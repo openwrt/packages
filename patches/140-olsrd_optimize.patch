@@ -1,0 +1,229 @@
+diff -Nur olsrd-0.4.10.orig/src/duplicate_set.c olsrd-0.4.10/src/duplicate_set.c
+--- olsrd-0.4.10.orig/src/duplicate_set.c	2005-02-27 19:39:43.000000000 +0100
++++ olsrd-0.4.10/src/duplicate_set.c	2006-02-22 12:24:03.000000000 +0100
+@@ -93,7 +93,7 @@
+ 
+ 
+   /* Hash the senders address */
+-  hash = olsr_hashing(originator);
++  hash = HASHMASK & seqno;
+ 
+   new_dup_entry = olsr_malloc(sizeof(struct dup_entry), "New dup entry");
+ 
+@@ -131,7 +131,7 @@
+   struct dup_entry *tmp_dup_table;
+ 
+   /* Hash the senders address */
+-  hash = olsr_hashing(originator);
++  hash = HASHMASK & seqno;
+ 
+   /* Check for entry */
+   for(tmp_dup_table = dup_set[hash].next;
+@@ -163,7 +163,7 @@
+   struct dup_entry *tmp_dup_table;
+ 
+   /* Hash the senders address */
+-  hash = olsr_hashing(originator);
++  hash = HASHMASK & seqno;
+ 
+   /* Check for entry */
+   for(tmp_dup_table = dup_set[hash].next;
+@@ -268,7 +268,7 @@
+   struct dup_iface *new_iface;
+ 
+   /* Hash the senders address */
+-  hash = olsr_hashing(originator);
++  hash = HASHMASK & seqno;
+ 
+ 
+   /* Check for entry */
+@@ -313,7 +313,7 @@
+   struct dup_entry *tmp_dup_table;
+ 
+   /* Hash the senders address */
+-  hash = olsr_hashing(originator);
++  hash = HASHMASK & seqno;
+ 
+   /* Check for entry */
+   for(tmp_dup_table = dup_set[hash].next;
+diff -Nur olsrd-0.4.10.orig/src/hashing.c olsrd-0.4.10/src/hashing.c
+--- olsrd-0.4.10.orig/src/hashing.c	2005-02-20 19:52:18.000000000 +0100
++++ olsrd-0.4.10/src/hashing.c	2006-02-22 12:23:24.000000000 +0100
+@@ -58,7 +58,7 @@
+ 
+   if(olsr_cnf->ip_version == AF_INET)
+     /* IPv4 */  
+-    hash = (ntohl(address->v4));
++    hash = address->v4x[0] ^ address->v4x[1] ^ address->v4x[2] ^ address->v4x[3];
+   else
+     {
+       /* IPv6 */
+diff -Nur olsrd-0.4.10.orig/src/hashing.h olsrd-0.4.10/src/hashing.h
+--- olsrd-0.4.10.orig/src/hashing.h	2005-02-20 19:52:18.000000000 +0100
++++ olsrd-0.4.10/src/hashing.h	2006-02-22 12:23:14.000000000 +0100
+@@ -43,7 +43,7 @@
+ #ifndef _OLSR_HASHING
+ #define _OLSR_HASHING
+ 
+-#define	HASHSIZE	32
++#define	HASHSIZE	128
+ #define	HASHMASK	(HASHSIZE - 1)
+ 
+ #include "olsr_types.h"
+diff -Nur olsrd-0.4.10.orig/src/lq_avl.c olsrd-0.4.10/src/lq_avl.c
+--- olsrd-0.4.10.orig/src/lq_avl.c	2005-01-22 15:30:57.000000000 +0100
++++ olsrd-0.4.10/src/lq_avl.c	2006-02-22 12:22:12.000000000 +0100
+@@ -40,6 +40,7 @@
+  */
+ 
+ #include <stddef.h>
++#include <time.h>
+ 
+ #include "lq_avl.h"
+ 
+@@ -52,11 +55,29 @@
+   tree->comp = comp;
+ }
+ 
++static struct avl_node *avl_find_rec_ipv4(struct avl_node *node, void *key)
++{
++  if (*(unsigned int *)key < *(unsigned int *)node->key) {
++    if (node->left != NULL) {
++      return avl_find_rec_ipv4(node->left, key);
++    }
++  }
++  else if (*(unsigned int *)key > *(unsigned int *)node->key) {
++    if (node->right != NULL) {
++      return avl_find_rec_ipv4(node->right, key);
++    }
++  }
++  return node;
++}
++
+ static struct avl_node *avl_find_rec(struct avl_node *node, void *key,
+                                      int (*comp)(void *, void *))
+ {
+   int diff;
+ 
++  if (0 == comp) {
++    return avl_find_rec_ipv4(node, key);
++  }
+   diff = (*comp)(key, node->key);
+ 
+   if (diff < 0)
+@@ -87,6 +112,11 @@
+ 
+   node = avl_find_rec(tree->root, key, tree->comp);
+ 
++  if (0 == tree->comp) {
++    if (0 != svenola_avl_comp_ipv4(node->key, key))
++      return NULL;
++  }
++  else
+   if ((*tree->comp)(node->key, key) != 0)
+     return NULL;
+ 
+@@ -228,6 +260,10 @@
+ 
+   node = avl_find_rec(tree->root, new->key, tree->comp);
+ 
++  if (0 == tree->comp) {
++    diff = svenola_avl_comp_ipv4(new->key, node->key);
++  }
++  else
+   diff = (*tree->comp)(new->key, node->key);
+ 
+   if (diff == 0)
+diff -Nur olsrd-0.4.10.orig/src/lq_avl.h olsrd-0.4.10/src/lq_avl.h
+--- olsrd-0.4.10.orig/src/lq_avl.h	2005-02-20 19:52:18.000000000 +0100
++++ olsrd-0.4.10/src/lq_avl.h	2006-02-22 12:22:12.000000000 +0100
+@@ -62,4 +62,7 @@
+ struct avl_node *avl_find(struct avl_tree *, void *);
+ int avl_insert(struct avl_tree *, struct avl_node *);
+ 
++#define svenola_avl_comp_ipv4(ip1, ip2) \
++  (*(unsigned int *)ip1 == *(unsigned int *)ip2 ? 0 : \
++  *(unsigned int *)ip1 < *(unsigned int *)ip2 ? -1 : +1)
+ #endif
+diff -Nur olsrd-0.4.10.orig/src/lq_list.c olsrd-0.4.10/src/lq_list.c
+--- olsrd-0.4.10.orig/src/lq_list.c	2004-12-04 18:06:57.000000000 +0100
++++ olsrd-0.4.10/src/lq_list.c	2006-02-22 12:22:12.000000000 +0100
+@@ -48,6 +48,7 @@
+   list->tail = NULL;
+ }
+ 
++#if 0
+ struct list_node *list_get_head(struct list *list)
+ {
+   return list->head;
+@@ -67,6 +68,7 @@
+ {
+   return node->prev;
+ }
++#endif
+ 
+ void list_add_head(struct list *list, struct list_node *node)
+ {
+diff -Nur olsrd-0.4.10.orig/src/lq_list.h olsrd-0.4.10/src/lq_list.h
+--- olsrd-0.4.10.orig/src/lq_list.h	2005-02-20 19:52:18.000000000 +0100
++++ olsrd-0.4.10/src/lq_list.h	2006-02-22 12:22:12.000000000 +0100
+@@ -58,11 +58,18 @@
+ 
+ void list_init(struct list *list);
+ 
++#if 1
++#define list_get_head(node) (node)->head
++#define list_get_tail(node) (node)->tail
++#define list_get_next(node) (node)->next
++#define list_get_prev(node) (node)->prev
++#else
+ struct list_node *list_get_head(struct list *list);
+ struct list_node *list_get_tail(struct list *list);
+ 
+ struct list_node *list_get_next(struct list_node *node);
+ struct list_node *list_get_prev(struct list_node *node);
++#endif
+ 
+ void list_add_head(struct list *list, struct list_node *node);
+ void list_add_tail(struct list *list, struct list_node *node);
+diff -Nur olsrd-0.4.10.orig/src/lq_route.c olsrd-0.4.10/src/lq_route.c
+--- olsrd-0.4.10.orig/src/lq_route.c	2005-11-29 19:37:58.000000000 +0100
++++ olsrd-0.4.10/src/lq_route.c	2006-02-22 12:22:12.000000000 +0100
+@@ -205,6 +205,14 @@
+ 
+   // add the vertex to the list, if it's not us
+ 
++  if (0 == comp) {
++    if (svenola_avl_comp_ipv4(&main_addr, node->key) != 0)
++    {
++      vert->node.data = vert;
++      list_add_tail(vertex_list, &vert->node);
++    }
++  }
++  else
+   if ((*comp)(&main_addr, node->key) != 0)
+   {
+     vert->node.data = vert;
+@@ -371,7 +381,11 @@
+   struct interface *inter;
+ 
+   if (ipsize == 4)
++#if 1
++    avl_comp = 0;
++#else
+     avl_comp = avl_comp_ipv4;
++#endif
+ 
+   else
+     avl_comp = avl_comp_ipv6;
+diff -Nur olsrd-0.4.10.orig/src/olsr_types.h olsrd-0.4.10/src/olsr_types.h
+--- olsrd-0.4.10.orig/src/olsr_types.h	2005-05-15 14:57:24.000000000 +0200
++++ olsrd-0.4.10/src/olsr_types.h	2006-02-22 12:22:43.000000000 +0100
+@@ -93,6 +93,7 @@
+ union olsr_ip_addr
+ {
+   olsr_u32_t v4;
++  olsr_u8_t v4x[4];
+   struct in6_addr v6;
+ };
+ 
