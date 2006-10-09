@@ -1,0 +1,11 @@
+diff -ur olsrd.old/src/cfgparser/oparse.c olsrd.dev/src/cfgparser/oparse.c
+--- olsrd.old/src/cfgparser/oparse.c	2006-01-01 17:15:57.000000000 +0100
++++ olsrd.dev/src/cfgparser/oparse.c	2006-10-09 01:06:27.000000000 +0200
+@@ -1921,6 +1921,7 @@
+       return -1;
+     }
+   h->netmask.v4 = in.s_addr;
++  h->net.v4 &= h->netmask.v4;
+   /* Queue */
+   h->next = cnf->hna4_entries;
+   cnf->hna4_entries = h;
