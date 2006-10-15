@@ -109,7 +109,7 @@ define Package/olsrd/install
 	install -d -m0755 $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/olsrd $(1)/usr/sbin/
 	install -d -m0755 $(1)/etc/init.d
-	install -m0755 ./files/olsrd.init $(1)/etc/init.d/S60olsrd
+	install -m0755 ./files/olsrd.init $(1)/etc/init.d/olsrd
 endef
 
 define Package/olsrd-mod-dot-draw/install

@@ -2,9 +2,9 @@
 # Copyright (C) 2006 OpenWrt.org
 
 DEFAULT=/etc/default/olsrd
-[ -f $DEFAULT ] && . $DEFAULT
 
 start() {
+	[ -f $DEFAULT ] && . $DEFAULT
 	olsrd $OPTIONS
 }
 
