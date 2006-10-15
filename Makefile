@@ -124,8 +124,8 @@ define Package/quagga/install
 	install -d -m0755 $(1)/etc/quagga/
 	chmod 0750 $(1)/etc/quagga/
 	install -d -m0755 $(1)/etc/init.d/
+	install -m0755 ./files/quagga $(1)/usr/sbin/quagga.init
 	install -m0755 ./files/quagga.init $(1)/etc/init.d/quagga
-	ln -sf quagga $(1)/etc/init.d/S49quagga
 	install -d -m0755 $(1)/var/run/quagga
 endef
 
