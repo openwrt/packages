@@ -100,14 +100,17 @@ define Package/quagga-vtysh
 endef
 
 define Build/Configure
-$(call Build/Configure/Default, --enable-shared \
+	$(call Build/Configure/Default, \
+		--sysconfdir=/etc/quagga/ \
+		--enable-shared \
 		--disable-static \
 		--enable-ipv6 \
 		--enable-vtysh \
 		--enable-user=quagga \
 		--enable-group=quagga \
 		--enable-multipath=8 \
-		--enable-isisd)
+		--enable-isisd \
+	)
 endef
 
 define Build/Compile	
@@ -127,6 +130,54 @@ define Package/quagga/install
 	install -m0755 ./files/quagga $(1)/usr/sbin/quagga.init
 	install -m0755 ./files/quagga.init $(1)/etc/init.d/quagga
 	install -d -m0755 $(1)/var/run/quagga
+endef
+
+define Package/quagga/postinst
+#!/bin/sh
+  
+name=quagga
+id=51
+  
+# do not change below
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	# create copies of passwd and group, if we use squashfs
+	rootfs=`mount |awk '/root/ { print $$5 }'`
+	if [ "$$rootfs" = "squashfs" ]; then
+		if [ -h /etc/group ]; then
+			rm /etc/group
+			cp /rom/etc/group /etc/group
+		fi
+		if [ -h /etc/passwd ]; then
+			rm /etc/passwd
+			cp /rom/etc/passwd /etc/passwd
+		fi
+	fi
+fi
+
+echo ""
+if [ -z "$$(grep ^\\$${name}: $${IPKG_INSTROOT}/etc/group)" ]; then 
+	echo "adding group $$name to /etc/group"
+	echo "$${name}:x:$${id}:" >> $${IPKG_INSTROOT}/etc/group  
+fi
+
+if [ -z "$$(grep ^\\$${name}: $${IPKG_INSTROOT}/etc/passwd)" ]; then 
+	echo "adding user $$name to /etc/passwd"
+	echo "$${name}:x:$${id}:$${id}:$${name}:/tmp/.$${name}:/bin/false" >> $${IPKG_INSTROOT}/etc/passwd
+fi
+
+grep -q '^zebra[[:space:]]*2601/tcp' $${IPKG_INSTROOT}/etc/services 2>/dev/null
+if [ $$? -ne 0 ]; then  
+echo "zebrasrv      2600/tcp" >>$${IPKG_INSTROOT}/etc/services
+echo "zebra         2601/tcp" >>$${IPKG_INSTROOT}/etc/services
+echo "ripd          2602/tcp" >>$${IPKG_INSTROOT}/etc/services
+echo "ripngd        2603/tcp" >>$${IPKG_INSTROOT}/etc/services
+echo "ospfd         2604/tcp" >>$${IPKG_INSTROOT}/etc/services
+echo "bgpd          2605/tcp" >>$${IPKG_INSTROOT}/etc/services
+echo "ospf6d        2606/tcp" >>$${IPKG_INSTROOT}/etc/services
+echo "ospfapi       2607/tcp" >>$${IPKG_INSTROOT}/etc/services
+echo "isisd         2608/tcp" >>$${IPKG_INSTROOT}/etc/services
+fi
 endef
 
 define Package/quagga-bgpd/install	
