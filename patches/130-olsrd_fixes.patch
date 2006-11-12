@@ -1,8 +1,12 @@
 diff -Nur olsrd-0.4.10.orig/src/defs.h olsrd-0.4.10/src/defs.h
 --- olsrd-0.4.10.orig/src/defs.h	2006-01-01 16:59:02.000000000 +0100
-+++ olsrd-0.4.10/src/defs.h	2006-03-02 02:10:02.000000000 +0100
-@@ -71,7 +71,7 @@
- #define	HOPCNT_MAX		32	/* maximum hops number */
++++ olsrd-0.4.10/src/defs.h	2006-10-31 19:34:52.000000000 +0100
+@@ -68,10 +68,10 @@
+ #define OLSRD_GLOBAL_CONF_FILE "/etc/" OLSRD_CONF_FILE_NAME
+ #endif
+ 
+-#define	HOPCNT_MAX		32	/* maximum hops number */
++#define	HOPCNT_MAX		64	/* maximum hops number */
  #define	MAXMESSAGESIZE		1500	/* max broadcast size */
  #define UDP_IPV4_HDRSIZE        28
 -#define UDP_IPV6_HDRSIZE        48
@@ -10,9 +14,21 @@ diff -Nur olsrd-0.4.10.orig/src/defs.h olsrd-0.4.10/src/defs.h
  #define MAX_IFS                 16
  
  /* Debug helper macro */
+diff -Nur olsrd-0.4.10.orig/src/interfaces.h olsrd-0.4.10/src/interfaces.h
+--- olsrd-0.4.10.orig/src/interfaces.h	2005-06-03 10:00:55.000000000 +0200
++++ olsrd-0.4.10/src/interfaces.h	2006-10-31 19:44:52.000000000 +0100
+@@ -136,6 +136,8 @@
+   struct        vtimes valtimes;
+ 
+   struct        if_gen_property *gen_properties;/* Generic interface properties */
++  
++  int           ttl_index; /* index in TTL array for fish-eye */
+ 
+   struct	interface *int_next;
+ };
 diff -Nur olsrd-0.4.10.orig/src/link_set.c olsrd-0.4.10/src/link_set.c
 --- olsrd-0.4.10.orig/src/link_set.c	2005-11-17 05:25:44.000000000 +0100
-+++ olsrd-0.4.10/src/link_set.c	2006-03-02 02:10:02.000000000 +0100
++++ olsrd-0.4.10/src/link_set.c	2006-10-31 19:31:19.000000000 +0100
 @@ -952,8 +952,9 @@
  
    entry->loss_link_quality =
@@ -27,20 +43,39 @@ diff -Nur olsrd-0.4.10.orig/src/link_set.c olsrd-0.4.10/src/link_set.c
    entry->loss_link_quality *= entry->loss_link_multiplier;
 diff -Nur olsrd-0.4.10.orig/src/lq_packet.c olsrd-0.4.10/src/lq_packet.c
 --- olsrd-0.4.10.orig/src/lq_packet.c	2005-11-17 02:58:51.000000000 +0100
-+++ olsrd-0.4.10/src/lq_packet.c	2006-03-02 02:10:02.000000000 +0100
-@@ -149,7 +149,8 @@
++++ olsrd-0.4.10/src/lq_packet.c	2006-10-31 21:51:11.000000000 +0100
+@@ -149,9 +149,8 @@
    int i;
    struct neighbor_entry *walker;
    struct link_entry *link;
 -  static int ttl_list[] = { MAX_TTL, 3, 2, 1, 2, 1, 1, 3, 2, 1, 2, 1, 1, 0 };
+-  static int ttl_index = 0;
+-
 +  static int ttl_list[] = { 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, 1, 2, 1, MAX_TTL-1, 0};
 +  
-   static int ttl_index = 0;
- 
    // remember that we have generated an LQ TC message; this is
+   // checked in net_output()
+ 
+@@ -167,10 +166,13 @@
+ 
+   if (olsr_cnf->lq_fish > 0)
+   {
+-    if (ttl_list[ttl_index] == 0)
+-      ttl_index = 0;
++    // SVEN_OLA: Too lazy to find the different iface inits. This will do it too.
++    if (outif->ttl_index >= sizeof(ttl_list) / sizeof(ttl_list[0])) outif->ttl_index = 0;
++    
++    if (ttl_list[outif->ttl_index] == 0)
++      outif->ttl_index = 0;
+ 
+-    lq_tc->comm.ttl = ttl_list[ttl_index++];
++    lq_tc->comm.ttl = ttl_list[outif->ttl_index++];
+ 
+     OLSR_PRINTF(3, "Creating LQ TC with TTL %d.\n", lq_tc->comm.ttl);
+   }
 diff -Nur olsrd-0.4.10.orig/src/olsr.c olsrd-0.4.10/src/olsr.c
 --- olsrd-0.4.10.orig/src/olsr.c	2005-11-17 05:25:44.000000000 +0100
-+++ olsrd-0.4.10/src/olsr.c	2006-03-02 02:16:42.000000000 +0100
++++ olsrd-0.4.10/src/olsr.c	2006-10-31 19:31:19.000000000 +0100
 @@ -68,6 +68,7 @@
  olsr_bool changes_topology;
  olsr_bool changes_neighborhood;
@@ -112,7 +147,7 @@ diff -Nur olsrd-0.4.10.orig/src/olsr.c olsrd-0.4.10/src/olsr.c
    return;
 diff -Nur olsrd-0.4.10.orig/src/olsr.h olsrd-0.4.10/src/olsr.h
 --- olsrd-0.4.10.orig/src/olsr.h	2005-05-29 14:47:45.000000000 +0200
-+++ olsrd-0.4.10/src/olsr.h	2006-03-02 02:13:02.000000000 +0100
++++ olsrd-0.4.10/src/olsr.h	2006-10-31 19:31:19.000000000 +0100
 @@ -49,6 +49,7 @@
  extern olsr_bool changes_topology;
  extern olsr_bool changes_neighborhood;
@@ -123,7 +158,7 @@ diff -Nur olsrd-0.4.10.orig/src/olsr.h olsrd-0.4.10/src/olsr.h
  register_pcf(int (*)(int, int, int));
 diff -Nur olsrd-0.4.10.orig/src/scheduler.c olsrd-0.4.10/src/scheduler.c
 --- olsrd-0.4.10.orig/src/scheduler.c	2005-12-29 23:34:37.000000000 +0100
-+++ olsrd-0.4.10/src/scheduler.c	2006-03-02 02:12:40.000000000 +0100
++++ olsrd-0.4.10/src/scheduler.c	2006-10-31 19:31:19.000000000 +0100
 @@ -70,6 +70,7 @@
  
    changes_neighborhood = OLSR_TRUE;
@@ -132,3 +167,46 @@ diff -Nur olsrd-0.4.10.orig/src/scheduler.c olsrd-0.4.10/src/scheduler.c
  }
  
  /**
+diff -Nur olsrd-0.4.10.orig/src/unix/ifnet.c olsrd-0.4.10/src/unix/ifnet.c
+--- olsrd-0.4.10.orig/src/unix/ifnet.c	2005-12-29 19:37:16.000000000 +0100
++++ olsrd-0.4.10/src/unix/ifnet.c	2006-10-31 21:44:59.000000000 +0100
+@@ -689,6 +689,17 @@
+   return 1;
+ }
+ 
++static char basename[32];
++char* if_basename(char* name);
++char* if_basename(char* name)
++{
++	char *p = strchr(name, ':');
++	if (0 == p || p - name >= (int)(sizeof(basename) / sizeof(basename[0]) - 1)) return name;
++	memcpy(basename, name, p - name);
++	basename[p - name] = 0;
++	return basename;
++}
++
+ /**
+  * Initializes a interface described by iface,
+  * if it is set up and is of the correct type.
+@@ -832,10 +843,10 @@
+ 	}
+       
+       /* Deactivate IP spoof filter */
+-      deactivate_spoof(ifr.ifr_name, iface->index, olsr_cnf->ip_version);
++      deactivate_spoof(if_basename(ifr.ifr_name), iface->index, olsr_cnf->ip_version);
+       
+       /* Disable ICMP redirects */
+-      disable_redirects(ifr.ifr_name, iface->index, olsr_cnf->ip_version);
++      disable_redirects(if_basename(ifr.ifr_name), iface->index, olsr_cnf->ip_version);
+       
+     }
+   
+@@ -894,7 +907,7 @@
+   ifp->gen_properties = NULL;
+   ifp->int_name = olsr_malloc(strlen(ifr.ifr_name) + 1, "Interface update 3");
+       
+-  strcpy(ifp->int_name, ifr.ifr_name);
++  strcpy(ifp->int_name, if_basename(ifr.ifr_name));
+   /* Segfaults if using strncpy(IFNAMSIZ) why oh why?? */
+   ifp->int_next = ifnet;
+   ifnet = ifp;

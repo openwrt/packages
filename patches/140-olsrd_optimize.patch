@@ -1,6 +1,6 @@
 diff -Nur olsrd-0.4.10.orig/src/duplicate_set.c olsrd-0.4.10/src/duplicate_set.c
 --- olsrd-0.4.10.orig/src/duplicate_set.c	2005-02-27 19:39:43.000000000 +0100
-+++ olsrd-0.4.10/src/duplicate_set.c	2006-02-22 12:24:03.000000000 +0100
++++ olsrd-0.4.10/src/duplicate_set.c	2006-11-12 09:33:49.000000000 +0100
 @@ -93,7 +93,7 @@
  
  
@@ -48,7 +48,7 @@ diff -Nur olsrd-0.4.10.orig/src/duplicate_set.c olsrd-0.4.10/src/duplicate_set.c
    for(tmp_dup_table = dup_set[hash].next;
 diff -Nur olsrd-0.4.10.orig/src/hashing.c olsrd-0.4.10/src/hashing.c
 --- olsrd-0.4.10.orig/src/hashing.c	2005-02-20 19:52:18.000000000 +0100
-+++ olsrd-0.4.10/src/hashing.c	2006-02-22 12:23:24.000000000 +0100
++++ olsrd-0.4.10/src/hashing.c	2006-11-12 09:33:49.000000000 +0100
 @@ -58,7 +58,7 @@
  
    if(olsr_cnf->ip_version == AF_INET)
@@ -60,7 +60,7 @@ diff -Nur olsrd-0.4.10.orig/src/hashing.c olsrd-0.4.10/src/hashing.c
        /* IPv6 */
 diff -Nur olsrd-0.4.10.orig/src/hashing.h olsrd-0.4.10/src/hashing.h
 --- olsrd-0.4.10.orig/src/hashing.h	2005-02-20 19:52:18.000000000 +0100
-+++ olsrd-0.4.10/src/hashing.h	2006-02-22 12:23:14.000000000 +0100
++++ olsrd-0.4.10/src/hashing.h	2006-11-12 09:33:49.000000000 +0100
 @@ -43,7 +43,7 @@
  #ifndef _OLSR_HASHING
  #define _OLSR_HASHING
@@ -72,19 +72,22 @@ diff -Nur olsrd-0.4.10.orig/src/hashing.h olsrd-0.4.10/src/hashing.h
  #include "olsr_types.h"
 diff -Nur olsrd-0.4.10.orig/src/lq_avl.c olsrd-0.4.10/src/lq_avl.c
 --- olsrd-0.4.10.orig/src/lq_avl.c	2005-01-22 15:30:57.000000000 +0100
-+++ olsrd-0.4.10/src/lq_avl.c	2006-02-22 12:22:12.000000000 +0100
-@@ -40,6 +40,7 @@
++++ olsrd-0.4.10/src/lq_avl.c	2006-11-12 09:33:49.000000000 +0100
+@@ -40,6 +40,9 @@
   */
  
  #include <stddef.h>
++#ifndef DISABLE_SVEN_OLA
 +#include <time.h>
++#endif
  
  #include "lq_avl.h"
  
-@@ -52,11 +55,29 @@
+@@ -52,11 +55,33 @@
    tree->comp = comp;
  }
  
++#ifndef DISABLE_SVEN_OLA
 +static struct avl_node *avl_find_rec_ipv4(struct avl_node *node, void *key)
 +{
 +  if (*(unsigned int *)key < *(unsigned int *)node->key) {
@@ -99,60 +102,69 @@ diff -Nur olsrd-0.4.10.orig/src/lq_avl.c olsrd-0.4.10/src/lq_avl.c
 +  }
 +  return node;
 +}
++#endif
 +
  static struct avl_node *avl_find_rec(struct avl_node *node, void *key,
                                       int (*comp)(void *, void *))
  {
    int diff;
  
++#ifndef DISABLE_SVEN_OLA
 +  if (0 == comp) {
 +    return avl_find_rec_ipv4(node, key);
 +  }
++#endif
    diff = (*comp)(key, node->key);
  
    if (diff < 0)
-@@ -87,6 +112,11 @@
+@@ -87,6 +112,13 @@
  
    node = avl_find_rec(tree->root, key, tree->comp);
  
++#ifndef DISABLE_SVEN_OLA
 +  if (0 == tree->comp) {
 +    if (0 != svenola_avl_comp_ipv4(node->key, key))
 +      return NULL;
 +  }
 +  else
++#endif
    if ((*tree->comp)(node->key, key) != 0)
      return NULL;
  
-@@ -228,6 +260,10 @@
+@@ -228,6 +260,12 @@
  
    node = avl_find_rec(tree->root, new->key, tree->comp);
  
++#ifndef DISABLE_SVEN_OLA
 +  if (0 == tree->comp) {
 +    diff = svenola_avl_comp_ipv4(new->key, node->key);
 +  }
 +  else
++#endif
    diff = (*tree->comp)(new->key, node->key);
  
    if (diff == 0)
 diff -Nur olsrd-0.4.10.orig/src/lq_avl.h olsrd-0.4.10/src/lq_avl.h
 --- olsrd-0.4.10.orig/src/lq_avl.h	2005-02-20 19:52:18.000000000 +0100
-+++ olsrd-0.4.10/src/lq_avl.h	2006-02-22 12:22:12.000000000 +0100
-@@ -62,4 +62,7 @@
++++ olsrd-0.4.10/src/lq_avl.h	2006-11-12 09:33:49.000000000 +0100
+@@ -62,4 +62,9 @@
  struct avl_node *avl_find(struct avl_tree *, void *);
  int avl_insert(struct avl_tree *, struct avl_node *);
  
++#ifndef DISABLE_SVEN_OLA
 +#define svenola_avl_comp_ipv4(ip1, ip2) \
 +  (*(unsigned int *)ip1 == *(unsigned int *)ip2 ? 0 : \
 +  *(unsigned int *)ip1 < *(unsigned int *)ip2 ? -1 : +1)
++#endif
  #endif
 diff -Nur olsrd-0.4.10.orig/src/lq_list.c olsrd-0.4.10/src/lq_list.c
 --- olsrd-0.4.10.orig/src/lq_list.c	2004-12-04 18:06:57.000000000 +0100
-+++ olsrd-0.4.10/src/lq_list.c	2006-02-22 12:22:12.000000000 +0100
++++ olsrd-0.4.10/src/lq_list.c	2006-11-12 09:33:49.000000000 +0100
 @@ -48,6 +48,7 @@
    list->tail = NULL;
  }
  
-+#if 0
++#ifdef DISABLE_SVEN_OLA
  struct list_node *list_get_head(struct list *list)
  {
    return list->head;
@@ -166,12 +178,12 @@ diff -Nur olsrd-0.4.10.orig/src/lq_list.c olsrd-0.4.10/src/lq_list.c
  {
 diff -Nur olsrd-0.4.10.orig/src/lq_list.h olsrd-0.4.10/src/lq_list.h
 --- olsrd-0.4.10.orig/src/lq_list.h	2005-02-20 19:52:18.000000000 +0100
-+++ olsrd-0.4.10/src/lq_list.h	2006-02-22 12:22:12.000000000 +0100
++++ olsrd-0.4.10/src/lq_list.h	2006-11-12 09:33:49.000000000 +0100
 @@ -58,11 +58,18 @@
  
  void list_init(struct list *list);
  
-+#if 1
++#ifndef DISABLE_SVEN_OLA
 +#define list_get_head(node) (node)->head
 +#define list_get_tail(node) (node)->tail
 +#define list_get_next(node) (node)->next
@@ -188,11 +200,12 @@ diff -Nur olsrd-0.4.10.orig/src/lq_list.h olsrd-0.4.10/src/lq_list.h
  void list_add_tail(struct list *list, struct list_node *node);
 diff -Nur olsrd-0.4.10.orig/src/lq_route.c olsrd-0.4.10/src/lq_route.c
 --- olsrd-0.4.10.orig/src/lq_route.c	2005-11-29 19:37:58.000000000 +0100
-+++ olsrd-0.4.10/src/lq_route.c	2006-02-22 12:22:12.000000000 +0100
-@@ -205,6 +205,14 @@
++++ olsrd-0.4.10/src/lq_route.c	2006-11-12 09:34:46.000000000 +0100
+@@ -205,6 +205,16 @@
  
    // add the vertex to the list, if it's not us
  
++#ifndef DISABLE_SVEN_OLA
 +  if (0 == comp) {
 +    if (svenola_avl_comp_ipv4(&main_addr, node->key) != 0)
 +    {
@@ -201,14 +214,170 @@ diff -Nur olsrd-0.4.10.orig/src/lq_route.c olsrd-0.4.10/src/lq_route.c
 +    }
 +  }
 +  else
++#endif
    if ((*comp)(&main_addr, node->key) != 0)
    {
      vert->node.data = vert;
-@@ -371,7 +381,11 @@
+@@ -266,6 +276,154 @@
+ }
+ 
+ // XXX - bad complexity
++#define SVEN_OPT
++#undef SVEN_OPT_DBG
++
++/*
++ * The function extract_best() is most expensive (>50% CPU in profiling).
++ * It is called in two modes: while doing Dijkstra route calculation and
++ * while searching for a direct route/hna. The latter can be optimized
++ * because the stored verices do not change from call to call and it is
++ * more sufficient to have them sorted/popped from a list rather than 
++ * searching the complete list by every call. Sven-Ola@gmx.de, 11/2006
++ */
++ 
++#ifdef SVEN_OPT
++static struct dijk_vertex **etx_cache = 0;
++static int etx_cache_count;
++static int etx_cache_get;
++static int etx_cache_saved = 0;
++
++static int etx_cache_compare(const void *a, const void *b)
++{
++  // Oh jeah. I love this macro assembler :)
++  
++  if ((*(struct dijk_vertex **)a)->path_etx > (*(struct dijk_vertex **)b)->path_etx) return 1;
++  if ((*(struct dijk_vertex **)a)->path_etx < (*(struct dijk_vertex **)b)->path_etx) return -1;
++  
++  // This is for debugging only: etx==etx then compare pointers
++  // to make it possible to compare to the original search algo.
++  if (*(struct dijk_vertex **)a > *(struct dijk_vertex **)b) return 1;
++  if (*(struct dijk_vertex **)a < *(struct dijk_vertex **)b) return -1;
++  
++  return 0;
++}
++
++static struct dijk_vertex *extract_best_route(struct list *vertex_list)
++{
++#ifdef SVEN_OPT_DBG
++  float best_etx = INFINITE_ETX + 1.0;
++#endif
++  struct list_node *node;
++  struct dijk_vertex *vert;
++  struct dijk_vertex *res = NULL;
++
++#ifdef SVEN_OPT_DBG
++  node = list_get_head(vertex_list);
++
++  // loop through all vertices
++  
++  while (node != NULL)
++  {
++    vert = node->data;
++
++    // see whether the current vertex is better than what we have
++
++    if (!vert->done && vert->path_etx < best_etx)
++    {
++      best_etx = vert->path_etx;
++      res = vert;
++    }
++    else if (!vert->done && vert->path_etx == best_etx && vert < res)
++    {
++      // Otherwise order is undefined if etx==etx and debug will complain
++      best_etx = vert->path_etx;
++      res = vert;
++    }
++
++    node = list_get_next(node);
++  }
++#endif
++  if (NULL == etx_cache)
++  {
++    int count = 0;
++    node = list_get_head(vertex_list);
++    while (node != NULL)
++    {
++      vert = node->data;
++      if (!vert->done && vert->path_etx < INFINITE_ETX) count++;
++      node = list_get_next(node);
++    }
++    if (0 < count)
++    {
++      etx_cache = olsr_malloc(sizeof(etx_cache[0]) * count, "ETX Cache");
++#ifdef SVEN_OPT_DBG
++      printf("count=%d, Malloc(%d)=%p\n", count, sizeof(etx_cache[0]) * count, etx_cache);
++#endif
++      node = list_get_head(vertex_list);
++      etx_cache_count = 0;
++      etx_cache_get = 0;
++      while (node != NULL)
++      {
++        vert = node->data;
++        if (!vert->done && vert->path_etx < INFINITE_ETX)
++        {
++          etx_cache[etx_cache_count] = vert;
++          etx_cache_count++;
++        }
++        node = list_get_next(node);
++      }
++#ifdef SVEN_OPT_DBG
++      printf("qsort(etx_cache_count=%d)\n", etx_cache_count);
++#endif
++      qsort(etx_cache, etx_cache_count, sizeof(etx_cache[0]), etx_cache_compare);
++#ifdef SVEN_OPT_DBG
++      if (0 < etx_cache_count)
++      {
++        int i = 0; 
++        while(i < etx_cache_count && i < 10)
++        {
++          printf("%d: %p=%f\n", i, etx_cache[i], etx_cache[i]->path_etx);
++          i++;
++        }
++      }
++#endif
++    }
++  }
++
++#ifdef SVEN_OPT_DBG
++  if (NULL != etx_cache)
++  {
++    struct dijk_vertex *rescache = NULL;
++    if (etx_cache_get < etx_cache_count)
++    {
++      rescache = etx_cache[etx_cache_get++];
++    }
++    if (res != rescache)
++    {
++      printf("miss: etx_cache_get=%d, res=%p,%f != rescache=%p,%f\n",
++        etx_cache_get, res, (NULL != res ? res->path_etx : -1), rescache, (NULL != rescache ? rescache->path_etx : -1));
++    }
++    else
++    {
++      etx_cache_saved++;
++    }
++  }
++#else
++  if (NULL != etx_cache && etx_cache_get < etx_cache_count)
++  {
++    res = etx_cache[etx_cache_get++];
++  }
++#endif
++
++  // if we've found a vertex, remove it from the set
++
++  if (res != NULL)
++    res->done = OLSR_TRUE;
++
++  return res;
++}
++#endif // SVEN_OPT
+ 
+ static struct dijk_vertex *extract_best(struct list *vertex_list)
+ {
+@@ -371,7 +529,11 @@
    struct interface *inter;
  
    if (ipsize == 4)
-+#if 1
++#ifndef DISABLE_SVEN_OLA
 +    avl_comp = 0;
 +#else
      avl_comp = avl_comp_ipv4;
@@ -216,9 +385,37 @@ diff -Nur olsrd-0.4.10.orig/src/lq_route.c olsrd-0.4.10/src/lq_route.c
  
    else
      avl_comp = avl_comp_ipv6;
+@@ -614,13 +776,27 @@
+ 
+   // add HNA routes - the set of unprocessed network nodes contains
+   // all reachable network nodes
++#ifdef SVEN_OPT
++#ifdef SVEN_OPT_DBG
++  printf("free etx_cache, saved compares=%d, etx_cache=%p\n", etx_cache_saved, etx_cache);
++  etx_cache_saved = 0;
++#endif
++  if (NULL != etx_cache) {
++    free(etx_cache);
++    etx_cache = NULL;
++  }
++#endif
+ 
+   for (;;)
+   {
+     // extract the network node with the best ETX and remove it
+     // from the set of unprocessed network nodes
+ 
++#ifdef SVEN_OPT
++    vert = extract_best_route(&vertex_list);
++#else
+     vert = extract_best(&vertex_list);
++#endif
+ 
+     // no more nodes left
+ 
 diff -Nur olsrd-0.4.10.orig/src/olsr_types.h olsrd-0.4.10/src/olsr_types.h
 --- olsrd-0.4.10.orig/src/olsr_types.h	2005-05-15 14:57:24.000000000 +0200
-+++ olsrd-0.4.10/src/olsr_types.h	2006-02-22 12:22:43.000000000 +0100
++++ olsrd-0.4.10/src/olsr_types.h	2006-11-12 09:33:49.000000000 +0100
 @@ -93,6 +93,7 @@
  union olsr_ip_addr
  {
