@@ -104,49 +104,49 @@ define Build/Compile
 endef
 
 define Package/olsrd/install
-	install -d -m0755 $(1)/etc
+	$(INSTALL_DIR) $(1)/etc
 	$(CP) $(PKG_INSTALL_DIR)/etc/olsrd.conf $(1)/etc/
-	install -d -m0755 $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/olsrd $(1)/usr/sbin/
-	install -d -m0755 $(1)/etc/init.d
-	install -m0755 ./files/olsrd.init $(1)/etc/init.d/olsrd
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/olsrd.init $(1)/etc/init.d/olsrd
 endef
 
 define Package/olsrd-mod-dot-draw/install
-	install -d -m0755 $(1)/usr/lib
-	install -m0755 $(PKG_INSTALL_DIR)/usr/lib/olsrd_dot_draw.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_dot_draw.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-dyn-gw/install
-	install -d -m0755 $(1)/usr/lib
-	install -m0755 $(PKG_INSTALL_DIR)/usr/lib/olsrd_dyn_gw.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_dyn_gw.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-httpinfo/install
-	install -d -m0755 $(1)/usr/lib
-	install -m0755 $(PKG_INSTALL_DIR)/usr/lib/olsrd_httpinfo.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_httpinfo.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-nameservice/install
-	install -d -m0755 $(1)/usr/lib
-	install -m0755 $(PKG_INSTALL_DIR)/usr/lib/olsrd_nameservice.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_nameservice.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-power/install
-	install -d -m0755 $(1)/usr/lib
-	install -m0755 $(PKG_INSTALL_DIR)/usr/lib/olsrd_power.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_power.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-secure/install
-	install -d -m0755 $(1)/etc/olsrd.d
+	$(INSTALL_DIR) $(1)/etc/olsrd.d
 	$(CP) ./files/olsrd_secure_key $(1)/etc/olsrd.d/
-	install -d -m0755 $(1)/usr/lib
-	install -m0755 $(PKG_INSTALL_DIR)/usr/lib/olsrd_secure.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_secure.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-tas/install
-	install -d -m0755 $(1)/usr/lib
-	install -m0755 $(PKG_INSTALL_DIR)/usr/lib/olsrd_tas.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_tas.so.* $(1)/usr/lib/
 endef
 
 
