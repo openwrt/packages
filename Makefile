@@ -120,16 +120,16 @@ define Build/Compile
 endef
 
 define Package/quagga/install	
-	install -d -m0755 $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/zebra $(1)/usr/sbin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/watchquagga $(1)/usr/sbin/
 	# avoid /etc being set to 0750
-	install -d -m0755 $(1)/etc/quagga/
+	$(INSTALL_DIR) $(1)/etc/quagga/
 	chmod 0750 $(1)/etc/quagga/
-	install -d -m0755 $(1)/etc/init.d/
-	install -m0755 ./files/quagga $(1)/usr/sbin/quagga.init
-	install -m0755 ./files/quagga.init $(1)/etc/init.d/quagga
-	install -d -m0755 $(1)/var/run/quagga
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/quagga $(1)/usr/sbin/quagga.init
+	$(INSTALL_BIN) ./files/quagga.init $(1)/etc/init.d/quagga
+	$(INSTALL_DIR) $(1)/var/run/quagga
 endef
 
 define Package/quagga/postinst
@@ -181,49 +181,49 @@ fi
 endef
 
 define Package/quagga-bgpd/install	
-	install -d -m0755 $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/bgpd $(1)/usr/sbin/
 endef
 
 define Package/quagga-isisd/install
-	install -d -m0755 $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/isisd $(1)/usr/sbin
 endef
 
 define Package/quagga-ospfd/install	
-	install -d -m0755 $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libospf.so.* $(1)/usr/lib/
-	install -d -m0755 $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/ospfd $(1)/usr/sbin/
 endef
 
 define Package/quagga-ospf6d/install	
-	install -d -m0755 $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/ospf6d $(1)/usr/sbin/
 endef
 
 define Package/quagga-ripd/install	
-	install -d -m0755 $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/ripd $(1)/usr/sbin/
 endef
 
 define Package/quagga-ripngd/install	
-	install -d -m0755 $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/ripngd $(1)/usr/sbin/
 endef
 
 define Package/quagga-vtysh/install	
-	install -d -m0755 $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/vtysh $(1)/usr/bin/
 endef
 
 define Package/quagga-libospf/install
-	install -d -m0755 $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libospf.so.* $(1)/usr/lib/
 endef
 
 define Package/quagga-libzebra/install
-	install -d -m0755 $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libzebra.so.* $(1)/usr/lib
 endef
 
