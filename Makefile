@@ -53,7 +53,7 @@ endef
 define Package/quagga-bgpd
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=quagga
+  DEPENDS:=quagga quagga-libzebra
   TITLE:=BGPv4, BGPv4+, BGPv4- routing engine
 endef
 
@@ -67,35 +67,35 @@ endef
 define Package/quagga-ospfd
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=quagga quagga-libospf
+  DEPENDS:=quagga quagga-libospf quagga-libzebra
   TITLE:=OSPFv2 routing engine
 endef
 
 define Package/quagga-ospf6d
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=quagga quagga-libospf
+  DEPENDS:=quagga quagga-libospf quagga-libzebra
   TITLE:=OSPFv3 routing engine
 endef
 
 define Package/quagga-ripd
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=quagga
+  DEPENDS:=quagga quagga-libzebra
   TITLE:=RIP routing engine
 endef
 
 define Package/quagga-ripngd
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=quagga
+  DEPENDS:=quagga +quagga-libzebra
   TITLE:=RIPNG routing engine
 endef
 
 define Package/quagga-vtysh
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=quagga +libreadline +libncurses
+  DEPENDS:=quagga quagga-libzebra +libreadline +libncurses
   TITLE:=integrated shell for Quagga routing software
 endef
 
