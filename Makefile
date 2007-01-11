@@ -101,6 +101,7 @@ endef
 
 define Build/Configure
 	$(call Build/Configure/Default, \
+		--localstatedir=/var/run/quagga \
 		--sysconfdir=/etc/quagga/ \
 		--enable-shared \
 		--disable-static \
