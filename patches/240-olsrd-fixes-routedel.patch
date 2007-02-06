@@ -1,0 +1,137 @@
+diff -Nur olsrd-0.4.10.orig/src/link_set.c olsrd-0.4.10/src/link_set.c
+--- olsrd-0.4.10.orig/src/link_set.c	2006-12-01 09:04:56.000000000 +0100
++++ olsrd-0.4.10/src/link_set.c	2006-12-01 09:06:22.000000000 +0100
+@@ -381,6 +381,69 @@
+ }
+ 
+ /**
++ *Delete all interface link entries
++ *
++ *@param interface ip address
++ */
++
++void
++del_if_link_entries(union olsr_ip_addr *int_addr)
++{
++  struct link_entry *tmp_link_set, *last_link_entry;
++
++  if(link_set == NULL)
++    return;
++
++  tmp_link_set = link_set;
++  last_link_entry = NULL;
++
++  while(tmp_link_set)
++    {
++
++      if(COMP_IP(int_addr, &tmp_link_set->local_iface_addr))
++        {
++          if(last_link_entry != NULL)
++            {
++              last_link_entry->next = tmp_link_set->next;
++
++              /* Delete neighbor entry */
++              if(tmp_link_set->neighbor->linkcount == 1)
++                olsr_delete_neighbor_table(&tmp_link_set->neighbor->neighbor_main_addr);
++              else
++                tmp_link_set->neighbor->linkcount--;
++
++              //olsr_delete_neighbor_if_no_link(&tmp_link_set->neighbor->neighbor_main_addr);
++              changes_neighborhood = OLSR_TRUE;
++
++              free(tmp_link_set);
++              tmp_link_set = last_link_entry;
++            }
++          else
++            {
++              link_set = tmp_link_set->next; /* CHANGED */
++
++              /* Delete neighbor entry */
++              if(tmp_link_set->neighbor->linkcount == 1)
++                olsr_delete_neighbor_table(&tmp_link_set->neighbor->neighbor_main_addr);
++              else
++                tmp_link_set->neighbor->linkcount--;
++
++              changes_neighborhood = OLSR_TRUE;
++
++              free(tmp_link_set);
++              tmp_link_set = link_set;
++              continue;
++            }
++        }
++
++      last_link_entry = tmp_link_set;
++      tmp_link_set = tmp_link_set->next;
++    }
++
++  return;
++}
++
++/**
+  *Nothing mysterious here.
+  *Adding a new link entry to the link set.
+  *
+diff -Nur olsrd-0.4.10.orig/src/link_set.h olsrd-0.4.10/src/link_set.h
+--- olsrd-0.4.10.orig/src/link_set.h	2005-10-23 22:58:14.000000000 +0200
++++ olsrd-0.4.10/src/link_set.h	2006-12-01 09:06:22.000000000 +0100
+@@ -116,6 +116,9 @@
+ void
+ olsr_init_link_set(void);
+ 
++void
++del_if_link_entries(union olsr_ip_addr *);
++
+ struct link_entry *
+ get_best_link_to_neighbor(union olsr_ip_addr *);
+ 
+diff -Nur olsrd-0.4.10.orig/src/linux/kernel_routes.c olsrd-0.4.10/src/linux/kernel_routes.c
+--- olsrd-0.4.10.orig/src/linux/kernel_routes.c	2005-02-27 19:39:43.000000000 +0100
++++ olsrd-0.4.10/src/linux/kernel_routes.c	2006-12-01 09:06:22.000000000 +0100
+@@ -244,9 +244,8 @@
+   inet_ntop(AF_INET, &destination->rt_mask.v4, mask_str, 16);
+   inet_ntop(AF_INET, &destination->rt_router.v4, router_str, 16);
+ 
+-  OLSR_PRINTF(1, "(ioctl)Deleting route with metric %d to %s/%s via %s/%s.\n",
+-              destination->rt_metric, dst_str, mask_str, router_str,
+-              destination->rt_if->int_name)
++  OLSR_PRINTF(1, "(ioctl)Deleting route with metric %d to %s/%s via %s.\n",
++              destination->rt_metric, dst_str, mask_str, router_str)
+   
+   memset(&kernel_route,0,sizeof(struct rtentry));
+ 
+diff -Nur olsrd-0.4.10.orig/src/lq_packet.c olsrd-0.4.10/src/lq_packet.c
+--- olsrd-0.4.10.orig/src/lq_packet.c	2006-12-01 09:04:56.000000000 +0100
++++ olsrd-0.4.10/src/lq_packet.c	2006-12-01 09:06:22.000000000 +0100
+@@ -225,8 +225,10 @@
+ 
+           link = get_best_link_to_neighbor(&neigh->main);
+ 
+-          neigh->link_quality = link->loss_link_quality;
+-          neigh->neigh_link_quality = link->neigh_link_quality;
++          if (link) {
++            neigh->link_quality = link->loss_link_quality;
++            neigh->neigh_link_quality = link->neigh_link_quality;
++          }
+ 
+           // queue the neighbour entry
+ 
+diff -Nur olsrd-0.4.10.orig/src/unix/ifnet.c olsrd-0.4.10/src/unix/ifnet.c
+--- olsrd-0.4.10.orig/src/unix/ifnet.c	2006-12-01 09:04:56.000000000 +0100
++++ olsrd-0.4.10/src/unix/ifnet.c	2006-12-01 09:06:22.000000000 +0100
+@@ -56,6 +56,7 @@
+ #include "mantissa.h"
+ #include "lq_packet.h"
+ #include "log.h"
++#include "link_set.h"
+ #include <signal.h>
+ #include <sys/types.h>
+ #include <net/if.h>
+@@ -393,6 +394,8 @@
+   OLSR_PRINTF(1, "Removing interface %s\n", iface->name)
+   olsr_syslog(OLSR_LOG_INFO, "Removing interface %s\n", iface->name);
+ 
++  del_if_link_entries(&ifp->ip_addr);
++
+   /*
+    *Call possible ifchange functions registered by plugins  
+    */

@@ -1,0 +1,425 @@
+diff -Nur olsrd-0.4.10.orig/src/bsd/kernel_routes.c olsrd-0.4.10/src/bsd/kernel_routes.c
+--- olsrd-0.4.10.orig/src/bsd/kernel_routes.c	2005-02-27 11:43:38.000000000 +0100
++++ olsrd-0.4.10/src/bsd/kernel_routes.c	2006-12-12 08:59:26.000000000 +0100
+@@ -170,12 +170,103 @@
+   return add_del_route(dest, 0);
+ }
+ 
+-int olsr_ioctl_add_route6(struct rt_entry *dest)
++static int add_del_route6(struct rt_entry *dest, int add)
+ {
++  struct rt_msghdr *rtm;
++  unsigned char buff[512];
++  unsigned char *walker;
++  struct sockaddr_in6 sin6;
++  struct sockaddr_dl sdl;
++  int step, step_dl;
++  int len;
++  char Str1[40], Str2[40];
++
++  inet_ntop(AF_INET6, &dest->rt_dst.v6, Str1, 40);
++  inet_ntop(AF_INET6, &dest->rt_router.v6, Str2, 40);
++
++  OLSR_PRINTF(1, "%s IPv6 route to %s/%d via %s.\n",
++    (add != 0) ? "Adding" : "Removing", Str1, dest->rt_mask.v6, Str2)
++
++  memset(buff, 0, sizeof (buff));
++  memset(&sin6, 0, sizeof (sin6));
++  memset(&sdl, 0, sizeof (sdl));
++
++  sin6.sin6_len = sizeof (sin6);
++  sin6.sin6_family = AF_INET6;
++  sdl.sdl_len = sizeof (sdl);
++  sdl.sdl_family = AF_LINK;
++
++  step = 1 + ((sizeof (struct sockaddr_in6) - 1) | 3);
++  step_dl = 1 + ((sizeof (struct sockaddr_dl) - 1) | 3);
++
++  rtm = (struct rt_msghdr *)buff;
++  rtm->rtm_version = RTM_VERSION;
++  rtm->rtm_type = (add != 0) ? RTM_ADD : RTM_DELETE;
++  rtm->rtm_index = 0;
++  rtm->rtm_flags = dest->rt_flags;
++  rtm->rtm_addrs = RTA_DST | RTA_GATEWAY;
++  rtm->rtm_seq = ++seq;
++
++  walker = buff + sizeof (struct rt_msghdr);
++
++  memcpy(&sin6.sin6_addr.s6_addr, &dest->rt_dst.v6, sizeof(struct in6_addr));
++
++  memcpy(walker, &sin6, sizeof (sin6));
++  walker += step;
++
++  if ((rtm->rtm_flags & RTF_GATEWAY) != 0)
++  {
++    memcpy(&sin6.sin6_addr.s6_addr, &dest->rt_router.v6, sizeof(struct in6_addr));
++
++    memcpy(walker, &sin6, sizeof (sin6));
++    walker += step;
++  }
++
++  // the host is directly reachable, so add the output interface's address
++
++  else
++  {
++    memcpy(&sin6.sin6_addr.s6_addr, &dest->rt_if->int6_addr.sin6_addr.s6_addr,
++      sizeof(struct in6_addr));
++
++    memcpy(walker, &sin6, sizeof (sin6));
++    walker += step;
++    rtm->rtm_flags |= RTF_LLINFO;
++  }
++
++  if ((rtm->rtm_flags & RTF_HOST) == 0)
++  {
++    olsr_prefix_to_netmask((union olsr_ip_addr *)&sin6.sin6_addr, dest->rt_mask.v6);
++    memcpy(walker, &sin6, sizeof (sin6));
++    walker += step;
++    rtm->rtm_addrs |= RTA_NETMASK;
++  }
++
++  if ((rtm->rtm_flags & RTF_GATEWAY) != 0)
++  {
++    strcpy(&sdl.sdl_data[0], dest->rt_if->int_name);
++    sdl.sdl_nlen = (u_char)strlen(dest->rt_if->int_name);
++    memcpy(walker, &sdl, sizeof (sdl));
++    walker += step_dl;
++    rtm->rtm_addrs |= RTA_IFP;
++  }
++
++  rtm->rtm_msglen = (unsigned short)(walker - buff);
++
++  len = write(rts, buff, rtm->rtm_msglen);
++
++  if (len < rtm->rtm_msglen)
++    fprintf(stderr, "cannot write to routing socket: %s\n", strerror(errno));
++
+   return 0;
+ }
+ 
++int olsr_ioctl_add_route6(struct rt_entry *dest)
++{
++  return add_del_route6(dest, 1);
++}
++
+ int olsr_ioctl_del_route6(struct rt_entry *dest)
+ {
+-  return 0;
++  return add_del_route6(dest, 0);
+ }
+diff -Nur olsrd-0.4.10.orig/src/bsd/net.c olsrd-0.4.10/src/bsd/net.c
+--- olsrd-0.4.10.orig/src/bsd/net.c	2005-08-28 21:30:29.000000000 +0200
++++ olsrd-0.4.10/src/bsd/net.c	2006-12-12 08:59:30.000000000 +0100
+@@ -61,8 +61,10 @@
+ #endif
+ 
+ #ifdef __FreeBSD__
++#include <ifaddrs.h>
+ #include <net/if_var.h>
+ #include <net/ethernet.h>
++#include <netinet/in_var.h>
+ #ifndef FBSD_NO_80211
+ #include <net80211/ieee80211.h>
+ #include <net80211/ieee80211_ioctl.h>
+@@ -71,8 +73,8 @@
+ #endif
+ #endif
+ 
+-#ifdef SPOOF
+ #include <net/if_dl.h>
++#ifdef SPOOF
+ #include <libnet.h>
+ #endif /* SPOOF */
+ 
+@@ -172,6 +174,17 @@
+     name = "net.inet6.icmp6.rediraccept";
+ 
+   ignore_redir = set_sysctl_int(name, 0);
++#elif defined __FreeBSD__
++  if (olsr_cnf->ip_version == AF_INET)
++  {
++    name = "net.inet.icmp.drop_redirect";
++    ignore_redir = set_sysctl_int(name, 1);
++  }
++  else
++  {
++    name = "net.inet6.icmp6.rediraccept";
++    ignore_redir = set_sysctl_int(name, 0);
++  }
+ #else
+   if (olsr_cnf->ip_version == AF_INET)
+     name = "net.inet.icmp.drop_redirect";
+@@ -243,6 +256,12 @@
+   else
+     name = "net.inet6.icmp6.rediraccept";
+ 
++#elif defined __FreeBSD__
++  if (olsr_cnf->ip_version == AF_INET)
++    name = "net.inet.icmp.drop_redirect";
++
++  else
++    name = "net.inet6.icmp6.rediraccept";
+ #else
+   if (olsr_cnf->ip_version == AF_INET)
+     name = "net.inet.icmp.drop_redirect";
+@@ -335,7 +354,6 @@
+       return (-1);
+     }
+ 
+-#ifdef SPOOF
+   if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on)) < 0) 
+     {
+       perror("SO_REUSEPORT failed");
+@@ -347,7 +365,6 @@
+       perror("IP_RECVIF failed");
+       return (-1);
+     }
+-#endif /* SPOOF */
+ 
+   for (on = bufspace; ; on -= 1024) 
+     {
+@@ -406,6 +423,18 @@
+       return (-1);
+     }
+ 
++  if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on)) < 0) 
++    {
++      perror("SO_REUSEPORT failed");
++      return (-1);
++    }
++
++  if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on, sizeof(on)) < 0)
++    {
++      perror("IPV6_RECVPKTINFO failed");
++      return (-1);
++    }
++
+   if (bind(sock, (struct sockaddr *)sin, sizeof (*sin)) < 0) 
+     {
+       perror("bind");
+@@ -425,31 +454,16 @@
+ int
+ join_mcast(struct interface *ifs, int sock)
+ {
+-  /* See linux/in6.h */
++  /* See netinet6/in6.h */
+ 
+   struct ipv6_mreq mcastreq;
+ 
+   COPY_IP(&mcastreq.ipv6mr_multiaddr, &ifs->int6_multaddr.sin6_addr);
+   mcastreq.ipv6mr_interface = ifs->if_index;
+ 
+-#if 0
+   OLSR_PRINTF(3, "Interface %s joining multicast %s...",	ifs->int_name, olsr_ip_to_string((union olsr_ip_addr *)&ifs->int6_multaddr.sin6_addr))
+-  /* Send multicast */
+-  if(setsockopt(sock, 
+-		IPPROTO_IPV6, 
+-		IPV6_ADD_MEMBERSHIP, 
+-		(char *)&mcastreq, 
+-		sizeof(struct ipv6_mreq)) 
+-     < 0)
+-    {
+-      perror("Join multicast");
+-      return -1;
+-    }
+-#else
+-#warning implement IPV6_ADD_MEMBERSHIP
+-#endif
+ 
+-  /* Old libc fix */
++  /* rfc 3493 */
+ #ifdef IPV6_JOIN_GROUP
+   /* Join reciever group */
+   if(setsockopt(sock, 
+@@ -458,8 +472,8 @@
+ 		(char *)&mcastreq, 
+ 		sizeof(struct ipv6_mreq)) 
+      < 0)
+-#else
+-  /* Join reciever group */
++#else /* rfc 2133, obsoleted */
++  /* Join receiver group */
+   if(setsockopt(sock, 
+ 		IPPROTO_IPV6, 
+ 		IPV6_ADD_MEMBERSHIP, 
+@@ -494,6 +508,70 @@
+ 
+ int get_ipv6_address(char *ifname, struct sockaddr_in6 *saddr6, int scope_in)
+ {
++  struct ifaddrs *ifap, *ifa;
++  const struct sockaddr_in6 *sin6 = NULL;
++  struct in6_ifreq ifr6;
++  int found = 0;
++  int s6;
++  u_int32_t flags6;
++
++  if (getifaddrs(&ifap) != 0)
++    {
++      OLSR_PRINTF(3, "get_ipv6_address: getifaddrs() failed.\n")
++      return 0;
++    }
++
++  for (ifa = ifap; ifa; ifa = ifa->ifa_next)
++    {
++      if (ifa->ifa_addr->sa_family == AF_INET6 &&
++          strcmp(ifa->ifa_name, ifname) == 0)
++        {
++	  sin6 = (const struct sockaddr_in6 *)ifa->ifa_addr;
++	  if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
++	    continue;
++	  strncpy(ifr6.ifr_name, ifname, sizeof(ifname));
++	  if ((s6 = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
++	    {
++	      OLSR_PRINTF(3, "socket(AF_INET6,SOCK_DGRAM)");
++	      break;
++	    }
++	  ifr6.ifr_addr = *sin6;
++	  if (ioctl(s6, SIOCGIFAFLAG_IN6, &ifr6) < 0)
++	    {
++	      OLSR_PRINTF(3, "ioctl(SIOCGIFAFLAG_IN6)");
++	      close(s6);
++	      break;
++	    }
++	  close(s6);
++	  flags6 = ifr6.ifr_ifru.ifru_flags6;
++	  if ((flags6 & IN6_IFF_ANYCAST) != 0)
++	    continue;
++	  if (IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr))
++	    {
++	      if (scope_in)
++		{
++		  memcpy(&saddr6->sin6_addr, &sin6->sin6_addr,
++			 sizeof(struct in6_addr));
++		  found = 1;
++		  break;
++		}
++	    }
++	  else
++	    {
++	      if (scope_in == 0)
++		{
++		  memcpy(&saddr6->sin6_addr, &sin6->sin6_addr,
++			 sizeof(struct in6_addr));
++		  found = 1;
++		  break;
++		}
++	    }
++	}
++    }
++  freeifaddrs(ifap);
++  if (found)
++    return 1;
++
+   return 0;
+ }
+ 
+@@ -621,16 +699,19 @@
+ 	      struct sockaddr *from,
+ 	      socklen_t *fromlen)
+ {
+-#if SPOOF
+   struct msghdr mhdr;
+   struct iovec iov;
+   struct cmsghdr *cm;
+   struct sockaddr_dl *sdl;
+   struct sockaddr_in *sin = (struct sockaddr_in *) from; //XXX
++  struct sockaddr_in6 *sin6;
++  struct in6_addr *iaddr6;
++  struct in6_pktinfo *pkti;
++  struct interface *ifc;
++  char addrstr[INET6_ADDRSTRLEN];
++  char iname[IFNAMSIZ];
+   unsigned char chdr[4096];
+   int count;
+-  struct interface *ifc;
+-  char iname[32];
+ 
+   bzero(&mhdr, sizeof(mhdr));
+   bzero(&iov, sizeof(iov));
+@@ -653,35 +734,45 @@
+ 
+   /* this needs to get communicated back to caller */
+   *fromlen = mhdr.msg_namelen;
+-
+-  cm = (struct cmsghdr *) chdr;
+-  sdl = (struct sockaddr_dl *) CMSG_DATA (cm);
+-  bzero (iname, sizeof (iname));
+-  memcpy (iname, sdl->sdl_data, sdl->sdl_nlen);
++  if (olsr_cnf->ip_version == AF_INET6)
++    {
++      for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(&mhdr); cm;
++	   cm = (struct cmsghdr *)CMSG_NXTHDR(&mhdr, cm))
++	{
++	  if (cm->cmsg_level == IPPROTO_IPV6 && cm->cmsg_type == IPV6_PKTINFO)
++	    {
++	      pkti = (struct in6_pktinfo *) CMSG_DATA(cm);
++	      iaddr6 = &pkti->ipi6_addr;
++	      if_indextoname(pkti->ipi6_ifindex, iname);
++	    }
++	}
++    }
++  else
++    {
++      cm = (struct cmsghdr *) chdr;
++      sdl = (struct sockaddr_dl *) CMSG_DATA (cm);
++      bzero (iname, sizeof (iname));
++      memcpy (iname, sdl->sdl_data, sdl->sdl_nlen);
++    }
+ 
+   ifc = if_ifwithsock (s);
+ 
++  sin6 = (struct sockaddr_in6 *)from;
++  OLSR_PRINTF (4, "%d bytes from %s, socket associated %s really received on %s\n",
++	       count,
++	       (olsr_cnf->ip_version == AF_INET6) ?
++		 inet_ntop(AF_INET6, (char *)&sin6->sin6_addr, addrstr,
++				     INET6_ADDRSTRLEN):
++	         inet_ntoa (sin->sin_addr),
++	       ifc->int_name,
++	       iname);
++
+   if (strcmp (ifc->int_name, iname) != 0)
+     {
+       return (0);
+     }
+ 
+-  OLSR_PRINTF (2, "%d bytes from %s, socket associated %s really received on %s\n",
+-	       count,
+-	       inet_ntoa (sin->sin_addr),
+-	       ifc->int_name,
+-	       iname);
+-
+   return (count);
+-
+-#else /* SPOOF */
+-  return recvfrom(s, 
+-		  buf, 
+-		  len, 
+-		  0, 
+-		  from, 
+-		  fromlen);
+-#endif /* SPOOF */
+ }
+ 
+ /**
+diff -Nur olsrd-0.4.10.orig/src/net_olsr.c olsrd-0.4.10/src/net_olsr.c
+--- olsrd-0.4.10.orig/src/net_olsr.c	2005-12-29 19:37:16.000000000 +0100
++++ olsrd-0.4.10/src/net_olsr.c	2006-12-12 08:59:35.000000000 +0100
+@@ -526,7 +526,7 @@
+ 
+   for(;p > 0; p -= 8)
+     {
+-      adr->v6.s6_addr[i] = (p < 8) ? 0xff ^ (0xff << p) : 0xff;
++      adr->v6.s6_addr[i] = (p < 8) ? 0xff ^ (0xff >> p) : 0xff;
+       i++;
+     }
+ 
+@@ -564,7 +564,7 @@
+ 	{
+ 	  for(tmp = adr->v6.s6_addr[i];
+ 	      tmp > 0;
+-	      tmp = tmp >> 1)
++	      tmp = (tmp << 1) & 0xff)
+ 	    prefix++;
+ 	}
+     }

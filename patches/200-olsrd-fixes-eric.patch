@@ -1,0 +1,1284 @@
+diff -Naur olsrd-0.4.10/files/olsrd.conf.default.lq olsrd-0.4.10-patched/files/olsrd.conf.default.lq
+--- olsrd-0.4.10/files/olsrd.conf.default.lq	2005-03-31 20:35:23.000000000 +0200
++++ olsrd-0.4.10-patched/files/olsrd.conf.default.lq	2006-11-16 13:22:26.000000000 +0100
+@@ -259,6 +259,7 @@
+     # HNA validity time
+     HnaValidityTime 	30.0
+ 
++
+     # When multiple links exist between hosts
+     # the weight of interface is used to determine
+     # the link to use. Normally the weight is
+@@ -266,9 +267,29 @@
+     # on the characteristics of the interface,
+     # but here you can specify a fixed value.
+     # Olsrd will choose links with the lowest value.
+-
++    # Note:
++    # Interface weight is used only when LinkQualityLevel is 0.
++    # For any other value of LinkQualityLevel, the interface ETX
++    # value is used instead.
+     # Weight 0
+ 
+ 
++    # If a certain route should be preferred 
++    # or ignored by the mesh, the Link Quality 
++    # value of a node can be multiplied with a factor 
++    # entered here. In the example the route 
++    # using 192.168.0.1 would rather be ignored.
++    # A multiplier of 0.5 will result in a small
++    # (bad) LinkQuality value and a high (bad)
++    # ETX value.
++    # Note:
++    # Link quality multiplier is used only when
++    # LinkQualityLevel is > 0.
++
++    # LinkQualityMult 192.168.0.1 0.5
++
++    # This multiplier applies to all other nodes 
++    # LinkQualityMult default 0.8
++
+ }
+ 
+diff -Naur olsrd-0.4.10/files/olsrd.conf.default.lq-fisheye olsrd-0.4.10-patched/files/olsrd.conf.default.lq-fisheye
+--- olsrd-0.4.10/files/olsrd.conf.default.lq-fisheye	2005-12-17 08:30:34.000000000 +0100
++++ olsrd-0.4.10-patched/files/olsrd.conf.default.lq-fisheye	2006-11-16 13:24:18.000000000 +0100
+@@ -267,6 +267,7 @@
+     # HNA validity time
+     HnaValidityTime 	100.0
+ 
++
+     # When multiple links exist between hosts
+     # the weight of interface is used to determine
+     # the link to use. Normally the weight is
+@@ -274,7 +275,10 @@
+     # on the characteristics of the interface,
+     # but here you can specify a fixed value.
+     # Olsrd will choose links with the lowest value.
+-
++    # Note:
++    # Interface weight is used only when LinkQualityLevel is set to 0.
++    # For any other value of LinkQualityLevel, the interface ETX
++    # value is used instead.
+     # Weight 0
+ 
+ 
+@@ -286,13 +290,14 @@
+     # A multiplier of 0.5 will result in a small
+     # (bad) LinkQuality value and a high (bad)
+     # ETX value.
++    # Note:
++    # Link quality multiplier is used only when
++    # LinkQualityLevel is > 0.
+ 
+     # LinkQualityMult 192.168.0.1 0.5
+ 
+     # This multiplier applies to all other nodes 
+     # LinkQualityMult default 0.8
+- 
+-
+ 
+ }
+ 
+diff -Naur olsrd-0.4.10/files/olsrd.conf.default.rfc olsrd-0.4.10-patched/files/olsrd.conf.default.rfc
+--- olsrd-0.4.10/files/olsrd.conf.default.rfc	2005-06-04 17:34:05.000000000 +0200
++++ olsrd-0.4.10-patched/files/olsrd.conf.default.rfc	2006-11-16 13:23:02.000000000 +0100
+@@ -254,6 +254,7 @@
+     # HNA validity time
+     # HnaValidityTime 	15.0
+ 
++
+     # When multiple links exist between hosts
+     # the weight of interface is used to determine
+     # the link to use. Normally the weight is
+@@ -261,9 +262,29 @@
+     # on the characteristics of the interface,
+     # but here you can specify a fixed value.
+     # Olsrd will choose links with the lowest value.
+-
++    # Note:
++    # Interface weight is used only when LinkQualityLevel is set to 0.
++    # For any other value of LinkQualityLevel, the interface ETX
++    # value is used instead.
+     # Weight 0
+ 
+ 
++    # If a certain route should be preferred 
++    # or ignored by the mesh, the Link Quality 
++    # value of a node can be multiplied with a factor 
++    # entered here. In the example the route 
++    # using 192.168.0.1 would rather be ignored.
++    # A multiplier of 0.5 will result in a small
++    # (bad) LinkQuality value and a high (bad)
++    # ETX value.
++    # Note:
++    # Link quality multiplier is used only when
++    # LinkQualityLevel is > 0.
++
++    # LinkQualityMult 192.168.0.1 0.5
++
++    # This multiplier applies to all other nodes 
++    # LinkQualityMult default 0.8
++
+ }
+ 
+diff -Naur olsrd-0.4.10/lib/httpinfo/src/html.h olsrd-0.4.10-patched/lib/httpinfo/src/html.h
+--- olsrd-0.4.10/lib/httpinfo/src/html.h	2005-03-14 22:28:15.000000000 +0100
++++ olsrd-0.4.10-patched/lib/httpinfo/src/html.h	2006-09-14 13:11:02.000000000 +0200
+@@ -48,7 +48,7 @@
+ 
+ static const char *httpinfo_css[] =
+ {
+-  "A {text-decoration: none}\n",
++  "#A {text-decoration: none}\n",
+   "TH{text-align: left}\n",
+   "H1, H3, TD, TH {font-family: Helvetica; font-size: 80%%}\n",
+   "h2\n {\nfont-family: Helvetica;\n font-size: 14px;text-align: center;\n",
+diff -Naur olsrd-0.4.10/lib/httpinfo/src/olsrd_httpinfo.c olsrd-0.4.10-patched/lib/httpinfo/src/olsrd_httpinfo.c
+--- olsrd-0.4.10/lib/httpinfo/src/olsrd_httpinfo.c	2005-12-22 16:06:52.000000000 +0100
++++ olsrd-0.4.10-patched/lib/httpinfo/src/olsrd_httpinfo.c	2006-11-24 12:53:25.000000000 +0100
+@@ -713,7 +713,10 @@
+ 
+   size += sprintf(&buf[size], "<h2>OLSR routes in kernel</h2>\n");
+ 
+-  size += sprintf(&buf[size], "<table width=\"100%%\" BORDER=0 CELLSPACING=0 CELLPADDING=0 ALIGN=center><tr><th>Destination</th><th>Gateway</th><th>Metric</th><th>ETX</th><th>Interface</th><th>Type</th></tr>\n");
++  size += sprintf(&buf[size], "<table width=\"100%%\" BORDER=0 CELLSPACING=0 CELLPADDING=0 ALIGN=center><tr><th>Destination</th><th>Gateway</th><th>Metric</th>");
++  if (olsr_cnf->lq_level > 0)
++    size += sprintf(&buf[size], "<th>ETX</th>");
++  size += sprintf(&buf[size], "<th>Interface</th><th>Type</th></tr>\n");
+ 
+   /* Neighbors */
+   for(index = 0;index < HASHSIZE;index++)
+@@ -722,12 +725,23 @@
+ 	  routes != &routingtable[index];
+ 	  routes = routes->next)
+ 	{
+-	  size += sprintf(&buf[size], "<tr><td>%s</td><td>%s</td><td>%d</td><td>%.2f</td><td>%s</td><td>HOST</td></tr>\n",
+-			  olsr_ip_to_string(&routes->rt_dst),
+-			  olsr_ip_to_string(&routes->rt_router),
+-			  routes->rt_metric,
+-			  routes->rt_etx,
+-			  routes->rt_if->int_name);
++	  size += sprintf(&buf[size],
++                         "<tr><td><a href=\"http://%s:%d/all\">%s</a></td>"
++                         "<td><a href=\"http://%s:%d/all\">%s</a></td>"
++                         "<td>%d</td>",
++                         olsr_ip_to_string(&routes->rt_dst),
++                         http_port,
++                         olsr_ip_to_string(&routes->rt_dst),
++                         olsr_ip_to_string(&routes->rt_router),
++                         http_port,
++                         olsr_ip_to_string(&routes->rt_router),
++                         routes->rt_metric);
++          if (olsr_cnf->lq_level > 0)
++	    size += sprintf(&buf[size], "<td>%.2f</td>", routes->rt_etx);
++	  size += sprintf(&buf[size],
++                         "<td>%s</td>"
++                         "<td>HOST</td></tr>\n",
++                         routes->rt_if->int_name);
+ 	}
+     }
+ 
+@@ -738,11 +752,21 @@
+ 	  routes != &hna_routes[index];
+ 	  routes = routes->next)
+ 	{
+-	  size += sprintf(&buf[size], "<tr><td>%s</td><td>%s</td><td>%d</td><td>%s</td><td>HNA</td></tr>\n",
+-			  olsr_ip_to_string(&routes->rt_dst),
+-			  olsr_ip_to_string(&routes->rt_router),
+-			  routes->rt_metric,
+-			  routes->rt_if->int_name);
++	  size += sprintf(&buf[size],
++                         "<tr><td>%s</td>"
++                         "<td><a href=\"http://%s:%d/all\">%s</a></td>"
++                         "<td>%d</td>",
++                         olsr_ip_to_string(&routes->rt_dst),
++                         olsr_ip_to_string(&routes->rt_router),
++                         http_port,
++                         olsr_ip_to_string(&routes->rt_router),
++                         routes->rt_metric);
++          if (olsr_cnf->lq_level > 0)
++	    size += sprintf(&buf[size], "<td>%.2f</td>", routes->rt_etx);
++	  size += sprintf(&buf[size],
++                         "<td>%s</td>"
++                         "<td>HNA</td></tr>\n",
++                         routes->rt_if->int_name);
+ 	}
+     }
+ 
+@@ -816,17 +840,24 @@
+     
+     size += sprintf(&buf[size], "</tr>\n<tr>\n");
+ 
+-    size += sprintf(&buf[size], "<td>Hysteresis: %s</td>\n", olsr_cnf->use_hysteresis ? "Enabled" : "Disabled");
+-	
+-    size += sprintf(&buf[size], "<td>Hyst scaling: %0.2f</td>\n", olsr_cnf->hysteresis_param.scaling);
+-    size += sprintf(&buf[size], "<td>Hyst lower/upper: %0.2f/%0.2f</td>\n", olsr_cnf->hysteresis_param.thr_low, olsr_cnf->hysteresis_param.thr_high);
++    if (olsr_cnf->lq_level == 0)
++      {
++        size += sprintf(&buf[size], "<td>Hysteresis: %s</td>\n", olsr_cnf->use_hysteresis ? "Enabled" : "Disabled");
++	if (olsr_cnf->use_hysteresis)
++          {
++            size += sprintf(&buf[size], "<td>Hyst scaling: %0.2f</td>\n", olsr_cnf->hysteresis_param.scaling);
++            size += sprintf(&buf[size], "<td>Hyst lower/upper: %0.2f/%0.2f</td>\n", olsr_cnf->hysteresis_param.thr_low, olsr_cnf->hysteresis_param.thr_high);
++          }
++      }
+ 
+     size += sprintf(&buf[size], "</tr>\n<tr>\n");
+ 
+-    size += sprintf(&buf[size], "<td>LQ extention: %s</td>\n", olsr_cnf->lq_level ? "Enabled" : "Disabled");
+-    size += sprintf(&buf[size], "<td>LQ level: %d</td>\n", olsr_cnf->lq_level);
+-    size += sprintf(&buf[size], "<td>LQ winsize: %d</td>\n", olsr_cnf->lq_wsize);
+-    size += sprintf(&buf[size], "<td></td>\n");
++    size += sprintf(&buf[size], "<td>LQ extension: %s</td>\n", olsr_cnf->lq_level ? "Enabled" : "Disabled");
++    if (olsr_cnf->lq_level)
++      {
++        size += sprintf(&buf[size], "<td>LQ level: %d</td>\n", olsr_cnf->lq_level);
++        size += sprintf(&buf[size], "<td>LQ winsize: %d</td>\n", olsr_cnf->lq_wsize);
++      }
+ 
+     size += sprintf(&buf[size], "</tr></table>\n");
+ 
+@@ -868,7 +899,6 @@
+ 	    size += sprintf(&buf[size], "<td>WLAN: %s</td>\n", rifs->is_wireless ? "Yes" : "No");
+ 	    size += sprintf(&buf[size], "<td>STATUS: UP</td></tr>\n");
+ 	  }	    
+-
+       }
+ 
+     size += sprintf(&buf[size], "</table>\n");
+@@ -950,21 +980,39 @@
+   int size = 0, index, thop_cnt;
+ 
+   size += sprintf(&buf[size], "<h2>Links</h2>\n");
+-  size += sprintf(&buf[size], "<table width=\"100%%\" BORDER=0 CELLSPACING=0 CELLPADDING=0 ALIGN=center><tr><th>Local IP</th><th>remote IP</th><th>Hysteresis</th><th>LinkQuality</th><th>lost</th><th>total</th><th>NLQ</th><th>ETX</th></tr>\n");
++  size += sprintf(&buf[size], "<table width=\"100%%\" BORDER=0 CELLSPACING=0 CELLPADDING=0 ALIGN=center><tr><th>Local IP</th><th>remote IP</th><th>Hysteresis</th>\n");
++  if (olsr_cnf->lq_level > 0)
++    size += sprintf(&buf[size], "<th>LinkQuality</th><th>lost</th><th>total</th><th>NLQ</th><th>ETX</th>\n");
++  size += sprintf(&buf[size], "</tr>\n");
+ 
+   /* Link set */
+   link = link_set;
+     while(link)
+       {
+-	size += sprintf(&buf[size], "<tr><td>%s</td><td>%s</td><td>%0.2f</td><td>%0.2f</td><td>%d</td><td>%d</td><td>%0.2f</td><td>%0.2f</td></tr>\n",
+-			olsr_ip_to_string(&link->local_iface_addr),
+-			olsr_ip_to_string(&link->neighbor_iface_addr),
+-			link->L_link_quality, 
+-			link->loss_link_quality,
+-			link->lost_packets, 
+-			link->total_packets,
+-			link->neigh_link_quality, 
+-			(link->loss_link_quality * link->neigh_link_quality) ? 1.0 / (link->loss_link_quality * link->neigh_link_quality) : 0.0);
++	size += sprintf(&buf[size],
++                       "<tr><td>%s</td>"
++                       "<td><a href=\"http://%s:%d/all\">%s</a></td>"
++                       "<td>%0.2f</td>",
++                       olsr_ip_to_string(&link->local_iface_addr),
++                       olsr_ip_to_string(&link->neighbor_iface_addr),
++                       http_port,
++                       olsr_ip_to_string(&link->neighbor_iface_addr),
++                       link->L_link_quality);
++        if (olsr_cnf->lq_level > 0)
++          {
++	    size += sprintf(&buf[size],
++                           "<td>%0.2f</td>"
++                           "<td>%d</td>"
++                           "<td>%d</td>"
++                           "<td>%0.2f</td>"
++                           "<td>%0.2f</td></tr>\n",
++                           link->loss_link_quality,
++                           link->lost_packets, 
++                           link->total_packets,
++                           link->neigh_link_quality, 
++                           (link->loss_link_quality * link->neigh_link_quality) ? 1.0 / (link->loss_link_quality * link->neigh_link_quality) : 0.0);
++          }
++	size += sprintf(&buf[size], "</tr>\n");
+ 
+ 	link = link->next;
+       }
+@@ -981,7 +1029,13 @@
+ 	  neigh = neigh->next)
+ 	{
+ 	  size += sprintf(&buf[size], 
+-			  "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td>", 
++			  "<tr><td><a href=\"http://%s:%d/all\">%s</a></td>"
++			  "<td>%s</td>"
++			  "<td>%s</td>"
++			  "<td>%s</td>"
++			  "<td>%d</td>", 
++			  olsr_ip_to_string(&neigh->neighbor_main_addr),
++                          http_port,
+ 			  olsr_ip_to_string(&neigh->neighbor_main_addr),
+ 			  (neigh->status == SYM) ? "YES" : "NO",
+ 			  neigh->is_mpr ? "YES" : "NO",
+@@ -1021,7 +1075,10 @@
+   struct topo_dst *dst_entry;
+ 
+ 
+-  size += sprintf(&buf[size], "<h2>Topology entries</h2>\n<table width=\"100%%\" BORDER=0 CELLSPACING=0 CELLPADDING=0 ALIGN=center><tr><th>Destination IP</th><th>Last hop IP</th><th>LQ</th><th>ILQ</th><th>ETX</th></tr>\n");
++  size += sprintf(&buf[size], "<h2>Topology entries</h2>\n<table width=\"100%%\" BORDER=0 CELLSPACING=0 CELLPADDING=0 ALIGN=center><tr><th>Destination IP</th><th>Last hop IP</th>");
++  if (olsr_cnf->lq_level > 0)
++    size += sprintf(&buf[size], "<th>LQ</th><th>ILQ</th><th>ETX</th>");
++  size += sprintf(&buf[size], "</tr>\n");
+ 
+ 
+   /* Topology */  
+@@ -1035,12 +1092,26 @@
+ 	  dst_entry = entry->destinations.next;
+ 	  while(dst_entry != &entry->destinations)
+ 	    {
+-	      size += sprintf(&buf[size], "<tr><td>%s</td><td>%s</td><td>%0.2f</td><td>%0.2f</td><td>%0.2f</td></tr>\n", 
+-			      olsr_ip_to_string(&dst_entry->T_dest_addr),
+-			      olsr_ip_to_string(&entry->T_last_addr), 
+-			      dst_entry->link_quality,
+-			      dst_entry->inverse_link_quality,
+-			      (dst_entry->link_quality * dst_entry->inverse_link_quality) ? 1.0 / (dst_entry->link_quality * dst_entry->inverse_link_quality) : 0.0);
++	      size += sprintf(&buf[size],
++                             "<tr><td><a href=\"http://%s:%d/all\">%s</a></td>"
++                             "<td><a href=\"http://%s:%d/all\">%s</a></td>",
++                             olsr_ip_to_string(&dst_entry->T_dest_addr),
++                             http_port,
++                             olsr_ip_to_string(&dst_entry->T_dest_addr),
++                             olsr_ip_to_string(&entry->T_last_addr), 
++                             http_port,
++                             olsr_ip_to_string(&entry->T_last_addr));
++              if (olsr_cnf->lq_level > 0)
++                {
++	          size += sprintf(&buf[size],
++                                 "<td>%0.2f</td>"
++                                 "<td>%0.2f</td>"
++                                 "<td>%0.2f</td>\n",
++                                 dst_entry->link_quality,
++                                 dst_entry->inverse_link_quality,
++                                 (dst_entry->link_quality * dst_entry->inverse_link_quality) ? 1.0 / (dst_entry->link_quality * dst_entry->inverse_link_quality) : 0.0);
++                }
++	      size += sprintf(&buf[size], "</tr>\n");
+ 
+ 	      dst_entry = dst_entry->next;
+ 	    }
+@@ -1083,7 +1154,9 @@
+ 			      olsr_ip_to_string(&tmp_net->A_network_addr));
+ 	      size += sprintf(&buf[size], "<td>%s</td>",
+ 			      olsr_netmask_to_string(&tmp_net->A_netmask));
+-	      size += sprintf(&buf[size], "<td>%s</td></tr>\n",
++	      size += sprintf(&buf[size], "<td><a href=\"http://%s:%d/all\">%s</a></td></tr>\n",
++                              olsr_ip_to_string(&tmp_hna->A_gateway_addr),
++                              http_port,
+                               olsr_ip_to_string(&tmp_hna->A_gateway_addr));
+ 	      tmp_net = tmp_net->next;
+ 	    }
+@@ -1101,7 +1174,7 @@
+ int
+ build_mid_body(char *buf, olsr_u32_t bufsize)
+ {
+-  int size = 0;
++  int size = 0, mid_cnt;
+   olsr_u8_t index;
+   struct mid_entry *entry;
+   struct mid_address *alias;
+@@ -1114,18 +1187,21 @@
+       entry = mid_set[index].next;
+       while(entry != &mid_set[index])
+ 	{
+-	  size += sprintf(&buf[size], "<tr><td>%s</td>\n", olsr_ip_to_string(&entry->main_addr));
++	  size += sprintf(&buf[size], "<tr><td><a href=\"http://%s:%d/all\">%s</a></td>\n",
++	                  olsr_ip_to_string(&entry->main_addr),
++                          http_port,
++	                  olsr_ip_to_string(&entry->main_addr));
+ 	  size += sprintf(&buf[size], "<td><select>\n<option>IP ADDRESS</option>\n");
+ 
+ 	  alias = entry->aliases;
++	  mid_cnt = 0;
+ 	  while(alias)
+ 	    {
+ 	      size += sprintf(&buf[size], "<option>%s</option>\n", olsr_ip_to_string(&alias->alias));
++	      mid_cnt ++;
+ 	      alias = alias->next_alias;
+ 	    }
+-	  size += sprintf(&buf[size], "</select>\n");
+-
+-	  size += sprintf(&buf[size], "</tr>\n");
++	  size += sprintf(&buf[size], "</select> (%d)</td></tr>\n", mid_cnt);
+ 	  entry = entry->next;
+ 	}
+     }
+diff -Naur olsrd-0.4.10/lib/httpinfo/src/olsrd_plugin.c olsrd-0.4.10-patched/lib/httpinfo/src/olsrd_plugin.c
+--- olsrd-0.4.10/lib/httpinfo/src/olsrd_plugin.c	2005-05-29 14:47:41.000000000 +0200
++++ olsrd-0.4.10-patched/lib/httpinfo/src/olsrd_plugin.c	2006-09-18 03:03:50.000000000 +0200
+@@ -51,6 +51,8 @@
+ #include <stdlib.h>
+ #include "olsrd_httpinfo.h"
+ 
++int http_port = 0;
++
+ static void __attribute__ ((constructor)) 
+ my_init(void);
+ 
+diff -Naur olsrd-0.4.10/lib/httpinfo/src/olsrd_plugin.h olsrd-0.4.10-patched/lib/httpinfo/src/olsrd_plugin.h
+--- olsrd-0.4.10/lib/httpinfo/src/olsrd_plugin.h	2005-05-29 14:47:41.000000000 +0200
++++ olsrd-0.4.10-patched/lib/httpinfo/src/olsrd_plugin.h	2006-09-18 03:03:38.000000000 +0200
+@@ -71,7 +71,7 @@
+ #define MOD_DESC PLUGIN_NAME " " PLUGIN_VERSION " by " PLUGIN_AUTHOR
+ #define PLUGIN_INTERFACE_VERSION 4
+ 
+-int http_port;
++extern int http_port;
+ 
+ /* Allowed hosts stuff */
+ 
+diff -Naur olsrd-0.4.10/src/cfgparser/cfgfile_gen.c olsrd-0.4.10-patched/src/cfgparser/cfgfile_gen.c
+--- olsrd-0.4.10/src/cfgparser/cfgfile_gen.c	2005-12-30 03:24:00.000000000 +0100
++++ olsrd-0.4.10-patched/src/cfgparser/cfgfile_gen.c	2006-11-16 13:54:04.000000000 +0100
+@@ -311,7 +311,17 @@
+ 		}
+ 	    }
+ 
+-	  fprintf(fd, "    # When multiple links exist between hosts\n    # the weight of interface is used to determine\n    # the link to use. Normally the weight is\n    # automatically calculated by olsrd based\n    # on the characteristics of the interface,\n    # but here you can specify a fixed value.\n    # Olsrd will choose links with the lowest value.\n");
++         fprintf(fd, "    # When multiple links exist between hosts\n");
++         fprintf(fd, "    # the weight of interface is used to determine\n");
++         fprintf(fd, "    # the link to use. Normally the weight is\n");
++         fprintf(fd, "    # automatically calculated by olsrd based\n");
++         fprintf(fd, "    # on the characteristics of the interface,\n");
++         fprintf(fd, "    # but here you can specify a fixed value.\n");
++         fprintf(fd, "    # Olsrd will choose links with the lowest value.\n");
++         fprintf(fd, "    # Note:\n");
++         fprintf(fd, "    # Interface weight is used only when LinkQualityLevel is 0.\n");
++         fprintf(fd, "    # For any other value of LinkQualityLevel, the interface ETX\n");
++         fprintf(fd, "    # value is used instead.\n\n");
+ 	  if(in->cnf->weight.fixed)
+ 	    {
+ 	      fprintf(fd, "    Weight\t %d\n\n", in->cnf->weight.value);
+@@ -615,9 +625,19 @@
+ 	    }
+ 
+ 	  if(first)
+-    	    WRITE_TO_BUF("    # When multiple links exist between hosts\n    # the weight of interface is used to determine\n    # the link to use. Normally the weight is\n")
+-          if(first)
+-            WRITE_TO_BUF("    # automatically calculated by olsrd based\n    # on the characteristics of the interface,\n    # but here you can specify a fixed value.\n    # Olsrd will choose links with the lowest value.\n")
++	    {
++             WRITE_TO_BUF("    # When multiple links exist between hosts\n");
++             WRITE_TO_BUF("    # the weight of interface is used to determine\n");
++             WRITE_TO_BUF("    # the link to use. Normally the weight is\n")
++             WRITE_TO_BUF("    # automatically calculated by olsrd based\n");
++             WRITE_TO_BUF("    # on the characteristics of the interface,\n");
++             WRITE_TO_BUF("    # but here you can specify a fixed value.\n");
++             WRITE_TO_BUF("    # Olsrd will choose links with the lowest value.\n")
++             WRITE_TO_BUF("    # Note:\n");
++             WRITE_TO_BUF("    # Interface weight is used only when LinkQualityLevel is 0.\n");
++             WRITE_TO_BUF("    # For any other value of LinkQualityLevel, the interface ETX\n");
++             WRITE_TO_BUF("    # value is used instead.\n\n");
++            }
+ 	  if(in->cnf->weight.fixed)
+ 	    {
+ 	      WRITE_TO_BUF("    Weight\t %d\n\n", in->cnf->weight.value)
+diff -Naur olsrd-0.4.10/src/defs.h olsrd-0.4.10-patched/src/defs.h
+--- olsrd-0.4.10/src/defs.h	2006-01-01 16:59:02.000000000 +0100
++++ olsrd-0.4.10-patched/src/defs.h	2006-09-13 15:24:48.000000000 +0200
+@@ -72,7 +72,7 @@
+ #define	MAXMESSAGESIZE		1500	/* max broadcast size */
+ #define UDP_IPV4_HDRSIZE        28
+ #define UDP_IPV6_HDRSIZE        48
+-#define MAX_IFS                 16
++#define MAX_IFS                 32
+ 
+ /* Debug helper macro */
+ #ifdef DEBUG
+diff -Naur olsrd-0.4.10/src/link_set.c olsrd-0.4.10-patched/src/link_set.c
+--- olsrd-0.4.10/src/link_set.c	2005-11-17 05:25:44.000000000 +0100
++++ olsrd-0.4.10-patched/src/link_set.c	2006-11-16 13:49:17.000000000 +0100
+@@ -263,7 +263,7 @@
+     if (!COMP_IP(&walker->neighbor->neighbor_main_addr, main_addr))
+       continue;
+ 
+-    // handle the non-LQ case
++    // handle the non-LQ, RFC-compliant case
+ 
+     if (olsr_cnf->lq_level == 0)
+     {
+@@ -297,7 +297,7 @@
+       }
+     }
+ 
+-    // handle the LQ case
++    // handle the LQ, non-RFC compliant case
+ 
+     else
+     {
+@@ -402,7 +402,8 @@
+   while(tmp_link_set)
+     {
+       if(COMP_IP(remote, &tmp_link_set->neighbor_iface_addr) &&
+-	 COMP_IP(local, &tmp_link_set->local_iface_addr))
++         COMP_IP(local, &tmp_link_set->local_iface_addr) &&
++         COMP_IP(remote_main, &tmp_link_set->neighbor->neighbor_main_addr))
+ 	return tmp_link_set;
+       tmp_link_set = tmp_link_set->next;
+     }
+@@ -501,7 +502,12 @@
+ 
+   /* Copy the main address - make sure this is done every time
+    * as neighbors might change main address */
+-  COPY_IP(&neighbor->neighbor_main_addr, remote_main);
++  /* Erik Tromp - OOPS! Don't do this! Neighbor entries are hashed through their
++   * neighbor_main_addr field, and when that field is changed, their position
++   * in the hash table is no longer correct, so that the function
++   * olsr_lookup_neighbor_table() can no longer find the neighbor
++   * entry. */
++  /*COPY_IP(&neighbor->neighbor_main_addr, remote_main);*/
+ 
+   neighbor->linkcount++;
+ 
+@@ -516,9 +522,14 @@
+        * We'll go for one that is hopefully long
+        * enough in most cases. 10 seconds
+        */
+-      OLSR_PRINTF(1, "Adding MID alias main %s ", olsr_ip_to_string(remote_main))
+-      OLSR_PRINTF(1, "-> %s based on HELLO\n\n", olsr_ip_to_string(remote))
+-      insert_mid_alias(remote_main, remote, MID_ALIAS_HACK_VTIME);
++    /* Erik Tromp - commented out. It is not RFC-compliant. Also, MID aliases
++     * that are not explicitly declared by a node will be removed as soon as
++     * the olsr_prune_aliases(...) function is called.
++     *
++     * OLSR_PRINTF(1, "Adding MID alias main %s ", olsr_ip_to_string(remote_main))
++     * OLSR_PRINTF(1, "-> %s based on HELLO\n\n", olsr_ip_to_string(remote))
++     * insert_mid_alias(remote_main, remote, MID_ALIAS_HACK_VTIME);
++     */
+     }
+ 
+   return link_set;
+diff -Naur olsrd-0.4.10/src/linux/net.h olsrd-0.4.10-patched/src/linux/net.h
+--- olsrd-0.4.10/src/linux/net.h	2005-08-28 21:30:30.000000000 +0200
++++ olsrd-0.4.10-patched/src/linux/net.h	2006-09-18 01:09:50.000000000 +0200
+@@ -55,8 +55,7 @@
+ #include <syslog.h>
+ #include <netinet/in.h>
+ #include "../olsr_protocol.h"
+-
+-#define MAXIFS                  8 /* Maximum number of network interfaces */
++#include "../defs.h" /* MAX_IFS */ 
+ 
+ /* Redirect proc entry */
+ #define REDIRECT_PROC "/proc/sys/net/ipv4/conf/%s/send_redirects"
+@@ -77,7 +76,7 @@
+   struct nic_state *next;
+ };
+ 
+-struct nic_state nic_states[MAXIFS];
++struct nic_state nic_states[MAX_IFS];
+ 
+ 
+ extern int
+diff -Naur olsrd-0.4.10/src/local_hna_set.c olsrd-0.4.10-patched/src/local_hna_set.c
+--- olsrd-0.4.10/src/local_hna_set.c	2005-02-27 19:39:43.000000000 +0100
++++ olsrd-0.4.10-patched/src/local_hna_set.c	2006-09-20 09:55:20.000000000 +0200
+@@ -129,6 +129,45 @@
+   return 0;
+ }
+ 
++struct hna4_entry *
++find_local_hna4_entry(union olsr_ip_addr *net, olsr_u32_t mask)
++{
++  struct hna4_entry *h4 = olsr_cnf->hna4_entries;
++
++  while(h4)
++    {
++      if((net->v4 == h4->net.v4) && 
++	 (mask == h4->netmask.v4))
++	{
++	  return h4;
++	}
++      h4 = h4->next;
++    }
++
++  return NULL;
++}
++
++
++
++struct hna6_entry *
++find_local_hna6_entry(union olsr_ip_addr *net, olsr_u16_t prefix_len)
++{
++  struct hna6_entry *h6 = olsr_cnf->hna6_entries;
++
++  while(h6)
++    {
++      if((memcmp(net, &h6->net, ipsize) == 0) && 
++	 (prefix_len == h6->prefix_len))
++	{
++	  return h6;
++	}
++      h6 = h6->next;
++    }
++
++  return NULL;
++}
++
++
+ 
+ 
+ int
+diff -Naur olsrd-0.4.10/src/local_hna_set.h olsrd-0.4.10-patched/src/local_hna_set.h
+--- olsrd-0.4.10/src/local_hna_set.h	2005-02-20 19:52:18.000000000 +0100
++++ olsrd-0.4.10-patched/src/local_hna_set.h	2006-09-20 09:55:42.000000000 +0200
+@@ -58,6 +58,12 @@
+ int
+ remove_local_hna6_entry(union olsr_ip_addr *, olsr_u16_t);
+ 
++struct hna4_entry *
++find_local_hna4_entry(union olsr_ip_addr *net, olsr_u32_t mask);
++
++struct hna6_entry *
++find_local_hna6_entry(union olsr_ip_addr *net, olsr_u16_t prefix_len);
++
+ int
+ check_inet_gw(void);
+ 
+diff -Naur olsrd-0.4.10/src/lq_mpr.c olsrd-0.4.10-patched/src/lq_mpr.c
+--- olsrd-0.4.10/src/lq_mpr.c	2005-11-29 19:37:58.000000000 +0100
++++ olsrd-0.4.10-patched/src/lq_mpr.c	2006-11-16 15:18:33.000000000 +0100
+@@ -51,7 +51,7 @@
+   struct neighbor_list_entry *walker;
+   int i, k;
+   struct neighbor_entry *neigh;
+-  double best;
++  double best, best_1hop;
+   olsr_bool mpr_changes = OLSR_FALSE;
+   struct link_entry *link;
+ 
+@@ -90,6 +90,8 @@
+            neigh2 != &two_hop_neighbortable[i];
+            neigh2 = neigh2->next)
+         {
++          best_1hop = -1.0;
++
+           // check whether this 2-hop neighbour is also a neighbour
+ 
+           neigh = olsr_lookup_neighbor_table(&neigh2->neighbor_2_addr);
+@@ -110,14 +112,14 @@
+ 	      if(!link)
+ 		continue;
+ 
+-              best = link->loss_link_quality * link->neigh_link_quality;
++              best_1hop = link->loss_link_quality * link->neigh_link_quality;
+ 
+               // see wether we find a better route via an MPR
+ 
+               for (walker = neigh2->neighbor_2_nblist.next;
+                    walker != &neigh2->neighbor_2_nblist;
+                    walker = walker->next)
+-                if (walker->path_link_quality > best)
++                if (walker->path_link_quality > best_1hop)
+                   break;
+ 
+               // we've reached the end of the list, so we haven't found
+@@ -157,7 +159,10 @@
+                     best = walker->path_link_quality;
+                   }
+ 
+-              if (neigh != NULL)
++              // Found a 1-hop neighbor that we haven't previously selected.
++              // Use it as MPR only when the 2-hop path through it is better than
++              // any existing 1-hop path.
++              if ((neigh != NULL) && (best > best_1hop))
+                 {
+                   neigh->is_mpr = OLSR_TRUE;
+                   neigh->skip = OLSR_TRUE;
+diff -Naur olsrd-0.4.10/src/mid_set.c olsrd-0.4.10-patched/src/mid_set.c
+--- olsrd-0.4.10/src/mid_set.c	2005-05-29 14:47:45.000000000 +0200
++++ olsrd-0.4.10-patched/src/mid_set.c	2006-11-13 14:29:14.000000000 +0100
+@@ -46,6 +46,7 @@
+ #include "scheduler.h"
+ #include "neighbor_table.h"
+ #include "link_set.h"
++#include "packet.h" /* struct mid_alias */
+ 
+ 
+ struct mid_entry mid_set[HASHSIZE];
+@@ -99,6 +100,7 @@
+   struct mid_entry *tmp;
+   struct mid_address *tmp_adr;
+   olsr_u32_t hash, alias_hash;
++  union olsr_ip_addr *registered_m_addr;
+ 
+   hash = olsr_hashing(m_addr);
+   alias_hash = olsr_hashing(&alias->alias);
+@@ -110,8 +112,16 @@
+     {
+       if(COMP_IP(&tmp->main_addr, m_addr))
+ 	break;
++     }
++
++  /* Check if alias is already registered with m_addr */
++  registered_m_addr = mid_lookup_main_addr(&alias->alias);
++  if (registered_m_addr != NULL && COMP_IP(registered_m_addr, m_addr))
++    {
++      /* Alias is already registered with main address. Nothing to do here. */
++      return;
+     }
+-	 
++
+   /*If the address was registered*/ 
+   if(tmp != &mid_set[hash])
+     {
+@@ -312,7 +322,7 @@
+       /*find match*/
+       if(COMP_IP(&tmp_list->main_addr, adr))
+ 	{
+-	  //printf("Updating timer for node %s\n",ip_to_string(&tmp_list->main_addr));
++	  // printf("MID: Updating timer for node %s\n", olsr_ip_to_string(&tmp_list->main_addr));
+ 	  tmp_list->ass_timer = GET_TIMESTAMP(vtime*1000);
+ 
+ 	  return 1;
+@@ -322,6 +332,91 @@
+ }
+ 
+ 
++/**
++ *Remove aliases from 'entry' which are not listed in 'declared_aliases'.
++ *
++ *@param entry the MID entry
++ *@param declared_aliases the list of declared aliases for the MID entry
++ *
++ *@return nada
++ */
++void
++olsr_prune_aliases(union olsr_ip_addr *m_addr, struct mid_alias *declared_aliases)
++{
++  struct mid_entry *entry;
++  olsr_u32_t hash;
++  struct mid_address *registered_aliases;
++  struct mid_address *previous_alias;
++  struct mid_alias *save_declared_aliases = declared_aliases;
++
++  hash = olsr_hashing(m_addr);
++
++  /* Check for registered entry */
++  for(entry = mid_set[hash].next;
++      entry != &mid_set[hash];
++      entry = entry->next)
++    {
++      if(COMP_IP(&entry->main_addr, m_addr))
++	break;
++    }
++  if(entry == &mid_set[hash])
++    {
++      /* MID entry not found, nothing to prune here */
++      return;
++    }
++
++  registered_aliases = entry->aliases;
++  previous_alias = NULL;
++
++  while(registered_aliases != 0)
++    {
++      struct mid_address *current_alias = registered_aliases;
++      registered_aliases = registered_aliases->next_alias;
++
++      declared_aliases = save_declared_aliases;
++
++      /* Go through the list of declared aliases to find the matching current alias */
++      while(declared_aliases != 0 &&
++            ! COMP_IP(&current_alias->alias, &declared_aliases->alias_addr))
++        {
++          declared_aliases = declared_aliases->next;
++        }
++
++      if (declared_aliases == 0)
++        {
++          /* Current alias not found in list of declared aliases: free current alias */
++          OLSR_PRINTF(1, "MID remove: (%s, ", olsr_ip_to_string(&entry->main_addr))
++          OLSR_PRINTF(1, "%s)\n", olsr_ip_to_string(&current_alias->alias))
++
++          /* Update linked list as seen by 'entry' */
++          if (previous_alias != NULL)
++            {
++              previous_alias->next_alias = current_alias->next_alias;
++            }
++          else
++            {
++              entry->aliases = current_alias->next_alias;
++            }
++
++          /* Remove from hash table */
++          DEQUEUE_ELEM(current_alias);
++ 
++          free(current_alias);
++
++          /*
++           *Recalculate topology
++           */
++          changes_neighborhood = OLSR_TRUE;
++          changes_topology = OLSR_TRUE;
++        }
++      else
++        {
++          previous_alias = current_alias;
++        }
++    }
++}
++
++
+ 
+ /**
+  *Find timed out entries and delete them
+diff -Naur olsrd-0.4.10/src/mid_set.h olsrd-0.4.10-patched/src/mid_set.h
+--- olsrd-0.4.10/src/mid_set.h	2005-05-29 14:47:45.000000000 +0200
++++ olsrd-0.4.10-patched/src/mid_set.h	2006-11-08 13:35:44.000000000 +0100
+@@ -73,6 +73,7 @@
+ extern struct mid_entry mid_set[HASHSIZE];
+ extern struct mid_address reverse_mid_set[HASHSIZE];
+ 
++struct mid_alias;
+ 
+ int
+ olsr_init_mid_set(void);
+@@ -95,6 +96,9 @@
+ void
+ olsr_time_out_mid_set(void *);
+ 
++void
++olsr_prune_aliases(union olsr_ip_addr *m_addr, struct mid_alias *declared_aliases);
++
+ int
+ olsr_update_mid_table(union olsr_ip_addr *, float);
+ 
+diff -Naur olsrd-0.4.10/src/olsr.c olsrd-0.4.10-patched/src/olsr.c
+--- olsrd-0.4.10/src/olsr.c	2005-11-17 05:25:44.000000000 +0100
++++ olsrd-0.4.10-patched/src/olsr.c	2006-11-09 14:12:24.000000000 +0100
+@@ -217,13 +217,17 @@
+ 	  
+           if (olsr_cnf->debug_level > 3)
+             {
+-              olsr_print_duplicate_table();
++              if (olsr_cnf->debug_level > 8)
++                {
++                  olsr_print_duplicate_table();
++                }
+               olsr_print_hna_set();
+             }
+         }
+       
+       olsr_print_link_set();
+       olsr_print_neighbor_table();
++      olsr_print_two_hop_neighbor_table();
+       olsr_print_tc_table();
+     }
+ 
+diff -Naur olsrd-0.4.10/src/process_package.c olsrd-0.4.10-patched/src/process_package.c
+--- olsrd-0.4.10/src/process_package.c	2005-11-29 19:38:40.000000000 +0100
++++ olsrd-0.4.10-patched/src/process_package.c	2006-11-24 12:19:33.000000000 +0100
+@@ -52,6 +52,7 @@
+ #include "parser.h"
+ #include "duplicate_set.h"
+ #include "rebuild_packet.h"
++#include "local_hna_set.h"
+ 
+ 
+ /**
+@@ -406,6 +407,8 @@
+       tmp_adr = tmp_adr->next;
+     } 
+   
++  olsr_prune_aliases(&message.mid_origaddr, message.mid_addr);
++
+  forward:  
+   olsr_forward_message(m, 
+ 		       &message.mid_origaddr, 
+@@ -470,8 +473,13 @@
+ 
+   while(hna_tmp)
+     {
+-      olsr_update_hna_entry(&message.originator, &hna_tmp->net, &hna_tmp->netmask, (float)message.vtime); 
+-      
++      /* Don't add an HNA entry that we are advertising ourselves. */
++      if (!find_local_hna4_entry(&hna_tmp->net, hna_tmp->netmask.v4) &&
++          !find_local_hna6_entry(&hna_tmp->net, hna_tmp->netmask.v6))
++        {
++          olsr_update_hna_entry(&message.originator, &hna_tmp->net, &hna_tmp->netmask, (float)message.vtime);
++        } 
++
+       hna_tmp = hna_tmp->next;
+     }
+ 
+@@ -494,7 +502,7 @@
+ 
+ /**
+  *Processes an list of neighbors from an incoming HELLO message.
+- *@param neighbor the neighbor who sendt the message.
++ *@param neighbor the neighbor who sent the message.
+  *@param message the HELLO message
+  *@return nada
+  */
+@@ -539,6 +547,31 @@
+               /* Updating the holding time for this neighbor */
+               two_hop_neighbor_yet->neighbor_2_timer = GET_TIMESTAMP(message->vtime*1000);
+               two_hop_neighbor = two_hop_neighbor_yet->neighbor_2;
++
++              // For link quality OLSR, reset the path link quality here.
++              // The path link quality will be calculated in the second pass, below.
++              // Keep the saved_path_link_quality for reference.
++
++              if (olsr_cnf->lq_level > 0)
++                {
++                  // loop through the one-hop neighbors that see this
++                  // 'two_hop_neighbor'
++
++                  struct neighbor_list_entry *walker;
++
++                  for (walker = two_hop_neighbor->neighbor_2_nblist.next;
++                       walker != &two_hop_neighbor->neighbor_2_nblist;
++                       walker = walker->next)
++                    {
++                      // have we found the one-hop neighbor that sent the
++                      // HELLO message that we're current processing?
++
++                      if (walker->neighbor == neighbor)
++                        {
++                          walker->path_link_quality = 0.0;
++                        }
++                    }
++                }
+             }
+           else
+             {
+@@ -586,19 +619,48 @@
+                                               (float)message->vtime); 
+                 }
+             }
++        }
++    }
+ 
+-          if (olsr_cnf->lq_level > 0)
++  // Separate, second and third pass for link quality OLSR
++
++  if (olsr_cnf->lq_level > 0)
++    {
++      struct link_entry *link =
++        get_best_link_to_neighbor(&neighbor->neighbor_main_addr);
++
++      if(!link)
++	return;
++
++      // Second pass for link quality OLSR: calculate the best 2-hop
++      // path costs to all the 2-hop neighbors indicated in the
++      // HELLO message. Since the same 2-hop neighbor may be listed
++      // more than once in the same HELLO message (each at a possibly
++      // different quality) we want to select only the best one, not just
++      // the last one listed in the HELLO message.
++
++      for(message_neighbors = message->neighbors;
++          message_neighbors != NULL;
++          message_neighbors = message_neighbors->next)
++        {
++          if(if_ifwithaddr(&message_neighbors->address) != NULL)
++            continue;
++
++          if(((message_neighbors->status == SYM_NEIGH) ||
++              (message_neighbors->status == MPR_NEIGH)))
+             {
+-	      struct neighbor_list_entry *walker;
+-	      struct link_entry *link;
++              struct neighbor_list_entry *walker;
++              struct neighbor_2_entry *two_hop_neighbor;
++              struct neighbor_2_list_entry *two_hop_neighbor_yet =
++                olsr_lookup_my_neighbors(neighbor, &message_neighbors->address);
+ 
+-              link = get_best_link_to_neighbor(&neighbor->neighbor_main_addr);
++              if(!two_hop_neighbor_yet)
++                continue;
+ 
+-	      if(!link)
+-		continue;
++              two_hop_neighbor = two_hop_neighbor_yet->neighbor_2;
+ 
+               // loop through the one-hop neighbors that see this
+-              // two hop neighbour
++              // 'two_hop_neighbor'
+ 
+               for (walker = two_hop_neighbor->neighbor_2_nblist.next;
+                    walker != &two_hop_neighbor->neighbor_2_nblist;
+@@ -609,14 +671,7 @@
+ 
+                   if (walker->neighbor == neighbor)
+                     {
+-                      double saved_lq, rel_lq;
+-
+-                      // saved previous total link quality
+-
+-                      saved_lq = walker->saved_path_link_quality;
+-
+-                      if (saved_lq == 0.0)
+-                        saved_lq = -1.0;
++                      double new_second_hop_link_quality, new_path_link_quality;
+ 
+                       // path link quality = link quality between us
+                       // and our one-hop neighbor x link quality between
+@@ -633,18 +688,75 @@
+                       // the link quality between the 1-hop neighbour and the
+                       // 2-hop neighbour
+ 
+-                      walker->second_hop_link_quality =
++                      new_second_hop_link_quality = 
+                         message_neighbors->link_quality *
+                         message_neighbors->neigh_link_quality;
+ 
+                       // the total quality for the route
+                       // "us --- 1-hop --- 2-hop"
+ 
+-                      walker->path_link_quality =
+-                        walker->second_hop_link_quality *
++                      new_path_link_quality =
++                        new_second_hop_link_quality *
+                         link->loss_link_quality * link->neigh_link_quality;
+ 
+-                      // if the link quality has changed by more than 10
++                      // Only copy the link quality if it is better than what we have
++                      // for this 2-hop neighbor
++                      if (new_path_link_quality > walker->path_link_quality)
++                        {
++                          walker->second_hop_link_quality = new_second_hop_link_quality;
++                          walker->path_link_quality = new_path_link_quality;
++                        }
++                    }
++                }
++            }
++        }
++
++      // Third pass for link quality OLSR: check if the 2-hop path qualities have
++      // actually changed. If so, signal this through the 'changes_neighborhood'
++      // and 'changes_topology' booleans. Keep a 'saved_path_link_quality' for
++      // later reference.
++      for(message_neighbors = message->neighbors;
++          message_neighbors != NULL;
++          message_neighbors = message_neighbors->next)
++        {
++          if(if_ifwithaddr(&message_neighbors->address) != NULL)
++            continue;
++
++          if(((message_neighbors->status == SYM_NEIGH) ||
++              (message_neighbors->status == MPR_NEIGH)))
++            {
++              struct neighbor_list_entry *walker;
++              struct neighbor_2_entry *two_hop_neighbor;
++              struct neighbor_2_list_entry *two_hop_neighbor_yet =
++                olsr_lookup_my_neighbors(neighbor, &message_neighbors->address);
++
++              if(!two_hop_neighbor_yet)
++                continue;
++
++              two_hop_neighbor = two_hop_neighbor_yet->neighbor_2;
++
++              // loop through the one-hop neighbors that see this
++              // 'two_hop_neighbor'
++
++              for (walker = two_hop_neighbor->neighbor_2_nblist.next;
++                   walker != &two_hop_neighbor->neighbor_2_nblist;
++                   walker = walker->next)
++                {
++                  // have we found the one-hop neighbor that sent the
++                  // HELLO message that we're current processing?
++
++                  if (walker->neighbor == neighbor)
++                    {
++                      double saved_lq, rel_lq;
++
++                      // saved previous total link quality
++
++                      saved_lq = walker->saved_path_link_quality;
++
++                      if (saved_lq == 0.0)
++                        saved_lq = -1.0;
++
++                      // if the link cost has changed by more than 10
+                       // percent, signal
+ 
+                       rel_lq = walker->path_link_quality / saved_lq;
+diff -Naur olsrd-0.4.10/src/routing_table.c olsrd-0.4.10-patched/src/routing_table.c
+--- olsrd-0.4.10/src/routing_table.c	2005-11-17 00:55:54.000000000 +0100
++++ olsrd-0.4.10-patched/src/routing_table.c	2006-11-26 12:08:12.004604584 +0100
+@@ -65,10 +65,10 @@
+ olsr_fill_routing_table_with_two_hop_neighbors(void);
+ 
+ static struct rt_entry *
+-olsr_check_for_higher_hopcount(struct rt_entry *, struct hna_net *, olsr_u16_t);
++olsr_check_for_higher_quality(struct rt_entry *, struct hna_net *, float);
+ 
+ struct rt_entry *
+-olsr_check_for_lower_hopcount(struct rt_entry *, struct hna_net *, olsr_u16_t);
++olsr_check_for_lower_quality(struct rt_entry *, struct hna_net *, float);
+ 
+ static olsr_bool
+ two_hop_neighbor_reachable(struct neighbor_2_list_entry *);
+@@ -212,7 +212,12 @@
+   new_route_entry->rt_if = iface;
+ 
+   new_route_entry->rt_metric = metric;
+-  new_route_entry->rt_etx = etx;
++  if (etx< 0.0)
++    /* non-LQ case */
++    new_route_entry->rt_etx = (float)metric;
++  else
++    /* LQ case */
++    new_route_entry->rt_etx = etx;
+   
+   if(COMP_IP(dst, router))
+     /* Not GW */
+@@ -289,7 +294,7 @@
+ 						    &link->neighbor_iface_addr,
+ 						    iface,
+ 						    1,
+-						    0);
++						    -1.0);
+ 			}
+ 		    }
+ 	      
+@@ -404,7 +409,7 @@
+ 						      &link->neighbor_iface_addr,
+ 						      iface,
+ 						      2,
+-						      0);
++						      -1.0);
+ 			  
+ 			  if(new_route_entry != NULL)
+ 			    {
+@@ -501,7 +506,7 @@
+ 						      &list_destination_n->destination->rt_router, 
+ 						      list_destination_n->destination->rt_if,
+ 						      list_destination_n->destination->rt_metric+1,
+-						      0);
++						      -1.0);
+ 			  if(destination_n_1->destination != NULL)
+ 			    {
+ 			      destination_n_1->next=list_destination_n_1;
+@@ -549,17 +554,17 @@
+ 
+ 
+ /**
+- *Check for a entry with a higher hopcount than
++ *Check for an entry with a higher quality (lower etx) than
+  *a given value in a routing table
+  *
+  *@param routes the routingtable to look in
+  *@param net the network entry to look for
+- *@param metric the metric to check for
++ *@param etx the metric to check for
+  *
+- *@return the localted entry if found. NULL if not
++ *@return the located entry if found. NULL if not
+  */
+ static struct rt_entry *
+-olsr_check_for_higher_hopcount(struct rt_entry *routes, struct hna_net *net, olsr_u16_t metric)
++olsr_check_for_higher_quality(struct rt_entry *routes, struct hna_net *net, float etx)
+ {
+   int index;
+ 
+@@ -574,8 +579,8 @@
+ 	  if(COMP_IP(&tmp_routes->rt_dst, &net->A_network_addr) &&
+ 	     (memcmp(&tmp_routes->rt_mask, &net->A_netmask, netmask_size) == 0))
+ 	    {
+-	      /* Found a entry */
+-	      if(tmp_routes->rt_metric > metric)
++	      /* Found an entry */
++	      if(tmp_routes->rt_etx < etx)
+ 		return tmp_routes;
+ 	      else
+ 		return NULL;
+@@ -589,17 +594,17 @@
+ 
+ 
+ /**
+- *Check for a entry with a lower or equal hopcount than
++ *Check for an entry with a lower or equal quality (higher or equal etx) than
+  *a given value in a routing table
+  *
+  *@param routes the routingtable to look in
+  *@param net the network entry to look for
+- *@param metric the metric to check for
++ *@param etx the metric to check for
+  *
+- *@return the localted entry if found. NULL if not
++ *@return the located entry if found. NULL if not
+  */
+ struct rt_entry *
+-olsr_check_for_lower_hopcount(struct rt_entry *routes, struct hna_net *net, olsr_u16_t metric)
++olsr_check_for_lower_quality(struct rt_entry *routes, struct hna_net *net, float etx)
+ {
+   int index;
+ 
+@@ -614,8 +619,8 @@
+ 	  if(COMP_IP(&tmp_routes->rt_dst, &net->A_network_addr) &&
+ 	     (memcmp(&tmp_routes->rt_mask, &net->A_netmask, netmask_size) == 0))
+ 	    {
+-	      /* Found a entry */
+-	      if(tmp_routes->rt_metric <= metric)
++	      /* Found an entry */
++	      if(tmp_routes->rt_etx >= etx)
+ 		return tmp_routes;
+ 	      else
+ 		return NULL;
+@@ -672,13 +677,13 @@
+ 		}
+ 
+ 	      /* If there exists a better or equal entry - skip */
+-	      if(olsr_check_for_lower_hopcount(hna_routes, tmp_net, tmp_rt->rt_metric) != NULL)
++	      if(olsr_check_for_higher_quality(hna_routes, tmp_net, tmp_rt->rt_etx) != NULL)
+ 		{
+ 		  continue;
+ 		}
+ 
+-	      /* If we find an entry with higher hopcount we just edit it */
+-	      if((new_rt = olsr_check_for_higher_hopcount(hna_routes, tmp_net, tmp_rt->rt_metric)) != NULL)
++	      /* If we find an entry with lower quality we just edit it */
++	      if((new_rt = olsr_check_for_lower_quality(hna_routes, tmp_net, tmp_rt->rt_etx)) != NULL)
+ 		{
+ 		  /* Fill struct */
+ 		  /* Net */
+@@ -687,6 +692,7 @@
+ 		  /* Gateway */
+ 		  COPY_IP(&new_rt->rt_router, &tmp_rt->rt_router);
+ 		  /* Metric */
++		  new_rt->rt_etx = tmp_rt->rt_etx;
+ 		  new_rt->rt_metric = tmp_rt->rt_metric;
+ 		  /* Flags */
+ 		  new_rt->rt_flags = RTF_UP | RTF_GATEWAY;
+@@ -707,6 +713,7 @@
+ 		  /* Gateway */
+ 		  COPY_IP(&new_rt->rt_router, &tmp_rt->rt_router);
+ 		  /* Metric */
++		  new_rt->rt_etx = tmp_rt->rt_etx;
+ 		  new_rt->rt_metric = tmp_rt->rt_metric;
+ 		  /* Flags */
+ 		  new_rt->rt_flags = RTF_UP | RTF_GATEWAY;
+diff -Naur olsrd-0.4.10/src/unix/ifnet.c olsrd-0.4.10-patched/src/unix/ifnet.c
+--- olsrd-0.4.10/src/unix/ifnet.c	2005-12-29 19:37:16.000000000 +0100
++++ olsrd-0.4.10-patched/src/unix/ifnet.c	2006-11-16 13:14:42.000000000 +0100
+@@ -308,9 +308,11 @@
+ 	  OLSR_PRINTF(1, "IPv4 address changed for %s\n", ifr.ifr_name)
+ 	  OLSR_PRINTF(1, "\tOld:%s\n", sockaddr_to_string(&ifp->int_addr))
+ 	  OLSR_PRINTF(1, "\tNew:%s\n", sockaddr_to_string(&ifr.ifr_addr))
++
++          ifp->int_addr = ifr.ifr_addr;
+ 	  
+ 	  if(memcmp(&main_addr, 
+-		    &((struct sockaddr_in *)&ifp->int_addr)->sin_addr.s_addr, 
++		    &ifp->ip_addr, 
+ 		    ipsize) == 0)
+ 	    {
+ 	      OLSR_PRINTF(1, "New main address: %s\n", sockaddr_to_string(&ifr.ifr_addr))
+@@ -320,7 +322,6 @@
+ 		     ipsize);
+ 	    }
+ 
+-	  ifp->int_addr = ifr.ifr_addr;
+ 	  memcpy(&ifp->ip_addr, 
+ 		 &((struct sockaddr_in *)&ifp->int_addr)->sin_addr.s_addr, 
+ 		 ipsize);
+@@ -845,7 +846,6 @@
+   ifs.if_index = if_nametoindex(ifr.ifr_name);
+   
+   /* Set interface metric */
+-  /* Set interface metric */
+   if(iface->cnf->weight.fixed)
+     ifs.int_metric = iface->cnf->weight.value;
+   else

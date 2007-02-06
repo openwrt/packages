@@ -1,0 +1,306 @@
+diff -Nur olsrd-0.4.10.orig/lib/dot_draw/src/olsrd_dot_draw.c olsrd-0.4.10/lib/dot_draw/src/olsrd_dot_draw.c
+--- olsrd-0.4.10.orig/lib/dot_draw/src/olsrd_dot_draw.c	2005-12-30 03:23:59.000000000 +0100
++++ olsrd-0.4.10/lib/dot_draw/src/olsrd_dot_draw.c	2006-12-01 20:23:37.000000000 +0100
+@@ -136,6 +136,8 @@
+   /* Register the "ProcessChanges" function */
+   register_pcf(&pcf_event);
+ 
++  plugin_ipc_init();
++
+   return 1;
+ }
+ 
+@@ -237,6 +239,7 @@
+ 
+ 
+       /* Register with olsrd */
++      printf("Adding socket with olsrd\n");
+       add_olsr_socket(ipc_socket, &ipc_action);
+       ipc_socket_up = 1;
+     }
+diff -Nur olsrd-0.4.10.orig/lib/httpinfo/src/olsrd_httpinfo.c olsrd-0.4.10/lib/httpinfo/src/olsrd_httpinfo.c
+--- olsrd-0.4.10.orig/lib/httpinfo/src/olsrd_httpinfo.c	2006-12-01 20:20:31.000000000 +0100
++++ olsrd-0.4.10/lib/httpinfo/src/olsrd_httpinfo.c	2006-12-01 20:23:37.000000000 +0100
+@@ -297,6 +297,7 @@
+   if (bind(s, (struct sockaddr *) &sin, sizeof(sin)) == -1) 
+     {
+       olsr_printf(1, "(HTTPINFO) bind failed %s\n", strerror(errno));
++      close(s);
+       return -1;
+     }
+       
+@@ -304,6 +305,7 @@
+   if (listen(s, 1) == -1) 
+     {
+       olsr_printf(1, "(HTTPINFO) listen failed %s\n", strerror(errno));
++      close(s);
+       return -1;
+     }
+ 
+diff -Nur olsrd-0.4.10.orig/lib/secure/src/olsrd_secure.c olsrd-0.4.10/lib/secure/src/olsrd_secure.c
+--- olsrd-0.4.10.orig/lib/secure/src/olsrd_secure.c	2005-11-19 09:37:23.000000000 +0100
++++ olsrd-0.4.10/lib/secure/src/olsrd_secure.c	2006-12-01 20:23:37.000000000 +0100
+@@ -952,7 +952,7 @@
+   else
+     {
+       /* Check configuration timeout */
+-      if(!TIMED_OUT(&entry->conftime))
++      if(!TIMED_OUT(entry->conftime))
+ 	{
+ 	  /* If registered - do not accept! */
+ 	  olsr_printf(1, "[ENC]Challenge from registered node...dropping!\n");
+@@ -1205,7 +1205,7 @@
+       while(tmp_list != &timestamps[index])
+ 	{
+ 	  /*Check if the entry is timed out*/
+-	  if((TIMED_OUT(&tmp_list->valtime)) && (TIMED_OUT(&tmp_list->conftime)))
++	  if((TIMED_OUT(tmp_list->valtime)) && (TIMED_OUT(tmp_list->conftime)))
+ 	    {
+ 	      entry_to_delete = tmp_list;
+ 	      tmp_list = tmp_list->next;
+diff -Nur olsrd-0.4.10.orig/make/Makefile.linux olsrd-0.4.10/make/Makefile.linux
+--- olsrd-0.4.10.orig/make/Makefile.linux	2005-11-19 09:43:51.000000000 +0100
++++ olsrd-0.4.10/make/Makefile.linux	2006-12-01 20:23:37.000000000 +0100
+@@ -3,7 +3,11 @@
+ #
+ 
+ INSTALL_PREFIX ?=
++ifeq ($(shell arch),x86_64)
++LIBDIR =	$(INSTALL_PREFIX)/usr/lib64
++else
+ LIBDIR =	$(INSTALL_PREFIX)/usr/lib
++endif
+ 
+ SRCS += 	$(wildcard src/linux/*.c) $(wildcard src/unix/*.c)
+ HDRS +=		$(wildcard src/linux/*.h) $(wildcard src/unix/*.h)
+diff -Nur olsrd-0.4.10.orig/make/Makefile.osx olsrd-0.4.10/make/Makefile.osx
+--- olsrd-0.4.10.orig/make/Makefile.osx	2005-12-29 20:48:43.000000000 +0100
++++ olsrd-0.4.10/make/Makefile.osx	2006-12-01 20:23:37.000000000 +0100
+@@ -2,6 +2,10 @@
+ # MAC OSX SPECIFIC CONFIGURATION
+ #
+ 
++# don't strip executables and bundles for now until we figure out the proper way
++# to do it (flags).
++STRIP = \#
++
+ INSTALL_PREFIX ?=
+ LIBDIR =	$(INSTALL_PREFIX)/usr/lib
+ 
+@@ -12,12 +16,10 @@
+ LIBS =		
+ 
+ PLUGIN_FULLNAME ?= $(PLUGIN_NAME).so.$(PLUGIN_VER)
+-INSTALL_LIB =	install -m 755 $(PLUGIN_FULLNAME) $(LIBDIR)/$(PLUGIN_FULLNAME); \
+-		/sbin/ldconfig
++INSTALL_LIB =	install -m 755 $(PLUGIN_FULLNAME) $(LIBDIR)/$(PLUGIN_FULLNAME)
+ 
+ ifdef OLSRD_PLUGIN
+-CFLAGS +=	-fPIC
+-LDFLAGS =	-fPIC -dynamiclib -single_module -flat_namespace -undefined suppress
++LDFLAGS = -bundle -flat_namespace -undefined suppress
+ else
+ LDFLAGS = -dynamic
+ endif
+diff -Nur olsrd-0.4.10.orig/Makefile olsrd-0.4.10/Makefile
+--- olsrd-0.4.10.orig/Makefile	2006-12-01 20:20:31.000000000 +0100
++++ olsrd-0.4.10/Makefile	2006-12-01 20:23:37.000000000 +0100
+@@ -171,3 +171,4 @@
+ 
+ build_all:	cfgparser olsrd libs
+ install_all:	install install_libs
++clean_all:      uberclean clean_libs
+diff -Nur olsrd-0.4.10.orig/src/bsd/net.c olsrd-0.4.10/src/bsd/net.c
+--- olsrd-0.4.10.orig/src/bsd/net.c	2005-08-28 21:30:29.000000000 +0200
++++ olsrd-0.4.10/src/bsd/net.c	2006-12-01 20:23:37.000000000 +0100
+@@ -290,6 +290,7 @@
+   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) 
+     {
+       perror("SO_REUSEADDR failed");
++      close(sock);
+       return (-1);
+     }
+   /* connect to PORT on HOST */
+@@ -298,6 +299,7 @@
+       printf("FAILED\n");
+       fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+       printf("connection refused\n");
++      close(sock);
+       return (-1);
+     }
+ 
+@@ -332,6 +334,7 @@
+   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) 
+     {
+       perror("SO_REUSEADDR failed");
++      close(sock);
+       return (-1);
+     }
+ 
+@@ -339,12 +342,14 @@
+   if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on)) < 0) 
+     {
+       perror("SO_REUSEPORT failed");
++      close(sock);
+       return (-1);
+     }
+ 
+   if (setsockopt(sock, IPPROTO_IP, IP_RECVIF, &on, sizeof(on)) < 0) 
+     {
+       perror("IP_RECVIF failed");
++      close(sock);
+       return (-1);
+     }
+ #endif /* SPOOF */
+@@ -403,6 +408,7 @@
+   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) 
+     {
+       perror("SO_REUSEADDR failed");
++      close(sock);
+       return (-1);
+     }
+ 
+diff -Nur olsrd-0.4.10.orig/src/linux/net.c olsrd-0.4.10/src/linux/net.c
+--- olsrd-0.4.10.orig/src/linux/net.c	2005-09-17 22:48:50.000000000 +0200
++++ olsrd-0.4.10/src/linux/net.c	2006-12-01 20:23:37.000000000 +0100
+@@ -434,6 +434,7 @@
+   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) 
+     {
+       perror("SO_REUSEADDR failed");
++      close(sock);
+       return (-1);
+     }
+   /* connect to PORT on HOST */
+@@ -442,6 +443,7 @@
+       printf("FAILED\n");
+       fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+       printf("connection refused\n");
++      close(sock);
+       return (-1);
+     }
+ 
+@@ -487,6 +489,7 @@
+   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) 
+     {
+       perror("SO_REUSEADDR failed");
++      close(sock);
+       return (-1);
+     }
+ 
+@@ -520,6 +523,7 @@
+     {
+       fprintf(stderr, "Could not bind socket to device... exiting!\n\n");
+       syslog(LOG_ERR, "Could not bind socket to device... exiting!\n\n");
++      close(sock);
+       return -1;
+     }
+ 
+@@ -606,6 +610,7 @@
+   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) 
+     {
+       perror("SO_REUSEADDR failed");
++      close(sock);
+       return (-1);
+     }
+ 
+@@ -619,6 +624,7 @@
+     {
+       fprintf(stderr, "Could not bind socket to device... exiting!\n\n");
+       syslog(LOG_ERR, "Could not bind socket to device... exiting!\n\n");
++      close(sock);
+       return -1;
+     }
+ 
+diff -Nur olsrd-0.4.10.orig/src/main.c olsrd-0.4.10/src/main.c
+--- olsrd-0.4.10.orig/src/main.c	2006-12-01 20:20:31.000000000 +0100
++++ olsrd-0.4.10/src/main.c	2006-12-01 20:23:54.000000000 +0100
+@@ -118,7 +118,7 @@
+   system_tick_divider = 1000/sysconf(_SC_CLK_TCK);
+ 
+   /* Check if user is root */
+-  if(getuid() || getgid())
++  if(geteuid())
+     {
+       fprintf(stderr, "You must be root(uid = 0) to run olsrd!\nExiting\n\n");
+       exit(EXIT_FAILURE);
+@@ -395,6 +395,7 @@
+   signal(SIGHUP, olsr_reconfigure);  
+   signal(SIGINT, olsr_shutdown);  
+   signal(SIGTERM, olsr_shutdown);  
++  signal(SIGPIPE, SIG_IGN);
+ #endif
+ 
+   /* Register socket poll event */
+@@ -535,6 +536,7 @@
+   fprintf(stderr, "  [-hint <hello interval (secs)>] [-tcint <tc interval (secs)>]\n");
+   fprintf(stderr, "  [-midint <mid interval (secs)>] [-hnaint <hna interval (secs)>]\n");
+   fprintf(stderr, "  [-T <Polling Rate (secs)>] [-nofork] [-hemu <ip_address>] \n"); 
++  fprintf(stderr, "  [-lql <LQ level>] [-lqw <LQ winsize>]\n"); 
+ 
+ }
+ 
+@@ -635,6 +637,42 @@
+ 	  memcpy(&ifcnf->ipv4_broadcast.v4, &in.s_addr, sizeof(olsr_u32_t));  
+ 	  continue;
+ 	}
++
++      /*
++       * Set LQ level
++       */
++      if (strcmp(*argv, "-lql") == 0) 
++	{
++	  int tmp_lq_level;
++	  NEXT_ARG;
++          CHECK_ARGC;
++	  
++	  /* Sanity checking is done later */
++	  sscanf(*argv, "%d", &tmp_lq_level);
++	  olsr_cnf->lq_level = tmp_lq_level;
++	  continue;
++	}
++
++      /*
++       * Set LQ winsize
++       */
++      if (strcmp(*argv, "-lqw") == 0) 
++	{
++	  int tmp_lq_wsize;
++	  NEXT_ARG;
++          CHECK_ARGC;
++	  
++	  sscanf(*argv, "%d", &tmp_lq_wsize);
++
++	  if(tmp_lq_wsize < MIN_LQ_WSIZE || tmp_lq_wsize > MAX_LQ_WSIZE)
++	    {
++	      printf("LQ winsize %d not allowed. Range [%d-%d]\n", 
++		     tmp_lq_wsize, MIN_LQ_WSIZE, MAX_LQ_WSIZE);
++	      olsr_exit(__func__, EXIT_FAILURE);
++	    }
++	  olsr_cnf->lq_wsize = tmp_lq_wsize;
++	  continue;
++	}
+       
+       /*
+        * Enable additional debugging information to be logged.
+diff -Nur olsrd-0.4.10.orig/src/scheduler.c olsrd-0.4.10/src/scheduler.c
+--- olsrd-0.4.10.orig/src/scheduler.c	2006-12-01 20:20:31.000000000 +0100
++++ olsrd-0.4.10/src/scheduler.c	2006-12-01 20:23:37.000000000 +0100
+@@ -330,6 +330,7 @@
+ 	    {
+ 	      prev->next = entry->next;
+ 	    }
++          free(entry);
+ 	  return 1;
+ 	}
+ 
+diff -Nur olsrd-0.4.10.orig/src/win32/net.c olsrd-0.4.10/src/win32/net.c
+--- olsrd-0.4.10.orig/src/win32/net.c	2005-05-30 15:50:27.000000000 +0200
++++ olsrd-0.4.10/src/win32/net.c	2006-12-01 20:23:37.000000000 +0100
+@@ -87,6 +87,7 @@
+       printf("FAILED\n");
+       fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+       printf("connection refused\n");
++      closesocket(sock);
+       return (-1);
+     }
+ 

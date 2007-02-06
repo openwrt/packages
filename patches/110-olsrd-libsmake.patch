@@ -1,0 +1,9 @@
+diff -Nur olsrd-0.4.10.orig/lib/Makefile olsrd-0.4.10/lib/Makefile
+--- olsrd-0.4.10.orig/lib/Makefile	2005-05-26 18:09:25.000000000 +0200
++++ olsrd-0.4.10/lib/Makefile	2006-12-01 08:18:12.000000000 +0100
+@@ -1,4 +1,4 @@
+-SUBDIRS = dot_draw dyn_gw httpinfo mini nameservice powerinfo secure tas
++SUBDIRS = $(shell find -maxdepth 1 -type d -not -name ".*" -not -name "CVS" -printf "%f\n")
+ 
+ .PHONY: $(SUBDIRS)
+ 

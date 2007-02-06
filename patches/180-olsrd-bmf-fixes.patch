@@ -1,0 +1,336 @@
+diff -Nur olsrd-0.4.10.orig/lib/bmf/src/Bmf.c olsrd-0.4.10/lib/bmf/src/Bmf.c
+--- olsrd-0.4.10.orig/lib/bmf/src/Bmf.c	2006-11-29 12:45:19.000000000 +0100
++++ olsrd-0.4.10/lib/bmf/src/Bmf.c	2006-11-29 12:47:49.000000000 +0100
+@@ -114,7 +114,15 @@
+ 
+   /* Only forward multicast or local broadcast packets */
+   COPY_IP(&destIp, &ipData->ip_dst);
+-  if (! IsMulticast(&destIp) && ! IsLocalBroadcast(&destIp, intf))
++  if (! IsMulticast(&destIp)
++#ifdef SVEN_OLA_DISABLED
++     /* 
++      * Sven-Ola@gmx.de: In a bigger mesh, there are a lot of
++      * accidential bcast sources.  Disabled to save bandwidth 
++      */
++     && ! IsLocalBroadcast(&destIp, intf)
++#endif
++  )
+   {
+     return;
+   }
+@@ -128,9 +136,10 @@
+   COPY_IP(&srcIp, &ipData->ip_src);
+   olsr_printf(
+     9,
+-    "%s: pkt of %d bytes incoming on \"%s\": %s->%s\n",
++    "%s: pkt of %d bytes ttl=%d incoming on \"%s\": %s->%s\n",
+     PLUGIN_NAME_SHORT,
+     ethPktLen,
++    GetIpTtl(ethPkt),
+     intf->ifName,
+     olsr_ip_to_string(&srcIp),
+     olsr_ip_to_string(&destIp));
+@@ -191,6 +200,7 @@
+   struct TEncapHeader* encapHdr = (struct TEncapHeader*) buffer;
+   memset (encapHdr, 0, ENCAP_HDR_LEN);
+   encapHdr->crc32 = htonl(crc32);
++  encapHdr->encapttl = GetIpTtl(ethPkt);
+ 
+   /* If this packet is captured on an OLSR interface from an OLSR neighbor,
+    * check with OLSR if I am MPR for that neighbor */
+@@ -248,7 +258,7 @@
+       /* If the TTL is <= 0, do not forward this packet */
+       if (GetIpTtl(ethPkt) <= 0)
+       {
+-        OLSR_PRINTF(
++        olsr_printf(
+           9,
+           "%s: --> not forwarding on \"%s\": TTL=0\n",
+           PLUGIN_NAME_SHORT,
+@@ -272,10 +282,11 @@
+         }
+         else
+         {
+-          OLSR_PRINTF(
++          olsr_printf(
+             9,
+-            "%s: --> forwarded to \"%s\"\n",
++            "%s: --> forwarded(capt) ttl=%d to \"%s\"\n",
+             PLUGIN_NAME_SHORT,
++            GetIpTtl(ethPkt),
+             fwIntf->ifName);
+         }
+       }
+@@ -291,6 +302,7 @@
+     if (isToOlsrIntf && !iAmNotMpr)
+     {
+       int nBytesWritten;
++      unsigned char ttl;
+ 
+       /* Change encapsulated source MAC address to that of sending interface */
+       memcpy(ethPkt + IFHWADDRLEN, fwIntf->macAddr, IFHWADDRLEN);
+@@ -298,6 +310,10 @@
+       /* Destination address is local broadcast */
+       encapDest.sin_addr.s_addr = ((struct sockaddr_in*)&fwIntf->olsrIntf->int_broadaddr)->sin_addr.s_addr;
+ 
++      /* SVEN_OLA: Normal TTL of this socket will be 64 if unset */
++      ttl = GetIpTtl(ethPkt);
++      if (0 <= (nBytesWritten = setsockopt(fwIntf->encapsulatingSkfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl))))
++
+       nBytesWritten = sendto(
+         fwIntf->encapsulatingSkfd,
+         buffer,
+@@ -306,6 +322,18 @@
+         (struct sockaddr*) &encapDest,
+         sizeof(encapDest));                   
+ 
++      /*
++       * Sven-Ola@gmx.de: Very primitive testing of forward error correction
++       */
++      if (nBytesWritten == len)
++        nBytesWritten = sendto(
++          fwIntf->encapsulatingSkfd,
++          buffer,
++          len,
++          MSG_DONTROUTE,
++          (struct sockaddr*) &encapDest,
++          sizeof(encapDest));
++
+       if (nBytesWritten != len)
+       {
+         olsr_printf(
+@@ -318,10 +346,11 @@
+       }
+       else
+       {
+-        OLSR_PRINTF(
++        olsr_printf(
+           9,
+-          "%s: --> encapsulated and forwarded to \"%s\"\n",
++          "%s: --> encapsulated and forwarded ttl=%d to \"%s\"\n",
+           PLUGIN_NAME_SHORT,
++          GetIpTtl(ethPkt),
+           fwIntf->ifName);
+       } /* if (nBytesWritten != len) */
+     } /* else if (isToOlsrIntf && !iAmNotMpr) */
+@@ -329,7 +358,7 @@
+     else /* (!isFromOlsrIntf || isToOlsrIntf) && (!isToOlsrIntf || iAmNotMpr) */
+     if (!isFromOlsrIntf && !isToOlsrIntf)
+     {
+-      OLSR_PRINTF(
++      olsr_printf(
+         9,
+         "%s: --> not forwarding from \"%s\" to \"%s\": both non-OLSR interfaces\n",
+         PLUGIN_NAME_SHORT,
+@@ -339,7 +368,7 @@
+ 
+     else /* (!isFromOlsrIntf || isToOlsrIntf) && (!isToOlsrIntf || iAmNotMpr) && (isFromOlsrIntf || isToOlsrIntf) */
+     {
+-      OLSR_PRINTF(
++      olsr_printf(
+         9,
+         "%s: --> not forwarding from \"%s\" to \"%s\": I am not selected as MPR by %s\n",
+         PLUGIN_NAME_SHORT,
+@@ -402,17 +431,21 @@
+ 
+   ipData = (struct ip*) (ethPkt + IP_HDR_OFFSET);
+ 
+-  OLSR_PRINTF(
++  olsr_printf(
+     9,
+-    "%s: encapsulated pkt of %d bytes incoming on \"%s\": %s->",
++    "%s: encapsulated pkt of %d bytes ttl=%d incoming on \"%s\": %s->",
+     PLUGIN_NAME_SHORT,
+     ethPktLen,
++    GetIpTtl(ethPkt),
+     intf->ifName,
+     inet_ntoa(ipData->ip_src));
+-  OLSR_PRINTF(
++  olsr_printf(
+     9,
+-    "%s, forwarded by %s\n",
+-    inet_ntoa(ipData->ip_dst), /* not possible to call inet_ntoa twice in same printf */
++    "%s, ",
++    inet_ntoa(ipData->ip_dst)); /* not possible to call inet_ntoa twice in same printf */
++  olsr_printf(
++    9,
++    "forwarded by %s\n",
+     olsr_ip_to_string(fromIp));
+ 
+   /* Get encapsulation header */
+@@ -421,7 +454,7 @@
+   /* Check if this packet was seen recently */
+   if (CheckAndMarkRecentPacket(Hash16(ntohl(encapHdr->crc32))))
+   {
+-    OLSR_PRINTF(
++    olsr_printf(
+       9,
+       "%s: --> discarding: packet is duplicate\n",
+       PLUGIN_NAME_SHORT);
+@@ -448,12 +481,28 @@
+   }
+   else
+   {
+-    OLSR_PRINTF(
++    olsr_printf(
+       9,
+-      "%s: --> unpacked and forwarded to \"%s\"\n",
++      "%s: --> unpacked and forwarded ttl=%d to \"%s\"\n",
+       PLUGIN_NAME_SHORT,
++      GetIpTtl(ethPkt),
+       EtherTunTapIfName);
+   }
++  
++  /*
++   * Sven-Ola@gmx.de: The original implemenation make a wave
++   * through the complete mesh for every packet. Packets are
++   * discarded if any device has seen it (most bad case). We
++   * Want some "local" distribution mode, so I've added some
++   * hopcounter here - derived from the original ttl
++   */
++  if (0 == encapHdr->encapttl || 0 == --encapHdr->encapttl) {
++    olsr_printf(
++      9,
++      "%s: --> dicarding encapsulated: TTL=0\n",
++      PLUGIN_NAME_SHORT);
++    return;
++  }
+ 
+   /* Lookup main address of forwarding node */
+   forwarder = mid_lookup_main_addr(fromIp);
+@@ -489,7 +538,7 @@
+       /* If the TTL is <= 0, do not forward this packet */
+       if (GetIpTtl(ethPkt) <= 0)
+       {
+-        OLSR_PRINTF(
++        olsr_printf(
+           9,
+           "%s: --> not forwarding on \"%s\": TTL=0\n",
+           PLUGIN_NAME_SHORT,
+@@ -509,10 +558,12 @@
+         }
+         else
+         {
+-          OLSR_PRINTF(
++          olsr_printf(
+             9,
+-            "%s: --> unpacked and forwarded to \"%s\"\n",
++            "%s: --> unpacked and forwarded ttl=%d, sttl=%d to \"%s\"\n",
+             PLUGIN_NAME_SHORT,
++            GetIpTtl(ethPkt),
++            sttl.ttl,
+             fwIntf->ifName);
+         }
+       }
+@@ -551,17 +602,18 @@
+       }
+       else
+       {
+-        OLSR_PRINTF(
++        olsr_printf(
+           9,
+-          "%s: --> forwarded to \"%s\"\n",
++          "%s: --> forwarded(encrec) ttl=%d to \"%s\"\n",
+           PLUGIN_NAME_SHORT,
++          GetIpTtl(ethPkt),
+           fwIntf->ifName);
+       }
+     }  /* else if (iAmMpr) */
+     else /* fwIntf->olsrIntf != NULL && !iAmMpr */
+     {
+       /* fwIntf is an OLSR interface and I am not selected as MPR */
+-      OLSR_PRINTF(
++      olsr_printf(
+         9,
+         "%s: --> not forwarding to \"%s\": I am not selected as MPR by %s\n",
+         PLUGIN_NAME_SHORT,
+@@ -690,7 +742,15 @@
+             {
+               union olsr_ip_addr destIp;
+               COPY_IP(&destIp, &ipData->ip_dst);
+-              if (IsMulticast(&destIp) || IsLocalBroadcast(&destIp, currIf))
++              if (IsMulticast(&destIp)
++#ifdef SVEN_OLA_DISABLED
++                 /* 
++                  * Sven-Ola@gmx.de: In a bigger mesh, there are a lot of
++                  * accidential bcast sources.  Disabled to save bandwidth 
++                  */
++                 || IsLocalBroadcast(&destIp, currIf)
++#endif
++              )
+               {
+                 if (! IsOlsrOrBmfPacket(currIf, ethPkt, nBytes))
+                 {
+@@ -701,8 +761,15 @@
+                 }
+               }
+             }
+-            else if (pktAddr.sll_pkttype == PACKET_MULTICAST ||
+-                     pktAddr.sll_pkttype == PACKET_BROADCAST)
++            else if (pktAddr.sll_pkttype == PACKET_MULTICAST
++#ifdef SVEN_OLA_DISABLED
++                 /* 
++                  * Sven-Ola@gmx.de: In a bigger mesh, there are a lot of
++                  * accidential bcast sources.  Disabled to save bandwidth 
++                  */
++                 || pktAddr.sll_pkttype == PACKET_BROADCAST
++#endif
++            )
+             {
+               /* An inbound multicast or broadcast packet was captured */
+               BmfPacketCaptured(currIf, buffer, nBytes + ENCAP_HDR_LEN);
+diff -Nur olsrd-0.4.10.orig/lib/bmf/src/NetworkInterfaces.c olsrd-0.4.10/lib/bmf/src/NetworkInterfaces.c
+--- olsrd-0.4.10.orig/lib/bmf/src/NetworkInterfaces.c	2006-11-29 12:45:19.000000000 +0100
++++ olsrd-0.4.10/lib/bmf/src/NetworkInterfaces.c	2006-11-29 12:47:49.000000000 +0100
+@@ -568,7 +568,7 @@
+   newIf->next = BmfInterfaces;
+   BmfInterfaces = newIf;
+ 
+-  OLSR_PRINTF(
++  olsr_printf(
+     9,
+     "%s: opened %s interface \"%s\"\n",
+     PLUGIN_NAME_SHORT,
+@@ -738,7 +738,7 @@
+       nClosed++;
+     }
+ 
+-    OLSR_PRINTF(
++    olsr_printf(
+       9,
+       "%s: closed %s interface \"%s\"\n", 
+       PLUGIN_NAME_SHORT,
+@@ -756,7 +756,7 @@
+     close(EtherTunTapFd);
+     nClosed++;
+ 
+-    OLSR_PRINTF(9, "%s: closed \"%s\"\n", PLUGIN_NAME_SHORT, EtherTunTapIfName);
++    olsr_printf(9, "%s: closed \"%s\"\n", PLUGIN_NAME_SHORT, EtherTunTapIfName);
+   }
+ 
+   BmfInterfaces = NULL;
+diff -Nur olsrd-0.4.10.orig/lib/bmf/src/Packet.c olsrd-0.4.10/lib/bmf/src/Packet.c
+--- olsrd-0.4.10.orig/lib/bmf/src/Packet.c	2006-11-29 12:45:19.000000000 +0100
++++ olsrd-0.4.10/lib/bmf/src/Packet.c	2006-11-29 12:50:35.000000000 +0100
+@@ -46,6 +46,8 @@
+ #include <assert.h> /* assert() */
+ #include <sys/types.h> /* u_int32_t */
+ #include <netinet/in.h> /* ntohs(), htons() */
++/* Fixes (k)ubuntu linux-kernel-headers package */
++#include <asm/byteorder.h>
+ #include <linux/ip.h>
+ 
+ /* -------------------------------------------------------------------------
+diff -Nur olsrd-0.4.10.orig/lib/bmf/src/Packet.h olsrd-0.4.10/lib/bmf/src/Packet.h
+--- olsrd-0.4.10.orig/lib/bmf/src/Packet.h	2006-11-29 12:45:19.000000000 +0100
++++ olsrd-0.4.10/lib/bmf/src/Packet.h	2006-11-29 12:47:49.000000000 +0100
+@@ -66,7 +66,8 @@
+   u_int32_t crc32;
+   u_int32_t futureExpansion1;
+   u_int32_t futureExpansion2;
+-  u_int32_t futureExpansion3;
++  u_int8_t futureExpansion3[3];
++  u_int8_t encapttl;
+ } __attribute__((__packed__));
+ 
+ #define	ENCAP_HDR_LEN sizeof(struct TEncapHeader)

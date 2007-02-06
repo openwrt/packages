@@ -1,0 +1,3231 @@
+diff -Nur olsrd-0.4.10.orig/lib/quagga/ChangeLog olsrd-0.4.10/lib/quagga/ChangeLog
+--- olsrd-0.4.10.orig/lib/quagga/ChangeLog	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/ChangeLog	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,17 @@
++0.2.1: Immo 'FaUl' Wehrenberg <immo@chaostreff-dortmund.de>:
++	* now check (most of the) return-values of syscalls, improvement still
++	  possible...
++	* added support for new zebra-protocoll-format (with
++	  ZEBRA_HEADER_MARKER and ZCLIENT_VERSION) if new 
++	  quagga-headers are found)
++	* Code Cleanup (removed lot of debug and test-stuff)
++	* fixed return-bug in zebra_send_command
++	* added copyright-stuff 
++	* removed memleak in zebra_add/delete_v4_route
++
++0.2.0: Immo 'FaUl' Wehrenberg <immo@chaostreff-dortmund.de>:
++	* Initial release, too :-) 
++	* Added support for route-export to the zebra/quagga
++	
++0.1.0: Immo 'FaUl' Wehrenberg <immo@chaostreff-dortmund.de>:
++	* Initial release
+diff -Nur olsrd-0.4.10.orig/lib/quagga/Makefile olsrd-0.4.10/lib/quagga/Makefile
+--- olsrd-0.4.10.orig/lib/quagga/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/Makefile	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,65 @@
++# The olsr.org Optimized Link-State Routing daemon(olsrd)
++# Copyright (c) 2004, Andreas Tønnesen(andreto@olsr.org)
++# All rights reserved.
++#
++# Redistribution and use in source and binary forms, with or without 
++# modification, are permitted provided that the following conditions 
++# are met:
++#
++# * Redistributions of source code must retain the above copyright 
++#   notice, this list of conditions and the following disclaimer.
++# * Redistributions in binary form must reproduce the above copyright 
++#   notice, this list of conditions and the following disclaimer in 
++#   the documentation and/or other materials provided with the 
++#   distribution.
++# * Neither the name of olsr.org, olsrd nor the names of its 
++#   contributors may be used to endorse or promote products derived 
++#   from this software without specific prior written permission.
++#
++# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
++# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
++# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
++# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
++# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
++# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
++# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
++# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
++# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
++# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
++# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
++# POSSIBILITY OF SUCH DAMAGE.
++#
++# Visit http://www.olsr.org for more information.
++#
++# If you find this software useful feel free to make a donation
++# to the project. For more information see the website or contact
++# the copyright holders.
++#
++# $Id: Makefile,v 1.1 2005/05/26 16:09:25 br1 Exp $
++
++OLSRD_PLUGIN =	true
++PLUGIN_NAME =	olsrd_quagga
++PLUGIN_VER =	0.2.2
++
++#CFLAGS +=-DMY_DEBUG 
++CFLAGS += -g
++CFLAGS +=-DUSE_UNIX_DOMAIN_SOCKET
++
++#uncomment the following line only if you are sure what you're doing, it will 
++#probably break things! 
++# CFLAGS +=-DZEBRA_HEADER_MARKER=255 
++
++TOPDIR = ../..
++include $(TOPDIR)/Makefile.inc
++
++default_target: $(PLUGIN_FULLNAME)
++
++$(PLUGIN_FULLNAME): $(OBJS)
++		$(CC) $(LDFLAGS) -o $(PLUGIN_FULLNAME) $(OBJS) $(LIBS)
++
++install:	$(PLUGIN_FULLNAME)
++		$(STRIP) $(PLUGIN_FULLNAME)
++		$(INSTALL_LIB)
++
++clean:
++		rm -f $(OBJS) $(SRCS:%.c=%.d) $(PLUGIN_FULLNAME)
+diff -Nur olsrd-0.4.10.orig/lib/quagga/quagga-0.98.6-olsr.diff olsrd-0.4.10/lib/quagga/quagga-0.98.6-olsr.diff
+--- olsrd-0.4.10.orig/lib/quagga/quagga-0.98.6-olsr.diff	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/quagga-0.98.6-olsr.diff	2006-12-02 10:57:52.000000000 +0100
+@@ -0,0 +1,717 @@
++diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
++--- quagga-0.98.6.orig/bgpd/bgp_vty.c	2006-03-30 18:12:25.000000000 +0200
+++++ quagga-0.98.6/bgpd/bgp_vty.c	2006-12-02 10:52:14.000000000 +0100
++@@ -7793,7 +7793,9 @@
++ 	return ZEBRA_ROUTE_STATIC;
++       else if (strncmp (str, "r", 1) == 0)
++ 	return ZEBRA_ROUTE_RIP;
++-      else if (strncmp (str, "o", 1) == 0)
+++      else if (strncmp (str, "ol", 2) == 0)
+++	return ZEBRA_ROUTE_OLSR;
+++      else if (strncmp (str, "os", 2) == 0)
++ 	return ZEBRA_ROUTE_OSPF;
++     }
++   if (afi == AFI_IP6)
++@@ -7806,20 +7808,23 @@
++ 	return ZEBRA_ROUTE_STATIC;
++       else if (strncmp (str, "r", 1) == 0)
++ 	return ZEBRA_ROUTE_RIPNG;
++-      else if (strncmp (str, "o", 1) == 0)
+++      else if (strncmp (str, "os", 2) == 0)
++ 	return ZEBRA_ROUTE_OSPF6;
+++      else if (strncmp (str, "ol", 2) == 0)
+++	return ZEBRA_ROUTE_OLSR;
++     }
++   return 0;
++ }
++ 
++ DEFUN (bgp_redistribute_ipv4,
++        bgp_redistribute_ipv4_cmd,
++-       "redistribute (connected|kernel|ospf|rip|static)",
+++       "redistribute (connected|kernel|ospf|rip|static|olsr)",
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Static routes\n")
++ {
++   int type;
++@@ -7835,13 +7840,14 @@
++ 
++ DEFUN (bgp_redistribute_ipv4_rmap,
++        bgp_redistribute_ipv4_rmap_cmd,
++-       "redistribute (connected|kernel|ospf|rip|static) route-map WORD",
+++       "redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD",
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Route map reference\n"
++        "Pointer to route-map entries\n")
++ {
++@@ -7860,13 +7866,14 @@
++ 
++ DEFUN (bgp_redistribute_ipv4_metric,
++        bgp_redistribute_ipv4_metric_cmd,
++-       "redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295>",
+++       "redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295>",
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "Default metric\n")
++ {
++@@ -7887,13 +7894,14 @@
++ 
++ DEFUN (bgp_redistribute_ipv4_rmap_metric,
++        bgp_redistribute_ipv4_rmap_metric_cmd,
++-       "redistribute (connected|kernel|ospf|rip|static) route-map WORD metric <0-4294967295>",
+++       "redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD metric <0-4294967295>",
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Route map reference\n"
++        "Pointer to route-map entries\n"
++        "Metric for redistributed routes\n"
++@@ -7917,13 +7925,14 @@
++ 
++ DEFUN (bgp_redistribute_ipv4_metric_rmap,
++        bgp_redistribute_ipv4_metric_rmap_cmd,
++-       "redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295> route-map WORD",
+++       "redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295> route-map WORD",
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "Default metric\n"
++        "Route map reference\n"
++@@ -7947,14 +7956,16 @@
++ 
++ DEFUN (no_bgp_redistribute_ipv4,
++        no_bgp_redistribute_ipv4_cmd,
++-       "no redistribute (connected|kernel|ospf|rip|static)",
+++       "no redistribute (connected|kernel|ospf|rip|static|olsr)",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
++-       "Static routes\n")
+++       "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
+++       )
++ {
++   int type;
++ 
++@@ -7970,7 +7981,7 @@
++ 
++ DEFUN (no_bgp_redistribute_ipv4_rmap,
++        no_bgp_redistribute_ipv4_rmap_cmd,
++-       "no redistribute (connected|kernel|ospf|rip|static) route-map WORD",
+++       "no redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++@@ -7978,6 +7989,7 @@
++        "Open Shurtest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Route map reference\n"
++        "Pointer to route-map entries\n")
++ {
++@@ -7996,7 +8008,7 @@
++ 
++ DEFUN (no_bgp_redistribute_ipv4_metric,
++        no_bgp_redistribute_ipv4_metric_cmd,
++-       "no redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295>",
+++       "no redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295>",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++@@ -8004,6 +8016,7 @@
++        "Open Shurtest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "Default metric\n")
++ {
++@@ -8022,7 +8035,7 @@
++ 
++ DEFUN (no_bgp_redistribute_ipv4_rmap_metric,
++        no_bgp_redistribute_ipv4_rmap_metric_cmd,
++-       "no redistribute (connected|kernel|ospf|rip|static) route-map WORD metric <0-4294967295>",
+++       "no redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD metric <0-4294967295>",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++@@ -8030,6 +8043,7 @@
++        "Open Shurtest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Route map reference\n"
++        "Pointer to route-map entries\n"
++        "Metric for redistributed routes\n"
++@@ -8051,7 +8065,7 @@
++ 
++ ALIAS (no_bgp_redistribute_ipv4_rmap_metric,
++        no_bgp_redistribute_ipv4_metric_rmap_cmd,
++-       "no redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295> route-map WORD",
+++       "no redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295> route-map WORD",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++@@ -8059,6 +8073,7 @@
++        "Open Shurtest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "Default metric\n"
++        "Route map reference\n"
++@@ -8067,13 +8082,15 @@
++ #ifdef HAVE_IPV6
++ DEFUN (bgp_redistribute_ipv6,
++        bgp_redistribute_ipv6_cmd,
++-       "redistribute (connected|kernel|ospf6|ripng|static)",
+++       "redistribute (connected|kernel|ospf6|ripng|static|olsr)",
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
++-       "Static routes\n")
+++       "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
+++       )
++ {
++   int type;
++ 
++@@ -8089,13 +8106,14 @@
++ 
++ DEFUN (bgp_redistribute_ipv6_rmap,
++        bgp_redistribute_ipv6_rmap_cmd,
++-       "redistribute (connected|kernel|ospf6|ripng|static) route-map WORD",
+++       "redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD",
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Route map reference\n"
++        "Pointer to route-map entries\n")
++ {
++@@ -8114,13 +8132,14 @@
++ 
++ DEFUN (bgp_redistribute_ipv6_metric,
++        bgp_redistribute_ipv6_metric_cmd,
++-       "redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295>",
+++       "redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295>",
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "Default metric\n")
++ {
++@@ -8141,13 +8160,14 @@
++ 
++ DEFUN (bgp_redistribute_ipv6_rmap_metric,
++        bgp_redistribute_ipv6_rmap_metric_cmd,
++-       "redistribute (connected|kernel|ospf6|ripng|static) route-map WORD metric <0-4294967295>",
+++       "redistribute (connected|kernel|ospf6|ripng|static|ols) route-map WORD metric <0-4294967295>",
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Route map reference\n"
++        "Pointer to route-map entries\n"
++        "Metric for redistributed routes\n"
++@@ -8171,13 +8191,14 @@
++ 
++ DEFUN (bgp_redistribute_ipv6_metric_rmap,
++        bgp_redistribute_ipv6_metric_rmap_cmd,
++-       "redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295> route-map WORD",
+++       "redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295> route-map WORD",
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "Default metric\n"
++        "Route map reference\n"
++@@ -8201,14 +8222,16 @@
++ 
++ DEFUN (no_bgp_redistribute_ipv6,
++        no_bgp_redistribute_ipv6_cmd,
++-       "no redistribute (connected|kernel|ospf6|ripng|static)",
+++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr)",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++        "Kernel routes\n"
++        "Open Shurtest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
++-       "Static routes\n")
+++       "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
+++      )
++ {
++   int type;
++ 
++@@ -8224,7 +8247,7 @@
++ 
++ DEFUN (no_bgp_redistribute_ipv6_rmap,
++        no_bgp_redistribute_ipv6_rmap_cmd,
++-       "no redistribute (connected|kernel|ospf6|ripng|static) route-map WORD",
+++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++@@ -8232,6 +8255,7 @@
++        "Open Shurtest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Route map reference\n"
++        "Pointer to route-map entries\n")
++ {
++@@ -8250,7 +8274,7 @@
++ 
++ DEFUN (no_bgp_redistribute_ipv6_metric,
++        no_bgp_redistribute_ipv6_metric_cmd,
++-       "no redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295>",
+++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295>",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++@@ -8258,6 +8282,7 @@
++        "Open Shurtest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "Default metric\n")
++ {
++@@ -8276,7 +8301,7 @@
++ 
++ DEFUN (no_bgp_redistribute_ipv6_rmap_metric,
++        no_bgp_redistribute_ipv6_rmap_metric_cmd,
++-       "no redistribute (connected|kernel|ospf6|ripng|static) route-map WORD metric <0-4294967295>",
+++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD metric <0-4294967295>",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++@@ -8284,6 +8309,7 @@
++        "Open Shurtest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Route map reference\n"
++        "Pointer to route-map entries\n"
++        "Metric for redistributed routes\n"
++@@ -8305,7 +8331,7 @@
++ 
++ ALIAS (no_bgp_redistribute_ipv6_rmap_metric,
++        no_bgp_redistribute_ipv6_metric_rmap_cmd,
++-       "no redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295> route-map WORD",
+++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295> route-map WORD",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Connected\n"
++@@ -8313,6 +8339,7 @@
++        "Open Shurtest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
++        "Static routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "Default metric\n"
++        "Route map reference\n"
++@@ -8325,7 +8352,7 @@
++ {
++   int i;
++   const char *str[] = { "system", "kernel", "connected", "static", "rip",
++-		  "ripng", "ospf", "ospf6", "isis", "bgp"};
+++		  "ripng", "ospf", "ospf6", "isis", "bgp", "hsls", "olsr"};
++ 
++   /* Unicast redistribution only.  */
++   if (safi != SAFI_UNICAST)
++diff -Nur quagga-0.98.6.orig/lib/zebra.h quagga-0.98.6/lib/zebra.h
++--- quagga-0.98.6.orig/lib/zebra.h	2005-06-15 13:54:18.000000000 +0200
+++++ quagga-0.98.6/lib/zebra.h	2006-12-02 10:48:51.000000000 +0100
++@@ -378,7 +378,8 @@
++ #define ZEBRA_ROUTE_ISIS                 8
++ #define ZEBRA_ROUTE_BGP                  9
++ #define ZEBRA_ROUTE_HSLS		 10
++-#define ZEBRA_ROUTE_MAX                  11
+++#define ZEBRA_ROUTE_OLSR		 11
+++#define ZEBRA_ROUTE_MAX                  12
++ 
++ /* Zebra's family types. */
++ #define ZEBRA_FAMILY_IPV4                1
++diff -Nur quagga-0.98.6.orig/ospfd/ospf_vty.c quagga-0.98.6/ospfd/ospf_vty.c
++--- quagga-0.98.6.orig/ospfd/ospf_vty.c	2006-03-30 17:41:20.000000000 +0200
+++++ quagga-0.98.6/ospfd/ospf_vty.c	2006-12-02 10:48:51.000000000 +0100
++@@ -108,9 +108,11 @@
++     *source = ZEBRA_ROUTE_RIP;
++   else if (strncmp (str, "b", 1) == 0)
++     *source = ZEBRA_ROUTE_BGP;
+++  else if (strncmp (str, "ol", 2) == 0)
+++    *source = ZEBRA_ROUTE_OLSR;
++   else
++     return 0;
++-
+++  
++   return 1;
++ }
++ 
++@@ -5302,13 +5304,14 @@
++ 
++ DEFUN (ospf_redistribute_source_metric_type,
++        ospf_redistribute_source_metric_type_routemap_cmd,
++-       "redistribute (kernel|connected|static|rip|bgp) metric <0-16777214> metric-type (1|2) route-map WORD",
+++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric <0-16777214> metric-type (1|2) route-map WORD",
++        "Redistribute information from another routing protocol\n"
++        "Kernel routes\n"
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++        "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "OSPF default metric\n"
++        "OSPF exterior metric type for redistributed routes\n"
++@@ -5346,13 +5349,14 @@
++ 
++ ALIAS (ospf_redistribute_source_metric_type,
++        ospf_redistribute_source_metric_type_cmd,
++-       "redistribute (kernel|connected|static|rip|bgp) metric <0-16777214> metric-type (1|2)",
+++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric <0-16777214> metric-type (1|2)",
++        "Redistribute information from another routing protocol\n"
++        "Kernel routes\n"
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++        "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "OSPF default metric\n"
++        "OSPF exterior metric type for redistributed routes\n"
++@@ -5368,18 +5372,20 @@
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++        "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "OSPF default metric\n")
++ 
++ DEFUN (ospf_redistribute_source_type_metric,
++        ospf_redistribute_source_type_metric_routemap_cmd,
++-       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2) metric <0-16777214> route-map WORD",
+++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2) metric <0-16777214> route-map WORD",
++        "Redistribute information from another routing protocol\n"
++        "Kernel routes\n"
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++        "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "OSPF exterior metric type for redistributed routes\n"
++        "Set OSPF External Type 1 metrics\n"
++        "Set OSPF External Type 2 metrics\n"
++@@ -5417,13 +5423,14 @@
++ 
++ ALIAS (ospf_redistribute_source_type_metric,
++        ospf_redistribute_source_type_metric_cmd,
++-       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2) metric <0-16777214>",
+++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2) metric <0-16777214>",
++        "Redistribute information from another routing protocol\n"
++        "Kernel routes\n"
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++        "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "OSPF exterior metric type for redistributed routes\n"
++        "Set OSPF External Type 1 metrics\n"
++        "Set OSPF External Type 2 metrics\n"
++@@ -5432,7 +5439,7 @@
++ 
++ ALIAS (ospf_redistribute_source_type_metric,
++        ospf_redistribute_source_type_cmd,
++-       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2)",
+++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2)",
++        "Redistribute information from another routing protocol\n"
++        "Kernel routes\n"
++        "Connected\n"
++@@ -5440,28 +5447,31 @@
++        "Routing Information Protocol (RIP)\n"
++        "Border Gateway Protocol (BGP)\n"
++        "OSPF exterior metric type for redistributed routes\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Set OSPF External Type 1 metrics\n"
++        "Set OSPF External Type 2 metrics\n")
++ 
++ ALIAS (ospf_redistribute_source_type_metric,
++        ospf_redistribute_source_cmd,
++-       "redistribute (kernel|connected|static|rip|bgp)",
+++       "redistribute (kernel|connected|static|rip|bgp|olsr)",
++        "Redistribute information from another routing protocol\n"
++        "Kernel routes\n"
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++-       "Border Gateway Protocol (BGP)\n")
+++       "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n")
++ 
++ DEFUN (ospf_redistribute_source_metric_routemap,
++        ospf_redistribute_source_metric_routemap_cmd,
++-       "redistribute (kernel|connected|static|rip|bgp) metric <0-16777214> route-map WORD",
+++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric <0-16777214> route-map WORD",
++        "Redistribute information from another routing protocol\n"
++        "Kernel routes\n"
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++        "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Metric for redistributed routes\n"
++        "OSPF default metric\n"
++        "Route map reference\n"
++@@ -5490,13 +5500,14 @@
++ 
++ DEFUN (ospf_redistribute_source_type_routemap,
++        ospf_redistribute_source_type_routemap_cmd,
++-       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2) route-map WORD",
+++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2) route-map WORD",
++        "Redistribute information from another routing protocol\n"
++        "Kernel routes\n"
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++        "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "OSPF exterior metric type for redistributed routes\n"
++        "Set OSPF External Type 1 metrics\n"
++        "Set OSPF External Type 2 metrics\n"
++@@ -5526,13 +5537,14 @@
++ 
++ DEFUN (ospf_redistribute_source_routemap,
++        ospf_redistribute_source_routemap_cmd,
++-       "redistribute (kernel|connected|static|rip|bgp) route-map WORD",
+++       "redistribute (kernel|connected|static|rip|bgp|olsr) route-map WORD",
++        "Redistribute information from another routing protocol\n"
++        "Kernel routes\n"
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++        "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Route map reference\n"
++        "Pointer to route-map entries\n")
++ {
++@@ -5553,14 +5565,16 @@
++ 
++ DEFUN (no_ospf_redistribute_source,
++        no_ospf_redistribute_source_cmd,
++-       "no redistribute (kernel|connected|static|rip|bgp)",
+++       "no redistribute (kernel|connected|static|rip|bgp|olsr)",
++        NO_STR
++        "Redistribute information from another routing protocol\n"
++        "Kernel routes\n"
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++-       "Border Gateway Protocol (BGP)\n")
+++       "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (olsr)\n"
+++       )
++ {
++   struct ospf *ospf = vty->index;
++   int source;
++@@ -5574,7 +5588,7 @@
++ 
++ DEFUN (ospf_distribute_list_out,
++        ospf_distribute_list_out_cmd,
++-       "distribute-list WORD out (kernel|connected|static|rip|bgp)",
+++       "distribute-list WORD out (kernel|connected|static|rip|bgp|olsr)",
++        "Filter networks in routing updates\n"
++        "Access-list name\n"
++        OUT_STR
++@@ -5582,7 +5596,8 @@
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++-       "Border Gateway Protocol (BGP)\n")
+++       "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n")
++ {
++   struct ospf *ospf = vty->index;
++   int source;
++@@ -5596,7 +5611,7 @@
++ 
++ DEFUN (no_ospf_distribute_list_out,
++        no_ospf_distribute_list_out_cmd,
++-       "no distribute-list WORD out (kernel|connected|static|rip|bgp)",
+++       "no distribute-list WORD out (kernel|connected|static|rip|bgp|olsr)",
++        NO_STR
++        "Filter networks in routing updates\n"
++        "Access-list name\n"
++@@ -5605,7 +5620,8 @@
++        "Connected\n"
++        "Static routes\n"
++        "Routing Information Protocol (RIP)\n"
++-       "Border Gateway Protocol (BGP)\n")
+++       "Border Gateway Protocol (BGP)\n"
+++       "Optimized Link State Routing (OLSR)\n")
++ {
++   struct ospf *ospf = vty->index;
++   int source;
++@@ -7121,7 +7137,8 @@
++ 
++ 
++ const char *distribute_str[] = { "system", "kernel", "connected", "static",
++-				"rip", "ripng", "ospf", "ospf6", "isis", "bgp"};
+++				"rip", "ripng", "ospf", "ospf6", "isis", "bgp",
+++				"hsls","olsr"};
++ int
++ config_write_ospf_redistribute (struct vty *vty, struct ospf *ospf)
++ {
++diff -Nur quagga-0.98.6.orig/zebra/zebra_vty.c quagga-0.98.6/zebra/zebra_vty.c
++--- quagga-0.98.6.orig/zebra/zebra_vty.c	2004-12-18 17:03:29.000000000 +0100
+++++ quagga-0.98.6/zebra/zebra_vty.c	2006-12-02 10:49:45.000000000 +0100
++@@ -53,6 +53,8 @@
++       return "isis";
++     case ZEBRA_ROUTE_BGP:
++       return "bgp";
+++    case ZEBRA_ROUTE_OLSR:
+++      return "olsr";
++     default:
++       return "unknown";
++     }
++@@ -84,6 +86,10 @@
++       return 'I';
++     case ZEBRA_ROUTE_BGP:
++       return 'B';
+++    case ZEBRA_ROUTE_HSLS:
+++      return 'H';
+++    case ZEBRA_ROUTE_OLSR:
+++      return 'L';
++     default:
++       return '?';
++     }
++@@ -755,8 +761,8 @@
++ }
++ 
++ #define SHOW_ROUTE_V4_HEADER "Codes: K - kernel route, C - connected, " \
++-  "S - static, R - RIP, O - OSPF,%s       I - ISIS, B - BGP, " \
++-  "> - selected route, * - FIB route%s%s"
+++  "S - static, R - RIP, O - OSPF,%s       I - ISIS, B - BGP, H - HSLS, " \
+++  "L - OLSR, > - selected route, * - FIB route%s%s"
++ 
++ DEFUN (show_ip_route,
++        show_ip_route_cmd,
++@@ -874,7 +880,7 @@
++ 
++ DEFUN (show_ip_route_protocol,
++        show_ip_route_protocol_cmd,
++-       "show ip route (bgp|connected|isis|kernel|ospf|rip|static)",
+++       "show ip route (bgp|connected|isis|kernel|ospf|rip|olsr|static)",
++        SHOW_STR
++        IP_STR
++        "IP routing table\n"
++@@ -884,6 +890,7 @@
++        "Kernel\n"
++        "Open Shortest Path First (OSPF)\n"
++        "Routing Information Protocol (RIP)\n"
+++       "Optimized Link State Routing (OLSR)\n"
++        "Static routes\n")
++ {
++   int type;
++@@ -898,7 +905,7 @@
++     type = ZEBRA_ROUTE_CONNECT;
++   else if (strncmp (argv[0], "k", 1) ==0)
++     type = ZEBRA_ROUTE_KERNEL;
++-  else if (strncmp (argv[0], "o", 1) == 0)
+++  else if (strncmp (argv[0], "os", 2) == 0)
++     type = ZEBRA_ROUTE_OSPF;
++   else if (strncmp (argv[0], "i", 1) == 0)
++     type = ZEBRA_ROUTE_ISIS;
++@@ -906,6 +913,8 @@
++     type = ZEBRA_ROUTE_RIP;
++   else if (strncmp (argv[0], "s", 1) == 0)
++     type = ZEBRA_ROUTE_STATIC;
+++  else if (strncmp (argv[0], "ol", 2) == 0)
+++    type = ZEBRA_ROUTE_OLSR;
++   else 
++     {
++       vty_out (vty, "Unknown route type%s", VTY_NEWLINE);
++@@ -1732,7 +1741,7 @@
++ 
++ DEFUN (show_ipv6_route_protocol,
++        show_ipv6_route_protocol_cmd,
++-       "show ipv6 route (bgp|connected|isis|kernel|ospf6|ripng|static)",
+++       "show ipv6 route (bgp|connected|isis|kernel|ospf6|ripng|olsr|static)",
++        SHOW_STR
++        IP_STR
++        "IP routing table\n"
++@@ -1742,6 +1751,7 @@
++        "Kernel\n"
++        "Open Shortest Path First (OSPFv3)\n"
++        "Routing Information Protocol (RIPng)\n"
+++       "Optimized Link State Routing (olsr)\n"
++        "Static routes\n")
++ {
++   int type;
++@@ -1756,7 +1766,7 @@
++     type = ZEBRA_ROUTE_CONNECT;
++   else if (strncmp (argv[0], "k", 1) ==0)
++     type = ZEBRA_ROUTE_KERNEL;
++-  else if (strncmp (argv[0], "o", 1) == 0)
+++  else if (strncmp (argv[0], "os", 2) == 0)
++     type = ZEBRA_ROUTE_OSPF6;
++   else if (strncmp (argv[0], "i", 1) == 0)
++     type = ZEBRA_ROUTE_ISIS;
++@@ -1764,7 +1774,9 @@
++     type = ZEBRA_ROUTE_RIPNG;
++   else if (strncmp (argv[0], "s", 1) == 0)
++     type = ZEBRA_ROUTE_STATIC;
++-  else 
+++  else if (strncmp (argv[0], "ol", 2) == 0)
+++     type = ZEBRA_ROUTE_OLSR;
+++  else
++     {
++       vty_out (vty, "Unknown route type%s", VTY_NEWLINE);
++       return CMD_WARNING;
+diff -Nur olsrd-0.4.10.orig/lib/quagga/README olsrd-0.4.10/lib/quagga/README
+--- olsrd-0.4.10.orig/lib/quagga/README	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/README	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,58 @@
++---------------------------------------------------------------------
++QUAGGA PLUGIN FOR OLSRD
++by Immo 'FaUl' Wehrenberg <immo@chaostreff-dortmund.de>
++---------------------------------------------------------------------
++
++This is the Quagga Plugin for the OLSRD. 
++It allowes olsrd to redistribute from various quagga-protocols 
++as well as to export olsr-routes to quagga so that they can be
++redistributed by the quagga-routing-daemons.
++
++Note Sven-Ola: You also need a source distribution of quagga-0.98.5
++or quagga-0.98.6 (that is the current stable). The quagga source tree 
++needs to be patched with quagga-0.98.6-olsr.diff, compiled and installed
++via 'make install'. Because many people will otherwise have compile
++probs, I've added 2 include files in lib/quagga/src/quagga. If you
++want to use another version of quagga, make sure to remove these
++before you compile the olsrd_quagga plugin.
++
++---------------------------------------------------------------------
++PLUGIN PARAMETERS (PlParam)
++---------------------------------------------------------------------
++
++PlParam "redistribute" "<protocol>"
++	where protocol is one of the following:
++	system, kernel, connect, static, rip, ripng, ospf, ospf6,
++	isis, bgp, hsls
++	May be used more then once
++
++PlParam "ExportRoutes" "<only/both>"
++	exportes olsr-routes to quagga or to both, quagga and kernel
++	no routes are exportet if not set.
++
++PlParam "Localpref" "true"
++        sets the zebra SELECTED-flag on the routes exported to zebra
++	which means these routes are prefered in any case.
++
++PlParam "Distance" "0-255"
++        allowes to set Administrative distance to routes exported 
++	to zebra.
++	
++---------------------------------------------------------------------
++SAMPLE CONFIG
++---------------------------------------------------------------------
++
++add in /etc/olsrd.conf:
++
++LoadPlugin "olsrd_quagga.so.0.2.2"
++{
++	PlParam "redistribute" "ospf"
++	PlParam "redistribute" "bgp"
++	PlParam "ExportRoutes" "only"
++        PlParam "Distance" "125" 
++	PlParam "Localpref" "false"
++}
++
++
++---------------------------------------------------------------------
++EOF / 8.5.2006
+diff -Nur olsrd-0.4.10.orig/lib/quagga/src/olsrd_plugin.c olsrd-0.4.10/lib/quagga/src/olsrd_plugin.c
+--- olsrd-0.4.10.orig/lib/quagga/src/olsrd_plugin.c	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/src/olsrd_plugin.c	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,107 @@
++/***************************************************************************
++ projekt              : olsrd-quagga
++ file                 : olsrd_plugin.c  
++ usage                : olsrd-plugin-handler-stuff 
++ copyright            : (C) 2006 by Immo 'FaUl' Wehrenberg
++ e-mail               : immo@chaostreff-dortmund.de
++ ***************************************************************************/
++
++/***************************************************************************
++ *                                                                         *
++ *   This program is free software; you can redistribute it and/or modify  *
++ *   it under the terms of the GNU General Public License version 2 as     *
++ *   published by the Free Software Foundation.                            *
++ *                                                                         *
++ ***************************************************************************/
++
++
++#include <stdio.h>
++#include <string.h>
++
++#include "olsrd_plugin.h"
++#include "olsr.h"
++#include "scheduler.h"
++#include "defs.h"
++#include "quagga.h"
++#include "kernel_routes.h"
++
++#define PLUGIN_NAME    "OLSRD quagga plugin"
++#define PLUGIN_VERSION "0.2.2"
++#define PLUGIN_AUTHOR  "Immo 'FaUl' Wehrenberg"
++#define MOD_DESC PLUGIN_NAME " " PLUGIN_VERSION " by " PLUGIN_AUTHOR
++
++static void __attribute__ ((constructor)) my_init(void);
++static void __attribute__ ((destructor)) my_fini(void);
++static void redist_hna (void);
++
++
++int olsrd_plugin_interface_version() {
++  return OLSRD_PLUGIN_INTERFACE_VERSION;
++}
++
++
++int olsrd_plugin_register_param(char *key, char *value) {
++  const char *zebra_route_types[] = {"system","kernel","connect","static",
++			      "rip","ripng","ospf","ospf6","isis",
++ 			      "bgp","hsls", NULL};
++  unsigned char i = 0;
++
++  if(!strcmp(key, "redistribute")) {
++    for (i = 0; zebra_route_types[i]; i++)
++      if (!strcmp(value, zebra_route_types[i])) {
++	zebra_redistribute(i);
++	return 1;
++      }
++  }
++  else if(!strcmp(key, "ExportRoutes")) {
++    if (!strcmp(value, "only")) {
++      if (!olsr_addroute_remove_function(&olsr_ioctl_add_route, AF_INET))
++	puts ("AIII, could not remove the kernel route exporter");
++      if (!olsr_delroute_remove_function(&olsr_ioctl_del_route, AF_INET))
++	puts ("AIII, could not remove the kernel route deleter");
++      olsr_addroute_add_function(&zebra_add_olsr_v4_route, AF_INET);
++      olsr_delroute_add_function(&zebra_del_olsr_v4_route, AF_INET);
++      return 1;
++    }
++    else if (!strcmp(value, "additional")) {
++      olsr_addroute_add_function(&zebra_add_olsr_v4_route, AF_INET);
++      olsr_delroute_add_function(&zebra_del_olsr_v4_route, AF_INET);
++      return 1;
++    }
++  }
++  else if (!strcmp(key, "Distance")) {
++    unsigned int distance = atoi (key);
++    if (distance < 255)
++      zebra_olsr_distance(distance);
++      return 1;
++  }
++  
++  else if (!strcmp(key, "LocalPref")) {
++    if (!strcmp(key, "true")) 
++      zebra_olsr_localpref();
++    else if (strcmp (key, "false"))
++      return -1;
++    return 1;
++  }
++  return -1;
++}
++
++
++int olsrd_plugin_init() {
++  if(olsr_cnf->ip_version != AF_INET) {
++    fputs("see the source - ipv4 so far not supportet\n" ,stderr);
++    return 1;
++  }
++
++  //  olsr_register_timeout_function(&olsr_timeout);
++  olsr_register_scheduler_event(&zebra_check, NULL, 1, 0, NULL);
++  return 0;
++}
++
++static void my_init(void) {
++  init_zebra();
++}
++
++static void my_fini(void) {
++}
++
+diff -Nur olsrd-0.4.10.orig/lib/quagga/src/quagga/zassert.h olsrd-0.4.10/lib/quagga/src/quagga/zassert.h
+--- olsrd-0.4.10.orig/lib/quagga/src/quagga/zassert.h	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/src/quagga/zassert.h	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,27 @@
++/*
++ * $Id: zassert.h,v 1.2 2004/12/03 18:01:04 ajs Exp $
++ */
++
++#ifndef _QUAGGA_ASSERT_H
++#define _QUAGGA_ASSERT_H
++
++extern void _zlog_assert_failed (const char *assertion, const char *file,
++				 unsigned int line, const char *function)
++				 __attribute__ ((noreturn));
++
++#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
++#define __ASSERT_FUNCTION    __func__
++#elif defined(__GNUC__)
++#define __ASSERT_FUNCTION    __FUNCTION__
++#else
++#define __ASSERT_FUNCTION    NULL
++#endif
++
++#define zassert(EX) ((void)((EX) ?  0 :	\
++			    (_zlog_assert_failed(#EX, __FILE__, __LINE__, \
++						 __ASSERT_FUNCTION), 0)))
++
++#undef assert
++#define assert(EX) zassert(EX)
++
++#endif /* _QUAGGA_ASSERT_H */
+diff -Nur olsrd-0.4.10.orig/lib/quagga/src/quagga/zebra.h olsrd-0.4.10/lib/quagga/src/quagga/zebra.h
+--- olsrd-0.4.10.orig/lib/quagga/src/quagga/zebra.h	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/src/quagga/zebra.h	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,501 @@
++/* Zebra common header.
++   Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002 Kunihiro Ishiguro
++
++This file is part of GNU Zebra.
++
++GNU Zebra is free software; you can redistribute it and/or modify it
++under the terms of the GNU General Public License as published by the
++Free Software Foundation; either version 2, or (at your option) any
++later version.
++
++GNU Zebra is distributed in the hope that it will be useful, but
++WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with GNU Zebra; see the file COPYING.  If not, write to the Free
++Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
++02111-1307, USA.  */
++
++#ifndef _ZEBRA_H
++#define _ZEBRA_H
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif /* HAVE_CONFIG_H */
++
++#ifdef SUNOS_5
++#define _XPG4_2
++#define __EXTENSIONS__
++typedef unsigned int    u_int32_t;
++typedef unsigned short  u_int16_t;
++typedef unsigned char   u_int8_t;
++#endif /* SUNOS_5 */
++
++#ifndef HAVE_SOCKLEN_T
++typedef int socklen_t;
++#endif /* HAVE_SOCKLEN_T */
++
++#include <unistd.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <ctype.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <signal.h>
++#include <string.h>
++#include <pwd.h>
++#include <grp.h>
++#ifdef HAVE_STROPTS_H
++#include <stropts.h>
++#endif /* HAVE_STROPTS_H */
++#include <sys/fcntl.h>
++#ifdef HAVE_SYS_SELECT_H
++#include <sys/select.h>
++#endif /* HAVE_SYS_SELECT_H */
++#include <sys/stat.h>
++#include <sys/time.h>
++#include <sys/types.h>
++#include <sys/param.h>
++#ifdef HAVE_SYS_SYSCTL_H
++#include <sys/sysctl.h>
++#endif /* HAVE_SYS_SYSCTL_H */
++#include <sys/ioctl.h>
++#ifdef HAVE_SYS_CONF_H
++#include <sys/conf.h>
++#endif /* HAVE_SYS_CONF_H */
++#ifdef HAVE_SYS_KSYM_H
++#include <sys/ksym.h>
++#endif /* HAVE_SYS_KSYM_H */
++#include <syslog.h>
++#include <time.h>
++#include <sys/uio.h>
++#include <sys/utsname.h>
++#ifdef HAVE_RUSAGE
++#include <sys/resource.h>
++#endif /* HAVE_RUSAGE */
++#ifdef HAVE_LIMITS_H
++#include <limits.h>
++#endif /* HAVE_LIMITS_H */
++
++/* machine dependent includes */
++#ifdef SUNOS_5
++#include <strings.h>
++#endif /* SUNOS_5 */
++
++/* machine dependent includes */
++#ifdef HAVE_LINUX_VERSION_H
++#include <linux/version.h>
++#endif /* HAVE_LINUX_VERSION_H */
++
++#ifdef HAVE_ASM_TYPES_H
++#include <asm/types.h>
++#endif /* HAVE_ASM_TYPES_H */
++
++/* misc include group */
++#include <stdarg.h>
++#if !(defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
++/* Not C99; do we need to define va_copy? */
++#ifndef va_copy
++#ifdef __va_copy
++#define va_copy(DST,SRC) __va_copy(DST,SRC)
++#else
++/* Now we are desperate; this should work on many typical platforms. 
++   But this is slightly dangerous, because the standard does not require
++   va_copy to be a macro. */
++#define va_copy(DST,SRC) memcpy(&(DST), &(SRC), sizeof(va_list))
++#warning "Not C99 and no va_copy macro available, falling back to memcpy"
++#endif /* __va_copy */
++#endif /* !va_copy */
++#endif /* !C99 */
++
++
++#ifdef HAVE_LCAPS
++#include <sys/capability.h>
++#include <sys/prctl.h>
++#endif /* HAVE_LCAPS */
++
++/* network include group */
++
++#include <sys/socket.h>
++
++#ifdef HAVE_SYS_SOCKIO_H
++#include <sys/sockio.h>
++#endif /* HAVE_SYS_SOCKIO_H */
++
++#ifdef HAVE_NETINET_IN_H
++#include <netinet/in.h>
++#endif /* HAVE_NETINET_IN_H */
++#include <netinet/in_systm.h>
++#include <netinet/ip.h>
++#include <netinet/tcp.h>
++
++#ifdef HAVE_NET_NETOPT_H
++#include <net/netopt.h>
++#endif /* HAVE_NET_NETOPT_H */
++
++#include <net/if.h>
++
++#ifdef HAVE_NET_IF_DL_H
++#include <net/if_dl.h>
++#endif /* HAVE_NET_IF_DL_H */
++
++#ifdef HAVE_NET_IF_VAR_H
++#include <net/if_var.h>
++#endif /* HAVE_NET_IF_VAR_H */
++
++#ifdef HAVE_NET_ROUTE_H
++#include <net/route.h>
++#endif /* HAVE_NET_ROUTE_H */
++
++#ifdef HAVE_NETLINK
++#include <linux/netlink.h>
++#include <linux/rtnetlink.h>
++#else
++#define RT_TABLE_MAIN		0
++#endif /* HAVE_NETLINK */
++
++#ifdef HAVE_NETDB_H
++#include <netdb.h>
++#endif /* HAVE_NETDB_H */
++
++#include <arpa/inet.h>
++#include <arpa/telnet.h>
++
++#ifdef HAVE_INET_ND_H
++#include <inet/nd.h>
++#endif /* HAVE_INET_ND_H */
++
++#ifdef HAVE_NETINET_IN_VAR_H
++#include <netinet/in_var.h>
++#endif /* HAVE_NETINET_IN_VAR_H */
++
++#ifdef HAVE_NETINET6_IN6_VAR_H
++#include <netinet6/in6_var.h>
++#endif /* HAVE_NETINET6_IN6_VAR_H */
++
++#ifdef HAVE_NETINET_IN6_VAR_H
++#include <netinet/in6_var.h>
++#endif /* HAVE_NETINET_IN6_VAR_H */
++
++#ifdef HAVE_NETINET6_IN_H
++#include <netinet6/in.h>
++#endif /* HAVE_NETINET6_IN_H */
++
++
++#ifdef HAVE_NETINET6_IP6_H
++#include <netinet6/ip6.h>
++#endif /* HAVE_NETINET6_IP6_H */
++
++#ifdef HAVE_NETINET_ICMP6_H
++#include <netinet/icmp6.h>
++#endif /* HAVE_NETINET_ICMP6_H */
++
++#ifdef HAVE_NETINET6_ND6_H
++#include <netinet6/nd6.h>
++#endif /* HAVE_NETINET6_ND6_H */
++
++/* Some systems do not define UINT32_MAX */
++#ifndef UINT32_MAX
++#define UINT32_MAX 0xFFFFFFFFU
++#endif /* UINT32_MAX */
++
++#ifdef HAVE_LIBUTIL_H
++#include <libutil.h>
++#endif /* HAVE_LIBUTIL_H */
++
++#ifdef HAVE_GLIBC_BACKTRACE
++#include <execinfo.h>
++#endif /* HAVE_GLIBC_BACKTRACE */
++
++#ifdef BSDI_NRL
++
++#ifdef HAVE_NETINET6_IN6_H
++#include <netinet6/in6.h>
++#endif /* HAVE_NETINET6_IN6_H */
++
++#ifdef NRL
++#include <netinet6/in6.h>
++#endif /* NRL */
++
++#define IN6_ARE_ADDR_EQUAL IN6_IS_ADDR_EQUAL
++
++#endif /* BSDI_NRL */
++
++/* Local includes: */
++#if !(defined(__GNUC__) || defined(VTYSH_EXTRACT_PL)) 
++#define __attribute__(x)
++#endif  /* !__GNUC__ || VTYSH_EXTRACT_PL */
++
++#include "zassert.h"
++
++
++#ifdef HAVE_BROKEN_CMSG_FIRSTHDR
++/* This bug is present in Solaris 8 and pre-patch Solaris 9 <sys/socket.h>;
++   please refer to http://bugzilla.quagga.net/show_bug.cgi?id=142 */
++
++/* Check that msg_controllen is large enough. */
++#define ZCMSG_FIRSTHDR(mhdr) \
++  (((size_t)((mhdr)->msg_controllen) >= sizeof(struct cmsghdr)) ? \
++   CMSG_FIRSTHDR(mhdr) : (struct cmsghdr *)NULL)
++
++#warning "CMSG_FIRSTHDR is broken on this platform, using a workaround"
++
++#else /* HAVE_BROKEN_CMSG_FIRSTHDR */
++#define ZCMSG_FIRSTHDR(M) CMSG_FIRSTHDR(M)
++#endif /* HAVE_BROKEN_CMSG_FIRSTHDR */
++
++
++
++/* 
++ * RFC 3542 defines several macros for using struct cmsghdr.
++ * Here, we define those that are not present
++ */
++
++/*
++ * Internal defines, for use only in this file.
++ * These are likely wrong on other than ILP32 machines, so warn.
++ */
++#ifndef _CMSG_DATA_ALIGN
++#define _CMSG_DATA_ALIGN(n)           (((n) + 3) & ~3)
++#endif /* _CMSG_DATA_ALIGN */
++
++#ifndef _CMSG_HDR_ALIGN
++#define _CMSG_HDR_ALIGN(n)            (((n) + 3) & ~3)
++#endif /* _CMSG_HDR_ALIGN */
++
++/*
++ * CMSG_SPACE and CMSG_LEN are required in RFC3542, but were new in that
++ * version.
++ */
++#ifndef CMSG_SPACE
++#define CMSG_SPACE(l)       (_CMSG_DATA_ALIGN(sizeof(struct cmsghdr)) + \
++                              _CMSG_HDR_ALIGN(l))
++#warning "assuming 4-byte alignment for CMSG_SPACE"
++#endif  /* CMSG_SPACE */
++
++
++#ifndef CMSG_LEN
++#define CMSG_LEN(l)         (_CMSG_DATA_ALIGN(sizeof(struct cmsghdr)) + (l))
++#warning "assuming 4-byte alignment for CMSG_LEN"
++#endif /* CMSG_LEN */
++
++
++/*  The definition of struct in_pktinfo is missing in old version of
++    GLIBC 2.1 (Redhat 6.1).  */
++#if defined (GNU_LINUX) && ! defined (HAVE_INPKTINFO)
++struct in_pktinfo
++{
++  int ipi_ifindex;
++  struct in_addr ipi_spec_dst;
++  struct in_addr ipi_addr;
++};
++#endif
++
++/* 
++ * OSPF Fragmentation / fragmented writes
++ *
++ * ospfd can support writing fragmented packets, for cases where
++ * kernel will not fragment IP_HDRINCL and/or multicast destined
++ * packets (ie TTBOMK all kernels, BSD, SunOS, Linux). However,
++ * SunOS, probably BSD too, clobber the user supplied IP ID and IP
++ * flags fields, hence user-space fragmentation will not work.
++ * Only Linux is known to leave IP header unmolested.
++ * Further, fragmentation really should be done the kernel, which already
++ * supports it, and which avoids nasty IP ID state problems.
++ *
++ * Fragmentation of OSPF packets can be required on networks with router
++ * with many many interfaces active in one area, or on networks with links
++ * with low MTUs.
++ */
++#ifdef GNU_LINUX
++#define WANT_OSPF_WRITE_FRAGMENT
++#endif
++
++/* 
++ * IP_HDRINCL / struct ip byte order
++ *
++ * Linux: network byte order
++ * *BSD: network, except for length and offset. (cf Stevens)
++ * SunOS: nominally as per BSD. but bug: network order on LE.
++ * OpenBSD: network byte order, apart from older versions which are as per 
++ *          *BSD
++ */
++#if defined(__NetBSD__) || defined(__FreeBSD__) \
++   || (defined(__OpenBSD__) && (OpenBSD < 200311)) \
++   || (defined(SUNOS_5) && defined(WORDS_BIGENDIAN))
++#define HAVE_IP_HDRINCL_BSD_ORDER
++#endif
++
++/* MAX / MIN are not commonly defined, but useful */
++#ifndef MAX
++#define MAX(a, b) ((a) > (b) ? (a) : (b))
++#endif 
++#ifndef MIN
++#define MIN(a, b) ((a) < (b) ? (a) : (b))
++#endif
++
++/* For old definition. */
++#ifndef IN6_ARE_ADDR_EQUAL
++#define IN6_ARE_ADDR_EQUAL IN6_IS_ADDR_EQUAL
++#endif /* IN6_ARE_ADDR_EQUAL */
++
++/* Zebra message types. */
++#define ZEBRA_INTERFACE_ADD                1
++#define ZEBRA_INTERFACE_DELETE             2
++#define ZEBRA_INTERFACE_ADDRESS_ADD        3
++#define ZEBRA_INTERFACE_ADDRESS_DELETE     4
++#define ZEBRA_INTERFACE_UP                 5
++#define ZEBRA_INTERFACE_DOWN               6
++#define ZEBRA_IPV4_ROUTE_ADD               7
++#define ZEBRA_IPV4_ROUTE_DELETE            8
++#define ZEBRA_IPV6_ROUTE_ADD               9
++#define ZEBRA_IPV6_ROUTE_DELETE           10
++#define ZEBRA_REDISTRIBUTE_ADD            11
++#define ZEBRA_REDISTRIBUTE_DELETE         12
++#define ZEBRA_REDISTRIBUTE_DEFAULT_ADD    13
++#define ZEBRA_REDISTRIBUTE_DEFAULT_DELETE 14
++#define ZEBRA_IPV4_NEXTHOP_LOOKUP         15
++#define ZEBRA_IPV6_NEXTHOP_LOOKUP         16
++#define ZEBRA_IPV4_IMPORT_LOOKUP          17
++#define ZEBRA_IPV6_IMPORT_LOOKUP          18
++#define ZEBRA_INTERFACE_RENAME            19
++#define ZEBRA_ROUTER_ID_ADD               20
++#define ZEBRA_ROUTER_ID_DELETE            21
++#define ZEBRA_ROUTER_ID_UPDATE            22
++#define ZEBRA_MESSAGE_MAX                 23
++
++/* Zebra route's types. */
++#define ZEBRA_ROUTE_SYSTEM               0
++#define ZEBRA_ROUTE_KERNEL               1
++#define ZEBRA_ROUTE_CONNECT              2
++#define ZEBRA_ROUTE_STATIC               3
++#define ZEBRA_ROUTE_RIP                  4
++#define ZEBRA_ROUTE_RIPNG                5
++#define ZEBRA_ROUTE_OSPF                 6
++#define ZEBRA_ROUTE_OSPF6                7
++#define ZEBRA_ROUTE_ISIS                 8
++#define ZEBRA_ROUTE_BGP                  9
++#define ZEBRA_ROUTE_HSLS		 10
++#define ZEBRA_ROUTE_OLSR		 11
++#define ZEBRA_ROUTE_MAX                  12
++
++/* Zebra's family types. */
++#define ZEBRA_FAMILY_IPV4                1
++#define ZEBRA_FAMILY_IPV6                2
++#define ZEBRA_FAMILY_MAX                 3
++
++/* Error codes of zebra. */
++#define ZEBRA_ERR_RTEXIST               -1
++#define ZEBRA_ERR_RTUNREACH             -2
++#define ZEBRA_ERR_EPERM                 -3
++#define ZEBRA_ERR_RTNOEXIST             -4
++
++/* Zebra message flags */
++#define ZEBRA_FLAG_INTERNAL           0x01
++#define ZEBRA_FLAG_SELFROUTE          0x02
++#define ZEBRA_FLAG_BLACKHOLE          0x04
++#define ZEBRA_FLAG_IBGP               0x08
++#define ZEBRA_FLAG_SELECTED           0x10
++#define ZEBRA_FLAG_CHANGED            0x20
++#define ZEBRA_FLAG_STATIC             0x40
++#define ZEBRA_FLAG_REJECT             0x80
++
++/* Zebra nexthop flags. */
++#define ZEBRA_NEXTHOP_IFINDEX            1
++#define ZEBRA_NEXTHOP_IFNAME             2
++#define ZEBRA_NEXTHOP_IPV4               3
++#define ZEBRA_NEXTHOP_IPV4_IFINDEX       4
++#define ZEBRA_NEXTHOP_IPV4_IFNAME        5
++#define ZEBRA_NEXTHOP_IPV6               6
++#define ZEBRA_NEXTHOP_IPV6_IFINDEX       7
++#define ZEBRA_NEXTHOP_IPV6_IFNAME        8
++#define ZEBRA_NEXTHOP_BLACKHOLE          9
++
++#ifndef INADDR_LOOPBACK
++#define	INADDR_LOOPBACK	0x7f000001	/* Internet address 127.0.0.1.  */
++#endif
++
++/* Address family numbers from RFC1700. */
++#define AFI_IP                    1
++#define AFI_IP6                   2
++#define AFI_MAX                   3
++
++/* Subsequent Address Family Identifier. */
++#define SAFI_UNICAST              1
++#define SAFI_MULTICAST            2
++#define SAFI_UNICAST_MULTICAST    3
++#define SAFI_MPLS_VPN             4
++#define SAFI_MAX                  5
++
++/* Filter direction.  */
++#define FILTER_IN                 0
++#define FILTER_OUT                1
++#define FILTER_MAX                2
++
++/* Default Administrative Distance of each protocol. */
++#define ZEBRA_KERNEL_DISTANCE_DEFAULT      0
++#define ZEBRA_CONNECT_DISTANCE_DEFAULT     0
++#define ZEBRA_STATIC_DISTANCE_DEFAULT      1
++#define ZEBRA_RIP_DISTANCE_DEFAULT       120
++#define ZEBRA_RIPNG_DISTANCE_DEFAULT     120
++#define ZEBRA_OSPF_DISTANCE_DEFAULT      110
++#define ZEBRA_OSPF6_DISTANCE_DEFAULT     110
++#define ZEBRA_ISIS_DISTANCE_DEFAULT      115
++#define ZEBRA_IBGP_DISTANCE_DEFAULT      200
++#define ZEBRA_EBGP_DISTANCE_DEFAULT       20
++
++/* Flag manipulation macros. */
++#define CHECK_FLAG(V,F)      ((V) & (F))
++#define SET_FLAG(V,F)        (V) = (V) | (F)
++#define UNSET_FLAG(V,F)      (V) = (V) & ~(F)
++
++/* AFI and SAFI type. */
++typedef u_int16_t afi_t;
++typedef u_int8_t safi_t;
++
++/* Zebra types. */
++typedef u_int16_t zebra_size_t;
++typedef u_int8_t zebra_command_t;
++
++/* FIFO -- first in first out structure and macros.  */
++struct fifo
++{
++  struct fifo *next;
++  struct fifo *prev;
++};
++
++#define FIFO_INIT(F)                                  \
++  do {                                                \
++    struct fifo *Xfifo = (struct fifo *)(F);          \
++    Xfifo->next = Xfifo->prev = Xfifo;                \
++  } while (0)
++
++#define FIFO_ADD(F,N)                                 \
++  do {                                                \
++    struct fifo *Xfifo = (struct fifo *)(F);          \
++    struct fifo *Xnode = (struct fifo *)(N);          \
++    Xnode->next = Xfifo;                              \
++    Xnode->prev = Xfifo->prev;                        \
++    Xfifo->prev = Xfifo->prev->next = Xnode;          \
++  } while (0)
++
++#define FIFO_DEL(N)                                   \
++  do {                                                \
++    struct fifo *Xnode = (struct fifo *)(N);          \
++    Xnode->prev->next = Xnode->next;                  \
++    Xnode->next->prev = Xnode->prev;                  \
++  } while (0)
++
++#define FIFO_HEAD(F)                                  \
++  ((((struct fifo *)(F))->next == (struct fifo *)(F)) \
++  ? NULL : (F)->next)
++
++#define FIFO_EMPTY(F)                                 \
++  (((struct fifo *)(F))->next == (struct fifo *)(F))
++
++#define FIFO_TOP(F)                                   \
++  (FIFO_EMPTY(F) ? NULL : ((struct fifo *)(F))->next)
++
++#endif /* _ZEBRA_H */
+diff -Nur olsrd-0.4.10.orig/lib/quagga/src/quagga.c olsrd-0.4.10/lib/quagga/src/quagga.c
+--- olsrd-0.4.10.orig/lib/quagga/src/quagga.c	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/src/quagga.c	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,870 @@
++/***************************************************************************
++ projekt              : olsrd-quagga
++ file                 : quagga.c  
++ usage                : communication with the zebra-daemon 
++ copyright            : (C) 2006 by Immo 'FaUl' Wehrenberg
++ e-mail               : immo@chaostreff-dortmund.de
++ ***************************************************************************/
++
++/***************************************************************************
++ *                                                                         *
++ *   This program is free software; you can redistribute it and/or modify  *
++ *   it under the terms of the GNU General Public License version 2 as     *
++ *   published by the Free Software Foundation.                            *
++ *                                                                         *
++ ***************************************************************************/
++
++
++#ifdef MY_DEBUG
++#include <stdio.h>
++#endif
++
++#define HAVE_SOCKLEN_T
++#include <quagga/zebra.h>
++
++#include <stdint.h>
++#include <sys/types.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
++#include "quagga.h"
++
++#include "olsr.h"
++#include "log.h"
++#include "defs.h"
++#include "local_hna_set.h"
++
++#ifdef USE_UNIX_DOMAIN_SOCKET
++#include <sys/un.h>
++#define ZEBRA_SOCKET "/var/run/quagga/zserv.api"
++#endif
++
++#define ZAPI_MESSAGE_NEXTHOP  0x01
++#define ZAPI_MESSAGE_IFINDEX  0x02
++#define ZAPI_MESSAGE_DISTANCE 0x04
++#define ZAPI_MESSAGE_METRIC   0x08
++
++#define BUFSIZE 1024
++
++#define STATUS_CONNECTED 1
++
++static struct {
++  char status; // TODO: internal status
++  int sock; // Socket to zebra...
++  char redistribute[ZEBRA_ROUTE_MAX];
++  char distance;
++  char flags;
++  struct ipv4_route *v4_rt; // routes currently exportet to zebra
++} zebra;
++
++
++/* prototypes intern */
++static char *try_read (ssize_t *);
++static char* zebra_route_packet (struct ipv4_route r, ssize_t *);
++static int parse_interface_add (char *, size_t);
++static int parse_interface_delete (char *, size_t);
++static int parse_interface_up (char *, size_t);
++static int parse_interface_down (char *, size_t);
++static int parse_interface_address_add (char *, size_t);
++static int parse_interface_address_delete (char *, size_t);
++static int parse_ipv4_route (char *, size_t, struct ipv4_route *);
++static int ipv4_route_add (char *, size_t);
++static int ipv4_route_delete (char *, size_t);
++static int parse_ipv6_route_add (char*, size_t);
++static int zebra_reconnect (void);
++static int zebra_connect (void);
++static int add_v4_route_status (struct ipv4_route r);
++static int del_v4_route_status (struct ipv4_route r);
++static uint32_t prefixlentomask (uint8_t);
++static void free_ipv4_route (struct ipv4_route);
++static void update_olsr_zebra_routes (struct ipv4_route*, struct ipv4_route*);
++static struct ipv4_route *zebra_create_ipv4_route_table_entry (uint32_t,
++							       uint32_t,
++							       uint32_t);
++static struct ipv4_route *zebra_create_ipv4_route_table (void);
++static void zebra_free_ipv4_route_table (struct ipv4_route*);
++static uint8_t masktoprefixlen (uint32_t);
++
++
++
++#ifdef MY_DEBUG
++static void dump_ipv4_route (struct ipv4_route r, char *c) {
++  int i = 0, x = 0;
++
++  puts (c);
++  printf("type: %d\n", r.type);
++  puts("flags:");
++  printf("  Internal: %s\n",r.flags&ZEBRA_FLAG_INTERNAL?"yes":"no");
++  printf("  Selfroute %s\n",r.flags&ZEBRA_FLAG_SELFROUTE?"yes":"no");
++  printf("  Blackhole %s\n",r.flags&ZEBRA_FLAG_BLACKHOLE?"yes":"no");
++  printf("  IBGP: %s\n",r.flags&ZEBRA_FLAG_IBGP?"yes":"no");
++  printf("  Selected: %s\n",r.flags&ZEBRA_FLAG_SELECTED?"yes":"no");
++  printf("  Changed: %s\n",r.flags&ZEBRA_FLAG_CHANGED?"yes":"no");
++  printf("  static: %s\n",r.flags&ZEBRA_FLAG_STATIC?"yes":"no");
++  printf("  reject: %s\n",r.flags&ZEBRA_FLAG_REJECT?"yes":"no");
++  puts("message:");
++  printf("  nexthop: %s\n",r.message&ZAPI_MESSAGE_NEXTHOP?"yes":"no");
++  printf("  ifindex: %s\n",r.message&ZAPI_MESSAGE_IFINDEX?"yes":"no");
++  printf("  distance: %s\n",r.message&ZAPI_MESSAGE_DISTANCE?"yes":"no");
++  printf("  metric: %s\n",r.message&ZAPI_MESSAGE_METRIC?"yes":"no");
++  printf("Prefixlen: %d\n", r.prefixlen);
++  printf("Prefix: %d", (unsigned char)r.prefix);
++  c = (char*) &r.prefix;
++  while (++i < (r.prefixlen/8 + (r.prefixlen % 8 ? 1 : 0)))
++    printf(".%d",(unsigned char)*(c + i));
++  while (i++ < 4)
++    printf(".0");
++  puts("");
++  i=0;
++  if (r.message&ZAPI_MESSAGE_NEXTHOP) {
++    printf("nexthop-count: %d\n", r.nh_count);
++    while (i++ < r.nh_count) {
++      if (r.nexthops[i].type == ZEBRA_NEXTHOP_IPV4) {
++	c = (unsigned char*) &r.nexthops[i].payload.v4;
++	printf ("Nexthop %d: %d", i, (unsigned char) *c);
++	while (++x < 4) {
++	  printf (".%d", (unsigned char) c[x]);
++	}
++	puts("");
++      }
++    }
++    i=0;
++  }
++  if (r.message&ZAPI_MESSAGE_IFINDEX) {
++    
++    printf("index-number: %d\n", r.ind_num);
++    while (i++ < r.ind_num)
++      printf("Index: %d: %d\n", i, r.index[i]);
++    i=0;
++    if (r.message&ZAPI_MESSAGE_DISTANCE)
++      printf("Distance: %d\n",r.distance);
++    if (r.message&ZAPI_MESSAGE_METRIC)
++      printf("Metric: %d\n",r.metric);
++    puts("\n");
++  }
++}
++#endif
++
++void *my_realloc (void *buf, size_t s, const char *c) {
++  buf = realloc (buf, s);
++  if (!buf) {
++    OLSR_PRINTF (1, "OUT OF MEMORY: %s\n", strerror(errno));
++    olsr_syslog(OLSR_LOG_ERR, "olsrd: out of memory!: %m\n");
++    olsr_exit(c, EXIT_FAILURE);
++  }
++  return buf;
++}
++
++int init_zebra () {
++  if (!zebra_connect()) {
++    olsr_exit ("AIIIII, could not connect to zebra! is zebra running?", 
++	       EXIT_FAILURE);
++  }
++}
++
++
++static int zebra_reconnect (void) {
++  struct ipv4_route *tmp;
++  int i;
++
++  if (!zebra_connect()) 
++    // log: zebra-reconnect failed
++    ;
++  for (i = 0; ZEBRA_ROUTE_MAX - 1; i++)
++    if (zebra.redistribute[i]) zebra_redistribute(i + 1);
++
++  for (tmp = zebra.v4_rt; tmp; tmp = tmp->next)
++    zebra_add_v4_route(*tmp);
++}
++
++
++static int add_v4_route_status (struct ipv4_route r) {
++
++  struct ipv4_route *tmp = olsr_malloc (sizeof r, "quagga_v4_route_status");
++  memcpy (tmp, &r, sizeof r);
++
++  if (r.message & ZAPI_MESSAGE_NEXTHOP) {
++    tmp->nexthops = olsr_malloc (r.nh_count * sizeof tmp->nexthops, 
++				 "quagga_v4_route_status");
++    memcpy (tmp->nexthops, &r.nexthops, sizeof *r.nexthops);
++  }
++
++  if (r.message & ZAPI_MESSAGE_IFINDEX) {
++    tmp->index = olsr_malloc (r.ind_num * sizeof *tmp->index, 
++			      "quagga_v4_route_status");
++    memcpy (tmp->index, &r.index, r.ind_num * sizeof *tmp->index);
++  }
++
++  tmp->next = zebra.v4_rt;
++  zebra.v4_rt = tmp;
++
++  return 0;
++
++}
++
++
++static int cmp_v4_route (struct ipv4_route a, struct ipv4_route b) {
++  if (a.type != b.type) return 1;
++  if (a.flags != b.flags) return 1;
++  if (a.message != b.message) return 1;
++  if (a.prefixlen != b.prefixlen) return 1;
++  if (a.message & ZAPI_MESSAGE_NEXTHOP) {
++    if (a.nh_count != b.nh_count) return 1;
++    if (memcmp (a.nexthops, b.nexthops, a.nh_count * sizeof *b.nexthops)) 
++      return 1;
++  }
++  if (a.message & ZAPI_MESSAGE_IFINDEX) {
++    if (a.ind_num != b.ind_num) return 1;
++    if (memcpy (a.index, b.index, a.ind_num * sizeof *a.index)) return 1;
++  }
++  if (a.message & ZAPI_MESSAGE_DISTANCE) 
++    if (a.distance != b.distance) return 1;
++  if (a.message & ZAPI_MESSAGE_METRIC)
++    if (a.metric != b.metric) return 1;
++  return 0;
++}
++
++static int del_v4_route_status (struct ipv4_route r) {
++
++  struct ipv4_route *tmp, *prv = 0;
++
++  for (tmp = zebra.v4_rt; tmp; tmp = tmp->next) {
++    if (!cmp_v4_route(*tmp, r)) {
++      if (prv) prv->next = tmp->next;
++
++      free_ipv4_route(*tmp);
++      free (tmp);
++
++      return 0;
++
++    }
++    prv = tmp;
++  }
++
++  return 1;
++}
++
++
++/* Connect to the zebra-daemon, returns a socket */
++static int zebra_connect (void) {
++
++#ifndef USE_UNIX_DOMAIN_SOCKET
++  struct sockaddr_in i;
++  close (zebra.sock);
++
++  zebra.sock = socket (AF_INET,SOCK_STREAM, 0);
++#else
++  struct sockaddr_un i;
++  close (zebra.sock);
++
++  zebra.sock = socket (AF_UNIX,SOCK_STREAM, 0);
++#endif
++
++  int ret;
++
++  if (zebra.sock <0 )
++    olsr_exit("could not create socket!", EXIT_FAILURE);
++  
++  memset (&i, 0, sizeof i);
++#ifndef USE_UNIX_DOMAIN_SOCKET
++  i.sin_family = AF_INET;
++  i.sin_port = htons (ZEBRA_PORT);
++  i.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
++#else
++  i.sun_family = AF_UNIX;
++  strcpy (i.sun_path, ZEBRA_SOCKET);
++#endif
++
++  ret = connect (zebra.sock, (struct sockaddr *)&i, sizeof i);
++  if  (ret < 0) {
++    close (zebra.sock);
++  }
++  else zebra.status |= STATUS_CONNECTED;
++  return zebra.sock;
++}
++
++    
++/* Sends a command to zebra, command is 
++   the command defined in zebra.h, options is the packet-payload, 
++   optlen the length, of the payload */
++char zebra_send_command (unsigned char command, char * options, int optlen) {
++
++#ifdef ZEBRA_HEADER_MARKER
++  char *p = olsr_malloc (optlen + 6, "zebra_send_command");
++  uint16_t length = optlen + 6; /* length of option + command + packet_length +
++				   marker + zserv-version */
++  uint16_t cmd;
++#else
++  char *p = olsr_malloc (optlen + 3, "zebra_send_command");
++  uint16_t length = optlen + 3;  // length of option + command + packet_length
++#endif
++  
++  int ret;
++  
++  uint16_t len = htons(length);
++  memcpy (p, &len, 2);
++
++#ifdef ZEBRA_HEADER_MARKER
++  p[2] = ZEBRA_HEADER_MARKER;
++  p[3] = ZSERV_VERSION;
++  cmd = htons (command);
++  memcpy (p + 4, &cmd, 2);
++  memcpy (p + 6, options, optlen);
++#else
++  p[2] = command;
++  memcpy (p + 3, options, optlen);
++#endif
++
++  errno = 0;
++
++  do {
++    ret = write (zebra.sock, p, length);
++    if (ret < 0) {
++      if (errno == EINTR) {
++	errno = 0;
++	continue;
++      }
++      else {
++	zebra.status &= ~STATUS_CONNECTED;
++	return -1;
++      }
++    }
++    p = p+ret;
++  } while ((length -= ret));
++
++  return 0;
++}
++
++
++/* Creates a Route-Packet-Payload, needs address, netmask, nexthop, 
++   distance, and a pointer of an size_t */
++static char* zebra_route_packet (struct ipv4_route r, ssize_t *optlen) {
++
++  int count;
++
++  char *cmdopt, *t;
++  *optlen = 4; // first: type, flags, message, prefixlen
++  *optlen += r.prefixlen / 8 + (r.prefixlen % 8 ? 1 : 0); // + prefix
++  if (r.message & ZAPI_MESSAGE_NEXTHOP)
++    if (r.nexthops->type == ZEBRA_NEXTHOP_IPV4 
++	|| r.nexthops->type == ZEBRA_NEXTHOP_IPV4_IFINDEX){
++      *optlen += (sizeof r.nexthops->payload.v4 
++		  + sizeof r.nexthops->type) * r.nh_count + 1;
++    }
++    else if (r.nexthops->type == 0) 
++      *optlen += 5;
++  if (r.message & ZAPI_MESSAGE_IFINDEX)
++    *optlen += r.ind_num * sizeof *r.index + 1;
++  if (r.message & ZAPI_MESSAGE_DISTANCE)
++    *optlen++;
++  if (r.message & ZAPI_MESSAGE_METRIC)
++    *optlen += sizeof r.metric;
++
++  cmdopt = olsr_malloc (*optlen, "zebra add_v4_route");
++
++  t = cmdopt;
++  *t++ = r.type; 
++  *t++ = r.flags; 
++  *t++ = r.message;
++  *t++ = r.prefixlen;
++  for (count = 0; count < r.prefixlen/8 + (r.prefixlen % 8 ? 1 : 0); count++) {
++    *t++ = *((char*)&r.prefix + count); /* this is so sick!! */
++  }
++
++  if (r.message & ZAPI_MESSAGE_NEXTHOP) {
++    *t++ = r.nh_count;
++    *t++ = r.nexthops->type;
++    if (r.nexthops->type == ZEBRA_NEXTHOP_IPV4 || 
++	r.nexthops->type == ZEBRA_NEXTHOP_IPV4_IFINDEX) {
++      for (count = 0; count != r.nh_count; count++) {
++	memcpy (t, &r.nexthops[count].payload.v4, 
++		sizeof r.nexthops->payload.v4);
++	t += sizeof r.nexthops->payload.v4;
++      }
++    }
++    else if (r.nexthops->type == 0) {
++      *t++ = 0;
++      *t++ = 0;
++      *t++ = 0;
++    }
++  }
++  if (r.message & ZAPI_MESSAGE_IFINDEX) {
++    *t++ = r.ind_num;
++    memcpy (t, r.index, sizeof *r.index * r.ind_num);
++    t += sizeof r.index * r.ind_num;
++  }
++  if (r.message & ZAPI_MESSAGE_METRIC) {
++    memcpy (t, &r.metric, sizeof r.metric);
++    t += sizeof r.metric;
++  }
++  if (r.message & ZAPI_MESSAGE_DISTANCE)
++    *t++ = r.distance;
++  return cmdopt;
++}
++
++
++/* adds a route to zebra-daemon */
++int zebra_add_v4_route (struct ipv4_route r) {
++  
++  char *cmdopt;
++  ssize_t optlen;
++  int retval;
++
++  cmdopt = zebra_route_packet (r, &optlen);
++
++  retval = zebra_send_command (ZEBRA_IPV4_ROUTE_ADD, cmdopt, optlen);
++  free (cmdopt);
++  return retval;
++  
++}
++
++/* deletes a route from the zebra-daemon */
++int zebra_delete_v4_route (struct ipv4_route r) {
++  
++  char *cmdopt;
++  ssize_t optlen;
++  int retval;
++
++  cmdopt = zebra_route_packet (r, &optlen);
++  
++  retval = zebra_send_command (ZEBRA_IPV4_ROUTE_DELETE, cmdopt, optlen);
++  free (cmdopt);
++
++  return retval;
++  
++}
++
++
++/* Check wether there is data from zebra aviable */
++void zebra_check (void* foo) {
++  char *data, *f;
++  ssize_t len, ret;
++
++  if (!(zebra.status & STATUS_CONNECTED)) {
++    if (!zebra_reconnect()) return;
++  }
++  data = try_read (&len);
++  if (data) {
++    f = data;
++    do {
++      ret = zebra_parse_packet (f, len);
++      if (!ret) {//something wired happened
++	puts ("DEBUG: IIIIIIIIIIRGS");
++	exit (EXIT_FAILURE);
++      }
++      f += ret;
++    } while ((f - data) < len);
++    free (data);
++  }
++}
++
++
++// tries to read a packet from zebra_socket
++// if there is something to read - make sure to read whole packages
++static char *try_read (ssize_t *len) {
++  char *buf = NULL;
++  ssize_t ret = 0, bsize = 0;
++  uint16_t length = 0, l = 0;
++  int sockstate;
++
++  *len = 0;
++
++  sockstate = fcntl (zebra.sock, F_GETFL, 0);
++  fcntl (zebra.sock, F_SETFL, sockstate|O_NONBLOCK);
++
++  do { 
++    if (*len == bsize) {
++      bsize += BUFSIZE;
++      buf = my_realloc (buf, bsize, "Zebra try_read");
++    }
++    ret = read (zebra.sock, buf + l, bsize - l);
++    if (ret <= 0) {
++      if (errno == EAGAIN) {
++	errno = 0;
++      }
++      else {
++	olsr_printf(1, "OOPS, something realy wired happened:"
++		    "read returned %s\n", strerror(errno));
++	errno = 0;
++	zebra.status &= ~STATUS_CONNECTED;
++	return 0;
++      }
++      free (buf);
++      return NULL;
++    }
++    *len += ret;
++
++    while ((*len - l) > length) {
++      l += length;
++      memcpy (&length, buf + l, 2);
++      length = ntohs (length);
++    }
++    if (((*len) - l) == length) break; // GOT FULL PACKAGE!!
++    if (*len < l) {
++      fcntl (zebra.sock, F_SETFL, sockstate);
++      continue;
++    }
++  } while (1);
++
++  fcntl (zebra.sock, F_SETFL, sockstate);
++  return buf;
++}
++
++
++/* Parse a packet recived from zebra */
++int zebra_parse_packet (char *packet, ssize_t maxlen) {
++
++  /* Array of functions */
++  int (*foo[ZEBRA_MESSAGE_MAX]) (char *, size_t) = {
++    parse_interface_add,
++    parse_interface_delete,
++    parse_interface_address_add,
++    parse_interface_address_delete,
++    parse_interface_up,
++    parse_interface_down,
++    ipv4_route_add,
++    ipv4_route_delete,
++    parse_ipv6_route_add
++  };
++
++#ifdef MY_DEBUG
++  puts ("DEBUG: zebra_parse_packet");
++#endif
++  uint16_t length;
++  
++  int ret;
++  memcpy (&length, packet, 2);
++  length = ntohs (length);
++  
++  if (maxlen < length) {
++    puts("Error: programmer is an idiot");
++    printf ("DEBUG: maxlen = %d, packet_length = %d\n", maxlen, length);
++    return maxlen;
++  }
++
++  if (packet[2] - 1 < ZEBRA_MESSAGE_MAX && foo[packet[2] - 1]) { 
++    if (!(ret = foo[packet[2] - 1] (packet + 3, length - 3))) 
++      return length;
++    else printf ("DEBUG: Parse error: %d\n", ret);
++  }
++  else
++    printf ("Unknown packet type: %d\n", packet[2]);
++
++  puts ("Quagga: RECIVED PACKET FROM ZEBRA THAT I CAN'T PARSE");
++
++  return length;
++}
++
++
++static int parse_interface_add (char *opt, size_t len) {
++  //todo
++  return 0;
++}
++
++
++static int parse_interface_delete (char *opt, size_t len) {
++  //todo
++  return 0;
++}
++
++
++static int parse_interface_address_add (char *opt, size_t len) {
++  
++  //todo
++  return 0;
++}
++
++static int parse_interface_up (char *opt, size_t len) {
++  
++  //todo
++  return 0;
++}
++
++static int parse_interface_down (char *opt, size_t len) {
++  
++  //todo
++  return 0;
++}
++
++
++static int parse_interface_address_delete (char *opt, size_t  len) {
++  //todo
++  return 0;
++}
++
++
++/* Parse an ipv4-route-packet recived from zebra
++ */
++static int parse_ipv4_route (char *opt, size_t len, struct ipv4_route *r) {
++  int c;
++
++  if (len < 4) return -1;
++  
++  r->type = *opt++;
++  r->flags = *opt++;
++  r->message = *opt++;
++  r->prefixlen = *opt++;
++  len -= 4;
++  r->prefix = 0;
++  
++  if ((int)len < r->prefixlen/8 + (r->prefixlen % 8 ? 1 : 0)) return -1;
++  
++  memcpy (&r->prefix, opt, r->prefixlen/8 + (r->prefixlen % 8 ? 1 : 0));
++  opt += r->prefixlen/8 + (r->prefixlen % 8 ? 1 : 0);
++  
++  if (r->message & ZAPI_MESSAGE_NEXTHOP) {
++    if (len < 1) return -1;
++    r->nh_count = *opt++;
++    len--;
++    if (len < (sizeof (uint32_t) + 1) * r->nh_count) return -1;
++    r->nexthops = olsr_malloc ((sizeof r->nexthops->type +
++				sizeof r->nexthops->payload) * r->nh_count,
++			       "quagga: parse_ipv4_route_add");
++    for (c = 0; c < r->nh_count; c++) {
++      r->nexthops[c].type = *opt++;
++      memcpy (&r->nexthops[c].payload.v4, opt, sizeof (uint32_t));
++      opt += sizeof (uint32_t);
++      len -= sizeof (uint32_t) + 1;
++    }
++  }
++
++  if (r->message & ZAPI_MESSAGE_IFINDEX) {
++    if (len < 1) return -1;
++    r->ind_num = *opt++;
++    if (len < sizeof (uint32_t) * r->ind_num) return -1;
++    r->index = olsr_malloc (sizeof (uint32_t) * r->ind_num,
++			    "quagga: parse_ipv4_route_add");
++    memcpy (r->index, opt, r->ind_num * sizeof (uint32_t));
++    opt += sizeof (uint32_t) * r->ind_num;
++    len -= sizeof (uint32_t) * r->ind_num;
++  }
++
++  if (r->message & ZAPI_MESSAGE_DISTANCE) {
++    if (len < 1) return -1;
++    r->distance = *opt++;
++    len--;
++  }
++
++  if (r->message & ZAPI_MESSAGE_METRIC) {
++    if (len < sizeof (uint32_t)) return -1;
++    memcpy (&r->metric, opt, sizeof (uint32_t));
++  }
++
++  return 0;
++}
++
++
++static int ipv4_route_add (char *opt, size_t len) {
++
++  struct ipv4_route r;
++  int f;
++    
++  f = parse_ipv4_route (opt, len, &r);
++  if (f < 0) {
++    printf ("parse-error: %d\n",f);
++    return f;
++  }
++  
++  add_hna4_route (r);
++  return 0;
++}
++
++static int ipv4_route_delete (char *opt, size_t len) {
++  struct ipv4_route r;
++  int f;
++  
++  f = parse_ipv4_route (opt, len, &r);
++  if (f < 0) return f;
++
++  return delete_hna4_route (r);
++  
++}
++
++static int parse_ipv6_route_add (char *opt, size_t len) {
++  //todo
++  return 0;
++}
++
++
++/* start redistribution FROM zebra */
++int zebra_redistribute (unsigned char type) {
++
++  if (type > ZEBRA_ROUTE_MAX) return -1;
++  zebra.redistribute[type - 1] = 1;
++
++  return zebra_send_command (ZEBRA_REDISTRIBUTE_ADD, &type, 1);
++  
++  
++}  
++
++
++/* end redistribution FROM zebra */
++int zebra_disable_redistribute (unsigned char type) {
++  
++  if (type > ZEBRA_ROUTE_MAX) return -1;
++  zebra.redistribute[type - 1] = 0;
++
++  return zebra_send_command (ZEBRA_REDISTRIBUTE_DELETE, &type, 1);
++
++}
++  
++static uint32_t prefixlentomask (uint8_t prefix) {
++  uint32_t mask = 0;
++
++  if (prefix) {
++    mask = 0xffffffff<<(32-prefix);
++    mask = ntohl(mask);
++  }
++
++  return mask;
++}
++
++int add_hna4_route (struct ipv4_route r) {
++  union olsr_ip_addr net, mask;
++  
++#ifdef MY_DEBUG
++  dump_ipv4_route(r, "add_hna4_route");
++#endif
++
++  mask.v4 = prefixlentomask(r.prefixlen);
++  net.v4 = r.prefix;
++
++  add_local_hna4_entry(&net, &mask);
++  free_ipv4_route(r);
++  return 0;
++}
++
++int delete_hna4_route (struct ipv4_route r) {
++
++  union olsr_ip_addr net, mask;
++
++#ifdef MY_DEBUG
++  dump_ipv4_route(r, "delete_hna4_route");
++#endif
++
++  mask.v4 = prefixlentomask(r.prefixlen);
++  net.v4 = r.prefix;
++
++  remove_local_hna4_entry(&net, &mask) ? 0 : -1;
++  free_ipv4_route(r);
++  return 0;
++
++}
++
++static void free_ipv4_route (struct ipv4_route r) {
++
++  if(r.message&ZAPI_MESSAGE_IFINDEX && r.ind_num) free(r.index);
++  if(r.message&ZAPI_MESSAGE_NEXTHOP && r.nh_count) free(r.nexthops);
++
++}
++
++static uint8_t masktoprefixlen (uint32_t mask) {
++  
++  uint8_t prefixlen = 0;
++
++  mask = htonl (mask);
++
++  if (mask) while (mask << ++prefixlen && prefixlen < 32);
++
++  return prefixlen;
++  
++}
++
++int zebra_add_olsr_v4_route (struct rt_entry *r) {
++  
++  struct ipv4_route route;
++  int retval;
++  
++  route.type = ZEBRA_ROUTE_OLSR; // OLSR
++  route.message = ZAPI_MESSAGE_METRIC;
++  route.flags = zebra.flags;
++  route.prefixlen = masktoprefixlen (r->rt_mask.v4);
++  route.prefix = r->rt_dst.v4;
++  if ((r->rt_router.v4 == r->rt_dst.v4 && route.prefixlen == 32)){
++    route.message |= ZAPI_MESSAGE_IFINDEX | ZAPI_MESSAGE_NEXTHOP;
++    route.ind_num = 1;
++    route.index = olsr_malloc (sizeof *route.index, 
++			       "zebra_add_olsr_v4_route");
++    *route.index = htonl(r->rt_if->if_index);
++    route.nexthops = olsr_malloc (sizeof route.nexthops->type +
++				  sizeof route.nexthops->payload,
++				  "zebra_add_olsr_v4_route");
++    route.nh_count = 1;
++    route.nexthops->type = 0;
++  }
++  else {
++    route.message |= ZAPI_MESSAGE_NEXTHOP;
++    route.nh_count = 1;
++    route.nexthops = olsr_malloc (route.nh_count * 
++				  (sizeof route.nexthops->type + 
++				   sizeof route.nexthops->payload), 
++				   "zebra_add_olsr_v4_route");
++    route.nexthops->type = ZEBRA_NEXTHOP_IPV4;
++    route.nexthops->payload.v4 = r->rt_router.v4;
++  }
++
++  route.metric = r->rt_metric;
++  route.metric = htonl(route.metric);
++
++  if (zebra.distance) {
++    route.message |= ZAPI_MESSAGE_DISTANCE;
++    route.distance = zebra.distance;
++  }
++
++  add_v4_route_status (route);
++  retval = zebra_add_v4_route(route);
++  free_ipv4_route (route);
++  return retval;
++}
++
++int zebra_del_olsr_v4_route (struct rt_entry *r) {
++  
++  struct ipv4_route route;
++  int retval;
++  route.type = ZEBRA_ROUTE_OLSR; // OLSR
++  route.message = ZAPI_MESSAGE_METRIC;
++  route.flags = zebra.flags;
++  route.prefixlen = masktoprefixlen (r->rt_mask.v4);
++  route.prefix = r->rt_dst.v4;
++  if ((r->rt_router.v4 == r->rt_dst.v4 && route.prefixlen == 32)){
++    route.message |= ZAPI_MESSAGE_IFINDEX;
++    route.ind_num = 1;
++    route.index = olsr_malloc (sizeof *route.index, 
++			       "zebra_add_olsr_v4_route");
++    *route.index = htonl (r->rt_if->if_index);
++    route.nexthops = olsr_malloc (sizeof route.nexthops->type +
++				  sizeof route.nexthops->payload,
++				  "zebra_add_olsr_v4_route");
++    route.nh_count = 1;
++    route.nexthops->type = 0;
++  }
++  else {
++    route.message |= ZAPI_MESSAGE_NEXTHOP;
++    route.nh_count = 1;
++    route.nexthops = olsr_malloc (route.nh_count * 
++				  (sizeof route.nexthops->type +
++				   sizeof route.nexthops->payload), 
++				  "zebra_add_olsr_v4_route");
++    route.nexthops->type = ZEBRA_NEXTHOP_IPV4;
++    route.nexthops->payload.v4 = r->rt_router.v4;
++  }
++  route.metric = r->rt_metric;
++  route.metric = htonl (route.metric);
++  
++  if (zebra.distance) {
++    route.message |= ZAPI_MESSAGE_DISTANCE;
++    route.distance = zebra.distance;
++  }
++
++  retval = zebra_delete_v4_route(route);
++  del_v4_route_status(route);
++  free_ipv4_route (route);
++  return retval;
++}
++
++void zebra_olsr_distance (char dist) {
++  zebra.distance = dist;
++}
++
++void zebra_olsr_localpref (void) {
++  zebra.flags &= ZEBRA_FLAG_SELECTED;
++}
+diff -Nur olsrd-0.4.10.orig/lib/quagga/src/quagga.h olsrd-0.4.10/lib/quagga/src/quagga.h
+--- olsrd-0.4.10.orig/lib/quagga/src/quagga.h	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/src/quagga.h	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,68 @@
++/***************************************************************************
++ projekt              : olsrd-quagga
++ file                 : quagga.h  
++ usage                : header for quagga.c
++ copyright            : (C) 2006 by Immo 'FaUl' Wehrenberg
++ e-mail               : immo@chaostreff-dortmund.de
++ ***************************************************************************/
++
++/***************************************************************************
++ *                                                                         *
++ *   This program is free software; you can redistribute it and/or modify  *
++ *   it under the terms of the GNU General Public License version 2 as     *
++ *   published by the Free Software Foundation.                            *
++ *                                                                         *
++ ***************************************************************************/
++
++#include <stdint.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include "routing_table.h"
++#define HAVE_SOCKLEN_T
++#include <quagga/zebra.h>
++
++#ifndef ZEBRA_PORT
++#define ZEBRA_PORT 2600
++#endif
++
++#ifdef ZEBRA_HEADER_MARKER
++#ifndef ZSERV_VERSION
++#define ZSERV_VERSION 1
++#endif
++#endif
++
++struct ipv4_route {
++  uint8_t type;
++  uint8_t flags;
++  uint8_t message;
++  uint8_t prefixlen;
++  uint32_t prefix;
++  uint8_t nh_count;
++  struct {
++    uint8_t type;
++    union {
++      uint32_t v4;
++    } payload;
++  } *nexthops;
++  uint8_t ind_num;
++  uint32_t *index;
++  uint32_t metric;
++  uint32_t distance;
++  struct ipv4_route *next;
++};
++
++int init_zebra (void);
++char zebra_send_command (unsigned char, char *, int );
++int zebra_add_v4_route (struct ipv4_route r);
++int zebra_delete_v4_route (struct ipv4_route r);
++void zebra_check (void*);
++int zebra_parse_packet (char*, ssize_t);
++int zebra_redistribute (unsigned char);
++int zebra_disable_redistribute (unsigned char);
++int add_hna4_route (struct ipv4_route);
++int delete_hna4_route (struct ipv4_route);
++void *my_realloc (void *, size_t, const char*);
++int zebra_add_olsr_v4_route (struct rt_entry*);
++int zebra_del_olsr_v4_route (struct rt_entry*);
++void zebra_olsr_localpref(void);
++void zebra_olsr_distance(char);
+diff -Nur olsrd-0.4.10.orig/lib/quagga/test/foo.c olsrd-0.4.10/lib/quagga/test/foo.c
+--- olsrd-0.4.10.orig/lib/quagga/test/foo.c	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/test/foo.c	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,10 @@
++#include "quagga.h"
++
++int main (void) {
++  
++  init_zebra();
++  zebra_redistribute (2);
++  //  zebra_redistribute (1);
++  while (!sleep (1)) zebra_check();
++  return 0;
++}
+diff -Nur olsrd-0.4.10.orig/lib/quagga/test/foo.pl olsrd-0.4.10/lib/quagga/test/foo.pl
+--- olsrd-0.4.10.orig/lib/quagga/test/foo.pl	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/test/foo.pl	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,19 @@
++#!/usr/bin/perl
++
++use IO::Socket;
++
++$command = 11; # 11 = redistribute_add , 13 = redistribute_default_add
++
++$proto = 2; # connected 
++
++$remote = IO::Socket::INET->new (Proto => "tcp",
++                                 PeerAddr => "127.0.0.1",
++                                 PeerPort => "2600",
++                                 );
++$remote->autoflush (1);
++#print $remote pack ("nc", 3, 13);
++print $remote pack ("nc",3,1);
++print $remote pack ("ncc", 4,$command,2);
++print $remote pack ("ncccccNcNcNN", 25, 7, 10, 16, 11, 25, 0xc0a80206, 0, 0, 1, 5, 1);
++print <$remote>;
++close $remote
+diff -Nur olsrd-0.4.10.orig/lib/quagga/test/quagga.try1.c olsrd-0.4.10/lib/quagga/test/quagga.try1.c
+--- olsrd-0.4.10.orig/lib/quagga/test/quagga.try1.c	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/test/quagga.try1.c	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,710 @@
++/* 
++ *  (C) 2006 by Immo 'FaUl' Wehrenberg <immo@chaostreff-dortmund.de>
++ *  
++ *  This code is covered by the GPLv2
++ *   
++ */
++
++#include <stdint.h>
++#ifdef MY_DEBUG
++#include <stdio.h>
++#endif
++#include <sys/types.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
++#define HAVE_SOCKLEN_T
++#include <quagga/zebra.h>
++#include "quagga.h"
++
++#ifdef OLSR_PLUGIN
++#include "olsr.h"
++#include "log.h"
++#include "defs.h"
++#include "local_hna_set.h"
++#endif
++
++#define ZAPI_MESSAGE_NEXTHOP  0x01
++#define ZAPI_MESSAGE_IFINDEX  0x02
++#define ZAPI_MESSAGE_DISTANCE 0x04
++#define ZAPI_MESSAGE_METRIC   0x08
++
++
++#define STATUS_CONNECTED 1
++#define BUFSIZE 1024
++static char status = 0;
++
++static int zsock; // Socket to zebra...
++struct ipv4_route *quagga_routes = 0; // routes currently exportet to zebra
++
++
++/* prototypes ntern */
++static char *try_read (ssize_t *);
++static char* zebra_route_packet (struct ipv4_route r, ssize_t *);
++static int parse_interface_add (char *, size_t);
++static int parse_interface_delete (char *, size_t);
++static int parse_interface_up (char *, size_t);
++static int parse_interface_down (char *, size_t);
++static int parse_interface_address_add (char *, size_t);
++static int parse_interface_address_delete (char *, size_t);
++static int parse_ipv4_route (char *, size_t, struct ipv4_route *);
++static int ipv4_route_add (char *, size_t);
++static int ipv4_route_delete (char *, size_t);
++static int parse_ipv6_route_add (char*, size_t);
++static uint32_t prefixlentomask (uint8_t);
++static void free_ipv4_route (struct ipv4_route);
++static void update_olsr_zebra_routes (struct ipv4_route*, struct ipv4_route*);
++static struct ipv4_route *zebra_create_ipv4_route_table_entry (uint32_t,
++							       uint32_t,
++							       uint32_t);
++static struct ipv4_route *zebra_create_ipv4_route_table (void);
++static void zebra_free_ipv4_route_table (struct ipv4_route*);
++static uint8_t masktoprefixlen (uint32_t);
++
++
++
++#ifdef MY_DEBUG
++static void dump_ipv4_route (struct ipv4_route r, char *c) {
++  int i = 0, x = 0;
++
++  puts (c);
++  printf("type: %d\n", r.type);
++  puts("flags:");
++  printf("  Internal: %s\n",r.flags&ZEBRA_FLAG_INTERNAL?"yes":"no");
++  printf("  Selfroute %s\n",r.flags&ZEBRA_FLAG_SELFROUTE?"yes":"no");
++  printf("  Blackhole %s\n",r.flags&ZEBRA_FLAG_BLACKHOLE?"yes":"no");
++  printf("  IBGP: %s\n",r.flags&ZEBRA_FLAG_IBGP?"yes":"no");
++  printf("  Selected: %s\n",r.flags&ZEBRA_FLAG_SELECTED?"yes":"no");
++  printf("  Changed: %s\n",r.flags&ZEBRA_FLAG_CHANGED?"yes":"no");
++  printf("  static: %s\n",r.flags&ZEBRA_FLAG_STATIC?"yes":"no");
++  printf("  reject: %s\n",r.flags&ZEBRA_FLAG_REJECT?"yes":"no");
++  puts("message:");
++  printf("  nexthop: %s\n",r.message&ZAPI_MESSAGE_NEXTHOP?"yes":"no");
++  printf("  ifindex: %s\n",r.message&ZAPI_MESSAGE_IFINDEX?"yes":"no");
++  printf("  distance: %s\n",r.message&ZAPI_MESSAGE_DISTANCE?"yes":"no");
++  printf("  metric: %s\n",r.message&ZAPI_MESSAGE_METRIC?"yes":"no");
++  printf("Prefixlen: %d\n", r.prefixlen);
++  printf("Prefix: %d", (unsigned char)r.prefix);
++  c = (char*) &r.prefix;
++  while (++i < (r.prefixlen/8 + (r.prefixlen % 8 ? 1 : 0)))
++    printf(".%d",(unsigned char)*(c + i));
++  while (i++ < 4)
++    printf(".0");
++  puts("");
++  i=0;
++  if (r.message&ZAPI_MESSAGE_NEXTHOP) {
++    
++    printf("nexthop-count: %d\n", r.nh_count);
++    while (i++ < r.nh_count) {
++      c = (unsigned char*) &r.nexthops[i];
++      printf ("Nexthop %d: %d", i, (unsigned char) *c);
++      while (++x < 4) {
++	printf (".%d", (unsigned char) c[x]);
++      }
++      puts("");
++    }
++    i=0;
++  }
++  if (r.message&ZAPI_MESSAGE_IFINDEX) {
++    
++    printf("index-number: %d\n", r.ind_num);
++    while (i++ < r.ind_num)
++      printf("Index: %d: %d\n", i, r.index[i]);
++    i=0;
++    if (r.message&ZAPI_MESSAGE_DISTANCE)
++      printf("Distance: %d\n",r.distance);
++    if (r.message&ZAPI_MESSAGE_METRIC)
++      printf("Metric: %d\n",r.metric);
++    puts("\n");
++  }
++}
++#endif
++
++void *my_realloc (void *buf, size_t s, const char *c) {
++  buf = realloc (buf, s);
++  if (!buf) {
++#ifdef OLSR_PLUGIN
++    OLSR_PRINTF (1, "OUT OF MEMORY: %s\n", strerror(errno));
++    olsr_syslog(OLSR_LOG_ERR, "olsrd: out of memory!: %m\n");
++    olsr_exit(c, EXIT_FAILURE);
++#else
++    exit (EXIT_FAILURE);
++#endif
++  }
++  return buf;
++}
++
++
++#ifndef OLSR_PLUGIN 
++void *olsr_malloc (size_t f, const char *c) {
++  void* v = malloc (f);
++  return v;
++}
++#endif
++
++/* Connect to the zebra-daemon, returns a socket */
++int init_zebra () {
++  struct sockaddr_in i;
++  int ret;
++
++  zsock = socket (AF_INET,SOCK_STREAM, 0);
++  if (zsock <0 ) // TODO: Could not create socket
++    return -1;
++  memset (&i, 0, sizeof i);
++  i.sin_family = AF_INET;
++  i.sin_port = htons (ZEBRA_PORT);
++  //  i.sin_len = sizeof i;
++  i.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
++  
++  ret = connect (zsock, (struct sockaddr *)&i, sizeof i);
++  if  (ret < 0) {
++    close (zsock);
++    return -1;
++  }
++  status |= STATUS_CONNECTED;
++  return zsock;
++}
++
++    
++/* Sends a command to zebra, command is 
++   the command defined in zebra.h, options is the packet-payload, 
++   optlen the length, of the payload */
++char zebra_send_command (unsigned char command, char * options, int optlen) {
++
++  char *p = olsr_malloc (optlen+3, "zebra send_command");
++  uint16_t length = optlen + 3;  // length of option + command + packet_length
++  
++  int ret;
++  
++  uint16_t len = htons(length);
++  memcpy (p, &len, 2);
++  p[2] = command;
++  memcpy (p + 3, options, optlen);
++  
++  do {
++    ret = write (zsock, p, length);
++    if (ret < 0) {
++      if (errno == EINTR) continue;
++    }
++    else return -1;
++    p = p+ret;
++  } while ((length =- ret));
++
++  return 0;
++}
++
++
++/* Creates a Route-Packet-Payload, needs address, netmask, nexthop, 
++   distance, and a pointer of an size_t */
++static char* zebra_route_packet (struct ipv4_route r, ssize_t *optlen) {
++
++  char *cmdopt, *t;
++  *optlen = 9; // first: type, flags, message, prefixlen, nexthop number, nexthop)
++  *optlen += r.prefixlen / 8 + (r.prefixlen % 8 ? 1 : 0);
++  
++  cmdopt = olsr_malloc (*optlen, "zebra add_v4_route");
++  t = cmdopt;
++  *t++ = 10; // Type: olsr
++  *t++ = r.flags; // flags
++  *t++ = r.message; // message: contains nexthop
++  *t++ = r.prefixlen;
++  memcpy (t, &r.prefix, r.prefixlen/8 + (r.prefixlen % 8 ? 1 : 0));
++  *t += r.prefixlen/8 + (r.prefixlen % 8 ? 1 : 0);
++  *t++ = r.nh_count;
++  memcpy (t, r.nexthops, r.nh_count * sizeof *r.nexthops);
++  return cmdopt;
++}
++
++
++/* adds a route to zebra-daemon (needs socket from zebra,
++   address = prefix of the route
++   mask = netmask of the route
++   nexthop = nexthop of the route
++   distance = distance-value of the route
++*/
++int zebra_add_v4_route (struct ipv4_route r) {
++  
++  char *cmdopt;
++  ssize_t optlen;
++
++  cmdopt = zebra_route_packet (r, &optlen);
++
++  puts ("DEBUG: zebra_route_packet returned");
++  
++  
++
++  return zebra_send_command (ZEBRA_IPV4_ROUTE_ADD, cmdopt, optlen);
++
++}
++
++/* deletes a route from the zebra-daemon (
++   needs socket from zebra,
++   address = prefix of the route
++   mask = netmask of the route
++   nexthop = nexthop of the route
++   distance = distance-value of the route
++*/
++int zebra_delete_v4_route (struct ipv4_route r) {
++  
++  char *cmdopt;
++  ssize_t optlen;
++  
++  cmdopt = zebra_route_packet (r, &optlen);
++  
++  return zebra_send_command (ZEBRA_IPV4_ROUTE_DELETE, cmdopt, optlen);
++
++}
++
++
++/* Check wether there is data from zebra aviable */
++void zebra_check (void* foo) {
++  char *data, *f;
++  ssize_t len, ret;
++
++  if (!status & STATUS_CONNECTED) {
++  }
++  data = try_read (&len);
++  if (data) {
++    f = data;
++    do {
++      ret = zebra_parse_packet (f, len);
++      if (!ret) {//something wired happened
++	puts ("DEBUG: IIIIIIIIIIRGS");
++	exit (EXIT_FAILURE);
++      }
++      f += ret;
++    } while ((f - data) < len);
++    free (data);
++  }
++}
++
++
++// tries to read a packet from zebra_socket
++// if there is something to read - make sure to read whole packages
++static char *try_read (ssize_t *len) {
++  char *buf = NULL;
++  ssize_t ret = 0, bsize = 0;
++  uint16_t length = 0, l = 0;
++  int sockstate;
++
++  *len = 0;
++
++  sockstate = fcntl (zsock, F_GETFL, 0);
++  fcntl (zsock, F_SETFL, sockstate|O_NONBLOCK);
++
++  do { 
++    if (*len == bsize) {
++      bsize += BUFSIZE;
++      buf = my_realloc (buf, bsize, "Zebra try_read");
++    }
++    ret = read (zsock, buf + l, bsize - l);
++    if (ret <= 0) {
++      if (errno == EAGAIN) {
++	errno = 0;
++      }
++      else {
++	// TODO: errorhandling
++	;
++      }
++      free (buf);
++      return NULL;
++    }
++    *len += ret;
++
++    while ((*len - l) > length) {
++      //      printf ("DEBUG: *len -l > length - %d - %d > %d\n", *len, l, length);
++      l += length;
++      memcpy (&length, buf + l, 2);
++      length = ntohs (length);
++    }
++    //    printf ("DEBUG: *len, l, length: %d,%d,%d\n", *len, l, length);
++    if (((*len) - l) == length) break; // GOT FULL PACKAGE!!
++    if (*len < l) {
++      //      printf ("DEBUG: *len, l, length: %d,%d,%d\n", *len, l, length);
++      fcntl (zsock, F_SETFL, sockstate);
++      continue;
++    }
++  } while (1);
++
++  fcntl (zsock, F_SETFL, sockstate);
++  return buf;
++}
++
++
++/* Parse a packet recived from zebra */
++int zebra_parse_packet (char *packet, ssize_t maxlen) {
++
++  /* Array of functions */
++  int (*foo[ZEBRA_MESSAGE_MAX]) (char *, size_t) = {
++    parse_interface_add,
++    parse_interface_delete,
++    parse_interface_address_add,
++    parse_interface_address_delete,
++    parse_interface_up,
++    parse_interface_down,
++    ipv4_route_add,
++    ipv4_route_delete,
++    parse_ipv6_route_add
++  };
++  
++  puts ("DEBUG: zebra_parse_packet");
++  uint16_t length;
++  
++  int ret;
++  memcpy (&length, packet, 2);
++  length = ntohs (length);
++  
++  if (maxlen < length) {
++    puts("Error: programmer is an idiot");
++    printf ("DEBUG: maxlen = %d, packet_length = %d\n", maxlen, length);
++    return maxlen;
++  }
++
++  if (packet[2] - 1 < ZEBRA_MESSAGE_MAX && foo[packet[2] - 1]) { 
++    if (!(ret = foo[packet[2] - 1] (packet + 3, length - 3))) 
++      return length;
++    else printf ("DEBUG: Parse error: %d\n", ret);
++  }
++  else
++    printf ("Unknown packet type: %d\n", packet[2]);
++
++  puts ("Quagga: RECIVED PACKET FROM ZEBRA THAT I CAN'T PARSE");
++
++  return length;
++}
++
++
++static int parse_interface_add (char *opt, size_t len) {
++  //todo
++  return 0;
++}
++
++
++static int parse_interface_delete (char *opt, size_t len) {
++  //todo
++  return 0;
++}
++
++
++static int parse_interface_address_add (char *opt, size_t len) {
++  
++  //todo
++  return 0;
++}
++
++static int parse_interface_up (char *opt, size_t len) {
++  
++  //todo
++  return 0;
++}
++
++static int parse_interface_down (char *opt, size_t len) {
++  
++  //todo
++  return 0;
++}
++
++
++static int parse_interface_address_delete (char *opt, size_t  len) {
++  //todo
++  return 0;
++}
++
++
++/* Parse an ipv4-route-packet recived from zebra
++ */
++static int parse_ipv4_route (char *opt, size_t len, struct ipv4_route *r) {
++  //  puts ("DEBUG: parse_ipv4_route");
++  if (len < 4) return -1;
++  
++  r->type = *opt++;
++  r->flags = *opt++;
++  r->message = *opt++;
++  r->prefixlen = *opt++;
++  len -= 4;
++  r->prefix = 0;
++  
++  if ((int)len < r->prefixlen/8 + (r->prefixlen % 8 ? 1 : 0)) return -1;
++  
++  memcpy (&r->prefix, opt, r->prefixlen/8 + (r->prefixlen % 8 ? 1 : 0));
++  opt += r->prefixlen/8 + (r->prefixlen % 8 ? 1 : 0);
++  
++  if (r->message & ZAPI_MESSAGE_NEXTHOP) {
++    if (len < 1) return -1;
++    r->nh_count = *opt++;
++    if (len < sizeof (uint32_t) * r->nh_count) return -1;
++    r->nexthops = olsr_malloc (sizeof (uint32_t) * r->nh_count, 
++			       "quagga: parse_ipv4_route_add");
++    memcpy (r->nexthops, opt, sizeof (uint32_t) * r->nh_count);
++    opt += sizeof (uint32_t) * r->nh_count;
++    len -= sizeof (uint32_t) * r->nh_count + 1;
++  }
++
++  if (r->message & ZAPI_MESSAGE_IFINDEX) {
++    if (len < 1) return -2;
++    r->ind_num = *opt++;
++    if (len < sizeof (uint32_t) * r->ind_num) return -3;
++    r->index = olsr_malloc (sizeof (uint32_t) * r->ind_num,
++			    "quagga: parse_ipv4_route_add");
++    memcpy (r->index, opt, r->ind_num * sizeof (uint32_t));
++    opt += sizeof (uint32_t) * r->ind_num;
++    len -= sizeof (uint32_t) * r->ind_num;
++  }
++
++  if (r->message & ZAPI_MESSAGE_DISTANCE)
++    // todo
++    ;
++
++  if (r->message & ZAPI_MESSAGE_METRIC) {
++    if (len < sizeof (uint32_t)) return -4;
++    memcpy (&r->metric, opt, sizeof (uint32_t));
++  }
++
++  return 0;
++}
++
++
++static int ipv4_route_add (char *opt, size_t len) {
++
++  struct ipv4_route r;
++  int f;
++  
++  //  puts ("DEBUG: ipv4_route_add");
++  
++  f = parse_ipv4_route (opt, len, &r);
++  if (f < 0) {
++    printf ("parse-error: %d\n",f);
++    return f;
++  }
++  
++  add_hna4_route (r);
++  return 0;
++}
++
++static int ipv4_route_delete (char *opt, size_t len) {
++  struct ipv4_route r;
++  int f;
++  
++  f = parse_ipv4_route (opt, len, &r);
++  if (f < 0) return f;
++
++  return delete_hna4_route (r);
++  // OK, now delete that foo
++  
++}
++
++static int parse_ipv6_route_add (char *opt, size_t len) {
++  //todo
++  return 0;
++}
++
++
++/* start redistribution FROM zebra */
++int zebra_redistribute (unsigned char type) {
++
++  return zebra_send_command (ZEBRA_REDISTRIBUTE_ADD, &type, 1);
++  
++  
++}  
++
++
++/* end redistribution FROM zebra */
++int zebra_disable_redistribute (unsigned char type) {
++  
++  return zebra_send_command (ZEBRA_REDISTRIBUTE_DELETE, &type, 1);
++
++}
++  
++static uint32_t prefixlentomask (uint8_t prefix) {
++  uint32_t mask;
++  mask = 0xffffffff<<(32-prefix);
++  mask = ntohl(mask);
++  return mask;
++}
++
++int add_hna4_route (struct ipv4_route r) {
++  union olsr_ip_addr net, mask;
++  
++#ifdef MY_DEBUG
++  dump_ipv4_route(r, "add_hna4_route");
++#endif
++
++  mask.v4 = prefixlentomask(r.prefixlen);
++  net.v4 = r.prefix;
++
++
++#ifdef OLSR_PLUGIN
++  add_local_hna4_entry(&net, &mask);
++#endif
++  free_ipv4_route(r);
++  return 0;
++}
++
++int delete_hna4_route (struct ipv4_route r) {
++
++  union olsr_ip_addr net, mask;
++
++#ifdef MY_DEBUG
++  dump_ipv4_route(r, "delete_hna4_route");
++#endif
++
++  mask.v4 = prefixlentomask(r.prefixlen);
++  net.v4 = r.prefix;
++
++#ifdef OLSR_PLUGIN
++  return remove_local_hna4_entry(&net, &mask) ? 0 : -1;
++#endif
++  
++  free_ipv4_route(r);
++  return 0;
++
++}
++
++static void free_ipv4_route (struct ipv4_route r) {
++
++  if(r.message&ZAPI_MESSAGE_IFINDEX && r.ind_num) free(r.index);
++  if(r.message&ZAPI_MESSAGE_NEXTHOP && r.nh_count) free(r.nexthops);
++
++}
++ 
++void zebra_clear_routes(void) {
++
++  struct ipv4_route *t;
++
++  t = quagga_routes;
++  while (t) {
++    zebra_delete_v4_route(*t);
++    t=t->next;
++  }
++  zebra_free_ipv4_route_table(quagga_routes);
++
++  quagga_routes = NULL;
++}
++
++
++void zebra_update_hna (void* f) {
++  
++  struct ipv4_route *a = zebra_create_ipv4_route_table();
++  update_olsr_zebra_routes(a, quagga_routes);
++  zebra_free_ipv4_route_table(quagga_routes);
++
++  quagga_routes = a;
++
++}
++
++static struct ipv4_route *zebra_create_ipv4_route_table (void) {
++
++  struct ipv4_route *r = 0, *t = 0 /* make compiler happy */;
++  int i;
++  struct hna_entry *e;
++  struct hna_net *n;
++
++  for (i = 0; i < HASHSIZE; i++) {
++    e = hna_set[i].next;
++    for(;e != &hna_set[i];e = e->next) {
++      n = e->networks.next;
++      for(;n != &e->networks; n = n->next) {
++	if (!r) {
++	  r = zebra_create_ipv4_route_table_entry(n->A_network_addr.v4, 
++						  n->A_netmask.v4,
++						  e->A_gateway_addr.v4);
++	  t = r;
++	}
++	else {
++	  t->next = zebra_create_ipv4_route_table_entry(n->A_network_addr.v4, 
++							n->A_netmask.v4,
++							e->A_gateway_addr.v4);
++	  t = t->next;
++	}
++      }
++    }
++  }
++  
++  return r;
++  
++}
++
++
++static struct ipv4_route *zebra_create_ipv4_route_table_entry (uint32_t addr, 
++							       uint32_t mask,
++							       uint32_t gw) {
++  
++  struct ipv4_route *r;
++  
++
++  r = olsr_malloc (sizeof *r,"zebra_create_ipv4_route_table_entry");
++  memset (r, 0, sizeof *r);
++  r->prefix = addr;
++  r->prefixlen = masktoprefixlen (mask);
++  r->message |= ZAPI_MESSAGE_NEXTHOP;
++  r->nh_count = 1;
++  r->nexthops = olsr_malloc (sizeof (uint32_t), "zebra_create_ipv4_route_table_entry"); 
++  *r->nexthops = gw;
++  r->next = NULL;
++
++  return r;
++}
++
++static uint8_t masktoprefixlen (uint32_t mask) {
++  
++  
++  uint8_t prefixlen = 0;
++  while (mask & (1 << ++prefixlen && prefixlen < 32);
++  return prefixlen;
++
++}
++
++static void update_olsr_zebra_routes (struct ipv4_route *a, 
++				      struct ipv4_route *r) {
++  
++  struct ipv4_route *t;
++
++  if (!r) {
++    puts("no quagga_routing_table aviable");
++    for (;a;a = a->next) {
++      dump_ipv4_route (*a, "adding this route");
++      //      zebra_add_v4_route(*r);
++    }
++    return;
++  }
++
++  while (a) {
++    for (t = r; t; t = t->next) {
++      if (a->prefix == t->prefix) 
++	if (a->prefixlen == t->prefixlen)
++	  if (*a->nexthops == *t->nexthops) {
++	    goto foo;
++	  }
++    }
++    dump_ipv4_route (*a, "adding this route");
++    //zebra_add_v4_route(*a);
++  foo:
++    a = a->next;
++  }
++
++  while (r) {
++    for (t = a; t; t = t->next) {
++      if (r->prefix == t->prefix) 
++	if (r->prefixlen == t->prefixlen)
++	  if (*r->nexthops == *t->nexthops) {
++	    goto bar;
++	  }
++    }
++    dump_ipv4_route (*r, "deleting this route");
++    //zebra_delete_v4_route(*r);
++  bar:
++    r = r->next;
++  }
++
++}
++
++
++static void zebra_free_ipv4_route_table (struct ipv4_route *r) {
++  struct ipv4_route *n;
++  if (!r) return;
++  while ((n = r->next)) {
++    if (r->message & ZAPI_MESSAGE_NEXTHOP) free (r->nexthops);
++    if (r->message & ZAPI_MESSAGE_IFINDEX) free (r->index);
++    free(r);
++    r = n;
++  }
++}
+diff -Nur olsrd-0.4.10.orig/lib/quagga/version-script.txt olsrd-0.4.10/lib/quagga/version-script.txt
+--- olsrd-0.4.10.orig/lib/quagga/version-script.txt	1970-01-01 01:00:00.000000000 +0100
++++ olsrd-0.4.10/lib/quagga/version-script.txt	2006-12-02 10:56:37.000000000 +0100
+@@ -0,0 +1,10 @@
++VERS_1.0
++{
++  global:
++    olsrd_plugin_interface_version;
++    olsrd_plugin_register_param;
++    olsrd_plugin_init;
++
++  local:
++    *;
++};

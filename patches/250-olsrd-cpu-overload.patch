@@ -1,0 +1,36 @@
+diff -Nur olsrd-0.4.10.orig/src/parser.c olsrd-0.4.10/src/parser.c
+--- olsrd-0.4.10.orig/src/parser.c	2005-11-19 09:49:44.000000000 +0100
++++ olsrd-0.4.10/src/parser.c	2006-12-04 09:12:40.000000000 +0100
+@@ -61,6 +61,14 @@
+ #define strerror(x) StrError(x)
+ #endif
+ 
++/* Sven-Ola: On very slow devices used in huge networks
++ * the amount of lq_tc messages is so high, that the 
++ * recv() loop never ends. This is a small hack to end
++ * the loop in this cases
++ */
++ 
++unsigned int cpu_overload_exit = 0;
++
+ struct parse_function_entry *parse_functions;
+ 
+ static char inbuf[MAXMESSAGESIZE+1];
+@@ -347,9 +355,16 @@
+   int cc;
+   struct interface *olsr_in_if;
+   union olsr_ip_addr from_addr;
+-
++  cpu_overload_exit = 0;
++  
+   for (;;) 
+     {
++      if (32 < ++cpu_overload_exit)
++      {
++        OLSR_PRINTF(1, "CPU overload detected, ending olsr_input() loop\n")
++      	break;
++      }
++      
+       fromlen = sizeof(struct sockaddr_storage);
+ 
+       cc = olsr_recvfrom(fd, 

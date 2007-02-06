@@ -1,0 +1,12 @@
+diff -Nur olsrd-0.4.10.orig/lib/secure/src/olsrd_secure.h olsrd-0.4.10/lib/secure/src/olsrd_secure.h
+--- olsrd-0.4.10.orig/lib/secure/src/olsrd_secure.h	2005-11-19 09:30:45.000000000 +0100
++++ olsrd-0.4.10/lib/secure/src/olsrd_secure.h	2006-12-01 08:50:41.000000000 +0100
+@@ -46,7 +46,7 @@
+ #include "hashing.h"
+ 
+ 
+-#define KEYFILE "/root/.olsr/olsrd_secure_key"
++#define KEYFILE "/etc/olsrd.d/olsrd_secure_key"
+ 
+ /* Schemes */
+ #define ONE_CHECKSUM          1
