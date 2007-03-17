@@ -1,0 +1,55 @@
+#!/bin/sh /etc/rc.common
+START=100
+. /lib/config/uci.sh
+uci_load batman
+start () {
+	interface=$(uci get batman.general.interface)
+	if [ "$interface" = "" ]; then
+		echo $1 Error, you must specify at least a network interface
+		exit
+	fi
+	announce=$(uci get batman.general.announce)
+	gateway_class=$(uci get batman.general.gateway_class)
+	originator_interval=$(uci get batman.general.originator_interval)
+	preferred_gateway=$(uci get batman.general.preferred_gateway)
+	routing_class=$(uci get batman.general.routing_class)
+	visualisation_srv=$(uci get batman.general.visualisation_srv)
+	batman_args=""
+
+	if [ $announce ]; then
+		batman_args=${batman_args}'-a '$announce' '
+	fi
+
+	if [ $gateway_class ]; then
+		batman_args=${batman_args}'-g '$gateway_class' '
+	fi
+
+	if [ $originator_interval ]; then
+		batman_args=${batman_args}'-o '$originator_interval' '
+	fi
+
+	if [ $preferred_gateway ]; then
+		batman_args=${batman_args}'-p '$preferred_gateway' '
+	fi
+
+	if [ $routing_class ]; then
+		batman_args=${batman_args}'-r '$routing_class' '
+	fi
+		
+	if [ $visualisation_srv ]; then
+		batman_args=${batman_args}'-v '$visualisation_srv' '
+	fi
+
+	batman_args=${batman_args}$interface
+	batmand $batman_args >/dev/null 2>&1
+}
+
+restart () {
+	$0 stop
+	sleep 3
+	$0 start
+}
+        
+stop () {
+	killall batmand
+}
