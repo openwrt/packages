@@ -1,11 +1,21 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2006 OpenWrt.org
 
+BIN=olsrd
 DEFAULT=/etc/default/olsrd
+RUN_D=/var/run
+PID_F=$RUN_D/$BIN.pid
 
 start() {
 	[ -f $DEFAULT ] && . $DEFAULT
-	olsrd $OPTIONS
+	$BIN -nofork $OPTIONS &
+	
+	# write pid file (but strip out own pid ($$))
+	mkdir -p $RUN_D
+	PID=`pidof $BIN`
+	echo ${PID%$$} > $PID_F
+
+
 }
 
 stop() {
