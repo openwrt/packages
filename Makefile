@@ -99,6 +99,7 @@ define Build/Compile
 		OFLAGS="$(TARGET_CFLAGS)" \
 		OS="linux" \
 		INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
+		LIBDIR="$(PKG_INSTALL_DIR)/usr/lib" \
 		STRIP="/bin/true" \
 		all libs install install_libs
 endef
