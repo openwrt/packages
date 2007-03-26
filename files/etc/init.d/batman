@@ -37,7 +37,7 @@ start () {
 	fi
 		
 	if [ $visualisation_srv ]; then
-		batman_args=${batman_args}'-v '$visualisation_srv' '
+		batman_args=${batman_args}'-s '$visualisation_srv' '
 	fi
 
 	batman_args=${batman_args}$interface
