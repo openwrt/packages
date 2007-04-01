@@ -40,7 +40,7 @@ define Build/Compile
 		$(TARGET_CONFIGURE_OPTS) \
 		NODEBUG=1 \
 		OFLAGS="$(TARGET_CFLAGS)" \
-		OS="linux" \
+		UNAME="Linux" \
 		INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
 		STRIP="/bin/true" \
 		batmand install
