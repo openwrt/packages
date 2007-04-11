@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=olsrd
-PKG_VERSION:=0.4.10
+PKG_VERSION:=0.5.0
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.olsr.org/releases/0.4
-PKG_MD5SUM:=9807d4451e65cb4ec385155eef7bf3cf
+PKG_SOURCE_URL:=http://www.olsr.org/releases/0.5
+PKG_MD5SUM:=c82c72d7a55a423aa9d9e571084f041b
 PKG_CAT:=bzcat
 
 PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
@@ -62,13 +62,6 @@ define Package/olsrd-mod-nameservice
   MENU:=0
 endef
 
-define Package/olsrd-mod-power
-  $(call Package/olsrd)
-  DEPENDS:=olsrd
-  TITLE:=Power status plugin
-  MENU:=0
-endef
-
 define Package/olsrd-mod-secure
   $(call Package/olsrd)
   DEPENDS:=olsrd
@@ -100,6 +93,9 @@ define Build/Compile
 		OS="linux" \
 		INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
 		LIBDIR="$(PKG_INSTALL_DIR)/usr/lib" \
+		SBINDIR="$(PKG_INSTALL_DIR)/usr/sbin/" \
+		ETCDIR="$(PKG_INSTALL_DIR)/etc" \
+		MANDIR="$(PKG_INSTALL_DIR)/usr/share/man" \
 		STRIP="/bin/true" \
 		all libs install install_libs
 endef
@@ -133,11 +129,6 @@ define Package/olsrd-mod-nameservice/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_nameservice.so.* $(1)/usr/lib/
 endef
 
-define Package/olsrd-mod-power/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_power.so.* $(1)/usr/lib/
-endef
-
 define Package/olsrd-mod-secure/install
 	$(INSTALL_DIR) $(1)/etc/olsrd.d
 	$(CP) ./files/olsrd_secure_key $(1)/etc/olsrd.d/
@@ -156,6 +147,5 @@ $(eval $(call BuildPackage,olsrd-mod-dot-draw))
 $(eval $(call BuildPackage,olsrd-mod-dyn-gw))
 $(eval $(call BuildPackage,olsrd-mod-httpinfo))
 $(eval $(call BuildPackage,olsrd-mod-nameservice))
-$(eval $(call BuildPackage,olsrd-mod-power))
 $(eval $(call BuildPackage,olsrd-mod-secure))
 $(eval $(call BuildPackage,olsrd-mod-tas))
