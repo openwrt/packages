@@ -1,0 +1,717 @@
+diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
+--- quagga-0.98.6.orig/bgpd/bgp_vty.c	2006-03-30 18:12:25.000000000 +0200
++++ quagga-0.98.6/bgpd/bgp_vty.c	2006-12-02 10:52:14.000000000 +0100
+@@ -7793,7 +7793,9 @@
+ 	return ZEBRA_ROUTE_STATIC;
+       else if (strncmp (str, "r", 1) == 0)
+ 	return ZEBRA_ROUTE_RIP;
+-      else if (strncmp (str, "o", 1) == 0)
++      else if (strncmp (str, "ol", 2) == 0)
++	return ZEBRA_ROUTE_OLSR;
++      else if (strncmp (str, "os", 2) == 0)
+ 	return ZEBRA_ROUTE_OSPF;
+     }
+   if (afi == AFI_IP6)
+@@ -7806,20 +7808,23 @@
+ 	return ZEBRA_ROUTE_STATIC;
+       else if (strncmp (str, "r", 1) == 0)
+ 	return ZEBRA_ROUTE_RIPNG;
+-      else if (strncmp (str, "o", 1) == 0)
++      else if (strncmp (str, "os", 2) == 0)
+ 	return ZEBRA_ROUTE_OSPF6;
++      else if (strncmp (str, "ol", 2) == 0)
++	return ZEBRA_ROUTE_OLSR;
+     }
+   return 0;
+ }
+ 
+ DEFUN (bgp_redistribute_ipv4,
+        bgp_redistribute_ipv4_cmd,
+-       "redistribute (connected|kernel|ospf|rip|static)",
++       "redistribute (connected|kernel|ospf|rip|static|olsr)",
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Static routes\n")
+ {
+   int type;
+@@ -7835,13 +7840,14 @@
+ 
+ DEFUN (bgp_redistribute_ipv4_rmap,
+        bgp_redistribute_ipv4_rmap_cmd,
+-       "redistribute (connected|kernel|ospf|rip|static) route-map WORD",
++       "redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD",
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Route map reference\n"
+        "Pointer to route-map entries\n")
+ {
+@@ -7860,13 +7866,14 @@
+ 
+ DEFUN (bgp_redistribute_ipv4_metric,
+        bgp_redistribute_ipv4_metric_cmd,
+-       "redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295>",
++       "redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295>",
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "Default metric\n")
+ {
+@@ -7887,13 +7894,14 @@
+ 
+ DEFUN (bgp_redistribute_ipv4_rmap_metric,
+        bgp_redistribute_ipv4_rmap_metric_cmd,
+-       "redistribute (connected|kernel|ospf|rip|static) route-map WORD metric <0-4294967295>",
++       "redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD metric <0-4294967295>",
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Route map reference\n"
+        "Pointer to route-map entries\n"
+        "Metric for redistributed routes\n"
+@@ -7917,13 +7925,14 @@
+ 
+ DEFUN (bgp_redistribute_ipv4_metric_rmap,
+        bgp_redistribute_ipv4_metric_rmap_cmd,
+-       "redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295> route-map WORD",
++       "redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295> route-map WORD",
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "Default metric\n"
+        "Route map reference\n"
+@@ -7947,14 +7956,16 @@
+ 
+ DEFUN (no_bgp_redistribute_ipv4,
+        no_bgp_redistribute_ipv4_cmd,
+-       "no redistribute (connected|kernel|ospf|rip|static)",
++       "no redistribute (connected|kernel|ospf|rip|static|olsr)",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
+-       "Static routes\n")
++       "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
++       )
+ {
+   int type;
+ 
+@@ -7970,7 +7981,7 @@
+ 
+ DEFUN (no_bgp_redistribute_ipv4_rmap,
+        no_bgp_redistribute_ipv4_rmap_cmd,
+-       "no redistribute (connected|kernel|ospf|rip|static) route-map WORD",
++       "no redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+@@ -7978,6 +7989,7 @@
+        "Open Shurtest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Route map reference\n"
+        "Pointer to route-map entries\n")
+ {
+@@ -7996,7 +8008,7 @@
+ 
+ DEFUN (no_bgp_redistribute_ipv4_metric,
+        no_bgp_redistribute_ipv4_metric_cmd,
+-       "no redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295>",
++       "no redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295>",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+@@ -8004,6 +8016,7 @@
+        "Open Shurtest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "Default metric\n")
+ {
+@@ -8022,7 +8035,7 @@
+ 
+ DEFUN (no_bgp_redistribute_ipv4_rmap_metric,
+        no_bgp_redistribute_ipv4_rmap_metric_cmd,
+-       "no redistribute (connected|kernel|ospf|rip|static) route-map WORD metric <0-4294967295>",
++       "no redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD metric <0-4294967295>",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+@@ -8030,6 +8043,7 @@
+        "Open Shurtest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Route map reference\n"
+        "Pointer to route-map entries\n"
+        "Metric for redistributed routes\n"
+@@ -8051,7 +8065,7 @@
+ 
+ ALIAS (no_bgp_redistribute_ipv4_rmap_metric,
+        no_bgp_redistribute_ipv4_metric_rmap_cmd,
+-       "no redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295> route-map WORD",
++       "no redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295> route-map WORD",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+@@ -8059,6 +8073,7 @@
+        "Open Shurtest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "Default metric\n"
+        "Route map reference\n"
+@@ -8067,13 +8082,15 @@
+ #ifdef HAVE_IPV6
+ DEFUN (bgp_redistribute_ipv6,
+        bgp_redistribute_ipv6_cmd,
+-       "redistribute (connected|kernel|ospf6|ripng|static)",
++       "redistribute (connected|kernel|ospf6|ripng|static|olsr)",
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
+-       "Static routes\n")
++       "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
++       )
+ {
+   int type;
+ 
+@@ -8089,13 +8106,14 @@
+ 
+ DEFUN (bgp_redistribute_ipv6_rmap,
+        bgp_redistribute_ipv6_rmap_cmd,
+-       "redistribute (connected|kernel|ospf6|ripng|static) route-map WORD",
++       "redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD",
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Route map reference\n"
+        "Pointer to route-map entries\n")
+ {
+@@ -8114,13 +8132,14 @@
+ 
+ DEFUN (bgp_redistribute_ipv6_metric,
+        bgp_redistribute_ipv6_metric_cmd,
+-       "redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295>",
++       "redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295>",
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "Default metric\n")
+ {
+@@ -8141,13 +8160,14 @@
+ 
+ DEFUN (bgp_redistribute_ipv6_rmap_metric,
+        bgp_redistribute_ipv6_rmap_metric_cmd,
+-       "redistribute (connected|kernel|ospf6|ripng|static) route-map WORD metric <0-4294967295>",
++       "redistribute (connected|kernel|ospf6|ripng|static|ols) route-map WORD metric <0-4294967295>",
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Route map reference\n"
+        "Pointer to route-map entries\n"
+        "Metric for redistributed routes\n"
+@@ -8171,13 +8191,14 @@
+ 
+ DEFUN (bgp_redistribute_ipv6_metric_rmap,
+        bgp_redistribute_ipv6_metric_rmap_cmd,
+-       "redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295> route-map WORD",
++       "redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295> route-map WORD",
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "Default metric\n"
+        "Route map reference\n"
+@@ -8201,14 +8222,16 @@
+ 
+ DEFUN (no_bgp_redistribute_ipv6,
+        no_bgp_redistribute_ipv6_cmd,
+-       "no redistribute (connected|kernel|ospf6|ripng|static)",
++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr)",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+        "Kernel routes\n"
+        "Open Shurtest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
+-       "Static routes\n")
++       "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
++      )
+ {
+   int type;
+ 
+@@ -8224,7 +8247,7 @@
+ 
+ DEFUN (no_bgp_redistribute_ipv6_rmap,
+        no_bgp_redistribute_ipv6_rmap_cmd,
+-       "no redistribute (connected|kernel|ospf6|ripng|static) route-map WORD",
++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+@@ -8232,6 +8255,7 @@
+        "Open Shurtest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Route map reference\n"
+        "Pointer to route-map entries\n")
+ {
+@@ -8250,7 +8274,7 @@
+ 
+ DEFUN (no_bgp_redistribute_ipv6_metric,
+        no_bgp_redistribute_ipv6_metric_cmd,
+-       "no redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295>",
++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295>",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+@@ -8258,6 +8282,7 @@
+        "Open Shurtest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "Default metric\n")
+ {
+@@ -8276,7 +8301,7 @@
+ 
+ DEFUN (no_bgp_redistribute_ipv6_rmap_metric,
+        no_bgp_redistribute_ipv6_rmap_metric_cmd,
+-       "no redistribute (connected|kernel|ospf6|ripng|static) route-map WORD metric <0-4294967295>",
++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD metric <0-4294967295>",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+@@ -8284,6 +8309,7 @@
+        "Open Shurtest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Route map reference\n"
+        "Pointer to route-map entries\n"
+        "Metric for redistributed routes\n"
+@@ -8305,7 +8331,7 @@
+ 
+ ALIAS (no_bgp_redistribute_ipv6_rmap_metric,
+        no_bgp_redistribute_ipv6_metric_rmap_cmd,
+-       "no redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295> route-map WORD",
++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295> route-map WORD",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Connected\n"
+@@ -8313,6 +8339,7 @@
+        "Open Shurtest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
+        "Static routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "Default metric\n"
+        "Route map reference\n"
+@@ -8325,7 +8352,7 @@
+ {
+   int i;
+   const char *str[] = { "system", "kernel", "connected", "static", "rip",
+-		  "ripng", "ospf", "ospf6", "isis", "bgp"};
++		  "ripng", "ospf", "ospf6", "isis", "bgp", "hsls", "olsr"};
+ 
+   /* Unicast redistribution only.  */
+   if (safi != SAFI_UNICAST)
+diff -Nur quagga-0.98.6.orig/lib/zebra.h quagga-0.98.6/lib/zebra.h
+--- quagga-0.98.6.orig/lib/zebra.h	2005-06-15 13:54:18.000000000 +0200
++++ quagga-0.98.6/lib/zebra.h	2006-12-02 10:48:51.000000000 +0100
+@@ -378,7 +378,8 @@
+ #define ZEBRA_ROUTE_ISIS                 8
+ #define ZEBRA_ROUTE_BGP                  9
+ #define ZEBRA_ROUTE_HSLS		 10
+-#define ZEBRA_ROUTE_MAX                  11
++#define ZEBRA_ROUTE_OLSR		 11
++#define ZEBRA_ROUTE_MAX                  12
+ 
+ /* Zebra's family types. */
+ #define ZEBRA_FAMILY_IPV4                1
+diff -Nur quagga-0.98.6.orig/ospfd/ospf_vty.c quagga-0.98.6/ospfd/ospf_vty.c
+--- quagga-0.98.6.orig/ospfd/ospf_vty.c	2006-03-30 17:41:20.000000000 +0200
++++ quagga-0.98.6/ospfd/ospf_vty.c	2006-12-02 10:48:51.000000000 +0100
+@@ -108,9 +108,11 @@
+     *source = ZEBRA_ROUTE_RIP;
+   else if (strncmp (str, "b", 1) == 0)
+     *source = ZEBRA_ROUTE_BGP;
++  else if (strncmp (str, "ol", 2) == 0)
++    *source = ZEBRA_ROUTE_OLSR;
+   else
+     return 0;
+-
++  
+   return 1;
+ }
+ 
+@@ -5302,13 +5304,14 @@
+ 
+ DEFUN (ospf_redistribute_source_metric_type,
+        ospf_redistribute_source_metric_type_routemap_cmd,
+-       "redistribute (kernel|connected|static|rip|bgp) metric <0-16777214> metric-type (1|2) route-map WORD",
++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric <0-16777214> metric-type (1|2) route-map WORD",
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+        "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "OSPF default metric\n"
+        "OSPF exterior metric type for redistributed routes\n"
+@@ -5346,13 +5349,14 @@
+ 
+ ALIAS (ospf_redistribute_source_metric_type,
+        ospf_redistribute_source_metric_type_cmd,
+-       "redistribute (kernel|connected|static|rip|bgp) metric <0-16777214> metric-type (1|2)",
++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric <0-16777214> metric-type (1|2)",
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+        "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "OSPF default metric\n"
+        "OSPF exterior metric type for redistributed routes\n"
+@@ -5368,18 +5372,20 @@
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+        "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "OSPF default metric\n")
+ 
+ DEFUN (ospf_redistribute_source_type_metric,
+        ospf_redistribute_source_type_metric_routemap_cmd,
+-       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2) metric <0-16777214> route-map WORD",
++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2) metric <0-16777214> route-map WORD",
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+        "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "OSPF exterior metric type for redistributed routes\n"
+        "Set OSPF External Type 1 metrics\n"
+        "Set OSPF External Type 2 metrics\n"
+@@ -5417,13 +5423,14 @@
+ 
+ ALIAS (ospf_redistribute_source_type_metric,
+        ospf_redistribute_source_type_metric_cmd,
+-       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2) metric <0-16777214>",
++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2) metric <0-16777214>",
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+        "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "OSPF exterior metric type for redistributed routes\n"
+        "Set OSPF External Type 1 metrics\n"
+        "Set OSPF External Type 2 metrics\n"
+@@ -5432,7 +5439,7 @@
+ 
+ ALIAS (ospf_redistribute_source_type_metric,
+        ospf_redistribute_source_type_cmd,
+-       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2)",
++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2)",
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
+@@ -5440,28 +5447,31 @@
+        "Routing Information Protocol (RIP)\n"
+        "Border Gateway Protocol (BGP)\n"
+        "OSPF exterior metric type for redistributed routes\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Set OSPF External Type 1 metrics\n"
+        "Set OSPF External Type 2 metrics\n")
+ 
+ ALIAS (ospf_redistribute_source_type_metric,
+        ospf_redistribute_source_cmd,
+-       "redistribute (kernel|connected|static|rip|bgp)",
++       "redistribute (kernel|connected|static|rip|bgp|olsr)",
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+-       "Border Gateway Protocol (BGP)\n")
++       "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n")
+ 
+ DEFUN (ospf_redistribute_source_metric_routemap,
+        ospf_redistribute_source_metric_routemap_cmd,
+-       "redistribute (kernel|connected|static|rip|bgp) metric <0-16777214> route-map WORD",
++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric <0-16777214> route-map WORD",
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+        "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Metric for redistributed routes\n"
+        "OSPF default metric\n"
+        "Route map reference\n"
+@@ -5490,13 +5500,14 @@
+ 
+ DEFUN (ospf_redistribute_source_type_routemap,
+        ospf_redistribute_source_type_routemap_cmd,
+-       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2) route-map WORD",
++       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2) route-map WORD",
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+        "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "OSPF exterior metric type for redistributed routes\n"
+        "Set OSPF External Type 1 metrics\n"
+        "Set OSPF External Type 2 metrics\n"
+@@ -5526,13 +5537,14 @@
+ 
+ DEFUN (ospf_redistribute_source_routemap,
+        ospf_redistribute_source_routemap_cmd,
+-       "redistribute (kernel|connected|static|rip|bgp) route-map WORD",
++       "redistribute (kernel|connected|static|rip|bgp|olsr) route-map WORD",
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+        "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Route map reference\n"
+        "Pointer to route-map entries\n")
+ {
+@@ -5553,14 +5565,16 @@
+ 
+ DEFUN (no_ospf_redistribute_source,
+        no_ospf_redistribute_source_cmd,
+-       "no redistribute (kernel|connected|static|rip|bgp)",
++       "no redistribute (kernel|connected|static|rip|bgp|olsr)",
+        NO_STR
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+-       "Border Gateway Protocol (BGP)\n")
++       "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (olsr)\n"
++       )
+ {
+   struct ospf *ospf = vty->index;
+   int source;
+@@ -5574,7 +5588,7 @@
+ 
+ DEFUN (ospf_distribute_list_out,
+        ospf_distribute_list_out_cmd,
+-       "distribute-list WORD out (kernel|connected|static|rip|bgp)",
++       "distribute-list WORD out (kernel|connected|static|rip|bgp|olsr)",
+        "Filter networks in routing updates\n"
+        "Access-list name\n"
+        OUT_STR
+@@ -5582,7 +5596,8 @@
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+-       "Border Gateway Protocol (BGP)\n")
++       "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n")
+ {
+   struct ospf *ospf = vty->index;
+   int source;
+@@ -5596,7 +5611,7 @@
+ 
+ DEFUN (no_ospf_distribute_list_out,
+        no_ospf_distribute_list_out_cmd,
+-       "no distribute-list WORD out (kernel|connected|static|rip|bgp)",
++       "no distribute-list WORD out (kernel|connected|static|rip|bgp|olsr)",
+        NO_STR
+        "Filter networks in routing updates\n"
+        "Access-list name\n"
+@@ -5605,7 +5620,8 @@
+        "Connected\n"
+        "Static routes\n"
+        "Routing Information Protocol (RIP)\n"
+-       "Border Gateway Protocol (BGP)\n")
++       "Border Gateway Protocol (BGP)\n"
++       "Optimized Link State Routing (OLSR)\n")
+ {
+   struct ospf *ospf = vty->index;
+   int source;
+@@ -7121,7 +7137,8 @@
+ 
+ 
+ const char *distribute_str[] = { "system", "kernel", "connected", "static",
+-				"rip", "ripng", "ospf", "ospf6", "isis", "bgp"};
++				"rip", "ripng", "ospf", "ospf6", "isis", "bgp",
++				"hsls","olsr"};
+ int
+ config_write_ospf_redistribute (struct vty *vty, struct ospf *ospf)
+ {
+diff -Nur quagga-0.98.6.orig/zebra/zebra_vty.c quagga-0.98.6/zebra/zebra_vty.c
+--- quagga-0.98.6.orig/zebra/zebra_vty.c	2004-12-18 17:03:29.000000000 +0100
++++ quagga-0.98.6/zebra/zebra_vty.c	2006-12-02 10:49:45.000000000 +0100
+@@ -53,6 +53,8 @@
+       return "isis";
+     case ZEBRA_ROUTE_BGP:
+       return "bgp";
++    case ZEBRA_ROUTE_OLSR:
++      return "olsr";
+     default:
+       return "unknown";
+     }
+@@ -84,6 +86,10 @@
+       return 'I';
+     case ZEBRA_ROUTE_BGP:
+       return 'B';
++    case ZEBRA_ROUTE_HSLS:
++      return 'H';
++    case ZEBRA_ROUTE_OLSR:
++      return 'L';
+     default:
+       return '?';
+     }
+@@ -755,8 +761,8 @@
+ }
+ 
+ #define SHOW_ROUTE_V4_HEADER "Codes: K - kernel route, C - connected, " \
+-  "S - static, R - RIP, O - OSPF,%s       I - ISIS, B - BGP, " \
+-  "> - selected route, * - FIB route%s%s"
++  "S - static, R - RIP, O - OSPF,%s       I - ISIS, B - BGP, H - HSLS, " \
++  "L - OLSR, > - selected route, * - FIB route%s%s"
+ 
+ DEFUN (show_ip_route,
+        show_ip_route_cmd,
+@@ -874,7 +880,7 @@
+ 
+ DEFUN (show_ip_route_protocol,
+        show_ip_route_protocol_cmd,
+-       "show ip route (bgp|connected|isis|kernel|ospf|rip|static)",
++       "show ip route (bgp|connected|isis|kernel|ospf|rip|olsr|static)",
+        SHOW_STR
+        IP_STR
+        "IP routing table\n"
+@@ -884,6 +890,7 @@
+        "Kernel\n"
+        "Open Shortest Path First (OSPF)\n"
+        "Routing Information Protocol (RIP)\n"
++       "Optimized Link State Routing (OLSR)\n"
+        "Static routes\n")
+ {
+   int type;
+@@ -898,7 +905,7 @@
+     type = ZEBRA_ROUTE_CONNECT;
+   else if (strncmp (argv[0], "k", 1) ==0)
+     type = ZEBRA_ROUTE_KERNEL;
+-  else if (strncmp (argv[0], "o", 1) == 0)
++  else if (strncmp (argv[0], "os", 2) == 0)
+     type = ZEBRA_ROUTE_OSPF;
+   else if (strncmp (argv[0], "i", 1) == 0)
+     type = ZEBRA_ROUTE_ISIS;
+@@ -906,6 +913,8 @@
+     type = ZEBRA_ROUTE_RIP;
+   else if (strncmp (argv[0], "s", 1) == 0)
+     type = ZEBRA_ROUTE_STATIC;
++  else if (strncmp (argv[0], "ol", 2) == 0)
++    type = ZEBRA_ROUTE_OLSR;
+   else 
+     {
+       vty_out (vty, "Unknown route type%s", VTY_NEWLINE);
+@@ -1732,7 +1741,7 @@
+ 
+ DEFUN (show_ipv6_route_protocol,
+        show_ipv6_route_protocol_cmd,
+-       "show ipv6 route (bgp|connected|isis|kernel|ospf6|ripng|static)",
++       "show ipv6 route (bgp|connected|isis|kernel|ospf6|ripng|olsr|static)",
+        SHOW_STR
+        IP_STR
+        "IP routing table\n"
+@@ -1742,6 +1751,7 @@
+        "Kernel\n"
+        "Open Shortest Path First (OSPFv3)\n"
+        "Routing Information Protocol (RIPng)\n"
++       "Optimized Link State Routing (olsr)\n"
+        "Static routes\n")
+ {
+   int type;
+@@ -1756,7 +1766,7 @@
+     type = ZEBRA_ROUTE_CONNECT;
+   else if (strncmp (argv[0], "k", 1) ==0)
+     type = ZEBRA_ROUTE_KERNEL;
+-  else if (strncmp (argv[0], "o", 1) == 0)
++  else if (strncmp (argv[0], "os", 2) == 0)
+     type = ZEBRA_ROUTE_OSPF6;
+   else if (strncmp (argv[0], "i", 1) == 0)
+     type = ZEBRA_ROUTE_ISIS;
+@@ -1764,7 +1774,9 @@
+     type = ZEBRA_ROUTE_RIPNG;
+   else if (strncmp (argv[0], "s", 1) == 0)
+     type = ZEBRA_ROUTE_STATIC;
+-  else 
++  else if (strncmp (argv[0], "ol", 2) == 0)
++     type = ZEBRA_ROUTE_OLSR;
++  else
+     {
+       vty_out (vty, "Unknown route type%s", VTY_NEWLINE);
+       return CMD_WARNING;
