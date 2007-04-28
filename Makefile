@@ -41,6 +41,13 @@ define Package/olsrd-mod-dot-draw
   MENU:=0
 endef
 
+define Package/olsrd-mod-bmf
+  $(call Package/olsrd)
+  DEPENDS:=olsrd libpthread kmod-tun
+  TITLE:=Basic multicast forwarding plugin
+  MENU:=0
+endef
+
 define Package/olsrd-mod-dyn-gw
   $(call Package/olsrd)
   DEPENDS:=olsrd
@@ -114,6 +121,11 @@ define Package/olsrd-mod-dot-draw/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_dot_draw.so.* $(1)/usr/lib/
 endef
 
+define Package/olsrd-mod-bmf/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_bmf.so.* $(1)/usr/lib/
+endef
+
 define Package/olsrd-mod-dyn-gw/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_dyn_gw.so.* $(1)/usr/lib/
@@ -144,6 +156,7 @@ endef
 
 $(eval $(call BuildPackage,olsrd))
 $(eval $(call BuildPackage,olsrd-mod-dot-draw))
+$(eval $(call BuildPackage,olsrd-mod-bmf))
 $(eval $(call BuildPackage,olsrd-mod-dyn-gw))
 $(eval $(call BuildPackage,olsrd-mod-httpinfo))
 $(eval $(call BuildPackage,olsrd-mod-nameservice))
