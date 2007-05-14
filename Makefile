@@ -192,8 +192,6 @@ define Package/quagga-isisd/install
 endef
 
 define Package/quagga-ospfd/install	
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libospf.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/ospfd $(1)/usr/sbin/
 endef
