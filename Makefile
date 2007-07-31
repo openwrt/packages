@@ -45,11 +45,10 @@ MAKE_FLAGS += \
 	batmand install
 
 define Package/batman/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/batmand $(1)/usr/sbin/
-	$(CP) -a ./files/* $(1)/
-	chmod -R 755 $(1)/etc/init.d/batman
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/batmand $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/etc/init.d/batman $(1)/etc/init.d
+	$(INSTALL_DATA) ./files/etc/config/batman $(1)/etc/config
 endef
-
 
 $(eval $(call BuildPackage,batman))
