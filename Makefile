@@ -15,7 +15,7 @@ PKG_RELEASE:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)_sources
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION)_sources.tgz
 PKG_SOURCE_URL:=http://downloads.open-mesh.net/batman/stable/sources/ \
-	http://downloads.open-mesh.net/batman/stable/sources/
+	http://downloads.open-mesh.net/batman/stable/sources/old/
 PKG_MD5SUM:=b00ad9603e32c85224d5b19f99126ddf
 PKG_CAT:=zcat
 
