@@ -1,0 +1,22 @@
+Index: olsrd-0.5.2/Makefile.inc
+===================================================================
+--- olsrd-0.5.2.orig/Makefile.inc	2007-08-03 04:25:53.320043315 +0200
++++ olsrd-0.5.2/Makefile.inc	2007-08-03 04:25:57.816299546 +0200
+@@ -62,7 +62,7 @@ LDFLAGS +=    -Wl,-export-dynamic 
+ endif
+ 
+ # options to save space on small systems
+-DEFINES +=      -DSUPPORT_OLD_PLUGIN_VERSIONS=1
++CFLAGS +=      -DSUPPORT_OLD_PLUGIN_VERSIONS=1
+ 
+ # search sources and headers in current dir and in src/
+ SRCS =         $(wildcard src/*.c)
+@@ -102,7 +102,7 @@ endif
+ CFLAGS +=      -MD
+ 
+ # we always need the includes and defines
+-CFLAGS += $(INCLUDES) $(DEFINES)
++CFLAGS +=      $(INCLUDES)
+ 
+ TAGFILE ?=     src/TAGS
+ 

@@ -43,14 +43,14 @@ endef
 
 define Package/olsrd-mod-bmf
   $(call Package/olsrd)
-  DEPENDS:=olsrd libpthread kmod-tun
+  DEPENDS:=olsrd +libpthread +kmod-tun
   TITLE:=Basic multicast forwarding plugin
   MENU:=0
 endef
 
 define Package/olsrd-mod-dyn-gw
   $(call Package/olsrd)
-  DEPENDS:=olsrd
+  DEPENDS:=olsrd +libpthread
   TITLE:=Dynamic internet gateway plugin
   MENU:=0
 endef
