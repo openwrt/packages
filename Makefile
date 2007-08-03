@@ -76,6 +76,13 @@ define Package/olsrd-mod-secure
   MENU:=0
 endef
 
+define Package/olsrd-mod-txtinfo
+  $(call Package/olsrd)
+  DEPENDS:=olsrd
+  TITLE:=Small informative web server plugin
+  MENU:=0
+endef
+
 define Package/olsrd-mod-secure/conffiles
 /etc/olsrd.d/olsrd_secure_key
 endef
@@ -153,6 +160,12 @@ define Package/olsrd-mod-tas/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_tas.so.* $(1)/usr/lib/
 endef
 
+define Package/olsrd-mod-txtinfo/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_txtinfo.so.* $(1)/usr/lib/
+endef
+
+
 
 $(eval $(call BuildPackage,olsrd))
 $(eval $(call BuildPackage,olsrd-mod-dot-draw))
@@ -162,3 +175,4 @@ $(eval $(call BuildPackage,olsrd-mod-httpinfo))
 $(eval $(call BuildPackage,olsrd-mod-nameservice))
 $(eval $(call BuildPackage,olsrd-mod-secure))
 $(eval $(call BuildPackage,olsrd-mod-tas))
+$(eval $(call BuildPackage,olsrd-mod-txtinfo))
