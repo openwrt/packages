@@ -9,12 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nodogsplash
-PKG_VERSION:=0.8_beta1
+PKG_VERSION:=0.9_beta8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://kokoro.ucsd.edu/nodogsplash/
-PKG_MD5SUM:=f81c69ea46d61455b394f237bcdb3fe4
+PKG_SOURCE_URL:=http://kokoro.ucsd.edu/nodogsplash/ \
+	http://kokoro.ucsd.edu/nodogsplash/old/
+PKG_MD5SUM:=74269856452b9ef6d8719a6b46bae56d
 PKG_CAT:=zcat
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
