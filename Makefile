@@ -24,6 +24,7 @@ PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
 include $(INCLUDE_DIR)/package.mk
 
 define Package/nodogsplash
+  SUBMENU:=Captive Portals
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+libpthread
