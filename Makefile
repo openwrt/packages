@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batmand
-PKG_VERSION:=0.2-rv478
+PKG_VERSION:=0.2-rv502
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)_sources
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION)_sources.tgz
 PKG_SOURCE_URL:=http://downloads.open-mesh.net/batman/stable/sources/ \
 	http://downloads.open-mesh.net/batman/stable/sources/old/
-PKG_MD5SUM:=b00ad9603e32c85224d5b19f99126ddf
+PKG_MD5SUM:=cf1c92ef3455cfbfedf2c577e013b6c0
 PKG_CAT:=zcat
 
 PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
