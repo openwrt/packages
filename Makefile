@@ -29,11 +29,13 @@ define Package/nodogsplash
   CATEGORY:=Network
   DEPENDS:=+libpthread
   TITLE:=Open public network gateway daemon
-  DESCRIPTION:=\
-  	Nodogsplash offers a simple way to open a free hotspot providing restricted access to an\\\
-	internet connection. It is intended for use on wireless access points running OpenWRT\\\
-	(but may also work on other Linux-based devices).
   URL:=http://kokoro.ucsd.edu/nodogsplash/
+endef
+
+define Package/nodogsplash/description
+	Nodogsplash offers a simple way to open a free hotspot providing restricted access to an
+	internet connection. It is intended for use on wireless access points running OpenWRT
+	(but may also work on other Linux-based devices).
 endef
 
 define Build/Configure
