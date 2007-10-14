@@ -29,11 +29,15 @@ define Package/quagga
   SECTION:=net
   CATEGORY:=Network
   TITLE:=The Quagga Software Routing Suite
-  DESCRIPTION:=A routing software package that provides TCP/IP based routing services\\\
-	with routing protocols support such as RIPv1, RIPv2, RIPng, OSPFv2,\\\
-	OSPFv3, BGP-4, and BGP-4+\\\
   URL:=http://www.quagga.net
   MENU:=1
+endef
+
+define Package/quagga/description
+A routing software package that provides TCP/IP based routing services
+	with routing protocols support such as RIPv1, RIPv2, RIPng, OSPFv2,
+	OSPFv3, BGP-4, and BGP-4+
+
 endef
 
 define Package/quagga-libzebra
