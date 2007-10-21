@@ -244,7 +244,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
  DEFUN (bgp_redistribute_ipv6_rmap_metric,
         bgp_redistribute_ipv6_rmap_metric_cmd,
 -       "redistribute (connected|kernel|ospf6|ripng|static) route-map WORD metric <0-4294967295>",
-+       "redistribute (connected|kernel|ospf6|ripng|static|ols) route-map WORD metric <0-4294967295>",
++       "redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD metric <0-4294967295>",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
