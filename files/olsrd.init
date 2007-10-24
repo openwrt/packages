@@ -1,22 +1,331 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006 OpenWrt.org
 START=50
 
 BIN=olsrd
+CONF_F=/var/etc/olsrd.conf
+USE_CONF_F=
 DEFAULT=/etc/default/olsrd
 RUN_D=/var/run
 PID_F=$RUN_D/$BIN.pid
 
+format_olsr_option() {
+	local str="$*"
+	echo -n "$str" | tr -d '\n\r\t\v '
+}
+
+format_olsr_value() {
+	local str="$*"
+	echo -n "$str" | tr -d '\n\r\v'
+}
+
+format_olsr_param() {
+	local str="$*"
+	echo -n "$str" | tr -d '\n\r\v"'
+}
+
+format_uci_varname() {
+	local str="$*"
+	echo -n "$str" | sed -e 's/[^a-zA-Z0-9_]//g'
+}
+
+foreach_olsr() {
+	local cfg="$1"
+	local option
+	local value
+
+	for option in $CONFIG_OPTIONS
+	do
+		config_get value "$cfg" "$option"
+		option=$(format_olsr_option "$option")
+		value=$(format_olsr_value "$value")
+
+		if [ -n "$value" -a "$option" != "ConfigFile" ]; then
+			echo "$option $value" >> "$CONF_F"
+		fi
+	done
+	echo >> "$CONF_F"
+}
+
+foreach_Hna4() {
+	local cfg="$1"
+	local netaddr
+	local netmask
+
+	config_get netaddr "$cfg" NetAddr
+	config_get netmask "$cfg" NetMask
+	netaddr=$(format_olsr_option "$netaddr")
+	netmask=$(format_olsr_option "$netmask")
+
+	if [ -n "$netaddr" -a -n "$netmask" ]; then
+		if [ "$HNA4_COUNT" -le 0 ]; then
+			echo "Hna4" >> "$CONF_F"
+			echo "{" >> "$CONF_F"
+		fi
+
+		echo "	$netaddr $netmask" >> "$CONF_F"
+		HNA4_COUNT=$((HNA4_COUNT + 1))
+	fi
+}
+
+write_Hna4() {
+	if [ "$HNA4_COUNT" -gt 0 ]; then
+		echo "}" >> "$CONF_F"
+		echo >> "$CONF_F"
+	fi
+}
+
+foreach_Hna6() {
+	local cfg="$1"
+	local netaddr
+	local netmask
+
+	config_get netaddr "$cfg" NetAddr
+	config_get prefix "$cfg" Prefix
+	netaddr=$(format_olsr_option "$netaddr")
+	prefix=$(format_olsr_option "$prefix")
+
+	if [ -n "$netaddr" -a -n "$prefix" ]; then
+		if [ "$HNA6_COUNT" -le 0 ]; then
+			echo "Hna6" >> "$CONF_F"
+			echo "{" >> "$CONF_F"
+		fi
+
+		echo "	$netaddr $prefix" >> "$CONF_F"
+		HNA6_COUNT=$((HNA6_COUNT + 1))
+	fi
+}
+
+write_Hna6() {
+	if [ "$HNA6_COUNT" -gt 0 ]; then
+		echo "}" >> "$CONF_F"
+		echo >> "$CONF_F"
+	fi
+}
+
+foreach_IpcConnect() {
+	local cfg="$1"
+	local option
+	local value
+	local c
+
+	echo "IpcConnect" >> "$CONF_F"
+	echo -n "{" >> "$CONF_F"
+
+	for option in $CONFIG_OPTIONS
+	do
+		config_get value "$cfg" "$option"
+		option=$(format_olsr_option "$option")
+		value=$(format_olsr_value "$value")
+
+		if [ -n "$value" ]; then
+			if [ "$option" = "Host" ]; then
+				for item in $value
+				do
+					echo >> "$CONF_F"
+					echo -n "	$option $item" >> "$CONF_F"
+				done
+			elif [ "$option" = "Net" ]; then
+				c=0
+				for item in $value
+				do
+					if [ $((c % 2)) -eq 0 ]; then
+						echo >> "$CONF_F"
+						echo -n "	$option $item" >> "$CONF_F"
+					else
+						echo -n " $item" >> "$CONF_F"
+					fi
+					c=$((c + 1))
+				done
+			else
+				echo >> "$CONF_F"
+				echo -n "	$option $value" >> "$CONF_F"
+			fi
+		fi
+	done
+
+	echo >> "$CONF_F"
+	echo "}" >> "$CONF_F"
+	echo >> "$CONF_F"
+}
+
+foreach_LoadPlugin() {
+	local cfg="$1"
+	local library
+	local option
+	local value
+	local is_ip_addr
+	local item
+	local c
+
+	config_get library "$cfg" Library
+	library=$(format_olsr_param "$library")
+
+	if [ -n "$library" ]; then
+		echo "LoadPlugin \"$library\"" >> "$CONF_F"
+		echo -n "{" >> "$CONF_F"
+
+		for option in $CONFIG_OPTIONS
+		do
+			config_get value "$cfg" "$option"
+			option=$(format_olsr_param "$option")
+			value=$(format_olsr_param "$value")
+
+			if [ -n "$value" ]; then
+				option=$(echo "$option" | sed -e y/[_]/[-]/)
+
+				is_ip_addr=$(echo "$option" | sed -e 's/[^-]//g')
+				if [ "$is_ip_addr" = "---" ]; then
+					option=$(echo "$option" | sed -e y/[-]/[.]/)
+				fi
+
+				if [ "$option" = "Ping" -o "$option" = "redistribute" -o "$option" = "Host" -o "$option" = "NonOlsrIf" -o "$option" = "name" -o "$is_ip_addr" = "---" ]; then
+					for item in $value
+					do
+						echo >> "$CONF_F"
+						echo -n "	PlParam \"$option\" \"$item\"" >> "$CONF_F"
+					done
+				elif [ "$option" = "Net" -o "$option" = "HNA" ]; then
+					c=0
+					for item in $value
+					do
+						if [ $((c % 2)) -eq 0 ]; then
+							echo >> "$CONF_F"
+							echo -n "	PlParam \"$option\" \"$item" >> "$CONF_F"
+						else
+							echo -n " $item\"" >> "$CONF_F"
+						fi
+						c=$((c + 1))
+					done
+				elif [ "$option" != "Library" ]; then
+					echo >> "$CONF_F"
+					echo -n "	PlParam \"$option\" \"$value\"" >> "$CONF_F"
+				fi
+			fi
+		done
+
+		echo >> "$CONF_F"
+		echo "}" >> "$CONF_F"
+		echo >> "$CONF_F"
+	fi
+}
+
+foreach_Interface() {
+	local cfg="$1"
+	local interfaces
+	local interface
+	local ifname
+	local option
+	local value
+	local item
+	local c
+
+	config_get interfaces "$cfg" Interface
+
+	if [ -n "$interfaces" ]; then
+		echo -n "Interface" >> "$CONF_F"
+
+		for interface in $interfaces
+		do
+			interface=$(format_uci_varname "$interface")
+			config_get ifnames "$interface" ifname
+			for ifname in $ifnames
+			do
+				ifname=$(format_olsr_param "$ifname")
+				echo -n " \"$ifname\"" >> "$CONF_F"
+			done
+		done
+
+		echo >> "$CONF_F"
+		echo -n "{" >> "$CONF_F"
+
+		for option in $CONFIG_OPTIONS
+		do
+			config_get value "$cfg" "$option"
+			option=$(format_olsr_option "$option")
+			value=$(format_olsr_value "$value")
+
+			if [ -n "$value" ]; then
+				if [ "$option" = "LinkQualityMult" ]; then
+					c=0
+					for item in $value
+					do
+						if [ $((c % 2)) -eq 0 ]; then
+							echo >> "$CONF_F"
+							echo -n "	$option $item" >> "$CONF_F"
+						else
+							echo -n " $item" >> "$CONF_F"
+						fi
+						c=$((c + 1))
+					done
+				elif [ "$option" != "Interface" ]; then
+					echo >> "$CONF_F"
+					echo -n "	$option $value" >> "$CONF_F"
+				fi
+			fi
+		done
+
+		echo >> "$CONF_F"
+		echo "}" >> "$CONF_F"
+	fi
+}
+
+write_config() {
+	include /lib/network
+	scan_interfaces
+	config_load /var/state/network
+
+	config_cb() {
+		local cfgtype="$1"
+		local name="$2"
+		CONFIG_TYPE="$cfgtype"
+	}
+
+	option_cb() {
+		local varname="$1"
+		local value="$2"
+
+		if [ "$CONFIG_TYPE" = "OLSR" -a "$varname" = "ConfigFile" ]; then
+			USE_CONF_F="$value"
+		fi
+
+		if ! echo "$CONFIG_OPTIONS" | grep " $varname " > /dev/null; then
+			CONFIG_OPTIONS="$CONFIG_OPTIONS $varname "
+		fi
+	}
+
+	CONFIG_OPTIONS=""
+	config_load olsr
+
+	if [ -n "$USE_CONF_F" ]; then
+		return 0
+	else
+		USE_CONF_F="$CONF_F"
+	fi
+
+	mkdir -p $(dirname "$CONF_F")
+	> "$CONF_F"
+	config_foreach foreach_olsr olsr
+	HNA4_COUNT=0
+	config_foreach foreach_Hna4 Hna4
+	write_Hna4
+	HNA6_COUNT=0
+	config_foreach foreach_Hna6 Hna6
+	write_Hna6
+	config_foreach foreach_IpcConnect IpcConnect
+	config_foreach foreach_LoadPlugin LoadPlugin
+	config_foreach foreach_Interface Interface
+}
+
 start() {
+	[ -z "$USE_CONF_F" ] && write_config
+
 	[ -f $DEFAULT ] && . $DEFAULT
-	$BIN -nofork $OPTIONS &
-	
+	$BIN -f "$USE_CONF_F" -nofork $OPTIONS &
+
 	# write pid file (but strip out own pid ($$))
 	mkdir -p $RUN_D
 	PID=`pidof $BIN`
 	echo ${PID%$$} > $PID_F
-
-
 }
 
 stop() {

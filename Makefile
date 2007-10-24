@@ -102,7 +102,7 @@ define Build/Compile
 	$(MAKE) -C "$(PKG_BUILD_DIR)" \
 		$(TARGET_CONFIGURE_OPTS) \
 		NODEBUG=1 \
-		OFLAGS="$(TARGET_CFLAGS)" \
+		CFLAGS="$(TARGET_CFLAGS)" \
 		OS="linux" \
 		INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
 		LIBDIR="$(PKG_INSTALL_DIR)/usr/lib" \
@@ -114,10 +114,11 @@ define Build/Compile
 endef
 
 define Package/olsrd/install
-	$(INSTALL_DIR) $(1)/etc
-	$(CP) $(PKG_INSTALL_DIR)/etc/olsrd.conf $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/olsr.config $(1)/etc/config/olsr
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/olsrd.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/olsrd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/olsrd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/olsrd.init $(1)/etc/init.d/olsrd
 endef
