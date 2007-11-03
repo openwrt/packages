@@ -21,11 +21,16 @@ PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/olsrd
+define Package/olsrd/template
   SECTION:=net
   CATEGORY:=Network
   TITLE:=OLSR (Optimized Link State Routing) daemon
   URL:=http://www.olsr.org/
+  MENU:=1
+endef
+
+define Package/olsrd
+  $(call Package/olsrd/template)
   MENU:=1
 endef
 
@@ -34,52 +39,45 @@ define Package/olsrd/conffiles
 endef
 
 define Package/olsrd-mod-dot-draw
-  $(call Package/olsrd)
+  $(call Package/olsrd/template)
   DEPENDS:=olsrd
   TITLE:=Dot topology information plugin
-  MENU:=0
 endef
 
 define Package/olsrd-mod-bmf
-  $(call Package/olsrd)
+  $(call Package/olsrd/template)
   DEPENDS:=olsrd +libpthread +kmod-tun
   TITLE:=Basic multicast forwarding plugin
-  MENU:=0
 endef
 
 define Package/olsrd-mod-dyn-gw
-  $(call Package/olsrd)
+  $(call Package/olsrd/template)
   DEPENDS:=olsrd +libpthread
   TITLE:=Dynamic internet gateway plugin
-  MENU:=0
 endef
 
 define Package/olsrd-mod-httpinfo
-  $(call Package/olsrd)
+  $(call Package/olsrd/template)
   DEPENDS:=olsrd
   TITLE:=Small informative web server plugin
-  MENU:=0
 endef
 
 define Package/olsrd-mod-nameservice
-  $(call Package/olsrd)
+  $(call Package/olsrd/template)
   DEPENDS:=olsrd
   TITLE:=Lightweight hostname resolver plugin
-  MENU:=0
 endef
 
 define Package/olsrd-mod-secure
-  $(call Package/olsrd)
+  $(call Package/olsrd/template)
   DEPENDS:=olsrd
   TITLE:=Message signing plugin to secure routing domain
-  MENU:=0
 endef
 
 define Package/olsrd-mod-txtinfo
-  $(call Package/olsrd)
+  $(call Package/olsrd/template)
   DEPENDS:=olsrd
   TITLE:=Small informative web server plugin
-  MENU:=0
 endef
 
 define Package/olsrd-mod-secure/conffiles
@@ -87,10 +85,9 @@ define Package/olsrd-mod-secure/conffiles
 endef
 
 define Package/olsrd-mod-tas
-  $(call Package/olsrd)
+  $(call Package/olsrd/template)
   DEPENDS:=olsrd
   TITLE:=Tiny Application Server (TAS) plugin
-  MENU:=0
 endef
 
 define Build/Configure

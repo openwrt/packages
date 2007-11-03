@@ -1,0 +1,13 @@
+Index: olsrd-0.5.4/Makefile
+===================================================================
+--- olsrd-0.5.4.orig/Makefile	2007-11-03 11:33:37.075400513 +0100
++++ olsrd-0.5.4/Makefile	2007-11-03 11:33:47.171975883 +0100
+@@ -71,8 +71,6 @@
+ $(CFGOBJS):
+ 		$(MAKECMD) -C $(CFGDIR)
+ 
+-# generate it always
+-.PHONY: src/builddata.c
+ src/builddata.c:
+ 	@$(RM) "$@"
+ 	@echo "#include \"defs.h\"" >> "$@" 
