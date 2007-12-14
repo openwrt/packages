@@ -84,12 +84,6 @@ define Package/olsrd-mod-secure/conffiles
 /etc/olsrd.d/olsrd_secure_key
 endef
 
-define Package/olsrd-mod-tas
-  $(call Package/olsrd/template)
-  DEPENDS:=olsrd
-  TITLE:=Tiny Application Server (TAS) plugin
-endef
-
 define Build/Configure
 endef
 
@@ -106,63 +100,58 @@ define Build/Compile
 		SBINDIR="$(PKG_INSTALL_DIR)/usr/sbin/" \
 		ETCDIR="$(PKG_INSTALL_DIR)/etc" \
 		MANDIR="$(PKG_INSTALL_DIR)/usr/share/man" \
-		STRIP="/bin/true" \
+		STRIP="true" \
+		INSTALL_LIB="true" \
+		SUBDIRS="bmf dot_draw dyn_gw httpinfo nameservice secure txtinfo" \
 		all libs install install_libs
 endef
 
 define Package/olsrd/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/olsr.config $(1)/etc/config/olsr
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/olsrd.conf $(1)/etc/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/cfgparser/olsrd.conf.example $(1)/etc/olsrd.conf
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/olsrd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/olsrd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/olsrd.init $(1)/etc/init.d/olsrd
 endef
 
 define Package/olsrd-mod-dot-draw/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_dot_draw.so.* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/dot_draw/olsrd_dot_draw.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-bmf/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_bmf.so.* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmf/olsrd_bmf.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-dyn-gw/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_dyn_gw.so.* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/dyn_gw/olsrd_dyn_gw.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-httpinfo/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_httpinfo.so.* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/httpinfo/olsrd_httpinfo.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-nameservice/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_nameservice.so.* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/nameservice/olsrd_nameservice.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-secure/install
 	$(INSTALL_DIR) $(1)/etc/olsrd.d
 	$(CP) ./files/olsrd_secure_key $(1)/etc/olsrd.d/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_secure.so.* $(1)/usr/lib/
-endef
-
-define Package/olsrd-mod-tas/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_tas.so.* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/secure/olsrd_secure.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-txtinfo/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/olsrd_txtinfo.so.* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/txtinfo/olsrd_txtinfo.so.* $(1)/usr/lib/
 endef
-
-
 
 $(eval $(call BuildPackage,olsrd))
 $(eval $(call BuildPackage,olsrd-mod-dot-draw))
@@ -171,5 +160,4 @@ $(eval $(call BuildPackage,olsrd-mod-dyn-gw))
 $(eval $(call BuildPackage,olsrd-mod-httpinfo))
 $(eval $(call BuildPackage,olsrd-mod-nameservice))
 $(eval $(call BuildPackage,olsrd-mod-secure))
-$(eval $(call BuildPackage,olsrd-mod-tas))
 $(eval $(call BuildPackage,olsrd-mod-txtinfo))
