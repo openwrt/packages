@@ -9,45 +9,84 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batmand
-PKG_VERSION:=0.2-rv502
+PKG_REV:=949
+PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
+PKG_BRANCH:=batman
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)_sources
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION)_sources.tgz
-PKG_SOURCE_URL:=http://downloads.open-mesh.net/batman/stable/sources/ \
-	http://downloads.open-mesh.net/batman/stable/sources/old/
-PKG_MD5SUM:=cf1c92ef3455cfbfedf2c577e013b6c0
-
+PKG_SOURCE_PROTO:=svn
+PKG_SOURCE_VERSION:=$(PKG_REV)
+PKG_SOURCE_SUBDIR:=$(PKG_BRANCH)d-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://dev.open-mesh.net/svn/batman/trunk/$(PKG_BRANCH)
+PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
 
-include $(INCLUDE_DIR)/package.mk
+PKG_KMOD_BUILD_DIR:=$(PKG_BUILD_DIR)/linux/modules
 
-define Package/batman
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/kernel.mk
+
+define Package/batmand/Default
   SECTION:=net
   CATEGORY:=Network
+  URL:=https://www.open-mesh.net/
+  MAINTAINER:=Marek Lindner <lindner_marek@yahoo.de>
+endef
+
+define Package/batmand
+$(call Package/batmand/Default)
   DEPENDS:=+libpthread +kmod-tun
   TITLE:=B.A.T.M.A.N. Better Approach To Mobile Ad-hoc Networking
-  URL:=https://www.open-mesh.net/
 endef
 
-define Build/Configure
+define Package/batmand/description
+B.A.T.M.A.N. layer 3 routing daemon
 endef
 
-MAKE_FLAGS += \
+define Package/batgat
+$(call Package/batmand/Default)
+  DEPENDS:=batmand
+  TITLE:=B.A.T.M.A.N. gateway module
+  FILES:=$(PKG_KMOD_BUILD_DIR)/batgat.$(LINUX_KMOD_SUFFIX)
+endef
+
+define Package/batgat/description
+Kernel gateway module for B.A.T.M.A.N.
+endef
+
+MAKE_ARGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
 	CCFLAGS="$(TARGET_CFLAGS)" \
 	OFLAGS="$(TARGET_CFLAGS)" \
+	CC="$(TARGET_CC)" \
 	NODEBUG=1 \
 	UNAME="Linux" \
 	INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
 	STRIP="/bin/true" \
 	batmand install
 
-define Package/batman/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/batmand $(1)/usr/sbin/
-	$(INSTALL_BIN) ./files/etc/init.d/batman $(1)/etc/init.d
-	$(INSTALL_DATA) ./files/etc/config/batman $(1)/etc/config
+define Build/Configure
 endef
 
-$(eval $(call BuildPackage,batman))
+define Build/Compile
+	$(MAKE) -C $(PKG_BUILD_DIR) $(MAKE_ARGS)
+	$(shell [ -e $(PKG_KMOD_BUILD_DIR)/Makefile.kbuild ] && mv $(PKG_KMOD_BUILD_DIR)/Makefile.kbuild $(PKG_KMOD_BUILD_DIR)/Makefile)
+	$(MAKE) -C "$(LINUX_DIR)" \
+		CROSS_COMPILE="$(TARGET_CROSS)" \
+		ARCH="$(LINUX_KARCH)" \
+		PATH="$(TARGET_PATH)" \
+		SUBDIRS="$(PKG_KMOD_BUILD_DIR)" \
+		LINUX_VERSION="$(LINUX_VERSION)" \
+		REVISION="$(PKG_REV)" modules
+endef
+
+define Package/batmand/install
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/batmand $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/etc/init.d/batmand $(1)/etc/init.d
+	$(INSTALL_DATA) ./files/etc/config/batmand $(1)/etc/config
+endef
+
+$(eval $(call BuildPackage,batmand))
+$(eval $(call BuildPackage,batgat))
