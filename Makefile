@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2006 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batmand
-PKG_REV:=949
+PKG_REV:=963
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
 PKG_BRANCH:=batman
@@ -17,7 +17,7 @@ PKG_BRANCH:=batman
 PKG_SOURCE_PROTO:=svn
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_SUBDIR:=$(PKG_BRANCH)d-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://dev.open-mesh.net/svn/batman/trunk/$(PKG_BRANCH)
+PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/trunk/$(PKG_BRANCH)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
@@ -37,21 +37,23 @@ endef
 define Package/batmand
 $(call Package/batmand/Default)
   DEPENDS:=+libpthread +kmod-tun
-  TITLE:=B.A.T.M.A.N. Better Approach To Mobile Ad-hoc Networking
+  TITLE:=B.A.T.M.A.N. layer 3 routing daemon
 endef
 
 define Package/batmand/description
 B.A.T.M.A.N. layer 3 routing daemon
 endef
 
-define Package/batgat
+define KernelPackage/batgat
 $(call Package/batmand/Default)
   DEPENDS:=batmand
   TITLE:=B.A.T.M.A.N. gateway module
   FILES:=$(PKG_KMOD_BUILD_DIR)/batgat.$(LINUX_KMOD_SUFFIX)
+  AUTOLOAD:=$(call AutoLoad,50,batgat)
 endef
 
-define Package/batgat/description
+
+define KernelPackage/batgat/description
 Kernel gateway module for B.A.T.M.A.N.
 endef
 
@@ -59,6 +61,7 @@ MAKE_ARGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
 	CCFLAGS="$(TARGET_CFLAGS)" \
 	OFLAGS="$(TARGET_CFLAGS)" \
+	REVISION="$(PKG_REV)" \
 	CC="$(TARGET_CC)" \
 	NODEBUG=1 \
 	UNAME="Linux" \
@@ -71,7 +74,7 @@ endef
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) $(MAKE_ARGS)
-	$(shell [ -e $(PKG_KMOD_BUILD_DIR)/Makefile.kbuild ] && mv $(PKG_KMOD_BUILD_DIR)/Makefile.kbuild $(PKG_KMOD_BUILD_DIR)/Makefile)
+	cp $(PKG_KMOD_BUILD_DIR)/Makefile.kbuild $(PKG_KMOD_BUILD_DIR)/Makefile
 	$(MAKE) -C "$(LINUX_DIR)" \
 		CROSS_COMPILE="$(TARGET_CROSS)" \
 		ARCH="$(LINUX_KARCH)" \
@@ -89,4 +92,4 @@ define Package/batmand/install
 endef
 
 $(eval $(call BuildPackage,batmand))
-$(eval $(call BuildPackage,batgat))
+$(eval $(call KernelPackage,batgat))
