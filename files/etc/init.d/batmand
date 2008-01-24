@@ -1,19 +1,20 @@
 #!/bin/sh /etc/rc.common
-START=100
+START=90
 . /lib/config/uci.sh
-uci_load batman
+uci_load batmand
 start () {
-	interface=$(uci get batman.general.interface)
+	interface=$(uci get batmand.general.interface)
 	if [ "$interface" = "" ]; then
 		echo $1 Error, you must specify at least a network interface
 		exit
 	fi
-	announce=$(uci get batman.general.announce)
-	gateway_class=$(uci get batman.general.gateway_class)
-	originator_interval=$(uci get batman.general.originator_interval)
-	preferred_gateway=$(uci get batman.general.preferred_gateway)
-	routing_class=$(uci get batman.general.routing_class)
-	visualisation_srv=$(uci get batman.general.visualisation_srv)
+	announce=$(uci get batmand.general.announce)
+	gateway_class=$(uci get batmand.general.gateway_class)
+	originator_interval=$(uci get batmand.general.originator_interval)
+	preferred_gateway=$(uci get batmand.general.preferred_gateway)
+	routing_class=$(uci get batmand.general.routing_class)
+	visualisation_srv=$(uci get batmand.general.visualisation_srv)
+	policy_routing_script=$(uci get batmand.general.policy_routing_script)
 	batman_args=""
 
 	if [ $announce ]; then
@@ -38,6 +39,10 @@ start () {
 		
 	if [ $visualisation_srv ]; then
 		batman_args=${batman_args}'-s '$visualisation_srv' '
+	fi
+	
+	if [ $policy_routing_script ]; then
+		batman_args=${batman_args}'--policy-routing-script '$policy_routing_script' '
 	fi
 
 	batman_args=${batman_args}$interface
