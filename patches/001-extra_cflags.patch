@@ -1,0 +1,12 @@
+diff -urN batmand-r963/linux/modules/Makefile.kbuild batmand-r963.new/linux/modules/Makefile.kbuild
+--- batmand-r963/linux/modules/Makefile.kbuild	2008-01-28 08:47:35.000000000 +0100
++++ batmand-r963.new/linux/modules/Makefile.kbuild	2008-03-02 18:24:49.000000000 +0100
+@@ -3,7 +3,7 @@
+ endif
+ 
+ LINUX26:=2.6
+-CFLAGS +=-DREVISION_VERSION=\"\ rv$(REVISION)\"
++EXTRA_CFLAGS +=-DREVISION_VERSION=\"\ rv$(REVISION)\"
+ 
+ ifeq ($(strip $(findstring $(LINUX26),$(LINUX_VERSION))),$(LINUX26))
+ 

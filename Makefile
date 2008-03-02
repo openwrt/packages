@@ -58,7 +58,7 @@ Kernel gateway module for B.A.T.M.A.N.
 endef
 
 MAKE_ARGS += \
-	CFLAGS="$(TARGET_CFLAGS)" \
+	EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
 	CCFLAGS="$(TARGET_CFLAGS)" \
 	OFLAGS="$(TARGET_CFLAGS)" \
 	REVISION="$(PKG_REV)" \
