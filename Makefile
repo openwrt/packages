@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006 OpenWrt.org
+# Copyright (C) 2008 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -28,14 +28,14 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 define Package/batmand/Default
-  SECTION:=net
-  CATEGORY:=Network
   URL:=https://www.open-mesh.net/
   MAINTAINER:=Marek Lindner <lindner_marek@yahoo.de>
 endef
 
 define Package/batmand
 $(call Package/batmand/Default)
+  SECTION:=net
+  CATEGORY:=Network
   DEPENDS:=+libpthread +kmod-tun
   TITLE:=B.A.T.M.A.N. layer 3 routing daemon
 endef
@@ -46,7 +46,8 @@ endef
 
 define KernelPackage/batgat
 $(call Package/batmand/Default)
-  DEPENDS:=batmand
+  SUBMENU:=Network Support
+  DEPENDS:=+batmand
   TITLE:=B.A.T.M.A.N. gateway module
   FILES:=$(PKG_KMOD_BUILD_DIR)/batgat.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,50,batgat)
@@ -54,7 +55,7 @@ endef
 
 
 define KernelPackage/batgat/description
-Kernel gateway module for B.A.T.M.A.N.
+ Kernel gateway module for B.A.T.M.A.N.
 endef
 
 MAKE_ARGS += \
