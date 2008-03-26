@@ -1,0 +1,19 @@
+diff -Nur quagga-0.98.6/bgpd/bgp_route.c quagga-0.98.6-patched/bgpd/bgp_route.c
+--- quagga-0.98.6/bgpd/bgp_route.c	2006-05-08 18:03:25.000000000 +0300
++++ quagga-0.98.6-patched/bgpd/bgp_route.c	2006-12-08 23:10:37.000000000 +0200
+@@ -1815,6 +1815,7 @@
+       if ((afi == AFI_IP || afi == AFI_IP6)
+ 	  && safi == SAFI_UNICAST 
+ 	  && (peer_sort (peer) == BGP_PEER_IBGP
++              || peer_sort (peer) == BGP_PEER_CONFED
+ 	      || (peer_sort (peer) == BGP_PEER_EBGP && peer->ttl != 1)
+ 	      || CHECK_FLAG (peer->flags, PEER_FLAG_ENFORCE_MULTIHOP)))
+ 	{
+@@ -1862,6 +1863,7 @@
+   if ((afi == AFI_IP || afi == AFI_IP6)
+       && safi == SAFI_UNICAST
+       && (peer_sort (peer) == BGP_PEER_IBGP
++          || peer_sort (peer) == BGP_PEER_CONFED
+ 	  || (peer_sort (peer) == BGP_PEER_EBGP && peer->ttl != 1)
+ 	  || CHECK_FLAG (peer->flags, PEER_FLAG_ENFORCE_MULTIHOP)))
+     {
