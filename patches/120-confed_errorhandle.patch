@@ -1,0 +1,93 @@
+diff -Nur quagga-0.98.6/bgpd/bgp_aspath.c quagga-0.98.6-patched/bgpd/bgp_aspath.c
+--- quagga-0.98.6/bgpd/bgp_aspath.c	2005-06-15 14:53:50.000000000 +0300
++++ quagga-0.98.6-patched/bgpd/bgp_aspath.c	2007-11-24 03:20:02.000000000 +0200
+@@ -614,6 +614,47 @@
+   return 1;
+ }
+ 
++/* AS path confed check.  If aspath contains confed set or sequence then return 1. */
++int
++aspath_confed_check (struct aspath *aspath)
++{
++  caddr_t pnt;
++  caddr_t end;
++  struct assegment *assegment;
++
++  if (aspath == NULL)
++    return 0;
++
++  pnt = aspath->data;
++  end = aspath->data + aspath->length;
++
++  while (pnt < end)
++    {
++      assegment = (struct assegment *) pnt;
++      if (assegment->type == AS_CONFED_SET || assegment->type == AS_CONFED_SEQUENCE)
++	  return 1;
++      pnt += (assegment->length * AS_VALUE_SIZE) + AS_HEADER_SIZE;
++    }
++  return 0;
++}
++
++/* Leftmost AS path segment confed check.  If leftmost AS segment is of type
++  AS_CONFED_SEQUENCE or AS_CONFED_SET then return 1.  */
++int
++aspath_left_confed_check (struct aspath *aspath)
++{
++  struct assegment *assegment;
++
++  if (aspath == NULL)
++    return 0;
++
++  assegment = (struct assegment *) aspath->data;
++  if (assegment->type == AS_CONFED_SEQUENCE || assegment->type == AS_CONFED_SET)
++    return 1;
++
++  return 0;
++}
++
+ /* Merge as1 to as2.  as2 should be uninterned aspath. */
+ struct aspath *
+ aspath_merge (struct aspath *as1, struct aspath *as2)
+@@ -671,6 +712,10 @@
+   if (seg1 == NULL)
+     return as2;
+ 
++  /* Delete any AS_CONFED_SEQUENCE segment from as2. */
++  if (seg1->type == AS_SEQUENCE && seg2->type == AS_CONFED_SEQUENCE)
++    as2 = aspath_delete_confed_seq (as2);
++
+   /* Compare last segment type of as1 and first segment type of as2. */
+   if (seg1->type != seg2->type)
+     return aspath_merge (as1, as2);
+diff -Nur quagga-0.98.6/bgpd/bgp_aspath.h quagga-0.98.6-patched/bgpd/bgp_aspath.h
+--- quagga-0.98.6/bgpd/bgp_aspath.h	2005-06-15 14:53:50.000000000 +0300
++++ quagga-0.98.6-patched/bgpd/bgp_aspath.h	2007-11-24 03:21:24.000000000 +0200
+@@ -76,4 +76,6 @@
+ int aspath_loop_check (struct aspath *, as_t);
+ int aspath_private_as_check (struct aspath *);
+ int aspath_firstas_check (struct aspath *, as_t);
++int aspath_confed_check (struct aspath *);
++int aspath_left_confed_check (struct aspath *);
+ unsigned long aspath_count ();
+diff -Nur quagga-0.98.6/bgpd/bgp_attr.c quagga-0.98.6-patched/bgpd/bgp_attr.c
+--- quagga-0.98.6/bgpd/bgp_attr.c	2006-05-03 01:37:47.000000000 +0300
++++ quagga-0.98.6-patched/bgpd/bgp_attr.c	2007-11-24 03:09:56.000000000 +0200
+@@ -673,6 +673,17 @@
+       return -1;
+     }
+ 
++  /* Confederation sanity check. */
++  if ((peer_sort (peer) == BGP_PEER_CONFED && ! aspath_left_confed_check (attr->aspath)) ||
++     (peer_sort (peer) == BGP_PEER_EBGP && aspath_confed_check (attr->aspath)))
++    {
++      zlog (peer->log, LOG_ERR, "Malformed AS path from %s", peer->host);
++      bgp_notify_send (peer, 
++		       BGP_NOTIFY_UPDATE_ERR, 
++		       BGP_NOTIFY_UPDATE_MAL_AS_PATH);
++      return -1;
++    }
++
+   bgp = peer->bgp;
+     
+   /* First AS check for EBGP. */
