@@ -1,6 +1,6 @@
-diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
---- quagga-0.98.6.orig/bgpd/bgp_vty.c	2006-03-30 18:12:25.000000000 +0200
-+++ quagga-0.98.6/bgpd/bgp_vty.c	2006-12-02 10:52:14.000000000 +0100
+diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
+--- quagga-0.98.6/bgpd/bgp_vty.c	2006-03-30 19:12:25.000000000 +0300
++++ quagga-0.98.6-patched/bgpd/bgp_vty.c	2007-04-05 01:26:42.000000000 +0300
 @@ -7793,7 +7793,9 @@
  	return ZEBRA_ROUTE_STATIC;
        else if (strncmp (str, "r", 1) == 0)
@@ -12,7 +12,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
  	return ZEBRA_ROUTE_OSPF;
      }
    if (afi == AFI_IP6)
-@@ -7806,20 +7808,23 @@
+@@ -7806,21 +7808,25 @@
  	return ZEBRA_ROUTE_STATIC;
        else if (strncmp (str, "r", 1) == 0)
  	return ZEBRA_ROUTE_RIPNG;
@@ -34,11 +34,14 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Kernel routes\n"
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
+-       "Static routes\n")
++       "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
-        "Static routes\n")
++       )
  {
    int type;
-@@ -7835,13 +7840,14 @@
+ 
+@@ -7835,13 +7841,14 @@
  
  DEFUN (bgp_redistribute_ipv4_rmap,
         bgp_redistribute_ipv4_rmap_cmd,
@@ -54,7 +57,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -7860,13 +7866,14 @@
+@@ -7860,13 +7867,14 @@
  
  DEFUN (bgp_redistribute_ipv4_metric,
         bgp_redistribute_ipv4_metric_cmd,
@@ -70,7 +73,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -7887,13 +7894,14 @@
+@@ -7887,13 +7895,14 @@
  
  DEFUN (bgp_redistribute_ipv4_rmap_metric,
         bgp_redistribute_ipv4_rmap_metric_cmd,
@@ -86,7 +89,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -7917,13 +7925,14 @@
+@@ -7917,13 +7926,14 @@
  
  DEFUN (bgp_redistribute_ipv4_metric_rmap,
         bgp_redistribute_ipv4_metric_rmap_cmd,
@@ -102,7 +105,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -7947,14 +7956,16 @@
+@@ -7947,14 +7957,16 @@
  
  DEFUN (no_bgp_redistribute_ipv4,
         no_bgp_redistribute_ipv4_cmd,
@@ -121,7 +124,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
  {
    int type;
  
-@@ -7970,7 +7981,7 @@
+@@ -7970,7 +7982,7 @@
  
  DEFUN (no_bgp_redistribute_ipv4_rmap,
         no_bgp_redistribute_ipv4_rmap_cmd,
@@ -130,7 +133,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -7978,6 +7989,7 @@
+@@ -7978,6 +7990,7 @@
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
@@ -138,7 +141,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -7996,7 +8008,7 @@
+@@ -7996,7 +8009,7 @@
  
  DEFUN (no_bgp_redistribute_ipv4_metric,
         no_bgp_redistribute_ipv4_metric_cmd,
@@ -147,7 +150,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8004,6 +8016,7 @@
+@@ -8004,6 +8017,7 @@
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
@@ -155,7 +158,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -8022,7 +8035,7 @@
+@@ -8022,7 +8036,7 @@
  
  DEFUN (no_bgp_redistribute_ipv4_rmap_metric,
         no_bgp_redistribute_ipv4_rmap_metric_cmd,
@@ -164,7 +167,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8030,6 +8043,7 @@
+@@ -8030,6 +8044,7 @@
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
@@ -172,7 +175,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -8051,7 +8065,7 @@
+@@ -8051,7 +8066,7 @@
  
  ALIAS (no_bgp_redistribute_ipv4_rmap_metric,
         no_bgp_redistribute_ipv4_metric_rmap_cmd,
@@ -181,7 +184,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8059,6 +8073,7 @@
+@@ -8059,6 +8074,7 @@
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
@@ -189,7 +192,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -8067,13 +8082,15 @@
+@@ -8067,13 +8083,15 @@
  #ifdef HAVE_IPV6
  DEFUN (bgp_redistribute_ipv6,
         bgp_redistribute_ipv6_cmd,
@@ -207,7 +210,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
  {
    int type;
  
-@@ -8089,13 +8106,14 @@
+@@ -8089,13 +8107,14 @@
  
  DEFUN (bgp_redistribute_ipv6_rmap,
         bgp_redistribute_ipv6_rmap_cmd,
@@ -223,7 +226,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -8114,13 +8132,14 @@
+@@ -8114,13 +8133,14 @@
  
  DEFUN (bgp_redistribute_ipv6_metric,
         bgp_redistribute_ipv6_metric_cmd,
@@ -239,7 +242,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -8141,13 +8160,14 @@
+@@ -8141,13 +8161,14 @@
  
  DEFUN (bgp_redistribute_ipv6_rmap_metric,
         bgp_redistribute_ipv6_rmap_metric_cmd,
@@ -255,7 +258,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -8171,13 +8191,14 @@
+@@ -8171,13 +8192,14 @@
  
  DEFUN (bgp_redistribute_ipv6_metric_rmap,
         bgp_redistribute_ipv6_metric_rmap_cmd,
@@ -271,7 +274,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -8201,14 +8222,16 @@
+@@ -8201,14 +8223,16 @@
  
  DEFUN (no_bgp_redistribute_ipv6,
         no_bgp_redistribute_ipv6_cmd,
@@ -290,7 +293,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
  {
    int type;
  
-@@ -8224,7 +8247,7 @@
+@@ -8224,7 +8248,7 @@
  
  DEFUN (no_bgp_redistribute_ipv6_rmap,
         no_bgp_redistribute_ipv6_rmap_cmd,
@@ -299,7 +302,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8232,6 +8255,7 @@
+@@ -8232,6 +8256,7 @@
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
@@ -307,7 +310,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -8250,7 +8274,7 @@
+@@ -8250,7 +8275,7 @@
  
  DEFUN (no_bgp_redistribute_ipv6_metric,
         no_bgp_redistribute_ipv6_metric_cmd,
@@ -316,7 +319,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8258,6 +8282,7 @@
+@@ -8258,6 +8283,7 @@
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
@@ -324,7 +327,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -8276,7 +8301,7 @@
+@@ -8276,7 +8302,7 @@
  
  DEFUN (no_bgp_redistribute_ipv6_rmap_metric,
         no_bgp_redistribute_ipv6_rmap_metric_cmd,
@@ -333,7 +336,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8284,6 +8309,7 @@
+@@ -8284,6 +8310,7 @@
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
@@ -341,7 +344,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -8305,7 +8331,7 @@
+@@ -8305,7 +8332,7 @@
  
  ALIAS (no_bgp_redistribute_ipv6_rmap_metric,
         no_bgp_redistribute_ipv6_metric_rmap_cmd,
@@ -350,7 +353,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8313,6 +8339,7 @@
+@@ -8313,6 +8340,7 @@
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
@@ -358,7 +361,7 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -8325,7 +8352,7 @@
+@@ -8325,7 +8353,7 @@
  {
    int i;
    const char *str[] = { "system", "kernel", "connected", "static", "rip",
@@ -367,9 +370,9 @@ diff -Nur quagga-0.98.6.orig/bgpd/bgp_vty.c quagga-0.98.6/bgpd/bgp_vty.c
  
    /* Unicast redistribution only.  */
    if (safi != SAFI_UNICAST)
-diff -Nur quagga-0.98.6.orig/lib/zebra.h quagga-0.98.6/lib/zebra.h
---- quagga-0.98.6.orig/lib/zebra.h	2005-06-15 13:54:18.000000000 +0200
-+++ quagga-0.98.6/lib/zebra.h	2006-12-02 10:48:51.000000000 +0100
+diff -Nur quagga-0.98.6/lib/zebra.h quagga-0.98.6-patched/lib/zebra.h
+--- quagga-0.98.6/lib/zebra.h	2005-06-15 14:54:18.000000000 +0300
++++ quagga-0.98.6-patched/lib/zebra.h	2007-04-05 01:23:59.000000000 +0300
 @@ -378,7 +378,8 @@
  #define ZEBRA_ROUTE_ISIS                 8
  #define ZEBRA_ROUTE_BGP                  9
@@ -380,9 +383,9 @@ diff -Nur quagga-0.98.6.orig/lib/zebra.h quagga-0.98.6/lib/zebra.h
  
  /* Zebra's family types. */
  #define ZEBRA_FAMILY_IPV4                1
-diff -Nur quagga-0.98.6.orig/ospfd/ospf_vty.c quagga-0.98.6/ospfd/ospf_vty.c
---- quagga-0.98.6.orig/ospfd/ospf_vty.c	2006-03-30 17:41:20.000000000 +0200
-+++ quagga-0.98.6/ospfd/ospf_vty.c	2006-12-02 10:48:51.000000000 +0100
+diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
+--- quagga-0.98.6/ospfd/ospf_vty.c	2006-03-30 18:41:20.000000000 +0300
++++ quagga-0.98.6-patched/ospfd/ospf_vty.c	2007-04-05 01:23:59.000000000 +0300
 @@ -108,9 +108,11 @@
      *source = ZEBRA_ROUTE_RIP;
    else if (strncmp (str, "b", 1) == 0)
@@ -609,9 +612,28 @@ diff -Nur quagga-0.98.6.orig/ospfd/ospf_vty.c quagga-0.98.6/ospfd/ospf_vty.c
  int
  config_write_ospf_redistribute (struct vty *vty, struct ospf *ospf)
  {
-diff -Nur quagga-0.98.6.orig/zebra/zebra_vty.c quagga-0.98.6/zebra/zebra_vty.c
---- quagga-0.98.6.orig/zebra/zebra_vty.c	2004-12-18 17:03:29.000000000 +0100
-+++ quagga-0.98.6/zebra/zebra_vty.c	2006-12-02 10:49:45.000000000 +0100
+diff -Nur quagga-0.98.6/zebra/redistribute.c quagga-0.98.6-patched/zebra/redistribute.c
+--- quagga-0.98.6/zebra/redistribute.c	2005-06-15 14:54:51.000000000 +0300
++++ quagga-0.98.6-patched/zebra/redistribute.c	2007-04-05 01:27:23.000000000 +0300
+@@ -253,6 +253,7 @@
+     case ZEBRA_ROUTE_OSPF:
+     case ZEBRA_ROUTE_OSPF6:
+     case ZEBRA_ROUTE_BGP:
++    case ZEBRA_ROUTE_OLSR:
+       if (! client->redist[type])
+ 	{
+ 	  client->redist[type] = 1;
+@@ -281,6 +282,7 @@
+     case ZEBRA_ROUTE_OSPF:
+     case ZEBRA_ROUTE_OSPF6:
+     case ZEBRA_ROUTE_BGP:
++    case ZEBRA_ROUTE_OLSR:
+       client->redist[type] = 0;
+       break;
+     default:
+diff -Nur quagga-0.98.6/zebra/zebra_vty.c quagga-0.98.6-patched/zebra/zebra_vty.c
+--- quagga-0.98.6/zebra/zebra_vty.c	2004-12-18 18:03:29.000000000 +0200
++++ quagga-0.98.6-patched/zebra/zebra_vty.c	2007-04-05 01:23:59.000000000 +0300
 @@ -53,6 +53,8 @@
        return "isis";
      case ZEBRA_ROUTE_BGP:
