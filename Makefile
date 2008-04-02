@@ -24,11 +24,17 @@ PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/quagga
+define Package/quagga/Default
   SECTION:=net
   CATEGORY:=Network
+  DEPENDS:=quagga
   TITLE:=The Quagga Software Routing Suite
   URL:=http://www.quagga.net
+endef
+
+define Package/quagga
+  $(call Package/quagga/Default)
+  DEPENDS:=
   MENU:=1
 endef
 
@@ -40,65 +46,53 @@ A routing software package that provides TCP/IP based routing services
 endef
 
 define Package/quagga-libzebra
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=quagga
+  $(call Package/quagga/Default)
   TITLE:=zebra library
 endef
 
 define Package/quagga-libospf
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=quagga
+  $(call Package/quagga/Default)
   TITLE:=OSPF library
 endef
 
 define Package/quagga-bgpd
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=quagga quagga-libzebra
+  $(call Package/quagga/Default)
+  DEPENDS += quagga-libzebra
   TITLE:=BGPv4, BGPv4+, BGPv4- routing engine
 endef
 
 define Package/quagga-isisd
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=quagga
+  $(call Package/quagga/Default)
   TITLE:=IS-IS routing engine
 endef
 
 define Package/quagga-ospfd
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=quagga quagga-libospf quagga-libzebra
+  $(call Package/quagga/Default)
+  DEPENDS += quagga-libospf quagga-libzebra
   TITLE:=OSPFv2 routing engine
 endef
 
 define Package/quagga-ospf6d
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=quagga quagga-libospf quagga-libzebra
+  $(call Package/quagga/Default)
+  DEPENDS += quagga-libospf quagga-libzebra
   TITLE:=OSPFv3 routing engine
 endef
 
 define Package/quagga-ripd
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=quagga quagga-libzebra
+  $(call Package/quagga/Default)
+  DEPENDS += quagga-libzebra
   TITLE:=RIP routing engine
 endef
 
 define Package/quagga-ripngd
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=quagga +quagga-libzebra
+  $(call Package/quagga/Default)
+  DEPENDS += quagga-libzebra
   TITLE:=RIPNG routing engine
 endef
 
 define Package/quagga-vtysh
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=quagga quagga-libzebra +libreadline +libncurses
+  $(call Package/quagga/Default)
+  DEPENDS += quagga-libzebra +libreadline +libncurses
   TITLE:=integrated shell for Quagga routing software
 endef
 
