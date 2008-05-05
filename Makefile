@@ -9,15 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batmand
-PKG_REV:=989
+PKG_REV:=1057
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
-PKG_BRANCH:=batman
+PKG_BRANCH:=batman-0.3
 
 PKG_SOURCE_PROTO:=svn
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE_SUBDIR:=$(PKG_BRANCH)d-$(PKG_VERSION)
-PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/trunk/$(PKG_BRANCH)
+PKG_SOURCE_SUBDIR:=$(PKG_BRANCH)-$(PKG_VERSION)
+PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/tags/$(PKG_BRANCH)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
