@@ -1,0 +1,21 @@
+diff -urb bmxd-r1042.orig/Makefile bmxd-r1042/Makefile
+--- bmxd-r1042.orig/Makefile	2008-05-08 00:07:50.000000000 +0200
++++ bmxd-r1042/Makefile	2008-05-08 00:07:16.000000000 +0200
+@@ -19,11 +19,15 @@
+ 
+ # CC =		gcc
+ 
+-CFLAGS =	-Wall -O1 -g -pg
++# JoW: "-pg" results in "gcrt1.o: No such file" ?!
++#CFLAGS =	-Wall -O1 -g -pg
++CFLAGS =	-Wall -O1 -g
+ 
+ #-DDEBUG_MALLOC -DMEMORY_USAGE -DPROFILE_DATA
+ 
+-LDFLAGS =	-lpthread -static -g -pg
++# JoW: "-pg" results in "gcrt1.o: No such file" ?!
++#LDFLAGS =	-lpthread -static -g -pg
++LDFLAGS =	-lpthread -static -g
+ 
+ 
+ #STRIP=			strip
