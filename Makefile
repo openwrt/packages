@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=bmxd
 PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/trunk/batman-experimental/
 
-PKG_REV:=$(shell LC_ALL=C svn info $(PKG_SOURCE_URL) | sed -ne 's/^Last Changed Rev: //p')
+PKG_REV:=1075
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
 
