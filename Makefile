@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=olsrd
-PKG_VERSION:=0.5.6-rc4
+PKG_VERSION:=0.5.6-rc6
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.olsr.org/releases/0.5
-PKG_MD5SUM:=c7187a3a11e61ca9a2b5881ab7c92ea5
+PKG_MD5SUM:=72e5d1a23339057c05bdd5a61dbdacba
 
 PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
 
