@@ -9,16 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nodogsplash
-PKG_VERSION:=0.9_beta8
+PKG_VERSION:=0.9_beta9.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://kokoro.ucsd.edu/nodogsplash/ \
 	http://kokoro.ucsd.edu/nodogsplash/old/
-PKG_MD5SUM:=74269856452b9ef6d8719a6b46bae56d
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
+PKG_MD5SUM:=96e597977717610186ed09ebd7fa54cf
 
 include $(INCLUDE_DIR)/package.mk
 
