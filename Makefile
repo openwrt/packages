@@ -21,7 +21,6 @@ PKG_SOURCE_SUBDIR:=$(if $(PKG_BRANCH),$(PKG_BRANCH),$(PKG_NAME))-$(PKG_VERSION)
 PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/$(if $(PKG_BRANCH),tags/$(PKG_BRANCH),trunk/batman/)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
-PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
 
 PKG_KMOD_BUILD_DIR:=$(PKG_BUILD_DIR)/linux/modules
 
