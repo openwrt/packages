@@ -7,25 +7,25 @@
 # $Id$
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=batmand
-PKG_REV:=1099
+PKG_REV:=1105
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
-PKG_BRANCH:=batman-0.3
+#PKG_BRANCH:=batman-0.3
 
 PKG_SOURCE_PROTO:=svn
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE_SUBDIR:=$(PKG_BRANCH)-$(PKG_VERSION)
-PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/tags/$(PKG_BRANCH)
+PKG_SOURCE_SUBDIR:=$(if $(PKG_BRANCH),$(PKG_BRANCH),$(PKG_NAME))-$(PKG_VERSION)
+PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/$(if $(PKG_BRANCH),tags/$(PKG_BRANCH),trunk/batman/)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
 
 PKG_KMOD_BUILD_DIR:=$(PKG_BUILD_DIR)/linux/modules
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/kernel.mk
 
 define Package/batmand/Default
   URL:=https://www.open-mesh.net/
