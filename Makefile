@@ -107,7 +107,7 @@ endef
 
 define Package/olsrd/install
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/olsr.config $(1)/etc/config/olsr
+	$(INSTALL_DATA) ./files/olsrd.config $(1)/etc/config/olsrd
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/cfgparser/olsrd.conf.example $(1)/etc/olsrd.conf
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/olsrd $(1)/usr/sbin/
