@@ -19,6 +19,8 @@ PKG_MD5SUM:=64b439cde30f48764f02cdd8766aba40
 
 include $(INCLUDE_DIR)/package.mk
 
+TARGET_CFLAGS += $(FPIC)
+
 define Package/olsrd/template
   SECTION:=net
   CATEGORY:=Network
