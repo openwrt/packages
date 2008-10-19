@@ -15,7 +15,7 @@ PKG_RELEASE:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.olsr.org/releases/0.5
-PKG_MD5SUM:=64b439cde30f48764f02cdd8766aba40
+PKG_MD5SUM:=eb72e4899142daa1a6237831da40eb74
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -55,6 +55,12 @@ define Package/olsrd-mod-dyn-gw
   $(call Package/olsrd/template)
   DEPENDS:=olsrd
   TITLE:=Dynamic internet gateway plugin
+endef
+
+define Package/olsrd-mod-dyn-gw-plain
+  $(call Package/olsrd/template)
+  DEPENDS:=olsrd
+  TITLE:=Simplified and more efficient dynamic internet gateway plugin by Sven-Ola Tuecke
 endef
 
 define Package/olsrd-mod-httpinfo
@@ -103,7 +109,7 @@ define Build/Compile
 		MANDIR="$(PKG_INSTALL_DIR)/usr/share/man" \
 		STRIP="true" \
 		INSTALL_LIB="true" \
-		SUBDIRS="bmf dot_draw dyn_gw httpinfo nameservice secure txtinfo" \
+		SUBDIRS="bmf dot_draw dyn_gw dyn_gw_plain httpinfo nameservice secure txtinfo" \
 		all libs install install_libs
 endef
 
@@ -132,6 +138,11 @@ define Package/olsrd-mod-dyn-gw/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/dyn_gw/olsrd_dyn_gw.so.* $(1)/usr/lib/
 endef
 
+define Package/olsrd-mod-dyn-gw-plain/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/dyn_gw_plain/olsrd_dyn_gw_plain.so.* $(1)/usr/lib/
+endef
+
 define Package/olsrd-mod-httpinfo/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/httpinfo/olsrd_httpinfo.so.* $(1)/usr/lib/
@@ -158,6 +169,7 @@ $(eval $(call BuildPackage,olsrd))
 $(eval $(call BuildPackage,olsrd-mod-dot-draw))
 $(eval $(call BuildPackage,olsrd-mod-bmf))
 $(eval $(call BuildPackage,olsrd-mod-dyn-gw))
+$(eval $(call BuildPackage,olsrd-mod-dyn-gw-plain))
 $(eval $(call BuildPackage,olsrd-mod-httpinfo))
 $(eval $(call BuildPackage,olsrd-mod-nameservice))
 $(eval $(call BuildPackage,olsrd-mod-secure))
