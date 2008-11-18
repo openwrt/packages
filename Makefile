@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=olsrd
 PKG_VERSION:=0.5.6-r2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -26,7 +26,6 @@ define Package/olsrd/template
   CATEGORY:=Network
   TITLE:=OLSR (Optimized Link State Routing) daemon
   URL:=http://www.olsr.org/
-  MENU:=1
 endef
 
 define Package/olsrd
@@ -36,7 +35,13 @@ define Package/olsrd
 endef
 
 define Package/olsrd/conffiles
-/etc/olsrd.conf
+/etc/config/olsrd
+endef
+
+define Package/olsrd-mod-arprefresh
+  $(call Package/olsrd/template)
+  DEPENDS:=olsrd
+  TITLE:=Kernel ARP cache refresh plugin
 endef
 
 define Package/olsrd-mod-dot-draw
@@ -60,7 +65,7 @@ endef
 define Package/olsrd-mod-dyn-gw-plain
   $(call Package/olsrd/template)
   DEPENDS:=olsrd
-  TITLE:=Simplified and more efficient dynamic internet gateway plugin by Sven-Ola Tuecke
+  TITLE:=Dynamic internet gateway plain plugin
 endef
 
 define Package/olsrd-mod-httpinfo
@@ -109,18 +114,22 @@ define Build/Compile
 		MANDIR="$(PKG_INSTALL_DIR)/usr/share/man" \
 		STRIP="true" \
 		INSTALL_LIB="true" \
-		SUBDIRS="bmf dot_draw dyn_gw dyn_gw_plain httpinfo nameservice secure txtinfo" \
+		SUBDIRS="arprefresh bmf dot_draw dyn_gw dyn_gw_plain httpinfo nameservice secure txtinfo" \
 		all libs install install_libs
 endef
 
 define Package/olsrd/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/olsrd.config $(1)/etc/config/olsrd
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/cfgparser/olsrd.conf.example $(1)/etc/olsrd.conf
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/olsrd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/olsrd.init $(1)/etc/init.d/olsrd
+endef
+
+define Package/olsrd-mod-arprefresh/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/arprefresh/olsrd_arprefresh.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-dot-draw/install
@@ -166,6 +175,7 @@ define Package/olsrd-mod-txtinfo/install
 endef
 
 $(eval $(call BuildPackage,olsrd))
+$(eval $(call BuildPackage,olsrd-mod-arprefresh))
 $(eval $(call BuildPackage,olsrd-mod-dot-draw))
 $(eval $(call BuildPackage,olsrd-mod-bmf))
 $(eval $(call BuildPackage,olsrd-mod-dyn-gw))

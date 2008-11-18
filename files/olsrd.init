@@ -5,7 +5,7 @@ START=50
 
 OLSRD_OLSRD_SCHEMA='ignore:internal config_file:internal DebugLevel=0 IpVersion=4 AllowNoInt:bool=1 Pollrate=0.025 TcRedundancy=2 MprCoverage=3 LinkQualityFishEye=1 LinkQualityWinSize=100 LinkQualityDijkstraLimit=0+9.0 LinkQualityLevel=2 UseHysteresis:bool=0 FIBMetric=flat ClearScreen:bool=1 Willingness=3 LinkQualityAging=0.1 LinkQualityAlgorithm=etx_fpm'
 OLSRD_IPCCONNECT_SCHEMA='ignore:internal Host:list Net:list2'
-OLSRD_LOADPLUGIN_SCHEMA='ignore:internal library:internal Host:list Net:list2 Ping:list redistribute:list NonOlsrIf:list name:list lat lon latlon_infile HNA:list2 hosts:list2'
+OLSRD_LOADPLUGIN_SCHEMA='ignore:internal library:internal Host4:list Net4:list2 Host:list Net:list2 Host6:list Net6:list2 Ping:list redistribute:list NonOlsrIf:list name:list lat lon latlon_infile HNA:list2 hosts:list2'
 OLSRD_INTERFACE_SCHEMA='ignore:internal interface:internal AutoDetectChanges:bool Ip4Broadcast=255.255.255.255 HelloInterval=2.0 HelloValidityTime=40.0 TcInterval=5.0 TcValidityTime=100.0 MidInterval=18.0 MidValidityTime=324.0 HnaInterval=18.0 HnaValidityTime=108.0'
 
 T='	'
@@ -13,38 +13,38 @@ N='
 '
 
 validate_varname() {
-	local varname=$1
+	local varname="$1"
 	[ -z "$varname" -o "$varname" != "${varname%%[!A-Za-z0-9_]*}" ] && return 1
 	return 0
 }
 
 validate_ifname() {
-	local ifname=$1
+	local ifname="$1"
 	[ -z "$ifname" -o "$ifname" != "${ifname%%[!A-Za-z0-9.:_-]*}" ] && return 1
 	return 0
 }
 
 validate_olsrd_option() {
-	local str=$1
+	local str="$1"
 	[ -z "$str" -o "$str" != "${str%%[! 	0-9A-Za-z./:_-]*}" ] && return 1
 	return 0
 }
 
 get_ifname() {
 	IFNAME=
-	local interface=$1
+	local interface="$1"
 	validate_varname "$interface" || return 1
 	local ifname
 
 	config_get ifname "$interface" ifname
 	validate_ifname "$ifname" || return 1
-	IFNAME=$ifname
+	IFNAME="$ifname"
 
 	return 0
 }
 
 system_config() {
-	local cfg=$1
+	local cfg="$1"
 	local cfgt
 	local hostname
 	local latlon
@@ -53,8 +53,8 @@ system_config() {
 
 	if [ "$cfgt" = "system" ]; then
 		config_get hostname "$cfg" hostname
-		hostname=${hostname:-OpenWrt}
-		SYSTEM_HOSTNAME=$hostname
+		hostname="${hostname:-OpenWrt}"
+		SYSTEM_HOSTNAME="$hostname"
 	fi
 
 	if [ -z "$SYSTEM_LAT" -o -z "$SYSTEM_LON" ]; then
@@ -62,13 +62,20 @@ system_config() {
 		IFS=" ${T}${N},"
 		set -- $latlon
 		unset IFS
-		SYSTEM_LAT=$1
-		SYSTEM_LON=$2
+		SYSTEM_LAT="$1"
+		SYSTEM_LON="$2"
+	fi
+
+	if [ -z "$SYSTEM_LAT" -o -z "$SYSTEM_LON" ]; then
+		config_get latlon "$cfg" latitude
+		SYSTEM_LAT="$latlon"
+		config_get latlon "$cfg" longitude
+		SYSTEM_LON="$latlon"
 	fi
 }
 
 olsrd_find_config_file() {
-	local cfg=$1
+	local cfg="$1"
 	validate_varname "$cfg" || return 0
 
 	config_get_bool ignore "$cfg" ignore 0
@@ -79,11 +86,11 @@ olsrd_find_config_file() {
 }
 
 warning_invalid_value() {
-	local package=$1
+	local package="$1"
 	validate_varname "$package" || package=
-	local config=$2
+	local config="$2"
 	validate_varname "$config" || config=
-	local option=$3
+	local option="$3"
 	validate_varname "$option" || option=
 
 	echo -n "Warning: Invalid value" 1>&2
@@ -98,13 +105,13 @@ warning_invalid_value() {
 }
 
 olsrd_write_option() {
-	local param=$1
-	local cfg=$2
+	local param="$1"
+	local cfg="$2"
 	validate_varname "$cfg" || return 1
-	local option=$3
+	local option="$3"
 	validate_varname "$option" || return 1
-	local value=$4
-	local option_type=$5
+	local value="$4"
+	local option_type="$5"
 
 	if [ "$option_type" = bool ]; then
 		case "$value" in
@@ -120,7 +127,7 @@ olsrd_write_option() {
 	fi
 
 	if [ "$value" != "${value%%[G-Zg-z_-]*}" ]; then
-		if [ "$value" != "yes" -a "$value" != "no" ]; then
+		if [ "$option" != "Ip6AddrType" -a "$value" != "yes" -a "$value" != "no" ]; then
 			value="\"$value\""
 		fi
 	fi
@@ -131,13 +138,13 @@ olsrd_write_option() {
 }
 
 olsrd_write_plparam() {
-	local param=$1
-	local cfg=$2
+	local param="$1"
+	local cfg="$2"
 	validate_varname "$cfg" || return 1
-	local option=$3
+	local option="$3"
 	validate_varname "$option" || return 1
-	local value=$4
-	local option_type=$5
+	local value="$4"
+	local option_type="$5"
 	local _option
 
 	if [ "$option_type" = bool ]; then
@@ -160,7 +167,7 @@ olsrd_write_plparam() {
 	_option="$option"
 	if [ "$option" = 'hosts' ]; then
 		set -- $value
-		option=$1
+		option="$1"
 		shift
 		value="$*"
 	fi
@@ -172,13 +179,13 @@ olsrd_write_plparam() {
 
 config_update_schema() {
 	unset IFS
-	local schema_varname=$1
+	local schema_varname="$1"
 	validate_varname "$schema_varname" || return 1
-	local command=$2
+	local command="$2"
 	validate_varname "$command" || return 1
-	local option=$3
+	local option="$3"
 	validate_varname "$option" || return 1
-	local value=$4
+	local value="$4"
 	local schema
 	local cur_option
 
@@ -213,12 +220,12 @@ config_update_schema() {
 
 config_write_options() {
 	unset IFS
-	local schema=$1
-	local cfg=$2
+	local schema="$1"
+	local cfg="$2"
 	validate_varname "$cfg" || return 1
-	local write_func=$3
+	local write_func="$3"
 	[ -z "$write_func" ] && output_func=echo
-	local write_param=$4
+	local write_param="$4"
 	local schema_entry
 	local option
 	local option_length
@@ -232,14 +239,14 @@ config_write_options() {
 	local position
 
 	for schema_entry in $schema; do
-		default=${schema_entry#*[=]}
+		default="${schema_entry#*[=]}"
 		[ "$default" = "$schema_entry" ] && default=
-		option=${schema_entry%%[=]*}
+		option="${schema_entry%%[=]*}"
 		IFS=':'
 		set -- $option
 		unset IFS
-		option=$1
-		option_type=$2
+		option="$1"
+		option_type="$2"
 		validate_varname "$option" || continue
 		[ -z "$option_type" ] || validate_varname "$option_type" || continue
 		[ "$option_type" = internal ] && continue
@@ -295,14 +302,21 @@ config_write_options() {
 }
 
 olsrd_write_olsrd() {
-	local cfg=$1
+	local cfg="$1"
 	validate_varname "$cfg" || return 0
 	local ignore
+	local ipversion
 
 	config_get_bool ignore "$cfg" ignore 0
 	[ "$ignore" -ne 0 ] && return 0
 
 	[ "$OLSRD_COUNT" -gt 0 ] && return 0
+
+	config_get ipversion "$cfg" IpVersion
+	if [ "$ipversion" = "6and4" ]; then
+		OLSRD_IPVERSION_6AND4=1
+		config_set "$cfg" IpVersion '6'
+	fi
 
 	config_write_options "$OLSRD_OLSRD_SCHEMA" "$cfg" olsrd_write_option
 	echo
@@ -312,7 +326,7 @@ olsrd_write_olsrd() {
 }
 
 olsrd_write_ipcconnect() {
-	local cfg=$1
+	local cfg="$1"
 	validate_varname "$cfg" || return 0
 	local ignore
 
@@ -330,7 +344,7 @@ olsrd_write_ipcconnect() {
 }
 
 olsrd_write_hna4() {
-	local cfg=$1
+	local cfg="$1"
 	validate_varname "$cfg" || return 0
 	local ignore
 
@@ -357,7 +371,7 @@ olsrd_write_hna4() {
 }
 
 olsrd_write_hna6() {
-	local cfg=$1
+	local cfg="$1"
 	validate_varname "$cfg" || return 0
 	local ignore
 
@@ -384,7 +398,7 @@ olsrd_write_hna6() {
 }
 
 olsrd_write_loadplugin() {
-	local cfg=$1
+	local cfg="$1"
 	validate_varname "$cfg" || return 0
 	local ignore
 	local name
@@ -441,7 +455,7 @@ olsrd_write_loadplugin() {
 }
 
 olsrd_write_interface() {
-	local cfg=$1
+	local cfg="$1"
 	validate_varname "$cfg" || return 0
 	local ignore
 	local interfaces
@@ -497,6 +511,7 @@ olsrd_update_schema() {
 }
 
 olsrd_write_config() {
+	OLSRD_IPVERSION_6AND4=0
 	OLSRD_COUNT=0
 	config_foreach olsrd_write_olsrd olsrd
 	IPCCONNECT_COUNT=0
@@ -548,7 +563,20 @@ start() {
 
 	[ -z "$OLSRD_CONFIG_FILE" ] && return 1
 
+	local bindv6only='0'
+	if [ "$OLSRD_IPVERSION_6AND4" -ne 0 ]; then
+		bindv6only="$(sysctl -n net.ipv6.bindv6only)"
+		sysctl -w net.ipv6.bindv6only=1
+	fi
+
 	olsrd -f "$OLSRD_CONFIG_FILE" -nofork < /dev/null > /dev/null &
+
+	if [ "$OLSRD_IPVERSION_6AND4" -ne 0 ]; then
+		sed -e 's/^IpVersion[ ][ ]*6$/IpVersion 4/' < "$OLSRD_CONFIG_FILE" > /var/etc/olsrd.conf.ipv4
+		olsrd -f /var/etc/olsrd.conf.ipv4 -nofork < /dev/null > /dev/null &
+		sleep 3
+		sysctl -w net.ipv6.bindv6only="$bindv6only"
+	fi
 }
 
 stop() {
