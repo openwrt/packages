@@ -1,0 +1,174 @@
+#!/bin/sh /etc/rc.common
+#
+# description: Startup/shutdown script for nodogsplash captive portal
+#
+# P. Kube 2007
+#
+# (Based on wifidog startup script
+# Date    : 2004-08-25
+# Version : 1.0
+# Comment by that author: Could be better, but it's working as expected)
+#
+
+
+IPT=/usr/sbin/iptables
+WD_DIR=/usr/bin
+OPTIONS=""
+START=65
+STOP=65
+# -s -d 5 runs in background, with level 5 (not so verbose) messages to syslog
+# -f -d 7 runs in foreground, with level 7 (verbose) debug messages to terminal
+# N.B.: -f will fail if starting at boot from rcS
+#OPTIONS="-s -d 5"
+
+start() {
+   	echo "Starting nodogsplash ... "
+	if $WD_DIR/ndsctl status 2> /dev/null; then
+		echo "FAILED:  nodogsplash already running"
+    	else
+		if $0 test_module && $WD_DIR/nodogsplash $OPTIONS; then
+			echo "OK: nodogsplash started"
+		else
+			echo "FAILED:  nodogsplash exited with non 0 status"
+		fi
+    	fi
+}
+
+stop() {
+	echo "Stopping nodogsplash ... "
+	if $WD_DIR/ndsctl status 2> /dev/null; then
+		if $WD_DIR/ndsctl stop; then
+			echo "OK: nodogsplash stopped"
+		else
+			echo "FAILED:  ndsctl stop exited with non 0 status"
+		fi
+	else
+		echo "FAILED:  nodogsplash was not running"
+    	fi
+status() {
+	$WD_DIR/ndsctl status
+}
+
+test_module() {
+
+    ### Test ipt_mark with iptables
+    test_ipt_mark () {
+	($IPT -A FORWARD -m mark --mark 2 -j ACCEPT 2>&1) > /dev/null
+	IPTABLES_OK=$?
+	if [ "$IPTABLES_OK" -eq 0 ]; then
+	    ($IPT -D FORWARD -m mark --mark 2 -j ACCEPT 2>&1) > /dev/null
+	    return 0
+	else
+	    return 1
+	fi
+    }
+    ### Test ipt_mac with iptables
+    test_ipt_mac () {
+	($IPT -A INPUT -m mac --mac-source 00:00:00:00:00:00 -j ACCEPT 2>&1) > /dev/null
+	IPTABLES_OK=$?
+	if [ "$IPTABLES_OK" -eq 0 ]; then
+	    ($IPT -D INPUT -m mac --mac-source 00:00:00:00:00:00 -j ACCEPT 2>&1) > /dev/null
+	    return 0
+	else
+	    return 1
+	fi
+    }
+
+    ### Test ipt_IMQ with iptables
+    test_ipt_IMQ () {
+	($IPT -t mangle -A PREROUTING -j IMQ --todev 0 2>&1) > /dev/null
+	IPTABLES_OK=$?
+	if [ "$IPTABLES_OK" -eq 0 ]; then
+	    ($IPT -t mangle -D PREROUTING -j IMQ --todev 0 2>&1) > /dev/null
+	    return 0
+	else
+	    return 1
+	fi
+    }
+
+    ### Test imq with ip
+    test_imq () {
+	(ip link set imq0 up 2>&1) > /dev/null
+	IMQ0_OK=$?
+	(ip link set imq1 up 2>&1) > /dev/null
+	IMQ1_OK=$?
+	if [ "$IMQ0_OK" -eq 0 -a "$IMQ1_OK" -eq 0 ]; then
+	    (ip link set imq0 down 2>&1) > /dev/null
+	    (ip link set imq1 down 2>&1) > /dev/null
+	    return 0
+	else
+	    return 1
+	fi
+    }
+
+    ### Test sch_htb with tc; requires imq0
+    test_sch_htb () {
+	(tc qdisc del dev imq0 root 2>&1) > /dev/null
+	(tc qdisc add dev imq0 root htb 2>&1) > /dev/null
+	TC_OK=$?
+	if [ "$TC_OK" -eq 0 ]; then
+	    (tc qdisc del dev imq0 root 2>&1) > /dev/null
+	    return 0
+	else
+	    return 1
+	fi
+    }
+
+    
+    ### Find a module on disk
+    module_exists () {
+      EXIST=$(find /lib/modules/`uname -r` -name $1.*o 2> /dev/null)
+      if [ -n "$EXIST" ]; then
+        return 0
+      else
+        return 1
+      fi
+    }
+
+    ### Test if a module is in memory
+    module_in_memory () {
+      MODULE=$(lsmod | grep $1 | awk '{print $1}')
+      if [ "$MODULE" = "$1" ]; then
+        return 0
+      else
+        return 1
+      fi
+    }
+
+    ### Test functionality of a module; load if necessary
+    do_module_tests () {
+	echo "  Testing module $1 $2"
+	"test_$1"
+	if [ $? -ne 0 ]; then
+	    echo "   Module $1 $2 needed"
+	    echo "   Scanning disk for $1 module"
+	    module_exists $1
+	    if [ $? -ne 0 ]; then 
+		echo "   $1 module missing: please install it"
+		exit 1
+	    else
+		echo "   $1 exists, trying to load"
+		insmod $1 $2 > /dev/null
+		if [ $? -ne 0 ]; then
+		    echo "   Error: insmod $1 $2 failed"
+		    exit 1
+		else
+		    echo "   $1 $2 loaded successfully"
+		fi
+	    fi
+	else
+	    echo "   $1 is working"
+	fi 
+		
+    }
+
+    echo " Testing required modules"
+
+    do_module_tests "ipt_mac"
+    do_module_tests "ipt_mark"
+    # if not using traffic control,
+    # you can comment out the following 3 lines:
+    do_module_tests "imq" "numdevs=2"
+    do_module_tests "ipt_IMQ"
+    do_module_tests "sch_htb"
+}

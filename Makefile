@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nodogsplash
 PKG_VERSION:=0.9_beta9.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://kokoro.ucsd.edu/nodogsplash/ \
@@ -54,6 +54,11 @@ define Package/nodogsplash/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/etc/$(PKG_NAME)
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/$(PKG_NAME).conf $(1)/etc/$(PKG_NAME)/
+	$(CP) $(PKG_BUILD_DIR)/htdocs $(1)/etc/$(PKG_NAME)/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/
 endef
 
 $(eval $(call BuildPackage,nodogsplash))
