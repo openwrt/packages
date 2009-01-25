@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=batmand
-PKG_REV:=1145
+PKG_REV:=1206
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
 #PKG_BRANCH:=batman-0.3
@@ -28,7 +28,7 @@ PKG_KMOD_BUILD_DIR:=$(PKG_BUILD_DIR)/linux/modules
 include $(INCLUDE_DIR)/package.mk
 
 define Package/batmand/Default
-  URL:=https://www.open-mesh.net/
+  URL:=http://www.open-mesh.net/
   MAINTAINER:=Marek Lindner <lindner_marek@yahoo.de>
 endef
 
