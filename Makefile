@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=batmand
-PKG_REV:=1206
+PKG_REV:=1235
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
 #PKG_BRANCH:=batman-0.3
