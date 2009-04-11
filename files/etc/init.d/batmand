@@ -49,12 +49,6 @@ start () {
 	batmand $batman_args >/dev/null 2>&1
 }
 
-restart () {
-	$0 stop
-	sleep 3
-	$0 start
-}
-        
 stop () {
 	killall batmand
 }
