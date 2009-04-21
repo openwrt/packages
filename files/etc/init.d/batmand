@@ -15,6 +15,8 @@ start () {
 	routing_class=$(uci get batmand.general.routing_class)
 	visualisation_srv=$(uci get batmand.general.visualisation_srv)
 	policy_routing_script=$(uci get batmand.general.policy_routing_script)
+	disable_client_nat=$(uci get batmand.general.disable_client_nat)
+	disable_aggregation=$(uci get batmand.general.disable_aggregation)
 	batman_args=""
 
 	if [ $announce ]; then
@@ -44,11 +46,21 @@ start () {
 	if [ $policy_routing_script ]; then
 		batman_args=${batman_args}'--policy-routing-script '$policy_routing_script' '
 	fi
+	
+	if [ $disable_client_nat ]; then
+		batman_args=${batman_args}'--disable-client-nat '
+	fi
+	
+	if [ $disable_aggregation ]; then
+		batman_args=${batman_args}'--disable-aggregation '
+	fi
 
 	batman_args=${batman_args}$interface
 	batmand $batman_args >/dev/null 2>&1
 }
 
 stop () {
-	killall batmand
+        killall batmand
 }
+
+        

@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+START=90
+. /lib/config/uci.sh
+uci_load vis
+start () {
+	interface=$(uci get vis.general.interface)
+	if [ "$interface" = "" ]; then
+		echo $1 Error, you must specify at least a network interface
+		exit
+	fi
+	vis_args=$interface
+
+	vis $vis_args >/dev/null 2>&1
+}
+
+stop () {
+        killall vis
+}
+
+        
