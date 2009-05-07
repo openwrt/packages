@@ -79,6 +79,12 @@ define Package/olsrd-mod-nameservice
   TITLE:=Lightweight hostname resolver plugin
 endef
 
+define Package/olsrd-mod-quagga
+  $(call Package/olsrd/template)
+  DEPENDS:=olsrd
+  TITLE:=Quagga plugin
+endef
+
 define Package/olsrd-mod-secure
   $(call Package/olsrd/template)
   DEPENDS:=olsrd
@@ -113,7 +119,7 @@ define Build/Compile
 		MANDIR="$(PKG_INSTALL_DIR)/usr/share/man" \
 		STRIP="true" \
 		INSTALL_LIB="true" \
-		SUBDIRS="arprefresh bmf dot_draw dyn_gw dyn_gw_plain httpinfo nameservice secure txtinfo" \
+		SUBDIRS="arprefresh bmf dot_draw dyn_gw dyn_gw_plain httpinfo nameservice secure txtinfo quagga" \
 		all libs install install_libs
 endef
 
@@ -161,6 +167,11 @@ define Package/olsrd-mod-nameservice/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/nameservice/olsrd_nameservice.so.* $(1)/usr/lib/
 endef
 
+define Package/olsrd-mod-quagga/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/quagga/olsrd_quagga.so.* $(1)/usr/lib/
+endef
+
 define Package/olsrd-mod-secure/install
 	$(INSTALL_DIR) $(1)/etc/olsrd.d
 	$(CP) ./files/olsrd_secure_key $(1)/etc/olsrd.d/
@@ -181,5 +192,6 @@ $(eval $(call BuildPackage,olsrd-mod-dyn-gw))
 $(eval $(call BuildPackage,olsrd-mod-dyn-gw-plain))
 $(eval $(call BuildPackage,olsrd-mod-httpinfo))
 $(eval $(call BuildPackage,olsrd-mod-nameservice))
+$(eval $(call BuildPackage,olsrd-mod-quagga))
 $(eval $(call BuildPackage,olsrd-mod-secure))
 $(eval $(call BuildPackage,olsrd-mod-txtinfo))
