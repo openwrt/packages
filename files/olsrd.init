@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2008  Alina Friedrichsen <x-alina@gmx.net>
 # Special thanks to bittorf wireless ))
-START=50
+START=65
 
 OLSRD_OLSRD_SCHEMA='ignore:internal config_file:internal DebugLevel=0 IpVersion=4 AllowNoInt:bool=1 Pollrate=0.025 TcRedundancy=2 MprCoverage=3 LinkQualityFishEye=1 LinkQualityWinSize=100 LinkQualityDijkstraLimit=0+9.0 LinkQualityLevel=2 UseHysteresis:bool=0 FIBMetric=flat ClearScreen:bool=1 Willingness=3 LinkQualityAging=0.1 LinkQualityAlgorithm=etx_fpm'
 OLSRD_IPCCONNECT_SCHEMA='ignore:internal Host:list Net:list2'
