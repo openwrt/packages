@@ -1,7 +1,17 @@
-diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
---- quagga-0.98.6/bgpd/bgp_vty.c	2006-03-30 19:12:25.000000000 +0300
-+++ quagga-0.98.6-patched/bgpd/bgp_vty.c	2007-04-05 01:26:42.000000000 +0300
-@@ -7793,7 +7793,9 @@
+diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6.patched/bgpd/bgp_vty.c
+--- quagga-0.98.6/bgpd/bgp_vty.c	2006-03-30 18:12:25.000000000 +0200
++++ quagga-0.98.6.patched/bgpd/bgp_vty.c	2007-12-30 14:18:22.000000000 +0200
+@@ -3,6 +3,9 @@
+ 
+ This file is part of GNU Zebra.
+ 
++This file was modified from the original on 30/12/2007
++by Vasilis Tsiligiannis <acinonyxs@yahoo.gr>
++
+ GNU Zebra is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 2, or (at your option) any
+@@ -7793,8 +7796,12 @@
  	return ZEBRA_ROUTE_STATIC;
        else if (strncmp (str, "r", 1) == 0)
  	return ZEBRA_ROUTE_RIP;
@@ -10,9 +20,12 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
 +	return ZEBRA_ROUTE_OLSR;
 +      else if (strncmp (str, "os", 2) == 0)
  	return ZEBRA_ROUTE_OSPF;
++      else if (strncmp (str, "ba", 2) == 0)
++	return ZEBRA_ROUTE_BATMAN;
      }
    if (afi == AFI_IP6)
-@@ -7806,21 +7808,25 @@
+     {
+@@ -7806,21 +7813,28 @@
  	return ZEBRA_ROUTE_STATIC;
        else if (strncmp (str, "r", 1) == 0)
  	return ZEBRA_ROUTE_RIPNG;
@@ -21,6 +34,8 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
  	return ZEBRA_ROUTE_OSPF6;
 +      else if (strncmp (str, "ol", 2) == 0)
 +	return ZEBRA_ROUTE_OLSR;
++      else if (strncmp (str, "ba", 2) == 0)
++	return ZEBRA_ROUTE_BATMAN;
      }
    return 0;
  }
@@ -28,7 +43,7 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
  DEFUN (bgp_redistribute_ipv4,
         bgp_redistribute_ipv4_cmd,
 -       "redistribute (connected|kernel|ospf|rip|static)",
-+       "redistribute (connected|kernel|ospf|rip|static|olsr)",
++       "redistribute (connected|kernel|ospf|rip|static|olsr|batman)",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
@@ -37,16 +52,17 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
 -       "Static routes\n")
 +       "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
 +       )
  {
    int type;
  
-@@ -7835,13 +7841,14 @@
+@@ -7835,13 +7849,15 @@
  
  DEFUN (bgp_redistribute_ipv4_rmap,
         bgp_redistribute_ipv4_rmap_cmd,
 -       "redistribute (connected|kernel|ospf|rip|static) route-map WORD",
-+       "redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD",
++       "redistribute (connected|kernel|ospf|rip|static|olsr|batman) route-map WORD",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
@@ -54,15 +70,16 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -7860,13 +7867,14 @@
+@@ -7860,13 +7876,15 @@
  
  DEFUN (bgp_redistribute_ipv4_metric,
         bgp_redistribute_ipv4_metric_cmd,
 -       "redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295>",
-+       "redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295>",
++       "redistribute (connected|kernel|ospf|rip|static|olsr|batman) metric <0-4294967295>",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
@@ -70,15 +87,16 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -7887,13 +7895,14 @@
+@@ -7887,13 +7905,15 @@
  
  DEFUN (bgp_redistribute_ipv4_rmap_metric,
         bgp_redistribute_ipv4_rmap_metric_cmd,
 -       "redistribute (connected|kernel|ospf|rip|static) route-map WORD metric <0-4294967295>",
-+       "redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD metric <0-4294967295>",
++       "redistribute (connected|kernel|ospf|rip|static|olsr|batman) route-map WORD metric <0-4294967295>",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
@@ -86,15 +104,16 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -7917,13 +7926,14 @@
+@@ -7917,13 +7937,15 @@
  
  DEFUN (bgp_redistribute_ipv4_metric_rmap,
         bgp_redistribute_ipv4_metric_rmap_cmd,
 -       "redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295> route-map WORD",
-+       "redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295> route-map WORD",
++       "redistribute (connected|kernel|ospf|rip|static|olsr|batman) metric <0-4294967295> route-map WORD",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
@@ -102,15 +121,16 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -7947,14 +7957,16 @@
+@@ -7947,14 +7969,17 @@
  
  DEFUN (no_bgp_redistribute_ipv4,
         no_bgp_redistribute_ipv4_cmd,
 -       "no redistribute (connected|kernel|ospf|rip|static)",
-+       "no redistribute (connected|kernel|ospf|rip|static|olsr)",
++       "no redistribute (connected|kernel|ospf|rip|static|olsr|batman)",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
@@ -120,84 +140,89 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
 -       "Static routes\n")
 +       "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
 +       )
  {
    int type;
  
-@@ -7970,7 +7982,7 @@
+@@ -7970,7 +7995,7 @@
  
  DEFUN (no_bgp_redistribute_ipv4_rmap,
         no_bgp_redistribute_ipv4_rmap_cmd,
 -       "no redistribute (connected|kernel|ospf|rip|static) route-map WORD",
-+       "no redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD",
++       "no redistribute (connected|kernel|ospf|rip|static|olsr|batman) route-map WORD",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -7978,6 +7990,7 @@
+@@ -7978,6 +8003,8 @@
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -7996,7 +8009,7 @@
+@@ -7996,7 +8023,7 @@
  
  DEFUN (no_bgp_redistribute_ipv4_metric,
         no_bgp_redistribute_ipv4_metric_cmd,
 -       "no redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295>",
-+       "no redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295>",
++       "no redistribute (connected|kernel|ospf|rip|static|olsr|batman) metric <0-4294967295>",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8004,6 +8017,7 @@
+@@ -8004,6 +8031,8 @@
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -8022,7 +8036,7 @@
+@@ -8022,7 +8051,7 @@
  
  DEFUN (no_bgp_redistribute_ipv4_rmap_metric,
         no_bgp_redistribute_ipv4_rmap_metric_cmd,
 -       "no redistribute (connected|kernel|ospf|rip|static) route-map WORD metric <0-4294967295>",
-+       "no redistribute (connected|kernel|ospf|rip|static|olsr) route-map WORD metric <0-4294967295>",
++       "no redistribute (connected|kernel|ospf|rip|static|olsr|batman) route-map WORD metric <0-4294967295>",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8030,6 +8044,7 @@
+@@ -8030,6 +8059,8 @@
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -8051,7 +8066,7 @@
+@@ -8051,7 +8082,7 @@
  
  ALIAS (no_bgp_redistribute_ipv4_rmap_metric,
         no_bgp_redistribute_ipv4_metric_rmap_cmd,
 -       "no redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295> route-map WORD",
-+       "no redistribute (connected|kernel|ospf|rip|static|olsr) metric <0-4294967295> route-map WORD",
++       "no redistribute (connected|kernel|ospf|rip|static|olsr|batman) metric <0-4294967295> route-map WORD",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8059,6 +8074,7 @@
+@@ -8059,6 +8090,8 @@
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -8067,13 +8083,15 @@
+@@ -8067,13 +8100,16 @@
  #ifdef HAVE_IPV6
  DEFUN (bgp_redistribute_ipv6,
         bgp_redistribute_ipv6_cmd,
 -       "redistribute (connected|kernel|ospf6|ripng|static)",
-+       "redistribute (connected|kernel|ospf6|ripng|static|olsr)",
++       "redistribute (connected|kernel|ospf6|ripng|static|olsr|batman)",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
@@ -206,16 +231,17 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
 -       "Static routes\n")
 +       "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
 +       )
  {
    int type;
  
-@@ -8089,13 +8107,14 @@
+@@ -8089,13 +8125,15 @@
  
  DEFUN (bgp_redistribute_ipv6_rmap,
         bgp_redistribute_ipv6_rmap_cmd,
 -       "redistribute (connected|kernel|ospf6|ripng|static) route-map WORD",
-+       "redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD",
++       "redistribute (connected|kernel|ospf6|ripng|static|olsr|batman) route-map WORD",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
@@ -223,15 +249,16 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -8114,13 +8133,14 @@
+@@ -8114,13 +8152,15 @@
  
  DEFUN (bgp_redistribute_ipv6_metric,
         bgp_redistribute_ipv6_metric_cmd,
 -       "redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295>",
-+       "redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295>",
++       "redistribute (connected|kernel|ospf6|ripng|static|olsr|batman) metric <0-4294967295>",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
@@ -239,15 +266,16 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -8141,13 +8161,14 @@
+@@ -8141,13 +8181,15 @@
  
  DEFUN (bgp_redistribute_ipv6_rmap_metric,
         bgp_redistribute_ipv6_rmap_metric_cmd,
 -       "redistribute (connected|kernel|ospf6|ripng|static) route-map WORD metric <0-4294967295>",
-+       "redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD metric <0-4294967295>",
++       "redistribute (connected|kernel|ospf6|ripng|static|olsr|batman) route-map WORD metric <0-4294967295>",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
@@ -255,15 +283,16 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -8171,13 +8192,14 @@
+@@ -8171,13 +8213,15 @@
  
  DEFUN (bgp_redistribute_ipv6_metric_rmap,
         bgp_redistribute_ipv6_metric_rmap_cmd,
 -       "redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295> route-map WORD",
-+       "redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295> route-map WORD",
++       "redistribute (connected|kernel|ospf6|ripng|static|olsr|batman) metric <0-4294967295> route-map WORD",
         "Redistribute information from another routing protocol\n"
         "Connected\n"
         "Kernel routes\n"
@@ -271,15 +300,16 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -8201,14 +8223,16 @@
+@@ -8201,14 +8245,17 @@
  
  DEFUN (no_bgp_redistribute_ipv6,
         no_bgp_redistribute_ipv6_cmd,
 -       "no redistribute (connected|kernel|ospf6|ripng|static)",
-+       "no redistribute (connected|kernel|ospf6|ripng|static|olsr)",
++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr|batman)",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
@@ -289,109 +319,140 @@ diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6-patched/bgpd/bgp_vty.c
 -       "Static routes\n")
 +       "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
 +      )
  {
    int type;
  
-@@ -8224,7 +8248,7 @@
+@@ -8224,7 +8271,7 @@
  
  DEFUN (no_bgp_redistribute_ipv6_rmap,
         no_bgp_redistribute_ipv6_rmap_cmd,
 -       "no redistribute (connected|kernel|ospf6|ripng|static) route-map WORD",
-+       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD",
++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr|batman) route-map WORD",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8232,6 +8256,7 @@
+@@ -8232,6 +8279,8 @@
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -8250,7 +8275,7 @@
+@@ -8250,7 +8299,7 @@
  
  DEFUN (no_bgp_redistribute_ipv6_metric,
         no_bgp_redistribute_ipv6_metric_cmd,
 -       "no redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295>",
-+       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295>",
++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr|batman) metric <0-4294967295>",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8258,6 +8283,7 @@
+@@ -8258,6 +8307,8 @@
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -8276,7 +8302,7 @@
+@@ -8276,7 +8327,7 @@
  
  DEFUN (no_bgp_redistribute_ipv6_rmap_metric,
         no_bgp_redistribute_ipv6_rmap_metric_cmd,
 -       "no redistribute (connected|kernel|ospf6|ripng|static) route-map WORD metric <0-4294967295>",
-+       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) route-map WORD metric <0-4294967295>",
++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr|batman) route-map WORD metric <0-4294967295>",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8284,6 +8310,7 @@
+@@ -8284,6 +8335,8 @@
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -8305,7 +8332,7 @@
+@@ -8305,7 +8358,7 @@
  
  ALIAS (no_bgp_redistribute_ipv6_rmap_metric,
         no_bgp_redistribute_ipv6_metric_rmap_cmd,
 -       "no redistribute (connected|kernel|ospf6|ripng|static) metric <0-4294967295> route-map WORD",
-+       "no redistribute (connected|kernel|ospf6|ripng|static|olsr) metric <0-4294967295> route-map WORD",
++       "no redistribute (connected|kernel|ospf6|ripng|static|olsr|batman) metric <0-4294967295> route-map WORD",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8313,6 +8340,7 @@
+@@ -8313,6 +8366,8 @@
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -8325,7 +8353,7 @@
+@@ -8325,7 +8380,7 @@
  {
    int i;
    const char *str[] = { "system", "kernel", "connected", "static", "rip",
 -		  "ripng", "ospf", "ospf6", "isis", "bgp"};
-+		  "ripng", "ospf", "ospf6", "isis", "bgp", "hsls", "olsr"};
++		  "ripng", "ospf", "ospf6", "isis", "bgp", "hsls", "olsr", "batman"};
  
    /* Unicast redistribution only.  */
    if (safi != SAFI_UNICAST)
-diff -Nur quagga-0.98.6/lib/zebra.h quagga-0.98.6-patched/lib/zebra.h
+diff -Nur quagga-0.98.6/lib/zebra.h quagga-0.98.6.patched/lib/zebra.h
 --- quagga-0.98.6/lib/zebra.h	2005-06-15 14:54:18.000000000 +0300
-+++ quagga-0.98.6-patched/lib/zebra.h	2007-04-05 01:23:59.000000000 +0300
-@@ -378,7 +378,8 @@
++++ quagga-0.98.6.patched/lib/zebra.h	2007-12-30 14:18:22.000000000 +0200
+@@ -3,6 +3,9 @@
+ 
+ This file is part of GNU Zebra.
+ 
++This file was modified from the original on 30/12/2007
++by Vasilis Tsiligiannis <acinonyxs@yahoo.gr>
++
+ GNU Zebra is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 2, or (at your option) any
+@@ -378,7 +381,9 @@
  #define ZEBRA_ROUTE_ISIS                 8
  #define ZEBRA_ROUTE_BGP                  9
  #define ZEBRA_ROUTE_HSLS		 10
 -#define ZEBRA_ROUTE_MAX                  11
 +#define ZEBRA_ROUTE_OLSR		 11
-+#define ZEBRA_ROUTE_MAX                  12
++#define ZEBRA_ROUTE_BATMAN		 12
++#define ZEBRA_ROUTE_MAX                  13
  
  /* Zebra's family types. */
  #define ZEBRA_FAMILY_IPV4                1
-diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
---- quagga-0.98.6/ospfd/ospf_vty.c	2006-03-30 18:41:20.000000000 +0300
-+++ quagga-0.98.6-patched/ospfd/ospf_vty.c	2007-04-05 01:23:59.000000000 +0300
-@@ -108,9 +108,11 @@
+diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6.patched/ospfd/ospf_vty.c
+--- quagga-0.98.6/ospfd/ospf_vty.c	2006-03-30 17:41:20.000000000 +0200
++++ quagga-0.98.6.patched/ospfd/ospf_vty.c	2007-12-30 14:18:22.000000000 +0200
+@@ -3,6 +3,9 @@
+  *
+  * This file is part of GNU Zebra.
+  *
++ * This file was modified from the original on 30/12/2007
++ * by Vasilis Tsiligiannis <acinonyxs@yahoo.gr>
++ *
+  * GNU Zebra is free software; you can redistribute it and/or modify it
+  * under the terms of the GNU General Public License as published by the
+  * Free Software Foundation; either version 2, or (at your option) any
+@@ -106,11 +109,15 @@
+     *source = ZEBRA_ROUTE_STATIC;
+   else if (strncmp (str, "r", 1) == 0)
      *source = ZEBRA_ROUTE_RIP;
-   else if (strncmp (str, "b", 1) == 0)
+-  else if (strncmp (str, "b", 1) == 0)
++  else if (strncmp (str, "bg", 2) == 0)
      *source = ZEBRA_ROUTE_BGP;
 +  else if (strncmp (str, "ol", 2) == 0)
 +    *source = ZEBRA_ROUTE_OLSR;
++  else if (strncmp (str, "ba", 2) == 0)
++    *source = ZEBRA_ROUTE_BATMAN;
    else
      return 0;
 -
@@ -399,12 +460,12 @@ diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
    return 1;
  }
  
-@@ -5302,13 +5304,14 @@
+@@ -5302,13 +5309,15 @@
  
  DEFUN (ospf_redistribute_source_metric_type,
         ospf_redistribute_source_metric_type_routemap_cmd,
 -       "redistribute (kernel|connected|static|rip|bgp) metric <0-16777214> metric-type (1|2) route-map WORD",
-+       "redistribute (kernel|connected|static|rip|bgp|olsr) metric <0-16777214> metric-type (1|2) route-map WORD",
++       "redistribute (kernel|connected|static|rip|bgp|olsr|batman) metric <0-16777214> metric-type (1|2) route-map WORD",
         "Redistribute information from another routing protocol\n"
         "Kernel routes\n"
         "Connected\n"
@@ -412,15 +473,16 @@ diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
         "Routing Information Protocol (RIP)\n"
         "Border Gateway Protocol (BGP)\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "OSPF default metric\n"
         "OSPF exterior metric type for redistributed routes\n"
-@@ -5346,13 +5349,14 @@
+@@ -5346,13 +5355,15 @@
  
  ALIAS (ospf_redistribute_source_metric_type,
         ospf_redistribute_source_metric_type_cmd,
 -       "redistribute (kernel|connected|static|rip|bgp) metric <0-16777214> metric-type (1|2)",
-+       "redistribute (kernel|connected|static|rip|bgp|olsr) metric <0-16777214> metric-type (1|2)",
++       "redistribute (kernel|connected|static|rip|bgp|olsr|batman) metric <0-16777214> metric-type (1|2)",
         "Redistribute information from another routing protocol\n"
         "Kernel routes\n"
         "Connected\n"
@@ -428,21 +490,31 @@ diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
         "Routing Information Protocol (RIP)\n"
         "Border Gateway Protocol (BGP)\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "OSPF default metric\n"
         "OSPF exterior metric type for redistributed routes\n"
-@@ -5368,18 +5372,20 @@
+@@ -5361,25 +5372,29 @@
+ 
+ ALIAS (ospf_redistribute_source_metric_type,
+        ospf_redistribute_source_metric_cmd,
+-       "redistribute (kernel|connected|static|rip|bgp) metric <0-16777214>",
++       "redistribute (kernel|connected|static|rip|bgp|olsr|batman) metric <0-16777214>",
+        "Redistribute information from another routing protocol\n"
+        "Kernel routes\n"
+        "Connected\n"
         "Static routes\n"
         "Routing Information Protocol (RIP)\n"
         "Border Gateway Protocol (BGP)\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "OSPF default metric\n")
  
  DEFUN (ospf_redistribute_source_type_metric,
         ospf_redistribute_source_type_metric_routemap_cmd,
 -       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2) metric <0-16777214> route-map WORD",
-+       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2) metric <0-16777214> route-map WORD",
++       "redistribute (kernel|connected|static|rip|bgp|olsr|batman) metric-type (1|2) metric <0-16777214> route-map WORD",
         "Redistribute information from another routing protocol\n"
         "Kernel routes\n"
         "Connected\n"
@@ -450,15 +522,16 @@ diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
         "Routing Information Protocol (RIP)\n"
         "Border Gateway Protocol (BGP)\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "OSPF exterior metric type for redistributed routes\n"
         "Set OSPF External Type 1 metrics\n"
         "Set OSPF External Type 2 metrics\n"
-@@ -5417,13 +5423,14 @@
+@@ -5417,13 +5432,15 @@
  
  ALIAS (ospf_redistribute_source_type_metric,
         ospf_redistribute_source_type_metric_cmd,
 -       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2) metric <0-16777214>",
-+       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2) metric <0-16777214>",
++       "redistribute (kernel|connected|static|rip|bgp|olsr|batman) metric-type (1|2) metric <0-16777214>",
         "Redistribute information from another routing protocol\n"
         "Kernel routes\n"
         "Connected\n"
@@ -466,30 +539,32 @@ diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
         "Routing Information Protocol (RIP)\n"
         "Border Gateway Protocol (BGP)\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "OSPF exterior metric type for redistributed routes\n"
         "Set OSPF External Type 1 metrics\n"
         "Set OSPF External Type 2 metrics\n"
-@@ -5432,7 +5439,7 @@
+@@ -5432,7 +5449,7 @@
  
  ALIAS (ospf_redistribute_source_type_metric,
         ospf_redistribute_source_type_cmd,
 -       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2)",
-+       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2)",
++       "redistribute (kernel|connected|static|rip|bgp|olsr|batman) metric-type (1|2)",
         "Redistribute information from another routing protocol\n"
         "Kernel routes\n"
         "Connected\n"
-@@ -5440,28 +5447,31 @@
+@@ -5440,28 +5457,35 @@
         "Routing Information Protocol (RIP)\n"
         "Border Gateway Protocol (BGP)\n"
         "OSPF exterior metric type for redistributed routes\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Set OSPF External Type 1 metrics\n"
         "Set OSPF External Type 2 metrics\n")
  
  ALIAS (ospf_redistribute_source_type_metric,
         ospf_redistribute_source_cmd,
 -       "redistribute (kernel|connected|static|rip|bgp)",
-+       "redistribute (kernel|connected|static|rip|bgp|olsr)",
++       "redistribute (kernel|connected|static|rip|bgp|olsr|batman)",
         "Redistribute information from another routing protocol\n"
         "Kernel routes\n"
         "Connected\n"
@@ -497,12 +572,14 @@ diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
         "Routing Information Protocol (RIP)\n"
 -       "Border Gateway Protocol (BGP)\n")
 +       "Border Gateway Protocol (BGP)\n"
-+       "Optimized Link State Routing (OLSR)\n")
++       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
++	)
  
  DEFUN (ospf_redistribute_source_metric_routemap,
         ospf_redistribute_source_metric_routemap_cmd,
 -       "redistribute (kernel|connected|static|rip|bgp) metric <0-16777214> route-map WORD",
-+       "redistribute (kernel|connected|static|rip|bgp|olsr) metric <0-16777214> route-map WORD",
++       "redistribute (kernel|connected|static|rip|bgp|olsr|batman) metric <0-16777214> route-map WORD",
         "Redistribute information from another routing protocol\n"
         "Kernel routes\n"
         "Connected\n"
@@ -510,15 +587,16 @@ diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
         "Routing Information Protocol (RIP)\n"
         "Border Gateway Protocol (BGP)\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Metric for redistributed routes\n"
         "OSPF default metric\n"
         "Route map reference\n"
-@@ -5490,13 +5500,14 @@
+@@ -5490,13 +5514,15 @@
  
  DEFUN (ospf_redistribute_source_type_routemap,
         ospf_redistribute_source_type_routemap_cmd,
 -       "redistribute (kernel|connected|static|rip|bgp) metric-type (1|2) route-map WORD",
-+       "redistribute (kernel|connected|static|rip|bgp|olsr) metric-type (1|2) route-map WORD",
++       "redistribute (kernel|connected|static|rip|bgp|olsr|batman) metric-type (1|2) route-map WORD",
         "Redistribute information from another routing protocol\n"
         "Kernel routes\n"
         "Connected\n"
@@ -526,15 +604,16 @@ diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
         "Routing Information Protocol (RIP)\n"
         "Border Gateway Protocol (BGP)\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "OSPF exterior metric type for redistributed routes\n"
         "Set OSPF External Type 1 metrics\n"
         "Set OSPF External Type 2 metrics\n"
-@@ -5526,13 +5537,14 @@
+@@ -5526,13 +5552,15 @@
  
  DEFUN (ospf_redistribute_source_routemap,
         ospf_redistribute_source_routemap_cmd,
 -       "redistribute (kernel|connected|static|rip|bgp) route-map WORD",
-+       "redistribute (kernel|connected|static|rip|bgp|olsr) route-map WORD",
++       "redistribute (kernel|connected|static|rip|bgp|olsr|batman) route-map WORD",
         "Redistribute information from another routing protocol\n"
         "Kernel routes\n"
         "Connected\n"
@@ -542,15 +621,16 @@ diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
         "Routing Information Protocol (RIP)\n"
         "Border Gateway Protocol (BGP)\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -5553,14 +5565,16 @@
+@@ -5553,14 +5581,17 @@
  
  DEFUN (no_ospf_redistribute_source,
         no_ospf_redistribute_source_cmd,
 -       "no redistribute (kernel|connected|static|rip|bgp)",
-+       "no redistribute (kernel|connected|static|rip|bgp|olsr)",
++       "no redistribute (kernel|connected|static|rip|bgp|olsr|batman)",
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Kernel routes\n"
@@ -559,91 +639,110 @@ diff -Nur quagga-0.98.6/ospfd/ospf_vty.c quagga-0.98.6-patched/ospfd/ospf_vty.c
         "Routing Information Protocol (RIP)\n"
 -       "Border Gateway Protocol (BGP)\n")
 +       "Border Gateway Protocol (BGP)\n"
-+       "Optimized Link State Routing (olsr)\n"
++       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
 +       )
  {
    struct ospf *ospf = vty->index;
    int source;
-@@ -5574,7 +5588,7 @@
+@@ -5574,7 +5605,7 @@
  
  DEFUN (ospf_distribute_list_out,
         ospf_distribute_list_out_cmd,
 -       "distribute-list WORD out (kernel|connected|static|rip|bgp)",
-+       "distribute-list WORD out (kernel|connected|static|rip|bgp|olsr)",
++       "distribute-list WORD out (kernel|connected|static|rip|bgp|olsr|batman)",
         "Filter networks in routing updates\n"
         "Access-list name\n"
         OUT_STR
-@@ -5582,7 +5596,8 @@
+@@ -5582,7 +5613,10 @@
         "Connected\n"
         "Static routes\n"
         "Routing Information Protocol (RIP)\n"
 -       "Border Gateway Protocol (BGP)\n")
 +       "Border Gateway Protocol (BGP)\n"
-+       "Optimized Link State Routing (OLSR)\n")
++       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
++)
  {
    struct ospf *ospf = vty->index;
    int source;
-@@ -5596,7 +5611,7 @@
+@@ -5596,7 +5630,7 @@
  
  DEFUN (no_ospf_distribute_list_out,
         no_ospf_distribute_list_out_cmd,
 -       "no distribute-list WORD out (kernel|connected|static|rip|bgp)",
-+       "no distribute-list WORD out (kernel|connected|static|rip|bgp|olsr)",
++       "no distribute-list WORD out (kernel|connected|static|rip|bgp|olsr|batman)",
         NO_STR
         "Filter networks in routing updates\n"
         "Access-list name\n"
-@@ -5605,7 +5620,8 @@
+@@ -5605,7 +5639,10 @@
         "Connected\n"
         "Static routes\n"
         "Routing Information Protocol (RIP)\n"
 -       "Border Gateway Protocol (BGP)\n")
 +       "Border Gateway Protocol (BGP)\n"
-+       "Optimized Link State Routing (OLSR)\n")
++       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
++)
  {
    struct ospf *ospf = vty->index;
    int source;
-@@ -7121,7 +7137,8 @@
+@@ -7121,7 +7158,8 @@
  
  
  const char *distribute_str[] = { "system", "kernel", "connected", "static",
 -				"rip", "ripng", "ospf", "ospf6", "isis", "bgp"};
 +				"rip", "ripng", "ospf", "ospf6", "isis", "bgp",
-+				"hsls","olsr"};
++				"hsls","olsr","batman"};
  int
  config_write_ospf_redistribute (struct vty *vty, struct ospf *ospf)
  {
-diff -Nur quagga-0.98.6/zebra/redistribute.c quagga-0.98.6-patched/zebra/redistribute.c
+diff -Nur quagga-0.98.6/zebra/redistribute.c quagga-0.98.6.patched/zebra/redistribute.c
 --- quagga-0.98.6/zebra/redistribute.c	2005-06-15 14:54:51.000000000 +0300
-+++ quagga-0.98.6-patched/zebra/redistribute.c	2007-04-05 01:27:23.000000000 +0300
-@@ -253,6 +253,7 @@
++++ quagga-0.98.6.patched/zebra/redistribute.c	2007-12-30 14:18:22.000000000 +0200
+@@ -3,6 +3,9 @@
+  *
+  * This file is part of GNU Zebra.
+  *
++ * This file was modified from the original on 30/12/2007
++ * by Vasilis Tsiligiannis <acinonyxs@yahoo.gr>
++ *
+  * GNU Zebra is free software; you can redistribute it and/or modify it
+  * under the terms of the GNU General Public License as published by the
+  * Free Software Foundation; either version 2, or (at your option) any
+@@ -253,6 +256,8 @@
      case ZEBRA_ROUTE_OSPF:
      case ZEBRA_ROUTE_OSPF6:
      case ZEBRA_ROUTE_BGP:
 +    case ZEBRA_ROUTE_OLSR:
++    case ZEBRA_ROUTE_BATMAN:
        if (! client->redist[type])
  	{
  	  client->redist[type] = 1;
-@@ -281,6 +282,7 @@
+@@ -281,6 +286,8 @@
      case ZEBRA_ROUTE_OSPF:
      case ZEBRA_ROUTE_OSPF6:
      case ZEBRA_ROUTE_BGP:
 +    case ZEBRA_ROUTE_OLSR:
++    case ZEBRA_ROUTE_BATMAN:
        client->redist[type] = 0;
        break;
      default:
-diff -Nur quagga-0.98.6/zebra/zebra_vty.c quagga-0.98.6-patched/zebra/zebra_vty.c
+diff -Nur quagga-0.98.6/zebra/zebra_vty.c quagga-0.98.6.patched/zebra/zebra_vty.c
 --- quagga-0.98.6/zebra/zebra_vty.c	2004-12-18 18:03:29.000000000 +0200
-+++ quagga-0.98.6-patched/zebra/zebra_vty.c	2007-04-05 01:23:59.000000000 +0300
-@@ -53,6 +53,8 @@
++++ quagga-0.98.6.patched/zebra/zebra_vty.c	2007-12-30 14:25:48.000000000 +0200
+@@ -53,6 +53,10 @@
        return "isis";
      case ZEBRA_ROUTE_BGP:
        return "bgp";
 +    case ZEBRA_ROUTE_OLSR:
 +      return "olsr";
++    case ZEBRA_ROUTE_BATMAN:
++      return "batman";
      default:
        return "unknown";
      }
-@@ -84,6 +86,10 @@
+@@ -84,6 +88,12 @@
        return 'I';
      case ZEBRA_ROUTE_BGP:
        return 'B';
@@ -651,38 +750,48 @@ diff -Nur quagga-0.98.6/zebra/zebra_vty.c quagga-0.98.6-patched/zebra/zebra_vty.
 +      return 'H';
 +    case ZEBRA_ROUTE_OLSR:
 +      return 'L';
++    case ZEBRA_ROUTE_BATMAN:
++      return 'M';
      default:
        return '?';
      }
-@@ -755,8 +761,8 @@
+@@ -755,8 +765,8 @@
  }
  
  #define SHOW_ROUTE_V4_HEADER "Codes: K - kernel route, C - connected, " \
 -  "S - static, R - RIP, O - OSPF,%s       I - ISIS, B - BGP, " \
 -  "> - selected route, * - FIB route%s%s"
 +  "S - static, R - RIP, O - OSPF,%s       I - ISIS, B - BGP, H - HSLS, " \
-+  "L - OLSR, > - selected route, * - FIB route%s%s"
++  "L - OLSR, M - BATMAN, > - selected route, * - FIB route%s%s"
  
  DEFUN (show_ip_route,
         show_ip_route_cmd,
-@@ -874,7 +880,7 @@
+@@ -874,7 +884,7 @@
  
  DEFUN (show_ip_route_protocol,
         show_ip_route_protocol_cmd,
 -       "show ip route (bgp|connected|isis|kernel|ospf|rip|static)",
-+       "show ip route (bgp|connected|isis|kernel|ospf|rip|olsr|static)",
++       "show ip route (bgp|connected|isis|kernel|ospf|rip|olsr|batman|static)",
         SHOW_STR
         IP_STR
         "IP routing table\n"
-@@ -884,6 +890,7 @@
+@@ -884,6 +894,8 @@
         "Kernel\n"
         "Open Shortest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
 +       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Static routes\n")
  {
    int type;
-@@ -898,7 +905,7 @@
+@@ -892,13 +904,13 @@
+   struct rib *rib;
+   int first = 1;
+ 
+-  if (strncmp (argv[0], "b", 1) == 0)
++  if (strncmp (argv[0], "bg", 2) == 0)
+     type = ZEBRA_ROUTE_BGP;
+   else if (strncmp (argv[0], "c", 1) == 0)
      type = ZEBRA_ROUTE_CONNECT;
    else if (strncmp (argv[0], "k", 1) ==0)
      type = ZEBRA_ROUTE_KERNEL;
@@ -691,33 +800,43 @@ diff -Nur quagga-0.98.6/zebra/zebra_vty.c quagga-0.98.6-patched/zebra/zebra_vty.
      type = ZEBRA_ROUTE_OSPF;
    else if (strncmp (argv[0], "i", 1) == 0)
      type = ZEBRA_ROUTE_ISIS;
-@@ -906,6 +913,8 @@
+@@ -906,6 +918,10 @@
      type = ZEBRA_ROUTE_RIP;
    else if (strncmp (argv[0], "s", 1) == 0)
      type = ZEBRA_ROUTE_STATIC;
 +  else if (strncmp (argv[0], "ol", 2) == 0)
 +    type = ZEBRA_ROUTE_OLSR;
++  else if (strncmp (argv[0], "ba", 2) == 0)
++    type = ZEBRA_ROUTE_BATMAN;
    else 
      {
        vty_out (vty, "Unknown route type%s", VTY_NEWLINE);
-@@ -1732,7 +1741,7 @@
+@@ -1732,7 +1748,7 @@
  
  DEFUN (show_ipv6_route_protocol,
         show_ipv6_route_protocol_cmd,
 -       "show ipv6 route (bgp|connected|isis|kernel|ospf6|ripng|static)",
-+       "show ipv6 route (bgp|connected|isis|kernel|ospf6|ripng|olsr|static)",
++       "show ipv6 route (bgp|connected|isis|kernel|ospf6|ripng|olsr|batman|static)",
         SHOW_STR
         IP_STR
         "IP routing table\n"
-@@ -1742,6 +1751,7 @@
+@@ -1742,6 +1758,8 @@
         "Kernel\n"
         "Open Shortest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
-+       "Optimized Link State Routing (olsr)\n"
++       "Optimized Link State Routing (OLSR)\n"
++       "Better Approach to Mobile Ad-Hoc Networking (BATMAN)\n"
         "Static routes\n")
  {
    int type;
-@@ -1756,7 +1766,7 @@
+@@ -1750,13 +1768,13 @@
+   struct rib *rib;
+   int first = 1;
+ 
+-  if (strncmp (argv[0], "b", 1) == 0)
++  if (strncmp (argv[0], "bg", 2) == 0)
+     type = ZEBRA_ROUTE_BGP;
+   else if (strncmp (argv[0], "c", 1) == 0)
      type = ZEBRA_ROUTE_CONNECT;
    else if (strncmp (argv[0], "k", 1) ==0)
      type = ZEBRA_ROUTE_KERNEL;
@@ -726,13 +845,15 @@ diff -Nur quagga-0.98.6/zebra/zebra_vty.c quagga-0.98.6-patched/zebra/zebra_vty.
      type = ZEBRA_ROUTE_OSPF6;
    else if (strncmp (argv[0], "i", 1) == 0)
      type = ZEBRA_ROUTE_ISIS;
-@@ -1764,7 +1774,9 @@
+@@ -1764,7 +1782,11 @@
      type = ZEBRA_ROUTE_RIPNG;
    else if (strncmp (argv[0], "s", 1) == 0)
      type = ZEBRA_ROUTE_STATIC;
 -  else 
 +  else if (strncmp (argv[0], "ol", 2) == 0)
 +     type = ZEBRA_ROUTE_OLSR;
++  else if (strncmp (argv[0], "ba", 2) == 0)
++     type = ZEBRA_ROUTE_BATMAN;
 +  else
      {
        vty_out (vty, "Unknown route type%s", VTY_NEWLINE);
