@@ -310,13 +310,13 @@ then
 		then
 			if [ "${d}" = "watchquagga" ]
 			then
-				$("${BINDIR}/${d}" \
+				"${BINDIR}/${d}" \
 					${WATCHQUAGGA_FLAGS} \
 					"${WATCHQUAGGA_CMD}" \
-					${WATCHQUAGGA_DAEMONS})
+					${WATCHQUAGGA_DAEMONS}
 				status=$?
 			else
-				$("${BINDIR}/${d}" ${DAEMON_FLAGS})
+				"${BINDIR}/${d}" ${DAEMON_FLAGS}
 				status=$?
 			fi
 			if [ $status -eq 0 ]
