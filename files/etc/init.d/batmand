@@ -8,7 +8,7 @@ start () {
 		echo $1 Error, you must specify at least a network interface
 		exit
 	fi
-	announce=$(uci get batmand.general.announce)
+	hnas=$(uci get batmand.general.hna)
 	gateway_class=$(uci get batmand.general.gateway_class)
 	originator_interval=$(uci get batmand.general.originator_interval)
 	preferred_gateway=$(uci get batmand.general.preferred_gateway)
@@ -19,9 +19,10 @@ start () {
 	disable_aggregation=$(uci get batmand.general.disable_aggregation)
 	batman_args=""
 
-	if [ $announce ]; then
-		batman_args=${batman_args}'-a '$announce' '
-	fi
+	for hna in $hnas
+	   do
+	      batman_args=${batman_args}'-a '$hna' '
+	   done
 
 	if [ $gateway_class ]; then
 		batman_args=${batman_args}'-g '$gateway_class' '

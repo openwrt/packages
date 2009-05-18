@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=batmand
-PKG_REV:=1249
+PKG_REV:=1267
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
 PKG_EXTRA_CFLAGS=-DDEBUG_MALLOC -DMEMORY_USAGE -DPROFILE_DATA -DREVISION_VERSION=\"\ rv$(PKG_REV)\"
@@ -105,15 +105,15 @@ MAKE_BATGAT_ARGS += \
 define Build/Configure
 endef
 
-ifneq ($(DEVEL_CONFIG)$(CONFIG_PACKAGE_batmand),)
+ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_batmand),)
 	BUILD_BATMAND := $(MAKE) -C $(PKG_BUILD_DIR)/batman $(MAKE_BATMAND_ARGS)
 endif
 
-ifneq ($(CONFIG_DEVEL)$(CONFIG_PACKAGE_vis),)
+ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_vis),)
 	BUILD_VIS := $(MAKE) -C $(PKG_BUILD_DIR)/vis $(MAKE_VIS_ARGS)
 endif
 	
-ifneq ($(CONFIG_DEVEL)$(CONFIG_PACKAGE_kmod-batgat),)
+ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_kmod-batgat),)
 	BUILD_BATGAT := $(MAKE) -C "$(LINUX_DIR)" $(MAKE_BATGAT_ARGS)
 endif
 	        

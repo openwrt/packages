@@ -1,6 +1,6 @@
 config batmand general
 	option interface		ath0
-	option announce			
+	option hna			
 	option gateway_class		
 	option originator_interval
 	option preferred_gateway	
