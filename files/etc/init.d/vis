@@ -1,7 +1,6 @@
 #!/bin/sh /etc/rc.common
 START=90
-. /lib/config/uci.sh
-uci_load vis
+
 start () {
 	interface=$(uci get vis.general.interface)
 	if [ "$interface" = "" ]; then
