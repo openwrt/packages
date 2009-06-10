@@ -1,7 +1,6 @@
-diff -Nur quagga-0.98.6/bgpd/bgp_aspath.c quagga-0.98.6-patched/bgpd/bgp_aspath.c
---- quagga-0.98.6/bgpd/bgp_aspath.c	2005-06-15 14:53:50.000000000 +0300
-+++ quagga-0.98.6-patched/bgpd/bgp_aspath.c	2007-11-24 03:20:02.000000000 +0200
-@@ -614,6 +614,47 @@
+--- a/bgpd/bgp_aspath.c
++++ b/bgpd/bgp_aspath.c
+@@ -614,6 +614,47 @@ aspath_private_as_check (struct aspath *
    return 1;
  }
  
@@ -49,7 +48,7 @@ diff -Nur quagga-0.98.6/bgpd/bgp_aspath.c quagga-0.98.6-patched/bgpd/bgp_aspath.
  /* Merge as1 to as2.  as2 should be uninterned aspath. */
  struct aspath *
  aspath_merge (struct aspath *as1, struct aspath *as2)
-@@ -671,6 +712,10 @@
+@@ -671,6 +712,10 @@ aspath_prepend (struct aspath *as1, stru
    if (seg1 == NULL)
      return as2;
  
@@ -60,20 +59,18 @@ diff -Nur quagga-0.98.6/bgpd/bgp_aspath.c quagga-0.98.6-patched/bgpd/bgp_aspath.
    /* Compare last segment type of as1 and first segment type of as2. */
    if (seg1->type != seg2->type)
      return aspath_merge (as1, as2);
-diff -Nur quagga-0.98.6/bgpd/bgp_aspath.h quagga-0.98.6-patched/bgpd/bgp_aspath.h
---- quagga-0.98.6/bgpd/bgp_aspath.h	2005-06-15 14:53:50.000000000 +0300
-+++ quagga-0.98.6-patched/bgpd/bgp_aspath.h	2007-11-24 03:21:24.000000000 +0200
-@@ -76,4 +76,6 @@
+--- a/bgpd/bgp_aspath.h
++++ b/bgpd/bgp_aspath.h
+@@ -76,4 +76,6 @@ unsigned int aspath_key_make (struct asp
  int aspath_loop_check (struct aspath *, as_t);
  int aspath_private_as_check (struct aspath *);
  int aspath_firstas_check (struct aspath *, as_t);
 +int aspath_confed_check (struct aspath *);
 +int aspath_left_confed_check (struct aspath *);
  unsigned long aspath_count ();
-diff -Nur quagga-0.98.6/bgpd/bgp_attr.c quagga-0.98.6-patched/bgpd/bgp_attr.c
---- quagga-0.98.6/bgpd/bgp_attr.c	2006-05-03 01:37:47.000000000 +0300
-+++ quagga-0.98.6-patched/bgpd/bgp_attr.c	2007-11-24 03:09:56.000000000 +0200
-@@ -673,6 +673,17 @@
+--- a/bgpd/bgp_attr.c
++++ b/bgpd/bgp_attr.c
+@@ -673,6 +673,17 @@ bgp_attr_aspath (struct peer *peer, bgp_
        return -1;
      }
  

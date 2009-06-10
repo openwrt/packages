@@ -1,6 +1,6 @@
---- quagga-0.98.4/configure.orig	Mon Jun 27 19:05:31 2005
-+++ quagga-0.98.4/configure	Thu Jul 28 07:02:12 2005
-@@ -10937,7 +10937,7 @@
+--- a/configure
++++ b/configure
+@@ -10972,7 +10972,7 @@ if test "${ac_cv_lib_curses_tputs+set}" 
    echo $ECHO_N "(cached) $ECHO_C" >&6
  else
    ac_check_lib_save_LIBS=$LIBS
@@ -9,7 +9,7 @@
  cat >conftest.$ac_ext <<_ACEOF
  /* confdefs.h.  */
  _ACEOF
-@@ -11071,7 +11071,8 @@
+@@ -11108,7 +11108,8 @@ if test $ac_cv_lib_ncurses_tputs = yes; 
  #define HAVE_LIBNCURSES 1
  _ACEOF
  
@@ -19,7 +19,7 @@
  
  fi
  
-@@ -11088,7 +11089,7 @@
+@@ -11125,7 +11126,7 @@ if test "${ac_cv_lib_readline_main+set}"
    echo $ECHO_N "(cached) $ECHO_C" >&6
  else
    ac_check_lib_save_LIBS=$LIBS
@@ -28,7 +28,7 @@
  cat >conftest.$ac_ext <<_ACEOF
  /* confdefs.h.  */
  _ACEOF
-@@ -11144,7 +11145,8 @@
+@@ -11182,7 +11183,8 @@ if test $ac_cv_lib_readline_main = yes; 
  #define HAVE_LIBREADLINE 1
  _ACEOF
  
@@ -38,7 +38,7 @@
  
  fi
  
-@@ -11303,7 +11305,7 @@
+@@ -11342,7 +11344,7 @@ if test "${ac_cv_lib_readline_rl_complet
    echo $ECHO_N "(cached) $ECHO_C" >&6
  else
    ac_check_lib_save_LIBS=$LIBS
@@ -47,7 +47,7 @@
  cat >conftest.$ac_ext <<_ACEOF
  /* confdefs.h.  */
  _ACEOF
-@@ -11365,7 +11367,7 @@
+@@ -11405,7 +11407,7 @@ if test $ac_cv_lib_readline_rl_completio
  #define HAVE_LIBREADLINE 1
  _ACEOF
  

@@ -1,5 +1,3 @@
-diff --git a/bgpd/bgp_network.c b/bgpd/bgp_network.c
-index df37783..c4d5a61 100644
 --- a/bgpd/bgp_network.c
 +++ b/bgpd/bgp_network.c
 @@ -109,6 +109,7 @@ bgp_accept (struct thread *thread)
@@ -10,8 +8,6 @@ index df37783..c4d5a61 100644
  
      /* Make peer's address string. */
      sockunion2str (&su, buf, SU_ADDRSTRLEN);
-diff --git a/bgpd/bgpd.h b/bgpd/bgpd.h
-index 4137baf..8615ac8 100644
 --- a/bgpd/bgpd.h
 +++ b/bgpd/bgpd.h
 @@ -656,6 +656,7 @@ struct bgp_nlri

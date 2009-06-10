@@ -1,6 +1,6 @@
---- quagga-0.98.4/configure.orig	Mon Jun 27 19:05:31 2005
-+++ quagga-0.98.4/configure	Mon Jul 11 20:32:07 2005
-@@ -12623,69 +12623,6 @@
+--- a/configure
++++ b/configure
+@@ -12675,69 +12675,6 @@ fi
  
  
  
@@ -70,7 +70,7 @@
  echo "$as_me:$LINENO: checking route read method check" >&5
  echo $ECHO_N "checking route read method check... $ECHO_C" >&6
  if test "${zebra_rtread+set}" = set; then
-@@ -12783,10 +12720,7 @@
+@@ -12835,10 +12772,7 @@ echo $ECHO_N "checking ipforward method 
  if test "${zebra_ipforward_path+set}" = set; then
    echo $ECHO_N "(cached) $ECHO_C" >&6
  else
