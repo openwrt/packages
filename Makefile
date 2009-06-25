@@ -96,6 +96,12 @@ define Package/olsrd-mod-txtinfo
   TITLE:=Small informative web server plugin
 endef
 
+define Package/olsrd-mod-watchdog
+  $(call Package/olsrd/template)
+  DEPENDS:=olsrd
+  TITLE:=Watchdog plugin
+endef
+
 define Package/olsrd-mod-secure/conffiles
 /etc/olsrd.d/olsrd_secure_key
 endef
@@ -118,7 +124,7 @@ define Build/Compile
 		MANDIR="$(PKG_INSTALL_DIR)/usr/share/man" \
 		STRIP="true" \
 		INSTALL_LIB="true" \
-		SUBDIRS="arprefresh bmf dot_draw dyn_gw dyn_gw_plain httpinfo nameservice secure txtinfo quagga" \
+		SUBDIRS="arprefresh bmf dot_draw dyn_gw dyn_gw_plain httpinfo nameservice quagga secure txtinfo watchdog" \
 		all libs install install_libs
 endef
 
@@ -183,6 +189,11 @@ define Package/olsrd-mod-txtinfo/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/txtinfo/olsrd_txtinfo.so.* $(1)/usr/lib/
 endef
 
+define Package/olsrd-mod-watchdog/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/watchdog/olsrd_watchdog.so.* $(1)/usr/lib/
+endef
+
 $(eval $(call BuildPackage,olsrd))
 $(eval $(call BuildPackage,olsrd-mod-arprefresh))
 $(eval $(call BuildPackage,olsrd-mod-dot-draw))
@@ -194,3 +205,4 @@ $(eval $(call BuildPackage,olsrd-mod-nameservice))
 $(eval $(call BuildPackage,olsrd-mod-quagga))
 $(eval $(call BuildPackage,olsrd-mod-secure))
 $(eval $(call BuildPackage,olsrd-mod-txtinfo))
+$(eval $(call BuildPackage,olsrd-mod-watchdog))
