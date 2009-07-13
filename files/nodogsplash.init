@@ -26,7 +26,7 @@ start() {
 	if $WD_DIR/ndsctl status 2> /dev/null; then
 		echo "FAILED:  nodogsplash already running"
     	else
-		if $0 test_module && $WD_DIR/nodogsplash $OPTIONS; then
+		if test_module && $WD_DIR/nodogsplash $OPTIONS; then
 			echo "OK: nodogsplash started"
 		else
 			echo "FAILED:  nodogsplash exited with non 0 status"
@@ -45,6 +45,8 @@ stop() {
 	else
 		echo "FAILED:  nodogsplash was not running"
     	fi
+}
+
 status() {
 	$WD_DIR/ndsctl status
 }
