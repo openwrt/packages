@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
 PKG_VERSION:=0.98.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MD5SUM:=b0d4132039953a0214256873b7d23d68
 
 PKG_SOURCE_URL:=http://www.quagga.net/download/ \
@@ -96,7 +96,6 @@ define Build/Configure
 		--sysconfdir=/etc/quagga/ \
 		--enable-shared \
 		--disable-static \
-		--enable-ipv6 \
 		--enable-vtysh \
 		--enable-user=quagga \
 		--enable-group=quagga \
