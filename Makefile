@@ -34,10 +34,9 @@ define Package/quagga
 endef
 
 define Package/quagga/description
-A routing software package that provides TCP/IP based routing services
+	A routing software package that provides TCP/IP based routing services
 	with routing protocols support such as RIPv1, RIPv2, RIPng, OSPFv2,
 	OSPFv3, BGP-4, and BGP-4+
-
 endef
 
 define Package/quagga-libzebra
@@ -106,13 +105,13 @@ define Build/Configure
 	)
 endef
 
-define Build/Compile	
+define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR=$(PKG_INSTALL_DIR) \
 		all install
 endef
 
-define Package/quagga/install	
+define Package/quagga/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/zebra $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/watchquagga $(1)/usr/sbin/
@@ -174,7 +173,7 @@ echo "isisd         2608/tcp" >>$${IPKG_INSTROOT}/etc/services
 fi
 endef
 
-define Package/quagga-bgpd/install	
+define Package/quagga-bgpd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/bgpd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/quagga/
@@ -190,7 +189,7 @@ define Package/quagga-isisd/install
 	$(INSTALL_DATA) ./files/quagga.conf $(1)/etc/quagga/isisd.conf
 endef
 
-define Package/quagga-ospfd/install	
+define Package/quagga-ospfd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ospfd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/quagga/
@@ -198,7 +197,7 @@ define Package/quagga-ospfd/install
 	$(INSTALL_DATA) ./files/quagga.conf $(1)/etc/quagga/ospfd.conf
 endef
 
-define Package/quagga-ospf6d/install	
+define Package/quagga-ospf6d/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ospf6d $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/quagga/
@@ -206,7 +205,7 @@ define Package/quagga-ospf6d/install
 	$(INSTALL_DATA) ./files/quagga.conf $(1)/etc/quagga/ospf6d.conf
 endef
 
-define Package/quagga-ripd/install	
+define Package/quagga-ripd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ripd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/quagga/
@@ -214,7 +213,7 @@ define Package/quagga-ripd/install
 	$(INSTALL_DATA) ./files/quagga.conf $(1)/etc/quagga/ripd.conf
 endef
 
-define Package/quagga-ripngd/install	
+define Package/quagga-ripngd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ripngd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/quagga/
@@ -222,7 +221,7 @@ define Package/quagga-ripngd/install
 	$(INSTALL_DATA) ./files/quagga.conf $(1)/etc/quagga/ripngd.conf
 endef
 
-define Package/quagga-vtysh/install	
+define Package/quagga-vtysh/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vtysh $(1)/usr/bin/
 endef
