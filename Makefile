@@ -68,7 +68,7 @@ endef
 
 define Package/quagga-ospf6d
   $(call Package/quagga/Default)
-  DEPENDS += quagga-libospf quagga-libzebra
+  DEPENDS += quagga-libospf quagga-libzebra @IPV6
   TITLE:=OSPFv3 routing engine
 endef
 
