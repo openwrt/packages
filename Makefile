@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://kokoro.ucsd.edu/nodogsplash/ \
 	http://kokoro.ucsd.edu/nodogsplash/old/
-#PKG_MD5SUM:=96e597977717610186ed09ebd7fa54cf
+PKG_MD5SUM:=142f6b761a0ef93bb3e8557e1f53bc56
 
 include $(INCLUDE_DIR)/package.mk
 
