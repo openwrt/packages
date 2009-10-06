@@ -80,7 +80,7 @@ endef
 
 define Package/quagga-ripngd
   $(call Package/quagga/Default)
-  DEPENDS += quagga-libzebra
+  DEPENDS += quagga-libzebra @BROKEN
   TITLE:=RIPNG routing engine
 endef
 
