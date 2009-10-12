@@ -1,7 +1,6 @@
-diff -Naur olsrd-0.5.6-r5/lib/quagga/Makefile olsrd-0.5.6-r5.patched/lib/quagga/Makefile
---- olsrd-0.5.6-r5/lib/quagga/Makefile	2009-06-24 20:00:51.000000000 +0300
-+++ olsrd-0.5.6-r5.patched/lib/quagga/Makefile	2009-07-04 16:38:27.000000000 +0300
-@@ -40,21 +40,19 @@
+--- a/lib/quagga/Makefile
++++ b/lib/quagga/Makefile
+@@ -40,21 +40,19 @@ OLSRD_PLUGIN =	true
  PLUGIN_NAME =	olsrd_quagga
  PLUGIN_VER =	0.2.2
  
@@ -28,15 +27,14 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/Makefile olsrd-0.5.6-r5.patched/lib/quagga/
  default_target: $(PLUGIN_FULLNAME)
  
  $(PLUGIN_FULLNAME): $(OBJS) version-script.txt
-@@ -66,4 +64,5 @@
+@@ -66,4 +64,5 @@ install:	$(PLUGIN_FULLNAME)
  
  clean:
  		rm -f $(OBJS) $(SRCS:%.c=%.d) $(PLUGIN_FULLNAME)
 +
  endif
-diff -Naur olsrd-0.5.6-r5/lib/quagga/patches/quagga-0.98.6.diff olsrd-0.5.6-r5.patched/lib/quagga/patches/quagga-0.98.6.diff
---- olsrd-0.5.6-r5/lib/quagga/patches/quagga-0.98.6.diff	1970-01-01 02:00:00.000000000 +0200
-+++ olsrd-0.5.6-r5.patched/lib/quagga/patches/quagga-0.98.6.diff	2009-07-04 16:38:26.000000000 +0300
+--- /dev/null
++++ b/lib/quagga/patches/quagga-0.98.6.diff
 @@ -0,0 +1,860 @@
 +diff -Nur quagga-0.98.6/bgpd/bgp_vty.c quagga-0.98.6.patched/bgpd/bgp_vty.c
 +--- quagga-0.98.6/bgpd/bgp_vty.c	2006-03-30 18:12:25.000000000 +0200
@@ -898,9 +896,8 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/patches/quagga-0.98.6.diff olsrd-0.5.6-r5.p
 +     {
 +       vty_out (vty, "Unknown route type%s", VTY_NEWLINE);
 +       return CMD_WARNING;
-diff -Naur olsrd-0.5.6-r5/lib/quagga/README_QUAGGA olsrd-0.5.6-r5.patched/lib/quagga/README_QUAGGA
---- olsrd-0.5.6-r5/lib/quagga/README_QUAGGA	2009-06-24 20:00:41.000000000 +0300
-+++ olsrd-0.5.6-r5.patched/lib/quagga/README_QUAGGA	2009-07-04 16:38:26.000000000 +0300
+--- a/lib/quagga/README_QUAGGA
++++ b/lib/quagga/README_QUAGGA
 @@ -1,20 +1,20 @@
  ---------------------------------------------------------------------
  QUAGGA PLUGIN FOR OLSRD
@@ -931,7 +928,7 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/README_QUAGGA olsrd-0.5.6-r5.patched/lib/qu
  
  ---------------------------------------------------------------------
  PLUGIN PARAMETERS (PlParam)
-@@ -27,22 +27,22 @@
+@@ -27,22 +27,22 @@ PlParam "redistribute" "<protocol>"
  	May be used more then once
  
  PlParam "ExportRoutes" "<only/both>"
@@ -959,15 +956,14 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/README_QUAGGA olsrd-0.5.6-r5.patched/lib/qu
  
  LoadPlugin "olsrd_quagga.so.0.2.2"
  {
-@@ -55,4 +55,4 @@
+@@ -55,4 +55,4 @@ LoadPlugin "olsrd_quagga.so.0.2.2"
  
  
  ---------------------------------------------------------------------
 -EOF / 8.5.2006
 +EOF / 29.12.2008
-diff -Naur olsrd-0.5.6-r5/lib/quagga/src/olsrd_plugin.c olsrd-0.5.6-r5.patched/lib/quagga/src/olsrd_plugin.c
---- olsrd-0.5.6-r5/lib/quagga/src/olsrd_plugin.c	2009-06-24 20:00:51.000000000 +0300
-+++ olsrd-0.5.6-r5.patched/lib/quagga/src/olsrd_plugin.c	2009-07-04 16:38:26.000000000 +0300
+--- a/lib/quagga/src/olsrd_plugin.c
++++ b/lib/quagga/src/olsrd_plugin.c
 @@ -1,19 +1,22 @@
 +/*
 + * OLSRd Quagga plugin
@@ -1014,7 +1010,7 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/olsrd_plugin.c olsrd-0.5.6-r5.patched/l
  #include "net_olsr.h"
  
  #define PLUGIN_NAME    "OLSRD quagga plugin"
-@@ -41,120 +43,94 @@
+@@ -41,120 +43,94 @@ static set_plugin_parameter set_exportro
  static set_plugin_parameter set_distance;
  static set_plugin_parameter set_localpref;
  
@@ -1180,9 +1176,8 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/olsrd_plugin.c olsrd-0.5.6-r5.patched/l
 - * indent-tabs-mode: nil
 - * End:
 - */
-diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga/zassert.h olsrd-0.5.6-r5.patched/lib/quagga/src/quagga/zassert.h
---- olsrd-0.5.6-r5/lib/quagga/src/quagga/zassert.h	2009-06-24 20:00:51.000000000 +0300
-+++ olsrd-0.5.6-r5.patched/lib/quagga/src/quagga/zassert.h	1970-01-01 02:00:00.000000000 +0200
+--- a/lib/quagga/src/quagga/zassert.h
++++ /dev/null
 @@ -1,33 +0,0 @@
 -
 -/*
@@ -1217,9 +1212,8 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga/zassert.h olsrd-0.5.6-r5.patched
 - * indent-tabs-mode: nil
 - * End:
 - */
-diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga/zebra.h olsrd-0.5.6-r5.patched/lib/quagga/src/quagga/zebra.h
---- olsrd-0.5.6-r5/lib/quagga/src/quagga/zebra.h	2009-06-24 20:00:51.000000000 +0300
-+++ olsrd-0.5.6-r5.patched/lib/quagga/src/quagga/zebra.h	1970-01-01 02:00:00.000000000 +0200
+--- a/lib/quagga/src/quagga/zebra.h
++++ /dev/null
 @@ -1,503 +0,0 @@
 -
 -/* Zebra common header.
@@ -1541,7 +1535,7 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga/zebra.h olsrd-0.5.6-r5.patched/l
 - * OpenBSD: network byte order, apart from older versions which are as per
 - *          *BSD
 - */
--#if defined(__NetBSD__) || defined(__FreeBSD__) \
+-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__)\
 -   || (defined(__OpenBSD__) && (OpenBSD < 200311)) \
 -   || (defined(SUNOS_5) && defined(WORDS_BIGENDIAN))
 -#define HAVE_IP_HDRINCL_BSD_ORDER
@@ -1724,10 +1718,9 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga/zebra.h olsrd-0.5.6-r5.patched/l
 - * indent-tabs-mode: nil
 - * End:
 - */
-diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.c olsrd-0.5.6-r5.patched/lib/quagga/src/quagga.c
---- olsrd-0.5.6-r5/lib/quagga/src/quagga.c	2009-06-24 20:00:51.000000000 +0300
-+++ olsrd-0.5.6-r5.patched/lib/quagga/src/quagga.c	2009-07-04 16:38:26.000000000 +0300
-@@ -1,865 +1,555 @@
+--- a/lib/quagga/src/quagga.c
++++ b/lib/quagga/src/quagga.c
+@@ -1,866 +1,555 @@
 +/*
 + * OLSRd Quagga plugin
 + *
@@ -1783,6 +1776,7 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.c olsrd-0.5.6-r5.patched/lib/qua
  #include <sys/socket.h>
  #include <netinet/in.h>
 -#include <fcntl.h>
+-#include <unistd.h>
 -
 -#include "quagga.h"
 -#include "olsr.h"
@@ -2032,9 +2026,9 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.c olsrd-0.5.6-r5.patched/lib/qua
 -  if (close(zebra.sock) < 0)
 -    olsr_exit("(QUAGGA) Could not close socket!", EXIT_FAILURE);
 +  if (close (zebra.sock) < 0) olsr_exit ("(QUAGGA) Could not close socket!", EXIT_FAILURE);
++
  
 -  zebra.sock = socket(AF_INET, SOCK_STREAM, 0);
-+
 +  zebra.sock = socket (AF_INET,SOCK_STREAM, 0);
  #else
    struct sockaddr_un i;
@@ -2095,20 +2089,20 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.c olsrd-0.5.6-r5.patched/lib/qua
 -#else
 -  uint16_t length = optlen + 3;        // length of option + command + packet_length
 -#endif
-+  if (!(zebra.status & STATUS_CONNECTED)) return 0;
- 
+-
 -  if (!(zebra.status & STATUS_CONNECTED))
 -    return 0;
-+  pnt = options;
-+  memcpy (&len, pnt, 2);
- 
+-
 -  p = olsr_malloc(length, "zebra_send_command");
 -  pnt = p;
 -
 -  len = htons(length);
--
++  if (!(zebra.status & STATUS_CONNECTED)) return 0;
+ 
 -  memcpy(p, &len, 2);
--
++  pnt = options;
++  memcpy (&len, pnt, 2);
+ 
 -#ifdef ZEBRA_HEADER_MARKER
 -  p[2] = ZEBRA_HEADER_MARKER;
 -  p[3] = ZSERV_VERSION;
@@ -2223,12 +2217,12 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.c olsrd-0.5.6-r5.patched/lib/qua
 -  }
 -  return cmdopt;
 -}
--
+ 
 -/* adds a route to zebra-daemon */
 -int
 -zebra_add_v4_route(const struct ipv4_route r)
 -{
- 
+-
 -  unsigned char *cmdopt;
 -  ssize_t optlen;
 -  int retval;
@@ -2480,8 +2474,7 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.c olsrd-0.5.6-r5.patched/lib/qua
 -  command = packet[2] - 1;
 -  skip = 3;
 -#endif
-+    *size += bytes;
- 
+-
 -  if (command < ZEBRA_MESSAGE_MAX && foo[command]) {
 -    if (!(ret = foo[command] (packet + skip, length - skip)))
 -      return length;
@@ -2520,7 +2513,8 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.c olsrd-0.5.6-r5.patched/lib/qua
 -static int
 -parse_interface_up(unsigned char *opt __attribute__ ((unused)), size_t len __attribute__ ((unused)))
 -{
--
++    *size += bytes;
+ 
 -  //todo
 -  return 0;
 -}
@@ -2941,7 +2935,7 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.c olsrd-0.5.6-r5.patched/lib/qua
    route.metric = 0;
  
    if (zebra.distance) {
-@@ -867,36 +557,23 @@
+@@ -868,36 +557,23 @@ zebra_del_olsr_v4_route(const struct rt_
      route.distance = zebra.distance;
    }
  
@@ -2983,9 +2977,8 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.c olsrd-0.5.6-r5.patched/lib/qua
 - * indent-tabs-mode: nil
 - * End:
 - */
-diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.h olsrd-0.5.6-r5.patched/lib/quagga/src/quagga.h
---- olsrd-0.5.6-r5/lib/quagga/src/quagga.h	2009-06-24 20:00:51.000000000 +0300
-+++ olsrd-0.5.6-r5.patched/lib/quagga/src/quagga.h	2009-07-04 16:38:26.000000000 +0300
+--- a/lib/quagga/src/quagga.h
++++ b/lib/quagga/src/quagga.h
 @@ -1,77 +1,102 @@
 +/*
 + * OLSRd Quagga plugin
@@ -3145,9 +3138,8 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/src/quagga.h olsrd-0.5.6-r5.patched/lib/qua
 - * indent-tabs-mode: nil
 - * End:
 - */
-diff -Naur olsrd-0.5.6-r5/lib/quagga/test/foo.c olsrd-0.5.6-r5.patched/lib/quagga/test/foo.c
---- olsrd-0.5.6-r5/lib/quagga/test/foo.c	2009-06-24 20:00:51.000000000 +0300
-+++ olsrd-0.5.6-r5.patched/lib/quagga/test/foo.c	1970-01-01 02:00:00.000000000 +0200
+--- a/lib/quagga/test/foo.c
++++ /dev/null
 @@ -1,20 +0,0 @@
 -#include "quagga.h"
 -
@@ -3169,9 +3161,8 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/test/foo.c olsrd-0.5.6-r5.patched/lib/quagg
 - * indent-tabs-mode: nil
 - * End:
 - */
-diff -Naur olsrd-0.5.6-r5/lib/quagga/test/foo.pl olsrd-0.5.6-r5.patched/lib/quagga/test/foo.pl
---- olsrd-0.5.6-r5/lib/quagga/test/foo.pl	2009-06-24 20:00:41.000000000 +0300
-+++ olsrd-0.5.6-r5.patched/lib/quagga/test/foo.pl	1970-01-01 02:00:00.000000000 +0200
+--- a/lib/quagga/test/foo.pl
++++ /dev/null
 @@ -1,19 +0,0 @@
 -#!/usr/bin/perl
 -
@@ -3192,9 +3183,8 @@ diff -Naur olsrd-0.5.6-r5/lib/quagga/test/foo.pl olsrd-0.5.6-r5.patched/lib/quag
 -print $remote pack ("ncccccNcNcNN", 25, 7, 10, 16, 11, 25, 0xc0a80206, 0, 0, 1, 5, 1);
 -print <$remote>;
 -close $remote
-diff -Naur olsrd-0.5.6-r5/lib/quagga/test/quagga.try1.c olsrd-0.5.6-r5.patched/lib/quagga/test/quagga.try1.c
---- olsrd-0.5.6-r5/lib/quagga/test/quagga.try1.c	2009-06-24 20:00:51.000000000 +0300
-+++ olsrd-0.5.6-r5.patched/lib/quagga/test/quagga.try1.c	1970-01-01 02:00:00.000000000 +0200
+--- a/lib/quagga/test/quagga.try1.c
++++ /dev/null
 @@ -1,728 +0,0 @@
 -
 -/*
