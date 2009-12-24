@@ -50,11 +50,8 @@ MAKE_ARGS += \
 	STRIP="/bin/true" \
 	batmand install
 
-define Build/Configure
-	mkdir -p $(PKG_INSTALL_DIR)/bin
-endef
-
 define Build/Compile
+	mkdir -p $(PKG_INSTALL_DIR)/bin
 	$(MAKE) -C $(PKG_BUILD_DIR) $(MAKE_ARGS)
 endef
 
