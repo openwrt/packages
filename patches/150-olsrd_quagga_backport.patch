@@ -1,6 +1,6 @@
 --- a/lib/quagga/Makefile
 +++ b/lib/quagga/Makefile
-@@ -40,21 +40,19 @@ OLSRD_PLUGIN =	true
+@@ -40,21 +40,19 @@
  PLUGIN_NAME =	olsrd_quagga
  PLUGIN_VER =	0.2.2
  
@@ -27,7 +27,7 @@
  default_target: $(PLUGIN_FULLNAME)
  
  $(PLUGIN_FULLNAME): $(OBJS) version-script.txt
-@@ -66,4 +64,5 @@ install:	$(PLUGIN_FULLNAME)
+@@ -66,4 +64,5 @@
  
  clean:
  		rm -f $(OBJS) $(SRCS:%.c=%.d) $(PLUGIN_FULLNAME)
@@ -928,7 +928,7 @@
  
  ---------------------------------------------------------------------
  PLUGIN PARAMETERS (PlParam)
-@@ -27,22 +27,22 @@ PlParam "redistribute" "<protocol>"
+@@ -27,22 +27,22 @@
  	May be used more then once
  
  PlParam "ExportRoutes" "<only/both>"
@@ -956,7 +956,7 @@
  
  LoadPlugin "olsrd_quagga.so.0.2.2"
  {
-@@ -55,4 +55,4 @@ LoadPlugin "olsrd_quagga.so.0.2.2"
+@@ -55,4 +55,4 @@
  
  
  ---------------------------------------------------------------------
@@ -1010,7 +1010,7 @@
  #include "net_olsr.h"
  
  #define PLUGIN_NAME    "OLSRD quagga plugin"
-@@ -41,120 +43,94 @@ static set_plugin_parameter set_exportro
+@@ -41,120 +43,94 @@
  static set_plugin_parameter set_distance;
  static set_plugin_parameter set_localpref;
  
@@ -2935,7 +2935,7 @@
    route.metric = 0;
  
    if (zebra.distance) {
-@@ -868,36 +557,23 @@ zebra_del_olsr_v4_route(const struct rt_
+@@ -868,36 +557,23 @@
      route.distance = zebra.distance;
    }
  

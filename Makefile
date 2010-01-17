@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=olsrd
-PKG_VERSION:=0.5.6-r7
-PKG_RELEASE:=2
+PKG_VERSION:=0.5.6-r8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.olsr.org/releases/0.5
-PKG_MD5SUM:=dde8cb45a10f0cad2010ab2e8ad55146
+PKG_MD5SUM:=aef6f4350c44fd0ad015a26621ef9607
 
 include $(INCLUDE_DIR)/package.mk
 

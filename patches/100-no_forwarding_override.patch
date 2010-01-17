@@ -1,6 +1,6 @@
 --- a/src/linux/net.c
 +++ b/src/linux/net.c
-@@ -107,6 +107,7 @@ bind_socket_to_device(int sock, char *de
+@@ -115,6 +115,7 @@
  int
  enable_ip_forwarding(int version)
  {
@@ -8,7 +8,7 @@
    FILE *proc_fwd;
    const char *const procfile = version == AF_INET ? "/proc/sys/net/ipv4/ip_forward" : "/proc/sys/net/ipv6/conf/all/forwarding";
  
-@@ -142,6 +143,7 @@ enable_ip_forwarding(int version)
+@@ -150,6 +151,7 @@
      }
      fclose(proc_fwd);
    }
@@ -16,7 +16,7 @@
    return 1;
  }
  
-@@ -268,6 +270,7 @@ restore_settings(int version)
+@@ -276,6 +278,7 @@
    OLSR_PRINTF(1, "Restoring network state\n");
  
    /* Restore IP forwarding to "off" */
@@ -24,7 +24,7 @@
    if (orig_fwd_state == '0') {
      const char *const procfile = version == AF_INET ? "/proc/sys/net/ipv4/ip_forward" : "/proc/sys/net/ipv6/conf/all/forwarding";
      FILE *proc_fd;
-@@ -280,6 +283,7 @@ restore_settings(int version)
+@@ -288,6 +291,7 @@
        fclose(proc_fd);
      }
    }
