@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
 PKG_VERSION:=0.98.6
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_MD5SUM:=b0d4132039953a0214256873b7d23d68
 
 PKG_SOURCE_URL:=http://www.quagga.net/download/ \
@@ -20,6 +20,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_quagga-unstable-isisd \
 	CONFIG_PACKAGE_quagga-unstable-ripngd
+
+PKG_FIXUP:=libtool
 
 include $(INCLUDE_DIR)/package.mk
 
