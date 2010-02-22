@@ -24,7 +24,7 @@
 +    {
 +      vty_out (vty, "Can't backup old configuration file %s.%s", config_file_sav,
 +	        VTY_NEWLINE);
-+      goto finished;
++      return CMD_WARNING;
 +    }
 +  sync ();
 +#endif
