@@ -364,7 +364,7 @@ olsrd_write_hna4() {
 	fi
 
 	[ "$HNA4_COUNT" -le 0 ] && echo -n "${N}Hna4${N}{"
-	echo -n "${N}${T}$netaddr $netmask"
+	echo -n "${N}${T}${T}$netaddr $netmask"
 	HNA4_COUNT=$((HNA4_COUNT + 1))
 
 	return 0
@@ -391,7 +391,7 @@ olsrd_write_hna6() {
 	fi
 
 	[ "$HNA6_COUNT" -le 0 ] && echo -n "${N}Hna6${N}{"
-	echo -n "${N}${T}$netaddr $prefix"
+	echo -n "${N}${T}${T}$netaddr $prefix"
 	HNA6_COUNT=$((HNA6_COUNT + 1))
 
 	return 0
@@ -567,15 +567,15 @@ start() {
 	if [ "$OLSRD_IPVERSION_6AND4" -ne 0 ]; then
 		bindv6only="$(sysctl -n net.ipv6.bindv6only)"
 		sysctl -w net.ipv6.bindv6only=1
-	fi
+		sed -e 's/^\t\t[0-9.]*[ ][0-9.]*$//' < "$OLSRD_CONFIG_FILE" > /var/etc/olsrd.conf.ipv6
+		olsrd -f /var/etc/olsrd.conf.ipv6 -nofork < /dev/null > /dev/null &
 
-	olsrd -f "$OLSRD_CONFIG_FILE" -nofork < /dev/null > /dev/null &
-
-	if [ "$OLSRD_IPVERSION_6AND4" -ne 0 ]; then
-		sed -e 's/^IpVersion[ ][ ]*6$/IpVersion 4/' < "$OLSRD_CONFIG_FILE" > /var/etc/olsrd.conf.ipv4
+		sed -e 's/^IpVersion[ ][ ]*6$/IpVersion 4/' -e 's/^\t\t[A-Fa-f0-9.:]*[:][A-Fa-f0-9.:]*[ ][0-9]*$//' < "$OLSRD_CONFIG_FILE" > /var/etc/olsrd.conf.ipv4
 		olsrd -f /var/etc/olsrd.conf.ipv4 -nofork < /dev/null > /dev/null &
 		sleep 3
 		sysctl -w net.ipv6.bindv6only="$bindv6only"
+	else
+		olsrd -f "$OLSRD_CONFIG_FILE" -nofork < /dev/null > /dev/null &
 	fi
 }
 
