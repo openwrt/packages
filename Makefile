@@ -96,6 +96,34 @@ define Package/quagga-vtysh
   TITLE:=integrated shell for Quagga routing software
 endef
 
+define Package/quagga/conffiles
+/etc/quagga/zebra.conf
+endef
+
+define Package/quagga-bgpd/conffiles
+/etc/quagga/bgpd.conf
+endef
+
+define Package/quagga-isisd/conffiles
+/etc/quagga/isisd.conf
+endef
+
+define Package/quagga-ospfd/conffiles
+/etc/quagga/ospfd.conf
+endef
+
+define Package/quagga-ospf6d/conffiles
+/etc/quagga/ospf6d.conf
+endef
+
+define Package/quagga-ripd/conffiles
+/etc/quagga/ripd.conf
+endef
+
+define Package/quagga-ripngd/conffiles
+/etc/quagga/ripngd.conf
+endef
+
 CONFIGURE_ARGS+= \
 	--localstatedir=/var/run/quagga \
 	--sysconfdir=/etc/quagga/ \
