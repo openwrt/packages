@@ -31,6 +31,7 @@ define Package/quagga/Default
   DEPENDS:=quagga
   TITLE:=The Quagga Software Routing Suite
   URL:=http://www.quagga.net
+  MAINTAINER:=Vasilis Tsiligiannis <b_tsiligiannis@silverton.gr>
 endef
 
 define Package/quagga
