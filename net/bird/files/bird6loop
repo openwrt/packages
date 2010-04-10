@@ -1,0 +1,12 @@
+#!/bin/sh
+
+BIRD=/usr/sbin/bird6
+
+$BIRD -p
+
+( until $BIRD -d "$@"
+do
+	logger error BIRD6 died!
+	sleep 2
+done; ) </dev/null >/dev/null 2> /dev/null &
+
