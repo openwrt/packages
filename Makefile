@@ -10,9 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=bmxd
 PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/trunk/batman-experimental/
 
-PKG_REV:=1075
+PKG_REV:=1636
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
+PKG_EXTRA_CFLAGS:=-DNODEBUGALL
 
 PKG_SOURCE_PROTO:=svn
 PKG_SOURCE_VERSION:=$(PKG_REV)
@@ -24,40 +25,46 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/bmxd/Default
   URL:=https://www.open-mesh.net/
+  MAINTAINER:=Axel Neumann <bmxd@neumann.cgws.de>
 endef
 
 define Package/bmxd
 $(call Package/bmxd/Default)
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread +kmod-tun
-  TITLE:=B.A.T.M.A.N. Experimental (BMX) layer 3 routing daemon
+  DEPENDS:=+kmod-tun
+  TITLE:=B.a.t.M.a.n. eXperimental (BMX) layer 3 routing daemon
 endef
 
+define Package/bmxd/conffiles
+/etc/config/bmxd
+endef
+
+
 define Package/bmxd/description
-B.A.T.M.A.N. Experimental (BMX) layer 3 routing daemon
+B.a.t.M.a.n. eXperimental (BMX) layer 3 routing daemon
 endef
 
 MAKE_ARGS += \
-	EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
+	EXTRA_CFLAGS="$(TARGET_CFLAGS) $(PKG_EXTRA_CFLAGS)" \
 	CCFLAGS="$(TARGET_CFLAGS)" \
 	OFLAGS="$(TARGET_CFLAGS)" \
 	REVISION="$(PKG_REV)" \
 	CC="$(TARGET_CC)" \
 	NODEBUG=1 \
 	UNAME="Linux" \
-	INSTALL_DIR="$(PKG_INSTALL_DIR)" \
+	INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
 	STRIP="/bin/true" \
-	batmand install
+	bmxd install
 
 define Build/Compile
-	mkdir -p $(PKG_INSTALL_DIR)/bin
+	mkdir -p $(PKG_INSTALL_DIR)/usr/sbin
 	$(MAKE) -C $(PKG_BUILD_DIR) $(MAKE_ARGS)
 endef
 
 define Package/bmxd/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/batmand $(1)/usr/sbin/bmxd
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/bmxd $(1)/usr/sbin/bmxd
 	$(INSTALL_BIN) ./files/etc/init.d/bmxd $(1)/etc/init.d
 	$(INSTALL_DATA) ./files/etc/config/bmxd $(1)/etc/config
 endef
