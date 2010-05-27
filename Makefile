@@ -72,10 +72,22 @@ define Package/olsrd-mod-httpinfo
   TITLE:=Small informative web server plugin
 endef
 
+define Package/olsrd-mod-mdns
+  $(call Package/olsrd/template)
+  DEPENDS:=olsrd
+  TITLE:=Multicast DNS plugin
+endef
+
 define Package/olsrd-mod-nameservice
   $(call Package/olsrd/template)
   DEPENDS:=olsrd
   TITLE:=Lightweight hostname resolver plugin
+endef
+
+define Package/olsrd-mod-p2pd
+  $(call Package/olsrd/template)
+  DEPENDS:=olsrd
+  TITLE:=Peer to Peer Discovery plugin
 endef
 
 define Package/olsrd-mod-quagga
@@ -106,25 +118,14 @@ define Package/olsrd-mod-secure/conffiles
 /etc/olsrd.d/olsrd_secure_key
 endef
 
-define Build/Configure
-endef
-
-define Build/Compile
-	$(MAKE) -C "$(PKG_BUILD_DIR)" \
-		$(TARGET_CONFIGURE_OPTS) \
-		NODEBUG=1 \
-		CFLAGS="$(TARGET_CFLAGS)" \
-		OS="linux" \
-		INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
-		LIBDIR="$(PKG_INSTALL_DIR)/usr/lib" \
-		SBINDIR="$(PKG_INSTALL_DIR)/usr/sbin/" \
-		ETCDIR="$(PKG_INSTALL_DIR)/etc" \
-		MANDIR="$(PKG_INSTALL_DIR)/usr/share/man" \
-		STRIP="true" \
-		INSTALL_LIB="true" \
-		SUBDIRS="arprefresh bmf dot_draw dyn_gw dyn_gw_plain httpinfo nameservice quagga secure txtinfo watchdog" \
-		all libs install install_libs
-endef
+MAKE_FLAGS+= \
+	NO_DEBUG_MESSAGES=1 \
+	OS="linux" \
+	DESTDIR="$(PKG_INSTALL_DIR)" \
+	STRIP="true" \
+	INSTALL_LIB="true" \
+	SUBDIRS="arprefresh bmf dot_draw dyn_gw dyn_gw_plain httpinfo mdns nameservice p2pd quagga secure txtinfo watchdog" \
+	all libs install install_libs
 
 define Package/olsrd/install
 	$(INSTALL_DIR) $(1)/etc/config
@@ -165,9 +166,19 @@ define Package/olsrd-mod-httpinfo/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/httpinfo/olsrd_httpinfo.so.* $(1)/usr/lib/
 endef
 
+define Package/olsrd-mod-mdns/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/mdns/olsrd_mdns.so.* $(1)/usr/lib/
+endef
+
 define Package/olsrd-mod-nameservice/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/nameservice/olsrd_nameservice.so.* $(1)/usr/lib/
+endef
+
+define Package/olsrd-mod-p2pd/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/p2pd/olsrd_p2pd.so.* $(1)/usr/lib/
 endef
 
 define Package/olsrd-mod-quagga/install
@@ -199,7 +210,9 @@ $(eval $(call BuildPackage,olsrd-mod-bmf))
 $(eval $(call BuildPackage,olsrd-mod-dyn-gw))
 $(eval $(call BuildPackage,olsrd-mod-dyn-gw-plain))
 $(eval $(call BuildPackage,olsrd-mod-httpinfo))
+$(eval $(call BuildPackage,olsrd-mod-mdns))
 $(eval $(call BuildPackage,olsrd-mod-nameservice))
+$(eval $(call BuildPackage,olsrd-mod-p2pd))
 $(eval $(call BuildPackage,olsrd-mod-quagga))
 $(eval $(call BuildPackage,olsrd-mod-secure))
 $(eval $(call BuildPackage,olsrd-mod-txtinfo))
