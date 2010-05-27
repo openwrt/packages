@@ -1,34 +1,29 @@
 --- a/src/linux/net.c
 +++ b/src/linux/net.c
-@@ -115,6 +115,7 @@
- int
- enable_ip_forwarding(int version)
- {
+@@ -171,11 +171,13 @@ static bool is_at_least_linuxkernel_2_6_
+  */
+ void
+ net_os_set_global_ifoptions(void) {
 +#if 0
-   FILE *proc_fwd;
-   const char *const procfile = version == AF_INET ? "/proc/sys/net/ipv4/ip_forward" : "/proc/sys/net/ipv6/conf/all/forwarding";
- 
-@@ -150,6 +151,7 @@
-     }
-     fclose(proc_fwd);
+   if (writeToProc(olsr_cnf->ip_version == AF_INET ? PROC_IPFORWARD_V4 : PROC_IPFORWARD_V6, &orig_fwd_state, '1')) {
+     OLSR_PRINTF(1, "Warning, could not enable IP forwarding!\n"
+         "you should manually ensure that IP forwarding is enabled!\n\n");
+     olsr_startup_sleep(3);
    }
 +#endif
-   return 1;
- }
  
-@@ -276,6 +278,7 @@
+   if (olsr_cnf->smart_gw_active) {
+     char procfile[FILENAME_MAX];
+@@ -266,10 +268,12 @@ net_os_restore_ifoptions(void)
+ 
    OLSR_PRINTF(1, "Restoring network state\n");
  
-   /* Restore IP forwarding to "off" */
 +#if 0
-   if (orig_fwd_state == '0') {
-     const char *const procfile = version == AF_INET ? "/proc/sys/net/ipv4/ip_forward" : "/proc/sys/net/ipv6/conf/all/forwarding";
-     FILE *proc_fd;
-@@ -288,6 +291,7 @@
-       fclose(proc_fd);
-     }
+   /* Restore IP forwarding to "off" */
+   if (writeToProc(olsr_cnf->ip_version == AF_INET ? PROC_IPFORWARD_V4 : PROC_IPFORWARD_V6, NULL, orig_fwd_state)) {
+     OLSR_PRINTF(1, "Error, could not restore ip_forward settings\n");
    }
 +#endif
  
-   /* Restore global ICMP redirect setting */
-   if (orig_global_redirect_state != '0') {
+   if (olsr_cnf->smart_gw_active) {
+     /* Generate the procfile name */
