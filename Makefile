@@ -22,6 +22,7 @@ TARGET_CFLAGS += $(FPIC)
 define Package/olsrd/template
   SECTION:=net
   CATEGORY:=Network
+  MAINTAINER:=Saverio Proto <zioproto@gmail.com>
   TITLE:=OLSR (Optimized Link State Routing) daemon
   URL:=http://www.olsr.org/
 endef
