@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=bmxd
 PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/trunk/batman-experimental/
 
-PKG_REV:=1636
+PKG_REV:=1694
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
 PKG_EXTRA_CFLAGS:=-DNODEBUGALL
