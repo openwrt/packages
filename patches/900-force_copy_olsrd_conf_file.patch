@@ -1,0 +1,11 @@
+--- a/Makefile	2010-06-14 11:27:58.000000000 +0200
++++ b/Makefile	2010-06-14 11:28:44.000000000 +0200
+@@ -117,7 +117,7 @@
+ 		@echo can be found at files/olsrd.conf.default.lq
+ 		@echo ==========================================================
+ 		mkdir -p $(ETCDIR)
+-		-cp -i files/olsrd.conf.default.lq $(CFGFILE)
++		-cp -f files/olsrd.conf.default.lq $(CFGFILE)
+ 		@echo -------------------------------------------
+ 		@echo Edit $(CFGFILE) before running olsrd!!
+ 		@echo -------------------------------------------
