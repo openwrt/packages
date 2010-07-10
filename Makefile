@@ -18,6 +18,7 @@ PKG_SOURCE_URL:=http://www.quagga.net/download/ \
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_IPV6 \
 	CONFIG_PACKAGE_quagga-unstable-isisd \
 	CONFIG_PACKAGE_quagga-unstable-ripngd
 
