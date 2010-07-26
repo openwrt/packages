@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bmxd
-PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/trunk/bmx/
+PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/branches/bmx-0.3.x/
 
-PKG_REV:=1694
+PKG_REV:=1707
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
 PKG_EXTRA_CFLAGS:=-DNODEBUGALL
