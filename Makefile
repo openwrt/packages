@@ -23,6 +23,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_quagga-unstable-ripngd
 
 PKG_FIXUP:=libtool
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -143,12 +144,6 @@ endif
 ifneq ($(CONFIG_PACKAGE_quagga-ripngd),)
   CONFIGURE_ARGS+= --enable-ripngd
 endif
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR=$(PKG_INSTALL_DIR) \
-		all install
-endef
 
 define Package/quagga/install
 	$(INSTALL_DIR) $(1)/usr/sbin
