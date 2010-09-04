@@ -171,6 +171,19 @@ olsrd_write_plparam() {
 		shift
 		value="$*"
 	fi
+	if [ "$option" = 'NonOlsrIf' ]; then
+		if validate_varname "$value"; then
+			if get_ifname "$value"; then
+				ifname="$IFNAME"
+				echo "Info: mdns Interface '$value' ifname '$ifname' found" 1>&2
+			else
+				echo "Warning: mdns Interface '$value' not found, skipped" 1>&2
+			fi
+		else
+			warning_invalid_value olsrd "$cfg" "NonOlsrIf"
+		fi
+		[ -z "$ifname" ] || value=$ifname
+	fi
 
 	echo -n "${N}${param}PlParam \"$option\" \"$value\""
 
