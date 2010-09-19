@@ -1,10 +1,9 @@
 #
-# Copyright (C) 2008 OpenWrt.org
+# Copyright (C) 2008-2010 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
-# $Id: Makefile 14803 2009-03-09 05:50:38Z marek $
 
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
@@ -18,7 +17,7 @@ PKG_EXTRA_CFLAGS=-DDEBUG_MALLOC -DMEMORY_USAGE -DPROFILE_DATA -DREVISION_VERSION
 PKG_SOURCE_PROTO:=svn
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_SUBDIR:=$(if $(PKG_BRANCH),$(PKG_BRANCH),$(PKG_NAME))-$(PKG_VERSION)
-PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/trunk/
+PKG_SOURCE_URL:=http://downloads.open-mesh.org/svn/batman/trunk/
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
@@ -27,7 +26,7 @@ PKG_KMOD_BUILD_DIR:=$(PKG_BUILD_DIR)/batman/linux/modules
 include $(INCLUDE_DIR)/package.mk
 
 define Package/batmand/Default
-  URL:=http://www.open-mesh.net/
+  URL:=http://www.open-mesh.org/
   MAINTAINER:=Marek Lindner <lindner_marek@yahoo.de>
 endef
 
