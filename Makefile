@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2008 Freifunk Leipzig
+# Copyright (C) 2008-2010 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bmxd
-PKG_SOURCE_URL:=http://downloads.open-mesh.net/svn/batman/branches/bmx-0.3.x/
+PKG_SOURCE_URL:=http://downloads.open-mesh.org/svn/batman/branches/bmx-0.3.x/
 
 PKG_REV:=1707
 PKG_VERSION:=r$(PKG_REV)
@@ -24,7 +25,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/bmxd/Default
-  URL:=https://www.open-mesh.net/
+  URL:=https://www.open-mesh.org/
   MAINTAINER:=Axel Neumann <bmxd@neumann.cgws.de>
 endef
 
