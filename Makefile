@@ -17,6 +17,8 @@ PKG_SOURCE_URL:=http://kokoro.ucsd.edu/nodogsplash/ \
 PKG_MD5SUM:=3ba0d862b4d63ecf97f16176a486faed
 
 PKG_FIXUP:=libtool
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -43,11 +45,15 @@ define Build/Configure
 endef
 
 define Build/Compile
+	$(call Build/Compile/Default, \
+		mkinstalldirs="$(INSTALL_DIR)")
+endef
+
+define Build/Install
 	mkdir -p $(PKG_INSTALL_DIR)/usr/{share{,/doc/$(PKG_NAME)-$(PKG_VERSION)},lib,include{,/nodogsplash},bin,sbin}/
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
+	$(call Build/Install/Default, \
 		mkinstalldirs="$(INSTALL_DIR)" \
-		install
+		install)
 endef
 
 define Package/nodogsplash/install
