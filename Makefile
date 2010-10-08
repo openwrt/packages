@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.olsr.org/releases/0.6
 PKG_MD5SUM:=8425a10e315be5e061143ac310f2424b
 
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
+
 include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS += $(FPIC)
@@ -125,8 +128,17 @@ MAKE_FLAGS+= \
 	DESTDIR="$(PKG_INSTALL_DIR)" \
 	STRIP="true" \
 	INSTALL_LIB="true" \
-	SUBDIRS="arprefresh bmf dot_draw dyn_gw dyn_gw_plain httpinfo mdns nameservice p2pd quagga secure txtinfo watchdog" \
-	all libs install install_libs
+	SUBDIRS="arprefresh bmf dot_draw dyn_gw dyn_gw_plain httpinfo mdns nameservice p2pd quagga secure txtinfo watchdog"
+
+define Build/Compile
+	$(call Build/Compile/Default,all)
+	$(call Build/Compile/Default,libs)
+endef
+
+define Build/Install
+	$(call Build/Install/Default,install)
+	$(call Build/Install/Default,install_libs)
+endef
 
 define Package/olsrd/install
 	$(INSTALL_DIR) $(1)/etc/config
