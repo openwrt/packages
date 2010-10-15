@@ -1,0 +1,11 @@
+--- a/vtysh/extract.pl.in
++++ b/vtysh/extract.pl.in
+@@ -62,7 +62,7 @@ $ignore{'"show history"'} = "ignore";
+ foreach (@ARGV) {
+     $file = $_;
+ 
+-    open (FH, "cpp -DHAVE_CONFIG_H -DVTYSH_EXTRACT_PL -DHAVE_IPV6 -I@top_builddir@ -I@srcdir@/ -I@srcdir@/.. -I@top_srcdir@/lib -I@top_srcdir@/isisd/topology @SNMP_INCLUDES@ $file |");
++    open (FH, "@CPP@ @CPPFLAGS@ -DHAVE_CONFIG_H -DVTYSH_EXTRACT_PL -DHAVE_IPV6 -I@top_builddir@ -I@srcdir@/ -I@srcdir@/.. -I@top_srcdir@/lib -I@top_srcdir@/isisd/topology @SNMP_INCLUDES@ $file |");
+     local $/; undef $/;
+     $line = <FH>;
+     close (FH);

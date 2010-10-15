@@ -8,20 +8,27 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
-PKG_VERSION:=0.98.6
-PKG_RELEASE:=5
-PKG_MD5SUM:=b0d4132039953a0214256873b7d23d68
+ifneq ($(CONFIG_QUAGGA_OLD),)
+  PKG_VERSION:=0.98.6
+  PKG_RELEASE:=5
+  PKG_MD5SUM:=b0d4132039953a0214256873b7d23d68
+  PATCH_DIR:=./patches-old
+else
+  PKG_VERSION:=0.99.17
+  PKG_RELEASE:=1
+  PKG_MD5SUM:=37b9022adca04b03863d2d79787e643f
+endif
 
+PKG_SOURCE:=quagga-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.quagga.net/download/ \
                 http://www.de.quagga.net/download/ \
                 http://www.uk.quagga.net/download/
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_QUAGGA_STABLE \
 	CONFIG_IPV6 \
 	CONFIG_PACKAGE_quagga-unstable-isisd \
 	CONFIG_PACKAGE_quagga-unstable-ripngd
-
+PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=libtool
 PKG_INSTALL:=1
 
@@ -38,7 +45,7 @@ endef
 
 define Package/quagga
   $(call Package/quagga/Default)
-  DEPENDS:=
+  DEPENDS:=+QUAGGA_STABLE:librt
   MENU:=1
 endef
 
@@ -46,6 +53,10 @@ define Package/quagga/description
   A routing software package that provides TCP/IP based routing services
   with routing protocols support such as RIPv1, RIPv2, RIPng, OSPFv2,
   OSPFv3, BGP-4, and BGP-4+
+endef
+
+define Package/quagga/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/quagga-libzebra
@@ -60,7 +71,7 @@ endef
 
 define Package/quagga-bgpd
   $(call Package/quagga/Default)
-  DEPENDS += quagga-libzebra
+  DEPENDS+=+quagga-libzebra
   TITLE:=BGPv4, BGPv4+, BGPv4- routing engine
 endef
 
@@ -71,31 +82,31 @@ endef
 
 define Package/quagga-ospfd
   $(call Package/quagga/Default)
-  DEPENDS += quagga-libospf quagga-libzebra
+  DEPENDS+=+quagga-libospf +quagga-libzebra
   TITLE:=OSPFv2 routing engine
 endef
 
 define Package/quagga-ospf6d
   $(call Package/quagga/Default)
-  DEPENDS += quagga-libospf quagga-libzebra @IPV6
+  DEPENDS+=+quagga-libospf +quagga-libzebra @IPV6
   TITLE:=OSPFv3 routing engine
 endef
 
 define Package/quagga-ripd
   $(call Package/quagga/Default)
-  DEPENDS += quagga-libzebra
+  DEPENDS+=+quagga-libzebra
   TITLE:=RIP routing engine
 endef
 
 define Package/quagga-ripngd
   $(call Package/quagga/Default)
-  DEPENDS += quagga-libzebra @BROKEN
+  DEPENDS+=+quagga-libzebra @BROKEN
   TITLE:=RIPNG routing engine
 endef
 
 define Package/quagga-vtysh
   $(call Package/quagga/Default)
-  DEPENDS += quagga-libzebra +libreadline +libncurses
+  DEPENDS+=quagga-libzebra +libreadline +libncurses
   TITLE:=integrated shell for Quagga routing software
 endef
 
@@ -135,6 +146,7 @@ CONFIGURE_ARGS+= \
 	--enable-vtysh \
 	--enable-user=quagga \
 	--enable-group=quagga \
+	--enable-pie=no \
 	--enable-multipath=8 \
 
 ifneq ($(CONFIG_PACKAGE_quagga-isisd),)

@@ -1,8 +1,8 @@
 --- a/lib/command.c
 +++ b/lib/command.c
-@@ -2601,6 +2601,13 @@ DEFUN (config_write_file,
- 		 VTY_NEWLINE);
-         goto finished;
+@@ -2567,6 +2567,13 @@
+ 	unlink (config_file_tmp);	
+ 	return CMD_WARNING;
        }
 +
 +#if 0
@@ -14,9 +14,9 @@
    if (link (config_file, config_file_sav) != 0)
      {
        vty_out (vty, "Can't backup old configuration file %s.%s", config_file_sav,
-@@ -2614,7 +2621,23 @@ DEFUN (config_write_file,
- 	        VTY_NEWLINE);
-       goto finished;
+@@ -2586,7 +2593,23 @@
+       unlink (config_file_tmp);
+       return CMD_WARNING;      
      }
 +#else
 +  /* And this is the code that hopefully does work */
@@ -24,7 +24,7 @@
 +    {
 +      vty_out (vty, "Can't backup old configuration file %s.%s", config_file_sav,
 +	        VTY_NEWLINE);
-+      goto finished;
++      return CMD_WARNING;
 +    }
 +  sync ();
 +#endif
