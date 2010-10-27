@@ -18,7 +18,7 @@
 +dnl ----------
 +AC_MSG_CHECKING(for support of multipath alg. in netlink)
 +  if grep RTA_MP_ALGO linux/rtnetlink.h >/dev/null 2>&1; then
-+    AC_DEFINE(HAVE_RT_MP_ALGO,,RTA_MP exist in rtnetlink)
++    AC_DEFINE(HAVE_LINUX_IP_MP_ALG_H,,RTA_MP exist in rtnetlink)
 +    AC_MSG_RESULT(yes)
 +  else
 +    AC_MSG_RESULT(no)
@@ -122,7 +122,7 @@
        if (src)
          addattr_l (&req.n, sizeof req, RTA_PREFSRC, &src->ipv4, bytelen);
  
-+#ifdef HAVE_RT_MP_ALGO
++#ifdef HAVE_LINUX_IP_MP_ALG_H
 +       if (zebrad.mpath != IP_MP_ALG_NONE)
 +       {
 +             if (IS_ZEBRA_DEBUG_KERNEL)
@@ -159,7 +159,7 @@
  };
  
  
-+#ifdef HAVE_RT_MP_ALGO
++#ifdef HAVE_LINUX_IP_MP_ALG_H
 +DEFUN (multipath_rr,
 +       multipath_rr_cmd,
 +       "multipath rr",
@@ -242,7 +242,7 @@
 +	  1
 +};
 +
-+#endif /* HAVE_RT_MP_ALGO */
++#endif /* HAVE_LINUX_IP_MP_ALG_H */
 +
  /* Initialisation of zebra and installation of commands. */
  void
@@ -251,7 +251,7 @@
    install_node (&table_node, config_write_table);
    install_node (&forwarding_node, config_write_forwarding);
  
-+#ifdef HAVE_RT_MP_ALGO
++#ifdef HAVE_LINUX_IP_MP_ALG_H
 +  install_node (&multipath_node, config_write_multipath);
 +#endif
 +
@@ -262,14 +262,14 @@
    install_element (VIEW_NODE, &show_table_cmd);
    install_element (ENABLE_NODE, &show_table_cmd);
    install_element (CONFIG_NODE, &config_table_cmd);
-+#ifdef HAVE_RT_MP_ALGO
++#ifdef HAVE_LINUX_IP_MP_ALG_H
 +  install_element (CONFIG_NODE, &multipath_rr_cmd);
 +  install_element (CONFIG_NODE, &multipath_drr_cmd);
 +  install_element (CONFIG_NODE, &multipath_random_cmd);
 +  install_element (CONFIG_NODE, &multipath_wrandom_cmd);
 +  install_element (CONFIG_NODE, &no_multipath_cmd);
 +  install_element (ENABLE_NODE, &show_multipath_cmd);
-+#endif /* HAVE_RT_MP_ALGO */
++#endif /* HAVE_LINUX_IP_MP_ALG_H */
  #endif /* HAVE_NETLINK */
  
  #ifdef HAVE_IPV6
