@@ -157,6 +157,13 @@ ifneq ($(CONFIG_PACKAGE_quagga-ripngd),)
   CONFIGURE_ARGS+= --enable-ripngd
 endif
 
+define Build/Configure
+	(cd $(PKG_BUILD_DIR); rm -rf config.{cache,status}; \
+		autoconf \
+	);
+	$(call Build/Configure/Default)
+endef
+
 define Package/quagga/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/zebra $(1)/usr/sbin/
