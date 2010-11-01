@@ -19,7 +19,7 @@ else
   PKG_MD5SUM:=37b9022adca04b03863d2d79787e643f
 endif
 
-PKG_SOURCE:=quagga-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.quagga.net/download/ \
                 http://www.de.quagga.net/download/ \
                 http://www.uk.quagga.net/download/
