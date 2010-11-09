@@ -10,12 +10,12 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=quagga
 ifneq ($(CONFIG_QUAGGA_OLD),)
   PKG_VERSION:=0.98.6
-  PKG_RELEASE:=5
+  PKG_RELEASE:=6
   PKG_MD5SUM:=b0d4132039953a0214256873b7d23d68
   PATCH_DIR:=./patches-old
 else
   PKG_VERSION:=0.99.17
-  PKG_RELEASE:=1
+  PKG_RELEASE:=2
   PKG_MD5SUM:=37b9022adca04b03863d2d79787e643f
 endif
 
@@ -26,8 +26,8 @@ PKG_SOURCE_URL:=http://www.quagga.net/download/ \
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_QUAGGA_STABLE \
 	CONFIG_IPV6 \
-	CONFIG_PACKAGE_quagga-unstable-isisd \
-	CONFIG_PACKAGE_quagga-unstable-ripngd
+	CONFIG_PACKAGE_quagga-isisd \
+	CONFIG_PACKAGE_quagga-ripngd
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=libtool
 PKG_INSTALL:=1
