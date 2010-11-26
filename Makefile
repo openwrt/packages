@@ -149,6 +149,17 @@ define Package/quagga-ripngd/conffiles
 /etc/quagga/ripngd.conf
 endef
 
+ifneq ($(SDK),)
+CONFIG_PACKAGE_quagga-libzebra:=m
+CONFIG_PACKAGE_quagga-libospf:=m
+CONFIG_PACKAGE_quagga-bgpd:=m
+CONFIG_PACKAGE_quagga-isisd:=m
+CONFIG_PACKAGE_quagga-ospf6d:=m
+CONFIG_PACKAGE_quagga-ripd:=m
+CONFIG_PACKAGE_quagga-ripngd:=m
+CONFIG_PACKAGE_quagga-vtysh:=m
+endif
+
 CONFIGURE_ARGS+= \
 	--localstatedir=/var/run/quagga \
 	--sysconfdir=/etc/quagga/ \
