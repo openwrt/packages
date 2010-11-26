@@ -10,12 +10,12 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=quagga
 ifneq ($(CONFIG_QUAGGA_OLD),)
   PKG_VERSION:=0.98.6
-  PKG_RELEASE:=7
+  PKG_RELEASE:=8
   PKG_MD5SUM:=b0d4132039953a0214256873b7d23d68
   PATCH_DIR:=./patches-old
 else
   PKG_VERSION:=0.99.17
-  PKG_RELEASE:=3
+  PKG_RELEASE:=4
   PKG_MD5SUM:=37b9022adca04b03863d2d79787e643f
 endif
 
@@ -111,7 +111,7 @@ endef
 
 define Package/quagga-ripngd
   $(call Package/quagga/Default)
-  DEPENDS+=+quagga-libzebra @BROKEN
+  DEPENDS+=+quagga-libzebra @IPV6
   TITLE:=RIPNG routing engine
 endef
 
