@@ -180,6 +180,7 @@ CONFIGURE_ARGS+= \
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -rf config.{cache,status}; \
+		autoconf \
 	);
 	$(call Build/Configure/Default)
 endef
