@@ -24,7 +24,7 @@ PKG_SOURCE_URL:=http://www.quagga.net/download/ \
                 http://www.de.quagga.net/download/ \
                 http://www.uk.quagga.net/download/
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_QUAGGA_STABLE \
+	CONFIG_QUAGGA_OLD \
 	CONFIG_IPV6 \
 	CONFIG_PACKAGE_quagga-isisd \
 	CONFIG_PACKAGE_quagga-ripngd
@@ -56,7 +56,12 @@ define Package/quagga/description
 endef
 
 define Package/quagga/config
-	source "$(SOURCE)/Config.in"
+config QUAGGA_OLD
+	depends on (PACKAGE_quagga && BROKEN)
+	default n
+	bool "Use the old release version 0.98.6"
+	help
+	  This option allows you to select the old version of Quagga to be built.
 endef
 
 define Package/quagga-libzebra
