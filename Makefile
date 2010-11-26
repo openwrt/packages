@@ -100,7 +100,7 @@ endef
 
 define Package/quagga-ripngd
   $(call Package/quagga/Default)
-  DEPENDS+=+quagga-libzebra @BROKEN
+  DEPENDS+=+quagga-libzebra @IPV6
   TITLE:=RIPNG routing engine
 endef
 
@@ -287,6 +287,7 @@ define Package/quagga-libzebra/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libzebra.so.* $(1)/usr/lib/
 endef
 
+ifeq ($(CONFIG_IPV6),y)
 $(eval $(call BuildPackage,quagga))
 $(eval $(call BuildPackage,quagga-libzebra))
 $(eval $(call BuildPackage,quagga-libospf))
@@ -297,3 +298,13 @@ $(eval $(call BuildPackage,quagga-ospf6d))
 $(eval $(call BuildPackage,quagga-ripd))
 $(eval $(call BuildPackage,quagga-ripngd))
 $(eval $(call BuildPackage,quagga-vtysh))
+else
+$(eval $(call BuildPackage,quagga))
+$(eval $(call BuildPackage,quagga-libzebra))
+$(eval $(call BuildPackage,quagga-libospf))
+$(eval $(call BuildPackage,quagga-bgpd))
+$(eval $(call BuildPackage,quagga-isisd))
+$(eval $(call BuildPackage,quagga-ospfd))
+$(eval $(call BuildPackage,quagga-ripd))
+$(eval $(call BuildPackage,quagga-vtysh))
+endif
