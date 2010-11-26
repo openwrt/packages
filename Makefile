@@ -10,12 +10,12 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=quagga
 ifneq ($(CONFIG_QUAGGA_OLD),)
   PKG_VERSION:=0.98.6
-  PKG_RELEASE:=6
+  PKG_RELEASE:=7
   PKG_MD5SUM:=b0d4132039953a0214256873b7d23d68
   PATCH_DIR:=./patches-old
 else
   PKG_VERSION:=0.99.17
-  PKG_RELEASE:=2
+  PKG_RELEASE:=3
   PKG_MD5SUM:=37b9022adca04b03863d2d79787e643f
 endif
 
@@ -26,8 +26,14 @@ PKG_SOURCE_URL:=http://www.quagga.net/download/ \
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_QUAGGA_OLD \
 	CONFIG_IPV6 \
+	CONFIG_PACKAGE_quagga-libzebra \
+	CONFIG_PACKAGE_quagga-libospf \
+	CONFIG_PACKAGE_quagga-bgpd \
 	CONFIG_PACKAGE_quagga-isisd \
-	CONFIG_PACKAGE_quagga-ripngd
+	CONFIG_PACKAGE_quagga-ospf6d \
+	CONFIG_PACKAGE_quagga-ripd \
+	CONFIG_PACKAGE_quagga-ripngd \
+	CONFIG_PACKAGE_quagga-vtysh
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=libtool
 PKG_INSTALL:=1
@@ -148,19 +154,18 @@ CONFIGURE_ARGS+= \
 	--sysconfdir=/etc/quagga/ \
 	--enable-shared \
 	--disable-static \
-	--enable-vtysh \
 	--enable-user=quagga \
 	--enable-group=quagga \
 	--enable-pie=no \
 	--enable-multipath=8 \
-
-ifneq ($(CONFIG_PACKAGE_quagga-isisd),)
-  CONFIGURE_ARGS+= --enable-isisd
-endif
-
-ifneq ($(CONFIG_PACKAGE_quagga-ripngd),)
-  CONFIGURE_ARGS+= --enable-ripngd
-endif
+	$(call autoconf_bool,CONFIG_PACKAGE_quagga-libzebra,zebra) \
+	$(call autoconf_bool,CONFIG_PACKAGE_quagga-libospf,ospfd) \
+	$(call autoconf_bool,CONFIG_PACKAGE_quagga-bgpd,bgpd) \
+	$(call autoconf_bool,CONFIG_PACKAGE_quagga-isisd,isisd) \
+	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ospf6d,ospf6d) \
+	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ripd,ripd) \
+	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ripngd,ripngd) \
+	$(call autoconf_bool,CONFIG_PACKAGE_quagga-vtysh,vtysh) \
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -rf config.{cache,status}; \
