@@ -3,10 +3,11 @@
 # Special thanks to bittorf wireless ))
 START=65
 
-OLSRD_OLSRD_SCHEMA='ignore:internal config_file:internal DebugLevel=0'
+OLSRD_OLSRD_SCHEMA='ignore:internal config_file:internal DebugLevel=0 AllowNoInt=yes'
 OLSRD_IPCCONNECT_SCHEMA='ignore:internal Host:list Net:list2'
 OLSRD_LOADPLUGIN_SCHEMA='ignore:internal library:internal Host4:list Net4:list2 Host:list Net:list2 Host6:list Net6:list2 Ping:list redistribute:list NonOlsrIf:list name:list lat lon latlon_infile HNA:list2 hosts:list2'
 OLSRD_INTERFACE_SCHEMA='ignore:internal interface:internal AutoDetectChanges:bool'
+OLSRD_INTERFACE_DEFAULTS_SCHEMA='AutoDetectChanges:bool'
 
 T='	'
 N='
@@ -127,7 +128,7 @@ olsrd_write_option() {
 	fi
 
 	if [ "$value" != "${value%%[G-Zg-z_-]*}" ]; then
-		if [ "$option" != "Ip6AddrType" -a "$value" != "yes" -a "$value" != "no" ]; then
+		if [ "$option" != "Ip6AddrType" -a "$option" != "LinkQualityMult" -a "$value" != "yes" -a "$value" != "no" ]; then
 			value="\"$value\""
 		fi
 	fi
@@ -502,6 +503,17 @@ olsrd_write_interface() {
 	return 0
 }
 
+olsrd_write_interface_defaults() {
+	local cfg="$1"
+	validate_varname "$cfg" || return 0
+
+	echo -n "${N}InterfaceDefaults$ifnames${N}{"
+	config_write_options "$OLSRD_INTERFACE_DEFAULTS_SCHEMA" "$cfg" olsrd_write_option "${T}"
+	echo "${N}}"
+
+	return 1
+}
+
 olsrd_update_schema() {
 	local command="$1"
 	validate_varname "$command" || return 0
@@ -518,6 +530,7 @@ olsrd_update_schema() {
 		IpcConnect) config_update_schema OLSRD_IPCCONNECT_SCHEMA "$command" "$varname" "$value";;
 		LoadPlugin) config_update_schema OLSRD_LOADPLUGIN_SCHEMA "$command" "$varname" "$value";;
 		Interface) config_update_schema OLSRD_INTERFACE_SCHEMA "$command" "$varname" "$value";;
+		InterfaceDefaults) config_update_schema OLSRD_INTERFACE_DEFAULTS_SCHEMA "$command" "$varname" "$value";;
 	esac
 
 	return 0
@@ -537,6 +550,7 @@ olsrd_write_config() {
 	[ "$HNA6_COUNT" -gt 0 ] && echo "${N}}"
 	config_foreach olsrd_write_loadplugin LoadPlugin
 	INTERFACES_COUNT=0
+	config_foreach olsrd_write_interface_defaults InterfaceDefaults
 	config_foreach olsrd_write_interface Interface
 	echo
 
@@ -581,6 +595,7 @@ start() {
 		bindv6only="$(sysctl -n net.ipv6.bindv6only)"
 		sysctl -w net.ipv6.bindv6only=1
 		sed -e 's/^\t\t[0-9.]*[ ][0-9.]*$//' < "$OLSRD_CONFIG_FILE" > /var/etc/olsrd.conf.ipv6
+		sed -i '/[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' /var/etc/olsrd.conf.ipv6
 		olsrd -f /var/etc/olsrd.conf.ipv6 -nofork < /dev/null > /dev/null &
 
 		sed -e 's/^IpVersion[ ][ ]*6$/IpVersion 4/' -e 's/^\t\t[A-Fa-f0-9.:]*[:][A-Fa-f0-9.:]*[ ][0-9]*$//' < "$OLSRD_CONFIG_FILE" > /var/etc/olsrd.conf.ipv4
