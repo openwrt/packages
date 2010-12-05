@@ -1,6 +1,6 @@
 --- a/src/linux/net.c
 +++ b/src/linux/net.c
-@@ -171,11 +171,13 @@ static bool is_at_least_linuxkernel_2_6_
+@@ -174,11 +174,13 @@ static bool is_at_least_linuxkernel_2_6_
   */
  void
  net_os_set_global_ifoptions(void) {
@@ -14,7 +14,7 @@
  
    if (olsr_cnf->smart_gw_active) {
      char procfile[FILENAME_MAX];
-@@ -266,10 +268,12 @@ net_os_restore_ifoptions(void)
+@@ -273,10 +275,12 @@ net_os_restore_ifoptions(void)
  
    OLSR_PRINTF(1, "Restoring network state\n");
  
@@ -25,5 +25,5 @@
    }
 +#endif
  
-   if (olsr_cnf->smart_gw_active) {
+   if (olsr_cnf->smart_gw_active && (olsr_cnf->ip_version == AF_INET || olsr_cnf->use_niit)) {
      /* Generate the procfile name */
