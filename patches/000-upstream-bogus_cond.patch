@@ -1,6 +1,6 @@
 --- a/zebra/zserv.c
 +++ b/zebra/zserv.c
-@@ -451,7 +451,7 @@ zsend_route_multipath (int cmd, struct zserv *client, struct prefix *p,
+@@ -451,7 +451,7 @@ zsend_route_multipath (int cmd, struct z
      }
  
    /* Metric */

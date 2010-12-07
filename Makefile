@@ -15,7 +15,7 @@ ifneq ($(CONFIG_QUAGGA_OLD),)
   PATCH_DIR:=./patches-old
 else
   PKG_VERSION:=0.99.17
-  PKG_RELEASE:=4
+  PKG_RELEASE:=5
   PKG_MD5SUM:=37b9022adca04b03863d2d79787e643f
 endif
 
@@ -160,6 +160,8 @@ CONFIG_PACKAGE_quagga-ripngd:=m
 CONFIG_PACKAGE_quagga-vtysh:=m
 endif
 
+TARGET_LDFLAGS += -lpthread
+
 CONFIGURE_ARGS+= \
 	--localstatedir=/var/run/quagga \
 	--sysconfdir=/etc/quagga/ \
@@ -177,6 +179,9 @@ CONFIGURE_ARGS+= \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ripd,ripd) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ripngd,ripngd) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-vtysh,vtysh) \
+
+MAKE_FLAGS += \
+	CFLAGS="$(TARGET_CFLAGS) -D_GNU_SOURCE"
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -rf config.{cache,status}; \

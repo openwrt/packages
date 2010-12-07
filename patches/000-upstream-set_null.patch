@@ -1,6 +1,6 @@
 --- a/bgpd/bgp_packet.c
 +++ b/bgpd/bgp_packet.c
-@@ -177,10 +177,11 @@ bgp_update_packet (struct peer *peer, afi_t afi, safi_t safi)
+@@ -177,10 +177,11 @@ bgp_update_packet (struct peer *peer, af
  	  
  	  if (rn->prn)
  	    prd = (struct prefix_rd *) &rn->prn->p;
