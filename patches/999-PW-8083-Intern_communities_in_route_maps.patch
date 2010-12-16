@@ -1,0 +1,91 @@
+From patchwork Sat Jul 24 16:44:07 2010
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: [quagga-dev,8083,3/3] bgpd: "Intern" communities in route maps
+Date: Sat, 24 Jul 2010 15:44:07 -0000
+From: Michael Lambert <lambert@psc.edu>
+X-Patchwork-Id: 253
+Message-Id: <201007241836.o6OIa8gR023592@tesla.psc.edu>
+To: quagga-dev@lists.quagga.net
+
+* bgp_community.[ch]: (community_lookup) New helper function to look
+  up a community list in the hash table.
+
+* bgp_routemap.c: A new community structure was being allocated for
+  every BGP update which matched a route map which set a community.
+  This behavior led to rapid growth in the memory consumed by bgpd.
+  Adding the communities to the hash table addresses the memory
+  growth, but may introduce a problem in modifying or deleting the
+  'set community' statement in the route map.
+
+---
+bgpd/bgp_community.c |    7 +++++++
+ bgpd/bgp_community.h |    1 +
+ bgpd/bgp_routemap.c  |    8 +++++---
+ 3 files changed, 13 insertions(+), 3 deletions(-)
+
+--- a/bgpd/bgp_community.c
++++ b/bgpd/bgp_community.c
+@@ -292,6 +292,13 @@ community_com2str  (struct community *co
+   return str;
+ }
+ 
++/* Find an 'intern'ed community structure */
++struct community *
++community_lookup (struct community *com)
++{
++   return (struct community *) hash_lookup (comhash, com);
++}
++
+ /* Intern communities attribute.  */
+ struct community *
+ community_intern (struct community *com)
+--- a/bgpd/bgp_community.h
++++ b/bgpd/bgp_community.h
+@@ -70,5 +70,6 @@ extern int community_include (struct com
+ extern void community_del_val (struct community *, u_int32_t *);
+ extern unsigned long community_count (void);
+ extern struct hash *community_hash (void);
++extern struct community *community_lookup (struct community *);
+ 
+ #endif /* _QUAGGA_BGP_COMMUNITY_H */
+--- a/bgpd/bgp_routemap.c
++++ b/bgpd/bgp_routemap.c
+@@ -1389,7 +1389,7 @@ route_set_community (void *rule, struct 
+ 	new = community_dup (rcs->com);
+       
+       /* will be interned by caller if required */
+-      attr->community = new;
++      attr->community = community_intern (new);
+ 
+       attr->flag |= ATTR_FLAG_BIT (BGP_ATTR_COMMUNITIES);
+     }
+@@ -1403,6 +1403,7 @@ route_set_community_compile (const char 
+ {
+   struct rmap_com_set *rcs;
+   struct community *com = NULL;
++  struct community *comint;
+   char *sp;
+   int additive = 0;
+   int none = 0;
+@@ -1429,8 +1430,9 @@ route_set_community_compile (const char 
+ 	return NULL;
+     }
+   
++  comint = community_intern (com);
+   rcs = XCALLOC (MTYPE_ROUTE_MAP_COMPILED, sizeof (struct rmap_com_set));
+-  rcs->com = com;
++  rcs->com = comint;
+   rcs->additive = additive;
+   rcs->none = none;
+   
+@@ -1493,7 +1495,7 @@ route_set_community_delete (void *rule, 
+ 	    }
+ 	  else
+ 	    {
+-	      binfo->attr->community = new;
++	      binfo->attr->community = community_intern (new);
+ 	      binfo->attr->flag |= ATTR_FLAG_BIT (BGP_ATTR_COMMUNITIES);
+ 	    }
+ 	}
