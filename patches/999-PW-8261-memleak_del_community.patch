@@ -1,0 +1,37 @@
+From patchwork Mon Sep 13 15:48:11 2010
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: [quagga-dev,8261] bgpd: fix memory leak when deleting a community
+Date: Mon, 13 Sep 2010 14:48:11 -0000
+From: Michael Lambert <lambert@psc.edu>
+X-Patchwork-Id: 281
+Message-Id: <20100913171959.5276EAAAC32@ebola.psc.edu>
+To: quagga-dev@lists.quagga.net
+Cc: lambert@psc.edu
+
+* bgp_routemap.c: (route_set_community_delete) When deleting a
+  community in a route-map the old community was being orphaned.  Like
+  the description of the same code in route_set_community, this is a
+  hack, not a true fix.
+
+---
+bgpd/bgp_routemap.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+--- a/bgpd/bgp_routemap.c
++++ b/bgpd/bgp_routemap.c
+@@ -1487,6 +1487,13 @@ route_set_community_delete (void *rule, 
+ 	  new = community_uniq_sort (merge);
+ 	  community_free (merge);
+ 
++	  /* HACK: if the old community is not intern'd,
++	   * we should free it here, or all reference to it may be lost.
++	   * Really need to cleanup attribute caching sometime.
++	   */
++	  if (old->refcnt == 0)
++	    community_free (old);
++
+ 	  if (new->size == 0)
+ 	    {
+ 	      binfo->attr->community = NULL;
