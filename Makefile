@@ -15,7 +15,7 @@ ifneq ($(CONFIG_QUAGGA_OLD),)
   PATCH_DIR:=./patches-old
 else
   PKG_VERSION:=0.99.17
-  PKG_RELEASE:=6
+  PKG_RELEASE:=7
   PKG_MD5SUM:=37b9022adca04b03863d2d79787e643f
 endif
 
