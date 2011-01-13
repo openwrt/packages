@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2010 OpenWrt.org
+# Copyright (C) 2006-2011 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,12 +10,12 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=quagga
 ifneq ($(CONFIG_QUAGGA_OLD),)
   PKG_VERSION:=0.98.6
-  PKG_RELEASE:=8
+  PKG_RELEASE:=9
   PKG_MD5SUM:=b0d4132039953a0214256873b7d23d68
   PATCH_DIR:=./patches-old
 else
   PKG_VERSION:=0.99.17
-  PKG_RELEASE:=5
+  PKG_RELEASE:=6
   PKG_MD5SUM:=37b9022adca04b03863d2d79787e643f
 endif
 
@@ -43,7 +43,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/quagga/Default
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=quagga +libpthread
+  DEPENDS:=quagga
   TITLE:=The Quagga Software Routing Suite
   URL:=http://www.quagga.net
   MAINTAINER:=Vasilis Tsiligiannis <b_tsiligiannis@silverton.gr>
@@ -160,8 +160,6 @@ CONFIG_PACKAGE_quagga-ripngd:=m
 CONFIG_PACKAGE_quagga-vtysh:=m
 endif
 
-TARGET_LDFLAGS += -lpthread
-
 CONFIGURE_ARGS+= \
 	--localstatedir=/var/run/quagga \
 	--sysconfdir=/etc/quagga/ \
@@ -181,7 +179,7 @@ CONFIGURE_ARGS+= \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-vtysh,vtysh) \
 
 MAKE_FLAGS += \
-	CFLAGS="$(TARGET_CFLAGS) -D_GNU_SOURCE -std=gnu99"
+	CFLAGS="$(TARGET_CFLAGS) -std=gnu99"
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -rf config.{cache,status}; \
