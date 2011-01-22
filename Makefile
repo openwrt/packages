@@ -9,24 +9,25 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bmxd
-PKG_SOURCE_URL:=http://downloads.open-mesh.org/svn/batman/branches/bmx-0.3.x/
 
-PKG_REV:=1707
-PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=1
-PKG_EXTRA_CFLAGS:=-DNODEBUGALL
-
-PKG_SOURCE_PROTO:=svn
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=git://git.bmx6.net/bmxd.git
+PKG_REV:=0f8bd1285741d709cfbfbdf4ee443e3c2e03da4c
+PKG_VERSION:=r2011012201
+#PKG_RELEASE:=1
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
+PKG_EXTRA_CFLAGS:=-DNODEBUGALL
+
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/bmxd/Default
-  URL:=https://www.open-mesh.org/
-  MAINTAINER:=Axel Neumann <bmxd@neumann.cgws.de>
+  URL:=http://www.bmx6.net/
+  MAINTAINER:=Axel Neumann <neumann@cgws.de>
 endef
 
 define Package/bmxd
