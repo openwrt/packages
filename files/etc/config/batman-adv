@@ -1,0 +1,13 @@
+
+config 'mesh' 'bat0'
+	option 'interfaces' 'wlan0'
+	option 'aggregated_ogms'
+	option 'bonding'
+	option 'fragmentation'
+	option 'gw_bandwidth'
+	option 'gw_mode'
+	option 'gw_sel_class'
+	option 'log_level'
+	option 'orig_interval'
+	option 'vis_mode'
+
