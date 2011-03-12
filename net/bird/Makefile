@@ -18,15 +18,11 @@ PKG_BUILD_DEPENDS:=libncurses libreadline
 include $(INCLUDE_DIR)/package.mk
 
 define Package/bird/Default
-  SECTION:=net
-  CATEGORY:=Network
   TITLE:=The BIRD Internet Routing Daemon
   URL:=http://bird.network.cz/
 endef
 
 define Package/birdc/Default
-  SECTION:=net
-  CATEGORY:=Network
   TITLE:=The BIRD command-line client
   URL:=http://bird.network.cz/
   DEPENDS:= +libreadline +libncurses
@@ -62,22 +58,32 @@ endef
 
 define Package/bird4
 $(call Package/bird/Default)
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
   TITLE+= (IPv4)
 endef
 
 define Package/birdc4
 $(call Package/birdc/Default)
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
   TITLE+= (IPv4)
   DEPENDS+= +bird4
 endef
 
 define Package/bird6
 $(call Package/bird/Default)
+  SECTION:=ipv6
+  CATEGORY:=IPv6
   TITLE+= (IPv6)
 endef
 
 define Package/birdc6
 $(call Package/birdc/Default)
+  SECTION:=ipv6
+  CATEGORY:=IPv6
   TITLE+= (IPv6)
   DEPENDS+= +bird6
 endef
