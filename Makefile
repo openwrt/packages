@@ -34,6 +34,7 @@ define Package/batmand
 $(call Package/batmand/Default)
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
   DEPENDS:=+libpthread +kmod-tun
   TITLE:=B.A.T.M.A.N. layer 3 routing daemon
 endef
