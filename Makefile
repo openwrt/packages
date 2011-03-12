@@ -34,6 +34,7 @@ define Package/bmxd
 $(call Package/bmxd/Default)
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
   DEPENDS:=+kmod-tun
   TITLE:=B.a.t.M.a.n. eXperimental (BMX) layer 3 routing daemon
 endef
