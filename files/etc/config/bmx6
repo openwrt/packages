@@ -1,0 +1,23 @@
+# for more options execute: bmx6 --help
+
+config 'bmx6' 'general'
+#       option 'runtime_dir' '/var/run/bmx6'
+#       option 'niit_source' '10.202.0.116'
+
+#config 'ip_version' 'ip_version'
+#       option 'ip_version' '6'   # default is 4
+#       option 'throw_rules' '0'
+
+config 'dev' 'mesh_1'
+        option 'dev' 'eth0.12'
+
+config 'dev' 'mesh_2'
+        option 'dev' 'ath0.12'
+
+#config 'unicast_hna' 'my_global_prefix'
+#       option 'unicast_hna' '2012:0:0:74:0:0:0:0/64'
+
+#config 'unicast_hna' 'niit6to4'
+#       option 'unicast_hna' '0:0:0:0:0:ffff:10.202.0.116/128'
+
+

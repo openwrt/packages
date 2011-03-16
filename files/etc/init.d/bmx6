@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+START=91
+
+BIN=/usr/sbin/bmx6
+CONF=/etc/config/bmx6
+PID=/var/run/bmx6/pid
+
+
+start() {
+	#$BIN -f $CONF -d0 > /dev/null &
+	start-stop-daemon -b -x $BIN -S -- -f $CONF
+}
+
+stop() {
+	start-stop-daemon -p $PID -K
+}
+
+restart() {
+	stop; sleep 3; start
+}
