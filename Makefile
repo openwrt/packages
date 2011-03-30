@@ -35,7 +35,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_quagga-ripngd \
 	CONFIG_PACKAGE_quagga-vtysh
 PKG_BUILD_PARALLEL:=1
-PKG_FIXUP:=libtool
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
