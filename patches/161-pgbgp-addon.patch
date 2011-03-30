@@ -24,7 +24,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
 
 --- a/bgpd/bgp_pgbgp.c
 +++ b/bgpd/bgp_pgbgp.c
-@@ -225,7 +225,7 @@ static void
+@@ -227,7 +227,7 @@ static void
  edge_neighbor_iterator (struct hash_backet *backet, struct nsearch *pns)
  {
    struct bgp_pgbgp_edge *hedge = backet->data;
@@ -33,7 +33,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
        && hedge->e.a != hedge->e.b)
      {
        struct vty *vty = pns->pvty;
-@@ -252,13 +252,39 @@ bgp_pgbgp_stats_neighbors (struct vty *vty, afi_t afi, safi_t safi, as_t asn)
+@@ -254,13 +254,39 @@ bgp_pgbgp_stats_neighbors (struct vty *v
    return CMD_SUCCESS;
  }
  
@@ -73,7 +73,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
    bgp = bgp_get_default ();
    if (bgp == NULL)
      return CMD_WARNING;
-@@ -267,28 +293,22 @@ bgp_pgbgp_stats_origins (struct vty *vty, afi_t afi, safi_t safi,
+@@ -269,28 +295,22 @@ bgp_pgbgp_stats_origins (struct vty *vty
    table = bgp->rib[afi][safi];
    if (table == NULL)
      return CMD_WARNING;
@@ -114,7 +114,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
    return CMD_SUCCESS;
  }
  
-@@ -375,7 +395,7 @@ bgp_pgbgp_stats (struct vty *vty, afi_t afi, safi_t safi)
+@@ -377,7 +397,7 @@ bgp_pgbgp_stats (struct vty *vty, afi_t
  DEFUN (show_ip_bgp_pgbgp,
         show_ip_bgp_pgbgp_cmd,
         "show ip bgp pgbgp",
@@ -123,7 +123,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
  {
    return bgp_pgbgp_stats (vty, AFI_IP, SAFI_UNICAST);
  }
-@@ -383,29 +403,46 @@ DEFUN (show_ip_bgp_pgbgp,
+@@ -385,29 +405,46 @@ DEFUN (show_ip_bgp_pgbgp,
  DEFUN (show_ip_bgp_pgbgp_neighbors,
         show_ip_bgp_pgbgp_neighbors_cmd,
         "show ip bgp pgbgp neighbors WORD",
@@ -180,7 +180,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
  
  
  /*! --------------- VTY (others exist in bgp_route.c)  ------------------ !*/
-@@ -747,12 +784,19 @@ bgp_pgbgp_enable (struct bgp *bgp, afi_t afi, safi_t safi,
+@@ -749,12 +786,19 @@ bgp_pgbgp_enable (struct bgp *bgp, afi_t
    pgbgp->lastgc = time (NULL);
    pgbgp->lastStore = time (NULL);
    pgbgp->startTime = time (NULL);
@@ -204,7 +204,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
    return 0;
 --- a/bgpd/bgp_route.c
 +++ b/bgpd/bgp_route.c
-@@ -5670,20 +5670,6 @@ enum bgp_display_type
+@@ -5496,20 +5496,6 @@ enum bgp_display_type
  static void
  route_vty_short_status_out (struct vty *vty, struct bgp_info *binfo)
  {
@@ -225,7 +225,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
   /* Route status display. */
    if (CHECK_FLAG (binfo->flags, BGP_INFO_REMOVED))
      vty_out (vty, "R");
-@@ -5699,6 +5685,17 @@ route_vty_short_status_out (struct vty *
+@@ -5525,6 +5511,17 @@ route_vty_short_status_out (struct vty *
    /* Selected */
    if (CHECK_FLAG (binfo->flags, BGP_INFO_HISTORY))
      vty_out (vty, "h");
@@ -243,7 +243,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
    else if (CHECK_FLAG (binfo->flags, BGP_INFO_DAMPED))
      vty_out (vty, "d");
    else if (CHECK_FLAG (binfo->flags, BGP_INFO_SELECTED))
-@@ -6180,15 +6177,31 @@ route_vty_out_detail (struct vty *vty, s
+@@ -5998,7 +5995,22 @@ route_vty_out_detail (struct vty *vty, s
        if (binfo->extra && binfo->extra->damp_info)
  	bgp_damp_info_vty (vty, binfo);
  
@@ -264,9 +264,10 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
 +	} 
 +
 +      /* Line 9 display Uptime */	
-       time_t tbuf = time(NULL) - (bgp_clock() - binfo->uptime);
+ #ifdef HAVE_CLOCK_MONOTONIC
+       tbuf = time(NULL) - (bgp_clock() - binfo->uptime);
        vty_out (vty, "      Last update: %s", ctime(&tbuf));
-     }
+@@ -6009,8 +6021,9 @@ route_vty_out_detail (struct vty *vty, s
    vty_out (vty, "%s", VTY_NEWLINE);
  }  
  
@@ -278,7 +279,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
  #define BGP_SHOW_OCODE_HEADER "Origin codes: i - IGP, e - EGP, ? - incomplete%s%s"
  #define BGP_SHOW_HEADER "   Network          Next Hop            Metric LocPrf Weight Path%s"
  #define BGP_SHOW_DAMP_HEADER "   Network          From             Reuse    Path%s"
-@@ -6397,8 +6410,7 @@ bgp_show_table (struct vty *vty, struct 
+@@ -6219,8 +6232,7 @@ bgp_show_table (struct vty *vty, struct
  	    if (header)
  	      {
  		vty_out (vty, "BGP table version is 0, local router ID is %s%s", inet_ntoa (*router_id), VTY_NEWLINE);
@@ -288,7 +289,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
  		vty_out (vty, BGP_SHOW_OCODE_HEADER, VTY_NEWLINE, VTY_NEWLINE);
  		if (type == bgp_show_type_dampend_paths
  		    || type == bgp_show_type_damp_neighbor)
-@@ -9663,7 +9675,7 @@ show_adj_route (struct vty *vty, struct 
+@@ -9492,7 +9504,7 @@ show_adj_route (struct vty *vty, struct
  			  PEER_STATUS_DEFAULT_ORIGINATE))
      {
        vty_out (vty, "BGP table version is 0, local router ID is %s%s", inet_ntoa (bgp->router_id), VTY_NEWLINE);
@@ -297,7 +298,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
        vty_out (vty, BGP_SHOW_OCODE_HEADER, VTY_NEWLINE, VTY_NEWLINE);
  
        vty_out (vty, "Originating default network 0.0.0.0%s%s",
-@@ -9680,7 +9692,7 @@ show_adj_route (struct vty *vty, struct 
+@@ -9509,7 +9521,7 @@ show_adj_route (struct vty *vty, struct
  	      if (header1)
  		{
  		  vty_out (vty, "BGP table version is 0, local router ID is %s%s", inet_ntoa (bgp->router_id), VTY_NEWLINE);
@@ -306,7 +307,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
  		  vty_out (vty, BGP_SHOW_OCODE_HEADER, VTY_NEWLINE, VTY_NEWLINE);
  		  header1 = 0;
  		}
-@@ -9704,7 +9716,7 @@ show_adj_route (struct vty *vty, struct 
+@@ -9533,7 +9545,7 @@ show_adj_route (struct vty *vty, struct
  	      if (header1)
  		{
  		  vty_out (vty, "BGP table version is 0, local router ID is %s%s", inet_ntoa (bgp->router_id), VTY_NEWLINE);

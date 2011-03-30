@@ -407,7 +407,7 @@
         "Route map reference\n"
 --- a/lib/log.c
 +++ b/lib/log.c
-@@ -835,6 +835,8 @@ static const struct zebra_desc_table rou
+@@ -838,6 +838,8 @@ static const struct zebra_desc_table rou
    DESC_ENTRY	(ZEBRA_ROUTE_ISIS,	"isis",		'I' ),
    DESC_ENTRY	(ZEBRA_ROUTE_BGP,	"bgp",		'B' ),
    DESC_ENTRY	(ZEBRA_ROUTE_HSLS,	"hsls",		'H' ),

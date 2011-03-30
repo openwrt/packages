@@ -2446,8 +2446,6 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
 +
 +  return 0;
 +}
-+
-+/*! --------------- Edge Detection ------------------ !*/
 --- /dev/null
 +++ b/bgpd/bgp_pgbgp.h
 @@ -0,0 +1,286 @@
@@ -2767,7 +2765,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
    /* 1. Weight check. */
    if (new->attr->extra)
      new_weight = new->attr->extra->weight;
-@@ -1554,6 +1562,10 @@ bgp_process_main (struct work_queue *wq,
+@@ -1508,6 +1516,10 @@ bgp_process_main (struct work_queue *wq,
        bgp_info_unset_flag (rn, new_select, BGP_INFO_ATTR_CHANGED);
      }
  
@@ -2778,7 +2776,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  
    /* Check each BGP peer. */
    for (ALL_LIST_ELEMENTS (bgp->peer, node, nnode, peer))
-@@ -1878,6 +1890,11 @@ bgp_update_rsclient (struct peer *rsclie
+@@ -1831,6 +1843,11 @@ bgp_update_rsclient (struct peer *rsclie
    /* If the update is implicit withdraw. */
    if (ri)
      {
@@ -2790,7 +2788,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
        ri->uptime = bgp_clock ();
  
        /* Same attribute comes in. */
-@@ -2309,6 +2326,11 @@ bgp_update_main (struct peer *peer, stru
+@@ -2262,6 +2279,11 @@ bgp_update_main (struct peer *peer, stru
    /* Increment prefix */
    bgp_aggregate_increment (bgp, p, new, afi, safi);
    
@@ -2802,7 +2800,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
    /* Register new BGP information. */
    bgp_info_add (rn, new);
    
-@@ -5648,6 +5670,20 @@ enum bgp_display_type
+@@ -5474,6 +5496,20 @@ enum bgp_display_type
  static void
  route_vty_short_status_out (struct vty *vty, struct bgp_info *binfo)
  {
@@ -2823,7 +2821,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
   /* Route status display. */
    if (CHECK_FLAG (binfo->flags, BGP_INFO_REMOVED))
      vty_out (vty, "R");
-@@ -6152,6 +6188,7 @@ route_vty_out_detail (struct vty *vty, s
+@@ -5974,6 +6010,7 @@ route_vty_out_detail (struct vty *vty, s
  }  
  
  #define BGP_SHOW_SCODE_HEADER "Status codes: s suppressed, d damped, h history, * valid, > best, i - internal,%s              r RIB-failure, S Stale, R Removed%s"
@@ -2831,7 +2829,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  #define BGP_SHOW_OCODE_HEADER "Origin codes: i - IGP, e - EGP, ? - incomplete%s%s"
  #define BGP_SHOW_HEADER "   Network          Next Hop            Metric LocPrf Weight Path%s"
  #define BGP_SHOW_DAMP_HEADER "   Network          From             Reuse    Path%s"
-@@ -6183,7 +6220,8 @@ enum bgp_show_type
+@@ -6005,7 +6042,8 @@ enum bgp_show_type
    bgp_show_type_flap_route_map,
    bgp_show_type_flap_neighbor,
    bgp_show_type_dampend_paths,
@@ -2841,7 +2839,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  };
  
  static int
-@@ -6350,11 +6388,17 @@ bgp_show_table (struct vty *vty, struct 
+@@ -6172,11 +6210,17 @@ bgp_show_table (struct vty *vty, struct
  		    || CHECK_FLAG (ri->flags, BGP_INFO_HISTORY))
  		  continue;
  	      }
@@ -2859,7 +2857,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  		vty_out (vty, BGP_SHOW_OCODE_HEADER, VTY_NEWLINE, VTY_NEWLINE);
  		if (type == bgp_show_type_dampend_paths
  		    || type == bgp_show_type_damp_neighbor)
-@@ -6432,6 +6476,7 @@ bgp_show (struct vty *vty, struct bgp *b
+@@ -6254,6 +6298,7 @@ bgp_show (struct vty *vty, struct bgp *b
    return bgp_show_table (vty, table, &bgp->router_id, type, output_arg);
  }
  
@@ -2867,7 +2865,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  /* Header of detailed BGP route information */
  static void
  route_vty_out_detail_header (struct vty *vty, struct bgp *bgp,
-@@ -11234,6 +11279,64 @@ DEFUN (bgp_damp_set,
+@@ -11063,6 +11108,64 @@ DEFUN (bgp_damp_set,
  			  half, reuse, suppress, max);
  }
  
@@ -2932,7 +2930,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  ALIAS (bgp_damp_set,
         bgp_damp_set2_cmd,
         "bgp dampening <1-45>",
-@@ -11283,6 +11386,19 @@ DEFUN (show_ip_bgp_dampened_paths,
+@@ -11112,6 +11215,19 @@ DEFUN (show_ip_bgp_dampened_paths,
                     NULL);
  }
  
@@ -2952,7 +2950,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  DEFUN (show_ip_bgp_flap_statistics,
         show_ip_bgp_flap_statistics_cmd,
         "show ip bgp flap-statistics",
-@@ -11828,6 +11944,7 @@ bgp_route_init (void)
+@@ -11629,6 +11745,7 @@ bgp_route_init (void)
    install_element (VIEW_NODE, &show_ip_bgp_neighbor_received_prefix_filter_cmd);
    install_element (VIEW_NODE, &show_ip_bgp_ipv4_neighbor_received_prefix_filter_cmd);
    install_element (VIEW_NODE, &show_ip_bgp_dampened_paths_cmd);
@@ -2960,7 +2958,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
    install_element (VIEW_NODE, &show_ip_bgp_flap_statistics_cmd);
    install_element (VIEW_NODE, &show_ip_bgp_flap_address_cmd);
    install_element (VIEW_NODE, &show_ip_bgp_flap_prefix_cmd);
-@@ -11935,6 +12052,7 @@ bgp_route_init (void)
+@@ -11736,6 +11853,7 @@ bgp_route_init (void)
    install_element (ENABLE_NODE, &show_ip_bgp_neighbor_received_prefix_filter_cmd);
    install_element (ENABLE_NODE, &show_ip_bgp_ipv4_neighbor_received_prefix_filter_cmd);
    install_element (ENABLE_NODE, &show_ip_bgp_dampened_paths_cmd);
@@ -2968,17 +2966,17 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
    install_element (ENABLE_NODE, &show_ip_bgp_flap_statistics_cmd);
    install_element (ENABLE_NODE, &show_ip_bgp_flap_address_cmd);
    install_element (ENABLE_NODE, &show_ip_bgp_flap_prefix_cmd);
-@@ -12293,6 +12411,10 @@ bgp_route_init (void)
-   install_element (BGP_IPV4_NODE, &bgp_damp_set3_cmd);
+@@ -12093,6 +12211,10 @@ bgp_route_init (void)
    install_element (BGP_IPV4_NODE, &bgp_damp_unset_cmd);
    install_element (BGP_IPV4_NODE, &bgp_damp_unset2_cmd);
-+  
+   
 +  install_element (BGP_NODE, &bgp_pgbgp_cmd);
 +  install_element (BGP_NODE, &bgp_pgbgp_arg_cmd);
 +  install_element (BGP_NODE, &bgp_pgbgp_unset_cmd);
- }
- 
- void
++
+   /* Deprecated AS-Pathlimit commands */
+   install_element (BGP_NODE, &bgp_network_ttl_cmd);
+   install_element (BGP_NODE, &bgp_network_mask_ttl_cmd);
 --- a/bgpd/bgp_route.h
 +++ b/bgpd/bgp_route.h
 @@ -1,3 +1,4 @@
@@ -2997,7 +2995,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  
    /* BGP route type.  This can be static, RIP, OSPF, BGP etc.  */
    u_char type;
-@@ -123,7 +128,7 @@ struct bgp_static
+@@ -120,7 +125,7 @@ struct bgp_static
  
  /* Flags which indicate a route is unuseable in some form */
  #define BGP_INFO_UNUSEABLE \
@@ -3008,9 +3006,9 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
   * sense of the additional VALID flag.
 --- a/bgpd/bgp_table.h
 +++ b/bgpd/bgp_table.h
-@@ -63,6 +63,8 @@ struct bgp_node
+@@ -65,6 +65,8 @@ struct bgp_node
  
-   unsigned int lock;
+   int lock;
  
 +  struct bgp_pgbgp_hist *hist;
 +
@@ -3019,7 +3017,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  };
 --- a/bgpd/bgpd.h
 +++ b/bgpd/bgpd.h
-@@ -121,6 +121,7 @@ struct bgp
+@@ -123,6 +123,7 @@ struct bgp
    /* BGP Per AF flags */
    u_int16_t af_flags[AFI_MAX][SAFI_MAX];
  #define BGP_CONFIG_DAMPENING              (1 << 0)
@@ -3029,7 +3027,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
    struct bgp_table *route[AFI_MAX][SAFI_MAX];
 --- a/lib/hash.c
 +++ b/lib/hash.c
-@@ -156,6 +156,35 @@ hash_iterate (struct hash *hash,
+@@ -166,6 +166,35 @@ hash_iterate (struct hash *hash,
        }
  }
  
@@ -3067,7 +3065,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  hash_clean (struct hash *hash, void (*free_func) (void *))
 --- a/lib/hash.h
 +++ b/lib/hash.h
-@@ -66,7 +66,8 @@ extern void *hash_release (struct hash *, void *);
+@@ -66,7 +66,8 @@ extern void *hash_release (struct hash *
  
  extern void hash_iterate (struct hash *, 
  		   void (*) (struct hash_backet *, void *), void *);
@@ -3079,7 +3077,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  
 --- a/lib/memtypes.c
 +++ b/lib/memtypes.c
-@@ -147,6 +147,15 @@ struct memory_list memory_list_bgp[] =
+@@ -149,6 +149,15 @@ struct memory_list memory_list_bgp[] =
    { MTYPE_PEER_UPDATE_SOURCE,	"BGP peer update interface"	},
    { MTYPE_BGP_DAMP_INFO,	"Dampening info"		},
    { MTYPE_BGP_DAMP_ARRAY,	"BGP Dampening array"		},
