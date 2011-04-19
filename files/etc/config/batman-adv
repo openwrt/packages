@@ -1,6 +1,6 @@
 
 config 'mesh' 'bat0'
-	option 'interfaces' 'wlan0'
+	option 'interfaces' 'mesh'
 	option 'aggregated_ogms'
 	option 'bonding'
 	option 'fragmentation'

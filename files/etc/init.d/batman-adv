@@ -1,4 +1,6 @@
 #!/bin/sh /etc/rc.common
+# Copyright (C) 2011 OpenWrt.org
+
 START=90
 
 is_module_loaded() {
@@ -33,11 +35,16 @@ start_mesh () {
 		echo Error, you must specify at least a network interface
 		return
 	fi
-
+	
 	for interface in $interfaces
 	   do
-		[ ! -f "/sys/class/net/$interface/batman_adv/mesh_iface" ] && echo "Can't add interface $interface - ignoring" && continue
-		echo $meshif > /sys/class/net/$interface/batman_adv/mesh_iface
+	      ifname=$(uci -P /var/state get network.$interface.ifname 2>&-)
+	      [ ! -f "/sys/class/net/$ifname/batman_adv/mesh_iface" ] && {
+	         ifname=${interface}
+	         [ ! -f "/sys/class/net/$ifname/batman_adv/mesh_iface" ] && echo "Can't add interface $ifname - ignoring" && continue
+	      }
+
+	      echo $meshif > /sys/class/net/$ifname/batman_adv/mesh_iface
 	   done
 
 	if [ $orig_interval ]; then
@@ -86,7 +93,7 @@ stop_mesh() {
 	for iface in $(ls /sys/class/net/*)
 	   do
 		 [ ! -f "$iface/batman_adv/mesh_iface" ] && continue
-		 [ "$(head -1 $iface/batman_adv/mesh_iface)" != "status: $meshif" ] && continue
+		 [ "$(head -1 $iface/batman_adv/mesh_iface)" != "$meshif" ] && continue
 
 		 echo "none" > $iface/batman_adv/mesh_iface
 	   done
