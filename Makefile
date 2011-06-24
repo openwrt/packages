@@ -10,9 +10,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2011.1.0
-PKG_MD5SUM:=a05a3ff72bbc12859539f6a9e14af098
-BATCTL_MD5SUM:=d3c7cca45c223a0ab80373fcb434dd5e
+PKG_VERSION:=2011.2.0
+PKG_MD5SUM:=1ef45406201913cc08ac01e47ad2d034
+BATCTL_MD5SUM:=69e7fe915f2c1867b74e6efe7c627dd5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -73,11 +73,26 @@ define Download/batctl
 endef
 $(eval $(call Download,batctl))
 
+EXTRACT_BATCTL = tar xzf "$(DL_DIR)/batctl-$(PKG_VERSION).tar.gz" -C "$(BUILD_DIR)/$(PKG_NAME)"
+PATCH_BATCTL = $(call Build/DoPatch,"$(PKG_BATCTL_BUILD_DIR)","$(PATCH_DIR)","*batctl*")
 BUILD_BATCTL = $(MAKE) -C $(PKG_TOOL_BUILD_DIR) $(MAKE_BATCTL_ARGS)
 endif
 
+define Build/DoPatch
+	@if [ -d "$(2)" ]; then \
+		if [ "$$$$(ls $(2) | grep -Ec $(3))" -gt 0 ]; then \
+			$(PATCH) "$(1)" "$(2)" "$(3)"; \
+		fi; \
+	fi
+endef
+
+define Build/Patch
+	$(call Build/DoPatch,"$(PKG_BUILD_DIR)","$(PATCH_DIR)","*batman*")
+	$(EXTRACT_BATCTL)
+	$(PATCH_BATCTL)
+endef
+
 define Build/Compile
-	tar xzf "$(DL_DIR)/batctl-$(PKG_VERSION).tar.gz" -C "$(BUILD_DIR)/$(PKG_NAME)"
 	cp $(PKG_BUILD_DIR)/Makefile.kbuild $(PKG_BUILD_DIR)/Makefile
 	$(MAKE) -C "$(LINUX_DIR)" $(MAKE_BATMAN_ADV_ARGS)
 	$(BUILD_BATCTL)
