@@ -43,6 +43,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/quagga/Default
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
   DEPENDS:=quagga
   TITLE:=The Quagga Software Routing Suite
   URL:=http://www.quagga.net
