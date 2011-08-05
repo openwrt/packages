@@ -1,0 +1,29 @@
+--- a/lib/quagga/src/quagga.c
++++ b/lib/quagga/src/quagga.c
+@@ -2,7 +2,7 @@
+  * OLSRd Quagga plugin
+  *
+  * Copyright (C) 2006-2008 Immo 'FaUl' Wehrenberg <immo@chaostreff-dortmund.de>
+- * Copyright (C) 2007-2010 Vasilis Tsiligiannis <acinonyxs@yahoo.gr>
++ * Copyright (C) 2007-2011 Vasilis Tsiligiannis <acinonyxs@yahoo.gr>
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 as
+@@ -78,8 +78,6 @@ zebra_addroute(const struct rt_entry *r)
+       (olsr_cnf->ip_version == AF_INET6 &&
+         !memcmp(r->rt_best->rtp_nexthop.gateway.v6.s6_addr, r->rt_dst.prefix.v6.s6_addr, sizeof r->rt_best->rtp_nexthop.gateway.v6.s6_addr) &&
+         route.prefixlen == 128)) {
+-    return 0;			/* Quagga BUG workaround: don't add routes with destination = gateway
+-				   see http://lists.olsr.org/pipermail/olsr-users/2006-June/001726.html */
+     route.ifindex_num++;
+     route.ifindex = olsr_malloc(sizeof *route.ifindex, "QUAGGA: New zebra route ifindex");
+     *route.ifindex = r->rt_best->rtp_nexthop.iif_index;
+@@ -129,8 +127,6 @@ zebra_delroute(const struct rt_entry *r)
+        (olsr_cnf->ip_version == AF_INET6 &&
+         !memcmp(r->rt_nexthop.gateway.v6.s6_addr, r->rt_dst.prefix.v6.s6_addr, sizeof r->rt_nexthop.gateway.v6.s6_addr) &&
+         route.prefixlen == 128)) {
+-    return 0;			/* Quagga BUG workaround: don't delete routes with destination = gateway
+-				   see http://lists.olsr.org/pipermail/olsr-users/2006-June/001726.html */
+     route.ifindex_num++;
+     route.ifindex = olsr_malloc(sizeof *route.ifindex, "QUAGGA: New zebra route ifindex");
+     *route.ifindex = r->rt_nexthop.iif_index;
