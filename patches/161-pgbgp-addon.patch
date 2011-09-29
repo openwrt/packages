@@ -289,7 +289,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
  		vty_out (vty, BGP_SHOW_OCODE_HEADER, VTY_NEWLINE, VTY_NEWLINE);
  		if (type == bgp_show_type_dampend_paths
  		    || type == bgp_show_type_damp_neighbor)
-@@ -9492,7 +9504,7 @@ show_adj_route (struct vty *vty, struct
+@@ -9761,7 +9773,7 @@ show_adj_route (struct vty *vty, struct
  			  PEER_STATUS_DEFAULT_ORIGINATE))
      {
        vty_out (vty, "BGP table version is 0, local router ID is %s%s", inet_ntoa (bgp->router_id), VTY_NEWLINE);
@@ -298,7 +298,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
        vty_out (vty, BGP_SHOW_OCODE_HEADER, VTY_NEWLINE, VTY_NEWLINE);
  
        vty_out (vty, "Originating default network 0.0.0.0%s%s",
-@@ -9509,7 +9521,7 @@ show_adj_route (struct vty *vty, struct
+@@ -9778,7 +9790,7 @@ show_adj_route (struct vty *vty, struct
  	      if (header1)
  		{
  		  vty_out (vty, "BGP table version is 0, local router ID is %s%s", inet_ntoa (bgp->router_id), VTY_NEWLINE);
@@ -307,7 +307,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=06ac72f9f6
  		  vty_out (vty, BGP_SHOW_OCODE_HEADER, VTY_NEWLINE, VTY_NEWLINE);
  		  header1 = 0;
  		}
-@@ -9533,7 +9545,7 @@ show_adj_route (struct vty *vty, struct
+@@ -9802,7 +9814,7 @@ show_adj_route (struct vty *vty, struct
  	      if (header1)
  		{
  		  vty_out (vty, "BGP table version is 0, local router ID is %s%s", inet_ntoa (bgp->router_id), VTY_NEWLINE);

@@ -1,6 +1,6 @@
 --- a/bgpd/bgp_vty.c
 +++ b/bgpd/bgp_vty.c
-@@ -8228,8 +8228,14 @@ bgp_str2route_type (int afi, const char
+@@ -8399,8 +8399,14 @@ bgp_str2route_type (int afi, const char
  	return ZEBRA_ROUTE_STATIC;
        else if (strncmp (str, "r", 1) == 0)
  	return ZEBRA_ROUTE_RIP;
@@ -16,7 +16,7 @@
      }
    if (afi == AFI_IP6)
      {
-@@ -8241,21 +8247,30 @@ bgp_str2route_type (int afi, const char
+@@ -8412,21 +8418,30 @@ bgp_str2route_type (int afi, const char
  	return ZEBRA_ROUTE_STATIC;
        else if (strncmp (str, "r", 1) == 0)
  	return ZEBRA_ROUTE_RIPNG;
@@ -50,7 +50,7 @@
  {
    int type;
  
-@@ -8270,13 +8285,16 @@ DEFUN (bgp_redistribute_ipv4,
+@@ -8441,13 +8456,16 @@ DEFUN (bgp_redistribute_ipv4,
  
  DEFUN (bgp_redistribute_ipv4_rmap,
         bgp_redistribute_ipv4_rmap_cmd,
@@ -68,7 +68,7 @@
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -8295,13 +8313,16 @@ DEFUN (bgp_redistribute_ipv4_rmap,
+@@ -8466,13 +8484,16 @@ DEFUN (bgp_redistribute_ipv4_rmap,
  
  DEFUN (bgp_redistribute_ipv4_metric,
         bgp_redistribute_ipv4_metric_cmd,
@@ -86,7 +86,7 @@
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -8322,13 +8343,16 @@ DEFUN (bgp_redistribute_ipv4_metric,
+@@ -8493,13 +8514,16 @@ DEFUN (bgp_redistribute_ipv4_metric,
  
  DEFUN (bgp_redistribute_ipv4_rmap_metric,
         bgp_redistribute_ipv4_rmap_metric_cmd,
@@ -104,7 +104,7 @@
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -8352,13 +8376,16 @@ DEFUN (bgp_redistribute_ipv4_rmap_metric
+@@ -8523,13 +8547,16 @@ DEFUN (bgp_redistribute_ipv4_rmap_metric
  
  DEFUN (bgp_redistribute_ipv4_metric_rmap,
         bgp_redistribute_ipv4_metric_rmap_cmd,
@@ -122,7 +122,7 @@
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -8382,14 +8409,17 @@ DEFUN (bgp_redistribute_ipv4_metric_rmap
+@@ -8553,14 +8580,17 @@ DEFUN (bgp_redistribute_ipv4_metric_rmap
  
  DEFUN (no_bgp_redistribute_ipv4,
         no_bgp_redistribute_ipv4_cmd,
@@ -142,7 +142,7 @@
  {
    int type;
  
-@@ -8405,7 +8435,7 @@ DEFUN (no_bgp_redistribute_ipv4,
+@@ -8576,7 +8606,7 @@ DEFUN (no_bgp_redistribute_ipv4,
  
  DEFUN (no_bgp_redistribute_ipv4_rmap,
         no_bgp_redistribute_ipv4_rmap_cmd,
@@ -151,7 +151,7 @@
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8413,6 +8443,9 @@ DEFUN (no_bgp_redistribute_ipv4_rmap,
+@@ -8584,6 +8614,9 @@ DEFUN (no_bgp_redistribute_ipv4_rmap,
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
@@ -161,7 +161,7 @@
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -8431,7 +8464,7 @@ DEFUN (no_bgp_redistribute_ipv4_rmap,
+@@ -8602,7 +8635,7 @@ DEFUN (no_bgp_redistribute_ipv4_rmap,
  
  DEFUN (no_bgp_redistribute_ipv4_metric,
         no_bgp_redistribute_ipv4_metric_cmd,
@@ -170,7 +170,7 @@
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8439,6 +8472,9 @@ DEFUN (no_bgp_redistribute_ipv4_metric,
+@@ -8610,6 +8643,9 @@ DEFUN (no_bgp_redistribute_ipv4_metric,
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
@@ -180,7 +180,7 @@
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -8457,7 +8493,7 @@ DEFUN (no_bgp_redistribute_ipv4_metric,
+@@ -8628,7 +8664,7 @@ DEFUN (no_bgp_redistribute_ipv4_metric,
  
  DEFUN (no_bgp_redistribute_ipv4_rmap_metric,
         no_bgp_redistribute_ipv4_rmap_metric_cmd,
@@ -189,7 +189,7 @@
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8465,6 +8501,9 @@ DEFUN (no_bgp_redistribute_ipv4_rmap_met
+@@ -8636,6 +8672,9 @@ DEFUN (no_bgp_redistribute_ipv4_rmap_met
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
@@ -199,7 +199,7 @@
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -8486,7 +8525,7 @@ DEFUN (no_bgp_redistribute_ipv4_rmap_met
+@@ -8657,7 +8696,7 @@ DEFUN (no_bgp_redistribute_ipv4_rmap_met
  
  ALIAS (no_bgp_redistribute_ipv4_rmap_metric,
         no_bgp_redistribute_ipv4_metric_rmap_cmd,
@@ -208,7 +208,7 @@
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8494,6 +8533,9 @@ ALIAS (no_bgp_redistribute_ipv4_rmap_met
+@@ -8665,6 +8704,9 @@ ALIAS (no_bgp_redistribute_ipv4_rmap_met
         "Open Shurtest Path First (OSPF)\n"
         "Routing Information Protocol (RIP)\n"
         "Static routes\n"
@@ -218,7 +218,7 @@
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -8502,13 +8544,16 @@ ALIAS (no_bgp_redistribute_ipv4_rmap_met
+@@ -8673,13 +8715,16 @@ ALIAS (no_bgp_redistribute_ipv4_rmap_met
  #ifdef HAVE_IPV6
  DEFUN (bgp_redistribute_ipv6,
         bgp_redistribute_ipv6_cmd,
@@ -237,7 +237,7 @@
  {
    int type;
  
-@@ -8524,13 +8569,16 @@ DEFUN (bgp_redistribute_ipv6,
+@@ -8695,13 +8740,16 @@ DEFUN (bgp_redistribute_ipv6,
  
  DEFUN (bgp_redistribute_ipv6_rmap,
         bgp_redistribute_ipv6_rmap_cmd,
@@ -255,7 +255,7 @@
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -8549,13 +8597,16 @@ DEFUN (bgp_redistribute_ipv6_rmap,
+@@ -8720,13 +8768,16 @@ DEFUN (bgp_redistribute_ipv6_rmap,
  
  DEFUN (bgp_redistribute_ipv6_metric,
         bgp_redistribute_ipv6_metric_cmd,
@@ -273,7 +273,7 @@
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -8576,13 +8627,16 @@ DEFUN (bgp_redistribute_ipv6_metric,
+@@ -8747,13 +8798,16 @@ DEFUN (bgp_redistribute_ipv6_metric,
  
  DEFUN (bgp_redistribute_ipv6_rmap_metric,
         bgp_redistribute_ipv6_rmap_metric_cmd,
@@ -291,7 +291,7 @@
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -8606,13 +8660,16 @@ DEFUN (bgp_redistribute_ipv6_rmap_metric
+@@ -8777,13 +8831,16 @@ DEFUN (bgp_redistribute_ipv6_rmap_metric
  
  DEFUN (bgp_redistribute_ipv6_metric_rmap,
         bgp_redistribute_ipv6_metric_rmap_cmd,
@@ -309,7 +309,7 @@
         "Metric for redistributed routes\n"
         "Default metric\n"
         "Route map reference\n"
-@@ -8636,14 +8693,17 @@ DEFUN (bgp_redistribute_ipv6_metric_rmap
+@@ -8807,14 +8864,17 @@ DEFUN (bgp_redistribute_ipv6_metric_rmap
  
  DEFUN (no_bgp_redistribute_ipv6,
         no_bgp_redistribute_ipv6_cmd,
@@ -329,7 +329,7 @@
  {
    int type;
  
-@@ -8659,7 +8719,7 @@ DEFUN (no_bgp_redistribute_ipv6,
+@@ -8830,7 +8890,7 @@ DEFUN (no_bgp_redistribute_ipv6,
  
  DEFUN (no_bgp_redistribute_ipv6_rmap,
         no_bgp_redistribute_ipv6_rmap_cmd,
@@ -338,7 +338,7 @@
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8667,6 +8727,9 @@ DEFUN (no_bgp_redistribute_ipv6_rmap,
+@@ -8838,6 +8898,9 @@ DEFUN (no_bgp_redistribute_ipv6_rmap,
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
@@ -348,7 +348,7 @@
         "Route map reference\n"
         "Pointer to route-map entries\n")
  {
-@@ -8685,7 +8748,7 @@ DEFUN (no_bgp_redistribute_ipv6_rmap,
+@@ -8856,7 +8919,7 @@ DEFUN (no_bgp_redistribute_ipv6_rmap,
  
  DEFUN (no_bgp_redistribute_ipv6_metric,
         no_bgp_redistribute_ipv6_metric_cmd,
@@ -357,7 +357,7 @@
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8693,6 +8756,9 @@ DEFUN (no_bgp_redistribute_ipv6_metric,
+@@ -8864,6 +8927,9 @@ DEFUN (no_bgp_redistribute_ipv6_metric,
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
@@ -367,7 +367,7 @@
         "Metric for redistributed routes\n"
         "Default metric\n")
  {
-@@ -8711,7 +8777,7 @@ DEFUN (no_bgp_redistribute_ipv6_metric,
+@@ -8882,7 +8948,7 @@ DEFUN (no_bgp_redistribute_ipv6_metric,
  
  DEFUN (no_bgp_redistribute_ipv6_rmap_metric,
         no_bgp_redistribute_ipv6_rmap_metric_cmd,
@@ -376,7 +376,7 @@
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8719,6 +8785,9 @@ DEFUN (no_bgp_redistribute_ipv6_rmap_met
+@@ -8890,6 +8956,9 @@ DEFUN (no_bgp_redistribute_ipv6_rmap_met
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
@@ -386,7 +386,7 @@
         "Route map reference\n"
         "Pointer to route-map entries\n"
         "Metric for redistributed routes\n"
-@@ -8740,7 +8809,7 @@ DEFUN (no_bgp_redistribute_ipv6_rmap_met
+@@ -8911,7 +8980,7 @@ DEFUN (no_bgp_redistribute_ipv6_rmap_met
  
  ALIAS (no_bgp_redistribute_ipv6_rmap_metric,
         no_bgp_redistribute_ipv6_metric_rmap_cmd,
@@ -395,7 +395,7 @@
         NO_STR
         "Redistribute information from another routing protocol\n"
         "Connected\n"
-@@ -8748,6 +8817,9 @@ ALIAS (no_bgp_redistribute_ipv6_rmap_met
+@@ -8919,6 +8988,9 @@ ALIAS (no_bgp_redistribute_ipv6_rmap_met
         "Open Shurtest Path First (OSPFv3)\n"
         "Routing Information Protocol (RIPng)\n"
         "Static routes\n"
@@ -407,7 +407,7 @@
         "Route map reference\n"
 --- a/lib/log.c
 +++ b/lib/log.c
-@@ -838,6 +838,8 @@ static const struct zebra_desc_table rou
+@@ -837,6 +837,8 @@ static const struct zebra_desc_table rou
    DESC_ENTRY	(ZEBRA_ROUTE_ISIS,	"isis",		'I' ),
    DESC_ENTRY	(ZEBRA_ROUTE_BGP,	"bgp",		'B' ),
    DESC_ENTRY	(ZEBRA_ROUTE_HSLS,	"hsls",		'H' ),
@@ -444,7 +444,7 @@
 +ZEBRA_ROUTE_BATMAN, "Better Approach to Mobile Ad-Hoc Networking (BATMAN)"
 --- a/lib/zebra.h
 +++ b/lib/zebra.h
-@@ -441,7 +441,9 @@ struct in_pktinfo
+@@ -437,7 +437,9 @@ struct in_pktinfo
  #define ZEBRA_ROUTE_ISIS                 8
  #define ZEBRA_ROUTE_BGP                  9
  #define ZEBRA_ROUTE_HSLS		 10
@@ -883,7 +883,7 @@
        vty_out (vty, "Unknown route type%s", VTY_NEWLINE);
 --- a/zebra/rt_netlink.c
 +++ b/zebra/rt_netlink.c
-@@ -1488,6 +1488,9 @@ netlink_route_multipath (int cmd, struct
+@@ -1494,6 +1494,9 @@ netlink_route_multipath (int cmd, struct
                          addattr_l (&req.n, sizeof req, RTA_PREFSRC,
  				 &nexthop->src.ipv4, bytelen);
  

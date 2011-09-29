@@ -2865,7 +2865,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  /* Header of detailed BGP route information */
  static void
  route_vty_out_detail_header (struct vty *vty, struct bgp *bgp,
-@@ -11063,6 +11108,64 @@ DEFUN (bgp_damp_set,
+@@ -11823,6 +11868,64 @@ DEFUN (bgp_damp_set,
  			  half, reuse, suppress, max);
  }
  
@@ -2930,7 +2930,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  ALIAS (bgp_damp_set,
         bgp_damp_set2_cmd,
         "bgp dampening <1-45>",
-@@ -11112,6 +11215,19 @@ DEFUN (show_ip_bgp_dampened_paths,
+@@ -11872,6 +11975,19 @@ DEFUN (show_ip_bgp_dampened_paths,
                     NULL);
  }
  
@@ -2950,7 +2950,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  DEFUN (show_ip_bgp_flap_statistics,
         show_ip_bgp_flap_statistics_cmd,
         "show ip bgp flap-statistics",
-@@ -11629,6 +11745,7 @@ bgp_route_init (void)
+@@ -12398,6 +12514,7 @@ bgp_route_init (void)
    install_element (VIEW_NODE, &show_ip_bgp_neighbor_received_prefix_filter_cmd);
    install_element (VIEW_NODE, &show_ip_bgp_ipv4_neighbor_received_prefix_filter_cmd);
    install_element (VIEW_NODE, &show_ip_bgp_dampened_paths_cmd);
@@ -2958,7 +2958,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
    install_element (VIEW_NODE, &show_ip_bgp_flap_statistics_cmd);
    install_element (VIEW_NODE, &show_ip_bgp_flap_address_cmd);
    install_element (VIEW_NODE, &show_ip_bgp_flap_prefix_cmd);
-@@ -11736,6 +11853,7 @@ bgp_route_init (void)
+@@ -12531,6 +12648,7 @@ bgp_route_init (void)
    install_element (ENABLE_NODE, &show_ip_bgp_neighbor_received_prefix_filter_cmd);
    install_element (ENABLE_NODE, &show_ip_bgp_ipv4_neighbor_received_prefix_filter_cmd);
    install_element (ENABLE_NODE, &show_ip_bgp_dampened_paths_cmd);
@@ -2966,7 +2966,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
    install_element (ENABLE_NODE, &show_ip_bgp_flap_statistics_cmd);
    install_element (ENABLE_NODE, &show_ip_bgp_flap_address_cmd);
    install_element (ENABLE_NODE, &show_ip_bgp_flap_prefix_cmd);
-@@ -12093,6 +12211,10 @@ bgp_route_init (void)
+@@ -12918,6 +13036,10 @@ bgp_route_init (void)
    install_element (BGP_IPV4_NODE, &bgp_damp_unset_cmd);
    install_element (BGP_IPV4_NODE, &bgp_damp_unset2_cmd);
    
@@ -3077,7 +3077,7 @@ X-Git-Url: http://git.ozo.com/?p=quagga-pgbg.git;a=commitdiff_plain;h=c2ee55705c
  
 --- a/lib/memtypes.c
 +++ b/lib/memtypes.c
-@@ -149,6 +149,15 @@ struct memory_list memory_list_bgp[] =
+@@ -147,6 +147,15 @@ struct memory_list memory_list_bgp[] =
    { MTYPE_PEER_UPDATE_SOURCE,	"BGP peer update interface"	},
    { MTYPE_BGP_DAMP_INFO,	"Dampening info"		},
    { MTYPE_BGP_DAMP_ARRAY,	"BGP Dampening array"		},
