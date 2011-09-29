@@ -78,10 +78,11 @@ PATCH_BATCTL = $(call Build/DoPatch,"$(PKG_BATCTL_BUILD_DIR)","$(PATCH_DIR)","*b
 BUILD_BATCTL = $(MAKE) -C $(PKG_TOOL_BUILD_DIR) $(MAKE_BATCTL_ARGS)
 endif
 
+KPATCH ?= $(PATCH)
 define Build/DoPatch
 	@if [ -d "$(2)" ]; then \
 		if [ "$$$$(ls $(2) | grep -Ec $(3))" -gt 0 ]; then \
-			$(PATCH) "$(1)" "$(2)" "$(3)"; \
+			$(KPATCH) "$(1)" "$(2)" "$(3)"; \
 		fi; \
 	fi
 endef
