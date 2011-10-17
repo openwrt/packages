@@ -13,8 +13,6 @@ Acked-by: Junkeun Song <jun361@gmail.com>
  translation-table.c |    2 ++
  1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/translation-table.c b/translation-table.c
-index 2d2cfc1..d4a3917 100644
 --- a/translation-table.c
 +++ b/translation-table.c
 @@ -1727,6 +1727,8 @@ static void tt_local_reset_flags(struct bat_priv *bat_priv, uint16_t flags)
