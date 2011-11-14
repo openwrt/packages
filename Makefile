@@ -10,12 +10,12 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=quagga
 ifneq ($(CONFIG_QUAGGA_OLD),)
   PKG_VERSION:=0.98.6
-  PKG_RELEASE:=10
+  PKG_RELEASE:=11
   PKG_MD5SUM:=b0d4132039953a0214256873b7d23d68
   PATCH_DIR:=./patches-old
 else
   PKG_VERSION:=0.99.20
-  PKG_RELEASE:=1
+  PKG_RELEASE:=2
   PKG_MD5SUM:=64cc29394eb8a4e24649d19dac868f64
 endif
 
@@ -170,6 +170,7 @@ CONFIGURE_ARGS+= \
 	--enable-group=network \
 	--enable-pie=no \
 	--enable-multipath=8 \
+	--disable-ospfclient \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-libzebra,zebra) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-libospf,ospfd) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-bgpd,bgpd) \
