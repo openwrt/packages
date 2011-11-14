@@ -13,13 +13,14 @@ is_module_loaded() {
 
 start_mesh () {
 	local meshif="$1"
-	local interfaces aggregated_ogms bonding fragmentation gw_bandwidth gw_mode gw_sel_class log_level orig_interval vis_mode
+	local interfaces aggregated_ogms ap_isolation bonding fragmentation gw_bandwidth gw_mode gw_sel_class log_level orig_interval vis_mode
 
 	is_module_loaded
 	[ $? -ne 1 ] && return
 
 	config_get interfaces "$meshif" interfaces
 	config_get aggregated_ogms "$meshif" aggregated_ogms
+	config_get ap_isolation "$meshif" ap_isolation
 	config_get bonding "$meshif" bonding
 	config_get fragmentation "$meshif" fragmentation
 	config_get gw_bandwidth "$meshif" gw_bandwidth
@@ -55,6 +56,10 @@ start_mesh () {
 
 	if [ $aggregated_ogms ]; then
 		echo $aggregated_ogms > /sys/class/net/$meshif/mesh/aggregated_ogms
+	fi
+	
+	if [ $ap_isolation ]; then
+		echo $ap_isolation > /sys/class/net/$meshif/mesh/ap_isolation
 	fi
 	
 	if [ $bonding ]; then
