@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2010 OpenWrt.org
+# Copyright (C) 2008-2011 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=batmand
 PKG_REV:=1439
 PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_EXTRA_CFLAGS=-DDEBUG_MALLOC -DMEMORY_USAGE -DPROFILE_DATA -DREVISION_VERSION=\"\ rv$(PKG_REV)\"
 
 PKG_SOURCE_PROTO:=svn
@@ -132,11 +132,19 @@ define Package/batmand/install
 	$(INSTALL_DATA) ./files/etc/config/batmand $(1)/etc/config
 endef
 
+define Package/batmand/conffiles
+/etc/config/batmand
+endef
+
 define Package/vis/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/vis $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/etc/init.d/vis $(1)/etc/init.d
 	$(INSTALL_DATA) ./files/etc/config/vis $(1)/etc/config
+endef
+
+define Package/vis/conffiles
+/etc/config/vis
 endef
 
 $(eval $(call BuildPackage,batmand))
