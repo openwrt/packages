@@ -2,7 +2,10 @@
 # Copyright (C) 2008-2011 OpenWrt.org 
 
 START=65
-BIN=/usr/sbin/olsrd
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
 CONF=/var/etc/olsrd.conf
 PID=/var/run/olsrd.pid
 PID6=/var/run/olsrd.ipv6.pid
@@ -637,6 +640,10 @@ olsrd_setup_smartgw_rules() {
 	fi
 }
 
+error() {
+	echo "${initscript}:" "$@" 1>&2
+}
+
 start() {
 	SYSTEM_HOSTNAME=
 	SYSTEM_LAT=
@@ -684,16 +691,18 @@ start() {
 			sed -i "s/$f/$f.ipv6/g" /var/etc/olsrd.conf.ipv6
 		done
 
-		if ([ -s $PID6 ] && kill -0 $(cat $PID6) 2>&-); then
-			echo "Error: There already is a IPv6 instance of olsrd running ($(cat $PID6)), not starting."
+		SERVICE_PID_FILE="$PID6"
+		if service_check /usr/sbin/olsrd; then
+			error "there already is an IPv6 instance of olsrd running ($(cat $PID6)), not starting."
 		else
-			start-stop-daemon -q -b -m -p $PID6 -x $BIN -S -- -f /var/etc/olsrd.conf.ipv6 -nofork
+			service_start /usr/sbin/olsrd -f /var/etc/olsrd.conf.ipv6 -nofork
 		fi
 
-                if ([ -s $PID ] && kill -0 $(cat $PID) 2>&-); then
-				echo "Error: There already is a IPv4 instance of olsrd running ($(cat $PID)), not starting."
+		SERVICE_PID_FILE="$PID"
+		if service_check /usr/sbin/olsrd; then
+			error "there already is an IPv4 instance of olsrd running ($(cat $PID)), not starting."
 		else
-			start-stop-daemon -q -b -m -p $PID -x $BIN -S -- -f /var/etc/olsrd.conf.ipv4 -nofork
+			service_start /usr/sbin/olsrd -f /var/etc/olsrd.conf.ipv4 -nofork
 		fi
 
 		sleep 3
@@ -705,20 +714,21 @@ start() {
 			sed -i '/[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$OLSRD_CONFIG_FILE"
 		fi
 
-		### check for running instance
-		if ([ -s $PID ] && kill -0 $(cat $PID) 2>&-); then
-			echo "Error: There already is a instance of olsrd running ($(cat $PID)), exiting now."
+		SERVICE_PID_FILE="$PID"
+		if service_check /usr/sbin/olsrd; then
+			error "there already is an IPv4 instance of olsrd running ($(cat $PID)), not starting."
 			return 1
 		else
-			start-stop-daemon -q -b -m -p $PID -x $BIN -S -- -f "$OLSRD_CONFIG_FILE" -nofork
+			service_start /usr/sbin/olsrd -f "$OLSRD_CONFIG_FILE" -nofork
 		fi
 	fi
 	olsrd_setup_smartgw_rules
 }
 
 stop() {
-	start-stop-daemon -q -p $PID -x $BIN -K
-	start-stop-daemon -q -p $PID6 -x $BIN -K
-	test -s $PID && rm $PID
-	test -s $PID6 && rm $PID6
+	SERVICE_PID_FILE="$PID"
+	service_stop /usr/sbin/olsrd
+
+	SERVICE_PID_FILE="$PID6"
+	service_stop /usr/sbin/olsrd
 }
