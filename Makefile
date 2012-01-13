@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=bmxd
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git@github.com:axn/bmxd.git
+PKG_SOURCE_URL:=git://github.com/axn/bmxd.git
 PKG_REV:=9c1d12b554dccd2efde249f5e44a7d4de59ce1a8
 PKG_VERSION:=r2012011001
 #PKG_RELEASE:=1
