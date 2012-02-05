@@ -12,3 +12,6 @@ config 'mesh' 'bat0'
 	option 'orig_interval'
 	option 'vis_mode'
 
+# yet another batX instance
+# config 'mesh' 'bat5'
+#	option 'interfaces' 'second_mesh'

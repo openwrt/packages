@@ -10,10 +10,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2011.4.0
-BATCTL_VERSION:=2011.4.0
-PKG_MD5SUM:=3987d693bd26d8057506b542c3635910
-BATCTL_MD5SUM:=325b25dbb8261f7fa19c6e1d9bfba6e1
+PKG_VERSION:=2012.0.0
+BATCTL_VERSION:=2012.0.0
+PKG_MD5SUM:=f1de23457a47ca4369ee1f0e0b7fc405
+BATCTL_MD5SUM:=27991c2921e18657c7262e917d45106a
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -74,9 +74,10 @@ define Download/batctl
 endef
 $(eval $(call Download,batctl))
 
-EXTRACT_BATCTL = tar xzf "$(DL_DIR)/batctl-$(BATCTL_VERSION).tar.gz" -C "$(BUILD_DIR)/$(PKG_NAME)"
-PATCH_BATCTL = $(call Build/DoPatch,"$(PKG_BATCTL_BUILD_DIR)","$(PATCH_DIR)","*batctl*")
-BUILD_BATCTL = $(MAKE) -C $(PKG_BATCTL_BUILD_DIR) $(MAKE_BATCTL_ARGS)
+BATCTL_EXTRACT = tar xzf "$(DL_DIR)/batctl-$(BATCTL_VERSION).tar.gz" -C "$(BUILD_DIR)/$(PKG_NAME)"
+BATCTL_PATCH = $(call Build/DoPatch,"$(PKG_BATCTL_BUILD_DIR)","$(PATCH_DIR)","*batctl*")
+BATCTL_BUILD = $(MAKE) -C $(PKG_BATCTL_BUILD_DIR) $(MAKE_BATCTL_ARGS)
+BATCTL_INSTALL = $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/sbin/batctl $(1)/usr/sbin/
 endif
 
 KPATCH ?= $(PATCH)
@@ -90,36 +91,27 @@ endef
 
 define Build/Patch
 	$(call Build/DoPatch,"$(PKG_BUILD_DIR)","$(PATCH_DIR)","*batman*")
-	$(EXTRACT_BATCTL)
-	$(PATCH_BATCTL)
+	$(BATCTL_EXTRACT)
+	$(BATCTL_PATCH)
 endef
 
 define Build/Compile
 	cp $(PKG_BUILD_DIR)/Makefile.kbuild $(PKG_BUILD_DIR)/Makefile
 	$(MAKE) -C "$(LINUX_DIR)" $(MAKE_BATMAN_ADV_ARGS)
-	$(BUILD_BATCTL)
+	$(BATCTL_BUILD)
 endef
 
 define Build/Clean
         rm -rf $(BUILD_DIR)/$(PKG_NAME)/
 endef
 
-ifneq ($(DEVELOPER)$(CONFIG_KMOD_BATMAN_ADV_BATCTL),)
 define KernelPackage/batman-adv/install
-	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d $(1)/lib/batman-adv
-	$(INSTALL_BIN) ./files/etc/init.d/batman-adv $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/lib/batman-adv/config.sh $(1)/lib/batman-adv
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/hotplug.d/net $(1)/lib/batman-adv $(1)/usr/sbin
 	$(INSTALL_DATA) ./files/etc/config/batman-adv $(1)/etc/config
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/sbin/batctl $(1)/usr/sbin/
+	$(INSTALL_DATA) ./files/lib/batman-adv/config.sh $(1)/lib/batman-adv
+	$(INSTALL_BIN) ./files/etc/hotplug.d/net/99-batman-adv $(1)/etc/hotplug.d/net
+	$(INSTALL_BIN) ./files/usr/sbin/batman-adv $(1)/usr/sbin
+	$(BATCTL_INSTALL)
 endef
-else
-define KernelPackage/batman-adv/install
-	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d $(1)/lib/batman-adv
-	$(INSTALL_BIN) ./files/etc/init.d/batman-adv $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/lib/batman-adv/config.sh $(1)/lib/batman-adv
-	$(INSTALL_DATA) ./files/etc/config/batman-adv $(1)/etc/config
-endef
-endif
 
 $(eval $(call KernelPackage,batman-adv))

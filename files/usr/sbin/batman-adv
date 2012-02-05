@@ -1,0 +1,46 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2011 OpenWrt.org
+
+. /lib/batman-adv/config.sh
+
+start_mesh() {
+	local mesh="$1"
+	local ifaces=$(awk -F':' '{if (NR > 2) print $1}' /proc/net/dev)
+
+	for iface in $ifaces; do
+		[ -d /sys/class/net/$iface/batman_adv/ ] && bat_add_interface "$mesh" "$iface"
+	done
+
+	bat_config "$mesh"
+}
+
+stop_mesh() {
+	local mesh="$1"
+	local ifaces=$(awk -F':' '{if (NR > 2) print $1}' /proc/net/dev)
+
+	for iface in $ifaces; do
+		[ -d /sys/class/net/$iface/batman_adv/ ] && bat_del_interface "$mesh" "$iface"
+	done
+}
+
+# can also be used with "batman-adv start bat0"
+start() {
+	config_load batman-adv
+
+	if [ -n "$1" ]; then
+		start_mesh $1
+	else
+		config_foreach start_mesh mesh
+	fi
+}
+
+# can also be used with "batman-adv stop bat0"
+stop () {
+	config_load batman-adv
+
+	if [ -n "$1" ]; then
+		stop_mesh $1
+	else
+		config_foreach stop_mesh mesh
+	fi
+}

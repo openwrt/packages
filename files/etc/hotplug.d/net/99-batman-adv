@@ -1,0 +1,15 @@
+#!/bin/sh
+
+. /lib/batman-adv/config.sh
+
+config_load batman-adv
+
+case "$ACTION" in
+	add)
+		[ -d /sys/class/net/$INTERFACE/mesh/ ] && config_bat "$INTERFACE"
+		[ -d /sys/class/net/$INTERFACE/batman_adv/ ] && config_foreach bat_add_interface mesh "$INTERFACE"
+		;;
+	remove)
+		[ -d /sys/class/net/$INTERFACE/batman_adv/ ] && config_foreach bat_del_interface mesh "$INTERFACE"
+		;;
+esac
