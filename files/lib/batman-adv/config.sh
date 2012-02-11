@@ -14,6 +14,7 @@ bat_config(){
 	config_get orig_interval "$mesh" orig_interval
 	config_get hop_penalty "$mesh" hop_penalty
 	config_get vis_mode "$mesh" vis_mode
+	config_get ap_isolation "$mesh" ap_isolation
 
 	[ -n "$orig_interval" ] && echo $orig_interval > /sys/class/net/$mesh/mesh/orig_interval
 	[ -n "$hop_penalty" ] && echo $hop_penalty > /sys/class/net/$mesh/mesh/hop_penalty
@@ -25,6 +26,8 @@ bat_config(){
 	[ -n "$gw_mode" ] && echo $gw_mode > /sys/class/net/$mesh/mesh/gw_mode
 	[ -n "$gw_sel_class" ] && echo $gw_sel_class > /sys/class/net/$mesh/mesh/gw_sel_class
 	[ -n "$vis_mode" ] && echo $vis_mode > /sys/class/net/$mesh/mesh/vis_mode
+	[ -n "$ap_isolation" ] && echo $ap_isolation > /sys/class/net/$mesh/mesh/ap_isolation
+	
 }
 
 bat_add_interface(){
