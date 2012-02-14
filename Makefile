@@ -47,7 +47,7 @@ define Build/Compile
 		CXXFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CXXFLAGS) -fno-builtin -fno-rtti -nostdinc++ \
 			-I$(STAGING_DIR)/usr/include/uClibc++ -I$(LINUX_DIR)/include" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		LIBS="-nodefaultlibs -luClibc++ -lconfuse" \
+		LIBS="-nodefaultlibs -lc -luClibc++ -lconfuse" \
 		ndppd
 endef
 
