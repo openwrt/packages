@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2007-2011 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -8,12 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ndppd
-PKG_VERSION:=0.2.1
+PKG_VERSION:=0.2.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+
+# Latest release
 PKG_SOURCE_URL:=http://www.priv.nu/projects/ndppd/files/
-PKG_MD5SUM:=9b65a8cccfce8689f0c1c410c20b4790
+PKG_MD5SUM:=d90c4b65777a62274c1837dba341e5a8
+
+# Development snapshot
+#PKG_SOURCE_URL=git://github.com/Tuhox/ndppd.git
+#PKG_SOURCE_VERSION=master
+#PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -23,7 +30,7 @@ define Package/ndppd
   TITLE:=NDP Proxy Daemon
   URL:=http://www.priv.nu/projects/ndppd/
   MAINTAINER:=Gabriel Kerneis <kerneis@pps.jussieu.fr>
-  DEPENDS:=+kmod-ipv6 +confuse +uclibcxx
+  DEPENDS:=+kmod-ipv6 +uclibcxx
 endef
 
 define Package/ndppd/description
@@ -44,10 +51,11 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CXX="$(TARGET_CXX)" \
-		CXXFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CXXFLAGS) -fno-builtin -fno-rtti -nostdinc++ \
-			-I$(STAGING_DIR)/usr/include/uClibc++ -I$(LINUX_DIR)/include" \
+		CXXFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CXXFLAGS) $(TARGET_CFLAGS) \
+		-std=c++0x -fno-builtin -fno-rtti -nostdinc++ \
+		-I$(STAGING_DIR)/usr/include/uClibc++" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		LIBS="-nodefaultlibs -lc -luClibc++ -lconfuse $(LIBGCC_S)" \
+		LIBS="-nodefaultlibs -lc -luClibc++ $(LIBGCC_S)" \
 		ndppd
 endef
 
