@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2006-2012 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,23 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
-ifneq ($(CONFIG_QUAGGA_OLD),)
-  PKG_VERSION:=0.98.6
-  PKG_RELEASE:=11
-  PKG_MD5SUM:=b0d4132039953a0214256873b7d23d68
-  PATCH_DIR:=./patches-old
-else
-  PKG_VERSION:=0.99.20
-  PKG_RELEASE:=2
-  PKG_MD5SUM:=64cc29394eb8a4e24649d19dac868f64
-endif
+PKG_VERSION:=0.99.20
+PKG_RELEASE:=2
+PKG_MD5SUM:=64cc29394eb8a4e24649d19dac868f64
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.quagga.net/download/ \
                 http://www.de.quagga.net/download/ \
                 http://www.uk.quagga.net/download/
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_QUAGGA_OLD \
 	CONFIG_IPV6 \
 	CONFIG_PACKAGE_quagga-libzebra \
 	CONFIG_PACKAGE_quagga-libospf \
@@ -52,7 +44,7 @@ endef
 
 define Package/quagga
   $(call Package/quagga/Default)
-  DEPENDS:=+!QUAGGA_OLD:librt
+  DEPENDS:=+librt
   MENU:=1
 endef
 
@@ -60,15 +52,6 @@ define Package/quagga/description
   A routing software package that provides TCP/IP based routing services
   with routing protocols support such as RIPv1, RIPv2, RIPng, OSPFv2,
   OSPFv3, BGP-4, and BGP-4+
-endef
-
-define Package/quagga/config
-config QUAGGA_OLD
-	depends on (PACKAGE_quagga && BROKEN)
-	default n
-	bool "Use the old release version 0.98.6"
-	help
-	  This option allows you to select the old version of Quagga to be built.
 endef
 
 define Package/quagga-libzebra
