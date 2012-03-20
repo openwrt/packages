@@ -5,6 +5,7 @@ BIRD=/usr/sbin/bird4
 $BIRD -p || return 1
 
 . /lib/functions.sh
+. /lib/functions/service.sh
 
 SERVICE_DAEMONIZE=1
 SERVICE_WRITE_PID=1
