@@ -1,0 +1,20 @@
+From ce0af6ff5a4f200035ed4134da72a67f49a21dd6 Mon Sep 17 00:00:00 2001
+From: "Oleg A. Arkhangelsky" <sysoleg@yandex.ru>
+Date: Sat, 3 Dec 2011 15:18:19 +0400
+Subject: [PATCH] bgpd: fix memory leak for extra attributes
+
+this fixes commit b881c7074bb698aeb1b099175b325734fc6e44d2
+---
+ bgpd/bgp_attr.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+--- a/bgpd/bgp_attr.c
++++ b/bgpd/bgp_attr.c
+@@ -675,6 +675,7 @@ bgp_attr_unintern (struct attr **attr)
+     }
+ 
+   bgp_attr_unintern_sub (&tmp);
++  bgp_attr_extra_free (&tmp);
+ }
+ 
+ void

@@ -1,0 +1,51 @@
+From 6a2e0f36b103386e57dbe3a6ee4716e809111198 Mon Sep 17 00:00:00 2001
+From: Stephen Hemminger <shemminger@vyatta.com>
+Date: Tue, 6 Dec 2011 14:04:12 +0400
+Subject: [PATCH] lib: call filter delete hook before freeing access list
+
+The delete_hook was being run after calling access list delete function.
+This would cause ospf to dereference a NULL, in ospf_filter_update
+because 'access->name' was already freed.
+
+See also:
+    https://bugzilla.vyatta.com/show_bug.cgi?id=7654
+---
+ lib/filter.c |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
+
+--- a/lib/filter.c
++++ b/lib/filter.c
+@@ -1337,13 +1337,13 @@ DEFUN (no_access_list_all,
+ 
+   master = access->master;
+ 
+-  /* Delete all filter from access-list. */
+-  access_list_delete (access);
+-
+   /* Run hook function. */
+   if (master->delete_hook)
+     (*master->delete_hook) (access);
+  
++  /* Delete all filter from access-list. */
++  access_list_delete (access);
++
+   return CMD_SUCCESS;
+ }
+ 
+@@ -1508,13 +1508,13 @@ DEFUN (no_ipv6_access_list_all,
+ 
+   master = access->master;
+ 
+-  /* Delete all filter from access-list. */
+-  access_list_delete (access);
+-
+   /* Run hook function. */
+   if (master->delete_hook)
+     (*master->delete_hook) (access);
+ 
++  /* Delete all filter from access-list. */
++  access_list_delete (access);
++
+   return CMD_SUCCESS;
+ }
+ 
