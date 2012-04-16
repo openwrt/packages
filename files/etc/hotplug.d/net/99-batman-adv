@@ -2,6 +2,7 @@
 
 . /lib/batman-adv/config.sh
 
+bat_load_module
 config_load batman-adv
 
 case "$ACTION" in

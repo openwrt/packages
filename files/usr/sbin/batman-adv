@@ -26,6 +26,7 @@ stop_mesh() {
 
 # can also be used with "batman-adv start bat0"
 start() {
+	bat_load_module
 	config_load batman-adv
 
 	if [ -n "$1" ]; then

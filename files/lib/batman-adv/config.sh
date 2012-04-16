@@ -1,6 +1,15 @@
 #!/bin/sh
 
-bat_config(){
+bat_load_module()
+{
+	[ -d "/sys/module/batman_adv/" ] && return
+	
+	. /etc/functions.sh
+	load_modules /etc/modules.d/*-lib-crc16 /etc/modules.d/*-batman-adv	
+}
+
+bat_config()
+{
 	local mesh="$1"
 	local aggregated_ogms bonding fragmentation gw_bandwidth gw_mode gw_sel_class log_level orig_interval hop_penalty vis_mode
 
@@ -30,7 +39,8 @@ bat_config(){
 	
 }
 
-bat_add_interface(){
+bat_add_interface()
+{
 	local mesh="$1"
 	local interface="$2"
 	local interfaces
@@ -47,7 +57,8 @@ bat_add_interface(){
 	done
 }
 
-bat_del_interface(){
+bat_del_interface()
+{
 	local mesh="$1"
 	local interface="$2"
 	local interfaces
