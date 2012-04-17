@@ -3,9 +3,9 @@
 bat_load_module()
 {
 	[ -d "/sys/module/batman_adv/" ] && return
-	
+
 	. /etc/functions.sh
-	load_modules /etc/modules.d/*-lib-crc16 /etc/modules.d/*-batman-adv	
+	load_modules /etc/modules.d/*-crc16 /etc/modules.d/*-batman-adv*
 }
 
 bat_config()
@@ -36,7 +36,6 @@ bat_config()
 	[ -n "$gw_sel_class" ] && echo $gw_sel_class > /sys/class/net/$mesh/mesh/gw_sel_class
 	[ -n "$vis_mode" ] && echo $vis_mode > /sys/class/net/$mesh/mesh/vis_mode
 	[ -n "$ap_isolation" ] && echo $ap_isolation > /sys/class/net/$mesh/mesh/ap_isolation
-	
 }
 
 bat_add_interface()
