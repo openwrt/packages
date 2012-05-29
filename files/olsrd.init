@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2008-2011 OpenWrt.org 
+# Copyright (C) 2008-2012 OpenWrt.org
 
 START=65
 
@@ -26,27 +26,9 @@ validate_varname() {
 	return 0
 }
 
-validate_ifname() {
-	local ifname="$1"
-	[ -z "$ifname" -o "$ifname" != "${ifname%%[!A-Za-z0-9.:_-]*}" ] && return 1
-	return 0
-}
-
 validate_olsrd_option() {
 	local str="$1"
 	[ -z "$str" -o "$str" != "${str%%[! 	0-9A-Za-z./|:_-]*}" ] && return 1
-	return 0
-}
-
-get_ifname() {
-	IFNAME=
-	local interface="$1"
-	validate_varname "$interface" || return 1
-	local ifname
-
-	config_get ifname "$interface" ifname
-	validate_ifname "$ifname" || return 1
-	IFNAME="$ifname"
 	return 0
 }
 
@@ -180,8 +162,7 @@ olsrd_write_plparam() {
 	fi
 	if [ "$option" = 'NonOlsrIf' ]; then
 		if validate_varname "$value"; then
-			if get_ifname "$value"; then
-				ifname="$IFNAME"
+			if network_get_device ifname "$value"; then
 				echo "Info: mdns Interface '$value' ifname '$ifname' found" 1>&2
 			else
 				echo "Warning: mdns Interface '$value' not found, skipped" 1>&2
@@ -495,7 +476,7 @@ olsrd_write_interface() {
 	config_get interfaces "$cfg" interface
 	for interface in $interfaces; do
 		if validate_varname "$interface"; then
-			if get_ifname "$interface"; then
+			if network_get_device IFNAME "$interface"; then
 				ifnames="$ifnames \"$IFNAME\""
 				ifsglobal="$ifsglobal $IFNAME"
 			else
@@ -659,8 +640,8 @@ start() {
 		olsrd_update_schema "list" "$@"
 	}
 
-	include /lib/network
-	scan_interfaces
+	. /lib/functions/network.sh
+
 	config_load olsrd
 	reset_cb
 
