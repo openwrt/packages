@@ -1,0 +1,18 @@
+--- a/src/http.c
++++ b/src/http.c
+@@ -455,10 +455,15 @@ http_nodogsplash_decode_authtarget(reque
+   var = httpdGetVariableByName(r,"tok");
+   if(var && var->value) {
+     token = var->value;
++  } else {
++    token = "";
+   }
++
+   var = httpdGetVariableByName(r,"redir");
+   if(var && var->value) {
+     redir = var->value;
++  } else {
++    redir = "";
+   }
+ 
+   authtarget = http_nodogsplash_make_authtarget(token,redir);
