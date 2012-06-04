@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
 PKG_VERSION:=0.99.21
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MD5SUM:=99840adbe57047c90dfba6b6ed9aec7f
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -25,6 +25,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_quagga-ospf6d \
 	CONFIG_PACKAGE_quagga-ripd \
 	CONFIG_PACKAGE_quagga-ripngd \
+	CONFIG_PACKAGE_quagga-babeld \
 	CONFIG_PACKAGE_quagga-vtysh
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -99,6 +100,12 @@ define Package/quagga-ripngd
   TITLE:=RIPNG routing engine
 endef
 
+define Package/quagga-babeld
+  $(call Package/quagga/Default)
+  DEPENDS+=+quagga-libzebra
+  TITLE:=Babel routing engine
+endef
+
 define Package/quagga-vtysh
   $(call Package/quagga/Default)
   DEPENDS+=quagga-libzebra +libreadline +libncurses
@@ -133,6 +140,10 @@ define Package/quagga-ripngd/conffiles
 /etc/quagga/ripngd.conf
 endef
 
+define Package/quagga-babeld/conffiles
+/etc/quagga/babeld.conf
+endef
+
 ifneq ($(SDK),)
 CONFIG_PACKAGE_quagga-libzebra:=m
 CONFIG_PACKAGE_quagga-libospf:=m
@@ -141,6 +152,7 @@ CONFIG_PACKAGE_quagga-isisd:=m
 CONFIG_PACKAGE_quagga-ospf6d:=m
 CONFIG_PACKAGE_quagga-ripd:=m
 CONFIG_PACKAGE_quagga-ripngd:=m
+CONFIG_PACKAGE_quagga-babeld:=m
 CONFIG_PACKAGE_quagga-vtysh:=m
 endif
 
@@ -162,6 +174,7 @@ CONFIGURE_ARGS+= \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ospf6d,ospf6d) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ripd,ripd) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ripngd,ripngd) \
+	$(call autoconf_bool,CONFIG_PACKAGE_quagga-babeld,babeld) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-vtysh,vtysh) \
 
 MAKE_FLAGS += \
@@ -235,6 +248,14 @@ define Package/quagga-ripngd/install
 	$(INSTALL_CONF) ./files/quagga.conf $(1)/etc/quagga/ripngd.conf
 endef
 
+define Package/quagga-babeld/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/babeld $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/quagga
+	chmod 0750 $(1)/etc/quagga
+	$(INSTALL_CONF) ./files/quagga.conf $(1)/etc/quagga/babeld.conf
+endef
+
 define Package/quagga-vtysh/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vtysh $(1)/usr/bin/
@@ -259,4 +280,5 @@ $(eval $(call BuildPackage,quagga-ospfd))
 $(eval $(call BuildPackage,quagga-ospf6d))
 $(eval $(call BuildPackage,quagga-ripd))
 $(eval $(call BuildPackage,quagga-ripngd))
+$(eval $(call BuildPackage,quagga-babeld))
 $(eval $(call BuildPackage,quagga-vtysh))
