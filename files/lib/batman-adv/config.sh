@@ -4,7 +4,7 @@ bat_load_module()
 {
 	[ -d "/sys/module/batman_adv/" ] && return
 
-	. /etc/functions.sh
+	. /lib/functions.sh
 	load_modules /etc/modules.d/*-crc16 /etc/modules.d/*-batman-adv*
 }
 
