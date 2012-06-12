@@ -28,7 +28,7 @@ define KernelPackage/batman-adv
   URL:=http://www.open-mesh.org/
   MAINTAINER:=Marek Lindner <lindner_marek@yahoo.de>
   SUBMENU:=Network Support
-  DEPENDS:=+kmod-lib-crc16
+  DEPENDS:=+kmod-lib-crc16 +libc
   TITLE:=B.A.T.M.A.N. Adv
   FILES:=$(PKG_BUILD_DIR)/batman-adv.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,50,batman-adv)
