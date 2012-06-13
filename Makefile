@@ -18,6 +18,8 @@ PKG_SOURCE_URL:=http://www.quagga.net/download/ \
                 http://www.uk.quagga.net/download/
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_IPV6 \
+	CONFIG_PACKAGE_quagga-watchquagga \
+	CONFIG_PACKAGE_quagga-zebra \
 	CONFIG_PACKAGE_quagga-libzebra \
 	CONFIG_PACKAGE_quagga-libospf \
 	CONFIG_PACKAGE_quagga-bgpd \
@@ -45,7 +47,7 @@ endef
 
 define Package/quagga
   $(call Package/quagga/Default)
-  DEPENDS:=+librt +quagga-libzebra
+  DEPENDS:=+librt
   MENU:=1
 endef
 
@@ -53,6 +55,20 @@ define Package/quagga/description
   A routing software package that provides TCP/IP based routing services
   with routing protocols support such as RIPv1, RIPv2, RIPng, OSPFv2,
   OSPFv3, BGP-4, and BGP-4+
+endef
+
+define Package/quagga-watchquagga
+  $(call Package/quagga/Default)
+  TITLE:=Quagga watchdog
+  DEPENDS+=+quagga-libzebra
+  DEFAULT:=y if PACKAGE_quagga
+endef
+
+define Package/quagga-zebra
+  $(call Package/quagga/Default)
+  TITLE:=Zebra daemon
+  DEPENDS+=+quagga-libzebra
+  DEFAULT:=y if PACKAGE_quagga
 endef
 
 define Package/quagga-libzebra
@@ -73,6 +89,7 @@ endef
 
 define Package/quagga-isisd
   $(call Package/quagga/Default)
+  DEPENDS+=+quagga-libzebra
   TITLE:=IS-IS routing engine
 endef
 
@@ -108,11 +125,11 @@ endef
 
 define Package/quagga-vtysh
   $(call Package/quagga/Default)
-  DEPENDS+=quagga-libzebra +libreadline +libncurses
+  DEPENDS+=+quagga-libzebra +libreadline +libncurses
   TITLE:=integrated shell for Quagga routing software
 endef
 
-define Package/quagga/conffiles
+define Package/quagga-zebra/conffiles
 /etc/quagga/zebra.conf
 endef
 
@@ -147,6 +164,8 @@ endef
 ifneq ($(SDK),)
 CONFIG_PACKAGE_quagga-libzebra:=m
 CONFIG_PACKAGE_quagga-libospf:=m
+CONFIG_PACKAGE_quagga-watchquagga:=m
+CONFIG_PACKAGE_quagga-zebra:=m
 CONFIG_PACKAGE_quagga-bgpd:=m
 CONFIG_PACKAGE_quagga-isisd:=m
 CONFIG_PACKAGE_quagga-ospf6d:=m
@@ -180,24 +199,24 @@ CONFIGURE_ARGS+= \
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS) -std=gnu99"
 
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); rm -rf config.{cache,status}; \
-		autoconf \
-	);
-	$(call Build/Configure/Default)
-endef
-
 define Package/quagga/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/zebra $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/quagga $(1)/usr/sbin/quagga.init
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/quagga.init $(1)/etc/init.d/quagga
+endef
+
+define Package/quagga-watchquagga/install
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/watchquagga $(1)/usr/sbin/
-	# avoid /etc being set to 0750
+endef
+
+define Package/quagga-zebra/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/zebra $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/quagga
 	chmod 0750 $(1)/etc/quagga
 	$(INSTALL_CONF) ./files/quagga.conf $(1)/etc/quagga/zebra.conf
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/quagga $(1)/usr/sbin/quagga.init
-	$(INSTALL_BIN) ./files/quagga.init $(1)/etc/init.d/quagga
 endef
 
 define Package/quagga-bgpd/install
@@ -274,6 +293,8 @@ endef
 $(eval $(call BuildPackage,quagga))
 $(eval $(call BuildPackage,quagga-libzebra))
 $(eval $(call BuildPackage,quagga-libospf))
+$(eval $(call BuildPackage,quagga-watchquagga))
+$(eval $(call BuildPackage,quagga-zebra))
 $(eval $(call BuildPackage,quagga-bgpd))
 $(eval $(call BuildPackage,quagga-isisd))
 $(eval $(call BuildPackage,quagga-ospfd))
