@@ -11,7 +11,7 @@ bat_load_module()
 bat_config()
 {
 	local mesh="$1"
-	local aggregated_ogms bonding fragmentation gw_bandwidth gw_mode gw_sel_class log_level orig_interval hop_penalty vis_mode
+	local aggregated_ogms bonding fragmentation gw_bandwidth gw_mode gw_sel_class log_level orig_interval hop_penalty vis_mode bridge_loop_avoidance
 
 	config_get aggregated_ogms "$mesh" aggregated_ogms
 	config_get bonding "$mesh" bonding
@@ -24,6 +24,9 @@ bat_config()
 	config_get hop_penalty "$mesh" hop_penalty
 	config_get vis_mode "$mesh" vis_mode
 	config_get ap_isolation "$mesh" ap_isolation
+	config_get bridge_loop_avoidance "$mesh" bridge_loop_avoidance
+	
+	[ ! -f "/sys/class/net/$mesh/mesh/orig_interval" ] && echo "batman-adv mesh $mesh does not exist - check your interface configuration" && return 1
 
 	[ -n "$orig_interval" ] && echo $orig_interval > /sys/class/net/$mesh/mesh/orig_interval
 	[ -n "$hop_penalty" ] && echo $hop_penalty > /sys/class/net/$mesh/mesh/hop_penalty
@@ -36,6 +39,7 @@ bat_config()
 	[ -n "$gw_sel_class" ] && echo $gw_sel_class > /sys/class/net/$mesh/mesh/gw_sel_class
 	[ -n "$vis_mode" ] && echo $vis_mode > /sys/class/net/$mesh/mesh/vis_mode
 	[ -n "$ap_isolation" ] && echo $ap_isolation > /sys/class/net/$mesh/mesh/ap_isolation
+	[ -n "$bridge_loop_avoidance" ] && echo $bridge_loop_avoidance > /sys/class/net/$mesh/mesh/bridge_loop_avoidance
 }
 
 bat_add_interface()
