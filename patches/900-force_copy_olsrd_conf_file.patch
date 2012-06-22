@@ -1,6 +1,6 @@
---- a/Makefile	2010-06-14 11:27:58.000000000 +0200
-+++ b/Makefile	2010-06-14 11:28:44.000000000 +0200
-@@ -117,7 +117,7 @@
+--- a/Makefile
++++ b/Makefile
+@@ -128,7 +128,7 @@ install_olsrd:	install_bin
  		@echo can be found at files/olsrd.conf.default.lq
  		@echo ==========================================================
  		mkdir -p $(ETCDIR)

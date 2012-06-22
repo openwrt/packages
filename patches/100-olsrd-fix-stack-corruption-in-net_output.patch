@@ -1,0 +1,52 @@
+From f4d250ad4fad5fcfe5b5feaac3f3e121adef3fba Mon Sep 17 00:00:00 2001
+From: Jo-Philipp Wich <jow@openwrt.org>
+Date: Fri, 22 Jun 2012 03:17:59 +0200
+Subject: [PATCH] olsrd: fix stack corruption in net_output()
+
+The net_output() function indirectly uses the stack variables dst and dst6
+outside of the scope they're declared in, this might leads to olsr_sendto()
+being called with a corrupted destination sockaddr_in.
+
+This failure condition can be observed in the log, olsrd will continuosly
+print "sendto(v4): Invalid Argument" or a similar message. On ARM it has been
+reported to result in "Unsupported Address Family".
+
+This bug became apparant on a custon OpenWrt x86_64 uClibc target using the
+Linaro GCC 4.7-2012.04 compiler, it has been reported for an unspecified ARM
+target as well.
+
+The offending code seems to be unchanged since 2008 and it does not cause
+issues on 32bit systems and/or with older (Linaro) GCC versions, but the
+compiler used in our tests seems to perform more aggressive optimizations
+leading to a stack corruption.
+---
+ src/net_olsr.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/net_olsr.c
++++ b/src/net_olsr.c
+@@ -336,6 +336,8 @@ net_output(struct interface *ifp)
+ {
+   struct sockaddr_in *sin = NULL;
+   struct sockaddr_in6 *sin6 = NULL;
++  struct sockaddr_in dst;
++  struct sockaddr_in6 dst6;
+   struct ptf *tmp_ptf_list;
+   union olsr_packet *outmsg;
+   int retval;
+@@ -354,7 +356,6 @@ net_output(struct interface *ifp)
+   outmsg->v4.olsr_packlen = htons(ifp->netbuf.pending);
+ 
+   if (olsr_cnf->ip_version == AF_INET) {
+-    struct sockaddr_in dst;
+     /* IP version 4 */
+     sin = (struct sockaddr_in *)&ifp->int_broadaddr;
+ 
+@@ -365,7 +366,6 @@ net_output(struct interface *ifp)
+     if (sin->sin_port == 0)
+       sin->sin_port = htons(olsr_cnf->olsrport);
+   } else {
+-    struct sockaddr_in6 dst6;
+     /* IP version 6 */
+     sin6 = (struct sockaddr_in6 *)&ifp->int6_multaddr;
+     /* Copy sin */
