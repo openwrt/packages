@@ -129,9 +129,9 @@
    [ZEBRA_ROUTE_BABEL]   = {ZEBRA_ROUTE_BABEL,    95},
    /* no entry/default: 150 */
  };
-@@ -381,6 +384,18 @@ nexthop_active_ipv4 (struct rib *rib, st
- 	      
- 	      return 1;
+@@ -403,6 +406,18 @@ nexthop_active_ipv4 (struct rib *rib, st
+ 		  }
+ 	      return 0;
  	    }
 +	  else if (match->type == ZEBRA_ROUTE_OLSR)
 +	    {
@@ -145,12 +145,12 @@
 +		  }
 +	      return 0;
 +	    }
- 	  else if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_INTERNAL))
+ 	  else
  	    {
- 	      for (newhop = match->nexthop; newhop; newhop = newhop->next)
-@@ -483,6 +498,18 @@ nexthop_active_ipv6 (struct rib *rib, st
- 	      
- 	      return 1;
+ 	      return 0;
+@@ -507,6 +522,18 @@ nexthop_active_ipv6 (struct rib *rib, st
+ 		  }
+ 	      return 0;
  	    }
 +	  else if (match->type == ZEBRA_ROUTE_OLSR)
 +	    {
@@ -164,9 +164,9 @@
 +		  }
 +	      return 0;
 +	    }
- 	  else if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_INTERNAL))
+ 	  else
  	    {
- 	      for (newhop = match->nexthop; newhop; newhop = newhop->next)
+ 	      return 0;
 @@ -1236,6 +1263,8 @@ static const u_char meta_queue_map[ZEBRA
    [ZEBRA_ROUTE_ISIS]    = 2,
    [ZEBRA_ROUTE_BGP]     = 3,
