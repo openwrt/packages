@@ -33,7 +33,7 @@ DAEMONS="zebra ripd ripngd ospfd ospf6d bgpd"
 DAEMON_FLAGS=-d
 WATCHQUAGGA_FLAGS="-d -z -T 60 -R"
 WATCHQUAGGA_CMD="$0 watchrestart"
-if [ ${COMMAND} != "watchrestart" ]
+if [ ${COMMAND} != "watchrestart" -a -x "${BINDIR}/watchquagga" ]
 then
 	DAEMONS="${DAEMONS} watchquagga"
 fi
