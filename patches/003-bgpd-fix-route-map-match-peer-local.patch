@@ -1,0 +1,20 @@
+--- a/bgpd/bgp_routemap.c
++++ b/bgpd/bgp_routemap.c
+@@ -172,7 +172,7 @@ route_match_peer_compile (const char *ar
+ 
+   su = XMALLOC (MTYPE_ROUTE_MAP_COMPILED, sizeof (union sockunion));
+ 
+-  ret = str2sockunion ( (arg)? arg : "0.0.0.0", su);
++  ret = str2sockunion (strcmp(arg, "local") ? arg : "0.0.0.0", su);
+   if (ret < 0) {
+     XFREE (MTYPE_ROUTE_MAP_COMPILED, su);
+     return NULL;
+@@ -2430,7 +2430,7 @@ DEFUN (match_peer_local,
+         "Match peer address\n"
+         "Static or Redistributed routes\n")
+ {
+-  return bgp_route_match_add (vty, vty->index, "peer", NULL);
++  return bgp_route_match_add (vty, vty->index, "peer", "local");
+ }
+ 
+ DEFUN (no_match_peer,
