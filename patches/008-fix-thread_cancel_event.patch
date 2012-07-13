@@ -1,0 +1,29 @@
+Index: quagga-0.99.21/lib/thread.c
+===================================================================
+--- quagga-0.99.21.orig/lib/thread.c
++++ quagga-0.99.21/lib/thread.c
+@@ -916,6 +916,24 @@ thread_cancel_event (struct thread_maste
+           thread_add_unuse (m, t);
+         }
+     }
++
++  /* thread can be on the ready list too */
++  thread = m->ready.head;
++  while (thread)
++    {
++      struct thread *t;
++
++      t = thread;
++      thread = t->next;
++
++      if (t->arg == arg)
++        {
++          ret++;
++          thread_list_delete (&m->ready, t);
++          t->type = THREAD_UNUSED;
++          thread_add_unuse (m, t);
++        }
++    }
+   return ret;
+ }
+ 
