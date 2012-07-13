@@ -1,0 +1,58 @@
+--- a/bgpd/bgp_debug.c
++++ b/bgpd/bgp_debug.c
+@@ -194,11 +194,11 @@ bgp_dump_attr (struct peer *peer, struct
+ #endif /* HAVE_IPV6 */
+ 
+   if (CHECK_FLAG (attr->flag, ATTR_FLAG_BIT (BGP_ATTR_LOCAL_PREF)))
+-    snprintf (buf + strlen (buf), size - strlen (buf), ", localpref %d",
++    snprintf (buf + strlen (buf), size - strlen (buf), ", localpref %u",
+ 	      attr->local_pref);
+ 
+   if (CHECK_FLAG (attr->flag, ATTR_FLAG_BIT (BGP_ATTR_MULTI_EXIT_DISC))) 
+-    snprintf (buf + strlen (buf), size - strlen (buf), ", metric %d",
++    snprintf (buf + strlen (buf), size - strlen (buf), ", metric %u",
+ 	      attr->med);
+ 
+   if (CHECK_FLAG (attr->flag, ATTR_FLAG_BIT (BGP_ATTR_COMMUNITIES))) 
+--- a/bgpd/bgp_route.c
++++ b/bgpd/bgp_route.c
+@@ -5954,7 +5954,7 @@ route_vty_out_detail (struct vty *vty, s
+ 	  if (! CHECK_FLAG (binfo->flags, BGP_INFO_VALID))
+ 	    vty_out (vty, " (inaccessible)"); 
+ 	  else if (binfo->extra && binfo->extra->igpmetric)
+-	    vty_out (vty, " (metric %d)", binfo->extra->igpmetric);
++	    vty_out (vty, " (metric %u)", binfo->extra->igpmetric);
+ 	  vty_out (vty, " from %s", sockunion2str (&binfo->peer->su, buf, SU_ADDRSTRLEN));
+ 	  if (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ORIGINATOR_ID))
+ 	    vty_out (vty, " (%s)", inet_ntoa (attr->extra->originator_id));
+--- a/bgpd/bgp_vty.c
++++ b/bgpd/bgp_vty.c
+@@ -8966,7 +8966,7 @@ bgp_config_write_redistribute (struct vt
+ 	  vty_out (vty, " redistribute %s", zebra_route_string(i));
+ 
+ 	  if (bgp->redist_metric_flag[afi][i])
+-	    vty_out (vty, " metric %d", bgp->redist_metric[afi][i]);
++	    vty_out (vty, " metric %u", bgp->redist_metric[afi][i]);
+ 
+ 	  if (bgp->rmap[afi][i].name)
+ 	    vty_out (vty, " route-map %s", bgp->rmap[afi][i].name);
+--- a/zebra/zebra_vty.c
++++ b/zebra/zebra_vty.c
+@@ -541,7 +541,7 @@ vty_show_ip_route_detail (struct vty *vt
+ 	       inet_ntoa (rn->p.u.prefix4), rn->p.prefixlen,
+ 	       VTY_NEWLINE);
+       vty_out (vty, "  Known via \"%s\"", zebra_route_string (rib->type));
+-      vty_out (vty, ", distance %d, metric %d", rib->distance, rib->metric);
++      vty_out (vty, ", distance %u, metric %u", rib->distance, rib->metric);
+       if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_SELECTED))
+ 	vty_out (vty, ", best");
+       if (rib->refcnt)
+@@ -1519,7 +1519,7 @@ vty_show_ipv6_route_detail (struct vty *
+ 	       rn->p.prefixlen,
+ 	       VTY_NEWLINE);
+       vty_out (vty, "  Known via \"%s\"", zebra_route_string (rib->type));
+-      vty_out (vty, ", distance %d, metric %d", rib->distance, rib->metric);
++      vty_out (vty, ", distance %u, metric %u", rib->distance, rib->metric);
+       if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_SELECTED))
+ 	vty_out (vty, ", best");
+       if (rib->refcnt)
