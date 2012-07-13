@@ -1,7 +1,5 @@
-Index: quagga-0.99.21/zebra/main.c
-===================================================================
---- quagga-0.99.21.orig/zebra/main.c
-+++ quagga-0.99.21/zebra/main.c
+--- a/zebra/main.c
++++ b/zebra/main.c
 @@ -327,7 +327,9 @@ main (int argc, char **argv)
    zebra_vty_init ();
    access_list_init ();
@@ -12,10 +10,8 @@ Index: quagga-0.99.21/zebra/main.c
  #ifdef HAVE_IRDP
    irdp_init();
  #endif
-Index: quagga-0.99.21/zebra/rtadv.h
-===================================================================
---- quagga-0.99.21.orig/zebra/rtadv.h
-+++ quagga-0.99.21/zebra/rtadv.h
+--- a/zebra/rtadv.h
++++ b/zebra/rtadv.h
 @@ -26,6 +26,9 @@
  #include "vty.h"
  #include "zebra/interface.h"
@@ -33,10 +29,8 @@ Index: quagga-0.99.21/zebra/rtadv.h
 +#endif /* RTADV */
 +
  #endif /* _ZEBRA_RTADV_H */
-Index: quagga-0.99.21/zebra/zebra_vty.c
-===================================================================
---- quagga-0.99.21.orig/zebra/zebra_vty.c
-+++ quagga-0.99.21/zebra/zebra_vty.c
+--- a/zebra/zebra_vty.c
++++ b/zebra/zebra_vty.c
 @@ -1197,6 +1197,40 @@ DEFUN (show_ip_protocol,
      return CMD_SUCCESS;
  }

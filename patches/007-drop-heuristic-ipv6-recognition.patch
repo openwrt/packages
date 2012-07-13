@@ -1,7 +1,5 @@
-Index: quagga-0.99.21/lib/command.c
-===================================================================
---- quagga-0.99.21.orig/lib/command.c
-+++ quagga-0.99.21/lib/command.c
+--- a/lib/command.c
++++ b/lib/command.c
 @@ -868,86 +868,7 @@ cmd_ipv6_match (const char *str)
    if (ret == 1)
      return exact_match;

@@ -1,7 +1,5 @@
-Index: quagga-0.99.21/zebra/connected.c
-===================================================================
---- quagga-0.99.21.orig/zebra/connected.c
-+++ quagga-0.99.21/zebra/connected.c
+--- a/zebra/connected.c
++++ b/zebra/connected.c
 @@ -191,6 +191,9 @@ connected_up_ipv4 (struct interface *ifp
    rib_add_ipv4 (ZEBRA_ROUTE_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
  	RT_TABLE_MAIN, ifp->metric, 0, SAFI_UNICAST);

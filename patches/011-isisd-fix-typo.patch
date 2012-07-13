@@ -1,7 +1,5 @@
-Index: quagga-0.99.21/isisd/isis_lsp.c
-===================================================================
---- quagga-0.99.21.orig/isisd/isis_lsp.c
-+++ quagga-0.99.21/isisd/isis_lsp.c
+--- a/isisd/isis_lsp.c
++++ b/isisd/isis_lsp.c
 @@ -2413,7 +2413,7 @@ top_lsp_refresh (struct thread *thread)
    isis_dynhn_insert (lsp->lsp_header->lsp_id, lsp->tlv_data.hostname,
  		     IS_LEVEL_1);

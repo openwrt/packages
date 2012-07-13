@@ -1,7 +1,5 @@
-Index: quagga-0.99.21/bgpd/bgp_route.c
-===================================================================
---- quagga-0.99.21.orig/bgpd/bgp_route.c
-+++ quagga-0.99.21/bgpd/bgp_route.c
+--- a/bgpd/bgp_route.c
++++ b/bgpd/bgp_route.c
 @@ -2485,12 +2485,8 @@ bgp_default_originate (struct peer *peer
  #ifdef HAVE_IPV6
    else if (afi == AFI_IP6)

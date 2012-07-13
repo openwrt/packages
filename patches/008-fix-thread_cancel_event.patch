@@ -1,7 +1,5 @@
-Index: quagga-0.99.21/lib/thread.c
-===================================================================
---- quagga-0.99.21.orig/lib/thread.c
-+++ quagga-0.99.21/lib/thread.c
+--- a/lib/thread.c
++++ b/lib/thread.c
 @@ -916,6 +916,24 @@ thread_cancel_event (struct thread_maste
            thread_add_unuse (m, t);
          }

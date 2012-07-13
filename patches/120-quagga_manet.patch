@@ -217,7 +217,7 @@
  	{
  	  time_t uptime;
  	  struct tm *tm;
-@@ -1536,7 +1542,10 @@ vty_show_ipv6_route_detail (struct vty *
+@@ -1570,7 +1576,10 @@ vty_show_ipv6_route_detail (struct vty *
  	  || rib->type == ZEBRA_ROUTE_OSPF6
  	  || rib->type == ZEBRA_ROUTE_BABEL
  	  || rib->type == ZEBRA_ROUTE_ISIS
@@ -229,7 +229,7 @@
  	{
  	  time_t uptime;
  	  struct tm *tm;
-@@ -1716,7 +1725,10 @@ vty_show_ipv6_route (struct vty *vty, st
+@@ -1750,7 +1759,10 @@ vty_show_ipv6_route (struct vty *vty, st
  	  || rib->type == ZEBRA_ROUTE_OSPF6
  	  || rib->type == ZEBRA_ROUTE_BABEL
  	  || rib->type == ZEBRA_ROUTE_ISIS
