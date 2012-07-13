@@ -1,0 +1,539 @@
+--- a/bgpd/bgp_routemap.c
++++ b/bgpd/bgp_routemap.c
+@@ -111,7 +111,8 @@ route_match_peer (void *rule, struct pre
+       void *object)
+ {
+   union sockunion *su;
+-  union sockunion *su2;
++  union sockunion su_def = { .sa.sa_family = AF_INET,
++			     .sin.sin_addr.s_addr = INADDR_ANY };
+   struct peer_group *group;
+   struct peer *peer;
+   struct listnode *node, *nnode;
+@@ -127,8 +128,7 @@ route_match_peer (void *rule, struct pre
+ 
+       /* If su='0.0.0.0' (command 'match peer local'), and it's a NETWORK,
+           REDISTRIBUTE or DEFAULT_GENERATED route => return RMAP_MATCH */
+-      su2 = sockunion_str2su ("0.0.0.0");
+-      if ( sockunion_same (su, su2) )
++      if (sockunion_same (su, &su_def))
+         {
+           int ret;
+           if ( CHECK_FLAG (peer->rmap_type, PEER_RMAP_TYPE_NETWORK) ||
+@@ -137,12 +137,9 @@ route_match_peer (void *rule, struct pre
+             ret = RMAP_MATCH;
+           else
+             ret = RMAP_NOMATCH;
+-          
+-          sockunion_free (su2);
+           return ret;
+         }
+-      sockunion_free (su2);
+-      
++
+       if (! CHECK_FLAG (peer->sflags, PEER_STATUS_GROUP))
+         {
+           if (sockunion_same (su, &peer->su))
+@@ -878,7 +875,6 @@ route_set_ip_nexthop (void *rule, struct
+ 		      route_map_object_t type, void *object)
+ {
+   struct rmap_ip_nexthop_set *rins = rule;
+-  struct in_addr peer_address;
+   struct bgp_info *bgp_info;
+   struct peer *peer;
+ 
+@@ -894,16 +890,14 @@ route_set_ip_nexthop (void *rule, struct
+ 	      && peer->su_remote 
+ 	      && sockunion_family (peer->su_remote) == AF_INET)
+ 	    {
+-              inet_aton (sockunion_su2str (peer->su_remote), &peer_address);
+-              bgp_info->attr->nexthop = peer_address;
++	      bgp_info->attr->nexthop.s_addr = sockunion2ip (peer->su_remote);
+ 	      bgp_info->attr->flag |= ATTR_FLAG_BIT (BGP_ATTR_NEXT_HOP);
+ 	    }
+ 	  else if (CHECK_FLAG (peer->rmap_type, PEER_RMAP_TYPE_OUT)
+ 		   && peer->su_local
+ 		   && sockunion_family (peer->su_local) == AF_INET)
+ 	    {
+-              inet_aton (sockunion_su2str (peer->su_local), &peer_address);
+-              bgp_info->attr->nexthop = peer_address;
++	      bgp_info->attr->nexthop.s_addr = sockunion2ip (peer->su_local);
+ 	      bgp_info->attr->flag |= ATTR_FLAG_BIT (BGP_ATTR_NEXT_HOP);
+ 	    }
+ 	}
+--- a/lib/sockunion.h
++++ b/lib/sockunion.h
+@@ -78,23 +78,17 @@ enum connect_result
+ #define SET_IN6_LINKLOCAL_IFINDEX(a, i)
+ #endif /* KAME */
+ 
+-/* shortcut macro to specify address field of struct sockaddr */
+-#define sock2ip(X)   (((struct sockaddr_in *)(X))->sin_addr.s_addr)
+-#ifdef HAVE_IPV6
+-#define sock2ip6(X)  (((struct sockaddr_in6 *)(X))->sin6_addr.s6_addr)
+-#endif /* HAVE_IPV6 */
+-
+ #define sockunion_family(X)  (X)->sa.sa_family
+ 
++#define sockunion2ip(X)      (X)->sin.sin_addr.s_addr
++
+ /* Prototypes. */
+ extern int str2sockunion (const char *, union sockunion *);
+ extern const char *sockunion2str (union sockunion *, char *, size_t);
+ extern int sockunion_cmp (union sockunion *, union sockunion *);
+ extern int sockunion_same (union sockunion *, union sockunion *);
+ 
+-extern char *sockunion_su2str (union sockunion *su);
+ extern union sockunion *sockunion_str2su (const char *str);
+-extern struct in_addr sockunion_get_in_addr (union sockunion *su);
+ extern int sockunion_accept (int sock, union sockunion *);
+ extern int sockunion_stream_socket (union sockunion *);
+ extern int sockopt_reuseaddr (int);
+--- a/bgpd/bgp_fsm.c
++++ b/bgpd/bgp_fsm.c
+@@ -597,8 +597,6 @@ bgp_stop_with_error (struct peer *peer)
+ static int
+ bgp_connect_success (struct peer *peer)
+ {
+-  char buf1[BUFSIZ];
+-
+   if (peer->fd < 0)
+     {
+       zlog_err ("bgp_connect_success peer's fd is negative value %d",
+@@ -612,6 +610,8 @@ bgp_connect_success (struct peer *peer)
+ 
+   if (BGP_DEBUG (normal, NORMAL))
+     {
++      char buf1[SU_ADDRSTRLEN];
++
+       if (! CHECK_FLAG (peer->sflags, PEER_STATUS_ACCEPT_PEER))
+ 	zlog_debug ("%s open active, local address %s", peer->host,
+ 		    sockunion2str (peer->su_local, buf1, SU_ADDRSTRLEN));
+--- a/bgpd/bgp_mplsvpn.c
++++ b/bgpd/bgp_mplsvpn.c
+@@ -581,24 +581,25 @@ DEFUN (show_ip_bgp_vpnv4_all_neighbor_ro
+        "Neighbor to display information about\n"
+        "Display routes learned from neighbor\n")
+ {
+-  union sockunion *su;
++  union sockunion su;
+   struct peer *peer;
+-  
+-  su = sockunion_str2su (argv[0]);
+-  if (su == NULL)
++  int ret;
++
++  ret = str2sockunion (argv[0], &su);
++  if (ret < 0)
+     {
+       vty_out (vty, "Malformed address: %s%s", argv[0], VTY_NEWLINE);
+-               return CMD_WARNING;
++      return CMD_WARNING;
+     }
+ 
+-  peer = peer_lookup (NULL, su);
++  peer = peer_lookup (NULL, &su);
+   if (! peer || ! peer->afc[AFI_IP][SAFI_MPLS_VPN])
+     {
+       vty_out (vty, "%% No such neighbor or address family%s", VTY_NEWLINE);
+       return CMD_WARNING;
+     }
+ 
+-  return bgp_show_mpls_vpn (vty, NULL, bgp_show_type_neighbor, su, 0);
++  return bgp_show_mpls_vpn (vty, NULL, bgp_show_type_neighbor, &su, 0);
+ }
+ 
+ DEFUN (show_ip_bgp_vpnv4_rd_neighbor_routes,
+@@ -615,7 +616,7 @@ DEFUN (show_ip_bgp_vpnv4_rd_neighbor_rou
+        "Display routes learned from neighbor\n")
+ {
+   int ret;
+-  union sockunion *su;
++  union sockunion su;
+   struct peer *peer;
+   struct prefix_rd prd;
+ 
+@@ -626,21 +627,21 @@ DEFUN (show_ip_bgp_vpnv4_rd_neighbor_rou
+       return CMD_WARNING;
+     }
+ 
+-  su = sockunion_str2su (argv[1]);
+-  if (su == NULL)
++  ret = str2sockunion (argv[1], &su);
++  if (ret < 0)
+     {
+       vty_out (vty, "Malformed address: %s%s", argv[0], VTY_NEWLINE);
+-               return CMD_WARNING;
++      return CMD_WARNING;
+     }
+ 
+-  peer = peer_lookup (NULL, su);
++  peer = peer_lookup (NULL, &su);
+   if (! peer || ! peer->afc[AFI_IP][SAFI_MPLS_VPN])
+     {
+       vty_out (vty, "%% No such neighbor or address family%s", VTY_NEWLINE);
+       return CMD_WARNING;
+     }
+ 
+-  return bgp_show_mpls_vpn (vty, &prd, bgp_show_type_neighbor, su, 0);
++  return bgp_show_mpls_vpn (vty, &prd, bgp_show_type_neighbor, &su, 0);
+ }
+ 
+ DEFUN (show_ip_bgp_vpnv4_all_neighbor_advertised_routes,
+--- a/bgpd/bgp_network.c
++++ b/bgpd/bgp_network.c
+@@ -185,7 +185,7 @@ bgp_accept (struct thread *thread)
+     zlog_debug ("[Event] Make dummy peer structure until read Open packet");
+ 
+   {
+-    char buf[SU_ADDRSTRLEN + 1];
++    char buf[SU_ADDRSTRLEN];
+ 
+     peer = peer_create_accept (peer1->bgp);
+     SET_FLAG (peer->sflags, PEER_STATUS_ACCEPT_PEER);
+--- a/bgpd/bgp_route.c
++++ b/bgpd/bgp_route.c
+@@ -10202,15 +10202,18 @@ DEFUN (show_ip_bgp_neighbor_received_pre
+        "Display the prefixlist filter\n")
+ {
+   char name[BUFSIZ];
+-  union sockunion *su;
++  union sockunion su;
+   struct peer *peer;
+-  int count;
++  int count, ret;
+ 
+-  su = sockunion_str2su (argv[0]);
+-  if (su == NULL)
+-    return CMD_WARNING;
++  ret = str2sockunion (argv[0], &su);
++  if (ret < 0)
++    {
++      vty_out (vty, "Malformed address: %s%s", argv[0], VTY_NEWLINE);
++      return CMD_WARNING;
++    }
+ 
+-  peer = peer_lookup (NULL, su);
++  peer = peer_lookup (NULL, &su);
+   if (! peer)
+     return CMD_WARNING;
+ 
+@@ -10241,15 +10244,18 @@ DEFUN (show_ip_bgp_ipv4_neighbor_receive
+        "Display the prefixlist filter\n")
+ {
+   char name[BUFSIZ];
+-  union sockunion *su;
++  union sockunion su;
+   struct peer *peer;
+-  int count;
++  int count, ret;
+ 
+-  su = sockunion_str2su (argv[1]);
+-  if (su == NULL)
+-    return CMD_WARNING;
++  ret = str2sockunion (argv[1], &su);
++  if (ret < 0)
++    {
++      vty_out (vty, "Malformed address: %s%s", argv[1], VTY_NEWLINE);
++      return CMD_WARNING;
++    }
+ 
+-  peer = peer_lookup (NULL, su);
++  peer = peer_lookup (NULL, &su);
+   if (! peer)
+     return CMD_WARNING;
+ 
+@@ -10312,15 +10318,18 @@ DEFUN (show_bgp_neighbor_received_prefix
+        "Display the prefixlist filter\n")
+ {
+   char name[BUFSIZ];
+-  union sockunion *su;
++  union sockunion su;
+   struct peer *peer;
+-  int count;
++  int count, ret;
+ 
+-  su = sockunion_str2su (argv[0]);
+-  if (su == NULL)
+-    return CMD_WARNING;
++  ret = str2sockunion (argv[0], &su);
++  if (ret < 0)
++    {
++      vty_out (vty, "Malformed address: %s%s", argv[0], VTY_NEWLINE);
++      return CMD_WARNING;
++    }
+ 
+-  peer = peer_lookup (NULL, su);
++  peer = peer_lookup (NULL, &su);
+   if (! peer)
+     return CMD_WARNING;
+ 
+@@ -10394,10 +10403,10 @@ DEFUN (show_bgp_view_neighbor_received_p
+        "Display the prefixlist filter\n")
+ {
+   char name[BUFSIZ];
+-  union sockunion *su;
++  union sockunion su;
+   struct peer *peer;
+   struct bgp *bgp;
+-  int count;
++  int count, ret;
+ 
+   /* BGP structure lookup. */
+   bgp = bgp_lookup_by_name (argv[0]);
+@@ -10407,11 +10416,14 @@ DEFUN (show_bgp_view_neighbor_received_p
+ 	  return CMD_WARNING;
+ 	}
+   
+-  su = sockunion_str2su (argv[1]);
+-  if (su == NULL)
+-    return CMD_WARNING;
++  ret = str2sockunion (argv[1], &su);
++  if (ret < 0)
++    {
++      vty_out (vty, "Malformed address: %s%s", argv[1], VTY_NEWLINE);
++      return CMD_WARNING;
++    }
+ 
+-  peer = peer_lookup (bgp, su);
++  peer = peer_lookup (bgp, &su);
+   if (! peer)
+     return CMD_WARNING;
+ 
+--- a/bgpd/bgp_vty.c
++++ b/bgpd/bgp_vty.c
+@@ -2943,7 +2943,6 @@ peer_update_source_vty (struct vty *vty,
+                         const char *source_str)
+ {
+   struct peer *peer;
+-  union sockunion *su;
+ 
+   peer = peer_and_group_lookup_vty (vty, peer_str);
+   if (! peer)
+@@ -2951,12 +2950,11 @@ peer_update_source_vty (struct vty *vty,
+ 
+   if (source_str)
+     {
+-      su = sockunion_str2su (source_str);
+-      if (su)
+-	{
+-	  peer_update_source_addr_set (peer, su);
+-	  sockunion_free (su);
+-	}
++      union sockunion su;
++      int ret = str2sockunion (source_str, &su);
++
++      if (ret == 0)
++	peer_update_source_addr_set (peer, &su);
+       else
+ 	peer_update_source_if_set (peer, source_str);
+     }
+--- a/lib/sockunion.c
++++ b/lib/sockunion.c
+@@ -177,55 +177,15 @@ sockunion2str (union sockunion *su, char
+ union sockunion *
+ sockunion_str2su (const char *str)
+ {
+-  int ret;
+-  union sockunion *su;
+-
+-  su = XCALLOC (MTYPE_SOCKUNION, sizeof (union sockunion));
+-
+-  ret = inet_pton (AF_INET, str, &su->sin.sin_addr);
+-  if (ret > 0)			/* Valid IPv4 address format. */
+-    {
+-      su->sin.sin_family = AF_INET;
+-#ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
+-      su->sin.sin_len = sizeof(struct sockaddr_in);
+-#endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
+-      return su;
+-    }
+-#ifdef HAVE_IPV6
+-  ret = inet_pton (AF_INET6, str, &su->sin6.sin6_addr);
+-  if (ret > 0)			/* Valid IPv6 address format. */
+-    {
+-      su->sin6.sin6_family = AF_INET6;
+-#ifdef SIN6_LEN
+-      su->sin6.sin6_len = sizeof(struct sockaddr_in6);
+-#endif /* SIN6_LEN */
+-      return su;
+-    }
+-#endif /* HAVE_IPV6 */
+-
++  union sockunion *su = XCALLOC (MTYPE_SOCKUNION, sizeof (union sockunion));
++  
++  if (!str2sockunion (str, su))
++    return su;
++  
+   XFREE (MTYPE_SOCKUNION, su);
+   return NULL;
+ }
+ 
+-char *
+-sockunion_su2str (union sockunion *su)
+-{
+-  char str[SU_ADDRSTRLEN];
+-
+-  switch (su->sa.sa_family)
+-    {
+-    case AF_INET:
+-      inet_ntop (AF_INET, &su->sin.sin_addr, str, sizeof (str));
+-      break;
+-#ifdef HAVE_IPV6
+-    case AF_INET6:
+-      inet_ntop (AF_INET6, &su->sin6.sin6_addr, str, sizeof (str));
+-      break;
+-#endif /* HAVE_IPV6 */
+-    }
+-  return XSTRDUP (MTYPE_TMP, str);
+-}
+-
+ /* Convert IPv4 compatible IPv6 address to IPv4 address. */
+ static void
+ sockunion_normalise_mapped (union sockunion *su)
+@@ -422,7 +382,7 @@ sockunion_bind (int sock, union sockunio
+       su->sin.sin_len = size;
+ #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
+       if (su_addr == NULL)
+-	su->sin.sin_addr.s_addr = htonl (INADDR_ANY);
++	sockunion2ip (su) = htonl (INADDR_ANY);
+     }
+ #ifdef HAVE_IPV6
+   else if (su->sa.sa_family == AF_INET6)
+@@ -779,9 +739,9 @@ sockunion_cmp (union sockunion *su1, uni
+ 
+   if (su1->sa.sa_family == AF_INET)
+     {
+-      if (ntohl (su1->sin.sin_addr.s_addr) == ntohl (su2->sin.sin_addr.s_addr))
++      if (ntohl (sockunion2ip (su1)) == ntohl (sockunion2ip (su2)))
+ 	return 0;
+-      if (ntohl (su1->sin.sin_addr.s_addr) > ntohl (su2->sin.sin_addr.s_addr))
++      if (ntohl (sockunion2ip (su1)) > ntohl (sockunion2ip (su2)))
+ 	return 1;
+       else
+ 	return -1;
+--- a/lib/vty.c
++++ b/lib/vty.c
+@@ -1612,13 +1612,16 @@ vty_flush (struct thread *thread)
+ static struct vty *
+ vty_create (int vty_sock, union sockunion *su)
+ {
++  char buf[SU_ADDRSTRLEN];
+   struct vty *vty;
+ 
++  sockunion2str(su, buf, SU_ADDRSTRLEN);
++
+   /* Allocate new vty structure and set up default values. */
+   vty = vty_new ();
+   vty->fd = vty_sock;
+   vty->type = VTY_TERM;
+-  vty->address = sockunion_su2str (su);
++  strcpy (vty->address, buf);
+   if (no_password_check)
+     {
+       if (restricted_mode)
+@@ -1693,7 +1696,7 @@ vty_accept (struct thread *thread)
+   int accept_sock;
+   struct prefix *p = NULL;
+   struct access_list *acl = NULL;
+-  char *bufp;
++  char buf[SU_ADDRSTRLEN];
+ 
+   accept_sock = THREAD_FD (thread);
+ 
+@@ -1719,10 +1722,8 @@ vty_accept (struct thread *thread)
+       if ((acl = access_list_lookup (AFI_IP, vty_accesslist_name)) &&
+ 	  (access_list_apply (acl, p) == FILTER_DENY))
+ 	{
+-	  char *buf;
+ 	  zlog (NULL, LOG_INFO, "Vty connection refused from %s",
+-		(buf = sockunion_su2str (&su)));
+-	  free (buf);
++		sockunion2str (&su, buf, SU_ADDRSTRLEN));
+ 	  close (vty_sock);
+ 	  
+ 	  /* continue accepting connections */
+@@ -1741,10 +1742,8 @@ vty_accept (struct thread *thread)
+       if ((acl = access_list_lookup (AFI_IP6, vty_ipv6_accesslist_name)) &&
+ 	  (access_list_apply (acl, p) == FILTER_DENY))
+ 	{
+-	  char *buf;
+ 	  zlog (NULL, LOG_INFO, "Vty connection refused from %s",
+-		(buf = sockunion_su2str (&su)));
+-	  free (buf);
++		sockunion2str (&su, buf, SU_ADDRSTRLEN));
+ 	  close (vty_sock);
+ 	  
+ 	  /* continue accepting connections */
+@@ -1767,9 +1766,7 @@ vty_accept (struct thread *thread)
+ 	  safe_strerror (errno));
+ 
+   zlog (NULL, LOG_INFO, "Vty connection from %s",
+-    (bufp = sockunion_su2str (&su)));
+-  if (bufp)
+-    XFREE (MTYPE_TMP, bufp);
++	sockunion2str (&su, buf, SU_ADDRSTRLEN));
+ 
+   vty_create (vty_sock, &su);
+ 
+@@ -2193,8 +2190,6 @@ vty_close (struct vty *vty)
+   if (vty->fd > 0)
+     close (vty->fd);
+ 
+-  if (vty->address)
+-    XFREE (MTYPE_TMP, vty->address);
+   if (vty->buf)
+     XFREE (MTYPE_VTY, vty->buf);
+ 
+--- a/lib/vty.h
++++ b/lib/vty.h
+@@ -23,6 +23,7 @@ Software Foundation, Inc., 59 Temple Pla
+ 
+ #include "thread.h"
+ #include "log.h"
++#include "sockunion.h"
+ 
+ #define VTY_BUFSIZ 512
+ #define VTY_MAXHIST 20
+@@ -39,9 +40,6 @@ struct vty
+   /* Node status of this vty */
+   int node;
+ 
+-  /* What address is this vty comming from. */
+-  char *address;
+-
+   /* Failure count */
+   int fail;
+ 
+@@ -118,6 +116,9 @@ struct vty
+   /* Timeout seconds and thread. */
+   unsigned long v_timeout;
+   struct thread *t_timeout;
++
++  /* What address is this vty comming from. */
++  char address[SU_ADDRSTRLEN];
+ };
+ 
+ /* Integrated configuration file. */
+--- a/zebra/zebra_rib.c
++++ b/zebra/zebra_rib.c
+@@ -678,8 +678,8 @@ rib_lookup_ipv4_route (struct prefix_ipv
+     if (CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_FIB))
+     {
+       /* We are happy with either direct or recursive hexthop */
+-      if (nexthop->gate.ipv4.s_addr == qgate->sin.sin_addr.s_addr ||
+-          nexthop->rgate.ipv4.s_addr == qgate->sin.sin_addr.s_addr)
++      if (nexthop->gate.ipv4.s_addr == sockunion2ip (qgate) ||
++          nexthop->rgate.ipv4.s_addr == sockunion2ip (qgate))
+         return ZEBRA_RIB_FOUND_EXACT;
+       else
+       {
+@@ -688,7 +688,7 @@ rib_lookup_ipv4_route (struct prefix_ipv
+           char gate_buf[INET_ADDRSTRLEN], rgate_buf[INET_ADDRSTRLEN], qgate_buf[INET_ADDRSTRLEN];
+           inet_ntop (AF_INET, &nexthop->gate.ipv4.s_addr, gate_buf, INET_ADDRSTRLEN);
+           inet_ntop (AF_INET, &nexthop->rgate.ipv4.s_addr, rgate_buf, INET_ADDRSTRLEN);
+-          inet_ntop (AF_INET, &qgate->sin.sin_addr.s_addr, qgate_buf, INET_ADDRSTRLEN);
++          inet_ntop (AF_INET, &sockunion2ip (qgate), qgate_buf, INET_ADDRSTRLEN);
+           zlog_debug ("%s: qgate == %s, gate == %s, rgate == %s", __func__, qgate_buf, gate_buf, rgate_buf);
+         }
+         return ZEBRA_RIB_FOUND_NOGATE;
