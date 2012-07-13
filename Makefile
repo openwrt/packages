@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
 PKG_VERSION:=0.99.21
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MD5SUM:=99840adbe57047c90dfba6b6ed9aec7f
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -186,6 +186,7 @@ CONFIGURE_ARGS+= \
 	--enable-multipath=8 \
 	--disable-ospfclient \
 	--disable-capabilities \
+	--disable-doc \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-libzebra,zebra) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-libospf,ospfd) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-bgpd,bgpd) \
