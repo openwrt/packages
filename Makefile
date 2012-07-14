@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
 PKG_VERSION:=0.99.21
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_MD5SUM:=99840adbe57047c90dfba6b6ed9aec7f
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -119,7 +119,7 @@ endef
 
 define Package/quagga-babeld
   $(call Package/quagga/Default)
-  DEPENDS+=+quagga-libzebra
+  DEPENDS+=+quagga-libzebra @IPV6
   TITLE:=Babel routing engine
 endef
 
