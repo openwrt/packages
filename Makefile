@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ndppd
 PKG_VERSION:=0.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
@@ -22,6 +22,7 @@ PKG_MD5SUM:=d90c4b65777a62274c1837dba341e5a8
 #PKG_SOURCE_VERSION=master
 #PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ndppd
@@ -30,7 +31,7 @@ define Package/ndppd
   TITLE:=NDP Proxy Daemon
   URL:=http://www.priv.nu/projects/ndppd/
   MAINTAINER:=Gabriel Kerneis <kerneis@pps.jussieu.fr>
-  DEPENDS:=+kmod-ipv6 +uclibcxx
+  DEPENDS:=+kmod-ipv6 $(CXX_DEPENDS)
 endef
 
 define Package/ndppd/description
@@ -51,11 +52,9 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CXX="$(TARGET_CXX)" \
-		CXXFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CXXFLAGS) $(TARGET_CFLAGS) \
-		-std=c++0x -fno-builtin -fno-rtti -nostdinc++ \
-		-I$(STAGING_DIR)/usr/include/uClibc++" \
+		CXXFLAGS="$(TARGET_CXXFLAGS) -std=c++0x -fno-rtti" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		LIBS="-nodefaultlibs -lc -luClibc++ $(LIBGCC_S)" \
+		LIBS="-lc" \
 		ndppd
 endef
 
