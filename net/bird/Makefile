@@ -20,7 +20,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bird/Default
   TITLE:=The BIRD Internet Routing Daemon
   URL:=http://bird.network.cz/
-  DEPENDS:= +USE_EGLIBC:librt
+  DEPENDS:=
 endef
 
 define Package/birdc/Default
