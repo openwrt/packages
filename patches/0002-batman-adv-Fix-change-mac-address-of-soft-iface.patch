@@ -1,0 +1,45 @@
+From 86fa71a4985f60da5918e1f43136dae77852cdc3 Mon Sep 17 00:00:00 2001
+From: Def <def@laposte.net>
+Date: Thu, 20 Sep 2012 14:56:13 +0200
+Subject: [PATCH] batman-adv: Fix change mac address of soft iface.
+
+Into function interface_set_mac_addr, the function tt_local_add was
+invoked before updating dev->dev_addr. The new MAC address was not
+tagged as NoPurge.
+
+Signed-off-by: Def <def@laposte.net>
+---
+ soft-interface.c |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/soft-interface.c b/soft-interface.c
+index cf26e41..b762068 100644
+--- a/soft-interface.c
++++ b/soft-interface.c
+@@ -100,18 +100,21 @@ static int batadv_interface_set_mac_addr(struct net_device *dev, void *p)
+ {
+ 	struct batadv_priv *bat_priv = netdev_priv(dev);
+ 	struct sockaddr *addr = p;
++	uint8_t old_addr[ETH_ALEN];
+ 
+ 	if (!is_valid_ether_addr(addr->sa_data))
+ 		return -EADDRNOTAVAIL;
+ 
++	memcpy(old_addr, dev->dev_addr, ETH_ALEN);
++	memcpy(dev->dev_addr, addr->sa_data, ETH_ALEN);
++
+ 	/* only modify transtable if it has been initialized before */
+ 	if (atomic_read(&bat_priv->mesh_state) == BATADV_MESH_ACTIVE) {
+-		batadv_tt_local_remove(bat_priv, dev->dev_addr,
++		batadv_tt_local_remove(bat_priv, old_addr,
+ 				       "mac address changed", false);
+ 		batadv_tt_local_add(dev, addr->sa_data, BATADV_NULL_IFINDEX);
+ 	}
+ 
+-	memcpy(dev->dev_addr, addr->sa_data, ETH_ALEN);
+ 	dev->addr_assign_type &= ~NET_ADDR_RANDOM;
+ 	return 0;
+ }
+-- 
+1.7.9.1
+
