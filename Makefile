@@ -9,13 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
 PKG_VERSION:=0.99.21
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_MD5SUM:=99840adbe57047c90dfba6b6ed9aec7f
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.quagga.net/download/ \
-                http://www.de.quagga.net/download/ \
-                http://www.uk.quagga.net/download/
+PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/quagga/
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_IPV6 \
 	CONFIG_PACKAGE_quagga-watchquagga \
