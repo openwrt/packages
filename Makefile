@@ -109,10 +109,11 @@ define Build/Clean
 endef
 
 define KernelPackage/batman-adv/install
-	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/hotplug.d/net $(1)/lib/batman-adv $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/hotplug.d/net $(1)/etc/hotplug.d/iface $(1)/lib/batman-adv $(1)/usr/sbin
 	$(INSTALL_DATA) ./files/etc/config/batman-adv $(1)/etc/config
 	$(INSTALL_DATA) ./files/lib/batman-adv/config.sh $(1)/lib/batman-adv
 	$(INSTALL_BIN) ./files/etc/hotplug.d/net/99-batman-adv $(1)/etc/hotplug.d/net
+	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/99-batman-adv $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./files/usr/sbin/batman-adv $(1)/usr/sbin
 	$(BATCTL_INSTALL)
 endef

@@ -48,7 +48,6 @@ bat_add_interface()
 	local interface="$2"
 	local interfaces
 
-	sleep 3s # some device (ath) is very lazy to start
 	config_get interfaces $mesh interfaces
 	for iface in $interfaces; do
 		[ -f "/sys/class/net/$iface/batman_adv/mesh_iface" ] || {

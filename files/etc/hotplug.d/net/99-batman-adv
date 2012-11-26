@@ -8,7 +8,6 @@ config_load batman-adv
 case "$ACTION" in
 	add)
 		[ -d /sys/class/net/$INTERFACE/mesh/ ] && bat_config "$INTERFACE"
-		[ -d /sys/class/net/$INTERFACE/batman_adv/ ] && config_foreach bat_add_interface mesh "$INTERFACE"
 		;;
 	remove)
 		[ -d /sys/class/net/$INTERFACE/batman_adv/ ] && config_foreach bat_del_interface mesh "$INTERFACE"
