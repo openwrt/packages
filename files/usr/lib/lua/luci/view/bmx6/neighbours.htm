@@ -1,0 +1,89 @@
+<%+header%>
+<style type="text/css">
+
+    table {
+       width:90%;
+       border-top:1px solid #e5eaf8;
+       border-right:1px solid #e5eaf8;
+       margin:1em auto;
+       border-collapse:collapse;
+     }
+
+    td {
+       color:#678197;
+       border-bottom:1px solid #e6eff8;
+       border-left:1px solid #e6eff8;
+       padding:.3em 1em;
+       text-align:center;
+     }
+    th {
+       background:#f4f9fe;
+       text-align:center;
+       font:bold 1.2em/2em "Century Gothic","Trebuchet MS",Arial,Helvetica,sans-serif;
+       color:#66a3d3;
+     }
+
+
+#neighbour {
+	position:relative;
+	margin:5px;
+}
+
+#orig_id {
+	background-color: black;
+	color: white;
+	text-ident:10px;
+}
+</style>
+
+<h2><a id="content" name="content"><%:Neighbours%></a></h2>
+<table>
+ <tr>
+  <th scope="col">Name</th>
+  <th scope="col">IPv4</th>
+  <th scope="col">IPv6</th>
+  <th scope="col">Via Dev</th>
+  <th scope="col">Via IP</th>
+  <th scope="col">Routes</th>
+  <th scope="col">Metric</th>
+  <th scope="col">Last Desc</th>
+  <th scope="col">Last Ref</th>
+ </tr>
+
+<% for i,o in ipairs(originators) do %>
+		<tr>
+		<td><%=o.name%></td>
+		<td><a href="http://<%=o.ipv4%>"><%=o.ipv4%></a></td>
+		<td><a href="http://[<%=o.orig.primaryIp%>]"><%=o.orig.primaryIp%></a></td>
+		<td><%=o.orig.viaDev%></td>
+		<td><%=o.orig.viaIp%></td>
+		<td><%=o.orig.routes%></td>
+		<td><%=o.orig.metric%></td>
+		<td><%=o.orig.lastDesc%></td>
+		<td><%=o.orig.lastRef%></td>
+		</tr>
+<%end%>
+</table>
+
+<table>
+ <tr>
+ <th scope="col">Node</th>
+ <th scope="col">Announced networks</th>
+ </tr>
+
+<% for i,o in ipairs(originators) do %>
+	<tr>
+	 <td><%=o.name%></td>
+	 <td style="text-align:left;">
+	<% if o.desc.DESC_ADV ~= nil then %>
+	<% for j,h in ipairs(o.desc.DESC_ADV.extensions[2].HNA6_EXTENSION) do %>
+	  <%=h.address%>&nbsp;&nbsp;&nbsp;&nbsp;
+	<% end %>
+	<% end %>
+	 </td>
+	</tr>
+<% end %>
+</table>
+
+<br />
+<%+footer%>

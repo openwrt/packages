@@ -1,0 +1,6 @@
+config 'bmx6' 'luci'
+	option ignore '0'
+	#option place 'admin status Bmx6'
+	option place 'qmp Mesh'
+	#option json 'http://127.0.0.1/cgi-bin/bmx6-info?'
+	option json 'exec:/www/cgi-bin/bmx6-info -s'
