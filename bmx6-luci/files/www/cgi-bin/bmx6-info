@@ -95,12 +95,17 @@ if [ "$QUERY" == '$neighbours' ]; then
 	print_query descriptions
 	echo "} ] }"
 	exit 0
+
+else if [ "$QUERY" == '$tunnels' ]; then
+	bmx6 -c --jshow tunnels
+	exit 0
+
 else
 	check_path "$BMX6_DIR/$QUERY"
 	print_query $QUERY
 	exit 0
 fi
-
+fi
 
 ls -1F "$BMX6_DIR"
 exit 0
