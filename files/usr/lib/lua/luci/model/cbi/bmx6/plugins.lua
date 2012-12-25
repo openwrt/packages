@@ -18,14 +18,14 @@
     The full GNU General Public License is included in this distribution in
     the file called "COPYING".
 --]]
+local sys = require("luci.sys")
 
 m = Map("bmx6", "bmx6")
-
 plugins_dir = {"/usr/lib/","/var/lib","/lib"}
 
 plugin = m:section(TypedSection,"plugin","Plugin")
 plugin.addremove = true
-plugin.anonymous = false
+plugin.anonymous = true
 plv = plugin:option(ListValue,"plugin", "Plugin")
 
 for _,d in ipairs(plugins_dir) do
@@ -34,6 +34,14 @@ for _,d in ipairs(plugins_dir) do
 		for _,v in ipairs(luci.util.split(pl,"\n")) do
 			plv:value(v,v)
 		end
+	end
+end
+
+
+function m.on_commit(self,map)
+	local err = sys.call('/etc/init.d/bmx6 restart')
+	if err ~= 0 then
+		m.message = sys.exec("Cannot restart bmx6")
 	end
 end
 

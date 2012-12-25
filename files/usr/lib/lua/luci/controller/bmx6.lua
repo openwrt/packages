@@ -28,6 +28,7 @@ function index()
 	local place = {}
 	local ucim = require "luci.model.uci"
 	local uci = ucim.cursor()
+
 	-- checking if ignore is on
 	if uci:get("luci-bmx6","luci","ignore") == "1" then
 		return nil
@@ -47,27 +48,33 @@ function index()
 	-- Starting with the pages
 	---------------------------
 
-	--- neighbours/descriptions (default)
-	entry(place,call("action_neighbours_j"),place[#place])
+	--- status (default)
+	entry(place,call("action_status_j"),place[#place])
 
-	table.insert(place,"neighbours_nojs")
-	entry(place, call("action_neighbours"), nil)
+	-- not visible
+	table.insert(place,"nodes_nojs")
+	entry(place, call("action_nodes"), nil)
 	table.remove(place)
 
-	--- status (this is default one)
-	table.insert(place,"Status")
-	entry(place,call("action_status"),"Status")
+	--- nodes
+	table.insert(place,"Nodes")
+	entry(place,call("action_nodes_j"),"Nodes",1)
 	table.remove(place)
 
-	--- links
+		--- links
 	table.insert(place,"Links")
-	entry(place,call("action_links"),"Links").leaf = true
+	entry(place,call("action_links"),"Links",2).leaf = true
 	table.remove(place)
 
-	-- Gateways
-	table.insert(place,"Gateways")
-	entry(place,call("action_gateways_j"),"Gateways").leaf = true
+	-- Tunnels
+	table.insert(place,"Tunnels")
+	entry(place,call("action_tunnels_j"), "Tunnels", 3).leaf = true
 	table.remove(place)
+
+	-- Gateways (deprecated)
+	--table.insert(place,"Gateways")
+	--entry(place,call("action_gateways_j"),"Gateways").leaf = true
+	--table.remove(place)
 
 	--- chat
 	table.insert(place,"Chat")
@@ -76,7 +83,7 @@ function index()
 
 	--- Graph
 	table.insert(place,"Graph")
-	entry(place, template("bmx6/graph"), "Graph")
+	entry(place, template("bmx6/graph",4), "Graph")
 	table.remove(place)
 
 	--- Topology (hidden)
@@ -86,22 +93,30 @@ function index()
 
 	--- configuration (CBI)
 	table.insert(place,"Configuration")
-	entry(place, cbi("bmx6/main"), "Configuration").dependent=false
+	entry(place, cbi("bmx6/main"), "Configuration",6).dependent=false
+
+	table.insert(place,"General")
+	entry(place, cbi("bmx6/main"), "General",1)
+	table.remove(place)
 
 	table.insert(place,"Advanced")
-	entry(place, cbi("bmx6/advanced"), "Advanced")
+	entry(place, cbi("bmx6/advanced"), "Advanced",5)
 	table.remove(place)
 
 	table.insert(place,"Interfaces")
-	entry(place, cbi("bmx6/interfaces"), "Interfaces")
+	entry(place, cbi("bmx6/interfaces"), "Interfaces",2)
 	table.remove(place)
+
+	table.insert(place,"Tunnels")
+        entry(place, cbi("bmx6/tunnels"), "Tunnels",3)
+        table.remove(place)
 
 	table.insert(place,"Plugins")
-	entry(place, cbi("bmx6/plugins"), "Plugins")
+	entry(place, cbi("bmx6/plugins"), "Plugins",6)
 	table.remove(place)
 
-	table.insert(place,"HNA")
-	entry(place, cbi("bmx6/hna"), "HNA")
+	table.insert(place,"HNAv6")
+	entry(place, cbi("bmx6/hna"), "HNAv6",4)
 	table.remove(place)
 
 	table.remove(place)
@@ -119,7 +134,12 @@ function action_status()
 		end
 end
 
-function action_neighbours()
+function action_status_j()
+	luci.template.render("bmx6/status_j", {})
+end
+
+
+function action_nodes()
 		local orig_list = bmx6json.get("originators").originators or nil
 
 		if orig_list == nil then
@@ -143,36 +163,25 @@ function action_neighbours()
 				name = o.name
 			end
 
-			--Not sure about that, but trying to find main ipv4 from HNA6 published by each node
-			if desc.DESC_ADV ~= nil then
-				for _,h in ipairs(desc.DESC_ADV.extensions[2].HNA6_EXTENSION) do
-
-					if h ~= nil and  string.find(h.address,"::ffff:") then
-						ipv4=string.gsub(h.address,"::ffff:","")
-						break
-					end
-				end
-			end
-
-			if ipv4 == "" then
-				ipv4="0.0.0.0"
-			end
-
-			table.insert(originators,{name=name,ipv4=ipv4,orig=orig,desc=desc})
+			table.insert(originators,{name=name,orig=orig,desc=desc})
 		end
 
-        luci.template.render("bmx6/neighbours", {originators=originators})
+        luci.template.render("bmx6/nodes", {originators=originators})
 end
 
-function action_neighbours_j()
+function action_nodes_j()
 	local http = require "luci.http"
-	local link_non_js = "/cgi-bin/luci" .. http.getenv("PATH_INFO") .. '/neighbours_nojs'
+	local link_non_js = "/cgi-bin/luci" .. http.getenv("PATH_INFO") .. '/nodes_nojs'
 
-	luci.template.render("bmx6/neighbours_j", {link_non_js=link_non_js})
+	luci.template.render("bmx6/nodes_j", {link_non_js=link_non_js})
 end
 
 function action_gateways_j()
 	luci.template.render("bmx6/gateways_j", {})
+end
+
+function action_tunnels_j()
+        luci.template.render("bmx6/tunnels_j", {})
 end
 
 
@@ -199,39 +208,65 @@ function action_topology()
 	local originators = bmx6json.get("originators/all")
 	local o,i,l,i2
 	local first = true
-	luci.http.prepare_content("application/json")
-	luci.http.write('[ ')
+	local topology = '[ '
+	local cache = '/tmp/bmx6-topology.json'
+	local offset = 60
 
-	for i,o in ipairs(originators) do
-		local links = bmx6json.get("links",o.primaryIp)
-		if links then
-			if first then
-				first = false
-			else
-				luci.http.write(', ')
-			end
+	local cachefd = io.open(cache,r)
+	local update = false
 
-			luci.http.write('{ "globalId": "%s", "links": [' %o.globalId:match("^[^%.]+"))
-
-			local first2 = true
-
-			for i2,l in ipairs(links.links) do
-				if first2 then
-					first2 = false
-				else
-					luci.http.write(', ')
-				end
-
-				luci.http.write('{ "globalId": "%s", "rxRate": %s, "txRate": %s }'
-					%{ l.globalId:match("^[^%.]+"), l.rxRate, l.txRate })
-
-			end
-
-			luci.http.write(']}')
+	if cachefd ~= nil then
+		local lastupdate = tonumber(cachefd:read("*line")) or 0
+		if os.time() >= lastupdate + offset then
+			update = true
+		else
+			topology = cachefd:read("*all")
 		end
-
+		cachefd:close()
 	end
-	luci.http.write(' ]')
+
+	if cachefd == nil or update then
+	    	for i,o in ipairs(originators) do
+	    		local links = bmx6json.get("links",o.primaryIp)
+	    		if links then
+	    			if first then
+	    				first = false
+	    			else
+	    				topology = topology .. ', '
+	    			end
+	    
+	    			topology = topology .. '{ "globalId": "%s", "links": [' %o.globalId:match("^[^%.]+")
+	    
+	    			local first2 = true
+	    
+	    			for i2,l in ipairs(links.links) do
+	    				if first2 then
+	    					first2 = false
+	    				else
+	    					topology = topology .. ', '
+	    				end
+	    
+	    				topology = topology .. '{ "globalId": "%s", "rxRate": %s, "txRate": %s }'
+	    					%{ l.globalId:match("^[^%.]+"), l.rxRate, l.txRate }
+	    
+	    			end
+	    
+	    			topology = topology .. ']}'
+	    		end
+	    
+	    	end
+		
+		topology = topology .. ' ]'
+
+		-- Upgrading the content of the cache file
+	 	cachefd = io.open(cache,'w+')
+		cachefd:write(os.time()..'\n')
+		cachefd:write(topology)
+		cachefd:close()
+	end
+
+	luci.http.prepare_content("application/json")
+	luci.http.write(topology)
 end
 
 

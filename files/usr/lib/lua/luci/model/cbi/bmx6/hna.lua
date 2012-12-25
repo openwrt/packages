@@ -23,18 +23,18 @@ local sys = require("luci.sys")
 
 m = Map("bmx6", "bmx6")
 
-local hna = m:section(TypedSection,"hna","HNA")
+local hna = m:section(TypedSection,"hna","IPv6 HNA")
 hna.addremove = true
-hna.anonymous = false
-local hna_option = hna:option(Value,"hna", "Host Network Announcement")
+hna.anonymous = true
+local hna_option = hna:option(Value,"hna", "Host Network Announcement IPv6")
 
-function hna_option:validate(value)
-	local err = sys.call('bmx6 -c --test -a ' .. value)
-	if err ~= 0 then
-		return nil
-	end
-	return value
-end
+--function hna_option:validate(value)
+--	local err = sys.call('bmx6 -c --test -a ' .. value)
+--	if err ~= 0 then
+--		return nil
+--	end
+--	return value
+--end
 
 function m.on_commit(self,map)
         local err = sys.call('bmx6 -c --configReload > /tmp/bmx6-luci.err.tmp')

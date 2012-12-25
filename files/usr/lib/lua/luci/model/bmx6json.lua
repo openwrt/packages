@@ -163,3 +163,57 @@ function wget(url, timeout)
 	end
 end
 
+function getOptions(name)
+	-- Getting json and Checking if bmx6-json is avaiable
+	local options = get("options")
+	if options == nil or options.OPTIONS == nil then
+		m.message = "bmx6-json plugin is not running or some mistake in luci-bmx6 configuration, check /etc/config/luci-bmx6"
+		return nil
+	else
+		options = options.OPTIONS
+	end
+
+	-- Filtering by the option name
+	local i,_
+	local namedopt = nil
+	if name ~= nil then
+		for _,i in ipairs(options) do
+			if i.name == name and i.CHILD_OPTIONS ~= nil then
+				namedopt = i.CHILD_OPTIONS
+				break
+			end
+		end
+	end
+
+	return namedopt
+end
+
+-- Rturns a help string formated to be used in HTML scope
+function getHtmlHelp(opt)
+	if opt == nil then return nil end
+	
+	local help = ""
+	if opt.help ~= nil then
+		help = text2html(opt.help)
+	end
+	if opt.syntax ~= nil then
+		help = help .. "<br/><b>Syntax: </b>" .. text2html(opt.syntax)
+	end		
+
+	return help
+end
+
+function testandreload()
+	local test = sys.call('bmx6 -c --test > /tmp/bmx6-luci.err.tmp')
+	if test ~= 0 then
+		return sys.exec("cat /tmp/bmx6-luci.err.tmp")
+	end
+
+	local err = sys.call('bmx6 -c --configReload > /tmp/bmx6-luci.err.tmp')
+		if err ~= 0 then
+		return sys.exec("cat /tmp/bmx6-luci.err.tmp")
+	end
+
+	return nil
+end
+

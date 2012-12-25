@@ -38,10 +38,10 @@ local eth_int = luci.sys.net.devices()
 -- Getting the most important options from general
 local general = m:section(NamedSection,"general","general","General")
 general.addremove = false
-general:option(Value,"globalPrefix","Global ip prefix","Specify global prefix for interfaces: NETADDR/LENGTH")
+general:option(Value,"globalPrefix","Global ip prefix","Specify global prefix for interfaces: NETADDR/LENGTH. If you are using IPv6 leave blank to let bmx6 autoassign an ULA IPv6 address.")
 
 if m:get("ipVersion","ipVersion") == "6" then
-	general:option(Value,"tun4Address","NIIT IPv4 tunnel address","specify default IPv4 tunnel address and announced range (IP SHOULD be assigned to niit4to6 interface!)")
+	general:option(Value,"tun4Address","IPv4 address or range","specify default IPv4 tunnel address and announced range")
 end
 
 -- IP section
@@ -90,7 +90,7 @@ end
 -- Interfaces section
 local interfaces = m:section(TypedSection,"dev","Devices","")
 interfaces.addremove = true
-interfaces.anonymous = false
+interfaces.anonymous = true
 local intlv = interfaces:option(ListValue,"dev","Device")
 
 for _,i in ipairs(eth_int) do
