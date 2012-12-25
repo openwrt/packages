@@ -20,7 +20,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bmx6-luci
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
@@ -29,14 +29,14 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bmx6-luci
   SECTION:=luci
   CATEGORY:=LuCI
-  SUBMENU:=Applications
-  TITLE:=bmx6 luci interface
-# DEPENDS:=+bmx6 +bmx6-uci-config +luci-lib-json +luci-mod-admin-core +luci-lib-httpclient
+  SUBMENU:=3. Applications
+  TITLE:= Bmx6 configuration, status and visualization module
+# DEPENDS:=+bmx6 +bmx6-uci-config 
   DEPENDS:=+luci-lib-json +luci-mod-admin-core +luci-lib-httpclient
 endef
 
 define Package/bmx6-luci/description
-	bmx6 web interface for luci
+	bmx6 web module for LuCi web interface
 endef
 
 define Package/bmx6-luci/conffiles
