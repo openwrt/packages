@@ -44,12 +44,20 @@ function index()
 		local util = require "luci.util"
 		place = util.split(uci_place," ")
 	end
+
+	-- getting position of menu
+	local uci_position = uci:get("luci-bmx6","luci","position")
+
 	---------------------------
 	-- Starting with the pages
 	---------------------------
 
 	--- status (default)
-	entry(place,call("action_status_j"),place[#place])
+	entry(place,call("action_status_j"),place[#place],tonumber(uci_position))            
+
+	table.insert(place,"Status")
+	entry(place,call("action_status_j"),"Status",0)
+	table.remove(place)
 
 	-- not visible
 	table.insert(place,"nodes_nojs")
@@ -76,14 +84,14 @@ function index()
 	--entry(place,call("action_gateways_j"),"Gateways").leaf = true
 	--table.remove(place)
 
-	--- chat
+	--- Chat
 	table.insert(place,"Chat")
-	entry(place,call("action_chat"),"Chat")
+	entry(place,call("action_chat"),"Chat",5)
 	table.remove(place)
 
 	--- Graph
 	table.insert(place,"Graph")
-	entry(place, template("bmx6/graph",4), "Graph")
+	entry(place, template("bmx6/graph"), "Graph",4)
 	table.remove(place)
 
 	--- Topology (hidden)
