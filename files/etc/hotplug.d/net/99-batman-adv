@@ -9,7 +9,4 @@ case "$ACTION" in
 	add)
 		[ -d /sys/class/net/$INTERFACE/mesh/ ] && bat_config "$INTERFACE"
 		;;
-	remove)
-		[ -d /sys/class/net/$INTERFACE/batman_adv/ ] && config_foreach bat_del_interface mesh "$INTERFACE"
-		;;
 esac

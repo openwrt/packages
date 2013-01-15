@@ -3,10 +3,17 @@ config KMOD_BATMAN_ADV_DEBUG_LOG
 	bool "enable verbose debug logging"
 	depends PACKAGE_kmod-batman-adv
 	default n
+
 config KMOD_BATMAN_ADV_BLA
 	bool "enable bridge loop avoidance"
 	depends PACKAGE_kmod-batman-adv
 	default y
+
+config KMOD_BATMAN_ADV_DAT
+	bool "enable distributed arp table"
+	depends PACKAGE_kmod-batman-adv
+	default y
+
 config KMOD_BATMAN_ADV_BATCTL
 	bool "enable batctl"
 	depends PACKAGE_kmod-batman-adv

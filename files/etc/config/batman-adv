@@ -1,6 +1,5 @@
 
 config 'mesh' 'bat0'
-	option 'interfaces' 'mesh'
 	option 'aggregated_ogms'
 	option 'ap_isolation'
 	option 'bonding'
@@ -12,6 +11,8 @@ config 'mesh' 'bat0'
 	option 'orig_interval'
 	option 'vis_mode'
 	option 'bridge_loop_avoidance'
+	option 'distributed_arp_table'
+	option 'hop_penalty'
 
 # yet another batX instance
 # config 'mesh' 'bat5'
