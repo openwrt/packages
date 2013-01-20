@@ -23,10 +23,10 @@ local sys = require("luci.sys")
 
 m = Map("bmx6", "bmx6")
 
-local hna = m:section(TypedSection,"hna","IPv6 HNA")
+local hna = m:section(TypedSection,"unicastHna","IPv6 HNA")
 hna.addremove = true
 hna.anonymous = true
-local hna_option = hna:option(Value,"hna", "Host Network Announcement IPv6")
+local hna_option = hna:option(Value,"unicastHna", "IPv6 Host Network Announcement. Syntax <NETADDR>/<PREFIX>")
 
 --function hna_option:validate(value)
 --	local err = sys.call('bmx6 -c --test -a ' .. value)
