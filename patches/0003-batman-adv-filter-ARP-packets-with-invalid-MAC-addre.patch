@@ -1,7 +1,7 @@
 From ab361a9ccc584e7501c06bfe1c00cb0411feebaf Mon Sep 17 00:00:00 2001
 From: Matthias Schiffer <mschiffer@universe-factory.net>
 Date: Thu, 24 Jan 2013 18:18:27 +0100
-Subject: [PATCH 3/3] batman-adv: filter ARP packets with invalid MAC
+Subject: [PATCH 3/4] batman-adv: filter ARP packets with invalid MAC
  addresses in DAT
 
 We never want multicast MAC addresses in the Distributed ARP Table, so it's

@@ -1,7 +1,7 @@
 From 3b24193d7cfc18f0cc005811ca4aab3479c2f1c6 Mon Sep 17 00:00:00 2001
 From: Matthias Schiffer <mschiffer@universe-factory.net>
 Date: Thu, 24 Jan 2013 18:18:26 +0100
-Subject: [PATCH 2/3] batman-adv: check for more types of invalid IP addresses
+Subject: [PATCH 2/4] batman-adv: check for more types of invalid IP addresses
  in DAT
 
 There are more types of IP addresses that may appear in ARP packets that we
