@@ -558,6 +558,37 @@ olsrd_write_config() {
 	return 0
 }
 
+get_wan_ifnames()
+{
+	local wanifnames word catch_next
+
+	which ip >/dev/null || return 1
+
+	set -- $( ip route list exact 0.0.0.0/0 table all )
+	for word in $*; do
+		case "$word" in
+			dev)
+				catch_next="true"
+			;;
+			*)
+				[ -n "$catch_next" ] && {
+					case "$wanifnames" in
+						*" $word "*)
+						;;
+						*)
+							wanifnames="$wanifnames $word "
+						;;
+					esac
+
+					catch_next=
+				}
+			;;
+		esac
+	done
+
+	echo "$wanifnames"
+}
+
 olsrd_setup_smartgw_rules() {
 	local funcname="olsrd_setup_smartgw_rules"
 	# Check if ipip is installed
@@ -566,10 +597,12 @@ olsrd_setup_smartgw_rules() {
 		return 1
 	}
 
-	wanifnames=$(ip r l e 0/0 t all | sed -e 's/^.* dev //' |cut -d " " -f 1 | sort | uniq)
-	nowan=0
+	local wanifnames="$( get_wan_ifnames )"
+
 	if [ -z "$wanifnames" ]; then
 		nowan=1
+	else
+		nowan=0
 	fi
 
 	IP4T=$(which iptables)
