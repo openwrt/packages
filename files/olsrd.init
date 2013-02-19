@@ -20,6 +20,11 @@ T='	'
 N='
 '
 
+log()
+{
+	logger -t olsrd -p daemon.info -s "$1"
+}
+
 validate_varname() {
 	local varname="$1"
 	[ -z "$varname" -o "$varname" != "${varname%%[!A-Za-z0-9_]*}" ] && return 1
@@ -75,6 +80,7 @@ olsrd_find_config_file() {
 }
 
 warning_invalid_value() {
+	local funcname="warning_invalid_value"
 	local package="$1"
 	validate_varname "$package" || package=
 	local config="$2"
@@ -82,13 +88,11 @@ warning_invalid_value() {
 	local option="$3"
 	validate_varname "$option" || option=
 
-	echo -n "Warning: Invalid value" 1>&2
-
 	if [ -n "$package" -a -n "$config" ]; then
-		echo -n " in option '$package.$config${option:+.}$option'" 1>&2
+		log "$funcname() in option '$package.$config${option:+.}$option', skipped"
+	else
+		log "$funcname() skipped"
 	fi
-
-	echo ", skipped" 1>&2
 
 	return 0
 }
@@ -127,6 +131,7 @@ olsrd_write_option() {
 }
 
 olsrd_write_plparam() {
+	local funcname="olsrd_write_plparam"
 	local param="$1"
 	local cfg="$2"
 	validate_varname "$cfg" || return 1
@@ -163,9 +168,9 @@ olsrd_write_plparam() {
 	if [ "$option" = 'NonOlsrIf' ]; then
 		if validate_varname "$value"; then
 			if network_get_device ifname "$value"; then
-				echo "Info: mdns Interface '$value' ifname '$ifname' found" 1>&2
+				log "$funcname() Info: mdns Interface '$value' ifname '$ifname' found"
 			else
-				echo "Warning: mdns Interface '$value' not found, skipped" 1>&2
+				log "$funcname() Warning: mdns Interface '$value' not found, skipped"
 			fi
 		else
 			warning_invalid_value olsrd "$cfg" "NonOlsrIf"
@@ -399,6 +404,7 @@ olsrd_write_hna6() {
 }
 
 olsrd_write_loadplugin() {
+	local funcname="olsrd_write_loadplugin"
 	local cfg="$1"
 	validate_varname "$cfg" || return 0
 	local ignore
@@ -417,7 +423,7 @@ olsrd_write_loadplugin() {
 		return 0
 	fi
 	if ! [ -x "/lib/$library" -o -x "/usr/lib/$library" -o -x "/usr/local/lib/$library" ]; then
-		echo "Warning: Plugin library '$library' not found, skipped" 1>&2
+		log "$funcname() Warning: Plugin library '$library' not found, skipped"
 		return 0
 	fi
 
@@ -462,6 +468,7 @@ olsrd_write_loadplugin() {
 }
 
 olsrd_write_interface() {
+	local funcname="olsrd_write_interface"
 	local cfg="$1"
 	validate_varname "$cfg" || return 0
 	local ignore
@@ -480,7 +487,7 @@ olsrd_write_interface() {
 				ifnames="$ifnames \"$IFNAME\""
 				ifsglobal="$ifsglobal $IFNAME"
 			else
-				echo "Warning: Interface '$interface' not found, skipped" 1>&2
+				log "$funcname() Warning: Interface '$interface' not found, skipped"
 			fi
 		else
 			warning_invalid_value olsrd "$cfg" "interface"
@@ -552,8 +559,11 @@ olsrd_write_config() {
 }
 
 olsrd_setup_smartgw_rules() {
+	local funcname="olsrd_setup_smartgw_rules"
 	# Check if ipip is installed
-	[ ! -e /etc/modules.d/[0-9]*-ipip ] && echo "Warning: kmod-ipip is missing. SmartGateway will not work until you install it."
+	[ -e /etc/modules.d/[0-9]*-ipip ] || {
+		log "$funcname() Warning: kmod-ipip is missing. SmartGateway will not work until you install it."
+	}
 
 	wanifnames=$(ip r l e 0/0 t all | sed -e 's/^.* dev //' |cut -d " " -f 1 | sort | uniq)
 	nowan=0
@@ -577,7 +587,7 @@ olsrd_setup_smartgw_rules() {
 	while $IP4T -t nat -D postrouting_rule -o tnl_+ -j MASQUERADE 2> /dev/null; do :;done
 
 	if [ "$smartgateway" == "yes" ]; then
-		echo "Notice: Inserting firewall rules for SmartGateway"
+		log "$funcname() Notice: Inserting firewall rules for SmartGateway"
 		if [ ! "$smartgatewayuplink" == "none" ]; then
 			if [ "$smartgatewayuplink" == "ipv4" ]; then
 				# Allow everything to be forwarded to tnl_+ and use NAT for it
@@ -622,7 +632,7 @@ olsrd_setup_smartgw_rules() {
 }
 
 error() {
-	echo "${initscript}:" "$@" 1>&2
+	log "error() ${initscript}: $@"
 }
 
 start() {
@@ -674,14 +684,14 @@ start() {
 
 		SERVICE_PID_FILE="$PID6"
 		if service_check /usr/sbin/olsrd; then
-			error "there already is an IPv6 instance of olsrd running ($(cat $PID6)), not starting."
+			error "there is already an IPv6 instance of olsrd running (pid: '$(cat $PID6)'), not starting."
 		else
 			service_start /usr/sbin/olsrd -f /var/etc/olsrd.conf.ipv6 -nofork
 		fi
 
 		SERVICE_PID_FILE="$PID"
 		if service_check /usr/sbin/olsrd; then
-			error "there already is an IPv4 instance of olsrd running ($(cat $PID)), not starting."
+			error "there is already an IPv4 instance of olsrd running (pid: '$(cat $PID)'), not starting."
 		else
 			service_start /usr/sbin/olsrd -f /var/etc/olsrd.conf.ipv4 -nofork
 		fi
@@ -697,7 +707,7 @@ start() {
 
 		SERVICE_PID_FILE="$PID"
 		if service_check /usr/sbin/olsrd; then
-			error "there already is an IPv4 instance of olsrd running ($(cat $PID)), not starting."
+			error "there is already an IPv4 instance of olsrd running (pid: '$(cat $PID)'), not starting."
 			return 1
 		else
 			service_start /usr/sbin/olsrd -f "$OLSRD_CONFIG_FILE" -nofork
