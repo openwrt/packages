@@ -563,6 +563,7 @@ olsrd_setup_smartgw_rules() {
 	# Check if ipip is installed
 	[ -e /etc/modules.d/[0-9]*-ipip ] || {
 		log "$funcname() Warning: kmod-ipip is missing. SmartGateway will not work until you install it."
+		return 1
 	}
 
 	wanifnames=$(ip r l e 0/0 t all | sed -e 's/^.* dev //' |cut -d " " -f 1 | sort | uniq)
