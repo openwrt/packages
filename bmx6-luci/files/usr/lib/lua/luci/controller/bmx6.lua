@@ -53,7 +53,7 @@ function index()
 	---------------------------
 
 	--- status (default)
-	entry(place,call("action_status_j"),place[#place],tonumber(uci_position))            
+	entry(place,call("action_nodes_j"),place[#place],tonumber(uci_position))            
 
 	table.insert(place,"Status")
 	entry(place,call("action_status_j"),"Status",0)
