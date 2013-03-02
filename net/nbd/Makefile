@@ -37,12 +37,24 @@ define Package/nbd/description
   This package contains the network block device client.
 endef
 
+define Package/nbd-server
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=Network Block Device Server
+  URL:=http://nbd.sourceforge.net
+  DEPENDS:=+glib2
+endef
+
+define Package/nbd-server/description
+  This package contains the network block device server.
+endef
+
 CONFIGURE_ARGS+= \
 	--disable-glibtest
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
-		nbd-client
+		nbd-client nbd-server
 endef
 
 define Package/nbd/install
@@ -51,3 +63,20 @@ define Package/nbd/install
 endef
 
 $(eval $(call BuildPackage,nbd))
+
+define Package/nbd-server/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nbd-server $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/nbd-server.conf $(1)/etc/config/nbd-server
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/nbd-server.init $(1)/etc/init.d/nbd-server
+endef
+
+define Package/nbd-server/conffiles
+/etc/config/nbd-server
+/etc/nbd-server/conf.d
+/etc/nbd-server/allow
+endef
+
+$(eval $(call BuildPackage,nbd-server))
