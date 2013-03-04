@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2013.0.0
-BATCTL_VERSION:=2013.0.0
-PKG_RELEASE:=3
-PKG_MD5SUM:=37f4aa02f393daad3d87cead2bc28ed9
-BATCTL_MD5SUM:=6ea4bcd8a9332d586bb06b5063f882cd
+PKG_VERSION:=2013.1.0
+BATCTL_VERSION:=2013.1.0
+PKG_RELEASE:=1
+PKG_MD5SUM:=fe1fd32eddde1f91575d7a7ec21d5782
+BATCTL_MD5SUM:=767bf36c77c517e1d321169bf9a7fae5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -115,7 +115,6 @@ define KernelPackage/batman-adv/install
 	$(INSTALL_DATA) ./files/lib/batman-adv/config.sh $(1)/lib/batman-adv
 	$(INSTALL_BIN) ./files/etc/hotplug.d/net/99-batman-adv $(1)/etc/hotplug.d/net
 	$(INSTALL_BIN) ./files/lib/netifd/proto/batadv.sh $(1)/lib/netifd/proto
-	$(INSTALL_BIN) ./files/usr/sbin/batman-adv $(1)/usr/sbin
 	$(BATCTL_INSTALL)
 endef
 
