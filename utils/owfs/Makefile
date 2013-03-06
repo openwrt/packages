@@ -20,6 +20,14 @@ PKG_LICENSE:=GPL-2.0
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+PKG_CONFIG_DEPENDS:= \
+  CONFIG_LIBOW_MASTER_USB \
+  CONFIG_LIBOW_MASTER_I2C \
+  CONFIG_LIBOW_MASTER_W1 \
+  CONFIG_LIBOW_ZEROCONF \
+  CONFIG_LIBOW_DEBUG \
+  CONFIG_LIBOW_OWTRAFFIC
+
 include $(INCLUDE_DIR)/package.mk
 
 #
@@ -74,8 +82,15 @@ endef
 
 define Package/libow
   $(call Package/owfs/Library)
-  DEPENDS:=+libusb-compat +libpthread
+  DEPENDS:= \
+    +libpthread \
+    +LIBOW_MASTER_USB:libusb-compat \
+    +LIBOW_MASTER_W1:kmod-w1
   TITLE:=OWFS - common shared library
+endef
+
+define Package/libow/config
+  source "$(SOURCE)/Config.in"
 endef
 
 define Package/libow/description
@@ -170,13 +185,18 @@ CONFIGURE_ARGS += \
 	--with-fuseinclude="$(STAGING_DIR)/usr/include" \
 	--with-fuselib="$(STAGING_DIR)/usr/lib" \
 	--enable-shared \
-	--enable-zero \
 	--disable-parport \
 	--disable-ownet \
 	--disable-owpython \
 	--disable-owphp \
 	--disable-owtcl \
 	--disable-swig \
+	$(if $(CONFIG_LIBOW_MASTER_USB),--enable-usb,--disable-usb) \
+	$(if $(CONFIG_LIBOW_MASTER_W1),--enable-w1,--disable-w1) \
+	$(if $(CONFIG_LIBOW_MASTER_I2C),--enable-i2c,--disable-i2c) \
+	$(if $(CONFIG_LIBOW_ZEROCONF),--enable-zero,--disable-zero) \
+	$(if $(CONFIG_LIBOW_DEBUG),--enable-debug,--disable-debug) \
+	$(if $(CONFIG_LIBOW_OWTRAFFIC),--enable-owtraffic,--disable-owtraffic)
 
 CONFIGURE_VARS += \
 	LDFLAGS="$(TARGET_LDFLAGS) -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -Wl,-rpath-link=$(TOOLCHAIN_DIR)/usr/lib" \
