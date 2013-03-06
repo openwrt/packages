@@ -1,0 +1,75 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2012 OpenWrt.org
+
+START=99
+
+SERVICE_WRITE_PID=1
+SERVICE_DAEMONIZE=1
+
+# Workaround insufficient /dev/fuse permissions and the lack of /etc/fuse.conf
+DEFAULT_SERVICE_UID=0
+DEFAULT_SERVICE_GID=0
+
+append_device() {
+	append devices "$1"
+}
+
+
+start_owfs_daemon() {
+	local program="$1"
+	local config="$1"
+	local args="--foreground --error_print=1 $2"
+
+
+	local enabled
+	config_get_bool enabled "$config" enabled 0
+	[ "${enabled}" -eq 0 ] && return 1
+
+	local readonly
+	config_get_bool readonly "$config" readonly 0
+	[ "${readonly}" -eq 1 ] && append args "--readonly"
+
+	local error_level
+	config_get error_level "$config" error_level
+	[ -n "${error_level}" ] && append args "--error_level=${error_level}"
+
+	local options
+	config_get options "$config" options
+
+	devices=""
+	config_list_foreach "$config" devices append_device
+
+	config_get SERVICE_UID "$config" uid "$DEFAULT_SERVICE_UID"
+	config_get SERVICE_GID "$config" gid "$DEFAULT_SERVICE_GID"
+
+	service_start "/usr/bin/$program" $args $options $devices
+}
+
+start_owfs() {
+	local config="owfs"
+	local args=""
+
+	config_load "$config"
+
+	local mountpoint
+	config_get mountpoint "$config" mountpoint /mnt/owfs
+	append args "--mountpoint=${mountpoint}"
+
+	local fuse_allow_other
+	config_get_bool fuse_allow_other "$config" fuse_allow_other 0
+	[ "${fuse_allow_other}" -eq 1 ] && append args "--allow_other"
+
+	local fuse_open_opt
+	config_get fuse_open_opt "$config" fuse_open_opt
+	[ -n "${fuse_open_opt}" ] && append args "--fuse_open_opt=\"${fuse_open_opt}\""
+
+	start_owfs_daemon "$config" "$args"
+}
+
+start() {
+	start_owfs
+}
+
+stop() {
+	service_stop /usr/bin/owfs
+}

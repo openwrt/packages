@@ -198,6 +198,15 @@ endef
 define Package/owfs/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/owfs $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/owfs.conf $(1)/etc/config/owfs
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/owfs.init $(1)/etc/init.d/owfs
+	mkdir -p $(1)/mnt/owfs
+endef
+
+define Package/owfs/conffiles
+/etc/config/owfs
 endef
 
 define Package/owshell/install
@@ -213,18 +222,41 @@ endef
 define Package/owserver/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/owserver $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/owserver.conf $(1)/etc/config/owserver
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/owserver.init $(1)/etc/init.d/owserver
+endef
+
+define Package/owserver/conffiles
+/etc/config/owserver
 endef
 
 define Package/owhttpd/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/owhttpd $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/owhttpd.conf $(1)/etc/config/owhttpd
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/owhttpd.init $(1)/etc/init.d/owhttpd
+endef
+
+define Package/owhttpd/conffiles
+/etc/config/owhttpd
 endef
 
 define Package/owftpd/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/owftpd $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/owftpd.conf $(1)/etc/config/owftpd
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/owftpd.init $(1)/etc/init.d/owftpd
 endef
 
+define Package/owftpd/conffiles
+/etc/config/owftpd
+endef
 
 define Package/libow/install
 	$(INSTALL_DIR) $(1)/usr/lib

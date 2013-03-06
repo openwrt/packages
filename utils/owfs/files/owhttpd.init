@@ -1,0 +1,71 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2012 OpenWrt.org
+
+START=99
+
+SERVICE_WRITE_PID=1
+SERVICE_DAEMONIZE=1
+
+DEFAULT_SERVICE_UID=65534
+DEFAULT_SERVICE_GID=65534
+
+append_device() {
+	append devices "$1"
+}
+
+
+start_owfs_daemon() {
+	local program="$1"
+	local config="$1"
+	local args="--foreground --error_print=1 $2"
+
+
+	local enabled
+	config_get_bool enabled "$config" enabled 0
+	[ "${enabled}" -eq 0 ] && return 1
+
+	local readonly
+	config_get_bool readonly "$config" readonly 0
+	[ "${readonly}" -eq 1 ] && append args "--readonly"
+
+	local error_level
+	config_get error_level "$config" error_level
+	[ -n "${error_level}" ] && append args "--error_level=${error_level}"
+
+	local options
+	config_get options "$config" options
+
+	devices=""
+	config_list_foreach "$config" devices append_device
+
+	config_get SERVICE_UID "$config" uid "$DEFAULT_SERVICE_UID"
+	config_get SERVICE_GID "$config" gid "$DEFAULT_SERVICE_GID"
+
+	service_start "/usr/bin/$program" $args $options $devices
+}
+
+start_owhttpd() {
+	local config="owhttpd"
+	local args=""
+
+	config_load "$config"
+
+	local port
+	config_get port "$config" port
+	[ -n "${port}" ] && append args "--port=${port}"
+
+	local max_connections
+	config_get max_connections "$config" max_connections
+	[ -n "${max_connections}" ] && append args "--max_connections=${max_connections}"
+
+	start_owfs_daemon "$config" "$args"
+}
+
+
+start() {
+	start_owhttpd
+}
+
+stop() {
+	service_stop /usr/bin/owhttpd
+}
