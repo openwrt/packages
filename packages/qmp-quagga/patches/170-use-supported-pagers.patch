@@ -1,0 +1,29 @@
+--- a/vtysh/vtysh.c
++++ b/vtysh/vtysh.c
+@@ -269,7 +269,7 @@ vtysh_pager_init (void)
+   if (pager_defined)
+     vtysh_pager_name = strdup (pager_defined);
+   else
+-    vtysh_pager_name = strdup ("more");
++    vtysh_pager_name = strdup ("cat");
+ }
+ 
+ /* Command execution over the vty interface. */
+@@ -1885,7 +1885,7 @@ DEFUN (vtysh_terminal_length,
+ {
+   int lines;
+   char *endptr = NULL;
+-  char default_pager[10];
++  char default_pager[12];
+ 
+   lines = strtol (argv[0], &endptr, 10);
+   if (lines < 0 || lines > 512 || *endptr != '\0')
+@@ -1902,7 +1902,7 @@ DEFUN (vtysh_terminal_length,
+ 
+   if (lines != 0)
+     {
+-      snprintf(default_pager, 10, "more -%i", lines);
++      snprintf(default_pager, 12, "head -n %i", lines);
+       vtysh_pager_name = strdup (default_pager);
+     }
+ 

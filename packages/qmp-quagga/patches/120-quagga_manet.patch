@@ -1,0 +1,243 @@
+--- a/lib/log.c
++++ b/lib/log.c
+@@ -929,13 +929,19 @@ proto_redistnum(int afi, const char *s)
+ 	return ZEBRA_ROUTE_STATIC;
+       else if (strncmp (s, "r", 1) == 0)
+ 	return ZEBRA_ROUTE_RIP;
+-      else if (strncmp (s, "o", 1) == 0)
++      else if (strncmp (s, "os", 2) == 0)
+ 	return ZEBRA_ROUTE_OSPF;
+       else if (strncmp (s, "i", 1) == 0)
+ 	return ZEBRA_ROUTE_ISIS;
+       else if (strncmp (s, "bg", 2) == 0)
+ 	return ZEBRA_ROUTE_BGP;
+-      else if (strncmp (s, "ba", 2) == 0)
++      else if (strncmp (s, "h", 1) == 0)
++	return ZEBRA_ROUTE_HSLS;
++      else if (strncmp (s, "ol", 2) == 0)
++	return ZEBRA_ROUTE_OLSR;
++      else if (strncmp (s, "bat", 3) == 0)
++	return ZEBRA_ROUTE_BATMAN;
++      else if (strncmp (s, "bab", 3) == 0)
+ 	return ZEBRA_ROUTE_BABEL;
+     }
+   if (afi == AFI_IP6)
+@@ -948,13 +954,19 @@ proto_redistnum(int afi, const char *s)
+ 	return ZEBRA_ROUTE_STATIC;
+       else if (strncmp (s, "r", 1) == 0)
+ 	return ZEBRA_ROUTE_RIPNG;
+-      else if (strncmp (s, "o", 1) == 0)
++      else if (strncmp (s, "os", 2) == 0)
+ 	return ZEBRA_ROUTE_OSPF6;
+       else if (strncmp (s, "i", 1) == 0)
+ 	return ZEBRA_ROUTE_ISIS;
+       else if (strncmp (s, "bg", 2) == 0)
+ 	return ZEBRA_ROUTE_BGP;
+-      else if (strncmp (s, "ba", 2) == 0)
++      else if (strncmp (s, "h", 1) == 0)
++	return ZEBRA_ROUTE_HSLS;
++      else if (strncmp (s, "ol", 2) == 0)
++	return ZEBRA_ROUTE_OLSR;
++      else if (strncmp (s, "bat", 3) == 0)
++	return ZEBRA_ROUTE_BATMAN;
++      else if (strncmp (s, "bab", 3) == 0)
+ 	return ZEBRA_ROUTE_BABEL;
+     }
+   return -1;
+--- a/lib/route_types.txt
++++ b/lib/route_types.txt
+@@ -51,13 +51,9 @@ ZEBRA_ROUTE_OSPF,       ospf,      ospfd
+ ZEBRA_ROUTE_OSPF6,      ospf6,     ospf6d, 'O', 0, 1, "OSPFv6"
+ ZEBRA_ROUTE_ISIS,       isis,      isisd,  'I', 1, 1, "IS-IS"
+ ZEBRA_ROUTE_BGP,        bgp,       bgpd,   'B', 1, 1, "BGP"
+-# HSLS and OLSR both are AFI independent (so: 1, 1), however
+-# we want to disable for them for general Quagga distribution.
+-# This at least makes it trivial for users of these protocols
+-# to 'switch on' redist support (direct numeric entry remaining
+-# possible).
+-ZEBRA_ROUTE_HSLS,       hsls,      hslsd,  'H', 0, 0, "HSLS"
+-ZEBRA_ROUTE_OLSR,       olsr,      olsrd,  'o', 0, 0, "OLSR"
++ZEBRA_ROUTE_HSLS,       hsls,      hslsd,  'H', 1, 1, "HSLS"
++ZEBRA_ROUTE_OLSR,       olsr,      olsrd,  'o', 1, 1, "OLSR"
++ZEBRA_ROUTE_BATMAN,     batman,    batmand,'b', 1, 1, "BATMAN"
+ ZEBRA_ROUTE_BABEL,      babel,     babeld, 'A', 1, 1, "Babel"
+ 
+ ## help strings
+@@ -72,5 +68,6 @@ ZEBRA_ROUTE_OSPF6,  "Open Shortest Path
+ ZEBRA_ROUTE_ISIS,   "Intermediate System to Intermediate System (IS-IS)"
+ ZEBRA_ROUTE_BGP,    "Border Gateway Protocol (BGP)"
+ ZEBRA_ROUTE_HSLS,   "Hazy-Sighted Link State Protocol (HSLS)"
+-ZEBRA_ROUTE_OLSR,   "Optimised Link State Routing (OLSR)"
++ZEBRA_ROUTE_OLSR,   "Optimized Link State Routing (OLSR)"
++ZEBRA_ROUTE_BATMAN, "Better Approach to Mobile Ad-Hoc Networking (BATMAN)"
+ ZEBRA_ROUTE_BABEL,  "Babel routing protocol (Babel)"
+--- a/ripd/rip_zebra.c
++++ b/ripd/rip_zebra.c
+@@ -206,9 +206,12 @@ static struct {
+   {ZEBRA_ROUTE_KERNEL,  1, "kernel"},
+   {ZEBRA_ROUTE_CONNECT, 1, "connected"},
+   {ZEBRA_ROUTE_STATIC,  1, "static"},
+-  {ZEBRA_ROUTE_OSPF,    1, "ospf"},
++  {ZEBRA_ROUTE_OSPF,    2, "ospf"},
+   {ZEBRA_ROUTE_BGP,     2, "bgp"},
+-  {ZEBRA_ROUTE_BABEL,   2, "babel"},
++  {ZEBRA_ROUTE_HSLS,    1, "hsls"},
++  {ZEBRA_ROUTE_OLSR,    2, "olsr"},
++  {ZEBRA_ROUTE_BATMAN,  3, "batman"},
++  {ZEBRA_ROUTE_BABEL,   3, "babel"},
+   {0, 0, NULL}
+ };
+ 
+--- a/ripngd/ripng_zebra.c
++++ b/ripngd/ripng_zebra.c
+@@ -216,9 +216,12 @@ static struct {
+   {ZEBRA_ROUTE_KERNEL,  1, "kernel"},
+   {ZEBRA_ROUTE_CONNECT, 1, "connected"},
+   {ZEBRA_ROUTE_STATIC,  1, "static"},
+-  {ZEBRA_ROUTE_OSPF6,   1, "ospf6"},
++  {ZEBRA_ROUTE_OSPF6,   2, "ospf6"},
+   {ZEBRA_ROUTE_BGP,     2, "bgp"},
+-  {ZEBRA_ROUTE_BABEL,   2, "babel"},
++  {ZEBRA_ROUTE_HSLS,    1, "hsls"},
++  {ZEBRA_ROUTE_OLSR,    2, "olsr"},
++  {ZEBRA_ROUTE_BATMAN,  3, "batman"},
++  {ZEBRA_ROUTE_BABEL,   3, "babel"},
+   {0, 0, NULL}
+ };
+ 
+--- a/zebra/rt_netlink.c
++++ b/zebra/rt_netlink.c
+@@ -1623,6 +1623,9 @@ netlink_route_multipath (int cmd, struct
+                         addattr_l (&req.n, sizeof req, RTA_PREFSRC,
+ 				 &nexthop->src.ipv4, bytelen);
+ 
++		      if (rib->type == ZEBRA_ROUTE_OLSR)
++			req.r.rtm_scope = RT_SCOPE_LINK;
++
+ 		      if (IS_ZEBRA_DEBUG_KERNEL)
+ 			zlog_debug("netlink_route_multipath() (single hop): "
+ 				   "nexthop via if %u", nexthop->ifindex);
+--- a/zebra/zebra_rib.c
++++ b/zebra/zebra_rib.c
+@@ -67,6 +67,9 @@ static const struct
+   [ZEBRA_ROUTE_OSPF6]   = {ZEBRA_ROUTE_OSPF6,   110},
+   [ZEBRA_ROUTE_ISIS]    = {ZEBRA_ROUTE_ISIS,    115},
+   [ZEBRA_ROUTE_BGP]     = {ZEBRA_ROUTE_BGP,      20  /* IBGP is 200. */},
++  [ZEBRA_ROUTE_HSLS]    = {ZEBRA_ROUTE_HSLS,      0},
++  [ZEBRA_ROUTE_OLSR]    = {ZEBRA_ROUTE_OLSR,      0},
++  [ZEBRA_ROUTE_BATMAN]  = {ZEBRA_ROUTE_BATMAN,    0},
+   [ZEBRA_ROUTE_BABEL]   = {ZEBRA_ROUTE_BABEL,    95},
+   /* no entry/default: 150 */
+ };
+@@ -403,6 +406,18 @@ nexthop_active_ipv4 (struct rib *rib, st
+ 		  }
+ 	      return 0;
+ 	    }
++	  else if (match->type == ZEBRA_ROUTE_OLSR)
++	    {
++	      for (newhop = match->nexthop; newhop; newhop = newhop->next)
++		if (CHECK_FLAG (newhop->flags, NEXTHOP_FLAG_FIB)
++		    && newhop->type == NEXTHOP_TYPE_IFINDEX)
++		  {
++		    if (nexthop->type == NEXTHOP_TYPE_IPV4)
++		      nexthop->ifindex = newhop->ifindex;
++		    return 1;
++		  }
++	      return 0;
++	    }
+ 	  else
+ 	    {
+ 	      return 0;
+@@ -507,6 +522,18 @@ nexthop_active_ipv6 (struct rib *rib, st
+ 		  }
+ 	      return 0;
+ 	    }
++	  else if (match->type == ZEBRA_ROUTE_OLSR)
++	    {
++	      for (newhop = match->nexthop; newhop; newhop = newhop->next)
++		if (CHECK_FLAG (newhop->flags, NEXTHOP_FLAG_FIB)
++		    && newhop->type == NEXTHOP_TYPE_IFINDEX)
++		  {
++		    if (nexthop->type == NEXTHOP_TYPE_IPV6)
++		      nexthop->ifindex = newhop->ifindex;
++		    return 1;
++		  }
++	      return 0;
++	    }
+ 	  else
+ 	    {
+ 	      return 0;
+@@ -1236,6 +1263,8 @@ static const u_char meta_queue_map[ZEBRA
+   [ZEBRA_ROUTE_ISIS]    = 2,
+   [ZEBRA_ROUTE_BGP]     = 3,
+   [ZEBRA_ROUTE_HSLS]    = 4,
++  [ZEBRA_ROUTE_OLSR]    = 4,
++  [ZEBRA_ROUTE_BATMAN]  = 4,
+   [ZEBRA_ROUTE_BABEL]   = 2,
+ };
+ 
+--- a/zebra/zebra_snmp.c
++++ b/zebra/zebra_snmp.c
+@@ -251,6 +251,12 @@ proto_trans(int type)
+       return 1; /* shouldn't happen */
+     case ZEBRA_ROUTE_BGP:
+       return 14; /* bgp */
++    case ZEBRA_ROUTE_HSLS:
++      return 1; /* other */
++    case ZEBRA_ROUTE_OLSR:
++      return 1; /* other */
++    case ZEBRA_ROUTE_BATMAN:
++      return 1; /* other */
+     default:
+       return 1; /* other */
+     }
+--- a/zebra/zebra_vty.c
++++ b/zebra/zebra_vty.c
+@@ -558,7 +558,10 @@ vty_show_ip_route_detail (struct vty *vt
+ 	  || rib->type == ZEBRA_ROUTE_OSPF
+ 	  || rib->type == ZEBRA_ROUTE_BABEL
+ 	  || rib->type == ZEBRA_ROUTE_ISIS
+-	  || rib->type == ZEBRA_ROUTE_BGP)
++	  || rib->type == ZEBRA_ROUTE_BGP
++	  || rib->type == ZEBRA_ROUTE_HSLS
++	  || rib->type == ZEBRA_ROUTE_OLSR
++	  || rib->type == ZEBRA_ROUTE_BATMAN)
+ 	{
+ 	  time_t uptime;
+ 	  struct tm *tm;
+@@ -777,7 +780,10 @@ vty_show_ip_route (struct vty *vty, stru
+ 	  || rib->type == ZEBRA_ROUTE_OSPF
+ 	  || rib->type == ZEBRA_ROUTE_BABEL
+ 	  || rib->type == ZEBRA_ROUTE_ISIS
+-	  || rib->type == ZEBRA_ROUTE_BGP)
++	  || rib->type == ZEBRA_ROUTE_BGP
++	  || rib->type == ZEBRA_ROUTE_HSLS
++	  || rib->type == ZEBRA_ROUTE_OLSR
++	  || rib->type == ZEBRA_ROUTE_BATMAN)
+ 	{
+ 	  time_t uptime;
+ 	  struct tm *tm;
+@@ -1536,7 +1542,10 @@ vty_show_ipv6_route_detail (struct vty *
+ 	  || rib->type == ZEBRA_ROUTE_OSPF6
+ 	  || rib->type == ZEBRA_ROUTE_BABEL
+ 	  || rib->type == ZEBRA_ROUTE_ISIS
+-	  || rib->type == ZEBRA_ROUTE_BGP)
++	  || rib->type == ZEBRA_ROUTE_BGP
++	  || rib->type == ZEBRA_ROUTE_HSLS
++	  || rib->type == ZEBRA_ROUTE_OLSR
++	  || rib->type == ZEBRA_ROUTE_BATMAN)
+ 	{
+ 	  time_t uptime;
+ 	  struct tm *tm;
+@@ -1716,7 +1725,10 @@ vty_show_ipv6_route (struct vty *vty, st
+ 	  || rib->type == ZEBRA_ROUTE_OSPF6
+ 	  || rib->type == ZEBRA_ROUTE_BABEL
+ 	  || rib->type == ZEBRA_ROUTE_ISIS
+-	  || rib->type == ZEBRA_ROUTE_BGP)
++	  || rib->type == ZEBRA_ROUTE_BGP
++	  || rib->type == ZEBRA_ROUTE_HSLS
++	  || rib->type == ZEBRA_ROUTE_OLSR
++	  || rib->type == ZEBRA_ROUTE_BATMAN)
+ 	{
+ 	  time_t uptime;
+ 	  struct tm *tm;

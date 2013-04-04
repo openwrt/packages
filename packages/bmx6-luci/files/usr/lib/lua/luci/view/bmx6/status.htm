@@ -1,0 +1,69 @@
+<%+header%>
+<link rel="stylesheet" type="text/css" href="/luci-static/resources/bmx6/style.css" />
+
+<img src="<%=resource%>/bmx6/bmx6logo.png" />
+
+Bmx6 is a routing protocol for Linux based operating systems. Visit <a href="http://bmx6.net">bmx6.net</a> for more info.
+
+<br />
+<br />
+
+<h2>Status of bmx6</h2>
+
+<table>
+<tr>
+	<th>Version</th>
+	<th>Compatibility</th>
+	<th>CodeVersion</th>
+	<th>Global Id</th>
+	<th>Primary Ip</th>
+	<th>Local Id</th>
+	<th>Uptime</th>
+	<th>CPU</th>
+	<th>Nodes</th>
+</tr>
+	<tr>
+		<td><%=status.version%></td>
+		<td><%=status.compatibility%></td>
+		<td><%=status.codeVersion%></td>
+		<td><%=status.globalId%>/<%=status.rateMax%></td>
+		<td><%=status.primaryIp%></td>
+		<td><%=status.myLocalId%></td>
+		<td><%=status.uptime%></td>
+		<td><%=status.cpu%></td>
+		<td><%=status.nodes%></td>
+	</tr>
+</table>
+
+<br />
+<br />
+
+<h2>Status of interfaces</h2>
+<table>
+<tr>
+	<th>Name</th>
+	<th>State</th>
+	<th>Type</th>
+	<th>Rate (Min/Max)</th>
+	<th>Local IP</th>
+	<th>Global IP</th>
+	<th>Multicast IP</th>
+	<th>Primary</th>
+</tr>
+<% for i,v in ipairs(interfaces) do %>
+	<tr>
+		<td><%=v.devName%></td>
+		<td><%=v.state%></td>
+		<td><%=v.type%></td>
+		<td><%=v.rateMin%>/<%=v.rateMax%></td>
+		<td><%=v.llocalIp%></td>
+		<td><%=v.globalIp%></td>
+		<td><%=v.multicastIp%></td>
+		<td><%=v.primary%></td>
+	</tr>
+<%end%>
+</table>
+
+<br />
+
+<%+footer%>

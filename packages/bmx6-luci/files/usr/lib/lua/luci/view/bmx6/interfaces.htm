@@ -1,0 +1,59 @@
+<%+header%>
+
+    <style type="text/css">
+    table.int {
+        border-width: 2px;
+        border-spacing: ;
+        border-style: inset;
+        border-color: white;
+        border-collapse: collapse;
+        background-color: #dadbe6;
+        }
+    table.int tr {
+        border-width: 5px;
+        padding: 4px;
+        border-style: solid;
+        border-color: white;
+        background-color: #dadbe9;
+        }
+    table.int td {
+        border-width: 5px;
+        padding: 4px;
+        border-style: solid;
+        border-color: white;
+        background-color: #dadbe9;
+		text-align: center;
+        }
+    </style>
+
+<h2><a id="content" name="content"><%:Interfaces%></a></h2>
+Interfaces where bmx6 is running
+<br />
+<br />
+<table class="int">
+<tr>
+	<td><strong>Name</strong></td>
+	<td><strong>State</strong></td>
+	<td><strong>Type</strong></td>
+	<td><strong>Rate (Min/Max)</strong></td>
+	<td><strong>Local IP</strong></td>
+	<td><strong>Global IP</strong></td>
+	<td><strong>Multicast IP</strong></td>
+	<td><strong>Primary</strong></td>
+</tr>
+<% for i,v in ipairs(data) do %>
+	<tr>
+		<td><%=v.devName%></td>
+		<td><%=v.state%></td>
+		<td><%=v.type%></td>
+		<td><%=v.rateMin%>/<%=v.rateMax%></td>
+		<td><%=v.llocalIp%></td>
+		<td><%=v.globalIp%></td>
+		<td><%=v.multicastIp%></td>
+		<td><%=v.primary%></td>
+	</tr>
+<%end%>
+</table>
+
+<br />
+<%+footer%>
