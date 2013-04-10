@@ -270,34 +270,32 @@ config_write_options() {
 		return 0
 	}
 
-	case " $schema " in
-		*" speed "*)
-			get_value_for_entry "speed"
+	already_in_schema()
+	{
+		case " $schema " in
+			*" $1 "*)
+				return 0
+			;;
+			*)
+				return 1
+			;;
+		esac
+	}
 
-			if [ 2>/dev/null $value -gt 0 -a $value -le 20 ]; then
-				speed="$value"
-			else
-				log "$funcname() Warning: invalid speed-value: '$value' - allowed integers: 1...20, fallback to 6"
-				speed=6
-			fi
+	already_in_schema "speed" && {
+		get_value_for_entry "speed"
 
-			already_in_schema()
-			{
-				case " $schema " in
-					*" $1 "*)
-						return 0
-					;;
-					*)
-						return 1
-					;;
-				esac
-			}
+		if [ 2>/dev/null $value -gt 0 -a $value -le 20 ]; then
+			speed="$value"
+		else
+			log "$funcname() Warning: invalid speed-value: '$value' - allowed integers: 1...20, fallback to 6"
+			speed=6
+		fi
 
-			for schema_entry in $list_speed_vars; do {
-				already_in_schema "$schema_entry" || schema="$schema $schema_entry"
-			} done
-		;;
-	esac
+		for schema_entry in $list_speed_vars; do {
+			already_in_schema "$schema_entry" || schema="$schema $schema_entry"
+		} done
+	}
 
 	for schema_entry in $schema; do
 		if [ -n "$speed" ]; then		# like sven-ola freifunk firmware fff-1.7.4
