@@ -232,6 +232,7 @@ config_write_options() {
 	local write_func="$3"
 	[ -z "$write_func" ] && output_func=echo
 	local write_param="$4"
+
 	local schema_entry
 	local option
 	local option_length
@@ -244,19 +245,29 @@ config_write_options() {
 	local i
 	local position
 
-	for schema_entry in $schema; do
+	get_value_for_entry()
+	{
+		local schema_entry="$1"
+
 		default="${schema_entry#*[=]}"
 		[ "$default" = "$schema_entry" ] && default=
 		option="${schema_entry%%[=]*}"
-		IFS=':'
-		set -- $option
-		unset IFS
+
+		IFS=':'; set -- $option; unset IFS
 		option="$1"
 		option_type="$2"
-		validate_varname "$option" || continue
-		[ -z "$option_type" ] || validate_varname "$option_type" || continue
-		[ "$option_type" = internal ] && continue
+
+		validate_varname "$option" || return 1
+		[ -z "$option_type" ] || validate_varname "$option_type" || return 1
+		[ "$option_type" = internal ] && return 1
+
 		config_get value "$cfg" "$option"
+
+		return 0
+	}
+
+	for schema_entry in $schema; do
+		get_value_for_entry "$schema_entry" || continue
 
 		if [ -z "$value" ]; then
 			IFS='+'
@@ -481,6 +492,7 @@ olsrd_write_interface() {
 
 	ifnames=
 	config_get interfaces "$cfg" interface
+
 	for interface in $interfaces; do
 		if validate_varname "$interface"; then
 			if network_get_device IFNAME "$interface"; then
