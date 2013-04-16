@@ -58,7 +58,8 @@ MAKE_ARGS += \
 
 define Package/bmx6/Default
   SECTION:=net
-  CATEGORY:=qMp
+  CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
   TITLE:=BMX6 layer 3 routing daemon (QMP version)
   URL:=http://bmx6.net/
   MAINTAINER:=Axel Neumann <neumann@cgws.de>
