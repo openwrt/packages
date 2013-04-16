@@ -29,7 +29,6 @@ start() {
 	cd /root/
 	ulimit -c 20000
 	$BIN -f $CONF -d0 > /dev/null &
-#	start-stop-daemon -b -x $BIN -S -- -f $CONF
 }
 
 stop() {

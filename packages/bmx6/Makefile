@@ -24,23 +24,18 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=bmx6-qmp
+PKG_NAME:=bmx6
 
 PKG_SOURCE_PROTO:=git
 
-Public Sources:
-#PKG_SOURCE_URL:=git://git.bmx6.net/bmx6.git
-PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
+PKG_SOURCE_URL:=git://bmx6.net/bmx6.git
+#PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
 
 PKG_REV:=7219010098ea67f8ea08a06a68e7a765b114ca16
-
-Private Sources:
-#PKG_SOURCE_URL:=file:///usr/src/bmx6/bmx6-private.git
 
 PKG_VERSION:=r2013022001
 
 PKG_RELEASE:=4
-#PKG_INSTALL:=1  # this tries to install straight to /usr/sbin/bmx6
 
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -52,8 +47,6 @@ include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS += $(FPIC)
 
-#-DNO_TRAFFIC_DUMP -DNO_DYN_PLUGIN -DNO_DEBUG_DUMP -DNO_DEBUG_ALL -DNO_DEBUG_TRACK -DNO_DEBUG_SYS
-
 MAKE_ARGS += \
 	EXTRA_CFLAGS="$(TARGET_CFLAGS) -I. -I$(STAGING_DIR)/usr/include -DNO_DEBUG_ALL -DNO_DEBUG_DUMP" \
 	EXTRA_LDFLAGS="-L$(STAGING_DIR)/usr/lib " \
@@ -63,8 +56,7 @@ MAKE_ARGS += \
 	STRIP="/bin/false" \
 	build_all
 
-
-define Package/bmx6-qmp/Default
+define Package/bmx6/Default
   SECTION:=net
   CATEGORY:=qMp
   TITLE:=BMX6 layer 3 routing daemon (QMP version)
@@ -72,37 +64,37 @@ define Package/bmx6-qmp/Default
   MAINTAINER:=Axel Neumann <neumann@cgws.de>
 endef
 
-define Package/bmx6-qmp/description
-BMX6 layer 3 routing daemon (QMP version) supporting IPv4, IPv6, and IPv4 over IPv6 -  http://www.bmx6.net
+define Package/bmx6/description
+BMX6 layer 3 routing daemon supporting IPv4, IPv6, and IPv4 over IPv6
 endef
 
-define Package/bmx6-qmp
-  $(call Package/bmx6-qmp/Default)
+define Package/bmx6
+  $(call Package/bmx6/Default)
   MENU:=1
 endef
 
-define Package/bmx6-qmp-uci-config
-  $(call Package/bmx6-qmp/Default)
-  DEPENDS:=bmx6-qmp +libuci
+define Package/bmx6-uci-config
+  $(call Package/bmx6/Default)
+  DEPENDS:=bmx6 +libuci
   TITLE:=configuration plugin based on uci (recommended!)
 endef
 
 
-define Package/bmx6-qmp-json
-  $(call Package/bmx6-qmp/Default)
-  DEPENDS:=bmx6-qmp +libjson
-  TITLE:=josn plugin based on jsonc
+define Package/bmx6-json
+  $(call Package/bmx6/Default)
+  DEPENDS:=bmx6 +libjson
+  TITLE:=json plugin based on jsonc
 endef
 
-define Package/bmx6-qmp-sms
-  $(call Package/bmx6-qmp/Default)
-  DEPENDS:=bmx6-qmp
+define Package/bmx6-sms
+  $(call Package/bmx6/Default)
+  DEPENDS:=bmx6
   TITLE:=sms plugin
 endef
 
-define Package/bmx6-qmp-quagga
-  $(call Package/bmx6-qmp/Default)
-  DEPENDS:=bmx6-qmp +qmp-quagga
+define Package/bmx6-quagga
+  $(call Package/bmx6/Default)
+  DEPENDS:=bmx6 +qmp-quagga @BROKEN
   TITLE:=bmx6 quagga plugin to redistribute/export routes (needs manet/bmx6 patched quagga 0.99.21)
 endef
 
@@ -115,43 +107,42 @@ define Build/Compile
 endef
 
 
-define Package/bmx6-qmp/install
+define Package/bmx6/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bmx6 $(1)/usr/sbin/bmx6
 endef
 
 
-define Package/bmx6-qmp-uci-config/conffiles
+define Package/bmx6-uci-config/conffiles
 /etc/config/bmx6
 endef
 
 
-define Package/bmx6-qmp-uci-config/install
+define Package/bmx6-uci-config/install
 	$(INSTALL_DIR) $(1)/usr/lib $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_uci_config/bmx6_config.so $(1)/usr/lib/bmx6_config.so
 	$(INSTALL_BIN) ./files/etc/init.d/bmx6 $(1)/etc/init.d/bmx6
 	$(INSTALL_DATA) ./files/etc/config/bmx6 $(1)/etc/config/bmx6
 endef
 
-define Package/bmx6-qmp-json/install
+define Package/bmx6-json/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_json/bmx6_json.so $(1)/usr/lib/bmx6_json.so
 endef
 
-define Package/bmx6-qmp-sms/install
+define Package/bmx6-sms/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_sms/bmx6_sms.so $(1)/usr/lib/bmx6_sms.so
 endef
 
-define Package/bmx6-qmp-quagga/install
+define Package/bmx6-quagga/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_quagga/bmx6_quagga.so $(1)/usr/lib/bmx6_quagga.so
 endef
 
-$(eval $(call BuildPackage,bmx6-qmp))
-$(eval $(call BuildPackage,bmx6-qmp-uci-config))
-$(eval $(call BuildPackage,bmx6-qmp-json))
-$(eval $(call BuildPackage,bmx6-qmp-sms))
-$(eval $(call BuildPackage,bmx6-qmp-quagga))
-
+$(eval $(call BuildPackage,bmx6))
+$(eval $(call BuildPackage,bmx6-uci-config))
+$(eval $(call BuildPackage,bmx6-json))
+$(eval $(call BuildPackage,bmx6-sms))
+$(eval $(call BuildPackage,bmx6-quagga))
 
