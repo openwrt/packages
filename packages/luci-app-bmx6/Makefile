@@ -30,8 +30,9 @@ define Package/luci-app-bmx6
   SECTION:=luci
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
-  TITLE:= Bmx6 configuration, status and visualization module
+  TITLE:= bmx6 configuration, status and visualization module
   DEPENDS:=+luci-lib-json +luci-mod-admin-core +luci-lib-httpclient +bmx6
+  MAINTAINER:= Pau Escrich <p4u@dabax.net>
 endef
 
 define Package/luci-app-bmx6/description
