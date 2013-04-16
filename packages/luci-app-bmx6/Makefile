@@ -19,32 +19,30 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=bmx6-luci
+PKG_NAME:=luci-app-bmx6
 PKG_RELEASE:=2
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/bmx6-luci
+define Package/luci-app-bmx6
   SECTION:=luci
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:= Bmx6 configuration, status and visualization module
-# DEPENDS:=+bmx6 +bmx6-uci-config 
-  DEPENDS:=+luci-lib-json +luci-mod-admin-core +luci-lib-httpclient
+  DEPENDS:=+luci-lib-json +luci-mod-admin-core +luci-lib-httpclient +bmx6
 endef
 
-define Package/bmx6-luci/description
+define Package/luci-app-bmx6/description
 	bmx6 web module for LuCi web interface
 endef
 
-define Package/bmx6-luci/conffiles
+define Package/luci-app-bmx6/conffiles
 	/etc/config/luci-bmx6
 endef
 
 define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)
 endef
 
 define Build/Configure
@@ -53,10 +51,10 @@ endef
 define Build/Compile
 endef
 
-define Package/bmx6-luci/install
+define Package/luci-app-bmx6/install
 	$(CP) ./files/* $(1)/
 	chmod 755 $(1)/www/cgi-bin/bmx6-info
 endef
 
-$(eval $(call BuildPackage,bmx6-luci))
+$(eval $(call BuildPackage,luci-app-bmx6))
 
