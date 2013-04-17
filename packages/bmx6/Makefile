@@ -58,9 +58,10 @@ define Package/bmx6/Default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
-  TITLE:=BMX6 layer 3 routing daemon (QMP version)
+  TITLE:=BMX6 layer 3 routing daemon
   URL:=http://bmx6.net/
   MAINTAINER:=Axel Neumann <neumann@cgws.de>
+  DEPENDS:=kmod-ip6-tunnel +kmod-iptunnel6
 endef
 
 define Package/bmx6/description
