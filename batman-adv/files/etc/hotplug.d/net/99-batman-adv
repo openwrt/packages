@@ -1,0 +1,12 @@
+#!/bin/sh
+
+. /lib/batman-adv/config.sh
+
+bat_load_module
+config_load batman-adv
+
+case "$ACTION" in
+	add)
+		[ -d /sys/class/net/$INTERFACE/mesh/ ] && bat_config "$INTERFACE"
+		;;
+esac

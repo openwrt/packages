@@ -1,0 +1,19 @@
+
+config 'mesh' 'bat0'
+	option 'aggregated_ogms'
+	option 'ap_isolation'
+	option 'bonding'
+	option 'fragmentation'
+	option 'gw_bandwidth'
+	option 'gw_mode'
+	option 'gw_sel_class'
+	option 'log_level'
+	option 'orig_interval'
+	option 'vis_mode'
+	option 'bridge_loop_avoidance'
+	option 'distributed_arp_table'
+	option 'hop_penalty'
+
+# yet another batX instance
+# config 'mesh' 'bat5'
+#	option 'interfaces' 'second_mesh'

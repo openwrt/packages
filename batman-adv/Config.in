@@ -1,0 +1,24 @@
+
+config KMOD_BATMAN_ADV_DEBUG_LOG
+	bool "enable verbose debug logging"
+	depends on PACKAGE_kmod-batman-adv
+	default n
+
+config KMOD_BATMAN_ADV_BLA
+	bool "enable bridge loop avoidance"
+	depends on PACKAGE_kmod-batman-adv
+	default y
+
+config KMOD_BATMAN_ADV_DAT
+	bool "enable distributed arp table"
+	depends on PACKAGE_kmod-batman-adv
+	default y
+
+config KMOD_BATMAN_ADV_BATCTL
+	bool "enable batctl"
+	depends on PACKAGE_kmod-batman-adv
+	default y
+	help
+	  batctl is a more intuitive managment utility for B.A.T.M.A.N.-Advanced.
+	  It is an easier method for configuring batman-adv and
+	  provides some additional tools for debugging as well.
