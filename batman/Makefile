@@ -59,7 +59,7 @@ endef
 define KernelPackage/batgat
 $(call Package/batmand/Default)
   SUBMENU:=Network Support
-  DEPENDS:=+batmand
+  DEPENDS:=+batmand @BROKEN
   TITLE:=B.A.T.M.A.N. gateway module
   FILES:=$(PKG_KMOD_BUILD_DIR)/batgat.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,50,batgat)
