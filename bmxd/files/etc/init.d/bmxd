@@ -1,0 +1,51 @@
+#!/bin/sh /etc/rc.common
+START=91
+. /lib/config/uci.sh
+uci_load bmxd
+start () {
+	interface="$(uci get bmxd.general.interface)"
+	if [ "$interface" = "" ]; then
+		echo $1 Error, you must specify at least a network interface
+		exit
+	fi
+	announce=$(uci get bmxd.general.announce)
+	gateway_class=$(uci get bmxd.general.gateway_class)
+	originator_interval=$(uci get bmxd.general.originator_interval)
+	preferred_gateway=$(uci get bmxd.general.preferred_gateway)
+	routing_class=$(uci get bmxd.general.routing_class)
+	visualisation_srv=$(uci get bmxd.general.visualisation_srv)
+	misc="$(uci get bmxd.general.misc)"
+	bmx_args=""
+
+	if [ $announce ]; then
+		bmx_args=${bmx_args}'-a '$announce' '
+	fi
+
+	if [ $gateway_class ]; then
+		bmx_args=${bmx_args}'-g '$gateway_class' '
+	fi
+
+	if [ $originator_interval ]; then
+		bmx_args=${bmx_args}'-o '$originator_interval' '
+	fi
+
+	if [ $preferred_gateway ]; then
+		bmx_args=${bmx_args}'-p '$preferred_gateway' '
+	fi
+
+	if [ $routing_class ]; then
+		bmx_args=${bmx_args}'-r '$routing_class' '
+	fi
+		
+	if [ $visualisation_srv ]; then
+		bmx_args=${bmx_args}'-s '$visualisation_srv' '
+	fi
+	
+
+	bmx_args="$misc ${bmx_args} $interface"
+	bmxd $bmx_args >/dev/null 2>&1
+}
+
+stop () {
+	killall bmxd
+}
