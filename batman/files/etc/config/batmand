@@ -1,0 +1,12 @@
+config batmand general
+	option interface		ath0
+	option hna			
+	option gateway_class		
+	option originator_interval
+	option preferred_gateway	
+	option routing_class
+	option visualisation_srv
+	option policy_routing_script
+	option disable_client_nat
+	option disable_aggregation
+	

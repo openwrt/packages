@@ -1,0 +1,47 @@
+---
+ batman/linux/modules/gateway.c |   19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+--- batmand-r1439.orig/batman/linux/modules/gateway.c
++++ batmand-r1439/batman/linux/modules/gateway.c
+@@ -29,6 +29,7 @@ static struct class *batman_class;
+ static int batgat_open(struct inode *inode, struct file *filp);
+ static int batgat_release(struct inode *inode, struct file *file);
+ static int batgat_ioctl( struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg );
++static long batgat_ioctl_unlocked(struct file *file, unsigned int cmd, unsigned long arg );
+ 
+ 
+ static void udp_data_ready(struct sock *sk, int len);
+@@ -53,7 +54,11 @@ static int proc_clients_read(char *buf,
+ static struct file_operations fops = {
+ 	.open = batgat_open,
+ 	.release = batgat_release,
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
++	.unlocked_ioctl = batgat_ioctl_unlocked,
++#else
+ 	.ioctl = batgat_ioctl,
++#endif
+ };
+ 
+ 
+@@ -166,6 +171,20 @@ static int batgat_release(struct inode *
+ }
+ 
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
++#include <linux/smp_lock.h>
++static long batgat_ioctl_unlocked(struct file *file, unsigned int cmd, unsigned long arg )
++{
++	int ret;
++
++	lock_kernel();
++	ret = batgat_ioctl(file->f_path.dentry->d_inode, file, cmd, arg);
++	unlock_kernel();
++
++	return ret;
++}
++#endif
++
+ static int batgat_ioctl( struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg )
+ {
+ 	uint8_t tmp_ip[4];

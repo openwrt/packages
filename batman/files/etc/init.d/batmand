@@ -1,0 +1,66 @@
+#!/bin/sh /etc/rc.common
+START=90
+
+start () {
+	interface=$(uci get batmand.general.interface)
+	if [ "$interface" = "" ]; then
+		echo $1 Error, you must specify at least a network interface
+		exit
+	fi
+	hnas=$(uci get batmand.general.hna)
+	gateway_class=$(uci get batmand.general.gateway_class)
+	originator_interval=$(uci get batmand.general.originator_interval)
+	preferred_gateway=$(uci get batmand.general.preferred_gateway)
+	routing_class=$(uci get batmand.general.routing_class)
+	visualisation_srv=$(uci get batmand.general.visualisation_srv)
+	policy_routing_script=$(uci get batmand.general.policy_routing_script)
+	disable_client_nat=$(uci get batmand.general.disable_client_nat)
+	disable_aggregation=$(uci get batmand.general.disable_aggregation)
+	batman_args=""
+
+	for hna in $hnas
+	   do
+	      batman_args=${batman_args}'-a '$hna' '
+	   done
+
+	if [ $gateway_class ]; then
+		batman_args=${batman_args}'-g '$gateway_class' '
+	fi
+
+	if [ $originator_interval ]; then
+		batman_args=${batman_args}'-o '$originator_interval' '
+	fi
+
+	if [ $preferred_gateway ]; then
+		batman_args=${batman_args}'-p '$preferred_gateway' '
+	fi
+
+	if [ $routing_class ]; then
+		batman_args=${batman_args}'-r '$routing_class' '
+	fi
+		
+	if [ $visualisation_srv ]; then
+		batman_args=${batman_args}'-s '$visualisation_srv' '
+	fi
+	
+	if [ $policy_routing_script ]; then
+		batman_args=${batman_args}'--policy-routing-script '$policy_routing_script' '
+	fi
+	
+	if [ $disable_client_nat ]; then
+		batman_args=${batman_args}'--disable-client-nat '
+	fi
+	
+	if [ $disable_aggregation ]; then
+		batman_args=${batman_args}'--disable-aggregation '
+	fi
+
+	batman_args=${batman_args}$interface
+	batmand $batman_args >/dev/null 2>&1
+}
+
+stop () {
+        killall batmand
+}
+
+        
