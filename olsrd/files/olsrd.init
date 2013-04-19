@@ -27,7 +27,7 @@ log() {
 error() {
 	log "ERROR: $@"
 }
-
+ 
 validate_varname() {
 	local varname="$1"
 	[ -z "$varname" -o "$varname" != "${varname%%[!A-Za-z0-9_]*}" ] && return 1
