@@ -61,7 +61,7 @@ define Package/bmx6/Default
   TITLE:=BMX6 layer 3 routing daemon
   URL:=http://bmx6.net/
   MAINTAINER:=Axel Neumann <neumann@cgws.de>
-  DEPENDS:=kmod-ip6-tunnel +kmod-iptunnel6
+  DEPENDS:=+kmod-ip6-tunnel +kmod-iptunnel6
 endef
 
 define Package/bmx6/description
