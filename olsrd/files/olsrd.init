@@ -39,9 +39,7 @@ validate_olsrd_option() {
 
 system_config() {
 	local cfg="$1"
-	local cfgt
-	local hostname
-	local latlon
+	local cfgt hostname latlon oldIFS
 
 	config_get cfgt "$cfg" TYPE
 
@@ -53,9 +51,7 @@ system_config() {
 
 	if [ -z "$SYSTEM_LAT" -o -z "$SYSTEM_LON" ]; then
 		config_get latlon "$cfg" latlon
-		IFS=" ${T}${N},"
-		set -- $latlon
-		unset IFS
+		oldIFS="$IFS"; IFS=" ${T}${N},"; set -- $latlon; IFS="$oldIFS"
 		SYSTEM_LAT="$1"
 		SYSTEM_LON="$2"
 	fi
@@ -139,7 +135,7 @@ olsrd_write_plparam() {
 	validate_varname "$option" || return 1
 	local value="$4"
 	local option_type="$5"
-	local _option
+	local _option oldIFS
 
 	if [ "$option_type" = bool ]; then
 		case "$value" in
@@ -154,17 +150,17 @@ olsrd_write_plparam() {
 		return 1
 	fi
 
-	IFS='-_'
-	set -- $option
+	oldIFS="$IFS"; IFS='-_'; set -- $option; IFS="$oldIFS"
 	option="$*"
-	unset IFS
 	_option="$option"
+
 	if [ "$option" = 'hosts' ]; then
 		set -- $value
 		option="$1"
 		shift
 		value="$*"
 	fi
+
 	if [ "$option" = 'NonOlsrIf' ]; then
 		if validate_varname "$value"; then
 			if network_get_device ifname "$value"; then
@@ -184,7 +180,6 @@ olsrd_write_plparam() {
 }
 
 config_update_schema() {
-	unset IFS
 	local schema_varname="$1"
 	validate_varname "$schema_varname" || return 1
 	local command="$2"
@@ -226,7 +221,6 @@ config_update_schema() {
 
 config_write_options() {
 	local funcname="config_write_options"
-	unset IFS
 	local schema="$1"
 	local cfg="$2"
 	validate_varname "$cfg" || return 1
@@ -234,18 +228,7 @@ config_write_options() {
 	[ -z "$write_func" ] && output_func=echo
 	local write_param="$4"
 
-	local schema_entry
-	local option
-	local option_length
-	local option_type
-	local default
-	local value
-	local list_size
-	local list_item
-	local list_value
-	local i
-	local position
-	local speed
+	local schema_entry option option_length option_type default value list_size list_item list_value i position speed oldIFS
 	local list_speed_vars="HelloInterval HelloValidityTime TcInterval TcValidityTime MidInterval MidValidityTime HnaInterval HnaValidityTime"
 
 	get_value_for_entry()
@@ -256,7 +239,7 @@ config_write_options() {
 		[ "$default" = "$schema_entry" ] && default=
 		option="${schema_entry%%[=]*}"
 
-		IFS=':'; set -- $option; unset IFS
+		oldIFS="$IFS"; IFS=':'; set -- $option; IFS="$oldIFS"
 		option="$1"
 		option_type="$2"
 
@@ -349,9 +332,7 @@ config_write_options() {
 		fi
 
 		if [ -z "$value" ]; then
-			IFS='+'
-			set -- $default
-			unset IFS
+			oldIFS="$IFS"; IFS='+'; set -- $default; IFS="$oldIFS"
 			value=$*
 		elif [ "$value" = '-' -a -n "$default" ]; then
 			continue
