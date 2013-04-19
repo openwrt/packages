@@ -20,9 +20,12 @@ T='	'
 N='
 '
 
-log()
-{
+log() {
 	logger -t olsrd -p daemon.info -s "$1"
+}
+
+error() {
+	log "error() ${initscript}: $@"
 }
 
 validate_varname() {
@@ -735,10 +738,6 @@ olsrd_setup_smartgw_rules() {
 			fi
 		fi
 	fi
-}
-
-error() {
-	log "error() ${initscript}: $@"
 }
 
 start() {
