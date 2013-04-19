@@ -21,11 +21,11 @@ N='
 '
 
 log() {
-	logger -t olsrd -p daemon.info -s "$1"
+	logger -t olsrd -p daemon.info -s "${initscript}: $@"
 }
 
 error() {
-	log "error() ${initscript}: $@"
+	log "ERROR: $@"
 }
 
 validate_varname() {
