@@ -1,39 +1,24 @@
-#    Copyright (C) 2011 Fundacio Privada per a la Xarxa Oberta, Lliure i Neutral guifi.net
 #
-#    This program is free software; you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation; either version 2 of the License, or
-#    (at your option) any later version.
+# Copyright (C) 2011 OpenWrt.org, bmx6.net
 #
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
 #
-#    You should have received a copy of the GNU General Public License along
-#    with this program; if not, write to the Free Software Foundation, Inc.,
-#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-#    The full GNU General Public License is included in this distribution in
-#    the file called "COPYING".
-#
-# Contibutors:
-#	Axel Neumann, Simó Albert i Beltran, Pau Escrich
-#
-
+# $Id$
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bmx6
 
+
 PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=git://git.bmx6.net/bmx6.git
+PKG_REV:=c3ef7d76292a765c5e578bd4113030dc34ee3b9a
 
-PKG_SOURCE_URL:=git://bmx6.net/bmx6.git
-#PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
+PKG_VERSION:=r2011031602
 
-PKG_REV:=c0076183ce28fe15285c8faa51920e74633776fe
-PKG_VERSION:=r2013041901
-PKG_RELEASE:=4
+#PKG_RELEASE:=1
+#PKG_INSTALL:=1  # this tries to install straight to /usr/sbin/bmx6
 
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -45,14 +30,17 @@ include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS += $(FPIC)
 
+#-DNO_TRAFFIC_DUMP -DNO_DYN_PLUGIN -DNO_DEBUG_DUMP -DNO_DEBUG_ALL -DNO_DEBUG_TRACK -DNO_DEBUG_SYS
+
 MAKE_ARGS += \
 	EXTRA_CFLAGS="$(TARGET_CFLAGS) -I. -I$(STAGING_DIR)/usr/include -DNO_DEBUG_ALL -DNO_DEBUG_DUMP" \
 	EXTRA_LDFLAGS="-L$(STAGING_DIR)/usr/lib " \
 	REVISION_VERSION="$(PKG_REV)" \
 	CC="$(TARGET_CC)" \
 	INSTALL_DIR="$(PKG_INSTALL_DIR)" \
-	STRIP="/bin/false" \
+	STRIP="/bin/true" \
 	build_all
+
 
 define Package/bmx6/Default
   SECTION:=net
@@ -61,11 +49,10 @@ define Package/bmx6/Default
   TITLE:=BMX6 layer 3 routing daemon
   URL:=http://bmx6.net/
   MAINTAINER:=Axel Neumann <neumann@cgws.de>
-  DEPENDS:=+kmod-ip6-tunnel +kmod-iptunnel6
 endef
 
 define Package/bmx6/description
-BMX6 layer 3 routing daemon supporting IPv4, IPv6, and IPv4 over IPv6
+BMX6 layer 3 routing daemon supporting IPv4, IPv6, and IPv4 over IPv6 -  http://www.bmx6.net
 endef
 
 define Package/bmx6
@@ -80,23 +67,7 @@ define Package/bmx6-uci-config
 endef
 
 
-define Package/bmx6-json
-  $(call Package/bmx6/Default)
-  DEPENDS:=bmx6 +libjson
-  TITLE:=json plugin based on jsonc
-endef
 
-define Package/bmx6-sms
-  $(call Package/bmx6/Default)
-  DEPENDS:=bmx6
-  TITLE:=sms plugin
-endef
-
-define Package/bmx6-quagga
-  $(call Package/bmx6/Default)
-  DEPENDS:=bmx6 +qmp-quagga @BROKEN
-  TITLE:=bmx6 quagga plugin to redistribute/export routes (needs manet/bmx6 patched quagga 0.99.21)
-endef
 
 define Build/Configure
 	mkdir -p $(PKG_INSTALL_DIR)
@@ -125,24 +96,7 @@ define Package/bmx6-uci-config/install
 	$(INSTALL_DATA) ./files/etc/config/bmx6 $(1)/etc/config/bmx6
 endef
 
-define Package/bmx6-json/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_json/bmx6_json.so $(1)/usr/lib/bmx6_json.so
-endef
-
-define Package/bmx6-sms/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_sms/bmx6_sms.so $(1)/usr/lib/bmx6_sms.so
-endef
-
-define Package/bmx6-quagga/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_quagga/bmx6_quagga.so $(1)/usr/lib/bmx6_quagga.so
-endef
 
 $(eval $(call BuildPackage,bmx6))
 $(eval $(call BuildPackage,bmx6-uci-config))
-$(eval $(call BuildPackage,bmx6-json))
-$(eval $(call BuildPackage,bmx6-sms))
-$(eval $(call BuildPackage,bmx6-quagga))
 
