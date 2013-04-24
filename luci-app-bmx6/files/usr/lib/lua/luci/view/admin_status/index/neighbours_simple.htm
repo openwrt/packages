@@ -1,0 +1,108 @@
+<script type="text/javascript">//<![CDATA[
+
+	XHR.poll(5, '/cgi-bin/bmx6-info', { '$neighbours': '' },
+		function(x, st)
+		{
+			var originators = st.neighbours[0].originators;
+			var descriptions = st.neighbours[1].descriptions;
+
+			var tb = document.getElementById('descriptions_table');
+
+			if ( originators.length != descriptions.length )
+			{
+				var tr = tb.insertRow(-1);
+				tr.className = 'cbi-section-table-row';
+				var td = tr.insertCell(-1);
+				td.colSpan = 7;
+				td.innerHTML = '<em><br /><%:Some problem with JSON: lenght of originators and descriptions different. %></em>';
+				return 1;
+			}
+
+			if ( originators && descriptions && tb)
+			{
+				/* clear all rows */
+				while( tb.rows.length > 1 )
+					tb.deleteRow(1);
+
+				for( var i = 0; i < descriptions.length; i++ )
+				{
+					var tr = tb.insertRow(-1);
+					tr.className = 'cbi-section-table-row cbi-rowstyle-' + ((i % 2) + 1);
+					tr.insertCell(-1).innerHTML = descriptions[i].DESC_ADV.globalId.replace(/\.[^\.]+$/,"");
+
+					var extensions = descriptions[i].DESC_ADV.extensions;
+
+					//Looking for the extensions
+					var hna6 = [];
+					for( var e = 0; e < extensions.length; e++)
+					{
+						if( extensions[e].HNA6_EXTENSION )
+						{
+							hna6 = extensions[e].HNA6_EXTENSION;
+							break;
+						}
+					}
+
+					//Adding first HNA with prefix=128 as main address
+					var ipstxt = '';
+					var address;
+					var prefix;
+
+					for( var e = 0; e < hna6.length; e++ )
+					{
+						address = hna6[e].address;
+						prefix = hna6[e].prefixlen;
+						if ( prefix == '128' )
+							{
+								ipstxt += address;
+								break;
+							}
+					}
+
+					tr.insertCell(-1).innerHTML = ipstxt;
+
+					tr.insertCell(-1).innerHTML = originators[i].viaDev;
+					tr.insertCell(-1).innerHTML = originators[i].metric;
+					tr.insertCell(-1).innerHTML = originators[i].lastDesc;
+					tr.insertCell(-1).innerHTML = originators[i].lastRef;
+					tr.insertCell(-1).innerHTML = originators[i].blocked;
+
+				}
+
+				if( tb.rows.length == 1 )
+				{
+					var tr = tb.insertRow(-1);
+						tr.className = 'cbi-section-table-row';
+
+					var td = tr.insertCell(-1);
+						td.colSpan = 7;
+						td.innerHTML = '<em><br /><%:There are no nodes available.%></em>';
+				}
+			}
+		}
+	);
+//]]></script>
+
+<div class="cbi-map">
+
+<fieldset class="cbi-section">
+	<legend><%:Mesh nodes%></legend>
+	<table class="cbi-section-table" id="descriptions_table">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell"><%:Hostname%></th>
+			<th class="cbi-section-table-cell"><%:Primary IP%></th>
+			<th class="cbi-section-table-cell"><%:Via Device%></th>
+			<th class="cbi-section-table-cell"><%:Metric%></th>
+			<th class="cbi-section-table-cell"><%:Last Desc%></th>
+			<th class="cbi-section-table-cell"><%:Last Ref%></th>
+			<th class="cbi-section-table-cell"><%:Blocked%></th>
+		</tr>
+		<tr class="cbi-section-table-row">
+			<td colspan="7"><em><br /><%:Collecting data...%></em></td>
+		</tr>
+	</table>
+</fieldset>
+
+</div>
+
+

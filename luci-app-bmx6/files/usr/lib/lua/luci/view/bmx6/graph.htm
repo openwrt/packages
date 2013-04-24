@@ -1,0 +1,110 @@
+<%#
+Copyright (C) 2011 Pau Escrich <pau@dabax.net>
+Contributors Jo-Philip
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+The full GNU General Public License is included in this distribution in
+the file called "COPYING".
+-%>
+
+<%
+	luci.http.prepare_content("text/html")
+
+	local location = { unpack(luci.dispatcher.context.path) }
+	location[#location] = "topology"
+%>
+
+<%+header%>
+
+<script type="text/javascript" src="<%=resource%>/bmx6/js/raphael-min.js"></script>
+<script type="text/javascript" src="<%=resource%>/bmx6/js/dracula_graffle.js"></script>
+<script type="text/javascript" src="<%=resource%>/bmx6/js/jquery-1.4.2.min.js"></script>
+<script type="text/javascript" src="<%=resource%>/bmx6/js/dracula_graph.js"></script>
+
+<button id="redraw" onclick="redraw();">&nbsp redraw &nbsp</button>
+
+<div id="wait" style="text-align: center">
+<br /><br />
+<img src="<%=resource%>/icons/loading.gif" />
+<%:Collecting data...%>
+
+</div>
+
+<div id="canvas" style="min-width:800px; min-height:800px"></div>
+
+<script type="text/javascript">//<![CDATA[
+	var redraw;
+
+	XHR.get('<%=luci.dispatcher.build_url(unpack(location))%>', null,
+		function(x, data)
+		{
+			var g = new Graph();
+			var seen = { };
+
+			for (var i = 0; i < (data.length); i++)
+			{
+				// node->node
+				if (data[i].globalId)
+					{
+					for (var j = 0; j < (data[i].links.length); j++)
+						 {
+						 var key = (data[i].globalId < data[i].links[j].globalId)
+						 	? data[i].globalId + '|' + data[i].links[j].globalId
+							: data[i].links[j].globalId + '|' + data[i].globalId;
+
+							var rxRate = data[i].links[j].rxRate;
+							var txRate = data[i].links[j].txRate;
+
+							if (!seen[key] && rxRate>0 && txRate>0)
+						 	{
+							 g.addEdge(data[i].globalId, data[i].links[j].globalId,
+							 	{ label: rxRate + '/' + txRate,
+								directed: false, stroke: '#aaaaaa', fill: '#ffffff',
+								'label-style': { 'font-size': 8 }});
+							 seen[key] = true;
+							 }
+						 }
+					}
+					//g.addEdge(data[i].router, data[i].neighbor,
+					//	{ label: data[i].label, directed: true, stroke: '#aaaaaa' });
+				// node->leaf
+				//else if (data[i].router && data[i].gateway)
+				//	g.addEdge(data[i].router, data[i].gateway,
+				//		{ label: 'leaf', stroke: '#cccccc' });
+			}
+
+			var canvas = document.getElementById('canvas');
+
+			var layouter = new Graph.Layout.Spring(g);
+			layouter.layout();
+			
+			var divwait = document.getElementById("wait");
+			divwait.parentNode.removeChild(divwait);
+
+			var renderer = new Graph.Renderer.Raphael(canvas.id, g, canvas.offsetWidth, canvas.offsetHeight);
+			renderer.draw();
+
+			redraw = function() {
+				layouter.layout();
+				renderer.draw();
+			}
+
+		}
+	);
+//]]></script>
+
+
+<%+footer%>
