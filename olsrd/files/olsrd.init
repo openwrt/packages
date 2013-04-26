@@ -153,8 +153,11 @@ olsrd_write_plparam() {
 		return 1
 	fi
 
-	oldIFS="$IFS"; IFS='-_'; set -- $option; IFS="$oldIFS"
+	oldIFS="$IFS"
+	IFS='-_'
+	set -- $option
 	option="$*"
+	IFS="$oldIFS"
 	_option="$option"
 
 	if [ "$option" = 'hosts' ]; then
