@@ -12,6 +12,7 @@ config 'mesh' 'bat0'
 	option 'vis_mode'
 	option 'bridge_loop_avoidance'
 	option 'distributed_arp_table'
+	option 'network_coding'
 	option 'hop_penalty'
 
 # yet another batX instance

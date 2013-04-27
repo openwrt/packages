@@ -14,6 +14,11 @@ config KMOD_BATMAN_ADV_DAT
 	depends on PACKAGE_kmod-batman-adv
 	default y
 
+config KMOD_BATMAN_ADV_NC
+	bool "enable network coding [requires promisc mode support]"
+	depends on PACKAGE_kmod-batman-adv
+	default n
+
 config KMOD_BATMAN_ADV_BATCTL
 	bool "enable batctl"
 	depends on PACKAGE_kmod-batman-adv
