@@ -1,7 +1,7 @@
 From 82d1a8ebf19a1b9841ee44ce7b2448114be3e772 Mon Sep 17 00:00:00 2001
 From: Patrick McHardy <kaber@trash.net>
 Date: Wed, 24 Apr 2013 17:42:56 +0200
-Subject: [PATCH 2/2] net: vlan: add protocol argument to packet tagging
+Subject: [PATCH 2/6] net: vlan: add protocol argument to packet tagging
  functions
 
 Add a protocol argument to the VLAN packet tagging functions. In case of HW
