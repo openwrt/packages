@@ -76,15 +76,15 @@ endef
 
 define Package/bird6
 $(call Package/bird/Default)
-  SECTION:=ipv6
-  CATEGORY:=IPv6
+  SECTION:=net
+  CATEGORY:=Network
   TITLE+= (IPv6)
 endef
 
 define Package/birdc6
 $(call Package/birdc/Default)
-  SECTION:=ipv6
-  CATEGORY:=IPv6
+  SECTION:=net
+  CATEGORY:=Network
   TITLE+= (IPv6)
   DEPENDS+= +bird6
 endef
