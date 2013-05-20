@@ -28,7 +28,7 @@ define Package/nodogsplash
 	CATEGORY:=Network
 	DEPENDS:=+libpthread +iptables-mod-ipopt
 	TITLE:=Open public network gateway daemon
-	URL:=https://github.com/mwarning/nodogsplash
+	URL:=https://github.com/nodogsplash/nodogsplash
 endef
 
 define Package/nodogsplash/description
