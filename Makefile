@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2012 OpenWrt.org
+# Copyright (C) 2006-2013 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
-PKG_VERSION:=0.99.21
+PKG_VERSION:=0.99.22
 PKG_RELEASE:=6
-PKG_MD5SUM:=99840adbe57047c90dfba6b6ed9aec7f
+PKG_MD5SUM:=3057bf3a91116a1017dd0df7e5e8ef93
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/quagga/

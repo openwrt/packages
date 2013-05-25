@@ -1,6 +1,6 @@
 --- a/lib/log.c
 +++ b/lib/log.c
-@@ -929,13 +929,19 @@ proto_redistnum(int afi, const char *s)
+@@ -925,13 +925,19 @@ proto_redistnum(int afi, const char *s)
  	return ZEBRA_ROUTE_STATIC;
        else if (strncmp (s, "r", 1) == 0)
  	return ZEBRA_ROUTE_RIP;
@@ -22,7 +22,7 @@
  	return ZEBRA_ROUTE_BABEL;
      }
    if (afi == AFI_IP6)
-@@ -948,13 +954,19 @@ proto_redistnum(int afi, const char *s)
+@@ -944,13 +950,19 @@ proto_redistnum(int afi, const char *s)
  	return ZEBRA_ROUTE_STATIC;
        else if (strncmp (s, "r", 1) == 0)
  	return ZEBRA_ROUTE_RIPNG;
@@ -107,7 +107,7 @@
  
 --- a/zebra/rt_netlink.c
 +++ b/zebra/rt_netlink.c
-@@ -1623,6 +1623,9 @@ netlink_route_multipath (int cmd, struct
+@@ -1609,6 +1609,9 @@ netlink_route_multipath (int cmd, struct
                          addattr_l (&req.n, sizeof req, RTA_PREFSRC,
  				 &nexthop->src.ipv4, bytelen);
  
@@ -119,7 +119,7 @@
  				   "nexthop via if %u", nexthop->ifindex);
 --- a/zebra/zebra_rib.c
 +++ b/zebra/zebra_rib.c
-@@ -67,6 +67,9 @@ static const struct
+@@ -68,6 +68,9 @@ static const struct
    [ZEBRA_ROUTE_OSPF6]   = {ZEBRA_ROUTE_OSPF6,   110},
    [ZEBRA_ROUTE_ISIS]    = {ZEBRA_ROUTE_ISIS,    115},
    [ZEBRA_ROUTE_BGP]     = {ZEBRA_ROUTE_BGP,      20  /* IBGP is 200. */},
@@ -129,7 +129,7 @@
    [ZEBRA_ROUTE_BABEL]   = {ZEBRA_ROUTE_BABEL,    95},
    /* no entry/default: 150 */
  };
-@@ -403,6 +406,18 @@ nexthop_active_ipv4 (struct rib *rib, st
+@@ -456,6 +459,18 @@ nexthop_active_ipv4 (struct rib *rib, st
  		  }
  	      return 0;
  	    }
@@ -148,7 +148,7 @@
  	  else
  	    {
  	      return 0;
-@@ -507,6 +522,18 @@ nexthop_active_ipv6 (struct rib *rib, st
+@@ -560,6 +575,18 @@ nexthop_active_ipv6 (struct rib *rib, st
  		  }
  	      return 0;
  	    }
@@ -167,7 +167,7 @@
  	  else
  	    {
  	      return 0;
-@@ -1236,6 +1263,8 @@ static const u_char meta_queue_map[ZEBRA
+@@ -1376,6 +1403,8 @@ static const u_char meta_queue_map[ZEBRA
    [ZEBRA_ROUTE_ISIS]    = 2,
    [ZEBRA_ROUTE_BGP]     = 3,
    [ZEBRA_ROUTE_HSLS]    = 4,
@@ -178,7 +178,7 @@
  
 --- a/zebra/zebra_snmp.c
 +++ b/zebra/zebra_snmp.c
-@@ -251,6 +251,12 @@ proto_trans(int type)
+@@ -245,6 +245,12 @@ proto_trans(int type)
        return 1; /* shouldn't happen */
      case ZEBRA_ROUTE_BGP:
        return 14; /* bgp */

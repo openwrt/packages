@@ -12,7 +12,7 @@
      sockunion2str (&su, buf, SU_ADDRSTRLEN);
 --- a/bgpd/bgpd.h
 +++ b/bgpd/bgpd.h
-@@ -718,6 +718,7 @@ struct bgp_nlri
+@@ -732,6 +732,7 @@ struct bgp_nlri
  /* BGP timers default value.  */
  #define BGP_INIT_START_TIMER                     5
  #define BGP_ERROR_START_TIMER                   30
