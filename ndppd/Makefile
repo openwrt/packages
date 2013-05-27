@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ndppd
-PKG_VERSION:=0.2.2
-PKG_RELEASE:=2
+PKG_VERSION:=0.2.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 # Latest release
 PKG_SOURCE_URL:=http://www.priv.nu/projects/ndppd/files/
-PKG_MD5SUM:=d90c4b65777a62274c1837dba341e5a8
+PKG_MD5SUM:=d6f3243bb7fc04c8085371c9acddc50e
 
 # Development snapshot
 #PKG_SOURCE_URL=git://github.com/Tuhox/ndppd.git
@@ -30,7 +30,7 @@ define Package/ndppd
   CATEGORY:=Network
   TITLE:=NDP Proxy Daemon
   URL:=http://www.priv.nu/projects/ndppd/
-  MAINTAINER:=Gabriel Kerneis <kerneis@pps.jussieu.fr>
+  MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>
   DEPENDS:=+kmod-ipv6 $(CXX_DEPENDS)
 endef
 

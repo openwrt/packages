@@ -1,0 +1,53 @@
+From 00da8bf7bab88a3827af4110fb27df9cde542e32 Mon Sep 17 00:00:00 2001
+From: Daniel Adolfsson <daniel@priv.nu>
+Date: Tue, 12 Feb 2013 13:25:22 +0100
+Subject: [PATCH] =?UTF-8?q?Fix=20issue=20#2=20-=20ndppd=20d=C3=A6monizes=20t?=
+ =?UTF-8?q?oo=20early?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ src/ndppd.cc |   18 ++++++++----------
+ 1 file changed, 8 insertions(+), 10 deletions(-)
+
+diff --git a/src/ndppd.cc b/src/ndppd.cc
+index 6ac19e8..20ced6f 100644
+--- a/src/ndppd.cc
++++ b/src/ndppd.cc
+@@ -201,15 +201,6 @@ int main(int argc, char* argv[], char* env[])
+         }
+     }
+ 
+-    if (daemon) {
+-        logger::syslog(true);
+-
+-        if (daemonize() < 0) {
+-            logger::error() << "Failed to daemonize process";
+-            return 1;
+-        }
+-    }
+-
+     if (!pidfile.empty()) {
+         std::ofstream pf;
+         pf.open(pidfile.c_str(), std::ios::out | std::ios::trunc);
+@@ -225,8 +216,15 @@ int main(int argc, char* argv[], char* env[])
+ 
+     if (!configure(config_path))
+         return -1;
++    
++    if (daemon) {
++        logger::syslog(true);
+ 
+-    //route::load("/proc/net/ipv6_route");
++        if (daemonize() < 0) {
++            logger::error() << "Failed to daemonize process";
++            return 1;
++        }
++    }
+ 
+     // Time stuff.
+ 
+-- 
+1.7.10.4
+
