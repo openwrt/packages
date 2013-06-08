@@ -31,8 +31,8 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://bmx6.net/bmx6.git
 #PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
 
-PKG_REV:=c0076183ce28fe15285c8faa51920e74633776fe
-PKG_VERSION:=r2013041901
+PKG_REV:=60adcbd4655ccf36a407bae58d66914e33f05a41
+PKG_VERSION:=r2013060803
 PKG_RELEASE:=4
 
 PKG_SOURCE_VERSION:=$(PKG_REV)
@@ -61,7 +61,7 @@ define Package/bmx6/Default
   TITLE:=BMX6 layer 3 routing daemon
   URL:=http://bmx6.net/
   MAINTAINER:=Axel Neumann <neumann@cgws.de>
-  DEPENDS:=+kmod-ip6-tunnel +kmod-iptunnel6
+  DEPENDS:=+kmod-ip6-tunnel +kmod-iptunnel6 +kmod-tun
 endef
 
 define Package/bmx6/description
