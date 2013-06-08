@@ -94,7 +94,7 @@ endef
 
 define Package/bmx6-quagga
   $(call Package/bmx6/Default)
-  DEPENDS:=bmx6 +qmp-quagga 
+  DEPENDS:=bmx6 +qmp-quagga @BROKEN
   TITLE:=bmx6 quagga plugin to redistribute/export routes (needs manet/bmx6 patched quagga 0.99.21)
 endef
 
