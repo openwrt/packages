@@ -1,7 +1,7 @@
 From d22ebef1431aab13099370b89afa4ba55eb95c35 Mon Sep 17 00:00:00 2001
 From: Marek Lindner <lindner_marek@yahoo.de>
 Date: Tue, 7 May 2013 19:25:02 +0800
-Subject: [PATCH 4/6] batman-adv: check return value of pskb_trim_rcsum()
+Subject: [PATCH 04/10] batman-adv: check return value of pskb_trim_rcsum()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

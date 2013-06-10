@@ -1,0 +1,47 @@
+From a5d79639a76d7a71116abbc369a246bd1fcbf947 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Martin=20Hundeb=C3=B8ll?= <martin@hundeboll.net>
+Date: Wed, 17 Apr 2013 21:13:16 +0200
+Subject: [PATCH 07/10] batman-adv: Avoid double freeing of bat_counters
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+On errors in batadv_mesh_init(), bat_counters will be freed in both
+batadv_mesh_free() and batadv_softif_init_late(). This patch fixes this
+by returning earlier from batadv_softif_init_late() in case of errors in
+batadv_mesh_init() and by setting bat_counters to NULL after freeing.
+
+Signed-off-by: Martin Hundebøll <martin@hundeboll.net>
+Signed-off-by: Marek Lindner <lindner_marek@yahoo.de>
+---
+ main.c           |    1 +
+ soft-interface.c |    1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/main.c b/main.c
+index 1240f07..51aafd6 100644
+--- a/main.c
++++ b/main.c
+@@ -181,6 +181,7 @@ void batadv_mesh_free(struct net_device *soft_iface)
+ 	batadv_originator_free(bat_priv);
+ 
+ 	free_percpu(bat_priv->bat_counters);
++	bat_priv->bat_counters = NULL;
+ 
+ 	atomic_set(&bat_priv->mesh_state, BATADV_MESH_INACTIVE);
+ }
+diff --git a/soft-interface.c b/soft-interface.c
+index 6f20d33..819dfb0 100644
+--- a/soft-interface.c
++++ b/soft-interface.c
+@@ -505,6 +505,7 @@ unreg_debugfs:
+ 	batadv_debugfs_del_meshif(dev);
+ free_bat_counters:
+ 	free_percpu(bat_priv->bat_counters);
++	bat_priv->bat_counters = NULL;
+ 
+ 	return ret;
+ }
+-- 
+1.7.10.4
+
