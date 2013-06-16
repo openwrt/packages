@@ -1,7 +1,7 @@
 From 763f413b9c74ccb25cb066408f49f07e5dd78f9b Mon Sep 17 00:00:00 2001
 From: Antonio Quartulli <ordex@autistici.org>
 Date: Tue, 7 May 2013 01:06:18 +0200
-Subject: [PATCH 6/6] batman-adv: reorder clean up routine in order to avoid
+Subject: [PATCH 06/10] batman-adv: reorder clean up routine in order to avoid
  race conditions
 
 nc_worker accesses the originator table during its periodic
