@@ -1,7 +1,7 @@
 From d6bd8b36fa1f3d72a6fd5942a6e9bde6ddafcd0d Mon Sep 17 00:00:00 2001
 From: Antonio Quartulli <ordex@autistici.org>
 Date: Thu, 9 May 2013 09:35:45 +0200
-Subject: [PATCH 5/6] batman-adv: make DAT drop ARP requests targeting local
+Subject: [PATCH 05/10] batman-adv: make DAT drop ARP requests targeting local
  clients
 
 In the outgoing ARP request snooping routine in DAT, ARP

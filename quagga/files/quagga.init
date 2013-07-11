@@ -1,0 +1,11 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=60
+start() {
+	/usr/sbin/quagga.init start
+}
+
+stop() {
+	/usr/sbin/quagga.init stop
+}
