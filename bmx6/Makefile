@@ -32,7 +32,7 @@ PKG_SOURCE_URL:=git://bmx6.net/bmx6.git
 #PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
 
 PKG_REV:=60adcbd4655ccf36a407bae58d66914e33f05a41
-PKG_VERSION:=r2013060803
+PKG_VERSION:=r2013073001
 PKG_RELEASE:=4
 
 PKG_SOURCE_VERSION:=$(PKG_REV)
@@ -82,7 +82,7 @@ endef
 
 define Package/bmx6-json
   $(call Package/bmx6/Default)
-  DEPENDS:=bmx6 +libjson-c
+  DEPENDS:=bmx6 +libjson
   TITLE:=json plugin based on jsonc
 endef
 
