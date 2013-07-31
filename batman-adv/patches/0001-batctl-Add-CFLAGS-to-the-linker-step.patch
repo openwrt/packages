@@ -1,0 +1,33 @@
+From 2c7bfe1299efa97438814bf6826a8f7ab3bc0b16 Mon Sep 17 00:00:00 2001
+From: Sven Eckelmann <sven@narfation.org>
+Date: Tue, 7 May 2013 14:51:02 +0200
+Subject: [PATCH] batctl: Add CFLAGS to the linker step
+
+The GCC manual states for different parameters that the options for compilation
+must also be used when linking. The options for compilation are stored in
+CFLAGS and added to LINK.o to fix the behavior.
+
+Option which need this are for example -fPIC/-fPIE or -flto.
+
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+Signed-off-by: Marek Lindner <lindner_marek@yahoo.de>
+---
+ Makefile |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 311e70e..233f453 100755
+--- a/Makefile
++++ b/Makefile
+@@ -53,7 +53,7 @@ RM ?= rm -f
+ INSTALL ?= install
+ MKDIR ?= mkdir -p
+ COMPILE.c = $(Q_CC)$(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+-LINK.o = $(Q_LD)$(CC) $(LDFLAGS) $(TARGET_ARCH)
++LINK.o = $(Q_LD)$(CC) $(CFLAGS) $(LDFLAGS) $(TARGET_ARCH)
+ 
+ # standard install paths
+ PREFIX = /usr/local
+-- 
+1.7.10.4
+
