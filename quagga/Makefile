@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
-PKG_VERSION:=0.99.22
-PKG_RELEASE:=6
-PKG_MD5SUM:=3057bf3a91116a1017dd0df7e5e8ef93
+PKG_VERSION:=0.99.22.3
+PKG_RELEASE:=1
+PKG_MD5SUM:=1467b6828842af59b31252515729bb09
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/quagga/
