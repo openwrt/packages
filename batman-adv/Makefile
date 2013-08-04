@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2013.2.0
-BATCTL_VERSION:=2013.2.0
-PKG_RELEASE:=3
-PKG_MD5SUM:=9ec18300b96df22f0ed21c9f51e4ccef
-BATCTL_MD5SUM:=712f86cdd0f9076503fc48acf37e109e
+PKG_VERSION:=2013.3.0
+BATCTL_VERSION:=2013.3.0
+PKG_RELEASE:=4
+PKG_MD5SUM:=d070c0879cd8fe8125315a4566fabd2d
+BATCTL_MD5SUM:=747535b0296f0013a6f99373a51d41fc
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -60,16 +60,29 @@ MAKE_BATMAN_ADV_ARGS += \
 	CONFIG_BATMAN_ADV_NC=$(if $(CONFIG_KMOD_BATMAN_ADV_NC),y,n) \
 	REVISION="" all
 
-MAKE_BATCTL_ARGS += \
+# The linker can identify unused sections of a binary when each symbol is stored
+# in a separate section. This mostly removes unused linker sections and reduces 
+# the size by ~3% on mipsel.
+
+TARGET_CFLAGS  += -ffunction-sections -fdata-sections
+TARGET_LDFLAGS += -Wl,--gc-sections
+
+# Link-time optimization allows to move parts of the optimization from the single
+# source file to the global source view. This is done by emitting the GIMPLE
+# representation in each object file and analyzing it again during the link step.
+
+TARGET_CFLAGS  += -flto
+TARGET_LDFLAGS += -fuse-linker-plugin
+
+MAKE_BATCTL_ENV += \
+	CPPFLAGS="$(TARGET_CPPFLAGS)" \
 	CFLAGS="$(TARGET_CFLAGS)" \
-	CCFLAGS="$(TARGET_CFLAGS)" \
-	OFLAGS="$(TARGET_CFLAGS)" \
+	LDFLAGS="$(TARGET_LDFLAGS)"
+
+MAKE_BATCTL_ARGS += \
 	REVISION="" \
 	CC="$(TARGET_CC)" \
-	NODEBUG=1 \
-	UNAME="Linux" \
 	DESTDIR="$(PKG_INSTALL_DIR)" \
-	STRIP="/bin/true" \
 	batctl install
 
 ifneq ($(DEVELOPER)$(CONFIG_KMOD_BATMAN_ADV_BATCTL),)
@@ -82,7 +95,7 @@ $(eval $(call Download,batctl))
 
 BATCTL_EXTRACT = tar xzf "$(DL_DIR)/batctl-$(BATCTL_VERSION).tar.gz" -C "$(BUILD_DIR)/$(PKG_NAME)"
 BATCTL_PATCH = $(call Build/DoPatch,"$(PKG_BATCTL_BUILD_DIR)","$(PATCH_DIR)","*batctl*")
-BATCTL_BUILD = $(MAKE) -C $(PKG_BATCTL_BUILD_DIR) $(MAKE_BATCTL_ARGS)
+BATCTL_BUILD = $(MAKE_BATCTL_ENV) $(MAKE) -C $(PKG_BATCTL_BUILD_DIR) $(MAKE_BATCTL_ARGS)
 BATCTL_INSTALL = $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/sbin/batctl $(1)/usr/sbin/
 endif
 

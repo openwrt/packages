@@ -71,7 +71,8 @@
 			<th class="cbi-section-table-cell"><%:IP metric%></th>
 			<th class="cbi-section-table-cell"><%:Tun metric%></th>
 			<th class="cbi-section-table-cell"><%:Bonus%></th>
-			<th class="cbi-section-table-cell"><%:search id%></th>
+			<th class="cbi-section-table-cell"><%:Src%></th>
+			<th class="cbi-section-table-cell"><%:Search id%></th>
 		</tr>
 		<tr class="cbi-section-table-row">
 			<td colspan="10"><em><br /><%:Collecting data...%></em></td>
@@ -89,15 +90,15 @@
 		  var res = Array();
                   for ( var k in st.tunnels ){
                         var tunnel = st.tunnels[k];
-                        var nodename = tunnel.remoteId.replace(/\..+$/,'');
+                        var nodename = tunnel.remoteName.replace(/\..+$/,'');
 			var advnet = tunnel.advNet;
 			var status = '<img src="'+tunicon_dis+'"/>';
 			
 			if ( tunnel.tunName != "---" ) status = '<img src="'+tunicon+'"/>';
 			if ( advnet == "0.0.0.0/0" ) advnet = "<b>Internet</b>";
 
-			res.push([status, tunnel.name, nodename, advnet, tunnel.advBw, tunnel.searchNet, tunnel.advType,
-				tunnel.pathMtc, tunnel.ipMtc, tunnel.tunMtc, tunnel.bonus, tunnel.searchId]);
+			res.push([status, tunnel.name, nodename, advnet, tunnel.advBw, tunnel.net, tunnel.advType,
+				tunnel.pathMtc, tunnel.ipMtc, tunnel.tunMtc, tunnel.bonus, tunnel.srcIngress, tunnel.id]);
 		  }
 		  return res;
 		});
