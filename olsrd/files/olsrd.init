@@ -564,6 +564,12 @@ olsrd_write_interface() {
 			if network_get_device IFNAME "$interface"; then
 				ifnames="$ifnames \"$IFNAME\""
 				ifsglobal="$ifsglobal $IFNAME"
+			elif network_get_physdev IFNAME "$interface"; then
+				local proto="$(uci -q get network.${interface}.proto)"
+				if [ "$proto" = "static" -o "$proto" = "none" ]; then
+					ifnames="$ifnames \"$IFNAME\""
+					ifsglobal="$ifsglobal $IFNAME"
+				fi
 			else
 				log "$funcname() Warning: Interface '$interface' not found, skipped"
 			fi
