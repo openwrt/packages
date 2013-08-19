@@ -1,0 +1,7 @@
+
+config PACKAGE_ALFRED_VIS
+	bool "enable vis server for alfred"
+	depends on PACKAGE_alfred
+	default y
+
+

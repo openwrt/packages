@@ -1,0 +1,81 @@
+#!/bin/sh /etc/rc.common
+
+#
+# Copyright (C) 2013 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+START=99
+STOP=99
+alfred_args=""
+vis_args=""
+pid_file_alfred="/var/run/alfred.pid"
+pid_file_vis="/var/run/vis.pid"
+enable=0
+vis_enable=0
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+alfred_start()
+{
+	local args=""
+	local section="$1"
+	local disabled interface mode batmanif
+
+	# check if section is disabled
+	config_get_bool disabled "$section" disabled 0
+	[ $disabled = 0 ] || return 1
+
+	args=""
+
+	config_get interface "$section" interface
+	append args "-i $interface"
+
+	config_get mode "$section" mode
+	[ "$mode" = "master" ] && append args "-m"
+
+	config_get batmanif "$section" batmanif
+	append args "-b $batmanif"
+
+	append alfred_args "$args"
+	enable=1
+
+        config_get_bool start_vis "$section" start_vis 0
+        if [ "$start_vis" = 1 ] && [ -x /usr/sbin/vis ]; then
+                vis_enable=1
+                append vis_args "-i $batmanif -s"
+        fi
+
+	return 0
+}
+
+start()
+{
+	config_load "alfred"
+	config_foreach alfred_start alfred
+
+	if [ "$enable" = "0" ]; then
+		exit 0
+	fi
+	echo "${initscript}: starting alfred"
+	SERVICE_PID_FILE="$pid_file_alfred"
+	service_start /usr/sbin/alfred ${alfred_args}
+
+        if [ "$vis_enable" = "0" ]; then
+                exit 0
+        fi
+        echo "${initscript}: starting vis"
+	SERVICE_PID_FILE="$pid_file_vis"
+        service_start /usr/sbin/vis ${vis_args}
+}
+
+stop()
+{
+	SERVICE_PID_FILE="$pid_file_alfred"
+	service_stop /usr/sbin/alfred
+	SERVICE_PID_FILE="$pid_file_vis"
+	[ -x /usr/sbin/vis ] && service_stop /usr/sbin/vis
+
+}
