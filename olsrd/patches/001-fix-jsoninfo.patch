@@ -1,0 +1,16 @@
+--- a/lib/jsoninfo/src/olsrd_jsoninfo.c
++++ b/lib/jsoninfo/src/olsrd_jsoninfo.c
+@@ -1283,8 +1283,11 @@ send_info(unsigned int send_what, int the_socket)
+   abuf_init(&abuf, 32768);
+ 
+  // only add if outputing JSON
+-  if (send_what & SIW_ALL) abuf_json_open_array_entry(&abuf);
+-
++  if (send_what & SIW_ALL) {
++    abuf_json_open_array_entry(&abuf);
++    entrynumber[0] = 0;
++    currentjsondepth = 0;
++  }
+   if ((send_what & SIW_LINKS) == SIW_LINKS) ipc_print_links(&abuf);
+   if ((send_what & SIW_NEIGHBORS) == SIW_NEIGHBORS) ipc_print_neighbors(&abuf);
+   if ((send_what & SIW_TOPOLOGY) == SIW_TOPOLOGY) ipc_print_topology(&abuf);
