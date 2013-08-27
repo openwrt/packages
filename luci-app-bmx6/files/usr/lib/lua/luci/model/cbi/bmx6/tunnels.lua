@@ -54,7 +54,7 @@ local _,o
 for _,o in ipairs(tunInoptions) do
         if o.name ~= nil  and o.name ~= "network" then
 		help = bmx6json.getHtmlHelp(o)
-		value = tunnelsOut:option(Value,o.name,o.name,help)
+		value = tunnelsIn:option(Value,o.name,o.name,help)
 		value.optional = true
 	end
 end
