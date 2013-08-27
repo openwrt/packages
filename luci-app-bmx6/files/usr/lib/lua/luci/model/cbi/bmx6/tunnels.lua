@@ -25,7 +25,7 @@ local bmx6json = require("luci.model.bmx6json")
 m = Map("bmx6", "bmx6")
 
 -- tunOut
-local tunnelsOut = m:section(TypedSection,"tunOut",translate("Networks to fetch"),translate("Tunnel announcements to fetch if possible"))
+local tunnelsOut = m:section(TypedSection,"tunOut",translate("Networks to fetch"),translate("Gateways announcements to fetch"))
 tunnelsOut.addremove = true
 tunnelsOut.anonymous = true
 tunnelsOut:option(Value,"tunOut","Name")
@@ -42,23 +42,19 @@ for _,o in ipairs(tunoptions) do
 end
 
 
---tunIn
-local tunnelsIn = m:section(TypedSection,"tunInNet",translate("Networks to offer"),translate("Tunnels to announce in the network"))
+-- tunOut
+local tunnelsIn = m:section(TypedSection,"tunIn",translate("Networks to offer"),translate("Gateways to announce in the network"))
 tunnelsIn.addremove = true
 tunnelsIn.anonymous = true
+tunnelsIn:option(Value,"tunIn","Name")
+tunnelsIn:option(Value,"network", translate("Network to offer"))
 
-local net = tunnelsIn:option(Value,"tunInNet", translate("Network to offer"))
-net.default = "10.0.0.0/8"
-
-local bwd = tunnelsIn:option(Value,"bandwidth",translate("Bandwidth (Bytes)"))
-bwd.default = "1000000"
-
-local tuninoptions = bmx6json.getOptions("tunInNet")
+local tunInoptions = bmx6json.getOptions("tunIn")
 local _,o
-for _,o in ipairs(tuninoptions) do
-        if o.name ~= nil  and o.name ~= "tunInNet" and o.name ~= "bandwidth" then
+for _,o in ipairs(tunInoptions) do
+        if o.name ~= nil  and o.name ~= "network" then
 		help = bmx6json.getHtmlHelp(o)
-		value = tunnelsIn:option(Value,o.name,o.name,help)
+		value = tunnelsOut:option(Value,o.name,o.name,help)
 		value.optional = true
 	end
 end
@@ -72,4 +68,3 @@ function m.on_commit(self,map)
 end
 
 return m
-
