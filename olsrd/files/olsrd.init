@@ -732,9 +732,9 @@ olsrd_setup_smartgw_rules() {
 					$IP6T -I input_rule -i $IFACE -p 4 -j ACCEPT
 				done
 			else
+				$IP4T -t nat -I postrouting_rule -o tnl_+ -j MASQUERADE
 				for IPT in $IP4T $IP6T; do
 					$IPT -I forwarding_rule -o tnl_+ -j ACCEPT
-					$IPT -t nat -I postrouting_rule -o tnl_+ -j MASQUERADE
 					if [ "$nowan"="0" ]; then
 						for IFACE in $wanifnames; do
 							$IPT -A forwarding_rule -i tunl0 -o $IFACE -j ACCEPT
