@@ -34,7 +34,8 @@ else
 	options = options.OPTIONS
 end
 
-local general = m:section(NamedSection,"general","general","General Options")
+local general = m:section(NamedSection,"general","bmx6")
+general.addremove = true
 
 local name = ""
 local help = ""

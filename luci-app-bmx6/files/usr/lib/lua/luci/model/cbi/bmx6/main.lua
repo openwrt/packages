@@ -35,21 +35,17 @@ end
 -- Getting a list of interfaces
 local eth_int = luci.sys.net.devices()
 
--- Getting the most important options from general
-local general = m:section(NamedSection,"general","general","General")
-general.addremove = false
-general:option(Value,"globalPrefix","Global ip prefix","Specify global prefix for interfaces: NETADDR/LENGTH. If you are using IPv6 leave blank to let bmx6 autoassign an ULA IPv6 address.")
-
-if m:get("ipVersion","ipVersion") == "6" then
-	general:option(Value,"tun4Address","IPv4 address or range","specify default IPv4 tunnel address and announced range")
-end
+local tunDev = m:section(TypedSection,"tunDev",translate("Tunnel device"),translate("Define incoming ipip tunnel interface name"))
+tunDev.addremove = true
+tunDev.anonymous = true
+tunDev:option(Value,"tunDev",translate("Name"),translate("Name for the tunnel network device"))
+tunDev:option(Value,"tun4Address", translate("IPv4 address/length"),translate("Specify default IPv4 tunnel address and announced range (ex. 10.1.2.3/24)"))
+tunDev:option(Value,"tun6Address", translate("IPv6 address/length"),translate("Specify default IPv6 tunnel address and announced range (ex. 2012:0:0:123:0:0:0:1/64)"))
 
 -- IP section
--- ipVersion section is important, we are allways showing it
-local ipV = m:section(NamedSection,"ipVersion","ipVersion","IP options")
+local ipV = m:section(NamedSection,"ipVersion","ipVersion",translate("Miscellaneous IP options"))
 ipV.addremove = false
-local lipv = ipV:option(ListValue,"ipVersion","IP version")
-lipv:value("4","4")
+local lipv = ipV:option(ListValue,"ipVersion",translate("IP version"))
 lipv:value("6","6")
 lipv.default = "6"
 
@@ -88,10 +84,10 @@ for _,o in ipairs(ipoptions) do
 end
 
 -- Interfaces section
-local interfaces = m:section(TypedSection,"dev","Devices","")
+local interfaces = m:section(TypedSection,"dev",translate("Devices"),translate("Network devices to mesh with"))
 interfaces.addremove = true
 interfaces.anonymous = true
-local intlv = interfaces:option(ListValue,"dev","Device")
+local intlv = interfaces:option(ListValue,"dev",translate("Device"))
 
 for _,i in ipairs(eth_int) do
 	intlv:value(i,i)

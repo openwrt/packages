@@ -95,7 +95,9 @@ Visit <a href="http://bmx6.net">bmx6.net</a> for more info.
 		sta.tun4Address,sta.myLocalId,sta.uptime,sta.cpu,sta.nodes]);
 		return res;
 		});
+//]]></script>
 
+<script type="text/javascript">//<![CDATA[
 		new TablePooler(5,"/cgi-bin/bmx6-info", {'interfaces':''}, "ifaces_table", function(st){
 		var res = Array();
 		var ifaces = st.interfaces;
@@ -108,7 +110,6 @@ Visit <a href="http://bmx6.net">bmx6.net</a> for more info.
 		return res;
 		});
 //]]></script>
-
 
 <%+footer%>
 
