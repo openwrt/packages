@@ -1,10 +1,16 @@
+Date: Fri,  6 Sep 2013 15:14:41 +0200
+From: Antonio Quartulli <ordex@autistici.org>
+To: b.a.t.m.a.n@lists.open-mesh.org
+Cc: Antonio Quartulli <ordex@autistici.org>
+Subject: [B.A.T.M.A.N.] [PATCH openwrt-feed only] batman-adv: fix metadata stripping
+
 a new optimisation in openwrt is stripping some metadata information, invluding
 the module version which is used by batctl to tell the user which version
 batman-adv the node is currently running.
 
 Un-define this constant to prevent the metadata from being stripped
 
-Signed-off-by: Antonio Quartulli <ordex at autistici.org>
+Signed-off-by: Antonio Quartulli <ordex@autistici.org>
 ---
  main.h | 2 ++
  1 file changed, 2 insertions(+)
@@ -19,7 +25,9 @@ index 834b1a0..b329e79 100644
  
 +#undef CONFIG_MODULE_STRIPPED
 +
- #define BATADV_DRIVER_AUTHOR "Marek Lindner <lindner_marek at yahoo.de>, "       "Simon Wunderlich <siwu at hrz.tu-chemnitz.de>"
+ #define BATADV_DRIVER_AUTHOR "Marek Lindner <lindner_marek@yahoo.de>, " \
+ 			     "Simon Wunderlich <siwu@hrz.tu-chemnitz.de>"
  #define BATADV_DRIVER_DESC   "B.A.T.M.A.N. advanced"
 -- 
 1.8.1.5
+
