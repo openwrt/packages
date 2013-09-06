@@ -1,0 +1,25 @@
+a new optimisation in openwrt is stripping some metadata information, invluding
+the module version which is used by batctl to tell the user which version
+batman-adv the node is currently running.
+
+Un-define this constant to prevent the metadata from being stripped
+
+Signed-off-by: Antonio Quartulli <ordex at autistici.org>
+---
+ main.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/main.h b/main.h
+index 834b1a0..b329e79 100644
+--- a/main.h
++++ b/main.h
+@@ -20,6 +20,8 @@
+ #ifndef _NET_BATMAN_ADV_MAIN_H_
+ #define _NET_BATMAN_ADV_MAIN_H_
+ 
++#undef CONFIG_MODULE_STRIPPED
++
+ #define BATADV_DRIVER_AUTHOR "Marek Lindner <lindner_marek at yahoo.de>, "       "Simon Wunderlich <siwu at hrz.tu-chemnitz.de>"
+ #define BATADV_DRIVER_DESC   "B.A.T.M.A.N. advanced"
+-- 
+1.8.1.5
