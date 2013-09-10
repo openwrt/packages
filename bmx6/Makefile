@@ -28,8 +28,8 @@ PKG_NAME:=bmx6
 
 PKG_SOURCE_PROTO:=git
 
-PKG_SOURCE_URL:=git://bmx6.net/bmx6.git
-#PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
+#PKG_SOURCE_URL:=git://bmx6.net/bmx6.git
+PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
 
 PKG_REV:=1d022e3f0ae0a2954c90b18fdfbcc178d7437605
 PKG_VERSION:=r2013080406
