@@ -1,0 +1,46 @@
+From 59221041095c2b83205caab3dbabc94d7a6f32f9 Mon Sep 17 00:00:00 2001
+From: Antonio Quartulli <antonio@open-mesh.com>
+Date: Wed, 11 Sep 2013 19:14:44 +0200
+Subject: [PATCH 4/4] batman-adv: set the TAG flag for the vid passed to BLA
+
+When receiving or sending a packet a packet on a VLAN, the
+vid has to be marked with the TAG flag in order to make any
+component in batman-adv understand that the packet is coming
+from a really tagged network.
+
+This fix the Bridge Loop Avoidance behaviour which was not
+able to send announces over VLAN interfaces.
+
+Introduced by 0b1da1765fdb00ca5d53bc95c9abc70dfc9aae5b
+("batman-adv: change VID semantic in the BLA code")
+
+Signed-off-by: Antonio Quartulli <antonio@open-mesh.org>
+Acked-by: Simon Wunderlich <siwu@hrz.tu-chemnitz.de>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ soft-interface.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/soft-interface.c b/soft-interface.c
+index 0f04e1c..33b6144 100644
+--- a/soft-interface.c
++++ b/soft-interface.c
+@@ -168,6 +168,7 @@ static int batadv_interface_tx(struct sk_buff *skb,
+ 	case ETH_P_8021Q:
+ 		vhdr = (struct vlan_ethhdr *)skb->data;
+ 		vid = ntohs(vhdr->h_vlan_TCI) & VLAN_VID_MASK;
++		vid |= BATADV_VLAN_HAS_TAG;
+ 
+ 		if (vhdr->h_vlan_encapsulated_proto != ethertype)
+ 			break;
+@@ -329,6 +330,7 @@ void batadv_interface_rx(struct net_device *soft_iface,
+ 	case ETH_P_8021Q:
+ 		vhdr = (struct vlan_ethhdr *)skb->data;
+ 		vid = ntohs(vhdr->h_vlan_TCI) & VLAN_VID_MASK;
++		vid |= BATADV_VLAN_HAS_TAG;
+ 
+ 		if (vhdr->h_vlan_encapsulated_proto != ethertype)
+ 			break;
+-- 
+1.8.4.rc3
+

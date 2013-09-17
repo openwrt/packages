@@ -1,0 +1,57 @@
+From 0d941e82ab5f92faf33bee6abdde519056f3ac2d Mon Sep 17 00:00:00 2001
+From: Simon Wunderlich <simon.wunderlich@s2003.tu-chemnitz.de>
+Date: Wed, 26 Jun 2013 11:37:51 +0200
+Subject: [PATCH 2/4] batman-adv: Unmap fragment page once iterator is done
+
+Callers of skb_seq_read() are currently forced to call skb_abort_seq_read()
+even when consuming all the data because the last call to skb_seq_read (the
+one that returns 0 to indicate the end) fails to unmap the last fragment page.
+
+With this patch callers will be allowed to traverse the SKB data by calling
+skb_prepare_seq_read() once and repeatedly calling skb_seq_read() as originally
+intended (and documented in the original commit 677e90eda), that is, only call
+skb_abort_seq_read() if the sequential read is actually aborted.
+
+Signed-off-by: Wedson Almeida Filho <wedsonaf@gmail.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Simon Wunderlich <siwu@hrz.tu-chemnitz.de>
+Signed-off-by: Marek Lindner <lindner_marek@yahoo.de>
+---
+ compat.h | 8 ++++++++
+ main.c   | 1 -
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/compat.h b/compat.h
+index 17ef089..346a824 100644
+--- a/compat.h
++++ b/compat.h
+@@ -306,6 +306,14 @@ static int __batadv_interface_set_mac_addr(x, y)
+ 
+ #define netdev_notifier_info_to_dev(ptr) ptr
+ 
++/* older kernels still need to call skb_abort_seq_read() */
++#define skb_seq_read(consumed, data, st) \
++	({ \
++		int len = skb_seq_read(consumed, data, st); \
++		if (len == 0) \
++			skb_abort_seq_read(st); \
++		len; \
++	})
+ #endif /* < KERNEL_VERSION(3, 11, 0) */
+ 
+ #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
+diff --git a/main.c b/main.c
+index 51aafd6..08125f3 100644
+--- a/main.c
++++ b/main.c
+@@ -473,7 +473,6 @@ __be32 batadv_skb_crc32(struct sk_buff *skb, u8 *payload_ptr)
+ 		crc = crc32c(crc, data, len);
+ 		consumed += len;
+ 	}
+-	skb_abort_seq_read(&st);
+ 
+ 	return htonl(crc);
+ }
+-- 
+1.8.4.rc3
+
