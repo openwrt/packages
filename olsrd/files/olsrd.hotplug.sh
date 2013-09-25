@@ -1,15 +1,5 @@
 #!/bin/sh
 
-case "$ACTION" in
-	ifup)
-		/etc/init.d/olsrd enabled && {
-			olsrd_interface_needs_adding "$INTERFACE" "$DEVICE" && {
-				/etc/init.d/olsrd restart
-			}
-		}
-	;;
-esac
-
 olsrd_list_configured_interfaces()
 {
 	local i=0
@@ -51,3 +41,13 @@ olsrd_interface_needs_adding()
 	logger -t olsrd_hotplug -p daemon.debug "[OK] interface $INTERFACE not used for olsrd"
 	return 1
 }
+
+case "$ACTION" in
+	ifup)
+		/etc/init.d/olsrd enabled && {
+			olsrd_interface_needs_adding "$INTERFACE" "$DEVICE" && {
+				/etc/init.d/olsrd restart
+			}
+		}
+	;;
+esac
