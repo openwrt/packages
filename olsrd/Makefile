@@ -175,6 +175,8 @@ define Package/olsrd/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/olsrd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/olsrd.init $(1)/etc/init.d/olsrd
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN) ./files/olsrd.hotplug.sh $(1)/etc/hotplug.d/iface/50-olsrd
 endef
 
 define Package/olsrd-mod-arprefresh/install
