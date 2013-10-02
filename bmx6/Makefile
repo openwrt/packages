@@ -79,7 +79,6 @@ define Package/bmx6-uci-config
   TITLE:=configuration plugin based on uci (recommended!)
 endef
 
-
 define Package/bmx6-json
   $(call Package/bmx6/Default)
   DEPENDS:=bmx6 +libjson
@@ -98,6 +97,12 @@ define Package/bmx6-quagga
   TITLE:=bmx6 quagga plugin to redistribute/export routes (needs manet/bmx6 patched quagga 0.99.21)
 endef
 
+define Package/bmx6-table
+  $(call Package/bmx6/Default)
+  DEPENDS:=bmx6
+  TITLE:=bmx6 table plugin to automatic announce routing-table routes via ip6ip tunnels
+endef
+
 define Build/Configure
 	mkdir -p $(PKG_INSTALL_DIR)
 endef
@@ -106,17 +111,14 @@ define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) $(MAKE_ARGS)
 endef
 
-
 define Package/bmx6/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bmx6 $(1)/usr/sbin/bmx6
 endef
 
-
 define Package/bmx6-uci-config/conffiles
 /etc/config/bmx6
 endef
-
 
 define Package/bmx6-uci-config/install
 	$(INSTALL_DIR) $(1)/usr/lib $(1)/etc/config $(1)/etc/init.d
@@ -135,6 +137,11 @@ define Package/bmx6-sms/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_sms/bmx6_sms.so $(1)/usr/lib/bmx6_sms.so
 endef
 
+define Package/bmx6-table/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_table/bmx6_table.so $(1)/usr/lib/bmx6_table.so
+endef
+
 define Package/bmx6-quagga/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_quagga/bmx6_quagga.so $(1)/usr/lib/bmx6_quagga.so
@@ -145,4 +152,4 @@ $(eval $(call BuildPackage,bmx6-uci-config))
 $(eval $(call BuildPackage,bmx6-json))
 $(eval $(call BuildPackage,bmx6-sms))
 $(eval $(call BuildPackage,bmx6-quagga))
-
+$(eval $(call BuildPackage,bmx6-table))
