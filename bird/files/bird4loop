@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BIRD=/usr/sbin/bird4
+BIRD="/usr/sbin/bird4 -c /etc/bird4.conf"
 
 $BIRD -p || return 1
 
