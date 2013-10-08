@@ -114,6 +114,13 @@ define Build/Patch
 	$(BATCTL_PATCH)
 endef
 
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(SED) '/#define _NET_BATMAN_ADV_MAIN_H_/a\#undef CONFIG_MODULE_STRIPPED' \
+		$(PKG_BUILD_DIR)/main.h
+endef
+
+
 define Build/Compile
 	$(MAKE) -C "$(PKG_BUILD_DIR)" $(MAKE_BATMAN_ADV_ARGS)
 	$(BATCTL_BUILD)
