@@ -1,7 +1,13 @@
+config ALFRED_NEEDS_libgps
+	bool
 
 config PACKAGE_ALFRED_VIS
 	bool "enable vis server for alfred"
 	depends on PACKAGE_alfred
 	default y
 
-
+config PACKAGE_ALFRED_GPSD
+	bool "enable gpsd service for alfred"
+	depends on PACKAGE_alfred
+	select ALFRED_NEEDS_libgps
+	default n
