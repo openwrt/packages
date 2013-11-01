@@ -120,6 +120,7 @@
 				hna6 = extensions[e].HNA6_EXTENSION;
 				if ( extensions[e].TUN4IN6_NET_EXTENSION )
 				tun4in6 = extensions[e].TUN4IN6_NET_EXTENSION;
+				tun6in6 = extensions[e].TUN6IN6_NET_EXTENSION;
 				}
 
 			// Gateways
@@ -131,6 +132,15 @@
 				else
 					gateways += "<li>"+tun4in6[t].network+'/'+tun4in6[t].networklen + ' | ' + tun4in6[t].bandwidth+'</li>';
 				}
+
+			for ( var t = 0; t < tun6in6.length; t++)
+				{
+				if ( tun6in6[t].networklen == "128" )
+					gateways += '<li><a href="http://' + tun6in6[t].network + '">' + tun6in6[t].network + '</a></li>';
+				else
+					gateways += "<li>"+tun6in6[t].network+'/'+tun6in6[t].networklen + ' | ' + tun6in6[t].bandwidth+'</li>';
+				}
+
 			gateways += '</ul>';
 
 			//Adding HNAs with prefix=128 as main address
