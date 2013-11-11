@@ -44,9 +44,11 @@ olsrd_interface_needs_adding()
 
 case "$ACTION" in
 	ifup)
-		/etc/init.d/olsrd enabled && {
+		# only work after the first normal startup
+		# also: no need to test, if enabled
+		[ -e '/var/run/olsrd.pid' ] && {
 			olsrd_interface_needs_adding "$INTERFACE" "$DEVICE" && {
-				/etc/init.d/olsrd restart
+				. /etc/rc.common /etc/init.d/olsrd restart
 			}
 		}
 	;;
