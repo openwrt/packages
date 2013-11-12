@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 #
 PKG_NAME:=alfred
 PKG_VERSION:=2013.4.0
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_MD5SUM:=3891697e127b1037cfc9349fd96e9993
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -28,6 +28,7 @@ define Package/alfred
   CATEGORY:=Network
   TITLE:=A.L.F.R.E.D. - Almighty Lightweight Fact Remote Exchange Daemon
   DEPENDS:= +libc +IPV6:kmod-ipv6 +librt \
+	  +ALFRED_NEEDS_lua:lua \
 	  +ALFRED_NEEDS_libgps:libgps
 endef
 
@@ -77,6 +78,8 @@ define Package/alfred/install
 	$(INSTALL_BIN) ./files/alfred.init $(1)/etc/init.d/alfred
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/alfred.config $(1)/etc/config/alfred
+	$(INSTALL_DIR) $(1)/etc/alfred
+	[ "x$(CONFIG_PACKAGE_ALFRED_BATHOSTS)" == "xy" ] && $(INSTALL_BIN) ./files/bat-hosts.lua $(1)/etc/alfred/bat-hosts.lua ; true
 endef
 
 $(eval $(call BuildPackage,alfred))
