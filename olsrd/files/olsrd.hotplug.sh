@@ -46,7 +46,7 @@ case "$ACTION" in
 	ifup)
 		# only work after the first normal startup
 		# also: no need to test, if enabled
-		[ -e '/var/run/olsrd.pid' ] && {
+		[ -e '/var/etc/olsrd.conf' ] && {
 			olsrd_interface_needs_adding "$INTERFACE" "$DEVICE" && {
 				. /etc/rc.common /etc/init.d/olsrd restart
 			}
