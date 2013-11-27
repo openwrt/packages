@@ -11,9 +11,9 @@ include $(TOPDIR)/rules.mk
 # The latest alfred git hash in PKG_REV can be obtained from http://git.open-mesh.org/alfred.git
 #
 PKG_NAME:=alfred
-PKG_VERSION:=2013.3.0
-PKG_RELEASE:=0
-PKG_MD5SUM:=018ef6262cdd11e900af31d71a864b13
+PKG_VERSION:=2013.4.0
+PKG_RELEASE:=1
+PKG_MD5SUM:=3891697e127b1037cfc9349fd96e9993
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -27,7 +27,9 @@ define Package/alfred
   SECTION:=net
   CATEGORY:=Network
   TITLE:=A.L.F.R.E.D. - Almighty Lightweight Fact Remote Exchange Daemon
-  DEPENDS:= +libc +IPV6:kmod-ipv6 +librt
+  DEPENDS:= +libc +IPV6:kmod-ipv6 +librt \
+	  +ALFRED_NEEDS_lua:lua \
+	  +ALFRED_NEEDS_libgps:libgps
 endef
 
 define Package/alfred/description
@@ -55,7 +57,8 @@ define Package/alfred/config
 endef
 
 MAKE_ALFRED_FLAGS=\
-	CONFIG_ALFRED_VIS=$(if $(CONFIG_PACKAGE_ALFRED_VIS),y,n)
+	CONFIG_ALFRED_VIS=$(if $(CONFIG_PACKAGE_ALFRED_VIS),y,n) \
+	CONFIG_ALFRED_GPSD=$(if $(CONFIG_PACKAGE_ALFRED_GPSD),y,n)
 
 TARGET_CFLAGS  += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections -fuse-linker-plugin
@@ -69,11 +72,14 @@ endef
 define Package/alfred/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	cp -fpR  $(PKG_BUILD_DIR)/alfred $(1)/usr/sbin/
-	[ "x$(CONFIG_PACKAGE_ALFRED_VIS)" == "xy" ] && cp -fpR  $(PKG_BUILD_DIR)/vis/vis $(1)/usr/sbin/ ; true
+	[ "x$(CONFIG_PACKAGE_ALFRED_VIS)" == "xy" ] && cp -fpR  $(PKG_BUILD_DIR)/vis/batadv-vis $(1)/usr/sbin/ ; true
+	[ "x$(CONFIG_PACKAGE_ALFRED_GPSD)" == "xy" ] && cp -fpR  $(PKG_BUILD_DIR)/vis/alfred-gpsd $(1)/usr/sbin/ ; true
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/alfred.init $(1)/etc/init.d/alfred
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/alfred.config $(1)/etc/config/alfred
+	$(INSTALL_DIR) $(1)/etc/alfred
+	[ "x$(CONFIG_PACKAGE_ALFRED_BATHOSTS)" == "xy" ] && $(INSTALL_BIN) ./files/bat-hosts.lua $(1)/etc/alfred/bat-hosts.lua ; true
 endef
 
 $(eval $(call BuildPackage,alfred))

@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2013.3.0
-BATCTL_VERSION:=2013.3.0
-PKG_RELEASE:=5
-PKG_MD5SUM:=d070c0879cd8fe8125315a4566fabd2d
-BATCTL_MD5SUM:=747535b0296f0013a6f99373a51d41fc
+PKG_VERSION:=2013.4.0
+BATCTL_VERSION:=2013.4.0
+PKG_RELEASE:=1
+PKG_MD5SUM:=6590caa324709289e3cb142273a5ff57
+BATCTL_MD5SUM:=42e269cc710bbc9a8fd17628201d4258
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -113,6 +113,13 @@ define Build/Patch
 	$(BATCTL_EXTRACT)
 	$(BATCTL_PATCH)
 endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(SED) '/#define _NET_BATMAN_ADV_MAIN_H_/a\#undef CONFIG_MODULE_STRIPPED' \
+		$(PKG_BUILD_DIR)/main.h
+endef
+
 
 define Build/Compile
 	$(MAKE) -C "$(PKG_BUILD_DIR)" $(MAKE_BATMAN_ADV_ARGS)

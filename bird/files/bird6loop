@@ -1,0 +1,24 @@
+#!/bin/sh
+
+BIRD="/usr/sbin/bird6 -c /etc/bird6.conf"
+
+$BIRD -p || return 1
+
+. /lib/functions.sh
+. /lib/functions/service.sh
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+sig_handler() {
+	running=0
+	service_stop $BIRD
+}
+
+running=1
+trap sig_handler INT
+trap sig_handler TERM
+while [ $running -gt 0 ]; do
+	service_check $BIRD || service_start $BIRD -d "$@"
+	sleep 3
+done
