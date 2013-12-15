@@ -13,6 +13,7 @@
 
 IPT=/usr/sbin/iptables
 WD_DIR=/usr/bin
+NDS_CONF=/etc/nodogsplash/nodogsplash.conf
 OPTIONS=""
 START=65
 STOP=65
@@ -168,9 +169,11 @@ test_module() {
 
     do_module_tests "ipt_mac"
     do_module_tests "ipt_mark"
-    # if not using traffic control,
-    # you can comment out the following 3 lines:
-    do_module_tests "imq" "numdevs=2"
-    do_module_tests "ipt_IMQ"
-    do_module_tests "sch_htb"
+
+    # test for imq modules, only if TrafficControl is enabled in conf
+    if ( grep -q '^[[:space:]]*TrafficControl[[:space:]]\+yes' "$NDS_CONF" ) ; then
+        do_module_tests "imq" "numdevs=2"
+        do_module_tests "ipt_IMQ"
+        do_module_tests "sch_htb"
+    fi
 }
