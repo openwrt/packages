@@ -171,7 +171,7 @@ test_module() {
     do_module_tests "ipt_mark"
 
     # test for imq modules, only if TrafficControl is enabled in conf
-    if ( grep -q '^[[:space:]]*TrafficControl[[:space:]]\+yes' "$NDS_CONF" ) ; then
+    if ( grep -q -E '^[[:space:]]*TrafficControl[[:space:]]+(yes|true|1)' "$NDS_CONF" ) ; then
         do_module_tests "imq" "numdevs=2"
         do_module_tests "ipt_IMQ"
         do_module_tests "sch_htb"
