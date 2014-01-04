@@ -33,13 +33,13 @@ olsrd_interface_already_in_config()
 
 olsrd_interface_needs_adding()
 {
-	local testif
+	local interface
 
 	# likely and cheap operation:
 	olsrd_interface_already_in_config && return 1
 
-	for myif in $(olsrd_list_configured_interfaces); do {
-		[ "$myif" = "$interface" ] && {
+	for interface in $(olsrd_list_configured_interfaces); do {
+		[ "$interface" = "$INTERFACE" ] && {
 			olsrd_interface_already_in_config || return 0
 		}
 	} done
