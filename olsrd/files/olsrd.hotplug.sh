@@ -11,7 +11,7 @@ olsrd_list_configured_interfaces()
 				# is disabled
 			;;
 			*)
-				echo "$interface"
+				echo "$interface"	# e.g. 'lan'
 			;;
 		esac
 
@@ -19,26 +19,32 @@ olsrd_list_configured_interfaces()
 	} done
 }
 
+olsrd_interface_already_in_config()
+{
+	# e.g.: 'Interface "eth0.1" "eth0.2" "wlan0"'
+	if grep -s ^'Interface ' '/var/etc/olsrd.conf' | grep -q "\"$DEVICE\""; then
+		logger -t olsrd_hotplug -p daemon.debug "[OK] already_active: '$INTERFACE' => '$DEVICE'"
+		return 0
+	else
+		logger -t olsrd_hotplug -p daemon.info "[OK] ifup: '$INTERFACE' => '$DEVICE'"
+		return 1
+	fi
+}
+
 olsrd_interface_needs_adding()
 {
-	local interface="$1"	# e.g. wlanadhocRADIO1
-	local device="$2"	# e.g. wlan1-1
-	local myif
-	local config="/var/etc/olsrd.conf"
+	local interface
 
-	for myif in $(olsrd_list_configured_interfaces); do {
-		[ "$myif" = "$interface" ] && {
-			if grep -s ^'Interface ' "$config" | grep -q "\"$device\""; then
-				logger -t olsrd_hotplug -p daemon.debug "[OK] already_active: $INTERFACE => $DEVICE"
-				return 1
-			else
-				logger -t olsrd_hotplug -p daemon.info "[OK] ifup: $INTERFACE => $DEVICE"
-				return 0
-			fi
+	# likely and cheap operation:
+	olsrd_interface_already_in_config && return 1
+
+	for interface in $(olsrd_list_configured_interfaces); do {
+		[ "$interface" = "$INTERFACE" ] && {
+			olsrd_interface_already_in_config || return 0
 		}
 	} done
 
-	logger -t olsrd_hotplug -p daemon.debug "[OK] interface $INTERFACE not used for olsrd"
+	logger -t olsrd_hotplug -p daemon.debug "[OK] interface '$INTERFACE' => '$DEVICE' not used for olsrd"
 	return 1
 }
 
@@ -47,7 +53,9 @@ case "$ACTION" in
 		# only work after the first normal startup
 		# also: no need to test, if enabled
 		[ -e '/var/etc/olsrd.conf' ] && {
-			olsrd_interface_needs_adding "$INTERFACE" "$DEVICE" && {
+			# INTERFACE = e.g. 'wlanadhocRADIO1' or 'cfg144d8f'
+			# DEVICE    = e.g. 'wlan1-1'
+			olsrd_interface_needs_adding && {
 				. /etc/rc.common /etc/init.d/olsrd restart
 			}
 		}
