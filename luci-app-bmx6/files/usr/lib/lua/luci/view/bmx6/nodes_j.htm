@@ -113,7 +113,8 @@
 			// Looking for the extensions
 			var hna6 = [];
 			var tun4in6 = [];
-			var tun6 = [];
+			var tun6in6 = [];
+
 			for( var e = 0; e < extensions.length; e++)
 				{
 				if( extensions[e].HNA6_EXTENSION )
@@ -125,6 +126,7 @@
 
 			// Gateways
 			var gateways = '<ul>';
+			if ( typeof(tun4in6) !== "undefined" && tun4in6 !== null )
 			for ( var t = 0; t < tun4in6.length; t++)
 				{
 				if ( tun4in6[t].networklen == "32" )
@@ -133,6 +135,7 @@
 					gateways += "<li>"+tun4in6[t].network+'/'+tun4in6[t].networklen + ' | ' + tun4in6[t].bandwidth+'</li>';
 				}
 
+			if ( typeof(tun6in6) !== "undefined" && tun6in6 !== null )
 			for ( var t = 0; t < tun6in6.length; t++)
 				{
 				if ( tun6in6[t].networklen == "128" )
