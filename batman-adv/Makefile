@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2013.4.0
-BATCTL_VERSION:=2013.4.0
+PKG_VERSION:=2014.0.0
+BATCTL_VERSION:=2014.0.0
 PKG_RELEASE:=1
-PKG_MD5SUM:=6590caa324709289e3cb142273a5ff57
-BATCTL_MD5SUM:=42e269cc710bbc9a8fd17628201d4258
+PKG_MD5SUM:=8d58ecaede17dc05aab1b549dc09fa7d
+BATCTL_MD5SUM:=b0bcf29fef80ddcc33769e13f5937d0a
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -29,7 +29,7 @@ define KernelPackage/batman-adv
   URL:=http://www.open-mesh.org/
   MAINTAINER:=Marek Lindner <lindner_marek@yahoo.de>
   SUBMENU:=Network Support
-  DEPENDS:=+kmod-lib-crc16 +kmod-crypto-core +kmod-crypto-crc32c +kmod-lib-crc32c +libc
+  DEPENDS:=+kmod-crypto-core +kmod-crypto-crc32c +kmod-lib-crc32c +libc
   TITLE:=B.A.T.M.A.N. Adv
   FILES:=$(PKG_BUILD_DIR)/batman-adv.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,50,batman-adv)
