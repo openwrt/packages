@@ -1,22 +1,25 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2010-2014 OpenWrt.org
 
+BIRD="bird4"
+
 START=99
 STOP=10
 
 SERVICE_DAEMONIZE=1
 SERVICE_WRITE_PID=1
 
-BIRD="/usr/sbin/bird4 -c /etc/bird4.conf"
+BIRD_BIN="/usr/sbin/$BIRD"
+BIRD_CONF="/etc/$BIRD.conf"
 
 start() {
-	service_start $BIRD -d
+	service_start $BIRD_BIN -d -c $BIRD_CONF
 }
 
 stop() {
-	service_stop $BIRD
+	service_stop $BIRD_BIN
 }
 
 reload() {
-	service_reload $BIRD
+	service_reload $BIRD_BIN
 }
