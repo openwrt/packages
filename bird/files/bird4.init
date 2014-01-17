@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2010-2011 OpenWrt.org
+# Copyright (C) 2010-2014 OpenWrt.org
 
 START=99
 STOP=10
@@ -11,11 +11,9 @@ BIRD="/usr/sbin/bird4 -c /etc/bird4.conf"
 
 start() {
 	service_start $BIRD -d
-#	( SERVICE_MATCH_NAME=1 service_start /usr/sbin/bird4loop )
 }
 
 stop() {
-#	( SERVICE_MATCH_NAME=1 service_stop /usr/sbin/bird4loop )
 	service_stop $BIRD
 }
 
