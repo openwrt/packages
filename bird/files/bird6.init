@@ -7,13 +7,14 @@ START=99
 STOP=10
 
 SERVICE_DAEMONIZE=1
-SERVICE_WRITE_PID=1
+SERVICE_USE_PID=1
+SERVICE_PID_FILE="/var/run/$BIRD.pid"
 
 BIRD_BIN="/usr/sbin/$BIRD"
 BIRD_CONF="/etc/$BIRD.conf"
 
 start() {
-	service_start $BIRD_BIN -d -c $BIRD_CONF
+	service_start $BIRD_BIN -d -c $BIRD_CONF -P $SERVICE_PID_FILE
 }
 
 stop() {
