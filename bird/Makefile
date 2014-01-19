@@ -1,5 +1,5 @@
 # 
-# Copyright (C) 2009-2012 OpenWrt.org
+# Copyright (C) 2009-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bird
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=bird-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://bird.network.cz/pub/bird
@@ -133,7 +133,6 @@ $(STAMP_BUILT): $(STAMP_BUILT)-$(2)
 define Package/bird$(2)/install
 	$(INSTALL_DIR)  $$(1)/usr/sbin
 	$(INSTALL_BIN)  $$(PKG_BUILD_DIR)/bird$(2) $$(1)/usr/sbin/
-	$(INSTALL_BIN)  ./files/bird$(2)loop $$(1)/usr/sbin/
 	$(INSTALL_DIR)  $$(1)/etc
 	$(INSTALL_DATA) ./files/bird$(2).conf $$(1)/etc/
 	$(INSTALL_DIR)  $$(1)/etc/init.d
