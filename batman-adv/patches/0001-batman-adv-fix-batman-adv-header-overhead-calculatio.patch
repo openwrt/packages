@@ -1,13 +1,14 @@
-From d72756b97529b3c6afa08933216aaa912bb16ce6 Mon Sep 17 00:00:00 2001
+From 746d6436f88899a79c1cb3b27af0614510368bb7 Mon Sep 17 00:00:00 2001
 From: Marek Lindner <mareklindner@neomailbox.ch>
 Date: Wed, 15 Jan 2014 20:31:18 +0800
-Subject: [PATCH] batman-adv: fix batman-adv header overhead calculation
+Subject: [PATCH 1/5] batman-adv: fix batman-adv header overhead calculation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
 Batman-adv prepends a full ethernet header in addition to its own
-header. This has to be reflected in the MTU calculation.
+header. This has to be reflected in the MTU calculation, especially
+since the value is used to set dev->hard_header_len.
 
 Introduced by f1f310d5c261f0214f85afea95d5cd11d49d64c6
 ("batman-adv: consider network coding overhead when calculating required mtu")
@@ -33,5 +34,5 @@ index 4547bf0..fd85205 100644
  
  /**
 -- 
-1.8.4.4
+1.8.5.3
 
