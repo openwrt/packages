@@ -1,5 +1,5 @@
 # 
-# Copyright (C) 2009-2012 OpenWrt.org
+# Copyright (C) 2009-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bird
-PKG_VERSION:=1.3.11
-PKG_RELEASE:=1
+PKG_VERSION:=1.4.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=bird-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://bird.network.cz/pub/bird
-PKG_MD5SUM:=8ad2eb997fb8251bc5b24cf32619571b
+PKG_MD5SUM:=4e5a47308335b1b0bf4691cac6c4174f
 PKG_BUILD_DEPENDS:=libncurses libreadline
 
 include $(INCLUDE_DIR)/package.mk
@@ -20,7 +20,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bird/Default
   TITLE:=The BIRD Internet Routing Daemon
   URL:=http://bird.network.cz/
-  DEPENDS:=
+  DEPENDS:=+libpthread
 endef
 
 define Package/birdc/Default
@@ -78,6 +78,7 @@ define Package/bird6
 $(call Package/bird/Default)
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
   TITLE+= (IPv6)
 endef
 
@@ -85,6 +86,7 @@ define Package/birdc6
 $(call Package/birdc/Default)
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
   TITLE+= (IPv6)
   DEPENDS+= +bird6
 endef
@@ -131,7 +133,6 @@ $(STAMP_BUILT): $(STAMP_BUILT)-$(2)
 define Package/bird$(2)/install
 	$(INSTALL_DIR)  $$(1)/usr/sbin
 	$(INSTALL_BIN)  $$(PKG_BUILD_DIR)/bird$(2) $$(1)/usr/sbin/
-	$(INSTALL_BIN)  ./files/bird$(2)loop $$(1)/usr/sbin/
 	$(INSTALL_DIR)  $$(1)/etc
 	$(INSTALL_DATA) ./files/bird$(2).conf $$(1)/etc/
 	$(INSTALL_DIR)  $$(1)/etc/init.d
