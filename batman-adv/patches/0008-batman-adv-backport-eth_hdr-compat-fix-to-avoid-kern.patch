@@ -1,32 +1,26 @@
-From f9170f22998a276e04b4c7d91da4c373609d28b3 Mon Sep 17 00:00:00 2001
+From b921e8f70aa929766856decfe79ee8e78ba21e23 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Linus=20L=C3=BCssing?= <linus.luessing@web.de>
-Date: Sun, 19 Jan 2014 22:22:45 +0100
-Subject: [PATCH] batman-adv: use vlan_/eth_hdr() instead of skb->data in
- interface_tx path
+Date: Sun, 2 Feb 2014 22:53:11 +0800
+Subject: [PATCH 08/13] batman-adv: backport eth_hdr() compat fix to avoid
+ kernel oops
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Our .ndo_start_xmit handler (batadv_interface_tx()) can rely on having
-the skb mac header pointer set correctly since the following commit
-present in kernels >= 3.9:
+Introduced by 41b38727749a94c1a65cf0f4be9bfe1cbaf0adeb
+   ("batman-adv: fix potential kernel paging error for unicast transmissions")
 
-"net: reset mac header in dev_start_xmit()" (6d1ccff627)
-
-Therefore we can safely use eth_hdr() and vlan_eth_hdr() instead of
-skb->data now, which spares us some ugly type casts.
-
-Signed-off-by: Linus Lüssing <linus.luessing@web.de>
 Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+CC: Linus Lüssing <linus.luessing@web.de>
 ---
  compat.h | 11 +++++++++++
  1 file changed, 11 insertions(+)
 
 diff --git a/compat.h b/compat.h
-index 57c9d96..9692ed2 100644
+index a4ab202..deea92b 100644
 --- a/compat.h
 +++ b/compat.h
-@@ -302,6 +302,17 @@ static int batadv_interface_set_mac_addr(struct net_device *dev, void *p) \
+@@ -289,6 +289,17 @@ static int batadv_interface_set_mac_addr(struct net_device *dev, void *p) \
  }\
  static int __batadv_interface_set_mac_addr(x, y)
  
@@ -45,5 +39,5 @@ index 57c9d96..9692ed2 100644
  #define netdev_upper_dev_unlink(slave, master) netdev_set_master(slave, NULL)
  #define netdev_master_upper_dev_get(dev) \
 -- 
-1.8.5.3
+1.9.0.rc3
 

@@ -1,8 +1,8 @@
 From 41b38727749a94c1a65cf0f4be9bfe1cbaf0adeb Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Linus=20L=C3=BCssing?= <linus.luessing@web.de>
 Date: Mon, 20 Jan 2014 11:06:44 +0100
-Subject: [PATCH 2/5] batman-adv: fix potential kernel paging error for unicast
- transmissions
+Subject: [PATCH 02/13] batman-adv: fix potential kernel paging error for
+ unicast transmissions
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -40,5 +40,5 @@ index b0a3d76..2035bd9 100644
  
  	/* inform the destination node that we are still missing a correct route
 -- 
-1.8.5.3
+1.9.0.rc3
 

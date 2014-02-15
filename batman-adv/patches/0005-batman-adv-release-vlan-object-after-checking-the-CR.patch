@@ -1,7 +1,7 @@
 From dc08c045b46bdd9a5c81068a89f9f2a78d3d4bbd Mon Sep 17 00:00:00 2001
 From: Antonio Quartulli <antonio@meshcoding.com>
 Date: Tue, 28 Jan 2014 02:06:47 +0100
-Subject: [PATCH 5/5] batman-adv: release vlan object after checking the CRC
+Subject: [PATCH 05/13] batman-adv: release vlan object after checking the CRC
 
 There is a refcounter unbalance in the CRC checking routine
 invoked on OGM reception. A vlan object is retrieved (thus
@@ -46,5 +46,5 @@ index 45b6155..05c2a9b 100644
  	}
  
 -- 
-1.8.5.3
+1.9.0.rc3
 

@@ -1,7 +1,7 @@
 From 746d6436f88899a79c1cb3b27af0614510368bb7 Mon Sep 17 00:00:00 2001
 From: Marek Lindner <mareklindner@neomailbox.ch>
 Date: Wed, 15 Jan 2014 20:31:18 +0800
-Subject: [PATCH 1/5] batman-adv: fix batman-adv header overhead calculation
+Subject: [PATCH 01/13] batman-adv: fix batman-adv header overhead calculation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -34,5 +34,5 @@ index 4547bf0..fd85205 100644
  
  /**
 -- 
-1.8.5.3
+1.9.0.rc3
 

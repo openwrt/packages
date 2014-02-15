@@ -1,0 +1,34 @@
+From cb4d66e6803b854663ee758e3eecbda183b0b007 Mon Sep 17 00:00:00 2001
+From: Simon Wunderlich <sw@simonwunderlich.de>
+Date: Sat, 8 Feb 2014 16:45:06 +0100
+Subject: [PATCH 09/13] batman-adv: fix potential orig_node reference leak
+
+Since batadv_orig_node_new() sets the refcount to two, assuming that
+the calling function will use a reference for putting the orig_node into
+a hash or similar, both references must be freed if initialization of
+the orig_node fails. Otherwise that object may be leaked in that error
+case.
+
+Reported-by: Antonio Quartulli <antonio@meshcoding.com>
+Signed-off-by: Simon Wunderlich <sw@simonwunderlich.de>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ bat_iv_ogm.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/bat_iv_ogm.c b/bat_iv_ogm.c
+index 6f4fcdc..c07e59f 100644
+--- a/bat_iv_ogm.c
++++ b/bat_iv_ogm.c
+@@ -256,6 +256,8 @@ batadv_iv_ogm_orig_get(struct batadv_priv *bat_priv, const uint8_t *addr)
+ free_bcast_own:
+ 	kfree(orig_node->bat_iv.bcast_own);
+ free_orig_node:
++	/* free twice, as batadv_orig_node_new sets refcount to 2 */
++	batadv_orig_node_free_ref(orig_node);
+ 	batadv_orig_node_free_ref(orig_node);
+ 
+ 	return NULL;
+-- 
+1.9.0.rc3
+

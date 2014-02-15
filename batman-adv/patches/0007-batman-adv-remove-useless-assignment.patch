@@ -1,0 +1,30 @@
+From 9a91d33c0ea234faf59ee7543d5253e6809a6b6f Mon Sep 17 00:00:00 2001
+From: Antonio Quartulli <antonio@meshcoding.com>
+Date: Thu, 30 Jan 2014 13:57:27 +0100
+Subject: [PATCH 07/13] batman-adv: remove useless assignment
+
+Introduced by 41b38727749a94c1a65cf0f4be9bfe1cbaf0adeb
+   ("batman-adv: fix potential kernel paging error for unicast transmissions")
+
+Signed-off-by: Antonio Quartulli <antonio@meshcoding.com>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ send.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/send.c b/send.c
+index 2035bd9..75be770 100644
+--- a/send.c
++++ b/send.c
+@@ -256,7 +256,7 @@ static int batadv_send_skb_unicast(struct batadv_priv *bat_priv,
+ 				   struct batadv_orig_node *orig_node,
+ 				   unsigned short vid)
+ {
+-	struct ethhdr *ethhdr = (struct ethhdr *)skb->data;
++	struct ethhdr *ethhdr;
+ 	struct batadv_unicast_packet *unicast_packet;
+ 	int ret = NET_XMIT_DROP;
+ 
+-- 
+1.9.0.rc3
+

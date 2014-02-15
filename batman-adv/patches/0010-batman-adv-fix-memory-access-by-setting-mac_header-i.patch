@@ -1,0 +1,44 @@
+From df99b07081eeda5cca292afe2dcc5cb3bf5be154 Mon Sep 17 00:00:00 2001
+From: Antonio Quartulli <antonio@meshcoding.com>
+Date: Tue, 11 Feb 2014 11:26:43 +0100
+Subject: [PATCH 10/13] batman-adv: fix memory access by setting mac_header in
+ DAT
+
+In the TX path we now have functions that rely on the
+skb->mac_header field. DAT does not set such field when
+creating its own ARP packets thus leading to wrong memory
+access.
+
+Fix it by always setting the mac_header after having forged
+the ARP packet.
+
+Introduced by 41b38727749a94c1a65cf0f4be9bfe1cbaf0adeb
+("batman-adv: fix potential kernel paging error for unicast transmissions")
+
+Reported-by: Russel Senior <russell@personaltelco.net>
+Signed-off-by: Antonio Quartulli <antonio@meshcoding.com>
+Tested-by: Russel Senior <russell@personaltelco.net>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ distributed-arp-table.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/distributed-arp-table.c b/distributed-arp-table.c
+index 6da587a..0b69b61 100644
+--- a/distributed-arp-table.c
++++ b/distributed-arp-table.c
+@@ -1028,6 +1028,11 @@ bool batadv_dat_snoop_incoming_arp_request(struct batadv_priv *bat_priv,
+ 	if (!skb_new)
+ 		goto out;
+ 
++	/* the rest of the TX path assumes that the mac_header offset pointing
++	 * to the inner Ethernet header has been set, therefore reset it now.
++	 */
++	skb_reset_mac_header(skb_new);
++
+ 	if (vid & BATADV_VLAN_HAS_TAG)
+ 		skb_new = vlan_insert_tag(skb_new, htons(ETH_P_8021Q),
+ 					  vid & VLAN_VID_MASK);
+-- 
+1.9.0.rc3
+

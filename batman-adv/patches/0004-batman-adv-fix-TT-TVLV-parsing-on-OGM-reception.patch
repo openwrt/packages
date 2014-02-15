@@ -1,7 +1,7 @@
 From db13d361ff6abf57090acfdeb0f5cedd8dd7f02e Mon Sep 17 00:00:00 2001
 From: Antonio Quartulli <antonio@meshcoding.com>
 Date: Mon, 27 Jan 2014 12:23:28 +0100
-Subject: [PATCH 4/5] batman-adv: fix TT-TVLV parsing on OGM reception
+Subject: [PATCH 04/13] batman-adv: fix TT-TVLV parsing on OGM reception
 
 When accessing a TT-TVLV container in the OGM RX path
 the variable pointing to the list of changes to apply is
@@ -31,5 +31,5 @@ index 3fca99d..45b6155 100644
  					 ttvn, tt_change);
  
 -- 
-1.8.5.3
+1.9.0.rc3
 

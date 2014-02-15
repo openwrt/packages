@@ -1,7 +1,7 @@
 From 2b108ccd0533e1375e44c73ec58c69dde9a71687 Mon Sep 17 00:00:00 2001
 From: Antonio Quartulli <antonio@meshcoding.com>
 Date: Tue, 21 Jan 2014 11:22:05 +0100
-Subject: [PATCH 3/5] batman-adv: fix soft-interface MTU computation
+Subject: [PATCH 03/13] batman-adv: fix soft-interface MTU computation
 
 The current MTU computation always returns a value
 smaller than 1500bytes even if the real interfaces
@@ -71,5 +71,5 @@ index 6792e03..0eb0b3b 100644
  
  /* adjusts the MTU if a new interface with a smaller MTU appeared. */
 -- 
-1.8.5.3
+1.9.0.rc3
 
