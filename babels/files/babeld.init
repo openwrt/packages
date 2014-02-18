@@ -1,0 +1,154 @@
+#!/bin/sh /etc/rc.common
+
+START=70
+
+pidfile='/var/run/babeld.pid'
+EXTRA_COMMANDS="status"
+EXTRA_HELP="        status Dump Babel's table to the log file."
+
+listen_ifname() {
+	local ifname=$(uci_get_state network "$1" ifname "$1")
+	local switch="$2"
+	append args "$switch $ifname"
+	append interfaces "$ifname"
+}
+
+append_ifname() {
+	local section="$1"
+	local option="$2"
+	local switch="$3"
+	local _name
+	config_get _name "$section" "$option"
+	[ -z "$_name" ] && return 0
+	local ifname=$(uci_get_state network "$_name" ifname "$_name")
+	append args "$switch $ifname"
+}
+
+append_bool() {
+	local section="$1"
+	local option="$2"
+	local value="$3"
+	local _loctmp
+	config_get_bool _loctmp "$section" "$option" 0
+	[ "$_loctmp" -gt 0 ] && append args "$value"
+}
+
+append_switch() {
+	local value="$1"
+	local switch="$2"
+	append args "$switch $value"
+}
+
+append_parm() {
+	local section="$1"
+	local option="$2"
+	local switch="$3"
+	local _loctmp
+	config_get _loctmp "$section" "$option"
+	[ -z "$_loctmp" ] && return 0
+	append args "$switch $_loctmp"
+}
+
+babel_filter() {
+	local cfg="$1"
+	local _loctmp
+
+	local _ignored
+	config_get_bool _ignored "$cfg" 'ignore' 0
+	[ "$_ignored" -eq 1 ] && return 0
+	
+	append args "-C '"
+
+	append_parm "$cfg" 'type' ''
+
+	append_bool "$cfg" 'local' 'local'
+
+	append_parm "$cfg" 'ip' 'ip'
+	append_parm "$cfg" 'eq' 'eq'
+	append_parm "$cfg" 'le' 'le'
+	append_parm "$cfg" 'ge' 'ge'
+	append_parm "$cfg" 'src_ip' 'src-ip'
+	append_parm "$cfg" 'src_eq' 'src-eq'
+	append_parm "$cfg" 'src_le' 'src-le'
+	append_parm "$cfg" 'src_ge' 'src-ge'
+	append_parm "$cfg" 'neigh' 'neigh'
+	append_parm "$cfg" 'id' 'id'
+	append_parm "$cfg" 'proto' 'proto'
+
+	append_ifname "$cfg" 'if' 'if'
+
+	append_parm "$cfg" 'action' ''
+
+	append args ' ' "'"
+}
+
+babel_addif() {
+	local cfg="$1"
+
+	local _ignored
+	config_get_bool _ignored "$cfg" 'ignore' 0
+	[ "$_ignored" -eq 1 ] && return 0
+	
+	listen_ifname "$cfg" "-C 'interface"
+
+	append_parm "$cfg" 'wired' 'wired'
+	append_parm "$cfg" 'link_quality' 'link-quality'
+	append_parm "$cfg" 'split_horizon' 'split-horizon'
+	append_parm "$cfg" 'rxcost' 'rxcost'
+	append_parm "$cfg" 'hello_interval' 'hello-interval'
+	append_parm "$cfg" 'update_interval' 'update-interval'
+
+	append args ' ' "'"
+}
+
+babel_config() {
+	local cfg="$1"
+
+	append_bool "$cfg" 'carrier_sense' '-l'
+	append_bool "$cfg" 'assume_wireless' '-w'
+	append_bool "$cfg" 'no_split_horizon' '-s'
+	append_bool "$cfg" 'keep_unfeasible' '-u'
+	append_bool "$cfg" 'random_router_id' '-r'
+
+	append_parm "$cfg" 'multicast_address' '-m'
+	append_parm "$cfg" 'port' '-p'
+	append_parm "$cfg" 'state_file' '-S'
+	append_parm "$cfg" 'hello_interval' '-h'
+	append_parm "$cfg" 'wired_hello_interval' '-H'
+	append_parm "$cfg" 'diversity' '-z'
+	append_parm "$cfg" 'smoothing_half_time' '-M'
+	append_parm "$cfg" 'kernel_priority' '-k'
+	append_parm "$cfg" 'duplication_priority' '-A'
+	append_parm "$cfg" 'debug' '-d'
+	append_parm "$cfg" 'local_server' '-g'
+	append_parm "$cfg" 'export_table' '-t'
+	config_list_foreach "$cfg" 'import_table' append_switch '-T'
+	append_parm "$cfg" 'conf_file' '-c'
+	append_parm "$cfg" 'log_file' '-L'
+}
+
+start() {
+	mkdir -p /var/lib
+	config_load babeld
+	unset args
+	unset interfaces
+	config_foreach babel_config general
+	config_foreach babel_addif interface
+	config_foreach babel_filter filter
+	[ -z "$interfaces" ] && return 0
+	eval "/usr/sbin/babeld -D -I $pidfile $args $interfaces"
+}
+
+stop() {
+	[ -f "$pidfile" ] && kill $(cat $pidfile)
+  # avoid race-condition on restart: wait for
+  # babeld to die for real.
+  [ -f "$pidfile" ] && sleep 1
+  [ -f "$pidfile" ] && sleep 1
+  [ -f "$pidfile" ] && sleep 1
+  [ -f "$pidfile" ] && exit 42
+}
+
+status() {
+	[ -f "$pidfile" ] && kill -USR1 $(cat $pidfile)
+}
