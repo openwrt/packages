@@ -1,0 +1,4 @@
+#!/bin/sh
+/etc/init.d/ohybridproxy enabled || exit 0
+[ "$ACTION" = ifupdate ] && exit 0
+/etc/init.d/ohybridproxy restart
