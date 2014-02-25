@@ -240,10 +240,10 @@ function action_topology()
 	    			if first then
 	    				first = false
 	    			else
-	    				topology = topology .. ', '
+						topology = topology .. ', '
 	    			end
 	    
-	    			topology = topology .. '{ "globalId": "%s", "links": [' %o.globalId:match("^[^%.]+")
+					topology = topology .. '{ "name": "%s", "links": [' %o.name
 	    
 	    			local first2 = true
 	    
@@ -252,10 +252,10 @@ function action_topology()
 	    					first2 = false
 	    				else
 	    					topology = topology .. ', '
-	    				end
-	    
-	    				topology = topology .. '{ "globalId": "%s", "rxRate": %s, "txRate": %s }'
-	    					%{ l.globalId:match("^[^%.]+"), l.rxRate, l.txRate }
+						end
+						name = l.name or l.llocalIp or "unknown"
+						topology = topology .. '{ "name": "%s", "rxRate": %s, "txRate": %s }'
+							%{ name, l.rxRate, l.txRate }
 	    
 	    			end
 	    

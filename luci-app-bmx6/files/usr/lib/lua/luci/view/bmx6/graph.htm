@@ -57,20 +57,20 @@ the file called "COPYING".
 			for (var i = 0; i < (data.length); i++)
 			{
 				// node->node
-				if (data[i].globalId)
+				if (data[i].name)
 					{
 					for (var j = 0; j < (data[i].links.length); j++)
 						 {
-						 var key = (data[i].globalId < data[i].links[j].globalId)
-						 	? data[i].globalId + '|' + data[i].links[j].globalId
-							: data[i].links[j].globalId + '|' + data[i].globalId;
+							var key = (data[i].name < data[i].links[j].name)
+							? data[i].name + '|' + data[i].links[j].name
+							: data[i].links[j].name + '|' + data[i].name;
 
 							var rxRate = data[i].links[j].rxRate;
 							var txRate = data[i].links[j].txRate;
 
 							if (!seen[key] && rxRate>0 && txRate>0)
 						 	{
-							 g.addEdge(data[i].globalId, data[i].links[j].globalId,
+							 g.addEdge(data[i].name, data[i].links[j].name,
 							 	{ label: rxRate + '/' + txRate,
 								directed: false, stroke: '#aaaaaa', fill: '#ffffff',
 								'label-style': { 'font-size': 8 }});
