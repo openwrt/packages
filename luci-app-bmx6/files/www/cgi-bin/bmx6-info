@@ -97,7 +97,7 @@ if [ "$QUERY" == '$neighbours' ]; then
 	exit 0
 
 else if [ "$QUERY" == '$tunnels' ]; then
-	bmx6 -c --jshow tunnels
+	bmx6 -c --jshow tunnels /r=0
 	exit 0
 
 else

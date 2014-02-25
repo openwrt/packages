@@ -66,11 +66,9 @@
 			<th class="cbi-section-table-cell"><%:Network%></th>
 			<th class="cbi-section-table-cell"><%:Bandwidth%></th>
 			<th class="cbi-section-table-cell"><%:SearchNet%></th>
-			<th class="cbi-section-table-cell"><%:Type%></th>
 			<th class="cbi-section-table-cell"><%:Path Metric%></th>
-			<th class="cbi-section-table-cell"><%:IP metric%></th>
 			<th class="cbi-section-table-cell"><%:Tun metric%></th>
-			<th class="cbi-section-table-cell"><%:Bonus%></th>
+			<th class="cbi-section-table-cell"><%:Rating%></th>
 			<th class="cbi-section-table-cell"><%:Src%></th>
 			<th class="cbi-section-table-cell"><%:Search id%></th>
 		</tr>
@@ -97,8 +95,8 @@
 			if ( tunnel.tunName != "---" ) status = '<img src="'+tunicon+'"/>';
 			if ( advnet == "0.0.0.0/0" ) advnet = "<b>Internet</b>";
 
-			res.push([status, tunnel.name, nodename, advnet, tunnel.advBw, tunnel.net, tunnel.advType,
-				tunnel.pathMtc, tunnel.ipMtc, tunnel.tunMtc, tunnel.bonus, tunnel.srcIngress, tunnel.id]);
+			res.push([status, tunnel.name, nodename, advnet, tunnel.advBw, tunnel.net,
+				tunnel.pathMtc, tunnel.tunMtc, tunnel.rating, tunnel.srcIngress, tunnel.id]);
 		  }
 		  return res;
 		});

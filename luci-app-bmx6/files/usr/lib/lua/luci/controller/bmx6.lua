@@ -69,7 +69,7 @@ function index()
 	entry(place,call("action_nodes_j"),"Nodes",1)
 	table.remove(place)
 
-		--- links
+	--- links
 	table.insert(place,"Links")
 	entry(place,call("action_links"),"Links",2).leaf = true
 	table.remove(place)
@@ -204,7 +204,7 @@ function action_links(host)
 			devlinks[l.viaDev] = {}
 		end
 		for _,l in ipairs(links) do
-			l.globalId = luci.util.split(l.globalId,'.')[1]
+			l.name = luci.util.split(l.name,'.')[1]
 			table.insert(devlinks[l.viaDev],l)
 		end
 	end
