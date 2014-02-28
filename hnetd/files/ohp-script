@@ -1,0 +1,48 @@
+#!/bin/sh 
+#-*-sh-*-
+#
+# $Id: ohp-script $
+#
+# Author: Markus Stenberg <mstenber@cisco.com>
+#
+# Copyright (c) 2014 cisco Systems, Inc.
+#
+# Created:       Fri Jan 17 11:46:30 2014 mstenber
+# Last modified: Mon Feb  3 14:39:15 2014 mstenber
+# Edit time:     15 min
+#
+
+# This is minimalist init.d-like start/stop script for
+# ohybridproxy. However, as ohybridproxy receives it's configuration
+# via command line, the 'start' command is also equivalent to
+# 'restart', and has bunch of extra arguments..
+
+OHP=ohybridproxy
+
+start() {
+    $OHP $* &
+}
+
+stop() {
+    killall -9 $OHP
+}
+
+
+CMD=$1
+# For debugging purposes
+LOGNAME=`basename $0`
+echo "$*" | logger -t "$LOGNAME"
+case $CMD in
+  start)
+    shift
+    stop
+    start $*
+    ;;
+  stop)
+  stop
+    ;;
+  *)
+    echo "Only start [config]/stop supported"
+    exit 1
+  ;;
+esac

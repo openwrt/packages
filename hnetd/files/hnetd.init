@@ -1,0 +1,42 @@
+#!/bin/sh /etc/rc.common
+
+# XXX - is there something that should cause reload? or can we just
+# use info from netifd and let it handle dynamic changes? let's hope
+# so..
+
+START=90
+STOP=10
+USE_PROCD=1
+
+DNSMASQ_DIR=/tmp/dnsmasq.d
+DNSMASQ_SCRIPT=/etc/init.d/dnsmasq
+OHP_SCRIPT=/usr/sbin/hnetd-ohp-script
+OHP_BINARY=/usr/sbin/ohybridproxy
+
+start_service() {
+    mkdir -p $DNSMASQ_DIR
+    procd_open_instance
+    procd_set_param command /usr/sbin/hnetd
+
+    # SD parts are here (make configurable?)
+    if [ -f $OHP_BINARY -a -f $DNSMASQ_SCRIPT ]
+    then
+        mkdir -p $DNSMASQ_DIR
+        procd_append_param command -d $DNSMASQ_SCRIPT
+        procd_append_param command -f $DNSMASQ_DIR/hnet.conf 
+        procd_append_param command -o $OHP_SCRIPT
+        HOSTNAME=`cat /proc/sys/kernel/hostname`
+        if [ -n "$HOSTNAME" ]
+        then
+            procd_append_param command -n "$HOSTNAME"
+        fi
+    fi
+    # State file
+    procd_append_param command -s /tmp/hnetd.pa_state
+
+    # Routing script
+    procd_append_param command -r /usr/sbin/hnetd-routing
+
+    procd_set_param respawn
+    procd_close_instance
+}
