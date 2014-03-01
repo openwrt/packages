@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hnetd
 PKG_SOURCE_VERSION:=1031619a9319baeee68ddd2bcb76c8d74089ba27
-PKG_VERSION:=2014-02-28-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=2014-03-01-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -72,7 +72,12 @@ endef
 
 define Package/hnetd/postinst
 #!/bin/sh
-[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/x-hnetd.defaults) && rm -f /etc/uci-defaults/x-hnetd.defaults
+[ -n "$${IPKG_INSTROOT}" ] || {
+	(. /etc/uci-defaults/x-hnetd.defaults) && rm -f /etc/uci-defaults/x-hnetd.defaults
+	[ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq restart
+	/etc/init.d/hnetd enable
+	/etc/init.d/hnetd start
+}
 exit 0
 endef
 
