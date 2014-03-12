@@ -38,6 +38,9 @@ define Package/ahcpd/conffiles
 /etc/config/ahcpd
 endef
 
+MAKE_FLAGS += \
+	      EXTRA_DEFINES="$(TARGET_CFLAGS)"
+
 define Package/ahcpd/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/ahcp
