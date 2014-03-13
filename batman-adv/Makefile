@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2014.0.0
-BATCTL_VERSION:=2014.0.0
-PKG_RELEASE:=2
-PKG_MD5SUM:=8d58ecaede17dc05aab1b549dc09fa7d
-BATCTL_MD5SUM:=b0bcf29fef80ddcc33769e13f5937d0a
+PKG_VERSION:=2014.1.0
+BATCTL_VERSION:=2014.1.0
+PKG_RELEASE:=1
+PKG_MD5SUM:=d55aabb2bc508194407187648c773c1b
+BATCTL_MD5SUM:=92fd4cb60e38ec952fb5fdda4b2e6933
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -27,9 +27,9 @@ include $(INCLUDE_DIR)/kernel.mk
 
 define KernelPackage/batman-adv
   URL:=http://www.open-mesh.org/
-  MAINTAINER:=Marek Lindner <lindner_marek@yahoo.de>
+  MAINTAINER:=Marek Lindner <mareklindner@neomailbox.ch>
   SUBMENU:=Network Support
-  DEPENDS:=+KMOD_BATMAN_ADV_BLA:kmod-lib-crc16 +kmod-crypto-core +kmod-crypto-crc32c +kmod-lib-crc32c +libc
+  DEPENDS:=+KMOD_BATMAN_ADV_BLA:kmod-lib-crc16 +kmod-crypto-core +kmod-crypto-crc32c +kmod-lib-crc32c +libc +libnl-tiny
   TITLE:=B.A.T.M.A.N. Adv
   FILES:=$(PKG_BUILD_DIR)/batman-adv.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,50,batman-adv)
@@ -77,7 +77,8 @@ TARGET_LDFLAGS += -fuse-linker-plugin
 MAKE_BATCTL_ENV += \
 	CPPFLAGS="$(TARGET_CPPFLAGS)" \
 	CFLAGS="$(TARGET_CFLAGS)" \
-	LDFLAGS="$(TARGET_LDFLAGS)"
+	LDFLAGS="$(TARGET_LDFLAGS)" \
+	LIBNL_NAME="libnl-tiny"
 
 MAKE_BATCTL_ARGS += \
 	REVISION="" \
