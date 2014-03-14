@@ -1,0 +1,38 @@
+From 46093914a5f95f50c9aef088b7172d6774d204cb Mon Sep 17 00:00:00 2001
+From: Oryon <pierre@darou.fr>
+Date: Tue, 11 Mar 2014 16:03:58 +0100
+Subject: [PATCH 2/2] Metric should be more important than distance at lookup
+
+---
+ src/mrib.cpp | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/src/mrib.cpp b/src/mrib.cpp
+index e51fed7..707d601 100644
+--- a/src/mrib.cpp
++++ b/src/mrib.cpp
+@@ -327,16 +327,16 @@ mrib_def::mrib_node *mrib_def::prefix_lookup_y(const inet6_addr &source) const {
+ void mrib_def::insert_prefix_in_node(mrib_node *n, prefix *p) {
+ 	prefix *curr = n->head, *prev = 0;
+ 
+-	/* first check the proper place based on distance */
+-	while (curr && curr->distance < p->distance) {
++	/* first check the proper place based on metric */
++	while (curr && curr->metric < p->metric) {
+ 		prev = curr;
+ 		curr = curr->next;
+ 	}
+ 
+-	if (prev && prev->distance == p->distance) {
+-		/* if distance matches, take metric into place */
++	if (prev && prev->metric == p->metric) {
++		/* if metric matches, take distance into place */
+ 		curr = prev;
+-		while (curr && curr->metric <= p->metric) {
++		while (curr && curr->distance <= p->distance) {
+ 			prev = curr;
+ 			curr = curr->next;
+ 		}
+-- 
+1.9.0
+

@@ -1,0 +1,58 @@
+Index: mrd6-0.9.5/include/mrdpriv/linux/netlink_missing_defs.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ mrd6-0.9.5/include/mrdpriv/linux/netlink_missing_defs.h	2007-09-21 13:19:06.000000000 +0200
+@@ -0,0 +1,41 @@
++#include <linux/version.h>
++
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19)
++
++#include <linux/if_link.h>
++#include <linux/if_addr.h>
++#include <linux/neighbour.h>
++
++#ifndef IFA_RTA
++#define IFA_RTA(r) \
++       ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct ifaddrmsg))))
++#endif
++#ifndef IFA_PAYLOAD
++#define IFA_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct ifaddrmsg))
++#endif
++
++#ifndef IFLA_RTA
++#define IFLA_RTA(r) \
++       ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct ifinfomsg))))
++#endif
++#ifndef IFLA_PAYLOAD
++#define IFLA_PAYLOAD(n)        NLMSG_PAYLOAD(n,sizeof(struct ifinfomsg))
++#endif
++
++#ifndef NDA_RTA
++#define NDA_RTA(r) \
++       ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct ndmsg))))
++#endif
++#ifndef NDA_PAYLOAD
++#define NDA_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct ndmsg))
++#endif
++
++#ifndef NDTA_RTA
++#define NDTA_RTA(r) \
++       ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct ndtmsg))))
++#endif
++#ifndef NDTA_PAYLOAD
++#define NDTA_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct ndtmsg))
++#endif
++
++#endif
+Index: mrd6-0.9.5/src/linux/linux_unicast_route.cpp
+===================================================================
+--- mrd6-0.9.5.orig/src/linux/linux_unicast_route.cpp	2007-09-21 13:19:05.000000000 +0200
++++ mrd6-0.9.5/src/linux/linux_unicast_route.cpp	2007-09-21 13:19:06.000000000 +0200
+@@ -23,6 +23,7 @@
+  */
+ 
+ #include <mrdpriv/linux/unicast_route.h>
++#include <mrdpriv/linux/netlink_missing_defs.h>
+ 
+ #include <mrd/mrd.h>
+ #include <mrd/interface.h>
