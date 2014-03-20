@@ -1,0 +1,57 @@
+--- a/mcproxy/src/parser/parser.cpp
++++ b/mcproxy/src/parser/parser.cpp
+@@ -125,7 +125,10 @@ void parser::parse_instance_definition(i
+                 get_next_token();
+                 if (m_current_token.get_type() == TT_STRING) {
+                     try {
+-                        table_number = std::stoi(m_current_token.get_string());
++                        std::stringstream convert;
++
++                        convert << m_current_token.get_string();
++                        convert >> table_number;
+                         user_selected_table_number = true;
+                     } catch (std::logic_error e) {
+                         HC_LOG_ERROR("failed to parse line " << m_current_line << " table number: " << table_number << " is not a number");
+@@ -298,7 +301,11 @@ std::unique_ptr<addr_match> parser::pars
+             get_next_token();
+             if (m_current_token.get_type() == TT_STRING) {
+                 try {
+-                    unsigned int prefix = std::stoi(m_current_token.get_string());
++                    std::stringstream convert;
++                    unsigned int prefix;
++
++                    convert << m_current_token.get_string();
++                    convert >> prefix;
+                     if (prefix > 128) {
+                         throw;
+                     }
+@@ -560,7 +567,11 @@ void parser::parse_interface_rule_match_
+             get_next_token();
+             if (m_current_token.get_type() == TT_STRING) {
+                 try {
+-                    int tmp_timeout = std::stoi(m_current_token.get_string());
++                    std::stringstream convert;
++                    int tmp_timeout;
++
++                    convert << m_current_token.get_string();
++                    convert >> tmp_timeout;
+                     timeout = std::chrono::milliseconds(tmp_timeout);
+                 } catch (...) {
+                     error_notification();
+--- a/mcproxy/src/utils/addr_storage.cpp
++++ b/mcproxy/src/utils/addr_storage.cpp
+@@ -298,7 +298,13 @@ addr_storage& addr_storage::set_port(uin
+ 
+ addr_storage& addr_storage::set_port(const std::string& port)
+ {
+-    set_port(std::stoi(port.c_str()));
++    std::stringstream convert;
++    int num_port;
++
++    convert << port;
++    convert >> num_port;
++
++    set_port(num_port);
+     return *this;
+ }
+ 
