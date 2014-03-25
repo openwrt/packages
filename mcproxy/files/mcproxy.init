@@ -1,23 +1,14 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2014 OpenWrt.org
 
-START=99
-STOP=10
+START=50
+USE_PROCD=1
 
-SERVICE_DAEMONIZE=1
-SERVICE_WRITE_PID=1
+start_service() {
+	procd_open_instance
 
-MCPROXY_BIN="/usr/sbin/mcproxy"
-MCPROXY_CONF="/etc/mcproxy.conf"
+	procd_set_param command /usr/sbin/mcproxy
+	procd_append_param command -f /etc/mcproxy.conf
 
-start() {
-	service_start $MCPROXY_BIN -f $MCPROXY_CONF
-}
-
-stop() {
-	service_stop $MCPROXY_BIN
-}
-
-reload() {
-	service_reload $MCPROXY_BIN
+	procd_set_param respawn
+	procd_close_instance
 }
