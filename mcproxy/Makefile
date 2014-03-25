@@ -1,0 +1,51 @@
+#
+# Copyright (C) 2006-2011 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=mcproxy
+PKG_SOURCE_VERSION:=986523a5d714be5cf6f65e4399045cbfecd415fd
+PKG_VERSION:=2014-03-25-$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=git://github.com/mcproxy/mcproxy.git
+PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
+
+define Package/mcproxy
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=Multicast Proxy for IGMP/MLD
+  URL:=http://mcproxy.realmv6.org
+  DEPENDS:=+libpthread +libstdcpp
+endef
+
+define Package/mcproxy/description
+ mcproxy is a free & open source implementation of the IGMP/MLD proxy function (see  RFC 4605) for Linux systems.
+ It operates on the kernel tables for multicast routing and allows for multiple instantiations,
+ as well as dynamically changing downstream interfaces.
+endef
+
+define Package/mcproxy/conffiles
+/etc/mcproxy.conf
+endef
+
+define Package/mcproxy/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_CONF) ./files/mcproxy.conf $(1)/etc
+	$(INSTALL_BIN) ./files/mcproxy.init $(1)/etc/init.d/mcproxy
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mcproxy-bin $(1)/usr/sbin/mcproxy
+endef
+
+$(eval $(call BuildPackage,mcproxy))
