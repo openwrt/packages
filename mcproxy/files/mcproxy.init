@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2014 OpenWrt.org
+
+START=99
+STOP=10
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+MCPROXY_BIN="/usr/sbin/mcproxy"
+MCPROXY_CONF="/etc/mcproxy.conf"
+
+start() {
+	service_start $MCPROXY_BIN -f $MCPROXY_CONF
+}
+
+stop() {
+	service_stop $MCPROXY_BIN
+}
+
+reload() {
+	service_reload $MCPROXY_BIN
+}
