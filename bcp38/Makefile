@@ -1,0 +1,63 @@
+#
+# Copyright (C) 2014 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+# Please note this is not an officially released version of bcp38
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=bcp38
+PKG_VERSION:=4
+PKG_RELEASE:=1
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/bcp38
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
+  TITLE:=BCP38 compliance 
+  URL:=http://www.github.com/dtaht/bcp38
+  MAINTAINER:=Dave Taht <d+bcp38@taht.net>
+  DEPENDS:=+ipset
+endef
+
+define Package/bcp38/description
+ bcp38 implements rfc bcp 38 for home routers.
+endef
+
+define Package/bcp38/conffiles
+/etc/config/bcp38
+endef
+
+define Build/Prepare
+endef
+
+define Build/Configure
+endef
+
+define Build/Compile
+endef
+
+define Package/bcp38/install
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/bcp38.config $(1)/etc/config/bcp38
+	$(INSTALL_DIR) $(1)/usr/lib/bcp38
+	$(INSTALL_BIN) ./files/run.sh $(1)/usr/lib/bcp38/run.sh
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/bcp38.defaults $(1)/etc/uci-defaults/bcp38
+endef
+
+define Package/bcp38/postinst
+#!/bin/sh
+[ -x /etc/uci-defaults/bcp38 ] && /etc/uci-defaults/bcp38 || exit 0
+endef
+
+define Package/bcp38/postrm
+#!/bin/sh
+uci delete firewall.bcp38
+uci commit
+endef
+
+$(eval $(call BuildPackage,bcp38))
