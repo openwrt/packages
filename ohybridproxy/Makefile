@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ohybridproxy
-PKG_SOURCE_VERSION:=504f334e7e718ef696c208f69da35f08f75aeb6c
-PKG_VERSION:=2014-02-20-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=1fb6094a18a1cd474f9afb6711f5b7f988c7b7c3
+PKG_VERSION:=2014-03-31-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -20,6 +20,9 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+
+# Spammy debug builds for now
+CMAKE_OPTIONS += -DL_LEVEL=7
 
 define Package/ohybridproxy
   SECTION:=net
