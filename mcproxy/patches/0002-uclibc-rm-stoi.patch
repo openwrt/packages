@@ -1,0 +1,40 @@
+--- a/mcproxy/src/parser/parser.cpp
++++ b/mcproxy/src/parser/parser.cpp
+@@ -126,7 +126,7 @@ void parser::parse_instance_definition(i
+                 get_next_token();
+                 if (m_current_token.get_type() == TT_STRING) {
+                     try {
+-                        table_number = std::stoi(m_current_token.get_string());
++                        table_number = atoi(m_current_token.get_string().c_str());
+                         user_selected_table_number = true;
+                     } catch (std::logic_error e) {
+                         HC_LOG_ERROR("failed to parse line " << m_current_line << " table number: " << table_number << " is not a number");
+@@ -299,7 +299,7 @@ std::unique_ptr<addr_match> parser::pars
+             get_next_token();
+             if (m_current_token.get_type() == TT_STRING) {
+                 try {
+-                    unsigned int prefix = std::stoi(m_current_token.get_string());
++                    unsigned int prefix = atoi(m_current_token.get_string().c_str());
+                     if (prefix > 128) {
+                         throw;
+                     }
+@@ -561,7 +561,7 @@ void parser::parse_interface_rule_match_
+             get_next_token();
+             if (m_current_token.get_type() == TT_STRING) {
+                 try {
+-                    int tmp_timeout = std::stoi(m_current_token.get_string());
++                    int tmp_timeout = atoi(m_current_token.get_string().c_str());
+                     timeout = std::chrono::milliseconds(tmp_timeout);
+                 } catch (...) {
+                     error_notification();
+--- a/mcproxy/src/utils/addr_storage.cpp
++++ b/mcproxy/src/utils/addr_storage.cpp
+@@ -298,7 +298,7 @@ addr_storage& addr_storage::set_port(uin
+ 
+ addr_storage& addr_storage::set_port(const std::string& port)
+ {
+-    set_port(std::stoi(port.c_str()));
++    set_port(atoi(port.c_str()));
+     return *this;
+ }
+ 
