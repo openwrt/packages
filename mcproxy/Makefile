@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mcproxy
-PKG_SOURCE_VERSION:=986523a5d714be5cf6f65e4399045cbfecd415fd
-PKG_VERSION:=2014-03-25-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=df2d117dd67a7948f86d7effc5b9ea8f372466d8
+PKG_VERSION:=2014-04-05-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -25,9 +25,10 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/mcproxy
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
   TITLE:=Multicast Proxy for IGMP/MLD
   URL:=http://mcproxy.realmv6.org
-  DEPENDS:=+libpthread +libstdcpp
+  DEPENDS:=+libpthread +libstdcpp @(!GCC_VERSION_4_4&&!GCC_VERSION_4_6)
 endef
 
 define Package/mcproxy/description
