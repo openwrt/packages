@@ -14,6 +14,7 @@ config 'mesh' 'bat0'
 	option 'distributed_arp_table'
 	option 'network_coding'
 	option 'hop_penalty'
+	option 'isolation_mark'
 
 # yet another batX instance
 # config 'mesh' 'bat5'
