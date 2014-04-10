@@ -1,0 +1,49 @@
+From 52e110289fcc0990688e16e640ca5e7f01c66bb1 Mon Sep 17 00:00:00 2001
+From: Steven Barth <steven@midlink.org>
+Date: Sun, 6 Apr 2014 17:46:42 +0200
+Subject: [PATCH 23/23] Fix configure.in for cross-compilation
+
+---
+ configure.in | 26 ++------------------------
+ 1 file changed, 2 insertions(+), 24 deletions(-)
+
+diff --git a/configure.in b/configure.in
+index b8446e2..e626a19 100644
+--- a/configure.in
++++ b/configure.in
+@@ -170,30 +170,8 @@ fi
+ AC_MSG_RESULT($enable_mldv2host)
+ 
+ dnl Determine routing get and set method
+-AC_MSG_CHECKING(userland-kernel interface for routing information)
+-AC_TRY_RUN([#include <errno.h>
+-#include <sys/types.h>
+-#include <sys/socket.h>
+-
+-main ()
+-{
+-#ifdef AF_NETLINK
+-  exit(1);
+-#else
+-  int ac_sock;
+-
+-  ac_sock = socket (AF_ROUTE, SOCK_RAW, 0);
+-  if (ac_sock < 0 && errno == EINVAL)
+-    exit (1);
+-  exit (0);
+-#endif
+-}],
+-	[AC_DEFINE(HAVE_ROUTING_SOCKETS)
+-	 UK_METHOD=routesock
+-	 AC_MSG_RESULT(routing socket)],
+-	[AC_DEFINE(HAVE_NETLINK)
+-	 UK_METHOD=netlink
+-	 AC_MSG_RESULT(netlink)])
++AC_DEFINE(HAVE_NETLINK)
++UK_METHOD=netlink
+ AC_SUBST(UK_METHOD)
+ 
+ dnl Checks for RFC3542
+-- 
+1.9.1
+

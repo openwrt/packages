@@ -1,0 +1,227 @@
+From 50bcf257f5f7d359d06744128585103f19072ee3 Mon Sep 17 00:00:00 2001
+From: Steven Barth <steven@midlink.org>
+Date: Thu, 10 Apr 2014 18:56:53 +0200
+Subject: [PATCH] Add compatibility code for uclibc
+
+---
+ pim6sd/cftoken.l      |   5 ++
+ pim6sd/inet6_compat.c | 161 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ pim6sd/mld6.c         |   4 ++
+ pim6sd/mld6v2.c       |   5 ++
+ 4 files changed, 175 insertions(+)
+ create mode 100644 pim6sd/inet6_compat.c
+
+diff --git a/pim6sd/cftoken.l b/pim6sd/cftoken.l
+index 17479d0..5b20741 100644
+--- a/pim6sd/cftoken.l
++++ b/pim6sd/cftoken.l
+@@ -697,3 +697,8 @@ cfparse(strict, debugonly)
+ 
+ 	return cf_post_config();
+ }
++
++int yywrap(void)
++{
++	return 1;
++}
+diff --git a/pim6sd/inet6_compat.c b/pim6sd/inet6_compat.c
+new file mode 100644
+index 0000000..375f17f
+--- /dev/null
++++ b/pim6sd/inet6_compat.c
+@@ -0,0 +1,161 @@
++#include <assert.h>
++
++static void
++add_pad (struct cmsghdr *cmsg, int len)
++{
++  unsigned char *p = CMSG_DATA (cmsg) + cmsg->cmsg_len - CMSG_LEN (0);
++
++  if (len == 1)
++    /* Special handling for 1, a one-byte solution.  */
++    *p++ = IP6OPT_PAD1;
++  else if (len != 0)
++    {
++      /* Multibyte padding.  */
++      *p++ = IP6OPT_PADN;
++      *p++ = len - 2;	/* Discount the two header bytes.  */
++      /* The rest is filled with zero.  */
++      memset (p, '\0', len - 2);
++      p += len - 2;
++    }
++
++  /* Account for the bytes.  */
++  cmsg->cmsg_len += len;
++}
++
++
++/* RFC 2292, 6.3.4
++
++   This function appends a Hop-by-Hop option or a Destination option
++   into an ancillary data object that has been initialized by
++   inet6_option_init().  This function returns a pointer to the 8-bit
++   option type field that starts the option on success, or NULL on an
++   error.  */
++static uint8_t *
++option_alloc (struct cmsghdr *cmsg, int datalen, int multx, int plusy)
++{
++  /* The RFC limits the value of the alignment values.  */
++  if ((multx != 1 && multx != 2 && multx != 4 && multx != 8)
++      || ! (plusy >= 0 && plusy <= 7))
++    return NULL;
++
++  /* Current data size.  */
++  int dsize = cmsg->cmsg_len - CMSG_LEN (0);
++
++  /* The first two bytes of the option are for the extended header.  */
++  if (__builtin_expect (dsize == 0, 0))
++    {
++      cmsg->cmsg_len += sizeof (struct ip6_ext);
++      dsize = sizeof (struct ip6_ext);
++    }
++
++  /* First add padding.  */
++  add_pad (cmsg, ((multx - (dsize & (multx - 1))) & (multx - 1)) + plusy);
++
++  /* Return the pointer to the start of the option space.  */
++  uint8_t *result = CMSG_DATA (cmsg) + cmsg->cmsg_len - CMSG_LEN (0);
++  cmsg->cmsg_len += datalen;
++
++  /* The extended option header length is measured in 8-byte groups.
++     To represent the current length we might have to add padding.  */
++  dsize = cmsg->cmsg_len - CMSG_LEN (0);
++  add_pad (cmsg, (8 - (dsize & (8 - 1))) & (8 - 1));
++
++  /* Record the new length of the option.  */
++  assert (((cmsg->cmsg_len - CMSG_LEN (0)) % 8) == 0);
++  int len8b = (cmsg->cmsg_len - CMSG_LEN (0)) / 8 - 1;
++  if (len8b >= 256)
++    /* Too long.  */
++    return NULL;
++
++  struct ip6_ext *ie = (void *) CMSG_DATA (cmsg);
++  ie->ip6e_len = len8b;
++
++  return result;
++}
++
++
++/* RFC 2292, 6.3.1
++
++   This function returns the number of bytes required to hold an option
++   when it is stored as ancillary data, including the cmsghdr structure
++   at the beginning, and any padding at the end (to make its size a
++   multiple of 8 bytes).  The argument is the size of the structure
++   defining the option, which must include any pad bytes at the
++   beginning (the value y in the alignment term "xn + y"), the type
++   byte, the length byte, and the option data.  */
++static int
++inet6_option_space (nbytes)
++     int nbytes;
++{
++  /* Add room for the extension header.  */
++  nbytes += sizeof (struct ip6_ext);
++
++  return CMSG_SPACE (roundup (nbytes, 8));
++}
++
++
++/* RFC 2292, 6.3.2
++
++   This function is called once per ancillary data object that will
++   contain either Hop-by-Hop or Destination options.  It returns 0 on
++   success or -1 on an error.  */
++static int
++inet6_option_init (bp, cmsgp, type)
++     void *bp;
++     struct cmsghdr **cmsgp;
++     int type;
++{
++  /* Only Hop-by-Hop or Destination options allowed.  */
++  if (type != IPV6_HOPOPTS && type != IPV6_DSTOPTS)
++    return -1;
++
++  /* BP is a pointer to the previously allocated space.  */
++  struct cmsghdr *newp = (struct cmsghdr *) bp;
++
++  /* Initialize the message header.
++
++     Length: No data yet, only the cmsghdr struct.  */
++  newp->cmsg_len = CMSG_LEN (0);
++  /* Originating protocol: obviously IPv6.  */
++  newp->cmsg_level = IPPROTO_IPV6;
++  /* Message type.  */
++  newp->cmsg_type = type;
++
++  /* Pass up the result.  */
++  *cmsgp = newp;
++
++  return 0;
++}
++
++
++/* RFC 2292, 6.3.3
++
++   This function appends a Hop-by-Hop option or a Destination option
++   into an ancillary data object that has been initialized by
++   inet6_option_init().  This function returns 0 if it succeeds or -1 on
++   an error.  */
++static int
++inet6_option_append (cmsg, typep, multx, plusy)
++     struct cmsghdr *cmsg;
++     const uint8_t *typep;
++     int multx;
++     int plusy;
++{
++  /* typep is a pointer to the 8-bit option type.  It is assumed that this
++     field is immediately followed by the 8-bit option data length field,
++     which is then followed immediately by the option data.
++
++     The option types IP6OPT_PAD1 and IP6OPT_PADN also must be handled.  */
++  int len = typep[0] == IP6OPT_PAD1 ? 1 : typep[1] + 2;
++
++  /* Get the pointer to the space in the message.  */
++  uint8_t *ptr = option_alloc (cmsg, len, multx, plusy);
++  if (ptr == NULL)
++    /* Some problem with the parameters.  */
++    return -1;
++
++  /* Copy the content.  */
++  memcpy (ptr, typep, len);
++
++  return 0;
++}
+diff --git a/pim6sd/mld6.c b/pim6sd/mld6.c
+index 0bac85d..febdc98 100644
+--- a/pim6sd/mld6.c
++++ b/pim6sd/mld6.c
+@@ -108,6 +108,10 @@
+ #include "trace.h"
+ #include "mld6.h"
+ 
++#ifdef __UCLIBC__
++#include "inet6_compat.c"
++#endif
++
+ /*
+  * Exported variables.
+  */
+diff --git a/pim6sd/mld6v2.c b/pim6sd/mld6v2.c
+index 8cd5a4d..322cb7b 100644
+--- a/pim6sd/mld6v2.c
++++ b/pim6sd/mld6v2.c
+@@ -73,6 +73,11 @@
+ #include "callout.h"
+ #include "timer.h"
+ 
++#ifdef __UCLIBC__
++#include "inet6_compat.c"
++#endif
++
++
+ #ifdef HAVE_MLDV2
+ 
+ #ifndef HAVE_RFC3542
+-- 
+1.9.1
+

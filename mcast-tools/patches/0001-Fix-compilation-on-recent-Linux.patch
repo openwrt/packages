@@ -1,0 +1,90 @@
+From 179b60f9d6a8a104fd8d1f810d105ddba914cc7a Mon Sep 17 00:00:00 2001
+From: Steven Barth <steven@midlink.org>
+Date: Thu, 3 Apr 2014 09:09:06 +0200
+Subject: [PATCH 1/3] Fix compilation on recent Linux
+
+---
+ pim6sd/debug.c | 6 +++---
+ pim6sd/mld6.c  | 8 ++++----
+ pim6sd/trace.c | 8 ++++++++
+ 3 files changed, 15 insertions(+), 7 deletions(-)
+
+diff --git a/pim6sd/debug.c b/pim6sd/debug.c
+index a06a876..a96e949 100644
+--- a/pim6sd/debug.c
++++ b/pim6sd/debug.c
+@@ -169,7 +169,7 @@ packet_kind(proto, type, code)
+ 	    return "Multicast Listener Query    ";
+ 	case MLD_LISTENER_REPORT:
+ 	    return "Multicast Listener Report   ";
+-	case MLD_LISTENER_DONE:
++	case MLD_LISTENER_REDUCTION:
+ 	    return "Multicast Listener Done     ";
+ 	default:
+ 	    snprintf(unknown, sizeof(unknown),
+@@ -230,7 +230,7 @@ debug_kind(proto, type, code)
+ 	    return DEBUG_MLD;
+ 	case MLD_LISTENER_REPORT:
+ 	    return DEBUG_MLD;
+-	case MLD_LISTENER_DONE:
++	case MLD_LISTENER_REDUCTION:
+ 	    return DEBUG_MLD;
+ 	default:
+ 	    return DEBUG_MLD;
+@@ -574,7 +574,7 @@ dump_nbrs(fp)
+ 				if (n->options_bitmap & PIM_HELLO_GENID_BIT)
+ 					fprintf(fp, " %-8x", n->genid);
+ 				else
+-					fprintf(fp, " %-8x", "-");
++					fprintf(fp, " %-8s", "-");
+ 				if (v->uv_pim_dr == n)
+ 					fprintf(fp, " D");
+ 				fprintf(fp, "\n");
+diff --git a/pim6sd/mld6.c b/pim6sd/mld6.c
+index d828bbf..0bac85d 100644
+--- a/pim6sd/mld6.c
++++ b/pim6sd/mld6.c
+@@ -207,9 +207,9 @@ init_mld6()
+ 
+     /* filter all non-MLD ICMP messages */
+     ICMP6_FILTER_SETBLOCKALL(&filt);
+-    ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_QUERY, &filt);
+-    ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_REPORT, &filt);
+-    ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_REDUCTION, &filt);
++    ICMP6_FILTER_SETPASS(MLD_LISTENER_QUERY, &filt);
++    ICMP6_FILTER_SETPASS(MLD_LISTENER_REPORT, &filt);
++    ICMP6_FILTER_SETPASS(MLD_LISTENER_REDUCTION, &filt);
+ #ifdef MLD_MTRACE_RESP
+     ICMP6_FILTER_SETPASS(MLD_MTRACE_RESP, &filt);
+     ICMP6_FILTER_SETPASS(MLD_MTRACE, &filt);
+@@ -448,7 +448,7 @@ accept_mld6(recvlen)
+ 		accept_listener_report(src, dst, group);
+ 		return;
+ 
+-	case MLD_LISTENER_DONE:
++	case MLD_LISTENER_REDUCTION:
+ 		accept_listener_done(src, dst, group);
+ 		return;
+ 
+diff --git a/pim6sd/trace.c b/pim6sd/trace.c
+index e361633..175c858 100644
+--- a/pim6sd/trace.c
++++ b/pim6sd/trace.c
+@@ -110,6 +110,14 @@
+ #include "rp.h"
+ #include "trace.h"
+ 
++#ifndef MLD_MTRACE_RESP
++#  define MLD_MTRACE_RESP     200
++#endif
++
++#ifndef MLD_MTRACE
++#  define MLD_MTRACE          201
++#endif
++
+ /* TODO */
+ /*
+  * Traceroute function which returns traceroute replies to the requesting
+-- 
+1.8.3.2
+
