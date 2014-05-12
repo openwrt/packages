@@ -1,7 +1,7 @@
 From cdd09f69871ce8c98b8ae9fa0583f73938768943 Mon Sep 17 00:00:00 2001
 From: Simon Wunderlich <simon@open-mesh.com>
 Date: Wed, 26 Mar 2014 15:46:22 +0100
-Subject: [PATCH 2/6] batman-adv: fix neigh reference imbalance
+Subject: [PATCH 2/9] batman-adv: fix neigh reference imbalance
 
 When an interface is removed from batman-adv, the orig_ifinfo of a
 orig_node may be removed without releasing the router first.
@@ -43,5 +43,5 @@ index 8539416..25df60d 100644
  }
  
 -- 
-1.9.0
+2.0.0.rc2
 

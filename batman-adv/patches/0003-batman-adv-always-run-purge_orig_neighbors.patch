@@ -1,7 +1,7 @@
 From 72125152cc46e55793329984428032769648904e Mon Sep 17 00:00:00 2001
 From: Simon Wunderlich <simon@open-mesh.com>
 Date: Wed, 26 Mar 2014 15:46:23 +0100
-Subject: [PATCH 3/6] batman-adv: always run purge_orig_neighbors
+Subject: [PATCH 3/9] batman-adv: always run purge_orig_neighbors
 
 The current code will not execute batadv_purge_orig_neighbors() when an
 orig_ifinfo has already been purged. However we need to run it in any
@@ -45,5 +45,5 @@ index 25df60d..47b0886 100644
  
  	/* first for NULL ... */
 -- 
-1.9.0
+2.0.0.rc2
 

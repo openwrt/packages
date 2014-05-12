@@ -1,7 +1,7 @@
 From 1c2e700fa93e6de3a2ae3725cf437504683b894a Mon Sep 17 00:00:00 2001
 From: Antonio Quartulli <antonio@open-mesh.com>
 Date: Sat, 29 Mar 2014 17:27:38 +0100
-Subject: [PATCH 5/6] batman-adv: fix local TT check for outgoing arp requests
+Subject: [PATCH 5/9] batman-adv: fix local TT check for outgoing arp requests
  in DAT
 
 Change introduced by d6bd8b36fa1f3d72a6fd5942a6e9bde6ddafcd0d
@@ -40,5 +40,5 @@ index 5bb37a8..a5d75be 100644
  			goto out;
  		}
 -- 
-1.9.0
+2.0.0.rc2
 

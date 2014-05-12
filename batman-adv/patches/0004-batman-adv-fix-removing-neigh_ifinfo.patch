@@ -1,7 +1,7 @@
 From 9b9cdbe28e2b9c8bdf9c761f22ba9655963d13d4 Mon Sep 17 00:00:00 2001
 From: Simon Wunderlich <simon@open-mesh.com>
 Date: Wed, 26 Mar 2014 15:46:24 +0100
-Subject: [PATCH 4/6] batman-adv: fix removing neigh_ifinfo
+Subject: [PATCH 4/9] batman-adv: fix removing neigh_ifinfo
 
 When an interface is removed separately, all neighbors need to be
 checked if they have a neigh_ifinfo structure for that particular
@@ -84,5 +84,5 @@ index 47b0886..aa2468b 100644
  	}
  
 -- 
-1.9.0
+2.0.0.rc2
 

@@ -1,0 +1,35 @@
+From 2ac2c94590d49e69ad8400a9df959533195143ed Mon Sep 17 00:00:00 2001
+From: Marek Lindner <mareklindner@neomailbox.ch>
+Date: Thu, 24 Apr 2014 03:44:25 +0800
+Subject: [PATCH 7/9] batman-adv: fix indirect hard_iface NULL dereference
+
+If hard_iface is NULL and goto out is made batadv_hardif_free_ref()
+doesn't check for NULL before dereferencing it to get to refcount.
+
+Introduced in f13f960797fd1969b3c0470cc97435ddfb6aecb4
+("batman-adv: add debugfs support to view multiif tables").
+
+Reported-by: Sven Eckelmann <sven@narfation.org>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+Acked-by: Antonio Quartulli <antonio@meshcoding.com>
+---
+ originator.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/originator.c b/originator.c
+index aa2468b..35b42f8 100644
+--- a/originator.c
++++ b/originator.c
+@@ -1074,7 +1074,8 @@ int batadv_orig_hardif_seq_print_text(struct seq_file *seq, void *offset)
+ 	bat_priv->bat_algo_ops->bat_orig_print(bat_priv, seq, hard_iface);
+ 
+ out:
+-	batadv_hardif_free_ref(hard_iface);
++	if (hard_iface)
++		batadv_hardif_free_ref(hard_iface);
+ 	return 0;
+ }
+ 
+-- 
+2.0.0.rc2
+

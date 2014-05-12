@@ -1,0 +1,56 @@
+From 8dbdee55810adceecf51548d44da893076c99219 Mon Sep 17 00:00:00 2001
+From: Antonio Quartulli <antonio@open-mesh.com>
+Date: Fri, 2 May 2014 01:35:13 +0200
+Subject: [PATCH 9/9] batman-adv: increase orig refcount when storing ref in
+ gw_node
+
+A pointer to the orig_node representing a bat-gateway is
+stored in the gw_node->orig_node member, but the refcount
+for such orig_node is never increased.
+This leads to memory faults when gw_node->orig_node is accessed
+and the originator has already been freed.
+
+Fix this by increasing the refcount on gw_node creation
+and decreasing it on gw_node free.
+
+Signed-off-by: Antonio Quartulli <antonio@open-mesh.com>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ gateway_client.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/gateway_client.c b/gateway_client.c
+index d7fafc1..d5a40ab 100644
+--- a/gateway_client.c
++++ b/gateway_client.c
+@@ -42,8 +42,10 @@
+ 
+ static void batadv_gw_node_free_ref(struct batadv_gw_node *gw_node)
+ {
+-	if (atomic_dec_and_test(&gw_node->refcount))
++	if (atomic_dec_and_test(&gw_node->refcount)) {
++		batadv_orig_node_free_ref(gw_node->orig_node);
+ 		kfree_rcu(gw_node, rcu);
++	}
+ }
+ 
+ static struct batadv_gw_node *
+@@ -406,9 +408,14 @@ static void batadv_gw_node_add(struct batadv_priv *bat_priv,
+ 	if (gateway->bandwidth_down == 0)
+ 		return;
+ 
++	if (!atomic_inc_not_zero(&orig_node->refcount))
++		return;
++
+ 	gw_node = kzalloc(sizeof(*gw_node), GFP_ATOMIC);
+-	if (!gw_node)
++	if (!gw_node) {
++		batadv_orig_node_free_ref(orig_node);
+ 		return;
++	}
+ 
+ 	INIT_HLIST_NODE(&gw_node->list);
+ 	gw_node->orig_node = orig_node;
+-- 
+2.0.0.rc2
+

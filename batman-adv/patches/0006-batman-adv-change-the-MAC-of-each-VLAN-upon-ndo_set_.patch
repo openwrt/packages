@@ -1,7 +1,7 @@
 From 31f391475cc08724e96ab060ef4aa6503d11da8e Mon Sep 17 00:00:00 2001
 From: Antonio Quartulli <antonio@open-mesh.com>
 Date: Mon, 31 Mar 2014 13:48:10 +0200
-Subject: [PATCH 6/6] batman-adv: change the MAC of each VLAN upon
+Subject: [PATCH 6/9] batman-adv: change the MAC of each VLAN upon
  ndo_set_mac_address
 
 The MAC address of the soft-interface is used to initialise
@@ -50,5 +50,5 @@ index f82c267..d962363 100644
  	return 0;
  }
 -- 
-1.9.0
+2.0.0.rc2
 
