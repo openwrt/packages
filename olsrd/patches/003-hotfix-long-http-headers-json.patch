@@ -1,0 +1,28 @@
+commit 528176910ee1d00278e4108cc23d9f4f2de8a639
+Author: Alessio Caiazza <nolith@abisso.org>
+Date:   Wed May 14 22:45:33 2014 +0200
+
+    Hotfix for very long http headers also for jsoninfo
+
+diff --git a/lib/jsoninfo/src/olsrd_jsoninfo.c b/lib/jsoninfo/src/olsrd_jsoninfo.c
+index 966292c..817c64a 100644
+--- a/lib/jsoninfo/src/olsrd_jsoninfo.c
++++ b/lib/jsoninfo/src/olsrd_jsoninfo.c
+@@ -508,8 +508,15 @@ ipc_action(int fd, void *data __attribute__ ((unused)), unsigned int flags __att
+   FD_ZERO(&rfds);
+   FD_SET((unsigned int)ipc_connection, &rfds);  /* Win32 needs the cast here */
+   if (0 <= select(ipc_connection + 1, &rfds, NULL, NULL, &tv)) {
+-    char requ[128];
+-    ssize_t s = recv(ipc_connection, (void *)&requ, sizeof(requ), 0);   /* Win32 needs the cast here */
++    char requ[1024];
++    ssize_t s = recv(ipc_connection, (void *)&requ, sizeof(requ)-1, 0);   /* Win32 needs the cast here */
++
++    if (s == sizeof(requ)-1) {
++      /* input was too much long, just skip the rest */
++      char dummy[1024];
++
++      while (recv(ipc_connection, (void *)&dummy, sizeof(dummy), 0) == sizeof(dummy), 0);
++    }
+     if (0 < s) {
+       requ[s] = 0;
+       /* print out the requested tables */
