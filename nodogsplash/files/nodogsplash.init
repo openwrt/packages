@@ -10,42 +10,33 @@
 # Comment by that author: Could be better, but it's working as expected)
 #
 
+START=95
+STOP=95
+
+USE_PROCD=1
 
 IPT=/usr/sbin/iptables
 WD_DIR=/usr/bin
 NDS_CONF=/etc/nodogsplash/nodogsplash.conf
-OPTIONS=""
-START=65
-STOP=65
 # -s -d 5 runs in background, with level 5 (not so verbose) messages to syslog
 # -f -d 7 runs in foreground, with level 7 (verbose) debug messages to terminal
-# N.B.: -f will fail if starting at boot from rcS
-#OPTIONS="-s -d 5"
+OPTIONS="-s -f -d 5"
 
-start() {
-   	echo "Starting nodogsplash ... "
-	if $WD_DIR/ndsctl status 2> /dev/null; then
-		echo "FAILED:  nodogsplash already running"
-    	else
-		if test_module && $WD_DIR/nodogsplash $OPTIONS; then
-			echo "OK: nodogsplash started"
-		else
-			echo "FAILED:  nodogsplash exited with non 0 status"
-		fi
-    	fi
+start_service() {
+	if test_module ;  then
+		procd_open_instance
+		procd_set_param command /usr/bin/nodogsplash $OPTIONS
+		procd_set_param respawn
+		procd_close_instance
+	else
+		logger -s -t nodogsplash -p daemon.error "nodogsplash is missing some kernel modules"
+	fi
 }
 
-stop() {
-	echo "Stopping nodogsplash ... "
-	if $WD_DIR/ndsctl status 2> /dev/null; then
-		if $WD_DIR/ndsctl stop; then
-			echo "OK: nodogsplash stopped"
-		else
-			echo "FAILED:  ndsctl stop exited with non 0 status"
-		fi
-	else
-		echo "FAILED:  nodogsplash was not running"
-    	fi
+stop_service() {
+	# nodogsplash doesn't exit fast enought, when procd terminates it.
+	# otherwise procd will restart nodogsplash twice. first time starting nodogsplash fails, second time it succeeds
+	sleep 1
 }
 
 status() {
