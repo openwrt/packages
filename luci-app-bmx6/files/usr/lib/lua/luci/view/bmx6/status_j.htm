@@ -47,39 +47,15 @@ Visit <a href="http://bmx6.net">bmx6.net</a> for more info.
 	<table class="cbi-section-table" id="status_table">
 		<tr class="cbi-section-table-titles">
 			<th class="cbi-section-table-cell"><%:Version%></th>
-			<th class="cbi-section-table-cell"><%:Compat%></th>
-			<th class="cbi-section-table-cell"><%:Code Version%></th>
-			<th class="cbi-section-table-cell"><%:Global ID%></th>
 			<th class="cbi-section-table-cell"><%:Primary IP%></th>
 			<th class="cbi-section-table-cell"><%:Tun6Address%></th>
 			<th class="cbi-section-table-cell"><%:Tun4Address%></th>
-			<th class="cbi-section-table-cell"><%:Local ID%></th>
 			<th class="cbi-section-table-cell"><%:Uptime%></th>
 			<th class="cbi-section-table-cell"><%:Cpu load%></th>
 			<th class="cbi-section-table-cell"><%:Nodes seen%></th>
 		</tr>
-		<tr class="cbi-section-table-row">
-			<td colspan="11"><em><br /><%:Collecting data...%></em></td>
-		</tr>
-	</table>
-</fieldset>
-
-<fieldset class="cbi-section">
-	
-	<legend><%:Network devices%></legend>
-	<table class="cbi-section-table" id="ifaces_table">
-		<tr class="cbi-section-table-titles">
-			<th class="cbi-section-table-cell"><%:Name%></th>
-			<th class="cbi-section-table-cell"><%:State%></th>
-			<th class="cbi-section-table-cell"><%:Type%></th>
-			<th class="cbi-section-table-cell"><%:Rate%></th>
-			<th class="cbi-section-table-cell"><%:Local IP%></th>
-			<th class="cbi-section-table-cell"><%:Global IP%></th>
-			<th class="cbi-section-table-cell"><%:Multicast IP%></th>
-			<th class="cbi-section-table-cell"><%:is Primary%></th>
-		</tr>
-		<tr class="cbi-section-table-row">
-			<td colspan="8"><em><br /><%:Collecting data...%></em></td>
+	        <tr class="cbi-section-table-row">
+			<td colspan="7"><em><br /><%:Collecting data...%></em></td>
 		</tr>
 	</table>
 </fieldset>
@@ -87,26 +63,23 @@ Visit <a href="http://bmx6.net">bmx6.net</a> for more info.
 </div>
 
 <script type="text/javascript">//<![CDATA[
-		new TablePooler(5,"/cgi-bin/bmx6-info", {'status':''}, "status_table", function(st){
+		new TablePooler(5,"/cgi-bin/bmx6-info", {'$info':''}, "status_table", function(st){
 		var res = Array();
-               	var sta = st.status;
+		var sta = st.info[0].status;
+		var ifaces = st.info[1].interfaces;
 
-		res.push([sta.version,sta.compat,sta.revision,sta.globalId,sta.primaryIp,sta.tun6Address,
-		sta.tun4Address,sta.myLocalId,sta.uptime,sta.cpu,sta.nodes]);
-		return res;
-		});
-//]]></script>
-
-<script type="text/javascript">//<![CDATA[
-		new TablePooler(5,"/cgi-bin/bmx6-info", {'interfaces':''}, "ifaces_table", function(st){
-		var res = Array();
-		var ifaces = st.interfaces;
+		res.push([sta.version+'/'+sta.compat,sta.primaryIp,sta.tun6Address,
+			sta.tun4Address,sta.uptime,sta.cpu,sta.nodes]);
+		res.push(['<br/>','','','','','','',''])
+		res.push(['','','','','','','',''])
+		res.push(['<b>Interface Name</b>','<b>State</b>','<b>Type</b>','<b>Rate</b>','<b>Local IP</b>','<b>Global IP</b>','<b>is Primary</b>'])
 
 		for ( var i = 0; i < ifaces.length; i++)
 			{
 			res.push([ifaces[i].devName,ifaces[i].state,ifaces[i].type,ifaces[i].rateMin+"/"+ifaces[i].rateMax,
-				ifaces[i].llocalIp,ifaces[i].globalIp,ifaces[i].multicastIp,ifaces[i].primary]);
+                              ifaces[i].llocalIp,ifaces[i].globalIp,ifaces[i].primary],'');
 			}
+
 		return res;
 		});
 //]]></script>
