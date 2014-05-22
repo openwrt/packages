@@ -76,7 +76,7 @@ print_query() {
         }
 
 	# If the query is a file, just printing the file
-	[ -f "$BMX6_DIR/$QUERY" ] && cat "$BMX6_DIR/$QUERY";
+	[ -f "$BMX6_DIR/$1" ] && cat "$BMX6_DIR/$1";
 }
 
 if [ "${QUERY##*/}" == "all" ]; then
@@ -84,6 +84,13 @@ if [ "${QUERY##*/}" == "all" ]; then
 	QALL=1
 fi
 
+if [ "$QUERY" == '$info' ]; then
+	echo '{ "info": [ '
+	print_query status
+	echo -n ","
+	print_query interfaces
+	echo "] }"
+fi
 
 if [ "$QUERY" == '$neighbours' ]; then
 	QALL=1
