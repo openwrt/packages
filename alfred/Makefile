@@ -73,7 +73,7 @@ define Package/alfred/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	cp -fpR  $(PKG_BUILD_DIR)/alfred $(1)/usr/sbin/
 	[ "x$(CONFIG_PACKAGE_ALFRED_VIS)" == "xy" ] && cp -fpR  $(PKG_BUILD_DIR)/vis/batadv-vis $(1)/usr/sbin/ ; true
-	[ "x$(CONFIG_PACKAGE_ALFRED_GPSD)" == "xy" ] && cp -fpR  $(PKG_BUILD_DIR)/vis/alfred-gpsd $(1)/usr/sbin/ ; true
+	[ "x$(CONFIG_PACKAGE_ALFRED_GPSD)" == "xy" ] && cp -fpR  $(PKG_BUILD_DIR)/gpsd/alfred-gpsd $(1)/usr/sbin/ ; true
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/alfred.init $(1)/etc/init.d/alfred
 	$(INSTALL_DIR) $(1)/etc/config
