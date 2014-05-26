@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hnetd
-PKG_SOURCE_VERSION:=a7fb081a9b98a150f2fda913886c6c0ef0725048
-PKG_VERSION:=2014-05-04-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=c6da40c19d0e550cd1e2dd1a459ef6cab9b15cae
+PKG_VERSION:=2014-06-02-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -39,10 +39,15 @@ endef
 define Package/hnet-full
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=HNCP Homenet metapackage (hnetd + ohybridproxy + babels)
+  TITLE:=HNCP Homenet metapackage
   URL:=https://github.com/sbyx/hnetd
-  DEPENDS:=+odhcpd +odhcp6c +netifd +hnetd +ohybridproxy +babels
-  DEPENDS+=+@IPV6
+  DEPENDS:=+hnetd
+  # Routing
+  DEPENDS+=+babels
+  # Service discovery
+  DEPENDS+=+ohybridproxy
+  # Distributed PCP support
+  DEPENDS+=+miniupnpd +minimalist-pcproxy
 endef
 
 define Package/hnetd/description
@@ -61,6 +66,7 @@ define Package/hnetd/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/hnetd.init $(1)/etc/init.d/hnetd
 	$(INSTALL_BIN) ./files/ohp-script $(1)/usr/sbin/hnetd-ohp-script
+	$(INSTALL_BIN) ./files/pcp-script $(1)/usr/sbin/hnetd-pcp-script
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generic/hnetd-routing $(1)/usr/sbin/hnetd-routing
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/hnetd.defaults $(1)/etc/uci-defaults/x-hnetd.defaults

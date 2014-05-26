@@ -12,6 +12,8 @@ DNSMASQ_DIR=/tmp/dnsmasq.d
 DNSMASQ_SCRIPT=/etc/init.d/dnsmasq
 OHP_SCRIPT=/usr/sbin/hnetd-ohp-script
 OHP_BINARY=/usr/sbin/ohybridproxy
+PCP_SCRIPT=/usr/sbin/hnetd-pcp-script
+PCP_BINARY=/usr/sbin/minimalist-pcproxy
 
 start_service() {
     mkdir -p $DNSMASQ_DIR
@@ -23,7 +25,7 @@ start_service() {
     then
         mkdir -p $DNSMASQ_DIR
         procd_append_param command -d $DNSMASQ_SCRIPT
-        procd_append_param command -f $DNSMASQ_DIR/hnet.conf 
+        procd_append_param command -f $DNSMASQ_DIR/hnet.conf
         procd_append_param command -o $OHP_SCRIPT
         HOSTNAME=`cat /proc/sys/kernel/hostname`
         if [ -n "$HOSTNAME" ]
@@ -31,6 +33,13 @@ start_service() {
             procd_append_param command -n "$HOSTNAME"
         fi
     fi
+
+    # Enable PCP, if it's present
+    if [ -f $PCP_BINARY -a -f $PCP_SCRIPT ]
+    then
+        procd_append_param command -c $PCP_SCRIPT
+    fi
+
     # State file
     procd_append_param command -s /tmp/hnetd.pa_state
 

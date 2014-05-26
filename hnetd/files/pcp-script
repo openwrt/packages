@@ -1,0 +1,46 @@
+#!/bin/sh
+#-*-sh-*-
+#
+# $Id: pcp-script $
+#
+# Author: Markus Stenberg <mstenber@cisco.com>
+#
+# Copyright (c) 2014 cisco Systems, Inc.
+#
+# Created:       Fri Jan 17 11:46:30 2014 mstenber
+# Last modified: Fri May 30 13:27:57 2014 mstenber
+# Edit time:     16 min
+#
+
+# Copied from ohp-script.. Same idea. Just prod minimalist-pcproxy as
+# needed, hoping the miniupnpd is taken care of by the system.
+
+PCP=minimalist-pcproxy
+
+start() {
+    $PCP $* &
+}
+
+stop() {
+    killall -9 $PCP
+}
+
+
+CMD=$1
+# For debugging purposes
+LOGNAME=`basename $0`
+echo "$*" | logger -t "$LOGNAME"
+case $CMD in
+  start)
+    shift
+    stop
+    start $*
+    ;;
+  stop)
+  stop
+    ;;
+  *)
+    echo "Only start [config]/stop supported"
+    exit 1
+  ;;
+esac
