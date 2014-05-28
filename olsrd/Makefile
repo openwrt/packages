@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=olsrd
 PKG_VERSION:=0.6.6.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.olsr.org/releases/0.6
@@ -37,7 +37,8 @@ define Package/olsrd
 endef
 
 define Package/olsrd/conffiles
-/etc/config/olsrd
+/etc/config/olsrd4
+/etc/config/olsrd6
 endef
 
 define Package/olsrd-mod-arprefresh
@@ -169,12 +170,16 @@ define Build/Compile
 endef
 
 define Package/olsrd/install
+	$(INSTALL_DIR) $(1)/lib/functions
+	$(INSTALL_DATA) ./files/olsrd.init $(1)/lib/functions/olsrd.sh
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/olsrd.config $(1)/etc/config/olsrd
+	$(INSTALL_DATA) ./files/olsrd4.config $(1)/etc/config/olsrd4
+	$(INSTALL_DATA) ./files/olsrd6.config $(1)/etc/config/olsrd6
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/olsrd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/olsrd.init $(1)/etc/init.d/olsrd
+	$(INSTALL_BIN) ./files/olsrd4.init $(1)/etc/init.d/olsrd4
+	$(INSTALL_BIN) ./files/olsrd6.init $(1)/etc/init.d/olsrd6
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./files/olsrd.hotplug.sh $(1)/etc/hotplug.d/iface/50-olsrd
 endef

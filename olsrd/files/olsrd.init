@@ -6,10 +6,6 @@ START=65
 SERVICE_DAEMONIZE=1
 SERVICE_WRITE_PID=1
 
-CONF=/var/etc/olsrd.conf
-PID=/var/run/olsrd.pid
-PID6=/var/run/olsrd.ipv6.pid
-
 OLSRD_OLSRD_SCHEMA='ignore:internal config_file:internal DebugLevel=0 AllowNoInt=yes'
 OLSRD_IPCCONNECT_SCHEMA='ignore:internal Host:list Net:list2'
 OLSRD_LOADPLUGIN_SCHEMA='ignore:internal library:internal Host4:list Net4:list2 Host:list Net:list2 Host6:list Net6:list2 Ping:list redistribute:list NonOlsrIf:list name:list lat lon latlon_infile HNA:list2 hosts:list2'
@@ -766,7 +762,7 @@ start() {
 
 	. /lib/functions/network.sh
 
-	config_load olsrd
+	config_load $UCI_CONF_NAME
 	reset_cb
 
 	OLSRD_CONFIG_FILE=
@@ -774,9 +770,9 @@ start() {
 
 	if [ -z "$OLSRD_CONFIG_FILE" ]; then
 		mkdir -p -- /var/etc/
-		olsrd_write_config > /var/etc/olsrd.conf
+		olsrd_write_config > /var/etc/$UCI_CONF_NAME.conf
 		if [ "$INTERFACES_COUNT" -gt 0 -a "$OLSRD_COUNT" -gt 0 ]; then
-			OLSRD_CONFIG_FILE=/var/etc/olsrd.conf
+			OLSRD_CONFIG_FILE=/var/etc/$UCI_CONF_NAME.conf
 		fi
 	fi
 
@@ -836,8 +832,5 @@ start() {
 
 stop() {
 	SERVICE_PID_FILE="$PID"
-	service_stop /usr/sbin/olsrd
-
-	SERVICE_PID_FILE="$PID6"
 	service_stop /usr/sbin/olsrd
 }
