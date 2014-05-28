@@ -799,6 +799,7 @@ start() {
 		return 1
 	else
 		service_start /usr/sbin/olsrd -f "$OLSRD_CONFIG_FILE" -nofork
+		sleep 1
 		service_check /usr/sbin/olsrd || {
 			log "startup-error: check via: '/usr/sbin/olsrd -f \"$OLSRD_CONFIG_FILE\" -nofork'"
 		}
