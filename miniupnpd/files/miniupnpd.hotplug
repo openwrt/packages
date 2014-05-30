@@ -1,0 +1,14 @@
+#!/bin/sh
+
+/etc/init.d/miniupnpd enabled && [ "$ACTION" = "ifup" ] && {
+	local iface
+        local ext_iface
+
+        . /lib/functions/network.sh
+        network_find_wan ext_iface
+
+	for iface in $ext_iface $(uci_get upnpd config internal_iface; uci_get upnpd config external_iface); do
+		[ "$INTERFACE" = "$iface" ] && /etc/init.d/miniupnpd restart
+                exit 0
+	done
+}

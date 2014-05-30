@@ -1,0 +1,14 @@
+diff --git a/Makefile.linux b/Makefile.linux
+index bcca779..7946108 100644
+--- a/Makefile.linux
++++ b/Makefile.linux
+@@ -147,7 +147,8 @@ LDLIBS += $(shell $(PKG_CONFIG) --static --libs-only-l libmnl)
+ LDLIBS += $(shell $(PKG_CONFIG) --static --libs-only-l libnetfilter_conntrack)
+ endif # ($(TEST),1)
+ 
+-LDLIBS += $(shell $(PKG_CONFIG) --static --libs-only-l libssl)
++# n/a - we don't enable https server for IGD v2 anyway
++#LDLIBS += $(shell $(PKG_CONFIG) --static --libs-only-l libssl)
+ 
+ TESTUPNPDESCGENOBJS = testupnpdescgen.o upnpdescgen.o
+ 
