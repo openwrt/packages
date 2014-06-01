@@ -1,0 +1,7 @@
+This is an OpenWrt package feed containing community maintained packages.
+
+Usage:
+Add to feeds.conf: src-git packages git://github.com/openwrt/packages.git
+Run: ./scripts/feeds update packages
+Run: ./scripts/feess install -a -p packages
+ 
