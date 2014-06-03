@@ -5,7 +5,7 @@ uci -q batch <<-EOT
 	set firewall.miniupnpd=include
 	set firewall.miniupnpd.type=script
 	set firewall.miniupnpd.path=/usr/share/miniupnpd/firewall.include
-	set firewall.miniupnpd.family=IPv4
+	set firewall.miniupnpd.family=any
 	set firewall.miniupnpd.reload=1
 	commit firewall
 EOT

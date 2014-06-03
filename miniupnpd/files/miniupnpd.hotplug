@@ -1,14 +1,28 @@
 #!/bin/sh
 
-/etc/init.d/miniupnpd enabled && [ "$ACTION" = "ifup" ] && {
-	local iface
-        local ext_iface
+if [ ! /etc/init.d/miniupnpd enabled ]
+then
+    exit 0
+fi
 
-        . /lib/functions/network.sh
-        network_find_wan ext_iface
+. /lib/functions/service.sh
 
-	for iface in $ext_iface $(uci_get upnpd config internal_iface; uci_get upnpd config external_iface); do
-		[ "$INTERFACE" = "$iface" ] && /etc/init.d/miniupnpd restart
-                exit 0
-	done
-}
+# If miniupnpd is not running:
+# - check on _any_ event (even updates may contribute to network_find_wan*)
+# If miniupnpd _is_ running:
+# - check only on ifup
+
+[ ! "$ACTION" = "ifup" ] && service_check /usr/sbin/miniupnpd && exit 0
+
+local iface
+local ext_iface
+local ext_iface6
+
+. /lib/functions/network.sh
+network_find_wan ext_iface
+network_find_wan6 ext_iface6
+
+for iface in $ext_iface $ext_iface6 $(uci_get upnpd config internal_iface; uci_get upnpd config external_iface); do
+    [ "$INTERFACE" = "$iface" ] && /etc/init.d/miniupnpd restart
+    exit 0
+done

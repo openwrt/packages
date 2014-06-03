@@ -94,6 +94,7 @@ start() {
 	local ifname
 
         [ -n "$extiface" ] || network_find_wan extiface
+        [ -n "$extiface" ] || network_find_wan6 extiface
 
 	network_get_device ifname ${extiface}
 
