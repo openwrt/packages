@@ -1,0 +1,187 @@
+#!/bin/sh /etc/rc.common
+
+SERVICE_USE_PID=1
+
+START=50
+
+setup_firewall() {
+	local port fw
+	config_get port		$1 port
+	test -z "$port" && return
+
+	config_get fwport		$1 "fwport"
+	test "$fwport" = "$port" && return
+
+	#can we remove the old rule?
+	uci add firewall rule
+	uci set firewall.@rule[-1].src=wan
+	uci set firewall.@rule[-1].target=ACCEPT
+	uci set firewall.@rule[-1].proto=tcpudp
+	uci set firewall.@rule[-1].dest_port=$port
+	uci commit firewall
+	/etc/init.d/firewall restart
+
+	uci set ocserv.config.fwport="$port"
+	uci commit ocserv
+}
+
+clear_firewall() {
+	iptables-save | grep -v ocserv-rule | iptables-restore
+}
+
+setup_config() {
+	config_get port         $1 port "4443"
+	config_get max_clients  $1 max_clients "8"
+	config_get max_same     $1 max_same "2"
+	config_get dpd          $1 dpd "120"
+	config_get predictable_ips  $1 predictable_ips "1"
+	config_get udp          $1 udp "1"
+	config_get auth         $1 auth "plain"
+	config_get cisco_compat $1 cisco_compat "1"
+	config_get ipaddr       $1 ipaddr "192.168.100.0"
+	config_get netmask      $1 netmask "255.255.255.0"
+	config_get ip6addr      $1 ip6addr ""
+
+	test $predictable_ips = "0" && predictable_ips="false"
+	test $predictable_ips = "1" && predictable_ips="true"
+	test $cisco_compat = "0" && cisco_compat="false"
+	test $cisco_compat = "1" && cisco_compat="true"
+	test $udp = "0" && udp="#"
+	test $udp = "1" && udp=""
+	test -z $ip6addr && enable_ipv6="#"
+
+	ipv6_addr=`echo $ip6addr|cut -d '/' -f 1`
+	ipv6_prefix=`echo $ip6addr|cut -d '/' -f 2`
+
+	test $auth = "plain" && authsuffix="[/var/etc/ocpasswd]"
+
+	mkdir -p /var/etc
+	sed -e "s/|PORT|/$port/g" \
+	    -e "s/|MAX_CLIENTS|/$max_clients/g" \
+	    -e "s/|MAX_SAME|/$max_same/g" \
+	    -e "s/|DPD|/$dpd/g" \
+	    -e "s/|AUTH|/$auth$authsuffix/g" \
+	    -e "s/|PREDICTABLE_IPS|/$predictable_ips/g" \
+	    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
+	    -e "s/|UDP|/$udp/g" \
+	    -e "s/|IPV4ADDR|/$ipaddr/g" \
+	    -e "s/|NETMASK|/$netmask/g" \
+	    -e "s/|IPV6ADDR|/$ipv6_addr/g" \
+	    -e "s/|IPV6PREFIX|/$ipv6_prefix/g" \
+	    -e "s/|ENABLE_IPV6|/$enable_ipv6/g" \
+	    /etc/ocserv/ocserv.conf.template > /var/etc/ocserv.conf
+}
+
+setup_users() {
+	local name
+	local password
+
+	config_get name $1 name
+	config_get password $1 password
+
+	[ -z "$name" -o -z "$password" ] && return
+
+	echo "$password"|ocpasswd -c /var/etc/ocpasswd "$name"
+}
+
+setup_routes() {
+	local routes
+
+	config_get ip $1 ip
+	config_get netmask $1 netmask
+
+	[ -z "$ip" -o -z "$netmask" ] && return
+
+	echo "route = $ip/$netmask" >> /var/etc/ocserv.conf
+}
+
+setup_dns() {
+	local routes
+
+	config_get ip $1 ip
+
+	[ -z "$ip" ] && return
+
+	echo "dns = $ip" >> /var/etc/ocserv.conf
+}
+
+start() {
+	local hostname iface
+
+	user_exists ocserv 72 || user_add ocserv 72 72 /var/lib/ocserv
+	group_exists ocserv 72 || group_add ocserv 72
+
+	hostname=`uci get ddns.myddns.domain`
+	[ -z "$hostname" ] && hostname=`uci get system.@system[0].hostname`
+
+	[ ! -f /etc/ocserv/ca-key.pem ] && [ -x /usr/bin/certtool ] && {
+		echo "Generating CA certificate..."
+		mkdir -p /etc/ocserv/pki/
+		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/ca-key.pem >/dev/null 2>&1
+		echo "cn=$hostname CA" >/etc/ocserv/pki/ca.tmpl
+		echo "expiration_days=-1" >>/etc/ocserv/pki/ca.tmpl
+		echo "serial=1" >>/etc/ocserv/pki/ca.tmpl
+		echo "ca" >>/etc/ocserv/pki/ca.tmpl
+		echo "cert_signing_key" >>/etc/ocserv/pki/ca.tmpl
+
+		certtool --template /etc/ocserv/pki/ca.tmpl \
+			--generate-self-signed --load-privkey /etc/ocserv/ca-key.pem \
+			--outfile /etc/ocserv/ca.pem >/dev/null 2>&1
+	}
+
+	#generate server certificate/key
+	[ ! -f /etc/ocserv/server-key.pem ] && [ -x /usr/bin/certtool ] && {
+		echo "Generating server certificate..."
+		mkdir -p /etc/ocserv/pki/
+		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/server-key.pem >/dev/null 2>&1
+		echo "cn=$hostname" >/etc/ocserv/pki/server.tmpl
+		echo "serial=2" >>/etc/ocserv/pki/server.tmpl
+		echo "expiration_days=-1" >>/etc/ocserv/pki/server.tmpl
+		echo "signing_key" >>/etc/ocserv/pki/server.tmpl
+		echo "encryption_key" >>/etc/ocserv/pki/server.tmpl
+		certtool --template /etc/ocserv/pki/server.tmpl \
+			--generate-certificate --load-privkey /etc/ocserv/server-key.pem \
+			--load-ca-certificate /etc/ocserv/ca.pem --load-ca-privkey \
+			/etc/ocserv/ca-key.pem --outfile /etc/ocserv/server-cert.pem >/dev/null 2>&1
+	}
+
+	[ -f /var/run/ocserv.pid ] || {
+		touch /var/run/ocserv.pid
+		chown ocserv:ocserv /var/run/ocserv.pid
+	}
+	[ -d /var/lib/ocserv ] || {
+		mkdir -m 0755 -p /var/lib/ocserv
+		chmod 0700 /var/lib/ocserv
+		chown ocserv:ocserv /var/lib/ocserv
+	}
+
+	config_load "ocserv"
+
+	rm -f /var/etc/ocserv.conf
+	touch /var/etc/ocserv.conf
+	setup_config config
+	config_foreach setup_routes routes
+	config_foreach setup_dns dns
+
+	rm -f /var/etc/ocpasswd
+	touch /var/etc/ocpasswd
+	config_foreach setup_users ocservusers
+
+	setup_firewall config
+
+	service_start /usr/sbin/ocserv -c /var/etc/ocserv.conf
+}
+
+stop() {
+	service_stop /usr/sbin/ocserv
+	clear_firewall
+}
+       
+reload() {
+	/usr/bin/occtl show status >/dev/null 2>&1
+	if test $? != 0;then
+		start
+	else
+		/usr/bin/occtl reload
+	fi
+}

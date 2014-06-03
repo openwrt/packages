@@ -1,0 +1,14 @@
+# ocserv avanced configuration
+
+menu "Configuration"
+	depends on PACKAGE_ocserv
+
+config OCSERV_PAM
+	bool "enable PAM"
+	default n
+
+config OCSERV_PROTOBUF
+	bool "use external libprotobuf"
+	default n
+
+endmenu

@@ -1,0 +1,34 @@
+# gnutls avanced configuration
+
+menu "Configuration"
+	depends on PACKAGE_libgnutls
+
+config GNUTLS_DTLS_SRTP
+	bool "enable DTLS SRTP support"
+
+config GNUTLS_ALPN
+	bool "enable ALPN support"
+
+config GNUTLS_OCSP
+	bool "enable ocsp support"
+
+config GNUTLS_CRYPTODEV
+	bool "enable /dev/crypto support"
+	depends on BROKEN
+
+config GNUTLS_HEARTBEAT
+	bool "enable DTLS heartbeat support"
+
+config GNUTLS_OPENPGP
+	bool "enable OPENPGP authentication support"
+
+config GNUTLS_SRP
+	bool "enable SRP authentication support"
+
+config GNUTLS_PSK
+	bool "enable PSK authentication support"
+
+config GNUTLS_ANON
+	bool "enable anonymous authentication support"
+
+endmenu
