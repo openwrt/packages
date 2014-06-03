@@ -1,0 +1,70 @@
+diff --git a/src/main-ctl-unix.c b/src/main-ctl-unix.c
+index b4da5eb..90d604f 100644
+--- a/src/main-ctl-unix.c
++++ b/src/main-ctl-unix.c
+@@ -629,7 +629,7 @@ static void ctl_handle_commands(main_server_st * s)
+ 		}
+ 		goto cleanup;
+ 	}
+-	length = (buffer[2] << 8) | buffer[1];
++	memcpy(&length, &buffer[1], 2);
+ 	buffer_size = ret - 3;
+ 
+ 	if (length != buffer_size) {
+diff --git a/src/occtl-unix.c b/src/occtl-unix.c
+index 183825d..0c1b3e1 100644
+--- a/src/occtl-unix.c
++++ b/src/occtl-unix.c
+@@ -83,15 +83,14 @@ int send_cmd(struct unix_ctx *ctx, unsigned cmd, const void *data,
+ 	struct iovec iov[2];
+ 	unsigned iov_len = 1;
+ 	int e, ret;
+-	unsigned length = 0;
++	uint16_t length = 0;
+ 	void *packed = NULL;
+ 
+ 	if (get_size)
+ 		length = get_size(data);
+ 
+ 	header[0] = cmd;
+-	header[1] = length;
+-	header[2] = length >> 8;
++	memcpy(&header[1], &length, 2);
+ 
+ 	iov[0].iov_base = header;
+ 	iov[0].iov_len = 3;
+@@ -145,7 +144,7 @@ int send_cmd(struct unix_ctx *ctx, unsigned cmd, const void *data,
+ 			goto fail;
+ 		}
+ 
+-		length = (header[2] << 8) | header[1];
++		memcpy(&length, &header[1], 2);
+ 
+ 		rep->data_size = length;
+ 		rep->data = talloc_size(ctx, length);
+diff --git a/src/sec-mod.c b/src/sec-mod.c
+index 15ee32a..c3d4bad 100644
+--- a/src/sec-mod.c
++++ b/src/sec-mod.c
+@@ -354,6 +354,7 @@ void sec_mod_server(void *main_pool, struct cfg_st *config, const char *socket_f
+ 	unsigned cmd, length;
+ 	unsigned i, buffer_size;
+ 	uint8_t *buffer, *tpool;
++	uint16_t l16;
+ 	struct pin_st pins;
+ 	int sd;
+ 	sec_mod_st *sec;
+@@ -538,10 +539,11 @@ void sec_mod_server(void *main_pool, struct cfg_st *config, const char *socket_f
+ 		}
+ 
+ 		cmd = buffer[0];
+-		length = buffer[1] | buffer[2] << 8;
++		memcpy(&l16, &buffer[1], 2);
++		length = l16;
+ 
+ 		if (length > buffer_size - 4) {
+-			seclog(LOG_INFO, "too big message");
++			seclog(LOG_INFO, "too big message (%d)", length);
+ 			goto cont;
+ 		}
+ 
