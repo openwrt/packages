@@ -15,3 +15,4 @@ Run: ./scripts/feess install -a -p packages
 Please make sure that all packages you commit or request to pull:
 	* Package a version which is still maintained by the upstream author.
         * Have yourself or another person listed in the PKG_MAINTAINER field.
+	* Will be updated regularly to maintained and supported versions. 
