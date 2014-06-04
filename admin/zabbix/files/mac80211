@@ -1,0 +1,27 @@
+#see http://wiki.openwrt.org/doc/howto/zabbix for ready to use templates
+
+# If you want to know the exact meaning of an UserParameter, you can search in the ieee80211 standard:
+# http://standards.ieee.org/getieee802/download/802.11-2012.pdf
+# exemple: for mac80211.ACKFailureCount search for dot11ACKFailureCount (page 2145)
+
+# mac80211 phy discovery (like 'phy0')
+# exemple: {"data":[{"{#PHY}":"phy0"}]}
+#
+UserParameter=mac80211.phydiscovery,zabbix_helper_mac80211 discovery
+
+#phy statistics (you need {#PHY} as parameter)
+#
+UserParameter=mac80211.ACKFailureCount[*],zabbix_helper_mac80211 $1 dot11ACKFailureCount
+UserParameter=mac80211.FCSErrorCount[*],zabbix_helper_mac80211 $1 dot11FCSErrorCount
+UserParameter=mac80211.RTSFailureCount[*],zabbix_helper_mac80211 $1 dot11RTSFailureCount
+UserParameter=mac80211.RTSSuccessCount[*],zabbix_helper_mac80211 $1 dot11RTSSuccessCount
+UserParameter=mac80211.FailedCount[*],zabbix_helper_mac80211 $1 failed_count
+UserParameter=mac80211.FrameDuplicateCount[*],zabbix_helper_mac80211 $1 frame_duplicate_count
+UserParameter=mac80211.MulticastReceivedFrameCount[*],zabbix_helper_mac80211 $1 multicast_received_frame_count
+UserParameter=mac80211.MulticastTransmittedFrameCount[*],zabbix_helper_mac80211 $1 multicast_transmitted_frame_count
+UserParameter=mac80211.MultipleRetryCount[*],zabbix_helper_mac80211 $1 multiple_retry_count
+UserParameter=mac80211.ReceivedFragmentCount[*],zabbix_helper_mac80211 $1 received_fragment_count
+UserParameter=mac80211.RetryCount[*],zabbix_helper_mac80211 $1 retry_count
+UserParameter=mac80211.TransmittedFragmentCount[*],zabbix_helper_mac80211 $1 transmitted_fragment_count
+UserParameter=mac80211.TransmittedFrameCount[*],zabbix_helper_mac80211 $1 transmitted_frame_count
+

@@ -1,0 +1,29 @@
+#see http://wiki.openwrt.org/doc/howto/zabbix for ready to use templates
+
+# wifi interface discovery
+# exemple: {"data":[{"{#IF}":"wlan0", "{#MODE}":"ap", "{#SSID}":"Openwrt", "{#NET}":"lan", "{#DEV}":"radio0", "{#ENC}":"psk2+ccmp", "{#TYPE}":"mac80211", "{#HWMODE}":"11ng", "{#CHANNEL}":"11", "{#BSSID}":"xx:xx:xx:xx:xx:xx"}]}
+#
+UserParameter=wifi.ifdiscovery,lua -l uci -l iwinfo -e 'x = uci.cursor(nil, "/var/state");list = "{\"data\":[";x:foreach("wireless", "wifi-iface", function(s) list=list.."{\"{#IF}\":\""..s.ifname.."\", \"{#MODE}\":\""..s.mode.."\", \"{#SSID}\":\""..s.ssid.."\", \"{#NET}\":\""..s.network.."\", \"{#DEV}\":\""..s.device.."\", \"{#ENC}\":\""..(s.encryption or "?").."\", \"{#TYPE}\":\""..x:get("wireless",s.device,"type").."\", \"{#HWMODE}\":\""..(x:get("wireless",s.device,"hwmode") or "?").."\", \"{#CHANNEL}\":\""..x:get("wireless",s.device,"channel").."\", \"{#BSSID}\":\""..iwinfo[iwinfo.type(s.ifname)].bssid(s.ifname).."\"}," end); list=string.gsub(list,",$",""); print(list.."]}")'
+
+
+#iwinfo info (you need {#IF} as parameter, like 'wlan0')
+UserParameter=wifi.iwinfo.channel[*],lua -l iwinfo -e "print(iwinfo[iwinfo.type('$1')].channel('$1'))"
+UserParameter=wifi.iwinfo.frequency[*],lua -l iwinfo -e "print(iwinfo[iwinfo.type('$1')].frequency('$1'))"
+UserParameter=wifi.iwinfo.txpower[*],lua -l iwinfo -e "print(iwinfo[iwinfo.type('$1')].txpower('$1'))"
+UserParameter=wifi.iwinfo.bitrate[*],lua -l iwinfo -e "b = iwinfo[iwinfo.type('$1')].bitrate('$1'); print(b or '0')"
+UserParameter=wifi.iwinfo.signal[*],lua -l iwinfo -e "s = iwinfo[iwinfo.type('$1')].signal('$1'); print(s or '-255')"
+UserParameter=wifi.iwinfo.noise[*],lua -l iwinfo -e "print(iwinfo[iwinfo.type('$1')].noise('$1'))"
+UserParameter=wifi.iwinfo.quality[*],lua -l iwinfo -e "print(iwinfo[iwinfo.type('$1')].quality('$1'))"
+UserParameter=wifi.iwinfo.quality_max[*],lua -l iwinfo -e "print(iwinfo[iwinfo.type('$1')].quality_max('$1'))"
+UserParameter=wifi.iwinfo.mode[*],lua -l iwinfo -e "print(iwinfo[iwinfo.type('$1')].mode('$1'))"
+UserParameter=wifi.iwinfo.ssid[*],lua -l iwinfo -e "print(iwinfo[iwinfo.type('$1')].ssid('$1'))"
+UserParameter=wifi.iwinfo.bssid[*],lua -l iwinfo -e "print(iwinfo[iwinfo.type('$1')].bssid('$1'))"
+UserParameter=wifi.iwinfo.country[*],lua -l iwinfo -e "print(iwinfo[iwinfo.type('$1')].country('$1'))"
+UserParameter=wifi.iwinfo.nbusers[*],lua -l iwinfo -e "n = 0; for _,_ in pairs(iwinfo[iwinfo.type('$1')].assoclist('$1')) do n = n + 1 end; print(n)"
+UserParameter=wifi.iwinfo.encryption[*],lua -l iwinfo -e "e = iwinfo[iwinfo.type('$1')].encryption('$1'); print(e and e.description or 'None')"
+UserParameter=wifi.iwinfo.hwmode[*],lua -l iwinfo -e "x=iwinfo[iwinfo.type('$1')].hwmodelist('$1'); print((x.a and 'a' or '')..(x.b and 'b' or '')..(x.g and 'g' or '')..(x.n and 'n' or ''))"
+
+#uci info (you need {#DEV} as parameter, like 'radio0')
+UserParameter=wifi.uci.hwmode[*],lua -l uci -e "x = uci.cursor(nil, '/var/state'); print(x:get('wireless','$1','hwmode'))"
+UserParameter=wifi.uci.channel[*],lua -l uci -e "x = uci.cursor(nil, '/var/state'); print(x:get('wireless','$1','channel'))"
+UserParameter=wifi.uci.txpower[*],lua -l uci -e "x = uci.cursor(nil, '/var/state'); print(x:get('wireless','$1','txpower'))"
