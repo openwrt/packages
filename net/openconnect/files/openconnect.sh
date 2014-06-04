@@ -7,7 +7,8 @@ proto_openconnect_init_config() {
 	proto_config_add_string "server"
 	proto_config_add_int "port"
 	proto_config_add_string "username"
-	proto_config_add_string "cookie"
+	proto_config_add_string "serverhash"
+	proto_config_add_string "authgroup"
 	proto_config_add_string "password"
 	no_device=1
 	available=1
@@ -16,17 +17,18 @@ proto_openconnect_init_config() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port username cookie password
+	json_get_vars server port username serverhash authgroup password vgroup
 
 	grep -q tun /proc/modules || insmod tun
 
+	logger -t openconnect "initializing..."
 	serv_addr=
 	for ip in $(resolveip -t 5 "$server"); do
 		proto_add_host_dependency "$config" "$server"
 		serv_addr=1
 	done
 	[ -n "$serv_addr" ] || {
-		echo "Could not resolve server address"
+		logger -t openconnect "Could not resolve server address"
 		sleep 5
 		proto_setup_failed "$config"
 		exit 1
@@ -34,9 +36,13 @@ proto_openconnect_setup() {
 
 	[ -n "$port" ] && port=":$port"
 
-	cmdline="$server$port -i vpn-$config --no-cert-check --non-inter --syslog --script /lib/netifd/vpnc-script"
+	cmdline="$server$port -i vpn-$config --non-inter --syslog --script /lib/netifd/vpnc-script"
 
-	[ -n "$cookie" ] && append cmdline "-C $cookie"
+	[ -f /etc/openconnect/ca.pem ] && append cmdline "--cafile /etc/openconnect/ca.pem"
+	[ -f /etc/openconnect/user-cert.pem ] && append cmdline "-c /etc/openconnect/user-cert.pem"
+	[ -f /etc/openconnect/user-key.pem ] && append cmdline "--sslkey /etc/openconnect/user-key.pem"
+	[ -n "$serverhash" ] && append cmdline "--servercert=$serverhash"
+	[ -n "$authgroup" ] && append cmdline "--authgroup $authgroup"
 	[ -n "$username" ] && append cmdline "-u $username"
 	[ -n "$password" ] && {
 		umask 077
@@ -46,10 +52,20 @@ proto_openconnect_setup() {
 	}
 
 	proto_export INTERFACE="$config"
-	proto_run_command "$config" /usr/sbin/openconnect $cmdline <$pwfile
+	logger -t openconnect "executing 'openconnect $cmdline'"
+
+	if [ -f "$pwfile" ];then
+		proto_run_command "$config" /usr/sbin/openconnect $cmdline <$pwfile
+	else
+		proto_run_command "$config" /usr/sbin/openconnect $cmdline
+	fi
 }
 
 proto_openconnect_teardown() {
+	pwfile="/var/run/openconnect-$config.passwd"
+
+	rm -f $pwfile
+	logger -t openconnect "bringing down openconnect"
 	proto_kill_command "$config"
 }
 

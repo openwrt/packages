@@ -48,6 +48,7 @@ CONFIGURE_ARGS += \
 endif
 
 define Package/openconnect/install
+	$(INSTALL_DIR) $(1)/etc/openconnect/
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/openconnect.sh $(1)/lib/netifd/proto/
 	$(INSTALL_BIN) ./files/vpnc-script $(1)/lib/netifd/
