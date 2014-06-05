@@ -27,6 +27,7 @@ PID=/var/run/bmx6/pid
 
 start() {
 	cd /root/
+	while pgrep -f mac80211.sh ; do sleep 1; done
 	ulimit -c 20000
 	$BIN -f $CONF -d0 > /dev/null &
 }
