@@ -115,7 +115,7 @@ start() {
 	[ -z "$hostname" ] && hostname=`uci get system.@system[0].hostname`
 
 	[ ! -f /etc/ocserv/ca-key.pem ] && [ -x /usr/bin/certtool ] && {
-		echo "Generating CA certificate..."
+		logger -t ocserv "Generating CA certificate..."
 		mkdir -p /etc/ocserv/pki/
 		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/ca-key.pem >/dev/null 2>&1
 		echo "cn=$hostname CA" >/etc/ocserv/pki/ca.tmpl
@@ -131,7 +131,7 @@ start() {
 
 	#generate server certificate/key
 	[ ! -f /etc/ocserv/server-key.pem ] && [ -x /usr/bin/certtool ] && {
-		echo "Generating server certificate..."
+		logger -t ocserv "Generating server certificate..."
 		mkdir -p /etc/ocserv/pki/
 		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/server-key.pem >/dev/null 2>&1
 		echo "cn=$hostname" >/etc/ocserv/pki/server.tmpl
