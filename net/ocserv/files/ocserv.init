@@ -53,14 +53,14 @@ setup_config() {
 	ipv6_addr=`echo $ip6addr|cut -d '/' -f 1`
 	ipv6_prefix=`echo $ip6addr|cut -d '/' -f 2`
 
-	test $auth = "plain" && authsuffix="[/var/etc/ocpasswd]"
+	test $auth = "plain" && authsuffix="\[/var/etc/ocpasswd\]"
 
 	mkdir -p /var/etc
 	sed -e "s/|PORT|/$port/g" \
 	    -e "s/|MAX_CLIENTS|/$max_clients/g" \
 	    -e "s/|MAX_SAME|/$max_same/g" \
 	    -e "s/|DPD|/$dpd/g" \
-	    -e "s/|AUTH|/$auth$authsuffix/g" \
+	    -e "s#|AUTH|#$auth$authsuffix#g" \
 	    -e "s/|PREDICTABLE_IPS|/$predictable_ips/g" \
 	    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
 	    -e "s/|UDP|/$udp/g" \
@@ -74,14 +74,17 @@ setup_config() {
 
 setup_users() {
 	local name
+	local group
 	local password
 
 	config_get name $1 name
+	config_get group $1 group
 	config_get password $1 password
 
+	[ -z "$group" ] && group='*'
 	[ -z "$name" -o -z "$password" ] && return
 
-	echo "$password"|ocpasswd -c /var/etc/ocpasswd "$name"
+	echo "$name:$group:$password" >> /var/etc/ocpasswd
 }
 
 setup_routes() {
@@ -165,6 +168,7 @@ start() {
 
 	rm -f /var/etc/ocpasswd
 	touch /var/etc/ocpasswd
+	chmod 600 /var/etc/ocpasswd
 	config_foreach setup_users ocservusers
 
 	setup_firewall config
