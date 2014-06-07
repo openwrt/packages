@@ -26,6 +26,7 @@ bat_config()
 	config_get gw_sel_class "$mesh" gw_sel_class
 	config_get hop_penalty "$mesh" hop_penalty
 	config_get isolation_mark "$mesh" isolation_mark
+	config_get multicast_mode "$mesh" multicast_mode
 	config_get network_coding "$mesh" network_coding
 	config_get log_level "$mesh" log_level
 	config_get orig_interval "$mesh" orig_interval
@@ -44,6 +45,7 @@ bat_config()
 	[ -n "$gw_sel_class" ] && echo $gw_sel_class > /sys/class/net/$mesh/mesh/gw_sel_class
 	[ -n "$hop_penalty" ] && echo $hop_penalty > /sys/class/net/$mesh/mesh/hop_penalty
 	[ -n "$isolation_mark" ] && echo $isolation_mark > /sys/class/net/$mesh/mesh/isolation_mark
+	[ -n "$multicast_mode" ] && echo $multicast_mode > /sys/class/net/$mesh/mesh/multicast_mode 2>&-
 	[ -n "$network_coding" ] && echo $network_coding > /sys/class/net/$mesh/mesh/network_coding 2>&-
 	[ -n "$log_level" ] && echo $log_level > /sys/class/net/$mesh/mesh/log_level 2>&-
 	[ -n "$orig_interval" ] && echo $orig_interval > /sys/class/net/$mesh/mesh/orig_interval
