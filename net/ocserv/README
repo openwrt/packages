@@ -1,0 +1,44 @@
+The openconnect server expects to be configured using the uci interface.
+
+To setup a server the provides access to LAN with network address
+10.100.2.0/255.255.255.0 using the VPN address range
+10.100.3.0/255.255.255.0 add the following to /etc/config/ocserv:
+
+-----------------------------------------------------------------
+config ocserv 'config'
+	option port '4443'
+	option dpd '120'
+	option max_clients '8'
+	option max_same '2'
+	option netmask '255.255.255.0'
+	option ipaddr '10.100.3.0'
+	option auth 'plain'
+	option zone 'lan'
+	option fwport '4443'
+	option enable '1'
+
+config dns
+	option ip '10.100.2.1'
+
+config routes
+	option ip '10.100.2.0'
+	option netmask '255.255.255.0'
+
+config ocservusers
+	option name 'test'
+	option password '$5$unl8uKAGNsdTh9zm$PnUHEGhDc5VHbFE2EfWwW38Bub6Y6EZ5hrFwZE1r2F1'
+
+-----------------------------------------------------------------
+
+This configuration also adds the user "test" with password "test". The
+password is specified in the crypt(3) format.
+
+The server can be enabled and started using:
+# /etc/init.d/ocserv enable
+# /etc/init.d/ocserv start
+
+
+
+There is a luci plugin to allow configuring the server from
+the web environment, available as patch over luci at
+https://github.com/nmav/luci-openconnect/tree/openconnect
