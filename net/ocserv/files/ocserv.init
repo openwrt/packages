@@ -182,6 +182,11 @@ stop() {
 }
        
 reload() {
+	rm -f /var/etc/ocpasswd
+	touch /var/etc/ocpasswd
+	chmod 600 /var/etc/ocpasswd
+	config_foreach setup_users ocservusers
+
 	/usr/bin/occtl show status >/dev/null 2>&1
 	if test $? != 0;then
 		start
