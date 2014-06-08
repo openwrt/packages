@@ -131,7 +131,7 @@ start_daemon_for_all_ddns_sections()
 	do
 		local iface
 		config_get iface "$section" interface "wan"
-		[ "$iface" = "$event_interface" ] || continue
+		[ -z "$event_interface" -o "$iface" = "$event_interface" ] || continue
 		/usr/lib/ddns/dynamic_dns_updater.sh $section 0 > /dev/null 2>&1 &
 	done
 }
