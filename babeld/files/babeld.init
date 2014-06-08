@@ -93,7 +93,7 @@ babel_addif() {
 	append_parm "$cfg" 'rxcost' 'rxcost'
 	append_parm "$cfg" 'hello_interval' 'hello-interval'
 	append_parm "$cfg" 'update_interval' 'update-interval'
-	append_bool "$cfg" 'enable_timestamps' 'enable-timestamps'
+	append_parm "$cfg" 'enable_timestamps' 'enable-timestamps'
 	append_parm "$cfg" 'max_rtt_penalty' 'max-rtt-penalty'
 	append_parm "$cfg" 'rtt_decay' 'rtt-decay'
 	append_parm "$cfg" 'rtt_min' 'rtt-min'
