@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hnetd
-PKG_SOURCE_VERSION:=e60ce270f5a1ab01c6e262e1b9ee5cc20223b8c4
-PKG_VERSION:=2014-06-06-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=590d67669b3b2330bfb78e3789393ca9ac20f5d8
+PKG_VERSION:=2014-06-10-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -50,6 +50,14 @@ define Package/hnet-full
   DEPENDS+=+miniupnpd +minimalist-pcproxy
 endef
 
+define Package/luci-app-hnet
+  SECTION:=luci
+  CATEGORY:=LuCI
+  SUBMENU:=3. Applications
+  TITLE:=HNCP Homenet configuration and visualization
+  DEPENDS:=+hnetd +luci-mod-admin-core
+endef
+
 define Package/hnetd/description
 This package provides a daemon which implementats distributed prefix assignment
 and service discovery for a home network consisting of multiple routers
@@ -78,6 +86,13 @@ define Package/hnet-full/install
 	true
 endef
 
+define Package/luci-app-hnet/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
+	$(INSTALL_DIR) $(1)/www
+	$(CP) -R $(PKG_BUILD_DIR)/openwrt/luci/luasrc/* $(1)/usr/lib/lua/luci/
+	$(CP) -R $(PKG_BUILD_DIR)/openwrt/luci/htdocs/* $(1)/www/
+endef
+
 define Package/hnetd/postinst
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] || {
@@ -91,3 +106,4 @@ endef
 
 $(eval $(call BuildPackage,hnetd))
 $(eval $(call BuildPackage,hnet-full))
+$(eval $(call BuildPackage,luci-app-hnet))
