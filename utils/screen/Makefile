@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/screen
 PKG_MD5SUM:=419a0594e2b25039239af8b90eda7d92
 
+PKG_LICENSE:GPL-3.0+
+PKG_LICENSE_FILES:=
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/screen
@@ -23,6 +26,7 @@ define Package/screen
   DEPENDS:=+libncurses
   TITLE:=Full-screen terminal window manager
   URL:=http://www.gnu.org/software/screen/
+  MAINTAINER:=Etienne CHAMPETIER <etienne.champetier@free.fr>
 endef
 
 define Package/screen/description
