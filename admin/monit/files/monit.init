@@ -1,0 +1,16 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2013 OpenWrt.org
+
+START=60
+
+SERVICE_USE_PID=1
+
+start() {
+	[ -f /etc/monitrc ] || return 1
+	chmod 0600 /etc/monitrc
+	service_start /usr/bin/monit
+}
+
+stop() {
+	service_stop /usr/bin/monit
+}
