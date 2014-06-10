@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://hisham.hm/htop/releases/$(PKG_VERSION)/
 PKG_MD5SUM:=e768b9b55c033d9c1dffda72db3a6ac7
 
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=
+
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -26,6 +29,7 @@ define Package/htop
   TITLE:=Interactive processes viewer
   DEPENDS:=+libncurses
   URL:=http://htop.sourceforge.net/
+  MAINTAINER:=Etienne CHAMPETIER <etienne.champetier@free.fr>
 endef
 
 define Package/htop/description
