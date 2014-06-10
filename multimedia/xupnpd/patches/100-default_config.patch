@@ -1,0 +1,15 @@
+--- a/xupnpd.lua
++++ b/xupnpd.lua
+@@ -1,10 +1,10 @@
+ cfg={}
+ 
+ -- multicast interface for SSDP exchange, 'eth0', 'br0', 'br-lan' for example
+-cfg.ssdp_interface='lo'
++cfg.ssdp_interface='br-lan'
+ 
+ -- 'cfg.ssdp_loop' enables multicast loop (if player and server in one host)
+-cfg.ssdp_loop=1
++cfg.ssdp_loop=0
+ 
+ -- SSDP announcement interval
+ cfg.ssdp_notify_interval=15
