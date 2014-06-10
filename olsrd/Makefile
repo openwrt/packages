@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=olsrd
 PKG_VERSION:=0.6.6.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.olsr.org/releases/0.6
@@ -182,6 +182,30 @@ define Package/olsrd/install
 	$(INSTALL_BIN) ./files/olsrd6.init $(1)/etc/init.d/olsrd6
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./files/olsrd.hotplug.sh $(1)/etc/hotplug.d/iface/50-olsrd
+endef
+
+define Package/olsrd/preinst
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	[ -f /etc/config/olsrd ] && cp /etc/config/olsrd /etc/config/olsrd.opkg-old
+fi
+exit 0
+endef
+
+define Package/olsrd/postinst
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+        if [ -f /etc/config/olsrd.opkg-old ]; then
+		mv /etc/config/olsrd.opkg-old /etc/config/olsrd
+		echo "**********  WARNING  ***************"
+		echo "/etc/config/olsrd is no longer used! This will prevent olsrd to start."
+		echo "Please use /etc/config/olsrd4 for IPv4 and /etc/config/olrsd6 for IPv6"
+		echo "Remember to remove option IpVersion from your config file"
+	fi
+fi
+exit 0
 endef
 
 define Package/olsrd-mod-arprefresh/install
