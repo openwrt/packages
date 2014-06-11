@@ -18,6 +18,7 @@ PKG_SOURCE_URL:= \
 	http://www.fastmirrors.org/rrdtool/rrdtool-1.0.x \
 	ftp://ftp.sunet.se/pub/network/monitoring/rrdtool/rrdtool-1.0.x
 PKG_MD5SUM:=c466e2e7df95fa8e318e46437da87686
+PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 
 PKG_FIXUP:=autoreconf
 
