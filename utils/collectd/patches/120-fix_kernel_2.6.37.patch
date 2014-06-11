@@ -1,0 +1,78 @@
+--- a/src/owniptc/libiptc.c
++++ b/src/owniptc/libiptc.c
+@@ -81,11 +81,11 @@ static const char *hooknames[] = {
+ };
+ 
+ /* Convenience structures */
+-struct ipt_error_target
++ struct ipt_error_target2
+ {
+ 	STRUCT_ENTRY_TARGET t;
+ 	char error[TABLE_MAXNAMELEN];
+-};
++}; 
+ 
+ struct chain_head;
+ struct rule_head;
+@@ -1007,10 +1007,10 @@ static int parse_table(TC_HANDLE_T h)
+ /* Convenience structures */
+ struct iptcb_chain_start{
+ 	STRUCT_ENTRY e;
+-	struct ipt_error_target name;
++	struct ipt_error_target2 name;
+ };
+ #define IPTCB_CHAIN_START_SIZE	(sizeof(STRUCT_ENTRY) +			\
+-				 ALIGN(sizeof(struct ipt_error_target)))
++				 ALIGN(sizeof(struct ipt_error_target2)))
+ 
+ struct iptcb_chain_foot {
+ 	STRUCT_ENTRY e;
+@@ -1021,10 +1021,10 @@ struct iptcb_chain_foot {
+ 
+ struct iptcb_chain_error {
+ 	STRUCT_ENTRY entry;
+-	struct ipt_error_target target;
++	struct ipt_error_target2 target;
+ };
+ #define IPTCB_CHAIN_ERROR_SIZE	(sizeof(STRUCT_ENTRY) +			\
+-				 ALIGN(sizeof(struct ipt_error_target)))
++				 ALIGN(sizeof(struct ipt_error_target2)))
+ 
+ 
+ 
+@@ -1069,7 +1069,7 @@ static int iptcc_compile_chain(TC_HANDLE
+ 		head->e.next_offset = IPTCB_CHAIN_START_SIZE;
+ 		strcpy(head->name.t.u.user.name, ERROR_TARGET);
+ 		head->name.t.u.target_size = 
+-				ALIGN(sizeof(struct ipt_error_target));
++				ALIGN(sizeof(struct ipt_error_target2));
+ 		strcpy(head->name.error, c->name);
+ 	} else {
+ 		repl->hook_entry[c->hooknum-1] = c->head_offset;	
+@@ -1113,7 +1113,7 @@ static int iptcc_compile_chain_offsets(T
+ 	if (!iptcc_is_builtin(c))  {
+ 		/* Chain has header */
+ 		*offset += sizeof(STRUCT_ENTRY) 
+-			     + ALIGN(sizeof(struct ipt_error_target));
++			     + ALIGN(sizeof(struct ipt_error_target2));
+ 		(*num)++;
+ 	}
+ 
+@@ -1153,7 +1153,7 @@ static int iptcc_compile_table_prep(TC_H
+ 	/* Append one error rule at end of chain */
+ 	num++;
+ 	offset += sizeof(STRUCT_ENTRY)
+-		  + ALIGN(sizeof(struct ipt_error_target));
++		  + ALIGN(sizeof(struct ipt_error_target2));
+ 
+ 	/* ruleset size is now in offset */
+ 	*size = offset;
+@@ -1177,7 +1177,7 @@ static int iptcc_compile_table(TC_HANDLE
+ 	error->entry.target_offset = sizeof(STRUCT_ENTRY);
+ 	error->entry.next_offset = IPTCB_CHAIN_ERROR_SIZE;
+ 	error->target.t.u.user.target_size = 
+-		ALIGN(sizeof(struct ipt_error_target));
++		ALIGN(sizeof(struct ipt_error_target2));
+ 	strcpy((char *)&error->target.t.u.user.name, ERROR_TARGET);
+ 	strcpy((char *)&error->target.error, "ERROR");
+ 

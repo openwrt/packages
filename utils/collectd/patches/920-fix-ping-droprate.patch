@@ -1,0 +1,11 @@
+--- a/src/ping.c
++++ b/src/ping.c
+@@ -651,7 +651,7 @@ static int ping_read (void) /* {{{ */
+           / ((double) (pkg_recv * (pkg_recv - 1))));
+ 
+     /* Calculate drop rate. */
+-    droprate = ((double) (pkg_sent - pkg_recv)) / ((double) pkg_sent);
++    droprate = ((double) (pkg_sent - pkg_recv)) * 100 / ((double) pkg_sent);
+ 
+     submit (hl->host, "ping", latency_average);
+     submit (hl->host, "ping_stddev", latency_stddev);

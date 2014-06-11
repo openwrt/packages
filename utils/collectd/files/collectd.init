@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=80
+
+SERVICE_USE_PID=1
+
+start() {
+	mkdir -m 0755 -p /var/lib/collectd
+	service_start /usr/sbin/collectd
+}
+
+stop() {
+	service_stop /usr/sbin/collectd
+}

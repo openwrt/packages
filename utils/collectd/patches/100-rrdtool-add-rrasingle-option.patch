@@ -1,0 +1,57 @@
+--- a/src/rrdtool.c
++++ b/src/rrdtool.c
+@@ -80,6 +80,7 @@ static const char *config_keys[] =
+ 	"HeartBeat",
+ 	"RRARows",
+ 	"RRATimespan",
++	"RRASingle",
+ 	"XFF",
+ 	"WritesPerSecond",
+ 	"RandomTimeout"
+@@ -101,6 +102,8 @@ static rrdcreate_config_t rrdcreate_conf
+ 	/* timespans = */ NULL,
+ 	/* timespans_num = */ 0,
+ 
++	/* rrasingle = */ 0,
++
+ 	/* consolidation_functions = */ NULL,
+ 	/* consolidation_functions_num = */ 0
+ };
+@@ -1027,6 +1030,14 @@ static int rrd_config (const char *key,
+ 
+ 		free (value_copy);
+ 	}
++	else if (strcasecmp ("RRASingle", key) == 0)
++	{
++		if (IS_TRUE (value))
++		{
++			rrdcreate_config.rrasingle = 1;
++			NOTICE ("rrdtool plugin: RRASingle = true: creating only AVERAGE RRAs");
++		}
++	}
+ 	else if (strcasecmp ("XFF", key) == 0)
+ 	{
+ 		double tmp = atof (value);
+--- a/src/utils_rrdcreate.c
++++ b/src/utils_rrdcreate.c
+@@ -122,6 +122,9 @@ static int rra_get (char ***ret, const v
+     rts_num = rra_timespans_num;
+   }
+ 
++  if (cfg->rrasingle)
++    rra_types_num = 1;
++
+   rra_max = rts_num * rra_types_num;
+ 
+   if ((rra_def = (char **) malloc ((rra_max + 1) * sizeof (char *))) == NULL)
+--- a/src/utils_rrdcreate.h
++++ b/src/utils_rrdcreate.h
+@@ -36,6 +36,8 @@ struct rrdcreate_config_s
+   int *timespans;
+   size_t timespans_num;
+ 
++  int rrasingle;
++
+   char **consolidation_functions;
+   size_t consolidation_functions_num;
+ };

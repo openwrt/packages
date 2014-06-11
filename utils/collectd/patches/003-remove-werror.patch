@@ -1,0 +1,66 @@
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -7,7 +7,7 @@ SUBDIRS += liboconfig
+ endif
+ 
+ if COMPILER_IS_GCC
+-AM_CFLAGS = -Wall -Werror
++AM_CFLAGS = -Wall
+ endif
+ 
+ AM_CPPFLAGS = -DPREFIX='"${prefix}"'
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -1833,7 +1833,7 @@ top_build_prefix = @top_build_prefix@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ SUBDIRS = libcollectdclient $(am__append_1) $(am__append_2)
+-@COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall -Werror
++@COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall
+ AM_CPPFLAGS = -DPREFIX='"${prefix}"' \
+ 	-DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"' \
+ 	-DLOCALSTATEDIR='"${localstatedir}"' \
+--- a/src/libcollectdclient/Makefile.am
++++ b/src/libcollectdclient/Makefile.am
+@@ -1,7 +1,7 @@
+ AUTOMAKE_OPTIONS = foreign no-dependencies
+ 
+ if COMPILER_IS_GCC
+-AM_CFLAGS = -Wall -Werror
++AM_CFLAGS = -Wall
+ endif
+ 
+ pkginclude_HEADERS = client.h lcc_features.h
+--- a/src/libcollectdclient/Makefile.in
++++ b/src/libcollectdclient/Makefile.in
+@@ -327,7 +327,7 @@ top_build_prefix = @top_build_prefix@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ AUTOMAKE_OPTIONS = foreign no-dependencies
+-@COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall -Werror
++@COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall
+ pkginclude_HEADERS = client.h lcc_features.h
+ lib_LTLIBRARIES = libcollectdclient.la
+ nodist_pkgconfig_DATA = libcollectdclient.pc
+--- a/src/owniptc/Makefile.am
++++ b/src/owniptc/Makefile.am
+@@ -3,7 +3,7 @@ AUTOMAKE_OPTIONS = foreign no-dependenci
+ EXTRA_DIST = libiptc.c README.collectd
+ 
+ if COMPILER_IS_GCC
+-AM_CFLAGS = -Wall -Werror
++AM_CFLAGS = -Wall
+ endif
+ 
+ noinst_LTLIBRARIES = libiptc.la
+--- a/src/owniptc/Makefile.in
++++ b/src/owniptc/Makefile.in
+@@ -296,7 +296,7 @@ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ AUTOMAKE_OPTIONS = foreign no-dependencies
+ EXTRA_DIST = libiptc.c README.collectd
+-@COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall -Werror
++@COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall
+ noinst_LTLIBRARIES = libiptc.la
+ libiptc_la_SOURCES = libip4tc.c libip6tc.c \
+ 		ipt_kernel_headers.h libip6tc.h libiptc.h linux_list.h \

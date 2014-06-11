@@ -1,0 +1,11 @@
+--- a/version-gen.sh
++++ b/version-gen.sh
+@@ -2,7 +2,7 @@
+ 
+ DEFAULT_VERSION="4.10.8.git"
+ 
+-VERSION="`git describe 2> /dev/null | sed -e 's/^collectd-//'`"
++#VERSION="`git describe 2> /dev/null | sed -e 's/^collectd-//'`"
+ 
+ if test -z "$VERSION"; then
+ 	VERSION="$DEFAULT_VERSION"
