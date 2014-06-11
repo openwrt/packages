@@ -5,8 +5,8 @@ This is an OpenWrt package feed containing community-maintained packages.
 
 * Usage *
 
-Replace the feeds.conf entry for packages with:
-  src-git packages git://github.com/openwrt/packages.git
+Add this line to the feeds.conf:
+  src-git communitypackages git://github.com/openwrt/packages.git
 
 Run: ./scripts/feeds update packages
 Run: ./scripts/feeds install -a -p packages
