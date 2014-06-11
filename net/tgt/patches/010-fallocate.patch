@@ -1,5 +1,5 @@
---- tgt-1.0.42/usr/util.h.orig	2013-12-26 16:18:54.000000000 +0200
-+++ tgt-1.0.42/usr/util.h	2013-12-26 16:19:10.000000000 +0200
+--- tgt-1.0.48.orig/usr/util.h	2014-06-04 15:03:53.000000000 +0300
++++ tgt-1.0.48/usr/util.h	2014-06-04 15:17:48.548123039 +0300
 @@ -212,11 +212,6 @@
   */
  static inline int unmap_file_region(int fd, off_t offset, off_t length)
