@@ -12,7 +12,7 @@ config options 'tgt'
 config target 1
 	option name 'iqn.2012-06.org.openwrt:target1'
 #	list allow_name 'iqn.1994-05.org.example:fedcba987654'
-#	list allow_address '172.19.218.128/27'
+#	list allow_address '192.168.2.128/27'
 
 #config target 2
 #	option name 'iqn.2012-06.org.openwrt:t2'
