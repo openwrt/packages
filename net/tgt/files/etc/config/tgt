@@ -1,0 +1,38 @@
+config target 1
+	option name 'iqn.2012-06.org.openwrt:target1'
+	option allow ALL
+
+#config target 2
+#	option name 'iqn.2012-06.org.openwrt:t2'
+#	option allow 192.168.1.0/24
+
+
+# all options are set to default, except for the device
+# for all type and bstype values see tgtd(8)
+# lun "name" is constructed as TGTID_LUN
+#config lun                        1_1
+#	option readonly 0
+#	option device /dev/sda
+#	option type disk
+#	option bstype rdwr
+#	option sync 0
+#	option direct 0
+
+
+#config lun 2_1
+#	option readonly 0
+#	option device /mnt/iscsi.img
+
+#config lun 2_2
+#	option device /dev/sdc
+
+#config account
+#	option target 1
+#	option user "username1"
+#	option password "pass1"
+
+#config account
+#	option target 2
+#	option user "user2"
+#	option password "pwd2"
+#	option outgoing 1

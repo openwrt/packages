@@ -1,0 +1,56 @@
+--- tgt-1.0.46.orig/usr/Makefile	2014-04-06 09:55:49.000000000 +0300
++++ tgt-1.0.46/usr/Makefile	2014-04-06 09:57:04.000000000 +0300
+@@ -1,13 +1,13 @@
+ sbindir ?= $(PREFIX)/sbin
+ libdir ?= $(PREFIX)/lib/tgt
+ 
+-ifneq ($(shell test -e /usr/include/linux/signalfd.h && echo 1),)
++#ifneq ($(shell test -e /usr/include/linux/signalfd.h && echo 1),)
+ CFLAGS += -DUSE_SIGNALFD
+-endif
++#endif
+ 
+-ifneq ($(shell test -e /usr/include/sys/timerfd.h && echo 1),)
++#ifneq ($(shell test -e /usr/include/sys/timerfd.h && echo 1),)
+ CFLAGS += -DUSE_TIMERFD
+-endif
++#endif
+ 
+ TGTD_OBJS += $(addprefix iscsi/, conn.o param.o session.o \
+ 		iscsid.o target.o chap.o sha1.o md5.o transport.o iscsi_tcp.o \
+@@ -21,8 +21,9 @@
+ MODULES += bs_glfs.so
+ endif
+ 
+-ifneq ($(shell test -e /usr/include/sys/eventfd.h && test -e /usr/include/libaio.h && echo 1),)
+-CFLAGS += -DUSE_EVENTFD
++#ifneq ($(shell test -e /usr/include/sys/eventfd.h && test -e $(STAGING_DIR)/usr/include/libaio.h && echo 1),)
++ifneq ((test -e $(STAGING_DIR)/usr/include/libaio.h && echo 1),)
++CFLAGS += -DUSE_EVENTFD -I$(STAGING_DIR)/usr/include/
+ TGTD_OBJS += bs_aio.o
+ LIBS += -laio
+ endif
+@@ -47,7 +48,7 @@
+ 
+ LIBS += -lpthread -ldl
+ 
+-PROGRAMS += tgtd tgtadm tgtimg
++PROGRAMS += tgtd tgtadm
+ TGTD_OBJS += tgtd.o mgmt.o target.o scsi.o log.o driver.o util.o work.o \
+ 		concat_buf.o parser.o spc.o sbc.o mmc.o osd.o scc.o smc.o \
+ 		ssc.o libssc.o bs_rdwr.o bs_ssc.o \
+@@ -74,14 +75,8 @@
+ 
+ -include $(TGTADM_DEP)
+ 
+-TGTIMG_OBJS = tgtimg.o libssc.o libcrc32c.o
+ TGTIMG_DEP = $(TGTIMG_OBJS:.o=.d)
+ 
+-tgtimg: $(TGTIMG_OBJS)
+-	$(CC) $^ -o $@
+-
+--include $(TGTIMG_DEP)
+-
+ %.o: %.c
+ 	$(CC) -c $(CFLAGS) $*.c -o $*.o
+ 	@$(CC) -MM $(CFLAGS) -MF $*.d -MT $*.o $*.c

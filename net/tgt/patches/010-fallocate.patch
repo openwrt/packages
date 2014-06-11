@@ -1,0 +1,14 @@
+--- tgt-1.0.42/usr/util.h.orig	2013-12-26 16:18:54.000000000 +0200
++++ tgt-1.0.42/usr/util.h	2013-12-26 16:19:10.000000000 +0200
+@@ -212,11 +212,6 @@
+  */
+ static inline int unmap_file_region(int fd, off_t offset, off_t length)
+ {
+-#ifdef FALLOC_FL_PUNCH_HOLE
+-	if (fallocate(fd, FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+-			offset, length) == 0)
+-		return 0;
+-#endif
+ 	return -1;
+ }
+ 
