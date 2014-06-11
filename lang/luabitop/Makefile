@@ -13,6 +13,7 @@ PKG_RELEASE:=1
 
 _BASENAME:=LuaBitOp
 
+PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_SOURCE:=$(_BASENAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://bitop.luajit.org/download/
 PKG_MD5SUM:=d0c1080fe0c844e8477279668e2d0d06

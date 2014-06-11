@@ -17,6 +17,7 @@ PKG_MD5SUM:=a25ff76d54bbbebf7a1f3b20c9806ee3
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)
 PKG_REMOVE_FILES:=aclocal.m4
 PKG_FIXUP:=autoreconf
+PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 
