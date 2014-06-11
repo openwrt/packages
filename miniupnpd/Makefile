@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
 PKG_VERSION:=1.8.20140523
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://miniupnp.free.fr/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -49,6 +49,7 @@ define Build/Prepare
 endef
 
 MAKE_FLAGS += \
+	TEST=0 \
 	LIBS="" \
 	CC="$(TARGET_CC) -DIPTABLES_143 -lnfnetlink -lip4tc $(if $(CONFIG_IPV6),-lip6tc)" \
 	CONFIG_OPTIONS="$(if $(CONFIG_IPV6),--ipv6) --leasefile" \
