@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tgt
-PKG_VERSION:=1.0.46
-PKG_REV:=601a44d6c833f59d9d2472ad11d421481a25b2e7
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.48
+PKG_REV:=22d9567f39e5eb8a794ce2cb5a2190abdbecaa1f
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/fujita/tgt.git
