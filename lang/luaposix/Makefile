@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luaposix
-PKG_VERSION:=v31
+PKG_VERSION:=v32
 PKG_RELEASE:=1
 
 PKG_SOURCE:=release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/luaposix/luaposix/archive/
-PKG_MD5SUM:=a25ff76d54bbbebf7a1f3b20c9806ee3
+PKG_MD5SUM:=2bfede7b7cee96c5d0f6c0354e17498c
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)
 PKG_REMOVE_FILES:=aclocal.m4
 PKG_FIXUP:=autoreconf
