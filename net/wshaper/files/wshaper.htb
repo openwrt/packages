@@ -8,13 +8,18 @@
 # All config needs to be done in /etc/config/wshaper
 
 . /lib/functions.sh
+. /lib/functions/network.sh
+
 config_load wshaper
 for s in downlink uplink network nopriohostdst nopriohostsrc noprioportdst noprioportsrc; do
 	config_get $s settings $s
 done
 
-device=$(uci_get_state network "$network" ifname "$network")
-[ -z "$device" ] && logger -t wondershaper "Error: Could not find the device for network $network, aborting." && exit 1
+if ! network_get_device device "$network"; then
+	logger -t wondershaper "Error: Could not find the device for network $network, aborting."
+	exit 1
+fi
+
 [ -z "$downlink" ] && logger -t wondershaper "Error: Downlink speed not set, aborting." && exit 1
 [ -z "$uplink" ] && logger -t wondershaper "Error: Uplink speed not set, aborting." && exit 1
 
