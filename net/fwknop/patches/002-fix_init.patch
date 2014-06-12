@@ -1,0 +1,17 @@
+--- a/extras/openwrt/package/fwknop/files/fwknopd.init
++++ b/extras/openwrt/package/fwknop/files/fwknopd.init
+@@ -11,12 +11,12 @@ FWKNOPD_BIN=/usr/sbin/fwknopd
+ 
+ start()
+ {
+-	$FWKNOPD_BIN
++	service_start $FWKNOPD_BIN
+ }
+ 
+ stop()
+ {
+-	$FWKNOPD_BIN -K
++	service_stop $FWKNOPD_BIN -K
+ }
+ 
+ restart()

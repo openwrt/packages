@@ -1,0 +1,18 @@
+--- a/server/fwknopd.conf.inst
++++ b/server/fwknopd.conf.inst
+@@ -284,8 +284,13 @@
+ # The IPT_FORWARD_ACCESS variable is only used if ENABLE_IPT_FORWARDING is
+ # enabled.
+ #
+-#IPT_FORWARD_ACCESS      ACCEPT, filter, FORWARD, 1, FWKNOP_FORWARD, 1;
+-#IPT_DNAT_ACCESS         DNAT, nat, PREROUTING, 1, FWKNOP_PREROUTING, 1;
++
++# These two lines are changed specifically for Openwrt, due to
++# different naming conventions. IPT_FORWARD is still disabled
++# by default, and must be enabled earlier in this file to be used.
++
++IPT_FORWARD_ACCESS      ACCEPT, filter, zone_wan_forward, 1, FWKNOP_FORWARD, 1;
++IPT_DNAT_ACCESS         DNAT, nat, zone_wan_prerouting, 1, FWKNOP_PREROUTING, 1;
+ 
+ # The IPT_SNAT_ACCESS variable is not used unless both ENABLE_IPT_SNAT and
+ # ENABLE_IPT_FORWARDING are enabled.  Also, the external static IP must be
