@@ -37,7 +37,7 @@ define Package/olsrd
 endef
 
 define Package/olsrd/conffiles
-/etc/config/olsrd4
+/etc/config/olsrd
 /etc/config/olsrd6
 endef
 
@@ -173,39 +173,15 @@ define Package/olsrd/install
 	$(INSTALL_DIR) $(1)/lib/functions
 	$(INSTALL_DATA) ./files/olsrd.init $(1)/lib/functions/olsrd.sh
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/olsrd4.config $(1)/etc/config/olsrd4
+	$(INSTALL_DATA) ./files/olsrd.config $(1)/etc/config/olsrd
 	$(INSTALL_DATA) ./files/olsrd6.config $(1)/etc/config/olsrd6
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/olsrd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/olsrd4.init $(1)/etc/init.d/olsrd4
+	$(INSTALL_BIN) ./files/olsrd4.init $(1)/etc/init.d/olsrd
 	$(INSTALL_BIN) ./files/olsrd6.init $(1)/etc/init.d/olsrd6
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./files/olsrd.hotplug.sh $(1)/etc/hotplug.d/iface/50-olsrd
-endef
-
-define Package/olsrd/preinst
-#!/bin/sh
-# check if we are on real system
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	[ -f /etc/config/olsrd ] && cp /etc/config/olsrd /etc/config/olsrd.opkg-old
-fi
-exit 0
-endef
-
-define Package/olsrd/postinst
-#!/bin/sh
-# check if we are on real system
-if [ -z "$${IPKG_INSTROOT}" ]; then
-        if [ -f /etc/config/olsrd.opkg-old ]; then
-		mv /etc/config/olsrd.opkg-old /etc/config/olsrd
-		echo "**********  WARNING  ***************"
-		echo "/etc/config/olsrd is no longer used! This will prevent olsrd to start."
-		echo "Please use /etc/config/olsrd4 for IPv4 and /etc/config/olrsd6 for IPv6"
-		echo "Remember to remove option IpVersion from your config file"
-	fi
-fi
-exit 0
 endef
 
 define Package/olsrd-mod-arprefresh/install

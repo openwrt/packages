@@ -8,8 +8,7 @@ START=65
 SERVICE_DAEMONIZE=1
 SERVICE_WRITE_PID=1
 
-CONF=/var/etc/olsrd4.conf
+CONF=/var/etc/olsrd.conf
 PID=/var/run/olsrd4.pid
 
-UCI_CONF_NAME=olsrd4
-OLSRD_OLSRD_SCHEMA="$OLSRD_OLSRD_SCHEMA IpVersion=4"
+UCI_CONF_NAME=olsrd

@@ -52,7 +52,7 @@ case "$ACTION" in
 	ifup)
 		# only work after the first normal startup
 		# also: no need to test, if enabled
-	        OLSRD=olsrd4
+	        OLSRD=olsrd
 		[ -e "/var/etc/$OLSRD.conf" ] && {
 			# INTERFACE = e.g. 'wlanadhocRADIO1' or 'cfg144d8f'
 			# DEVICE    = e.g. 'wlan1-1'
