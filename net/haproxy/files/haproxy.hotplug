@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ "$ACTION" = add ]; then
+
+	/etc/init.d/haproxy enabled && \
+		/etc/init.d/haproxy start
+fi
+
