@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/zip
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=
+  DEPENDS:=libbz2
   TITLE:=Archiver for .zip files
   URL:=http://infozip.sourceforge.net/Zip.html
   SUBMENU:=Compression
