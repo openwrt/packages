@@ -20,5 +20,5 @@ Please make sure that all packages you commit or request to pull:
 	* Will be updated regularly to maintained and supported versions. 
 
 Please sign-off your commits / pull requests to this repository. See:
-http://elinux.org/Developer_Certificate_Of_Origin
+https://dev.openwrt.org/wiki/SubmittingPatches#a10.Signyourwork
 
