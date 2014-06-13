@@ -18,3 +18,7 @@ Please make sure that all packages you commit or request to pull:
 	* Package a version which is still maintained by the upstream author.
         * Have yourself or another person listed in the (PKG_)MAINTAINER field.
 	* Will be updated regularly to maintained and supported versions. 
+
+Please sign-off your commits / pull requests to this repository. See:
+http://elinux.org/Developer_Certificate_Of_Origin
+
