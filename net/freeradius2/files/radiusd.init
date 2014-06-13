@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+START=50
+
+DEFAULT=/etc/default/radiusd
+LOG_D=/var/log
+RUN_D=/var/run
+PID_F=$RUN_D/radiusd.pid
+RADACCT_D=/var/db/radacct
+IPADDR=$(ifconfig br-lan | sed -n 's/.*dr:\(.*\)Bc.*/\1/p')
+
+start() {
+	[ -f $DEFAULT ] && . $DEFAULT
+	mkdir -p $LOG_D
+	mkdir -p $RUN_D
+	mkdir -p $RADACCT_D
+	radiusd -i $IPADDR -p 1812,1813 $OPTIONS
+}
+
+stop() {
+	[ -f $PID_F ] && kill $(cat $PID_F)
+}

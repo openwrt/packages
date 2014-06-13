@@ -1,0 +1,38 @@
+--- a/configure.in
++++ b/configure.in
+@@ -832,35 +832,6 @@ if test "x$WITH_OPENSSL" = xyes; then
+     OPENSSL_INCLUDE="-DOPENSSL_NO_KRB5"
+   fi
+ 
+-  dnl #
+-  dnl #  Now check that the header versions match the library
+-  dnl #
+-  AC_MSG_CHECKING([OpenSSL library and header version consistency])
+-  AC_RUN_IFELSE(
+-    [AC_LANG_PROGRAM(
+-      [[
+-        #include <stdio.h>
+-        #include <openssl/opensslv.h>
+-        #include <openssl/crypto.h>
+-      ]],
+-      [[
+-        if (SSLeay() == OPENSSL_VERSION_NUMBER) {
+-          return 0;
+-        } else {
+-          printf("library: %lx header: %lx... ", (unsigned long) SSLeay(), (unsigned long) OPENSSL_VERSION_NUMBER);
+-          return 1;
+-        }
+-      ]]
+-    )],
+-    [
+-      AC_MSG_RESULT(yes)
+-    ],
+-    [
+-      AC_MSG_RESULT(no)
+-      AC_MSG_FAILURE([OpenSSL library version does not match header version])
+-    ]
+-  )
+-
+   if test "x$OPENSSL_LIBS" = x; then
+     LIBS=$old_LIBS
+     LDFLAGS="$old_LDFLAGS"
