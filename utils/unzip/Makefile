@@ -43,12 +43,15 @@ endef
 define Build/Configure
 endef
 
+TARGET_CFLAGS += -DNO_LCHMOD -DLARGE_FILE_SUPPORT
+
 define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) -f unix/Makefile generic \
+	$(MAKE) -C $(PKG_BUILD_DIR) -f unix/Makefile unzips \
 		$(TARGET_CONFIGURE_OPTS) \
 		prefix="$(PKG_INSTALL_DIR)/usr" \
 		CFLAGS="$(TARGET_CFLAGS)" \
 		CF="$(TARGET_CFLAGS) -O $(TARGET_CPPFLAGS) -I. -DUNIX" \
+		CC="$(TARGET_CC)" \
 		LD="$(TARGET_CC) $(TARGET_LDFLAGS)" \
 		install
 endef
