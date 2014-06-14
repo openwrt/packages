@@ -8,21 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stm32flash
-PKG_REV:=61
-PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=2
+PKG_REV:=4d7ce45
+PKG_VERSION:=git~$(PKG_REV)
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://stm32flash.googlecode.com/svn/trunk
+PKG_SOURCE_URL:=git://gitorious.org/stm32flash/stm32flash.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE_PROTO:=svn
+PKG_SOURCE_PROTO:=git
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/stm32flash
   SECTION:=utils
   CATEGORY:=Utilities
+  MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
   URL:=http://code.google.com/p/stm32flash/
   TITLE:=Firmware flash tool for STM32's serial bootloader
 endef
