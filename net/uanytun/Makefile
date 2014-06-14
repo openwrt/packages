@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2008 Christian Pointner,
-#                    <equinox@anytun.org>
+# Copyright (C) 2008-2014 Christian Pointner,
+#                         <equinox@anytun.org>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -12,13 +12,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uanytun
-PKG_VERSION:=0.3.3
+PKG_VERSION:=0.3.4
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.anytun.org/download/
-PKG_MD5SUM:=ca39dab02e91b0737e2b3f0839e74f6a
+PKG_MD5SUM:=b4085ab7f0127732818b8b801f280aef
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,13 +27,26 @@ include $(INCLUDE_DIR)/package.mk
 define Package/uanytun/template
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=VPN
+  DEPENDS:=+kmod-tun
   TITLE:=micro anycast tunneling daemon
   URL:=http://www.anytun.org/
-  MAINTAINER:=Christian Pointner <equinox@anytun.org>
-  SUBMENU:=VPN
+  MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 endef
 
-define Package/uanytun/desc-template
+
+define Package/uanytun
+  $(call Package/uanytun/template)
+  TITLE+= (gcrypt)
+  VARIANT:=gcrypt
+  DEPENDS+=+libgcrypt
+endef
+
+define Package/uanytun/conffiles
+/etc/config/uanytun
+endef
+
+define Package/uanytun/description
 uAnytun is a tiny implementation of SATP the secure anycast tunneling protocol.
   SATP defines a protocol used for communication between any combination of
   unicast and anycast tunnel endpoints.  It has less protocol overhead than
@@ -47,159 +61,91 @@ uAnytun is a tiny implementation of SATP the secure anycast tunneling protocol.
 endef
 
 
-define Package/uanytun
-  $(call Package/uanytun/template)
-  DEPENDS:=+kmod-tun +libgcrypt
-endef
-
-define Package/uanytun/conffiles
-/etc/config/uanytun
-endef
-
-define Package/uanytun/description
-  $(call Package/uanytun/desc-template)
-endef
-
-
 define Package/uanytun-sslcrypt
   $(call Package/uanytun/template)
-  DEPENDS:=+kmod-tun +libopenssl
+  TITLE+= (openssl)
+  VARIANT:=sslcrypt
+  DEPENDS+=+libopenssl
 endef
 
-define Package/uanytun-sslcrypt/conffiles
-/etc/config/uanytun-sslcrypt
-endef
-
-define Package/uanytun-sslcrypt/description
-  $(call Package/uanytun/desc-template)
-endef
+Package/uanytun-sslcrypt/conffiles=$(Package/uanytun/conffiles)
+Package/uanytun-sslcrypt/description=$(Package/uanytun/description)
 
 
 define Package/uanytun-nocrypt
   $(call Package/uanytun/template)
-  DEPENDS:=+kmod-tun
+  TITLE+= (no crypt)
+  VARIANT:=nocrypt
 endef
 
-define Package/uanytun-nocrypt/conffiles
-/etc/config/uanytun-nocrypt
-endef
+Package/uanytun-nocrypt/conffiles=$(Package/uanytun/conffiles)
+Package/uanytun-nocrypt/description=$(Package/uanytun/description)
 
-define Package/uanytun-nocrypt/description
-  $(call Package/uanytun/desc-template)
-endef
 
-define Package/uanytun/configure
-	(cd $(1)/$(2)/src; \
+
+define Build/Configure
+	(cd $(PKG_BUILD_DIR)/src; \
     touch include.mk; \
     ln -s linux/tun.c .; \
     echo '#ifndef UANYTUN_version_h_INCLUDED' > version.h; \
     echo '#define UANYTUN_version_h_INCLUDED' >> version.h; \
     echo '' >> version.h; \
-    echo '#define VERSION_STRING_0 "uanytun version '`cat $(1)/version`'"' >> version.h; \
+    echo '#define VERSION_STRING_0 "uanytun version '`cat $(PKG_BUILD_DIR)/version`'"' >> version.h; \
     echo '#define VERSION_STRING_1 "built on '`hostname`', '`date +"%d.%m.%Y %H:%M:%S %Z"`'"' >> version.h; \
     echo '' >> version.h; \
     echo '#endif' >> version.h \
   )
 endef
 
-ifneq ($(CONFIG_PACKAGE_uanytun-nocrypt),)
- define Build/Configure/uanytun-nocrypt
-	rm -rf $(PKG_BUILD_DIR)/uanytun-nocrypt
-	mkdir -p $(PKG_BUILD_DIR)/uanytun-nocrypt
-	$(CP) -r $(PKG_BUILD_DIR)/src $(PKG_BUILD_DIR)/uanytun-nocrypt
-	$(call Package/uanytun/configure,$(PKG_BUILD_DIR),uanytun-nocrypt)
- endef
+VARIANT_CFLAGS:=
+VARIANT_LDFLAGS:=-ldl
+VARIANT_MAKE_OPTS:=
 
- define Build/Compile/uanytun-nocrypt
-	$(MAKE) -C $(PKG_BUILD_DIR)/uanytun-nocrypt/src \
-    $(TARGET_CONFIGURE_OPTS) \
-    NO_CRYPT_OBJ=1 \
-    TARGET=Linux \
-    CFLAGS="$(TARGET_CFLAGS) -DNO_CRYPT" \
-    LDFLAGS="$(TARGET_LDFLAGS) -ldl"
-	$(STRIP) $(PKG_BUILD_DIR)/uanytun-nocrypt/src/uanytun
- endef
+ifeq ($(BUILD_VARIANT),gcrypt)
+VARIANT_LDFLAGS+=-lgpg-error -lgcrypt
 endif
 
-ifneq ($(CONFIG_PACKAGE_uanytun-sslcrypt),)
- define Build/Configure/uanytun-sslcrypt
-	rm -rf $(PKG_BUILD_DIR)/uanytun-sslcrypt
-	mkdir -p $(PKG_BUILD_DIR)/uanytun-sslcrypt
-	$(CP) -r $(PKG_BUILD_DIR)/src $(PKG_BUILD_DIR)/uanytun-sslcrypt
-	$(call Package/uanytun/configure,$(PKG_BUILD_DIR),uanytun-sslcrypt)
- endef
-
- define Build/Compile/uanytun-sslcrypt
-	$(MAKE) -C $(PKG_BUILD_DIR)/uanytun-sslcrypt/src \
-    $(TARGET_CONFIGURE_OPTS) \
-    TARGET=Linux \
-    CFLAGS="$(TARGET_CFLAGS) -DUSE_SSL_CRYPTO -I$(STAGING_DIR)/usr/include" \
-    LDFLAGS="$(TARGET_LDFLAGS) -ldl -lcrypto"
-	$(STRIP) $(PKG_BUILD_DIR)/uanytun-sslcrypt/src/uanytun
- endef
+ifeq ($(BUILD_VARIANT),sslcrypt)
+VARIANT_CFLAGS+=-DUSE_SSL_CRYPTO
+VARIANT_LDFLAGS+=-lcrypto
 endif
 
-ifneq ($(CONFIG_PACKAGE_uanytun),)
- define Build/Configure/uanytun-default
-	rm -rf $(PKG_BUILD_DIR)/uanytun
-	mkdir -p $(PKG_BUILD_DIR)/uanytun
-	$(CP) -r $(PKG_BUILD_DIR)/src $(PKG_BUILD_DIR)/uanytun
-	$(call Package/uanytun/configure,$(PKG_BUILD_DIR),uanytun)
- endef
-
- define Build/Compile/uanytun-default
-	$(MAKE) -C $(PKG_BUILD_DIR)/uanytun/src \
-    $(TARGET_CONFIGURE_OPTS) \
-    TARGET=Linux \
-    CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include" \
-    LDFLAGS="$(TARGET_LDFLAGS) -ldl -lgcrypt -lgpg-error"
-	$(STRIP) $(PKG_BUILD_DIR)/uanytun/src/uanytun
- endef
+ifeq ($(BUILD_VARIANT),nocrypt)
+VARIANT_CFLAGS+=-DNO_CRYPT
+VARIANT_MAKE_OPTS+=NO_CRYPT_OBJ=1
 endif
-
-
-define Build/Configure
-	$(call Build/Configure/uanytun-nocrypt)
-	$(call Build/Configure/uanytun-sslcrypt)
-	$(call Build/Configure/uanytun-default)
-endef
 
 define Build/Compile
-	$(call Build/Compile/uanytun-nocrypt)
-	$(call Build/Compile/uanytun-sslcrypt)
-	$(call Build/Compile/uanytun-default)
+	$(MAKE) -C $(PKG_BUILD_DIR)/src \
+    $(TARGET_CONFIGURE_OPTS) \
+    $(VARIANT_MAKE_OPTS) \
+    TARGET=Linux \
+    CFLAGS="$(TARGET_CFLAGS) $(VARIANT_CFLAGS)" \
+    LDFLAGS="$(TARGET_LDFLAGS) $(VARIANT_LDFLAGS)"
+	$(STRIP) $(PKG_BUILD_DIR)/src/uanytun
 endef
-
-define Build/Clean
-	rm -rf $(PKG_BUILD_DIR)/uanytun-nocrypt
-	rm -rf $(PKG_BUILD_DIR)/uanytun-sslcrypt
-	rm -rf $(PKG_BUILD_DIR)/uanytun
-endef
-
 
 
 define Package/uanytun/install-generic
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/$(3) $(1)/etc/config/$(2)
+	$(INSTALL_DATA) ./files/$(2) $(1)/etc/config/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(2)/src/uanytun $(1)/usr/sbin/$(2)
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/uanytun $(1)/usr/sbin/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/uanytun.init $(1)/etc/init.d/$(2)
-	@sed -e 's/BIN=uanytun/BIN=$(2)/' -i $(1)/etc/init.d/$(2)
+	$(INSTALL_BIN) ./files/uanytun.init $(1)/etc/init.d/$(PKG_NAME)
 endef
 
 define Package/uanytun/install
-  $(call Package/uanytun/install-generic,$(1),uanytun,uanytun.config)
+  $(call Package/uanytun/install-generic,$(1),uanytun.config)
 endef
 
 define Package/uanytun-sslcrypt/install
-  $(call Package/uanytun/install-generic,$(1),uanytun-sslcrypt,uanytun.config)
+  $(call Package/uanytun/install-generic,$(1),uanytun.config)
 endef
 
 define Package/uanytun-nocrypt/install
-  $(call Package/uanytun/install-generic,$(1),uanytun-nocrypt,uanytun-nocrypt.config)
+  $(call Package/uanytun/install-generic,$(1),uanytun-nocrypt.config)
 endef
-
 
 
 $(eval $(call BuildPackage,uanytun))

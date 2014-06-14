@@ -61,7 +61,7 @@ stop_vpn() {
   echo -n " $name"
   local status="OK"
   if [ ! -f "$pidfile" ]; then
-    status="tunnel not active"    
+    status="tunnel not active"
   else
     kill `cat $pidfile` > /dev/null 2>&1 || status="failed"
     rm -f $pidfile
@@ -71,7 +71,7 @@ stop_vpn() {
 
 start() {
   echo -n "Starting $DESC:"
-  config_load $BIN  
+  config_load $BIN
   if [ $# -gt 0 ]; then
     while [ $# -gt 0 ]; do
       config_foreach foreach_config_forced "$1"
