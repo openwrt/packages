@@ -1,0 +1,30 @@
+--- a/Makefile
++++ b/Makefile
+@@ -5,7 +5,7 @@ export AR
+ 
+ all:
+ 	$(MAKE) -C parsers
+-	$(CC) -g -o stm32flash -I./ \
++	$(CC) $(LDFLAGS) -o stm32flash -I./ \
+ 		main.c \
+ 		utils.c \
+ 		stm32.c \
+@@ -13,7 +13,7 @@ all:
+ 		serial_platform.c \
+ 		parsers/parsers.a \
+ 		stm32/stmreset_binary.c \
+-		-Wall
++		$(CFLAGS)
+ 
+ clean:
+ 	$(MAKE) -C parsers clean
+--- a/parsers/Makefile
++++ b/parsers/Makefile
+@@ -1,6 +1,6 @@
+ 
+ all:
+-	$(CC) -g -Wall -c -I../ binary.c hex.c
++	$(CC) $(CFLAGS) -Wall -c -I../ binary.c hex.c
+ 	$(AR) r parsers.a        binary.o hex.o
+ 
+ clean:
