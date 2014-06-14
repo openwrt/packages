@@ -1,0 +1,15 @@
+diff --git a/compat.h b/compat.h
+index 65d6ec7..7fc3aa7 100644
+--- a/compat.h
++++ b/compat.h
+@@ -219,7 +219,9 @@ int	 	 daemon(int, int);
+ #ifndef HAVE_B64_NTOP
+ /* b64_ntop.c */
+ #undef b64_ntop /* for Cygwin */
+-int		 b64_ntop(const char *, size_t, char *, size_t);
++int		 local_b64_ntop(const char *, size_t, char *, size_t);
++#else
++#define local_b64_ntop b64_ntop
+ #endif
+ 
+ #ifndef HAVE_FORKPTY

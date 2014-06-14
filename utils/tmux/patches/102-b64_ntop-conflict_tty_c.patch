@@ -1,0 +1,13 @@
+diff --git a/tty.c b/tty.c
+index eb2511c..576edbc 100644
+--- a/tty.c
++++ b/tty.c
+@@ -1067,7 +1067,7 @@ tty_cmd_setselection(struct tty *tty, const struct tty_ctx *ctx)
+ 	off = 4 * ((ctx->num + 2) / 3) + 1; /* storage for base64 */
+ 	buf = xmalloc(off);
+ 
+-	b64_ntop(ctx->ptr, ctx->num, buf, off);
++	local_b64_ntop(ctx->ptr, ctx->num, buf, off);
+ 	tty_putcode_ptr2(tty, TTYC_MS, "", buf);
+ 
+ 	free(buf);
