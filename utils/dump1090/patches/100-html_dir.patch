@@ -1,0 +1,11 @@
+--- a/dump1090.h
++++ b/dump1090.h
+@@ -178,7 +178,7 @@
+ #define MODES_NET_SNDBUF_MAX  (7)               
+ 
+ #ifndef HTMLPATH
+-#define HTMLPATH   "./public_html"      // default path for gmap.html etc
++#define HTMLPATH   "/usr/share/dump1090"      // default path for gmap.html etc
+ #endif
+ 
+ #define MODES_NOTUSED(V) ((void) V)

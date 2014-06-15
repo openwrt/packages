@@ -1,0 +1,20 @@
+config DUMP1090_DUMP
+	bool "dump1090"
+	depends on PACKAGE_dump1090
+	default y
+	help
+		dump1090 ModeS Receiver
+
+config DUMP1090_WWW
+	bool "website files"
+	depends on DUMP1090_DUMP
+	default y
+	help
+		HTML website files for showing planes
+
+config DUMP1090_VIEW
+	bool "view1090"
+	depends on PACKAGE_dump1090
+	default n
+	help
+		view1090 dump1090 Viewer
