@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=minimalist-pcproxy
 PKG_SOURCE_VERSION:=c8d47ff42c4354f502830faeae13bd8f269401af
 PKG_VERSION:=2014-06-02-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/fingon/minimalist-pcproxy.git
@@ -46,7 +46,7 @@ define Package/minimalist-pcproxy/install
 endef
 
 define Package/minimalist-pcproxy/postinst
-!/bin/sh
+#!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] || {
 	(. /etc/uci-defaults/x-minimalist-pcproxy.defaults) && rm -f /etc/uci-defaults/x-minimalist-pcproxy.defaults
 }
