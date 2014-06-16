@@ -1,0 +1,81 @@
+#
+# Copyright (C) 2007 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=protobuf
+PKG_VERSION:=2.5.0
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=http://protobuf.googlecode.com/files
+PKG_MD5SUM:=a72001a9067a4c2c4e0e836d0f92ece4
+
+PKG_BUILD_DEPENDS:=protobuf/host
+
+PKG_INSTALL:=1
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
+
+define Package/protobuf
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=A structured data encoding library
+  URL:=http://code.google.com/p/protobuf/
+  DEPENDS:=+zlib +libpthread +libstdcpp
+  MAINTAINER:=Obinou <obconseil@gmail.com>
+endef
+
+define Package/protobuf/description
+ Protocol Buffers are a way of encoding structured data in an efficient
+ yet extensible format. Google uses Protocol Buffers for almost all
+ of its internal RPC protocols and file formats.
+endef
+
+define Host/Compile
+	$(MAKE) -C $(HOST_BUILD_DIR)
+endef
+
+define Host/Install
+endef
+
+CONFIGURE_ARGS += --with-protoc=$(HOST_BUILD_DIR)/src/protoc
+
+define Build/InstallDev
+	$(INSTALL_DIR) \
+		$(1)/usr/lib \
+		$(1)/usr/include
+
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/include/* \
+		$(1)/usr/include/
+
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/* \
+		$(1)/usr/lib/
+endef
+
+define Package/protobuf/install
+	$(INSTALL_DIR) \
+		$(1)/usr/lib
+
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/libprotoc.so*  \
+		$(1)/usr/lib/
+
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/libprotobuf-lite.so* \
+		$(1)/usr/lib/
+
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/libprotobuf.so* \
+		$(1)/usr/lib/
+endef
+
+$(eval $(call BuildPackage,protobuf))
+$(eval $(call HostBuild))
