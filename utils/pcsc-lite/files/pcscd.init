@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2011 OpenWrt.org
+
+START=50
+
+SERVICE_PID_FILE=/var/run/pcscd/pcscd.pid
+
+start() {
+	service_start /usr/sbin/pcscd
+}
+
+stop() {
+	service_stop /usr/sbin/pcscd
+}
