@@ -1,0 +1,13 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2008 OpenWrt.org
+
+START=60
+
+STEP_SERVERS="0.openwrt.pool.ntp.org 1.openwrt.pool.ntp.org 2.openwrt.pool.ntp.org"
+TIMEOUT="2" # in seconds
+
+start() {
+	for s in $STEP_SERVERS ; do
+		/usr/sbin/ntpdate -s -b -u -t "$TIMEOUT" "$s" && break
+	done
+}

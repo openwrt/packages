@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=65
+STOP=65
+
+USE_PROCD=1
+
+start_service() {
+#	ln -sf /dev/ttyS0 /dev/gps0
+#	/usr/sbin/setgarmin -d /dev/gps -c /etc/setgarmin.conf
+	user_exists ntp 123 || user_add ntp 123 123 ntp /var/lib/ntp
+	group_exists ntp 123 || group_add ntp 123
+	mkdir -p /var/lib/ntp
+	chown -R ntp:ntp /var/lib/ntp
+
+	procd_open_instance
+	procd_set_param command /sbin/ntpd -g -u ntp:ntp -p /var/run/ntpd.pid -n
+	procd_close_instance
+}
