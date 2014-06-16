@@ -1,0 +1,29 @@
+--- a/Makefile
++++ b/Makefile
+@@ -37,16 +37,12 @@ all: sslh $(MAN) echosrv
+ 	$(CC) $(CFLAGS) -D'VERSION=$(VERSION)' -c $<
+ 
+ 
+-sslh: $(OBJS) sslh-fork sslh-select
++sslh: $(OBJS) sslh-fork
+ 
+ sslh-fork: $(OBJS) sslh-fork.o Makefile common.h
+ 	$(CC) $(CFLAGS) -D'VERSION=$(VERSION)' -o sslh-fork sslh-fork.o $(OBJS) $(LIBS)
+ 	#strip sslh-fork
+ 
+-sslh-select: $(OBJS) sslh-select.o Makefile common.h 
+-	$(CC) $(CFLAGS) -D'VERSION=$(VERSION)' -o sslh-select sslh-select.o $(OBJS) $(LIBS)
+-	#strip sslh-select
+-
+ echosrv: $(OBJS) echosrv.o
+ 	$(CC) $(CFLAGS) -o echosrv echosrv.o probe.o common.o $(LIBS)
+ 
+@@ -77,7 +73,7 @@ uninstall:
+ 	update-rc.d sslh remove
+ 
+ clean:
+-	rm -f sslh-fork sslh-select echosrv $(MAN) *.o *.gcov *.gcno *.gcda *.png *.html *.css *.info 
++	rm -f sslh-fork echosrv $(MAN) *.o *.gcov *.gcno *.gcda *.png *.html *.css *.info 
+ 
+ tags:
+ 	ctags --globals -T *.[ch]
