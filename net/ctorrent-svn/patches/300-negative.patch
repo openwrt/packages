@@ -1,0 +1,14 @@
+diff --git a/bencode.cpp b/bencode.cpp
+index fef82ba..b7f14bc 100644
+--- a/bencode.cpp
++++ b/bencode.cpp
+@@ -45,6 +45,9 @@ size_t buf_int(const char *b, size_t len, char beginchar, char endchar,
+     p++;
+     len--;
+   }
++  if( *p == '-'){
++    p++; len--;
++  }
+ 
+   for( psave = p; len && isdigit(*p); p++, len-- );
+ 
