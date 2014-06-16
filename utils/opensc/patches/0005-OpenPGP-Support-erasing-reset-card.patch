@@ -1,0 +1,173 @@
+From 4cdc5f3102f5ad93d263eea2f8206bb5e9fffc6c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Mon, 4 Mar 2013 11:28:08 +0700
+Subject: [PATCH 05/18] OpenPGP: Support erasing (reset) card.
+
+Command: openpgp-tool --erase
+---
+ src/libopensc/card-openpgp.c | 64 ++++++++++++++++++++++++++++++++++++++++++++
+ src/tools/openpgp-tool.c     | 23 +++++++++++++++-
+ 2 files changed, 86 insertions(+), 1 deletion(-)
+
+diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
+index ead07ae..42a9684 100644
+--- a/src/libopensc/card-openpgp.c
++++ b/src/libopensc/card-openpgp.c
+@@ -2197,6 +2197,66 @@ out:
+ 
+ #endif /* ENABLE_OPENSSL */
+ 
++/**
++ * Erase card
++ **/
++static int pgp_erase_card(sc_card_t *card)
++{
++	sc_context_t *ctx = card->ctx;
++	u8 *apdustring[10] = {
++		"00:20:00:81:08:40:40:40:40:40:40:40:40",
++		"00:20:00:81:08:40:40:40:40:40:40:40:40",
++		"00:20:00:81:08:40:40:40:40:40:40:40:40",
++		"00:20:00:81:08:40:40:40:40:40:40:40:40",
++		"00:20:00:83:08:40:40:40:40:40:40:40:40",
++		"00:20:00:83:08:40:40:40:40:40:40:40:40",
++		"00:20:00:83:08:40:40:40:40:40:40:40:40",
++		"00:20:00:83:08:40:40:40:40:40:40:40:40",
++		"00:e6:00:00",
++		"00:44:00:00"
++	};
++	u8 buf[SC_MAX_APDU_BUFFER_SIZE];
++	u8 rbuf[SC_MAX_APDU_BUFFER_SIZE];
++	sc_apdu_t apdu;
++	size_t len0;
++	int commandsnum = 10;
++	int i, r;
++
++	LOG_FUNC_CALLED(ctx);
++
++	/* Check card version */
++	if (card->type != SC_CARD_TYPE_OPENPGP_V2) {
++		sc_log(ctx, "Card is not OpenPGP v2");
++		LOG_FUNC_RETURN(ctx, SC_ERROR_NO_CARD_SUPPORT);
++	}
++	sc_log(ctx, "Card is OpenPGP v2. Erase card.");
++
++	/* Iterate over 10 commands above */
++	for (i = 0; i < commandsnum; i++) {
++		/* Convert the string to binary array */
++		len0 = sizeof(buf);
++		sc_hex_to_bin(apdustring[i], buf, &len0);
++		printf("Sending: ");
++		for (r = 0; r < len0; r++)
++			printf("%02X ", buf[r]);
++		printf("\n");
++
++		/* Build APDU from binary array */
++		r = sc_bytes2apdu(card->ctx, buf, len0, &apdu);
++		if (r) {
++			sc_log(ctx, "Failed to build APDU");
++			LOG_FUNC_RETURN(ctx, SC_ERROR_INTERNAL);
++		}
++		apdu.resp = rbuf;
++		apdu.resplen = sizeof(rbuf);
++
++		/* Send APDU to card */
++		r = sc_transmit_apdu(card, &apdu);
++		LOG_TEST_RET(ctx, r, "Transmiting APDU failed");
++	}
++	LOG_FUNC_RETURN(ctx, r);
++}
++
+ /* ABI: card ctl: perform special card-specific operations */
+ static int pgp_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
+ {
+@@ -2221,6 +2281,10 @@ static int pgp_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
+ 		LOG_FUNC_RETURN(card->ctx, r);
+ 		break;
+ #endif /* ENABLE_OPENSSL */
++	case SC_CARDCTL_ERASE_CARD:
++		r = pgp_erase_card(card);
++		LOG_FUNC_RETURN(card->ctx, r);
++		break;
+ 	}
+ 
+ 	LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_SUPPORTED);
+diff --git a/src/tools/openpgp-tool.c b/src/tools/openpgp-tool.c
+index 8b5e327..0d360a3 100644
+--- a/src/tools/openpgp-tool.c
++++ b/src/tools/openpgp-tool.c
+@@ -76,6 +76,7 @@ static int opt_verify = 0;
+ static char *verifytype = NULL;
+ static int opt_pin = 0;
+ static char *pin = NULL;
++static int opt_erase = 0;
+ 
+ static const char *app_name = "openpgp-tool";
+ 
+@@ -92,6 +93,7 @@ static const struct option options[] = {
+ 	{ "help",      no_argument,       NULL, 'h'        },
+ 	{ "verbose",   no_argument,       NULL, 'v'        },
+ 	{ "version",   no_argument,       NULL, 'V'        },
++	{ "erase",     no_argument,       NULL, 'E'        },
+ 	{ "verify",    required_argument, NULL, OPT_VERIFY },
+ 	{ "pin",       required_argument, NULL, OPT_PIN },
+ 	{ NULL, 0, NULL, 0 }
+@@ -110,6 +112,7 @@ static const char *option_help[] = {
+ /* h */	"Print this help message",
+ /* v */	"Verbose operation. Use several times to enable debug output.",
+ /* V */	"Show version number",
++/* E */	"Erase (reset) the card",
+ 	"Verify PIN (CHV1, CHV2, CHV3...)",
+ 	"PIN string"
+ };
+@@ -228,7 +231,7 @@ static int decode_options(int argc, char **argv)
+ {
+ 	int c;
+ 
+-	while ((c = getopt_long(argc, argv,"r:x:CUG:L:hwvV", options, (int *) 0)) != EOF) {
++	while ((c = getopt_long(argc, argv,"r:x:CUG:L:hwvVE", options, (int *) 0)) != EOF) {
+ 		switch (c) {
+ 		case 'r':
+ 			opt_reader = optarg;
+@@ -288,6 +291,9 @@ static int decode_options(int argc, char **argv)
+ 			show_version();
+ 			exit(EXIT_SUCCESS);
+ 			break;
++		case 'E':
++			opt_erase++;
++			break;
+ 		default:
+ 			util_print_usage_and_die(app_name, options, option_help, NULL);
+ 		}
+@@ -446,6 +452,18 @@ int do_verify(sc_card_t *card, u8 *type, u8* pin)
+ 	return r;
+ }
+ 
++int do_erase(sc_card_t *card)
++{
++	int r;
++	/* Check card version */
++	if (card->type != SC_CARD_TYPE_OPENPGP_V2) {
++		printf("Do not erase card which is not OpenPGP v2\n");
++	}
++	printf("Erase card\n");
++	r = sc_card_ctl(card, SC_CARDCTL_ERASE_CARD, NULL);
++	return r;
++}
++
+ int main(int argc, char **argv)
+ {
+ 	sc_context_t *ctx = NULL;
+@@ -521,6 +539,9 @@ int main(int argc, char **argv)
+ 		exit(EXIT_FAILURE);
+ 	}
+ 
++	if (opt_erase)
++		exit_status != do_erase(card);
++
+ out:
+ 	sc_unlock(card);
+ 	sc_disconnect_card(card);
+-- 
+1.9.3
+

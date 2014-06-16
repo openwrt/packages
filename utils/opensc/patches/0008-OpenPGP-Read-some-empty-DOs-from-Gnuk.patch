@@ -1,0 +1,58 @@
+From d1b8d3588336abac4876c1d537d8e8e5e578bc02 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Mon, 25 Mar 2013 11:58:38 +0700
+Subject: [PATCH 08/18] OpenPGP: Read some empty DOs from Gnuk.
+
+In Gnuk, some empty DOs are returned as not exist, instead of existing with empty value.
+So, we will consider them exist in driver.
+---
+ src/libopensc/card-openpgp.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
+index 47c1938..9b08bbb 100644
+--- a/src/libopensc/card-openpgp.c
++++ b/src/libopensc/card-openpgp.c
+@@ -813,6 +813,23 @@ pgp_get_blob(sc_card_t *card, struct blob *blob, unsigned int id,
+ 		}
+ 	}
+ 
++	/* This part is for "NOT FOUND" cases */
++
++	/* Special case:
++	 * Gnuk does not have default value for children of DO 65 (DOs 5B, 5F2D, 5F35)
++	 * So, if these blob was not found, we create it. */
++	if (blob->id == 0x65 && (id == 0x5B || id == 0x5F2D || id == 0x5F35)) {
++		sc_log(card->ctx, "Create blob %X under %X", id, blob->id);
++		child = pgp_new_blob(card, blob, id, sc_file_new());
++		if (child) {
++			pgp_set_blob(child, NULL, 0);
++			*ret = child;
++			return SC_SUCCESS;
++		}
++		else
++			sc_log(card->ctx, "Not enough memory to create blob for DO %X");
++	}
++
+ 	return SC_ERROR_FILE_NOT_FOUND;
+ }
+ 
+@@ -1147,6 +1164,14 @@ pgp_get_data(sc_card_t *card, unsigned int tag, u8 *buf, size_t buf_len)
+ 	LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
+ 
+ 	r = sc_check_sw(card, apdu.sw1, apdu.sw2);
++
++	/* For Gnuk card, if there is no certificate, it returns error instead of empty data.
++	 * So, for this case, we ignore error and consider success */
++	if (r == SC_ERROR_DATA_OBJECT_NOT_FOUND && card->type == SC_CARD_TYPE_OPENPGP_GNUK
++        && (tag == DO_CERT || tag == 0x0101 || tag == 0x0102 || tag == 0x0103 || tag == 0x0104)) {
++		r = SC_SUCCESS;
++		apdu.resplen = 0;
++	}
+ 	LOG_TEST_RET(card->ctx, r, "Card returned error");
+ 
+ 	LOG_FUNC_RETURN(card->ctx, apdu.resplen);
+-- 
+1.9.3
+

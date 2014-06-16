@@ -1,0 +1,34 @@
+From a099f951d085d3abfefeead14a4af06913cb67d2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Wed, 8 May 2013 16:51:21 +0700
+Subject: [PATCH 18/18] Move declaration to top of block.
+
+---
+ src/libopensc/card-openpgp.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
+index c4ef3b6..7f2006e 100644
+--- a/src/libopensc/card-openpgp.c
++++ b/src/libopensc/card-openpgp.c
+@@ -736,6 +736,7 @@ pgp_read_blob(sc_card_t *card, struct blob *blob)
+ 		u8 	buffer[2048];
+ 		size_t	buf_len = (card->caps & SC_CARD_CAP_APDU_EXT)
+ 				  ? sizeof(buffer) : 256;
++		int r = SC_SUCCESS;
+ 
+ 		/* Buffer length for certificate */
+ 		if (blob->id == DO_CERT && priv->max_cert_size > 0) {
+@@ -749,7 +750,7 @@ pgp_read_blob(sc_card_t *card, struct blob *blob)
+ 			buf_len = MAXLEN_RESP_PUBKEY_GNUK;
+ 		}
+ 
+-		int	r = blob->info->get_fn(card, blob->id, buffer, buf_len);
++		r = blob->info->get_fn(card, blob->id, buffer, buf_len);
+ 
+ 		if (r < 0) {	/* an error occurred */
+ 			blob->status = r;
+-- 
+1.9.3
+

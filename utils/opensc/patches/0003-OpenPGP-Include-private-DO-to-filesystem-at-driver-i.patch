@@ -1,0 +1,30 @@
+From 5f751ba5628f9d85e9d8dca9939a93f49d2525d0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Fri, 22 Mar 2013 17:37:16 +0700
+Subject: [PATCH 03/18] OpenPGP: Include private DO to filesystem at driver
+ initialization.
+
+In old implementation, the DOs which their access is restricted by
+PIN (like DOs 0101 -> 0104) were excluded from the fake filesystem,
+leading to that we cannot read their data later, even if we verified PIN.
+---
+ src/libopensc/card-openpgp.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
+index 716052b..ead07ae 100644
+--- a/src/libopensc/card-openpgp.c
++++ b/src/libopensc/card-openpgp.c
+@@ -357,7 +357,7 @@ pgp_init(sc_card_t *card)
+ 
+ 	/* Populate MF - add matching blobs listed in the pgp_objects table. */
+ 	for (info = priv->pgp_objects; (info != NULL) && (info->id > 0); info++) {
+-		if (((info->access & READ_MASK) == READ_ALWAYS) &&
++		if (((info->access & READ_MASK) != READ_NEVER) &&
+ 		    (info->get_fn != NULL)) {
+ 			child = pgp_new_blob(card, priv->mf, info->id, sc_file_new());
+ 
+-- 
+1.9.3
+

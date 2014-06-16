@@ -1,0 +1,50 @@
+From ecc6460d17147b37def27a9b776e1fc5a61408d0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Fri, 12 Apr 2013 17:24:00 +0700
+Subject: [PATCH 02/18] OpenPGP: Add Gnuk in pkcs15 emulation layer.
+
+---
+ src/libopensc/pkcs15-openpgp.c | 6 ++++--
+ src/libopensc/pkcs15-syn.c     | 1 +
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/src/libopensc/pkcs15-openpgp.c b/src/libopensc/pkcs15-openpgp.c
+index d9dc074..5a8a1ca 100644
+--- a/src/libopensc/pkcs15-openpgp.c
++++ b/src/libopensc/pkcs15-openpgp.c
+@@ -155,7 +155,8 @@ sc_pkcs15emu_openpgp_init(sc_pkcs15_card_t *p15card)
+ 	u8		c4data[10];
+ 	u8		c5data[70];
+ 	int		r, i;
+-	const pgp_pin_cfg_t *pin_cfg = (card->type == SC_CARD_TYPE_OPENPGP_V2) ? pin_cfg_v2 : pin_cfg_v1;
++	const pgp_pin_cfg_t *pin_cfg = (card->type == SC_CARD_TYPE_OPENPGP_V2 || card->type == SC_CARD_TYPE_OPENPGP_GNUK)
++	                               ? pin_cfg_v2 : pin_cfg_v1;
+ 	sc_path_t path;
+ 	sc_file_t *file;
+ 
+@@ -367,7 +368,8 @@ failed:	sc_debug(card->ctx, SC_LOG_DEBUG_NORMAL, "Failed to initialize OpenPGP e
+ 
+ static int openpgp_detect_card(sc_pkcs15_card_t *p15card)
+ {
+-	if (p15card->card->type == SC_CARD_TYPE_OPENPGP_V1 || p15card->card->type == SC_CARD_TYPE_OPENPGP_V2)
++	if (p15card->card->type == SC_CARD_TYPE_OPENPGP_V1 || p15card->card->type == SC_CARD_TYPE_OPENPGP_V2
++	    || p15card->card->type == SC_CARD_TYPE_OPENPGP_GNUK)
+ 		return SC_SUCCESS;
+ 	else
+ 		return SC_ERROR_WRONG_CARD;
+diff --git a/src/libopensc/pkcs15-syn.c b/src/libopensc/pkcs15-syn.c
+index e2f6004..a9f8c0b 100644
+--- a/src/libopensc/pkcs15-syn.c
++++ b/src/libopensc/pkcs15-syn.c
+@@ -112,6 +112,7 @@ int sc_pkcs15_is_emulation_only(sc_card_t *card)
+ 		case SC_CARD_TYPE_GEMSAFEV1_PTEID:
+ 		case SC_CARD_TYPE_OPENPGP_V1:
+ 		case SC_CARD_TYPE_OPENPGP_V2:
++		case SC_CARD_TYPE_OPENPGP_GNUK:
+ 		case SC_CARD_TYPE_SC_HSM:
+ 			return 1;
+ 		default:
+-- 
+1.9.3
+

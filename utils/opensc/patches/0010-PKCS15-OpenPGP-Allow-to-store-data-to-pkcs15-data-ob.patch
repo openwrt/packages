@@ -1,0 +1,91 @@
+From 88ded8fc5802c073caa71b649cee5a3116699b2a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Wed, 27 Mar 2013 11:39:33 +0700
+Subject: [PATCH 10/18] PKCS15-OpenPGP: Allow to store data to pkcs15 data
+ object.
+
+Only one DO is supported now.
+---
+ src/libopensc/pkcs15-openpgp.c  |  2 +-
+ src/pkcs15init/pkcs15-openpgp.c | 38 +++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 38 insertions(+), 2 deletions(-)
+
+diff --git a/src/libopensc/pkcs15-openpgp.c b/src/libopensc/pkcs15-openpgp.c
+index 850dd74..b701041 100644
+--- a/src/libopensc/pkcs15-openpgp.c
++++ b/src/libopensc/pkcs15-openpgp.c
+@@ -397,7 +397,7 @@ sc_pkcs15emu_openpgp_add_data(sc_pkcs15_card_t *p15card)
+ 		 */
+ 		r = read_file(p15card->card, path, content, sizeof(content));
+ 		if (r <= 0 ) {
+-			sc_log(ctx, "Cannot read DO 010%d or there is no data in it", i);
++			sc_log(ctx, "No data get from DO 010%d", i);
+ 			/* Skip */
+ 			continue;
+ 		}
+diff --git a/src/pkcs15init/pkcs15-openpgp.c b/src/pkcs15init/pkcs15-openpgp.c
+index f3a4962..1455580 100755
+--- a/src/pkcs15init/pkcs15-openpgp.c
++++ b/src/pkcs15init/pkcs15-openpgp.c
+@@ -236,13 +236,16 @@ static int openpgp_emu_update_tokeninfo(sc_profile_t *profile, sc_pkcs15_card_t
+ }
+ 
+ static int openpgp_store_data(struct sc_pkcs15_card *p15card, struct sc_profile *profile,
+-                              struct sc_pkcs15_object *obj,	struct sc_pkcs15_der *content,
++                              struct sc_pkcs15_object *obj, struct sc_pkcs15_der *content,
+                               struct sc_path *path)
+ {
+ 	sc_card_t *card = p15card->card;
++	sc_context_t *ctx = card->ctx;
+ 	sc_file_t *file;
+ 	sc_pkcs15_cert_info_t *cinfo;
+ 	sc_pkcs15_id_t *cid;
++	sc_pkcs15_data_info_t *dinfo;
++	u8 buf[254];
+ 	int r;
+ 
+ 	LOG_FUNC_CALLED(card->ctx);
+@@ -282,6 +285,39 @@ static int openpgp_store_data(struct sc_pkcs15_card *p15card, struct sc_profile
+ 			                     content->len, 0);
+ 		break;
+ 
++	case SC_PKCS15_TYPE_DATA_OBJECT:
++		dinfo = (sc_pkcs15_data_info_t *) obj->data;
++		/* dinfo->app_label contains filename */
++		sc_log(ctx, "===== App label %s", dinfo->app_label);
++		/* Currently, we only support DO 0101. The reason is that when initializing this
++		 * pkcs15 emulation, PIN authentication is not applied and we can expose only this DO,
++		 * which is "read always".
++		 * If we support other DOs, they will not be exposed, and not helpful to user.
++		 * I haven't found a way to refresh the list of exposed DOs after verifying PIN yet.
++		 * http://sourceforge.net/mailarchive/message.php?msg_id=30646373
++		 **/
++		sc_log(ctx, "About to write to DO 0101");
++		sc_format_path("0101", path);
++		r = sc_select_file(card, path, &file);
++		LOG_TEST_RET(card->ctx, r, "Cannot select private DO");
++		r = sc_read_binary(card, 0, buf, sizeof(buf), 0);
++		if (r < 0) {
++			sc_log(ctx, "Cannot read DO 0101");
++			break;
++		}
++		if (r > 0) {
++			sc_log(ctx, "DO 0101 is full.");
++			r = SC_ERROR_TOO_MANY_OBJECTS;
++			break;
++		}
++		r = sc_pkcs15init_authenticate(profile, p15card, file, SC_AC_OP_UPDATE);
++		if (r >= 0 && content->len) {
++			r = sc_update_binary(p15card->card, 0,
++			                     (const unsigned char *) content->value,
++			                     content->len, 0);
++		}
++		break;
++
+ 	default:
+ 		r = SC_ERROR_NOT_IMPLEMENTED;
+ 	}
+-- 
+1.9.3
+

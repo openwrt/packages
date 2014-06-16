@@ -1,0 +1,53 @@
+From df8a78e3c8c9d9d591c0d3fa31db7e010eb2c8c2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Thu, 11 Apr 2013 16:18:31 +0700
+Subject: [PATCH 14/18] OpenPGP: Overcome the restriction of even data length
+ of Gnuk.
+
+When write certificate with odd length to Gnuk, we add zero padding to make it even.
+---
+ src/libopensc/card-openpgp.c | 20 ++++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
+index d9db948..a666163 100644
+--- a/src/libopensc/card-openpgp.c
++++ b/src/libopensc/card-openpgp.c
+@@ -1206,6 +1206,10 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+ 	sc_apdu_t apdu;
+ 	u8 *part;
+ 	size_t plen;
++	/* Two round_ variables below are to build APDU data
++	 * with even length for Gnuk */
++	u8 roundbuf[256];
++	size_t roundlen = 0;
+ 	int r = SC_SUCCESS;
+ 
+ 	LOG_FUNC_CALLED(ctx);
+@@ -1236,8 +1240,20 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+ 			sc_format_apdu(card, &apdu, SC_APDU_CASE_3_SHORT, 0xD6, i, 0);
+ 		}
+ 		apdu.flags |= SC_APDU_FLAGS_CHAINING;
+-		apdu.data = part;
+-		apdu.datalen = apdu.lc = plen;
++
++		/* If the last part has odd length, we add zero padding to make it even.
++		 * Gnuk does not allow data with odd length */
++		if (plen < 256 && (plen % 2) != 0) {
++			roundlen = plen + 1;
++			memset(roundbuf, 0, roundlen);
++			memcpy(roundbuf, part, plen);
++			apdu.data = roundbuf;
++			apdu.datalen = apdu.lc = roundlen;
++		}
++		else {
++			apdu.data = part;
++			apdu.datalen = apdu.lc = plen;
++		}
+ 
+ 		r = sc_transmit_apdu(card, &apdu);
+ 		LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
+-- 
+1.9.3
+
