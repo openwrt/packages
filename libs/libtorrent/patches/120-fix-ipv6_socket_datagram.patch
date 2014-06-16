@@ -1,0 +1,26 @@
+--- a/src/net/socket_datagram.cc
++++ b/src/net/socket_datagram.cc
+@@ -73,6 +73,23 @@ SocketDatagram::write_datagram(const voi
+   int r;
+ 
+   if (sa != NULL) {
++#ifdef RAK_USE_INET6
++    if (m_ipv6_socket && sa->family() == rak::socket_address::pf_inet) {
++      uint32_t addr32[4];
++      sockaddr_in6 mapped_addr;
++      memset(&mapped_addr, 0, sizeof(mapped_addr));
++      mapped_addr.sin6_family = AF_INET6;
++      addr32[0] = 0;
++      addr32[1] = 0;
++      addr32[2] = htonl(0xffff);
++      addr32[3] = sa->sa_inet()->address_n();
++      memcpy(mapped_addr.sin6_addr.s6_addr, addr32, sizeof(uint32_t) * 4);
++      mapped_addr.sin6_port = sa->sa_inet()->port_n();
++      r = ::sendto(m_fileDesc, buffer, length, 0, (sockaddr*)&mapped_addr, sizeof(mapped_addr));
++    } else if (m_ipv6_socket && sa->family() == rak::socket_address::pf_inet6) {
++      r = ::sendto(m_fileDesc, buffer, length, 0, sa->sa_inet6()->c_sockaddr(), sizeof(rak::socket_address_inet6));
++    } else
++#endif
+     r = ::sendto(m_fileDesc, buffer, length, 0, sa->sa_inet()->c_sockaddr(), sizeof(rak::socket_address_inet));
+   } else {
+     r = ::send(m_fileDesc, buffer, length, 0);
