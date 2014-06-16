@@ -12,9 +12,13 @@ PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Frank Edelhaeuser <fedel@users.sourceforge.net>
 
-PKG_SOURCE:=i2c-lua-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.sourceforge.net/i2c-lua/
+PKG_SOURCE_NAME:=i2c-lua
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
+
+PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/$(PKG_SOURCE_NAME)
 PKG_MD5SUM:=7098577f101410b201cd43a7467e408d
+
 
 include $(INCLUDE_DIR)/package.mk
 
