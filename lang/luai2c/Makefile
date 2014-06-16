@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luai2c
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Frank Edelhaeuser <fedel@users.sourceforge.net>
 
 PKG_SOURCE_NAME:=i2c-lua
