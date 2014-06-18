@@ -40,5 +40,4 @@ The server can be enabled and started using:
 
 
 There is a luci plugin to allow configuring the server from
-the web environment, available as patch over luci at
-https://github.com/nmav/luci-openconnect/tree/openconnect
+the web environment; see the package luci-app-ocserv.
