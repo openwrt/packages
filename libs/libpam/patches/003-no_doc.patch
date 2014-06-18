@@ -1,0 +1,22 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -4,7 +4,7 @@
+ 
+ AUTOMAKE_OPTIONS = 1.9 gnu dist-bzip2 check-news
+ 
+-SUBDIRS = libpam tests libpamc libpam_misc modules po conf doc examples xtests
++SUBDIRS = libpam tests libpamc libpam_misc modules po conf examples xtests
+ 
+ CLEANFILES = *~
+ 
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -288,7 +288,7 @@ top_build_prefix = @top_build_prefix@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ AUTOMAKE_OPTIONS = 1.9 gnu dist-bzip2 check-news
+-SUBDIRS = libpam tests libpamc libpam_misc modules po conf doc examples xtests
++SUBDIRS = libpam tests libpamc libpam_misc modules po conf examples xtests
+ CLEANFILES = *~
+ EXTRA_DIST = pgp.keys.asc CHANGELOG ChangeLog-CVS Copyright Make.xml.rules
+ ACLOCAL_AMFLAGS = -I m4

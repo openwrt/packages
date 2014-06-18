@@ -1,0 +1,26 @@
+--- a/conf/pam_conv1/pam_conv_l.c
++++ b/conf/pam_conv1/pam_conv_l.c
+@@ -534,7 +534,9 @@ void yyset_lineno (int line_number  );
+ #ifdef __cplusplus
+ extern "C" int yywrap (void );
+ #else
+-extern int yywrap (void );
++int yywrap (void ) {
++	return 1;
++}
+ #endif
+ #endif
+ 
+--- a/doc/specs/parse_l.c
++++ b/doc/specs/parse_l.c
+@@ -520,7 +520,9 @@ void yyset_lineno (int line_number  );
+ #ifdef __cplusplus
+ extern "C" int yywrap (void );
+ #else
+-extern int yywrap (void );
++int yywrap (void ) {
++	return 1;
++}
+ #endif
+ #endif
+ 
