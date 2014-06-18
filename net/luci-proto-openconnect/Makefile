@@ -31,7 +31,7 @@ define Package/luci-proto-openconnect
   CATEGORY:=LuCI
   SUBMENU:=6. Protocols
   TITLE:= OpenConnect VPN protocol configuration
-  DEPENDS:=+luci-mod-admin-core +openconnect
+  DEPENDS:=+luci-mod-admin-core +luci-lib-nixio +openconnect
   MAINTAINER:= Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 endef
 
