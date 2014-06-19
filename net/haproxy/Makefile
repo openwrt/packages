@@ -1,5 +1,6 @@
 #
-# Copyright (C) 2009-2014 Thomas Heil <heil@terminal-consulting.de>
+# Copyright (C) 2010-2013 OpenWrt.org
+# Copyright (C) 2009-2013 Thomas Heil <heil@terminal-consulting.de>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=1.4.25
-PKG_RELEASE:=01
-
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.4/src
-PKG_MD5SUM:=74b5ec1f0f9b4d148c8083bcfb512ccd
+PKG_VERSION:=1.5.0
+PKG_RELEASE:=00
+PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.5/src/
+PKG_MD5SUM:=e33bb97e644e98af948090f1ecebbda9
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=GPL-2.0
 
@@ -25,7 +25,7 @@ define Package/haproxy
   CATEGORY:=Network
   TITLE:=The Reliable, High Performance TCP/HTTP Load Balancer
   URL:=http://haproxy.1wt.eu/
-  DEPENDS:=+libpcre +libltdl
+  DEPENDS:=+libpcre +libltdl +libopenssl +zlib +libpthread
 endef
 
 define Package/haproxy/conffiles
@@ -40,12 +40,26 @@ define Build/Compile
 	$(MAKE) TARGET=linux2628 -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS)" \
+		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=8192 -DSYSTEM_MAXCONN=65530" USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 \
+		ADDLIB="-lcrypto" \
+		PCREDIR="$(STAGING_DIR)/usr/include" \
+		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
+		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 USE_OPENSSL=1 \
+		USE_ZLIB=yes USE_PCRE=1 \
 		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
-		all install
+		install
+
+	$(MAKE) -C $(PKG_BUILD_DIR)/contrib/halog \
+		DESTDIR="$(PKG_INSTALL_DIR)" \
+		CC="$(TARGET_CC)" \
+		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
+		LD="$(TARGET_CC)" \
+		LDFLAGS="$(TARGET_LDFLAGS)" \
+		ADDLIB="-lcrypto" \
+		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
+		halog
 endef
 
 define Package/haproxy/install
@@ -59,4 +73,21 @@ define Package/haproxy/install
 	$(INSTALL_BIN) ./files/haproxy.hotplug $(1)/etc/hotplug.d/net/90-haproxy
 endef
 
+define Package/halog
+	MENU:=1
+	$(call Package/haproxy)
+	TITLE+= halog
+	DEPENDS:=haproxy
+endef
+
+define Package/halog/description
+	HAProxy Log Analyzer
+endef
+
+define Package/halog/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/halog/halog $(1)/usr/bin/
+endef
+
 $(eval $(call BuildPackage,haproxy))
+$(eval $(call BuildPackage,halog))
