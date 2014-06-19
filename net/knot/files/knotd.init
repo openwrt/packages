@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+START=70
+
+knot_bin="/usr/sbin/knotd"
+knot_ctl="/usr/sbin/knotc"
+config_file="/etc/knot/knot.conf"
+pid_file="/var/run/knot.pid"
+
+start() {
+  echo "Starting Knot DNS"
+
+  if [ -e $pid_file ]; then
+     echo "  Already running with PID `cat $pid_file`"
+     return 1
+  fi
+
+  $knot_bin -c $config_file -d
+
+  if [ $? -ne 0 ]; then
+    echo "  Failed to start"
+  fi
+}
+
+stop() {
+  echo "Stopping Knot DNS"
+
+  if [ -e $pid_file ]; then
+    kill `cat $pid_file`
+    rm -f $pid_file
+  else
+    echo "  No PID file $pid_file"
+    return 1
+  fi
+}
+
+restart() {
+  stop
+  start
+}
+
+reload() {
+  echo "Reloading Knot DNS"
+
+  $knot_ctl -c $config_file reload
+}
