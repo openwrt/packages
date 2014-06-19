@@ -63,6 +63,9 @@ start_service() {
     config_get val sd domain_name
     [ -n "$val" ] && procd_append_param command -m $val
 
+    # For more verbose logging, uncomment this:
+    #procd_append_param command --loglevel 7
+
     procd_set_param respawn
     procd_close_instance
 }
