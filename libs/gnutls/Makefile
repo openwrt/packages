@@ -75,7 +75,7 @@ endef
 define Package/libgnutls
 $(call Package/gnutls/Default)
   TITLE+= (library)
-  DEPENDS+= +libnettle +!LIBNETTLE_MINI:libgmp
+  DEPENDS+= +libnettle +!LIBNETTLE_MINI:libgmp +GNUTLS_EXT_LIBTASN1:libtasn1 +GNUTLS_PKCS11:p11-kit
 endef
 
 define Package/libgnutls/description
@@ -102,13 +102,19 @@ CONFIGURE_ARGS+= \
 	--disable-guile \
 	--disable-nls \
 	--without-zlib \
-	--with-included-libtasn1 \
 	--enable-local-libopts \
 	--disable-doc \
 	--disable-tests \
 	--disable-rsa-export \
-	--disable-crywrap \
-	--without-p11-kit
+	--disable-crywrap
+
+ifneq ($(CONFIG_GNUTLS_EXT_LIBTASN1),y)
+CONFIGURE_ARGS += --with-included-libtasn1
+endif
+
+ifneq ($(CONFIG_GNUTLS_PKCS11),y)
+CONFIGURE_ARGS += --without-p11-kit
+endif
 
 ifeq ($(CONFIG_LIBNETTLE_MINI),y)
 CONFIGURE_ARGS += --with-nettle-mini
@@ -204,6 +210,11 @@ endif
 ifeq ($(CONFIG_GNUTLS_PSK),y)
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/bin/psktool \
+		$(1)/usr/bin/
+endif
+ifeq ($(CONFIG_GNUTLS_PKCS11),y)
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/bin/p11tool \
 		$(1)/usr/bin/
 endif
 endef
