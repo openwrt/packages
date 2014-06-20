@@ -50,6 +50,10 @@ endef
 define Package/p11-kit/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libp11-kit.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/etc/p11-kit/modules/
+ifneq ($(CONFIG_PACKAGE_libopensc),)
+	$(CP) ./files/opensc.module $(1)/etc/p11-kit/modules/
+endif
 endef
 
 $(eval $(call BuildPackage,p11-kit))
