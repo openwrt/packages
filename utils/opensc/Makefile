@@ -30,7 +30,7 @@ define Package/libopensc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=OpenSC libraries for smart cards
-  URL:=https://www.opensc-project.org/opensc/wiki/
+  URL:=https://github.com/OpenSC/OpenSC/wiki
   DEPENDS:=+libopenssl +libpthread
   MENU:=1
 endef
@@ -46,7 +46,7 @@ define Package/libopensc-pkcs11
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=OpenSC - PKCS11 provider
-  URL:=https://www.opensc-project.org/opensc/wiki/
+  URL:=https://github.com/OpenSC/OpenSC/wiki
   DEPENDS:=libopensc
 endef
 
@@ -58,7 +58,7 @@ define Package/libpkcs11-spy
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=PKCS11 spying wrapper
-  URL:=https://www.opensc-project.org/opensc/wiki/
+  URL:=https://github.com/OpenSC/OpenSC/wiki
 endef
 
 define Package/libpkcs11-spy/dscription
@@ -69,7 +69,7 @@ define Package/opensc-utils
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=OpenSC - tools for smart cards
-  URL:=https://www.opensc-project.org/opensc/wiki/
+  URL:=https://github.com/OpenSC/OpenSC/wiki
   DEPENDS:=+libopensc
   MENU:=1
 endef
@@ -81,7 +81,7 @@ endef
 define ToolGen
 define Package/opensc-utils-$(subst _,-,$(firstword $(subst :, ,$(1))))
   TITLE:=$(firstword $(subst :, ,$(1))) utility from opensc
-  URL:=https://www.opensc-project.org/opensc/wiki/
+  URL:=https://github.com/OpenSC/OpenSC/wiki
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=opensc-utils $(wordlist 2,$(words $(subst :, ,$(1))),$(subst :, ,$(1)))
@@ -91,7 +91,7 @@ endef
 define ProfileGen
 define Package/libopensc-profile-$(subst _,-,$(firstword $(subst :, ,$(1))))
   TITLE:=$(firstword $(subst :, ,$(1))) card profile for opensc
-  URL:=https://www.opensc-project.org/opensc/wiki/
+  URL:=https://github.com/OpenSC/OpenSC/wiki
   SECTION:=lib
   CATEGORY:=Libraries
   DEPENDS:=libopensc
