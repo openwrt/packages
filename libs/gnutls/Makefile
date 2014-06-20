@@ -75,7 +75,7 @@ endef
 define Package/libgnutls
 $(call Package/gnutls/Default)
   TITLE+= (library)
-  DEPENDS+= +libnettle +!LIBNETTLE_MINI:libgmp
+  DEPENDS+= +libnettle +!LIBNETTLE_MINI:libgmp +GNUTLS_EXT_LIBTASN1:libtasn1
 endef
 
 define Package/libgnutls/description
@@ -102,13 +102,16 @@ CONFIGURE_ARGS+= \
 	--disable-guile \
 	--disable-nls \
 	--without-zlib \
-	--with-included-libtasn1 \
 	--enable-local-libopts \
 	--disable-doc \
 	--disable-tests \
 	--disable-rsa-export \
 	--disable-crywrap \
 	--without-p11-kit
+
+ifneq ($(CONFIG_GNUTLS_EXT_LIBTASN1),y)
+CONFIGURE_ARGS += --with-included-libtasn1
+endif
 
 ifeq ($(CONFIG_LIBNETTLE_MINI),y)
 CONFIGURE_ARGS += --with-nettle-mini
