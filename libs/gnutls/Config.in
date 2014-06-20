@@ -31,6 +31,11 @@ config GNUTLS_PSK
 config GNUTLS_ANON
 	bool "enable anonymous authentication support"
 
+config GNUTLS_PKCS11
+	bool "enable smart card (PKCS11) support"
+	select GNUTLS_EXT_LIBTASN1
+	default n
+
 config GNUTLS_EXT_LIBTASN1
 	bool "use external libtasn1"
 	default n
