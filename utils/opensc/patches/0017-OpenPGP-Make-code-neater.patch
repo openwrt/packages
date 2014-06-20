@@ -1,0 +1,39 @@
+From 8a69525a60391b46db4994033527d219d2adaa4e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Tue, 16 Apr 2013 16:02:17 +0700
+Subject: [PATCH 17/18] OpenPGP: Make code neater
+
+---
+ src/libopensc/card-openpgp.c | 8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
+index 196c094..c4ef3b6 100644
+--- a/src/libopensc/card-openpgp.c
++++ b/src/libopensc/card-openpgp.c
+@@ -1220,10 +1220,7 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+ 		r = sc_transmit_apdu(card, &apdu);
+ 		LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
+ 		/* Check response */
+-		r = sc_check_sw(card, apdu.sw1, apdu.sw2);
+-		if (r < 0)
+-			LOG_FUNC_RETURN(card->ctx, r);
+-		LOG_FUNC_RETURN(card->ctx, length);
++		LOG_TEST_RET(card->ctx, sc_check_sw(card, apdu.sw1, apdu.sw2), "Certificate writing failed");
+ 	}
+ 
+ 	/* Ref: gnuk_put_binary_libusb.py and gnuk_token.py in Gnuk source tree */
+@@ -1260,8 +1257,7 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+ 		r = sc_transmit_apdu(card, &apdu);
+ 		LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
+ 		/* Check response */
+-		r = sc_check_sw(card, apdu.sw1, apdu.sw2);
+-		LOG_TEST_RET(card->ctx, r, "UPDATE BINARY returned error");
++		LOG_TEST_RET(card->ctx, sc_check_sw(card, apdu.sw1, apdu.sw2), "UPDATE BINARY returned error");
+ 
+ 		/* To next part */
+ 		i++;
+-- 
+1.9.3
+

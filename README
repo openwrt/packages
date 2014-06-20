@@ -1,12 +1,11 @@
 * Description *
 
-This is an OpenWrt package feed containing community-maintained packages.
+This is the OpenWrt "packages"-feed containing community-maintained packages.
 
 
 * Usage *
 
-Replace the feeds.conf entry for packages with:
-  src-git packages git://github.com/openwrt/packages.git
+This feed is enabled by default. To install all its package definitions:
 
 Run: ./scripts/feeds update packages
 Run: ./scripts/feeds install -a -p packages
@@ -18,3 +17,7 @@ Please make sure that all packages you commit or request to pull:
 	* Package a version which is still maintained by the upstream author.
         * Have yourself or another person listed in the (PKG_)MAINTAINER field.
 	* Will be updated regularly to maintained and supported versions. 
+
+Please sign-off your commits / pull requests to this repository. See:
+https://dev.openwrt.org/wiki/SubmittingPatches#a10.Signyourwork
+

@@ -26,5 +26,4 @@ the MYVPN interface and lan.
 
 
 There is a luci plugin to allow configuring an openconnect interface from
-the web environment, available as patch over luci at
-https://github.com/nmav/luci-openconnect/tree/openconnect
+the web environment; see the luci-protocol-openconnect package.

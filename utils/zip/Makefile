@@ -49,6 +49,7 @@ define Build/Compile
 		CFLAGS="$(TARGET_CFLAGS)" \
 		CC="$(TARGET_CC) $(TARGET_CFLAGS) -O $(TARGET_CPPFLAGS) -I. -DUNIX" \
 		LD="$(TARGET_CC) $(TARGET_LDFLAGS)" \
+		IZ_BZIP2="no" \
 		install
 endef
 

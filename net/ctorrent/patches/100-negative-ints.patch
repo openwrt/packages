@@ -1,0 +1,13 @@
+--- a/bencode.cpp
++++ b/bencode.cpp
+@@ -44,6 +44,10 @@ size_t buf_long(const char *b,size_t len
+     p++; len--;
+   }
+ 
++  if( *p == '-'){
++    p++; len--;
++  }
++
+   for(psave = p; len && isdigit(*p); p++,len--) ;
+ 
+   if(!len || MAX_INT_SIZ < (p - psave) || *p != endchar) return 0;

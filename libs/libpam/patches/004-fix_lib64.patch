@@ -1,0 +1,16 @@
+--- a/configure.in
++++ b/configure.in
+@@ -28,12 +28,7 @@ dnl If we use /usr as prefix, use /etc f
+         fi
+ 	if test ${libdir} = '${exec_prefix}/lib'
+ 	then
+-		case "`uname -m`" in
+-		    x86_64|ppc64|s390x|sparc64)
+-			libdir="/lib64" ;;
+-		    *)
+-			libdir="/lib" ;;
+-		esac
++		libdir="/lib"
+ 	fi
+ 	if test ${sbindir} = '${exec_prefix}/sbin'
+         then

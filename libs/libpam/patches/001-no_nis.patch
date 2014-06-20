@@ -1,0 +1,68 @@
+--- a/modules/pam_access/pam_access.c
++++ b/modules/pam_access/pam_access.c
+@@ -44,7 +44,7 @@
+ #include <arpa/inet.h>
+ #include <netdb.h>
+ #include <sys/socket.h>
+-#ifdef HAVE_RPCSVC_YPCLNT_H
++#ifdef HAVE_RPCSVC_YPCLNT_H && USE_NIS
+ #include <rpcsvc/ypclnt.h>
+ #endif
+ #ifdef HAVE_LIBAUDIT
+--- a/modules/pam_unix/pam_unix_passwd.c
++++ b/modules/pam_unix/pam_unix_passwd.c
+@@ -79,18 +79,18 @@
+ #include "passverify.h"
+ #include "bigcrypt.h"
+ 
+-#if (HAVE_YP_GET_DEFAULT_DOMAIN || HAVE_GETDOMAINNAME) && HAVE_YP_MASTER
++#if (HAVE_YP_GET_DEFAULT_DOMAIN || HAVE_GETDOMAINNAME) && HAVE_YP_MASTER && USE_NIS
+ # define HAVE_NIS
+ #endif
+ 
+ #ifdef HAVE_NIS
+ # include <rpc/rpc.h>
+ 
+-# if HAVE_RPCSVC_YP_PROT_H
++# if HAVE_RPCSVC_YP_PROT_H && USE_NIS
+ #  include <rpcsvc/yp_prot.h>
+ # endif
+ 
+-# if HAVE_RPCSVC_YPCLNT_H
++# if HAVE_RPCSVC_YPCLNT_H && USE_NIS
+ #  include <rpcsvc/ypclnt.h>
+ # endif
+ 
+--- a/modules/pam_unix/support.c
++++ b/modules/pam_unix/support.c
+@@ -19,7 +19,7 @@
+ #include <ctype.h>
+ #include <syslog.h>
+ #include <sys/resource.h>
+-#ifdef HAVE_RPCSVC_YPCLNT_H
++#ifdef HAVE_RPCSVC_YPCLNT_H && USE_NIS
+ #include <rpcsvc/ypclnt.h>
+ #endif
+ 
+@@ -402,7 +402,7 @@ int _unix_getpwnam(pam_handle_t *pamh, c
+ 		}
+ 	}
+ 
+-#if defined(HAVE_YP_GET_DEFAULT_DOMAIN) && defined (HAVE_YP_BIND) && defined (HAVE_YP_MATCH) && defined (HAVE_YP_UNBIND)
++#if defined(HAVE_YP_GET_DEFAULT_DOMAIN) && defined (HAVE_YP_BIND) && defined (HAVE_YP_MATCH) && defined (HAVE_YP_UNBIND) && (USE_NIS)
+ 	if (!matched && nis) {
+ 		char *userinfo = NULL, *domain = NULL;
+ 		int len = 0, i;
+--- a/modules/pam_unix/yppasswd_xdr.c
++++ b/modules/pam_unix/yppasswd_xdr.c
+@@ -15,6 +15,10 @@
+ #ifdef HAVE_RPC_RPC_H
+ 
+ #include <rpc/rpc.h>
++#ifdef USE_NIS
++#include <rpcsvc/yp_prot.h>
++#include <rpcsvc/ypclnt.h>
++#endif
+ #include "yppasswd.h"
+ 
+ bool_t

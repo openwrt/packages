@@ -1,0 +1,364 @@
+--- a/modules/pam_rhosts/pam_rhosts.c
++++ b/modules/pam_rhosts/pam_rhosts.c
+@@ -43,6 +43,361 @@
+ #include <security/pam_modutil.h>
+ #include <security/pam_ext.h>
+ 
++#ifdef __UCLIBC__
++
++#include <stdio.h>
++#include <sys/stat.h>
++
++
++int  __check_rhosts_file = 1;
++
++/* Extremely paranoid file open function. */
++static FILE *
++iruserfopen (const char *file, uid_t okuser)
++{
++  struct stat st;
++  char *cp = NULL;
++  FILE *res = NULL;
++
++  /* If not a regular file, if owned by someone other than user or
++     root, if writeable by anyone but the owner, or if hardlinked
++     anywhere, quit.  */
++  if (lstat (file, &st))
++    cp = "lstat failed";
++  else if (!S_ISREG (st.st_mode))
++    cp = "not regular file";
++  else
++    {
++      res = fopen (file, "r");
++      if (!res)
++	cp = "cannot open";
++      else if (fstat (fileno (res), &st) < 0)
++	cp = "fstat failed";
++      else if (st.st_uid && st.st_uid != okuser)
++	cp = "bad owner";
++      else if (st.st_mode & (S_IWGRP|S_IWOTH))
++	cp = "writeable by other than owner";
++      else if (st.st_nlink > 1)
++	cp = "hard linked somewhere";
++    }
++
++  /* If there were any problems, quit.  */
++  if (cp != NULL)
++    {
++      if (res)
++	fclose (res);
++      return NULL;
++    }
++
++  return res;
++}
++
++/*
++ * Returns 1 for blank lines (or only comment lines) and 0 otherwise
++ */
++static int
++__isempty(char *p)
++{
++    while (*p && isspace (*p)) {
++	++p;
++    }
++
++    return (*p == '\0' || *p == '#') ? 1 : 0 ;
++}
++
++/* Returns 1 on positive match, 0 on no match, -1 on negative match.  */
++static int
++__icheckhost (u_int32_t raddr, char *lhost, const char *rhost)
++{
++	struct hostent *hp;
++	u_int32_t laddr;
++	int negate=1;    /* Multiply return with this to get -1 instead of 1 */
++	char **pp;
++
++#ifdef __UCLIBC_HAS_REENTRANT_RPC__
++	int save_errno;
++	size_t buflen;
++	char *buffer;
++	struct hostent hostbuf;
++	int herr;
++#endif
++
++#ifdef HAVE_NETGROUP
++	/* Check nis netgroup.  */
++	if (strncmp ("+@", lhost, 2) == 0)
++		return innetgr (&lhost[2], rhost, NULL, NULL);
++
++	if (strncmp ("-@", lhost, 2) == 0)
++		return -innetgr (&lhost[2], rhost, NULL, NULL);
++#endif /* HAVE_NETGROUP */
++
++	/* -host */
++	if (strncmp ("-", lhost,1) == 0) {
++		negate = -1;
++		lhost++;
++	} else if (strcmp ("+",lhost) == 0) {
++		return 1;                    /* asking for trouble, but ok.. */
++	}
++
++	/* Try for raw ip address first. */
++	if (isdigit (*lhost) && (laddr = inet_addr (lhost)) != INADDR_NONE)
++		return negate * (! (raddr ^ laddr));
++
++	/* Better be a hostname. */
++#ifdef __UCLIBC_HAS_REENTRANT_RPC__
++	buflen = 1024;
++	buffer = malloc(buflen);
++	save_errno = errno;
++
++	while (gethostbyname_r (lhost, &hostbuf, buffer, buflen, &hp, &herr)
++	       != 0) {
++	    free(buffer);
++	    return (0);
++	}
++	free(buffer);
++	__set_errno (save_errno);
++#else
++	hp = gethostbyname(lhost);
++#endif /* __UCLIBC_HAS_REENTRANT_RPC__ */
++
++	if (hp == NULL)
++		return 0;
++
++	/* Spin through ip addresses. */
++	for (pp = hp->h_addr_list; *pp; ++pp)
++		if (!memcmp (&raddr, *pp, sizeof (u_int32_t)))
++			return negate;
++
++	/* No match. */
++	return (0);
++}
++
++/* Returns 1 on positive match, 0 on no match, -1 on negative match.  */
++static int
++__icheckuser (const char *luser, const char *ruser)
++{
++
++    /*
++      luser is user entry from .rhosts/hosts.equiv file
++      ruser is user id on remote host
++      */
++
++#ifdef HAVE_NETGROUP
++    /* [-+]@netgroup */
++    if (strncmp ("+@", luser, 2) == 0)
++	return innetgr (&luser[2], NULL, ruser, NULL);
++
++    if (strncmp ("-@", luser,2) == 0)
++	return -innetgr (&luser[2], NULL, ruser, NULL);
++#endif /* HAVE_NETGROUP */
++
++    /* -user */
++    if (strncmp ("-", luser, 1) == 0)
++	return -(strcmp (&luser[1], ruser) == 0);
++
++    /* + */
++    if (strcmp ("+", luser) == 0)
++	return 1;
++
++    /* simple string match */
++    return strcmp (ruser, luser) == 0;
++}
++
++/*
++ * Returns 0 if positive match, -1 if _not_ ok.
++ */
++static int
++__ivaliduser2(FILE *hostf, u_int32_t raddr,	const char *luser,
++			  const char *ruser, const char *rhost)
++{
++    register const char *user;
++    register char *p;
++    int hcheck, ucheck;
++    char *buf = NULL;
++    size_t bufsize = 0;
++    int retval = -1;
++
++    while (getline (&buf, &bufsize, hostf) > 0) {
++	buf[bufsize - 1] = '\0'; /* Make sure it's terminated.  */
++        p = buf;
++
++	/* Skip empty or comment lines */
++	if (__isempty (p)) {
++	    continue;
++	}
++
++	/* Skip lines that are too long. */
++	if (strchr (p, '\n') == NULL) {
++	    int ch = getc_unlocked (hostf);
++
++	    while (ch != '\n' && ch != EOF)
++	      ch = getc_unlocked (hostf);
++	    continue;
++	}
++
++	for (;*p && !isspace(*p); ++p) {
++	    *p = tolower (*p);
++	}
++
++	/* Next we want to find the permitted name for the remote user.  */
++	if (*p == ' ' || *p == '\t') {
++	    /* <nul> terminate hostname and skip spaces */
++	    for (*p++='\0'; *p && isspace (*p); ++p);
++
++	    user = p;                   /* this is the user's name */
++	    while (*p && !isspace (*p))
++		++p;                    /* find end of user's name */
++	} else
++	    user = p;
++
++	*p = '\0';              /* <nul> terminate username (+host?) */
++
++	/* buf -> host(?) ; user -> username(?) */
++
++	/* First check host part */
++	hcheck = __icheckhost (raddr, buf, rhost);
++
++	if (hcheck < 0)
++	    break;
++
++	if (hcheck) {
++	    /* Then check user part */
++	    if (! (*user))
++		user = luser;
++
++	    ucheck = __icheckuser (user, ruser);
++
++	    /* Positive 'host user' match? */
++	    if (ucheck > 0) {
++		retval = 0;
++		break;
++	    }
++
++	    /* Negative 'host -user' match? */
++	    if (ucheck < 0)
++		break;
++
++	    /* Neither, go on looking for match */
++	}
++    }
++
++    free (buf);
++
++    return retval;
++}
++
++static int
++iruserok2 (u_int32_t raddr, int superuser, const char *ruser, const char *luser,
++		   const char *rhost)
++{
++	FILE *hostf = NULL;
++	int isbad = -1;
++
++	if (!superuser)
++		hostf = iruserfopen (_PATH_HEQUIV, 0);
++
++	if (hostf) {
++		isbad = __ivaliduser2 (hostf, raddr, luser, ruser, rhost);
++		fclose (hostf);
++
++		if (!isbad)
++			return 0;
++	}
++
++	if (__check_rhosts_file || superuser) {
++		char *pbuf;
++		struct passwd *pwd;
++		size_t dirlen;
++		uid_t uid;
++
++#ifdef __UCLIBC_HAS_REENTRANT_RPC__
++		size_t buflen = sysconf (_SC_GETPW_R_SIZE_MAX);
++		struct passwd pwdbuf;
++		char *buffer = stack_heap_alloc(buflen);
++
++		if (getpwnam_r (luser, &pwdbuf, buffer,
++			    buflen, &pwd) != 0 || pwd == NULL)
++		{
++			stack_heap_free(buffer);
++			return -1;
++		}
++		stack_heap_free(buffer);
++#else
++		if ((pwd = getpwnam(luser)) == NULL)
++			return -1;
++#endif
++
++		dirlen = strlen (pwd->pw_dir);
++		pbuf = malloc (dirlen + sizeof "/.rhosts");
++		strcpy (pbuf, pwd->pw_dir);
++		strcat (pbuf, "/.rhosts");
++
++		/* Change effective uid while reading .rhosts.  If root and
++		   reading an NFS mounted file system, can't read files that
++		   are protected read/write owner only.  */
++		uid = geteuid ();
++		seteuid (pwd->pw_uid);
++		hostf = iruserfopen (pbuf, pwd->pw_uid);
++		free(pbuf);
++
++		if (hostf != NULL) {
++			isbad = __ivaliduser2 (hostf, raddr, luser, ruser, rhost);
++			fclose (hostf);
++		}
++
++		seteuid (uid);
++		return isbad;
++	}
++	return -1;
++}
++
++int ruserok(const char *rhost, int superuser, const char *ruser,
++			const char *luser)
++{
++        struct hostent *hp;
++	u_int32_t addr;
++	char **ap;
++#ifdef __UCLIBC_HAS_REENTRANT_RPC__
++	size_t buflen;
++	char *buffer;
++	int herr;
++	struct hostent hostbuf;
++#endif
++
++#ifdef __UCLIBC_HAS_REENTRANT_RPC__
++	buflen = 1024;
++	buffer = stack_heap_alloc(buflen);
++
++	while (gethostbyname_r (rhost, &hostbuf, buffer,
++		    buflen, &hp, &herr) != 0 || hp == NULL)
++	{
++	    if (herr != NETDB_INTERNAL || errno != ERANGE) {
++		stack_heap_free(buffer);
++		return -1;
++	    } else
++	    {
++		/* Enlarge the buffer.  */
++		buflen *= 2;
++		stack_heap_free(buffer);
++		buffer = stack_heap_alloc(buflen);
++	    }
++	}
++	stack_heap_free(buffer);
++#else
++	if ((hp = gethostbyname(rhost)) == NULL) {
++		return -1;
++	}
++#endif
++	for (ap = hp->h_addr_list; *ap; ++ap) {
++		memmove(&addr, *ap, sizeof(addr));
++		if (iruserok2(addr, superuser, ruser, luser, rhost) == 0)
++			return 0;
++	}
++	return -1;
++}
++
++#endif /* __UCLIBC__ */
++
+ PAM_EXTERN
+ int pam_sm_authenticate (pam_handle_t *pamh, int flags, int argc,
+ 			 const char **argv)

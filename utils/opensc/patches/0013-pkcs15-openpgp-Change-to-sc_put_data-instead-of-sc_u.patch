@@ -1,0 +1,31 @@
+From e5c94d3f1f7e6a96a98815d6e51190498c357fb6 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Wed, 10 Apr 2013 18:35:58 +0700
+Subject: [PATCH 13/18] pkcs15-openpgp: Change to sc_put_data instead of
+ sc_update_binary when writing certificate.
+
+---
+ src/pkcs15init/pkcs15-openpgp.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/src/pkcs15init/pkcs15-openpgp.c b/src/pkcs15init/pkcs15-openpgp.c
+index 1455580..be1291e 100755
+--- a/src/pkcs15init/pkcs15-openpgp.c
++++ b/src/pkcs15init/pkcs15-openpgp.c
+@@ -279,10 +279,9 @@ static int openpgp_store_data(struct sc_pkcs15_card *p15card, struct sc_profile
+ 		r = sc_select_file(card, path, &file);
+ 		LOG_TEST_RET(card->ctx, r, "Cannot select cert file");
+ 		r = sc_pkcs15init_authenticate(profile, p15card, file, SC_AC_OP_UPDATE);
++		sc_log(card->ctx, "Data to write is %d long", content->len);
+ 		if (r >= 0 && content->len)
+-			r = sc_update_binary(p15card->card, 0,
+-			                     (const unsigned char *) content->value,
+-			                     content->len, 0);
++			r = sc_put_data(p15card->card, 0x7F21, (const unsigned char *) content->value, content->len);
+ 		break;
+ 
+ 	case SC_PKCS15_TYPE_DATA_OBJECT:
+-- 
+1.9.3
+

@@ -9,12 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flashrom
 PKG_VERSION:=0.9.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.flashrom.org/releases
 PKG_MD5SUM:=d239bafa1b46619d851f70f84a5b122a
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 

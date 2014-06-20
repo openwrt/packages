@@ -1,0 +1,30 @@
+Index: hamlib-1.2.15.3/configure.ac
+===================================================================
+--- hamlib-1.2.15.3.orig/configure.ac	2012-11-01 22:27:27.000000000 +0100
++++ hamlib-1.2.15.3/configure.ac	2014-06-15 09:34:25.557966205 +0200
+@@ -234,12 +234,12 @@
+ 		"You need a C99 compliant C compiler that supports struct/array intializers."
+ 		"Have you considered GCC lately?.")]);
+ 
+-dnl libxml2 required rigmem xml support
+-PKG_CHECK_MODULES([LIBXML2], [libxml-2.0],
+-	[AC_DEFINE(HAVE_XML2,[1],[Define if libxml2 is available])],
+-	[AC_MSG_WARN([libxml-2.0 pkg-config not found, XML support will be disabled])])
++#dnl libxml2 required rigmem xml support
++#PKG_CHECK_MODULES([LIBXML2], [libxml-2.0],
++#	[AC_DEFINE(HAVE_XML2,[1],[Define if libxml2 is available])],
++#	[AC_MSG_WARN([libxml-2.0 pkg-config not found, XML support will be disabled])])
+ AC_SUBST(LIBXML2_LIBS)
+ AC_SUBST(LIBXML2_CFLAGS)
+ 
+ dnl Check if libgd-dev is installed, so we can enable rigmatrix
+ 
+@@ -406,7 +406,7 @@
+ AM_CONDITIONAL(HAVE_USRP, test x"${cf_with_usrp}" = "xyes")
+ 
+ 
+-PKG_CHECK_MODULES(LIBUSB, libusb >= 0.1, ,
++PKG_CHECK_MODULES(LIBUSB, libusb >= 1.0, ,
+ 		  [AC_MSG_WARN([libusb pkg-config not found, USB backends will be disabled])])
+ CFLAGS="${CFLAGS} ${LIBUSB_CFLAGS}"
+ CXXFLAGS="${CXXFLAGS} ${LIBUSB_CFLAGS}"

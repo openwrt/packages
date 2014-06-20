@@ -1,0 +1,271 @@
+--- a/modules/pam_unix/yppasswd_xdr.c
++++ b/modules/pam_unix/yppasswd_xdr.c
+@@ -21,6 +21,268 @@
+ #endif
+ #include "yppasswd.h"
+ 
++#ifdef __UCLIBC__
++
++static const char xdr_zero[BYTES_PER_XDR_UNIT] = {0, 0, 0, 0};
++
++/*
++ * XDR integers
++ */
++bool_t
++xdr_int (XDR *xdrs, int *ip)
++{
++
++#if INT_MAX < LONG_MAX
++  long l;
++
++  switch (xdrs->x_op)
++    {
++    case XDR_ENCODE:
++      l = (long) *ip;
++      return XDR_PUTLONG (xdrs, &l);
++
++    case XDR_DECODE:
++      if (!XDR_GETLONG (xdrs, &l))
++	{
++	  return FALSE;
++	}
++      *ip = (int) l;
++    case XDR_FREE:
++      return TRUE;
++    }
++  return FALSE;
++#elif INT_MAX == LONG_MAX
++  return xdr_long (xdrs, (long *) ip);
++#elif INT_MAX == SHRT_MAX
++  return xdr_short (xdrs, (short *) ip);
++#else
++#error unexpected integer sizes in xdr_int()
++#endif
++}
++
++/*
++ * XDR null terminated ASCII strings
++ * xdr_string deals with "C strings" - arrays of bytes that are
++ * terminated by a NULL character.  The parameter cpp references a
++ * pointer to storage; If the pointer is null, then the necessary
++ * storage is allocated.  The last parameter is the max allowed length
++ * of the string as specified by a protocol.
++ */
++bool_t
++xdr_string (XDR *xdrs, char **cpp, u_int maxsize)
++{
++  char *sp = *cpp;	/* sp is the actual string pointer */
++  u_int size;
++  u_int nodesize;
++
++  /*
++   * first deal with the length since xdr strings are counted-strings
++   */
++  switch (xdrs->x_op)
++    {
++    case XDR_FREE:
++      if (sp == NULL)
++	{
++	  return TRUE;		/* already free */
++	}
++      /* fall through... */
++    case XDR_ENCODE:
++      if (sp == NULL)
++	return FALSE;
++      size = strlen (sp);
++      break;
++    case XDR_DECODE:
++      break;
++    }
++  if (!xdr_u_int (xdrs, &size))
++    {
++      return FALSE;
++    }
++  if (size > maxsize)
++    {
++      return FALSE;
++    }
++  nodesize = size + 1;
++
++  /*
++   * now deal with the actual bytes
++   */
++  switch (xdrs->x_op)
++    {
++    case XDR_DECODE:
++      if (nodesize == 0)
++	{
++	  return TRUE;
++	}
++      if (sp == NULL)
++	*cpp = sp = (char *) mem_alloc (nodesize);
++      if (sp == NULL)
++	{
++#ifdef USE_IN_LIBIO
++	  if (_IO_fwide (stderr, 0) > 0)
++	    (void) fwprintf (stderr, L"%s",
++			       _("xdr_string: out of memory\n"));
++	  else
++#endif
++	    (void) fputs (_("xdr_string: out of memory\n"), stderr);
++	  return FALSE;
++	}
++      sp[size] = 0;
++      /* fall into ... */
++
++    case XDR_ENCODE:
++      return xdr_opaque (xdrs, sp, size);
++
++    case XDR_FREE:
++      mem_free (sp, nodesize);
++      *cpp = NULL;
++      return TRUE;
++    }
++  return FALSE;
++}
++
++/*
++ * XDR long integers
++ * The definition of xdr_long() is kept for backward
++ * compatibility. Instead xdr_int() should be used.
++ */
++bool_t
++xdr_long (XDR *xdrs, long *lp)
++{
++  if (xdrs->x_op == XDR_ENCODE
++      && (sizeof (int32_t) == sizeof (long)
++	  || (int32_t) *lp == *lp))
++    return XDR_PUTLONG (xdrs, lp);
++
++  if (xdrs->x_op == XDR_DECODE)
++    return XDR_GETLONG (xdrs, lp);
++
++  if (xdrs->x_op == XDR_FREE)
++    return TRUE;
++
++  return FALSE;
++}
++
++/*
++ * XDR unsigned integers
++ */
++bool_t
++xdr_u_int (XDR *xdrs, u_int *up)
++{
++#if UINT_MAX < ULONG_MAX
++  u_long l;
++
++  switch (xdrs->x_op)
++    {
++    case XDR_ENCODE:
++      l = (u_long) * up;
++      return XDR_PUTLONG (xdrs, (long *) &l);
++
++    case XDR_DECODE:
++      if (!XDR_GETLONG (xdrs, (long *) &l))
++	{
++	  return FALSE;
++	}
++      *up = (u_int) l;
++    case XDR_FREE:
++      return TRUE;
++    }
++  return FALSE;
++#elif UINT_MAX == ULONG_MAX
++  return xdr_u_long (xdrs, (u_long *) up);
++#elif UINT_MAX == USHRT_MAX
++  return xdr_short (xdrs, (short *) up);
++#else
++#error unexpected integer sizes in xdr_u_int()
++#endif
++}
++
++/*
++ * XDR opaque data
++ * Allows the specification of a fixed size sequence of opaque bytes.
++ * cp points to the opaque object and cnt gives the byte length.
++ */
++bool_t
++xdr_opaque (XDR *xdrs, caddr_t cp, u_int cnt)
++{
++  u_int rndup;
++  static char crud[BYTES_PER_XDR_UNIT];
++
++  /*
++   * if no data we are done
++   */
++  if (cnt == 0)
++    return TRUE;
++
++  /*
++   * round byte count to full xdr units
++   */
++  rndup = cnt % BYTES_PER_XDR_UNIT;
++  if (rndup > 0)
++    rndup = BYTES_PER_XDR_UNIT - rndup;
++
++  switch (xdrs->x_op)
++    {
++    case XDR_DECODE:
++      if (!XDR_GETBYTES (xdrs, cp, cnt))
++	{
++	  return FALSE;
++	}
++      if (rndup == 0)
++	return TRUE;
++      return XDR_GETBYTES (xdrs, (caddr_t)crud, rndup);
++
++    case XDR_ENCODE:
++      if (!XDR_PUTBYTES (xdrs, cp, cnt))
++	{
++	  return FALSE;
++	}
++      if (rndup == 0)
++	return TRUE;
++      return XDR_PUTBYTES (xdrs, xdr_zero, rndup);
++
++    case XDR_FREE:
++      return TRUE;
++    }
++  return FALSE;
++}
++
++/*
++ * XDR unsigned long integers
++ * The definition of xdr_u_long() is kept for backward
++ * compatibility. Instead xdr_u_int() should be used.
++ */
++bool_t
++xdr_u_long (XDR *xdrs, u_long *ulp)
++{
++  switch (xdrs->x_op)
++    {
++    case XDR_DECODE:
++      {
++	long int tmp;
++
++	if (XDR_GETLONG (xdrs, &tmp) == FALSE)
++	  return FALSE;
++
++	*ulp = (uint32_t) tmp;
++	return TRUE;
++      }
++
++    case XDR_ENCODE:
++      if (sizeof (uint32_t) != sizeof (u_long)
++	  && (uint32_t) *ulp != *ulp)
++	return FALSE;
++
++      return XDR_PUTLONG (xdrs, (long *) ulp);
++
++    case XDR_FREE:
++      return TRUE;
++    }
++  return FALSE;
++}
++
++#endif /* UCLIBC */
++
+ bool_t
+ xdr_xpasswd(XDR * xdrs, xpasswd * objp)
+ {

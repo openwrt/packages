@@ -1,0 +1,88 @@
+diff --git a/btconfig.cpp b/btconfig.cpp
+index e1badd0..aaa6feb 100644
+--- a/btconfig.cpp
++++ b/btconfig.cpp
+@@ -828,7 +828,7 @@ void CfgCTCS(Config<const char *> *config)
+     strncpy(CTCS.m_host, *cfg_ctcs, MAXHOSTNAMELEN-1);
+     CTCS.m_host[MAXHOSTNAMELEN-1] = '\0';
+     if( (s = strchr(CTCS.m_host, ':')) ) *s='\0';
+-    CTCS.m_port = atoi(s = (strchr(*cfg_ctcs, ':')+1));
++    CTCS.m_port = atoi(s = (char*)(strchr(*cfg_ctcs, ':')+1));
+     if( strchr(s, ':') )
+       CONSOLE.Input("Enter CTCS password: ", CTCS.m_pass, CTCS_PASS_SIZE);
+     else *CTCS.m_pass = '\0';
+diff --git a/btcontent.cpp b/btcontent.cpp
+index d84f450..88ccb50 100644
+--- a/btcontent.cpp
++++ b/btcontent.cpp
+@@ -1408,27 +1408,27 @@ void btContent::CompletionCommand()
+         ptmp = cmdstr + strlen(cmdstr);
+         parg = strstr(parg, "&t") + 2;
+         strcat(pt, parg);
+-        pt = strstr(ptmp, "&t");
+-        if( pd ) pd = strstr(ptmp, "&d");
+-        if( pw ) pw = strstr(ptmp, "&w");
++        pt = (char *)strstr(ptmp, "&t");
++        if( pd ) pd = (char *)strstr(ptmp, "&d");
++        if( pw ) pw = (char *)strstr(ptmp, "&w");
+       }
+       if( pd && (!pt || pd < pt) && (!pw || pd < pw) ){
+         strcpy(pd, m_btfiles.GetDataName());
+         ptmp = cmdstr + strlen(cmdstr);
+         parg = strstr(parg, "&d") + 2;
+         strcat(pd, parg);
+-        pd = strstr(ptmp, "&d");
+-        if( pt ) pt = strstr(ptmp, "&t");
+-        if( pw ) pw = strstr(ptmp, "&w");
++        pd = (char *)strstr(ptmp, "&d");
++        if( pt ) pt = (char *)strstr(ptmp, "&t");
++        if( pw ) pw = (char *)strstr(ptmp, "&w");
+       }
+       if( pw && (!pt || pw < pt) && (!pd || pw < pd) ){
+         strcpy(pw, wd);
+         ptmp = cmdstr + strlen(cmdstr);
+         parg = strstr(parg, "&w") + 2;
+         strcat(pw, parg);
+-        pw = strstr(ptmp, "&w");
+-        if( pt ) pt = strstr(ptmp, "&t");
+-        if( pd ) pd = strstr(ptmp, "&d");
++        pw = (char *)strstr(ptmp, "&w");
++        if( pt ) pt = (char *)strstr(ptmp, "&t");
++        if( pd ) pd = (char *)strstr(ptmp, "&d");
+       }
+     }
+   }
+diff --git a/console.cpp b/console.cpp
+index bdadb61..5ab2492 100644
+--- a/console.cpp
++++ b/console.cpp
+@@ -511,11 +511,8 @@ void ConStream::Error(int sev, const char *message, ...)
+   va_list ap;
+ 
+   va_start(ap, message);
+-  if( g_console_ready ) CONSOLE.Error(sev, message, ap);
+-  else{
+     vfprintf(stderr, message, ap);
+     fflush(stderr);
+-  }
+   va_end(ap);
+ }
+ 
+@@ -1766,7 +1763,7 @@ void Console::Warning(int sev, const char *message, ...)
+   va_end(ap);
+ }
+ 
+-
++/*
+ void Console::Error(int sev, const char *message, va_list ap)
+ {
+   vsnprintf(m_buffer, sizeof(m_buffer), message, ap);
+@@ -1778,7 +1775,7 @@ void Console::Error(int sev, const char *message, va_list ap)
+   m_warnings.AddMessage(sev, m_buffer);
+   if( sev && *cfg_ctcs ) CTCS.Send_Info(sev, m_buffer);
+ }
+-
++*/
+ 
+ void Console::Debug(const char *message, ...)
+ {
