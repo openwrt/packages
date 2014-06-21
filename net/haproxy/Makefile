@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=01
+PKG_RELEASE:=03
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.5/src/
 PKG_MD5SUM:=e33bb97e644e98af948090f1ecebbda9
@@ -36,8 +36,14 @@ define Package/haproxy/description
   Open source High Performance TCP/HTTP Load Balancer
 endef
 
+ifeq ($(CONFIG_avr32),y)
+  LINUX_TARGET:=linux26
+else
+  LINUX_TARGET:=linux2628
+endif
+
 define Build/Compile
-	$(MAKE) TARGET=linux2628 -C $(PKG_BUILD_DIR) \
+	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
