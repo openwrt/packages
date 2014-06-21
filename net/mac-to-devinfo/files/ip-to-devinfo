@@ -1,0 +1,80 @@
+#!/bin/sh
+#    ip-to-devinfo - IP (through arping or ping and arp cache) to MAC IEEE and 
+#    custom information
+#    Copyright (C) 2009  Daniel Dickinson
+
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License along
+#    with this program; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+ARP=arp
+MACTODEV=mac-to-devinfo
+
+usage() {
+    echo "Usage: $0 [-i interface] [-x port] IP-address"
+}
+
+if [ "$1" == "-i" ]; then
+    INTERFACE="$2"
+    if [ -z "$INTERFACE" ]; then
+	echo "-i without interface"
+	usage
+	exit 1
+    fi
+    shift
+    shift
+fi
+
+if [ "$1" == "-x" ]; then
+    PORT="-x $2"
+    if [ -z "$PORT" ]; then
+	echo "-x without the port"
+	usage
+	exit 1
+    fi
+    shift
+    shift
+fi
+
+IP="$1"
+shift
+
+if [ -z "$IP" ]; then
+	echo "Must specify IP address"
+	usage
+	exit 1
+fi
+
+
+if [ ! -x "$(which $ARP)" ]; then
+    do_arp() {
+	cat /proc/net/arp
+    }
+    ARPMACFIELD=4
+else
+    do_arp() {
+	$ARP -n
+    }
+    ARPMACFIELD=3
+fi
+
+if [ -z "$INTERFACE" ]; then
+    ping -q -c 2 $IP >/dev/null
+    MAC=$(do_arp|grep "$IP "|tr -s \  | cut -f$ARPMACFIELD -d\  )
+else
+    MAC=$(arping -f -c 5 -I $INTERFACE $IP | grep 'Unicast reply from' | cut -f2 -d \[ | cut -f1 -d\])
+fi
+
+$MACTODEV $PORT $MAC
+
+

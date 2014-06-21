@@ -1,0 +1,197 @@
+#!/bin/sh
+#    mac-to-devinfo - MAC IEEE and custom information
+#    Copyright (C) 2009  Daniel Dickinson
+
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License along
+#    with this program; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+UCIBIN=uci
+UCIFUNC=/usr/lib/mac-to-devinfo/devinfo-functions.sh
+OVERRIDETABLE=mactodevinfo
+DEVDB=macdevdb
+UCICONFIG=/etc/config
+
+OUIURL=http://standards.ieee.org/regauth/oui/oui.txt
+IABURL=http://standards.ieee.org/regauth/oui/iab.txt
+
+OUIDIR=/var/cache/mac-to-devinfo
+
+OUIFILE=$OUIDIR/oui.txt
+IABFILE=$OUIDIR/iab.txt
+
+UCIDEVDB=/usr/share/mac-to-devinfo
+UCISTATE="$(mktemp -t)"
+
+. $UCIFUNC
+
+
+if [ "$1" == "-x" ]; then
+    PORT="$2"
+    if [ -z "$PORT" ]; then
+	echo "-x without the port"
+	echo "Usage: $0 [-x port] MAC-address"
+	exit 1
+    fi
+    shift
+    shift
+fi
+
+MAC="$1"
+
+if [ -z "$MAC" ]; then
+	echo "Unknown MAC address | Unknown | unknown | unknown | unknown"
+	exit 1
+fi
+
+MAC=$(echo $MAC | sed -e 's/^\([0-9]\):/0\1:/g' | sed -e 's/:\([0-9]\)$/:0\1/g' | sed -e 's/:\([0-9]\):/:0\1:/g')
+
+parse_override() {
+	local cfg="$1"
+	config_get name "$cfg" name
+	config_get maclow "$cfg" maclow
+	config_get machigh "$cfg" machigh
+	config_get vendor "$cfg" vendor
+	config_get devtype "$cfg" devtype
+	config_get model "$cfg" model
+	config_get ouiowneroverride "$cfg" ouiowner
+	LOW=$(echo $maclow | sed -e 's/://g')
+	HIGH=$(echo $machigh | sed -e 's/://g')
+	if [ -z "$LOW" ] || [ -z "$HIGH" ] || [ -n "$(echo $LOW | grep -E -v '^[0-9A-Fa-f]{12}$')" ] || [ -n "$(echo $HIGH | grep -E -v '^[0-9A-Fa-f]{12}$')" ]; then
+	        echo "Invalid mac range for $name: $ouiowneroverride $vendor $devtype $model : $LOW-$HIGH" >&2
+		return 1
+	fi
+
+	LOWMSB=$(expr substr "$LOW" 1 6)
+	LOWLSB=$(expr substr "$LOW" 7 6)
+	HIGHMSB=$(expr substr "$HIGH" 1 6)
+	HIGHLSB=$(expr substr "$HIGH" 7 6)
+
+	if [ -z "$LOWMSB" ] || [ -z "$LOWLSB" ] || [ -z "$HIGHMSB" ] || [ -z "$HIGHLSB" ]; then
+		echo "Error splitting database address strings"
+		return 1
+	fi
+
+	MACMSB=$(expr substr "$MACNUM" 1 6)
+	MACLSB=$(expr substr "$MACNUM" 7 6)
+
+	if [ -z "$MACMSB" ] || [ -z "$MACLSB" ]; then
+		echo "Error spliiting mac address string"
+		return 1
+	fi
+
+	if [ -n "$ouiowneroverride" ]; then
+	    OUIOWNER="$ouiowneroverride"
+	fi
+	if [ $((0x$MACMSB)) -ge $((0x$LOWMSB)) ] && [ $((0x$MACMSB)) -le $((0x$HIGHMSB)) ]; then
+		if [ $((0x$MACLSB)) -ge $((0x$LOWLSB)) ] && [ $((0x$MACLSB)) -le $((0x$HIGHLSB)) ]; then
+		        if [ "$PORT" == "5060" ]; then
+			    if [ "$vendor" == "Vertical Communications" ]; then
+				devtype="VoIP Phone"
+				model="IP200x"
+			    fi
+			fi
+			if [ "$PORT" == "6060" ]; then
+			    if [ "$vendor" == "Vertical Communications" ]; then
+				devtype="VoIP PBX"
+				model="Xcelerator IP"
+			    fi
+			fi
+			if [ -n "$OUTSTRING" ]; then	
+				echo "ERROR: We already have found information '$OUTSTRING'" >&2
+				echo -n "and now we have: " >&2
+				echo "$MAC | $OUIOWNER | $vendor | $devtype | $model" >&2
+				return 1
+			else
+				echo "$MAC | $OUIOWNER | $vendor | $devtype | $model"
+				return 0
+			fi
+		fi
+	fi
+	return 0
+}
+
+if [ ! -r "$OUIFILE" ] || [ ! -r "$IABFILE" ]; then
+	echo "Missing IEEE Registration Authority Database.  Please run prep-devinfo"
+	exit 1
+fi	
+
+OUI="$(echo $MAC | cut -f1-3 -d:  | sed -e 's/:/-/g' | tr abcdef ABCDEF )"
+
+OUIOWNER="$(cat $OUIFILE | grep $OUI | tr -s '\t' | cut -f2- -d"$(printf '\t')" )"
+
+if [ -z "$OUIOWNER" ] || [ "$OUIOWNER" = "IEEE REGISTRATION AUTHORITY" ]; then
+	if [ -n "$(cat $IABFILE | grep $OUI)" ]; then
+		LOWRANGE="$(echo $MAC | cut -f4-6 -d:  | sed -e 's/://g' | tr abcdef ABCDEF )"
+		for range in $(cat $IABFILE |grep -E '[0-9A-F]{6}\-[0-9A-F]{6}' |cut -f1 -d"$(printf '\t')"  ); do
+			LOW="$(echo $range | cut -f1 -d- )"
+			HIGH="$(echo $range | cut -f2 -d- )"
+			if [ -z "$LOW" ] || [ -z "$HIGH" ]; then
+				echo "Error parsing IAB table"
+				exit 1
+
+			fi
+			LOWMSB=$(expr substr "$LOW" 1 6)
+			LOWLSB=$(expr substr "$LOW" 7 6)
+			HIGHMSB=$(expr substr "$HIGH" 1 6)
+			HIGHLSB=$(expr substr "$HIGH" 7 6)
+
+			if [ -z "$LOWMSB" ] || [ -z "$LOWLSB" ] || [ -z "$HIGHMSB" ] || [ -z "$HIGHLSB" ]; then
+				echo "Error splitting registration authority IAB address strings"
+				exit 1
+			fi
+
+			MACMSB=$(expr substr "$LOWRANGE" 1 6)
+			MACLSB=$(expr substr "$LOWRANGE" 7 6)
+			
+			if [ -z "$MACMSB" ] || [ -z "$MACLSB" ]; then
+				echo "Error splitting mac address string"
+				exit 1
+			fi
+			if [ $((0x$MACMSB)) -ge $((0x$LOWMSB)) ] && [ $((0x$MACMSB)) -le $((0x$HIGHMSB)) ]; then
+				if [ $((0x$MACLSB)) -ge $((0x$LOWLSB)) ] && [ $((0x$MACLSB)) -le $((0x$HIGHLSB)) ]; then
+					OUIOWNER="$(cat $IABFILE | grep "$LOW-$HIGH" | tr -s '\t' | cut -f3- -d"$(printf '\t')" )"
+					break;
+				fi
+			fi
+		done
+	fi
+fi
+
+if [ -z "$OUIOWNER" ]; then
+    OUIOWNER="Unknown Organization"
+fi
+
+MACNUM="$(echo $MAC |sed -e 's/://g' | tr ABCDEF abcdef )"
+
+UCI="$UCIBIN -c $UCIDEVDB"
+config_load $DEVDB
+DEVSTRING=$(config_foreach parse_override mactodevinfo)
+
+SAVEDEVSTRING="$DEVSTRING"
+
+UCI="$UCIBIN -c $UCICONFIG"
+config_load $OVERRIDETABLE
+DEVSTRING=$(config_foreach parse_override mactodevinfo)
+
+if [ -z "$DEVSTRING" ]; then
+    if [ -z "$SAVEDEVSTRING" ]; then
+	echo "$MAC | $OUIOWNER | unknown | unknown | unknown"
+    else
+	echo "$SAVEDEVSTRING"
+    fi
+else
+    echo "$DEVSTRING"
+fi
+
+rm -f $UCISTATE
