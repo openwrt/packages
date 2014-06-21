@@ -127,6 +127,13 @@ if [ ! -r "$OUIFILE" ] || [ ! -r "$IABFILE" ]; then
 fi	
 
 OUI="$(echo $MAC | cut -f1-3 -d:  | sed -e 's/:/-/g' | tr abcdef ABCDEF )"
+HIGHBYTE="$(echo $OUI | cut -f1 -d- )"
+
+if [[ $(($((0x$HIGHBYTE)) & $((0x2)))) != 0 ]]; then
+	LOCALMAC="(Locally Administered)"
+	NEWHIGHBYTE="$(printf "%X" $(( $((0x$HIGHBYTE)) & $(( ~$((0x2)) )) )) )"
+	OUI="$NEWHIGHBYTE-$(echo $OUI | cut -f2-3 -d- )"
+fi
 
 OUIOWNER="$(cat $OUIFILE | grep $OUI | tr -s '\t' | cut -f2- -d"$(printf '\t')" )"
 
@@ -166,6 +173,10 @@ if [ -z "$OUIOWNER" ] || [ "$OUIOWNER" = "IEEE REGISTRATION AUTHORITY" ]; then
 			fi
 		done
 	fi
+fi
+
+if [ -n "$OUIOWNER" ] && [ -n "$LOCALMAC" ]; then
+	OUIOWNER="$OUIOWNER $LOCALMAC"
 fi
 
 if [ -z "$OUIOWNER" ]; then
