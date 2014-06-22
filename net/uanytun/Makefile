@@ -12,12 +12,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uanytun
-PKG_VERSION:=0.3.4
+PKG_VERSION:=0.3.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.anytun.org/download/
-PKG_MD5SUM:=b4085ab7f0127732818b8b801f280aef
+PKG_MD5SUM:=ce47ad45003ff1d84eaf5276941b9ddf
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -37,9 +37,9 @@ endef
 
 define Package/uanytun
   $(call Package/uanytun/template)
-  TITLE+= (gcrypt)
-  VARIANT:=gcrypt
-  DEPENDS+=+libgcrypt
+  TITLE+= (nettle)
+  VARIANT:=nettle
+  DEPENDS+=+libnettle
 endef
 
 define Package/uanytun/conffiles
@@ -101,8 +101,9 @@ VARIANT_CFLAGS:=
 VARIANT_LDFLAGS:=-ldl
 VARIANT_MAKE_OPTS:=
 
-ifeq ($(BUILD_VARIANT),gcrypt)
-VARIANT_LDFLAGS+=-lgpg-error -lgcrypt
+ifeq ($(BUILD_VARIANT),nettle)
+VARIANT_CFLAGS+=-DUSE_NETTLE
+VARIANT_LDFLAGS+=-lnettle
 endif
 
 ifeq ($(BUILD_VARIANT),sslcrypt)
