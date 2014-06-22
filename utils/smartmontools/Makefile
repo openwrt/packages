@@ -41,7 +41,6 @@ endef
 
 define Package/smartd
   $(call Package/smartmontools/Default)
-  DEPENDS+= +rsync
   TITLE+= Daemon
 endef
 
