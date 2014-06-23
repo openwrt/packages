@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2010 OpenWrt.org
+
+START=99
+STOP=80
+
+SERVICE_USE_PID=1
+
+CRTMPSERVER_BIN="/usr/bin/crtmpserver"
+CRTMPSERVER_CONFIG="/etc/crtmpserver.lua"
+CRTMPSERVER_PID="/var/run/crtmpserver.pid"
+
+start()
+{
+        echo "start $CRTMPSERVER_BIN"
+        start-stop-daemon -S -x "$CRTMPSERVER_BIN" -- --daemon --pid="$CRTMPSERVER_PID" \
+                "$CRTMPSERVER_CONFIG"
+}
+stop() {
+
+        echo "stop $CRTMPSERVER_BIN"
+        start-stop-daemon  -K -x $CRTMPSERVER_BIN -p $CRTMPSERVER_PID
+}
+
+reload()
+{
+        stop
+        start
+}
+

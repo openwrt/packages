@@ -1,0 +1,11 @@
+--- a/builders/make/compile.mk
++++ b/builders/make/compile.mk
+@@ -67,7 +67,7 @@ TINYXML_OBJS = $(TINYXML_SRCS:.cpp=.tiny
+ 
+ #common
+ COMMON_INCLUDE=$(LUA_INCLUDE) $(TINYXML_INCLUDE) $(SSL_INCLUDE) -I$(PROJECT_BASE_PATH)/sources/common/include
+-COMMON_LIBS=$(SSL_LIB) -L$(OUTPUT_DYNAMIC) -llua -ltinyxml
++COMMON_LIBS=$(SSL_LIB) -L$(OUTPUT_DYNAMIC) -llua -ltinyxml -lcrypt
+ COMMON_SRCS = $(shell find $(PROJECT_BASE_PATH)/sources/common/src -type f -name "*.cpp")
+ COMMON_OBJS = $(COMMON_SRCS:.cpp=.common.o)
+ 

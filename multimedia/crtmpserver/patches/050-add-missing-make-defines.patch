@@ -1,0 +1,57 @@
+--- a/builders/make/compile.mk
++++ b/builders/make/compile.mk
+@@ -43,17 +43,22 @@ FEATURES_DEFINES = \
+ 	-DHAS_PROTOCOL_RTP \
+ 	-DHAS_PROTOCOL_TS \
+ 	-DHAS_PROTOCOL_VAR \
++	-DHAS_PROTOCOL_CLI \
++	-DHAS_PROTOCOL_HLS \
++	-DHAS_PROTOCOL_RAWHTTPSTREAM \
+ 	-DHAS_LUA \
+ 	-DHAS_MEDIA_MP3 \
+ 	-DHAS_MEDIA_MP4 \
+-	-DHAS_MEDIA_FLV
++	-DHAS_MEDIA_FLV \
++	-DHAS_SYSLOG
++	
+ 
+ 
+ DEFINES = $(PLATFORM_DEFINES) $(FEATURES_DEFINES)
+ 
+ #library paths
+ SSL_INCLUDE=-I$(SSL_BASE)/include
+-SSL_LIB=-L$(SSL_BASE)/lib -lssl -lcrypto
++SSL_LIB=-L$(SSL_BASE)/lib -lssl -lcrypto -ldl
+ 
+ #lua
+ LUA_INCLUDE=-I$(PROJECT_BASE_PATH)/3rdparty/lua-dev
+@@ -67,25 +72,25 @@ TINYXML_OBJS = $(TINYXML_SRCS:.cpp=.tiny
+ 
+ #common
+ COMMON_INCLUDE=$(LUA_INCLUDE) $(TINYXML_INCLUDE) $(SSL_INCLUDE) -I$(PROJECT_BASE_PATH)/sources/common/include
+-COMMON_LIBS=$(SSL_LIB) -L$(OUTPUT_DYNAMIC) -llua -ltinyxml -lcrypt
++COMMON_LIBS=$(SSL_LIB) -L$(OUTPUT_DYNAMIC) $(PROJECT_BASE_PATH)/builders/make/output/dynamic/liblua.so -ltinyxml -lcrypt -ldl
+ COMMON_SRCS = $(shell find $(PROJECT_BASE_PATH)/sources/common/src -type f -name "*.cpp")
+ COMMON_OBJS = $(COMMON_SRCS:.cpp=.common.o)
+ 
+ #thelib
+ THELIB_INCLUDE=$(COMMON_INCLUDE) -I$(PROJECT_BASE_PATH)/sources/thelib/include
+-THELIB_LIBS=$(COMMON_LIBS) -L$(OUTPUT_DYNAMIC) -lcommon
++THELIB_LIBS=$(COMMON_LIBS) -L$(OUTPUT_DYNAMIC) -lcommon -ldl
+ THELIB_SRCS = $(shell find $(PROJECT_BASE_PATH)/sources/thelib/src -type f -name "*.cpp")
+ THELIB_OBJS = $(THELIB_SRCS:.cpp=.thelib.o)
+ 
+ #tests
+ TESTS_INCLUDE=$(THELIB_INCLUDE) -I$(PROJECT_BASE_PATH)/sources/tests/include
+-TESTS_LIBS=$(THELIB_LIBS) -L$(OUTPUT_DYNAMIC) -lthelib
++TESTS_LIBS=$(THELIB_LIBS) -L$(OUTPUT_DYNAMIC) -lthelib -ldl
+ TESTS_SRCS=$(shell find $(PROJECT_BASE_PATH)/sources/tests/src -type f -name "*.cpp")
+ TESTS_OBJS=$(TESTS_SRCS:.cpp=.tests.o)
+ 
+ #crtmpserver
+ CRTMPSERVER_INCLUDE=$(THELIB_INCLUDE) -I$(PROJECT_BASE_PATH)/sources/crtmpserver/include
+-CRTMPSERVER_LIBS=$(THELIB_LIBS) -L$(OUTPUT_DYNAMIC) -lthelib
++CRTMPSERVER_LIBS=$(THELIB_LIBS) -L$(OUTPUT_DYNAMIC) -lthelib -ldl
+ CRTMPSERVER_SRCS=$(shell find $(PROJECT_BASE_PATH)/sources/crtmpserver/src -type f -name "*.cpp")
+ CRTMPSERVER_OBJS_DYNAMIC=$(CRTMPSERVER_SRCS:.cpp=.crtmpserver_dynamic.o)
+ CRTMPSERVER_OBJS_STATIC=$(CRTMPSERVER_SRCS:.cpp=.crtmpserver_static.o)
