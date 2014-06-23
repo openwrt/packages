@@ -1,0 +1,101 @@
+--- aiccu/unix-console/Makefile.orig	2007-09-02 23:19:39.000000000 +0200
++++ aiccu/unix-console/Makefile	2007-09-02 23:20:11.000000000 +0200
+@@ -25,7 +25,8 @@
+ # CWARNS += -Wpacked
+ 
+ #CFLAGS	+= $(CWARNS) -D_GNU_SOURCE -D_DEBUG -g3 -O0
+-CFLAGS	+= $(CWARNS) -D_GNU_SOURCE
++CFLAGS	+= $(CWARNS) $(EXTRA_CFLAGS) -D_GNU_SOURCE
++LDFLAGS += $(EXTRA_LDFLAGS)
+ CC      = @gcc
+ RM      = rm
+ 
+@@ -40,25 +41,25 @@
+ # GnuTLS Support ?
+ # Used by TIC to secure that communication
+ # Currently defaultly builds only on Linux, but other platforms might easily also support it
+-ifeq ($(shell uname | grep -c "Linux"),1)
++ifneq ($(HAVE_GNUTLS),)
+ CFLAGS	+= -D AICCU_GNUTLS
+ LDFLAGS += -lgnutls
+ endif
+ 
+ # Linux
+-ifeq ($(shell uname | grep -c "Linux"),1)
++ifeq ($(OS_NAME),Linux)
+ CFLAGS  += -D_LINUX -D HAS_IFHEAD -D AICCU_TYPE="\"linux\""
+ SRCS	+= ../common/aiccu_linux.c
+ OBJS	+= ../common/aiccu_linux.o
+-LDFLAGS	+= -lpthread -lresolv
++LDFLAGS	+= -pthread -lresolv
+ endif
+ 
+ # FreeBSD
+-ifeq ($(shell uname | grep -c "FreeBSD"),1)
++ifeq ($(OS_NAME),FreeBSD)
+ CFLAGS	+= -D_FREEBSD
+ 
+ # FreeBSD 4.x
+-ifeq ($(shell uname -r | cut -c 1),4)
++ifeq ($(shell echo $(OS_VERSION) | cut -c 1),4)
+ CFLAGS	+= -D AICCU_TYPE="\"freebsd4\""
+ SRCS	+= ../common/aiccu_freebsd4.c
+ OBJS	+= ../common/aiccu_freebsd4.o
+@@ -71,7 +72,7 @@
+ endif
+ 
+ # DragonFlyBSD
+-ifeq ($(shell uname | grep -c "DragonFly"),1)
++ifeq ($(OS_NAME),DragonFly)
+ CFLAGS	+= -D_DFBSD -D NEED_IFHEAD -D AICCU_TYPE="\"dragonfly\""
+ SRCS	+= ../common/aiccu_freebsd4.c
+ OBJS	+= ../common/aiccu_freebsd4.o
+@@ -79,7 +80,7 @@
+ endif
+ 
+ # NetBSD
+-ifeq ($(shell uname | grep -c "NetBSD"),1)
++ifeq ($(OS_NAME),NetBSD)
+ CFLAGS	+= -D_NETBSD -D AICCU_TYPE="\"kame\""
+ 
+ # Check if net/if_tun.h has TUNSIFHEAD and enable support for it
+@@ -97,10 +98,10 @@
+ endif
+ 
+ # OpenBSD
+-ifeq ($(shell uname | grep -c "OpenBSD"),1)
++ifeq ($(OS_NAME),OpenBSD)
+ CFLAGS	+= -D_OPENBSD -D HAS_IFHEAD
+ # 2.7-2.9
+-ifeq ($(shell uname -r | cut -c 1),2)
++ifeq ($(shell echo $(OS_VERSION) | cut -c 1),2)
+ CFLAGS	+= -D AICCU_TYPE="\"openbsd2\""
+ SRCS	+= ../common/aiccu_openbsd2.c
+ OBJS	+= ../common/aiccu_openbsd2.o
+@@ -114,7 +115,7 @@
+ endif
+ 
+ # Darwin
+-ifeq ($(shell uname | grep -c "Darwin"),1)
++ifeq ($(OS_NAME),Darwin)
+ CFLAGS	+= -D_DARWIN -D NEED_IFHEAD -D AICCU_TYPE="\"darwin\""
+ SRCS	+= ../common/aiccu_darwin.c
+ OBJS	+= ../common/aiccu_darwin.o
+@@ -122,7 +123,7 @@
+ endif
+ 
+ # SunOS / Solaris
+-ifeq ($(shell uname | grep -c "SunOS"),1)
++ifeq ($(OS_NAME),SunOS)
+ CFLAGS	+= -D_SUNOS -D AICCU_TYPE="\"sunos\""
+ SRCS	+= ../common/aiccu_sunos.c
+ OBJS	+= ../common/aiccu_sunos.o
+@@ -130,7 +131,7 @@
+ endif
+ 
+ # AIX
+-ifeq ($(shell uname | grep -c "AIX"),1)
++ifeq ($(OS_NAME),AIX)
+ CC	= @/usr/vac/bin/xlc_r
+ CFLAGS	= -qthreaded -q64 -qlanglvl=stdc99 -bmaxdata:0xD0000000 -D_64BIT -g -qdbxextra -qfullpath -qheapdebug -qformat=all -qcheck=all
+ CFLAGS	+= -D AICCU_CONSOLE
