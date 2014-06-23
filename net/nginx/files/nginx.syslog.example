@@ -1,0 +1,59 @@
+worker_processes  1;
+
+syslog local6 nginx;
+
+events {
+        worker_connections  1024;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] $request '
+        '"$status" $body_bytes_sent "$http_referer" '
+        '"$http_user_agent" "$http_x_forwarded_for"';
+
+    server {
+        listen       80;
+        server_name  localhost;
+
+        #send the log to syslog and file.
+        access_log  syslog:notice|logs/host1.access.log main;
+
+        # pre 1.5.x
+        error_log syslog:notice|logs/host1.error.log;
+
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+    }
+
+    server {
+        listen       80;
+        server_name  www.example.com;
+
+        access_log  syslog:warn|logs/host2.access.log main;
+        error_log syslog:warn|logs/host2.error.log;
+
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+    }
+
+    server {
+        listen       80;
+        server_name  www.test.com;
+
+        #send the log just to syslog.
+        access_log  syslog:error main;
+        error_log syslog:error;
+
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+    }
+}

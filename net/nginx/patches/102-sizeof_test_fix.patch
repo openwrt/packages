@@ -1,0 +1,26 @@
+--- a/auto/types/sizeof
++++ b/auto/types/sizeof
+@@ -25,8 +25,13 @@ $NGX_INCLUDE_UNISTD_H
+ $NGX_INCLUDE_INTTYPES_H
+ $NGX_INCLUDE_AUTO_CONFIG_H
+ 
++char object_code_block[] = {
++	'\n', 'e', '4', 'V', 'A',
++	'0', 'x', ('0' + sizeof($ngx_type)),
++	'Y', '3', 'p', 'M', '\n'
++};
++
+ int main() {
+-    printf("%d", (int) sizeof($ngx_type));
+     return 0;
+ }
+ 
+@@ -40,7 +45,7 @@ eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&
+ 
+ 
+ if [ -x $NGX_AUTOTEST ]; then
+-    ngx_size=`$NGX_AUTOTEST`
++    ngx_size=`sed -ne 's/^e4VA0x\(.\)Y3pM$/\1/p' < $NGX_AUTOTEST`
+     echo " $ngx_size bytes"
+ fi
+ 
