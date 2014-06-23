@@ -1,0 +1,55 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2010-2011 OpenWrt.org
+
+START=99
+
+EXTRA_COMMANDS="status"
+EXTRA_HELP="	status	Print the status of the service"
+
+BIN=/usr/bin/prosodyctl
+LOG_D=/var/log/prosody
+RUN_D=/var/run/prosody
+PID_F=$RUN_D/prosody.pid
+RUN_USER=prosody
+RUN_GROUP=prosody
+
+start() {
+	user_exists prosody 54 || user_add prosody 54
+	group_exists prosody 54 || group_add prosody 54
+	[ -d /var/run/prosody ] || {
+		mkdir -m 0755 -p /var/run/prosody
+		chown prosody:prosody /var/run/prosody
+	}
+	[ -d /var/log/prosody ] || {
+		mkdir -m 0755 -p /var/log/prosody
+		chown prosody:prosody /var/log/prosody
+	}
+
+	[ -d /var/log/prosody ] && {
+		chown -R prosody:prosody /etc/prosody
+	}
+
+	[ -f /sbin/paxctl ] && {
+		paxctl  -v /usr/bin/ > /dev/null  2>&1	
+		[ $? -ne 0 ] && {
+			cp /usr/bin/lua /tmp
+			paxctl -c -m /tmp/lua
+			cp -f /tmp/lua /usr/bin/lua
+		}
+	}
+
+	
+	$BIN start
+}
+
+stop() {
+	$BIN stop
+}
+
+reload() {
+	[ -f $PID_F ] && kill -HUP $(cat $PID_F)
+}
+
+status() {
+	$BIN status
+}
