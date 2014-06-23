@@ -1,0 +1,27 @@
+From 8d914d1c9c069fada5f34b0c5e27afa4ba6b9920 Mon Sep 17 00:00:00 2001
+From: Emeric Brun <ebrun@haproxy.com>
+Date: Fri, 20 Jun 2014 15:37:32 +0200
+Subject: [PATCH 4/5] BUG/MINOR: ssl: Fix OCSP resp update fails with the same
+ certificate configured twice. (cherry picked from commit
+ 1d3865b096b43b9a6d6a564ffb424ffa6f1ef79f)
+
+---
+ src/ssl_sock.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 9eacf9f..328b978 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -195,7 +195,7 @@ nosec:
+ 	return -1;
+ }
+ 
+-static struct eb_root cert_ocsp_tree;
++static struct eb_root cert_ocsp_tree = EB_ROOT_UNIQUE;
+ 
+ /* This function starts to check if the OCSP response (in DER format) contained
+  * in chunk 'ocsp_response' is valid (else exits on error).
+-- 
+1.8.5.5
+
