@@ -1,0 +1,293 @@
+From 2a4f511b33958b5a09cee2913f1ed9d3210f98f5 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Mon, 23 Jun 2014 15:22:31 +0200
+Subject: [PATCH 5/5] BUG/MAJOR: session: revert all the crappy client-side
+ timeout changes
+
+This is the 3rd regression caused by the changes below. The latest to
+date was reported by Finn Arne Gangstad. If a server responds with no
+content-length and the client's FIN is never received, either we leak
+the client-side FD or we spin at 100% CPU if timeout client-fin is set.
+
+Enough is enough. The amount of tricks needed to cover these side-effects
+starts to look like used toilet paper stacked over a chocolate cake. I
+don't want to eat that cake anymore!
+
+All this to avoid reporting a server-side timeout when a client stops
+uploading data and haproxy expires faster than the server... A lot of
+"ifs" resulting in a technically valid log that doesn't always please
+users, and whose alternative causes that many issues for all others
+users.
+
+So let's revert this crap merged since 1.5-dev25 :
+  Revert "CLEANUP: http: don't clear CF_READ_NOEXP twice"
+    This reverts commit 1592d1e72a4a2d25a554c299ae95a3e6cad80bf1.
+  Revert "BUG/MEDIUM: http: clear CF_READ_NOEXP when preparing a new transaction"
+    This reverts commit 77d29029af1c44216b190dd7442964b9d8f45257.
+  Revert "BUG/MEDIUM: session: don't clear CF_READ_NOEXP if analysers are not called"
+    This reverts commit 0943757a2144761c60e416b5ed07baa76934f5a4.
+  Revert "BUG/MEDIUM: http: disable server-side expiration until client has sent the body"
+    This reverts commit 3bed5e9337fd6eeab0f0006ebefcbe98ee5c4f9f.
+  Revert "BUG/MEDIUM: http: correctly report request body timeouts"
+    This reverts commit b9edf8fbecc9d1b5c82794735adcc367a80a4ae2.
+  Revert "BUG/MEDIUM: http/session: disable client-side expiration only after body"
+    This reverts commit b1982e27aaff2a92a389a9f1bc847e3bb8fdb4f2.
+
+If a cleaner AND SAFER way to do something equivalent in 1.6-dev, we *might*
+consider backporting it to 1.5, but given the vicious bugs that have surfaced
+since, I doubt it will happen any time soon.
+
+Fortunately, that crap never made it into 1.4 so no backport is needed.
+(cherry picked from commit 6f0a7bac282c9b2082dc763977b7721b6b002089)
+---
+ src/proto_http.c | 95 ++------------------------------------------------------
+ src/session.c    | 41 ++++++++++++------------
+ 2 files changed, 23 insertions(+), 113 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 52319a9..878951f 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -4884,7 +4884,7 @@ void http_end_txn_clean_session(struct session *s)
+ 	s->req->cons->conn_retries = 0;  /* used for logging too */
+ 	s->req->cons->exp       = TICK_ETERNITY;
+ 	s->req->cons->flags    &= SI_FL_DONT_WAKE; /* we're in the context of process_session */
+-	s->req->flags &= ~(CF_SHUTW|CF_SHUTW_NOW|CF_AUTO_CONNECT|CF_WRITE_ERROR|CF_STREAMER|CF_STREAMER_FAST|CF_NEVER_WAIT|CF_WAKE_CONNECT|CF_READ_NOEXP);
++	s->req->flags &= ~(CF_SHUTW|CF_SHUTW_NOW|CF_AUTO_CONNECT|CF_WRITE_ERROR|CF_STREAMER|CF_STREAMER_FAST|CF_NEVER_WAIT|CF_WAKE_CONNECT);
+ 	s->rep->flags &= ~(CF_SHUTR|CF_SHUTR_NOW|CF_READ_ATTACHED|CF_READ_ERROR|CF_READ_NOEXP|CF_STREAMER|CF_STREAMER_FAST|CF_WRITE_PARTIAL|CF_NEVER_WAIT);
+ 	s->flags &= ~(SN_DIRECT|SN_ASSIGNED|SN_ADDR_SET|SN_BE_ASSIGNED|SN_FORCE_PRST|SN_IGNORE_PRST);
+ 	s->flags &= ~(SN_CURR_SESS|SN_REDIRECTABLE|SN_SRV_REUSED);
+@@ -5305,13 +5305,6 @@ int http_request_forward_body(struct session *s, struct channel *req, int an_bit
+ 		 */
+ 		msg->msg_state = HTTP_MSG_ERROR;
+ 		http_resync_states(s);
+-
+-		if (req->flags & CF_READ_TIMEOUT)
+-			goto cli_timeout;
+-
+-		if (req->flags & CF_WRITE_TIMEOUT)
+-			goto srv_timeout;
+-
+ 		return 1;
+ 	}
+ 
+@@ -5478,11 +5471,6 @@ int http_request_forward_body(struct session *s, struct channel *req, int an_bit
+ 				channel_auto_read(req);
+ 			}
+ 
+-			/* if we received everything, we don't want to expire anymore */
+-			if (msg->msg_state == HTTP_MSG_DONE) {
+-				req->flags |= CF_READ_NOEXP;
+-				req->rex = TICK_ETERNITY;
+-			}
+ 			return 0;
+ 		}
+ 	}
+@@ -5592,68 +5580,6 @@ int http_request_forward_body(struct session *s, struct channel *req, int an_bit
+ 			s->flags |= SN_FINST_D;
+ 	}
+ 	return 0;
+-
+- cli_timeout:
+-	if (!(s->flags & SN_ERR_MASK))
+-		s->flags |= SN_ERR_CLITO;
+-
+-	if (!(s->flags & SN_FINST_MASK)) {
+-		if (txn->rsp.msg_state < HTTP_MSG_ERROR)
+-			s->flags |= SN_FINST_H;
+-		else
+-			s->flags |= SN_FINST_D;
+-	}
+-
+-	if (txn->status > 0) {
+-		/* Don't send any error message if something was already sent */
+-		stream_int_retnclose(req->prod, NULL);
+-	}
+-	else {
+-		txn->status = 408;
+-		stream_int_retnclose(req->prod, http_error_message(s, HTTP_ERR_408));
+-	}
+-
+-	msg->msg_state = HTTP_MSG_ERROR;
+-	req->analysers = 0;
+-	s->rep->analysers = 0; /* we're in data phase, we want to abort both directions */
+-
+-	session_inc_http_err_ctr(s);
+-	s->fe->fe_counters.failed_req++;
+-	s->be->be_counters.failed_req++;
+-	if (s->listener->counters)
+-		s->listener->counters->failed_req++;
+-	return 0;
+-
+- srv_timeout:
+-	if (!(s->flags & SN_ERR_MASK))
+-		s->flags |= SN_ERR_SRVTO;
+-
+-	if (!(s->flags & SN_FINST_MASK)) {
+-		if (txn->rsp.msg_state < HTTP_MSG_ERROR)
+-			s->flags |= SN_FINST_H;
+-		else
+-			s->flags |= SN_FINST_D;
+-	}
+-
+-	if (txn->status > 0) {
+-		/* Don't send any error message if something was already sent */
+-		stream_int_retnclose(req->prod, NULL);
+-	}
+-	else {
+-		txn->status = 504;
+-		stream_int_retnclose(req->prod, http_error_message(s, HTTP_ERR_504));
+-	}
+-
+-	msg->msg_state = HTTP_MSG_ERROR;
+-	req->analysers = 0;
+-	s->rep->analysers = 0; /* we're in data phase, we want to abort both directions */
+-
+-	s->be->be_counters.failed_resp++;
+-	if (objt_server(s->target)) {
+-		objt_server(s->target)->counters.failed_resp++;
+-		health_adjust(objt_server(s->target), HANA_STATUS_HTTP_READ_TIMEOUT);
+-	}
+-	return 0;
+ }
+ 
+ /* This stream analyser waits for a complete HTTP response. It returns 1 if the
+@@ -5821,11 +5747,8 @@ int http_wait_for_response(struct session *s, struct channel *rep, int an_bit)
+ 			return 0;
+ 		}
+ 
+-		/* read/write timeout : return a 504 to the client.
+-		 * The write timeout may happen when we're uploading POST
+-		 * data that the server is not consuming fast enough.
+-		 */
+-		else if (rep->flags & (CF_READ_TIMEOUT|CF_WRITE_TIMEOUT)) {
++		/* read timeout : return a 504 to the client. */
++		else if (rep->flags & CF_READ_TIMEOUT) {
+ 			if (msg->err_pos >= 0)
+ 				http_capture_bad_message(&s->be->invalid_rep, s, msg, msg->msg_state, s->fe);
+ 			else if (txn->flags & TX_NOT_FIRST)
+@@ -5921,12 +5844,6 @@ int http_wait_for_response(struct session *s, struct channel *rep, int an_bit)
+ 			return 0;
+ 		}
+ 
+-		/* we don't want to expire on the server side first until the client
+-		 * has sent all the expected message body.
+-		 */
+-		if (txn->req.msg_state >= HTTP_MSG_BODY && txn->req.msg_state < HTTP_MSG_DONE)
+-			rep->flags |= CF_READ_NOEXP;
+-
+ 		channel_dont_close(rep);
+ 		rep->flags |= CF_READ_DONTWAIT; /* try to get back here ASAP */
+ 		return 0;
+@@ -6742,12 +6659,6 @@ int http_response_forward_body(struct session *s, struct channel *res, int an_bi
+ 				}
+ 				return 1;
+ 			}
+-
+-			/* if we received everything, we don't want to expire anymore */
+-			if (msg->msg_state == HTTP_MSG_DONE) {
+-				res->flags |= CF_READ_NOEXP;
+-				res->rex = TICK_ETERNITY;
+-			}
+ 			return 0;
+ 		}
+ 	}
+diff --git a/src/session.c b/src/session.c
+index f828d9c..e26f5ad 100644
+--- a/src/session.c
++++ b/src/session.c
+@@ -1636,7 +1636,6 @@ struct task *process_session(struct task *t)
+ 	unsigned int rq_prod_last, rq_cons_last;
+ 	unsigned int rp_cons_last, rp_prod_last;
+ 	unsigned int req_ana_back;
+-	unsigned int rq_oneshot, rp_oneshot;
+ 
+ 	//DPRINTF(stderr, "%s:%d: cs=%d ss=%d(%d) rqf=0x%08x rpf=0x%08x\n", __FUNCTION__, __LINE__,
+ 	//        s->si[0].state, s->si[1].state, s->si[1].err_type, s->req->flags, s->rep->flags);
+@@ -1644,13 +1643,9 @@ struct task *process_session(struct task *t)
+ 	/* this data may be no longer valid, clear it */
+ 	memset(&s->txn.auth, 0, sizeof(s->txn.auth));
+ 
+-	/* These flags must explicitly be set every time by the analysers who
+-	 * need them, but we won't always call them (eg: during a connection
+-	 * retry). So we need to keep them and only clear them if we're sure
+-	 * to call the analysers.
+-	 */
+-	rq_oneshot = s->req->flags & (CF_READ_NOEXP | CF_WAKE_WRITE);
+-	rp_oneshot = s->rep->flags & (CF_READ_NOEXP | CF_WAKE_WRITE);
++	/* This flag must explicitly be set every time */
++	s->req->flags &= ~(CF_READ_NOEXP|CF_WAKE_WRITE);
++	s->rep->flags &= ~(CF_READ_NOEXP|CF_WAKE_WRITE);
+ 
+ 	/* Keep a copy of req/rep flags so that we can detect shutdowns */
+ 	rqf_last = s->req->flags & ~CF_MASK_ANALYSER;
+@@ -1831,8 +1826,6 @@ struct task *process_session(struct task *t)
+ 	    s->si[1].state != rq_cons_last) {
+ 		unsigned int flags = s->req->flags;
+ 
+-		s->req->flags &= ~rq_oneshot;
+-		rq_oneshot = 0;
+ 		if (s->req->prod->state >= SI_ST_EST) {
+ 			int max_loops = global.tune.maxpollevents;
+ 			unsigned int ana_list;
+@@ -1986,13 +1979,11 @@ struct task *process_session(struct task *t)
+ 	/* Analyse response */
+ 
+ 	if (((s->rep->flags & ~rpf_last) & CF_MASK_ANALYSER) ||
+-	    ((s->rep->flags ^ rpf_last) & CF_MASK_STATIC) ||
+-	    s->si[0].state != rp_cons_last ||
+-	    s->si[1].state != rp_prod_last) {
++		 (s->rep->flags ^ rpf_last) & CF_MASK_STATIC ||
++		 s->si[0].state != rp_cons_last ||
++		 s->si[1].state != rp_prod_last) {
+ 		unsigned int flags = s->rep->flags;
+ 
+-		s->rep->flags &= ~rp_oneshot;
+-		rp_oneshot = 0;
+ 		if ((s->rep->flags & CF_MASK_ANALYSER) &&
+ 		    (s->rep->analysers & AN_REQ_WAIT_HTTP)) {
+ 			/* Due to HTTP pipelining, the HTTP request analyser might be waiting
+@@ -2186,9 +2177,6 @@ struct task *process_session(struct task *t)
+ 		channel_auto_close(s->req);
+ 		buffer_flush(s->req->buf);
+ 
+-		s->req->flags &= ~rq_oneshot;
+-		rq_oneshot = 0;
+-
+ 		/* We'll let data flow between the producer (if still connected)
+ 		 * to the consumer (which might possibly not be connected yet).
+ 		 */
+@@ -2344,9 +2332,6 @@ struct task *process_session(struct task *t)
+ 		channel_auto_close(s->rep);
+ 		buffer_flush(s->rep->buf);
+ 
+-		s->rep->flags &= ~rp_oneshot;
+-		rp_oneshot = 0;
+-
+ 		/* We'll let data flow between the producer (if still connected)
+ 		 * to the consumer.
+ 		 */
+@@ -2496,6 +2481,20 @@ struct task *process_session(struct task *t)
+ 		s->si[0].flags &= ~(SI_FL_ERR|SI_FL_EXP);
+ 		s->si[1].flags &= ~(SI_FL_ERR|SI_FL_EXP);
+ 
++		/* Trick: if a request is being waiting for the server to respond,
++		 * and if we know the server can timeout, we don't want the timeout
++		 * to expire on the client side first, but we're still interested
++		 * in passing data from the client to the server (eg: POST). Thus,
++		 * we can cancel the client's request timeout if the server's
++		 * request timeout is set and the server has not yet sent a response.
++		 */
++
++		if ((s->rep->flags & (CF_AUTO_CLOSE|CF_SHUTR)) == 0 &&
++		    (tick_isset(s->req->wex) || tick_isset(s->rep->rex))) {
++			s->req->flags |= CF_READ_NOEXP;
++			s->req->rex = TICK_ETERNITY;
++		}
++
+ 		/* When any of the stream interfaces is attached to an applet,
+ 		 * we have to call it here. Note that this one may wake the
+ 		 * task up again. If at least one applet was called, the current
+-- 
+1.8.5.5
+
