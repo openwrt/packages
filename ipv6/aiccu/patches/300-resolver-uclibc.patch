@@ -1,0 +1,29 @@
+--- aiccu/common/resolver.c.orig	2007-09-02 23:10:58.000000000 +0200
++++ aiccu/common/resolver.c	2007-09-02 23:11:01.000000000 +0200
+@@ -26,7 +26,7 @@
+ 
+ int getrrs(const char *label, int rrtype, void gotrec(unsigned int num, int type, const char *record))
+ {
+-#ifdef _LINUX
++#if defined(_LINUX) && !defined(__UCLIBC__)
+ 	struct __res_state	res;
+ #endif
+ 	unsigned char		answer[8192];
+@@ -38,7 +38,7 @@
+ 	uint16_t		type = 0, class = 0;
+ 	uint32_t		ttl = 0;
+ 
+-#ifdef _LINUX
++#if defined(_LINUX) && !defined(__UCLIBC__)
+ 	memset(&res, 0, sizeof(res));
+ 	res.options = RES_DEBUG;
+ 	res_ninit(&res);
+@@ -47,7 +47,7 @@
+ #endif
+ 
+ 	memset(answer, 0, sizeof(answer));
+-#ifdef _LINUX
++#if defined(_LINUX) && !defined(__UCLIBC__)
+ 	ret = res_nquery(&res, label, C_IN, rrtype, answer, sizeof(answer));
+ #else
+ 	ret = res_query(label, C_IN, rrtype, answer, sizeof(answer));
