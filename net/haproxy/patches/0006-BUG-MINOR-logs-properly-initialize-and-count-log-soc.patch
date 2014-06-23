@@ -1,0 +1,110 @@
+From 53045692e1a106016b84b63b86fbe4822e4ec755 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Mon, 23 Jun 2014 18:07:15 +0200
+Subject: [PATCH 6/6] BUG/MINOR: logs: properly initialize and count log
+ sockets
+
+Commit 81ae195 ("[MEDIUM] add support for logging via a UNIX socket")
+merged in 1.3.14 introduced a few minor issues with log sockets. All
+of them happen only when a failure is encountered when trying to set
+up the logging socket (eg: socket family is not available or is
+temporarily short in resources).
+
+The first socket which experiences an error causes the socket setup
+loop to abort, possibly preventing any log from being sent if it was
+the first logger. The second issue is that if this socket finally
+succeeds after a second attempt, errors are reported for the wrong
+logger (eg: logger #1 failed instead of #2).  The last point is that
+we now have multiple loggers, and it's a waste of time to walk over
+their list for every log while they're almost always properly set up.
+
+So in order to fix all this, let's merge the two lists. If a logger
+experiences an error, it simply sends an alert and skips to the next
+one. That way they don't prevent messages from being sent and are
+all properly accounted for.
+(cherry picked from commit c7c7be21bf6c7e9afd897d4bf451dc450187a77e)
+---
+ src/log.c | 49 +++++++++++++++++--------------------------------
+ 1 file changed, 17 insertions(+), 32 deletions(-)
+
+diff --git a/src/log.c b/src/log.c
+index eb7ccb1..114ab7b 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -813,37 +813,6 @@ void __send_log(struct proxy *p, int level, char *message, size_t size)
+ 
+ 	message[size - 1] = '\n';
+ 
+-	/* Lazily set up syslog sockets for protocol families of configured
+-	 * syslog servers. */
+-	nblogger = 0;
+-	list_for_each_entry(tmp, logsrvs, list) {
+-		const struct logsrv *logsrv = tmp;
+-		int proto, *plogfd;
+-
+-		if (logsrv->addr.ss_family == AF_UNIX) {
+-			proto = 0;
+-			plogfd = &logfdunix;
+-		} else {
+-			proto = IPPROTO_UDP;
+-			plogfd = &logfdinet;
+-		}
+-		if (*plogfd >= 0) {
+-			/* socket already created. */
+-			continue;
+-		}
+-		if ((*plogfd = socket(logsrv->addr.ss_family, SOCK_DGRAM,
+-				proto)) < 0) {
+-			Alert("socket for logger #%d failed: %s (errno=%d)\n",
+-				nblogger + 1, strerror(errno), errno);
+-			return;
+-		}
+-		/* we don't want to receive anything on this socket */
+-		setsockopt(*plogfd, SOL_SOCKET, SO_RCVBUF, &zero, sizeof(zero));
+-		/* does nothing under Linux, maybe needed for others */
+-		shutdown(*plogfd, SHUT_RD);
+-		nblogger++;
+-	}
+-
+ 	/* Send log messages to syslog server. */
+ 	nblogger = 0;
+ 	list_for_each_entry(tmp, logsrvs, list) {
+@@ -852,10 +821,27 @@ void __send_log(struct proxy *p, int level, char *message, size_t size)
+ 			&logfdunix : &logfdinet;
+ 		int sent;
+ 
++		nblogger++;
++
+ 		/* we can filter the level of the messages that are sent to each logger */
+ 		if (level > logsrv->level)
+ 			continue;
+ 
++		if (unlikely(*plogfd < 0)) {
++			/* socket not successfully initialized yet */
++			int proto = logsrv->addr.ss_family == AF_UNIX ? 0 : IPPROTO_UDP;
++
++			if ((*plogfd = socket(logsrv->addr.ss_family, SOCK_DGRAM, proto)) < 0) {
++				Alert("socket for logger #%d failed: %s (errno=%d)\n",
++				      nblogger, strerror(errno), errno);
++				continue;
++			}
++			/* we don't want to receive anything on this socket */
++			setsockopt(*plogfd, SOL_SOCKET, SO_RCVBUF, &zero, sizeof(zero));
++			/* does nothing under Linux, maybe needed for others */
++			shutdown(*plogfd, SHUT_RD);
++		}
++
+ 		/* For each target, we may have a different facility.
+ 		 * We can also have a different log level for each message.
+ 		 * This induces variations in the message header length.
+@@ -879,7 +865,6 @@ void __send_log(struct proxy *p, int level, char *message, size_t size)
+ 			Alert("sendto logger #%d failed: %s (errno=%d)\n",
+ 				nblogger, strerror(errno), errno);
+ 		}
+-		nblogger++;
+ 	}
+ }
+ 
+-- 
+1.8.5.5
+
