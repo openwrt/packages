@@ -25,6 +25,7 @@ define Package/aiccu
   DEPENDS:=+libpthread +ip +kmod-sit +kmod-tun
   TITLE:=SixXS Automatic IPv6 Connectivity Client Utility
   URL:=http://www.sixxs.net/tools/aiccu/
+  MAINTAINER:=Ondrej Caletka <ondrej@caletka.cz>
 endef
 
 define Build/Configure
