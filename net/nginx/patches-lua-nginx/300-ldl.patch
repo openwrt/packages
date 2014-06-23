@@ -1,0 +1,21 @@
+--- a/lua-nginx/config
++++ b/lua-nginx/config
+@@ -1,5 +1,5 @@
+ ngx_feature="Lua library"
+-ngx_feature_libs="-llua -lm"
++ngx_feature_libs="-llua -lm -ldl"
+ ngx_feature_name=
+ ngx_feature_run=no
+ ngx_feature_incs="#include <lauxlib.h>"
+@@ -47,9 +47,9 @@ else
+         ngx_feature="Lua library in $LUA_LIB and $LUA_INC (specified by the LUA_LIB and LUA_INC env)"
+         ngx_feature_path="$LUA_INC"
+         if [ $NGX_RPATH = YES ]; then
+-            ngx_feature_libs="-R$LUA_LIB -L$LUA_LIB -llua -lm"
++            ngx_feature_libs="-R$LUA_LIB -L$LUA_LIB -llua -lm -ldl"
+         else
+-            ngx_feature_libs="-L$LUA_LIB -llua -lm"
++            ngx_feature_libs="-L$LUA_LIB -llua -lm -ldl"
+         fi
+ 
+         . auto/feature
