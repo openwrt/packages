@@ -1,14 +1,6 @@
 #!/bin/sh
 # miniupnpd integration for firewall3
 
-# Note: Correct way to do this would be probably to use
-# /lib/functions/network.sh, and use network_find_wan{,6}, and then
-# network_get_device, then determine their zones using fw3 -q network
-# etc. However, network_find_wan* return only one device, and
-# frequently incorrect one if multiple ISPs are in use. So this
-# current ugly solution works, although perhaps makes holes where it
-# shouldn't (if so, do override it in e.g. firewall.user)
-
 IP6TABLES=/usr/sbin/ip6tables
 
 iptables -t filter -N MINIUPNPD 2>/dev/null
@@ -16,11 +8,42 @@ iptables -t nat -N MINIUPNPD 2>/dev/null
 
 [ -x $IP6TABLES ] && $IP6TABLES -t filter -N MINIUPNPD 2>/dev/null
 
-# IPv4 - due to NAT, need to add both to nat and filter table
-iptables -t filter -I delegate_forward 2 -j MINIUPNPD
-iptables -t nat -I delegate_prerouting 2 -j MINIUPNPD
+. /lib/functions/network.sh
 
-# IPv6 if available - filter only
-[ -x $IP6TABLES ] && {
-    $IP6TABLES -t filter -I delegate_forward 2 -j MINIUPNPD
+ADDED=0
+
+add_extzone_rules() {
+    local ext_zone=$1
+
+    [ -z "$ext_zone" ] && return
+
+    # IPv4 - due to NAT, need to add both to nat and filter table
+    iptables -t filter -I zone_${ext_zone}_forward -j MINIUPNPD
+    iptables -t nat -I zone_${ext_zone}_prerouting -j MINIUPNPD
+
+    # IPv6 if available - filter only
+    [ -x $IP6TABLES ] && {
+        $IP6TABLES -t filter -I zone_${ext_zone}_forward -j MINIUPNPD
+    }
+    ADDED=$(($ADDED + 1))
 }
+
+# By default, user configuration is king.
+
+for ext_iface in $(uci -q get upnpd.config.external_iface); do
+    add_extzone_rules $(fw3 -q network "$ext_iface")
+done
+
+[ ! $ADDED = 0 ] && exit 0
+
+# If it's not available, resort to network_find_wan{,6} and
+# assume external interfaces all have same firewall zone.
+
+network_find_wan wan_iface
+network_find_wan6 wan6_iface
+
+for ext_iface in $wan_iface $wan6_iface; do
+    # fw3 -q network fails on sub-interfaces => map to device first
+    network_get_device ext_device $ext_iface
+    add_extzone_rules $(fw3 -q device "$ext_device")
+done

@@ -9,8 +9,11 @@ fi
 
 # If miniupnpd is not running:
 # - check on _any_ event (even updates may contribute to network_find_wan*)
+
 # If miniupnpd _is_ running:
-# - check only on ifup
+# - check only on ifup (otherwise lease updates etc would cause
+#   miniupnpd state loss)
+
 
 [ ! "$ACTION" = "ifup" ] && service_check /usr/sbin/miniupnpd && exit 0
 
@@ -23,6 +26,6 @@ network_find_wan ext_iface
 network_find_wan6 ext_iface6
 
 for iface in $ext_iface $ext_iface6 $(uci_get upnpd config internal_iface; uci_get upnpd config external_iface); do
-    [ "$INTERFACE" = "$iface" ] && /etc/init.d/miniupnpd restart
-    exit 0
+    network_get_device device $iface
+    [ "$DEVICE" = "$device" ] && /etc/init.d/miniupnpd restart && exit 0
 done
