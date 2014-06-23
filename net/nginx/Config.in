@@ -162,13 +162,15 @@ config NGINX_NAXSI
 	bool
 	prompt "Enable NAXSI module"
 	select PACKAGE_nginx-naxsi
+	default y
 	help
 		Enable support for NAXSI WAF.
 
 config NGINX_PROXYPROTOCOL
 	bool
-	prompt "Enable NAXSI proxyprotocol"
+	prompt "Enable HAProxy proxyprotocol"
 	select PACKAGE_nginx-proxyprotocol
+	default y
 	help
 		Enable support for NAXSI WAF.
 
@@ -176,6 +178,7 @@ config NGINX_SYSLOG
 	bool
 	prompt "Enable Syslog module"
 	select PACKAGE_nginx-syslog
+	default y
 	help
 		Provides the ability log to a remote destination
 

@@ -252,8 +252,8 @@ endef
 define Package/nginx-naxsi
         MENU:=1
         $(call Package/nginx)
-        TITLE+= nginx-naxsi
-        DEPENDS:=nginx
+        TITLE:=nginx-naxsi
+        DEPENDS:=nginx @NGINX_NAXSI
 endef
 
 define Package/nginx-naxsi/description
@@ -263,8 +263,8 @@ endef
 define Package/nginx-proxyprotocol
         MENU:=1
         $(call Package/nginx)
-        TITLE+= nginx-proxyprotocol
-        DEPENDS:=nginx
+        TITLE:=nginx 
+        DEPENDS:=nginx @NGINX_PROXYPROTOCOL
 endef
 
 define Package/nginx-proxyprotocol/description
@@ -274,8 +274,8 @@ endef
 define Package/nginx-syslog
         MENU:=1
         $(call Package/nginx)
-        TITLE+= nginx-syslog
-        DEPENDS:=nginx
+        TITLE:=nginx-syslog
+        DEPENDS:=nginx @NGINX_SYSLOG
 endef
 
 define Package/nginx-syslog/description
