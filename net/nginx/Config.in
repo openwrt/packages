@@ -170,9 +170,10 @@ config NGINX_PROXYPROTOCOL
 	bool
 	prompt "Enable HAProxy proxyprotocol"
 	select PACKAGE_nginx-proxyprotocol
-	default y
+	select NGINX_SSL
+	default n
 	help
-		Enable support for NAXSI WAF.
+		Enable support for PROXY PROTOCOL
 
 config NGINX_SYSLOG
 	bool
@@ -184,7 +185,8 @@ config NGINX_SYSLOG
 
 config NGINX_HTTP_UPSTREAM_CHECK
 	bool
+	select NGINX_SSL
 	prompt "Enable HTTP upstream check module"
-	default y
+	default n
 
 endmenu
