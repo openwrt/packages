@@ -1,0 +1,45 @@
+From c1fbbd4a3dd480b4eebbd8b32ca6cdf08791477a Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Tue, 24 Jun 2014 17:27:02 +0200
+Subject: [PATCH] BUG/MEDIUM: http: fetch "base" is not compatible with
+ set-header
+
+The sample fetch function "base" makes use of the trash which is also
+used by set-header/add-header etc... everything which builds a formated
+line. So we end up with some junk in the header if base is in use. Let's
+fix this as all other fetches by using a trash chunk instead.
+
+This bug was reported by Baptiste Assmann, and also affects 1.5.
+(cherry picked from commit 3caf2afabe89fb0ef0886cd1d8ea99ef21ec3491)
+---
+ src/proto_http.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 231d49a..5321f7d 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -10247,6 +10247,7 @@ smp_fetch_base(struct proxy *px, struct session *l4, void *l7, unsigned int opt,
+ 	struct http_txn *txn = l7;
+ 	char *ptr, *end, *beg;
+ 	struct hdr_ctx ctx;
++	struct chunk *temp;
+ 
+ 	CHECK_HTTP_MESSAGE_FIRST();
+ 
+@@ -10255,9 +10256,10 @@ smp_fetch_base(struct proxy *px, struct session *l4, void *l7, unsigned int opt,
+ 		return smp_fetch_path(px, l4, l7, opt, args, smp, kw);
+ 
+ 	/* OK we have the header value in ctx.line+ctx.val for ctx.vlen bytes */
+-	memcpy(trash.str, ctx.line + ctx.val, ctx.vlen);
++	temp = get_trash_chunk();
++	memcpy(temp->str, ctx.line + ctx.val, ctx.vlen);
+ 	smp->type = SMP_T_STR;
+-	smp->data.str.str = trash.str;
++	smp->data.str.str = temp->str;
+ 	smp->data.str.len = ctx.vlen;
+ 
+ 	/* now retrieve the path */
+-- 
+1.8.5.5
+
