@@ -14,8 +14,10 @@ fi
 # - check only on ifup (otherwise lease updates etc would cause
 #   miniupnpd state loss)
 
-
 [ ! "$ACTION" = "ifup" ] && service_check /usr/sbin/miniupnpd && exit 0
+
+# DEVICE is set only in ifup as of 20140625 netifd
+[ -z "$DEVICE" ] && network_get_device DEVICE $INTERFACE
 
 local iface
 local ext_iface
