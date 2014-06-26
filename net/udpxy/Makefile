@@ -11,7 +11,7 @@ PKG_NAME:=udpxy
 PKG_REV:=1.0.23
 PKG_TAG:=9
 PKG_VERSION:=$(PKG_REV)-$(PKG_TAG)
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_REV)-$(patsubst %,%-prod,$(PKG_TAG)).tar.gz
 PKG_SOURCE_URL:=http://www.udpxy.com/download/1_23

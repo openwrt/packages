@@ -23,33 +23,32 @@ udpxy_parse() {
 
 	config_get_bool cfg_verbose $cfg 'verbose' 0
 	config_get_bool cfg_status $cfg 'status' 1
-	config_get cfg_bind $cfg 'bind' '0.0.0.0'
+	config_get cfg_bind $cfg 'bind'
 	config_get cfg_port $cfg 'port' '4022'
-	config_get cfg_source $cfg 'source' '0.0.0.0'
-	config_get cfg_max_clients $cfg 'max_clients' '3'
-	config_get cfg_log_file $cfg 'log_file' '/var/log/udpxy'
-	config_get cfg_buffer_size $cfg 'buffer_size' '2048'
-	config_get cfg_buffer_messages $cfg 'buffer_messages' '1'
-	config_get cfg_buffer_time $cfg 'buffer_time' '1'
-	config_get cfg_nice_increment $cfg 'nice_increment' '0'
-	config_get cfg_mcsub_renew $cfg 'mcsub_renew' 0
+	config_get cfg_source $cfg 'source'
+	config_get cfg_max_clients $cfg 'max_clients'
+	config_get cfg_log_file $cfg 'log_file'
+	config_get cfg_buffer_size $cfg 'buffer_size'
+	config_get cfg_buffer_messages $cfg 'buffer_messages'
+	config_get cfg_buffer_time $cfg 'buffer_time'
+	config_get cfg_nice_increment $cfg 'nice_increment'
+	config_get cfg_mcsub_renew $cfg 'mcsub_renew'
 
 	procd_open_instance
 
 	procd_set_param command /usr/bin/udpxy
-	procd_append_param command -T
+	procd_append_param command -T -p $cfg_port
 	[ "$cfg_verbose" -eq 1 ] && procd_append_param command -v
 	[ "$cfg_status" -eq 1 ] && procd_append_param command -S
-	procd_append_param command -a $cfg_bind
-	procd_append_param command -p $cfg_port
-	procd_append_param command -m $cfg_source
-	procd_append_param command -c $cfg_max_clients
-	procd_append_param command -l $cfg_log_file
-	[ "$cfg_nice_increment" -ge 4096 ] && procd_append_param command -B $cfg_buffer_size
-	procd_append_param command -R $cfg_buffer_messages
-	procd_append_param command -H $cfg_buffer_time
-	[ "$cfg_nice_increment" -ne 0 ] && procd_append_param command -n $cfg_nice_increment
-	procd_append_param command -M $cfg_mcsub_renew
+	[ ! -z "$cfg_bind" ] && procd_append_param command -a $cfg_bind
+	[ ! -z "$cfg_source" ] && procd_append_param command -m $cfg_source
+	[ ! -z "$cfg_max_clients" ] && procd_append_param command -c $cfg_max_clients
+	[ ! -z "$cfg_log_file" ] && procd_append_param command -l $cfg_log_file
+	[ ! -z "$cfg_buffer_size" ] && procd_append_param command -B $cfg_buffer_size
+	[ ! -z "$cfg_buffer_messages" ] && procd_append_param command -R $cfg_buffer_messages
+	[ ! -z "$cfg_buffer_time" ] && procd_append_param command -H $cfg_buffer_time
+	[ ! -z "$cfg_nice_increment" ] && procd_append_param command -n $cfg_nice_increment
+	[ ! -z "$cfg_mcsub_renew" ] && procd_append_param command -M $cfg_mcsub_renew
 
 	procd_set_param respawn
 	procd_close_instance
