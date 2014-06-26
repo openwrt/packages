@@ -1,0 +1,65 @@
+From a4ba9dbfc688576ffb7e0a3ce43ac0b420211bf6 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 25 Jun 2014 16:56:41 +0200
+Subject: [PATCH 4/6] BUG/MAJOR: sample: correctly reinitialize sample fetch
+ context before calling sample_process()
+
+We used to only clear flags when reusing the static sample before calling
+sample_process(), but that's not enough because there's a context in samples
+that can be used by some fetch functions such as auth, headers and cookies,
+and not reinitializing it risks that a pointer of a different type is used
+in the wrong context.
+
+An example configuration which triggers the case consists in mixing hdr()
+and http_auth_group() which both make use of contexts :
+
+     http-request add-header foo2 %[hdr(host)],%[http_auth_group(foo)]
+
+The solution is simple, initialize all the sample and not just the flags.
+This fix must be backported into 1.5 since it was introduced in 1.5-dev19.
+(cherry picked from commit 6c616e0b96106dd33d183afbda31e72799e967c3)
+---
+ src/proto_http.c | 3 +++
+ src/sample.c     | 5 +++--
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index d566bcc..01fe62d 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -9748,6 +9748,9 @@ smp_prefetch_http(struct proxy *px, struct session *s, void *l7, unsigned int op
+ 	return 1;
+ }
+ 
++/* Note: these functinos *do* modify the sample. Even in case of success, at
++ * least the type and uint value are modified.
++ */
+ #define CHECK_HTTP_MESSAGE_FIRST() \
+ 	do { int r = smp_prefetch_http(px, l4, l7, opt, args, smp, 1); if (r <= 0) return r; } while (0)
+ 
+diff --git a/src/sample.c b/src/sample.c
+index 9f22ef9..3a0f3fb 100644
+--- a/src/sample.c
++++ b/src/sample.c
+@@ -905,7 +905,7 @@ struct sample *sample_process(struct proxy *px, struct session *l4, void *l7,
+ 
+ 	if (p == NULL) {
+ 		p = &temp_smp;
+-		p->flags = 0;
++		memset(p, 0, sizeof(*p));
+ 	}
+ 
+ 	if (!expr->fetch->process(px, l4, l7, opt, expr->arg_p, p, expr->fetch->kw))
+@@ -1160,7 +1160,8 @@ struct sample *sample_fetch_string(struct proxy *px, struct session *l4, void *l
+ {
+ 	struct sample *smp = &temp_smp;
+ 
+-	smp->flags = 0;
++	memset(smp, 0, sizeof(*smp));
++
+ 	if (!sample_process(px, l4, l7, opt, expr, smp)) {
+ 		if ((smp->flags & SMP_F_MAY_CHANGE) && !(opt & SMP_OPT_FINAL))
+ 			return smp;
+-- 
+1.8.5.5
+

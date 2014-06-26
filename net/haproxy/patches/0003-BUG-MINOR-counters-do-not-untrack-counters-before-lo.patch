@@ -1,0 +1,42 @@
+From c177ea7187bc1918a1900c1b0e3fc67c559987a2 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 25 Jun 2014 15:36:04 +0200
+Subject: [PATCH 3/6] BUG/MINOR: counters: do not untrack counters before
+ logging
+
+Baptiste Assmann reported a corner case in the releasing of stick-counters:
+we release content-aware counters before logging. In the past it was not a
+problem, but since now we can log them it, it prevents one from logging
+their value. Simply switching the log production and the release of the
+counter fixes the issue.
+
+This should be backported into 1.5.
+(cherry picked from commit d713bcc326da5d1ac80adab666d7710f3e37650c)
+---
+ src/proto_http.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 5321f7d..d566bcc 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -4808,7 +4808,6 @@ void http_end_txn_clean_session(struct session *s)
+ 
+ 	s->logs.t_close = tv_ms_elapsed(&s->logs.tv_accept, &now);
+ 	session_process_counters(s);
+-	session_stop_content_counters(s);
+ 
+ 	if (s->txn.status) {
+ 		int n;
+@@ -4842,6 +4841,8 @@ void http_end_txn_clean_session(struct session *s)
+ 		s->do_log(s);
+ 	}
+ 
++	/* stop tracking content-based counters */
++	session_stop_content_counters(s);
+ 	session_update_time_stats(s);
+ 
+ 	s->logs.accept_date = date; /* user-visible date for logging */
+-- 
+1.8.5.5
+

@@ -1,0 +1,101 @@
+From 4910098653e356f814924663b4ddf71c971a71d6 Mon Sep 17 00:00:00 2001
+From: Emeric Brun <ebrun@haproxy.com>
+Date: Tue, 24 Jun 2014 18:26:41 +0200
+Subject: [PATCH 2/6] BUG/MINOR: ssl: Fix external function in order not to
+ return a pointer on an internal trash buffer.
+
+'ssl_sock_get_common_name' applied to a connection was also renamed
+'ssl_sock_get_remote_common_name'. Currently, this function is only used
+with protocol PROXYv2 to retrieve the client certificate's common name.
+A further usage could be to retrieve the server certificate's common name
+on an outgoing connection.
+(cherry picked from commit 0abf836ecb32767fa1f9ad598f3e236e073491bd)
+---
+ include/proto/ssl_sock.h |  2 +-
+ src/connection.c         |  5 ++---
+ src/ssl_sock.c           | 23 +++++++++++------------
+ 3 files changed, 14 insertions(+), 16 deletions(-)
+
+diff --git a/include/proto/ssl_sock.h b/include/proto/ssl_sock.h
+index 0902fde..3e111cd 100644
+--- a/include/proto/ssl_sock.h
++++ b/include/proto/ssl_sock.h
+@@ -52,7 +52,7 @@ const char *ssl_sock_get_cipher_name(struct connection *conn);
+ const char *ssl_sock_get_proto_version(struct connection *conn);
+ char *ssl_sock_get_version(struct connection *conn);
+ int ssl_sock_get_cert_used(struct connection *conn);
+-char *ssl_sock_get_common_name(struct connection *conn);
++int ssl_sock_get_remote_common_name(struct connection *conn, struct chunk *out);
+ unsigned int ssl_sock_get_verify_result(struct connection *conn);
+ #ifdef SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB
+ int ssl_sock_update_ocsp_response(struct chunk *ocsp_response, char **err);
+diff --git a/src/connection.c b/src/connection.c
+index 0b154d8..20a911b 100644
+--- a/src/connection.c
++++ b/src/connection.c
+@@ -682,9 +682,8 @@ int make_proxy_line_v2(char *buf, int buf_len, struct server *srv, struct connec
+ 				tlv->verify = htonl(ssl_sock_get_verify_result(remote));
+ 			}
+ 			if (srv->pp_opts & SRV_PP_V2_SSL_CN) {
+-				value = ssl_sock_get_common_name(remote);
+-				if (value) {
+-					tlv_len = make_tlv(&buf[ret+ssl_tlv_len], (buf_len - ret - ssl_tlv_len), PP2_TYPE_SSL_CN, strlen(value), value);
++				if (ssl_sock_get_remote_common_name(remote, &trash) > 0) {
++					tlv_len = make_tlv(&buf[ret+ssl_tlv_len], (buf_len - ret - ssl_tlv_len), PP2_TYPE_SSL_CN, trash.len, trash.str);
+ 					ssl_tlv_len += tlv_len;
+ 				}
+ 			}
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 328b978..375225d 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -2654,21 +2654,25 @@ char *ssl_sock_get_version(struct connection *conn)
+ 	return (char *)SSL_get_version(conn->xprt_ctx);
+ }
+ 
+-/* returns common name, NULL terminated, from client certificate, or NULL if none */
+-char *ssl_sock_get_common_name(struct connection *conn)
++/* Extract peer certificate's common name into the chunk dest
++ * Returns
++ *  the len of the extracted common name
++ *  or 0 if no CN found in DN
++ *  or -1 on error case (i.e. no peer certificate)
++ */
++int ssl_sock_get_remote_common_name(struct connection *conn, struct chunk *dest)
+ {
+ 	X509 *crt = NULL;
+ 	X509_NAME *name;
+-	struct chunk *cn_trash;
+ 	const char find_cn[] = "CN";
+ 	const struct chunk find_cn_chunk = {
+ 		.str = (char *)&find_cn,
+ 		.len = sizeof(find_cn)-1
+ 	};
+-	char *result = NULL;
++	int result = -1;
+ 
+ 	if (!ssl_sock_is_ssl(conn))
+-		return NULL;
++		goto out;
+ 
+ 	/* SSL_get_peer_certificate, it increase X509 * ref count */
+ 	crt = SSL_get_peer_certificate(conn->xprt_ctx);
+@@ -2679,13 +2683,8 @@ char *ssl_sock_get_common_name(struct connection *conn)
+ 	if (!name)
+ 		goto out;
+ 
+-	cn_trash = get_trash_chunk();
+-	if (ssl_sock_get_dn_entry(name, &find_cn_chunk, 1, cn_trash) <= 0)
+-		goto out;
+-	cn_trash->str[cn_trash->len] = '\0';
+-	result = cn_trash->str;
+-
+-	out:
++	result = ssl_sock_get_dn_entry(name, &find_cn_chunk, 1, dest);
++out:
+ 	if (crt)
+ 		X509_free(crt);
+ 
+-- 
+1.8.5.5
+

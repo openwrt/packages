@@ -1,0 +1,109 @@
+From d008394057c4fe46ca6eb775c66cc0ff986a5495 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 25 Jun 2014 16:20:53 +0200
+Subject: [PATCH 5/6] MINOR: stick-table: make stktable_fetch_key() indicate
+ why it failed
+
+stktable_fetch_key() does not indicate whether it returns NULL because
+the input sample was not found or because it's unstable. It causes trouble
+with track-sc* rules. Just like with sample_fetch_string(), we want it to
+be able to give more information to the caller about what it found. Thus,
+now we use the pointer to a sample passed by the caller, and fill it with
+the information we have about the sample. That way, even if we return NULL,
+the caller has the ability to check whether a sample was found and if it is
+still changing or not.
+(cherry picked from commit b5975defba61e7ef37ae771614166d0970ede04e)
+---
+ include/proto/stick_table.h |  2 +-
+ src/proto_tcp.c             |  4 ++--
+ src/session.c               |  4 ++--
+ src/stick_table.c           | 12 +++++++-----
+ 4 files changed, 12 insertions(+), 10 deletions(-)
+
+diff --git a/include/proto/stick_table.h b/include/proto/stick_table.h
+index 0c26fbe..57ca223 100644
+--- a/include/proto/stick_table.h
++++ b/include/proto/stick_table.h
+@@ -48,7 +48,7 @@ struct stksess *stktable_lookup_key(struct stktable *t, struct stktable_key *key
+ struct stksess *stktable_update_key(struct stktable *table, struct stktable_key *key);
+ struct stktable_key *stktable_fetch_key(struct stktable *t, struct proxy *px,
+ 				        struct session *l4, void *l7, unsigned int opt,
+-				        struct sample_expr *expr);
++				        struct sample_expr *expr, struct sample *smp);
+ int stktable_compatible_sample(struct sample_expr *expr, unsigned long table_type);
+ int stktable_get_data_type(char *name);
+ struct proxy *find_stktable(const char *name);
+diff --git a/src/proto_tcp.c b/src/proto_tcp.c
+index 65c4fda..1aac0d9 100644
+--- a/src/proto_tcp.c
++++ b/src/proto_tcp.c
+@@ -1027,7 +1027,7 @@ int tcp_inspect_request(struct session *s, struct channel *req, int an_bit)
+ 					continue;
+ 
+ 				t = rule->act_prm.trk_ctr.table.t;
+-				key = stktable_fetch_key(t, s->be, s, &s->txn, SMP_OPT_DIR_REQ|SMP_OPT_FINAL, rule->act_prm.trk_ctr.expr);
++				key = stktable_fetch_key(t, s->be, s, &s->txn, SMP_OPT_DIR_REQ|SMP_OPT_FINAL, rule->act_prm.trk_ctr.expr, NULL);
+ 
+ 				if (key && (ts = stktable_get_entry(t, key))) {
+ 					session_track_stkctr(&s->stkctr[tcp_trk_idx(rule->action)], t, ts);
+@@ -1228,7 +1228,7 @@ int tcp_exec_req_rules(struct session *s)
+ 					continue;
+ 
+ 				t = rule->act_prm.trk_ctr.table.t;
+-				key = stktable_fetch_key(t, s->be, s, &s->txn, SMP_OPT_DIR_REQ|SMP_OPT_FINAL, rule->act_prm.trk_ctr.expr);
++				key = stktable_fetch_key(t, s->be, s, &s->txn, SMP_OPT_DIR_REQ|SMP_OPT_FINAL, rule->act_prm.trk_ctr.expr, NULL);
+ 
+ 				if (key && (ts = stktable_get_entry(t, key)))
+ 					session_track_stkctr(&s->stkctr[tcp_trk_idx(rule->action)], t, ts);
+diff --git a/src/session.c b/src/session.c
+index e26f5ad..df85170 100644
+--- a/src/session.c
++++ b/src/session.c
+@@ -1458,7 +1458,7 @@ static int process_sticking_rules(struct session *s, struct channel *req, int an
+ 		if (ret) {
+ 			struct stktable_key *key;
+ 
+-			key = stktable_fetch_key(rule->table.t, px, s, &s->txn, SMP_OPT_DIR_REQ|SMP_OPT_FINAL, rule->expr);
++			key = stktable_fetch_key(rule->table.t, px, s, &s->txn, SMP_OPT_DIR_REQ|SMP_OPT_FINAL, rule->expr, NULL);
+ 			if (!key)
+ 				continue;
+ 
+@@ -1561,7 +1561,7 @@ static int process_store_rules(struct session *s, struct channel *rep, int an_bi
+ 		if (ret) {
+ 			struct stktable_key *key;
+ 
+-			key = stktable_fetch_key(rule->table.t, px, s, &s->txn, SMP_OPT_DIR_RES|SMP_OPT_FINAL, rule->expr);
++			key = stktable_fetch_key(rule->table.t, px, s, &s->txn, SMP_OPT_DIR_RES|SMP_OPT_FINAL, rule->expr, NULL);
+ 			if (!key)
+ 				continue;
+ 
+diff --git a/src/stick_table.c b/src/stick_table.c
+index c6463ec..a708d3c 100644
+--- a/src/stick_table.c
++++ b/src/stick_table.c
+@@ -601,15 +601,17 @@ static sample_to_key_fct sample_to_key[SMP_TYPES][STKTABLE_TYPES] = {
+  * Process a fetch + format conversion as defined by the sample expression <expr>
+  * on request or response considering the <opt> parameter. Returns either NULL if
+  * no key could be extracted, or a pointer to the converted result stored in
+- * static_table_key in format <table_type>.
++ * static_table_key in format <table_type>. If <smp> is not NULL, it will be reset
++ * and its flags will be initialized so that the caller gets a copy of the input
++ * sample, and knows why it was not accepted (eg: SMP_F_MAY_CHANGE is present).
+  */
+ struct stktable_key *stktable_fetch_key(struct stktable *t, struct proxy *px, struct session *l4, void *l7,
+-					unsigned int opt,
+-                                        struct sample_expr *expr)
++                                        unsigned int opt, struct sample_expr *expr, struct sample *smp)
+ {
+-	struct sample *smp;
++	if (smp)
++		memset(smp, 0, sizeof(*smp));
+ 
+-	smp = sample_process(px, l4, l7, opt, expr, NULL);
++	smp = sample_process(px, l4, l7, opt, expr, smp);
+ 	if (!smp)
+ 		return NULL;
+ 
+-- 
+1.8.5.5
+
