@@ -121,7 +121,7 @@ endef
 define Package/openssh-sftp-server
 	$(call Package/openssh/Default)
 	TITLE+= SFTP server
-	DEPENDS:=
+	DEPENDS:=+SSP_SUPPORT:libssp
 endef
 
 define Package/openssh-sftp-server/description
