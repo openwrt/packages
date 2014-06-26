@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libevent
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=Event notification library
+  TITLE:=Event notification library (legacy)
   DEPENDS:=+librt
   URL:=http://www.libevent.org
 endef
