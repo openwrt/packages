@@ -31,3 +31,7 @@ for iface in $ext_iface $ext_iface6 $(uci_get upnpd config internal_iface; uci_g
     network_get_device device $iface
     [ "$DEVICE" = "$device" ] && /etc/init.d/miniupnpd restart && exit 0
 done
+
+for device in $(fw3 -q zone `uci_get upnpd config external_zone`); do
+    [ "$DEVICE" = "$device" ] && /etc/init.d/miniupnpd restart && exit 0
+done

@@ -70,6 +70,7 @@ start() {
         local ipv6_listening_ip
 
 	config_get extiface config external_iface
+	config_get extzone config external_zone
 	config_get intiface config internal_iface
 	config_get extip config external_ip
 	config_get port config port 5000
@@ -93,10 +94,18 @@ start() {
 
 	local ifname
 
-        [ -n "$extiface" ] || network_find_wan extiface
-        [ -n "$extiface" ] || network_find_wan6 extiface
+        # manual external interface overrides everything
+        if [ -z "$extiface" ] ; then
+            # manual external zone (if dynamically find interfaces
+            # belonging to it) overrides network_find_wan*
+            if [ -n "$extzone" ] ; then
+                ifname=$(fw3 -q zone $extzone | head -1)
+            fi
+            [ -n "$extiface" ] || network_find_wan extiface
+            [ -n "$extiface" ] || network_find_wan6 extiface
+        fi
 
-	network_get_device ifname ${extiface}
+	[ -n "$ifname"] || network_get_device ifname ${extiface}
 
 	if [ -n "$conffile" ]; then
 		args="-f $conffile"
