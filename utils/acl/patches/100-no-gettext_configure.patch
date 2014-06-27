@@ -1,0 +1,21 @@
+diff --git a/configure.ac b/configure.ac
+index 2182e81..4836b3d 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -31,9 +31,6 @@ AC_FUNC_GCC_VISIBILITY
+ AM_PROG_AR
+ LT_INIT
+ 
+-AM_GNU_GETTEXT_VERSION([0.18.2])
+-AM_GNU_GETTEXT([external])
+-
+ AC_ARG_ENABLE([debug],
+ 	[AS_HELP_STRING([--enable-debug], [Enable extra debugging])])
+ AS_IF([test "x$enable_debug" = "xyes"],
+@@ -61,6 +58,5 @@ AC_CONFIG_COMMANDS([include/sys],
+ AC_CONFIG_FILES([
+ 	libacl.pc
+ 	Makefile
+-	po/Makefile.in
+ ])
+ AC_OUTPUT
