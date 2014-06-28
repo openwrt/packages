@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ZONE=`uci get ocserv.config.ZONE`
+ZONE=`uci get ocserv.config.zone`
 
 if [ "$REASON" = "connect" ];then
 	env -i ACTION=ifup INTERFACE="$ZONE" DEVICE=$DEVICE /sbin/hotplug-call "iface"
