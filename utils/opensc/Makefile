@@ -47,7 +47,7 @@ define Package/libopensc-pkcs11
   CATEGORY:=Libraries
   TITLE:=OpenSC - PKCS11 provider
   URL:=https://github.com/OpenSC/OpenSC/wiki
-  DEPENDS:=libopensc
+  DEPENDS:=+libopensc
 endef
 
 define Package/libopensc-pkcs11/description
@@ -59,6 +59,7 @@ define Package/libpkcs11-spy
   CATEGORY:=Libraries
   TITLE:=PKCS11 spying wrapper
   URL:=https://github.com/OpenSC/OpenSC/wiki
+  DEPENDS:=+libopensc-pkcs11
 endef
 
 define Package/libpkcs11-spy/dscription
@@ -84,7 +85,7 @@ define Package/opensc-utils-$(subst _,-,$(firstword $(subst :, ,$(1))))
   URL:=https://github.com/OpenSC/OpenSC/wiki
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=opensc-utils $(wordlist 2,$(words $(subst :, ,$(1))),$(subst :, ,$(1)))
+  DEPENDS:=+opensc-utils $(wordlist 2,$(words $(subst :, ,$(1))),$(subst :, ,$(1)))
 endef
 endef
 
@@ -94,7 +95,7 @@ define Package/libopensc-profile-$(subst _,-,$(firstword $(subst :, ,$(1))))
   URL:=https://github.com/OpenSC/OpenSC/wiki
   SECTION:=lib
   CATEGORY:=Libraries
-  DEPENDS:=libopensc
+  DEPENDS:=+libopensc
 endef
 endef
 
