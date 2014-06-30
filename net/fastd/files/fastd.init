@@ -3,6 +3,8 @@
 
 START=95
 
+SERVICE_USE_PID=1
+
 EXTRA_COMMANDS="up down show_key generate_key"
 
 LIST_SEP="
@@ -359,16 +361,19 @@ reload_instance() {
 start() {
 	config_load 'fastd'
 	config_foreach start_instance 'fastd'
+	return 0
 }
 
 stop() {
 	config_load 'fastd'
 	config_foreach stop_instance 'fastd'
+	return 0
 }
 
 reload() {
 	config_load 'fastd'
 	config_foreach reload_instance 'fastd'
+	return 0
 }
 
 up() {

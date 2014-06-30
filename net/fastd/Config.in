@@ -79,4 +79,9 @@ config FASTD_WITH_CMDLINE_COMMANDS
 	depends on PACKAGE_fastd
 	default n
 
+config FASTD_WITH_VERIFY
+        bool "Include support for on-verify handlers"
+        depends on PACKAGE_fastd
+        default n
+
 endmenu
