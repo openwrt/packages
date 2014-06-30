@@ -18,6 +18,7 @@ PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 
 PKG_INSTALL:=1
 PKG_LIBTOOL_PATHS:=. lib
+PKG_CHECK_FORMAT_SECURITY:=0
 
 include $(INCLUDE_DIR)/package.mk
 
