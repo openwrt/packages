@@ -1,0 +1,44 @@
+From b4cbc1e2227754ff384da1437e7d3448f91571b2 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Fri, 27 Jun 2014 18:08:49 +0200
+Subject: [PATCH 8/9] MINOR: log: make MAX_SYSLOG_LEN overridable at build time
+
+This value was set in log.h without any #ifndef around, so when one
+wanted to change it, a patch was needed. Let's move it to defaults.h
+with the usual #ifndef so that it's easier to change it.
+(cherry picked from commit 4e957907aa117c07214ab84ba2a58f2fc1666931)
+---
+ include/common/defaults.h | 4 ++++
+ include/types/log.h       | 1 -
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/include/common/defaults.h b/include/common/defaults.h
+index c53db08..0075509 100644
+--- a/include/common/defaults.h
++++ b/include/common/defaults.h
+@@ -48,6 +48,10 @@
+ #define CAPTURE_LEN     64
+ #endif
+ 
++#ifndef MAX_SYSLOG_LEN
++#define MAX_SYSLOG_LEN          1024
++#endif
++
+ // maximum line size when parsing config
+ #ifndef LINESIZE
+ #define LINESIZE	2048
+diff --git a/include/types/log.h b/include/types/log.h
+index 8ee8d7c..b3288bd 100644
+--- a/include/types/log.h
++++ b/include/types/log.h
+@@ -28,7 +28,6 @@
+ #include <common/config.h>
+ #include <common/mini-clist.h>
+ 
+-#define MAX_SYSLOG_LEN          1024
+ #define NB_LOG_FACILITIES       24
+ #define NB_LOG_LEVELS           8
+ #define SYSLOG_PORT             514
+-- 
+1.8.5.5
+

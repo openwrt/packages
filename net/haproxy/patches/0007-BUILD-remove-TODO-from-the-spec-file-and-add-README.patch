@@ -1,0 +1,28 @@
+From e726fd6571f684d0e92b8d97de8ca7a68d30f708 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 26 Jun 2014 08:20:38 +0200
+Subject: [PATCH 7/9] BUILD: remove TODO from the spec file and add README
+
+This used to cause a build failure since 1.5.0, as reported by
+Timothy Shelton. The proxy protocol doc was also added.
+(cherry picked from commit ca3094d0b1531ce62fc1970aa7396a01330bb5c1)
+---
+ examples/haproxy.spec | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/examples/haproxy.spec b/examples/haproxy.spec
+index 4ee3aa5..2fdb1a7 100644
+--- a/examples/haproxy.spec
++++ b/examples/haproxy.spec
+@@ -67,7 +67,7 @@ fi
+ 
+ %files
+ %defattr(-,root,root)
+-%doc CHANGELOG TODO examples/*.cfg doc/haproxy-en.txt doc/haproxy-fr.txt doc/architecture.txt doc/configuration.txt
++%doc CHANGELOG README examples/*.cfg doc/haproxy-en.txt doc/haproxy-fr.txt doc/architecture.txt doc/configuration.txt doc/proxy-protocol.txt
+ %doc %{_mandir}/man1/%{name}.1*
+ 
+ %attr(0755,root,root) %{_sbindir}/%{name}
+-- 
+1.8.5.5
+

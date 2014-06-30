@@ -1,0 +1,360 @@
+From dc2695cc531bd7fc98f09df5f6e1e57290ab1a14 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Fri, 27 Jun 2014 18:10:07 +0200
+Subject: [PATCH 9/9] MEDIUM: log: support a user-configurable max log line
+ length
+
+With all the goodies supported by logformat, people find that the limit
+of 1024 chars for log lines is too short. Some servers do not support
+larger lines and can simply drop them, so changing the default value is
+not always the best choice.
+
+This patch takes a different approach. Log line length is specified per
+log server on the "log" line, with a value between 80 and 65535. That
+way it's possibly to satisfy all needs, even with some fat local servers
+and small remote ones.
+(cherry picked from commit 18324f574f349d510622ff45635de899437a3a11)
+---
+ doc/configuration.txt  | 28 ++++++++++++++++--
+ include/proto/log.h    |  1 +
+ include/types/global.h |  1 +
+ include/types/log.h    |  1 +
+ src/cfgparse.c         | 80 ++++++++++++++++++++++++++++++++++++++++----------
+ src/log.c              | 36 ++++++++++++++++-------
+ 6 files changed, 118 insertions(+), 29 deletions(-)
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index 080d8fc..e53bb21 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -559,7 +559,7 @@ group <group name>
+   Similar to "gid" but uses the GID of group name <group name> from /etc/group.
+   See also "gid" and "user".
+ 
+-log <address> <facility> [max level [min level]]
++log <address> [len <length>] <facility> [max level [min level]]
+   Adds a global syslog server. Up to two global servers can be defined. They
+   will receive logs for startups and exits, as well as all logs from proxies
+   configured with "log global".
+@@ -584,6 +584,18 @@ log <address> <facility> [max level [min level]]
+         optionally enclosing them with braces ('{}'), similarly to what is done
+         in Bourne shell.
+ 
++  <length> is an optional maximum line length. Log lines larger than this value
++           will be truncated before being sent. The reason is that syslog
++           servers act differently on log line length. All servers support the
++           default value of 1024, but some servers simply drop larger lines
++           while others do log them. If a server supports long lines, it may
++           make sense to set this value here in order to avoid truncating long
++           lines. Similarly, if a server drops long lines, it is preferable to
++           truncate them before sending them. Accepted values are 80 to 65535
++           inclusive. The default value of 1024 is generally fine for all
++           standard usages. Some specific cases of long captures or
++           JSON-formated logs may require larger values.
++
+   <facility> must be one of the 24 standard syslog facilities :
+ 
+           kern   user   mail   daemon auth   syslog lpr    news
+@@ -3349,7 +3361,7 @@ ignore-persist { if | unless } <condition>
+ 
+ 
+ log global
+-log <address> <facility> [<level> [<minlevel>]]
++log <address> [len <length>] <facility> [<level> [<minlevel>]]
+ no log
+   Enable per-instance logging of events and traffic.
+   May be used in sections :   defaults | frontend | listen | backend
+@@ -3389,6 +3401,18 @@ no log
+                sign ('$') and optionally enclosing them with braces ('{}'),
+                similarly to what is done in Bourne shell.
+ 
++    <length>   is an optional maximum line length. Log lines larger than this
++               value will be truncated before being sent. The reason is that
++               syslog servers act differently on log line length. All servers
++               support the default value of 1024, but some servers simply drop
++               larger lines while others do log them. If a server supports long
++               lines, it may make sense to set this value here in order to avoid
++               truncating long lines. Similarly, if a server drops long lines,
++               it is preferable to truncate them before sending them. Accepted
++               values are 80 to 65535 inclusive. The default value of 1024 is
++               generally fine for all standard usages. Some specific cases of
++               long captures or JSON-formated logs may require larger values.
++
+     <facility> must be one of the 24 standard syslog facilities :
+ 
+                  kern   user   mail   daemon auth   syslog lpr    news
+diff --git a/include/proto/log.h b/include/proto/log.h
+index e3c1a75..54c51d1 100644
+--- a/include/proto/log.h
++++ b/include/proto/log.h
+@@ -39,6 +39,7 @@ extern char *log_format;
+ extern char default_tcp_log_format[];
+ extern char default_http_log_format[];
+ extern char clf_http_log_format[];
++extern char *logline;
+ 
+ 
+ int build_logline(struct session *s, char *dst, size_t maxsize, struct list *list_format);
+diff --git a/include/types/global.h b/include/types/global.h
+index 23e3f3d..77df1dd 100644
+--- a/include/types/global.h
++++ b/include/types/global.h
+@@ -110,6 +110,7 @@ struct global {
+ 	int last_checks;
+ 	int spread_checks;
+ 	int max_spread_checks;
++	int max_syslog_len;
+ 	char *chroot;
+ 	char *pidfile;
+ 	char *node, *desc;		/* node name & description */
+diff --git a/include/types/log.h b/include/types/log.h
+index b3288bd..c7e47ea 100644
+--- a/include/types/log.h
++++ b/include/types/log.h
+@@ -152,6 +152,7 @@ struct logsrv {
+ 	int facility;
+ 	int level;
+ 	int minlvl;
++	int maxlen;
+ };
+ 
+ #endif /* _TYPES_LOG_H */
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index 762978a..e6e65b4 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -1254,6 +1254,8 @@ int cfg_parse_global(const char *file, int linenum, char **args, int kwm)
+ 		struct sockaddr_storage *sk;
+ 		int port1, port2;
+ 		struct logsrv *logsrv;
++		int arg = 0;
++		int len = 0;
+ 
+ 		if (*(args[1]) == 0 || *(args[2]) == 0) {
+ 			Alert("parsing [%s:%d] : '%s' expects <address> and <facility> as arguments.\n", file, linenum, args[0]);
+@@ -1263,28 +1265,50 @@ int cfg_parse_global(const char *file, int linenum, char **args, int kwm)
+ 
+ 		logsrv = calloc(1, sizeof(struct logsrv));
+ 
+-		logsrv->facility = get_log_facility(args[2]);
++		/* just after the address, a length may be specified */
++		if (strcmp(args[arg+2], "len") == 0) {
++			len = atoi(args[arg+3]);
++			if (len < 80 || len > 65535) {
++				Alert("parsing [%s:%d] : invalid log length '%s', must be between 80 and 65535.\n",
++				      file, linenum, args[arg+3]);
++				err_code |= ERR_ALERT | ERR_FATAL;
++				goto out;
++			}
++			logsrv->maxlen = len;
++
++			/* skip these two args */
++			arg += 2;
++		}
++		else
++			logsrv->maxlen = MAX_SYSLOG_LEN;
++
++		if (logsrv->maxlen > global.max_syslog_len) {
++			global.max_syslog_len = logsrv->maxlen;
++			logline = realloc(logline, global.max_syslog_len + 1);
++		}
++
++		logsrv->facility = get_log_facility(args[arg+2]);
+ 		if (logsrv->facility < 0) {
+-			Alert("parsing [%s:%d] : unknown log facility '%s'\n", file, linenum, args[2]);
++			Alert("parsing [%s:%d] : unknown log facility '%s'\n", file, linenum, args[arg+2]);
+ 			err_code |= ERR_ALERT | ERR_FATAL;
+ 			logsrv->facility = 0;
+ 		}
+ 
+ 		logsrv->level = 7; /* max syslog level = debug */
+-		if (*(args[3])) {
+-			logsrv->level = get_log_level(args[3]);
++		if (*(args[arg+3])) {
++			logsrv->level = get_log_level(args[arg+3]);
+ 			if (logsrv->level < 0) {
+-				Alert("parsing [%s:%d] : unknown optional log level '%s'\n", file, linenum, args[3]);
++				Alert("parsing [%s:%d] : unknown optional log level '%s'\n", file, linenum, args[arg+3]);
+ 				err_code |= ERR_ALERT | ERR_FATAL;
+ 				logsrv->level = 0;
+ 			}
+ 		}
+ 
+ 		logsrv->minlvl = 0; /* limit syslog level to this level (emerg) */
+-		if (*(args[4])) {
+-			logsrv->minlvl = get_log_level(args[4]);
++		if (*(args[arg+4])) {
++			logsrv->minlvl = get_log_level(args[arg+4]);
+ 			if (logsrv->minlvl < 0) {
+-				Alert("parsing [%s:%d] : unknown optional minimum log level '%s'\n", file, linenum, args[4]);
++				Alert("parsing [%s:%d] : unknown optional minimum log level '%s'\n", file, linenum, args[arg+4]);
+ 				err_code |= ERR_ALERT | ERR_FATAL;
+ 				logsrv->minlvl = 0;
+ 			}
+@@ -4791,22 +4815,46 @@ stats_error_parsing:
+ 		else if (*(args[1]) && *(args[2])) {
+ 			struct sockaddr_storage *sk;
+ 			int port1, port2;
++			int arg = 0;
++			int len = 0;
+ 
+ 			logsrv = calloc(1, sizeof(struct logsrv));
+ 
+-			logsrv->facility = get_log_facility(args[2]);
++			/* just after the address, a length may be specified */
++			if (strcmp(args[arg+2], "len") == 0) {
++				len = atoi(args[arg+3]);
++				if (len < 80 || len > 65535) {
++					Alert("parsing [%s:%d] : invalid log length '%s', must be between 80 and 65535.\n",
++					      file, linenum, args[arg+3]);
++					err_code |= ERR_ALERT | ERR_FATAL;
++					goto out;
++				}
++				logsrv->maxlen = len;
++
++				/* skip these two args */
++				arg += 2;
++			}
++			else
++				logsrv->maxlen = MAX_SYSLOG_LEN;
++
++			if (logsrv->maxlen > global.max_syslog_len) {
++				global.max_syslog_len = logsrv->maxlen;
++				logline = realloc(logline, global.max_syslog_len + 1);
++			}
++
++			logsrv->facility = get_log_facility(args[arg+2]);
+ 			if (logsrv->facility < 0) {
+-				Alert("parsing [%s:%d] : unknown log facility '%s'\n", file, linenum, args[2]);
++				Alert("parsing [%s:%d] : unknown log facility '%s'\n", file, linenum, args[arg+2]);
+ 				err_code |= ERR_ALERT | ERR_FATAL;
+ 				goto out;
+ 
+ 			}
+ 	    
+ 			logsrv->level = 7; /* max syslog level = debug */
+-			if (*(args[3])) {
+-				logsrv->level = get_log_level(args[3]);
++			if (*(args[arg+3])) {
++				logsrv->level = get_log_level(args[arg+3]);
+ 				if (logsrv->level < 0) {
+-					Alert("parsing [%s:%d] : unknown optional log level '%s'\n", file, linenum, args[3]);
++					Alert("parsing [%s:%d] : unknown optional log level '%s'\n", file, linenum, args[arg+3]);
+ 					err_code |= ERR_ALERT | ERR_FATAL;
+ 					goto out;
+ 
+@@ -4814,10 +4862,10 @@ stats_error_parsing:
+ 			}
+ 
+ 			logsrv->minlvl = 0; /* limit syslog level to this level (emerg) */
+-			if (*(args[4])) {
+-				logsrv->minlvl = get_log_level(args[4]);
++			if (*(args[arg+4])) {
++				logsrv->minlvl = get_log_level(args[arg+4]);
+ 				if (logsrv->minlvl < 0) {
+-					Alert("parsing [%s:%d] : unknown optional minimum log level '%s'\n", file, linenum, args[4]);
++					Alert("parsing [%s:%d] : unknown optional minimum log level '%s'\n", file, linenum, args[arg+4]);
+ 					err_code |= ERR_ALERT | ERR_FATAL;
+ 					goto out;
+ 
+diff --git a/src/log.c b/src/log.c
+index 114ab7b..3e3acb4 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -146,7 +146,7 @@ char *log_format = NULL;
+ /* This is a global syslog line, common to all outgoing messages. It begins
+  * with the syslog tag and the date that are updated by update_log_hdr().
+  */
+-static char logline[MAX_SYSLOG_LEN];
++char *logline = NULL;
+ 
+ struct logformat_var_args {
+ 	char *name;
+@@ -736,7 +736,7 @@ static char *update_log_hdr()
+ 		tvsec = date.tv_sec;
+ 		get_localtime(tvsec, &tm);
+ 
+-		hdr_len = snprintf(logline, MAX_SYSLOG_LEN,
++		hdr_len = snprintf(logline, global.max_syslog_len,
+ 				   "<<<<>%s %2d %02d:%02d:%02d %s%s[%d]: ",
+ 				   monthname[tm.tm_mon],
+ 				   tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
+@@ -746,8 +746,8 @@ static char *update_log_hdr()
+ 		 * either -1 or the number of bytes that would be needed to store
+ 		 * the total message. In both cases, we must adjust it.
+ 		 */
+-		if (hdr_len < 0 || hdr_len > MAX_SYSLOG_LEN)
+-			hdr_len = MAX_SYSLOG_LEN;
++		if (hdr_len < 0 || hdr_len > global.max_syslog_len)
++			hdr_len = global.max_syslog_len;
+ 
+ 		dataptr = logline + hdr_len;
+ 	}
+@@ -772,9 +772,9 @@ void send_log(struct proxy *p, int level, const char *format, ...)
+ 	data_len = dataptr - logline;
+ 
+ 	va_start(argp, format);
+-	data_len += vsnprintf(dataptr, logline + sizeof(logline) - dataptr, format, argp);
+-	if (data_len < 0 || data_len > MAX_SYSLOG_LEN)
+-		data_len =  MAX_SYSLOG_LEN;
++	data_len += vsnprintf(dataptr, logline + global.max_syslog_len - dataptr, format, argp);
++	if (data_len < 0 || data_len > global.max_syslog_len)
++		data_len = global.max_syslog_len;
+ 	va_end(argp);
+ 
+ 	__send_log(p, level, logline, data_len);
+@@ -811,8 +811,6 @@ void __send_log(struct proxy *p, int level, char *message, size_t size)
+ 	if (!logsrvs)
+ 		return;
+ 
+-	message[size - 1] = '\n';
+-
+ 	/* Send log messages to syslog server. */
+ 	nblogger = 0;
+ 	list_for_each_entry(tmp, logsrvs, list) {
+@@ -820,6 +818,8 @@ void __send_log(struct proxy *p, int level, char *message, size_t size)
+ 		int *plogfd = logsrv->addr.ss_family == AF_UNIX ?
+ 			&logfdunix : &logfdinet;
+ 		int sent;
++		int max;
++		char backup;
+ 
+ 		nblogger++;
+ 
+@@ -858,9 +858,23 @@ void __send_log(struct proxy *p, int level, char *message, size_t size)
+ 		} while (fac_level && log_ptr > dataptr);
+ 		*log_ptr = '<';
+ 
+-		sent = sendto(*plogfd, log_ptr, size - (log_ptr - dataptr),
++		max = size - (log_ptr - dataptr);
++		if (max > logsrv->maxlen)
++			max = logsrv->maxlen;
++
++		/* insert a \n at the end of the message, but save what was
++		 * there first because we could have different max lengths
++		 * for different log targets.
++		 */
++		backup = log_ptr[max - 1];
++		log_ptr[max - 1] = '\n';
++
++		sent = sendto(*plogfd, log_ptr, max,
+ 			      MSG_DONTWAIT | MSG_NOSIGNAL,
+ 			      (struct sockaddr *)&logsrv->addr, get_addr_len(&logsrv->addr));
++
++		log_ptr[max - 1] = backup;
++
+ 		if (sent < 0) {
+ 			Alert("sendto logger #%d failed: %s (errno=%d)\n",
+ 				nblogger, strerror(errno), errno);
+@@ -1604,7 +1618,7 @@ void sess_log(struct session *s)
+ 
+ 	tmplog = update_log_hdr();
+ 	size = tmplog - logline;
+-	size += build_logline(s, tmplog, sizeof(logline) - size, &s->fe->logformat);
++	size += build_logline(s, tmplog, global.max_syslog_len - size, &s->fe->logformat);
+ 	if (size > 0) {
+ 		__send_log(s->fe, level, logline, size + 1);
+ 		s->logs.logwait = 0;
+-- 
+1.8.5.5
+
