@@ -30,11 +30,7 @@ define Package/patch/description
   by applying a "patch" file typically created by the diff program.
 endef
 
-define Build/Configure
-        $(call Build/Configure/Default,\
-                --disable-xattr \
-        )
-endef
+CONFIGURE_ARGS+= --disable-xattr
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
