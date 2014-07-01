@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=http://protobuf.googlecode.com/files
 PKG_MD5SUM:=a72001a9067a4c2c4e0e836d0f92ece4
 
 PKG_BUILD_DEPENDS:=protobuf/host
+PKG_USE_MIPS16:=0
 
 PKG_INSTALL:=1
 
