@@ -40,23 +40,26 @@ define Package/glib2/description
   The GLib library of C routines
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--enable-shared \
-		--enable-static \
-		--enable-debug=no \
-		--disable-selinux \
-        --disable-fam \
-        $(if $(ICONV_FULL),--with-libiconv=gnu) \
-		, \
-		glib_cv_stack_grows=no \
-		glib_cv_uscore=no \
-		ac_cv_path_GLIB_GENMARSHAL=$(STAGING_DIR_HOST)/bin/glib-genmarshal \
-		ac_cv_func_mmap_fixed_mapped=yes \
-		ac_cv_func_posix_getpwuid_r=yes \
-		ac_cv_func_posix_getgrgid_r=yes \
-	);
-endef
+HOST_CONFIGURE_ARGS += \
+	--disable-selinux \
+	--disable-xattr
+
+CONFIGURE_ARGS += \
+	--enable-shared \
+	--enable-static \
+	--enable-debug=no \
+	--disable-selinux \
+	--disable-xattr \
+	--disable-fam \
+	$(if $(ICONV_FULL),--with-libiconv=gnu)
+
+CONFIGURE_VARS += \
+	glib_cv_stack_grows=no \
+	glib_cv_uscore=no \
+	ac_cv_path_GLIB_GENMARSHAL=$(STAGING_DIR_HOST)/bin/glib-genmarshal \
+	ac_cv_func_mmap_fixed_mapped=yes \
+	ac_cv_func_posix_getpwuid_r=yes \
+	ac_cv_func_posix_getgrgid_r=yes
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
