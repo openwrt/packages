@@ -32,6 +32,7 @@ define Package/rtorrent/Default
   TITLE:=BitTorrent client for ncurses
   URL:=http://libtorrent.rakshasa.no/
   DEPENDS:=+libcurl +libtorrent +libncursesw +libsigcxx +libpthread
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/rtorrent/Default/description

@@ -32,6 +32,7 @@ define Package/glib2
   CATEGORY:=Libraries
   DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +zlib +libpthread +libffi
   TITLE:=glib 2.0
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.gtk.org/
 endef
 

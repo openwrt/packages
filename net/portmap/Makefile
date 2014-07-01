@@ -28,6 +28,7 @@ define Package/portmap
   DEPENDS:=+libwrap $(LIBRPC_DEPENDS)
   TITLE:=The RPC Portmapper
   URL:=http://neil.brown.name/portmap/
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/portmap/description

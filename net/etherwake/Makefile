@@ -25,6 +25,7 @@ define Package/etherwake
   CATEGORY:=Network
   TITLE:=WoL client for magic packets via ethernet frames
   URL:=http://ftp.debian.org/debian/pool/main/e/etherwake
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/etherwake/description

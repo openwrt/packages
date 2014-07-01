@@ -27,6 +27,7 @@ define Package/libwrap
   CATEGORY:=Libraries
   TITLE:=Security wrapper library for TCP services
   URL:=ftp://ftp.porcupine.org/pub/security/index.html
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 TARGET_CFLAGS += $(FPIC)

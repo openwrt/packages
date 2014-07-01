@@ -24,6 +24,7 @@ define Package/libspeex
   CATEGORY:=Libraries
   TITLE:=Open source speech compression codec library
   URL:=http://www.speex.org/
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/libspeexdsp
@@ -31,6 +32,7 @@ define Package/libspeexdsp
   CATEGORY:=Libraries
   TITLE:=Open source speech compression codec library output to DSP
   URL:=http://www.speex.org/
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/libspeex/description

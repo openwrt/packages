@@ -30,6 +30,7 @@ define Package/libffi
   CATEGORY:=Libraries
   TITLE:=Foreign Function Interface (FFI) library
   URL:=http://sourceware.org/libffi/
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/libffi/description

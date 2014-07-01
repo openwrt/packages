@@ -29,6 +29,7 @@ define Package/nfs-kernel-server/Default
   SUBMENU:=Filesystem
   DEPENDS:=+libwrap +libblkid +libuuid $(LIBRPC_DEPENDS)
   URL:=http://nfs.sourceforge.net/
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/nfs-kernel-server

@@ -29,6 +29,7 @@ define Package/libtorrent
   TITLE:=Rakshasa's BitTorrent library
   URL:=http://libtorrent.rakshasa.no/
   DEPENDS:=+libopenssl +libsigcxx
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/libtorrent/description
