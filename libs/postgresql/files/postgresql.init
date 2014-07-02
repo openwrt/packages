@@ -1,0 +1,93 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+START=50
+
+EXTRA_COMMANDS="status reload"
+
+config_load "postgresql"
+config_get pgdata config PGDATA
+config_get pguser config PGUSER
+config_get pgctl config PG_CTL
+config_get pglog config PGLOG
+
+start() {
+    if [ ! -e /usr/bin/su ]; then
+        echo "The su command is requred to run postgres"
+        exit 1
+    fi
+
+    if [ ! -d ${pgdata} ]; then
+        echo "Create the data directory (${pgdata}) and try again"
+        exit 1
+    fi
+
+    echo "starting postgres..."
+    # make sure localhost (without a dot) is in /etc/hosts
+    grep -q 'localhost$' /etc/hosts || echo '127.0.0.1 localhost' >> /etc/hosts
+
+    # for whatever reason, /dev/null gets wrong perms
+    chmod a+w /dev/null
+
+    if [ -f ${pgdata}/postmaster.pid ]; then
+        rm ${pgdata}/postmaster.pid
+    fi
+
+    config_get pgopts config PGOPTS
+    if [ -n "${pgopts}" ]; then
+        pgopts="-o ${pgopts}"
+    fi
+    /usr/bin/su ${pguser} -c "/usr/bin/postmaster -D '${pgdata}' &" >> ${pglog} 2>&1
+
+    while :
+    do
+        cnt=$((${cnt} + 1))
+        if [ -f "${pgdata}/postmaster.pid" ]; then
+            ret=0
+            break
+        fi
+
+        if [ ${cnt} -eq 30 ]; then
+            echo "Postgres failed to start.  See ${pglog} for details"
+            ret=1
+            break
+        fi
+        sleep 1
+    done
+
+    echo "ok"
+    return ${ret}
+}
+
+stop() {
+    echo "stopping postgres..."
+    /usr/bin/su ${pguser} -c "${pgctl} stop -D '${pgdata}' -s -m fast"
+    ret=$?
+    if [ -f ${pgdata}/postmaster.pid ]; then
+        rm ${pgdata}/postmaster.pid
+    fi
+    echo "ok"
+    return ${ret}
+}
+
+restart() {
+    echo "restarting postgres..."
+    /usr/bin/su ${pguser} -c "${pgctl} stop -D '${pgdata}' -s -m fast -w"
+    if [ -f ${pgdata}/postmaster.pid ]; then
+        rm ${pgdata}/postmaster.pid
+    fi
+    /usr/bin/su ${pguser} -c "/usr/bin/postmaster -D '${pgdata}' &" >> ${pglog} 2>&1
+    echo "ok"
+    return $?
+}
+
+reload() {
+    echo "reloading postgres..."
+    /usr/bin/su ${pguser} -c "${pgctl} reload -D '${pgdata}' -s"
+    echo "ok"
+}
+
+status() {
+    echo "status postgres..."
+    /usr/bin/su ${pguser} -c "${pgctl} status -D '${pgdata}'"
+    echo "ok"
+}

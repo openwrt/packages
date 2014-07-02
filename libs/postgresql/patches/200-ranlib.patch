@@ -1,0 +1,10 @@
+--- a/src/port/Makefile
++++ b/src/port/Makefile
+@@ -53,6 +53,7 @@ uninstall:
+ 
+ libpgport.a: $(OBJS)
+ 	$(AR) $(AROPT) $@ $^
++	$(RANLIB) libpgport.a
+ 
+ # thread.o needs PTHREAD_CFLAGS (but thread_srv.o does not)
+ thread.o: thread.c
