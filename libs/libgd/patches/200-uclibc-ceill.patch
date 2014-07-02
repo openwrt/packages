@@ -1,0 +1,24 @@
+--- a/src/gd_bmp.c
++++ b/src/gd_bmp.c
+@@ -21,6 +21,7 @@
+ #include <math.h>
+ #include <string.h>
+ #include <stdlib.h>
++#include <features.h>
+ #include "gd.h"
+ #include "gdhelpers.h"
+ #include "bmp.h"
+@@ -42,6 +43,13 @@ static int bmp_read_rle(gdImagePtr im, g
+ 
+ #define BMP_DEBUG(s)
+ 
++#if defined(__UCLIBC__) && !defined(__UCLIBC_HAS_LONG_DOUBLE_MATH__)
++long double ceill(long double x)
++{
++	return (long double)ceil((double)x);
++}
++#endif
++
+ static int gdBMPPutWord(gdIOCtx *out, int w)
+ {
+ 	/* Byte order is little-endian */
