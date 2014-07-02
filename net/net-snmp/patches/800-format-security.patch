@@ -1,0 +1,29 @@
+--- a/agent/mibgroup/host/hr_filesys.c
++++ b/agent/mibgroup/host/hr_filesys.c
+@@ -322,13 +322,13 @@ var_hrfilesys(struct variable *vp,
+         long_return = fsys_idx;
+         return (u_char *) & long_return;
+     case HRFSYS_MOUNT:
+-        snprintf(string, sizeof(string), HRFS_entry->HRFS_mount);
++        snprintf(string, sizeof(string), "%s", HRFS_entry->HRFS_mount);
+         string[ sizeof(string)-1 ] = 0;
+         *var_len = strlen(string);
+         return (u_char *) string;
+     case HRFSYS_RMOUNT:
+         if (Check_HR_FileSys_NFS()) {
+-            snprintf(string, sizeof(string), HRFS_entry->HRFS_name);
++            snprintf(string, sizeof(string), "%s", HRFS_entry->HRFS_name);
+             string[ sizeof(string)-1 ] = 0;
+         } else
+             string[0] = '\0';
+--- a/agent/mibgroup/ucd-snmp/extensible.c
++++ b/agent/mibgroup/ucd-snmp/extensible.c
+@@ -513,7 +513,7 @@ fixExecError(int action,
+         }
+         tmp = *((long *) var_val);
+         if ((tmp == 1) && (action == COMMIT) && (exten->fixcmd[0] != 0)) {
+-            sprintf(ex.command, exten->fixcmd);
++            sprintf(ex.command, "%s", exten->fixcmd);
+             if ((fd = get_exec_output(&ex)) != -1) {
+                 file = fdopen(fd, "r");
+                 while (fgets(ex.output, sizeof(ex.output), file) != NULL);

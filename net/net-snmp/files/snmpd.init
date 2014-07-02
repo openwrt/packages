@@ -1,0 +1,146 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008 OpenWrt.org
+START=50
+
+DEFAULT=/etc/default/snmpd
+LIB_D=/var/lib/snmp
+LOG_D=/var/log
+RUN_D=/var/run
+PID_F=$RUN_D/snmpd.pid
+RUN_C=$RUN_D/snmpd.conf
+
+snmpd_agent_add() {
+	local cfg="$1"
+
+	config_get agentaddress "$cfg" agentaddress
+	[ -n "$agentaddress" ] || return 0
+	echo "agentaddress $agentaddress" >> $RUN_C
+}
+snmpd_system_add() {
+	local cfg="$1"
+	config_get syslocation "$cfg" sysLocation
+	[ -n "$syslocation" ] && echo "sysLocation $syslocation" >> $RUN_C
+	config_get syscontact "$cfg" sysContact
+	[ -n "$syscontact" ] && echo "sysContact $syscontact" >> $RUN_C
+	config_get sysname "$cfg" sysName
+	[ -n "$sysname" ] && echo "sysName $sysname" >> $RUN_C
+	config_get sysservice "$cfg" sysService
+	[ -n "$sysservice" ] && echo "sysService $sysservice" >> $RUN_C
+	config_get sysdescr "$cfg" sysDescr
+	[ -n "$sysdescr" ] && echo "sysDescr $sysdescr" >> $RUN_C
+	config_get sysobjectid "$cfg" sysObjectID
+	[ -n "$sysobjectid" ] && echo "sysObjectID $sysobjectid" >> $RUN_C
+}
+snmpd_com2sec_add() {
+	local cfg="$1"
+	config_get secname "$cfg" secname
+	[ -n "$secname" ] || return 0
+	config_get source "$cfg" source
+	[ -n "$source" ] || return 0
+	config_get community "$cfg" community
+	[ -n "$community" ] || return 0
+	echo "com2sec $secname $source $community" >> $RUN_C
+}
+snmpd_com2sec6_add() {
+	local cfg="$1"
+	config_get secname "$cfg" secname
+	[ -n "$secname" ] || return 0
+	config_get source "$cfg" source
+	[ -n "$source" ] || return 0
+	config_get community "$cfg" community
+	[ -n "$community" ] || return 0
+	echo "com2sec6 $secname $source $community" >> $RUN_C
+}
+snmpd_group_add() {
+	local cfg="$1"
+	config_get group "$cfg" group
+	[ -n "$group" ] || return 0
+	config_get version "$cfg" version
+	[ -n "$version" ] || return 0
+	config_get secname "$cfg" secname
+	[ -n "$secname" ] || return 0
+	echo "group $group $version $secname" >> $RUN_C
+}
+snmpd_view_add() {
+	local cfg="$1"
+	config_get viewname "$cfg" viewname
+	[ -n "$viewname" ] || return 0
+	config_get type "$cfg" type
+	[ -n "$type" ] || return 0
+	config_get oid "$cfg" oid
+	[ -n "$oid" ] || return 0
+	# optional mask
+	config_get mask "$cfg" mask
+	echo "view $viewname $type $oid $mask" >> $RUN_C
+}
+snmpd_access_add() {
+	local cfg="$1"
+	config_get group "$cfg" group
+	[ -n "$group" ] || return 0
+	config_get context "$cfg" context
+	[ -n $context ] || return 0
+	[ "$context" == "none" ] && context='""'
+	config_get version "$cfg" version
+	[ -n "$version" ] || return 0
+	config_get level "$cfg" level
+	[ -n "$level" ] || return 0
+	config_get prefix "$cfg" prefix
+	[ -n "$prefix" ] || return 0
+	config_get read "$cfg" read
+	[ -n "$read" ] || return 0
+	config_get write "$cfg" write
+	[ -n "$write" ] || return 0
+	config_get notify "$cfg" notify
+	[ -n "$notify" ] || return 0
+	echo "access $group $context $version $level $prefix $read $write $notify" >> $RUN_C
+}
+snmpd_pass_add() {
+	local cfg="$1"
+	local pass='pass'
+
+	config_get miboid "$cfg" miboid
+	[ -n "$miboid" ] || return 0
+	config_get prog "$cfg" prog
+	[ -n "$prog" ] || return 0
+	config_get_bool persist "$cfg" persist 0
+	[ $persist -ne 0 ] && pass='pass_persist'
+	config_get priority "$cfg" priority
+	priority=${priority:+-p $priority}
+	echo "$pass $priority $miboid $prog" >> $RUN_C
+}
+snmpd_exec_add() {
+	local cfg="$1"
+
+	config_get name "$cfg" name
+	[ -n "$name" ] || return 0
+	config_get prog "$cfg" prog
+	[ -n "$prog" ] || return 0
+	config_get args "$cfg" args
+	config_get miboid "$cfg" miboid
+	echo "exec $miboid $name $prog $args" >> $RUN_C
+}
+start() {
+	[ -d $LIB_D ] || mkdir -p $LIB_D
+	[ -d $LOG_D ] || mkdir -p $LOG_D
+	[ -d $RUN_D ] || mkdir -p $RUN_D
+	[ -f $RUN_C ] && rm -f $RUN_C
+
+	config_load snmpd
+
+	config_foreach snmpd_agent_add agent
+	config_foreach snmpd_system_add system
+	config_foreach snmpd_com2sec_add com2sec
+	config_foreach snmpd_com2sec6_add com2sec6
+	config_foreach snmpd_group_add group
+	config_foreach snmpd_view_add view
+	config_foreach snmpd_access_add access
+	config_foreach snmpd_pass_add pass
+	config_foreach snmpd_exec_add exec
+
+	[ -f $DEFAULT ] && . $DEFAULT
+	$DEBUG /usr/sbin/snmpd $OPTIONS
+}
+stop() {
+	[ -f $PID_F ] && kill $(cat $PID_F)
+	[ -f $RUN_C ] && rm -f $RUN_C
+}
