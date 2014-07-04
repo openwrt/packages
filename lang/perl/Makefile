@@ -100,7 +100,7 @@ define Build/perl/Configure
 	@echo
 	@echo "===> Stage 2: Build host perl binary with static extensions"
 	@echo
-	$(MAKE) -C $(PKG_BUILD_DIR)/host-perl
+	$(MAKE) -C $(PKG_BUILD_DIR)/host-perl miniperl
 
 	@echo
 	@echo "===> Stage 3: Configure target perl"
