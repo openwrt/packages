@@ -1,0 +1,49 @@
+--- /dev/null
++++ b/generate_uudmap
+@@ -0,0 +1,7 @@
++#!/bin/bash
++echo \{
++for i in {0..31}; do echo -n ' 0,'; done
++echo
++for i in {0..63}; do echo -n " $i,"; done
++echo
++echo \}
+--- a/Makefile.micro
++++ b/Makefile.micro
+@@ -173,13 +173,8 @@ uperlapi$(_O):	$(HE) perlapi.c perlapi.h
+ uxsutils$(_O):	$(HE) xsutils.c
+ 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) xsutils.c
+ 
+-uudmap.h: generate_uudmap$(_X)
+-	$(RUN) ./generate_uudmap$(_X) >uudmap.h
+-
+-generate_uudmap$(_O): generate_uudmap.c
+-	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) generate_uudmap.c
+-
+-generate_uudmap$(_X): generate_uudmap$(_O)
+-	$(LD) -o generate_uudmap $(LDFLAGS) generate_uudmap$(_O) $(LIBS)
++uudmap.h:
++	chmod a+x generate_uudmap
++	$(RUN) ./generate_uudmap >uudmap.h
+ 
+ # That's it, folks!
+--- a/Makefile.SH
++++ b/Makefile.SH
+@@ -478,11 +478,13 @@ opmini\$(OBJ_EXT): opmini.c
+ 
+ globals\$(OBJ_EXT): uudmap.h
+ 
+-uudmap.h: generate_uudmap\$(EXE_EXT)
+-	\$(RUN) ./generate_uudmap\$(EXE_EXT) >uudmap.h
++uudmap.h: generate_uudmap
++	chmod a+x generate_uudmap
++	\$(RUN) ./generate_uudmap >uudmap.h
+ 
+-generate_uudmap\$(EXE_EXT): generate_uudmap\$(OBJ_EXT)
+-	\$(CC) -o generate_uudmap \$(LDFLAGS) generate_uudmap\$(OBJ_EXT) \$(libs)
++generate_uudmap:
++	cp ../generate_uudmap .
++	touch generate_uudmap
+ 
+ !GROK!THIS!
+ $spitshell >>Makefile <<'!NO!SUBS!'

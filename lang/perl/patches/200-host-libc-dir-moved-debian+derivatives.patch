@@ -1,0 +1,27 @@
+--- a/hints/linux.sh
++++ b/hints/linux.sh
+@@ -133,6 +133,24 @@ case "$optimize" in
+     ;;
+ esac
+ 
++# Ubuntu 11.04 (and later, presumably) doesn't keep most libraries
++# (such as -lm) in /lib or /usr/lib.  So we have to ask gcc to tell us
++# where to look.  We don't want gcc's own libraries, however, so we
++# filter those out.
++# This could be conditional on Unbuntu, but other distributions may
++# follow suit, and this scheme seems to work even on rather old gcc's.
++# This unconditionally uses gcc because even if the user is using another
++# compiler, we still need to find the math library and friends, and I don't
++# know how other compilers will cope with that situation.
++# Still, as an escape hatch, allow Configure command line overrides to
++# plibpth to bypass this check.
++case "$plibpth" in
++'') plibpth=`gcc -print-search-dirs | grep libraries |
++	cut -f2- -d= | tr ':' $trnl | grep -v 'gcc'`
++    plibpth="$plibpth"  # Collapse all entries on one line
++    ;;
++esac
++
+ # Are we using ELF?  Thanks to Kenneth Albanowski <kjahds@kjahds.com>
+ # for this test.
+ cat >try.c <<'EOM'
