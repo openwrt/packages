@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl
-PKG_VERSION:=5.10.0
-PKG_RELEASE:=7
-PKG_MD5SUM:=d2c39b002ebfd2c3c5dba589365c5a71
+PKG_VERSION:=5.20.0
+PKG_RELEASE:=1
+PKG_MD5SUM:=406ec049ebe3afcc80d9c76ec78ca4f8
 
 PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 		ftp://ftp.mpi-sb.mpg.de/pub/perl/CPAN/src/5.0 \
