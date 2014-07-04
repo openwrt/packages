@@ -1,0 +1,22 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -16,7 +16,7 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-SUBDIRS = gl lib/gl lib po src doc gltests lib/gltests tests examples	\
++SUBDIRS = gl lib/gl lib src \
+ 	java csharp
+ 
+ EXTRA_DIST = cfg.mk maint.mk .clcopying
+--- a/configure.ac
++++ b/configure.ac
+@@ -46,8 +46,6 @@ gl_EARLY
+ AC_PROG_LIBTOOL
+ AM_MISSING_PROG(PERL, perl, $missing_dir)
+ AM_MISSING_PROG(HELP2MAN, help2man, $missing_dir)
+-AM_GNU_GETTEXT(external)
+-AM_GNU_GETTEXT_VERSION(0.17)
+ AM_ICONV
+ AM_PATH_LISPDIR
+ 
