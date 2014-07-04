@@ -1,6 +1,6 @@
 --- a/config_h.SH
 +++ b/config_h.SH
-@@ -53,6 +53,19 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#und
+@@ -52,6 +52,19 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#und
  #ifndef _config_h_
  #define _config_h_
  
