@@ -3,10 +3,10 @@
 
 # Build environment
 PERL_CMD := $(STAGING_DIR)/usr/bin/perl
-PERL_LIB := $(STAGING_DIR)/usr/lib/perl5/5.10
+PERL_LIB := $(STAGING_DIR)/usr/lib/perl5/5.20
 
 # Module install prefix
-PERL_SITELIB := /usr/lib/perl5/5.10
+PERL_SITELIB := /usr/lib/perl5/5.20
 
 define perlmod/Configure
 	(cd $(PKG_BUILD_DIR); \
