@@ -67,9 +67,9 @@ define Build/microperl/Configure
 endef
 
 define Build/microperl/Compile
-	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) -f Makefile.micro \
+	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR) -f Makefile.micro \
 		CC="gcc" ugenerate_uudmap
-	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) -f Makefile.micro \
+	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR) -f Makefile.micro \
 		CC="$(TARGET_CC)" OPTIMIZE="$(TARGET_CFLAGS)"
 	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/usr/bin/
 	$(CP) $(PKG_BUILD_DIR)/microperl $(PKG_INSTALL_DIR)/usr/bin/
@@ -102,7 +102,7 @@ define Build/perl/Configure
 	@echo
 	@echo "===> Stage 2: Build host perl binary with static extensions"
 	@echo
-	$(MAKE) -C $(PKG_BUILD_DIR)/host-perl miniperl
+	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR)/host-perl miniperl
 
 	@echo
 	@echo "===> Stage 3: Configure target perl"
@@ -132,14 +132,14 @@ define Build/perl/Compile
 	@echo "===> Stage 4: Build target miniperl binary"
 	@echo
 	install -m 0644 $(PKG_BUILD_DIR)/config.h $(PKG_BUILD_DIR)/xconfig.h
-	$(MAKE) -C $(PKG_BUILD_DIR) miniperl
+	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR) miniperl
 	# Due to the new cross compiling support, make miniperl will never
 	# actually link a target miniperl binary, but will always symlink
 	# the one from host-perl. To compensate that, we add a custom rule
 	# to the Makefile that corresponds to the one that would have
 	# been generated if we weren't cross compiling
 	echo -e 'miniperl.target:\n\t$$$$(CC) $$$$(CLDFLAGS) -o miniperl.target $$$$(mini_obj) $$$$(libs)' >> $(PKG_BUILD_DIR)/Makefile
-	$(MAKE) -C $(PKG_BUILD_DIR) miniperl.target
+	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR) miniperl.target
 	
 	mkdir -p $(PKG_BUILD_DIR)/target-bin
 	install -m 0755 $(PKG_BUILD_DIR)/miniperl.target $(PKG_BUILD_DIR)/target-bin/miniperl
@@ -147,13 +147,13 @@ define Build/perl/Compile
 	@echo
 	@echo "===> Stage 5: Build target perl binary"
 	@echo
-	$(MAKE) -C $(PKG_BUILD_DIR) perl
+	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR) perl
 	install -m 0755 $(PKG_BUILD_DIR)/perl $(PKG_BUILD_DIR)/target-bin/
 
 	@echo
 	@echo "===> Stage 6: Build target extensions and utils"
 	@echo
-	$(MAKE) -C $(PKG_BUILD_DIR)
+	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR)
 
 	@echo
 	@echo "===> Stage 7: Install Perl into staging dir"
