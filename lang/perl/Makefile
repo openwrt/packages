@@ -108,7 +108,7 @@ define Build/perl/Configure
 	-$(MAKE) -C $(PKG_BUILD_DIR) clean
 	sed \
 		-e 's!%%CC%%!$(TARGET_CC)!g' \
-		-e 's!%%CFLAGS%%!$(TARGET_CFLAGS) -DUSE_CROSS_COMPILE $(TARGET_CPPFLAGS)!g' \
+		-e 's!%%CFLAGS%%!$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)!g' \
 		-e 's!%%CPP%%!$(TARGET_CROSS)gcc -E!g' \
 		-e 's!%%AR%%!$(TARGET_CROSS)ar!g' \
 		-e 's!%%LD%%!$(TARGET_CROSS)gcc!g' \
@@ -117,6 +117,9 @@ define Build/perl/Configure
 		-e 's!%%INCDIRS%%!$(STAGING_DIR)/include $(STAGING_DIR)/usr/include!g' \
 		-e 's!%%EXTRA_PERLLIBS%%!$(EXTRA_LIBS:%=-l%)!g' \
 		-e 's!%%EXTRA_PERLLIBDIRS%%!$(EXTRA_LIBDIRS:%=-L%)!g' \
+		-e 's!%%IPV6%%!$(if $($(CONFIG_IPV6)),define,undef)!g' \
+		-e 's!%%HOSTMINIPERL%%!$(PKG_BUILD_DIR)/host-perl/miniperl!g' \
+		-e 's!%%HOSTGENERATE%%!$(PKG_BUILD_DIR)/host-perl/generate_uudmap!g' \
 		files/config.sh-$(patsubst i386,i486,$(ARCH)).in \
 		> $(PKG_BUILD_DIR)/config.sh
 	(cd $(PKG_BUILD_DIR) && ./Configure -S)
@@ -127,44 +130,39 @@ define Build/perl/Compile
 	@echo "===> Stage 4: Build target miniperl binary"
 	@echo
 	install -m 0644 $(PKG_BUILD_DIR)/config.h $(PKG_BUILD_DIR)/xconfig.h
-	-rm -f $(PKG_BUILD_DIR)/miniperl
 	$(MAKE) -C $(PKG_BUILD_DIR) miniperl
+	# Due to the new cross compiling support, make miniperl will never
+	# actually link a target miniperl binary, but will always symlink
+	# the one from host-perl. To compensate that, we add a custom rule
+	# to the Makefile that corresponds to the one that would have
+	# been generated if we weren't cross compiling
+	echo -e 'miniperl.target:\n\t$$$$(CC) $$$$(CLDFLAGS) -o miniperl.target $$$$(mini_obj) $$$$(libs)' >> $(PKG_BUILD_DIR)/Makefile
+	$(MAKE) -C $(PKG_BUILD_DIR) miniperl.target
+	
 	mkdir -p $(PKG_BUILD_DIR)/target-bin
-	install -m 0755 $(PKG_BUILD_DIR)/miniperl $(PKG_BUILD_DIR)/target-bin/
-
+	install -m 0755 $(PKG_BUILD_DIR)/miniperl.target $(PKG_BUILD_DIR)/target-bin/miniperl
+	
 	@echo
 	@echo "===> Stage 5: Build target perl binary"
 	@echo
-	-rm -f $(PKG_BUILD_DIR)/miniperl $(PKG_BUILD_DIR)/perl
-	install -m 0755 $(PKG_BUILD_DIR)/host-perl/miniperl $(PKG_BUILD_DIR)/
-	touch $(PKG_BUILD_DIR)/miniperl
 	$(MAKE) -C $(PKG_BUILD_DIR) perl
 	install -m 0755 $(PKG_BUILD_DIR)/perl $(PKG_BUILD_DIR)/target-bin/
 
 	@echo
 	@echo "===> Stage 6: Build target extensions and utils"
 	@echo
-	-rm -f $(PKG_BUILD_DIR)/miniperl $(PKG_BUILD_DIR)/perl
-	install -m 0755 $(PKG_BUILD_DIR)/host-perl/miniperl $(PKG_BUILD_DIR)/
-	ln -sf miniperl $(PKG_BUILD_DIR)/perl
-	touch $(PKG_BUILD_DIR)/miniperl $(PKG_BUILD_DIR)/perl
 	$(MAKE) -C $(PKG_BUILD_DIR)
 
 	@echo
 	@echo "===> Stage 7: Install Perl into staging dir"
 	@echo
-	-rm -f $(PKG_BUILD_DIR)/perl
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/host-perl/perl $(PKG_BUILD_DIR)/
-	(cd $(PKG_BUILD_DIR) && ./perl installperl --destdir=$(STAGING_DIR))
+	(cd $(PKG_BUILD_DIR) && ./miniperl installperl --destdir=$(STAGING_DIR))
 
 	@echo
 	@echo "===> Stage 8: Install Perl into a temporary root"
 	@echo
-	-rm -f $(PKG_BUILD_DIR)/perl
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/target-bin/perl $(PKG_BUILD_DIR)
-	-rm -rf $(PKG_INSTALL_DIR)
 	mkdir -p $(PKG_INSTALL_DIR)
-	(cd $(PKG_BUILD_DIR) && host-perl/miniperl installperl --destdir=$(PKG_INSTALL_DIR))
+	(cd $(PKG_BUILD_DIR) && ./miniperl installperl --destdir=$(PKG_INSTALL_DIR))
 endef
 
 define Package/perl/install
