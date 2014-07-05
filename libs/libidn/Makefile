@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/libidn
 PKG_MD5SUM:=43a6f14b16559e10a492acc65c4b0acc
-
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=GNUmakefile aclocal.m4
 
