@@ -67,7 +67,9 @@ define Build/microperl/Configure
 endef
 
 define Build/microperl/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) -f Makefile.micro \
+	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) -f Makefile.micro \
+		CC="gcc" ugenerate_uudmap
+	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) -f Makefile.micro \
 		CC="$(TARGET_CC)" OPTIMIZE="$(TARGET_CFLAGS)"
 	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/usr/bin/
 	$(CP) $(PKG_BUILD_DIR)/microperl $(PKG_INSTALL_DIR)/usr/bin/
