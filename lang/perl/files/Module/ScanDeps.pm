@@ -14,7 +14,7 @@ use base 'Exporter';
 use constant dl_ext  => ".$Config{dlext}";
 use constant lib_ext => $Config{lib_ext};
 use constant is_insensitive_fs => (
-    -s $0 
+    -s $0
         and (-s lc($0) || -1) == (-s uc($0) || -1)
         and (-s lc($0) || -1) == -s $0
 );
@@ -342,7 +342,7 @@ my %Preload = (
         ) {
             return $_ if _find_in_inc($_);
         }
-        
+
         for (
               "$archlib/pods/perldiag.pod",
               "$privlib/pods/perldiag-$Config{version}.pod",

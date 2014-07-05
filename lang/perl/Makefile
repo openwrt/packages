@@ -45,7 +45,7 @@ $(call Package/perl/Default)
 endef
 
 define Package/microperl/description
- A perl package without operating-specific functions such as readdir.
+  A perl package without operating-specific functions such as readdir.
 endef
 
 define Build/Template
@@ -87,9 +87,9 @@ $(call Package/perl/Default)
 endef
 
 define Package/perl/description
- Perl is a stable, cross platform programming language.
- It is used for mission critical projects in the public and private sectors
- and is widely used to program web applications of all needs.
+  Perl is a stable, cross platform programming language.
+  It is used for mission critical projects in the public and private sectors
+  and is widely used to program web applications of all needs.
 endef
 
 define Build/perl/Configure
@@ -140,10 +140,9 @@ define Build/perl/Compile
 	# been generated if we weren't cross compiling
 	echo -e 'miniperl.target:\n\t$$$$(CC) $$$$(CLDFLAGS) -o miniperl.target $$$$(mini_obj) $$$$(libs)' >> $(PKG_BUILD_DIR)/Makefile
 	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR) miniperl.target
-	
 	mkdir -p $(PKG_BUILD_DIR)/target-bin
 	install -m 0755 $(PKG_BUILD_DIR)/miniperl.target $(PKG_BUILD_DIR)/target-bin/miniperl
-	
+
 	@echo
 	@echo "===> Stage 5: Build target perl binary"
 	@echo

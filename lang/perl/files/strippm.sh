@@ -1,5 +1,5 @@
 #!/bin/sh
-# 
+#
 # Attempt to strip comments and pod docs from perl modules
 #
 
