@@ -16,7 +16,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/db-$(PKG_VERSION)
 PKG_SOURCE:=db-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.oracle.com/berkeley-db/
 PKG_MD5SUM:=073ab7f20d24b3872a51ca762f5090e7
-
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=LICENSE
 
@@ -32,7 +32,6 @@ define Package/libdb47
   DEPENDS:=+libxml2
   TITLE:=Berkeley DB library (4.7)
   URL:=http://www.sleepycat.com/products/db.shtml
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
 define Package/libdb47/description
@@ -45,7 +44,6 @@ define Package/libdb47xx
   DEPENDS:=+libdb47 $(CXX_DEPENDS)
   TITLE:=Berkeley DB library (4.7) for C++
   URL:=http://www.sleepycat.com/products/db.shtml
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
 define Package/libdb47xx/description
