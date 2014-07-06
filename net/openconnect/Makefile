@@ -25,7 +25,7 @@ define Package/openconnect
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+libxml2 +kmod-tun +resolveip +OPENCONNECT_OPENSSL:libopenssl +OPENCONNECT_GNUTLS:libgnutls
-  TITLE:=VPN client for Cisco's AnyConnect SSL VPN
+  TITLE:=VPN client compatible with Cisco's AnyConnect SSL VPN
   URL:=http://www.infradead.org/openconnect/
   SUBMENU:=VPN
 endef
@@ -33,9 +33,10 @@ endef
 define Package/openconnect/description
 	A VPN client compatible with Cisco's AnyConnect SSL VPN and ocserv.
 
-        OpenConnect is a client for Cisco's AnyConnect SSL VPN, which is
-        supported by IOS 12.4(9)T or later on Cisco SR500, 870, 880, 1800, 2800,
-        3800, 7200 Series and Cisco 7301 Routers.
+        OpenConnect is a client that follows the Cisco's AnyConnect SSL VPN protocol,
+        which is supported by IOS 12.4(9)T or later on Cisco SR500, 870, 880, 1800, 
+        2800, 3800, 7200 Series and Cisco 7301 Routers, as well as the OpenConnect
+        VPN server.
 endef
 
 CONFIGURE_ARGS += \
