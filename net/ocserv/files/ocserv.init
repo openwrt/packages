@@ -6,27 +6,26 @@ START=50
 
 setup_firewall() {
 	local port fw
-	config_get port		$1 port
+	config_get port	$1 port
 	test -z "$port" && return
 
-	config_get fwport		$1 "fwport"
+	config_get fwport $1 fwport
 	test "$fwport" = "$port" && return
 
+	logger -t ocserv "opening port $port..."
 	#can we remove the old rule?
 	uci add firewall rule
 	uci set firewall.@rule[-1].src=wan
+	uci set firewall.@rule[-1].name="ocserv-ext-port"
 	uci set firewall.@rule[-1].target=ACCEPT
 	uci set firewall.@rule[-1].proto=tcpudp
 	uci set firewall.@rule[-1].dest_port=$port
 	uci commit firewall
-	/etc/init.d/firewall restart
 
 	uci set ocserv.config.fwport="$port"
 	uci commit ocserv
-}
 
-clear_firewall() {
-	iptables-save | grep -v ocserv-rule | iptables-restore
+	/etc/init.d/firewall restart
 }
 
 setup_config() {
@@ -178,7 +177,6 @@ start() {
 
 stop() {
 	service_stop /usr/sbin/ocserv
-	clear_firewall
 }
        
 reload() {
