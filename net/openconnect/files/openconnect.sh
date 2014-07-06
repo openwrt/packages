@@ -26,7 +26,7 @@ proto_openconnect_setup() {
 	for ip in $(resolveip -t 10 "$server"); do
 		( proto_add_host_dependency "$config" "$ip" )
 		serv_addr=1
-	fi
+	done
 	[ -n "$serv_addr" ] || {
 		logger -t openconnect "Could not resolve server address: '$server'"
 		sleep 20
