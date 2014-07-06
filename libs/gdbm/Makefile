@@ -17,6 +17,7 @@ PKG_MD5SUM:=72c832680cf0999caedbe5b265c8c1bd
 
 PKG_LICENSE:=GPLv3
 PKG_LICENSE_FILES:=COPYING
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=Makefile compat/Makefile doc/Makefile export/Makefile src/Makefile tests/Makefile
