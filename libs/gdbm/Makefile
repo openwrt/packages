@@ -19,6 +19,7 @@ PKG_LICENSE:=GPLv3
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
+PKG_REMOVE_FILES:=Makefile compat/Makefile doc/Makefile export/Makefile src/Makefile tests/Makefile
 PKG_BUILD_PARALLEL:=0
 
 include $(INCLUDE_DIR)/package.mk
