@@ -32,6 +32,12 @@ define Package/libgdbm
   URL:=http://www.gnu.org/software/gdbm/
 endef
 
+define Package/libgdbm/description
+  GNU database manager library
+  GNU dbm is a set of database routines that use extendible hashing and
+  works similar to the standard UNIX dbm routines.
+endef
+
 TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
