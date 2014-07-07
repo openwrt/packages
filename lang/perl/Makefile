@@ -129,38 +129,25 @@ endef
 
 define Build/perl/Compile
 	@echo
-	@echo "===> Stage 4: Build target miniperl binary"
+	@echo "===> Stage 4: Build target perl binary"
 	@echo
 	install -m 0644 $(PKG_BUILD_DIR)/config.h $(PKG_BUILD_DIR)/xconfig.h
-	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR) miniperl
-	# Due to the new cross compiling support, make miniperl will never
-	# actually link a target miniperl binary, but will always symlink
-	# the one from host-perl. To compensate that, we add a custom rule
-	# to the Makefile that corresponds to the one that would have
-	# been generated if we weren't cross compiling
-	echo -e 'miniperl.target:\n\t$$$$(CC) $$$$(CLDFLAGS) -o miniperl.target $$$$(mini_obj) $$$$(libs)' >> $(PKG_BUILD_DIR)/Makefile
-	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR) miniperl.target
-	mkdir -p $(PKG_BUILD_DIR)/target-bin
-	install -m 0755 $(PKG_BUILD_DIR)/miniperl.target $(PKG_BUILD_DIR)/target-bin/miniperl
-
-	@echo
-	@echo "===> Stage 5: Build target perl binary"
-	@echo
 	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR) perl
+	mkdir -p $(PKG_BUILD_DIR)/target-bin
 	install -m 0755 $(PKG_BUILD_DIR)/perl $(PKG_BUILD_DIR)/target-bin/
 
 	@echo
-	@echo "===> Stage 6: Build target extensions and utils"
+	@echo "===> Stage 5: Build target extensions and utils"
 	@echo
 	+$(MAKE) $(MAKE_J) -C $(PKG_BUILD_DIR)
 
 	@echo
-	@echo "===> Stage 7: Install Perl into staging dir"
+	@echo "===> Stage 6: Install Perl into staging dir"
 	@echo
 	(cd $(PKG_BUILD_DIR) && ./miniperl installperl --destdir=$(STAGING_DIR))
 
 	@echo
-	@echo "===> Stage 8: Install Perl into a temporary root"
+	@echo "===> Stage 7: Install Perl into a temporary root"
 	@echo
 	mkdir -p $(PKG_INSTALL_DIR)
 	(cd $(PKG_BUILD_DIR) && ./miniperl installperl --destdir=$(PKG_INSTALL_DIR))
