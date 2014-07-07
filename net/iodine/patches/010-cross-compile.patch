@@ -1,22 +1,24 @@
---- a/src/osflags
-+++ b/src/osflags
-@@ -16,9 +16,6 @@ link)
+--- iodine-0.7.0.orig/src/osflags
++++ iodine-0.7.0/src/osflags
+@@ -16,12 +16,6 @@ link)
  		windows32)
  			echo '-lws2_32 -liphlpapi';
  		;;
 -		Linux)
--			[ -e /usr/include/selinux/selinux.h ] && echo '-lselinux';
+-			FLAGS="";
+-			[ -e /usr/include/selinux/selinux.h ] && FLAGS="$FLAGS -lselinux";
+-			[ -e /usr/include/systemd/sd-daemon.h ] && FLAGS="$FLAGS -lsystemd-daemon";
+-			echo $FLAGS;
 -		;;
  	esac
  	;;
  cflags)
-@@ -26,9 +23,6 @@ cflags)
- 		BeOS)
- 			echo '-Dsocklen_t=int';
+@@ -34,8 +28,6 @@ cflags)
  		;;
--		Linux)
--			[ -e /usr/include/selinux/selinux.h ] && echo '-DHAVE_SETCON';
--		;;
+ 		Linux)
+ 			FLAGS="-D_GNU_SOURCE"
+-			[ -e /usr/include/selinux/selinux.h ] && FLAGS="$FLAGS -DHAVE_SETCON";
+-			[ -e /usr/include/systemd/sd-daemon.h ] && FLAGS="$FLAGS -DHAVE_SYSTEMD";
+ 			echo $FLAGS;
+ 		;;
  	esac
- ;;
- *)
