@@ -1,0 +1,21 @@
+--- a/plugins/if_
++++ b/plugins/if_
+@@ -15,10 +15,14 @@ config_if() {
+   echo "up.min 0"
+   echo "up.negative down"
+   echo "up.cdef up,8,*"
+-  if ethtool $1 | grep -q Speed; then
+-    MAX=$(($(ethtool $1 | grep Speed | sed -e 's/[[:space:]]\{1,\}/ /g' -e 's/^ //' -e 's/M.*//' | cut -d\  -f2) * 1000000))
+-    echo "up.max $MAX"
+-    echo "down.max $MAX"
++  if [ -n "$(which ethtool)" ]; then
++	if [ -x "$(which ethtool)" ]; then
++  		if ethtool $1 | grep -q Speed; then
++    			MAX=$(($(ethtool $1 | grep Speed | sed -e 's/[[:space:]]\{1,\}/ /g' -e 's/^ //' -e 's/M.*//' | cut -d\  -f2) * 1000000))
++    			echo "up.max $MAX"
++    			echo "down.max $MAX"
++		fi
++	fi
+   fi
+ }
+ fetch_if() {
