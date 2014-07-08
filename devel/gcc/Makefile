@@ -4,17 +4,17 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
+#
+# NB: GCC building is a bit special, you need to have the gcc build-deps installed on the build machine as well,
+#     for instance mpfr, mpc and gmp development packages!
+#
 include $(TOPDIR)/rules.mk
 PKG_NAME:=gcc
-PKG_VERSION:=$(strip $(subst ",, $(CONFIG_GCC_VERSION)))#"))
+PKG_VERSION:=linaro-4.6-2013.05
 PKG_RELEASE:=1
-PATCH_DIR=$(TOPDIR)/toolchain/gcc/patches/$(PKG_VERSION)
-PKG_SOURCE_URL:=ftp://ftp.fu-berlin.de/unix/languages/gcc/releases/gcc-$(PKG_VERSION) \
-    http://mirrors.rcn.net/pub/sourceware/gcc/releases/gcc-$(PKG_VERSION) \
-	    ftp://ftp.gnu.org/gnu/gcc/releases/gcc-$(PKG_VERSION)
-
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=354853e0b2da90c527e35aabb8d6f1e6
+PKG_SOURCE_URL:=https://releases.linaro.org/13.05/components/toolchain/gcc-linaro/4.6/
+PKG_SOURCE:=gcc-$(PKG_VERSION).tar.bz2
+PKG_MD5SUM:=26b48802ae1203cd99415026fbf56ed7
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -34,12 +34,14 @@ define Package/gcc/description
 endef
 
 define Build/Prepare
-	$(call Build/Prepare/Default)
+	$(PKG_UNPACK)
+# 	we have to download additional stuff before patching
+	(cd $(PKG_BUILD_DIR) && ./contrib/download_prerequisites)
+	$(Build/Patch)
 	$(SED) 's,\(version_string.. = "[0-9\.]*\).*\(";\),\1 (OpenWrt-2.0)\2,' $(PKG_BUILD_DIR)/gcc/version.c
 	$(SED) 's,\(bug_report_url.. = "\).*\(";\),\1<URL:https://dev.openwrt.org/>\2,' $(PKG_BUILD_DIR)/gcc/version.c
-	(cd $(PKG_BUILD_DIR)/libstdc++-v3; autoconf;);
-	$(SED) 's,gcc_no_link=yes,gcc_no_link=no,' $(PKG_BUILD_DIR)/libstdc++-v3/configure
 endef
+
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -f config.cache; \
@@ -51,16 +53,22 @@ define Build/Configure
 			--host=$(REAL_GNU_TARGET_NAME) \
 			--target=$(REAL_GNU_TARGET_NAME) \
 			--enable-languages=$(TARGET_LANGUAGES) \
-			--enable-shared \
 			--disable-__cxa_atexit \
 			--enable-target-optspace \
 			--with-gnu-ld \
 			--disable-nls \
 			--disable-libmudflap \
 			--disable-multilib \
+			--disable-libgomp \
+			--disable-libquadmath \
+			--disable-decimal-float \
+			--with-host-libstdcxx=-lstdc++ \
+			--disable-libstdcxx-pch \
 			$(EXTRA_TARGET) \
 			$(SOFT_FLOAT_CONFIG_OPTION) \
 			$(call qstrip,$(CONFIG_EXTRA_GCC_CONFIG_OPTIONS)) \
+			$(if $(CONFIG_mips64)$(CONFIG_mips64el),--with-arch=mips64 \
+			--with-abi=$(subst ",,$(CONFIG_MIPS64_ABI))) \
 	);
 endef
 
