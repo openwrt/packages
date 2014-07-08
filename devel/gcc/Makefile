@@ -27,7 +27,7 @@ define Package/gcc
   CATEGORY:=Development
   TITLE:=gcc
   MAINTAINER:=Christian Beier <cb@shoutrlabs.com>
-  DEPENDS:=@TARGET_x86 @NO_STRIP
+  DEPENDS:= +binutils
 endef
 
 define Package/gcc/description
