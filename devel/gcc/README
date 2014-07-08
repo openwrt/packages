@@ -1,0 +1,9 @@
+Native GCC that runs on target.
+
+Note that building this one is a bit tricky. First and foremost, your build machine
+needs to have the gcc build-deps installed as well, i.e. mpfr, gmp and mpc, amongst
+others.
+
+For now, this was only tested for a mips target. Others to be done...
+
+Christian Beier <cb@shoutrlabs.com>
