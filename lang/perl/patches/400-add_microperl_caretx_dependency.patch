@@ -1,0 +1,22 @@
+--- a/Makefile.micro
++++ b/Makefile.micro
+@@ -22,7 +22,8 @@ O = uav$(_O) udeb$(_O) udoio$(_O) udoop$
+ 	uregcomp$(_O) uregexec$(_O) urun$(_O) \
+ 	uscope$(_O) usv$(_O) utaint$(_O) utoke$(_O) \
+ 	unumeric$(_O) ulocale$(_O) umathoms$(_O) \
+-	uuniversal$(_O) uutf8$(_O) uutil$(_O) uperlapi$(_O) ukeywords$(_O)
++	uuniversal$(_O) uutf8$(_O) uutil$(_O) uperlapi$(_O) ukeywords$(_O) \
++	ucaretx$(_O)
+ 
+ microperl:	$(O)
+ 	$(LD) -o $@ $(O) $(LDFLAGS) $(LIBS)
+@@ -178,6 +179,9 @@ uutil$(_O):	$(HE) util.c
+ uperlapi$(_O):	$(HE) perlapi.c perlapi.h
+ 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) perlapi.c
+ 
++ucaretx$(_O): $(HE) caretx.c
++	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) caretx.c
++
+ uuudmap.h umg_data.h: ubitcount.h
+ 
+ ubitcount.h: ugenerate_uudmap$(_X)
