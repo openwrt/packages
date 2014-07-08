@@ -16,6 +16,8 @@ PKG_SOURCE_URL:=https://releases.linaro.org/13.05/components/toolchain/gcc-linar
 PKG_SOURCE:=gcc-$(PKG_VERSION).tar.bz2
 PKG_MD5SUM:=26b48802ae1203cd99415026fbf56ed7
 
+PKG_BUILD_PARALLEL:=1
+
 include $(INCLUDE_DIR)/package.mk
 
 SEP:=,
