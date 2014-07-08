@@ -13,9 +13,13 @@ PKG_RELEASE:=1
 PKG_MD5SUM:=406ec049ebe3afcc80d9c76ec78ca4f8
 
 PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
+		http://www.cpan.org/src/5.0/perl-5.20.0.tar.gz \
 		ftp://ftp.mpi-sb.mpg.de/pub/perl/CPAN/src/5.0 \
+		http://ftp.mpi-sb.mpg.de/pub/perl/CPAN/src/5.0 \
 		ftp://ftp.gmd.de/mirrors/CPAN/src/5.0 \
-		ftp://ftp.funet.fi/pub/languages/perl/CPAN/src/5.0
+		http://ftp5.gwdg.de/pub/languages/perl/CPAN/src/ \
+		ftp://ftp.funet.fi/pub/languages/perl/CPAN/src/5.0 \
+		http://ftp.funet.fi/pub/languages/perl/CPAN/src/5.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_LICENSE:=GPLv1 ARTISTIC
