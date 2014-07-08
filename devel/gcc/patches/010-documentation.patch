@@ -1,6 +1,8 @@
+diff --git a/gcc/Makefile.in b/gcc/Makefile.in
+index 9b6af49..a5404be 100644
 --- a/gcc/Makefile.in
 +++ b/gcc/Makefile.in
-@@ -4251,18 +4251,10 @@
+@@ -4267,18 +4267,10 @@ doc/gcc.info: $(TEXI_GCC_FILES)
  doc/gccint.info: $(TEXI_GCCINT_FILES)
  doc/cppinternals.info: $(TEXI_CPPINT_FILES)
  
@@ -21,3 +23,12 @@
  
  doc/cpp.dvi: $(TEXI_CPP_FILES)
  doc/gcc.dvi: $(TEXI_GCC_FILES)
+@@ -4496,7 +4488,7 @@ maintainer-clean:
+ # Install the driver last so that the window when things are
+ # broken is small.
+ install: install-common $(INSTALL_HEADERS) \
+-    install-cpp install-man install-info install-@POSUB@ \
++    install-cpp install-@POSUB@ \
+     install-driver install-lto-wrapper
+ 
+ ifeq ($(enable_plugin),yes)
