@@ -26,6 +26,7 @@ define Package/gcc
   SECTION:=devel
   CATEGORY:=Development
   TITLE:=gcc
+  MAINTAINER:=Christian Beier <cb@shoutrlabs.com>
   DEPENDS:=@TARGET_x86 @NO_STRIP
 endef
 
