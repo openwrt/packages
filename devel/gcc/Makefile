@@ -48,10 +48,7 @@ define Build/Configure
 		SHELL="$(BASH)" \
 		$(TARGET_CONFIGURE_OPTS) \
 		$(PKG_BUILD_DIR)/configure \
-			$(TARGET_CONFIGURE_ARGS) \
-			--build=$(GNU_HOST_NAME) \
-			--host=$(REAL_GNU_TARGET_NAME) \
-			--target=$(REAL_GNU_TARGET_NAME) \
+			$(CONFIGURE_ARGS) \
 			--enable-languages=$(TARGET_LANGUAGES) \
 			--disable-__cxa_atexit \
 			--enable-target-optspace \
