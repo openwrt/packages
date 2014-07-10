@@ -1,0 +1,40 @@
+From b4fca5dbf0cfe887b88d6213b014e2f73e02a5e6 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Tue, 8 Jul 2014 00:37:50 +0200
+Subject: [PATCH 19/21] DOC: explicitly mention the limits of abstract
+ namespace sockets
+
+Listening to an abstract namespace socket is quite convenient but
+comes with some drawbacks that must be clearly understood when the
+socket is being listened to by multiple processes. The trouble is
+that the socket cannot be rebound if a new process attempts a soft
+restart and fails, so only one of the initially bound processes
+will still be bound to it, the other ones will fail to rebind. For
+most situations it's not an issue but it needs to be indicated.
+(cherry picked from commit 70f72e0c90691c72cb72306b718f785902270015)
+---
+ doc/configuration.txt | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index fcc6454..73195ba 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -1791,7 +1791,13 @@ bind /<path> [, ...] [param*]
+                     - 'ipv4@'  -> address is always IPv4
+                     - 'ipv6@'  -> address is always IPv6
+                     - 'unix@'  -> address is a path to a local unix socket
+-                    - 'abns@'  -> address is in abstract namespace (Linux only)
++                    - 'abns@'  -> address is in abstract namespace (Linux only).
++                      Note: since abstract sockets are not "rebindable", they
++                            do not cope well with multi-process mode during
++                            soft-restart, so it is better to avoid them if
++                            nbproc is greater than 1. The effect is that if the
++                            new process fails to start, only one of the old ones
++                            will be able to rebind to the socket.
+                     - 'fd@<n>' -> use file descriptor <n> inherited from the
+                       parent. The fd must be bound and may or may not already
+                       be listening.
+-- 
+1.8.5.5
+

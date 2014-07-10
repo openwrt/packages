@@ -1,0 +1,71 @@
+From 631a70f8baff6d26a2a6692ccd368de8d3948bf9 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Mon, 7 Jul 2014 21:07:51 +0200
+Subject: [PATCH 18/21] BUG/MEDIUM: unix: completely unbind abstract sockets
+ during a pause()
+
+Abstract namespace sockets ignore the shutdown() call and do not make
+it possible to temporarily stop listening. The issue it causes is that
+during a soft reload, the new process cannot bind, complaining that the
+address is already in use.
+
+This change registers a new pause() function for unix sockets and
+completely unbinds the abstract ones since it's possible to rebind
+them later. It requires the two previous patches as well as preceeding
+fixes.
+
+This fix should be backported into 1.5 since the issue apperas there.
+(cherry picked from commit fd0e008d9d4db2f860b739bd28f6cd31d9aaf2b5)
+---
+ include/proto/proto_uxst.h |  1 +
+ src/proto_uxst.c           | 15 +++++++++++++++
+ 2 files changed, 16 insertions(+)
+
+diff --git a/include/proto/proto_uxst.h b/include/proto/proto_uxst.h
+index 9422ea7..8e796ec 100644
+--- a/include/proto/proto_uxst.h
++++ b/include/proto/proto_uxst.h
+@@ -27,6 +27,7 @@
+ #include <types/task.h>
+ 
+ void uxst_add_listener(struct listener *listener);
++int uxst_pause_listener(struct listener *l);
+ int uxst_get_src(int fd, struct sockaddr *sa, socklen_t salen, int dir);
+ int uxst_get_dst(int fd, struct sockaddr *sa, socklen_t salen, int dir);
+ 
+diff --git a/src/proto_uxst.c b/src/proto_uxst.c
+index 409c659..adc1b46 100644
+--- a/src/proto_uxst.c
++++ b/src/proto_uxst.c
+@@ -68,6 +68,7 @@ static struct protocol proto_unix = {
+ 	.disable_all = disable_all_listeners,
+ 	.get_src = uxst_get_src,
+ 	.get_dst = uxst_get_dst,
++	.pause = uxst_pause_listener,
+ 	.listeners = LIST_HEAD_INIT(proto_unix.listeners),
+ 	.nb_listeners = 0,
+ };
+@@ -373,6 +374,20 @@ void uxst_add_listener(struct listener *listener)
+ 	proto_unix.nb_listeners++;
+ }
+ 
++/* Pause a listener. Returns < 0 in case of failure, 0 if the listener
++ * was totally stopped, or > 0 if correctly paused. Nothing is done for
++ * plain unix sockets since currently it's the new process which handles
++ * the renaming. Abstract sockets are completely unbound.
++ */
++int uxst_pause_listener(struct listener *l)
++{
++	if (((struct sockaddr_un *)&l->addr)->sun_path[0])
++		return 1;
++
++	unbind_listener(l);
++	return 0;
++}
++
+ 
+ /*
+  * This function initiates a UNIX connection establishment to the target assigned
+-- 
+1.8.5.5
+

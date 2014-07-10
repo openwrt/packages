@@ -1,0 +1,124 @@
+From d903bb345dcf6ed058ccf84f476f066b3dc08d47 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Mon, 7 Jul 2014 20:22:12 +0200
+Subject: [PATCH 16/21] MEDIUM: listener: implement a per-protocol pause()
+ function
+
+In order to fix the abstact socket pause mechanism during soft restarts,
+we'll need to proceed differently depending on the socket protocol. The
+pause_listener() function already supports some protocol-specific handling
+for the TCP case.
+
+This commit makes this cleaner by adding a new ->pause() function to the
+protocol struct, which, if defined, may be used to pause a listener of a
+given protocol.
+
+For now, only TCP has been adapted, with the specific code moved from
+pause_listener() to tcp_pause_listener().
+(cherry picked from commit 092d865c53de80afc847c5ff0a079b414041ce2a)
+---
+ include/proto/proto_tcp.h |  1 +
+ include/types/protocol.h  |  1 +
+ src/listener.c            | 17 +++++++++--------
+ src/proto_tcp.c           | 18 ++++++++++++++++++
+ 4 files changed, 29 insertions(+), 8 deletions(-)
+
+diff --git a/include/proto/proto_tcp.h b/include/proto/proto_tcp.h
+index 4adf4d2..ac8b711 100644
+--- a/include/proto/proto_tcp.h
++++ b/include/proto/proto_tcp.h
+@@ -30,6 +30,7 @@
+ int tcp_bind_socket(int fd, int flags, struct sockaddr_storage *local, struct sockaddr_storage *remote);
+ void tcpv4_add_listener(struct listener *listener);
+ void tcpv6_add_listener(struct listener *listener);
++int tcp_pause_listener(struct listener *l);
+ int tcp_connect_server(struct connection *conn, int data, int delack);
+ int tcp_connect_probe(struct connection *conn);
+ int tcp_get_src(int fd, struct sockaddr *sa, socklen_t salen, int dir);
+diff --git a/include/types/protocol.h b/include/types/protocol.h
+index e03692a..74b20e8 100644
+--- a/include/types/protocol.h
++++ b/include/types/protocol.h
+@@ -60,6 +60,7 @@ struct protocol {
+ 	int (*get_src)(int fd, struct sockaddr *, socklen_t, int dir); /* syscall used to retrieve src addr */
+ 	int (*get_dst)(int fd, struct sockaddr *, socklen_t, int dir); /* syscall used to retrieve dst addr */
+ 	int (*drain)(int fd);                           /* indicates whether we can safely close the fd */
++	int (*pause)(struct listener *l);               /* temporarily pause this listener for a soft restart */
+ 
+ 	struct list listeners;				/* list of listeners using this protocol */
+ 	int nb_listeners;				/* number of listeners */
+diff --git a/src/listener.c b/src/listener.c
+index a82ce81..67f8ca7 100644
+--- a/src/listener.c
++++ b/src/listener.c
+@@ -95,15 +95,16 @@ int pause_listener(struct listener *l)
+ 	if (l->state <= LI_PAUSED)
+ 		return 1;
+ 
+-	if (l->proto->sock_prot == IPPROTO_TCP) {
+-		if (shutdown(l->fd, SHUT_WR) != 0)
+-			return 0; /* Solaris dies here */
+-
+-		if (listen(l->fd, l->backlog ? l->backlog : l->maxconn) != 0)
+-			return 0; /* OpenBSD dies here */
++	if (l->proto->pause) {
++		/* Returns < 0 in case of failure, 0 if the listener
++		 * was totally stopped, or > 0 if correctly paused.
++		 */
++		int ret = l->proto->pause(l);
+ 
+-		if (shutdown(l->fd, SHUT_RD) != 0)
+-			return 0; /* should always be OK */
++		if (ret < 0)
++			return 0;
++		else if (ret == 0)
++			return 1;
+ 	}
+ 
+ 	if (l->state == LI_LIMITED)
+diff --git a/src/proto_tcp.c b/src/proto_tcp.c
+index e9dbc9c..9778856 100644
+--- a/src/proto_tcp.c
++++ b/src/proto_tcp.c
+@@ -80,6 +80,7 @@ static struct protocol proto_tcpv4 = {
+ 	.get_src = tcp_get_src,
+ 	.get_dst = tcp_get_dst,
+ 	.drain = tcp_drain,
++	.pause = tcp_pause_listener,
+ 	.listeners = LIST_HEAD_INIT(proto_tcpv4.listeners),
+ 	.nb_listeners = 0,
+ };
+@@ -102,6 +103,7 @@ static struct protocol proto_tcpv6 = {
+ 	.get_src = tcp_get_src,
+ 	.get_dst = tcp_get_dst,
+ 	.drain = tcp_drain,
++	.pause = tcp_pause_listener,
+ 	.listeners = LIST_HEAD_INIT(proto_tcpv6.listeners),
+ 	.nb_listeners = 0,
+ };
+@@ -947,6 +949,22 @@ void tcpv6_add_listener(struct listener *listener)
+ 	proto_tcpv6.nb_listeners++;
+ }
+ 
++/* Pause a listener. Returns < 0 in case of failure, 0 if the listener
++ * was totally stopped, or > 0 if correctly paused.
++ */
++int tcp_pause_listener(struct listener *l)
++{
++	if (shutdown(l->fd, SHUT_WR) != 0)
++		return -1; /* Solaris dies here */
++
++	if (listen(l->fd, l->backlog ? l->backlog : l->maxconn) != 0)
++		return -1; /* OpenBSD dies here */
++
++	if (shutdown(l->fd, SHUT_RD) != 0)
++		return -1; /* should always be OK */
++	return 1;
++}
++
+ /* This function performs the TCP request analysis on the current request. It
+  * returns 1 if the processing can continue on next analysers, or zero if it
+  * needs more data, encounters an error, or wants to immediately abort the
+-- 
+1.8.5.5
+
