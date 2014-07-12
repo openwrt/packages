@@ -1,0 +1,60 @@
+--- a/docs/conf/httpd.conf.in
++++ b/docs/conf/httpd.conf.in
+@@ -51,7 +51,6 @@ Listen @@Port@@
+ # Example:
+ # LoadModule foo_module modules/mod_foo.so
+ #
+-@@LoadModule@@
+ 
+ <IfModule !mpm_netware_module>
+ <IfModule !mpm_winnt_module>
+@@ -63,8 +62,8 @@ Listen @@Port@@
+ # It is usually good practice to create a dedicated user and group for
+ # running httpd, as with most system services.
+ #
+-User daemon
+-Group daemon
++User nobody
++Group nogroup
+ 
+ </IfModule>
+ </IfModule>
+@@ -191,7 +190,7 @@ ErrorLog "@rel_logfiledir@/error_log"
+ # Possible values include: debug, info, notice, warn, error, crit,
+ # alert, emerg.
+ #
+-LogLevel warn
++LogLevel debug
+ 
+ <IfModule log_config_module>
+     #
+@@ -336,7 +335,7 @@ DefaultType text/plain
+ # contents of the file itself to determine its type.  The MIMEMagicFile
+ # directive tells the module where the hint definitions are located.
+ #
+-#MIMEMagicFile @rel_sysconfdir@/magic
++MIMEMagicFile @rel_sysconfdir@/magic
+ 
+ #
+ # Customizable error responses come in three flavors:
+@@ -358,7 +357,7 @@ DefaultType text/plain
+ # broken on your system.
+ #
+ #EnableMMAP off
+-#EnableSendfile off
++EnableSendfile off
+ 
+ # Supplemental configuration
+ #
+@@ -404,7 +403,7 @@ DefaultType text/plain
+ #       starting without SSL on platforms with no /dev/random equivalent
+ #       but a statically compiled-in mod_ssl.
+ #
+-<IfModule ssl_module>
+-SSLRandomSeed startup builtin
+-SSLRandomSeed connect builtin
+-</IfModule>
++#<IfModule ssl_module>
++#SSLRandomSeed startup builtin
++#SSLRandomSeed connect builtin
++#</IfModule>

@@ -1,0 +1,33 @@
+--- a/build/mkconfNW.awk
++++ b/build/mkconfNW.awk
+@@ -24,7 +24,7 @@ BEGIN {
+     A["sysconfdir"] = "conf"
+     A["iconsdir"] = "icons"
+     A["manualdir"] = "manual"
+-    A["runtimedir"] = "logs"
++    A["runtimedir"] = "log"
+     A["errordir"] = "error"
+     A["proxycachedir"] = "proxy"
+ 
+--- a/config.layout
++++ b/config.layout
+@@ -28,8 +28,8 @@
+     cgidir:        ${datadir}/cgi-bin
+     includedir:    ${prefix}/include
+     localstatedir: ${prefix}
+-    runtimedir:    ${localstatedir}/logs
+-    logfiledir:    ${localstatedir}/logs
++    runtimedir:    ${localstatedir}/log
++    logfiledir:    ${localstatedir}/log
+     proxycachedir: ${localstatedir}/proxy
+ </Layout>
+ 
+@@ -150,7 +150,7 @@
+     includedir:    ${prefix}/include
+     localstatedir: /var${prefix}
+     runtimedir:    ${localstatedir}/run
+-    logfiledir:    ${localstatedir}/logs
++    logfiledir:    ${localstatedir}/log
+     proxycachedir: ${localstatedir}/proxy
+ </Layout>
+ 
