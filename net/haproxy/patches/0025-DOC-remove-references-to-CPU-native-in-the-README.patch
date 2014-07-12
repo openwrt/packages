@@ -1,0 +1,48 @@
+From 94fb38fbb77e664e4f41343257a26ae5bab40d1d Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 10 Jul 2014 20:24:25 +0200
+Subject: [PATCH 25/25] DOC: remove references to CPU=native in the README
+
+Certain compilers running in virtualized environments may produce code
+that the same processor cannot execute with -march=native, either because
+of hypervisor bugs reporting wrong CPU features, or because of compiler
+bugs forgetting to check CPU features. So better stop recommending this
+combination so that users don't get trapped anymore.
+(cherry picked from commit 817dad50b02d1a82d495dfea4eab9e3a91127391)
+---
+ README | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/README b/README
+index 0ef0179..e2b8570 100644
+--- a/README
++++ b/README
+@@ -53,8 +53,9 @@ one of the following choices to the CPU variable :
+   - i686 for intel PentiumPro, Pentium 2 and above, AMD Athlon
+   - i586 for intel Pentium, AMD K6, VIA C3.
+   - ultrasparc : Sun UltraSparc I/II/III/IV processor
+-  - native : use the build machine's specific processor optimizations
+-  - generic : any other processor or no specific optimization. (default)
++  - native : use the build machine's specific processor optimizations. Use with
++    extreme care, and never in virtualized environments (known to break).
++  - generic : any other processor or no CPU-specific optimization. (default)
+ 
+ Alternatively, you may just set the CPU_CFLAGS value to the optimal GCC options
+ for your platform.
+@@ -132,11 +133,11 @@ And I build it this way on OpenBSD or FreeBSD :
+ 
+ And on a classic Linux with SSL and ZLIB support (eg: Red Hat 5.x) :
+ 
+-    $ make TARGET=linux26 CPU=native USE_PCRE=1 USE_OPENSSL=1 USE_ZLIB=1
++    $ make TARGET=linux26 USE_PCRE=1 USE_OPENSSL=1 USE_ZLIB=1
+ 
+ And on a recent Linux >= 2.6.28 with SSL and ZLIB support :
+ 
+-    $ make TARGET=linux2628 CPU=native USE_PCRE=1 USE_OPENSSL=1 USE_ZLIB=1
++    $ make TARGET=linux2628 USE_PCRE=1 USE_OPENSSL=1 USE_ZLIB=1
+ 
+ In order to build a 32-bit binary on an x86_64 Linux system with SSL support
+ without support for compression but when OpenSSL requires ZLIB anyway :
+-- 
+1.8.5.5
+

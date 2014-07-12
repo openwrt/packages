@@ -1,0 +1,84 @@
+From 644d9ef5af4f8010412007374c345f7465c97391 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 10 Jul 2014 16:29:08 +0200
+Subject: [PATCH 23/25] DOC: fix alphabetical sort of converters
+
+For an unknown reason, these ones were not sorted.
+(cherry picked from commit ffcb2e4b42acd710121a57eb39651a373d904e5b)
+---
+ doc/configuration.txt | 32 ++++++++++++++++----------------
+ 1 file changed, 16 insertions(+), 16 deletions(-)
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index b6d1b3b..f8199b9 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -9887,28 +9887,12 @@ base64
+   transfer binary content in a way that can be reliably transferred (eg:
+   an SSL ID can be copied in a header).
+ 
+-lower
+-  Convert a string sample to lower case. This can only be placed after a string
+-  sample fetch function or after a transformation keyword returning a string
+-  type. The result is of type string.
+-
+-upper
+-  Convert a string sample to upper case. This can only be placed after a string
+-  sample fetch function or after a transformation keyword returning a string
+-  type. The result is of type string.
+-
+ hex
+   Converts a binary input sample to an hex string containing two hex digits per
+   input byte. It is used to log or transfer hex dumps of some binary input data
+   in a way that can be reliably transferred (eg: an SSL ID can be copied in a
+   header).
+ 
+-ipmask(<mask>)
+-  Apply a mask to an IPv4 address, and use the result for lookups and storage.
+-  This can be used to make all hosts within a certain mask to share the same
+-  table entries and as such use the same server. The mask can be passed in
+-  dotted form (eg: 255.255.255.0) or in CIDR form (eg: 24).
+-
+ http_date([<offset>])
+   Converts an integer supposed to contain a date since epoch to a string
+   representing this date in a format suitable for use in HTTP header fields. If
+@@ -9917,6 +9901,12 @@ http_date([<offset>])
+   emit Date header fields, Expires values in responses when combined with a
+   positive offset, or Last-Modified values when the offset is negative.
+ 
++ipmask(<mask>)
++  Apply a mask to an IPv4 address, and use the result for lookups and storage.
++  This can be used to make all hosts within a certain mask to share the same
++  table entries and as such use the same server. The mask can be passed in
++  dotted form (eg: 255.255.255.0) or in CIDR form (eg: 24).
++
+ language(<value>[,<default>])
+   Returns the value with the highest q-factor from a list as extracted from the
+   "accept-language" header using "req.fhdr". Values with no q-factor have a
+@@ -9944,6 +9934,11 @@ language(<value>[,<default>])
+     use_backend english if en
+     default_backend choose_your_language
+ 
++lower
++  Convert a string sample to lower case. This can only be placed after a string
++  sample fetch function or after a transformation keyword returning a string
++  type. The result is of type string.
++
+ map(<map_file>[,<default_value>])
+ map_<match_type>(<map_file>[,<default_value>])
+ map_<match_type>_<output_type>(<map_file>[,<default_value>])
+@@ -10001,6 +9996,11 @@ map_<match_type>_<output_type>(<map_file>[,<default_value>])
+       |       `---------------------------- key
+       `------------------------------------ leading spaces ignored
+ 
++upper
++  Convert a string sample to upper case. This can only be placed after a string
++  sample fetch function or after a transformation keyword returning a string
++  type. The result is of type string.
++
+ 
+ 7.3.2. Fetching samples from internal states
+ --------------------------------------------
+-- 
+1.8.5.5
+
