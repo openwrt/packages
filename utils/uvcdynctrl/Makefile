@@ -13,6 +13,7 @@ PKG_VERSION:=0.2.2
 PKG_SOURCE:=libwebcam-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/libwebcam
 PKG_MD5SUM:=b14193c90f27cf4b57e760514425361b
+PKG_MAINTAINER:=Roger D<rogerdammit@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/libwebcam-src-$(PKG_VERSION)
 
