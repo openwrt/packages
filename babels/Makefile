@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=babels
-PKG_SOURCE_VERSION:=757af8018a6e51ba64994d4834d41d4da8377e09
-PKG_VERSION:=2013-12-18-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=bc5d60e58e7ebd1694cef23d798df08b3b8f216f
+PKG_VERSION:=2014-07-04-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://git.wifi.pps.univ-paris-diderot.fr/babels
@@ -58,6 +58,11 @@ define Package/babels/install
 	$(INSTALL_CONF) ./files/babeld.config $(1)/etc/config/babeld
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/babeld.init $(1)/etc/init.d/babeld
+endef
+
+define Build/Compile
+	echo "#define BABEL_VERSION \"$(PKG_SOURCE_SUBDIR)\"" > $(PKG_BUILD_DIR)/version.h
+	$(call Build/Compile/Default)
 endef
 
 $(eval $(call BuildPackage,babels))

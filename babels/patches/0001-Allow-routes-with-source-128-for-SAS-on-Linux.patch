@@ -22,11 +22,9 @@ Signed-off-by: Steven Barth <cyrus@openwrt.org>
  xroute.c         | 2 +-
  5 files changed, 8 insertions(+), 8 deletions(-)
 
-diff --git a/kernel_netlink.c b/kernel_netlink.c
-index 8b9099c..2e174af 100644
 --- a/kernel_netlink.c
 +++ b/kernel_netlink.c
-@@ -1236,8 +1236,8 @@ filter_kernel_routes(struct nlmsghdr *nh, void *data)
+@@ -1242,8 +1242,8 @@ filter_kernel_routes(struct nlmsghdr *nh
      if(rc < 0)
          return 0;
  
@@ -37,30 +35,35 @@ index 8b9099c..2e174af 100644
          return 0;
  
      /* Ignore default unreachable routes; no idea where they come from. */
-diff --git a/route.c b/route.c
-index a97e8ed..c709303 100644
+@@ -1944,7 +1944,7 @@ filter_kernel_rules(struct nlmsghdr *nh,
+     kdebugf("filter_rules: from %s prio %d table %d\n",
+             format_prefix(src, src_plen), priority, table);
+ 
+-    if(martian_prefix(src, src_plen) || !has_priority)
++    if(martian_prefix(src, src_plen, 1) || !has_priority)
+         return 0;
+ 
+     i = priority - src_table_prio;
 --- a/route.c
 +++ b/route.c
-@@ -1371,12 +1371,12 @@ update_route(const unsigned char *id,
+@@ -901,12 +901,12 @@ update_route(const unsigned char *id,
      if(memcmp(id, myid, 8) == 0)
          return NULL;
  
 -    if(martian_prefix(prefix, plen)) {
 +    if(martian_prefix(prefix, plen, 0)) {
          fprintf(stderr, "Rejecting martian route to %s through %s.\n",
-                 format_prefix(prefix, plen), format_address(id));
+                 format_prefix(prefix, plen), format_address(nexthop));
          return NULL;
      }
 -    if(src_plen != 0 && martian_prefix(src_prefix, src_plen)) {
 +    if(src_plen != 0 && martian_prefix(src_prefix, src_plen, 1)) {
          fprintf(stderr, "Rejecting martian route to %s from %s through %s.\n",
                  format_prefix(prefix, plen),
-                 format_prefix(src_prefix, src_plen), format_address(id));
-diff --git a/util.c b/util.c
-index cdb4ab2..80930e4 100644
+                 format_prefix(src_prefix, src_plen), format_eui64(id));
 --- a/util.c
 +++ b/util.c
-@@ -425,13 +425,13 @@ wait_for_fd(int direction, int fd, int msecs)
+@@ -437,13 +437,13 @@ wait_for_fd(int direction, int fd, int m
  }
  
  int
@@ -76,11 +79,9 @@ index cdb4ab2..80930e4 100644
          (plen >= 96 && v4mapped(prefix) &&
           ((plen >= 104 && (prefix[12] == 127 || prefix[12] == 0)) ||
            (plen >= 100 && (prefix[12] & 0xE0) == 0xE0)));
-diff --git a/util.h b/util.h
-index 935481f..f399b8a 100644
 --- a/util.h
 +++ b/util.h
-@@ -95,7 +95,7 @@ int parse_net(const char *net, unsigned char *prefix_r, unsigned char *plen_r,
+@@ -106,7 +106,7 @@ int parse_net(const char *net, unsigned
                int *af_r);
  int parse_eui64(const char *eui, unsigned char *eui_r);
  int wait_for_fd(int direction, int fd, int msecs);
@@ -89,11 +90,9 @@ index 935481f..f399b8a 100644
  int linklocal(const unsigned char *address) ATTRIBUTE ((pure));
  int v4mapped(const unsigned char *address) ATTRIBUTE ((pure));
  void v4tov6(unsigned char *dst, const unsigned char *src);
-diff --git a/xroute.c b/xroute.c
-index e8b3b11..e4bd12a 100644
 --- a/xroute.c
 +++ b/xroute.c
-@@ -259,7 +259,7 @@ check_xroutes(int send_updates)
+@@ -266,7 +266,7 @@ check_xroutes(int send_updates)
      /* Add any new routes */
  
      for(i = 0; i < numroutes; i++) {
@@ -102,6 +101,3 @@ index e8b3b11..e4bd12a 100644
              continue;
          metric = redistribute_filter(routes[i].prefix, routes[i].plen,
                                       routes[i].src_prefix, routes[i].src_plen,
--- 
-1.8.5.3
-
