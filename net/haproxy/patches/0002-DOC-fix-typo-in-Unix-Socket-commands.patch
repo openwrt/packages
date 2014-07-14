@@ -1,0 +1,29 @@
+From de9789b37466c37547d8c5d52d96a9d4466eb431 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Cyril=20Bont=C3=A9?= <cyril.bonte@free.fr>
+Date: Sat, 12 Jul 2014 18:22:42 +0200
+Subject: [PATCH 2/2] DOC: fix typo in Unix Socket commands
+
+Konstantin Romanenko reported a typo in the HTML documentation. The typo is
+already present in the raw text version : the "shutdown sessions" command
+should be "shutdown sessions server".
+(cherry picked from commit e63a1eb290a1c407453dbcaa16535c85a1904f9e)
+---
+ doc/configuration.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index ca21f7d..2d71555 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -13869,7 +13869,7 @@ shutdown session <id>
+   endless transfer is ongoing. Such terminated sessions are reported with a 'K'
+   flag in the logs.
+ 
+-shutdown sessions <backend>/<server>
++shutdown sessions server <backend>/<server>
+   Immediately terminate all the sessions attached to the specified server. This
+   can be used to terminate long-running sessions after a server is put into
+   maintenance mode, for instance. Such terminated sessions are reported with a
+-- 
+1.8.5.5
+
