@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=hnetd
 PKG_SOURCE_VERSION:=0500e70b1de3dfa3315263db7b92c0247187437f
 PKG_VERSION:=2014-06-19-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/sbyx/hnetd.git
@@ -41,7 +41,7 @@ define Package/hnet-full
   CATEGORY:=Network
   TITLE:=HNCP Homenet metapackage
   URL:=https://github.com/sbyx/hnetd
-  DEPENDS:=+hnetd
+  DEPENDS:=+hnetd +luci-app-hnet
   # Routing
   DEPENDS+=+babels
   # Service discovery
@@ -55,7 +55,7 @@ define Package/luci-app-hnet
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=HNCP Homenet configuration and visualization
-  DEPENDS:=+hnetd +luci-mod-admin-core
+  DEPENDS:=+hnetd
 endef
 
 define Package/hnetd/description
