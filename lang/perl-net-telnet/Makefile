@@ -25,7 +25,7 @@ SUBMENU:=Perl
 SECTION:=lang
 CATEGORY:=Languages
 TITLE:=Telnet client
-URL:=http://search.cpan.org/~jrogers/Net-Telnet-3.03/
+URL:=http://search.cpan.org/dist/Net-Telnet/
 DEPENDS:=perl
 endef
 
