@@ -5,9 +5,7 @@
 # See /LICENSE for more information.
 #
 #
-# NB: GCC building is a bit special, you need to have the gcc build-deps installed on the build machine as well,
-#     for instance mpfr, mpc and gmp development packages!
-#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gcc

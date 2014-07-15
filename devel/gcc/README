@@ -1,9 +1,8 @@
 Native GCC that runs on target.
 
-Note that building this one is a bit tricky. First and foremost, your build machine
-needs to have the gcc build-deps installed as well, i.e. mpfr, gmp and mpc, amongst
-others.
+To save disk space, this GCC only supports dynamic linking on the target box,
+there are no static libraries shipped.
 
-For now, this was only tested for a mips target. Others to be done...
+For now, this was only tested on a mips target. Others to be done...
 
-Christian Beier <cb@shoutrlabs.com>
+   Christian Beier <cb@shoutrlabs.com>
