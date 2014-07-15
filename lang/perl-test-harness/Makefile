@@ -2,9 +2,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-test-harness
-PKG_VERSION:=3.25
+PKG_VERSION:=3.32
 PKG_RELEASE:=1
-PKG_MD5SUM:=69a8a019eeb952fe97e3ac0767c726da
+PKG_MD5SUM:=a1241b628dc80f5271ed9235c211e55c
 
 PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/O/OV/OVID
 PKG_SOURCE:=Test-Harness-$(PKG_VERSION).tar.gz

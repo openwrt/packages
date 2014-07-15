@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-net-telnet
-PKG_VERSION:=3.03
+PKG_VERSION:=3.04
 PKG_RELEASE:=1
-PKG_MD5SUM:=2f7d34b09d6117baefe89d44cff9d5fc
+PKG_MD5SUM:=d2514080116c1b0fa5f96295c84538e3
 
 PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/J/JR/JROGERS
 PKG_SOURCE:=Net-Telnet-$(PKG_VERSION).tar.gz

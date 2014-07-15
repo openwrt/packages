@@ -2,11 +2,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-compress-bzip2
-PKG_VERSION:=2.09
-PKG_RELEASE:=3
-PKG_MD5SUM:=1699fde3e86f2a036f135ae606d456bf
+PKG_VERSION:=2.17
+PKG_RELEASE:=1
+PKG_MD5SUM:=d8b809f6efe3edb33f81d608c932b2ef
 
-PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/A/AR/ARJAY
+PKG_SOURCE_URL:=http://www.cpan.org/authors/id/R/RU/RURBAN/
 PKG_SOURCE:=Compress-Bzip2-$(PKG_VERSION).tar.gz
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Compress-Bzip2-$(PKG_VERSION)

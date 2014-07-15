@@ -2,9 +2,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-html-parser
-PKG_VERSION:=3.56
+PKG_VERSION:=3.71
 PKG_RELEASE:=1
-PKG_MD5SUM:=bddc432e5ed9df4d4153a62234f04fc2
+PKG_MD5SUM:=9128a45893097dfa3bf03301b19c5efe
 
 PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/G/GA/GAAS
 PKG_SOURCE:=HTML-Parser-$(PKG_VERSION).tar.gz

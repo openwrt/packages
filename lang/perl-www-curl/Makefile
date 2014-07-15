@@ -2,9 +2,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www-curl
-PKG_VERSION:=4.00
+PKG_VERSION:=4.17
 PKG_RELEASE:=1
-PKG_MD5SUM:=f34eb29f59a811869a4f77bfc0df2f5d
+PKG_MD5SUM:=997ac81cd6b03b30b36f7cd930474845
 
 PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/S/SZ/SZBALINT
 PKG_SOURCE:=WWW-Curl-$(PKG_VERSION).tar.gz
