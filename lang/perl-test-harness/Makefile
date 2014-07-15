@@ -23,7 +23,7 @@ SECTION:=lang
 CATEGORY:=Languages
 TITLE:=Perl Test Harness
 URL:=http://search.cpan.org/dist/Test-Harness/
-DEPENDS:=+perl
+DEPENDS:=perl
 endef
 
 define Build/Configure
