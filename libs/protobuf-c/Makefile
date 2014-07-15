@@ -19,6 +19,8 @@ PKG_SOURCE_VERSION:=6136f54b221ab8883731349d01f34b01812e391d
 
 PKG_INSTALL:=1
 
+PKG_MAINTAINER:=Jacob Siverskog <jacob@teenageengineering.com>
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libprotobuf-c
