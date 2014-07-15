@@ -1,0 +1,11 @@
+--- WWW-Curl-4.00.config/Makefile.PL	2008-04-21 23:18:39.000000000 +0200
++++ WWW-Curl-4.00/Makefile.PL	2008-04-21 23:18:52.000000000 +0200
+@@ -11,7 +11,7 @@
+ no_index		directory => 'template';
+ # This is a hack. If you have libcurl installed, just specify curl.h below
+ # and comment out this line.
+-requires_external_bin	'curl-config';
++#requires_external_bin	'curl-config';
+ 
+ # This utility helper generates the constants function from curl.h
+ # It is normally only used by the maintainer, but if you're curl is older
