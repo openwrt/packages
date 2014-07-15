@@ -1,0 +1,29 @@
+From a124eb6d7838eff2c52cc9bf027594c11e87fae9 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Sat, 12 Jul 2014 17:31:07 +0200
+Subject: [PATCH 1/2] DOC: mention that Squid correctly responds 400 to PPv2
+ header
+
+Amos reported that Squid builds 3.5.0.0_20140624 and 3.5.0.0_20140630
+were confirmed to respond correctly here and that any version will do
+the same.
+(cherry picked from commit 9e1382002aa1ba12dcc637870befd077ff887aad)
+---
+ doc/proxy-protocol.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/doc/proxy-protocol.txt b/doc/proxy-protocol.txt
+index a2dbcea..a3925a4 100644
+--- a/doc/proxy-protocol.txt
++++ b/doc/proxy-protocol.txt
+@@ -692,6 +692,7 @@ presented, even with minimal implementations :
+     - thttpd 2.20c     : 400 Bad Request + abort => pass/optimal
+     - mini-httpd-1.19  : 400 Bad Request + abort => pass/optimal
+     - haproxy 1.4.21   : 400 Bad Request + abort => pass/optimal
++    - Squid 3          : 400 Bad Request + abort => pass/optimal
+   - SSL :
+     - stud 0.3.47      : connection abort        => pass/optimal
+     - stunnel 4.45     : connection abort        => pass/optimal
+-- 
+1.8.5.5
+
