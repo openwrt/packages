@@ -22,7 +22,7 @@ SUBMENU:=Perl
 SECTION:=lang
 CATEGORY:=Languages
 TITLE:=Perl Test Harness
-URL:=http://search.cpan.org/~ovid/Test-Harness-3.25/bin/prove
+URL:=http://search.cpan.org/dist/Test-Harness/
 DEPENDS:=+perl
 endef
 
