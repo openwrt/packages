@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008 OpenWrt.org
+# Copyright (C) 2008-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,11 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=faad2
 PKG_VERSION:=2.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/faac
 PKG_MD5SUM:=4c332fa23febc0e4648064685a3d4332
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_CONFIG_DEPENDS := \
 	CONFIG_SOFT_FLOAT \
@@ -30,6 +31,7 @@ TARGET_CFLAGS += $(FPIC)
 # specifically ask to use floats anyways.
 ifeq ($(CONFIG_SOFT_FLOAT)-$(CONFIG_FAAD2_ALWAYS_USE_FLOATING_POINT),y-)
 TARGET_CFLAGS+= -DFIXED_POINT
+FAAD2_CONFIG_OPTS= --without-fp -nfp
 endif
 
 define Package/faad2/Default
@@ -84,6 +86,7 @@ define Build/Configure
 	);
 	$(call Build/Configure/Default, \
 		--with-mp4v2 \
+		$(FAAD2_CONFIG_OPTS) \
 		--without-xmms \
 		, \
 		FAAD2_CPPFLAGS="-fno-builtin-cos -fno-builtin-sin -fno-builtin-log" \
