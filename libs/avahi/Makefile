@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2012 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -18,12 +18,13 @@ endif
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.6.31
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://avahi.org/download/
 PKG_MD5SUM:=2f22745b8f7368ad5a0a3fddac343f2d
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_BUILD_DEPENDS:=libexpat libdaemon libgdbm intltool/host libpthread dbus
 
