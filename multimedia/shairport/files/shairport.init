@@ -1,0 +1,53 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2013-2014 OpenWrt.org
+
+START=50
+USE_PROCD=1
+
+config_shairport() {
+	local cfg="$1"
+
+	local cfg_name
+	local cfg_password
+	local cfg_port
+	local cfg_buffer
+	local cfg_log
+	local cfg_cmd_start
+	local cfg_cmd_stop
+	local cfg_cmd_wait
+	local cfg_audio_output
+	local cfg_mdns
+
+	config_get cfg_name $cfg 'name' 'AirPort'
+	config_get cfg_password $cfg 'password' ''
+	config_get cfg_port $cfg 'port' '5002'
+	config_get cfg_buffer $cfg 'buffer' '256'
+	config_get cfg_log $cfg 'log' '/var/log/shairport'
+	config_get cfg_cmd_start $cfg 'cmd_start' ''
+	config_get cfg_cmd_stop $cfg 'cmd_stop' ''
+	config_get_bool cfg_cmd_wait $cfg 'cmd_wait' '0'
+	config_get cfg_audio_output $cfg 'audio_output' ''
+	config_get cfg_mdns $cfg 'mdns' ''
+
+	procd_open_instance
+
+	procd_set_param command /usr/sbin/shairport
+	procd_append_param command -a "$cfg_name"
+	[ ! -z "$cfg_password" ] && procd_append_param command -k "$cfg_password"
+	procd_append_param command -p $cfg_port
+	procd_append_param command -b $cfg_buffer
+	procd_append_param command -l $cfg_log
+	[ ! -z "$cfg_cmd_start" ] && procd_append_param command -B "$cfg_cmd_start"
+	[ ! -z "$cfg_cmd_stop" ] && procd_append_param command -E "$cfg_cmd_stop"
+	[ "$cfg_cmd_wait" -eq 1 ] && procd_append_param command -w
+	[ ! -z "$cfg_audio_output" ] && procd_append_param command -o "$cfg_audio_output"
+	[ ! -z "$cfg_mdns" ] && procd_append_param command -m "$cfg_mdns"
+
+	procd_set_param respawn
+	procd_close_instance
+}
+
+start_service() {
+	config_load shairport
+	config_foreach config_shairport shairport
+}
