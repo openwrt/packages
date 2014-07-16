@@ -1,0 +1,10 @@
+--- a/config
++++ b/config
+@@ -31,6 +31,6 @@
+         -Wshadow \
+         -Wwrite-strings
+ 
+-CFLAGS = $(CWARNS) -ansi -O2 -I$(LUA_INC) \
++CFLAGS = $(CWARNS) -O2 -I$(LUA_INC) \
+    -I$(COMPAT_DIR) -I$(EXPAT_INC)
+ CC = gcc
