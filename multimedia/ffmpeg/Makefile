@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2013 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,11 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=0.11.5
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
 PKG_MD5SUM:=ea25fc252c132141f12988ed5506bfe8
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPLv2.1+ GPLv2+ LGPLv3
 PKG_LICENSE_FILES:=COPYING.GPLv2 COPYING.GPLv3 COPYING.LGPLv2.1 COPYING.LGPLv3
@@ -33,6 +34,10 @@ FFMPEG_CUSTOM_ENCODERS:= \
 FFMPEG_CUSTOM_DECODERS:= \
 	aac \
 	ac3 \
+	alac \
+	amrnb \
+	amrwb \
+	ape \
 	atrac3 \
 	flac \
 	gif \
@@ -44,10 +49,13 @@ FFMPEG_CUSTOM_DECODERS:= \
 	mpeg2video \
 	mpeg4 \
 	mpegvideo \
+	mpc7 \
+	mpc8 \
 	pcm_s16be \
 	pcm_s16le \
 	png \
 	vorbis \
+	wavpack \
 	wmav1 \
 	wmav2 \
 	zlib \
@@ -67,6 +75,8 @@ FFMPEG_CUSTOM_MUXERS:= \
 FFMPEG_CUSTOM_DEMUXERS:= \
 	aac \
 	ac3 \
+	amr \
+	ape \
 	avi \
 	flac \
 	ffm \
@@ -77,14 +87,20 @@ FFMPEG_CUSTOM_DEMUXERS:= \
 	mpegps \
 	mpegts \
 	mpegvideo \
+	mpc \
+	mpc8 \
 	ogg \
 	rm \
 	rtsp \
+	rtp \
 	sdp \
 	v4l2 \
+	wav \
+	wv \
 
 FFMPEG_CUSTOM_PARSERS:= \
 	aac \
+	flac \
 	ac3 \
 	h264 \
 	mpegaudio \
@@ -129,6 +145,7 @@ FFMPEG_MINI_DEMUXERS := \
 	mp3 \
 	mpegts \
 	mpegvideo \
+	sdp \
 	rtsp \
 
 FFMPEG_MINI_PARSERS:= \
@@ -141,6 +158,64 @@ FFMPEG_MINI_PARSERS:= \
 
 FFMPEG_MINI_PROTOCOLS := \
 	file http rtp tcp udp \
+
+FFMPEG_AUDIO_DECODERS:= \
+	aac \
+	aac_latm \
+	ac3 \
+	adpcm_* \
+	alac \
+	amrnb \
+	amrwb \
+	ape \
+	atrac3 \
+	flac \
+	mp2 \
+	mp3* \
+	mpc7 \
+	mpc8 \
+	pcm_* \
+	vorbis \
+	wavpack \
+	wmav1 \
+	wmav2 \
+	wmalossless \
+	wmapro \
+	zlib \
+
+FFMPEG_AUDIO_DEMUXERS:= \
+	aac \
+	ac3 \
+	aiff \
+	amr \
+	ape \
+	avi \
+	flac \
+	ffm \
+	matroska \
+	mp3 \
+	mov \
+	mpc \
+	mpc8 \
+	mpegts \
+	ogg \
+	rm \
+	rtsp \
+	rtp \
+	sdp \
+	wav \
+	wv \
+
+FFMPEG_AUDIO_PARSERS:= \
+	aac \
+	aac_latm \
+	flac \
+	ac3 \
+	mpegaudio \
+
+FFMPEG_AUDIO_PROTOCOLS:= \
+	file http rtp tcp udp
+
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -226,7 +301,7 @@ endef
 define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (mini)
- DEPENDS+= @DEVEL
+ DEPENDS+= @DEVEL +libspeex
  VARIANT:=custom
  MENU:=1
 endef
@@ -239,6 +314,20 @@ define Package/libffmpeg-custom/description
 $(call Package/ffmpeg/Default/description)
  .
  This package contains customized FFmpeg shared libraries.
+endef
+
+
+define Package/libffmpeg-audio-dec
+$(call Package/libffmpeg/Default)
+ TITLE+= (audio)
+ DEPENDS+= @DEVEL +libspeex
+ VARIANT:=audio-dec
+endef
+
+define Package/libffmpeg-audio-dec/description
+$(call Package/ffmpeg/Default/description)
+ .
+ This package contains FFmpeg shared libraries for audio decoding
 endef
 
 
@@ -292,6 +381,7 @@ FFMPEG_CONFIGURE:= \
 	--disable-doc \
 	--disable-dxva2 \
 	--enable-pthreads \
+	--disable-optimizations \
 	--enable-small \
 	--disable-stripping \
 	--enable-zlib \
@@ -320,6 +410,46 @@ ifeq ($(BUILD_VARIANT),custom)
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_CUSTOM_DEMUXERS),CONFIG_FFMPEG_CUSTOM_DEMUXER) \
 	$(call FFMPEG_ENABLE,parser,$(FFMPEG_CUSTOM_PARSERS),CONFIG_FFMPEG_CUSTOM_PARSER) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_CUSTOM_PROTOCOLS),CONFIG_FFMPEG_CUSTOM_PROTOCOL) \
+
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_adpcm),y)
+  FFMPEG_CONFIGURE+= \
+	--enable-decoder=adpcm_ima_wav \
+	--enable-decoder=adpcm_ima_qt \
+	--enable-decoder=adpcm_ms \
+
+endif
+
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_speex),y)
+  FFMPEG_CONFIGURE+= \
+	--enable-libspeex --enable-decoder=libspeex \
+
+endif
+
+endif
+
+ifeq ($(BUILD_VARIANT),audio-dec)
+
+  FFMPEG_ENABLE= \
+	$(foreach c, $(2), \
+		--enable-$(1)="$(c)" \
+	)
+
+  FFMPEG_CONFIGURE+= \
+	--disable-ffmpeg \
+	--disable-ffplay \
+	--disable-ffprobe \
+	--disable-ffserver \
+	--disable-avfilter \
+	--disable-postproc \
+	--disable-swresample \
+	--disable-swscale \
+	--disable-everything \
+	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_AUDIO_DECODERS)) \
+	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_AUDIO_DEMUXERS)) \
+	$(call FFMPEG_ENABLE,parser,$(FFMPEG_AUDIO_PARSERS)) \
+	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_AUDIO_PROTOCOLS)) \
+	--enable-libspeex --enable-decoder=libspeex \
+	--disable-decoder=pcm_bluray,pcm_dvd \
 
 endif
 
@@ -382,12 +512,19 @@ define Build/InstallDev/full
 endef
 
 Build/InstallDev/mini = $(Build/InstallDev/custom)
+Build/InstallDev/audio-dec = $(Build/InstallDev/custom)
 
 # XXX: attempt at installing "best" dev files available
 ifeq ($(BUILD_VARIANT),custom)
   # XXX: only install "custom" dev files if -full & -mini are not selected
   ifeq ($(CONFIG_PACKAGE_libffmpeg-full)$(CONFIG_PACKAGE_libffmpeg-mini),)
     Build/InstallDev = $(Build/InstallDev/custom)
+  endif
+endif
+ifeq ($(BUILD_VARIANT),audio-dec)
+  # XXX: only install "audio-dec" dev files if -full & -mini are not selected
+  ifeq ($(CONFIG_PACKAGE_libffmpeg-full)$(CONFIG_PACKAGE_libffmpeg-mini),)
+    Build/InstallDev = $(Build/InstallDev/audio-dec)
   endif
 endif
 ifeq ($(BUILD_VARIANT),full)
@@ -427,6 +564,7 @@ define Package/libffmpeg-full/install
 endef
 
 Package/libffmpeg-mini/install = $(Package/libffmpeg-custom/install)
+Package/libffmpeg-audio-dec/install = $(Package/libffmpeg-custom/install)
 
 $(eval $(call BuildPackage,ffmpeg))
 $(eval $(call BuildPackage,ffprobe))
@@ -434,3 +572,4 @@ $(eval $(call BuildPackage,ffserver))
 $(eval $(call BuildPackage,libffmpeg-custom))
 $(eval $(call BuildPackage,libffmpeg-full))
 $(eval $(call BuildPackage,libffmpeg-mini))
+$(eval $(call BuildPackage,libffmpeg-audio-dec))

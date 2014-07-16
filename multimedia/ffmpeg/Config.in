@@ -105,10 +105,27 @@ config FFMPEG_CUSTOM_DECODER_aac
 	depends on FFMPEG_CUSTOM_PATENTED
 	select FFMPEG_CUSTOM_PARSER_aac
 
+config FFMPEG_CUSTOM_SELECT_adpcm
+	bool "ADPCM (multiple types)"
+
 config FFMPEG_CUSTOM_DECODER_ac3
 	bool "AC3"
 	depends on FFMPEG_CUSTOM_PATENTED
 	select FFMPEG_CUSTOM_PARSER_ac3
+
+config FFMPEG_CUSTOM_DECODER_alac
+	bool "ALAC"
+
+config FFMPEG_CUSTOM_DECODER_amrnb
+	bool "AMR-NB"
+	select FFMPEG_CUSTOM_DEMUXER_amr
+
+config FFMPEG_CUSTOM_DECODER_amrwb
+	bool "AMR-WB"
+	select FFMPEG_CUSTOM_DEMUXER_amr
+
+config FFMPEG_CUSTOM_DECODER_ape
+	bool "APE"
 
 config FFMPEG_CUSTOM_DECODER_atrac3
 	bool "ATRAC3"
@@ -116,6 +133,7 @@ config FFMPEG_CUSTOM_DECODER_atrac3
 
 config FFMPEG_CUSTOM_DECODER_flac
 	bool "FLAC"
+	select FFMPEG_CUSTOM_PARSER_flac
 
 config FFMPEG_CUSTOM_DECODER_gif
 	bool "GIF"
@@ -149,6 +167,14 @@ config FFMPEG_CUSTOM_DECODER_mpeg4
 	bool "MPEG-4"
 	depends on FFMPEG_CUSTOM_PATENTED
 
+config FFMPEG_CUSTOM_DECODER_mpc7
+	bool "Musepack 7"
+	select FFMPEG_CUSTOM_DEMUXER_mpc
+
+config FFMPEG_CUSTOM_DECODER_mpc8
+	bool "Musepack 8"
+	select FFMPEG_CUSTOM_DEMUXER_mpc8
+
 config FFMPEG_CUSTOM_DECODER_pcm_s16be
 	bool "PCM signed 16-bit big-endian"
 
@@ -159,8 +185,14 @@ config FFMPEG_CUSTOM_DECODER_png
 	bool "PNG"
 	select FFMPEG_CUSTOM_DECODER_zlib
 
+config FFMPEG_CUSTOM_SELECT_speex
+	bool "Speex"
+
 config FFMPEG_CUSTOM_DECODER_vorbis
 	bool "Vorbis"
+
+config FFMPEG_CUSTOM_DECODER_wavpack
+	bool "Wavpack"
 
 config FFMPEG_CUSTOM_DECODER_wmav1
 	bool "WMAv1"
@@ -218,6 +250,12 @@ config FFMPEG_CUSTOM_DEMUXER_avi
 config FFMPEG_CUSTOM_DEMUXER_ac3
 	bool "AC3"
 
+config FFMPEG_CUSTOM_DEMUXER_amr
+	bool "AMR"
+
+config FFMPEG_CUSTOM_DEMUXER_ape
+	bool "APE"
+
 config FFMPEG_CUSTOM_DEMUXER_flac
 	bool "FLAC"
 
@@ -249,6 +287,12 @@ config FFMPEG_CUSTOM_DEMUXER_mpegps
 config FFMPEG_CUSTOM_DEMUXER_mpegts
 	bool "MPEG-2 (TS)"
 
+config FFMPEG_CUSTOM_DEMUXER_mpc
+	bool "Musepack"
+
+config FFMPEG_CUSTOM_DEMUXER_mpc8
+	bool "Musepack 8"
+
 config FFMPEG_CUSTOM_DEMUXER_ogg
 	bool "Ogg"
 
@@ -261,10 +305,20 @@ config FFMPEG_CUSTOM_DEMUXER_rtsp
 	bool "RTSP"
 	select FFMPEG_CUSTOM_DEMUXER_rm
 	select FFMPEG_CUSTOM_DEMUXER_sdp
+	select FFMPEG_CUSTOM_DEMUXER_rtp
 
 config FFMPEG_CUSTOM_DEMUXER_sdp
 	bool "SDP"
 	select FFMPEG_CUSTOM_DEMUXER_mpegts
+
+config FFMPEG_CUSTOM_DEMUXER_rtp
+	bool "RTP"
+
+config FFMPEG_CUSTOM_DEMUXER_wav
+	bool "WAV"
+
+config FFMPEG_CUSTOM_DEMUXER_wv
+	bool "WV"
 
 comment "Parsers ---"
 
@@ -274,6 +328,9 @@ config FFMPEG_CUSTOM_PARSER_aac
 
 config FFMPEG_CUSTOM_PARSER_ac3
 	bool "AC3"
+
+config FFMPEG_CUSTOM_PARSER_flac
+	bool "FLAC"
 
 config FFMPEG_CUSTOM_PARSER_h264
 	bool "H.264"
