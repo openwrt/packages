@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2009 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpc
-PKG_VERSION:=0.20
-PKG_RELEASE:=1
+PKG_VERSION:=0.26
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=@SF/musicpd
-PKG_MD5SUM:=24c81ad6afe6099e8d7a6826ef4b7105
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=http://www.musicpd.org/download/mpc/0
+PKG_MD5SUM:=d4f37e7e6b32c804a870192d1eb86199
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 include $(INCLUDE_DIR)/package.mk
 
