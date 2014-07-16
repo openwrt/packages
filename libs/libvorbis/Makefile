@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2013 OpenWrt.org
+# Copyright (C) 2008-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libvorbis
-PKG_VERSION:=1.3.3
-PKG_RELEASE:=1
+PKG_VERSION:=1.3.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/vorbis/
-PKG_MD5SUM:=71b649d3e08e63ece16649df906ce8b9
+PKG_MD5SUM:=55f2288055e44754275a17c9a2497391
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=COPYING
