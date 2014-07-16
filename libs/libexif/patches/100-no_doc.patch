@@ -1,0 +1,11 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -280,7 +280,7 @@ target_alias = @target_alias@
+ top_build_prefix = @top_build_prefix@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+-SUBDIRS = m4m po libexif test doc binary contrib
++SUBDIRS = m4m po libexif test binary contrib
+ @SHIP_BINARIES_TRUE@README_W32_XDIST = README-Win32.txt
+ EXTRA_DIST = @PACKAGE_TARNAME@.spec $(README_W32_XDIST) libexif.pc.in \
+ 	libexif-uninstalled.pc.in
