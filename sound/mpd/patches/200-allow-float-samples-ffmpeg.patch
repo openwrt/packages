@@ -1,0 +1,16 @@
+--- a/src/decoder/ffmpeg_decoder_plugin.c
++++ b/src/decoder/ffmpeg_decoder_plugin.c
+@@ -370,6 +370,13 @@
+ #endif
+ 		return SAMPLE_FORMAT_S32;
+ 
++#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(52, 94, 1)
++	case AV_SAMPLE_FMT_FLT:
++#else
++	case SAMPLE_FMT_FLOAT:
++#endif
++		return SAMPLE_FORMAT_FLOAT;
++
+ 	default:
+ 		g_warning("Unsupported libavcodec SampleFormat value: %d",
+ 			  codec_context->sample_fmt);

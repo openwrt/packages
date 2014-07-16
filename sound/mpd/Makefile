@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2011 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.16.8
-PKG_RELEASE:=2
+PKG_VERSION:=0.17.6
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.16/
-PKG_MD5SUM:=b412a9d0b3457bea1bb87904a8f80c04
+PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.17/
+PKG_MD5SUM:=0a42ed81ff298c12e22c16be31097e4c
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
@@ -31,8 +32,8 @@ define Package/mpd/Default
   CATEGORY:=Sound
   TITLE:=Music Player Daemon
   URL:=http://www.musicpd.org/
-  DEPENDS:= +glib2 +libcurl +libpthread \
-	+libflac +BUILD_PATENTED:libmad +libvorbisidec
+  DEPENDS:= +glib2 +libcurl +libpthread $(ICONV_DEPENDS) \
+	    +libflac +BUILD_PATENTED:libmad +libvorbisidec
 endef
 
 define Package/mpd/Default/description
@@ -42,14 +43,13 @@ define Package/mpd/Default/description
  gmpc (gnome), phpmp (php), etc...
 endef
 
-
 define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
   DEPENDS+= \
 	+AUDIO_SUPPORT:alsa-lib \
 	+libaudiofile +BUILD_PATENTED:libfaad2 +libffmpeg +libid3tag \
-	+libmms +libogg +libshout +libsndfile +libvorbis
+	+libmms +libogg +libsndfile +libvorbis
   PROVIDES:=mpd
   VARIANT:=full
 endef
@@ -64,7 +64,6 @@ define Package/mpd-full/conffiles
 /etc/avahi/services/mpd.service
 /etc/mpd.conf
 endef
-
 
 define Package/mpd-mini
 $(call Package/mpd/Default)
@@ -84,7 +83,6 @@ define Package/mpd-mini/conffiles
 /etc/mpd.conf
 endef
 
-
 CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-debug \
@@ -95,11 +93,11 @@ CONFIGURE_ARGS += \
 	\
 	--disable-ao \
 	--disable-bzip2 \
-	--disable-cue \
+	--enable-cue \
 	--disable-ffado \
 	--disable-fluidsynth \
 	--disable-gme \
-	--disable-inotify \
+	--enable-inotify \
 	--disable-iso9660 \
 	--disable-jack \
 	--disable-lame-encoder \
@@ -116,11 +114,11 @@ CONFIGURE_ARGS += \
 	--disable-solaris-output \
 	--disable-sqlite \
 	--disable-twolame-encoder \
-	--disable-wave-encoder \
+	--enable-wave-encoder \
 	--disable-wavpack \
 	--disable-wildmidi \
 	--disable-zzip \
-	--with-zeroconf=no \
+	--with-zeroconf=auto \
 	\
 	--enable-curl \
 	--enable-flac \
@@ -137,7 +135,7 @@ CONFIGURE_VARS += \
 	$(if $(CONFIG_BUILD_PATENTED),MAD_LIBS="$(TARGET_LDFLAGS) -lmad") \
 
 TARGET_CFLAGS += -std=gnu99
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
+TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-liconv)
 
 # use gcc instead of g++ to avoid unnecessary linking against libstdc++
 TARGET_CXX:=$(TARGET_CC)
@@ -156,12 +154,12 @@ ifeq ($(BUILD_VARIANT),full)
 	--enable-oggflac \
 	--enable-pipe-output \
 	--enable-recorder-output \
-	--enable-shout \
+	--disable-shout \
 	--enable-sndfile \
 	--enable-vorbis \
-	--enable-vorbis-encoder \
+	--disable-vorbis-encoder \
 	--with-faad="$(STAGING_DIR)/usr" \
-	--with-tremor=no \
+	--with-tremor=yes \
 
 endif
 
