@@ -1,0 +1,60 @@
+--- a/libasm/Makefile.am
++++ b/libasm/Makefile.am
+@@ -69,7 +69,6 @@ libasm.so: libasm_pic.a libasm.map
+ 		-Wl,--version-script,$(srcdir)/libasm.map,--no-undefined \
+ 		-Wl,--soname,$@.$(VERSION) \
+ 		../libebl/libebl.a ../libelf/libelf.so  $(libasm_so_LDLIBS)
+-	if readelf -d $@ | fgrep -q TEXTREL; then exit 1; fi
+ 	ln -fs $@ $@.$(VERSION)
+ 
+ install: install-am libasm.so
+--- a/libasm/Makefile.in
++++ b/libasm/Makefile.in
+@@ -656,7 +656,6 @@ uninstall-am: uninstall-libLIBRARIES uni
+ @MUDFLAP_FALSE@		-Wl,--version-script,$(srcdir)/libasm.map,--no-undefined \
+ @MUDFLAP_FALSE@		-Wl,--soname,$@.$(VERSION) \
+ @MUDFLAP_FALSE@		../libebl/libebl.a ../libelf/libelf.so  $(libasm_so_LDLIBS)
+-@MUDFLAP_FALSE@	if readelf -d $@ | fgrep -q TEXTREL; then exit 1; fi
+ @MUDFLAP_FALSE@	ln -fs $@ $@.$(VERSION)
+ 
+ @MUDFLAP_FALSE@install: install-am libasm.so
+--- a/libdw/Makefile.am
++++ b/libdw/Makefile.am
+@@ -112,7 +112,6 @@ libdw.so: $(srcdir)/libdw.map libdw_pic.
+ 		-Wl,--version-script,$<,--no-undefined \
+ 		-Wl,--whole-archive $(filter-out $<,$^) -Wl,--no-whole-archive\
+ 		-ldl $(zip_LIBS) $(LIBS)
+-	if readelf -d $@ | fgrep -q TEXTREL; then exit 1; fi
+ 	ln -fs $@ $@.$(VERSION)
+ 
+ install: install-am libdw.so
+--- a/libdw/Makefile.in
++++ b/libdw/Makefile.in
+@@ -846,7 +846,6 @@ uninstall-am: uninstall-includeHEADERS u
+ @MUDFLAP_FALSE@		-Wl,--version-script,$<,--no-undefined \
+ @MUDFLAP_FALSE@		-Wl,--whole-archive $(filter-out $<,$^) -Wl,--no-whole-archive\
+ @MUDFLAP_FALSE@		-ldl $(zip_LIBS) $(LIBS)
+-@MUDFLAP_FALSE@	if readelf -d $@ | fgrep -q TEXTREL; then exit 1; fi
+ @MUDFLAP_FALSE@	ln -fs $@ $@.$(VERSION)
+ 
+ @MUDFLAP_FALSE@install: install-am libdw.so
+--- a/libelf/Makefile.am
++++ b/libelf/Makefile.am
+@@ -106,7 +106,6 @@ libelf.so: libelf_pic.a libelf.map
+ 	$(LINK) -shared -o $@ -Wl,--whole-archive,$<,--no-whole-archive \
+ 		-Wl,--version-script,$(srcdir)/libelf.map,--no-undefined \
+ 		-Wl,--soname,$@.$(VERSION),-z,defs,-z,relro $(libelf_so_LDLIBS)
+-	if readelf -d $@ | fgrep -q TEXTREL; then exit 1; fi
+ 	ln -fs $@ $@.$(VERSION)
+ 
+ install: install-am libelf.so
+--- a/libelf/Makefile.in
++++ b/libelf/Makefile.in
+@@ -832,7 +832,6 @@ uninstall-am: uninstall-includeHEADERS u
+ @MUDFLAP_FALSE@	$(LINK) -shared -o $@ -Wl,--whole-archive,$<,--no-whole-archive \
+ @MUDFLAP_FALSE@		-Wl,--version-script,$(srcdir)/libelf.map,--no-undefined \
+ @MUDFLAP_FALSE@		-Wl,--soname,$@.$(VERSION),-z,defs,-z,relro $(libelf_so_LDLIBS)
+-@MUDFLAP_FALSE@	if readelf -d $@ | fgrep -q TEXTREL; then exit 1; fi
+ @MUDFLAP_FALSE@	ln -fs $@ $@.$(VERSION)
+ 
+ @MUDFLAP_FALSE@install: install-am libelf.so
