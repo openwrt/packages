@@ -1,0 +1,26 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -22,8 +22,8 @@ AUTOMAKE_OPTIONS = dist-bzip2
+ DISTCHECK_CONFIGURE_FLAGS = --enable-random-daemon \
+   --enable-ciphers=arcfour:blowfish:cast5:des:aes:twofish:serpent:rfc2268:seed:camellia
+ 
+-DIST_SUBDIRS = m4 compat mpi cipher random src doc tests
+-SUBDIRS =         compat mpi cipher random src doc tests
++DIST_SUBDIRS = m4 compat mpi cipher random src
++SUBDIRS =         compat mpi cipher random src
+ EXTRA_DIST = autogen.sh README.SVN
+ DISTCLEANFILES =
+ 
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -281,8 +281,8 @@ AUTOMAKE_OPTIONS = dist-bzip2
+ DISTCHECK_CONFIGURE_FLAGS = --enable-random-daemon \
+   --enable-ciphers=arcfour:blowfish:cast5:des:aes:twofish:serpent:rfc2268:seed:camellia
+ 
+-DIST_SUBDIRS = m4 compat mpi cipher random src doc tests
+-SUBDIRS = compat mpi cipher random src doc tests
++DIST_SUBDIRS = m4 compat mpi cipher random src
++SUBDIRS = compat mpi cipher random src
+ EXTRA_DIST = autogen.sh README.SVN
+ DISTCLEANFILES = 
+ all: config.h
