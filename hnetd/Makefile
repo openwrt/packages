@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hnetd
-PKG_SOURCE_VERSION:=0500e70b1de3dfa3315263db7b92c0247187437f
-PKG_VERSION:=2014-06-19-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=1fecf1a0f0e8869b939719de429a9698dffb374e
+PKG_VERSION:=2014-07-17-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
@@ -70,7 +70,7 @@ define Package/hnetd/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hnetd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openwrt/hnet.sh $(1)/lib/netifd/proto
-	ln -s hnetd $(1)/usr/sbin/hnet-call
+	ln -s hnetd $(1)/usr/sbin/hnet-ifresolve
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/hnetd.init $(1)/etc/init.d/hnetd
 	$(INSTALL_DIR) $(1)/etc/config
