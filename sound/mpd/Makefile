@@ -118,7 +118,7 @@ CONFIGURE_ARGS += \
 	--disable-wavpack \
 	--disable-wildmidi \
 	--disable-zzip \
-	--with-zeroconf=auto \
+	--with-zeroconf=no \
 	\
 	--enable-curl \
 	--enable-flac \
