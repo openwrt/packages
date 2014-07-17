@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2013 OpenWrt.org
+# Copyright (C) 2008-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libogg
-PKG_VERSION:=1.3.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.3.2
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/ogg/
-PKG_MD5SUM:=ca25d8da0ddfc8c6cbbf78d847a209fe
+PKG_MD5SUM:=5c3a34309d8b98640827e5d0991a4015
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=COPYING
