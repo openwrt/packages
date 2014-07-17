@@ -1,0 +1,36 @@
+diff -u --recursive gst-plugins-base-1.0.7-vanilla/Makefile.am gst-plugins-base-1.0.7/Makefile.am
+--- gst-plugins-base-1.0.7-vanilla/Makefile.am	2013-06-01 22:38:30.495678685 -0500
++++ gst-plugins-base-1.0.7/Makefile.am	2013-06-01 22:39:04.374335121 -0500
+@@ -12,14 +12,12 @@
+ 	gst sys $(SUBDIRS_EXT) 	\
+ 	tools 			\
+ 	tests 			\
+-	docs			\
+ 	po 			\
+ 	common 			\
+ 	m4
+ 
+ DIST_SUBDIRS = 			\
+ 	pkgconfig		\
+-	docs			\
+ 	gst-libs		\
+ 	gst sys ext		\
+ 	tools 			\
+diff -u --recursive gst-plugins-base-1.0.7-vanilla/Makefile.in gst-plugins-base-1.0.7/Makefile.in
+--- gst-plugins-base-1.0.7-vanilla/Makefile.in	2013-06-01 22:38:30.527677416 -0500
++++ gst-plugins-base-1.0.7/Makefile.in	2013-06-01 22:38:59.110543873 -0500
+@@ -493,14 +493,12 @@
+ 	gst sys $(SUBDIRS_EXT) 	\
+ 	tools 			\
+ 	tests 			\
+-	docs			\
+ 	po 			\
+ 	common 			\
+ 	m4
+ 
+ DIST_SUBDIRS = \
+ 	pkgconfig		\
+-	docs			\
+ 	gst-libs		\
+ 	gst sys ext		\
+ 	tools 			\
