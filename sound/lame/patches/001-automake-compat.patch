@@ -1,0 +1,33 @@
+--- a/configure.in
++++ b/configure.in
+@@ -385,7 +385,7 @@ CONFIG_MATH_LIB="${USE_LIBM}"
+ 
+ dnl configure use of features
+ 
+-AM_PATH_GTK(1.2.0, HAVE_GTK="yes", HAVE_GTK="no")
++HAVE_GTK="no"
+ 
+ dnl ElectricFence malloc debugging
+ AC_MSG_CHECKING(use of ElectricFence malloc debugging)
+--- a/frontend/Makefile.am
++++ b/frontend/Makefile.am
+@@ -51,7 +51,7 @@ mp3rtp_SOURCES = mp3rtp.c rtp.c rtp.h $(
+ mp3x_SOURCES = mp3x.c gtkanal.c gpkplotting.c $(common_sources)
+ endif
+ 
+-CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @FRONTEND_CFLAGS@ @SNDFILE_CFLAGS@
++CFLAGS = @CFLAGS@ @FRONTEND_CFLAGS@ @SNDFILE_CFLAGS@
+ LDFLAGS = @LDFLAGS@ @FRONTEND_LDFLAGS@ @SNDFILE_LIBS@ -static
+ 
+ INCLUDES = -I$(top_srcdir)/libmp3lame -I$(top_srcdir)/include -I$(top_builddir)
+--- a/frontend/Makefile.in
++++ b/frontend/Makefile.in
+@@ -113,7 +113,7 @@ AUTOMAKE = @AUTOMAKE@
+ AWK = @AWK@
+ CC = @CC@
+ CCDEPMODE = @CCDEPMODE@
+-CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @FRONTEND_CFLAGS@ @SNDFILE_CFLAGS@
++CFLAGS = @CFLAGS@ @FRONTEND_CFLAGS@ @SNDFILE_CFLAGS@
+ CONFIG_DEFS = @CONFIG_DEFS@
+ CONFIG_MATH_LIB = @CONFIG_MATH_LIB@
+ CPP = @CPP@
