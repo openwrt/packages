@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2009 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -14,6 +14,8 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/flac
 PKG_MD5SUM:=
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+
 PKG_INSTALL:=1
 
 PKG_LICENSE:=GFDLv1.2 GPLv2 LGPLv2.1 BSD-3c
