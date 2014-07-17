@@ -22,7 +22,7 @@ start() {
 	mkdir -m 0755 -p /var/media/music
 	mkdir -m 0755 -p /var/media/pictures
 
-	service_start /usr/sbin/dmapd -m /var/media/music -p /var/media/pictures --vips-disc-threshold 64k
+	service_start /usr/sbin/dmapd -u dmapd -g dmapd -m /var/media/music -p /var/media/pictures --vips-disc-threshold 64k
 }
 
 stop() {
