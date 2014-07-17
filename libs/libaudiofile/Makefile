@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2010 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=audiofile
-PKG_VERSION:=0.2.7
-PKG_RELEASE:=1
+PKG_VERSION:=0.3.6
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	http://github.com/downloads/mpruett/audiofile/ \
 	http://www.68k.org/~michael/audiofile/
-PKG_MD5SUM:=a39be317a7b1971b408805dc5e371862
+PKG_MD5SUM:=2731d79bec0acef3d30d2fc86b0b72fd
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL=1
@@ -27,12 +28,13 @@ define Package/libaudiofile
   CATEGORY:=Libraries
   TITLE:=Audio File library
   URL:=http://www.68k.org/~michael/audiofile/
+  DEPENDS:=+libflac +libstdcpp
 endef
 
 define Package/libaudiofile/description
  The audiofile library allows the processing of audio data to and from audio
  files of many common formats (currently AIFF, AIFF-C, WAVE, NeXT/Sun, BICS,
- and raw data).
+ FLAC, ALAC, and raw data).
 endef
 
 CONFIGURE_ARGS+= \
@@ -40,17 +42,9 @@ CONFIGURE_ARGS+= \
 	--enable-static \
 	--with-build-cc="$(HOSTCC)" \
 
-TARGET_CFLAGS+= $(FPIC) -std=c99
+TARGET_CFLAGS+= $(FPIC)
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(2)/bin
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/bin/audiofile-config \
-		$(2)/bin/
-	$(SED) \
-		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
-		$(2)/bin/audiofile-config
-
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/{af_vfs,audiofile,aupvlist}.h \
