@@ -1,0 +1,22 @@
+diff -u --recursive gst-plugins-good-1.0.7-vanilla/Makefile.am gst-plugins-good-1.0.7/Makefile.am
+--- gst-plugins-good-1.0.7-vanilla/Makefile.am	2013-06-01 19:54:57.652601127 -0500
++++ gst-plugins-good-1.0.7/Makefile.am	2013-06-01 19:55:15.281902215 -0500
+@@ -3,7 +3,6 @@
+ ALWAYS_SUBDIRS =		\
+ 	gst sys ext 		\
+ 	tests			\
+-	docs			\
+ 	po			\
+ 	common			\
+ 	m4			\
+diff -u --recursive gst-plugins-good-1.0.7-vanilla/Makefile.in gst-plugins-good-1.0.7/Makefile.in
+--- gst-plugins-good-1.0.7-vanilla/Makefile.in	2013-06-01 19:54:57.692599541 -0500
++++ gst-plugins-good-1.0.7/Makefile.in	2013-06-01 19:55:23.025595255 -0500
+@@ -523,7 +523,6 @@
+ ALWAYS_SUBDIRS = \
+ 	gst sys ext 		\
+ 	tests			\
+-	docs			\
+ 	po			\
+ 	common			\
+ 	m4			\
