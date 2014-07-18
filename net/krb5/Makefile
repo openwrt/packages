@@ -5,7 +5,7 @@ PKG_VERSION:=1.12.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=krb5-$(PKG_VERSION)-signed.tar
-PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/$(PKG_VERSION)/
+PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.12/
 PKG_MD5SUM:=524b1067b619cb5bf780759b6884c3f5
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
@@ -56,7 +56,7 @@ define Build/Prepare
 	# containing source code.
 	tar xf "$(DL_DIR)/$(PKG_SOURCE)" -C "$(BUILD_DIR)"
 	tar xzf "$(BUILD_DIR)/krb5-$(PKG_VERSION).tar.gz" -C "$(BUILD_DIR)"
-	patch -p1 -d "$(PKG_BUILD_DIR)" < "$(PATCH_DIR)/001-fix-build-warning.patch"
+	patch -p1 -d "$(PKG_BUILD_DIR)" < "$(PATCH_DIR)/001-fix-build.patch"
 endef
 
 CONFIGURE_PATH = ./src
