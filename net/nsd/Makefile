@@ -30,7 +30,6 @@ define Package/nsd/default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  DEPENDS:=+libevent2
 endef
 
 define Package/nsd/default/description
@@ -85,7 +84,7 @@ endef
 
 CONFIGURE_ARGS+= \
 	--disable-checking \
-	--with-libevent="$(STAGING_DIR)/usr" \
+	--with-libevent=no \
 	--with-user="network" \
 
 CONFIGURE_VARS+= \
