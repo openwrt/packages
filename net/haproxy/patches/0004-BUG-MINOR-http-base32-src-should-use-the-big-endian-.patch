@@ -1,0 +1,35 @@
+From 0dff81c6a5876172bc1d4725a7a07fddd9d1f369 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Tue, 15 Jul 2014 21:34:06 +0200
+Subject: [PATCH 4/5] BUG/MINOR: http: base32+src should use the big endian
+ version of base32
+
+We're using the internal memory representation of base32 here, which is
+wrong since these data might be exported to headers for logs or be used
+to stick to a server and replicated to other peers. Let's convert base32
+to big endian (network representation) when building the binary block.
+
+This mistake is also present in 1.5, it would be better to backport it.
+(cherry picked from commit 5ad6e1dc09f0a85aabf86f154b1817b9ebffb568)
+---
+ src/proto_http.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 94afed7..b7ed85d 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -10358,8 +10358,8 @@ smp_fetch_base32_src(struct proxy *px, struct session *l4, void *l7, unsigned in
+ 		return 0;
+ 
+ 	temp = get_trash_chunk();
+-	memcpy(temp->str + temp->len, &smp->data.uint, sizeof(smp->data.uint));
+-	temp->len += sizeof(smp->data.uint);
++	*(unsigned int *)temp->str = htonl(smp->data.uint);
++	temp->len += sizeof(unsigned int);
+ 
+ 	switch (cli_conn->addr.from.ss_family) {
+ 	case AF_INET:
+-- 
+1.8.5.5
+

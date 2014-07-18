@@ -1,0 +1,42 @@
+From 66dbae025876a65c81ae3c4011e3aa3b630b42f7 Mon Sep 17 00:00:00 2001
+From: Dave McCowan <11235david@gmail.com>
+Date: Thu, 17 Jul 2014 14:34:01 -0400
+Subject: [PATCH 5/5] BUG/MEDIUM: connection: fix memory corruption when
+ building a proxy v2 header
+
+Use temporary trash chunk, instead of global trash chunk in
+make_proxy_line_v2() to avoid memory overwrite.
+
+This fix must also be backported to 1.5.
+(cherry picked from commit 77d1f0143e210c13ee8ec6aaf6b3150fa4ce6c5b)
+---
+ src/connection.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/connection.c b/src/connection.c
+index 20a911b..3435b1a 100644
+--- a/src/connection.c
++++ b/src/connection.c
+@@ -622,6 +622,7 @@ int make_proxy_line_v2(char *buf, int buf_len, struct server *srv, struct connec
+ 	char *value = NULL;
+ 	struct tlv_ssl *tlv;
+ 	int ssl_tlv_len = 0;
++	struct chunk *cn_trash;
+ #endif
+ 
+ 	if (buf_len < PP2_HEADER_LEN)
+@@ -682,8 +683,9 @@ int make_proxy_line_v2(char *buf, int buf_len, struct server *srv, struct connec
+ 				tlv->verify = htonl(ssl_sock_get_verify_result(remote));
+ 			}
+ 			if (srv->pp_opts & SRV_PP_V2_SSL_CN) {
+-				if (ssl_sock_get_remote_common_name(remote, &trash) > 0) {
+-					tlv_len = make_tlv(&buf[ret+ssl_tlv_len], (buf_len - ret - ssl_tlv_len), PP2_TYPE_SSL_CN, trash.len, trash.str);
++				cn_trash = get_trash_chunk();
++				if (ssl_sock_get_remote_common_name(remote, &cn_trash) > 0) {
++					tlv_len = make_tlv(&buf[ret+ssl_tlv_len], (buf_len - ret - ssl_tlv_len), PP2_TYPE_SSL_CN, cn_trash->len, cn_trash->str);
+ 					ssl_tlv_len += tlv_len;
+ 				}
+ 			}
+-- 
+1.8.5.5
+
