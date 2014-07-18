@@ -1,0 +1,23 @@
+--- a/configure
++++ b/configure
+@@ -9821,6 +9821,7 @@ fi
+ # Check whether --with-faad was given.
+ if test "${with_faad+set}" = set; then :
+   withval=$with_faad;
++  faad_prefix=$with_faad;
+ else
+   faad_prefix=""
+ fi
+--- a/src/input/file_input_plugin.c
++++ b/src/input/file_input_plugin.c
+@@ -82,10 +82,6 @@ input_file_open(const char *filename,
+ 		return NULL;
+ 	}
+ 
+-#ifdef POSIX_FADV_SEQUENTIAL
+-	posix_fadvise(fd, (off_t)0, st.st_size, POSIX_FADV_SEQUENTIAL);
+-#endif
+-
+ 	fis = g_new(struct file_input_stream, 1);
+ 	input_stream_init(&fis->base, &input_plugin_file, filename,
+ 			  mutex, cond);

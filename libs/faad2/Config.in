@@ -1,0 +1,12 @@
+config FAAD2_ALWAYS_USE_FLOATING_POINT
+	depends on PACKAGE_libfaad2
+	bool "Build FAAD2 to use floating-point math even if using soft floats."
+	default n
+	help
+		By default, libfaad2 will be built to use fixed point rather
+		than floating point math if emulated floating point operations
+		are being used. (See the CONFIG_SOFT_FLOAT option.) Set this
+		option if you would like to use floating point math regardless
+		of whether floating point emulation is in use.
+		
+		For the best real-time decoding ability, leave this option off.

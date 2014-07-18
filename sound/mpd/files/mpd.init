@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2011 OpenWrt.org
+
+START=93
+
+start() {
+	#create mpd directories
+	pld=`grep ^playlist_directory /etc/mpd.conf | cut -d "\"" -f 2 | sed "s/~/\/root/g"`
+	if [ ! -d $pld ]; then
+		mkdir -m 0755 -p $pld
+	fi
+
+	# Set the initial volume to something manageable
+	[ -x /usr/bin/amixer ] && /usr/bin/amixer set PCM 40
+
+	if [ -x /bin/nice ]; then
+		# This has real-time constraints, so let's at least tell the OS
+		# that this should have higher priority to avoid skipping
+		# when doing other things in the background.
+		nice -n -10
+	fi
+
+	service_start /usr/bin/mpd
+}
+
+stop() {
+	service_stop /usr/bin/mpd
+}

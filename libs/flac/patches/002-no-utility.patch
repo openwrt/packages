@@ -1,0 +1,24 @@
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -26,9 +26,6 @@ endif
+ SUBDIRS = \
+ 	libFLAC \
+ 	share \
+-	flac \
+-	metaflac \
+-	monkeys_audio_utilities \
+ 	$(XMMS_DIRS) \
+ 	$(CPPLIBS_DIRS)
+ 
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -226,9 +226,6 @@ target_alias = @target_alias@
+ SUBDIRS = \
+ 	libFLAC \
+ 	share \
+-	flac \
+-	metaflac \
+-	monkeys_audio_utilities \
+ 	$(XMMS_DIRS) \
+ 	$(CPPLIBS_DIRS)
+ 

@@ -1,0 +1,62 @@
+--- a/src/libFLAC/Makefile.in
++++ b/src/libFLAC/Makefile.in
+@@ -66,6 +66,7 @@ NORMAL_UNINSTALL = :
+ PRE_UNINSTALL = :
+ POST_UNINSTALL = :
+ host_triplet = @host@
++@FLaC__CPU_PPC_TRUE@@FLaC__SYS_DARWIN_FALSE@@FLaC__USE_ALTIVEC_TRUE@am__append_1 = -maltivec -mabi=altivec
+ ACLOCAL = @ACLOCAL@
+ ACLOCAL_AMFLAGS = @ACLOCAL_AMFLAGS@
+ AMDEP_FALSE = @AMDEP_FALSE@
+@@ -234,13 +235,21 @@ target_alias = @target_alias@
+ 
+ lib_LTLIBRARIES = libFLAC.la
+ @DEBUG_TRUE@DEBUGCFLAGS = -DFLAC__OVERFLOW_DETECT
++# Linux-gcc for PPC does not have -force_cpusubtype_ALL, it is Darwin-specific
++#@@@ PPC optimizations temporarily disabled
++@FLaC__CPU_PPC_TRUE@@FLaC__SYS_DARWIN_FALSE@CPUCFLAGS =  \
++@FLaC__CPU_PPC_TRUE@@FLaC__SYS_DARWIN_FALSE@	$(am__append_1) \
++@FLaC__CPU_PPC_TRUE@@FLaC__SYS_DARWIN_FALSE@	-DFLAC__NO_ASM
++
++# FIXME: The following logic should be part of configure, not of Makefile.am
++
+ # The -force_cpusubtype_ALL is needed to insert a ppc64 instruction
+ # into cpu.c with an asm().
+ #@@@ PPC optimizations temporarily disabled
+-@FLaC__CPU_PPC_TRUE@@FLaC__SYS_DARWIN_TRUE@CPUCFLAGS = -faltivec -force_cpusubtype_ALL -DFLAC__NO_ASM
+-# Linux-gcc for PPC does not have -force_cpusubtype_ALL, it is Darwin-specific
+-#@@@ PPC optimizations temporarily disabled
+-@FLaC__CPU_PPC_TRUE@@FLaC__SYS_DARWIN_FALSE@CPUCFLAGS = -maltivec -mabi=altivec -DFLAC__NO_ASM
++@FLaC__CPU_PPC_TRUE@@FLaC__SYS_DARWIN_TRUE@CPUCFLAGS = -faltivec \
++@FLaC__CPU_PPC_TRUE@@FLaC__SYS_DARWIN_TRUE@	-force_cpusubtype_ALL \
++@FLaC__CPU_PPC_TRUE@@FLaC__SYS_DARWIN_TRUE@	-DFLAC__NO_ASM \
++@FLaC__CPU_PPC_TRUE@@FLaC__SYS_DARWIN_TRUE@	$(am__append_1)
+ 
+ AM_CFLAGS = $(DEBUGCFLAGS) $(CPUCFLAGS) @OGG_CFLAGS@
+ @FLaC__CPU_PPC_TRUE@@FLaC__NO_ASM_FALSE@ARCH_SUBDIRS = ppc
+--- a/src/libFLAC/Makefile.am
++++ b/src/libFLAC/Makefile.am
+@@ -32,6 +32,9 @@ lib_LTLIBRARIES = libFLAC.la
+ if DEBUG
+ DEBUGCFLAGS = -DFLAC__OVERFLOW_DETECT
+ endif
++
++# FIXME: The following logic should be part of configure, not of Makefile.am
++
+ if FLaC__CPU_PPC
+ # The -force_cpusubtype_ALL is needed to insert a ppc64 instruction
+ # into cpu.c with an asm().
+@@ -40,8 +43,12 @@ if FLaC__SYS_DARWIN
+ CPUCFLAGS = -faltivec -force_cpusubtype_ALL -DFLAC__NO_ASM
+ else
+ # Linux-gcc for PPC does not have -force_cpusubtype_ALL, it is Darwin-specific
++CPUCFLAGS =
++if FLaC__USE_ALTIVEC
++CPUCFLAGS += -maltivec -mabi=altivec
++endif
+ #@@@ PPC optimizations temporarily disabled
+-CPUCFLAGS = -maltivec -mabi=altivec -DFLAC__NO_ASM
++CPUCFLAGS += -DFLAC__NO_ASM
+ endif
+ endif
+ 

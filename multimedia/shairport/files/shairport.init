@@ -1,0 +1,91 @@
+#!/bin/sh /etc/rc.common
+
+NAME=shairport
+START=94
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+AP_PIDDIR=/var/run
+AP_BIN=/usr/bin/shairport
+
+append_arg() {
+        local cfg="$1"
+        local var="$2"
+        local opt="$3"
+        local def="$4"
+        local val
+
+        config_get val "$cfg" "$var"
+        [ -n "$val" -o -n "$def" ] && append AP_ARGS "$opt ${val:-$def}"
+}
+
+append_bool() {
+        local cfg="$1"
+        local var="$2"
+        local opt="$3"
+        local def="$4"
+        local val
+
+        config_get_bool val "$cfg" "$var" "$def"
+        [ "$val" = 1 ] && append AP_ARGS "$opt"
+}
+
+start_instance() {
+	AP_ARGS=""
+	local cfg="$1"
+	local ao dev
+
+	append_arg "$cfg" bname "-a" "AirPort"
+	append_arg "$cfg" log "-l"
+	append_arg "$cfg" initbuf "-b" "256"
+	append_arg "$cfg" port "-p" "5002"
+	append_arg "$cfg" password "-k"
+	append_arg "$cfg" mdns "-m"
+
+	append_arg "$cfg" cmd_start "-B"
+	append_arg "$cfg" cmd_stop "-E"
+	append_bool "$cfg" cmd_wait "-w"
+
+	append_arg "$cfg" audio_output "-o"
+
+	config_get ao "$cfg" audio_output ""
+	if [ "$ao" = "alsa" ]; then
+		config_get dev "$cfg" output_device ""
+		if [ -n "$dev" ]; then
+			append AP_ARGS "--"
+			append_arg "$cfg" output_device "-d"
+			append_arg "$cfg" mixer_device "-m"
+			append_arg "$cfg" mixer_type "-t"
+			append_arg "$cfg" mixer-control "-c"
+			append_arg "$cfg" mixer-index "-i"
+		fi
+	fi
+
+	SERVICE_PID_FILE=${AP_PIDDIR}/${NAME}_${cfg}.pid
+	service_start $AP_BIN $AP_ARGS
+
+	# Check if daemon is running, if not then
+	# re-execute in foreground to display error.
+	sleep 1 && service_check $AP_BIN || \
+		$AP_BIN $AP_ARGS
+}
+
+stop_instance()
+{
+	local cfg="$1"
+
+	SERVICE_PID_FILE=${AP_PIDDIR}/${NAME}_${cfg}.pid
+	SERVICE_SIG_STOP="INT"
+	service_stop $AP_BIN
+}
+
+start() {
+	config_load shairport
+	config_foreach start_instance shairport
+}
+
+stop() {
+	config_load shairport
+	config_foreach stop_instance shairport
+}

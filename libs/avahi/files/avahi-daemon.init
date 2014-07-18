@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+START=61
+
+BIN=avahi-daemon
+DEFAULT=/etc/default/$BIN
+OPTIONS="-D"
+RUN_D=/var/run/$BIN
+
+start() {
+	[ -f $DEFAULT ] && . $DEFAULT
+	mkdir -p $RUN_D
+	$BIN $OPTIONS
+}
+
+stop() {
+  $BIN -k
+}
+
+reload() {
+  $BIN -r
+}
+
