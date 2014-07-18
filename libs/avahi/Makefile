@@ -26,7 +26,7 @@ PKG_SOURCE_URL:=http://avahi.org/download/
 PKG_MD5SUM:=2f22745b8f7368ad5a0a3fddac343f2d
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_BUILD_DEPENDS:=libexpat libdaemon libgdbm intltool/host libpthread dbus
+PKG_BUILD_DEPENDS:=libexpat libdaemon libgdbm intltool/host libpthread
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh
@@ -132,28 +132,28 @@ $(call Package/avahi/Default/description)
  in a DHCP-like fashion. Especially useful on IPv6.
 endef
 
-define Package/libavahi-dbus-support
-  $(call Package/avahi/Default)
-  SECTION:=libs
-  CATEGORY:=Libraries
-  VARIANT:=dbus
-  DEPENDS:=+dbus +libavahi
-  TITLE+= (D-Bus support)
-endef
+#define Package/libavahi-dbus-support
+#  $(call Package/avahi/Default)
+#  SECTION:=libs
+#  CATEGORY:=Libraries
+#  VARIANT:=dbus
+#  DEPENDS:=+dbus +libavahi
+#  TITLE+= (D-Bus support)
+#endef
 
-define Package/libavahi-dbus-support/description
-$(call Package/libavahi/description)
- .
- The libavahi-dbus-support package enables
- D-Bus support in avahi, needed to support
- the libavahi-client library and avahi-utils.
- Selecting this package modifies the build configuration
- so that avahi packages are built with support for D-BUS enabled;
- it does not generate a separate binary of its own.
- It also automatically adds the D-Bus package to the build.
- libavahi-dbus-support is selected automatically if you select
- libavahi-client or avahi-utils.
-endef
+#define Package/libavahi-dbus-support/description
+#$(call Package/libavahi/description)
+# .
+# The libavahi-dbus-support package enables
+# D-Bus support in avahi, needed to support
+# the libavahi-client library and avahi-utils.
+# Selecting this package modifies the build configuration
+# so that avahi packages are built with support for D-BUS enabled;
+# it does not generate a separate binary of its own.
+# It also automatically adds the D-Bus package to the build.
+# libavahi-dbus-support is selected automatically if you select
+# libavahi-client or avahi-utils.
+#endef
 
 define Package/libavahi-client
   $(call Package/avahi/Default)
@@ -251,10 +251,10 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
 endef
 
-define Package/libavahi-dbus-support/install
-	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
-	$(CP) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/* $(1)/etc/dbus-1/system.d
-endef
+#define Package/libavahi-dbus-support/install
+#	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
+#	$(CP) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/* $(1)/etc/dbus-1/system.d
+#endef
 
 define Package/libavahi/install
 	# The next line removes the ".build" file from the "other" build.
@@ -306,7 +306,7 @@ endef
 
 $(eval $(call BuildPackage,libavahi-client))
 $(eval $(call BuildPackage,avahi-utils))
-$(eval $(call BuildPackage,libavahi-dbus-support))
+#$(eval $(call BuildPackage,libavahi-dbus-support))
 $(eval $(call BuildPackage,libavahi))
 $(eval $(call BuildPackage,avahi-autoipd))
 $(eval $(call BuildPackage,avahi-daemon))
