@@ -28,7 +28,6 @@ define Package/elfutils/Default
   DEPENDS:=$(INTL_DEPENDS)
   TITLE:=ELF manipulation libraries
   URL:=https://fedorahosted.org/elfutils/
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
 define Package/libdw
