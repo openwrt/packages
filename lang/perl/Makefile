@@ -55,15 +55,15 @@ define Package/perl/description
   and is widely used to program web applications of all needs.
 endef
 
-HOST_PERL_DIR:=$(STAGING_DIR_HOST)/usr
+HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
 define Host/Configure
-	( cd $(HOST_BUILD_DIR); ./Configure -der -Uusedl -Dprefix=$(HOST_PERL_DIR) )
+	( cd $(HOST_BUILD_DIR); ./Configure -der -Uusedl -Dprefix=$(HOST_PERL_PREFIX) )
 endef
 
 define Host/Install
 	( cd $(HOST_BUILD_DIR); ./miniperl installperl )
 	#--destdir=$(STAGING_DIR_HOST)
-	$(CP) $(HOST_BUILD_DIR)/generate_uudmap $(HOST_PERL_DIR)/bin/
+	$(CP) $(HOST_BUILD_DIR)/generate_uudmap $(HOST_PERL_PREFIX)/bin/
 endef
 
 define Build/Configure
@@ -79,8 +79,8 @@ define Build/Configure
 		-e 's!%%EXTRA_PERLLIBS%%!$(EXTRA_LIBS:%=-l%)!g' \
 		-e 's!%%EXTRA_PERLLIBDIRS%%!$(EXTRA_LIBDIRS:%=-L%)!g' \
 		-e 's!%%IPV6%%!$(if $($(CONFIG_IPV6)),define,undef)!g' \
-		-e 's!%%HOSTMINIPERL%%!$(HOST_PERL_DIR)/bin/perl!g' \
-		-e 's!%%HOSTGENERATE%%!$(HOST_PERL_DIR)/bin/generate_uudmap!g' \
+		-e 's!%%HOSTMINIPERL%%!$(HOST_PERL_PREFIX)/bin/perl!g' \
+		-e 's!%%HOSTGENERATE%%!$(HOST_PERL_PREFIX)/bin/generate_uudmap!g' \
 		files/config.sh-$(patsubst i386,i486,$(ARCH)).in \
 		> $(PKG_BUILD_DIR)/config.sh
 	(cd $(PKG_BUILD_DIR) && ./Configure -S)
