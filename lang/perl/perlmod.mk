@@ -14,8 +14,48 @@ define perlmod/Configure
 	$(2) \
 	$(PERL_CMD) Makefile.PL \
 		$(1) \
+		AR=ar \
+		CC=$(GNU_TARGET_NAME)-gcc \
+		CCCDLFLAGS=-fPIC \
+		CCDLFLAGS=-Wl,-E \
+		DLEXT=so \
+		DLSRC=dl_dlopen.xs \
+		EXE_EXT=" " \
+		FULL_AR=$(GNU_TARGET_NAME)-ar \
+		LD=$(GNU_TARGET_NAME)-gcc \
+		LDDLFLAGS="-shared $(TARGET_LDFLAGS)"  \
+		LDFLAGS=" " \
+		LIBC=" " \
+		LIB_EXT=.a \
+		OBJ_EXT=.o \
+		OSNAME=linux \
+		OSVERS=2.4.30 \
+		RANLIB=: \
+		SITELIBEXP=" " \
+		SITEARCHEXP=" " \
+		SO=so  \
+		VENDORARCHEXP=" " \
+		VENDORLIBEXP=" " \
+		SITEPREFIX=/usr \
+		INSTALLPRIVLIB=$(PERL_SITELIB) \
 		INSTALLSITELIB=$(PERL_SITELIB) \
+		INSTALLVENDORLIB=" " \
+		INSTALLARCHLIB=$(PERL_SITELIB) \
 		INSTALLSITEARCH=$(PERL_SITELIB) \
+		INSTALLVENDORARCH=" " \
+		INSTALLBIN=/usr/bin \
+		INSTALLSITEBIN=/usr/bin \
+		INSTALLVENDORBIN=" " \
+		INSTALLSCRIPT=/usr/bin \
+		INSTALLSITESCRIPT=/usr/bin \
+		INSTALLVENDORSCRIPT=" " \
+		INSTALLMAN1DIR=/usr/man/man1 \
+		INSTALLSITEMAN1DIR=/usr/man/man1 \
+		INSTALLVENDORMAN1DIR=" " \
+		INSTALLMAN3DIR=/usr/man/man3 \
+		INSTALLSITEMAN3DIR=/usr/man/man3 \
+		INSTALLVENDORMAN3DIR=" " \
+		LINKTYPE=dynamic \
 		DESTDIR=$(PKG_INSTALL_DIR) \
 	);
 endef
