@@ -2,10 +2,11 @@
 #
 
 # Build environment
-PERL_CMD := $(STAGING_DIR)/usr/bin/perl
+HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
+PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl5.20.0
 
 # Module install prefix
-PERL_SITELIB := /usr/lib/perl5/5.20
+PERL_SITELIB:=/usr/lib/perl5/5.20
 
 define perlmod/Configure
 	(cd $(PKG_BUILD_DIR); \
