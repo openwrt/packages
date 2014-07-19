@@ -3,6 +3,10 @@
 
 # Build environment
 HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
+ifneq ($(CONFIG_USE_EGLIBC),)
+	EXTRA_LIBS:=bsd
+	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
+endif
 PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl5.20.0
 
 # Module install prefix
@@ -24,7 +28,7 @@ define perlmod/Configure
 		FULL_AR=$(GNU_TARGET_NAME)-ar \
 		LD=$(GNU_TARGET_NAME)-gcc \
 		LDDLFLAGS="-shared $(TARGET_LDFLAGS)"  \
-		LDFLAGS=" " \
+		LDFLAGS="$(EXTRA_LIBDIRS:%=-L%) $(EXTRA_LIBS:%=-l%) " \
 		LIBC=" " \
 		LIB_EXT=.a \
 		OBJ_EXT=.o \

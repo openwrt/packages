@@ -26,19 +26,22 @@ PKG_LICENSE:=GPLv1 ARTISTIC
 PKG_LICENSE_FILES:=Copying Artistic README
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
+# Build settings
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=perl/host
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
 
+# Variables used during configuration/build
+HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
+ifneq ($(CONFIG_USE_EGLIBC),)
+	EXTRA_LIBS:=bsd
+	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
+endif
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-
-ifneq ($(CONFIG_USE_EGLIBC),)
-EXTRA_LIBS:=bsd
-EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
-endif
 
 define Package/perl
   SUBMENU:=Perl
@@ -55,17 +58,17 @@ define Package/perl/description
   and is widely used to program web applications of all needs.
 endef
 
-HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
+# Static host perl
 define Host/Configure
 	( cd $(HOST_BUILD_DIR); ./Configure -der -Uusedl -Dprefix=$(HOST_PERL_PREFIX) )
 endef
 
 define Host/Install
 	( cd $(HOST_BUILD_DIR); ./miniperl installperl )
-	#--destdir=$(STAGING_DIR_HOST)
 	$(CP) $(HOST_BUILD_DIR)/generate_uudmap $(HOST_PERL_PREFIX)/bin/
 endef
 
+# Target perl
 define Build/Configure
 	sed \
 		-e 's!%%CC%%!$(TARGET_CC)!g' \
@@ -96,6 +99,7 @@ define Package/perl/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/perl$(PKG_VERSION) $(1)/usr/bin
 	ln -nsf perl$(PKG_VERSION) $(1)/usr/bin/perl
 endef
+
 
 $(eval $(call RequireCommand,rsync, \
 	$(PKG_NAME) requires rsync installed on the host-system. \
