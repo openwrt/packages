@@ -1,0 +1,13 @@
+diff --git a/modules/certauth.cpp b/modules/certauth.cpp
+index 61e5687..4857d59 100644
+--- a/modules/certauth.cpp
++++ b/modules/certauth.cpp
+@@ -204,7 +204,7 @@ public:
+ 			return;
+ 		}
+ 
+-		SCString::const_iterator it2 = it->second.begin();
++		SCString::iterator it2 = it->second.begin();
+ 		while (id > 1) {
+ 			++it2;
+ 			id--;
