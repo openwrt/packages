@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=0.11.5
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
@@ -300,7 +300,7 @@ endef
 
 define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
- TITLE+= (mini)
+ TITLE+= (custom)
  DEPENDS+= @DEVEL +libspeex
  VARIANT:=custom
  MENU:=1
@@ -465,6 +465,7 @@ ifeq ($(BUILD_VARIANT),mini)
 	--disable-ffplay \
 	--disable-ffprobe \
 	--disable-ffserver \
+	--disable-avdevice \
 	--disable-avfilter \
 	--disable-postproc \
 	--disable-swresample \
@@ -563,7 +564,11 @@ define Package/libffmpeg-full/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avutil,postproc,swresample,swscale}.so.* $(1)/usr/lib/
 endef
 
-Package/libffmpeg-mini/install = $(Package/libffmpeg-custom/install)
+define Package/libffmpeg-mini/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avformat,avutil}.so.* $(1)/usr/lib/
+endef
+
 Package/libffmpeg-audio-dec/install = $(Package/libffmpeg-custom/install)
 
 $(eval $(call BuildPackage,ffmpeg))
