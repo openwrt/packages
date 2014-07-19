@@ -12,7 +12,7 @@ PKG_VERSION:=0.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://luaforge.net/frs/download.php/4255
+PKG_SOURCE_URL:=http://files.luaforge.net/releases/luasec/LuaSec/LuaSec0.4/
 PKG_MD5SUM:=712158d60207bdbb6215fc7e07d8db24
 
 PKG_INSTALL:=1
