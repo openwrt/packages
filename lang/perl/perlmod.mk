@@ -2,23 +2,64 @@
 #
 
 # Build environment
-PERL_CMD := $(STAGING_DIR)/usr/bin/perl
-PERL_LIB := $(STAGING_DIR)/usr/lib/perl5/5.20
+HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
+ifneq ($(CONFIG_USE_EGLIBC),)
+	EXTRA_LIBS:=bsd
+	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
+endif
+PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl5.20.0
 
 # Module install prefix
-PERL_SITELIB := /usr/lib/perl5/5.20
+PERL_SITELIB:=/usr/lib/perl5/5.20
 
 define perlmod/Configure
 	(cd $(PKG_BUILD_DIR); \
-	PERL5LIB=$(PERL_LIB) \
 	PERL_MM_USE_DEFAULT=1 \
 	$(2) \
 	$(PERL_CMD) Makefile.PL \
 		$(1) \
-		PERL_LIB=$(PERL_LIB) \
-		PERL_ARCHLIB=$(PERL_LIB) \
+		AR=ar \
+		CC=$(GNU_TARGET_NAME)-gcc \
+		CCCDLFLAGS=-fPIC \
+		CCDLFLAGS=-Wl,-E \
+		DLEXT=so \
+		DLSRC=dl_dlopen.xs \
+		EXE_EXT=" " \
+		FULL_AR=$(GNU_TARGET_NAME)-ar \
+		LD=$(GNU_TARGET_NAME)-gcc \
+		LDDLFLAGS="-shared $(TARGET_LDFLAGS)"  \
+		LDFLAGS="$(EXTRA_LIBDIRS:%=-L%) $(EXTRA_LIBS:%=-l%) " \
+		LIBC=" " \
+		LIB_EXT=.a \
+		OBJ_EXT=.o \
+		OSNAME=linux \
+		OSVERS=2.4.30 \
+		RANLIB=: \
+		SITELIBEXP=" " \
+		SITEARCHEXP=" " \
+		SO=so  \
+		VENDORARCHEXP=" " \
+		VENDORLIBEXP=" " \
+		SITEPREFIX=/usr \
+		INSTALLPRIVLIB=$(PERL_SITELIB) \
 		INSTALLSITELIB=$(PERL_SITELIB) \
+		INSTALLVENDORLIB=" " \
+		INSTALLARCHLIB=$(PERL_SITELIB) \
 		INSTALLSITEARCH=$(PERL_SITELIB) \
+		INSTALLVENDORARCH=" " \
+		INSTALLBIN=/usr/bin \
+		INSTALLSITEBIN=/usr/bin \
+		INSTALLVENDORBIN=" " \
+		INSTALLSCRIPT=/usr/bin \
+		INSTALLSITESCRIPT=/usr/bin \
+		INSTALLVENDORSCRIPT=" " \
+		INSTALLMAN1DIR=/usr/man/man1 \
+		INSTALLSITEMAN1DIR=/usr/man/man1 \
+		INSTALLVENDORMAN1DIR=" " \
+		INSTALLMAN3DIR=/usr/man/man3 \
+		INSTALLSITEMAN3DIR=/usr/man/man3 \
+		INSTALLVENDORMAN3DIR=" " \
+		LINKTYPE=dynamic \
 		DESTDIR=$(PKG_INSTALL_DIR) \
 	);
 endef
