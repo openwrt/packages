@@ -45,10 +45,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-asm \
-	--with-gpg-error-prefix="$(STAGING_DIR)/usr" \
-	--enable-digests="md5 rmd160 sha1 sha256 sha512" \
-	--enable-ciphers="arcfour des aes cast5" \
-	--enable-pubkey-ciphers="rsa dsa"
+	--with-gpg-error-prefix="$(STAGING_DIR)/usr"
 
 TARGET_CFLAGS += $(FPIC)
 
