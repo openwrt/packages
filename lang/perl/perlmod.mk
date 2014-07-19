@@ -3,20 +3,16 @@
 
 # Build environment
 PERL_CMD := $(STAGING_DIR)/usr/bin/perl
-PERL_LIB := $(STAGING_DIR)/usr/lib/perl5/5.20
 
 # Module install prefix
 PERL_SITELIB := /usr/lib/perl5/5.20
 
 define perlmod/Configure
 	(cd $(PKG_BUILD_DIR); \
-	PERL5LIB=$(PERL_LIB) \
 	PERL_MM_USE_DEFAULT=1 \
 	$(2) \
 	$(PERL_CMD) Makefile.PL \
 		$(1) \
-		PERL_LIB=$(PERL_LIB) \
-		PERL_ARCHLIB=$(PERL_LIB) \
 		INSTALLSITELIB=$(PERL_SITELIB) \
 		INSTALLSITEARCH=$(PERL_SITELIB) \
 		DESTDIR=$(PKG_INSTALL_DIR) \
