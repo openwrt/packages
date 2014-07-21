@@ -20,6 +20,7 @@ define perlmod/Configure
 		$(1) \
 		AR=ar \
 		CC=$(GNU_TARGET_NAME)-gcc \
+		CCFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 		CCCDLFLAGS=-fPIC \
 		CCDLFLAGS=-Wl,-E \
 		DLEXT=so \
