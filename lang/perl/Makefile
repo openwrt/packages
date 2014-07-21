@@ -39,6 +39,9 @@ ifneq ($(CONFIG_USE_EGLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
+# Filter -g3, it will break Compress-Raw-Zlib
+TARGET_CFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CFLAGS))
+TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -72,7 +75,7 @@ endef
 define Build/Configure
 	sed \
 		-e 's!%%CC%%!$(TARGET_CC)!g' \
-		-e 's!%%CFLAGS%%!$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)!g' \
+		-e 's!%%CFLAGS%%!$(TARGET_CFLAGS_PERL) $(TARGET_CPPFLAGS_PERL)!g' \
 		-e 's!%%CPP%%!$(TARGET_CROSS)gcc -E!g' \
 		-e 's!%%AR%%!$(TARGET_CROSS)ar!g' \
 		-e 's!%%LD%%!$(TARGET_CROSS)gcc!g' \
