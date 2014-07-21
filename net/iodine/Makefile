@@ -15,6 +15,10 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://code.kryo.se/iodine/
 PKG_MD5SUM:=fdbf3b81cd69caf5230d76a8b039fd99
 
+PKG_MAINTAINER:=Uwe Kleine-König <uwe+openwrt@kleine-koenig.org>
+PKG_LICENSE:=ISC
+PKG_LICENSE_FILES:=README
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/iodine/Default
