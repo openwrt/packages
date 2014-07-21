@@ -1,0 +1,22 @@
+--- a/src/osflags
++++ b/src/osflags
+@@ -16,9 +16,6 @@ link)
+ 		windows32)
+ 			echo '-lws2_32 -liphlpapi';
+ 		;;
+-		Linux)
+-			[ -e /usr/include/selinux/selinux.h ] && echo '-lselinux';
+-		;;
+ 	esac
+ 	;;
+ cflags)
+@@ -26,9 +23,6 @@ cflags)
+ 		BeOS)
+ 			echo '-Dsocklen_t=int';
+ 		;;
+-		Linux)
+-			[ -e /usr/include/selinux/selinux.h ] && echo '-DHAVE_SETCON';
+-		;;
+ 	esac
+ ;;
+ *)
