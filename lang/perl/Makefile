@@ -97,6 +97,11 @@ define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)
 endef
 
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/CORE
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/5.20/CORE/*.h $(1)/usr/lib/perl5/5.20/CORE/
+endef
+
 define Package/perl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/perl$(PKG_VERSION) $(1)/usr/bin
