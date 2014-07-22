@@ -31,7 +31,7 @@ define Package/sqlite3/Default
   SUBMENU:=database
   TITLE:=SQLite (v3.x) database engine
   URL:=http://www.sqlite.org/
-  MAINTAINER:=Etienne CHAMPETIER <etienne.champetier@free.fr>
+  MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 endef
 
 define Package/sqlite3/Default/description

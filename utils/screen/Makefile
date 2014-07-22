@@ -26,7 +26,7 @@ define Package/screen
   DEPENDS:=+libncurses
   TITLE:=Full-screen terminal window manager
   URL:=http://www.gnu.org/software/screen/
-  MAINTAINER:=Etienne CHAMPETIER <etienne.champetier@free.fr>
+  MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 endef
 
 define Package/screen/description
