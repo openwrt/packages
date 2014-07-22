@@ -63,6 +63,7 @@ define perlmod/Configure
 		LINKTYPE=dynamic \
 		DESTDIR=$(PKG_INSTALL_DIR) \
 	);
+	sed 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/5.20/CORE/!' -i $(PKG_BUILD_DIR)/Makefile
 endef
 
 define perlmod/Compile
