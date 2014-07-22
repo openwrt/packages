@@ -1,0 +1,23 @@
+if PACKAGE_mjpg-streamer
+
+config MJPG_STREAMER_INPUT_FILE
+	bool "Install input file library"
+	default y
+
+config MJPG_STREAMER_INPUT_UVC
+	bool "Install input uvc library"
+	default y
+
+config MJPG_STREAMER_OUTPUT_FILE
+	bool "Install output file library"
+	default y
+
+config MJPG_STREAMER_OUTPUT_HTTP
+	bool "Install output http library"
+	default y
+
+config MJPG_STREAMER_WWW
+	bool "Install WWW files"
+	default y
+
+endif
