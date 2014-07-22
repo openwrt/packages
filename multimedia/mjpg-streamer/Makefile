@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2013 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mjpg-streamer
-PKG_REV:=181
+PKG_REV:=182
 PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
@@ -19,13 +19,17 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_PROTO:=svn
 
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILE:=LICENSE
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mjpg-streamer
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=MJPG-streamer
-  DEPENDS:=+libpthread +libjpeg
+  DEPENDS:=+libpthread +libjpeg +PACKAGE_libv4l:libv4l
+#$(if $(CONFIG_MJPG_STREAMER_V4L2),+libv4l)
   URL:=http://mjpg-streamer.wiki.sourceforge.net/
   MENU:=1
 endef
@@ -44,6 +48,30 @@ define Package/mjpg-streamer/conffiles
 /etc/config/mjpg-streamer
 endef
 
+CAMBOZOLA:=cambozola-latest.tar.gz
+
+define Download/cambozola
+  URL:=http://www.andywilcock.com/code/cambozola
+  FILE:=$(CAMBOZOLA)
+  MD5SUM:=6c48fd994685d4d72668850eeb613e24
+endef
+
+# Fetch latest cambozola that works with latest Java(s)
+# Yes, I know this is ugly
+define Build/Prepare
+    $(call Build/Prepare/Default)
+    ifeq ($(CONFIG_MJPG_STREAMER_WWW),y)
+	$(eval $(call Download,cambozola))
+	$(TAR) -xvf $(DL_DIR)/$(CAMBOZOLA) --strip=2 --wildcards \
+		-C $(PKG_BUILD_DIR)/www */dist/cambozola.jar
+    endif
+endef
+
+ifeq ($(CONFIG_MJPG_STREAMER_V4L2),y)
+    TARGET_CFLAGS+= -DUSE_LIBV4L2
+    TARGET_LDFLAGS+= -lv4l2
+endif
+
 define Package/mjpg-streamer/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mjpg_streamer $(1)/usr/bin/
@@ -59,6 +87,9 @@ ifeq ($(CONFIG_MJPG_STREAMER_INPUT_FILE),y)
 endif
 ifeq ($(CONFIG_MJPG_STREAMER_INPUT_UVC),y)
 	$(CP) $(PKG_BUILD_DIR)/input_uvc.so $(1)/usr/lib
+endif
+ifeq ($(CONFIG_MJPG_STREAMER_INPUT_TESTPICTURE),y)
+	$(CP) $(PKG_BUILD_DIR)/input_testpicture.so $(1)/usr/lib
 endif
 ifeq ($(CONFIG_MJPG_STREAMER_OUTPUT_FILE),y)
 	$(CP) $(PKG_BUILD_DIR)/output_file.so $(1)/usr/lib
