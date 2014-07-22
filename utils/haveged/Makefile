@@ -4,13 +4,12 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
-# $Id: Makefile 1 2012-01-12 03:50:18Z Olipro $
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haveged
 PKG_VERSION:=1.9.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.issihosts.com/$(PKG_NAME)
@@ -18,6 +17,7 @@ PKG_MD5SUM:=015ff58cd10607db0e0de60aeca2f5f8
 
 #ensure this is consistent with the dir in the tarball!!!
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
 
 PKG_BUILD_PARALLEL:=1
 
