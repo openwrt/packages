@@ -1,0 +1,57 @@
+--- a/lib/libv4lconvert/control/libv4lcontrol.c
++++ b/lib/libv4lconvert/control/libv4lcontrol.c
+@@ -570,7 +570,7 @@ static void v4lcontrol_get_flags_from_db
+ struct v4lcontrol_data *v4lcontrol_create(int fd, void *dev_ops_priv,
+ 	const struct libv4l_dev_ops *dev_ops, int always_needs_conversion)
+ {
+-	int shm_fd;
++	int shm_fd, fdflags;
+ 	int i, rc, got_usb_info, speed, init = 0;
+ 	char *s, shm_name[256], pwd_buf[1024];
+ 	struct v4l2_capability cap;
+@@ -695,33 +695,38 @@ struct v4lcontrol_data *v4lcontrol_creat
+ 
+ 	if (getpwuid_r(geteuid(), &pwd, pwd_buf, sizeof(pwd_buf), &pwd_p) == 0) {
+ 		if (got_usb_info)
+-			snprintf(shm_name, 256, "/libv4l-%s:%s:%04x:%04x:%s", pwd.pw_name,
++			snprintf(shm_name, 256, "/dev/shm/libv4l-%s:%s:%04x:%04x:%s", pwd.pw_name,
+ 					cap.bus_info, (int)vendor_id, (int)product_id, cap.card);
+ 		else
+-			snprintf(shm_name, 256, "/libv4l-%s:%s:%s", pwd.pw_name,
++			snprintf(shm_name, 256, "/dev/shm/libv4l-%s:%s:%s", pwd.pw_name,
+ 					cap.bus_info, cap.card);
+ 	} else {
+ 		perror("libv4lcontrol: error getting username using uid instead");
+ 		if (got_usb_info)
+-			snprintf(shm_name, 256, "/libv4l-%lu:%s:%04x:%04x:%s",
++			snprintf(shm_name, 256, "/dev/shm/libv4l-%lu:%s:%04x:%04x:%s",
+ 					(unsigned long)geteuid(), cap.bus_info,
+ 					(int)vendor_id, (int)product_id, cap.card);
+ 		else
+-			snprintf(shm_name, 256, "/libv4l-%lu:%s:%s", (unsigned long)geteuid(),
++			snprintf(shm_name, 256, "/dev/shm/libv4l-%lu:%s:%s", (unsigned long)geteuid(),
+ 					cap.bus_info, cap.card);
+ 	}
+ 
+ 	/* / is not allowed inside shm names */
+-	for (i = 1; shm_name[i]; i++)
++	for (i = 9; shm_name[i]; i++) /* start after "/dev/shm", i = 9 */
+ 		if (shm_name[i] == '/')
+ 			shm_name[i] = '-';
+ 
+ 	/* Open the shared memory object identified by shm_name */
+-	shm_fd = shm_open(shm_name, (O_CREAT | O_EXCL | O_RDWR), (S_IREAD | S_IWRITE));
++	shm_fd = open(shm_name, (O_CREAT | O_EXCL | O_RDWR), (S_IREAD | S_IWRITE));
+ 	if (shm_fd >= 0)
+ 		init = 1;
+ 	else
+-		shm_fd = shm_open(shm_name, O_RDWR, (S_IREAD | S_IWRITE));
++		shm_fd = open(shm_name, O_RDWR, (S_IREAD | S_IWRITE));
++
++	/* This is all uClibc > 0.9.30 seems to do for shm_open() in librt/shm.c */
++	fdflags = fcntl(shm_fd, F_GETFD, 0);
++	if (fdflags >= 0)
++		fdflags = fcntl(fd, F_SETFD, fdflags | FD_CLOEXEC);
+ 
+ 	if (shm_fd >= 0) {
+ 		/* Set the shared memory size */
