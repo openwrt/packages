@@ -29,7 +29,6 @@ define Package/mjpg-streamer
   CATEGORY:=Multimedia
   TITLE:=MJPG-streamer
   DEPENDS:=+libpthread +libjpeg +PACKAGE_libv4l:libv4l
-#$(if $(CONFIG_MJPG_STREAMER_V4L2),+libv4l)
   URL:=http://mjpg-streamer.wiki.sourceforge.net/
   MENU:=1
 endef

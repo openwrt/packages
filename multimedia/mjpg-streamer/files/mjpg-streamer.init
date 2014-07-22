@@ -61,6 +61,10 @@ start_instance() {
 
 		config_get www "$s" 'www'
 		[ -n "$www" ] && output_arg="${output_arg} --www $www"
+
+		config_get username "$s" 'username'
+		config_get password "$s" 'password'
+		[ -n "$username" ] && [ -n "$password" ] && output_arg="${output_arg} --credentials $username:$password"
 	fi
 
 	if [ -z "$output_arg" ]; then
