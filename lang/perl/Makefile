@@ -10,7 +10,6 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=perl
 PKG_VERSION:=5.20.0
 PKG_RELEASE:=3
-PKG_MD5SUM:=406ec049ebe3afcc80d9c76ec78ca4f8
 
 PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 		http://www.cpan.org/src/5.0/perl-5.20.0.tar.gz \
@@ -21,6 +20,7 @@ PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 		ftp://ftp.funet.fi/pub/languages/perl/CPAN/src/5.0 \
 		http://ftp.funet.fi/pub/languages/perl/CPAN/src/5.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=406ec049ebe3afcc80d9c76ec78ca4f8
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
 PKG_LICENSE_FILES:=Copying Artistic README
