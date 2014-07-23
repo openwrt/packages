@@ -29,7 +29,7 @@ define Package/htop
   TITLE:=Interactive processes viewer
   DEPENDS:=+libncurses
   URL:=http://htop.sourceforge.net/
-  MAINTAINER:=Etienne CHAMPETIER <etienne.champetier@free.fr>
+  MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 endef
 
 define Package/htop/description

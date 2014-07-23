@@ -1,0 +1,10 @@
+--- a/utils/rds-ctl/rds-ctl.cpp
++++ b/utils/rds-ctl/rds-ctl.cpp
+@@ -29,6 +29,7 @@
+ #include <inttypes.h>
+ #include <getopt.h>
+ #include <sys/types.h>
++#include <ctype.h>
+ #include <fcntl.h>
+ #include <errno.h>
+ #include <sys/ioctl.h>
