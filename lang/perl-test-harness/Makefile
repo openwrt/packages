@@ -10,10 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=perl-test-harness
 PKG_VERSION:=3.32
 PKG_RELEASE:=1
-PKG_MD5SUM:=a1241b628dc80f5271ed9235c211e55c
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/O/OV/OVID/
 PKG_SOURCE:=Test-Harness-$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=a1241b628dc80f5271ed9235c211e55c
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
 
@@ -23,12 +23,12 @@ include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
 
 define Package/perl-test-harness
-SUBMENU:=Perl
-SECTION:=lang
-CATEGORY:=Languages
-TITLE:=Perl Test Harness
-URL:=http://search.cpan.org/dist/Test-Harness/
-DEPENDS:=perl
+  SUBMENU:=Perl
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=Perl Test Harness
+  URL:=http://search.cpan.org/dist/Test-Harness/
+  DEPENDS:=perl
 endef
 
 define Build/Configure

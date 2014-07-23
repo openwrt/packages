@@ -10,10 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=perl-html-tagset
 PKG_VERSION:=3.20
 PKG_RELEASE:=1
-PKG_MD5SUM:=d2bfa18fe1904df7f683e96611e87437
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/P/PE/PETDANCE/
 PKG_SOURCE:=HTML-Tagset-$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=d2bfa18fe1904df7f683e96611e87437
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
 
@@ -23,12 +23,12 @@ include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
 
 define Package/perl-html-tagset
-SUBMENU:=Perl
-SECTION:=lang
-CATEGORY:=Languages
-TITLE:=Data tables pertaining to HTML
-URL:=http://search.cpan.org/dist/HTML-Tagset/
-DEPENDS:=perl
+  SUBMENU:=Perl
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=Data tables pertaining to HTML
+  URL:=http://search.cpan.org/dist/HTML-Tagset/
+  DEPENDS:=perl
 endef
 
 define Build/Configure

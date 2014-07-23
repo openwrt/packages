@@ -14,6 +14,7 @@ PKG_MD5SUM:=6352f50be402301f79b580dd235d7762
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/P/PE/PETEK/
 PKG_SOURCE:=HTML-Tree-$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=6352f50be402301f79b580dd235d7762
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
 
@@ -23,12 +24,12 @@ include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
 
 define Package/perl-html-tree
-SUBMENU:=Perl
-SECTION:=lang
-CATEGORY:=Languages
-TITLE:=represent and create HTML syntax trees
-URL:=http://search.cpan.org/dist/HTML-Tree/
-DEPENDS:=perl +perl-html-parser +perl-html-tagset
+  SUBMENU:=Perl
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=represent and create HTML syntax trees
+  URL:=http://search.cpan.org/dist/HTML-Tree/
+  DEPENDS:=perl +perl-html-parser +perl-html-tagset
 endef
 
 define Build/Configure

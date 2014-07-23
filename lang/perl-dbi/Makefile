@@ -10,10 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=perl-dbi
 PKG_VERSION:=1.631
 PKG_RELEASE:=1
-PKG_MD5SUM:=444d3c305e86597e11092b517794a840
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/T/TI/TIMB/
 PKG_SOURCE:=DBI-$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=444d3c305e86597e11092b517794a840
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
 
@@ -23,12 +23,12 @@ include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
 
 define Package/perl-dbi
-SUBMENU:=Perl
-SECTION:=lang
-CATEGORY:=Languages
-TITLE:=Database independent interface for Perl
-URL:=http://search.cpan.org/dist/DBI/
-DEPENDS:=perl +perlbase-essential
+  SUBMENU:=Perl
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=Database independent interface for Perl
+  URL:=http://search.cpan.org/dist/DBI/
+  DEPENDS:=perl +perlbase-essential
 endef
 
 define Build/Configure

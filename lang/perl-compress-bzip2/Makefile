@@ -10,10 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=perl-compress-bzip2
 PKG_VERSION:=2.17
 PKG_RELEASE:=1
-PKG_MD5SUM:=d8b809f6efe3edb33f81d608c932b2ef
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/R/RU/RURBAN/
 PKG_SOURCE:=Compress-Bzip2-$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=d8b809f6efe3edb33f81d608c932b2ef
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
 

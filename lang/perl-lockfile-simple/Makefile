@@ -10,10 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=perl-lockfile-simple
 PKG_VERSION:=0.208
 PKG_RELEASE:=1
-PKG_MD5SUM:=4421283b4f32549e5299963734170044
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/J/JV/JV/
 PKG_SOURCE:=LockFile-Simple-$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=4421283b4f32549e5299963734170044
 
 PKG_LICENSE:=GPLv2+ ARTISTIC
 
@@ -23,12 +23,12 @@ include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
 
 define Package/perl-lockfile-simple
-SUBMENU:=Perl
-SECTION:=lang
-CATEGORY:=Languages
-TITLE:=Simple advisory file locking
-URL:=http://search.cpan.org/dist/LockFile-Simple/
-DEPENDS:=perl
+  SUBMENU:=Perl
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=Simple advisory file locking
+  URL:=http://search.cpan.org/dist/LockFile-Simple/
+  DEPENDS:=perl
 endef
 
 define Build/Configure

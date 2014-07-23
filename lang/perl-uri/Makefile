@@ -10,10 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=perl-uri
 PKG_VERSION:=1.64
 PKG_RELEASE:=1
-PKG_MD5SUM:=975b2282bc8f0fd72a6dae5cefc33824
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS/
 PKG_SOURCE:=URI-$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=975b2282bc8f0fd72a6dae5cefc33824
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
 
@@ -23,12 +23,12 @@ include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
 
 define Package/perl-uri
-SUBMENU:=Perl
-SECTION:=lang
-CATEGORY:=Languages
-TITLE:=Manipulates and accesses URI strings
-URL:=http://search.cpan.org/dist/URI/
-DEPENDS:=perl
+  SUBMENU:=Perl
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=Manipulates and accesses URI strings
+  URL:=http://search.cpan.org/dist/URI/
+  DEPENDS:=perl
 endef
 
 define Build/Configure
