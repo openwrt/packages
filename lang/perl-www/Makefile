@@ -15,6 +15,8 @@ PKG_MD5SUM:=9bbf1bce482b0bac98bb4f04253c03d0
 PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/G/GA/GAAS
 PKG_SOURCE:=libwww-perl-$(PKG_VERSION).tar.gz
 
+PKG_LICENSE:=GPLv1+ ARTISTIC
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/libwww-perl-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk

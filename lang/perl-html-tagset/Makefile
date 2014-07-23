@@ -15,6 +15,8 @@ PKG_MD5SUM:=d2bfa18fe1904df7f683e96611e87437
 PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/P/PE/PETDANCE
 PKG_SOURCE:=HTML-Tagset-$(PKG_VERSION).tar.gz
 
+PKG_LICENSE:=GPLv1+ ARTISTIC
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTML-Tagset-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk

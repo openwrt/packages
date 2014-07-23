@@ -15,6 +15,8 @@ PKG_MD5SUM:=d2514080116c1b0fa5f96295c84538e3
 PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/J/JR/JROGERS
 PKG_SOURCE:=Net-Telnet-$(PKG_VERSION).tar.gz
 
+PKG_LICENSE:=GPLv1+ ARTISTIC
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Net-Telnet-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
