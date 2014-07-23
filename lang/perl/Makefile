@@ -22,7 +22,7 @@ PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 		http://ftp.funet.fi/pub/languages/perl/CPAN/src/5.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
-PKG_LICENSE:=GPLv1 ARTISTIC
+PKG_LICENSE:=GPLv1+ ARTISTIC
 PKG_LICENSE_FILES:=Copying Artistic README
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
