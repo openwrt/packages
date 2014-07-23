@@ -12,7 +12,7 @@ PKG_VERSION:=3.20
 PKG_RELEASE:=1
 PKG_MD5SUM:=d2bfa18fe1904df7f683e96611e87437
 
-PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/P/PE/PETDANCE
+PKG_SOURCE_URL:=http://www.cpan.org/authors/id/P/PE/PETDANCE/
 PKG_SOURCE:=HTML-Tagset-$(PKG_VERSION).tar.gz
 
 PKG_LICENSE:=GPLv1+ ARTISTIC

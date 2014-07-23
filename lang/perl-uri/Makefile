@@ -12,7 +12,7 @@ PKG_VERSION:=1.64
 PKG_RELEASE:=1
 PKG_MD5SUM:=975b2282bc8f0fd72a6dae5cefc33824
 
-PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/G/GA/GAAS
+PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS/
 PKG_SOURCE:=URI-$(PKG_VERSION).tar.gz
 
 PKG_LICENSE:=GPLv1+ ARTISTIC

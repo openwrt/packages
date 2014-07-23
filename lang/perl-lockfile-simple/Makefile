@@ -12,7 +12,7 @@ PKG_VERSION:=0.208
 PKG_RELEASE:=1
 PKG_MD5SUM:=4421283b4f32549e5299963734170044
 
-PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/J/JV/JV
+PKG_SOURCE_URL:=http://www.cpan.org/authors/id/J/JV/JV/
 PKG_SOURCE:=LockFile-Simple-$(PKG_VERSION).tar.gz
 
 PKG_LICENSE:=GPLv2+ ARTISTIC

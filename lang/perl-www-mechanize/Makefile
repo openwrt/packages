@@ -12,7 +12,7 @@ PKG_VERSION:=1.73
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WWW-Mechanize-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/P/PE/PETDANCE/
+PKG_SOURCE_URL:=http://www.cpan.org/authors/id/P/PE/PETDANCE/
 PKG_MD5SUM:=de0a9c528c12793c881151301bc14d1a
 
 PKG_LICENSE:=GPLv1+ ARTISTIC

@@ -12,7 +12,7 @@ PKG_VERSION:=3.71
 PKG_RELEASE:=1
 PKG_MD5SUM:=9128a45893097dfa3bf03301b19c5efe
 
-PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/G/GA/GAAS
+PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS/
 PKG_SOURCE:=HTML-Parser-$(PKG_VERSION).tar.gz
 
 PKG_LICENSE:=GPLv1+ ARTISTIC

@@ -12,7 +12,7 @@ PKG_VERSION:=3.32
 PKG_RELEASE:=1
 PKG_MD5SUM:=a1241b628dc80f5271ed9235c211e55c
 
-PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/O/OV/OVID
+PKG_SOURCE_URL:=http://www.cpan.org/authors/id/O/OV/OVID/
 PKG_SOURCE:=Test-Harness-$(PKG_VERSION).tar.gz
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
