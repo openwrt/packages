@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l-utils
 PKG_VERSION:=1.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.linuxtv.org/downloads/v4l-utils
@@ -25,6 +25,7 @@ PKG_BUILD_DEPENDS:=argp-standalone
 
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libv4l/Default
   TITLE:=Video 4 Linux
@@ -51,7 +52,7 @@ define Package/libv4l
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= wrapper libraries
-  DEPENDS := +libpthread +librt
+  DEPENDS := +libpthread +librt $(ICONV_DEPENDS)
 endef
 
 define Package/libv4l/description
@@ -63,7 +64,7 @@ define Package/v4l-utils
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= utilities
-  DEPENDS := +libv4l $(CXX_DEPENDS)
+  DEPENDS := +libv4l $(CXX_DEPENDS) $(ICONV_DEPENDS)
 endef
 
 define Package/v4l-utils/description
