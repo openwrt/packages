@@ -1,3 +1,7 @@
+#
+# Copyright (C) 2014 OpenWrt.org
+#
+
 if PACKAGE_mjpg-streamer
 
 config MJPG_STREAMER_V4L2
@@ -26,7 +30,7 @@ config MJPG_STREAMER_OUTPUT_HTTP
 	default y
 
 config MJPG_STREAMER_WWW
-	bool "Install Web UI files (includes cambozola)"
-	default y
+	bool "Install complete Web UI files (includes cambozola)"
+	default n
 
 endif
