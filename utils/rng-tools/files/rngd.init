@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2011 OpenWrt.org
+# Copyright (C) 2011-2014 OpenWrt.org
 
 START=98
 
@@ -8,7 +8,7 @@ RNGD_AMOUNT=4000
 RNGD_DEVICE="/dev/urandom"
 
 start() {
-	service_start /sbin/rngd -r $RNGD_DEVICE -W $RNGD_AMOUNT -t $RNGD_INTERVAL
+	service_start /sbin/rngd -r $RNGD_DEVICE -W $RNGD_AMOUNT
 }
 
 stop() {
