@@ -16,6 +16,7 @@ PKG_SOURCE:=libwww-perl-$(PKG_VERSION).tar.gz
 PKG_MD5SUM:=9bbf1bce482b0bac98bb4f04253c03d0
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/libwww-perl-$(PKG_VERSION)
 

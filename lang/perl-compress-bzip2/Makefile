@@ -16,6 +16,7 @@ PKG_SOURCE:=Compress-Bzip2-$(PKG_VERSION).tar.gz
 PKG_MD5SUM:=d8b809f6efe3edb33f81d608c932b2ef
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Compress-Bzip2-$(PKG_VERSION)
 

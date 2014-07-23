@@ -16,6 +16,7 @@ PKG_SOURCE:=Test-Harness-$(PKG_VERSION).tar.gz
 PKG_MD5SUM:=a1241b628dc80f5271ed9235c211e55c
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Test-Harness-$(PKG_VERSION)
 
