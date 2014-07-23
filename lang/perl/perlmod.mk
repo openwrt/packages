@@ -89,8 +89,8 @@ define perlmod/Install
 	@echo "---> Stripping modules in: $(strip $(1))$(PERL_SITELIB)"
 	find $(strip $(1))$(PERL_SITELIB) -name \*.pm -or -name \*.pl | \
 	xargs -r sed -i \
-		-e '/^=\(head\|pod\|item\|over\|back\)/,/^=cut/d' \
-		-e '/^=\(head\|pod\|item\|over\|back\)/,$$$$d' \
+		-e '/^=\(head\|pod\|item\|over\|back\|encoding\)/,/^=cut/d' \
+		-e '/^=\(head\|pod\|item\|over\|back\|encoding\)/,$$$$d' \
 		-e '/^#$$$$/d' \
 		-e '/^#[^!"'"'"']/d'
 endef
