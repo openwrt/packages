@@ -20,6 +20,7 @@ define perlmod/Configure
 		$(1) \
 		AR=ar \
 		CC=$(GNU_TARGET_NAME)-gcc \
+		CCFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 		CCCDLFLAGS=-fPIC \
 		CCDLFLAGS=-Wl,-E \
 		DLEXT=so \
@@ -62,6 +63,7 @@ define perlmod/Configure
 		LINKTYPE=dynamic \
 		DESTDIR=$(PKG_INSTALL_DIR) \
 	);
+	sed 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/5.20/CORE/!' -i $(PKG_BUILD_DIR)/Makefile
 endef
 
 define perlmod/Compile
@@ -87,8 +89,8 @@ define perlmod/Install
 	@echo "---> Stripping modules in: $(strip $(1))$(PERL_SITELIB)"
 	find $(strip $(1))$(PERL_SITELIB) -name \*.pm -or -name \*.pl | \
 	xargs -r sed -i \
-		-e '/^=\(head\|pod\|item\|over\|back\)/,/^=cut/d' \
-		-e '/^=\(head\|pod\|item\|over\|back\)/,$$$$d' \
+		-e '/^=\(head\|pod\|item\|over\|back\|encoding\)/,/^=cut/d' \
+		-e '/^=\(head\|pod\|item\|over\|back\|encoding\)/,$$$$d' \
 		-e '/^#$$$$/d' \
 		-e '/^#[^!"'"'"']/d'
 endef

@@ -9,8 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=5.20.0
-PKG_RELEASE:=3
-PKG_MD5SUM:=406ec049ebe3afcc80d9c76ec78ca4f8
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 		http://www.cpan.org/src/5.0/perl-5.20.0.tar.gz \
@@ -21,8 +20,9 @@ PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 		ftp://ftp.funet.fi/pub/languages/perl/CPAN/src/5.0 \
 		http://ftp.funet.fi/pub/languages/perl/CPAN/src/5.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=406ec049ebe3afcc80d9c76ec78ca4f8
 
-PKG_LICENSE:=GPLv1 ARTISTIC
+PKG_LICENSE:=GPLv1+ ARTISTIC
 PKG_LICENSE_FILES:=Copying Artistic README
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
@@ -39,6 +39,9 @@ ifneq ($(CONFIG_USE_EGLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
+# Filter -g3, it will break Compress-Raw-Zlib
+TARGET_CFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CFLAGS))
+TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -72,7 +75,7 @@ endef
 define Build/Configure
 	sed \
 		-e 's!%%CC%%!$(TARGET_CC)!g' \
-		-e 's!%%CFLAGS%%!$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)!g' \
+		-e 's!%%CFLAGS%%!$(TARGET_CFLAGS_PERL) $(TARGET_CPPFLAGS_PERL)!g' \
 		-e 's!%%CPP%%!$(TARGET_CROSS)gcc -E!g' \
 		-e 's!%%AR%%!$(TARGET_CROSS)ar!g' \
 		-e 's!%%LD%%!$(TARGET_CROSS)gcc!g' \
@@ -92,6 +95,11 @@ endef
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)
+endef
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/CORE
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/5.20/CORE/*.h $(1)/usr/lib/perl5/5.20/CORE/
 endef
 
 define Package/perl/install
