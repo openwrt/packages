@@ -11,6 +11,7 @@ start_instance () {
 	config_get tld      "$section" 'tld'
 	config_get port     "$section" 'port'
 	
+	test -n "$address" || address='0.0.0.0'
 	test -n "$port" || port='53'
 
 	service_start /usr/sbin/iodined -l "$address" -P "$password" -p "$port" "$tunnelip" "$tld"
