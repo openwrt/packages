@@ -46,7 +46,7 @@ start_proxy() {
 	proxy_string "$1" StatFile >> $CFGFILE
 	proxy_string "$1" LogFile >> $CFGFILE
 
-	proxy_flag "$1" SysLog >> $CFGFILE
+	proxy_flag "$1" Syslog >> $CFGFILE
 
 	proxy_atom "$1" LogLevel >> $CFGFILE
 
@@ -111,6 +111,10 @@ proxy_string() {
 	config_get _value "$SECTION" "$OPTION"
 	[ -z "$_value" ] && _value="$DEFAULT"
 	[ -n "$_value" ] && echo "${ALIAS:-${OPTION}} "'"'"$_value"'"'
+	[ -n "$_value" -a "$OPTION" = "LogFile" ] && {
+		touch $_value
+		chmod 666 $_value
+	}
 }
 
 proxy_flag() {
