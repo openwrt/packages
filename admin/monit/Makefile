@@ -29,7 +29,7 @@ define Package/monit/Default
   DEPENDS:= +libpthread
   TITLE:=System services monitoring utility
   URL:=http://mmonit.com/monit/
-  MAINTAINER:=Etienne CHAMPETIER <etienne.champetier@free.fr>
+  MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 endef
 
 define Package/monit/Default/description

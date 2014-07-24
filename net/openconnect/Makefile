@@ -25,7 +25,7 @@ define Package/openconnect
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+libxml2 +kmod-tun +resolveip +OPENCONNECT_OPENSSL:libopenssl +OPENCONNECT_GNUTLS:libgnutls
-  TITLE:=VPN client compatible with Cisco's AnyConnect SSL VPN
+  TITLE:=OpenConnect VPN client (Cisco AnyConnect compatible)
   URL:=http://www.infradead.org/openconnect/
   SUBMENU:=VPN
 endef

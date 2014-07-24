@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
-PKG_VERSION:=3080403
+PKG_VERSION:=3080500
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.sqlite.org/2014/
-PKG_MD5SUM:=0f5459cde43cb269e5120ecd2c671ced
+PKG_MD5SUM:=0544ef6d7afd8ca797935ccc2685a9ed
 
 PKG_LICENSE:=PUBLICDOMAIN
 PKG_LICENSE_FILES:=
@@ -31,7 +31,7 @@ define Package/sqlite3/Default
   SUBMENU:=database
   TITLE:=SQLite (v3.x) database engine
   URL:=http://www.sqlite.org/
-  MAINTAINER:=Etienne CHAMPETIER <etienne.champetier@free.fr>
+  MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 endef
 
 define Package/sqlite3/Default/description

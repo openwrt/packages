@@ -37,9 +37,9 @@ endef
 
 define Package/uanytun
   $(call Package/uanytun/template)
-  TITLE+= (nettle)
-  VARIANT:=nettle
-  DEPENDS+=+libnettle
+  TITLE+= (gcrypt)
+  VARIANT:=gcrypt
+  DEPENDS+=+libgcrypt
 endef
 
 define Package/uanytun/conffiles
@@ -59,6 +59,17 @@ uAnytun is a tiny implementation of SATP the secure anycast tunneling protocol.
   for multiple connections or synchronisation. It is a small single threaded
   implementation intended to act as a client on small platforms.
 endef
+
+
+define Package/uanytun-nettle
+  $(call Package/uanytun/template)
+  TITLE+= (nettle)
+  VARIANT:=nettle
+  DEPENDS+=+libnettle
+endef
+
+Package/uanytun-nettle/conffiles=$(Package/uanytun/conffiles)
+Package/uanytun-nettle/description=$(Package/uanytun/description)
 
 
 define Package/uanytun-sslcrypt
@@ -101,6 +112,11 @@ VARIANT_CFLAGS:=
 VARIANT_LDFLAGS:=-ldl
 VARIANT_MAKE_OPTS:=
 
+ifeq ($(BUILD_VARIANT),gcrypt)
+VARIANT_CFLAGS+=-DUSE_GCRYPT
+VARIANT_LDFLAGS+=-lgpg-error -lgcrypt
+endif
+
 ifeq ($(BUILD_VARIANT),nettle)
 VARIANT_CFLAGS+=-DUSE_NETTLE
 VARIANT_LDFLAGS+=-lnettle
@@ -140,6 +156,10 @@ define Package/uanytun/install
   $(call Package/uanytun/install-generic,$(1),uanytun.config)
 endef
 
+define Package/uanytun-nettle/install
+  $(call Package/uanytun/install-generic,$(1),uanytun.config)
+endef
+
 define Package/uanytun-sslcrypt/install
   $(call Package/uanytun/install-generic,$(1),uanytun.config)
 endef
@@ -150,5 +170,6 @@ endef
 
 
 $(eval $(call BuildPackage,uanytun))
+$(eval $(call BuildPackage,uanytun-nettle))
 $(eval $(call BuildPackage,uanytun-sslcrypt))
 $(eval $(call BuildPackage,uanytun-nocrypt))
