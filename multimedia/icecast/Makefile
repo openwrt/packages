@@ -10,6 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=icecast
 PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
+PKG_MAINTAINER:=André Gaul <gaul@web-yard.de>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.us.xiph.org/releases/icecast/
