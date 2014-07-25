@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+# Example script
+# Copyright (C) 2014 OpenWrt.org
+ 
+START=99
+STOP=15
+
+start() {        
+        service_start /usr/bin/icecast -c /etc/icecast.xml -b
+}                 
+ 
+stop() {          
+	service_stop /usr/bin/icecast
+}

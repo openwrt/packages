@@ -77,6 +77,8 @@ endef
 define Package/icecast/install
 	$(INSTALL_DIR) $(1)/etc
 	$(CP) $(PKG_INSTALL_DIR)/etc/icecast.xml $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/icecast.init $(1)/etc/init.d/icecast
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/icecast $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/share/icecast
