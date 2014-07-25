@@ -34,6 +34,9 @@ CONFIGURE_VARS += \
     LIBS="-largp"
 endif
 
+CONFIGURE_ARGS += \
+	--without-libgcrypt
+
 define Package/rng-tools/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/rngd.init $(1)/etc/init.d/rngd
