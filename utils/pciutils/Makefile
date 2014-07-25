@@ -16,6 +16,9 @@ PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
 PKG_MD5SUM:=425b1acad6854cc2bbb06ac8e48e76fc
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYING
+
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
