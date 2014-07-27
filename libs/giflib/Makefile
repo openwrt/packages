@@ -28,7 +28,6 @@ define Package/giflib
   CATEGORY:=Libraries
   TITLE:=GIF libraries
   URL:=http://sourceforge.net/projects/giflib
-  MAINTAINER:=Oliver Ertl <oliver-ertl@t-online.de>
 endef
 
 define Package/giflib/description
