@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+# Example script
+# Copyright (C) 2014 OpenWrt.org
+ 
+USE_PROCD=1
+START=99
+STOP=15
+
+start_service() {
+	procd_open_instance
+	procd_set_param command /usr/bin/icecast -c /etc/icecast.xml
+	procd_set_param respawn
+	procd_close_instance
+}
