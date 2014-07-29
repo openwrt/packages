@@ -39,8 +39,8 @@ define Package/ncdu/description
 endef
 
 define Package/ncdu/install
-  $(INSTALL_DIR) $(1)/usr/bin
-  $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ncdu $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ncdu $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,ncdu))
