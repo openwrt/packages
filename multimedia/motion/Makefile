@@ -10,6 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=motion
 PKG_VERSION:=20110826-051001
 PKG_RELEASE:=2
+PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.lavrsen.dk/sources/motion-daily \
