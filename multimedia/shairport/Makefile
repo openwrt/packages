@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/shairport
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+libpthread +avahi-utils +libopenssl +libavahi-client +alsa-utils
+  DEPENDS:=+libpthread +libopenssl +libavahi-client +alsa-lib
   TITLE:=ShairPort AirPort Express emulator
 endef
 
