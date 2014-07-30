@@ -24,6 +24,7 @@ define Package/libtasn1
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=An ASN.1 and DER structures manipulation library
+  MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
   URL:=ftp://ftp.gnu.org/gnu/libtasn1/
 endef
 

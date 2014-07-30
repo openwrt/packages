@@ -29,6 +29,7 @@ define KernelPackage/cryptodev
   DEFAULT:=m if ALL
   TITLE:=Driver for cryptographic acceleration
   URL:=http://cryptodev-linux.org/
+  MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
   VERSION:=$(LINUX_VERSION)+$(PKG_VERSION)-$(BOARD)-$(PKG_RELEASE)
   DEPENDS:=+kmod-crypto-core +kmod-crypto-authenc +kmod-crypto-hash
   FILES:= \
