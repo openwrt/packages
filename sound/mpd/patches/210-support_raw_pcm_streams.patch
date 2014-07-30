@@ -1,20 +1,6 @@
---- a/src/decoder/ffmpeg_decoder_plugin.c
-+++ b/src/decoder/ffmpeg_decoder_plugin.c
-@@ -387,6 +387,13 @@ ffmpeg_probe(struct decoder *decoder, st
- 
- 	unsigned char *buffer = g_malloc(BUFFER_SIZE);
- 	size_t nbytes = decoder_read(decoder, is, buffer, BUFFER_SIZE);
-+
-+	if ((nbytes > 0) && (nbytes < 1024))
-+	{
-+		// Gobble some more data if header is small
-+		nbytes += decoder_read(decoder, is, buffer + nbytes, BUFFER_SIZE - nbytes);
-+	}
-+
- 	if (nbytes <= PADDING ||
- 	    !input_stream_lock_seek(is, 0, SEEK_SET, NULL)) {
- 		g_free(buffer);
-@@ -683,6 +690,7 @@ static const char *const ffmpeg_mime_typ
+--- a/src/decoder/FfmpegDecoderPlugin.cxx
++++ b/src/decoder/FfmpegDecoderPlugin.cxx
+@@ -634,6 +634,7 @@ static const char *const ffmpeg_mime_typ
  	"audio/qcelp",
  	"audio/vorbis",
  	"audio/vorbis+ogg",
