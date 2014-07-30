@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=22
+PKG_RELEASE:=23
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
@@ -14,6 +14,7 @@ define Package/ddns-scripts
         SUBMENU:=IP Addresses and Names
 	TITLE:=Dynamic DNS Scripts
 	PKGARCH:=all
+	MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 endef
 
 define Package/ddns-scripts/description
