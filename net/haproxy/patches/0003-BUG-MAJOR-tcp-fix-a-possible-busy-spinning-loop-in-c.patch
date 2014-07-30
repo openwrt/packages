@@ -1,0 +1,111 @@
+From f94735eb76e634d7531f9c903113f64820c4cec0 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 30 Jul 2014 08:56:35 +0200
+Subject: [PATCH 3/3] BUG/MAJOR: tcp: fix a possible busy spinning loop in
+ content track-sc*
+
+As a consequence of various recent changes on the sample conversion,
+a corner case has emerged where it is possible to wait forever for a
+sample in track-sc*.
+
+The issue is caused by the fact that functions relying on sample_process()
+don't all exactly work the same regarding the SMP_F_MAY_CHANGE flag and
+the output result. Here it was possible to wait forever for an output
+sample from stktable_fetch_key() without checking the SMP_OPT_FINAL flag.
+As a result, if the client connects and closes without sending the data
+and haproxy expects a sample which is capable of coming, it will ignore
+this impossible case and will continue to wait.
+
+This change adds control for SMP_OPT_FINAL before waiting for extra data.
+The various relevant functions have been better documented regarding their
+output values.
+
+This fix must be backported to 1.5 since it appeared there.
+(cherry picked from commit 6bcb0a84e7256f00793fa8ec8a0d6c19c3b22935)
+---
+ src/proto_tcp.c   |  4 ++--
+ src/sample.c      | 23 ++++++++++++++++++++++-
+ src/stick_table.c | 11 ++++++++++-
+ 3 files changed, 34 insertions(+), 4 deletions(-)
+
+diff --git a/src/proto_tcp.c b/src/proto_tcp.c
+index 9778856..72dc92b 100644
+--- a/src/proto_tcp.c
++++ b/src/proto_tcp.c
+@@ -1048,8 +1048,8 @@ int tcp_inspect_request(struct session *s, struct channel *req, int an_bit)
+ 				t = rule->act_prm.trk_ctr.table.t;
+ 				key = stktable_fetch_key(t, s->be, s, &s->txn, SMP_OPT_DIR_REQ | partial, rule->act_prm.trk_ctr.expr, &smp);
+ 
+-				if (smp.flags & SMP_F_MAY_CHANGE)
+-					goto missing_data;
++				if ((smp.flags & SMP_F_MAY_CHANGE) && !(partial & SMP_OPT_FINAL))
++					goto missing_data; /* key might appear later */
+ 
+ 				if (key && (ts = stktable_get_entry(t, key))) {
+ 					session_track_stkctr(&s->stkctr[tcp_trk_idx(rule->action)], t, ts);
+diff --git a/src/sample.c b/src/sample.c
+index 3a0f3fb..8e62640 100644
+--- a/src/sample.c
++++ b/src/sample.c
+@@ -896,6 +896,18 @@ out_error:
+  * Note: the fetch functions are required to properly set the return type. The
+  * conversion functions must do so too. However the cast functions do not need
+  * to since they're made to cast mutiple types according to what is required.
++ *
++ * The caller may indicate in <opt> if it considers the result final or not.
++ * The caller needs to check the SMP_F_MAY_CHANGE flag in p->flags to verify
++ * if the result is stable or not, according to the following table :
++ *
++ * return MAY_CHANGE FINAL   Meaning for the sample
++ *  NULL      0        *     Not present and will never be (eg: header)
++ *  NULL      1        0     Not present yet, could change (eg: POST param)
++ *  NULL      1        1     Not present yet, will not change anymore
++ *   smp      0        *     Present and will not change (eg: header)
++ *   smp      1        0     Present, may change (eg: request length)
++ *   smp      1        1     Present, last known value (eg: request length)
+  */
+ struct sample *sample_process(struct proxy *px, struct session *l4, void *l7,
+                               unsigned int opt,
+@@ -1153,7 +1165,16 @@ int smp_resolve_args(struct proxy *p)
+  * and <opt> does not contain SMP_OPT_FINAL, then the sample is returned as-is
+  * with its SMP_F_MAY_CHANGE flag so that the caller can check it and decide to
+  * take actions (eg: wait longer). If a sample could not be found or could not
+- * be converted, NULL is returned.
++ * be converted, NULL is returned. The caller MUST NOT use the sample if the
++ * SMP_F_MAY_CHANGE flag is present, as it is used only as a hint that there is
++ * still hope to get it after waiting longer, and is not converted to string.
++ * The possible output combinations are the following :
++ *
++ * return MAY_CHANGE FINAL   Meaning for the sample
++ *  NULL      *        *     Not present and will never be (eg: header)
++ *   smp      0        *     Final value converted (eg: header)
++ *   smp      1        0     Not present yet, may appear later (eg: header)
++ *   smp      1        1     never happens (either flag is cleared on output)
+  */
+ struct sample *sample_fetch_string(struct proxy *px, struct session *l4, void *l7,
+                                    unsigned int opt, struct sample_expr *expr)
+diff --git a/src/stick_table.c b/src/stick_table.c
+index a708d3c..d39b4ff 100644
+--- a/src/stick_table.c
++++ b/src/stick_table.c
+@@ -603,7 +603,16 @@ static sample_to_key_fct sample_to_key[SMP_TYPES][STKTABLE_TYPES] = {
+  * no key could be extracted, or a pointer to the converted result stored in
+  * static_table_key in format <table_type>. If <smp> is not NULL, it will be reset
+  * and its flags will be initialized so that the caller gets a copy of the input
+- * sample, and knows why it was not accepted (eg: SMP_F_MAY_CHANGE is present).
++ * sample, and knows why it was not accepted (eg: SMP_F_MAY_CHANGE is present
++ * without SMP_OPT_FINAL). The output will be usable like this :
++ *
++ * return MAY_CHANGE FINAL   Meaning for the sample
++ *  NULL      0        *     Not present and will never be (eg: header)
++ *  NULL      1        0     Not present or unstable, could change (eg: req_len)
++ *  NULL      1        1     Not present, will not change anymore
++ *   smp      0        *     Present and will not change (eg: header)
++ *   smp      1        0     not possible
++ *   smp      1        1     Present, last known value (eg: request length)
+  */
+ struct stktable_key *stktable_fetch_key(struct stktable *t, struct proxy *px, struct session *l4, void *l7,
+                                         unsigned int opt, struct sample_expr *expr, struct sample *smp)
+-- 
+1.8.5.5
+
