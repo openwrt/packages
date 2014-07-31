@@ -59,11 +59,6 @@ function index()
 	entry(place,call("action_status_j"),"Status",0)
 	table.remove(place)
 
-	-- not visible
-	table.insert(place,"nodes_nojs")
-	entry(place, call("action_nodes"), nil)
-	table.remove(place)
-
 	--- nodes
 	table.insert(place,"Nodes")
 	entry(place,call("action_nodes_j"),"Nodes",1)
@@ -78,11 +73,6 @@ function index()
 	table.insert(place,"Tunnels")
 	entry(place,call("action_tunnels_j"), "Tunnels", 3).leaf = true
 	table.remove(place)
-
-	-- Gateways (deprecated)
-	--table.insert(place,"Gateways")
-	--entry(place,call("action_gateways_j"),"Gateways").leaf = true
-	--table.remove(place)
 
 	--- Chat
 	table.insert(place,"Chat")
@@ -131,51 +121,10 @@ function index()
 
 end
 
-function action_status()
-		local status = bmx6json.get("status").status or nil
-		local interfaces = bmx6json.get("interfaces").interfaces or nil
-
-		if status == nil or interfaces == nil then
-			luci.template.render("bmx6/error", {txt="Cannot fetch data from bmx6 json"})
-		else
-        	luci.template.render("bmx6/status", {status=status,interfaces=interfaces})
-		end
-end
-
 function action_status_j()
 	luci.template.render("bmx6/status_j", {})
 end
 
-
-function action_nodes()
-		local orig_list = bmx6json.get("originators").originators or nil
-
-		if orig_list == nil then
-			luci.template.render("bmx6/error", {txt="Cannot fetch data from bmx6 json"})
-			return nil
-		end
-
-		local originators = {}
-		local desc = nil
-		local orig = nil
-		local name = ""
-		local ipv4 = ""
-
-		for _,o in ipairs(orig_list) do
-			orig = bmx6json.get("originators/"..o.name) or {}
-			desc = bmx6json.get("descriptions/"..o.name) or {}
-
-			if string.find(o.name,'.') then
-				name = luci.util.split(o.name,'.')[1]
-			else
-				name = o.name
-			end
-
-			table.insert(originators,{name=name,orig=orig,desc=desc})
-		end
-
-        luci.template.render("bmx6/nodes", {originators=originators})
-end
 
 function action_nodes_j()
 	local http = require "luci.http"
@@ -191,7 +140,6 @@ end
 function action_tunnels_j()
         luci.template.render("bmx6/tunnels_j", {})
 end
-
 
 function action_links(host)
 	local links = bmx6json.get("links", host)

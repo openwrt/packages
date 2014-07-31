@@ -20,7 +20,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-bmx6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
@@ -31,12 +31,12 @@ define Package/luci-app-bmx6
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:= bmx6 configuration, status and visualization module
-  DEPENDS:=+luci-lib-json +luci-mod-admin-core +luci-lib-httpclient +bmx6
+  DEPENDS:=+luci-lib-json +luci-mod-admin-full +luci-lib-httpclient +bmx6
   MAINTAINER:= Pau Escrich <p4u@dabax.net>
 endef
 
 define Package/luci-app-bmx6/description
-	bmx6 web module for LuCi web interface
+	bmx6 web application (status and configuration) for LuCi web interface
 endef
 
 define Package/luci-app-bmx6/conffiles
