@@ -11,6 +11,7 @@ PKG_VERSION:=1.0.7
 PKG_RELEASE:=1
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPLv2
+PKG_LICENSE_FILE:=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
