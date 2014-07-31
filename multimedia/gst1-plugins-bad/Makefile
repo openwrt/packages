@@ -11,6 +11,7 @@ PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.2.3
 PKG_RELEASE:=1
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_LICENSE:=LGPLv2 GPLv2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
