@@ -1,0 +1,12 @@
+--- a/upnphttp.c
++++ b/upnphttp.c
+@@ -1259,7 +1259,7 @@
+ 	int try_sendfile = 1;
+ #endif
+ 
+-	while( offset < end_offset )
++	while( offset <= end_offset )
+ 	{
+ #if HAVE_SENDFILE
+ 		if( try_sendfile )
+
