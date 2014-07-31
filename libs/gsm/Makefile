@@ -9,13 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gsm
 PKG_VERSION:=1.0.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://user.cs.tu-berlin.de/~jutta/gsm/
+PKG_SOURCE_URL:=http://www.quut.com/gsm
 PKG_MD5SUM:=c1ba392ce61dc4aff1c29ea4e92f6df4
-
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=FREE
 PKG_LICENSE_FILES:=COPYRIGHT
@@ -26,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/gsm/Default
   TITLE:=GSM transcoding
-  URL:=http://user.cs.tu-berlin.de/~jutta/toast.html
+  URL:=http://www.quut.com/gsm
 endef
 
 define Package/gsm/description/Default
