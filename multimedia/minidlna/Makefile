@@ -19,6 +19,7 @@ PKG_MAINTAINER:=Knyazkov Dmitry <medavedik@gmail.com>
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILE:=COPYING
+
 PKG_BUILD_PARALLEL:=0
 PKG_BUILD_DEPENDS:=util-linux
 
