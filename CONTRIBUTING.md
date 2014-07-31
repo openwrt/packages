@@ -5,11 +5,11 @@ Please make sure that all packages you commit or request to pull:
 * Have yourself or another person listed in the (PKG_)MAINTAINER field.
 * Will be updated regularly to maintained and supported versions.
 * Have no dependencies outside the openwrt core packages or this feed.
-* Are "run tested" (or at least compile tested)
+* Are tested to run (or at the very least tested to compile sucessfully)
 
 Please make sure that all commits you make to this repository:
 * Are signed-off (see https://dev.openwrt.org/wiki/SubmittingPatches#a10.Signyourwork)
-* Have a proper description (starting with <package-name>: / including <package-name>)
+* Have a proper description prefixed with the package name
 
 If you have commit access:
 * Do NOT use git push --force.
