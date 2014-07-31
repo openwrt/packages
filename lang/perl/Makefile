@@ -98,8 +98,8 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/CORE
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/5.20/CORE/*.h $(1)/usr/lib/perl5/5.20/CORE/
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/5.20 $(1)/usr/lib/perl5/
 endef
 
 define Package/perl/install
