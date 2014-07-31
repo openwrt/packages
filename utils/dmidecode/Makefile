@@ -16,6 +16,9 @@ PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/dmidecode
 PKG_MD5SUM:=a406f3cbb27736491698697beeddb781
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=LICENSE
+
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

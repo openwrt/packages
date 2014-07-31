@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2008 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,12 +9,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lame
-PKG_VERSION:=398-2
-PKG_RELEASE:=3
+PKG_VERSION:=3.99.5
+PKG_RELEASE:=1
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/lame
-PKG_MD5SUM:=719dae0ee675d0c16e0e89952930ed35
+PKG_MD5SUM:=84835b313d4a8b68f5349816d33e07ce
 PKG_FIXUP:=autoreconf
+
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+
+PKG_LICENSE:=LGPLv2
+PKG_LICENSE_FILES:=COPYING LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 

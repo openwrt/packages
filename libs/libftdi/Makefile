@@ -16,6 +16,9 @@ PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
 PKG_MD5SUM:=355d4474e3faa81b485d6a604b06951f
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
+PKG_LICENSE:=LGPL-2.0
+PKG_LICENSE_FILES:=COPYING.LIB
+
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

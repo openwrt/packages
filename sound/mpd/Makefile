@@ -8,13 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.17.6
-PKG_RELEASE:=4
+PKG_VERSION:=0.18.11
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.17/
-PKG_MD5SUM:=0a42ed81ff298c12e22c16be31097e4c
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.18/
+PKG_MD5SUM:=be23120f342250e8352f6499cb960fd2
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILE:=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
@@ -32,7 +35,7 @@ define Package/mpd/Default
   CATEGORY:=Sound
   TITLE:=Music Player Daemon
   URL:=http://www.musicpd.org/
-  DEPENDS:= +glib2 +libcurl +libpthread $(ICONV_DEPENDS) \
+  DEPENDS:= +glib2 +libcurl +libpthread +libmpdclient $(ICONV_DEPENDS) \
 	    +libflac +BUILD_PATENTED:libmad +libvorbisidec
 endef
 
@@ -98,6 +101,7 @@ CONFIGURE_ARGS += \
 	--disable-fluidsynth \
 	--disable-gme \
 	--enable-inotify \
+	--disable-eventfd \
 	--disable-iso9660 \
 	--disable-jack \
 	--disable-lame-encoder \
@@ -134,11 +138,7 @@ CONFIGURE_VARS += \
 	$(if $(CONFIG_BUILD_PATENTED),MAD_CFLAGS="$(TARGET_CFLAGS)") \
 	$(if $(CONFIG_BUILD_PATENTED),MAD_LIBS="$(TARGET_LDFLAGS) -lmad") \
 
-TARGET_CFLAGS += -std=gnu99
 TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-liconv)
-
-# use gcc instead of g++ to avoid unnecessary linking against libstdc++
-TARGET_CXX:=$(TARGET_CC)
 
 ifeq ($(BUILD_VARIANT),full)
 

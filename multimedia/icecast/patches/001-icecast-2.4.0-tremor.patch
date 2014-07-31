@@ -1,0 +1,155 @@
+--- a/src/format_flac.c
++++ b/src/format_flac.c
+@@ -18,7 +18,7 @@
+ #endif
+ 
+ #include <stdlib.h>
+-#include <ogg/ogg.h>
++#include <tremor/ogg.h>
+ #include <string.h>
+ 
+ typedef struct source_tag source_t;
+--- a/src/format_midi.c
++++ b/src/format_midi.c
+@@ -18,7 +18,7 @@
+ #endif
+ 
+ #include <stdlib.h>
+-#include <ogg/ogg.h>
++#include <tremor/ogg.h>
+ #include <string.h>
+ 
+ typedef struct source_tag source_t;
+--- a/src/format_ogg.c
++++ b/src/format_ogg.c
+@@ -24,7 +24,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include <ogg/ogg.h>
++#include <tremor/ogg.h>
+ 
+ #include "refbuf.h"
+ #include "source.h"
+--- a/src/format_ogg.h
++++ b/src/format_ogg.h
+@@ -18,7 +18,7 @@
+ #ifndef __FORMAT_OGG_H__
+ #define __FORMAT_OGG_H__
+ 
+-#include <ogg/ogg.h>
++#include <tremor/ogg.h>
+ #include "refbuf.h"
+ #include "format.h"
+ 
+--- a/src/format_speex.c
++++ b/src/format_speex.c
+@@ -18,7 +18,7 @@
+ #endif
+ 
+ #include <stdlib.h>
+-#include <ogg/ogg.h>
++#include <tremor/ogg.h>
+ #include <speex/speex_header.h>
+ 
+ typedef struct source_tag source_t;
+--- a/src/format_theora.c
++++ b/src/format_theora.c
+@@ -18,7 +18,7 @@
+ #endif
+ 
+ #include <stdlib.h>
+-#include <ogg/ogg.h>
++#include <tremor/ogg.h>
+ #include <theora/theora.h>
+ 
+ typedef struct source_tag source_t;
+--- a/src/format_vorbis.c
++++ b/src/format_vorbis.c
+@@ -18,8 +18,8 @@
+ #endif
+ 
+ #include <stdlib.h>
+-#include <ogg/ogg.h>
+-#include <vorbis/codec.h>
++#include <tremor/ogg.h>
++#include <tremor/ivorbiscodec.h>
+ #include <memory.h>
+ #include <string.h>
+ 
+--- a/src/source.c
++++ b/src/source.c
+@@ -19,7 +19,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/types.h>
+-#include <ogg/ogg.h>
++#include <tremor/ogg.h>
+ #include <errno.h>
+ 
+ #ifndef _WIN32
+--- a/src/format_kate.c
++++ b/src/format_kate.c
+@@ -19,7 +19,7 @@
+ 
+ #include <stdlib.h>
+ #include <string.h>
+-#include <ogg/ogg.h>
++#include <tremor/ogg.h>
+ #ifdef HAVE_KATE
+ #include <kate/oggkate.h>
+ #endif
+--- a/m4/vorbis.m4
++++ b/m4/vorbis.m4
+@@ -38,9 +38,9 @@ if test "x$vorbis_prefix" != "x$ogg_pref
+             ])
+ fi
+ 
+-VORBIS_LIBS="-lvorbis"
+-VORBISFILE_LIBS="-lvorbisfile"
+-VORBISENC_LIBS="-lvorbisenc"
++VORBIS_LIBS="-lvorbisidec"
++VORBISFILE_LIBS="-lvorbisidec"
++VORBISENC_LIBS="-lvorbisidec"
+ 
+ xt_save_LIBS="$LIBS"
+ xt_save_LDFLAGS="$LDFLAGS"
+@@ -58,18 +58,6 @@ AC_TRY_LINK_FUNC(ogg_stream_init, [xt_li
+             )
+         ])
+ 
+-if test "x$xt_lib_vorbis" = "xok"; then
+-#
+-# Now check if the installed Vorbis is sufficiently new.
+-#
+-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+-#include <vorbis/codec.h>
+-#include <vorbis/vorbisenc.h>
+-        ], [
+-struct ovectl_ratemanage_arg a;
+-])],,[xt_lib_vorbis="old version found"])
+-AC_MSG_RESULT([$xt_lib_vorbis])
+-fi
+ CPPFLAGS="$xt_save_CPPFLAGS"
+ LIBS="$xt_save_LIBS"
+ LDFLAGS="$xt_save_LDFLAGS"
+--- a/m4/ogg.m4
++++ b/m4/ogg.m4
+@@ -29,7 +29,7 @@ XIPH_GCC_WARNING([-I$ogg_prefix/include]
+       ])
+ AC_CACHE_CHECK([for libogg], xt_cv_lib_ogg,
+ [dnl
+-OGG_LIBS="-logg"
++OGG_LIBS="-lvorbisidec"
+ 
+ #
+ # check if the installed Ogg is sufficiently new.
+@@ -42,7 +42,7 @@ LIBS="$LIBS $OGG_LIBS"
+ LDFLAGS="$LDFLAGS $OGG_LDFLAGS"
+ AC_TRY_LINK_FUNC(ogg_sync_init,
+     [ xt_cv_lib_ogg=ok ],
+-    [ AC_TRY_LINK([#include <ogg/ogg.h>],, 
++    [ AC_TRY_LINK([#include <tremor/ogg.h>],, 
+         [ xt_cv_lib_ogg="pre v1.0, needs updating" ],
+         [ xt_cv_lib_ogg="not found" ])
+     ])

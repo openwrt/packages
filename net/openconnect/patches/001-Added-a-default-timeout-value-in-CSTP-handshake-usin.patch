@@ -1,0 +1,31 @@
+From 826ad45a86f1556910c2f00dfa6477879deb978f Mon Sep 17 00:00:00 2001
+From: Nikos Mavrogiannopoulos <nmav@gnutls.org>
+Date: Thu, 24 Jul 2014 21:59:01 +0200
+Subject: [PATCH] Added a default timeout value in CSTP handshake using gnutls
+
+[dwmw2: move it to openconnect_open_https() so it's done only once]
+
+Signed-off-by: Nikos Mavrogiannopoulos <nmav@gnutls.org>
+Signed-off-by: David Woodhouse <David.Woodhouse@intel.com>
+---
+ gnutls.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/gnutls.c b/gnutls.c
+index 3e3204a..2ef836c 100644
+--- a/gnutls.c
++++ b/gnutls.c
+@@ -2017,6 +2017,10 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
+ 	vpn_progress(vpninfo, PRG_INFO, _("SSL negotiation with %s\n"),
+ 		     vpninfo->hostname);
+ 
++#ifdef GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT
++	gnutls_handshake_set_timeout(vpninfo->https_sess,
++				     GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT);
++#endif
+ 
+ 	err = cstp_handshake(vpninfo, 1);
+ 	if (err)
+-- 
+2.0.0
+

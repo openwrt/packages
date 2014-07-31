@@ -43,9 +43,6 @@ endef
 TARGET_CPPFLAGS += \
 	-I$(STAGING_DIR)/usr/include \
 	-I$(STAGING_DIR)/usr/include/FLAC \
-	-I$(STAGING_DIR)/usr/include/libavcodec \
-	-I$(STAGING_DIR)/usr/include/libavformat \
-	-I$(STAGING_DIR)/usr/include/libavutil \
 	-I$(STAGING_DIR)/usr/include/libexif \
 	-I$(STAGING_DIR)/usr/include/uuid \
 	-I$(STAGING_DIR)/usr/include/vorbis \

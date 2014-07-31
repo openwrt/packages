@@ -458,7 +458,7 @@ TITLE:=essential perl module
 endef
 
 define Package/perlbase-essential/install
-$(call perlmod/Install,$(1),Carp Carp.pm Exporter Exporter.pm constant.pm lib.pm locale.pm overload.pm strict.pm subs.pm vars.pm warnings warnings.pm,)
+$(call perlmod/Install,$(1),Carp Carp.pm Exporter Exporter.pm constant.pm lib.pm locale.pm overload.pm strict.pm subs.pm vars.pm warnings warnings.pm overloading.pm,)
 endef
 
 $(eval $(call BuildPackage,perlbase-essential))

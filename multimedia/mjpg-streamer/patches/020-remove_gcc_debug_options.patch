@@ -1,0 +1,33 @@
+--- a/plugins/input_uvc/Makefile
++++ b/plugins/input_uvc/Makefile
+@@ -13,7 +13,7 @@ OTHER_HEADERS = ../../mjpg_streamer.h ..
+ 
+ CFLAGS += -O1  -DLINUX -D_GNU_SOURCE -Wall -shared -fPIC
+ 
+-CFLAGS += -g -DDEBUG
++#CFLAGS += -g -DDEBUG
+ 
+ ifeq ($(USE_LIBV4L2),true)
+ LFLAGS += -lv4l2
+--- a/plugins/output_file/Makefile
++++ b/plugins/output_file/Makefile
+@@ -12,7 +12,7 @@ CC = gcc
+ OTHER_HEADERS = ../../mjpg_streamer.h ../../utils.h ../output.h ../input.h
+ 
+ CFLAGS += -O2 -DLINUX -D_GNU_SOURCE -Wall -shared -fPIC
+-CFLAGS += -DDEBUG -g
++#CFLAGS += -DDEBUG -g
+ LFLAGS += -lpthread -ldl
+ 
+ all: output_file.so
+--- a/plugins/output_udp/Makefile
++++ b/plugins/output_udp/Makefile
+@@ -14,7 +14,7 @@ CC = gcc
+ OTHER_HEADERS = ../../mjpg_streamer.h ../../utils.h ../output.h ../input.h
+ 
+ CFLAGS += -O2 -DLINUX -D_GNU_SOURCE -Wall -shared -fPIC
+-CFLAGS += -DDEBUG
++#CFLAGS += -DDEBUG
+ LFLAGS += -lpthread -ldl
+ 
+ all: output_udp.so

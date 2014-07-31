@@ -1,0 +1,129 @@
+--- a/configure
++++ b/configure
+@@ -15825,9 +15825,9 @@
+   cat >>confdefs.h <<_ACEOF
+ #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+ _ACEOF
+- { $as_echo "$as_me:${as_lineno-$LINENO}: checking for av_open_input_file in -lavformat" >&5
+-$as_echo_n "checking for av_open_input_file in -lavformat... " >&6; }
+-if ${ac_cv_lib_avformat_av_open_input_file+:} false; then :
++ { $as_echo "$as_me:${as_lineno-$LINENO}: checking for avformat_open_input in -lavformat" >&5
++$as_echo_n "checking for avformat_open_input in -lavformat... " >&6; }
++if ${ac_cv_lib_avformat_avformat_open_input+:} false; then :
+   $as_echo_n "(cached) " >&6
+ else
+   ac_check_lib_save_LIBS=$LIBS
+@@ -15841,27 +15841,27 @@
+ #ifdef __cplusplus
+ extern "C"
+ #endif
+-char av_open_input_file ();
++char avformat_open_input ();
+ int
+ main ()
+ {
+-return av_open_input_file ();
++return avformat_open_input ();
+   ;
+   return 0;
+ }
+ _ACEOF
+ if ac_fn_c_try_link "$LINENO"; then :
+-  ac_cv_lib_avformat_av_open_input_file=yes
++  ac_cv_lib_avformat_avformat_open_input=yes
+ else
+-  ac_cv_lib_avformat_av_open_input_file=no
++  ac_cv_lib_avformat_avformat_open_input=no
+ fi
+ rm -f core conftest.err conftest.$ac_objext \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avformat_av_open_input_file" >&5
+-$as_echo "$ac_cv_lib_avformat_av_open_input_file" >&6; }
+-if test "x$ac_cv_lib_avformat_av_open_input_file" = xyes; then :
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avformat_avformat_open_input" >&5
++$as_echo "$ac_cv_lib_avformat_avformat_open_input" >&6; }
++if test "x$ac_cv_lib_avformat_avformat_open_input" = xyes; then :
+   for ac_header in libavcodec/avcodec.h ffmpeg/avcodec.h
+ do :
+   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+diff -Naur sox-14.4.0-orig/src/ffmpeg.c sox-14.4.0/src/ffmpeg.c
+--- sox-14.4.0-orig/src/ffmpeg.c	2012-06-12 00:35:53.459027469 -0400
++++ sox-14.4.0/src/ffmpeg.c	2012-06-12 00:36:26.539028545 -0400
+@@ -93,7 +93,7 @@
+ #if LIBAVCODEC_VERSION_INT < ((52<<16)+(0<<8)+0)
+   enc->error_resilience = 1;
+ #else
+-  enc->error_recognition = 1;
++  enc->err_recognition = 1;
+ #endif
+ 
+   if (!codec || avcodec_open(enc, codec) < 0)
+@@ -157,7 +157,7 @@
+ static int startread(sox_format_t * ft)
+ {
+   priv_t * ffmpeg = (priv_t *)ft->priv;
+-  AVFormatParameters params;
++  AVDictionary *params;
+   int ret;
+   int i;
+ 
+@@ -172,7 +172,7 @@
+ 
+   /* Open file and get format */
+   memset(&params, 0, sizeof(params));
+-  if ((ret = av_open_input_file(&ffmpeg->ctxt, ft->filename, NULL, 0, &params)) < 0) {
++  if ((ret = avformat_open_input(&ffmpeg->ctxt, ft->filename, NULL, &params)) < 0) {
+     lsx_fail("ffmpeg cannot open file for reading: %s (code %d)", ft->filename, ret);
+     return SOX_EOF;
+   }
+@@ -231,7 +231,7 @@
+     /* If input buffer empty, read more data */
+     if (ffmpeg->audio_buf_index * 2 >= ffmpeg->audio_buf_size) {
+       if ((ret = av_read_frame(ffmpeg->ctxt, pkt)) < 0 &&
+-	  (ret == AVERROR_EOF || url_ferror(ffmpeg->ctxt->pb)))
++	  (ret == AVERROR_EOF || ffmpeg->ctxt->pb->error))
+ 	break;
+       ffmpeg->audio_buf_size = audio_decode_frame(ffmpeg, ffmpeg->audio_buf_aligned, AVCODEC_MAX_AUDIO_FRAME_SIZE);
+       ffmpeg->audio_buf_index = 0;
+@@ -373,13 +373,6 @@
+       return SOX_EOF;
+   }
+ 
+-  /* set the output parameters (must be done even if no
+-     parameters). */
+-  if (av_set_parameters(ffmpeg->ctxt, NULL) < 0) {
+-    lsx_fail("ffmpeg invalid output format parameters");
+-    return SOX_EOF;
+-  }
+-
+   /* Next line for debugging */
+   /* dump_format(ffmpeg->ctxt, 0, ft->filename, 1); */
+ 
+@@ -391,14 +384,14 @@
+ 
+   /* open the output file, if needed */
+   if (!(ffmpeg->fmt->flags & AVFMT_NOFILE)) {
+-    if (url_fopen(&ffmpeg->ctxt->pb, ft->filename, URL_WRONLY) < 0) {
++    if (avio_open(&ffmpeg->ctxt->pb, ft->filename, AVIO_FLAG_WRITE) < 0) {
+       lsx_fail("ffmpeg could not open `%s'", ft->filename);
+       return SOX_EOF;
+     }
+   }
+ 
+   /* write the stream header, if any */
+-  av_write_header(ffmpeg->ctxt);
++  avformat_write_header(ffmpeg->ctxt, NULL);
+ 
+   return SOX_SUCCESS;
+ }
+@@ -478,7 +471,7 @@
+ #if (LIBAVFORMAT_VERSION_INT < 0x340000)
+     url_fclose(&ffmpeg->ctxt->pb);
+ #else
+-    url_fclose(ffmpeg->ctxt->pb);
++    avio_close(ffmpeg->ctxt->pb);
+ #endif
+   }
+
