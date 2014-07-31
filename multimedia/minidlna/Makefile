@@ -14,7 +14,12 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/minidlna
 PKG_MD5SUM:=879027192c89e5376cdd2ae2d1aa33b4
+
 PKG_MAINTAINER:=Knyazkov Dmitry <medavedik@gmail.com>
+
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILE:=COPYING
+
 PKG_BUILD_PARALLEL:=0
 PKG_BUILD_DEPENDS:=util-linux
 
@@ -43,9 +48,6 @@ endef
 TARGET_CPPFLAGS += \
 	-I$(STAGING_DIR)/usr/include \
 	-I$(STAGING_DIR)/usr/include/FLAC \
-	-I$(STAGING_DIR)/usr/include/libavcodec \
-	-I$(STAGING_DIR)/usr/include/libavformat \
-	-I$(STAGING_DIR)/usr/include/libavutil \
 	-I$(STAGING_DIR)/usr/include/libexif \
 	-I$(STAGING_DIR)/usr/include/uuid \
 	-I$(STAGING_DIR)/usr/include/vorbis \
