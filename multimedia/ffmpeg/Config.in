@@ -190,6 +190,7 @@ config FFMPEG_CUSTOM_SELECT_speex
 
 config FFMPEG_CUSTOM_DECODER_vorbis
 	bool "Vorbis"
+	select FFMPEG_CUSTOM_DEMUXER_ogg
 
 config FFMPEG_CUSTOM_DECODER_wavpack
 	bool "Wavpack"
