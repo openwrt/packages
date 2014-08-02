@@ -106,6 +106,9 @@ define Package/perl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/perl$(PKG_VERSION) $(1)/usr/bin
 	ln -nsf perl$(PKG_VERSION) $(1)/usr/bin/perl
+	
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/CORE
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/5.20/CORE/libperl.so $(1)/usr/lib/perl5/5.20/CORE/
 endef
 
 
