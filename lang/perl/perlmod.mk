@@ -12,6 +12,37 @@ PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl5.20.0
 # Module install prefix
 PERL_SITELIB:=/usr/lib/perl5/5.20
 
+define perlmod/host/relink
+	rm -f $(1)/Makefile.aperl
+	$(MAKE) -C $(1) perl
+	$(CP) $(1)/perl $(PERL_CMD)
+	$(CP) $(1)/perl $(STAGING_DIR_HOST)/usr/bin/perl
+endef
+
+define perlmod/host/Configure
+	(cd $(HOST_BUILD_DIR); \
+	PERL_MM_USE_DEFAULT=1 \
+	$(2) \
+	$(PERL_CMD) Makefile.PL \
+		$(1) \
+	);
+endef
+
+define perlmod/host/Compile
+	$(2) \
+	$(MAKE) -C $(HOST_BUILD_DIR) \
+		$(1) \
+		install
+endef
+
+define perlmod/host/Install
+	$(2) \
+	$(MAKE) -C $(HOST_BUILD_DIR) \
+		$(1) \
+		install
+	$(call perlmod/host/relink,$(HOST_BUILD_DIR))
+endef
+
 define perlmod/Configure
 	(cd $(PKG_BUILD_DIR); \
 	PERL_MM_USE_DEFAULT=1 \
