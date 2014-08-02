@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=http://ftp.de.debian.org/debian/pool/main/libv/libvorbisidec/
 PKG_MD5SUM:=4190859414c5d6760e316b5cf00fe7c5
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_LICENSE:=BSD-3c
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
