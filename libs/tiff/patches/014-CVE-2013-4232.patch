@@ -1,0 +1,18 @@
+Description: use after free in tiff2pdf
+Bug: http://bugzilla.maptools.org/show_bug.cgi?id=2449
+Bug-Debian: http://bugs.debian.org/719303
+
+Index: tiff-4.0.3/tools/tiff2pdf.c
+===================================================================
+--- tiff-4.0.3.orig/tools/tiff2pdf.c	2013-08-22 11:46:37.292847242 -0400
++++ tiff-4.0.3/tools/tiff2pdf.c	2013-08-22 11:46:37.292847242 -0400
+@@ -2461,7 +2461,8 @@
+ 					(unsigned long) t2p->tiff_datasize, 
+ 					TIFFFileName(input));
+ 				t2p->t2p_error = T2P_ERR_ERROR;
+-			  _TIFFfree(buffer);
++				_TIFFfree(buffer);
++				return(0);
+ 			} else {
+ 				buffer=samplebuffer;
+ 				t2p->tiff_datasize *= t2p->tiff_samplesperpixel;
