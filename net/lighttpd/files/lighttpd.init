@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+SERVICE_USE_PID=1
+
+START=50
+
+start() {
+	[ -d /var/log/lighttpd ] || mkdir -p /var/log/lighttpd
+	chmod 0777 /var/log/lighttpd
+	service_start /usr/sbin/lighttpd -f /etc/lighttpd/lighttpd.conf
+}
+
+stop() {
+	service_stop /usr/sbin/lighttpd
+}
+

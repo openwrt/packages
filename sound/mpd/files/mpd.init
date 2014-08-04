@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2014 OpenWrt.org
+
+START=93
+
+USE_PROCD=1
+
+PROG=/usr/bin/mpd
+CONFIGFILE=/etc/mpd.conf
+NICEPRIO=-10
+
+#TODO: Add uci config - nice, config
+
+start_service() {
+	#create mpd directories from config
+	local pld=`grep ^playlist_directory "$CONFIGFILE" | cut -d "\"" -f 2 | sed "s/~/\/root/g"`
+	if [ ! -d $pld ]; then
+		mkdir -m 0755 -p $pld
+	fi
+
+	procd_open_instance
+	procd_set_param command "$PROG" --no-daemon "$CONFIGFILE"
+	# Give MPD some real-time priority
+	procd_set_param nice "$NICEPRIO"
+	procd_close_instance
+}

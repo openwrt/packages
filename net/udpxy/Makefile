@@ -18,6 +18,9 @@ PKG_SOURCE_URL:=http://www.udpxy.com/download/1_23
 PKG_MD5SUM:=0c953f7dd80329c1a062997afb9b6744
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
+PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILES:=gpl.txt
+
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

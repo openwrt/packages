@@ -47,15 +47,6 @@ $(call Package/acl/Default)
   CATEGORY:=Libraries
   TITLE+=library
   DEPENDS:=+libattr
-  KCONFIG:= \
-    CONFIG_EXT4_FS_POSIX_ACL=y \
-    CONFIG_FS_POSIX_ACL=y \
-    CONFIG_HFSPLUS_FS_POSIX_ACL=y \
-    CONFIG_JFFS2_FS_POSIX_ACL=y \
-    CONFIG_JFS_POSIX_ACL=y \
-    CONFIG_TMPFS_POSIX_ACL=y \
-    CONFIG_XFS_POSIX_ACL=y \
-
 endef
 
 define Package/libacl/description

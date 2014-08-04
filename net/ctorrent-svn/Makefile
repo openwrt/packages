@@ -13,7 +13,7 @@ PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://dtorrent.svn.sourceforge.net/svnroot/dtorrent/dtorrent/trunk
+PKG_SOURCE_URL:=https://svn.code.sf.net/p/dtorrent/code/dtorrent/trunk
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_PROTO:=svn

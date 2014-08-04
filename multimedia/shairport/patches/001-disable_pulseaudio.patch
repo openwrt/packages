@@ -1,0 +1,12 @@
+--- a/configure
++++ b/configure
+@@ -59,7 +59,7 @@ do_pkg_config()
+ 
+ do_pkg_config OpenSSL       openssl
+-do_pkg_config libao         ao              CONFIG_AO
+-do_pkg_config PulseAudio    libpulse-simple CONFIG_PULSE
++#do_pkg_config libao         ao              CONFIG_AO
++#do_pkg_config PulseAudio    libpulse-simple CONFIG_PULSE
+ do_pkg_config ALSA          alsa            CONFIG_ALSA
+ do_pkg_config Avahi\ client avahi-client    CONFIG_AVAHI
+ 

@@ -1,0 +1,16 @@
+--- a/src/decoder/FfmpegDecoderPlugin.cxx
++++ b/src/decoder/FfmpegDecoderPlugin.cxx
+@@ -373,6 +373,13 @@ ffmpeg_probe(Decoder *decoder, InputStre
+ 
+ 	unsigned char buffer[BUFFER_SIZE];
+ 	size_t nbytes = decoder_read(decoder, is, buffer, BUFFER_SIZE);
++
++	if ((nbytes > 0) && (nbytes < 1024))
++	{
++		// Gobble some more data if header is small
++		nbytes += decoder_read(decoder, is, buffer + nbytes, BUFFER_SIZE - nbytes);
++	}
++
+ 	if (nbytes <= PADDING || !is.LockRewind(IgnoreError()))
+ 		return nullptr;
+ 

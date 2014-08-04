@@ -1,0 +1,78 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2013-2014 OpenWrt.org
+
+START=94
+USE_PROCD=1
+
+append_arg() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	local def="$4"
+	local val
+
+	config_get val "$cfg" "$var"
+	[ -n "$val" -o -n "$def" ] && procd_append_param command $opt "${val:-$def}"
+}
+
+append_bool() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	local def="$4"
+	local val
+
+	config_get_bool val "$cfg" "$var" "$def"
+	[ "$val" = 1 ] && procd_append_param command "$opt"
+}
+
+start_instance() {
+	local cfg="$1"
+	local ao dev
+
+	procd_open_instance
+
+	procd_set_param command /usr/bin/shairport
+
+	append_arg "$cfg" bname "-a" "AirPort"
+	append_arg "$cfg" log "-l"
+	append_arg "$cfg" initbuf "-b" "256"
+	append_arg "$cfg" port "-p" "5002"
+	append_arg "$cfg" password "-k"
+	append_arg "$cfg" mdns "-m"
+
+	append_arg "$cfg" cmd_start "-B"
+	append_arg "$cfg" cmd_stop "-E"
+	append_bool "$cfg" cmd_wait "-w"
+
+	append_arg "$cfg" audio_output "-o"
+
+	config_get ao "$cfg" audio_output ""
+	if [ "$ao" = "alsa" ]; then
+		config_get dev "$cfg" output_dev ""
+		if [ -n "$dev" ]; then
+			procd_append_param command "--"
+			append_arg "$cfg" output_dev "-d"
+			append_arg "$cfg" mixer_dev "-m"
+			append_arg "$cfg" mixer_type "-t"
+			append_arg "$cfg" mixer_control "-c"
+			append_arg "$cfg" mixer_index "-i"
+		fi
+	fi
+
+	procd_close_instance
+}
+
+service_triggers() { 
+	procd_add_reload_trigger "shairport" 
+} 
+
+start_service() {
+	config_load shairport
+	config_foreach start_instance shairport
+}
+
+stop_service() {
+	# FIXME: workaround until procd supports custom signal
+	killall -SIGINT shairport
+}

@@ -31,7 +31,7 @@ define Package/luci-app-ocserv
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:= OpenConnect VPN server configuration and status module
-  DEPENDS:=+luci-lib-json +luci-lib-nixio +luci-mod-admin-core +ocserv
+  DEPENDS:=+luci-lib-json +luci-lib-nixio +luci-mod-admin-full +ocserv
   MAINTAINER:= Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 endef
 

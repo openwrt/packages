@@ -1,0 +1,58 @@
+--- a/dtls.c
++++ b/dtls.c
+@@ -523,6 +523,7 @@ void *udpdtlsserverrd(void *arg) {
+ 	free(params);
+ 	cacheexpire(sessioncache, &lastexpiry);
+     }
++    return NULL;
+ }
+ 
+ int dtlsconnect(struct server *server, struct timeval *when, int timeout, char *text) {
+@@ -642,6 +643,7 @@ void *udpdtlsclientrd(void *arg) {
+ 	if (udp2bio(s, conf->servers->rbios, cnt))
+ 	    debug(DBG_DBG, "radudpget: got DTLS in UDP from %s", addr2string((struct sockaddr *)&from));
+     }
++    return NULL;
+ }
+ 
+ void *dtlsclientrd(void *arg) {
+--- a/radsecproxy.c
++++ b/radsecproxy.c
+@@ -3203,6 +3203,8 @@ void *sighandler(void *arg) {
+             debug(DBG_WARN, "sighandler: ignoring signal %d", sig);
+         }
+     }
++
++    return NULL;
+ }
+ 
+ int createpidfile(const char *pidfile) {
+@@ -3289,6 +3291,8 @@ int radsecproxy_main(int argc, char **ar
+     /* just hang around doing nothing, anything to do here? */
+     for (;;)
+ 	sleep(1000);
++
++    return 0;
+ }
+ 
+ /* Local Variables: */
+--- a/udp.c
++++ b/udp.c
+@@ -266,6 +266,8 @@ void *udpclientrd(void *arg) {
+ 	buf = radudpget(*s, NULL, &server, NULL);
+ 	replyh(server, buf);
+     }
++
++    return NULL;
+ }
+ 
+ void *udpserverrd(void *arg) {
+@@ -310,6 +312,8 @@ void *udpserverwr(void *arg) {
+ 	debug(DBG_DBG, "udpserverwr: refcount %d", reply->refcount);
+ 	freerq(reply);
+     }
++
++    return NULL;
+ }
+ 
+ void addclientudp(struct client *client) {

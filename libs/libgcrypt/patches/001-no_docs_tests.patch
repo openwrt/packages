@@ -1,0 +1,28 @@
+diff -u --recursive libgcrypt-1.6.1-vanilla/Makefile.am libgcrypt-1.6.1/Makefile.am
+--- libgcrypt-1.6.1-vanilla/Makefile.am	2014-07-18 00:31:21.020329371 -0400
++++ libgcrypt-1.6.1/Makefile.am	2014-07-18 00:31:49.076314616 -0400
+@@ -25,8 +25,8 @@
+ # (A suitable gitlog-to-changelog script can be found in GnuPG master.)
+ GITLOG_TO_CHANGELOG=gitlog-to-changelog
+ 
+-DIST_SUBDIRS = m4 compat mpi cipher random src doc tests
+-SUBDIRS =         compat mpi cipher random src doc tests
++DIST_SUBDIRS = m4 compat mpi cipher random src
++SUBDIRS =         compat mpi cipher random src
+ 
+ EXTRA_DIST = autogen.sh autogen.rc README.GIT LICENSES      	           \
+              ChangeLog-2011 build-aux/ChangeLog-2011 doc/ChangeLog-2011    \
+diff -u --recursive libgcrypt-1.6.1-vanilla/Makefile.in libgcrypt-1.6.1/Makefile.in
+--- libgcrypt-1.6.1-vanilla/Makefile.in	2014-07-18 00:31:21.020329371 -0400
++++ libgcrypt-1.6.1/Makefile.in	2014-07-18 00:31:54.974311498 -0400
+@@ -331,8 +331,8 @@
+ 
+ # (A suitable gitlog-to-changelog script can be found in GnuPG master.)
+ GITLOG_TO_CHANGELOG = gitlog-to-changelog
+-DIST_SUBDIRS = m4 compat mpi cipher random src doc tests
+-SUBDIRS = compat mpi cipher random src doc tests
++DIST_SUBDIRS = m4 compat mpi cipher random src
++SUBDIRS = compat mpi cipher random src
+ EXTRA_DIST = autogen.sh autogen.rc README.GIT LICENSES      	           \
+              ChangeLog-2011 build-aux/ChangeLog-2011 doc/ChangeLog-2011    \
+              m4/ChangeLog-2011 cipher/ChangeLog-2011 src/ChangeLog-2011    \

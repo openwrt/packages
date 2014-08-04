@@ -22,7 +22,7 @@ if m.uci:get("ocserv", "config", "auth") == "plain" then
 --[[Users]]--
 
 function m.on_commit(map)
-	luci.sys.call("/usr/bin/occtl reload  >/dev/null 2>&1")
+	luci.sys.call("/etc/init.d/ocserv restart >/dev/null 2>&1")
 end
 
 s = m:section(TypedSection, "ocservusers", translate("Available users"))

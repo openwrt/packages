@@ -1,0 +1,42 @@
+From 715e9b892f564e58489f86c125aed2a8994f16e9 Mon Sep 17 00:00:00 2001
+From: Conrad Hoffmann <conrad@soundcloud.com>
+Date: Mon, 28 Jul 2014 23:22:43 +0200
+Subject: [PATCH 2/3] BUG/MINOR: Fix search for -p argument in systemd wrapper.
+
+Searching for the pid file in the list of arguments did not
+take flags without parameters into account, like e.g. -de. Because
+of this, the wrapper would use a different pid file than haproxy
+if such an argument was specified before -p.
+
+The new version can still yield a false positive for some crazy
+situations, like your config file name starting with "-p", but
+I think this is as good as it gets without using getopt or some
+library.
+
+Signed-off-by: Conrad Hoffmann <conrad@soundcloud.com>
+(cherry picked from commit eb2cf45b72a7e14c581276247381dc1ac76be2c0)
+---
+ src/haproxy-systemd-wrapper.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/src/haproxy-systemd-wrapper.c b/src/haproxy-systemd-wrapper.c
+index ba07ebe..529b213 100644
+--- a/src/haproxy-systemd-wrapper.c
++++ b/src/haproxy-systemd-wrapper.c
+@@ -130,11 +130,8 @@ static void sigint_handler(int signum __attribute__((unused)))
+ static void init(int argc, char **argv)
+ {
+ 	while (argc > 1) {
+-		if (**argv == '-') {
+-			char *flag = *argv + 1;
+-			--argc; ++argv;
+-			if (*flag == 'p')
+-				pid_file = *argv;
++		if ((*argv)[0] == '-' && (*argv)[1] == 'p') {
++			pid_file = *(argv + 1);
+ 		}
+ 		--argc; ++argv;
+ 	}
+-- 
+1.8.5.5
+

@@ -1,0 +1,73 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -30,7 +30,7 @@
+ 
+ AUTOMAKE_OPTIONS = foreign 1.7
+ 
+-SUBDIRS = doc include m4 man src examples test build obj
++SUBDIRS = include m4 src build obj
+ 
+ DISTCLEANFILES = libtool-disable-static
+ 
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -234,7 +234,7 @@ target_alias = @target_alias@
+ 
+ AUTOMAKE_OPTIONS = foreign 1.7
+ 
+-SUBDIRS = doc include m4 man src examples test build obj
++SUBDIRS = include m4 src build obj
+ 
+ DISTCLEANFILES = libtool-disable-static
+ 
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -30,12 +30,6 @@ SUBDIRS = \
+ 	metaflac \
+ 	monkeys_audio_utilities \
+ 	$(XMMS_DIRS) \
+-	plugin_winamp2 \
+-	test_grabbag \
+-	test_libs_common \
+-	test_libFLAC \
+-	test_seeking \
+-	test_streams \
+ 	$(CPPLIBS_DIRS)
+ 
+ EXTRA_DIST = \
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -221,7 +221,7 @@ target_alias = @target_alias@
+ 
+ @FLaC__HAS_XMMS_TRUE@XMMS_DIRS = plugin_common plugin_xmms
+ 
+-@FLaC__WITH_CPPLIBS_TRUE@CPPLIBS_DIRS = libFLAC++ test_libFLAC++
++@FLaC__WITH_CPPLIBS_TRUE@CPPLIBS_DIRS = libFLAC++
+ 
+ SUBDIRS = \
+ 	libFLAC \
+@@ -230,12 +230,6 @@ SUBDIRS = \
+ 	metaflac \
+ 	monkeys_audio_utilities \
+ 	$(XMMS_DIRS) \
+-	plugin_winamp2 \
+-	test_grabbag \
+-	test_libs_common \
+-	test_libFLAC \
+-	test_seeking \
+-	test_streams \
+ 	$(CPPLIBS_DIRS)
+ 
+ 
+@@ -256,9 +250,8 @@ RECURSIVE_TARGETS = info-recursive dvi-r
+ 	check-recursive installcheck-recursive
+ DIST_COMMON = $(srcdir)/Makefile.in Makefile.am
+ DIST_SUBDIRS = libFLAC share flac metaflac monkeys_audio_utilities \
+-	plugin_common plugin_xmms plugin_winamp2 test_grabbag \
+-	test_libs_common test_libFLAC test_seeking test_streams \
+-	libFLAC++ test_libFLAC++
++	plugin_common plugin_xmms plugin_winamp2 \
++	libFLAC++
+ all: all-recursive
+ 
+ .SUFFIXES:

@@ -22,6 +22,8 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_MAINTAINER:=Vasilis Tsiligiannis <acinonyx@openwrt.gr>
 
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/nsd/default
@@ -30,7 +32,6 @@ define Package/nsd/default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  DEPENDS:=+libevent2
 endef
 
 define Package/nsd/default/description
@@ -85,7 +86,7 @@ endef
 
 CONFIGURE_ARGS+= \
 	--disable-checking \
-	--with-libevent="$(STAGING_DIR)/usr" \
+	--with-libevent=no \
 	--with-user="network" \
 
 CONFIGURE_VARS+= \

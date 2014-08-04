@@ -64,7 +64,7 @@ $(call Package/rtorrent/Default/description)
  This package is built with xmlrpc support
 endef
 
-TARGET_LDFLAGS += -lpthread -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
+TARGET_LDFLAGS += -lz -lpthread -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
 
 CONFIGURE_ARGS+= \
 	--enable-shared \
@@ -90,4 +90,4 @@ endef
 Package/rtorrent-rpc/install = $(Package/rtorrent/install)
 
 $(eval $(call BuildPackage,rtorrent))
-$(eval $(call BuildPackage,rtorrent-rpc))
+#$(eval $(call BuildPackage,rtorrent-rpc))

@@ -1,0 +1,28 @@
+menu "Aria2 configuration"
+	depends on PACKAGE_aria2
+
+choice
+	prompt "SSL library"
+	default ARIA2_OPENSSL
+
+config ARIA2_OPENSSL
+	bool "OpenSSL"
+
+config ARIA2_GNUTLS
+	bool "GNUTLS"
+
+config ARIA2_NOSSL
+	bool "No SSL support"
+
+endchoice
+
+config ARIA2_BITTORRENT
+	bool "Enable bittorrent support"
+	depends on ARIA2_OPENSSL
+	default n
+
+config ARIA2_METALINK
+	bool "Enable metalink support"
+	default N
+
+endmenu

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openconnect
 PKG_VERSION:=6.00
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/openconnect/
@@ -25,7 +25,8 @@ define Package/openconnect
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+libxml2 +kmod-tun +resolveip +OPENCONNECT_OPENSSL:libopenssl +OPENCONNECT_GNUTLS:libgnutls
-  TITLE:=VPN client compatible with Cisco's AnyConnect SSL VPN
+  TITLE:=OpenConnect VPN client (Cisco AnyConnect compatible)
+  MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
   URL:=http://www.infradead.org/openconnect/
   SUBMENU:=VPN
 endef
