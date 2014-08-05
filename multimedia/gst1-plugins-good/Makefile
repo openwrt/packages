@@ -1,4 +1,4 @@
-## Copyright (C) 2009-2011 OpenWrt.org
+## Copyright (C) 2009-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,16 +7,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
-PKG_VERSION:=1.0.7
+PKG_VERSION:=1.2.3
 PKG_RELEASE:=1
+
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+
 PKG_LICENSE:=LGPLv2
 PKG_LICENSE_FILE:=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-good/
-PKG_MD5SUM:=e4b1c825475a9b478fe29e8e9f34516f
+PKG_MD5SUM:=1a1f96bc27ad446e559474299160a9a8
 
 PKG_BUILD_DEPENDS:= gstreamer1 gst1-plugins-base liboil
 
@@ -31,6 +33,7 @@ define Package/gstreamer1/Default
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
+  DEPENDS:= $(ICONV_DEPENDS)
 endef
 
 define Package/gstreamer1/description/Default
@@ -113,6 +116,7 @@ CONFIGURE_ARGS += \
 
 EXTRA_LDFLAGS+= \
 	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
+	$(if $(ICONV_FULL),-liconv) \
 
 
 define Package/gst1-plugins-good/install
@@ -162,13 +166,13 @@ $(eval $(call GstBuildPlugin,id3demux,ID3v1/v2 demuxer,pbutils tag,,))
 $(eval $(call GstBuildPlugin,icydemux,icy demuxer,audio tag,,))
 $(eval $(call GstBuildPlugin,interleave,audio interleave,audio,,))
 $(eval $(call GstBuildPlugin,level,audio level,audio,,))
-$(eval $(call GstBuildPlugin,audioparsers,audioparsers,audio tag,,))
+$(eval $(call GstBuildPlugin,audioparsers,audioparsers,audio tag pbutils,,))
 $(eval $(call GstBuildPlugin,multifile,multiple files access,video,,))
 $(eval $(call GstBuildPlugin,multipart,multipart stream handling,,,))
 $(eval $(call GstBuildPlugin,ossaudio,OSS audio support,audio,,))
 $(eval $(call GstBuildPlugin,replaygain,volume normalization,pbutils,,))
 $(eval $(call GstBuildPlugin,rtp,RTP,audio rtp tag pbutils video,,))
-$(eval $(call GstBuildPlugin,rtsp,RTSP,rtp rtsp sdp,,))
+$(eval $(call GstBuildPlugin,rtsp,RTSP,net rtp rtsp sdp,,))
 $(eval $(call GstBuildPlugin,souphttpsrc,soup input,audio tag,,+libsoup))
 $(eval $(call GstBuildPlugin,spectrum,spectrum data output,audio fft,,))
 $(eval $(call GstBuildPlugin,udp,UDP,net,,))
