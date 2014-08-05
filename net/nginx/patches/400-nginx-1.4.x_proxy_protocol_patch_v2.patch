@@ -882,17 +882,6 @@ Index: nginx-1.4.7/src/http/ngx_http_request.c
  
  #if (NGX_HTTP_SSL)
  
-@@ -1291,6 +1368,10 @@ ngx_http_read_request_header(ngx_http_re
-     c = r->connection;
-     rev = c->read;
- 
-+fprintf(stderr, "DEBUG: pos: %p, last: %p, start: %p, end: %p\n",
-+		r->header_in->pos, r->header_in->last, r->header_in->start,
-+		r->header_in->end);
-+
-     n = r->header_in->last - r->header_in->pos;
- 
-     if (n > 0) {
 Index: nginx-1.4.7/src/http/ngx_http_upstream.c
 ===================================================================
 --- nginx-1.4.7.orig/src/http/ngx_http_upstream.c
