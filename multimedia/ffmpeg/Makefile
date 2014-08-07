@@ -110,14 +110,10 @@ FFMPEG_CUSTOM_PARSERS:= \
 FFMPEG_CUSTOM_PROTOCOLS:= \
 	file http pipe rtp tcp udp
 
-FFMPEG_MINI_ENCODERS:= \
-
 FFMPEG_MINI_DECODERS:= \
 	aac \
 	ac3 \
-	atrac3 \
 	flac \
-	h263 \
 	h264 \
 	jpegls \
 	mp3 \
@@ -129,15 +125,10 @@ FFMPEG_MINI_DECODERS:= \
 	wmav1 \
 	wmav2 \
 
-FFMPEG_MINI_MUXERS:= \
-	ffm \
-
 FFMPEG_MINI_DEMUXERS := \
 	aac \
 	ac3 \
-	asf \
 	avi \
-	ffm \
 	flac \
 	h264 \
 	matroska \
@@ -145,19 +136,16 @@ FFMPEG_MINI_DEMUXERS := \
 	mp3 \
 	mpegts \
 	mpegvideo \
-	sdp \
-	rtsp \
 
 FFMPEG_MINI_PARSERS:= \
 	ac3 \
 	flac \
-	h263 \
 	h264 \
 	mpeg4video \
 	mpegaudio \
 
 FFMPEG_MINI_PROTOCOLS := \
-	file http rtp tcp udp \
+	file \
 
 FFMPEG_AUDIO_DECODERS:= \
 	aac \
@@ -486,9 +474,7 @@ ifeq ($(BUILD_VARIANT),mini)
 	--disable-swresample \
 	--disable-swscale \
 	--disable-everything \
-	$(call FFMPEG_ENABLE,encoder,$(FFMPEG_MINI_ENCODERS)) \
 	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_MINI_DECODERS)) \
-	$(call FFMPEG_ENABLE,muxer,$(FFMPEG_MINI_MUXERS)) \
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_MINI_DEMUXERS)) \
 	$(call FFMPEG_ENABLE,parser,$(FFMPEG_MINI_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_MINI_PROTOCOLS)) \
