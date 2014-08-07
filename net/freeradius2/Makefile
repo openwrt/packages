@@ -18,6 +18,7 @@ PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/freeradius-server-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
+PKG_CHECK_FORMAT_SECURITY:=0
 
 PKG_CONFIG_DEPENDS := \
   FREERADIUS_OPENSSL \
