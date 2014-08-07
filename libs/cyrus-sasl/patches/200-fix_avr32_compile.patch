@@ -1,0 +1,11 @@
+--- a/config/config.sub
++++ b/config/config.sub
+@@ -241,7 +241,7 @@ case $basic_machine in
+ 		| mips64vr5000 | mips64vr5000el | mcore | s390 | s390x \
+ 		| sparc | sparclet | sparclite | sparc64 | sparcv9 | sparcv9b \
+ 		| v850 | c4x \
+-		| thumb | d10v | d30v | fr30 | avr | openrisc | tic80 \
++		| thumb | d10v | d30v | fr30 | avr | avr32 | openrisc | tic80 \
+ 		| pj | pjl | h8500 | z8k)
+ 		basic_machine=$basic_machine-unknown
+ 		;;
