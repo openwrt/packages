@@ -100,6 +100,11 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_PROTOCOL_tcp
 	select FFMPEG_CUSTOM_PROTOCOL_udp
 
+comment "External Libraries ---"
+
+config FFMPEG_CUSTOM_SELECT_speex
+	bool "Speex"
+
 comment "Encoders ---"
 
 config FFMPEG_CUSTOM_ENCODER_ac3
@@ -223,9 +228,6 @@ config FFMPEG_CUSTOM_DECODER_pcm_s16le
 config FFMPEG_CUSTOM_DECODER_png
 	bool "PNG"
 	select FFMPEG_CUSTOM_DECODER_zlib
-
-config FFMPEG_CUSTOM_SELECT_speex
-	bool "Speex"
 
 config FFMPEG_CUSTOM_DECODER_vorbis
 	bool "Vorbis"
