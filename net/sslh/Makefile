@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://rutschle.net/tech/
-PKG_MD5SUM:=1e85b84eb82a96b81de9b1e637a3e795
+PKG_MD5SUM:=c6e7d1cb0adb15f6efe480e36d98c560
 
 include $(INCLUDE_DIR)/package.mk
 
