@@ -1,0 +1,31 @@
+Index: tiff-4.0.3/tools/ppm2tiff.c
+===================================================================
+--- tiff-4.0.3.orig/tools/ppm2tiff.c	2013-06-23 10:36:50.779629492 -0400
++++ tiff-4.0.3/tools/ppm2tiff.c	2013-06-23 10:36:50.775629494 -0400
+@@ -89,6 +89,7 @@
+ 	int c;
+ 	extern int optind;
+ 	extern char* optarg;
++	tmsize_t scanline_size;
+ 
+ 	if (argc < 2) {
+ 	    fprintf(stderr, "%s: Too few arguments\n", argv[0]);
+@@ -237,8 +238,16 @@
+ 	}
+ 	if (TIFFScanlineSize(out) > linebytes)
+ 		buf = (unsigned char *)_TIFFmalloc(linebytes);
+-	else
+-		buf = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(out));
++	else {
++		scanline_size = TIFFScanlineSize(out);
++		if (scanline_size != 0)
++			buf = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(out));
++		else {
++			fprintf(stderr, "%s: scanline size overflow\n",infile);
++			(void) TIFFClose(out);
++			exit(-2);
++			}
++		}
+ 	if (resolution > 0) {
+ 		TIFFSetField(out, TIFFTAG_XRESOLUTION, resolution);
+ 		TIFFSetField(out, TIFFTAG_YRESOLUTION, resolution);

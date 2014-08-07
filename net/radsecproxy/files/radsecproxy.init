@@ -1,0 +1,16 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=70
+
+USE_PROCD=1
+PROG=/usr/sbin/radsecproxy
+CONFFILE=/etc/radsecproxy.conf
+
+start_service() {
+	procd_open_instance
+	procd_set_param command $PROG -f -c $CONFFILE
+	procd_set_param file $CONFFILE
+	procd_set_param respawn
+	procd_close_instance
+}

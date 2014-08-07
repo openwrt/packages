@@ -1,3 +1,10 @@
+# 
+# Copyright (C) 2014 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup
@@ -8,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.44
 PKG_MD5SUM:=92aa3667357157e8f3489bcca287f2fa
 
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILE:=COPYING
+
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -15,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 TARGET_LDFLAGS+=\
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib
+	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-liconv)
 
 define Package/libsoup
   SECTION:=libs
@@ -23,7 +33,7 @@ define Package/libsoup
   TITLE:=libsoup
   URL:=http://live.gnome.org/LibSoup
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-  DEPENDS:=+glib2 +libxml2 +libgnutls +libsqlite3
+  DEPENDS:=+glib2 +libxml2 +libgnutls +libsqlite3 $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
 define Build/Configure

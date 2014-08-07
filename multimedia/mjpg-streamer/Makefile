@@ -13,7 +13,7 @@ PKG_VERSION:=r$(PKG_REV)
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).1.tar.bz2
 PKG_SOURCE_URL:=https://svn.code.sf.net/p/mjpg-streamer/code/mjpg-streamer-experimental
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)

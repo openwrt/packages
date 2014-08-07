@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2011 OpenWrt.org
+# Copyright (C) 2009-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,7 +10,9 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gst1-plugins-ugly
 PKG_VERSION:=1.2.3
 PKG_RELEASE:=1
+
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+
 PKG_LICENSE:=LGPLv2
 PKG_LICENSE_FILE:=COPYING
 
@@ -37,6 +39,7 @@ define Package/gstreamer1/Default
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
+  DEPENDS:= $(ICONV_DEPENDS)
 endef
 
 define Package/gstreamer1/description/Default
@@ -91,6 +94,7 @@ CONFIGURE_ARGS += \
 
 EXTRA_LDFLAGS+= \
 	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
+	$(if $(ICONV_FULL),-liconv) \
 
 
 define Package/gst1-plugins-ugly/install

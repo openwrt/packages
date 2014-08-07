@@ -46,14 +46,6 @@ $(call Package/attr/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+=library
-  KCONFIG:= \
-    CONFIG_CIFS_XATTR=y \
-    CONFIG_EXT4_FS_XATTR=y \
-    CONFIG_JFFS2_FS_XATTR=y \
-    CONFIG_REISERFS_FS_XATTR=y \
-    CONFIG_SQUASHFS_XATTR=y \
-    CONFIG_TMPFS_XATTR=y \
-
 endef
 
 define Package/libattr/description

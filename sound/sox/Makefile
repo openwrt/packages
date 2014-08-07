@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sox
 PKG_VERSION:=14.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/sox
@@ -29,7 +29,9 @@ TARGET_LDFLAGS+= \
 define Package/sox
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+BUILD_PATENTED:lame-lib +BUILD_PATENTED:libmad +BUILD_PATENTED:libid3tag +libvorbis +libvorbisidec +libgsm +alsa-lib +libsndfile +libflac +libmagic +libpng +libao +libffmpeg
+  DEPENDS:=+BUILD_PATENTED:lame-lib +BUILD_PATENTED:libmad +BUILD_PATENTED:libid3tag \
+		+libvorbis +libvorbisidec +alsa-lib +libsndfile +libflac \
+		+libmagic +libpng +libffmpeg
   TITLE:=Sox is a general purpose sound converter/player/recorder
   URL:=http://sox.sourceforge.net/
   MAINTAINER:=Hamish Guthrie <hcg@openwrt.org>
@@ -45,10 +47,9 @@ endef
 
 define Build/Configure
 	$(call Build/Configure/Default, \
-		--disable-external-gsm \
-		--disable-oss \
-		--enable-alsa \
-		--disable-libao \
+		--without-oss \
+		--without-ao \
+		--with-alsa \
 		--without-libltdl \
 		--with-ogg \
 		--with-flac \

@@ -1,0 +1,17 @@
+Description: Buffer overflow in gif2tiff
+Bug: http://bugzilla.maptools.org/show_bug.cgi?id=2450
+Bug-Debian: http://bugs.debian.org/719303
+
+Index: tiff-4.0.3/tools/gif2tiff.c
+===================================================================
+--- tiff-4.0.3.orig/tools/gif2tiff.c	2013-08-22 11:46:11.960846910 -0400
++++ tiff-4.0.3/tools/gif2tiff.c	2013-08-22 11:46:11.956846910 -0400
+@@ -333,6 +333,8 @@
+     int status = 1;
+ 
+     datasize = getc(infile);
++    if (datasize > 12)
++	return 0;
+     clear = 1 << datasize;
+     eoi = clear + 1;
+     avail = clear + 2;

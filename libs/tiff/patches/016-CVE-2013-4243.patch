@@ -1,0 +1,37 @@
+Index: tiff/tools/gif2tiff.c
+===================================================================
+--- tiff.orig/tools/gif2tiff.c
++++ tiff/tools/gif2tiff.c
+@@ -280,6 +280,10 @@ readgifimage(char* mode)
+         fprintf(stderr, "no colormap present for image\n");
+         return (0);
+     }
++    if (width == 0 || height == 0) {
++        fprintf(stderr, "Invalid value of width or height\n");
++        return(0);
++    }
+     if ((raster = (unsigned char*) _TIFFmalloc(width*height+EXTRAFUDGE)) == NULL) {
+         fprintf(stderr, "not enough memory for image\n");
+         return (0);
+@@ -404,6 +408,10 @@ process(register int code, unsigned char
+             fprintf(stderr, "bad input: code=%d is larger than clear=%d\n",code, clear);
+             return 0;
+         }
++        if (*fill >= raster + width*height) {
++            fprintf(stderr, "raster full before eoi code\n");
++            return 0;
++        }
+ 	*(*fill)++ = suffix[code];
+ 	firstchar = oldcode = code;
+ 	return 1;
+@@ -434,6 +442,10 @@ process(register int code, unsigned char
+     }
+     oldcode = incode;
+     do {
++        if (*fill >= raster + width*height) {
++            fprintf(stderr, "raster full before eoi code\n");
++            return 0;
++        }
+ 	*(*fill)++ = *--stackp;
+     } while (stackp > stack);
+     return 1;

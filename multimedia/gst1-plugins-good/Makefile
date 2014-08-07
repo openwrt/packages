@@ -1,4 +1,4 @@
-## Copyright (C) 2009-2011 OpenWrt.org
+## Copyright (C) 2009-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,16 +7,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
-PKG_VERSION:=1.0.7
+PKG_VERSION:=1.2.3
 PKG_RELEASE:=1
+
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+
 PKG_LICENSE:=LGPLv2
 PKG_LICENSE_FILE:=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-good/
-PKG_MD5SUM:=e4b1c825475a9b478fe29e8e9f34516f
+PKG_MD5SUM:=1a1f96bc27ad446e559474299160a9a8
 
 PKG_BUILD_DEPENDS:= gstreamer1 gst1-plugins-base liboil
 
@@ -31,6 +33,7 @@ define Package/gstreamer1/Default
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
+  DEPENDS:= $(ICONV_DEPENDS)
 endef
 
 define Package/gstreamer1/description/Default
@@ -59,47 +62,26 @@ CONFIGURE_ARGS += \
 	--disable-examples \
 	\
 	--disable-aalib \
-	--disable-alpha \
 	--disable-annodex \
-	--disable-apetag \
-	--disable-auparse \
-	--disable-avi \
 	--disable-bz2 \
 	--disable-cairo \
 	--disable-directsound \
 	--disable-dv1394 \
-	--disable-effectv \
 	--disable-esd \
-	--disable-flv \
-	--disable-flx \
 	--disable-gconf \
 	--disable-gconftool \
 	--disable-gdk_pixbuf \
-	--disable-goom \
-	--disable-goom2k1 \
 	--disable-gst_v4l2 \
 	--disable-hal \
-	--disable-jpeg \
-	--disable-law \
 	--disable-libcaca \
 	--disable-libdv \
-	--disable-libpng \
-	--disable-matroska \
-	--disable-monoscope \
 	--disable-osx_audio \
 	--disable-osx_video \
 	--disable-pulse \
 	--disable-qtdemux \
 	--disable-rtspmanager \
-	--disable-smpte \
 	--disable-shout2 \
-	--disable-speex \
 	--disable-sunaudio \
-	--disable-taglib \
-	--disable-videobox \
-	--disable-videocrop \
-	--disable-videofilter \
-	--disable-videomixer \
 	--disable-wavpack \
 	--disable-x \
 	--disable-xshm \
@@ -113,6 +95,7 @@ CONFIGURE_ARGS += \
 
 EXTRA_LDFLAGS+= \
 	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
+	$(if $(ICONV_FULL),-liconv) \
 
 
 define Package/gst1-plugins-good/install
@@ -152,27 +135,68 @@ define GstBuildPlugin
   $$(eval $$(call BuildPackage,gst1-mod-$(1)))
 endef
 
+#$(eval $(call GstBuildPlugin,1394,IEEE 1394 support,,,))
+$(eval $(call GstBuildPlugin,alaw,alaw codec,audio,,))
+$(eval $(call GstBuildPlugin,alpha,alpha support,video,,))
+$(eval $(call GstBuildPlugin,alphacolor,alphacolor support,video,,))
+$(eval $(call GstBuildPlugin,apetag,apetag support,audio pbutils tag video,,))
 $(eval $(call GstBuildPlugin,audiofx,audio effects,audio fft controller,,))
+$(eval $(call GstBuildPlugin,audioparsers,audioparsers,audio tag pbutils,,))
+$(eval $(call GstBuildPlugin,auparse,auparse,audio tag pbutils,,))
 $(eval $(call GstBuildPlugin,autodetect,format auto-detection,,,))
+$(eval $(call GstBuildPlugin,avi,avi support,audio riff tag video,,))
 $(eval $(call GstBuildPlugin,cutter,audio cutter,audio,,))
 $(eval $(call GstBuildPlugin,debug,debugging,,,))
+$(eval $(call GstBuildPlugin,deinterlace,deinterlace support,video,,))
+$(eval $(call GstBuildPlugin,dtmf,dtmf support,rtp,,))
+#$(eval $(call GstBuildPlugin,dv,dv support,audio tag video,,))
+$(eval $(call GstBuildPlugin,effectv,effectvsupport,video,,))
 $(eval $(call GstBuildPlugin,equalizer,audio equalizer,audio controller,,))
 $(eval $(call GstBuildPlugin,flac,FLAC codec,audio pbutils tag,,+libflac))
-$(eval $(call GstBuildPlugin,id3demux,ID3v1/v2 demuxer,pbutils tag,,))
+$(eval $(call GstBuildPlugin,flv,flv codec,audio pbutils tag video,,))
+$(eval $(call GstBuildPlugin,flxdec,flx codec,,,))
+#$(eval $(call GstBuildPlugin,gdkpixbuf,gdkpixbuf support,video,,))
+$(eval $(call GstBuildPlugin,goom2k1,goom support,,,))
+$(eval $(call GstBuildPlugin,goom,goom support,,,))
 $(eval $(call GstBuildPlugin,icydemux,icy demuxer,audio tag,,))
+$(eval $(call GstBuildPlugin,id3demux,ID3v1/v2 demuxer,pbutils tag,,))
+$(eval $(call GstBuildPlugin,imagefreeze,imagefreeze support,,,))
 $(eval $(call GstBuildPlugin,interleave,audio interleave,audio,,))
+$(eval $(call GstBuildPlugin,isomp4,isomp4 support,audio pbutils riff rtp tag video,,))
+#$(eval $(call GstBuildPlugin,jack,jack support,audio,,))
+$(eval $(call GstBuildPlugin,jpeg,jpeg support,video,,+libjpeg))
 $(eval $(call GstBuildPlugin,level,audio level,audio,,))
-$(eval $(call GstBuildPlugin,audioparsers,audioparsers,audio tag,,))
+$(eval $(call GstBuildPlugin,matroska,matroska support,audio pbutils riff tag video,,))
+$(eval $(call GstBuildPlugin,mulaw,mulaw support,audio,,))
 $(eval $(call GstBuildPlugin,multifile,multiple files access,video,,))
 $(eval $(call GstBuildPlugin,multipart,multipart stream handling,,,))
+$(eval $(call GstBuildPlugin,navigationtest,navigationtest support,video,,))
+$(eval $(call GstBuildPlugin,oss4audio,OSS 4 audio support,audio tag,,))
 $(eval $(call GstBuildPlugin,ossaudio,OSS audio support,audio,,))
+$(eval $(call GstBuildPlugin,png,png support,video,,+libpng))
+#$(eval $(call GstBuildPlugin,pulse,pulse support,audio pbutils tag video,,))
 $(eval $(call GstBuildPlugin,replaygain,volume normalization,pbutils,,))
+$(eval $(call GstBuildPlugin,rtpmanager,RTP manager,audio net rtp tag pbutils video,,))
 $(eval $(call GstBuildPlugin,rtp,RTP,audio rtp tag pbutils video,,))
-$(eval $(call GstBuildPlugin,rtsp,RTSP,rtp rtsp sdp,,))
+$(eval $(call GstBuildPlugin,rtsp,RTSP,net rtp rtsp sdp,,))
+$(eval $(call GstBuildPlugin,shapewipe,shapewipe support,video,,))
+#$(eval $(call GstBuildPlugin,shout2,shout2 support,,,))
+$(eval $(call GstBuildPlugin,smpte,smpte support,video,,))
 $(eval $(call GstBuildPlugin,souphttpsrc,soup input,audio tag,,+libsoup))
 $(eval $(call GstBuildPlugin,spectrum,spectrum data output,audio fft,,))
+#$(eval $(call GstBuildPlugin,speex,speex support,audio tag,,))
+#$(eval $(call GstBuildPlugin,sty4menc,sty4menc support,video,,))
+#$(eval $(call GstBuildPlugin,taglib,taglib support,tag,,))
 $(eval $(call GstBuildPlugin,udp,UDP,net,,))
+#$(eval $(call GstBuildPlugin,video4linux2,video4linux2 support,video,,))
+$(eval $(call GstBuildPlugin,videobox,videobox support,video,,))
+$(eval $(call GstBuildPlugin,videocrop,videocrop support,video,,))
+$(eval $(call GstBuildPlugin,videofilter,videofilter support,video,,))
+$(eval $(call GstBuildPlugin,videomixer,videomixer support,video,,))
+#$(eval $(call GstBuildPlugin,vpx,vpx support,tag video,,))
 $(eval $(call GstBuildPlugin,wavenc,Wav encoder,riff,,))
+#$(eval $(call GstBuildPlugin,wavpack,Wav packer,audio riff tag,,))
 $(eval $(call GstBuildPlugin,wavparse,Wav parser,audio riff tag,,))
+#$(eval $(call GstBuildPlugin,ximagesrc,ximagesrc support,video,,))
 
 $(eval $(call BuildPackage,gst1-plugins-good))

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011 OpenWrt.org
+# Copyright (C) 2011-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,8 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
+
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+
 PKG_LICENSE:=LGPLv2 GPLv2
 PKG_LICENSE_FILE:=COPYING.LIB COPYING
 
@@ -32,6 +34,7 @@ define Package/gstreamer1/Default
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
+  DEPENDS:= $(ICONV_DEPENDS)
 endef
 
 define Package/gstreamer1/description/Default
@@ -120,14 +123,16 @@ CONFIGURE_ARGS += \
 	--disable-schro \
 	--disable-zbar \
 	--disable-vp8 \
-	--disable-librfb \
 	\
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
 	--without-x \
 
+TARGET_CFLAGS+= -std=gnu99
+
 EXTRA_LDFLAGS+= \
 	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
+	$(if $(ICONV_FULL),-liconv) \
 
 
 define Package/gst1-plugins-ugly/install
@@ -164,8 +169,9 @@ define GstBuildLibrary
 
   $$(eval $$(call BuildPackage,libgst1$(1)))
 endef
-$(eval $(call GstBuildLibrary,photography,photography,,))
 
+$(eval $(call GstBuildLibrary,photography,photography,,))
+$(eval $(call GstBuildLibrary,basecamerabinsrc,basecamerabinsrc,app,))
 
 # 1: short name
 # 2: description
@@ -199,58 +205,34 @@ define GstBuildPlugin
   $$(eval $$(call BuildPackage,gst1-mod-$(1)))
 endef
 
-$(eval $(call GstBuildPlugin,adpcmdec,adpcm decoding support,,,))
-$(eval $(call GstBuildPlugin,adpcmenc,adpcm encoding support,,,))
-$(eval $(call GstBuildPlugin,aiff,aiff support,,,))
+$(eval $(call GstBuildPlugin,adpcmdec,adpcm decoding support,audio,,))
+$(eval $(call GstBuildPlugin,adpcmenc,adpcm encoding support,audio,,))
+$(eval $(call GstBuildPlugin,aiff,aiff support,audio tag,,))
 $(eval $(call GstBuildPlugin,asfmux,asf muxing support,rtp,,))
-$(eval $(call GstBuildPlugin,audioparsersbad,audioparsers support,audio tag,,))
 $(eval $(call GstBuildPlugin,autoconvert,autoconvert support,,,))
-$(eval $(call GstBuildPlugin,camerabin,camerabin support,photography,,))
-$(eval $(call GstBuildPlugin,legacyresample,legacyresample support,,,+liboil +librt))
 $(eval $(call GstBuildPlugin,bayer,bayer support,video,,))
-$(eval $(call GstBuildPlugin,cdxaparse,cdxaparse support,riff,,))
+$(eval $(call GstBuildPlugin,camerabin2,camerabin support,basecamerabinsrc photography tag pbutils app,,))
 $(eval $(call GstBuildPlugin,dataurisrc,dataurisrc support,,,))
-$(eval $(call GstBuildPlugin,dccp,dccp support,,,))
-$(eval $(call GstBuildPlugin,debugutilsbad,debugutils support,,,))
-$(eval $(call GstBuildPlugin,dtmf,dtmf support,rtp,,))
+$(eval $(call GstBuildPlugin,debugutilsbad,debugutils support,video,,))
 $(eval $(call GstBuildPlugin,dvdspu,dvdspu support,video,,))
 $(eval $(call GstBuildPlugin,festival,festival support,audio,,))
-$(eval $(call GstBuildPlugin,freeze,freeze support,,,))
 $(eval $(call GstBuildPlugin,frei0r,frei0r support,controller video,,))
-$(eval $(call GstBuildPlugin,h264parse,h264parse support,,,))
-$(eval $(call GstBuildPlugin,hdvparse,hdvparse support,,,))
 $(eval $(call GstBuildPlugin,id3tag,id3tag support,tag,,))
-$(eval $(call GstBuildPlugin,invtelecine,invtelecine support,,,))
 $(eval $(call GstBuildPlugin,jpegformat,jpegformat support,tag,,))
-#$(eval $(call GstBuildPlugin,librfbsrc,librfb support,,,))
 $(eval $(call GstBuildPlugin,liveadder,liveadder support,audio,,))
-$(eval $(call GstBuildPlugin,mpegdemux,mpegdemux support,tag,,+liboil +librt))
-$(eval $(call GstBuildPlugin,mpegtsmux,mpegtsmux support,,,))
+$(eval $(call GstBuildPlugin,mpegpsdemux,mpegpsdemux support,pbutils tag,,))
 $(eval $(call GstBuildPlugin,mpegpsmux,mpegpsmux support,,,))
-$(eval $(call GstBuildPlugin,mpeg4videoparse,mpeg4videoparse support,,,))
-$(eval $(call GstBuildPlugin,mpegvideoparse,mpegvideoparse support,,,))
-$(eval $(call GstBuildPlugin,mve,mve support,,,))
-$(eval $(call GstBuildPlugin,mxf,mxf support,video,,))
-$(eval $(call GstBuildPlugin,nsf,nsf support,,,))
-$(eval $(call GstBuildPlugin,nuvdemux,nuvdemux support,,,))
+#$(eval $(call GstBuildPlugin,mpegtsdemux,mpegtsdemux support,mpegts pbutils tag,,))
+#$(eval $(call GstBuildPlugin,mpegtsmux,mpegtsmux support,video,,))
+$(eval $(call GstBuildPlugin,mxf,mxf support,audio video,,))
 $(eval $(call GstBuildPlugin,pcapparse,pcapparse support,,,))
 $(eval $(call GstBuildPlugin,pnm,pnm support,video,,))
-$(eval $(call GstBuildPlugin,qtmux,qtmux support,tag,,))
-$(eval $(call GstBuildPlugin,rawparse,rawparse support,video,,))
-$(eval $(call GstBuildPlugin,rtpmux,rtpmux support,rtp,,))
-#$(eval $(call GstBuildPlugin,rfbsrc,rfb support,,,))
-$(eval $(call GstBuildPlugin,scaletempoplugin,scaletempo support,,,))
+$(eval $(call GstBuildPlugin,rawparse,rawparse support,audio video,,))
+$(eval $(call GstBuildPlugin,rfbsrc,librfb support,video,,))
 $(eval $(call GstBuildPlugin,sdpelem,sdp support,rtp sdp,,))
 $(eval $(call GstBuildPlugin,segmentclip,segmentclip support,audio,,))
-$(eval $(call GstBuildPlugin,selector,selector support,,,))
-$(eval $(call GstBuildPlugin,siren,siren support,rtp,,))
-$(eval $(call GstBuildPlugin,speed,speed support,,,))
+$(eval $(call GstBuildPlugin,siren,siren support,audio rtp,,))
+$(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
-$(eval $(call GstBuildPlugin,stereo,stereo support,audio controller,,))
-$(eval $(call GstBuildPlugin,tta,tta support,,,))
-$(eval $(call GstBuildPlugin,valve,valve support,,,))
-$(eval $(call GstBuildPlugin,videomeasure,videomeasure support,video,,))
-$(eval $(call GstBuildPlugin,videosignal,videosignal support,video,,))
-$(eval $(call GstBuildPlugin,vmnc,vmnc support,,,))
 
 $(eval $(call BuildPackage,gst1-plugins-bad))

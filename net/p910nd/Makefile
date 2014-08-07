@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2012 OpenWrt.org
+# Copyright (C) 2009-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=p910nd
-PKG_VERSION:=0.95
-PKG_RELEASE:=3
+PKG_VERSION:=0.97
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/p910nd
-PKG_MD5SUM:=c7ac6afdf7730ac8387a8e87198d4491
+PKG_LICENSE:=GPLv2
+PKG_LICENSE_FILES:=COPYING
+PKG_MD5SUM:=69461a6c54dca0b13ecad5b83864b43e
+PKG_MAINTAINER:=Philipp Kerling <pkerling@casix.org>
 
 PKG_INSTALL:=1
 
