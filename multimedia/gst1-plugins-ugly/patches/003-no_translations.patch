@@ -1,0 +1,35 @@
+diff -u --recursive gst-plugins-ugly-1.0.7-vanilla/configure.ac gst-plugins-ugly-1.0.7/configure.ac
+--- gst-plugins-ugly-1.0.7-vanilla/configure.ac	2013-06-01 19:59:46.199174835 -0500
++++ gst-plugins-ugly-1.0.7/configure.ac	2013-06-01 20:00:29.709453831 -0500
+@@ -479,7 +479,6 @@
+ tests/Makefile
+ tests/check/Makefile
+ m4/Makefile
+-po/Makefile.in
+ pkgconfig/Makefile
+ pkgconfig/gstreamer-plugins-ugly-uninstalled.pc
+ gst-plugins-ugly.spec
+diff -u --recursive gst-plugins-ugly-1.0.7-vanilla/Makefile.am gst-plugins-ugly-1.0.7/Makefile.am
+--- gst-plugins-ugly-1.0.7-vanilla/Makefile.am	2013-06-01 19:59:46.210174399 -0500
++++ gst-plugins-ugly-1.0.7/Makefile.am	2013-06-01 20:00:11.351179921 -0500
+@@ -1,7 +1,7 @@
+ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
+ 
+ SUBDIRS = \
+-	gst-libs gst ext m4 common pkgconfig po
++	gst-libs gst ext m4 common pkgconfig
+ 
+ # include before EXTRA_DIST for win32 assignment
+ include $(top_srcdir)/common/win32.mak
+diff -u --recursive gst-plugins-ugly-1.0.7-vanilla/Makefile.in gst-plugins-ugly-1.0.7/Makefile.in
+--- gst-plugins-ugly-1.0.7-vanilla/Makefile.in	2013-06-01 19:59:46.210174399 -0500
++++ gst-plugins-ugly-1.0.7/Makefile.in	2013-06-01 20:00:20.222829049 -0500
+@@ -453,7 +453,7 @@
+ top_srcdir = @top_srcdir@
+ DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
+ SUBDIRS = \
+-	gst-libs gst ext m4 common pkgconfig po
++	gst-libs gst ext m4 common pkgconfig
+ 
+ 
+ # the MANIFEST contains all win32 related files that should be disted
