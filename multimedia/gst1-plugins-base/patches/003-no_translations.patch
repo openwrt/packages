@@ -1,0 +1,49 @@
+diff -u --recursive gst-plugins-base-1.0.7-vanilla/configure.ac gst-plugins-base-1.0.7/configure.ac
+--- gst-plugins-base-1.0.7-vanilla/configure.ac	2013-06-01 19:48:21.931257133 -0500
++++ gst-plugins-base-1.0.7/configure.ac	2013-06-01 19:51:30.371829534 -0500
+@@ -923,7 +923,6 @@
+ docs/libs/Makefile
+ docs/plugins/Makefile
+ docs/version.entities
+-po/Makefile.in
+ common/Makefile
+ common/m4/Makefile
+ m4/Makefile
+diff -u --recursive gst-plugins-base-1.0.7-vanilla/Makefile.am gst-plugins-base-1.0.7/Makefile.am
+--- gst-plugins-base-1.0.7-vanilla/Makefile.am	2013-06-01 19:50:30.232202309 -0500
++++ gst-plugins-base-1.0.7/Makefile.am	2013-06-01 19:50:58.973069965 -0500
+@@ -11,7 +11,6 @@
+ 	gst-libs 		\
+ 	gst sys $(SUBDIRS_EXT) 	\
+ 	tools 			\
+-	po 			\
+ 	common 			\
+ 	m4
+ 
+@@ -20,7 +19,6 @@
+ 	gst-libs		\
+ 	gst sys ext		\
+ 	tools 			\
+-	po 			\
+ 	common 			\
+ 	m4
+ 
+diff -u --recursive gst-plugins-base-1.0.7-vanilla/Makefile.in gst-plugins-base-1.0.7/Makefile.in
+--- gst-plugins-base-1.0.7-vanilla/Makefile.in	2013-06-01 19:50:30.233202273 -0500
++++ gst-plugins-base-1.0.7/Makefile.in	2013-06-01 19:51:22.796130711 -0500
+@@ -492,7 +492,6 @@
+ 	gst-libs 		\
+ 	gst sys $(SUBDIRS_EXT) 	\
+ 	tools 			\
+-	po 			\
+ 	common 			\
+ 	m4
+ 
+@@ -501,7 +500,6 @@
+ 	gst-libs		\
+ 	gst sys ext		\
+ 	tools 			\
+-	po 			\
+ 	common 			\
+ 	m4
+ 

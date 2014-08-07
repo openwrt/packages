@@ -1,5 +1,5 @@
 # 
-# Copyright (C) 2007-2010 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,16 +9,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liboil
 PKG_VERSION:=0.3.17
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://liboil.freedesktop.org/download/
 PKG_MD5SUM:=47dc734f82faeb2964d97771cfd2e701
 
+PKG_LICENSE:=FREE
+PKG_LICENSE_FILE:=COPYING
+
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/liboil
   SECTION:=libs
@@ -26,7 +30,7 @@ define Package/liboil
   TITLE:=simple functions optimized for various CPUs
   URL:=http://liboil.freedesktop.org/wiki/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-  DEPENDS:=+librt
+  DEPENDS:=+librt $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
 define Package/liboil/description
@@ -42,7 +46,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 
-TARGET_CFLAGS += $(FPIC)
+TARGET_CFLAGS += $(FPIC) $(if $(ICONV_FULL),-liconv) $(if $(INTL_FULL),-lintl)
 
 # XXX: VFP_CFLAGS is set to '-mfpu=vfp' on arm by configure, but that breaks 
 # final linking stages, so override it until we find why
