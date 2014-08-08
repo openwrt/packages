@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2012 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -26,9 +26,9 @@ define Package/bash
 endef
 
 define Package/bash/description
-	Bash is an sh-compatible command language interpreter that executes
-	commands read from the standard input or from a file. Bash also
-	incorporates useful features from the Korn and C shells (ksh and csh).
+  Bash is an sh-compatible command language interpreter that executes
+  commands read from the standard input or from a file. Bash also
+  incorporates useful features from the Korn and C shells (ksh and csh).
 endef
 
 
@@ -60,5 +60,6 @@ define Package/bash/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/bash $(1)/bin/
 	ln -sf bash $(1)/bin/rbash
 endef
+
 
 $(eval $(call BuildPackage,bash))
