@@ -1,0 +1,20 @@
+--- a/src/lxc/lxc-checkconfig.in
++++ b/src/lxc/lxc-checkconfig.in
+@@ -4,6 +4,17 @@
+ : ${CONFIG:=/proc/config.gz}
+ : ${GREP:=zgrep}
+ : ${MODNAME:=configs}
++: ${ZGREP:=zgrep}
++: ${GUNZIP:=gunzip}
++
++if [ -z $(which $ZGREP) ] && ! [ -z $(which $GUNZIP) ] && [ -x $(which $GUNZIP) ] &&  [ -f $CONFIG ] && [ "$CONFIG" == "/proc/config.gz" ] ; then
++
++	CONFIG_NEW="/tmp/config-$(uname -r)"
++	$GUNZIP -c $CONFIG > $CONFIG_NEW
++	CONFIG=$CONFIG_NEW
++
++	GREP=grep
++fi
+ 
+ SETCOLOR_SUCCESS="printf \\033[1;32m"
+ SETCOLOR_FAILURE="printf \\033[1;31m"
