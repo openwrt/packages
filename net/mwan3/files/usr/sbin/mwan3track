@@ -1,0 +1,65 @@
+#!/bin/sh
+
+[ -z "$9" ] && echo "Error: should not be started manually" && exit 0
+
+if [ -e /var/run/mwan3track-$1.pid ] ; then
+	kill $(cat /var/run/mwan3track-$1.pid) &> /dev/null
+	rm /var/run/mwan3track-$1.pid &> /dev/null
+fi
+
+echo "$$" > /var/run/mwan3track-$1.pid
+
+score=$(($7+$8))
+track_ips=$(echo $* | cut -d ' ' -f 9-99)
+host_up_count=0
+lost=0
+
+while true; do
+
+	for track_ip in $track_ips; do
+		ping -I $2 -c $4 -W $5 -s 4 -q $track_ip &> /dev/null
+		if [ $? -eq 0 ]; then
+			let host_up_count++
+		else
+			let lost++
+		fi
+	done
+		
+	if [ $host_up_count -lt $3 ]; then
+		let score--
+
+		if [ $score -lt $8 ]; then score=0 ; fi
+		if [ $score -eq $8 ]; then
+
+			logger -t mwan3track -p notice "Interface $1 ($2) is offline"
+			env -i ACTION=ifdown INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
+			score=0
+
+		fi
+
+	else
+
+		if [ $score -lt $(($7+$8)) ] && [ $lost -gt 0 ]; then
+
+			logger -t mwan3track -p info "Lost $(($lost*$4)) ping(s) on interface $1 ($2)"
+
+		fi
+
+		let score++
+		lost=0
+
+		if [ $score -gt $8 ]; then score=$(($7+$8)); fi
+		if [ $score -eq $8 ]; then
+
+			logger -t mwan3track -p notice "Interface $1 ($2) is online"
+			env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
+			rm /var/run/mwan3track-$1.pid
+			exit 0
+		fi
+	fi
+
+	host_up_count=0
+	sleep $6
+done
+
+exit 1
