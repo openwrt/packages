@@ -1,0 +1,7 @@
+#!/bin/sh
+
+[ -n "${IPKG_INSTROOT}" ] || {
+	/etc/init.d/vsftpd enabled || /etc/init.d/vsftpd enable
+	ln -s /var/run/vsftpd/vsftpd.vu /etc/pam.d/vsftpd
+	exit 0
+}
