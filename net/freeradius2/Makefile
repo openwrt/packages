@@ -218,7 +218,7 @@ endef
 
 define Package/freeradius2-mod-ldap
   $(call Package/freeradius2/Default)
-  DEPENDS:=freeradius2 +PACKAGE_freeradius2-mod-ldap:libopenldap
+  DEPENDS:=freeradius2 +libopenldap
   TITLE:=LDAP module
 endef
 
@@ -292,22 +292,19 @@ endef
 
 define Package/freeradius2-mod-sql-mysql
   $(call Package/freeradius2/Default)
-  DEPENDS:=freeradius2-mod-sql \
-  	+PACKAGE_freeradius2-mod-sql-mysql:libmysqlclient-r
+  DEPENDS:=freeradius2-mod-sql +libmysqlclient-r
   TITLE:=MySQL module
 endef
 
 define Package/freeradius2-mod-sql-pgsql
   $(call Package/freeradius2/Default)
-  DEPENDS:=freeradius2-mod-sql \
-  	+PACKAGE_freeradius2-mod-sql-pgsql:libpq
+  DEPENDS:=freeradius2-mod-sql +libpq
   TITLE:=PostgreSQL module
 endef
 
 define Package/freeradius2-mod-sql-sqlite
   $(call Package/freeradius2/Default)
-  DEPENDS:=freeradius2-mod-sql \
-  	+PACKAGE_freeradius2-mod-sql-sqlite:libsqlite3
+  DEPENDS:=freeradius2-mod-sql +libsqlite3
   TITLE:=SQLite module
 endef
 
