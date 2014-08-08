@@ -58,6 +58,7 @@ CONFIGURE_ARGS += \
 	--with-libgcrypt-dir="$(STAGING_DIR)/usr" \
 	--with-ssl-dir="$(STAGING_DIR)/usr" \
 	--with-uams-path="/usr/lib/uams" \
+	--without-acls \
 	--without-pam \
 	--disable-admin-group \
 	--disable-srvloc \
