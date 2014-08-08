@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2011 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
 PKG_VERSION:=1.4
-PKG_RELEASE:=21
+PKG_RELEASE:=22
+PKG_MAINTAINER:=Jeroen Louwes <jeroen.louwes@gmail.com>
+PKG_LICENSE:=GPLv2
 
 include $(INCLUDE_DIR)/package.mk
 
