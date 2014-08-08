@@ -1,0 +1,52 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-013
+
+Bug-Reported-by:	<Trond.Endrestol@ximalas.info>
+Bug-Reference-ID:	<alpine.BSF.2.03.1404192114310.1973@enterprise.ximalas.info>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-04/msg00069.html
+
+Bug-Description:
+
+Using reverse-i-search when horizontal scrolling is enabled does not redisplay
+the entire line containing the successful search results.
+
+Patch (apply with `patch -p0'):
+--- a/lib/readline/display.c
++++ b/lib/readline/display.c
+@@ -1637,7 +1637,7 @@ update_line (old, new, current_line, oma
+   /* If we are changing the number of invisible characters in a line, and
+      the spot of first difference is before the end of the invisible chars,
+      lendiff needs to be adjusted. */
+-  if (current_line == 0 && !_rl_horizontal_scroll_mode &&
++  if (current_line == 0 && /* !_rl_horizontal_scroll_mode && */
+       current_invis_chars != visible_wrap_offset)
+     {
+       if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
+@@ -1825,8 +1825,13 @@ update_line (old, new, current_line, oma
+ 	      else
+ 		_rl_last_c_pos += bytes_to_insert;
+ 
++	      /* XXX - we only want to do this if we are at the end of the line
++		 so we move there with _rl_move_cursor_relative */
+ 	      if (_rl_horizontal_scroll_mode && ((oe-old) > (ne-new)))
+-		goto clear_rest_of_line;
++		{
++		  _rl_move_cursor_relative (ne-new, new);
++		  goto clear_rest_of_line;
++		}
+ 	    }
+ 	}
+       /* Otherwise, print over the existing material. */
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 12
++#define PATCHLEVEL 13
+ 
+ #endif /* _PATCHLEVEL_H_ */

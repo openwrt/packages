@@ -1,0 +1,39 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-006
+
+Bug-Reported-by:	Eduardo A . Bustamante Lopez <dualbus@gmail.com>
+Bug-Reference-ID:	<20140228170013.GA16015@dualbus.me>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-02/msg00091.html
+
+Bug-Description:
+
+A shell that started with job control active but was not interactive left
+the terminal in the wrong process group when exiting, causing its parent
+shell to get a stop signal when it attempted to read from the terminal.
+
+Patch (apply with `patch -p0'):
+
+--- a/jobs.c
++++ b/jobs.c
+@@ -4374,7 +4374,7 @@ without_job_control ()
+ void
+ end_job_control ()
+ {
+-  if (interactive_shell)		/* XXX - should it be interactive? */
++  if (interactive_shell || job_control)		/* XXX - should it be just job_control? */
+     {
+       terminate_stopped_jobs ();
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 5
++#define PATCHLEVEL 6
+ 
+ #endif /* _PATCHLEVEL_H_ */

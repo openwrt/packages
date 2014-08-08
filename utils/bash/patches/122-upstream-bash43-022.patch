@@ -1,0 +1,47 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-022
+
+Bug-Reported-by:	scorp.dev.null@gmail.com
+Bug-Reference-ID:	<E1WxXw8-0007iE-Bi@pcm14>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-06/msg00061.html
+
+Bug-Description:
+
+Using nested pipelines within loops with the `lastpipe' option set can result
+in a segmentation fault.
+
+Patch (apply with `patch -p0'):
+
+--- a/execute_cmd.c
++++ b/execute_cmd.c
+@@ -2413,7 +2413,16 @@ execute_pipeline (command, asynchronous,
+ #endif
+       lstdin = wait_for (lastpid);
+ #if defined (JOB_CONTROL)
+-      exec_result = job_exit_status (lastpipe_jid);
++      /* If wait_for removes the job from the jobs table, use result of last
++	 command as pipeline's exit status as usual.  The jobs list can get
++	 frozen and unfrozen at inconvenient times if there are multiple pipelines
++	 running simultaneously. */
++      if (INVALID_JOB (lastpipe_jid) == 0)
++	exec_result = job_exit_status (lastpipe_jid);
++      else if (pipefail_opt)
++	exec_result = exec_result | lstdin;	/* XXX */
++      /* otherwise we use exec_result */
++        
+ #endif
+       unfreeze_jobs_list ();
+     }
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 21
++#define PATCHLEVEL 22
+ 
+ #endif /* _PATCHLEVEL_H_ */

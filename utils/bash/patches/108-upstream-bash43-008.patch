@@ -1,0 +1,148 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-008
+
+Bug-Reported-by:	Stephane Chazelas <stephane.chazelas@gmail.com>
+Bug-Reference-ID:	<20140318135901.GB22158@chaz.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-03/msg00098.html
+
+Bug-Description:
+
+Some extended glob patterns incorrectly matched filenames with a leading
+dot, regardless of the setting of the `dotglob' option.
+
+Patch (apply with `patch -p0'):
+
+--- a/lib/glob/gmisc.c
++++ b/lib/glob/gmisc.c
+@@ -210,6 +210,7 @@ extglob_pattern_p (pat)
+     case '+':
+     case '!':
+     case '@':
++    case '?':
+       return (pat[1] == LPAREN);
+     default:
+       return 0;
+--- a/lib/glob/glob.c
++++ b/lib/glob/glob.c
+@@ -179,42 +179,50 @@ extglob_skipname (pat, dname, flags)
+      char *pat, *dname;
+      int flags;
+ {
+-  char *pp, *pe, *t;
+-  int n, r;
++  char *pp, *pe, *t, *se;
++  int n, r, negate;
+ 
++  negate = *pat == '!';
+   pp = pat + 2;
+-  pe = pp + strlen (pp) - 1;	/*(*/
+-  if (*pe != ')')
+-    return 0;
+-  if ((t = strchr (pp, '|')) == 0)	/* easy case first */
++  se = pp + strlen (pp) - 1;		/* end of string */
++  pe = glob_patscan (pp, se, 0);	/* end of extglob pattern (( */
++  /* we should check for invalid extglob pattern here */
++  /* if pe != se we have more of the pattern at the end of the extglob
++     pattern. Check the easy case first ( */
++  if (pe == se && *pe == ')' && (t = strchr (pp, '|')) == 0)
+     {
+       *pe = '\0';
++#if defined (HANDLE_MULTIBYTE)
++      r = mbskipname (pp, dname, flags);
++#else
+       r = skipname (pp, dname, flags);	/*(*/
++#endif
+       *pe = ')';
+       return r;
+     }
++
++  /* check every subpattern */
+   while (t = glob_patscan (pp, pe, '|'))
+     {
+       n = t[-1];
+       t[-1] = '\0';
++#if defined (HANDLE_MULTIBYTE)
++      r = mbskipname (pp, dname, flags);
++#else
+       r = skipname (pp, dname, flags);
++#endif
+       t[-1] = n;
+       if (r == 0)	/* if any pattern says not skip, we don't skip */
+         return r;
+       pp = t;
+     }	/*(*/
+ 
+-  if (pp == pe)		/* glob_patscan might find end of pattern */
++  /* glob_patscan might find end of pattern */
++  if (pp == se)
+     return r;
+ 
+-  *pe = '\0';
+-#  if defined (HANDLE_MULTIBYTE)
+-  r = mbskipname (pp, dname, flags);	/*(*/
+-#  else
+-  r = skipname (pp, dname, flags);	/*(*/
+-#  endif
+-  *pe = ')';
+-  return r;
++  /* but if it doesn't then we didn't match a leading dot */
++  return 0;
+ }
+ #endif
+ 
+@@ -277,20 +285,23 @@ wextglob_skipname (pat, dname, flags)
+      int flags;
+ {
+ #if EXTENDED_GLOB
+-  wchar_t *pp, *pe, *t, n;
+-  int r;
++  wchar_t *pp, *pe, *t, n, *se;
++  int r, negate;
+ 
++  negate = *pat == L'!';
+   pp = pat + 2;
+-  pe = pp + wcslen (pp) - 1;	/*(*/
+-  if (*pe != L')')
+-    return 0;
+-  if ((t = wcschr (pp, L'|')) == 0)
++  se = pp + wcslen (pp) - 1;	/*(*/
++  pe = glob_patscan_wc (pp, se, 0);
++
++  if (pe == se && *pe == ')' && (t = wcschr (pp, L'|')) == 0)
+     {
+       *pe = L'\0';
+       r = wchkname (pp, dname); /*(*/
+       *pe = L')';
+       return r;
+     }
++
++  /* check every subpattern */
+   while (t = glob_patscan_wc (pp, pe, '|'))
+     {
+       n = t[-1];
+@@ -305,10 +316,8 @@ wextglob_skipname (pat, dname, flags)
+   if (pp == pe)		/* glob_patscan_wc might find end of pattern */
+     return r;
+ 
+-  *pe = L'\0';
+-  r = wchkname (pp, dname);	/*(*/
+-  *pe = L')';
+-  return r;
++  /* but if it doesn't then we didn't match a leading dot */
++  return 0;
+ #else
+   return (wchkname (pat, dname));
+ #endif
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 7
++#define PATCHLEVEL 8
+ 
+ #endif /* _PATCHLEVEL_H_ */

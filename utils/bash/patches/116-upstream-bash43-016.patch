@@ -1,0 +1,121 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-016
+
+Bug-Reported-by:	Pierre Gaston <pierre.gaston@gmail.com>
+Bug-Reference-ID:	<CAPSX3sTCD61k1VQLJ5r-LWzEt+e7Xc-fxXmwn2u8EA5gJJej8Q@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-04/msg00100.html
+
+Bug-Description:
+
+An extended glob pattern containing a slash (`/') causes the globbing code
+to misinterpret it as a directory separator.
+
+Patch (apply with `patch -p0'):
+--- a/lib/glob/glob.c
++++ b/lib/glob/glob.c
+@@ -123,6 +123,8 @@ static char **glob_dir_to_array __P((cha
+ extern char *glob_patscan __P((char *, char *, int));
+ extern wchar_t *glob_patscan_wc __P((wchar_t *, wchar_t *, int));
+ 
++extern char *glob_dirscan __P((char *, int));
++
+ /* Compile `glob_loop.c' for single-byte characters. */
+ #define CHAR	unsigned char
+ #define INT	int
+@@ -187,6 +189,9 @@ extglob_skipname (pat, dname, flags)
+   se = pp + strlen (pp) - 1;		/* end of string */
+   pe = glob_patscan (pp, se, 0);	/* end of extglob pattern (( */
+   /* we should check for invalid extglob pattern here */
++  if (pe == 0)
++    return 0;
++
+   /* if pe != se we have more of the pattern at the end of the extglob
+      pattern. Check the easy case first ( */
+   if (pe == se && *pe == ')' && (t = strchr (pp, '|')) == 0)
+@@ -1015,7 +1020,7 @@ glob_filename (pathname, flags)
+ {
+   char **result;
+   unsigned int result_size;
+-  char *directory_name, *filename, *dname;
++  char *directory_name, *filename, *dname, *fn;
+   unsigned int directory_len;
+   int free_dirname;			/* flag */
+   int dflags;
+@@ -1031,6 +1036,18 @@ glob_filename (pathname, flags)
+ 
+   /* Find the filename.  */
+   filename = strrchr (pathname, '/');
++#if defined (EXTENDED_GLOB)
++  if (filename && extended_glob)
++    {
++      fn = glob_dirscan (pathname, '/');
++#if DEBUG_MATCHING
++      if (fn != filename)
++	fprintf (stderr, "glob_filename: glob_dirscan: fn (%s) != filename (%s)\n", fn ? fn : "(null)", filename);
++#endif
++      filename = fn;
++    }
++#endif
++
+   if (filename == NULL)
+     {
+       filename = pathname;
+--- a/lib/glob/gmisc.c
++++ b/lib/glob/gmisc.c
+@@ -42,6 +42,8 @@
+ #define WLPAREN         L'('
+ #define WRPAREN         L')'
+ 
++extern char *glob_patscan __P((char *, char *, int));
++
+ /* Return 1 of the first character of WSTRING could match the first
+    character of pattern WPAT.  Wide character version. */
+ int
+@@ -375,3 +377,34 @@ bad_bracket:
+ 
+   return matlen;
+ }
++
++/* Skip characters in PAT and return the final occurrence of DIRSEP.  This
++   is only called when extended_glob is set, so we have to skip over extglob
++   patterns x(...) */
++char *
++glob_dirscan (pat, dirsep)
++     char *pat;
++     int dirsep;
++{
++  char *p, *d, *pe, *se;
++
++  d = pe = se = 0;
++  for (p = pat; p && *p; p++)
++    {
++      if (extglob_pattern_p (p))
++	{
++	  if (se == 0)
++	    se = p + strlen (p) - 1;
++	  pe = glob_patscan (p + 2, se, 0);
++	  if (pe == 0)
++	    continue;
++	  else if (*pe == 0)
++	    break;
++	  p = pe - 1;	/* will do increment above */
++	  continue;
++	}
++      if (*p ==  dirsep)
++	d = p;
++    }
++  return d;
++}
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 15
++#define PATCHLEVEL 16
+ 
+ #endif /* _PATCHLEVEL_H_ */

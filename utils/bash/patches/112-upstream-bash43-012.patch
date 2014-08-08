@@ -1,0 +1,38 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-012
+
+Bug-Reported-by:	Eduardo A. Bustamante López<dualbus@gmail.com>
+Bug-Reference-ID:	<5346B54C.4070205@case.edu>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-04/msg00051.html
+
+Bug-Description:
+
+When a SIGCHLD trap runs a command containing a shell builtin while
+a script is running `wait' to wait for all running children to complete,
+the SIGCHLD trap will not be run once for each child that terminates.
+
+Patch (apply with `patch -p0'):
+
+--- a/jobs.c
++++ b/jobs.c
+@@ -3597,6 +3597,7 @@ run_sigchld_trap (nchild)
+   unwind_protect_int (jobs_list_frozen);
+   unwind_protect_pointer (the_pipeline);
+   unwind_protect_pointer (subst_assign_varlist);
++  unwind_protect_pointer (this_shell_builtin);
+ 
+   /* We have to add the commands this way because they will be run
+      in reverse order of adding.  We don't want maybe_set_sigchld_trap ()
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 11
++#define PATCHLEVEL 12
+ 
+ #endif /* _PATCHLEVEL_H_ */
