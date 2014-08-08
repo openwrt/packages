@@ -1,0 +1,38 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-004
+
+Bug-Reported-by:	Daan van Rossum <daan@flash.uchicago.edu>
+Bug-Reference-ID:	<20140307072523.GA14250@flash.uchicago.edu>
+Bug-Reference-URL:	
+
+Bug-Description:
+
+The `.' command in vi mode cannot undo multi-key commands beginning with
+`c', `d', and `y' (command plus motion specifier).
+
+Patch (apply with `patch -p0'):
+
+--- a/lib/readline/readline.c
++++ b/lib/readline/readline.c
+@@ -965,7 +965,7 @@ _rl_dispatch_subseq (key, map, got_subse
+ #if defined (VI_MODE)
+   if (rl_editing_mode == vi_mode && _rl_keymap == vi_movement_keymap &&
+       key != ANYOTHERKEY &&
+-      rl_key_sequence_length == 1 &&	/* XXX */
++      _rl_dispatching_keymap == vi_movement_keymap &&
+       _rl_vi_textmod_command (key))
+     _rl_vi_set_last (key, rl_numeric_arg, rl_arg_sign);
+ #endif
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 3
++#define PATCHLEVEL 4
+ 
+ #endif /* _PATCHLEVEL_H_ */

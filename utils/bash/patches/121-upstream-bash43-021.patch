@@ -1,0 +1,46 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-021
+
+Bug-Reported-by:	Jared Yanovich <slovichon@gmail.com>
+Bug-Reference-ID:	<20140625225019.GJ17044@nightderanger.psc.edu>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-06/msg00070.html
+
+Bug-Description:
+
+When the readline `revert-all-at-newline' option is set, pressing newline
+when the current line is one retrieved from history results in a double free
+and a segmentation fault.
+
+Patch (apply with `patch -p0'):
+
+--- a/lib/readline/misc.c
++++ b/lib/readline/misc.c
+@@ -461,6 +461,7 @@ _rl_revert_all_lines ()
+ 	    saved_undo_list = 0;
+ 	  /* Set up rl_line_buffer and other variables from history entry */
+ 	  rl_replace_from_history (entry, 0);	/* entry->line is now current */
++	  entry->data = 0;			/* entry->data is now current undo list */
+ 	  /* Undo all changes to this history entry */
+ 	  while (rl_undo_list)
+ 	    rl_do_undo ();
+@@ -468,7 +469,6 @@ _rl_revert_all_lines ()
+ 	     the timestamp. */
+ 	  FREE (entry->line);
+ 	  entry->line = savestring (rl_line_buffer);
+-	  entry->data = 0;
+ 	}
+       entry = previous_history ();
+     }
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 20
++#define PATCHLEVEL 21
+ 
+ #endif /* _PATCHLEVEL_H_ */

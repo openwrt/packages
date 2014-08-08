@@ -1,0 +1,48 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-015
+
+Bug-Reported-by:	Clark Wang <dearvoid@gmail.com>
+Bug-Reference-ID:	<CADv8-og2TOSoabXeNVXVGaXN3tEMHnYVq1rwOLe5meaRPSGRig@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-04/msg00095.html
+
+Bug-Description:
+
+When completing directory names, the directory name is dequoted twice.
+This causes problems for directories with single and double quotes in
+their names.
+
+Patch (apply with `patch -p0'):
+--- a/bashline.c
++++ b/bashline.c
+@@ -4167,9 +4167,16 @@ bash_directory_completion_matches (text)
+   int qc;
+ 
+   qc = rl_dispatching ? rl_completion_quote_character : 0;  
+-  dfn = bash_dequote_filename ((char *)text, qc);
++  /* If rl_completion_found_quote != 0, rl_completion_matches will call the
++     filename dequoting function, causing the directory name to be dequoted
++     twice. */
++  if (rl_dispatching && rl_completion_found_quote == 0)
++    dfn = bash_dequote_filename ((char *)text, qc);
++  else
++    dfn = (char *)text;
+   m1 = rl_completion_matches (dfn, rl_filename_completion_function);
+-  free (dfn);
++  if (dfn != text)
++    free (dfn);
+ 
+   if (m1 == 0 || m1[0] == 0)
+     return m1;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 14
++#define PATCHLEVEL 15
+ 
+ #endif /* _PATCHLEVEL_H_ */
