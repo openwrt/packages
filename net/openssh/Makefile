@@ -12,10 +12,8 @@ PKG_VERSION:=6.6p1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
-		ftp://openbsd.wiretapped.net/pub/OpenBSD/OpenSSH/portable/ \
-		ftp://ftp.belnet.be/packages/openbsd/OpenSSH/portable/ \
-		ftp://ftp.de.openbsd.org/pub/unix/OpenBSD/OpenSSH/portable/
+PKG_SOURCE_URL:=http://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
+		http://ftp.belnet.be/pub/OpenBSD/OpenSSH/portable/
 PKG_MD5SUM:=3e9800e6bca1fbac0eea4d41baa7f239
 
 
