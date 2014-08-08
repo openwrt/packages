@@ -1,0 +1,14 @@
+diff -urN bash-4.2/Makefile.in bash-4.2.new/Makefile.in
+--- bash-4.2/Makefile.in	2010-12-01 01:22:42.000000000 +0100
++++ bash-4.2.new/Makefile.in	2012-07-30 16:24:01.325057998 +0200
+@@ -724,10 +724,8 @@
+ #	$(MAKE) -f $(srcdir)/Makefile $(MFLAGS) srcdir=$(srcdir)
+ 
+ doc documentation:  force
+-	@(cd $(DOCDIR) ; $(MAKE) $(MFLAGS) )
+ 
+ info dvi ps: force
+-	@(cd $(DOCDIR) ; $(MAKE) $(MFLAGS) CFLAGS='$(CCFLAGS)' $@ )
+ 
+ force:
+ 

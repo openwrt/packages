@@ -1,0 +1,231 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-003
+
+Bug-Reported-by:	Clark J. Wang <dearvoid@gmail.com>
+Bug-Reference-ID:	<AANLkTikZ_rVV-frR8Fh0PzhXnMKnm5XsUR-F3qtPPs5G@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2011-02/msg00136.html
+
+Bug-Description:
+
+When using the pattern replacement and pattern removal word expansions, bash
+miscalculates the possible match length in the presence of an unescaped left
+bracket without a closing right bracket, resulting in a failure to match
+the pattern.
+
+Patch (apply with `patch -p0'):
+
+--- a/lib/glob/gmisc.c
++++ b/lib/glob/gmisc.c
+@@ -77,8 +77,8 @@ wmatchlen (wpat, wmax)
+      wchar_t *wpat;
+      size_t wmax;
+ {
+-  wchar_t wc, *wbrack;
+-  int matlen, t, in_cclass, in_collsym, in_equiv;
++  wchar_t wc;
++  int matlen, bracklen, t, in_cclass, in_collsym, in_equiv;
+ 
+   if (*wpat == 0)
+     return (0);
+@@ -118,58 +118,80 @@ wmatchlen (wpat, wmax)
+ 	  break;
+ 	case L'[':
+ 	  /* scan for ending `]', skipping over embedded [:...:] */
+-	  wbrack = wpat;
++	  bracklen = 1;
+ 	  wc = *wpat++;
+ 	  do
+ 	    {
+ 	      if (wc == 0)
+ 		{
+-	          matlen += wpat - wbrack - 1;	/* incremented below */
+-	          break;
++		  wpat--;			/* back up to NUL */
++	          matlen += bracklen;
++	          goto bad_bracket;
+ 	        }
+ 	      else if (wc == L'\\')
+ 		{
+-		  wc = *wpat++;
+-		  if (*wpat == 0)
+-		    break;
++		  /* *wpat == backslash-escaped character */
++		  bracklen++;
++		  /* If the backslash or backslash-escape ends the string,
++		     bail.  The ++wpat skips over the backslash escape */
++		  if (*wpat == 0 || *++wpat == 0)
++		    {
++		      matlen += bracklen;
++		      goto bad_bracket;
++		    }
+ 		}
+ 	      else if (wc == L'[' && *wpat == L':')	/* character class */
+ 		{
+ 		  wpat++;
++		  bracklen++;
+ 		  in_cclass = 1;
+ 		}
+ 	      else if (in_cclass && wc == L':' && *wpat == L']')
+ 		{
+ 		  wpat++;
++		  bracklen++;
+ 		  in_cclass = 0;
+ 		}
+ 	      else if (wc == L'[' && *wpat == L'.')	/* collating symbol */
+ 		{
+ 		  wpat++;
++		  bracklen++;
+ 		  if (*wpat == L']')	/* right bracket can appear as collating symbol */
+-		    wpat++;
++		    {
++		      wpat++;
++		      bracklen++;
++		    }
+ 		  in_collsym = 1;
+ 		}
+ 	      else if (in_collsym && wc == L'.' && *wpat == L']')
+ 		{
+ 		  wpat++;
++		  bracklen++;
+ 		  in_collsym = 0;
+ 		}
+ 	      else if (wc == L'[' && *wpat == L'=')	/* equivalence class */
+ 		{
+ 		  wpat++;
++		  bracklen++;
+ 		  if (*wpat == L']')	/* right bracket can appear as equivalence class */
+-		    wpat++;
++		    {
++		      wpat++;
++		      bracklen++;
++		    }
+ 		  in_equiv = 1;
+ 		}
+ 	      else if (in_equiv && wc == L'=' && *wpat == L']')
+ 		{
+ 		  wpat++;
++		  bracklen++;
+ 		  in_equiv = 0;
+ 		}
++	      else
++		bracklen++;
+ 	    }
+ 	  while ((wc = *wpat++) != L']');
+ 	  matlen++;		/* bracket expression can only match one char */
++bad_bracket:
+ 	  break;
+ 	}
+     }
+@@ -213,8 +235,8 @@ umatchlen (pat, max)
+      char *pat;
+      size_t max;
+ {
+-  char c, *brack;
+-  int matlen, t, in_cclass, in_collsym, in_equiv;
++  char c;
++  int matlen, bracklen, t, in_cclass, in_collsym, in_equiv;
+ 
+   if (*pat == 0)
+     return (0);
+@@ -254,58 +276,80 @@ umatchlen (pat, max)
+ 	  break;
+ 	case '[':
+ 	  /* scan for ending `]', skipping over embedded [:...:] */
+-	  brack = pat;
++	  bracklen = 1;
+ 	  c = *pat++;
+ 	  do
+ 	    {
+ 	      if (c == 0)
+ 		{
+-	          matlen += pat - brack - 1;	/* incremented below */
+-	          break;
++		  pat--;			/* back up to NUL */
++		  matlen += bracklen;
++		  goto bad_bracket;
+ 	        }
+ 	      else if (c == '\\')
+ 		{
+-		  c = *pat++;
+-		  if (*pat == 0)
+-		    break;
++		  /* *pat == backslash-escaped character */
++		  bracklen++;
++		  /* If the backslash or backslash-escape ends the string,
++		     bail.  The ++pat skips over the backslash escape */
++		  if (*pat == 0 || *++pat == 0)
++		    {
++		      matlen += bracklen;
++		      goto bad_bracket;
++		    }
+ 		}
+ 	      else if (c == '[' && *pat == ':')	/* character class */
+ 		{
+ 		  pat++;
++		  bracklen++;
+ 		  in_cclass = 1;
+ 		}
+ 	      else if (in_cclass && c == ':' && *pat == ']')
+ 		{
+ 		  pat++;
++		  bracklen++;
+ 		  in_cclass = 0;
+ 		}
+ 	      else if (c == '[' && *pat == '.')	/* collating symbol */
+ 		{
+ 		  pat++;
++		  bracklen++;
+ 		  if (*pat == ']')	/* right bracket can appear as collating symbol */
+-		    pat++;
++		    {
++		      pat++;
++		      bracklen++;
++		    }
+ 		  in_collsym = 1;
+ 		}
+ 	      else if (in_collsym && c == '.' && *pat == ']')
+ 		{
+ 		  pat++;
++		  bracklen++;
+ 		  in_collsym = 0;
+ 		}
+ 	      else if (c == '[' && *pat == '=')	/* equivalence class */
+ 		{
+ 		  pat++;
++		  bracklen++;
+ 		  if (*pat == ']')	/* right bracket can appear as equivalence class */
+-		    pat++;
++		    {
++		      pat++;
++		      bracklen++;
++		    }
+ 		  in_equiv = 1;
+ 		}
+ 	      else if (in_equiv && c == '=' && *pat == ']')
+ 		{
+ 		  pat++;
++		  bracklen++;
+ 		  in_equiv = 0;
+ 		}
++	      else
++		bracklen++;
+ 	    }
+ 	  while ((c = *pat++) != ']');
+ 	  matlen++;		/* bracket expression can only match one char */
++bad_bracket:
+ 	  break;
+ 	}
+     }
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 2
++#define PATCHLEVEL 3
+ 
+ #endif /* _PATCHLEVEL_H_ */

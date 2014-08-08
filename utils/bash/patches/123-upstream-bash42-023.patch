@@ -1,0 +1,53 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-023
+
+Bug-Reported-by:	Ewan Mellor <Ewan.Mellor@eu.citrix.com>
+Bug-Reference-ID:	<6005BE083BF501439A84DC3523BAC82DC4B964FD12@LONPMAILBOX01.citrite.net>
+Bug-Reference-URL:	
+
+Bug-Description:
+
+Under some circumstances, an exit trap triggered by a bad substitution
+error when errexit is enabled will cause the shell to exit with an
+incorrect exit status (0).
+
+Patch (apply with `patch -p0'):
+
+--- a/subst.c
++++ b/subst.c
+@@ -7274,6 +7274,7 @@ parameter_brace_expand (string, indexp, 
+     default:
+     case '\0':
+     bad_substitution:
++      last_command_exit_value = EXECUTION_FAILURE;
+       report_error (_("%s: bad substitution"), string ? string : "??");
+       FREE (value);
+       FREE (temp);
+--- a/error.c
++++ b/error.c
+@@ -200,7 +200,11 @@ report_error (format, va_alist)
+ 
+   va_end (args);
+   if (exit_immediately_on_error)
+-    exit_shell (1);
++    {
++      if (last_command_exit_value == 0)
++	last_command_exit_value = 1;
++      exit_shell (last_command_exit_value);
++    }
+ }
+ 
+ void
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 22
++#define PATCHLEVEL 23
+ 
+ #endif /* _PATCHLEVEL_H_ */
