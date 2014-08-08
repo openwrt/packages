@@ -12,7 +12,8 @@ PKG_VERSION:=1.9.1
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.issihosts.com/$(PKG_NAME)
+PKG_SOURCE_URL:=http://www.issihosts.com/$(PKG_NAME) \
+	http://pkgs.fedoraproject.org/repo/pkgs/haveged/haveged-1.9.1.tar.gz/015ff58cd10607db0e0de60aeca2f5f8/
 PKG_MD5SUM:=015ff58cd10607db0e0de60aeca2f5f8
 
 #ensure this is consistent with the dir in the tarball!!!

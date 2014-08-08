@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=audiofile
 PKG_VERSION:=0.3.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -40,6 +40,7 @@ endef
 CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
+	--disable-examples \
 	--with-build-cc="$(HOSTCC)" \
 
 TARGET_CFLAGS+= $(FPIC)
