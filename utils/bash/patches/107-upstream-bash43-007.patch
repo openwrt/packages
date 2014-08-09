@@ -1,0 +1,45 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-007
+
+Bug-Reported-by:	geir.hauge@gmail.com
+Bug-Reference-ID:	<20140318093650.B181C1C5B0B@gina.itea.ntnu.no>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-03/msg00095.html
+
+Bug-Description:
+
+Using compound assignments for associative arrays like
+
+assoc=( [x]= [y]=bar )
+
+left the value corresponding to the key `x' NULL.  This caused subsequent
+lookups to interpret it as unset.
+
+Patch (apply with `patch -p0'):
+
+--- a/arrayfunc.c
++++ b/arrayfunc.c
+@@ -597,6 +597,11 @@ assign_compound_array_list (var, nlist,
+       if (assoc_p (var))
+ 	{
+ 	  val = expand_assignment_string_to_string (val, 0);
++	  if (val == 0)
++	    {
++	      val = (char *)xmalloc (1);
++	      val[0] = '\0';	/* like do_assignment_internal */
++	    }
+ 	  free_val = 1;
+ 	}
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 6
++#define PATCHLEVEL 7
+ 
+ #endif /* _PATCHLEVEL_H_ */

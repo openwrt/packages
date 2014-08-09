@@ -1,0 +1,49 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-002
+
+Bug-Reported-by:	Moe Tunes <moetunes42@gmail.com>
+Bug-Reference-ID:	<53103F49.3070100@gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-02/msg00086.html
+
+Bug-Description:
+
+A change to save state while running the DEBUG trap caused pipelines to hang
+on systems which need process group synchronization while building pipelines.
+
+Patch (apply with `patch -p0'):
+
+--- a/trap.c
++++ b/trap.c
+@@ -920,7 +920,8 @@ _run_trap_internal (sig, tag)
+       subst_assign_varlist = 0;
+ 
+ #if defined (JOB_CONTROL)
+-      save_pipeline (1);	/* XXX only provides one save level */
++      if (sig != DEBUG_TRAP)	/* run_debug_trap does this */
++	save_pipeline (1);	/* XXX only provides one save level */
+ #endif
+ 
+       /* If we're in a function, make sure return longjmps come here, too. */
+@@ -940,7 +941,8 @@ _run_trap_internal (sig, tag)
+       trap_exit_value = last_command_exit_value;
+ 
+ #if defined (JOB_CONTROL)
+-      restore_pipeline (1);
++      if (sig != DEBUG_TRAP)	/* run_debug_trap does this */
++	restore_pipeline (1);
+ #endif
+ 
+       subst_assign_varlist = save_subst_varlist;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 1
++#define PATCHLEVEL 2
+ 
+ #endif /* _PATCHLEVEL_H_ */

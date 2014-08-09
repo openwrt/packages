@@ -1,0 +1,41 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-017
+
+Bug-Reported-by:	Dan Douglas <ormaaj@gmail.com>
+Bug-Reference-ID:	<7781746.RhfoTROLxF@smorgbox>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-05/msg00026.html
+
+Bug-Description:
+
+The code that creates local variables should not clear the `invisible'
+attribute when returning an existing local variable.  Let the code that
+actually assigns a value clear it.
+
+Patch (apply with `patch -p0'):
+--- a/variables.c
++++ b/variables.c
+@@ -2197,10 +2197,7 @@ make_local_variable (name)
+   /* local foo; local foo;  is a no-op. */
+   old_var = find_variable (name);
+   if (old_var && local_p (old_var) && old_var->context == variable_context)
+-    {
+-      VUNSETATTR (old_var, att_invisible);	/* XXX */
+-      return (old_var);
+-    }
++    return (old_var);
+ 
+   was_tmpvar = old_var && tempvar_p (old_var);
+   /* If we're making a local variable in a shell function, the temporary env
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 16
++#define PATCHLEVEL 17
+ 
+ #endif /* _PATCHLEVEL_H_ */

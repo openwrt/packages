@@ -16,6 +16,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://hyperelliptic.org/nacl
 PKG_MD5SUM:=7efb5715561c3d10dafd3fa97b4f2d20
 
+PKG_LICENSE:=PublicDomain
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/nacl

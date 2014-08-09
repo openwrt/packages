@@ -1,0 +1,40 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-011
+
+Bug-Reported-by:	Egmont Koblinger <egmont@gmail.com>
+Bug-Reference-ID:	<CAGWcZk+bU5Jo1M+tutGvL-250UBE9DXjpeJVofYJSFcqFEVfMg@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-03/msg00153.html
+
+Bug-Description:
+
+The signal handling changes to bash and readline (to avoid running any code
+in a signal handler context) cause the cursor to be placed on the wrong
+line of a multi-line command after a ^C interrupts editing.
+
+Patch (apply with `patch -p0'):
+
+--- a/lib/readline/display.c
++++ b/lib/readline/display.c
+@@ -2677,7 +2677,8 @@ _rl_clean_up_for_exit ()
+ {
+   if (_rl_echoing_p)
+     {
+-      _rl_move_vert (_rl_vis_botlin);
++      if (_rl_vis_botlin > 0)	/* minor optimization plus bug fix */
++	_rl_move_vert (_rl_vis_botlin);
+       _rl_vis_botlin = 0;
+       fflush (rl_outstream);
+       rl_restart_output (1, 0);
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 10
++#define PATCHLEVEL 11
+ 
+ #endif /* _PATCHLEVEL_H_ */

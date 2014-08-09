@@ -1,0 +1,50 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-005
+
+Bug-Reported-by:	David Sines <dave.gma@googlemail.com>
+Bug-Reference-ID:	<CAO3BAa_CK_Rgkhdfzs+NJ4KFYdB9qW3pvXQK0xLCi6GMmDU8bw@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-03/msg00037.html
+
+Bug-Description:
+
+When in Posix mode, bash did not correctly interpret the ANSI-C-style
+$'...' quoting mechanism when performing pattern substitution word
+expansions within double quotes.
+
+Patch (apply with `patch -p0'):
+
+--- a/parse.y
++++ b/parse.y
+@@ -3398,7 +3398,7 @@ parse_matched_pair (qc, open, close, len
+          within a double-quoted ${...} construct "an even number of
+          unescaped double-quotes or single-quotes, if any, shall occur." */
+       /* This was changed in Austin Group Interp 221 */
+-      if MBTEST(posixly_correct && shell_compatibility_level > 41 && dolbrace_state != DOLBRACE_QUOTE && (flags & P_DQUOTE) && (flags & P_DOLBRACE) && ch == '\'')
++      if MBTEST(posixly_correct && shell_compatibility_level > 41 && dolbrace_state != DOLBRACE_QUOTE && dolbrace_state != DOLBRACE_QUOTE2 && (flags & P_DQUOTE) && (flags & P_DOLBRACE) && ch == '\'')
+ 	continue;
+ 
+       /* Could also check open == '`' if we want to parse grouping constructs
+--- a/y.tab.c
++++ b/y.tab.c
+@@ -5710,7 +5710,7 @@ parse_matched_pair (qc, open, close, len
+          within a double-quoted ${...} construct "an even number of
+          unescaped double-quotes or single-quotes, if any, shall occur." */
+       /* This was changed in Austin Group Interp 221 */
+-      if MBTEST(posixly_correct && shell_compatibility_level > 41 && dolbrace_state != DOLBRACE_QUOTE && (flags & P_DQUOTE) && (flags & P_DOLBRACE) && ch == '\'')
++      if MBTEST(posixly_correct && shell_compatibility_level > 41 && dolbrace_state != DOLBRACE_QUOTE && dolbrace_state != DOLBRACE_QUOTE2 && (flags & P_DQUOTE) && (flags & P_DOLBRACE) && ch == '\'')
+ 	continue;
+ 
+       /* Could also check open == '`' if we want to parse grouping constructs
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 4
++#define PATCHLEVEL 5
+ 
+ #endif /* _PATCHLEVEL_H_ */
