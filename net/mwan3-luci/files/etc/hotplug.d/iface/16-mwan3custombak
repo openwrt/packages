@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# to enable this script uncomment the case loop at the bottom
+# to report MWAN3 status on interface up/down events modify the lines in the send_reportdata function
+
+send_alert()
+{
+	# $1 stores the mwan3 status information
+	# insert your code here to send the contents of $1
+	echo "$1"
+}
+
+gather_event_info()
+{
+	# create event information message
+	local EVENT_INFO="Interface [ "$INTERFACE" ($DEVICE) ] on router [ "$(uci get -p /var/state system.@system[0].hostname)" ] has triggered an [ "$ACTION" ] hotplug event on "$(date)""
+
+	# get current interface, policy and rule status
+	local CURRENT_STATUS="$(mwan3 status)"
+
+	# get last 50 mwan3 systemlog messages
+	local MWAN3_LOG="$(echo -e "Last 50 MWAN3 systemlog entries. Newest entries sorted at the top:\n$(logread | grep mwan3 | tail -n 50 | sed 'x;1!H;$!d;x')")"
+
+	# pass event info to send_alert function
+	send_alert "$(echo -e "$EVENT_INFO\n\n$CURRENT_STATUS\n\n$MWAN3_LOG")"
+}
+
+#case "$ACTION" in
+#	ifup)
+#		gather_event_info
+#	;;
+#
+#	ifdown)
+#		gather_event_info
+#	;;
+#esac
+
+exit 0
