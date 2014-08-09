@@ -1,4 +1,4 @@
-# OpenWRT packages feed
+# OpenWrt packages feed
 
 ## Description
 
