@@ -18,6 +18,7 @@ PKG_SOURCE:=$(_BASENAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://bitop.luajit.org/download/
 PKG_MD5SUM:=d0c1080fe0c844e8477279668e2d0d06
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(_BASENAME)-$(PKG_VERSION)
+PKG_LICENSE:=MIT
 
 include $(INCLUDE_DIR)/package.mk
 
