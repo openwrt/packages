@@ -9,13 +9,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxslt
 PKG_VERSION:=1.1.28
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
-¨	http://xmlsoft.org/sources/ \
+	http://xmlsoft.org/sources/ \
 	ftp://fr.rpmfind.net/pub/libxml/
 PKG_MD5SUM:=9667bf6f9310b957254fdcf6596600b7
+
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=COPYING
 
 PKG_MAINTAINER:=Jiri Slachta <slachta@cesnet.cz>
 
@@ -45,7 +48,7 @@ define Package/libexslt
 endef
 
 define Package/libexslt/description
- A extention for XSLT.
+ An extension for XSLT.
 endef
 
 define Package/xsltproc

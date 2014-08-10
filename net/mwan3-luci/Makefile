@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-mwan3
-PKG_VERSION:=1.2
-PKG_RELEASE:=19
+PKG_VERSION:=1.3
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Aedan Renner <chipdankly@gmail.com>
 PKG_LICENSE:=GPLv2
 
@@ -19,14 +19,15 @@ define Package/luci-app-mwan3
   SECTION:=LuCI
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
-  TITLE:=LuCI support for MWAN3 Multiwan hotplug script with connection tracking support
+  TITLE:=LuCI support for the MWAN3 multiwan hotplug script
   DEPENDS:=+mwan3
   PKGARCH:=all
   MAINTAINER:=Aedan Renner <chipdankly@gmail.com>
 endef
 
 define Package/luci-app-mwan3/description
-   Hotplug script which makes configuration of multiple WAN interfaces simple and manageable. With loadbalancing/failover support for up to 250 wan interfaces, connection tracking and an easy to manage traffic ruleset.
+Hotplug script which makes configuration of multiple WAN interfaces simple and manageable
+With loadbalancing/failover support for up to 250 WAN interfaces, connection tracking and an easy to manage traffic ruleset
 endef
 
 define Build/Compile
