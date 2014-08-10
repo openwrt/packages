@@ -1,0 +1,18 @@
+Description: OOB write in gif2tiff
+Bug-Redhat: https://bugzilla.redhat.com/show_bug.cgi?id=996468
+
+Index: tiff-4.0.3/tools/gif2tiff.c
+===================================================================
+--- tiff-4.0.3.orig/tools/gif2tiff.c	2013-08-24 11:17:13.546447901 -0400
++++ tiff-4.0.3/tools/gif2tiff.c	2013-08-24 11:17:13.546447901 -0400
+@@ -400,6 +400,10 @@
+     }
+ 
+     if (oldcode == -1) {
++        if (code >= clear) {
++            fprintf(stderr, "bad input: code=%d is larger than clear=%d\n",code, clear);
++            return 0;
++        }
+ 	*(*fill)++ = suffix[code];
+ 	firstchar = oldcode = code;
+ 	return 1;

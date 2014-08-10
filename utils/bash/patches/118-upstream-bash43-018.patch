@@ -1,0 +1,38 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-018
+
+Bug-Reported-by:	Geir Hauge <geir.hauge@gmail.com>
+Bug-Reference-ID:	<CAO-BiTLOvfPXDypg61jcBausADrxUKJejakV2WTWP26cW0=rgA@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-05/msg00040.html
+
+Bug-Description:
+
+When assigning an array variable using the compound assignment syntax,
+but using `declare' with the rhs of the compound assignment quoted, the
+shell did not mark the variable as visible after successfully performing
+the assignment.
+
+Patch (apply with `patch -p0'):
+--- a/arrayfunc.c
++++ b/arrayfunc.c
+@@ -179,6 +179,7 @@ bind_array_var_internal (entry, ind, key
+     array_insert (array_cell (entry), ind, newval);
+   FREE (newval);
+ 
++  VUNSETATTR (entry, att_invisible);	/* no longer invisible */
+   return (entry);
+ }
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 17
++#define PATCHLEVEL 18
+ 
+ #endif /* _PATCHLEVEL_H_ */

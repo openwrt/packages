@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+START=99
+
+start() {
+	/usr/sbin/mwan3 start
+}
+
+stop() {
+	/usr/sbin/mwan3 stop
+}
+
+restart() {
+	stop
+	start
+}
+
+boot() {
+	# Don't start on boot, mwan3 is started by hotplug event.
+	return 0
+}

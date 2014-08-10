@@ -20,6 +20,7 @@ PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_INSTALL:=1
+PKG_LICENSE:=LGPL-2.1 GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -46,14 +47,6 @@ $(call Package/attr/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+=library
-  KCONFIG:= \
-    CONFIG_CIFS_XATTR=y \
-    CONFIG_EXT4_FS_XATTR=y \
-    CONFIG_JFFS2_FS_XATTR=y \
-    CONFIG_REISERFS_FS_XATTR=y \
-    CONFIG_SQUASHFS_XATTR=y \
-    CONFIG_TMPFS_XATTR=y \
-
 endef
 
 define Package/libattr/description

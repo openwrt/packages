@@ -15,6 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/ccrypt
 PKG_MD5SUM:=44ddd763465c254df83f5d38851d04d7
 PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
+PKG_LICENSE:=GPLv2+
 
 PKG_FIXUP:=autoreconf
 

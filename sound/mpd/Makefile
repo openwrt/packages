@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.18.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.18/
@@ -35,8 +35,8 @@ define Package/mpd/Default
   CATEGORY:=Sound
   TITLE:=Music Player Daemon
   URL:=http://www.musicpd.org/
-  DEPENDS:= +glib2 +libcurl +libpthread +libmpdclient $(ICONV_DEPENDS) \
-	    +libflac +BUILD_PATENTED:libmad +libvorbisidec
+  DEPENDS:= +glib2 +libcurl +libpthread +libmpdclient $(ICONV_DEPENDS) +libstdcpp \
+	    +libflac +BUILD_PATENTED:libmad +libvorbisidec +AUDIO_SUPPORT:alsa-lib
 endef
 
 define Package/mpd/Default/description
@@ -50,7 +50,6 @@ define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
   DEPENDS+= \
-	+AUDIO_SUPPORT:alsa-lib \
 	+libaudiofile +BUILD_PATENTED:libfaad2 +libffmpeg +libid3tag \
 	+libmms +libogg +libsndfile +libvorbis
   PROVIDES:=mpd
@@ -128,7 +127,7 @@ CONFIGURE_ARGS += \
 	--enable-flac \
 	--enable-httpd-output \
 	$(call autoconf_bool,CONFIG_BUILD_PATENTED,mad) \
-	$(call autoconf_bool,CONFIG_AUDIO_SUPPORT,oss) \
+	$(call autoconf_bool,CONFIG_AUDIO_SUPPORT,alsa) \
 	--enable-tcp \
 	--enable-un \
 

@@ -20,6 +20,7 @@ PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_INSTALL:=1
+PKG_LICENSE:=LGPL-2.1 GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -47,15 +48,6 @@ $(call Package/acl/Default)
   CATEGORY:=Libraries
   TITLE+=library
   DEPENDS:=+libattr
-  KCONFIG:= \
-    CONFIG_EXT4_FS_POSIX_ACL=y \
-    CONFIG_FS_POSIX_ACL=y \
-    CONFIG_HFSPLUS_FS_POSIX_ACL=y \
-    CONFIG_JFFS2_FS_POSIX_ACL=y \
-    CONFIG_JFS_POSIX_ACL=y \
-    CONFIG_TMPFS_POSIX_ACL=y \
-    CONFIG_XFS_POSIX_ACL=y \
-
 endef
 
 define Package/libacl/description

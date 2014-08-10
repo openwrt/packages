@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2010-2012 OpenWrt.org
+
+START=70
+
+MAXCONS="7"
+
+start()
+{
+	service_start /usr/sbin/cnid_metad
+	service_start /usr/sbin/afpd -c ${MAXCONS}
+}
+
+stop()
+{
+	service_stop /usr/sbin/afpd
+	service_stop /usr/sbin/cnid_metad
+}
+
+reload()
+{
+	service_reload /usr/sbin/afpd
+}
