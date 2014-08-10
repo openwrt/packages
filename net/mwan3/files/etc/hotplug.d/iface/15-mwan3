@@ -6,68 +6,61 @@ mwan3_get_iface_id()
 	[ "$1" == "$INTERFACE" ] && iface_id=$iface_count
 }
 
-mwan3_get_route_args()
-{
-	route_args=$(ip -4 route list dev $DEVICE default | head -1 | sed '/.*via \([^ ]*\) .*$/!d;s//\1/;q' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}')
-	[ -n "$route_args" ] && route_args="via $route_args"
-	route_args="nexthop $route_args dev $DEVICE"
-}
-
 mwan3_set_general_iptables()
 {
-	if ! iptables -S mwan3_ifaces -t mangle &> /dev/null; then
-		iptables -N mwan3_ifaces -t mangle
+	if ! $IPT -S mwan3_ifaces &> /dev/null; then
+		$IPT -N mwan3_ifaces
 	fi
 
-	if ! iptables -S mwan3_rules -t mangle &> /dev/null; then
-		iptables -N mwan3_rules -t mangle
+	if ! $IPT -S mwan3_rules &> /dev/null; then
+		$IPT -N mwan3_rules
 	fi
 
-	if ! iptables -S mwan3_connected -t mangle &> /dev/null; then
-		iptables -N mwan3_connected -t mangle
+	if ! $IPT -S mwan3_connected &> /dev/null; then
+		$IPT -N mwan3_connected
 	fi
 
-	if ! iptables -S mwan3_hook -t mangle &> /dev/null; then
-		iptables -N mwan3_hook -t mangle
-		iptables -A mwan3_hook -t mangle -j CONNMARK --restore-mark --nfmask 0xff00 --ctmask 0xff00
-		iptables -A mwan3_hook -t mangle -m mark --mark 0x0/0xff00 -j mwan3_ifaces
-		iptables -A mwan3_hook -t mangle -m mark --mark 0x0/0xff00 -j mwan3_connected
-		iptables -A mwan3_hook -t mangle -m mark --mark 0x0/0xff00 -j mwan3_rules
-		iptables -A mwan3_hook -t mangle -j CONNMARK --save-mark --nfmask 0xff00 --ctmask 0xff00
+	if ! $IPT -S mwan3_hook &> /dev/null; then
+		$IPT -N mwan3_hook
+		$IPT -A mwan3_hook -j CONNMARK --restore-mark --nfmask 0xff00 --ctmask 0xff00
+		$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_ifaces
+		$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_connected
+		$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_rules
+		$IPT -A mwan3_hook -j CONNMARK --save-mark --nfmask 0xff00 --ctmask 0xff00
 	fi
 
-	if ! iptables -S mwan3_track_hook -t mangle &> /dev/null; then
-		iptables -N mwan3_track_hook -t mangle
+	if ! $IPT -S mwan3_track_hook &> /dev/null; then
+		$IPT -N mwan3_track_hook
 	fi
 
-	if ! iptables -S PREROUTING -t mangle | grep mwan3_hook &> /dev/null; then
-		iptables -A PREROUTING -t mangle -j mwan3_hook
+	if ! $IPT -S PREROUTING | grep mwan3_hook &> /dev/null; then
+		$IPT -A PREROUTING -j mwan3_hook
 	fi
 
-	if ! iptables -S OUTPUT -t mangle | grep mwan3_hook &> /dev/null; then
-		iptables -A OUTPUT -t mangle -j mwan3_hook
+	if ! $IPT -S OUTPUT | grep mwan3_hook &> /dev/null; then
+		$IPT -A OUTPUT -j mwan3_hook
 	fi
 
-	if ! iptables -S OUTPUT -t mangle | grep mwan3_track_hook &> /dev/null; then
-		iptables -A OUTPUT -t mangle -j mwan3_track_hook
+	if ! $IPT -S OUTPUT | grep mwan3_track_hook &> /dev/null; then
+		$IPT -A OUTPUT -j mwan3_track_hook
 	fi
 
-	iptables -F mwan3_rules -t mangle
+	$IPT -F mwan3_rules
 }
 
 mwan3_set_connected_iptables()
 {
 	local connected_networks
 
-	if iptables -S mwan3_connected -t mangle &> /dev/null; then
-		iptables -F mwan3_connected -t mangle
+	if $IPT -S mwan3_connected &> /dev/null; then
+		$IPT -F mwan3_connected
 
-		for connected_networks in $(ip -4 route | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}'); do
-			iptables -A mwan3_connected -t mangle -d $connected_networks -m mark --mark 0x0/0xff00 -j MARK --set-xmark 0xff00/0xff00
+		for connected_networks in $($IP route | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}'); do
+			$IPT -A mwan3_connected -d $connected_networks -m mark --mark 0x0/0xff00 -j MARK --set-xmark 0xff00/0xff00
 		done
 
-		iptables -I mwan3_connected -t mangle -d 224.0.0.0/3 -m mark --mark 0x0/0xff00 -j MARK --set-xmark 0xff00/0xff00
-		iptables -I mwan3_connected -t mangle -d 127.0.0.0/8 -m mark --mark 0x0/0xff00 -j MARK --set-xmark 0xff00/0xff00
+		$IPT -I mwan3_connected -d 224.0.0.0/3 -m mark --mark 0x0/0xff00 -j MARK --set-xmark 0xff00/0xff00
+		$IPT -I mwan3_connected -d 127.0.0.0/8 -m mark --mark 0x0/0xff00 -j MARK --set-xmark 0xff00/0xff00
 	fi
 }
 
@@ -75,56 +68,56 @@ mwan3_set_iface_iptables()
 {
 	local local_net local_nets
 
-	local_net=$(ip -4 route list dev $DEVICE scope link | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}')
+	local_net=$($IP route list dev $DEVICE scope link | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}')
 
-	if ! iptables -S mwan3_iface_$INTERFACE -t mangle &> /dev/null; then
-		iptables -N mwan3_iface_$INTERFACE -t mangle
+	if ! $IPT -S mwan3_iface_$INTERFACE &> /dev/null; then
+		$IPT -N mwan3_iface_$INTERFACE
 	fi
 
-	iptables -F mwan3_iface_$INTERFACE -t mangle
-	iptables -D mwan3_ifaces -t mangle -i $DEVICE -m mark --mark 0x0/0xff00 -j mwan3_iface_$INTERFACE &> /dev/null
+	$IPT -F mwan3_iface_$INTERFACE
+	$IPT -D mwan3_ifaces -i $DEVICE -m mark --mark 0x0/0xff00 -j mwan3_iface_$INTERFACE &> /dev/null
 
 	if [ $ACTION == "ifup" ]; then
 		if [ -n "$local_net" ]; then
 			for local_nets in $local_net ; do
 				if [ $ACTION == "ifup" ]; then
-					iptables -I mwan3_iface_$INTERFACE -t mangle -s $local_net -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE" -j MARK --set-xmark 0xff00/0xff00
+					$IPT -I mwan3_iface_$INTERFACE -s $local_net -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE" -j MARK --set-xmark 0xff00/0xff00
 				fi
 			done
 		fi
 
-		iptables -A mwan3_iface_$INTERFACE -t mangle -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE" -j MARK --set-xmark $(($iface_id*256))/0xff00
-		iptables -A mwan3_ifaces -t mangle -i $DEVICE -m mark --mark 0x0/0xff00 -j mwan3_iface_$INTERFACE
+		$IPT -A mwan3_iface_$INTERFACE -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE" -j MARK --set-xmark $(($iface_id*256))/0xff00
+		$IPT -A mwan3_ifaces -i $DEVICE -m mark --mark 0x0/0xff00 -j mwan3_iface_$INTERFACE
 	fi
 
 	if [ $ACTION == "ifdown" ]; then
-		iptables -X mwan3_iface_$INTERFACE -t mangle
+		$IPT -X mwan3_iface_$INTERFACE
 	fi
 }
 
 mwan3_set_iface_route()
 {
-	ip -4 route flush table $iface_id
-	[ $ACTION == "ifup" ] && ip -4 route add table $iface_id default $route_args
+	$IP route flush table $iface_id
+	[ $ACTION == "ifup" ] && $IP route add table $iface_id default $route_args
 }
 
 mwan3_set_iface_rules()
 {
-	while [ -n "$(ip -4 rule list | awk '$1 == "'$(($iface_id+1000)):'"')" ]; do
-		ip -4 rule del pref $(($iface_id+1000))
+	while [ -n "$($IP rule list | awk '$1 == "'$(($iface_id+1000)):'"')" ]; do
+		$IP rule del pref $(($iface_id+1000))
 	done
 
-	while [ -n "$(ip -4 rule list | awk '$1 == "'$(($iface_id+2000)):'"')" ]; do
-		ip -4 rule del pref $(($iface_id+2000))
+	while [ -n "$($IP rule list | awk '$1 == "'$(($iface_id+2000)):'"')" ]; do
+		$IP rule del pref $(($iface_id+2000))
 	done
 
-	while [ -n "$(ip -4 rule list | awk '$1 == "2254:"')" ]; do
-		ip -4 rule del pref 2254
+	while [ -n "$($IP rule list | awk '$1 == "2254:"')" ]; do
+		$IP rule del pref 2254
 	done
 
-	[ $ACTION == "ifup" ] && ip -4 rule add pref $(($iface_id+1000)) iif $DEVICE lookup main
-	[ $ACTION == "ifup" ] && ip -4 rule add pref $(($iface_id+2000)) fwmark $(($iface_id*256))/0xff00 lookup $iface_id
-        ip rule add pref 2254 fwmark 0xfe00/0xff00 unreachable                                   
+	[ $ACTION == "ifup" ] && $IP rule add pref $(($iface_id+1000)) iif $DEVICE lookup main
+	[ $ACTION == "ifup" ] && $IP rule add pref $(($iface_id+2000)) fwmark $(($iface_id*256))/0xff00 lookup $iface_id
+        $IP rule add pref 2254 fwmark 0xfe00/0xff00 unreachable                                   
 }
 
 mwan3_track()
@@ -145,28 +138,28 @@ mwan3_track()
 		config_get down $INTERFACE down 5
 		config_get up $INTERFACE up 5
 
-		if ! iptables -S mwan3_track_$INTERFACE -t mangle &> /dev/null; then
-			iptables -N mwan3_track_$INTERFACE -t mangle
-			iptables -A mwan3_track_hook -t mangle -p icmp -m icmp --icmp-type 8 -m length --length 32 -j mwan3_track_$INTERFACE
+		if ! $IPT -S mwan3_track_$INTERFACE &> /dev/null; then
+			$IPT -N mwan3_track_$INTERFACE
+			$IPT -A mwan3_track_hook -p icmp -m icmp --icmp-type 8 -m length --length 32 -j mwan3_track_$INTERFACE
 		fi
 
-		iptables -F mwan3_track_$INTERFACE -t mangle
+		$IPT -F mwan3_track_$INTERFACE
 
 		for track_ip in $track_ips; do
-			iptables -A mwan3_track_$INTERFACE -t mangle -d $track_ip -j MARK --set-xmark 0xff00/0xff00
+			$IPT -A mwan3_track_$INTERFACE -d $track_ip -j MARK --set-xmark 0xff00/0xff00
 		done
 
 		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $INTERFACE $DEVICE $reliability $count $timeout $interval $down $up $track_ips &
 	else
-		iptables -D mwan3_track_hook -t mangle -p icmp -m icmp --icmp-type 8 -m length --length 32 -j mwan3_track_$INTERFACE &> /dev/null
-		iptables -F mwan3_track_$INTERFACE -t mangle &> /dev/null
-		iptables -X mwan3_track_$INTERFACE -t mangle &> /dev/null
+		$IPT -D mwan3_track_hook -p icmp -m icmp --icmp-type 8 -m length --length 32 -j mwan3_track_$INTERFACE &> /dev/null
+		$IPT -F mwan3_track_$INTERFACE &> /dev/null
+		$IPT -X mwan3_track_$INTERFACE &> /dev/null
 	fi
 }
 
 mwan3_set_policy()
 {
-	local iface_count iface_id metric probability weight
+	local iface_count iface_id INTERFACE metric probability weight
 
 	config_get INTERFACE $1 interface
 	config_get metric $1 metric 1
@@ -178,12 +171,12 @@ mwan3_set_policy()
 
 	[ -n "$iface_id" ] || return 0
 
-	if iptables -S mwan3_iface_$INTERFACE -t mangle &> /dev/null; then
+	if $IPT -S mwan3_iface_$INTERFACE &> /dev/null; then
 		if [ "$metric" -lt "$lowest_metric" ]; then
 
 			total_weight=$weight
-			iptables -F mwan3_policy_$policy -t mangle
-			iptables -A mwan3_policy_$policy -t mangle -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE $weight $weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
+			$IPT -F mwan3_policy_$policy
+			$IPT -A mwan3_policy_$policy -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE $weight $weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
 
 			lowest_metric=$metric
 
@@ -204,7 +197,7 @@ mwan3_set_policy()
 
 			probability="-m statistic --mode random --probability $probability"
 			
-			iptables -I mwan3_policy_$policy -t mangle -m mark --mark 0x0/0xff00 $probability -m comment --comment "$INTERFACE $weight $total_weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
+			$IPT -I mwan3_policy_$policy -m mark --mark 0x0/0xff00 $probability -m comment --comment "$INTERFACE $weight $total_weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
 		fi
 	fi
 }
@@ -216,22 +209,22 @@ mwan3_set_policies_iptables()
 	policy=$1
 
 	if [ "$policy" != $(echo "$policy" | cut -c1-15) ]; then
-		logger -t mwan3 -p warn "Policy $policy exceeds max of 15 chars. Not setting policy" && return 0
+		$LOG warn "Policy $policy exceeds max of 15 chars. Not setting policy" && return 0
 	fi
 
-	if ! iptables -S mwan3_policy_$policy -t mangle &> /dev/null; then
-		iptables -N mwan3_policy_$policy -t mangle
+	if ! $IPT -S mwan3_policy_$policy &> /dev/null; then
+		$IPT -N mwan3_policy_$policy
 	fi
 
-	iptables -F mwan3_policy_$policy -t mangle
-	iptables -A mwan3_policy_$policy -t mangle -m mark --mark 0x0/0xff00 -m comment --comment "unreachable" -j MARK --set-xmark 0xfe00/0xff00
+	$IPT -F mwan3_policy_$policy
+	$IPT -A mwan3_policy_$policy -m mark --mark 0x0/0xff00 -m comment --comment "unreachable" -j MARK --set-xmark 0xfe00/0xff00
 
 	lowest_metric=256
 	total_weight=0
 
 	config_list_foreach $policy use_member mwan3_set_policy
 
-	iptables -X $policy -t mangle &> /dev/null
+	$IPT -X $policy &> /dev/null
 }
 
 mwan3_set_user_rules_iptables()
@@ -256,10 +249,10 @@ mwan3_set_user_rules_iptables()
 
 		case $proto in
 			tcp|udp)
-			iptables -A mwan3_rules -t mangle -p $proto -s $src_ip -d $dest_ip -m multiport --sports $src_port -m multiport --dports $dest_port -m mark --mark 0/0xff00 -m comment --comment "$1" -j $use_policy &> /dev/null
+			$IPT -A mwan3_rules -p $proto -s $src_ip -d $dest_ip -m multiport --sports $src_port -m multiport --dports $dest_port -m mark --mark 0/0xff00 -m comment --comment "$1" -j $use_policy &> /dev/null
 			;;
 			*)
-			iptables -A mwan3_rules -t mangle -p $proto -s $src_ip -d $dest_ip -m mark --mark 0/0xff00 -m comment --comment "$1" -j $use_policy &> /dev/null
+			$IPT -A mwan3_rules -p $proto -s $src_ip -d $dest_ip -m mark --mark 0/0xff00 -m comment --comment "$1" -j $use_policy &> /dev/null
 			;;
 		esac
 	fi
@@ -269,45 +262,41 @@ mwan3_ifupdown()
 {
 	local counter enabled iface_count iface_id route_args wan_metric
 
-	[ -n "$DEVICE" ] || exit 0
-	[ -n "$INTERFACE" ] || exit 0
-	[ "$(uci get -P /var/state mwan3.$INTERFACE 2> /dev/null)" == "interface" ] || return 0
-
 	config_load mwan3
+	config_foreach mwan3_get_iface_id interface
+
+	[ -n "$iface_id" ] || return 0
+	[ "$iface_count" -le 250 ] || return 0
+	unset iface_count
+
 	config_get enabled $INTERFACE enabled 0
 
 	counter=0
 
 	if [ $ACTION == "ifup" ]; then
-		[ "$enabled" -eq 1 ] || exit 0
+		[ "$enabled" -eq 1 ] || return 0
 
-		while [ -z "$(ip -4 route list dev $DEVICE default | head -1)" -a "$counter" -lt 10 ]; do
+		while [ -z "$($IP route list dev $DEVICE default | head -1)" -a "$counter" -lt 10 ]; do
 			sleep 1
 			let counter++
 			if [ "$counter" -ge 10 ]; then
-				logger -t mwan3 -p warn "Could not find gateway for interface $INTERFACE ($DEVICE)" && exit 0
+				$LOG warn "Could not find gateway for interface $INTERFACE ($DEVICE)" && return 0
 			fi
 		done
 
-		mwan3_get_route_args
+		route_args=$($IP route list dev $DEVICE default | head -1 | sed '/.*via \([^ ]*\) .*$/!d;s//via \1/;q' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}')
+		route_args="nexthop $route_args dev $DEVICE"
 	fi
 
 	while [ "$(pgrep -f -o hotplug-call)" -ne $$ -a "$counter" -lt 60 ]; do
 		sleep 1
 		let counter++
 		if [ "$counter" -ge 60 ]; then
-			logger -t mwan3 -p warn "Timeout waiting for older hotplug processes to finish. $ACTION interface $INTERFACE ($DEVICE) aborted" && exit 0
+			$LOG warn "Timeout waiting for older hotplug processes to finish. $ACTION interface $INTERFACE ($DEVICE) aborted" && return 0
 		fi
 	done
 
-	config_foreach mwan3_get_iface_id interface
-
-	[ -n "$iface_id" ] || exit 0
-	[ "$iface_count" -le 250 ] || exit 0
-	unset iface_count
-	unset counter
-
-	logger -t mwan3 -p notice "$ACTION interface $INTERFACE ($DEVICE)"
+	$LOG notice "$ACTION interface $INTERFACE ($DEVICE)"
 
 	mwan3_set_general_iptables
 	mwan3_set_iface_iptables
@@ -320,9 +309,20 @@ mwan3_ifupdown()
 	config_foreach mwan3_set_user_rules_iptables rule
 }
 
+[ -n "$DEVICE" ] || exit 0
+[ -n "$INTERFACE" ] || exit 0
+
+local IP IPT LOG
+
+IP="/usr/sbin/ip -4"
+IPT="/usr/sbin/iptables -t mangle -w"
+LOG="/usr/bin/logger -t mwan3 -p"
+
 case "$ACTION" in
 	ifup|ifdown)
 		mwan3_ifupdown
 		mwan3_set_connected_iptables
 	;;
 esac
+
+exit 0
