@@ -12,7 +12,7 @@ PKG_SOURCE_VERSION:=bc5d60e58e7ebd1694cef23d798df08b3b8f216f
 PKG_VERSION:=2014-07-04-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.wifi.pps.univ-paris-diderot.fr/babels
+PKG_SOURCE_URL:=https://github.com/boutier/babeld.git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
