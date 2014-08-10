@@ -88,7 +88,7 @@ err_reliability = 0
 iface_check()
 
 
-m5 = Map("mwan3", translate("MWAN3 Multi-WAN Interface Configuration - " .. arg[1]),
+m5 = Map("mwan3", translate("MWAN3 Multi-WAN Interface Configuration - ") .. arg[1],
 	translate(iface_warn()))
 	m5.redirect = dsp.build_url("admin", "network", "mwan3", "configuration", "interface")
 
