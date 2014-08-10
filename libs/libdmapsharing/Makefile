@@ -10,14 +10,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdmapsharing
-PKG_VERSION:=2.9.15
+PKG_VERSION:=2.9.28
 PKG_RELEASE:=1
 
-PKG_SOURCE:=libdmapsharing-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.flyn.org/projects/libdmapsharing/
-PKG_MD5SUM:=52c9e4d3de931d9013eeaccf7371bb2d
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+
+PKG_LICENSE=LGPLv2.1
+PKG_LICENSE_FILE=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/libdmapsharing-$(PKG_VERSION)
+PKG_SOURCE:=libdmapsharing-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=http://www.flyn.org/projects/libdmapsharing/
+PKG_MD5SUM:=a530bee446040f6e6664a38212f16f60
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -31,15 +35,18 @@ TARGET_LDFLAGS+= \
 define Package/libdmapsharing
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libsoup +mdnsresponder +gstreamer +gst-plugins-base +libgstapp
+  DEPENDS:=+libsoup +mdnsresponder +gstreamer1 +gst1-plugins-base +libgst1app
   TITLE:=libdmapsharing
   URL:=http://www.flyn.org/projects/libdmapsharing/
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
 define Package/libdmapsharing/decription
   Libdmapsharing is a DMAP library implementation in C
 endef
+
+CONFIGURE_ARGS += \
+	--disable-introspection \
+	--disable-gtk-doc
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
