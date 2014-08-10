@@ -15,6 +15,8 @@ PKG_SOURCE:=freeradius-server-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.freeradius.org/pub/freeradius/
 PKG_MD5SUM:=40535bace507d7a3134c3d858f3cbc5a
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYRIGHT LICENSE
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/freeradius-server-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
