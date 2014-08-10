@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2010 Gianluigi Tiesi <sherpya@netfarm.it>
-# Copyright (C) 2011-2013 OpenWrt.org
+# Copyright (C) 2011-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -16,6 +16,8 @@ PKG_MAINTAINER=Daniel Golle <daniel@makrotopia.org>
 PKG_SOURCE:=$(PKG_NAME)-udeb_$(PKG_VERSION)_all.udeb
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/d/debootstrap
 PKG_MD5SUM:=6d4e3b97981b9e0bb86f49d8edac91af
+PKG_LICENSE:=Unique
+PKG_LICENSE_FILES:=debian/copyright
 
 UNPACK_CMD=ar -p "$(DL_DIR)/$(PKG_SOURCE)" data.tar.xz | xzcat | tar -C $(1) -xf -
 
