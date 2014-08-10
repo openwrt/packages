@@ -11,6 +11,8 @@ PKG_NAME:=mktorrent
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.sourceforge.net/$(PKG_NAME)/
