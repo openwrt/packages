@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gcc
-PKG_VERSION:=4.6.3
+PKG_VERSION:=4.8.3
 PKG_RELEASE:=1
 PKG_SOURCE_URL:=ftp://ftp.fu-berlin.de/unix/languages/gcc/releases/gcc-$(PKG_VERSION) \
      http://mirrors.rcn.net/pub/sourceware/gcc/releases/gcc-$(PKG_VERSION) \
     ftp://ftp.gnu.org/gnu/gcc/releases/gcc-$(PKG_VERSION)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=773092fe5194353b02bb0110052a972e
+PKG_MD5SUM:=7c60f24fab389f77af203d2516ee110f
 PKG_INSTALL:=1
 PKG_FIXUP:=libtool
 PKG_BUILD_PARALLEL:=1

@@ -1,6 +1,6 @@
---- gcc/gcc/config/mips/t-libgcc-mips16~	2013-03-26 09:09:34.209077496 -0400
-+++ gcc/gcc/config/mips/t-libgcc-mips16	2013-03-26 18:21:01.717303669 -0400
-@@ -43,3 +43,6 @@
+--- a/libgcc/config/mips/t-mips16
++++ b/libgcc/config/mips/t-mips16
+@@ -43,3 +43,6 @@ SYNC_CFLAGS = -mno-mips16
  
  # Version these symbols if building libgcc.so.
  SHLIB_MAPFILES += $(srcdir)/config/mips/libgcc-mips16.ver
