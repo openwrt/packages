@@ -20,6 +20,7 @@ PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_INSTALL:=1
+PKG_LICENSE:=LGPL-2.1 GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 

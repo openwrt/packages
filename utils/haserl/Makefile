@@ -15,6 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/haserl
 PKG_MD5SUM:=a9decddb508944d56f71dd2f821e2ec5
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
+PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
