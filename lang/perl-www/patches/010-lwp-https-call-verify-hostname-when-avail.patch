@@ -1,0 +1,41 @@
+commit 3b266f17ccd5613a9c42d1e04118e94ca6467489
+Author: Gisle Aas <gisle@aas.no>
+Date:   Sun Jan 16 12:56:30 2011 +0100
+
+    Call IO::Socket::SSL's verify_hostname when available
+
+--- a/lib/LWP/Protocol/https.pm
++++ b/lib/LWP/Protocol/https.pm
+@@ -14,6 +14,15 @@ sub socket_type
+ sub _check_sock
+ {
+     my($self, $req, $sock) = @_;
++    if ($sock->can("verify_hostname")) {
++	if (!$sock->verify_hostname($req->uri->host, "www")) {
++	    my $subject = $sock->peer_certificate("subject");
++	    die "SSL-peer fails verification [subject=$subject]\n";
++	}
++	else {
++	    $req->{ssl_sock_verified}++;
++	}
++    }
+     my $check = $req->header("If-SSL-Cert-Subject");
+     if (defined $check) {
+ 	my $cert = $sock->get_peer_certificate ||
+@@ -36,9 +45,14 @@ sub _get_sock_info
+ 	$res->header("Client-SSL-Cert-Subject" => $cert->subject_name);
+ 	$res->header("Client-SSL-Cert-Issuer" => $cert->issuer_name);
+     }
+-    if(! eval { $sock->get_peer_verify }) {
+-       $res->header("Client-SSL-Warning" => "Peer certificate not verified");
++    if (!$res->request->{ssl_sock_verified}) {
++	if(! eval { $sock->get_peer_verify }) {
++	    my $msg = "Peer certificate not verified";
++	    $msg .= " [$@]" if $@;
++	    $res->header("Client-SSL-Warning" => $msg);
++	}
+     }
++    $res->header("Client-SSL-Socket-Class" => $Net::HTTPS::SSL_SOCKET_CLASS);
+ }
+ 
+ #-----------------------------------------------------------
