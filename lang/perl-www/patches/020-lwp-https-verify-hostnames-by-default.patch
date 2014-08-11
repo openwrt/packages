@@ -1,0 +1,113 @@
+commit 62dd58188d8f8987d24bd84951813a54a8bf5987
+Author: Gisle Aas <gisle@aas.no>
+Date:   Mon Jan 24 23:19:59 2011 +0100
+
+    Default to verifying hostnames when using SSL
+
+--- a/lib/LWP/Protocol/https.pm
++++ b/lib/LWP/Protocol/https.pm
+@@ -11,18 +11,30 @@ sub socket_type
+     return "https";
+ }
+ 
+-sub _check_sock
++sub _extra_sock_opts
+ {
+-    my($self, $req, $sock) = @_;
+-    if ($sock->can("verify_hostname")) {
+-	if (!$sock->verify_hostname($req->uri->host, "www")) {
+-	    my $subject = $sock->peer_certificate("subject");
+-	    die "SSL-peer fails verification [subject=$subject]\n";
+-	}
+-	else {
+-	    $req->{ssl_sock_verified}++;
++    my $self = shift;
++    my %ssl_opts = %{$self->{ua}{ssl_opts} || {}};
++    unless (exists $ssl_opts{SSL_verify_mode}) {
++	$ssl_opts{SSL_verify_mode} = 1;
++    }
++    if (delete $ssl_opts{verify_hostname}) {
++	$ssl_opts{SSL_verify_mode} ||= 1;
++	$ssl_opts{SSL_verifycn_scheme} = 'www';
++    }
++    if ($ssl_opts{SSL_verify_mode}) {
++	unless (exists $ssl_opts{SSL_ca_file} || exists $ssl_opts{SSL_ca_path}) {
++	    require Mozilla::CA;
++	    $ssl_opts{SSL_ca_file} = Mozilla::CA::SSL_ca_file();
+ 	}
+     }
++    $self->{ssl_opts} = \%ssl_opts;
++    return (%ssl_opts, $self->SUPER::_extra_sock_opts);
++}
++
++sub _check_sock
++{
++    my($self, $req, $sock) = @_;
+     my $check = $req->header("If-SSL-Cert-Subject");
+     if (defined $check) {
+ 	my $cert = $sock->get_peer_certificate ||
+@@ -45,12 +57,11 @@ sub _get_sock_info
+ 	$res->header("Client-SSL-Cert-Subject" => $cert->subject_name);
+ 	$res->header("Client-SSL-Cert-Issuer" => $cert->issuer_name);
+     }
+-    if (!$res->request->{ssl_sock_verified}) {
+-	if(! eval { $sock->get_peer_verify }) {
+-	    my $msg = "Peer certificate not verified";
+-	    $msg .= " [$@]" if $@;
+-	    $res->header("Client-SSL-Warning" => $msg);
+-	}
++    if (!$self->{ssl_opts}{SSL_verify_mode}) {
++	$res->push_header("Client-SSL-Warning" => "Peer certificate not verified");
++    }
++    elsif (!$self->{ssl_opts}{SSL_verifycn_scheme}) {
++	$res->push_header("Client-SSL-Warning" => "Peer hostname match with certificate not verified");
+     }
+     $res->header("Client-SSL-Socket-Class" => $Net::HTTPS::SSL_SOCKET_CLASS);
+ }
+--- a/lib/LWP/UserAgent.pm
++++ b/lib/LWP/UserAgent.pm
+@@ -41,6 +41,7 @@ sub new
+     my $timeout = delete $cnf{timeout};
+     $timeout = 3*60 unless defined $timeout;
+     my $local_address = delete $cnf{local_address};
++    my $ssl_opts = delete $cnf{ssl_opts};
+     my $use_eval = delete $cnf{use_eval};
+     $use_eval = 1 unless defined $use_eval;
+     my $parse_head = delete $cnf{parse_head};
+@@ -83,6 +84,7 @@ sub new
+ 		      def_headers  => $def_headers,
+ 		      timeout      => $timeout,
+ 		      local_address => $local_address,
++		      ssl_opts     => { $ssl_opts ? %$ssl_opts  : (verify_hostname => 1) },
+ 		      use_eval     => $use_eval,
+                       show_progress=> $show_progress,
+ 		      max_size     => $max_size,
+@@ -582,6 +584,20 @@ sub max_size     { shift->_elem('max_siz
+ sub max_redirect { shift->_elem('max_redirect', @_); }
+ sub show_progress{ shift->_elem('show_progress', @_); }
+ 
++sub ssl_opts {
++    my $self = shift;
++    if (@_ == 1) {
++	my $k = shift;
++	return $self->{ssl_opts}{$k};
++    }
++    if (@_) {
++	%{$self->{ssl_opts}} = (%{$self->{ssl_opts}}, @_);
++    }
++    else {
++	return keys %{$self->{ssl_opts}};
++    }
++}
++
+ sub parse_head {
+     my $self = shift;
+     if (@_) {
+@@ -1040,6 +1056,7 @@ The following options correspond to attr
+    cookie_jar              undef
+    default_headers         HTTP::Headers->new
+    local_address           undef
++   ssl_opts		   { verify_hostname => 1 }
+    max_size                undef
+    max_redirect            7
+    parse_head              1
