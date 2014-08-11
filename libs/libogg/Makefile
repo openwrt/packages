@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=http://downloads.xiph.org/releases/ogg/
 PKG_MD5SUM:=5c3a34309d8b98640827e5d0991a4015
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_LICENSE:=BSD-3c
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf

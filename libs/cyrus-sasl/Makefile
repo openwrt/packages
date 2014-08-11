@@ -11,6 +11,8 @@ PKG_NAME:=cyrus-sasl
 PKG_VERSION:=2.1.26
 PKG_RELEASE:=2
 
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.cyrusimap.org/cyrus-sasl/
 PKG_MD5SUM:=a7f4e5e559a0e37b3ffc438c9456e425

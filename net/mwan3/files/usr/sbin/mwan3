@@ -16,10 +16,13 @@ EOF
 
 EXTRA_COMMANDS="ifdown ifup interfaces policies rules status"
 EXTRA_HELP="$(extra_help)"
-
+IP="/usr/sbin/ip -4"
+IPT="/usr/sbin/iptables -t mangle -w"
 
 ifdown()
 {
+	local device
+
 	if [ -z "$1" ]; then
 		echo "Error: Expecting interface. Usage: mwan3 ifdown <interface>" && exit 0
 	fi
@@ -28,8 +31,6 @@ ifdown()
 		echo "Error: Too many arguments. Usage: mwan3 ifdown <interface>" && exit 0
 	fi
 
-	local device
-	
 	device=$(uci get -p /var/state network.$1.ifname) &> /dev/null
 	
 	if [ -e /var/run/mwan3track-$1.pid ] ; then
@@ -44,6 +45,8 @@ ifdown()
 
 ifup()
 {
+	local device enabled
+
 	config_load mwan3
 
 	if [ -z "$1" ]; then
@@ -53,8 +56,6 @@ ifup()
 	if [ -n "$2" ]; then
 		echo "Too many arguments. Usage: mwan3 ifup <interface>" && exit 0
 	fi
-
-	local device enabled
 	
 	config_get enabled "$1" enabled 0
 
@@ -67,9 +68,9 @@ ifup()
 
 interfaces()
 {
-	config_load mwan3
-
 	local device enabled iface_id tracking
+
+	config_load mwan3
 
 	echo "Interface status:"
 	
@@ -91,13 +92,13 @@ interfaces()
 			tracking="down"
 		fi
 
-		if [ -n "$(ip rule | awk '$5 == ("'$device'")')" -a -n "$(iptables -S mwan3_iface_$1 -t mangle 2> /dev/null)" -a -n "$(ip -4 route list table $iface_id default dev $device 2> /dev/null)" ]; then
+		if [ -n "$($IP rule | awk '$5 == ("'$device'")')" -a -n "$($IPT -S mwan3_iface_$1 2> /dev/null)" -a -n "$($IP route list table $iface_id default dev $device 2> /dev/null)" ]; then
 			if [ -n "$(uci get -p /var/state mwan3.$1.track_ip 2> /dev/null)" ]; then
 				echo "Interface $1 is online (tracking $tracking)"
 			else
 				echo "Interface $1 is online"
 			fi
-		elif [ -n "$(ip rule | awk '$5 == ("'$device'")')" -o -n "$(iptables -S mwan3_iface_$1 -t mangle 2> /dev/null)" -o -n "$(ip -4 route list table $iface_id default dev $device 2> /dev/null)" ]; then
+		elif [ -n "$($IP rule | awk '$5 == ("'$device'")')" -o -n "$($IPT -S mwan3_iface_$1 2> /dev/null)" -o -n "$($IP route list table $iface_id default dev $device 2> /dev/null)" ]; then
 			echo "Interface $1 error"
 		else
 			if [ "$enabled" -eq 1 ]; then
@@ -119,21 +120,21 @@ policies()
 {
 	local percent policy share total_weight weight iface
 
-	for policy in $(iptables -S -t mangle | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
+	for policy in $($IPT -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
 		echo "Policy $policy:" | sed 's/mwan3_policy_//g'
 
-		for iface in $(iptables -S $policy -t mangle | cut -s -d'"' -f2 | awk '{print $1}'); do
-			[ -n "$total_weight" ] || total_weight=$(iptables -S $policy -t mangle | grep "$iface " | cut -s -d'"' -f2 | awk '{print $3}')
+		for iface in $($IPT -S $policy | cut -s -d'"' -f2 | awk '{print $1}'); do
+			[ -n "$total_weight" ] || total_weight=$($IPT -S $policy | grep "$iface " | cut -s -d'"' -f2 | awk '{print $3}')
 		done
 
 		if [ ! -z "${total_weight##*[!0-9]*}" ]; then
-			for iface in $(iptables -S $policy -t mangle | cut -s -d'"' -f2 | awk '{print $1}'); do
-				weight=$(iptables -S $policy -t mangle | grep "$iface " | cut -s -d'"' -f2 | awk '{print $2}')
+			for iface in $($IPT -S $policy | cut -s -d'"' -f2 | awk '{print $1}'); do
+				weight=$($IPT -S $policy | grep "$iface " | cut -s -d'"' -f2 | awk '{print $2}')
 				percent=$(($weight*100/$total_weight))
 				echo " $iface ($percent%)"
 			done
 		else
-			echo " $(iptables -S $policy -t mangle | sed '/.*--comment \([^ ]*\) .*$/!d;s//\1/;q')"
+			echo " $($IPT -S $policy | sed '/.*--comment \([^ ]*\) .*$/!d;s//\1/;q')"
 		fi
 
 		echo -e
@@ -144,19 +145,17 @@ policies()
 }
 rules()
 {
-	if [ -n "$(iptables -S mwan3_connected -t mangle 2> /dev/null)" ]; then
+	if [ -n "$($IPT -S mwan3_connected 2> /dev/null)" ]; then
 		echo "Known networks:"
-		echo "destination policy hits" | awk '{ printf "%-19s%-19s%-9s%s\n",$1,$2,$3}'
-		echo "------------------------------------------------"
-		iptables -L mwan3_connected -t mangle -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_//g' | awk '{printf "%-19s%-19s%-9s%s\n",$9,"default",$1}'
+		echo "destination policy hits" | awk '{ printf "%-19s%-19s%-9s%s\n",$1,$2,$3}' | awk '1; {gsub(".","-")}1'
+		$IPT -L mwan3_connected -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_//g' | awk '{printf "%-19s%-19s%-9s%s\n",$9,"default",$1}'
 		echo -e
 	fi
 
-	if [ -n "$(iptables -S mwan3_rules -t mangle 2> /dev/null)" ]; then
+	if [ -n "$($IPT -S mwan3_rules 2> /dev/null)" ]; then
 		echo "Active rules:"
-		echo "source destination proto src-port dest-port policy hits" | awk '{ printf "%-19s%-19s%-7s%-14s%-14s%-16s%-9s%s\n",$1,$2,$3,$4,$5,$6,$7}'
-		echo "---------------------------------------------------------------------------------------------------"
-		iptables -L mwan3_rules -t mangle -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_//g' | awk '{ printf "%-19s%-19s%-7s%-14s%-14s%-16s%-9s%s\n",$8,$9,$4,$12,$15,$3,$1}'
+		echo "source destination proto src-port dest-port policy hits" | awk '{ printf "%-19s%-19s%-7s%-14s%-14s%-16s%-9s%s\n",$1,$2,$3,$4,$5,$6,$7}' | awk '1; {gsub(".","-")}1'
+		$IPT -L mwan3_rules -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_//g' | awk '{ printf "%-19s%-19s%-7s%-14s%-14s%-16s%-9s%s\n",$8,$9,$4,$12,$15,$3,$1}'
 		echo -e
 	fi
 }
@@ -181,24 +180,24 @@ stop()
 	killall mwan3track &> /dev/null
 	rm /var/run/mwan3track-* &> /dev/null
 
-	for route in $(ip route list table all | sed 's/.*table \([^ ]*\) .*/\1/' |  awk '{print $1}' | awk '{for(i=1;i<=NF;i++) if($i+0>0) if($i+0<255) {print;break}}'); do
-		ip -4 route flush table $route &> /dev/null
+	for route in $($IP route list table all | sed 's/.*table \([^ ]*\) .*/\1/' |  awk '{print $1}' | awk '{for(i=1;i<=NF;i++) if($i+0>0) if($i+0<255) {print;break}}'); do
+		$IP route flush table $route &> /dev/null
 	done
 
-	for rule in $(ip -4 rule list | egrep '^[1-2][0-9]{3}\:' | cut -d ':' -f 1); do
-		ip -4 rule del pref $rule &> /dev/null
+	for rule in $($IP rule list | egrep '^[1-2][0-9]{3}\:' | cut -d ':' -f 1); do
+		$IP rule del pref $rule &> /dev/null
 	done
 
-	iptables -D PREROUTING -t mangle -j mwan3_hook &> /dev/null
-	iptables -D OUTPUT -t mangle -j mwan3_hook &> /dev/null
-	iptables -D OUTPUT -t mangle -j mwan3_track_hook &> /dev/null
+	$IPT -D PREROUTING -j mwan3_hook &> /dev/null
+	$IPT -D OUTPUT -j mwan3_hook &> /dev/null
+	$IPT -D OUTPUT -j mwan3_track_hook &> /dev/null
 
-	for table in $(iptables -S -t mangle | awk '{print $2}' | grep mwan3 | sort -u); do
-		iptables -F $table -t mangle &> /dev/null
+	for table in $($IPT -S | awk '{print $2}' | grep mwan3 | sort -u); do
+		$IPT -F $table &> /dev/null
 	done
 
-	for table in $(iptables -S -t mangle | awk '{print $2}' | grep mwan3 | sort -u); do
-		iptables -X $table -t mangle &> /dev/null
+	for table in $($IPT -S | awk '{print $2}' | grep mwan3 | sort -u); do
+		$IPT -X $table &> /dev/null
 	done
 }
 

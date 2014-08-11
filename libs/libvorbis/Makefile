@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=http://downloads.xiph.org/releases/vorbis/
 PKG_MD5SUM:=55f2288055e44754275a17c9a2497391
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_LICENSE:=BSD-3c
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
