@@ -45,6 +45,7 @@ TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
+include perlmod.mk
 
 define Package/perl
   SUBMENU:=Perl
@@ -69,6 +70,11 @@ endef
 define Host/Install
 	( cd $(HOST_BUILD_DIR); ./miniperl installperl )
 	$(CP) $(HOST_BUILD_DIR)/generate_uudmap $(HOST_PERL_PREFIX)/bin/
+	
+	# Link any possibly installed static extension in
+	$(MAKE) -C $(HOST_BUILD_DIR)/relink clean || true
+	( cd $(HOST_BUILD_DIR)/relink && $(HOST_PERL_PREFIX)/bin/perl Makefile.PL )
+	$(call perlmod/host/relink,$(HOST_BUILD_DIR)/relink)
 endef
 
 # Target perl
@@ -119,5 +125,4 @@ $(eval $(call RequireCommand,rsync, \
 $(eval $(call BuildPackage,perl))
 $(eval $(call HostBuild))
 
-include perlmod.mk
 -include perlbase.mk
