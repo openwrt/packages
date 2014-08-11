@@ -11,6 +11,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mosquitto
 PKG_VERSION:=1.3.4
 PKG_RELEASE:=1
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILE:=LICENSE.txt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://mosquitto.org/files/source/
