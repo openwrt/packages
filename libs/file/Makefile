@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.11
+PKG_VERSION:=5.19
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.astron.com/pub/file/
-PKG_MD5SUM:=16a407bd66d6c7a832f3a5c0d609c27b
+PKG_MD5SUM:=e3526f59023f3f7d1ffa4d541335edab
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=COPYING
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/file/Default
   TITLE:=File type determination
   URL:=ftp://ftp.astron.com/pub/file/
-  MAINTAINER:=Luka Perkov <openwrt@lukaperkov.net>
+  MAINTAINER:=Luka Perkov <luka@openwrt.org>
 endef
 
 define Package/file
