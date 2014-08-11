@@ -3,6 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=1.0.0
 PKG_RELEASE:=23
+PKG_LICENSE:=GPL-2.0
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
