@@ -14,8 +14,9 @@ Makefile contents should contain:
 * An up-to-date copyright notice. Use OpenWrt if no other present or supply your own.
 * A (PKG_)MAINTAINER definition listing either yourself or another person in the field.  
     (E.g.: PKG_MAINTAINER:= Joe D. Hacker `<jdh@jdhs-email-provider.org`>)
-* A PKG_LICENSE and optional PKG_LICENSE_FILE definition showing the license type and what file(s) in the package, if present, contain it respectively. The license type tag should be in the form suggested by the Software Package Data Exchange (SPDX) license list. Using these normalized tags will aide us in filtering packages based on license type. See below for a abbreviated list of some common license tags.
-    (E.g.: PKG_LICENSE:=GPL-2.0+; PKG_LICENSE_FILE:=COPYING)
+* A PKG_LICENSE tag declaring the main license of the package.
+    (E.g.: PKG_LICENSE:=GPL-2.0+) Please use SPDX identifiers if possible (see list at the bottom).
+* An optional PKG_LICENSE_FILE including the filename of the license-file in the source-package.
 
 Commits and pull-requests:
 
