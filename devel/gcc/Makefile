@@ -24,6 +24,17 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 TARGET_LANGUAGES:="c,c++"
+BUGURL=https://dev.openwrt.org/
+PKGVERSION=OpenWrt GCC $(PKG_VERSION)
+
+STRIP:=$(STAGING_DIR_HOST)/bin/sstrip
+RSTRIP:= \
+       NM="$(TARGET_CROSS)nm" \
+       STRIP="$(STRIP) --strip-debug" \
+       STRIP_KMOD="$(TARGET_CROSS)strip --strip-debug" \
+       $(SCRIPT_DIR)/rstrip.sh
+
+
 
 define Package/gcc
   SECTION:=devel
@@ -37,21 +48,12 @@ define Package/gcc/description
 	build a native toolchain for compiling on target
 endef
 
-STRIP:=$(STAGING_DIR_HOST)/bin/sstrip
-RSTRIP:= \
-	NM="$(TARGET_CROSS)nm" \
-	STRIP="$(STRIP) --strip-debug" \
-	STRIP_KMOD="$(TARGET_CROSS)strip --strip-debug" \
-	$(SCRIPT_DIR)/rstrip.sh
-
 
 define Build/Prepare
 	$(PKG_UNPACK)
 # 	we have to download additional stuff before patching
 	(cd $(PKG_BUILD_DIR) && ./contrib/download_prerequisites)
 	$(Build/Patch)
-	$(SED) 's,\(version_string.. = "[0-9\.]*\).*\(";\),\1 (OpenWrt-2.0)\2,' $(PKG_BUILD_DIR)/gcc/version.c
-	$(SED) 's,\(bug_report_url.. = "\).*\(";\),\1<URL:https://dev.openwrt.org/>\2,' $(PKG_BUILD_DIR)/gcc/version.c
 endef
 
 
@@ -65,6 +67,8 @@ define Build/Configure
 			--host=$(REAL_GNU_TARGET_NAME) \
 			--target=$(REAL_GNU_TARGET_NAME) \
 			--enable-languages=$(TARGET_LANGUAGES) \
+			--with-bugurl=$(BUGURL) \
+			--with-pkgversion="$(PKGVERSION)" \
 			--enable-shared \
 			--disable-__cxa_atexit \
 			--enable-target-optspace \
