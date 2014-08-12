@@ -30,6 +30,12 @@ If you have commit access:
 * Do NOT commit to other maintainer's packages without their consent.
 * Use Pull Requests if you are unsure and to suggest changes to other maintainers.
 
+Gaining commit access:
+
+* We will gladly grant commit access to responsible contributors who have made
+  useful pull requests and / or feedback or patches to this repository or
+  OpenWrt in general. Please contact @sbyx if you would like write access.
+
 Release Branches:
 
 * Branches named "for-XX.YY" (e.g. for-14.07) are release branches.
