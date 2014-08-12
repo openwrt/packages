@@ -1,0 +1,8 @@
+Native GCC that runs on target.
+
+To save disk space, this GCC only supports dynamic linking on the target box,
+there are no static libraries shipped.
+
+For now, this was only tested on a mips target. Others to be done...
+
+   Christian Beier <cb@shoutrlabs.com>
