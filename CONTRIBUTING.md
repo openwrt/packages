@@ -17,6 +17,7 @@ Makefile contents should contain:
 * A PKG_LICENSE tag declaring the main license of the package.
     (E.g.: PKG_LICENSE:=GPL-2.0+) Please use SPDX identifiers if possible (see list at the bottom).
 * An optional PKG_LICENSE_FILE including the filename of the license-file in the source-package.
+    (E.g.: PKG_LICENSE_FILE:=COPYING)
 
 Commits and pull-requests:
 
