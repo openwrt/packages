@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
 PKG_VERSION:=1.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Jeroen Louwes <jeroen.louwes@gmail.com>
 PKG_LICENSE:=GPLv2
 
@@ -26,9 +26,9 @@ define Package/mwan3
 endef
 
 define Package/mwan3/description
-	Hotplug script which makes configuration of multiple WAN interfaces simple
-	and manageable. With loadbalancing/failover support for up to 250 wan
-	interfaces, connection tracking and an easy to manage traffic ruleset.
+Hotplug script which makes configuration of multiple WAN interfaces simple
+and manageable. With loadbalancing/failover support for up to 250 wan
+interfaces, connection tracking and an easy to manage traffic ruleset.
 endef
 
 define Package/mwan3/conffiles

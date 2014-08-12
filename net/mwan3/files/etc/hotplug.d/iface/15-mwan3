@@ -29,8 +29,9 @@ mwan3_set_general_iptables()
 		$IPT -A mwan3_hook -j CONNMARK --save-mark --nfmask 0xff00 --ctmask 0xff00
 	fi
 
-	if ! $IPT -S mwan3_track_hook &> /dev/null; then
-		$IPT -N mwan3_track_hook
+	if ! $IPT -S mwan3_output_hook &> /dev/null; then
+		$IPT -N mwan3_output_hook
+		$IPT -A mwan3_output_hook -p icmp -m icmp --icmp-type 3 -j MARK --set-xmark 0xff00/0xff00
 	fi
 
 	if ! $IPT -S PREROUTING | grep mwan3_hook &> /dev/null; then
@@ -41,8 +42,8 @@ mwan3_set_general_iptables()
 		$IPT -A OUTPUT -j mwan3_hook
 	fi
 
-	if ! $IPT -S OUTPUT | grep mwan3_track_hook &> /dev/null; then
-		$IPT -A OUTPUT -j mwan3_track_hook
+	if ! $IPT -S OUTPUT | grep mwan3_output_hook &> /dev/null; then
+		$IPT -A OUTPUT -j mwan3_output_hook
 	fi
 
 	$IPT -F mwan3_rules
@@ -140,7 +141,7 @@ mwan3_track()
 
 		if ! $IPT -S mwan3_track_$INTERFACE &> /dev/null; then
 			$IPT -N mwan3_track_$INTERFACE
-			$IPT -A mwan3_track_hook -p icmp -m icmp --icmp-type 8 -m length --length 32 -j mwan3_track_$INTERFACE
+			$IPT -A mwan3_output_hook -p icmp -m icmp --icmp-type 8 -m length --length 32 -j mwan3_track_$INTERFACE
 		fi
 
 		$IPT -F mwan3_track_$INTERFACE
@@ -151,7 +152,7 @@ mwan3_track()
 
 		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $INTERFACE $DEVICE $reliability $count $timeout $interval $down $up $track_ips &
 	else
-		$IPT -D mwan3_track_hook -p icmp -m icmp --icmp-type 8 -m length --length 32 -j mwan3_track_$INTERFACE &> /dev/null
+		$IPT -D mwan3_output_hook -p icmp -m icmp --icmp-type 8 -m length --length 32 -j mwan3_track_$INTERFACE &> /dev/null
 		$IPT -F mwan3_track_$INTERFACE &> /dev/null
 		$IPT -X mwan3_track_$INTERFACE &> /dev/null
 	fi
@@ -223,8 +224,6 @@ mwan3_set_policies_iptables()
 	total_weight=0
 
 	config_list_foreach $policy use_member mwan3_set_policy
-
-	$IPT -X $policy &> /dev/null
 }
 
 mwan3_set_user_rules_iptables()
