@@ -190,7 +190,7 @@ stop()
 
 	$IPT -D PREROUTING -j mwan3_hook &> /dev/null
 	$IPT -D OUTPUT -j mwan3_hook &> /dev/null
-	$IPT -D OUTPUT -j mwan3_track_hook &> /dev/null
+	$IPT -D OUTPUT -j mwan3_output_hook &> /dev/null
 
 	for table in $($IPT -S | awk '{print $2}' | grep mwan3 | sort -u); do
 		$IPT -F $table &> /dev/null
