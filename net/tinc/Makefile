@@ -25,7 +25,7 @@ define Package/tinc
   DEPENDS:=+liblzo +libopenssl +kmod-tun
   TITLE:=VPN tunneling daemon
   URL:=http://www.tinc-vpn.org/
-  MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
+  MAINTAINER:=Saverio Proto <zioproto@gmail.com>
   SUBMENU:=VPN
 endef
 
