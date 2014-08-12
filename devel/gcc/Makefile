@@ -27,13 +27,13 @@ TARGET_LANGUAGES:="c,c++"
 BUGURL=https://dev.openwrt.org/
 PKGVERSION=OpenWrt GCC $(PKG_VERSION)
 
-STRIP:=$(STAGING_DIR_HOST)/bin/sstrip
+# not using sstrip here as this fucks up the .so's somehow
+STRIP:=$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)strip
 RSTRIP:= \
-       NM="$(TARGET_CROSS)nm" \
-       STRIP="$(STRIP) --strip-debug" \
-       STRIP_KMOD="$(TARGET_CROSS)strip --strip-debug" \
+       NM="$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)nm" \
+       STRIP="$(STRIP)" \
+       STRIP_KMOD="$(STRIP) --strip-debug" \
        $(SCRIPT_DIR)/rstrip.sh
-
 
 
 define Package/gcc
