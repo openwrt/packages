@@ -36,7 +36,8 @@ Gaining commit access:
 
 * We will gladly grant commit access to responsible contributors who have made
   useful pull requests and / or feedback or patches to this repository or
-  OpenWrt in general. Please contact @sbyx if you would like write access.
+  OpenWrt in general. Please include your request for commit access in your
+  next pull request or ticket.
 
 Release Branches:
 
