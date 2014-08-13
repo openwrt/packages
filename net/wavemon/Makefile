@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/wavemon
   SECTION:=net
   CATEGORY:=Network
-  MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
   TITLE:=N-curses based wireless network devices monitor
   DEPENDS:=+libncurses +libpthread
   SUBMENU:=wireless

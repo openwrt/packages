@@ -23,7 +23,7 @@ define Package/sslh
   SUBMENU:=Routing and Redirection
   TITLE:=SSL/SSH multiplexer
   URL:=http://rutschle.net/tech/sslh.shtml
-  MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 
 define Package/sslh/conffiles

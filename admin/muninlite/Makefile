@@ -25,7 +25,7 @@ define Package/muninlite
   DEPENDS:=+xinetd
   TITLE:=Munin node implemented in shell
   URL:=http://sourceforge.net/projects/muninlite/
-  MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 
 define Package/muninlite/Default/description
