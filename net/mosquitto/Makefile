@@ -9,12 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=1.3.2
+PKG_VERSION:=1.3.4
 PKG_RELEASE:=1
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILE:=LICENSE.txt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://mosquitto.org/files/source/
-PKG_MD5SUM:=5d2fe7c8bf2518eb9829547751c04bbf
+PKG_MD5SUM:=9d729849efd74c6e3eee17a4a002e1e9
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -44,9 +46,9 @@ define Package/$(PKG_NAME)-nossl
 endef
 
 define Package/$(PKG_NAME)/default/description
- mosquitto is a message broker that supports v3.1 of the MQ Telemetry
-Transport protocol. MQTT provides a lightweight method for
-messaging using a publish/subscribe model.
+Mosquitto is an open source (BSD licensed) message broker that implements
+the MQTT protocol version 3.1 and 3.1.1. MQTT provides a lightweight
+method of carrying out messaging using a publish/subscribe model.
 
 This package also includes some basic support for configuring via UCI
 endef
@@ -119,7 +121,7 @@ define Package/libmosquitto/default/description
 use by any third party software that wants to communicate with a
 mosquitto server.
 
-Should be useable for communicating with any MQTT v3.1 compatible
+Should be useable for communicating with any MQTT v3.1/3.1.1 compatible
 server, such as IBM's RSMB, in addition to Mosquitto
 endef
 

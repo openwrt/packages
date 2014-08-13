@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
-PKG_VERSION:=4.1.5.1
-PKG_RELEASE:=4
+PKG_VERSION:=4.2.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pkg-shadow.alioth.debian.org/releases
-PKG_MD5SUM:=a00449aa439c69287b6d472191dc2247
+PKG_MD5SUM:=2bfafe7d4962682d31b5eba65dba4fc8
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_LICENSE:=BSD-3-Clause
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -35,7 +36,8 @@ CONFIGURE_ARGS += \
 	--without-acl \
 	--without-attr \
 	--without-tcb \
-	--without-nscd
+	--without-nscd \
+	--disable-subordinate-ids \
 
 define Package/shadow/Default
   SECTION:=utils

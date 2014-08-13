@@ -15,6 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.vips.ecs.soton.ac.uk/supported/7.38/
 PKG_MD5SUM:=768d1c0f50c5b2794bcab68383af33ee
 PKG_FIXUP:=autoreconf
+PKG_CHECK_FORMAT_SECURITY:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
