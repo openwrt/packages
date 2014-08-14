@@ -12,6 +12,7 @@ PKG_VERSION:=1
 PKG_RELEASE:=5
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
+PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 

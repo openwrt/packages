@@ -1,4 +1,9 @@
-#!/bin/sh 
+#!/bin/sh
+#
+# Copyright (C) 2010 segal.di.ubi.pt
+#
+# This is free software, licensed under the GNU General Public License v2.
+#
 
 mode="$1"
 
@@ -46,12 +51,12 @@ watchcat_ping() {
 
 		for host in "$pinghosts"
 		do
-			if ping -c 1 "$host" &> /dev/null 
-			then 
+			if ping -c 1 "$host" &> /dev/null
+			then
 				time_lastcheck_withinternet="$time_now"
 			else
 				time_diff="$((time_now-time_lastcheck_withinternet))"
-				logger -p daemon.info -t "watchcat[$$]" "no internet connectivity for $time_diff seconds. Reseting when reaching $period"       
+				logger -p daemon.info -t "watchcat[$$]" "no internet connectivity for $time_diff seconds. Reseting when reaching $period"
 			fi
 		done
 
