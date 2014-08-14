@@ -27,11 +27,11 @@ mwan3_set_general_iptables()
 		$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_connected
 		$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_rules
 		$IPT -A mwan3_hook -j CONNMARK --save-mark --nfmask 0xff00 --ctmask 0xff00
+		$IPT -A mwan3_hook -m mark ! --mark 0xff00/0xff00 -j mwan3_connected
 	fi
 
 	if ! $IPT -S mwan3_output_hook &> /dev/null; then
 		$IPT -N mwan3_output_hook
-		$IPT -A mwan3_output_hook -p icmp -m icmp --icmp-type 3 -j MARK --set-xmark 0xff00/0xff00
 	fi
 
 	if ! $IPT -S PREROUTING | grep mwan3_hook &> /dev/null; then
@@ -57,11 +57,11 @@ mwan3_set_connected_iptables()
 		$IPT -F mwan3_connected
 
 		for connected_networks in $($IP route | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}'); do
-			$IPT -A mwan3_connected -d $connected_networks -m mark --mark 0x0/0xff00 -j MARK --set-xmark 0xff00/0xff00
+			$IPT -A mwan3_connected -d $connected_networks -j MARK --set-xmark 0xff00/0xff00
 		done
 
-		$IPT -I mwan3_connected -d 224.0.0.0/3 -m mark --mark 0x0/0xff00 -j MARK --set-xmark 0xff00/0xff00
-		$IPT -I mwan3_connected -d 127.0.0.0/8 -m mark --mark 0x0/0xff00 -j MARK --set-xmark 0xff00/0xff00
+		$IPT -I mwan3_connected -d 224.0.0.0/3 -j MARK --set-xmark 0xff00/0xff00
+		$IPT -I mwan3_connected -d 127.0.0.0/8 -j MARK --set-xmark 0xff00/0xff00
 	fi
 }
 
