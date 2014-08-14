@@ -14,6 +14,8 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.bitwizard.nl/mtr
 PKG_MD5SUM:=5e665c617e5659b6ec3e201ee7488eb1
+PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 
@@ -27,7 +29,7 @@ define Package/mtr
   DEPENDS:=+libncurses
   TITLE:=Full screen ncurses traceroute tool
   URL:=http://www.bitwizard.nl/mtr/
-  MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 
 define Package/mtr/description
