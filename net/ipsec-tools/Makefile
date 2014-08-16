@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2006-2011 OpenWrt.org
+#               2014 Noah Meyerhans <frodo@morgul.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -11,6 +12,8 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=ipsec-tools
 PKG_VERSION:=0.8.2
 PKG_RELEASE:=1
+PKG_MAINTAINER := "Noah Meyerhans <frodo@morgul.net>"
+PKG_LICENSE := BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/ipsec-tools
@@ -30,6 +33,7 @@ define Package/ipsec-tools
   DEPENDS:=+libopenssl +kmod-ipsec
   TITLE:=IPsec management tools
   URL:=http://ipsec-tools.sourceforge.net/
+  MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
 endef
 
 CONFIGURE_ARGS += \
