@@ -1,0 +1,26 @@
+Index: bind-9.9.4/bin/Makefile.in
+===================================================================
+--- bind-9.9.4.orig/bin/Makefile.in
++++ bind-9.9.4/bin/Makefile.in
+@@ -19,7 +19,7 @@ srcdir =	@srcdir@
+ VPATH =		@srcdir@
+ top_srcdir =	@top_srcdir@
+ 
+-SUBDIRS =	named rndc dig dnssec tools tests nsupdate \
++SUBDIRS =	named rndc dig dnssec tools nsupdate \
+ 		check confgen @PYTHON_TOOLS@ @PKCS11_TOOLS@
+ TARGETS =
+ 
+Index: bind-9.9.4/lib/Makefile.in
+===================================================================
+--- bind-9.9.4.orig/lib/Makefile.in
++++ bind-9.9.4/lib/Makefile.in
+@@ -23,7 +23,7 @@ top_srcdir =	@top_srcdir@
+ # Attempt to disable parallel processing.
+ .NOTPARALLEL:
+ .NO_PARALLEL:
+-SUBDIRS =	isc isccc dns isccfg bind9 lwres tests
++SUBDIRS =	isc isccc dns isccfg bind9 lwres
+ TARGETS =
+ 
+ @BIND9_MAKE_RULES@
