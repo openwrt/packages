@@ -1,0 +1,24 @@
+--- a/src/racoon/oakley.c
++++ b/src/racoon/oakley.c
+@@ -2424,8 +2424,21 @@ oakley_skeyid(iph1)
+ 				plog(LLV_ERROR, LOCATION, iph1->remote,
+ 					"couldn't find the pskey for %s.\n",
+ 					saddrwop2str(iph1->remote));
++			}
++		}
++		if (iph1->authstr == NULL) {
++			/*
++			 * If we could not locate a psk above try and locate
++			 * the default psk, ie, "*".
++			 */
++			iph1->authstr = privsep_getpsk("*", 1);
++			if (iph1->authstr == NULL) {
++				plog(LLV_ERROR, LOCATION, iph1->remote,
++					"couldn't find the the default pskey either.\n");
+ 				goto end;
+ 			}
++			plog(LLV_NOTIFY, LOCATION, iph1->remote,
++					"Using default PSK.\n");
+ 		}
+ 		plog(LLV_DEBUG, LOCATION, NULL, "the psk found.\n");
+ 		/* should be secret PSK */
