@@ -1,0 +1,22 @@
+--- a/src/racoon/cftoken.l
++++ b/src/racoon/cftoken.l
+@@ -104,6 +104,8 @@ static struct include_stack {
+ static int incstackp = 0;
+ 
+ static int yy_first_time = 1;
++
++int yywrap(void) { return 1; }
+ %}
+ 
+ /* common seciton */
+--- a/src/setkey/token.l
++++ b/src/setkey/token.l
+@@ -86,6 +86,8 @@
+ #if defined(SADB_X_EALG_AES) && ! defined(SADB_X_EALG_AESCBC)
+ #define SADB_X_EALG_AESCBC  SADB_X_EALG_AES
+ #endif
++
++int yywrap(void) { return 1; }
+ %}
+ 
+ /* common section */
