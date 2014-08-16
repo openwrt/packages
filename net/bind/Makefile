@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2006-2012 OpenWrt.org
+#               2014 Noah Meyerhans <frodo@morgul.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.9.4
+PKG_VERSION:=9.9.5-P1
 PKG_RELEASE:=1
+
+PKG_MAINTAINER := Noah Meyerhans <frodo@morgul.net>
+PKG_LICENSE := BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	ftp://ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_MD5SUM:=f69757adc86776daed8e5acb0ee7c0ca
+PKG_MD5SUM:=3408af8c6d27d6cb8a05287f2ee32ad0
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
