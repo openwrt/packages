@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython
-PKG_VERSION:=8.16.14
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)-1
+PKG_VERSION=1.2-$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 PKG_LICENSE:=MIT
