@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython-lib
-PKG_VERSION:=2014-08-12
+PKG_VERSION=$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
-PKG_LICENSE:=MIT
+PKG_LICENSE:=MIT/PSFL
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/micropython/micropython-lib.git
@@ -30,7 +30,7 @@ define Package/micropython-lib
     CATEGORY:=Languages
     TITLE:=micropython-lib
     URL:=https://github.com/micropython/micropython-lib
-    DEPENDS:=+micropython
+    DEPENDS:=micropython
 endef
 
 define Package/micropython-lib/description
