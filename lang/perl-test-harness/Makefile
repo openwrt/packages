@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-test-harness
-PKG_VERSION:=3.32
+PKG_VERSION:=3.33
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/L/LE/LEONT/
 PKG_SOURCE:=Test-Harness-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=a1241b628dc80f5271ed9235c211e55c
+PKG_MD5SUM:=7a72849ee1e67184db098146cc7c8855
 
 PKG_LICENSE:=GPLv1+ ARTISTIC
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
