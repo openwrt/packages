@@ -30,7 +30,7 @@ define Package/micropython-lib
     CATEGORY:=Languages
     TITLE:=micropython-lib
     URL:=https://github.com/micropython/micropython-lib
-    DEPENDS:=micropython
+    DEPENDS:=+micropython
 endef
 
 define Package/micropython-lib/description
