@@ -65,7 +65,7 @@ define Package/xl2tpd/install
 	$(INSTALL_DATA) ./files/options.xl2tpd $(1)/etc/ppp/
 
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
-	$(INSTALL_BIN) ./files/l2tpv2.sh $(1)/lib/netifd/proto
+	$(INSTALL_BIN) ./files/l2tp.sh $(1)/lib/netifd/proto
 endef
 
 $(eval $(call BuildPackage,xl2tpd))
