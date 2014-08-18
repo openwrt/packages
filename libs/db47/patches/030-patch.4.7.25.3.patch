@@ -1,7 +1,6 @@
-diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.c
---- db-4.7.25.NC/lock/lock_deadlock.c	2008-03-10 14:31:33.000000000 +0100
-+++ db-4.7.25.NC.new/lock/lock_deadlock.c	2009-11-08 12:53:25.000000000 +0100
-@@ -121,7 +121,7 @@
+--- a/lock/lock_deadlock.c
++++ b/lock/lock_deadlock.c
+@@ -121,7 +121,7 @@ __lock_detect(env, atype, rejectp)
  	DB_LOCKTAB *lt;
  	db_timespec now;
  	locker_info *idmap;
@@ -10,7 +9,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  	u_int32_t i, cid, keeper, killid, limit, nalloc, nlockers;
  	u_int32_t lock_max, txn_max;
  	int ret, status;
-@@ -133,7 +133,8 @@
+@@ -133,7 +133,8 @@ __lock_detect(env, atype, rejectp)
  	if (IS_REP_CLIENT(env))
  		atype = DB_LOCK_MINWRITE;
  
@@ -20,7 +19,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  
  	lt = env->lk_handle;
  	if (rejectp != NULL)
-@@ -179,11 +180,11 @@
+@@ -179,11 +180,11 @@ __lock_detect(env, atype, rejectp)
  	memcpy(copymap, bitmap, nlockers * sizeof(u_int32_t) * nalloc);
  
  	if ((ret = __os_calloc(env, sizeof(u_int32_t), nalloc, &tmpmap)) != 0)
@@ -34,7 +33,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  		return (ret);
  
  	/*
-@@ -204,8 +205,7 @@
+@@ -204,8 +205,7 @@ __lock_detect(env, atype, rejectp)
  		txn_max = TXN_MAXIMUM;
  
  	killid = BAD_KILLID;
@@ -44,7 +43,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  		if (rejectp != NULL)
  			++*rejectp;
  		killid = (u_int32_t)(*deadp - bitmap) / nalloc;
-@@ -342,11 +342,12 @@
+@@ -342,11 +342,12 @@ dokill:		if (killid == BAD_KILLID) {
  			__db_msg(env,
  			    "Aborting locker %lx", (u_long)idmap[killid].id);
  	}
@@ -62,7 +61,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  	__os_free(env, bitmap);
  	__os_free(env, idmap);
  
-@@ -360,6 +361,17 @@
+@@ -360,6 +361,17 @@ err:	if (free_me != NULL)
  
  #define	DD_INVALID_ID	((u_int32_t) -1)
  
@@ -80,7 +79,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  static int
  __dd_build(env, atype, bmp, nlockers, allocp, idmap, rejectp)
  	ENV *env;
-@@ -393,6 +405,7 @@
+@@ -393,6 +405,7 @@ __dd_build(env, atype, bmp, nlockers, al
  	 * In particular we do not build the conflict array and our caller
  	 * needs to expect this.
  	 */
@@ -88,7 +87,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  	if (atype == DB_LOCK_EXPIRE) {
  skip:		LOCK_DD(env, region);
  		op = SH_TAILQ_FIRST(&region->dd_objs, __db_lockobj);
-@@ -430,17 +443,18 @@
+@@ -430,17 +443,18 @@ skip:		LOCK_DD(env, region);
  			OBJECT_UNLOCK(lt, region, indx);
  		}
  		UNLOCK_DD(env, region);
@@ -112,7 +111,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  		*nlockers = 0;
  		return (0);
  	}
-@@ -448,50 +462,37 @@
+@@ -448,50 +462,37 @@ retry:	count = region->stat.st_nlockers;
  	if (FLD_ISSET(env->dbenv->verbose, DB_VERB_DEADLOCK))
  		__db_msg(env, "%lu lockers", (u_long)count);
  
@@ -170,7 +169,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  			lip->dd_id = id++;
  			id_array[lip->dd_id].id = lip->id;
  			switch (atype) {
-@@ -510,7 +511,6 @@
+@@ -510,7 +511,6 @@ retry:	count = region->stat.st_nlockers;
  			lip->dd_id = DD_INVALID_ID;
  
  	}
@@ -178,7 +177,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  
  	/*
  	 * We only need consider objects that have waiters, so we use
-@@ -669,7 +669,6 @@
+@@ -669,7 +669,6 @@ again:		memset(bitmap, 0, count * sizeof
  	 * status after building the bit maps so that we will not detect
  	 * a blocked transaction without noting that it is already aborting.
  	 */
@@ -186,7 +185,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  	for (id = 0; id < count; id++) {
  		if (!id_array[id].valid)
  			continue;
-@@ -738,6 +737,7 @@
+@@ -738,6 +737,7 @@ get_lock:		id_array[id].last_lock = R_OF
  			id_array[id].in_abort = 1;
  	}
  	UNLOCK_LOCKERS(env, region);
@@ -194,7 +193,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  
  	/*
  	 * Now we can release everything except the bitmap matrix that we
-@@ -839,6 +839,7 @@
+@@ -839,6 +839,7 @@ __dd_abort(env, info, statusp)
  	ret = 0;
  
  	/* We must lock so this locker cannot go away while we abort it. */
@@ -202,7 +201,7 @@ diff -urN db-4.7.25.NC/lock/lock_deadlock.c db-4.7.25.NC.new/lock/lock_deadlock.
  	LOCK_LOCKERS(env, region);
  
  	/*
-@@ -895,6 +896,7 @@
+@@ -895,6 +896,7 @@ __dd_abort(env, info, statusp)
  done:	OBJECT_UNLOCK(lt, region, info->last_ndx);
  err:
  out:	UNLOCK_LOCKERS(env, region);
