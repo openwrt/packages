@@ -31,7 +31,7 @@ define Package/libdb47
   CATEGORY:=Libraries
   DEPENDS:=+libxml2
   TITLE:=Berkeley DB library (4.7)
-  URL:=http://www.sleepycat.com/products/db.shtml
+  URL:=http://www.oracle.com/us/products/database/berkeley-db
 endef
 
 define Package/libdb47/description
@@ -43,7 +43,7 @@ define Package/libdb47xx
   CATEGORY:=Libraries
   DEPENDS:=+libdb47 $(CXX_DEPENDS)
   TITLE:=Berkeley DB library (4.7) for C++
-  URL:=http://www.sleepycat.com/products/db.shtml
+  URL:=http://www.oracle.com/us/products/database/berkeley-db
 endef
 
 define Package/libdb47xx/description
