@@ -16,8 +16,9 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/db-$(PKG_VERSION)
 PKG_SOURCE:=db-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.oracle.com/berkeley-db/
 PKG_MD5SUM:=073ab7f20d24b3872a51ca762f5090e7
+
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
-PKG_LICENSE:=BSD-2c
+PKG_LICENSE:=Sleepycat
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_FIXUP:=autoreconf
@@ -95,4 +96,3 @@ endef
 
 $(eval $(call BuildPackage,libdb47))
 $(eval $(call BuildPackage,libdb47xx))
-
