@@ -9,6 +9,6 @@ SERVICE_DAEMONIZE=1
 SERVICE_WRITE_PID=1
 
 CONF=/var/etc/olsrd.conf
-PID=/var/run/olsrd4.pid
+PID=/var/run/olsrd.pid
 
 UCI_CONF_NAME=olsrd
