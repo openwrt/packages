@@ -48,7 +48,7 @@ TITLE:=attributes perl module
 endef
 
 define Package/perlbase-attributes/install
-$(call perlmod/Install,$(1),attributes.pm,)
+$(call perlmod/Install,$(1),attributes.pm auto/attributes,)
 endef
 
 $(eval $(call BuildPackage,perlbase-attributes))
@@ -786,7 +786,7 @@ TITLE:=mro perl module
 endef
 
 define Package/perlbase-mro/install
-$(call perlmod/Install,$(1),mro.pm,)
+$(call perlmod/Install,$(1),mro.pm auto/mro,)
 endef
 
 $(eval $(call BuildPackage,perlbase-mro))
