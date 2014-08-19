@@ -1244,7 +1244,7 @@ TITLE:=version perl module
 endef
 
 define Package/perlbase-version/install
-$(call perlmod/Install,$(1),version.pm,)
+$(call perlmod/Install,$(1),version.pm version,)
 endef
 
 $(eval $(call BuildPackage,perlbase-version))
