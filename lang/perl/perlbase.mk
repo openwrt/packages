@@ -192,7 +192,7 @@ TITLE:=charnames perl module
 endef
 
 define Package/perlbase-charnames/install
-$(call perlmod/Install,$(1),charnames.pm,)
+$(call perlmod/Install,$(1),charnames.pm _charnames.pm,)
 endef
 
 $(eval $(call BuildPackage,perlbase-charnames))
