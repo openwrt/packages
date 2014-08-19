@@ -15,7 +15,7 @@ PKG_SOURCE_URL:=http://www.cpan.org/authors/id/S/SC/SCHWIGON/lockfile-simple/
 PKG_SOURCE:=LockFile-Simple-$(PKG_VERSION).tar.gz
 PKG_MD5SUM:=4421283b4f32549e5299963734170044
 
-PKG_LICENSE:=GPLv2+ ARTISTIC
+PKG_LICENSE:=GPL-2.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/LockFile-Simple-$(PKG_VERSION)

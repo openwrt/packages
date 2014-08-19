@@ -8,7 +8,7 @@
 	init_proto "$@"
 }
 
-proto_l2tpv2_init_config() {
+proto_l2tp_init_config() {
 	proto_config_add_string "username"
 	proto_config_add_string "password"
 	proto_config_add_string "keepalive"
@@ -20,7 +20,7 @@ proto_l2tpv2_init_config() {
 	no_device=1
 }
 
-proto_l2tpv2_setup() {
+proto_l2tp_setup() {
 	local config="$1"
 	local iface="$2"
 	local optfile="/tmp/l2tp/options.${config}"
@@ -77,7 +77,7 @@ proto_l2tpv2_setup() {
 	xl2tpd-control connect l2tp-${config}
 }
 
-proto_l2tpv2_teardown() {
+proto_l2tp_teardown() {
 	local interface="$1"
 	local optfile="/tmp/l2tp/options.${interface}"
 
@@ -103,5 +103,5 @@ proto_l2tpv2_teardown() {
 }
 
 [ -n "$INCLUDE_ONLY" ] || {
-	add_protocol l2tpv2
+	add_protocol l2tp
 }

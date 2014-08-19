@@ -1,7 +1,6 @@
-diff -urN db-4.7.25.NC/lock/lock.c db-4.7.25.NC.new/lock/lock.c
---- db-4.7.25.NC/lock/lock.c	2008-05-07 14:27:35.000000000 +0200
-+++ db-4.7.25.NC.new/lock/lock.c	2009-11-08 12:52:19.000000000 +0100
-@@ -1274,10 +1274,12 @@
+--- a/lock/lock.c
++++ b/lock/lock.c
+@@ -1274,10 +1274,12 @@ __lock_put_internal(lt, lockp, obj_ndx,
  		SH_TAILQ_REMOVE(
  		    &lt->obj_tab[obj_ndx], sh_obj, links, __db_lockobj);
  		if (sh_obj->lockobj.size > sizeof(sh_obj->objdata)) {
@@ -16,7 +15,7 @@ diff -urN db-4.7.25.NC/lock/lock.c db-4.7.25.NC.new/lock/lock.c
  		}
  		SH_TAILQ_INSERT_HEAD(
  		    &FREE_OBJS(lt, part_id), sh_obj, links, __db_lockobj);
-@@ -1467,15 +1469,21 @@
+@@ -1467,15 +1469,21 @@ retry:	SH_TAILQ_FOREACH(sh_obj, &lt->obj
  		if (obj->size <= sizeof(sh_obj->objdata))
  			p = sh_obj->objdata;
  		else {

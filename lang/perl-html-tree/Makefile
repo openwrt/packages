@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=http://www.cpan.org/authors/id/P/PE/PETEK/
 PKG_SOURCE:=HTML-Tree-$(PKG_VERSION).tar.gz
 PKG_MD5SUM:=6352f50be402301f79b580dd235d7762
 
-PKG_LICENSE:=GPLv1+ ARTISTIC
+PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTML-Tree-$(PKG_VERSION)
