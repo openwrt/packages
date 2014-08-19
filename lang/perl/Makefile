@@ -45,7 +45,14 @@ TARGET_CFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CFLAGS))
 TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
 
 # A list of disabled testss
-PERL_DISABLEDTESTS:=
+# ExtUtils tests are disabled for now as we don't support building
+# native extensions on the target machine at the moment
+PERL_DISABLEDTESTS:=cpan/ExtUtils-Constant cpan/ExtUtils-MakeMaker
+# We're on Linux, so don't even package those
+PERL_DISABLEDTESTS+=cpan/Win32API-File cpan/Win32 ext/VMS-DCLsym ext/VMS-Filespec ext/VMS-Stdio ext/Win32CORE
+# NDBM and ODBM not supported
+PERL_DISABLEDTESTS+=ext/NDBM_File ext/ODBM_File
+
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
