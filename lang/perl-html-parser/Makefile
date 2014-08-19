@@ -15,7 +15,7 @@ PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS/
 PKG_SOURCE:=HTML-Parser-$(PKG_VERSION).tar.gz
 PKG_MD5SUM:=9128a45893097dfa3bf03301b19c5efe
 
-PKG_LICENSE:=GPLv1+ ARTISTIC
+PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTML-Parser-$(PKG_VERSION)

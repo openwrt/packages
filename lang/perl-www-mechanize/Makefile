@@ -15,7 +15,7 @@ PKG_SOURCE:=WWW-Mechanize-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
 PKG_MD5SUM:=de0a9c528c12793c881151301bc14d1a
 
-PKG_LICENSE:=GPLv1+ ARTISTIC
+PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/WWW-Mechanize-$(PKG_VERSION)
