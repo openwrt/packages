@@ -1,5 +1,5 @@
 # Contributing Guidelines  
-(See <http://wiki.openwrt.org/doc/devel/packages> for overall format and contstruction)
+(See <http://wiki.openwrt.org/doc/devel/packages> for overall format and construction)
 
 All packages you commit or submit by pull-request should follow these simple guidelines:
 
