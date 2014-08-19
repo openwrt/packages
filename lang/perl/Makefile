@@ -44,6 +44,9 @@ endif
 TARGET_CFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CFLAGS))
 TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
 
+# A list of disabled testss
+PERL_DISABLEDTESTS:=
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include perlmod.mk
@@ -61,6 +64,10 @@ define Package/perl/description
   Perl is a stable, cross platform programming language.
   It is used for mission critical projects in the public and private sectors
   and is widely used to program web applications of all needs.
+endef
+
+define Package/perl/config
+	source "$(SOURCE)/Config.in"
 endef
 
 # Static host perl
@@ -128,3 +135,37 @@ $(eval $(call BuildPackage,perl))
 $(eval $(call HostBuild))
 
 -include perlbase.mk
+
+# A helper package that includes all sort of supplementary files for tests
+define Package/perl-tests-common
+$(call Package/perlbase-template)
+TITLE:=Common test support files
+DEPENDS:=@PERL_TESTS
+endef
+
+define Package/perl-tests-common/install
+	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)
+	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)/Porting
+	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)/regen
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/XS
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/auto/XS
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/unicore
+	
+	$(CP) $(PKG_BUILD_DIR)/t $(1)/$(PERL_TESTSDIR)
+	$(CP) $(PKG_BUILD_DIR)/Porting $(1)/$(PERL_TESTSDIR)
+	$(CP) $(PKG_BUILD_DIR)/regen $(1)/$(PERL_TESTSDIR)
+	$(CP) $(PKG_BUILD_DIR)/MANIFEST $(1)/$(PERL_TESTSDIR)
+	$(CP) $(PKG_BUILD_DIR)/TestInit.pm $(1)/$(PERL_TESTSDIR)
+	$(CP) $(PKG_BUILD_DIR)/vutil.c $(1)/$(PERL_TESTSDIR)
+	$(CP) $(PKG_BUILD_DIR)/vxs.inc $(1)/$(PERL_TESTSDIR)
+	$(CP) $(PKG_BUILD_DIR)/lib/XS $(1)/usr/lib/perl5/5.20/
+	$(CP) $(PKG_BUILD_DIR)/lib/auto/XS $(1)/usr/lib/perl5/5.20/auto
+	$(CP) $(PKG_BUILD_DIR)/lib/vmsish.pm $(1)/usr/lib/perl5/5.20/
+	$(CP) $(PKG_BUILD_DIR)/lib/unicore/TestProp.pl $(1)/usr/lib/perl5/5.20/unicore
+	$(CP) files/perl-run_tests.sh $(1)/$(PERL_TESTSDIR)/run_tests.sh
+	sed -e 's!%%PERL_DISABLEDTESTS%%!$(PERL_DISABLEDTESTS)!' -i $(1)/$(PERL_TESTSDIR)/run_tests.sh
+	$(CP) $(PKG_BUILD_DIR)/config_h.SH $(1)/$(PERL_TESTSDIR)
+	$(CP) $(PKG_BUILD_DIR)/perl.h $(1)/$(PERL_TESTSDIR)
+endef
+
+$(eval $(call BuildPackage,perl-tests-common))
