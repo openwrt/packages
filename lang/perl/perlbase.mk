@@ -228,7 +228,7 @@ TITLE:=Config perl module
 endef
 
 define Package/perlbase-config/install
-$(call perlmod/Install,$(1),Config Config.pm Config_heavy.pl,)
+$(call perlmod/Install,$(1),Config Config.pm Config_heavy.pl Config_git.pl,)
 endef
 
 $(eval $(call BuildPackage,perlbase-config))
