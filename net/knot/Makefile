@@ -16,6 +16,9 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
 PKG_MD5SUM:=4109648a538d35babea8379993c34996
 
+PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
+PKG_LICENSE:=GPL-2.0+
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -28,7 +31,6 @@ define Package/knot/Default
 	CATEGORY:=Network
 	TITLE:=Knot DNS
 	URL:=https://www.knot-dns.cz
-	MAINTAINER:=daniel.salzman@nic.cz
 	SUBMENU:=IP Addresses and Names
 	DEPENDS:=+libopenssl +liburcu
 endef
