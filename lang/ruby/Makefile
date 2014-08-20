@@ -32,8 +32,6 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 
-HOST_BUILD_DEPENDS:=gmp/host
-
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -210,7 +208,8 @@ endef
 HOST_CONFIGURE_ARGS += \
 	--disable-install-doc \
 	--disable-install-rdoc \
-	--disable-install-capi
+	--disable-install-capi \
+	--with-static-linked-ext \
 
 CONFIGURE_ARGS += \
 	--enable-shared \
