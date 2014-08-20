@@ -27,10 +27,12 @@ PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILE:=COPYING
 
-PKG_BUILD_DEPENDS:=ruby/host gmp/host
+PKG_BUILD_DEPENDS:=ruby/host
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
+
+HOST_BUILD_DEPENDS:=gmp/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
