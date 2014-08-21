@@ -1,0 +1,14 @@
+#!/bin/sh
+# Copyright (C) 2014 OpenWrt.org
+
+/etc/init.d/sshguard enabled && {
+
+	[ "$ACTION" = "ifup" ] && {
+		/etc/init.d/sshguard start
+	}
+
+	[ "$ACTION" = "ifdown" ] && {
+		/etc/init.d/sshguard stop
+	}
+
+}

@@ -1,0 +1,85 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2011 OpenWrt.org
+
+# start after and stop before networking
+START=80
+STOP=80
+
+USE_PROCD=1
+PROG=/usr/sbin/sshguard
+MYCF=0
+
+validate_sshguard_section() {
+	uci_validate_section sshguard sshguard "${1}" \
+		'firewall:bool:1' \
+		'logfiles:string' \
+		'whitelists:string' \
+		'args:string'
+
+	return $?
+}
+
+# Function that enables firewall
+do_enable_firewall() {
+	#log_progress_msg "enabling firewall"
+	# creating sshguard chain
+	iptables -N sshguard 2> /dev/null
+	ip6tables -N sshguard 2> /dev/null
+	# block traffic from abusers
+	iptables -I INPUT -j sshguard 2> /dev/null
+	ip6tables -I INPUT -j sshguard 2> /dev/null
+}
+
+# Function that disables firewall
+do_disable_firewall() {
+	#log_progress_msg "disabling firewall"
+	# flushes list of abusers
+	iptables -F sshguard 2> /dev/null
+	ip6tables -F sshguard 2> /dev/null
+	# removes sshguard firewall rules
+	iptables -D INPUT -j sshguard 2> /dev/null
+	ip6tables -D INPUT -j sshguard 2> /dev/null
+	# removing sshguard chain
+	iptables -X sshguard 2> /dev/null
+	ip6tables -X sshguard 2> /dev/null
+}
+
+start_service_daemon() {
+	local logfiles whitelists args
+
+	validate_sshguard_section ${1} || {
+		echo "validation failed"
+		return 1
+	}
+
+	#echo "!!!!!!!!!!!!!${MYCF}: ${1}" >> /var/log/sshguard
+	#echo "$(set)" >> /var/log/sshguard
+
+	procd_open_instance
+	#procd_set_param env SSHGUARD_DEBUG=1
+	procd_set_param command "$PROG" $args
+
+	for file in $logfiles; do [ -r "$file" ] && procd_append_param command -l $file; done
+	for file in $whitelists; do [ -r "$file" ] && procd_append_param command -w $file; done
+	procd_set_param respawn
+	procd_close_instance
+}
+
+shutdown()
+{
+	stop
+	do_disable_firewall
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "sshguard"
+	procd_add_validation validate_sshguard_section
+}
+
+start_service()
+{
+	config_load sshguard
+	do_enable_firewall
+	config_foreach start_service_daemon sshguard
+}

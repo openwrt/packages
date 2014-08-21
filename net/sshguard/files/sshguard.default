@@ -1,0 +1,2 @@
+uci set system.system.log_file='/var/log/syslog'
+uci set system.system.log_size='1048576'
