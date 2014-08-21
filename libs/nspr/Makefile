@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nspr
-PKG_VERSION:=3.16
+PKG_VERSION:=3.16.4
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/nss-$(PKG_VERSION)
-PKG_SOURCE:=nss-$(PKG_VERSION)-with-nspr-4.10.4.tar.gz
-PKG_SOURCE_URL:=ftp://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_16_RTM/src/
+PKG_SOURCE:=nss-$(PKG_VERSION)-with-nspr-4.10.6.tar.gz
+PKG_SOURCE_URL:=ftp://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_16_4_RTM/src/
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
