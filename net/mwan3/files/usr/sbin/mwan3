@@ -86,19 +86,19 @@ interfaces()
 		config_get enabled "$1" enabled 0
 		let iface_id++
 
-		if [ -n "$(ps -w | grep mwan3track | grep -v grep | sed '/.*\/usr\/sbin\/mwan3track \([^ ]*\) .*$/!d;s//\1/' | awk '$1 == ("'$1'")')" ]; then
+		if [ -n "$(ps -w | grep mwan3track | grep -v grep | sed '/.*\/usr\/sbin\/mwan3track \([^ ]*\) .*$/!d;s//\1/' | awk '$1 == "'$1'"')" ]; then
 			tracking="active"
 		else
 			tracking="down"
 		fi
 
-		if [ -n "$($IP rule | awk '$5 == ("'$device'")')" -a -n "$($IPT -S mwan3_iface_$1 2> /dev/null)" -a -n "$($IP route list table $iface_id default dev $device 2> /dev/null)" ]; then
+		if [ -n "$($IP rule | awk '$5 == "'$device'"')" -a -n "$($IPT -S mwan3_iface_$1 2> /dev/null)" -a -n "$($IP route list table $iface_id default dev $device 2> /dev/null)" ]; then
 			if [ -n "$(uci get -p /var/state mwan3.$1.track_ip 2> /dev/null)" ]; then
 				echo "Interface $1 is online (tracking $tracking)"
 			else
 				echo "Interface $1 is online"
 			fi
-		elif [ -n "$($IP rule | awk '$5 == ("'$device'")')" -o -n "$($IPT -S mwan3_iface_$1 2> /dev/null)" -o -n "$($IP route list table $iface_id default dev $device 2> /dev/null)" ]; then
+		elif [ -n "$($IP rule | awk '$5 == "'$device'"')" -o -n "$($IPT -S mwan3_iface_$1 2> /dev/null)" -o -n "$($IP route list table $iface_id default dev $device 2> /dev/null)" ]; then
 			echo "Interface $1 error"
 		else
 			if [ "$enabled" -eq 1 ]; then
@@ -123,13 +123,11 @@ policies()
 	for policy in $($IPT -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
 		echo "Policy $policy:" | sed 's/mwan3_policy_//g'
 
-		for iface in $($IPT -S $policy | cut -s -d'"' -f2 | awk '{print $1}'); do
-			[ -n "$total_weight" ] || total_weight=$($IPT -S $policy | grep "$iface " | cut -s -d'"' -f2 | awk '{print $3}')
-		done
+		[ -n "$total_weight" ] || total_weight=$($IPT -S $policy | cut -s -d'"' -f2 | head -1 | awk '{print $3}')
 
 		if [ ! -z "${total_weight##*[!0-9]*}" ]; then
 			for iface in $($IPT -S $policy | cut -s -d'"' -f2 | awk '{print $1}'); do
-				weight=$($IPT -S $policy | grep "$iface " | cut -s -d'"' -f2 | awk '{print $2}')
+				weight=$($IPT -S $policy | cut -s -d'"' -f2 | awk '$1 == "'$iface'"' | awk '{print $2}')
 				percent=$(($weight*100/$total_weight))
 				echo " $iface ($percent%)"
 			done
@@ -148,14 +146,14 @@ rules()
 	if [ -n "$($IPT -S mwan3_connected 2> /dev/null)" ]; then
 		echo "Known networks:"
 		echo "destination policy hits" | awk '{ printf "%-19s%-19s%-9s%s\n",$1,$2,$3}' | awk '1; {gsub(".","-")}1'
-		$IPT -L mwan3_connected -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_//g' | awk '{printf "%-19s%-19s%-9s%s\n",$9,"default",$1}'
+		$IPT -L mwan3_connected -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_//' | awk '{printf "%-19s%-19s%-9s%s\n",$9,"default",$1}'
 		echo -e
 	fi
 
 	if [ -n "$($IPT -S mwan3_rules 2> /dev/null)" ]; then
 		echo "Active rules:"
 		echo "source destination proto src-port dest-port policy hits" | awk '{ printf "%-19s%-19s%-7s%-14s%-14s%-16s%-9s%s\n",$1,$2,$3,$4,$5,$6,$7}' | awk '1; {gsub(".","-")}1'
-		$IPT -L mwan3_rules -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_//g' | awk '{ printf "%-19s%-19s%-7s%-14s%-14s%-16s%-9s%s\n",$8,$9,$4,$12,$15,$3,$1}'
+		$IPT -L mwan3_rules -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_//' | awk '{ printf "%-19s%-19s%-7s%-14s%-14s%-16s%-9s%s\n",$8,$9,$4,$12,$15,$3,$1}'
 		echo -e
 	fi
 }
