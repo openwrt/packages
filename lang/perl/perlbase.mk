@@ -1160,7 +1160,7 @@ TITLE:=Tie perl module
 endef
 
 define Package/perlbase-tie/install
-$(call perlmod/Install,$(1),Tie,)
+$(call perlmod/Install,$(1),Tie auto/Tie,)
 endef
 
 $(eval $(call BuildPackage,perlbase-tie))
