@@ -1,0 +1,11 @@
+--- a/erts/emulator/Makefile.in
++++ b/erts/emulator/Makefile.in
+@@ -682,7 +682,7 @@ $(OBJDIR)/beam_emu.o: beam/beam_emu.c
+ endif
+ 
+ $(OBJDIR)/%.o: beam/%.c
+-	$(V_CC) $(subst -O2, $(GEN_OPT_FLGS), $(CFLAGS)) $(INCLUDES) -c $< -o $@
++	$(V_CC) $(INCLUDES) $(subst -O2, $(GEN_OPT_FLGS), $(CFLAGS)) -c $< -o $@
+ 
+ $(OBJDIR)/%.o: $(TARGET)/%.c
+ 	$(V_CC) $(CFLAGS) $(INCLUDES) -Idrivers/common -c $< -o $@
