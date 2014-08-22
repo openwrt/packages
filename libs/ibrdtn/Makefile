@@ -19,7 +19,6 @@ PKG_LICENSE:=Apache-2.0
 
 PKG_INSTALL:=1
 PKG_FIXUP:=libtool
-PKG_BUILD_DEPENDS:=ibrcommon zlib
 
 include $(INCLUDE_DIR)/package.mk
 
