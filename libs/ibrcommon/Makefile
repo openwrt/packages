@@ -44,7 +44,7 @@ endef
 
 define Package/ibrcommon/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib$(PKG_NAME){.so,-$(PKG_VERSION_MAJOR).$(PKG_VERSION_MINOR).so.*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,ibrcommon))
