@@ -19,7 +19,6 @@ PKG_LICENSE:=BSD-2-Clause
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
-PKG_BUILD_DEPENDS:=libxml2 libopenssl zlib
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -31,7 +30,7 @@ endef
 
 define Package/libarchive
   $(call Package/libarchive/Default)
-  DEPENDS:=+libxml2 +libopenssl +zlib
+  DEPENDS:=+libxml2 +libopenssl +zlib +libacl +libattr +libbz2 +liblzo +libnettle
   TITLE:=Multi-format archive and compression library
 endef
 
