@@ -36,7 +36,7 @@ start_instance() {
 
 	append_arg "$cfg" bname "-a" "AirPort"
 	append_arg "$cfg" log "-l"
-	append_arg "$cfg" initbuf "-b" "256"
+	append_arg "$cfg" buffer "-b" "256"
 	append_arg "$cfg" port "-p" "5002"
 	append_arg "$cfg" password "-k"
 	append_arg "$cfg" mdns "-m"
