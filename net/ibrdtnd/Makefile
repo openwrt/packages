@@ -18,7 +18,6 @@ PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
 PKG_LICENSE:=Apache-2.0
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=dtndht ibrdtn libsqlite3
 
 include $(INCLUDE_DIR)/package.mk
 
