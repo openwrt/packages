@@ -1,0 +1,32 @@
+menu "Configuration"
+	depends on PACKAGE_mc
+
+config MC_VIEWER
+	bool "Enable viewer"
+	default n
+
+config MC_DIFF_VIEWER
+	bool "Enable diff viewer"
+	default n
+
+config MC_EDITOR
+	bool "Enable editor"
+	default n
+
+config MC_SUBSHELL
+	bool "Enable concurrent subshell"
+	default n
+
+config MC_DOC
+	bool "Install documents, hints and examples"
+	default n
+
+config MC_MAN
+	bool "Install man guides"
+	default n
+
+config MC_VFS
+	bool "Enable VFS support"
+	default n
+
+endmenu

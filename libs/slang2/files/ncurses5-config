@@ -1,0 +1,6 @@
+#!/bin/sh
+
+if [ "$1" == "--terminfo" ]; then
+	echo "/usr/share/terminfo"
+fi
+
