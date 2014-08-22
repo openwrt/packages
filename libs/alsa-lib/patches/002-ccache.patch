@@ -1,8 +1,6 @@
-diff --git a/configure.in b/configure.in
-index 00fff2b..af39300 100644
---- a/configure.in
-+++ b/configure.in
-@@ -24,22 +24,6 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+--- a/configure.ac
++++ b/configure.ac
+@@ -25,22 +25,6 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_R
  
  AC_PREFIX_DEFAULT(/usr)
  
