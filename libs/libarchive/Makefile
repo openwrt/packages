@@ -30,13 +30,21 @@ endef
 
 define Package/libarchive
   $(call Package/libarchive/Default)
-  DEPENDS:=+libxml2 +libopenssl +zlib +libacl +libattr +libbz2 +liblzo +libnettle
+  DEPENDS:=+libopenssl +zlib
   TITLE:=Multi-format archive and compression library
 endef
 
 define Package/libarchive/description
  Multi-format archive and compression library.
 endef
+
+CONFIGURE_ARGS += \
+	--disable-acl \
+	--disable-xattr \
+	--without-bz2lib \
+	--without-lzo2 \
+	--without-nettle \
+	--without-xml2
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)
