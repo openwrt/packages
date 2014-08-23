@@ -1,0 +1,24 @@
+From 9be381859d7c9077ed652a82ec06ef01494d413d Mon Sep 17 00:00:00 2001
+From: Nikos Mavrogiannopoulos <nmav@redhat.com>
+Date: Fri, 8 Aug 2014 12:27:08 +0200
+Subject: [PATCH 01/10] worker: call sigprocmask() prior to entering main loop
+
+---
+ src/worker-vpn.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/worker-vpn.c b/src/worker-vpn.c
+index 1c30f14..55ab375 100644
+--- a/src/worker-vpn.c
++++ b/src/worker-vpn.c
+@@ -1856,6 +1856,7 @@ static int connect_handler(worker_st * ws)
+ 	bandwidth_init(&ws->b_tx, ws->config->tx_per_sec);
+ 
+ 	session_info_send(ws);
++	sigprocmask(SIG_BLOCK, &blockset, NULL);
+ 
+ 	/* worker main loop  */
+ 	for (;;) {
+-- 
+2.0.0
+

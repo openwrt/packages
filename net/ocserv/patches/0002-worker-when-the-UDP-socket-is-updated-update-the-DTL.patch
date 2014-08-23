@@ -1,0 +1,26 @@
+From c567a129f4dac88d1b3c4508484a2dffd78e1e5a Mon Sep 17 00:00:00 2001
+From: Nikos Mavrogiannopoulos <nmav@redhat.com>
+Date: Fri, 22 Aug 2014 11:57:15 +0200
+Subject: [PATCH 06/10] worker: when the UDP socket is updated, update the DTLS
+ session
+
+---
+ src/worker-misc.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/worker-misc.c b/src/worker-misc.c
+index 52be346..bde24d7 100644
+--- a/src/worker-misc.c
++++ b/src/worker-misc.c
+@@ -139,6 +139,8 @@ int handle_worker_commands(struct worker_st *ws)
+ 						close(fd);
+ 						return 0;
+ 					}
++					if (ws->dtls_session != NULL)
++						gnutls_transport_set_ptr(ws->dtls_session, (gnutls_transport_ptr_t)(long)fd);
+ 				} else { /* received client hello */
+ 					ws->udp_state = UP_SETUP;
+ 				}
+-- 
+2.0.0
+
