@@ -1,0 +1,76 @@
+From 817f757577ef78bcc19aecf73d6ecf1b11258c82 Mon Sep 17 00:00:00 2001
+From: Nikos Mavrogiannopoulos <nmav@redhat.com>
+Date: Fri, 22 Aug 2014 15:23:16 +0200
+Subject: [PATCH 07/10] after fork restore the default signal mask
+
+---
+ src/main-user.c | 2 ++
+ src/main.c      | 5 +++--
+ src/main.h      | 1 +
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/main-user.c b/src/main-user.c
+index bc16e3a..9b57e00 100644
+--- a/src/main-user.c
++++ b/src/main-user.c
+@@ -66,6 +66,8 @@ const char* script;
+ 		char local[64] = "";
+ 		char remote[64] = "";
+ 
++		sigprocmask(SIG_SETMASK, &sig_default_set, NULL);
++
+ 		snprintf(real, sizeof(real), "%u", (unsigned)proc->pid);
+ 		setenv("ID", real, 1);
+ 
+diff --git a/src/main.c b/src/main.c
+index 8bb3061..a71bde6 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -64,6 +64,7 @@ static unsigned int terminate = 0;
+ static unsigned int reload_conf = 0;
+ unsigned int need_maintenance = 0;
+ static unsigned int need_children_cleanup = 0;
++sigset_t sig_default_set;
+ 
+ static void ms_sleep(unsigned ms)
+ {
+@@ -974,7 +975,7 @@ int main(int argc, char** argv)
+ 		exit(1);
+ 	}
+ 
+-	sigprocmask(SIG_BLOCK, &blockset, NULL);
++	sigprocmask(SIG_BLOCK, &blockset, &sig_default_set);
+ 	alarm(MAINTAINANCE_TIME(s));
+ 
+ 	for (;;) {
+@@ -1061,6 +1062,7 @@ int main(int argc, char** argv)
+ 					/* close any open descriptors, and erase
+ 					 * sensitive data before running the worker
+ 					 */
++					sigprocmask(SIG_SETMASK, &sig_default_set, NULL);
+ 					close(cmd_fd[0]);
+ 					clear_lists(s);
+ 
+@@ -1096,7 +1098,6 @@ int main(int argc, char** argv)
+ 					 * sensitive data have to be overwritten anyway. */
+ 					malloc_trim(0);
+ #endif
+-					sigprocmask(SIG_UNBLOCK, &blockset, NULL);
+ 					vpn_server(ws);
+ 					exit(0);
+ 				} else if (pid == -1) {
+diff --git a/src/main.h b/src/main.h
+index de3d00c..cf5a0b1 100644
+--- a/src/main.h
++++ b/src/main.h
+@@ -39,6 +39,7 @@
+ 
+ #define COOKIE_KEY_SIZE 16
+ 
++extern sigset_t sig_default_set;
+ int cmd_parser (void *pool, int argc, char **argv, struct cfg_st** config);
+ void reload_cfg_file(void *pool, struct cfg_st* config);
+ void clear_cfg_file(struct cfg_st* config);
+-- 
+2.0.0
+
