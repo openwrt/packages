@@ -33,6 +33,9 @@ define Package/ibrdtn-tools/description
  and a tools to ping a DTN node (dtnping).
 endef
 
+CONFIGURE_ARGS += \
+	--without-libdaemon
+
 define Package/ibrdtn-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dtnping $(1)/usr/bin/dtnping

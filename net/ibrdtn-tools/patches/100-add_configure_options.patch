@@ -1,0 +1,89 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -67,34 +67,57 @@ AC_TYPE_UINT8_T
+ AC_FUNC_MALLOC
+ AC_CHECK_FUNCS([memset])
+ 
+-PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
+-	AC_SUBST(DAEMON_CFLAGS)
+-	AC_SUBST(DAEMON_LIBS)
+-	AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
+-	AC_CHECK_LIB(daemon, daemon_reset_sigs, [
+-		AC_DEFINE(HAVE_DAEMON_RESET_SIGS, [1], ["daemon library has daemon_reset_sigs() and daemon_unblock_sigs() functions"])
+-	])
+-], [
+-	AC_MSG_WARN([daemon library not found, daemonize features disabled])
+-])
++AC_ARG_WITH([libdaemon],
++	AS_HELP_STRING([--without-libdaemon], [Build without daemonize support]),
++	[
++		AC_MSG_NOTICE([daemonize support disabled])
++	], [
++		PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
++			AC_SUBST(DAEMON_CFLAGS)
++			AC_SUBST(DAEMON_LIBS)
++			AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
++			AC_CHECK_LIB(daemon, daemon_reset_sigs, [
++				AC_DEFINE(HAVE_DAEMON_RESET_SIGS, [1], ["daemon library has daemon_reset_sigs() and daemon_unblock_sigs() functions"])
++			])
++		], [
++			AC_MSG_WARN([daemon library not found, daemonize features disabled])
++		])
++	]
++)
+ 
+-PKG_CHECK_MODULES(ARCHIVE, libarchive >= 3.0, [
+-	AC_SUBST(ARCHIVE_CFLAGS)
+-	AC_SUBST(ARCHIVE_LIBS)
+-	AC_DEFINE(HAVE_LIBARCHIVE, [1], ["libarchive is available"])
+-		has_libarchive="yes"
+-], [
+-	AC_MSG_WARN([libarchive not found, dtninbox and dtnoutbox will not be compiled])
+-])
++AC_ARG_WITH([libarchive],
++	AS_HELP_STRING([--without-libarchive], [Build without archive support]),
++	[
++		has_libarchive="no"
++		AC_MSG_NOTICE([archive support disabled, dtninbox and dtnoutbox will not be compiled])
++	], [
++		PKG_CHECK_MODULES(ARCHIVE, libarchive >= 3.0, [
++			AC_SUBST(ARCHIVE_CFLAGS)
++			AC_SUBST(ARCHIVE_LIBS)
++			AC_DEFINE(HAVE_LIBARCHIVE, [1], ["libarchive is available"])
++				has_libarchive="yes"
++		], [
++			AC_MSG_WARN([libarchive not found, dtninbox and dtnoutbox will not be compiled])
++		])
++	]
++)
+ 
+-PKG_CHECK_MODULES(OPENSSL, openssl, [
+-	AC_SUBST(OPENSSL_CFLAGS)
+-	AC_SUBST(OPENSSL_LIBS)
+-	AC_DEFINE(HAVE_OPENSSL, [1], ["openssl available"])
+-		has_openssl="yes"
+-], [
+-	AC_MSG_WARN([openssl not found, dtninbox and dtnoutbox will not be compiled])
+-])
++AC_ARG_WITH([openssl],
++	AS_HELP_STRING([--without-openssl], [Build without openssl support]),
++	[
++		has_openssl="no"
++		AC_MSG_NOTICE([openssl support disabled, dtninbox and dtnoutbox will not be compiled])
++	], [
++		PKG_CHECK_MODULES(OPENSSL, openssl, [
++			AC_SUBST(OPENSSL_CFLAGS)
++			AC_SUBST(OPENSSL_LIBS)
++			AC_DEFINE(HAVE_OPENSSL, [1], ["openssl available"])
++				has_openssl="yes"
++		], [
++			AC_MSG_WARN([openssl not found, dtninbox and dtnoutbox will not be compiled])
++		])
++	]
++)
+ 
+ AC_ARG_WITH([tffs],
+ AS_HELP_STRING([--with-tffs=PATH], [set the tffs path for fat-image support in dtnoutbox]), [
+-- 
+1.9.1
+
