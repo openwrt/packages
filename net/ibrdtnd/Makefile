@@ -37,7 +37,7 @@ define Package/ibrdtnd/description
 endef
 
 CONFIGURE_ARGS += \
-        --with-tls --with-sqlite --with-dht
+        --with-tls --with-sqlite --with-dht --without-wifip2p --without-vmime
 
 define Package/ibrdtnd/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
