@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pkg-shadow.alioth.debian.org/releases
@@ -48,7 +48,9 @@ endef
 
 define Package/shadow
   $(call Package/shadow/Default)
+  TITLE+= (all)
   DEPENDS:=$(foreach u,$(SHADOW_APPLETS),+shadow-$(u))
+  HIDDEN:=1
 endef
 
 define Package/shadow/description
@@ -61,18 +63,48 @@ define Package/shadow/install
 	true
 endef
 
+define Package/shadow-utils/install
+endef
+
+define Package/shadow-utils
+  $(call Package/shadow/Default)
+  DEPENDS:=+ALL:shadow
+endef
+
+define Package/shadow-utils/config
+    menu "Select shadow utilities"
+      depends on PACKAGE_shadow-utils
+
+    config shadow-all
+      bool "Include all PLD shadow utilities"
+      select PACKAGE_shadow
+
+    comment "Utilities"
+
+  $(foreach u,$(SHADOW_APPLETS), \
+    config PACKAGE_shadow-$(u)
+      prompt "Full PLD version of $(u) utility"
+
+   )
+
+  endmenu
+
+endef
+
+Package/shadow-utils/description = $(Package/shadow/description)
 
 define Package/shadow-common
   $(call Package/shadow/Default)
   TITLE:=Shared definitions for the PLD Linux shadow utilities
+  HIDDEN:=1
 endef
-
 
 define GenPlugin
   define Package/shadow-$(1)
     $(call Package/shadow/Default)
     TITLE:=Utility $(1) from the PLD Linux shadow utilities
     DEPENDS:=+shadow-common
+    HIDDEN:=1
   endef
 
   define Package/shadow-$(1)/description
@@ -82,7 +114,6 @@ define GenPlugin
 endef
 
 $(foreach u,$(SHADOW_APPLETS),$(eval $(call GenPlugin,$(u))))
-
 
 define Package/shadow-common/conffiles
 /etc/login.defs
@@ -110,5 +141,6 @@ endef
 
 $(foreach u,$(SHADOW_APPLETS),$(eval $(call BuildPlugin,$(u))))
 
-$(eval $(call BuildPackage,shadow))
+$(eval $(call BuildPackage,shadow-utils))
 $(eval $(call BuildPackage,shadow-common))
+$(eval $(call BuildPackage,shadow))
