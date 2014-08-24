@@ -34,7 +34,8 @@ define Package/ibrdtn/description
 endef
 
 CONFIGURE_ARGS += \
-	--with-compression
+	--with-compression \
+	--without-glib
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)
