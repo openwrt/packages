@@ -12,6 +12,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=opennhrp
 PKG_VERSION:=0.14.1
 PKG_RELEASE:=1
+PKG_MAINTAINER:=Artem Makhutov <artem@makhutov.org>
+PKG_LICENSE:=MIT License
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/opennhrp
