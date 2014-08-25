@@ -1,0 +1,45 @@
+From fc566b541e4c67cfbd8d6b40b627ce27dfc8a7cb Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <tfournier@exceliance.fr>
+Date: Fri, 22 Aug 2014 06:55:26 +0200
+Subject: [PATCH 5/6] BUG/MEDIUM: http: tarpit timeout is reset
+
+Before the commit bbba2a8ecc35daf99317aaff7015c1931779c33b
+(1.5-dev24-8), the tarpit section set timeout and return, after this
+commit, the tarpit section set the timeout, and go to the "done" label
+which reset the timeout.
+
+Thanks Bryan Talbot for the bug report and analysis.
+
+This should be backported in 1.5.
+(cherry picked from commit 7566e30477bf5ea4206bda5950d2d83108c4a3dc)
+---
+ src/proto_http.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 2b75b32..bebc8bf 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -4117,8 +4117,9 @@ int http_process_req_common(struct session *s, struct channel *req, int an_bit,
+  done:	/* done with this analyser, continue with next ones that the calling
+ 	 * points will have set, if any.
+ 	 */
+-	req->analysers &= ~an_bit;
+ 	req->analyse_exp = TICK_ETERNITY;
++ done_without_exp: /* done with this analyser, but dont reset the analyse_exp. */
++	req->analysers &= ~an_bit;
+ 	return 1;
+ 
+  tarpit:
+@@ -4144,7 +4145,7 @@ int http_process_req_common(struct session *s, struct channel *req, int an_bit,
+ 		s->be->be_counters.denied_req++;
+ 	if (s->listener->counters)
+ 		s->listener->counters->denied_req++;
+-	goto done;
++	goto done_without_exp;
+ 
+  deny:	/* this request was blocked (denied) */
+ 	txn->flags |= TX_CLDENY;
+-- 
+1.8.5.5
+

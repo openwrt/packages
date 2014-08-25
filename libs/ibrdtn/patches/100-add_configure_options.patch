@@ -1,0 +1,33 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -159,12 +159,21 @@ AS_IF([test "x$enable_android" = "xyes"], [
+ 	dnl -----------------------------------------------
+ 	dnl check for glib support
+ 	dnl -----------------------------------------------
+-	PKG_CHECK_MODULES([GLIB], [glib-2.0], [
+-		AC_SUBST(GLIB_CFLAGS)
+-		AC_SUBST(GLIB_LIBS)
+-		AC_DEFINE(HAVE_GLIB, [1], ["glib library is available"])
+-		REQUIRES_LIBS="$REQUIRES_LIBS glib-2.0"
+-	], [
++	AC_ARG_WITH([glib], [AS_HELP_STRING([--without-glib], [Disable linking to glib-2.0 library])], [with_glib=no], [with_glib=yes])
++	AS_IF([test "x$with_glib" != xno],
++	[
++		PKG_CHECK_MODULES([GLIB], [glib-2.0], [
++			AC_SUBST(GLIB_CFLAGS)
++			AC_SUBST(GLIB_LIBS)
++			AC_DEFINE(HAVE_GLIB, [1], ["glib library is available"])
++			REQUIRES_LIBS="$REQUIRES_LIBS glib-2.0"
++		], [
++			with_glib=no
++		])
++	], [])
++		
++	AS_IF([test "x$with_glib" = xno],
++	[
+ 		AS_IF([test "x$has_endian_h" = "xyes"],[
+ 			AC_MSG_NOTICE([use endian.h for endianess conversion])
+ 		],[
+-- 
+1.9.1
+
