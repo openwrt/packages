@@ -9,6 +9,6 @@ config OCSERV_PAM
 
 config OCSERV_PROTOBUF
 	bool "use external libprotobuf"
-	default n
+	default y
 
 endmenu
