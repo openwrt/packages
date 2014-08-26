@@ -18,6 +18,7 @@ PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
 PKG_LICENSE:=Apache-2.0
 
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -37,7 +38,11 @@ define Package/ibrdtnd/description
 endef
 
 CONFIGURE_ARGS += \
-        --with-tls --with-sqlite --with-dht --without-wifip2p --without-vmime
+	--with-tls \
+	--with-sqlite \
+	--without-wifip2p \
+	--without-vmime \
+	--disable-libdaemon
 
 define Package/ibrdtnd/install
 	$(INSTALL_DIR) $(1)/usr/sbin/

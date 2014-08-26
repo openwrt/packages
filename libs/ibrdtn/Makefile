@@ -18,7 +18,7 @@ PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
 PKG_LICENSE:=Apache-2.0
 
 PKG_INSTALL:=1
-PKG_FIXUP:=libtool
+PKG_FIXUP:=libtool autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
