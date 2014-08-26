@@ -22,33 +22,32 @@ PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libarchive/Default
+define Package/libarchive
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.libarchive.org
-endef
-
-define Package/libarchive
-  $(call Package/libarchive/Default)
   DEPENDS:=+libopenssl +zlib
   TITLE:=Multi-format archive and compression library
-endef
-
-define Package/libarchive/description
- Multi-format archive and compression library.
+  URL:=http://www.libarchive.org/
 endef
 
 CONFIGURE_ARGS += \
+	--disable-bsdcpio \
+	--disable-bsdtar \
 	--disable-acl \
 	--disable-xattr \
 	--without-bz2lib \
+	--without-lzma \
+	--without-lzmadec \
 	--without-lzo2 \
 	--without-nettle \
+	--without-expat \
 	--without-xml2
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)
-	$(CP) $(PKG_INSTALL_DIR)/* $(1)/
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 endef
 
 define Package/libarchive/install
