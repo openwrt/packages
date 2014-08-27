@@ -132,6 +132,12 @@ start() {
 	config_foreach babel_filter filter
 	# Using multiple config files is supported since babeld 1.5.1
 	/usr/sbin/babeld -D -I "$pidfile" -c "$OTHERCONFIGFILE" -c "$CONFIGFILE"
+	# Wait for the pidfile to appear
+	for i in 1 2
+	do
+		[ -f "$pidfile" ] || sleep 1
+	done
+	[ -f "$pidfile" ] || (echo "Failed to start babeld"; exit 42)
 }
 
 stop() {
