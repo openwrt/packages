@@ -19,6 +19,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MIRROR_MD5SUM:=
 
 PKG_MAINTAINER:=Liu Peng <pengliu@credosemi.com>
+PKG_LICENSE:=MIT
 
 include $(INCLUDE_DIR)/package.mk
 
