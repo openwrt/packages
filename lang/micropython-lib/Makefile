@@ -12,7 +12,8 @@ PKG_VERSION=0.1-20140822-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
-PKG_LICENSE:=MIT
+PKG_LICENSE:=MIT, PSFL
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/micropython/micropython-lib.git
