@@ -289,7 +289,7 @@ endef
 define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (custom)
- DEPENDS+= @DEVEL +libspeex
+ DEPENDS+= @DEVEL +libopus +libspeex
  VARIANT:=custom
  MENU:=1
 endef
@@ -308,7 +308,7 @@ endef
 define Package/libffmpeg-audio-dec
 $(call Package/libffmpeg/Default)
  TITLE+= (audio)
- DEPENDS+= @DEVEL +libspeex
+ DEPENDS+= @DEVEL +libopus +libspeex
  VARIANT:=audio-dec
 endef
 
@@ -428,6 +428,12 @@ ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_adpcm),y)
 
 endif
 
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libopus),y)
+  FFMPEG_CONFIGURE+= \
+	--enable-libopus --enable-decoder=libopus \
+
+endif
+
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_speex),y)
   FFMPEG_CONFIGURE+= \
 	--enable-libspeex --enable-decoder=libspeex \
@@ -454,6 +460,7 @@ ifeq ($(BUILD_VARIANT),audio-dec)
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_AUDIO_DEMUXERS)) \
 	$(call FFMPEG_ENABLE,parser,$(FFMPEG_AUDIO_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_AUDIO_PROTOCOLS)) \
+	--enable-libopus --enable-decoder=libopus \
 	--enable-libspeex --enable-decoder=libspeex \
 	--disable-decoder=pcm_bluray,pcm_dvd \
 

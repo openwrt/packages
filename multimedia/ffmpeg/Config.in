@@ -60,6 +60,7 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_DECODER_ape
 	select FFMPEG_CUSTOM_DECODER_atrac3
 	select FFMPEG_CUSTOM_DECODER_flac
+	select FFMPEG_CUSTOM_SELECT_libopus
 	select FFMPEG_CUSTOM_DECODER_mp2
 	select FFMPEG_CUSTOM_DECODER_mp3
 	select FFMPEG_CUSTOM_DECODER_mpc7
@@ -107,6 +108,9 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_PROTOCOL_udp
 
 comment "External Libraries ---"
+
+config FFMPEG_CUSTOM_SELECT_libopus
+	bool "Opus"
 
 config FFMPEG_CUSTOM_SELECT_speex
 	bool "Speex"
