@@ -19,6 +19,8 @@ PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
 PKG_INSTALL:=1
 
+PKG_LICENSE:=BSD-2c
+
 PKG_MAINTAINER:=Jacob Siverskog <jacob@teenageengineering.com>
 
 include $(INCLUDE_DIR)/package.mk
