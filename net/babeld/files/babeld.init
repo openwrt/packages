@@ -90,7 +90,7 @@ list_cb() {
 	option_cb "$@"
 }
 
-config_cb() {
+babel_config_cb() {
 	local type="$1"
 	local section="$2"
 	case "$type" in
@@ -109,9 +109,19 @@ config_cb() {
 			local value="$2"
 			cfg_append "interface $interface ${option//_/-} $value"
 		}
-		# Also include an empty "interface $interface" statement, so
-		# that babeld operates on this interface.
-		cfg_append "interface $interface"
+		# Handle ignore options.
+		local _ignored
+		# This works because we loaded the whole configuration
+		# beforehand (see config_load below).
+		config_get_bool _ignored "$section" 'ignore' 0
+		if [ "$_ignored" -eq 1 ]
+		then
+			option_cb() { return; }
+		else
+			# Also include an empty "interface $interface" statement,
+			# so that babeld operates on this interface.
+			cfg_append "interface $interface"
+		fi
 	;;
 	*)
 		# Don't use reset_cb, this would also reset config_cb
@@ -124,9 +134,13 @@ start() {
 	mkdir -p /var/lib
 	# Start by emptying the generated config file
 	>"$CONFIGFILE"
+	# First load the whole config file, without callbacks, so that we are
+	# aware of all "ignore" options in the second pass.
+	config_load babeld
 	# Parse general and interface sections thanks to the "config_cb()"
 	# callback.  This allows to loop over all options without having to
 	# know their name in advance.
+	config_cb() { babel_config_cb "$@"; }
 	config_load babeld
 	# Parse filters separately, since we know which options we expect
 	config_foreach babel_filter filter
