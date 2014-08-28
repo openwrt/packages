@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=5.20.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 		http://www.cpan.org/src/5.0/perl-5.20.0.tar.gz \
@@ -22,12 +22,13 @@ PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MD5SUM:=406ec049ebe3afcc80d9c76ec78ca4f8
 
-PKG_LICENSE:=GPLv1+ ARTISTIC
+PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_LICENSE_FILES:=Copying Artistic README
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 # Build settings
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/$(PKG_NAME)-$(PKG_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=perl/host
 PKG_BUILD_PARALLEL:=1
@@ -45,6 +46,7 @@ TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
+include perlmod.mk
 
 define Package/perl
   SUBMENU:=Perl
@@ -69,6 +71,11 @@ endef
 define Host/Install
 	( cd $(HOST_BUILD_DIR); ./miniperl installperl )
 	$(CP) $(HOST_BUILD_DIR)/generate_uudmap $(HOST_PERL_PREFIX)/bin/
+	
+	# Link any possibly installed static extension in
+	$(MAKE) -C $(HOST_BUILD_DIR)/relink clean || true
+	( cd $(HOST_BUILD_DIR)/relink && $(HOST_PERL_PREFIX)/bin/perl Makefile.PL )
+	$(call perlmod/host/relink,$(HOST_BUILD_DIR)/relink)
 endef
 
 # Target perl
@@ -98,14 +105,17 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/CORE
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/5.20/CORE/*.h $(1)/usr/lib/perl5/5.20/CORE/
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/5.20 $(1)/usr/lib/perl5/
 endef
 
 define Package/perl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/perl$(PKG_VERSION) $(1)/usr/bin
 	ln -nsf perl$(PKG_VERSION) $(1)/usr/bin/perl
+	
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/CORE
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/5.20/CORE/libperl.so $(1)/usr/lib/perl5/5.20/CORE/
 endef
 
 
@@ -116,5 +126,4 @@ $(eval $(call RequireCommand,rsync, \
 $(eval $(call BuildPackage,perl))
 $(eval $(call HostBuild))
 
-include perlmod.mk
 -include perlbase.mk

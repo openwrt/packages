@@ -34,7 +34,7 @@ proto_aiccu_setup() {
 	echo "ipv6_interface $link"   >> "$CFGFILE"
 	[ -n "$server" ] && echo "server $server" >> "$CFGFILE"
 	[ -n "$protocol" ] && echo "protocol $protocol" >> "$CFGFILE"
-	[ -n "$tunnel_id" ] && echo "tunnel_id $tunnel_id"	  >> "$CFGFILE"
+	[ -n "$tunnelid" ] && echo "tunnel_id $tunnelid"	  >> "$CFGFILE"
 	[ -n "$requiretls" ] && echo "requiretls $requiretls"	   >> "$CFGFILE"
 	[ "$nat" == 1 ] && echo "behindnat true"     >> "$CFGFILE"
 	[ "$heartbeat"	== 1 ] && echo "makebeats true" >> "$CFGFILE"

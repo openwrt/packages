@@ -1,0 +1,18 @@
+--- a/libavutil/libm.h
++++ b/libavutil/libm.h
+@@ -82,6 +82,7 @@ static av_always_inline float cbrtf(floa
+ #define exp2f(x) ((float)exp2(x))
+ #endif /* HAVE_EXP2F */
+ 
++/* ---------- BROKEN: Defined in math.h but not present in uClibc 0.9.33.2 
+ #if !HAVE_FMINF
+ #undef fminf
+ static av_always_inline av_const float fminf(float x, float y)
+@@ -91,6 +92,7 @@ static av_always_inline av_const float f
+     return x > y ? y : (x == x ? x : y);
+ }
+ #endif
++------------------------------------------------------------------------- */
+ 
+ #if !HAVE_ISINF
+ static av_always_inline av_const int isinf(float x)

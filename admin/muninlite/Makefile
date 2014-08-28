@@ -14,6 +14,8 @@ PKG_RELEASE:=5
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
 PKG_MD5SUM:=a8cc86f0cc536a6c22dc298f4ed55339
+PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -23,7 +25,7 @@ define Package/muninlite
   DEPENDS:=+xinetd
   TITLE:=Munin node implemented in shell
   URL:=http://sourceforge.net/projects/muninlite/
-  MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 
 define Package/muninlite/Default/description

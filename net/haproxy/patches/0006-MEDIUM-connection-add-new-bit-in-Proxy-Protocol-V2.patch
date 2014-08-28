@@ -1,0 +1,112 @@
+From d6ec605d2059191163cad27b7d7b215ed8d3725b Mon Sep 17 00:00:00 2001
+From: Dave McCowan <11235david@gmail.com>
+Date: Wed, 30 Jul 2014 10:39:13 -0400
+Subject: [PATCH 6/6] MEDIUM: connection: add new bit in Proxy Protocol V2
+
+There are two sample commands to get information about the presence of a
+client certificate.
+ssl_fc_has_crt is true if there is a certificate present in the current
+connection
+ssl_c_used is true if there is a certificate present in the session.
+If a session has stopped and resumed, then ssl_c_used could be true, while
+ssl_fc_has_crt is false.
+
+In the client byte of the TLS TLV of Proxy Protocol V2, there is only one
+bit to indicate whether a certificate is present on the connection.  The
+attached patch adds a second bit to indicate the presence for the session.
+
+This maintains backward compatibility.
+
+[wt: this should be backported to 1.5 to help maintain compatibility
+ between versions]
+(cherry picked from commit 328fb58d745c03a0dc706da9e2fcd4e9f860a14b)
+---
+ include/proto/ssl_sock.h   |  3 ++-
+ include/types/connection.h |  5 +++--
+ src/connection.c           |  6 ++++--
+ src/ssl_sock.c             | 21 +++++++++++++++++++--
+ 4 files changed, 28 insertions(+), 7 deletions(-)
+
+diff --git a/include/proto/ssl_sock.h b/include/proto/ssl_sock.h
+index 3e111cd..10541ed 100644
+--- a/include/proto/ssl_sock.h
++++ b/include/proto/ssl_sock.h
+@@ -51,7 +51,8 @@ void ssl_sock_free_all_ctx(struct bind_conf *bind_conf);
+ const char *ssl_sock_get_cipher_name(struct connection *conn);
+ const char *ssl_sock_get_proto_version(struct connection *conn);
+ char *ssl_sock_get_version(struct connection *conn);
+-int ssl_sock_get_cert_used(struct connection *conn);
++int ssl_sock_get_cert_used_sess(struct connection *conn);
++int ssl_sock_get_cert_used_conn(struct connection *conn);
+ int ssl_sock_get_remote_common_name(struct connection *conn, struct chunk *out);
+ unsigned int ssl_sock_get_verify_result(struct connection *conn);
+ #ifdef SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB
+diff --git a/include/types/connection.h b/include/types/connection.h
+index 2ae16d7..b317007 100644
+--- a/include/types/connection.h
++++ b/include/types/connection.h
+@@ -345,8 +345,9 @@ struct tlv_ssl {
+ 	uint8_t sub_tlv[0];
+ }__attribute__((packed));
+ 
+-#define PP2_CLIENT_SSL      0x01
+-#define PP2_CLIENT_CERT     0x02
++#define PP2_CLIENT_SSL           0x01
++#define PP2_CLIENT_CERT_CONN     0x02
++#define PP2_CLIENT_CERT_SESS     0x04
+ 
+ #endif /* _TYPES_CONNECTION_H */
+ 
+diff --git a/src/connection.c b/src/connection.c
+index 2dd2c02..3af6d9a 100644
+--- a/src/connection.c
++++ b/src/connection.c
+@@ -678,9 +678,11 @@ int make_proxy_line_v2(char *buf, int buf_len, struct server *srv, struct connec
+ 				tlv_len = make_tlv(&buf[ret+ssl_tlv_len], (buf_len-ret-ssl_tlv_len), PP2_TYPE_SSL_VERSION, strlen(value), value);
+ 				ssl_tlv_len += tlv_len;
+ 			}
+-			if (ssl_sock_get_cert_used(remote)) {
+-				tlv->client |= PP2_CLIENT_CERT;
++			if (ssl_sock_get_cert_used_sess(remote)) {
++				tlv->client |= PP2_CLIENT_CERT_SESS;
+ 				tlv->verify = htonl(ssl_sock_get_verify_result(remote));
++				if (ssl_sock_get_cert_used_conn(remote))
++					tlv->client |= PP2_CLIENT_CERT_CONN;
+ 			}
+ 			if (srv->pp_opts & SRV_PP_V2_SSL_CN) {
+ 				cn_trash = get_trash_chunk();
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index cf8adc7..da99a30 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -2720,8 +2720,25 @@ out:
+ 	return result;
+ }
+ 
+-/* returns 1 if client passed a certificate, 0 if not */
+-int ssl_sock_get_cert_used(struct connection *conn)
++/* returns 1 if client passed a certificate for this session, 0 if not */
++int ssl_sock_get_cert_used_sess(struct connection *conn)
++{
++	X509 *crt = NULL;
++
++	if (!ssl_sock_is_ssl(conn))
++		return 0;
++
++	/* SSL_get_peer_certificate, it increase X509 * ref count */
++	crt = SSL_get_peer_certificate(conn->xprt_ctx);
++	if (!crt)
++		return 0;
++
++	X509_free(crt);
++	return 1;
++}
++
++/* returns 1 if client passed a certificate for this connection, 0 if not */
++int ssl_sock_get_cert_used_conn(struct connection *conn)
+ {
+ 	if (!ssl_sock_is_ssl(conn))
+ 		return 0;
+-- 
+1.8.5.5
+

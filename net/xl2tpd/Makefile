@@ -11,6 +11,8 @@ PKG_NAME:=xl2tpd
 PKG_VERSION:=1.3.6
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
@@ -65,7 +67,7 @@ define Package/xl2tpd/install
 	$(INSTALL_DATA) ./files/options.xl2tpd $(1)/etc/ppp/
 
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
-	$(INSTALL_BIN) ./files/l2tpv2.sh $(1)/lib/netifd/proto
+	$(INSTALL_BIN) ./files/l2tp.sh $(1)/lib/netifd/proto
 endef
 
 $(eval $(call BuildPackage,xl2tpd))

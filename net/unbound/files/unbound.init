@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+#Copyright (C) 2010 Ondrej Caletka <o.caletka@sh.cvut.cz>
+START=61
+
+start () {
+	unbound
+}
+
+stop () {
+	PIDFILE='/var/run/unbound.pid'
+	if [ -f $PIDFILE ] ; then
+		kill $(cat $PIDFILE)
+	fi
+}

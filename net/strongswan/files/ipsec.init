@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+
+START=90
+STOP=10
+
+start() {
+	ipsec start
+}
+
+stop() {
+	ipsec stop
+}
+
+restart() {
+	ipsec restart
+}
+
+reload() {
+	ipsec update
+}

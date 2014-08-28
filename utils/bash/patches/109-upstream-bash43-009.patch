@@ -1,0 +1,51 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-009
+
+Bug-Reported-by:	Matthias Klose <doko@debian.org>
+Bug-Reference-ID:	<53346FC8.6090005@debian.org>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-03/msg00171.html
+
+Bug-Description:
+
+There is a problem with unsigned sign extension when attempting to reallocate
+the input line when it is fewer than 3 characters long and there has been a
+history expansion.  The sign extension causes the shell to not reallocate the
+line, which results in a segmentation fault when it writes past the end.
+
+Patch (apply with `patch -p0'):
+
+--- a/parse.y
++++ b/parse.y
+@@ -2424,7 +2424,7 @@ shell_getc (remove_quoted_newline)
+ 	 not already end in an EOF character.  */
+       if (shell_input_line_terminator != EOF)
+ 	{
+-	  if (shell_input_line_size < SIZE_MAX && shell_input_line_len > shell_input_line_size - 3)
++	  if (shell_input_line_size < SIZE_MAX-3 && (shell_input_line_len+3 > shell_input_line_size))
+ 	    shell_input_line = (char *)xrealloc (shell_input_line,
+ 					1 + (shell_input_line_size += 2));
+ 
+--- a/y.tab.c
++++ b/y.tab.c
+@@ -4736,7 +4736,7 @@ shell_getc (remove_quoted_newline)
+ 	 not already end in an EOF character.  */
+       if (shell_input_line_terminator != EOF)
+ 	{
+-	  if (shell_input_line_size < SIZE_MAX && shell_input_line_len > shell_input_line_size - 3)
++	  if (shell_input_line_size < SIZE_MAX-3 && (shell_input_line_len+3 > shell_input_line_size))
+ 	    shell_input_line = (char *)xrealloc (shell_input_line,
+ 					1 + (shell_input_line_size += 2));
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 8
++#define PATCHLEVEL 9
+ 
+ #endif /* _PATCHLEVEL_H_ */

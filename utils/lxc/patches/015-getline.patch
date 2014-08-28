@@ -1,0 +1,15 @@
+--- a/src/lxc/utils.h
++++ b/src/lxc/utils.h
+@@ -44,11 +44,7 @@ extern char *get_rundir(void);
+ extern const char *lxc_global_config_value(const char *option_name);
+ 
+ /* Define getline() if missing from the C library */
+-#ifndef HAVE_GETLINE
+-#ifdef HAVE_FGETLN
+-#include <../include/getline.h>
+-#endif
+-#endif
++#include "../include/getline.h"
+ 
+ /* Define setns() if missing from the C library */
+ #ifndef HAVE_SETNS

@@ -1,0 +1,327 @@
+#!/bin/sh
+
+mwan3_get_iface_id()
+{
+	let iface_count++
+	[ "$1" == "$INTERFACE" ] && iface_id=$iface_count
+}
+
+mwan3_set_general_iptables()
+{
+	if ! $IPT -S mwan3_ifaces &> /dev/null; then
+		$IPT -N mwan3_ifaces
+	fi
+
+	if ! $IPT -S mwan3_rules &> /dev/null; then
+		$IPT -N mwan3_rules
+	fi
+
+	if ! $IPT -S mwan3_connected &> /dev/null; then
+		$IPT -N mwan3_connected
+	fi
+
+	if ! $IPT -S mwan3_hook &> /dev/null; then
+		$IPT -N mwan3_hook
+		$IPT -A mwan3_hook -j CONNMARK --restore-mark --nfmask 0xff00 --ctmask 0xff00
+		$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_ifaces
+		$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_connected
+		$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_rules
+		$IPT -A mwan3_hook -j CONNMARK --save-mark --nfmask 0xff00 --ctmask 0xff00
+		$IPT -A mwan3_hook -m mark ! --mark 0xff00/0xff00 -j mwan3_connected
+	fi
+
+	if ! $IPT -S mwan3_output_hook &> /dev/null; then
+		$IPT -N mwan3_output_hook
+	fi
+
+	if ! $IPT -S PREROUTING | grep mwan3_hook &> /dev/null; then
+		$IPT -A PREROUTING -j mwan3_hook
+	fi
+
+	if ! $IPT -S OUTPUT | grep mwan3_hook &> /dev/null; then
+		$IPT -A OUTPUT -j mwan3_hook
+	fi
+
+	if ! $IPT -S OUTPUT | grep mwan3_output_hook &> /dev/null; then
+		$IPT -A OUTPUT -j mwan3_output_hook
+	fi
+
+	$IPT -F mwan3_rules
+}
+
+mwan3_set_connected_iptables()
+{
+	local connected_networks
+
+	if $IPT -S mwan3_connected &> /dev/null; then
+		$IPT -F mwan3_connected
+
+		for connected_networks in $($IP route | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}'); do
+			$IPT -A mwan3_connected -d $connected_networks -j MARK --set-xmark 0xff00/0xff00
+		done
+
+		$IPT -I mwan3_connected -d 224.0.0.0/3 -j MARK --set-xmark 0xff00/0xff00
+		$IPT -I mwan3_connected -d 127.0.0.0/8 -j MARK --set-xmark 0xff00/0xff00
+	fi
+}
+
+mwan3_set_iface_iptables()
+{
+	local local_net local_nets
+
+	local_net=$($IP route list dev $DEVICE scope link | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}')
+
+	if ! $IPT -S mwan3_iface_$INTERFACE &> /dev/null; then
+		$IPT -N mwan3_iface_$INTERFACE
+	fi
+
+	$IPT -F mwan3_iface_$INTERFACE
+	$IPT -D mwan3_ifaces -i $DEVICE -m mark --mark 0x0/0xff00 -j mwan3_iface_$INTERFACE &> /dev/null
+
+	if [ $ACTION == "ifup" ]; then
+		if [ -n "$local_net" ]; then
+			for local_nets in $local_net ; do
+				if [ $ACTION == "ifup" ]; then
+					$IPT -I mwan3_iface_$INTERFACE -s $local_net -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE" -j MARK --set-xmark 0xff00/0xff00
+				fi
+			done
+		fi
+
+		$IPT -A mwan3_iface_$INTERFACE -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE" -j MARK --set-xmark $(($iface_id*256))/0xff00
+		$IPT -A mwan3_ifaces -i $DEVICE -m mark --mark 0x0/0xff00 -j mwan3_iface_$INTERFACE
+	fi
+
+	if [ $ACTION == "ifdown" ]; then
+		$IPT -X mwan3_iface_$INTERFACE
+	fi
+}
+
+mwan3_set_iface_route()
+{
+	$IP route flush table $iface_id
+	[ $ACTION == "ifup" ] && $IP route add table $iface_id default $route_args
+}
+
+mwan3_set_iface_rules()
+{
+	while [ -n "$($IP rule list | awk '$1 == "'$(($iface_id+1000)):'"')" ]; do
+		$IP rule del pref $(($iface_id+1000))
+	done
+
+	while [ -n "$($IP rule list | awk '$1 == "'$(($iface_id+2000)):'"')" ]; do
+		$IP rule del pref $(($iface_id+2000))
+	done
+
+	while [ -n "$($IP rule list | awk '$1 == "2254:"')" ]; do
+		$IP rule del pref 2254
+	done
+
+	[ $ACTION == "ifup" ] && $IP rule add pref $(($iface_id+1000)) iif $DEVICE lookup main
+	[ $ACTION == "ifup" ] && $IP rule add pref $(($iface_id+2000)) fwmark $(($iface_id*256))/0xff00 lookup $iface_id
+        $IP rule add pref 2254 fwmark 0xfe00/0xff00 unreachable                                   
+}
+
+mwan3_track()
+{
+	local track_ip track_ips reliability count timeout interval down up
+
+	mwan3_list_track_ips()
+	{
+		track_ips="$1 $track_ips"
+	}
+	config_list_foreach $INTERFACE track_ip mwan3_list_track_ips
+
+	if [ -n "$track_ips" ]; then
+		config_get reliability $INTERFACE reliability 1
+		config_get count $INTERFACE count 1
+		config_get timeout $INTERFACE timeout 4
+		config_get interval $INTERFACE interval 10
+		config_get down $INTERFACE down 5
+		config_get up $INTERFACE up 5
+
+		if ! $IPT -S mwan3_track_$INTERFACE &> /dev/null; then
+			$IPT -N mwan3_track_$INTERFACE
+			$IPT -A mwan3_output_hook -p icmp -m icmp --icmp-type 8 -m length --length 32 -j mwan3_track_$INTERFACE
+		fi
+
+		$IPT -F mwan3_track_$INTERFACE
+
+		for track_ip in $track_ips; do
+			$IPT -A mwan3_track_$INTERFACE -d $track_ip -j MARK --set-xmark 0xff00/0xff00
+		done
+
+		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $INTERFACE $DEVICE $reliability $count $timeout $interval $down $up $track_ips &
+	else
+		$IPT -D mwan3_output_hook -p icmp -m icmp --icmp-type 8 -m length --length 32 -j mwan3_track_$INTERFACE &> /dev/null
+		$IPT -F mwan3_track_$INTERFACE &> /dev/null
+		$IPT -X mwan3_track_$INTERFACE &> /dev/null
+	fi
+}
+
+mwan3_set_policy()
+{
+	local iface_count iface_id INTERFACE metric probability weight
+
+	config_get INTERFACE $1 interface
+	config_get metric $1 metric 1
+	config_get weight $1 weight 1
+
+	[ -n "$INTERFACE" ] || return 0
+	
+	config_foreach mwan3_get_iface_id interface
+
+	[ -n "$iface_id" ] || return 0
+
+	if $IPT -S mwan3_iface_$INTERFACE &> /dev/null; then
+		if [ "$metric" -lt "$lowest_metric" ]; then
+
+			total_weight=$weight
+			$IPT -F mwan3_policy_$policy
+			$IPT -A mwan3_policy_$policy -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE $weight $weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
+
+			lowest_metric=$metric
+
+		elif [ "$metric" -eq "$lowest_metric" ]; then
+
+			total_weight=$(($total_weight+$weight))
+			probability=$(($weight*1000/$total_weight))
+			
+			if [ "$probability" -lt 10 ]; then
+				probability="0.00$probability"
+				elif [ $probability -lt 100 ]; then
+				probability="0.0$probability"
+				elif [ $probability -lt 1000 ]; then
+				probability="0.$probability"
+			else
+				probability="1"
+			fi
+
+			probability="-m statistic --mode random --probability $probability"
+			
+			$IPT -I mwan3_policy_$policy -m mark --mark 0x0/0xff00 $probability -m comment --comment "$INTERFACE $weight $total_weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
+		fi
+	fi
+}
+
+mwan3_set_policies_iptables()
+{
+	local lowest_metric policy total_weight
+
+	policy=$1
+
+	if [ "$policy" != $(echo "$policy" | cut -c1-15) ]; then
+		$LOG warn "Policy $policy exceeds max of 15 chars. Not setting policy" && return 0
+	fi
+
+	if ! $IPT -S mwan3_policy_$policy &> /dev/null; then
+		$IPT -N mwan3_policy_$policy
+	fi
+
+	$IPT -F mwan3_policy_$policy
+	$IPT -A mwan3_policy_$policy -m mark --mark 0x0/0xff00 -m comment --comment "unreachable" -j MARK --set-xmark 0xfe00/0xff00
+
+	lowest_metric=256
+	total_weight=0
+
+	config_list_foreach $policy use_member mwan3_set_policy
+}
+
+mwan3_set_user_rules_iptables()
+{
+	local proto src_ip src_port dest_ip dest_port use_policy
+
+	config_get proto $1 proto all
+	config_get src_ip $1 src_ip 0.0.0.0/0
+	config_get src_port $1 src_port 0:65535
+	config_get dest_ip $1 dest_ip 0.0.0.0/0
+	config_get dest_port $1 dest_port 0:65535
+	config_get use_policy $1 use_policy
+
+	if [ -n "$use_policy" ]; then
+		if [ "$use_policy" == "default" ]; then
+			use_policy="MARK --set-xmark 0xff00/0xff00"
+		elif [ "$use_policy" == "unreachable" ]; then
+			use_policy="MARK --set-xmark 0xfe00/0xff00"
+		else
+			use_policy="mwan3_policy_$use_policy"
+		fi
+
+		case $proto in
+			tcp|udp)
+			$IPT -A mwan3_rules -p $proto -s $src_ip -d $dest_ip -m multiport --sports $src_port -m multiport --dports $dest_port -m mark --mark 0/0xff00 -m comment --comment "$1" -j $use_policy &> /dev/null
+			;;
+			*)
+			$IPT -A mwan3_rules -p $proto -s $src_ip -d $dest_ip -m mark --mark 0/0xff00 -m comment --comment "$1" -j $use_policy &> /dev/null
+			;;
+		esac
+	fi
+}
+
+mwan3_ifupdown()
+{
+	local counter enabled iface_count iface_id route_args wan_metric
+
+	config_load mwan3
+	config_foreach mwan3_get_iface_id interface
+
+	[ -n "$iface_id" ] || return 0
+	[ "$iface_count" -le 250 ] || return 0
+	unset iface_count
+
+	config_get enabled $INTERFACE enabled 0
+
+	counter=0
+
+	if [ $ACTION == "ifup" ]; then
+		[ "$enabled" -eq 1 ] || return 0
+
+		while [ -z "$($IP route list dev $DEVICE default | head -1)" -a "$counter" -lt 10 ]; do
+			sleep 1
+			let counter++
+			if [ "$counter" -ge 10 ]; then
+				$LOG warn "Could not find gateway for interface $INTERFACE ($DEVICE)" && return 0
+			fi
+		done
+
+		route_args=$($IP route list dev $DEVICE default | head -1 | sed '/.*via \([^ ]*\) .*$/!d;s//via \1/;q' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}')
+		route_args="nexthop $route_args dev $DEVICE"
+	fi
+
+	while [ "$(pgrep -f -o hotplug-call)" -ne $$ -a "$counter" -lt 60 ]; do
+		sleep 1
+		let counter++
+		if [ "$counter" -ge 60 ]; then
+			$LOG warn "Timeout waiting for older hotplug processes to finish. $ACTION interface $INTERFACE ($DEVICE) aborted" && return 0
+		fi
+	done
+
+	$LOG notice "$ACTION interface $INTERFACE ($DEVICE)"
+
+	mwan3_set_general_iptables
+	mwan3_set_iface_iptables
+	mwan3_set_iface_route
+	mwan3_set_iface_rules
+
+	[ $ACTION == "ifup" ] && mwan3_track
+
+	config_foreach mwan3_set_policies_iptables policy
+	config_foreach mwan3_set_user_rules_iptables rule
+}
+
+[ -n "$DEVICE" ] || exit 0
+[ -n "$INTERFACE" ] || exit 0
+
+local IP IPT LOG
+
+IP="/usr/sbin/ip -4"
+IPT="/usr/sbin/iptables -t mangle -w"
+LOG="/usr/bin/logger -t mwan3 -p"
+
+case "$ACTION" in
+	ifup|ifdown)
+		mwan3_ifupdown
+		mwan3_set_connected_iptables
+	;;
+esac
+
+exit 0

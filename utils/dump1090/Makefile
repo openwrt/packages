@@ -3,17 +3,18 @@
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
+#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dump1090
-PKG_VERSION:=2014-07-25
+PKG_VERSION:=2014-08-22
 PKG_RELEASE:=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/MalcolmRobb/dump1090.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=a17e5b0f980f726d246ee5c8fe1661c99a11e90f
+PKG_SOURCE_VERSION:=a82df07c0c0a750d58610bf3c3ece77482f3a58c
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
@@ -25,7 +26,7 @@ define Package/dump1090
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Mode S decoder for the Realtek RTL2832U
-  URL:=https://github.com/antirez/dump1090
+  URL:=https://github.com/MalcolmRobb/dump1090
   DEPENDS:=+libpthread +librtlsdr
 endef
 

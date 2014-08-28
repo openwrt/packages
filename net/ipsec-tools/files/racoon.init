@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2011 OpenWrt.org
+# Copyright (C) 2011 Artem Makhutov
+
+START=49
+
+SERVICE_USE_PID=1
+
+start() {
+	mkdir -m 0700 -p /var/racoon
+	[ -f /etc/ipsec.conf ] && /usr/sbin/setkey -f /etc/ipsec.conf
+	service_start /usr/sbin/racoon -f /etc/racoon.conf
+}
+
+stop() {
+	service_stop /usr/sbin/racoon
+}

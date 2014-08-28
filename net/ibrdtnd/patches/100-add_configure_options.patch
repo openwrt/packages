@@ -1,0 +1,75 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -333,30 +333,46 @@ AS_IF([test "x$enable_android" = "xyes"], [
+ 	dnl optional parameter: Wifi-P2P support
+ 	dnl -----------------------------------------------
+ 
+-	PKG_CHECK_MODULES([WIFIP2P], wifip2p >= 0.1 , [
+-				with_wifi_p2p="yes"
+-				AC_SUBST(WIFIP2P_CFLAGS)
+-				AC_SUBST(WIFIP2P_LIBS)
+-				AC_DEFINE(WITH_WIFIP2P, [1], ["wifi-p2p support enabled"])
+-			], [
+-				with_wifi_p2p="no"
+-				AC_MSG_WARN([wifi-p2p library not found. wifi-p2p support is disabled.])
+-			])
++	AC_ARG_WITH([wifip2p],
++		AS_HELP_STRING([--without-wifip2p], [Build without wifip2p support]),
++		[
++			with_wifi_p2p="no"
++			AC_MSG_NOTICE([WIFIP2P support disabled])
++		], [
++			PKG_CHECK_MODULES([WIFIP2P], wifip2p >= 0.1 , [
++						with_wifi_p2p="yes"
++						AC_SUBST(WIFIP2P_CFLAGS)
++						AC_SUBST(WIFIP2P_LIBS)
++						AC_DEFINE(WITH_WIFIP2P, [1], ["wifi-p2p support enabled"])
++					], [
++						with_wifi_p2p="no"
++						AC_MSG_WARN([wifi-p2p library not found. wifi-p2p support is disabled.])
++					])
++		]
++	)
+ 
+-    dnl -----------------------------------------------
+-    dnl optional parameter: VMime support
+-    dnl -----------------------------------------------
+-
+-    PKG_CHECK_MODULES([VMIME], vmime >= 0.9.1 , [
+-                with_vmime="yes"
+-                AC_SUBST(VMIME_CFLAGS)
+-                AC_SUBST(VMIME_LIBS)
+-                AC_DEFINE(HAVE_VMIME, [1], ["Email Convergence Layer is available"])
+-                AC_CHECK_HEADERS([vmime/utility/smartPtrInt.hpp])
+-            ], [
+-                with_vmime="no"
+-                AC_MSG_WARN([VMime library not found. Email Convergence Layer is disabled.])
+-            ])
++	dnl -----------------------------------------------
++	dnl optional parameter: VMime support
++	dnl -----------------------------------------------
++
++	AC_ARG_WITH([vmime],
++		AS_HELP_STRING([--without-vmime], [Build without vmime support]),
++		[
++			with_vmime="no"
++			AC_MSG_NOTICE([VMIME support disabled])
++		], [
++			PKG_CHECK_MODULES([VMIME], vmime >= 0.9.1 , [
++						with_vmime="yes"
++						AC_SUBST(VMIME_CFLAGS)
++						AC_SUBST(VMIME_LIBS)
++						AC_DEFINE(HAVE_VMIME, [1], ["Email Convergence Layer is available"])
++						AC_CHECK_HEADERS([vmime/utility/smartPtrInt.hpp])
++					], [
++						with_vmime="no"
++						AC_MSG_WARN([VMime library not found. Email Convergence Layer is disabled.])
++					])
++		]
++	)
+ 
+ 	dnl -----------------------------------------------
+ 	dnl check for regex capabilities
+-- 
+1.9.1
+

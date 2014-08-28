@@ -14,6 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/gkernel/rng-tools/$(PKG_VERSION)/
 PKG_MD5SUM:=6726cdc6fae1f5122463f24ae980dd68
+PKG_LICENSE:=GPLv2
 PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
 
 PKG_FIXUP:=autoreconf

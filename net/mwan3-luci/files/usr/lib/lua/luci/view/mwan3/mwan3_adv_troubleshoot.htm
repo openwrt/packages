@@ -1,0 +1,77 @@
+<%+header%>
+
+<ul class="cbi-tabmenu">
+	<li class="cbi-tab-disabled"><a href="<%=luci.dispatcher.build_url("admin/network/mwan3/advanced/hotplug")%>"><%:Hotplug Script%></a></li>
+	<li class="cbi-tab-disabled"><a href="<%=luci.dispatcher.build_url("admin/network/mwan3/advanced/mwan3")%>"><%:MWAN3 Config%></a></li>
+	<li class="cbi-tab-disabled"><a href="<%=luci.dispatcher.build_url("admin/network/mwan3/advanced/network")%>"><%:Network Config%></a></li>
+	<li class="cbi-tab-disabled"><a href="<%=luci.dispatcher.build_url("admin/network/mwan3/advanced/diag")%>"><%:Diagnostics%></a></li>
+	<li class="cbi-tab"><a href="<%=luci.dispatcher.build_url("admin/network/mwan3/advanced/tshoot")%>"><%:Troubleshooting%></a></li>
+</ul>
+
+<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(15, '<%=luci.dispatcher.build_url("admin", "network", "mwan3", "advanced", "tshoot_display")%>', null,
+		function(x, st)
+		{
+			var tx = document.getElementById('mwan3_tshoot_text');
+			if (st.mw3ver)
+			{
+				var temp = '';
+				var mwanvers = 'Software versions : <br /><br />';
+				var mwan3cnfg = '<br /><br />Output of &#34;cat /etc/config/mwan3&#34; : <br /><br />';
+				var netcnfg = '<br /><br />Output of &#34;cat /etc/config/network&#34; : <br /><br />';
+				var ifcnfg = '<br /><br />Output of &#34;ifconfig&#34; : <br /><br />';
+				var iproute = '<br /><br />Output of &#34;route -n&#34; : <br /><br />';
+				var iprulesh = '<br /><br />Output of &#34;ip rule show&#34; : <br /><br />';
+				var routelisttbl = '<br /><br />Output of &#34;ip route list table 1-250&#34; : <br /><br />';
+				var firewalldef = '<br /><br />Firewall default output policy (must be ACCEPT) : <br /><br />';
+				var iptable = '<br /><br />Output of &#34;iptables -L -t mangle -v -n&#34; : <br /><br />';
+
+				temp = String.format(
+					'<pre><span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s</pre>',
+						mwanvers, st.mw3ver[0].mwan3v, mwan3cnfg, st.mwan3config[0].mwn3cfg, netcnfg, st.netconfig[0].netcfg, ifcnfg, st.ifconfig[0].ifcfg, iproute, st.rtshow[0].iprtshow, iprulesh, st.iprule[0].rule, routelisttbl, st.routelist[0].iprtlist, firewalldef, st.fidef[0].firedef, iptable, st.iptables[0].iptbls
+				);
+				tx.innerHTML = temp;
+			}
+			else
+			{
+				var temp = '';
+				var terror = 'Error collecting troubleshooting information';
+				temp = String.format(
+					'<strong>%s</strong>',
+						terror
+				);
+				tx.innerHTML = temp;
+			}
+		}
+	);
+//]]></script>
+
+<div id="tshoot_div">
+	<fieldset class="cbi-section">
+		<legend><%:Troubleshooting Data%></legend>
+		<div id="mwan3_tshoot_text"><img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> Collecting data...</div>
+	</fieldset>
+</div>
+<style type="text/css">
+  .container {  /*container for entire page. fixes bootstrap theme's ridiculously small page width*/
+	max-width: none;
+	margin-left: 30px;
+	padding-right: 30px;
+	width: auto;
+  }
+  #tshoot_div {
+	background-color: #FFFFFF;
+	border: 1px dotted #555555;
+	padding: 20px;
+  }
+  #mwan3_tshoot_text {
+	padding: 20px;
+	text-align: left;
+  }
+  .tsht {
+	background-color: rgb(78, 186, 241);
+  }
+</style>
+
+<%+footer%>

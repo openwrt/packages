@@ -1,0 +1,49 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-001
+
+Bug-Reported-by:	NBaH <nbah@sfr.fr>
+Bug-Reference-ID:	<ler0b5$iu9$1@speranza.aioe.org>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-02/msg00092.html
+
+Bug-Description:
+
+A missing check for a valid option prevented `test -R' from working.  There
+is another problem that causes bash to look up the wrong variable name when
+processing the argument to `test -R'.
+
+Patch (apply with `patch -p0'):
+
+--- a/test.c
++++ b/test.c
+@@ -646,8 +646,8 @@ unary_test (op, arg)
+       return (v && invisible_p (v) == 0 && var_isset (v) ? TRUE : FALSE);
+ 
+     case 'R':
+-      v = find_variable (arg);
+-      return (v && invisible_p (v) == 0 && var_isset (v) && nameref_p (v) ? TRUE : FALSE);
++      v = find_variable_noref (arg);
++      return ((v && invisible_p (v) == 0 && var_isset (v) && nameref_p (v)) ? TRUE : FALSE);
+     }
+ 
+   /* We can't actually get here, but this shuts up gcc. */
+@@ -723,6 +723,7 @@ test_unop (op)
+     case 'o': case 'p': case 'r': case 's': case 't':
+     case 'u': case 'v': case 'w': case 'x': case 'z':
+     case 'G': case 'L': case 'O': case 'S': case 'N':
++    case 'R':
+       return (1);
+     }
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 0
++#define PATCHLEVEL 1
+ 
+ #endif /* _PATCHLEVEL_H_ */

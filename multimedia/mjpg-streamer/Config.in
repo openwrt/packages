@@ -6,8 +6,8 @@ if PACKAGE_mjpg-streamer
 
 config MJPG_STREAMER_V4L2
 	bool "Compile input_uvc with libv4l2 (camera controls)"
-	depends on PACKAGE_libv4l
 	default n
+	select PACKAGE_libv4l
 
 config MJPG_STREAMER_INPUT_FILE
 	bool "Install input file plugin"

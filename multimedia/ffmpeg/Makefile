@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=0.11.5
-PKG_RELEASE:=5
+PKG_VERSION:=2.3.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=ea25fc252c132141f12988ed5506bfe8
+PKG_MD5SUM:=bb02e99c39941d7f3dc56658b9324a2b
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_LICENSE:=LGPLv2.1+ GPLv2+ LGPLv3
+PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
 PKG_LICENSE_FILES:=COPYING.GPLv2 COPYING.GPLv3 COPYING.LGPLv2.1 COPYING.LGPLv3
 
 FFMPEG_CUSTOM_ENCODERS:= \
@@ -110,14 +110,10 @@ FFMPEG_CUSTOM_PARSERS:= \
 FFMPEG_CUSTOM_PROTOCOLS:= \
 	file http pipe rtp tcp udp
 
-FFMPEG_MINI_ENCODERS:= \
-
 FFMPEG_MINI_DECODERS:= \
 	aac \
 	ac3 \
-	atrac3 \
 	flac \
-	h263 \
 	h264 \
 	jpegls \
 	mp3 \
@@ -129,15 +125,10 @@ FFMPEG_MINI_DECODERS:= \
 	wmav1 \
 	wmav2 \
 
-FFMPEG_MINI_MUXERS:= \
-	ffm \
-
 FFMPEG_MINI_DEMUXERS := \
 	aac \
 	ac3 \
-	asf \
 	avi \
-	ffm \
 	flac \
 	h264 \
 	matroska \
@@ -145,19 +136,16 @@ FFMPEG_MINI_DEMUXERS := \
 	mp3 \
 	mpegts \
 	mpegvideo \
-	sdp \
-	rtsp \
 
 FFMPEG_MINI_PARSERS:= \
 	ac3 \
 	flac \
-	h263 \
 	h264 \
 	mpeg4video \
 	mpegaudio \
 
 FFMPEG_MINI_PROTOCOLS := \
-	file http rtp tcp udp \
+	file \
 
 FFMPEG_AUDIO_DECODERS:= \
 	aac \
@@ -368,23 +356,47 @@ FFMPEG_CONFIGURE:= \
 	--arch="$(ARCH)" \
 	--target-os=linux \
 	--prefix="/usr" \
+	--pkg-config="pkg-config" \
 	--enable-shared \
 	--enable-static \
+	--enable-small \
+	--enable-pthreads \
+	--enable-zlib \
+	--disable-runtime-cpudetect \
+	--disable-doc \
 	--disable-debug \
-	--pkg-config="pkg-config" \
 	\
 	--enable-gpl \
 	--enable-version3 \
 	\
 	--disable-altivec \
-	--disable-asm \
-	--disable-doc \
+	--disable-amd3dnow \
+	--disable-amd3dnowext \
+	--disable-mmx \
+	--disable-mmxext \
+	--disable-sse \
+	--disable-sse2 \
+	--disable-sse3 \
+	--disable-ssse3 \
+	--disable-sse4 \
+	--disable-sse42 \
+	--disable-avx \
+	--disable-xop \
+	--disable-fma3 \
+	--disable-fma4 \
+	--disable-avx2 \
+	--disable-vfp \
+	--disable-neon \
+	--disable-inline-asm \
+	--disable-yasm \
+	--disable-mipsdspr1 \
+	--disable-mipsdspr2 \
+	--disable-mipsfpu \
+	\
 	--disable-dxva2 \
-	--enable-pthreads \
-	--disable-optimizations \
-	--enable-small \
-	--disable-stripping \
-	--enable-zlib \
+	--disable-vaapi \
+	--disable-vda \
+	--disable-vdpau \
 	--disable-outdevs
 
 ifeq ($(BUILD_VARIANT),custom)
@@ -395,10 +407,7 @@ ifeq ($(BUILD_VARIANT),custom)
 	)
 
   FFMPEG_CONFIGURE+= \
-	--disable-ffmpeg \
-	--disable-ffplay \
-	--disable-ffprobe \
-	--disable-ffserver \
+	--disable-programs \
 	--disable-avfilter \
 	--disable-postproc \
 	--disable-swresample \
@@ -435,10 +444,7 @@ ifeq ($(BUILD_VARIANT),audio-dec)
 	)
 
   FFMPEG_CONFIGURE+= \
-	--disable-ffmpeg \
-	--disable-ffplay \
-	--disable-ffprobe \
-	--disable-ffserver \
+	--disable-programs \
 	--disable-avfilter \
 	--disable-postproc \
 	--disable-swresample \
@@ -461,19 +467,14 @@ ifeq ($(BUILD_VARIANT),mini)
 	)
 
   FFMPEG_CONFIGURE+= \
-	--disable-ffmpeg \
-	--disable-ffplay \
-	--disable-ffprobe \
-	--disable-ffserver \
+	--disable-programs \
 	--disable-avdevice \
 	--disable-avfilter \
 	--disable-postproc \
 	--disable-swresample \
 	--disable-swscale \
 	--disable-everything \
-	$(call FFMPEG_ENABLE,encoder,$(FFMPEG_MINI_ENCODERS)) \
 	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_MINI_DECODERS)) \
-	$(call FFMPEG_ENABLE,muxer,$(FFMPEG_MINI_MUXERS)) \
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_MINI_DEMUXERS)) \
 	$(call FFMPEG_ENABLE,parser,$(FFMPEG_MINI_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_MINI_PROTOCOLS)) \

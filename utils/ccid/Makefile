@@ -15,6 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/4091
 PKG_MD5SUM:=a227a20a0dd034cd4bb7400806a0a2d0
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=LGPL-2.1+
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=libtool
 PKG_INSTALL:=1

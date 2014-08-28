@@ -19,7 +19,7 @@ PKG_FIXUP:=autoreconf
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_LICENSE:=LGPLv2
+PKG_LICENSE:=LGPL-2.0
 PKG_LICENSE_FILES:=COPYING LICENSE
 
 include $(INCLUDE_DIR)/package.mk
