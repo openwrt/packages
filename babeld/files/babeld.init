@@ -102,11 +102,17 @@ babel_config_cb() {
 		}
 	;;
 	"interface")
+		local _ifname
+		config_get _ifname "$section" 'ifname'
+		# Try to resolve the logical interface name
 		unset interface
-		network_get_device interface "$section" || interface="$section"
+		network_get_device interface "$_ifname" || interface="$_ifname"
 		option_cb() {
 			local option="$1"
 			local value="$2"
+			# "option ifname" is a special option, don't actually
+			# generate configuration for it.
+			[ "$option" = "ifname" ] && return
 			cfg_append "interface $interface ${option//_/-} $value"
 		}
 		# Handle ignore options.
