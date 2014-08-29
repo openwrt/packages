@@ -110,10 +110,12 @@ babel_config_cb() {
 		option_cb() {
 			local option="$1"
 			local value="$2"
+			local _interface
 			# "option ifname" is a special option, don't actually
 			# generate configuration for it.
 			[ "$option" = "ifname" ] && return
-			cfg_append "interface $interface ${option//_/-} $value"
+			[ -n "$interface" ] && _interface="interface $interface" || _interface="default"
+			cfg_append "$_interface ${option//_/-} $value"
 		}
 		# Handle ignore options.
 		local _ignored
@@ -126,7 +128,7 @@ babel_config_cb() {
 		else
 			# Also include an empty "interface $interface" statement,
 			# so that babeld operates on this interface.
-			cfg_append "interface $interface"
+			[ -n "$interface" ] && cfg_append "interface $interface"
 		fi
 	;;
 	*)
