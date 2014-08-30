@@ -48,7 +48,7 @@ TITLE:=attributes perl module
 endef
 
 define Package/perlbase-attributes/install
-$(call perlmod/Install,$(1),attributes.pm,)
+$(call perlmod/Install,$(1),attributes.pm auto/attributes,)
 endef
 
 $(eval $(call BuildPackage,perlbase-attributes))
@@ -192,7 +192,7 @@ TITLE:=charnames perl module
 endef
 
 define Package/perlbase-charnames/install
-$(call perlmod/Install,$(1),charnames.pm,)
+$(call perlmod/Install,$(1),charnames.pm _charnames.pm,)
 endef
 
 $(eval $(call BuildPackage,perlbase-charnames))
@@ -228,7 +228,7 @@ TITLE:=Config perl module
 endef
 
 define Package/perlbase-config/install
-$(call perlmod/Install,$(1),Config Config.pm Config_heavy.pl,)
+$(call perlmod/Install,$(1),Config Config.pm Config_heavy.pl Config_git.pl,)
 endef
 
 $(eval $(call BuildPackage,perlbase-config))
@@ -458,7 +458,7 @@ TITLE:=essential perl module
 endef
 
 define Package/perlbase-essential/install
-$(call perlmod/Install,$(1),Carp Carp.pm Exporter Exporter.pm constant.pm lib.pm locale.pm overload.pm strict.pm subs.pm vars.pm warnings warnings.pm overloading.pm,)
+$(call perlmod/Install,$(1),Carp Carp.pm Exporter Exporter.pm constant.pm lib.pm locale.pm overload.pm overloading.pm parent.pm strict.pm subs.pm vars.pm warnings warnings.pm deprecate.pm,)
 endef
 
 $(eval $(call BuildPackage,perlbase-essential))
@@ -786,7 +786,7 @@ TITLE:=mro perl module
 endef
 
 define Package/perlbase-mro/install
-$(call perlmod/Install,$(1),mro.pm,)
+$(call perlmod/Install,$(1),mro.pm auto/mro,)
 endef
 
 $(eval $(call BuildPackage,perlbase-mro))
@@ -1160,7 +1160,7 @@ TITLE:=Tie perl module
 endef
 
 define Package/perlbase-tie/install
-$(call perlmod/Install,$(1),Tie,)
+$(call perlmod/Install,$(1),Tie auto/Tie,)
 endef
 
 $(eval $(call BuildPackage,perlbase-tie))
@@ -1244,7 +1244,7 @@ TITLE:=version perl module
 endef
 
 define Package/perlbase-version/install
-$(call perlmod/Install,$(1),version.pm,)
+$(call perlmod/Install,$(1),version.pm version,)
 endef
 
 $(eval $(call BuildPackage,perlbase-version))
