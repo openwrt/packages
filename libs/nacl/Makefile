@@ -18,6 +18,8 @@ PKG_MD5SUM:=7efb5715561c3d10dafd3fa97b4f2d20
 
 PKG_LICENSE:=PublicDomain
 
+PKG_USE_MIPS16:=0
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/nacl
