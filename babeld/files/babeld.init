@@ -10,6 +10,10 @@ OTHERCONFIGFILE="/etc/babeld.conf"
 EXTRA_COMMANDS="status"
 EXTRA_HELP="        status Dump Babel's table to the log file."
 
+# Options to ignore for the global section (old options that are translated
+# for backward compatibility with old configuration files)
+ignored_options="carrier_sense assume_wireless no_split_horizon random_router_id multicast_address port hello_interval wired_hello_interval smoothing_half_time duplication_priority local_server conf_file"
+
 # Append a line to the configuration file
 cfg_append() {
         local value="$1"
@@ -56,6 +60,56 @@ append_parm() {
 	append buffer "$switch $_loctmp"
 }
 
+
+# Provides backward compatibility for old option names in the global section.
+translate_option() {
+	local section="$1"
+	local old_option="$2"
+	local new_option="$3"
+	local _value
+	config_get _value "$section" "$old_option"
+	[ -z "$_value" ] && return
+	cfg_append "${new_option//_/-} $_value"
+}
+
+translate_bool() {
+	local section="$1"
+	local old_option="$2"
+	local new_option="$3"
+	local _bool
+	local _value
+	config_get_bool _bool "$section" "$old_option" 0
+	[ "$_bool" -eq 0 ] && return
+	cfg_append "${new_option//_/-} true"
+}
+
+# Adds a new interface section for setting default interface options.
+add_default_option() {
+	local option="$1"
+	local value="$2"
+	cfg_append "default ${option//_/-} $value"
+}
+
+# Global 'hello_interval' and 'wired_hello_interval' options are ignored,
+# because they have no direct equivalent: you should use
+# interface-specific settings.
+parse_old_global_options() {
+	local section="$1"
+	translate_bool   "$section" 'carrier_sense'	'link_detect'
+	translate_bool   "$section" 'random_router_id'	'random_id'
+	translate_option "$section" 'multicast_address'	'protocol_group'
+	translate_option "$section" 'port'		'protocol_port'
+	translate_option "$section" 'local_server'	'local_port'
+	translate_option "$section" 'smoothing_half_time'	'smoothing_half_life'
+	translate_option "$section" 'duplication_priority'	'allow_duplicates'
+	# These two global options are turned into default interface options.
+	local _bool
+	config_get_bool _bool "$section" 'assume_wireless' 0
+	[ "$_bool" -eq 1 ] && add_default_option "wired" "false"
+	config_get_bool _bool "$section" 'no_split_horizon' 0
+	[ "$_bool" -eq 1 ] && add_default_option "split_horizon" "false"
+}
+
 babel_filter() {
 	local cfg="$1"
 	local _loctmp
@@ -98,12 +152,17 @@ babel_config_cb() {
 		option_cb() {
 			local option="$1"
 			local value="$2"
+			# Ignore old options
+			list_contains ignored_options "$option" && return
 			cfg_append "${option//_/-} $value"
 		}
 	;;
 	"interface")
 		local _ifname
 		config_get _ifname "$section" 'ifname'
+		# Backward compatibility: try to use the section name
+		# if no "option ifname" was used.
+		[ -z "$_ifname" -a "${section:0:3}" != "cfg" ] && _ifname="$section"
 		# Try to resolve the logical interface name
 		unset interface
 		network_get_device interface "$_ifname" || interface="$_ifname"
@@ -150,6 +209,8 @@ start() {
 	# know their name in advance.
 	config_cb() { babel_config_cb "$@"; }
 	config_load babeld
+	# Backward compatibility
+	config_foreach parse_old_global_options general
 	# Parse filters separately, since we know which options we expect
 	config_foreach babel_filter filter
 	# Using multiple config files is supported since babeld 1.5.1
