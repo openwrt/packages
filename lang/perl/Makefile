@@ -70,6 +70,7 @@ endef
 
 define Host/Install
 	( cd $(HOST_BUILD_DIR); ./miniperl installperl )
+	$(INSTALL_DIR) $(HOST_PERL_PREFIX)/bin/
 	$(CP) $(HOST_BUILD_DIR)/generate_uudmap $(HOST_PERL_PREFIX)/bin/
 	
 	# Link any possibly installed static extension in
