@@ -55,13 +55,15 @@ proto_openconnect_setup() {
 	logger -t openconnect "executing 'openconnect $cmdline'"
 
 	if [ -f "$pwfile" ];then
-		proto_run_command "$config" /usr/sbin/openconnect $cmdline <$pwfile
+		proto_run_command "$config" /usr/sbin/openconnect-wrapper $pwfile $cmdline
 	else
 		proto_run_command "$config" /usr/sbin/openconnect $cmdline
 	fi
 }
 
 proto_openconnect_teardown() {
+	local config="$1"
+
 	pwfile="/var/run/openconnect-$config.passwd"
 
 	rm -f $pwfile
