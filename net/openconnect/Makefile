@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openconnect
 PKG_VERSION:=6.00
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/openconnect/
@@ -56,6 +56,7 @@ define Package/openconnect/install
 	$(INSTALL_BIN) ./files/vpnc-script $(1)/lib/netifd/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openconnect $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/openconnect-wrapper $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,openconnect))
