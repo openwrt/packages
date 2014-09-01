@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython
-PKG_VERSION=1.3-20140828-$(PKG_SOURCE_VERSION)
+PKG_VERSION=1.3.1-20140830-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
@@ -17,9 +17,9 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/micropython/micropython.git
-PKG_SOURCE_VERSION:=110ba35980d03da2e744a8aadd85d08c0c06a23b
+PKG_SOURCE_VERSION:=90fad65d2fb2695e1941296a6a55c175982299f2
 
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_PARALLEL:=1
@@ -39,16 +39,25 @@ define Package/micropython/description
  that is optimised to run on a microcontroller (and low power computers).
 endef
 
-# The following hacks have been tested for MIPS builds, but may need to be modified for other platforms.
-# (Based on: https://github.com/pfalcon/micropython/blob/2663b63241498569d9acb9c7cf9e01e831dbd816/unix/build-mips.sh)
-TARGET_CFLAGS_EXTRA += -DMICROPY_GCREGS_SETJMP=1 -DMICROPY_NLR_SETJMP=1 -DMICROPY_EMIT_X64=0
-TARGET_STRIPFLAGS_EXTRA += --remove-section=.pdr -R .comment -R .gnu.version -R .gnu.version_r -R .gnu.attributes -R .reginfo -R .mdebug.abi32
+# This is necessary for MIPS only (based on https://github.com/pfalcon/micropython/blob/cross/unix/build-mips.sh)
+MIPS_CFLAGS_EXTRA += -DMICROPY_GCREGS_SETJMP=1
+
+ifeq ($(ARCH),mips)
+       TARGET_CFLAGS_EXTRA += $(MIPS_CFLAGS_EXTRA)
+endif
+
+ifeq ($(ARCH),mipsel)
+       TARGET_CFLAGS_EXTRA += $(MIPS_CFLAGS_EXTRA)
+endif
+
+ifneq ($(ARCH),x86_64)
+       TARGET_CFLAGS_EXTRA += -DMICROPY_EMIT_X64=0
+endif
 
 MAKE_FLAGS += \
        -C $(PKG_BUILD_DIR)/unix \
        MICROPY_USE_READLINE=0 \
-       CFLAGS_EXTRA="$(TARGET_CFLAGS_EXTRA)" \
-       STRIPFLAGS_EXTRA="$(TARGET_STRIPFLAGS_EXTRA)"
+       CFLAGS_EXTRA="$(TARGET_CFLAGS_EXTRA)" 
 
 define Package/micropython/install
 	$(INSTALL_DIR) $(1)/usr/bin
