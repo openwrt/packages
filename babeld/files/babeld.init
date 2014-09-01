@@ -1,18 +1,35 @@
 #!/bin/sh /etc/rc.common
 
+. /lib/functions/network.sh
+
 START=70
 
 pidfile='/var/run/babeld.pid'
+CONFIGFILE='/var/etc/babeld.conf'
+OTHERCONFIGFILE="/etc/babeld.conf"
 EXTRA_COMMANDS="status"
 EXTRA_HELP="        status Dump Babel's table to the log file."
 
-listen_ifname() {
-	local ifname=$(uci_get_state network "$1" ifname "$1")
-	local switch="$2"
-	append args "$switch $ifname"
-	append interfaces "$ifname"
+# Options to ignore for the global section (old options that are translated
+# for backward compatibility with old configuration files)
+ignored_options="carrier_sense assume_wireless no_split_horizon random_router_id multicast_address port hello_interval wired_hello_interval smoothing_half_time duplication_priority local_server conf_file"
+
+# Append a line to the configuration file
+cfg_append() {
+        local value="$1"
+        echo "$value" >> $CONFIGFILE
 }
 
+cfg_append_option() {
+	local section="$1"
+	local option="$2"
+	local value
+	config_get value "$section" "$option"
+	# babeld convention for options is '-', not '_'
+	[ -n "$value" ] && cfg_append "${option//_/-} $value"
+}
+
+# Append to the "$buffer" variable
 append_ifname() {
 	local section="$1"
 	local option="$2"
@@ -21,7 +38,7 @@ append_ifname() {
 	config_get _name "$section" "$option"
 	[ -z "$_name" ] && return 0
 	local ifname=$(uci_get_state network "$_name" ifname "$_name")
-	append args "$switch $ifname"
+	append buffer "$switch $ifname"
 }
 
 append_bool() {
@@ -30,13 +47,7 @@ append_bool() {
 	local value="$3"
 	local _loctmp
 	config_get_bool _loctmp "$section" "$option" 0
-	[ "$_loctmp" -gt 0 ] && append args "$value"
-}
-
-append_switch() {
-	local value="$1"
-	local switch="$2"
-	append args "$switch $value"
+	[ "$_loctmp" -gt 0 ] && append buffer "$value"
 }
 
 append_parm() {
@@ -46,7 +57,57 @@ append_parm() {
 	local _loctmp
 	config_get _loctmp "$section" "$option"
 	[ -z "$_loctmp" ] && return 0
-	append args "$switch $_loctmp"
+	append buffer "$switch $_loctmp"
+}
+
+
+# Provides backward compatibility for old option names in the global section.
+translate_option() {
+	local section="$1"
+	local old_option="$2"
+	local new_option="$3"
+	local _value
+	config_get _value "$section" "$old_option"
+	[ -z "$_value" ] && return
+	cfg_append "${new_option//_/-} $_value"
+}
+
+translate_bool() {
+	local section="$1"
+	local old_option="$2"
+	local new_option="$3"
+	local _bool
+	local _value
+	config_get_bool _bool "$section" "$old_option" 0
+	[ "$_bool" -eq 0 ] && return
+	cfg_append "${new_option//_/-} true"
+}
+
+# Adds a new interface section for setting default interface options.
+add_default_option() {
+	local option="$1"
+	local value="$2"
+	cfg_append "default ${option//_/-} $value"
+}
+
+# Global 'hello_interval' and 'wired_hello_interval' options are ignored,
+# because they have no direct equivalent: you should use
+# interface-specific settings.
+parse_old_global_options() {
+	local section="$1"
+	translate_bool   "$section" 'carrier_sense'	'link_detect'
+	translate_bool   "$section" 'random_router_id'	'random_id'
+	translate_option "$section" 'multicast_address'	'protocol_group'
+	translate_option "$section" 'port'		'protocol_port'
+	translate_option "$section" 'local_server'	'local_port'
+	translate_option "$section" 'smoothing_half_time'	'smoothing_half_life'
+	translate_option "$section" 'duplication_priority'	'allow_duplicates'
+	# These two global options are turned into default interface options.
+	local _bool
+	config_get_bool _bool "$section" 'assume_wireless' 0
+	[ "$_bool" -eq 1 ] && add_default_option "wired" "false"
+	config_get_bool _bool "$section" 'no_split_horizon' 0
+	[ "$_bool" -eq 1 ] && add_default_option "split_horizon" "false"
 }
 
 babel_filter() {
@@ -56,9 +117,8 @@ babel_filter() {
 	local _ignored
 	config_get_bool _ignored "$cfg" 'ignore' 0
 	[ "$_ignored" -eq 1 ] && return 0
-	
-	append args "-C '"
 
+	unset buffer
 	append_parm "$cfg" 'type' ''
 
 	append_bool "$cfg" 'local' 'local'
@@ -75,69 +135,92 @@ babel_filter() {
 
 	append_parm "$cfg" 'action' ''
 
-	append args ' ' "'"
+	cfg_append "$buffer"
 }
 
-babel_addif() {
-	local cfg="$1"
-
-	local _ignored
-	config_get_bool _ignored "$cfg" 'ignore' 0
-	[ "$_ignored" -eq 1 ] && return 0
-	
-	listen_ifname "$cfg" "-C 'interface"
-
-	append_parm "$cfg" 'wired' 'wired'
-	append_parm "$cfg" 'link_quality' 'link-quality'
-	append_parm "$cfg" 'split_horizon' 'split-horizon'
-	append_parm "$cfg" 'rxcost' 'rxcost'
-	append_parm "$cfg" 'hello_interval' 'hello-interval'
-	append_parm "$cfg" 'update_interval' 'update-interval'
-	append_parm "$cfg" 'enable_timestamps' 'enable-timestamps'
-	append_parm "$cfg" 'max_rtt_penalty' 'max-rtt-penalty'
-	append_parm "$cfg" 'rtt_decay' 'rtt-decay'
-	append_parm "$cfg" 'rtt_min' 'rtt-min'
-	append_parm "$cfg" 'rtt_max' 'rtt-max'
-
-	append args ' ' "'"
+# Only one of babeld's options is allowed multiple times, "import-table".
+# We just append it multiple times.
+list_cb() {
+	option_cb "$@"
 }
 
-babel_config() {
-	local cfg="$1"
-
-	append_bool "$cfg" 'carrier_sense' '-l'
-	append_bool "$cfg" 'assume_wireless' '-w'
-	append_bool "$cfg" 'no_split_horizon' '-s'
-	append_bool "$cfg" 'keep_unfeasible' '-u'
-	append_bool "$cfg" 'random_router_id' '-r'
-
-	append_parm "$cfg" 'multicast_address' '-m'
-	append_parm "$cfg" 'port' '-p'
-	append_parm "$cfg" 'state_file' '-S'
-	append_parm "$cfg" 'hello_interval' '-h'
-	append_parm "$cfg" 'wired_hello_interval' '-H'
-	append_parm "$cfg" 'diversity' '-z'
-	append_parm "$cfg" 'smoothing_half_time' '-M'
-	append_parm "$cfg" 'kernel_priority' '-k'
-	append_parm "$cfg" 'duplication_priority' '-A'
-	append_parm "$cfg" 'debug' '-d'
-	append_parm "$cfg" 'local_server' '-g'
-	append_parm "$cfg" 'export_table' '-t'
-	config_list_foreach "$cfg" 'import_table' append_switch '-T'
-	append_parm "$cfg" 'conf_file' '-c'
-	append_parm "$cfg" 'log_file' '-L'
+babel_config_cb() {
+	local type="$1"
+	local section="$2"
+	case "$type" in
+	"general")
+		option_cb() {
+			local option="$1"
+			local value="$2"
+			# Ignore old options
+			list_contains ignored_options "$option" && return
+			cfg_append "${option//_/-} $value"
+		}
+	;;
+	"interface")
+		local _ifname
+		config_get _ifname "$section" 'ifname'
+		# Backward compatibility: try to use the section name
+		# if no "option ifname" was used.
+		[ -z "$_ifname" -a "${section:0:3}" != "cfg" ] && _ifname="$section"
+		# Try to resolve the logical interface name
+		unset interface
+		network_get_device interface "$_ifname" || interface="$_ifname"
+		option_cb() {
+			local option="$1"
+			local value="$2"
+			local _interface
+			# "option ifname" is a special option, don't actually
+			# generate configuration for it.
+			[ "$option" = "ifname" ] && return
+			[ -n "$interface" ] && _interface="interface $interface" || _interface="default"
+			cfg_append "$_interface ${option//_/-} $value"
+		}
+		# Handle ignore options.
+		local _ignored
+		# This works because we loaded the whole configuration
+		# beforehand (see config_load below).
+		config_get_bool _ignored "$section" 'ignore' 0
+		if [ "$_ignored" -eq 1 ]
+		then
+			option_cb() { return; }
+		else
+			# Also include an empty "interface $interface" statement,
+			# so that babeld operates on this interface.
+			[ -n "$interface" ] && cfg_append "interface $interface"
+		fi
+	;;
+	*)
+		# Don't use reset_cb, this would also reset config_cb
+		option_cb() { return; }
+	;;
+	esac
 }
 
 start() {
 	mkdir -p /var/lib
+	# Start by emptying the generated config file
+	>"$CONFIGFILE"
+	# First load the whole config file, without callbacks, so that we are
+	# aware of all "ignore" options in the second pass.
 	config_load babeld
-	unset args
-	unset interfaces
-	config_foreach babel_config general
-	config_foreach babel_addif interface
+	# Parse general and interface sections thanks to the "config_cb()"
+	# callback.  This allows to loop over all options without having to
+	# know their name in advance.
+	config_cb() { babel_config_cb "$@"; }
+	config_load babeld
+	# Backward compatibility
+	config_foreach parse_old_global_options general
+	# Parse filters separately, since we know which options we expect
 	config_foreach babel_filter filter
-	[ -z "$interfaces" ] && return 0
-	eval "/usr/sbin/babeld -D -I $pidfile $args $interfaces"
+	# Using multiple config files is supported since babeld 1.5.1
+	/usr/sbin/babeld -D -I "$pidfile" -c "$OTHERCONFIGFILE" -c "$CONFIGFILE"
+	# Wait for the pidfile to appear
+	for i in 1 2
+	do
+		[ -f "$pidfile" ] || sleep 1
+	done
+	[ -f "$pidfile" ] || (echo "Failed to start babeld"; exit 42)
 }
 
 stop() {
