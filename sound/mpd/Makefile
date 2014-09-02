@@ -112,6 +112,7 @@ CONFIGURE_ARGS += \
 	--disable-pulse \
 	--disable-sidplay \
 	--disable-solaris-output \
+	--disable-soup \
 	--disable-sqlite \
 	--disable-twolame-encoder \
 	--enable-wave-encoder \
