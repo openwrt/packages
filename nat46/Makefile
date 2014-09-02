@@ -21,6 +21,13 @@ PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 
 include $(INCLUDE_DIR)/package.mk
 
+define Package/map-t
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+map +kmod-nat46
+  TITLE:=MAP-T configuration support
+endef
+
 define KernelPackage/nat46
   DEPENDS:=+kmod-ipv6
   TITLE:=Stateless NAT46 translation kernel module
@@ -38,4 +45,9 @@ define Build/Compile
 		modules
 endef
 
+define Package/map-t/install
+	true
+endef
+
 $(eval $(call KernelPackage,nat46))
+$(eval $(call BuildPackage,map-t))
