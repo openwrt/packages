@@ -1,0 +1,78 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-023
+
+Bug-Reported-by:	Tim Friske <me@timfriske.com>
+Bug-Reference-ID:	<CAM1RzOcOR9zzC2i+aeES6LtbHNHoOV+0pZEYPrqxv_QAii-RXA@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-06/msg00056.html
+
+Bug-Description:
+
+Bash does not correctly parse process substitution constructs that contain
+unbalanced parentheses as part of the contained command.
+
+Patch (apply with `patch -p0'):
+
+--- a/subst.h
++++ b/subst.h
+@@ -82,7 +82,7 @@ extern char *extract_arithmetic_subst __
+ /* Extract the <( or >( construct in STRING, and return a new string.
+    Start extracting at (SINDEX) as if we had just seen "<(".
+    Make (SINDEX) get the position just after the matching ")". */
+-extern char *extract_process_subst __P((char *, char *, int *));
++extern char *extract_process_subst __P((char *, char *, int *, int));
+ #endif /* PROCESS_SUBSTITUTION */
+ 
+ /* Extract the name of the variable to bind to from the assignment string. */
+--- a/subst.c
++++ b/subst.c
+@@ -1192,12 +1192,18 @@ extract_arithmetic_subst (string, sindex
+    Start extracting at (SINDEX) as if we had just seen "<(".
+    Make (SINDEX) get the position of the matching ")". */ /*))*/
+ char *
+-extract_process_subst (string, starter, sindex)
++extract_process_subst (string, starter, sindex, xflags)
+      char *string;
+      char *starter;
+      int *sindex;
++     int xflags;
+ {
++#if 0
+   return (extract_delimited_string (string, sindex, starter, "(", ")", SX_COMMAND));
++#else
++  xflags |= (no_longjmp_on_fatal_error ? SX_NOLONGJMP : 0);
++  return (xparse_dolparen (string, string+*sindex, sindex, xflags));
++#endif
+ }
+ #endif /* PROCESS_SUBSTITUTION */
+ 
+@@ -1785,7 +1791,7 @@ skip_to_delim (string, start, delims, fl
+ 	  si = i + 2;
+ 	  if (string[si] == '\0')
+ 	    CQ_RETURN(si);
+-	  temp = extract_process_subst (string, (c == '<') ? "<(" : ">(", &si);
++	  temp = extract_process_subst (string, (c == '<') ? "<(" : ">(", &si, 0);
+ 	  free (temp);		/* no SX_ALLOC here */
+ 	  i = si;
+ 	  if (string[i] == '\0')
+@@ -8249,7 +8255,7 @@ add_string:
+ 	    else
+ 	      t_index = sindex + 1; /* skip past both '<' and LPAREN */
+ 
+-	    temp1 = extract_process_subst (string, (c == '<') ? "<(" : ">(", &t_index); /*))*/
++	    temp1 = extract_process_subst (string, (c == '<') ? "<(" : ">(", &t_index, 0); /*))*/
+ 	    sindex = t_index;
+ 
+ 	    /* If the process substitution specification is `<()', we want to
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 22
++#define PATCHLEVEL 23
+ 
+ #endif /* _PATCHLEVEL_H_ */
