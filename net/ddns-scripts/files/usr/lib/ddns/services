@@ -66,3 +66,6 @@
 
 # Securepoint Dynamic-DNS-Service	(http://www.spdns.de)
 "spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# duiadns.net - free dynamic DNS
+"duiadns.net"   "http://ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
