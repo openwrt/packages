@@ -29,7 +29,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libsodium
   SECTION:=libs
   CATEGORY:=Libraries
-  DEFAULT:=y
   TITLE:=P(ortable|ackageable) NaCl-based crypto library
   URL:=https://github.com/jedisct1/libsodium
   MAINTAINER:=Damiano Renfer <damiano.renfer@gmail.com>
