@@ -43,9 +43,7 @@ define Package/libsodium/description
   And despite the emphasis on higher security, primitives are faster across-the-board than most implementations of the NIST standards.
 endef
 
-define Build/Configure
-  $(call Build/Configure/Default, --disable-ssp)
-endef
+CONFIGURE_ARGS += --disable-ssp
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/sodium
