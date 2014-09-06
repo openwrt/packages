@@ -112,9 +112,11 @@ CONFIGURE_ARGS += \
 	--disable-mpg123 \
 	--disable-mvp \
 	--disable-openal \
+	--disable-opus \
 	--disable-pulse \
 	--disable-sidplay \
 	--disable-solaris-output \
+	--disable-soup \
 	--disable-sqlite \
 	--disable-twolame-encoder \
 	--enable-wave-encoder \

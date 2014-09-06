@@ -218,7 +218,7 @@ endef
 
 define Package/freeradius2-mod-ldap
   $(call Package/freeradius2/Default)
-  DEPENDS:=freeradius2 +PACKAGE_freeradius2-mod-ldap:libopenldap
+  DEPENDS:=freeradius2 +libopenldap
   TITLE:=LDAP module
 endef
 
@@ -292,22 +292,19 @@ endef
 
 define Package/freeradius2-mod-sql-mysql
   $(call Package/freeradius2/Default)
-  DEPENDS:=freeradius2-mod-sql \
-  	+PACKAGE_freeradius2-mod-sql-mysql:libmysqlclient-r
+  DEPENDS:=freeradius2-mod-sql +libmysqlclient-r
   TITLE:=MySQL module
 endef
 
 define Package/freeradius2-mod-sql-pgsql
   $(call Package/freeradius2/Default)
-  DEPENDS:=freeradius2-mod-sql \
-  	+PACKAGE_freeradius2-mod-sql-pgsql:libpq
+  DEPENDS:=freeradius2-mod-sql +libpq
   TITLE:=PostgreSQL module
 endef
 
 define Package/freeradius2-mod-sql-sqlite
   $(call Package/freeradius2/Default)
-  DEPENDS:=freeradius2-mod-sql \
-  	+PACKAGE_freeradius2-mod-sql-sqlite:libsqlite3
+  DEPENDS:=freeradius2-mod-sql +libsqlite3
   TITLE:=SQLite module
 endef
 
@@ -427,15 +424,15 @@ else
   CONFIGURE_ARGS+= --without-rlm_ldap
 endif
 
-#ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius2-mod-sql-mysql),)
-#  CONFIGURE_ARGS+= \
-#		--with-mysql-include-dir="$(STAGING_DIR)/usr/include" \
-#		--with-mysql-lib-dir="$(STAGING_DIR)/usr/lib/mysql"
-#  CONFIGURE_LIBS+= -lz
-#  CONFIGURE_VARS+= ac_cv_lib_mysqlclient_r_mysql_init=yes
-#else
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius2-mod-sql-mysql),)
+  CONFIGURE_ARGS+= \
+		--with-mysql-include-dir="$(STAGING_DIR)/usr/include" \
+		--with-mysql-lib-dir="$(STAGING_DIR)/usr/lib/mysql"
+  CONFIGURE_LIBS+= -lz
+  CONFIGURE_VARS+= ac_cv_lib_mysqlclient_r_mysql_init=yes
+else
   CONFIGURE_ARGS+= --without-rlm_sql_mysql
-#endif
+endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius2-mod-sql-pgsql),)
   CONFIGURE_ARGS+= \
@@ -621,7 +618,7 @@ $(eval $(call BuildPlugin,freeradius2-mod-pap,rlm_pap,modules/pap,modules,))
 $(eval $(call BuildPlugin,freeradius2-mod-preprocess,rlm_preprocess,hints huntgroups modules/preprocess,modules,))
 $(eval $(call BuildPlugin,freeradius2-mod-realm,rlm_realm,proxy.conf modules/realm modules/inner-eap,modules,))
 $(eval $(call BuildPlugin,freeradius2-mod-sql,rlm_sql,sql.conf,))
-#$(eval $(call BuildPlugin,freeradius2-mod-sql-mysql,rlm_sql_mysql,))
+$(eval $(call BuildPlugin,freeradius2-mod-sql-mysql,rlm_sql_mysql,))
 $(eval $(call BuildPlugin,freeradius2-mod-sql-pgsql,rlm_sql_postgresql,))
 $(eval $(call BuildPlugin,freeradius2-mod-sql-sqlite,rlm_sql_sqlite,))
 $(eval $(call BuildPlugin,freeradius2-mod-sqlcounter,rlm_sqlcounter,))

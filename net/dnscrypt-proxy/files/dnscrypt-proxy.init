@@ -1,0 +1,27 @@
+#!/bin/sh /etc/rc.common
+
+START=50
+
+start_instance () {
+	local section="$1"
+	config_get address         "$section" 'address'
+	config_get port            "$section" 'port'
+	config_get resolver        "$section" 'resolver'
+	config_get resolvers_list  "$section" 'resolvers_list'
+
+	service_start /usr/sbin/dnscrypt-proxy -d \
+		-a ${address}:${port} \
+		-u nobody \
+		-L ${resolvers_list:-'/usr/share/dnscrypt-proxy/dnscrypt-resolvers.csv'} \
+		-R ${resolver:-'opendns'}
+}
+
+start() {
+	config_load 'dnscrypt-proxy'
+	config_foreach start_instance 'dnscrypt-proxy'
+}
+
+stop() {
+	service_stop /usr/sbin/dnscrypt-proxy
+}
+

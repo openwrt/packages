@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nacl
 PKG_VERSION:=20110221
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -17,6 +17,8 @@ PKG_SOURCE_URL:=http://hyperelliptic.org/nacl
 PKG_MD5SUM:=7efb5715561c3d10dafd3fa97b4f2d20
 
 PKG_LICENSE:=PublicDomain
+
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 

@@ -1,0 +1,26 @@
+--- a/macros/db3-check.m4
++++ b/macros/db3-check.m4
+@@ -148,9 +148,9 @@ AC_DEFUN([AC_PATH_BDB],[
+                         dnl -- LD_LIBRARY_PATH on many platforms. This will be fairly
+                         dnl -- portable hopefully. Reference:
+                         dnl -- http://lists.gnu.org/archive/html/autoconf/2009-03/msg00040.html
+-                        eval export $shlibpath_var=$bdblibdir
++#                        eval export $shlibpath_var=$bdblibdir
+                         NETATALK_BDB_TRY_LINK
+-                        eval export $shlibpath_var=$saved_shlibpath_var
++#                        eval export $shlibpath_var=$saved_shlibpath_var
+ 
+                         if test x"${atalk_cv_bdb_version}" = x"yes"; then
+                             BDB_CFLAGS="-I${bdbdir}/include${subdir}"
+@@ -171,9 +171,9 @@ AC_DEFUN([AC_PATH_BDB],[
+                            CPPFLAGS="-I${bdbdir}/include${subdir} $CPPFLAGS"
+                            LDFLAGS="-L$bdblibdir $LDFLAGS"
+ 
+-                           eval export $shlibpath_var=$bdblibdir
++#                           eval export $shlibpath_var=$bdblibdir
+                            NETATALK_BDB_TRY_LINK
+-                           eval export $shlibpath_var=$saved_shlibpath_var
++#                           eval export $shlibpath_var=$saved_shlibpath_var
+ 
+                            if test x"${atalk_cv_bdb_version}" = x"yes"; then
+                               BDB_CFLAGS="-I${bdbdir}/include${subdir}"

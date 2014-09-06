@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# This script wraps openconnect in order to obtain the password
+# file from cmd.
+
+# $1 password file
+# $2... are passed to openconnect
+
+test -z "$1" && exit 1
+
+pwfile=$1
+shift
+
+pidfile=/var/run/ocwrap-$$.pid
+
+cleanup()
+{
+	if ! test -z "$pid";then
+		kill $pid
+		wait $pid
+	fi
+	exit 0
+}
+
+trap cleanup 1 2 3 6 15
+
+rm -f "$pidfile"
+/usr/sbin/openconnect $* <$pwfile &
+pid=$!
+
+wait $pid
