@@ -199,6 +199,7 @@ babel_config_cb() {
 
 start() {
 	mkdir -p /var/lib
+	mkdir -p /var/etc
 	# Start by emptying the generated config file
 	>"$CONFIGFILE"
 	# First load the whole config file, without callbacks, so that we are
