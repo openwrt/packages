@@ -1,0 +1,35 @@
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -32,8 +32,8 @@ mount_davfs_SOURCES = cache.c dav_coda.c
+         kernel_interface.h mount_davfs.h webdav.h
+ umount_davfs_SOURCES = umount_davfs.c defaults.h
+ 
+-AM_CFLAGS = -Wall -Werror=format-security \
+-        -fstack-protector --param=ssp-buffer-size=4
++AM_CFLAGS = -Wall -Werror=format-security 
++#        -fstack-protector --param=ssp-buffer-size=4  -- removed ssp not supported in openwrt
+ DEFS = -DPROGRAM_NAME=\"mount.davfs\" \
+        -DDAV_SYS_CONF_DIR=\"$(pkgsysconfdir)\" \
+        -DDAV_LOCALSTATE_DIR=\"$(dav_localstatedir)\" \
+--- a/src/cache.c
++++ b/src/cache.c
+@@ -58,7 +58,7 @@
+ #ifdef HAVE_SYS_TYPES_H
+ #include <sys/types.h>
+ #endif
+-#include <sys/xattr.h>
++#include <linux/xattr.h>
+ 
+ #include <ne_alloc.h>
+ #include <ne_string.h>
+--- a/src/webdav.c
++++ b/src/webdav.c
+@@ -2033,7 +2033,7 @@ ssl_verify(void *userdata, int failures,
+             len = getline(&s, &n, stdin);
+             if (len < 0)
+                 abort();
+-            if (rpmatch(s) > 0)
++            if ((s[0]=='y' || s[0]=='Y') > 0)
+                 ret = 0;
+             free(s);
+     } 
