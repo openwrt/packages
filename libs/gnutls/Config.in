@@ -38,7 +38,7 @@ config GNUTLS_PSK
 
 config GNUTLS_ANON
 	bool "enable anonymous authentication support"
-	default n
+	default y
 
 config GNUTLS_PKCS11
 	bool "enable smart card (PKCS11) support"
