@@ -10,7 +10,7 @@
  #
  # Checks for typedefs, structures, and compiler characteristics.
  #
-@@ -4081,6 +4084,7 @@ plugin_interface="no"
+@@ -4078,6 +4081,7 @@ plugin_interface="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
@@ -18,7 +18,7 @@
  plugin_libvirt="no"
  plugin_load="no"
  plugin_memory="no"
-@@ -4388,6 +4392,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
+@@ -4385,6 +4389,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
  AC_PLUGIN([iptables],    [$with_libiptc],      [IPTables rule counters])
  AC_PLUGIN([ipvs],        [$plugin_ipvs],       [IPVS connection statistics])
  AC_PLUGIN([irq],         [$plugin_irq],        [IRQ statistics])
@@ -26,7 +26,7 @@
  AC_PLUGIN([java],        [$with_java],         [Embed the Java Virtual Machine])
  AC_PLUGIN([libvirt],     [$plugin_libvirt],    [Virtual machine statistics])
  AC_PLUGIN([load],        [$plugin_load],       [System load])
-@@ -4666,6 +4671,7 @@ Configuration:
+@@ -4663,6 +4668,7 @@ Configuration:
      protobuf-c  . . . . . $have_protoc_c
      oracle  . . . . . . . $with_oracle
      python  . . . . . . . $with_python
@@ -34,7 +34,7 @@
  
    Features:
      daemon mode . . . . . $enable_daemon
-@@ -4705,6 +4711,7 @@ Configuration:
+@@ -4702,6 +4708,7 @@ Configuration:
      iptables  . . . . . . $enable_iptables
      ipvs  . . . . . . . . $enable_ipvs
      irq . . . . . . . . . $enable_irq
