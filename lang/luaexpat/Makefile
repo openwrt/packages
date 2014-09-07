@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luaexpat
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://matthewwild.co.uk/projects/luaexpat
-PKG_MD5SUM:=03efe50c7f30a34580701e6527d7bfee
+PKG_MD5SUM:=3c20b5795e7107f847f8da844fbfe2da
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -37,8 +37,8 @@ endef
 define Build/Compile
 	$(CP) files/compat-5.1r5 $(PKG_BUILD_DIR)/compat-5.1r5
 	$(MAKE) -C $(PKG_BUILD_DIR) \
-	EXPAT_INC="$(STAGING_DIR)/usr/include/" \
-	LUA_INC="$(STAGING_DIR)/usr/include/" \
+	EXPAT_INC="-I$(STAGING_DIR)/usr/include/" \
+	LUA_INC="-I$(STAGING_DIR)/usr/include/" \
 	LUA_LIBDIR="$(STAGING_DIR)/usr/lib/" \
 	COMPAT_DIR="$(PKG_BUILD_DIR)/compat-5.1r5" \
 	LIB_OPTION="-shared $(TARGET_LDFLAGS)" \
@@ -48,7 +48,7 @@ endef
 
 define Package/luaexpat/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/lxp.so.1.2.0 $(1)/usr/lib/lua/lxp.so
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/lxp.so $(1)/usr/lib/lua/lxp.so
 	$(INSTALL_DIR) $(1)/usr/lib/lua/lxp
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/lxp/lom.lua $(1)/usr/lib/lua/lxp
 endef
