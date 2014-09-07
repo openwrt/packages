@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dkolf.de/src/dkjson-lua.fsl/tarball/
-# TODO: md5sum doesn't seem be taken into account
+PKG_BUILD_DIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_MD5SUM:=dbe706722dd64308172cf8e37395e762
 PKG_LICENSE:=MIT
 
@@ -41,7 +41,7 @@ endef
 
 define Package/dkjson/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(INSTALL_BIN) $(BUILD_DIR)/dkjson/dkjson.lua $(1)/usr/lib/lua/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/dkjson.lua $(1)/usr/lib/lua/
 endef
 
 $(eval $(call BuildPackage,dkjson))

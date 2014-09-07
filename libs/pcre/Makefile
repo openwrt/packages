@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre
 PKG_VERSION:=8.35
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pcre
 PKG_MD5SUM:=6aacb23986adccd9b3bc626c00979958
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 
-PKG_LICENSE:=BSD-3c
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENCE
 
 PKG_FIXUP:=autoreconf
@@ -41,7 +41,6 @@ define Package/libpcrecpp
   TITLE:=C++ wrapper for Perl Compatible Regular Expression library
   DEPENDS:=+libpcre +libstdcpp
 endef
-
 
 TARGET_CFLAGS += $(FPIC)
 
@@ -70,17 +69,14 @@ define Build/InstallDev
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre*.{a,so*} $(1)/usr/lib//
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre.so $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpcre*.pc $(1)/usr/lib/pkgconfig/
-
 endef
 
 define Package/libpcre/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre{,posix}.so.* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre.so $(1)/usr/lib/
 endef
 
 define Package/libpcrecpp/install

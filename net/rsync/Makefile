@@ -29,7 +29,7 @@ define Package/rsync
   CATEGORY:=Network
   SUBMENU:=File Transfer
   TITLE:=Fast remote file copy program (like rcp)
-  DEPENDS:=+libpopt +zlib +RSYNC_xattr:libattr +RSYNC_acl:libacl
+  DEPENDS:=+libpopt +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_zlib:zlib
   URL:=http://rsync.samba.org/
   MENU:=1
 endef
@@ -37,6 +37,11 @@ endef
 define Package/rsync/config
 	source "$(SOURCE)/Config.in"
 endef
+
+CONFIGURE_ARGS += \
+	--with-included-popt=no \
+	--disable-debug \
+	--disable-locale \
 
 ifeq ($(CONFIG_RSYNC_xattr),y)
 	CONFIGURE_ARGS+= --enable-xattr-support
@@ -48,6 +53,12 @@ ifeq ($(CONFIG_RSYNC_acl),y)
 	CONFIGURE_ARGS+= --enable-acl-support
 else
 	CONFIGURE_ARGS+= --disable-acl-support
+endif
+
+ifeq ($(CONFIG_RSYNC_zlib),y)
+	CONFIGURE_ARGS+= --with-included-zlib=no
+else
+	CONFIGURE_ARGS+= --with-included-zlib=yes
 endif
 
 define Package/rsyncd
@@ -68,12 +79,6 @@ define Package/rsync/description
  The rsync remote-update protocol allows rsync to transfer just the differences
  between two sets of files across the network link.
 endef
-
-CONFIGURE_ARGS += \
-	--with-included-popt=no \
-	--with-included-zlib=no \
-	--disable-debug \
-	--disable-locale \
 
 define Package/rsync/install
 	$(INSTALL_DIR) $(1)/usr/bin
