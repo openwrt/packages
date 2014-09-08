@@ -127,6 +127,25 @@
  {
  	int listen_port = 0;
  	struct string_list listen_addr = STRING_LIST_INIT_NODUP;
+@@ -1315,12 +1315,13 @@
+ 		store_pid(pid_file);
+ 
+ 	/* prepare argv for serving-processes */
+-	cld_argv = xmalloc(sizeof (char *) * (argc + 2));
+-	cld_argv[0] = argv[0];	/* git-daemon */
+-	cld_argv[1] = "--serve";
++	cld_argv = xmalloc(sizeof (char *) * (argc + 3));
++	cld_argv[0] = "git";
++	cld_argv[1] = argv[0];	/* daemon */
++	cld_argv[2] = "--serve";
+ 	for (i = 1; i < argc; ++i)
+-		cld_argv[i+1] = argv[i];
+-	cld_argv[argc+1] = NULL;
++		cld_argv[i+2] = argv[i];
++	cld_argv[argc+2] = NULL;
+ 
+ 	return serve(&listen_addr, listen_port, cred);
+ }
 --- a/fast-import.c
 +++ b/fast-import.c
 @@ -3343,7 +3343,7 @@ static void parse_argv(void)
