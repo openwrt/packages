@@ -1,0 +1,21 @@
+--- a/src/interface.c
++++ b/src/interface.c
+@@ -244,8 +244,8 @@ struct net_device_stats {
+ 
+ 	for (if_ptr = if_list; if_ptr != NULL; if_ptr = if_ptr->ifa_next)
+ 	{
+-		if (if_ptr->ifa_addr != NULL && if_ptr->ifa_addr->sa_family == AF_LINK) {
+-			if_data = (struct IFA_DATA *) if_ptr->ifa_data;
++		if ((if_data = (struct IFA_DATA *) if_ptr->ifa_data) == NULL)
++			continue;
+ 
+ 			if_submit (if_ptr->ifa_name, "if_octets",
+ 				if_data->IFA_RX_BYTES,
+@@ -256,7 +256,6 @@ struct net_device_stats {
+ 			if_submit (if_ptr->ifa_name, "if_errors",
+ 				if_data->IFA_RX_ERROR,
+ 				if_data->IFA_TX_ERROR);
+-		}
+ 	}
+ 
+ 	freeifaddrs (if_list);
