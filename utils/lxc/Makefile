@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
 PKG_VERSION:=1.0.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://linuxcontainers.org/downloads/
@@ -47,6 +47,10 @@ endef
 define Package/lxc
   $(call Package/lxc/Default)
   MENU:=1
+endef
+
+define Package/lxc/config
+  source "$(SOURCE)/Config.in"
 endef
 
 define Package/lxc/description
