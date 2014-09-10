@@ -40,6 +40,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	mbmon \
 	memcachec \
 	memcached \
+	modbus \
 	monitorus \
 	multimeter \
 	netapp \
@@ -88,7 +89,6 @@ COLLECTD_PLUGINS_SELECTED:= \
 	logfile \
 	madwifi \
 	memory \
-	modbus \
 	mysql \
 	netlink \
 	network \
@@ -194,11 +194,6 @@ ifneq ($(CONFIG_PACKAGE_collectd-mod-netlink),)
   CONFIGURE_ARGS+= --with-libnetlink="$(STAGING_DIR)/usr"
 endif
 
-# exception: mod-modbus needs libmodbus
-ifneq ($(CONFIG_PACKAGE_collectd-mod-modbus),)
-  CONFIGURE_ARGS+= --with-libmodbus="$(STAGING_DIR)/usr"
-endif
-
 # exception: mod-onewire needs libow-capi
 ifneq ($(CONFIG_PACKAGE_collectd-mod-onewire),)
   CONFIGURE_ARGS+= --with-libowcapi="$(STAGING_DIR)/usr"
@@ -280,7 +275,6 @@ $(eval $(call BuildPlugin,logfile,log files output,logfile,))
 $(eval $(call BuildPlugin,madwifi,MadWifi status input,madwifi,))
 #$(eval $(call BuildPlugin,mysql,MySQL status input,mysql,+PACKAGE_collectd-mod-mysql:libmysqlclient-r))
 $(eval $(call BuildPlugin,memory,physical memory usage input,memory,))
-$(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAGE_collectd-mod-modbus:libmodbus))
 $(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-netlink:ip @BROKEN))
 $(eval $(call BuildPlugin,network,network input/output,network))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
