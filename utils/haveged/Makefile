@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haveged
 PKG_VERSION:=1.9.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.issihosts.com/$(PKG_NAME) \
@@ -43,7 +43,7 @@ define Package/libhavege
 endef
 
 CONFIGURE_ARGS+= \
-      --enable-daemon=yes
+      --enable-daemon=yes \
       --enable-threads=no
 
 define Build/InstallDev
