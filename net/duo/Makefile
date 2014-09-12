@@ -23,6 +23,7 @@ define Package/duo
   DEFAULT:=n
   TITLE:=duo-security
   URL:=http://www.duosecurity.com/
+  DEPENDS:=+openvpn-plugin-openssl
 endef
 
 define Package/duo/description
