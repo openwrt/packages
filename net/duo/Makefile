@@ -23,7 +23,8 @@ define Package/duo
   DEFAULT:=n
   TITLE:=duo-security
   URL:=http://www.duosecurity.com/
-  DEPENDS:=+openvpn-plugin-openssl
+  DEPENDS:=+openvpn-plugin-openssl python python-curl python-json python-mini python-openssl 
+
 endef
 
 define Package/duo/description
