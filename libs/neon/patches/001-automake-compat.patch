@@ -1,5 +1,0 @@
---- /dev/null
-+++ b/Makefile.am
-@@ -0,0 +1,2 @@
-+SUBDIRS = .
-+ACLOCAL_AMFLAGS = -I macros
