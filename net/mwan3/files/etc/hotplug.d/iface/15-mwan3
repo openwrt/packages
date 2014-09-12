@@ -69,7 +69,7 @@ mwan3_set_iface_iptables()
 {
 	local local_net local_nets
 
-	local_net=$($IP route list dev $DEVICE scope link | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}')
+	local_nets=$($IP route list dev $DEVICE scope link | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}')
 
 	if ! $IPT -S mwan3_iface_$INTERFACE &> /dev/null; then
 		$IPT -N mwan3_iface_$INTERFACE
@@ -79,10 +79,10 @@ mwan3_set_iface_iptables()
 	$IPT -D mwan3_ifaces -i $DEVICE -m mark --mark 0x0/0xff00 -j mwan3_iface_$INTERFACE &> /dev/null
 
 	if [ $ACTION == "ifup" ]; then
-		if [ -n "$local_net" ]; then
-			for local_nets in $local_net ; do
+		if [ -n "$local_nets" ]; then
+			for local_net in $local_nets ; do
 				if [ $ACTION == "ifup" ]; then
-					$IPT -I mwan3_iface_$INTERFACE -s $local_net -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE" -j MARK --set-xmark 0xff00/0xff00
+					$IPT -I mwan3_iface_$INTERFACE -s $local_net -m mark --mark 0x0/0xff00 -m comment --comment "default" -j MARK --set-xmark 0xff00/0xff00
 				fi
 			done
 		fi

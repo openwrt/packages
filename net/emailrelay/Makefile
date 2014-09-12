@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=@SF/emailrelay/$(PKG_VERSION)
 PKG_MD5SUM:=0892fbf993407c6b5a16f96e23299b62
 PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_CAT :=zcat
 
 include $(INCLUDE_DIR)/uclibc++.mk
@@ -93,11 +93,6 @@ ifeq ($(BUILD_VARIANT),nossl)
 		--with-openssl=no
 endif
 
-
-#define Build/Configure
-#  $(call Build/Configure/Default,--with-openssl)
-#  endef
-	
 define Package/emailrelay/install	
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay $(1)/usr/bin/

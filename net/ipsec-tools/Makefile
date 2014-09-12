@@ -70,7 +70,9 @@ define Build/Configure
 		configure \
 	);
 	$(call Build/Configure/Default)
+ifndef CONFIG_SHADOW_PASSWORDS
 	echo "#undef HAVE_SHADOW_H" >> $(PKG_BUILD_DIR)/config.h
+endif
 endef
 
 define Package/ipsec-tools/install
