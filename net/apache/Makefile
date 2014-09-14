@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
-PKG_VERSION:=2.2.27
+PKG_VERSION:=2.2.29
 PKG_RELEASE:=1
 PKG_SOURCE_NAME:=httpd
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
@@ -17,7 +17,7 @@ PKG_LICENSE:=Apache License
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://mirrors.ibiblio.org/apache/httpd/ \
 		http://apache.imsam.info/httpd/
-PKG_MD5SUM:=8faef0decf3fa7e69b2568eb2105a3d8
+PKG_MD5SUM:=579342fdeaa7b8b68d17fee91f8fab6e
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
