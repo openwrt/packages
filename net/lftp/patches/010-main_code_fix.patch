@@ -1,0 +1,12 @@
+--- a/src/ftpclass.cc
++++ b/src/ftpclass.cc
+@@ -1071,7 +1071,9 @@ Ftp::Connection::~Connection()
+ 
+    control_send=0;
+    control_recv=0;
++#if USE_SSL
+    control_ssl=0; // ssl should be freed after send/recv
++#endif
+ 
+    if(control_sock!=-1)
+    {
