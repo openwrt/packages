@@ -1,8 +1,6 @@
-diff --git a/Makefile.linux b/Makefile.linux
-index bcca779..7946108 100644
 --- a/Makefile.linux
 +++ b/Makefile.linux
-@@ -147,7 +147,8 @@ LDLIBS += $(shell $(PKG_CONFIG) --static --libs-only-l libmnl)
+@@ -147,7 +147,8 @@ LDLIBS += $(shell $(PKG_CONFIG) --static
  LDLIBS += $(shell $(PKG_CONFIG) --static --libs-only-l libnetfilter_conntrack)
  endif # ($(TEST),1)
  
