@@ -1,0 +1,156 @@
+#!/bin/sh
+#    netsmap-to-devinfo - netdisovered then smap'ed IP addresses to  MAC IEEE 
+#    and custom information
+#    Copyright (C) 2009  Daniel Dickinson
+
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License along
+#    with this program; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+MACTODEV=mac-to-devinfo
+IPTODEV=ip-to-devinfo
+
+usage() {
+    echo "$0: -i interferace -r ip-range [options]"
+    echo ""
+    echo "-r ip-range       range to probe (CIDR, e.g. 192.168.2.0/24)"
+    echo "-i interface      interface to use in scan"
+    echo "-t timeout        time to rate for arp responses for device detection"
+    echo "-p port[,port...] command-separated lists of ports to scan for SIP responses"
+    echo "-c repeat_count   Number of times to send each request (default 1)"
+    echo "-s sleepreq       ms to wait between sending arp requests"
+    echo "-x                Assume we're running on an Xcelerator IP"
+    echo "-h                help"
+}
+
+
+while getopts "r:i:t:p:c:s:xh" param; do
+    case "$param" in
+	h)
+	    usage
+	    exit 1
+	    ;;
+	r)
+	    IPRANGE=$OPTARG
+	    ;;
+	i)
+	    INTERFACE=$OPTARG
+	    ;;
+	t)
+	    TIMEOUT=$OPTARG
+	    ;;
+	p)
+	    PORTARG=$OPTARG
+	    ;;
+	c)
+	    REPEATCOUNT=$OPTARG
+	    ;;
+	s)
+	    SLEEPREQ="-s $OPTARG"
+	    ;;
+	x)
+	    XIP=TRUE
+	    ;;
+	?|*)
+	    usage
+	    exit 1
+	    break
+	    ;;
+
+    esac
+done
+
+if [ "$IPRANGE" = "" ]; then
+    echo "Must specify an ip range"
+    usage
+    exit 1
+fi
+
+if [ "$INTERFACE" = "" ]; then
+    echo "Must speciy the interface"
+    usage
+    exit 1
+fi
+
+if [ "$TIMEOUT" = "" ]; then
+    TIMEOUT=20
+    usage
+fi
+
+unset PORTS
+
+if [ -n "$PORTARG" ]; then
+    PORTLIST="$PORTARG"
+    
+    if [ -z "$(echo $PORTLIST | grep ',')" ]; then
+	PORTS="$PORTLIST"
+    else
+	FIELD=1
+	oldcurport=""
+	curport="$(echo $PORTLIST | cut -f$FIELD -d, )"
+	while [ "$curport" != "$oldcurport" ]; do
+	    PORTS="$curport $PORTS"
+	    FIELD=$(($FIELD + 1))
+	    oldcurport="$(echo $PORTLIST | cut -f$FIELD -d, )"
+	    curport="$(echo $PORTLIST | cut -f$FIELD -d, )"
+	done
+    fi
+fi
+
+
+prep-devinfo
+
+IFS='
+'
+
+if [ -n "$REPEATCOUNT" ]; then
+    REPEAT="-c $REPEATCOUNT"
+fi
+
+for line in $(sh -c "netdiscover -t $TIMEOUT -k -m -i $INTERFACE -r $IPRANGE $REPEAT $SLEEPREQ 2>/dev/null" | grep -E '[0-9]([0-9]?[0-9])?.[0-9]([0-9]?[0-9])?.[0-9]([0-9]?[0-9])?.[0-9]([0-9]?[0-9])?.[0-9]([0-9]?[0-9])?'); do
+    unset IFS
+    IP=$(echo $line | tr -s \  |  cut -f1 -d\  )
+    MAC=$(echo $line | tr -s \  |  cut -f2 -d\  )
+
+    if [ -n "$PORTS" ]; then
+	for port in $PORTS; do
+	    
+	    if [ "$XIP" = "TRUE" ]; then
+		XIP_PORT="-x $port"
+	    fi
+	    for sip_device in $(smap -p $port $IP </dev/null | grep -E -v 'host.? scanned' | grep 'SIP enabled' | cut -f1 -d:  ); do
+		if [ -x "$(which httping)" ]; then
+		    if httping -G -q -o 401,200 -c 2 -h $sip_device; then
+			echo "$sip_device"" | ""$($MACTODEV $XIP_PORT $MAC)"" | ""http://$sip_device/"
+			continue
+		    fi
+		fi
+		echo "$sip_device"" | ""$(MACTODEV $XIP_PORT $MAC)"" | "" - "
+	    done
+	done
+    else
+	for sip_device in $(smap $IP </dev/null | grep -E -v 'host.? scanned' | grep 'SIP enabled' | cut -f1 -d:  ); do
+	    if [ -x "$(which httping)" ]; then
+		if httping -G -q -o 401,200 -c 2 -h $sip_device; then
+		    echo "$sip_device"" | ""$($MACTODEV $MAC $XIP_PORT)"" | ""http://$sip_device/"
+		    continue
+		fi
+	    fi
+	    echo "$sip_device"" | ""$($MACTODEV $MAC $XIP_PORT)"" | "" - "
+	done
+    fi
+    IFS='
+'
+done
+
+unset IFS

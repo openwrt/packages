@@ -1,0 +1,102 @@
+#!/bin/sh
+#    smap-to-devinfo - smap to MAC IEEE and custom information
+#    Copyright (C) 2009  Daniel Dickinson
+
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License along
+#    with this program; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+IPTODEV=ip-to-devinfo
+SMAP=smap
+OUIDIR=/var/cache/mac-to-devinfo
+
+XIP_SCANS=FALSE
+
+usage() {
+    echo "Usage: $0 IP-Range [-r ratelimit] [-i interface] [-x] [port,port,...]"
+}
+if [ "$1" == "-h" ] || [ "$2" == "-h" ] || [ "$3" == "-h" ] || [ -z "$1" ]; then
+    usage
+    exit 1
+fi
+
+IPRANGE="$1"
+shift
+
+if [ "$1" == "-r" ]; then
+    RATELIMIT="-r $2"
+    if [ -z "$RATELIMIT" ]; then
+	echo "-r without a ratelimit"
+	usage
+        exit 1
+    fi
+    shift
+    shift
+fi
+
+if [ "$1" == "-i" ]; then
+    INTERFACE="-i $2"
+    if [ -z "$INTERFACE" ]; then
+	echo "-i without interface"
+	usage
+	exit 1
+    fi
+    shift
+    shift
+fi
+
+if [ "$1" == "-x" ]; then
+    XIP_SCANS=TRUE
+    shift
+fi
+
+if [ -n "$1" ]; then
+    PORTLIST="$1"
+    
+    if [ -z "$(echo $PORTLIST | grep ',')" ]; then
+	PORTS="$PORTLIST"
+    else
+	FIELD=1
+	oldcurport=""
+	curport="$(echo $PORTLIST | cut -f$FIELD -d, )"
+	while [ "$curport" != "$oldcurport" ]; do
+	    PORTS="$curport $PORTS"
+	    FIELD=$(($FIELD + 1))
+	    oldcurport="$(echo $PORTLIST | cut -f$FIELD -d, )"
+	    curport="$(echo $PORTLIST | cut -f$FIELD -d, )"
+	done
+    fi
+fi
+
+prep-devinfo
+
+if [ -z "$PORTS" ]; then
+    PORTS=5060
+fi
+
+for port in $PORTS; do
+
+    if [ "$XIP_SCANS" == "TRUE" ]; then
+	XIP_PORT="-x $port"
+    fi
+    for sip_device in $($SMAP $RATELIMIT -p $port $IPRANGE | grep -E -v 'host.? scanned' | grep 'SIP enabled' | cut -f1 -d:  ); do
+	if [ -x "$(which httping)" ]; then
+	    if httping -G -q -o 401,200 -c 2 -h $sip_device; then
+		echo "$sip_device"" | ""$($IPTODEV $INTERFACE $XIP_PORT $sip_device)"" | ""http://$sip_device/"
+		continue
+	    fi
+	fi
+	echo "$sip_device"" | ""$(IPTODEV $XIP_PORT $sip_device)"" | "" - "
+    done
+done
+

@@ -1,0 +1,67 @@
+#!/bin/sh
+#    netdiscover-to-devinfo - netdiscover to MAC IEEE and custom information
+#    Copyright (C) 2009  Daniel Dickinson
+
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License along
+#    with this program; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+MACTODEV=mac-to-devinfo
+
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+    echo "Usage: netdiscover-to-devinfo IP-range Interface Timeout [-r repeats] [-s sleep_between_arp_requests]"
+    exit 1
+fi
+
+prep-devinfo
+IFS='
+'
+
+IPRANGE=$1
+IFACE=$2
+TIMEOUT=$3
+
+shift 3
+
+while getopts "r:s:h" param; do
+    case "$param" in
+	h)
+	    usage
+	    exit 1
+	    ;;
+	r)
+	    REPEATS=" -c $OPTARG"
+	    ;;
+	s)
+	    SLEEPREQ="-s $OPTARG"
+	    ;;
+	?|*)
+	    usage
+	    exit 1
+	    break
+	    ;;
+
+    esac
+done
+
+
+for line in $(sh -c "netdiscover -t $TIMEOUT-k -m -i $IFACE -r $IPRANGE $REPEATS $SLEEPREQ 2>/dev/null" | grep -E '[0-9]([0-9]?[0-9])?.[0-9]([0-9]?[0-9])?.[0-9]([0-9]?[0-9])?.[0-9]([0-9]?[0-9])?.[0-9]([0-9]?[0-9])?'); do
+    unset IFS
+    IP=$(echo $line | tr -s \  |  cut -f1 -d\  )
+    MAC=$(echo $line | tr -s \  |  cut -f2 -d\  )
+    echo "$IP"" | ""$($MACTODEV $MAC)"
+    IFS='
+'
+done
+
+unset IFS
