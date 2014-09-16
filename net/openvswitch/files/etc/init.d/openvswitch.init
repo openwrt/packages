@@ -21,6 +21,8 @@ start_service() {
 	procd_append_param respawn 3600
 	procd_append_param respawn 5
 	procd_append_param respawn -1
+	procd_set_param nice
+	procd_append_param nice -10
 	procd_close_instance
 
 	# ovs-vswitchd
@@ -31,6 +33,8 @@ start_service() {
 	procd_append_param respawn 3600
 	procd_append_param respawn 5
 	procd_append_param respawn -1
+	procd_set_param nice
+	procd_append_param nice -10
 	procd_close_instance
 
 }
