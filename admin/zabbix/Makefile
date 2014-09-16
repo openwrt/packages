@@ -31,7 +31,7 @@ define Package/zabbix/Default
   TITLE:=Zabbix
   URL:=http://www.zabbix.com/
   SUBMENU:=zabbix
-  MAINTAINER:=Mirko Vogt <mirko@openwrt.org>
+  MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 endef
 
 define Package/zabbix-agent
