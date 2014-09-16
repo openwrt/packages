@@ -2,9 +2,9 @@
 
 . $IPKG_INSTROOT/lib/functions/network.sh
 
+USE_PROCD=1
 START=70
 
-pidfile='/var/run/babeld.pid'
 CONFIGFILE='/var/etc/babeld.conf'
 OTHERCONFIGFILE="/etc/babeld.conf"
 OTHERCONFIGDIR="/tmp/babeld.d/"
@@ -212,7 +212,7 @@ babel_config_cb() {
 	esac
 }
 
-start() {
+start_service() {
 	mkdir -p /var/lib
 	mkdir -p /var/etc
 	mkdir -p $OTHERCONFIGDIR
@@ -235,26 +235,18 @@ start() {
 	config_foreach parse_old_global_options general
 	# Parse filters separately, since we know which options we expect
 	config_foreach babel_filter filter
+	procd_open_instance
 	# Using multiple config files is supported since babeld 1.5.1
-	/usr/sbin/babeld -D -I "$pidfile" -c "$OTHERCONFIGFILE" -c "$CONFIGFILE"
-	# Wait for the pidfile to appear
-	for i in 1 2
-	do
-		[ -f "$pidfile" ] || sleep 1
-	done
-	[ -f "$pidfile" ] || (echo "Failed to start babeld"; exit 42)
+	procd_set_param command /usr/sbin/babeld -L /var/log/babeld.log -I "" -c "$OTHERCONFIGFILE" -c "$CONFIGFILE"
+	procd_set_param file "$OTHERCONFIGFILE" "$CONFIGFILE"
+	procd_set_param respawn
+	procd_close_instance
 }
 
-stop() {
-	[ -f "$pidfile" ] && kill $(cat $pidfile)
-  # avoid race-condition on restart: wait for
-  # babeld to die for real.
-  [ -f "$pidfile" ] && sleep 1
-  [ -f "$pidfile" ] && sleep 1
-  [ -f "$pidfile" ] && sleep 1
-  [ -f "$pidfile" ] && exit 42
+service_triggers() {
+	procd_add_reload_trigger babeld
 }
 
 status() {
-	[ -f "$pidfile" ] && kill -USR1 $(cat $pidfile)
+	kill -USR1 $(pgrep -P 1 babeld)
 }
