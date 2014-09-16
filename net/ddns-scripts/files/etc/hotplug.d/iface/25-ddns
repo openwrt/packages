@@ -1,9 +1,7 @@
 #!/bin/sh
 
-. /usr/lib/ddns/dynamic_dns_functions.sh
-
 if [ "$ACTION" = "ifup" ]; then
-	start_daemon_for_all_ddns_sections "$INTERFACE"
+	. /usr/lib/ddns/dynamic_dns_functions.sh
+	/etc/init.d/ddns enabled && start_daemon_for_all_ddns_sections "$INTERFACE"
 fi
-
 
