@@ -28,6 +28,7 @@ define Package/prosody
   DEPENDS:=+luafilesystem +libidn +luaexpat +luasec +libopenssl +libidn +liblua 
   TITLE:=XMPP server
   URL:=http://prosody.im/
+  USERID:=prosody:prosody
 endef
 
 define Package/prosody/description

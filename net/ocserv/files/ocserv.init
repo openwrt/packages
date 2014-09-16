@@ -86,9 +86,6 @@ setup_dns() {
 start() {
 	local hostname iface
 
-	user_exists ocserv 72 || user_add ocserv 72 72 /var/lib/ocserv
-	group_exists ocserv 72 || group_add ocserv 72
-
 	hostname=`uci get ddns.myddns.domain`
 	[ -z "$hostname" ] && hostname=`uci get system.@system[0].hostname`
 

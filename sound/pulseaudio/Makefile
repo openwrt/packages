@@ -38,6 +38,7 @@ define Package/pulseaudio/Default
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.pulseaudio.org
   PROVIDES:=pulseaudio
+  USERID:=pulse:pulse
 endef
 
 define Package/pulseaudio-daemon

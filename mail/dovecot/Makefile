@@ -31,6 +31,7 @@ define Package/dovecot
   TITLE:=An IMAP and POP3 daemon
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.dovecot.org/
+  USERID:=dovecot:dovecot
 endef
 
 define Package/dovecot/description

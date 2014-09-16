@@ -14,7 +14,6 @@ SERVICE_DAEMONIZE=1
 SERVICE_WRITE_PID=1
 
 start() {
-        user_exists mosquitto 200 || user_add mosquitto 200
         if [ "$USE_UCI_CONFIG" -eq 1 ]; then
             CONF=/tmp/mosquitto.converted.$$.conf
             mosquitto.uci.convert -f $CONF
