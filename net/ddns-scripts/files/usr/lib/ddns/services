@@ -63,3 +63,9 @@
 
 # Mythic Beasts (https://www.mythic-beasts.com) Dynamic DNS
 "mythic-beasts.com"	"http://dnsapi4.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20A%20DYNAMIC_IP"
+
+# Securepoint Dynamic-DNS-Service (http://www.spdns.de)
+"spdns.de" "http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# duiadns.net - free dynamic DNS
+"duiadns.net" "http://ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
