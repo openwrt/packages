@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -21,7 +21,7 @@ PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-base/
 PKG_MD5SUM:=17aeabfbcd232526f50c9bee375f1b97
 
-PKG_BUILD_DEPENDS:= gstreamer1 liboil
+PKG_BUILD_DEPENDS:= libgstreamer1 liboil
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-alsa \
 	CONFIG_PACKAGE_gst1-mod-app \
@@ -36,6 +36,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-videotestsrc \
 	CONFIG_PACKAGE_gst1-mod-volume \
 	CONFIG_PACKAGE_gst1-mod-vorbis \
+	CONFIG_PACKAGE_libgst1app \
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -43,32 +44,70 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/gstreamer1/Default
+GST_BASE_LIBS:=
+GST_BASE_MODULES:=
+
+define Package/gstreamer1-base/Default
   CATEGORY:=Multimedia
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
-  DEPENDS:= $(ICONV_DEPENDS)
+  DEPENDS:= +libgstreamer1 $(ICONV_DEPENDS)
 endef
 
-define Package/gstreamer1/description/Default
+define Package/gstreamer1-base/description/Default
  GStreamer open source multimedia framework
 endef
 
 
 define Package/gst1-plugins-base
-$(call Package/gstreamer1/Default)
+$(call Package/gstreamer1-base/Default)
   TITLE+= plugins collection (base)
   DEPENDS+= $(GST_DEPENDS)
+  HIDDEN:=1
 endef
 
 define Package/gts1-plugins-base/description
-$(call Package/gstreamer1/description/Default)
+$(call Package/gstreamer1-base/description/Default)
  .
  This meta package contains only dependencies to the other libraries and
  plugins from the base plugins collection.
 endef
 
+define Package/gstreamer1-plugins-base
+  $(call Package/gstreamer1-base/Default)
+  TITLE+= plugins collection (base)
+  DEPENDS:=+ALL:gst1-plugins-base +gstreamer1-libs
+endef
+
+define Package/gstreamer1-plugins-base/config
+    menu "Select GStreamer base modules and libraries"
+      depends on PACKAGE_gstreamer1-plugins-base
+
+
+    config gst1-plugins-base-all
+      bool "Include all GStreamer base plugins"
+      select PACKAGE_gst1-plugins-base
+
+    comment "Modules"
+
+   $(foreach mod,$(GST_BASE_MODULES), \
+    config PACKAGE_gst1-mod-$(mod)
+      prompt "GStreamer $(mod) module"
+
+   )
+
+    comment "Libraries"
+
+   $(foreach lib,$(GST_BASE_LIBS), \
+    config PACKAGE_libgst1$(lib)
+      prompt "GStreamer $(lib) library"
+
+   )
+
+  endmenu
+
+endef
 
 GST_COND_SELECT = $(patsubst %,$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),--enable,--disable)-%,$(1))
 
@@ -156,14 +195,17 @@ define GstBuildLibrary
 
   GST_DEPENDS += +libgst1$(1)
 
+  GST_BASE_LIBS+= $(1)
+
   define Package/libgst1$(1)
-    $(call Package/gstreamer1/Default)
+    $(call Package/gstreamer1-base/Default)
     TITLE+= $(2) library (base)
-    DEPENDS+= +libgstreamer1 $$(foreach p,$(3),+libgst1$$(p)) $(4)
+    DEPENDS+= $$(foreach p,$(3),+libgst1$$(p)) $(4)
+    HIDDEN:=1
   endef
 
   define Package/libgst1$(1)/description
-   $(call Package/gstreamer1/description/Default)
+   $(call Package/gstreamer1-base/description/Default)
    .
    This package contains the GStreamer $(2) library.
   endef
@@ -190,7 +232,6 @@ $(eval $(call GstBuildLibrary,sdp,SDP,,))
 $(eval $(call GstBuildLibrary,tag,tag support,,))
 $(eval $(call GstBuildLibrary,video,video,,))
 
-
 # 1: short name
 # 2: description
 # 3: dependencies on other gstreamer libraries (short name)
@@ -200,14 +241,17 @@ define GstBuildPlugin
 
   GST_DEPENDS += +gst1-mod-$(1)
 
+  GST_BASE_MODULES+= $(1)
+
   define Package/gst1-mod-$(1)
-    $(call Package/gstreamer1/Default)
+    $(call Package/gstreamer1-base/Default)
     TITLE+= $(2) plugin (base)
-    DEPENDS+= +libgstreamer1 $$(foreach p,$(3),+libgst1$$(p)) $$(foreach p,$(4),+gst1-mod-$$(p)) $(5)
+    DEPENDS+= $$(foreach p,$(3),+libgst1$$(p)) $$(foreach p,$(4),+gst1-mod-$$(p)) $(5)
+    HIDDEN:=1
   endef
 
   define Package/gst1-mod-$(1)/description
-   $(call Package/gstreamer1/description/Default)
+   $(call Package/gstreamer1-base/description/Default)
    .
    This package contains the GStreamer $(2) plugin.
   endef
@@ -239,4 +283,5 @@ $(eval $(call GstBuildPlugin,videotestsrc,video test,video,,+liboil))
 $(eval $(call GstBuildPlugin,volume,volume,audio controller,,+liboil))
 $(eval $(call GstBuildPlugin,vorbis,Vorbis,audio tag,ogg,+libvorbis))
 
+$(eval $(call BuildPackage,gstreamer1-plugins-base))
 $(eval $(call BuildPackage,gst1-plugins-base))

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -21,7 +21,7 @@ PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-bad/
 PKG_MD5SUM:=cfd6f303c8df2740b27cc63b945decef
 
-PKG_BUILD_DEPENDS:= gstreamer1 gst1-plugins-base liboil
+PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base liboil
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -29,32 +29,70 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/gstreamer1/Default
+GST_BAD_LIBS:=
+GST_BAD_MODULES:=
+
+define Package/gstreamer1-bad/Default
   CATEGORY:=Multimedia
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
-  DEPENDS:= $(ICONV_DEPENDS)
+  DEPENDS:= +libgstreamer1 $(ICONV_DEPENDS)
 endef
 
-define Package/gstreamer1/description/Default
+define Package/gstreamer1-bad/description/Default
  GStreamer open source multimedia framework
 endef
 
 
 define Package/gst1-plugins-bad
-$(call Package/gstreamer1/Default)
+$(call Package/gstreamer1-bad/Default)
   TITLE+= plugins collection (bad)
   DEPENDS+= $(GST_DEPENDS)
+  HIDDEN:=1
 endef
 
 define Package/gts1-plugins-bad/description
-$(call Package/gstreamer1/description/Default)
+$(call Package/gstreamer1-bad/description/Default)
  .
  This meta package contains only dependencies to the other plugins from
  the bad plugins collection.
 endef
 
+define Package/gstreamer1-plugins-bad
+  $(call Package/gstreamer1-bad/Default)
+  TITLE+= plugins collection (bad)
+  DEPENDS:=+ALL:gst1-plugins-bad +gstreamer1-plugins-base
+endef
+
+define Package/gstreamer1-plugins-bad/config
+    menu "Select GStreamer bad modules and libraries"
+      depends on PACKAGE_gstreamer1-plugins-bad
+
+
+    config gst1-plugins-bad-all
+      bool "Include all GStreamer bad plugins"
+      select PACKAGE_gst1-plugins-bad
+
+    comment "Modules"
+
+   $(foreach mod,$(GST_BAD_MODULES), \
+    config PACKAGE_gst1-mod-$(mod)
+      prompt "GStreamer $(mod) module"
+
+   )
+
+    comment "Libraries"
+
+   $(foreach lib,$(GST_BAD_LIBS), \
+    config PACKAGE_libgst1$(lib)
+      prompt "GStreamer $(lib) library"
+
+   )
+
+  endmenu
+
+endef
 
 GST_VERSION:=1.0
 
@@ -135,7 +173,7 @@ EXTRA_LDFLAGS+= \
 	$(if $(ICONV_FULL),-liconv) \
 
 
-define Package/gst1-plugins-ugly/install
+define Package/gst1-plugins-bad/install
 	/bin/true
 endef
 
@@ -147,14 +185,16 @@ define GstBuildLibrary
 
   GST_DEPENDS += +libgst1$(1)
 
+  GST_BAD_LIBS+= $(1)
   define Package/libgst1$(1)
-    $(call Package/gstreamer1/Default)
+    $(call Package/gstreamer1-bad/Default)
     TITLE+= $(2) library (base)
-    DEPENDS+= +libgstreamer1 $$(foreach p,$(3),+libgst1$$(p)) $(4)
+    DEPENDS+= $$(foreach p,$(3),+libgst1$$(p)) $(4)
+    HIDDEN:=1
   endef
 
   define Package/libgst1$(1)/description
-   $(call Package/gstreamer1/description/Default)
+   $(call Package/gstreamer1-bad/description/Default)
    .
    This package contains the GStreamer $(2) library.
   endef
@@ -182,14 +222,17 @@ define GstBuildPlugin
 
   GST_DEPENDS += +gst1-mod-$(1)
 
+  GST_BAD_MODULES+= $(1)
+
   define Package/gst1-mod-$(1)
-    $(call Package/gstreamer1/Default)
+    $(call Package/gstreamer1-bad/Default)
     TITLE+= $(2) plugin (bad)
-    DEPENDS+= +libgstreamer1 $$(foreach p,$(3),+libgst1$$(p)) $$(foreach p,$(4),+gst1-mod-$$(p)) $(5)
+    DEPENDS+= $$(foreach p,$(3),+libgst1$$(p)) $$(foreach p,$(4),+gst1-mod-$$(p)) $(5)
+    HIDDEN:=1
   endef
 
   define Package/gst1-mod-$(1)/description
-   $(call Package/gstreamer1/description/Default)
+   $(call Package/gstreamer1-bad/description/Default)
    .
    This package contains the GStreamer $(2) plugin.
   endef
@@ -235,4 +278,5 @@ $(eval $(call GstBuildPlugin,siren,siren support,audio rtp,,))
 $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
 
+$(eval $(call BuildPackage,gstreamer1-plugins-bad))
 $(eval $(call BuildPackage,gst1-plugins-bad))
