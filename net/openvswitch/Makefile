@@ -53,8 +53,7 @@ define Package/openvswitch-common
 endef
 
 define Package/openvswitch-common/description
-  openvswitch-common provides components required by both openvswitch-switch and
-  openvswitch-controller.
+  openvswitch-common provides components required by openvswitch-switch. 
 endef
 
 define Package/openvswitch-ipsec
@@ -76,17 +75,6 @@ endef
 
 define Package/openvswitch-benchmark/description
   Utility for running OpenVSwitch benchmarking
-endef
-
-define Package/openvswitch-controller
-  $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+openvswitch-common
-endef
-
-define Package/openvswitch-controller/description
-  The Open vSwitch controller enables OpenFlow switches that connect to it to
-  act as MAC-learning Ethernet switches.
 endef
 
 define Package/openvswitch-switch
@@ -179,11 +167,6 @@ define Package/openvswitch-common/postinst
 [ -n "$${IPKG_INSTROOT}" ] || /etc/init.d/openvswitch enable || true
 endef
 
-define Package/openvswitch-controller/install
-	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-controller $(1)/usr/bin/
-endef
-
 define Package/openvswitch-switch/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-dpctl $(1)/usr/bin/
@@ -200,7 +183,6 @@ endef
 
 $(eval $(call BuildPackage,openvswitch-ipsec))
 $(eval $(call BuildPackage,openvswitch-common))
-$(eval $(call BuildPackage,openvswitch-controller))
 $(eval $(call BuildPackage,openvswitch-switch))
 $(eval $(call BuildPackage,openvswitch-benchmark))
 $(eval $(call KernelPackage,openvswitch))
