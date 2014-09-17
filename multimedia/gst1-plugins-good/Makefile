@@ -1,4 +1,5 @@
-## Copyright (C) 2009-2014 OpenWrt.org
+#
+# Copyright (C) 2009-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -20,7 +21,7 @@ PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-good/
 PKG_MD5SUM:=1a1f96bc27ad446e559474299160a9a8
 
-PKG_BUILD_DEPENDS:= gstreamer1 gst1-plugins-base liboil
+PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base liboil
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -28,32 +29,62 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/gstreamer1/Default
+GST_GOOD_MODULES:=
+
+define Package/gstreamer1-good/Default
   CATEGORY:=Multimedia
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
-  DEPENDS:= $(ICONV_DEPENDS)
+  DEPENDS:= +libgstreamer1 $(ICONV_DEPENDS)
 endef
 
-define Package/gstreamer1/description/Default
+define Package/gstreamer1-good/description/Default
  GStreamer open source multimedia framework
 endef
 
 
 define Package/gst1-plugins-good
-$(call Package/gstreamer1/Default)
+$(call Package/gstreamer1-good/Default)
   TITLE+= plugins collection (good)
   DEPENDS+= $(GST_DEPENDS)
+  HIDDEN:=1
 endef
 
-define Package/gts-plugins-good/description
-$(call Package/gstreamer1/description/Default)
+define Package/gst1-plugins-good/description
+$(call Package/gstreamer1-good/description/Default)
  .
  This meta package contains only dependencies to the other plugins from
  the good plugins collection.
 endef
 
+
+define Package/gstreamer1-plugins-good
+  $(call Package/gstreamer1-good/Default)
+  TITLE+= plugins collection (good)
+  DEPENDS:=+ALL:gst1-plugins-good +gstreamer1-plugins-base
+endef
+
+define Package/gstreamer1-plugins-good/config
+    menu "Select GStreamer good modules"
+      depends on PACKAGE_gstreamer1-plugins-good
+
+
+    config gst1-plugins-good-all
+      bool "Include all GStreamer good plugins"
+      select PACKAGE_gst1-plugins-good
+
+    comment "Modules"
+
+   $(foreach mod,$(GST_GOOD_MODULES), \
+    config PACKAGE_gst1-mod-$(mod)
+      prompt "GStreamer $(mod) module"
+
+   )
+
+  endmenu
+
+endef
 
 GST_VERSION:=1.0
 
@@ -112,14 +143,17 @@ define GstBuildPlugin
 
   GST_DEPENDS += +gst1-mod-$(1)
 
+  GST_GOOD_MODULES+= $(1)
+
   define Package/gst1-mod-$(1)
-    $(call Package/gstreamer1/Default)
+    $(call Package/gstreamer1-good/Default)
     TITLE+= $(2) plugin (good)
-    DEPENDS+= +libgstreamer1 $$(foreach p,$(3),+libgst1$$(p)) $$(foreach p,$(4),+gst1-mod-$$(p)) $(5)
+    DEPENDS+= $$(foreach p,$(3),+libgst1$$(p)) $$(foreach p,$(4),+gst1-mod-$$(p)) $(5)
+    HIDDEN:=1
   endef
 
   define Package/gst1-mod-$(1)/description
-   $(call Package/gstreamer1/description/Default)
+   $(call Package/gstreamer1-good/description/Default)
    .
    This package contains the GStreamer $(2) plugin.
   endef
@@ -199,4 +233,5 @@ $(eval $(call GstBuildPlugin,wavenc,Wav encoder,riff,,))
 $(eval $(call GstBuildPlugin,wavparse,Wav parser,audio riff tag,,))
 #$(eval $(call GstBuildPlugin,ximagesrc,ximagesrc support,video,,))
 
+$(eval $(call BuildPackage,gstreamer1-plugins-good))
 $(eval $(call BuildPackage,gst1-plugins-good))
