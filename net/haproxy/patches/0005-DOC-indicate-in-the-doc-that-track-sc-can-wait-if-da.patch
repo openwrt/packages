@@ -1,0 +1,52 @@
+From 531485c08ffb15b939a28ecf47090e4c93341d1b Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Tue, 16 Sep 2014 15:48:15 +0200
+Subject: [PATCH 05/13] DOC: indicate in the doc that track-sc* can wait if
+ data are missing
+
+Since commit 1b71eb5 ("BUG/MEDIUM: counters: fix track-sc* to wait on
+unstable contents"), we don't need the "if HTTP" anymore. But the doc
+was not updated to reflect this.
+
+Since this change was backported to 1.5, this doc update should be
+backported as well.
+(cherry picked from commit 4d54c7ca0286588de5060acce9aff8aa9645bb98)
+---
+ doc/configuration.txt | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index 1ecf15a..3c75c92 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -7470,9 +7470,9 @@ tcp-request content <action> [{if | unless} <condition>]
+   contents will always be immediately present when the rule is evaluated first.
+ 
+   Tracking layer7 information is also possible provided that the information
+-  are present when the rule is processed. The current solution for making the
+-  rule engine wait for such information is to set an inspect delay and to
+-  condition its execution with an ACL relying on such information.
++  are present when the rule is processed. The rule processing engine is able to
++  wait until the inspect delay expires when the data to be tracked is not yet
++  available.
+ 
+   Example:
+         # Accept HTTP requests containing a Host header saying "example.com"
+@@ -7497,12 +7497,12 @@ tcp-request content <action> [{if | unless} <condition>]
+   Example:
+         # Track the last IP from X-Forwarded-For
+         tcp-request inspect-delay 10s
+-        tcp-request content track-sc0 hdr(x-forwarded-for,-1) if HTTP
++        tcp-request content track-sc0 hdr(x-forwarded-for,-1)
+ 
+   Example:
+         # track request counts per "base" (concatenation of Host+URL)
+         tcp-request inspect-delay 10s
+-        tcp-request content track-sc0 base table req-rate if HTTP
++        tcp-request content track-sc0 base table req-rate
+ 
+   Example: track per-frontend and per-backend counters, block abusers at the
+            frontend when the backend detects abuse.
+-- 
+1.8.5.5
+
