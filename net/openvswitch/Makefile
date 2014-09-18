@@ -59,7 +59,7 @@ endef
 define Package/openvswitch-ipsec
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+openvswitch
+  DEPENDS:=@PACKAGE_openvswitch +PACKAGE_openvswitch:openvswitch
 endef
 
 define Package/openvswitch-ipsec/description
@@ -70,7 +70,7 @@ endef
 define Package/openvswitch-benchmark
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+openvswitch
+  DEPENDS:=@PACKAGE_openvswitch +PACKAGE_openvswitch:openvswitch
 endef
 
 define Package/openvswitch-benchmark/description
