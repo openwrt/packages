@@ -56,17 +56,6 @@ define Package/openvswitch/description
   Provides the main userspace components required for Open vSwitch to function.
 endef
 
-define Package/openvswitch-ipsec
-  $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=@PACKAGE_openvswitch +PACKAGE_openvswitch:openvswitch
-endef
-
-define Package/openvswitch-ipsec/description
-  The ovs-monitor-ipsec script provides support for encrypting GRE tunnels with 
-  IPsec.
-endef
-
 define Package/openvswitch-benchmark
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
@@ -152,11 +141,6 @@ define Package/openvswitch/install
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/vswitchd/vswitch.ovsschema $(1)/usr/share/openvswitch/
 endef
 
-define Package/openvswitch-ipsec/install
-	$(INSTALL_DIR) $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/debian/ovs-monitor-ipsec $(1)/usr/sbin/
-endef
-
 define Package/openvswitch-benchmark/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-benchmark $(1)/usr/bin/
@@ -168,7 +152,6 @@ define Package/openvswitch/postinst
 endef
 
 $(eval $(call BuildPackage,openvswitch))
-$(eval $(call BuildPackage,openvswitch-ipsec))
 $(eval $(call BuildPackage,openvswitch-benchmark))
 $(eval $(call KernelPackage,openvswitch))
 
