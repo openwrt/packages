@@ -32,7 +32,7 @@ PKG_FIXUP=libtool
 define Package/openvswitch/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://www.openvswitchswitch.org/
+  URL:=http://openvswitch.org/
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
