@@ -1,6 +1,6 @@
---- a/configure.in
-+++ b/configure.in
-@@ -490,6 +490,9 @@ AC_CHECK_HEADERS(netinet/if_ether.h, [],
+--- a/configure.ac
++++ b/configure.ac
+@@ -568,6 +568,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
  have_termios_h="no"
  AC_CHECK_HEADERS(termios.h, [have_termios_h="yes"])
  
@@ -10,7 +10,7 @@
  #
  # Checks for typedefs, structures, and compiler characteristics.
  #
-@@ -4081,6 +4084,7 @@ plugin_interface="no"
+@@ -4819,6 +4822,7 @@ plugin_interface="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
@@ -18,7 +18,7 @@
  plugin_libvirt="no"
  plugin_load="no"
  plugin_memory="no"
-@@ -4388,6 +4392,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
+@@ -5157,6 +5161,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
  AC_PLUGIN([iptables],    [$with_libiptc],      [IPTables rule counters])
  AC_PLUGIN([ipvs],        [$plugin_ipvs],       [IPVS connection statistics])
  AC_PLUGIN([irq],         [$plugin_irq],        [IRQ statistics])
@@ -26,7 +26,7 @@
  AC_PLUGIN([java],        [$with_java],         [Embed the Java Virtual Machine])
  AC_PLUGIN([libvirt],     [$plugin_libvirt],    [Virtual machine statistics])
  AC_PLUGIN([load],        [$plugin_load],       [System load])
-@@ -4666,6 +4671,7 @@ Configuration:
+@@ -5458,6 +5463,7 @@ Configuration:
      protobuf-c  . . . . . $have_protoc_c
      oracle  . . . . . . . $with_oracle
      python  . . . . . . . $with_python
@@ -34,7 +34,7 @@
  
    Features:
      daemon mode . . . . . $enable_daemon
-@@ -4705,6 +4711,7 @@ Configuration:
+@@ -5502,6 +5508,7 @@ Configuration:
      iptables  . . . . . . $enable_iptables
      ipvs  . . . . . . . . $enable_ipvs
      irq . . . . . . . . . $enable_irq
@@ -44,7 +44,7 @@
      load  . . . . . . . . $enable_load
 --- a/src/collectd.conf.in
 +++ b/src/collectd.conf.in
-@@ -82,6 +82,7 @@ FQDNLookup   true
+@@ -109,6 +109,7 @@
  #@BUILD_PLUGIN_IPMI_TRUE@LoadPlugin ipmi
  #@BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
  #@BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
@@ -52,7 +52,7 @@
  #@BUILD_PLUGIN_JAVA_TRUE@LoadPlugin java
  #@BUILD_PLUGIN_LIBVIRT_TRUE@LoadPlugin libvirt
  @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
-@@ -376,6 +377,12 @@ FQDNLookup   true
+@@ -467,6 +468,12 @@
  #	IgnoreSelected true
  #</Plugin>
  
@@ -67,7 +67,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -1478,6 +1478,27 @@ and all other interrupts are collected.
+@@ -2056,6 +2056,27 @@ and all other interrupts are collected.
  
  =back
  
@@ -250,7 +250,7 @@
 +}
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -453,6 +453,15 @@ collectd_LDADD += "-dlopen" irq.la
+@@ -530,6 +530,15 @@ collectd_LDADD += "-dlopen" irq.la
  collectd_DEPENDENCIES += irq.la
  endif
  
@@ -268,8 +268,12 @@
  java_la_SOURCES = java.c
 --- a/src/types.db
 +++ b/src/types.db
-@@ -171,3 +171,4 @@ voltage			value:GAUGE:U:U
+@@ -195,7 +195,7 @@ voltage			value:GAUGE:U:U
  vs_memory		value:GAUGE:0:9223372036854775807
  vs_processes		value:GAUGE:0:65535
  vs_threads		value:GAUGE:0:65535
+-
 +stations		value:GAUGE:0:256
+ #
+ # Legacy types
+ # (required for the v5 upgrade target)
