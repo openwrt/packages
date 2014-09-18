@@ -33,7 +33,6 @@ define Package/openvswitch/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=http://www.openvswitchswitch.org/
-  DEPENDS:=+libopenssl +librt +libpcap +libatomic
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
@@ -47,20 +46,20 @@ define Package/openvswitch/Default/description
   1000V.
 endef
 
-define Package/openvswitch-common
+define Package/openvswitch
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+libpcap +libopenssl +librt +kmod-openvswitch
+  DEPENDS:=+libpcap +libopenssl +librt +libatomic +kmod-openvswitch
 endef
 
-define Package/openvswitch-common/description
-  openvswitch-common provides components required by openvswitch-switch. 
+define Package/openvswitch/description
+  Provides the main userspace components required for Open vSwitch to function.
 endef
 
 define Package/openvswitch-ipsec
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+openvswitch-common
+  DEPENDS:=+openvswitch
 endef
 
 define Package/openvswitch-ipsec/description
@@ -71,22 +70,11 @@ endef
 define Package/openvswitch-benchmark
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+openvswitch-common
+  DEPENDS:=+openvswitch
 endef
 
 define Package/openvswitch-benchmark/description
   Utility for running OpenVSwitch benchmarking
-endef
-
-define Package/openvswitch-switch
-  $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+openvswitch-common
-endef
-
-define Package/openvswitch-switch/description
-  openvswitch-switch provides the userspace components and utilities for the
-  Open vSwitch kernel-based switch.
 endef
 
 define KernelPackage/openvswitch
@@ -145,7 +133,7 @@ define Package/openvswitch-benchmark/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-benchmark $(1)/usr/bin/
 endef
 
-define Package/openvswitch-common/install
+define Package/openvswitch/install
 	$(INSTALL_DIR) $(1)/etc/openvswitch
 
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -161,10 +149,7 @@ define Package/openvswitch-common/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-appctl $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-ofctl $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ovsdb/.libs/ovsdb-client $(1)/usr/bin/
-endef
 
-define Package/openvswitch-switch/install
-	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-dpctl $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-vsctl $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ovsdb/.libs/ovsdb-tool $(1)/usr/bin/
@@ -177,14 +162,13 @@ define Package/openvswitch-switch/install
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/vswitchd/vswitch.ovsschema $(1)/usr/share/openvswitch/
 endef
 
-define Package/openvswitch-common/postinst
+define Package/openvswitch/postinst
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] || /etc/init.d/openvswitch enable || true
 endef
 
+$(eval $(call BuildPackage,openvswitch))
 $(eval $(call BuildPackage,openvswitch-ipsec))
-$(eval $(call BuildPackage,openvswitch-common))
-$(eval $(call BuildPackage,openvswitch-switch))
 $(eval $(call BuildPackage,openvswitch-benchmark))
 $(eval $(call KernelPackage,openvswitch))
 
