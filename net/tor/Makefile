@@ -27,6 +27,7 @@ define Package/tor/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=https://www.torproject.org/
+  USERID:=tor:tor
 endef
 
 define Package/tor/Default/description

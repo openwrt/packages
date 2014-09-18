@@ -29,6 +29,7 @@ define Package/portmap
   TITLE:=The RPC Portmapper
   URL:=http://neil.brown.name/portmap/
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+  USERID:=rpc:rpc
 endef
 
 define Package/portmap/description

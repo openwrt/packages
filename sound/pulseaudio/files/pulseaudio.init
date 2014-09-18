@@ -8,8 +8,6 @@ USE_PROCD=1
 PROG=/usr/bin/pulseaudio
 
 start_service() {
-	user_exists pulse 51 || user_add pulse 51
-	group_exists pulse 51 || group_add pulse 51
 	[ -d /var/run/pulse ] || {
 		mkdir -m 0755 -p /var/run/pulse
 		chmod 0750 /var/run/pulse

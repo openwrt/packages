@@ -32,6 +32,7 @@ define Package/zabbix/Default
   URL:=http://www.zabbix.com/
   SUBMENU:=zabbix
   MAINTAINER:=Mirko Vogt <mirko@openwrt.org>
+  USERID:=zabbix:zabbix
 endef
 
 define Package/zabbix-agent

@@ -30,6 +30,7 @@ define Package/$(PKG_NAME)/default
   URL:=http://www.mosquitto.org/
   MAINTAINER:=Karl Palsson <karlp@remake.is>
   DEPENDS:= +librt
+  USERID:=mosquitto:mosquitto
 endef
 
 define Package/$(PKG_NAME)
