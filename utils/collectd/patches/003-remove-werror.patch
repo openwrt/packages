@@ -11,7 +11,7 @@
  AM_CPPFLAGS = -DPREFIX='"${prefix}"'
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -1833,7 +1833,7 @@ top_build_prefix = @top_build_prefix@
+@@ -1835,7 +1835,7 @@ top_build_prefix = @top_build_prefix@
  top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
  SUBDIRS = libcollectdclient $(am__append_1) $(am__append_2)
@@ -33,7 +33,7 @@
  pkginclude_HEADERS = client.h lcc_features.h
 --- a/src/libcollectdclient/Makefile.in
 +++ b/src/libcollectdclient/Makefile.in
-@@ -327,7 +327,7 @@ top_build_prefix = @top_build_prefix@
+@@ -329,7 +329,7 @@ top_build_prefix = @top_build_prefix@
  top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
  AUTOMAKE_OPTIONS = foreign no-dependencies
@@ -55,7 +55,7 @@
  noinst_LTLIBRARIES = libiptc.la
 --- a/src/owniptc/Makefile.in
 +++ b/src/owniptc/Makefile.in
-@@ -296,7 +296,7 @@ top_builddir = @top_builddir@
+@@ -298,7 +298,7 @@ top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
  AUTOMAKE_OPTIONS = foreign no-dependencies
  EXTRA_DIST = libiptc.c README.collectd
