@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vnstat
-PKG_VERSION:=1.11
-PKG_RELEASE:=4
+PKG_VERSION:=1.12
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://humdi.net/vnstat
-PKG_MD5SUM:=a5a113f9176cd61fb954f2ba297f5fdb
+PKG_MD5SUM:=a154b2196771e06a8accd1c24374009c
 PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 
 PKG_INSTALL:=1
