@@ -123,16 +123,6 @@ define Build/Compile
 		KCC="$(KERNEL_CC)"
 endef
 
-define Package/openvswitch-ipsec/install
-	$(INSTALL_DIR) $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/debian/ovs-monitor-ipsec $(1)/usr/sbin/
-endef
-
-define Package/openvswitch-benchmark/install
-	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-benchmark $(1)/usr/bin/
-endef
-
 define Package/openvswitch/install
 	$(INSTALL_DIR) $(1)/etc/openvswitch
 
@@ -160,6 +150,16 @@ define Package/openvswitch/install
 
 	$(INSTALL_DIR) $(1)/usr/share/openvswitch/
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/vswitchd/vswitch.ovsschema $(1)/usr/share/openvswitch/
+endef
+
+define Package/openvswitch-ipsec/install
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/debian/ovs-monitor-ipsec $(1)/usr/sbin/
+endef
+
+define Package/openvswitch-benchmark/install
+	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-benchmark $(1)/usr/bin/
 endef
 
 define Package/openvswitch/postinst
