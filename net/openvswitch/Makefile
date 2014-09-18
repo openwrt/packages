@@ -67,6 +67,17 @@ define Package/openvswitch-python/description
   Provides bindings and libraries for using Python to manipulate/work with Open vSwitch.
 endef
 
+define Package/openvswitch-ipsec
+  $(call Package/openvswitch/Default)
+  TITLE:=Open vSwitch Userspace Package
+  DEPENDS:=@PACKAGE_openvswitch +PACKAGE_openvswitch:openvswitch-python
+endef
+
+define Package/openvswitch-ipsec/description
+  The ovs-monitor-ipsec script provides support for encrypting GRE tunnels with 
+  IPsec.
+endef
+
 define Package/openvswitch-benchmark
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
@@ -157,6 +168,11 @@ define Package/openvswitch-python/install
 	$(CP) $(PKG_BUILD_DIR)/python/ovs/ $(1)/usr/lib/python$(PYTHON_VERSION)/
 endef
 
+define Package/openvswitch-ipsec/install
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/debian/ovs-monitor-ipsec $(1)/usr/sbin/
+endef
+
 define Package/openvswitch-benchmark/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-benchmark $(1)/usr/bin/
@@ -169,6 +185,7 @@ endef
 
 $(eval $(call BuildPackage,openvswitch))
 $(eval $(call BuildPackage,openvswitch-python))
+$(eval $(call BuildPackage,openvswitch-ipsec))
 $(eval $(call BuildPackage,openvswitch-benchmark))
 $(eval $(call KernelPackage,openvswitch))
 
