@@ -26,6 +26,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
+$(call include_mk, python-package.mk)
 
 PKG_FIXUP=libtool
 
@@ -54,6 +55,16 @@ endef
 
 define Package/openvswitch/description
   Provides the main userspace components required for Open vSwitch to function.
+endef
+
+define Package/openvswitch-python
+  $(call Package/openvswitch/Default)
+  TITLE:=Open vSwitch Python Support
+  DEPENDS:=@PACKAGE_openvswitch +PACKAGE_openvswitch:openvswitch +python
+endef
+
+define Package/openvswitch-python/description
+  Provides bindings and libraries for using Python to manipulate/work with Open vSwitch.
 endef
 
 define Package/openvswitch-benchmark
@@ -141,6 +152,11 @@ define Package/openvswitch/install
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/vswitchd/vswitch.ovsschema $(1)/usr/share/openvswitch/
 endef
 
+define Package/openvswitch-python/install
+	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
+	$(CP) $(PKG_BUILD_DIR)/python/ovs/ $(1)/usr/lib/python$(PYTHON_VERSION)/
+endef
+
 define Package/openvswitch-benchmark/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-benchmark $(1)/usr/bin/
@@ -152,6 +168,7 @@ define Package/openvswitch/postinst
 endef
 
 $(eval $(call BuildPackage,openvswitch))
+$(eval $(call BuildPackage,openvswitch-python))
 $(eval $(call BuildPackage,openvswitch-benchmark))
 $(eval $(call KernelPackage,openvswitch))
 
