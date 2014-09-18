@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
-PKG_VERSION:=3.2.17
-PKG_RELEASE:=2
+PKG_VERSION:=3.3.8
+PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=ftp://ftp.gnutls.org/gcrypt/gnutls/v3.2
-PKG_MD5SUM:=271c6fc8c546abb8bd547eb12bfff518
+PKG_SOURCE_URL:=ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3
+PKG_MD5SUM:=b57e6b7630bdba9ea8eb28ff0eb29c2f
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 
 PKG_INSTALL:=1
@@ -108,6 +108,7 @@ CONFIGURE_ARGS+= \
 	--disable-doc \
 	--disable-tests \
 	--disable-rsa-export \
+	--with-default-trust-store-dir=/etc/ssl/certs/ \
 	--disable-crywrap
 
 ifneq ($(CONFIG_GNUTLS_EXT_LIBTASN1),y)
