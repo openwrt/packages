@@ -1,0 +1,52 @@
+From 7fc7ebd5785629074297ee324b22e0aee9ad00f9 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Tue, 16 Sep 2014 16:21:19 +0200
+Subject: [PATCH 13/13] MINOR: config: detect the case where a tcp-request
+ content rule has no inspect-delay
+
+If a frontend has any tcp-request content rule relying on request contents
+without any inspect delay, we now emit a warning as this will randomly match.
+
+This can be backported to 1.5 as it reduces the support effort.
+(cherry picked from commit e42bd96d0acc38ea7c546c8de8115ffd1dd6c3f3)
+---
+ src/cfgparse.c | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index 9ff44e9..f723a3a 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -6998,6 +6998,29 @@ out_uri_auth_compat:
+ 			newsrv = newsrv->next;
+ 		}
+ 
++		/* check if we have a frontend with "tcp-request content" looking at L7
++		 * with no inspect-delay
++		 */
++		if ((curproxy->cap & PR_CAP_FE) && !curproxy->tcp_req.inspect_delay) {
++			list_for_each_entry(trule, &curproxy->tcp_req.inspect_rules, list) {
++				if (trule->action == TCP_ACT_CAPTURE &&
++				    !(trule->act_prm.cap.expr->fetch->val & SMP_VAL_FE_SES_ACC))
++					break;
++				if  ((trule->action >= TCP_ACT_TRK_SC0 && trule->action <= TCP_ACT_TRK_SCMAX) &&
++				     !(trule->act_prm.trk_ctr.expr->fetch->val & SMP_VAL_FE_SES_ACC))
++					break;
++			}
++
++			if (&trule->list != &curproxy->tcp_req.inspect_rules) {
++				Warning("config : %s '%s' : some 'tcp-request content' rules explicitly depending on request"
++				        " contents were found in a frontend without any 'tcp-request inspect-delay' setting."
++				        " This means that these rules will randomly find their contents. This can be fixed by"
++					" setting the tcp-request inspect-delay.\n",
++				        proxy_type_str(curproxy), curproxy->id);
++				err_code |= ERR_WARN;
++			}
++		}
++
+ 		if (curproxy->cap & PR_CAP_FE) {
+ 			if (!curproxy->accept)
+ 				curproxy->accept = frontend_accept;
+-- 
+1.8.5.5
+

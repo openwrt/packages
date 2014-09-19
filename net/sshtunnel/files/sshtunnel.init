@@ -1,0 +1,203 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=01
+
+PIDFILE="/tmp/run/sshtunnel"
+
+
+append_params() {
+	local p; local v; local args;
+	for p in $*; do
+		eval "v=\$$p"
+		[ -n "$v" ] && args="$args -o $p=$v"
+	done
+	
+	ARGS_options="${args# *}"
+}
+
+append_string() {
+	local varname="$1"; local add="$2"; local separator="${3:- }"; local actual
+	eval "actual=\$$varname"
+
+	new="${actual:+$actual$separator}$add"
+	eval "$varname=\$new"
+}
+
+load_tunnelR() {
+	config_get section_server $1 server
+	[ "$server" = "$section_server" ] || return 0 # continue to read next section if this is not for the current server
+	let count++ # count nr of valid sections to make sure there are at least one
+
+	config_get remoteaddress $1 remoteaddress "*"
+	config_get remoteport 	$1 remoteport
+	config_get localaddress $1 localaddress
+	config_get localport	$1 localport
+	
+        [ "$remoteport" -gt 0 ] || append_string "error" "[tunnelR: $1]remoteport must be a positive integer" "; "
+        [ "$localport" -gt 0 ] 	|| append_string "error" "[tunnelR: $1]localport must be a positive integer" "; "
+	[ -n "$error" ] && return 1
+
+	append_string "ARGS_tunnels" "-R $remoteaddress:$remoteport:$localaddress:$localport"
+}
+
+load_tunnelL() {
+	config_get section_server $1 server
+	[ "$server" = "$section_server" ] || return 0 # continue to read next section if this is not for the current server
+	let count++ # count nr of valid sections to make sure there are at least one
+
+	config_get localaddress $1 localaddress "*"	
+	config_get localport	$1 localport
+	config_get remoteaddress $1 remoteaddress
+	config_get remoteport 	$1 remoteport
+
+        [ "$remoteport" -gt 0 ] || append_string "error" "[tunnelL: $1]remoteport must be a positive integer" "; "
+        [ "$localport" -gt 0 ] 	|| append_string "error" "[tunnelL: $1]localport must be a positive integer" "; "
+	[ -n "$error" ] && return 1
+
+	append_string "ARGS_tunnels" "-L $localaddress:$localport:$remoteaddress:$remoteport"
+}
+
+load_tunnelD() {
+	config_get section_server $1 server
+	[ "$server" = "$section_server" ] || return 0 # continue to read next section if this is not for the current server
+	let count++ # count nr of valid sections to make sure there are at least one
+
+	config_get localaddress $1 localaddress "*"
+	config_get localport	$1 localport
+
+        [ "$remoteport" -gt 0 ] || append_string "error" "[tunnelD: $1]remoteport must be a positive integer" "; "
+        [ "$localport" -gt 0 ] 	|| append_string "error" "[tunnelD: $1]localport must be a positive integer" "; "
+	[ -n "$error" ] && return 1
+
+	append_string "ARGS_tunnels" "-D $localaddress:$localport"
+}
+
+load_tunnelW() {
+        config_get section_server $1 server
+        [ "$server" = "$section_server" ] || return 0 # continue to read next section if this is not for the current server
+        let count++ # count nr of valid sections to make sure there are at least one
+
+        config_get localdev     $1 localdev "*"
+        config_get remotedev    $1 remotedev "*"
+        config_get vpntype      $1 vpntype "*"
+
+        [ "$vpntype" == "ethernet" ] || [ "$vpntype" == "point-to-point" ] || append_string "error" "[tunnelW: $1] vpntype must be \"ethernet\" (tap) or \"pointopoint\" (tun)" "; "
+        [ "$localdev" == "any" ] || [ "$localdev" -ge 0 ] || append_string "error" "[tunnelW: $1] localdev must be an integer or \"any\"" "; "
+        [ "$remotedev" == "any" ] || [ "$remotedev" -ge 0 ] || append_string "error" "[tunnelW: $1] remotedev must be an integer or \"any\"" "; "
+        [ "$user" == "root" ] || logger -p user.warn -t "sshtunnel" "warning: root is required unless the tunnel device has been created manually"
+        [ -n "$error" ] && return 1
+
+        append_string "ARGS_tunnels" "-w $localdev:$remotedev -o Tunnel=$vpntype"
+}
+
+load_server() {
+	server="$1"
+
+	config_get user 	$1 user
+	config_get hostname 	$1 hostname
+	config_get port		$1 port		"22"
+	config_get retrydelay 	$1 retrydelay	"60"
+	config_get PKCS11Provider	$1 PKCS11Provider
+	config_get CheckHostIP		$1 CheckHostIP
+	config_get Compression		$1 Compression
+	config_get CompressionLevel 	$1 CompressionLevel
+	config_get IdentityFile		$1 IdentityFile
+	config_get LogLevel 		$1 LogLevel
+	config_get ServerAliveCountMax 	$1 ServerAliveCountMax
+	config_get ServerAliveInterval 	$1 ServerAliveInterval
+	config_get StrictHostKeyChecking $1 StrictHostKeyChecking
+	config_get TCPKeepAlive		$1 TCPKeepAlive
+	config_get VerifyHostKeyDNS 	$1 VerifyHostKeyDNS
+		
+	error=""
+        [ -n "$user" ] \
+		|| append_string "error" "user is not set" "; "
+        [ -n "$hostname" ] \
+		|| append_string "error" "hostname is not set" "; "
+        [ "$retrydelay" -ge 1 ] \
+		|| append_string "error" "retrydelay must be a positive integer" "; "
+	[ -z "$PKCS11Provider" -o -f "$PKCS11Provider" ] \
+		|| append_string "error" "PKCS11Provider must be a pkcs11 shared library accessible" "; "
+	[ -z "$CheckHostIP" -o "$CheckHostIP"="yes" -o "$CheckHostIP"="no" ] \
+		|| append_string "error" "CheckHostIP must be 'yes' or 'no'" "; "
+	[ -z "$Compression" -o "$Compression"="yes" -o "$Compression"="no" ] \
+		|| append_string "error" "Compression must be 'yes' or 'no'" "; "
+	[ -z "$CompressionLevel" ] || [ "$CompressionLevel" -ge 1 -a "$CompressionLevel" -le 9 ] \
+		|| append_string "error" "CompressionLevel must be between 1 and 9" "; "
+	[ -z "$IdentityFile" -o -f "$IdentityFile" ] \
+		|| append_string "error" "IdentityFile $IdentityFile not accessible" "; "	
+	[ -z "$LogLevel" -o "$LogLevel" = "QUIET" -o "$LogLevel" = "FATAL" -o "$LogLevel" = "ERROR" -o \
+	 	"$LogLevel" = "INFO" -o "$LogLevel" = "VERBOSE" -o "$LogLevel" = "DEBUG" -o \
+		"$LogLevel" = "DEBUG1" -o "$LogLevel" = "DEBUG2" -o "$LogLevel" = "DEBUG3" ] \
+		|| append_string "error" "LogLevel is invalid" "; "
+	[ -z "$ServerAliveCountMax" ] || [ "$ServerAliveCountMax" -ge 1 ] \
+		|| append_string "error" "ServerAliveCountMax must be greater or equal than 1" "; "
+	[ -z "$ServerAliveInterval" ] || [ "$ServerAliveInterval" -ge 0 ] \
+		|| append_string "error" "ServerAliveInterval must be greater or equal than 0" "; "
+	[ -z "$StrictHostKeyChecking" -o "$StrictHostKeyChecking" = "yes" -o "$StrictHostKeyChecking" = "ask" -o "$StrictHostKeyChecking" = "no" ] \
+		|| append_string "error" "StrictHostKeyChecking must be 'yes', 'ask' or 'no'" "; "
+	[ -z "$TCPKeepAlive" -o "$TCPKeepAlive" = "yes" -o "$TCPKeepAlive" = "no" ] \
+		|| append_string "error" "TCPKeepAlive must be 'yes' or 'no'" "; "
+	[ -z "$VerifyHostKeyDNS" -o "$VerifyHostKeyDNS" = "yes" -o "$VerifyHostKeyDNS" = "no" ] \
+		|| append_string "error" "VerifyHostKeyDNS must be 'yes' or 'no'" "; "
+
+	[ -n "$error" ] && { logger -p user.err -t "sshtunnel" "tunnels to $server not started - $error"; return; }
+        
+
+	ARGS=""
+	ARGS_options=""
+        ARGS_tunnels=""
+
+	count=0
+        config_foreach load_tunnelR tunnelR && config_foreach load_tunnelL tunnelL && config_foreach load_tunnelD tunnelD
+	[ -n "$error" ] 	&& { logger -p user.err -t "sshtunnel" "tunnels to $server not started - $error"; return; }
+	[ "$count" -eq 0 ] 	&& { logger -p user.err -t "sshtunnel" "tunnels to $server not started - no tunnels defined"; return; }
+
+	append_params CheckHostIP Compression CompressionLevel IdentityFile LogLevel PKCS11Provider ServerAliveCountMax ServerAliveInterval StrictHostKeyChecking TCPKeepAlive VerifyHostKeyDNS
+	ARGS="$ARGS_options -o ExitOnForwardFailure=yes -o BatchMode=yes -nN $ARGS_tunnels -p $port $user@$hostname"
+
+	/usr/bin/sshtunnel.sh "$ARGS" "$retrydelay" "$server" &
+	echo $! >> "${PIDFILE}.pids"
+	logger -p user.info -t "sshtunnel" "started tunnels to $server (pid=$!;retrydelay=$retrydelay)" 
+}
+
+stop() {
+        if [ -f "$PIDFILE".pids ]
+        then
+                logger -p user.info -t "sshtunnel" "stopping all tunnels"
+                
+                while read pid
+                do
+			kill "$pid"	# kill mother process first
+
+			[ -f "${PIDFILE}_${pid}.pid" ] && { # if ssh was running, kill it also (mother process could be in retry wait)
+				start-stop-daemon -K -p "${PIDFILE}_${pid}.pid"
+				rm "${PIDFILE}_${pid}.pid"
+			}
+			
+			logger -p daemon.info -t "sshtunnel[$pid]" "tunnel stopped"
+			
+		done < "${PIDFILE}.pids"
+
+		rm "${PIDFILE}.pids"
+
+                logger -p user.info -t "sshtunnel" "all tunnels stopped"
+        else
+                logger -p user.info -t "sshtunnel" "no tunnels running"
+        fi
+}
+
+start() {
+        [ -f "${PIDFILE}.pids" ] && stop
+        
+	config_load sshtunnel
+	if [ -n "$(uci show sshtunnel.@server[0])" ] # at least one server section exists
+	then        
+		logger -p user.info -t "sshtunnel" "starting all tunnels"
+		config_foreach load_server server       
+		logger -p user.info -t "sshtunnel" "all tunnels started"	
+	else
+		logger -p user.info -t "sshtunnel" "no servers defined"
+	fi
+}

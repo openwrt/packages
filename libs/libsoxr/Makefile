@@ -10,14 +10,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoxr
 PKG_VERSION:=0.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://git.code.sf.net/p/soxr/code
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_LICENSE:=LGPL-2.0
+
+PKG_LICENSE:=LGPL-2.1
+PKG_LICENSE_FILE:=LICENCE
 
 PKG_FIXUP:=libtool
 PKG_REMOVE_FILES:=autogen.sh
@@ -25,11 +27,7 @@ PKG_REMOVE_FILES:=autogen.sh
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-
-define Build/Configure
-	$(CP) ./files/* $(PKG_BUILD_DIR)/
-	$(call Build/Configure/Default, )
-endef
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libsoxr
   SECTION:=libs
@@ -45,6 +43,8 @@ define Package/libsoxr/description
   High quality, one-dimensional sample-rate conversion library
 endef
 
+CMAKE_OPTIONS:= -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTS=0 -DBUILD_EXAMPLES=0
+CMAKE_OPTIONS+= -DHAVE_WORDS_BIGENDIAN_EXITCODE=$(if $(CONFIG_BIG_ENDIAN),0,1)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

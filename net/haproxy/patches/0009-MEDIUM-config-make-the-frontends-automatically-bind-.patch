@@ -1,0 +1,93 @@
+From e56c4f1f76c6731a5a0f4b128540071cffeb1951 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Tue, 16 Sep 2014 13:21:03 +0200
+Subject: [PATCH 09/13] MEDIUM: config: make the frontends automatically bind
+ to the listeners' processes
+
+When a frontend does not have any bind-process directive, make it
+automatically bind to the union of all of its listeners' processes
+instead of binding to all processes. That will make it possible to
+have the expected behaviour without having to explicitly specify a
+bind-process directive.
+
+Note that if the listeners are not bound to a specific process, the
+default is still to bind to all processes.
+
+This change could be backported to 1.5 as it simplifies process
+management, and was planned to be done during the 1.5 development phase.
+(cherry picked from commit b369a045d545b41ef2b250bf747caf83c97e0ca8)
+---
+ doc/configuration.txt |  4 ++++
+ src/cfgparse.c        | 36 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 40 insertions(+)
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index 3c75c92..1e32057 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -1905,6 +1905,10 @@ bind-process [ all | odd | even | <number 1-64>[-<number 1-64>] ] ...
+   Each "bind" line may further be limited to a subset of the proxy's processes,
+   please consult the "process" bind keyword in section 5.1.
+ 
++  When a frontend has no explicit "bind-process" line, it tries to bind to all
++  the processes referenced by its "bind" lines. That means that frontends can
++  easily adapt to their listeners' processes.
++
+   If some backends are referenced by frontends bound to other processes, the
+   backend automatically inherits the frontend's processes.
+ 
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index b9853ef..d53f69e 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -7175,11 +7175,47 @@ out_uri_auth_compat:
+ 	}
+ 
+ 	/* At this point, target names have already been resolved */
++
++	/* Make each frontend inherit bind-process from its listeners when not specified. */
++	for (curproxy = proxy; curproxy; curproxy = curproxy->next) {
++		if (curproxy->bind_proc)
++			continue;
++
++		list_for_each_entry(bind_conf, &curproxy->conf.bind, by_fe) {
++			unsigned long mask;
++
++			mask = bind_conf->bind_proc ? bind_conf->bind_proc : ~0UL;
++			curproxy->bind_proc |= mask;
++		}
++
++		if (!curproxy->bind_proc)
++			curproxy->bind_proc = ~0UL;
++	}
++
++	if (global.stats_fe) {
++		list_for_each_entry(bind_conf, &global.stats_fe->conf.bind, by_fe) {
++			unsigned long mask;
++
++			mask = bind_conf->bind_proc ? bind_conf->bind_proc : ~0UL;
++			global.stats_fe->bind_proc |= mask;
++		}
++		if (!global.stats_fe->bind_proc)
++			global.stats_fe->bind_proc = ~0UL;
++	}
++
++	/* propagate bindings from frontends to backends */
+ 	for (curproxy = proxy; curproxy; curproxy = curproxy->next) {
+ 		if (curproxy->cap & PR_CAP_FE)
+ 			propagate_processes(curproxy, NULL);
+ 	}
+ 
++	/* Bind each unbound backend to all processes when not specified. */
++	for (curproxy = proxy; curproxy; curproxy = curproxy->next) {
++		if (curproxy->bind_proc)
++			continue;
++		curproxy->bind_proc = ~0UL;
++	}
++
+ 	/* automatically compute fullconn if not set. We must not do it in the
+ 	 * loop above because cross-references are not yet fully resolved.
+ 	 */
+-- 
+1.8.5.5
+

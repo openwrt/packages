@@ -1,0 +1,60 @@
+From b53934eec71ab34eb3762a89cec326360a5b0bc5 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Tue, 16 Sep 2014 11:31:31 +0200
+Subject: [PATCH 07/13] BUG/MEDIUM: config: propagate frontend to backend
+ process binding again.
+
+This basically reverts 3507d5d ("MEDIUM: proxy: only adjust the backend's
+bind-process when already set"). It was needed during the transition to
+the new process binding method but is causing trouble now because frontend
+to backend binding is not properly propagated.
+
+This fix should be backported to 1.5.
+(cherry picked from commit 8a3478ed31a16904f45178c153f4649faf6de675)
+---
+ src/cfgparse.c | 15 ++++++---------
+ 1 file changed, 6 insertions(+), 9 deletions(-)
+
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index 943eba0..5288600 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -6165,9 +6165,8 @@ int check_config_validity()
+ 				/* we force the backend to be present on at least all of
+ 				 * the frontend's processes.
+ 				 */
+-				if (target->bind_proc)
+-					target->bind_proc = curproxy->bind_proc ?
+-						(target->bind_proc | curproxy->bind_proc) : 0;
++				target->bind_proc = curproxy->bind_proc ?
++					(target->bind_proc | curproxy->bind_proc) : 0;
+ 
+ 				/* Emit a warning if this proxy also has some servers */
+ 				if (curproxy->srv) {
+@@ -6203,9 +6202,8 @@ int check_config_validity()
+ 					/* we force the backend to be present on at least all of
+ 					 * the frontend's processes.
+ 					 */
+-					if (target->bind_proc)
+-						target->bind_proc = curproxy->bind_proc ?
+-							(target->bind_proc | curproxy->bind_proc) : 0;
++					target->bind_proc = curproxy->bind_proc ?
++						(target->bind_proc | curproxy->bind_proc) : 0;
+ 				}
+ 			}
+ 		}
+@@ -6257,9 +6255,8 @@ int check_config_validity()
+ 				/* we force the backend to be present on at least all of
+ 				 * the frontend's processes.
+ 				 */
+-				if (target->bind_proc)
+-					target->bind_proc = curproxy->bind_proc ?
+-						(target->bind_proc | curproxy->bind_proc) : 0;
++				target->bind_proc = curproxy->bind_proc ?
++					(target->bind_proc | curproxy->bind_proc) : 0;
+ 			}
+ 		}
+ 
+-- 
+1.8.5.5
+

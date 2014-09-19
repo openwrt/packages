@@ -13,15 +13,15 @@
  dnl *                                                               *
 --- a/src/libs/zbxsysinfo/common/net.c
 +++ b/src/libs/zbxsysinfo/common/net.c
-@@ -425,6 +425,7 @@ static int	dns_query(AGENT_REQUEST *requ
- 	if (-1 == res_init())	/* initialize always, settings might have changed */
+@@ -450,6 +450,7 @@ static int	dns_query(AGENT_REQUEST *requ
  		return SYSINFO_RET_FAIL;
+ 	}
  
 +#if defined(HAVE_RES_MKQUERY) && defined(HAVE_RES_SEND) 
  	if (-1 == (res = res_mkquery(QUERY, zone, C_IN, type, NULL, 0, NULL, buf, sizeof(buf))))
- 		return SYSINFO_RET_FAIL;
- 
-@@ -449,6 +450,11 @@ static int	dns_query(AGENT_REQUEST *requ
+ 	{
+ 		SET_MSG_RESULT(result, zbx_dsprintf(NULL, "Cannot create DNS query: %s", zbx_strerror(errno)));
+@@ -480,6 +481,11 @@ static int	dns_query(AGENT_REQUEST *requ
  	_res.retry = retry;
  
  	res = res_send(buf, res, answer.buffer, sizeof(answer.buffer));

@@ -71,8 +71,3 @@ start_service() {
 	config_load shairport
 	config_foreach start_instance shairport
 }
-
-stop_service() {
-	# FIXME: workaround until procd supports custom signal
-	killall -SIGINT shairport
-}

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -41,45 +41,73 @@ define Package/gstreamer1/description/Default
  GStreamer open source multimedia framework
 endef
 
+GSTREAMER_CORE_LIBS:= \
+	libgstreamer1 \
+	libgst1check \
+	libgst1controller \
+	libgst1net
 
 define Package/gstreamer1
-$(call Package/gstreamer1/Default)
-  TITLE+= framework
-  DEPENDS+= +libgstreamer1 \
-	+libgst1check \
-	+libgst1controller \
-	+libgst1net
+  $(call Package/gstreamer1/Default)
+  TITLE+= (All libraries)
+  DEPENDS:= $(foreach lib,$(GSTREAMER_CORE_LIBS),+$(lib))
+  HIDDEN:=1
 endef
 
-define Package/gstreamer1/description
-$(call Package/gstreamer1/description/Default)
+define Package/gstreamer1-libs/description
+ $(call Package/gstreamer1/description/Default)
  .
  This meta package contains only dependencies on the other GStreamer
  componenents.
 endef
 
+define Package/gstreamer1-libs
+  $(call Package/gstreamer1/Default)
+  TITLE+= core libraries
+  DEPENDS+=+ALL:gstreamer1
+endef
+
+define Package/gstreamer1-libs/config
+    menu "Select GStreamer libraries"
+      depends on PACKAGE_gstreamer1-libs
+
+    config gstreamer1-all
+      bool "Include all GStreamer1 core libraries"
+      select PACKAGE_gstreamer1
+
+    comment "Libraries"
+
+   $(foreach lib,$(GSTREAMER_CORE_LIBS), \
+    config PACKAGE_$(lib)
+      prompt "GStreamer core library $(lib)"
+
+   )
+
+  endmenu
+
+endef
 
 define Package/gstreamer1-utils
-$(call Package/gstreamer1/Default)
+  $(call Package/gstreamer1/Default)
   TITLE+= utilities
-  DEPENDS+= +libgstreamer1
+  DEPENDS+= +libgstreamer1 +gstreamer1-libs
 endef
 
 define Package/gstreamer1-utils/description
-$(call Package/gstreamer1/description/Default)
+ $(call Package/gstreamer1/description/Default)
  .
  This package contains the GStreamer utilities.
 endef
 
-
 define Package/libgstreamer1
-$(call Package/gstreamer1/Default)
+  $(call Package/gstreamer1/Default)
   TITLE+= library (core)
   DEPENDS+= +glib2 +libpthread +libxml2
+  HIDDEN:=1
 endef
 
 define Package/libgstreamer1/description
-$(call Package/gstreamer1/description/Default)
+ $(call Package/gstreamer1/description/Default)
  .
  This package contains the GStreamer core library.
 endef
@@ -129,7 +157,10 @@ define Build/InstallDev
 endef
 
 define Package/gstreamer1/install
-	/bin/true
+  true
+endef
+
+define Package/gstreamer1-libs/install
 endef
 
 define Package/gstreamer1-utils/install
@@ -167,6 +198,7 @@ define GstBuildLibrary
     $(call Package/gstreamer1/Default)
     TITLE+= $(2) library (core)
     DEPENDS+= +libgstreamer1 $$(foreach p,$(3),+libgst1$$(p)) $(4)
+    HIDDEN:=1
   endef
 
   define Package/libgst1$(1)/description
@@ -191,5 +223,6 @@ $(eval $(call GstBuildLibrary,controller,dynamic parameter control))
 $(eval $(call GstBuildLibrary,net,network classes))
 
 $(eval $(call BuildPackage,libgstreamer1))
-$(eval $(call BuildPackage,gstreamer1))
+$(eval $(call BuildPackage,gstreamer1-libs))
 $(eval $(call BuildPackage,gstreamer1-utils))
+$(eval $(call BuildPackage,gstreamer1))
