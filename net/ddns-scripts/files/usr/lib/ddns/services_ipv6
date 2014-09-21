@@ -1,0 +1,29 @@
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!! IPv6 Version of original services file			!!!!!
+# !!!!! funtionally and syntax is the same			!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# This file contains the update urls for various dynamic dns services.
+# Column one contains the service name, column two contains the update url.
+# within the update url there are 4 variables you can use: [USERNAME], 
+# [PASSWORD], [DOMAIN] and [IP].  These are substituted for the username, 
+# password, and domain name specified in the /etc/config/ddns file when an 
+# update is performed.  The IP is substituted for the current ip address of the
+# router.  These variables are case sensitive, while urls generally are not, so 
+# if you need to enter the same text in the url (which seems very unlikely) put 
+# that text in lowercase, while the variables should remain in uppercase
+
+# tested with
+
+# Securepoint Dynamic-DNS-Service
+"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# Hurricane Electric Dynamic DNS
+"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]" 
+
+#### ADD YOURS HERE! ######################################################################################
+#                                                                                                         #
+# There are TONS of dynamic dns services out there. There's a huge list of them at:                       #
+# http://www.dmoz.org/Computers/Software/Internet/Servers/Address_Management/Dynamic_DNS_Services/        #
+# If anyone has time they could update this file to be compatible with a bunch of them                    #
+#                                                                                                         #
+###########################################################################################################
