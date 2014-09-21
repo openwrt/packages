@@ -47,7 +47,7 @@ define Package/libsodium/config
 menu "Configuration"
 	config LIBSODIUM_MINIMAL
 		bool "Create a smaller library"
-		default n
+		default y
 endmenu
 endef
 
