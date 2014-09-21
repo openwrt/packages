@@ -6,8 +6,7 @@ SERVICE_USE_PID=1
 START=50
 
 start() {
-	[ -d /var/log/lighttpd ] || mkdir -p /var/log/lighttpd
-	chmod 0777 /var/log/lighttpd
+	mkdir -m 0755 -p /var/log/lighttpd
 	service_start /usr/sbin/lighttpd -f /etc/lighttpd/lighttpd.conf
 }
 
