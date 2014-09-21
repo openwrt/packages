@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsodium
 PKG_VERSION:=0.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -46,7 +46,7 @@ endef
 define Package/libsodium/config
 menu "Configuration"
 	config LIBSODIUM_MINIMAL
-		bool "Create a smaller library"
+		bool "Compile only what is required for the high-level API (no aes128ctr), should be fine in most cases."
 		default y
 endmenu
 endef
