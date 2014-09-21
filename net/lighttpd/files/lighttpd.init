@@ -6,7 +6,11 @@ SERVICE_USE_PID=1
 START=50
 
 start() {
-	mkdir -m 0755 -p /var/log/lighttpd
+	user_exists http || user_add http
+	[ -d /var/log/lighttpd ] || {
+		mkdir -m 0775 -p /var/log/lighttpd
+		chgrp www-data /var/log/lighttpd
+	}
 	service_start /usr/sbin/lighttpd -f /etc/lighttpd/lighttpd.conf
 }
 
