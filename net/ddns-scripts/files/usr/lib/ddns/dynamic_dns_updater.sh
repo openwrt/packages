@@ -1,360 +1,399 @@
 #!/bin/sh
-# /usr/lib/dynamic_dns/dynamic_dns_updater.sh
+# /usr/lib/ddns/dynamic_dns_updater.sh
 #
-# Written by Eric Paul Bishop, Janary 2008
+# Original written by Eric Paul Bishop, January 2008
 # Distributed under the terms of the GNU General Public License (GPL) version 2.0
-#
-# This script is (loosely) based on the one posted by exobyte in the forums here:
+# (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 #
-
-. /usr/lib/ddns/dynamic_dns_functions.sh
-
-
-service_id=$1
-if [ -z "$service_id" ]
-then
-	echo "ERRROR: You must specify a service id (the section name in the /etc/config/ddns file) to initialize dynamic DNS."
-	return 1
-fi
-
-#default mode is verbose_mode, but easily turned off with second parameter
-verbose_mode="1"
-if [ -n "$2" ]
-then
-	verbose_mode="$2"
-fi
-
-###############################################################
-# Leave this comment here, to clearly document variable names
-# that are expected/possible
+# extended and partial rewritten by Christian Schoenebeck in August 2014 to support:
+# - IPv6 DDNS services
+# - DNS Server to retrieve registered IP including TCP transport
+# - Proxy Server to send out updates
+# - force_interval=0 to run once
+# - the usage of BIND's host command instead of BusyBox's nslookup if installed
+# - extended Verbose Mode and log file support for better error detection 
 #
-# Now use load_all_config_options to load config
-# options, which is a much more flexible solution.
+# variables in small chars are read from /etc/config/ddns
+# variables in big chars are defined inside these scripts as global vars
+# variables in big chars beginning with "__" are local defined inside functions only
+#set -vx  	#script debugger
+
+[ $# -lt 1 -o -n "${2//[0-3]/}" -o ${#2} -gt 1 ] && {
+	echo -e "\n  USAGE:"
+	echo -e "  $0 [SECTION] [VERBOSE_MODE]\n"
+	echo    "  [SECTION]      - service section as defined in /etc/config/ddns"
+	echo    "  [VERBOSE_MODE] - '0' NO output to console"
+	echo    "                   '1' output to console"
+	echo    "                   '2' output to console AND logfile"
+	echo    "                       + run once WITHOUT retry on error"
+	echo    "                   '3' output to console AND logfile"
+	echo    "                       + run once WITHOUT retry on error"
+	echo -e "                       + NOT sending update to DDNS service\n"
+	exit 1
+}
+
+. /usr/lib/ddns/dynamic_dns_functions.sh	# global vars are also defined here
+
+SECTION_ID="$1"
+VERBOSE_MODE=${2:-1}	#default mode is log to console
+
+# set file names
+PIDFILE="$RUNDIR/$SECTION_ID.pid"	# Process ID file
+UPDFILE="$RUNDIR/$SECTION_ID.update"	# last update successful send (system uptime)
+LOGFILE="$LOGDIR/$SECTION_ID.log"	# log file
+
+# VERBOSE_MODE > 1 delete logfile if exist to create an empty one
+# only with this data of this run for easier diagnostic
+# new one created by verbose_echo function
+[ $VERBOSE_MODE -gt 1 -a -f $LOGFILE ] && rm -f $LOGFILE
+
+################################################################################
+# Leave this comment here, to clearly document variable names that are expected/possible
+# Use load_all_config_options to load config options, which is a much more flexible solution.
 #
+# config_load "ddns"
+# config_get <variable> $SECTION_ID <option]>
 #
-#config_load "ddns"
+# defined options (also used as variable):
+# 
+# enable	self-explanatory
+# interface 	network interface used by hotplug.d i.e. 'wan' or 'wan6'
 #
-#config_get enabled $service_id enabled
-#config_get service_name $service_id service_name
-#config_get update_url $service_id update_url
+# service_name	Which DDNS service do you use or "custom"
+# update_url	URL to use to update your "custom" DDNS service
 #
+# domain 	Your DNS name / replace [DOMAIN] in update_url
+# username 	Username of your DDNS service account / replace [USERNAME] in update_url
+# password 	Password of your DDNS service account / replace [PASSWORD] in update_url
 #
-#config_get username $service_id username
-#config_get password $service_id password
-#config_get domain $service_id domain
+# use_https	use HTTPS to update DDNS service
+# cacert	file or directory where HTTPS can find certificates to verify server; 'IGNORE' ignore check of server certificate
 #
+# use_syslog	log activity to syslog
 #
-#config_get use_https $service_id use_https
-#config_get use_syslog $service_id use_syslog
-#config_get cacert $service_id cacert
+# ip_source	source to detect current local IP ('network' or 'web' or 'script' or 'interface')
+# ip_network	local defined network to read IP from i.e. 'wan' or 'wan6'
+# ip_url	URL to read local address from i.e. http://checkip.dyndns.com/ or http://checkipv6.dyndns.com/
+# ip_script	full path and name of your script to detect local IP
+# ip_interface	physical interface to use for detecting 
 #
-#config_get ip_source $service_id ip_source
-#config_get ip_interface $service_id ip_interface
-#config_get ip_network $service_id ip_network
-#config_get ip_url $service_id ip_url
+# check_interval	check for changes every  !!! checks below 10 minutes make no sense because the Internet 
+# check_unit		'days' 'hours' 'minutes' !!! needs about 5-10 minutes to sync an IP-change for an DNS entry
 #
-#config_get force_interval $service_id force_interval
-#config_get force_unit $service_id force_unit
+# force_interval	force to send an update to your service if no change was detected
+# force_unit		'days' 'hours' 'minutes' !!! force_interval="0" runs this script once for use i.e. with cron
 #
-#config_get check_interval $service_id check_interval
-#config_get check_unit $service_id check_unit
-#########################################################
-load_all_config_options "ddns" "$service_id"
+# retry_interval	if error was detected retry in
+# retry_unit		'days' 'hours' 'minutes' 'seconds'
+# retry_count 		#NEW# number of retries before scripts stops
+#
+# use_ipv6		#NEW# detecting/sending IPv6 address
+# force_ipversion	#NEW# force usage of IPv4 or IPv6 for the whole detection and update communication
+# dns_server		#NEW# using a non default dns server to get Registered IP from Internet
+# force_dnstcp		#NEW# force communication with DNS server via TCP instead of default UDP
+# proxy			#NEW# using a proxy for communication !!! ALSO used to detect local IP via web => return proxy's IP !!!
+# use_logfile		#NEW# self-explanatory "/var/log/ddns/$SECTION_ID.log"
+#
+# some functionality needs 
+# - GNU Wget or cURL installed for sending updates to DDNS service
+# - BIND host installed to detect Registered IP
+#
+################################################################################
 
+# verify and load SECTION_ID is exists
+[ "$(uci_get ddns $SECTION_ID)" != "service" ] && {
+	[ $VERBOSE_MODE -le 1 ] && VERBOSE_MODE=2	# force console out and logfile output
+	[ -f $LOGFILE ] && rm -f $LOGFILE		# clear logfile before first entry
+	verbose_echo "\n ************** =: ************** ************** **************"
+	verbose_echo "       STARTED =: PID '$$' at $(eval $DATE_PROG)"
+	verbose_echo "    UCI CONFIG =:\n$(uci -q show ddns | grep '=service' | sort)"
+	critical_error "Service '$SECTION_ID' not defined"
+}
+load_all_config_options "ddns" "$SECTION_ID"
 
-#some defaults
-if [ -z "$check_interval" ]
-then
-	check_interval=600
-fi
-
-if [ -z "$retry_interval" ]
-then
-	retry_interval=60
-fi
-
-if [ -z "$check_unit" ]
-then
-	check_unit="seconds"
-fi
-
-if [ -z "$force_interval" ]
-then
-	force_interval=72
-fi
-
-if [ -z "$force_unit" ]
-then
-	force_unit="hours"
-fi
-
-if [ -z $use_syslog ]
-then
-	use_syslog=0
-fi
-
-if [ -z "$use_https" ]
-then
-	use_https=0
-fi
-
-
-#some constants
-
-retrieve_prog="/usr/bin/wget -O - ";
-if [ "x$use_https" = "x1" ]
-then
-	/usr/bin/wget --version 2>&1 |grep -q "\+ssl"
-	if [ $? -eq 0 ]
-	then
-		if [ -f "$cacert" ]
-		then
-			retrieve_prog="${retrieve_prog}--ca-certificate=${cacert} "
-		elif [ -d "$cacert" ]
-		then
-			retrieve_prog="${retrieve_prog}--ca-directory=${cacert} "
-		fi
-	else
-		retrieve_prog="/usr/bin/curl "
-		if [ -f "$cacert" ]
-		then
-			retrieve_prog="${retrieve_prog}--cacert $cacert "
-		elif [ -d "$cacert" ]
-		then
-			retrieve_prog="${retrieve_prog}--capath $cacert "
-		fi
-	fi
-fi
-
-
-service_file="/usr/lib/ddns/services"
-
-ip_regex="[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"
-
-NEWLINE_IFS='
-'
-
-#determine what update url we're using if the service_name is supplied
-if [ -n "$service_name" ]
-then
-	#remove any lines not containing data, and then make sure fields are enclosed in double quotes
-	quoted_services=$(cat $service_file |  grep "^[\t ]*[^#]" |  awk ' gsub("\x27", "\"") { if ($1~/^[^\"]*$/) $1="\""$1"\"" }; { if ( $NF~/^[^\"]*$/) $NF="\""$NF"\""  }; { print $0 }' )
-
-
-	#echo "quoted_services = $quoted_services"
-	OLD_IFS=$IFS
-	IFS=$NEWLINE_IFS
-	for service_line in $quoted_services
-	do
-		#grep out proper parts of data and use echo to remove quotes
-		next_name=$(echo $service_line | grep -o "^[\t ]*\"[^\"]*\"" | xargs -r -n1 echo)
-		next_url=$(echo $service_line | grep -o "\"[^\"]*\"[\t ]*$" | xargs -r -n1 echo)
-
-		if [ "$next_name" = "$service_name" ]
-		then
-			update_url=$next_url
-		fi
-	done
-	IFS=$OLD_IFS
-fi
-
-if [ "x$use_https" = x1 ]
-then
-	update_url=$(echo $update_url | sed -e 's/^http:/https:/')
-fi
-
-verbose_echo "update_url=$update_url"
-
-#if this service isn't enabled then quit
-if [ "$enabled" != "1" ] 
-then
-	return 0
-fi
-
-#compute update interval in seconds
-case "$force_unit" in
-	"days" )
-		force_interval_seconds=$(($force_interval*60*60*24))
-		;;
-	"hours" )
-		force_interval_seconds=$(($force_interval*60*60))
-		;;
-	"minutes" )
-		force_interval_seconds=$(($force_interval*60))
-		;;
-	"seconds" )
-		force_interval_seconds=$force_interval
-		;;
-	* )
-		#default is hours
-		force_interval_seconds=$(($force_interval*60*60))
-		;;
+verbose_echo "\n ************** =: ************** ************** **************"
+verbose_echo "       STARTED =: PID '$$' at $(eval $DATE_PROG)"
+syslog_info "Started"
+case $VERBOSE_MODE in
+	0) verbose_echo "  verbose mode =: '0' - run normal, NO console output";;
+	1) verbose_echo "  verbose mode =: '1' - run normal, console mode";;
+	2) verbose_echo "  verbose mode =: '2' - run once, NO retry on error";;
+	3) verbose_echo "  verbose mode =: '3' - run once, NO retry on error, NOT sending update";;
+	*) critical_error "ERROR detecting VERBOSE_MODE '$VERBOSE_MODE'"
 esac
+verbose_echo "    UCI CONFIG =:\n$(uci -q show ddns.$SECTION_ID | sort)"
 
+# set defaults if not defined
+[ -z "$enabled" ]	  && enabled=0
+[ -z "$retry_count" ]	  && retry_count=5
+[ -z "$use_syslog" ]      && use_syslog=0	# not use syslog
+[ -z "$use_https" ]       && use_https=0	# not use https
+[ -z "$use_logfile" ]     && use_logfile=1	# NEW - use logfile by default
+[ -z "$use_ipv6" ]	  && use_ipv6=0		# NEW - use IPv4 by default
+[ -z "$force_ipversion" ] && force_ipversion=0	# NEW - default let system decide
+[ -z "$force_dnstcp" ]	  && force_dnstcp=0	# NEW - default UDP
+[ -z "$ip_source" ]	  && ip_source="network"
+[ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 0 ] && ip_network="wan"  # IPv4: default wan
+[ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 1 ] && ip_network="wan6" # IPv6: default wan6
+[ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 0 ] && ip_url="http://checkip.dyndns.com"
+[ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 1 ] && ip_url="http://checkipv6.dyndns.com"
+[ "$ip_source" = "interface" -a -z "$ip_interface" ] && ip_interface="eth1"
 
-#compute check interval in seconds
-case "$check_unit" in
-	"days" )
-		check_interval_seconds=$(($check_interval*60*60*24))
-		;;
-	"hours" )
-		check_interval_seconds=$(($check_interval*60*60))
-		;;
-	"minutes" )
-		check_interval_seconds=$(($check_interval*60))
-		;;
-	"seconds" )
-		check_interval_seconds=$check_interval
-		;;
-	* )
-		#default is seconds
-		check_interval_seconds=$check_interval
-		;;
-esac
+# check configuration and enabled state
+[ -z "$domain" -o -z "$username" -o -z "$password" ] && critical_error "Service Configuration not correctly configured"
+[ $enabled -eq 0 ] && critical_error "Service Configuration is disabled"
 
+# verify script if configured and executable
+if [ "$ip_source" = "script" ]; then
+	[ -z "$ip_script" ] && critical_error "No script defined to detect local IP"
+	[ -x "$ip_script" ] || critical_error "Script to detect local IP not found or not executable"
+fi
 
-#compute retry interval in seconds
-case "$retry_unit" in
-	"days" )
-		retry_interval_seconds=$(($retry_interval*60*60*24))
-		;;
-	"hours" )
-		retry_interval_seconds=$(($retry_interval*60*60))
-		;;
-	"minutes" )
-		retry_interval_seconds=$(($retry_interval*60))
-		;;
-	"seconds" )
-		retry_interval_seconds=$retry_interval
-		;;
-	* )
-		#default is seconds
-		retry_interval_seconds=$retry_interval
-		;;
-esac
+# compute update interval in seconds
+get_seconds CHECK_SECONDS ${check_interval:-10} ${check_unit:-"minutes"} # default 10 min
+get_seconds FORCE_SECONDS ${force_interval:-72} ${force_unit:-"hours"}	 # default 3 days
+get_seconds RETRY_SECONDS ${retry_interval:-60} ${retry_unit:-"seconds"} # default 60 sec
+verbose_echo "check interval =: $CHECK_SECONDS seconds"
+verbose_echo "force interval =: $FORCE_SECONDS seconds"
+verbose_echo "retry interval =: $RETRY_SECONDS seconds"
+verbose_echo " retry counter =: $retry_count times"
 
-
-verbose_echo "force seconds = $force_interval_seconds"
-verbose_echo "check seconds = $check_interval_seconds"
+# determine what update url we're using if a service_name is supplied
+# otherwise update_url is set inside configuration (custom service)
+[ -n "$service_name" ] && get_service_url update_url
+[ -z "$update_url" ]   && critical_error "no update url found/defined"
 
 #kill old process if it exists & set new pid file
-if [ -d /var/run/dynamic_dns ]
-then
+if [ -d $RUNDIR ]; then
 	#if process is already running, stop it
-	if [ -e "/var/run/dynamic_dns/$service_id.pid" ]
-	then
-		old_pid=$(cat /var/run/dynamic_dns/$service_id.pid)
-		test_match=$(ps | grep "^[\t ]*$old_pid")
-		verbose_echo "old process id (if it exists) = \"$test_match\""
-		if [ -n  "$test_match" ]
-		then
-			kill $old_pid
-		fi
+	if [ -e "$PIDFILE" ]; then
+		OLD_PID=$(cat $PIDFILE)
+		ps | grep -q "^[\t ]*$OLD_PID" && {
+			verbose_echo "   old process =: PID '$OLD_PID'"
+			kill $OLD_PID
+		} || verbose_echo "old process id =: PID 'none'"
+	else
+		verbose_echo "old process id =: PID 'none'"
 	fi
-
 else
 	#make dir since it doesn't exist
-	mkdir /var/run/dynamic_dns
+	mkdir -p $RUNDIR
+	verbose_echo "old process id =: PID 'none'"
 fi
-echo $$ > /var/run/dynamic_dns/$service_id.pid
+echo $$ > $PIDFILE
 
-
-
-
-#determine when the last update was
-current_time=$(monotonic_time)
-last_update=$(( $current_time - (2*$force_interval_seconds) ))
-if [ -e "/var/run/dynamic_dns/$service_id.update" ]
-then
-	last_update=$(cat /var/run/dynamic_dns/$service_id.update)
+# determine when the last update was
+# the following lines should prevent multiple updates if hotplug fires multiple startups 
+# as described in Ticket #7820, but did not function if never an update take place
+# i.e. after a reboot (/var is linked to /tmp)
+# using uptime as reference because date might not be updated via NTP client 
+get_uptime CURR_TIME
+[ -e "$UPDFILE" ] && {
+	LAST_TIME=$(cat $UPDFILE)
+	# check also LAST > CURR because link of /var/run to /tmp might be removed
+	# i.e. boxes with larger filesystems
+	[ -z "$LAST_TIME" ] && LAST_TIME=0
+	[ $LAST_TIME -gt $CURR_TIME ] && LAST_TIME=0
+}
+if [ $LAST_TIME -eq 0 ]; then
+	verbose_echo "   last update =: never"
+else
+	EPOCH_TIME=$(( $(date +%s) - CURR_TIME + LAST_TIME ))
+	EPOCH_TIME="date -d @$EPOCH_TIME +'$DATE_FORMAT'"
+	verbose_echo "   last update =: $(eval $EPOCH_TIME)"
 fi
-time_since_update=$(($current_time - $last_update))
 
+# we need time here because hotplug.d is fired by netifd
+# but IP addresses are not set by DHCP/DHCPv6 etc.
+verbose_echo "       waiting =: 10 seconds for interfaces to fully come up"
+sleep 10
 
-human_time_since_update=$(( $time_since_update / ( 60 * 60 ) ))
-verbose_echo "time_since_update = $human_time_since_update hours"
+# verify DNS server
+[ -n "$dns_server" ] && {
+	verbose_echo "******* VERIFY =: DNS server '$dns_server'"
+	verify_dns "$dns_server"
+	case $? in
+		0)	;;	# everything OK
+		2)	critical_error "Invalid DNS server Error: '2' - nslookup can not resolve host";;
+		3)	critical_error "Invalid DNS server Error: '3' - nc (netcat) can not connect";;
+		4)	critical_error "Invalid DNS server Error: '4' - Forced IP Version don't matched";;
+		*)	critical_error "Invalid DNS server Error: '1' - unspecific error";;
+	esac
+}
 
+# verify Proxy server and set environment
+[ -n "$proxy" ] && {
+	verbose_echo "******* VERIFY =: Proxy server 'http://$proxy'"
+	verify_proxy "$proxy"
+	case $? in
+		0)	# everything OK
+			export HTTP_PROXY="http://$proxy"
+			export HTTPS_PROXY="http://$proxy"
+			export http_proxy="http://$proxy"
+			export https_proxy="http://$proxy"
+			;;
+		2)	critical_error "Invalid Proxy server Error: '2' - nslookup can not resolve host";;
+		3)	critical_error "Invalid Proxy server Error: '3' - nc (netcat) can not connect";;
+		4)	critical_error "Invalid Proxy server Error: '4' - Forced IP Version don't matched";;
+		5)	critical_error "Invalid Proxy server Error: '5' - proxy port missing";;
+		*)	critical_error "Invalid Proxy server Error: '1' - unspecific error";;
+	esac
+}
 
+# let's check if there is already an IP registered at the web
+# but ignore errors if not
+verbose_echo "******* DETECT =: Registered IP"
+get_registered_ip REGISTERED_IP
 
-#do update and then loop endlessly, checking ip every check_interval and forcing an updating once every force_interval
+# loop endlessly, checking ip every check_interval and forcing an updating once every force_interval
+# NEW: ### Luci Ticket 538
+# a "force_interval" of "0" will run this script only once
+# the update is only done once when an interface goes up
+# or you run /etc/init.d/ddns start or you can use a cron job
+# it will force an update without check when lastupdate happen
+# but it will verify after "check_interval" if update is seen in the web 
+# and retries on error retry_count times
+# CHANGES: ### Ticket 16363
+# modified nslookup / sed / grep to detect registered ip
+# NEW: ### Ticket 7820
+# modified nslookup to support non standard dns_server (needs to be defined in /etc/config/ddns)
+# support for BIND host command.
+# Wait for interface to fully come up, before the first update is done
+verbose_echo "*** START LOOP =: $(eval $DATE_PROG)"
+# we run NOT once
+[ $FORCE_SECONDS -gt 0 -o $VERBOSE_MODE -le 1 ] && syslog_info "Starting main loop"
 
-while [ true ]
-do
-	registered_ip=$(echo $(nslookup "$domain" 2>/dev/null) |  grep -o "Name:.*" | grep -o "$ip_regex")
-	current_ip=$(get_current_ip)
+while : ; do
 
-
-	current_time=$(monotonic_time)
-	time_since_update=$(($current_time - $last_update))
-
-	syslog_echo "Running IP check ..."
-	verbose_echo "Running IP check..."
-	verbose_echo "current system ip = $current_ip"
-	verbose_echo "registered domain ip = $registered_ip"
-
-
-	if [ "$current_ip" != "$registered_ip" ]  || [ $force_interval_seconds -lt $time_since_update ]
-	then
-		verbose_echo "update necessary, performing update ..."
-
-		#do replacement
-		final_url=$update_url
-		for option_var in $ALL_OPTION_VARIABLES
-		do
-			if [ "$option_var" != "update_url" ]
-			then
-				replace_name=$(echo "\[$option_var\]" | tr 'a-z' 'A-Z')
-				replace_value=$(eval echo "\$$option_var")
-				replace_value=$(echo $replace_value | sed -f /usr/lib/ddns/url_escape.sed)
-				final_url=$(echo $final_url | sed s^"$replace_name"^"$replace_value"^g )
-			fi
-		done
-		final_url=$(echo $final_url | sed s^"\[HTTPAUTH\]"^"${username//^/\\^}${password:+:${password//^/\\^}}"^g )
-		final_url=$(echo $final_url | sed s/"\[IP\]"/"$current_ip"/g )
-
-
-		verbose_echo "updating with url=\"$final_url\""
-
-		#here we actually connect, and perform the update
-		update_output=$( $retrieve_prog "$final_url" )
-		if [ $? -gt 0 ]
-		then
-			syslog_echo "update failed, retrying in $retry_interval_seconds seconds"
-			verbose_echo "update failed"
-			sleep $retry_interval_seconds
-			continue
+	# read local IP
+	verbose_echo "******* DETECT =: Local IP"
+	get_local_ip LOCAL_IP
+	ERR_LAST=$?	# save return value
+	# Error in function
+	[ $ERR_LAST -gt 0 ] && {
+		if [ $VERBOSE_MODE -le 1 ]; then	# VERBOSE_MODE <= 1 then retry
+			# we can't read local IP
+			ERR_LOCAL_IP=$(( $ERR_LOCAL_IP + 1 ))
+			[ $ERR_LOCAL_IP -gt $retry_count ] && critical_error "Can not detect local IP"
+			verbose_echo "\n!!!!!!!!! ERROR =: detecting local IP - retry $ERR_LOCAL_IP/$retry_count in $RETRY_SECONDS seconds\n"
+			syslog_err "Error detecting local IP - retry $ERR_LOCAL_IP/$retry_count in $RETRY_SECONDS seconds"
+			sleep $RETRY_SECONDS
+			continue	# jump back to the beginning of while loop
+		else
+			verbose_echo "\n!!!!!!!!! ERROR =: detecting local IP - NO retry\n"
 		fi
-		syslog_echo "Update successful"
-		verbose_echo "Update Output:"
-		verbose_echo "$update_output"
-		verbose_echo ""
+	}
+	ERR_LOCAL_IP=0	# reset err counter
 
-		#save the time of the update
-		current_time=$(monotonic_time)
-		last_update=$current_time
-		time_since_update='0'
-		registered_ip=$current_ip
+	# prepare update
+	# never updated or forced immediate then NEXT_TIME = 0 
+	[ $FORCE_SECONDS -eq 0 -o $LAST_TIME -eq 0 ] \
+		&& NEXT_TIME=0 \
+		|| NEXT_TIME=$(( $LAST_TIME + $FORCE_SECONDS ))
+	# get current uptime
+	get_uptime CURR_TIME
+	
+	# send update when current time > next time or local ip different from registered ip (as loop on error)
+	ERR_SEND=0
+	while [ $CURR_TIME -ge $NEXT_TIME -o "$LOCAL_IP" != "$REGISTERED_IP" ]; do
+		if [ $VERBOSE_MODE -gt 2 ]; then
+			verbose_echo "  VERBOSE MODE =: NO UPDATE send to DDNS provider"
+		elif [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
+			verbose_echo "******* UPDATE =: LOCAL: '$LOCAL_IP' <=> REGISTERED: '$REGISTERED_IP'"
+		else
+			verbose_echo "******* FORCED =: LOCAL: '$LOCAL_IP' == REGISTERED: '$REGISTERED_IP'"
+		fi
+		# only send if VERBOSE_MODE < 3
+		ERR_LAST=0
+		[ $VERBOSE_MODE -lt 3 ] && {
+			send_update "$LOCAL_IP" 
+			ERR_LAST=$?	# save return value
+		}
 
-		human_time=$(date)
-		verbose_echo "update complete, time is: $human_time"
+		# Error in function 
+		if [ $ERR_LAST -gt 0 ]; then
+			if [ $VERBOSE_MODE -le 1 ]; then	# VERBOSE_MODE <=1 then retry
+				# error sending local IP
+				ERR_SEND=$(( $ERR_SEND + 1 ))
+				[ $ERR_SEND -gt $retry_count ] && critical_error "can not send update to DDNS Provider"
+				verbose_echo "\n!!!!!!!!! ERROR =: sending update - retry $ERR_SEND/$retry_count in $RETRY_SECONDS seconds\n"
+				syslog_err "Error sending update - retry $ERR_SEND/$retry_count in $RETRY_SECONDS seconds"
+				sleep $RETRY_SECONDS
+				continue # re-loop
+			else
+				verbose_echo "\n!!!!!!!!! ERROR =: sending update to DDNS service - NO retry\n"
+				break
+			fi
+		else
+			# we send data so save "last time"
+			get_uptime LAST_TIME
+			echo $LAST_TIME > $UPDFILE	# save LASTTIME to file
+			[ "$LOCAL_IP" != "$REGISTERED_IP" ] \
+				&& syslog_notice "Changed IP: '$LOCAL_IP' successfully send" \
+				|| syslog_notice "Forced Update: IP: '$LOCAL_IP' successfully send"
+			break # leave while
+		fi
+	done
 
-		echo "$last_update" > "/var/run/dynamic_dns/$service_id.update"
-	else
-		human_time=$(date)
-		human_time_since_update=$(( $time_since_update / ( 60 * 60 ) ))
-		verbose_echo "update unnecessary"
-		verbose_echo "time since last update = $human_time_since_update hours"
-		verbose_echo "the time is now $human_time"
-	fi
+	# now we wait for check interval before testing if update was recognized
+	# only sleep if VERBOSE_MODE <= 2 because nothing send so do not wait
+	[ $VERBOSE_MODE -le 2 ] && {
+		verbose_echo "****** WAITING =: $CHECK_SECONDS seconds (Check Interval) before continue"
+		sleep $CHECK_SECONDS
+	} || verbose_echo "  VERBOSE MODE =: NO WAITING for Check Interval\n"
 
-	#sleep for 10 minutes, then re-check ip && time since last update
-	sleep $check_interval_seconds
+	# read at DDNS service registered IP (in loop on error)
+	REGISTERED_IP=""
+	ERR_REG_IP=0
+	while : ; do
+		verbose_echo "******* DETECT =: Registered IP"
+		get_registered_ip REGISTERED_IP
+		ERR_LAST=$?	# save return value
+
+		# No Error in function we leave while loop
+		[ $ERR_LAST -eq 0  ] && break
+
+		# we can't read Registered IP
+		if [ $VERBOSE_MODE -le 1 ]; then	# VERBOSE_MODE <=1 then retry
+			ERR_REG_IP=$(( $ERR_REG_IP + 1 ))
+			[ $ERR_REG_IP -gt $retry_count ] && critical_error "can not detect registered local IP"
+			verbose_echo "\n!!!!!!!!! ERROR =: detecting Registered IP - retry $ERR_REG_IP/$retry_count in $RETRY_SECONDS seconds\n"
+			syslog_err "Error detecting Registered IP - retry $ERR_REG_IP/$retry_count in $RETRY_SECONDS seconds"
+			sleep $RETRY_SECONDS
+		else
+			verbose_echo "\n!!!!!!!!! ERROR =: detecting Registered IP - NO retry\n"
+			break	# leave while loop
+		fi
+	done
+
+	# IP's are still different
+	if [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
+		if [ $VERBOSE_MODE -le 1 ]; then	# VERBOSE_MODE <=1 then retry
+			ERR_UPDATE=$(( $ERR_UPDATE + 1 ))
+			[ $ERR_UPDATE -gt $retry_count ] && critical_error "Registered IP <> Local IP - LocalIP: '$LOCAL_IP' - RegisteredIP: '$REGISTERED_IP'"
+			verbose_echo "\n!!!!!!!!! ERROR =: Registered IP <> Local IP - starting retry $ERR_UPDATE/$retry_count\n"
+			syslog_warn "Warning: Registered IP <> Local IP - starting retry $ERR_UPDATE/$retry_count"
+			continue # loop to beginning
+		else
+			verbose_echo "\n!!!!!!!!! ERROR =: Registered IP <> Local IP - LocalIP: '$LOCAL_IP' - RegisteredIP: '$REGISTERED_IP' - NO retry\n"
+		fi
+	fi		
+
+	# we checked successful the last update
+	ERR_UPDATE=0			# reset error counter
+
+	# force_update=0 or VERBOSE_MODE > 1 - leave the main loop
+	[ $FORCE_SECONDS -eq 0 -o $VERBOSE_MODE -gt 1 ] && {
+		verbose_echo "****** LEAVING =: $(eval $DATE_PROG)"
+		syslog_info "Leaving"
+		break
+	}
+	verbose_echo "********* LOOP =: $(eval $DATE_PROG)"
+	syslog_info "Rerun IP check"
 done
 
-#should never get here since we're a daemon, but I'll throw it in anyway
-return 0
+verbose_echo "****** STOPPED =: PID '$$' at $(eval $DATE_PROG)\n"
+syslog_info "Done"
 
-
-
-
+exit 0
