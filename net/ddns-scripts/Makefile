@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
-PKG_VERSION:=1.0.0
-PKG_RELEASE:=23
+PKG_VERSION:=2.0.1
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -10,17 +10,25 @@ PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ddns-scripts
-	SECTION:=net
-	CATEGORY:=Network
-        SUBMENU:=IP Addresses and Names
-	TITLE:=Dynamic DNS Scripts
-	PKGARCH:=all
-	MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
+    SECTION:=net
+    CATEGORY:=Network
+    SUBMENU:=IP Addresses and Names
+    TITLE:=Dynamic DNS Scripts (with IPv6 support)
+    PKGARCH:=all
+    MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 endef
 
 define Package/ddns-scripts/description
-	A highly configurable set of scripts for doing
-	dynamic dns updates
+	A highly configurable set of scripts for doing dynamic dns updates. 
+	NEW in this version:
+	- IPv6 support
+	- force communication to IPv4 or IPv6 only
+	- DNS server support
+	- using BIND host if installed
+	- DNS requests via TCP
+	- Proxy server support
+	- log file support
+	- support to run once
 endef
 
 define Build/Prepare
@@ -37,10 +45,50 @@ define Package/ddns-scripts/conffiles
 endef
 
 define Package/ddns-scripts/install
-	$(INSTALL_DIR) $(1)
-	$(CP) ./files/* $(1)/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/etc/config/* $(1)/etc/config
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/* $(1)/etc/hotplug.d/iface
+
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/etc/init.d/ddns $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/etc/init.d/* $(1)/etc/init.d/
+
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_DATA) ./files/usr/lib/ddns/service* $(1)/usr/lib/ddns
+	$(INSTALL_BIN)  ./files/usr/lib/ddns/*.sh $(1)/usr/lib/ddns
+endef
+
+define Package/ddns-scripts/postinst
+	#!/bin/sh
+	# if run within buildroot exit
+	[ -n "${IPKG_INSTROOT}" ] && exit 0
+
+	# add new section "ddns" "global" if not exists
+	uci -q get ddns.global > /dev/null || uci -q set ddns.global='ddns'
+	uci -q get ddns.global.date_format > /dev/null || uci -q set ddns.global.date_format='%F %R'
+	uci -q get ddns.global.log_lines > /dev/null || uci -q set ddns.global.log_lines='250'
+	uci -q commit ddns
+
+	# clear LuCI indexcache 
+	rm -f /tmp/luci-indexcache >/dev/null 2>&1
+
+	exit 0
+endef
+
+define Package/ddns-scripts/prerm
+	#!/bin/sh
+	# if run within buildroot exit
+	[ -n "${IPKG_INSTROOT}" ] && exit 0
+
+	# stop running scripts
+	/etc/init.d/ddns disable
+	/etc/init.d/ddns stop
+
+	# clear LuCI indexcache 
+	rm -f /tmp/luci-indexcache >/dev/null 2>&1
+
+	exit 0
 endef
 
 $(eval $(call BuildPackage,ddns-scripts))
