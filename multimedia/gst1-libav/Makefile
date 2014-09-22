@@ -160,7 +160,8 @@ CONFIGURE_ARGS += \
 	--disable-parsers \
 	$(LIBAV_CONFIGURE_PARSERS) \
 	--disable-protocols \
-	$(LIBAV_CONFIGURE_PROTOCOLS)"
+	$(LIBAV_CONFIGURE_PROTOCOLS) \
+	--disable-yasm"
 
 # XXX: trick to force use of embedded Libav headers
 TARGET_CFLAGS += $(TARGET_CPPFLAGS)
