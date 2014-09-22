@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasql
-PKG_VERSION:=2.1.1
+PKG_VERSION:=2.3.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://files.luaforge.net/releases/luasql/luasql
-PKG_MD5SUM:=63bdd57de4b9d1be336ba112d8cb69eb
+PKG_SOURCE:=v$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/keplerproject/luasql/archive/
+PKG_MD5SUM:=af9f0f3a2313a1fcf88c40700092048d
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILE:=docs/us/license.html
