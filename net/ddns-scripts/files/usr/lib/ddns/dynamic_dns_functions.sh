@@ -672,7 +672,7 @@ get_registered_ip() {
 		} || {
 			# we need to run twice because multi-line output needs to be directly piped to grep because
 			# pipe returns return code of last prog in pipe but we need errors from host command
-			__IP=$(eval $__RUNPROG | grep "^$domain" | grep -m 1 -o "$__REGEX")
+			__IP=$(eval $__RUNPROG | grep -m 1 "has" | awk -F "address " '{print $2}' )
 		}
 
 	elif [ -x /usr/bin/nslookup ]; then	# last use BusyBox nslookup
@@ -692,7 +692,7 @@ get_registered_ip() {
 		} || {
 			# we need to run twice because multi-line output needs to be directly piped to grep because
 			# pipe returns return code of last prog in pipe but we need errors from nslookup command
-			__IP=$(eval $__RUNPROG | sed '1,2d' | grep -o "Name:\|Address.*" | grep -m 1 -o "$__REGEX")
+			__IP=$(eval $__RUNPROG | sed '1,2d' | awk '/Address.*/ {print $3}' | grep -m 1 -o "$__REGEX" )
 		}
 
 	else					# there must be an error
