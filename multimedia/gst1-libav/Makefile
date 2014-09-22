@@ -145,8 +145,8 @@ LIBAV_CONFIGURE_PARSERS:=$(call FILTER_CONFIG,PARSER,parser,$(LIBAV_PARSERS))
 LIBAV_CONFIGURE_PROTOCOLS:=$(call FILTER_CONFIG,PROTOCOL,protocol,$(LIBAV_PROTOCOLS))
 
 CONFIGURE_ARGS += \
-	--with-libav-extra-configure="--target-os=linux \
 	--without-system-libav \
+	--with-libav-extra-configure="--target-os=linux \
 	--disable-bsfs \
 	--disable-devices \
 	--disable-encoders \
