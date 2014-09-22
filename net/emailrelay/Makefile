@@ -80,6 +80,9 @@ define Package/emailrelay-nossl/conffiles
 /etc/emailrelay.auth
 endef
 
+CONFIGURE_ARGS += \
+	--with-pam=no
+
 CONFIGURE_VARS += \
 	CXXFLAGS="$$$$CXXFLAGS -fno-rtti"	
 
@@ -93,7 +96,7 @@ ifeq ($(BUILD_VARIANT),nossl)
 		--with-openssl=no
 endif
 
-define Package/emailrelay/install	
+define Package/emailrelay/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-filter-copy $(1)/usr/bin/
