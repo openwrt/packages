@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
 PKG_VERSION:=1.5.4
-PKG_RELEASE:=14
+PKG_RELEASE:=15
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.5/src/
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -76,16 +76,10 @@ else
 endif
 
 ifeq ($(BUILD_VARIANT),ssl)
-	ADDLIB:=-lcrypt
 	USE_OPENSSL=USE_OPENSSL=1
 else
-	ADDLIB:=
 	USE_OPENSSL=
 endif
-
-
-
-
 
 define Build/Compile
 	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR) \
@@ -94,7 +88,6 @@ define Build/Compile
 		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		ADDLIB="$(ADDLIB)" \
 		PCREDIR="$(STAGING_DIR)/usr/include" \
 		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
 		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 $(USE_OPENSSL) \
@@ -108,7 +101,6 @@ define Build/Compile
 		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		ADDLIB="$(ADDLIB)" \
 		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
 		halog
 endef
