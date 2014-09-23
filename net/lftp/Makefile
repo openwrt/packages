@@ -50,6 +50,7 @@ CONFIGURE_ARGS += \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
 	--without-gnutls \
+	--without-libidn \
 	--without-libresolv \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--disable-static
