@@ -45,6 +45,7 @@ endef
 
 define Package/libsodium/config
 menu "Configuration"
+	depends on PACKAGE_libsodium
 	config LIBSODIUM_MINIMAL
 		bool "Compile only what is required for the high-level API (no aes128ctr), should be fine in most cases."
 		default y
