@@ -8,13 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=1.5.0
+PKG_VERSION:=1.5.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_MD5SUM:=d677de99c19afea3b1e8ef075a9d5a8b
+PKG_MD5SUM:=bab73ec83ad7f1d64bb765bf0c72caae
+
+PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
+PKG_LICENSE:=GPL-2.0+
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
@@ -28,7 +31,6 @@ define Package/knot/Default
 	CATEGORY:=Network
 	TITLE:=Knot DNS
 	URL:=https://www.knot-dns.cz
-	MAINTAINER:=daniel.salzman@nic.cz
 	SUBMENU:=IP Addresses and Names
 	DEPENDS:=+libopenssl +liburcu
 endef
