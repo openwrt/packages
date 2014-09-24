@@ -1,0 +1,23 @@
+---
+ Makefile.pre.in |    6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/Makefile.pre.in
++++ b/Makefile.pre.in
+@@ -1169,12 +1169,12 @@ TAGS::
+ # Sanitation targets -- clean leaves libraries, executables and tags
+ # files, which clobber removes as well
+ pycremoval:
+-	find $(srcdir) -name '*.py[co]' -exec rm -f {} ';'
++	find $(srcdir) ! -path './ipkg-install/*' -name '*.py[co]' -exec rm -f {} ';'
+ 
+ clean: pycremoval
+-	find . -name '*.[oa]' -exec rm -f {} ';'
+-	find . -name '*.s[ol]' -exec rm -f {} ';'
+-	find . -name '*.so.[0-9]*.[0-9]*' -exec rm -f {} ';'
++	find . ! -path './ipkg-install/*' -name '*.[oa]' -exec rm -f {} ';'
++	find . ! -path './ipkg-install/*' -name '*.s[ol]' -exec rm -f {} ';'
++	find . ! -path './ipkg-install/*' -name '*.so.[0-9]*.[0-9]*' -exec rm -f {} ';'
+ 	find build -name 'fficonfig.h' -exec rm -f {} ';' || true
+ 	find build -name 'fficonfig.py' -exec rm -f {} ';' || true
+ 	-rm -f Lib/lib2to3/*Grammar*.pickle
