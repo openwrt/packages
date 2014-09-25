@@ -18,7 +18,7 @@ Patch (apply with `patch -p0'):
 
 --- a/subst.c
 +++ b/subst.c
-@@ -7274,6 +7274,7 @@ parameter_brace_expand (string, indexp, 
+@@ -7274,6 +7274,7 @@ parameter_brace_expand (string, indexp,
      default:
      case '\0':
      bad_substitution:

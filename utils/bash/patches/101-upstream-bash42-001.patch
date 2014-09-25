@@ -34,7 +34,7 @@ Patch (apply with `patch -p0'):
  
    i = *sindex;
    while (c = string[i])
-@@ -7176,7 +7178,7 @@ parameter_brace_expand (string, indexp, 
+@@ -7176,7 +7178,7 @@ parameter_brace_expand (string, indexp,
      {
        /* Extract the contents of the ${ ... } expansion
  	 according to the Posix.2 rules. */
