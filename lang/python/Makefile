@@ -51,87 +51,86 @@ endef
 
 define Package/python
 $(call Package/python/Default)
-  TITLE+= (full)
-  DEPENDS:=+libpthread +zlib +libffi +python-mini
+  DEPENDS:=+libpthread +zlib +libffi
 endef
 
 define Package/python/description
-$(call Package/python/Default/description)
- .
- This package contains the full Python install.
-endef
-
-define Package/python-mini
-$(call Package/python/Default)
-  TITLE+= (minimal)
-  DEPENDS:=+libpthread +zlib
-endef
-
-define Package/python-mini/description
 $(call Package/python/Default/description)
   .
   This package contains only a minimal Python install.
 endef
 
+define Package/python-full
+$(call Package/python/Default)
+  TITLE+= (full)
+  DEPENDS:=@PACKAGE_python +PACKAGE_python:python
+endef
+
+define Package/python-full/description
+$(call Package/python/Default/description)
+ .
+ This package contains the full Python install.
+endef
+
 define Package/python-doc
 $(call Package/python/Default)
   TITLE:=Python interactive documentation
-  DEPENDS+=+python-mini
+  DEPENDS:=@PACKAGE_python +PACKAGE_python:python
 endef
 
 define Package/python-bzip2
 $(call Package/python/Default)
   TITLE:=Python support for Bzip2
-  DEPENDS+=+python-mini +libbz2
+  DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libbz2
 endef
 
 define Package/python-expat
 $(call Package/python/Default)
   TITLE:=Python support for expat
-  DEPENDS+=+python-mini +libexpat
+  DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libexpat
 endef
 
 define Package/python-gzip
 $(call Package/python/Default)
   TITLE:=Python support for gzip
-  DEPENDS+=+python-mini
+  DEPENDS:=@PACKAGE_python +PACKAGE_python:python
 endef
 
 define Package/python-openssl
 $(call Package/python/Default)
  TITLE:=Python support for OpenSSL
- DEPENDS+=+python-mini +libopenssl
+ DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libopenssl
 endef
 
 define Package/python-shutil
 $(call Package/python/Default)
   TITLE:=Python support for shutil
-  DEPENDS+=+python-mini
+  DEPENDS:=@PACKAGE_python +PACKAGE_python:python
 endef
 
 # Needs datetime
 define Package/python-sqlite3
 $(call Package/python/Default)
  TITLE:=Python support for sqlite3
- DEPENDS+=+python +libsqlite3
+ DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libsqlite3
 endef
 
 define Package/python-gdbm
 $(call Package/python/Default)
  TITLE:=Python support for gdbm
- DEPENDS+=+python-mini +libgdbm
+ DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libgdbm
 endef
 
 define Package/python-readline
 $(call Package/python/Default)
  TITLE:=Python support for readline
- DEPENDS+=+python-mini +libreadline +libncurses @BROKEN
+ DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libreadline +libncurses @BROKEN
 endef
 
 define Package/python-ncurses
 $(call Package/python/Default)
  TITLE:=Python support for readline
- DEPENDS+=+python-mini +libncurses
+ DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libncurses
 endef
 
 MAKE_FLAGS:=\
@@ -203,7 +202,7 @@ define Build/InstallDev
 	ln -sf python$(PYTHON_VERSION)-config python-config;)
 endef
 
-define PyPackage/python/filespec
+define PyPackage/python-full/filespec
 +|/usr/lib/python$(PYTHON_VERSION)
 -|/usr/lib/python$(PYTHON_VERSION)/bsddb/test
 -|/usr/lib/python$(PYTHON_VERSION)/config
@@ -318,7 +317,7 @@ define PyPackage/python/filespec
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_bisect.so
 endef
 
-define PyPackage/python-mini/filespec
+define PyPackage/python/filespec
 +|/usr/bin/python$(PYTHON_VERSION)
 +|/usr/lib/python$(PYTHON_VERSION)/__future__.py
 +|/usr/lib/python$(PYTHON_VERSION)/_abcoll.py
@@ -408,7 +407,7 @@ define PyPackage/python-mini/filespec
 +|/usr/include/python$(PYTHON_VERSION)/pyconfig.h
 endef
 
-define PyPackage/python-mini/install
+define PyPackage/python/install
 	ln -sf python$(PYTHON_VERSION) $(1)/usr/bin/python
 endef
 
@@ -486,7 +485,7 @@ endef
 $(eval $(call HostBuild))
 
 $(eval $(call PyPackage,python))
-$(eval $(call PyPackage,python-mini))
+$(eval $(call PyPackage,python-full))
 $(eval $(call PyPackage,python-doc))
 $(eval $(call PyPackage,python-bzip2))
 $(eval $(call PyPackage,python-expat))
@@ -499,7 +498,7 @@ $(eval $(call PyPackage,python-readline))
 $(eval $(call PyPackage,python-ncurses))
 
 $(eval $(call BuildPackage,python))
-$(eval $(call BuildPackage,python-mini))
+$(eval $(call BuildPackage,python-full))
 $(eval $(call BuildPackage,python-doc))
 $(eval $(call BuildPackage,python-bzip2))
 $(eval $(call BuildPackage,python-expat))
