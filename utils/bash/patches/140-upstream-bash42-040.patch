@@ -1,0 +1,45 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-040
+
+Bug-Reported-by:	Andrey Zaitsev <jstcdr@gmail.com>
+Bug-Reference-ID:	<CAEZVQT5PJ1Mb_Zh8LT5qz8sv+-9Q6hGfQ5DU9ZxdJ+gV7xBUaQ@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2012-04/msg00144.html
+
+Bug-Description:
+
+Output redirection applied to builtin commands missed I/O errors if
+they happened when the file descriptor was closed, rather than on write
+(e.g., like with an out-of-space error on a remote NFS file system).
+
+Patch (apply with `patch -p0'):
+
+--- a/redir.c
++++ b/redir.c
+@@ -1091,10 +1091,12 @@ do_redirection_internal (redirect, flags
+ 
+ #if defined (BUFFERED_INPUT)
+ 	  check_bash_input (redirector);
+-	  close_buffered_fd (redirector);
++	  r = close_buffered_fd (redirector);
+ #else /* !BUFFERED_INPUT */
+-	  close (redirector);
++	  r = close (redirector);
+ #endif /* !BUFFERED_INPUT */
++	  if (r < 0 && (flags & RX_INTERNAL) && (errno == EIO || errno == ENOSPC))
++	    REDIRECTION_ERROR (r, errno, -1);
+ 	}
+       break;
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 39
++#define PATCHLEVEL 40
+ 
+ #endif /* _PATCHLEVEL_H_ */

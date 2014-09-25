@@ -1,0 +1,91 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-037
+
+Bug-Reported-by:	Jakub Filak
+Bug-Reference-ID:
+Bug-Reference-URL:	https://bugzilla.redhat.com/show_bug.cgi?id=813289
+
+Bug-Description:
+
+Attempting to redo (using `.') the vi editing mode `cc', `dd', or `yy'
+commands leads to an infinite loop.
+
+Patch (apply with `patch -p0'):
+
+--- a/lib/readline/vi_mode.c
++++ b/lib/readline/vi_mode.c
+@@ -1234,11 +1234,19 @@ rl_vi_delete_to (count, key)
+       _rl_vimvcxt->motion = '$';
+       r = rl_domove_motion_callback (_rl_vimvcxt);
+     }
+-  else if (vi_redoing)
++  else if (vi_redoing && _rl_vi_last_motion != 'd')	/* `dd' is special */
+     {
+       _rl_vimvcxt->motion = _rl_vi_last_motion;
+       r = rl_domove_motion_callback (_rl_vimvcxt);
+     }
++  else if (vi_redoing)		/* handle redoing `dd' here */
++    {
++      _rl_vimvcxt->motion = _rl_vi_last_motion;
++      rl_mark = rl_end;
++      rl_beg_of_line (1, key);
++      RL_UNSETSTATE (RL_STATE_VIMOTION);
++      r = vidomove_dispatch (_rl_vimvcxt);
++    }
+ #if defined (READLINE_CALLBACKS)
+   else if (RL_ISSTATE (RL_STATE_CALLBACK))
+     {
+@@ -1316,11 +1324,19 @@ rl_vi_change_to (count, key)
+       _rl_vimvcxt->motion = '$';
+       r = rl_domove_motion_callback (_rl_vimvcxt);
+     }
+-  else if (vi_redoing)
++  else if (vi_redoing && _rl_vi_last_motion != 'c')	/* `cc' is special */
+     {
+       _rl_vimvcxt->motion = _rl_vi_last_motion;
+       r = rl_domove_motion_callback (_rl_vimvcxt);
+     }
++  else if (vi_redoing)		/* handle redoing `cc' here */
++    {
++      _rl_vimvcxt->motion = _rl_vi_last_motion;
++      rl_mark = rl_end;
++      rl_beg_of_line (1, key);
++      RL_UNSETSTATE (RL_STATE_VIMOTION);
++      r = vidomove_dispatch (_rl_vimvcxt);
++    }
+ #if defined (READLINE_CALLBACKS)
+   else if (RL_ISSTATE (RL_STATE_CALLBACK))
+     {
+@@ -1377,6 +1393,19 @@ rl_vi_yank_to (count, key)
+       _rl_vimvcxt->motion = '$';
+       r = rl_domove_motion_callback (_rl_vimvcxt);
+     }
++  else if (vi_redoing && _rl_vi_last_motion != 'y')	/* `yy' is special */
++    {
++      _rl_vimvcxt->motion = _rl_vi_last_motion;
++      r = rl_domove_motion_callback (_rl_vimvcxt);
++    }
++  else if (vi_redoing)			/* handle redoing `yy' here */
++    {
++      _rl_vimvcxt->motion = _rl_vi_last_motion;
++      rl_mark = rl_end;
++      rl_beg_of_line (1, key);
++      RL_UNSETSTATE (RL_STATE_VIMOTION);
++      r = vidomove_dispatch (_rl_vimvcxt);
++    }
+ #if defined (READLINE_CALLBACKS)
+   else if (RL_ISSTATE (RL_STATE_CALLBACK))
+     {
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 36
++#define PATCHLEVEL 37
+ 
+ #endif /* _PATCHLEVEL_H_ */

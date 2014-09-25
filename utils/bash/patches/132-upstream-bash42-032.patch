@@ -1,0 +1,62 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-032
+
+Bug-Reported-by:	Ruediger Kuhlmann <RKuhlmann@orga-systems.com>
+Bug-Reference-ID:	<OFDE975207.0C3622E5-ONC12579F3.00361A06-C12579F3.00365E39@orga-systems.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2012-05/msg00010.html
+
+Bug-Description:
+
+Bash-4.2 has problems with DEL characters in the expanded value of variables
+used in the same quoted string as variables that expand to nothing.
+
+Patch (apply with `patch -p0'):
+
+--- a/subst.c
++++ b/subst.c
+@@ -8151,6 +8151,14 @@ add_string:
+ 	  temp = tword->word;
+ 	  dispose_word_desc (tword);
+ 
++	  /* Kill quoted nulls; we will add them back at the end of
++	     expand_word_internal if nothing else in the string */
++	  if (had_quoted_null && temp && QUOTED_NULL (temp))
++	    {
++	      FREE (temp);
++	      temp = (char *)NULL;
++	    }
++
+ 	  goto add_string;
+ 	  break;
+ 
+@@ -8555,7 +8563,7 @@ finished_with_string:
+ 	tword->flags |= W_NOEXPAND;	/* XXX */
+       if (quoted & (Q_HERE_DOCUMENT|Q_DOUBLE_QUOTES))
+ 	tword->flags |= W_QUOTED;
+-      if (had_quoted_null)
++      if (had_quoted_null && QUOTED_NULL (istring))
+ 	tword->flags |= W_HASQUOTEDNULL;
+       list = make_word_list (tword, (WORD_LIST *)NULL);
+     }
+@@ -8586,7 +8594,7 @@ finished_with_string:
+ 	    tword->flags |= W_NOGLOB;
+ 	  if (word->flags & W_NOEXPAND)
+ 	    tword->flags |= W_NOEXPAND;
+-	  if (had_quoted_null)
++	  if (had_quoted_null && QUOTED_NULL (istring))
+ 	    tword->flags |= W_HASQUOTEDNULL;	/* XXX */
+ 	  list = make_word_list (tword, (WORD_LIST *)NULL);
+ 	}
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 31
++#define PATCHLEVEL 32
+ 
+ #endif /* _PATCHLEVEL_H_ */

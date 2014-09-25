@@ -1,0 +1,58 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-044
+
+Bug-Reported-by:	"Dashing" <dashing@hushmail.com>
+Bug-Reference-ID:	<20130211175049.D90786F446@smtp.hushmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2013-02/msg00030.html
+
+Bug-Description:
+
+When converting a multibyte string to a wide character string as part of
+pattern matching, bash does not handle the end of the string correctly,
+causing the search for the NUL to go beyond the end of the string and
+reference random memory.  Depending on the contents of that memory, bash
+can produce errors or crash. 
+
+Patch (apply with `patch -p0'):
+
+--- a/lib/glob/xmbsrtowcs.c
++++ b/lib/glob/xmbsrtowcs.c
+@@ -216,12 +216,24 @@ xdupmbstowcs2 (destp, src)
+ 	 It may set 'p' to NULL. */
+       n = mbsnrtowcs(wsbuf+wcnum, &p, nms, wsbuf_size-wcnum, &state);
+ 
++      if (n == 0 && p == 0)
++	{
++	  wsbuf[wcnum] = L'\0';
++	  break;
++	}
++
+       /* Compensate for taking single byte on wcs conversion failure above. */
+       if (wcslength == 1 && (n == 0 || n == (size_t)-1))
+ 	{
+ 	  state = tmp_state;
+ 	  p = tmp_p;
+-	  wsbuf[wcnum++] = *p++;
++	  wsbuf[wcnum] = *p;
++	  if (*p == 0)
++	    break;
++	  else
++	    {
++	      wcnum++; p++;
++	    }
+ 	}
+       else
+         wcnum += wcslength;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 43
++#define PATCHLEVEL 44
+ 
+ #endif /* _PATCHLEVEL_H_ */

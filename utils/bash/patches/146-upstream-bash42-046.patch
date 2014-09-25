@@ -1,0 +1,46 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-046
+
+Bug-Reported-by:	"Theodoros V. Kalamatianos" <thkala@gmail.com>
+Bug-Reference-ID:	<20140112011131.GE17667@infinity.metashade.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-01/msg00044.html
+
+Bug-Description:
+
+Bash-4.2 patch 32 introduced a problem with "$@" and arrays expanding empty
+positional parameters or array elements when using substring expansion,
+pattern substitution, or case modfication.  The empty parameters or array
+elements are removed instead of expanding to empty strings ("").
+
+Patch (apply with `patch -p0'):
+
+--- a/subst.c
++++ b/subst.c
+@@ -7242,7 +7242,13 @@ parameter_brace_expand (string, indexp,
+ 
+       ret = alloc_word_desc ();
+       ret->word = temp1;
+-      if (temp1 && QUOTED_NULL (temp1) && (quoted & (Q_HERE_DOCUMENT|Q_DOUBLE_QUOTES)))
++      /* We test quoted_dollar_atp because we want variants with double-quoted
++	 "$@" to take a different code path. In fact, we make sure at the end
++	 of expand_word_internal that we're only looking at these flags if
++	 quoted_dollar_at == 0. */
++      if (temp1 && 
++          (quoted_dollar_atp == 0 || *quoted_dollar_atp == 0) &&
++	  QUOTED_NULL (temp1) && (quoted & (Q_HERE_DOCUMENT|Q_DOUBLE_QUOTES)))
+ 	ret->flags |= W_QUOTED|W_HASQUOTEDNULL;
+       return ret;
+     }
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 45
++#define PATCHLEVEL 46
+ 
+ #endif /* _PATCHLEVEL_H_ */

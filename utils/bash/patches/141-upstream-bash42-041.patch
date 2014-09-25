@@ -1,0 +1,42 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-041
+
+Bug-Reported-by:	Andrey Borzenkov <arvidjaar@gmail.com>
+Bug-Reference-ID:	<20121202205200.2134478e@opensuse.site>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2012-12/msg00008.html
+
+Bug-Description:
+
+Process substitution incorrectly inherited a flag that inhibited using the
+(local) temporary environment for variable lookups if it was providing
+the filename to a redirection.  The intent the flag is to enforce the
+Posix command expansion ordering rules.
+
+Patch (apply with `patch -p0'):
+
+--- a/subst.c
++++ b/subst.c
+@@ -5124,6 +5124,10 @@ process_substitute (string, open_for_rea
+   dev_fd_list[parent_pipe_fd] = 0;
+ #endif /* HAVE_DEV_FD */
+ 
++  /* subshells shouldn't have this flag, which controls using the temporary
++     environment for variable lookups. */
++  expanding_redir = 0;
++
+   result = parse_and_execute (string, "process substitution", (SEVAL_NONINT|SEVAL_NOHIST));
+ 
+ #if !defined (HAVE_DEV_FD)
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 40
++#define PATCHLEVEL 41
+ 
+ #endif /* _PATCHLEVEL_H_ */

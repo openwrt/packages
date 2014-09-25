@@ -1,0 +1,56 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-035
+
+Bug-Reported-by:	Dan Douglas <ormaaj@gmail.com>
+Bug-Reference-ID:	<2766482.Ksm3GrSoYi@smorgbox>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2012-06/msg00071.html
+
+Bug-Description:
+
+When given a number of lines to read, `mapfile -n lines' reads one too many.
+
+Patch (apply with `patch -p0'):
+
+--- a/builtins/mapfile.def
++++ b/builtins/mapfile.def
+@@ -195,13 +195,9 @@ mapfile (fd, line_count_goal, origin, ns
+   /* Reset the buffer for bash own stream */
+   interrupt_immediately++;
+   for (array_index = origin, line_count = 1; 
+-       zgetline (fd, &line, &line_length, unbuffered_read) != -1;
+-       array_index++, line_count++) 
++ 	zgetline (fd, &line, &line_length, unbuffered_read) != -1;
++	array_index++) 
+     {
+-      /* Have we exceeded # of lines to store? */
+-      if (line_count_goal != 0 && line_count > line_count_goal) 
+-	break;
+-
+       /* Remove trailing newlines? */
+       if (flags & MAPF_CHOP)
+ 	do_chop (line);
+@@ -217,6 +213,11 @@ mapfile (fd, line_count_goal, origin, ns
+ 	}
+ 
+       bind_array_element (entry, array_index, line, 0);
++
++      /* Have we exceeded # of lines to store? */
++      line_count++;
++      if (line_count_goal != 0 && line_count > line_count_goal) 
++	break;
+     }
+ 
+   xfree (line);
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 34
++#define PATCHLEVEL 35
+ 
+ #endif /* _PATCHLEVEL_H_ */

@@ -1,0 +1,54 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-043
+
+Bug-Reported-by:	konsolebox <konsolebox@gmail.com>
+Bug-Reference-ID:	<CAJnmqwZuGKLgMsMwxRK4LL+2NN+HgvmKzrnode99QBGrcgX1Lw@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2013-01/msg00138.html
+
+Bug-Description:
+
+When SIGCHLD is trapped, and a SIGCHLD trap handler runs when a pending
+`read -t' invocation times out and generates SIGALRM, bash can crash with
+a segmentation fault.
+
+Patch (apply with `patch -p0'):
+
+--- a/builtins/read.def
++++ b/builtins/read.def
+@@ -385,10 +385,20 @@ read_builtin (list)
+ 	{
+ 	  /* Tricky.  The top of the unwind-protect stack is the free of
+ 	     input_string.  We want to run all the rest and use input_string,
+-	     so we have to remove it from the stack. */
+-	  remove_unwind_protect ();
+-	  run_unwind_frame ("read_builtin");
++	     so we have to save input_string temporarily, run the unwind-
++	     protects, then restore input_string so we can use it later. */
++
+ 	  input_string[i] = '\0';	/* make sure it's terminated */
++	  if (i == 0)
++	    {
++	      t = (char *)xmalloc (1);
++	      t[0] = 0;
++	    }
++	  else
++	    t = savestring (input_string);
++
++	  run_unwind_frame ("read_builtin");
++	  input_string = t;
+ 	  retval = 128+SIGALRM;
+ 	  goto assign_vars;
+ 	}
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 42
++#define PATCHLEVEL 43
+ 
+ #endif /* _PATCHLEVEL_H_ */

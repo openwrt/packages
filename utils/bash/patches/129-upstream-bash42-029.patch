@@ -1,0 +1,461 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-029
+
+Bug-Reported-by:	"Michael Kalisz" <michael@kalisz.homelinux.net>
+Bug-Reference-ID:	<50241.78.69.11.112.1298585641.squirrel@kalisz.homelinux.net>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2011-02/msg00274.html
+
+Bug-Description:
+
+Bash-4.2 tries to leave completed directory names as the user typed them,
+without expanding them to a full pathname.  One effect of this is that
+shell variables used in pathnames being completed (e.g., $HOME) are left
+unchanged, but the `$' is quoted by readline because it is a special
+character to the shell.
+
+This patch introduces two things:
+
+1.  A new shell option, `direxpand', which, if set, attempts to emulate the
+    bash-4.1 behavior of expanding words to full pathnames during
+    completion;
+2.  A set of heuristics that reduce the number of times special characters
+    such as `$' are quoted when the directory name is not expanded.
+
+Patch (apply with `patch -p0'):
+
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 28
++#define PATCHLEVEL 29
+ 
+ #endif /* _PATCHLEVEL_H_ */
+--- a/bashline.c
++++ b/bashline.c
+@@ -121,6 +121,9 @@ static int bash_directory_completion_hoo
+ static int filename_completion_ignore __P((char **));
+ static int bash_push_line __P((void));
+ 
++static rl_icppfunc_t *save_directory_hook __P((void));
++static void reset_directory_hook __P((rl_icppfunc_t *));
++
+ static void cleanup_expansion_error __P((void));
+ static void maybe_make_readline_line __P((char *));
+ static void set_up_new_line __P((char *));
+@@ -243,10 +246,17 @@ int force_fignore = 1;
+ /* Perform spelling correction on directory names during word completion */
+ int dircomplete_spelling = 0;
+ 
++/* Expand directory names during word/filename completion. */
++int dircomplete_expand = 0;
++int dircomplete_expand_relpath = 0;
++
+ static char *bash_completer_word_break_characters = " \t\n\"'@><=;|&(:";
+ static char *bash_nohostname_word_break_characters = " \t\n\"'><=;|&(:";
+ /* )) */
+ 
++static const char *default_filename_quote_characters = " \t\n\\\"'@<>=;|&()#$`?*[!:{~";	/*}*/
++static char *custom_filename_quote_characters = 0;
++
+ static rl_hook_func_t *old_rl_startup_hook = (rl_hook_func_t *)NULL;
+ 
+ static int dot_in_path = 0;
+@@ -501,7 +511,7 @@ initialize_readline ()
+ 
+   /* Tell the completer that we might want to follow symbolic links or
+      do other expansion on directory names. */
+-  rl_directory_rewrite_hook = bash_directory_completion_hook;
++  set_directory_hook ();
+ 
+   rl_filename_rewrite_hook = bash_filename_rewrite_hook;
+ 
+@@ -529,7 +539,7 @@ initialize_readline ()
+   enable_hostname_completion (perform_hostname_completion);
+ 
+   /* characters that need to be quoted when appearing in filenames. */
+-  rl_filename_quote_characters = " \t\n\\\"'@<>=;|&()#$`?*[!:{~";	/*}*/
++  rl_filename_quote_characters = default_filename_quote_characters;
+ 
+   rl_filename_quoting_function = bash_quote_filename;
+   rl_filename_dequoting_function = bash_dequote_filename;
+@@ -564,8 +574,10 @@ bashline_reset ()
+   tilde_initialize ();
+   rl_attempted_completion_function = attempt_shell_completion;
+   rl_completion_entry_function = NULL;
+-  rl_directory_rewrite_hook = bash_directory_completion_hook;
+   rl_ignore_some_completions_function = filename_completion_ignore;
++  rl_filename_quote_characters = default_filename_quote_characters;
++
++  set_directory_hook ();
+ }
+ 
+ /* Contains the line to push into readline. */
+@@ -1279,6 +1291,9 @@ attempt_shell_completion (text, start, e
+   matches = (char **)NULL;
+   rl_ignore_some_completions_function = filename_completion_ignore;
+ 
++  rl_filename_quote_characters = default_filename_quote_characters;
++  set_directory_hook ();
++
+   /* Determine if this could be a command word.  It is if it appears at
+      the start of the line (ignoring preceding whitespace), or if it
+      appears after a character that separates commands.  It cannot be a
+@@ -1591,6 +1606,12 @@ command_word_completion_function (hint_t
+ 	    }
+ 	  else
+ 	    {
++	     if (dircomplete_expand && dot_or_dotdot (filename_hint))
++		{
++		  dircomplete_expand = 0;
++		  set_directory_hook ();
++		  dircomplete_expand = 1;
++		}
+ 	      mapping_over = 4;
+ 	      goto inner;
+ 	    }
+@@ -1791,6 +1812,9 @@ globword:
+ 
+  inner:
+   val = rl_filename_completion_function (filename_hint, istate);
++  if (mapping_over == 4 && dircomplete_expand)
++    set_directory_hook ();
++
+   istate = 1;
+ 
+   if (val == 0)
+@@ -2693,6 +2717,52 @@ bash_filename_rewrite_hook (fname, fnlen
+   return conv;
+ }
+ 
++/* Functions to save and restore the appropriate directory hook */
++/* This is not static so the shopt code can call it */
++void
++set_directory_hook ()
++{
++  if (dircomplete_expand)
++    {
++      rl_directory_completion_hook = bash_directory_completion_hook;
++      rl_directory_rewrite_hook = (rl_icppfunc_t *)0;
++    }
++  else
++    {
++      rl_directory_rewrite_hook = bash_directory_completion_hook;
++      rl_directory_completion_hook = (rl_icppfunc_t *)0;
++    }
++}
++
++static rl_icppfunc_t *
++save_directory_hook ()
++{
++  rl_icppfunc_t *ret;
++
++  if (dircomplete_expand)
++    {
++      ret = rl_directory_completion_hook;
++      rl_directory_completion_hook = (rl_icppfunc_t *)NULL;
++    }
++  else
++    {
++      ret = rl_directory_rewrite_hook;
++      rl_directory_rewrite_hook = (rl_icppfunc_t *)NULL;
++    }
++
++  return ret;
++}
++
++static void
++restore_directory_hook (hookf)
++     rl_icppfunc_t *hookf;
++{
++  if (dircomplete_expand)
++    rl_directory_completion_hook = hookf;
++  else
++    rl_directory_rewrite_hook = hookf;
++}
++
+ /* Handle symbolic link references and other directory name
+    expansions while hacking completion.  This should return 1 if it modifies
+    the DIRNAME argument, 0 otherwise.  It should make sure not to modify
+@@ -2702,20 +2772,31 @@ bash_directory_completion_hook (dirname)
+      char **dirname;
+ {
+   char *local_dirname, *new_dirname, *t;
+-  int return_value, should_expand_dirname;
++  int return_value, should_expand_dirname, nextch, closer;
+   WORD_LIST *wl;
+   struct stat sb;
+ 
+-  return_value = should_expand_dirname = 0;
++  return_value = should_expand_dirname = nextch = closer = 0;
+   local_dirname = *dirname;
+ 
+-  if (mbschr (local_dirname, '$'))
+-    should_expand_dirname = 1;
++  if (t = mbschr (local_dirname, '$'))
++    {
++      should_expand_dirname = '$';
++      nextch = t[1];
++      /* Deliberately does not handle the deprecated $[...] arithmetic
++	 expansion syntax */
++      if (nextch == '(')
++	closer = ')';
++      else if (nextch == '{')
++	closer = '}';
++      else
++	nextch = 0;
++    }
+   else
+     {
+       t = mbschr (local_dirname, '`');
+       if (t && unclosed_pair (local_dirname, strlen (local_dirname), "`") == 0)
+-	should_expand_dirname = 1;
++	should_expand_dirname = '`';
+     }
+ 
+ #if defined (HAVE_LSTAT)
+@@ -2739,6 +2820,23 @@ bash_directory_completion_hook (dirname)
+ 	  free (new_dirname);
+ 	  dispose_words (wl);
+ 	  local_dirname = *dirname;
++	  /* XXX - change rl_filename_quote_characters here based on
++	     should_expand_dirname/nextch/closer.  This is the only place
++	     custom_filename_quote_characters is modified. */
++	  if (rl_filename_quote_characters && *rl_filename_quote_characters)
++	    {
++	      int i, j, c;
++	      i = strlen (default_filename_quote_characters);
++	      custom_filename_quote_characters = xrealloc (custom_filename_quote_characters, i+1);
++	      for (i = j = 0; c = default_filename_quote_characters[i]; i++)
++		{
++		  if (c == should_expand_dirname || c == nextch || c == closer)
++		    continue;
++		  custom_filename_quote_characters[j++] = c;
++		}
++	      custom_filename_quote_characters[j] = '\0';
++	      rl_filename_quote_characters = custom_filename_quote_characters;
++	    }
+ 	}
+       else
+ 	{
+@@ -2758,11 +2856,31 @@ bash_directory_completion_hook (dirname)
+       local_dirname = *dirname = new_dirname;
+     }
+ 
++  /* no_symbolic_links == 0 -> use (default) logical view of the file system.
++     local_dirname[0] == '.' && local_dirname[1] == '/' means files in the
++     current directory (./).
++     local_dirname[0] == '.' && local_dirname[1] == 0 means relative pathnames
++     in the current directory (e.g., lib/sh).
++     XXX - should we do spelling correction on these? */
++
++  /* This is test as it was in bash-4.2: skip relative pathnames in current
++     directory.  Change test to
++      (local_dirname[0] != '.' || (local_dirname[1] && local_dirname[1] != '/'))
++     if we want to skip paths beginning with ./ also. */
+   if (no_symbolic_links == 0 && (local_dirname[0] != '.' || local_dirname[1]))
+     {
+       char *temp1, *temp2;
+       int len1, len2;
+ 
++      /* If we have a relative path
++      		(local_dirname[0] != '/' && local_dirname[0] != '.')
++	 that is canonical after appending it to the current directory, then
++	 	temp1 = temp2+'/'
++	 That is,
++	 	strcmp (temp1, temp2) == 0
++	 after adding a slash to temp2 below.  It should be safe to not
++	 change those.
++      */
+       t = get_working_directory ("symlink-hook");
+       temp1 = make_absolute (local_dirname, t);
+       free (t);
+@@ -2797,7 +2915,15 @@ bash_directory_completion_hook (dirname)
+ 	      temp2[len2 + 1] = '\0';
+ 	    }
+ 	}
+-      return_value |= STREQ (local_dirname, temp2) == 0;
++
++      /* dircomplete_expand_relpath == 0 means we want to leave relative
++	 pathnames that are unchanged by canonicalization alone.
++	 *local_dirname != '/' && *local_dirname != '.' == relative pathname
++	 (consistent with general.c:absolute_pathname())
++	 temp1 == temp2 (after appending a slash to temp2) means the pathname
++	 is not changed by canonicalization as described above. */
++      if (dircomplete_expand_relpath || ((local_dirname[0] != '/' && local_dirname[0] != '.') && STREQ (temp1, temp2) == 0))
++	return_value |= STREQ (local_dirname, temp2) == 0;
+       free (local_dirname);
+       *dirname = temp2;
+       free (temp1);
+@@ -3002,12 +3128,13 @@ bash_complete_filename_internal (what_to
+ 
+   orig_func = rl_completion_entry_function;
+   orig_attempt_func = rl_attempted_completion_function;
+-  orig_dir_func = rl_directory_rewrite_hook;
+   orig_ignore_func = rl_ignore_some_completions_function;
+   orig_rl_completer_word_break_characters = rl_completer_word_break_characters;
++
++  orig_dir_func = save_directory_hook ();
++
+   rl_completion_entry_function = rl_filename_completion_function;
+   rl_attempted_completion_function = (rl_completion_func_t *)NULL;
+-  rl_directory_rewrite_hook = (rl_icppfunc_t *)NULL;
+   rl_ignore_some_completions_function = filename_completion_ignore;
+   rl_completer_word_break_characters = " \t\n\"\'";
+ 
+@@ -3015,10 +3142,11 @@ bash_complete_filename_internal (what_to
+ 
+   rl_completion_entry_function = orig_func;
+   rl_attempted_completion_function = orig_attempt_func;
+-  rl_directory_rewrite_hook = orig_dir_func;
+   rl_ignore_some_completions_function = orig_ignore_func;
+   rl_completer_word_break_characters = orig_rl_completer_word_break_characters;
+ 
++  restore_directory_hook (orig_dir_func);
++
+   return r;
+ }
+ 
+--- a/bashline.h
++++ b/bashline.h
+@@ -33,10 +33,15 @@ extern void bashline_reset __P((void));
+ extern void bashline_reinitialize __P((void));
+ extern int bash_re_edit __P((char *));
+ 
++extern void bashline_set_event_hook __P((void));
++extern void bashline_reset_event_hook __P((void));
++
+ extern int bind_keyseq_to_unix_command __P((char *));
+ 
+ extern char **bash_default_completion __P((const char *, int, int, int, int));
+ 
++void set_directory_hook __P((void));
++
+ /* Used by programmable completion code. */
+ extern char *command_word_completion_function __P((const char *, int));
+ extern char *bash_groupname_completion_function __P((const char *, int));
+--- a/builtins/shopt.def
++++ b/builtins/shopt.def
+@@ -61,6 +61,10 @@ $END
+ #include "common.h"
+ #include "bashgetopt.h"
+ 
++#if defined (READLINE)
++#  include "../bashline.h"
++#endif
++
+ #if defined (HISTORY)
+ #  include "../bashhist.h"
+ #endif
+@@ -94,7 +98,7 @@ extern int extended_glob;
+ extern int hist_verify, history_reediting, perform_hostname_completion;
+ extern int no_empty_command_completion;
+ extern int force_fignore;
+-extern int dircomplete_spelling;
++extern int dircomplete_spelling, dircomplete_expand;
+ 
+ extern int enable_hostname_completion __P((int));
+ #endif
+@@ -121,6 +125,10 @@ static int set_compatibility_level __P((
+ static int set_restricted_shell __P((char *, int));
+ #endif
+ 
++#if defined (READLINE)
++static int shopt_set_complete_direxpand __P((char *, int));
++#endif
++
+ static int shopt_login_shell;
+ static int shopt_compat31;
+ static int shopt_compat32;
+@@ -150,6 +158,7 @@ static struct {
+   { "compat40", &shopt_compat40, set_compatibility_level },
+   { "compat41", &shopt_compat41, set_compatibility_level },
+ #if defined (READLINE)
++  { "direxpand", &dircomplete_expand, shopt_set_complete_direxpand },
+   { "dirspell", &dircomplete_spelling, (shopt_set_func_t *)NULL },
+ #endif
+   { "dotglob", &glob_dot_filenames, (shopt_set_func_t *)NULL },
+@@ -535,6 +544,17 @@ set_compatibility_level (option_name, mo
+   return 0;
+ }
+ 
++#if defined (READLINE)
++static int
++shopt_set_complete_direxpand (option_name, mode)
++     char *option_name;
++     int mode;
++{
++  set_directory_hook ();
++  return 0;
++}
++#endif
++
+ #if defined (RESTRICTED_SHELL)
+ /* Don't allow the value of restricted_shell to be modified. */
+ 
+--- a/doc/bash.1
++++ b/doc/bash.1
+@@ -8948,6 +8948,16 @@ parameter expansion as a special charact
+ quoted.  This is the behavior of posix mode through version 4.1.
+ The default bash behavior remains as in previous versions.
+ .TP 8
++.B direxpand
++If set,
++.B bash
++replaces directory names with the results of word expansion when performing
++filename completion.  This changes the contents of the readline editing
++buffer.
++If not set,
++.B bash
++attempts to preserve what the user typed.
++.TP 8
+ .B dirspell
+ If set,
+ .B bash
+--- a/doc/bashref.texi
++++ b/doc/bashref.texi
+@@ -4535,6 +4535,13 @@ parameter expansion as a special charact
+ quoted.  This is the behavior of @sc{posix} mode through version 4.1.
+ The default Bash behavior remains as in previous versions.
+ 
++@item direxpand
++If set, Bash
++replaces directory names with the results of word expansion when performing
++filename completion.  This changes the contents of the readline editing
++buffer.
++If not set, Bash attempts to preserve what the user typed.
++
+ @item dirspell
+ If set, Bash
+ attempts spelling correction on directory names during word completion 
+--- a/tests/shopt.right
++++ b/tests/shopt.right
+@@ -12,6 +12,7 @@ shopt -u compat31
+ shopt -u compat32
+ shopt -u compat40
+ shopt -u compat41
++shopt -u direxpand
+ shopt -u dirspell
+ shopt -u dotglob
+ shopt -u execfail
+@@ -68,6 +69,7 @@ shopt -u compat31
+ shopt -u compat32
+ shopt -u compat40
+ shopt -u compat41
++shopt -u direxpand
+ shopt -u dirspell
+ shopt -u dotglob
+ shopt -u execfail
+@@ -101,6 +103,7 @@ compat31       	off
+ compat32       	off
+ compat40       	off
+ compat41       	off
++direxpand      	off
+ dirspell       	off
+ dotglob        	off
+ execfail       	off

@@ -1,0 +1,147 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-030
+
+Bug-Reported-by:	Roman Rakus <rrakus@redhat.com>
+Bug-Reference-ID:	<4D7DD91E.7040808@redhat.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2011-03/msg00126.html
+
+Bug-Description:
+
+When attempting to glob strings in a multibyte locale, and those strings
+contain invalid multibyte characters that cause mbsnrtowcs to return 0,
+the globbing code loops infinitely.
+
+Patch (apply with `patch -p0'):
+
+--- a/lib/glob/xmbsrtowcs.c
++++ b/lib/glob/xmbsrtowcs.c
+@@ -35,6 +35,8 @@
+ 
+ #if HANDLE_MULTIBYTE
+ 
++#define WSBUF_INC 32
++
+ #ifndef FREE
+ #  define FREE(x)	do { if (x) free (x); } while (0)
+ #endif
+@@ -148,7 +150,7 @@ xdupmbstowcs2 (destp, src)
+   size_t wsbuf_size;	/* Size of WSBUF */
+   size_t wcnum;		/* Number of wide characters in WSBUF */
+   mbstate_t state;	/* Conversion State */
+-  size_t wcslength;	/* Number of wide characters produced by the conversion. */
++  size_t n, wcslength;	/* Number of wide characters produced by the conversion. */
+   const char *end_or_backslash;
+   size_t nms;	/* Number of multibyte characters to convert at one time. */
+   mbstate_t tmp_state;
+@@ -171,7 +173,18 @@ xdupmbstowcs2 (destp, src)
+       /* Compute the number of produced wide-characters. */
+       tmp_p = p;
+       tmp_state = state;
+-      wcslength = mbsnrtowcs(NULL, &tmp_p, nms, 0, &tmp_state);
++
++      if (nms == 0 && *p == '\\')	/* special initial case */
++	nms = wcslength = 1;
++      else
++	wcslength = mbsnrtowcs (NULL, &tmp_p, nms, 0, &tmp_state);
++
++      if (wcslength == 0)
++	{
++	  tmp_p = p;		/* will need below */
++	  tmp_state = state;
++	  wcslength = 1;	/* take a single byte */
++	}
+ 
+       /* Conversion failed. */
+       if (wcslength == (size_t)-1)
+@@ -186,7 +199,8 @@ xdupmbstowcs2 (destp, src)
+ 	{
+ 	  wchar_t *wstmp;
+ 
+-	  wsbuf_size = wcnum+wcslength+1;	/* 1 for the L'\0' or the potential L'\\' */
++	  while (wsbuf_size < wcnum+wcslength+1) /* 1 for the L'\0' or the potential L'\\' */
++	    wsbuf_size += WSBUF_INC;
+ 
+ 	  wstmp = (wchar_t *) realloc (wsbuf, wsbuf_size * sizeof (wchar_t));
+ 	  if (wstmp == NULL)
+@@ -199,10 +213,18 @@ xdupmbstowcs2 (destp, src)
+ 	}
+ 
+       /* Perform the conversion. This is assumed to return 'wcslength'.
+-       * It may set 'p' to NULL. */
+-      mbsnrtowcs(wsbuf+wcnum, &p, nms, wsbuf_size-wcnum, &state);
++	 It may set 'p' to NULL. */
++      n = mbsnrtowcs(wsbuf+wcnum, &p, nms, wsbuf_size-wcnum, &state);
+ 
+-      wcnum += wcslength;
++      /* Compensate for taking single byte on wcs conversion failure above. */
++      if (wcslength == 1 && (n == 0 || n == (size_t)-1))
++	{
++	  state = tmp_state;
++	  p = tmp_p;
++	  wsbuf[wcnum++] = *p++;
++	}
++      else
++        wcnum += wcslength;
+ 
+       if (mbsinit (&state) && (p != NULL) && (*p == '\\'))
+ 	{
+@@ -230,8 +252,6 @@ xdupmbstowcs2 (destp, src)
+    If conversion is failed, the return value is (size_t)-1 and the values
+    of DESTP and INDICESP are NULL. */
+ 
+-#define WSBUF_INC 32
+-
+ size_t
+ xdupmbstowcs (destp, indicesp, src)
+     wchar_t **destp;	/* Store the pointer to the wide character string */
+--- a/lib/glob/glob.c
++++ b/lib/glob/glob.c
+@@ -200,8 +200,11 @@ mbskipname (pat, dname, flags)
+   wchar_t *pat_wc, *dn_wc;
+   size_t pat_n, dn_n;
+ 
++  pat_wc = dn_wc = (wchar_t *)NULL;
++
+   pat_n = xdupmbstowcs (&pat_wc, NULL, pat);
+-  dn_n = xdupmbstowcs (&dn_wc, NULL, dname);
++  if (pat_n != (size_t)-1)
++    dn_n = xdupmbstowcs (&dn_wc, NULL, dname);
+ 
+   ret = 0;
+   if (pat_n != (size_t)-1 && dn_n !=(size_t)-1)
+@@ -221,6 +224,8 @@ mbskipname (pat, dname, flags)
+ 	   (pat_wc[0] != L'\\' || pat_wc[1] != L'.'))
+ 	ret = 1;
+     }
++  else
++    ret = skipname (pat, dname, flags);
+ 
+   FREE (pat_wc);
+   FREE (dn_wc);
+@@ -266,8 +271,11 @@ wdequote_pathname (pathname)
+   /* Convert the strings into wide characters.  */
+   n = xdupmbstowcs (&wpathname, NULL, pathname);
+   if (n == (size_t) -1)
+-    /* Something wrong. */
+-    return;
++    {
++      /* Something wrong.  Fall back to single-byte */
++      udequote_pathname (pathname);
++      return;
++    }
+   orig_wpathname = wpathname;
+ 
+   for (i = j = 0; wpathname && wpathname[i]; )
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 29
++#define PATCHLEVEL 30
+ 
+ #endif /* _PATCHLEVEL_H_ */
