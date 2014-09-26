@@ -1,0 +1,95 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-048
+
+Bug-Reported-by:	Stephane Chazelas <stephane.chazelas@gmail.com>
+Bug-Reference-ID:
+Bug-Reference-URL:
+
+Bug-Description:
+
+Under certain circumstances, bash will execute user code while processing the
+environment for exported function definitions.
+
+Patch (apply with `patch -p0'):
+
+--- a/builtins/common.h
++++ b/builtins/common.h
+@@ -35,6 +35,8 @@
+ #define SEVAL_NOLONGJMP 0x040
+ 
+ /* Flags for describe_command, shared between type.def and command.def */
++#define SEVAL_FUNCDEF	0x080		/* only allow function definitions */
++#define SEVAL_ONECMD	0x100		/* only allow a single command */
+ #define CDESC_ALL		0x001	/* type -a */
+ #define CDESC_SHORTDESC		0x002	/* command -V */
+ #define CDESC_REUSABLE		0x004	/* command -v */
+--- a/builtins/evalstring.c
++++ b/builtins/evalstring.c
+@@ -261,6 +261,14 @@ parse_and_execute (string, from_file, fl
+ 	    {
+ 	      struct fd_bitmap *bitmap;
+ 
++	      if ((flags & SEVAL_FUNCDEF) && command->type != cm_function_def)
++		{
++		  internal_warning ("%s: ignoring function definition attempt", from_file);
++		  should_jump_to_top_level = 0;
++		  last_result = last_command_exit_value = EX_BADUSAGE;
++		  break;
++		}
++
+ 	      bitmap = new_fd_bitmap (FD_BITMAP_SIZE);
+ 	      begin_unwind_frame ("pe_dispose");
+ 	      add_unwind_protect (dispose_fd_bitmap, bitmap);
+@@ -321,6 +329,9 @@ parse_and_execute (string, from_file, fl
+ 	      dispose_command (command);
+ 	      dispose_fd_bitmap (bitmap);
+ 	      discard_unwind_frame ("pe_dispose");
++
++	      if (flags & SEVAL_ONECMD)
++		break;
+ 	    }
+ 	}
+       else
+--- a/variables.c
++++ b/variables.c
+@@ -347,12 +347,10 @@ initialize_shell_variables (env, privmod
+ 	  temp_string[char_index] = ' ';
+ 	  strcpy (temp_string + char_index + 1, string);
+ 
+-	  parse_and_execute (temp_string, name, SEVAL_NONINT|SEVAL_NOHIST);
+-
+-	  /* Ancient backwards compatibility.  Old versions of bash exported
+-	     functions like name()=() {...} */
+-	  if (name[char_index - 1] == ')' && name[char_index - 2] == '(')
+-	    name[char_index - 2] = '\0';
++	  /* Don't import function names that are invalid identifiers from the
++	     environment. */
++	  if (legal_identifier (name))
++	    parse_and_execute (temp_string, name, SEVAL_NONINT|SEVAL_NOHIST|SEVAL_FUNCDEF|SEVAL_ONECMD);
+ 
+ 	  if (temp_var = find_function (name))
+ 	    {
+@@ -361,10 +359,6 @@ initialize_shell_variables (env, privmod
+ 	    }
+ 	  else
+ 	    report_error (_("error importing function definition for `%s'"), name);
+-
+-	  /* ( */
+-	  if (name[char_index - 1] == ')' && name[char_index - 2] == '\0')
+-	    name[char_index - 2] = '(';		/* ) */
+ 	}
+ #if defined (ARRAY_VARS)
+ #  if 0
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 47
++#define PATCHLEVEL 48
+ 
+ #endif /* _PATCHLEVEL_H_ */

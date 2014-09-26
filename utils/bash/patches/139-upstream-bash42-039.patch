@@ -1,0 +1,53 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-039
+
+Bug-Reported-by:	Dan Douglas <ormaaj@gmail.com>
+Bug-Reference-ID:	<1498458.MpVlmOXDB7@smorgbox>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2012-09/msg00008.html
+
+Bug-Description:
+
+Under certain circumstances, bash attempts to expand variables in arithmetic
+expressions even when evaluation is being suppressed.
+
+Patch (apply with `patch -p0'):
+
+--- a/expr.c
++++ b/expr.c
+@@ -1009,6 +1009,12 @@ expr_streval (tok, e, lvalue)
+   arrayind_t ind;
+ #endif
+ 
++/*itrace("expr_streval: %s: noeval = %d", tok, noeval);*/
++  /* If we are suppressing evaluation, just short-circuit here instead of
++     going through the rest of the evaluator. */
++  if (noeval)
++    return (0);
++
+   /* [[[[[ */
+ #if defined (ARRAY_VARS)
+   v = (e == ']') ? array_variable_part (tok, (char **)0, (int *)0) : find_variable (tok);
+@@ -1182,6 +1188,10 @@ readtok ()
+ #endif /* ARRAY_VARS */
+ 
+       *cp = '\0';
++      /* XXX - watch out for pointer aliasing issues here */
++      if (curlval.tokstr && curlval.tokstr == tokstr)
++	init_lvalue (&curlval);
++
+       FREE (tokstr);
+       tokstr = savestring (tp);
+       *cp = c;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 38
++#define PATCHLEVEL 39
+ 
+ #endif /* _PATCHLEVEL_H_ */

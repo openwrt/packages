@@ -1,0 +1,24 @@
+--- a/configure
++++ b/configure
+@@ -5748,8 +5748,7 @@ _ACEOF
+ 		# static version specified as -llibname to override the
+ 		# dynamic version
+ 		case "${host_os}" in
+-		darwin[89]*|darwin10*) READLINE_LIB='${READLINE_LIBRARY}' ;;
+-		*)		READLINE_LIB=-lreadline ;;
++		*) READLINE_LIB='${READLINE_LIBRARY}' ;;
+ 		esac
+ 	fi
+ else
+--- a/configure.in
++++ b/configure.in
+@@ -540,8 +540,7 @@ if test $opt_readline = yes; then
+ 		# static version specified as -llibname to override the
+ 		# dynamic version
+ 		case "${host_os}" in
+-		darwin[[89]]*|darwin10*) READLINE_LIB='${READLINE_LIBRARY}' ;;
+-		*)		READLINE_LIB=-lreadline ;;
++		*) READLINE_LIB='${READLINE_LIBRARY}' ;;
+ 		esac
+ 	fi
+ else

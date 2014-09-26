@@ -1,0 +1,39 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-034
+
+Bug-Reported-by:	"Davide Brini" <dave_br@gmx.com>
+Bug-Reference-ID:	<20120604164154.69781EC04B@imaps.oficinas.atrapalo.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2012-06/msg00030.html
+
+Bug-Description:
+
+In bash-4.2, the history code would inappropriately add a semicolon to
+multi-line compound array assignments when adding them to the history.
+
+Patch (apply with `patch -p0'):
+
+--- a/parse.y
++++ b/parse.y
+@@ -4900,6 +4900,9 @@ history_delimiting_chars (line)
+       return (current_command_line_count == 2 ? "\n" : "");
+     }
+ 
++  if (parser_state & PST_COMPASSIGN)
++    return (" ");
++
+   /* First, handle some special cases. */
+   /*(*/
+   /* If we just read `()', assume it's a function definition, and don't
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 33
++#define PATCHLEVEL 34
+ 
+ #endif /* _PATCHLEVEL_H_ */

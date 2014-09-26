@@ -1,0 +1,47 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-045
+
+Bug-Reported-by:	Stephane Chazelas <stephane.chazelas@gmail.com>
+Bug-Reference-ID:	<20130218195539.GA9620@chaz.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2013-02/msg00080.html
+
+Bug-Description:
+
+The <&n- and >&n- redirections, which move one file descriptor to another,
+leave the file descriptor closed when applied to builtins or compound
+commands.
+
+Patch (apply with `patch -p0'):
+
+--- a/redir.c
++++ b/redir.c
+@@ -1007,6 +1007,16 @@ do_redirection_internal (redirect, flags
+ 		close (redirector);
+ 	      REDIRECTION_ERROR (r, errno, -1);
+ 	    }
++	  if ((flags & RX_UNDOABLE) && (ri == r_move_input || ri == r_move_output))
++	    {
++	      /* r_move_input and r_move_output add an additional close()
++		 that needs to be undone */
++	      if (fcntl (redirector, F_GETFD, 0) != -1)
++		{
++		  r = add_undo_redirect (redir_fd, r_close_this, -1);
++		  REDIRECTION_ERROR (r, errno, -1);
++		}
++	    }
+ #if defined (BUFFERED_INPUT)
+ 	  check_bash_input (redirector);
+ #endif
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 44
++#define PATCHLEVEL 45
+ 
+ #endif /* _PATCHLEVEL_H_ */

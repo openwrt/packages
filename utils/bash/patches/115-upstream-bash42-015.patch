@@ -1,0 +1,71 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-015
+
+Bug-Reported-by:	<dnade.ext@orange-ftgroup.com>
+Bug-Reference-ID:	<728_1312188080_4E3666B0_728_118711_1_3B5D3E0F95CC5C478D6500CDCE8B691F7AAAA4AA3D@PUEXCB2B.nanterre.francetelecom.fr>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2011-08/msg00000.html
+
+Bug-Description:
+
+When in a context where arithmetic evaluation is not taking place, the
+evaluator should not check for division by 0.
+
+Patch (apply with `patch -p0'):
+
+--- a/expr.c
++++ b/expr.c
+@@ -476,19 +476,23 @@ expassign ()
+ 
+       if (special)
+ 	{
++	  if ((op == DIV || op == MOD) && value == 0)
++	    {
++	      if (noeval == 0)
++		evalerror (_("division by 0"));
++	      else
++	        value = 1;
++	    }
++
+ 	  switch (op)
+ 	    {
+ 	    case MUL:
+ 	      lvalue *= value;
+ 	      break;
+ 	    case DIV:
+-	      if (value == 0)
+-		evalerror (_("division by 0"));
+ 	      lvalue /= value;
+ 	      break;
+ 	    case MOD:
+-	      if (value == 0)
+-		evalerror (_("division by 0"));
+ 	      lvalue %= value;
+ 	      break;
+ 	    case PLUS:
+@@ -804,7 +808,12 @@ exp2 ()
+       val2 = exppower ();
+ 
+       if (((op == DIV) || (op == MOD)) && (val2 == 0))
+-	evalerror (_("division by 0"));
++	{
++	  if (noeval == 0)
++	    evalerror (_("division by 0"));
++	  else
++	    val2 = 1;
++	}
+ 
+       if (op == MUL)
+ 	val1 *= val2;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 14
++#define PATCHLEVEL 15
+ 
+ #endif /* _PATCHLEVEL_H_ */

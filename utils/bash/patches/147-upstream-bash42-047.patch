@@ -1,0 +1,40 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-047
+
+Bug-Reported-by:	Matthew Riley <mattdr@google.com>
+Bug-Reference-ID:	<CA+NEdkwP3gw+gbcF5+xnR1pvcuzb1mDVzvmuJOpHRGHA9T7VFg@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2013-03/msg00047.html
+
+Bug-Description:
+
+The function that shortens pathnames for $PS1 according to the value of
+$PROMPT_DIRTRIM uses memcpy on potentially-overlapping regions of memory,
+when it should use memmove.  The result is garbled pathnames in prompt
+strings.
+
+Patch (apply with `patch -p0'):
+
+--- a/general.c
++++ b/general.c
+@@ -766,7 +766,7 @@ trim_pathname (name, maxlen)
+   *nbeg++ = '.';
+ 
+   nlen = nend - ntail;
+-  memcpy (nbeg, ntail, nlen);
++  memmove (nbeg, ntail, nlen);
+   nbeg[nlen] = '\0';
+ 
+   return name;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 46
++#define PATCHLEVEL 47
+ 
+ #endif /* _PATCHLEVEL_H_ */

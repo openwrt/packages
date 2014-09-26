@@ -1,0 +1,38 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-027
+
+Bug-Reported-by:	Mike Frysinger <vapier@gentoo.org>
+Bug-Reference-ID:	<201204211243.30163.vapier@gentoo.org>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2012-04/msg00134.html
+
+Bug-Description:
+
+When the `extglob' shell option is enabled, pattern substitution does not
+work correctly in the presence of multibyte characters.
+
+Patch (apply with `patch -p0'):
+
+--- a/subst.c
++++ b/subst.c
+@@ -4166,7 +4166,7 @@ match_wpattern (wstring, indices, wstrle
+   simple = (wpat[0] != L'\\' && wpat[0] != L'*' && wpat[0] != L'?' && wpat[0] != L'[');
+ #if defined (EXTENDED_GLOB)
+   if (extended_glob)
+-    simple |= (wpat[1] != L'(' || (wpat[0] != L'*' && wpat[0] != L'?' && wpat[0] != L'+' && wpat[0] != L'!' && wpat[0] != L'@')); /*)*/
++    simple &= (wpat[1] != L'(' || (wpat[0] != L'*' && wpat[0] != L'?' && wpat[0] != L'+' && wpat[0] != L'!' && wpat[0] != L'@')); /*)*/
+ #endif
+ 
+   /* If the pattern doesn't match anywhere in the string, go ahead and
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 26
++#define PATCHLEVEL 27
+ 
+ #endif /* _PATCHLEVEL_H_ */

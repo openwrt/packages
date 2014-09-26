@@ -1,0 +1,47 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-042
+
+Bug-Reported-by:	Adam Pippin <adam@gp-inc.ca>
+Bug-Reference-ID:	<CAPYbNHr6ucZFOoWsRdUJj6KP3Ju0j1bkESa_cmb7iU+kZwdVpg@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2012-11/msg00087.html
+
+Bug-Description:
+
+Compilation failed after specifying the  `--enable-minimal-config' option to
+configure (more specifically, specifying `--disable-alias').
+
+Patch (apply with `patch -p0'):
+
+--- a/parse.y
++++ b/parse.y
+@@ -2393,6 +2393,7 @@ pop_alias:
+ 	   is the last character).  If it's not the last character, we need
+ 	   to consume the quoted newline and move to the next character in
+ 	   the expansion. */
++#if defined (ALIAS)
+ 	if (expanding_alias () && shell_input_line[shell_input_line_index+1] == '\0')
+ 	  {
+ 	    uc = 0;
+@@ -2403,7 +2404,8 @@ pop_alias:
+ 	    shell_input_line_index++;	/* skip newline */
+ 	    goto next_alias_char;	/* and get next character */
+ 	  }
+-	else	    
++	else
++#endif 
+ 	  goto restart_read;
+     }
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 41
++#define PATCHLEVEL 42
+ 
+ #endif /* _PATCHLEVEL_H_ */

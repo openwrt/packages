@@ -1,0 +1,62 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-031
+
+Bug-Reported-by:	Max Horn <max@quendi.de>
+Bug-Reference-ID:	<20CC5C60-07C3-4E41-9817-741E48D407C5@quendi.de>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-readline/2012-06/msg00005.html
+
+Bug-Description:
+
+A change between bash-4.1 and bash-4.2 to prevent the readline input hook
+from being called too frequently had the side effect of causing delays
+when reading pasted input on systems such as Mac OS X.  This patch fixes
+those delays while retaining the bash-4.2 behavior.
+
+Patch (apply with `patch -p0'):
+
+--- a/lib/readline/input.c
++++ b/lib/readline/input.c
+@@ -409,7 +409,7 @@ rl_clear_pending_input ()
+ int
+ rl_read_key ()
+ {
+-  int c;
++  int c, r;
+ 
+   rl_key_sequence_length++;
+ 
+@@ -429,14 +429,18 @@ rl_read_key ()
+ 	{
+ 	  while (rl_event_hook)
+ 	    {
+-	      if (rl_gather_tyi () < 0)	/* XXX - EIO */
++	      if (rl_get_char (&c) != 0)
++		break;
++		
++	      if ((r = rl_gather_tyi ()) < 0)	/* XXX - EIO */
+ 		{
+ 		  rl_done = 1;
+ 		  return ('\n');
+ 		}
++	      else if (r == 1)			/* read something */
++		continue;
++
+ 	      RL_CHECK_SIGNALS ();
+-	      if (rl_get_char (&c) != 0)
+-		break;
+ 	      if (rl_done)		/* XXX - experimental */
+ 		return ('\n');
+ 	      (*rl_event_hook) ();
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 30
++#define PATCHLEVEL 31
+ 
+ #endif /* _PATCHLEVEL_H_ */

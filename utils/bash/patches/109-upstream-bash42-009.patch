@@ -1,0 +1,65 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-009
+
+Bug-Reported-by:	<piuma@piumalab.org>
+Bug-Reference-ID:	<4DAAC0DB.7060606@piumalab.org>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2011-04/msg00075.html
+
+Bug-Description:
+
+Under certain circumstances, running `fc -l' two times in succession with a
+relative history offset at the end of the history will result in an incorrect
+calculation of the last history entry and a seg fault.
+
+Patch (apply with `patch -p0'):
+
+--- a/builtins/fc.def
++++ b/builtins/fc.def
+@@ -304,7 +304,7 @@ fc_builtin (list)
+   last_hist = i - rh - hist_last_line_added;
+ 
+   /* XXX */
+-  if (saved_command_line_count > 0 && i == last_hist && hlist[last_hist] == 0)
++  if (i == last_hist && hlist[last_hist] == 0)
+     while (last_hist >= 0 && hlist[last_hist] == 0)
+       last_hist--;
+   if (last_hist < 0)
+@@ -475,7 +475,7 @@ fc_gethnum (command, hlist)
+      HIST_ENTRY **hlist;
+ {
+   int sign, n, clen, rh;
+-  register int i, j;
++  register int i, j, last_hist;
+   register char *s;
+ 
+   sign = 1;
+@@ -495,7 +495,15 @@ fc_gethnum (command, hlist)
+      has been enabled (interactive or not) should use it in the last_hist
+      calculation as if it were on. */
+   rh = remember_on_history || ((subshell_environment & SUBSHELL_COMSUB) && enable_history_list);
+-  i -= rh + hist_last_line_added;
++  last_hist = i - rh - hist_last_line_added;
++
++  if (i == last_hist && hlist[last_hist] == 0)
++    while (last_hist >= 0 && hlist[last_hist] == 0)
++      last_hist--;
++  if (last_hist < 0)
++    return (-1);
++
++  i = last_hist;
+ 
+   /* No specification defaults to most recent command. */
+   if (command == NULL)
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 8
++#define PATCHLEVEL 9
+ 
+ #endif /* _PATCHLEVEL_H_ */

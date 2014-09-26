@@ -1,0 +1,47 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-020
+
+Bug-Reported-by:	Vincent Sheffer <vince.sheffer@apisphere.com>
+Bug-Reference-ID:	<F13C1C4F-C44C-4071-BFED-4BB6D13CF92F@apisphere.com>
+Bug-Reference-URL:	https://lists.gnu.org/archive/html/bug-readline/2011-08/msg00000.html
+
+Bug-Description:
+
+The shared object helper script needs to be updated for Mac OS X 10.7
+(Lion, darwin11).
+
+Patch (apply with `patch -p0'):
+
+--- a/support/shobj-conf
++++ b/support/shobj-conf
+@@ -157,7 +157,7 @@ freebsd[4-9]*|freebsdelf*|dragonfly*)
+ 	;;
+ 
+ # Darwin/MacOS X
+-darwin[89]*|darwin10*)
++darwin[89]*|darwin1[012]*)
+ 	SHOBJ_STATUS=supported
+ 	SHLIB_STATUS=supported
+ 	
+@@ -186,7 +186,7 @@ darwin*|macosx*)
+ 	SHLIB_LIBSUFF='dylib'
+ 
+ 	case "${host_os}" in
+-	darwin[789]*|darwin10*)	SHOBJ_LDFLAGS=''
++	darwin[789]*|darwin1[012]*)	SHOBJ_LDFLAGS=''
+ 			SHLIB_XLDFLAGS='-dynamiclib -arch_only `/usr/bin/arch` -install_name $(libdir)/$@ -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR) -v'
+ 			;;
+ 	*)		SHOBJ_LDFLAGS='-dynamic'
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 19
++#define PATCHLEVEL 20
+ 
+ #endif /* _PATCHLEVEL_H_ */
