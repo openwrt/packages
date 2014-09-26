@@ -14,15 +14,15 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://releases.stm32flash.googlecode.com/git
 PKG_MD5SUM:=a806c6b10b186b7d06a7eab12c3bc880
-
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
-
+PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
+PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE_FILE:=gpl-2.0.txt
 include $(INCLUDE_DIR)/package.mk
 
 define Package/stm32flash
   SECTION:=utils
   CATEGORY:=Utilities
-  MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
   URL:=http://code.google.com/p/stm32flash/
   TITLE:=Firmware flash tool for STM32's serial bootloader
 endef
