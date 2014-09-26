@@ -18,9 +18,10 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.anytun.org/download/
 PKG_MD5SUM:=ce47ad45003ff1d84eaf5276941b9ddf
-
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-
+PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
+PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE_FILE:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 
 
@@ -31,7 +32,6 @@ define Package/uanytun/template
   DEPENDS:=+kmod-tun
   TITLE:=micro anycast tunneling daemon
   URL:=http://www.anytun.org/
-  MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 endef
 
 
