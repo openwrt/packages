@@ -7,13 +7,16 @@
 
 include $(TOPDIR)/rules.mk
 
+# The file included below defines PYTHON_VERSION
+-include $(if $(DUMP),,./files/python-package.mk)
+
 PKG_NAME:=python
-PKG_VERSION:=2.7.3
-PKG_RELEASE:=2
+PKG_RELEASE:=1
+PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=62c4c1699170078c469f79ddfed21bc0
+PKG_MD5SUM:=6cafc183b4106476dd73d5738d7f616a
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -29,7 +32,6 @@ PKG_BUILD_DEPENDS:=python/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
--include $(if $(DUMP),,./files/python-package.mk)
 
 define Package/python/Default
   SUBMENU:=Python
@@ -139,34 +141,47 @@ MAKE_FLAGS:=\
 	CROSS_COMPILE=yes \
 	CFLAGS="$(TARGET_CFLAGS) -DNDEBUG -fno-inline" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
-	LD="$(TARGET_CC)" \
-	HOSTPYTHON=./hostpython \
-	HOSTPGEN=./hostpgen
+	LD="$(TARGET_CC)"
 
 ENABLE_IPV6:=
 ifeq ($(CONFIG_IPV6),y)
 	ENABLE_IPV6 += --enable-ipv6
 endif
 
+#=======================================================================
+# Notes: adding these so that I don't forget, and can track why stuff
+#        was did as was did
+# - Arguments below were moved to ./files/config.site file, and disabled
+#          ac_cv_have_chflags=no \
+#          ac_cv_have_lchflags=no \
+#          ac_cv_py_format_size_t=no \
+#          ac_cv_have_long_long_format=yes \
+#          ac_cv_buggy_getaddrinfo=no \
+# - --without-ensurepip added, because the build wants to ensure that
+#   it works; that's a good idea, but for now, it requires special 
+#   setup, and we can do that later
+# - --without-pymalloc added, becase in Python 3, modules are suffixed
+#   with m; e.g. so some paths are python3.4m instead of python3.4 
+#   all this is detailed here:
+#     http://legacy.python.org/dev/peps/pep-3149/
+#=======================================================================
+
 define Build/Configure
 	-$(MAKE) -C $(PKG_BUILD_DIR) distclean
 	(cd $(PKG_BUILD_DIR); autoreconf --force --install || exit 0)
 	# The python executable needs to stay in the rootdir since its location will
 	# be used to compute the path of the config files.
-	$(CP) $(STAGING_DIR_HOST)/bin/pgen $(PKG_BUILD_DIR)/hostpgen
-	$(CP) $(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION) $(PKG_BUILD_DIR)/hostpython
+	$(CP) ./files/config.site $(PKG_BUILD_DIR)
 	$(call Build/Configure/Default, \
 		--sysconfdir=/etc \
 		--disable-shared \
 		--without-cxx-main \
 		--with-threads \
 		--with-system-ffi="$(STAGING_DIR)/usr" \
+		--without-ensurepip \
+		--without-pymalloc \
 		$(ENABLE_IPV6) \
-		ac_cv_have_chflags=no \
-		ac_cv_have_lchflags=no \
-		ac_cv_py_format_size_t=no \
-		ac_cv_have_long_long_format=yes \
-		ac_cv_buggy_getaddrinfo=no \
+		CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
 		OPT="$(TARGET_CFLAGS)" \
 	)
 endef
@@ -183,15 +198,8 @@ define Build/InstallDev
 		$(PKG_BUILD_DIR)/libpython$(PYTHON_VERSION).a \
 		$(1)/usr/lib/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config-$(PYTHON_VERSION) \
 		$(1)/usr/lib/python$(PYTHON_VERSION)/
-
-	$(CP) \
-		$(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION) \
-		$(1)/usr/bin/hostpython
-	(cd $(2)/bin; \
-	ln -sf ../../usr/bin/hostpython python$(PYTHON_VERSION); \
-	ln -sf python$(PYTHON_VERSION) python)
 
 	$(CP) \
 		$(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION)-config \
@@ -461,7 +469,12 @@ define Host/Configure
 		rm -rf config.cache; \
 		CONFIG_SITE= \
 		OPT="$(HOST_CFLAGS)" \
-		./configure --without-cxx-main --with-threads --prefix=$(STAGING_DIR_HOST); \
+		./configure \
+			--without-cxx-main \
+			--without-ensurepip \
+			--without-pymalloc \
+			--with-threads \
+			--prefix=$(STAGING_DIR_HOST); \
 	)
 endef
 
@@ -469,14 +482,12 @@ define Host/Compile
 	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) \
 		python Parser/pgen
 	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) \
-		HOSTPYTHON=$(HOST_BUILD_DIR)/python \
 		sharedmods
 endef
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
 	$(MAKE) -C $(HOST_BUILD_DIR) \
-		HOSTPYTHON=$(HOST_BUILD_DIR)/python \
 		install
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR_HOST)/bin/
 endef
