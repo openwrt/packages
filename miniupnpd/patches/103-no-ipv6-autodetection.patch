@@ -1,0 +1,29 @@
+The miniupnpd makefile tries to autodetect iptables capabilities.
+This will incorrectly detect capabilities such as ipv6 support even though it is disabled for the target build.
+
+As the OpenWRT buildsystem already passes the right compile flags, we can skip the autodetection.
+
+
+diff -up miniupnpd-1.8.20140906/netfilter/Makefile.orig miniupnpd-1.8.20140906/netfilter/Makefile
+--- miniupnpd-1.8.20140906/netfilter/Makefile.orig	2014-09-28 16:39:56.652296642 +0200
++++ miniupnpd-1.8.20140906/netfilter/Makefile	2013-12-13 14:12:11.000000000 +0100
+@@ -38,6 +38,4 @@ endif
+ endif
+ endif
+ 
+-LIBS +=  /lib/libip4tc.so /lib/libip6tc.so
+-
+ all:	iptcrdr.o testiptcrdr iptpinhole.o \
+         testiptcrdr_peer testiptcrdr_dscp test_nfct_get
+ #        testiptpinhole
+diff -up miniupnpd-1.8.20140906/Makefile.linux.orig miniupnpd-1.8.20140906/Makefile.linux
+--- miniupnpd-1.8.20140906/Makefile.linux.orig	2014-09-28 16:46:06.781835136 +0200
++++ miniupnpd-1.8.20140906/Makefile.linux	2014-09-28 16:46:14.388907413 +0200
+@@ -70,7 +70,6 @@ CPPFLAGS += -DIPTABLES_143
+ endif
+ 
+ CFLAGS  += $(shell $(PKG_CONFIG) --cflags libiptc)
+-LDLIBS  += $(shell $(PKG_CONFIG) --static --libs-only-l libiptc)
+ LDFLAGS += $(shell $(PKG_CONFIG) --libs-only-L libiptc)
+ LDFLAGS += $(shell $(PKG_CONFIG) --libs-only-other libiptc)
+ else
