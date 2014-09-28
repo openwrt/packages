@@ -589,7 +589,7 @@ get_local_ip () {
 		interface )
 			if [ $use_ipv6 -eq 0 ]; then
 				__IP=$(ifconfig $ip_interface | awk '
-					/Bcast.*Mask/ {	# Filter IPv4
+					/inet addr:/ {	# Filter IPv4
 					#   inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0
 					$1="";		# remove inet
 					$3="";		# remove Bcast: ...
