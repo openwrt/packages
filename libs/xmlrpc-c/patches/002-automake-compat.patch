@@ -1,0 +1,13 @@
+--- a/configure.in
++++ b/configure.in
+@@ -224,9 +224,7 @@ dnl Checks for programs.
+ dnl =======================================================================
+ 
+ AC_PROG_CC
+-if test x"$enable_cplusplus" != xno; then
+-    AC_PROG_CXX
+-fi
++AC_PROG_CXX
+ 
+ 
+ dnl =======================================================================
