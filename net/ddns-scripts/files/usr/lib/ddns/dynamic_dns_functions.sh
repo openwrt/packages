@@ -553,7 +553,7 @@ send_update() {
 	local __IP __URL __ANSWER __ERR
 
 	# verify given IP
-	[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10|^127|^172|^192)")	# no private IPv4's
+	[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^127|^172|^192)")	# no private IPv4's
 	[ $use_ipv6 -eq 1 ] && __IP=$(echo $1 | grep "^[0-9a-eA-E]")	# no IPv6 addr starting with fxxx of with ":"
 	[ -z "$__IP" ] && critical_error "Invalid or no IP '$1' given"
 
