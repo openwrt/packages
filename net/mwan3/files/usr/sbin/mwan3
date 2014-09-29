@@ -21,8 +21,6 @@ IPT="/usr/sbin/iptables -t mangle -w"
 
 ifdown()
 {
-	local device
-
 	if [ -z "$1" ]; then
 		echo "Error: Expecting interface. Usage: mwan3 ifdown <interface>" && exit 0
 	fi
@@ -31,16 +29,12 @@ ifdown()
 		echo "Error: Too many arguments. Usage: mwan3 ifdown <interface>" && exit 0
 	fi
 
-	device=$(uci get -p /var/state network.$1.ifname) &> /dev/null
-	
 	if [ -e /var/run/mwan3track-$1.pid ] ; then
 		kill $(cat /var/run/mwan3track-$1.pid)
 		rm /var/run/mwan3track-$1.pid
 	fi
 
-	if [ -n "$device" ] ; then
-		ACTION=ifdown INTERFACE=$1 DEVICE=$device /sbin/hotplug-call iface
-	fi
+	ACTION=ifdown INTERFACE=$1 /sbin/hotplug-call iface
 }
 
 ifup()
@@ -121,7 +115,7 @@ policies()
 	local percent policy share total_weight weight iface
 
 	for policy in $($IPT -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
-		echo "Policy $policy:" | sed 's/mwan3_policy_//g'
+		echo "Policy $policy:" | sed 's/mwan3_policy_//'
 
 		[ -n "$total_weight" ] || total_weight=$($IPT -S $policy | cut -s -d'"' -f2 | head -1 | awk '{print $3}')
 

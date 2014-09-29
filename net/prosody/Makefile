@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prosody
 PKG_VERSION:=0.9.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://prosody.im/downloads/source
@@ -84,8 +84,14 @@ define Package/prosody/install
 	#$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/fallbacks/*.lua $(1)/usr/lib/prosody/fallbacks/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/*.lua $(1)/usr/lib/prosody/modules/
+	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/adhoc
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/adhoc/*.lua $(1)/usr/lib/prosody/modules/adhoc/
+	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/mod_s2s
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/mod_s2s/*.lua $(1)/usr/lib/prosody/modules/mod_s2s/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/muc
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/muc/*.lua $(1)/usr/lib/prosody/modules/muc/
+	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/storage
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/storage/*.lua $(1)/usr/lib/prosody/modules/storage/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/net
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/net/*.lua $(1)/usr/lib/prosody/net/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/net/http

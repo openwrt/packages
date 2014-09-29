@@ -29,7 +29,7 @@ proto_openconnect_setup() {
 	done
 	[ -n "$serv_addr" ] || {
 		logger -t openconnect "Could not resolve server address: '$server'"
-		sleep 20
+		sleep 60
 		proto_setup_failed "$config"
 		exit 1
 	}
