@@ -69,3 +69,6 @@
 
 # duiadns.net - free dynamic DNS
 "duiadns.net"   "http://ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
+
+# Two-DNS - Simply. Connected. Everywhere.
+"Two-DNS" "http://[USERNAME]:[PASSWORD]@update.twodns.de/update?hostname=[DOMAIN]&ip=[IP]"
