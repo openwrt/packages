@@ -101,7 +101,6 @@ define Package/hnetd/postinst
 	/etc/init.d/hnetd enable
 	/etc/init.d/hnetd start
 }
-exit 0
 endef
 
 $(eval $(call BuildPackage,hnetd))
