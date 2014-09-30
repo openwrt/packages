@@ -72,12 +72,12 @@ last_resort = mwan_policy:option(DummyValue, "last_resort", translate("Last reso
 	last_resort.rawhtml = true
 	function last_resort.cfgvalue(self, s)
 		local str = self.map:get(s, "last_resort")
-		if str == "unreachable" or str == "" or str == null then
-			return "unreachable (reject)"
-		elseif str == "blackhole" then
+		if str == "blackhole" then
 			return "blackhole (drop)"
-		elseif str == "main" then
-			return "main (use main routing table)"
+		elseif str == "default" then
+			return "default (use main routing table)"
+		else
+			return "unreachable (reject)"
 		end
 	end
 

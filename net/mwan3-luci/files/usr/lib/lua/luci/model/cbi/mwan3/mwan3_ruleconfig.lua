@@ -83,8 +83,9 @@ proto = mwan_rule:option(Value, "proto", translate("Protocol"),
 
 use_policy = mwan_rule:option(Value, "use_policy", translate("Policy assigned"))
 	cbi_add_policy(use_policy)
-	use_policy:value("unreachable")
-	use_policy:value("default")
+	use_policy:value("unreachable", translate("unreachable (reject)"))
+	use_policy:value("blackhole", translate("blackhole (drop)"))
+	use_policy:value("default", translate("default (use main routing table)"))
 
 
 -- ------ currently configured policies ------ --
