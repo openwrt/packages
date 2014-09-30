@@ -168,7 +168,7 @@ function mwan3_diag_data(iface, tool, alt)
 		local ifdev = ut.trim(sys.exec("uci get -p /var/state network." .. iface .. ".ifname"))
 		if ifdev ~= "" then
 			if tool == "ping" then
-				local gateway = ut.trim(sys.exec("route -n | awk -F' ' '{ if ($8 == \"" .. ifdev .. "\" && $1 == \"0.0.0.0\") print $2 }'"))
+				local gateway = ut.trim(sys.exec("route -n | awk '{ if ($8 == \"" .. ifdev .. "\" && $1 == \"0.0.0.0\" && $3 == \"0.0.0.0\") print $2 }'"))
 				if gateway ~= "" then
 					if alt == "gateway" then
 						local cmd = "ping -c 3 -W 2 -I " .. ifdev .. " " .. gateway
@@ -247,17 +247,17 @@ function mwan3_tshoot_data()
 		else
 			lucirelease = "\nLuCI - unknown"
 		end
-	local mwan3version = ut.trim(sys.exec("opkg info mwan3 | grep Version | awk -F' ' '{ print $2 }'"))
+	local mwan3version = ut.trim(sys.exec("opkg info mwan3 | grep Version | awk '{ print $2 }'"))
 		if mwan3version ~= "" then
 			mwan3version = "\n\nmwan3 - " .. mwan3version
 		else
 			mwan3version = "\nmwan3 - unknown"
 		end
-	local mwan3lversion = ut.trim(sys.exec("opkg info luci-app-mwan3 | grep Version | awk -F' ' '{ print $2 }'"))
+	local mwan3lversion = ut.trim(sys.exec("opkg info luci-app-mwan3 | grep Version | awk '{ print $2 }'"))
 		if mwan3lversion ~= "" then
-			mwan3lversion = "\nluci-app-mwan3 - " .. mwan3lversion
+			mwan3lversion = "\nmwan3-luci - " .. mwan3lversion
 		else
-			mwan3lversion = "\nluci-app-mwan3 - unknown"
+			mwan3lversion = "\nmwan3-luci - unknown"
 		end
 	local softrev = wrtrelease .. lucirelease .. mwan3version .. mwan3lversion
 	rv.mw3ver = { }
@@ -316,7 +316,7 @@ function mwan3_tshoot_data()
 	rv.iprule[ipruleid[ipr]] = { rule = ipr }
 
 	-- ip route list table 1-250
-	local routelisting, rlstr = ut.trim(sys.exec("ip rule | sed 's/://g' | awk -F' ' '$1>=2001 && $1<=2250' | awk -F' ' '{ print $NF }'")), ""
+	local routelisting, rlstr = ut.trim(sys.exec("ip rule | sed 's/://g' | awk '$1>=2001 && $1<=2250' | awk '{ print $NF }'")), ""
 		if routelisting ~= "" then
 			for line in routelisting:gmatch("[^\r\n]+") do
 				rlstr = rlstr .. line .. "\n" .. sys.exec("ip route list table " .. line)

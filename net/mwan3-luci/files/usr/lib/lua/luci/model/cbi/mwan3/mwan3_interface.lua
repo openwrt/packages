@@ -30,7 +30,7 @@ function iface_check() -- find issues with too many interfaces, reliability and 
 					err_netcfg_list = err_netcfg_list .. ifname .. " "
 					err_route_list = err_route_list .. ifname .. " "
 				else
-					local rtcheck = ut.trim(sys.exec("route -n | awk -F' ' '{ if ($8 == \"" .. ifdev .. "\" && $1 == \"0.0.0.0\") print $1 }'"))
+					local rtcheck = ut.trim(sys.exec("route -n | awk '{ if ($8 == \"" .. ifdev .. "\" && $1 == \"0.0.0.0\" && $3 == \"0.0.0.0\") print $1 }'"))
 					if rtcheck == "" then
 						err_found = 1
 						err_route_list = err_route_list .. ifname .. " "
@@ -44,12 +44,12 @@ function iface_check() -- find issues with too many interfaces, reliability and 
 		end
 	)
 	-- check if any interfaces have duplicate metrics
-	local metric_dupnums = sys.exec("echo '" .. metric_list .. "' | awk -F' ' '{ print $2 }' | uniq -d")
+	local metric_dupnums = sys.exec("echo '" .. metric_list .. "' | awk '{ print $2 }' | uniq -d")
 	if metric_dupnums ~= "" then
 		err_found = 1
 		local metric_dupes = ""
 		for line in metric_dupnums:gmatch("[^\r\n]+") do
-			metric_dupes = sys.exec("echo '" .. metric_list .. "' | grep '" .. line .. "' | awk -F' ' '{ print $1 }'")
+			metric_dupes = sys.exec("echo '" .. metric_list .. "' | grep '" .. line .. "' | awk '{ print $1 }'")
 			err_dupmet_list = err_dupmet_list .. metric_dupes
 		end
 		err_dupmet_list = sys.exec("echo '" .. err_dupmet_list .. "' | tr '\n' ' '")
