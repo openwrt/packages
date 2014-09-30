@@ -7,6 +7,7 @@ send_alert()
 {
 	# variable "$1" stores the mwan3 status information
 	# insert your code here to send the contents of "$1"
+	echo "$1"
 }
 
 gather_event_info()
