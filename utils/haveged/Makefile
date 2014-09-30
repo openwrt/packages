@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haveged
 PKG_VERSION:=1.9.1
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.issihosts.com/$(PKG_NAME) \
@@ -44,7 +44,8 @@ endef
 
 CONFIGURE_ARGS+= \
       --enable-daemon=yes \
-      --enable-threads=no
+      --enable-threads=no \
+      --enable-olt=no
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

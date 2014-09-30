@@ -28,7 +28,7 @@ function cbi_add_policy(field)
 end
 
 function cbi_add_protocol(field)
-	local protos = ut.trim(sys.exec("cat /etc/protocols | grep '	# ' | awk -F' ' '{print $1}' | grep -vw -e 'ip' -e 'tcp' -e 'udp' -e 'icmp' -e 'esp' | grep -v 'ipv6' | sort | tr '\n' ' '"))
+	local protos = ut.trim(sys.exec("cat /etc/protocols | grep '	# ' | awk '{print $1}' | grep -vw -e 'ip' -e 'tcp' -e 'udp' -e 'icmp' -e 'esp' | grep -v 'ipv6' | sort | tr '\n' ' '"))
 	for p in string.gmatch(protos, "%S+") do
 		field:value(p)
 	end

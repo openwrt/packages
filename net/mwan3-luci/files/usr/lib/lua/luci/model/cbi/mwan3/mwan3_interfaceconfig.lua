@@ -12,9 +12,9 @@ function iface_check()
 			end
 		)
 		-- compare metric against list
-		local metric_dupnums, metric_dupes = sys.exec("echo '" .. metric_list .. "' | awk -F' ' '{ print $2 }' | uniq -d"), ""
+		local metric_dupnums, metric_dupes = sys.exec("echo '" .. metric_list .. "' | awk '{ print $2 }' | uniq -d"), ""
 		for line in metric_dupnums:gmatch("[^\r\n]+") do
-			metric_dupes = sys.exec("echo '" .. metric_list .. "' | grep '" .. line .. "' | awk -F' ' '{ print $1 }'")
+			metric_dupes = sys.exec("echo '" .. metric_list .. "' | grep '" .. line .. "' | awk '{ print $1 }'")
 			err_dupmet_list = err_dupmet_list .. metric_dupes
 		end
 		if sys.exec("echo '" .. err_dupmet_list .. "' | grep -w " .. arg[1]) ~= "" then
@@ -36,7 +36,7 @@ function iface_check()
 			err_netcfg = 1
 			err_route = 1
 		else
-			local rtcheck = ut.trim(sys.exec("route -n | awk -F' ' '{ if ($8 == \"" .. ifdev .. "\" && $1 == \"0.0.0.0\") print $1 }'"))
+			local rtcheck = ut.trim(sys.exec("route -n | awk '{ if ($8 == \"" .. ifdev .. "\" && $1 == \"0.0.0.0\" && $3 == \"0.0.0.0\") print $1 }'"))
 			if rtcheck == "" then
 				err_route = 1
 			end

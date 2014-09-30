@@ -45,6 +45,13 @@ mwan_policy = m5:section(NamedSection, arg[1], "policy", "")
 use_member = mwan_policy:option(DynamicList, "use_member", translate("Member used"))
 	cbi_add_member(use_member)
 
+last_resort = mwan_policy:option(ListValue, "last_resort", translate("Last resort"),
+	translate("When all policy members are offline use this behavior for matched traffic"))
+	last_resort.default = "unreachable"
+	last_resort:value("unreachable", translate("unreachable (reject)"))
+	last_resort:value("blackhole", translate("blackhole (drop)"))
+	last_resort:value("main", translate("main (use main routing table)"))
+
 
 -- ------ currently configured members ------ --
 

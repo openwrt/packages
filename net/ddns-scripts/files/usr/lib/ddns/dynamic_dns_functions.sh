@@ -552,9 +552,9 @@ send_update() {
 	# $1	# IP to set at DDNS service provider
 	local __IP __URL __ANSWER __ERR
 
-	# verify given IP
-	[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10|^127|^172|^192)")	# no private IPv4's
-	[ $use_ipv6 -eq 1 ] && __IP=$(echo $1 | grep "^[0-9a-eA-E]")	# no IPv6 addr starting with fxxx of with ":"
+	# verify given IP / no private IPv4's / no IPv6 addr starting with fxxx of with ":"
+	[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^127|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168)")
+	[ $use_ipv6 -eq 1 ] && __IP=$(echo $1 | grep "^[0-9a-eA-E]")
 	[ -z "$__IP" ] && critical_error "Invalid or no IP '$1' given"
 
 	# do replaces in URL
@@ -589,7 +589,7 @@ get_local_ip () {
 		interface )
 			if [ $use_ipv6 -eq 0 ]; then
 				__IP=$(ifconfig $ip_interface | awk '
-					/Bcast.*Mask/ {	# Filter IPv4
+					/inet addr:/ {	# Filter IPv4
 					#   inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0
 					$1="";		# remove inet
 					$3="";		# remove Bcast: ...
