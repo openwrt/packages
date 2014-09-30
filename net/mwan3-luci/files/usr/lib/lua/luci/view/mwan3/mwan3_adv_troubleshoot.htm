@@ -29,7 +29,7 @@
 
 				temp = String.format(
 					'<pre><span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s<span class="tsht">%s</span>%s</pre>',
-						mwanvers, st.mw3ver[0].mwan3v, mwan3cnfg, st.mwan3config[0].mwn3cfg, netcnfg, st.netconfig[0].netcfg, ifcnfg, st.ifconfig[0].ifcfg, iproute, st.rtshow[0].iprtshow, iprulesh, st.iprule[0].rule, routelisttbl, st.routelist[0].iprtlist, firewalldef, st.fidef[0].firedef, iptable, st.iptables[0].iptbls
+					mwanvers, st.mw3ver[0].mwan3v, mwan3cnfg, st.mwan3config[0].mwn3cfg, netcnfg, st.netconfig[0].netcfg, ifcnfg, st.ifconfig[0].ifcfg, iproute, st.rtshow[0].iprtshow, iprulesh, st.iprule[0].rule, routelisttbl, st.routelist[0].iprtlist, firewalldef, st.fidef[0].firedef, iptable, st.iptables[0].iptbls
 				);
 				tx.innerHTML = temp;
 			}
@@ -37,10 +37,7 @@
 			{
 				var temp = '';
 				var terror = 'Error collecting troubleshooting information';
-				temp = String.format(
-					'<strong>%s</strong>',
-						terror
-				);
+				temp = String.format('<strong>%s</strong>', terror);
 				tx.innerHTML = temp;
 			}
 		}
@@ -53,6 +50,7 @@
 		<div id="mwan3_tshoot_text"><img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> Collecting data...</div>
 	</fieldset>
 </div>
+
 <style type="text/css">
   .container {  /*container for entire page. fixes bootstrap theme's ridiculously small page width*/
 	max-width: none;

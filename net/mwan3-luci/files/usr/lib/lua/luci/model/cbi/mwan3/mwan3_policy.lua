@@ -68,6 +68,19 @@ use_member = mwan_policy:option(DummyValue, "use_member", translate("Members ass
 		
 	end
 
+last_resort = mwan_policy:option(DummyValue, "last_resort", translate("Last resort"))
+	last_resort.rawhtml = true
+	function last_resort.cfgvalue(self, s)
+		local str = self.map:get(s, "last_resort")
+		if str == "unreachable" or str == "" or str == null then
+			return "unreachable (reject)"
+		elseif str == "blackhole" then
+			return "blackhole (drop)"
+		elseif str == "main" then
+			return "main (use main routing table)"
+		end
+	end
+
 errors = mwan_policy:option(DummyValue, "errors", translate("Errors"))
 	errors.rawhtml = true
 	function errors.cfgvalue(self, s)
