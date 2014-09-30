@@ -45,7 +45,7 @@
 
 					temp += String.format(
 						'<span class="%s"><strong>%s (<a href="%q">%s</a>)</strong><br />%s</span>',
-							cssc, st.wans[i].name, st.wans[i].link, st.wans[i].ifname, stat
+						cssc, st.wans[i].name, st.wans[i].link, st.wans[i].ifname, stat
 					);
 				}
 				tx.innerHTML = temp;
@@ -54,10 +54,7 @@
 			{
 				var temp = '';
 				var ncint = 'No MWAN3 interfaces found';
-				temp = String.format(
-					'<strong>%s</strong>',
-						ncint
-				);
+				temp = String.format('<strong>%s</strong>', ncint);
 				tx.innerHTML = temp;
 			}
 
@@ -66,21 +63,14 @@
 			{
 				var temp = '';
 				var mwan3lg = 'Last 50 MWAN3 systemlog entries. Newest entries sorted at the top :';
-
-				temp = String.format(
-					'<pre>%s<br /><br />%s</pre>',
-						mwan3lg, st.mwan3log[0].mwanlog
-				);
+				temp = String.format('<pre>%s<br /><br />%s</pre>', mwan3lg, st.mwan3log[0].mwanlog);
 				tx.innerHTML = temp;
 			}
 			else
 			{
 				var temp = '';
 				var nslg = 'No MWAN3 systemlog history found';
-				temp = String.format(
-					'<strong>%s</strong>',
-						nslg
-				);
+				temp = String.format('<strong>%s</strong>', nslg);
 				tx.innerHTML = temp;
 			}
 		}

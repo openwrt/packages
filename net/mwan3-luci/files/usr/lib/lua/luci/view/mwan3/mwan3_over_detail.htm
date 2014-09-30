@@ -14,20 +14,14 @@
 			if (st.mwan3dst)
 			{
 				var temp = '';
-				temp = String.format(
-					'<pre>%s</pre>',
-						st.mwan3dst[0].detailstat
-				);
+				temp = String.format('<pre>%s</pre>', st.mwan3dst[0].detailstat);
 				tx.innerHTML = temp;
 			}
 			else
 			{
 				var temp = '';
 				var nslg = 'No detailed status information available';
-				temp = String.format(
-					'<strong>%s</strong>',
-						nslg
-				);
+				temp = String.format('<strong>%s</strong>', nslg);
 				tx.innerHTML = temp;
 			}
 		}
