@@ -1,0 +1,129 @@
+config bird 'bird'
+    option use_UCI_config '1'
+        #Caution! Enabling this option, Bird will translate this
+        #UCI file and use it instead of /etc/bird4.conf
+    option UCI_config_file '/tmp/bird4.conf'
+        #If you enable useUCIconfig, UCIconfigFile will be Bird's
+        #configuration file location.
+
+config global 'global'
+    option log_file '/tmp/bird4.log'
+    option log 'all'
+    option debug 'off'
+    option router_id '172.16.1.6'
+
+config table
+    option name 'aux'
+    
+config kernel kernel1
+    option table 'aux'
+    option import 'all'
+    option export 'all'
+    option kernel_table '100'
+    option scan_time '10'
+    option learn '1'
+    option persist '0'
+    option disabled '0'
+
+config device device1
+    option scan_time '10'
+    option disabled '0'
+
+config static static1
+    option table 'aux'
+    option disabled '0'
+
+config bgp bgp1
+    option template 'bgp_common'
+    option description 'Description of the BGP instance'
+    option neighbor_address '172.16.1.5'
+    option neighbor_as '65530'
+    option source_address '172.16.1.6'
+    option next_hop_self '0'
+    option next_hop_keep '0'
+    option rr_client '1'
+    option rr_cluster_id '172.16.1.6'
+
+config bgp_template bgp_common
+    option table 'aux'
+    option import 'all'
+    option export 'all'
+    option local_address '172.16.1.6'
+    option local_as '65001'
+    option import_limit '100'
+    option import_limit_action 'warn'
+    option export_limit '100'
+    option export_limit_action 'warn'
+    option receive_limit '100'
+    option receive_limit_action 'warn'
+    option disabled '0'
+
+config ospf ospf1
+    option cfg1583compat '1'
+
+config ospf_area '0.0.0.0'
+    option instance 'ospf1'
+    option stub '0'
+
+config ospf_interface '*'
+    option area '0.0.0.0'
+    option cost '100'
+    option type 'broadcast'
+    option hello '5'
+    option password '1'
+
+config ospf_password '1'
+    option authentication 'cryptographic'
+    option passphrase '1234'
+
+config ospf_networks
+    option area '0.0.0.0'
+    list prefix '10.0.0.0/24'
+
+config ospf_hidden_networks
+    option area '0.0.0.0'
+    option prefix '12.0.0.0/24'
+
+config ospf_stubnet '11.0.0.0/24'
+    option area '0.0.0.0'
+    option hidden '0'
+    option summary '0'
+    option cost '101'
+
+config route
+    option instance 'static1'
+    option type 'router'
+    option prefix '192.168.9.0/24'
+    option via '10.99.105.159'
+
+config route
+    option instance 'static1'
+    option type 'special'
+    option prefix '192.168.2.0/24'
+    option attribute 'unreachable'
+
+config route
+    option instance 'static1'
+    option type 'iface'
+    option prefix '192.168.3.0/24'
+    option iface 'mgmt0'
+
+config route
+    option instance 'static1'
+    option type 'recursive'
+    option prefix '192.168.4.0/24'
+    option ip '192.168.1.1'
+
+config route
+    option instance 'static1'
+    option type 'multipath'
+    option prefix '192.168.30.0/24'
+    list l_via '172.16.1.5'
+    list l_via '172.16.1.6'
+
+config filter 'firstFilter'
+    option type 'bgp'
+    option instance 'bgp1'
+    option file_path '/var/filters/f1'
+
+
