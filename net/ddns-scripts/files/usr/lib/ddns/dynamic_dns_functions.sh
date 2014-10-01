@@ -173,6 +173,45 @@ critical_error() {
 	exit 1		# critical error -> leave here
 }
 
+# replace all special chars to their %hex value
+# used for USERNAME and PASSWORD in update_url
+# unchanged: "-"(minus) "_"(underscore) "."(dot) "~"(tilde)
+# to verify: "'"(single quote) '"'(double quote)	# because shell delimiter
+#            "$"(Dollar)				# because used as variable output
+# tested with the following string stored via Luci Application as password / username
+# A B!"#AA$1BB%&'()*+,-./:;<=>?@[\]^_`{|}~	without problems at Dollar or quotes
+__urlencode() {
+	# $1	Name of Variable to store encoded string to
+	# $2	string to encode
+	local __STR __LEN __CHAR __OUT
+	local __ENC=""
+	local __POS=1
+
+	__STR="$2"		# read string to encode
+	__LEN=${#__STR}		# get string length
+
+	while [ $__POS -le $__LEN ]; do
+		# read one chat of the string
+		__CHAR=$(expr substr "$__STR" $__POS 1)
+
+		case "$__CHAR" in
+		        [-_.~a-zA-Z0-9] )
+				# standard char
+				__OUT="${__CHAR}"
+				;;
+		        * )
+				# special char get %hex code
+		               __OUT=$(printf '%%%02x' "'$__CHAR" )
+				;;
+		esac
+		__ENC="${__ENC}${__OUT}"	# append to encoded string
+		__POS=$(( $__POS + 1 ))		# increment position
+	done
+
+	eval "$1='$__ENC'"	# transfer back to variable
+	return 0
+}
+
 # extract update_url for given DDNS Provider from
 # file /usr/lib/ddns/services for IPv4 or from
 # file /usr/lib/ddns/services_ipv6 for IPv6
@@ -550,7 +589,7 @@ __do_transfer() {
 
 send_update() {
 	# $1	# IP to set at DDNS service provider
-	local __IP __URL __ANSWER __ERR
+	local __IP __URL __ANSWER __ERR __USER __PASS
 
 	# verify given IP / no private IPv4's / no IPv6 addr starting with fxxx of with ":"
 	[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^127|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168)")
@@ -558,7 +597,9 @@ send_update() {
 	[ -z "$__IP" ] && critical_error "Invalid or no IP '$1' given"
 
 	# do replaces in URL
-	__URL=$(echo $update_url | sed -e "s#\[USERNAME\]#$username#g" -e "s#\[PASSWORD\]#$password#g" \
+	__urlencode __USER "$username"	# encode username, might be email or something like this
+	__urlencode __PASS "$password"	# encode password, might have special chars for security reason
+	__URL=$(echo $update_url | sed -e "s#\[USERNAME\]#$__USER#g" -e "s#\[PASSWORD\]#$__PASS#g" \
 				       -e "s#\[DOMAIN\]#$domain#g" -e "s#\[IP\]#$__IP#g")
 	[ $use_https -ne 0 ] && __URL=$(echo $__URL | sed -e 's#^http:#https:#')
 
