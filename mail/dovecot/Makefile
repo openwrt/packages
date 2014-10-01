@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dovecot
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+libopenssl +librt +zlib +libbz2 +libcap
+  DEPENDS:=+DOVECOT_LDAP:libopenldap +libopenssl +librt +zlib +libbz2 +libcap
   TITLE:=An IMAP and POP3 daemon
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.dovecot.org/
@@ -37,6 +37,17 @@ define Package/dovecot/description
  Dovecot is a program which provides POP3 and IMAP services.
 endef
 
+define Package/dovecot/config
+        menu "Select dovecot build options"
+                depends on PACKAGE_dovecot
+                config DOVECOT_LDAP
+                        bool "LDAP support"
+                        default y
+                        help
+                          Implements LDAP support in dovecot.
+        endmenu
+endef
+
 CONFIGURE_ARGS += \
 	--without-gssapi \
 	--without-pam \
@@ -44,6 +55,14 @@ CONFIGURE_ARGS += \
 	--with-notify=dnotify \
 	--without-lzma \
 	--without-lz4
+
+ifneq ($(strip $(CONFIG_DOVECOT_LDAP)),)
+  CONFIGURE_ARGS+= \
+	--with-ldap=yes
+else
+  CONFIGURE_ARGS+= \
+	--with-ldap=no
+endif
 
 CONFIGURE_VARS += \
 	RPCGEN= \
