@@ -49,6 +49,17 @@ mwan3_set_general_iptables()
 	$IPT -F mwan3_rules
 }
 
+mwan3_set_general_rules()
+{
+	if [ -z "$($IP rule list | awk '$1 == "2253:"')" ]; then
+		$IP rule add pref 2253 fwmark 0xfd00/0xff00 blackhole
+	fi
+
+	if [ -z "$($IP rule list | awk '$1 == "2254:"')" ]; then
+		$IP rule add pref 2254 fwmark 0xfe00/0xff00 unreachable
+	fi
+}
+
 mwan3_set_connected_iptables()
 {
 	local connected_networks
@@ -112,18 +123,8 @@ mwan3_set_iface_rules()
 		$IP rule del pref $(($iface_id+2000))
 	done
 
-	while [ -n "$($IP rule list | awk '$1 == "2253:"')" ]; do
-		$IP rule del pref 2253
-	done
-
-	while [ -n "$($IP rule list | awk '$1 == "2254:"')" ]; do
-		$IP rule del pref 2254
-	done
-
 	[ $ACTION == "ifup" ] && $IP rule add pref $(($iface_id+1000)) iif $DEVICE lookup main
 	[ $ACTION == "ifup" ] && $IP rule add pref $(($iface_id+2000)) fwmark $(($iface_id*256))/0xff00 lookup $iface_id
-        $IP rule add pref 2253 fwmark 0xfd00/0xff00 blackhole
-        $IP rule add pref 2254 fwmark 0xfe00/0xff00 unreachable
 }
 
 mwan3_track()
@@ -135,6 +136,11 @@ mwan3_track()
 		track_ips="$1 $track_ips"
 	}
 	config_list_foreach $INTERFACE track_ip mwan3_list_track_ips
+
+	if [ -e /var/run/mwan3track-$INTERFACE.pid ] ; then
+		kill $(cat /var/run/mwan3track-$INTERFACE.pid) &> /dev/null
+		rm /var/run/mwan3track-$INTERFACE.pid &> /dev/null
+	fi
 
 	if [ -n "$track_ips" ]; then
 		config_get reliability $INTERFACE reliability 1
@@ -299,7 +305,7 @@ mwan3_ifupdown()
 			sleep 1
 			let counter++
 			if [ "$counter" -ge 10 ]; then
-				$LOG warn "Could not find gateway for interface $INTERFACE (${DEVICE:-unknown})" && return 0
+				$LOG warn "Could not find gateway for interface $INTERFACE ($DEVICE)" && return 0
 			fi
 		done
 
@@ -318,6 +324,7 @@ mwan3_ifupdown()
 	$LOG notice "$ACTION interface $INTERFACE (${DEVICE:-unknown})"
 
 	mwan3_set_general_iptables
+	mwan3_set_general_rules
 	mwan3_set_iface_iptables
 	mwan3_set_iface_route
 	mwan3_set_iface_rules
@@ -328,13 +335,14 @@ mwan3_ifupdown()
 	config_foreach mwan3_set_user_rules_iptables rule
 }
 
-local IP IPT LOG
-
+[ -n "$ACTION" ] || exit 0
 [ -n "$INTERFACE" ] || exit 0
 
 if [ $ACTION == "ifup" ]; then
 	[ -n "$DEVICE" ] || exit 0
 fi
+
+local IP IPT LOG
 
 IP="/usr/sbin/ip -4"
 IPT="/usr/sbin/iptables -t mangle -w"
