@@ -1,23 +1,27 @@
-#!/bin/sh /etc/rc.common
+#!/bin/sh
+. /lib/functions.sh
 
-. /lib/network/config.sh
-
-extra_help() {
-	cat <<EOF
-
-	ifup <iface>	Start service on interface
-	ifdown <iface>	Stop service on interface
-	interfaces	Show interfaces status
-	policies	Show policies status
-	rules		Show rules status
-	status		Show all status
-EOF
-}
-
-EXTRA_COMMANDS="ifdown ifup interfaces policies rules status"
-EXTRA_HELP="$(extra_help)"
 IP="/usr/sbin/ip -4"
 IPT="/usr/sbin/iptables -t mangle -w"
+
+help()
+{                                                                    
+	cat <<EOF                                                                                      
+Syntax: mwan3 [command]                                                                          
+                                                                                                       
+Available commands:                                                                                    
+	start           Load iptables rules, ip rules and ip routes
+	stop            Unload iptables rules, ip rules and ip routes
+	restart         Reload iptables rules, ip rules and ip routes
+        ifup <iface>    Load rules and routes for specific interface
+        ifdown <iface>  Unload rules and routes for specific interface
+        interfaces      Show interfaces status
+        policies        Show policies status
+        rules           Show rules status
+        status          Show all status
+
+EOF
+}
 
 ifdown()
 {
@@ -197,3 +201,6 @@ restart() {
 	stop
 	start
 }
+
+action=${1:-help}
+$action

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
 PKG_VERSION:=1.5
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_MAINTAINER:=Jeroen Louwes <jeroen.louwes@gmail.com>
 PKG_LICENSE:=GPLv2
 
@@ -40,11 +40,6 @@ endef
 
 define Package/mwan3/install
    $(CP) ./files/* $(1)
-endef
-
-define Package/mwan3/postinst
-   [ -n "$${IPKG_INSTROOT}" ] || /etc/init.d/mwan3 enable
-   exit 0
 endef
 
 $(eval $(call BuildPackage,mwan3))
