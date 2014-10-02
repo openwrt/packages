@@ -50,7 +50,7 @@ last_resort = mwan_policy:option(ListValue, "last_resort", translate("Last resor
 	last_resort.default = "unreachable"
 	last_resort:value("unreachable", translate("unreachable (reject)"))
 	last_resort:value("blackhole", translate("blackhole (drop)"))
-	last_resort:value("main", translate("main (use main routing table)"))
+	last_resort:value("default", translate("default (use main routing table)"))
 
 
 -- ------ currently configured members ------ --
