@@ -69,3 +69,6 @@
 
 # duiadns.net - free dynamic DNS
 "duiadns.net" "http://ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
+
+# MyDNS.JP
+"mydns.jp" "http://[USERNAME]:[PASSWORD]@www.mydns.jp/login.html"
