@@ -16,7 +16,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_LIBVER:=2.1
 
@@ -223,7 +223,13 @@ MAKE_FLAGS += \
 
 define Package/ruby/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ruby $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/vendor_ruby/$(PKG_LIBVER)
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/site_ruby/$(PKG_LIBVER)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ruby $(1)/usr/lib/ruby/ruby$(PKG_LIBVER)-bin
+	$(INSTALL_BIN) ./files/ruby $(1)/usr/bin/ruby
+	sed -i -e "s%@RUBY_LIBPATH@%/usr/lib/ruby/$(PKG_LIBVER)%" $(1)/usr/bin/ruby
+	sed -i -e "s%@RUBY_BINPATH@%/usr/lib/ruby/ruby$(PKG_LIBVER)-bin%" $(1)/usr/bin/ruby
 endef
 
 define Package/libruby/install
