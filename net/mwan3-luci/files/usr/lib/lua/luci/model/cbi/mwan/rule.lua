@@ -1,22 +1,22 @@
 -- ------ extra functions ------ --
 
-function rule_check() -- determine if rules needs a proper protocol configured
+function ruleCheck() -- determine if rules needs a proper protocol configured
 	uci.cursor():foreach("mwan3", "rule",
 		function (section)
-			local sport = ut.trim(sys.exec("uci get -p /var/state mwan3." .. section[".name"] .. ".src_port"))
-			local dport = ut.trim(sys.exec("uci get -p /var/state mwan3." .. section[".name"] .. ".dest_port"))
-			if sport ~= "" or dport ~= "" then -- ports configured
-				local proto = ut.trim(sys.exec("uci get -p /var/state mwan3." .. section[".name"] .. ".proto"))
-				if proto == "" or proto == "all" then -- no or improper protocol
-					err_proto_list = err_proto_list .. section[".name"] .. " "
+			local sourcePort = ut.trim(sys.exec("uci get -p /var/state mwan3." .. section[".name"] .. ".src_port"))
+			local destPort = ut.trim(sys.exec("uci get -p /var/state mwan3." .. section[".name"] .. ".dest_port"))
+			if sourcePort ~= "" or destPort ~= "" then -- ports configured
+				local protocol = ut.trim(sys.exec("uci get -p /var/state mwan3." .. section[".name"] .. ".proto"))
+				if protocol == "" or protocol == "all" then -- no or improper protocol
+					error_protocol_list = error_protocol_list .. section[".name"] .. " "
 				end
 			end
 		end
 	)
 end
 
-function rule_warn() -- display warning messages at the top of the page
-	if err_proto_list ~= " " then
+function ruleWarn() -- display warning messages at the top of the page
+	if error_protocol_list ~= " " then
 		return "<font color=\"ff0000\"><strong>WARNING: some rules have a port configured with no or improper protocol specified! Please configure a specific protocol!</strong></font>"
 	else
 		return ""
@@ -29,18 +29,17 @@ dsp = require "luci.dispatcher"
 sys = require "luci.sys"
 ut = require "luci.util"
 
-err_proto = 0
-err_proto_list = " "
-rule_check()
+error_protocol_list = " "
+ruleCheck()
 
 
-m5 = Map("mwan3", translate("MWAN3 Multi-WAN Traffic Rule Configuration"),
-	translate(rule_warn()))
-	m5:append(Template("mwan3/mwan3_config_css"))
+m5 = Map("mwan3", translate("MWAN Rule Configuration"),
+	translate(ruleWarn()))
+	m5:append(Template("mwan/config_css"))
 
 
 mwan_rule = m5:section(TypedSection, "rule", translate("Traffic Rules"),
-	translate("Rules specify which traffic will use a particular MWAN3 policy based on IP address, port or protocol<br />" ..
+	translate("Rules specify which traffic will use a particular MWAN policy based on IP address, port or protocol<br />" ..
 	"Rules are matched from top to bottom. Rules below a matching rule are ignored. Traffic not matching any rule is routed using the main routing table<br />" ..
 	"Traffic destined for known (other than default) networks is handled by the main routing table. Traffic matching a rule, but all WAN interfaces for that policy are down will be blackholed<br />" ..
 	"Names may contain characters A-Z, a-z, 0-9, _ and no spaces<br />" ..
@@ -51,11 +50,11 @@ mwan_rule = m5:section(TypedSection, "rule", translate("Traffic Rules"),
 	mwan_rule.sectionhead = "Rule"
 	mwan_rule.sortable = true
 	mwan_rule.template = "cbi/tblsection"
-	mwan_rule.extedit = dsp.build_url("admin", "network", "mwan3", "configuration", "rule", "%s")
+	mwan_rule.extedit = dsp.build_url("admin", "network", "mwan", "configuration", "rule", "%s")
 	function mwan_rule.create(self, section)
 		TypedSection.create(self, section)
 		m5.uci:save("mwan3")
-		luci.http.redirect(dsp.build_url("admin", "network", "mwan3", "configuration", "rule", section))
+		luci.http.redirect(dsp.build_url("admin", "network", "mwan", "configuration", "rule", section))
 	end
 
 
@@ -98,7 +97,7 @@ use_policy = mwan_rule:option(DummyValue, "use_policy", translate("Policy assign
 errors = mwan_rule:option(DummyValue, "errors", translate("Errors"))
 	errors.rawhtml = true
 	function errors.cfgvalue(self, s)
-		if not string.find(err_proto_list, " " .. s .. " ") then
+		if not string.find(error_protocol_list, " " .. s .. " ") then
 			return ""
 		else
 			return "<span title=\"No protocol specified\"><img src=\"/luci-static/resources/cbi/reset.gif\" alt=\"error\"></img></span>"
