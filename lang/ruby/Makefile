@@ -7,7 +7,6 @@
 
 #
 # To Do:
-#  - split up encodings
 #  - allow selection of either native or pure version of a library where supported
 #  +-> some native libraries are probably only supported if ruby-dl is enabled
 # anything else?
@@ -119,8 +118,14 @@ endef
 
 define Package/ruby-enc
 $(call Package/ruby/Default)
-  TITLE+= (character re-coding library) (adds 2MB+)
+  TITLE:=Ruby character re-coding library charset (small subset)
   DEPENDS:=ruby
+endef
+
+define Package/ruby-enc-extra
+$(call Package/ruby/Default)
+  TITLE:=Ruby character re-coding library charset (extra subset)
+  DEPENDS:=ruby +ruby-enc
 endef
 
 define Package/ruby-erb
@@ -406,6 +411,20 @@ endef
 
 define Package/ruby-enc/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
+		usr/lib/ruby/$(PKG_LIBVER)/*/enc/encdb.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/enc/iso_8859_1.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/enc/utf_* \
+		usr/lib/ruby/$(PKG_LIBVER)/*/enc/euc_jp.so \
+	) | ( cd $(1); $(TAR) -xf - )
+endef
+
+define Package/ruby-enc-extra/install
+	( cd $(PKG_INSTALL_DIR); $(TAR) \
+		--exclude=usr/lib/ruby/$(PKG_LIBVER)/*/enc/encdb.so \
+		--exclude=usr/lib/ruby/$(PKG_LIBVER)/*/enc/iso_8859_1.so \
+		--exclude=usr/lib/ruby/$(PKG_LIBVER)/*/enc/utf_* \
+		--exclude=usr/lib/ruby/$(PKG_LIBVER)/*/enc/euc_jp.so \
+		-cf - \
 		usr/lib/ruby/$(PKG_LIBVER)/*/enc \
 	) | ( cd $(1); $(TAR) -xf - )
 endef
@@ -593,6 +612,7 @@ $(eval $(call BuildPackage,ruby-cgi))
 $(eval $(call BuildPackage,ruby-digest))
 $(eval $(call BuildPackage,ruby-dl))
 $(eval $(call BuildPackage,ruby-enc))
+$(eval $(call BuildPackage,ruby-enc-extra))
 $(eval $(call BuildPackage,ruby-erb))
 $(eval $(call BuildPackage,ruby-gdbm))
 $(eval $(call BuildPackage,ruby-gems))
