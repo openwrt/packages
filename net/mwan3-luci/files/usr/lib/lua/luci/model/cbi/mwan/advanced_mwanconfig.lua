@@ -1,12 +1,12 @@
--- ------ mwan3 configuration ------ --
+-- ------ mwan configuration ------ --
 
 ut = require "luci.util"
 
-mwan3file = "/etc/config/mwan3"
+mwanConfig = "/etc/config/mwan3"
 
 
 m5 = SimpleForm("luci", nil)
-	m5:append(Template("mwan3/mwan3_adv_mwan3")) -- highlight current tab
+	m5:append(Template("mwan/advanced_mwanconfig")) -- highlight current tab
 
 
 f = m5:section(SimpleSection, nil,
@@ -17,11 +17,11 @@ t = f:option(TextValue, "lines")
 	t.rows = 20
 
 	function t.cfgvalue()
-		return nixio.fs.readfile(mwan3file) or ""
+		return nixio.fs.readfile(mwanConfig) or ""
 	end
 
 	function t.write(self, section, data) -- format and write new data to script
-		return nixio.fs.writefile(mwan3file, "\n" .. ut.trim(data:gsub("\r\n", "\n")) .. "\n")
+		return nixio.fs.writefile(mwanConfig, "\n" .. ut.trim(data:gsub("\r\n", "\n")) .. "\n")
 	end
 
 	function f.handle(self, state, data)

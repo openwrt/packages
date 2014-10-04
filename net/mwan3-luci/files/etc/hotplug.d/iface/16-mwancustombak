@@ -1,11 +1,11 @@
 #!/bin/sh
 
 # to enable this script uncomment the case loop at the bottom
-# to report mwan3 status on interface hotplug ifup/ifdown events modify the lines in the send_alert function
+# to report mwan status on interface hotplug ifup/ifdown events modify the lines in the send_alert function
 
 send_alert()
 {
-	# variable "$1" stores the mwan3 status information
+	# variable "$1" stores the MWAN status information
 	# insert your code here to send the contents of "$1"
 	echo "$1"
 }
@@ -18,11 +18,11 @@ gather_event_info()
 	# get current interface, policy and rule status
 	local CURRENT_STATUS="$(/usr/sbin/mwan3 status)"
 
-	# get last 50 mwan3 systemlog messages
-	local MWAN3_LOG="$(echo -e "Last 50 MWAN3 systemlog entries. Newest entries sorted at the top:\n$(logread | grep mwan3 | tail -n 50 | sed 'x;1!H;$!d;x')")"
+	# get last 50 MWAN systemlog messages
+	local MWAN_LOG="$(echo -e "Last 50 MWAN systemlog entries. Newest entries sorted at the top:\n$(logread | grep mwan3 | tail -n 50 | sed 'x;1!H;$!d;x')")"
 
 	# pass event info to send_alert function
-	send_alert "$(echo -e "$EVENT_INFO\n\n$CURRENT_STATUS\n\n$MWAN3_LOG")"
+	send_alert "$(echo -e "$EVENT_INFO\n\n$CURRENT_STATUS\n\n$MWAN_LOG")"
 }
 
 #case "$ACTION" in
