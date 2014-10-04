@@ -16,7 +16,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_LIBVER:=2.1
 
@@ -79,6 +79,12 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +libdb47 +libffi
 endef
 
+define Package/ruby-bigdecimal
+$(call Package/ruby/Default)
+  TITLE+= Arbitrary-precision decimal floating-point library
+  DEPENDS:=ruby
+endef
+
 define Package/ruby-cgi
 $(call Package/ruby/Default)
   TITLE:=Ruby CGI support toolkit
@@ -115,6 +121,12 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-yaml +ruby-zlib +ruby-openssl +ruby-webrick +ruby-erb
 endef
 
+define Package/ruby-io-console
+$(call Package/ruby/Default)
+  TITLE+= Console interface
+  DEPENDS:=ruby
+endef
+
 define Package/ruby-irb
 $(call Package/ruby/Default)
   TITLE+= (interactive shell)
@@ -124,6 +136,12 @@ endef
 define Package/ruby-json
 $(call Package/ruby/Default)
   TITLE:=Ruby support for JSON
+  DEPENDS:=ruby
+endef
+
+define Package/ruby-minitest
+$(call Package/ruby/Default)
+  TITLE+= minitest bundled with Ruby
   DEPENDS:=ruby
 endef
 
@@ -137,6 +155,12 @@ define Package/ruby-openssl
 $(call Package/ruby/Default)
   TITLE:=Ruby support for openssl
   DEPENDS:=ruby +libopenssl
+endef
+
+define Package/ruby-psych
+$(call Package/ruby/Default)
+  TITLE+=YAML parser and emitter
+  DEPENDS:=ruby
 endef
 
 define Package/ruby-rdoc
@@ -169,9 +193,9 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby
 endef
 
-define Package/ruby-unit
+define Package/ruby-testunit
 $(call Package/ruby/Default)
-  TITLE:=Ruby unit testing toolkit
+  TITLE:=Ruby Test Unit toolkit
   DEPENDS:=ruby
 endef
 
@@ -248,6 +272,9 @@ define Package/ruby-core/install
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/kconv.rb \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/nkf.so \
 		\
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/bigdecimal.so \
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/bigdecimal/ \
+		\
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/digest \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/digest.rb \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/digest \
@@ -267,6 +294,9 @@ define Package/ruby-core/install
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/irb/completion.rb \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/irb/ext/save-history.rb \
 		\
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/io/console.so \
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/io/console/ \
+		\
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/zlib.so \
 		\
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/erb.rb \
@@ -278,13 +308,22 @@ define Package/ruby-core/install
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/irb.rb \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/irb \
 		\
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/minitest/ \
+		\
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/psych \
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/psych.rb \
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/psych.so \
+		\
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/rdoc.rb \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/rdoc \
 		\
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/rake.rb \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/rake \
 		\
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/ubygems.rb \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/rubygems.rb \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/rubygems \
+		$(1)/usr/lib/ruby/gems \
 		\
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/cgi.rb \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/cgi \
@@ -306,6 +345,14 @@ define Package/ruby-core/install
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/syck.so \
 
 	find $(1) -name '*.h' | xargs rm -f
+endef
+
+define Package/ruby-bigdecimal/install
+	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
+		usr/lib/ruby/$(PKG_LIBVER)/*/bigdecimal.so \
+		usr/lib/ruby/$(PKG_LIBVER)/bigdecimal/ \
+		usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/bigdecimal-*.gemspec \
+	) | ( cd $(1); $(TAR) -xf - )
 endef
 
 define Package/ruby-cgi/install
@@ -343,8 +390,23 @@ define Package/ruby-gems/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/gem $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/ubygems.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rubygems.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rubygems $(1)/usr/lib/ruby/$(PKG_LIBVER)/
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/doc
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/cache
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/extensions
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/build_info
+endef
+
+define Package/ruby-io-console/install
+	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
+		usr/lib/ruby/$(PKG_LIBVER)/*/io/console.so \
+		usr/lib/ruby/$(PKG_LIBVER)/io/console/ \
+		usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/io-console-*.gemspec \
+	) | ( cd $(1); $(TAR) -xf - )
 endef
 
 define Package/ruby-irb/install
@@ -360,6 +422,16 @@ define Package/ruby-json/install
 		usr/lib/ruby/$(PKG_LIBVER)/json.rb \
 		usr/lib/ruby/$(PKG_LIBVER)/json \
 		usr/lib/ruby/$(PKG_LIBVER)/*/json \
+		usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/json-*.gemspec \
+	) | ( cd $(1); $(TAR) -xf - )
+	rm -rf \
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/psych/json
+endef
+
+define Package/ruby-minitest/install
+	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
+		usr/lib/ruby/$(PKG_LIBVER)/minitest/ \
+		usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/minitest-*.gemspec \
 	) | ( cd $(1); $(TAR) -xf - )
 endef
 
@@ -384,12 +456,28 @@ define Package/ruby-openssl/install
 	) | ( cd $(1); $(TAR) -xf - )
 endef
 
+define Package/ruby-psych/install
+	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
+		usr/lib/ruby/$(PKG_LIBVER)/psych \
+		usr/lib/ruby/$(PKG_LIBVER)/psych.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/*/psych.so \
+		usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/psych-*.gemspec \
+	) | ( cd $(1); $(TAR) -xf - )
+endef
+
 define Package/ruby-rdoc/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/rdoc $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ri $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rdoc.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rdoc $(1)/usr/lib/ruby/$(PKG_LIBVER)/
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/rdoc-*.gemspec \
+		$(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rdoc-* \
+		$(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/
 endef
 
 define Package/ruby-rake/install
@@ -398,6 +486,11 @@ define Package/ruby-rake/install
 	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rake.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rake $(1)/usr/lib/ruby/$(PKG_LIBVER)/
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/rake-*.gemspec \
+		$(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-* $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/
 endef
 
 define Package/ruby-readline/install
@@ -418,11 +511,15 @@ define Package/ruby-rss/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rss.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
 endef
 
-define Package/ruby-unit/install
+define Package/ruby-testunit/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/testrb $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/test $(1)/usr/lib/ruby/$(PKG_LIBVER)/
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/test-unit-*.gemspec $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/test-unit-* $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/
 endef
 
 define Package/ruby-webrick/install
@@ -459,6 +556,7 @@ endef
 $(eval $(call BuildPackage,ruby))
 $(eval $(call BuildPackage,libruby))
 $(eval $(call BuildPackage,ruby-core))
+$(eval $(call BuildPackage,ruby-bigdecimal))
 $(eval $(call BuildPackage,ruby-cgi))
 $(eval $(call BuildPackage,ruby-dl))
 $(eval $(call BuildPackage,ruby-enc))
@@ -466,15 +564,18 @@ $(eval $(call BuildPackage,ruby-erb))
 $(eval $(call BuildPackage,ruby-gdbm))
 $(eval $(call BuildPackage,ruby-gems))
 $(eval $(call BuildPackage,ruby-json))
+$(eval $(call BuildPackage,ruby-io-console))
 $(eval $(call BuildPackage,ruby-irb))
+$(eval $(call BuildPackage,ruby-minitest))
 $(eval $(call BuildPackage,ruby-nkf))
 $(eval $(call BuildPackage,ruby-openssl))
+$(eval $(call BuildPackage,ruby-psych))
 $(eval $(call BuildPackage,ruby-rake))
 $(eval $(call BuildPackage,ruby-rdoc))
 $(eval $(call BuildPackage,ruby-readline))
 $(eval $(call BuildPackage,ruby-rexml))
 $(eval $(call BuildPackage,ruby-rss))
-$(eval $(call BuildPackage,ruby-unit))
+$(eval $(call BuildPackage,ruby-testunit))
 $(eval $(call BuildPackage,ruby-webrick))
 $(eval $(call BuildPackage,ruby-xmlrpc))
 $(eval $(call BuildPackage,ruby-yaml))
