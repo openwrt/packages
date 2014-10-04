@@ -16,7 +16,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_LIBVER:=2.1
 
