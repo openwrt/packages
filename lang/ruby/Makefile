@@ -91,6 +91,26 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby
 endef
 
+define Package/ruby-digest
+$(call Package/ruby/Default)
+  TITLE:=Ruby Digest Library
+  DEPENDS:=ruby +RUBY_DIGEST_USE_OPENSSL:libopenssl
+endef
+
+define Package/ruby-digest/config
+
+  config RUBY_DIGEST_USE_OPENSSL
+		bool "Use OpenSSL functions for ruby digest hash functions"
+        depends on PACKAGE_ruby-digest
+		help
+			Ruby can use OpenSSL hash functions or compile alternative implementations. Using
+			OpenSSL saves about 30KBytes (less when compressed) but requires OpenSSL (that
+			is way bigger than that). However, if OpenSSL is already needed by another usage,
+			as ruby-openssl or any other non ruby package, it is better to mark this option.
+		default n
+
+endef
+
 define Package/ruby-dl
 $(call Package/ruby/Default)
   TITLE+= (dynamic linker support) (adds 5MB+)
@@ -239,6 +259,15 @@ CONFIGURE_ARGS += \
 	--with-ruby-version=minor \
 	--with-iconv-dir=$(ICONV_PREFIX) \
 
+ifndef CONFIG_RUBY_DIGEST_USE_OPENSSL
+CONFIGURE_ARGS += \
+	--with-bundled-sha1\
+	--with-bundled-md5\
+	--with-bundled-rmd160\
+	--with-bundled-sha2 \
+
+endif
+
 TARGET_LDFLAGS += -L$(PKG_BUILD_DIR)
 
 MAKE_FLAGS += \
@@ -360,6 +389,15 @@ define Package/ruby-cgi/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/cgi.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
 endef
 
+define Package/ruby-digest/install
+	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
+		usr/lib/ruby/$(PKG_LIBVER)/digest \
+		usr/lib/ruby/$(PKG_LIBVER)/digest.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/*/digest.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/digest/* \
+	) | ( cd $(1); $(TAR) -xf - )
+endef
+
 define Package/ruby-dl/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
 		usr/lib/ruby/$(PKG_LIBVER)/*/dl.so \
@@ -443,10 +481,6 @@ endef
 
 define Package/ruby-openssl/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
-		usr/lib/ruby/$(PKG_LIBVER)/digest \
-		usr/lib/ruby/$(PKG_LIBVER)/digest.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/*/digest.so \
-		usr/lib/ruby/$(PKG_LIBVER)/*/digest/*.so \
 		usr/lib/ruby/$(PKG_LIBVER)/openssl \
 		usr/lib/ruby/$(PKG_LIBVER)/openssl.rb \
 		usr/lib/ruby/$(PKG_LIBVER)/*/openssl.so \
@@ -556,6 +590,7 @@ $(eval $(call BuildPackage,libruby))
 $(eval $(call BuildPackage,ruby-core))
 $(eval $(call BuildPackage,ruby-bigdecimal))
 $(eval $(call BuildPackage,ruby-cgi))
+$(eval $(call BuildPackage,ruby-digest))
 $(eval $(call BuildPackage,ruby-dl))
 $(eval $(call BuildPackage,ruby-enc))
 $(eval $(call BuildPackage,ruby-erb))
