@@ -1,0 +1,12 @@
+diff -r -u ruby-2.1.2.old/ext/digest/rmd160/extconf.rb ruby-2.1.2/ext/digest/rmd160/extconf.rb
+--- ruby-2.1.2.old/ext/digest/rmd160/extconf.rb	2012-11-26 22:58:52.000000000 -0200
++++ ruby-2.1.2/ext/digest/rmd160/extconf.rb	2014-09-17 14:20:57.537367488 -0300
+@@ -14,7 +14,7 @@
+ require File.expand_path('../../../openssl/deprecation', __FILE__)
+ 
+ if !with_config("bundled-rmd160") &&
+-    have_library("crypto") && OpenSSL.check_func("RMD160_Transform", "openssl/ripemd.h")
++    have_library("crypto") && OpenSSL.check_func("RIPEMD160_Transform", "openssl/ripemd.h")
+   $objs << "rmd160ossl.#{$OBJEXT}"
+ else
+   $objs << "rmd160.#{$OBJEXT}"

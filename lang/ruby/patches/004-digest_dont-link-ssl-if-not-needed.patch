@@ -1,0 +1,117 @@
+--- ruby-2.1.2/ext/digest/md5/extconf.rb	2012-11-26 22:58:52.000000000 -0200
++++ ruby-2.1.2/ext/digest/md5/extconf.rb	2014-09-16 19:25:21.120457409 -0300
+@@ -9,14 +9,21 @@
+ 
+ $objs = [ "md5init.#{$OBJEXT}" ]
+ 
+-dir_config("openssl")
+-pkg_config("openssl")
+-require File.expand_path('../../../openssl/deprecation', __FILE__)
++if !with_config("bundled-md5")
++  dir_config("openssl")
++  pkg_config("openssl")
++  require File.expand_path('../../../openssl/deprecation', __FILE__)
++  if have_library("crypto") && OpenSSL.check_func("MD5_Transform", "openssl/md5.h")
++    $use_bundled=false
++  else
++    $use_bundled=true
++  end
++else
++  $use_bundled=true
++end
+ 
+-if !with_config("bundled-md5") &&
+-    have_library("crypto") && OpenSSL.check_func("MD5_Transform", "openssl/md5.h")
++if !$use_bundled
+   $objs << "md5ossl.#{$OBJEXT}"
+-
+ else
+   $objs << "md5.#{$OBJEXT}"
+ end
+--- ruby-2.1.2/ext/digest/rmd160/extconf.rb	2012-11-26 22:58:52.000000000 -0200
++++ ruby-2.1.2/ext/digest/rmd160/extconf.rb	2014-09-16 19:29:11.425628541 -0300
+@@ -9,12 +9,20 @@
+ 
+ $objs = [ "rmd160init.#{$OBJEXT}" ]
+ 
+-dir_config("openssl")
+-pkg_config("openssl")
+-require File.expand_path('../../../openssl/deprecation', __FILE__)
++if !with_config("bundled-rmd160")
++  dir_config("openssl")
++  pkg_config("openssl")
++  require File.expand_path('../../../openssl/deprecation', __FILE__)
++  if have_library("crypto") && OpenSSL.check_func("RIPEMD160_Transform", "openssl/ripemd.h")
++    $use_bundled=false
++  else
++    $use_bundled=true
++  end
++else
++  $use_bundled=true
++end
+ 
+-if !with_config("bundled-rmd160") &&
+-    have_library("crypto") && OpenSSL.check_func("RIPEMD160_Transform", "openssl/ripemd.h")
++if !$use_bundled
+   $objs << "rmd160ossl.#{$OBJEXT}"
+ else
+   $objs << "rmd160.#{$OBJEXT}"
+--- ruby-2.1.2/ext/digest/sha1/extconf.rb	2012-11-26 22:58:52.000000000 -0200
++++ ruby-2.1.2/ext/digest/sha1/extconf.rb	2014-09-16 19:30:09.359168494 -0300
+@@ -9,12 +9,20 @@
+ 
+ $objs = [ "sha1init.#{$OBJEXT}" ]
+ 
+-dir_config("openssl")
+-pkg_config("openssl")
+-require File.expand_path('../../../openssl/deprecation', __FILE__)
++if !with_config("bundled-sha1")
++  dir_config("openssl")
++  pkg_config("openssl")
++  require File.expand_path('../../../openssl/deprecation', __FILE__)
++  if have_library("crypto") && OpenSSL.check_func("SHA1_Transform", "openssl/sha.h")
++    $use_bundled=false
++  else
++    $use_bundled=true
++  end
++else
++  $use_bundled=true
++end
+ 
+-if !with_config("bundled-sha1") &&
+-    have_library("crypto") && OpenSSL.check_func("SHA1_Transform", "openssl/sha.h")
++if !$use_bundled
+   $objs << "sha1ossl.#{$OBJEXT}"
+ else
+   $objs << "sha1.#{$OBJEXT}"
+--- ruby-2.1.2/ext/digest/sha2/extconf.rb	2012-11-26 22:58:52.000000000 -0200
++++ ruby-2.1.2/ext/digest/sha2/extconf.rb	2014-09-16 19:31:31.833513570 -0300
+@@ -9,14 +9,22 @@
+ 
+ $objs = [ "sha2init.#{$OBJEXT}" ]
+ 
+-dir_config("openssl")
+-pkg_config("openssl")
+-require File.expand_path('../../../openssl/deprecation', __FILE__)
+-
+-if !with_config("bundled-sha2") &&
+-    have_library("crypto") &&
++if !with_config("bundled-sha2")
++  dir_config("openssl")
++  pkg_config("openssl")
++  require File.expand_path('../../../openssl/deprecation', __FILE__)
++  if have_library("crypto") &&
+     %w[SHA256 SHA512].all? {|d| OpenSSL.check_func("#{d}_Transform", "openssl/sha.h")} &&
+     %w[SHA256 SHA512].all? {|d| have_type("#{d}_CTX", "openssl/sha.h")}
++    $use_bundled=false
++  else
++    $use_bundled=true
++  end
++else
++  $use_bundled=true
++end
++
++if !$use_bundled
+   $objs << "sha2ossl.#{$OBJEXT}"
+   $defs << "-DSHA2_USE_OPENSSL"
+ else
