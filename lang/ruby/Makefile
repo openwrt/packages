@@ -16,7 +16,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_LIBVER:=2.1
 
@@ -214,7 +214,7 @@ endef
 define Package/ruby-yaml
 $(call Package/ruby/Default)
   TITLE:=Ruby YAML toolkit
-  DEPENDS:=ruby
+  DEPENDS:=ruby +ruby-psych
 endef
 
 define Package/ruby-zlib
@@ -342,7 +342,6 @@ define Package/ruby-core/install
 		\
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/yaml \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/yaml.rb \
-		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/syck.so \
 
 	find $(1) -name '*.h' | xargs rm -f
 endef
@@ -537,7 +536,6 @@ define Package/ruby-yaml/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
 		usr/lib/ruby/$(PKG_LIBVER)/yaml \
 		usr/lib/ruby/$(PKG_LIBVER)/yaml.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/*/syck.so \
 	) | ( cd $(1); $(TAR) -xf - )
 endef
 
