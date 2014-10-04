@@ -15,7 +15,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 
 PKG_LIBVER:=2.1
 
@@ -321,6 +321,9 @@ define Package/ruby-core/install
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/webrick/ssl.rb \
 		\
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/dl.so \
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/dl.rb \
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/dl \
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/dl/ \
 		\
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/*/enc \
 		\
@@ -373,6 +376,7 @@ define Package/ruby-core/install
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/webrick.rb \
 		\
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/xmlrpc \
+		$(1)/usr/lib/ruby/$(PKG_LIBVER)/xmlrpc.rb \
 		\
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/yaml \
 		$(1)/usr/lib/ruby/$(PKG_LIBVER)/yaml.rb \
@@ -405,7 +409,10 @@ endef
 
 define Package/ruby-dl/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
+		usr/lib/ruby/$(PKG_LIBVER)/dl.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/dl \
 		usr/lib/ruby/$(PKG_LIBVER)/*/dl.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/dl/ \
 	) | ( cd $(1); $(TAR) -xf - )
 endef
 
@@ -583,6 +590,7 @@ endef
 define Package/ruby-xmlrpc/install
 	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/xmlrpc $(1)/usr/lib/ruby/$(PKG_LIBVER)/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/xmlrpc.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
 endef
 
 define Package/ruby-yaml/install
