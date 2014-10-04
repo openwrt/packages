@@ -16,7 +16,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LIBVER:=2.1
 
@@ -125,12 +125,6 @@ define Package/ruby-json
 $(call Package/ruby/Default)
   TITLE:=Ruby support for JSON
   DEPENDS:=ruby
-endef
-
-define Package/ruby-ncurses
-$(call Package/ruby/Default)
-  TITLE:=Ruby support for ncurses
-  DEPENDS:=ruby +libncurses +libncursesw
 endef
 
 define Package/ruby-nkf
@@ -361,12 +355,6 @@ define Package/ruby-json/install
 	) | ( cd $(1); $(TAR) -xf - )
 endef
 
-define Package/ruby-ncurses/install
-	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
-		usr/lib/ruby/$(PKG_LIBVER)/*/curses.so \
-	) | ( cd $(1); $(TAR) -xf - )
-endef
-
 define Package/ruby-nkf/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
 		usr/lib/ruby/$(PKG_LIBVER)/kconv.rb \
@@ -471,7 +459,6 @@ $(eval $(call BuildPackage,ruby-gdbm))
 $(eval $(call BuildPackage,ruby-gems))
 $(eval $(call BuildPackage,ruby-json))
 $(eval $(call BuildPackage,ruby-irb))
-$(eval $(call BuildPackage,ruby-ncurses))
 $(eval $(call BuildPackage,ruby-nkf))
 $(eval $(call BuildPackage,ruby-openssl))
 $(eval $(call BuildPackage,ruby-rake))
