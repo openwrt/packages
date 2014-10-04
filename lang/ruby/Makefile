@@ -16,7 +16,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LIBVER:=2.1
 
@@ -210,6 +210,8 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--disable-rpath \
 	--enable-ipv6 \
+	--disable-install-doc \
+	--disable-install-capi \
 	--with-ruby-version=minor \
 	--with-iconv-dir=$(ICONV_PREFIX) \
 
