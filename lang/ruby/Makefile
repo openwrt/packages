@@ -6,18 +6,18 @@
 #
 # To Do:
 #  - dirs not removed when uninstalling!
-#  - update to 2.1.3!
+# -- sort pkgs locations
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=2.1.2
-PKG_RELEASE:=11
+PKG_VERSION:=2.1.3
+PKG_RELEASE:=1
 
 PKG_LIBVER:=2.1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_LIBVER)/
-PKG_MD5SUM:=ed9b8565bdeccb401d628ec8d54a0774
+PKG_MD5SUM:=02b7da3bb06037c777ca52e1194efccb
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILE:=COPYING
@@ -40,7 +40,7 @@ define Package/ruby/Default
 endef
 
 define Package/ruby/Default/description
- Ruby is the interpreted scripting language for quick and  easy
+ Ruby is the interpreted scripting language for quick and easy
  object-oriented programming.  It has many features to process text files
  and to do system management tasks (as in perl).  It is simple,
  straight-forward, and extensible.
