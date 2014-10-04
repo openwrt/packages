@@ -9,13 +9,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtorrent
 PKG_VERSION:=0.9.4-git
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)-1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rakshasa/rtorrent.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=6a3234eaa79f15857260df31f98711ef24266191
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILE:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -90,4 +93,4 @@ endef
 Package/rtorrent-rpc/install = $(Package/rtorrent/install)
 
 $(eval $(call BuildPackage,rtorrent))
-#$(eval $(call BuildPackage,rtorrent-rpc))
+$(eval $(call BuildPackage,rtorrent-rpc))
