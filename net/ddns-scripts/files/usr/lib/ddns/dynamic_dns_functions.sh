@@ -6,7 +6,9 @@
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 #
-# extended and partial rewritten by Christian Schoenebeck in August 2014 to support:
+# extended and partial rewritten in August 2014 
+# by Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+# to support:
 # - IPv6 DDNS services
 # - setting DNS Server to retrieve current IP including TCP transport
 # - Proxy Server to send out updates or retrieving WEB based IP detection
@@ -215,9 +217,11 @@ __urlencode() {
 # extract update_url for given DDNS Provider from
 # file /usr/lib/ddns/services for IPv4 or from
 # file /usr/lib/ddns/services_ipv6 for IPv6
-get_service_url() {
+get_service_data() {
 	# $1	Name of Variable to store url to
-	local __LINE __FILE __NAME __URL __SERVICES
+	# $2	Name of Variable to store script to
+	local __LINE __FILE __NAME __URL __SERVICES __DATA
+	local __SCRIPT=""
 	local __OLD_IFS=$IFS
 	local __NEWLINE_IFS='
 ' #__NEWLINE_IFS
@@ -234,15 +238,20 @@ get_service_url() {
 	do
 		#grep out proper parts of data and use echo to remove quotes
 		__NAME=$(echo $__LINE | grep -o "^[\t ]*\"[^\"]*\"" | xargs -r -n1 echo)
-		__URL=$(echo $__LINE | grep -o "\"[^\"]*\"[\t ]*$" | xargs -r -n1 echo)
+		__DATA=$(echo $__LINE | grep -o "\"[^\"]*\"[\t ]*$" | xargs -r -n1 echo)
 
 		if [ "$__NAME" = "$service_name" ]; then
 			break			# found so leave for loop
 		fi
 	done
 	IFS=$__OLD_IFS
+
+	# check is URL or SCRIPT is given
+	__URL=$(echo "$__URL" | grep "^http:")
+	[ -z "$__URL" ] && __SCRIPT="/usr/lib/ddns/$__DATA"
 	
 	eval "$1='$__URL'"
+	eval "$2='$__SCRIPT'"
 	return 0
 }
 
@@ -589,30 +598,35 @@ __do_transfer() {
 
 send_update() {
 	# $1	# IP to set at DDNS service provider
-	local __IP __URL __ANSWER __ERR __USER __PASS
+	local __IP
 
 	# verify given IP / no private IPv4's / no IPv6 addr starting with fxxx of with ":"
 	[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^127|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168)")
 	[ $use_ipv6 -eq 1 ] && __IP=$(echo $1 | grep "^[0-9a-eA-E]")
-	[ -z "$__IP" ] && critical_error "Invalid or no IP '$1' given"
+	[ -z "$__IP" ] && critical_error "Private or invalid or no IP '$1' given"
 
-	# do replaces in URL
-	__urlencode __USER "$username"	# encode username, might be email or something like this
-	__urlencode __PASS "$password"	# encode password, might have special chars for security reason
-	__URL=$(echo $update_url | sed -e "s#\[USERNAME\]#$__USER#g" -e "s#\[PASSWORD\]#$__PASS#g" \
-				       -e "s#\[DOMAIN\]#$domain#g" -e "s#\[IP\]#$__IP#g")
-	[ $use_https -ne 0 ] && __URL=$(echo $__URL | sed -e 's#^http:#https:#')
+	if [ -n "$update_script" ]; then
+		verbose_echo "        update =: parsing script '$update_script'"
+		. $update_script
+	else
+		local __URL __ANSWER __ERR __USER __PASS
 
-	__do_transfer __ANSWER "$__URL"
-	__ERR=$?
-	[ $__ERR -gt 0 ] && {
-		verbose_echo "\n!!!!!!!!! ERROR =: Error sending update to DDNS Provider\n"
-		return 1
-	}
+		# do replaces in URL
+		__urlencode __USER "$username"	# encode username, might be email or something like this
+		__urlencode __PASS "$password"	# encode password, might have special chars for security reason
+		__URL=$(echo $update_url | sed -e "s#\[USERNAME\]#$__USER#g" -e "s#\[PASSWORD\]#$__PASS#g" \
+					       -e "s#\[DOMAIN\]#$domain#g" -e "s#\[IP\]#$__IP#g")
+		[ $use_https -ne 0 ] && __URL=$(echo $__URL | sed -e 's#^http:#https:#')
 
-	verbose_echo "   update send =: DDNS Provider answered\n$__ANSWER"
-	
-	return 0
+		__do_transfer __ANSWER "$__URL"
+		__ERR=$?
+		[ $__ERR -gt 0 ] && {
+			verbose_echo "\n!!!!!!!!! ERROR =: Error sending update to DDNS Provider\n"
+			return 1
+		}
+		verbose_echo "   update send =: DDNS Provider answered\n$__ANSWER"
+		return 0
+	fi
 }
 
 get_local_ip () {
