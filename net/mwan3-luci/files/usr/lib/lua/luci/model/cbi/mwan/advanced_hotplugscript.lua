@@ -4,21 +4,21 @@ fs = require "nixio.fs"
 sys = require "luci.sys"
 ut = require "luci.util"
 
-script = "/etc/hotplug.d/iface/16-mwan3custom"
-scriptbak = "/etc/hotplug.d/iface/16-mwan3custombak"
+script = "/etc/hotplug.d/iface/16-mwancustom"
+scriptBackup = "/etc/hotplug.d/iface/16-mwancustombak"
 
 if luci.http.formvalue("cbid.luci.1._restorebak") then -- restore button has been clicked
-	luci.http.redirect(luci.dispatcher.build_url("admin/network/mwan3/advanced/hotplug") .. "?restore=yes")
+	luci.http.redirect(luci.dispatcher.build_url("admin/network/mwan/advanced/hotplugscript") .. "?restore=yes")
 elseif luci.http.formvalue("restore") == "yes" then -- restore script from backup
-	os.execute("cp -f " .. scriptbak .. " " .. script)
+	os.execute("cp -f " .. scriptBackup .. " " .. script)
 end
 
 
 m5 = SimpleForm("luci", nil)
-	m5:append(Template("mwan3/mwan3_adv_hotplug")) -- highlight current tab
+	m5:append(Template("mwan/advanced_hotplugscript")) -- highlight current tab
 
 f = m5:section(SimpleSection, nil,
-	translate("This section allows you to modify the contents of /etc/hotplug.d/iface/16-mwan3custom<br />" ..
+	translate("This section allows you to modify the contents of /etc/hotplug.d/iface/16-mwancustom<br />" ..
 	"This is useful for running system commands and/or scripts based on interface ifup or ifdown hotplug events<br /><br />" ..
 	"Notes:<br />" ..
 	"The first line of the script must be &#34;#!/bin/sh&#34; without quotes<br />" ..
@@ -40,7 +40,7 @@ t = f:option(TextValue, "lines")
 	function t.cfgvalue()
 		local hps = fs.readfile(script)
 		if not hps or hps == "" then -- if script does not exist or is blank restore from backup
-			sys.call("cp -f " .. scriptbak .. " " .. script)
+			sys.call("cp -f " .. scriptBackup .. " " .. script)
 			return fs.readfile(script)
 		else
 			return hps

@@ -1,71 +1,62 @@
 <script type="text/javascript">//<![CDATA[
-	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "network", "mwan3", "overview", "iface_status")%>', null,
-		function(x, st)
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "network", "mwan", "overview", "interface_status")%>', null,
+		function(x, mArray)
 		{
-			var tx = document.getElementById('mwan3_status_text');
-			if (st.wans)
+			var status = document.getElementById('mwan_status_text');
+			if (mArray.wans)
 			{
 				var temp = '';
-
-				for( var i = 0; i < st.wans.length; i++ )
+				for( var i = 0; i < mArray.wans.length; i++ )
 				{
 					var stat = '';
 					var cssc = '';
-
-					switch (st.wans[i].status)
+					switch (mArray.wans[i].status)
 					{
-						case 'on':
+						case 'online':
 							stat = 'Online (tracking active)';
 							cssc = 'wanon';
 							break;
-
-						case 'nm':
+						case 'notMonitored':
 							stat = 'Online (tracking off)';
 							cssc = 'wanon';
 							break;
-
-						case 'off':
+						case 'offline':
 							stat = 'Offline';
 							cssc = 'wanoff';
 							break;
-
-						case 'ne':
+						case 'notEnabled':
 							stat = 'Disabled';
 							cssc = 'wanoff';
 							break;
 					}
-
 					temp += String.format(
 						'<span class="%s"><strong>%s (<a href="%q">%s</a>)</strong><br />%s</span>',
-						cssc, st.wans[i].name, st.wans[i].link, st.wans[i].ifname, stat
+						cssc, mArray.wans[i].name, mArray.wans[i].link, mArray.wans[i].ifname, stat
 					);
 				}
-				tx.innerHTML = temp;
+				status.innerHTML = temp;
 			}
 			else
 			{
-				var temp = '';
-				var ncint = 'No MWAN3 interfaces found';
-				temp += String.format('<strong>%s</strong>', ncint );
-				tx.innerHTML = temp;
+				status.innerHTML = '<strong>No MWAN interfaces found</strong>';
 			}
 		}
 	);
 //]]></script>
 
 <fieldset id="interface_field" class="cbi-section">
-	<legend><%:MWAN3 Multi-WAN Interface Live Status%></legend>
-	<div id="mwan3_status_text"><img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> Collecting data...</div>
+	<legend><%:MWAN Interface Live Status%></legend>
+	<div id="mwan_status_text"><img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> Collecting data...</div>
 </fieldset>
 
 <style type="text/css">
-  .container {  /*container for entire page. fixes bootstrap theme's ridiculously small page width*/
+  .container {	/* container for entire page. fixes bootstrap theme's ridiculously small page width */
 	max-width: 1044px;
   }
   #interface_field {
 	padding: 12px 20px 20px 20px;
   }
-  #mwan3_status_text {
+  #mwan_status_text {
 	display: table;
 	font-size: 14px;
 	margin: auto;

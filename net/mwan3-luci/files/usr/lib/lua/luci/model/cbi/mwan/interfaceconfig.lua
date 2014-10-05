@@ -1,70 +1,70 @@
 -- ------ extra functions ------ --
 
-function iface_check()
-	metcheck = ut.trim(sys.exec("uci get -p /var/state network." .. arg[1] .. ".metric"))
-	if metcheck == "" then -- no metric
-		err_nomet = 1
+function interfaceCheck()
+	metricValue = ut.trim(sys.exec("uci get -p /var/state network." .. arg[1] .. ".metric"))
+	if metricValue == "" then -- no metric
+		errorNoMetric = 1
 	else -- if metric exists create list of interface metrics to compare against for duplicates
 		uci.cursor():foreach("mwan3", "interface",
 			function (section)
-				local metlkp = ut.trim(sys.exec("uci get -p /var/state network." .. section[".name"] .. ".metric"))
-				metric_list = metric_list .. section[".name"] .. " " .. metlkp .. "\n"
+				local metricValue = ut.trim(sys.exec("uci get -p /var/state network." .. section[".name"] .. ".metric"))
+				metricList = metricList .. section[".name"] .. " " .. metricValue .. "\n"
 			end
 		)
 		-- compare metric against list
-		local metric_dupnums, metric_dupes = sys.exec("echo '" .. metric_list .. "' | awk '{ print $2 }' | uniq -d"), ""
-		for line in metric_dupnums:gmatch("[^\r\n]+") do
-			metric_dupes = sys.exec("echo '" .. metric_list .. "' | grep '" .. line .. "' | awk '{ print $1 }'")
-			err_dupmet_list = err_dupmet_list .. metric_dupes
+		local metricDuplicateNumbers, metricDuplicates = sys.exec("echo '" .. metricList .. "' | awk '{print $2}' | uniq -d"), ""
+		for line in metricDuplicateNumbers:gmatch("[^\r\n]+") do
+			metricDuplicates = sys.exec("echo '" .. metricList .. "' | grep '" .. line .. "' | awk '{print $1}'")
+			errorDuplicateMetricList = errorDuplicateMetricList .. metricDuplicates
 		end
-		if sys.exec("echo '" .. err_dupmet_list .. "' | grep -w " .. arg[1]) ~= "" then
-			err_dupmet = 1
+		if sys.exec("echo '" .. errorDuplicateMetricList .. "' | grep -w " .. arg[1]) ~= "" then
+			errorDuplicateMetric = 1
 		end
 	end
 	-- check if this interface has a higher reliability requirement than track IPs configured
-	local tipnum = tonumber(ut.trim(sys.exec("echo $(uci get -p /var/state mwan3." .. arg[1] .. ".track_ip) | wc -w")))
-	if tipnum > 0 then
-		local relnum = tonumber(ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".reliability")))
-		if relnum and relnum > tipnum then
-			err_reliability = 1
+	local trackingNumber = tonumber(ut.trim(sys.exec("echo $(uci get -p /var/state mwan3." .. arg[1] .. ".track_ip) | wc -w")))
+	if trackingNumber > 0 then
+		local reliabilityNumber = tonumber(ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".reliability")))
+		if reliabilityNumber and reliabilityNumber > trackingNumber then
+			errorReliability = 1
 		end
 	end
 	-- check if any interfaces are not properly configured in /etc/config/network or have no default route in main routing table
 	if ut.trim(sys.exec("uci get -p /var/state network." .. arg[1])) == "interface" then
-		local ifdev = ut.trim(sys.exec("uci get -p /var/state network." .. arg[1] .. ".ifname"))
-		if ifdev == "uci: Entry not found" or ifdev == "" then
-			err_netcfg = 1
-			err_route = 1
+		local interfaceDevice = ut.trim(sys.exec("uci get -p /var/state network." .. arg[1] .. ".ifname"))
+		if interfaceDevice == "uci: Entry not found" or interfaceDevice == "" then
+			errorNetConfig = 1
+			errorRoute = 1
 		else
-			local rtcheck = ut.trim(sys.exec("route -n | awk '{ if ($8 == \"" .. ifdev .. "\" && $1 == \"0.0.0.0\" && $3 == \"0.0.0.0\") print $1 }'"))
-			if rtcheck == "" then
-				err_route = 1
+			local routeCheck = ut.trim(sys.exec("route -n | awk '{if ($8 == \"" .. interfaceDevice .. "\" && $1 == \"0.0.0.0\" && $3 == \"0.0.0.0\") print $1}'"))
+			if routeCheck == "" then
+				errorRoute = 1
 			end
 		end
 	else
-		err_netcfg = 1
-		err_route = 1
+		errorNetConfig = 1
+		errorRoute = 1
 	end
 end
 
-function iface_warn() -- display warning messages at the top of the page
-	local warns, linebrk = "", ""
-	if err_reliability == 1 then
+function interfaceWarnings() -- display warning messages at the top of the page
+	local warns, lineBreak = "", ""
+	if errorReliability == 1 then
 		warns = "<font color=\"ff0000\"><strong>WARNING: this interface has a higher reliability requirement than there are tracking IP addresses!</strong></font>"
-		linebrk = "<br /><br />"
+		lineBreak = "<br /><br />"
 	end
-	if err_route == 1 then
-		warns = warns .. linebrk .. "<font color=\"ff0000\"><strong>WARNING: this interface has no default route in the main routing table!</strong></font>"
-		linebrk = "<br /><br />"
+	if errorRoute == 1 then
+		warns = warns .. lineBreak .. "<font color=\"ff0000\"><strong>WARNING: this interface has no default route in the main routing table!</strong></font>"
+		lineBreak = "<br /><br />"
 	end
-	if err_netcfg == 1 then
-		warns = warns .. linebrk .. "<font color=\"ff0000\"><strong>WARNING: this interface is configured incorrectly or not at all in /etc/config/network!</strong></font>"
-		linebrk = "<br /><br />"
+	if errorNetConfig == 1 then
+		warns = warns .. lineBreak .. "<font color=\"ff0000\"><strong>WARNING: this interface is configured incorrectly or not at all in /etc/config/network!</strong></font>"
+		lineBreak = "<br /><br />"
 	end
-	if err_nomet == 1 then
-		warns = warns .. linebrk .. "<font color=\"ff0000\"><strong>WARNING: this interface has no metric configured in /etc/config/network!</strong></font>"
-	elseif err_dupmet == 1 then
-		warns = warns .. linebrk .. "<font color=\"ff0000\"><strong>WARNING: this and other interfaces have duplicate metrics configured in /etc/config/network!</strong></font>"
+	if errorNoMetric == 1 then
+		warns = warns .. lineBreak .. "<font color=\"ff0000\"><strong>WARNING: this interface has no metric configured in /etc/config/network!</strong></font>"
+	elseif errorDuplicateMetric == 1 then
+		warns = warns .. lineBreak .. "<font color=\"ff0000\"><strong>WARNING: this and other interfaces have duplicate metrics configured in /etc/config/network!</strong></font>"
 	end
 	return warns
 end
@@ -76,21 +76,20 @@ sys = require "luci.sys"
 ut = require "luci.util"
 arg[1] = arg[1] or ""
 
-metcheck = ""
-metric_list = ""
-err_dupmet_list = ""
-err_rel_list = ""
-err_nomet = 0
-err_dupmet = 0
-err_route = 0
-err_netcfg = 0
-err_reliability = 0
-iface_check()
+metricValue = ""
+metricList = ""
+errorDuplicateMetricList = ""
+errorNoMetric = 0
+errorDuplicateMetric = 0
+errorRoute = 0
+errorNetConfig = 0
+errorReliability = 0
+interfaceCheck()
 
 
-m5 = Map("mwan3", translate("MWAN3 Multi-WAN Interface Configuration - " .. arg[1]),
-	translate(iface_warn()))
-	m5.redirect = dsp.build_url("admin", "network", "mwan3", "configuration", "interface")
+m5 = Map("mwan3", translate("MWAN Interface Configuration - " .. arg[1]),
+	translate(interfaceWarnings()))
+	m5.redirect = dsp.build_url("admin", "network", "mwan", "configuration", "interface")
 
 
 mwan_interface = m5:section(NamedSection, arg[1], "interface", "")
@@ -180,8 +179,8 @@ metric = mwan_interface:option(DummyValue, "metric", translate("Metric"),
 	translate("This displays the metric assigned to this interface in /etc/config/network"))
 	metric.rawhtml = true
 	function metric.cfgvalue(self, s)
-		if err_nomet == 0 then
-			return metcheck
+		if errorNoMetric == 0 then
+			return metricValue
 		else
 			return "&#8212;"
 		end
