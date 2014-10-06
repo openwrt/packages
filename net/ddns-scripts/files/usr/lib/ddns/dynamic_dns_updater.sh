@@ -117,7 +117,6 @@ load_all_config_options "ddns" "$SECTION_ID"
 
 verbose_echo "\n ************** =: ************** ************** **************"
 verbose_echo "       STARTED =: PID '$$' at $(eval $DATE_PROG)"
-syslog_info "Started"
 case $VERBOSE_MODE in
 	0) verbose_echo "  verbose mode =: '0' - run normal, NO console output";;
 	1) verbose_echo "  verbose mode =: '1' - run normal, console mode";;
