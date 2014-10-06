@@ -6,7 +6,9 @@
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 #
-# extended and partial rewritten by Christian Schoenebeck in August 2014 to support:
+# extended and partial rewritten in August 2014 
+# by Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+# to support:
 # - IPv6 DDNS services
 # - DNS Server to retrieve registered IP including TCP transport
 # - Proxy Server to send out updates
@@ -62,6 +64,7 @@ LOGFILE="$LOGDIR/$SECTION_ID.log"	# log file
 #
 # service_name	Which DDNS service do you use or "custom"
 # update_url	URL to use to update your "custom" DDNS service
+# update_script SCRIPT to use to update your "custom" DDNS service
 #
 # domain 	Your DNS name / replace [DOMAIN] in update_url
 # username 	Username of your DDNS service account / replace [USERNAME] in update_url
@@ -161,8 +164,10 @@ verbose_echo " retry counter =: $retry_count times"
 
 # determine what update url we're using if a service_name is supplied
 # otherwise update_url is set inside configuration (custom service)
-[ -n "$service_name" ] && get_service_url update_url
-[ -z "$update_url" ]   && critical_error "no update url found/defined"
+# or update_script is set inside configuration (custom update script)
+[ -n "$service_name" ] && get_service_data update_url update_script
+[ -z "$update_url" -a -z "$update_script" ] && critical_error "no update_url found/defined or no update_script found/defined"
+[ -n "$update_script" -a ! -f "$update_script" ] && critical_error "custom update_script not found"
 
 #kill old process if it exists & set new pid file
 if [ -d $RUNDIR ]; then

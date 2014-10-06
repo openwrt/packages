@@ -91,12 +91,22 @@ config service "myddns"
 	# the format of the url to update with.  You can either add an
 	# entry to the "/usr/lib/ddns/services" or "services_ipv6" file 
 	# or specify this with the "update_url" option.
+	# If your ddns provider doesn't work with ddns-scripts because
+	# there are additional parameters or other special thinks to be done,
+	# then you could write your own script to send updates to your ddns provider.
+	# Have a look into /usr/lib/ddns/update_sample.sh
+	# The script is specified in "update_script"
+	# Either set "service_name" or one of "update_url" and "update_script"
 	# default: none
 	option service_name "dyndns.org"
 
 	# sample: 
 	# "http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
 #	option update_url   ""
+
+	# sample: 
+	# "/usr/lib/ddns/update_sample.sh"
+#	option update_script   ""
 
 	###########
 	# You must specify your domain/host name, your username and your password
