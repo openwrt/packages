@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=2.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LIBVER:=2.1
 
@@ -44,6 +44,7 @@ define Package/ruby/Default/description
  object-oriented programming.  It has many features to process text files
  and to do system management tasks (as in perl).  It is simple,
  straight-forward, and extensible.
+
 endef
 
 define Package/ruby
@@ -67,13 +68,37 @@ endef
 
 define Package/ruby-misc
 $(call Package/ruby/Default)
-  TITLE:=Ruby standard libraries (miscelaneous subset)
+  TITLE:=Ruby standard libraries subset (miscelaneous files)
   DEPENDS:=ruby
 endef
 
-define Package/ruby-misc/Description
-	This package contains miscellaneous files from stdlib
-	not splitted in other ruby packages like stringio
+define Package/ruby-misc/description
+ This package contains miscellaneous files from stdlib
+ not splitted in other ruby packages like stringio:
+ - English.rb
+ - abbrev.rb
+ - base64.rb
+ - continuation.so
+ - coverage.so
+ - delegate.rb
+ - e2mmap.rb
+ - etc.so
+ - expect.rb
+ - fcntl.so
+ - fiber.so
+ - getoptlong.rb
+ - open3.rb
+ - ostruct.rb
+ - pty.so
+ - scanf.rb
+ - securerandom.rb
+ - set.rb
+ - shellwords.rb
+ - stringio.so
+ - strscan.so
+ - tsort.rb
+ - weakref.rb
+
 endef
 
 define Package/ruby-stdlib
@@ -88,15 +113,20 @@ $(call Package/ruby/Default)
 			+ruby-socket +ruby-testunit +ruby-uri +ruby-webrick +ruby-xmlrpc +ruby-yaml +ruby-zlib
 endef
 
-define Package/ruby-stdlib/Description
-	This metapackage install all ruby-* packages, providing all
-	Ruby Standard Library files
+define Package/ruby-stdlib/description
+ This metapackage currently install all ruby-* packages,
+ providing a complete Ruby Standard Library.
+
 endef
 
 define Package/ruby-bigdecimal
 $(call Package/ruby/Default)
-  TITLE+= Arbitrary-precision decimal floating-point library
+  TITLE:=Arbitrary-precision decimal floating-point library for Ruby
   DEPENDS:=ruby
+endef
+
+define Package/ruby-bigdecimal/description
+ Provides bigdecimal* files
 endef
 
 define Package/ruby-cgi
@@ -105,10 +135,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-filelib +ruby-pstore
 endef
 
+define Package/ruby-bigdecimal/description
+ Provides bigdecimal* files
+
+endef
+
 define Package/ruby-csv
 $(call Package/ruby/Default)
   TITLE+=CSV library
   DEPENDS:=ruby +ruby-patterns +ruby-datetime +ruby-enc
+endef
+
+define Package/ruby-csv/description
+ Provides csv.rb file
+
 endef
 
 define Package/ruby-datetime
@@ -117,8 +157,9 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby
 endef
 
-define Package/ruby-datetime/Description
-	Provides date.rb and time.rb
+define Package/ruby-datetime/description
+ Provides date.rb and time.rb
+
 endef
 
 define Package/ruby-dbm
@@ -127,15 +168,27 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +libdb47
 endef
 
+define Package/ruby-dbm/description
+ The DBM class provides a wrapper to a Unix-style dbm or Database Manager library.
+ This package provides dbm.so file.
+
+endef
+
 define Package/ruby-debuglib
 $(call Package/ruby/Default)
   TITLE+= debug library
   DEPENDS:=ruby +ruby-multithread +ruby-prettyprint
 endef
 
-define Package/ruby-debuglib/Description
-	Provides files for debugging as tracer.rb, profile.rb,
-	debug.rb and benchmark.rb
+define Package/ruby-debuglib/description
+ Provides files for debugging:
+ - benchmark.rb
+ - debug.rb
+ - objspace.so
+ - profile.rb
+ - profiler.rb
+ - tracer.rb
+
 endef
 
 define Package/ruby-digest
@@ -144,9 +197,15 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +RUBY_DIGEST_USE_OPENSSL:libopenssl
 endef
 
+define Package/ruby-digest/description
+ Provides digest* files. Can be configured to use OpenSSL or
+ bundled hash functions.
+
+endef
+
 define Package/ruby-digest/config
 
-  config RUBY_DIGEST_USE_OPENSSL
+	config RUBY_DIGEST_USE_OPENSSL
 		bool "Use OpenSSL functions for ruby digest hash functions"
         depends on PACKAGE_ruby-digest
 		help
@@ -164,10 +223,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-filelib +ruby-patterns +ruby-socket
 endef
 
+define Package/ruby-drb/description
+ Provides drb* files
+
+endef
+
 define Package/ruby-dl
 $(call Package/ruby/Default)
   TITLE+= (dynamic linker support)
   DEPENDS:=ruby +ruby-fiddle +ruby-multithread
+endef
+
+define Package/ruby-dl/description
+ Provides dl* files. This is deprecated, use fiddle.
+
 endef
 
 define Package/ruby-enc
@@ -176,10 +245,75 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby
 endef
 
+define Package/ruby-enc/description
+ Provides ruby encoding library for encodings used directly by
+ libraries in Ruby Standard Library:
+ - enc/encdb.so
+ - enc/euc_jp.so
+ - enc/iso_8859_1.so
+ - enc/utf_16be.so
+ - enc/utf_16le.so
+ - enc/utf_32be.so
+ - enc/utf_32le.so
+ FYI: ASCII-8BIT, UTF-7, UTF-8 and US-ASCII are already in Core.
+
+endef
+
 define Package/ruby-enc-extra
 $(call Package/ruby/Default)
   TITLE:=Ruby character re-coding library charset (extra subset)
   DEPENDS:=ruby +ruby-enc
+endef
+
+define Package/ruby-enc-extra/description
+ Provides extra encodings not provided by ruby-enc:
+ - enc/big5.so
+ - enc/cp949.so
+ - enc/emacs_mule.so
+ - enc/euc_kr.so
+ - enc/euc_tw.so
+ - enc/gb18030.so
+ - enc/gb2312.so
+ - enc/gbk.so
+ - enc/iso_8859_10.so
+ - enc/iso_8859_11.so
+ - enc/iso_8859_13.so
+ - enc/iso_8859_14.so
+ - enc/iso_8859_15.so
+ - enc/iso_8859_16.so
+ - enc/iso_8859_2.so
+ - enc/iso_8859_3.so
+ - enc/iso_8859_4.so
+ - enc/iso_8859_5.so
+ - enc/iso_8859_6.so
+ - enc/iso_8859_7.so
+ - enc/iso_8859_8.so
+ - enc/iso_8859_9.so
+ - enc/koi8_r.so
+ - enc/koi8_u.so
+ - enc/shift_jis.so
+ - enc/trans/big5.so
+ - enc/trans/chinese.so
+ - enc/trans/emoji.so
+ - enc/trans/emoji_iso2022_kddi.so
+ - enc/trans/emoji_sjis_docomo.so
+ - enc/trans/emoji_sjis_kddi.so
+ - enc/trans/emoji_sjis_softbank.so
+ - enc/trans/escape.so
+ - enc/trans/gb18030.so
+ - enc/trans/gbk.so
+ - enc/trans/iso2022.so
+ - enc/trans/japanese.so
+ - enc/trans/japanese_euc.so
+ - enc/trans/japanese_sjis.so
+ - enc/trans/korean.so
+ - enc/trans/single_byte.so
+ - enc/trans/transdb.so
+ - enc/trans/utf8_mac.so
+ - enc/trans/utf_16_32.so
+ - enc/windows_1251.so
+ - enc/windows_31j.so
+
 endef
 
 define Package/ruby-erb
@@ -188,10 +322,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-cgi
 endef
 
+define Package/ruby-erb/description
+ Provides erb* files
+
+endef
+
 define Package/ruby-fiddle
 $(call Package/ruby/Default)
   TITLE:=A libffi wrapper for Ruby
   DEPENDS:=ruby +libffi
+endef
+
+define Package/ruby-fiddle/description
+ Provides fiddle* files
+
 endef
 
 define Package/ruby-filelib
@@ -200,10 +344,27 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-multithread +ruby-enc
 endef
 
+define Package/ruby-filelib/description
+ Provides filesystem interaction files, including
+ path and temp:
+ - fileutils.rb
+ - find.rb
+ - pathname.rb
+ - pathname.so
+ - tempfile.rb
+ - tmpdir.rb
+
+endef
+
 define Package/ruby-gdbm
 $(call Package/ruby/Default)
   TITLE:=Ruby support for gdbm
   DEPENDS:=ruby +libgdbm
+endef
+
+define Package/ruby-gdbm/description
+ Provides gdbm* files
+
 endef
 
 define Package/ruby-gems
@@ -212,10 +373,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-net +ruby-rdoc +ruby-zlib
 endef
 
+define Package/ruby-gems/description
+ Provides rubygems for gems usage, download and installation
+
+endef
+
 define Package/ruby-io-console
 $(call Package/ruby/Default)
   TITLE+= Console interface
   DEPENDS:=ruby
+endef
+
+define Package/ruby-io-console/description
+ Provides io-console* files
+
 endef
 
 define Package/ruby-irb
@@ -224,10 +395,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-debuglib +ruby-filelib +ruby-math
 endef
 
+define Package/ruby-irb/description
+ Provides irb* files
+
+endef
+
 define Package/ruby-json
 $(call Package/ruby/Default)
   TITLE:=Ruby support for JSON
   DEPENDS:=ruby +ruby-datetime +ruby-misc
+endef
+
+define Package/ruby-json/description
+ Provides json* files
+
 endef
 
 define Package/ruby-logger
@@ -236,10 +417,33 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-multithread
 endef
 
+define Package/ruby-logger/description
+ Provides log library, including syslog:
+ - logger.rb
+ - syslog.so
+ - syslog/logger.rb
+
+endef
+
 define Package/ruby-math
 $(call Package/ruby/Default)
   TITLE+= math library
   DEPENDS:=ruby +ruby-patterns
+endef
+
+define Package/ruby-math/description
+ Provides math related files:
+ - cmath.rb
+ - complex.rb
+ - mathn.rb
+ - mathn/complex.so
+ - mathn/rational.so
+ - matrix.rb
+ - matrix/eigenvalue_decomposition.rb
+ - matrix/lup_decomposition.rb
+ - prime.rb
+ - rational.rb
+
 endef
 
 define Package/ruby-minitest
@@ -248,10 +452,28 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-filelib +ruby-optparse +ruby-prettyprint +ruby-rbconfig
 endef
 
+define Package/ruby-minitest/description
+ Provides minitest* files
+
+endef
+
 define Package/ruby-multithread
 $(call Package/ruby/Default)
   TITLE+= multithread library
   DEPENDS:=ruby +ruby-misc
+endef
+
+define Package/ruby-multithread/description
+ Provides files for multithread usage:
+ - io/nonblock.so
+ - io/wait.so
+ - thread.so (FYI, Thread is a core class)
+ - monitor.rb
+ - mutex_m.rb
+ - sync.rb
+ - thwait.rb
+ - timeout.rb
+
 endef
 
 define Package/ruby-mkmf
@@ -260,10 +482,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-filelib +ruby-optparse +ruby-rbconfig
 endef
 
+define Package/ruby-mkmf/description
+ Provides mkmf* files
+
+endef
+
 define Package/ruby-net
 $(call Package/ruby/Default)
   TITLE:=Ruby Network Protocols Library
   DEPENDS:=ruby +ruby-datetime +ruby-digest +ruby-filelib +ruby-uri
+endef
+
+define Package/ruby-net/description
+ Provides net* files
+
 endef
 
 define Package/ruby-nkf
@@ -272,10 +504,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-enc
 endef
 
+define Package/ruby-nkf/description
+ Provides nkf* files
+
+endef
+
 define Package/ruby-openssl
 $(call Package/ruby/Default)
   TITLE:=Ruby support for openssl
   DEPENDS:=ruby +ruby-enc +libopenssl +ruby-misc
+endef
+
+define Package/ruby-openssl/description
+ Provides openssl* files
+
 endef
 
 define Package/ruby-optparse
@@ -284,10 +526,23 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-misc
 endef
 
+define Package/ruby-optparse/description
+ Provides optparse* files
+
+endef
+
 define Package/ruby-patterns
 $(call Package/ruby/Default)
   TITLE:=Ruby design patterns implementation
   DEPENDS:=ruby +ruby-multithread
+endef
+
+define Package/ruby-patterns/description
+ Provides design patterns helpers files:
+ - forwardable.rb
+ - observer.rb
+ - singleton.rb
+
 endef
 
 define Package/ruby-prettyprint
@@ -296,10 +551,22 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-misc
 endef
 
+define Package/ruby-prettyprint/description
+ Provides Pretty Print library:
+ - pp.rb
+ - prettyprint.rb
+
+endef
+
 define Package/ruby-pstore
 $(call Package/ruby/Default)
   TITLE+=file based persistence
   DEPENDS:=ruby +ruby-digest +ruby-enc
+endef
+
+define Package/ruby-pstore/description
+ Provides pstore.rb file
+
 endef
 
 define Package/ruby-psych
@@ -308,10 +575,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-bigdecimal +ruby-datetime +ruby-misc +ruby-enc
 endef
 
+define Package/ruby-psych/description
+ Provides psych* files
+
+endef
+
 define Package/ruby-racc
 $(call Package/ruby/Default)
   TITLE:=LALR parser generator in Ruby
   DEPENDS:=ruby
+endef
+
+define Package/ruby-racc/description
+ Provides racc* files
+
 endef
 
 define Package/ruby-rake
@@ -320,10 +597,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-datetime +ruby-filelib +ruby-optparse +ruby-patterns +ruby-rbconfig
 endef
 
+define Package/ruby-rake/description
+ Provides rake* files
+
+endef
+
 define Package/ruby-rbconfig
 $(call Package/ruby/Default)
   TITLE+=Ruby RbConfig
   DEPENDS:=ruby
+endef
+
+define Package/ruby-rbconfig/description
+ Provides rbconfig file
+
 endef
 
 define Package/ruby-rdoc
@@ -332,10 +619,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-erb +ruby-irb +ruby-json +ruby-racc +ruby-rake +ruby-yaml
 endef
 
+define Package/ruby-rdoc/description
+ Provides rdoc* and ri files
+
+endef
+
 define Package/ruby-readline
 $(call Package/ruby/Default)
   TITLE:=Ruby support for readline
   DEPENDS:=ruby +libncurses +libreadline
+endef
+
+define Package/ruby-readline/description
+ Provides readline* files
+
 endef
 
 define Package/ruby-rexml
@@ -344,10 +641,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-patterns +ruby-enc
 endef
 
+define Package/ruby-rexml/description
+ Provides rexml* files
+
+endef
+
 define Package/ruby-rinda
 $(call Package/ruby/Default)
   TITLE:=Ruby Linda paradigm implementation
   DEPENDS:=ruby +ruby-drb
+endef
+
+define Package/ruby-rinda/description
+ Provides rinda* files
+
 endef
 
 define Package/ruby-ripper
@@ -356,10 +663,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby
 endef
 
+define Package/ruby-ripper/description
+ Provides ripper* files
+
+endef
+
 define Package/ruby-rss
 $(call Package/ruby/Default)
   TITLE:=Ruby RSS toolkit
   DEPENDS:=ruby +ruby-net +ruby-nkf +ruby-rexml
+endef
+
+define Package/ruby-rss/description
+ Provides rss* files
+
 endef
 
 define Package/ruby-sdbm
@@ -368,10 +685,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby
 endef
 
+define Package/ruby-sdbm/description
+ Provides sdbm* files
+
+endef
+
 define Package/ruby-shell
 $(call Package/ruby/Default)
   TITLE:=Ruby idiomatic Ruby interface
   DEPENDS:=ruby +ruby-patterns
+endef
+
+define Package/ruby-shell/description
+ Provides shell* files
+
 endef
 
 define Package/ruby-socket
@@ -380,10 +707,26 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-multithread
 endef
 
+define Package/ruby-socket/description
+ Provides socket-related files:
+ - gserver.rb
+ - ipaddr.rb
+ - resolv-replace.rb
+ - resolv.rb
+ - socket.rb
+ - socket.so
+
+endef
+
 define Package/ruby-testunit
 $(call Package/ruby/Default)
   TITLE:=Ruby Test Unit toolkit
   DEPENDS:=ruby +ruby-minitest
+endef
+
+define Package/ruby-testunit/description
+ Provides test/unit* files
+
 endef
 
 define Package/ruby-uri
@@ -392,10 +735,20 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-socket +ruby-enc
 endef
 
+define Package/ruby-uri/description
+ Provides uri* files
+
+endef
+
 define Package/ruby-webrick
 $(call Package/ruby/Default)
   TITLE:=Ruby Web server toolkit
   DEPENDS:=ruby +ruby-erb +ruby-net +ruby-patterns +ruby-rbconfig
+endef
+
+define Package/ruby-webrick/description
+ Provides webrick* files
+
 endef
 
 define Package/ruby-xmlrpc
@@ -404,16 +757,31 @@ $(call Package/ruby/Default)
   DEPENDS:=ruby +ruby-rexml +ruby-webrick
 endef
 
+define Package/ruby-xmlrpc/description
+ Provides xmlrpc* files
+
+endef
+
 define Package/ruby-yaml
 $(call Package/ruby/Default)
   TITLE:=Ruby YAML toolkit
   DEPENDS:=ruby +ruby-dbm +ruby-pstore +ruby-psych
 endef
 
+define Package/ruby-yaml/description
+ Provides yaml* files
+
+endef
+
 define Package/ruby-zlib
 $(call Package/ruby/Default)
   TITLE:=Ruby support for zlib
   DEPENDS:=ruby +zlib
+endef
+
+define Package/ruby-zlib/description
+ Provides zlib* files
+
 endef
 
 HOST_CONFIGURE_ARGS += \
