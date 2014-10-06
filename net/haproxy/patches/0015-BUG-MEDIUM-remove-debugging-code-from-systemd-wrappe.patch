@@ -1,0 +1,36 @@
+From 575e299cc07f5f2b314d91dfac8671834cbdd2a7 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 24 Sep 2014 12:59:25 +0200
+Subject: [PATCH 15/20] BUG/MEDIUM: remove debugging code from systemd-wrapper
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Kristoffer Grönlund reported that after my recent update to the
+systemd-wrapper, I accidentely left the debugging code which
+consists in disabling the fork :-(
+
+The fix needs to be backported to 1.5 as well since I pushed it
+there as well.
+(cherry picked from commit a55bbc64d8272e4066a67b6d190ffebaff2b300a)
+---
+ src/haproxy-systemd-wrapper.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/haproxy-systemd-wrapper.c b/src/haproxy-systemd-wrapper.c
+index 446f28f..8602881 100644
+--- a/src/haproxy-systemd-wrapper.c
++++ b/src/haproxy-systemd-wrapper.c
+@@ -70,8 +70,7 @@ static void spawn_haproxy(char **pid_strv, int nb_pid)
+ 	main_argc = wrapper_argc - 1;
+ 	main_argv = wrapper_argv + 1;
+ 
+-	//pid = fork();
+-	pid=0;
++	pid = fork();
+ 	if (!pid) {
+ 		/* 3 for "haproxy -Ds -sf" */
+ 		char **argv = calloc(4 + main_argc + nb_pid + 1, sizeof(char *));
+-- 
+2.0.4
+
