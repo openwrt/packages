@@ -247,7 +247,7 @@ get_service_data() {
 	IFS=$__OLD_IFS
 
 	# check is URL or SCRIPT is given
-	__URL=$(echo "$__URL" | grep "^http:")
+	__URL=$(echo "$__DATA" | grep "^http:")
 	[ -z "$__URL" ] && __SCRIPT="/usr/lib/ddns/$__DATA"
 	
 	eval "$1='$__URL'"
