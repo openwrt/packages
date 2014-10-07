@@ -135,10 +135,8 @@ prepare_net() {
 
 	section_enabled "$s" || return 1
 
-        # rm old config
-        rm -rf "$TMP_TINC/$s/"
-
-	[ ! -d "$TMP_TINC/$s" ] && mkdir -p "$TMP_TINC/$s"
+	[ -d "$TMP_TINC/$s" ] && rm -rf "$TMP_TINC/$s/"
+	mkdir -p "$TMP_TINC/$s"
 	[ -d "/etc/tinc/$s" ] && cp -r "/etc/tinc/$s" "$TMP_TINC/"
 
 	# append flags

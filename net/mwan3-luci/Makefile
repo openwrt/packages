@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-mwan3
 PKG_VERSION:=1.3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_MAINTAINER:=Aedan Renner <chipdankly@gmail.com>
 PKG_LICENSE:=GPLv2
 
@@ -20,7 +20,7 @@ define Package/luci-app-mwan3
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=LuCI support for the MWAN3 multiwan hotplug script
-  DEPENDS:=+mwan3 +luci-mod-admin-full +luci-lib-nixio
+  DEPENDS:=+mwan3 +luci-mod-admin-full +luci-app-firewall +luci-lib-nixio
   PKGARCH:=all
   MAINTAINER:=Aedan Renner <chipdankly@gmail.com>
 endef

@@ -1,0 +1,1526 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-028
+
+Bug-Reported-by:	Florian Weimer <fweimer@redhat.com>
+Bug-Reference-ID:
+Bug-Reference-URL:
+
+Bug-Description:
+
+There are two local buffer overflows in parse.y that can cause the shell
+to dump core when given many here-documents attached to a single command
+or many nested loops.
+
+Patch (apply with `patch -p0'):
+
+--- a/parse.y
++++ b/parse.y
+@@ -168,6 +168,9 @@ static char *read_a_line __P((int));
+ 
+ static int reserved_word_acceptable __P((int));
+ static int yylex __P((void));
++
++static void push_heredoc __P((REDIRECT *));
++static char *mk_alexpansion __P((char *));
+ static int alias_expand_token __P((char *));
+ static int time_command_acceptable __P((void));
+ static int special_case_tokens __P((char *));
+@@ -265,7 +268,9 @@ int parser_state;
+ 
+ /* Variables to manage the task of reading here documents, because we need to
+    defer the reading until after a complete command has been collected. */
+-static REDIRECT *redir_stack[10];
++#define HEREDOC_MAX 16
++
++static REDIRECT *redir_stack[HEREDOC_MAX];
+ int need_here_doc;
+ 
+ /* Where shell input comes from.  History expansion is performed on each
+@@ -307,7 +312,7 @@ static int global_extglob;
+    or `for WORD' begins.  This is a nested command maximum, since the array
+    index is decremented after a case, select, or for command is parsed. */
+ #define MAX_CASE_NEST	128
+-static int word_lineno[MAX_CASE_NEST];
++static int word_lineno[MAX_CASE_NEST+1];
+ static int word_top = -1;
+ 
+ /* If non-zero, it is the token that we want read_token to return
+@@ -520,42 +525,42 @@ redirection:	'>' WORD
+ 			  source.dest = 0;
+ 			  redir.filename = $2;
+ 			  $$ = make_redirection (source, r_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	NUMBER LESS_LESS WORD
+ 			{
+ 			  source.dest = $1;
+ 			  redir.filename = $3;
+ 			  $$ = make_redirection (source, r_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	REDIR_WORD LESS_LESS WORD
+ 			{
+ 			  source.filename = $1;
+ 			  redir.filename = $3;
+ 			  $$ = make_redirection (source, r_reading_until, redir, REDIR_VARASSIGN);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	LESS_LESS_MINUS WORD
+ 			{
+ 			  source.dest = 0;
+ 			  redir.filename = $2;
+ 			  $$ = make_redirection (source, r_deblank_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	NUMBER LESS_LESS_MINUS WORD
+ 			{
+ 			  source.dest = $1;
+ 			  redir.filename = $3;
+ 			  $$ = make_redirection (source, r_deblank_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	REDIR_WORD  LESS_LESS_MINUS WORD
+ 			{
+ 			  source.filename = $1;
+ 			  redir.filename = $3;
+ 			  $$ = make_redirection (source, r_deblank_reading_until, redir, REDIR_VARASSIGN);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	LESS_LESS_LESS WORD
+ 			{
+@@ -2636,6 +2641,21 @@ yylex ()
+    which allow ESAC to be the next one read. */
+ static int esacs_needed_count;
+ 
++static void
++push_heredoc (r)
++     REDIRECT *r;
++{
++  if (need_here_doc >= HEREDOC_MAX)
++    {
++      last_command_exit_value = EX_BADUSAGE;
++      need_here_doc = 0;
++      report_syntax_error (_("maximum here-document count exceeded"));
++      reset_parser ();
++      exit_shell (last_command_exit_value);
++    }
++  redir_stack[need_here_doc++] = r;
++}
++
+ void
+ gather_here_documents ()
+ {
+--- a/y.tab.c
++++ b/y.tab.c
+@@ -168,7 +168,7 @@
+ 
+ 
+ /* Copy the first part of user declarations.  */
+-#line 21 "/usr/homes/chet/src/bash/src/parse.y"
++#line 21 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+ 
+ #include "config.h"
+ 
+@@ -319,6 +319,9 @@ static char *read_a_line __P((int));
+ 
+ static int reserved_word_acceptable __P((int));
+ static int yylex __P((void));
++
++static void push_heredoc __P((REDIRECT *));
++static char *mk_alexpansion __P((char *));
+ static int alias_expand_token __P((char *));
+ static int time_command_acceptable __P((void));
+ static int special_case_tokens __P((char *));
+@@ -416,7 +419,9 @@ int parser_state;
+ 
+ /* Variables to manage the task of reading here documents, because we need to
+    defer the reading until after a complete command has been collected. */
+-static REDIRECT *redir_stack[10];
++#define HEREDOC_MAX 16
++
++static REDIRECT *redir_stack[HEREDOC_MAX];
+ int need_here_doc;
+ 
+ /* Where shell input comes from.  History expansion is performed on each
+@@ -458,7 +463,7 @@ static int global_extglob;
+    or `for WORD' begins.  This is a nested command maximum, since the array
+    index is decremented after a case, select, or for command is parsed. */
+ #define MAX_CASE_NEST	128
+-static int word_lineno[MAX_CASE_NEST];
++static int word_lineno[MAX_CASE_NEST+1];
+ static int word_top = -1;
+ 
+ /* If non-zero, it is the token that we want read_token to return
+@@ -492,7 +497,7 @@ static REDIRECTEE redir;
+ 
+ #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+ typedef union YYSTYPE
+-#line 324 "/usr/homes/chet/src/bash/src/parse.y"
++#line 329 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+ {
+   WORD_DESC *word;		/* the word that we read. */
+   int number;			/* the number that we read. */
+@@ -503,7 +508,7 @@ typedef union YYSTYPE
+   PATTERN_LIST *pattern;
+ }
+ /* Line 193 of yacc.c.  */
+-#line 507 "y.tab.c"
++#line 512 "y.tab.c"
+ 	YYSTYPE;
+ # define yystype YYSTYPE /* obsolescent; will be withdrawn */
+ # define YYSTYPE_IS_DECLARED 1
+@@ -516,7 +521,7 @@ typedef union YYSTYPE
+ 
+ 
+ /* Line 216 of yacc.c.  */
+-#line 520 "y.tab.c"
++#line 525 "y.tab.c"
+ 
+ #ifdef short
+ # undef short
+@@ -886,23 +891,23 @@ static const yytype_int8 yyrhs[] =
+ /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
+ static const yytype_uint16 yyrline[] =
+ {
+-       0,   377,   377,   388,   397,   412,   422,   424,   428,   434,
+-     440,   446,   452,   458,   464,   470,   476,   482,   488,   494,
+-     500,   506,   512,   518,   525,   532,   539,   546,   553,   560,
+-     566,   572,   578,   584,   590,   596,   602,   608,   614,   620,
+-     626,   632,   638,   644,   650,   656,   662,   668,   674,   680,
+-     686,   692,   700,   702,   704,   708,   712,   723,   725,   729,
+-     731,   733,   749,   751,   755,   757,   759,   761,   763,   765,
+-     767,   769,   771,   773,   775,   779,   784,   789,   794,   799,
+-     804,   809,   814,   821,   826,   831,   836,   843,   848,   853,
+-     858,   863,   868,   875,   880,   885,   892,   895,   898,   902,
+-     904,   935,   942,   947,   964,   969,   986,   993,   995,   997,
+-    1002,  1006,  1010,  1014,  1016,  1018,  1022,  1023,  1027,  1029,
+-    1031,  1033,  1037,  1039,  1041,  1043,  1045,  1047,  1051,  1053,
+-    1062,  1070,  1071,  1077,  1078,  1085,  1089,  1091,  1093,  1100,
+-    1102,  1104,  1108,  1109,  1112,  1114,  1116,  1120,  1121,  1130,
+-    1143,  1159,  1174,  1176,  1178,  1185,  1188,  1192,  1194,  1200,
+-    1206,  1223,  1243,  1245,  1268,  1272,  1274,  1276
++       0,   382,   382,   393,   402,   417,   427,   429,   433,   439,
++     445,   451,   457,   463,   469,   475,   481,   487,   493,   499,
++     505,   511,   517,   523,   530,   537,   544,   551,   558,   565,
++     571,   577,   583,   589,   595,   601,   607,   613,   619,   625,
++     631,   637,   643,   649,   655,   661,   667,   673,   679,   685,
++     691,   697,   705,   707,   709,   713,   717,   728,   730,   734,
++     736,   738,   754,   756,   760,   762,   764,   766,   768,   770,
++     772,   774,   776,   778,   780,   784,   789,   794,   799,   804,
++     809,   814,   819,   826,   831,   836,   841,   848,   853,   858,
++     863,   868,   873,   880,   885,   890,   897,   900,   903,   907,
++     909,   940,   947,   952,   969,   974,   991,   998,  1000,  1002,
++    1007,  1011,  1015,  1019,  1021,  1023,  1027,  1028,  1032,  1034,
++    1036,  1038,  1042,  1044,  1046,  1048,  1050,  1052,  1056,  1058,
++    1067,  1075,  1076,  1082,  1083,  1090,  1094,  1096,  1098,  1105,
++    1107,  1109,  1113,  1114,  1117,  1119,  1121,  1125,  1126,  1135,
++    1148,  1164,  1179,  1181,  1183,  1190,  1193,  1197,  1199,  1205,
++    1211,  1228,  1248,  1250,  1273,  1277,  1279,  1281
+ };
+ #endif
+ 
+@@ -2093,7 +2098,7 @@ yyreduce:
+   switch (yyn)
+     {
+         case 2:
+-#line 378 "/usr/homes/chet/src/bash/src/parse.y"
++#line 383 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  /* Case of regular command.  Discard the error
+ 			     safety net,and return the command just parsed. */
+@@ -2107,7 +2112,7 @@ yyreduce:
+     break;
+ 
+   case 3:
+-#line 389 "/usr/homes/chet/src/bash/src/parse.y"
++#line 394 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  /* Case of regular command, but not a very
+ 			     interesting one.  Return a NULL command. */
+@@ -2119,7 +2124,7 @@ yyreduce:
+     break;
+ 
+   case 4:
+-#line 398 "/usr/homes/chet/src/bash/src/parse.y"
++#line 403 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  /* Error during parsing.  Return NULL command. */
+ 			  global_command = (COMMAND *)NULL;
+@@ -2137,7 +2142,7 @@ yyreduce:
+     break;
+ 
+   case 5:
+-#line 413 "/usr/homes/chet/src/bash/src/parse.y"
++#line 418 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  /* Case of EOF seen by itself.  Do ignoreeof or
+ 			     not. */
+@@ -2148,17 +2153,17 @@ yyreduce:
+     break;
+ 
+   case 6:
+-#line 423 "/usr/homes/chet/src/bash/src/parse.y"
++#line 428 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.word_list) = make_word_list ((yyvsp[(1) - (1)].word), (WORD_LIST *)NULL); }
+     break;
+ 
+   case 7:
+-#line 425 "/usr/homes/chet/src/bash/src/parse.y"
++#line 430 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.word_list) = make_word_list ((yyvsp[(2) - (2)].word), (yyvsp[(1) - (2)].word_list)); }
+     break;
+ 
+   case 8:
+-#line 429 "/usr/homes/chet/src/bash/src/parse.y"
++#line 434 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 1;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+@@ -2167,7 +2172,7 @@ yyreduce:
+     break;
+ 
+   case 9:
+-#line 435 "/usr/homes/chet/src/bash/src/parse.y"
++#line 440 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 0;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+@@ -2176,7 +2181,7 @@ yyreduce:
+     break;
+ 
+   case 10:
+-#line 441 "/usr/homes/chet/src/bash/src/parse.y"
++#line 446 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2185,7 +2190,7 @@ yyreduce:
+     break;
+ 
+   case 11:
+-#line 447 "/usr/homes/chet/src/bash/src/parse.y"
++#line 452 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2194,7 +2199,7 @@ yyreduce:
+     break;
+ 
+   case 12:
+-#line 453 "/usr/homes/chet/src/bash/src/parse.y"
++#line 458 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2203,7 +2208,7 @@ yyreduce:
+     break;
+ 
+   case 13:
+-#line 459 "/usr/homes/chet/src/bash/src/parse.y"
++#line 464 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2212,7 +2217,7 @@ yyreduce:
+     break;
+ 
+   case 14:
+-#line 465 "/usr/homes/chet/src/bash/src/parse.y"
++#line 470 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 1;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+@@ -2221,7 +2226,7 @@ yyreduce:
+     break;
+ 
+   case 15:
+-#line 471 "/usr/homes/chet/src/bash/src/parse.y"
++#line 476 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2230,7 +2235,7 @@ yyreduce:
+     break;
+ 
+   case 16:
+-#line 477 "/usr/homes/chet/src/bash/src/parse.y"
++#line 482 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2239,7 +2244,7 @@ yyreduce:
+     break;
+ 
+   case 17:
+-#line 483 "/usr/homes/chet/src/bash/src/parse.y"
++#line 488 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 1;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+@@ -2248,7 +2253,7 @@ yyreduce:
+     break;
+ 
+   case 18:
+-#line 489 "/usr/homes/chet/src/bash/src/parse.y"
++#line 494 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2257,7 +2262,7 @@ yyreduce:
+     break;
+ 
+   case 19:
+-#line 495 "/usr/homes/chet/src/bash/src/parse.y"
++#line 500 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2266,7 +2271,7 @@ yyreduce:
+     break;
+ 
+   case 20:
+-#line 501 "/usr/homes/chet/src/bash/src/parse.y"
++#line 506 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 0;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+@@ -2275,7 +2280,7 @@ yyreduce:
+     break;
+ 
+   case 21:
+-#line 507 "/usr/homes/chet/src/bash/src/parse.y"
++#line 512 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2284,7 +2289,7 @@ yyreduce:
+     break;
+ 
+   case 22:
+-#line 513 "/usr/homes/chet/src/bash/src/parse.y"
++#line 518 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2293,67 +2298,67 @@ yyreduce:
+     break;
+ 
+   case 23:
+-#line 519 "/usr/homes/chet/src/bash/src/parse.y"
++#line 524 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 0;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+ 			  (yyval.redirect) = make_redirection (source, r_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = (yyval.redirect);
++			  push_heredoc ((yyval.redirect));
+ 			}
+     break;
+ 
+   case 24:
+-#line 526 "/usr/homes/chet/src/bash/src/parse.y"
++#line 531 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+ 			  (yyval.redirect) = make_redirection (source, r_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = (yyval.redirect);
++			  push_heredoc ((yyval.redirect));
+ 			}
+     break;
+ 
+   case 25:
+-#line 533 "/usr/homes/chet/src/bash/src/parse.y"
++#line 538 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+ 			  (yyval.redirect) = make_redirection (source, r_reading_until, redir, REDIR_VARASSIGN);
+-			  redir_stack[need_here_doc++] = (yyval.redirect);
++			  push_heredoc ((yyval.redirect));
+ 			}
+     break;
+ 
+   case 26:
+-#line 540 "/usr/homes/chet/src/bash/src/parse.y"
++#line 545 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 0;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+ 			  (yyval.redirect) = make_redirection (source, r_deblank_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = (yyval.redirect);
++			  push_heredoc ((yyval.redirect));
+ 			}
+     break;
+ 
+   case 27:
+-#line 547 "/usr/homes/chet/src/bash/src/parse.y"
++#line 552 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+ 			  (yyval.redirect) = make_redirection (source, r_deblank_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = (yyval.redirect);
++			  push_heredoc ((yyval.redirect));
+ 			}
+     break;
+ 
+   case 28:
+-#line 554 "/usr/homes/chet/src/bash/src/parse.y"
++#line 559 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+ 			  (yyval.redirect) = make_redirection (source, r_deblank_reading_until, redir, REDIR_VARASSIGN);
+-			  redir_stack[need_here_doc++] = (yyval.redirect);
++			  push_heredoc ((yyval.redirect));
+ 			}
+     break;
+ 
+   case 29:
+-#line 561 "/usr/homes/chet/src/bash/src/parse.y"
++#line 566 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 0;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+@@ -2362,7 +2367,7 @@ yyreduce:
+     break;
+ 
+   case 30:
+-#line 567 "/usr/homes/chet/src/bash/src/parse.y"
++#line 572 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2371,7 +2376,7 @@ yyreduce:
+     break;
+ 
+   case 31:
+-#line 573 "/usr/homes/chet/src/bash/src/parse.y"
++#line 578 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2380,7 +2385,7 @@ yyreduce:
+     break;
+ 
+   case 32:
+-#line 579 "/usr/homes/chet/src/bash/src/parse.y"
++#line 584 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 0;
+ 			  redir.dest = (yyvsp[(2) - (2)].number);
+@@ -2389,7 +2394,7 @@ yyreduce:
+     break;
+ 
+   case 33:
+-#line 585 "/usr/homes/chet/src/bash/src/parse.y"
++#line 590 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.dest = (yyvsp[(3) - (3)].number);
+@@ -2398,7 +2403,7 @@ yyreduce:
+     break;
+ 
+   case 34:
+-#line 591 "/usr/homes/chet/src/bash/src/parse.y"
++#line 596 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.dest = (yyvsp[(3) - (3)].number);
+@@ -2407,7 +2412,7 @@ yyreduce:
+     break;
+ 
+   case 35:
+-#line 597 "/usr/homes/chet/src/bash/src/parse.y"
++#line 602 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 1;
+ 			  redir.dest = (yyvsp[(2) - (2)].number);
+@@ -2416,7 +2421,7 @@ yyreduce:
+     break;
+ 
+   case 36:
+-#line 603 "/usr/homes/chet/src/bash/src/parse.y"
++#line 608 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.dest = (yyvsp[(3) - (3)].number);
+@@ -2425,7 +2430,7 @@ yyreduce:
+     break;
+ 
+   case 37:
+-#line 609 "/usr/homes/chet/src/bash/src/parse.y"
++#line 614 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.dest = (yyvsp[(3) - (3)].number);
+@@ -2434,7 +2439,7 @@ yyreduce:
+     break;
+ 
+   case 38:
+-#line 615 "/usr/homes/chet/src/bash/src/parse.y"
++#line 620 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 0;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+@@ -2443,7 +2448,7 @@ yyreduce:
+     break;
+ 
+   case 39:
+-#line 621 "/usr/homes/chet/src/bash/src/parse.y"
++#line 626 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2452,7 +2457,7 @@ yyreduce:
+     break;
+ 
+   case 40:
+-#line 627 "/usr/homes/chet/src/bash/src/parse.y"
++#line 632 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2461,7 +2466,7 @@ yyreduce:
+     break;
+ 
+   case 41:
+-#line 633 "/usr/homes/chet/src/bash/src/parse.y"
++#line 638 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 1;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+@@ -2470,7 +2475,7 @@ yyreduce:
+     break;
+ 
+   case 42:
+-#line 639 "/usr/homes/chet/src/bash/src/parse.y"
++#line 644 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2479,7 +2484,7 @@ yyreduce:
+     break;
+ 
+   case 43:
+-#line 645 "/usr/homes/chet/src/bash/src/parse.y"
++#line 650 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.filename = (yyvsp[(3) - (3)].word);
+@@ -2488,7 +2493,7 @@ yyreduce:
+     break;
+ 
+   case 44:
+-#line 651 "/usr/homes/chet/src/bash/src/parse.y"
++#line 656 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 1;
+ 			  redir.dest = 0;
+@@ -2497,7 +2502,7 @@ yyreduce:
+     break;
+ 
+   case 45:
+-#line 657 "/usr/homes/chet/src/bash/src/parse.y"
++#line 662 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.dest = 0;
+@@ -2506,7 +2511,7 @@ yyreduce:
+     break;
+ 
+   case 46:
+-#line 663 "/usr/homes/chet/src/bash/src/parse.y"
++#line 668 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.dest = 0;
+@@ -2515,7 +2520,7 @@ yyreduce:
+     break;
+ 
+   case 47:
+-#line 669 "/usr/homes/chet/src/bash/src/parse.y"
++#line 674 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 0;
+ 			  redir.dest = 0;
+@@ -2524,7 +2529,7 @@ yyreduce:
+     break;
+ 
+   case 48:
+-#line 675 "/usr/homes/chet/src/bash/src/parse.y"
++#line 680 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = (yyvsp[(1) - (3)].number);
+ 			  redir.dest = 0;
+@@ -2533,7 +2538,7 @@ yyreduce:
+     break;
+ 
+   case 49:
+-#line 681 "/usr/homes/chet/src/bash/src/parse.y"
++#line 686 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.filename = (yyvsp[(1) - (3)].word);
+ 			  redir.dest = 0;
+@@ -2542,7 +2547,7 @@ yyreduce:
+     break;
+ 
+   case 50:
+-#line 687 "/usr/homes/chet/src/bash/src/parse.y"
++#line 692 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 1;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+@@ -2551,7 +2556,7 @@ yyreduce:
+     break;
+ 
+   case 51:
+-#line 693 "/usr/homes/chet/src/bash/src/parse.y"
++#line 698 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  source.dest = 1;
+ 			  redir.filename = (yyvsp[(2) - (2)].word);
+@@ -2560,29 +2565,29 @@ yyreduce:
+     break;
+ 
+   case 52:
+-#line 701 "/usr/homes/chet/src/bash/src/parse.y"
++#line 706 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.element).word = (yyvsp[(1) - (1)].word); (yyval.element).redirect = 0; }
+     break;
+ 
+   case 53:
+-#line 703 "/usr/homes/chet/src/bash/src/parse.y"
++#line 708 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.element).word = (yyvsp[(1) - (1)].word); (yyval.element).redirect = 0; }
+     break;
+ 
+   case 54:
+-#line 705 "/usr/homes/chet/src/bash/src/parse.y"
++#line 710 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.element).redirect = (yyvsp[(1) - (1)].redirect); (yyval.element).word = 0; }
+     break;
+ 
+   case 55:
+-#line 709 "/usr/homes/chet/src/bash/src/parse.y"
++#line 714 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.redirect) = (yyvsp[(1) - (1)].redirect);
+ 			}
+     break;
+ 
+   case 56:
+-#line 713 "/usr/homes/chet/src/bash/src/parse.y"
++#line 718 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  register REDIRECT *t;
+ 
+@@ -2594,27 +2599,27 @@ yyreduce:
+     break;
+ 
+   case 57:
+-#line 724 "/usr/homes/chet/src/bash/src/parse.y"
++#line 729 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_simple_command ((yyvsp[(1) - (1)].element), (COMMAND *)NULL); }
+     break;
+ 
+   case 58:
+-#line 726 "/usr/homes/chet/src/bash/src/parse.y"
++#line 731 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_simple_command ((yyvsp[(2) - (2)].element), (yyvsp[(1) - (2)].command)); }
+     break;
+ 
+   case 59:
+-#line 730 "/usr/homes/chet/src/bash/src/parse.y"
++#line 735 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = clean_simple_command ((yyvsp[(1) - (1)].command)); }
+     break;
+ 
+   case 60:
+-#line 732 "/usr/homes/chet/src/bash/src/parse.y"
++#line 737 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 61:
+-#line 734 "/usr/homes/chet/src/bash/src/parse.y"
++#line 739 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  COMMAND *tc;
+ 
+@@ -2633,72 +2638,72 @@ yyreduce:
+     break;
+ 
+   case 62:
+-#line 750 "/usr/homes/chet/src/bash/src/parse.y"
++#line 755 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 63:
+-#line 752 "/usr/homes/chet/src/bash/src/parse.y"
++#line 757 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 64:
+-#line 756 "/usr/homes/chet/src/bash/src/parse.y"
++#line 761 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 65:
+-#line 758 "/usr/homes/chet/src/bash/src/parse.y"
++#line 763 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 66:
+-#line 760 "/usr/homes/chet/src/bash/src/parse.y"
++#line 765 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_while_command ((yyvsp[(2) - (5)].command), (yyvsp[(4) - (5)].command)); }
+     break;
+ 
+   case 67:
+-#line 762 "/usr/homes/chet/src/bash/src/parse.y"
++#line 767 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_until_command ((yyvsp[(2) - (5)].command), (yyvsp[(4) - (5)].command)); }
+     break;
+ 
+   case 68:
+-#line 764 "/usr/homes/chet/src/bash/src/parse.y"
++#line 769 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 69:
+-#line 766 "/usr/homes/chet/src/bash/src/parse.y"
++#line 771 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 70:
+-#line 768 "/usr/homes/chet/src/bash/src/parse.y"
++#line 773 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 71:
+-#line 770 "/usr/homes/chet/src/bash/src/parse.y"
++#line 775 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 72:
+-#line 772 "/usr/homes/chet/src/bash/src/parse.y"
++#line 777 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 73:
+-#line 774 "/usr/homes/chet/src/bash/src/parse.y"
++#line 779 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 74:
+-#line 776 "/usr/homes/chet/src/bash/src/parse.y"
++#line 781 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 75:
+-#line 780 "/usr/homes/chet/src/bash/src/parse.y"
++#line 785 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_for_command ((yyvsp[(2) - (6)].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[(5) - (6)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2706,7 +2711,7 @@ yyreduce:
+     break;
+ 
+   case 76:
+-#line 785 "/usr/homes/chet/src/bash/src/parse.y"
++#line 790 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_for_command ((yyvsp[(2) - (6)].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[(5) - (6)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2714,7 +2719,7 @@ yyreduce:
+     break;
+ 
+   case 77:
+-#line 790 "/usr/homes/chet/src/bash/src/parse.y"
++#line 795 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_for_command ((yyvsp[(2) - (7)].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[(6) - (7)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2722,7 +2727,7 @@ yyreduce:
+     break;
+ 
+   case 78:
+-#line 795 "/usr/homes/chet/src/bash/src/parse.y"
++#line 800 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_for_command ((yyvsp[(2) - (7)].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[(6) - (7)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2730,7 +2735,7 @@ yyreduce:
+     break;
+ 
+   case 79:
+-#line 800 "/usr/homes/chet/src/bash/src/parse.y"
++#line 805 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_for_command ((yyvsp[(2) - (10)].word), REVERSE_LIST ((yyvsp[(5) - (10)].word_list), WORD_LIST *), (yyvsp[(9) - (10)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2738,7 +2743,7 @@ yyreduce:
+     break;
+ 
+   case 80:
+-#line 805 "/usr/homes/chet/src/bash/src/parse.y"
++#line 810 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_for_command ((yyvsp[(2) - (10)].word), REVERSE_LIST ((yyvsp[(5) - (10)].word_list), WORD_LIST *), (yyvsp[(9) - (10)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2746,7 +2751,7 @@ yyreduce:
+     break;
+ 
+   case 81:
+-#line 810 "/usr/homes/chet/src/bash/src/parse.y"
++#line 815 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_for_command ((yyvsp[(2) - (9)].word), (WORD_LIST *)NULL, (yyvsp[(8) - (9)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2754,7 +2759,7 @@ yyreduce:
+     break;
+ 
+   case 82:
+-#line 815 "/usr/homes/chet/src/bash/src/parse.y"
++#line 820 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_for_command ((yyvsp[(2) - (9)].word), (WORD_LIST *)NULL, (yyvsp[(8) - (9)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2762,7 +2767,7 @@ yyreduce:
+     break;
+ 
+   case 83:
+-#line 822 "/usr/homes/chet/src/bash/src/parse.y"
++#line 827 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 				  (yyval.command) = make_arith_for_command ((yyvsp[(2) - (7)].word_list), (yyvsp[(6) - (7)].command), arith_for_lineno);
+ 				  if (word_top > 0) word_top--;
+@@ -2770,7 +2775,7 @@ yyreduce:
+     break;
+ 
+   case 84:
+-#line 827 "/usr/homes/chet/src/bash/src/parse.y"
++#line 832 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 				  (yyval.command) = make_arith_for_command ((yyvsp[(2) - (7)].word_list), (yyvsp[(6) - (7)].command), arith_for_lineno);
+ 				  if (word_top > 0) word_top--;
+@@ -2778,7 +2783,7 @@ yyreduce:
+     break;
+ 
+   case 85:
+-#line 832 "/usr/homes/chet/src/bash/src/parse.y"
++#line 837 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 				  (yyval.command) = make_arith_for_command ((yyvsp[(2) - (5)].word_list), (yyvsp[(4) - (5)].command), arith_for_lineno);
+ 				  if (word_top > 0) word_top--;
+@@ -2786,7 +2791,7 @@ yyreduce:
+     break;
+ 
+   case 86:
+-#line 837 "/usr/homes/chet/src/bash/src/parse.y"
++#line 842 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 				  (yyval.command) = make_arith_for_command ((yyvsp[(2) - (5)].word_list), (yyvsp[(4) - (5)].command), arith_for_lineno);
+ 				  if (word_top > 0) word_top--;
+@@ -2794,7 +2799,7 @@ yyreduce:
+     break;
+ 
+   case 87:
+-#line 844 "/usr/homes/chet/src/bash/src/parse.y"
++#line 849 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_select_command ((yyvsp[(2) - (6)].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[(5) - (6)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2802,7 +2807,7 @@ yyreduce:
+     break;
+ 
+   case 88:
+-#line 849 "/usr/homes/chet/src/bash/src/parse.y"
++#line 854 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_select_command ((yyvsp[(2) - (6)].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[(5) - (6)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2810,7 +2815,7 @@ yyreduce:
+     break;
+ 
+   case 89:
+-#line 854 "/usr/homes/chet/src/bash/src/parse.y"
++#line 859 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_select_command ((yyvsp[(2) - (7)].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[(6) - (7)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2818,7 +2823,7 @@ yyreduce:
+     break;
+ 
+   case 90:
+-#line 859 "/usr/homes/chet/src/bash/src/parse.y"
++#line 864 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_select_command ((yyvsp[(2) - (7)].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[(6) - (7)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2826,7 +2831,7 @@ yyreduce:
+     break;
+ 
+   case 91:
+-#line 864 "/usr/homes/chet/src/bash/src/parse.y"
++#line 869 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_select_command ((yyvsp[(2) - (10)].word), REVERSE_LIST ((yyvsp[(5) - (10)].word_list), WORD_LIST *), (yyvsp[(9) - (10)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2834,7 +2839,7 @@ yyreduce:
+     break;
+ 
+   case 92:
+-#line 869 "/usr/homes/chet/src/bash/src/parse.y"
++#line 874 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_select_command ((yyvsp[(2) - (10)].word), REVERSE_LIST ((yyvsp[(5) - (10)].word_list), WORD_LIST *), (yyvsp[(9) - (10)].command), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2842,7 +2847,7 @@ yyreduce:
+     break;
+ 
+   case 93:
+-#line 876 "/usr/homes/chet/src/bash/src/parse.y"
++#line 881 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_case_command ((yyvsp[(2) - (6)].word), (PATTERN_LIST *)NULL, word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2850,7 +2855,7 @@ yyreduce:
+     break;
+ 
+   case 94:
+-#line 881 "/usr/homes/chet/src/bash/src/parse.y"
++#line 886 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_case_command ((yyvsp[(2) - (7)].word), (yyvsp[(5) - (7)].pattern), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2858,7 +2863,7 @@ yyreduce:
+     break;
+ 
+   case 95:
+-#line 886 "/usr/homes/chet/src/bash/src/parse.y"
++#line 891 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_case_command ((yyvsp[(2) - (6)].word), (yyvsp[(5) - (6)].pattern), word_lineno[word_top]);
+ 			  if (word_top > 0) word_top--;
+@@ -2866,27 +2871,27 @@ yyreduce:
+     break;
+ 
+   case 96:
+-#line 893 "/usr/homes/chet/src/bash/src/parse.y"
++#line 898 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_function_def ((yyvsp[(1) - (5)].word), (yyvsp[(5) - (5)].command), function_dstart, function_bstart); }
+     break;
+ 
+   case 97:
+-#line 896 "/usr/homes/chet/src/bash/src/parse.y"
++#line 901 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_function_def ((yyvsp[(2) - (6)].word), (yyvsp[(6) - (6)].command), function_dstart, function_bstart); }
+     break;
+ 
+   case 98:
+-#line 899 "/usr/homes/chet/src/bash/src/parse.y"
++#line 904 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_function_def ((yyvsp[(2) - (4)].word), (yyvsp[(4) - (4)].command), function_dstart, function_bstart); }
+     break;
+ 
+   case 99:
+-#line 903 "/usr/homes/chet/src/bash/src/parse.y"
++#line 908 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 100:
+-#line 905 "/usr/homes/chet/src/bash/src/parse.y"
++#line 910 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  COMMAND *tc;
+ 
+@@ -2918,7 +2923,7 @@ yyreduce:
+     break;
+ 
+   case 101:
+-#line 936 "/usr/homes/chet/src/bash/src/parse.y"
++#line 941 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_subshell_command ((yyvsp[(2) - (3)].command));
+ 			  (yyval.command)->flags |= CMD_WANT_SUBSHELL;
+@@ -2926,7 +2931,7 @@ yyreduce:
+     break;
+ 
+   case 102:
+-#line 943 "/usr/homes/chet/src/bash/src/parse.y"
++#line 948 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_coproc_command ("COPROC", (yyvsp[(2) - (2)].command));
+ 			  (yyval.command)->flags |= CMD_WANT_SUBSHELL|CMD_COPROC_SUBSHELL;
+@@ -2934,7 +2939,7 @@ yyreduce:
+     break;
+ 
+   case 103:
+-#line 948 "/usr/homes/chet/src/bash/src/parse.y"
++#line 953 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  COMMAND *tc;
+ 
+@@ -2954,7 +2959,7 @@ yyreduce:
+     break;
+ 
+   case 104:
+-#line 965 "/usr/homes/chet/src/bash/src/parse.y"
++#line 970 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_coproc_command ((yyvsp[(2) - (3)].word)->word, (yyvsp[(3) - (3)].command));
+ 			  (yyval.command)->flags |= CMD_WANT_SUBSHELL|CMD_COPROC_SUBSHELL;
+@@ -2962,7 +2967,7 @@ yyreduce:
+     break;
+ 
+   case 105:
+-#line 970 "/usr/homes/chet/src/bash/src/parse.y"
++#line 975 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  COMMAND *tc;
+ 
+@@ -2982,7 +2987,7 @@ yyreduce:
+     break;
+ 
+   case 106:
+-#line 987 "/usr/homes/chet/src/bash/src/parse.y"
++#line 992 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = make_coproc_command ("COPROC", clean_simple_command ((yyvsp[(2) - (2)].command)));
+ 			  (yyval.command)->flags |= CMD_WANT_SUBSHELL|CMD_COPROC_SUBSHELL;
+@@ -2990,117 +2995,117 @@ yyreduce:
+     break;
+ 
+   case 107:
+-#line 994 "/usr/homes/chet/src/bash/src/parse.y"
++#line 999 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_if_command ((yyvsp[(2) - (5)].command), (yyvsp[(4) - (5)].command), (COMMAND *)NULL); }
+     break;
+ 
+   case 108:
+-#line 996 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1001 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_if_command ((yyvsp[(2) - (7)].command), (yyvsp[(4) - (7)].command), (yyvsp[(6) - (7)].command)); }
+     break;
+ 
+   case 109:
+-#line 998 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1003 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_if_command ((yyvsp[(2) - (6)].command), (yyvsp[(4) - (6)].command), (yyvsp[(5) - (6)].command)); }
+     break;
+ 
+   case 110:
+-#line 1003 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1008 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_group_command ((yyvsp[(2) - (3)].command)); }
+     break;
+ 
+   case 111:
+-#line 1007 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1012 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_arith_command ((yyvsp[(1) - (1)].word_list)); }
+     break;
+ 
+   case 112:
+-#line 1011 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1016 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(2) - (3)].command); }
+     break;
+ 
+   case 113:
+-#line 1015 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1020 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_if_command ((yyvsp[(2) - (4)].command), (yyvsp[(4) - (4)].command), (COMMAND *)NULL); }
+     break;
+ 
+   case 114:
+-#line 1017 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1022 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_if_command ((yyvsp[(2) - (6)].command), (yyvsp[(4) - (6)].command), (yyvsp[(6) - (6)].command)); }
+     break;
+ 
+   case 115:
+-#line 1019 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1024 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = make_if_command ((yyvsp[(2) - (5)].command), (yyvsp[(4) - (5)].command), (yyvsp[(5) - (5)].command)); }
+     break;
+ 
+   case 117:
+-#line 1024 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1029 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyvsp[(2) - (2)].pattern)->next = (yyvsp[(1) - (2)].pattern); (yyval.pattern) = (yyvsp[(2) - (2)].pattern); }
+     break;
+ 
+   case 118:
+-#line 1028 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1033 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.pattern) = make_pattern_list ((yyvsp[(2) - (4)].word_list), (yyvsp[(4) - (4)].command)); }
+     break;
+ 
+   case 119:
+-#line 1030 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1035 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.pattern) = make_pattern_list ((yyvsp[(2) - (4)].word_list), (COMMAND *)NULL); }
+     break;
+ 
+   case 120:
+-#line 1032 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1037 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.pattern) = make_pattern_list ((yyvsp[(3) - (5)].word_list), (yyvsp[(5) - (5)].command)); }
+     break;
+ 
+   case 121:
+-#line 1034 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1039 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.pattern) = make_pattern_list ((yyvsp[(3) - (5)].word_list), (COMMAND *)NULL); }
+     break;
+ 
+   case 122:
+-#line 1038 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1043 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.pattern) = (yyvsp[(1) - (2)].pattern); }
+     break;
+ 
+   case 123:
+-#line 1040 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1045 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyvsp[(2) - (3)].pattern)->next = (yyvsp[(1) - (3)].pattern); (yyval.pattern) = (yyvsp[(2) - (3)].pattern); }
+     break;
+ 
+   case 124:
+-#line 1042 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1047 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyvsp[(1) - (2)].pattern)->flags |= CASEPAT_FALLTHROUGH; (yyval.pattern) = (yyvsp[(1) - (2)].pattern); }
+     break;
+ 
+   case 125:
+-#line 1044 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1049 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyvsp[(2) - (3)].pattern)->flags |= CASEPAT_FALLTHROUGH; (yyvsp[(2) - (3)].pattern)->next = (yyvsp[(1) - (3)].pattern); (yyval.pattern) = (yyvsp[(2) - (3)].pattern); }
+     break;
+ 
+   case 126:
+-#line 1046 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1051 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyvsp[(1) - (2)].pattern)->flags |= CASEPAT_TESTNEXT; (yyval.pattern) = (yyvsp[(1) - (2)].pattern); }
+     break;
+ 
+   case 127:
+-#line 1048 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1053 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyvsp[(2) - (3)].pattern)->flags |= CASEPAT_TESTNEXT; (yyvsp[(2) - (3)].pattern)->next = (yyvsp[(1) - (3)].pattern); (yyval.pattern) = (yyvsp[(2) - (3)].pattern); }
+     break;
+ 
+   case 128:
+-#line 1052 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1057 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.word_list) = make_word_list ((yyvsp[(1) - (1)].word), (WORD_LIST *)NULL); }
+     break;
+ 
+   case 129:
+-#line 1054 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1059 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.word_list) = make_word_list ((yyvsp[(3) - (3)].word), (yyvsp[(1) - (3)].word_list)); }
+     break;
+ 
+   case 130:
+-#line 1063 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1068 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = (yyvsp[(2) - (2)].command);
+ 			  if (need_here_doc)
+@@ -3109,14 +3114,14 @@ yyreduce:
+     break;
+ 
+   case 132:
+-#line 1072 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1077 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = (yyvsp[(2) - (2)].command);
+ 			}
+     break;
+ 
+   case 134:
+-#line 1079 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1084 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  if ((yyvsp[(1) - (3)].command)->type == cm_connection)
+ 			    (yyval.command) = connect_async_list ((yyvsp[(1) - (3)].command), (COMMAND *)NULL, '&');
+@@ -3126,17 +3131,17 @@ yyreduce:
+     break;
+ 
+   case 136:
+-#line 1090 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1095 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = command_connect ((yyvsp[(1) - (4)].command), (yyvsp[(4) - (4)].command), AND_AND); }
+     break;
+ 
+   case 137:
+-#line 1092 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1097 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = command_connect ((yyvsp[(1) - (4)].command), (yyvsp[(4) - (4)].command), OR_OR); }
+     break;
+ 
+   case 138:
+-#line 1094 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1099 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  if ((yyvsp[(1) - (4)].command)->type == cm_connection)
+ 			    (yyval.command) = connect_async_list ((yyvsp[(1) - (4)].command), (yyvsp[(4) - (4)].command), '&');
+@@ -3146,37 +3151,37 @@ yyreduce:
+     break;
+ 
+   case 139:
+-#line 1101 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1106 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = command_connect ((yyvsp[(1) - (4)].command), (yyvsp[(4) - (4)].command), ';'); }
+     break;
+ 
+   case 140:
+-#line 1103 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1108 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = command_connect ((yyvsp[(1) - (4)].command), (yyvsp[(4) - (4)].command), ';'); }
+     break;
+ 
+   case 141:
+-#line 1105 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1110 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 144:
+-#line 1113 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1118 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.number) = '\n'; }
+     break;
+ 
+   case 145:
+-#line 1115 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1120 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.number) = ';'; }
+     break;
+ 
+   case 146:
+-#line 1117 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1122 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.number) = yacc_EOF; }
+     break;
+ 
+   case 149:
+-#line 1131 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1136 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = (yyvsp[(1) - (1)].command);
+ 			  if (need_here_doc)
+@@ -3192,7 +3197,7 @@ yyreduce:
+     break;
+ 
+   case 150:
+-#line 1144 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1149 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  if ((yyvsp[(1) - (2)].command)->type == cm_connection)
+ 			    (yyval.command) = connect_async_list ((yyvsp[(1) - (2)].command), (COMMAND *)NULL, '&');
+@@ -3211,7 +3216,7 @@ yyreduce:
+     break;
+ 
+   case 151:
+-#line 1160 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1165 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  (yyval.command) = (yyvsp[(1) - (2)].command);
+ 			  if (need_here_doc)
+@@ -3227,17 +3232,17 @@ yyreduce:
+     break;
+ 
+   case 152:
+-#line 1175 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1180 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = command_connect ((yyvsp[(1) - (4)].command), (yyvsp[(4) - (4)].command), AND_AND); }
+     break;
+ 
+   case 153:
+-#line 1177 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1182 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = command_connect ((yyvsp[(1) - (4)].command), (yyvsp[(4) - (4)].command), OR_OR); }
+     break;
+ 
+   case 154:
+-#line 1179 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1184 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  if ((yyvsp[(1) - (3)].command)->type == cm_connection)
+ 			    (yyval.command) = connect_async_list ((yyvsp[(1) - (3)].command), (yyvsp[(3) - (3)].command), '&');
+@@ -3247,22 +3252,22 @@ yyreduce:
+     break;
+ 
+   case 155:
+-#line 1186 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1191 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = command_connect ((yyvsp[(1) - (3)].command), (yyvsp[(3) - (3)].command), ';'); }
+     break;
+ 
+   case 156:
+-#line 1189 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1194 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 157:
+-#line 1193 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1198 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 158:
+-#line 1195 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1200 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  if ((yyvsp[(2) - (2)].command))
+ 			    (yyvsp[(2) - (2)].command)->flags ^= CMD_INVERT_RETURN;	/* toggle */
+@@ -3271,7 +3276,7 @@ yyreduce:
+     break;
+ 
+   case 159:
+-#line 1201 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1206 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  if ((yyvsp[(2) - (2)].command))
+ 			    (yyvsp[(2) - (2)].command)->flags |= (yyvsp[(1) - (2)].number);
+@@ -3280,7 +3285,7 @@ yyreduce:
+     break;
+ 
+   case 160:
+-#line 1207 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1212 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  ELEMENT x;
+ 
+@@ -3300,7 +3305,7 @@ yyreduce:
+     break;
+ 
+   case 161:
+-#line 1224 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1229 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  ELEMENT x;
+ 
+@@ -3321,12 +3326,12 @@ yyreduce:
+     break;
+ 
+   case 162:
+-#line 1244 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1249 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = command_connect ((yyvsp[(1) - (4)].command), (yyvsp[(4) - (4)].command), '|'); }
+     break;
+ 
+   case 163:
+-#line 1246 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1251 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     {
+ 			  /* Make cmd1 |& cmd2 equivalent to cmd1 2>&1 | cmd2 */
+ 			  COMMAND *tc;
+@@ -3352,28 +3357,28 @@ yyreduce:
+     break;
+ 
+   case 164:
+-#line 1269 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1274 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.command) = (yyvsp[(1) - (1)].command); }
+     break;
+ 
+   case 165:
+-#line 1273 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1278 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.number) = CMD_TIME_PIPELINE; }
+     break;
+ 
+   case 166:
+-#line 1275 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1280 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.number) = CMD_TIME_PIPELINE|CMD_TIME_POSIX; }
+     break;
+ 
+   case 167:
+-#line 1277 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1282 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+     { (yyval.number) = CMD_TIME_PIPELINE|CMD_TIME_POSIX; }
+     break;
+ 
+ 
+ /* Line 1267 of yacc.c.  */
+-#line 3377 "y.tab.c"
++#line 3382 "y.tab.c"
+       default: break;
+     }
+   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
+@@ -3587,7 +3592,7 @@ yyreturn:
+ }
+ 
+ 
+-#line 1279 "/usr/homes/chet/src/bash/src/parse.y"
++#line 1284 "/usr/src/local/chet/src/bash/bash-4.3.28/parse.y"
+ 
+ 
+ /* Initial size to allocate for tokens, and the
+@@ -4948,6 +4953,21 @@ yylex ()
+    which allow ESAC to be the next one read. */
+ static int esacs_needed_count;
+ 
++static void
++push_heredoc (r)
++     REDIRECT *r;
++{
++  if (need_here_doc >= HEREDOC_MAX)
++    {
++      last_command_exit_value = EX_BADUSAGE;
++      need_here_doc = 0;
++      report_syntax_error (_("maximum here-document count exceeded"));
++      reset_parser ();
++      exit_shell (last_command_exit_value);
++    }
++  redir_stack[need_here_doc++] = r;
++}
++
+ void
+ gather_here_documents ()
+ {
+@@ -8541,3 +8561,4 @@ set_line_mbstate ()
+     }
+ }
+ #endif /* HANDLE_MULTIBYTE */
++
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 27
++#define PATCHLEVEL 28
+ 
+ #endif /* _PATCHLEVEL_H_ */

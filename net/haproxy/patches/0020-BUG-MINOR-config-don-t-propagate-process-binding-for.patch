@@ -1,0 +1,34 @@
+From c8d57dec6173430bd5602bb76efff302c51e7803 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Cyril=20Bont=C3=A9?= <cyril.bonte@free.fr>
+Date: Thu, 2 Oct 2014 19:56:25 +0200
+Subject: [PATCH 20/20] BUG/MINOR: config: don't propagate process binding for
+ dynamic use_backend
+
+A segfault was reported with the introduction of the propagate_processes()
+function. It was caused when a use_backend rule was declared with a dynamic
+name, using a log-format string. The backend is not resolved during the
+configuration, which lead to the segfault.
+
+The patch prevents the process binding propagation for such dynamic rules, it
+should also be backported to 1.5.
+(cherry picked from commit 51639696e0a112ea3612e905a5722ad912b3869f)
+---
+ src/cfgparse.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index 6e962c8..ec6d923 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -6015,6 +6015,8 @@ void propagate_processes(struct proxy *from, struct proxy *to)
+ 
+ 	/* use_backend */
+ 	list_for_each_entry(rule, &from->switching_rules, list) {
++		if (rule->dynamic)
++			continue;
+ 		to = rule->be.backend;
+ 		propagate_processes(from, to);
+ 	}
+-- 
+2.0.4
+
