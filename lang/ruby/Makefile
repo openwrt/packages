@@ -6,7 +6,7 @@
 #
 # To Do:
 #  - dirs not removed when uninstalling!
-# -- sort pkgs locations
+#
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
@@ -64,41 +64,6 @@ $(call Package/ruby/Default)
   CATEGORY:=Libraries
   TITLE+= (shared library)
   DEPENDS+= +libpthread +librt +libgmp
-endef
-
-define Package/ruby-misc
-$(call Package/ruby/Default)
-  TITLE:=Ruby standard libraries subset (miscelaneous files)
-  DEPENDS:=ruby
-endef
-
-define Package/ruby-misc/description
- This package contains miscellaneous files from stdlib
- not splitted in other ruby packages like stringio:
- - English.rb
- - abbrev.rb
- - base64.rb
- - continuation.so
- - coverage.so
- - delegate.rb
- - e2mmap.rb
- - etc.so
- - expect.rb
- - fcntl.so
- - fiber.so
- - getoptlong.rb
- - open3.rb
- - ostruct.rb
- - pty.so
- - scanf.rb
- - securerandom.rb
- - set.rb
- - shellwords.rb
- - stringio.so
- - strscan.so
- - tsort.rb
- - weakref.rb
-
 endef
 
 define Package/ruby-stdlib
@@ -217,17 +182,6 @@ define Package/ruby-digest/config
 
 endef
 
-define Package/ruby-drb
-$(call Package/ruby/Default)
-  TITLE:=Ruby distributed object system
-  DEPENDS:=ruby +ruby-filelib +ruby-patterns +ruby-socket
-endef
-
-define Package/ruby-drb/description
- Provides drb* files
-
-endef
-
 define Package/ruby-dl
 $(call Package/ruby/Default)
   TITLE+= (dynamic linker support)
@@ -236,6 +190,17 @@ endef
 
 define Package/ruby-dl/description
  Provides dl* files. This is deprecated, use fiddle.
+
+endef
+
+define Package/ruby-drb
+$(call Package/ruby/Default)
+  TITLE:=Ruby distributed object system
+  DEPENDS:=ruby +ruby-filelib +ruby-patterns +ruby-socket
+endef
+
+define Package/ruby-drb/description
+ Provides drb* files
 
 endef
 
@@ -457,6 +422,52 @@ define Package/ruby-minitest/description
 
 endef
 
+define Package/ruby-misc
+$(call Package/ruby/Default)
+  TITLE:=Ruby standard libraries subset (miscelaneous files)
+  DEPENDS:=ruby
+endef
+
+define Package/ruby-misc/description
+ This package contains miscellaneous files from stdlib
+ not splitted in other ruby packages like stringio:
+ - English.rb
+ - abbrev.rb
+ - base64.rb
+ - continuation.so
+ - coverage.so
+ - delegate.rb
+ - e2mmap.rb
+ - etc.so
+ - expect.rb
+ - fcntl.so
+ - fiber.so
+ - getoptlong.rb
+ - open3.rb
+ - ostruct.rb
+ - pty.so
+ - scanf.rb
+ - securerandom.rb
+ - set.rb
+ - shellwords.rb
+ - stringio.so
+ - strscan.so
+ - tsort.rb
+ - weakref.rb
+
+endef
+
+define Package/ruby-mkmf
+$(call Package/ruby/Default)
+  TITLE+= makefile library
+  DEPENDS:=ruby +ruby-filelib +ruby-optparse +ruby-rbconfig
+endef
+
+define Package/ruby-mkmf/description
+ Provides mkmf* files
+
+endef
+
 define Package/ruby-multithread
 $(call Package/ruby/Default)
   TITLE+= multithread library
@@ -473,17 +484,6 @@ define Package/ruby-multithread/description
  - sync.rb
  - thwait.rb
  - timeout.rb
-
-endef
-
-define Package/ruby-mkmf
-$(call Package/ruby/Default)
-  TITLE+= makefile library
-  DEPENDS:=ruby +ruby-filelib +ruby-optparse +ruby-rbconfig
-endef
-
-define Package/ruby-mkmf/description
- Provides mkmf* files
 
 endef
 
@@ -835,35 +835,6 @@ define Package/ruby-stdlib/install
 	# nothing to do
 endef
 
-define Package/ruby-misc/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
-		usr/lib/ruby/$(PKG_LIBVER)/English.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/abbrev.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/base64.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/delegate.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/e2mmap.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/expect.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/getoptlong.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/open3.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/ostruct.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/scanf.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/securerandom.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/set.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/shellwords.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/tsort.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/weakref.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/*/continuation.so \
-		usr/lib/ruby/$(PKG_LIBVER)/*/coverage.so \
-		usr/lib/ruby/$(PKG_LIBVER)/*/etc.so \
-		usr/lib/ruby/$(PKG_LIBVER)/*/fcntl.so \
-		usr/lib/ruby/$(PKG_LIBVER)/*/fiber.so \
-		usr/lib/ruby/$(PKG_LIBVER)/*/pty.so \
-		usr/lib/ruby/$(PKG_LIBVER)/*/stringio.so \
-		usr/lib/ruby/$(PKG_LIBVER)/*/strscan.so \
-	) | ( cd $(1); $(TAR) -xf - )
-endef
-
 define Package/ruby-bigdecimal/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
 		usr/lib/ruby/$(PKG_LIBVER)/*/bigdecimal.so \
@@ -872,15 +843,15 @@ define Package/ruby-bigdecimal/install
 	) | ( cd $(1); $(TAR) -xf - )
 endef
 
-define Package/ruby-csv/install
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/csv.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
-endef
-
 define Package/ruby-cgi/install
 	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/cgi $(1)/usr/lib/ruby/$(PKG_LIBVER)/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/cgi.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
+endef
+
+define Package/ruby-csv/install
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/csv.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
 endef
 
 define Package/ruby-datetime/install
@@ -1056,6 +1027,37 @@ define Package/ruby-minitest/install
 	) | ( cd $(1); $(TAR) -xf - )
 endef
 
+define Package/ruby-misc/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
+		usr/lib/ruby/$(PKG_LIBVER)/English.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/abbrev.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/base64.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/delegate.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/e2mmap.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/expect.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/getoptlong.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/open3.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/ostruct.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/scanf.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/securerandom.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/set.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/shellwords.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/tsort.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/weakref.rb \
+		usr/lib/ruby/$(PKG_LIBVER)/*/continuation.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/coverage.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/etc.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/fcntl.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/fiber.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/pty.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/stringio.so \
+		usr/lib/ruby/$(PKG_LIBVER)/*/strscan.so \
+	) | ( cd $(1); $(TAR) -xf - )
+endef
+
+
+
 define Package/ruby-mkmf/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
 		usr/lib/ruby/$(PKG_LIBVER)/mkmf.rb \
@@ -1134,21 +1136,6 @@ define Package/ruby-psych/install
 	) | ( cd $(1); $(TAR) -xf - )
 endef
 
-define Package/ruby-rdoc/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/rdoc $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ri $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rdoc.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rdoc $(1)/usr/lib/ruby/$(PKG_LIBVER)/
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/rdoc-*.gemspec \
-		$(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rdoc-* \
-		$(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/
-endef
-
 define Package/ruby-racc/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
 		usr/lib/ruby/$(PKG_LIBVER)/racc \
@@ -1175,6 +1162,21 @@ define Package/ruby-rbconfig/install
 		usr/lib/ruby/$(PKG_LIBVER)/rbconfig/* \
 		usr/lib/ruby/$(PKG_LIBVER)/*/rbconfig/*.so \
 	) | ( cd $(1); $(TAR) -xf - )
+endef
+
+define Package/ruby-rdoc/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/rdoc $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ri $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rdoc.rb $(1)/usr/lib/ruby/$(PKG_LIBVER)/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/$(PKG_LIBVER)/rdoc $(1)/usr/lib/ruby/$(PKG_LIBVER)/
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/rdoc-*.gemspec \
+		$(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rdoc-* \
+		$(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/
 endef
 
 define Package/ruby-readline/install
@@ -1284,7 +1286,6 @@ endef
 $(eval $(call BuildPackage,ruby))
 $(eval $(call BuildPackage,libruby))
 $(eval $(call BuildPackage,ruby-stdlib))
-$(eval $(call BuildPackage,ruby-misc))
 $(eval $(call BuildPackage,ruby-bigdecimal))
 $(eval $(call BuildPackage,ruby-cgi))
 $(eval $(call BuildPackage,ruby-csv))
@@ -1297,20 +1298,21 @@ $(eval $(call BuildPackage,ruby-drb))
 $(eval $(call BuildPackage,ruby-enc))
 $(eval $(call BuildPackage,ruby-enc-extra))
 $(eval $(call BuildPackage,ruby-erb))
-$(eval $(call BuildPackage,ruby-gdbm))
-$(eval $(call BuildPackage,ruby-gems))
-$(eval $(call BuildPackage,ruby-json))
-$(eval $(call BuildPackage,ruby-io-console))
-$(eval $(call BuildPackage,ruby-irb))
 $(eval $(call BuildPackage,ruby-fiddle))
 $(eval $(call BuildPackage,ruby-filelib))
+$(eval $(call BuildPackage,ruby-gdbm))
+$(eval $(call BuildPackage,ruby-gems))
+$(eval $(call BuildPackage,ruby-io-console))
+$(eval $(call BuildPackage,ruby-irb))
+$(eval $(call BuildPackage,ruby-json))
 $(eval $(call BuildPackage,ruby-logger))
 $(eval $(call BuildPackage,ruby-math))
 $(eval $(call BuildPackage,ruby-minitest))
+$(eval $(call BuildPackage,ruby-misc))
 $(eval $(call BuildPackage,ruby-mkmf))
 $(eval $(call BuildPackage,ruby-multithread))
-$(eval $(call BuildPackage,ruby-nkf))
 $(eval $(call BuildPackage,ruby-net))
+$(eval $(call BuildPackage,ruby-nkf))
 $(eval $(call BuildPackage,ruby-openssl))
 $(eval $(call BuildPackage,ruby-optparse))
 $(eval $(call BuildPackage,ruby-patterns))
