@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+
+function list_staging_files {
+	cd staging_dir/target-*/; find \
+		\( \( -name "root-x86" -or -name "packages" -or -name "stamp" -or -name "pkginfo" \) -prune \) -or -true \
+		\( -path "*ruby*" -or -name "erb" -or -name "gem" -or -name "irb" -or -name "rake" -or -name "rdoc" -or -name "ri" -or -name "testrb" \) \
+		-print | sort
+}
+
+function list_ipkg_files {
+	for OPKG in bin/*/packages/packages/*ruby*; do
+        tar --to-stdout -xzf "$OPKG" ./data.tar.gz | tar tz | sed -e 's%/$%%'
+	done | sort -u
+}
+
+
+echo "          Staging                    Packages"
+diff -y <(list_staging_files) <(list_ipkg_files)
+
