@@ -202,5 +202,13 @@ restart() {
 	start
 }
 
-action=${1:-help}
-$action
+case "$1" in
+	ifup|ifdown|interfaces|policies|rules|status|start|stop|restart)
+		$*
+	;;
+	*)
+		help
+	;;
+esac
+
+exit 0
