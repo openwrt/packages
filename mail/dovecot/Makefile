@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot
 PKG_VERSION:=2.2.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.dovecot.org/releases/2.2
@@ -42,7 +42,7 @@ define Package/dovecot/config
                 depends on PACKAGE_dovecot
                 config DOVECOT_LDAP
                         bool "LDAP support"
-                        default y
+                        default n
                         help
                           Implements LDAP support in dovecot.
         endmenu
