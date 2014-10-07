@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012 OpenWrt.org
+# Copyright (C) 2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -11,7 +11,7 @@ PKG_NAME:=unixodbc
 PKG_VERSION:=2.3.2
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=ftp://ftp.unixodbc.org/pub/unixODBC/
+PKG_SOURCE_URL:=@SF/unixodbc
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
 PKG_MD5SUM:=5e4528851eda5d3d4aed249b669bd05b
 PKG_BUILD_DIR:=$(BUILD_DIR)/unixODBC-$(PKG_VERSION)
