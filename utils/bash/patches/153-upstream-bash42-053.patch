@@ -1,0 +1,114 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-053
+
+Bug-Reported-by:	Michal Zalewski <lcamtuf@coredump.cx>
+Bug-Reference-ID:
+Bug-Reference-URL:
+
+Bug-Description:
+
+A combination of nested command substitutions and function importing from
+the environment can cause bash to execute code appearing in the environment
+variable value following the function definition.
+
+Patch (apply with `patch -p0'):
+
+--- a/builtins/evalstring.c
++++ b/builtins/evalstring.c
+@@ -261,12 +261,25 @@ parse_and_execute (string, from_file, fl
+ 	    {
+ 	      struct fd_bitmap *bitmap;
+ 
+-	      if ((flags & SEVAL_FUNCDEF) && command->type != cm_function_def)
++	      if (flags & SEVAL_FUNCDEF)
+ 		{
+-		  internal_warning ("%s: ignoring function definition attempt", from_file);
+-		  should_jump_to_top_level = 0;
+-		  last_result = last_command_exit_value = EX_BADUSAGE;
+-		  break;
++		  char *x;
++
++		  /* If the command parses to something other than a straight
++		     function definition, or if we have not consumed the entire
++		     string, or if the parser has transformed the function
++		     name (as parsing will if it begins or ends with shell
++		     whitespace, for example), reject the attempt */
++		  if (command->type != cm_function_def ||
++		      ((x = parser_remaining_input ()) && *x) ||
++		      (STREQ (from_file, command->value.Function_def->name->word) == 0))
++		    {
++		      internal_warning (_("%s: ignoring function definition attempt"), from_file);
++		      should_jump_to_top_level = 0;
++		      last_result = last_command_exit_value = EX_BADUSAGE;
++		      reset_parser ();
++		      break;
++		    }
+ 		}
+ 
+ 	      bitmap = new_fd_bitmap (FD_BITMAP_SIZE);
+@@ -331,7 +344,10 @@ parse_and_execute (string, from_file, fl
+ 	      discard_unwind_frame ("pe_dispose");
+ 
+ 	      if (flags & SEVAL_ONECMD)
+-		break;
++		{
++		  reset_parser ();
++		  break;
++		}
+ 	    }
+ 	}
+       else
+--- a/parse.y
++++ b/parse.y
+@@ -2435,6 +2435,16 @@ shell_ungetc (c)
+     eol_ungetc_lookahead = c;
+ }
+ 
++char *
++parser_remaining_input ()
++{
++  if (shell_input_line == 0)
++    return 0;
++  if (shell_input_line_index < 0 || shell_input_line_index >= shell_input_line_len)
++    return '\0';	/* XXX */
++  return (shell_input_line + shell_input_line_index);
++}
++
+ #ifdef INCLUDE_UNUSED
+ /* Back the input pointer up by one, effectively `ungetting' a character. */
+ static void
+@@ -3890,8 +3900,8 @@ xparse_dolparen (base, string, indp, fla
+   reset_parser ();
+   /* reset_parser clears shell_input_line and associated variables */
+   restore_input_line_state (&ls);
+-  if (interactive)
+-    token_to_read = 0;
++
++  token_to_read = 0;
+ 
+   /* Need to find how many characters parse_and_execute consumed, update
+      *indp, if flags != 0, copy the portion of the string parsed into RET
+--- a/shell.h
++++ b/shell.h
+@@ -177,6 +177,8 @@ typedef struct _sh_input_line_state_t {
+ } sh_input_line_state_t;
+ 
+ /* Let's try declaring these here. */
++extern char *parser_remaining_input __P((void));
++
+ extern sh_parser_state_t *save_parser_state __P((sh_parser_state_t *));
+ extern void restore_parser_state __P((sh_parser_state_t *));
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 52
++#define PATCHLEVEL 53
+ 
+ #endif /* _PATCHLEVEL_H_ */

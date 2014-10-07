@@ -1,0 +1,131 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.2
+Patch-ID:	bash42-051
+
+Bug-Reported-by:	Florian Weimer <fweimer@redhat.com>
+Bug-Reference-ID:
+Bug-Reference-URL:
+
+Bug-Description:
+
+There are two local buffer overflows in parse.y that can cause the shell
+to dump core when given many here-documents attached to a single command
+or many nested loops.
+
+Patch (apply with `patch -p0'):
+
+--- a/parse.y
++++ b/parse.y
+@@ -167,6 +167,9 @@ static char *read_a_line __P((int));
+ 
+ static int reserved_word_acceptable __P((int));
+ static int yylex __P((void));
++
++static void push_heredoc __P((REDIRECT *));
++static char *mk_alexpansion __P((char *));
+ static int alias_expand_token __P((char *));
+ static int time_command_acceptable __P((void));
+ static int special_case_tokens __P((char *));
+@@ -264,7 +267,9 @@ int parser_state;
+ 
+ /* Variables to manage the task of reading here documents, because we need to
+    defer the reading until after a complete command has been collected. */
+-static REDIRECT *redir_stack[10];
++#define HEREDOC_MAX 16
++
++static REDIRECT *redir_stack[HEREDOC_MAX];
+ int need_here_doc;
+ 
+ /* Where shell input comes from.  History expansion is performed on each
+@@ -306,7 +311,7 @@ static int global_extglob;
+    or `for WORD' begins.  This is a nested command maximum, since the array
+    index is decremented after a case, select, or for command is parsed. */
+ #define MAX_CASE_NEST	128
+-static int word_lineno[MAX_CASE_NEST];
++static int word_lineno[MAX_CASE_NEST+1];
+ static int word_top = -1;
+ 
+ /* If non-zero, it is the token that we want read_token to return
+@@ -519,42 +524,42 @@ redirection:	'>' WORD
+ 			  source.dest = 0;
+ 			  redir.filename = $2;
+ 			  $$ = make_redirection (source, r_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	NUMBER LESS_LESS WORD
+ 			{
+ 			  source.dest = $1;
+ 			  redir.filename = $3;
+ 			  $$ = make_redirection (source, r_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	REDIR_WORD LESS_LESS WORD
+ 			{
+ 			  source.filename = $1;
+ 			  redir.filename = $3;
+ 			  $$ = make_redirection (source, r_reading_until, redir, REDIR_VARASSIGN);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	LESS_LESS_MINUS WORD
+ 			{
+ 			  source.dest = 0;
+ 			  redir.filename = $2;
+ 			  $$ = make_redirection (source, r_deblank_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	NUMBER LESS_LESS_MINUS WORD
+ 			{
+ 			  source.dest = $1;
+ 			  redir.filename = $3;
+ 			  $$ = make_redirection (source, r_deblank_reading_until, redir, 0);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	REDIR_WORD  LESS_LESS_MINUS WORD
+ 			{
+ 			  source.filename = $1;
+ 			  redir.filename = $3;
+ 			  $$ = make_redirection (source, r_deblank_reading_until, redir, REDIR_VARASSIGN);
+-			  redir_stack[need_here_doc++] = $$;
++			  push_heredoc ($$);
+ 			}
+ 	|	LESS_LESS_LESS WORD
+ 			{
+@@ -2533,6 +2538,21 @@ yylex ()
+    which allow ESAC to be the next one read. */
+ static int esacs_needed_count;
+ 
++static void
++push_heredoc (r)
++     REDIRECT *r;
++{
++  if (need_here_doc >= HEREDOC_MAX)
++    {
++      last_command_exit_value = EX_BADUSAGE;
++      need_here_doc = 0;
++      report_syntax_error (_("maximum here-document count exceeded"));
++      reset_parser ();
++      exit_shell (last_command_exit_value);
++    }
++  redir_stack[need_here_doc++] = r;
++}
++
+ void
+ gather_here_documents ()
+ {
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 50
++#define PATCHLEVEL 51
+ 
+ #endif /* _PATCHLEVEL_H_ */
