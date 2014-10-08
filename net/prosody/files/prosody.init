@@ -14,8 +14,6 @@ RUN_USER=prosody
 RUN_GROUP=prosody
 
 start() {
-	user_exists prosody 54 || user_add prosody 54
-	group_exists prosody 54 || group_add prosody 54
 	[ -d /var/run/prosody ] || {
 		mkdir -m 0755 -p /var/run/prosody
 		chown prosody:prosody /var/run/prosody

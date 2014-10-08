@@ -19,8 +19,6 @@ start() {
 	}
 
 	grep -q "^AllowRoot=1" ${CONFIG} || {
-		user_exists zabbix 53 || user_add zabbix 53
-		group_exists zabbix 53 || group_add zabbix 53
 		touch ${SERVICE_PID_FILE}
 		chown zabbix:zabbix ${SERVICE_PID_FILE}
 	}

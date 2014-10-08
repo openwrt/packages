@@ -34,6 +34,7 @@ define Package/ocserv
   URL:=http://www.infradead.org/ocserv/
   MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
   DEPENDS:= +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c
+  USERID:=ocserv=72:ocserv=72
 endef
 
 define Package/ocserv/description

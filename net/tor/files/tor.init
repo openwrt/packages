@@ -7,8 +7,6 @@ STOP=50
 USE_PROCD=1
 
 start_service() {
-	user_exists tor 52 || user_add tor 52 52 /var/lib/tor
-	group_exists tor 52 || group_add tor 52
 	[ -f /var/run/tor.pid ] || {
 		touch /var/run/tor.pid
 		chown tor:tor /var/run/tor.pid
