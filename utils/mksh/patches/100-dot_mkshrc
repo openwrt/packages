@@ -1,5 +1,5 @@
-From 2bee59bb9e6b142a78c94f5e77a54e4e2366c1b8 Mon Sep 17 00:00:00 2001
-From: Thorsten Glaser <tg@freewrt.org>
+From 23712cea8e2a623fd952eb781df0011c501703d0 Mon Sep 17 00:00:00 2001
+From: Thorsten Glaser <tg@mirbsd.org>
 Date: Thu, 25 Jul 2013 22:07:33 +0200
 Subject: [PATCH] Make default mkshrc file suitable for OpenWrt environment:
 
@@ -13,7 +13,7 @@ Subject: [PATCH] Make default mkshrc file suitable for OpenWrt environment:
  1 file changed, 7 insertions(+), 3 deletions(-)
 
 diff --git a/dot.mkshrc b/dot.mkshrc
-index c10b8fd..3a389b2 100644
+index 233a10c..caf482c 100644
 --- a/dot.mkshrc
 +++ b/dot.mkshrc
 @@ -28,8 +28,8 @@ case $KSH_VERSION in
@@ -33,10 +33,10 @@ index c10b8fd..3a389b2 100644
  alias ll='l -l'
 -alias lo='l -alo'
 +alias lo='l -al'
- alias doch='fc -ln -1 | sudo mksh -s'
+ alias doch='sudo mksh -c "$(fc -ln -1)"'
  whence -p rot13 >/dev/null || alias rot13='tr \
      abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ \
-@@ -413,4 +413,8 @@ alias cls='print -n \\033c'
+@@ -402,4 +402,8 @@ alias cls='print -n \\033c'
  
  unset p
  
@@ -46,5 +46,5 @@ index c10b8fd..3a389b2 100644
 +
  : place customisations above this line
 -- 
-1.8.3.2
+2.1.1
 

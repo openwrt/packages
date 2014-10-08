@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2007-2011 OpenWrt.org
-# Copyright (c) 2009-2013 Thorsten Glaser <tg@mirbsd.org>
+# Copyright (c) 2009-2014 Thorsten Glaser <tg@mirbsd.org>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,12 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mksh
-PKG_VERSION:=47
+PKG_VERSION:=50d
 PKG_RELEASE:=1
+
+PKG_MAINTAINER:=Thorsten Glaser <tg@mirbsd.org>
+PKG_LICENSE:=MirOS
 
 PKG_SOURCE:=$(PKG_NAME)-R$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://www.mirbsd.org/MirOS/dist/mir/mksh
-PKG_MD5SUM:=71c7cbcd78306897801b8b6691091e66
+PKG_MD5SUM:=1c3882c07a760b23df1ad94ad0b4ed2e
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
@@ -36,7 +39,7 @@ derivate currently being actively developed.  It includes bug
 fixes and feature improvements, in order to produce a modern,
 robust shell good for interactive and especially script use.
 mksh has UTF-8 support (in substring operations and the Emacs
-editing mode) and - while R47 corresponds to OpenBSD 5.1-cur-
+editing mode) and - while R50 corresponds to OpenBSD 5.5-cur-
 rent ksh (without GNU bash-like PS1 and fancy character clas-
 ses) - adheres to SUSv4 and is much more robust. The code has
 been cleaned up and simplified, bugs fixed, standards compli-
@@ -50,13 +53,18 @@ define Build/Compile
 	# -DMKSH_ASSUME_UTF8=0 ⇒ never automatically enable
 	#	UTF-8 mode, neither use setlocale/nl_langinfo
 	#	nor look at $LC_* and $LANG (not recommended)
+	# -DMKSH_BINSHPOSIX ⇒ enable POSIX mode if called as sh
+	#XXX maybe change to -DMKSH_ASSUME_UTF8=1 now (which
+	#XXX is always assume UTF-8 mode)
 	# HAVE_CAN_FSTACKPROTECTORALL=0 ⇒ nuke libssp dependency
+	# HAVE_CAN_FSTACKPROTECTORSTRONG=0 ⇒ same, for gcc 4.9+
 	cd $(PKG_BUILD_DIR); \
 		CC="$(TARGET_CC)" \
 		TARGET_OS="$(shell uname -s)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
-		CPPFLAGS="-DMKSH_SMALL=1 -DMKSH_ASSUME_UTF8=0" \
+		CPPFLAGS="-DMKSH_SMALL=1 -DMKSH_ASSUME_UTF8=0 -DMKSH_BINSHPOSIX" \
 		HAVE_CAN_FSTACKPROTECTORALL=0 \
+		HAVE_CAN_FSTACKPROTECTORSTRONG=0 \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
 			$(BASH) Build.sh -Q -r -c lto
 endef
