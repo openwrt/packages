@@ -1,0 +1,18 @@
+#! /bin/sh
+#
+# Copyright (C) 2007-2014 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+ac_cv_file__dev_ptmx=yes
+ac_cv_file__dev_ptc=no
+
+# FIXME: moved from Makefile here
+#ac_cv_have_chflags=no \
+#ac_cv_have_lchflags=no \
+#ac_cv_py_format_size_t=no \
+#ac_cv_have_long_long_format=yes \
+#ac_cv_buggy_getaddrinfo=no \
+
