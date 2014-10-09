@@ -1,0 +1,50 @@
+From 23712cea8e2a623fd952eb781df0011c501703d0 Mon Sep 17 00:00:00 2001
+From: Thorsten Glaser <tg@mirbsd.org>
+Date: Thu, 25 Jul 2013 22:07:33 +0200
+Subject: [PATCH] Make default mkshrc file suitable for OpenWrt environment:
+
+* Part of the FreeWRT patches:
+  - no hostname(1)
+  - ls(1) has no -o option
+* OpenWrt and FreeWRT-1.0 fix:
+  - since this is not ~/.mkshrc make sure subshells find it
+---
+ dot.mkshrc | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/dot.mkshrc b/dot.mkshrc
+index 233a10c..caf482c 100644
+--- a/dot.mkshrc
++++ b/dot.mkshrc
+@@ -28,8 +28,8 @@ case $KSH_VERSION in
+ *) return 0 ;;
+ esac
+ 
+-PS1='#'; (( USER_ID )) && PS1='$'; [[ ${HOSTNAME:=$(ulimit -c 0; hostname -s \
+-    2>/dev/null)} = *([	 ]|localhost) ]] && HOSTNAME=$(ulimit -c 0; hostname \
++PS1='#'; (( USER_ID )) && PS1='$'; [[ ${HOSTNAME:=$(</proc/sys/kernel/hostname
++    )} = *([	 ]|localhost) ]] && HOSTNAME=$(ulimit -c 0; hostname \
+     2>/dev/null); : ${EDITOR:=/bin/ed} ${HOSTNAME:=nil} ${TERM:=vt100}
+ : ${MKSH:=$(whence -p mksh)}; PS4='[$EPOCHREALTIME] '; PS1=$'\001\r''${|
+ 	local e=$?
+@@ -50,7 +50,7 @@ unalias ls
+ alias l='ls -F'
+ alias la='l -a'
+ alias ll='l -l'
+-alias lo='l -alo'
++alias lo='l -al'
+ alias doch='sudo mksh -c "$(fc -ln -1)"'
+ whence -p rot13 >/dev/null || alias rot13='tr \
+     abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ \
+@@ -402,4 +402,8 @@ alias cls='print -n \\033c'
+ 
+ unset p
+ 
++# we need this in OpenWrt for subshells that are not login shells
++: ${ENV=/etc/mkshrc}
++[[ -z $ENV ]] || export ENV
++
+ : place customisations above this line
+-- 
+2.1.1
+
