@@ -31,6 +31,7 @@ define Package/ntpd/Default
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.ntp.org/
   DEPENDS:=+libcap
+  USERID:=ntp=123:ntp=123
 endef
 
 define Package/ntpd/Default/description

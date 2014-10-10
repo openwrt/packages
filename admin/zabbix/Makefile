@@ -32,6 +32,7 @@ define Package/zabbix/Default
   URL:=http://www.zabbix.com/
   SUBMENU:=zabbix
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
+  USERID:=zabbix=53:zabbix=53
 endef
 
 define Package/zabbix-agent
