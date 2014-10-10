@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmpdclient
 PKG_VERSION:=2.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/libmpdclient/2/
@@ -28,7 +28,6 @@ define Package/libmpdclient
     SECTION:=libs
     CATEGORY:=Libraries
     URL:=http://mpd.wikia.com/wiki/ClientLib:libmpdclient
-    DEPENDS:=
 endef
 
 define Package/libmpdclient/description
@@ -37,10 +36,10 @@ endef
 
 TARGET_CFLAGS+="-std=gnu99"
 
-#TARGET_LDFLAGS+=-lpthread
-
 define Build/Configure
-	$(call Build/Configure/Default)
+	$(call Build/Configure/Default, \
+		--disable-documentation \
+	)
 endef
 
 define Build/InstallDev
