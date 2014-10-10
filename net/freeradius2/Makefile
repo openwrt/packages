@@ -26,6 +26,7 @@ PKG_CONFIG_DEPENDS := \
   FREERADIUS_OPENSSL \
   FREERADIUS_NOSSL
 
+PKG_CHECK_FORMAT_SECURITY:=0
 include $(INCLUDE_DIR)/package.mk
 
 define Package/freeradius2/config
