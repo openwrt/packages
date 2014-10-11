@@ -32,6 +32,7 @@ define Package/dmapd
   DEPENDS:=+libdmapsharing +libdb47 +vips
   TITLE:= dmapd
   URL:=http://www.flyn.org/projects/dmapd/
+  USERID:=dmapd=56:dmapd=56
 endef
 
 define Package/dmapd/decription

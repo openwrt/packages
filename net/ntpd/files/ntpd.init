@@ -9,8 +9,6 @@ USE_PROCD=1
 start_service() {
 #	ln -sf /dev/ttyS0 /dev/gps0
 #	/usr/sbin/setgarmin -d /dev/gps -c /etc/setgarmin.conf
-	user_exists ntp 123 || user_add ntp 123 123 ntp /var/lib/ntp
-	group_exists ntp 123 || group_add ntp 123
 	mkdir -p /var/lib/ntp
 	chown -R ntp:ntp /var/lib/ntp
 

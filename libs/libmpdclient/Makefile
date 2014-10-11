@@ -8,13 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmpdclient
-PKG_VERSION:=2.7
+PKG_VERSION:=2.9
 PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/libmpdclient/2/
-PKG_MD5SUM:=053a97f1b045646d2d01a68fb2ddb5ef
+PGK_MD5SUM:=4b101a36e5c0cf967dc063391260ddbf
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILE:=COPYING
 
 PKG_INSTALL:=1
 
@@ -25,7 +28,6 @@ define Package/libmpdclient
     SECTION:=libs
     CATEGORY:=Libraries
     URL:=http://mpd.wikia.com/wiki/ClientLib:libmpdclient
-    DEPENDS:=
 endef
 
 define Package/libmpdclient/description
@@ -34,10 +36,10 @@ endef
 
 TARGET_CFLAGS+="-std=gnu99"
 
-#TARGET_LDFLAGS+=-lpthread
-
 define Build/Configure
-	$(call Build/Configure/Default)
+	$(call Build/Configure/Default, \
+		--disable-documentation \
+	)
 endef
 
 define Build/InstallDev

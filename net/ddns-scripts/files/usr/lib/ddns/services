@@ -72,3 +72,6 @@
 
 # Two-DNS - Simply. Connected. Everywhere.
 "Two-DNS" "http://[USERNAME]:[PASSWORD]@update.twodns.de/update?hostname=[DOMAIN]&ip=[IP]"
+
+# MyDNS.JP
+"mydns.jp"	"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV4ADDR=[IP]"

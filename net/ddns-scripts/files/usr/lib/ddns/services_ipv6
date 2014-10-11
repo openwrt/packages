@@ -27,3 +27,6 @@
 # If anyone has time they could update this file to be compatible with a bunch of them                    #
 #                                                                                                         #
 ###########################################################################################################
+
+# MyDNS.JP
+"mydns.jp"	"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV6ADDR=[IP]"

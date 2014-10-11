@@ -35,6 +35,7 @@ define Package/openssh/Default
 	URL:=http://www.openssh.com/
 	SUBMENU:=SSH
 	VARIANT:=without-pam
+	USERID:=sshd=22:sshd=22
 endef
 
 define Package/openssh-moduli

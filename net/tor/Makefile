@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
-PKG_VERSION:=0.2.4.23
+PKG_VERSION:=0.2.4.24
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.torproject.org/dist \
 	https://archive.torproject.org/tor-package-archive
-PKG_MD5SUM:=9e39928e310612c3bffee727f554c63f
+PKG_MD5SUM:=9acb86b529f0f48cc495da3801f85d1f
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de>
 PKG_LICENSE_FILE:=LICENSE
 
@@ -27,6 +27,7 @@ define Package/tor/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=https://www.torproject.org/
+  USERID:=tor=52:tor=52
 endef
 
 define Package/tor/Default/description

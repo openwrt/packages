@@ -1,0 +1,13 @@
+--- ruby-2.1.2.orig/lib/minitest/autorun.rb	2014-09-03 02:22:29.769909573 -0300
++++ ruby-2.1.2/lib/minitest/autorun.rb	2014-09-03 02:22:29.768909580 -0300
+@@ -6,8 +6,9 @@
+ ######################################################################
+ 
+ begin
+-  require 'rubygems'
+   gem 'minitest'
++rescue NameError => e # --disable-gems
++  raise unless e.name == :gem
+ rescue Gem::LoadError
+   # do nothing
+ end

@@ -21,7 +21,7 @@ PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
-PKG_BUILD_DEPENDS:=libintl
+PKG_BUILD_DEPENDS:=libintl libiconv
 
 include $(INCLUDE_DIR)/package.mk
 
