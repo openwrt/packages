@@ -213,36 +213,75 @@ fi
 verbose_echo "       waiting =: 10 seconds for interfaces to fully come up"
 sleep 10
 
-# verify DNS server
-[ -n "$dns_server" ] && {
-	verbose_echo "******* VERIFY =: DNS server '$dns_server'"
+# verify DNS server: 
+# do with retry's because there might be configurations
+# not directly could connect to outside dns when interface is already up
+ERR_VERIFY=0	# reset err counter
+while [ -n "$dns_server" ]; do
+	[ $ERR_VERIFY -eq 0 ] && verbose_echo "******* VERIFY =: DNS server '$dns_server'"
 	verify_dns "$dns_server"
-	case $? in
-		0)	;;	# everything OK
-		2)	critical_error "Invalid DNS server Error: '2' - nslookup can not resolve host";;
-		3)	critical_error "Invalid DNS server Error: '3' - nc (netcat) can not connect";;
-		4)	critical_error "Invalid DNS server Error: '4' - Forced IP Version don't matched";;
-		*)	critical_error "Invalid DNS server Error: '1' - unspecific error";;
+	ERR_LAST=$?			# save return value
+	[ $ERR_LAST -eq 0 ] && break	# everything ok leave while loop
+	ERR_VERIFY=$(( $ERR_VERIFY + 1 ))
+	# if error count > retry_count leave here with critical error
+	[ $ERR_VERIFY -gt $retry_count ] && {
+		case $ERR_LAST in
+			2)	critical_error "Invalid DNS server Error: '2' - nslookup can not resolve host";;
+			3)	critical_error "Invalid DNS server Error: '3' - nc (netcat) can not connect";;
+			*)	critical_error "Invalid DNS server Error: '$ERR_LAST' - unspecific error";;
+		esac
+	}
+	case $ERR_LAST in
+		2)	syslog_err "Invalid DNS server Error: '2' - nslookup can not resolve host - retry $ERR_VERIFY/$retry_count in $RETRY_SECONDS seconds\n";;
+		3)	syslog_err "Invalid DNS server Error: '3' - nc (netcat) can not connect - retry $ERR_VERIFY/$retry_count in $RETRY_SECONDS seconds\n";;
+		*)	syslog_err "Invalid DNS server Error: '$ERR_LAST' - unspecific error - retry $ERR_VERIFY/$retry_count in $RETRY_SECONDS seconds\n";;
 	esac
-}
+	[ $VERBOSE_MODE -gt 1 ] && {
+		# VERBOSE_MODE > 1 then NO retry
+		verbose_echo "\n!!!!!!!!! ERROR =: Verbose Mode - NO retry\n"
+		break
+	}
+	verbose_echo "******** RETRY =: DNS server '$dns_server' - retry $ERR_VERIFY/$retry_count in $RETRY_SECONDS seconds"
+	sleep $RETRY_SECONDS
+done
 
 # verify Proxy server and set environment
+# do with retry's because there might be configurations
+# not directly could connect to outside dns when interface is already up
+ERR_VERIFY=0	# reset err counter
 [ -n "$proxy" ] && {
-	verbose_echo "******* VERIFY =: Proxy server 'http://$proxy'"
+	[ $ERR_VERIFY -eq 0 ] && verbose_echo "******* VERIFY =: Proxy server 'http://$proxy'"
 	verify_proxy "$proxy"
-	case $? in
-		0)	# everything OK
-			export HTTP_PROXY="http://$proxy"
-			export HTTPS_PROXY="http://$proxy"
-			export http_proxy="http://$proxy"
-			export https_proxy="http://$proxy"
-			;;
-		2)	critical_error "Invalid Proxy server Error: '2' - nslookup can not resolve host";;
-		3)	critical_error "Invalid Proxy server Error: '3' - nc (netcat) can not connect";;
-		4)	critical_error "Invalid Proxy server Error: '4' - Forced IP Version don't matched";;
-		5)	critical_error "Invalid Proxy server Error: '5' - proxy port missing";;
-		*)	critical_error "Invalid Proxy server Error: '1' - unspecific error";;
+	ERR_LAST=$?			# save return value
+	[ $ERR_LAST -eq 0 ] && {
+		# everything ok set proxy and leave while loop
+		export HTTP_PROXY="http://$proxy"
+		export HTTPS_PROXY="http://$proxy"
+		export http_proxy="http://$proxy"
+		export https_proxy="http://$proxy"
+		break
+	}
+	ERR_VERIFY=$(( $ERR_VERIFY + 1 ))
+	# if error count > retry_count leave here with critical error
+	[ $ERR_VERIFY -gt $retry_count ] && {
+		case $ERR_LAST in
+			2)	critical_error "Invalid Proxy server Error '2' - nslookup can not resolve host";;
+			3)	critical_error "Invalid Proxy server Error '3' - nc (netcat) can not connect";;
+			*)	critical_error "Invalid Proxy server Error '$ERR_LAST' - unspecific error";;
+		esac
+	}
+	case $ERR_LAST in
+		2)	syslog_err "Invalid Proxy server Error '2' - nslookup can not resolve host - retry $ERR_VERIFY/$retry_count in $RETRY_SECONDS seconds\n";;
+		3)	syslog_err "Invalid Proxy server Error '3' - nc (netcat) can not connect - retry $ERR_VERIFY/$retry_count in $RETRY_SECONDS seconds\n";;
+		*)	syslog_err "Invalid Proxy server Error '$ERR_LAST' - unspecific error - retry $ERR_VERIFY/$retry_count in $RETRY_SECONDS seconds\n";;
 	esac
+	[ $VERBOSE_MODE -gt 1 ] && {
+		# VERBOSE_MODE > 1 then NO retry
+		verbose_echo "\n!!!!!!!!! ERROR =: Verbose Mode - NO retry\n"
+		break
+	}
+	verbose_echo "******** RETRY =: Proxy server 'http://$proxy' - retry $ERR_VERIFY/$retry_count in $RETRY_SECONDS seconds"
+	sleep $RETRY_SECONDS
 }
 
 # let's check if there is already an IP registered at the web
@@ -304,7 +343,7 @@ while : ; do
 		if [ $VERBOSE_MODE -gt 2 ]; then
 			verbose_echo "  VERBOSE MODE =: NO UPDATE send to DDNS provider"
 		elif [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
-			verbose_echo "******* UPDATE =: LOCAL: '$LOCAL_IP' <=> REGISTERED: '$REGISTERED_IP'"
+			verbose_echo "******* UPDATE =: LOCAL: '$LOCAL_IP' <> REGISTERED: '$REGISTERED_IP'"
 		else
 			verbose_echo "******* FORCED =: LOCAL: '$LOCAL_IP' == REGISTERED: '$REGISTERED_IP'"
 		fi
