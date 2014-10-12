@@ -1,0 +1,5 @@
+--- a/config/etc/default.conf.unknown
++++ b/config/etc/default.conf.unknown
+@@ -1 +1,2 @@
++lxc.lxcpath = /lxc
+ lxc.network.type = empty

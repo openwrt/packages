@@ -155,7 +155,7 @@ define Package/lxc-common/install
 	$(INSTALL_DIR) $(1)/etc/lxc/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/etc/lxc/default.conf \
-		$(1)/etc/lxc/
+		$(1)/etc/lxc/lxc.conf
 endef
 
 define Package/lxc-hooks/install
