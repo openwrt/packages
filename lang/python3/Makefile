@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 # The file included below defines PYTHON_VERSION
 -include $(if $(DUMP),,./files/python-package.mk)
 
-PKG_NAME:=python
+PKG_NAME:=python3
 PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
@@ -28,12 +28,12 @@ HOST_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=python/host
+PKG_BUILD_DEPENDS:=python3/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
-define Package/python/Default
+define Package/python3/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
@@ -42,7 +42,7 @@ define Package/python/Default
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
-define Package/python/Default/description
+define Package/python3/Default/description
  Python is a dynamic object-oriented programming language that can be used
  for many kinds of software development. It offers strong support for
  integration with other languages and tools, comes with extensive standard
@@ -51,13 +51,13 @@ define Package/python/Default/description
  the development of higher quality, more maintainable code.
 endef
 
-define Package/python
-$(call Package/python/Default)
+define Package/python3
+$(call Package/python3/Default)
   DEPENDS:=+libpthread +zlib +libffi
 endef
 
-define Package/python/description
-$(call Package/python/Default/description)
+define Package/python3/description
+$(call Package/python3/Default/description)
   .
   This package contains only the interpreter and the bare minimum for the interpreter to start.
 endef
@@ -137,7 +137,7 @@ define Build/InstallDev
 	ln -sf python$(PYTHON_VERSION)-config python-config;)
 endef
 
-define PyPackage/python/filespec
+define PyPackage/python3/filespec
 +|/usr/bin/python$(PYTHON_VERSION)
 +|/usr/lib/python$(PYTHON_VERSION)/encodings
 +|/usr/lib/python$(PYTHON_VERSION)/_collections_abc.py
@@ -155,7 +155,7 @@ define PyPackage/python/filespec
 +|/usr/lib/python$(PYTHON_VERSION)/stat.py
 endef
 
-define PyPackage/python/install
+define PyPackage/python3/install
 	# Adding the lib-dynload folder (even just empty) suppresses 2 warnings when starting Python
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/lib-dynload/
 	ln -sf python$(PYTHON_VERSION) $(1)/usr/bin/python
@@ -194,6 +194,6 @@ endef
 
 $(eval $(call HostBuild))
 
-$(eval $(call PyPackage,python))
+$(eval $(call PyPackage,python3))
 
-$(eval $(call BuildPackage,python))
+$(eval $(call BuildPackage,python3))
