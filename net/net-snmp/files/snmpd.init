@@ -119,6 +119,16 @@ snmpd_exec_add() {
 	config_get miboid "$cfg" miboid
 	echo "exec $miboid $name $prog $args" >> $RUN_C
 }
+snmpd_disk_add() {
+        local cfg="$1"
+        local disk='disk'
+
+        config_get partition "$cfg" partition
+        [ -n "$partition" ] || return 0
+        config_get size "$cfg" size
+        [ -n "$size" ] || return 0
+        echo "$disk $partition $size" >> $RUN_C
+}
 start() {
 	[ -d $LIB_D ] || mkdir -p $LIB_D
 	[ -d $LOG_D ] || mkdir -p $LOG_D
@@ -136,7 +146,8 @@ start() {
 	config_foreach snmpd_access_add access
 	config_foreach snmpd_pass_add pass
 	config_foreach snmpd_exec_add exec
-
+	config_foreach snmpd_disk_add disk
+	
 	[ -f $DEFAULT ] && . $DEFAULT
 	$DEBUG /usr/sbin/snmpd $OPTIONS
 }
