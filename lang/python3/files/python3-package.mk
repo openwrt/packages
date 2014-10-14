@@ -17,7 +17,7 @@ PYTHON3_PKG_DIR:=/usr/lib/python$(PYTHON3_VERSION)/site-packages
 
 PYTHON3:=python$(PYTHON3_VERSION)
 
-HOST_PYTHON3_BIN:=$(STAGING_DIR)/usr/bin/hostpython3
+HOST_PYTHON3_BIN:=$(STAGING_DIR_HOST)/bin/python3
 
 define HostPython3
 	(	export PYTHONPATH="$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR)"; \
