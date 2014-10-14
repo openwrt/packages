@@ -5,34 +5,34 @@
 # See /LICENSE for more information.
 #
 
-PYTHON_VERSION:=3.4
-PYTHON_VERSION_MICRO:=1
+PYTHON3_VERSION:=3.4
+PYTHON3_VERSION_MICRO:=1
 
-PYTHON_DIR:=$(STAGING_DIR)/usr
-PYTHON_BIN_DIR:=$(PYTHON_DIR)/bin
-PYTHON_INC_DIR:=$(PYTHON_DIR)/include/python$(PYTHON_VERSION)
-PYTHON_LIB_DIR:=$(PYTHON_DIR)/lib/python$(PYTHON_VERSION)
+PYTHON3_DIR:=$(STAGING_DIR)/usr
+PYTHON3_BIN_DIR:=$(PYTHON3_DIR)/bin
+PYTHON3_INC_DIR:=$(PYTHON3_DIR)/include/python$(PYTHON3_VERSION)
+PYTHON3_LIB_DIR:=$(PYTHON3_DIR)/lib/python$(PYTHON3_VERSION)
 
-PYTHON_PKG_DIR:=/usr/lib/python$(PYTHON_VERSION)/site-packages
+PYTHON3_PKG_DIR:=/usr/lib/python$(PYTHON3_VERSION)/site-packages
 
-PYTHON:=python$(PYTHON_VERSION)
+PYTHON3:=python$(PYTHON3_VERSION)
 
-HOST_PYTHON_BIN:=$(STAGING_DIR)/usr/bin/hostpython
+HOST_PYTHON3_BIN:=$(STAGING_DIR)/usr/bin/hostpython3
 
-define HostPython
-	(	export PYTHONPATH="$(PYTHON_LIB_DIR):$(STAGING_DIR)/$(PYTHON_PKG_DIR)"; \
+define HostPython3
+	(	export PYTHONPATH="$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR)"; \
 		export PYTHONOPTIMIZE=""; \
 		export PYTHONDONTWRITEBYTECODE=1; \
 		$(1) \
-		$(HOST_PYTHON_BIN) $(2); \
+		$(HOST_PYTHON3_BIN) $(2); \
 	)
 endef
 
-define PyPackage
-  $(call shexport,PyPackage/$(1)/filespec)
+define Py3Package
+  $(call shexport,Py3Package/$(1)/filespec)
 
   define Package/$(1)/install
-	@$(SH_FUNC) getvar $$(call shvar,PyPackage/$(1)/filespec) | ( \
+	@$(SH_FUNC) getvar $$(call shvar,Py3Package/$(1)/filespec) | ( \
 		IFS='|'; \
 		while read fop fspec fperm; do \
 		  if [ "$$$$$$$$fop" = "+" ]; then \
@@ -57,15 +57,15 @@ define PyPackage
 		  fi; \
 		done; \
 	)
-	$(call PyPackage/$(1)/install,$$(1))
+	$(call Py3Package/$(1)/install,$$(1))
   endef
 endef
 
 # $(1) => build subdir
 # $(2) => additional arguments to setup.py
 # $(3) => additional variables
-define Build/Compile/PyMod
-	$(call HostPython, \
+define Build/Compile/Py3Mod
+	$(call HostPython3, \
 		cd $(PKG_BUILD_DIR)/$(strip $(1)); \
 		CFLAGS="$(TARGET_CFLAGS)" \
 		CPPFLAGS="$(TARGET_CPPFLAGS)" \

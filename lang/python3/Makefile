@@ -10,6 +10,9 @@ include $(TOPDIR)/rules.mk
 # The file included below defines PYTHON_VERSION
 include ./files/python3-package.mk
 
+PYTHON_VERSION:=$(PYTHON3_VERSION)
+PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
+
 PKG_NAME:=python3
 PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
@@ -134,7 +137,7 @@ define Build/InstallDev
 	$(SED) 's,^#!.*,#!/usr/bin/env python$(PYTHON_VERSION),g' $(2)/bin/python$(PYTHON_VERSION)-config
 endef
 
-define PyPackage/python3/filespec
+define Py3Package/python3/filespec
 +|/usr/bin/python$(PYTHON_VERSION)
 +|/usr/lib/python$(PYTHON_VERSION)/encodings
 +|/usr/lib/python$(PYTHON_VERSION)/_collections_abc.py
@@ -152,7 +155,7 @@ define PyPackage/python3/filespec
 +|/usr/lib/python$(PYTHON_VERSION)/stat.py
 endef
 
-define PyPackage/python3/install
+define Py3Package/python3/install
 	# Adding the lib-dynload folder (even just empty) suppresses 2 warnings when starting Python
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/lib-dynload/
 endef
@@ -190,6 +193,6 @@ endef
 
 $(eval $(call HostBuild))
 
-$(eval $(call PyPackage,python3))
+$(eval $(call Py3Package,python3))
 
 $(eval $(call BuildPackage,python3))
