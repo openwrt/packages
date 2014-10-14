@@ -99,8 +99,6 @@ endif
 define Build/Configure
 	-$(MAKE) -C $(PKG_BUILD_DIR) distclean
 	(cd $(PKG_BUILD_DIR); autoreconf --force --install || exit 0)
-	# The python executable needs to stay in the rootdir since its location will
-	# be used to compute the path of the config files.
 	$(CP) ./files/config.site $(PKG_BUILD_DIR)
 	$(call Build/Configure/Default, \
 		--sysconfdir=/etc \
@@ -158,6 +156,7 @@ endef
 define Py3Package/python3/install
 	# Adding the lib-dynload folder (even just empty) suppresses 2 warnings when starting Python
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/lib-dynload/
+	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python3
 endef
 
 define Host/Configure
