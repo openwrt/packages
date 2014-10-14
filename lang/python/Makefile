@@ -192,8 +192,8 @@ define Build/InstallDev
 		$(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION) \
 		$(1)/usr/bin/hostpython
 	(cd $(2)/bin; \
-	ln -sf ../../usr/bin/hostpython python$(PYTHON_VERSION); \
-	ln -sf python$(PYTHON_VERSION) python)
+	$(LN) ../../usr/bin/hostpython python$(PYTHON_VERSION); \
+	$(LN) python$(PYTHON_VERSION) python)
 
 	$(CP) \
 		$(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION)-config \
@@ -201,7 +201,7 @@ define Build/InstallDev
 	$(SED) 's,^#!.*,#!/usr/bin/env python$(PYTHON_VERSION),g' $(2)/bin/python$(PYTHON_VERSION)-config
 
 	(cd $(2)/bin; \
-	ln -sf python$(PYTHON_VERSION)-config python-config;)
+	$(LN) python$(PYTHON_VERSION)-config python-config;)
 endef
 
 define PyPackage/python-full/filespec
@@ -410,7 +410,7 @@ define PyPackage/python/filespec
 endef
 
 define PyPackage/python/install
-	ln -sf python$(PYTHON_VERSION) $(1)/usr/bin/python
+	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python
 endef
 
 define PyPackage/python-doc/filespec
