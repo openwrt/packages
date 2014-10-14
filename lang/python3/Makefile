@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 # The file included below defines PYTHON_VERSION
--include $(if $(DUMP),,./files/python3-package.mk)
+include ./files/python3-package.mk
 
 PKG_NAME:=python3
 PKG_RELEASE:=1
