@@ -399,6 +399,10 @@ FFMPEG_CONFIGURE:= \
 	--disable-vdpau \
 	--disable-outdevs
 
+ifeq ($(CONFIG_CPU_TYPE),"mips32")
+	FFMPEG_CONFIGURE +=--disable-mips32r2
+endif
+
 ifeq ($(BUILD_VARIANT),custom)
 
   FFMPEG_ENABLE= \
