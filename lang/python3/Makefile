@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 # The file included below defines PYTHON_VERSION
--include $(if $(DUMP),,./files/python-package.mk)
+-include $(if $(DUMP),,./files/python3-package.mk)
 
 PKG_NAME:=python3
 PKG_RELEASE:=1
@@ -116,7 +116,7 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include $(1)/usr/lib
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
-	$(INSTALL_DATA) ./files/python-package.mk $(STAGING_DIR)/mk/
+	$(INSTALL_DATA) ./files/python3-package.mk $(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
