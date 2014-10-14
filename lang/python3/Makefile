@@ -132,9 +132,6 @@ define Build/InstallDev
 		$(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION)-config \
 		$(2)/bin/
 	$(SED) 's,^#!.*,#!/usr/bin/env python$(PYTHON_VERSION),g' $(2)/bin/python$(PYTHON_VERSION)-config
-
-	(cd $(2)/bin; \
-	ln -sf python$(PYTHON_VERSION)-config python-config;)
 endef
 
 define PyPackage/python3/filespec
@@ -158,7 +155,6 @@ endef
 define PyPackage/python3/install
 	# Adding the lib-dynload folder (even just empty) suppresses 2 warnings when starting Python
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/lib-dynload/
-	ln -sf python$(PYTHON_VERSION) $(1)/usr/bin/python
 endef
 
 define Host/Configure
