@@ -411,6 +411,7 @@ endef
 
 define PyPackage/python/install
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python
+	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python2
 endef
 
 define PyPackage/python-doc/filespec
