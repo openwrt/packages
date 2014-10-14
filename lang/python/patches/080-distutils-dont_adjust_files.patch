@@ -1,0 +1,63 @@
+---
+ Lib/distutils/command/build_scripts.py |   43 +++------------------------------
+ 1 file changed, 4 insertions(+), 39 deletions(-)
+
+--- a/Lib/distutils/command/build_scripts.py
++++ b/Lib/distutils/command/build_scripts.py
+@@ -51,10 +51,7 @@ class build_scripts (Command):
+ 
+ 
+     def copy_scripts (self):
+-        """Copy each script listed in 'self.scripts'; if it's marked as a
+-        Python script in the Unix way (first line matches 'first_line_re',
+-        ie. starts with "\#!" and contains "python"), then adjust the first
+-        line to refer to the current Python interpreter as we copy.
++        """Copy each script listed in 'self.scripts'
+         """
+         _sysconfig = __import__('sysconfig')
+         self.mkpath(self.build_dir)
+@@ -78,41 +75,9 @@ class build_scripts (Command):
+                 if not self.dry_run:
+                     raise
+                 f = None
+-            else:
+-                first_line = f.readline()
+-                if not first_line:
+-                    self.warn("%s is an empty file (skipping)" % script)
+-                    continue
+-
+-                match = first_line_re.match(first_line)
+-                if match:
+-                    adjust = 1
+-                    post_interp = match.group(1) or ''
+-
+-            if adjust:
+-                log.info("copying and adjusting %s -> %s", script,
+-                         self.build_dir)
+-                if not self.dry_run:
+-                    outf = open(outfile, "w")
+-                    if not _sysconfig.is_python_build():
+-                        outf.write("#!%s%s\n" %
+-                                   (self.executable,
+-                                    post_interp))
+-                    else:
+-                        outf.write("#!%s%s\n" %
+-                                   (os.path.join(
+-                            _sysconfig.get_config_var("BINDIR"),
+-                           "python%s%s" % (_sysconfig.get_config_var("VERSION"),
+-                                           _sysconfig.get_config_var("EXE"))),
+-                                    post_interp))
+-                    outf.writelines(f.readlines())
+-                    outf.close()
+-                if f:
+-                    f.close()
+-            else:
+-                if f:
+-                    f.close()
+-                self.copy_file(script, outfile)
++            if f:
++                f.close()
++            self.copy_file(script, outfile)
+ 
+         if os.name == 'posix':
+             for file in outfiles:

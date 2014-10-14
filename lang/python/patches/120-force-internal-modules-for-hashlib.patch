@@ -1,0 +1,25 @@
+---
+ setup.py |   10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+--- a/setup.py
++++ b/setup.py
+@@ -704,8 +704,7 @@ class PyBuildExt(build_ext):
+ 
+         min_openssl_ver = 0x00907000
+         have_any_openssl = ssl_incs is not None and ssl_libs is not None
+-        have_usable_openssl = (have_any_openssl and
+-                               openssl_ver >= min_openssl_ver)
++        have_usable_openssl = False
+ 
+         if have_any_openssl:
+             if have_usable_openssl:
+@@ -730,7 +729,7 @@ class PyBuildExt(build_ext):
+                             depends = ['md5.h']) )
+ 
+         min_sha2_openssl_ver = 0x00908000
+-        if COMPILED_WITH_PYDEBUG or openssl_ver < min_sha2_openssl_ver:
++        if True:
+             # OpenSSL doesn't do these until 0.9.8 so we'll bring our own hash
+             exts.append( Extension('_sha256', ['sha256module.c']) )
+             exts.append( Extension('_sha512', ['sha512module.c']) )
