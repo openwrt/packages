@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 # The file included below defines PYTHON_VERSION
--include $(if $(DUMP),,./files/python-package.mk)
+include ./files/python-package.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
