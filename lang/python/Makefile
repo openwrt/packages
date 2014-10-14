@@ -7,8 +7,11 @@
 
 include $(TOPDIR)/rules.mk
 
+# The file included below defines PYTHON_VERSION
+-include $(if $(DUMP),,./files/python-package.mk)
+
 PKG_NAME:=python
-PKG_VERSION:=2.7.3
+PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 PKG_RELEASE:=2
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -29,7 +32,6 @@ PKG_BUILD_DEPENDS:=python/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
--include $(if $(DUMP),,./files/python-package.mk)
 
 define Package/python/Default
   SUBMENU:=Python
