@@ -1,0 +1,2 @@
+BW-limited three-tier prioritisation scheme with fq_codel on each queue. Temporary version to implement shaping
+of pass through PPPOE encapsulated packets.
