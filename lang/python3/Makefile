@@ -8,7 +8,10 @@
 include $(TOPDIR)/rules.mk
 
 # The file included below defines PYTHON_VERSION
--include $(if $(DUMP),,./files/python-package.mk)
+include ./files/python3-package.mk
+
+PYTHON_VERSION:=$(PYTHON3_VERSION)
+PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
 PKG_RELEASE:=1
@@ -96,8 +99,6 @@ endif
 define Build/Configure
 	-$(MAKE) -C $(PKG_BUILD_DIR) distclean
 	(cd $(PKG_BUILD_DIR); autoreconf --force --install || exit 0)
-	# The python executable needs to stay in the rootdir since its location will
-	# be used to compute the path of the config files.
 	$(CP) ./files/config.site $(PKG_BUILD_DIR)
 	$(call Build/Configure/Default, \
 		--sysconfdir=/etc \
@@ -116,7 +117,7 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include $(1)/usr/lib
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
-	$(INSTALL_DATA) ./files/python-package.mk $(STAGING_DIR)/mk/
+	$(INSTALL_DATA) ./files/python3-package.mk $(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
@@ -132,12 +133,9 @@ define Build/InstallDev
 		$(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION)-config \
 		$(2)/bin/
 	$(SED) 's,^#!.*,#!/usr/bin/env python$(PYTHON_VERSION),g' $(2)/bin/python$(PYTHON_VERSION)-config
-
-	(cd $(2)/bin; \
-	ln -sf python$(PYTHON_VERSION)-config python-config;)
 endef
 
-define PyPackage/python3/filespec
+define Py3Package/python3/filespec
 +|/usr/bin/python$(PYTHON_VERSION)
 +|/usr/lib/python$(PYTHON_VERSION)/encodings
 +|/usr/lib/python$(PYTHON_VERSION)/_collections_abc.py
@@ -155,10 +153,10 @@ define PyPackage/python3/filespec
 +|/usr/lib/python$(PYTHON_VERSION)/stat.py
 endef
 
-define PyPackage/python3/install
+define Py3Package/python3/install
 	# Adding the lib-dynload folder (even just empty) suppresses 2 warnings when starting Python
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/lib-dynload/
-	ln -sf python$(PYTHON_VERSION) $(1)/usr/bin/python
+	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python3
 endef
 
 define Host/Configure
@@ -194,6 +192,6 @@ endef
 
 $(eval $(call HostBuild))
 
-$(eval $(call PyPackage,python3))
+$(eval $(call Py3Package,python3))
 
 $(eval $(call BuildPackage,python3))
