@@ -12,11 +12,11 @@ include ./files/python-package.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=62c4c1699170078c469f79ddfed21bc0
+PKG_MD5SUM:=d235bdfa75b8396942e360a70487ee00
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -142,8 +142,7 @@ MAKE_FLAGS:=\
 	CFLAGS="$(TARGET_CFLAGS) -DNDEBUG -fno-inline" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 	LD="$(TARGET_CC)" \
-	HOSTPYTHON=./hostpython \
-	HOSTPGEN=./hostpgen
+	PGEN=pgen2
 
 ENABLE_IPV6:=
 ifeq ($(CONFIG_IPV6),y)
@@ -153,22 +152,17 @@ endif
 define Build/Configure
 	-$(MAKE) -C $(PKG_BUILD_DIR) distclean
 	(cd $(PKG_BUILD_DIR); autoreconf --force --install || exit 0)
-	# The python executable needs to stay in the rootdir since its location will
-	# be used to compute the path of the config files.
-	$(CP) $(STAGING_DIR_HOST)/bin/pgen $(PKG_BUILD_DIR)/hostpgen
-	$(CP) $(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION) $(PKG_BUILD_DIR)/hostpython
+	$(CP) ./files/config.site $(PKG_BUILD_DIR)
 	$(call Build/Configure/Default, \
 		--sysconfdir=/etc \
 		--disable-shared \
 		--without-cxx-main \
 		--with-threads \
 		--with-system-ffi="$(STAGING_DIR)/usr" \
+		--without-ensurepip \
+		--without-pymalloc \
 		$(ENABLE_IPV6) \
-		ac_cv_have_chflags=no \
-		ac_cv_have_lchflags=no \
-		ac_cv_py_format_size_t=no \
-		ac_cv_have_long_long_format=yes \
-		ac_cv_buggy_getaddrinfo=no \
+		CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
 		OPT="$(TARGET_CFLAGS)" \
 	)
 endef
@@ -189,19 +183,9 @@ define Build/InstallDev
 		$(1)/usr/lib/python$(PYTHON_VERSION)/
 
 	$(CP) \
-		$(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION) \
-		$(1)/usr/bin/hostpython
-	(cd $(2)/bin; \
-	$(LN) ../../usr/bin/hostpython python$(PYTHON_VERSION); \
-	$(LN) python$(PYTHON_VERSION) python)
-
-	$(CP) \
 		$(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION)-config \
 		$(2)/bin/
 	$(SED) 's,^#!.*,#!/usr/bin/env python$(PYTHON_VERSION),g' $(2)/bin/python$(PYTHON_VERSION)-config
-
-	(cd $(2)/bin; \
-	$(LN) python$(PYTHON_VERSION)-config python-config;)
 endef
 
 define PyPackage/python-full/filespec
@@ -464,7 +448,12 @@ define Host/Configure
 		rm -rf config.cache; \
 		CONFIG_SITE= \
 		OPT="$(HOST_CFLAGS)" \
-		./configure --without-cxx-main --with-threads --prefix=$(STAGING_DIR_HOST); \
+		./configure \
+			--without-cxx-main \
+			--without-ensurepip \
+			--without-pymalloc \
+			--with-threads \
+			--prefix=$(STAGING_DIR_HOST); \
 	)
 endef
 
@@ -472,16 +461,14 @@ define Host/Compile
 	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) \
 		python Parser/pgen
 	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) \
-		HOSTPYTHON=$(HOST_BUILD_DIR)/python \
 		sharedmods
 endef
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
 	$(MAKE) -C $(HOST_BUILD_DIR) \
-		HOSTPYTHON=$(HOST_BUILD_DIR)/python \
 		install
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR_HOST)/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR_HOST)/bin/pgen2
 endef
 
 
