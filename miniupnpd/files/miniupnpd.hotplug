@@ -16,22 +16,29 @@ fi
 
 [ ! "$ACTION" = "ifup" ] && service_check /usr/sbin/miniupnpd && exit 0
 
-# DEVICE is set only in ifup as of 20140625 netifd
-[ -z "$DEVICE" ] && network_get_device DEVICE $INTERFACE
-
 local iface
-local ext_iface
-local ext_iface6
+local ifname
+local tmpconf="/var/etc/miniupnpd.conf"
+local extiface=$(uci get upnpd.config.external_iface)
+local extzone=$(uci get upnpd.config.external_zone)
 
 . /lib/functions/network.sh
-network_find_wan ext_iface
-network_find_wan6 ext_iface6
 
-for iface in $ext_iface $ext_iface6 $(uci_get upnpd config internal_iface; uci_get upnpd config external_iface); do
+for iface in $(uci get upnpd.config.internal_iface); do
     network_get_device device $iface
     [ "$DEVICE" = "$device" ] && /etc/init.d/miniupnpd restart && exit 0
 done
 
-for device in $(fw3 -q zone `uci_get upnpd config external_zone`); do
-    [ "$DEVICE" = "$device" ] && /etc/init.d/miniupnpd restart && exit 0
-done
+
+if [ -z "$extiface" ] ; then
+  # manual external zone (if dynamically find interfaces
+  # belonging to it) overrides network_find_wan*
+  if [ -n "$extzone" ] ; then
+    ifname=$(fw3 -q zone $extzone | head -1)
+  fi
+  [ -n "$extiface" ] || network_find_wan extiface
+  [ -n "$extiface" ] || network_find_wan6 extiface
+fi
+
+[ -n "$ifname" ] || network_get_device ifname ${extiface}
+grep -q "ext_ifname=$ifname" $tmpconf || /etc/init.d/miniupnpd restart
