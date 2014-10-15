@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+
+START=50
+
+reload()
+{
+/usr/lib/sqm/run.sh
+}
+
+restart()
+{
+reload
+}
+
+start()
+{
+reload
+}
+
+stop()
+{
+/usr/lib/sqm/run.sh stop
+}
