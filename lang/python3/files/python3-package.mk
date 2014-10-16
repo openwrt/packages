@@ -37,6 +37,10 @@ define Py3Package
 		IFS='|'; \
 		while read fop fspec fperm; do \
 		  if [ "$$$$$$$$fop" = "+" ]; then \
+			if [ ! -e "$(PKG_INSTALL_DIR)$$$$$$$$fspec" ]; then \
+			  echo "File not found '$(PKG_INSTALL_DIR)$$$$$$$$fspec'"; \
+			  exit 1; \
+			fi; \
 			dpath=`dirname "$$$$$$$$fspec"`; \
 			if [ -n "$$$$$$$$fperm" ]; then \
 			  dperm="-m$$$$$$$$fperm"; \
