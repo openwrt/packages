@@ -32,6 +32,7 @@ define Py3Package
   $(call shexport,Py3Package/$(1)/filespec)
 
   define Package/$(1)/install
+	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
 	@$(SH_FUNC) getvar $$(call shvar,Py3Package/$(1)/filespec) | ( \
 		IFS='|'; \
 		while read fop fspec fperm; do \
