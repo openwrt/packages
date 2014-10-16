@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
 PKG_MD5SUM:=c3568b42e058cfc385b46d25140dced4
-PKG_MAINTAINER:=Martin Rowe <cyanidium@users.noreply.github.com>
+PKG_MAINTAINER:=Martin Rowe <martin.p.rowe@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE-GPL2
 
