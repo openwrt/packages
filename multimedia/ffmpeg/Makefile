@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=2.3.3
+PKG_VERSION:=2.3.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=72361d3b8717b6db3ad2b9da8df7af5e
+PKG_MD5SUM:=d6a0c7f0827a2446ca2bed11ac9bf608
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -289,7 +289,7 @@ endef
 define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (custom)
- DEPENDS+= @DEVEL +libspeex
+ DEPENDS+= @DEVEL +libopus +libspeex
  VARIANT:=custom
  MENU:=1
 endef
@@ -308,7 +308,7 @@ endef
 define Package/libffmpeg-audio-dec
 $(call Package/libffmpeg/Default)
  TITLE+= (audio)
- DEPENDS+= @DEVEL +libspeex
+ DEPENDS+= @DEVEL +libopus +libspeex
  VARIANT:=audio-dec
 endef
 
@@ -399,6 +399,10 @@ FFMPEG_CONFIGURE:= \
 	--disable-vdpau \
 	--disable-outdevs
 
+ifeq ($(CONFIG_CPU_TYPE),"mips32")
+	FFMPEG_CONFIGURE +=--disable-mips32r2
+endif
+
 ifeq ($(BUILD_VARIANT),custom)
 
   FFMPEG_ENABLE= \
@@ -428,6 +432,12 @@ ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_adpcm),y)
 
 endif
 
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libopus),y)
+  FFMPEG_CONFIGURE+= \
+	--enable-libopus --enable-decoder=libopus \
+
+endif
+
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_speex),y)
   FFMPEG_CONFIGURE+= \
 	--enable-libspeex --enable-decoder=libspeex \
@@ -454,6 +464,7 @@ ifeq ($(BUILD_VARIANT),audio-dec)
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_AUDIO_DEMUXERS)) \
 	$(call FFMPEG_ENABLE,parser,$(FFMPEG_AUDIO_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_AUDIO_PROTOCOLS)) \
+	--enable-libopus --enable-decoder=libopus \
 	--enable-libspeex --enable-decoder=libspeex \
 	--disable-decoder=pcm_bluray,pcm_dvd \
 

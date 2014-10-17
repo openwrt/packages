@@ -1,0 +1,28 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -431,12 +431,6 @@ distclean-libtool:
+ # (2) otherwise, pass the desired values on the `make' command line.
+ $(RECURSIVE_TARGETS):
+ 	@fail= failcom='exit 1'; \
+-	for f in x $$MAKEFLAGS; do \
+-	  case $$f in \
+-	    *=* | --[!k]*);; \
+-	    *k*) failcom='fail=yes';; \
+-	  esac; \
+-	done; \
+ 	dot_seen=no; \
+ 	target=`echo $@ | sed s/-recursive//`; \
+ 	list='$(SUBDIRS)'; for subdir in $$list; do \
+@@ -456,12 +450,6 @@ $(RECURSIVE_TARGETS):
+ 
+ $(RECURSIVE_CLEAN_TARGETS):
+ 	@fail= failcom='exit 1'; \
+-	for f in x $$MAKEFLAGS; do \
+-	  case $$f in \
+-	    *=* | --[!k]*);; \
+-	    *k*) failcom='fail=yes';; \
+-	  esac; \
+-	done; \
+ 	dot_seen=no; \
+ 	case "$@" in \
+ 	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \

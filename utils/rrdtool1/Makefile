@@ -21,6 +21,7 @@ PKG_MD5SUM:=c466e2e7df95fa8e318e46437da87686
 PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 
 PKG_FIXUP:=autoreconf
+PKG_CHECK_FORMAT_SECURITY:=0
 
 include $(INCLUDE_DIR)/package.mk
 

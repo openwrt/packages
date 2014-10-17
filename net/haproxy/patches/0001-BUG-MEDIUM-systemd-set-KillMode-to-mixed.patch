@@ -1,0 +1,41 @@
+From 1f24e3fee3aba83fb3338d17589d0ad0f34f6c73 Mon Sep 17 00:00:00 2001
+From: Apollon Oikonomopoulos <apoikos@debian.org>
+Date: Wed, 8 Oct 2014 15:14:41 +0300
+Subject: [PATCH 1/2] BUG/MEDIUM: systemd: set KillMode to 'mixed'
+
+By default systemd will send SIGTERM to all processes in the service's
+control group. In our case, this includes the wrapper, the master
+process and all worker processes.
+
+Since commit c54bdd2a the wrapper actually catches SIGTERM and survives
+to see the master process getting killed by systemd and regard this as
+an error, placing the unit in a failed state during "systemctl stop".
+
+Since the wrapper now handles SIGTERM by itself, we switch the kill mode
+to 'mixed', which means that systemd will deliver the initial SIGTERM to
+the wrapper only, and if the actual haproxy processes don't exit after a
+given amount of time (default: 90s), a SIGKILL is sent to all remaining
+processes in the control group. See systemd.kill(5) for more
+information.
+
+This should also be backported to 1.5.
+(cherry picked from commit 74f016985ab1fa7a6a5afa301d982e77eba9c96a)
+---
+ contrib/systemd/haproxy.service.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/contrib/systemd/haproxy.service.in b/contrib/systemd/haproxy.service.in
+index 1a3d2c0..0bc5420 100644
+--- a/contrib/systemd/haproxy.service.in
++++ b/contrib/systemd/haproxy.service.in
+@@ -5,6 +5,7 @@ After=network.target
+ [Service]
+ ExecStart=@SBINDIR@/haproxy-systemd-wrapper -f /etc/haproxy/haproxy.cfg -p /run/haproxy.pid
+ ExecReload=/bin/kill -USR2 $MAINPID
++KillMode=mixed
+ Restart=always
+ 
+ [Install]
+-- 
+1.8.5.5
+

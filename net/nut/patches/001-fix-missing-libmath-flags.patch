@@ -1,0 +1,22 @@
+--- a/drivers/Makefile.am
++++ b/drivers/Makefile.am
+@@ -171,7 +171,7 @@ tripplite_usb_SOURCES = tripplite_usb.c
+ tripplite_usb_LDADD = $(LDADD_DRIVERS) $(LIBUSB_LIBS) -lm
+ 
+ bcmxcp_usb_SOURCES = bcmxcp_usb.c bcmxcp.c usb-common.c
+-bcmxcp_usb_LDADD = $(LDADD_DRIVERS) $(LIBUSB_LIBS)
++bcmxcp_usb_LDADD = $(LDADD_DRIVERS) $(LIBUSB_LIBS) -lm
+ 
+ blazer_usb_SOURCES = blazer.c blazer_usb.c libusb.c usb-common.c
+ blazer_usb_LDADD = $(LDADD_DRIVERS) $(LIBUSB_LIBS) -lm
+--- a/drivers/Makefile.in
++++ b/drivers/Makefile.in
+@@ -785,7 +785,7 @@ usbhid_ups_LDADD = $(LDADD_DRIVERS) $(LI
+ tripplite_usb_SOURCES = tripplite_usb.c libusb.c usb-common.c
+ tripplite_usb_LDADD = $(LDADD_DRIVERS) $(LIBUSB_LIBS) -lm
+ bcmxcp_usb_SOURCES = bcmxcp_usb.c bcmxcp.c usb-common.c
+-bcmxcp_usb_LDADD = $(LDADD_DRIVERS) $(LIBUSB_LIBS)
++bcmxcp_usb_LDADD = $(LDADD_DRIVERS) $(LIBUSB_LIBS) -lm
+ blazer_usb_SOURCES = blazer.c blazer_usb.c libusb.c usb-common.c
+ blazer_usb_LDADD = $(LDADD_DRIVERS) $(LIBUSB_LIBS) -lm
+ nutdrv_atcl_usb_SOURCES = nutdrv_atcl_usb.c usb-common.c

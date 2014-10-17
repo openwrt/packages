@@ -1,0 +1,39 @@
+From 4ab232ce2fbdaf9b871c411fc7284096219bb854 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Fri, 10 Oct 2014 14:54:25 +0200
+Subject: [PATCH 2/2] BUG/MEDIUM: config: avoid skipping disabled proxies
+
+Paul Taylor and Bryan Talbot found that after commit 419ead8 ("MEDIUM:
+config: compute the exact bind-process before listener's maxaccept"),
+a backend marked "disabled" would cause the next backend to be skipped
+and if it was the last one it would cause a segfault.
+
+The reason is that the commit above changed the "while" loop for a "for"
+loop but a "continue" statement still incrementing the current proxy was
+left in the code for disabled proxies, causing the next one to be skipped
+as well and the last one to try to dereference NULL when seeking ->next.
+
+The quick workaround consists in not disabling backends, or adding an
+empty dummy one after a disabled section.
+
+This fix must be backported to 1.5.
+(cherry picked from commit 06cc905813f1858c0606b44d1e271bd0b6a25224)
+---
+ src/cfgparse.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index ec6d923..392a692 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -6104,7 +6104,6 @@ int check_config_validity()
+ 		if (curproxy->state == PR_STSTOPPED) {
+ 			/* ensure we don't keep listeners uselessly bound */
+ 			stop_proxy(curproxy);
+-			curproxy = curproxy->next;
+ 			continue;
+ 		}
+ 
+-- 
+1.8.5.5
+

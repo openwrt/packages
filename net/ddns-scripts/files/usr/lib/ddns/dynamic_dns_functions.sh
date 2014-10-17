@@ -63,6 +63,7 @@ ERR_LOCAL_IP=0		# error counter on getting local ip
 ERR_REG_IP=0		# error counter on getting DNS registered ip
 ERR_SEND=0		# error counter on sending update to DNS provider
 ERR_UPDATE=0		# error counter on different local and registered ip
+ERR_VERIFY=0		# error counter verifying proxy- and dns-servers
 
 # format to show date information in log and luci-app-ddns default ISO 8601 format
 DATE_FORMAT=$(uci -q get ddns.global.date_format) || DATE_FORMAT="%F %R"
@@ -122,10 +123,10 @@ start_daemon_for_all_ddns_sections()
 	local __SECTIONID=""
 	local __IFACE=""
 
-	config_cb() 
+	config_cb()
 	{
 		# only look for section type "service", ignore everything else
-		[ "$1" == "service" ] && __SECTIONS="$__SECTIONS $2"
+		[ "$1" = "service" ] && __SECTIONS="$__SECTIONS $2"
 	}
 	config_load "ddns"
 
@@ -214,7 +215,7 @@ __urlencode() {
 	return 0
 }
 
-# extract update_url for given DDNS Provider from
+# extract url or script for given DDNS Provider from
 # file /usr/lib/ddns/services for IPv4 or from
 # file /usr/lib/ddns/services_ipv6 for IPv6
 get_service_data() {
@@ -387,25 +388,27 @@ __verify_host_port() {
 	# command error
 	[ $__ERR -gt 0 ] && {
 		verbose_echo "\n!!!!!!!!! ERROR =: BusyBox nslookup Error '$__ERR'\n$(eval $__ERRPROG)\n"
-		syslog_err "DNS Resolver Error - BusyBox nslookup Error: '$__ERR'"
+		syslog_err "DNS Resolver Error - BusyBox nslookup Error '$__ERR'"
 		return 2
 	} || {
 		# we need to run twice because multi-line output needs to be directly piped to grep because
 		# pipe returns return code of last prog in pipe but we need errors from nslookup command
-		__IPV4=$(eval $__RUNPROG | sed '1,2d' | grep -o "Name:\|Address.*" | grep -m 1 -o "$IPV4_REGEX")
-		__IPV6=$(eval $__RUNPROG | sed '1,2d' | grep -o "Name:\|Address.*" | grep -m 1 -o "$IPV6_REGEX")
+		__IPV4=$(eval $__RUNPROG | sed -ne "3,\$ { s/^Address [0-9]*: \($IPV4_REGEX\).*$/\\1/p }")
+		__IPV6=$(eval $__RUNPROG | sed -ne "3,\$ { s/^Address [0-9]*: \($IPv6_REGEX\).*$/\\1/p }")
 	}
 
 	# check IP version if forced
 	if [ $force_ipversion -ne 0 ]; then
-		[ $use_ipv6 -eq 0 -a -z "$__IPV4" ] && return 4
-		[ $use_ipv6 -eq 1 -a -z "$__IPV6" ] && return 4
+		__ERR=0
+		[ $use_ipv6 -eq 0 -a -z "$__IPV4" ] && __ERR=4
+		[ $use_ipv6 -eq 1 -a -z "$__IPV6" ] && __ERR=6
+		[ $__ERR -gt 0 ] && critical_error "Invalid host: Error '4' - Force IP Version IPv$__ERR not supported"
 	fi
 
 	# verify nc command
 	# busybox nc compiled without -l option "NO OPT l!" -> critical error
 	nc --help 2>&1 | grep -iq "NO OPT l!" && \
-		critical_error "Busybox nc: netcat compiled with errors"
+		critical_error "Busybox nc: netcat compiled without -l option, error 'NO OPT l!'"
 	# busybox nc compiled with extensions
 	nc --help 2>&1 | grep -q "\-w" && __NCEXT="TRUE"
 
@@ -428,7 +431,7 @@ __verify_host_port() {
 		__ERR=$?
 		[ $__ERR -eq 0 ] && return 0
 		verbose_echo "\n!!!!!!!!! ERROR =: BusyBox nc Error '$__ERR'\n$(eval $__ERRPROG)\n"
-		syslog_err "host verify Error - BusyBox nc Error: '$__ERR'"
+		syslog_err "host verify Error - BusyBox nc Error '$__ERR'"
 		return 3
 	else		# nc compiled without extensions (no timeout support)
 		__RUNPROG="__timeout 2 -- nc $__IP $__PORT </dev/null >/dev/null 2>&1"
@@ -437,7 +440,7 @@ __verify_host_port() {
 		__ERR=$?
 		[ $__ERR -eq 0 ] && return 0
 		verbose_echo "\n!!!!!!!!! ERROR =: BusyBox nc Error '$__ERR' (timeout)"
-		syslog_err "host verify Error - BusyBox nc Error: '$__ERR' (timeout)"
+		syslog_err "host verify Error - BusyBox nc Error '$__ERR' (timeout)"
 		return 3
 	fi
 }
@@ -454,8 +457,9 @@ verify_dns() {
 verify_proxy() {
 	# $1	Proxy-String to verify
 	#		complete entry		user:password@host:port
+	# 					inside user and password NO '@' of ":" allowed 
 	#		host and port only	host:port
-	#		host only		host		unsupported
+	#		host only		host		ERROR unsupported
 	#		IPv4 address instead of host	123.234.234.123
 	#		IPv6 address instead of host	[xxxx:....:xxxx]	in square bracket
 	local __TMP __HOST __PORT
@@ -477,8 +481,8 @@ verify_proxy() {
 		__HOST=$(echo $__TMP | awk -F ":" '{print $1}')
 		__PORT=$(echo $__TMP | awk -F ":" '{print $2}')
 	fi
-	# No Port detected ERROR 5
-	[ -z "$__PORT" ] && return 5
+	# No Port detected
+	[ -z "$__PORT" ] && critical_error "Invalid Proxy server Error '5' - proxy port missing"
 
 	__verify_host_port "$__HOST" "$__PORT"
 }

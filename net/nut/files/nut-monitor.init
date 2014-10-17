@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+
+START=60
+USE_PROCD=1
+
+restart() {
+	stop_service
+	start_service
+}
+
+start_service() {
+	upsmon -p
+}
+
+stop_service() {
+	upsmon -c stop
+}
+
+reload_service() {
+	upsmon -c reload
+}

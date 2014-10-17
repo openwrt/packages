@@ -22,6 +22,7 @@ PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
+PKG_CHECK_FORMAT_SECURITY:=0
 include $(INCLUDE_DIR)/package.mk
 
 define Package/bash

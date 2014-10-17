@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+
+START=50
+USE_PROCD=1
+
+restart() {
+	stop_service
+	start_service
+}
+
+start_service() {
+	upsdrvctl start
+	upsd
+}
+
+stop_service() {
+	upsd -c stop
+	upsdrvctl stop
+}
+
+reload_service() {
+	upsd -c reload
+}
