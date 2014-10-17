@@ -53,7 +53,7 @@ endef
 
 define Package/python
 $(call Package/python/Default)
-  DEPENDS:=+libpthread +zlib +libffi
+  DEPENDS:=+libpthread +zlib +libffi +libopenssl +libcrypto
 endef
 
 define Package/python/description
