@@ -1,3 +1,9 @@
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+#       Copyright (C) 2012-4 Michael D. Taht, Toke Høiland-Jørgensen, Sebastian Moeller
+
 #improve the logread output
 sqm_logger() {
     logger -t SQM -s ${1}
@@ -74,42 +80,6 @@ get_ifb_associated_with_if() {
     echo ${CUR_IFB}
 }
 
-# what is the lowest-index currently not used ifb device
-#sm: hopefully this is not required any longer, and can be deleted after a bit more testing...
-get_lowest_unused_ifb() {
-    LOWEST_FREE_IFB=
-    # this just returns a list of currently existing IFBs, these need not be associated with any interface
-    CUR_UP_IFBS=$( ifconfig | grep -o -e ifb'[[:digit:]]\+' )
-    # the possible IFBs (N in insmod ifb numifbs=N)
-    here=$( pwd )
-    cd /sys/devices/virtual/net/
-    CUR_ALLOWED_IFBS=$( ls -d ifb* )
-    sqm_logger "Currently allowed IFBs: ${CUR_ALLOWED_IFBS}"
-    cd ${here}
-    # this is the sorted list of the active ifbs
-    # note for 3.10.32 unused and even down IFBs linger on in the tc output, so take $CUR_UP_IFBS instead
-    # a better test might be to check for each allowed IFB whether it is in use
-    # but the only way I figured out doing this means interating over all interfaces and that sounds costly
-    # so instead we rely on stop.sh actually calling ifconfig ${LAST_USED_IFB} down
-    CUR_USED_IFBS=$( tc -d qdisc | grep -o -e ifb'[[:digit:]]\+' | sort -u)
-    sqm_logger "Currently used IFBs: ${CUR_USED_IFBS}"
-    # now find the lowest index not in the sorted list
-    local CUR_IDX=0
-    while [ -z "$LOWEST_FREE_IFB" ]
-    do
-        #TMP=$( echo "${CUR_USED_IFBS}" | grep -o -e ifb${CUR_IDX} )
-        TMP=$( echo "${CUR_UP_IFBS}" | grep -o -e ifb${CUR_IDX} )
-        [ -z "$TMP" ] && LOWEST_FREE_IFB="ifb"${CUR_IDX}
-        CUR_IDX=$(( $CUR_IDX + 1 ))
-    done
-    # check whether the number is in the allowed range
-    LOWEST_FREE_IFB=$( echo "${CUR_ALLOWED_IFBS}" | grep -o -e ${LOWEST_FREE_IFB} )
-    [ -z "${LOWEST_FREE_IFB}" ] && sqm_logger "The IFB candidate ifb$(( ${CUR_IDX} - 1 )) is not in the range of allowed IFBs, bailing out..."
-    sqm_logger "selected ifb index: ${LOWEST_FREE_IFB}"
-    echo ${LOWEST_FREE_IFB}
-}
-
-# instead of playing around with indices just create a named IFB
 # ATTENTION, IFB names can only be 15 chararcters, so we chop of excessive characters at the start of the interface name 
 # if required
 create_new_ifb_for_if() {
@@ -134,8 +104,6 @@ get_ifb_for_if() {
     CUR_IF=$1
     # if an ifb is already associated return that
     CUR_IFB=$( get_ifb_associated_with_if ${CUR_IF} )
-    # otherwise find the lowest unused ifb device
-    #[ -z "$CUR_IFB" ] && CUR_IFB=$( get_lowest_unused_ifb )
     [ -z "$CUR_IFB" ] && CUR_IFB=$( create_new_ifb_for_if ${CUR_IF} )
     [ -z "$CUR_IFB" ] && sqm_logger "Could not find existing IFB for ${CUR_IF}, nor create a new IFB instead..."
     echo ${CUR_IFB}
@@ -144,13 +112,6 @@ get_ifb_for_if() {
 #sm: we need the functions above before trying to set the ingress IFB device
 [ -z "$DEV" ] && DEV=$( get_ifb_for_if ${IFACE} )      # automagically get the right IFB device for the IFACE"
 
-
-
-#sqm_logger "iqdisc opts: ${iqdisc_opts}"
-#sqm_logger "eqdisc opts: ${eqdisc_opts}"
-
-#sqm_logger "LLAM: ${LLAM}"
-#sqm_logger "LINKLAYER: ${LINKLAYER}"
 
 get_htb_adsll_string() {
 	ADSLL=""
