@@ -384,7 +384,6 @@ define PyPackage/python/filespec
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_heapq.so
 +|/usr/lib/python$(PYTHON_VERSION)/bisect.py
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_bisect.so
-+|/usr/include/python$(PYTHON_VERSION)/pyconfig.h
 endef
 
 define PyPackage/python/install
