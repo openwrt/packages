@@ -72,6 +72,8 @@ endef
 define Build/Compile/Py3Mod
 	$(call HostPython3, \
 		cd $(PKG_BUILD_DIR)/$(strip $(1)); \
+		CC="$(TARGET_CC)" \
+		CCSHARED="$(TARGET_CC) $(FPIC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
 		CPPFLAGS="$(TARGET_CPPFLAGS)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
