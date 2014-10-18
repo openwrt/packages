@@ -3,8 +3,11 @@
 # A 3 bin tc_codel and ipv6 enabled shaping script for
 # ethernet gateways
 
-# Copyright (C) 2012 Michael D Taht
-# GPLv2
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+#       Copyright (C) 2012-4 Michael D. Taht, Toke Høiland-Jørgensen, Sebastian Moeller
 
 # Compared to the complexity that debloat had become
 # this cleanly shows a means of going from diffserv marking
