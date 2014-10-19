@@ -79,6 +79,7 @@ define Build/Compile/PyMod
 		CFLAGS="$(TARGET_CFLAGS)" \
 		CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON_INC_DIR)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON_VERSION)" \
+		_PYTHON_HOST_PLATFORM="linux-$(ARCH)" \
 		$(3) \
 		, \
 		./setup.py $(2) \
