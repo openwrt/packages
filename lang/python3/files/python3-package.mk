@@ -79,6 +79,7 @@ define Build/Compile/Py3Mod
 		CFLAGS="$(TARGET_CFLAGS)" \
 		CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
+		_PYTHON_HOST_PLATFORM="linux-$(ARCH)" \
 		$(3) \
 		, \
 		./setup.py $(2) \
