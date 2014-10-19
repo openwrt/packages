@@ -75,7 +75,7 @@ define Build/Compile/PyMod
 		CC="$(TARGET_CC)" \
 		CCSHARED="$(TARGET_CC) $(FPIC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
-		CPPFLAGS="$(TARGET_CPPFLAGS)" \
+		CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON_INC_DIR)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
 		$(3) \
 		, \
