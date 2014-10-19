@@ -126,13 +126,13 @@ endef
 define Package/python-readline
 $(call Package/python/Default)
  TITLE:=Python support for readline
- DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libreadline +libncurses @BROKEN
+ DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libreadline +libncursesw @BROKEN
 endef
 
 define Package/python-ncurses
 $(call Package/python/Default)
  TITLE:=Python support for readline
- DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libncurses
+ DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libncursesw
 endef
 
 MAKE_FLAGS:=\
