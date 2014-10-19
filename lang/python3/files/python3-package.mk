@@ -74,9 +74,11 @@ define Build/Compile/Py3Mod
 		cd $(PKG_BUILD_DIR)/$(strip $(1)); \
 		CC="$(TARGET_CC)" \
 		CCSHARED="$(TARGET_CC) $(FPIC)" \
+		LD="$(TARGET_CC)" \
+		LDSHARED="$(TARGET_CC) -shared" \
 		CFLAGS="$(TARGET_CFLAGS)" \
 		CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
-		LDFLAGS="$(TARGET_LDFLAGS)" \
+		LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
 		$(3) \
 		, \
 		./setup.py $(2) \
