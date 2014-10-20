@@ -32,10 +32,15 @@ define PyPackage
   $(call shexport,PyPackage/$(1)/filespec)
 
   define Package/$(1)/install
+	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
 	@$(SH_FUNC) getvar $$(call shvar,PyPackage/$(1)/filespec) | ( \
 		IFS='|'; \
 		while read fop fspec fperm; do \
 		  if [ "$$$$$$$$fop" = "+" ]; then \
+			if [ ! -e "$(PKG_INSTALL_DIR)$$$$$$$$fspec" ]; then \
+			  echo "File not found '$(PKG_INSTALL_DIR)$$$$$$$$fspec'"; \
+			  exit 1; \
+			fi; \
 			dpath=`dirname "$$$$$$$$fspec"`; \
 			if [ -n "$$$$$$$$fperm" ]; then \
 			  dperm="-m$$$$$$$$fperm"; \

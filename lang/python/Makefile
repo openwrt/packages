@@ -53,7 +53,7 @@ endef
 
 define Package/python
 $(call Package/python/Default)
-  DEPENDS:=+libpthread +zlib +libffi
+  DEPENDS:=+libpthread +zlib +libffi +libopenssl +libcrypto
 endef
 
 define Package/python/description
@@ -239,14 +239,11 @@ define PyPackage/python-full/filespec
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/grp.so
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/itertools.so
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/math.so
--|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_md5.so
+-|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_hashlib.so
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/operator.so
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_random.so
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/readline.so
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/select.so
--|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_sha.so
--|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_sha256.so
--|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_sha512.so
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_socket.so
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/strop.so
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_struct.so
@@ -328,13 +325,10 @@ define PyPackage/python/filespec
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/grp.so
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/itertools.so
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/math.so
-+|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_md5.so
++|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_hashlib.so
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/operator.so
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_random.so
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/select.so
-+|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_sha.so
-+|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_sha256.so
-+|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_sha512.so
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_socket.so
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/strop.so
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_struct.so

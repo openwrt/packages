@@ -1,0 +1,12 @@
+diff -urN LVM2.2.02.111.old/lib/device/dev-type.c LVM2.2.02.111/lib/device/dev-type.c
+--- LVM2.2.02.111.old/lib/device/dev-type.c	2014-09-17 09:41:08.281821278 -0400
++++ LVM2.2.02.111/lib/device/dev-type.c	2014-09-17 09:41:50.773821280 -0400
+@@ -22,7 +22,7 @@
+ #include <ctype.h>
+ 
+ #ifdef BLKID_WIPING_SUPPORT
+-#include <blkid.h>
++#include <blkid/blkid.h>
+ #endif
+ 
+ #include "device-types.h"

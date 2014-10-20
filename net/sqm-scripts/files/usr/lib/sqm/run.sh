@@ -1,5 +1,12 @@
 #!/bin/sh
 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+#       Copyright (C) 2012-4 Michael D. Taht, Toke Høiland-Jørgensen, Sebastian Moeller
+
+
 . /lib/functions.sh
 
 STOP=$1
@@ -17,7 +24,7 @@ for STATE_FILE in ${PROTO_STATE_FILE_LIST} ; do
     then
 	STATE_FILE_BASE_NAME=$( basename ${STATE_FILE} )
 	CURRENT_INTERFACE=${STATE_FILE_BASE_NAME:${#ACTIVE_STATE_PREFIX}:$(( ${#STATE_FILE_BASE_NAME} - ${#ACTIVE_STATE_PREFIX} ))}        
-	logger -t SQM -s "Stopping SQM on interface: ${CURRENT_INTERFACE}"
+	logger -t SQM -s "${0} Stopping SQM on interface: ${CURRENT_INTERFACE}"
 	/usr/lib/sqm/stop.sh ${CURRENT_INTERFACE}
 	rm ${STATE_FILE}	# well, we stop it so it is not running anymore and hence no active state file needed...
     fi
@@ -38,7 +45,7 @@ run_simple_qos() {
 		# this should not be possible, delete after testing
 		local SECTION_STOP="stop"	# it seems the user just de-selected enable, so stop the active SQM
 	    else
-		logger -t SQM -s "SQM for interface ${IFACE} is not enabled, skipping over..."
+		logger -t SQM -s "${0} SQM for interface ${IFACE} is not enabled, skipping over..."
 		return 0	# since SQM is not active on the current interface nothing to do here
 	    fi
 	fi
@@ -72,10 +79,10 @@ run_simple_qos() {
 #	     /usr/lib/sqm/stop.sh
 #	     [ -f ${ACTIVE_STATE_FILE_FQN} ] && rm ${ACTIVE_STATE_FILE_FQN}	# conditional to avoid errors ACTIVE_STATE_FILE_FQN does not exist anymore
 #	     $(config_set "$section" enabled 0)	# this does not save to the config file only to the loaded memory representation
-#	     logger -t SQM -s "SQM qdiscs on ${IFACE} removed"
+	     logger -t SQM -s "${0} SQM qdiscs on ${IFACE} removed"
 	     return 0
 	fi
-	logger -t SQM -s "Queue Setup Script: ${SCRIPT}"
+	logger -t SQM -s "${0} Queue Setup Script: ${SCRIPT}"
 	[ -x "$SCRIPT" ] && { $SCRIPT ; touch ${ACTIVE_STATE_FILE_FQN}; }
 }
 

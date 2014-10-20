@@ -1,6 +1,6 @@
 --- a/cipher.c
 +++ b/cipher.c
-@@ -80,8 +80,10 @@ static const struct Cipher ciphers[] = {
+@@ -88,8 +88,10 @@ static const struct sshcipher ciphers[]
  	{ "3des-cbc",	SSH_CIPHER_SSH2, 8, 24, 0, 0, 0, 1, EVP_des_ede3_cbc },
  	{ "blowfish-cbc",
  			SSH_CIPHER_SSH2, 8, 16, 0, 0, 0, 1, EVP_bf_cbc },

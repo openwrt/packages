@@ -1,0 +1,12 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009 Stefan Monnier
+START=15
+
+start () {
+   /sbin/lvm vgscan --ignorelockingfailure --mknodes || :
+   /sbin/lvm vgchange -aly --ignorelockingfailure || return 2
+}
+
+stop () {
+    /sbin/lvm vgchange -aln --ignorelockingfailure || return 2
+}

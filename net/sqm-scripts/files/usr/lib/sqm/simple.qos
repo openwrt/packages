@@ -3,8 +3,11 @@
 # A 3 bin tc_codel and ipv6 enabled shaping script for
 # ethernet gateways
 
-# Copyright (C) 2012 Michael D Taht
-# GPLv2
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+#       Copyright (C) 2012-4 Michael D. Taht, Toke Høiland-Jørgensen, Sebastian Moeller
 
 # Compared to the complexity that debloat had become
 # this cleanly shows a means of going from diffserv marking
@@ -36,10 +39,10 @@ ipt -t mangle -A QOS_MARK_${IFACE} -m tos  --tos Minimize-Delay -j MARK --set-ma
 
 if [ "$SQUASH_DSCP" = "1" ]
 then
-sqm_logger "Squashing differentiad services code points (DSCP) from ingress."
+sqm_logger "Squashing differentiated services code points (DSCP) from ingress."
 ipt -t mangle -I PREROUTING -i $IFACE -m dscp ! --dscp 0 -j DSCP --set-dscp-class be
 else
-sqm_logger "Keeping differentiad services code points (DSCP) from ingress."
+sqm_logger "Keeping differentiated services code points (DSCP) from ingress."
 ipt -t mangle -A PREROUTING -i $IFACE -m mark --mark 0x00 -g QOS_MARK_${IFACE} 
 fi
 
