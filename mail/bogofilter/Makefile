@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bogofilter
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+libdb47
+  DEPENDS:=+libdb47-full
   TITLE:=bogofilter
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
   URL:=http://bogofilter.sourceforge.net/
