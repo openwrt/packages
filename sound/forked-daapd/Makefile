@@ -17,6 +17,8 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/ejurgensen/forked-daapd.git
 PKG_SOURCE_VERSION:=$(PKG_REV)
+
+PKG_BUILD_DEPENDS:=gperf/host
 PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
 PKG_INSTALL:=1
