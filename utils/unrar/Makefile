@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unrar
-PKG_VERSION:=5.1.7
+PKG_VERSION:=5.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.rarlab.com/rar
-PKG_MD5SUM:=af571529a358c972872b91792ffc0a80
+PKG_MD5SUM:=451d75ce182abccfa60b47f605aaf736
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=UnRAR

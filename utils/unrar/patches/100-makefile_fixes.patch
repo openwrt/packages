@@ -1,6 +1,5 @@
-diff -uprN a/unrar/makefile b/unrar/makefile
---- a/makefile	2014-06-12 13:36:14.723816266 +0200
-+++ b/makefile	2014-06-12 13:36:36.174531961 +0200
+--- a/makefile
++++ b/makefile
 @@ -2,12 +2,12 @@
  # Makefile for UNIX - unrar
  
