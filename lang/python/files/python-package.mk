@@ -72,9 +72,14 @@ endef
 define Build/Compile/PyMod
 	$(call HostPython, \
 		cd $(PKG_BUILD_DIR)/$(strip $(1)); \
+		CC="$(TARGET_CC)" \
+		CCSHARED="$(TARGET_CC) $(FPIC)" \
+		LD="$(TARGET_CC)" \
+		LDSHARED="$(TARGET_CC) -shared" \
 		CFLAGS="$(TARGET_CFLAGS)" \
-		CPPFLAGS="$(TARGET_CPPFLAGS)" \
-		LDFLAGS="$(TARGET_LDFLAGS)" \
+		CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON_INC_DIR)" \
+		LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON_VERSION)" \
+		_PYTHON_HOST_PLATFORM="linux-$(ARCH)" \
 		$(3) \
 		, \
 		./setup.py $(2) \
