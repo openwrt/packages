@@ -41,6 +41,7 @@ define Package/bogofilter/install
 	$(INSTALL_DIR)  $(1)/etc/ \
                         $(1)/usr/bin
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/bogofilter.cf.example $(1)/etc/bogofilter.cf
+	$(INSTALL_BIN) ./files/postfix-bogofilter $(1)/usr/sbin/postfix-bogofilter
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bf_compact $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bf_copy $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bf_tar $(1)/usr/bin/
