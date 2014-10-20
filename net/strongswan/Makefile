@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.2.0
+PKG_VERSION:=5.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
-PKG_MD5SUM:=5cee4ee1a6ccb74400758b3ace54d46e
+PKG_MD5SUM:=dd3717c0aa59ab4591ca1812941ebb82
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 
