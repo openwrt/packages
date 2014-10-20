@@ -176,7 +176,7 @@ define Build/InstallDev
 		$(1)/usr/include/
 	$(CP) \
 		$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION) \
-		$(PKG_BUILD_DIR)/libpython$(PYTHON_VERSION).so* \
+		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
@@ -389,7 +389,7 @@ endef
 define PyPackage/python/install
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python2
-	$(CP) $(PKG_BUILD_DIR)/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
 endef
 
 define PyPackage/python-doc/filespec
