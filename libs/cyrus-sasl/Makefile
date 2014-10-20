@@ -32,7 +32,7 @@ define Package/libsasl2
   CATEGORY:=Libraries
   TITLE:=A general purpose authentication library
   URL:=http://asg.web.cmu.edu/sasl/
-  DEPENDS:=libopenssl
+  DEPENDS:=+libopenssl
 endef
 
 TARGET_CFLAGS += $(FPIC)
