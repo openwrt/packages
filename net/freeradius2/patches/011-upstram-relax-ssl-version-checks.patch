@@ -1,0 +1,62 @@
+From 5ae2a70a135062a025d8fabc104eeae3a2c53a7a Mon Sep 17 00:00:00 2001
+From: Arran Cudbard-Bell <a.cudbardb@freeradius.org>
+Date: Tue, 17 Jun 2014 10:09:24 +0100
+Subject: [PATCH] Relax libssl checks
+
+---
+ src/main/version.c |   35 ++++++++++++++++++++++++++++-------
+ 1 file changed, 28 insertions(+), 7 deletions(-)
+
+--- a/src/main/version.c
++++ b/src/main/version.c
+@@ -34,7 +34,12 @@ RCSID("$Id: af82d4126a65d94929c22f44da2b
+ 
+ static long ssl_built = OPENSSL_VERSION_NUMBER;
+ 
+-/** Check build and linked versions of OpenSSL match
++/** Check built and linked versions of OpenSSL match
++ *
++ * OpenSSL version number consists of:
++ * MMNNFFPPS: major minor fix patch status
++ *
++ * Where status >= 0 && < 10 means beta, and status 10 means release.
+  *
+  * Startup check for whether the linked version of OpenSSL matches the
+  * version the server was built against.
+@@ -54,14 +59,30 @@ int ssl_check_version(int allow_vulnerab
+ 
+ 	ssl_linked = SSLeay();
+ 
+-	if (ssl_linked != ssl_built) {
+-		radlog(L_ERR, "libssl version mismatch."
+-		       "  Built with: %lx\n  Linked: %lx",
+-		       (unsigned long) ssl_built,
+-		       (unsigned long) ssl_linked);
++	/*
++	 *	Status mismatch always triggers error.
++	 */
++	if ((ssl_linked & 0x00000000f) != (ssl_built & 0x00000000f)) {
++	mismatch:
++		radlog(L_ERR, "libssl version mismatch.  built: %lx linked: %lx",
++		       (unsigned long) ssl_built, (unsigned long) ssl_linked);
+ 
+ 		return -1;
+-	};
++	}
++
++	/*
++	 *	Use the OpenSSH approach and relax fix checks after version
++	 *	1.0.0 and only allow moving backwards within a patch
++	 *	series.
++	 */
++	if (ssl_built & 0xff) {
++		if ((ssl_built & 0xffff) != (ssl_linked & 0xffff) ||
++		    (ssl_built & 0x0000ff) > (ssl_linked & 0x0000ff)) goto mismatch;
++	/*
++	 *	Before 1.0.0 we require the same major minor and fix version
++	 *	and ignore the patch number.
++	 */
++	} else if ((ssl_built & 0xffffff) != (ssl_linked & 0xffffff)) goto mismatch;
+ 
+ 	if (!allow_vulnerable) {
+ 		/* Check for bad versions */
