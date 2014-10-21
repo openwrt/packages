@@ -74,7 +74,7 @@ endef
 define Package/lxc-templates
   $(call Package/lxc/Default)
   TITLE:=LXC virtual machine templates
-  DEPENDS:= lxc @BROKEN
+  DEPENDS:= lxc
 endef
 
 define Package/liblxc
