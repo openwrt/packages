@@ -33,6 +33,7 @@ LXC_SCRIPTS += \
 
 DEPENDS_APPLETS = +libpthread +libcap +liblxc
 
+DEPENDS_ls = +lxc-config
 DEPENDS_top = +lxc-lua +luafilesystem @BROKEN
 
 
