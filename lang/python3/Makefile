@@ -70,7 +70,7 @@ MAKE_FLAGS:=\
 	DESTDIR="$(PKG_INSTALL_DIR)" \
 	CROSS_COMPILE=yes \
 	CFLAGS="$(TARGET_CFLAGS) -DNDEBUG -fno-inline" \
-	LDFLAGS="$(TARGET_LDFLAGS)" \
+	LDFLAGS="$(TARGET_LDFLAGS) -L$(PKG_BUILD_DIR)" \
 	LD="$(TARGET_CC)"
 
 ENABLE_IPV6:=
@@ -102,7 +102,7 @@ define Build/Configure
 	$(CP) ./files/config.site $(PKG_BUILD_DIR)
 	$(call Build/Configure/Default, \
 		--sysconfdir=/etc \
-		--disable-shared \
+		--enable-shared \
 		--without-cxx-main \
 		--with-threads \
 		--with-system-ffi="$(STAGING_DIR)/usr" \
@@ -123,7 +123,7 @@ define Build/InstallDev
 		$(1)/usr/include/
 	$(CP) \
 		$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION) \
-		$(PKG_BUILD_DIR)/libpython$(PYTHON_VERSION).a \
+		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config-$(PYTHON_VERSION) \
@@ -157,6 +157,7 @@ define Py3Package/python3/install
 	# Adding the lib-dynload folder (even just empty) suppresses 2 warnings when starting Python
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/lib-dynload/
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python3
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
 endef
 
 define Host/Configure
