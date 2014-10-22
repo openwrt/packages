@@ -168,10 +168,7 @@ endef
 define Package/lxc-hooks/install
 	$(INSTALL_DIR) $(1)/usr/share/lxc/hooks
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/share/lxc/hooks/mountcgroups \
-		$(1)/usr/share/lxc/hooks/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/share/lxc/hooks/mountecryptfsroot \
+		$(PKG_INSTALL_DIR)/usr/share/lxc/hooks/* \
 		$(1)/usr/share/lxc/hooks/
 endef
 
