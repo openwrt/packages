@@ -12,4 +12,17 @@ config LXC_KERNEL_OPTIONS
 	  include cgroups, namespaces and other miscellaneous options. These
 	  options unfortunately can not be installed as a module.
 
+config LXC_BUSYBOX_OPTIONS
+	bool "Enable busybox support for lxc-create tool"
+	default n
+	select BUSYBOX_CUSTOM
+	select BUSYBOX_CONFIG_HAVE_DOT_CONFIG
+	select BUSYBOX_CONFIG_FEATURE_SEAMLESS_XZ
+	select BUSYBOX_CONFIG_FEATURE_TAR_LONG_OPTIONS
+	select BUSYBOX_CONFIG_GETOPT
+	select BUSYBOX_CONFIG_FEATURE_GETOPT_LONG
+	help
+	  Select needed busybox options for lxc-create utility. This include XZ tar
+	  compression, long option support for tar and built-in getopt support.
+
 endmenu
