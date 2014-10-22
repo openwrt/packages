@@ -35,65 +35,72 @@ define Package/libdb47/Default
   DEPENDS:=+libxml2
   PROVIDES:=libdb47
   URL:=http://www.oracle.com/us/products/database/berkeley-db
+  TITLE:=Berkeley DB library (4.7)
 endef
 
 define Package/libdb47/Default/description
   Berkeley DB library (4.7).
 endef
 
-define Package/libdb47
+define Package/libdb47-small
 $(call Package/libdb47/Default)
   VARIANT:=small
-  TITLE:=Berkeley DB library (4.7) (without statistics etc. support)
+  TITLE+= (small variant)
 endef
 
-define Package/libdb47/description
+define Package/libdb47-small/description
 $(call Package/libdb47/Default/description)
- This package is not built with statistics etc. support.
+ This package does not provide support for:
+ - Hashes/Queues
+ - Replication
+ - Statistics
+ - Database verification
+ which saves about 200 kilobytes combined.
 endef
 
 define Package/libdb47-full
 $(call Package/libdb47/Default)
+  CONFLICTS:=libdb47-small
   VARIANT:=full
-  TITLE:=Berkeley DB library (4.7) (with statistics etc. support)
 endef
 
 define Package/libdb47-full/description
 $(call Package/libdb47/Default/description)
- This package is built with statistics etc. support.
 endef
 
 define Package/libdb47xx/Default
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libdb47 $(CXX_DEPENDS)
+  PROVIDES:=libdb47xx
+  DEPENDS:=$(CXX_DEPENDS)
   URL:=http://www.oracle.com/us/products/database/berkeley-db
+  TITLE:=Berkeley DB library (4.7) for C++
 endef
 
 define Package/libdb47xx/Default/description
-  Berkeley DB library (4.7).  C++ wrapper.
+  Berkeley DB library (4.7). C++ wrapper.
 endef
 
-define Package/libdb47xx
+define Package/libdb47xx-small
 $(call Package/libdb47xx/Default)
+  DEPENDS+=+libdb47-small
   VARIANT:=small
-  TITLE:=Berkeley DB library (4.7) for C++ (without statistics etc. support)
+  TITLE+= (small variant)
 endef
 
-define Package/libdb47xx/description
+define Package/libdb47xx-small/description
 $(call Package/libdb47xx/Default/description)
- This package is not built with statistics etc. support.
 endef
 
 define Package/libdb47xx-full
 $(call Package/libdb47xx/Default)
+  DEPENDS+=+libdb47-full
+  CONFLICTS:=libdb47xx-small
   VARIANT:=full
-  TITLE:=Berkeley DB library (4.7) for C++ (with statistics etc. support)
 endef
 
 define Package/libdb47xx-full/description
 $(call Package/libdb47xx/Default/description)
- This package is built with statistics etc. support.
 endef
 
 CONFIGURE_PATH = build_unix
@@ -108,11 +115,15 @@ CONFIGURE_ARGS += \
 	--disable-rpc \
 	--enable-compat185 \
 	--disable-debug \
-	--enable-cryptography \
-	$(if $(CONFIG_PACKAGE_libdb47xx),--enable-cxx,--disable-cxx)
+	--enable-cryptography
 
 ifeq ($(BUILD_VARIANT),small)
-        CONFIGURE_ARGS += --enable-smallbuild
+	CONFIGURE_ARGS += --enable-smallbuild \
+		$(if $(CONFIG_PACKAGE_libdb47xx-small),--enable-cxx,--disable-cxx)
+endif
+
+ifeq ($(BUILD_VARIANT),full)
+	CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_libdb47xx-full),--enable-cxx,--disable-cxx)
 endif
 
 TARGET_CFLAGS += $(FPIC)
@@ -124,7 +135,7 @@ define Build/Compile
 		DESTDIR="$(PKG_INSTALL_DIR)" install
 endef
 
-define Package/libdb47/install
+define Package/libdb47-small/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdb-*.so $(1)/usr/lib/
 endef
@@ -134,7 +145,7 @@ define Package/libdb47-full/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdb-*.so $(1)/usr/lib/
 endef
 
-define Package/libdb47xx/install
+define Package/libdb47xx-small/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdb_cxx-*.so $(1)/usr/lib/
 endef
@@ -152,7 +163,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdb*.{a,so} $(1)/usr/lib
 endef
 
-$(eval $(call BuildPackage,libdb47))
+$(eval $(call BuildPackage,libdb47-small))
 $(eval $(call BuildPackage,libdb47-full))
-$(eval $(call BuildPackage,libdb47xx))
+$(eval $(call BuildPackage,libdb47xx-small))
 $(eval $(call BuildPackage,libdb47xx-full))
