@@ -77,6 +77,12 @@ define Package/lxc-templates
   DEPENDS:= lxc
 endef
 
+define Package/lxc-configs
+  $(call Package/lxc/Default)
+  TITLE:=LXC virtual machine common config files
+  DEPENDS:= lxc
+endef
+
 define Package/liblxc
   $(call Package/lxc/Default)
   SECTION:=libs
@@ -176,6 +182,13 @@ define Package/lxc-templates/install
 		$(1)/usr/share/lxc/templates/
 endef
 
+define Package/lxc-configs/install
+	$(INSTALL_DIR) $(1)/usr/share/lxc/config/
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/share/lxc/config/* \
+		$(1)/usr/share/lxc/config/
+endef
+
 define Package/liblxc/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) \
@@ -222,6 +235,7 @@ endef
 $(eval $(call BuildPackage,lxc))
 $(eval $(call BuildPackage,lxc-common))
 $(eval $(call BuildPackage,lxc-hooks))
+$(eval $(call BuildPackage,lxc-configs))
 $(eval $(call BuildPackage,lxc-templates))
 $(eval $(call BuildPackage,liblxc))
 $(eval $(call BuildPackage,lxc-lua))
