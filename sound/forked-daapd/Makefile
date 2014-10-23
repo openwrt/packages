@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=forked-daapd
 PKG_VERSION:=22.0
-PKG_RELEASE:=20141016
+PKG_RELEASE:=20141022
 PKG_REV:=61a4da215c05b621951aa3903d7d390fd1839537
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -35,8 +35,8 @@ CATEGORY:=Sound
 TITLE:=Improved iTunes (DAAP) server. Support for Apple Remote and AirPlay.
 URL:=https://github.com/ejurgensen/forked-daapd
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
-	+libevent +libdaemon +libantlr3c +confuse +glib2 +alsa-lib +libffmpeg-full \
-	+mxml +libavl +avahi-daemon +libavahi-client +sqlite3-cli +libplist
+	+libevent2 +libdaemon +libantlr3c +confuse +glib2 +alsa-lib +libffmpeg-full \
+	+mxml +libavl +avahi-daemon +libavahi-client +sqlite3-cli +libplist +libcurl
 endef
 
 define Package/forked-daapd/conffiles
@@ -44,11 +44,8 @@ define Package/forked-daapd/conffiles
 endef
 
 CONFIGURE_ARGS += \
-	--enable-itunes
-
-# Fix for libevent
-TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/libevent
-TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/libevent
+	--enable-itunes \
+	--enable-lastfm
 
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
