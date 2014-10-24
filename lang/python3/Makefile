@@ -156,6 +156,7 @@ endef
 define Py3Package/python3/install
 	# Adding the lib-dynload folder (even just empty) suppresses 2 warnings when starting Python
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/lib-dynload/
+	$(INSTALL_DIR) $(1)/usr/bin
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python3
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
 endef
