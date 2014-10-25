@@ -18,7 +18,7 @@ endif
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.6.31
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -172,6 +172,22 @@ $(call Package/avahi/Default/description)
  For more information please see the avahi documentation.
 endef
 
+define Package/libavahi-compat-libdnssd
+  $(call Package/avahi/Default)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  DEPENDS:=+libavahi-client
+  TITLE+= (libdnssd)
+endef
+
+define Package/libavahi-compat-libdnssd/description
+$(call Package/avahi/Default/description)
+ .
+ This packages adds the libavahi-compat-libdnssd library.
+ It also automatically adds the required libavahi-client package.
+ For more information please see the avahi documentation.
+endef
+
 define Package/avahi-utils
   $(call Package/avahi/Default)
   SUBMENU:=IP Addresses and Names
@@ -201,6 +217,7 @@ CONFIGURE_ARGS+= \
 	--disable-gtk3 \
 	--with-xml=expat \
 	--disable-dbm \
+	--enable-compat-libdns_sd \
 	--enable-gdbm \
 	--enable-libdaemon \
 	--disable-python \
@@ -246,7 +263,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{libavahi-*,libdns_sd*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
 endef
@@ -271,6 +288,11 @@ endef
 define Package/libavahi-client/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-client.so.* $(1)/usr/lib/
+endef
+
+define Package/libavahi-compat-libdnssd/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so.* $(1)/usr/lib/
 endef
 
 define Package/avahi-utils/install
@@ -305,6 +327,7 @@ define Package/avahi-dnsconfd/install
 endef
 
 $(eval $(call BuildPackage,libavahi-client))
+$(eval $(call BuildPackage,libavahi-compat-libdnssd))
 $(eval $(call BuildPackage,avahi-utils))
 $(eval $(call BuildPackage,libavahi-dbus-support))
 $(eval $(call BuildPackage,libavahi))
