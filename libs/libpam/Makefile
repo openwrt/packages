@@ -42,10 +42,11 @@ $(call Package/libpam/Default)
   DEPENDS:=+libdb47
 endef
 
-
 define Package/libpam/description
 	The Linux-PAM Pluggable Authentication Modules.
 endef
+
+Package/libpam-db/description=$(Package/libpam/description)
 
 TARGET_CFLAGS += $(FPIC)
 
@@ -87,19 +88,26 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include
 endef
 
-define Package/libpam/install
+define Package/libpam/install/Default
 	$(INSTALL_DIR) $(1)/lib $(1)/lib/security $(1)/lib/security/pam_filter
 	$(INSTALL_DIR) $(1)/etc $(1)/etc/pam.d
-	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/lib/*.so* $(1)/lib/
-	$(CP) $(PKG_INSTALL_DIR)/lib/security/*.so* $(1)/lib/security/
-	$(CP) $(PKG_INSTALL_DIR)/lib/security/pam_filter/* $(1)/lib/security/pam_filter/
 	$(CP) $(PKG_INSTALL_DIR)/etc/* $(1)/etc/
 	$(CP) ./files/* $(1)/etc/
+endef
+
+define Package/libpam/install
+$(call Package/libpam/install/Default,$(1))
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(CP) $(PKG_INSTALL_DIR)/lib/security/*.so* $(1)/lib/security/
+	$(CP) $(PKG_INSTALL_DIR)/lib/security/pam_filter/* $(1)/lib/security/pam_filter/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
 endef
 
-Package/libpam-db/install=$(Package/libpam/install)
+define Package/libpam-db/install
+$(call Package/libpam/install/Default,$(1))
+	$(CP) $(PKG_INSTALL_DIR)/lib/security/{pam_userdb.so,pam_unix.so} $(1)/lib/security/
+endef
 
 $(eval $(call BuildPackage,libpam))
 $(eval $(call BuildPackage,libpam-db))
