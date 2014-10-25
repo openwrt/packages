@@ -1,7 +1,7 @@
---- a/dump1090.h
-+++ b/dump1090.h
-@@ -178,7 +178,7 @@
- #define MODES_NET_SNDBUF_MAX  (7)               
+--- a/dump1090.h	2014-10-02 15:32:40.000000000 -0500
++++ b/dump1090.h	2014-10-24 21:35:38.644764373 -0500
+@@ -179,7 +179,7 @@
+ #define MODES_NET_SNDBUF_MAX  (7)
  
  #ifndef HTMLPATH
 -#define HTMLPATH   "./public_html"      // default path for gmap.html etc

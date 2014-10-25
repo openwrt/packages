@@ -1,0 +1,43 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2014 OpenWrt.org
+
+START=90
+STOP=10
+USE_PROCD=1
+
+NAME=dump1090
+PROG=/usr/bin/$NAME
+
+start_instance() {
+    local section="$1"
+
+    config_get_bool enabled "$section" 'enabled' '0'
+    config_get_bool agressive "$section" 'agressive' '0'
+    config_get_bool enable_agc "$section" 'enable_agc' '0'
+    config_get_bool metric "$section" 'metric' '0'
+    config_get http_port "$section" 'http_port' '8080'
+
+    [ "$enabled" -gt 0 ] || return 1
+
+    procd_open_instance
+    procd_set_param respawn
+
+    procd_set_param command "$PROG"
+    procd_append_param command --net --quiet
+    procd_append_param command --net-http-port $http_port
+
+    [ "$enable_agc" -ne 0 ] && procd_append_param command "--enable-agc"
+    [ "$agressive" -ne 0 ] && procd_append_param command "--agressive"
+    [ "$metric" -ne 0 ] && procd_append_param command "--metric"
+
+    procd_close_instance
+}
+
+start_service() {
+    config_load "$NAME"
+    config_foreach start_instance "$NAME"
+}
+
+service_triggers() {
+    procd_add_reload_trigger "$NAME"
+}
