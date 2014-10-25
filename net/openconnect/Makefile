@@ -15,6 +15,11 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/openconnect/
 PKG_MD5SUM:=7e28e23c6e281be31446e6c365f5d273
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_OPENCONNECT_GNUTLS \
+	CONFIG_OPENCONNECT_OPENSSL \
+
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/openconnect/config
