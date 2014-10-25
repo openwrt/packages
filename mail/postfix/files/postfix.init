@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2014 OpenWrt.org
+
+START=50
+STOP=50
+
+create_users() {
+	group_exists postfix || group_add postfix 87
+	user_exists postfix || user_add postfix 87
+	group_exists postdrop || group_add postdrop 88
+}
+
+start() {
+	postfix start
+}
+
+stop() {
+	postfix stop
+}
