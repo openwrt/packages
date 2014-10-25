@@ -17,6 +17,11 @@ PKG_MD5SUM:=a9decddb508944d56f71dd2f821e2ec5
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-2.0
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_HASERL_with_lua \
+	CONFIG_HASERL_shell_luac \
+	CONFIG_HASERL_shell_lua \
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/haserl
