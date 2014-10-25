@@ -20,6 +20,10 @@ PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
 PKG_FIXUP:=autoreconf
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_OCSERV_PAM \
+	CONFIG_OCSERV_PROTOBUF \
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ocserv/config
