@@ -39,7 +39,7 @@ proto_aiccu_setup() {
 	[ "$nat" == 1 ] && echo "behindnat true"     >> "$CFGFILE"
 	[ "$heartbeat"	== 1 ] && echo "makebeats true" >> "$CFGFILE"
 	[ "$verbose" == 1 ] && echo "verbose true" >> "$CFGFILE"
-	echo "defaultroute false" >> "$CFGFILE"
+	[ "$defaultroute" == 1 ] && echo "defaultroute true" >> "$CFGFILE" 
 	echo "daemonize true"	  >> "$CFGFILE"
 	echo "pidfile $PIDFILE"   >> "$CFGFILE"
 
