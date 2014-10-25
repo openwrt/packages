@@ -20,6 +20,11 @@ PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=BSD-3c
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_DUMP1090_DUMP \
+	CONFIG_DUMP1090_WWW \
+	CONFIG_DUMP1090_VIEW \
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/dump1090
