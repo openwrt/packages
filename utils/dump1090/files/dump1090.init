@@ -29,23 +29,21 @@ append_bool() {
 
 start_instance() {
 	local cfg="$1"
+	local aux
 
-	config_get_bool disabled "$cfg" 'disabled' '0'
-	[ "$disabled" = 1 ] && return 1
+	config_get_bool aux "$cfg" 'disabled' '0'
+	[ "$aux" = 1 ] && return 1
 
 	procd_open_instance
 
 	procd_set_param command /usr/bin/dump1090
+	procd_append_param command "--quiet"
 
 	append_arg "$cfg" device_index "--device-index"
 	append_arg "$cfg" gain "--gain"
 	append_bool "$cfg" enable_agc "--enable-agc"
 	append_arg "$cfg" freq "--freq"
 	append_arg "$cfg" ifile "--ifile"
-	append_bool "$cfg" interactive "--interactive"
-	append_arg "$cfg" interactive_rows "--interactive-rows"
-	append_arg "$cfg" interactive_ttl "--interactive-ttl"
-	append_bool "$cfg" interactive_rtl1090 "--interactive-rtl1090"
 	append_bool "$cfg" raw "--raw"
 	append_bool "$cfg" net "--net"
 	append_bool "$cfg" modeac "--modeac"
@@ -75,8 +73,10 @@ start_instance() {
 	append_bool "$cfg" metric "--metric"
 	append_arg "$cfg" snip "--snip"
 	append_arg "$cfg" debug "--debug"
-	append_bool "$cfg" quiet "--quiet"
 	append_arg "$cfg" ppm "--ppm"
+
+	config_get_bool aux "$cfg" 'respawn' '0'
+	[ "$aux" = 1 ] && procd_set_param respawn
 
 	procd_close_instance
 }
