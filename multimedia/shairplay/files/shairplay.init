@@ -17,9 +17,10 @@ append_arg() {
 
 start_instance() {
 	local cfg="$1"
+	local aux
 
-	config_get_bool disabled "$cfg" 'disabled' '0'
-	[ "$disabled" = 1 ] && return 1
+	config_get_bool aux "$cfg" 'disabled' '0'
+	[ "$aux" = 1 ] && return 1
 
 	procd_open_instance
 
@@ -33,6 +34,9 @@ start_instance() {
 	append_arg "$cfg" ao_driver "--ao_driver"
 	append_arg "$cfg" ao_devicename "--ao_devicename"
 	append_arg "$cfg" ao_deviceid "--ao_deviceid"
+
+	config_get_bool aux "$cfg" 'respawn' '0'
+	[ "$aux" = 1 ] && procd_set_param respawn
 
 	procd_close_instance
 }
