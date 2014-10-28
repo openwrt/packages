@@ -72,36 +72,39 @@ define Package/python-full/description
 endef
 
 MAKE_FLAGS:=\
-	$(TARGET_CONFIGURE_OPTS) \
 	DESTDIR="$(PKG_INSTALL_DIR)" \
 	CROSS_COMPILE=yes \
-	CFLAGS="$(TARGET_CFLAGS) -DNDEBUG -fno-inline" \
-	LDFLAGS="$(TARGET_LDFLAGS) -L$(PKG_BUILD_DIR)" \
 	LD="$(TARGET_CC)" \
 	PGEN=pgen2
+
+EXTRA_CFLAGS+= \
+	-DNDEBUG -fno-inline
+EXTRA_LDFLAGS+= \
+	-L$(PKG_BUILD_DIR)
 
 ENABLE_IPV6:=
 ifeq ($(CONFIG_IPV6),y)
 	ENABLE_IPV6 += --enable-ipv6
 endif
 
-define Build/Configure
-	-$(MAKE) -C $(PKG_BUILD_DIR) distclean
-	(cd $(PKG_BUILD_DIR); autoreconf --force --install || exit 0)
-	$(CP) ./files/config.site $(PKG_BUILD_DIR)
-	$(call Build/Configure/Default, \
-		--sysconfdir=/etc \
-		--enable-shared \
-		--without-cxx-main \
-		--with-threads \
-		--with-system-ffi="$(STAGING_DIR)/usr" \
-		--without-ensurepip \
-		--without-pymalloc \
-		$(ENABLE_IPV6) \
-		CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
-		OPT="$(TARGET_CFLAGS)" \
-	)
+CONFIGURE_ARGS+= \
+	--sysconfdir=/etc \
+	--enable-shared \
+	--without-cxx-main \
+	--with-threads \
+	--with-system-ffi="$(STAGING_DIR)/usr" \
+	--without-ensurepip \
+	--without-pymalloc \
+	$(ENABLE_IPV6) \
+	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
+	OPT="$(TARGET_CFLAGS)"
+
+define Hooks/Configure/Pre/ConfigSiteInstall
+	$(CP) ./files/config.site $(PKG_BUILD_DIR)/config.site
 endef
+
+Hooks/Configure/Pre+=\
+	Hooks/Configure/Pre/ConfigSiteInstall
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include $(1)/usr/lib
@@ -167,33 +170,16 @@ define PyPackage/python/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
 endef
 
-define Host/Configure
-	-$(MAKE) -C $(HOST_BUILD_DIR) distclean
-	(cd $(HOST_BUILD_DIR); autoreconf --force --install || exit 0)
-	(cd $(HOST_BUILD_DIR); \
-		rm -rf config.cache; \
-		CONFIG_SITE= \
-		OPT="$(HOST_CFLAGS)" \
-		./configure \
-			--without-cxx-main \
-			--without-ensurepip \
-			--without-pymalloc \
-			--with-threads \
-			--prefix=$(STAGING_DIR_HOST); \
-	)
-endef
-
-define Host/Compile
-	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) \
-		python Parser/pgen
-	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) \
-		sharedmods
-endef
+HOST_CONFIGURE_ARGS+= \
+	--without-cxx-main \
+	--without-ensurepip \
+	--without-pymalloc \
+	--with-threads \
+	--prefix=$(STAGING_DIR_HOST)
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
-	$(MAKE) -C $(HOST_BUILD_DIR) \
-		install
+	$(MAKE) -C $(HOST_BUILD_DIR) install
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR_HOST)/bin/pgen2
 endef
 
