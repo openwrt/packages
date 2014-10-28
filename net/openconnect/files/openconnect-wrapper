@@ -22,7 +22,17 @@ cleanup()
 	exit 0
 }
 
-trap cleanup 1 2 3 6 15
+cleanup2()
+{
+	if ! test -z "$pid";then
+		kill -2 $pid
+		wait $pid
+	fi
+	exit 0
+}
+
+trap cleanup2 2
+trap cleanup 1 3 6 15
 
 rm -f "$pidfile"
 /usr/sbin/openconnect $* <$pwfile &
