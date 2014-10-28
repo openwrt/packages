@@ -131,6 +131,7 @@ define Build/Compile
 		ARCH="$(LINUX_KARCH)" \
 		SUBDIRS="$(PKG_BUILD_DIR)/datapath/linux" \
 		PATH="$(TARGET_PATH)" \
+		KCFLAGS="-Wno-error=date-time" \
 		KCC="$(KERNEL_CC)"
 endef
 
