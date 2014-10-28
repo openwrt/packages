@@ -11,6 +11,8 @@ PKG_NAME:=kismet
 PKG_VERSION:=2013-03-R1b
 PKG_RELEASE:=1
 
+PKG_LICENSE:=LGPLv2.1
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.kismetwireless.net/code
 PKG_MD5SUM:=6cdcd78baf2e15edbe8a9de3c5493f02
