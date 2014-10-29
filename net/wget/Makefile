@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2011 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
-PKG_VERSION:=1.15
+PKG_VERSION:=1.16
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_MD5SUM:=7a279d5ac5594919124d5526e7143e28
+PKG_MD5SUM:=fe102975ab3a6c049777883f1bb9ad07
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
