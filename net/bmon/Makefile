@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,21 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bmon
-PKG_VERSION:=2.1.0
+PKG_VERSION:=3.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://people.suug.ch/~tgr/bmon/files/
-PKG_MD5SUM:=3111a027907016c0902d67350c619df6
+PKG_SOURCE_URL:=https://github.com/tgraf/bmon/releases/download/v$(PKG_VERSION)/
+PKG_MD5SUM:=b7d0d055727f2cf1e452f26dfbf6a825
+PKG_MAINTAINER:=Baptiste Jonglez <openwrt-pkg@bitsofnetworks.org>
+PKG_LICENSE:=MIT
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/bmon
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libncurses
+  DEPENDS:=+libncurses +libnl +confuse
   TITLE:=bmon is a portable bandwidth monitor
-  URL:=http://people.suug.ch/~tgr/bmon/
+  URL:=https://github.com/tgraf/bmon/
 endef
 
 define Package/bmon/description
