@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bogofilter
 PKG_VERSION:=1.2.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILE:=COPYING
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bogofilter
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+libdb47-full
+  DEPENDS:=+libdb47
   TITLE:=bogofilter
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
   URL:=http://bogofilter.sourceforge.net/
