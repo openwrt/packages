@@ -119,6 +119,11 @@ define Build/Configure
 	$(call Build/Configure/Default,$(CONFIGURE_ARGS))
 endef
 
+KCFLAGS=
+ifeq ($(CONFIG_GCC_VERSION_4_9),y)
+KCFLAGS:=-Wno-error=date-time
+endif
+
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		$(TARGET_CONFIGURE_OPTS) \
@@ -131,7 +136,7 @@ define Build/Compile
 		ARCH="$(LINUX_KARCH)" \
 		SUBDIRS="$(PKG_BUILD_DIR)/datapath/linux" \
 		PATH="$(TARGET_PATH)" \
-		KCFLAGS="-Wno-error=date-time" \
+		KCFLAGS="$(KCFLAGS)" \
 		KCC="$(KERNEL_CC)"
 endef
 
