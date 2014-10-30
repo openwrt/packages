@@ -98,7 +98,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 
 		loading(loader_add)
 
-		new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_create/' + lxc_name + "/" + lxc_template , null,
+		new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_create/' + '%h/%h'.format(lxc_name, lxc_template) , null,
 		function(x)
 		{
 			bt_create.disabled = false
@@ -118,7 +118,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 		var actions = ''
 		actions += '<input type="button" onclick="action_handler(this)" data-action="start" value="<%:Start%>" class="cbi-button cbi-button-apply" />'
 		actions+= '<input type="button" onclick="action_handler(this)" data-action="stop" value="<%:Stop%>" class="cbi-button cbi-button-reset" />'
-		actions+= '<input type="button" onclick="action_handler(this)" data-action="delete" value="<%:Delete%>" class="cbi-button cbi-button-remove" />'
+		actions+= '<input type="button" onclick="action_handler(this)" data-action="destroy" value="<%:Delete%>" class="cbi-button cbi-button-remove" />'
 		actions+= ' <select class="cbi-input-select cbi-button" onchange="action_more_handler(this)">\
 						<option selected disabled>more</option>\
 						<option>configure</option>\
@@ -130,7 +130,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 
 		var row = t_lxc_list.insertRow(-1)
 		var cell = row.insertCell(-1)
-		cell.innerHTML = "<strong>" + lxc_name + "</strong>"
+		cell.innerHTML = '%q%h%q'.format("<strong>", lxc_name, "</strong>")
 		cell.width = "30%"
 		cell.setAttribute("data-id", lxc_name)
 
@@ -158,14 +158,14 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 		{
 			loading(loader)
 
-			new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_stop/' + lxc_name, null,
-			function(x)
+			new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_action/' + '%h/%h'.format(action, lxc_name), null,
+			function(x, ec)
 			{
 				loading(loader, 0)
 				bt_action.disabled = false
 
-				if (!x || x.responseText != "0")
-					return info_message(output_list,"Invalid response from system!")
+				if (!x || ec)
+					return info_message(output_list,"Action failed!")
 
 				set_status(status_img, "red")
 
@@ -176,62 +176,42 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 		{
 			loading(loader)
 
-			new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_start/' + lxc_name, null,
-			function(x)
+			new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_action/' + '%h/%h'.format(action, lxc_name), null,
+			function(x, data)
 			{
 				loading(loader, 0)
 				bt_action.disabled = false
 
 				//FIXME: uncomment after fixing 'lxc-start'
-				if (!x /*|| x.responseText != "0"*/)
-					return info_message(output_list,"Invalid response from system!")
+				if (!x /*|| ec */)
+					return info_message(output_list,"Action failed!")
 
 				//FIXME: uncomment after fixing 'lxc-start'
 				//set_status(status_img, "green")
 			});
 		}
 
-		else if (action == "delete")
+		else if (action == "destroy")
 		{
 			if (!confirm("This will completely remove LXC container from the disk. Are you sure? (container will be stopped if running)"))
 				return
 
 			loading(loader)
 
-			new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_delete/' + lxc_name, null,
-			function(x)
+			new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_action/' + '%h/%h'.format(action, lxc_name), null,
+			function(x, ec)
 			{
 				loading(loader, 0)
 				bt_action.disabled = false
 
-				if (!x || x.responseText != "0")
-					return info_message(output_list,"Invalid response from system!")
+				if (!x || ec)
+					return info_message(output_list,"Action failed!")
 
 				var row = self.parentNode.parentNode
 				row.parentNode.removeChild(row)
 
 			});
 		}
-	}
-
-	function lxc_rename_handler(self)
-	{
-		var td = self.parentNode
-		var lxc_name_holder = td.querySelector('[data-id]')
-		var lxc_name_cur = lxc_name_holder.getAttribute('data-id')
-		var lxc_name_new = lxc_name_holder.value
-
-		if (t_lxc_list.querySelector("[data-id='" + lxc_name_new + "']") != null)
-			return info_message(output_list, "Container with new name already exists!", 4000)
-
-		new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_rename/' + lxc_name_cur + '/' + lxc_name_new, null,
-		function(x)
-		{
-			if (!x || x.responseText != "0")
-				return info_message(output_list,"Invalid response from system!")
-
-			info_message(output_list,"LXC renamed")
-		})
 	}
 
 	function lxc_configure_handler(self)
@@ -245,7 +225,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 		function(x)
 		{
 			if (!x || x.responseText != "0")
-				return info_message(output_list,"Invalid response from system!")
+				return info_message(output_list,"Action failed!")
 
 			info_message(output_list,"LXC configuration updated")
 			var row = td.parentNode
@@ -299,19 +279,6 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 
 			break
 
-			case "rename":
-				var tr = document.createElement('tr')
-				var row = self.parentNode.parentNode
-				var next_row = row.nextSibling
-				if (next_row && next_row.getAttribute('data-action') !== null)
-					row.parentNode.removeChild(next_row)
-
-				tr.innerHTML="<td colspan='" + row.cells.length + "'>" + lxc_rename_template(lxc_name) + "</td>"
-				tr.setAttribute('data-action','')
-				row.parentNode.insertBefore(tr, row.nextSibling)
-
-				break
-
 			case "freeze":
 				var tr = self.parentNode.parentNode
 				var img = tr.querySelector('img')
@@ -319,12 +286,12 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 					return info_message(output_list,"Container is not running!")
 
 				loading(loader)
-				new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_freeze/' + lxc_name, null,
-				function(x)
+				new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_action/' + '%h/%h'.format(option, lxc_name), null,
+				function(x, ec)
 				{
 					loading(loader, 0)
-					if (!x || x.responseText != "0")
-						return info_message(output_list,"Invalid response from system!")
+					if (!x || ec)
+						return info_message(output_list,"Action failed!")
 
 					set_status(img, "purple")
 				})
@@ -339,12 +306,12 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 					return info_message(output_list,"Container is not frozen!")
 
 				loading(loader)
-				new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_unfreeze/' + lxc_name, null,
-				function(x)
+				new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_action/' + '%h/%h'.format(option, lxc_name), null,
+				function(x, ec)
 				{
 					loading(loader, 0)
-					if (!x || x.responseText != "0")
-						return info_message(output_list,"Invalid response from system!")
+					if (!x || ec)
+						return info_message(output_list,"Action failed!")
 
 					set_status(img, "green")
 				})
@@ -361,12 +328,12 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 					return
 
 				loading(loader)
-				new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_reboot/' + lxc_name, null,
-				function(x)
+				new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_action/' + '%h/%h'.format(option, lxc_name), null,
+				function(x, ec)
 				{
 					loading(loader, 0)
-					if (!x || x.responseText != "0")
-						return info_message(output_list,"Invalid response from system!")
+					if (!x || ec)
+						return info_message(output_list,"Action failed!")
 
 					info_message(output_list,"LXC rebooted")
 				})
@@ -392,7 +359,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 
 	function lxc_list_update()
 	{
-		XHR.poll(4, '<%=luci.dispatcher.build_url("admin", "services")%>/lxc_list', null,
+		XHR.poll(4, '<%=luci.dispatcher.build_url("admin", "services")%>/lxc_action/list', null,
 		function(x, data)
 		{
 			if (!x) return;

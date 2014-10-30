@@ -16,6 +16,37 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 
 module("luci.controller.lxc", package.seeall)
 
+require "ubus"
+local conn = ubus.connect()
+if not conn then
+    error("Failed to connect to ubus")
+end
+
+
+function fork_exec(command)
+	local pid = nixio.fork()
+	if pid > 0 then
+		return
+	elseif pid == 0 then
+		-- change to root dir
+		nixio.chdir("/")
+
+		-- patch stdin, out, err to /dev/null
+		local null = nixio.open("/dev/null", "w+")
+		if null then
+			nixio.dup(null, nixio.stderr)
+			nixio.dup(null, nixio.stdout)
+			nixio.dup(null, nixio.stdin)
+			if null:fileno() > 2 then
+				null:close()
+			end
+		end
+
+		-- replace with target command
+		nixio.exec("/bin/sh", "-c", command)
+	end
+end
+
 function index()
 	page = node("admin", "services", "lxc")
 	page.target = cbi("lxc")
@@ -25,31 +56,7 @@ function index()
 	page = entry({"admin", "services", "lxc_create"}, call("lxc_create"), nil)
 	page.leaf = true
 
-	page = entry({"admin", "services", "lxc_stop"}, call("lxc_stop"), nil)
-	page.leaf = true
-
-	page = entry({"admin", "services", "lxc_start"}, call("lxc_start"), nil)
-	page.leaf = true
-
-	page = entry({"admin", "services", "lxc_reboot"}, call("lxc_reboot"), nil)
-	page.leaf = true
-
-	page = entry({"admin", "services", "lxc_delete"}, call("lxc_delete"), nil)
-	page.leaf = true
-
-	page = entry({"admin", "services", "lxc_list"}, call("lxc_list"), nil)
-	page.leaf = true
-
-	page = entry({"admin", "services", "lxc_rename"}, call("lxc_rename"), nil)
-	page.leaf = true
-
-	page = entry({"admin", "services", "lxc_clone"}, call("lxc_clone"), nil)
-	page.leaf = true
-
-	page = entry({"admin", "services", "lxc_freeze"}, call("lxc_freeze"), nil)
-	page.leaf = true
-
-	page = entry({"admin", "services", "lxc_unfreeze"}, call("lxc_unfreeze"), nil)
+	page = entry({"admin", "services", "lxc_action"}, call("lxc_action"), nil)
 	page.leaf = true
 
 	page = entry({"admin", "services", "lxc_configuration_get"}, call("lxc_configuration_get"), nil)
@@ -67,87 +74,23 @@ function lxc_create(lxc_name, lxc_template)
 
 	local url = uci:get("lxc", "lxc", "url")
 
-	local f = io.popen([[grep DISTRIB_TARGET /etc/openwrt_release | awk -F"[/'']" '{ print $2 }']])
-	if not f then
+	if not pcall(dofile, "/etc/openwrt_release") then
 		return luci.http.write("1")
 	end
 
-	local target = f:read("*all")
+	local target = _G.DISTRIB_TARGET:match('([^/]+)')
 
-	local res = os.execute("lxc-create -t download -n " .. lxc_name .. " -- --server=" .. url .. " --no-validate --dist openwrt --release bb --arch " .. target)
-
-	luci.http.write(tostring(res))
-end
-
-function lxc_start(lxc_name)
-	luci.http.prepare_content("text/plain")
-
-	local res = os.execute("ubus call lxc start '{\"name\" : \"" .. lxc_name .. "\"}' ")
+	local res = os.execute("lxc-create -t download -n " .. lxc_name .. " -- --server=" .. url .. " --no-validate --dist " .. lxc_template .. " --release bb --arch " .. target)
 
 	luci.http.write(tostring(res))
 end
 
-function lxc_stop(lxc_name)
-	luci.http.prepare_content("text/plain")
-
-	local res = os.execute("ubus call lxc stop '{\"name\" : \"" .. lxc_name .. "\"}' ")
-
-	luci.http.write(tostring(res))
-end
-
-function lxc_delete(lxc_name)
-	luci.http.prepare_content("text/plain")
-
-	os.execute("ubus call lxc stop '{\"name\" : \"" .. lxc_name .. "\"}' ")
-	local res = os.execute("ubus call lxc destroy '{\"name\" : \"" .. lxc_name .. "\"}' ")
-
-	luci.http.write(tostring(res))
-end
-
-function lxc_reboot(lxc_name)
-	luci.http.prepare_content("text/plain")
-
-	local res = os.execute("ubus call lxc reboot '{\"name\" : \"" .. lxc_name .. "\"}' ")
-
-	luci.http.write(tostring(res))
-end
-
-function lxc_rename(lxc_name_cur, lxc_name_new)
-	luci.http.prepare_content("text/plain")
-
-	local res = os.execute("ubus call lxc rename '{\"name\" : \"" .. lxc_name_cur .. "\", \"newname\" : \"" .. lxc_name_new .. "\"}' ")
-
-	luci.http.write(tostring(res))
-end
-
-function lxc_freeze(lxc_name)
-	luci.http.prepare_content("text/plain")
-
-	local res = os.execute("ubus call lxc freeze '{\"name\" : \"" .. lxc_name .. "\"}' ")
-
-	luci.http.write(tostring(res))
-end
-
-function lxc_unfreeze(lxc_name)
-	luci.http.prepare_content("text/plain")
-
-	local res = os.execute("ubus call lxc unfreeze '{\"name\" : \"" .. lxc_name .. "\"}' ")
-
-	luci.http.write(tostring(res))
-end
-
-function lxc_list()
+function lxc_action(lxc_action, lxc_name)
 	luci.http.prepare_content("application/json")
 
-	local cmd = io.popen("ubus call lxc list")
-	if not cmd then
-		return luci.http.write("{}")
-	end
+	local data, ec = conn:call("lxc", lxc_action, lxc_name and { name = lxc_name} or {} )
 
-	local res = cmd:read("*all")
-	cmd:close()
-
-	luci.http.write(res)
+	luci.http.write_json(ec and {} or data)
 end
 
 function lxc_configuration_get(lxc_name)
