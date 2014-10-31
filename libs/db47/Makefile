@@ -135,5 +135,5 @@ endef
 
 $(eval $(call BuildPackage,libdb47))
 $(eval $(call BuildPackage,libdb47xx))
-$(eval $(call BuildPackage,libdb47xx-full))
+#$(eval $(call BuildPackage,libdb47xx-full))
 $(eval $(call BuildPackage,db47-util))
