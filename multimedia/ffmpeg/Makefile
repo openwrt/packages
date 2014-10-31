@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=2.3.4
+PKG_VERSION:=2.4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=d6a0c7f0827a2446ca2bed11ac9bf608
+PKG_MD5SUM:=9e6163b09b7b9331b834d80874c2c0ff
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -289,7 +289,7 @@ endef
 define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (custom)
- DEPENDS+= @DEVEL +libopus +libspeex
+ DEPENDS+= @DEVEL @!ALL +libopus +libspeex
  VARIANT:=custom
  MENU:=1
 endef

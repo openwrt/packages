@@ -68,7 +68,7 @@ proto_openconnect_teardown() {
 
 	rm -f $pwfile
 	logger -t openconnect "bringing down openconnect"
-	proto_kill_command "$config"
+	proto_kill_command "$config" 2
 }
 
 add_protocol openconnect

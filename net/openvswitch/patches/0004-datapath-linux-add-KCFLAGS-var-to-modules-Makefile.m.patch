@@ -1,0 +1,39 @@
+From deb44e6e9d64001562ee9395a2c8525848052394 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <aa@ocedo.com>
+Date: Tue, 28 Oct 2014 11:03:53 +0200
+Subject: [PATCH] datapath/linux: add KCFLAGS var to modules Makefile.main.in
+
+This is mostly required because of GCC 4.9 which seems
+to error out with:
+  openvswitch/datapath/linux/datapath.c:2108:10:
+       error: macro "DATE" might prevent reproducible builds
+
+We would have wanted to add '-Wno-error=date-time' directly
+but that would be too specific, so we decided to add
+a generic make flag and configure it with what we need.
+
+Signed-off-by: Alexandru Ardelean <ardeleanalex@gmail.com>
+---
+ datapath/linux/Makefile.main.in | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/datapath/linux/Makefile.main.in b/datapath/linux/Makefile.main.in
+index 88f144c..0b200b7 100644
+--- a/datapath/linux/Makefile.main.in
++++ b/datapath/linux/Makefile.main.in
+@@ -67,10 +67,10 @@ ifeq (,$(wildcard $(CONFIG_FILE)))
+ endif
+ 
+ default:
+-	$(MAKE) -C $(KSRC) M=$(builddir) modules
++	$(MAKE) -C $(KSRC) M=$(builddir) $(KCFLAGS) modules
+ 
+ modules_install:
+-	$(MAKE) -C $(KSRC) M=$(builddir) modules_install
++	$(MAKE) -C $(KSRC) M=$(builddir) $(KCFLAGS) modules_install
+ 	depmod `sed -n 's/#define UTS_RELEASE "\([^"]*\)"/\1/p' $(KSRC)/include/generated/utsrelease.h`
+ endif
+ 
+-- 
+1.8.4.5
+

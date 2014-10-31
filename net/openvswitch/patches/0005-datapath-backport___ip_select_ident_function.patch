@@ -1,0 +1,43 @@
+commit 2ea824143172e38b4387ef23b8685cebaee21c69
+Author: Pravin B Shelar <pshelar@nicira.com>
+Date:   Tue Sep 24 18:42:43 2013 -0700
+
+    datapath: Backport __ip_select_ident() function
+    
+    definition of __ip_select_ident() changed in newer kernel and
+    it is backported to stable kernel, Therefore adding configure
+    check to detect the new function.
+    
+    Signed-off-by: Pravin B Shelar <pshelar@nicira.com>
+    Acked-by: Andy Zhou <azhou@nicira.com>
+
+diff --git a/acinclude.m4 b/acinclude.m4
+index 7e036e5..b0794d2 100644
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -284,6 +284,8 @@ AC_DEFUN([OVS_CHECK_LINUX_COMPAT], [
+   OVS_GREP_IFELSE([$KSRC/include/linux/if_vlan.h], [vlan_set_encap_proto])
+ 
+   OVS_GREP_IFELSE([$KSRC/include/linux/in.h], [ipv4_is_multicast])
++  OVS_GREP_IFELSE([$KSRC/include/net/ip.h], [__ip_select_ident.*dst_entry],
++                  [OVS_DEFINE([HAVE_IP_SELECT_IDENT_USING_DST_ENTRY])])
+ 
+   OVS_GREP_IFELSE([$KSRC/include/linux/netdevice.h], [dev_disable_lro])
+   OVS_GREP_IFELSE([$KSRC/include/linux/netdevice.h], [dev_get_stats])
+diff --git a/datapath/linux/compat/ip_tunnels_core.c b/datapath/linux/compat/ip_tunnels_core.c
+index d650be2..a70aefc 100644
+--- a/datapath/linux/compat/ip_tunnels_core.c
++++ b/datapath/linux/compat/ip_tunnels_core.c
+@@ -70,7 +70,12 @@ int iptunnel_xmit(struct rtable *rt,
+ 	iph->daddr	=	dst;
+ 	iph->saddr	=	src;
+ 	iph->ttl	=	ttl;
++
++#ifdef HAVE_IP_SELECT_IDENT_USING_DST_ENTRY
+ 	__ip_select_ident(iph, &rt_dst(rt), (skb_shinfo(skb)->gso_segs ?: 1) - 1);
++#else
++	__ip_select_ident(iph, skb_shinfo(skb)->gso_segs ?: 1);
++#endif
+ 
+ 	err = ip_local_out(skb);
+ 	if (unlikely(net_xmit_eval(err)))

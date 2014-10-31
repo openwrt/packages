@@ -1,0 +1,14 @@
+diff --git a/configure b/configure
+index 6936a47..9a85269 100755
+--- a/configure
++++ b/configure
+@@ -6980,9 +6980,6 @@ else
+ fi
+ 
+ 
+-# Add additional cflags since some distros bury panel.h
+-CPPFLAGS="$CPPFLAGS -I/usr/include/ncurses"
+-
+ termcontrol="none";
+ 
+ if test "$wantclient" = "yes"; then

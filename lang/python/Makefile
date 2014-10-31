@@ -375,6 +375,7 @@ define PyPackage/python/filespec
 +|/usr/lib/python$(PYTHON_VERSION)/_weakrefset.py
 +|/usr/lib/python$(PYTHON_VERSION)/config/Makefile
 +|/usr/lib/python$(PYTHON_VERSION)/sysconfig.py
++|/usr/lib/python$(PYTHON_VERSION)/_sysconfigdata.py
 +|/usr/lib/python$(PYTHON_VERSION)/functools.py
 +|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_functools.so
 +|/usr/lib/python$(PYTHON_VERSION)/collections.py

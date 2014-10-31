@@ -10,8 +10,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=postfix
 PKG_RELEASE:=1
 PKG_SOURCE_URL:=ftp://ftp.porcupine.org/mirrors/postfix-release/official/
-PKG_VERSION:=2.11.1
-PKG_MD5SUM:=56ac1f1a79737c4ac1e24535a122a4a6
+PKG_VERSION:=2.11.3
+PKG_MD5SUM:=c3f0f51d8865559b40e9350eb3816011
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=IPL-1.0
@@ -100,7 +100,7 @@ endef
 define Build/Compile
 	# Currently postfix has a bug with Makefiles that CCARGS are not passed to the compiler, so we are copying them to CC
 	cd $(PKG_BUILD_DIR); $(MAKE) $(TARGET_CONFIGURE_OPTS) CC='$(TARGET_CC) $(CCARGS)'
-	mv $(PKG_BUILD_DIR)/conf/main.cf.default.openwrt $(PKG_BUILD_DIR)/conf/main.cf.default
+	cp ./files/main.cf.default $(PKG_BUILD_DIR)/conf/main.cf.default
 	echo "sendmail_path = $(sendmail_path)$(ln_suffix)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
 	echo "newaliases_path = $(newaliases_path)$(ln_suffix)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
 	echo "mailq_path = $(mailq_path)$(ln_suffix)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
@@ -120,7 +120,7 @@ define Package/postfix/install
 	cd $(PKG_BUILD_DIR); $(MAKE) install_root=$(1) command_directory=$(command_directory) daemon_directory=$(daemon_directory) data_directory=$(data_directory) html_directory=$(html_directory) mail_owner=postfix mailq_path=$(mailq_path)$(ln_suffix) manpage_directory=$(manpage_directory) newaliases_path=$(newaliases_path)$(ln_suffix) queue_directory=$(queue_directory) readme_directory=$(readme_directory) sendmail_path=$(sendmail_path)$(ln_suffix) setgid_group=postdrop sample_directory=$(sample_directory) config_directory=$(config_directory) non-interactive-package
 	$(INSTALL_DIR) $(1)$(mail_spool_directory)
 	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/postfix_init $(1)/etc/init.d/postfix
+	$(INSTALL_BIN) ./files/postfix.init $(1)/etc/init.d/postfix
 endef
 
 define Package/postfix/postinst
