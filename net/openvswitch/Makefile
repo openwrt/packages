@@ -94,7 +94,7 @@ define KernelPackage/openvswitch
   SUBMENU:=Network Support
   TITLE:=Open vSwitch Kernel Package
   KCONFIG:=CONFIG_BRIDGE
-  DEPENDS:=+kmod-stp +kmod-ipv6 +kmod-gre +kmod-lib-crc32c
+  DEPENDS:=+kmod-stp +kmod-ipv6 +kmod-gre +kmod-lib-crc32c +kmod-vxlan
   FILES:= \
 	$(PKG_BUILD_DIR)/datapath/linux/openvswitch.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,21,openvswitch)
