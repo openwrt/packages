@@ -26,7 +26,7 @@ define Package/mc
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+glib2 +libncurses $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
-  TITLE:=midnight commander - a powerful file manager
+  TITLE:=Midnight Commander - a powerful visual file manager
   URL:=http://www.midnight-commander.org/
   SUBMENU:=filemanager
   MENU:=1
@@ -37,10 +37,11 @@ define Package/mc/config
 endef
 
 define Package/mc/description
- GNU Midnight Commander is a visual file manager, licensed under GNU General Public License 
- and therefore qualifies as Free Software. It's a feature rich full-screen text mode application
- that allows you to copy, move and delete files and whole directory trees, 
- search for files and run commands in the subshell. Internal viewer and editor are included. 
+ GNU Midnight Commander is a visual file manager, 
+ licensed under GNU General Public License and therefore qualifies as Free Software.
+ It's a feature rich full-screen text mode application that allows you to copy, 
+ move and delete files and whole directory trees, search for files 
+ and run commands in the subshell. Internal viewer and editor are included. 
 endef
 
 CONFIGURE_ARGS += \
