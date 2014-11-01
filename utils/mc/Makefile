@@ -10,6 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mc
 PKG_VERSION:=4.8.13
 PKG_RELEASE:=1
+PKG_MAINTAINER:=Dirk Brenken <dibdot@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
@@ -36,11 +37,10 @@ define Package/mc/config
 endef
 
 define Package/mc/description
- GNU Midnight Commander is a visual file manager, licensed under GNU General
- Public License and therefore qualifies as Free Software. It's a feature rich
- full-screen text mode application that allows you to copy, move and delete
- files and whole directory trees, search for files and run commands in the
- subshell.
+ GNU Midnight Commander is a visual file manager, licensed under GNU General Public License 
+ and therefore qualifies as Free Software. It's a feature rich full-screen text mode application
+ that allows you to copy, move and delete files and whole directory trees, 
+ search for files and run commands in the subshell. Internal viewer and editor are included. 
 endef
 
 CONFIGURE_ARGS += \
