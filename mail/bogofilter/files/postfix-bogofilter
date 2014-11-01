@@ -12,7 +12,7 @@ FILTER_DIR=/mnt/sda1/var/spool/bogofilter
 # misleading traces in headers, such as local address
 # canonicalizations.
 POSTFIX="/usr/sbin/sendmail -G -i"
-export BOGOFILTER_DIR=/var/lib/bogofilter
+export BOGOFILTER_DIR=/etc/bogofilter
 
 # Exit codes from <sysexits.h>
 EX_TEMPFAIL=75
