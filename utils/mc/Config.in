@@ -1,0 +1,20 @@
+menu "Configuration"
+	depends on PACKAGE_mc
+
+config MC_DIFF_VIEWER
+	bool "Compile with diff viewer"
+	default n
+
+config MC_EDITOR
+	bool "Enable internal editor"
+	default n
+
+config MC_SUBSHELL
+	bool "Compile in concurrent subshell"
+	default n
+
+config MC_DISABLE_VFS
+	bool "Disable VFS"
+	default y
+
+endmenu
