@@ -12,9 +12,9 @@ PKG_VERSION:=4.8.13
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Brenken <dibdot@gmail.com>
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_MD5SUM:=12a521a50da6a86852177591b9623d5e
+PKG_MD5SUM:=d967caa12765eb86e52a6a63ca202500
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -28,7 +28,6 @@ define Package/mc
   DEPENDS:=+glib2 +libncurses $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
   TITLE:=Midnight Commander - a powerful visual file manager
   URL:=http://www.midnight-commander.org/
-  SUBMENU:=filemanager
   MENU:=1
 endef
 
