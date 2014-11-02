@@ -29,6 +29,7 @@ ipt() {
 }
 
 do_modules() {
+#sm TODO: check first whether the modules exist and only load then
 	insmod act_ipt
 	insmod sch_$QDISC
 	insmod sch_ingress
@@ -59,15 +60,18 @@ do_modules() {
 [ -z "$IECN" ] && IECN="ECN"
 [ -z "$EECN" ] && EECN="NOECN"
 [ -z "$SQUASH_DSCP" ] && SQUASH_DSCP="1"
-[ -z "SQUASH_INGRESS" ] && SQUASH_INGRESS="1"
+[ -z "$SQUASH_INGRESS" ] && SQUASH_INGRESS="1"
 [ -z "$IQDISC_OPTS" ] && IQDISC_OPTS=""
 [ -z "$EQDISC_OPTS" ] && EQDISC_OPTS=""
 [ -z "$TC" ] && TC=`which tc`
 #[ -z "$TC" ] && TC="sqm_logger tc"# this redirects all tc calls into the log
 [ -z "$IP" ] && IP=$( which ip )
 [ -z "$INSMOD" ] && INSMOD=`which insmod`
-[ -z "TARGET" ] && TARGET="5ms"
+[ -z "$TARGET" ] && TARGET="5ms"
+[ -z "$IPT_MASK" ] && IPT_MASK="0xff"
+[ -z "$IPT_MASK_STRING" ] && IPT_MASK_STRING="/${IPT_MASK}"	# for set-mark
 
+#sqm_logger "${0} IPT_MASK: ${IPT_MASK_STRING}"
 
 
 
