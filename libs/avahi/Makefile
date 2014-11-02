@@ -217,9 +217,9 @@ CONFIGURE_ARGS+= \
 	--disable-gtk3 \
 	--with-xml=expat \
 	--disable-dbm \
-	--enable-compat-libdns_sd \
 	--enable-gdbm \
 	--enable-libdaemon \
+	$(if $(CONFIG_PACKAGE_libavahi-compat-libdnssd),--enable-compat-libdns_sd) \
 	--disable-python \
 	--disable-pygtk \
 	--disable-python-dbus \
@@ -263,7 +263,10 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{libavahi-*,libdns_sd*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-* $(1)/usr/lib/
+ifneq ($(CONFIG_PACKAGE_libavahi-compat-libdnssd),)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd* $(1)/usr/lib/
+endif
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
 endef

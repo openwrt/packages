@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE_URL:=ftp://ftp.porcupine.org/mirrors/postfix-release/official/
 PKG_VERSION:=2.11.3
 PKG_MD5SUM:=c3f0f51d8865559b40e9350eb3816011
@@ -16,7 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=IPL-1.0
 PKG_LICENSE_FILE:=LICENSE
-PKG_BUILD_DEPENDS:=+tinycdb
+PKG_BUILD_DEPENDS:=+POSTFIX_CDB:tinycdb
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,7 +25,7 @@ define Package/postfix
   CATEGORY:=Mail
   TITLE:=Postfix Mail Transmit Agent
   URL:=http://www.postfix.org/
-  DEPENDS:=+POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +libpcre
+  DEPENDS:=+POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +libpcre
 endef
 
 define Package/postfix/description
@@ -49,17 +49,22 @@ define Package/postfix/config
 			default y
 			help
 			  Implements LDAP support in postfix (using OpenLDAP).
+		config POSTFIX_DB
+			bool "BerkeleyDB support"
+			default n
+			help
+			  Implements support for btree files using Berkeley DB. Note that hash files support is not compiled into Berkeley DB OpenWRT distribution
+		config POSTFIX_CDB
+			bool "CDB support"
+			default y
+			help
+			  Implements support for cdb files using tinycdb
 	endmenu
 endef
 
-define Package/postfix/conffiles
-/etc/postfix/main.cf
-/etc/postfix/master.cf
-/etc/postfix/aliases
-endef
-
-CCARGS=-DHAS_CDB -DNO_DB -DNO_EPOLL -DNO_SIGSETJMP -DNO_NIS -DDEF_DB_TYPE=\"cdb\"
-AUXLIBS=-L$(STAGING_DIR)/usr/lib -lcdb
+CCARGS=-DNO_EPOLL -DNO_SIGSETJMP -DNO_NIS
+AUXLIBS=-L$(STAGING_DIR)/usr/lib
+default_database_type=cdb
 
 ifdef CONFIG_POSTFIX_TLS
   CCARGS+=-DUSE_TLS
@@ -75,6 +80,23 @@ ifdef CONFIG_POSTFIX_LDAP
   CCARGS+=-DHAS_LDAP
   AUXLIBS+=-lldap -llber
 endif
+
+ifdef CONFIG_POSTFIX_CDB
+  CCARGS+=-DHAS_CDB
+  AUXLIBS+=-lcdb
+endif
+
+ifdef CONFIG_POSTFIX_DB
+  AUXLIBS+=-ldb
+  CCARGS+=-DHAS_DB
+  ifndef CONFIG_POSTFIX_CDB
+    default_database_type=btree
+  endif
+else
+  CCARGS+=-DNO_DB
+endif
+
+CCARGS+=-DDEF_DB_TYPE=\"$(default_database_type)\"
 
 config_directory=/etc/postfix
 sample_directory=/etc/postfix
@@ -93,7 +115,18 @@ mailq_path=/usr/bin/mailq
 ln_suffix=.postfix
 ln_old_suffix=.old
 
+define Package/postfix/conffiles
+$(config_directory)/main.cf
+$(config_directory)/master.cf
+$(config_directory)/aliases
+endef
+
 define Build/Configure
+	if [ "$(CONFIG_POSTFIX_DB)" = "" -a "$(CONFIG_POSTFIX_CDB)" = "" ]; then\
+	  echo "Build error: You must select at least one of the DB types";\
+          exit 1;\
+	fi
+
 	cd $(PKG_BUILD_DIR); $(MAKE) makefiles CCARGS='$(CCARGS)' $(TARGET_CONFIGURE_OPTS) AUXLIBS="$(AUXLIBS)"
 endef
 
@@ -101,6 +134,9 @@ define Build/Compile
 	# Currently postfix has a bug with Makefiles that CCARGS are not passed to the compiler, so we are copying them to CC
 	cd $(PKG_BUILD_DIR); $(MAKE) $(TARGET_CONFIGURE_OPTS) CC='$(TARGET_CC) $(CCARGS)'
 	cp ./files/main.cf.default $(PKG_BUILD_DIR)/conf/main.cf.default
+	echo "default_database_type = $(default_database_type)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
+	echo "alias_database = $(default_database_type):$(config_directory)/aliases" >> $(PKG_BUILD_DIR)/conf/main.cf.default
+	echo "alias_maps = $(default_database_type):$(config_directory)/aliases" >> $(PKG_BUILD_DIR)/conf/main.cf.default
 	echo "sendmail_path = $(sendmail_path)$(ln_suffix)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
 	echo "newaliases_path = $(newaliases_path)$(ln_suffix)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
 	echo "mailq_path = $(mailq_path)$(ln_suffix)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
@@ -156,24 +192,24 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
  echo "mydomain = $$(uci get system.@system[0].hostname|sed -e "s/[^\.]*\.\(.*\)/\1/")" >> $(config_directory)/main.cf.default
  for net in $$(uci show network|grep ipaddr|sed -e "s/network\.\([^\.]*\).*/\1/"); do eval "$$(ipcalc.sh $$(uci get network.$$net.ipaddr) $$(uci get network.$$net.netmask))"; echo "$$IP/$$PREFIX"; done | xargs echo "mynetworks =" >> $(config_directory)/main.cf.default
 
- grep -qc "^sendmail_path" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^sendmail_path =" /etc/postfix/main.cf.default)"
- grep -qc "^newaliases_path" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^newaliases_path =" /etc/postfix/main.cf.default)"
- grep -qc "^mailq_path" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^mailq_path =" /etc/postfix/main.cf.default)"
- grep -qc "^html_directory" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^html_directory =" /etc/postfix/main.cf.default)"
- grep -qc "^manpage_directory" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^manpage_directory =" /etc/postfix/main.cf.default)"
- grep -qc "^sample_directory" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^sample_directory =" /etc/postfix/main.cf.default)"
- grep -qc "^readme_directory" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^readme_directory =" /etc/postfix/main.cf.default)"
- grep -qc "^command_directory" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^command_directory =" /etc/postfix/main.cf.default)"
- grep -qc "^daemon_directory" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^daemon_directory =" /etc/postfix/main.cf.default)"
- grep -qc "^data_directory" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^data_directory =" /etc/postfix/main.cf.default)"
- grep -qc "^queue_directory" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^queue_directory =" /etc/postfix/main.cf.default)"
- grep -qc "^config_directory" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^config_directory =" /etc/postfix/main.cf.default)"
- grep -qc "^mail_spool_directory" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^mail_spool_directory =" /etc/postfix/main.cf.default)"
- grep -qc "^mail_owner" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^mail_owner =" /etc/postfix/main.cf.default)"
- grep -qc "^setgid_group" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^setgid_group =" /etc/postfix/main.cf.default)"
- grep -qc "^myhostname" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^myhostname =" /etc/postfix/main.cf.default)"
- grep -qc "^mydomain" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^mydomain =" /etc/postfix/main.cf.default)"
- grep -qc "^mynetworks" /etc/postfix/main.cf >/dev/null || postconf -e "$$(grep "^mynetworks =" /etc/postfix/main.cf.default)"
+ grep -qc "^sendmail_path" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^sendmail_path =" $(config_directory)/main.cf.default)"
+ grep -qc "^newaliases_path" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^newaliases_path =" $(config_directory)/main.cf.default)"
+ grep -qc "^mailq_path" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^mailq_path =" $(config_directory)/main.cf.default)"
+ grep -qc "^html_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^html_directory =" $(config_directory)/main.cf.default)"
+ grep -qc "^manpage_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^manpage_directory =" $(config_directory)/main.cf.default)"
+ grep -qc "^sample_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^sample_directory =" $(config_directory)/main.cf.default)"
+ grep -qc "^readme_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^readme_directory =" $(config_directory)/main.cf.default)"
+ grep -qc "^command_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^command_directory =" $(config_directory)/main.cf.default)"
+ grep -qc "^daemon_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^daemon_directory =" $(config_directory)/main.cf.default)"
+ grep -qc "^data_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^data_directory =" $(config_directory)/main.cf.default)"
+ grep -qc "^queue_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^queue_directory =" $(config_directory)/main.cf.default)"
+ grep -qc "^config_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^config_directory =" $(config_directory)/main.cf.default)"
+ grep -qc "^mail_spool_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^mail_spool_directory =" $(config_directory)/main.cf.default)"
+ grep -qc "^mail_owner" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^mail_owner =" $(config_directory)/main.cf.default)"
+ grep -qc "^setgid_group" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^setgid_group =" $(config_directory)/main.cf.default)"
+ grep -qc "^myhostname" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^myhostname =" $(config_directory)/main.cf.default)"
+ grep -qc "^mydomain" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^mydomain =" $(config_directory)/main.cf.default)"
+ grep -qc "^mynetworks" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^mynetworks =" $(config_directory)/main.cf.default)"
 
  EXTRA_COMMANDS=create_users /etc/init.d/postfix create_users
 
@@ -181,15 +217,10 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
  postfix post-install upgrade-source
  postfix upgrade-configuration
  newaliases
- if [ `ps | grep "postfix/master" | grep -cv grep` -gt 0 ]
- then
-  postfix reload
- fi
- if [ `grep -c aliases /etc/sysupgrade.conf` -eq 0 ]
- then
-  echo "$(config_directory)/main.cf" >> /etc/sysupgrade.conf
-  echo "$(config_directory)/aliases" >> /etc/sysupgrade.conf
- fi
+ ps | grep "postfix/master" | grep -cvq grep >/dev/null && postfix reload
+ grep -qc main\.cf /etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/main.cf" >> /etc/sysupgrade.conf
+ grep -qc master\.cf /etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/master.cf" >> /etc/sysupgrade.conf
+ grep -qc aliases /etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/aliases" >> /etc/sysupgrade.conf
 
 fi
 endef
@@ -199,11 +230,7 @@ define Package/postfix/prerm
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
 
- if [ `ps | grep "postfix/master" | grep -cv grep` -gt 0 ]
- then
-  postfix stop
- fi
-
+ ps | grep "postfix/master" | grep -cvq grep >/dev/null && postfix stop
  /etc/init.d/postfix disable
 
 fi
@@ -213,7 +240,7 @@ define Package/postfix/postrm
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
- rm -f $(config_directory)/aliases.cdb $(data_directory)/master.lock
+ rm -f $(config_directory)/aliases.cdb $(config_directory)/aliases.db $(data_directory)/master.lock
 
  rm -f "$(sendmail_path)" "$(newaliases_path)" "$(mailq_path)"
 

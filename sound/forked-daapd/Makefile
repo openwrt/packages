@@ -32,7 +32,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/forked-daapd
 SECTION:=sound
 CATEGORY:=Sound
-TITLE:=Improved iTunes (DAAP) server. Support for Apple Remote and AirPlay.
+TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
 URL:=https://github.com/ejurgensen/forked-daapd
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
 	+libevent2 +libdaemon +libantlr3c +confuse +glib2 +alsa-lib +libffmpeg-full \
