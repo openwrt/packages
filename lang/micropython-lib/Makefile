@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython-lib
-PKG_VERSION=0.1-20140822-$(PKG_SOURCE_VERSION)
+PKG_VERSION=0.1-20141028-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/micropython/micropython-lib.git
-PKG_SOURCE_VERSION:=46ede279d8fae081319914d00cb4a9bb22102fa1
+PKG_SOURCE_VERSION:=610aa65ceff9f4b0a60514423f543aa807f49f76
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
@@ -27,6 +27,7 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/micropython-lib
+    SUBMENU:=Python
     SECTION:=lang
     CATEGORY:=Languages
     TITLE:=micropython-lib
