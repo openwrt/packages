@@ -8,5 +8,8 @@ config PERL_TESTS
 		Include test suites for all perl packages.
 		This will make perl related packages much bigger, so
 		use with care.
+		
+		Note: Test support is still in development. Some tests
+		still fail, others are just missing completely.
 
 endmenu
