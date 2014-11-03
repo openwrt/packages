@@ -32,7 +32,6 @@ alignbytes='4'
 ansi2knr=''
 aphostname='/bin/hostname'
 api_revision='5'
-api_subversion='0'
 
 
 ar='ar'
@@ -1050,8 +1049,6 @@ config_args='-der'
 config_argc=1
 config_arg1='-der'
 PERL_REVISION=5
-
-PERL_SUBVERSION=0
 PERL_API_REVISION=5
 
 PERL_API_SUBVERSION=0
@@ -1150,12 +1147,14 @@ privlib='/usr/lib/perl5/5.20'
 privlibexp='/usr/lib/perl5/5.20'
 archlib='/usr/lib/perl5/5.20'
 archlibexp='/usr/lib/perl5/5.20'
-version='5.20.0'
-version_patchlevel_string='version 20 subversion 0'
+version='5.20.1'
+version_patchlevel_string='version 20 subversion 1'
 PERL_VERSION=20
 PERL_API_VERSION=20
+PERL_SUBVERSION=0
 patchlevel='20'
 ccdlflags='-fPIC -Wl,-rpath,/usr/lib/perl5/5.20/CORE'
+api_subversion='1'
 
 # Make perl use these tools instead of the target binaries during build.
 hostgenerate='%%HOSTGENERATE%%'
