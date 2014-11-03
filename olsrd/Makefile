@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=http://www.olsr.org/releases/0.6
 
 PKG_MD5SUM:=d4411d4ed94b399a3778b8036dee1214
 PKG_BUILD_PARALLEL:=1
+PKG_LICENSE:=BSD-3-Clause
 
 include $(INCLUDE_DIR)/package.mk
 

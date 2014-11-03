@@ -20,6 +20,7 @@ PKG_SOURCE_SUBDIR:=$(if $(PKG_BRANCH),$(PKG_BRANCH),$(PKG_NAME))-$(PKG_VERSION)
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/svn/batman/trunk/
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+PKG_LICENSE:=GPL-2.0
 
 PKG_KMOD_BUILD_DIR:=$(PKG_BUILD_DIR)/batman/linux/modules
 

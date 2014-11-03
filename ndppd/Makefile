@@ -16,6 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 # Latest release
 PKG_SOURCE_URL:=http://www.priv.nu/projects/ndppd/files/
 PKG_MD5SUM:=d6f3243bb7fc04c8085371c9acddc50e
+PKG_LICENSE:=GPL-3.0+
 
 # Development snapshot
 #PKG_SOURCE_URL=git://github.com/Tuhox/ndppd.git

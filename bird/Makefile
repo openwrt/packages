@@ -14,6 +14,7 @@ PKG_SOURCE:=bird-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://bird.network.cz/pub/bird
 PKG_MD5SUM:=eb7e00b9c1d102ddfcbc19d9cb168511
 PKG_BUILD_DEPENDS:=libncurses libreadline
+PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 

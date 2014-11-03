@@ -22,6 +22,7 @@ BIRD:=bird4
 PKG_NAME:=$(BIRD)-openwrt
 PKG_RELEASE:=0.2
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
+PKG_LICENSE:=GPL-3.0+
 uci:=$(BIRD)-uci
 luci:=luci-app-$(BIRD)
 

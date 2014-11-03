@@ -14,6 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.pps.univ-paris-diderot.fr/~jch/software/files/
 PKG_MD5SUM:=20e3284d5ad291d7ba2ad91d5b47de10
+PKG_LICENSE:=MIT
 
 include $(INCLUDE_DIR)/package.mk
 

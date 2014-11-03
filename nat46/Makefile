@@ -18,6 +18,7 @@ PKG_SOURCE_URL:=https://github.com/ayourtch/nat46.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=758a02e6f9e4c43553e0fc37d83c286c77febe94
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 

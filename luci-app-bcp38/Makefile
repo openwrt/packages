@@ -10,6 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luci-app-bcp38
 PKG_VERSION:=2
 PKG_RELEASE:=1
+PKG_LICENSE:=Apache-2.0
 LUCI_DIR:=/usr/lib/lua/luci
 
 include $(INCLUDE_DIR)/package.mk

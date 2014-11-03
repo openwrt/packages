@@ -18,6 +18,7 @@ PKG_SOURCE_URL:=git://github.com/nodogsplash/nodogsplash.git
 PKG_SOURCE_VERSION:=v0.9_beta9.9.8
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
+PKG_LICENSE:=GPL-2.0+
 
 include $(INCLUDE_DIR)/package.mk
 
