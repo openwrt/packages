@@ -106,24 +106,8 @@ Hooks/Configure/Pre+=\
 	Hooks/Configure/Pre/ConfigSiteInstall
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include $(1)/usr/lib
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
 	$(INSTALL_DATA) ./files/python-package.mk $(STAGING_DIR)/mk/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
-		$(1)/usr/include/
-	$(CP) \
-		$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION) \
-		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
-		$(1)/usr/lib/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
-		$(1)/usr/lib/python$(PYTHON_VERSION)/
-
-	$(CP) \
-		$(STAGING_DIR_HOST)/bin/python$(PYTHON_VERSION)-config \
-		$(2)/bin/
-	$(SED) 's,^#!.*,#!/usr/bin/env python$(PYTHON_VERSION),g' $(2)/bin/python$(PYTHON_VERSION)-config
 endef
 
 define PyPackage/python/filespec
