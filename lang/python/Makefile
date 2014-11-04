@@ -93,7 +93,6 @@ CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--with-threads \
 	--with-system-ffi="$(STAGING_DIR)/usr" \
-	--without-ensurepip \
 	--without-pymalloc \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
@@ -172,7 +171,6 @@ endef
 
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
-	--without-ensurepip \
 	--without-pymalloc \
 	--with-threads \
 	--prefix=$(STAGING_DIR_HOST)
