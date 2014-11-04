@@ -17,6 +17,7 @@ PYTHON_PKG_DIR:=/usr/lib/python$(PYTHON_VERSION)/site-packages
 
 PYTHON:=python$(PYTHON_VERSION)
 
+HOST_PYTHON_LIB_DIR:=$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION)
 HOST_PYTHON_BIN:=$(STAGING_DIR_HOST)/bin/python2
 
 define HostPython
