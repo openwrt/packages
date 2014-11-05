@@ -30,6 +30,13 @@ define HostPython
 	)
 endef
 
+PKG_USE_MIPS16:=0
+# This is required in addition to PKG_USE_MIPS16:=0 because otherwise MIPS16
+# flags are inherited from the Python base package (via sysconfig module)
+ifdef CONFIG_USE_MIPS16
+  TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
+endif
+
 define PyPackage
   $(call shexport,PyPackage/$(1)/filespec)
 
