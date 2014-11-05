@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=nat46
-PKG_VERSION:=1
+PKG_VERSION:=2
 PKG_RELEASE:=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/ayourtch/nat46.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=758a02e6f9e4c43553e0fc37d83c286c77febe94
+PKG_SOURCE_VERSION:=5589212cb35527929fd66218721ab54040c6b788
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=GPL-2.0
 
@@ -43,6 +43,7 @@ include $(INCLUDE_DIR)/kernel-defaults.mk
 define Build/Compile
 	$(MAKE) $(KERNEL_MAKEOPTS) SUBDIRS="$(PKG_BUILD_DIR)/nat46/modules" \
 		MODFLAGS="-DMODULE -mlong-calls" \
+		EXTRA_CFLAGS="-DNAT46_VERSION=\\\"$(PKG_SOURCE_VERSION)\\\"" \
 		modules
 endef
 
