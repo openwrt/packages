@@ -18,7 +18,8 @@ PKG_LICENSE:=ISC
 PKG_LICENSE_FILE:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include $(STAGING_DIR)/mk/python-package.mk
+#$(call include_mk, python-package.mk)
 
 define Package/python-dns
 	SECTION:=language-python
@@ -26,7 +27,7 @@ define Package/python-dns
 	SUBMENU:=Python
 	TITLE:=dnspython
 	URL:=http://www.dnspython.org/
-	DEPENDS:=+python-mini
+	DEPENDS:=+python
 endef
 
 define Package/python-dns/description
