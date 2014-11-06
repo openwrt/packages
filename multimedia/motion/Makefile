@@ -8,16 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=motion
-PKG_VERSION:=20110826-051001
-PKG_RELEASE:=2
+PKG_VERSION=3.4.0-20141018-$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
+
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
+PKG_LICENSE:=GPLv2
+PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.lavrsen.dk/sources/motion-daily \
-		@SF/motion
-PKG_MD5SUM:=e703fce57ae2215cb05f25e3027f5818
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/Mr-Dave/motion.git
+PKG_SOURCE_VERSION:=9479d910f2149b5558788bb86f97f26522794212
 
-PKG_INSTALL:=1
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -30,7 +35,7 @@ define Package/motion
 endef
 
 define Package/motion/conffiles
-/etc/motion.conf
+  /etc/motion.conf
 endef
 
 CONFIGURE_ARGS+= \
@@ -44,9 +49,9 @@ CONFIGURE_ARGS+= \
 
 define Package/motion/install
 	$(INSTALL_DIR) $(1)/etc
-	$(CP) $(PKG_INSTALL_DIR)/etc/motion-dist.conf $(1)/etc/motion.conf
+	$(CP) $(PKG_BUILD_DIR)/motion-dist.conf $(1)/etc/motion.conf
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/motion $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/motion $(1)/usr/bin/
 
 endef
 
