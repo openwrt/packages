@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2011 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -12,6 +12,10 @@ PKG_NAME:=zoneinfo
 PKG_VERSION:=2014i
 PKG_VERSION_CODE:=2014i
 PKG_RELEASE:=2
+
+#As i couldn't find real license used "Puplic Domain"
+#as referense to http://www.iana.org/time-zones/repository/tz-link.html
+PKG_LICENSE:=Public Domain
 
 PKG_SOURCE:=tzdata$(PKG_VERSION).tar.gz
 PKG_SOURCE_CODE:=tzcode$(PKG_VERSION_CODE).tar.gz
