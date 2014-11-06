@@ -1,0 +1,75 @@
+From 27d4d10a3ed3a4d87941247ed73bcb67c68b2bb9 Mon Sep 17 00:00:00 2001
+From: Thomas Bernard <miniupnp@free.fr>
+Date: Thu, 30 Oct 2014 20:37:35 +0100
+Subject: [PATCH] miniupnpd.c: fix PCP third party mode (in IPv4)
+
+fixes problem introduced in commit 16389fda3c5313bffc83fb6594f5bb5872e37e5e
+---
+ miniupnpd.c | 38 +++++++++++++++++++++++++++-----------
+ 1 file changed, 27 insertions(+), 11 deletions(-)
+
+diff --git a/miniupnpd.c b/miniupnpd.c
+index 6468075..06bcae2 100644
+--- a/miniupnpd.c
++++ b/miniupnpd.c
+@@ -2133,30 +2133,46 @@ main(int argc, char * * argv)
+ 				                               msg_buff, sizeof(msg_buff));
+ 				if (len < 1)
+ 					continue;
++#ifdef ENABLE_PCP
++				if (msg_buff[0]==0) {  /* version equals to 0 -> means NAT-PMP */
++					/* Check if the packet is coming from a LAN to enforce RFC6886 :
++					 * The NAT gateway MUST NOT accept mapping requests destined to the NAT
++					 * gateway's external IP address or received on its external network
++					 * interface.  Only packets received on the internal interface(s) with a
++					 * destination address matching the internal address(es) of the NAT
++					 * gateway should be allowed. */
++					/* TODO : move to ProcessIncomingNATPMPPacket() ? */
++					lan_addr = get_lan_for_peer((struct sockaddr *)&senderaddr);
++					if(lan_addr == NULL) {
++						char sender_str[64];
++						sockaddr_to_string((struct sockaddr *)&senderaddr, sender_str, sizeof(sender_str));
++						syslog(LOG_WARNING, "NAT-PMP packet sender %s not from a LAN, ignoring",
++						       sender_str);
++						continue;
++					}
++					ProcessIncomingNATPMPPacket(snatpmp[i], msg_buff, len,
++					                            &senderaddr);
++				} else { /* everything else can be PCP */
++					ProcessIncomingPCPPacket(snatpmp[i], msg_buff, len,
++					                         (struct sockaddr *)&senderaddr, NULL);
++				}
++
++#else
+ 				/* Check if the packet is coming from a LAN to enforce RFC6886 :
+ 				 * The NAT gateway MUST NOT accept mapping requests destined to the NAT
+ 				 * gateway's external IP address or received on its external network
+ 				 * interface.  Only packets received on the internal interface(s) with a
+ 				 * destination address matching the internal address(es) of the NAT
+ 				 * gateway should be allowed. */
++				/* TODO : move to ProcessIncomingNATPMPPacket() ? */
+ 				lan_addr = get_lan_for_peer((struct sockaddr *)&senderaddr);
+ 				if(lan_addr == NULL) {
+ 					char sender_str[64];
+ 					sockaddr_to_string((struct sockaddr *)&senderaddr, sender_str, sizeof(sender_str));
+-					syslog(LOG_WARNING, "NAT-PMP/PCP packet sender %s not from a LAN, ignoring",
++					syslog(LOG_WARNING, "NAT-PMP packet sender %s not from a LAN, ignoring",
+ 					       sender_str);
+ 					continue;
+ 				}
+-#ifdef ENABLE_PCP
+-				if (msg_buff[0]==0) {  /* version equals to 0 -> means NAT-PMP */
+-					ProcessIncomingNATPMPPacket(snatpmp[i], msg_buff, len,
+-					                            &senderaddr);
+-				} else { /* everything else can be PCP */
+-					ProcessIncomingPCPPacket(snatpmp[i], msg_buff, len,
+-					                         (struct sockaddr *)&senderaddr, NULL);
+-				}
+-
+-#else
+ 				ProcessIncomingNATPMPPacket(snatpmp[i], msg_buff, len, &senderaddr);
+ #endif
+ 			}
+-- 
+2.1.0
+
