@@ -142,7 +142,9 @@ define PyPackage/python-full/filespec
 -|/usr/lib/python$(PYTHON_VERSION)/lib2to3
 -|/usr/lib/python$(PYTHON_VERSION)/lib-tk
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_testcapi.so
+-|/usr/lib/python$(PYTHON_VERSION)/pdb.doc
 -|/usr/lib/python$(PYTHON_VERSION)/test
+-|/usr/lib/python$(PYTHON_VERSION)/webbrowser.py
 -|/usr/lib/python$(PYTHON_VERSION)/*/test
 -|/usr/lib/python$(PYTHON_VERSION)/*/tests
 endef
