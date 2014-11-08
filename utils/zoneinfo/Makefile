@@ -100,11 +100,6 @@ $(call Package/zoneinfo/Default)
   TITLE:=Zone Information (India)
 endef
 
-define Package/zoneinfo-middleeast
-$(call Package/zoneinfo/Default)
-  TITLE:=Zone Information (MiddleEast)
-endef
-
 define Build/Prepare
 	(cd $(PKG_BUILD_DIR) && tar -xzf $(DL_DIR)/$(PKG_SOURCE_CODE) && tar -xzf $(DL_DIR)/$(PKG_SOURCE))
 endef
@@ -121,7 +116,6 @@ define Build/Compile
 		TZDIR="$(PKG_INSTALL_DIR)/zoneinfo" \
 		install
 endef
-
 
 define Package/zoneinfo-core/install
 	$(INSTALL_DIR) $(1)/usr/share/zoneinfo
@@ -226,18 +220,9 @@ define Package/zoneinfo-europe/install
 	done
 endef
 
-
 define Package/zoneinfo-india/install
 	$(INSTALL_DIR) $(1)/usr/share/zoneinfo
 	for i in Indian ; do \
-	  $(CP) $(PKG_INSTALL_DIR)/zoneinfo/$$$$i \
-	      $(1)/usr/share/zoneinfo ; \
-	done
-endef
-
-define Package/zoneinfo-middleeast/install
-	$(INSTALL_DIR) $(1)/usr/share/zoneinfo
-	for i in Egypt Libya Iran Israel Turkey Mideast ; do \
 	  $(CP) $(PKG_INSTALL_DIR)/zoneinfo/$$$$i \
 	      $(1)/usr/share/zoneinfo ; \
 	done
@@ -255,5 +240,3 @@ $(eval $(call BuildPackage,zoneinfo-australia-nz))
 $(eval $(call BuildPackage,zoneinfo-pacific))
 $(eval $(call BuildPackage,zoneinfo-europe))
 $(eval $(call BuildPackage,zoneinfo-india))
-$(eval $(call BuildPackage,zoneinfo-middleeast))
-
