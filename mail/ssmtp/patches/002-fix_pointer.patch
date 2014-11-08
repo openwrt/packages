@@ -1,0 +1,384 @@
+--- a/ssmtp.c
++++ b/ssmtp.c
+@@ -51,21 +51,21 @@ bool_t use_oldauth = False;		/* use old
+ 
+ #define ARPADATE_LENGTH 32		/* Current date in RFC format */
+ char arpadate[ARPADATE_LENGTH];
+-char *auth_user = (char)NULL;
+-char *auth_pass = (char)NULL;
+-char *auth_method = (char)NULL;		/* Mechanism for SMTP authentication */
+-char *mail_domain = (char)NULL;
+-char *from = (char)NULL;		/* Use this as the From: address */
++char *auth_user = NULL;
++char *auth_pass = NULL;
++char *auth_method = NULL;		/* Mechanism for SMTP authentication */
++char *mail_domain = NULL;
++char *from = NULL;		/* Use this as the From: address */
+ char *hostname;
+ char *mailhost = "mailhub";
+-char *minus_f = (char)NULL;
+-char *minus_F = (char)NULL;
++char *minus_f = NULL;
++char *minus_F = NULL;
+ char *gecos;
+-char *prog = (char)NULL;
++char *prog = NULL;
+ char *root = NULL;
+ char *tls_cert = "/etc/ssl/certs/ssmtp.pem";	/* Default Certificate */
+-char *uad = (char)NULL;
+-char *config_file = (char)NULL;		/* alternate configuration file */
++char *uad = NULL;
++char *config_file = NULL;		/* alternate configuration file */
+ 
+ headers_t headers, *ht;
+ 
+@@ -257,7 +257,7 @@ char *strip_post_ws(char *str)
+ 
+ 	p = (str + strlen(str));
+ 	while(isspace(*--p)) {
+-		*p = (char)NULL;
++		*p = '\0';
+ 	}
+ 
+ 	return(p);
+@@ -275,7 +275,7 @@ char *addr_parse(char *str)
+ #endif
+ 
+ 	/* Simple case with email address enclosed in <> */
+-	if((p = strdup(str)) == (char *)NULL) {
++	if((p = strdup(str)) == NULL) {
+ 		die("addr_parse(): strdup()");
+ 	}
+ 
+@@ -283,7 +283,7 @@ char *addr_parse(char *str)
+ 		q++;
+ 
+ 		if((p = strchr(q, '>'))) {
+-			*p = (char)NULL;
++			*p = '\0';
+ 		}
+ 
+ #if 0
+@@ -306,7 +306,7 @@ char *addr_parse(char *str)
+ 	q = strip_post_ws(p);
+ 	if(*q == ')') {
+ 		while((*--q != '('));
+-		*q = (char)NULL;
++		*q = '\0';
+ 	}
+ 	(void)strip_post_ws(p);
+ 
+@@ -359,7 +359,7 @@ bool_t standardise(char *str, bool_t *li
+ 	*linestart = False;
+ 
+ 	if((p = strchr(str, '\n'))) {
+-		*p = (char)NULL;
++		*p = '\0';
+ 		*linestart = True;
+ 	}
+ 	return(leadingdot);
+@@ -380,7 +380,7 @@ void revaliases(struct passwd *pw)
+ 		while(fgets(buf, sizeof(buf), fp)) {
+ 			/* Make comments invisible */
+ 			if((p = strchr(buf, '#'))) {
+-				*p = (char)NULL;
++				*p = '\0';
+ 			}
+ 
+ 			/* Ignore malformed lines and comments */
+@@ -515,11 +515,11 @@ void rcpt_save(char *str)
+ #endif
+ 
+ 	/* Ignore missing usernames */
+-	if(*str == (char)NULL) {
++	if(*str == '\0') {
+ 		return;
+ 	}
+ 
+-	if((rt->string = strdup(str)) == (char *)NULL) {
++	if((rt->string = strdup(str)) == NULL) {
+ 		die("rcpt_save() -- strdup() failed");
+ 	}
+ 
+@@ -544,7 +544,7 @@ void rcpt_parse(char *str)
+ 	(void)fprintf(stderr, "*** rcpt_parse(): str = [%s]\n", str);
+ #endif
+ 
+-	if((p = strdup(str)) == (char *)NULL) {
++	if((p = strdup(str)) == NULL) {
+ 		die("rcpt_parse(): strdup() failed");
+ 	}
+ 	q = p;
+@@ -572,7 +572,7 @@ void rcpt_parse(char *str)
+ 		}
+ 
+ 		/* End of string? */
+-		if(*(q + 1) == (char)NULL) {
++		if(*(q + 1) == '\0') {
+ 			got_addr = True;
+ 		}
+ 
+@@ -580,7 +580,7 @@ void rcpt_parse(char *str)
+ 		if((*q == ',') && (in_quotes == False)) {
+ 			got_addr = True;
+ 
+-			*q = (char)NULL;
++			*q = '\0';
+ 		}
+ 
+ 		if(got_addr) {
+@@ -664,7 +664,7 @@ void header_save(char *str)
+ 	(void)fprintf(stderr, "header_save(): str = [%s]\n", str);
+ #endif
+ 
+-	if((p = strdup(str)) == (char *)NULL) {
++	if((p = strdup(str)) == NULL) {
+ 		die("header_save() -- strdup() failed");
+ 	}
+ 	ht->string = p;
+@@ -672,7 +672,7 @@ void header_save(char *str)
+ 	if(strncasecmp(ht->string, "From:", 5) == 0) {
+ #if 1
+ 		/* Hack check for NULL From: line */
+-		if(*(p + 6) == (char)NULL) {
++		if(*(p + 6) == '\0') {
+ 			return;
+ 		}
+ #endif
+@@ -735,19 +735,19 @@ header_parse() -- Break headers into sep
+ void header_parse(FILE *stream)
+ {
+ 	size_t size = BUF_SZ, len = 0;
+-	char *p = (char *)NULL, *q;
++	char *p = NULL, *q;
+ 	bool_t in_header = True;
+-	char l = (char)NULL;
++	char l = '\0';
+ 	int c;
+ 
+ 	while(in_header && ((c = fgetc(stream)) != EOF)) {
+ 		/* Must have space for up to two more characters, since we
+ 			may need to insert a '\r' */
+-		if((p == (char *)NULL) || (len >= (size - 1))) {
++		if((p == NULL) || (len >= (size - 1))) {
+ 			size += BUF_SZ;
+ 
+ 			p = (char *)realloc(p, (size * sizeof(char)));
+-			if(p == (char *)NULL) {
++			if(p == NULL) {
+ 				die("header_parse() -- realloc() failed");
+ 			}
+ 			q = (p + len);
+@@ -772,9 +772,9 @@ void header_parse(FILE *stream)
+ 						in_header = False;
+ 
+ 				default:
+-						*q = (char)NULL;
++						*q = '\0';
+ 						if((q = strrchr(p, '\n'))) {
+-							*q = (char)NULL;
++							*q = '\0';
+ 						}
+ 						header_save(p);
+ 
+@@ -805,9 +805,9 @@ void header_parse(FILE *stream)
+ 						in_header = False;
+ 
+ 				default:
+-						*q = (char)NULL;
++						*q = '\0';
+ 						if((q = strrchr(p, '\n'))) {
+-							*q = (char)NULL;
++							*q = '\0';
+ 						}
+ 						header_save(p);
+ 
+@@ -872,11 +872,11 @@ bool_t read_config()
+ 		char *rightside;
+ 		/* Make comments invisible */
+ 		if((p = strchr(buf, '#'))) {
+-			*p = (char)NULL;
++			*p = '\0';
+ 		}
+ 
+ 		/* Ignore malformed lines and comments */
+-		if(strchr(buf, '=') == (char *)NULL) continue;
++		if(strchr(buf, '=') == NULL) continue;
+ 
+ 		/* Parse out keywords */
+ 		p=firsttok(&begin, "= \t\n");
+@@ -886,7 +886,7 @@ bool_t read_config()
+ 		}
+ 		if(p && q) {
+ 			if(strcasecmp(p, "Root") == 0) {
+-				if((root = strdup(q)) == (char *)NULL) {
++				if((root = strdup(q)) == NULL) {
+ 					die("parse_config() -- strdup() failed");
+ 				}
+ 
+@@ -900,7 +900,7 @@ bool_t read_config()
+ 					port = atoi(r);
+ 				}
+ 
+-				if((mailhost = strdup(q)) == (char *)NULL) {
++				if((mailhost = strdup(q)) == NULL) {
+ 					die("parse_config() -- strdup() failed");
+ 				}
+ 
+@@ -945,7 +945,7 @@ bool_t read_config()
+ 					mail_domain = strdup(q);
+ 				}
+ 
+-				if(mail_domain == (char *)NULL) {
++				if(mail_domain == NULL) {
+ 					die("parse_config() -- strdup() failed");
+ 				}
+ 				rewrite_domain = True;
+@@ -1021,7 +1021,7 @@ bool_t read_config()
+ 				}
+ 			}
+ 			else if(strcasecmp(p, "TLSCert") == 0) {
+-				if((tls_cert = strdup(q)) == (char *)NULL) {
++				if((tls_cert = strdup(q)) == NULL) {
+ 					die("parse_config() -- strdup() failed");
+ 				}
+ 
+@@ -1032,7 +1032,7 @@ bool_t read_config()
+ #endif
+ 			/* Command-line overrides these */
+ 			else if(strcasecmp(p, "AuthUser") == 0 && !auth_user) {
+-				if((auth_user = strdup(q)) == (char *)NULL) {
++				if((auth_user = strdup(q)) == NULL) {
+ 					die("parse_config() -- strdup() failed");
+ 				}
+ 
+@@ -1041,7 +1041,7 @@ bool_t read_config()
+ 				}
+ 			}
+ 			else if(strcasecmp(p, "AuthPass") == 0 && !auth_pass) {
+-				if((auth_pass = strdup(q)) == (char *)NULL) {
++				if((auth_pass = strdup(q)) == NULL) {
+ 					die("parse_config() -- strdup() failed");
+ 				}
+ 
+@@ -1050,7 +1050,7 @@ bool_t read_config()
+ 				}
+ 			}
+ 			else if(strcasecmp(p, "AuthMethod") == 0 && !auth_method) {
+-				if((auth_method = strdup(q)) == (char *)NULL) {
++				if((auth_method = strdup(q)) == NULL) {
+ 					die("parse_config() -- strdup() failed");
+ 				}
+ 
+@@ -1309,7 +1309,7 @@ char *fd_gets(char *buf, int size, int f
+ 			buf[i++] = c;
+ 		}
+ 	}
+-	buf[i] = (char)NULL;
++	buf[i] = '\0';
+ 
+ 	return(buf);
+ }
+@@ -1433,14 +1433,14 @@ int ssmtp(char *argv[])
+ 	}
+ 
+ 	if((p = strtok(pw->pw_gecos, ";,"))) {
+-		if((gecos = strdup(p)) == (char *)NULL) {
++		if((gecos = strdup(p)) == NULL) {
+ 			die("ssmtp() -- strdup() failed");
+ 		}
+ 	}
+ 	revaliases(pw);
+ 
+ 	/* revaliases() may have defined this */
+-	if(uad == (char *)NULL) {
++	if(uad == NULL) {
+ 		uad = append_domain(pw->pw_name);
+ 	}
+ 
+@@ -1488,7 +1488,7 @@ int ssmtp(char *argv[])
+ 	/* Try to log in if username was supplied */
+ 	if(auth_user) {
+ #ifdef MD5AUTH
+-		if(auth_pass == (char *)NULL) {
++		if(auth_pass == NULL) {
+ 			auth_pass = strdup("");
+ 		}
+ 
+@@ -1736,7 +1736,7 @@ char **parse_options(int argc, char *arg
+ 		j = 0;
+ 
+ 		add = 1;
+-		while(argv[i][++j] != (char)NULL) {
++		while(argv[i][++j] != '\0') {
+ 			switch(argv[i][j]) {
+ #ifdef INET6
+ 			case '6':
+@@ -1754,14 +1754,14 @@ char **parse_options(int argc, char *arg
+ 					if((!argv[i][(j + 1)])
+ 						&& argv[(i + 1)]) {
+ 						auth_user = strdup(argv[i+1]);
+-						if(auth_user == (char *)NULL) {
++						if(auth_user == NULL) {
+ 							die("parse_options() -- strdup() failed");
+ 						}
+ 						add++;
+ 					}
+ 					else {
+ 						auth_user = strdup(argv[i]+j+1);
+-						if(auth_user == (char *)NULL) {
++						if(auth_user == NULL) {
+ 							die("parse_options() -- strdup() failed");
+ 						}
+ 					}
+@@ -1771,14 +1771,14 @@ char **parse_options(int argc, char *arg
+ 					if((!argv[i][(j + 1)])
+ 						&& argv[(i + 1)]) {
+ 						auth_pass = strdup(argv[i+1]);
+-						if(auth_pass == (char *)NULL) {
++						if(auth_pass == NULL) {
+ 							die("parse_options() -- strdup() failed");
+ 						}
+ 						add++;
+ 					}
+ 					else {
+ 						auth_pass = strdup(argv[i]+j+1);
+-						if(auth_pass == (char *)NULL) {
++						if(auth_pass == NULL) {
+ 							die("parse_options() -- strdup() failed");
+ 						}
+ 					}
+@@ -1869,14 +1869,14 @@ char **parse_options(int argc, char *arg
+ 			case 'F':
+ 				if((!argv[i][(j + 1)]) && argv[(i + 1)]) {
+ 					minus_F = strdup(argv[(i + 1)]);
+-					if(minus_F == (char *)NULL) {
++					if(minus_F == NULL) {
+ 						die("parse_options() -- strdup() failed");
+ 					}
+ 					add++;
+ 				}
+ 				else {
+ 					minus_F = strdup(argv[i]+j+1);
+-					if(minus_F == (char *)NULL) {
++					if(minus_F == NULL) {
+ 						die("parse_options() -- strdup() failed");
+ 					}
+ 				}
+@@ -1888,14 +1888,14 @@ char **parse_options(int argc, char *arg
+ 			case 'r':
+ 				if((!argv[i][(j + 1)]) && argv[(i + 1)]) {
+ 					minus_f = strdup(argv[(i + 1)]);
+-					if(minus_f == (char *)NULL) {
++					if(minus_f == NULL) {
+ 						die("parse_options() -- strdup() failed");
+ 					}
+ 					add++;
+ 				}
+ 				else {
+ 					minus_f = strdup(argv[i]+j+1);
+-					if(minus_f == (char *)NULL) {
++					if(minus_f == NULL) {
+ 						die("parse_options() -- strdup() failed");
+ 					}
+ 				}
