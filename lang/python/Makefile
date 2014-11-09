@@ -159,7 +159,9 @@ HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
-	--prefix=$(STAGING_DIR_HOST)
+	--prefix=$(STAGING_DIR_HOST) \
+	CONFIG_SITE= \
+	OPT="$(HOST_CFLAGS)"
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
