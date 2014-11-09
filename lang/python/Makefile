@@ -28,7 +28,7 @@ HOST_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=python/host
+PKG_BUILD_DEPENDS:=libffi/host python/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -51,23 +51,23 @@ define Package/python/Default/description
  the development of higher quality, more maintainable code.
 endef
 
-define Package/python
+define Package/python-base
 $(call Package/python/Default)
+  TITLE:=Python $(PYTHON_VERSION) interpreter
   DEPENDS:=+libpthread +zlib +libffi +libopenssl
 endef
 
-define Package/python/description
+define Package/python-base/description
   This package contains only the interpreter and the bare minimum
   for the interpreter to start.
 endef
 
-define Package/python-full
+define Package/python
 $(call Package/python/Default)
-  TITLE:=Full install (minus a few libs)
-  DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libncursesw
+  DEPENDS:=+python-base +libncursesw +libbz2 +libgdbm +libsqlite3 +libexpat +libdb47
 endef
 
-define Package/python-full/description
+define Package/python/description
   This package contains the (almost) full Python install.
 endef
 
@@ -107,10 +107,22 @@ Hooks/Configure/Pre+=\
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
+	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
 	$(INSTALL_DATA) ./files/python-package.mk $(STAGING_DIR)/mk/
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
+		$(1)/usr/include/
+	$(CP) \
+		$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION) \
+		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
+		$(1)/usr/lib/
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
+		$(1)/usr/lib/python$(PYTHON_VERSION)/
 endef
 
-define PyPackage/python/filespec
+define PyPackage/python-base/filespec
 +|/usr/bin/python$(PYTHON_VERSION)
 +|/usr/lib/python$(PYTHON_VERSION)/_abcoll.py
 +|/usr/lib/python$(PYTHON_VERSION)/_sysconfigdata.py
@@ -134,7 +146,7 @@ define PyPackage/python/filespec
 +|/usr/lib/python$(PYTHON_VERSION)/warnings.py
 endef
 
-define PyPackage/python-full/filespec
+define PyPackage/python/filespec
 +|/usr/lib/python$(PYTHON_VERSION)
 -|/usr/lib/python$(PYTHON_VERSION)/config
 -|/usr/lib/python$(PYTHON_VERSION)/distutils
@@ -147,9 +159,10 @@ define PyPackage/python-full/filespec
 -|/usr/lib/python$(PYTHON_VERSION)/webbrowser.py
 -|/usr/lib/python$(PYTHON_VERSION)/*/test
 -|/usr/lib/python$(PYTHON_VERSION)/*/tests
+-|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/readline.so
 endef
 
-define PyPackage/python/install
+define PyPackage/python-base/install
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
@@ -159,7 +172,9 @@ HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
-	--prefix=$(STAGING_DIR_HOST)
+	--prefix=$(STAGING_DIR_HOST) \
+	CONFIG_SITE= \
+	OPT="$(HOST_CFLAGS)"
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
@@ -169,8 +184,8 @@ endef
 
 $(eval $(call HostBuild))
 
+$(eval $(call PyPackage,python-base))
 $(eval $(call PyPackage,python))
-$(eval $(call PyPackage,python-full))
 
+$(eval $(call BuildPackage,python-base))
 $(eval $(call BuildPackage,python))
-$(eval $(call BuildPackage,python-full))
