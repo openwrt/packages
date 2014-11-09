@@ -16,7 +16,7 @@
 # - the usage of BIND's host instead of BusyBox's nslookup if installed (DNS via TCP)
 # - extended Verbose Mode and log file support for better error detection 
 #
-# function __timeout
+# function timeout
 # copied from http://www.ict.griffith.edu.au/anthony/software/timeout.sh
 # @author Anthony Thyssen  6 April 2011
 #
@@ -31,7 +31,6 @@
 # GLOBAL VARIABLES #
 SECTION_ID=""		# hold config's section name
 VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
-LUCI_HELPER=""		# set by dynamic_dns_lucihelper.sh, if filled supress all error logging
 
 PIDFILE=""		# pid file
 UPDFILE=""		# store UPTIME of last update
@@ -43,12 +42,11 @@ LOGDIR=$(uci -q get ddns.global.log_dir) || LOGDIR="/var/log/ddns"
 LOGFILE=""		# NEW # logfile can be enabled as new option
 # number of lines to before rotate logfile
 LOGLINES=$(uci -q get ddns.global.log_lines) || LOGLINES=250
+LOGLINES=$((LOGLINES + 1))	# correct sed handling
 
 CHECK_SECONDS=0		# calculated seconds out of given
 FORCE_SECONDS=0		# interval and unit
 RETRY_SECONDS=0		# in configuration
-
-OLD_PID=0		# Holds the PID of already running process for the same config section
 
 LAST_TIME=0		# holds the uptime of last successful update
 CURR_TIME=0		# holds the current uptime
@@ -58,12 +56,13 @@ EPOCH_TIME=0		# seconds since 1.1.1970 00:00:00
 REGISTERED_IP=""	# holds the IP read from DNS
 LOCAL_IP=""		# holds the local IP read from the box
 
+URL_USER=""		# url encoded $username from config file
+URL_PASS=""		# url encoded $password from config file
+
 ERR_LAST=0		# used to save $? return code of program and function calls
-ERR_LOCAL_IP=0		# error counter on getting local ip
-ERR_REG_IP=0		# error counter on getting DNS registered ip
-ERR_SEND=0		# error counter on sending update to DNS provider
 ERR_UPDATE=0		# error counter on different local and registered ip
-ERR_VERIFY=0		# error counter verifying proxy- and dns-servers
+
+PID_SLEEP=0		# ProcessID of current background "sleep"
 
 # format to show date information in log and luci-app-ddns default ISO 8601 format
 DATE_FORMAT=$(uci -q get ddns.global.date_format) || DATE_FORMAT="%F %R"
@@ -113,9 +112,26 @@ load_all_config_options()
 	return 0
 }
 
+# read's all service sections from ddns config
+# $1 = Name of variable to store 
+load_all_service_sections() {
+	local __DATA=""
+	config_cb() 
+	{
+		# only look for section type "service", ignore everything else
+		[ "$1" = "service" ] && __DATA="$__DATA $2"
+	}
+	config_load "ddns"
+
+	eval "$1='$__DATA'"	
+	return
+}
+
 # starts updater script for all given sections or only for the one given
 # $1 = interface (Optional: when given only scripts are started
 # configured for that interface)
+# used by /etc/hotplug.d/iface/25-ddns on IFUP
+# and by /etc/init.d/ddns start
 start_daemon_for_all_ddns_sections()
 {
 	local __EVENTIF="$1"
@@ -123,57 +139,100 @@ start_daemon_for_all_ddns_sections()
 	local __SECTIONID=""
 	local __IFACE=""
 
-	config_cb()
-	{
-		# only look for section type "service", ignore everything else
-		[ "$1" = "service" ] && __SECTIONS="$__SECTIONS $2"
-	}
-	config_load "ddns"
-
-	for __SECTIONID in $__SECTIONS
-	do
+	load_all_service_sections __SECTIONS
+	for __SECTIONID in $__SECTIONS; do
 		config_get __IFACE "$__SECTIONID" interface "wan"
 		[ -z "$__EVENTIF" -o "$__IFACE" = "$__EVENTIF" ] || continue
 		/usr/lib/ddns/dynamic_dns_updater.sh $__SECTIONID 0 > /dev/null 2>&1 &
 	done
 }
 
-verbose_echo()
-{
-	[ -n "$LUCI_HELPER" ] && return	# nothing to report when used by LuCI helper script
-	[ $VERBOSE_MODE -gt 0 ] && echo -e " $*"
-	if [ ${use_logfile:-0} -eq 1 -o $VERBOSE_MODE -gt 1 ]; then
+# stop sections process incl. childs (sleeps)
+# $1 = section
+stop_section_processes() {
+	local __PID=0
+	local __PIDFILE="$RUNDIR/$1.pid"
+	[ $# -ne 1 ] && write_log 12 "Error calling 'stop_section_processes()' - wrong number of parameters"
+
+	[ -e "$__PIDFILE" ] && {
+		__PID=$(cat $__PIDFILE)
+		ps | grep "^[\t ]*$__PID" >/dev/null 2>&1 && kill $__PID || __PID=0	# terminate it
+	}
+	[ $__PID -eq 0 ] # report if process was running
+}
+
+# stop updater script for all defines sections or only for one given
+# $1 = interface (optional)
+# used by /etc/hotplug.d/iface/25-ddns on 'ifdown'
+# and by /etc/init.d/ddns stop
+# needed because we also need to kill "sleep" child processes
+stop_daemon_for_all_ddns_sections() {
+	local __EVENTIF="$1"
+	local __SECTIONS=""
+	local __SECTIONID=""
+	local __IFACE=""
+
+	load_all_service_sections __SECTIONS
+	for __SECTIONID in $__SECTIONS;	do
+		config_get __IFACE "$__SECTIONID" interface "wan"
+		[ -z "$__EVENTIF" -o "$__IFACE" = "$__EVENTIF" ] || continue
+		stop_section_processes "$__SECTIONID"
+	done
+}
+
+# reports to console, logfile, syslog
+# $1	loglevel 7 == Debug to 0 == EMERG
+#	value +10 will exit the scripts
+# $2..n	text to report
+write_log() {
+	local __LEVEL __EXIT __CMD __MSG
+	local __TIME=$(date +%H%M%S)
+	[ $1 -ge 10 ] && {
+		__LEVEL=$(($1-10))
+		__EXIT=1
+	} || {
+		__LEVEL=$1
+		__EXIT=0
+	}
+	shift	# remove loglevel
+	[ $__EXIT -eq 0 ] && __MSG="$*" || __MSG="$* - TERMINATE"
+	case $__LEVEL in		# create log message and command depending on loglevel
+		0)	__CMD="logger -p user.emerg -t ddns-scripts[$$] $SECTION_ID: $__MSG"
+			__MSG=" $__TIME EMERG : $__MSG" ;;
+		1)	__CMD="logger -p user.alert -t ddns-scripts[$$] $SECTION_ID: $__MSG"
+			__MSG=" $__TIME ALERT : $__MSG" ;;
+		2)	__CMD="logger -p user.crit -t ddns-scripts[$$] $SECTION_ID: $__MSG"
+			__MSG=" $__TIME  CRIT : $__MSG" ;;
+		3)	__CMD="logger -p user.err -t ddns-scripts[$$] $SECTION_ID: $__MSG"
+			__MSG=" $__TIME ERROR : $__MSG" ;;
+		4)	__CMD="logger -p user.warn -t ddns-scripts[$$] $SECTION_ID: $__MSG"
+			__MSG=" $__TIME  WARN : $__MSG" ;;
+		5)	__CMD="logger -p user.notice -t ddns-scripts[$$] $SECTION_ID: $__MSG"
+			__MSG=" $__TIME  note : $__MSG" ;;
+		6)	__CMD="logger -p user.info -t ddns-scripts[$$] $SECTION_ID: $__MSG"
+			__MSG=" $__TIME  info : $__MSG" ;;
+		7)	__MSG=" $__TIME       : $__MSG";;
+		*) 	return;;
+	esac
+
+	# verbose echo
+	[ $VERBOSE_MODE -gt 0 -o $__EXIT -gt 0 ] && echo -e "$__MSG"
+	# write to logfile
+	if [ ${use_logfile:-1} -eq 1 -o $VERBOSE_MODE -gt 1 ]; then
 		[ -d $LOGDIR ] || mkdir -p -m 755 $LOGDIR
-		echo -e " $*" >> $LOGFILE
+		echo -e "$__MSG" >> $LOGFILE
 		# VERBOSE_MODE > 1 then NO loop so NO truncate log to $LOGLINES lines
 		[ $VERBOSE_MODE -gt 1 ] || sed -i -e :a -e '$q;N;'$LOGLINES',$D;ba' $LOGFILE
 	fi
+	[ "$SECTION_ID" = "lucihelper" ] && return	# nothing else todo when running LuCI helper script
+	[ $__LEVEL -eq 7 ] && return	# no syslog for debug messages
+	[ $__EXIT  -eq 1 ] && {
+		$__CMD		# force syslog before exit
+		exit 1
+	}
+	[ $use_syslog -eq 0 ] && return
+	[ $((use_syslog + __LEVEL)) -le 7 ] && $__CMD
 	return
-}
-
-syslog_info(){
-	[ $use_syslog -eq 1 ] && logger -p user.info -t ddns-scripts[$$] "$SECTION_ID: $*"
-	return
-}
-syslog_notice(){
-	[ $use_syslog -ge 1 -a $use_syslog -le 2 ] && logger -p user.notice -t ddns-scripts[$$] "$SECTION_ID: $*"
-	return
-}
-syslog_warn(){
-	[ $use_syslog -ge 1 -a $use_syslog -le 3 ] && logger -p user.warn -t ddns-scripts[$$] "$SECTION_ID: $*"
-	return
-}
-syslog_err(){
-	[ $use_syslog -ge 1 ] && logger -p user.err -t ddns-scripts[$$] "$SECTION_ID: $*"
-	return
-}
-
-critical_error() {
-	[ -n "$LUCI_HELPER" ] && return	# nothing to report when used by LuCI helper script
-	verbose_echo "\n CRITICAL ERROR =: $* - EXITING\n"
-	[ $VERBOSE_MODE -eq 0 ] && echo -e "\n$SECTION_ID: CRITICAL ERROR - $* - EXITING\n"
-	logger -t ddns-scripts[$$] -p user.crit "$SECTION_ID: CRITICAL ERROR - $* - EXITING"
-	exit 1		# critical error -> leave here
 }
 
 # replace all special chars to their %hex value
@@ -183,12 +242,14 @@ critical_error() {
 #            "$"(Dollar)				# because used as variable output
 # tested with the following string stored via Luci Application as password / username
 # A B!"#AA$1BB%&'()*+,-./:;<=>?@[\]^_`{|}~	without problems at Dollar or quotes
-__urlencode() {
+urlencode() {
 	# $1	Name of Variable to store encoded string to
 	# $2	string to encode
 	local __STR __LEN __CHAR __OUT
 	local __ENC=""
 	local __POS=1
+
+	[ $# -ne 2 ] && write_log 12 "Error calling 'urlencode()' - wrong number of parameters"
 
 	__STR="$2"		# read string to encode
 	__LEN=${#__STR}		# get string length
@@ -218,14 +279,15 @@ __urlencode() {
 # extract url or script for given DDNS Provider from
 # file /usr/lib/ddns/services for IPv4 or from
 # file /usr/lib/ddns/services_ipv6 for IPv6
+# $1	Name of Variable to store url to
+# $2	Name of Variable to store script to
 get_service_data() {
-	# $1	Name of Variable to store url to
-	# $2	Name of Variable to store script to
 	local __LINE __FILE __NAME __URL __SERVICES __DATA
 	local __SCRIPT=""
 	local __OLD_IFS=$IFS
 	local __NEWLINE_IFS='
 ' #__NEWLINE_IFS
+	[ $# -ne 2 ] && write_log 12 "Error calling 'get_service_data()' - wrong number of parameters"
 
 	__FILE="/usr/lib/ddns/services"					# IPv4
 	[ $use_ipv6 -ne 0 ] && __FILE="/usr/lib/ddns/services_ipv6"	# IPv6
@@ -256,10 +318,12 @@ get_service_data() {
 	return 0
 }
 
+# Calculate seconds from interval and unit
+# $1	Name of Variable to store result in
+# $2	Number and
+# $3	Unit of time interval
 get_seconds() {
-	# $1	Name of Variable to store result in
-	# $2	Number and
-	# $3	Unit of time interval
+	[ $# -ne 3 ] && write_log 12 "Error calling 'get_seconds()' - wrong number of parameters"
 	case "$3" in
 		"days" )	eval "$1=$(( $2 * 86400 ))";;
 		"hours" )	eval "$1=$(( $2 * 3600 ))";;
@@ -269,7 +333,7 @@ get_seconds() {
 	return 0
 }
 
-__timeout() {
+timeout() {
 	# copied from http://www.ict.griffith.edu.au/anthony/software/timeout.sh
 	# only did the folloing changes
 	#	- commented out "#!/bin/bash" and usage section
@@ -314,7 +378,7 @@ __timeout() {
 
 	SIG=-TERM
 
-	while [  $# -gt 0 ]; do
+	while [ $# -gt 0 ]; do
 		case "$1" in
 			--)
 				# forced end of user options
@@ -368,9 +432,10 @@ __timeout() {
 	return $status
 }
 
-__verify_host_port() {
-	# $1	Host/IP to verify
-	# $2	Port to verify
+#verify given host and port is connectable
+# $1	Host/IP to verify
+# $2	Port to verify
+verify_host_port() {
 	local __HOST=$1
 	local __PORT=$2
 	local __TMP __IP __IPV4 __IPV6 __RUNPROG __ERRPROG __ERR
@@ -380,92 +445,119 @@ __verify_host_port() {
 	# 3	nc (netcat) error
 	# 4	unmatched IP version
 
+	[ $# -ne 2 ] && write_log 12 "Error calling 'verify_host_port()' - wrong number of parameters"
+
 	__RUNPROG="nslookup $__HOST 2>/dev/null"
 	__ERRPROG="nslookup $__HOST 2>&1"
-	verbose_echo " resolver prog =: '$__RUNPROG'"
+	write_log 7 "#> $__RUNPROG"
 	__TMP=$(eval $__RUNPROG)	# test if nslookup runs without errors
 	__ERR=$?
 	# command error
 	[ $__ERR -gt 0 ] && {
-		verbose_echo "\n!!!!!!!!! ERROR =: BusyBox nslookup Error '$__ERR'\n$(eval $__ERRPROG)\n"
-		syslog_err "DNS Resolver Error - BusyBox nslookup Error '$__ERR'"
+		write_log 7 "Error:\n$(eval $__ERRPROG)"
+		write_log 3 "DNS Resolver Error - BusyBox nslookup Error '$__ERR'"
 		return 2
-	} || {
-		# we need to run twice because multi-line output needs to be directly piped to grep because
-		# pipe returns return code of last prog in pipe but we need errors from nslookup command
-		__IPV4=$(eval $__RUNPROG | sed -ne "3,\$ { s/^Address [0-9]*: \($IPV4_REGEX\).*$/\\1/p }")
-		__IPV6=$(eval $__RUNPROG | sed -ne "3,\$ { s/^Address [0-9]*: \($IPv6_REGEX\).*$/\\1/p }")
 	}
+	# extract IP address
+	__IPV4=$(echo "$__TMP" | sed -ne "3,\$ { s/^Address [0-9]*: \($IPV4_REGEX\).*$/\\1/p }")
+	__IPV6=$(echo "$__TMP" | sed -ne "3,\$ { s/^Address [0-9]*: \($IPV6_REGEX\).*$/\\1/p }")
 
 	# check IP version if forced
 	if [ $force_ipversion -ne 0 ]; then
 		__ERR=0
 		[ $use_ipv6 -eq 0 -a -z "$__IPV4" ] && __ERR=4
 		[ $use_ipv6 -eq 1 -a -z "$__IPV6" ] && __ERR=6
-		[ $__ERR -gt 0 ] && critical_error "Invalid host: Error '4' - Force IP Version IPv$__ERR not supported"
+		[ $__ERR -gt 0 ] && {
+			[ "$SECTION_ID" = "lucihelper" ] && return 4
+			write_log 14 "Invalid host Error '4' - Forced IP Version IPv$__ERR don't match"
+		}
 	fi
 
 	# verify nc command
 	# busybox nc compiled without -l option "NO OPT l!" -> critical error
-	nc --help 2>&1 | grep -iq "NO OPT l!" && \
-		critical_error "Busybox nc: netcat compiled without -l option, error 'NO OPT l!'"
+	nc --help 2>&1 | grep -i "NO OPT l!" >/dev/null 2>&1 && \
+		write_log 12 "Busybox nc (netcat) compiled without '-l' option, error 'NO OPT l!'"
 	# busybox nc compiled with extensions
-	nc --help 2>&1 | grep -q "\-w" && __NCEXT="TRUE"
+	nc --help 2>&1 | grep "\-w" >/dev/null 2>&1 && __NCEXT="TRUE"
 
 	# connectivity test
 	# run busybox nc to HOST PORT
 	# busybox might be compiled with "FEATURE_PREFER_IPV4_ADDRESS=n"
-	# then nc will try to connect via IPv6 if there is an IPv6 availible for host
-	# not worring if there is an IPv6 wan address
-	# so if not "forced_ipversion" to use ipv6 then connect test via ipv4 if availible
-	[ $force_ipversion -ne 0 -a $use_ipv6 -ne 0 -o -z "$__IPV4" ] && {
-		# force IPv6
-		__IP=$__IPV6
-	} || __IP=$__IPV4
+	# then nc will try to connect via IPv6 if there is any IPv6 availible on any host interface
+	# not worring, if there is an IPv6 wan address
+	# so if not "force_ipversion" to use_ipv6 then connect test via ipv4, if availible
+	[ $force_ipversion -ne 0 -a $use_ipv6 -ne 0 -o -z "$__IPV4" ] && __IP=$__IPV6 || __IP=$__IPV4
 
 	if [ -n "$__NCEXT" ]; then	# nc compiled with extensions (timeout support)
 		__RUNPROG="nc -w 1 $__IP $__PORT </dev/null >/dev/null 2>&1"
 		__ERRPROG="nc -vw 1 $__IP $__PORT </dev/null 2>&1"
-		verbose_echo "  connect prog =: '$__RUNPROG'"
+		write_log 7 "#> $__RUNPROG"
 		eval $__RUNPROG
 		__ERR=$?
 		[ $__ERR -eq 0 ] && return 0
-		verbose_echo "\n!!!!!!!!! ERROR =: BusyBox nc Error '$__ERR'\n$(eval $__ERRPROG)\n"
-		syslog_err "host verify Error - BusyBox nc Error '$__ERR'"
+		write_log 7 "Error:\n$(eval $__ERRPROG)"
+		write_log 3 "Connect error - BusyBox nc (netcat) Error '$__ERR'"
 		return 3
 	else		# nc compiled without extensions (no timeout support)
-		__RUNPROG="__timeout 2 -- nc $__IP $__PORT </dev/null >/dev/null 2>&1"
-		verbose_echo "  connect prog =: '$__RUNPROG'"
+		__RUNPROG="timeout 2 -- nc $__IP $__PORT </dev/null >/dev/null 2>&1"
+		write_log 7 "#> $__RUNPROG"
 		eval $__RUNPROG
 		__ERR=$?
 		[ $__ERR -eq 0 ] && return 0
-		verbose_echo "\n!!!!!!!!! ERROR =: BusyBox nc Error '$__ERR' (timeout)"
-		syslog_err "host verify Error - BusyBox nc Error '$__ERR' (timeout)"
+		write_log 3 "Connect error - BusyBox nc (netcat) timeout Error '$__ERR'"
 		return 3
 	fi
 }
 
+# verfiy given DNS server if connectable
+# $1	DNS server to verify
 verify_dns() {
-	# $1	DNS server to verify
-	# we need DNS server to verify otherwise exit with ERROR 1
-	[ -z "$1" ] && return 1
+	local __ERR=255	# last error buffer
+	local __CNT=0	# error counter
+	
+	[ $# -ne 1 ] && write_log 12 "Error calling 'verify_dns()' - wrong number of parameters"
+	write_log 7 "Verify DNS server '$1'"
 
-	# DNS uses port 53
-	__verify_host_port "$1" "53"
+	while [ $__ERR -gt 0 ]; do
+		# DNS uses port 53
+		verify_host_port "$1" "53"
+		__ERR=$?
+		if [ "$SECTION_ID" = "lucihelper" ]; then	# no retry if called by LuCI helper script
+			return $__ERR
+		elif [ $__ERR -gt 0 -a $VERBOSE_MODE -gt 1 ]; then	# VERBOSE_MODE > 1 then NO retry
+			write_log 7 "Verbose Mode: $VERBOSE_MODE - NO retry on error"
+			return $__ERR
+		elif [ $__ERR -gt 0 ]; then
+			__CNT=$(( $__CNT + 1 ))	# increment error counter
+			# if error count > retry_count leave here
+			[ $__CNT -gt $retry_count ] && \
+				write_log 14 "Verify DNS server '$1' failed after $retry_count retries"
+
+			write_log 4 "Verify DNS server '$1' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+			sleep $RETRY_SECONDS &
+			PID_SLEEP=$!
+			wait $PID_SLEEP	# enable trap-handler
+			PID_SLEEP=0
+		fi
+	done
+	return 0
 }
 
+# analyse and verfiy given proxy string
+# $1	Proxy-String to verify
 verify_proxy() {
-	# $1	Proxy-String to verify
-	#		complete entry		user:password@host:port
-	# 					inside user and password NO '@' of ":" allowed 
-	#		host and port only	host:port
-	#		host only		host		ERROR unsupported
-	#		IPv4 address instead of host	123.234.234.123
-	#		IPv6 address instead of host	[xxxx:....:xxxx]	in square bracket
+	#	complete entry		user:password@host:port
+	# 				inside user and password NO '@' of ":" allowed 
+	#	host and port only	host:port
+	#	host only		host		ERROR unsupported
+	#	IPv4 address instead of host	123.234.234.123
+	#	IPv6 address instead of host	[xxxx:....:xxxx]	in square bracket
 	local __TMP __HOST __PORT
+	local __ERR=255	# last error buffer
+	local __CNT=0	# error counter
 
-	# we need Proxy-Sting to verify otherwise exit with ERROR 1
-	[ -z "$1" ] && return 1
+	[ $# -ne 1 ] && write_log 12 "Error calling 'verify_proxy()' - wrong number of parameters"
+	write_log 7 "Verify Proxy server 'http://$1'"
 
 	# try to split user:password "@" host:port
 	__TMP=$(echo $1 | awk -F "@" '{print $2}')
@@ -481,24 +573,51 @@ verify_proxy() {
 		__HOST=$(echo $__TMP | awk -F ":" '{print $1}')
 		__PORT=$(echo $__TMP | awk -F ":" '{print $2}')
 	fi
-	# No Port detected
-	[ -z "$__PORT" ] && critical_error "Invalid Proxy server Error '5' - proxy port missing"
+	# No Port detected - EXITING
+	[ -z "$__PORT" ] && {
+		[ "$SECTION_ID" = "lucihelper" ] && return 5
+		write_log 14 "Invalid Proxy server Error '5' - proxy port missing"
+	}
 
-	__verify_host_port "$__HOST" "$__PORT"
+	while [ $__ERR -gt 0 ]; do
+		verify_host_port "$__HOST" "$__PORT"
+		__ERR=$?
+		if [ "$SECTION_ID" = "lucihelper" ]; then	# no retry if called by LuCI helper script
+			return $__ERR
+		elif [ $__ERR -gt 0 -a $VERBOSE_MODE -gt 1 ]; then	# VERBOSE_MODE > 1 then NO retry
+			write_log 7 "Verbose Mode: $VERBOSE_MODE - NO retry on error"
+			return $__ERR
+		elif [ $__ERR -gt 0 ]; then
+			__CNT=$(( $__CNT + 1 ))	# increment error counter
+			# if error count > retry_count leave here
+			[ $__CNT -gt $retry_count ] && \
+				write_log 14 "Verify Proxy server '$1' failed after $retry_count retries"
+
+			write_log 4 "Verify Proxy server '$1' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+			sleep $RETRY_SECONDS &
+			PID_SLEEP=$!
+			wait $PID_SLEEP	# enable trap-handler
+			PID_SLEEP=0
+		fi
+	done
+	return 0
 }
 
-__do_transfer() {
+do_transfer() {
 	# $1	# Variable to store Answer of transfer
 	# $2	# URL to use
 	local __URL="$2"
 	local __ERR=0
+	local __CNT=0	# error counter
 	local __PROG  __RUNPROG  __ERRPROG  __DATA
 
+	[ $# -ne 2 ] && write_log 12 "Error in 'do_transfer()' - wrong number of parameters"
+
 	# lets prefer GNU Wget because it does all for us - IPv4/IPv6/HTTPS/PROXY/force IP version
-	if /usr/bin/wget --version 2>&1 | grep -q "\+ssl"; then
+	if /usr/bin/wget --version 2>&1 | grep "\+ssl" >/dev/null 2>&1 ; then
 		__PROG="/usr/bin/wget -t 2 -O -"	# standard output only 2 retrys on error
 		# force ip version to use
-		if [ $force_ipversion -eq 1 ]; then	
+		if [ $force_ipversion -eq 1 ]; then
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"	# force IPv4/IPv6
 		fi
 		# set certificate parameters
@@ -510,7 +629,7 @@ __do_transfer() {
 			elif [ -d "$cacert" ]; then
 				__PROG="$__PROG --ca-directory=${cacert}"
 			else	# exit here because it makes no sense to start loop
-				critical_error "Wget: No valid certificate(s) found for running HTTPS"
+				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
 			fi
 		fi
 		# disable proxy if no set (there might be .wgetrc or .curlrc or wrong environment set)
@@ -518,21 +637,14 @@ __do_transfer() {
 
 		__RUNPROG="$__PROG -q '$__URL' 2>/dev/null"	# do transfer with "-q" to suppress not needed output
 		__ERRPROG="$__PROG -d '$__URL' 2>&1"		# do transfer with "-d" for debug mode
-		verbose_echo " transfer prog =: $__RUNPROG"
-		__DATA=$(eval $__RUNPROG)
-		__ERR=$?
-		[ $__ERR -gt 0 ] && {
-			verbose_echo "\n!!!!!!!!! ERROR =: GNU Wget Error '$__ERR'\n$(eval $__ERRPROG)\n"
-			syslog_err "Communication Error - GNU Wget Error: '$__ERR'"
-			return 1
-		}
+		__PROG="GNU Wget"				# reuse for error logging
 
 	# 2nd choice is cURL IPv4/IPv6/HTTPS
 	# libcurl might be compiled without Proxy Support (default in trunk)
 	elif [ -x /usr/bin/curl ]; then
 		__PROG="/usr/bin/curl"
 		# force ip version to use
-		if [ $force_ipversion -eq 1 ]; then	
+		if [ $force_ipversion -eq 1 ]; then
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"	# force IPv4/IPv6
 		fi
 		# set certificate parameters
@@ -544,7 +656,7 @@ __do_transfer() {
 			elif [ -d "$cacert" ]; then
 				__PROG="$__PROG --capath $cacert"
 			else	# exit here because it makes no sense to start loop
-				critical_error "cURL: No valid certificate(s) found for running HTTPS"
+				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
 			fi
 		fi
 		# disable proxy if no set (there might be .wgetrc or .curlrc or wrong environment set)
@@ -554,163 +666,218 @@ __do_transfer() {
 		else
 			# if libcurl has no proxy support and proxy should be used then force ERROR
 			# libcurl currently no proxy support by default
-			grep -iq all_proxy /usr/lib/libcurl.so* || \
-				critical_error "cURL: libcurl compiled without Proxy support"
+			grep -i "all_proxy" /usr/lib/libcurl.so* >/dev/null 2>&1 || \
+				write_log 13 "cURL: libcurl compiled without Proxy support"
 		fi
 
 		__RUNPROG="$__PROG -q '$__URL' 2>/dev/null"	# do transfer with "-s" to suppress not needed output
 		__ERRPROG="$__PROG -v '$__URL' 2>&1"		# do transfer with "-v" for verbose mode
-		verbose_echo " transfer prog =: $__RUNPROG"
-		__DATA=$(eval $__RUNPROG)
-		__ERR=$?
-		[ $__ERR -gt 0 ] && {
-			verbose_echo "\n!!!!!!!!! ERROR =: cURL Error '$__ERR'\n$(eval $__ERRPROG)\n"
-			syslog_err "Communication Error - cURL Error: '$__ERR'"
-			return 1
-		}
+		__PROG="cURL"					# reuse for error logging
 
 	# busybox Wget (did not support neither IPv6 nor HTTPS)
 	elif [ -x /usr/bin/wget ]; then
 		__PROG="/usr/bin/wget -O -"
 		# force ip version not supported
 		[ $force_ipversion -eq 1 ] && \
-			critical_error "BusyBox Wget: can not force IP version to use"
+			write_log 14 "BusyBox Wget: can not force IP version to use"
 		# https not supported
 		[ $use_https -eq 1 ] && \
-			critical_error "BusyBox Wget: no HTTPS support"
+			write_log 14 "BusyBox Wget: no HTTPS support"
 		# disable proxy if no set (there might be .wgetrc or .curlrc or wrong environment set)
 		[ -z "$proxy" ] && __PROG="$__PROG -Y off"
-		
+
 		__RUNPROG="$__PROG -q '$__URL' 2>/dev/null"	# do transfer with "-q" to suppress not needed output
-		__ERRPROG="$__PROG '$__URL' 2>&1"
-		verbose_echo " transfer prog =: $__RUNPROG"
+		__ERRPROG="$__PROG '$__URL' 2>&1"		# 
+		__PROG="Busybox Wget"				# reuse for error logging
+
+	else
+		write_log 13 "Neither 'Wget' nor 'cURL' installed or executable"
+	fi
+
+	while : ; do
+		write_log 7 "#> $__RUNPROG"
 		__DATA=$(eval $__RUNPROG)
 		__ERR=$?
-		[ $__ERR -gt 0 ] && {
-			verbose_echo "\n!!!!!!!!! ERROR =: BusyBox Wget Error '$__ERR'\n$(eval $__ERRPROG)\n"
-			syslog_err "Communication Error - BusyBox Wget Error: '$__ERR'"
+		[ $__ERR -eq 0 ] && {
+			eval "$1='$__DATA'"	# everything ok
+			return 0		# return
+		}
+
+		[ "$SECTION_ID" = "lucihelper" ] && return 1	# no retry if called by LuCI helper script
+
+		write_log 7 "Error:\n$(eval $__ERRPROG)"	# report error
+		write_log 3 "$__PROG error: '$__ERR'"
+		__DATA=""
+
+		[ $VERBOSE_MODE -gt 1 ] && {
+			# VERBOSE_MODE > 1 then NO retry
+			write_log 7 "Verbose Mode: $VERBOSE_MODE - NO retry on error"
 			return 1
 		}
 
-	else
-		critical_error "Program not found - Neither 'Wget' nor 'cURL' installed or executable"
-	fi
+		__CNT=$(( $__CNT + 1 ))	# increment error counter
+		# if error count > retry_count leave here
+		[ $__CNT -gt $retry_count ] && \
+			write_log 14 "Transfer failed after $retry_count retries"
 
-	eval "$1='$__DATA'"
-	return 0
+		write_log 4 "Transfer failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		sleep $RETRY_SECONDS &
+		PID_SLEEP=$!
+		wait $PID_SLEEP	# enable trap-handler
+		PID_SLEEP=0
+	done
+	# we should never come here there must be a programming error
+	write_log 12 "Error in 'do_transfer()' - program coding error"
 }
 
 send_update() {
 	# $1	# IP to set at DDNS service provider
 	local __IP
 
+	[ $# -ne 1 ] && write_log 12 "Error calling 'send_update()' - wrong number of parameters"
+
 	# verify given IP / no private IPv4's / no IPv6 addr starting with fxxx of with ":"
 	[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^127|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168)")
 	[ $use_ipv6 -eq 1 ] && __IP=$(echo $1 | grep "^[0-9a-eA-E]")
-	[ -z "$__IP" ] && critical_error "Private or invalid or no IP '$1' given"
+	[ -z "$__IP" ] && write_log 14 "Private or invalid or no IP '$1' given"
 
 	if [ -n "$update_script" ]; then
-		verbose_echo "        update =: parsing script '$update_script'"
+		write_log 7 "parsing script '$update_script'"
 		. $update_script
 	else
-		local __URL __ANSWER __ERR __USER __PASS
+		local __URL __ANSWER __ERR
 
 		# do replaces in URL
-		__urlencode __USER "$username"	# encode username, might be email or something like this
-		__urlencode __PASS "$password"	# encode password, might have special chars for security reason
-		__URL=$(echo $update_url | sed -e "s#\[USERNAME\]#$__USER#g" -e "s#\[PASSWORD\]#$__PASS#g" \
+		__URL=$(echo $update_url | sed -e "s#\[USERNAME\]#$URL_USER#g" -e "s#\[PASSWORD\]#$URL_PASS#g" \
 					       -e "s#\[DOMAIN\]#$domain#g" -e "s#\[IP\]#$__IP#g")
 		[ $use_https -ne 0 ] && __URL=$(echo $__URL | sed -e 's#^http:#https:#')
 
-		__do_transfer __ANSWER "$__URL"
-		__ERR=$?
-		[ $__ERR -gt 0 ] && {
-			verbose_echo "\n!!!!!!!!! ERROR =: Error sending update to DDNS Provider\n"
-			return 1
-		}
-		verbose_echo "   update send =: DDNS Provider answered\n$__ANSWER"
-		return 0
+		do_transfer __ANSWER "$__URL" || return 1	# if VERBOSE_MODE > 1
+
+		write_log 7 "DDNS Provider answered:\n$__ANSWER"
+
+		# analyse provider answers
+		# "good [IP_ADR]"	= successful
+		# "nochg [IP_ADR]"	= no change but OK
+		echo "$__ANSWER" | grep -E "good|nochg" >/dev/null 2>&1
+		return $?	# "0" if "good" or "nochg" found
 	fi
 }
 
 get_local_ip () {
 	# $1	Name of Variable to store local IP (LOCAL_IP)
-	local __RUNPROG __IP __URL __ANSWER
+	local __CNT=0	# error counter
+	local __RUNPROG __DATA __URL __ANSWER
 
-	case $ip_source in
-		network )
-			# set correct program
-			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
-					    || __RUNPROG="network_get_ipaddr6"
-			$__RUNPROG __IP "$ip_network"
-			verbose_echo "      local ip =: '$__IP' detected on network '$ip_network'"
-			;;
-		interface )
-			if [ $use_ipv6 -eq 0 ]; then
-				__IP=$(ifconfig $ip_interface | awk '
-					/inet addr:/ {	# Filter IPv4
-					#   inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0
-					$1="";		# remove inet
-					$3="";		# remove Bcast: ...
-					$4="";		# remove Mask: ...
-					FS=":";		# separator ":"
-					$0=$0;		# reread to activate separator
-					$1="";		# remove addr
-					FS=" ";		# set back separator to default " "
-					$0=$0;		# reread to activate separator (remove whitespaces)
-					print $1;	# print IPv4 addr
-					}'
-				)
-			else
-				__IP=$(ifconfig $ip_interface | awk '
-					/inet6/ && /: [0-9a-eA-E]/ && !/\/128/ {	# Filter IPv6 exclude fxxx and /128 prefix
-					#   inet6 addr: 2001:db8::xxxx:xxxx/32 Scope:Global
-					FS="/";		# separator "/"
-					$0=$0;		# reread to activate separator
-					$2="";		# remove everything behind "/"
-					FS=" ";		# set back separator to default " "
-					$0=$0;		# reread to activate separator
-					print $3;	# print IPv6 addr
-					}'
-				)
-			fi
-			verbose_echo "      local ip =: '$__IP' detected on interface '$ip_interface'"
-			;;
-		script )
-			# get ip from script
-			__IP=$($ip_script)
-			verbose_echo "      local ip =: '$__IP' detected via script '$ip_script'"
-			;;
-		* )
-			for __URL in $ip_url; do
-				__do_transfer __ANSWER "$__URL"
-				[ -n "$__IP" ] && break	# Answer detected, leave for loop
-			done
-			# use correct regular expression
-			[ $use_ipv6 -eq 0 ] \
-				&& __IP=$(echo "$__ANSWER" | grep -m 1 -o "$IPV4_REGEX") \
-				|| __IP=$(echo "$__ANSWER" | grep -m 1 -o "$IPV6_REGEX")
-			verbose_echo "      local ip =: '$__IP' detected via web at '$__URL'"
-			;;
-	esac
+	[ $# -ne 1 ] && write_log 12 "Error calling 'get_local_ip()' - wrong number of parameters"
+	write_log 7 "Detect local IP"
 
-	# if NO IP was found
-	[ -z "$__IP" ] && return 1
+	while : ; do
+		case $ip_source in
+			network)
+				# set correct program
+				[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
+						    || __RUNPROG="network_get_ipaddr6"
+				write_log 7 "#> $__RUNPROG __DATA '$ip_network'"
+				$__RUNPROG __DATA "$ip_network"
+				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on network '$ip_network'"
+				;;
+			interface)
+				write_log 7 "#> ifconfig '$ip_interface'"
+				if [ $use_ipv6 -eq 0 ]; then
+					__DATA=$(ifconfig $ip_interface | awk '
+						/inet addr:/ {	# Filter IPv4
+						#   inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0
+						$1="";		# remove inet
+						$3="";		# remove Bcast: ...
+						$4="";		# remove Mask: ...
+						FS=":";		# separator ":"
+						$0=$0;		# reread to activate separator
+						$1="";		# remove addr
+						FS=" ";		# set back separator to default " "
+						$0=$0;		# reread to activate separator (remove whitespaces)
+						print $1;	# print IPv4 addr
+						}'
+					)
+				else
+					__DATA=$(ifconfig $ip_interface | awk '
+						/inet6/ && /: [0-9a-eA-E]/ && !/\/128/ {	# Filter IPv6 exclude fxxx and /128 prefix
+						#   inet6 addr: 2001:db8::xxxx:xxxx/32 Scope:Global
+						FS="/";		# separator "/"
+						$0=$0;		# reread to activate separator
+						$2="";		# remove everything behind "/"
+						FS=" ";		# set back separator to default " "
+						$0=$0;		# reread to activate separator
+						print $3;	# print IPv6 addr
+						}'
+					)
+				fi
+				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on interface '$ip_interface'"
+				;;
+			script)
+				write_log 7 "#> $ip_script"
+				__DATA=$($ip_script)	# get ip from script
+				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected via script '$ip_script'"
+				;;
+			web)
+				for __URL in $ip_url; do
+					do_transfer __ANSWER "$__URL"
+					[ -n "$__ANSWER" ] && break	# Answer detected, leave "for do done"
+				done
+				# use correct regular expression
+				[ $use_ipv6 -eq 0 ] \
+					&& __DATA=$(echo "$__ANSWER" | grep -m 1 -o "$IPV4_REGEX") \
+					|| __DATA=$(echo "$__ANSWER" | grep -m 1 -o "$IPV6_REGEX")
+				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on web at '$__URL'"
+				;;
+			*)
+				write_log 12 "Error in 'get_local_ip()' - unhandled ip_source '$ip_source'"
+				;;
+		esac
+		# valid data found return here
+		[ -n "$__DATA" ] && {
+			eval "$1='$__DATA'"
+			return 0
+		}
 
-	eval "$1='$__IP'"
-	return 0
+		[ "$SECTION_ID" = "lucihelper" ] && return 1	# no retry if called by LuCI helper script
+		[ $VERBOSE_MODE -gt 1 ] && {
+			# VERBOSE_MODE > 1 then NO retry
+			write_log 7 "Verbose Mode: $VERBOSE_MODE - NO retry on error"
+			return 1
+		}
+
+		__CNT=$(( $__CNT + 1 ))	# increment error counter
+		# if error count > retry_count leave here
+		[ $__CNT -gt $retry_count ] && \
+			write_log 14 "Get local IP via '$ip_source' failed after $retry_count retries"
+
+		write_log 4 "Get local IP via '$ip_source' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		sleep $RETRY_SECONDS &
+		PID_SLEEP=$!
+		wait $PID_SLEEP	# enable trap-handler
+		PID_SLEEP=0
+	done
+	# we should never come here there must be a programming error
+	write_log 12 "Error in 'get_local_ip()' - program coding error"
 }
 
 get_registered_ip() {
 	# $1	Name of Variable to store public IP (REGISTERED_IP)
-	local __IP  __REGEX  __PROG  __RUNPROG  __ERRPROG  __ERR
+	# $2	(optional) if set, do not retry on error
+	local __CNT=0	# error counter
+	local __ERR=255
+	local __REGEX  __PROG  __RUNPROG  __ERRPROG  __DATA
 	# return codes
 	# 1	no IP detected
+
+	[ $# -lt 1 -o $# -gt 2 ] && write_log 12 "Error calling 'get_registered_ip()' - wrong number of parameters"
+	write_log 7 "Detect registered/public IP"
 
 	# set correct regular expression
 	[ $use_ipv6 -eq 0 ] && __REGEX="$IPV4_REGEX" || __REGEX="$IPV6_REGEX"
 
-	if [ -x /usr/bin/host ]; then		# otherwise try to use BIND host
+	if [ -x /usr/bin/host ]; then		
 		__PROG="/usr/bin/host"
 		[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -t A"  || __PROG="$__PROG -t AAAA"
 		if [ $force_ipversion -eq 1 ]; then			# force IP version
@@ -720,55 +887,106 @@ get_registered_ip() {
 
 		__RUNPROG="$__PROG $domain $dns_server 2>/dev/null"
 		__ERRPROG="$__PROG -v $domain $dns_server 2>&1"
-		verbose_echo " resolver prog =: $__RUNPROG"
-		__IP=$(eval $__RUNPROG)
-		__ERR=$?
-		# command error
-		[ $__ERR -gt 0 ] && {
-			verbose_echo "\n!!!!!!!!! ERROR =: BIND host Error '$__ERR'\n$(eval $__ERRPROG)\n"
-			syslog_err "DNS Resolver Error - BIND host Error: '$__ERR'"
-			return 1
-		} || {
-			# we need to run twice because multi-line output needs to be directly piped to grep because
-			# pipe returns return code of last prog in pipe but we need errors from host command
-			__IP=$(eval $__RUNPROG | awk -F "address " '/has/ {print $2; exit}' )
-		}
-
+		__PROG="BIND host"
 	elif [ -x /usr/bin/nslookup ]; then	# last use BusyBox nslookup
 		[ $force_ipversion -ne 0 -o $force_dnstcp -ne 0 ] && \
-			critical_error "nslookup - no support to 'force IP Version' or 'DNS over TCP'"
+			write_log 14 "Busybox nslookup - no support to 'force IP Version' or 'DNS over TCP'"
 
 		__RUNPROG="nslookup $domain $dns_server 2>/dev/null"
 		__ERRPROG="nslookup $domain $dns_server 2>&1"
-		verbose_echo " resolver prog =: $__RUNPROG"
-		__IP=$(eval $__RUNPROG)
-		__ERR=$?
-		# command error
-		[ $__ERR -gt 0 ] && {
-			verbose_echo "\n!!!!!!!!! ERROR =: BusyBox nslookup Error '$__ERR'\n$(eval $__ERRPROG)\n"
-			syslog_err "DNS Resolver Error - BusyBox nslookup Error: '$__ERR'"
-			return 1
-		} || {
-			# we need to run twice because multi-line output needs to be directly piped to grep because
-			# pipe returns return code of last prog in pipe but we need errors from nslookup command
-			__IP=$(eval $__RUNPROG | sed -ne "3,\$ { s/^Address [0-9]*: \($__REGEX\).*$/\\1/p }" )
-		}
-
-	else					# there must be an error
-		critical_error "No program found to request public registered IP"
+		__PROG="BusyBox nslookup"
+	else	# there must be an error
+		write_log 12 "Error in 'get_registered_ip()' - no supported Name Server lookup software accessible"
 	fi
 
-	verbose_echo "   resolved ip =: '$__IP'"
+	while : ; do
+		write_log 7 "#> $__RUNPROG"
+		__DATA=$(eval $__RUNPROG)
+		__ERR=$?
+		if [ $__ERR -ne 0 ]; then
+			write_log 7 "Error:\n$(eval $__ERRPROG)"
+			write_log 3 "$__PROG error: '$__ERR'"
+			__DATA=""
+		else
+			if [ "$__PROG" = "BIND host" ]; then		
+				__DATA=$(echo "$__DATA" | awk -F "address " '/has/ {print $2; exit}' )
+			else
+				__DATA=$(echo "$__DATA" | sed -ne "3,\$ { s/^Address [0-9]*: \($__REGEX\).*$/\\1/p }" )
+			fi
+			[ -n "$__DATA" ] && {
+				write_log 7 "Registered IP '$__DATA' detected"
+				eval "$1='$__DATA'"	# valid data found
+				return 0		# leave here
+			}
+			write_log 4 "NO valid IP found"
+			__ERR=127
+		fi
 
-	# if NO IP was found
-	[ -z "$__IP" ] && return 1
+		[ "$SECTION_ID" = "lucihelper" ] && return $__ERR	# no retry if called by LuCI helper script
+		[ -n "$2" ] && return $__ERR		# $2 is given -> no retry
+		[ $VERBOSE_MODE -gt 1 ] && {
+			# VERBOSE_MODE > 1 then NO retry
+			write_log 7 "Verbose Mode: $VERBOSE_MODE - NO retry on error"
+			return $__ERR
+		}
 
-	eval "$1='$__IP'"
-	return 0
+		__CNT=$(( $__CNT + 1 ))	# increment error counter
+		# if error count > retry_count leave here
+		[ $__CNT -gt $retry_count ] && \
+			write_log 14 "Get registered/public IP for '$domain' failed after $retry_count retries"
+
+		write_log 4 "Get registered/public IP for '$domain' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		sleep $RETRY_SECONDS &
+		PID_SLEEP=$!
+		wait $PID_SLEEP	# enable trap-handler
+		PID_SLEEP=0
+	done
+	# we should never come here there must be a programming error
+	write_log 12 "Error in 'get_registered_ip()' - program coding error"
 }
 
 get_uptime() {
 	# $1	Variable to store result in
+	[ $# -ne 1 ] && write_log 12 "Error calling 'verify_host_port()' - wrong number of parameters"
 	local __UPTIME=$(cat /proc/uptime)
 	eval "$1='${__UPTIME%%.*}'"
+}
+
+trap_handler() {
+	# $1	trap signal
+	# $2	optional (exit status)
+	local __PIDS __PID
+	local __ERR=${2:-0}
+	local __OLD_IFS=$IFS
+	local __NEWLINE_IFS='
+' #__NEWLINE_IFS
+
+	[ $PID_SLEEP -ne 0 ] && kill -$1 $PID_SLEEP 2>/dev/null	# kill pending sleep if exist
+
+	case $1 in
+		0)	if [ $__ERR -eq 0 ]; then
+				write_log 5 "PID '$$' exit normal at $(eval $DATE_PROG)\n"
+			else
+				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)\n"
+			fi ;;
+		1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
+			eval "$0 $SECTION_ID $VERBOSE_MODE &"	# reload config via restarting script
+			exit 0 ;;
+		2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)\n";;
+		3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)\n";;
+		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(eval $DATE_PROG)\n";;
+		*)	write_log 13 "Unhandled signal '$1' in 'trap_handler()'";;
+	esac
+
+	__PIDS=$(pgrep -P $$)	# get my childs (pgrep prints with "newline")
+	IFS=$__NEWLINE_IFS
+	for __PID in $__PIDS; do
+		kill -$1 $__PID	# terminate it
+	done
+	IFS=$__OLD_IFS
+	
+	# exit with correct handling:
+	# remove trap handling settings and send kill to myself
+	trap - 0 1 2 3 15
+	[ $1 -gt 0 ] && kill -$1 $$
 }
