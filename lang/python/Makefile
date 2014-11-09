@@ -64,7 +64,7 @@ endef
 
 define Package/python
 $(call Package/python/Default)
-  DEPENDS:=+python-base +libncursesw +libbz2 +libgdbm +libreadline +libsqlite3 +libexpat +libdb47
+  DEPENDS:=+python-base +libncursesw +libbz2 +libgdbm +libsqlite3 +libexpat +libdb47
 endef
 
 define Package/python/description
@@ -159,6 +159,7 @@ define PyPackage/python/filespec
 -|/usr/lib/python$(PYTHON_VERSION)/webbrowser.py
 -|/usr/lib/python$(PYTHON_VERSION)/*/test
 -|/usr/lib/python$(PYTHON_VERSION)/*/tests
+-|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/readline.so
 endef
 
 define PyPackage/python-base/install
