@@ -1,8 +1,19 @@
 #!/bin/sh /etc/rc.common
 START=95
+STOP=10
 
 boot() {
 	return 0
+}
+
+reload() {
+	killall -1 dynamic_dns_updater.sh	# send SIGHUP
+}
+
+restart() {
+	stop
+	sleep 1	# give time to shutdown
+	start
 }
 
 start() {
@@ -11,6 +22,5 @@ start() {
 }
 
 stop() {
-	killall -9 dynamic_dns_updater.sh
+	killall dynamic_dns_updater.sh
 }
-

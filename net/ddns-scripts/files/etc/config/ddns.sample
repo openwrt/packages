@@ -127,7 +127,7 @@ config service "myddns"
 	###########
 	# use HTTPS for secure communication with you DDNS provider
 	# personally found some providers having problems when not sending 
-	# updates via HTTPS. Yyou must not specify "https://" in update_url. 
+	# updates via HTTPS. You must not specify "https://" in update_url. 
 	# It's modified by the scripts themselves
 	# Needs GNU Wget (with SSL support) or cURL to be installed.
 	# default: "0"	do not use HTTPS
@@ -139,8 +139,8 @@ config service "myddns"
 	# the transfer program can find them. (might need package CA-certificates)
 	# if you don't want to verify servers certificate (insecure) you should
 	# this parameter to "IGNORE" (in capital letters)
-	# default: "/etc/cacert"	path where CA-certificate package is installed
-	option cacert "/etc/cacert"
+	# default: (none)	path where CA-certificate package is installed
+	option cacert "/etc/ssl/certs"
 
 	###########
 	# for logging and control if everything work fine you can get information inside
@@ -210,11 +210,10 @@ config service "myddns"
 	option force_ipversion "0"
 
 	###########
-	# normally the current (in the internet) registered ip is detected using the
+	# Normally the current (in the internet) registered ip is detected using the
 	# local defined name lookup policies (i.e. /etc/resolve.conf etc.)
 	# Specify here a DNS server to use instead of the defaults.
 	# you can use hostname or ip address
-	# IPv6 address must be in squared brackets "[...]"
 	# i.e. "google-public-dns-a.google.com"
 	# default: none
 #	option dns_server "google-public-dns-a.google.com"
@@ -236,6 +235,7 @@ config service "myddns"
 	# ip_source='web' (see above) because this request is also 
 	# send via the configured proxy !!!
 	# Syntax: [user:password@]proxy:port !port is required !
+	# IPv6 address must be in squared brackets "[...]"
 	# default: none
 #	option proxy ''
 
@@ -247,7 +247,7 @@ config service "myddns"
 	# wait this time before verify if update was successful send.
 	# !!! checks below 5 minutes make no sense because the Internet 
 	# needs about 5-10 minutes to sync an IP-change to all DNS servers !!!
-	# accepted unit entry’s: 'seconds' 'minutes' 'hours' 'days'
+	# accepted unit entry’s: 'seconds' 'minutes' 'hours'
 	# minimum 5 minutes == 300 seconds
 	# default 10 minutes
 	option check_interval	'10'
@@ -256,7 +256,7 @@ config service "myddns"
 	###########
 	# force to send an update to service provider, if no change was detected.
 	# consult DDNS providers documentation if your DDNS entry might timeout.
-	# accepted unit entry’s: 'seconds' 'minutes' 'hours' 'days'
+	# accepted unit entry’s: 'minutes' 'hours' 'days'
 	# minimum needs to be greater or equal check interval (see above)
 	# A special setting of '0' is allowed, which forces the script to run once.
 	# It sends an update, verify if update was accepted by DNS 
@@ -276,7 +276,7 @@ config service "myddns"
 	# if error happen on detecting, sending or updating the
 	# script will retry the relevant action.
 	# here you define the time to wait before retry is started
-	# accepted unit entry’s: 'seconds' 'minutes' 'hours' 'days'
+	# accepted unit entry’s: 'seconds' 'minutes'
 	# default: 60 seconds
 	option retry_interval	'60'
 	option retry_unit	'seconds'
