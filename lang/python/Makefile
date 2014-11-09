@@ -51,23 +51,23 @@ define Package/python/Default/description
  the development of higher quality, more maintainable code.
 endef
 
-define Package/python
+define Package/python-base
 $(call Package/python/Default)
+  TITLE:=Python $(PYTHON_VERSION) interpreter
   DEPENDS:=+libpthread +zlib +libffi +libopenssl
 endef
 
-define Package/python/description
+define Package/python-base/description
   This package contains only the interpreter and the bare minimum
   for the interpreter to start.
 endef
 
-define Package/python-full
+define Package/python
 $(call Package/python/Default)
-  TITLE:=Full install (minus a few libs)
-  DEPENDS:=@PACKAGE_python +PACKAGE_python:python +libncursesw
+  DEPENDS:=+python-base +libncursesw
 endef
 
-define Package/python-full/description
+define Package/python/description
   This package contains the (almost) full Python install.
 endef
 
@@ -110,7 +110,7 @@ define Build/InstallDev
 	$(INSTALL_DATA) ./files/python-package.mk $(STAGING_DIR)/mk/
 endef
 
-define PyPackage/python/filespec
+define PyPackage/python-base/filespec
 +|/usr/bin/python$(PYTHON_VERSION)
 +|/usr/lib/python$(PYTHON_VERSION)/_abcoll.py
 +|/usr/lib/python$(PYTHON_VERSION)/_sysconfigdata.py
@@ -134,7 +134,7 @@ define PyPackage/python/filespec
 +|/usr/lib/python$(PYTHON_VERSION)/warnings.py
 endef
 
-define PyPackage/python-full/filespec
+define PyPackage/python/filespec
 +|/usr/lib/python$(PYTHON_VERSION)
 -|/usr/lib/python$(PYTHON_VERSION)/config
 -|/usr/lib/python$(PYTHON_VERSION)/distutils
@@ -149,7 +149,7 @@ define PyPackage/python-full/filespec
 -|/usr/lib/python$(PYTHON_VERSION)/*/tests
 endef
 
-define PyPackage/python/install
+define PyPackage/python-base/install
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
@@ -169,8 +169,8 @@ endef
 
 $(eval $(call HostBuild))
 
+$(eval $(call PyPackage,python-base))
 $(eval $(call PyPackage,python))
-$(eval $(call PyPackage,python-full))
 
+$(eval $(call BuildPackage,python-base))
 $(eval $(call BuildPackage,python))
-$(eval $(call BuildPackage,python-full))
