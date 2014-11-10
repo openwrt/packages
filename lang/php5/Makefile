@@ -116,6 +116,17 @@ define Package/php5-cgi/description
   This package contains the CGI version of the PHP5 interpreter.
 endef
 
+define Package/php5-fpm
+  $(call Package/php5/Default)
+  DEPENDS+= +php5-cgi
+  TITLE+= (PHP-FPM)
+endef
+
+define Package/php5-fpm/description
+  $(call Package/php5/Default/description)
+  This package contains the FastCGI Process Manager of the PHP5 interpreter.
+endef
+
 define Package/php5-fastcgi
   $(call Package/php5/Default)
   DEPENDS+= +php5-cgi
@@ -130,6 +141,7 @@ endef
 CONFIGURE_ARGS+= \
 	--enable-cli \
 	--enable-cgi \
+	--enable-fpm \
 	--enable-shared \
 	--disable-static \
 	--disable-rpath \
@@ -445,6 +457,16 @@ define Package/php5-cgi/install
 	ln -sf php-cgi $(1)/usr/bin/php-fcgi
 endef
 
+define Package/php5-fpm/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/php5-fpm.init $(1)/etc/init.d/php5-fpm
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sapi/fpm/php-fpm $(1)/usr/bin/php-fpm
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/sapi/fpm/php-fpm.conf $(1)/etc/php-fpm.conf.default
+	$(INSTALL_DATA) ./files/php-fpm.conf $(1)/etc/php-fpm.conf
+endef
+
 define Package/php5-fastcgi/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/php5-fastcgi.config $(1)/etc/config/php5-fastcgi
@@ -494,6 +516,7 @@ endef
 $(eval $(call BuildPackage,php5))
 $(eval $(call BuildPackage,php5-cli))
 $(eval $(call BuildPackage,php5-cgi))
+$(eval $(call BuildPackage,php5-fpm))
 $(eval $(call BuildPackage,php5-fastcgi))
 
 #$(eval $(call BuildModule,NAME,TITLE[,PKG DEPENDS]))
