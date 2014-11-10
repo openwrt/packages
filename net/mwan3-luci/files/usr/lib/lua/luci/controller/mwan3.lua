@@ -8,348 +8,311 @@ function index()
 		return
 	end
 
-	entry({"admin", "network", "mwan3"},
-		alias("admin", "network", "mwan3", "overview"),
+	entry({"admin", "network", "mwan"},
+		alias("admin", "network", "mwan", "overview"),
 		_("Load Balancing"), 600)
 
-	entry({"admin", "network", "mwan3", "overview"},
-		alias("admin", "network", "mwan3", "overview", "over_iface"),
+	entry({"admin", "network", "mwan", "overview"},
+		alias("admin", "network", "mwan", "overview", "overview_interface"),
 		_("Overview"), 10)
-	entry({"admin", "network", "mwan3", "overview", "over_iface"},
-		template("mwan3/mwan3_over_interface"))
-	entry({"admin", "network", "mwan3", "overview", "iface_status"},
-		call("mwan3_iface_status"))
-	entry({"admin", "network", "mwan3", "overview", "over_detail"},
-		template("mwan3/mwan3_over_detail"))
-	entry({"admin", "network", "mwan3", "overview", "detail_status"},
-		call("mwan3_detail_status"))
+	entry({"admin", "network", "mwan", "overview", "overview_interface"},
+		template("mwan/overview_interface"))
+	entry({"admin", "network", "mwan", "overview", "interface_status"},
+		call("interfaceStatus"))
+	entry({"admin", "network", "mwan", "overview", "overview_detailed"},
+		template("mwan/overview_detailed"))
+	entry({"admin", "network", "mwan", "overview", "detailed_status"},
+		call("detailedStatus"))
 
-	entry({"admin", "network", "mwan3", "configuration"},
-		alias("admin", "network", "mwan3", "configuration", "interface"),
+	entry({"admin", "network", "mwan", "configuration"},
+		alias("admin", "network", "mwan", "configuration", "interface"),
 		_("Configuration"), 20)
-	entry({"admin", "network", "mwan3", "configuration", "interface"},
-		arcombine(cbi("mwan3/mwan3_interface"), cbi("mwan3/mwan3_interfaceconfig")),
+	entry({"admin", "network", "mwan", "configuration", "interface"},
+		arcombine(cbi("mwan/interface"), cbi("mwan/interfaceconfig")),
 		_("Interfaces"), 10).leaf = true
-	entry({"admin", "network", "mwan3", "configuration", "member"},
-		arcombine(cbi("mwan3/mwan3_member"), cbi("mwan3/mwan3_memberconfig")),
+	entry({"admin", "network", "mwan", "configuration", "member"},
+		arcombine(cbi("mwan/member"), cbi("mwan/memberconfig")),
 		_("Members"), 20).leaf = true
-	entry({"admin", "network", "mwan3", "configuration", "policy"},
-		arcombine(cbi("mwan3/mwan3_policy"), cbi("mwan3/mwan3_policyconfig")),
+	entry({"admin", "network", "mwan", "configuration", "policy"},
+		arcombine(cbi("mwan/policy"), cbi("mwan/policyconfig")),
 		_("Policies"), 30).leaf = true
-	entry({"admin", "network", "mwan3", "configuration", "rule"},
-		arcombine(cbi("mwan3/mwan3_rule"), cbi("mwan3/mwan3_ruleconfig")),
+	entry({"admin", "network", "mwan", "configuration", "rule"},
+		arcombine(cbi("mwan/rule"), cbi("mwan/ruleconfig")),
 		_("Rules"), 40).leaf = true
 
-	entry({"admin", "network", "mwan3", "advanced"},
-		alias("admin", "network", "mwan3", "advanced", "hotplug"),
+	entry({"admin", "network", "mwan", "advanced"},
+		alias("admin", "network", "mwan", "advanced", "hotplugscript"),
 		_("Advanced"), 100)
-	entry({"admin", "network", "mwan3", "advanced", "hotplug"},
-		form("mwan3/mwan3_adv_hotplug"))
-	entry({"admin", "network", "mwan3", "advanced", "mwan3"},
-		form("mwan3/mwan3_adv_mwan3"))
-	entry({"admin", "network", "mwan3", "advanced", "network"},
-		form("mwan3/mwan3_adv_network"))
-	entry({"admin", "network", "mwan3", "advanced", "diag"},
-		template("mwan3/mwan3_adv_diagnostics"))
-	entry({"admin", "network", "mwan3", "advanced", "diag_display"},
-		call("mwan3_diag_data"), nil).leaf = true
-	entry({"admin", "network", "mwan3", "advanced", "tshoot"},
-		template("mwan3/mwan3_adv_troubleshoot"))
-	entry({"admin", "network", "mwan3", "advanced", "tshoot_display"},
-		call("mwan3_tshoot_data"))
+	entry({"admin", "network", "mwan", "advanced", "hotplugscript"},
+		form("mwan/advanced_hotplugscript"))
+	entry({"admin", "network", "mwan", "advanced", "mwanconfig"},
+		form("mwan/advanced_mwanconfig"))
+	entry({"admin", "network", "mwan", "advanced", "networkconfig"},
+		form("mwan/advanced_networkconfig"))
+	entry({"admin", "network", "mwan", "advanced", "diagnostics"},
+		template("mwan/advanced_diagnostics"))
+	entry({"admin", "network", "mwan", "advanced", "diagnostics_display"},
+		call("diagnosticsData"), nil).leaf = true
+	entry({"admin", "network", "mwan", "advanced", "troubleshooting"},
+		template("mwan/advanced_troubleshooting"))
+	entry({"admin", "network", "mwan", "advanced", "troubleshooting_display"},
+		call("troubleshootingData"))
 end
 
-function mwan3_get_iface_status(rulenum, ifname)
-	if ut.trim(sys.exec("uci get -p /var/state mwan3." .. ifname .. ".enabled")) == "1" then
-		if ut.trim(sys.exec("ip route list table " .. rulenum)) ~= "" then
-			if ut.trim(sys.exec("uci get -p /var/state mwan3." .. ifname .. ".track_ip")) ~= "" then
-				return "on"
+function getInterfaceStatus(ruleNumber, interfaceName)
+	if ut.trim(sys.exec("uci get -p /var/state mwan3." .. interfaceName .. ".enabled")) == "1" then
+		if ut.trim(sys.exec("ip route list table " .. ruleNumber)) ~= "" then
+			if ut.trim(sys.exec("uci get -p /var/state mwan3." .. interfaceName .. ".track_ip")) ~= "" then
+				return "online"
 			else
-				return "nm"
+				return "notMonitored"
 			end
 		else
-			return "off"
+			return "offline"
 		end
 	else
-		return "ne"
+		return "notEnabled"
 	end
 end
 
-function mwan3_get_iface()
-	local rulenum, str = 0, ""
+function getInterfaceName()
+	local ruleNumber, status = 0, ""
 	uci.cursor():foreach("mwan3", "interface",
 		function (section)
-			rulenum = rulenum+1
-			str = str .. section[".name"] .. "[" .. mwan3_get_iface_status(rulenum, section[".name"]) .. "]"
+			ruleNumber = ruleNumber+1
+			status = status .. section[".name"] .. "[" .. getInterfaceStatus(ruleNumber, section[".name"]) .. "]"
 		end
 	)
-	return str
+	return status
 end
 
-function mwan3_iface_status()
+function interfaceStatus()
 	local ntm = require "luci.model.network".init()
 
-	local rv = {	}
+	local mArray = {}
 
 	-- overview status
-	local statstr = mwan3_get_iface()
-	if statstr ~= "" then
-		rv.wans = { }
+	local statusString = getInterfaceName()
+	if statusString ~= "" then
+		mArray.wans = {}
 		wansid = {}
 
-		for wanname, ifstat in string.gfind(statstr, "([^%[]+)%[([^%]]+)%]") do
-			local wanifname = ut.trim(sys.exec("uci get -p /var/state network." .. wanname .. ".ifname"))
-				if wanifname == "" then
-					wanifname = "X"
+		for wanName, interfaceState in string.gfind(statusString, "([^%[]+)%[([^%]]+)%]") do
+			local wanInterfaceName = ut.trim(sys.exec("uci get -p /var/state network." .. wanName .. ".ifname"))
+				if wanInterfaceName == "" then
+					wanInterfaceName = "X"
 				end
-			local wanlink = ntm:get_interface(wanifname)
-				wanlink = wanlink and wanlink:get_network()
-				wanlink = wanlink and wanlink:adminlink() or "#"
-			wansid[wanname] = #rv.wans + 1
-			rv.wans[wansid[wanname]] = { name = wanname, link = wanlink, ifname = wanifname, status = ifstat }
+			local wanDeviceLink = ntm:get_interface(wanInterfaceName)
+				wanDeviceLink = wanDeviceLink and wanDeviceLink:get_network()
+				wanDeviceLink = wanDeviceLink and wanDeviceLink:adminlink() or "#"
+			wansid[wanName] = #mArray.wans + 1
+			mArray.wans[wansid[wanName]] = { name = wanName, link = wanDeviceLink, ifname = wanInterfaceName, status = interfaceState }
 		end
 	end
 
 	-- overview status log
-	local mwlg = ut.trim(sys.exec("logread | grep mwan3 | tail -n 50 | sed 'x;1!H;$!d;x'"))
-	if mwlg ~= "" then
-		rv.mwan3log = { }
-		mwlog = {}
-		mwlog[mwlg] = #rv.mwan3log + 1
-		rv.mwan3log[mwlog[mwlg]] = { mwanlog = mwlg }
+	local mwanLog = ut.trim(sys.exec("logread | grep mwan3 | tail -n 50 | sed 'x;1!H;$!d;x'"))
+	if mwanLog ~= "" then
+		mArray.mwanlog = { mwanLog }
 	end
 
 	luci.http.prepare_content("application/json")
-	luci.http.write_json(rv)
+	luci.http.write_json(mArray)
 end
 
-function mwan3_detail_status()
-	local rv = {	}
+function detailedStatus()
+	local mArray = {}
 
-	-- detailed mwan3 status
-	local dst = ut.trim(sys.exec("mwan3 status"))
-	if dst ~= "" then
-		rv.mwan3dst = { }
-		dstat = {}
-		dstat[dst] = #rv.mwan3dst + 1
-		rv.mwan3dst[dstat[dst]] = { detailstat = dst }
+	-- detailed mwan status
+	local detailStatusInfo = ut.trim(sys.exec("/usr/sbin/mwan3 status"))
+	if detailStatusInfo ~= "" then
+		mArray.mwandetail = { detailStatusInfo }
 	end
 
 	luci.http.prepare_content("application/json")
-	luci.http.write_json(rv)
+	luci.http.write_json(mArray)
 end
 
-function mwan3_diag_data(iface, tool, alt)
-	function get_ifnum()
-		local num = 0
+function diagnosticsData(interface, tool, task)
+	function getInterfaceNumber()
+		local number = 0
 		uci.cursor():foreach("mwan3", "interface",
 			function (section)
-				num = num+1
-				if section[".name"] == iface then
-					ifnum = num
+				number = number+1
+				if section[".name"] == interface then
+					interfaceNumber = number
 				end
 			end
 		)
 	end
 
-	local rv = {	}
+	local mArray = {}
 
-	local res = ""
+	local results = ""
 	if tool == "service" then
-		os.execute("mwan3 " .. alt)
-		if alt == "restart" then
-			res = "MWAN3 restarted"
-		elseif alt == "stop" then
-			res = "MWAN3 stopped"
+		os.execute("/usr/sbin/mwan3 " .. task)
+		if task == "restart" then
+			results = "MWAN3 restarted"
+		elseif task == "stop" then
+			results = "MWAN3 stopped"
 		else
-			res = "MWAN3 started"
+			results = "MWAN3 started"
 		end
 	else
-		local ifdev = ut.trim(sys.exec("uci get -p /var/state network." .. iface .. ".ifname"))
-		if ifdev ~= "" then
+		local interfaceDevice = ut.trim(sys.exec("uci get -p /var/state network." .. interface .. ".ifname"))
+		if interfaceDevice ~= "" then
 			if tool == "ping" then
-				local gateway = ut.trim(sys.exec("route -n | awk -F' ' '{ if ($8 == \"" .. ifdev .. "\" && $1 == \"0.0.0.0\") print $2 }'"))
+				local gateway = ut.trim(sys.exec("route -n | awk '{if ($8 == \"" .. interfaceDevice .. "\" && $1 == \"0.0.0.0\" && $3 == \"0.0.0.0\") print $2}'"))
 				if gateway ~= "" then
-					if alt == "gateway" then
-						local cmd = "ping -c 3 -W 2 -I " .. ifdev .. " " .. gateway
-						res = cmd .. "\n\n" .. sys.exec(cmd)
+					if task == "gateway" then
+						local pingCommand = "ping -c 3 -W 2 -I " .. interfaceDevice .. " " .. gateway
+						results = pingCommand .. "\n\n" .. sys.exec(pingCommand)
 					else
-						local str = ut.trim(sys.exec("uci get -p /var/state mwan3." .. iface .. ".track_ip"))
-						if str ~= "" then
-							for z in str:gmatch("[^ ]+") do
-								local cmd = "ping -c 3 -W 2 -I " .. ifdev .. " " .. z
-								res = res .. cmd .. "\n\n" .. sys.exec(cmd) .. "\n\n"
+						local tracked = ut.trim(sys.exec("uci get -p /var/state mwan3." .. interface .. ".track_ip"))
+						if tracked ~= "" then
+							for z in tracked:gmatch("[^ ]+") do
+								local pingCommand = "ping -c 3 -W 2 -I " .. interfaceDevice .. " " .. z
+								results = results .. pingCommand .. "\n\n" .. sys.exec(pingCommand) .. "\n\n"
 							end
 						else
-							res = "No tracking IP addresses configured on " .. iface
+							results = "No tracking IP addresses configured on " .. interface
 						end
 					end
 				else
-					res = "No default gateway for " .. iface .. " found. Default route does not exist or is configured incorrectly"
+					results = "No default gateway for " .. interface .. " found. Default route does not exist or is configured incorrectly"
 				end
 			elseif tool == "rulechk" then
-				get_ifnum()
-				local rule1 = sys.exec("ip rule | grep $(echo $((" .. ifnum .. " + 1000)))")
-				local rule2 = sys.exec("ip rule | grep $(echo $((" .. ifnum .. " + 2000)))")
+				getInterfaceNumber()
+				local rule1 = sys.exec("ip rule | grep $(echo $((" .. interfaceNumber .. " + 1000)))")
+				local rule2 = sys.exec("ip rule | grep $(echo $((" .. interfaceNumber .. " + 2000)))")
 				if rule1 ~= "" and rule2 ~= "" then
-					res = "All required interface IP rules found:\n\n" .. rule1 .. rule2
+					results = "All required interface IP rules found:\n\n" .. rule1 .. rule2
 				elseif rule1 ~= "" or rule2 ~= "" then
-					res = "Missing 1 of the 2 required interface IP rules\n\n\nRules found:\n\n" .. rule1 .. rule2
+					results = "Missing 1 of the 2 required interface IP rules\n\n\nRules found:\n\n" .. rule1 .. rule2
 				else
-					res = "Missing both of the required interface IP rules"
+					results = "Missing both of the required interface IP rules"
 				end
 			elseif tool == "routechk" then
-				get_ifnum()
-				local table = sys.exec("ip route list table " .. ifnum)
-				if table ~= "" then
-					res = "Interface routing table " .. ifnum .. " was found:\n\n" .. table
+				getInterfaceNumber()
+				local routeTable = sys.exec("ip route list table " .. interfaceNumber)
+				if routeTable ~= "" then
+					results = "Interface routing table " .. interfaceNumber .. " was found:\n\n" .. routeTable
 				else
-					res = "Missing required interface routing table " .. ifnum
+					results = "Missing required interface routing table " .. interfaceNumber
 				end
 			elseif tool == "hotplug" then
-				if alt == "ifup" then
-					os.execute("mwan3 ifup " .. iface)
-					res = "Hotplug ifup sent to interface " .. iface .. "..."
+				if task == "ifup" then
+					os.execute("/usr/sbin/mwan3 ifup " .. interface)
+					results = "Hotplug ifup sent to interface " .. interface .. "..."
 				else
-					os.execute("mwan3 ifdown " .. iface)
-					res = "Hotplug ifdown sent to interface " .. iface .. "..."
+					os.execute("/usr/sbin/mwan3 ifdown " .. interface)
+					results = "Hotplug ifdown sent to interface " .. interface .. "..."
 				end
 			end
 		else
-			res = "Unable to perform diagnostic tests on " .. iface .. ". There is no physical or virtual device associated with this interface"
+			results = "Unable to perform diagnostic tests on " .. interface .. ". There is no physical or virtual device associated with this interface"
 		end
 	end
-	if res ~= "" then
-		res = ut.trim(res)
-		rv.diagres = { }
-		dres = {}
-		dres[res] = #rv.diagres + 1
-		rv.diagres[dres[res]] = { diagresult = res }
+	if results ~= "" then
+		results = ut.trim(results)
+		mArray.diagnostics = { results }
 	end
 
 	luci.http.prepare_content("application/json")
-	luci.http.write_json(rv)
+	luci.http.write_json(mArray)
 end
 
-function mwan3_tshoot_data()
-	local rv = {	}
+function troubleshootingData()
+	local mArray = {}
 
 	-- software versions
-	local wrtrelease = ut.trim(luci.version.distversion)
-		if wrtrelease ~= "" then
-			wrtrelease = "OpenWrt - " .. wrtrelease
+	local wrtRelease = ut.trim(luci.version.distversion)
+		if wrtRelease ~= "" then
+			wrtRelease = "OpenWrt - " .. wrtRelease
 		else
-			wrtrelease = "OpenWrt - unknown"
+			wrtRelease = "OpenWrt - unknown"
 		end
-	local lucirelease = ut.trim(luci.version.luciversion)
-		if lucirelease ~= "" then
-			lucirelease = "\nLuCI - " .. lucirelease
+	local luciRelease = ut.trim(luci.version.luciversion)
+		if luciRelease ~= "" then
+			luciRelease = "\nLuCI - " .. luciRelease
 		else
-			lucirelease = "\nLuCI - unknown"
+			luciRelease = "\nLuCI - unknown"
 		end
-	local mwan3version = ut.trim(sys.exec("opkg info mwan3 | grep Version | awk -F' ' '{ print $2 }'"))
-		if mwan3version ~= "" then
-			mwan3version = "\n\nmwan3 - " .. mwan3version
+	local mwanVersion = ut.trim(sys.exec("opkg info mwan3 | grep Version | awk '{print $2}'"))
+		if mwanVersion ~= "" then
+			mwanVersion = "\n\nmwan3 - " .. mwanVersion
 		else
-			mwan3version = "\nmwan3 - unknown"
+			mwanVersion = "\n\nmwan3 - unknown"
 		end
-	local mwan3lversion = ut.trim(sys.exec("opkg info luci-app-mwan3 | grep Version | awk -F' ' '{ print $2 }'"))
-		if mwan3lversion ~= "" then
-			mwan3lversion = "\nluci-app-mwan3 - " .. mwan3lversion
+	local mwanLuciVersion = ut.trim(sys.exec("opkg info luci-app-mwan3 | grep Version | awk '{print $2}'"))
+		if mwanLuciVersion ~= "" then
+			mwanLuciVersion = "\nmwan3-luci - " .. mwanLuciVersion
 		else
-			mwan3lversion = "\nluci-app-mwan3 - unknown"
+			mwanLuciVersion = "\nmwan3-luci - unknown"
 		end
-	local softrev = wrtrelease .. lucirelease .. mwan3version .. mwan3lversion
-	rv.mw3ver = { }
-	mwv = {}
-	mwv[softrev] = #rv.mw3ver + 1
-	rv.mw3ver[mwv[softrev]] = { mwan3v = softrev }
+	mArray.versions = { wrtRelease .. luciRelease .. mwanVersion .. mwanLuciVersion }
 
-	-- mwan3 config
-	local mwcg = ut.trim(sys.exec("cat /etc/config/mwan3"))
-		if mwcg == "" then
-			mwcg = "No data found"
+	-- mwan config
+	local mwanConfig = ut.trim(sys.exec("cat /etc/config/mwan3"))
+		if mwanConfig == "" then
+			mwanConfig = "No data found"
 		end
-	rv.mwan3config = { }
-	mwan3cfg = {}
-	mwan3cfg[mwcg] = #rv.mwan3config + 1
-	rv.mwan3config[mwan3cfg[mwcg]] = { mwn3cfg = mwcg }
+	mArray.mwanconfig = { mwanConfig }
 
 	-- network config
-	local netcg = ut.trim(sys.exec("cat /etc/config/network | sed -e 's/.*username.*/	USERNAME HIDDEN/' -e 's/.*password.*/	PASSWORD HIDDEN/'"))
-		if netcg == "" then
-			netcg = "No data found"
+	local networkConfig = ut.trim(sys.exec("cat /etc/config/network | sed -e 's/.*username.*/	USERNAME HIDDEN/' -e 's/.*password.*/	PASSWORD HIDDEN/'"))
+		if networkConfig == "" then
+			networkConfig = "No data found"
 		end
-	rv.netconfig = { }
-	ncfg = {}
-	ncfg[netcg] = #rv.netconfig + 1
-	rv.netconfig[ncfg[netcg]] = { netcfg = netcg }
+	mArray.netconfig = { networkConfig }
 
 	-- ifconfig
-	local ifcg = ut.trim(sys.exec("ifconfig"))
-		if ifcg == "" then
-			ifcg = "No data found"
+	local ifconfig = ut.trim(sys.exec("ifconfig"))
+		if ifconfig == "" then
+			ifconfig = "No data found"
 		end
-	rv.ifconfig = { }
-	icfg = {}
-	icfg[ifcg] = #rv.ifconfig + 1
-	rv.ifconfig[icfg[ifcg]] = { ifcfg = ifcg }
+	mArray.ifconfig = { ifconfig }
 
 	-- route -n
-	local routeshow = ut.trim(sys.exec("route -n"))
-		if routeshow == "" then
-			routeshow = "No data found"
+	local routeShow = ut.trim(sys.exec("route -n"))
+		if routeShow == "" then
+			routeShow = "No data found"
 		end
-	rv.rtshow = { }
-	rshw = {}
-	rshw[routeshow] = #rv.rtshow + 1
-	rv.rtshow[rshw[routeshow]] = { iprtshow = routeshow }
+	mArray.routeshow = { routeShow }
 
 	-- ip rule show
-	local ipr = ut.trim(sys.exec("ip rule show"))
-		if ipr == "" then
-			ipr = "No data found"
+	local ipRuleShow = ut.trim(sys.exec("ip rule show"))
+		if ipRuleShow == "" then
+			ipRuleShow = "No data found"
 		end
-	rv.iprule = { }
-	ipruleid = {}
-	ipruleid[ipr] = #rv.iprule + 1
-	rv.iprule[ipruleid[ipr]] = { rule = ipr }
+	mArray.iprule = { ipRuleShow }
 
 	-- ip route list table 1-250
-	local routelisting, rlstr = ut.trim(sys.exec("ip rule | sed 's/://g' | awk -F' ' '$1>=2001 && $1<=2250' | awk -F' ' '{ print $NF }'")), ""
-		if routelisting ~= "" then
-			for line in routelisting:gmatch("[^\r\n]+") do
-				rlstr = rlstr .. line .. "\n" .. sys.exec("ip route list table " .. line)
+	local routeList, routeString = ut.trim(sys.exec("ip rule | sed 's/://g' | awk '$1>=2001 && $1<=2250' | awk '{print $NF}'")), ""
+		if routeList ~= "" then
+			for line in routeList:gmatch("[^\r\n]+") do
+				routeString = routeString .. line .. "\n" .. sys.exec("ip route list table " .. line)
 			end
-			rlstr = ut.trim(rlstr)
+			routeString = ut.trim(routeString)
 		else
-			rlstr = "No data found"
+			routeString = "No data found"
 		end
-	rv.routelist = { }
-	rtlist = {}
-	rtlist[rlstr] = #rv.routelist + 1
-	rv.routelist[rtlist[rlstr]] = { iprtlist = rlstr }
+	mArray.routelist = { routeString }
 
 	-- default firewall output policy
-	local defout = ut.trim(sys.exec("uci get -p /var/state firewall.@defaults[0].output"))
-		if defout == "" then
-			defout = "No data found"
+	local firewallOut = ut.trim(sys.exec("uci get -p /var/state firewall.@defaults[0].output"))
+		if firewallOut == "" then
+			firewallOut = "No data found"
 		end
-	rv.fidef = { }
-	fwdf = {}
-	fwdf[defout] = #rv.fidef + 1
-	rv.fidef[fwdf[defout]] = { firedef = defout }
+	mArray.firewallout = { firewallOut }
 
 	-- iptables
-	local iptbl = ut.trim(sys.exec("iptables -L -t mangle -v -n"))
-		if iptbl == "" then
-			iptbl = "No data found"
+	local iptables = ut.trim(sys.exec("iptables -L -t mangle -v -n"))
+		if iptables == "" then
+			iptables = "No data found"
 		end
-	rv.iptables = { }
-	tables = {}
-	tables[iptbl] = #rv.iptables + 1
-	rv.iptables[tables[iptbl]] = { iptbls = iptbl }
+	mArray.iptables = { iptables }
 
 	luci.http.prepare_content("application/json")
-	luci.http.write_json(rv)
+	luci.http.write_json(mArray)
 end

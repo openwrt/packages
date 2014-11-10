@@ -1,25 +1,25 @@
 -- ------ extra functions ------ --
 
-function rule_check() -- determine if rule needs a protocol specified
-	local sport = ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".src_port"))
-	local dport = ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".dest_port"))
-	if sport ~= "" or dport ~= "" then -- ports configured
-		local proto = ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".proto"))
-		if proto == "" or proto == "all" then -- no or improper protocol
-			err_proto = 1
+function ruleCheck() -- determine if rule needs a protocol specified
+	local sourcePort = ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".src_port"))
+	local destPort = ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".dest_port"))
+	if sourcePort ~= "" or destPort ~= "" then -- ports configured
+		local protocol = ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".proto"))
+		if protocol == "" or protocol == "all" then -- no or improper protocol
+			error_protocol = 1
 		end
 	end
 end
 
-function rule_warn() -- display warning message at the top of the page
-	if err_proto == 1 then
+function ruleWarn() -- display warning message at the top of the page
+	if error_protocol == 1 then
 		return "<font color=\"ff0000\"><strong>WARNING: this rule is incorrectly configured with no or improper protocol specified! Please configure a specific protocol!</strong></font>"
 	else
 		return ""
 	end
 end
 
-function cbi_add_policy(field)
+function cbiAddPolicy(field)
 	uci.cursor():foreach("mwan3", "policy",
 		function (section)
 			field:value(section[".name"])
@@ -27,9 +27,9 @@ function cbi_add_policy(field)
 	)
 end
 
-function cbi_add_protocol(field)
-	local protos = ut.trim(sys.exec("cat /etc/protocols | grep '	# ' | awk -F' ' '{print $1}' | grep -vw -e 'ip' -e 'tcp' -e 'udp' -e 'icmp' -e 'esp' | grep -v 'ipv6' | sort | tr '\n' ' '"))
-	for p in string.gmatch(protos, "%S+") do
+function cbiAddProtocol(field)
+	local protocols = ut.trim(sys.exec("cat /etc/protocols | grep '	# ' | awk '{print $1}' | grep -vw -e 'ip' -e 'tcp' -e 'udp' -e 'icmp' -e 'esp' | grep -v 'ipv6' | sort | tr '\n' ' '"))
+	for p in string.gmatch(protocols, "%S+") do
 		field:value(p)
 	end
 end
@@ -41,13 +41,13 @@ sys = require "luci.sys"
 ut = require "luci.util"
 arg[1] = arg[1] or ""
 
-err_proto = 0
-rule_check()
+error_protocol = 0
+ruleCheck()
 
 
-m5 = Map("mwan3", translate("MWAN3 Multi-WAN Rule Configuration - ") .. arg[1],
-	translate(rule_warn()))
-	m5.redirect = dsp.build_url("admin", "network", "mwan3", "configuration", "rule")
+m5 = Map("mwan3", translate("MWAN Rule Configuration - ") .. arg[1],
+	translate(ruleWarn()))
+	m5.redirect = dsp.build_url("admin", "network", "mwan", "configuration", "rule")
 
 
 mwan_rule = m5:section(NamedSection, arg[1], "rule", "")
@@ -79,12 +79,13 @@ proto = mwan_rule:option(Value, "proto", translate("Protocol"),
 	proto:value("udp")
 	proto:value("icmp")
 	proto:value("esp")
-	cbi_add_protocol(proto)
+	cbiAddProtocol(proto)
 
 use_policy = mwan_rule:option(Value, "use_policy", translate("Policy assigned"))
-	cbi_add_policy(use_policy)
-	use_policy:value("unreachable")
-	use_policy:value("default")
+	cbiAddPolicy(use_policy)
+	use_policy:value("unreachable", translate("unreachable (reject)"))
+	use_policy:value("blackhole", translate("blackhole (drop)"))
+	use_policy:value("default", translate("default (use main routing table)"))
 
 
 -- ------ currently configured policies ------ --
