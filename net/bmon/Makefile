@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bmon
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libncurses +libnl +confuse
+  DEPENDS:=+PACKAGE_libncursesw:libncursesw +!PACKAGE_libncursesw:libncurses +libnl +confuse
   TITLE:=bmon is a portable bandwidth monitor
   URL:=https://github.com/tgraf/bmon/
 endef
@@ -36,9 +36,6 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-cnt-workaround \
-	--disable-dbi \
-	--disable-rrd \
-	--disable-asound \
 
 CONFIGURE_VARS += \
 	ac_cv_lib_nl_nl_connect=no \
