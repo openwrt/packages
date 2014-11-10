@@ -36,9 +36,6 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-cnt-workaround \
-	--disable-dbi \
-	--disable-rrd \
-	--disable-asound \
 
 CONFIGURE_VARS += \
 	ac_cv_lib_nl_nl_connect=no \
