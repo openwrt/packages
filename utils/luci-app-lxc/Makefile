@@ -19,7 +19,7 @@ define Package/luci-app-lxc
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=LXC management Web UI
-  DEPENDS:=+luci-mod-admin-full +lxc +liblxc +rpcd-mod-lxc
+  DEPENDS:=+luci-mod-admin-full +lxc +lxc-create +lxc-configs +liblxc +rpcd-mod-lxc
   MAINTAINER:=Petar Koretic <petar.koretic@sartura.hr>
 endef
 
