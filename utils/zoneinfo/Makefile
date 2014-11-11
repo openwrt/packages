@@ -9,8 +9,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zoneinfo
-PKG_VERSION:=2014i
-PKG_VERSION_CODE:=2014i
+PKG_VERSION:=2014j
+PKG_VERSION_CODE:=2014j
 PKG_RELEASE:=2
 
 #As i couldn't find real license used "Puplic Domain"
