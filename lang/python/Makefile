@@ -71,8 +71,7 @@ define Package/python/description
   This package contains the (almost) full Python install.
 endef
 
-MAKE_FLAGS:=\
-	DESTDIR="$(PKG_INSTALL_DIR)" \
+MAKE_FLAGS+=\
 	CROSS_COMPILE=yes \
 	LD="$(TARGET_CC)" \
 	PGEN=pgen2
