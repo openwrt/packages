@@ -80,8 +80,14 @@ config FASTD_WITH_CMDLINE_COMMANDS
 	default n
 
 config FASTD_WITH_VERIFY
-        bool "Include support for on-verify handlers"
-        depends on PACKAGE_fastd
-        default n
+	bool "Include support for on-verify handlers"
+	depends on PACKAGE_fastd
+	default n
+
+config FASTD_WITH_STATUS_SOCKET
+	bool "Include support for status sockets"
+	depends on PACKAGE_fastd
+	default y
+
 
 endmenu
