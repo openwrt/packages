@@ -148,7 +148,8 @@ endef
 define PyPackage/python/filespec
 +|/usr/lib/python$(PYTHON_VERSION)
 -|/usr/lib/python$(PYTHON_VERSION)/config
--|/usr/lib/python$(PYTHON_VERSION)/distutils
+-|/usr/lib/python$(PYTHON_VERSION)/distutils/cygwinccompiler.py
+-|/usr/lib/python$(PYTHON_VERSION)/distutils/command/wininst*
 -|/usr/lib/python$(PYTHON_VERSION)/idlelib
 -|/usr/lib/python$(PYTHON_VERSION)/lib2to3
 -|/usr/lib/python$(PYTHON_VERSION)/lib-tk
