@@ -40,7 +40,7 @@ define Build/Compile
 endef
 
 define Package/smcroute/conffiles
-	/etc/smcproxy.conf
+	/etc/smcroute.conf
 endef
 
 define Package/smcroute/install
