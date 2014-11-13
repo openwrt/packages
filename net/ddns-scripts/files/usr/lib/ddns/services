@@ -87,3 +87,6 @@
 
 # LoopiaDNS
 "loopia.se" "http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
+
+# no-ip.pl
+"no-ip.pl" "http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
