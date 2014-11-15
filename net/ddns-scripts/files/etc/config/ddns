@@ -27,4 +27,4 @@ config service "myddns_ipv6"
 	option interface	"wan6"
 	option ip_source	"network"
 	option ip_network	"wan6"
-	
+

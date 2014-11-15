@@ -7,7 +7,7 @@ boot() {
 }
 
 reload() {
-	killall -1 dynamic_dns_updater.sh	# send SIGHUP
+	killall -1 dynamic_dns_updater.sh 2>/dev/null	# send SIGHUP
 }
 
 restart() {
@@ -22,5 +22,5 @@ start() {
 }
 
 stop() {
-	killall dynamic_dns_updater.sh
+	killall dynamic_dns_updater.sh 2>/dev/null
 }

@@ -6,7 +6,7 @@
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 #
-# extended and partial rewritten in August 2014 
+# extended and partial rewritten in August 2014
 # by Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 # to support:
 # - IPv6 DDNS services
@@ -14,7 +14,7 @@
 # - Proxy Server to send out updates
 # - force_interval=0 to run once (Luci Ticket 538)
 # - the usage of BIND's host command instead of BusyBox's nslookup if installed
-# - extended Verbose Mode and log file support for better error detection 
+# - extended Verbose Mode and log file support for better error detection
 # - wait for interface to fully come up, before the first update is done
 #
 # variables in small chars are read from /etc/config/ddns
@@ -67,7 +67,7 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # config_get <variable> $SECTION_ID <option>
 #
 # defined options (also used as variable):
-# 
+#
 # enable	self-explanatory
 # interface 	network interface used by hotplug.d i.e. 'wan' or 'wan6'
 #
@@ -88,9 +88,9 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # ip_network	local defined network to read IP from i.e. 'wan' or 'wan6'
 # ip_url	URL to read local address from i.e. http://checkip.dyndns.com/ or http://checkipv6.dyndns.com/
 # ip_script	full path and name of your script to detect local IP
-# ip_interface	physical interface to use for detecting 
+# ip_interface	physical interface to use for detecting
 #
-# check_interval	check for changes every  !!! checks below 10 minutes make no sense because the Internet 
+# check_interval	check for changes every  !!! checks below 10 minutes make no sense because the Internet
 # check_unit		'days' 'hours' 'minutes' !!! needs about 5-10 minutes to sync an IP-change for an DNS entry
 #
 # force_interval	force to send an update to your service if no change was detected
@@ -107,7 +107,7 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # proxy			#NEW# using a proxy for communication !!! ALSO used to detect local IP via web => return proxy's IP !!!
 # use_logfile		#NEW# self-explanatory "/var/log/ddns/$SECTION_ID.log"
 #
-# some functionality needs 
+# some functionality needs
 # - GNU Wget or cURL installed for sending updates to DDNS service
 # - BIND host installed to detect Registered IP
 #
@@ -124,16 +124,16 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 }
 load_all_config_options "ddns" "$SECTION_ID"
 
-write_log  7 "************ ************** ************** **************"
-write_log  5 "PID '$$' started at $(eval $DATE_PROG)"
+write_log 7 "************ ************** ************** **************"
+write_log 5 "PID '$$' started at $(eval $DATE_PROG)"
+write_log 7 "uci configuraion:\n$(uci -q show ddns.$SECTION_ID | sort)"
 case $VERBOSE_MODE in
-	0) write_log  7 "verbose mode '0' - run normal, NO console output";;
-	1) write_log  7 "verbose mode '1' - run normal, console mode";;
-	2) write_log  7 "verbose mode '2' - run once, NO retry on error";;
-	3) write_log  7 "verbose mode '3' - run once, NO retry on error, NOT sending update";;
+	0) write_log  7 "verbose mode  : 0 - run normal, NO console output";;
+	1) write_log  7 "verbose mode  : 1 - run normal, console mode";;
+	2) write_log  7 "verbose mode  : 2 - run once, NO retry on error";;
+	3) write_log  7 "verbose mode  : 3 - run once, NO retry on error, NOT sending update";;
 	*) write_log 14 "error detecting VERBOSE_MODE '$VERBOSE_MODE'";;
 esac
-write_log 7 "uci configuraion:\n$(uci -q show ddns.$SECTION_ID | sort)"
 
 # set defaults if not defined
 [ -z "$enabled" ]	  && enabled=0
@@ -161,8 +161,9 @@ urlencode URL_PASS "$password"	# encode password, might have special chars for s
 
 # verify ip_source script if configured and executable
 if [ "$ip_source" = "script" ]; then
-	[ -z "$ip_script" ] && write_log 14 "No script defined to detect local IP!"
-	[ -x "$ip_script" ] || write_log 14 "Script to detect local IP not found or not executable!"
+	set -- $ip_script	#handling script with parameters, we need a trick
+	[ -z "$1" ] && write_log 14 "No script defined to detect local IP!"
+	[ -x "$1" ] || write_log 14 "Script to detect local IP not executable!"
 fi
 
 # compute update interval in seconds
@@ -196,10 +197,10 @@ fi
 echo $$ > $PIDFILE
 
 # determine when the last update was
-# the following lines should prevent multiple updates if hotplug fires multiple startups 
+# the following lines should prevent multiple updates if hotplug fires multiple startups
 # as described in Ticket #7820, but did not function if never an update take place
 # i.e. after a reboot (/var is linked to /tmp)
-# using uptime as reference because date might not be updated via NTP client 
+# using uptime as reference because date might not be updated via NTP client
 get_uptime CURR_TIME
 [ -e "$UPDFILE" ] && {
 	LAST_TIME=$(cat $UPDFILE)
@@ -224,7 +225,7 @@ PID_SLEEP=$!
 wait $PID_SLEEP	# enable trap-handler
 PID_SLEEP=0
 
-# verify DNS server 
+# verify DNS server
 [ -n "$dns_server" ] && verify_dns "$dns_server"
 
 # verify Proxy server and set environment
@@ -273,19 +274,20 @@ while : ; do
 			ERR_LAST=$?	# save return value
 		}
 
-		# error sending local IP to provider 
+		# error sending local IP to provider
 		# we have no communication error (handled inside send_update/do_transfer)
 		# but update was not recognized
 		# do NOT retry after RETRY_SECONDS, do retry after CHECK_SECONDS
 		# to early retrys will block most DDNS provider
 		# providers answer is checked inside send_update() function
-		[ $ERR_LAST -eq 0 ] && {
+		if [ $ERR_LAST -eq 0 ]; then
 			get_uptime LAST_TIME		# we send update, so
 			echo $LAST_TIME > $UPDFILE	# save LASTTIME to file
-			[ "$LOCAL_IP" != "$REGISTERED_IP" ] \
-				&& write_log 6 "Update successful - IP '$LOCAL_IP' send" \
-				|| write_log 6 "Forced update successful - IP: '$LOCAL_IP' send"
-		} || write_log 3 "Can not update IP at DDNS Provider"
+			[ "$LOCAL_IP" != "$REGISTERED_IP" ] && write_log 6 "Update successful - IP '$LOCAL_IP' send"
+			[ "$LOCAL_IP" = "$REGISTERED_IP" ]  || write_log 6 "Forced update successful - IP: '$LOCAL_IP' send"
+		else
+			write_log 3 "Can not update IP at DDNS Provider"
+		fi
 	fi
 
 	# now we wait for check interval before testing if update was recognized
@@ -318,8 +320,10 @@ while : ; do
 	fi
 
 	# force_update=0 or VERBOSE_MODE > 1 - leave here
-	[ $VERBOSE_MODE -gt 1 ]  && write_log 7 "Verbose Mode: $VERBOSE_MODE - NO reloop"; exit 0
-	[ $FORCE_SECONDS -eq 0 ] && write_log 6 "Configured to run once"; exit 0
+	[ $VERBOSE_MODE -gt 1 ]  && write_log 7 "Verbose Mode: $VERBOSE_MODE - NO reloop"
+	[ $FORCE_SECONDS -eq 0 ] && write_log 6 "Configured to run once"
+	[ $VERBOSE_MODE -gt 1 -o $FORCE_SECONDS -eq 0 ] && exit 0
+
 	write_log 6 "Rerun IP check at $(eval $DATE_PROG)"
 done
 # we should never come here there must be a programming error
