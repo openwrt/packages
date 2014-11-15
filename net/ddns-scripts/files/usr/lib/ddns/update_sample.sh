@@ -16,22 +16,22 @@
 #
 # the code here is the copy of the default used inside send_update()
 #
-local __USER __PASS __ANSWER
+local __ANSWER
 # tested with spdns.de
 local __URL="http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
 # do replaces in URL
-__urlencode __USER "$username"	# encode username, might be email or something like this
-__urlencode __PASS "$password"	# encode password, might have special chars for security reason
-__URL=$(echo $__URL | sed -e "s#\[USERNAME\]#$__USER#g" -e "s#\[PASSWORD\]#$__PASS#g" \
+__URL=$(echo $__URL | sed -e "s#\[USERNAME\]#$URL_USER#g" -e "s#\[PASSWORD\]#$URL_PASS#g" \
 			       -e "s#\[DOMAIN\]#$domain#g" -e "s#\[IP\]#$__IP#g")
 [ $use_https -ne 0 ] && __URL=$(echo $__URL | sed -e 's#^http:#https:#')
 
-__do_transfer __ANSWER "$__URL"
-__ERR=$?
-[ $__ERR -gt 0 ] && {
-	verbose_echo "\n!!!!!!!!! ERROR =: Error sending update to DDNS Provider\n"
-	return 1
-}
-verbose_echo "   update send =: DDNS Provider answered\n$__ANSWER"
-return 0
+do_transfer __ANSWER "$__URL" || return 1
+
+write_log 7 "DDNS Provider answered:\n$__ANSWER"
+
+# analyse provider answers
+# "good [IP_ADR]"	= successful
+# "nochg [IP_ADR]"	= no change but OK
+echo "$__ANSWER" | grep -E "good|nochg" >/dev/null 2>&1
+return $?	# "0" if "good" or "nochg" found
+

@@ -11,6 +11,8 @@ PKG_NAME:=lxc
 PKG_VERSION:=1.0.6
 PKG_RELEASE:=1
 
+PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause GPL-2.0
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://linuxcontainers.org/downloads/
 PKG_MD5SUM:=4aad3aee84b42faa194e44091d723a3b
@@ -33,6 +35,7 @@ LXC_SCRIPTS += \
 
 DEPENDS_APPLETS = +libpthread +libcap +liblxc
 
+DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates
 DEPENDS_ls = +lxc-config
 DEPENDS_top = +lxc-lua +luafilesystem @BROKEN
 

@@ -15,6 +15,7 @@ PKG_SOURCE:=mDNSResponder-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://opensource.apple.com/tarballs/mDNSResponder/
 PKG_MD5SUM:=39142ab70bd82a096801ce346f86cbab
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_LICENSE:=Apache-2.0
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/mDNSResponder-$(PKG_VERSION)
 

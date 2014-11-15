@@ -40,12 +40,14 @@ endef
 CONFIGURE_ARGS += \
 	--prefix="$(prefix)" \
 	--exec-prefix="$(prefix)" \
-	--with-python="/usr/bin/python" \
 	--with-username="root" \
 	--with-groupname="root" \
 	--with-mail-gid="nogroup" \
 	--with-cgi-gid="root" \
 	--without-permcheck \
+
+define Build/Compile
+endef
 
 define Package/mailman/install
 	$(INSTALL_DIR) $(1)$(prefix)
@@ -89,6 +91,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
   ./bin/mmsitepass mailman
   echo "NOTE: The default site password 'mailman' has been created."
  fi
+ # /etc/init.d/mailman enable
  if [ `ps | grep "mailman/bin/qrunner" | grep -cv grep` -gt 0 ]
  then
   $(prefix)/bin/mailmanctl -q restart
@@ -105,7 +108,6 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
   echo "Don't forget to setup firewall for accessing this website!"
   echo "To add a mailing list go to http://$$hostname/mailman/create."
  fi
- # /etc/init.d/mailman enable
 fi
 endef
 

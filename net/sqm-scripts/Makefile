@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqm-scripts
 PKG_VERSION:=7
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_LICENSE:=GPLv2
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -44,8 +44,14 @@ define Build/Compile
 endef
 
 define Package/sqm-scripts/install
-	$(INSTALL_DIR) $(1)
-	$(CP) ./files/* $(1)/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/sqm $(1)/etc/init.d/sqm
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/etc/config/sqm $(1)/etc/config/sqm
+	$(INSTALL_DIR) $(1)/usr/lib/sqm
+	$(INSTALL_BIN) ./files/usr/lib/sqm/*.sh $(1)/usr/lib/sqm/
+	$(INSTALL_BIN) ./files/usr/lib/sqm/*.qos $(1)/usr/lib/sqm/
+	$(INSTALL_DATA) ./files/usr/lib/sqm/*.help $(1)/usr/lib/sqm/
 endef
 
 $(eval $(call BuildPackage,sqm-scripts))

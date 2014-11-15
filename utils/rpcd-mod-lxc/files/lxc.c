@@ -53,6 +53,15 @@ enum {
 	__RPC_LXC_RENAME_MAX,
 };
 
+enum {
+	RPC_LXC_CREATE_NAME,
+	RPC_LXC_CREATE_CONFIG,
+	RPC_LXC_CREATE_TEMPLATE,
+	RPC_LXC_CREATE_FLAGS,
+	RPC_LXC_CREATE_ARGS,
+	__RPC_LXC_CREATE_MAX,
+};
+
 static const struct blobmsg_policy rpc_lxc_min_policy[__RPC_LXC_MAX] = {
 	[RPC_LXC_NAME] = { .name = "name", .type = BLOBMSG_TYPE_STRING },
 	[RPC_LXC_CONFIG] = { .name = "config", .type = BLOBMSG_TYPE_STRING },
@@ -68,6 +77,14 @@ static const struct blobmsg_policy rpc_lxc_rename_policy[__RPC_LXC_RENAME_MAX] =
 	[RPC_LXC_RENAME_NAME] = { .name = "name", .type = BLOBMSG_TYPE_STRING },
 	[RPC_LXC_RENAME_CONFIG] = { .name = "config", .type = BLOBMSG_TYPE_STRING },
 	[RPC_LXC_RENAME_NEWNAME] = { .name = "newname", .type = BLOBMSG_TYPE_STRING },
+};
+
+static const struct blobmsg_policy rpc_lxc_create_policy[__RPC_LXC_CREATE_MAX] = {
+	[RPC_LXC_CREATE_NAME] = { .name = "name", .type = BLOBMSG_TYPE_STRING },
+	[RPC_LXC_CREATE_CONFIG] = { .name = "config", .type = BLOBMSG_TYPE_STRING },
+	[RPC_LXC_CREATE_TEMPLATE] = { .name = "template", .type = BLOBMSG_TYPE_STRING },
+	[RPC_LXC_CREATE_FLAGS] = { .name = "flags", .type = BLOBMSG_TYPE_INT32 },
+	[RPC_LXC_CREATE_ARGS] = { .name = "args", .type = BLOBMSG_TYPE_ARRAY },
 };
 
 static struct rpc_lxc *
@@ -336,6 +353,65 @@ out:
 }
 
 static int
+rpc_lxc_create(struct ubus_context *ctx, struct ubus_object *obj,
+		struct ubus_request_data *req, const char *method,
+		struct blob_attr *msg)
+{
+	struct blob_attr *tb[__RPC_LXC_CREATE_MAX];
+	struct rpc_lxc *l = NULL;
+	int rc;
+
+	char *template = "none";
+	int flags = 0;
+	char **args = NULL;
+
+	blobmsg_parse(rpc_lxc_create_policy, __RPC_LXC_CREATE_MAX, tb, blob_data(msg), blob_len(msg));
+
+	l = rpc_lxc_init(tb);
+	if (!l) return UBUS_STATUS_INVALID_ARGUMENT;
+
+	if (tb[RPC_LXC_CREATE_TEMPLATE])
+		template = blobmsg_data(tb[RPC_LXC_CREATE_TEMPLATE]);
+
+	if (tb[RPC_LXC_CREATE_FLAGS])
+		flags = blobmsg_get_u32(tb[RPC_LXC_CREATE_FLAGS]);
+
+	if (tb[RPC_LXC_CREATE_ARGS]) {
+		struct blob_attr *cur;
+		int num, rem;
+
+		num = blobmsg_check_array(tb[RPC_LXC_CREATE_ARGS], BLOBMSG_TYPE_STRING);
+
+		// trailing NULL is needed
+		args = calloc(num + 1, sizeof(char *));
+		if (!args) {
+			rc = UBUS_STATUS_UNKNOWN_ERROR;
+			goto out;
+		}
+
+		num = 0;
+		blobmsg_for_each_attr(cur, tb[RPC_LXC_CREATE_ARGS], rem)
+		{
+			if (blobmsg_type(cur) != BLOBMSG_TYPE_STRING)
+				continue;
+
+			args[num++] = (char *) blobmsg_data(cur);
+		}
+	}
+
+	if (!l->container->create(l->container, template, NULL, NULL, flags, args)) {
+		rc = UBUS_STATUS_INVALID_ARGUMENT;
+		goto out;
+	}
+
+	rc = UBUS_STATUS_OK;
+out:
+	rpc_lxc_done(l);
+	free(args);
+	return rc;
+}
+
+static int
 rpc_lxc_destroy(struct ubus_context *ctx, struct ubus_object *obj,
 		struct ubus_request_data *req, const char *method,
 		struct blob_attr *msg)
@@ -405,6 +481,7 @@ rpc_lxc_api_init(const struct rpc_daemon_ops *o, struct ubus_context *ctx)
 		UBUS_METHOD("freeze", rpc_lxc_freeze, rpc_lxc_min_policy),
 		UBUS_METHOD("unfreeze", rpc_lxc_unfreeze, rpc_lxc_min_policy),
 		UBUS_METHOD("rename", rpc_lxc_rename, rpc_lxc_rename_policy),
+		UBUS_METHOD("create", rpc_lxc_create, rpc_lxc_create_policy),
 		UBUS_METHOD("destroy", rpc_lxc_destroy, rpc_lxc_min_policy),
 		UBUS_METHOD_NOARG("list", rpc_lxc_list),
 	};

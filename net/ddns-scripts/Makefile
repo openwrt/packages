@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
-PKG_VERSION:=2.0.1
-PKG_RELEASE:=9
+PKG_VERSION:=2.1.0
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -62,7 +62,10 @@ endef
 define Package/ddns-scripts/postinst
 	#!/bin/sh
 	# if run within buildroot exit
-	[ -n "${IPKG_INSTROOT}" ] && exit 0
+	[ -n "$${IPKG_INSTROOT}" ] && exit 0
+
+	# remove old sed script file
+	[ -f /usr/lib/ddns/url_escape.sed ] && rm -f /usr/lib/ddns/url_escape.sed
 
 	# add new section "ddns" "global" if not exists
 	uci -q get ddns.global > /dev/null || uci -q set ddns.global='ddns'
@@ -79,7 +82,7 @@ endef
 define Package/ddns-scripts/prerm
 	#!/bin/sh
 	# if run within buildroot exit
-	[ -n "${IPKG_INSTROOT}" ] && exit 0
+	[ -n "$${IPKG_INSTROOT}" ] && exit 0
 
 	# stop running scripts
 	/etc/init.d/ddns disable

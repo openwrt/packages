@@ -1,0 +1,15 @@
+menu "Configuration"
+	depends on PACKAGE_perl
+
+config PERL_TESTS
+	bool "Include perl tests"
+	default n
+	help
+		Include test suites for all perl packages.
+		This will make perl related packages much bigger, so
+		use with care.
+		
+		Note: Test support is still in development. Some tests
+		still fail, others are just missing completely.
+
+endmenu

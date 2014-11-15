@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=17.1
+PKG_VERSION:=17.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/ \
 	http://erlang.mirror.su.se/
-PKG_MD5SUM:=9c90706ce70e01651adde34a2b79bf4c
+PKG_MD5SUM:=1d0bb2d54dfe1bb6844756b99902ba20
 
 PKG_LICENSE:=ErlPL-1.1
 PKG_LICENSE_FILE:=EPLICENCE

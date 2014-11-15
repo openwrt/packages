@@ -25,13 +25,13 @@ ipt_setup() {
 
 ipt -t mangle -N QOS_MARK_${IFACE}
 
-ipt -t mangle -A QOS_MARK_${IFACE} -j MARK --set-mark 0x2
+ipt -t mangle -A QOS_MARK_${IFACE} -j MARK --set-mark 0x2${IPT_MASK_STRING}
 # You can go further with classification but...
-ipt -t mangle -A QOS_MARK_${IFACE} -m dscp --dscp-class CS1 -j MARK --set-mark 0x3
-ipt -t mangle -A QOS_MARK_${IFACE} -m dscp --dscp-class CS6 -j MARK --set-mark 0x1
-ipt -t mangle -A QOS_MARK_${IFACE} -m dscp --dscp-class EF -j MARK --set-mark 0x1
-ipt -t mangle -A QOS_MARK_${IFACE} -m dscp --dscp-class AF42 -j MARK --set-mark 0x1
-ipt -t mangle -A QOS_MARK_${IFACE} -m tos  --tos Minimize-Delay -j MARK --set-mark 0x1
+ipt -t mangle -A QOS_MARK_${IFACE} -m dscp --dscp-class CS1 -j MARK --set-mark 0x3${IPT_MASK_STRING}
+ipt -t mangle -A QOS_MARK_${IFACE} -m dscp --dscp-class CS6 -j MARK --set-mark 0x1${IPT_MASK_STRING}
+ipt -t mangle -A QOS_MARK_${IFACE} -m dscp --dscp-class EF -j MARK --set-mark 0x1${IPT_MASK_STRING}
+ipt -t mangle -A QOS_MARK_${IFACE} -m dscp --dscp-class AF42 -j MARK --set-mark 0x1${IPT_MASK_STRING}
+ipt -t mangle -A QOS_MARK_${IFACE} -m tos  --tos Minimize-Delay -j MARK --set-mark 0x1${IPT_MASK_STRING}
 
 # and it might be a good idea to do it for udp tunnels too
 
@@ -43,16 +43,16 @@ sqm_logger "Squashing differentiated services code points (DSCP) from ingress."
 ipt -t mangle -I PREROUTING -i $IFACE -m dscp ! --dscp 0 -j DSCP --set-dscp-class be
 else
 sqm_logger "Keeping differentiated services code points (DSCP) from ingress."
-ipt -t mangle -A PREROUTING -i $IFACE -m mark --mark 0x00 -g QOS_MARK_${IFACE} 
+ipt -t mangle -A PREROUTING -i $IFACE -m mark --mark 0x00${IPT_MASK_STRING} -g QOS_MARK_${IFACE} 
 fi
 
-ipt -t mangle -A POSTROUTING -o $IFACE -m mark --mark 0x00 -g QOS_MARK_${IFACE} 
+ipt -t mangle -A POSTROUTING -o $IFACE -m mark --mark 0x00${IPT_MASK_STRING} -g QOS_MARK_${IFACE} 
 
 # The Syn optimization was nice but fq_codel does it for us
 # ipt -t mangle -A PREROUTING -i s+ -p tcp -m tcp --tcp-flags SYN,RST,ACK SYN -j MARK --set-mark 0x01
 # Not sure if this will work. Encapsulation is a problem period
 
-ipt -t mangle -I PREROUTING -i vtun+ -p tcp -j MARK --set-mark 0x2 # tcp tunnels need ordering
+ipt -t mangle -I PREROUTING -i vtun+ -p tcp -j MARK --set-mark 0x2${IPT_MASK_STRING} # tcp tunnels need ordering
 
 # Emanating from router, do a little more optimization
 # but don't bother with it too much. 
