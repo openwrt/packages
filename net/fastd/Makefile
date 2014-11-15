@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fastd
-PKG_VERSION:=15
+PKG_VERSION:=16
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://projects.universe-factory.net/attachments/download/77
-PKG_MD5SUM:=31763188a7fc35d22fd506e406f8c37c
+PKG_SOURCE_URL:=https://projects.universe-factory.net/attachments/download/78
+PKG_MD5SUM:=135b3083d2743e335738de3bd4bb0c3c
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILE:=COPYRIGHT
