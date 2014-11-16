@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
 PKG_VERSION:=4.8.13
-PKG_RELEASE:=1
+PKG_RELEASE:=1.1
 PKG_MAINTAINER:=Dirk Brenken <dibdot@gmail.com>
 PKG_LICENSE:=GPL-3.0+
 
@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/mc
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+glib2 +libncurses $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
+  DEPENDS:=+glib2 +libncurses +MC_VFS:libssh2 $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
   TITLE:=Midnight Commander - a powerful visual file manager
   URL:=http://www.midnight-commander.org/
   MENU:=1
@@ -37,47 +37,62 @@ define Package/mc/config
 endef
 
 define Package/mc/description
- GNU Midnight Commander is a visual file manager, 
+ GNU Midnight Commander is a visual file manager,
  licensed under GNU General Public License and therefore qualifies as Free Software.
- It's a feature rich full-screen text mode application that allows you to copy, 
- move and delete files and whole directory trees, search for files 
- and run commands in the subshell. Internal viewer and editor are included. 
+ It's a feature rich full-screen text mode application that allows you to copy,
+ move and delete files and whole directory trees, search for files
+ and run commands in the subshell. Internal viewer and editor are included.
 endef
 
 CONFIGURE_ARGS += \
-	--enable-utf8 \
 	--disable-doxygen-doc \
-	--disable-vfs-sftp \
 	--with-screen=ncurses \
 	--without-gpm-mouse \
 	--without-x \
-	ac_cv_search_addwstr=no
 
-ifeq ($(CONFIG_MC_DIFF_VIEWER),n)
+CONFIGURE_VARS += \
+	ac_cv_search_addwstr=no \
+
+ifeq ($(CONFIG_MC_DIFFVIEWER),)
 CONFIGURE_ARGS += \
 	--without-diff-viewer
 endif
 
-ifeq ($(CONFIG_MC_EDITOR),n)
+ifeq ($(CONFIG_MC_EDITOR),)
 CONFIGURE_ARGS += \
-	--without-edit
+	--without-internal-edit
 endif
 
-ifeq ($(CONFIG_MC_SUBSHELL),n)
+ifeq ($(CONFIG_MC_SUBSHELL),)
 CONFIGURE_ARGS += \
 	--without-subshell
 endif
 
-ifeq ($(CONFIG_MC_DISABLE_VFS),y)
+ifeq ($(CONFIG_MC_LARGEFILE),)
 CONFIGURE_ARGS += \
-	--without-vfs
+	--disable-largefile
+endif
+
+ifeq ($(CONFIG_MC_BACKGROUND),)
+CONFIGURE_ARGS += \
+	--disable-background
+endif
+
+ifeq ($(CONFIG_MC_CHARSET),)
+CONFIGURE_ARGS += \
+	--disable-charset
+endif
+
+ifeq ($(CONFIG_MC_VFS),)
+CONFIGURE_ARGS += \
+	--disable-vfs
 endif
 
 define Package/mc/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mc $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/mc
-ifeq ($(CONFIG_MC_DIFF_VIEWER),y)
+ifeq ($(CONFIG_MC_DIFFVIEWER),y)
 	ln -sf mc $(1)/usr/bin/mcdiff
 endif
 ifeq ($(CONFIG_MC_EDITOR),y)
