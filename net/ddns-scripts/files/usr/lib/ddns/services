@@ -2,12 +2,12 @@
 #4
 #4 This file contains the update urls for various dynamic dns services.
 #4 Column one contains the service name, column two contains the update url.
-#4 within the update url there are 4 variables you can use: [USERNAME], 
-#4 [PASSWORD], [DOMAIN] and [IP].  These are substituted for the username, 
-#4 password, and domain name specified in the /etc/config/ddns file when an 
+#4 within the update url there are 4 variables you can use: [USERNAME],
+#4 [PASSWORD], [DOMAIN] and [IP].  These are substituted for the username,
+#4 password, and domain name specified in the /etc/config/ddns file when an
 #4 update is performed.  The IP is substituted for the current ip address of the
-#4 router.  These variables are case sensitive, while urls generally are not, so 
-#4 if you need to enter the same text in the url (which seems very unlikely) put 
+#4 router.  These variables are case sensitive, while urls generally are not, so
+#4 if you need to enter the same text in the url (which seems very unlikely) put
 #4 that text in lowercase, while the variables should remain in uppercase
 #4
 #4 There are TONS of dynamic dns services out there. There's a huge list of them at:
@@ -16,10 +16,10 @@
 #4
 #4 !!! Since ddns-scripts Version 2.x the update of IPv6 addresses is also supported
 #4 !!! This file is used for update of IPv4 adresses only. For IPv6 use services_ipv6
-#4 
-#4 !!! Since ddns-scripts Version 2.x the update via provider specific update scripts is supported. 
+#4
+#4 !!! Since ddns-scripts Version 2.x the update via provider specific update scripts is supported.
 #4 !!! This scripts must be located at /usr/lib/ddns directory if defined inside this file.
-#4 !!! Use only the script name (without path). Sample: 
+#4 !!! Use only the script name (without path). Sample:
 #4 !!! "example.com"	"update_sample.sh"
 #4
 #444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
@@ -42,7 +42,7 @@
 "thatip.com"	"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=2&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
 
 # Hurricane Electric Dynamic DNS
-"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]" 
+"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
 # DNSdynamic.org
 "dnsdynamic.org"	"http://[USERNAME]:[PASSWORD]@www.dnsdynamic.org/api/?hostname=[DOMAIN]&myip=[IP]"
@@ -87,3 +87,12 @@
 
 # LoopiaDNS
 "loopia.se" "http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
+
+# Cloudflare
+"cloudflare.com"	"update_cloudflare.sh"
+
+# SelfHost.de
+"selfhost.de"	"http://carol.selfhost.de/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=1"
+
+# no-ip.pl nothing to do with no-ip.com (domain registered to www.domeny.tv) (IP autodetected by provider)
+"no-ip.pl"	"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
