@@ -19,6 +19,8 @@ PKG_LICENSE:=BSD-Style Open Source License
 
 include $(INCLUDE_DIR)/package.mk
 
+TARGET_CFLAGS+=-D_GNU_SOURCE
+
 define Package/hdparm
   SECTION:=utils
   CATEGORY:=Utilities
