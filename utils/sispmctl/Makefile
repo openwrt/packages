@@ -43,6 +43,7 @@ define Package/sispmctl/description
  multiple SIS-PM devices, too.
 endef
 
+TARGET_CFLAGS += -D_GNU_SOURCE
 CONFIGURE_ARGS += \
 	--enable-webless \
 	--disable-dependency-tracking
