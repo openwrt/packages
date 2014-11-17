@@ -165,6 +165,11 @@ define Package/lxc-common/install
 	$(INSTALL_DIR) $(1)/etc/lxc/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/etc/lxc/default.conf \
+		$(1)/etc/lxc/default.conf
+
+	$(INSTALL_DIR) $(1)/etc/lxc/
+	$(CP) \
+		./files/lxc.conf \
 		$(1)/etc/lxc/lxc.conf
 
 	$(INSTALL_DIR) $(1)/lxc/
