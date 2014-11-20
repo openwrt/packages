@@ -58,72 +58,10 @@ config bgp_template bgp_common
     option receive_limit_action 'warn'
     option disabled '0'
 
-config ospf ospf1
-    option cfg1583compat '1'
-
-config ospf_area '0.0.0.0'
-    option instance 'ospf1'
-    option stub '0'
-
-config ospf_interface '*'
-    option area '0.0.0.0'
-    option cost '100'
-    option type 'broadcast'
-    option hello '5'
-    option password '1'
-
-config ospf_password '1'
-    option authentication 'cryptographic'
-    option passphrase '1234'
-
-config ospf_networks
-    option area '0.0.0.0'
-    list prefix '10.0.0.0/24'
-
-config ospf_hidden_networks
-    option area '0.0.0.0'
-    option prefix '12.0.0.0/24'
-
-config ospf_stubnet '11.0.0.0/24'
-    option area '0.0.0.0'
-    option hidden '0'
-    option summary '0'
-    option cost '101'
-
 config route
     option instance 'static1'
     option type 'router'
     option prefix '192.168.9.0/24'
     option via '10.99.105.159'
-
-config route
-    option instance 'static1'
-    option type 'special'
-    option prefix '192.168.2.0/24'
-    option attribute 'unreachable'
-
-config route
-    option instance 'static1'
-    option type 'iface'
-    option prefix '192.168.3.0/24'
-    option iface 'mgmt0'
-
-config route
-    option instance 'static1'
-    option type 'recursive'
-    option prefix '192.168.4.0/24'
-    option ip '192.168.1.1'
-
-config route
-    option instance 'static1'
-    option type 'multipath'
-    option prefix '192.168.30.0/24'
-    list l_via '172.16.1.5'
-    list l_via '172.16.1.6'
-
-config filter 'firstFilter'
-    option type 'bgp'
-    option instance 'bgp1'
-    option file_path '/var/filters/f1'
 
 

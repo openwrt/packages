@@ -78,9 +78,3 @@ config route
     option type 'iface'
     option prefix '2001:db8:0:f101::1111/128'
     option iface 'eth0'
-
-config filter 'firstFilter'
-    option type 'bgp'
-    option instance 'bgp1'
-    option file_path '/var/filters/f1'
-
