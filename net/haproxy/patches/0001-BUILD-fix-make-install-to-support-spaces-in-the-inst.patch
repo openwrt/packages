@@ -1,0 +1,46 @@
+From 184422d39df1aa27e6ef4c1ae75177489147ec99 Mon Sep 17 00:00:00 2001
+From: Arcadiy Ivanov <arcadiy.ivanov@servicemesh.com>
+Date: Tue, 4 Nov 2014 07:06:13 -0500
+Subject: [PATCH 1/6] BUILD: fix "make install" to support spaces in the
+ install dirs
+
+Makefile is unable to install into directories containing spaces.
+(cherry picked from commit 3785311e64792787de78370fa126fd806734f7fe)
+---
+ Makefile | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 707037b..9556069 100644
+--- a/Makefile
++++ b/Makefile
+@@ -710,19 +710,19 @@ src/dlmalloc.o: $(DLMALLOC_SRC)
+ 	$(CC) $(COPTS) -DDEFAULT_MMAP_THRESHOLD=$(DLMALLOC_THRES) -c -o $@ $<
+ 
+ install-man:
+-	install -d $(DESTDIR)$(MANDIR)/man1
+-	install -m 644 doc/haproxy.1 $(DESTDIR)$(MANDIR)/man1
++	install -d "$(DESTDIR)$(MANDIR)"/man1
++	install -m 644 doc/haproxy.1 "$(DESTDIR)$(MANDIR)"/man1
+ 
+ install-doc:
+-	install -d $(DESTDIR)$(DOCDIR)
++	install -d "$(DESTDIR)$(DOCDIR)"
+ 	for x in configuration architecture haproxy-en haproxy-fr; do \
+-		install -m 644 doc/$$x.txt $(DESTDIR)$(DOCDIR) ; \
++		install -m 644 doc/$$x.txt "$(DESTDIR)$(DOCDIR)" ; \
+ 	done
+ 
+ install-bin: haproxy haproxy-systemd-wrapper
+-	install -d $(DESTDIR)$(SBINDIR)
+-	install haproxy $(DESTDIR)$(SBINDIR)
+-	install haproxy-systemd-wrapper $(DESTDIR)$(SBINDIR)
++	install -d "$(DESTDIR)$(SBINDIR)"
++	install haproxy "$(DESTDIR)$(SBINDIR)"
++	install haproxy-systemd-wrapper "$(DESTDIR)$(SBINDIR)"
+ 
+ install: install-bin install-man install-doc
+ 
+-- 
+2.0.4
+
