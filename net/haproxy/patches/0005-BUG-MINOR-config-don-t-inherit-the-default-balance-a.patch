@@ -1,0 +1,42 @@
+From cac307c020db7a938b73d4fef27a3b4ad2ecdf6a Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Tue, 18 Nov 2014 15:04:29 +0100
+Subject: [PATCH 5/6] BUG/MINOR: config: don't inherit the default balance
+ algorithm in frontends
+
+Tom Limoncelli from Stack Exchange reported a minor bug : the frontend
+inherits the LB parameters from the defaults sections. The impact is
+that if a "balance" directive uses any L7 parameter in the defaults
+sections and the frontend is in TCP mode, a warning is emitted about
+their incompatibility. The warning is harmless but a valid, sane config
+should never cause any warning to be reported.
+
+This fix should be backported into 1.5 and possibly 1.4.
+(cherry picked from commit 743c128580ee29c8f073b4a29771a5ce715f3721)
+---
+ src/cfgparse.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index 392a692..40d20ab 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -2003,7 +2003,6 @@ int cfg_parse_listen(const char *file, int linenum, char **args, int kwm)
+ 		curproxy->no_options = defproxy.no_options;
+ 		curproxy->no_options2 = defproxy.no_options2;
+ 		curproxy->bind_proc = defproxy.bind_proc;
+-		curproxy->lbprm.algo = defproxy.lbprm.algo;
+ 		curproxy->except_net = defproxy.except_net;
+ 		curproxy->except_mask = defproxy.except_mask;
+ 		curproxy->except_to = defproxy.except_to;
+@@ -2037,6 +2036,7 @@ int cfg_parse_listen(const char *file, int linenum, char **args, int kwm)
+ 		}
+ 
+ 		if (curproxy->cap & PR_CAP_BE) {
++			curproxy->lbprm.algo = defproxy.lbprm.algo;
+ 			curproxy->fullconn = defproxy.fullconn;
+ 			curproxy->conn_retries = defproxy.conn_retries;
+ 			curproxy->max_ka_queue = defproxy.max_ka_queue;
+-- 
+2.0.4
+

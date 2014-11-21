@@ -1,0 +1,102 @@
+From 1f96a87c4e1412ccdc6cfe81bfd6f20a1782886a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Cyril=20Bont=C3=A9?= <cyril.bonte@free.fr>
+Date: Sat, 15 Nov 2014 22:41:27 +0100
+Subject: [PATCH 4/6] BUG/MEDIUM: checks: fix conflicts between agent checks
+ and ssl healthchecks
+
+Lasse Birnbaum Jensen reported an issue when agent checks are used at the same
+time as standard healthchecks when SSL is enabled on the server side.
+
+The symptom is that agent checks try to communicate in SSL while it should
+manage raw data. This happens because the transport layer is shared between all
+kind of checks.
+
+To fix the issue, the transport layer is now stored in each check type,
+allowing to use SSL healthchecks when required, while an agent check should
+always use the raw_sock implementation.
+
+The fix must be backported to 1.5.
+(cherry picked from commit 9ce1311ebc834e20addc7a8392c0fc4e4ad687b7)
+---
+ include/types/checks.h | 3 ++-
+ include/types/server.h | 1 -
+ src/checks.c           | 2 +-
+ src/server.c           | 2 +-
+ src/ssl_sock.c         | 2 +-
+ 5 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/include/types/checks.h b/include/types/checks.h
+index a50043b..42b7b07 100644
+--- a/include/types/checks.h
++++ b/include/types/checks.h
+@@ -125,6 +125,7 @@ enum {
+ };
+ 
+ struct check {
++	struct xprt_ops *xprt;			/* transport layer operations for health checks */
+ 	struct connection *conn;		/* connection state for health checks */
+ 	unsigned short port;			/* the port to use for the health checks */
+ 	struct buffer *bi, *bo;			/* input and output buffers to send/recv check */
+@@ -132,7 +133,7 @@ struct check {
+ 	struct timeval start;			/* last health check start time */
+ 	long duration;				/* time in ms took to finish last health check */
+ 	short status, code;			/* check result, check code */
+-	char desc[HCHK_DESC_LEN];		/* health check descritpion */
++	char desc[HCHK_DESC_LEN];		/* health check description */
+ 	int use_ssl;				/* use SSL for health checks */
+ 	int send_proxy;				/* send a PROXY protocol header with checks */
+ 	struct tcpcheck_rule *current_step;     /* current step when using tcpcheck */
+diff --git a/include/types/server.h b/include/types/server.h
+index 313f58d..c419b40 100644
+--- a/include/types/server.h
++++ b/include/types/server.h
+@@ -194,7 +194,6 @@ struct server {
+ 
+ 	struct {                                /* configuration  used by health-check and agent-check */
+ 		struct protocol *proto;	        /* server address protocol for health checks */
+-		struct xprt_ops *xprt;          /* transport layer operations for health checks */
+ 		struct sockaddr_storage addr;   /* the address to check, if different from <addr> */
+ 	} check_common;
+ 
+diff --git a/src/checks.c b/src/checks.c
+index 5318f35..84bf0e5 100644
+--- a/src/checks.c
++++ b/src/checks.c
+@@ -1413,7 +1413,7 @@ static int connect_chk(struct task *t)
+ 
+ 	/* prepare a new connection */
+ 	conn_init(conn);
+-	conn_prepare(conn, s->check_common.proto, s->check_common.xprt);
++	conn_prepare(conn, s->check_common.proto, check->xprt);
+ 	conn_attach(conn, check, &check_conn_cb);
+ 	conn->target = &s->obj_type;
+ 
+diff --git a/src/server.c b/src/server.c
+index fdb63cc..94a31b6 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -929,7 +929,7 @@ int parse_server(const char *file, int linenum, char **args, struct proxy *curpr
+ 
+ 			newsrv->addr = *sk;
+ 			newsrv->proto = newsrv->check_common.proto = protocol_by_family(newsrv->addr.ss_family);
+-			newsrv->xprt  = newsrv->check_common.xprt  = &raw_sock;
++			newsrv->xprt  = newsrv->check.xprt = newsrv->agent.xprt = &raw_sock;
+ 
+ 			if (!newsrv->proto) {
+ 				Alert("parsing [%s:%d] : Unknown protocol family %d '%s'\n",
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index f50efe5..b73d6f9 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -1812,7 +1812,7 @@ int ssl_sock_prepare_srv_ctx(struct server *srv, struct proxy *curproxy)
+ 	if (srv->use_ssl)
+ 		srv->xprt = &ssl_sock;
+ 	if (srv->check.use_ssl)
+-		srv->check_common.xprt = &ssl_sock;
++		srv->check.xprt = &ssl_sock;
+ 
+ 	srv->ssl_ctx.ctx = SSL_CTX_new(SSLv23_client_method());
+ 	if (!srv->ssl_ctx.ctx) {
+-- 
+2.0.4
+

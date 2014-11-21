@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-compress-bzip2
-PKG_VERSION:=2.18
+PKG_VERSION:=2.19
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/R/RU/RURBAN/
 PKG_SOURCE:=Compress-Bzip2-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=c4a1995df9443cb97c28593cbbb23304
+PKG_MD5SUM:=dd4ebb4e88a50cc9a85e282618fdf88f
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

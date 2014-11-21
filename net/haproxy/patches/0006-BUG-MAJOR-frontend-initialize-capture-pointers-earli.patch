@@ -1,0 +1,59 @@
+From 8ba50128832bb31e95f06fe4cb2bd172f2b945fe Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Tue, 18 Nov 2014 18:49:19 +0100
+Subject: [PATCH 6/6] BUG/MAJOR: frontend: initialize capture pointers earlier
+
+Denys Fedoryshchenko reported and diagnosed a nasty bug caused by TCP
+captures, introduced in late 1.5-dev by commit 18bf01e ("MEDIUM: tcp:
+add a new tcp-request capture directive"). The problem is that we're
+using the array of capture pointers initially designed for HTTP usage
+only, and that this array was only reset when starting to process an
+HTTP request. In a tcp-only frontend, the pointers are not reset, and
+if the capture pool is shared, we can very well point to whatever other
+memory location, resulting in random crashes when tcp-request content
+captures are processed.
+
+The fix simply consists in initializing these pointers when the pools
+are prepared.
+
+A workaround for existing versions consists in either disabling TCP
+captures in tcp-only frontends, or in forcing the frontends to work in
+HTTP mode.
+
+Thanks to Denys for the amount of testing and detailed reports.
+
+This fix must be backported to 1.5.
+(cherry picked from commit 9654e57fac86c773091b892f42015ba2ba56be5a)
+---
+ src/frontend.c | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/src/frontend.c b/src/frontend.c
+index 3f80774..2928047 100644
+--- a/src/frontend.c
++++ b/src/frontend.c
+@@ -106,11 +106,17 @@ int frontend_accept(struct session *s)
+ 	if (global.tune.client_rcvbuf)
+ 		setsockopt(cfd, SOL_SOCKET, SO_RCVBUF, &global.tune.client_rcvbuf, sizeof(global.tune.client_rcvbuf));
+ 
+-	if (unlikely(s->fe->nb_req_cap > 0 && (s->txn.req.cap = pool_alloc2(s->fe->req_cap_pool)) == NULL))
+-		goto out_return;	/* no memory */
++	if (unlikely(s->fe->nb_req_cap > 0)) {
++		if ((s->txn.req.cap = pool_alloc2(s->fe->req_cap_pool)) == NULL)
++			goto out_return;	/* no memory */
++		memset(s->txn.req.cap, 0, s->fe->nb_req_cap * sizeof(void *));
++	}
+ 
+-	if (unlikely(s->fe->nb_rsp_cap > 0 && (s->txn.rsp.cap = pool_alloc2(s->fe->rsp_cap_pool)) == NULL))
+-		goto out_free_reqcap;	/* no memory */
++	if (unlikely(s->fe->nb_rsp_cap > 0)) {
++		if ((s->txn.rsp.cap = pool_alloc2(s->fe->rsp_cap_pool)) == NULL)
++			goto out_free_reqcap;	/* no memory */
++		memset(s->txn.rsp.cap, 0, s->fe->nb_rsp_cap * sizeof(void *));
++	}
+ 
+ 	if (s->fe->http_needed) {
+ 		/* we have to allocate header indexes only if we know
+-- 
+2.0.4
+

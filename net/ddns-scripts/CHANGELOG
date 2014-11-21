@@ -1,3 +1,28 @@
+Version 2.1.0-2
+Date	2014-11-15
+
+- moved /usr/lib/ddns/dynamic_dns_lucihelper.sh from luci-app-ddns into this package
+	(Github openwrt/luci issue 251)
+	(OpenWrt Trac tickets 18326 18347)
+- fix: dynamic_dns_update.sh did not loop
+	(OpenWrt Trac ticket 18336)
+- add provider cloudflare.com IPv4 and IPv6 (Thanks to Paul for support and testing)
+	(OpenWrt Trac ticket 12500)
+- modified detection, if dynamic_dns_fuctions are used by dynamic_dns_lucihelper.sh
+- redirect stdout of wget,curl,host,nslookup,nc etc to /tmp/ddns_$$.dat and *.err instead of variables
+- extended error detection in get_local_ip function
+- modified verify of option ip_script to allow parameters, when calling
+- add provider selfhost.de IPv4
+- add provider no-ip.pl (nothing to do with no-ip.com)
+	(Github openwrt/packages issue #542)
+	IPv4 (tested) and also added for
+	IPv6 (NOT tested) because client IP is autodetected be provider
+- add getlocalip_sample.sh as sample script for usage of
+	option ip_source 'script'  together with
+	option ip_script '/usr/lib/ddns/getlocalip.sh -4'
+- cleanup whitespaces at line ends
+
+--------------------------------------------------------------------------------
 Version 2.1.0-1
 Date	2014-11-09
 
@@ -6,7 +31,7 @@ Date	2014-11-09
 	first Provider "no-ip.com"	- Thanks to DarkStarXxX for request and testing
 - finished uci/ddns wiki at http://wiki.openwrt.org/doc/uci/ddns
 - rewritten retry management
-- rewritten logging including following Issue 469 
+- rewritten logging including following Issue 469
 	https://github.com/openwrt/packages/issues/469
 - stop running sections on hotplug ifdown event (like start on ifup)
 - implement trap detection

@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -19,7 +19,7 @@ define Package/ddns-scripts
 endef
 
 define Package/ddns-scripts/description
-	A highly configurable set of scripts for doing dynamic dns updates. 
+	A highly configurable set of scripts for doing dynamic dns updates.
 	NEW in this version:
 	- IPv6 support
 	- force communication to IPv4 or IPv6 only
@@ -67,13 +67,18 @@ define Package/ddns-scripts/postinst
 	# remove old sed script file
 	[ -f /usr/lib/ddns/url_escape.sed ] && rm -f /usr/lib/ddns/url_escape.sed
 
+	# luci updates are not in sync with ddns-script updates !!!
+	# if old luci-app-ddns then errors during install because exist from differnt package
+	# copy dynamic_dns_helper.tmp.sh -> dynamic_dns_helper.sh
+	cp -f /usr/lib/ddns/dynamic_dns_lucihelper.tmp.sh /usr/lib/ddns/dynamic_dns_lucihelper.sh
+
 	# add new section "ddns" "global" if not exists
 	uci -q get ddns.global > /dev/null || uci -q set ddns.global='ddns'
 	uci -q get ddns.global.date_format > /dev/null || uci -q set ddns.global.date_format='%F %R'
 	uci -q get ddns.global.log_lines > /dev/null || uci -q set ddns.global.log_lines='250'
 	uci -q commit ddns
 
-	# clear LuCI indexcache 
+	# clear LuCI indexcache
 	rm -f /tmp/luci-indexcache >/dev/null 2>&1
 
 	exit 0
@@ -88,7 +93,7 @@ define Package/ddns-scripts/prerm
 	/etc/init.d/ddns disable
 	/etc/init.d/ddns stop
 
-	# clear LuCI indexcache 
+	# clear LuCI indexcache
 	rm -f /tmp/luci-indexcache >/dev/null 2>&1
 
 	exit 0
