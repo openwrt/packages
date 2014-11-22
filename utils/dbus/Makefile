@@ -21,6 +21,7 @@ PKG_LICENSE:=AFL-2.1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
 TARGET_LDFLAGS+= \
@@ -107,6 +108,29 @@ CONFIGURE_VARS+= \
 	ac_cv_have_abstract_sockets="yes" \
 	ac_cv_lib_expat_XML_ParserCreate_MM="yes" \
 
+HOST_CONFIGURE_ARGS+= \
+	--enable-shared \
+	--enable-static \
+	--disable-abstract-sockets \
+	--disable-ansi \
+	--disable-asserts \
+	--disable-console-owner-file \
+	--disable-docygen-docs \
+	--disable-compiler_coverage \
+	--disable-selinux \
+	--disable-tests \
+	--disable-verbose-mode \
+	--disable-xml-docs \
+	--with-dbus-user=root \
+	--with-dbus-daemondir="$(STAGIND_DIR_HOST)/bin" \
+	--with-system-socket="$(STAGING_DIR_HOST)/var/run/dbus/system_bus_socket" \
+	--with-system-pid-file="$(STAGING_DIR_HOST)/var/run/dbus.pid" \
+	--without-x \
+	--libexecdir="$(STAGING_DIR_HOST)/lib/dbus-1"
+
+HOST_CONFIGURE_VARS+= \
+	ac_cv_have_abstract_sockets="yes" \
+	ac_cv_lib_expat_XML_ParserCreate_MM="yes" \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -184,6 +208,7 @@ define Package/dbus-utils/install
 		$(1)/usr/bin/
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libdbus))
 $(eval $(call BuildPackage,dbus))
 $(eval $(call BuildPackage,dbus-utils))
