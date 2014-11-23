@@ -18,7 +18,7 @@ endif
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.6.31
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -113,8 +113,8 @@ endef
 
 define Package/avahi-daemon/conffiles
 /etc/avahi/avahi-daemon.conf
-/etc/avahi/services/http.service
 /etc/avahi/services/ssh.service
+/etc/avahi/services/sftp-ssh.service.service
 endef
 
 define Package/avahi-dnsconfd
@@ -316,8 +316,8 @@ define Package/avahi-daemon/install
 	$(INSTALL_DIR) $(1)/etc/avahi
 	$(INSTALL_DATA) ./files/avahi-daemon.conf $(1)/etc/avahi/
 	$(INSTALL_DIR) $(1)/etc/avahi/services
-	$(INSTALL_DATA) ./files/service-http $(1)/etc/avahi/services/http.service
-	$(INSTALL_DATA) ./files/service-ssh $(1)/etc/avahi/services/ssh.service
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/avahi/services/ssh.service $(1)/etc/avahi/services/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/avahi/services/sftp-ssh.service $(1)/etc/avahi/services/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/avahi-daemon.init $(1)/etc/init.d/avahi-daemon
 endef
