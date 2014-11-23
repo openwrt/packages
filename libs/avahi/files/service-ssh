@@ -6,4 +6,9 @@
    <type>_ssh._tcp</type>
    <port>22</port>
   </service>
+
+  <service>
+   <type>_sftp-ssh._tcp</type>
+   <port>22</port>
+  </service>
 </service-group>

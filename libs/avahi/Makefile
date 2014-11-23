@@ -18,7 +18,7 @@ endif
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.6.31
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -121,14 +121,14 @@ define Package/avahi-dnsconfd
   $(call Package/avahi/Default)
   SUBMENU:=IP Addresses and Names
   DEPENDS:=+libavahi +libdaemon
-  TITLE:=A Unicast DNS server from mDNS/DNS-SD configuration daemon
+  TITLE:=An mDNS/DNS-SD unicast DNS server
 endef
 
 define Package/avahi-dnsconfd/description
 $(call Package/avahi/Default/description)
  .
- This package contains a Unicast DNS server from mDNS/DNS-SD configuration
- daemon, which may be used to configure conventional DNS servers using mDNS
+ This package contains a Unicast DNS server for the mDNS/DNS-SD configuration
+ daemon. It may be used to configure conventional DNS servers using mDNS
  in a DHCP-like fashion. Especially useful on IPv6.
 endef
 
