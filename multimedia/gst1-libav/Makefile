@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-libav
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -109,7 +109,7 @@ PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_GST1_LIBAV_PARSER_%,$(LIBAV_PARSERS)) \
 	$(patsubst %,CONFIG_GST1_LIBAV_PROTOCOL_%,$(LIBAV_PROTOCOLS))
 
-PKG_BUILD_DEPENDS:= libstreamer1 gstreamer1-plugins-base
+PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk

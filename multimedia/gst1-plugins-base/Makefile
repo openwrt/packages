@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -183,9 +183,12 @@ endef
 
 
 define Package/gst1-plugins-base/install
-	/bin/true
+  true
 endef
 
+define Package/gstreamer1-plugins-base/install
+  true
+endef
 
 # 1: short name
 # 2: description
