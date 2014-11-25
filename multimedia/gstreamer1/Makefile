@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -161,6 +161,7 @@ define Package/gstreamer1/install
 endef
 
 define Package/gstreamer1-libs/install
+  true
 endef
 
 define Package/gstreamer1-utils/install
