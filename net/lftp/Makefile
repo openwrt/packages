@@ -14,6 +14,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://lftp.yar.ru/ftp \ http://lftp.cybermirror.org \ http://lftp.cybermirror.org/old
 PKG_MD5SUM:=e58fc886e3d7c6d994de5ce51de46087
 
+PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE_FILES:=COPYING
+
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
