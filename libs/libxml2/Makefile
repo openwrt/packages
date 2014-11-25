@@ -42,6 +42,7 @@ define Package/libxml2/description
 endef
 
 TARGET_CFLAGS += $(FPIC)
+TARGET_LDFLAGS += -lz
 
 CONFIGURE_ARGS += \
 	--enable-shared \
