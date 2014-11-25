@@ -57,6 +57,9 @@ start_service() {
     config_get val pa ulaprefix
     [ -n "$val" ] && procd_append_param command --ulaprefix $val
 
+    config_get val pa ulamode
+    [ -n "$val" ] && procd_append_param command --ulamode $val
+
     config_get val sd router_name
     [ -n "$val" ] && procd_append_param command -n $val
 

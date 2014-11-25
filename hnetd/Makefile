@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2013 OpenWrt.org
+# Copyright (C) 2012-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hnetd
-PKG_SOURCE_VERSION:=0c1d55d03983c726aaad010738236c2da64ca7df
-PKG_VERSION:=2014-09-26-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=10b22c409f2ecadaaec45e068fd01c74ffe5c772
+PKG_VERSION:=2014-11-25-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
