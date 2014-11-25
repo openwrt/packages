@@ -1,0 +1,14 @@
+--- a/fdm.h	2011-10-10 17:36:29.000000000 +0400
++++ b/fdm.h	2014-11-13 12:56:59.217083683 +0300
+@@ -719,6 +719,11 @@
+ size_t	 	 strlcat(char *, const char *, size_t);
+ #endif
+ 
++int local_b64_ntop(uint8_t const *src, size_t srclength, char *target,
++    size_t targsize);
++
++int local_b64_pton(char const *src, uint8_t *target, size_t targsize);
++
+ /* shm.c */
+ char  		*shm_path(struct shm *);
+ void		*shm_create(struct shm *, size_t);
