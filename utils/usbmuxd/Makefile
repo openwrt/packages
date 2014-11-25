@@ -14,7 +14,7 @@ PKG_SOURCE_PROTO:=git
 
 PKG_MAINTAINER:=Lukasz Baj <l.baj@radytek.com>
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILE:=COPYING.GPLv2
+PKG_LICENSE_FILES:=COPYING.GPLv2
 
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/usbmuxd.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)

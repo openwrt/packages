@@ -20,7 +20,7 @@ PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_LIBVER)/
 PKG_MD5SUM:=f4136e781d261e3cc20748005e1740b7
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DEPENDS:=ruby/host
 PKG_INSTALL:=1

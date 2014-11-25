@@ -17,7 +17,7 @@ PKG_MD5SUM:=6633b2354b7f23f9cd8e2bfb6e735965
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILE:=doc/COPYING
+PKG_LICENSE_FILES:=doc/COPYING
 
 include $(INCLUDE_DIR)/package.mk
 

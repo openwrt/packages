@@ -17,7 +17,7 @@ PKG_SOURCE_URL:= http://www.erlang.org/download/ \
 PKG_MD5SUM:=1d0bb2d54dfe1bb6844756b99902ba20
 
 PKG_LICENSE:=ErlPL-1.1
-PKG_LICENSE_FILE:=EPLICENCE
+PKG_LICENSE_FILES:=EPLICENCE
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_BUILD_DEPENDS:=erlang/host openssl

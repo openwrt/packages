@@ -14,7 +14,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.astron.com/pub/tcsh/
 PKG_MD5SUM:=6eed09dbd4223ab5b6955378450d228a
 PKG_LICENSE:=BSD-4-Clause-UC
-PKG_LICENSE_FILE:=Copyright
+PKG_LICENSE_FILES:=Copyright
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 

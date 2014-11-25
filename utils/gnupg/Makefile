@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=ftp://ftp.franken.de/pub/crypt/mirror/ftp.gnupg.org/gcrypt/gnupg
 PKG_MD5SUM:=54db1be9588b11afbbdd8b82d4ea883a
 
 PKG_LICENSE:=GPL-3.0
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_INSTALL:=1
