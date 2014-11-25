@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -186,6 +186,8 @@ define Package/libgstreamer1/install
 		./usr/lib/gstreamer-$(GST_VERSION)/libgst*.so \
 		$(1)/usr/lib/gstreamer-$(GST_VERSION)/ \
 	)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gstreamer-$(GST_VERSION)/gst-plugin-scanner \
+		       $(1)/usr/lib/gstreamer-$(GST_VERSION)
 endef
 
 
