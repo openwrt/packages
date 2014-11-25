@@ -10,6 +10,7 @@ PKG_NAME:=tgt
 PKG_VERSION:=1.0.48
 PKG_REV:=22d9567f39e5eb8a794ce2cb5a2190abdbecaa1f
 PKG_RELEASE:=1
+PKG_USE_MIPS16:=0
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/fujita/tgt.git
