@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -35,7 +35,7 @@ endef
 
 define Package/ntpd/Default/description
  The ISC ntp suite is a collection of tools used to synchronize the
- system clock with remote NTP time servers and run/montior local NTP
+ system clock with remote NTP time servers and run/monitor local NTP
  servers.
 endef
 

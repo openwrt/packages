@@ -105,11 +105,6 @@ define Package/libdb47xx/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdb_cxx-*.so $(1)/usr/lib/
 endef
 
-define Package/libdb47xx-full/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdb_cxx-*.so $(1)/usr/lib/
-endef
-
 define Package/db47-util/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	if [ "$(CONFIG_DB47_ARCHIVE)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_archive $(1)/usr/bin/; fi
@@ -135,5 +130,4 @@ endef
 
 $(eval $(call BuildPackage,libdb47))
 $(eval $(call BuildPackage,libdb47xx))
-#$(eval $(call BuildPackage,libdb47xx-full))
 $(eval $(call BuildPackage,db47-util))

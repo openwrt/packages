@@ -43,6 +43,7 @@ define Host/Compile
 endef
 
 define Host/Install
+	$(MAKE) -C $(HOST_BUILD_DIR) install
 endef
 
 CONFIGURE_ARGS += --with-protoc=$(HOST_BUILD_DIR)/src/protoc

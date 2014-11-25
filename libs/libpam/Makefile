@@ -48,10 +48,10 @@ endef
 
 Package/libpam-db/description=$(Package/libpam/description)
 
-TARGET_CFLAGS += $(FPIC)
 
 ifeq ($(BUILD_VARIANT),nodb)
  define Build/Configure
+TARGET_CFLAGS += $(FPIC)
 	$(call Build/Configure/Default, \
 		--enable-shared \
 		--enable-static \
