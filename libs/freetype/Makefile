@@ -15,6 +15,7 @@ PKG_SOURCE_VERSION:=02b8e7e8d751605b133568b86fbb5dff48b6b5a5
 PKG_SOURCE:=$(PKG_NAME)2-$(PKG_SOURCE_VERSION).tar.gz
 PKG_SOURCE_URL:=http://git.savannah.gnu.org/cgit/freetype/freetype2.git/snapshot/
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)2-$(PKG_SOURCE_VERSION)/
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)2-$(PKG_SOURCE_VERSION)/
 PKG_MD5SUM:=ab713eef5f9a585f9f299eec3908b58d
 
 PKG_LICENSE:=FTL GPL-2.0 MIT ZLIB
@@ -50,11 +51,26 @@ CONFIGURE_ARGS += \
 	--with-png=no \
 	--with-harfbuzz=no
 
+HOST_CONFIGURE_ARGS += \
+	--enable-shared \
+	--enable-static \
+	--with-bzip2 \
+	--with-zlib \
+	--with-png=no \
+	--with-harfbuzz=no
+
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); \
 		./autogen.sh; \
 	)
 	$(call Build/Configure/Default)
+endef
+
+define Host/Configure
+	(cd $(HOST_BUILD_DIR); \
+		./autogen.sh; \
+	)
+	$(call Host/Configure/Default)
 endef
 
 define Build/Compile	
