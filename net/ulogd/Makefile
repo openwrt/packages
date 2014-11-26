@@ -19,7 +19,7 @@ PKG_SOURCE_URL:=ftp://ftp.netfilter.org/pub/ulogd/ \
 PKG_MD5SUM:=7c71ec460dfea5287eba27472c521ebc
 
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_FIXUP:=autoreconf

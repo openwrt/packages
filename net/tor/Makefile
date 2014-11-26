@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://www.torproject.org/dist \
 	https://archive.torproject.org/tor-package-archive
 PKG_MD5SUM:=9acb86b529f0f48cc495da3801f85d1f
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de>
-PKG_LICENSE_FILE:=LICENSE
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=libminiupnpc libnatpmp
 PKG_INSTALL:=1
