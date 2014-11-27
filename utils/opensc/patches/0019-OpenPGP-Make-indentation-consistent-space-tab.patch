@@ -1,0 +1,182 @@
+From c6abf7976f64be5191dc80fecdbcb07daab7a2e0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Sun, 3 Nov 2013 01:45:56 +0800
+Subject: [PATCH 19/26] OpenPGP: Make indentation consistent (space -> tab).
+
+---
+ src/libopensc/card-openpgp.c | 22 ++++++++---------
+ src/tools/openpgp-tool.c     | 56 ++++++++++++++++++++++----------------------
+ 2 files changed, 39 insertions(+), 39 deletions(-)
+
+diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
+index 037ef73..ae40940 100644
+--- a/src/libopensc/card-openpgp.c
++++ b/src/libopensc/card-openpgp.c
+@@ -192,12 +192,12 @@ static struct do_info		pgp1_objects[] = {	/* OpenPGP card spec 1.1 */
+ 	{ 0x5f35, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  NULL,               sc_put_data },
+ 	{ 0x5f50, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  sc_get_data,        sc_put_data },
+ 	{ 0x7f49, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, NULL,               NULL        },
+-	{ 0xa400, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER,  pgp_get_pubkey,     NULL        },
+-	{ 0xa401, SIMPLE,      READ_ALWAYS | WRITE_PIN3, pgp_get_pubkey_pem, NULL        },
+-	{ 0xb600, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER,  pgp_get_pubkey,     NULL        },
+-	{ 0xb601, SIMPLE,      READ_ALWAYS | WRITE_PIN3, pgp_get_pubkey_pem, NULL        },
+-	{ 0xb800, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER,  pgp_get_pubkey,     NULL        },
+-	{ 0xb801, SIMPLE,      READ_ALWAYS | WRITE_PIN3, pgp_get_pubkey_pem, NULL        },
++	{ 0xa400, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
++	{ 0xa401, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
++	{ 0xb600, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
++	{ 0xb601, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
++	{ 0xb800, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
++	{ 0xb801, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
+ 	{ 0, 0, 0, NULL, NULL },
+ };
+ 
+@@ -253,11 +253,11 @@ static struct do_info		pgp2_objects[] = {	/* OpenPGP card spec 2.0 */
+ 	/* The 0xA401, 0xB601, 0xB801 are just symbolic, it does not represent any real DO.
+ 	 * However, their R/W access condition may block the process of importing key in pkcs15init.
+ 	 * So we set their accesses condition as WRITE_PIN3 (writable). */
+-	{ 0xa401, SIMPLE,      READ_ALWAYS | WRITE_PIN3, pgp_get_pubkey_pem, NULL        },
+-	{ 0xb600, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER,  pgp_get_pubkey,     NULL        },
+-	{ 0xb601, SIMPLE,      READ_ALWAYS | WRITE_PIN3, pgp_get_pubkey_pem, NULL        },
+-	{ 0xb800, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER,  pgp_get_pubkey,     NULL        },
+-	{ 0xb801, SIMPLE,      READ_ALWAYS | WRITE_PIN3, pgp_get_pubkey_pem, NULL        },
++	{ 0xa401, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
++	{ 0xb600, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
++	{ 0xb601, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
++	{ 0xb800, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
++	{ 0xb801, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
+ 	{ 0, 0, 0, NULL, NULL },
+ };
+ 
+diff --git a/src/tools/openpgp-tool.c b/src/tools/openpgp-tool.c
+index 374819a..a0334ca 100644
+--- a/src/tools/openpgp-tool.c
++++ b/src/tools/openpgp-tool.c
+@@ -37,11 +37,11 @@
+ #include "util.h"
+ #include "libopensc/log.h"
+ 
+-#define	OPT_RAW		256
+-#define	OPT_PRETTY	257
+-#define	OPT_VERIFY	258
+-#define	OPT_PIN	    259
+-#define	OPT_DELKEY  260
++#define OPT_RAW     256
++#define OPT_PRETTY  257
++#define OPT_VERIFY  258
++#define OPT_PIN     259
++#define OPT_DELKEY  260
+ 
+ /* define structures */
+ struct ef_name_map {
+@@ -142,10 +142,10 @@ static const struct ef_name_map openpgp_data[] = {
+ static void show_version(void)
+ {
+ 	fprintf(stderr,
+-		"openpgp-tool - OpenPGP card utility version " PACKAGE_VERSION "\n"
+-		"\n"
+-		"Copyright (c) 2012 Peter Marschall <peter@adpm.de>\n"
+-		"Licensed under LGPL v2\n");
++	        "openpgp-tool - OpenPGP card utility version " PACKAGE_VERSION "\n"
++	        "\n"
++	        "Copyright (c) 2012 Peter Marschall <peter@adpm.de>\n"
++	        "Licensed under LGPL v2\n");
+ }
+ 
+ 
+@@ -176,16 +176,16 @@ static char *prettify_language(char *str)
+ {
+ 	if (str != NULL) {
+ 		switch (strlen(str)) {
+-			case 8:	memmove(str+7, str+6, 1+strlen(str+6));
++			case 8: memmove(str+7, str+6, 1+strlen(str+6));
+ 				str[6] = ',';
+ 				/* fall through */
+-			case 6:	memmove(str+5, str+4, 1+strlen(str+4));
++			case 6: memmove(str+5, str+4, 1+strlen(str+4));
+ 				str[4] = ',';
+ 				/* fall through */
+-			case 4:	memmove(str+3, str+2, 1+strlen(str+2));
++			case 4: memmove(str+3, str+2, 1+strlen(str+2));
+ 				str[2] = ',';
+ 				/* fall through */
+-			case 2:  return str;
++			case 2: return str;
+ 		}
+ 	}
+ 	return NULL;
+@@ -197,10 +197,10 @@ static char *prettify_gender(char *str)
+ {
+ 	if (str != NULL) {
+ 		switch (*str) {
+-			case '0':  return "unknown";
+-			case '1':  return "male";
+-			case '2':  return "female";
+-			case '9':  return "not applicable";
++			case '0': return "unknown";
++			case '1': return "male";
++			case '2': return "female";
++			case '9': return "not applicable";
+ 		}
+ 	}
+ 	return NULL;
+@@ -218,7 +218,7 @@ static void display_data(const struct ef_name_map *mapping, char *value)
+ 				char *envvar;
+ 
+ 				envvar = malloc(strlen(mapping->env_name) +
+-						strlen(value) + 2);
++				                strlen(value) + 2);
+ 				if (envvar != NULL) {
+ 					strcpy(envvar, mapping->env_name);
+ 					strcat(envvar, "=");
+@@ -346,20 +346,20 @@ static int do_userinfo(sc_card_t *card)
+ 		if (!count)
+ 			continue;
+ 
+-		if (count > (int)sizeof(buf) - 1)   {
++		if (count > (int)sizeof(buf) - 1) {
+ 			fprintf(stderr, "Too small buffer to read the OpenPGP data\n");
+ 			return EXIT_FAILURE;
+ 		}
+-	
+-        	r = sc_read_binary(card, 0, buf, count, 0);
+-               	if (r < 0) {
++
++		r = sc_read_binary(card, 0, buf, count, 0);
++		if (r < 0) {
+ 			fprintf(stderr, "%s: read failed - %s\n", openpgp_data[i].ef, sc_strerror(r));
+ 			return EXIT_FAILURE;
+-        	}
+-               	if (r != count) {
+-                        fprintf(stderr, "%s: expecting %d, got only %d bytes\n", openpgp_data[i].ef, count, r);
++		}
++		if (r != count) {
++			fprintf(stderr, "%s: expecting %d, got only %d bytes\n", openpgp_data[i].ef, count, r);
+ 			return EXIT_FAILURE;
+-        	}
++		}
+ 
+ 		buf[count] = '\0';
+ 
+@@ -628,7 +628,7 @@ int main(int argc, char **argv)
+ 	r = sc_context_create(&ctx, &ctx_param);
+ 	if (r) {
+ 		util_fatal("failed to establish context: %s\n",
+-			sc_strerror(r));
++		           sc_strerror(r));
+ 		return EXIT_FAILURE;
+ 	}
+ 
+@@ -640,7 +640,7 @@ int main(int argc, char **argv)
+ 	r = util_connect_card(ctx, &card, opt_reader, opt_wait, verbose);
+ 	if (r) {
+ 		util_fatal("failed to connect to card: %s\n",
+-			sc_strerror(r));
++		           sc_strerror(r));
+ 		return EXIT_FAILURE;
+ 	}
+ 
+-- 
+2.1.3
+

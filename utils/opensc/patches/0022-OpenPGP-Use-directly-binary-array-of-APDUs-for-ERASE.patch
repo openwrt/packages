@@ -1,0 +1,87 @@
+From 0cd2a488d86006bb2740a4e73e7a0d859e1bf33c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Sun, 13 Jul 2014 17:37:59 +0800
+Subject: [PATCH 22/26] OpenPGP: Use directly binary array of APDUs for ERASE
+ command.
+
+I used a string presentation before and it needed an extra conversion step.
+---
+ src/libopensc/card-openpgp.c | 47 +++++++++++++++++++++++---------------------
+ 1 file changed, 25 insertions(+), 22 deletions(-)
+
+diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
+index ae40940..724fe73 100644
+--- a/src/libopensc/card-openpgp.c
++++ b/src/libopensc/card-openpgp.c
+@@ -2347,24 +2347,27 @@ out:
+ static int pgp_erase_card(sc_card_t *card)
+ {
+ 	sc_context_t *ctx = card->ctx;
+-	u8 *apdustring[10] = {
+-		"00:20:00:81:08:40:40:40:40:40:40:40:40",
+-		"00:20:00:81:08:40:40:40:40:40:40:40:40",
+-		"00:20:00:81:08:40:40:40:40:40:40:40:40",
+-		"00:20:00:81:08:40:40:40:40:40:40:40:40",
+-		"00:20:00:83:08:40:40:40:40:40:40:40:40",
+-		"00:20:00:83:08:40:40:40:40:40:40:40:40",
+-		"00:20:00:83:08:40:40:40:40:40:40:40:40",
+-		"00:20:00:83:08:40:40:40:40:40:40:40:40",
+-		"00:e6:00:00",
+-		"00:44:00:00"
++	/* Special series of commands to erase OpenPGP card,
++	 * according to https://www.crypto-stick.com/en/faq
++	 * (How to reset a Crypto Stick? question).
++	 * Gnuk is known not to support this feature. */
++	u8 apdu_binaries[10][13] = {
++		{0, 0x20, 0, 0x81, 0x08, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40},
++		{0, 0x20, 0, 0x81, 0x08, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40},
++		{0, 0x20, 0, 0x81, 0x08, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40},
++		{0, 0x20, 0, 0x81, 0x08, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40},
++		{0, 0x20, 0, 0x83, 0x08, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40},
++		{0, 0x20, 0, 0x83, 0x08, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40},
++		{0, 0x20, 0, 0x83, 0x08, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40},
++		{0, 0x20, 0, 0x83, 0x08, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40},
++		{0, 0xe6, 0, 0},
++		{0, 0x44, 0, 0}
+ 	};
++	u8 apdu_lens[10] = {13, 13, 13, 13, 13, 13, 13, 13, 4, 4};
+ 	u8 buf[SC_MAX_APDU_BUFFER_SIZE];
+ 	u8 rbuf[SC_MAX_APDU_BUFFER_SIZE];
+ 	sc_apdu_t apdu;
+-	size_t len0;
+-	int commandsnum = 10;
+-	int i, r;
++	int i, l, r;
+ 
+ 	LOG_FUNC_CALLED(ctx);
+ 
+@@ -2376,17 +2379,17 @@ static int pgp_erase_card(sc_card_t *card)
+ 	sc_log(ctx, "Card is OpenPGP v2. Erase card.");
+ 
+ 	/* Iterate over 10 commands above */
+-	for (i = 0; i < commandsnum; i++) {
+-		/* Convert the string to binary array */
+-		len0 = sizeof(buf);
+-		sc_hex_to_bin(apdustring[i], buf, &len0);
+-		printf("Sending: ");
+-		for (r = 0; r < len0; r++)
+-			printf("%02X ", buf[r]);
++	for (i = 0; i < sizeof(apdu_lens); i++) {
++		/* Length of the binary array of the current command */
++		l = apdu_lens[i];
++		/* Print the command to console */
++		printf("Sending %d: ", i);
++		for (r = 0; r < l; r++)
++			printf("%02X ", apdu_binaries[i][r]);
+ 		printf("\n");
+ 
+ 		/* Build APDU from binary array */
+-		r = sc_bytes2apdu(card->ctx, buf, len0, &apdu);
++		r = sc_bytes2apdu(card->ctx, apdu_binaries[i], l, &apdu);
+ 		if (r) {
+ 			sc_log(ctx, "Failed to build APDU");
+ 			LOG_FUNC_RETURN(ctx, SC_ERROR_INTERNAL);
+-- 
+2.1.3
+
