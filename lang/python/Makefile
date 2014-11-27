@@ -104,7 +104,7 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
-	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
 	$(INSTALL_DATA) ./files/python-package.mk $(STAGING_DIR)/mk/
 	$(CP) \
@@ -114,6 +114,11 @@ define Build/InstallDev
 		$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
+	$(CP) \
+		$(STAGING_DIR_HOST)/lib/pkgconfig/python.pc \
+		$(STAGING_DIR_HOST)/lib/pkgconfig/python2.pc \
+		$(STAGING_DIR_HOST)/lib/pkgconfig/python-$(PYTHON_VERSION).pc \
+		$(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
 		$(1)/usr/lib/python$(PYTHON_VERSION)/
