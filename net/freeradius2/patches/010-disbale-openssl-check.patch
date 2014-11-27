@@ -1,6 +1,6 @@
 --- a/configure.in
 +++ b/configure.in
-@@ -832,35 +832,6 @@ if test "x$WITH_OPENSSL" = xyes; then
+@@ -796,35 +796,6 @@ if test "x$WITH_OPENSSL" = xyes; then
      OPENSSL_INCLUDE="-DOPENSSL_NO_KRB5"
    fi
  
