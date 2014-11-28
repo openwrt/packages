@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013 OpenWrt.org
+# Copyright (C) 2013-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -18,6 +18,9 @@ PKG_SOURCE_VERSION:=6beeb6fe6ce2b16b14284c26e1b9220b68044591
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
+
+PKG_LICENSE:=ISC
+PKG_LICENSE_FILE:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
 
