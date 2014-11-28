@@ -15,6 +15,8 @@ PKG_SOURCE_URL:=http://dl.cihar.com/gammu/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_MD5SUM:=66b95afbde3085168c4a20266e8cb5c0
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
+PKG_LICENCE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -22,12 +24,11 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/gammu
 	SECTION:=utils
 	CATEGORY:=Utilities
-	TITLE:=Command line utility which you can use to control your cellphone
+	TITLE:=Cell phone/modem SMS and control tool
 	URL:=http://dl.cihar.com/gammu/releases/
 	DEPENDS:=@BUILD_NLS +libpthread +libcurl +glib2 $(ICONV_DEPENDS) $(INTL_DEPENDS)
 	DEPENDS+=+PACKAGE_python:python +PACKAGE_bluez-libs:bluez-libs
 	DEPENDS+=+PACKAGE_libmysqlclient:libmysqlclient +PACKAGE_unixodbc:unixodbc
-	MAINTAINER:=Vitaly Protsko <villy@sft.ru>
 endef
 
 CONFIGURE_ARGS:= \
