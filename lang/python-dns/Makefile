@@ -15,7 +15,7 @@ PKG_MD5SUM:=3f2601ef3c8b77fc6d21a9c77a81efeb
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=ISC
-PKG_LICENSE_FILE:=LICENSE
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)

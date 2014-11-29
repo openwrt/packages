@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=LGPLv2 GPLv2
-PKG_LICENSE_FILE:=COPYING.LIB COPYING
+PKG_LICENSE_FILES:=COPYING.LIB COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
@@ -183,9 +183,12 @@ endef
 
 
 define Package/gst1-plugins-base/install
-	/bin/true
+  true
 endef
 
+define Package/gstreamer1-plugins-base/install
+  true
+endef
 
 # 1: short name
 # 2: description

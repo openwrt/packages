@@ -1,8 +1,8 @@
-From b6bc7a497e1fe20104f923de1092a35d137ba553 Mon Sep 17 00:00:00 2001
+From d210faa377bcec63876f84b82540b110ede16e57 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Mon, 4 Mar 2013 18:14:51 +0700
-Subject: [PATCH 07/18] OpenPGP: Correct building Extended Header List when
+Subject: [PATCH 07/26] OpenPGP: Correct building Extended Header List when
  importing keys.
 
 ---
@@ -10,10 +10,10 @@ Subject: [PATCH 07/18] OpenPGP: Correct building Extended Header List when
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 42a9684..47c1938 100644
+index 7349876..91c311b 100644
 --- a/src/libopensc/card-openpgp.c
 +++ b/src/libopensc/card-openpgp.c
-@@ -1978,7 +1978,7 @@ pgp_build_extended_header_list(sc_card_t *card, sc_cardctl_openpgp_keystore_info
+@@ -1977,7 +1977,7 @@ pgp_build_extended_header_list(sc_card_t *card, sc_cardctl_openpgp_keystore_info
  	u8 *p = NULL;
  	u8 *components[] = {key_info->e, key_info->p, key_info->q, key_info->n};
  	size_t componentlens[] = {key_info->e_len, key_info->p_len, key_info->q_len, key_info->n_len};
@@ -23,5 +23,5 @@ index 42a9684..47c1938 100644
  		"public exponent",
  		"prime p",
 -- 
-1.9.3
+2.1.3
 

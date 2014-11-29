@@ -1,0 +1,53 @@
+From b9dae832db54b206a15bcc12e290cef50f31c3d0 Mon Sep 17 00:00:00 2001
+From: george <ggkitsas@yahoo.com>
+Date: Tue, 11 Nov 2014 16:16:15 +0100
+Subject: [PATCH 26/26] hardcode->defines for DO's
+
+---
+ src/libopensc/card-openpgp.c | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
+index 1e6e338..8464914 100644
+--- a/src/libopensc/card-openpgp.c
++++ b/src/libopensc/card-openpgp.c
+@@ -164,6 +164,18 @@ static int		pgp_get_pubkey_pem(sc_card_t *, unsigned int,
+ #define DO_SIGN_SYM              0xb601
+ #define DO_ENCR_SYM              0xb801
+ #define DO_AUTH_SYM              0xa401
++/* Private DO's */
++#define DO_PRIV1                 0x0101
++#define DO_PRIV2                 0x0102
++#define DO_PRIV3                 0x0103
++#define DO_PRIV4                 0x0104
++/* Cardholder information DO's */
++#define DO_CARDHOLDER            0x65
++#define DO_NAME                  0x5b
++#define DO_LANG_PREF             0x5f2d
++#define DO_SEX                   0x5f35
++
++
+ /* Maximum length for response buffer when reading pubkey. This value is calculated with
+  * 4096-bit key length */
+ #define MAXLEN_RESP_PUBKEY       527
+@@ -851,7 +863,7 @@ pgp_get_blob(sc_card_t *card, pgp_blob_t *blob, unsigned int id,
+ 	/* Special case:
+ 	 * Gnuk does not have default value for children of DO 65 (DOs 5B, 5F2D, 5F35)
+ 	 * So, if these blob was not found, we create it. */
+-	if (blob->id == 0x65 && (id == 0x5B || id == 0x5F2D || id == 0x5F35)) {
++	if (blob->id == DO_CARDHOLDER && (id == DO_NAME || id == DO_LANG_PREF || id == DO_SEX)) {
+ 		sc_log(card->ctx, "Create blob %X under %X", id, blob->id);
+ 		child = pgp_new_blob(card, blob, id, sc_file_new());
+ 		if (child) {
+@@ -1198,7 +1210,7 @@ pgp_get_data(sc_card_t *card, unsigned int tag, u8 *buf, size_t buf_len)
+ 	/* For Gnuk card, if there is no certificate, it returns error instead of empty data.
+ 	 * So, for this case, we ignore error and consider success */
+ 	if (r == SC_ERROR_DATA_OBJECT_NOT_FOUND && card->type == SC_CARD_TYPE_OPENPGP_GNUK
+-        && (tag == DO_CERT || tag == 0x0101 || tag == 0x0102 || tag == 0x0103 || tag == 0x0104)) {
++        && (tag == DO_CERT || tag == DO_PRIV1 || tag == DO_PRIV2 || tag == DO_PRIV3 || tag == DO_PRIV4)) {
+ 		r = SC_SUCCESS;
+ 		apdu.resplen = 0;
+ 	}
+-- 
+2.1.3
+

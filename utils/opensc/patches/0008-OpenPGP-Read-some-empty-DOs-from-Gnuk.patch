@@ -1,8 +1,8 @@
-From d1b8d3588336abac4876c1d537d8e8e5e578bc02 Mon Sep 17 00:00:00 2001
+From df98874784a77c96a7a1be54412a02a53fdd3a3e Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Mon, 25 Mar 2013 11:58:38 +0700
-Subject: [PATCH 08/18] OpenPGP: Read some empty DOs from Gnuk.
+Subject: [PATCH 08/26] OpenPGP: Read some empty DOs from Gnuk.
 
 In Gnuk, some empty DOs are returned as not exist, instead of existing with empty value.
 So, we will consider them exist in driver.
@@ -11,10 +11,10 @@ So, we will consider them exist in driver.
  1 file changed, 25 insertions(+)
 
 diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 47c1938..9b08bbb 100644
+index 91c311b..e7b25c0 100644
 --- a/src/libopensc/card-openpgp.c
 +++ b/src/libopensc/card-openpgp.c
-@@ -813,6 +813,23 @@ pgp_get_blob(sc_card_t *card, struct blob *blob, unsigned int id,
+@@ -815,6 +815,23 @@ pgp_get_blob(sc_card_t *card, struct blob *blob, unsigned int id,
  		}
  	}
  
@@ -38,7 +38,7 @@ index 47c1938..9b08bbb 100644
  	return SC_ERROR_FILE_NOT_FOUND;
  }
  
-@@ -1147,6 +1164,14 @@ pgp_get_data(sc_card_t *card, unsigned int tag, u8 *buf, size_t buf_len)
+@@ -1149,6 +1166,14 @@ pgp_get_data(sc_card_t *card, unsigned int tag, u8 *buf, size_t buf_len)
  	LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
  
  	r = sc_check_sw(card, apdu.sw1, apdu.sw2);
@@ -54,5 +54,5 @@ index 47c1938..9b08bbb 100644
  
  	LOG_FUNC_RETURN(card->ctx, apdu.resplen);
 -- 
-1.9.3
+2.1.3
 

@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://projects.universe-factory.net/attachments/download/71
 PKG_MD5SUM:=7f44df5dc69cb8686947562e2a11eea9
 
 PKG_LICENSE:=BSD-2-Clause
-PKG_LICENSE_FILE:=COPYRIGHT
+PKG_LICENSE_FILES:=COPYRIGHT
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

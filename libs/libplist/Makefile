@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Lukasz Baj <l.baj@radytek.com>
 PKG_LICENSE:=LGPL-2.1+
-PKG_LICENSE_FILE:=COPYING.LESSER
+PKG_LICENSE_FILES:=COPYING.LESSER
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libplist.git

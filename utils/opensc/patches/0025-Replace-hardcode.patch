@@ -1,0 +1,148 @@
+From da70a41383e2ab81fbcc89fb1067f5a189e0fb97 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Sun, 9 Nov 2014 15:58:40 +0700
+Subject: [PATCH 25/26] Replace hardcode.
+
+---
+ src/libopensc/card-openpgp.c | 72 +++++++++++++++++++++++++-------------------
+ 1 file changed, 41 insertions(+), 31 deletions(-)
+
+diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
+index 94c69ae..1e6e338 100644
+--- a/src/libopensc/card-openpgp.c
++++ b/src/libopensc/card-openpgp.c
+@@ -152,6 +152,24 @@ static int		pgp_get_pubkey(sc_card_t *, unsigned int,
+ static int		pgp_get_pubkey_pem(sc_card_t *, unsigned int,
+ 				u8 *, size_t);
+ 
++/* The DO holding X.509 certificate is constructed but does not contain child DO.
++ * We should notice this when building fake file system later. */
++#define DO_CERT                  0x7f21
++/* Control Reference Template of private keys. Ref: Section 4.3.3.7 of OpenPGP card v2 spec.
++ * Here we seen it as DO just for convenient */
++#define DO_SIGN                  0xb600
++#define DO_ENCR                  0xb800
++#define DO_AUTH                  0xa400
++/* These DO does not exist. They are defined and used just for ease of implementation */
++#define DO_SIGN_SYM              0xb601
++#define DO_ENCR_SYM              0xb801
++#define DO_AUTH_SYM              0xa401
++/* Maximum length for response buffer when reading pubkey. This value is calculated with
++ * 4096-bit key length */
++#define MAXLEN_RESP_PUBKEY       527
++/* Gnuk only support 1 key length (2048 bit) */
++#define MAXLEN_RESP_PUBKEY_GNUK  271
++
+ static struct do_info		pgp1_objects[] = {	/* OpenPGP card spec 1.1 */
+ 	{ 0x004f, SIMPLE,      READ_ALWAYS | WRITE_NEVER, NULL,               NULL        },
+ 	{ 0x005b, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  NULL,               sc_put_data },
+@@ -192,12 +210,12 @@ static struct do_info		pgp1_objects[] = {	/* OpenPGP card spec 1.1 */
+ 	{ 0x5f35, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  NULL,               sc_put_data },
+ 	{ 0x5f50, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  sc_get_data,        sc_put_data },
+ 	{ 0x7f49, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, NULL,               NULL        },
+-	{ 0xa400, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
+-	{ 0xa401, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
+-	{ 0xb600, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
+-	{ 0xb601, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
+-	{ 0xb800, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
+-	{ 0xb801, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
++	{ DO_AUTH,     CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL   },
++	{ DO_AUTH_SYM, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL   },
++	{ DO_SIGN,     CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL   },
++	{ DO_SIGN_SYM, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL   },
++	{ DO_ENCR,     CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL   },
++	{ DO_ENCR_SYM, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL   },
+ 	{ 0, 0, 0, NULL, NULL },
+ };
+ 
+@@ -246,30 +264,21 @@ static struct do_info		pgp2_objects[] = {	/* OpenPGP card spec 2.0 */
+ 	{ 0x5f52, SIMPLE,      READ_ALWAYS | WRITE_NEVER, sc_get_data,        NULL        },
+ 	/* The 7F21 is constructed DO in spec, but in practice, its content can be retrieved
+ 	 * as simple DO (no need to parse TLV). */
+-	{ 0x7f21, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  sc_get_data,        sc_put_data },
++	{ DO_CERT, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  sc_get_data,        sc_put_data },
+ 	{ 0x7f48, CONSTRUCTED, READ_NEVER  | WRITE_NEVER, NULL,               NULL        },
+ 	{ 0x7f49, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, NULL,               NULL        },
+-	{ 0xa400, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
++	{ DO_AUTH,     CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL   },
+ 	/* The 0xA401, 0xB601, 0xB801 are just symbolic, it does not represent any real DO.
+ 	 * However, their R/W access condition may block the process of importing key in pkcs15init.
+ 	 * So we set their accesses condition as WRITE_PIN3 (writable). */
+-	{ 0xa401, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
+-	{ 0xb600, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
+-	{ 0xb601, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
+-	{ 0xb800, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL        },
+-	{ 0xb801, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL        },
++	{ DO_AUTH_SYM, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL   },
++	{ DO_SIGN,     CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL   },
++	{ DO_SIGN_SYM, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL   },
++	{ DO_ENCR,     CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, pgp_get_pubkey,     NULL   },
++	{ DO_ENCR_SYM, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  pgp_get_pubkey_pem, NULL   },
+ 	{ 0, 0, 0, NULL, NULL },
+ };
+ 
+-/* The DO holding X.509 certificate is constructed but does not contain child DO.
+- * We should notice this when building fake file system later. */
+-#define DO_CERT                  0x7f21
+-/* Maximum length for response buffer when reading pubkey. This value is calculated with
+- * 4096-bit key length */
+-#define MAXLEN_RESP_PUBKEY       527
+-/* Gnuk only support 1 key length (2048 bit) */
+-#define MAXLEN_RESP_PUBKEY_GNUK  271
+-
+ #define DRVDATA(card)        ((struct pgp_priv_data *) ((card)->drv_data))
+ struct pgp_priv_data {
+ 	pgp_blob_t *		mf;
+@@ -747,8 +756,9 @@ pgp_read_blob(sc_card_t *card, pgp_blob_t *blob)
+ 
+ 		/* Buffer length for Gnuk pubkey */
+ 		if (card->type == SC_CARD_TYPE_OPENPGP_GNUK &&
+-		    (blob->id == 0xa400 || blob->id == 0xb600 || blob->id == 0xb800
+-		     || blob->id == 0xa401 || blob->id == 0xb601 || blob->id == 0xb801)) {
++		    (blob->id == DO_AUTH || blob->id == DO_SIGN || blob->id == DO_ENCR
++		     || blob->id == DO_AUTH_SYM || blob->id == DO_SIGN_SYM
++		     || blob->id == DO_ENCR_SYM)) {
+ 			buf_len = MAXLEN_RESP_PUBKEY_GNUK;
+ 		}
+ 
+@@ -1804,11 +1814,11 @@ pgp_update_pubkey_blob(sc_card_t *card, u8* modulus, size_t modulus_len,
+ 	LOG_FUNC_CALLED(card->ctx);
+ 
+ 	if (key_id == SC_OPENPGP_KEY_SIGN)
+-		blob_id = 0xB601;
++		blob_id = DO_SIGN_SYM;
+ 	else if (key_id == SC_OPENPGP_KEY_ENCR)
+-		blob_id = 0xB801;
++		blob_id = DO_ENCR_SYM;
+ 	else if (key_id == SC_OPENPGP_KEY_AUTH)
+-		blob_id = 0xA401;
++		blob_id = DO_AUTH_SYM;
+ 	else {
+ 		sc_log(card->ctx, "Unknown key id %X.", key_id);
+ 		LOG_FUNC_RETURN(card->ctx, SC_ERROR_INVALID_ARGUMENTS);
+@@ -2501,17 +2511,17 @@ pgp_delete_file(sc_card_t *card, const sc_path_t *path)
+ 		LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_SUPPORTED);
+ 
+ 	if (card->type != SC_CARD_TYPE_OPENPGP_GNUK &&
+-	    (file->id == 0xB601 || file->id == 0xB801 || file->id == 0xA401)) {
++	    (file->id == DO_SIGN_SYM || file->id == DO_ENCR_SYM || file->id == DO_AUTH_SYM)) {
+ 		/* These tags are just symbolic. We don't really delete it. */
+ 		r = SC_SUCCESS;
+ 	}
+-	else if (card->type == SC_CARD_TYPE_OPENPGP_GNUK && file->id == 0xB601) {
++	else if (card->type == SC_CARD_TYPE_OPENPGP_GNUK && file->id == DO_SIGN_SYM) {
+ 		r = gnuk_delete_key(card, 1);
+ 	}
+-	else if (card->type == SC_CARD_TYPE_OPENPGP_GNUK && file->id == 0xB801) {
++	else if (card->type == SC_CARD_TYPE_OPENPGP_GNUK && file->id == DO_ENCR_SYM) {
+ 		r = gnuk_delete_key(card, 2);
+ 	}
+-	else if (card->type == SC_CARD_TYPE_OPENPGP_GNUK && file->id == 0xA401) {
++	else if (card->type == SC_CARD_TYPE_OPENPGP_GNUK && file->id == DO_AUTH_SYM) {
+ 		r = gnuk_delete_key(card, 3);
+ 	}
+ 	else {
+-- 
+2.1.3
+

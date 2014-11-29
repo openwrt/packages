@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-libav
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -18,7 +18,7 @@ PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-libav
 PKG_MD5SUM:=58c7998a054d8d8ca041fa35738f72b6
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.0
-PKG_LICENSE_FILE:=COPYING COPYING.LIB
+PKG_LICENSE_FILES:=COPYING COPYING.LIB
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-libav-$(PKG_VERSION)
 
@@ -109,7 +109,7 @@ PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_GST1_LIBAV_PARSER_%,$(LIBAV_PARSERS)) \
 	$(patsubst %,CONFIG_GST1_LIBAV_PROTOCOL_%,$(LIBAV_PROTOCOLS))
 
-PKG_BUILD_DEPENDS:= libstreamer1 gstreamer1-plugins-base
+PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk

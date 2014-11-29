@@ -1,18 +1,18 @@
-From 693b3ac5a53e89a0cdeab0f728d24a6e16864f5c Mon Sep 17 00:00:00 2001
+From 9af45c4cf052e3a6059a3004082f9ee3d2b3b2bf Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Fri, 12 Apr 2013 15:33:31 +0700
-Subject: [PATCH 15/18] OpenPGP: Delete key as file, for Gnuk.
+Subject: [PATCH 15/26] OpenPGP: Delete key as file, for Gnuk.
 
 ---
  src/libopensc/card-openpgp.c | 51 +++++++++++++++++++++++++++++++++++++++++++-
  1 file changed, 50 insertions(+), 1 deletion(-)
 
 diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index a666163..19d3b04 100644
+index 7a77a71..4d0500d 100644
 --- a/src/libopensc/card-openpgp.c
 +++ b/src/libopensc/card-openpgp.c
-@@ -2437,6 +2437,44 @@ static int pgp_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
+@@ -2435,6 +2435,44 @@ static int pgp_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
  	LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_SUPPORTED);
  }
  
@@ -57,7 +57,7 @@ index a666163..19d3b04 100644
  /* ABI: DELETE FILE */
  static int
  pgp_delete_file(sc_card_t *card, const sc_path_t *path)
-@@ -2444,6 +2482,7 @@ pgp_delete_file(sc_card_t *card, const sc_path_t *path)
+@@ -2442,6 +2480,7 @@ pgp_delete_file(sc_card_t *card, const sc_path_t *path)
  	struct pgp_priv_data *priv = DRVDATA(card);
  	struct blob *blob;
  	sc_file_t *file;
@@ -65,7 +65,7 @@ index a666163..19d3b04 100644
  	int r;
  
  	LOG_FUNC_CALLED(card->ctx);
-@@ -2459,10 +2498,20 @@ pgp_delete_file(sc_card_t *card, const sc_path_t *path)
+@@ -2457,10 +2496,20 @@ pgp_delete_file(sc_card_t *card, const sc_path_t *path)
  	if (blob == priv->mf)
  		LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_SUPPORTED);
  
@@ -88,5 +88,5 @@ index a666163..19d3b04 100644
  		/* call pgp_put_data() with zero-sized NULL-buffer to zap the DO contents */
  		r = pgp_put_data(card, file->id, NULL, 0);
 -- 
-1.9.3
+2.1.3
 

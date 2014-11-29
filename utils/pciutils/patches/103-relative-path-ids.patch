@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -85,7 +85,7 @@ lspci: LDLIBS+=$(LIBKMOD_LIBS)
+@@ -88,7 +88,7 @@ lspci: LDLIBS+=$(LIBKMOD_LIBS)
  ls-kernel.o: CFLAGS+=$(LIBKMOD_CFLAGS)
  
  update-pciids: update-pciids.sh

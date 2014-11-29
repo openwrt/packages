@@ -1,18 +1,18 @@
-From f96f7536a8c2efd0ba41fd94fe3334e5fa556854 Mon Sep 17 00:00:00 2001
+From ee23d262768e7e54ed0fc554bc0b869c65868ace Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Tue, 16 Apr 2013 10:19:34 +0700
-Subject: [PATCH 16/18] OpenPGP: Correct parameter checking.
+Subject: [PATCH 16/26] OpenPGP: Correct parameter checking.
 
 ---
  src/libopensc/card-openpgp.c | 9 +++++++--
  1 file changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 19d3b04..196c094 100644
+index 4d0500d..beeee83 100644
 --- a/src/libopensc/card-openpgp.c
 +++ b/src/libopensc/card-openpgp.c
-@@ -1221,6 +1221,8 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+@@ -1223,6 +1223,8 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
  		LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
  		/* Check response */
  		r = sc_check_sw(card, apdu.sw1, apdu.sw2);
@@ -21,7 +21,7 @@ index 19d3b04..196c094 100644
  		LOG_FUNC_RETURN(card->ctx, length);
  	}
  
-@@ -2448,6 +2450,11 @@ gnuk_delete_key(sc_card_t *card, u8 key_id)
+@@ -2446,6 +2448,11 @@ gnuk_delete_key(sc_card_t *card, u8 key_id)
  
  	LOG_FUNC_CALLED(ctx);
  
@@ -33,7 +33,7 @@ index 19d3b04..196c094 100644
  	/* Delete fingerprint */
  	sc_log(ctx, "Delete fingerprints");
  	r = pgp_put_data(card, 0xC6 + key_id, NULL, 0);
-@@ -2466,8 +2473,6 @@ gnuk_delete_key(sc_card_t *card, u8 key_id)
+@@ -2464,8 +2471,6 @@ gnuk_delete_key(sc_card_t *card, u8 key_id)
  		data = "\x4D\x02\xB8";
  	else if (key_id == 3)
  		data = "\x4D\x02\xA4";
@@ -43,5 +43,5 @@ index 19d3b04..196c094 100644
  	r = pgp_put_data(card, 0x4D, data, strlen(data) + 1);
  
 -- 
-1.9.3
+2.1.3
 

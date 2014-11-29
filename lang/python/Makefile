@@ -97,12 +97,10 @@ CONFIGURE_ARGS+= \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
 	OPT="$(TARGET_CFLAGS)"
 
-define Hooks/Configure/Pre/ConfigSiteInstall
+define Build/Prepare
+	$(call Build/Prepare/Default)
 	$(CP) ./files/config.site $(PKG_BUILD_DIR)/config.site
 endef
-
-Hooks/Configure/Pre+=\
-	Hooks/Configure/Pre/ConfigSiteInstall
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/

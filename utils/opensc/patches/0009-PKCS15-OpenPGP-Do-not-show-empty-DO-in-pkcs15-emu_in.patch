@@ -1,8 +1,8 @@
-From 6a4457cde65ef44f05b0689415ae7165b06fb8bf Mon Sep 17 00:00:00 2001
+From 42adc35954e18e24f253f710b16d850d1872bce5 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Wed, 27 Mar 2013 11:38:42 +0700
-Subject: [PATCH 09/18] PKCS15-OpenPGP: Do not show empty DO in pkcs15
+Subject: [PATCH 09/26] PKCS15-OpenPGP: Do not show empty DO in pkcs15
  emu_init.
 
 ---
@@ -10,10 +10,10 @@ Subject: [PATCH 09/18] PKCS15-OpenPGP: Do not show empty DO in pkcs15
  1 file changed, 18 insertions(+)
 
 diff --git a/src/libopensc/pkcs15-openpgp.c b/src/libopensc/pkcs15-openpgp.c
-index 9f239ef..850dd74 100644
+index fea2805..51a2032 100644
 --- a/src/libopensc/pkcs15-openpgp.c
 +++ b/src/libopensc/pkcs15-openpgp.c
-@@ -385,16 +385,34 @@ sc_pkcs15emu_openpgp_add_data(sc_pkcs15_card_t *p15card)
+@@ -381,16 +381,34 @@ sc_pkcs15emu_openpgp_add_data(sc_pkcs15_card_t *p15card)
  		sc_pkcs15_object_t dat_obj;
  		char name[8];
  		char path[9];
@@ -49,5 +49,5 @@ index 9f239ef..850dd74 100644
  		r = sc_pkcs15emu_add_data_object(p15card, &dat_obj, &dat_info);
  	}
 -- 
-1.9.3
+2.1.3
 

@@ -1,8 +1,8 @@
-From e5c94d3f1f7e6a96a98815d6e51190498c357fb6 Mon Sep 17 00:00:00 2001
+From 7823e836e8279c8d77786d8f10ffaa83cf50bf1d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Wed, 10 Apr 2013 18:35:58 +0700
-Subject: [PATCH 13/18] pkcs15-openpgp: Change to sc_put_data instead of
+Subject: [PATCH 13/26] pkcs15-openpgp: Change to sc_put_data instead of
  sc_update_binary when writing certificate.
 
 ---
@@ -27,5 +27,5 @@ index 1455580..be1291e 100755
  
  	case SC_PKCS15_TYPE_DATA_OBJECT:
 -- 
-1.9.3
+2.1.3
 

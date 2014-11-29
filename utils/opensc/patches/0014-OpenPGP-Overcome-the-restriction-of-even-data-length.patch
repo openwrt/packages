@@ -1,8 +1,8 @@
-From df8a78e3c8c9d9d591c0d3fa31db7e010eb2c8c2 Mon Sep 17 00:00:00 2001
+From 3ff1f7234abb4c42273adedbe06d9e7f9f3a5f9d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Thu, 11 Apr 2013 16:18:31 +0700
-Subject: [PATCH 14/18] OpenPGP: Overcome the restriction of even data length
+Subject: [PATCH 14/26] OpenPGP: Overcome the restriction of even data length
  of Gnuk.
 
 When write certificate with odd length to Gnuk, we add zero padding to make it even.
@@ -11,10 +11,10 @@ When write certificate with odd length to Gnuk, we add zero padding to make it e
  1 file changed, 18 insertions(+), 2 deletions(-)
 
 diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index d9db948..a666163 100644
+index 7cea84f..7a77a71 100644
 --- a/src/libopensc/card-openpgp.c
 +++ b/src/libopensc/card-openpgp.c
-@@ -1206,6 +1206,10 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+@@ -1208,6 +1208,10 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
  	sc_apdu_t apdu;
  	u8 *part;
  	size_t plen;
@@ -25,7 +25,7 @@ index d9db948..a666163 100644
  	int r = SC_SUCCESS;
  
  	LOG_FUNC_CALLED(ctx);
-@@ -1236,8 +1240,20 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+@@ -1238,8 +1242,20 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
  			sc_format_apdu(card, &apdu, SC_APDU_CASE_3_SHORT, 0xD6, i, 0);
  		}
  		apdu.flags |= SC_APDU_FLAGS_CHAINING;
@@ -49,5 +49,5 @@ index d9db948..a666163 100644
  		r = sc_transmit_apdu(card, &apdu);
  		LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
 -- 
-1.9.3
+2.1.3
 

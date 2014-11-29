@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=http://download.lighttpd.net/lighttpd/releases-1.4.x
 PKG_MD5SUM:=c7ae774eab4cb7ac85e41b712f4ee9ba
 
 PKG_LICENSE:=BSD-3c
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

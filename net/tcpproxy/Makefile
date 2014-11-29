@@ -21,7 +21,7 @@ PKG_SOURCE_URL:=http://www.spreadspace.org/tcpproxy/releases/
 PKG_MD5SUM:=55126473bcde635f9ee019c6caf19bb7
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 PKG_LICENSE:=GPL-3.0+
-PKG_LICENSE_FILE:=LICENSE
+PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 
 
