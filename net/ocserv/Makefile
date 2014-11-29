@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ocserv
-PKG_VERSION:=0.8.7
+PKG_VERSION:=0.8.8
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL :=ftp://ftp.infradead.org/pub/ocserv/
-PKG_MD5SUM:=79c00132c3366bb60546f256068211eb
+PKG_MD5SUM:=d9b12a3fa976dfda3e4c0238173744e6
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
@@ -37,7 +37,7 @@ define Package/ocserv
   TITLE:=OpenConnect VPN server
   URL:=http://www.infradead.org/ocserv/
   MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
-  DEPENDS:= +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c
+  DEPENDS:= +OCSERV_HTTP_PARSER:libhttp-parser +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c
   USERID:=ocserv=72:ocserv=72
 endef
 
@@ -64,6 +64,10 @@ endif
 
 ifneq ($(CONFIG_OCSERV_PROTOBUF),y)
 CONFIGURE_ARGS += --without-protobuf
+endif
+
+ifneq ($(CONFIG_OCSERV_HTTP_PARSER),y)
+CONFIGURE_ARGS += --without-http-parser
 endif
 
 define Package/ocserv/conffiles
