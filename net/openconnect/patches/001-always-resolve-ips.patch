@@ -1,0 +1,22 @@
+diff --git a/cstp.c b/cstp.c
+index b1235ef..05c3444 100644
+--- a/cstp.c
++++ b/cstp.c
+@@ -591,6 +591,8 @@ static int cstp_reconnect(struct openconnect_info *vpninfo)
+ 	timeout = vpninfo->reconnect_timeout;
+ 	interval = vpninfo->reconnect_interval;
+ 
++	free(vpninfo->peer_addr); 
++	vpninfo->peer_addr = NULL;
+ 	while ((ret = openconnect_make_cstp_connection(vpninfo))) {
+ 		if (timeout <= 0)
+ 			return ret;
+@@ -611,6 +613,8 @@ static int cstp_reconnect(struct openconnect_info *vpninfo)
+ 		interval += vpninfo->reconnect_interval;
+ 		if (interval > RECONNECT_INTERVAL_MAX)
+ 			interval = RECONNECT_INTERVAL_MAX;
++		free(vpninfo->peer_addr); 
++		vpninfo->peer_addr = NULL;
+ 	}
+ 	script_config_tun(vpninfo, "reconnect");
+ 	return 0;
