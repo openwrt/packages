@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nodogsplash
 PKG_FIXUP:=autoreconf
-PKG_VERSION:=0.9_beta9.9.8
+PKG_VERSION:=0.9_beta9.9.9
 PKG_RELEASE:=2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=git://github.com/nodogsplash/nodogsplash.git
-PKG_SOURCE_VERSION:=v0.9_beta9.9.8
+PKG_SOURCE_VERSION:=v0.9_beta9.9.9
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 PKG_LICENSE:=GPL-2.0+
@@ -52,6 +52,8 @@ define Package/nodogsplash/install
 	$(CP) $(PKG_BUILD_DIR)/resources/splash.jpg $(1)/etc/$(PKG_NAME)/htdocs/images/
 endef
 
+define Package/nodogsplash/conffiles
+/etc/nodogsplash/nodogsplash.conf
+endef
 
 $(eval $(call BuildPackage,nodogsplash))
-
