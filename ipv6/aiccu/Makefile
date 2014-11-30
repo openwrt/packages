@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aiccu
 PKG_VERSION:=20070115
-PKG_RELEASE:=11
+PKG_RELEASE:=12
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.sixxs.net/archive/sixxs/aiccu/unix
@@ -47,9 +47,10 @@ define Package/aiccu/conffiles
 endef
 
 define Package/aiccu/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/lib/netifd/proto
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/lib/netifd/proto $(1)/etc/hotplug.d/ntp
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/unix-console/$(PKG_NAME) $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/aiccu.sh $(1)/lib/netifd/proto/aiccu.sh
+	$(INSTALL_DATA) ./files/aiccu.hotplug $(1)/etc/hotplug.d/ntp/10-aiccu
 endef
 
 $(eval $(call BuildPackage,aiccu))
