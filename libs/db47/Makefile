@@ -83,6 +83,7 @@ CONFIGURE_ARGS += \
 	--disable-tcl \
 	--disable-rpc \
 	--enable-compat185 \
+	--enable-smallbuild \
 	--disable-debug \
 	$(if $(CONFIG_PACKAGE_libdb47xx),--enable-cxx,--disable-cxx)
 
