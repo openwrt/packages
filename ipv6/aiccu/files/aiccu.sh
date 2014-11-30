@@ -14,8 +14,8 @@ proto_aiccu_setup() {
 	local iface="$2"
 	local link="aiccu-$cfg"
 
-	local username password protocol server ip6prefix tunnelid requiretls defaultroute nat heartbeat verbose sourcerouting ip6addr
-	json_get_vars username password protocol server ip6prefix tunnelid requiretls defaultroute nat heartbeat verbose sourcerouting ip6addr
+	local username password protocol server ip6prefix tunnelid requiretls defaultroute nat heartbeat verbose sourcerouting ip6addr ntpsynctimeout
+	json_get_vars username password protocol server ip6prefix tunnelid requiretls defaultroute nat heartbeat verbose sourcerouting ip6addr ntpsynctimeout
 
 	[ -z "$username" -o -z "$password" ] && {
 		proto_notify_error "$cfg" "MISSING_USERNAME_OR_PASSWORD"
@@ -27,6 +27,7 @@ proto_aiccu_setup() {
 
 	CFGFILE="/var/etc/${link}.conf"
 	PIDFILE="/var/run/${link}.pid"
+	NTPSTRATUMFILE="/var/run/aiccu_ntp_stratum"
 	mkdir -p /var/run /var/etc
 
 	echo "username $username" > "$CFGFILE"
@@ -43,6 +44,15 @@ proto_aiccu_setup() {
 	echo "daemonize true" >> "$CFGFILE"
 	echo "pidfile $PIDFILE" >> "$CFGFILE"
 
+	# By default, wait at most 90 seconds for NTP sync
+	[ -z "$ntpsynctimeout" ] && ntpsynctimeout=90
+	for i in $(seq 1 $ntpsynctimeout); do
+		[ -f "$NTPSTRATUMFILE" ] && \
+		[ "$(cat $NTPSTRATUMFILE)" -lt 16 ] && \
+		echo "NTP synced, stratum $(cat $NTPSTRATUMFILE)" && break
+		[ "$(( $i % 10 ))" -eq 0 ] && echo "Waiting ${i} secs for NTP sync..."
+		sleep 1
+	done
 
 	aiccu start "$CFGFILE"
 
@@ -99,6 +109,7 @@ proto_aiccu_init_config() {
 	proto_config_add_boolean "nat"
 	proto_config_add_boolean "heartbeat"
 	proto_config_add_boolean "verbose"
+	proto_config_add_int "ntpsynctimeout"
 }
 
 [ -n "$INCLUDE_ONLY" ] || {
