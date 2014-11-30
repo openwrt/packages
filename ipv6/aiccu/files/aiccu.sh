@@ -31,17 +31,18 @@ proto_aiccu_setup() {
 
 	echo "username $username" > "$CFGFILE"
 	echo "password $password" >> "$CFGFILE"
-	echo "ipv6_interface $link"   >> "$CFGFILE"
+	echo "ipv6_interface $link" >> "$CFGFILE"
 	[ -n "$server" ] && echo "server $server" >> "$CFGFILE"
 	[ -n "$protocol" ] && echo "protocol $protocol" >> "$CFGFILE"
-	[ -n "$tunnelid" ] && echo "tunnel_id $tunnelid"	  >> "$CFGFILE"
-	[ -n "$requiretls" ] && echo "requiretls $requiretls"	   >> "$CFGFILE"
-	[ "$nat" == 1 ] && echo "behindnat true"     >> "$CFGFILE"
-	[ "$heartbeat"	== 1 ] && echo "makebeats true" >> "$CFGFILE"
+	[ -n "$tunnelid" ] && echo "tunnel_id $tunnelid" >> "$CFGFILE"
+	[ -n "$requiretls" ] && echo "requiretls $requiretls" >> "$CFGFILE"
+	[ "$nat" == 1 ] && echo "behindnat true" >> "$CFGFILE"
+	[ "$heartbeat" == 1 ] && echo "makebeats true" >> "$CFGFILE"
 	[ "$verbose" == 1 ] && echo "verbose true" >> "$CFGFILE"
 	echo "defaultroute false" >> "$CFGFILE"
-	echo "daemonize true"	  >> "$CFGFILE"
-	echo "pidfile $PIDFILE"   >> "$CFGFILE"
+	echo "daemonize true" >> "$CFGFILE"
+	echo "pidfile $PIDFILE" >> "$CFGFILE"
+
 
 	aiccu start "$CFGFILE"
 
