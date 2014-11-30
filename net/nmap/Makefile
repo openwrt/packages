@@ -87,7 +87,8 @@ CONFIGURE_ARGS += \
 	--with-libdnet=included \
 	--with-libpcre=included \
 	--with-libpcap="$(STAGING_DIR)/usr" \
-	--without-liblua
+	--without-liblua \
+	--without-zenmap
 
 CONFIGURE_VARS += CXXFLAGS="$$$$CXXFLAGS -fno-builtin"
 
