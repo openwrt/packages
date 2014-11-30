@@ -1,0 +1,161 @@
+diff --git a/cstp.c b/cstp.c
+index b1235ef..f955b82 100644
+--- a/cstp.c
++++ b/cstp.c
+@@ -570,7 +570,10 @@ int openconnect_make_cstp_connection(struct openconnect_info *vpninfo)
+ 	return ret;
+ }
+ 
+-static int cstp_reconnect(struct openconnect_info *vpninfo)
++/* When dead peer is set, this function will re-attempt resolving
++ * the peer in case its IP changed.
++ */
++static int cstp_reconnect(struct openconnect_info *vpninfo, unsigned dead_peer)
+ {
+ 	int ret;
+ 	int timeout;
+@@ -591,6 +594,16 @@ static int cstp_reconnect(struct openconnect_info *vpninfo)
+ 	timeout = vpninfo->reconnect_timeout;
+ 	interval = vpninfo->reconnect_interval;
+ 
++	/* handle cases with dynamic DNS by forcing a new resolve.
++	 * The original IP is saved to retry as fallback if resolving
++	 * fails.
++	 */
++	if (dead_peer && vpninfo->first_peer_addr == NULL) {
++		vpninfo->first_peer_addr = vpninfo->peer_addr;
++		vpninfo->first_peer_addrlen = vpninfo->peer_addrlen;
++		vpninfo->peer_addr = NULL;
++	}
++
+ 	while ((ret = openconnect_make_cstp_connection(vpninfo))) {
+ 		if (timeout <= 0)
+ 			return ret;
+@@ -611,6 +624,11 @@ static int cstp_reconnect(struct openconnect_info *vpninfo)
+ 		interval += vpninfo->reconnect_interval;
+ 		if (interval > RECONNECT_INTERVAL_MAX)
+ 			interval = RECONNECT_INTERVAL_MAX;
++
++		if (dead_peer && vpninfo->first_peer_addr != NULL) {
++			free(vpninfo->peer_addr);
++			vpninfo->peer_addr = NULL;
++		}
+ 	}
+ 	script_config_tun(vpninfo, "reconnect");
+ 	return 0;
+@@ -903,8 +921,15 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout)
+ 		/* Not that this will ever happen; we don't even process
+ 		   the setting when we're asked for it. */
+ 		vpn_progress(vpninfo, PRG_INFO, _("CSTP rekey due\n"));
+-		if (vpninfo->ssl_times.rekey_method == REKEY_TUNNEL)
+-			goto do_reconnect;
++		if (vpninfo->ssl_times.rekey_method == REKEY_TUNNEL) {
++			ret = cstp_reconnect(vpninfo, 0);
++			if (ret) {
++				vpn_progress(vpninfo, PRG_ERR, _("Reconnect failed\n"));
++				vpninfo->quit_reason = "CSTP reconnect failed";
++				return ret;
++			}
++			goto do_dtls_reconnect;
++		}
+ 		else if (vpninfo->ssl_times.rekey_method == REKEY_SSL) {
+ 			ret = cstp_handshake(vpninfo, 0);
+ 			if (ret) {
+@@ -922,7 +947,7 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout)
+ 		vpn_progress(vpninfo, PRG_ERR,
+ 			     _("CSTP Dead Peer Detection detected dead peer!\n"));
+ 	do_reconnect:
+-		ret = cstp_reconnect(vpninfo);
++		ret = cstp_reconnect(vpninfo, 1);
+ 		if (ret) {
+ 			vpn_progress(vpninfo, PRG_ERR, _("Reconnect failed\n"));
+ 			vpninfo->quit_reason = "CSTP reconnect failed";
+diff --git a/library.c b/library.c
+index f5d3dc9..7c8d5ec 100644
+--- a/library.c
++++ b/library.c
+@@ -178,6 +178,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
+ 		CloseHandle(vpninfo->dtls_event);
+ #endif
+ 	free(vpninfo->peer_addr);
++	free(vpninfo->first_peer_addr);
+ 	free_optlist(vpninfo->csd_env);
+ 	free_optlist(vpninfo->script_env);
+ 	free_optlist(vpninfo->cookies);
+@@ -291,6 +292,8 @@ int openconnect_set_hostname(struct openconnect_info *vpninfo,
+ 	vpninfo->unique_hostname = NULL;
+ 	free(vpninfo->peer_addr);
+ 	vpninfo->peer_addr = NULL;
++	free(vpninfo->first_peer_addr);
++	vpninfo->first_peer_addr = NULL;
+ 
+ 	return 0;
+ }
+diff --git a/openconnect-internal.h b/openconnect-internal.h
+index 1bc79e5..cafbb3c 100644
+--- a/openconnect-internal.h
++++ b/openconnect-internal.h
+@@ -424,6 +424,9 @@ struct openconnect_info {
+ 	struct sockaddr *peer_addr;
+ 	struct sockaddr *dtls_addr;
+ 
++	struct sockaddr *first_peer_addr;
++	socklen_t first_peer_addrlen;
++
+ 	int dtls_local_port;
+ 
+ 	int deflate;
+diff --git a/ssl.c b/ssl.c
+index b50652d..e341871 100644
+--- a/ssl.c
++++ b/ssl.c
+@@ -110,6 +110,7 @@ int connect_https_socket(struct openconnect_info *vpninfo)
+ {
+ 	int ssl_sock = -1;
+ 	int err;
++	unsigned retry_old_ip = 0;
+ 
+ 	if (!vpninfo->port)
+ 		vpninfo->port = 443;
+@@ -230,6 +231,8 @@ int connect_https_socket(struct openconnect_info *vpninfo)
+ 			if (hints.ai_flags & AI_NUMERICHOST)
+ 				free(hostname);
+ 			ssl_sock = -EINVAL;
++			if (vpninfo->first_peer_addr != NULL)
++				retry_old_ip = 1;
+ 			goto out;
+ 		}
+ 		if (hints.ai_flags & AI_NUMERICHOST)
+@@ -291,7 +294,10 @@ int connect_https_socket(struct openconnect_info *vpninfo)
+ 		}
+ 		freeaddrinfo(result);
+ 
++
+ 		if (ssl_sock < 0) {
++			if (vpninfo->first_peer_addr != NULL)
++				retry_old_ip = 1;
+ 			vpn_progress(vpninfo, PRG_ERR,
+ 				     _("Failed to connect to host %s\n"),
+ 				     vpninfo->proxy?:vpninfo->hostname);
+@@ -314,6 +320,21 @@ int connect_https_socket(struct openconnect_info *vpninfo)
+ 		}
+ 	}
+  out:
++	if (retry_old_ip != 0 && vpninfo->first_peer_addr != NULL) {
++		vpn_progress(vpninfo, PRG_ERR,
++			     _("Retrying connection to host %s with original IP\n"),
++				     vpninfo->proxy?:vpninfo->hostname);
++
++		retry_old_ip = 0;
++		if (vpninfo->first_peer_addrlen > vpninfo->peer_addrlen || vpninfo->peer_addr == NULL)
++			realloc_inplace(vpninfo->peer_addr, vpninfo->first_peer_addrlen);
++
++		if (vpninfo->peer_addr != NULL) {
++			memcpy(vpninfo->peer_addr, vpninfo->first_peer_addr, vpninfo->first_peer_addrlen);
++			goto reconnect;
++		}
++	}
++
+ 	/* If proxy processing returned -EAGAIN to reconnect before attempting
+ 	   further auth, and we failed to reconnect, we have to clean up here. */
+ 	cleanup_proxy_auth(vpninfo);

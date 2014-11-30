@@ -1,0 +1,56 @@
+From ef48fe731f8b43c58b9580a048d793a69bd5a903 Mon Sep 17 00:00:00 2001
+From: Nikos Mavrogiannopoulos <nmav@gnutls.org>
+Date: Sat, 29 Nov 2014 19:44:03 +0100
+Subject: [PATCH] use define _XOPEN_SOURCE to get crypt()
+
+---
+ configure.ac     | 3 ++-
+ src/auth/plain.c | 3 +++
+ src/ocpasswd.c   | 3 +++
+ 3 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index 8bb0044..622929d 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -190,7 +190,8 @@ fi
+ 
+ gl_INIT
+ 
+-AC_LIB_HAVE_LINKFLAGS(crypt,, [#include <unistd.h>], [crypt(0,0);])
++AC_LIB_HAVE_LINKFLAGS(crypt,, [#define _XOPEN_SOURCE
++#include <unistd.h>], [crypt(0,0);])
+ 
+ AC_ARG_WITH(utmp,
+   AS_HELP_STRING([--without-utmp], [do not use libutil for utmp support]),
+diff --git a/src/auth/plain.c b/src/auth/plain.c
+index f429ef4..0e13241 100644
+--- a/src/auth/plain.c
++++ b/src/auth/plain.c
+@@ -22,6 +22,9 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <syslog.h>
++#ifndef _XOPEN_SOURCE
++# define _XOPEN_SOURCE
++#endif
+ #include <unistd.h>
+ #include <vpn.h>
+ #include <c-ctype.h>
+diff --git a/src/ocpasswd.c b/src/ocpasswd.c
+index 8b33d76..aced94a 100644
+--- a/src/ocpasswd.c
++++ b/src/ocpasswd.c
+@@ -23,6 +23,9 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <stdint.h>
++#ifndef _XOPEN_SOURCE
++# define _XOPEN_SOURCE
++#endif
+ #include <unistd.h>
+ #include <gnutls/gnutls.h>
+ #include <gnutls/crypto.h>	/* for random */
+-- 
+2.1.3
+

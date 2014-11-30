@@ -1,0 +1,48 @@
+# CoovaChilli avanced configuration
+
+menu "Configuration"
+	depends on PACKAGE_coova-chilli
+
+config COOVACHILLI_REDIR
+	bool "Enable support for redir server. Required for uamregex"
+	default n
+
+config COOVACHILLI_MINIPORTAL
+	bool "Enable support Coova miniportal"
+	default n
+
+config COOVACHILLI_USERAGENT
+	bool "Enable recording user-agent"
+	default n
+
+config COOVACHILLI_DNSLOG
+	bool "Enable support to log DNS name queries"
+	default n
+
+config COOVACHILLI_UAMDOMAINFILE
+	bool "Enable loading of mass uamdomains from file"
+	default n
+
+config COOVACHILLI_LARGELIMITS
+	bool "Enable larger limits for use with non-embedded systems"
+	default n
+
+choice
+	prompt "SSL library"
+	default COOVACHILLI_NOSSL
+
+config COOVACHILLI_NOSSL
+	bool "No SSL support"
+
+config COOVACHILLI_MATRIXSSL
+	bool "MatrixSSL"
+
+config COOVACHILLI_CYASSL
+	bool "CyaSSL"
+
+config COOVACHILLI_OPENSSL
+	bool "OpenSSL"
+
+endchoice
+
+endmenu
