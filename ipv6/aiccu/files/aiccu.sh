@@ -89,8 +89,12 @@ proto_aiccu_teardown() {
 	local cfg="$1"
 	local link="aiccu-$cfg"
 	CFGFILE="/var/etc/${link}.conf"
-
-	aiccu stop "$CFGFILE"
+	PIDFILE="/var/run/${link}.pid"
+	[ -f "$CFGFILE" -a -f "$PIDFILE" ] && {
+		local pid="$(cat "$PIDFILE")"
+		[ -d /proc/$pid -a $(cat /proc/$pid/comm) = "aiccu" ] && \
+		aiccu stop "$CFGFILE"
+	}
 }
 
 proto_aiccu_init_config() {
