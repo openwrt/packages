@@ -36,6 +36,7 @@ define Package/sstp-client/conffiles
 	/etc/ppp/chap-secrets
 	/etc/ppp/peers/peer-sstp-example-nopty.txt
 	/etc/ppp/peers/peer-sstp-example.txt
+	/lib/netifd/proto/sstp.sh
 endef
 
 define Package/sstp-client/install
