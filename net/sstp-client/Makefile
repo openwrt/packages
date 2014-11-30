@@ -47,6 +47,7 @@ define Package/sstp-client/install
 	$(CP) $(PKG_BUILD_DIR)/src/pppd-plugin/.libs/*.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc/ppp
 	$(INSTALL_DIR) $(1)/etc/peers
+	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(CP) ./files/* $(1)
 endef
 
