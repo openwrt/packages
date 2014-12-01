@@ -21,7 +21,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/sstp-client
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS=+libevent2 +libopenssl +ppp
+  DEPENDS=+libevent2 +libopenssl +ppp +resolveip
   TITLE:=SSTP is Microsofts Remote Access Solution for PPP over SSL
   URL:=http://sstp-client.sourceforge.net/
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
@@ -46,6 +46,7 @@ define Package/sstp-client/install
 	$(CP) $(PKG_BUILD_DIR)/src/pppd-plugin/.libs/*.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc/ppp
 	$(INSTALL_DIR) $(1)/etc/peers
+	$(CP) ./files/* $(1)
 endef
 
 $(eval $(call BuildPackage,sstp-client))
