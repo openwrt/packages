@@ -17,7 +17,7 @@ PKG_MD5SUM:=dcceab3efe3dae4c18fa549dbd198e71
 
 PKG_MAINTAINER:=Martijn Zilverschoon <martijn@friedzombie.com>
 
-PKG_LICENSE:=LGPL-2.1
+PKG_LICENSE:=GPL-2.1
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
@@ -35,9 +35,7 @@ define Package/libartnet/description
 endef
 
 define Build/Configure
-	$(call Build/Configure/Default, \
-		--prefix=/usr \
-	)
+	$(call Build/Configure/Default)
 endef
 
 define Build/Compile
