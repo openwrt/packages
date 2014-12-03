@@ -136,7 +136,7 @@ define Build/Compile
 		ARCH="$(LINUX_KARCH)" \
 		SUBDIRS="$(PKG_BUILD_DIR)/datapath/linux" \
 		PATH="$(TARGET_PATH)" \
-		KCFLAGS="$(KCFLAGS)" \
+		EXTRA_CFLAGS="$(KCFLAGS)" \
 		KCC="$(KERNEL_CC)"
 endef
 
