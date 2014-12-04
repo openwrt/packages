@@ -72,6 +72,7 @@ endef
 
 define Build/Configure
 	$(call Build/Configure/Default, \
+	$(if $(CONFIG_COOVACHILLI_PROXY),--enable,--disable)-chilliproxy \
 	$(if $(CONFIG_COOVACHILLI_REDIR),--enable,--disable)-chilliredir \
 	$(if $(CONFIG_COOVACHILLI_DNSLOG),--enable,--disable)-dnslog \
 	$(if $(CONFIG_COOVACHILLI_MINIPORTAL),--enable,--disable)-miniportal \
