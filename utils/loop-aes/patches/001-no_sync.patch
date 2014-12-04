@@ -1,0 +1,13 @@
+--- a/Makefile
++++ b/Makefile
+@@ -208,10 +208,8 @@ endif
+ ifeq ($(EXTRA_CIPHERS),y)
+ 	ln -s tmp-d-kbuild/loop_twofish.ko tmp-d-kbuild/loop_serpent.ko tmp-d-kbuild/loop_blowfish.ko .
+ endif
+-	sync
+ else
+ 	cd $(LS) && make SUBDIRS=$(TD) modules
+-	sync
+ endif
+ 
+ # 2.6 kernels older than 2.6.17 do not run depmod in "modules_install" stage,
