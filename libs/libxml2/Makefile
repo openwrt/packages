@@ -42,7 +42,6 @@ define Package/libxml2/description
 endef
 
 TARGET_CFLAGS += $(FPIC)
-TARGET_LDFLAGS += -lz
 
 CONFIGURE_ARGS += \
 	--enable-shared \
@@ -73,7 +72,7 @@ CONFIGURE_ARGS += \
 	--with-xinclude \
 	--with-xpath \
 	--with-xptr \
-	--with-zlib \
+	--with-zlib=$(STAGING_DIR)/usr \
 	--without-lzma
 
 HOST_CONFIGURE_ARGS += \
