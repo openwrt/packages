@@ -11,6 +11,8 @@ config interface 'MYVPN'
         option username 'test'
         option password 'secret'
         option serverhash 'AE7FF6A0426F0A0CD0A02EB9EC3C5066FAEB0B25'
+        option token_mode 'rsa' # when built with stoken support
+        option token_secret 'secret' # when built with stoken support
 
 The additional files are also used:
 /etc/openconnect/user-cert-vpn-MYVPN.pem: The user certificate
