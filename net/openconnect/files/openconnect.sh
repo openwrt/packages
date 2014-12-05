@@ -38,10 +38,16 @@ proto_openconnect_setup() {
 
 	cmdline="$server$port -i vpn-$config --non-inter --syslog --script /lib/netifd/vpnc-script"
 
-	[ -f /etc/openconnect/ca-vpn-$config.pem ] && append cmdline "--no-system-trust --cafile /etc/openconnect/ca-vpn-$config.pem"
 	[ -f /etc/openconnect/user-cert-vpn-$config.pem ] && append cmdline "-c /etc/openconnect/user-cert-vpn-$config.pem"
 	[ -f /etc/openconnect/user-key-vpn-$config.pem ] && append cmdline "--sslkey /etc/openconnect/user-key-vpn-$config.pem"
-	[ -n "$serverhash" ] && append cmdline "--no-system-trust --servercert=$serverhash"
+	if test -f /etc/openconnect/ca-vpn-$config.pem;then
+		append cmdline "--cafile /etc/openconnect/ca-vpn-$config.pem"
+		append cmdline "--no-system-trust"
+	fi
+	if test -n "$serverhash";then
+		append cmdline " --servercert=$serverhash"
+		append cmdline "--no-system-trust"
+	fi
 	[ -n "$authgroup" ] && append cmdline "--authgroup $authgroup"
 	[ -n "$username" ] && append cmdline "-u $username"
 	[ -n "$password" ] && {
