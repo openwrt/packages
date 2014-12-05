@@ -1,0 +1,9 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009 OpenWrt.org
+
+START=19
+
+start() {
+	grep -q btrfs /proc/modules && /usr/bin/btrfsctl -a
+}
+
