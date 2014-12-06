@@ -29,7 +29,7 @@ define Package/btrfs-progs
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Filesystem
-  DEPENDS:=+attr +libuuid +zlib +libext2fs +libblkid +liblzo +libpthread
+  DEPENDS:=+libattr +libuuid +zlib +libext2fs +libblkid +liblzo +libpthread
   TITLE:=Btrfs filesystems utilities
   URL:=http://btrfs.wiki.kernel.org/
 endef
