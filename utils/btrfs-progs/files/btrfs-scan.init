@@ -4,6 +4,6 @@
 START=19
 
 start() {
-	grep -q btrfs /proc/modules && /usr/bin/btrfsctl -a
+	grep -q btrfs /proc/modules && /usr/bin/btrfs device scan
 }
 
