@@ -16,7 +16,7 @@ upgrade() {
 
 		echo "myhostname = $(uci get system.@system[0].hostname)" >> "$config_directory"/main.cf.default
 		echo "mydomain = $(uci get system.@system[0].hostname|sed -e "s/[^\.]*\.\(.*\)/\1/")" >> "$config_directory"/main.cf.default
-		for net in $(uci show network|grep ipaddr|sed -e "s/network\.\([^\.]*\).*/\1/"); do eval "$(ipcalc.sh $(uci get network.$net.ipaddr) $(uci get network.$net.netmask))"; echo "$IP/$PREFIX"; done | xargs echo "mynetworks =" >> "$config_directory"/main.cf.default
+		ifconfig | grep "inet addr" | sed -e "s/.*inet addr:\([0-9.]*\).*Mask:/\1 /" | while read IP NETMASK; do eval "$(ipcalc.sh $IP $NETMASK)"; echo "$NETWORK/$PREFIX"; done | xargs echo "mynetworks =" >> "$config_directory"/main.cf.default
 
 		grep -qc "^sendmail_path" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^sendmail_path =" "$config_directory"/main.cf.default)"
 		grep -qc "^newaliases_path" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^newaliases_path =" "$config_directory"/main.cf.default)"
