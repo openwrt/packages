@@ -1,20 +1,39 @@
+Version 2.1.0-3
+Date	2014-12-07
+
+- removed special handling for dynamic_dns_helper.sh and url_escape.sed in Makefile/postinst
+- minor fixes in logging
+- allow retry_count of "0" to run infinite retrys on error
+	-- https://dev.openwrt.org/ticket/18382
+- changed naming of .dat and .err file to have one per section, not one per process
+- defer hotplug helper from 25-ddns to 95-ddns (according initscript START=95) 
+	-- https://github.com/openwrt/packages/issues/568 (#568)
+- fix commandline for busybox wget
+	-- https://dev.openwrt.org/ticket/18411
+	-- https://dev.openwrt.org/ticket/18437
+	-- https://github.com/openwrt/packages/issues/605 (#605)
+- remove checking answer from ddns provider because there are to many different. 
+Many providers did not follow API from dyndns.com 
+
+--------------------------------------------------------------------------------
 Version 2.1.0-2
 Date	2014-11-15
 
 - moved /usr/lib/ddns/dynamic_dns_lucihelper.sh from luci-app-ddns into this package
-	(Github openwrt/luci issue 251)
-	(OpenWrt Trac tickets 18326 18347)
+	-- https://github.com/openwrt/luci/issue/251
+	-- https://dev.openwrt.org/ticket/18326
+	-- https://dev.openwrt.org/ticket/18347
 - fix: dynamic_dns_update.sh did not loop
-	(OpenWrt Trac ticket 18336)
+	-- https://dev.openwrt.org/ticket/18336
 - add provider cloudflare.com IPv4 and IPv6 (Thanks to Paul for support and testing)
-	(OpenWrt Trac ticket 12500)
+	-- https://dev.openwrt.org/ticket/12500
 - modified detection, if dynamic_dns_fuctions are used by dynamic_dns_lucihelper.sh
 - redirect stdout of wget,curl,host,nslookup,nc etc to /tmp/ddns_$$.dat and *.err instead of variables
 - extended error detection in get_local_ip function
 - modified verify of option ip_script to allow parameters, when calling
 - add provider selfhost.de IPv4
 - add provider no-ip.pl (nothing to do with no-ip.com)
-	(Github openwrt/packages issue #542)
+	-- https://github.com/openwrt/packages/issues/542 (#542)
 	IPv4 (tested) and also added for
 	IPv6 (NOT tested) because client IP is autodetected be provider
 - add getlocalip_sample.sh as sample script for usage of

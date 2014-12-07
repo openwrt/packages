@@ -44,6 +44,8 @@ VERBOSE_MODE=${2:-1}	# default mode is log to console
 # set file names
 PIDFILE="$RUNDIR/$SECTION_ID.pid"	# Process ID file
 UPDFILE="$RUNDIR/$SECTION_ID.update"	# last update successful send (system uptime)
+DATFILE="$RUNDIR/$SECTION_ID.dat"	# save stdout data of WGet and other extern programs called
+ERRFILE="$RUNDIR/$SECTION_ID.err"	# save stderr output of WGet and other extern programs called
 LOGFILE="$LOGDIR/$SECTION_ID.log"	# log file
 
 # VERBOSE_MODE > 1 delete logfile if exist to create an empty one
@@ -98,14 +100,14 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 #
 # retry_interval	if error was detected retry in
 # retry_unit		'days' 'hours' 'minutes' 'seconds'
-# retry_count 		#NEW# number of retries before scripts stops
+# retry_count 		number of retries before scripts stops
 #
-# use_ipv6		#NEW# detecting/sending IPv6 address
-# force_ipversion	#NEW# force usage of IPv4 or IPv6 for the whole detection and update communication
-# dns_server		#NEW# using a non default dns server to get Registered IP from Internet
-# force_dnstcp		#NEW# force communication with DNS server via TCP instead of default UDP
-# proxy			#NEW# using a proxy for communication !!! ALSO used to detect local IP via web => return proxy's IP !!!
-# use_logfile		#NEW# self-explanatory "/var/log/ddns/$SECTION_ID.log"
+# use_ipv6		detecting/sending IPv6 address
+# force_ipversion	force usage of IPv4 or IPv6 for the whole detection and update communication
+# dns_server		using a non default dns server to get Registered IP from Internet
+# force_dnstcp		force communication with DNS server via TCP instead of default UDP
+# proxy			using a proxy for communication !!! ALSO used to detect local IP via web => return proxy's IP !!!
+# use_logfile		self-explanatory "/var/log/ddns/$SECTION_ID.log"
 #
 # some functionality needs
 # - GNU Wget or cURL installed for sending updates to DDNS service
@@ -138,12 +140,12 @@ esac
 # set defaults if not defined
 [ -z "$enabled" ]	  && enabled=0
 [ -z "$retry_count" ]	  && retry_count=5
-[ -z "$use_syslog" ]      && use_syslog=0	# not use syslog
+[ -z "$use_syslog" ]      && use_syslog=2	# syslog "Notice"
 [ -z "$use_https" ]       && use_https=0	# not use https
-[ -z "$use_logfile" ]     && use_logfile=1	# NEW - use logfile by default
-[ -z "$use_ipv6" ]	  && use_ipv6=0		# NEW - use IPv4 by default
-[ -z "$force_ipversion" ] && force_ipversion=0	# NEW - default let system decide
-[ -z "$force_dnstcp" ]	  && force_dnstcp=0	# NEW - default UDP
+[ -z "$use_logfile" ]     && use_logfile=1	# use logfile by default
+[ -z "$use_ipv6" ]	  && use_ipv6=0		# use IPv4 by default
+[ -z "$force_ipversion" ] && force_ipversion=0	# default let system decide
+[ -z "$force_dnstcp" ]	  && force_dnstcp=0	# default UDP
 [ -z "$ip_source" ]	  && ip_source="network"
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 0 ] && ip_network="wan"  # IPv4: default wan
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 1 ] && ip_network="wan6" # IPv6: default wan6
@@ -185,15 +187,8 @@ write_log 7 "retry counter : $retry_count times"
 [ -n "$update_script" -a ! -f "$update_script" ] && write_log 14 "Custom update_script not found!"
 
 #kill old process if it exists & set new pid file
-if [ -d $RUNDIR ]; then
-	#if process for section is already running, stop it
-	stop_section_processes "$SECTION_ID"
-	[ $? -gt 0 ] && write_log 7 "Send 'SIGTERM' to old process" || write_log 7 "No old process"
-else
-	#make dir since it doesn't exist
-	mkdir -p $RUNDIR
-	write_log 7 "No old process"
-fi
+stop_section_processes "$SECTION_ID"
+[ $? -gt 0 ] && write_log 7 "Send 'SIGTERM' to old process" || write_log 7 "No old process"
 echo $$ > $PIDFILE
 
 # determine when the last update was
@@ -307,7 +302,8 @@ while : ; do
 	if [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
 		if [ $VERBOSE_MODE -le 1 ]; then	# VERBOSE_MODE <=1 then retry
 			ERR_UPDATE=$(( $ERR_UPDATE + 1 ))
-			[ $ERR_UPDATE -gt $retry_count ] && write_log 14 "Updating IP at DDNS provider failed after $retry_count retries"
+			[ $retry_count -gt 0 -a $ERR_UPDATE -gt $retry_count ] && \
+				write_log 14 "Updating IP at DDNS provider failed after $retry_count retries"
 			write_log 4 "Updating IP at DDNS provider failed - starting retry $ERR_UPDATE/$retry_count"
 			continue # loop to beginning
 		else

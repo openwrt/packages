@@ -10,6 +10,11 @@
 #
 # the script is executed (not parsed) inside get_local_ip() function
 # of /usr/lib/ddns/dynamic_dns_functions.sh
+# 
+# useful when this box is the only DDNS client in the network
+# IP adresses of "internal" boxes could be detected with this script
+# so no need to install ddns client on every "internal" box
+# On IPv6 every internal box normally has it's own external IP
 #
 # This script should
 # 	- return the IP address via stdout	echo -n "...."	!!! without line feed

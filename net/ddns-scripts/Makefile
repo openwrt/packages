@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-2.0
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -19,8 +19,7 @@ define Package/ddns-scripts
 endef
 
 define Package/ddns-scripts/description
-	A highly configurable set of scripts for doing dynamic dns updates.
-	NEW in this version:
+A highly configurable set of scripts for doing dynamic dns updates.
 	- IPv6 support
 	- force communication to IPv4 or IPv6 only
 	- DNS server support
@@ -29,6 +28,7 @@ define Package/ddns-scripts/description
 	- Proxy server support
 	- log file support
 	- support to run once
+Version: $(PKG_VERSION)-$(PKG_RELEASE)
 endef
 
 define Build/Prepare
@@ -63,14 +63,6 @@ define Package/ddns-scripts/postinst
 	#!/bin/sh
 	# if run within buildroot exit
 	[ -n "$${IPKG_INSTROOT}" ] && exit 0
-
-	# remove old sed script file
-	[ -f /usr/lib/ddns/url_escape.sed ] && rm -f /usr/lib/ddns/url_escape.sed
-
-	# luci updates are not in sync with ddns-script updates !!!
-	# if old luci-app-ddns then errors during install because exist from differnt package
-	# copy dynamic_dns_helper.tmp.sh -> dynamic_dns_helper.sh
-	cp -f /usr/lib/ddns/dynamic_dns_lucihelper.tmp.sh /usr/lib/ddns/dynamic_dns_lucihelper.sh
 
 	# add new section "ddns" "global" if not exists
 	uci -q get ddns.global > /dev/null || uci -q set ddns.global='ddns'
