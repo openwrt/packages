@@ -48,7 +48,7 @@ define Build/Prepare
 endef
 
 define Package/fdm/config
-	source "$(SOURCE)/Config.in
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/fdm/conffiles
