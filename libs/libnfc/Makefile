@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2012 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,6 +10,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=libnfc
 PKG_VERSION:=1.7.1
 PKG_RELEASE:=1
+PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://bintray.com/artifact/download/nfc-tools/sources/
@@ -18,15 +20,11 @@ PKG_MD5SUM:=a3bea901778ac324e802b8ffb86820ff
 PKG_LICENSE:=LGPL-2.1
 PKG_MAINTAINER:=Sebastian Wendel <packages@sourceindex.de>
 
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libnfc/Default
 	TITLE:=A open source library for Near Field Communication (NFC)
 	URL:=http://nfc-tools.org/
-	MAINTAINER:=Sebastian Wendel <packages@sourceindex.de>
 endef
 
 define Package/libnfc
