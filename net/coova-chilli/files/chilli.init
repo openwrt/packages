@@ -1,0 +1,75 @@
+#!/bin/sh /etc/rc.common
+
+START=30
+STOP=90
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/chilli
+NAME=chilli
+DESC=chilli
+
+common_checks() {
+
+    test -f $DAEMON || exit 0
+
+    . /etc/chilli/functions
+
+    MULTI=$(ls /etc/chilli/*/chilli.conf 2>/dev/null)
+    [ -z "$DHCPIF" ] && [ -n "$MULTI" ] && {
+    for c in $MULTI;
+    do
+        echo "Found configuration $c"
+        DHCPIF=$(basename $(echo $c|sed 's#/chilli.conf##'))
+        export DHCPIF
+        echo "Running DHCPIF=$DHCPIF $0 $*"
+        sh $0 $*
+    done
+    exit
+    }
+
+    if [ -n "$DHCPIF" ]; then
+    CONFIG=/etc/chilli/$DHCPIF/chilli.conf
+    else
+        CONFIG=/etc/chilli.conf
+    fi
+
+    [ -f $CONFIG ] || {
+        echo "$CONFIG Not found"
+        exit 0
+    }
+
+}
+start() {
+
+    common_checks
+
+    echo -n "Starting $DESC: "
+    /sbin/modprobe tun >/dev/null 2>&1
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+
+    writeconfig
+    radiusconfig
+
+    test ${HS_ADMINTERVAL:-0} -gt 0 && {
+            (crontab -l 2>&- | grep -v $0
+                echo "*/$HS_ADMINTERVAL * * * * $0 radconfig"
+                ) | crontab - 2>&-
+        }
+
+    ifconfig $HS_LANIF 0.0.0.0
+
+    $DAEMON -c $CONFIG --pidfile /var/run/$NAME.$HS_LANIF.pid &
+
+}
+
+stop() {
+
+    common_checks
+
+    crontab -l 2>&- | grep -v $0 | crontab -
+    ls /var/run/$NAME*.pid 2>/dev/null && {
+	kill $(cat /var/run/$NAME*.pid)
+	rm -f /var/run/$NAME*
+    }
+}
+
