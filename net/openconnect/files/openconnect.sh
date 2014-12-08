@@ -17,7 +17,7 @@ proto_openconnect_init_config() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port username serverhash authgroup password vgroup
+	json_get_vars server port username serverhash authgroup password vgroup token_mode token_secret
 
 	grep -q tun /proc/modules || insmod tun
 
@@ -56,6 +56,9 @@ proto_openconnect_setup() {
 		echo "$password" > "$pwfile"
 		append cmdline "--passwd-on-stdin"
 	}
+
+	[ -n "$token_mode" ] && append cmdline "--token-mode=$token_mode"
+	[ -n "$token_secret" ] && append cmdline "--token-secret=$token_secret"
 
 	proto_export INTERFACE="$config"
 	logger -t openconnect "executing 'openconnect $cmdline'"
