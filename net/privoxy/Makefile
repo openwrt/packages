@@ -49,7 +49,8 @@ endef
 CONFIGURE_ARGS += \
 	--sysconfdir=/etc/privoxy \
 
-# MAKE_FLAGS:=
+# needed otherwise errors during compile
+MAKE_FLAGS:=
 
 define Build/Install
 	$(call Build/Install/Default,)
