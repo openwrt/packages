@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.18.16
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.18/
@@ -63,7 +63,6 @@ $(call Package/mpd/Default/description)
 endef
 
 define Package/mpd-full/conffiles
-/etc/avahi/services/mpd.service
 /etc/mpd.conf
 endef
 
@@ -83,6 +82,23 @@ endef
 
 define Package/mpd-mini/conffiles
 /etc/mpd.conf
+endef
+
+define Package/mpd-avahi-service
+$(call Package/mpd/Default)
+  TITLE+= (Avahi service)
+  DEPENDS+=+avahi-daemon
+endef
+
+define Package/mpd-avahi-service/description
+$(call Package/mpd/Default/description)
+ .
+ This package contains the service definition for announcing the
+ Music Player Daemon service via mDNS/DNS-SD.
+endef
+
+define Package/mpd-avahi-service/conffiles
+/etc/avahi/services/mpd.service
 endef
 
 CONFIGURE_ARGS += \
@@ -198,13 +214,17 @@ endef
 
 define Package/mpd-full/install
 $(call Package/mpd/install,$1)
-	$(INSTALL_DIR) $(1)/etc/avahi/services
-	$(INSTALL_DATA) ./files/mpd.service $(1)/etc/avahi/services/
 endef
 
 define Package/mpd-mini/install
 $(call Package/mpd/install,$1)
 endef
 
+define Package/mpd-avahi-service/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_DATA) ./files/mpd.service $(1)/etc/avahi/services/
+endef
+
 $(eval $(call BuildPackage,mpd-full))
 $(eval $(call BuildPackage,mpd-mini))
+$(eval $(call BuildPackage,mpd-avahi-service))
