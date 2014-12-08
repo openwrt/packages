@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2013 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -17,6 +17,8 @@ PKG_SOURCE_URL:=https://github.com/rriggio/click-wifi.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_PROTO:=git
+PKG_MAINTAINER:=Roberto Riggio <roberto.riggio@gmail.com>
+PKG_LICENSE:=MIT
 
 include $(INCLUDE_DIR)/package.mk
 
