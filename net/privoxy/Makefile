@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2013 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa
 PKG_MD5SUM:=aa121751d332a51d37d3c6e4b7594daa
 
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-stable
@@ -49,7 +49,7 @@ endef
 CONFIGURE_ARGS += \
 	--sysconfdir=/etc/privoxy \
 
-MAKE_FLAGS:=
+# MAKE_FLAGS:=
 
 define Build/Install
 	$(call Build/Install/Default,)

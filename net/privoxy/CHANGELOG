@@ -1,9 +1,0 @@
-Version 3.0.22-1
-Date	2014-12-07
-
-- moved from oldpackages to github
-- set maintainer
-- update pkg source to new version 3.0.22
-- run privoxy as non root user privoxy:privoxy
-- using procd including network events to restart on changes
-- log start and stop to syslog, privoxy not using syslog

@@ -1,3 +1,9 @@
+#
+# original configuration file used by privoxy
+# this is no longer supported by this package
+# it's converted and moved to uci configuration
+# please look at /etc/config/privoxy
+#
 confdir /etc/privoxy
 logdir /var/log
 logfile privoxy.log
