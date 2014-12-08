@@ -42,3 +42,14 @@
  
  #include "ctree.h"
  #include "disk-io.h"
+--- a/Makefile
++++ b/Makefile
+@@ -26,7 +26,7 @@ TESTS = fsck-tests.sh convert-tests.sh
+ INSTALL = install
+ prefix ?= /usr/local
+ bindir = $(prefix)/bin
+-lib_LIBS = -luuid -lblkid -lm -lz -llzo2 -L.
++lib_LIBS = -lattr -luuid -lblkid -lm -lz -llzo2 -L.
+ libdir ?= $(prefix)/lib
+ incdir = $(prefix)/include/btrfs
+ LIBS = $(lib_LIBS) $(libs_static)
