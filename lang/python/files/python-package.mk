@@ -21,6 +21,7 @@ HOST_PYTHON_LIB_DIR:=$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION)
 HOST_PYTHON_BIN:=$(STAGING_DIR_HOST)/bin/python2
 
 PYTHONPATH:=$(PYTHON_LIB_DIR):$(STAGING_DIR)/$(PYTHON_PKG_DIR)
+PYTHONPATH+=:$(PKG_INSTALL_DIR)/$(PYTHON_PKG_DIR)
 define HostPython
 	(	export PYTHONPATH="$(PYTHONPATH)"; \
 		export PYTHONOPTIMIZE=""; \
@@ -79,6 +80,7 @@ endef
 # $(2) => additional arguments to setup.py
 # $(3) => additional variables
 define Build/Compile/PyMod
+	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON_PKG_DIR)
 	$(call HostPython, \
 		cd $(PKG_BUILD_DIR)/$(strip $(1)); \
 		CC="$(TARGET_CC)" \
