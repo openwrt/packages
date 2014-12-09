@@ -26,7 +26,7 @@ define Package/python-dns
 	SUBMENU:=Python
 	TITLE:=dnspython
 	URL:=http://www.dnspython.org/
-	DEPENDS:=+python-mini
+	DEPENDS:=+python
 endef
 
 define Package/python-dns/description
