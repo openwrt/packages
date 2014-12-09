@@ -20,7 +20,8 @@ PYTHON3:=python$(PYTHON3_VERSION)
 HOST_PYTHON3_LIB_DIR:=$(STAGING_DIR_HOST)/lib/python$(PYTHON3_VERSION)
 HOST_PYTHON3_BIN:=$(STAGING_DIR_HOST)/bin/python3
 
-PYTHON3PATH="$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR)"
+PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR)
+PYTHON3PATH+=:$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 define HostPython3
 	(	export PYTHONPATH="$(PYTHON3PATH)"; \
 		export PYTHONOPTIMIZE=""; \
@@ -79,6 +80,7 @@ endef
 # $(2) => additional arguments to setup.py
 # $(3) => additional variables
 define Build/Compile/Py3Mod
+	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 	$(call HostPython3, \
 		cd $(PKG_BUILD_DIR)/$(strip $(1)); \
 		CC="$(TARGET_CC)" \

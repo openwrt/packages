@@ -1,0 +1,22 @@
+diff --git a/Python/pythonrun.c b/Python/pythonrun.c
+index 0327830..df41cda 100644
+--- a/Python/pythonrun.c
++++ b/Python/pythonrun.c
+@@ -124,7 +124,7 @@ int Py_InteractiveFlag; /* Needed by Py_FdIsInteractive() below */
+ int Py_InspectFlag; /* Needed to determine whether to exit at SystemExit */
+ int Py_NoSiteFlag; /* Suppress 'import site' */
+ int Py_BytesWarningFlag; /* Warn on str(bytes) and str(buffer) */
+-int Py_DontWriteBytecodeFlag; /* Suppress writing bytecode files (*.py[co]) */
++int Py_DontWriteBytecodeFlag = 1; /* Suppress writing bytecode files (*.py[co]) */
+ int Py_UseClassExceptionsFlag = 1; /* Needed by bltinmodule.c: deprecated */
+ int Py_FrozenFlag; /* Needed by getpath.c */
+ int Py_IgnoreEnvironmentFlag; /* e.g. PYTHONPATH, PYTHONHOME */
+@@ -350,7 +350,7 @@ _Py_InitializeEx_Private(int install_sigs, int install_importlib)
+     if ((p = Py_GETENV("PYTHONOPTIMIZE")) && *p != '\0')
+         Py_OptimizeFlag = add_flag(Py_OptimizeFlag, p);
+     if ((p = Py_GETENV("PYTHONDONTWRITEBYTECODE")) && *p != '\0')
+-        Py_DontWriteBytecodeFlag = add_flag(Py_DontWriteBytecodeFlag, p);
++        Py_DontWriteBytecodeFlag = atoi(p);
+     /* The variable is only tested for existence here; _PyRandom_Init will
+        check its value further. */
+     if ((p = Py_GETENV("PYTHONHASHSEED")) && *p != '\0')
