@@ -1,0 +1,44 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+add_uci_default() {
+  local disabled=$1
+
+# add default configuration
+  uci batch <<EOF
+add nodogsplash instance
+set nodogsplash.@instance[-1].network='lan'
+set nodogsplash.@instance[-1].gatewayname='OpenWrt Nodogsplash'
+set nodogsplash.@instance[-1].maxclients=250
+set nodogsplash.@instance[-1].idletimeout=1200
+set nodogsplash.@instance[-1].disabled=$disabled
+add_list nodogsplash.@instance[-1].users_to_router='allow tcp port 22'
+add_list nodogsplash.@instance[-1].users_to_router='allow tcp port 23'
+add_list nodogsplash.@instance[-1].users_to_router='allow tcp port 53'
+add_list nodogsplash.@instance[-1].users_to_router='allow udp port 53'
+add_list nodogsplash.@instance[-1].users_to_router='allow udp port 67'
+add_list nodogsplash.@instance[-1].users_to_router='allow tcp port 80'
+add_list nodogsplash.@instance[-1].users_to_router='allow tcp port 443'
+EOF
+
+}
+
+[ -e /etc/config/nodogsplash ] && exit 0
+
+touch /etc/config/nodogsplash
+
+# check if we have an old config
+if [ -e "/etc/nodogsplash/nodogsplash.conf" ] ; then
+
+  uci batch <<EOF
+add nodogsplash instance
+set nodogsplash.@instance[-1].config='/etc/nodogsplash/nodogsplash.conf'
+EOF
+
+  add_uci_default 1
+else
+  add_uci_default 0
+fi
+
+exit 0
