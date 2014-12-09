@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2009-2013 OpenWrt.org
+# Copyright (C) 2009-2014 OpenWrt.org
 
 START=90
 STOP=10
@@ -45,6 +45,9 @@ start_instance() {
 
 		config_get resolution "$s" 'resolution'
 		[ -n "$resolution" ] && input_arg="${input_arg} --resolution $resolution"
+
+		config_get led "$s" 'led'
+		[ -n "$led" ] && input_arg="${input_arg} --led $led"
 	fi
 
 	if [ -z "$input_arg" ]; then
