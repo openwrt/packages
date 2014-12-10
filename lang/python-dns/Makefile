@@ -34,13 +34,13 @@ define Package/python-dns/description
 endef
 
 define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+	$(call Build/Compile/PyMod,,\
+		install --prefix="$(PKG_INSTALL_DIR)/usr" \
+	)
 endef
 
-define Package/python-dns/install
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(CP) $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/dns/* \
-		$(1)$(PYTHON_PKG_DIR)
+define PyPackage/python-dns/filespec
++|/usr/lib/python$(PYTHON_VERSION)/site-packages
 endef
 
 $(eval $(call PyPackage,python-dns))
