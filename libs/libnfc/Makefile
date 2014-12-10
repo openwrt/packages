@@ -13,9 +13,11 @@ PKG_RELEASE:=1
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://bintray.com/artifact/download/nfc-tools/sources/
-PKG_MD5SUM:=a3bea901778ac324e802b8ffb86820ff
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://code.google.com/p/libnfc/
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=LGPL-2.1
 PKG_MAINTAINER:=Sebastian Wendel <packages@sourceindex.de>
