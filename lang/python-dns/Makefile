@@ -43,4 +43,5 @@ define Package/python-dns/install
 		$(1)$(PYTHON_PKG_DIR)
 endef
 
+$(eval $(call PyPackage,python-dns))
 $(eval $(call BuildPackage,python-dns))
