@@ -37,17 +37,17 @@ and control points. It is shared by upmpdcli and upplay.
 endef
 
 define Build/InstallDev
-       $(INSTALL_DIR) $(1)/usr/include
-       $(CP) $(PKG_INSTALL_DIR)/usr/include/libupnpp $(1)/usr/include/
-       $(INSTALL_DIR) $(1)/usr/lib
-       $(CP) $(PKG_INSTALL_DIR)/usr/lib/libupnpp-$(PKG_VERSION).so* $(1)/usr/lib/
-       $(CP) $(PKG_INSTALL_DIR)/usr/lib/libupnpp.{so,la} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/libupnpp $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupnpp-$(PKG_VERSION).so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupnpp.{so,la} $(1)/usr/lib/
 endef
 
 define Package/libupnpp/install
-       $(INSTALL_DIR) $(1)/usr/lib
-       $(CP) $(PKG_INSTALL_DIR)/usr/lib/libupnpp-$(PKG_VERSION).so.* $(1)/usr/lib/
-       $(CP) $(PKG_INSTALL_DIR)/usr/lib/libupnpp.so $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupnpp-$(PKG_VERSION).so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupnpp.so $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libupnpp))
