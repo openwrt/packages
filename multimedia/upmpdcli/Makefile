@@ -37,14 +37,14 @@ upmpdcli implements an UPnP Media Renderer, using MPD to perform the real work.
 endef
 
 define Package/upmpdcli/install
-       $(INSTALL_DIR) $(1)/etc
-       $(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/upmpdcli.conf $(1)/etc/
-       $(INSTALL_DIR) $(1)/usr/bin
-       $(CP) $(PKG_INSTALL_DIR)/usr/bin/upmpdcli $(1)/usr/bin/
-       $(INSTALL_DIR) $(1)/usr/share
-       $(CP) $(PKG_INSTALL_DIR)/usr/share/upmpdcli $(1)/usr/share/
-       $(INSTALL_DIR) $(1)/etc/init.d
-       $(INSTALL_BIN) ./files/upmpdcli.init $(1)/etc/init.d/upmpdcli
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/upmpdcli.conf $(1)/etc/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/upmpdcli $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/share
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/upmpdcli $(1)/usr/share/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/upmpdcli.init $(1)/etc/init.d/upmpdcli
 endef
 
 $(eval $(call BuildPackage,upmpdcli))
