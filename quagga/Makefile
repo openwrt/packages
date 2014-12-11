@@ -46,7 +46,7 @@ endef
 
 define Package/quagga
   $(call Package/quagga/Default)
-  DEPENDS:=+librt
+  DEPENDS:=@BROKEN +librt
   MENU:=1
 endef
 
