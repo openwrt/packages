@@ -63,7 +63,7 @@ define Package/gammu/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/lib{Gammu*,gsmsd*} $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_BIN) ./files/gammurc $(1)/etc/gammurc
+	$(INSTALL_CONF) ./files/gammurc $(1)/etc/gammurc
 endef
 
 define Package/gammu/conffiles
