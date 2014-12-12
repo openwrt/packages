@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.4.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -161,6 +161,7 @@ CONFIGURE_ARGS += \
 	--disable-schro \
 	--disable-zbar \
 	--disable-vp8 \
+	--disable-srtp \
 	\
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
@@ -277,7 +278,7 @@ $(eval $(call GstBuildPlugin,segmentclip,segmentclip support,audio,,))
 $(eval $(call GstBuildPlugin,siren,siren support,audio rtp,,))
 $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
-$(eval $(call GstBuildPlugin,srtp,srtp support,rtp,,+libsrtp))
+#$(eval $(call GstBuildPlugin,srtp,srtp support,rtp,,+libsrtp))
 
 $(eval $(call BuildPackage,gstreamer1-plugins-bad))
 $(eval $(call BuildPackage,gst1-plugins-bad))
