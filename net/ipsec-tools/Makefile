@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ipsec-tools
 PKG_VERSION:=0.8.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER := "Noah Meyerhans <frodo@morgul.net>"
 PKG_LICENSE := BSD-3-Clause
 
@@ -77,8 +77,7 @@ endef
 
 define Package/ipsec-tools/install
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/src/racoon/samples/racoon.conf $(1)/etc/
-	$(SED) 's|@sysconfdir_x@|/etc|g' $(1)/etc/racoon.conf
+	$(INSTALL_CONF) ./files/racoon.conf $(1)/etc/racoon.conf
 	$(INSTALL_DIR) $(1)/etc/racoon
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/src/racoon/samples/psk.txt $(1)/etc/racoon/
 	$(INSTALL_DIR) $(1)/etc/init.d
