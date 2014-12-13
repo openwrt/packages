@@ -1,0 +1,22 @@
+--- a/libdw/Makefile.am
++++ b/libdw/Makefile.am
+@@ -111,7 +111,7 @@ libdw.so: $(srcdir)/libdw.map libdw_pic.
+ 		-Wl,--enable-new-dtags,-rpath,$(pkglibdir) \
+ 		-Wl,--version-script,$<,--no-undefined \
+ 		-Wl,--whole-archive $(filter-out $<,$^) -Wl,--no-whole-archive\
+-		-ldl $(zip_LIBS)
++		-ldl $(zip_LIBS) $(LIBS)
+ 	if readelf -d $@ | fgrep -q TEXTREL; then exit 1; fi
+ 	ln -fs $@ $@.$(VERSION)
+ 
+--- a/libdw/Makefile.in
++++ b/libdw/Makefile.in
+@@ -845,7 +845,7 @@ uninstall-am: uninstall-includeHEADERS u
+ @MUDFLAP_FALSE@		-Wl,--enable-new-dtags,-rpath,$(pkglibdir) \
+ @MUDFLAP_FALSE@		-Wl,--version-script,$<,--no-undefined \
+ @MUDFLAP_FALSE@		-Wl,--whole-archive $(filter-out $<,$^) -Wl,--no-whole-archive\
+-@MUDFLAP_FALSE@		-ldl $(zip_LIBS)
++@MUDFLAP_FALSE@		-ldl $(zip_LIBS) $(LIBS)
+ @MUDFLAP_FALSE@	if readelf -d $@ | fgrep -q TEXTREL; then exit 1; fi
+ @MUDFLAP_FALSE@	ln -fs $@ $@.$(VERSION)
+ 
