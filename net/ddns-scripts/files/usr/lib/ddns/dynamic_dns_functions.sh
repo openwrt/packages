@@ -34,13 +34,15 @@ VERBOSE_MODE=1		# default mode is log to console, but easily changed with parame
 
 # directory to store run information to.
 RUNDIR=$(uci -q get ddns.global.run_dir) || RUNDIR="/var/run/ddns"
+[ -d $RUNDIR ] || mkdir -p -m755 $RUNDIR
 # NEW # directory to store log files
 LOGDIR=$(uci -q get ddns.global.log_dir) || LOGDIR="/var/log/ddns"
+[ -d $LOGDIR ] || mkdir -p -m755 $LOGDIR
 LOGFILE=""		# NEW # logfile can be enabled as new option
 PIDFILE=""		# pid file
 UPDFILE=""		# store UPTIME of last update
-DATFILE="/tmp/ddns_$$.dat"	# save stdout data of WGet and other extern programs called
-ERRFILE="/tmp/ddns_$$.err"	# save stderr output of WGet and other extern programs called
+DATFILE=""		# save stdout data of WGet and other extern programs called
+ERRFILE=""		# save stderr output of WGet and other extern programs called
 
 # number of lines to before rotate logfile
 LOGLINES=$(uci -q get ddns.global.log_lines) || LOGLINES=250
@@ -224,7 +226,6 @@ write_log() {
 	[ $VERBOSE_MODE -gt 0 -o $__EXIT -gt 0 ] && echo -e "$__MSG"
 	# write to logfile
 	if [ ${use_logfile:-1} -eq 1 -o $VERBOSE_MODE -gt 1 ]; then
-		[ -d $LOGDIR ] || mkdir -p -m 755 $LOGDIR
 		echo -e "$__MSG" >> $LOGFILE
 		# VERBOSE_MODE > 1 then NO loop so NO truncate log to $LOGLINES lines
 		[ $VERBOSE_MODE -gt 1 ] || sed -i -e :a -e '$q;N;'$LOGLINES',$D;ba' $LOGFILE
@@ -302,8 +303,7 @@ get_service_data() {
 		awk ' gsub("\x27", "\"") { if ($1~/^[^\"]*$/) $1="\""$1"\"" }; { if ( $NF~/^[^\"]*$/) $NF="\""$NF"\""  }; { print $0 }')
 
 	IFS=$__NEWLINE_IFS
-	for __LINE in $__SERVICES
-	do
+	for __LINE in $__SERVICES; do
 		#grep out proper parts of data and use echo to remove quotes
 		__NAME=$(echo $__LINE | grep -o "^[\t ]*\"[^\"]*\"" | xargs -r -n1 echo)
 		__DATA=$(echo $__LINE | grep -o "\"[^\"]*\"[\t ]*$" | xargs -r -n1 echo)
@@ -459,7 +459,7 @@ verify_host_port() {
 	# command error
 	[ $__ERR -gt 0 ] && {
 		write_log 3 "DNS Resolver Error - BusyBox nslookup Error '$__ERR'"
-		write_log 7 "Error:\n$(cat $ERRFILE)"
+		write_log 7 "$(cat $ERRFILE)"
 		return 2
 	}
 	# extract IP address
@@ -499,7 +499,7 @@ verify_host_port() {
 		__ERR=$?
 		[ $__ERR -eq 0 ] && return 0
 		write_log 3 "Connect error - BusyBox nc (netcat) Error '$__ERR'"
-		write_log 7 "Error:\n$(cat $ERRFILE)"
+		write_log 7 "$(cat $ERRFILE)"
 		return 3
 	else		# nc compiled without extensions (no timeout support)
 		__RUNPROG="timeout 2 -- /usr/bin/nc $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
@@ -533,7 +533,7 @@ verify_dns() {
 		elif [ $__ERR -ne 0 ]; then
 			__CNT=$(( $__CNT + 1 ))	# increment error counter
 			# if error count > retry_count leave here
-			[ $__CNT -gt $retry_count ] && \
+			[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
 				write_log 14 "Verify DNS server '$1' failed after $retry_count retries"
 
 			write_log 4 "Verify DNS server '$1' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
@@ -593,7 +593,7 @@ verify_proxy() {
 		elif [ $__ERR -gt 0 ]; then
 			__CNT=$(( $__CNT + 1 ))	# increment error counter
 			# if error count > retry_count leave here
-			[ $__CNT -gt $retry_count ] && \
+			[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
 				write_log 14 "Verify Proxy server '$1' failed after $retry_count retries"
 
 			write_log 4 "Verify Proxy server '$1' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
@@ -637,7 +637,7 @@ do_transfer() {
 		# disable proxy if no set (there might be .wgetrc or .curlrc or wrong environment set)
 		[ -z "$proxy" ] && __PROG="$__PROG --no-proxy"
 
-		__RUNPROG="$__PROG $__URL"	# build final command
+		__RUNPROG="$__PROG '$__URL'"	# build final command
 		__PROG="GNU Wget"		# reuse for error logging
 
 	# 2nd choice is cURL IPv4/IPv6/HTTPS
@@ -671,7 +671,7 @@ do_transfer() {
 				write_log 13 "cURL: libcurl compiled without Proxy support"
 		fi
 
-		__RUNPROG="$__PROG $__URL"	# build final command
+		__RUNPROG="$__PROG '$__URL'"	# build final command
 		__PROG="cURL"			# reuse for error logging
 
 	# busybox Wget (did not support neither IPv6 nor HTTPS)
@@ -686,8 +686,8 @@ do_transfer() {
 		# disable proxy if no set (there might be .wgetrc or .curlrc or wrong environment set)
 		[ -z "$proxy" ] && __PROG="$__PROG -Y off"
 
-		__RUNPROG="$__PROG $__URL 2>$ERRFILE"	# build final command
-		__PROG="Busybox Wget"			# reuse for error logging
+		__RUNPROG="$__PROG '$__URL' 2>$ERRFILE"		# build final command
+		__PROG="Busybox Wget"				# reuse for error logging
 
 	else
 		write_log 13 "Neither 'Wget' nor 'cURL' installed or executable"
@@ -695,7 +695,7 @@ do_transfer() {
 
 	while : ; do
 		write_log 7 "#> $__RUNPROG"
-		$__RUNPROG			# DO transfer
+		eval $__RUNPROG			# DO transfer
 		__ERR=$?			# save error code
 		[ $__ERR -eq 0 ] && return 0	# no error leave
 		[ $LUCI_HELPER ] && return 1	# no retry if called by LuCI helper script
@@ -711,7 +711,7 @@ do_transfer() {
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
 		# if error count > retry_count leave here
-		[ $__CNT -gt $retry_count ] && \
+		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
 			write_log 14 "Transfer failed after $retry_count retries"
 
 		write_log 4 "Transfer failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
@@ -750,11 +750,11 @@ send_update() {
 
 		write_log 7 "DDNS Provider answered:\n$(cat $DATFILE)"
 
-		# analyse provider answers
-		# "good [IP_ADR]"	= successful
-		# "nochg [IP_ADR]"	= no change but OK
-		grep -E "good|nochg" $DATFILE >/dev/null 2>&1
-		return $?	# "0" if "good" or "nochg" found
+		return 0
+		# TODO analyse providers answer
+		# "good" or "nochg"		= dyndns.com compatible API
+		# grep -i -E "good|nochg" $DATFILE >/dev/null 2>&1
+		# return $?	# "0" if found
 	fi
 }
 
@@ -846,6 +846,9 @@ get_local_ip () {
 		}
 
 		[ $LUCI_HELPER ] && return 1	# no retry if called by LuCI helper script
+
+		write_log 7 "Data detected:\n$(cat $DATFILE)"
+
 		[ $VERBOSE_MODE -gt 1 ] && {
 			# VERBOSE_MODE > 1 then NO retry
 			write_log 4 "Get local IP via '$ip_source' failed - Verbose Mode: $VERBOSE_MODE - NO retry on error"
@@ -854,9 +857,8 @@ get_local_ip () {
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
 		# if error count > retry_count leave here
-		[ $__CNT -gt $retry_count ] && \
+		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
 			write_log 14 "Get local IP via '$ip_source' failed after $retry_count retries"
-
 		write_log 4 "Get local IP via '$ip_source' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
@@ -908,7 +910,7 @@ get_registered_ip() {
 		__ERR=$?
 		if [ $__ERR -ne 0 ]; then
 			write_log 3 "$__PROG error: '$__ERR'"
-			write_log 7 "Error:\n$(cat $ERRFILE)"
+			write_log 7 "$(cat $ERRFILE)"
 		else
 			if [ "$__PROG" = "BIND host" ]; then
 				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
@@ -934,7 +936,7 @@ get_registered_ip() {
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
 		# if error count > retry_count leave here
-		[ $__CNT -gt $retry_count ] && \
+		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
 			write_log 14 "Get registered/public IP for '$domain' failed after $retry_count retries"
 
 		write_log 4 "Get registered/public IP for '$domain' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
@@ -966,18 +968,19 @@ trap_handler() {
 	[ $PID_SLEEP -ne 0 ] && kill -$1 $PID_SLEEP 2>/dev/null	# kill pending sleep if exist
 
 	case $1 in
-		0)	if [ $__ERR -eq 0 ]; then
+		 0)	if [ $__ERR -eq 0 ]; then
 				write_log 5 "PID '$$' exit normal at $(eval $DATE_PROG)\n"
 			else
 				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)\n"
 			fi ;;
-		1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
-			eval "$0 $SECTION_ID $VERBOSE_MODE &"	# reload config via restarting script
-			exit 0 ;;
-		2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)\n";;
-		3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)\n";;
+		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
+			# reload config via starting the script again 
+			eval "/usr/lib/ddns/dynamic_dns_updater.sh $SECTION_ID $VERBOSE_MODE &"
+			exit 0 ;;	# and leave this one
+		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)\n";;
+		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)\n";;
 		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(eval $DATE_PROG)\n";;
-		*)	write_log 13 "Unhandled signal '$1' in 'trap_handler()'";;
+		 *)	write_log 13 "Unhandled signal '$1' in 'trap_handler()'";;
 	esac
 
 	__PIDS=$(pgrep -P $$)	# get my childs (pgrep prints with "newline")

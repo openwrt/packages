@@ -19,10 +19,10 @@ endchoice
 config ARIA2_BITTORRENT
 	bool "Enable bittorrent support"
 	depends on ARIA2_OPENSSL
-	default y
+	default n
 
 config ARIA2_METALINK
 	bool "Enable metalink support"
-	default y
+	default N
 
 endmenu

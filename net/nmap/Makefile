@@ -14,7 +14,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
 PKG_VERSION:=6.47
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER=Nuno Goncalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -87,7 +87,8 @@ CONFIGURE_ARGS += \
 	--with-libdnet=included \
 	--with-libpcre=included \
 	--with-libpcap="$(STAGING_DIR)/usr" \
-	--without-liblua
+	--without-liblua \
+	--without-zenmap
 
 CONFIGURE_VARS += CXXFLAGS="$$$$CXXFLAGS -fno-builtin"
 

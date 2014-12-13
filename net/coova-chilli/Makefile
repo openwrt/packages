@@ -11,7 +11,7 @@ PKG_NAME:=coova-chilli
 PKG_VERSION:=1.3.0+20141128
 PKG_MAINTAINER:=Imre Kaloz <kaloz@openwrt.org>
 PKG_LICENSE:=GPL-2.0+
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -72,6 +72,7 @@ endef
 
 define Build/Configure
 	$(call Build/Configure/Default, \
+	$(if $(CONFIG_COOVACHILLI_PROXY),--enable,--disable)-chilliproxy \
 	$(if $(CONFIG_COOVACHILLI_REDIR),--enable,--disable)-chilliredir \
 	$(if $(CONFIG_COOVACHILLI_DNSLOG),--enable,--disable)-dnslog \
 	$(if $(CONFIG_COOVACHILLI_MINIPORTAL),--enable,--disable)-miniportal \

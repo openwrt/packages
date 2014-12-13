@@ -1,0 +1,43 @@
+--- /dev/null
++++ b/cmake/Toolchain-cross.cmake
+@@ -0,0 +1,5 @@
++# search for programs in the build host directories
++SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
++# for libraries and headers in the target directories
++SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
++SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+--- a/configure
++++ b/configure
+@@ -25,6 +25,7 @@ Usage: ./configure [options]
+ 
+ --help|-h           shows this help
+ --prefix=<path>     installation prefix
++--cross-root=<path> cross-compilation prefix
+ --enable-shared     enables shared build
+ --enable-debug      enables debug build
+ --enable-tiger      enables Mac OS X 10.4 (Tiger) build
+@@ -50,6 +51,7 @@ SOURCE_DIR=`pwd`
+ 
+ # cmake parameters
+ CMAKE_PREFIX=
++CMAKE_ROOT=
+ CMAKE_SHARED=
+ CMAKE_DEBUG=
+ CMAKE_BACKUP=
+@@ -69,6 +71,10 @@ while [ "$#" -gt 0 ] ; do
+         --prefix=*)
+             CMAKE_PREFIX="-DCMAKE_INSTALL_PREFIX=${1##--prefix=}"
+             ;;
++        --cross-root=*)
++            CMAKE_ROOT="-DCMAKE_TOOLCHAIN_FILE=$SOURCE_DIR/cmake/Toolchain-cross.cmake"
++            echo "SET(CMAKE_FIND_ROOT_PATH ${1##--cross-root=})" >> $SOURCE_DIR/cmake/Toolchain-cross.cmake
++            ;;
+         --with-python=*)
+             CMAKE_PYTHON="-DBUILD_PYTHON=${1##--with-python=}"
+             ;;
+@@ -150,4 +156,4 @@ fi
+ cd "$BUILD_DIR"
+ 
+ # invoke cmake to do configuration
+-cmake $SOURCE_DIR $CMAKE_PREFIX $CMAKE_SHARED $CMAKE_DEBUG $CMAKE_BACKUP $CMAKE_CROSS $CMAKE_PROTECTION $CMAKE_PYTHON $CMAKE_GNAP $CMAKE_COMPLETE $CMAKE_ICONV
++cmake $SOURCE_DIR $CMAKE_ROOT $CMAKE_PREFIX $CMAKE_SHARED $CMAKE_DEBUG $CMAKE_BACKUP $CMAKE_CROSS $CMAKE_PROTECTION $CMAKE_PYTHON $CMAKE_GNAP $CMAKE_COMPLETE $CMAKE_ICONV

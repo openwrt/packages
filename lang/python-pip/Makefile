@@ -34,9 +34,7 @@ define Package/python-pip/description
   A tool for installing and managing Python packages.
 endef
 
-PYTHONPATH:=$(PKG_INSTALL_DIR)/$(PYTHON_PKG_DIR)
 define Build/Compile
-	$(INSTALL_DIR) $(PYTHONPATH)
 	$(call Build/Compile/PyMod,,\
 		install --prefix="$(PKG_INSTALL_DIR)/usr" \
 	)

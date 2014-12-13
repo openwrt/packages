@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
-PKG_VERSION:=1.16
+PKG_VERSION:=1.16.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_MD5SUM:=fe102975ab3a6c049777883f1bb9ad07
+PKG_MD5SUM:=78942cc0cce0a23e18114d982789e360
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-3.0+
 
@@ -65,7 +65,8 @@ endef
 
 CONFIGURE_ARGS+= \
 	--disable-rpath \
-	--disable-iri
+	--disable-iri \
+	--without-libuuid
 
 CONFIGURE_VARS += \
 	ac_cv_header_uuid_uuid_h=no

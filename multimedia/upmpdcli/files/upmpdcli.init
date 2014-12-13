@@ -1,0 +1,18 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2014 OpenWrt.org
+
+START=95
+
+create_user() {
+       group_exists upmpdcli || group_add upmpdcli 89
+       user_exists upmpdcli || user_add upmpdcli 89
+}
+
+start() {
+       create_user
+       service_start /usr/bin/upmpdcli -D
+}
+
+stop() {
+       service_stop /usr/bin/upmpdcli
+}
