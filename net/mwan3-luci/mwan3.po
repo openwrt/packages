@@ -27,7 +27,7 @@ msgid "Members"
 msgstr "成员"
 
 msgid "Policies"
-msgstr "政策"
+msgstr "策略"
 
 msgid "Rules"
 msgstr "规则"
@@ -35,8 +35,8 @@ msgstr "规则"
 msgid "Hotplug Script"
 msgstr "Hotplug脚本"
 
-msgid "MWAN3 Config"
-msgstr "MWAN3配置文件"
+msgid "MWAN Config"
+msgstr "MWAN配置文件"
 
 msgid "Network Config"
 msgstr "网络配置文件"
@@ -44,23 +44,23 @@ msgstr "网络配置文件"
 msgid "Troubleshooting"
 msgstr "故障排除信息"
 
-msgid "MWAN3 Multi-WAN Interface Live Status"
-msgstr "MWAN3负载均衡 接口状态"
+msgid "MWAN Interface Live Status"
+msgstr "MWAN负载均衡 接口状态"
 
-msgid "MWAN3 Multi-WAN Interface Systemlog"
-msgstr "MWAN3负载均衡 系统日志"
+msgid "MWAN Interface Systemlog"
+msgstr "MWAN负载均衡 系统日志"
 
-msgid "MWAN3 Multi-WAN Detailed Status"
-msgstr "MWAN3负载均衡 详细状态"
+msgid "MWAN Detailed Status"
+msgstr "MWAN负载均衡 详细状态"
 
-msgid "MWAN3 Multi-WAN Interface Configuration"
-msgstr "MWAN3负载均衡 接口配置"
+msgid "MWAN Interface Configuration"
+msgstr "MWAN负载均衡 接口配置"
 
 msgid "Interface"
 msgstr "接口"
 
-msgid "MWAN3 supports up to 250 physical and/or logical interfaces<br />MWAN3 requires that all interfaces have a unique metric configured in /etc/config/network<br />Names must match the interface name found in /etc/config/network (see advanced tab)<br />Names may contain characters A-Z, a-z, 0-9, _ and no spaces<br />Interfaces may not share the same name as configured members, policies or rules"
-msgstr "MWAN3支持最多250个物理或逻辑接口。<br />MWAN3要求所有接口必须在/etc/config/network中设定唯一的网关跃点。<br />“接口”必须与/etc/config/network中的接口名称匹配。(可查看“高级”选项卡)<br />名称允许包括A-Z、a-z、0-9、_ 但是不能有空格。<br />接口不应该与成员、政策、规则中的任意一个设置项使用相同的名称。"
+msgid "MWAN supports up to 250 physical and/or logical interfaces<br />MWAN requires that all interfaces have a unique metric configured in /etc/config/network<br />Names must match the interface name found in /etc/config/network (see advanced tab)<br />Names may contain characters A-Z, a-z, 0-9, _ and no spaces<br />Interfaces may not share the same name as configured members, policies or rules"
+msgstr "MWAN支持最多250个物理或逻辑接口。<br />MWAN要求所有接口必须在/etc/config/network中设定唯一的网关跃点。<br />“接口”必须与/etc/config/network中的接口名称匹配。(可查看“高级”选项卡)<br />名称允许包括A-Z、a-z、0-9、_ 但是不能有空格。<br />接口不应该与成员、策略、规则中的任意一个设置项使用相同的名称。"
 
 msgid "Tracking IP"
 msgstr "跟踪的IP地址"
@@ -86,11 +86,11 @@ msgstr "接口上线"
 msgid "Errors"
 msgstr "错误"
 
-msgid "MWAN3 Multi-WAN Member Configuration"
-msgstr "MWAN3负载均衡 成员配置"
+msgid "MWAN Member Configuration"
+msgstr "MWAN负载均衡 成员配置"
 
-msgid "Members are profiles attaching a metric and weight to an MWAN3 interface<br />Names may contain characters A-Z, a-z, 0-9, _ and no spaces<br />Members may not share the same name as configured interfaces, policies or rules"
-msgstr "“成员”用来设置每一个MWAN3接口的跃点数（即接口优先级）和所占比重。<br />名称允许包括A-Z、a-z、0-9、_ 但是不能有空格。<br />成员不应该与接口、政策、规则中的任意一个设置项使用相同的名称。"
+msgid "Members are profiles attaching a metric and weight to an MWAN interface<br />Names may contain characters A-Z, a-z, 0-9, _ and no spaces<br />Members may not share the same name as configured interfaces, policies or rules"
+msgstr "“成员”用来设置每一个MWAN接口的跃点数（即接口优先级）和所占比重。<br />名称允许包括A-Z、a-z、0-9、_ 但是不能有空格。<br />成员不应该与接口、策略、规则中的任意一个设置项使用相同的名称。"
 
 msgid "Member"
 msgstr "成员"
@@ -98,11 +98,11 @@ msgstr "成员"
 msgid "Weight"
 msgstr "接口比重"
 
-msgid "MWAN3 Multi-WAN Interface Configuration -"
-msgstr "MWAN3负载均衡 接口配置 - "
+msgid "MWAN Interface Configuration -"
+msgstr "MWAN负载均衡 接口配置 - "
 
-msgid "MWAN3 Multi-WAN Member Configuration -"
-msgstr "MWAN3负载均衡 成员配置 - "
+msgid "MWAN Member Configuration -"
+msgstr "MWAN负载均衡 成员配置 - "
 
 msgid "Acceptable values: 1-1000. Defaults to 1 if not set"
 msgstr "接受1-1000的数值，如果不填写，默认值为1。"
@@ -111,7 +111,7 @@ msgid "Currently Configured Interfaces"
 msgstr "当前已经配置好的接口"
 
 msgid "This IP address will be pinged to dermine if the link is up or down. Leave blank to assume interface is always online"
-msgstr "MWAN3将会通过Ping这些IP地址来确定接口是否上线。如果留空，则MWAN3认为该接口永远在线（不建议这么做）。"
+msgstr "MWAN将会通过Ping这些IP地址来确定接口是否上线。如果留空，则MWAN认为该接口永远在线（不建议这么做）。"
 
 msgid "Acceptable values: 1-100. This many Tracking IP addresses must respond for the link to be deemed up"
 msgstr "接受1-100的数值。这个设置项指定了当多少个IP地址能够连通时接口会被认为在线。"
@@ -125,20 +125,20 @@ msgstr "当Ping成功次数达到这个数值后，已经被认为断线的接�
 msgid "This displays the metric assigned to this interface in /etc/config/network"
 msgstr "这里显示了这个接口在/etc/config/network中配置的跃点数。"
 
-msgid "MWAN3 Multi-WAN Policy Configuration"
-msgstr "MWAN3负载均衡 政策配置"
+msgid "MWAN Policy Configuration"
+msgstr "MWAN负载均衡 策略配置"
 
-msgid "Policies are profiles grouping one or more members controlling how MWAN3 distributes traffic<br />Member interfaces with lower metrics are used first. Interfaces with the same metric load-balance<br />Load-balanced member interfaces distribute more traffic out those with higher weights<br />Names may contain characters A-Z, a-z, 0-9, _ and no spaces. Names must be 15 characters or less<br />Policies may not share the same name as configured interfaces, members or rules"
-msgstr "“政策”把成员进行分组，告诉MWAN3如何分配“规则”中使用这一政策的流量<br />拥有较低跃点数的成员将会被优先使用。拥有相同跃点数的成员把流量进行负载均衡。<br />进行负载均衡的成员之间拥有较高比重的成员将会被分配到更多流量。<br />名称允许包括A-Z、a-z、0-9、_ 但是不能有空格。名称应该在15个字符以内<br />政策不应该与接口、成员、规则中的任意一个设置项使用相同的名称。"
+msgid "Policies are profiles grouping one or more members controlling how MWAN distributes traffic<br />Member interfaces with lower metrics are used first. Interfaces with the same metric load-balance<br />Load-balanced member interfaces distribute more traffic out those with higher weights<br />Names may contain characters A-Z, a-z, 0-9, _ and no spaces. Names must be 15 characters or less<br />Policies may not share the same name as configured interfaces, members or rules"
+msgstr "“策略”把成员进行分组，告诉MWAN如何分配“规则”中使用这一策略的流量<br />拥有较低跃点数的成员将会被优先使用。拥有相同跃点数的成员把流量进行负载均衡。<br />进行负载均衡的成员之间拥有较高比重的成员将会被分配到更多流量。<br />名称允许包括A-Z、a-z、0-9、_ 但是不能有空格。名称应该在15个字符以内<br />策略不应该与接口、成员、规则中的任意一个设置项使用相同的名称。"
 
 msgid "Members assigned"
 msgstr "使用的成员"
 
 msgid "Policy"
-msgstr "政策"
+msgstr "策略"
 
-msgid "MWAN3 Multi-WAN Policy Configuration -"
-msgstr "MWAN3负载均衡 政策配置 - "
+msgid "MWAN Policy Configuration -"
+msgstr "MWAN负载均衡 策略配置 - "
 
 msgid "Member used"
 msgstr "使用的成员"
@@ -146,17 +146,17 @@ msgstr "使用的成员"
 msgid "Currently Configured Members"
 msgstr "当前已经配置好的成员"
 
-msgid "MWAN3 Multi-WAN Traffic Rule Configuration"
-msgstr "MWAN3负载均衡 通信规则配置"
+msgid "MWAN Rule Configuration"
+msgstr "MWAN负载均衡 通信规则配置"
 
-msgid "MWAN3 Multi-WAN Traffic Rule Configuration -"
-msgstr "MWAN3负载均衡 通信规则配置 -"
+msgid "MWAN Traffic Rule Configuration -"
+msgstr "MWAN负载均衡 通信规则配置 -"
 
-msgid "Rules specify which traffic will use a particular MWAN3 policy based on IP address, port or protocol<br />Rules are matched from top to bottom. Rules below a matching rule are ignored. Traffic not matching any rule is routed using the main routing table<br />Traffic destined for known (other than default) networks is handled by the main routing table. Traffic matching a rule, but all WAN interfaces for that policy are down will be blackholed<br />Names may contain characters A-Z, a-z, 0-9, _ and no spaces<br />Rules may not share the same name as configured interfaces, members or policies"
-msgstr "“规则”基于IP地址、协议、端口把流量划分到指定的“政策”中。<br />规则按照从上到下的顺序进行匹配。除了第一条能够匹配一次通信的规则以外，其它规则将被忽略。不匹配任何规则的通信将会由系统默认路由表进行。<br />来自已知的网络的转发流量由系统默认路由表接手，然后MWAN3从中匹配出相应的流量并转移到MWAN3自己的路由表。但是所有被划分到一个无法使用的政策的流量将会无法正常进行路由。<br />名称允许包括A-Z、a-z、0-9、_ 但是不能有空格。<br />规则不应该与接口、成员、政策中的任意一个设置项使用相同的名称。"
+msgid "Rules specify which traffic will use a particular MWAN policy based on IP address, port or protocol<br />Rules are matched from top to bottom. Rules below a matching rule are ignored. Traffic not matching any rule is routed using the main routing table<br />Traffic destined for known (other than default) networks is handled by the main routing table. Traffic matching a rule, but all WAN interfaces for that policy are down will be blackholed<br />Names may contain characters A-Z, a-z, 0-9, _ and no spaces<br />Rules may not share the same name as configured interfaces, members or policies"
+msgstr "“规则”基于IP地址、协议、端口把流量划分到指定的“策略”中。<br />规则按照从上到下的顺序进行匹配。除了第一条能够匹配一次通信的规则以外，其它规则将被忽略。不匹配任何规则的通信将会由系统默认路由表进行。<br />来自已知的网络的转发流量由系统默认路由表接手，然后MWAN从中匹配出相应的流量并转移到MWAN自己的路由表。但是所有被划分到一个无法使用的策略的流量将会无法正常进行路由。<br />名称允许包括A-Z、a-z、0-9、_ 但是不能有空格。<br />规则不应该与接口、成员、策略中的任意一个设置项使用相同的名称。"
 
 msgid "Policy assigned"
-msgstr "使用的政策"
+msgstr "使用的策略"
 
 msgid "Currently Configured Policies"
-msgstr "当前已经配置好的政策"
+msgstr "当前已经配置好的策略"
