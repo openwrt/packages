@@ -28,22 +28,22 @@ index de1c9d4..374819a 100644
  
  static const char *app_name = "openpgp-tool";
  
-@@ -99,6 +101,7 @@ static const struct option options[] = {
+@@ -98,6 +100,7 @@ static const struct option options[] = {
+ 	{ "erase",     no_argument,       NULL, 'E'        },
  	{ "verify",    required_argument, NULL, OPT_VERIFY },
  	{ "pin",       required_argument, NULL, OPT_PIN },
- 	{ "do",        required_argument, NULL, 'd' },
 +	{ "del-key",   required_argument, NULL, OPT_DELKEY },
+ 	{ "do",        required_argument, NULL, 'd' },
  	{ NULL, 0, NULL, 0 }
  };
- 
-@@ -119,6 +122,7 @@ static const char *option_help[] = {
+@@ -118,6 +121,7 @@ static const char *option_help[] = {
+ /* E */	"Erase (reset) the card",
  	"Verify PIN (CHV1, CHV2, CHV3...)",
  	"PIN string",
++	"Delete key (1, 2, 3 or all)",
  /* d */ "Dump private data object number <arg> (i.e. PRIVATE-DO-<arg>)"
-+	"Delete key (1, 2, 3 or all)"
  };
  
- static const struct ef_name_map openpgp_data[] = {
 @@ -302,6 +306,14 @@ static int decode_options(int argc, char **argv)
  		case 'E':
  			opt_erase++;
