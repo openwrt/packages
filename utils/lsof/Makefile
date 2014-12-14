@@ -17,6 +17,8 @@ PKG_SOURCE_URL:=http://ftp2.de.debian.org/debian/pool/main/l/lsof
 PKG_MD5SUM:=23420509564a897b76055f9d84d19068
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)+dfsg.orig
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
+PKG_LICENSE:=Unique
+PKG_LICENSE_FILES:=00README
 
 include $(INCLUDE_DIR)/package.mk
 

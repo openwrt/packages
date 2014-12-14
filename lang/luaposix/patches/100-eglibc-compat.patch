@@ -1,28 +1,29 @@
---- a/ext/posix/posix.c
-+++ b/ext/posix/posix.c
-@@ -1970,6 +1970,7 @@ static int Pctermid(lua_State *L)
- 	return 1;
- }
+diff -Naur luaposix-release-v33.0.0.orig/ext/posix/unistd.c luaposix-release-v33.0.0/ext/posix/unistd.c
+--- luaposix-release-v33.0.0.orig/ext/posix/unistd.c	2014-11-04 17:49:35.000000000 +0200
++++ luaposix-release-v33.0.0/ext/posix/unistd.c	2014-12-14 00:59:14.878622722 +0200
+@@ -526,6 +526,7 @@
+ #endif
+ 
  
 +#ifndef NO_GETLOGIN
  /***
  Current logged-in user.
- @see getlogin(3)
-@@ -1980,6 +1981,7 @@ static int Pgetlogin(lua_State *L)
- 	lua_pushstring(L, getlogin());
- 	return 1;
+ @treturn[1] string username, if successful
+@@ -538,6 +539,7 @@
+ 	checknargs(L, 0);
+ 	return pushstringresult(getlogin());
  }
 +#endif
  
- static void Fgetpasswd(lua_State *L, int i, const void *data)
- {
-@@ -3786,7 +3788,9 @@ static const luaL_Reg R[] =
- #if _POSIX_VERSION >= 200112L
- 	MENTRY( Pgetgroups	),
- #endif
+ 
+ /***
+@@ -1037,7 +1039,9 @@
+ 	LPOSIX_FUNC( Pgetegid		),
+ 	LPOSIX_FUNC( Pgeteuid		),
+ 	LPOSIX_FUNC( Pgetgid		),
 +#ifndef NO_GETLOGIN
- 	MENTRY( Pgetlogin	),
+ 	LPOSIX_FUNC( Pgetlogin		),
 +#endif
- 	MENTRY( Pgetopt		),
- 	MENTRY( Pgetpasswd	),
- 	MENTRY( Pgetpid		),
+ 	LPOSIX_FUNC( Pgetpgrp		),
+ 	LPOSIX_FUNC( Pgetpid		),
+ 	LPOSIX_FUNC( Pgetppid		),
