@@ -158,6 +158,26 @@ define PyPackage/python/filespec
 -|/usr/lib/python$(PYTHON_VERSION)/*/test
 -|/usr/lib/python$(PYTHON_VERSION)/*/tests
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/readline.so
+-|/usr/lib/python$(PYTHON_VERSION)/_abcoll.py
+-|/usr/lib/python$(PYTHON_VERSION)/_sysconfigdata.py
+-|/usr/lib/python$(PYTHON_VERSION)/_weakrefset.py
+-|/usr/lib/python$(PYTHON_VERSION)/abc.py
+-|/usr/lib/python$(PYTHON_VERSION)/copy_reg.py
+-|/usr/lib/python$(PYTHON_VERSION)/genericpath.py
+-|/usr/lib/python$(PYTHON_VERSION)/linecache.py
+-|/usr/lib/python$(PYTHON_VERSION)/posixpath.py
+-|/usr/lib/python$(PYTHON_VERSION)/os.py
+-|/usr/lib/python$(PYTHON_VERSION)/re.py
+-|/usr/lib/python$(PYTHON_VERSION)/site.py
+-|/usr/lib/python$(PYTHON_VERSION)/sre_compile.py
+-|/usr/lib/python$(PYTHON_VERSION)/sre_constants.py
+-|/usr/lib/python$(PYTHON_VERSION)/sre_parse.py
+-|/usr/lib/python$(PYTHON_VERSION)/sysconfig.py
+-|/usr/lib/python$(PYTHON_VERSION)/stat.py
+-|/usr/lib/python$(PYTHON_VERSION)/traceback.py
+-|/usr/lib/python$(PYTHON_VERSION)/types.py
+-|/usr/lib/python$(PYTHON_VERSION)/UserDict.py
+-|/usr/lib/python$(PYTHON_VERSION)/warnings.py
 endef
 
 define PyPackage/python-base/install
