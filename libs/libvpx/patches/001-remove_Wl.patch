@@ -1,0 +1,12 @@
+--- libvpx-1.3.0/build/make/Makefile.old	2014-12-06 02:17:06.648714353 -0200
++++ libvpx-1.3.0/build/make/Makefile	2014-12-06 02:17:16.096555499 -0200
+@@ -268,8 +268,8 @@
+ $(1):
+ 	$(if $(quiet),@echo "    [LD] $$@")
+ 	$(qexec)$$(LD) -shared $$(LDFLAGS) \
+-            -Wl,--no-undefined -Wl,-soname,$$(SONAME) \
+-            -Wl,--version-script,$$(EXPORTS_FILE) -o $$@ \
++            --no-undefined -soname $$(SONAME) \
++            --version-script $$(EXPORTS_FILE) -o $$@ \
+             $$(filter %.o,$$^) $$(extralibs)
+ endef
