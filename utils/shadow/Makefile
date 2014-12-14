@@ -63,9 +63,6 @@ define Package/shadow/install
 	true
 endef
 
-define Package/shadow-utils/install
-endef
-
 define Package/shadow-utils
   $(call Package/shadow/Default)
   DEPENDS:=+ALL:shadow
