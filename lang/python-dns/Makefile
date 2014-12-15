@@ -40,9 +40,5 @@ define Build/Compile
 	)
 endef
 
-define PyPackage/python-dns/filespec
-+|/usr/lib/python$(PYTHON_VERSION)/site-packages
-endef
-
 $(eval $(call PyPackage,python-dns))
 $(eval $(call BuildPackage,python-dns))
