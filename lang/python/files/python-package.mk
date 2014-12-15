@@ -38,6 +38,14 @@ ifdef CONFIG_USE_MIPS16
 endif
 
 define PyPackage
+
+  # Add default PyPackage filespec none defined
+  ifndef PyPackage/$(1)/filespec
+    define PyPackage/$(1)/filespec
+      +|$(PYTHON_PKG_DIR)
+    endef
+  endif
+
   $(call shexport,PyPackage/$(1)/filespec)
 
   define Package/$(1)/install
@@ -98,3 +106,4 @@ define Build/Compile/PyMod
 	)
 	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
 endef
+
