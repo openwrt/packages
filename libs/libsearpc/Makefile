@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsearpc
-PKG_VERSION:=3.0-latest
-PKG_RELEASE:=1
+PKG_VERSION:=3.1.7
+PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=GPL-3.0
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/haiwen/libsearpc/archive/
-PKG_MD5SUM:=32a6eaafe16d8c0c0e320b4a08a4d8f6
-PKG_CAT:=zcat
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/haiwen/libsearpc.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=8998e7b2c5587f0b94c48db24e2952d08def5add
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -57,13 +57,6 @@ define Host/Install
 endef
 
 $(eval $(call HostBuild))
-
-Hooks/Prepare/Post += delete_source_package
-
-define delete_source_package
-	# deleting source package as its filename is ambiguous
-	rm -f $(DL_DIR)/$(PKG_SOURCE)
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/{bin,include}
