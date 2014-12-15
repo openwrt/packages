@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-ccnet
 PKG_VERSION:=3.1.7
-PKG_RELEASE:=1
+PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=GPL-3.0
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/ccnet-$(PKG_VERSION)-server
-PKG_SOURCE:=v$(PKG_VERSION)-server.tar.gz
-PKG_SOURCE_URL:=https://github.com/haiwen/ccnet/archive/
-PKG_MD5SUM:=ed6d58bcce31d33847f536d129cfb404
-PKG_CAT:=zcat
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/haiwen/ccnet.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=ddf42784fab3b5924f65e648facd21c3bffa2c72
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -51,15 +51,8 @@ CONFIGURE_ARGS += --disable-client \
 PKG_BUILD_DEPENDS:=vala/host \
 		   libsearpc/host
 
-Hooks/Prepare/Post += delete_source_package
-
 TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -liconv \
 		    -L$(STAGING_DIR)/usr/lib/mysql -lmysqlclient -lz
-
-define delete_source_package
-	# deleting downloaded source package as its filename is ambiguous
-	rm -f $(DL_DIR)/$(PKG_SOURCE)
-endef
 
 define Package/seafile-ccnet/install
 	$(INSTALL_DIR) $(1)/usr/{bin,lib}
