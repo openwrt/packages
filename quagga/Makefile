@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
 PKG_VERSION:=0.99.22.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MD5SUM:=03ef24a448be47beba80efa2152f8a28
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -46,7 +46,7 @@ endef
 
 define Package/quagga
   $(call Package/quagga/Default)
-  DEPENDS:=@BROKEN +librt
+  DEPENDS:=+librt
   MENU:=1
 endef
 
