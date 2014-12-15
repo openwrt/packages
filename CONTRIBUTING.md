@@ -1,12 +1,14 @@
 # Contributing Guidelines  
 (See <http://wiki.openwrt.org/doc/devel/packages> for overall format and construction)
 
+
 All packages you commit or submit by pull-request should follow these simple guidelines:
 
 * Package a version which is still maintained by the upstream author.
 * Will be updated regularly to maintained and supported versions.
 * Have no dependencies outside the OpenWrt core packages or this repository feed.
-* Have been tested to compile with the correct includes and dependencies. Also, test with "Compile with full language support" found under "General Build Settings" set.
+* Have been tested to compile with the correct includes and dependencies. Please also test with "Compile with full language support" found under "General Build Settings" set if language support is relevant to your package.
+* Do NOT use a rolling source file (e.g. foo-latest.tar.gz) or the head of a branch as source for the package since that would create unpredictable builds which change over time.
 * Best of all -- it works as expected!
 
 Makefile contents should contain:
@@ -19,7 +21,7 @@ Makefile contents should contain:
 * An optional PKG_LICENSE_FILES including the filename of the license-file in the source-package.
     (E.g.: PKG_LICENSE_FILES:=COPYING)
 
-Commits and pull-requests:
+Commits in your pull-requests should:
 
 * Have a useful description prefixed with the package name  
     (E.g.: "foopkg: Add libzot dependency")
