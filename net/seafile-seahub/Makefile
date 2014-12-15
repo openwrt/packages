@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
 PKG_VERSION:=3.1.7
-PKG_RELEASE:=1
+PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=Apache-2.0
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/seahub-$(PKG_VERSION)-server
-PKG_SOURCE:=v$(PKG_VERSION)-server.tar.gz
-PKG_SOURCE_URL:=https://github.com/haiwen/seahub/archive/
-PKG_MD5SUM:=d019b7171ed23817025cba55554b90d9
-PKG_CAT:=zcat
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/haiwen/seahub.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=a984c86442e7fc10c3bcf6d92b4843f7263547eb
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -37,12 +37,6 @@ define Package/seafile-seahub/description
 endef
 
 PKG_BUILD_DEPENDS:=python-setuptools
-Hooks/Prepare/Post += delete_source_package
-
-define delete_source_package
-	# deleting downloaded source package as its filename is ambiguous
-	rm -f $(DL_DIR)/$(PKG_SOURCE)
-endef
 
 define Build/Configure
 endef

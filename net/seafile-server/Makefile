@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=3.1.7
-PKG_RELEASE:=1
+PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=GPL-3.0
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/seafile-$(PKG_VERSION)-server
-PKG_SOURCE:=v$(PKG_VERSION)-server.tar.gz
-PKG_SOURCE_URL:=https://github.com/haiwen/seafile/archive/
-PKG_MD5SUM:=af35324998b6c98fe1442d5d775871ee
-PKG_CAT:=zcat
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/haiwen/seafile.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=69658fca88f258276be92447b1b4462b64a1c6b9
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -52,13 +52,6 @@ PKG_BUILD_DEPENDS:=vala/host \
 
 TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -liconv \
 		    -L$(STAGING_DIR)/usr/lib/mysql -lmysqlclient -lz
-
-Hooks/Prepare/Post += delete_source_package
-
-define delete_source_package
-	# deleting downloaded source package as its filename is ambiguous
-	rm -f $(DL_DIR)/$(PKG_SOURCE)
-endef
 
 define Package/seafile-server/install
 	$(INSTALL_DIR) $(1)/usr/{bin,lib}
