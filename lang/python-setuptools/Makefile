@@ -39,10 +39,6 @@ define Build/Compile
 	)
 endef
 
-define PyPackage/python-setuptools/filespec
-+|/usr/lib/python$(PYTHON_VERSION)/site-packages
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)$(PYTHON_PKG_DIR)
 	$(CP) \
