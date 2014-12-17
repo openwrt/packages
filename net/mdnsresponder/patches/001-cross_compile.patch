@@ -56,7 +56,7 @@
  LINKOPTS = -lsocket -lnsl -lresolv
  JAVACFLAGS_OS += -I$(JDK)/include/solaris
  ifneq ($(DEBUG),1)
-@@ -147,7 +148,8 @@ CFLAGS_OS = -DHAVE_IPV6 -no-cpp-precomp 
+@@ -147,7 +148,8 @@ CFLAGS_OS = -DHAVE_IPV6 -no-cpp-precomp
  	-D__MAC_OS_X_VERSION_MIN_REQUIRED=__MAC_OS_X_VERSION_10_4 \
  	-D__APPLE_USE_RFC_2292 #-Wunreachable-code
  CC = gcc

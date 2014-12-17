@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mDNSResponder
-PKG_VERSION:=544
-PKG_RELEASE:=4
+PKG_VERSION:=561.1.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=mDNSResponder-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://opensource.apple.com/tarballs/mDNSResponder/
-PKG_MD5SUM:=39142ab70bd82a096801ce346f86cbab
+PKG_MD5SUM:=d4b56e22798d6f45e29b42cd6720ab6e
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=Apache-2.0
 
