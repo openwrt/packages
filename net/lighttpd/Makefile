@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.35
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://download.lighttpd.net/lighttpd/releases-1.4.x
@@ -149,33 +149,39 @@ define BuildPlugin
 endef
 
 $(eval $(call BuildPackage,lighttpd))
-$(eval $(call BuildPlugin,access,Access restrictions,,10))
-$(eval $(call BuildPlugin,accesslog,Access logging,,10))
-$(eval $(call BuildPlugin,alias,Directory alias,,10))
-$(eval $(call BuildPlugin,auth,Authentication,,05))
-$(eval $(call BuildPlugin,cgi,CGI,,10))
-$(eval $(call BuildPlugin,cml,Cache Meta Language,,10))
-$(eval $(call BuildPlugin,compress,Compress output,+PACKAGE_lighttpd-mod-compress:zlib,10))
-$(eval $(call BuildPlugin,evasive,Evasive,,10))
-$(eval $(call BuildPlugin,evhost,Exnhanced Virtual-Hosting,,10))
-$(eval $(call BuildPlugin,expire,Expire,,10))
-$(eval $(call BuildPlugin,extforward,Extract client,,10))
-$(eval $(call BuildPlugin,fastcgi,FastCGI,,10))
-$(eval $(call BuildPlugin,flv_streaming,FLV streaming,,10))
-$(eval $(call BuildPlugin,magnet,Magnet,,10))
-$(eval $(call BuildPlugin,mysql_vhost,Mysql virtual hosting,+PACKAGE_lighttpd-mod-mysql_vhost:libmysqlclient,10))
-$(eval $(call BuildPlugin,proxy,Proxy,,10))
+
+# First, permit redirect from HTTP to HTTPS.
 $(eval $(call BuildPlugin,redirect,URL redirection,+PACKAGE_lighttpd-mod-redirect:libpcre,10))
-$(eval $(call BuildPlugin,rewrite,URL rewriting,+PACKAGE_lighttpd-mod-rewrite:libpcre,10))
-$(eval $(call BuildPlugin,rrdtool,RRDtool,,10))
-$(eval $(call BuildPlugin,scgi,SCGI,,10))
-$(eval $(call BuildPlugin,secdownload,Secure and fast download,,10))
-$(eval $(call BuildPlugin,setenv,Environment variable setting,,10))
-$(eval $(call BuildPlugin,simple_vhost,Simple virtual hosting,,10))
-$(eval $(call BuildPlugin,ssi,SSI,+libpcre,10))
-$(eval $(call BuildPlugin,status,Server status display,,10))
-$(eval $(call BuildPlugin,trigger_b4_dl,Trigger before download,+PACKAGE_lighttpd-mod-trigger_b4_dl:libpcre,10))
-$(eval $(call BuildPlugin,userdir,User directory,,10))
-$(eval $(call BuildPlugin,usertrack,User tracking,,10))
-$(eval $(call BuildPlugin,webdav,WebDAV,+PACKAGE_lighttpd-mod-webdav:libsqlite3 +PACKAGE_lighttpd-mod-webdav:libuuid +PACKAGE_lighttpd-mod-webdav:libxml2,10))
+
+# Next, permit authentication.
+$(eval $(call BuildPlugin,auth,Authentication,,20))
+
+# Finally, everything else.
+$(eval $(call BuildPlugin,access,Access restrictions,,30))
+$(eval $(call BuildPlugin,accesslog,Access logging,,30))
+$(eval $(call BuildPlugin,alias,Directory alias,,30))
+$(eval $(call BuildPlugin,cgi,CGI,,30))
+$(eval $(call BuildPlugin,cml,Cache Meta Language,,30))
+$(eval $(call BuildPlugin,compress,Compress output,+PACKAGE_lighttpd-mod-compress:zlib,30))
+$(eval $(call BuildPlugin,evasive,Evasive,,30))
+$(eval $(call BuildPlugin,evhost,Exnhanced Virtual-Hosting,,30))
+$(eval $(call BuildPlugin,expire,Expire,,30))
+$(eval $(call BuildPlugin,extforward,Extract client,,30))
+$(eval $(call BuildPlugin,fastcgi,FastCGI,,30))
+$(eval $(call BuildPlugin,flv_streaming,FLV streaming,,30))
+$(eval $(call BuildPlugin,magnet,Magnet,,30))
+$(eval $(call BuildPlugin,mysql_vhost,Mysql virtual hosting,+PACKAGE_lighttpd-mod-mysql_vhost:libmysqlclient,30))
+$(eval $(call BuildPlugin,proxy,Proxy,,30))
+$(eval $(call BuildPlugin,rewrite,URL rewriting,+PACKAGE_lighttpd-mod-rewrite:libpcre,30))
+$(eval $(call BuildPlugin,rrdtool,RRDtool,,30))
+$(eval $(call BuildPlugin,scgi,SCGI,,30))
+$(eval $(call BuildPlugin,secdownload,Secure and fast download,,30))
+$(eval $(call BuildPlugin,setenv,Environment variable setting,,30))
+$(eval $(call BuildPlugin,simple_vhost,Simple virtual hosting,,30))
+$(eval $(call BuildPlugin,ssi,SSI,+libpcre,30))
+$(eval $(call BuildPlugin,status,Server status display,,30))
+$(eval $(call BuildPlugin,trigger_b4_dl,Trigger before download,+PACKAGE_lighttpd-mod-trigger_b4_dl:libpcre,30))
+$(eval $(call BuildPlugin,userdir,User directory,,30))
+$(eval $(call BuildPlugin,usertrack,User tracking,,30))
+$(eval $(call BuildPlugin,webdav,WebDAV,+PACKAGE_lighttpd-mod-webdav:libsqlite3 +PACKAGE_lighttpd-mod-webdav:libuuid +PACKAGE_lighttpd-mod-webdav:libxml2,30))
 
