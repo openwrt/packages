@@ -47,7 +47,9 @@ CONFIGURE_ARGS+= \
 	--disable-pam-session \
 	--with-editor=/bin/vi \
 	--without-lecture \
-	--disable-zlib
+	--disable-zlib \
+	--with-rundir=/var/lib/sudo \
+	--with-vardir=/var/lib/sudo
 
 CONFIGURE_VARS+= \
 	sudo_cv_uid_t_len=10 \
