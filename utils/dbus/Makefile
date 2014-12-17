@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 # Make sure to also update the dbus-x package
 PKG_NAME:=dbus
-PKG_VERSION:=1.8.8
+PKG_VERSION:=1.9.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dbus.freedesktop.org/releases/dbus/
-PKG_MD5SUM:=b9f4a18ee3faa1e07c04aa1d83239c43
+PKG_MD5SUM:=beee7886e478911ff942a80e4afec303
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=AFL-2.1
 
@@ -47,7 +47,6 @@ define Package/libdbus
 $(call Package/dbus/Default)
   CATEGORY:=Libraries
   TITLE+= (library)
-  DEPENDS:= +librt
 endef
 
 define Package/libdbus/Description
