@@ -8,14 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grep
-PKG_VERSION:=2.20
+PKG_VERSION:=2.21
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/grep
-PKG_MD5SUM:=2cbea44a4f1548aee20b9ff2d3076908
+PKG_MD5SUM:=43c48064d6409862b8a850db83c8038a
+
+PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILES:=COPYING
+PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+
+TARGET_CFLAGS+=--std=gnu99
 
 define Package/grep
   SECTION:=utils
