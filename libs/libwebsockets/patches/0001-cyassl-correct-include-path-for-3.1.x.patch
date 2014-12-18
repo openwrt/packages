@@ -1,0 +1,25 @@
+From 4fb4a2353db521667d1ec61480bf8179bf585d5f Mon Sep 17 00:00:00 2001
+From: Karl Palsson <karlp@remake.is>
+Date: Thu, 14 Aug 2014 16:30:48 +0000
+Subject: [PATCH] cyassl: correct include path for 3.1.x
+
+---
+ lib/private-libwebsockets.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/private-libwebsockets.h b/lib/private-libwebsockets.h
+index 4194498..fbd22b5 100755
+--- a/lib/private-libwebsockets.h
++++ b/lib/private-libwebsockets.h
+@@ -155,7 +155,7 @@
+ #ifdef LWS_OPENSSL_SUPPORT
+ #ifdef USE_CYASSL
+ #include <cyassl/openssl/ssl.h>
+-#include <cyassl/error.h>
++#include <cyassl/error-ssl.h>
+ unsigned char *
+ SHA1(const unsigned char *d, size_t n, unsigned char *md);
+ #else
+-- 
+1.8.3.1
+
