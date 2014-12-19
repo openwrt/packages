@@ -125,10 +125,6 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/mDNSPosix/build/prod/*.so* $(1)/usr/lib/
 endef
 
-define Package/mdns-utils/conffile
-  /etc/init.d/mDNSResponder
-endef
-
 define Package/mdns-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dns-sd $(1)/usr/bin/
