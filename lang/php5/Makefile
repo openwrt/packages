@@ -22,6 +22,7 @@ PKG_MD5SUM:=489cc8336488fb2e722ffa3c08f9c864
 
 PKG_FIXUP:=libtool no-autoreconf
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 PHP5_MODULES = \
 	calendar ctype curl \
