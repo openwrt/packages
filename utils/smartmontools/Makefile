@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=@SF/smartmontools
 PKG_MD5SUM:=2ea0c62206e110192a97b59291b17f54
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 

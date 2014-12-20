@@ -1,0 +1,24 @@
+diff -rupN seafile-3.1.7-server.orig/controller/seafile-controller.c seafile-3.1.7-server/controller/seafile-controller.c
+--- seafile-3.1.7-server.orig/controller/seafile-controller.c	2014-10-16 05:30:04.000000000 +0200
++++ seafile-3.1.7-server/controller/seafile-controller.c	2014-11-28 16:50:24.053674057 +0100
+@@ -21,7 +21,7 @@
+ 
+ SeafileController *ctl;
+ 
+-static char *controller_pidfile = NULL;
++static char *controller_pidfile = "/var/run/seafile/seafile-controller.pid";
+ 
+ char *bin_dir = NULL;
+ char *installpath = NULL;
+@@ -614,9 +614,9 @@ stop_ccnet_server ()
+ static void
+ init_pidfile_path (SeafileController *ctl)
+ {
+-    char *pid_dir = g_build_filename (topdir, "pids", NULL);
++    char *pid_dir = g_path_get_dirname (controller_pidfile);
+     if (!g_file_test(pid_dir, G_FILE_TEST_EXISTS)) {
+-        if (g_mkdir(pid_dir, 0777) < 0) {
++        if (g_mkdir(pid_dir, 0755) < 0) {
+             seaf_warning("failed to create pid dir %s: %s", pid_dir, strerror(errno));
+             controller_exit(1);
+         }

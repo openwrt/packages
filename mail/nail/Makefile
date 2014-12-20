@@ -8,15 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nail
-PKG_VERSION:=
+PKG_VERSION:=12.5
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-2-Clause
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=:pserver:anonymous@nail.cvs.sourceforge.net:/cvsroot/nail
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)
-PKG_SOURCE_VERSION:=-D"2014-11-24 00:00"
-PKG_SOURCE_PROTO:=cvs
+PKG_SOURCE:=heirloom-mailx_$(PKG_VERSION).orig.tar.gz
+PKG_SOURCE_URL:=http://ftp.de.debian.org/debian/pool/main/h/heirloom-mailx/
+PKG_MD5SUM:=29a6033ef1412824d02eb9d9213cb1f2
+PKG_BUILD_DIR:=$(BUILD_DIR)/heirloom-mailx-$(PKG_VERSION)
 
 PKG_INSTALL:=0
 

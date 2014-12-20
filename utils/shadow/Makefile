@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2013 OpenWrt.org
+# Copyright (C) 2008-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pkg-shadow.alioth.debian.org/releases
@@ -61,9 +61,6 @@ endef
 
 define Package/shadow/install
 	true
-endef
-
-define Package/shadow-utils/install
 endef
 
 define Package/shadow-utils
@@ -124,6 +121,9 @@ define Package/shadow-common/install
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/login.defs $(1)/etc/
 endef
 
+define Package/shadow-utils/install
+	true
+endef
 
 define BuildPlugin
   define Package/shadow-$(1)/install

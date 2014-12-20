@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mjpg-streamer
 PKG_REV:=182
 PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).1.tar.bz2
@@ -30,7 +30,7 @@ define Package/mjpg-streamer
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=MJPG-streamer
-  DEPENDS:=+libpthread +libjpeg +PACKAGE_libv4l:libv4l
+  DEPENDS:=+libpthread +libjpeg +MJPG_STREAMER_V4L2:libv4l
   URL:=http://mjpg-streamer.wiki.sourceforge.net/
   MENU:=1
 endef

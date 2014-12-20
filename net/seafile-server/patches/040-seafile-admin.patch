@@ -1,0 +1,53 @@
+diff -rupN seafile-3.1.7-server.orig/tools/seafile-admin seafile-3.1.7-server/tools/seafile-admin
+--- seafile-3.1.7-server.orig/tools/seafile-admin	2014-10-16 05:30:04.000000000 +0200
++++ seafile-3.1.7-server/tools/seafile-admin	2014-12-12 12:09:00.703175935 +0100
+@@ -416,13 +416,15 @@ def create_gunicorn_conf():
+     content = '''\
+ import os
+ daemon = True
+-workers = 3
++workers = 1
++threads = 3
+ 
+ # Logging
+ runtime_dir = os.path.dirname(__file__)
+-pidfile = os.path.join(runtime_dir, 'seahub.pid')
++pidfile = '/var/run/seafile/seahub.pid'
+ errorlog = os.path.join(runtime_dir, 'error.log')
+-accesslog = os.path.join(runtime_dir, 'access.log')
++# uncomment if you need access logging (works only in fastcgi mode)
++#accesslog = os.path.join(runtime_dir, 'access.log')
+ '''
+     try:
+         with open(confpath, 'w') as fp:
+@@ -607,6 +609,7 @@ def start_seahub_gunicorn():
+         'gunicorn_django',
+         '-c', conf[CONF_SEAHUB_CONF],
+         '-b', '0.0.0.0:%s' % conf[CONF_SEAHUB_PORT],
++        '-t', '120',
+     ]
+ 
+     info('Starting seahub...')
+@@ -738,10 +741,9 @@ def setup_seafile(args):
+     print '-----------------------------------------------------------------'
+     print '-----------------------------------------------------------------'
+     print
+-    print 'To start/stop seafile server:'
++    print 'To start, stop or restart seafile server, please run as root:'
+     print
+-    print highlight('         $ cd %s' % cwd)
+-    print highlight('         $ %s { start | stop }' % SCRIPT_NAME)
++    print highlight('         # /etc/init.d/seafile { start | stop | restart }')
+     print
+     print 'If you have any problem, refer to\n'
+     print
+@@ -802,8 +804,7 @@ def start_seafile(args):
+ def stop_seafile(dummy):
+     info('Stopping seafile server')
+     pkill('seafile-controller')
+-    runtime_dir = os.path.join(cwd, 'seafile-server', 'runtime')
+-    pidfile = os.path.join(runtime_dir, 'seahub.pid')
++    pidfile = '/var/run/seafile/seahub.pid'
+     try:
+         with open(pidfile, 'r') as fp:
+             pid = fp.read().strip('\n ')

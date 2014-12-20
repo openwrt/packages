@@ -76,9 +76,11 @@ define Package/lvm2/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/lvm $(1)/sbin
 	$(INSTALL_DIR) $(1)/etc/lvm
+	$(SED) '/^[[:space:]]*\(#\|$$$$\)/d' $(PKG_BUILD_DIR)/conf/example.conf
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/conf/example.conf $(1)/etc/lvm/lvm.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/lvm2.init $(1)/etc/init.d/lvm2
+	$(FIND) $(PKG_INSTALL_DIR)/usr/sbin/ -type l -exec $(CP) -a {} $(1)/sbin/ \;
 endef
 
 define Package/lvm2/conffiles
