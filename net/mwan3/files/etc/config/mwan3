@@ -12,6 +12,7 @@ config interface 'wan'
 
 config policy 'balanced'
 	list use_member 'wan_m1_w1'
+	option last_resort 'default'
 
 config rule 'default_rule'
 	option dest_ip '0.0.0.0/0'
