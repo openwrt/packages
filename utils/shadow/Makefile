@@ -64,7 +64,6 @@ endef
 
 define Package/shadow-utils
   $(call Package/shadow/Default)
-  DEPENDS:=+ALL:shadow
 endef
 
 define Package/shadow-utils/config
