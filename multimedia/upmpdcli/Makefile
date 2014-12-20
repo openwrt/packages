@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upmpdcli
 PKG_VERSION:=0.9.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,8 +18,6 @@ PKG_MD5SUM:=0e7b86037f19ea3a08067409af6f6902
 PKG_MAINTAINER:=Petko Bordjukov <bordjukov@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
-
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -34,6 +32,11 @@ endef
 
 define Package/upmpdcli/description
 upmpdcli implements an UPnP Media Renderer, using MPD to perform the real work.
+endef
+
+# Force strip of binaries
+define Build/Install
+  $(call Build/Install/Default,install-strip)
 endef
 
 define Package/upmpdcli/install
