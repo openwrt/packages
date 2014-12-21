@@ -10,17 +10,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=2.1.3
-PKG_RELEASE:=2
+PKG_VERSION:=2.1.5
+PKG_RELEASE:=1
 
 PKG_LIBVER:=2.1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_LIBVER)/
-PKG_MD5SUM:=02b7da3bb06037c777ca52e1194efccb
+PKG_MD5SUM:=a7c3e5fec47eff23091b566e9e1dac1b
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DEPENDS:=ruby/host
 PKG_INSTALL:=1
@@ -86,7 +86,7 @@ endef
 
 define Package/ruby-bigdecimal
 $(call Package/ruby/Default)
-  TITLE:=Arbitrary-precision decimal floating-point library for Ruby
+  TITLE:=Arbitrary-precision decimal floating-point lib for Ruby
   DEPENDS:=ruby
 endef
 

@@ -15,7 +15,7 @@ PKG_MD5SUM:=c3f0f51d8865559b40e9350eb3816011
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=IPL-1.0
-PKG_LICENSE_FILE:=LICENSE
+PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DEPENDS:=+POSTFIX_CDB:tinycdb
 
 include $(INCLUDE_DIR)/package.mk
@@ -98,7 +98,7 @@ endif
 
 CCARGS+=-DDEF_DB_TYPE=\"$(default_database_type)\"
 
-config_directory=/etc/postfix
+config_directory=/etc/postfix# also add this to postfix init file
 sample_directory=/etc/postfix
 command_directory=/usr/sbin
 daemon_directory=/usr/libexec/postfix
@@ -161,103 +161,67 @@ endef
 
 define Package/postfix/postinst
 #!/bin/sh
-# check if we are on real system
-if [ -z "$${IPKG_INSTROOT}" ]; then
 
- if [ -f "$(sendmail_path)" -a "$$(readlink "$(sendmail_path)")" != "$(sendmail_path)$(ln_suffix)" ]; then
-  mv "$(sendmail_path)" "$(sendmail_path)$(ln_old_suffix)"
-  echo "Warning: $(sendmail_path) saved as $(sendmail_path)$(ln_old_suffix)"
+ if [ -f "$${IPKG_INSTROOT}$(sendmail_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(sendmail_path)")" != "$(sendmail_path)$(ln_suffix)" ]; then
+  mv "$${IPKG_INSTROOT}$(sendmail_path)" "$${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
+  echo "Warning: $${IPKG_INSTROOT}$(sendmail_path) saved as $${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
  fi
- if [ ! -f "$(sendmail_path)" ]; then
-  ln -s "$(sendmail_path)$(ln_suffix)" "$(sendmail_path)"
+ if [ ! -f "$${IPKG_INSTROOT}$(sendmail_path)" ]; then
+  ln -s "$${IPKG_INSTROOT}$(sendmail_path)$(ln_suffix)" "$(sendmail_path)"
  fi
 
- if [ -f "$(newaliases_path)" -a "$$(readlink "$(newaliases_path)")" != "$(newaliases_path)$(ln_suffix)" ]; then
-  mv "$(newaliases_path)" "$(newaliases_path)$(ln_old_suffix)"
-  echo "Warning: $(newaliases_path) saved as $(newaliases_path)$(ln_old_suffix)"
+ if [ -f "$${IPKG_INSTROOT}$(newaliases_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(newaliases_path)")" != "$(newaliases_path)$(ln_suffix)" ]; then
+  mv "$${IPKG_INSTROOT}$(newaliases_path)" "$${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
+  echo "Warning: $${IPKG_INSTROOT}$(newaliases_path) saved as $${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
  fi
- if [ ! -f "$(newaliases_path)" ]; then
-  ln -s "$(newaliases_path)$(ln_suffix)" "$(newaliases_path)"
+ if [ ! -f "$${IPKG_INSTROOT}$(newaliases_path)" ]; then
+  ln -s "$${IPKG_INSTROOT}$(newaliases_path)$(ln_suffix)" "$(newaliases_path)"
  fi
 
- if [ -f "$(mailq_path)" -a "$$(readlink "$(mailq_path)")" != "$(mailq_path)$(ln_suffix)" ]; then
-  mv "$(mailq_path)" "$(mailq_path)$(ln_old_suffix)"
-  echo "Warning: $(mailq_path) saved as $(mailq_path)$(ln_old_suffix)"
+ if [ -f "$${IPKG_INSTROOT}$(mailq_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(mailq_path)")" != "$(mailq_path)$(ln_suffix)" ]; then
+  mv "$${IPKG_INSTROOT}$(mailq_path)" "$${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
+  echo "Warning: $${IPKG_INSTROOT}$(mailq_path) saved as $${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
  fi
  if [ ! -f "$(mailq_path)" ]; then
-  ln -s "$(mailq_path)$(ln_suffix)" "$(mailq_path)"
+  ln -s "$${IPKG_INSTROOT}$(mailq_path)$(ln_suffix)" "$(mailq_path)"
  fi
 
- echo "myhostname = $$(uci get system.@system[0].hostname)" >> $(config_directory)/main.cf.default
- echo "mydomain = $$(uci get system.@system[0].hostname|sed -e "s/[^\.]*\.\(.*\)/\1/")" >> $(config_directory)/main.cf.default
- for net in $$(uci show network|grep ipaddr|sed -e "s/network\.\([^\.]*\).*/\1/"); do eval "$$(ipcalc.sh $$(uci get network.$$net.ipaddr) $$(uci get network.$$net.netmask))"; echo "$$IP/$$PREFIX"; done | xargs echo "mynetworks =" >> $(config_directory)/main.cf.default
+ grep -qc main\.cf "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/main.cf" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
+ grep -qc master\.cf "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/master.cf" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
+ grep -qc aliases "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/aliases" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
 
- grep -qc "^sendmail_path" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^sendmail_path =" $(config_directory)/main.cf.default)"
- grep -qc "^newaliases_path" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^newaliases_path =" $(config_directory)/main.cf.default)"
- grep -qc "^mailq_path" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^mailq_path =" $(config_directory)/main.cf.default)"
- grep -qc "^html_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^html_directory =" $(config_directory)/main.cf.default)"
- grep -qc "^manpage_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^manpage_directory =" $(config_directory)/main.cf.default)"
- grep -qc "^sample_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^sample_directory =" $(config_directory)/main.cf.default)"
- grep -qc "^readme_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^readme_directory =" $(config_directory)/main.cf.default)"
- grep -qc "^command_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^command_directory =" $(config_directory)/main.cf.default)"
- grep -qc "^daemon_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^daemon_directory =" $(config_directory)/main.cf.default)"
- grep -qc "^data_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^data_directory =" $(config_directory)/main.cf.default)"
- grep -qc "^queue_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^queue_directory =" $(config_directory)/main.cf.default)"
- grep -qc "^config_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^config_directory =" $(config_directory)/main.cf.default)"
- grep -qc "^mail_spool_directory" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^mail_spool_directory =" $(config_directory)/main.cf.default)"
- grep -qc "^mail_owner" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^mail_owner =" $(config_directory)/main.cf.default)"
- grep -qc "^setgid_group" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^setgid_group =" $(config_directory)/main.cf.default)"
- grep -qc "^myhostname" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^myhostname =" $(config_directory)/main.cf.default)"
- grep -qc "^mydomain" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^mydomain =" $(config_directory)/main.cf.default)"
- grep -qc "^mynetworks" $(config_directory)/main.cf >/dev/null || postconf -e "$$(grep "^mynetworks =" $(config_directory)/main.cf.default)"
+ touch "$${IPKG_INSTROOT}$(config_directory)"/opkg_postinst
 
- EXTRA_COMMANDS=create_users /etc/init.d/postfix create_users
+ if [ -z "$${IPKG_INSTROOT}" ]; then
+  ps | grep "postfix/master" | grep -cvq grep >/dev/null && /etc/init.d/postfix reload
+ fi
 
- postfix set-permissions
- postfix post-install upgrade-source
- postfix upgrade-configuration
- newaliases
- ps | grep "postfix/master" | grep -cvq grep >/dev/null && postfix reload
- grep -qc main\.cf /etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/main.cf" >> /etc/sysupgrade.conf
- grep -qc master\.cf /etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/master.cf" >> /etc/sysupgrade.conf
- grep -qc aliases /etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/aliases" >> /etc/sysupgrade.conf
-
-fi
 endef
 
 define Package/postfix/prerm
 #!/bin/sh
-# check if we are on real system
-if [ -z "$${IPKG_INSTROOT}" ]; then
-
  ps | grep "postfix/master" | grep -cvq grep >/dev/null && postfix stop
  /etc/init.d/postfix disable
-
-fi
 endef
 
 define Package/postfix/postrm
 #!/bin/sh
-# check if we are on real system
-if [ -z "$${IPKG_INSTROOT}" ]; then
- rm -f $(config_directory)/aliases.cdb $(config_directory)/aliases.db $(data_directory)/master.lock
+ rm -f $${IPKG_INSTROOT}$(config_directory)/aliases.cdb $${IPKG_INSTROOT}$(config_directory)/aliases.db $${IPKG_INSTROOT}$(data_directory)/master.lock
 
- rm -f "$(sendmail_path)" "$(newaliases_path)" "$(mailq_path)"
+ rm -f "$${IPKG_INSTROOT}$(sendmail_path)" "$${IPKG_INSTROOT}$(newaliases_path)" "$${IPKG_INSTROOT}$(mailq_path)"
 
- if [ -f "$(sendmail_path)$(ln_old_suffix)" ]; then
-  mv "$(sendmail_path)$(ln_old_suffix)" "$(sendmail_path)"
-  echo "Warning: $(sendmail_path) restored from $(sendmail_path)$(ln_old_suffix)"
+ if [ -f "$${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)" ]; then
+  mv "$${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)" "$${IPKG_INSTROOT}$(sendmail_path)"
+  echo "Warning: $${IPKG_INSTROOT}$(sendmail_path) restored from $${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
  fi
- if [ -f "$(newaliases_path)$(ln_old_suffix)" ]; then
-  mv "$(newaliases_path)$(ln_old_suffix)" "$(newaliases_path)"
-  echo "Warning: $(newaliases_path) restored from $(newaliases_path)$(ln_old_suffix)"
+ if [ -f "$${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)" ]; then
+  mv "$${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)" "$${IPKG_INSTROOT}$(newaliases_path)"
+  echo "Warning: $${IPKG_INSTROOT}$(newaliases_path) restored from $${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
  fi
- if [ -f "$(mailq_path)$(ln_old_suffix)" ]; then
-  mv "$(mailq_path)$(ln_old_suffix)" "$(mailq_path)"
-  echo "Warning: $(mailq_path) restored from $(mailq_path)$(ln_old_suffix)"
+ if [ -f "$${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)" ]; then
+  mv "$${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)" "$${IPKG_INSTROOT}$(mailq_path)"
+  echo "Warning: $${IPKG_INSTROOT}$(mailq_path) restored from $${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
  fi
-
-fi
 endef
 
 $(eval $(call BuildPackage,postfix))

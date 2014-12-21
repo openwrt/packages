@@ -18,6 +18,11 @@ auth = "|AUTH|"
 # A banner to be displayed on clients
 banner = "Welcome to OpenWRT"
 
+# When the server has a dynamic DNS address (that may change),
+# should set that to true to ask the client to resolve again on
+# reconnects.
+listen-host-is-dyndns = |DYNDNS|
+
 # Use listen-host to limit to specific IPs or to the IPs of a provided 
 # hostname.
 #listen-host = [IP|HOSTNAME]

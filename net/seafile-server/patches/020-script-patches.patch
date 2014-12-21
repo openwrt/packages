@@ -1,0 +1,40 @@
+diff -rupN seafile-3.1.7-server.orig/scripts/seaf-gc.sh seafile-3.1.7-server/scripts/seaf-gc.sh
+--- seafile-3.1.7-server.orig/scripts/seaf-gc.sh	2014-10-16 05:30:04.000000000 +0200
++++ seafile-3.1.7-server/scripts/seaf-gc.sh	2014-12-13 00:51:12.919136978 +0100
+@@ -6,11 +6,10 @@ SCRIPT=$(readlink -f "$0")
+ INSTALLPATH=$(dirname "${SCRIPT}")
+ TOPDIR=$(dirname "${INSTALLPATH}")
+ default_ccnet_conf_dir=${TOPDIR}/ccnet
+-seaf_gc=${INSTALLPATH}/seafile/bin/seafserv-gc
++seaf_gc=/usr/bin/seafserv-gc
+ seaf_gc_opts=""
+ 
+-export PATH=${INSTALLPATH}/seafile/bin:$PATH
+-export SEAFILE_LD_LIBRARY_PATH=${INSTALLPATH}/seafile/lib/:${INSTALLPATH}/seafile/lib64:${LD_LIBRARY_PATH}
++export PYTHONPATH="/usr/share/seafile/seafile-server/seahub/thirdpart:$PYTHONPATH"
+ 
+ script_name=$0
+ function usage () {
+@@ -78,9 +77,7 @@ function run_seaf_gc () {
+ 
+     echo "Starting seafserv-gc, please wait ..."
+ 
+-    LD_LIBRARY_PATH=$SEAFILE_LD_LIBRARY_PATH ${seaf_gc} \
+-        -c "${default_ccnet_conf_dir}" -d "${seafile_data_dir}" \
+-        ${seaf_gc_opts}
++    ${seaf_gc} -c "${default_ccnet_conf_dir}" -d "${seafile_data_dir}" ${seaf_gc_opts}
+ 
+     echo "seafserv-gc run done"
+     echo
+diff -rupN seafile-3.1.7-server.orig/scripts/setup-seafile-mysql.sh seafile-3.1.7-server/scripts/setup-seafile-mysql.sh
+--- seafile-3.1.7-server.orig/scripts/setup-seafile-mysql.sh	2014-10-16 05:30:04.000000000 +0200
++++ seafile-3.1.7-server/scripts/setup-seafile-mysql.sh	2014-12-13 00:51:49.242172631 +0100
+@@ -9,6 +9,8 @@ set -e
+ SCRIPT=$(readlink -f "$0")
+ INSTALLPATH=$(dirname "${SCRIPT}")
+ 
++export PYTHONPATH="/usr/share/seafile/seafile-server/seahub/thirdpart:$PYTHONPATH"
++
+ cd "$INSTALLPATH"
+ 
+ python_script=setup-seafile-mysql.py

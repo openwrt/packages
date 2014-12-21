@@ -17,16 +17,26 @@ PYTHON_PKG_DIR:=/usr/lib/python$(PYTHON_VERSION)/site-packages
 
 PYTHON:=python$(PYTHON_VERSION)
 
+HOST_PYTHON_LIB_DIR:=$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION)
 HOST_PYTHON_BIN:=$(STAGING_DIR_HOST)/bin/python2
 
+PYTHONPATH:=$(PYTHON_LIB_DIR):$(STAGING_DIR)/$(PYTHON_PKG_DIR)
+PYTHONPATH+=:$(PKG_INSTALL_DIR)/$(PYTHON_PKG_DIR)
 define HostPython
-	(	export PYTHONPATH="$(PYTHON_LIB_DIR):$(STAGING_DIR)/$(PYTHON_PKG_DIR)"; \
+	(	export PYTHONPATH="$(PYTHONPATH)"; \
 		export PYTHONOPTIMIZE=""; \
 		export PYTHONDONTWRITEBYTECODE=1; \
 		$(1) \
 		$(HOST_PYTHON_BIN) $(2); \
 	)
 endef
+
+PKG_USE_MIPS16:=0
+# This is required in addition to PKG_USE_MIPS16:=0 because otherwise MIPS16
+# flags are inherited from the Python base package (via sysconfig module)
+ifdef CONFIG_USE_MIPS16
+  TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
+endif
 
 define PyPackage
   $(call shexport,PyPackage/$(1)/filespec)
@@ -70,6 +80,7 @@ endef
 # $(2) => additional arguments to setup.py
 # $(3) => additional variables
 define Build/Compile/PyMod
+	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON_PKG_DIR)
 	$(call HostPython, \
 		cd $(PKG_BUILD_DIR)/$(strip $(1)); \
 		CC="$(TARGET_CC)" \
@@ -80,6 +91,7 @@ define Build/Compile/PyMod
 		CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON_INC_DIR)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON_VERSION)" \
 		_PYTHON_HOST_PLATFORM="linux-$(ARCH)" \
+		__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON)" \
 		$(3) \
 		, \
 		./setup.py $(2) \

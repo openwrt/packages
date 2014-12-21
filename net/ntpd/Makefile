@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -14,6 +14,9 @@ PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
 PKG_MD5SUM:=00df80a84ec9528fcfb09498075525bc
+
+PKG_LICENSE:=Unique
+PKG_LICENSE_FILES:=COPYRIGHT html/copyright.html
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -35,7 +38,7 @@ endef
 
 define Package/ntpd/Default/description
  The ISC ntp suite is a collection of tools used to synchronize the
- system clock with remote NTP time servers and run/montior local NTP
+ system clock with remote NTP time servers and run/monitor local NTP
  servers.
 endef
 

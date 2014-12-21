@@ -1,0 +1,41 @@
+--- a/tdbtool.c	2001-12-11 06:45:47.000000000 +0300
++++ b/tdbtool.c	2014-11-14 15:14:00.401164300 +0300
+@@ -169,23 +169,21 @@ static void print_data(unsigned char *bu
+ 
+ static void help(void)
+ {
+-	printf("
+-tdbtool: 
+-  create    dbname     : create a database
+-  open      dbname     : open an existing database
+-  erase                : erase the database
+-  dump      dumpname   : dump the database as strings
+-  insert    key  data  : insert a record
+-  store     key  data  : store a record (replace)
+-  show      key        : show a record by key
+-  delete    key        : delete a record by key
+-  list                 : print the database hash table and freelist
+-  free                 : print the database freelist
+-  1 | first            : print the first record
+-  n | next             : print the next record
+-  q | quit             : terminate
+-  \\n                   : repeat 'next' command
+-");
++	printf("tdbtool:\n");
++	printf("  create    dbname     : create a database\n");
++	printf("  open      dbname     : open an existing database\n");
++	printf("  erase                : erase the database\n");
++	printf("  dump      dumpname   : dump the database as strings\n");
++	printf("  insert    key  data  : insert a record\n");
++	printf("  store     key  data  : store a record (replace)\n");
++	printf("  show      key        : show a record by key\n");
++	printf("  delete    key        : delete a record by key\n");
++	printf("  list                 : print the database hash table and freelist\n");
++	printf("  free                 : print the database freelist\n");
++	printf("  1 | first            : print the first record\n");
++	printf("  n | next             : print the next record\n");
++	printf("  q | quit             : terminate\n");
++	printf("  \\n                   : repeat 'next' command\n\n");
+ }
+ 
+ static void terror(char *why)

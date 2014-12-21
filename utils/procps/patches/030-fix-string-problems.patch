@@ -1,0 +1,11 @@
+--- a/proc/sig.c
++++ b/proc/sig.c
+@@ -214,7 +214,7 @@ void pretty_print_signals(void){
+   while(++i <= number_of_signals){
+     int n;
+     n = printf("%2d %s", i, signal_number_to_name(i));
+-    if(i%7) printf("           \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" + n);
++    if(i%7) printf("%s", "           \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" + n);
+     else printf("\n");
+   }
+   if((i-1)%7) printf("\n");

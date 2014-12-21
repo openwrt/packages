@@ -30,12 +30,17 @@ setup_config() {
 
 	test $auth = "plain" && authsuffix="\[/var/etc/ocpasswd\]"
 
+	dyndns="false"
+	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 1`
+	[ -n "$hostname" ] && dyndns="true"
+
 	mkdir -p /var/etc
 	sed -e "s/|PORT|/$port/g" \
 	    -e "s/|MAX_CLIENTS|/$max_clients/g" \
 	    -e "s/|MAX_SAME|/$max_same/g" \
 	    -e "s/|DPD|/$dpd/g" \
 	    -e "s#|AUTH|#$auth$authsuffix#g" \
+	    -e "s#|DYNDNS|#$dyndns#g" \
 	    -e "s/|PREDICTABLE_IPS|/$predictable_ips/g" \
 	    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
 	    -e "s/|UDP|/$udp/g" \
@@ -86,7 +91,7 @@ setup_dns() {
 start() {
 	local hostname iface
 
-	hostname=`uci get ddns.myddns.domain`
+	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 1`
 	[ -z "$hostname" ] && hostname=`uci get system.@system[0].hostname`
 
 	[ ! -f /etc/ocserv/ca-key.pem ] && [ -x /usr/bin/certtool ] && {

@@ -9,18 +9,19 @@ include $(TOPDIR)/rules.mk
 
 # Make sure to also update the dbus-x package
 PKG_NAME:=dbus
-PKG_VERSION:=1.8.8
+PKG_VERSION:=1.9.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dbus.freedesktop.org/releases/dbus/
-PKG_MD5SUM:=b9f4a18ee3faa1e07c04aa1d83239c43
+PKG_MD5SUM:=beee7886e478911ff942a80e4afec303
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=AFL-2.1
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
 TARGET_LDFLAGS+= \
@@ -46,7 +47,7 @@ define Package/libdbus
 $(call Package/dbus/Default)
   CATEGORY:=Libraries
   TITLE+= (library)
-  DEPENDS:= +librt
+  DEPENDS:= +libpthread
 endef
 
 define Package/libdbus/Description
@@ -107,6 +108,29 @@ CONFIGURE_VARS+= \
 	ac_cv_have_abstract_sockets="yes" \
 	ac_cv_lib_expat_XML_ParserCreate_MM="yes" \
 
+HOST_CONFIGURE_ARGS+= \
+	--enable-shared \
+	--enable-static \
+	--disable-abstract-sockets \
+	--disable-ansi \
+	--disable-asserts \
+	--disable-console-owner-file \
+	--disable-docygen-docs \
+	--disable-compiler_coverage \
+	--disable-selinux \
+	--disable-tests \
+	--disable-verbose-mode \
+	--disable-xml-docs \
+	--with-dbus-user=root \
+	--with-dbus-daemondir="$(STAGIND_DIR_HOST)/bin" \
+	--with-system-socket="$(STAGING_DIR_HOST)/var/run/dbus/system_bus_socket" \
+	--with-system-pid-file="$(STAGING_DIR_HOST)/var/run/dbus.pid" \
+	--without-x \
+	--libexecdir="$(STAGING_DIR_HOST)/lib/dbus-1"
+
+HOST_CONFIGURE_VARS+= \
+	ac_cv_have_abstract_sockets="yes" \
+	ac_cv_lib_expat_XML_ParserCreate_MM="yes" \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -184,6 +208,7 @@ define Package/dbus-utils/install
 		$(1)/usr/bin/
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libdbus))
 $(eval $(call BuildPackage,dbus))
 $(eval $(call BuildPackage,dbus-utils))

@@ -10,6 +10,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luci-app-lxc
 PKG_RELEASE:=20141012
 
+PKG_LICENSE:=Apache-2.0
+
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
 include $(INCLUDE_DIR)/package.mk
@@ -19,7 +21,7 @@ define Package/luci-app-lxc
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=LXC management Web UI
-  DEPENDS:=+luci-mod-admin-full +lxc +liblxc +rpcd-mod-lxc
+  DEPENDS:=+luci-mod-admin-full +lxc +lxc-create +liblxc +rpcd-mod-lxc
   MAINTAINER:=Petar Koretic <petar.koretic@sartura.hr>
 endef
 

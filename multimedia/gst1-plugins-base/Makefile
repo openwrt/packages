@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
-PKG_VERSION:=1.2.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.4
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=LGPLv2 GPLv2
-PKG_LICENSE_FILE:=COPYING.LIB COPYING
+PKG_LICENSE_FILES:=COPYING.LIB COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-base/
-PKG_MD5SUM:=17aeabfbcd232526f50c9bee375f1b97
+PKG_MD5SUM:=0c42eca8f9e4efd56d2ce8e9249ce4a1
 
 PKG_BUILD_DEPENDS:= libgstreamer1 liboil
 PKG_CONFIG_DEPENDS:= \
@@ -157,7 +157,6 @@ EXTRA_LDFLAGS+= \
 	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
 	$(if $(ICONV_FULL),-liconv) \
 
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/gstreamer-$(GST_VERSION)
 	( cd $(PKG_INSTALL_DIR); $(CP) \
@@ -183,9 +182,12 @@ endef
 
 
 define Package/gst1-plugins-base/install
-	/bin/true
+  true
 endef
 
+define Package/gstreamer1-plugins-base/install
+  true
+endef
 
 # 1: short name
 # 2: description

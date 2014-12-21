@@ -1,0 +1,49 @@
+From 1e89acb6be9ba6400fe4defd3b6b2cc94c6667d9 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 26 Nov 2014 13:24:24 +0100
+Subject: [PATCH 2/2] BUG/MEDIUM: payload: ensure that a request channel is
+ available
+
+Denys Fedoryshchenko reported a segfault when using certain
+sample fetch functions in the "tcp-request connection" rulesets
+despite the warnings. This is because some tests for the existence
+of the channel were missing.
+
+The fetches which were fixed are :
+  - req.ssl_hello_type
+  - rep.ssl_hello_type
+  - req.ssl_sni
+
+This fix must be backported to 1.5.
+(cherry picked from commit 83f2592bcd2e186beeabcba16be16faaab82bd39)
+---
+ src/payload.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/payload.c b/src/payload.c
+index 4057f6f..f62163c 100644
+--- a/src/payload.c
++++ b/src/payload.c
+@@ -72,6 +72,9 @@ smp_fetch_ssl_hello_type(struct proxy *px, struct session *s, void *l7, unsigned
+ 
+ 	chn = ((opt & SMP_OPT_DIR) == SMP_OPT_DIR_RES) ? s->rep : s->req;
+ 
++	if (!chn)
++		goto not_ssl_hello;
++
+ 	bleft = chn->buf->i;
+ 	data = (const unsigned char *)chn->buf->p;
+ 
+@@ -276,6 +279,9 @@ smp_fetch_ssl_hello_sni(struct proxy *px, struct session *s, void *l7, unsigned
+ 
+ 	chn = ((opt & SMP_OPT_DIR) == SMP_OPT_DIR_RES) ? s->rep : s->req;
+ 
++	if (!chn)
++		goto not_ssl_hello;
++
+ 	bleft = chn->buf->i;
+ 	data = (unsigned char *)chn->buf->p;
+ 
+-- 
+2.0.4
+

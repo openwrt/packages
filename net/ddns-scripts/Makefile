@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
-PKG_VERSION:=2.0.1
-PKG_RELEASE:=9
+PKG_VERSION:=2.1.0
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-2.0
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -19,8 +19,7 @@ define Package/ddns-scripts
 endef
 
 define Package/ddns-scripts/description
-	A highly configurable set of scripts for doing dynamic dns updates. 
-	NEW in this version:
+A highly configurable set of scripts for doing dynamic dns updates.
 	- IPv6 support
 	- force communication to IPv4 or IPv6 only
 	- DNS server support
@@ -29,6 +28,7 @@ define Package/ddns-scripts/description
 	- Proxy server support
 	- log file support
 	- support to run once
+Version: $(PKG_VERSION)-$(PKG_RELEASE)
 endef
 
 define Build/Prepare
@@ -62,7 +62,7 @@ endef
 define Package/ddns-scripts/postinst
 	#!/bin/sh
 	# if run within buildroot exit
-	[ -n "${IPKG_INSTROOT}" ] && exit 0
+	[ -n "$${IPKG_INSTROOT}" ] && exit 0
 
 	# add new section "ddns" "global" if not exists
 	uci -q get ddns.global > /dev/null || uci -q set ddns.global='ddns'
@@ -70,7 +70,7 @@ define Package/ddns-scripts/postinst
 	uci -q get ddns.global.log_lines > /dev/null || uci -q set ddns.global.log_lines='250'
 	uci -q commit ddns
 
-	# clear LuCI indexcache 
+	# clear LuCI indexcache
 	rm -f /tmp/luci-indexcache >/dev/null 2>&1
 
 	exit 0
@@ -79,13 +79,13 @@ endef
 define Package/ddns-scripts/prerm
 	#!/bin/sh
 	# if run within buildroot exit
-	[ -n "${IPKG_INSTROOT}" ] && exit 0
+	[ -n "$${IPKG_INSTROOT}" ] && exit 0
 
 	# stop running scripts
 	/etc/init.d/ddns disable
 	/etc/init.d/ddns stop
 
-	# clear LuCI indexcache 
+	# clear LuCI indexcache
 	rm -f /tmp/luci-indexcache >/dev/null 2>&1
 
 	exit 0

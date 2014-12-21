@@ -1,18 +1,18 @@
-From bbbedd3b358f80a7f98df2b22cf541cb007dd62e Mon Sep 17 00:00:00 2001
+From 469b6567d9adc4af6f49fa65534162673060454d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Mon, 4 Mar 2013 18:13:03 +0700
-Subject: [PATCH 06/18] openpgp-tool: Support deleting key in Gnuk.
+Subject: [PATCH 06/26] openpgp-tool: Support deleting key in Gnuk.
 
 ---
- src/tools/openpgp-tool.c | 144 ++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 143 insertions(+), 1 deletion(-)
+ src/tools/openpgp-tool.c | 142 +++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 142 insertions(+)
 
 diff --git a/src/tools/openpgp-tool.c b/src/tools/openpgp-tool.c
-index 0d360a3..239c86b 100644
+index de1c9d4..374819a 100644
 --- a/src/tools/openpgp-tool.c
 +++ b/src/tools/openpgp-tool.c
-@@ -39,6 +39,7 @@
+@@ -41,6 +41,7 @@
  #define	OPT_PRETTY	257
  #define	OPT_VERIFY	258
  #define	OPT_PIN	    259
@@ -20,33 +20,31 @@ index 0d360a3..239c86b 100644
  
  /* define structures */
  struct ef_name_map {
-@@ -77,6 +78,7 @@ static char *verifytype = NULL;
- static int opt_pin = 0;
- static char *pin = NULL;
+@@ -79,6 +80,7 @@ static char *pin = NULL;
+ static int opt_dump_do = 0;
+ static u8 do_dump_idx;
  static int opt_erase = 0;
 +static int opt_delkey = 0;
  
  static const char *app_name = "openpgp-tool";
  
-@@ -96,6 +98,7 @@ static const struct option options[] = {
+@@ -98,6 +100,7 @@ static const struct option options[] = {
  	{ "erase",     no_argument,       NULL, 'E'        },
  	{ "verify",    required_argument, NULL, OPT_VERIFY },
  	{ "pin",       required_argument, NULL, OPT_PIN },
 +	{ "del-key",   required_argument, NULL, OPT_DELKEY },
+ 	{ "do",        required_argument, NULL, 'd' },
  	{ NULL, 0, NULL, 0 }
  };
- 
-@@ -114,7 +117,8 @@ static const char *option_help[] = {
- /* V */	"Show version number",
+@@ -118,6 +121,7 @@ static const char *option_help[] = {
  /* E */	"Erase (reset) the card",
  	"Verify PIN (CHV1, CHV2, CHV3...)",
--	"PIN string"
-+	"PIN string",
-+	"Delete key (1, 2, 3 or all)"
+ 	"PIN string",
++	"Delete key (1, 2, 3 or all)",
+ /* d */ "Dump private data object number <arg> (i.e. PRIVATE-DO-<arg>)"
  };
  
- static const struct ef_name_map openpgp_data[] = {
-@@ -294,6 +298,14 @@ static int decode_options(int argc, char **argv)
+@@ -302,6 +306,14 @@ static int decode_options(int argc, char **argv)
  		case 'E':
  			opt_erase++;
  			break;
@@ -61,7 +59,7 @@ index 0d360a3..239c86b 100644
  		default:
  			util_print_usage_and_die(app_name, options, option_help, NULL);
  		}
-@@ -452,6 +464,133 @@ int do_verify(sc_card_t *card, u8 *type, u8* pin)
+@@ -457,6 +469,133 @@ int do_verify(sc_card_t *card, char *type, char *pin)
  	return r;
  }
  
@@ -195,7 +193,7 @@ index 0d360a3..239c86b 100644
  int do_erase(sc_card_t *card)
  {
  	int r;
-@@ -539,6 +678,9 @@ int main(int argc, char **argv)
+@@ -548,6 +687,9 @@ int main(int argc, char **argv)
  		exit(EXIT_FAILURE);
  	}
  
@@ -206,5 +204,5 @@ index 0d360a3..239c86b 100644
  		exit_status != do_erase(card);
  
 -- 
-1.9.3
+2.1.3
 

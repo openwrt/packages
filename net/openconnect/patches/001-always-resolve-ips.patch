@@ -1,0 +1,143 @@
+From 2f55fec323730a94ed49d401d93b913d85e43b65 Mon Sep 17 00:00:00 2001
+From: Nikos Mavrogiannopoulos <nmav@gnutls.org>
+Date: Mon, 1 Dec 2014 20:10:06 +0100
+Subject: [PATCH 1/2] Re-resolve when reconnecting CSTP and the X-CSTP-DynDNS
+ is set by the server
+
+That is, when reconnecting CSTP due to peer tearing the connection
+down attempt to re-resolve its IP. That handles the case where
+the server is using dynamic DNS and is advertising it.
+
+[dwmw2: refactored to simplify it somewhat]
+
+Signed-off-by: Nikos Mavrogiannopoulos <nmav@gnutls.org>
+Signed-off-by: David Woodhouse <David.Woodhouse@intel.com>
+---
+ cstp.c                 |  3 +++
+ openconnect-internal.h |  1 +
+ ssl.c                  | 48 +++++++++++++++++++++++++++++++++++++++++++++++-
+ 4 files changed, 52 insertions(+), 2 deletions(-)
+
+diff --git a/cstp.c b/cstp.c
+index 3b93538..55225f4 100644
+--- a/cstp.c
++++ b/cstp.c
+@@ -378,6 +378,9 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
+ 			int cstpmtu = atol(colon);
+ 			if (cstpmtu > mtu)
+ 				mtu = cstpmtu;
++		} else if (!strcmp(buf + 7, "DynDNS")) {
++			if (!strcmp(colon, "true"))
++				vpninfo->is_dyndns = 1;
+ 		} else if (!strcmp(buf + 7, "Address-IP6")) {
+ 			vpninfo->ip_info.netmask6 = new_option->value;
+ 		} else if (!strcmp(buf + 7, "Address")) {
+diff --git a/openconnect-internal.h b/openconnect-internal.h
+index 1bc79e5..db6c2ba 100644
+--- a/openconnect-internal.h
++++ b/openconnect-internal.h
+@@ -427,6 +427,7 @@ struct openconnect_info {
+ 	int dtls_local_port;
+ 
+ 	int deflate;
++	int is_dyndns; /* Attempt to redo DNS lookup on each CSTP reconnect */
+ 	char *useragent;
+ 
+ 	const char *quit_reason;
+diff --git a/ssl.c b/ssl.c
+index b50652d..d47a819 100644
+--- a/ssl.c
++++ b/ssl.c
+@@ -106,6 +106,23 @@ unsigned string_is_hostname(const char *str)
+ 	return 1;
+ }
+ 
++static int match_sockaddr(struct sockaddr *a, struct sockaddr *b)
++{
++	if (a->sa_family == AF_INET) {
++		struct sockaddr_in *a4 = (void *)a;
++		struct sockaddr_in *b4 = (void *)b;
++
++		return (a4->sin_addr.s_addr == b4->sin_addr.s_addr) &&
++			(a4->sin_port == b4->sin_port);
++	} else if (a->sa_family == AF_INET6) {
++		struct sockaddr_in6 *a6 = (void *)a;
++		struct sockaddr_in6 *b6 = (void *)b;
++		return !memcmp(&a6->sin6_addr, &b6->sin6_addr, sizeof(a6->sin6_addr) &&
++			       a6->sin6_port == b6->sin6_port);
++	} else
++		return 0;
++}
++
+ int connect_https_socket(struct openconnect_info *vpninfo)
+ {
+ 	int ssl_sock = -1;
+@@ -114,7 +131,11 @@ int connect_https_socket(struct openconnect_info *vpninfo)
+ 	if (!vpninfo->port)
+ 		vpninfo->port = 443;
+ 
+-	if (vpninfo->peer_addr) {
++	/* If we're talking to a server which told us it has dynamic DNS, don't
++	   just re-use its previous IP address. If we're talking to a proxy, we
++	   can use *its* previous IP address. We expect it'll re-do the DNS
++	   lookup for the server anyway. */
++	if (vpninfo->peer_addr && (!vpninfo->is_dyndns || vpninfo->proxy)) {
+ 	reconnect:
+ #ifdef SOCK_CLOEXEC
+ 		ssl_sock = socket(vpninfo->peer_addr->sa_family, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_IP);
+@@ -230,6 +251,13 @@ int connect_https_socket(struct openconnect_info *vpninfo)
+ 			if (hints.ai_flags & AI_NUMERICHOST)
+ 				free(hostname);
+ 			ssl_sock = -EINVAL;
++			/* If we were just retrying for dynamic DNS, reconnct using
++			   the previously-known IP address */
++			if (vpninfo->peer_addr) {
++				vpn_progress(vpninfo, PRG_ERR,
++					     _("Reconnecting to DynDNS server using previously cached IP address\n"));
++				goto reconnect;
++			}
+ 			goto out;
+ 		}
+ 		if (hints.ai_flags & AI_NUMERICHOST)
+@@ -257,6 +285,8 @@ int connect_https_socket(struct openconnect_info *vpninfo)
+ 			if (cancellable_connect(vpninfo, ssl_sock, rp->ai_addr, rp->ai_addrlen) >= 0) {
+ 				/* Store the peer address we actually used, so that DTLS can
+ 				   use it again later */
++				free(vpninfo->peer_addr);
++				vpninfo->peer_addrlen = 0;
+ 				vpninfo->peer_addr = malloc(rp->ai_addrlen);
+ 				if (!vpninfo->peer_addr) {
+ 					vpn_progress(vpninfo, PRG_ERR,
+@@ -288,6 +318,17 @@ int connect_https_socket(struct openconnect_info *vpninfo)
+ 			}
+ 			closesocket(ssl_sock);
+ 			ssl_sock = -1;
++
++			/* If we're in DynDNS mode but this *was* the cached IP address,
++			 * don't bother falling back to it if it didn't work. */
++			if (vpninfo->peer_addr && vpninfo->peer_addrlen == rp->ai_addrlen &&
++			    match_sockaddr(vpninfo->peer_addr, rp->ai_addr)) {
++				vpn_progress(vpninfo, PRG_TRACE,
++					     _("Forgetting non-functional previous peer address\n"));
++				free(vpninfo->peer_addr);
++				vpninfo->peer_addr = 0;
++				vpninfo->peer_addrlen = 0;
++			}
+ 		}
+ 		freeaddrinfo(result);
+ 
+@@ -296,6 +337,11 @@ int connect_https_socket(struct openconnect_info *vpninfo)
+ 				     _("Failed to connect to host %s\n"),
+ 				     vpninfo->proxy?:vpninfo->hostname);
+ 			ssl_sock = -EINVAL;
++			if (vpninfo->peer_addr) {
++				vpn_progress(vpninfo, PRG_ERR,
++					     _("Reconnecting to DynDNS server using previously cached IP address\n"));
++				goto reconnect;
++			}
+ 			goto out;
+ 		}
+ 	}
+-- 
+2.1.3
+

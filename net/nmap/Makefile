@@ -14,14 +14,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
 PKG_VERSION:=6.47
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER=Nuno Goncalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://nmap.org/dist/
 PKG_MD5SUM:=edfe81f6763223c0a29bfa15a8526e2a
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 
@@ -87,7 +87,8 @@ CONFIGURE_ARGS += \
 	--with-libdnet=included \
 	--with-libpcre=included \
 	--with-libpcap="$(STAGING_DIR)/usr" \
-	--without-liblua
+	--without-liblua \
+	--without-zenmap
 
 CONFIGURE_VARS += CXXFLAGS="$$$$CXXFLAGS -fno-builtin"
 

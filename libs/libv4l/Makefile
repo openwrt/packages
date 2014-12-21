@@ -11,6 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=v4l-utils
 PKG_VERSION:=1.2.1
 PKG_RELEASE:=2
+PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.linuxtv.org/downloads/v4l-utils
@@ -19,7 +20,7 @@ PKG_MD5SUM:=4cc0fb4ded302ea9e89e5e1b56a7252b
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
-PKG_LICENSE_FILE:=COPYING COPYING.libv4l
+PKG_LICENSE_FILES:=COPYING COPYING.libv4l
 
 PKG_BUILD_DEPENDS:=argp-standalone
 

@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=http://www.firestorm.cx/fswebcam/files \
 PKG_MD5SUM:=1bfdb21904e816f100370ec8f4df986b
 
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILE:=LICENCE
+PKG_LICENSE_FILES:=LICENCE
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_INSTALL:=1

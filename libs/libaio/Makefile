@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2010 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libaio
-PKG_VERSION:=0.3.109
+PKG_VERSION:=0.3.110
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/liba/libaio/
-PKG_MD5SUM:=435a5b16ca6198eaf01155263d855756
+PKG_MD5SUM:=2a35602e43778383e2f4907a4ca39ab8
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_LICENSE:=LGPL-2.1
 
 PKG_USE_MIPS16:=0
 

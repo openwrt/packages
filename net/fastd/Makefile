@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fastd
-PKG_VERSION:=14
-PKG_RELEASE:=3
+PKG_VERSION:=16
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://projects.universe-factory.net/attachments/download/75
-PKG_MD5SUM:=34f6bdebd0410a1fba7c8fd06fff7a05
+PKG_SOURCE_URL:=https://projects.universe-factory.net/attachments/download/78
+PKG_MD5SUM:=135b3083d2743e335738de3bd4bb0c3c
 
 PKG_LICENSE:=BSD-2-Clause
-PKG_LICENSE_FILE:=COPYRIGHT
+PKG_LICENSE_FILES:=COPYRIGHT
 
 PKG_CONFIG_DEPENDS:=\
 	CONFIG_FASTD_ENABLE_METHOD_CIPHER_TEST \
@@ -35,7 +35,8 @@ PKG_CONFIG_DEPENDS:=\
 	CONFIG_FASTD_WITH_CMDLINE_LOGGING \
 	CONFIG_FASTD_WITH_CMDLINE_OPERATION \
 	CONFIG_FASTD_WITH_CMDLINE_COMMANDS \
-	CONFIG_FASTD_WITH_VERIFY
+	CONFIG_FASTD_WITH_VERIFY \
+	CONFIG_FASTD_WITH_STATUS_SOCKET
 
 
 PKG_BUILD_DEPENDS:=nacl libuecc
@@ -46,7 +47,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/fastd
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+kmod-tun +librt +libpthread
+  DEPENDS:=+kmod-tun +librt +libpthread +FASTD_WITH_STATUS_SOCKET:libjson-c
   TITLE:=Fast and Secure Tunneling Daemon
   URL:=https://projects.universe-factory.net/projects/fastd
   SUBMENU:=VPN
@@ -77,6 +78,7 @@ CMAKE_OPTIONS += \
 	-DWITH_CMDLINE_OPERATION:BOOL=FALSE \
 	-DWITH_CMDLINE_COMMANDS:BOOL=FALSE \
 	-DWITH_VERIFY:BOOL=FALSE \
+	-DWITH_STATUS_SOCKET:BOOL=FALSE \
 	-DWITH_CAPABILITIES:BOOL=FALSE \
 	-DENABLE_SYSTEMD:BOOL=FALSE \
 	-DENABLE_LIBSODIUM:BOOL=FALSE \
@@ -150,6 +152,10 @@ ifeq ($(CONFIG_FASTD_WITH_VERIFY),y)
 CMAKE_OPTIONS += -DWITH_VERIFY:BOOL=TRUE
 endif
 
+ifeq ($(CONFIG_FASTD_WITH_STATUS_SOCKET),y)
+CMAKE_OPTIONS += -DWITH_STATUS_SOCKET:BOOL=TRUE
+endif
+
 
 define Package/fastd/description
  Fast and secure tunneling daemon, which is optimized on small code size and few dependencies
@@ -164,9 +170,9 @@ define Package/fastd/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/fastd $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_BIN) files/fastd.init $(1)/etc/init.d/fastd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/doc/examples/openwrt/fastd.init $(1)/etc/init.d/fastd
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) files/fastd.config $(1)/etc/config/fastd
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/doc/examples/openwrt/fastd.config $(1)/etc/config/fastd
 	$(INSTALL_DIR) $(1)/etc/fastd
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) files/fastd.upgrade $(1)/lib/upgrade/keep.d/fastd
