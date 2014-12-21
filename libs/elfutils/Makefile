@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=elfutils
 PKG_VERSION:=0.160
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://fedorahosted.org/releases/e/l/$(PKG_NAME)/$(PKG_VERSION)
@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=COPYING COPYING-GPLV2 COPYING-LGPLV3
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
-PKG_BUILD_DEPENDS:=USE_UCLIBC:argp-standalone
+PKG_BUILD_DEPENDS:=USE_UCLIBC:argp-standalone USE_MUSL:argp-standalone
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -55,6 +55,11 @@ TARGET_LDFLAGS += "-lintl"
 endif
 
 ifdef CONFIG_USE_UCLIBC
+CONFIGURE_VARS += \
+	LIBS="-largp"
+endif
+
+ifdef CONFIG_USE_MUSL
 CONFIGURE_VARS += \
 	LIBS="-largp"
 endif
