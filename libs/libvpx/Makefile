@@ -23,7 +23,6 @@ PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
-#PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -55,9 +54,14 @@ ifneq ($(findstring -Os,$(TARGET_CFLAGS)),)
 CONFIGURE_ARGS += --enable-small
 endif
 
+# libvpx expects gcc as linker but uses $LD if provided
+# However, OpenWRT defines LD as *-uclibc-ld and not *-gcc
 CONFIGURE_VARS += \
-    CROSS=$(GNU_TARGET_NAME)\
-    extralibs="-lc -lgcc_s"
+    CROSS=$(GNU_TARGET_NAME) \
+	LD="$(TARGET_CC)" \
+
+MAKE_FLAGS += \
+	LD="$(TARGET_CC)" \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/vpx/

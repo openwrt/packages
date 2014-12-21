@@ -1,0 +1,41 @@
+--- a/proc/sysinfo.c
++++ b/proc/sysinfo.c
+@@ -209,7 +209,12 @@ static int check_for_privs(void){
+   return !!rc;
+ }
+ 
++#if __GNUC__ < 4 || __GNUC_MINOR__ < 3
+ static void init_libproc(void) __attribute__((constructor));
++#else
++static void init_libproc(void) __attribute__((constructor(200)));
++#endif
++
+ static void init_libproc(void){
+   have_privs = check_for_privs();
+   // ought to count CPUs in /proc/stat instead of relying
+--- a/proc/version.c
++++ b/proc/version.c
+@@ -33,7 +33,12 @@ void display_version(void) {
+ 
+ int linux_version_code;
+ 
++#if __GNUC__ < 4 || __GNUC_MINOR__ < 3
+ static void init_Linux_version(void) __attribute__((constructor));
++#else
++static void init_Linux_version(void) __attribute__((constructor(100)));
++#endif
++
+ static void init_Linux_version(void) {
+     static struct utsname uts;
+     int x = 0, y = 0, z = 0;	/* cleared in case sscanf() < 3 */
+--- a/proc/module.mk
++++ b/proc/module.mk
+@@ -76,7 +76,7 @@ proc/$(ANAME): $(LIBOBJ)
+ 
+ #proc/$(SONAME): proc/library.map
+ proc/$(SONAME): $(LIBOBJ)
+-	$(CC) $(ALL_CFLAGS) $(ALL_LDFLAGS) -shared -Wl,-soname,$(SONAME) -Wl,--version-script=proc/library.map -o $@ $^ -lc
++	$(CC) $(ALL_CFLAGS) $(ALL_LDFLAGS) -shared -Wl,-soname,$(SONAME) -Wl,--version-script=proc/library.map -o $@ $(sort $^) -lc
+ 
+ 
+ # AUTOMATIC DEPENDENCY GENERATION -- GCC AND GNUMAKE DEPENDENT
