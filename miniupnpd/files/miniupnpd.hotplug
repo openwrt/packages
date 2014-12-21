@@ -1,9 +1,6 @@
 #!/bin/sh
 
-if [ ! /etc/init.d/miniupnpd enabled ]
-then
-    exit 0
-fi
+/etc/init.d/miniupnpd enabled || exit 0
 
 . /lib/functions/service.sh
 
