@@ -40,14 +40,14 @@ proto_openconnect_setup() {
 
 	[ -f /etc/openconnect/user-cert-vpn-$config.pem ] && append cmdline "-c /etc/openconnect/user-cert-vpn-$config.pem"
 	[ -f /etc/openconnect/user-key-vpn-$config.pem ] && append cmdline "--sslkey /etc/openconnect/user-key-vpn-$config.pem"
-	if test -f /etc/openconnect/ca-vpn-$config.pem;then
+	[ -f /etc/openconnect/ca-vpn-$config.pem ] && {
 		append cmdline "--cafile /etc/openconnect/ca-vpn-$config.pem"
 		append cmdline "--no-system-trust"
-	fi
-	if test -n "$serverhash";then
+	}
+	[ -n "$serverhash" ] && {
 		append cmdline " --servercert=$serverhash"
 		append cmdline "--no-system-trust"
-	fi
+	}
 	[ -n "$authgroup" ] && append cmdline "--authgroup $authgroup"
 	[ -n "$username" ] && append cmdline "-u $username"
 	[ -n "$password" ] && {
@@ -63,7 +63,7 @@ proto_openconnect_setup() {
 	proto_export INTERFACE="$config"
 	logger -t openconnect "executing 'openconnect $cmdline'"
 
-	if [ -f "$pwfile" ];then
+	if [ -f "$pwfile" ]; then
 		proto_run_command "$config" /usr/sbin/openconnect-wrapper $pwfile $cmdline
 	else
 		proto_run_command "$config" /usr/sbin/openconnect $cmdline
