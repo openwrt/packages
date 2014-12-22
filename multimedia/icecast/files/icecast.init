@@ -5,8 +5,13 @@
 USE_PROCD=1
 START=99
 STOP=15
+LOG="/var/log/icecast"
 
 start_service() {
+	#create icecast log directories
+	if [ ! -d $LOG ]; then
+		mkdir -m 777 -p $LOG
+	fi
 	procd_open_instance
 	procd_set_param command /usr/bin/icecast -c /etc/icecast.xml
 	procd_set_param respawn
