@@ -1,0 +1,23 @@
+Index: CMakeLists.txt
+===================================================================
+--- a/CMakeLists.txt	2014-12-22 19:32:27.768281786 +0100
++++ b/CMakeLists.txt	2014-12-22 21:23:44.751158291 +0100
+@@ -79,6 +79,9 @@
+ set(CPACK_SOURCE_IGNORE_FILES          "\\\\.git")
+ set(CPACK_SOURCE_PACKAGE_FILE_NAME     ${CPACK_PACKAGE_FILE_NAME})
+ 
++set(PACKAGE libftdi)
++set(VERSION ${VERSION_STRING})
++
+ # Subdirectories
+ if(${UNIX})
+   set(CPACK_SET_DESTDIR "ON")
+@@ -100,8 +103,6 @@
+ if(DOCUMENTATION AND DOXYGEN_FOUND)
+ 
+    # Set variables
+-   set(PACKAGE libftdi)
+-   set(VERSION ${VERSION_STRING})
+    set(top_srcdir ${CMAKE_SOURCE_DIR})
+ 
+    # Find doxy config
