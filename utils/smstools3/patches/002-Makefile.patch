@@ -1,0 +1,12 @@
+--- a/src/Makefile	2014-12-20 18:33:55.654252867 +0100
++++ b/src/Makefile	2014-12-20 18:31:10.241359741 +0100
+@@ -43,7 +43,7 @@
+ 
+ ifneq (,$(findstring SOLARIS,$(CFLAGS)))
+ ifeq (,$(findstring DISABLE_INET_SOCKET,$(CFLAGS)))
+-override LFLAGS += -lsocket -lnsl
++	override LFLAGS += -lsocket -lnsl
+ endif
+ endif
+ 
+
