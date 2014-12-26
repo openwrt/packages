@@ -4,6 +4,7 @@
 START=50
 
 SERVICE_USE_PID=1
+SERVICE_PID_FILE=/var/run/minidlna/minidlna.pid
 
 MINIDLNA_CONFIG_FILE="/tmp/minidlna.conf"
 
