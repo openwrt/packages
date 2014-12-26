@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpng
-PKG_VERSION:=1.2.51
+PKG_VERSION:=1.2.52
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/libpng
-PKG_MD5SUM:=4efba67fa5aa2b785c6fcec2cc3e90c9
+PKG_MD5SUM:=49d5c71929bf69a172147c47b9309fbe
 PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 
 PKG_LICENSE:=Libpng GPL-2.0+ BSD-3-Clause
