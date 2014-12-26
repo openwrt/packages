@@ -26,6 +26,8 @@
 #* CISCO_IPV6_SPLIT_INC_%d_ADDR -- IPv6 network address
 #* CISCO_IPV6_SPLIT_INC_$%d_MASKLEN -- IPv6 subnet masklen
 
+HOOKS_DIR=/etc/openconnect
+
 # FIXMEs:
 
 # Section A: route handling
@@ -50,7 +52,7 @@
 do_connect() {
 	if [ -n "$CISCO_BANNER" ]; then
 		logger -t openconnect "Connect Banner:"
-		logger -t openconnect "$CISCO_BANNER" | while read LINE ; do logger -t openconnect "|" "$LINE" ; done
+		echo "$CISCO_BANNER" | while read LINE ; do logger -t openconnect "|" "$LINE" ; done
 	fi
 
 	proto_init_update "$TUNDEV" 1
@@ -122,6 +124,17 @@ do_disconnect() {
 	proto_send_update "$INTERFACE"
 }
 
+#### Hooks
+run_hooks() {
+	HOOK="$1"
+
+	if [ -d ${HOOKS_DIR}/${HOOK}.d ]; then
+		for script in ${HOOKS_DIR}/${HOOK}.d/* ; do
+			[ -f $script ] && . $script
+		done
+	fi
+}
+
 #### Main
 
 if [ -z "$reason" ]; then
@@ -137,14 +150,20 @@ fi
 
 case "$reason" in
 	pre-init)
+		run_hooks pre-init
 		;;
 	connect)
+		run_hooks connect
 		do_connect
+		run_hooks post-connect
 		;;
 	disconnect)
+		run_hooks disconnect
 		do_disconnect
+		run_hooks post-disconnect
 		;;
 	reconnect)
+		run_hooks reconnect
 		;;
 	*)
 		logger -t openconnect "unknown reason '$reason'. Maybe vpnc-script is out of date" 1>&2

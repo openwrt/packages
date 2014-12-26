@@ -1,6 +1,6 @@
 --- a/server/fwknopd.conf.inst
 +++ b/server/fwknopd.conf.inst
-@@ -392,8 +392,13 @@
+@@ -402,8 +402,13 @@
  # The IPT_FORWARD_ACCESS variable is only used if ENABLE_IPT_FORWARDING is
  # enabled.
  #

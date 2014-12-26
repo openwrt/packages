@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwknop
-PKG_VERSION:=2.6.4
+PKG_VERSION:=2.6.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.cipherdyne.org/fwknop/download
-PKG_MD5SUM:=259ae562a8fd845b67662fc8e504467e
+PKG_MD5SUM:=1ae000a499bf604a2aeef4d0a7a178c8
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
+PKG_LICENSE:=GPLv2
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

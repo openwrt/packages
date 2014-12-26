@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=privoxy
 PKG_VERSION:=3.0.22
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa
@@ -47,7 +47,7 @@ Version: $(PKG_VERSION)-$(PKG_RELEASE)
 endef
 
 CONFIGURE_ARGS += \
-	--sysconfdir=/etc/privoxy \
+	--sysconfdir=/etc/privoxy
 
 # needed otherwise errors during compile
 MAKE_FLAGS:=
@@ -67,9 +67,8 @@ define Package/privoxy/preinst
 	#!/bin/sh
 	# if run within buildroot exit
 	[ -n "$${IPKG_INSTROOT}" ] && exit 0
-	# stop service # if PKG_UPGRADE NOT WORKING
-	# [ "$${PKG_UPGRADE}" = "1" ] && /etc/init.d/privoxy stop
-	/etc/init.d/privoxy stop >/dev/null 2>&1
+	# stop service if PKG_UPGRADE
+	[ "$${PKG_UPGRADE}" = "1" ] && /etc/init.d/privoxy stop >/dev/null 2>&1
 	exit 0	# supress errors from stop command
 endef
 
@@ -78,9 +77,8 @@ define Package/privoxy/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/privoxy $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/privoxy.init $(1)/etc/init.d/privoxy
-	# no longer needed because running with procd
-	# $(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	# $(INSTALL_BIN) ./files/privoxy.hotplug $(1)/etc/hotplug.d/iface/80-privoxy
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN) ./files/privoxy.hotplug $(1)/etc/hotplug.d/iface/80-privoxy
 
 	$(INSTALL_DIR) $(1)/etc/privoxy
 	$(CP) $(PKG_INSTALL_DIR)/etc/privoxy/* $(1)/etc/privoxy/
@@ -89,7 +87,7 @@ define Package/privoxy/install
 	$(INSTALL_CONF) ./files/privoxy.oldconfig $(1)/etc/privoxy/config
 	# create .old file to be removed with next pacakge builds during update
 	$(INSTALL_CONF) ./files/privoxy.oldconfig $(1)/etc/privoxy/config.old
-
+	# copy NEW config
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/privoxy.config $(1)/etc/config/privoxy
 endef
