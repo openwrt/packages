@@ -73,6 +73,7 @@ define Package/shadow-utils/config
     config shadow-all
       bool "Include all PLD shadow utilities"
       select PACKAGE_shadow
+      default y
 
     comment "Utilities"
 
