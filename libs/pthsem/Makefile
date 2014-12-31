@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pthsem
 PKG_VERSION:=2.0.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=LGPL-2.1+
