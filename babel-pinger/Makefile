@@ -33,7 +33,7 @@ endef
 MAKE_FLAGS+= \
 	CFLAGS="$(TARGET_CFLAGS)" \
 
-define Package/babeld/install
+define Package/babel-pinger/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/babel-pinger $(1)/usr/sbin/
 endef
