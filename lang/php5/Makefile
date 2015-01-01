@@ -226,7 +226,7 @@ else
   CONFIGURE_ARGS+= --without-iconv
 endif
 
-ifneq ($(CONFIG_PACKAGE_php5-mod-json),)
+ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-json),)
   CONFIGURE_ARGS+= --enable-json=shared
 else
   CONFIGURE_ARGS+= --disable-json
