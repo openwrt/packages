@@ -1,0 +1,11 @@
+--- a/mcproxy/src/utils/mc_socket.cpp
++++ b/mcproxy/src/utils/mc_socket.cpp
+@@ -38,6 +38,8 @@
+ #include <unistd.h>
+ 
+ #ifdef __UCLIBC__
++#define IP_MULTICAST_ALL 49
++
+ #include "sourcefilter.cpp"
+ #endif /* __UCLIBC__ */
+ 
