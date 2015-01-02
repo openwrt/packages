@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=5.4.36
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -38,7 +38,7 @@ PHP5_MODULES = \
 	mbstring mcrypt mysql mysqli \
 	openssl \
 	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql \
-	session shmop simplexml soap sockets sqlite sqlite3 sysvmsg sysvsem sysvshm \
+	session shmop simplexml soap sockets sqlite3 sysvmsg sysvsem sysvshm \
 	tokenizer \
 	xml xmlreader xmlwriter zip \
 
@@ -334,12 +334,6 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-sockets),)
   CONFIGURE_ARGS+= --enable-sockets=shared
 else
   CONFIGURE_ARGS+= --disable-sockets
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-sqlite),)
-  CONFIGURE_ARGS+= --with-sqlite=shared,"$(STAGING_DIR)/usr"
-else
-  CONFIGURE_ARGS+= --without-sqlite
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-sqlite3),)
