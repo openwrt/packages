@@ -39,30 +39,30 @@ define Package/pthsem/description
 endef
 
 MAKE_FLAGS += \
-        OPTIM="$(TARGET_CFLAGS)" \
-        CFLAGS="$(TARGET_CFLAGS)" \
-        DESTDIR="$(PKG_INSTALL_DIR)"
+	OPTIM="$(TARGET_CFLAGS)" \
+	CFLAGS="$(TARGET_CFLAGS)" \
+	DESTDIR="$(PKG_INSTALL_DIR)"
 
 define Build/InstallDev
-        $(INSTALL_DIR) $(2)/bin
-        $(INSTALL_BIN) \
-                $(PKG_INSTALL_DIR)/usr/bin/pthsem-config \
-                $(2)/bin/
-        $(SED) \
-                's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
-                $(2)/bin/pthsem-config
+	$(INSTALL_DIR) $(2)/bin
+	$(INSTALL_BIN) \
+		$(PKG_INSTALL_DIR)/usr/bin/pthsem-config \
+		$(2)/bin/
+	$(SED) \
+		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
+		$(2)/bin/pthsem-config
 
-        $(INSTALL_DIR) $(1)/usr/include
-        $(CP)   $(PKG_INSTALL_DIR)/usr/include/*.h \
-                $(1)/usr/include/
-        $(INSTALL_DIR) $(1)/usr/lib
-        $(CP)   $(PKG_INSTALL_DIR)/usr/lib/libpthsem.{a,la,so*} \
-                $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP)   $(PKG_INSTALL_DIR)/usr/include/*.h \
+		$(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP)   $(PKG_INSTALL_DIR)/usr/lib/libpthsem.{a,la,so*} \
+		$(1)/usr/lib/
 endef
 
 define Package/pthsem/install
-        $(INSTALL_DIR) $(1)/usr/lib
-        $(CP) $(PKG_INSTALL_DIR)/usr/lib/libpthsem.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpthsem.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,pthsem))
