@@ -22,7 +22,7 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/jamvm2
+define Package/jamvm
   SUBMENU:=Java
   SECTION:=lang
   CATEGORY:=Languages
@@ -31,7 +31,7 @@ define Package/jamvm2
   DEPENDS:=+zlib +libpthread +librt +classpath @!avr32
 endef
 
-define Package/jamvm2/description
+define Package/jamvm/description
  JamVM is a new Java Virtual Machine which conforms to the JVM
  specification version (blue book). In comparison to most other VM's (free
  and commercial) it is extremely small.However, unlike other small VMs
@@ -50,7 +50,7 @@ CONFIGURE_ARGS += \
 MAKE_FLAGS += \
 	GLIBJ_ZIP=$(STAGING_DIR)/usr/share/classpath/glibj.zip
 
-define Package/jamvm2/install
+define Package/jamvm/install
 	$(INSTALL_DIR) $(1)/usr
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/bin \
@@ -62,4 +62,4 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/* $(1)/
 endef
 
-$(eval $(call BuildPackage,jamvm2))
+$(eval $(call BuildPackage,jamvm))
