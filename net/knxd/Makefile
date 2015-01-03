@@ -63,93 +63,93 @@ define Package/knxd-tools/description
 EIB KNX Tools
 endef
 define Build/Prepare
-        $(call Build/Prepare/Default)
+	$(call Build/Prepare/Default)
 endef
 
 
 define Build/Configure
-        $(call Build/Configure/Default,\
-                --disable-ft12 \
-                --enable-eibnetip \
-                --enable-eibnetiptunnel \
-                --enable-eibnetipserver \
-                --disable-usb \
-                --enable-tpuart \
-                --enable-tpuarts \
-                --disable-pei16 \
-                --disable-pei16s \
-                --enable-groupcache \
-                --without-pth-test \
-                --without-libstdc )
+	$(call Build/Configure/Default,\
+		--disable-ft12 \
+		--enable-eibnetip \
+		--enable-eibnetiptunnel \
+		--enable-eibnetipserver \
+		--disable-usb \
+		--enable-tpuart \
+		--enable-tpuarts \
+		--disable-pei16 \
+		--disable-pei16s \
+		--enable-groupcache \
+		--without-pth-test \
+		--without-libstdc )
 endef
 
 define Build/Compile
-        $(MAKE) -C $(PKG_BUILD_DIR) \
-                CC=$(TARGET_CC) \
-                LIBS="-L$(STAGING_DIR)/lib -L$(STAGING_DIR)/usr/lib -fno-builtin -nostdinc++ -nodefaultlibs -lc -lm -lgcc -largp -lpthsem" \
-                CPPFLAGS="-I$(STAGING_DIR)/include -I$(STAGING_DIR)/usr/include"
+	$(MAKE) -C $(PKG_BUILD_DIR) \
+		CC=$(TARGET_CC) \
+		LIBS="-L$(STAGING_DIR)/lib -L$(STAGING_DIR)/usr/lib -fno-builtin -nostdinc++ -nodefaultlibs -lc -lm -lgcc -largp -lpthsem" \
+		CPPFLAGS="-I$(STAGING_DIR)/include -I$(STAGING_DIR)/usr/include"
 endef
 
 define Package/knxd/install
-        mkdir -p $(1)/usr/bin
-        $(CP) $(PKG_BUILD_DIR)/src/server/knxd $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/tools/bcu/bcuaddrtab $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/tools/bcu/bcuread $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetsearch $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetdescribe $(1)/usr/bin/
-        mkdir -p $(1)/etc/init.d
-        $(CP) ./files/knxd.init $(1)/etc/init.d/knxd
-        mkdir -p $(1)/etc/config
-        $(CP) ./files/knxd.config $(1)/etc/config/knxd
+	mkdir -p $(1)/usr/bin
+	$(CP) $(PKG_BUILD_DIR)/src/server/knxd $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/tools/bcu/bcuaddrtab $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/tools/bcu/bcuread $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetsearch $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetdescribe $(1)/usr/bin/
+	mkdir -p $(1)/etc/init.d
+	$(CP) ./files/knxd.init $(1)/etc/init.d/knxd
+	mkdir -p $(1)/etc/config
+	$(CP) ./files/knxd.config $(1)/etc/config/knxd
 endef
 #       add this line above to support USB
 #       $(CP) $(PKG_BUILD_DIR)/src/usb/findknxusb $(1)/usr/bin/
 
 define Package/knxd-tools/install
-        mkdir -p $(1)/usr/lib
-        $(CP) $(PKG_BUILD_DIR)/src/client/c/.libs/libeibclient.so.0.0.0 $(1)/usr/lib/
-        ln -s libeibclient.so.0.0.0 $(1)/usr/lib/libeibclient.so
-        ln -s libeibclient.so.0.0.0 $(1)/usr/lib/libeibclient.so.0
-        mkdir -p $(1)/usr/bin
-        -rm -f $(1)/usr/bin/knxread
-        -rm -f $(1)/usr/bin/knxreadtemp
-        -rm -f $(1)/usr/bin/knxwrite
-        -rm -f $(1)/usr/bin/knxlog
-        -rm -f $(1)/usr/bin/knxon
-        -rm -f $(1)/usr/bin/knxoff
-        -rm -f $(1)/usr/bin/knxif
-        -rm -f $(1)/usr/bin/knxswrite
-        -rm -f $(1)/usr/bin/knxbool
-        -rm -f $(1)/usr/bin/knxdimup
-        ln -s knxtool $(1)/usr/bin/knxread
-        ln -s knxtool $(1)/usr/bin/knxreadtemp
-        ln -s knxtool $(1)/usr/bin/knxwrite
-        ln -s knxtool $(1)/usr/bin/knxlog
-        ln -s knxtool $(1)/usr/bin/knxon
-        ln -s knxtool $(1)/usr/bin/knxoff
-        ln -s knxtool $(1)/usr/bin/knxif
-        ln -s knxtool $(1)/usr/bin/knxswrite
-        ln -s knxtool $(1)/usr/bin/knxbool
-        ln -s knxtool $(1)/usr/bin/knxdimup
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/knxtool $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor1 $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor2 $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor3 $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/eibread-cgi $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/eibwrite-cgi $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor1 $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor2 $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor3 $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupwrite $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupswrite $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/grouplisten $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupread $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupresponse $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupreadresponse $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketlisten $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketread $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketwrite $(1)/usr/bin/
-        $(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketswrite $(1)/usr/bin/
+	mkdir -p $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/src/client/c/.libs/libeibclient.so.0.0.0 $(1)/usr/lib/
+	ln -s libeibclient.so.0.0.0 $(1)/usr/lib/libeibclient.so
+	ln -s libeibclient.so.0.0.0 $(1)/usr/lib/libeibclient.so.0
+	mkdir -p $(1)/usr/bin
+	-rm -f $(1)/usr/bin/knxread
+	-rm -f $(1)/usr/bin/knxreadtemp
+	-rm -f $(1)/usr/bin/knxwrite
+	-rm -f $(1)/usr/bin/knxlog
+	-rm -f $(1)/usr/bin/knxon
+	-rm -f $(1)/usr/bin/knxoff
+	-rm -f $(1)/usr/bin/knxif
+	-rm -f $(1)/usr/bin/knxswrite
+	-rm -f $(1)/usr/bin/knxbool
+	-rm -f $(1)/usr/bin/knxdimup
+	ln -s knxtool $(1)/usr/bin/knxread
+	ln -s knxtool $(1)/usr/bin/knxreadtemp
+	ln -s knxtool $(1)/usr/bin/knxwrite
+	ln -s knxtool $(1)/usr/bin/knxlog
+	ln -s knxtool $(1)/usr/bin/knxon
+	ln -s knxtool $(1)/usr/bin/knxoff
+	ln -s knxtool $(1)/usr/bin/knxif
+	ln -s knxtool $(1)/usr/bin/knxswrite
+	ln -s knxtool $(1)/usr/bin/knxbool
+	ln -s knxtool $(1)/usr/bin/knxdimup
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/knxtool $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor1 $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor2 $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor3 $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/eibread-cgi $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/eibwrite-cgi $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor1 $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor2 $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor3 $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupwrite $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupswrite $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/grouplisten $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupread $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupresponse $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupreadresponse $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketlisten $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketread $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketwrite $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketswrite $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,knxd))
