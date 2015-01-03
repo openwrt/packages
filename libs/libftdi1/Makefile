@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi1
 PKG_VERSION:=1.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
@@ -40,8 +40,8 @@ define Package/libftdi1/description
 endef
 
 define Package/ftdi_eeprom
-  SECTION:=libs
-  CATEGORY:=Libraries
+  SECTION:=utils
+  CATEGORY:=Utilities
   DEPENDS:=+confuse +libftdi1
   TITLE:=Tool for reading/erasing/flashing FTDI USB chip eeproms
   URL:=http://www.intra2net.com/en/developer/libftdi/
@@ -52,8 +52,7 @@ define Package/ftdi_eeprom/description
   eeproms. It uses libftdi to access the chip, so you will need to have
   the required permissions on the device.
 
-  The ftdi_sio module should not be loaded. You can prevent it to be
-  automatically loaded by adding it to /etc/modprobe.d/blacklist.
+  The ftdi_sio module should not be loaded.
 
   You have to unplug and replug your device to get the new values to be
   read. Otherwise, you will still get the old values.
