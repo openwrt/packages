@@ -10,6 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=classpath
 PKG_VERSION:=0.99
 PKG_RELEASE:=1
+PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/classpath
