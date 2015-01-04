@@ -15,6 +15,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=knxd
 PKG_REV:=b01d99c6748cc565f1be69b68cf2b9d3115e8ce5
 PKG_VERSION:=2014-12-20
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0+
@@ -99,6 +100,7 @@ define Package/knxd/install
 	$(CP) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetdescribe $(1)/usr/bin/
 	mkdir -p $(1)/etc/init.d
 	$(CP) ./files/knxd.init $(1)/etc/init.d/knxd
+	chmod 755 $(1)/etc/init.d/knxd
 	mkdir -p $(1)/etc/config
 	$(CP) ./files/knxd.config $(1)/etc/config/knxd
 endef
