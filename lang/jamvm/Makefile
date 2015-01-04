@@ -27,7 +27,7 @@ define Package/jamvm
   SUBMENU:=Java
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=A compact Java Virtual Machine V2
+  TITLE:=A compact Java Virtual Machine
   URL:=http://sourceforge.net/projects/jamvm
   DEPENDS:=+zlib +libpthread +librt +classpath @!avr32
 endef
