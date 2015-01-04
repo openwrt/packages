@@ -54,9 +54,11 @@ define Package/linknx/install
 	$(CP) $(PKG_BUILD_DIR)/src/linknx $(1)/usr/bin/
 	mkdir -p $(1)/etc/init.d
 	$(CP) ./files/linknx.init $(1)/etc/init.d/linknx
+	chmod 755 $(1)/etc/init.d/linknx
 	mkdir -p $(1)/etc/config
 	$(CP) ./files/linknx.config $(1)/etc/config/linknx
 	$(CP) ./files/linknx.xml.dist $(1)/etc/linknx.xml.dist
+	mkdir -p $(1)/var/lib/linknx/persist
 endef
 
 $(eval $(call BuildPackage,linknx))
