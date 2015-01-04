@@ -15,6 +15,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=knxd
 PKG_REV:=b01d99c6748cc565f1be69b68cf2b9d3115e8ce5
 PKG_VERSION:=2014-12-20
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0+
@@ -91,26 +92,26 @@ define Build/Compile
 endef
 
 define Package/knxd/install
-	mkdir -p $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/src/server/knxd $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/tools/bcu/bcuaddrtab $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/tools/bcu/bcuread $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetsearch $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetdescribe $(1)/usr/bin/
-	mkdir -p $(1)/etc/init.d
-	$(CP) ./files/knxd.init $(1)/etc/init.d/knxd
-	mkdir -p $(1)/etc/config
-	$(CP) ./files/knxd.config $(1)/etc/config/knxd
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/server/knxd $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/bcu/bcuaddrtab $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/bcu/bcuread $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetsearch $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetdescribe $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/knxd.init $(1)/etc/init.d/knxd
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/knxd.config $(1)/etc/config/knxd
 endef
 #       add this line above to support USB
 #       $(CP) $(PKG_BUILD_DIR)/src/usb/findknxusb $(1)/usr/bin/
 
 define Package/knxd-tools/install
-	mkdir -p $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/src/client/c/.libs/libeibclient.so.0.0.0 $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/client/c/.libs/libeibclient.so.0.0.0 $(1)/usr/lib/
 	ln -s libeibclient.so.0.0.0 $(1)/usr/lib/libeibclient.so
 	ln -s libeibclient.so.0.0.0 $(1)/usr/lib/libeibclient.so.0
-	mkdir -p $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/bin
 	-rm -f $(1)/usr/bin/knxread
 	-rm -f $(1)/usr/bin/knxreadtemp
 	-rm -f $(1)/usr/bin/knxwrite
@@ -131,25 +132,25 @@ define Package/knxd-tools/install
 	ln -s knxtool $(1)/usr/bin/knxswrite
 	ln -s knxtool $(1)/usr/bin/knxbool
 	ln -s knxtool $(1)/usr/bin/knxdimup
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/knxtool $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor1 $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor2 $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor3 $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/eibread-cgi $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/eibwrite-cgi $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor1 $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor2 $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor3 $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupwrite $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupswrite $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/grouplisten $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupread $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupresponse $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupreadresponse $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketlisten $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketread $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketwrite $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketswrite $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/knxtool $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor1 $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor2 $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/busmonitor3 $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/eibread-cgi $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/eibwrite-cgi $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor1 $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor2 $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/vbusmonitor3 $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/groupwrite $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/groupswrite $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/grouplisten $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/groupread $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/groupresponse $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/groupreadresponse $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketlisten $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketread $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketwrite $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/examples/.libs/groupsocketswrite $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,knxd))
