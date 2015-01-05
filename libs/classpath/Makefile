@@ -11,6 +11,7 @@ PKG_NAME:=classpath
 PKG_VERSION:=0.99
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:= Dana H. Myers <k6jq@comcast.net>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/classpath
@@ -26,7 +27,6 @@ define Package/classpath
   CATEGORY:=Libraries
   TITLE:=GNU Classpath
   URL:=http://www.gnu.org/software/classpath/
-  MAINTAINER:=Roberto Riggio <roberto.riggio@create-net.org>
   DEPENDS:=+alsa-lib +libgmp +libmagic
 endef
 
@@ -41,7 +41,6 @@ define Package/classpath-tools
   CATEGORY:=Libraries
   TITLE:=GNU Classpath tools
   URL:=http://www.gnu.org/software/classpath/
-  MAINTAINER:=Roberto Riggio <roberto.riggio@create-net.org>
 endef
 
 define Download/antlr
