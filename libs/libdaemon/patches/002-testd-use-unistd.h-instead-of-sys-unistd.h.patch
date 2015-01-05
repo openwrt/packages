@@ -1,0 +1,28 @@
+From 8cc1a70b8f65c8fc4f944cad5e9e642394ddbd2f Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Mon, 5 Jan 2015 23:55:21 +0100
+Subject: [PATCH] testd: use unistd.h instead of sys/unistd.h
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+examples/testd.c: As the C POSIX library recommends include the <unistd.h>
+instead of <sys/unistd.h>. This removes an error when building libdaemon
+against the musl C library.
+
+Signed-off-by: Jörg Krause <jkrause@posteo.de>
+---
+ examples/testd.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/examples/testd.c
++++ b/examples/testd.c
+@@ -23,7 +23,7 @@
+ #include <string.h>
+ #include <sys/types.h>
+ #include <sys/time.h>
+-#include <sys/unistd.h>
++#include <unistd.h>
+ #include <sys/select.h>
+ 
+ #include <libdaemon/dfork.h>
