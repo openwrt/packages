@@ -1,8 +1,5 @@
 #
-# Copyright (C) 2006-2012 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
+# Copyright (C) 2015 OpenWrt.org
 #
 
 include $(TOPDIR)/rules.mk
@@ -14,6 +11,9 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://www.harding.motd.ca/autossh/
 PKG_MD5SUM:=89c09b50aa2d57814f808d727e937d0f
+
+PKG_MAINTAINER:=sinkcup <sinkcup@163.com>
+PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
