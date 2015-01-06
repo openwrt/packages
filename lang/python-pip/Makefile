@@ -40,8 +40,10 @@ define Build/Compile
 	)
 endef
 
+PYTHON_PIP_PKG_DIR:=$(PYTHON_PKG_DIR)/pip-$(PKG_VERSION)-py$(PYTHON_VERSION).egg/pip
 define PyPackage/python-pip/filespec
-+|/usr/lib/python$(PYTHON_VERSION)
++|$(PYTHON_PKG_DIR)
+-|$(PYTHON_PIP_PKG_DIR)/_vendor/distlib/*.exe
 endef
 
 # Backup these files, so that they do not clash with python-setuptools
