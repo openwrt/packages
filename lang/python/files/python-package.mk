@@ -45,6 +45,7 @@ define PyPackage
 	@echo "$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" | ( \
 		IFS='|'; \
 		while read fop fspec fperm; do \
+		  fop=`echo "$$$$$$$$fop" | tr -d ' \t\n'`; \
 		  if [ "$$$$$$$$fop" = "+" ]; then \
 			if [ ! -e "$(PKG_INSTALL_DIR)$$$$$$$$fspec" ]; then \
 			  echo "File not found '$(PKG_INSTALL_DIR)$$$$$$$$fspec'"; \
