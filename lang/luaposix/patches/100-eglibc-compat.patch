@@ -1,7 +1,8 @@
-diff -Naur luaposix-release-v33.0.0.orig/ext/posix/unistd.c luaposix-release-v33.0.0/ext/posix/unistd.c
---- luaposix-release-v33.0.0.orig/ext/posix/unistd.c	2014-11-04 17:49:35.000000000 +0200
-+++ luaposix-release-v33.0.0/ext/posix/unistd.c	2014-12-14 00:59:14.878622722 +0200
-@@ -526,6 +526,7 @@
+diff --git a/ext/posix/unistd.c b/ext/posix/unistd.c
+index 9276640..69c8cef 100644
+--- a/ext/posix/unistd.c
++++ b/ext/posix/unistd.c
+@@ -525,6 +525,7 @@ Pgetgroups(lua_State *L)
  #endif
  
  
@@ -9,7 +10,7 @@ diff -Naur luaposix-release-v33.0.0.orig/ext/posix/unistd.c luaposix-release-v33
  /***
  Current logged-in user.
  @treturn[1] string username, if successful
-@@ -538,6 +539,7 @@
+@@ -537,6 +538,7 @@ Pgetlogin(lua_State *L)
  	checknargs(L, 0);
  	return pushstringresult(getlogin());
  }
@@ -17,7 +18,7 @@ diff -Naur luaposix-release-v33.0.0.orig/ext/posix/unistd.c luaposix-release-v33
  
  
  /***
-@@ -1037,7 +1039,9 @@
+@@ -1044,7 +1046,9 @@ static const luaL_Reg posix_unistd_fns[] =
  	LPOSIX_FUNC( Pgetegid		),
  	LPOSIX_FUNC( Pgeteuid		),
  	LPOSIX_FUNC( Pgetgid		),

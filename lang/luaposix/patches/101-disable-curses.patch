@@ -1,22 +1,12 @@
-diff -Naur luaposix-release-v33.0.0.orig/ext/posix/posix.c luaposix-release-v33.0.0/ext/posix/posix.c
---- luaposix-release-v33.0.0.orig/ext/posix/posix.c	2014-11-04 17:49:35.000000000 +0200
-+++ luaposix-release-v33.0.0/ext/posix/posix.c	2014-12-14 01:49:44.486562194 +0200
-@@ -11,7 +11,6 @@
-  */
+diff --git a/configure.ac b/configure.ac
+index dfd4199..19924d0 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -153,15 +153,6 @@ AC_CHECK_LIB([rt], [clock_gettime])
+ AC_SUBST([LIBRT], [$LIBS])
+ LIBS=$save_LIBS
  
- #include "ctype.c"
--#include "curses.c"
- #include "dirent.c"
- #include "errno.c"
- #include "fcntl.c"
-diff -Naur luaposix-release-v33.0.0.orig/configure.ac luaposix-release-v33.0.0/configure.ac
---- luaposix-release-v33.0.0.orig/configure.ac	2014-11-04 17:49:35.000000000 +0200
-+++ luaposix-release-v33.0.0/configure.ac	2014-12-14 01:58:08.214554482 +0200
-@@ -109,15 +109,6 @@
-   AC_SUBST([LIBRT], [-lrt])
- fi
- 
--dnl Curses
+-## Curses
 -AX_WITH_CURSES
 -AC_ARG_VAR(CURSES_LIB, [linker flags for curses library])
 -
@@ -25,6 +15,18 @@ diff -Naur luaposix-release-v33.0.0.orig/configure.ac luaposix-release-v33.0.0/c
 -AC_CHECK_FUNCS([resizeterm])
 -LIBS=$save_LIBS
 -
- dnl Lua 5.1 or 5.2
- AX_PROG_LUA(5.1, 5.3)
- AX_LUA_HEADERS
+ ## Use system implementation, or bundled replacement?
+ AC_CHECK_FUNCS([strlcpy])
+ 
+diff --git a/ext/posix/posix.c b/ext/posix/posix.c
+index 6019df0..2d75487 100644
+--- a/ext/posix/posix.c
++++ b/ext/posix/posix.c
+@@ -12,7 +12,6 @@
+ 
+ #include "bit32.c"
+ #include "ctype.c"
+-#include "curses.c"
+ #include "dirent.c"
+ #include "errno.c"
+ #include "fcntl.c"
