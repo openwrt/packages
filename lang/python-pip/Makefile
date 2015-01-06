@@ -44,6 +44,26 @@ define PyPackage/python-pip/filespec
 +|/usr/lib/python$(PYTHON_VERSION)
 endef
 
+# Backup these files, so that they do not clash with python-setuptools
+# If we install python-pip python-setuptools, we want these to be replaced,
+# since python-pip replaces python-setuptools (when installed)
+define Package/python-pip/preinst
+#!/bin/sh
+cd "$${IPKG_INSTROOT}$(PYTHON_PKG_DIR)"
+mv -f easy-install.pth easy-install.pth.old
+mv -f site.py site.py.old
+exit 0
+endef
+
+# And put them back on remove
+define Package/python-pip/postrm
+#!/bin/sh
+cd "$${IPKG_INSTROOT}$(PYTHON_PKG_DIR)"
+mv -f easy-install.pth.old easy-install.pth
+mv -f site.py.old site.py
+exit 0
+endef
+
 define PyPackage/python-pip/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
