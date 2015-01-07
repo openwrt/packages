@@ -90,4 +90,4 @@ endef
 Package/rtorrent-rpc/install = $(Package/rtorrent/install)
 
 $(eval $(call BuildPackage,rtorrent))
-#$(eval $(call BuildPackage,rtorrent-rpc))
+$(eval $(call BuildPackage,rtorrent-rpc))
