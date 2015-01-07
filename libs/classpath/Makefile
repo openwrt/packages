@@ -51,6 +51,7 @@ endef
 $(eval $(call Download,antlr))
 
 CONFIGURE_ARGS += \
+	--with-gmp="$(STAGING_DIR)/usr" \
 	--without-x \
 	--disable-gtk-peer \
 	--disable-qt-peer \
