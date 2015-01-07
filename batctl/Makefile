@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batctl
 
-PKG_VERSION:=2014.3.0
+PKG_VERSION:=2014.4.0
 PKG_RELEASE:=1
-PKG_MD5SUM:=7d2b8c129424c014d020c4b1a2add31b
+PKG_MD5SUM:=f3a14565699313258ee6ba3de783eb0a
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
