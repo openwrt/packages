@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linknx
 PKG_VERSION:=0.0.1.32
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MD5SUM:=7ecc1208f59bceb05068c752b2250b63
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
@@ -53,11 +53,16 @@ define Package/linknx/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/linknx $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DATA) ./files/linknx.init $(1)/etc/init.d/linknx
+	$(INSTALL_BIN) ./files/linknx.init $(1)/etc/init.d/linknx
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/linknx.config $(1)/etc/config/linknx
 	$(INSTALL_DATA) ./files/linknx.xml.dist $(1)/etc/linknx.xml.dist
-	$(INSTALL_DIR) $(1)/var/lib/linknx/persist
+	$(INSTALL_DIR) $(1)/tmp/linknx/persist
+endef
+
+define Package/linknx/conffiles
+/etc/config/linknx
+/etc/linknx.xml.dist
 endef
 
 $(eval $(call BuildPackage,linknx))
