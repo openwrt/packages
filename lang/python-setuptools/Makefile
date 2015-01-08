@@ -40,10 +40,10 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(2)$(PYTHON_PKG_DIR)
+	$(INSTALL_DIR) $(PYTHON_LIB_DIR)
 	$(CP) \
-		$(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR) \
-		$(2)$(PYTHON_PKG_DIR)
+		$(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
+		$(PYTHON_LIB_DIR)
 endef
 
 define PyPackage/python-setuptools/install
