@@ -52,6 +52,8 @@ define Package/bluez-utils/conffiles
 endef
 
 CONFIGURE_ARGS += \
+	--enable-static \
+	--enable-shared \
 	--enable-client \
 	--enable-datafiles \
 	--enable-experimental \
@@ -70,6 +72,15 @@ CONFIGURE_ARGS += \
 
 TARGET_CPPFLAGS += \
 	-D_GNU_SOURCE
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/bluetooth $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libbluetooth.{a,so*} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/bluez.pc $(1)/usr/lib/pkgconfig/
+endef
 
 define Package/bluez-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
