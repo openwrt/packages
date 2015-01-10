@@ -18,6 +18,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=6136f54b221ab8883731349d01f34b01812e391d
 
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 PKG_MAINTAINER:=Jacob Siverskog <jacob@teenageengineering.com>
 
@@ -41,11 +42,6 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-protoc
-
-define Build/Configure
-	cd $(PKG_BUILD_DIR) && ./autogen.sh
-	$(call Build/Configure/Default)
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
