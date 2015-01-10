@@ -26,6 +26,8 @@
 #* CISCO_IPV6_SPLIT_INC_%d_ADDR -- IPv6 network address
 #* CISCO_IPV6_SPLIT_INC_$%d_MASKLEN -- IPv6 subnet masklen
 
+HOOKS_DIR=/etc/openconnect
+
 # FIXMEs:
 
 # Section A: route handling
@@ -44,13 +46,12 @@
 
 # Section B: Split DNS handling
 
-# 1) Maybe dnsmasq can do something like that
-# 2) Parse dns packets going out via tunnel and redirect them to original dns-server
+# 1) We parse CISCO_SPLIT_DNS and use dnsmasq to set it
 
 do_connect() {
 	if [ -n "$CISCO_BANNER" ]; then
 		logger -t openconnect "Connect Banner:"
-		logger -t openconnect "$CISCO_BANNER" | while read LINE ; do logger -t openconnect "|" "$LINE" ; done
+		echo "$CISCO_BANNER" | while read LINE ; do logger -t openconnect "|" "$LINE" ; done
 	fi
 
 	proto_init_update "$TUNDEV" 1
@@ -80,8 +81,23 @@ do_connect() {
 		[[ "$addr" != "$mask" ]] && proto_add_ipv6_address "$addr" "$mask"
 	fi
 
-	[ -n "$INTERNAL_IP4_DNS" ] && proto_add_dns_server "$INTERNAL_IP4_DNS"
-	[ -n "$CISCO_DEF_DOMAIN" ] && proto_add_dns_search "$CISCO_DEF_DOMAIN"
+	if [ -n "$CISCO_SPLIT_DNS" ] && [ -d "/tmp/dnsmasq.d/" ];then
+		SDNS=`echo $CISCO_SPLIT_DNS|sed 's/,/\n/g'`
+		DNSMASQ_FILE="/tmp/dnsmasq.d/openconnect.$TUNDEV"
+		rm -f $DNSMASQ_FILE
+		echo "$SDNS" | while read i; do
+			if [ -n "$INTERNAL_IP4_DNS" ];then
+				echo "server=/$i/$INTERNAL_IP4_DNS" >> $DNSMASQ_FILE
+			fi
+			if [ -n "$INTERNAL_IP6_DNS" ];then
+				echo "server=/$i/$INTERNAL_IP6_DNS" >> $DNSMASQ_FILE
+			fi
+		done
+		/etc/init.d/dnsmasq restart
+	else
+		[ -n "$INTERNAL_IP4_DNS" ] && proto_add_dns_server "$INTERNAL_IP4_DNS"
+		[ -n "$CISCO_DEF_DOMAIN" ] && proto_add_dns_search "$CISCO_DEF_DOMAIN"
+	fi
 
 	if [ -n "$CISCO_SPLIT_INC" ]; then
 		i=0
@@ -118,8 +134,20 @@ do_connect() {
 }
 
 do_disconnect() {
+	rm -f "/tmp/dnsmasq.d/openconnect.$TUNDEV"
 	proto_init_update "$TUNDEV" 0
 	proto_send_update "$INTERFACE"
+}
+
+#### Hooks
+run_hooks() {
+	HOOK="$1"
+
+	if [ -d ${HOOKS_DIR}/${HOOK}.d ]; then
+		for script in ${HOOKS_DIR}/${HOOK}.d/* ; do
+			[ -f $script ] && . $script
+		done
+	fi
 }
 
 #### Main
@@ -137,14 +165,20 @@ fi
 
 case "$reason" in
 	pre-init)
+		run_hooks pre-init
 		;;
 	connect)
+		run_hooks connect
 		do_connect
+		run_hooks post-connect
 		;;
 	disconnect)
+		run_hooks disconnect
 		do_disconnect
+		run_hooks post-disconnect
 		;;
 	reconnect)
+		run_hooks reconnect
 		;;
 	*)
 		logger -t openconnect "unknown reason '$reason'. Maybe vpnc-script is out of date" 1>&2

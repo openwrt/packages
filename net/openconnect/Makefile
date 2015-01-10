@@ -8,12 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openconnect
-PKG_VERSION:=6.00
-PKG_RELEASE:=3
+PKG_VERSION:=7.03
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/openconnect/
-PKG_MD5SUM:=7e28e23c6e281be31446e6c365f5d273
+PKG_MD5SUM:=83f6a359906d49473f591ba613ca3fe5
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_OPENCONNECT_GNUTLS \
+	CONFIG_OPENCONNECT_OPENSSL \
+
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -42,7 +47,9 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-shared \
-	--with-vpnc-script=/lib/netifd/vpnc-script
+	--with-vpnc-script=/lib/netifd/vpnc-script \
+	--without-libpcsclite \
+	--without-stoken
 
 ifeq ($(CONFIG_OPENCONNECT_OPENSSL),y)
 CONFIGURE_ARGS += \
