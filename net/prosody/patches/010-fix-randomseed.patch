@@ -1,0 +1,12 @@
+diff -u --recursive prosody-0.9.7-vanilla/net/dns.lua prosody-0.9.7/net/dns.lua
+--- prosody-0.9.7-vanilla/net/dns.lua	2015-01-02 00:26:19.981433830 -0500
++++ prosody-0.9.7/net/dns.lua	2015-01-02 00:33:10.467077715 -0500
+@@ -225,7 +225,7 @@
+ 
+ 
+ function dns.random(...)    -- - - - - - - - - - - - - - - - - - -  dns.random
+-	math.randomseed(math.floor(10000*socket.gettime()) % 0x100000000);
++	math.randomseed(math.floor(10000*socket.gettime()) % 0x80000000);
+ 	dns.random = math.random;
+ 	return dns.random(...);
+ end

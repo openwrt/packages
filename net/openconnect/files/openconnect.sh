@@ -38,12 +38,19 @@ proto_openconnect_setup() {
 
 	cmdline="$server$port -i vpn-$config --non-inter --syslog --script /lib/netifd/vpnc-script"
 
-	[ -f /etc/openconnect/user-cert-vpn-$config.pem ] && append cmdline "-c /etc/openconnect/user-cert-vpn-$config.pem"
-	[ -f /etc/openconnect/user-key-vpn-$config.pem ] && append cmdline "--sslkey /etc/openconnect/user-key-vpn-$config.pem"
-	[ -f /etc/openconnect/ca-vpn-$config.pem ] && {
+	# migrate to new config files
+	[ -f /etc/openconnect/user-cert-vpn-$config.pem ] && mv "/etc/openconnect/user-cert-vpn-$config.pem" "/etc/config/openconnect-user-cert-vpn-$config.pem"
+	[ -f /etc/openconnect/user-key-vpn-$config.pem ] && mv "/etc/openconnect/user-key-vpn-$config.pem" "/etc/config/openconnect-user-key-vpn-$config.pem"
+	[ -f /etc/openconnect/ca-vpn-$config.pem ] && mv "/etc/openconnect/ca-vpn-$config.pem" "/etc/config/openconnect-ca-vpn-$config.pem"
+
+	# read new config files
+	[ -f /etc/config/openconnect-user-cert-vpn-$config.pem ] && append cmdline "-c /etc/config/openconnect-user-cert-vpn-$config.pem"
+	[ -f /etc/config/openconnect-user-key-vpn-$config.pem ] && append cmdline "--sslkey /etc/config/openconnect-user-key-vpn-$config.pem"
+	[ -f /etc/config/openconnect-ca-vpn-$config.pem ] && {
 		append cmdline "--cafile /etc/openconnect/ca-vpn-$config.pem"
 		append cmdline "--no-system-trust"
 	}
+
 	[ -n "$serverhash" ] && {
 		append cmdline " --servercert=$serverhash"
 		append cmdline "--no-system-trust"
