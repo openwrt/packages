@@ -3,8 +3,6 @@ The openconnect client expects to be configured using the uci interface.
 To setup a VPN connection, add the following to /etc/config/network:
 
 config interface 'MYVPN'
-        option _orig_ifname 'vpnc'
-        option _orig_bridge 'false'
         option proto 'openconnect'
         option server 'vpn.example.com'
         option port '4443'
