@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-privoxy
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.0.1
 #PKG_RELEASE:=0
 
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
@@ -22,7 +22,7 @@ define Package/luci-app-privoxy
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=LuCI support for Privoxy WEB Proxy
-  DEPENDS:=+luci-lib-nixio +luci-mod-admin-full +privoxy
+  DEPENDS:=+luci-mod-admin-full +privoxy
   PKGARCH:=all
 endef
 
@@ -44,8 +44,7 @@ define Build/Compile
 	# copy everthing we need ot PKG_INSTALL_DIR
 	$(CP) ./* $(PKG_INSTALL_DIR)/
 	# due to package dependencies LuCI is compiled first so the needed binary exists
-	$(LN) $(BUILD_DIR)/luci/build/po2lmo $(PKG_INSTALL_DIR)/build/po2lmo
-	$(LN) $(BUILD_DIR)/luci/build/i18n-po2lua.pl $(PKG_INSTALL_DIR)/build/i18n-po2lua.pl
+	$(LN) $(STAGING_DIR_HOST)/bin/po2lmo $(PKG_INSTALL_DIR)/build/po2lmo
 	# generate needed .lmo files out of given .po files
 	cd $(PKG_INSTALL_DIR); build/i18n-po2lua.pl po files/luasrc/i18n
 endef
