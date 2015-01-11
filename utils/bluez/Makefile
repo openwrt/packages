@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.kernel.org/pub/linux/bluetooth/
 PKG_MD5SUM:=a8fc508690e497e88c2c0b373cd653a8
 
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 

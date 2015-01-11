@@ -31,7 +31,7 @@ setup_config() {
 	test $auth = "plain" && authsuffix="\[/var/etc/ocpasswd\]"
 
 	dyndns="false"
-	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 1`
+	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 2`
 	[ -n "$hostname" ] && dyndns="true"
 
 	mkdir -p /var/etc
@@ -91,7 +91,7 @@ setup_dns() {
 start() {
 	local hostname iface
 
-	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 1`
+	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 2`
 	[ -z "$hostname" ] && hostname=`uci get system.@system[0].hostname`
 
 	[ ! -f /etc/ocserv/ca-key.pem ] && [ -x /usr/bin/certtool ] && {
