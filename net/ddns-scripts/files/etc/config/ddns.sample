@@ -48,6 +48,12 @@ config ddns "global"
 	# default: "250" lines
 #	option log_lines "250"
 
+	###########
+	# Whether to allow to send Private/Special IP's to the DDNS provider
+	# IPv4: 0.x, 10.x, 127.x, 172.16.x-172.31.x, 192.168.x
+	# IPv6: ::, Fxxx:
+	# default: "0"	disabled
+#	option allow_local_ip "0"
 
 #####################################################################
 # DDNS service settings

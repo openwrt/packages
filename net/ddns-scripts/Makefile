@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENSE:=GPL-2.0
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -55,7 +55,7 @@ define Package/ddns-scripts/install
 	$(INSTALL_BIN) ./files/etc/init.d/* $(1)/etc/init.d/
 
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_DATA) ./files/usr/lib/ddns/service* $(1)/usr/lib/ddns
+	$(INSTALL_DATA) ./files/usr/lib/ddns/* $(1)/usr/lib/ddns
 	$(INSTALL_BIN)  ./files/usr/lib/ddns/*.sh $(1)/usr/lib/ddns
 endef
 
@@ -68,6 +68,7 @@ define Package/ddns-scripts/postinst
 	uci -q get ddns.global > /dev/null || uci -q set ddns.global='ddns'
 	uci -q get ddns.global.date_format > /dev/null || uci -q set ddns.global.date_format='%F %R'
 	uci -q get ddns.global.log_lines > /dev/null || uci -q set ddns.global.log_lines='250'
+	uci -q get ddns.global.allow_local_ip > /dev/null || uci -q set ddns.global.allow_local_ip='0'
 	uci -q commit ddns
 
 	# clear LuCI indexcache
