@@ -18,6 +18,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 PKG_LICENSE:=BSD-2c
 
@@ -43,11 +44,6 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-protoc
-
-define Build/Configure
-	cd $(PKG_BUILD_DIR) && ./autogen.sh
-	$(call Build/Configure/Default)
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
