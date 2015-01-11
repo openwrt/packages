@@ -11,17 +11,19 @@
 # option domain   - your full hostname to update, in cloudflare its subdomain.domain
 #			i.e. myhost.example.com where myhost is the subdomain and example.com is your domain
 #
-# Attention !!! script will only work if there is only one subdomain-level at your domain
-# subdomain2.subdomain1.domain i.e. mail.host.example.com will not work
-#
 # variable __IP already defined with the ip-address to use for update
 #
 [ $use_https -eq 0 ] && write_log 14 "Cloudflare only support updates via Secure HTTP (HTTPS). Please correct configuration!"
 
-local __RECID __URL __KEY __KEYS __FOUND __DOMREC
-local __SUBDOM=$(echo $domain | awk -F "." '{print $1}')
-local __DOMAIN=$(echo $domain | awk -F "${__SUBDOM}." '{print $2}')
-local __TMP="/tmp/$$.json"
+local __RECID __URL __KEY __KEYS __FOUND __SUBDOM __DOMAIN __TLD
+
+# split given Host/Domain into TLD, registrable domain, and subdomain
+split_FQDN $domain __TLD __DOMAIN __SUBDOM
+[ $? -ne 0 -o -z "$__DOMAIN" ] && \
+	write_log 14 "Wrong Host/Domain configuration ($domain). Please correct configuration!"
+
+# put together what we need
+__DOMAIN="$__DOMAIN.$__TLD"
 
 # parse OpenWrt script with
 # functions for parsing and generating json
@@ -29,17 +31,17 @@ local __TMP="/tmp/$$.json"
 
 # function copied from /usr/share/libubox/jshn.sh
 # from BB14.09 for backward compatibility to AA12.09
-json_get_keys() {
-	local __dest="$1"
-	local _tbl_cur
+grep -i "json_get_keys" /usr/share/libubox/jshn.sh >/dev/null 2>&1 || json_get_keys() {
+		local __dest="$1"
+		local _tbl_cur
 
-	if [ -n "$2" ]; then
-		json_get_var _tbl_cur "$2"
-	else
-		_json_get_var _tbl_cur JSON_CUR
-	fi
-	local __var="${JSON_PREFIX}KEYS_${_tbl_cur}"
-	eval "export -- \"$__dest=\${$__var}\"; [ -n \"\${$__var+x}\" ]"
+		if [ -n "$2" ]; then
+			json_get_var _tbl_cur "$2"
+		else
+			_json_get_var _tbl_cur JSON_CUR
+		fi
+		local __var="${JSON_PREFIX}KEYS_${_tbl_cur}"
+		eval "export -- \"$__dest=\${$__var}\"; [ -n \"\${$__var+x}\" ]"
 }
 
 # function to "sed" unwanted string parts from DATFILE
@@ -77,15 +79,13 @@ json_select "recs"
 json_select "objs"
 json_get_keys __KEYS
 for __KEY in $__KEYS; do
-	local __ZONE __NAME __DISPLAY __TYPE
+	local __ZONE __DISPLAY __NAME __TYPE
 	json_select "$__KEY"
-	json_get_var __ZONE "zone_name"
+#	json_get_var __ZONE "zone_name"		# for debugging
+#	json_get_var __DISPLAY "display_name"	# for debugging
 	json_get_var __NAME "name"
-	json_get_var __DISPLAY "display_name"
 	json_get_var __TYPE "type"
-	# if "zone_name" == "name" == "display_name" == $domain, then we found a valid domain record
 	if [ "$__NAME" = "$domain" ]; then
-		[ "$__DISPLAY" = "$__ZONE" ] && __DOMREC=1 || __DOMREC=0
 		# we must verify IPv4 and IPv6 because there might be both for the same host
 		[ \( $use_ipv6 -eq 0 -a "$__TYPE" = "A" \) -o \( $use_ipv6 -eq 1 -a "$__TYPE" = "AAAA" \) ] && {
 			__FOUND=1	# mark found
@@ -110,14 +110,14 @@ __URL="${__URL}?a=rec_edit"				#  -d 'a=rec_edit'
 __URL="${__URL}&tkn=$password"				#  -d 'tkn=8afbe6dea02407989af4dd4c97bb6e25'
 __URL="${__URL}&id=$__RECID"				#  -d 'id=9001'
 __URL="${__URL}&email=$username"			#  -d 'email=sample@example.com'
-[ $__DOMREC -eq 0 ] && __URL="${__URL}&z=$__DOMAIN"	#  -d 'z=example.com'
-[ $__DOMREC -eq 1 ] && __URL="${__URL}&z=$domain"	#  -d 'z=example.com'
+__URL="${__URL}&z=$__DOMAIN"				#  -d 'z=example.com'
 
 [ $use_ipv6 -eq 0 ] && __URL="${__URL}&type=A"		#  -d 'type=A'		(IPv4)
 [ $use_ipv6 -eq 1 ] && __URL="${__URL}&type=AAAA"	#  -d 'type=AAAA'	(IPv6)
 
-[ $__DOMREC -eq 0 ] && __URL="${__URL}&name=$__SUBDOM"	#  -d 'name=sub'	(HOST/SUBDOMAIN)
-[ $__DOMREC -eq 1 ] && __URL="${__URL}&name=$domain"	#  -d 'name=example.com'(DOMAIN)
+# handle subdomain or domain record
+[ -n "$__SUBDOM" ] && __URL="${__URL}&name=$__SUBDOM"	#  -d 'name=sub'	(HOST/SUBDOMAIN)
+[ -z "$__SUBDOM" ] && __URL="${__URL}&name=$__DOMAIN"	#  -d 'name=example.com'(DOMAIN)
 
 __URL="${__URL}&content=$__IP"				#  -d 'content=1.2.3.4'
 __URL="${__URL}&service_mode=0"				#  -d 'service_mode=0'

@@ -12,7 +12,7 @@
 # - IPv6 DDNS services
 # - setting DNS Server to retrieve current IP including TCP transport
 # - Proxy Server to send out updates or retrieving WEB based IP detection
-# - force_interval=0 to run once (usefull for cron jobs etc.)
+# - force_interval=0 to run once (useful for cron jobs etc.)
 # - the usage of BIND's host instead of BusyBox's nslookup if installed (DNS via TCP)
 # - extended Verbose Mode and log file support for better error detection
 #
@@ -32,17 +32,20 @@
 SECTION_ID=""		# hold config's section name
 VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
 
+# allow NON-public IP's
+ALLOW_LOCAL_IP=$(uci -q get ddns.global.allow_local_ip) || ALLOW_LOCAL_IP=0
 # directory to store run information to.
 RUNDIR=$(uci -q get ddns.global.run_dir) || RUNDIR="/var/run/ddns"
 [ -d $RUNDIR ] || mkdir -p -m755 $RUNDIR
-# NEW # directory to store log files
+# directory to store log files
 LOGDIR=$(uci -q get ddns.global.log_dir) || LOGDIR="/var/log/ddns"
 [ -d $LOGDIR ] || mkdir -p -m755 $LOGDIR
-LOGFILE=""		# NEW # logfile can be enabled as new option
+LOGFILE=""		# logfile - all files are set in dynamic_dns_updater.sh
 PIDFILE=""		# pid file
 UPDFILE=""		# store UPTIME of last update
-DATFILE=""		# save stdout data of WGet and other extern programs called
-ERRFILE=""		# save stderr output of WGet and other extern programs called
+DATFILE=""		# save stdout data of WGet and other external programs called
+ERRFILE=""		# save stderr output of WGet and other external programs called
+TLDFILE=/usr/lib/ddns/tld_names.dat	# TLD file used by split_FQDN
 
 # number of lines to before rotate logfile
 LOGLINES=$(uci -q get ddns.global.log_lines) || LOGLINES=250
@@ -314,8 +317,8 @@ get_service_data() {
 	done
 	IFS=$__OLD_IFS
 
-	# check is URL or SCRIPT is given
-	__URL=$(echo "$__DATA" | grep "^http:")
+	# check if URL or SCRIPT is given
+	__URL=$(echo "$__DATA" | grep "^http")
 	[ -z "$__URL" ] && __SCRIPT="/usr/lib/ddns/$__DATA"
 
 	eval "$1=\"$__URL\""
@@ -340,15 +343,15 @@ get_seconds() {
 
 timeout() {
 	# copied from http://www.ict.griffith.edu.au/anthony/software/timeout.sh
-	# only did the folloing changes
+	# only did the following changes
 	#	- commented out "#!/bin/bash" and usage section
 	#	- replace exit by return for usage as function
-	#	- some reformating
+	#	- some reformatting
 	#
 	# timeout [-SIG] time [--] command args...
 	#
 	# Run the given command until completion, but kill it if it runs too long.
-	# Specifically designed to exit immediatally (no sleep interval) and clean up
+	# Specifically designed to exit immediately (no sleep interval) and clean up
 	# nicely without messages or leaving any extra processes when finished.
 	#
 	# Example use
@@ -402,7 +405,7 @@ timeout() {
 		shift	# next option
 	done
 
-	# run main command in backgrouds and get its pid
+	# run main command in backgrounds and get its pid
 	"$@" &
 	command_pid=$!
 
@@ -443,28 +446,45 @@ timeout() {
 verify_host_port() {
 	local __HOST=$1
 	local __PORT=$2
-	local __IP __IPV4 __IPV6 __RUNPROG __ERR
+	local __IP __IPV4 __IPV6 __RUNPROG __PROG __ERR
 	# return codes
 	# 1	system specific error
-	# 2	nslookup error
+	# 2	nslookup/host error
 	# 3	nc (netcat) error
 	# 4	unmatched IP version
 
 	[ $# -ne 2 ] && write_log 12 "Error calling 'verify_host_port()' - wrong number of parameters"
 
-	__RUNPROG="/usr/bin/nslookup $__HOST >$DATFILE 2>$ERRFILE"
-	write_log 7 "#> $__RUNPROG"
-	eval $__RUNPROG
-	__ERR=$?
-	# command error
-	[ $__ERR -gt 0 ] && {
-		write_log 3 "DNS Resolver Error - BusyBox nslookup Error '$__ERR'"
-		write_log 7 "$(cat $ERRFILE)"
-		return 2
+	# check if ip or FQDN was given
+	__IPV4=$(echo $__HOST | grep -m 1 -o "$IPV4_REGEX$")	# do not detect ip in 0.0.0.0.example.com
+	__IPV6=$(echo $__HOST | grep -m 1 -o "$IPV6_REGEX")
+	# if FQDN given get IP address
+	[ -z "$__IPV4" -a -z "$__IPV6" ] && {
+		if [ -x /usr/bin/host ]; then	# use BIND host if installed
+			__PROG="BIND host"
+			__RUNPROG="/usr/bin/host -t ANY $__HOST >$DATFILE 2>$ERRFILE"
+		else	# use BusyBox nslookup
+			__PROG="BusyBox nslookup"
+			__RUNPROG="/usr/bin/nslookup $__HOST >$DATFILE 2>$ERRFILE"
+		fi
+		write_log 7 "#> $__RUNPROG"
+		eval $__RUNPROG
+		__ERR=$?
+		# command error
+		[ $__ERR -gt 0 ] && {
+			write_log 3 "DNS Resolver Error - $__PROG Error '$__ERR'"
+			write_log 7 "$(cat $ERRFILE)"
+			return 2
+		}
+		# extract IP address
+		if [ -x /usr/bin/host ]; then	# use BIND host if installed
+			__IPV4=$(cat $DATFILE | awk -F "address " '/has address/ {print $2; exit}' )
+			__IPV6=$(cat $DATFILE | awk -F "address " '/has IPv6/ {print $2; exit}' )
+		else	# use BusyBox nslookup
+			__IPV4=$(cat $DATFILE | sed -ne "3,\$ { s/^Address[0-9 ]\{0,\}: \($IPV4_REGEX\).*$/\\1/p }")
+			__IPV6=$(cat $DATFILE | sed -ne "3,\$ { s/^Address[0-9 ]\{0,\}: \($IPV6_REGEX\).*$/\\1/p }")
+		fi
 	}
-	# extract IP address
-	__IPV4=$(cat $DATFILE | sed -ne "3,\$ { s/^Address [0-9]*: \($IPV4_REGEX\).*$/\\1/p }")
-	__IPV6=$(cat $DATFILE | sed -ne "3,\$ { s/^Address [0-9]*: \($IPV6_REGEX\).*$/\\1/p }")
 
 	# check IP version if forced
 	if [ $force_ipversion -ne 0 ]; then
@@ -487,9 +507,9 @@ verify_host_port() {
 	# connectivity test
 	# run busybox nc to HOST PORT
 	# busybox might be compiled with "FEATURE_PREFER_IPV4_ADDRESS=n"
-	# then nc will try to connect via IPv6 if there is any IPv6 availible on any host interface
-	# not worring, if there is an IPv6 wan address
-	# so if not "force_ipversion" to use_ipv6 then connect test via ipv4, if availible
+	# then nc will try to connect via IPv6 if there is any IPv6 available on any host interface
+	# not worrying, if there is an IPv6 wan address
+	# so if not "force_ipversion" to use_ipv6 then connect test via ipv4, if available
 	[ $force_ipversion -ne 0 -a $use_ipv6 -ne 0 -o -z "$__IPV4" ] && __IP=$__IPV6 || __IP=$__IPV4
 
 	if [ -n "$__NCEXT" ]; then	# BusyBox nc compiled with extensions (timeout support)
@@ -512,7 +532,7 @@ verify_host_port() {
 	fi
 }
 
-# verfiy given DNS server if connectable
+# verify given DNS server if connectable
 # $1	DNS server to verify
 verify_dns() {
 	local __ERR=255	# last error buffer
@@ -546,7 +566,7 @@ verify_dns() {
 	return 0
 }
 
-# analyse and verfiy given proxy string
+# analyze and verify given proxy string
 # $1	Proxy-String to verify
 verify_proxy() {
 	#	complete entry		user:password@host:port
@@ -643,7 +663,7 @@ do_transfer() {
 	# 2nd choice is cURL IPv4/IPv6/HTTPS
 	# libcurl might be compiled without Proxy Support (default in trunk)
 	elif [ -x /usr/bin/curl ]; then
-		__PROG="/usr/bin/curl -sS -o $DATFILE --stderr $ERRFILE"
+		__PROG="/usr/bin/curl -RsS -o $DATFILE --stderr $ERRFILE"
 		# force ip version to use
 		if [ $force_ipversion -eq 1 ]; then
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"	# force IPv4/IPv6
@@ -730,10 +750,14 @@ send_update() {
 
 	[ $# -ne 1 ] && write_log 12 "Error calling 'send_update()' - wrong number of parameters"
 
-	# verify given IP / no private IPv4's / no IPv6 addr starting with fxxx of with ":"
-	[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^127|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168)")
-	[ $use_ipv6 -eq 1 ] && __IP=$(echo $1 | grep "^[0-9a-eA-E]")
-	[ -z "$__IP" ] && write_log 4 "Private or invalid or no IP '$1' given"
+	if [ $ALLOW_LOCAL_IP -eq 0 ]; then
+		# verify given IP / no private IPv4's / no IPv6 addr starting with fxxx of with ":"
+		[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^127|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168)")
+		[ $use_ipv6 -eq 1 ] && __IP=$(echo $1 | grep "^[0-9a-eA-E]")
+		[ -z "$__IP" ] && write_log 14 "Private or invalid or no IP '$1' given! Please check your configuration"
+	else
+		__IP="$1"
+	fi
 
 	if [ -n "$update_script" ]; then
 		write_log 7 "parsing script '$update_script'"
@@ -751,7 +775,7 @@ send_update() {
 		write_log 7 "DDNS Provider answered:\n$(cat $DATFILE)"
 
 		return 0
-		# TODO analyse providers answer
+		# TODO analyze providers answer
 		# "good" or "nochg"		= dyndns.com compatible API
 		# grep -i -E "good|nochg" $DATFILE >/dev/null 2>&1
 		# return $?	# "0" if found
@@ -915,7 +939,7 @@ get_registered_ip() {
 			if [ "$__PROG" = "BIND host" ]; then
 				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
 			else
-				__DATA=$(cat $DATFILE | sed -ne "3,\$ { s/^Address [0-9]*: \($__REGEX\).*$/\\1/p }" )
+				__DATA=$(cat $DATFILE | sed -ne "3,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
 			fi
 			[ -n "$__DATA" ] && {
 				write_log 7 "Registered IP '$__DATA' detected"
@@ -974,7 +998,7 @@ trap_handler() {
 				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)\n"
 			fi ;;
 		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
-			# reload config via starting the script again 
+			# reload config via starting the script again
 			eval "/usr/lib/ddns/dynamic_dns_updater.sh $SECTION_ID $VERBOSE_MODE &"
 			exit 0 ;;	# and leave this one
 		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)\n";;
@@ -998,4 +1022,56 @@ trap_handler() {
 	# remove trap handling settings and send kill to myself
 	trap - 0 1 2 3 15
 	[ $1 -gt 0 ] && kill -$1 $$
+}
+
+split_FQDN() {
+	# $1	FQDN to split
+	# $2	name of variable to store TLD
+	# $3	name of variable to store (reg)Domain
+	# $4	name of variable to store Host/Subdomain
+
+	[ $# -ne 4 ] && write_log 12 "Error calling 'split_FQDN()' - wrong number of parameters"
+
+	_SET="$@"					# save given parameters
+	local _FHOST _FTLD _FOUND
+	local _FDOM=$(echo "$1" | tr [A-Z] [a-z])	# to lower
+
+	set -- $(echo "$_FDOM" | tr "." " ")		# replace DOT with SPACE and set as script parameters
+	_FDOM=""					# clear variable for later reuse
+
+	while [ -n "$1" ] ; do				# as long we have parameters
+		_FTLD=$(echo $@ | tr " " ".")		# build back dot separated as TLD
+		# look if match excludes "!" in tld_names.dat
+		grep -E "^!$_FTLD$" $TLDFILE >/dev/null 2>&1 || {
+			# Don't match excludes
+			# check if match any "*" in tld_names.dat
+			grep -E "^*.$_FTLD$" $TLDFILE >/dev/null 2>&1 && {
+				_FOUND="VALID"
+				break	# found leave while
+			}
+			# check if exact match in tld_names.dat
+			grep -E "^$_FTLD$" $TLDFILE >/dev/null 2>&1 && {
+				_FOUND="VALID"
+				break	# found leave while
+			}
+		}
+		# nothing match so
+		_FHOST="$_FHOST $_FDOM"		# append DOMAIN to last found HOST
+		_FDOM="$1"			# set 1st parameter as DOMAIN
+		_FTLD=""			# clear TLD
+		shift				# delete 1st parameter and retry with the rest
+	done
+
+	set -- $_SET				# set back parameters from function call
+	[ -n "$_FHOST" ] && _FHOST=$(echo $_FHOST | tr " " ".")	# put dots back into HOST
+	[ -n "$_FOUND" ] && {
+		eval "$2=$_FTLD"	# set found TLD
+		eval "$3=$_FDOM"	# set found registrable domain
+		eval "$4=$_FHOST"	# set found HOST/SUBDOMAIN
+		return 0
+	}
+	eval "$2=''"		# clear TLD
+	eval "$3=''"		# clear registrable domain
+	eval "$4=''"		# clear HOST/SUBDOMAIN
+	return 1
 }
