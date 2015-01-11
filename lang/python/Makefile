@@ -191,6 +191,7 @@ HOST_CONFIGURE_ARGS+= \
 	--without-pymalloc \
 	--with-threads \
 	--prefix=$(STAGING_DIR_HOST) \
+	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
 	OPT="$(HOST_CFLAGS)"
 
