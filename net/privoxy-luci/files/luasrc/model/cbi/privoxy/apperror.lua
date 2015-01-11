@@ -14,16 +14,19 @@ $Id$
 
 local CTRL = require "luci.controller.privoxy"	-- privoxy multiused functions
 local DISP = require "luci.dispatcher"
+local SYS  = require "luci.sys"
 
 -- Build javascript string to be displayed as version information
 local VERSION = translate("Version Information")
 		.. [[\n\nluci-app-privoxy]]
 		.. [[\n\t]] .. translate("Version") .. [[:\t]] .. CTRL.version_luci_app
-		.. [[\n\t]] .. translate("Build") .. [[:\t]] .. CTRL.ipkg_version("luci-app-privoxy").version
+		.. [[\n\t]] .. translate("Build") .. [[:\t]] 
+		.. SYS.exec([[opkg list-installed ]] .. [[luci_app_privoxy]] .. [[ | awk '{print $3}']])
 		.. [[\n\nprivoxy ]] .. translate("required") .. [[:]]
-		.. [[\n\t]] .. translate("Version") .. [[:\t]] .. CTRL.version_required .. [[ ]] .. translate("or higher")
+		.. [[\n\t]] .. translate("Version") .. [[:\t]] .. CTRL.version_required .. [[ ]] .. translate("or greater")
 		.. [[\n\nprivoxy ]] .. translate("installed") .. [[:]]
-		.. [[\n\t]] .. translate("Version") .. [[:\t]] .. CTRL.ipkg_version("privoxy").version
+		.. [[\n\t]] .. translate("Version") .. [[:\t]] 
+		.. SYS.exec([[opkg list-installed ]] .. [[privoxy]] .. [[ | awk '{print $3}']])
 		.. [[\n\n]]
 local HELP = [[<a href="http://www.privoxy.org/user-manual/config.html#%s" target="_blank">%s</a>]]
 
