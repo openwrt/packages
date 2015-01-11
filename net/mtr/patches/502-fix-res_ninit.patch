@@ -1,6 +1,6 @@
 --- a/dns.c
 +++ b/dns.c
-@@ -1305,28 +1305,6 @@ res_nmkquery(res_state statp,
+@@ -1308,28 +1308,6 @@ res_nmkquery(res_state statp,
                  return (-1);
          memset(buf, 0, HFIXEDSZ);
          hp = (HEADER *) buf;
