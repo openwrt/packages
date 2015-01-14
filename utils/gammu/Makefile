@@ -29,6 +29,7 @@ define Package/gammu
 	DEPENDS:=@BUILD_NLS +libpthread +libcurl +glib2 $(ICONV_DEPENDS) $(INTL_DEPENDS)
 	DEPENDS+=+PACKAGE_python:python +PACKAGE_bluez-libs:bluez-libs
 	DEPENDS+=+PACKAGE_libmysqlclient:libmysqlclient +PACKAGE_unixodbc:unixodbc
+	DEPENDS+=+PACKAGE_libusb-1.0:libusb-1.0
 endef
 
 CONFIGURE_ARGS:= \
