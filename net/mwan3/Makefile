@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
 PKG_VERSION:=1.5
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 PKG_MAINTAINER:=Jeroen Louwes <jeroen.louwes@gmail.com>
 PKG_LICENSE:=GPLv2
 
