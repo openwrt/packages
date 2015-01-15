@@ -115,6 +115,9 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 #
 ################################################################################
 
+# Set this early, it is used by write_log.
+[ -z "$use_syslog" ]      && use_syslog=2	# syslog "Notice"
+
 # verify and load SECTION_ID is exists
 [ "$(uci -q get ddns.$SECTION_ID)" != "service" ] && {
 	[ $VERBOSE_MODE -le 1 ] && VERBOSE_MODE=2	# force console out and logfile output
@@ -141,7 +144,6 @@ esac
 # set defaults if not defined
 [ -z "$enabled" ]	  && enabled=0
 [ -z "$retry_count" ]	  && retry_count=5
-[ -z "$use_syslog" ]      && use_syslog=2	# syslog "Notice"
 [ -z "$use_https" ]       && use_https=0	# not use https
 [ -z "$use_logfile" ]     && use_logfile=1	# use logfile by default
 [ -z "$use_ipv6" ]	  && use_ipv6=0		# use IPv4 by default
