@@ -131,7 +131,7 @@ load_all_config_options "ddns" "$SECTION_ID"
 
 write_log 7 "************ ************** ************** **************"
 write_log 5 "PID '$$' started at $(eval $DATE_PROG)"
-write_log 7 "uci configuraion:\n$(uci -q show ddns.$SECTION_ID | sort)"
+write_log 7 "uci configuration:\n$(uci -q show ddns.$SECTION_ID | sort)"
 write_log 7 "ddns version  : $(opkg list-installed ddns-scripts | awk '{print $3}')"
 case $VERBOSE_MODE in
 	0) write_log  7 "verbose mode  : 0 - run normal, NO console output";;
