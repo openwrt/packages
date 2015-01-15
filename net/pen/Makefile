@@ -12,7 +12,7 @@ PKG_VERSION:=0.25.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://siag.nu/pub/pen/
+PKG_SOURCE_URL:=http://siag.nu/pub/pen/
 PKG_MD5SUM:=13e517350ec3fbfa06a512a36067ae2b
 
 PKG_LICENSE:=GPL-2.0+
