@@ -314,7 +314,7 @@ mwan3_ifupdown()
 		done
 
 		route_args=$($IP route list dev $DEVICE default | head -1 | sed '/.*via \([^ ]*\) .*$/!d;s//via \1/;q' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}')
-		route_args="nexthop $route_args dev $DEVICE"
+		route_args="$route_args dev $DEVICE"
 	fi
 
 	while [ "$(pgrep -f -o hotplug-call)" -ne $$ -a "$counter" -lt 60 ]; do

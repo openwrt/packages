@@ -74,6 +74,7 @@ interfaces()
 	
 	check_iface_status()
 	{
+		let iface_id++
 		device=$(uci get -p /var/state network.$1.ifname) &> /dev/null
 
 		if [ -z "$device" ]; then
@@ -82,7 +83,6 @@ interfaces()
 		fi
 
 		config_get enabled "$1" enabled 0
-		let iface_id++
 
 		if [ -n "$(ps -w | grep mwan3track | grep -v grep | sed '/.*\/usr\/sbin\/mwan3track \([^ ]*\) .*$/!d;s//\1/' | awk '$1 == "'$1'"')" ]; then
 			tracking="active"
