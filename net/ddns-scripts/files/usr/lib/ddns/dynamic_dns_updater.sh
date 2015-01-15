@@ -159,11 +159,6 @@ esac
 # check enabled state otherwise we don't need to continue
 [ $enabled -eq 0 ] && write_log 14 "Service section disabled!"
 
-# without domain or username or password we can do nothing for you
-[ -z "$domain" -o -z "$username" -o -z "$password" ] && write_log 14 "Service section not correctly configured!"
-urlencode URL_USER "$username"	# encode username, might be email or something like this
-urlencode URL_PASS "$password"	# encode password, might have special chars for security reason
-
 # verify ip_source script if configured and executable
 if [ "$ip_source" = "script" ]; then
 	set -- $ip_script	#handling script with parameters, we need a trick
@@ -188,6 +183,18 @@ write_log 7 "retry counter : $retry_count times"
 [ -n "$service_name" ] && get_service_data update_url update_script
 [ -z "$update_url" -a -z "$update_script" ] && write_log 14 "No update_url found/defined or no update_script found/defined!"
 [ -n "$update_script" -a ! -f "$update_script" ] && write_log 14 "Custom update_script not found!"
+
+# All variables present in update_url must be configured.
+for var in domain username password; do
+	pattern="[$(echo $var | tr '[a-z]' '[A-Z]')]"
+	value="$(eval echo "\$${var}")"
+	if echo "$update_url" | grep -qF "$pattern" && [ -z "$value" ]; then
+		write_log 14 "Service section not correctly configured: missing '$var'!"
+		exit 1
+	fi
+done
+urlencode URL_USER "$username"	# encode username, might be email or something like this
+urlencode URL_PASS "$password"	# encode password, might have special chars for security reason
 
 #kill old process if it exists & set new pid file
 stop_section_processes "$SECTION_ID"
