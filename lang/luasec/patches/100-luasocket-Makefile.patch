@@ -1,0 +1,20 @@
+--- luasec-luasec-0.5-old/src/luasocket/Makefile	2014-01-29 21:43:33.000000000 +0100
++++ luasec-luasec-0.5/src/luasocket/Makefile	2014-11-30 13:07:44.850051000 +0100
+@@ -6,7 +6,7 @@
+ 
+ CC	?= cc
+ CFLAGS	+= $(MYCFLAGS) -DLUASOCKET_DEBUG
+-AR	:= ar rcu
++AR	?= ar
+ RANLIB	?= ranlib
+ 
+ .PHONY: all clean
+@@ -14,7 +14,7 @@
+ all: libluasocket.a
+ 
+ libluasocket.a: $(OBJS)
+-	$(AR) $@ $(OBJS)
++	$(AR) rcu $@ $(OBJS)
+ 	$(RANLIB) $@
+ 
+ clean:

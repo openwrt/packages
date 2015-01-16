@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi1
-PKG_VERSION:=1.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
-PKG_MD5SUM:=b79a6356978aa8e69f8eecc3a720ff79
+PKG_MD5SUM:=89dff802d89c4c0d55d8b4665fd52d0b
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=LGPL-2.0
@@ -39,19 +39,47 @@ define Package/libftdi1/description
   The library is linked with your program in userspace, no kernel driver required.
 endef
 
+define Package/ftdi_eeprom
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=+confuse +libftdi1
+  TITLE:=Tool for reading/erasing/flashing FTDI USB chip eeproms
+  URL:=http://www.intra2net.com/en/developer/libftdi/
+endef
+
+define Package/ftdi_eeprom/description
+  ftdi_eeprom is a small tool for reading/erasing/flashing FTDI USB chip
+  eeproms. It uses libftdi to access the chip, so you will need to have
+  the required permissions on the device.
+
+  The ftdi_sio module should not be loaded.
+
+  You have to unplug and replug your device to get the new values to be
+  read. Otherwise, you will still get the old values.
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/libftdi1/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libftdi1/ftdi.h $(1)/usr/include/libftdi1/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libftdi1.{a,so} $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libftdi1.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libftdi1.{a,so*} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/cmake/libftdi1
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/cmake/libftdi1/* $(1)/usr/lib/cmake/libftdi1/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libftdi1.pc $(1)/usr/lib/pkgconfig/libftdi1.pc
 endef
 
 define Package/libftdi1/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/libftdi1-config $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libftdi1.so.* $(1)/usr/lib/
 endef
 
+define Package/ftdi_eeprom/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ftdi_eeprom $(1)/usr/bin/
+endef
+
 $(eval $(call BuildPackage,libftdi1))
+$(eval $(call BuildPackage,ftdi_eeprom))

@@ -18,7 +18,7 @@ endif
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.6.31
-PKG_RELEASE:=7
+PKG_RELEASE:=9
 
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -103,6 +103,7 @@ define Package/avahi-daemon
   DEPENDS:=+libavahi +libexpat +librt +libdaemon
   endif
   TITLE+= (daemon)
+  MENU:=1
 endef
 
 define Package/avahi-daemon/description
@@ -113,7 +114,39 @@ endef
 
 define Package/avahi-daemon/conffiles
 /etc/avahi/avahi-daemon.conf
+endef
+
+define Package/avahi-daemon-service-http
+  $(call Package/avahi/Default)
+  SUBMENU:=IP Addresses and Names
+  DEPENDS:=avahi-daemon
+  TITLE:=Announce HTTP service
+endef
+
+define Package/avahi-daemon-service-http/description
+$(call Package/avahi/Default/description)
+ .
+ This package contains the service definition for announcing HTTP service.
+endef
+
+define Package/avahi-daemon-service-http/conffiles
 /etc/avahi/services/http.service
+endef
+
+define Package/avahi-daemon-service-ssh
+  $(call Package/avahi/Default)
+  SUBMENU:=IP Addresses and Names
+  DEPENDS:=avahi-daemon
+  TITLE:=Announce SSH service
+endef
+
+define Package/avahi-daemon-service-ssh/description
+$(call Package/avahi/Default/description)
+ .
+ This package contains the service definition for announcing SSH service.
+endef
+
+define Package/avahi-daemon-service-ssh/conffiles
 /etc/avahi/services/ssh.service
 endef
 
@@ -315,11 +348,21 @@ define Package/avahi-daemon/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/avahi-daemon $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/avahi
 	$(INSTALL_DATA) ./files/avahi-daemon.conf $(1)/etc/avahi/
+	# install empty service directory so that user knows where
+	# to place custom service files
 	$(INSTALL_DIR) $(1)/etc/avahi/services
-	$(INSTALL_DATA) ./files/service-http $(1)/etc/avahi/services/http.service
-	$(INSTALL_DATA) ./files/service-ssh $(1)/etc/avahi/services/ssh.service
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/avahi-daemon.init $(1)/etc/init.d/avahi-daemon
+endef
+
+define Package/avahi-daemon-service-http/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_DATA) ./files/service-http $(1)/etc/avahi/services/http.service
+endef
+
+define Package/avahi-daemon-service-ssh/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_DATA) ./files/service-ssh $(1)/etc/avahi/services/ssh.service
 endef
 
 define Package/avahi-dnsconfd/install
@@ -336,4 +379,6 @@ $(eval $(call BuildPackage,libavahi-dbus-support))
 $(eval $(call BuildPackage,libavahi))
 $(eval $(call BuildPackage,avahi-autoipd))
 $(eval $(call BuildPackage,avahi-daemon))
+$(eval $(call BuildPackage,avahi-daemon-service-http))
+$(eval $(call BuildPackage,avahi-daemon-service-ssh))
 $(eval $(call BuildPackage,avahi-dnsconfd))

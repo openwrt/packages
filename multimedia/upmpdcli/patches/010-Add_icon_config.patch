@@ -1,0 +1,9 @@
+--- a/src/upmpdcli.conf
++++ b/src/upmpdcli.conf
+@@ -53,3 +53,6 @@ ohmetapersist = 1
+ #  Path to the sc2mpd if it is not in /usr/bin and the location is not in
+ #  the PATH for the init scripts.
+ #sc2mpd = /usr/bin/sc2mpd
++
++# Icon for MPD UPnP interface
++iconpath = /usr/share/upmpdcli/upmpdcli.png

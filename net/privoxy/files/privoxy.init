@@ -1,0 +1,119 @@
+#!/bin/sh /etc/rc.common
+
+START=80
+STOP=20
+
+PIDFILE=/var/run/privoxy.pid
+CFGFILE=/var/etc/privoxy.conf
+CFGTEMP=/var/etc/privoxy.conf.tmp
+
+_uci2conf() {
+	local _LOGDIR="/var/log"	# set default
+	local _LOGFILE="privoxy.log"	# set default
+
+	# redefined callback for options when calling config_load
+	option_cb()
+	{
+		# $1	name of variable
+		# $2	value
+		local __OPT="$1"
+		local __VAL="$2"
+		case $__OPT in
+			logdir)		# logdir handled later
+				_LOGDIR="$__VAL"  ;;
+			logfile)	# logfile handled later
+				_LOGFILE="$__VAL" ;;
+			*)
+				# detect list options (LENGTH) and ignore
+				echo $__OPT | grep -i "_LENGTH" >/dev/null 2>&1 && return
+				# detect list options (ITEM) and ignore
+				echo $__OPT | grep -i "_ITEM" >/dev/null 2>&1 && __OPT=$(echo $__OPT | sed -e "s#_ITEM.##g")
+				# filter debug_*
+				echo $__OPT | grep -i "debug_" >/dev/null 2>&1 && {
+					[ $__VAL -eq 0 ] && return	# not set ignore
+					__VAL=$(echo $__OPT | sed -e "s#debug_##g")
+					__OPT="debug"
+				}
+				# uci only accept "_" but we need "-"
+				local __OPT=$(echo $__OPT | sed -e "s#_#-#g")
+				# write to config
+				echo -e "$__OPT\t$__VAL" >> $CFGTEMP
+				;;
+		esac
+	}
+
+	mkdir -m0755 -p /var/etc
+	echo "" > $CFGTEMP	# create tmp config file
+	chmod 644 $CFGTEMP	# garantee that privoxy can read
+	chgrp privoxy $CFGTEMP
+
+	echo '### AUTO-GENERATED CONFIGURATION'	   >> $CFGTEMP
+	echo '### USED BY PRIVOXY'		   >> $CFGTEMP
+	echo '### DO NOT EDIT'			   >> $CFGTEMP
+	echo '### SEE /etc/config/privoxy INSTEAD' >> $CFGTEMP
+	echo ''					   >> $CFGTEMP
+
+	config_load privoxy	# calling above option_cb()
+
+	# write logdir/logfile to config
+	echo -e "logdir\t$_LOGDIR" >> $CFGTEMP
+	echo -e "logfile\t$_LOGFILE" >> $CFGTEMP
+
+	# create logfile and set permissions
+	touch $_LOGDIR/$_LOGFILE
+	chmod 664 $_LOGDIR/$_LOGFILE
+	chown privoxy:privoxy $_LOGDIR/$_LOGFILE
+
+	# move temp to final privoxy readable configuration
+	mv -f $CFGTEMP $CFGFILE
+}
+
+boot() {
+	return 0	# will be started by "iface" hotplug events
+}
+
+start() {
+	# if already running do nothing
+	local _PID=$(cat $PIDFILE 2>/dev/null)
+	kill -1 $_PID 2>/dev/null && return 0
+
+	_uci2conf
+	/usr/sbin/privoxy --pidfile $PIDFILE --user privoxy.privoxy $CFGFILE
+
+	# verify startup
+	_PID=$(cat $PIDFILE 2>/dev/null)
+	kill -1 $_PID 2>/dev/null
+	local _ERR=$?
+	[ $_ERR -eq 0 ] \
+		&& logger -p daemon.notice -t "privoxy[$_PID]" "Started successfully"\
+		|| logger -p daemon.warn -t "privoxy[-----]" "Failed to start"
+	return $_ERR
+}
+
+reload() {
+	# reload is also used by luci-app-privoxy
+	local _PID=$(cat $PIDFILE 2>/dev/null)
+	kill -1 $_PID 2>/dev/null
+	if [ $? -eq 0 ]; then
+		# only restart if already running
+		restart
+	else
+		# only start if enabled
+		enabled && start
+	fi
+	return 0
+}
+
+stop() {
+	local _PID=$(cat $PIDFILE 2>/dev/null)
+	kill -15 $_PID 2>/dev/null
+	sleep 1			# give time to shutdown
+	local _tmp=$(pgrep privoxy)
+	if [ -z "$_tmp" ]; then
+		logger -p daemon.notice -t "privoxy[$_PID]" "Shutdown successfully"
+	else
+		killall -9 privoxy
+		logger -p daemon.warn -t "privoxy[-----]" "Shutdown forced by KILL"
+	fi
+	return 0
+}

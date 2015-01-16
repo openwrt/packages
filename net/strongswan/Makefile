@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2014 OpenWrt.org
+# Copyright (C) 2012-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.2.1
+PKG_VERSION:=5.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
-PKG_MD5SUM:=dd3717c0aa59ab4591ca1812941ebb82
+PKG_MD5SUM:=7ee1a33060b2bde35be0f6d78a1d26d0
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 
@@ -298,21 +298,15 @@ define BuildPlugin
     DEPENDS:= +strongswan $(3)
   endef
 
-  strongswan_mod_conf=$(wildcard $(PKG_INSTALL_DIR)/etc/strongswan.d/charon/$(1).conf)
   define Package/strongswan-mod-$(1)/install
 	$(INSTALL_DIR) $$(1)/etc/strongswan.d/charon
-	$(if $(call strongswan_mod_conf,$(1)), \
-		$(INSTALL_DATA) \
-			$(call strongswan_mod_conf,$(1)) \
-			$$(1)/etc/strongswan.d/charon/ \
-	)
+	if [ -f $(PKG_INSTALL_DIR)/etc/strongswan.d/charon/$(1).conf ]; then \
+		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/strongswan.d/charon/$(1).conf $$(1)/etc/strongswan.d/charon/; fi
 	$(INSTALL_DIR) $$(1)/usr/lib/ipsec/plugins
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-$(1).so \
 		$$(1)/usr/lib/ipsec/plugins/
 	$(call Plugin/$(1)/install,$$(1))
   endef
-
-  Package/strongswan-mod-$(1)/conffiles=$(patsubst $(PKG_INSTALL_DIR)%,%,$(call strongswan_mod_conf,$(1)))
 
   $$(eval $$(call BuildPackage,strongswan-mod-$(1)))
 endef

@@ -1,0 +1,68 @@
+diff -rupN seafile-3.1.7-server.orig/tools/seafile-admin seafile-3.1.7-server/tools/seafile-admin
+--- seafile-3.1.7-server.orig/tools/seafile-admin	2014-10-16 05:30:04.000000000 +0200
++++ seafile-3.1.7-server/tools/seafile-admin	2014-12-22 21:52:25.929781054 +0100
+@@ -416,13 +416,13 @@ def create_gunicorn_conf():
+     content = '''\
+ import os
+ daemon = True
+-workers = 3
++workers = 1
++threads = 3
+ 
+ # Logging
+ runtime_dir = os.path.dirname(__file__)
+-pidfile = os.path.join(runtime_dir, 'seahub.pid')
++pidfile = '/var/run/seafile/seahub.pid'
+ errorlog = os.path.join(runtime_dir, 'error.log')
+-accesslog = os.path.join(runtime_dir, 'access.log')
+ '''
+     try:
+         with open(confpath, 'w') as fp:
+@@ -607,6 +607,7 @@ def start_seahub_gunicorn():
+         'gunicorn_django',
+         '-c', conf[CONF_SEAHUB_CONF],
+         '-b', '0.0.0.0:%s' % conf[CONF_SEAHUB_PORT],
++        '-t', '120',
+     ]
+ 
+     info('Starting seahub...')
+@@ -625,6 +626,7 @@ def start_seahub_fastcgi():
+         'pidfile=%(pidfile)s',
+         'outlog=%(outlog)s',
+         'errlog=%(errlog)s',
++        'method=threaded',
+     ]
+ 
+     cmdline = ' '.join(argv) % \
+@@ -693,7 +695,7 @@ def check_layout(args):
+     conf[CONF_SEAFILE_DIR]      = seafile_data_dir
+     conf[CONF_SEAHUB_DIR]       = seahub_dir
+     conf[CONF_SEAHUB_CONF]      = seahub_conf
+-    conf[CONF_SEAHUB_PIDFILE]   = os.path.join(runtime_dir, 'seahub.pid')
++    conf[CONF_SEAHUB_PIDFILE]   = '/var/run/seafile/seahub.pid'
+     conf[CONF_SEAHUB_OUTLOG]    = os.path.join(runtime_dir, 'access.log')
+     conf[CONF_SEAHUB_ERRLOG]    = os.path.join(runtime_dir, 'error.log')
+ 
+@@ -738,10 +740,9 @@ def setup_seafile(args):
+     print '-----------------------------------------------------------------'
+     print '-----------------------------------------------------------------'
+     print
+-    print 'To start/stop seafile server:'
++    print 'To start, stop or restart seafile server, please run as root:'
+     print
+-    print highlight('         $ cd %s' % cwd)
+-    print highlight('         $ %s { start | stop }' % SCRIPT_NAME)
++    print highlight('         # /etc/init.d/seafile { start | stop | restart }')
+     print
+     print 'If you have any problem, refer to\n'
+     print
+@@ -802,8 +803,7 @@ def start_seafile(args):
+ def stop_seafile(dummy):
+     info('Stopping seafile server')
+     pkill('seafile-controller')
+-    runtime_dir = os.path.join(cwd, 'seafile-server', 'runtime')
+-    pidfile = os.path.join(runtime_dir, 'seahub.pid')
++    pidfile = '/var/run/seafile/seahub.pid'
+     try:
+         with open(pidfile, 'r') as fp:
+             pid = fp.read().strip('\n ')

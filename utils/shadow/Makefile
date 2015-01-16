@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2013 OpenWrt.org
+# Copyright (C) 2008-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pkg-shadow.alioth.debian.org/releases
@@ -21,9 +21,8 @@ PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
-PKG_BUILD_DEPENDS:=libintl libiconv
-
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 SHADOW_APPLETS := \
 	chage groupadd groupdel groupmod groups passwd su \
@@ -63,12 +62,8 @@ define Package/shadow/install
 	true
 endef
 
-define Package/shadow-utils/install
-endef
-
 define Package/shadow-utils
   $(call Package/shadow/Default)
-  DEPENDS:=+ALL:shadow
 endef
 
 define Package/shadow-utils/config
@@ -78,6 +73,7 @@ define Package/shadow-utils/config
     config shadow-all
       bool "Include all PLD shadow utilities"
       select PACKAGE_shadow
+      default y
 
     comment "Utilities"
 
@@ -96,6 +92,7 @@ Package/shadow-utils/description = $(Package/shadow/description)
 define Package/shadow-common
   $(call Package/shadow/Default)
   TITLE:=Shared definitions for the PLD Linux shadow utilities
+  DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS)
   HIDDEN:=1
 endef
 
@@ -124,6 +121,9 @@ define Package/shadow-common/install
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/login.defs $(1)/etc/
 endef
 
+define Package/shadow-utils/install
+	true
+endef
 
 define BuildPlugin
   define Package/shadow-$(1)/install

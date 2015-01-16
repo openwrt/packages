@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2014 OpenWrt.org
+# Copyright (C) 2011-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=moc
-PKG_VERSION:=2.5.0-beta2
+PKG_VERSION:=2.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://ftp.daper.net/pub/soft/moc/unstable/
-PKG_MD5SUM:=da87b90b57934234589b63e347921458
+PKG_SOURCE_URL:=http://ftp.daper.net/pub/soft/moc/stable/
+PKG_MD5SUM:=18e3a979b67091bfee4b62217908c473
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

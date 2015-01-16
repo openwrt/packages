@@ -1,0 +1,40 @@
+--- a/tools/hciattach.c
++++ b/tools/hciattach.c
+@@ -101,20 +101,37 @@ int uart_speed(int s)
+ 		return B230400;
+ 	case 460800:
+ 		return B460800;
++/* FIX: Not all platform support this high serial speed
++   claudyus84 @gamil.com
++*/
++#ifdef B500000
+ 	case 500000:
+ 		return B500000;
++#endif
++#ifdef B576000
+ 	case 576000:
+ 		return B576000;
++#endif
++#ifdef B921600
+ 	case 921600:
+ 		return B921600;
++#endif
++#ifdef B1000000
+ 	case 1000000:
+ 		return B1000000;
++#endif
++#ifdef B1152000
+ 	case 1152000:
+ 		return B1152000;
++#endif
++#ifdef B1500000
+ 	case 1500000:
+ 		return B1500000;
++#endif
++#ifdef B2000000
+ 	case 2000000:
+ 		return B2000000;
++#endif
+ #ifdef B2500000
+ 	case 2500000:
+ 		return B2500000;

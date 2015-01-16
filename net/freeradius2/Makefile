@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius2
-PKG_VERSION:=2.2.5
+PKG_VERSION:=2.2.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=freeradius-server-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.freeradius.org/pub/freeradius/
-PKG_MD5SUM:=40535bace507d7a3134c3d858f3cbc5a
+PKG_MD5SUM:=e9a6f9bbee9706b008b924061ab3f915
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYRIGHT LICENSE

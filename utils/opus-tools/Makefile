@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=http://downloads.xiph.org/releases/opus/
 PKG_MD5SUM:=20682e4d8d1ae9ec5af3cf43e808b8cb
 
 PKG_LICENSE:=BSD-2-Clause
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_INSTALL:=1

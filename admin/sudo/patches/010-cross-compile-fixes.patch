@@ -1,0 +1,25 @@
+diff -rupN sudo-1.8.11p2.orig/lib/util/Makefile.in sudo-1.8.11p2/lib/util/Makefile.in
+--- sudo-1.8.11p2.orig/lib/util/Makefile.in	2014-10-07 22:26:20.000000000 +0200
++++ sudo-1.8.11p2/lib/util/Makefile.in	2014-12-09 21:44:35.610041162 +0100
+@@ -17,6 +17,8 @@
+ # @configure_input@
+ #
+ 
++include $(TOPDIR)/rules.mk
++
+ #### Start of system configuration section. ####
+ 
+ srcdir = @srcdir@
+@@ -142,10 +144,10 @@ libsudo_util.la: $(LTOBJS) @LT_LDDEP@
+ 	esac
+ 
+ siglist.c: mksiglist
+-	./mksiglist > $@
++	$(STAGING_DIR_HOST)/bin/mksiglist > $@
+ 
+ signame.c: mksigname
+-	./mksigname > $@
++	$(STAGING_DIR_HOST)/bin/mksigname > $@
+ 
+ mksiglist: $(srcdir)/mksiglist.c $(srcdir)/mksiglist.h $(incdir)/sudo_compat.h $(top_builddir)/config.h
+ 	$(CC) $(CPPFLAGS) $(CFLAGS) $(DEFS) $(srcdir)/mksiglist.c -o $@

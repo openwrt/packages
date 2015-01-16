@@ -1,8 +1,8 @@
-From 88ded8fc5802c073caa71b649cee5a3116699b2a Mon Sep 17 00:00:00 2001
+From f085e6a5f386875b5b071ef3bf115e4d9bb33bdb Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Wed, 27 Mar 2013 11:39:33 +0700
-Subject: [PATCH 10/18] PKCS15-OpenPGP: Allow to store data to pkcs15 data
+Subject: [PATCH 10/26] PKCS15-OpenPGP: Allow to store data to pkcs15 data
  object.
 
 Only one DO is supported now.
@@ -12,10 +12,10 @@ Only one DO is supported now.
  2 files changed, 38 insertions(+), 2 deletions(-)
 
 diff --git a/src/libopensc/pkcs15-openpgp.c b/src/libopensc/pkcs15-openpgp.c
-index 850dd74..b701041 100644
+index 51a2032..4cc1c39 100644
 --- a/src/libopensc/pkcs15-openpgp.c
 +++ b/src/libopensc/pkcs15-openpgp.c
-@@ -397,7 +397,7 @@ sc_pkcs15emu_openpgp_add_data(sc_pkcs15_card_t *p15card)
+@@ -393,7 +393,7 @@ sc_pkcs15emu_openpgp_add_data(sc_pkcs15_card_t *p15card)
  		 */
  		r = read_file(p15card->card, path, content, sizeof(content));
  		if (r <= 0 ) {
@@ -87,5 +87,5 @@ index f3a4962..1455580 100755
  		r = SC_ERROR_NOT_IMPLEMENTED;
  	}
 -- 
-1.9.3
+2.1.3
 

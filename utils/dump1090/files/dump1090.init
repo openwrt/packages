@@ -49,6 +49,7 @@ start_instance() {
 	append_bool "$cfg" modeac "--modeac"
 	append_bool "$cfg" net_beast "--net-beast"
 	append_bool "$cfg" net_only "--net-only"
+	append_arg "$cfg" net_bind_address "--net-bind-address"
 	append_arg "$cfg" net_http_port "--net-http-port"
 	append_arg "$cfg" net_ri_port "--net-ri-port"
 	append_arg "$cfg" net_ro_port "--net-ro-port"

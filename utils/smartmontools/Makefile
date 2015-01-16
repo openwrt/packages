@@ -17,6 +17,9 @@ PKG_SOURCE_URL:=@SF/smartmontools
 PKG_MD5SUM:=2ea0c62206e110192a97b59291b17f54
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE_FILES:=COPYING
+
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -59,13 +62,6 @@ CONFIGURE_VARS += \
 	CPPFLAGS="$$$$CPPFLAGS -I$(STAGING_DIR)/usr/include/uClibc++ -I$(LINUX_DIR)/include" \
 	LDFLAGS="$$$$LDFLAGS" \
 	LIBS="-nodefaultlibs -lc -luClibc++ -lm $(LIBGCC_S) -lc" \
-
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); rm -rf config.{cache,status} ; \
-		./autogen.sh \
-	);
-	$(call Build/Configure/Default)
-endef
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \

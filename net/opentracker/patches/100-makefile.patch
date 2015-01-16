@@ -1,7 +1,5 @@
-Index: opentracker-20130804/Makefile
-===================================================================
---- opentracker-20130804.orig/Makefile
-+++ opentracker-20130804/Makefile
+--- a/Makefile
++++ b/Makefile
 @@ -9,13 +9,13 @@ CC?=gcc
  
  # BSD flavour

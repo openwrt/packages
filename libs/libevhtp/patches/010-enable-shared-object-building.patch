@@ -1,0 +1,12 @@
+diff -rupN libevhtp-1.2.9.orig/CMakeLists.txt libevhtp-1.2.9/CMakeLists.txt
+--- libevhtp-1.2.9.orig/CMakeLists.txt	2014-03-23 12:50:50.000000000 +0100
++++ libevhtp-1.2.9/CMakeLists.txt	2014-11-21 11:46:58.644575813 +0100
+@@ -64,7 +64,7 @@ OPTION(EVHTP_DISABLE_EVTHR     "Disable
+ OPTION(EVHTP_DISABLE_REGEX     "Disable regex support"    OFF)
+ 
+ # -DEVHTP_BUILD_SHARED:STRING=ON
+-OPTION(EVHTP_BUILD_SHARED      "Build shared library too" OFF)
++OPTION(EVHTP_BUILD_SHARED      "Build shared library too" ON)
+ 
+ # -DEVHTP_USE_DEFER_ACCEPT:STRING=ON
+ OPTION(EVHTP_USE_DEFER_ACCEPT  "Enable TCP_DEFER_ACCEPT"  OFF)

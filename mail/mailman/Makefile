@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mailman
 PKG_RELEASE:=1
-PKG_SOURCE_URL:=ftp://ftp.gnu.org/gnu/mailman/
+PKG_SOURCE_URL:=ftp://ftp.gnu.org/gnu/mailman/ http://ftp.gnu.org/gnu/mailman/
 PKG_VERSION:=2.1.18-1
 PKG_MD5SUM:=dc861ed9698a98499a951eaef7d4db9f
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=GPL-2.0+
-PKG_LICENSE_FILE:=gnu-COPYING-GPL
+PKG_LICENSE_FILES:=gnu-COPYING-GPL
 
 include $(INCLUDE_DIR)/package.mk
 

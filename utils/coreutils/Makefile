@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
-PKG_VERSION:=8.16
+PKG_VERSION:=8.23
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
-PKG_MD5SUM:=89b06f91634208dceba7b36ad1f9e8b9
+PKG_MD5SUM:=abed135279f87ad6762ce57ff6d89c41
 PKG_BUILD_DEPENDS:=libpthread
 PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 
@@ -36,6 +36,12 @@ DEPENDS_sort = +libpthread
 DEPENDS_timeout = +librt
 DEPENDS_expr = +libgmp
 DEPENDS_factor = +libgmp
+DEPENDS_cp = +libacl
+DEPENDS_dir = +libacl
+DEPENDS_install = +libacl
+DEPENDS_ls = +libacl
+DEPENDS_mv = +libacl
+DEPENDS_vdir = +libacl
 
 define Package/coreutils/Default
   SECTION:=utils
@@ -89,7 +95,7 @@ define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		SHELL="/bin/bash" \
-		all install install-root
+		all install
 endef
 
 define Package/coreutils/install

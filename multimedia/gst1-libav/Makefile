@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-libav
-PKG_VERSION:=1.2.3
+PKG_VERSION:=1.4.4
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_SOURCE:=gst-libav-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-libav
-PKG_MD5SUM:=58c7998a054d8d8ca041fa35738f72b6
+PKG_MD5SUM:=64a3e2cda2687132cadca4efdc63f3b4
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.0
-PKG_LICENSE_FILE:=COPYING COPYING.LIB
+PKG_LICENSE_FILES:=COPYING COPYING.LIB
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-libav-$(PKG_VERSION)
 
@@ -109,7 +109,7 @@ PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_GST1_LIBAV_PARSER_%,$(LIBAV_PARSERS)) \
 	$(patsubst %,CONFIG_GST1_LIBAV_PROTOCOL_%,$(LIBAV_PROTOCOLS))
 
-PKG_BUILD_DEPENDS:= libstreamer1 gstreamer1-plugins-base
+PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -148,6 +148,7 @@ CONFIGURE_ARGS += \
 	--without-system-libav \
 	--with-libav-extra-configure="--target-os=linux \
 	--disable-bsfs \
+	--disable-programs \
 	--disable-devices \
 	--disable-encoders \
 	$(LIBAV_CONFIGURE_ENCODERS) \
@@ -161,6 +162,26 @@ CONFIGURE_ARGS += \
 	$(LIBAV_CONFIGURE_PARSERS) \
 	--disable-protocols \
 	$(LIBAV_CONFIGURE_PROTOCOLS) \
+	--disable-asm \
+	--disable-altivec \
+	--disable-amd3dnow \
+	--disable-amd3dnowext \
+	--disable-mmx \
+	--disable-mmxext \
+	--disable-sse \
+	--disable-sse2 \
+	--disable-sse3 \
+	--disable-ssse3 \
+	--disable-sse4 \
+	--disable-sse42 \
+	--disable-avx \
+	--disable-xop \
+	--disable-fma3 \
+	--disable-fma4 \
+	--disable-avx2 \
+	--disable-vfp \
+	--disable-neon \
+	--disable-inline-asm \
 	--disable-yasm"
 
 # XXX: trick to force use of embedded Libav headers

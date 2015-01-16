@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,20 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=5.4.33
-PKG_RELEASE:=1
+PKG_VERSION:=5.4.36
+PKG_RELEASE:=5
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
-PKG_LICENSE=PHPv3.01
-PKG_LICENSE_FILE=LICENSE
+PKG_LICENSE:=PHPv3.01
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_MD5SUM:=c6878bb1cdb46bfc1e1a5cd67a024737
+PKG_MD5SUM:=70e223be4bb460e465b7a9d7cb5b9cac
 
 PKG_FIXUP:=libtool no-autoreconf
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 PHP5_MODULES = \
 	calendar ctype curl \
@@ -37,7 +38,7 @@ PHP5_MODULES = \
 	mbstring mcrypt mysql mysqli \
 	openssl \
 	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql \
-	session shmop simplexml soap sockets sqlite sqlite3 sysvmsg sysvsem sysvshm \
+	session shmop simplexml soap sockets sqlite3 sysvmsg sysvsem sysvshm \
 	tokenizer \
 	xml xmlreader xmlwriter zip \
 
@@ -237,7 +238,7 @@ else
   CONFIGURE_ARGS+= --without-iconv
 endif
 
-ifneq ($(CONFIG_PACKAGE_php5-mod-json),)
+ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-json),)
   CONFIGURE_ARGS+= --enable-json=shared
 else
   CONFIGURE_ARGS+= --disable-json
@@ -345,12 +346,6 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-sockets),)
   CONFIGURE_ARGS+= --enable-sockets=shared
 else
   CONFIGURE_ARGS+= --disable-sockets
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-sqlite),)
-  CONFIGURE_ARGS+= --with-sqlite=shared,"$(STAGING_DIR)/usr"
-else
-  CONFIGURE_ARGS+= --without-sqlite
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-sqlite3),)
@@ -524,15 +519,15 @@ $(eval $(call BuildPackage,php5-fastcgi))
 $(eval $(call BuildModule,calendar,Calendar))
 $(eval $(call BuildModule,ctype,Ctype))
 $(eval $(call BuildModule,curl,cURL,+PACKAGE_php5-mod-curl:libcurl))
-$(eval $(call BuildModule,fileinfo,Fileinfo,+PACKAGE_php5-mod-fileinfo:libmagic))
 $(eval $(call BuildModule,dom,DOM,+@PHP5_LIBXML +PACKAGE_php5-mod-dom:libxml2))
 $(eval $(call BuildModule,exif,EXIF))
+$(eval $(call BuildModule,fileinfo,Fileinfo))
 $(eval $(call BuildModule,ftp,FTP,+PACKAGE_php5-mod-ftp:libopenssl))
-$(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php5-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php5-mod-gd:libjpeg +PACKAGE_php5-mod-gd:libpng))
+$(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php5-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php5-mod-gmp:libgmp))
 $(eval $(call BuildModule,hash,Hash))
-$(eval $(call BuildModule,iconv,iConv,+PACKAGE_php5-mod-iconv:libiconv))
+$(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
 $(eval $(call BuildModule,json,JSON))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php5-mod-ldap:libopenldap +PACKAGE_php5-mod-ldap:libsasl2))
 $(eval $(call BuildModule,mbstring,MBString))
@@ -544,19 +539,19 @@ $(eval $(call BuildModule,pcntl,PCNTL))
 $(eval $(call BuildModule,pdo,PHP Data Objects))
 $(eval $(call BuildModule,pdo-mysql,PDO driver for MySQL,+php5-mod-pdo +PACKAGE_php5-mod-pdo-mysql:libmysqlclient))
 $(eval $(call BuildModule,pdo-pgsql,PDO driver for PostgreSQL,+php5-mod-pdo +PACKAGE_php5-mod-pdo-pgsql:libpq))
-$(eval $(call BuildModule,pdo-sqlite,PDO driver for SQLite 3.x,+php5-mod-pdo +PACKAGE_php5-mod-pdo-sqlite:libsqlite3 +PACKAGE_php5-mod-pdo-sqlite:libpthread +PACKAGE_php5-mod-pdo-sqlite:librt))
+$(eval $(call BuildModule,pdo-sqlite,PDO driver for SQLite 3.x,+php5-mod-pdo +PACKAGE_php5-mod-pdo-sqlite:libsqlite3 +PACKAGE_php5-mod-pdo-sqlite:librt))
 $(eval $(call BuildModule,pgsql,PostgreSQL,+PACKAGE_php5-mod-pgsql:libpq))
 $(eval $(call BuildModule,session,Session))
 $(eval $(call BuildModule,shmop,Shared Memory))
 $(eval $(call BuildModule,simplexml,SimpleXML,+@PHP5_LIBXML +PACKAGE_php5-mod-simplexml:libxml2))
 $(eval $(call BuildModule,soap,SOAP,+@PHP5_LIBXML +PACKAGE_php5-mod-soap:libxml2))
 $(eval $(call BuildModule,sockets,Sockets))
-$(eval $(call BuildModule,sqlite3,SQLite3,+PACKAGE_php5-mod-sqlite3:libsqlite3 +PACKAGE_php5-mod-sqlite3:libpthread))
+$(eval $(call BuildModule,sqlite3,SQLite3,+PACKAGE_php5-mod-sqlite3:libsqlite3))
 $(eval $(call BuildModule,sysvmsg,System V messages))
 $(eval $(call BuildModule,sysvsem,System V shared memory))
 $(eval $(call BuildModule,sysvshm,System V semaphore))
 $(eval $(call BuildModule,tokenizer,Tokenizer))
 $(eval $(call BuildModule,xml,XML,+PHP5_LIBXML:libxml2 +!PHP5_LIBXML:libexpat))
-$(eval $(call BuildModule,xmlreader,XMLReader,+@PHP5_LIBXML +PACKAGE_php5-mod-xmlreader:libxml2 +PACKAGE_php5-mod-xmlreader:libiconv))
-$(eval $(call BuildModule,xmlwriter,XMLWriter,+@PHP5_LIBXML +PACKAGE_php5-mod-xmlwriter:libxml2 +PACKAGE_php5-mod-xmlwriter:libiconv))
+$(eval $(call BuildModule,xmlreader,XMLReader,+@PHP5_LIBXML +PACKAGE_php5-mod-xmlreader:libxml2))
+$(eval $(call BuildModule,xmlwriter,XMLWriter,+@PHP5_LIBXML +PACKAGE_php5-mod-xmlwriter:libxml2))
 $(eval $(call BuildModule,zip,ZIP,+PACKAGE_php5-mod-zip:zlib))

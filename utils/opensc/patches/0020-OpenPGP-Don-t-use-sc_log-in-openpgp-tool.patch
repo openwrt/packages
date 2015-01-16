@@ -1,0 +1,84 @@
+From 9acf5c1ad7d8a32b472203d3bd8860ea2cbde0e7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
+ <ng.hong.quan@gmail.com>
+Date: Sun, 3 Nov 2013 02:53:35 +0800
+Subject: [PATCH 20/26] OpenPGP: Don't use sc_log in openpgp-tool.
+
+---
+ src/tools/openpgp-tool.c | 21 +++++++++++----------
+ 1 file changed, 11 insertions(+), 10 deletions(-)
+
+diff --git a/src/tools/openpgp-tool.c b/src/tools/openpgp-tool.c
+index a0334ca..505abd9 100644
+--- a/src/tools/openpgp-tool.c
++++ b/src/tools/openpgp-tool.c
+@@ -414,8 +414,6 @@ int do_genkey(sc_card_t *card, u8 key_id, unsigned int key_len)
+ 	sc_path_t path;
+ 	sc_file_t *file;
+ 
+-	LOG_FUNC_CALLED(card->ctx);
+-
+ 	if (key_id < 1 || key_id > 3) {
+ 		printf("Unknown key ID %d.\n", key_id);
+ 		return 1;
+@@ -479,14 +477,14 @@ int delete_key_gnuk(sc_card_t *card, u8 key_id)
+ 	u8 *data = NULL;
+ 
+ 	/* Delete fingerprint */
+-	sc_log(ctx, "Delete fingerprints");
++	fprintf(stdout, "Delete fingerprints");
+ 	r |= sc_put_data(card, 0xC6 + key_id, NULL, 0);
+ 	/* Delete creation time */
+-	sc_log(ctx, "Delete creation time");
++	fprintf(stdout, "Delete creation time");
+ 	r |= sc_put_data(card, 0xCD + key_id, NULL, 0);
+ 
+ 	/* Rewrite Extended Header List */
+-	sc_log(ctx, "Rewrite Extended Header List");
++	fprintf(stdout, "Rewrite Extended Header List");
+ 
+ 	if (key_id == 1)
+ 		data = "\x4D\x02\xB6";
+@@ -534,15 +532,18 @@ int delete_key_openpgp(sc_card_t *card, u8 key_id)
+ 		/* Build APDU from binary array */
+ 		r = sc_bytes2apdu(card->ctx, buf, len0, &apdu);
+ 		if (r) {
+-			sc_log(ctx, "Failed to build APDU");
+-			LOG_FUNC_RETURN(ctx, SC_ERROR_INTERNAL);
++			fprintf(stderr, "Failed to build APDU: %s\n", sc_strerror(r));
++			return r;
+ 		}
+ 		apdu.resp = rbuf;
+ 		apdu.resplen = sizeof(rbuf);
+ 
+ 		/* Send APDU to card */
+ 		r = sc_transmit_apdu(card, &apdu);
+-		LOG_TEST_RET(ctx, r, "Transmiting APDU failed");
++		if (r) {
++			fprintf(stderr, "Transmiting APDU failed: %s\n", sc_strerror(r));
++			return r;
++		}
+ 	}
+ 	/* TODO: Rewrite Extended Header List.
+ 	 * Not support by OpenGPG v2 yet */
+@@ -557,7 +558,7 @@ int delete_key(sc_card_t *card, u8 key_id)
+ 	LOG_FUNC_CALLED(ctx);
+ 	/* Check key ID */
+ 	if (key_id < 1 || key_id > 3) {
+-		sc_log(ctx, "Invalid key ID %d", key_id);
++		fprintf(stderr, "Invalid key ID %d", key_id);
+ 		LOG_FUNC_RETURN(ctx, SC_ERROR_INVALID_ARGUMENTS);
+ 	}
+ 
+@@ -649,7 +650,7 @@ int main(int argc, char **argv)
+ 	    (card->type != SC_CARD_TYPE_OPENPGP_V2) &&
+ 	    (card->type != SC_CARD_TYPE_OPENPGP_GNUK)) {
+ 		util_error("not an OpenPGP card");
+-		sc_log(card->ctx, "Card type %X", card->type);
++		fprintf(stderr, "Card type %X\n", card->type);
+ 		exit_status = EXIT_FAILURE;
+ 		goto out;
+ 	}
+-- 
+2.1.3
+

@@ -1,0 +1,621 @@
+
+-asis
+-nobackups
+-nonotice
+-noxon
+-notite
+-assume_color
+-assume_256color
+-guess_non_utf8
+-guess_crlf
+-guess_indent
+-menu_above
+-transpose
+-joe_state
+-restore
+-mouse
+-joexterm
+-search_prompting
+-lmsg \i%k%T%W%I%X %n %m%y%R %M %x
+-rmsg  %S Row %r Col %c %t  Ctrl-K H for help
+-highlight
+-istep 2
+
+ :include ftyperc
+
+:defmenu root
+mode,"overwrite",rtn	T Overtype %Zoverwrite%
+mode,"hex",rtn	% % Hex edit mode
+mode,"autoindent",rtn	I Autoindent %Zautoindent%
+mode,"wordwrap",rtn	W Word wrap %Zwordwrap%
+mode,"tab",rtn	D Tab width %Ztab%
+mode,"lmargin",rtn	L Left margin %Zlmargin%
+mode,"rmargin",rtn	R Right margin %Zrmargin%
+mode,"square",rtn	X Rectangle mode %Zsquare%
+mode,"indentc",rtn	% % Indent char %Zindentc%
+mode,"istep",rtn	% % Indent step %Zistep%
+mode,"highlight",rtn	H Highlighting %Zhighlight%
+mode,"crlf",rtn	Z CR-LF (MS-DOS) %Zcrlf%
+mode,"linums",rtn	N Line numbers %Zlinums%
+mode,"beep",rtn	B Beep %Zbeep%
+mode,"rdonly",rtn	O Read only %Zrdonly%
+ mode,"syntax",rtn	Y Syntax
+mode,"encoding",rtn	E Encoding
+mode,"asis",rtn	% % Meta chars as-is
+mode,"language",rtn	V Language
+mode,"picture",rtn	P picture %Zpicture%
+menu,"more-options",rtn	  % % More options...
+
+:defmenu more-options
+menu,"^G",rtn	% % ^G options
+menu,"search",rtn	% % search options
+menu,"paragraph",rtn	% % paragraph options
+menu,"file",rtn	% % file options
+menu,"menu",rtn	% % menu options
+menu,"global",rtn	% % global options
+menu,"cursor",rtn	% % cursor options
+menu,"marking",rtn	% % marking options
+menu,"tab",rtn	% % tab/indent options
+
+:defmenu menu
+mode,"menu_explorer",rtn	% % Menu explorer %Zmenu_explorer%
+mode,"menu_above",rtn	% % Menu position %Zmenu_above%
+mode,"menu_jump",rtn	% % Jump into menu %Zmenu_jump%
+mode,"transpose",rtn	% % Transpose menus %Ztranspose%
+
+:defmenu ^G
+mode,"single_quoted",rtn	% % ^G ignores '...' %Zsingle_quoted%
+mode,"no_double_quoted",rtn	% % ^G no ignore "..." %Zno_double_quoted%
+mode,"c_comment",rtn	% % ^G ignores /*...*/ %Zc_comment%
+mode,"cpp_comment",rtn	% % ^G ignores //... %Zcpp_comment%
+mode,"pound_comment",rtn	% % ^G ignores #... %Zpound_comment%
+mode,"vhdl_comment",rtn	% % ^G ignores --... %Zvhdl_comment%
+mode,"semi_comment",rtn	% % ^G ignores ;... %Zsemi_comment%
+mode,"tex_comment",rtn % % ^G ignores %... %Ztex_comment%
+mode,"text_delimiters",rtn % % Text delimiters %Ztext_delimiters%
+
+:defmenu search
+mode,"icase",rtn	% % Case insensitivity %Zicase%
+mode,"wrap",rtn	% % Search wraps %Zwrap%
+mode,"search_prompting",rtn	% % Search prompting %Zsearch_prompting%
+mode,"csmode",rtn	% % Continued search %Zcsmode%
+
+:defmenu paragraph
+mode,"french",rtn	% % French spacing %Zfrench%
+mode,"flowed",rtn	% % Flowed text %Zflowed%
+mode,"cpara",rtn	% % Paragraph indent chars %Zcpara%
+
+:defmenu file
+mode,"restore",rtn	% % Restore cursor %Zrestore%
+mode,"guess_crlf",rtn	% % Auto detect CR-LF %Zguess_crlf%
+mode,"guess_indent",rtn	% % Guess indent %Zguess_indent%
+mode,"guess_non_utf8",rtn	% % Guess non-UTF-8 %Zguess_non_utf8%
+mode,"guess_utf8",rtn	% % Guess UTF-8 %Zguess_utf8%
+mode,"force",rtn	% % Force last NL %Zforce%
+mode,"nobackup",rtn	% % No backup %Znobackup%
+
+:defmenu global
+mode,"nolocks",rtn	% % Disable locks %Znolocks%
+mode,"nobackups",rtn	% % Disable backups %Znobackups%
+mode,"nomodcheck",rtn	% % Disable mtime check %Znomodcheck%
+mode,"nocurdir",rtn	% % Disable current dir %Znocurdir%
+mode,"exask",rtn	% % Exit ask %Zexask%
+mode,"nosta",rtn	% % Disable status line %Znosta%
+mode,"keepup",rtn	% % Fast status line %Zkeepup%
+mode,"break_hardlinks",rtn	% % Break hard links %Zbreak_hardlinks%
+mode,"break_links",rtn	% % Break links %Zbreak_links%
+mode,"joe_state",rtn	% % Joe_state file %Zjoe_state%
+mode,"undo_keep",rtn	% % No. undo records %Zundo_keep%
+mode,"backpath",rtn	% % Path to backup files %Zbackpath%
+
+:defmenu cursor
+mode,"pg",rtn	% % No. PgUp/PgDn lines %Zpg%
+mode,"mid",rtn	C Center on scroll %Zmid%
+mode,"floatmouse",rtn	% % Click past end %Zfloatmouse%
+mode,"rtbutton",rtn	% % Right button %Zrtbutton%
+
+:defmenu marking
+mode,"autoswap",rtn	% % Autoswap mode %Zautoswap%
+mode,"marking",rtn	% % Marking %Zmarking%
+mode,"lightoff",rtn	% % Auto unmask %Zlightoff%
+
+:defmenu tab
+mode,"smarthome",rtn	% % Smart home key %Zsmarthome%
+mode,"smartbacks",rtn	% % Smart backspace %Zsmartbacks%
+mode,"indentfirst",rtn	% % To indent first %Zindentfirst%
+mode,"purify",rtn	% % Clean up indents %Zpurify%
+mode,"spaces",rtn	% % No tabs %Zspaces%
+
+{Basic
+\i   Help Screen    \|turn off with ^KH    more help with ESC . (^[.)              \i
+\i \i\|\uCURSOR\u           \|\uGO TO\u            \|\uBLOCK\u      \|\uDELETE\u   \|\uMISC\u         \|\uEXIT\u      \|\i \i
+\i \i\|^B left ^F right \|^U  prev. screen \|^KB begin  \|^D char. \|^KJ reformat \|^KX save  \|\i \i
+\i \i\|^P up   ^N down  \|^V  next screen  \|^KK end    \|^Y line  \|^KA center   \|^C  abort \|\i \i
+\i \i\|^Z previous word \|^A  beg. of line \|^KM move   \|^W >word \|^T  options  \|^KZ shell \|\i \i
+\i \i\|^X next word     \|^E  end of line  \|^KC copy   \|^O word< \|^R  refresh  \|\uFILE\u      \|\i \i
+\i \i\|\uSEARCH\u           \|^KU top of file  \|^KW file   \|^J >line \|\uSPELL\u        \|^KE edit  \|\i \i
+\i \i\|^KF find text    \|^KV end of file  \|^KY delete \|^_ undo  \|^[N word     \|^KR insert\|\i \i
+\i \i\|^L  find next    \|^KL to line No.  \|^K/ filter \|^^ redo  \|^[L file     \|^KD save  \|\i \i
+}
+
+{Windows
+\i   Help Screen    \|turn off with ^KH    prev. screen ^[,    next screen ^[.     \i
+\i \i\|^KO Split the window in half           \|^KE Load file into window             \|\i \i
+\i \i\|^KG Make current window bigger         \|^KT Make current window smaller       \|\i \i
+\i \i\|^KN Go to the window below             \|^KP Go to the window above            \|\i \i
+\i \i\|^[V Switch to next buffer              \|^[U Switch to previous buffer         \|\i \i
+\i \i\|^C  Eliminate the current window       \|^KI Show all windows / Show one window\|\i \i
+}
+
+{Advanced
+\i   Help Screen    \|turn off with ^KH    prev. screen ^[,    next screen ^[.     \i
+\i \i\|\uMACROS\u         \|\uMISC\u            \|\uSCROLL\u    \|\uSHELL\u       \|\uGOTO\u       \|\uI-SEARCH\u     \|\i \i
+\i \i\|^K[ 0-9 Record \|^K SPACE status \|^[W Up    \|^K' Window  \|^[B To ^KB \|^[R Backwards\|\i \i
+\i \i\|^K]     Stop   \|^K\\ Repeat      \|^[Z Down  \|^[! Command \|^[K To ^KK \|^[S Forwards \|\i \i
+\i \i\|^K 0-9  Play   \|\uINSERT\u          \|^K< Left  \|\uQUOTE\u       \|\uDELETE\u     \|\uBOOKMARKS\u    \|\i \i
+\i \i\|^K?     Query  \|^] split line   \|^K> Right \|^[' Ctrl-   \|^[Y yank   \|^[ 0-9 Goto  \|\i \i
+\i \i\|^[D     Dump   \|^SPACE ins space\|          \|^\\ Meta-    \|^[O line<  \|^[^[   Set   \|\i \i
+}
+
+{Programs
+\i   Help Screen    \|turn off with ^KH    prev. screen ^[,    next screen ^[.     \i
+\i \i\|\uGOTO\u                 \|\uINDENT\u   \|\uCOMPILING\u          \uQUICK\u                       \|\i \i
+\i \i\|^G  Matching ( [ {   \|^K, less \|^[C Compile & parse ^G  find word under cursor \|\i \i
+\i \i\|^K- Previous place   \|^K. more \|^[G Grep & parse    ^[ENTER complete word      \|\i \i
+\i \i\|^K= Next place       \|\uFILE\u     \|^[= To next error   ^[Y paste deleted text     \|\i \i
+\i \i\|^K; Tags file search \|^K `     \|^[- To prev. error  ^[^Y cycle through deleted \|\i \i
+\i \i\|                     \| revert  \|^[ SP Jump to error                            \|\i \i
+}
+
+{Search
+\i   Help Screen    \|turn off with ^KH    prev. screen ^[,    next screen ^[.     \i
+\i \iSpecial search sequences:                                                    \|\i \i
+\i \i    \\^  \\$  matches beg./end of line      \\?     match any single char       \|\i \i
+\i \i    \\<  \\>  matches beg./end of word      \\*     match 0 or more chars       \|\i \i
+\i \i    \\c      matches balanced C expression \\\\     matches a \\                 \|\i \i
+\i \i    \\[..]   matches one of a set          \\n     matches a newline           \|\i \i
+\i \i    \\+      matches 0 or more of the character which follows the \\+          \|\i \i
+\i \iSpecial replace sequences:                                                   \|\i \i
+\i \i    \\&      replaced with text which matched search string                   \|\i \i
+\i \i    \\0 - 9  replaced with text which matched Nth \\*, \\?, \\c, \\+, or \\[..]    \|\i \i
+\i \i    \\\\      replaced with \\               \\n     replaced with newline       \|\i \i
+}
+
+{SearchOptions
+\i   Help Screen    \|turn off with ^KH    prev. screen ^[,    next screen ^[.     \i
+\i \iSearch options:                                                              \|\i \i
+\i \i   r Replace                                                                 \|\i \i
+\i \i   k Restrict search to highlighted block, which can be rectangular          \|\i \i
+\i \i   b Search backward instead of forward                                      \|\i \i
+\i \i   i Ignore case                                                             \|\i \i
+\i \i   a Search across all loaded files                                          \|\i \i
+\i \i   e Search across all files in Grep or Compile error list                   \|\i \i
+\i \i   w Wrap to beginning of file for this search                               \|\i \i
+\i \i   n Do not wrap to beginning of file for this search                        \|\i \i
+\i \i   nnn Perform exaclty nnn replacements                                      \|\i \i
+}
+
+{Math
+\i   Help Screen    \|turn off with ^KH    prev. screen ^[,    next screen ^[.     \i
+\i \i \uCOMMANDS\u (hit ESC m for math)  \uFUNCTIONS\u                                    \|\i \i
+\i \i     hex hex display mode       sin cos tab asin acos atan                   \|\i \i
+\i \i     dec decimal mode           sinh cosh tanh asinh acosh atanh             \|\i \i
+\i \i     ins type result into file  sqrt cbrt exp ln log                         \|\i \i
+\i \i    eval evaluate block         int floor ceil abs erg ergc                  \|\i \i
+\i \i    0xff enter number in hex    joe(..macro..) - runs an editor macro        \|\i \i
+\i \i    3e-4 floating point decimal \uBLOCK\u                                        \|\i \i
+\i \i    a=10 assign a variable      sum cnt  Sum, count                          \|\i \i
+\i \i 2+3:ins multiple commands      avg dev  Average, std. deviation             \|\i \i
+\i \i    e pi constants              \uOPERATORS\u                                    \|\i \i
+\i \i     ans previous result        ! ^  * / %  + -  < <= > >= == !=  &&  ||  ? :\|\i \i
+}
+
+{Names
+\i   Help Screen    \|turn off with ^KH    prev. screen ^[,    next screen ^[.     \i
+\i \i Hit TAB at file name prompts to generate menu of file names                 \|\i \i
+\i \i Or use up/down keys to access history of previously entered names           \|\i \i
+\i \i Special file names:                                                         \|\i \i
+\i \i      !command                 Pipe in/out of a shell command                \|\i \i
+\i \i      >>filename               Append to a file                              \|\i \i
+\i \i      -                        Read/Write to/from standard I/O               \|\i \i
+\i \i      filename,START,SIZE      Read/Write a part of a file/device            \|\i \i
+\i \i          Give START/SIZE in decimal (255), octal (0377) or hex (0xFF)       \|\i \i
+}
+
+{Joe
+\i   Help Screen    \|turn off with ^KH    prev. screen ^[,    next screen ^[.     \i
+\i \i Send bug reports to: http://sourceforge.net/projects/joe-editor \|\i \i
+\i \i \|\i \i
+\i \i  default joerc file is here /etc/joe/joerc \|\i \i
+\i \i  default syntax and i18n files are here /usr/share/joe \|\i \i
+\i \i  additional documentation can be found here /usr/share/doc/joe \|\i \i
+}
+
+{CharTable
+\i   Help Screen    \|turn off with ^KH    prev. screen ^[,                        \i
+\i \i\| Dec  \u 0123 4567  8901 2345    0123 4567  8901 2345 \u  Dec \|\i \i
+\i \i\|     |                                              |     \|\i \i
+\i \i\|   0 | \u@ABC\u \uDEFG\u  \uHIJK\u \uLMNO\u    \i\u@ABC\u\i \i\uDEFG\u\i  \i\uHIJK\u\i \i\uLMNO\u\i | 128 \|\i \i
+\i \i\|  16 | \uPQRS\u \uTUVW\u  \uXYZ[\u \u\\]^_\u    \i\uPQRS\u\i \i\uTUVW\u\i  \i\uXYZ[\u\i \i\u\\]^_\u\i | 144 \|\i \i
+\i \i\|  32 |  !"# $%&'  ()*+ ,-./     ¡¢£ ¤¥¦§  ¨©ª« ¬­®¯ | 160 \|\i \i
+\i \i\|  48 | 0123 4567  89:; <=>?    °±²³ ´µ¶·  ¸¹º» ¼½¾¿ | 176 \|\i \i
+\i \i\|  64 | @ABC DEFG  HIJK LMNO    ÀÁÂÃ ÄÅÆÇ  ÈÉÊË ÌÍÎÏ | 192 \|\i \i
+\i \i\|  80 | PQRS TUVW  XYZ[ \\]^_    ÐÑÒÓ ÔÕÖ×  ØÙÚÛ ÜÝÞß | 208 \|\i \i
+\i \i\|  96 | `abc defg  hijk lmno    àáâã äåæç  èéêë ìíîï | 224 \|\i \i
+\i \i\| 112 | pqrs tuvw  xyz{ |}~    ðñòó ôõö÷  øùúû üýþÿ | 240 \|\i \i
+}
+
+:windows		Bindings common to all windows
+type		^@ TO ÿ
+abort		^C
+abort		^K Q
+abort		^K ^Q
+abort		^K q
+arg		^K \
+explode		^K I
+explode		^K ^I
+explode		^K i
+help		^K H
+help		^K ^H
+help		^K h
+hnext		^[ .
+hprev		^[ ,
+math		^[ m
+math		^[ M
+msg		^[ h
+msg		^[ H
+msg		^[ ^H
+nextw		^K N
+nextw		^K ^N
+nextw		^K n
+pgdn		.kN
+pgdn		^V
+pgdn		^[ [ 6 ~
+pgup		.kP
+pgup		^U
+pgup		^[ [ 5 ~
+play		^K 0 TO 9
+prevw		^K P
+prevw		^K ^P
+prevw		^K p
+query		^K ?
+record		^K [
+retype		^R
+rtn		^M
+shell		^K Z
+shell		^K ^Z
+shell		^K z
+stop		^K ]
+
+defmdown	MDOWN
+defmup		MUP
+defmdrag	MDRAG
+defm2down	M2DOWN
+defm2up		M2UP
+defm2drag	M2DRAG
+defm3down	M3DOWN
+defm3up		M3UP
+defm3drag	M3DRAG
+
+xtmouse		^[ [ M
+
+if,"char==65",then,"it's an A",else,"it's not an a",endif	^[ q
+
+:main			Text editing window
+:inherit windows
+
+:def ispellfile filt,"cat >ispell.tmp;ispell ispell.tmp </dev/tty >/dev/tty;cat ispell.tmp;/bin/rm ispell.tmp",rtn,retype
+:def ispellword psh,nextword,markk,prevword,markb,filt,"cat >ispell.tmp;ispell ispell.tmp </dev/tty >/dev/tty;tr -d <ispell.tmp '\\012';/bin/rm ispell.tmp",rtn,retype,nextword
+
+:def aspellfile filt,"SPLTMP=ispell.tmp;cat >$SPLTMP;aspell --lang=",language,".",charset," -x -c $SPLTMP </dev/tty >/dev/tty;cat $SPLTMP;/bin/rm $SPLTMP",rtn,retype
+:def aspellword psh,nextword,markk,prevword,markb,filt,"SPLTMP=ispell.tmp;cat >$SPLTMP;aspell --lang=",language,".",charset," -x -c $SPLTMP </dev/tty >/dev/tty;tr -d <$SPLTMP '\\012';/bin/rm $SPLTMP",rtn,retype,nextword
+
+aspellfile	^[ l
+aspellword	^[ n
+
+:def compile mwind!,mfit!,querysave,query,scratch,"* Build Log *",rtn,bof,markb,eof," ",markk,blkdel,build
+
+:def grep_find mwind!,mfit!,scratch,"* Grep Log *",rtn,bof,markb,eof," ",markk,blkdel,grep
+
+:def man scratch,"* Man Page *",rtn,bof,markb,eof," ",markk,blkdel," ",ltarw,run,"man -P cat -S 2:3 "
+
+paste			^[ ] 5 2 ;
+
+insc			^[ [ 2 ~
+insc			^[ [ L
+
+delch			^[ [ 3 ~
+
+pgup			^[ [ I
+
+pgdn			^[ [ G
+
+home			^[ [ 1 ~
+home			^[ [ H
+home			^[ O H
+home			^[ [ 7 ~
+
+eol			^[ [ 4 ~
+eol			^[ [ F
+eol			^[ O F
+eol			^[ [ 8 ~
+
+rtarw,ltarw,begin_marking,rtarw,toggle_marking	^[ [ 1 ; 5 C
+rtarw,ltarw,begin_marking,rtarw,toggle_marking	^[ [ 5 C
+rtarw,ltarw,begin_marking,rtarw,toggle_marking	^[ O c
+
+ltarw,rtarw,begin_marking,ltarw,toggle_marking	^[ [ 1 ; 5 D
+ltarw,rtarw,begin_marking,ltarw,toggle_marking	^[ [ 5 D
+ltarw,rtarw,begin_marking,ltarw,toggle_marking	^[ O d
+
+uparw,dnarw,begin_marking,uparw,toggle_marking	^[ [ 1 ; 5 A
+uparw,dnarw,begin_marking,uparw,toggle_marking	^[ [ 5 A
+uparw,dnarw,begin_marking,uparw,toggle_marking	^[ O a
+
+dnarw,uparw,begin_marking,dnarw,toggle_marking	^[ [ 1 ; 5 B
+dnarw,uparw,begin_marking,dnarw,toggle_marking	^[ [ 5 B
+dnarw,uparw,begin_marking,dnarw,toggle_marking	^[ O b
+
+blkdel,nmark   ^[ [ 3 ; 5 -
+blkdel,nmark   ^[ [ 3 ; 5 ~
+
+yank		^[ [ 2 ; 5 -
+yank		^[ [ 2 ; 5 ~
+
+delbol		^[ o
+delbol		^[ ^O
+dnslide		^[ z
+dnslide		^[ Z
+dnslide		^[ ^Z
+dnslide,dnslide,dnslide,dnslide		MWDOWN
+compile		^[ c
+compile		^[ C
+compile		^[ ^C
+grep_find	^[ g
+grep_find	^[ G
+grep_find	^[ ^G
+execmd		^[ x
+execmd		^[ X
+execmd		^[ ^X
+finish		^[ ^I
+finish		^[ ^M
+mwind,mfit,jump,bol		^[ SP
+isrch		^[ s
+isrch		^[ S
+isrch		^[ ^S
+notmod		^[ ~
+mwind,mfit,prevw,nxterr		^[ =
+parserr		^[ e
+parserr		^[ E
+parserr		^[ ^E
+mwind,mfit,prevw,prverr		^[ -
+rsrch		^[ r
+rsrch		^[ R
+rsrch		^[ ^R
+run		^[ !
+tomarkb		^[ b
+tomarkb		^[ ^B
+tomarkk		^[ k
+tomarkk		^[ ^K
+tomarkk		^[ K
+txt		^[ i
+txt		^[ I
+upslide		^[ w
+upslide		^[ ^W
+upslide		^[ W
+upslide,upslide,upslide,upslide		MWUP
+yank		^[ y
+yankpop		^[ ^Y
+yank		^[ Y
+
+insc		^@
+
+nbuf		^[ v
+nbuf		^[ V
+nbuf		^[ ^V
+pbuf		^[ u
+pbuf		^[ U
+pbuf		^[ ^U
+
+quote8		^\
+quote		^[ '
+quote		^Q
+
+backs		^?
+backs		^H
+backw		^O
+bknd		^K '
+blkcpy		^K C
+blkcpy		^K ^C
+blkcpy		^K c
+blkdel		^K Y
+blkdel		^K ^Y
+blkdel		^K y
+blkmove		^K M
+blkmove		^K ^M
+blkmove		^K m
+blksave		^K W
+blksave		^K ^W
+blksave		^K w
+bof		^K U
+bof		^K ^U
+bof		^K u
+home		.kh
+home		^A
+center		^K A
+center		^K ^A
+center		^K a
+crawll		^K <
+crawlr		^K >
+delch		.kD
+delch		^D
+deleol		^J
+dellin		^Y
+delw		^W
+dnarw		.kd
+dnarw		^N
+dnarw		^[ O B
+dnarw		^[ [ B
+edit		^K E
+edit		^K ^E
+edit		^K e
+eof		^K V
+eof		^K ^V
+eof		^K v
+eol		.kH
+eol		.@7
+eol		^E
+exsave		^K X
+exsave		^K ^X
+exsave		^K x
+ffirst		^K F
+ffirst		^K ^F
+ffirst		^K f
+filt		^K /
+fnext		^L
+fmtblk		^K J
+fmtblk		^K ^J
+fmtblk		^K j
+gomark		^[ 0 TO 9
+groww		^K G
+groww		^K ^G
+groww		^K g
+insc		.kI
+insf		^K R
+insf		^K ^R
+insf		^K r
+lindent		^K ,
+line		^K L
+line		^K ^L
+line		^K l
+ltarw		.kl
+ltarw		^B
+ltarw		^[ O D
+ltarw		^[ [ D
+macros		^[ d
+macros		^[ ^D
+markb		^K B
+markb		^K ^B
+markb		^K b
+markk		^K K
+markk		^K ^K
+markk		^K k
+menu,"root",rtn	^T
+nextpos		^K =
+nextword	^X
+open		^]
+prevpos		^K -
+prevword	^Z
+reload		^K `
+redo		^^
+rindent		^K .
+rtarw		.kr
+rtarw		^F
+rtarw		^[ O C
+rtarw		^[ [ C
+run		^K !
+save		^K D
+save		^K S
+save		^K ^D
+save		^K ^S
+save		^K d
+save		^K s
+setmark		^[ ^[
+shrinkw		^K T
+shrinkw		^K ^T
+shrinkw		^K t
+splitw		^K O
+splitw		^K ^O
+splitw		^K o
+stat		^K SP
+tag		^K ;
+tomatch		^G
+undo		^_
+uparw		.ku
+uparw		^P
+uparw		^[ O A
+uparw		^[ [ A
+
+:prompt			Prompt windows
+:inherit main
+if,"byte>size",then,complete,complete,else,delch,endif	^D
+complete	^I
+dnarw,eol	.kd
+dnarw,eol	^N
+dnarw,eol	^[ O B
+dnarw,eol	^[ [ B
+uparw,eol	.ku
+uparw,eol	^P
+uparw,eol	^[ O A
+uparw,eol	^[ [ A
+
+:menu			Selection menus
+:inherit windows
+
+pgupmenu	^[ [ I
+
+pgdnmenu	^[ [ G
+
+bolmenu		^[ [ 1 ~
+bolmenu		^[ [ H
+bolmenu		^[ O H
+bolmenu		^[ [ 7 ~
+
+eolmenu		^[ [ 4 ~
+eolmenu		^[ [ F
+eolmenu		^[ O F
+eolmenu		^[ [ 8 ~
+
+abort		^[ ^[
+backsmenu	^?
+backsmenu	^H
+bofmenu		^K U
+bofmenu		^K ^U
+bofmenu		^K u
+bolmenu		.kh
+bolmenu		^A
+dnarwmenu	.kd
+dnarwmenu	^N
+dnarwmenu	^[ [ B
+dnarwmenu	^[ O B
+dnarwmenu	MWDOWN
+eofmenu		^K V
+eofmenu		^K ^V
+eofmenu		^K v
+eolmenu		.kH
+eolmenu		^E
+ltarwmenu	.kl
+ltarwmenu	^B
+ltarwmenu	^[ [ D
+ltarwmenu	^[ O D
+pgdnmenu	.kN
+pgdnmenu	^V
+pgdnmenu	^[ [ 6 ~
+pgupmenu	.kP
+pgupmenu	^U
+pgupmenu	^[ [ 5 ~
+rtarwmenu	.kr
+rtarwmenu	^F
+rtarwmenu	^[ [ C
+rtarwmenu	^[ O C
+rtn		SP
+rtn		^I
+rtn		^K H
+rtn		^K h
+rtn		^K ^H
+tabmenu		^I
+uparwmenu	.ku
+uparwmenu	^P
+uparwmenu	^[ [ A
+uparwmenu	^[ O A
+uparwmenu	MWUP
+defm2down	M2DOWN
+
+:query			Single-key query window
+:inherit windows
+
+:querya			Single-key query window for quoting
+type		^@ TO ÿ
+
+:querysr		Search & replace query window
+type		^@ TO ÿ

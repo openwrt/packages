@@ -1,8 +1,8 @@
-From fbf8e392db4456de97796259a62ccb972fe24df8 Mon Sep 17 00:00:00 2001
+From fda9b6dd088e734de372fc85c091f88e8607bc2e Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Tue, 26 Feb 2013 17:37:16 +0700
-Subject: [PATCH 04/18] PKCS15-OpenPGP: Declare DATA objects.
+Subject: [PATCH 04/26] PKCS15-OpenPGP: Declare DATA objects.
 
 Begin to support read/write DATA object for PKCS-OpenPGP binding.
 This object is used by TrueCrypt.
@@ -11,18 +11,18 @@ This object is used by TrueCrypt.
  1 file changed, 35 insertions(+)
 
 diff --git a/src/libopensc/pkcs15-openpgp.c b/src/libopensc/pkcs15-openpgp.c
-index 5a8a1ca..9f239ef 100644
+index fdf720a..fea2805 100644
 --- a/src/libopensc/pkcs15-openpgp.c
 +++ b/src/libopensc/pkcs15-openpgp.c
-@@ -36,6 +36,7 @@ typedef USHORT ushort;
- #endif
+@@ -32,6 +32,7 @@
+ #include "log.h"
  
  int sc_pkcs15emu_openpgp_init_ex(sc_pkcs15_card_t *, sc_pkcs15emu_opt_t *);
 +static int sc_pkcs15emu_openpgp_add_data(sc_pkcs15_card_t *);
  
  
  #define	PGP_USER_PIN_FLAGS	(SC_PKCS15_PIN_FLAG_CASE_SENSITIVE \
-@@ -45,6 +46,8 @@ int sc_pkcs15emu_openpgp_init_ex(sc_pkcs15_card_t *, sc_pkcs15emu_opt_t *);
+@@ -41,6 +42,8 @@ int sc_pkcs15emu_openpgp_init_ex(sc_pkcs15_card_t *, sc_pkcs15emu_opt_t *);
  				| SC_PKCS15_PIN_FLAG_UNBLOCK_DISABLED \
  				| SC_PKCS15_PIN_FLAG_SO_PIN)
  
@@ -31,7 +31,7 @@ index 5a8a1ca..9f239ef 100644
  typedef struct _pgp_pin_cfg {
  	const char	*label;
  	int		reference;
-@@ -359,6 +362,9 @@ sc_pkcs15emu_openpgp_init(sc_pkcs15_card_t *p15card)
+@@ -355,6 +358,9 @@ sc_pkcs15emu_openpgp_init(sc_pkcs15_card_t *p15card)
  			goto failed;
  	}
  
@@ -41,7 +41,7 @@ index 5a8a1ca..9f239ef 100644
  	return 0;
  
  failed:	sc_debug(card->ctx, SC_LOG_DEBUG_NORMAL, "Failed to initialize OpenPGP emulation: %s\n",
-@@ -366,6 +372,35 @@ failed:	sc_debug(card->ctx, SC_LOG_DEBUG_NORMAL, "Failed to initialize OpenPGP e
+@@ -362,6 +368,35 @@ failed:	sc_debug(card->ctx, SC_LOG_DEBUG_NORMAL, "Failed to initialize OpenPGP e
  	return r;
  }
  
@@ -78,5 +78,5 @@ index 5a8a1ca..9f239ef 100644
  {
  	if (p15card->card->type == SC_CARD_TYPE_OPENPGP_V1 || p15card->card->type == SC_CARD_TYPE_OPENPGP_V2
 -- 
-1.9.3
+2.1.3
 

@@ -1,18 +1,18 @@
-From c706491fc9b08d4cc6d7b254cf936d6b8d8691bc Mon Sep 17 00:00:00 2001
+From 471b40173b73f213ee72bf05735abf3357658197 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Nguy=E1=BB=85n=20H=E1=BB=93ng=20Qu=C3=A2n?=
  <ng.hong.quan@gmail.com>
 Date: Wed, 20 Feb 2013 11:54:30 +0700
-Subject: [PATCH 01/18] OpenPGP: Detect and support Gnuk Token.
+Subject: [PATCH 01/26] OpenPGP: Detect and support Gnuk Token.
 
 http://www.fsij.org/gnuk/
 ---
  src/libopensc/card-openpgp.c | 61 ++++++++++++++++++++++++++++++++++----------
  src/libopensc/cards.h        |  1 +
- src/tools/openpgp-tool.c     |  9 +++++--
- 3 files changed, 56 insertions(+), 15 deletions(-)
+ src/tools/openpgp-tool.c     |  7 ++++-
+ 3 files changed, 55 insertions(+), 14 deletions(-)
 
 diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 743e79c..716052b 100644
+index 6774fe1..c785a55 100644
 --- a/src/libopensc/card-openpgp.c
 +++ b/src/libopensc/card-openpgp.c
 @@ -43,6 +43,7 @@
@@ -66,7 +66,7 @@ index 743e79c..716052b 100644
  				priv->ext_caps |= EXT_CAP_SM;
  
  			if ((priv->bcd_version >= OPENPGP_CARD_2_0) && (blob->len >= 10)) {
-@@ -1055,12 +1060,18 @@ static int
+@@ -1057,12 +1062,18 @@ static int
  pgp_get_pubkey(sc_card_t *card, unsigned int tag, u8 *buf, size_t buf_len)
  {
  	sc_apdu_t	apdu;
@@ -86,7 +86,7 @@ index 743e79c..716052b 100644
  	apdu.lc = 2;
  	apdu.data = ushort2bebytes(idbuf, tag);
  	apdu.datalen = 2;
-@@ -1152,6 +1163,7 @@ pgp_put_data(sc_card_t *card, unsigned int tag, const u8 *buf, size_t buf_len)
+@@ -1154,6 +1165,7 @@ pgp_put_data(sc_card_t *card, unsigned int tag, const u8 *buf, size_t buf_len)
  	u8 ins = 0xDA;
  	u8 p1 = tag >> 8;
  	u8 p2 = tag & 0xFF;
@@ -94,7 +94,7 @@ index 743e79c..716052b 100644
  	int r;
  
  	LOG_FUNC_CALLED(card->ctx);
-@@ -1193,13 +1205,17 @@ pgp_put_data(sc_card_t *card, unsigned int tag, const u8 *buf, size_t buf_len)
+@@ -1195,13 +1207,17 @@ pgp_put_data(sc_card_t *card, unsigned int tag, const u8 *buf, size_t buf_len)
  
  	/* Build APDU */
  	if (buf != NULL && buf_len > 0) {
@@ -114,7 +114,7 @@ index 743e79c..716052b 100644
  		apdu.datalen = buf_len;
  		apdu.lc = buf_len;
  	}
-@@ -1326,6 +1342,7 @@ pgp_compute_signature(sc_card_t *card, const u8 *data,
+@@ -1328,6 +1344,7 @@ pgp_compute_signature(sc_card_t *card, const u8 *data,
  	struct pgp_priv_data	*priv = DRVDATA(card);
  	sc_security_env_t	*env = &priv->sec_env;
  	sc_apdu_t		apdu;
@@ -122,7 +122,7 @@ index 743e79c..716052b 100644
  	int			r;
  
  	LOG_FUNC_CALLED(card->ctx);
-@@ -1334,14 +1351,19 @@ pgp_compute_signature(sc_card_t *card, const u8 *data,
+@@ -1336,14 +1353,19 @@ pgp_compute_signature(sc_card_t *card, const u8 *data,
  		LOG_TEST_RET(card->ctx, SC_ERROR_INVALID_ARGUMENTS,
  				"invalid operation");
  
@@ -144,7 +144,7 @@ index 743e79c..716052b 100644
  		break;
  	case 0x01:
  	default:
-@@ -1350,7 +1372,7 @@ pgp_compute_signature(sc_card_t *card, const u8 *data,
+@@ -1352,7 +1374,7 @@ pgp_compute_signature(sc_card_t *card, const u8 *data,
  	}
  
  	apdu.lc = data_len;
@@ -153,7 +153,7 @@ index 743e79c..716052b 100644
  	apdu.datalen = data_len;
  	apdu.le = ((outlen >= 256) && !(card->caps & SC_CARD_CAP_APDU_EXT)) ? 256 : outlen;
  	apdu.resp    = out;
-@@ -1374,6 +1396,7 @@ pgp_decipher(sc_card_t *card, const u8 *in, size_t inlen,
+@@ -1376,6 +1398,7 @@ pgp_decipher(sc_card_t *card, const u8 *in, size_t inlen,
  	struct pgp_priv_data	*priv = DRVDATA(card);
  	sc_security_env_t	*env = &priv->sec_env;
  	sc_apdu_t	apdu;
@@ -161,7 +161,7 @@ index 743e79c..716052b 100644
  	u8		*temp = NULL;
  	int		r;
  
-@@ -1398,7 +1421,7 @@ pgp_decipher(sc_card_t *card, const u8 *in, size_t inlen,
+@@ -1400,7 +1423,7 @@ pgp_decipher(sc_card_t *card, const u8 *in, size_t inlen,
  	case 0x01: /* Decryption key */
  	case 0x02: /* authentication key */
  		/* PSO DECIPHER */
@@ -170,7 +170,7 @@ index 743e79c..716052b 100644
  		break;
  	case 0x00: /* signature key */
  	default:
-@@ -1407,8 +1430,13 @@ pgp_decipher(sc_card_t *card, const u8 *in, size_t inlen,
+@@ -1409,8 +1432,13 @@ pgp_decipher(sc_card_t *card, const u8 *in, size_t inlen,
  				"invalid key reference");
  	}
  
@@ -209,10 +209,10 @@ index 743e79c..716052b 100644
  		 * sc_format_apdu() */
  		apdu_le = card->max_recv_size;
 diff --git a/src/libopensc/cards.h b/src/libopensc/cards.h
-index 0fbf9ca..01b08fd 100644
+index 7be6667..a3f3634 100644
 --- a/src/libopensc/cards.h
 +++ b/src/libopensc/cards.h
-@@ -104,6 +104,7 @@ enum {
+@@ -105,6 +105,7 @@ enum {
  	SC_CARD_TYPE_OPENPGP_BASE = 9000,
  	SC_CARD_TYPE_OPENPGP_V1,
  	SC_CARD_TYPE_OPENPGP_V2,
@@ -221,27 +221,18 @@ index 0fbf9ca..01b08fd 100644
  	/* jcop driver */
  	SC_CARD_TYPE_JCOP_BASE = 10000,
 diff --git a/src/tools/openpgp-tool.c b/src/tools/openpgp-tool.c
-index 7058aaa..8b5e327 100644
+index f42e6d6..a24a395 100644
 --- a/src/tools/openpgp-tool.c
 +++ b/src/tools/openpgp-tool.c
-@@ -32,6 +32,7 @@
- #include "libopensc/asn1.h"
+@@ -33,6 +33,7 @@
  #include "libopensc/cards.h"
  #include "libopensc/cardctl.h"
+ #include "libopensc/errors.h"
 +#include "libopensc/log.h"
  #include "util.h"
+ #include "libopensc/log.h"
  
- #define	OPT_RAW		256
-@@ -216,7 +217,7 @@ static void display_data(const struct ef_name_map *mapping, char *value)
- 			} else {
- 				const char *label = mapping->name;
- 
--				printf("%s:%*s%s\n", label, 10-strlen(label), "", value);
-+				printf("%s:%*s%s\n", label, 10 - (int)strlen(label), "", value);
- 			}
- 		}
- 	}
-@@ -390,6 +391,8 @@ int do_genkey(sc_card_t *card, u8 key_id, unsigned int key_len)
+@@ -396,6 +397,8 @@ int do_genkey(sc_card_t *card, u8 key_id, unsigned int key_len)
  	sc_path_t path;
  	sc_file_t *file;
  
@@ -250,7 +241,7 @@ index 7058aaa..8b5e327 100644
  	if (key_id < 1 || key_id > 3) {
  		printf("Unknown key ID %d.\n", key_id);
  		return 1;
-@@ -481,8 +484,10 @@ int main(int argc, char **argv)
+@@ -487,8 +490,10 @@ int main(int argc, char **argv)
  
  	/* check card type */
  	if ((card->type != SC_CARD_TYPE_OPENPGP_V1) &&
@@ -263,5 +254,5 @@ index 7058aaa..8b5e327 100644
  		goto out;
  	}
 -- 
-1.9.3
+2.1.3
 

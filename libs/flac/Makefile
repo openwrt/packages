@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flac
-PKG_VERSION:=1.2.1
+PKG_VERSION:=1.3.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/flac
-PKG_MD5SUM:=
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=http://downloads.xiph.org/releases/flac/
+PKG_MD5SUM:=b9922c9a0378c88d3e901b234f852698
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_INSTALL:=1
@@ -30,23 +30,21 @@ define Package/libflac
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Free Lossless Audio Codec library
-  URL:=http://flac.sourceforge.net/
+  URL:=https://xiph.org/flac
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--disable-cpplibs \
-		--disable-sse \
-		--disable-3dnow \
-		--disable-altivec \
-		--disable-doxgen-docs \
-		--disable-local-xmms-plugin \
-		--disable-xmms-plugin \
-		--disable-ogg \
-		--disable-oggtest \
-		--disable-debug \
-	)
-endef
+CONFIGURE_ARGS += \
+	--disable-cpplibs \
+	--disable-sse \
+	--disable-3dnow \
+	--disable-altivec \
+	--disable-doxgen-docs \
+	--disable-local-xmms-plugin \
+	--disable-xmms-plugin \
+	--disable-ogg \
+	--disable-oggtest \
+	--disable-debug \
+	--enable-static \
 
 TARGET_CFLAGS += $(FPIC)
 

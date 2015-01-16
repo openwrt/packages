@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# there are other ACTIONs like ifupdate we don't need
+# so parse dynamic_dns_functions.sh only when needed
+case "$ACTION" in
+	ifup)
+		. /usr/lib/ddns/dynamic_dns_functions.sh
+		/etc/init.d/ddns enabled && start_daemon_for_all_ddns_sections "$INTERFACE"
+		;;
+	ifdown)
+		. /usr/lib/ddns/dynamic_dns_functions.sh
+		stop_daemon_for_all_ddns_sections "$INTERFACE"
+		;;
+esac

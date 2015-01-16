@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.18.16
+PKG_VERSION:=0.18.21
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.18/
-PKG_MD5SUM:=900657ff55726f4cc09a27eb7df57015
+PKG_MD5SUM:=945879f55acc256d30a5f69787338ceb
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
@@ -63,7 +63,6 @@ $(call Package/mpd/Default/description)
 endef
 
 define Package/mpd-full/conffiles
-/etc/avahi/services/mpd.service
 /etc/mpd.conf
 endef
 
@@ -83,6 +82,23 @@ endef
 
 define Package/mpd-mini/conffiles
 /etc/mpd.conf
+endef
+
+define Package/mpd-avahi-service
+$(call Package/mpd/Default)
+  TITLE+= (Avahi service)
+  DEPENDS+=+avahi-daemon
+endef
+
+define Package/mpd-avahi-service/description
+$(call Package/mpd/Default/description)
+ .
+ This package contains the service definition for announcing the
+ Music Player Daemon service via mDNS/DNS-SD.
+endef
+
+define Package/mpd-avahi-service/conffiles
+/etc/avahi/services/mpd.service
 endef
 
 CONFIGURE_ARGS += \
@@ -189,22 +205,26 @@ endif
 
 define Package/mpd/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/mpd $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mpd $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc
-	$(CP) $(PKG_BUILD_DIR)/doc/mpdconf.example $(1)/etc/mpd.conf
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/doc/mpdconf.example $(1)/etc/mpd.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mpd.init $(1)/etc/init.d/mpd
 endef
 
 define Package/mpd-full/install
 $(call Package/mpd/install,$1)
-	$(INSTALL_DIR) $(1)/etc/avahi/services
-	$(INSTALL_DATA) ./files/mpd.service $(1)/etc/avahi/services/
 endef
 
 define Package/mpd-mini/install
 $(call Package/mpd/install,$1)
 endef
 
+define Package/mpd-avahi-service/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_DATA) ./files/mpd.service $(1)/etc/avahi/services/
+endef
+
 $(eval $(call BuildPackage,mpd-full))
 $(eval $(call BuildPackage,mpd-mini))
+$(eval $(call BuildPackage,mpd-avahi-service))

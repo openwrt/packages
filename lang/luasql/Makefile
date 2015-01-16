@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://github.com/keplerproject/luasql/archive/
 PKG_MD5SUM:=af9f0f3a2313a1fcf88c40700092048d
 
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILE:=docs/us/license.html
+PKG_LICENSE_FILES:=docs/us/license.html
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)

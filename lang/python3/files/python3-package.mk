@@ -6,7 +6,7 @@
 #
 
 PYTHON3_VERSION:=3.4
-PYTHON3_VERSION_MICRO:=1
+PYTHON3_VERSION_MICRO:=2
 
 PYTHON3_DIR:=$(STAGING_DIR)/usr
 PYTHON3_BIN_DIR:=$(PYTHON3_DIR)/bin
@@ -17,10 +17,13 @@ PYTHON3_PKG_DIR:=/usr/lib/python$(PYTHON3_VERSION)/site-packages
 
 PYTHON3:=python$(PYTHON3_VERSION)
 
+HOST_PYTHON3_LIB_DIR:=$(STAGING_DIR_HOST)/lib/python$(PYTHON3_VERSION)
 HOST_PYTHON3_BIN:=$(STAGING_DIR_HOST)/bin/python3
 
+PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR)
+PYTHON3PATH+=:$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 define HostPython3
-	(	export PYTHONPATH="$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR)"; \
+	(	export PYTHONPATH="$(PYTHON3PATH)"; \
 		export PYTHONOPTIMIZE=""; \
 		export PYTHONDONTWRITEBYTECODE=1; \
 		$(1) \
@@ -28,12 +31,19 @@ define HostPython3
 	)
 endef
 
+PKG_USE_MIPS16:=0
+# This is required in addition to PKG_USE_MIPS16:=0 because otherwise MIPS16
+# flags are inherited from the Python base package (via sysconfig module)
+ifdef CONFIG_USE_MIPS16
+  TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
+endif
+
 define Py3Package
   $(call shexport,Py3Package/$(1)/filespec)
 
   define Package/$(1)/install
 	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
-	@echo "$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" | ( \
+	@echo "$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)" | ( \
 		IFS='|'; \
 		while read fop fspec fperm; do \
 		  if [ "$$$$$$$$fop" = "+" ]; then \
@@ -70,6 +80,7 @@ endef
 # $(2) => additional arguments to setup.py
 # $(3) => additional variables
 define Build/Compile/Py3Mod
+	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 	$(call HostPython3, \
 		cd $(PKG_BUILD_DIR)/$(strip $(1)); \
 		CC="$(TARGET_CC)" \
@@ -80,6 +91,7 @@ define Build/Compile/Py3Mod
 		CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
 		_PYTHON_HOST_PLATFORM="linux-$(ARCH)" \
+		__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON3)" \
 		$(3) \
 		, \
 		./setup.py $(2) \

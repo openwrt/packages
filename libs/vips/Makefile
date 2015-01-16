@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vips
-PKG_VERSION:=7.38.5
+PKG_VERSION:=7.42.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.vips.ecs.soton.ac.uk/supported/7.38/
-PKG_MD5SUM:=768d1c0f50c5b2794bcab68383af33ee
+PKG_SOURCE_URL:=http://www.vips.ecs.soton.ac.uk/supported/7.42/
+PKG_MD5SUM:=33a4590924b3120ce309982ec85a7c16
 PKG_FIXUP:=autoreconf
 PKG_CHECK_FORMAT_SECURITY:=0
 

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
 PKG_VERSION:=1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
@@ -33,7 +33,7 @@ endef
 
 define Package/znc
   $(Package/znc/default)
-  DEPENDS:=+libopenssl +libpthread $(CXX_DEPENDS)
+  DEPENDS:=+libopenssl +libpthread +libstdcpp
   MENU:=1
 endef
 
@@ -261,14 +261,13 @@ $(eval $(call webskin,ice))
 
 PKG_CONFIG_DEPENDS := $(patsubst %,CONFIG_PACKAGE_%,$(ZNC_MODULES))
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_VARS += \
-	CXXFLAGS="$(TARGET_CFLAGS) -fno-builtin -fno-rtti -nostdinc++" \
+	CXXFLAGS="$(TARGET_CFLAGS) -fno-builtin -fno-rtti" \
 	CPPFLAGS="-I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/include" \
 	LDFLAGS="-nodefaultlibs -lc -L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib" \
-	LIBS="-luClibc++ -lm -lssl -lcrypto $(LIBGCC_S) -lc"
+	LIBS="-lstdc++ -lm -lssl -lcrypto $(LIBGCC_S) -lc"
 
 CONFIGURE_ARGS += \
 	--disable-c-ares \
