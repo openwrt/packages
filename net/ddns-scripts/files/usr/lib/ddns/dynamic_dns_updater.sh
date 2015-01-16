@@ -20,7 +20,7 @@
 # variables in small chars are read from /etc/config/ddns
 # variables in big chars are defined inside these scripts as global vars
 # variables in big chars beginning with "__" are local defined inside functions only
-#set -vx  	#script debugger
+# set -vx  	#script debugger
 
 [ $# -lt 1 -o -n "${2//[0-3]/}" -o ${#2} -gt 1 ] && {
 	echo -e "\n  USAGE:"
@@ -58,7 +58,7 @@ trap "trap_handler 0 \$?" 0	# handle script exit with exit status
 trap "trap_handler 1"  1	# SIGHUP	Hangup / reload config
 trap "trap_handler 2"  2	# SIGINT	Terminal interrupt
 trap "trap_handler 3"  3	# SIGQUIT	Terminal quit
-#trap "trap_handler 9"  9	# SIGKILL	no chance to trap
+# trap "trap_handler 9"  9	# SIGKILL	no chance to trap
 trap "trap_handler 15" 15	# SIGTERM	Termination
 
 ################################################################################
@@ -115,28 +115,8 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 #
 ################################################################################
 
-# verify and load SECTION_ID is exists
-[ "$(uci -q get ddns.$SECTION_ID)" != "service" ] && {
-	[ $VERBOSE_MODE -le 1 ] && VERBOSE_MODE=2	# force console out and logfile output
-	[ -f $LOGFILE ] && rm -f $LOGFILE		# clear logfile before first entry
-	write_log  7 "************ ************** ************** **************"
-	write_log  5 "PID '$$' started at $(eval $DATE_PROG)"
-	write_log  7 "uci configuration:\n$(uci -q show ddns | grep '=service' | sort)"
-	write_log 14 "Service section '$SECTION_ID' not defined"
-}
 load_all_config_options "ddns" "$SECTION_ID"
-
-write_log 7 "************ ************** ************** **************"
-write_log 5 "PID '$$' started at $(eval $DATE_PROG)"
-write_log 7 "uci configuraion:\n$(uci -q show ddns.$SECTION_ID | sort)"
-write_log 7 "ddns version  : $(opkg list-installed ddns-scripts | awk '{print $3}')"
-case $VERBOSE_MODE in
-	0) write_log  7 "verbose mode  : 0 - run normal, NO console output";;
-	1) write_log  7 "verbose mode  : 1 - run normal, console mode";;
-	2) write_log  7 "verbose mode  : 2 - run once, NO retry on error";;
-	3) write_log  7 "verbose mode  : 3 - run once, NO retry on error, NOT sending update";;
-	*) write_log 14 "error detecting VERBOSE_MODE '$VERBOSE_MODE'";;
-esac
+ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 
 # set defaults if not defined
 [ -z "$enabled" ]	  && enabled=0
@@ -154,15 +134,54 @@ esac
 [ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 1 ] && ip_url="http://checkipv6.dyndns.com"
 [ "$ip_source" = "interface" -a -z "$ip_interface" ] && ip_interface="eth1"
 
+# SECTION_ID does not exists
+[ $ERR_LAST -ne 0 ] && {
+	[ $VERBOSE_MODE -le 1 ] && VERBOSE_MODE=2	# force console out and logfile output
+	[ -f $LOGFILE ] && rm -f $LOGFILE		# clear logfile before first entry
+	write_log  7 "************ ************** ************** **************"
+	write_log  5 "PID '$$' started at $(eval $DATE_PROG)"
+	write_log  7 "uci configuration:\n$(uci -q show ddns | grep '=service' | sort)"
+	write_log 14 "Service section '$SECTION_ID' not defined"
+}
+
+write_log 7 "************ ************** ************** **************"
+write_log 5 "PID '$$' started at $(eval $DATE_PROG)"
+write_log 7 "uci configuration:\n$(uci -q show ddns.$SECTION_ID | sort)"
+write_log 7 "ddns version  : $(opkg list-installed ddns-scripts | awk '{print $3}')"
+case $VERBOSE_MODE in
+	0) write_log  7 "verbose mode  : 0 - run normal, NO console output";;
+	1) write_log  7 "verbose mode  : 1 - run normal, console mode";;
+	2) write_log  7 "verbose mode  : 2 - run once, NO retry on error";;
+	3) write_log  7 "verbose mode  : 3 - run once, NO retry on error, NOT sending update";;
+	*) write_log 14 "error detecting VERBOSE_MODE '$VERBOSE_MODE'";;
+esac
+
 # check enabled state otherwise we don't need to continue
 [ $enabled -eq 0 ] && write_log 14 "Service section disabled!"
 
-# without domain or username or password we can do nothing for you
-[ -z "$domain" -o -z "$username" -o -z "$password" ] && write_log 14 "Service section not correctly configured!"
-urlencode URL_USER "$username"	# encode username, might be email or something like this
-urlencode URL_PASS "$password"	# encode password, might have special chars for security reason
+# determine what update url we're using if a service_name is supplied
+# otherwise update_url is set inside configuration (custom update url)
+# or update_script is set inside configuration (custom update script)
+[ -n "$service_name" ] && get_service_data update_url update_script
+[ -z "$update_url" -a -z "$update_script" ] && write_log 14 "No update_url found/defined or no update_script found/defined!"
+[ -n "$update_script" -a ! -f "$update_script" ] && write_log 14 "Custom update_script not found!"
 
-# verify ip_source script if configured and executable
+# without domain and possibly username and password we can do nothing for you
+[ -z "$domain" ] && write_log 14 "Service section not configured correctly! Missing 'domain'"
+[ -n "$update_url" ] && {
+	# only check if update_url is given, update_scripts have to check themselves
+	[ -z "$username" ] && $(echo "$update_url" | grep "\[USERNAME\]" >/dev/null 2>&1) && \
+		write_log 14 "Service section not configured correctly! Missing 'username'"
+	[ -z "$password" ] && $(echo "$update_url" | grep "\[PASSWORD\]" >/dev/null 2>&1) && \
+		write_log 14 "Service section not configured correctly! Missing 'password'"
+}
+
+# url encode username (might be email or something like this)
+# and password (might have special chars for security reason)
+[ -n "$username" ] && urlencode URL_USER "$username"
+[ -n "$password" ] && urlencode URL_PASS "$password"
+
+# verify ip_source 'script' if script is configured and executable
 if [ "$ip_source" = "script" ]; then
 	set -- $ip_script	#handling script with parameters, we need a trick
 	[ -z "$1" ] && write_log 14 "No script defined to detect local IP!"
@@ -180,16 +199,9 @@ write_log 7 "force interval: $FORCE_SECONDS seconds"
 write_log 7 "retry interval: $RETRY_SECONDS seconds"
 write_log 7 "retry counter : $retry_count times"
 
-# determine what update url we're using if a service_name is supplied
-# otherwise update_url is set inside configuration (custom update url)
-# or update_script is set inside configuration (custom update script)
-[ -n "$service_name" ] && get_service_data update_url update_script
-[ -z "$update_url" -a -z "$update_script" ] && write_log 14 "No update_url found/defined or no update_script found/defined!"
-[ -n "$update_script" -a ! -f "$update_script" ] && write_log 14 "Custom update_script not found!"
-
-#kill old process if it exists & set new pid file
+# kill old process if it exists & set new pid file
 stop_section_processes "$SECTION_ID"
-[ $? -gt 0 ] && write_log 7 "Send 'SIGTERM' to old process" || write_log 7 "No old process"
+[ $? -gt 0 ] && write_log 7 "Send 'SIGTERM' was send to old process" || write_log 7 "No old process"
 echo $$ > $PIDFILE
 
 # determine when the last update was
@@ -213,14 +225,6 @@ else
 	write_log 7 "last update: $(eval $EPOCH_TIME)"
 fi
 
-# we need time here because hotplug.d is fired by netifd
-# but IP addresses are not set by DHCP/DHCPv6 etc.
-write_log 7 "Waiting 10 seconds for interfaces to fully come up"
-sleep 10 &
-PID_SLEEP=$!
-wait $PID_SLEEP	# enable trap-handler
-PID_SLEEP=0
-
 # verify DNS server
 [ -n "$dns_server" ] && verify_dns "$dns_server"
 
@@ -235,9 +239,11 @@ PID_SLEEP=0
 	}
 }
 
-# let's check if there is already an IP registered at the web
-# but ignore errors if not
+# let's check if there is already an IP registered on the web
 get_registered_ip REGISTERED_IP "NO_RETRY"
+ERR_LAST=$?
+#     No error    or     No IP set	 otherwise retry
+[ $ERR_LAST -eq 0 -o $ERR_LAST -eq 127 ] || get_registered_ip REGISTERED_IP
 
 # loop endlessly, checking ip every check_interval and forcing an updating once every force_interval
 write_log 6 "Starting main loop at $(eval $DATE_PROG)"
@@ -279,8 +285,9 @@ while : ; do
 		if [ $ERR_LAST -eq 0 ]; then
 			get_uptime LAST_TIME		# we send update, so
 			echo $LAST_TIME > $UPDFILE	# save LASTTIME to file
-			[ "$LOCAL_IP" != "$REGISTERED_IP" ] && write_log 6 "Update successful - IP '$LOCAL_IP' send"
-			[ "$LOCAL_IP" = "$REGISTERED_IP" ]  || write_log 6 "Forced update successful - IP: '$LOCAL_IP' send"
+			[ "$LOCAL_IP" != "$REGISTERED_IP" ] \
+				&& write_log 6 "Update successful - IP '$LOCAL_IP' send" \
+				|| write_log 6 "Forced update successful - IP: '$LOCAL_IP' send"
 		else
 			write_log 3 "Can not update IP at DDNS Provider"
 		fi

@@ -1,6 +1,6 @@
 #
 # script for sending updates to no-ip.com / noip.com
-# 2014 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+# 2014-2015 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
 #
@@ -9,6 +9,9 @@
 #
 local __DUMMY
 local __UPDURL="http://[USERNAME]:[PASSWORD]@dynupdate.no-ip.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+# inside url we need username and password
+[ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
+[ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
 
 # set IP version dependend dummy (localhost)
 [ $use_ipv6 -eq 0 ] && __DUMMY="127.0.0.1" || __DUMMY="::1"

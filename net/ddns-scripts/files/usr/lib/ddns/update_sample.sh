@@ -1,5 +1,5 @@
 # sample script for sending user defined updates
-# 2014 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+# 2014-2015 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # activated inside /etc/config/ddns by setting
 #
@@ -18,6 +18,9 @@
 #
 # tested with spdns.de
 local __URL="http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
+# inside url we need username and password
+[ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
+[ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
 
 # do replaces in URL
 __URL=$(echo $__URL | sed -e "s#\[USERNAME\]#$URL_USER#g" -e "s#\[PASSWORD\]#$URL_PASS#g" \
