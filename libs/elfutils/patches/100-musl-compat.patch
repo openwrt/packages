@@ -775,20 +775,9 @@
  	  if (*file_name == NULL)
  	    {
  	      *file_name = name;
---- a/libdw/dwarf_getpubnames.c
-+++ b/libdw/dwarf_getpubnames.c
-@@ -208,7 +208,7 @@ dwarf_getpubnames (dbg, callback, arg, o
- 	  gl.die_offset += dbg->pubnames_sets[cnt].cu_offset;
- 
- 	  gl.name = (char *) readp;
--	  readp = (unsigned char *) rawmemchr (gl.name, '\0') + 1;
-+	  readp = (unsigned char *) memchr (gl.name, '\0', SIZE_MAX) + 1;
- 
- 	  /* We found name and DIE offset.  Report it.  */
- 	  if (callback (dbg, &gl, arg) != DWARF_CB_OK)
 --- a/libelf/elf_getarsym.c
 +++ b/libelf/elf_getarsym.c
-@@ -283,7 +283,7 @@ elf_getarsym (elf, ptr)
+@@ -284,7 +284,7 @@ elf_getarsym (elf, ptr)
  		arsym[cnt].as_off = file_data->u32[cnt];
  
  	      arsym[cnt].as_hash = _dl_elf_hash (str_data);
