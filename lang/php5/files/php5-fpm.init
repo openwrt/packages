@@ -1,0 +1,27 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2010-2015 OpenWrt.org
+
+START=50
+NAME=php-fpm
+DESC="php-fpm daemon"
+DAEMON=/usr/bin/php-fpm
+# config path
+CONFIGFILE=/etc/php-fpm.conf
+# PID file path
+PIDFILE=/var/run/$NAME.pid
+
+# Gracefully exit if the package has been removed.
+test -x $DAEMON || exit 0;
+
+start() {
+	$DAEMON -y $CONFIGFILE || echo -n "already running";
+}
+
+stop() {
+	if [ -f $PIDFILE ];then
+		kill -QUIT `cat $PIDFILE` > /dev/null 2>&1 || echo -n "not running" ;	
+	else
+		kill -QUIT `ps | grep [p]hp-fpm | awk {'print $1'}` > /dev/null 2>&1;
+	fi
+}
+
