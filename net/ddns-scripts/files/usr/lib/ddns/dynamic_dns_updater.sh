@@ -115,6 +115,9 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 #
 ################################################################################
 
+# Set this early, it is used by write_log.
+[ -z "$use_syslog" ]      && use_syslog=2	# syslog "Notice"
+
 # verify and load SECTION_ID is exists
 [ "$(uci -q get ddns.$SECTION_ID)" != "service" ] && {
 	[ $VERBOSE_MODE -le 1 ] && VERBOSE_MODE=2	# force console out and logfile output
@@ -128,7 +131,7 @@ load_all_config_options "ddns" "$SECTION_ID"
 
 write_log 7 "************ ************** ************** **************"
 write_log 5 "PID '$$' started at $(eval $DATE_PROG)"
-write_log 7 "uci configuraion:\n$(uci -q show ddns.$SECTION_ID | sort)"
+write_log 7 "uci configuration:\n$(uci -q show ddns.$SECTION_ID | sort)"
 write_log 7 "ddns version  : $(opkg list-installed ddns-scripts | awk '{print $3}')"
 case $VERBOSE_MODE in
 	0) write_log  7 "verbose mode  : 0 - run normal, NO console output";;
@@ -141,7 +144,6 @@ esac
 # set defaults if not defined
 [ -z "$enabled" ]	  && enabled=0
 [ -z "$retry_count" ]	  && retry_count=5
-[ -z "$use_syslog" ]      && use_syslog=2	# syslog "Notice"
 [ -z "$use_https" ]       && use_https=0	# not use https
 [ -z "$use_logfile" ]     && use_logfile=1	# use logfile by default
 [ -z "$use_ipv6" ]	  && use_ipv6=0		# use IPv4 by default
@@ -156,11 +158,6 @@ esac
 
 # check enabled state otherwise we don't need to continue
 [ $enabled -eq 0 ] && write_log 14 "Service section disabled!"
-
-# without domain or username or password we can do nothing for you
-[ -z "$domain" -o -z "$username" -o -z "$password" ] && write_log 14 "Service section not correctly configured!"
-urlencode URL_USER "$username"	# encode username, might be email or something like this
-urlencode URL_PASS "$password"	# encode password, might have special chars for security reason
 
 # verify ip_source script if configured and executable
 if [ "$ip_source" = "script" ]; then
@@ -186,6 +183,18 @@ write_log 7 "retry counter : $retry_count times"
 [ -n "$service_name" ] && get_service_data update_url update_script
 [ -z "$update_url" -a -z "$update_script" ] && write_log 14 "No update_url found/defined or no update_script found/defined!"
 [ -n "$update_script" -a ! -f "$update_script" ] && write_log 14 "Custom update_script not found!"
+
+# All variables present in update_url must be configured.
+for var in domain username password; do
+	pattern="[$(echo $var | tr '[a-z]' '[A-Z]')]"
+	value="$(eval echo "\$${var}")"
+	if echo "$update_url" | grep -qF "$pattern" && [ -z "$value" ]; then
+		write_log 14 "Service section not correctly configured: missing '$var'!"
+		exit 1
+	fi
+done
+urlencode URL_USER "$username"	# encode username, might be email or something like this
+urlencode URL_PASS "$password"	# encode password, might have special chars for security reason
 
 #kill old process if it exists & set new pid file
 stop_section_processes "$SECTION_ID"
