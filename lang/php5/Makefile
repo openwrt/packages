@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=5.4.36
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -128,9 +128,21 @@ define Package/php5-fastcgi/description
   on the php5-cgi package, containing just the startup script.
 endef
 
+define Package/php5-fpm
+  $(call Package/php5/Default)
+  DEPENDS+= +php5-cgi
+  TITLE+= (FPM)
+endef
+
+define Package/php5-fpm/description
+  $(call Package/php5/Default/description)
+  This package contains the FastCGI Process Manager of the PHP5 interpreter.
+endef
+
 CONFIGURE_ARGS+= \
 	--enable-cli \
 	--enable-cgi \
+	--enable-fpm \
 	--enable-shared \
 	--disable-static \
 	--disable-rpath \
@@ -448,6 +460,23 @@ define Package/php5-fastcgi/install
 	$(INSTALL_BIN) ./files/php5-fastcgi.init $(1)/etc/init.d/php5-fastcgi
 endef
 
+define Package/php5-fpm/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sapi/fpm/php-fpm $(1)/usr/bin/php-fpm
+
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DATA) ./files/php5-fpm.conf $(1)/etc/php5-fpm.conf
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/php5-fpm.config $(1)/etc/config/php5-fpm
+
+	$(INSTALL_DIR) $(1)/etc/php5-fpm.d
+	$(INSTALL_DATA) ./files/php5-fpm-www.conf $(1)/etc/php5-fpm.d/www.conf
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/php5-fpm.init $(1)/etc/init.d/php5-fpm
+endef
+
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	( cd $(PKG_BUILD_DIR); touch configure.in; ./buildconf --force )
@@ -487,9 +516,10 @@ define BuildModule
 endef
 
 $(eval $(call BuildPackage,php5))
-$(eval $(call BuildPackage,php5-cli))
 $(eval $(call BuildPackage,php5-cgi))
+$(eval $(call BuildPackage,php5-cli))
 $(eval $(call BuildPackage,php5-fastcgi))
+$(eval $(call BuildPackage,php5-fpm))
 
 #$(eval $(call BuildModule,NAME,TITLE[,PKG DEPENDS]))
 $(eval $(call BuildModule,calendar,Calendar))
