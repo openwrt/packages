@@ -1,22 +1,11 @@
---- elfutils-0.160/libdw/Makefile.am.old	2014-11-06 03:02:12.700116452 -0200
-+++ elfutils-0.160/libdw/Makefile.am	2014-11-06 03:02:55.732116447 -0200
-@@ -110,7 +110,7 @@
- 		-Wl,--enable-new-dtags,-rpath,$(pkglibdir) \
- 		-Wl,--version-script,$<,--no-undefined \
- 		-Wl,--whole-archive $(filter-out $<,$^) -Wl,--no-whole-archive\
--		-ldl $(zip_LIBS)
-+		-ldl $(zip_LIBS) x $(LIBS)
- 	if $(READELF) -d $@ | fgrep -q TEXTREL; then exit 1; fi
- 	ln -fs $@ $@.$(VERSION)
- 
---- elfutils-0.160/libdw/Makefile.in.old	2014-11-06 03:28:53.092116261 -0200
-+++ elfutils-0.160/libdw/Makefile.in	2014-11-06 03:29:02.528116260 -0200
-@@ -958,7 +958,7 @@
+--- elfutils-0.161/libdw/Makefile.in.orig	2015-01-16 03:50:15.311237461 -0200
++++ elfutils-0.161/libdw/Makefile.in	2015-01-16 03:55:35.082090075 -0200
+@@ -969,7 +969,7 @@
  		-Wl,--enable-new-dtags,-rpath,$(pkglibdir) \
  		-Wl,--version-script,$<,--no-undefined \
  		-Wl,--whole-archive $(filter-out $<,$^) -Wl,--no-whole-archive\
 -		-ldl $(zip_LIBS)
 +		-ldl $(zip_LIBS) $(LIBS)
- 	if $(READELF) -d $@ | fgrep -q TEXTREL; then exit 1; fi
+ 	@$(textrel_check)
  	ln -fs $@ $@.$(VERSION)
  
