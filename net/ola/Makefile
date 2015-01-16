@@ -35,7 +35,7 @@ define Package/ola
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Open Lighting Architecture Daemon
-  URL:=http://code.google.com/p/linux-lighting/
+  URL:=https://www.openlighting.org/
   DEPENDS:=+protobuf +libmicrohttpd +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses
 endef
 
