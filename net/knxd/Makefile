@@ -41,11 +41,13 @@ define Package/knxd
   URL:=https://github.com/Makki1/knxd
   DEPENDS:=pthsem libusb-1.0
 endef
-# use this if you want to support USB
-# DEPENDS:=pthsem libusb-1.0
 
 define Package/knxd/description
 EIB KNX Daemon
+endef
+
+define Package/knxd/conffiles
+/etc/config/knxd
 endef
 
 define Package/knxd-tools
@@ -59,10 +61,10 @@ endef
 define Package/knxd-tools/description
 EIB KNX Tools
 endef
+
 define Build/Prepare
 	$(call Build/Prepare/Default)
 endef
-
 
 define Build/Configure
 	$(call Build/Configure/Default,\
@@ -87,10 +89,6 @@ define Build/Compile
 		CPPFLAGS="-I$(STAGING_DIR)/include -I$(STAGING_DIR)/usr/include"
 endef
 
-define Package/knxd/conffiles
-  /etc/config/knxd
-endef
-
 define Package/knxd/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/server/knxd $(1)/usr/bin/
@@ -98,7 +96,7 @@ define Package/knxd/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/bcu/bcuread $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetsearch $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetdescribe $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/eibnet/findknxusb $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/usb/findknxusb $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/knxd.init $(1)/etc/init.d/knxd
 	$(INSTALL_DIR) $(1)/etc/config
