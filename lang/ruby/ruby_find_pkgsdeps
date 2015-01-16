@@ -24,7 +24,7 @@ require_regex_ignore=/^require ([a-zA-Z\$]|["']$|.*\/$)/
 require_ignore=%w{drb/invokemethod16 foo rubygems/defaults/operating_system win32console java Win32API
                   builder/xchar json/pure simplecov win32/sspi rdoc/markdown/literals_1_8 enumerator win32/resolv rbtree
                   nqxml/streamingparser nqxml/treeparser xmlscan/parser xmlscan/scanner xmltreebuilder xml/parser xmlparser xml/encoding-ja xmlencoding-ja
-                  iconv uconv}
+                  iconv uconv win32ole gettext/po_parser gettext/mo libxml}
 
 builtin_enc=[
 	Encoding.find("ASCII-8BIT"),
@@ -124,21 +124,22 @@ package_requires = Hash[packages.collect { |pkg| [pkg, package_files[pkg].collec
 
 weak_dependency=Hash.new([])
 weak_dependency.merge!({
-"ruby-misc"=>["ruby-openssl"], 					#securerandom.rb
+"ruby-misc"=>["ruby-openssl","ruby-fiddle"],			#securerandom.rb
 "ruby-debuglib"=>["ruby-readline"],				#debug.rb
 "ruby-drb"=>["ruby-openssl"],				 	#drb/ssl.rb
 "ruby-irb"=>["ruby-rdoc", "ruby-readline"],		 	#irb/cmd/help.rb
-"ruby-gems"=>["ruby-openssl","ruby-io-console", 		#rubygems/commands/cert_command.rb rubygems/user_interaction.rb
-	      "ruby-minitest", "ruby-webrick"],			#rubygems/test_case.rb rubygems/server.rb
+"ruby-gems"=>["ruby-openssl","ruby-io-console","ruby-webrick"], #rubygems/commands/cert_command.rb rubygems/user_interaction.rb rubygems/server.rb
 "ruby-mkmf"=>["ruby-webrick"], 					#un.rb
 "ruby-net"=>["ruby-openssl","ruby-io-console","ruby-zlib"], 	#net/*.rb
 "ruby-optparse"=>["ruby-uri","ruby-datetime"],			#optparse/date.rb optparse/uri.rb
-"ruby-rake"=>["ruby-net","ruby-testunit","ruby-gems"],		#rake/contrib/ftptools.rb rake/runtest.rb /usr/bin/rake
-"ruby-rdoc"=>["ruby-gems","ruby-readline","ruby-webrick",
-	      "ruby-minitest"],					#/usr/bin/rdoc and others
-"ruby-testunit"=>["ruby-gems", "ruby-io-console"],		#test/unit/parallel.rb test/unit.rb
+"ruby-rake"=>["ruby-net","ruby-gems"],				#rake/contrib/ftptools.rb /usr/bin/rake
+"ruby-rdoc"=>["ruby-gems","ruby-readline","ruby-webrick",	#/usr/bin/rdoc and others
+	       "ruby-io-console"],				#rdoc/stats/normal.rb
 "ruby-webrick"=>["ruby-openssl"],				#webrick/ssl.rb
 })
+
+puts "Preloading gems..."
+Gem::Specification.all.each{ |x| gem x.name }
 
 puts "Looking for package dependencies..."
 package_provides = {}
@@ -153,7 +154,7 @@ package_requires.each do
 		else
 			found = package_files.detect {|(pkg,files)| files.detect {|file| $:.detect {|path| "#{path}/#{require}" == file.gsub(/\.(so|rb)$/,"") } } }
 			if not found
-				$stderr.puts "#{pkg}: Nobody provides #{require}"
+				$stderr.puts "#{pkg}: Nothing provides #{require}"
 				failed = true
 				next
 			end
@@ -168,7 +169,11 @@ package_requires.each do
 		end
 	end
 end
-exit(1) if failed
+if failed
+	puts "There is some missing requirements not mapped to files in packages."
+	puts "Please, fix the missing files or ignore them on require_ignore var"
+	exit(1)
+end
 
 package_dependencies.each do
         |(pkg,deps)|
@@ -240,7 +245,7 @@ package_dependencies.each do
 	extra_dep = current_deps - deps
 	$stderr.puts "Package #{pkg} does not need to depend on #{extra_dep.join(" ")} " if not extra_dep.empty?
 	missing_dep = deps - current_deps
-	$stderr.puts "Package #{pkg} need to depend on #{missing_dep.join(" ")} " if not missing_dep.empty?
+	$stderr.puts "Package #{pkg} needs to depend on #{missing_dep.join(" ")} " if not missing_dep.empty?
 
 	if not extra_dep.empty? or not missing_dep.empty?
 		$stderr.puts "define Package/#{pkg}"
