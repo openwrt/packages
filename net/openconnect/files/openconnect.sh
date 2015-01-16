@@ -47,7 +47,7 @@ proto_openconnect_setup() {
 	[ -f /etc/config/openconnect-user-cert-vpn-$config.pem ] && append cmdline "-c /etc/config/openconnect-user-cert-vpn-$config.pem"
 	[ -f /etc/config/openconnect-user-key-vpn-$config.pem ] && append cmdline "--sslkey /etc/config/openconnect-user-key-vpn-$config.pem"
 	[ -f /etc/config/openconnect-ca-vpn-$config.pem ] && {
-		append cmdline "--cafile /etc/openconnect/ca-vpn-$config.pem"
+		append cmdline "--cafile /etc/config/openconnect-ca-vpn-$config.pem"
 		append cmdline "--no-system-trust"
 	}
 
