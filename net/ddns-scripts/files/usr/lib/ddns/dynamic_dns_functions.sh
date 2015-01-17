@@ -23,7 +23,7 @@
 # variables in small chars are read from /etc/config/ddns
 # variables in big chars are defined inside these scripts as global vars
 # variables in big chars beginning with "__" are local defined inside functions only
-#set -vx  	#script debugger
+# set -vx  	#script debugger
 
 . /lib/functions.sh
 . /lib/functions/network.sh
@@ -32,12 +32,12 @@
 SECTION_ID=""		# hold config's section name
 VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
 
-# allow NON-public IP's
+			# allow NON-public IP's
 ALLOW_LOCAL_IP=$(uci -q get ddns.global.allow_local_ip) || ALLOW_LOCAL_IP=0
-# directory to store run information to.
+			# directory to store run information to.
 RUNDIR=$(uci -q get ddns.global.run_dir) || RUNDIR="/var/run/ddns"
 [ -d $RUNDIR ] || mkdir -p -m755 $RUNDIR
-# directory to store log files
+			# directory to store log files
 LOGDIR=$(uci -q get ddns.global.log_dir) || LOGDIR="/var/log/ddns"
 [ -d $LOGDIR ] || mkdir -p -m755 $LOGDIR
 LOGFILE=""		# logfile - all files are set in dynamic_dns_updater.sh
@@ -47,7 +47,7 @@ DATFILE=""		# save stdout data of WGet and other external programs called
 ERRFILE=""		# save stderr output of WGet and other external programs called
 TLDFILE=/usr/lib/ddns/tld_names.dat	# TLD file used by split_FQDN
 
-# number of lines to before rotate logfile
+			# number of lines to before rotate logfile
 LOGLINES=$(uci -q get ddns.global.log_lines) || LOGLINES=250
 LOGLINES=$((LOGLINES + 1))	# correct sed handling
 
@@ -295,19 +295,19 @@ get_service_data() {
 	local __SCRIPT=""
 	local __OLD_IFS=$IFS
 	local __NEWLINE_IFS='
-' #__NEWLINE_IFS
+' # __NEWLINE_IFS
 	[ $# -ne 2 ] && write_log 12 "Error calling 'get_service_data()' - wrong number of parameters"
 
 	__FILE="/usr/lib/ddns/services"					# IPv4
 	[ $use_ipv6 -ne 0 ] && __FILE="/usr/lib/ddns/services_ipv6"	# IPv6
 
-	#remove any lines not containing data, and then make sure fields are enclosed in double quotes
+	# remove any lines not containing data, and then make sure fields are enclosed in double quotes
 	__SERVICES=$(cat $__FILE | grep "^[\t ]*[^#]" | \
 		awk ' gsub("\x27", "\"") { if ($1~/^[^\"]*$/) $1="\""$1"\"" }; { if ( $NF~/^[^\"]*$/) $NF="\""$NF"\""  }; { print $0 }')
 
 	IFS=$__NEWLINE_IFS
 	for __LINE in $__SERVICES; do
-		#grep out proper parts of data and use echo to remove quotes
+		# grep out proper parts of data and use echo to remove quotes
 		__NAME=$(echo $__LINE | grep -o "^[\t ]*\"[^\"]*\"" | xargs -r -n1 echo)
 		__DATA=$(echo $__LINE | grep -o "\"[^\"]*\"[\t ]*$" | xargs -r -n1 echo)
 
@@ -440,7 +440,7 @@ timeout() {
 	return $status
 }
 
-#verify given host and port is connectable
+# verify given host and port is connectable
 # $1	Host/IP to verify
 # $2	Port to verify
 verify_host_port() {
@@ -987,7 +987,7 @@ trap_handler() {
 	local __ERR=${2:-0}
 	local __OLD_IFS=$IFS
 	local __NEWLINE_IFS='
-' #__NEWLINE_IFS
+' # __NEWLINE_IFS
 
 	[ $PID_SLEEP -ne 0 ] && kill -$1 $PID_SLEEP 2>/dev/null	# kill pending sleep if exist
 

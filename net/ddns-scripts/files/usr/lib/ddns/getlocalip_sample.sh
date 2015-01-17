@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # sample script for detecting local IP
-# 2014 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+# 2014-2015 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # activated inside /etc/config/ddns by setting
 #
@@ -10,7 +10,7 @@
 #
 # the script is executed (not parsed) inside get_local_ip() function
 # of /usr/lib/ddns/dynamic_dns_functions.sh
-# 
+#
 # useful when this box is the only DDNS client in the network
 # IP adresses of "internal" boxes could be detected with this script
 # so no need to install ddns client on every "internal" box

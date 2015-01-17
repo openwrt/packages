@@ -2,8 +2,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
@@ -15,7 +16,6 @@ define Package/ddns-scripts
     SUBMENU:=IP Addresses and Names
     TITLE:=Dynamic DNS Scripts (with IPv6 support)
     PKGARCH:=all
-    MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 endef
 
 define Package/ddns-scripts/description
@@ -28,7 +28,6 @@ A highly configurable set of scripts for doing dynamic dns updates.
 	- Proxy server support
 	- log file support
 	- support to run once
-Version: $(PKG_VERSION)-$(PKG_RELEASE)
 endef
 
 define Build/Prepare

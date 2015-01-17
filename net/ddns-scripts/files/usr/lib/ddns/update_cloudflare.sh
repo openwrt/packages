@@ -1,6 +1,6 @@
 #
 # script for sending updates to cloudflare.com
-# 2014 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+# 2014-2015 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 # many thanks to Paul for testing and feedback during development
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
@@ -14,6 +14,8 @@
 # variable __IP already defined with the ip-address to use for update
 #
 [ $use_https -eq 0 ] && write_log 14 "Cloudflare only support updates via Secure HTTP (HTTPS). Please correct configuration!"
+[ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
+[ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
 
 local __RECID __URL __KEY __KEYS __FOUND __SUBDOM __DOMAIN __TLD
 
@@ -46,7 +48,7 @@ grep -i "json_get_keys" /usr/share/libubox/jshn.sh >/dev/null 2>&1 || json_get_k
 
 # function to "sed" unwanted string parts from DATFILE
 cleanup() {
-	#based on the sample output on cloudflare.com homepage we need to do some cleanup
+	# based on the sample output on cloudflare.com homepage we need to do some cleanup
 	sed -i 's/^[ \t]*//;s/[ \t]*$//' $DATFILE	# remove invisible chars at beginning and end of lines
 	sed -i '/^-$/d' $DATFILE			# remove lines with "-" (dash)
 	sed -i '/^$/d' $DATFILE				# remove empty lines

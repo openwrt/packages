@@ -17,8 +17,6 @@
 
 . /usr/lib/ddns/dynamic_dns_functions.sh	# global vars are also defined here
 
-# set -vx  	#script debugger
-
 # preset some variables, wrong or not set in dynamic_dns_functions.sh
 SECTION_ID="lucihelper"
 LOGFILE="$LOGDIR/$SECTION_ID.log"
