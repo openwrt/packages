@@ -116,6 +116,7 @@ add_param $CONFFILE "ibrdtn.dht.allow_neighbour_announcement" "dht_allow_neighbo
 # iterate through all network interfaces
 iter=0
 netinterfaces=
+netinternet=
 while [ 1 == 1 ]; do
 	$UCI -q get "ibrdtn.@network[$iter]" > /dev/null
 	if [ $? == 0 ]; then
@@ -123,6 +124,9 @@ while [ 1 == 1 ]; do
 		add_param $CONFFILE "ibrdtn.@network[$iter].type" "net_lan${iter}_type"
 		add_param $CONFFILE "ibrdtn.@network[$iter].interface" "net_lan${iter}_interface"
 		add_param $CONFFILE "ibrdtn.@network[$iter].port" "net_lan${iter}_port"
+		if [ "$(uci -q get ibrdtn.@network[$iter].global)" == "yes" ]; then
+			netinternet="${netinternet} $(uci -q get ibrdtn.@network[$iter].interface)"
+		fi
 	else
 		break
 	fi
@@ -132,6 +136,7 @@ done
 
 # write list of network interfaces
 echo "net_interfaces =$netinterfaces" >> $CONFFILE
+echo "net_internet =${netinternet}" >> $CONFFILE
 
 # iterate through all static routes
 iter=0

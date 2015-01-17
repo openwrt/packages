@@ -65,8 +65,8 @@ try-mtu-discovery = false
 #
 # There may be multiple certificate and key pairs and each key
 # should correspond to the preceding certificate.
-server-cert = /etc/ocserv/server-cert.pem
-server-key = /etc/ocserv/server-key.pem
+server-cert = /etc/config/ocserv-dir/server-cert.pem
+server-key = /etc/config/ocserv-dir/server-key.pem
 
 # Diffie-Hellman parameters. Only needed if you require support
 # for the DHE ciphersuites (by default this server supports ECDHE).
@@ -92,7 +92,7 @@ server-key = /etc/ocserv/server-key.pem
 # The Certificate Authority that will be used to verify
 # client certificates (public keys) if certificate authentication
 # is set.
-#ca-cert = /etc/ocserv/ca.pem
+#ca-cert = /etc/config/ocserv-dir/ca.pem
 
 # The object identifier that will be used to read the user ID in the client 
 # certificate. The object identifier should be part of the certificate's DN
@@ -107,7 +107,7 @@ server-key = /etc/ocserv/server-key.pem
 #cert-group-oid = 2.5.4.11
 
 # The revocation list of the certificates issued by the 'ca-cert' above.
-#crl = /etc/ocserv/crl.pem
+#crl = /etc/config/ocserv-dir/crl.pem
 
 # GnuTLS priority string
 tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT"
@@ -277,14 +277,14 @@ ping-leases = false
 # based on a user or group. The syntax depends on the input accepted
 # by the commands route-add-cmd and route-del-cmd (see below).
 
-#config-per-user = /etc/ocserv/config-per-user/
-#config-per-group = /etc/ocserv/config-per-group/
+#config-per-user = /etc/config/ocserv-dir/config-per-user/
+#config-per-group = /etc/config/ocserv-dir/config-per-group/
 
 # When config-per-xxx is specified and there is no group or user that
 # matches, then utilize the following configuration.
 
-#default-user-config = /etc/ocserv/defaults/user.conf
-#default-group-config = /etc/ocserv/defaults/group.conf
+#default-user-config = /etc/config/ocserv-dir/defaults/user.conf
+#default-group-config = /etc/config/ocserv-dir/defaults/group.conf
 
 # Groups that a client is allowed to select from.
 # A client may belong in multiple groups, and in certain use-cases

@@ -22,32 +22,19 @@ local UCI  = require "luci.model.uci"
 local SYS  = require "luci.sys"
 local UTIL = require "luci.util"
 
-version_luci_app = "1.0.0"	-- luci-application / openwrt Makefile compatible version
-version_required = "3.0.22"	-- minimum required service version
+version_luci_app = "1.0.1"	-- luci-application / openwrt Makefile compatible version
+version_required = "3.0.22-1"	-- minimum required service version
 
 function index()
-	local _service	= "privoxy"
-	local _vermin	= "3.0.22"
-	local _verinst
-	local _util	= require "luci.util"
-	local _ipkg	= require "luci.model.ipkg"
-	local _info	= _ipkg.info(_service)
-	for _, v in pairs(_info) do
-		if v.Package == _service and v.Status.installed then
-			_verinst = v.Version
-			break
-		end
-	end
-	local _sver = _util.split(_verinst, "[%.%-]", nil, true)
-	local _rver = _util.split(_vermin , "[%.%-]", nil, true)
+	local _sys	= require "luci.sys"
+	local _vermin	= "3.0.22-1"
+	local _verinst	= _sys.exec([[opkg list-installed ]] .. "privoxy" .. [[ | awk '{print $3}']])
+	local _cmd 	= [[opkg compare-versions "]] .. _verinst .. [[" ">=" "]] .. _vermin .. [["]]
+	local _verok	= tonumber(_sys.call(_cmd))
 
-	-- check config file and version 
-	if not nixio.fs.access("/etc/config/" .. _service )
-	    or (tonumber(_sver[1]) or 0) < (tonumber(_rver[1]) or 0)
-	    or (tonumber(_sver[2]) or 0) < (tonumber(_rver[2]) or 0)
-	    or (tonumber(_sver[3]) or 0) < (tonumber(_rver[3]) or 0)
-	    or (tonumber(_sver[4]) or 0) < (tonumber(_rver[4]) or 0) then
-		entry( {"admin", "services", "privoxy"}, cbi("privoxy/apperror", 
+	-- check config file and version
+	if not nixio.fs.access("/etc/config/privoxy") or (_verok == 0) then
+		entry( {"admin", "services", "privoxy"}, cbi("privoxy/apperror",
 			{hideapplybtn=true, hidesavebtn=true, hideresetbtn=true }), _("Privoxy WEB proxy"), 59)
 	else
 		entry( {"admin", "services", "privoxy"}, cbi("privoxy/detail"), _("Privoxy WEB proxy"), 59)
@@ -120,35 +107,6 @@ function get_theme()
 		end
 	end
 	return nil
-end
-
--- read version information for given package if installed
-function ipkg_version(package)
-	if not package then
-		return nil
-	end
-	local _info = IPKG.info(package)
-	local _data = {}
-	local _version = ""
-	local i = 0
-	for k, v in pairs(_info) do
-		if v.Package == package and v.Status.installed then
-			_version = v.Version
-			i = i + 1
-		end
-	end
-	if i > 1 then	-- more then one valid record
-		return _data
-	end
-	local _sver = UTIL.split(_version, "[%.%-]", nil, true)
-	_data = {
-		version = _version,
-		major   = tonumber(_sver[1]) or 0,
-		minor   = tonumber(_sver[2]) or 0,
-		patch   = tonumber(_sver[3]) or 0,
-		build   = tonumber(_sver[4]) or 0
-	}
-	return _data
 end
 
 -- replacement of build-in Flag.parse of cbi.lua

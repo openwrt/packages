@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntp
 PKG_VERSION:=4.2.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
@@ -33,7 +33,7 @@ define Package/ntpd/Default
   TITLE:=ISC ntp
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.ntp.org/
-  DEPENDS:=+libcap
+  DEPENDS:=+libopenssl +libpthread
 endef
 
 define Package/ntpd/Default/description
@@ -45,8 +45,7 @@ endef
 define Package/ntpd
 $(call Package/ntpd/Default)
   TITLE+= server
-  USERID:=ntp=123:ntp=123
-  DEPENDS+= +libopenssl +libpthread
+  DEPENDS+= +libcap
   USERID:=ntp=123:ntp=123
 endef
 
@@ -70,7 +69,6 @@ endef
 define Package/ntp-utils
 $(call Package/ntpd/Default)
   TITLE+= utilities
-  DEPENDS+= +libpthread +libopenssl
 endef
 
 define Package/ntp-utils/description
@@ -82,7 +80,6 @@ endef
 define Package/ntp-keygen
 $(call Package/ntpd/Default)
   TITLE+=keygen
-  DEPENDS+= +libopenssl +libpthread
 endef
 
 define Package/ntp-keygen/description
@@ -137,9 +134,6 @@ define Package/ntpd/postrm
 exit 0
 endef
 
-Package/ntpd-ssl/conffiles = $(Package/ntpd/conffiles)
-Package/ntpd-ssl/install = $(Package/ntpd/install)
-
 define Package/ntpdate/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpdate/ntpdate $(1)/usr/sbin/
@@ -158,8 +152,6 @@ define Package/ntp-keygen/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/util/ntp-keygen $(1)/usr/sbin/
 endef
-
-Package/ntp-keygen-ssl/install = $(Package/ntp-keygen/install)
 
 $(eval $(call BuildPackage,ntpd))
 $(eval $(call BuildPackage,ntpdate))

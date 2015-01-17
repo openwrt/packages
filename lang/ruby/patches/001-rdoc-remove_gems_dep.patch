@@ -1,3 +1,7 @@
+References:
+
+https://github.com/rdoc/rdoc/pull/340
+
 --- ruby-2.1.2.orig/lib/rdoc.rb	2014-09-02 17:14:28.719224215 -0300
 +++ ruby-2.1.2/lib/rdoc.rb	2014-09-02 17:14:28.762223911 -0300
 @@ -109,6 +109,8 @@

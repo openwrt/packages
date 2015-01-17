@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnscrypt-proxy
-PKG_VERSION:=1.4.1
+PKG_VERSION:=1.4.3
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.dnscrypt.org/dnscrypt-proxy
-PKG_MD5SUM:=f2bf4195b7264813138e3c6c8da86190
+PKG_MD5SUM:=54d172236a8f321fb5689ff81767f1ba
 PKG_CAT:=zcat
 
 PKG_FIXUP:=autoreconf

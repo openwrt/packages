@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2014 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,14 +7,12 @@
 
 ### Remarks
 ### 'python pascal ruby lua' need to be deleted in src/clients/Makefile.am
-### USB stays disabled as long as official libusb-1.0 remains on version 1.0.9
-### you need to build libusb-1.0 >= 1.0.10 yourself if you want to add USB support
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
-PKG_REV:=b01d99c6748cc565f1be69b68cf2b9d3115e8ce5
-PKG_VERSION:=2014-12-20
+PKG_REV:=c97a543043297e38bbe04e1030916e8a4737373c
+PKG_VERSION:=2015-01-14
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
@@ -41,13 +39,15 @@ define Package/knxd
   CATEGORY:=Network
   TITLE:=Eib KNX deamon
   URL:=https://github.com/Makki1/knxd
-  DEPENDS:=pthsem
+  DEPENDS:=pthsem libusb-1.0
 endef
-# use this if you want to support USB
-# DEPENDS:=pthsem libusb-1.0
 
 define Package/knxd/description
 EIB KNX Daemon
+endef
+
+define Package/knxd/conffiles
+/etc/config/knxd
 endef
 
 define Package/knxd-tools
@@ -55,18 +55,16 @@ define Package/knxd-tools
   CATEGORY:=Network
   TITLE:=Eib KNX Utils
   URL:=https://github.com/Makki1/knxd
-  DEPENDS:=pthsem
+  DEPENDS:=pthsem libusb-1.0
 endef
-# use this if you want to support USB
-# DEPENDS:=pthsem libusb-1.0
 
 define Package/knxd-tools/description
 EIB KNX Tools
 endef
+
 define Build/Prepare
 	$(call Build/Prepare/Default)
 endef
-
 
 define Build/Configure
 	$(call Build/Configure/Default,\
@@ -74,7 +72,7 @@ define Build/Configure
 		--enable-eibnetip \
 		--enable-eibnetiptunnel \
 		--enable-eibnetipserver \
-		--disable-usb \
+		--enable-usb \
 		--enable-tpuart \
 		--enable-tpuarts \
 		--disable-pei16 \
@@ -87,7 +85,7 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CC=$(TARGET_CC) \
-		LIBS="-L$(STAGING_DIR)/lib -L$(STAGING_DIR)/usr/lib -fno-builtin -nostdinc++ -nodefaultlibs -lc -lm -lgcc -largp -lpthsem" \
+		LIBS="-L$(STAGING_DIR)/lib -L$(STAGING_DIR)/usr/lib -fno-builtin -nodefaultlibs -lc -lm -lgcc -largp -lpthsem" \
 		CPPFLAGS="-I$(STAGING_DIR)/include -I$(STAGING_DIR)/usr/include"
 endef
 
@@ -98,13 +96,12 @@ define Package/knxd/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/bcu/bcuread $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetsearch $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/eibnet/eibnetdescribe $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/usb/findknxusb $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/knxd.init $(1)/etc/init.d/knxd
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/knxd.config $(1)/etc/config/knxd
 endef
-#       add this line above to support USB
-#       $(CP) $(PKG_BUILD_DIR)/src/usb/findknxusb $(1)/usr/bin/
 
 define Package/knxd-tools/install
 	$(INSTALL_DIR) $(1)/usr/lib
