@@ -21,17 +21,12 @@ PKG_FIXUP:=libtool
 PKG_INSTALL:=1
 
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
-PKG_BUILD_DEPENDS:=protobuf
+PKG_BUILD_DEPENDS:=protobuf/host ola/host
 
 include $(INCLUDE_DIR)/package.mk
 
-#PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
-#define Build/Prepare
-#	rm -r $(PKG_BUILD_DIR)
-#	mkdir -p $(PKG_BUILD_DIR)
-#	$(CP) /home/markus/svn/open-lighting/** $(PKG_BUILD_DIR)/
-#endef
 
 define Package/ola
   SECTION:=net
@@ -47,9 +42,53 @@ define Package/ola/description
   protocols. It enables software controllers talk to DMX hardware.
 endef
 
-define Build/Configure
-  $(call Build/Configure/Default,--disable-dependency-tracking --disable-static --disable-slp --disable-root-check --disable-fatal-warnings --disable-unittests)
+
+include $(INCLUDE_DIR)/host-build.mk
+
+# When building the host part, disable as much as possible to speed up
+# the configure step and avoid missing host dependencies.
+# Stolen from http://git.buildroot.net/buildroot/commit/?id=66056a5179ef49f2ec10ba5d7fbd1a58863d1350
+define Host/Configure
+   $(call Host/Configure/Default,\
+	--disable-all-plugins \
+	--disable-slp \
+	--disable-osc \
+	--disable-uart \
+	--disable-libusb \
+	--disable-libftdi \
+	--disable-http  \
+	--disable-examples \
+	--disable-unittests \
+	--disable-doxygen-html \
+	--disable-doxygen-doc)
 endef
+
+# only build the ola_protoc thingy
+define Host/Compile
+	cd $(HOST_BUILD_DIR); \
+	    $(MAKE) protoc/ola_protoc
+endef
+
+# only need ola_protoc
+define Host/Install
+	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin
+	$(CP) $(HOST_BUILD_DIR)/protoc/ola_protoc $(STAGING_DIR_HOST)/bin/
+endef
+
+$(eval $(call HostBuild))
+
+
+
+define Build/Configure
+  $(call Build/Configure/Default,\
+	--disable-dependency-tracking \
+	--disable-static \
+	--disable-root-check \
+	--disable-fatal-warnings \
+	--disable-unittests \
+	--with-ola-protoc=$(STAGING_DIR_HOST)/bin/ola_protoc)
+endef
+
 
 define Build/InstallDev
 	mkdir -p $(1)/usr/include
@@ -63,11 +102,8 @@ endef
 define Package/ola/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
-	$(INSTALL_DIR) $(1)/usr/lib/olad
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/olad/*.so* $(1)/usr/lib/olad
-	$(INSTALL_DIR) $(1)/usr/share/olad/www
-	$(CP) $(PKG_INSTALL_DIR)/usr/share/olad $(1)/usr/share
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/olad.init $(1)/etc/init.d/olad
 endef
