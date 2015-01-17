@@ -14,6 +14,7 @@ start() {
         config_get conf args conf '/etc/linknx.xml'
         config_get options args options ''
         test -f $conf || cp -p /etc/linknx.xml.dist $conf
+        mkdir -p /tmp/$NAME/persist
         service_start $PROG --config=$conf $options
 }
 
