@@ -3,15 +3,16 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stddef.h>
-#include <stdio.h>
-#include <string.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
-
 int main(int argc, char *argv[]) {
+	char buf[1024];
+	ssize_t r;
+
 	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <socket>\n", argv[0]);
+		fprintf(stderr, "Write to and read from a Unix domain socket.\n\nUsage: %s <socket>\n", argv[0]);
 		return 1;
 	}
 
@@ -36,8 +37,15 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	char buf[1024];
-	ssize_t r;
+	/* Check if stdin refers to a terminal */
+	if (!isatty(fileno(stdin))) {
+		/* Read from stdin and write to socket */
+		while (0 < (r = fread(buf, 1, sizeof(buf), stdin))) {
+			send(fd, buf, r, 0);
+		}
+	}
+
+	/* Read from socket and write to stdout */
 	while (1) {
 		r = recv(fd, buf, sizeof(buf), 0);
 		if (r < 0) {

@@ -18,7 +18,7 @@ define Package/sockread
 endef
 
 define Package/sockread/description
-	sockread reads data from a Unix domain socket
+	sockread writes and reads data from a Unix domain socket
 	represented as a special file on the file system.
 endef
 
