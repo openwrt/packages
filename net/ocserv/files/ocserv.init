@@ -16,13 +16,16 @@ setup_config() {
 	config_get ipaddr       $1 ipaddr "192.168.100.0"
 	config_get netmask      $1 netmask "255.255.255.0"
 	config_get ip6addr      $1 ip6addr ""
+	config_get default_domain  $1 default_domain ""
 
+	enable_default_domain="#"
+	enable_udp="#"
 	test $predictable_ips = "0" && predictable_ips="false"
 	test $predictable_ips = "1" && predictable_ips="true"
 	test $cisco_compat = "0" && cisco_compat="false"
 	test $cisco_compat = "1" && cisco_compat="true"
-	test $udp = "0" && udp="#"
-	test $udp = "1" && udp=""
+	test $udp = "1" && enable_udp=""
+	test -z $default_domain && enable_default_domain=""
 	test -z $ip6addr && enable_ipv6="#"
 
 	ipv6_addr=`echo $ip6addr|cut -d '/' -f 1`
@@ -42,8 +45,10 @@ setup_config() {
 	    -e "s#|AUTH|#$auth$authsuffix#g" \
 	    -e "s#|DYNDNS|#$dyndns#g" \
 	    -e "s/|PREDICTABLE_IPS|/$predictable_ips/g" \
+	    -e "s/|DEFAULT_DOMAIN|/$default_domain/g" \
+	    -e "s/|ENABLE_DEFAULT_DOMAIN|/$enable_default_domain/g" \
 	    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
-	    -e "s/|UDP|/$udp/g" \
+	    -e "s/|UDP|/$enable_udp/g" \
 	    -e "s/|IPV4ADDR|/$ipaddr/g" \
 	    -e "s/|NETMASK|/$netmask/g" \
 	    -e "s/|IPV6ADDR|/$ipv6_addr/g" \

@@ -217,7 +217,7 @@ device = vpns
 predictable-ips = |PREDICTABLE_IPS|
 
 # The default domain to be advertised
-#default-domain = example.com
+|ENABLE_DEFAULT_DOMAIN|default-domain = |DEFAULT_DOMAIN|
 
 # The pool of addresses that leases will be given from.
 ipv4-network = |IPV4ADDR|
