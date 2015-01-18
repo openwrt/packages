@@ -14,7 +14,6 @@ config ocserv 'config'
 	option ipaddr '10.100.3.0'
 	option auth 'plain'
 	option zone 'lan'
-	option fwport '4443'
 	option enable '1'
 
 config dns
