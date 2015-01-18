@@ -277,8 +277,8 @@ ping-leases = false
 # based on a user or group. The syntax depends on the input accepted
 # by the commands route-add-cmd and route-del-cmd (see below).
 
-#config-per-user = /etc/config/ocserv-dir/config-per-user/
-#config-per-group = /etc/config/ocserv-dir/config-per-group/
+config-per-user = /etc/config/ocserv-dir/config-per-user/
+config-per-group = /etc/config/ocserv-dir/config-per-group/
 
 # When config-per-xxx is specified and there is no group or user that
 # matches, then utilize the following configuration.
@@ -309,8 +309,8 @@ ping-leases = false
 # The following example is from linux systems. %{R} should be something
 # like 192.168.2.0/24
 
-#route-add-cmd = "ip route add %{R} dev %{D}"
-#route-del-cmd = "ip route delete %{R} dev %{D}"
+route-add-cmd = "/sbin/route add -net %{R} dev %{D}"
+route-del-cmd = "/sbin/route del -net %{R} dev %{D}"
 
 # This option allows to forward a proxy. The special strings '%{U}'
 # and '%{G}', if present will be replaced by the username and group name.
