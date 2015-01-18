@@ -40,7 +40,7 @@
  	ifdef OPENSSLDIR
  		BASIC_CFLAGS += -I$(OPENSSLDIR)/include
  		OPENSSL_LINK = -L$(OPENSSLDIR)/$(lib) $(CC_LD_DYNPATH)$(OPENSSLDIR)/$(lib)
-@@ -1895,10 +1892,6 @@ endif
+@@ -1901,10 +1898,6 @@ endif
  git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
  	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
  
@@ -51,7 +51,7 @@
  git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
  	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
  		$(LIBS) $(CURL_LIBCURL)
-@@ -2216,24 +2209,22 @@ endif
+@@ -2222,24 +2215,22 @@ endif
  	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
  	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
  	{ test "$$bindir/" = "$$execdir/" || \
