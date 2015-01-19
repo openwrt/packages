@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ocserv
 PKG_VERSION:=0.8.9
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -87,6 +87,8 @@ define Package/ocserv/install
 	$(INSTALL_CONF) ./files/ocserv.conf.template $(1)/etc/ocserv/ocserv.conf.template
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/config $(1)/etc/config/ocserv
+	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
+	$(INSTALL_DATA) ./files/ocserv.upgrade $(1)/lib/upgrade/keep.d/ocserv
 endef
 
 $(eval $(call BuildPackage,ocserv))

@@ -99,6 +99,12 @@ start() {
 	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 2 2>/dev/null`
 	[ -z "$hostname" ] && hostname=`uci get system.@system[0].hostname 2>/dev/null`
 
+	[ -f /etc/config/ocserv-dir/ca-key.pem ] && mv /etc/config/ocserv-dir/ca-key.pem /etc/ocserv/ca-key.pem
+	[ -f /etc/config/ocserv-dir/ca.pem ] && mv /etc/config/ocserv-dir/ca.pem /etc/ocserv/ca.pem
+	[ -f /etc/config/ocserv-dir/server-key.pem ] && mv /etc/config/ocserv-dir/server-key.pem /etc/ocserv/server-key.pem
+	[ -f /etc/config/ocserv-dir/server-cert.pem ] && mv /etc/config/ocserv-dir/server-cert.pem /etc/ocserv/server-cert.pem 
+	[ -d /etc/config/ocserv-dir ] && rmdir /etc/config/ocserv-dir
+
 	[ ! -f /etc/ocserv/ca-key.pem ] && [ -x /usr/bin/certtool ] && {
 		logger -t ocserv "Generating CA certificate..."
 		mkdir -p /etc/ocserv/pki/
