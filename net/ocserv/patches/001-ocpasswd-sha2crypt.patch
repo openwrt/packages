@@ -1,0 +1,12 @@
+diff -ur ocserv-0.8.9/src/ocpasswd.c ocserv-0.8.9.new/src/ocpasswd.c
+--- ocserv-0.8.9/src/ocpasswd.c	2014-11-29 19:49:38.000000000 +0100
++++ ocserv-0.8.9.new/src/ocpasswd.c	2015-01-19 23:21:14.959144113 +0100
+@@ -69,7 +69,7 @@
+ 		exit(1);
+ 	}
+ 
+-	strcpy(salt, "$5$");
++	strcpy(salt, "$1$");
+ 	p = salt + 3;
+ 
+ 	for (i = 0; i < sizeof(_salt); i++) {
