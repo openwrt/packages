@@ -97,41 +97,35 @@ start() {
 	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 2`
 	[ -z "$hostname" ] && hostname=`uci get system.@system[0].hostname`
 
-	[ -d /etc/config/ocserv-dir ] || mkdir -p /etc/config/ocserv-dir
-	[ -f /etc/ocserv/ca-key.pem ] && mv /etc/ocserv/ca-key.pem /etc/config/ocserv-dir/ca-key.pem
-	[ -f /etc/ocserv/ca.pem ] && mv /etc/ocserv/ca.pem /etc/config/ocserv-dir/ca.pem
-	[ -f /etc/ocserv/server-key.pem ] && mv /etc/ocserv/server-key.pem /etc/config/ocserv-dir/server-key.pem
-	[ -f /etc/ocserv/server-cert.pem ] && mv /etc/ocserv/server-cert.pem /etc/config/ocserv-dir/server-cert.pem
-
-	[ ! -f /etc/config/ocserv-dir/ca-key.pem ] && [ -x /usr/bin/certtool ] && {
+	[ ! -f /etc/ocserv/ca-key.pem ] && [ -x /usr/bin/certtool ] && {
 		logger -t ocserv "Generating CA certificate..."
-		mkdir -p /tmp/ocserv-pki/
-		certtool --bits 2048 --generate-privkey --outfile /etc/config/ocserv-dir/ca-key.pem >/dev/null 2>&1
-		echo "cn=$hostname CA" >/tmp/ocserv-pki/ca.tmpl
-		echo "expiration_days=-1" >>/tmp/ocserv-pki/ca.tmpl
-		echo "serial=1" >>/tmp/ocserv-pki/ca.tmpl
-		echo "ca" >>/tmp/ocserv-pki/ca.tmpl
-		echo "cert_signing_key" >>/tmp/ocserv-pki/ca.tmpl
+		mkdir -p /etc/ocserv/pki/
+		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/ca-key.pem >/dev/null 2>&1
+		echo "cn=$hostname CA" >/etc/ocserv/pki/ca.tmpl
+		echo "expiration_days=-1" >>/etc/ocserv/pki/ca.tmpl
+		echo "serial=1" >>/etc/ocserv/pki/ca.tmpl
+		echo "ca" >>/etc/ocserv/pki/ca.tmpl
+		echo "cert_signing_key" >>/etc/ocserv/pki/ca.tmpl
 
-		certtool --template /tmp/ocserv-pki/ca.tmpl \
-			--generate-self-signed --load-privkey /etc/config/ocserv-dir/ca-key.pem \
-			--outfile /etc/config/ocserv-dir/ca.pem >/dev/null 2>&1
+		certtool --template /etc/ocserv/pki/ca.tmpl \
+			--generate-self-signed --load-privkey /etc/ocserv/ca-key.pem \
+			--outfile /etc/ocserv/ca.pem >/dev/null 2>&1
 	}
 
 	#generate server certificate/key
-	[ ! -f /etc/config/ocserv-dir/server-key.pem ] && [ -x /usr/bin/certtool ] && {
+	[ ! -f /etc/ocserv/server-key.pem ] && [ -x /usr/bin/certtool ] && {
 		logger -t ocserv "Generating server certificate..."
-		mkdir -p /tmp/ocserv-pki/
-		certtool --bits 2048 --generate-privkey --outfile /etc/config/ocserv-dir/server-key.pem >/dev/null 2>&1
-		echo "cn=$hostname" >/tmp/ocserv-pki/server.tmpl
-		echo "serial=2" >>/tmp/ocserv-pki/server.tmpl
-		echo "expiration_days=-1" >>/tmp/ocserv-pki/server.tmpl
-		echo "signing_key" >>/tmp/ocserv-pki/server.tmpl
-		echo "encryption_key" >>/tmp/ocserv-pki/server.tmpl
-		certtool --template /tmp/ocserv-pki/server.tmpl \
-			--generate-certificate --load-privkey /etc/config/ocserv-dir/server-key.pem \
-			--load-ca-certificate /etc/config/ocserv-dir/ca.pem --load-ca-privkey \
-			/etc/config/ocserv-dir/ca-key.pem --outfile /etc/config/ocserv-dir/server-cert.pem >/dev/null 2>&1
+		mkdir -p /etc/ocserv/pki/
+		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/server-key.pem >/dev/null 2>&1
+		echo "cn=$hostname" >/etc/ocserv/pki/server.tmpl
+		echo "serial=2" >>/etc/ocserv/pki/server.tmpl
+		echo "expiration_days=-1" >>/etc/ocserv/pki/server.tmpl
+		echo "signing_key" >>/etc/ocserv/pki/server.tmpl
+		echo "encryption_key" >>/etc/ocserv/pki/server.tmpl
+		certtool --template /etc/ocserv/pki/server.tmpl \
+			--generate-certificate --load-privkey /etc/ocserv/server-key.pem \
+			--load-ca-certificate /etc/ocserv/ca.pem --load-ca-privkey \
+			/etc/ocserv/ca-key.pem --outfile /etc/ocserv/server-cert.pem >/dev/null 2>&1
 	}
 
 	[ -f /var/run/ocserv.pid ] || {
