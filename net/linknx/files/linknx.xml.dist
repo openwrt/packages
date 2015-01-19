@@ -8,7 +8,7 @@
   <services>
     <xmlserver type="inet" port="1028"/>
     <knxconnection url="ip:localhost"/>
-    <persistence type="file" path="/var/lib/linknx/persist"/>
+    <persistence type="file" path="/tmp/linknx/persist"/>
     <emailserver type="smtp" host="localhost:25" from="linknx@local.local" />
   </services>
   <logging format="basic" level="INFO" />
