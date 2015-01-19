@@ -31,7 +31,7 @@ HOST_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=libffi/host python3/host
+PKG_BUILD_DEPENDS:=python3/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -57,7 +57,7 @@ endef
 define Package/python3-base
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON_VERSION) interpreter
-  DEPENDS:=+libpthread +zlib +libffi
+  DEPENDS:=+libpthread +zlib +libffi +libopenssl
 endef
 
 define Package/python3-base/description
@@ -67,7 +67,7 @@ endef
 
 define Package/python3
 $(call Package/python3/Default)
-  DEPENDS:=+python3-base +libncursesw +libbz2 +libgdbm +libsqlite3 +libdb47 +libopenssl
+  DEPENDS:=+python3-base +libncursesw +libbz2 +libgdbm +libsqlite3 +libdb47
 endef
 
 define Package/python3/description
@@ -170,9 +170,9 @@ endef
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
-	--without-ensurepip \
 	--with-threads \
 	--prefix=$(STAGING_DIR_HOST) \
+	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
 	OPT="$(HOST_CFLAGS)"
 
