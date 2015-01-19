@@ -34,7 +34,7 @@ define Package/ola
   TITLE:=Open Lighting Architecture Daemon
   URL:=https://www.openlighting.org/
   MAINTAINER:=Christian Beier <dontmind@freeshell.org>
-  DEPENDS:=+protobuf +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses
+  DEPENDS:=+protobuf +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses +sudo
 endef
 
 define Package/ola/description
@@ -84,7 +84,6 @@ define Build/Configure
   $(call Build/Configure/Default,\
 	--disable-dependency-tracking \
 	--disable-static \
-	--disable-root-check \
 	--disable-fatal-warnings \
 	--disable-unittests \
 	--disable-http  \
@@ -109,5 +108,17 @@ define Package/ola/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/olad.init $(1)/etc/init.d/olad
 endef
+
+define Package/ola/postinst
+#!/bin/sh
+
+# make sure the conf dir exists and is writeable by the group olad uses
+mkdir -p /etc/ola
+chgrp nogroup /etc/ola
+chmod 775 $(1)/etc/ola
+
+exit 0
+endef
+
 
 $(eval $(call BuildPackage,ola))
