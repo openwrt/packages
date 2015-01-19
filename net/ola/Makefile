@@ -87,6 +87,7 @@ define Build/Configure
 	--disable-root-check \
 	--disable-fatal-warnings \
 	--disable-unittests \
+	--disable-http  \
 	--with-ola-protoc=$(STAGING_DIR_HOST)/bin/ola_protoc)
 endef
 
