@@ -1,0 +1,3 @@
+/etc/openconnect/user-cert-vpn-*.pem
+/etc/openconnect/user-key-vpn-*.pem
+/etc/openconnect/ca-vpn-*.pem
