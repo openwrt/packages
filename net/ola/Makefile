@@ -107,6 +107,8 @@ define Package/ola/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/olad.init $(1)/etc/init.d/olad
+	$(INSTALL_DIR) $(1)/usr/share/ola/pids
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/ola/pids/* $(1)/usr/share/ola/pids
 endef
 
 define Package/ola/postinst
