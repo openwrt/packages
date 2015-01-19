@@ -15,6 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/davfs2/
 PKG_MD5SUM:=376bc9346454135cba78afacbcb23f86
 
+PKG_FIXUP:=autoreconf
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/davfs2
