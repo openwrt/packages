@@ -28,7 +28,7 @@ PKG_FIXUP:=libtool
 define Package/shairplay
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+avahi-daemon +libao +libavahi-compat-libdnssd +libltdl +libpthread
+  DEPENDS:=+libao +libavahi-compat-libdnssd +libltdl +libpthread
   TITLE:=Shairplay
 endef
 

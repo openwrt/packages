@@ -36,7 +36,7 @@ TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
 URL:=https://github.com/ejurgensen/forked-daapd
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
 	+libevent2 +libdaemon +libantlr3c +confuse +glib2 +alsa-lib +libffmpeg-full \
-	+mxml +libavl +avahi-daemon +libavahi-client +sqlite3-cli +libplist +libcurl
+	+mxml +libavl +libavahi-client +sqlite3-cli +libplist +libcurl
 endef
 
 define Package/forked-daapd/conffiles
