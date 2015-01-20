@@ -43,6 +43,12 @@ max-same-clients = |MAX_SAME|
 tcp-port = |PORT|
 |UDP|udp-port = |PORT|
 
+# Stats report time. The number of seconds after which each
+# worker process will report its usage statistics (number of
+# bytes transferred etc). This is useful when accounting like
+# radius is in use.
+#stats-report-time = 360
+
 # Keepalive in seconds
 keepalive = 32400
 
@@ -109,11 +115,14 @@ server-key = /etc/ocserv/server-key.pem
 # The revocation list of the certificates issued by the 'ca-cert' above.
 #crl = /etc/ocserv/crl.pem
 
+# Uncomment this to enable compression negotiation (LZS, LZ4).
+|COMPRESSION|compression = true
+
 # GnuTLS priority string
-tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT"
+tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT:-VERS-SSL3.0"
 
 # To enforce perfect forward secrecy (PFS) on the main channel.
-#tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT:-RSA"
+#tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT:-VERS-SSL3.0:-RSA"
 
 # The time (in seconds) that a client is allowed to stay connected prior
 # to authentication

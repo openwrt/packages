@@ -15,6 +15,7 @@ config ocserv 'config'
 	option auth 'plain'
 	option zone 'vpn'
 	option default_domain 'lan'
+	option compression '1'
 	option enable '1'
 
 config dns

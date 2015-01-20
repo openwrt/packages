@@ -10,6 +10,7 @@ setup_config() {
 	config_get max_same     $1 max_same "2"
 	config_get dpd          $1 dpd "120"
 	config_get predictable_ips  $1 predictable_ips "1"
+	config_get compression  $1 compression "0"
 	config_get udp          $1 udp "1"
 	config_get auth         $1 auth "plain"
 	config_get cisco_compat $1 cisco_compat "1"
@@ -20,11 +21,13 @@ setup_config() {
 
 	enable_default_domain="#"
 	enable_udp="#"
+	enable_compression="#"
 	test $predictable_ips = "0" && predictable_ips="false"
 	test $predictable_ips = "1" && predictable_ips="true"
 	test $cisco_compat = "0" && cisco_compat="false"
 	test $cisco_compat = "1" && cisco_compat="true"
 	test $udp = "1" && enable_udp=""
+	test $compression = "1" && enable_compression=""
 	test -z $default_domain && enable_default_domain=""
 	test -z $ip6addr && enable_ipv6="#"
 
@@ -49,6 +52,7 @@ setup_config() {
 	    -e "s/|ENABLE_DEFAULT_DOMAIN|/$enable_default_domain/g" \
 	    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
 	    -e "s/|UDP|/$enable_udp/g" \
+	    -e "s/|COMPRESSION|/$enable_compression/g" \
 	    -e "s/|IPV4ADDR|/$ipaddr/g" \
 	    -e "s/|NETMASK|/$netmask/g" \
 	    -e "s/|IPV6ADDR|/$ipv6_addr/g" \
