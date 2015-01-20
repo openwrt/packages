@@ -115,7 +115,8 @@ define Build/InstallDev
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
 	$(CP) \
-		$(STAGING_DIR_HOST)/lib/pkgconfig/python3.pc \
+		$(STAGING_DIR_HOST)/lib/pkgconfig/python.pc \
+		$(STAGING_DIR_HOST)/lib/pkgconfig/python2.pc \
 		$(STAGING_DIR_HOST)/lib/pkgconfig/python-$(PYTHON_VERSION).pc \
 		$(1)/usr/lib/pkgconfig
 	$(CP) \
