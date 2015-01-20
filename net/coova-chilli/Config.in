@@ -1,4 +1,4 @@
-# CoovaChilli avanced configuration
+# CoovaChilli advanced configuration
 
 menu "Configuration"
 	depends on PACKAGE_coova-chilli
