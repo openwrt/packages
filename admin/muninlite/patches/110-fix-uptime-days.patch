@@ -1,0 +1,9 @@
+--- a/plugins/uptime
++++ b/plugins/uptime
+@@ -7,5 +7,5 @@
+   echo "uptime.cdef uptime,86400,/"
+ }
+ fetch_uptime() {
+-  echo "uptime.value" $(cut -d\  -f1 /proc/uptime)
++  awk '{printf "uptime.value %.2f",$1/86400; print ""}' /proc/uptime
+ }
