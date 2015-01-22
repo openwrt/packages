@@ -1,0 +1,16 @@
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -477,8 +477,13 @@
+ mDNSlocal void GetUserSpecifiedRFC1034ComputerName(domainlabel *const namelabel)
+ {
+     int len = 0;
++    int idx = 0;
+     gethostname((char *)(&namelabel->c[1]), MAX_DOMAIN_LABEL);
+     while (len < MAX_DOMAIN_LABEL && namelabel->c[len+1] && namelabel->c[len+1] != '.') len++;
++
++    idx = len;
++    do { if (namelabel->c[idx+1] == ' ') namelabel->c[idx+1] = '-'; } while (idx-- >= 1);
++
+     namelabel->c[0] = len;
+ }
+ 
