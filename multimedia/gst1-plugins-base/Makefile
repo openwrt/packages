@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2014 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
 PKG_VERSION:=1.4.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -33,6 +33,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-ogg \
 	CONFIG_PACKAGE_gst1-mod-tcp \
 	CONFIG_PACKAGE_gst1-mod-theora \
+	CONFIG_PACKAGE_gst1-mod-videoconvert \
 	CONFIG_PACKAGE_gst1-mod-videotestsrc \
 	CONFIG_PACKAGE_gst1-mod-volume \
 	CONFIG_PACKAGE_gst1-mod-vorbis \
@@ -134,6 +135,7 @@ CONFIGURE_ARGS += \
 	$(call GST_COND_SELECT,theora) \
 	--disable-videorate \
 	--disable-videoscale \
+	$(call GST_COND_SELECT,videoconvert) \
 	$(call GST_COND_SELECT,videotestsrc) \
 	$(call GST_COND_SELECT,volume) \
 	$(call GST_COND_SELECT,vorbis) \
@@ -275,6 +277,7 @@ $(eval $(call GstBuildPlugin,ogg,Ogg,riff tag pbutils video,,+libogg))
 $(eval $(call GstBuildPlugin,tcp,TCP,,,))
 $(eval $(call GstBuildPlugin,theora,Theora,tag video,,+libogg +libtheora))
 $(eval $(call GstBuildPlugin,typefindfunctions,'typefind' functions,audio pbutils tag video,,))
+$(eval $(call GstBuildPlugin,videoconvert,video format conversion,video,,))
 $(eval $(call GstBuildPlugin,videotestsrc,video test,video,,+liboil))
 $(eval $(call GstBuildPlugin,volume,volume,audio controller,,+liboil))
 $(eval $(call GstBuildPlugin,vorbis,Vorbis,audio tag,ogg,+libvorbis))
