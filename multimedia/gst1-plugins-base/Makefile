@@ -118,21 +118,16 @@ CONFIGURE_ARGS += \
 	--disable-examples \
 	\
 	$(call GST_COND_SELECT,alsa) \
-	--disable-alsa-test \
 	$(call GST_COND_SELECT,app) \
 	$(call GST_COND_SELECT,audioconvert) \
 	$(call GST_COND_SELECT,audiorate) \
 	$(call GST_COND_SELECT,audioresample) \
 	$(call GST_COND_SELECT,audiotestsrc) \
 	--disable-cdparanoia \
-	--disable-ffmpegcolorspace \
 	--disable-freetypetest \
 	$(call GST_COND_SELECT,gio) \
-	--disable-gnome_vfs \
-	--disable-gst_v4l \
 	--disable-libvisual \
 	$(call GST_COND_SELECT,ogg) \
-	--disable-oggtest \
 	--disable-pango \
 	--disable-subparse \
 	$(call GST_COND_SELECT,tcp) \
@@ -142,7 +137,6 @@ CONFIGURE_ARGS += \
 	$(call GST_COND_SELECT,videotestsrc) \
 	$(call GST_COND_SELECT,volume) \
 	$(call GST_COND_SELECT,vorbis) \
-	--disable-vorbistest \
 	--disable-x \
 	--disable-xshm \
 	--disable-xvideo \
