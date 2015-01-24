@@ -43,6 +43,12 @@ max-same-clients = |MAX_SAME|
 tcp-port = |PORT|
 |UDP|udp-port = |PORT|
 
+# Stats report time. The number of seconds after which each
+# worker process will report its usage statistics (number of
+# bytes transferred etc). This is useful when accounting like
+# radius is in use.
+#stats-report-time = 360
+
 # Keepalive in seconds
 keepalive = 32400
 
@@ -65,8 +71,8 @@ try-mtu-discovery = false
 #
 # There may be multiple certificate and key pairs and each key
 # should correspond to the preceding certificate.
-server-cert = /etc/config/ocserv-dir/server-cert.pem
-server-key = /etc/config/ocserv-dir/server-key.pem
+server-cert = /etc/ocserv/server-cert.pem
+server-key = /etc/ocserv/server-key.pem
 
 # Diffie-Hellman parameters. Only needed if you require support
 # for the DHE ciphersuites (by default this server supports ECDHE).
@@ -92,7 +98,7 @@ server-key = /etc/config/ocserv-dir/server-key.pem
 # The Certificate Authority that will be used to verify
 # client certificates (public keys) if certificate authentication
 # is set.
-#ca-cert = /etc/config/ocserv-dir/ca.pem
+#ca-cert = /etc/ocserv/ca.pem
 
 # The object identifier that will be used to read the user ID in the client 
 # certificate. The object identifier should be part of the certificate's DN
@@ -107,13 +113,16 @@ server-key = /etc/config/ocserv-dir/server-key.pem
 #cert-group-oid = 2.5.4.11
 
 # The revocation list of the certificates issued by the 'ca-cert' above.
-#crl = /etc/config/ocserv-dir/crl.pem
+#crl = /etc/ocserv/crl.pem
+
+# Uncomment this to enable compression negotiation (LZS, LZ4).
+|COMPRESSION|compression = true
 
 # GnuTLS priority string
-tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT"
+tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT:-VERS-SSL3.0"
 
 # To enforce perfect forward secrecy (PFS) on the main channel.
-#tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT:-RSA"
+#tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT:-VERS-SSL3.0:-RSA"
 
 # The time (in seconds) that a client is allowed to stay connected prior
 # to authentication
@@ -164,8 +173,11 @@ rekey-method = ssl
 # DEVICE, IP_REAL (the real IP of the client), IP_LOCAL (the local IP
 # in the P-t-P connection), IP_REMOTE (the VPN IP of the client),
 # ID (a unique numeric ID); REASON may be "connect" or "disconnect".
-connect-script = /usr/bin/ocserv-script
-disconnect-script = /usr/bin/ocserv-script
+
+# These scripts are not needed if you have setup an interface for all vpns+
+# devices.
+#connect-script = /usr/bin/ocserv-script
+#disconnect-script = /usr/bin/ocserv-script
 
 # UTMP
 use-utmp = false
@@ -217,7 +229,7 @@ device = vpns
 predictable-ips = |PREDICTABLE_IPS|
 
 # The default domain to be advertised
-#default-domain = example.com
+|ENABLE_DEFAULT_DOMAIN|default-domain = |DEFAULT_DOMAIN|
 
 # The pool of addresses that leases will be given from.
 ipv4-network = |IPV4ADDR|
@@ -277,14 +289,14 @@ ping-leases = false
 # based on a user or group. The syntax depends on the input accepted
 # by the commands route-add-cmd and route-del-cmd (see below).
 
-#config-per-user = /etc/config/ocserv-dir/config-per-user/
-#config-per-group = /etc/config/ocserv-dir/config-per-group/
+config-per-user = /etc/ocserv/config-per-user/
+config-per-group = /etc/ocserv/config-per-group/
 
 # When config-per-xxx is specified and there is no group or user that
 # matches, then utilize the following configuration.
 
-#default-user-config = /etc/config/ocserv-dir/defaults/user.conf
-#default-group-config = /etc/config/ocserv-dir/defaults/group.conf
+#default-user-config = /etc/ocserv/defaults/user.conf
+#default-group-config = /etc/ocserv/defaults/group.conf
 
 # Groups that a client is allowed to select from.
 # A client may belong in multiple groups, and in certain use-cases
@@ -309,8 +321,8 @@ ping-leases = false
 # The following example is from linux systems. %{R} should be something
 # like 192.168.2.0/24
 
-#route-add-cmd = "ip route add %{R} dev %{D}"
-#route-del-cmd = "ip route delete %{R} dev %{D}"
+route-add-cmd = "/sbin/route add -net %{R} dev %{D}"
+route-del-cmd = "/sbin/route del -net %{R} dev %{D}"
 
 # This option allows to forward a proxy. The special strings '%{U}'
 # and '%{G}', if present will be replaced by the username and group name.

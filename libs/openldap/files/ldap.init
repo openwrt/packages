@@ -7,7 +7,7 @@ SERVICE_USE_PID=1
 
 start() {
 	mkdir -m 0755 -p /var/openldap-data
-	service_start /usr/sbin/slapd
+	service_start /usr/sbin/slapd -h "ldap://localhost/ ldaps:///"
 }
 
 stop() {

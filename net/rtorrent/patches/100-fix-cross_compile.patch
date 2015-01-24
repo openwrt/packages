@@ -10,7 +10,7 @@
  AC_PROG_LIBTOOL
 --- a/scripts/common.m4
 +++ b/scripts/common.m4
-@@ -223,7 +223,7 @@ dnl   Need to fix this so that it uses t
+@@ -153,7 +153,7 @@ dnl   Need to fix this so that it uses t
  AC_DEFUN([TORRENT_CHECK_EXECINFO], [
    AC_MSG_CHECKING(for execinfo.h)
  
@@ -19,7 +19,7 @@
        #include <execinfo.h>
        int main() { backtrace((void**)0, 0); backtrace_symbols((char**)0, 0); return 0;}
        ])],
-@@ -238,7 +238,7 @@ AC_DEFUN([TORRENT_CHECK_EXECINFO], [
+@@ -168,7 +168,7 @@ AC_DEFUN([TORRENT_CHECK_EXECINFO], [
  AC_DEFUN([TORRENT_CHECK_ALIGNED], [
    AC_MSG_CHECKING(the byte alignment)
  

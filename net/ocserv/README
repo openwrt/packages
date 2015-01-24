@@ -4,7 +4,7 @@ To setup a server the provides access to LAN with network address
 10.100.2.0/255.255.255.0 using the VPN address range
 10.100.3.0/255.255.255.0 add the following to /etc/config/ocserv:
 
------------------------------------------------------------------
+----/etc/config/ocserv-------------------------------------------
 config ocserv 'config'
 	option port '4443'
 	option dpd '120'
@@ -13,8 +13,9 @@ config ocserv 'config'
 	option netmask '255.255.255.0'
 	option ipaddr '10.100.3.0'
 	option auth 'plain'
-	option zone 'lan'
-	option fwport '4443'
+	option zone 'vpn'
+	option default_domain 'lan'
+	option compression '1'
 	option enable '1'
 
 config dns
@@ -37,6 +38,34 @@ The server can be enabled and started using:
 # /etc/init.d/ocserv enable
 # /etc/init.d/ocserv start
 
+
+To simplify firewall configuration, you should setup an unmanaged interface
+(e.g., called vpn), and will have assigned the 'vpns+' interfaces. Then a zone
+called vpn should be setup to handle interactions with lan. An example
+follows:
+----/etc/config/network------------------------------------------
+config interface 'vpn'
+        option proto 'none'
+        option ifname 'vpns+'
+-----------------------------------------------------------------
+
+----/etc/config/firewall-----------------------------------------
+config zone
+        option input 'ACCEPT'
+        option forward 'REJECT'
+        option output 'ACCEPT'
+        option name 'vpn'
+        option device 'vpns+'
+        option network 'vpn'
+
+config forwarding
+        option dest 'lan'
+        option src 'vpn'
+
+config forwarding
+        option dest 'vpn'
+        option src 'lan'
+-----------------------------------------------------------------
 
 
 There is a luci plugin to allow configuring the server from

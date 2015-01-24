@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtorrent
-PKG_VERSION:=0.13.4-git
-PKG_RELEASE=$(PKG_SOURCE_VERSION)-1
+PKG_VERSION:=0.13.4-git-0
+PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rakshasa/libtorrent.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=51cd5ea8913a5f5062813d9f5b6256c76d41ea11
+PKG_SOURCE_VERSION:=72e908707f01ee01a9b4918436c64348878b63f7
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_FIXUP:=autoreconf
@@ -48,7 +48,8 @@ CONFIGURE_ARGS+= \
 	--enable-aligned \
 	--disable-debug \
 	--enable-openssl \
-	--disable-instrumentation
+	--disable-instrumentation \
+	--with-zlib=$(STAGING_DIR)/usr
 
 define Build/Configure
 	( cd $(PKG_BUILD_DIR); ./autogen.sh );

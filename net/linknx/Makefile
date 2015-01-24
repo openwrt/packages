@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linknx
 PKG_VERSION:=0.0.1.32
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MD5SUM:=7ecc1208f59bceb05068c752b2250b63
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>

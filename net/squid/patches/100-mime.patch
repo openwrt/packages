@@ -20,7 +20,7 @@
  \.gif$			image/gif		silk/image.png			-	image	+download
  \.mime$			www/mime		silk/page_white_text.png	-	ascii	+download
  ^internal-dirup$	-			silk/arrow_up.png		-	-
-@@ -190,6 +174,4 @@
+@@ -190,6 +174,4 @@ README		text/plain			silk/information.pn
  \.xml$		text/xml			silk/page_world.png		-	ascii	+download
  \.xsl$		text/xml			silk/layout.png			-	ascii	+download
  \.xyz$		chemical/x-xyz			silk/chart_line.png		-	image	+download

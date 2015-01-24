@@ -10,19 +10,25 @@ setup_config() {
 	config_get max_same     $1 max_same "2"
 	config_get dpd          $1 dpd "120"
 	config_get predictable_ips  $1 predictable_ips "1"
+	config_get compression  $1 compression "0"
 	config_get udp          $1 udp "1"
 	config_get auth         $1 auth "plain"
 	config_get cisco_compat $1 cisco_compat "1"
 	config_get ipaddr       $1 ipaddr "192.168.100.0"
 	config_get netmask      $1 netmask "255.255.255.0"
 	config_get ip6addr      $1 ip6addr ""
+	config_get default_domain  $1 default_domain ""
 
+	enable_default_domain="#"
+	enable_udp="#"
+	enable_compression="#"
 	test $predictable_ips = "0" && predictable_ips="false"
 	test $predictable_ips = "1" && predictable_ips="true"
 	test $cisco_compat = "0" && cisco_compat="false"
 	test $cisco_compat = "1" && cisco_compat="true"
-	test $udp = "0" && udp="#"
-	test $udp = "1" && udp=""
+	test $udp = "1" && enable_udp=""
+	test $compression = "1" && enable_compression=""
+	test -z $default_domain && enable_default_domain=""
 	test -z $ip6addr && enable_ipv6="#"
 
 	ipv6_addr=`echo $ip6addr|cut -d '/' -f 1`
@@ -31,7 +37,7 @@ setup_config() {
 	test $auth = "plain" && authsuffix="\[/var/etc/ocpasswd\]"
 
 	dyndns="false"
-	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 2`
+	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 2 2>/dev/null`
 	[ -n "$hostname" ] && dyndns="true"
 
 	mkdir -p /var/etc
@@ -42,8 +48,11 @@ setup_config() {
 	    -e "s#|AUTH|#$auth$authsuffix#g" \
 	    -e "s#|DYNDNS|#$dyndns#g" \
 	    -e "s/|PREDICTABLE_IPS|/$predictable_ips/g" \
+	    -e "s/|DEFAULT_DOMAIN|/$default_domain/g" \
+	    -e "s/|ENABLE_DEFAULT_DOMAIN|/$enable_default_domain/g" \
 	    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
-	    -e "s/|UDP|/$udp/g" \
+	    -e "s/|UDP|/$enable_udp/g" \
+	    -e "s/|COMPRESSION|/$enable_compression/g" \
 	    -e "s/|IPV4ADDR|/$ipaddr/g" \
 	    -e "s/|NETMASK|/$netmask/g" \
 	    -e "s/|IPV6ADDR|/$ipv6_addr/g" \
@@ -91,44 +100,44 @@ setup_dns() {
 start() {
 	local hostname iface
 
-	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 2`
-	[ -z "$hostname" ] && hostname=`uci get system.@system[0].hostname`
+	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 2 2>/dev/null`
+	[ -z "$hostname" ] && hostname=`uci get system.@system[0].hostname 2>/dev/null`
 
-	[ -d /etc/config/ocserv-dir ] || mkdir -p /etc/config/ocserv-dir
-	[ -f /etc/ocserv/ca-key.pem ] && mv /etc/ocserv/ca-key.pem /etc/config/ocserv-dir/ca-key.pem
-	[ -f /etc/ocserv/ca.pem ] && mv /etc/ocserv/ca.pem /etc/config/ocserv-dir/ca.pem
-	[ -f /etc/ocserv/server-key.pem ] && mv /etc/ocserv/server-key.pem /etc/config/ocserv-dir/server-key.pem
-	[ -f /etc/ocserv/server-cert.pem ] && mv /etc/ocserv/server-cert.pem /etc/config/ocserv-dir/server-cert.pem
+	[ -f /etc/config/ocserv-dir/ca-key.pem ] && mv /etc/config/ocserv-dir/ca-key.pem /etc/ocserv/ca-key.pem
+	[ -f /etc/config/ocserv-dir/ca.pem ] && mv /etc/config/ocserv-dir/ca.pem /etc/ocserv/ca.pem
+	[ -f /etc/config/ocserv-dir/server-key.pem ] && mv /etc/config/ocserv-dir/server-key.pem /etc/ocserv/server-key.pem
+	[ -f /etc/config/ocserv-dir/server-cert.pem ] && mv /etc/config/ocserv-dir/server-cert.pem /etc/ocserv/server-cert.pem 
+	[ -d /etc/config/ocserv-dir ] && rmdir /etc/config/ocserv-dir
 
-	[ ! -f /etc/config/ocserv-dir/ca-key.pem ] && [ -x /usr/bin/certtool ] && {
+	[ ! -f /etc/ocserv/ca-key.pem ] && [ -x /usr/bin/certtool ] && {
 		logger -t ocserv "Generating CA certificate..."
-		mkdir -p /tmp/ocserv-pki/
-		certtool --bits 2048 --generate-privkey --outfile /etc/config/ocserv-dir/ca-key.pem >/dev/null 2>&1
-		echo "cn=$hostname CA" >/tmp/ocserv-pki/ca.tmpl
-		echo "expiration_days=-1" >>/tmp/ocserv-pki/ca.tmpl
-		echo "serial=1" >>/tmp/ocserv-pki/ca.tmpl
-		echo "ca" >>/tmp/ocserv-pki/ca.tmpl
-		echo "cert_signing_key" >>/tmp/ocserv-pki/ca.tmpl
+		mkdir -p /etc/ocserv/pki/
+		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/ca-key.pem >/dev/null 2>&1
+		echo "cn=$hostname CA" >/etc/ocserv/pki/ca.tmpl
+		echo "expiration_days=-1" >>/etc/ocserv/pki/ca.tmpl
+		echo "serial=1" >>/etc/ocserv/pki/ca.tmpl
+		echo "ca" >>/etc/ocserv/pki/ca.tmpl
+		echo "cert_signing_key" >>/etc/ocserv/pki/ca.tmpl
 
-		certtool --template /tmp/ocserv-pki/ca.tmpl \
-			--generate-self-signed --load-privkey /etc/config/ocserv-dir/ca-key.pem \
-			--outfile /etc/config/ocserv-dir/ca.pem >/dev/null 2>&1
+		certtool --template /etc/ocserv/pki/ca.tmpl \
+			--generate-self-signed --load-privkey /etc/ocserv/ca-key.pem \
+			--outfile /etc/ocserv/ca.pem >/dev/null 2>&1
 	}
 
 	#generate server certificate/key
-	[ ! -f /etc/config/ocserv-dir/server-key.pem ] && [ -x /usr/bin/certtool ] && {
+	[ ! -f /etc/ocserv/server-key.pem ] && [ -x /usr/bin/certtool ] && {
 		logger -t ocserv "Generating server certificate..."
-		mkdir -p /tmp/ocserv-pki/
-		certtool --bits 2048 --generate-privkey --outfile /etc/config/ocserv-dir/server-key.pem >/dev/null 2>&1
-		echo "cn=$hostname" >/tmp/ocserv-pki/server.tmpl
-		echo "serial=2" >>/tmp/ocserv-pki/server.tmpl
-		echo "expiration_days=-1" >>/tmp/ocserv-pki/server.tmpl
-		echo "signing_key" >>/tmp/ocserv-pki/server.tmpl
-		echo "encryption_key" >>/tmp/ocserv-pki/server.tmpl
-		certtool --template /tmp/ocserv-pki/server.tmpl \
-			--generate-certificate --load-privkey /etc/config/ocserv-dir/server-key.pem \
-			--load-ca-certificate /etc/config/ocserv-dir/ca.pem --load-ca-privkey \
-			/etc/config/ocserv-dir/ca-key.pem --outfile /etc/config/ocserv-dir/server-cert.pem >/dev/null 2>&1
+		mkdir -p /etc/ocserv/pki/
+		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/server-key.pem >/dev/null 2>&1
+		echo "cn=$hostname" >/etc/ocserv/pki/server.tmpl
+		echo "serial=2" >>/etc/ocserv/pki/server.tmpl
+		echo "expiration_days=-1" >>/etc/ocserv/pki/server.tmpl
+		echo "signing_key" >>/etc/ocserv/pki/server.tmpl
+		echo "encryption_key" >>/etc/ocserv/pki/server.tmpl
+		certtool --template /etc/ocserv/pki/server.tmpl \
+			--generate-certificate --load-privkey /etc/ocserv/server-key.pem \
+			--load-ca-certificate /etc/ocserv/ca.pem --load-ca-privkey \
+			/etc/ocserv/ca-key.pem --outfile /etc/ocserv/server-cert.pem >/dev/null 2>&1
 	}
 
 	[ -f /var/run/ocserv.pid ] || {

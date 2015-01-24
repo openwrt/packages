@@ -14,9 +14,9 @@ config interface 'MYVPN'
         option authgroup 'DEFAULT'
 
 The additional files are also used:
-/etc/config/openconnect-user-cert-vpn-MYVPN.pem: The user certificate
-/etc/config/openconnect-user-key-vpn-MYVPN.pem: The user private key
-/etc/config/openconnect-ca-vpn-MYVPN.pem: The CA certificate (instead of serverhash)
+/etc/openconnect/user-cert-vpn-MYVPN.pem: The user certificate
+/etc/openconnect/user-key-vpn-MYVPN.pem: The user private key
+/etc/openconnect/ca-vpn-MYVPN.pem: The CA certificate (instead of serverhash)
 
 After these are setup you can initiate the VPN using "ifup MYVPN", and
 deinitialize it using ifdown. You may also use the luci web interface

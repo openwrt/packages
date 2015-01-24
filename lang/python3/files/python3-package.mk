@@ -20,8 +20,7 @@ PYTHON3:=python$(PYTHON3_VERSION)
 HOST_PYTHON3_LIB_DIR:=$(STAGING_DIR_HOST)/lib/python$(PYTHON3_VERSION)
 HOST_PYTHON3_BIN:=$(STAGING_DIR_HOST)/bin/python3
 
-PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR)
-PYTHON3PATH+=:$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
+PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 define HostPython3
 	(	export PYTHONPATH="$(PYTHON3PATH)"; \
 		export PYTHONOPTIMIZE=""; \
@@ -39,6 +38,14 @@ ifdef CONFIG_USE_MIPS16
 endif
 
 define Py3Package
+
+  # Add default PyPackage filespec none defined
+  ifndef Py3Package/$(1)/filespec
+    define Py3Package/$(1)/filespec
+      +|$(PYTHON3_PKG_DIR)
+    endef
+  endif
+
   $(call shexport,Py3Package/$(1)/filespec)
 
   define Package/$(1)/install
@@ -46,6 +53,7 @@ define Py3Package
 	@echo "$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)" | ( \
 		IFS='|'; \
 		while read fop fspec fperm; do \
+		  fop=`echo "$$$$$$$$fop" | tr -d ' \t\n'`; \
 		  if [ "$$$$$$$$fop" = "+" ]; then \
 			if [ ! -e "$(PKG_INSTALL_DIR)$$$$$$$$fspec" ]; then \
 			  echo "File not found '$(PKG_INSTALL_DIR)$$$$$$$$fspec'"; \
@@ -90,7 +98,7 @@ define Build/Compile/Py3Mod
 		CFLAGS="$(TARGET_CFLAGS)" \
 		CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
-		_PYTHON_HOST_PLATFORM="linux-$(ARCH)" \
+		_PYTHON_HOST_PLATFORM=linux2 \
 		__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON3)" \
 		$(3) \
 		, \
@@ -98,3 +106,4 @@ define Build/Compile/Py3Mod
 	)
 	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
 endef
+
