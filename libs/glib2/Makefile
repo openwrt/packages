@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.42.1
+PKG_VERSION:=2.43.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
-PKG_SOURCE_URL:=@GNOME/glib/2.42
-PKG_MD5SUM:=89c4119e50e767d3532158605ee9121a
+PKG_SOURCE_URL:=@GNOME/glib/2.43
+PKG_MD5SUM:=2727c4dee79c5449f364cd5e27b17099
 
 PKG_BUILD_DEPENDS:=glib2/host libpthread zlib libintl libffi
 HOST_BUILD_DEPENDS:=libintl/host libiconv/host libffi/host
