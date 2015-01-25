@@ -1,0 +1,18 @@
+--- daq-1.1.1/configure	2012-07-10 21:32:51.000000000 +0200
++++ daq-new/configure	2012-08-03 15:47:07.654945651 +0200
+@@ -12717,10 +12717,11 @@
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libpcap version >= \"1.0.0\"" >&5
+ $as_echo_n "checking for libpcap version >= \"1.0.0\"... " >&6; }
+     if test "$cross_compiling" = yes; then :
+-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+-as_fn_error $? "cannot run test program while cross compiling
+-See \`config.log' for more details" "$LINENO" 5; }
++#  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
++#$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
++#as_fn_error $? "cannot run test program while cross compiling
++#See \`config.log' for more details" "$LINENO" 5; }
++        echo "    No cross compiling test."
+ else
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
