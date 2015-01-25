@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alpine
-PKG_VERSION:=2.11
+PKG_VERSION:=2.20
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://patches.freeiz.com/alpine/release/src/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MD5SUM:=a3bba218787691080d706b36215eec06
+PKG_MD5SUM:=043b67666af73b26f9627ad97e2aaf92
 
 PKG_MAINTAINER:=Antti Seppälä <a.seppala@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -101,14 +101,6 @@ ifeq ($(CONFIG_IPV6),y)
 else
   DISABLE_IPV6:=--without-ipv6
 endif
-
-define Build/Configure
-	$(call Build/Configure/Default)
-	( cd $(PKG_BUILD_DIR)/regex ; \
-		make ; \
-	)
-	$(call Build/Configure/Default)
-endef
 
 define Build/Compile
 	( cd $(PKG_BUILD_DIR)/pith ; \
