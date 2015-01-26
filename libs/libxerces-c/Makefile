@@ -28,15 +28,28 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
-CONFIGURE_ARGS += --disable-pretty-make
-TARGET_LDFLAGS += -lm
+CONFIGURE_ARGS += \
+	--disable-pretty-make \
+	--enable-transcoder-iconv \
+	--enable-netaccessor-socket \
+	--enable-msgloader-inmemory
+
+TARGET_CFLAGS += \
+	-I$(STAGING_DIR)/usr/lib/libiconv-full/include
+
+TARGET_CPPFLAGS += \
+	-I$(STAGING_DIR)/usr/lib/libiconv-full/include
+
+TARGET_LDFLAGS += \
+	-L$(STAGING_DIR)/usr/lib/libiconv-full/lib \
+	-lm
 
 define Package/libxerces-c
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Validating XML parser library for C++
   URL:=http://xerces.apache.org/
-  DEPENDS:=$(CXX_DEPENDS) +libc +libpthread
+  DEPENDS:=$(CXX_DEPENDS) +libc +libiconv +libpthread
 endef
 
 define Package/libxerces-c-samples
@@ -73,17 +86,14 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/xercesc/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/xercesc/* $(1)/usr/include/xercesc/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxerces-c.a $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxerces-c-3.1.so $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxerces-c.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{libxerces-c.a,libxerces-c-3.1.so,libxerces-c.so} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/xerces-c.pc $(1)/usr/lib/pkgconfig/xerces-c.pc
 endef
 
 define Package/libxerces-c/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxerces-c-3.1.so $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxerces-c.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{libxerces-c-3.1.so,libxerces-c.so} $(1)/usr/lib/
 endef
 
 define Package/libxerces-c-samples/install
