@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=nodogsplash
 PKG_FIXUP:=autoreconf
 PKG_VERSION:=0.9_beta9.9.9
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -43,10 +43,9 @@ define Package/nodogsplash/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ndsctl $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) files/nodogsplash.init $(1)/etc/init.d/$(PKG_NAME)
-
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_CONF) ./files/nodogsplash.migrate $(1)/etc/uci-defaults/30_nodogsplash
+	$(INSTALL_BIN) files/nodogsplash.init $(1)/etc/init.d/nodogsplash
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) files/nodogsplash.config $(1)/etc/config/nodogsplash
 
 	$(INSTALL_DIR) $(1)/etc/$(PKG_NAME)/htdocs/images
 	$(CP) $(PKG_BUILD_DIR)/resources/splash.html $(1)/etc/$(PKG_NAME)/htdocs/

@@ -53,15 +53,15 @@ setup_user_authentication() {
   [ $val -gt 0 ] && echo "AuthenticateImmediately yes" >> $CONFIGFILE
 
   config_get val "$cfg" username
-  if [ -n "${val}" ] ; then
+  if [ -n "$val" ] ; then
     echo "UsernameAuthentication" >> $CONFIGFILE
-    echo "Username ${val}" >> $CONFIGFILE
+    echo "Username $val" >> $CONFIGFILE
   fi
 
   config_get val "$cfg" password
-  if [ -n "${val}" ] ; then
+  if [ -n "$val" ] ; then
     echo "PasswordAuthentication" >> $CONFIGFILE
-    echo "Password ${val}" >> $CONFIGFILE
+    echo "Password $val" >> $CONFIGFILE
   fi
 }
 
@@ -71,26 +71,26 @@ setup_mac_lists() {
   local val
 
   append_mac() {
-    append MAC $1 ,
+    append MAC "$1" ","
   }
 
   config_get val "$cfg" macmechanism
-  if [ -z "${val}" ] ; then
+  if [ -z "$val" ] ; then
     # check if we have AllowedMACList or BlockedMACList defined they will be ignored
     config_get val "$cfg" allowedmac
-    if [ -n "${val}" ] ; then
+    if [ -n "$val" ] ; then
       echo "Ignoring allowedmac - macmechanism not \"allow\"" >&2
     fi
 
     config_get val "$cfg" blockedmac
-    if [ -n "${val}" ] ; then
+    if [ -n "$val" ] ; then
       echo "Ignoring blockedmac - macmechanism not \"block\"" >&2
     fi
-  elif [ "${val}" == "allow" ] ; then
+  elif [ "$val" == "allow" ] ; then
     MAC=""
     config_list_foreach "$cfg" allowedmac append_mac
     echo "AllowedMACList $MAC" >> $CONFIGFILE
-  elif [ "${val}" == "block" ] ; then
+  elif [ "$val" == "block" ] ; then
     MAC=""
     config_list_foreach "$cfg" blockedmac append_mac
     echo "BlockedMACList $MAC" >> $CONFIGFILE
@@ -120,7 +120,7 @@ setup_firewall() {
     config_list_foreach "$cfg" ${uci_name} append_firewall
     echo "}" >> $CONFIGFILE
     config_get val "$cfg" policy_${uci_name}
-    [ -n "${val}" ] && echo "EmptyRuleSetPolicy $rule $val" >> $CONFIGFILE
+    [ -n "$val" ] && echo "EmptyRuleSetPolicy $rule $val" >> $CONFIGFILE
   done
 }
 
@@ -134,20 +134,41 @@ generate_uci_config() {
   CONFIGFILE="/tmp/etc/nodogsplash_$cfg.conf"
 
   echo "# auto-generated config file from /etc/config/nodogsplash" > $CONFIGFILE
-  config_get val "$cfg" network
-  if [ ! -n "${val}" ] ; then
-    nolog error "$cfg missing network"
-    return 1
+
+  config_get val "$cfg" config
+  if [ -n "$val" ] ; then
+    if [ -f "$val" ] ; then
+      nolog error "Configuration file '$file' doesn't exist"
+      return 0
+    fi
+    cat $val > CONFIGFILE
   fi
 
-  if ! network_get_device ifname $val ; then
-    nolog error "$cfg can not find ifname for network '${val}'"
-    return 1
+  config_get val "$cfg" network
+  if [ -n "$val" ] ; then
+    if ! network_get_device ifname "$val" ; then
+      nolog error "$cfg can not find ifname for network '$val'"
+      return 1
+    fi
+  fi
+
+  config_get val "$cfg" gatewayinterface
+  if [ -n "$val" ] ; then
+    if [ -n "$ifname" ] ; then
+      nolog error "$cfg cannot use both option network and gatewayinterface"
+      return 1
+    fi
+    ifname="$val"
+  fi
+
+  if [ -z "$ifname" ] ; then
+      nolog error "$cfg option network or gatewayinterface missing"
+      return 1
   fi
 
   echo "GatewayInterface $ifname" >> $CONFIGFILE
   config_get val "$cfg" externalnetwork
-  [ -n "${val}" ] && network_get_device ifname ${val} && echo "ExternalInterface $ifname" >> $CONFIGFILE
+  [ -n "$val" ] && network_get_device ifname "$val" && echo "ExternalInterface $ifname" >> $CONFIGFILE
 
   append_config_option "$CONFIGFILE" "$cfg" gatewayname GatewayName
   append_config_option "$CONFIGFILE" "$cfg" gatewayaddress GatewayAddress
@@ -177,22 +198,11 @@ create_instance() {
   local cfg="$1"
   local manual_config
   local val
-  CONFIGFILE="/tmp/etc/nodogsplash_$cfg.conf"
 
-  config_get_bool val "$cfg" disabled 0
-  [ $val -gt 0 ] && return 0
+  config_get_bool val "$cfg" enabled 0
+  [ $val -gt 0 ] || return 0
 
-  config_get manual_config "$cfg" config ""
-  if [ ! -n "$manual_config" ] ; then
-    generate_uci_config "$cfg"
-  else
-    # check if configration exists
-    if [ ! -f "$manual_config" ] ; then
-      nolog error "Configuration file '$file' doesn't exists"
-      return 0
-    fi
-    CONFIGFILE="$manual_config"
-  fi
+  generate_uci_config "$cfg"
 
   if ! test_module ;  then
     logger -s -t nodogsplash -p daemon.error "nodogsplash is missing some kernel modules"
@@ -226,127 +236,125 @@ status() {
 
 # Test if we got all modules loaded
 test_module() {
-
-    ### Test ipt_mark with iptables
-    test_ipt_mark () {
-	($IPT -A FORWARD -m mark --mark 2 -j ACCEPT 2>&1) > /dev/null
-	IPTABLES_OK=$?
-	if [ "$IPTABLES_OK" -eq 0 ]; then
-	    ($IPT -D FORWARD -m mark --mark 2 -j ACCEPT 2>&1) > /dev/null
-	    return 0
-	else
-	    return 1
-	fi
-    }
-    ### Test ipt_mac with iptables
-    test_ipt_mac () {
-	($IPT -A INPUT -m mac --mac-source 00:00:00:00:00:00 -j ACCEPT 2>&1) > /dev/null
-	IPTABLES_OK=$?
-	if [ "$IPTABLES_OK" -eq 0 ]; then
-	    ($IPT -D INPUT -m mac --mac-source 00:00:00:00:00:00 -j ACCEPT 2>&1) > /dev/null
-	    return 0
-	else
-	    return 1
-	fi
-    }
-
-    ### Test ipt_IMQ with iptables
-    test_ipt_IMQ () {
-	($IPT -t mangle -A PREROUTING -j IMQ --todev 0 2>&1) > /dev/null
-	IPTABLES_OK=$?
-	if [ "$IPTABLES_OK" -eq 0 ]; then
-	    ($IPT -t mangle -D PREROUTING -j IMQ --todev 0 2>&1) > /dev/null
-	    return 0
-	else
-	    return 1
-	fi
-    }
-
-    ### Test imq with ip
-    test_imq () {
-	(ip link set imq0 up 2>&1) > /dev/null
-	IMQ0_OK=$?
-	(ip link set imq1 up 2>&1) > /dev/null
-	IMQ1_OK=$?
-	if [ "$IMQ0_OK" -eq 0 -a "$IMQ1_OK" -eq 0 ]; then
-	    (ip link set imq0 down 2>&1) > /dev/null
-	    (ip link set imq1 down 2>&1) > /dev/null
-	    return 0
-	else
-	    return 1
-	fi
-    }
-
-    ### Test sch_htb with tc; requires imq0
-    test_sch_htb () {
-	(tc qdisc del dev imq0 root 2>&1) > /dev/null
-	(tc qdisc add dev imq0 root htb 2>&1) > /dev/null
-	TC_OK=$?
-	if [ "$TC_OK" -eq 0 ]; then
-	    (tc qdisc del dev imq0 root 2>&1) > /dev/null
-	    return 0
-	else
-	    return 1
-	fi
-    }
-
-    
-    ### Find a module on disk
-    module_exists () {
-      EXIST=$(find /lib/modules/`uname -r` -name $1.*o 2> /dev/null)
-      if [ -n "$EXIST" ]; then
-        return 0
-      else
-        return 1
-      fi
-    }
-
-    ### Test if a module is in memory
-    module_in_memory () {
-      MODULE=$(lsmod | grep $1 | awk '{print $1}')
-      if [ "$MODULE" = "$1" ]; then
-        return 0
-      else
-        return 1
-      fi
-    }
-
-    ### Test functionality of a module; load if necessary
-    do_module_tests () {
-	echo "  Testing module $1 $2"
-	"test_$1"
-	if [ $? -ne 0 ]; then
-	    echo "   Module $1 $2 needed"
-	    echo "   Scanning disk for $1 module"
-	    module_exists $1
-	    if [ $? -ne 0 ]; then 
-		echo "   $1 module missing: please install it"
-		exit 1
-	    else
-		echo "   $1 exists, trying to load"
-		insmod $1 $2 > /dev/null
-		if [ $? -ne 0 ]; then
-		    echo "   Error: insmod $1 $2 failed"
-		    exit 1
-		else
-		    echo "   $1 $2 loaded successfully"
-		fi
-	    fi
-	else
-	    echo "   $1 is working"
-	fi 
-		
-    }
-
-    echo " Testing required modules"
-
-    do_module_tests "ipt_mac"
-    do_module_tests "ipt_mark"
-
-    # test for imq modules, only if TrafficControl is enabled in conf
-    if ( grep -q -E '^[[:space:]]*TrafficControl[[:space:]]+(yes|true|1)' "$NDS_CONF" ) ; then
-        do_module_tests "imq" "numdevs=2"
-        do_module_tests "ipt_IMQ"
-        do_module_tests "sch_htb"
+  ### Test ipt_mark with iptables
+  test_ipt_mark () {
+    ($IPT -A FORWARD -m mark --mark 2 -j ACCEPT 2>&1) > /dev/null
+    IPTABLES_OK=$?
+    if [ "$IPTABLES_OK" -eq 0 ]; then
+      ($IPT -D FORWARD -m mark --mark 2 -j ACCEPT 2>&1) > /dev/null
+      return 0
+    else
+      return 1
     fi
+  }
+
+  ### Test ipt_mac with iptables
+  test_ipt_mac () {
+    ($IPT -A INPUT -m mac --mac-source 00:00:00:00:00:00 -j ACCEPT 2>&1) > /dev/null
+    IPTABLES_OK=$?
+    if [ "$IPTABLES_OK" -eq 0 ]; then
+      ($IPT -D INPUT -m mac --mac-source 00:00:00:00:00:00 -j ACCEPT 2>&1) > /dev/null
+      return 0
+    else
+      return 1
+    fi
+  }
+
+  ### Test ipt_IMQ with iptables
+  test_ipt_IMQ () {
+    ($IPT -t mangle -A PREROUTING -j IMQ --todev 0 2>&1) > /dev/null
+    IPTABLES_OK=$?
+    if [ "$IPTABLES_OK" -eq 0 ]; then
+      ($IPT -t mangle -D PREROUTING -j IMQ --todev 0 2>&1) > /dev/null
+      return 0
+    else
+      return 1
+    fi
+  }
+
+  ### Test imq with ip
+  test_imq () {
+    (ip link set imq0 up 2>&1) > /dev/null
+    IMQ0_OK=$?
+    (ip link set imq1 up 2>&1) > /dev/null
+    IMQ1_OK=$?
+    if [ "$IMQ0_OK" -eq 0 -a "$IMQ1_OK" -eq 0 ]; then
+      (ip link set imq0 down 2>&1) > /dev/null
+      (ip link set imq1 down 2>&1) > /dev/null
+      return 0
+    else
+      return 1
+    fi
+  }
+
+  ### Test sch_htb with tc; requires imq0
+  test_sch_htb () {
+    (tc qdisc del dev imq0 root 2>&1) > /dev/null
+    (tc qdisc add dev imq0 root htb 2>&1) > /dev/null
+    TC_OK=$?
+    if [ "$TC_OK" -eq 0 ]; then
+      (tc qdisc del dev imq0 root 2>&1) > /dev/null
+      return 0
+    else
+      return 1
+    fi
+  }
+
+  ### Find a module on disk
+  module_exists () {
+    EXIST=$(find /lib/modules/`uname -r` -name $1.*o 2> /dev/null)
+    if [ -n "$EXIST" ]; then
+      return 0
+    else
+      return 1
+    fi
+  }
+
+  ### Test if a module is in memory
+  module_in_memory () {
+    MODULE=$(lsmod | grep $1 | awk '{print $1}')
+    if [ "$MODULE" = "$1" ]; then
+      return 0
+    else
+      return 1
+    fi
+  }
+
+  ### Test functionality of a module; load if necessary
+  do_module_tests () {
+    echo "  Testing module $1 $2"
+    "test_$1"
+    if [ $? -ne 0 ]; then
+      echo "   Module $1 $2 needed"
+      echo "   Scanning disk for $1 module"
+      module_exists $1
+      if [ $? -ne 0 ]; then
+        echo "   $1 module missing: please install it"
+        exit 1
+      else
+        echo "   $1 exists, trying to load"
+        insmod $1 $2 > /dev/null
+        if [ $? -ne 0 ]; then
+          echo "   Error: insmod $1 $2 failed"
+          exit 1
+        else
+          echo "   $1 $2 loaded successfully"
+        fi
+      fi
+    else
+      echo "   $1 is working"
+    fi
+  }
+
+  echo " Testing required modules"
+
+  do_module_tests "ipt_mac"
+  do_module_tests "ipt_mark"
+
+  # test for imq modules, only if TrafficControl is enabled in conf
+  if ( grep -q -E '^[[:space:]]*TrafficControl[[:space:]]+(yes|true|1)' "$CONFIGFILE" ) ; then
+    do_module_tests "imq" "numdevs=2"
+    do_module_tests "ipt_IMQ"
+    do_module_tests "sch_htb"
+  fi
 }
