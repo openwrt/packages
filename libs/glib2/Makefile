@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2012 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -20,6 +20,8 @@ PKG_BUILD_DEPENDS:=glib2/host libpthread zlib libintl libffi
 HOST_BUILD_DEPENDS:=libintl/host libiconv/host libffi/host
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
+
+PKG_FIXUP:=autoreconf
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/glib-$(PKG_VERSION)
 
