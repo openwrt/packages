@@ -1,0 +1,44 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=90
+STOP=10
+
+USE_PROCD=1
+PROG=/usr/bin/suricata
+CONFIGFILE="/tmp/suricata/suricata.conf"
+
+validate_suricata_section() {
+	uci_validate_section suricata suricata "${1}" \
+		'config_file:string' 
+}
+
+start_service() {
+	local config_file 
+
+	validate_suricata_section suricata || {
+		echo "validation failed"
+		return 1
+	}
+
+	mkdir -p $(dirname $CONFIGFILE)
+
+	cat $config_file > $CONFIGFILE
+
+	procd_open_instance
+	procd_set_param command $PROG -s -f $CONFIGFILE -N
+	procd_set_param file $CONFIGFILE
+	procd_set_param respawn
+	procd_close_instance
+}
+
+stop_service()
+{
+        ${PROG} -f $CONFIGFILE -N -k shutdown 2>/dev/null
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "suricata"
+	procd_add_validation validate_suricata_section
+}
