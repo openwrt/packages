@@ -94,7 +94,7 @@ start_service() {
 		reverseclientiplookups scancleancache showweightedfound softrestart trickledelay urlcacheage urlcachenumber \
 		urlipcfilename usecustombannedflash usecustombannedimage usexforwardedfor weightedphrasemode
 
-	validate_dansguardian_section dansguardian || { 
+	validate_dansguardian_section dansguardian || {
 		echo "validation failed"
 		return 1
 	}
