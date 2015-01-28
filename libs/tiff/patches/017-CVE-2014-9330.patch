@@ -1,0 +1,45 @@
+Description: CVE-2014-9330
+ Integer overflow in bmp2tiff
+Origin: upstream, http://bugzilla.maptools.org/show_bug.cgi?id=2494
+Bug: http://bugzilla.maptools.org/show_bug.cgi?id=2494
+Bug-Debian: http://bugs.debian.org/773987
+
+Index: tiff/tools/bmp2tiff.c
+===================================================================
+--- tiff.orig/tools/bmp2tiff.c
++++ tiff/tools/bmp2tiff.c
+@@ -1,4 +1,4 @@
+-/* $Id: bmp2tiff.c,v 1.23 2010-03-10 18:56:49 bfriesen Exp $
++/* $Id: bmp2tiff.c,v 1.24 2014-12-21 15:15:32 erouault Exp $
+  *
+  * Project:  libtiff tools
+  * Purpose:  Convert Windows BMP files in TIFF.
+@@ -403,6 +403,13 @@ main(int argc, char* argv[])
+ 
+ 		width = info_hdr.iWidth;
+ 		length = (info_hdr.iHeight > 0) ? info_hdr.iHeight : -info_hdr.iHeight;
++        if( width <= 0 || length <= 0 )
++        {
++            TIFFError(infilename,
++                  "Invalid dimensions of BMP file" );
++            close(fd);
++            return -1;
++        }
+ 
+ 		switch (info_hdr.iBitCount)
+ 		{
+@@ -593,6 +600,14 @@ main(int argc, char* argv[])
+ 
+ 			compr_size = file_hdr.iSize - file_hdr.iOffBits;
+ 			uncompr_size = width * length;
++            /* Detect int overflow */
++            if( uncompr_size / width != length )
++            {
++                TIFFError(infilename,
++                    "Invalid dimensions of BMP file" );
++                close(fd);
++                return -1;
++            }
+ 			comprbuf = (unsigned char *) _TIFFmalloc( compr_size );
+ 			if (!comprbuf) {
+ 				TIFFError(infilename,
