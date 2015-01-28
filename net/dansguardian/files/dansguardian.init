@@ -102,7 +102,7 @@ start_service() {
 	mkdir -p $(dirname $CONFIGFILE)
 	ln -sf $config_file $(dirname $CONFIGFILE)
 
-	echo "accessdeniedaddress = " $accessdeniedaddress >> $CONFIGFILE
+	echo "accessdeniedaddress = " $accessdeniedaddress > $CONFIGFILE
 	echo "bannediplist = " $bannediplist >> $CONFIGFILE
 	echo "contentscanexceptions = " $contentscanexceptions >> $CONFIGFILE
 	echo "contentscannertimeout = " $contentscannertimeout >> $CONFIGFILE
