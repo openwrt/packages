@@ -7,6 +7,7 @@ STOP=10
 USE_PROCD=1
 PROG=/usr/sbin/e2guardian
 CONFIGFILE="/tmp/e2guardian/e2guardian.conf"
+LOGFILE="/tmp/e2guardian/access.log"
 
 validate_e2guardian_section() {
 	uci_validate_section e2guardian e2guardian "${1}" \
@@ -102,7 +103,10 @@ start_service() {
 	}
 
 	mkdir -p $(dirname $CONFIGFILE)
+	mkdir -p $(dirname $loglocation)
+	touch $loglocation
 	ln -sf $config_file $(dirname $CONFIGFILE)
+	ln -sf $loglocation $(dirname $LOGFILE)
 
 	echo "accessdeniedaddress = " $accessdeniedaddress > $CONFIGFILE
 	echo "bannediplist = " $bannediplist >> $CONFIGFILE
