@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
 PKG_VERSION:=1.4.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -102,7 +102,6 @@ CONFIGURE_ARGS += \
 	--disable-gconf \
 	--disable-gconftool \
 	--disable-gdk_pixbuf \
-	--disable-gst_v4l2 \
 	--disable-hal \
 	--disable-libcaca \
 	--disable-libdv \
@@ -222,7 +221,7 @@ $(eval $(call GstBuildPlugin,spectrum,spectrum data output,audio fft,,))
 #$(eval $(call GstBuildPlugin,sty4menc,sty4menc support,video,,))
 #$(eval $(call GstBuildPlugin,taglib,taglib support,tag,,))
 $(eval $(call GstBuildPlugin,udp,UDP,net,,))
-#$(eval $(call GstBuildPlugin,video4linux2,video4linux2 support,video,,))
+$(eval $(call GstBuildPlugin,video4linux2,video4linux2 support,video allocators,,+libv4l))
 $(eval $(call GstBuildPlugin,videobox,videobox support,video,,))
 $(eval $(call GstBuildPlugin,videocrop,videocrop support,video,,))
 $(eval $(call GstBuildPlugin,videofilter,videofilter support,video,,))
