@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luaposix
 PKG_VERSION:=v33.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/luaposix/luaposix/archive/
@@ -48,9 +48,10 @@ endif
 
 
 define Package/luaposix/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua
+	$(INSTALL_DIR) $(1)/usr/lib/lua/posix
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ext/posix/.libs/posix.so $(1)/usr/lib/lua
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/posix.lua $(1)/usr/lib/lua
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/posix/*.lua $(1)/usr/lib/lua/posix
 endef
 
 $(eval $(call BuildPackage,luaposix))
