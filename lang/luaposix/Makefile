@@ -38,6 +38,8 @@ define Package/luaposix/description
   to various low level libc functions.
 endef
 
+CONFIGURE_VARS += ac_cv_path_LDOC=""
+
 TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99
 
 ifneq ($(CONFIG_USE_EGLIBC),)
