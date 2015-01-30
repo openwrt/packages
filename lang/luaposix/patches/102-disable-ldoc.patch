@@ -1,0 +1,13 @@
+diff --git a/configure.ac b/configure.ac
+index 19924d0..abac2dd 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -187,7 +187,7 @@ if test -z "$PERL"; then
+ fi
+ 
+ ## ldoc
+-AC_PATH_PROG([LDOC], [ldoc], [false])
++LDOC=false
+ AM_CONDITIONAL([HAVE_LDOC], [test false != "$LDOC"])
+ 
+ ## Generate output files
