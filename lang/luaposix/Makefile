@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luaposix
 PKG_VERSION:=v33.2.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/luaposix/luaposix/archive/
@@ -37,6 +37,8 @@ define Package/luaposix/description
   luaposix is a general POSIX library for Lua providing access
   to various low level libc functions.
 endef
+
+CONFIGURE_VARS += ac_cv_path_LDOC=""
 
 TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99
 
