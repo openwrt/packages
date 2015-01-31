@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014, 2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-test-harness
-PKG_VERSION:=3.34
+PKG_VERSION:=3.35
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/L/LE/LEONT/
 PKG_SOURCE:=Test-Harness-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=aa0175e8fef92c19f06128810f1a2921
+PKG_MD5SUM:=2a6010bca2ad78e094d629eea6afd7d9
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

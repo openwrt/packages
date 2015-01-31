@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.6.31
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://avahi.org/download/
@@ -55,6 +55,7 @@ define Package/libavahi/Default
   $(call Package/avahi/Default)
   SECTION:=libs
   CATEGORY:=Libraries
+  PROVIDES:=libavahi
   DEPENDS:=+libpthread +SSP_SUPPORT:libssp
 endef
 

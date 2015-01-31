@@ -1,0 +1,77 @@
+#!/bin/sh /etc/rc.common
+
+NAME='shairport-sync'
+START=99
+
+USE_PROCD=1
+
+append_arg() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	local def="$4"
+	local val
+
+	config_get val "$cfg" "$var"
+	[ -n "$val" -o -n "$def" ] && procd_append_param command $opt "${val:-$def}"
+}
+
+append_bool() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	local def="$4"
+	local val
+
+	config_get_bool val "$cfg" "$var" "$def"
+	[ "$val" = 1 ] && procd_append_param command "$opt"
+}
+
+start_shairport_service() {
+	local cfg=$1
+	local stuffing
+        local device
+
+	procd_open_instance
+
+	procd_set_param command /usr/bin/$NAME
+
+	append_arg "$cfg" name "-a"
+	append_arg "$cfg" port "-p"
+	append_arg "$cfg" airplaylatency "-A"
+	append_arg "$cfg" ituneslatency "-i"
+
+        config_get stuffing "$cfg" stuffing ""
+
+	if [ -n "$stuffing" ] ; then
+                case "x$stuffing" in
+                        ( "xbasic" ) procd_append_param command -S basic ;;
+                        ( "xsoxr" ) procd_append_param command -S soxr ;;
+                        ( * ) logger "bad argument for -S option -- should be \"basic\" or \"soxr\"" ;;
+                esac
+        fi
+
+	append_arg "$cfg" beforeaction "-B"
+	append_arg "$cfg" afteraction "-E"
+	append_bool "$cfg" awaitactioncompletion "-w"
+
+        config_get device "$cfg" device ""
+	if [ -n "$device" ] ; then
+		procd_append_param command "--"
+		append_arg "$cfg" device "-d"
+		append_arg "$cfg" devicetype "-t"
+		append_arg "$cfg" volumecontrolname "-c"
+	fi
+
+	procd_close_instance
+}
+
+service_triggers() { 
+        procd_add_reload_trigger $NAME
+} 
+
+start_service() {
+        config_load $NAME
+	# Just a single instance
+        start_shairport_service "main"
+}
