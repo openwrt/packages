@@ -1,0 +1,8 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = libdmapsharing vala tests doc
++SUBDIRS = libdmapsharing vala doc
+ DIST_SUBDIRS = $(SUBDIRS) m4 media
+ 
+ # pcfiles = libdmapsharing-@LIBDMAPSHARING_MAJORMINOR@.pc
