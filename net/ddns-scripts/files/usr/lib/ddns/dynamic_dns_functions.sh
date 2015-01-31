@@ -638,6 +638,16 @@ do_transfer() {
 	# lets prefer GNU Wget because it does all for us - IPv4/IPv6/HTTPS/PROXY/force IP version
 	if /usr/bin/wget --version 2>&1 | grep "\+ssl" >/dev/null 2>&1 ; then
 		__PROG="/usr/bin/wget -nv -t 1 -O $DATFILE -o $ERRFILE"	# non_verbose no_retry outfile errfile
+		# force network/ip to use for communication
+		if [ -n "$bind_network" ]; then
+			local __BINDIP
+			# set correct program to detect IP
+			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" || __RUNPROG="network_get_ipaddr6"
+			eval "$__RUNPROG __BINDIP $bind_network" || \
+				write_log 13 "Can not detect local IP using '$__RUNPROG $bind_network' - Error: '$?'"
+			write_log 7 "Force communication via IP '$__BINDIP'"
+			__PROG="$__PROG --bind-address=$__BINDIP"
+		fi
 		# force ip version to use
 		if [ $force_ipversion -eq 1 ]; then
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"	# force IPv4/IPv6
@@ -664,6 +674,14 @@ do_transfer() {
 	# libcurl might be compiled without Proxy Support (default in trunk)
 	elif [ -x /usr/bin/curl ]; then
 		__PROG="/usr/bin/curl -RsS -o $DATFILE --stderr $ERRFILE"
+		# force network/interface-device to use for communication
+		if [ -n "$bind_network" ]; then
+			local __DEVICE
+			network_get_physdev __DEVICE $bind_network || \
+				write_log 13 "Can not detect local device using 'network_get_physdev $bind_network' - Error: '$?'"
+			write_log 7 "Force communication via device '$__DEVICE'"
+			__PROG="$__PROG --interface $__DEVICE"
+		fi
 		# force ip version to use
 		if [ $force_ipversion -eq 1 ]; then
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"	# force IPv4/IPv6
@@ -697,9 +715,12 @@ do_transfer() {
 	# busybox Wget (did not support neither IPv6 nor HTTPS)
 	elif [ -x /usr/bin/wget ]; then
 		__PROG="/usr/bin/wget -q -O $DATFILE"
+		# force network/ip not supported
+		[ -n "$__BINDIP" ] && \
+			write_log 14 "BusyBox Wget: FORCE binding to specific address not supported"
 		# force ip version not supported
 		[ $force_ipversion -eq 1 ] && \
-			write_log 14 "BusyBox Wget: can not force IP version to use"
+			write_log 14 "BusyBox Wget: Force connecting to IPv4 or IPv6 addresses not supported"
 		# https not supported
 		[ $use_https -eq 1 ] && \
 			write_log 14 "BusyBox Wget: no HTTPS support"
@@ -752,7 +773,7 @@ send_update() {
 
 	if [ $ALLOW_LOCAL_IP -eq 0 ]; then
 		# verify given IP / no private IPv4's / no IPv6 addr starting with fxxx of with ":"
-		[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^127|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168)")
+		[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^100\.6[4-9]\.|^100\.[7-9][0-9]\.|^100\.1[0-1][0-9]\.|^100\.12[0-7]\.|^127|^169\.254|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168)")
 		[ $use_ipv6 -eq 1 ] && __IP=$(echo $1 | grep "^[0-9a-eA-E]")
 		[ -z "$__IP" ] && write_log 14 "Private or invalid or no IP '$1' given! Please check your configuration"
 	else
@@ -788,7 +809,7 @@ get_local_ip () {
 	local __RUNPROG __DATA __URL __ERR
 
 	[ $# -ne 1 ] && write_log 12 "Error calling 'get_local_ip()' - wrong number of parameters"
-	write_log 7 "Detect local IP"
+	write_log 7 "Detect local IP on '$ip_source'"
 
 	while : ; do
 		case $ip_source in
@@ -796,8 +817,8 @@ get_local_ip () {
 				# set correct program
 				[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
 						    || __RUNPROG="network_get_ipaddr6"
-				write_log 7 "#> $__RUNPROG __DATA '$ip_network'"
-				eval "$__RUNPROG __DATA $ip_network" || write_log 3 "$__RUNPROG Error: '$?'"
+				eval "$__RUNPROG __DATA $ip_network" || \
+					write_log 13 "Can not detect local IP using $__RUNPROG '$ip_network' - Error: '$?'"
 				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on network '$ip_network'"
 				;;
 			interface)
@@ -857,7 +878,7 @@ get_local_ip () {
 				[ $use_ipv6 -eq 0 ] \
 					&& __DATA=$(grep -m 1 -o "$IPV4_REGEX" $DATFILE) \
 					|| __DATA=$(grep -m 1 -o "$IPV6_REGEX" $DATFILE)
-				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on web at '$__URL'"
+				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on web at '$ip_url'"
 				;;
 			*)
 				write_log 12 "Error in 'get_local_ip()' - unhandled ip_source '$ip_source'"
