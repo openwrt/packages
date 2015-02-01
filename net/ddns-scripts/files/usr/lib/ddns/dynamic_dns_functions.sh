@@ -235,6 +235,7 @@ write_log() {
 	fi
 	[ $LUCI_HELPER ]   && return	# nothing else todo when running LuCI helper script
 	[ $__LEVEL -eq 7 ] && return	# no syslog for debug messages
+	__CMD=$(echo -e "$__CMD" | tr -d '\n' | tr '\t' '     ')        # remove \n \t chars
 	[ $__EXIT  -eq 1 ] && {
 		$__CMD		# force syslog before exit
 		exit 1
