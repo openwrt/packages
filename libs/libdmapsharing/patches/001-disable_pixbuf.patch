@@ -1,8 +1,6 @@
-Index: libdmapsharing-2.9.15/configure.ac
-===================================================================
---- libdmapsharing-2.9.15.orig/configure.ac	2012-08-14 21:02:31.861158482 +0200
-+++ libdmapsharing-2.9.15/configure.ac	2012-08-14 21:03:42.448658906 +0200
-@@ -112,18 +112,7 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -117,18 +117,7 @@ dnl make GOBJECT_CFLAGS and GOBJECT_LIBS
  AC_SUBST(GOBJECT_CFLAGS)
  AC_SUBST(GOBJECT_LIBS)
  

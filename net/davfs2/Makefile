@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/davfs2/
 PKG_MD5SUM:=376bc9346454135cba78afacbcb23f86
 
-PKG_FIXUP:=autoreconf
+PKG_FIXUP:=gettext-version autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
