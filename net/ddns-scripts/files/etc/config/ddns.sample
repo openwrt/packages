@@ -245,6 +245,17 @@ config service "myddns"
 	# default: none
 #	option proxy ''
 
+	###########
+	# In some very special configurations i.e. Multi WAN environment
+	# in a NAT cascade it might be necessary to define
+	# a network to use for communication.
+	# should use option ip_source "web" (see above)
+	# Needs GNU Wget (with SSL support) or cURL to be installed.
+	# GNU Wget will use IP address and cURL the physical device 
+	# of the given network
+	# default: none
+#	option bind_network "wan7"
+
 	########### Timer settings ########################
 
 	###########

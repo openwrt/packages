@@ -1,0 +1,59 @@
+if PACKAGE_ddns-scripts
+
+	comment "Options to reduce the size of installed package"
+
+	config DDNS-SCRIPTS_small
+		bool "Remove sample files and comments"
+		help
+			Remove comments from files an do not install sample files
+		default n
+
+	comment "Install Sample files"
+		depends on !DDNS-SCRIPTS_small
+
+	config  DDNS-SCRIPTS_sample-config
+		depends on !DDNS-SCRIPTS_small
+		bool "Install sample configuration"
+		help
+			Install /etc/config/ddns.sample
+			full commented ddns configuration
+		default y
+
+	config  DDNS-SCRIPTS_sample-update
+		depends on !DDNS-SCRIPTS_small
+		bool "Install provider update sample script"
+		help
+			Sample how to write a provider specific update script
+			Install /usr/lib/ddns/update_sample.sh
+		default n
+
+	config  DDNS-SCRIPTS_sample-getlocalip
+		depends on !DDNS-SCRIPTS_small
+		bool "Install 'get local ip' sample script"
+		help
+			Sample how to write a script to detect an IP address 
+			and return data to the main scripts.
+			Install /usr/lib/ddns/getlocalip_sample.sh
+		default n
+
+	comment "Install Provider specific scripts"
+
+	config  DDNS-SCRIPTS_provider-cloudflare-com
+		bool "Install support for cloudflare.com"
+		help
+			Script to fulfill specific API requirements to
+			update DDNS at cloudflare.com 
+			Install /usr/lib/ddns/update_cloudflare.sh
+			and     /usr/lib/ddns/tld_names.dat
+		default y
+
+	config  DDNS-SCRIPTS_provider-noip-com
+		bool "Install support for no-ip.com"
+		help
+			Script as workaround to let no-ip.com think that
+			the client IP has changed since last update.
+			Install /usr/lib/ddns/update_no-ip.sh
+		default y
+
+
+endif
