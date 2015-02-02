@@ -46,6 +46,12 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libftdi.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libftdi.pc $(1)/usr/lib/pkgconfig/libftdi.pc
+	$(SED) \
+		's,/usr/include,$$$${prefix}/include,g' \
+		 $(1)/usr/lib/pkgconfig/libftdi.pc
+	$(SED) \
+		's,/usr/lib,$$$${prefix}/lib,g' \
+		 $(1)/usr/lib/pkgconfig/libftdi.pc
 endef
 
 define Package/libftdi/install
