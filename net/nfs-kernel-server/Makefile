@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=1.3.1
+PKG_VERSION:=1.3.2
 PKG_RELEASE:=1
-PKG_MD5SUM:=97f157f954edb6d4d4385a0c5986f36f
+PKG_MD5SUM:=1e2f3c1ed468dee02d00c534c002ea10
 
 PKG_SOURCE_URL:=@SF/nfs
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.bz2
@@ -77,6 +77,7 @@ CONFIGURE_ARGS += \
 	--disable-gss \
 	--disable-nfsv4 \
 	--disable-nfsv41 \
+	--disable-ipv6 \
 	--enable-static \
 	--enable-shared \
 	--disable-caps \
