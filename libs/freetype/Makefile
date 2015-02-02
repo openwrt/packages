@@ -66,6 +66,12 @@ define Build/InstallDev
 	$(SED) \
 		's,^\(prefix\|exec_prefix\)=.*,\1="$(STAGING_DIR)/usr",g' \
 		 $(2)/bin/freetype-config
+	$(SED) \
+		's,/usr/include,$$$${prefix}/include,g' \
+		 $(1)/usr/lib/pkgconfig/freetype2.pc
+	$(SED) \
+		's,/usr/lib,$$$${exec_prefix}/lib,g' \
+		 $(1)/usr/lib/pkgconfig/freetype2.pc
 endef
 
 
