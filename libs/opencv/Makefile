@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2013-2014 wrtnode.com
+# Copyright (C) 2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opencv
 PKG_VERSION:=2.4.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/2.4.10/
@@ -45,7 +46,14 @@ PKG_INSTALL:=1
 
 CMAKE_OPTIONS += -DBUILD_opencv_gpu:BOOL=OFF \
 	 -DWITH_1394:BOOL=OFF -DBUILD_opencv_stitching:BOOL=OFF \
-	 -DBUILD_opencv_superres:BOOL=OFF -DBUILD_opencv_ts:BOOL=OFF
+	 -DBUILD_opencv_superres:BOOL=OFF -DBUILD_opencv_ts:BOOL=OFF \
+	-DBUILD_opencv_highgui:BOOL=OFF \
+	-DBUILD_opencv_videostab:BOOL=OFF \
+	-DWITH_FFMPEG:BOOL=OFF \
+	-DWITH_GSTREAMER:BOOL=OFF \
+	-DWITH_LIBV4L:BOOL=OFF \
+	-DWITH_PNG:BOOL=OFF \
+	-DWITH_TIFF:BOOL=OFF \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -58,7 +66,6 @@ endef
 define Package/opencv/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libopencv* $(1)/usr/lib/
-
 endef
 
 $(eval $(call BuildPackage,opencv))
