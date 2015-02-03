@@ -1,0 +1,20 @@
+diff --git a/lib/posix.lua.in b/lib/posix.lua.in
+index 17ef39a..a248d9b 100644
+--- a/lib/posix.lua.in
++++ b/lib/posix.lua.in
+@@ -35,15 +35,6 @@ for _, sub in ipairs {
+   end
+ end
+ 
+-
+--- Inject deprecated APIs (overwriting submodules) for backwards compatibility.
+-for k, v in pairs (require "posix.deprecated") do
+-  M[k] = v
+-end
+-for k, v in pairs (require "posix.compat") do
+-  M[k] = v
+-end
+-
+ M.version = "posix for " .. _VERSION .. " / @PACKAGE_STRING@"
+ 
+ 
