@@ -44,6 +44,20 @@ endif
 TARGET_CFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CFLAGS))
 TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
 
+# Handle threading
+ifdef CONFIG_PERL_THREADS
+	PERL_CONFIG_SUFFIX:=-mt
+
+	# uclibc doesn't provide crypt_r(). Enable crypt() usage for glibc builds only
+	ifdef CONFIG_USE_EGLIBC
+		CRYPT_R_PROTO:=REENTRANT_PROTO_B_CCS
+		CRYPT:=define
+	else
+		CRYPT_R_PROTO:=0
+		CRYPT:=undef
+	endif
+endif
+
 # A list of disabled testss
 # ExtUtils tests are disabled for now as we don't support building
 # native extensions on the target machine at the moment
@@ -64,7 +78,7 @@ define Package/perl
   CATEGORY:=Languages
   TITLE:=The Perl intepreter
   URL:=http://www.perl.com/
-  DEPENDS:=+USE_EGLIBC:libbsd
+  DEPENDS:=+USE_EGLIBC:libbsd +PERL_THREADS:libpthread
 endef
 
 define Package/perl/description
@@ -108,8 +122,10 @@ define Build/Configure
 		-e 's!%%EXTRA_PERLLIBDIRS%%!$(EXTRA_LIBDIRS:%=-L%)!g' \
 		-e 's!%%IPV6%%!$(if $($(CONFIG_IPV6)),define,undef)!g' \
 		-e 's!%%HOSTMINIPERL%%!$(HOST_PERL_PREFIX)/bin/perl!g' \
+		-e 's!%%CRYPT_R_PROTO%%!$(CRYPT_R_PROTO)!g' \
+		-e 's!%%CRYPT%%!$(CRYPT)!g' \
 		-e 's!%%HOSTGENERATE%%!$(HOST_PERL_PREFIX)/bin/generate_uudmap!g' \
-		files/config.sh-$(patsubst i386,i486,$(ARCH)).in \
+		files/config.sh-$(patsubst i386,i486,$(ARCH))$(PERL_CONFIG_SUFFIX).in \
 		> $(PKG_BUILD_DIR)/config.sh
 	(cd $(PKG_BUILD_DIR) && ./Configure -S)
 	install -m 0644 $(PKG_BUILD_DIR)/config.h $(PKG_BUILD_DIR)/xconfig.h
