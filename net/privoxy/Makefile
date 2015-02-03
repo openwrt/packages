@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,42 +8,53 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=privoxy
-PKG_VERSION:=3.0.22
-PKG_RELEASE:=2
+PKG_VERSION:=3.0.23
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa
-PKG_MD5SUM:=aa121751d332a51d37d3c6e4b7594daa
-
-PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILES:=LICENSE
-
+PKG_MD5SUM:=bbe47d5ff1a54d9f9fc93a160532697f
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-stable
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_MAINTAINER:=christian.schoenebeck@gmail.com
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/privoxy
+define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   DEPENDS:=+libpcre +libpthread +zlib
-  TITLE:=web proxy with advanced filtering capabilities
+  TITLE:=Privoxy WEB Proxy
   URL:=http://www.privoxy.org/
   USERID:=privoxy=8118:privoxy=8118
 endef
 
-define Package/privoxy/description
-Privoxy is a web proxy with advanced filtering capabilities for
- protecting privacy, modifying web page content, managing cookies,
- controlling access, and removing ads, banners, pop-ups and other
- obnoxious Internet junk. Privoxy has a very flexible configuration
- and can be customized to suit individual needs and tastes. Privoxy
- has application for both stand-alone systems and multi-user networks.
-Version: $(PKG_VERSION)-$(PKG_RELEASE)
+# shown in LuCI package description
+define Package/$(PKG_NAME)/description
+$(TITLE) - Homepage: www.privoxy.org
+endef
+
+# shown in make menuconfig <Help>
+define Package/$(PKG_NAME)/config
+help
+	Privoxy is a web proxy with advanced filtering capabilities for protecting
+	privacy, modifying web page content, managing cookies, controlling access,
+	and removing ads, banners, pop-ups and other obnoxious Internet junk. 
+	Privoxy has a very flexible configuration and can be customized to suit
+	individual needs and tastes. 
+	Privoxy has application for both stand-alone systems and multi-user networks.
+
+	Run as : $(USERID)
+	Version: $(PKG_VERSION)-$(PKG_RELEASE)
+	Home   : $(URL)
+
+	$(PKG_MAINTAINER)
 endef
 
 CONFIGURE_ARGS += \
@@ -58,12 +69,13 @@ define Build/Install
 	mv $(PKG_INSTALL_DIR)/etc/privoxy/config $(PKG_INSTALL_DIR)/etc/privoxy/config.privoxy
 endef
 
-define Package/privoxy/conffiles
+# "/etc/privoxy/config" temporary needed if updating from old version
+define Package/$(PKG_NAME)/conffiles
 /etc/config/privoxy
-/etc/privoxy/config	# temporary needed if updating from old version
+/etc/privoxy/config
 endef
 
-define Package/privoxy/preinst
+define Package/$(PKG_NAME)/preinst
 	#!/bin/sh
 	# if run within buildroot exit
 	[ -n "$${IPKG_INSTROOT}" ] && exit 0
@@ -72,7 +84,7 @@ define Package/privoxy/preinst
 	exit 0	# supress errors from stop command
 endef
 
-define Package/privoxy/install
+define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/privoxy $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -92,7 +104,7 @@ define Package/privoxy/install
 	$(INSTALL_CONF) ./files/privoxy.config $(1)/etc/config/privoxy
 endef
 
-define Package/privoxy/postinst
+define Package/$(PKG_NAME)/postinst
 	#!/bin/sh
 
 	# if fresh install we don't need old config file in privoxy directory
@@ -163,4 +175,4 @@ define Package/privoxy/postinst
 	chmod 644 /etc/privoxy/templates/*
 endef
 
-$(eval $(call BuildPackage,privoxy))
+$(eval $(call BuildPackage,$(PKG_NAME)))
