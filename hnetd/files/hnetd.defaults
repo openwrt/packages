@@ -2,5 +2,6 @@
 
 uci batch <<EOF
 set dhcp.odhcpd.maindhcp=1
+set dhcp.@dnsmasq[0].localservice=0
 commit dhcp
 EOF
