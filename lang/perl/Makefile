@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -40,6 +40,7 @@ ifneq ($(CONFIG_USE_EGLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
+
 # Filter -g3, it will break Compress-Raw-Zlib
 TARGET_CFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CFLAGS))
 TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
@@ -58,11 +59,11 @@ ifdef CONFIG_PERL_THREADS
 	endif
 endif
 
-# A list of disabled testss
+# A list of disabled tests
 # ExtUtils tests are disabled for now as we don't support building
 # native extensions on the target machine at the moment
 PERL_DISABLEDTESTS:=cpan/ExtUtils-Constant cpan/ExtUtils-MakeMaker
-# We're on Linux, so don't even package those
+# We're on Linux, so don't even package them
 PERL_DISABLEDTESTS+=cpan/Win32API-File cpan/Win32 ext/VMS-DCLsym ext/VMS-Filespec ext/VMS-Stdio ext/Win32CORE
 # NDBM and ODBM not supported
 PERL_DISABLEDTESTS+=ext/NDBM_File ext/ODBM_File

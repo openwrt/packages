@@ -562,7 +562,7 @@ $(eval $(call BuildPackage,perlbase-essential))
 
 define Package/perlbase-experimental
 $(call Package/perlbase-template)
-TITLE:=perl module to enable/disable experimental features
+TITLE:=experimental perl module
 DEPENDS+=+perlbase-essential +perlbase-feature
 endef
 
