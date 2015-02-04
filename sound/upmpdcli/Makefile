@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -24,8 +24,8 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/upmpdcli
-  SECTION:=multimedia
-  CATEGORY:=Multimedia
+  SECTION:=sound
+  CATEGORY:=Sound
   URL:=http://www.lesbonscomptes.com/upmpdcli
   DEPENDS+= +libupnpp +libmpdclient
   TITLE:=A UPnP front-end to MPD, the Music Player Daemon
