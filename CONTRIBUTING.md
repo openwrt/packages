@@ -18,8 +18,9 @@ Makefile contents should contain:
     (E.g.: PKG_MAINTAINER:= Joe D. Hacker `<jdh@jdhs-email-provider.org`>)
 * A PKG_LICENSE tag declaring the main license of the package.
     (E.g.: PKG_LICENSE:=GPL-2.0+) Please use SPDX identifiers if possible (see list at the bottom).
-* An optional PKG_LICENSE_FILES including the filename of the license-file in the source-package.
+* An optional PKG_LICENSE_FILES tag including the filenames of the license-files in the source-package.
     (E.g.: PKG_LICENSE_FILES:=COPYING)
+* PKG_RELEASE should be initially set to 1 or reset to 1 if the software version is changed. You should increment it if the package itself has changed. For example, modifying a support script, changing configure options like --disable* or --enable* switches, or if you changed something in the package which causes the resulting binaries to be different. Changes like correcting md5sums, changing mirror URLs, adding a maintainer field or updating a comment or copyright year in a Makefile do not require a change to PKG_RELEASE.
 
 Commits in your pull-requests should:
 
