@@ -1,6 +1,8 @@
 #
+#.Distributed under the terms of the GNU General Public License (GPL) version 2.0
+#
 # script for sending updates to cloudflare.com
-# 2014-2015 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2014-2015 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 # many thanks to Paul for testing and feedback during development
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
@@ -34,16 +36,16 @@ __DOMAIN="$__DOMAIN.$__TLD"
 # function copied from /usr/share/libubox/jshn.sh
 # from BB14.09 for backward compatibility to AA12.09
 grep -i "json_get_keys" /usr/share/libubox/jshn.sh >/dev/null 2>&1 || json_get_keys() {
-		local __dest="$1"
-		local _tbl_cur
+	local __dest="$1"
+	local _tbl_cur
 
-		if [ -n "$2" ]; then
-			json_get_var _tbl_cur "$2"
-		else
-			_json_get_var _tbl_cur JSON_CUR
-		fi
-		local __var="${JSON_PREFIX}KEYS_${_tbl_cur}"
-		eval "export -- \"$__dest=\${$__var}\"; [ -n \"\${$__var+x}\" ]"
+	if [ -n "$2" ]; then
+		json_get_var _tbl_cur "$2"
+	else
+		_json_get_var _tbl_cur JSON_CUR
+	fi
+	local __var="${JSON_PREFIX}KEYS_${_tbl_cur}"
+	eval "export -- \"$__dest=\${$__var}\"; [ -n \"\${$__var+x}\" ]"
 }
 
 # function to "sed" unwanted string parts from DATFILE

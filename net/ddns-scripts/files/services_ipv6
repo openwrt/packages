@@ -33,9 +33,6 @@
 # IPv6 @ MyDNS.JP
 "mydns.jp"	"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV6ADDR=[IP]"
 
-# IPv6 @ Cloudflare
-"cloudflare.com"	"update_cloudflare.sh"
-
 # IPv6 @ no-ip.pl nothing to do with no-ip.com (domain registered to www.domeny.tv) (IP autodetected by provider)
 "no-ip.pl"	"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
 
