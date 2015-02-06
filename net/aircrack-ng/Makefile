@@ -13,7 +13,8 @@ PKG_RELEASE:=1
 PKG_LICENSE:=GPLv2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://download.aircrack-ng.org/
+PKG_SOURCE_URL:=http://download.aircrack-ng.org/ \
+		http://archive.aircrack-ng.org/aircrack-ng/$(PKG_VERSION)/
 PKG_MD5SUM:=c2f8648c92f7e46051c86c618d4fb0d5
 
 PKG_BUILD_PARALLEL:=1
