@@ -10,9 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=aircrack-ng
 PKG_VERSION:=1.2-rc1
 PKG_RELEASE:=1
+PKG_LICENSE:=GPLv2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://download.aircrack-ng.org/$(PKG_SOURCE)/
+PKG_SOURCE_URL:=http://download.aircrack-ng.org/
 PKG_MD5SUM:=c2f8648c92f7e46051c86c618d4fb0d5
 
 PKG_BUILD_PARALLEL:=1
@@ -24,7 +25,6 @@ define Package/aircrack-ng
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+libpcap +libpthread +libopenssl +libnl +wireless-tools +ethtool
-  BUILD_DEPENDS:=+pkg-config
   TITLE:=WLAN tools for breaking 802.11 WEP/WPA keys
   URL:=http://www.aircrack-ng.org/
   MAINTAINER:=Zero_Chaos <zerochaos@gentoo.org>
@@ -38,7 +38,8 @@ endef
 MAKE_FLAGS += prefix=/usr \
 	libnl=true \
 	sqlite=false \
-	unstable=false
+	unstable=false \
+	OSNAME=Linux
 
 define Package/aircrack-ng/install
 	$(INSTALL_DIR) $(1)/usr/bin
