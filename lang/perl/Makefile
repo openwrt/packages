@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=5.20.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 		http://www.cpan.org/src/5.0/perl-5.20.0.tar.gz \
@@ -40,15 +40,30 @@ ifneq ($(CONFIG_USE_EGLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
+
 # Filter -g3, it will break Compress-Raw-Zlib
 TARGET_CFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CFLAGS))
 TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
 
-# A list of disabled testss
+# Handle threading
+ifdef CONFIG_PERL_THREADS
+	PERL_CONFIG_SUFFIX:=-mt
+
+	# uclibc doesn't provide crypt_r(). Enable crypt() usage for glibc builds only
+	ifdef CONFIG_USE_EGLIBC
+		CRYPT_R_PROTO:=REENTRANT_PROTO_B_CCS
+		CRYPT:=define
+	else
+		CRYPT_R_PROTO:=0
+		CRYPT:=undef
+	endif
+endif
+
+# A list of disabled tests
 # ExtUtils tests are disabled for now as we don't support building
 # native extensions on the target machine at the moment
 PERL_DISABLEDTESTS:=cpan/ExtUtils-Constant cpan/ExtUtils-MakeMaker
-# We're on Linux, so don't even package those
+# We're on Linux, so don't even package them
 PERL_DISABLEDTESTS+=cpan/Win32API-File cpan/Win32 ext/VMS-DCLsym ext/VMS-Filespec ext/VMS-Stdio ext/Win32CORE
 # NDBM and ODBM not supported
 PERL_DISABLEDTESTS+=ext/NDBM_File ext/ODBM_File
@@ -64,7 +79,7 @@ define Package/perl
   CATEGORY:=Languages
   TITLE:=The Perl intepreter
   URL:=http://www.perl.com/
-  DEPENDS:=+USE_EGLIBC:libbsd
+  DEPENDS:=+USE_EGLIBC:libbsd +PERL_THREADS:libpthread
 endef
 
 define Package/perl/description
@@ -108,8 +123,10 @@ define Build/Configure
 		-e 's!%%EXTRA_PERLLIBDIRS%%!$(EXTRA_LIBDIRS:%=-L%)!g' \
 		-e 's!%%IPV6%%!$(if $($(CONFIG_IPV6)),define,undef)!g' \
 		-e 's!%%HOSTMINIPERL%%!$(HOST_PERL_PREFIX)/bin/perl!g' \
+		-e 's!%%CRYPT_R_PROTO%%!$(CRYPT_R_PROTO)!g' \
+		-e 's!%%CRYPT%%!$(CRYPT)!g' \
 		-e 's!%%HOSTGENERATE%%!$(HOST_PERL_PREFIX)/bin/generate_uudmap!g' \
-		files/config.sh-$(patsubst i386,i486,$(ARCH)).in \
+		files/config.sh-$(patsubst i386,i486,$(ARCH))$(PERL_CONFIG_SUFFIX).in \
 		> $(PKG_BUILD_DIR)/config.sh
 	(cd $(PKG_BUILD_DIR) && ./Configure -S)
 	install -m 0644 $(PKG_BUILD_DIR)/config.h $(PKG_BUILD_DIR)/xconfig.h
