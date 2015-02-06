@@ -16,33 +16,33 @@ Signed-off-by: Luka Perkov <luka@openwrt.org>
 
 --- a/src/lxc/utils.c
 +++ b/src/lxc/utils.c
-@@ -46,7 +46,7 @@
+@@ -47,7 +47,7 @@
  
  lxc_log_define(lxc_utils, lxc);
  
--static int _recursive_rmdir_onedev(char *dirname, dev_t pdev)
-+static int _recursive_rmdir_onedev(char *dirname)
+-static int _recursive_rmdir_onedev(char *dirname, dev_t pdev,
++static int _recursive_rmdir_onedev(char *dirname,
+ 				   const char *exclude, int level)
  {
  	struct dirent dirent, *direntp;
- 	DIR *dir;
-@@ -82,10 +82,8 @@ static int _recursive_rmdir_onedev(char
+@@ -108,10 +108,8 @@ static int _recursive_rmdir_onedev(char
  			failed=1;
  			continue;
  		}
 -		if (mystat.st_dev != pdev)
 -			continue;
  		if (S_ISDIR(mystat.st_mode)) {
--			if (_recursive_rmdir_onedev(pathname, pdev) < 0)
-+			if (_recursive_rmdir_onedev(pathname) < 0)
+-			if (_recursive_rmdir_onedev(pathname, pdev, exclude, level+1) < 0)
++			if (_recursive_rmdir_onedev(pathname, exclude, level+1) < 0)
  				failed=1;
  		} else {
  			if (unlink(pathname) < 0) {
-@@ -119,7 +117,7 @@ extern int lxc_rmdir_onedev(char *path)
+@@ -147,7 +145,7 @@ extern int lxc_rmdir_onedev(char *path,
  		return -1;
  	}
  
--	return _recursive_rmdir_onedev(path, mystat.st_dev);
-+	return _recursive_rmdir_onedev(path);
+-	return _recursive_rmdir_onedev(path, mystat.st_dev, exclude, 0);
++	return _recursive_rmdir_onedev(path, exclude, 0);
  }
  
  static int mount_fs(const char *source, const char *target, const char *type)
