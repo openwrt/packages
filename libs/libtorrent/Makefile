@@ -50,11 +50,6 @@ CONFIGURE_ARGS+= \
 	--enable-openssl \
 	--disable-instrumentation
 
-define Build/Configure
-	( cd $(PKG_BUILD_DIR); ./autogen.sh );
-	$(call Build/Configure/Default)
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/torrent $(1)/usr/include/
