@@ -1,0 +1,17 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -357,7 +357,13 @@ if test -n "$BUILD_DPAPVIEW" ; then
+ 	AC_WARN([will not build dpapview])
+ fi
+ 
+-PKG_CHECK_MODULES([CHECK], [check >= 0.9.4],have_check=yes,have_check=no)
++dnl Test if --enable-unit-test given
++AC_ARG_ENABLE(unit-test, [AC_HELP_STRING([--enable-unit-test],[enable unit test])])
++if test "x$enable_unit_test" = "xyes" ; then
++  PKG_CHECK_MODULES([CHECK], [check >= 0.9.4],have_check=yes,have_check=no)
++else
++  have_check=no
++fi
+ AM_CONDITIONAL(HAVE_CHECK, test x"$have_check" = "xyes")
+ if test "x$have_check" = "xyes"; then
+ 	AC_DEFINE(HAVE_CHECK, 1, [Define if check support is enabled])
