@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=2.4.5
+PKG_VERSION:=2.5.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=685362fc14d2c28568a5d36b3760795a
+PKG_MD5SUM:=efba7c5cfbea9ce58ff693cd08f90ffa
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -389,6 +389,7 @@ FFMPEG_CONFIGURE:= \
 	--disable-neon \
 	--disable-inline-asm \
 	--disable-yasm \
+	--disable-mips32r2 \
 	--disable-mipsdspr1 \
 	--disable-mipsdspr2 \
 	--disable-mipsfpu \
@@ -398,10 +399,6 @@ FFMPEG_CONFIGURE:= \
 	--disable-vda \
 	--disable-vdpau \
 	--disable-outdevs
-
-ifeq ($(CONFIG_CPU_TYPE),"mips32")
-	FFMPEG_CONFIGURE +=--disable-mips32r2
-endif
 
 ifeq ($(BUILD_VARIANT),custom)
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shairplay
 PKG_VERSION:=2014-10-27
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/juhovh/shairplay.git
@@ -26,8 +26,8 @@ include $(INCLUDE_DIR)/package.mk
 PKG_FIXUP:=libtool
 
 define Package/shairplay
-  SECTION:=multimedia
-  CATEGORY:=Multimedia
+  SECTION:=sound
+  CATEGORY:=Sound
   DEPENDS:=+libao +libavahi-compat-libdnssd +libltdl +libpthread
   TITLE:=Shairplay
 endef

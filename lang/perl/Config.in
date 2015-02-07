@@ -1,6 +1,11 @@
 menu "Configuration"
 	depends on PACKAGE_perl
 
+config PERL_THREADS
+    bool "Enable threading support"
+    default y if (mips || mipsel || x86 || x86_64 || armeb || arm) && (USE_UCLIBC || USE_EGLIBC)
+    default n
+
 config PERL_TESTS
 	bool "Include perl tests"
 	default n

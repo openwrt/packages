@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgd
-PKG_VERSION:=2.1.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.1.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://bitbucket.org/libgd/gd-libgd/downloads
-PKG_MD5SUM:=03588159bf4faab9079849c8d709acc6
+PKG_SOURCE:=gd-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/libgd/libgd/archive
+PKG_MD5SUM:=e91a1a99903e460e7ba00a794e72cc1e
 PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 PKG_LICENSE:=MIT
 
@@ -21,6 +21,7 @@ PKG_FIXUP:=autoreconf
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DIR:=$(BUILD_DIR)/libgd-gd-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
