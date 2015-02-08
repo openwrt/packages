@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -18,7 +18,7 @@ PKG_SOURCE_URL:= \
 	http://mirrors.evolva.ro/netfilter.org/libnetfilter_queue/
 PKG_MD5SUM:=df09befac35cb215865b39a36c96a3fa
 
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
@@ -30,9 +30,9 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libnetfilter-queue
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libmnl +libnfnetlink +kmod-nfnetlink-queue
   TITLE:=API to packets queued by the kernel packet filter
   URL:=http://www.netfilter.org/projects/libnetfilter_queue/
+  DEPENDS:=+libmnl +libnfnetlink +kmod-nfnetlink-queue
 endef
 
 define Package/libnetfilter-queue/description
@@ -46,23 +46,18 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--enable-shared \
 
-CONFIGURE_VARS += \
-	LIBNFNETLINK_CFLAGS="$(TARGET_CPPFLAGS)" \
-	LIBNFNETLINK_LIBS="$(TARGET_LDFLAGS)"
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/libnetfilter_queue
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/include/libnetfilter_queue/*.h \
-		$(1)/usr/include/libnetfilter_queue/
-
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/include/libnetfilter_queue \
+		$(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/libnetfilter_queue*.{so*,a,la} \
 		$(1)/usr/lib/
-
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(INSTALL_DATA) \
+	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libnetfilter_queue.pc \
 		$(1)/usr/lib/pkgconfig/
 endef
