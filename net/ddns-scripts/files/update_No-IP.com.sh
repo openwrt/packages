@@ -1,6 +1,8 @@
 #
+#.Distributed under the terms of the GNU General Public License (GPL) version 2.0
+#
 # script for sending updates to no-ip.com / noip.com
-# 2014-2015 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2014-2015 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
 #

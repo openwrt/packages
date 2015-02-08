@@ -2,12 +2,12 @@
 # /usr/lib/ddns/dynamic_dns_updater.sh
 #
 # Original written by Eric Paul Bishop, January 2008
-# Distributed under the terms of the GNU General Public License (GPL) version 2.0
+#.Distributed under the terms of the GNU General Public License (GPL) version 2.0
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 #
-# extended and partial rewritten in August 2014
-# by Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+# extended and partial rewritten in August 2014 by
+#.Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 # to support:
 # - IPv6 DDNS services
 # - DNS Server to retrieve registered IP including TCP transport (Ticket 7820)
@@ -147,7 +147,7 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 write_log 7 "************ ************** ************** **************"
 write_log 5 "PID '$$' started at $(eval $DATE_PROG)"
 write_log 7 "uci configuration:\n$(uci -q show ddns.$SECTION_ID | sort)"
-write_log 7 "ddns version  : $(opkg list-installed ddns-scripts | awk '{print $3}')"
+write_log 7 "ddns version  : $(opkg list-installed ddns-scripts | cut -d ' ' -f 3)"
 case $VERBOSE_MODE in
 	0) write_log  7 "verbose mode  : 0 - run normal, NO console output";;
 	1) write_log  7 "verbose mode  : 1 - run normal, console mode";;
