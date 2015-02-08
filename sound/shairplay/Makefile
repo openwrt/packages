@@ -21,9 +21,9 @@ PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-include $(INCLUDE_DIR)/package.mk
-
 PKG_FIXUP:=autoreconf
+
+include $(INCLUDE_DIR)/package.mk
 
 define Package/shairplay
   SECTION:=sound
