@@ -44,11 +44,6 @@ endef
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += $(if $(ICONV_FULL),-liconv)
 
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); ./autogen.sh );
-	$(call Build/Configure/Default)
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libmms $(1)/usr/include/
