@@ -23,19 +23,13 @@ PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
-PKG_FIXUP:=libtool
+PKG_FIXUP:=autoreconf
 
 define Package/shairplay
   SECTION:=sound
   CATEGORY:=Sound
   DEPENDS:=+libao +libavahi-compat-libdnssd +libltdl +libpthread
   TITLE:=Shairplay
-endef
-
-define Build/Configure
-	(cd $(PKG_BUILD_DIR)/$(CONFIGURE_PATH); \
-	./autogen.sh;)
-	$(call Build/Configure/Default)
 endef
 
 define Package/shairplay/description
