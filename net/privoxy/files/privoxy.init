@@ -108,11 +108,11 @@ stop() {
 	local _PID=$(cat $PIDFILE 2>/dev/null)
 	kill -15 $_PID 2>/dev/null
 	sleep 1			# give time to shutdown
-	local _tmp=$(pgrep privoxy)
+	local _tmp=$(pgrep privoxy | tr "\n" " ")
 	if [ -z "$_tmp" ]; then
 		logger -p daemon.notice -t "privoxy[$_PID]" "Shutdown successfully"
 	else
-		killall -9 privoxy
+		kill -9 $_tmp	# Normally never come here
 		logger -p daemon.warn -t "privoxy[-----]" "Shutdown forced by KILL"
 	fi
 	return 0
