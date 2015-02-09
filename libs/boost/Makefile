@@ -18,7 +18,8 @@ PKG_SOURCE_URL:=@SF/boost
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_VERSION)
 PKG_MD5SUM:=25f9a8ac28beeb5ab84aa98510305299
-
+PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
+PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com> (Modified from Mirko Vogt <mirko@openwrt.org> Boost 1.51 Original Makefile and patches)
 
 
 PKG_BUILD_DEPENDS:=boost/host
@@ -52,7 +53,6 @@ define Package/boost/Default
   TITLE:=Boost C++ source libraries
   URL:=http://www.boost.org
   DEPENDS:=+libstdcpp +libpthread +librt
-  MAINTAINER:=Mirko Vogt <mirko@openwrt.org>
 endef
 
 define Package/boost/Default/description
@@ -381,7 +381,7 @@ $(eval $(call BuildPackage,boost-graph))
 $(eval $(call BuildPackage,boost-iostreams))
 $(eval $(call BuildPackage,boost-locale))
 $(eval $(call BuildPackage,boost-math))
-$(eval $(call BuildPackage,boost-mpi))
+#$(eval $(call BuildPackage,boost-mpi))
 $(eval $(call BuildPackage,boost-program_options))
 $(eval $(call BuildPackage,boost-random))
 $(eval $(call BuildPackage,boost-python))
