@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 # Make sure to also update the dbus-x package
 PKG_NAME:=dbus
 PKG_VERSION:=1.9.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dbus.freedesktop.org/releases/dbus/
@@ -26,7 +26,6 @@ include $(INCLUDE_DIR)/package.mk
 
 TARGET_LDFLAGS+= \
 	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
-	-Wl,-rpath=/usr/lib/
 
 define Package/dbus/Default
   SECTION:=utils
