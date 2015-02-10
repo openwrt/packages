@@ -1,0 +1,20 @@
+--- a/munin-node.in
++++ b/munin-node.in
+@@ -141,7 +141,7 @@
+   fi
+ }
+ fetch_if() {
+-  IINFO=$(grep "$1:" /proc/net/dev | cut -d: -f2 | sed -e 's/  / /g')
++  IINFO=$(sed -ne "/^ *${1//_/-}: / { s/^.\+: \+//; s/[[:space:]]\+/ /gp }" /proc/net/dev)
+   echo "down.value" $(echo $IINFO | cut -d\  -f1)
+   echo "up.value" $(echo $IINFO | cut -d\  -f9)
+ }
+@@ -162,7 +162,7 @@
+   echo "trans.warning 1"
+ }
+ fetch_if_err() {
+-  IINFO=$(grep "$1:" /proc/net/dev | cut -d: -f2 | sed -e 's/  / /g')
++  IINFO=$(sed -ne "/^ *${1//_/-}: / { s/^.\+: \+//; s/[[:space:]]\+/ /gp }" /proc/net/dev)
+   echo "rcvd.value" $(echo $IINFO | cut -d\  -f3)
+   echo "trans.value" $(echo $IINFO | cut -d\  -f11)
+ }

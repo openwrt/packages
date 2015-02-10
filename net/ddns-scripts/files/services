@@ -29,11 +29,6 @@
 "zoneedit.com"		"http://[USERNAME]:[PASSWORD]@dynamic.zoneedit.com/auth/dynamic.html?host=[DOMAIN]&dnsto=[IP]"
 "free.editdns.net"	"http://dyndns-free.editdns.net/api/dynLinux.php?p=[PASSWORD]&r=[DOMAIN]"
 
-# noip is an alias of no-ip, so allow both names for the same service
-# use provider specific update script
-"no-ip.com"	"update_no-ip.sh"
-"noip.com"	"update_no-ip.sh"
-
 # freedns.afraid.org is weird, you just need an update code, for which we use the password variable
 "freedns.afraid.org"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
 
@@ -88,11 +83,11 @@
 # LoopiaDNS
 "loopia.se" "http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
 
-# Cloudflare
-"cloudflare.com"	"update_cloudflare.sh"
-
 # SelfHost.de
 "selfhost.de"	"http://carol.selfhost.de/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=1"
 
 # no-ip.pl nothing to do with no-ip.com (domain registered to www.domeny.tv) (IP autodetected by provider)
 "no-ip.pl"	"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
+
+# domains.google.com	non free service - require HTTPS communication
+"domains.google.com"	"https://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"

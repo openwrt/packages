@@ -4,6 +4,7 @@ To setup a VPN connection, add the following to /etc/config/network:
 
 config interface 'MYVPN'
         option proto 'openconnect'
+        option interface 'wan'
         option server 'vpn.example.com'
         option port '4443'
         option username 'test'
