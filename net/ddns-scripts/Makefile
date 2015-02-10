@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ddns-scripts
 # Version == major.minor.patch
 # increase on new functionality (minor) or patches (patch)
-PKG_VERSION:=2.2.0
+PKG_VERSION:=2.3.0
 # Release == build
 # increase on changes of services files or tld_names.dat
 PKG_RELEASE:=1
@@ -51,7 +51,7 @@ endef
 define Package/$(PKG_NAME)_CloudFlare
     $(call Package/$(PKG_NAME)/Default)
     TITLE:=DDNS extension for CloudFlare
-    DEPENDS:=+$(PKG_NAME)
+    DEPENDS:=$(PKG_NAME)
 endef
 define Package/$(PKG_NAME)_CloudFlare/description
     Dynamic DNS Client scripts extension for CloudFlare
@@ -60,7 +60,7 @@ endef
 define Package/$(PKG_NAME)_No-IP_com
     $(call Package/$(PKG_NAME)/Default)
     TITLE:=DDNS extension for No-IP.com
-    DEPENDS:=+$(PKG_NAME)
+    DEPENDS:=$(PKG_NAME)
 endef
 define Package/$(PKG_NAME)_No-IP_com/description
     Dynamic DNS Client scripts extension for No-IP.com
