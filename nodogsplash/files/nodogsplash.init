@@ -167,8 +167,6 @@ generate_uci_config() {
   fi
 
   echo "GatewayInterface $ifname" >> $CONFIGFILE
-  config_get val "$cfg" externalnetwork
-  [ -n "$val" ] && network_get_device ifname "$val" && echo "ExternalInterface $ifname" >> $CONFIGFILE
 
   append_config_option "$CONFIGFILE" "$cfg" gatewayname GatewayName
   append_config_option "$CONFIGFILE" "$cfg" gatewayaddress GatewayAddress
