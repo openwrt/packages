@@ -32,24 +32,12 @@
 SECTION_ID=""		# hold config's section name
 VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
 
-			# allow NON-public IP's
-ALLOW_LOCAL_IP=$(uci -q get ddns.global.allow_local_ip) || ALLOW_LOCAL_IP=0
-			# directory to store run information to.
-RUNDIR=$(uci -q get ddns.global.run_dir) || RUNDIR="/var/run/ddns"
-[ -d $RUNDIR ] || mkdir -p -m755 $RUNDIR
-			# directory to store log files
-LOGDIR=$(uci -q get ddns.global.log_dir) || LOGDIR="/var/log/ddns"
-[ -d $LOGDIR ] || mkdir -p -m755 $LOGDIR
 LOGFILE=""		# logfile - all files are set in dynamic_dns_updater.sh
 PIDFILE=""		# pid file
 UPDFILE=""		# store UPTIME of last update
 DATFILE=""		# save stdout data of WGet and other external programs called
 ERRFILE=""		# save stderr output of WGet and other external programs called
 TLDFILE=/usr/lib/ddns/tld_names.dat	# TLD file used by split_FQDN
-
-			# number of lines to before rotate logfile
-LOGLINES=$(uci -q get ddns.global.log_lines) || LOGLINES=250
-LOGLINES=$((LOGLINES + 1))	# correct sed handling
 
 CHECK_SECONDS=0		# calculated seconds out of given
 FORCE_SECONDS=0		# interval and unit
@@ -71,6 +59,21 @@ ERR_UPDATE=0		# error counter on different local and registered ip
 
 PID_SLEEP=0		# ProcessID of current background "sleep"
 
+# allow NON-public IP's
+ALLOW_LOCAL_IP=$(uci -q get ddns.global.allow_local_ip) || ALLOW_LOCAL_IP=0
+
+# directory to store run information to.
+RUNDIR=$(uci -q get ddns.global.run_dir) || RUNDIR="/var/run/ddns"
+[ -d $RUNDIR ] || mkdir -p -m755 $RUNDIR
+
+# directory to store log files
+LOGDIR=$(uci -q get ddns.global.log_dir) || LOGDIR="/var/log/ddns"
+[ -d $LOGDIR ] || mkdir -p -m755 $LOGDIR
+
+# number of lines to before rotate logfile
+LOGLINES=$(uci -q get ddns.global.log_lines) || LOGLINES=250
+LOGLINES=$((LOGLINES + 1))	# correct sed handling
+
 # format to show date information in log and luci-app-ddns default ISO 8601 format
 DATE_FORMAT=$(uci -q get ddns.global.date_format) || DATE_FORMAT="%F %R"
 DATE_PROG="date +'$DATE_FORMAT'"
@@ -83,6 +86,11 @@ IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(
 
 # detect if called by dynamic_dns_lucihelper.sh script, disable retrys (empty variable == false)
 [ "$(basename $0)" = "dynamic_dns_lucihelper.sh" ] && LUCI_HELPER="TRUE" || LUCI_HELPER=""
+
+# USE_CURL if GNU Wget and cURL installed normally Wget is used by do_transfer()
+# to change this use global option use_curl '1'
+USE_CURL=$(uci -q get ddns.global.use_curl) || USE_CURL=0	# read config
+[ -x /usr/bin/curl ] || USE_CURL=0				# check for cURL
 
 # loads all options for a given package and section
 # also, sets all_option_variables to a list of the variable names
@@ -510,7 +518,7 @@ verify_host_port() {
 	[ $force_ipversion -ne 0 -a $use_ipv6 -ne 0 -o -z "$__IPV4" ] && __IP=$__IPV6 || __IP=$__IPV4
 
 	if [ -n "$__NCEXT" ]; then	# BusyBox nc compiled with extensions (timeout support)
-		__RUNPROG="/usr/bin/nc -vw 1 $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
+		__RUNPROG="/usr/bin/nc -w 1 $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
 		write_log 7 "#> $__RUNPROG"
 		eval $__RUNPROG
 		__ERR=$?
@@ -633,7 +641,8 @@ do_transfer() {
 	[ $# -ne 1 ] && write_log 12 "Error in 'do_transfer()' - wrong number of parameters"
 
 	# lets prefer GNU Wget because it does all for us - IPv4/IPv6/HTTPS/PROXY/force IP version
-	if /usr/bin/wget --version 2>&1 | grep "\+ssl" >/dev/null 2>&1 ; then
+	grep -i "\+ssl" /usr/bin/wget >/dev/null 2>&1	# check for Wget with SSL support
+	if [ $? -eq 0 -a $USE_CURL -eq 0 ]; then 	# except global option use_curl is set to "1"
 		__PROG="/usr/bin/wget -nv -t 1 -O $DATFILE -o $ERRFILE"	# non_verbose no_retry outfile errfile
 		# force network/ip to use for communication
 		if [ -n "$bind_network" ]; then
