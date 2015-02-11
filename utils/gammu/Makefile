@@ -26,7 +26,7 @@ define Package/gammu
 	CATEGORY:=Utilities
 	TITLE:=Cell phone/modem SMS and control tool
 	URL:=http://dl.cihar.com/gammu/releases/
-	DEPENDS:=@BUILD_NLS +libpthread +libcurl +glib2 $(ICONV_DEPENDS) $(INTL_DEPENDS)
+	DEPENDS:=+libpthread +libcurl +glib2 $(ICONV_DEPENDS) $(INTL_DEPENDS)
 	DEPENDS+=+PACKAGE_python:python +PACKAGE_bluez-libs:bluez-libs
 	DEPENDS+=+PACKAGE_libmysqlclient:libmysqlclient +PACKAGE_unixodbc:unixodbc
 	DEPENDS+=+PACKAGE_libusb-1.0:libusb-1.0
