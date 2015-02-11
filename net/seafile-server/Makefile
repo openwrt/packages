@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
-PKG_VERSION:=3.1.7
+PKG_VERSION:=4.0.6
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/haiwen/seafile.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=69658fca88f258276be92447b1b4462b64a1c6b9
+PKG_SOURCE_VERSION:=adf9a875a960c1471bf6c93fce397c576e985bb3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -29,9 +29,11 @@ define Package/seafile-server
     TITLE:=Seafile server
     MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
     URL:=http://seafile.com/
-    DEPENDS:=+shadow-useradd +libarchive +libopenssl +glib2 +seafile-ccnet +libsearpc +sqlite3-cli +python-mysql \
-		+jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 +libmysqlclient +libevhtp \
-		+libpthread +libuuid +seafile-seahub +bash +sudo +procps +procps-pkill $(ICONV_DEPENDS)
+    DEPENDS:=+shadow-useradd +libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub \
+		+sqlite3-cli +python-mysql +jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 \
+		+libmysqlclient +libevhtp +libpthread +libuuid \
+		+bash +sudo +procps +procps-pkill $(ICONV_DEPENDS)
+    EXTRA_DEPENDS:=seafile-ccnet (=4.0.6-1e1aeae83cc33356ebd5f064f4a4c148186b814d), seafile-seahub (=4.0.6-739b32b02c4803448d5cb75b3e22ec0073930aed)
 endef
 
 define Package/seafile-server/description
@@ -99,9 +101,17 @@ then
       echo "*** ERROR: Configuration failed. Please fix the issues if any and re-run the script using the command below:"
       echo "*** \"/etc/init.d/seafile setup\""
    fi
-echo
-echo "*** NOTE: you need to create an admin account before using Seafile."
-echo "*** Please run \"/etc/init.d/seafile create_admin\" to do so."
+
+   echo
+   echo "*** NOTE: you need to create an admin account before using Seafile."
+   echo "*** Please run \"/etc/init.d/seafile create_admin\" to do so."
+else
+   echo "*** WARNING: it seems you are upgrading from an older version."
+   echo "*** If so, please run the appropriate upgrade script before using the new version of Seafile."
+   echo "*** Upgrade scripts are located at \"/usr/share/seafile/seafile-server/upgrade\""
+   echo
+   echo "*** For more information, please read http://manual.seafile.com/deploy/upgrade.html"
+   exit
 fi
 
 /etc/init.d/seafile enable
