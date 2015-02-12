@@ -201,7 +201,7 @@ write_log 7 "retry counter : $retry_count times"
 
 # kill old process if it exists & set new pid file
 stop_section_processes "$SECTION_ID"
-[ $? -gt 0 ] && write_log 7 "Send 'SIGTERM' was send to old process" || write_log 7 "No old process"
+[ $? -gt 0 ] && write_log 7 "'SIGTERM' was send to old process" || write_log 7 "No old process"
 echo $$ > $PIDFILE
 
 # determine when the last update was
