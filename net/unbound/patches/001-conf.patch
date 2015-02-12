@@ -149,6 +149,6 @@
  	# plain value in bytes or you can append k, m or G. default is "1Mb". 
  	# neg-cache-size: 1m
 +	neg-cache-size: 10k
- 
+ 	
  	# By default, for a number of zones a small default 'nothing here'
  	# reply is built-in.  Query traffic is thus blocked.  If you
