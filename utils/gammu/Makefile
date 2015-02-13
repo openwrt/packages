@@ -35,7 +35,8 @@ endef
 CONFIGURE_ARGS:= \
 	--prefix=/usr \
 	--cross-root="$(STAGING_DIR) $(TOOLCHAIN_DIR)" \
-	--enable-shared
+	--enable-shared \
+	--without-libdbi \
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
