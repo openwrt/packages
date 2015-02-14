@@ -22,6 +22,7 @@ PKG_FIXUP:=autoreconf
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_OCSERV_PAM \
+	CONFIG_OCSERV_SECCOMP \
 	CONFIG_OCSERV_PROTOBUF \
 
 include $(INCLUDE_DIR)/package.mk
@@ -37,7 +38,7 @@ define Package/ocserv
   TITLE:=OpenConnect VPN server
   URL:=http://www.infradead.org/ocserv/
   MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
-  DEPENDS:= +OCSERV_HTTP_PARSER:libhttp-parser +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c +kmod-tun
+  DEPENDS:= +OCSERV_HTTP_PARSER:libhttp-parser +OCSERV_SECCOMP:libseccomp +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c +kmod-tun
   USERID:=ocserv=72:ocserv=72
 endef
 
@@ -60,6 +61,10 @@ CONFIGURE_ARGS+= \
 
 ifneq ($(CONFIG_OCSERV_PAM),y)
 CONFIGURE_ARGS += --without-pam
+endif
+
+ifneq ($(CONFIG_OCSERV_SECCOMP),y)
+CONFIGURE_ARGS += --disable-seccomp
 endif
 
 ifneq ($(CONFIG_OCSERV_PROTOBUF),y)
