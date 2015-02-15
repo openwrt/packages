@@ -1,6 +1,6 @@
 --- a/gio/Makefile.am
 +++ b/gio/Makefile.am
-@@ -695,6 +695,7 @@ bin_PROGRAMS = gio-querymodules glib-com
+@@ -700,6 +700,7 @@ bin_PROGRAMS = gio-querymodules glib-com
  
  glib_compile_resources_LDADD = libgio-2.0.la 		\
  	$(top_builddir)/gobject/libgobject-2.0.la	\
