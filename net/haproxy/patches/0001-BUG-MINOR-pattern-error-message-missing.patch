@@ -1,0 +1,30 @@
+From e338a8741983acc9a4501a03ecd593d89e6fade3 Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <tfournier@exceliance.fr>
+Date: Fri, 6 Feb 2015 17:50:55 +0100
+Subject: [PATCH 1/2] BUG/MINOR: pattern: error message missing
+
+This patch must be backported in 1.5 version.
+(cherry picked from commit 8aa8384e22dd0b66ded00c70a9c6034278b4bb69)
+---
+ src/pattern.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/pattern.c b/src/pattern.c
+index 208e33a..a6fc52d 100644
+--- a/src/pattern.c
++++ b/src/pattern.c
+@@ -989,8 +989,10 @@ int pat_idx_list_ptr(struct pattern_expr *expr, struct pattern *pat, char **err)
+ 
+ 	/* allocate pattern */
+ 	patl = calloc(1, sizeof(*patl));
+-	if (!patl)
++	if (!patl) {
++		memprintf(err, "out of memory while indexing pattern");
+ 		return 0;
++	}
+ 
+ 	/* duplicate pattern */
+ 	memcpy(&patl->pat, pat, sizeof(*pat));
+-- 
+2.0.4
+
