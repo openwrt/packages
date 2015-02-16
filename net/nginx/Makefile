@@ -99,6 +99,7 @@ ifeq ($(CONFIG_NGINX_DAV),y)
   ADDITIONAL_MODULES += --with-http_dav_module
 endif
 ifeq ($(CONFIG_NGINX_LUA),y)
+  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/lua-nginx/deps/ngx_devel_kit
   ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/lua-nginx
 endif
 ifeq ($(CONFIG_NGINX_SUB_MULTIFILTER),y)
