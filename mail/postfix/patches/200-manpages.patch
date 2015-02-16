@@ -1,7 +1,7 @@
 diff -Naur postfix-2.10.2/conf/post-install postfix-2.10.2_patched/conf/post-install
 --- postfix-2.10.2/conf/post-install	2013-06-13 18:07:46.000000000 +0400
 +++ postfix-2.10.2_patched/conf/post-install	2013-11-19 21:17:49.572820573 +0400
-@@ -350,10 +350,10 @@
+@@ -359,10 +359,10 @@
  
  # Sanity checks
  
@@ -16,28 +16,28 @@ diff -Naur postfix-2.10.2/conf/post-install postfix-2.10.2_patched/conf/post-ins
  
  case $setgid_group in
   no) echo $0: Error: setgid_group no longer accepts \"no\" values. 1>&2
-@@ -361,7 +361,7 @@
+@@ -370,7 +370,7 @@
  esac
  
  for path in "$daemon_directory" "$command_directory" "$queue_directory" \
--    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory"
-+    "$sendmail_path" "$newaliases_path" "$mailq_path"
+-    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory" \
++    "$sendmail_path" "$newaliases_path" "$mailq_path" \
+     "$meta_directory"
  do
     case "$path" in
-    /*) ;;
-@@ -369,7 +369,7 @@
+@@ -379,7 +379,7 @@
     esac
  done
  
--for path in "$html_directory" "$readme_directory"
-+for path in "$html_directory" "$readme_directory" "$manpage_directory"
+-for path in "$html_directory" "$readme_directory" "$shlib_directory"
++for path in "$html_directory" "$readme_directory" "$shlib_directory" "$manpage_directory"
  do
     case "$path" in
     /*) ;;
 diff -Naur postfix-2.10.2/postfix-install postfix-2.10.2_patched/postfix-install
 --- postfix-2.10.2/postfix-install	2012-05-22 23:40:29.000000000 +0400
 +++ postfix-2.10.2_patched/postfix-install	2013-11-19 21:12:20.694160734 +0400
-@@ -481,13 +481,13 @@
+@@ -543,13 +543,13 @@
       exit 1;;
  esac
  
@@ -56,18 +56,18 @@ diff -Naur postfix-2.10.2/postfix-install postfix-2.10.2_patched/postfix-install
 +#     exit 1;;
 +#esac
  
- for path in "$html_directory" "$readme_directory"
+ for path in "$html_directory" "$readme_directory" "$shlib_directory"
  do
-@@ -500,7 +500,7 @@
+@@ -562,7 +562,7 @@
  done
  
  for path in "$daemon_directory" "$data_directory" "$command_directory" "$queue_directory" \
--    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory"
-+    "$sendmail_path" "$newaliases_path" "$mailq_path"
+-    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory" \
++    "$sendmail_path" "$newaliases_path" "$mailq_path" \
+     "$meta_directory"
  do
     case "$path" in
-    /*) ;;
-@@ -680,8 +680,8 @@
+@@ -758,8 +758,8 @@
  		compare_or_replace $mode "$owner" "$group" html/$file \
  		    $HTML_DIRECTORY/$file || exit 1;;
  	'$manpage_directory')
