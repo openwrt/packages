@@ -191,6 +191,10 @@ define PyPackage/python-base/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
 endef
 
+HOST_CFLAGS+= \
+	-I/usr/include/ncursesw \
+	-I/usr/include/ncurses
+
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
@@ -198,7 +202,7 @@ HOST_CONFIGURE_ARGS+= \
 	--prefix=$(STAGING_DIR_HOST) \
 	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
-	OPT="$(HOST_CFLAGS)"
+	CFLAGS="$(HOST_CFLAGS)"
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
