@@ -198,6 +198,13 @@ define Package/dbus/install
 	$(INSTALL_BIN) \
 		./files/dbus.init \
 		$(1)/etc/init.d/dbus
+
+ifneq ($(CONFIG_PACKAGE_systemd),)
+	$(INSTALL_DIR) $(1)/usr/lib/systemd
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/systemd/system \
+		$(1)/usr/lib/systemd/
+endif
 endef
 
 define Package/dbus-utils/install
