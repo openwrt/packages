@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 # Make sure to also update the dbus-x package
 PKG_NAME:=dbus
 PKG_VERSION:=1.9.8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dbus.freedesktop.org/releases/dbus/
@@ -97,7 +97,6 @@ CONFIGURE_ARGS += \
 	--disable-xml-docs \
 	--with-xml="expat" \
 	--with-dbus-user=root \
-	--with-dbus-daemondir="/usr/sbin" \
 	--with-system-socket="/var/run/dbus/system_bus_socket" \
 	--with-system-pid-file="/var/run/dbus.pid" \
 	--without-x \
@@ -121,7 +120,6 @@ HOST_CONFIGURE_ARGS+= \
 	--disable-verbose-mode \
 	--disable-xml-docs \
 	--with-dbus-user=root \
-	--with-dbus-daemondir="$(STAGIND_DIR_HOST)/bin" \
 	--with-system-socket="$(STAGING_DIR_HOST)/var/run/dbus/system_bus_socket" \
 	--with-system-pid-file="$(STAGING_DIR_HOST)/var/run/dbus.pid" \
 	--without-x \
@@ -177,21 +175,9 @@ define Package/dbus/install
 		$(PKG_INSTALL_DIR)/usr/lib/dbus-1/dbus-daemon-launch-helper \
 		$(1)/usr/lib/dbus-1/
 
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/sbin/dbus-daemon \
-		$(1)/usr/sbin/
-
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/dbus-uuidgen \
-		$(1)/usr/bin/
-
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/dbus-launch \
-		$(1)/usr/bin/dbus-launch.real
-	$(INSTALL_BIN) \
-		./files/dbus-launch \
+		$(PKG_INSTALL_DIR)/usr/bin/dbus-{cleanup-sockets,daemon,uuidgen} \
 		$(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -210,7 +196,14 @@ endef
 define Package/dbus-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/dbus-{send,monitor,cleanup-sockets} \
+		$(PKG_INSTALL_DIR)/usr/bin/dbus-{send,monitor} \
+		$(1)/usr/bin/
+
+	$(INSTALL_BIN) \
+		$(PKG_INSTALL_DIR)/usr/bin/dbus-launch \
+		$(1)/usr/bin/dbus-launch.real
+	$(INSTALL_BIN) \
+		./files/dbus-launch \
 		$(1)/usr/bin/
 endef
 
