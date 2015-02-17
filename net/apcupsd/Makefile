@@ -1,0 +1,78 @@
+#
+# Copyright (C) 2006-2015 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=apcupsd
+PKG_VERSION:=3.14.13
+PKG_RELEASE:=2
+
+PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYING
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/apcupsd
+PKG_MD5SUM:=c291d9d3923b4d9c0e600b755ad4f489
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/apcupsd
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=+libpthread +libusb-compat
+  TITLE:=UPS control software
+  URL:=http://www.apcupsd.org/
+endef
+
+define Build/Configure
+	$(CP) $(SCRIPT_DIR)/config.* $(PKG_BUILD_DIR)/autoconf/
+	$(call Build/Configure/Default, \
+		--with-distname=unknown \
+		--sysconfdir=/etc/apcupsd \
+		--enable-usb \
+		--without-x \
+	)
+endef
+
+define Build/Compile
+	$(MAKE) -C $(PKG_BUILD_DIR) \
+		DESTDIR="$(PKG_INSTALL_DIR)" \
+		LD="$(TARGET_CC)" \
+		all install
+endef
+
+define Package/apcupsd/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/apcupsd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/smtp $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/apctest $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/apcaccess $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/apcupsd
+	$(INSTALL_CONF) ./files/apcupsd.conf $(1)/etc/apcupsd/
+	$(INSTALL_CONF) ./files/apcupsd_mail.conf $(1)/etc/apcupsd/
+	$(INSTALL_BIN) ./files/changeme $(1)/etc/apcupsd/
+	$(INSTALL_BIN) ./files/commfailure $(1)/etc/apcupsd/
+	$(INSTALL_BIN) ./files/commok $(1)/etc/apcupsd/
+	$(INSTALL_BIN) ./files/offbattery $(1)/etc/apcupsd/
+	$(INSTALL_BIN) ./files/onbattery $(1)/etc/apcupsd/
+	$(INSTALL_BIN) ./files/apccontrol $(1)/etc/apcupsd/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN)	./files/apcupsd.init $(1)/etc/init.d/apcupsd
+endef
+
+define Package/apcupsd/conffiles
+/etc/apcupsd/apcupsd.conf
+/etc/apcupsd/apcupsd_mail.conf
+/etc/apcupsd/changeme
+/etc/apcupsd/commfailure
+/etc/apcupsd/commok
+/etc/apcupsd/offbattery
+/etc/apcupsd/onbattery
+endef
+
+$(eval $(call BuildPackage,apcupsd))
