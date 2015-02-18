@@ -14,7 +14,7 @@ logger="logger -p daemon.err -s -t $NAME"
 
 validate_lun_section() {
 	uci_validate_section tgt lun $1 \
-		'device:or("file", "device")' \
+		'device:or(file, device)' \
 		'type:or("disk", "cd", "pt"):disk' \
 		'bstype:or("rdwr", "aio", "sg"):rdwr' \
 		'sync:bool:0' \
