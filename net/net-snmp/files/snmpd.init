@@ -159,6 +159,10 @@ start_service() {
 	procd_set_param file $CONFIGFILE
 	procd_set_param respawn
 
+	for iface in $(ls /sys/class/net 2>/dev/null); do
+		procd_append_param netdev "$iface"
+	done
+
 	procd_close_instance
 }
 
