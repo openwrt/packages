@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=svox
 PKG_VERSION:=1.0+git20130326
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/non-free/s/svox
@@ -49,12 +49,13 @@ define Build/Prepare
 	mv $(PKG_BUILD_DIR)/pico/* $(PKG_BUILD_DIR)
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default)
-endef
-
 define Package/svox/install
-	$(call Build/Install/Default)
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/pico2wave $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libttspico.so* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/share/pico/lang
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pico/lang/* $(1)/usr/share/pico/lang/
 endef
 
 $(eval $(call BuildPackage,svox))
