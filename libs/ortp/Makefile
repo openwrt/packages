@@ -12,10 +12,8 @@ PKG_VERSION:=0.23.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= \
-	http://download.savannah.gnu.org/releases-noredirect/linphone/ortp/sources/ \
-	http://www.very-clever.com/download/nongnu/linphone/ortp/sources/
-PKG_MD5SUM:=2b0281600cb958d1c94e318a86b62fe3
+PKG_SOURCE_URL:=@SAVANNAH/linphone/ortp/sources
+PKG_MD5SUM:=fb833cc7a66ec1a0c1b75016130e7e6d
 
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING
