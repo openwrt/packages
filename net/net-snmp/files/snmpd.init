@@ -2,7 +2,7 @@
 # Copyright (C) 2008 OpenWrt.org
 START=50
 
-DEFAULT=/etc/default/snmpd
+OPTIONS="-Lf /dev/null -p /var/run/snmpd.pid"
 LIB_D=/var/lib/snmp
 LOG_D=/var/log
 RUN_D=/var/run
@@ -148,7 +148,6 @@ start() {
 	config_foreach snmpd_exec_add exec
 	config_foreach snmpd_disk_add disk
 	
-	[ -f $DEFAULT ] && . $DEFAULT
 	$DEBUG /usr/sbin/snmpd $OPTIONS
 }
 stop() {
