@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
 PKG_VERSION:=3.3.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -123,7 +123,8 @@ CONFIGURE_ARGS+= \
 	--disable-tests \
 	--disable-rsa-export \
 	--with-default-trust-store-dir=/etc/ssl/certs/ \
-	--disable-crywrap
+	--disable-crywrap \
+	--with-librt-prefix="$(STAGING_DIR)/"
 
 ifneq ($(CONFIG_GNUTLS_EXT_LIBTASN1),y)
 CONFIGURE_ARGS += --with-included-libtasn1
