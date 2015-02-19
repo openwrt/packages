@@ -124,6 +124,7 @@ endef
 Package/msmtp-nossl/conffiles = $(Package/msmtp/conffiles)
 Package/msmtp-nossl/install = $(Package/msmtp/install)
 Package/msmtp-nossl/postinst = $(Package/msmtp/postinst)
+Package/msmtp-nossl/prerm = $(Package/msmtp/prerm)
 
 define Package/msmtp-queue/install
 	$(INSTALL_DIR) $(1)/usr/bin
