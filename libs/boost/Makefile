@@ -45,8 +45,11 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_boost-test \
 	CONFIG_PACKAGE_boost-thread \
 	CONFIG_PACKAGE_boost-wave \
-        CONFIG_PACKAGE_boost-atomic \
-
+	CONFIG_PACKAGE_boost-atomic \
+	CONFIG_PACKAGE_boost-context \
+	CONFIG_PACKAGE_boost-container \
+	CONFIG_PACKAGE_boost-coroutine \
+	CONFIG_PACKAGE_boost-log \
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -183,6 +186,28 @@ define Package/boost-wave
   DEPENDS+= +boost-date_time +boost-thread +boost-filesystem
 endef
 
+define Package/boost-context
+  $(call Package/boost/Default)
+  TITLE+= (context)
+endef
+
+define Package/boost-container
+  $(call Package/boost/Default)
+  TITLE+= (container)
+endef
+
+define Package/boost-coroutine
+  $(call Package/boost/Default)
+  TITLE+= (coroutine)
+  DEPENDS+= +boost-system +boost-chrono +boost-context +boost-thread
+endef
+
+define Package/boost-log
+  $(call Package/boost/Default)
+  TITLE+= (log)
+  DEPENDS+= +boost-system +boost-chrono +boost-date_time +boost-thread +boost-filesystem +boost-regex
+endef
+
 define Package/boost
   $(call Package/boost/Default)
   TITLE+= (header-only)
@@ -199,6 +224,10 @@ endef
 
 CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
 TARGET_LDFLAGS += -pthread -lrt
+
+ifeq ($(ARCH),mips)
+  BOOST_CONTEXT_ABI_USE_O32:=y
+endif
 
 define Build/Compile
 	( cd $(PKG_BUILD_DIR) ; \
@@ -237,6 +266,7 @@ define Build/Compile
 			\
 			$(if $(CONFIG_PACKAGE_boost-iostreams),-sNO_BZIP2=1 -sZLIB_INCLUDE=$(STAGING_DIR)/usr/include \
 				-sZLIB_LIBPATH=$(STAGING_DIR)/usr/lib) \
+			$(if $(BOOST_CONTEXT_ABI_USE_O32),abi=o32,) \
 			install \
 	)
 endef
@@ -373,6 +403,22 @@ define Package/boost-wave/install
   $(call Package/boost/Default/install,$(1),wave)
 endef
 
+define Package/boost-context/install
+  $(call Package/boost/Default/install,$(1),context)
+endef
+
+define Package/boost-container/install
+  $(call Package/boost/Default/install,$(1),container)
+endef
+
+define Package/boost-coroutine/install
+  $(call Package/boost/Default/install,$(1),coroutine)
+endef
+
+define Package/boost-log/install
+  $(call Package/boost/Default/install,$(1),log)
+endef
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,boost))
 $(eval $(call BuildPackage,boost-atomic))
@@ -397,3 +443,8 @@ $(eval $(call BuildPackage,boost-test))
 $(eval $(call BuildPackage,boost-thread))
 $(eval $(call BuildPackage,boost-timer))
 $(eval $(call BuildPackage,boost-wave))
+$(eval $(call BuildPackage,boost-context))
+$(eval $(call BuildPackage,boost-container))
+$(eval $(call BuildPackage,boost-coroutine))
+$(eval $(call BuildPackage,boost-log))
+
