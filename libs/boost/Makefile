@@ -111,6 +111,7 @@ endef
 define Package/boost-locale
   $(call Package/boost/Default)
   TITLE+= (locale)
+  DEPENDS+= +iconv
 endef
 
 define Package/boost-math
@@ -200,6 +201,14 @@ endef
 CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
 TARGET_LDFLAGS += -pthread -lrt
 
+ifeq ($(ARCH),mips)
+	BOOST_ABI = o32
+else ifeq ($(ARCH),arm)
+	BOOST_ABI = aapcs
+else
+	BOOST_ABI = sysv
+endif
+
 define Build/Compile
 	( cd $(PKG_BUILD_DIR) ; \
 		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
@@ -209,7 +218,7 @@ define Build/Compile
 		) \
 		bjam \
 			'-sBUILD=release <optimization>space <inlining>on <debug-symbols>off' \
-			--toolset=gcc-$(ARCH) --build-type=minimal --layout=system \
+			--toolset=gcc-$(ARCH) --build-type=minimal --layout=system abi=$(BOOST_ABI) \
 			--disable-long-double \
 			$(CONFIGURE_ARGS) \
 			$(if $(CONFIG_PACKAGE_boost-atomic),,--without-atomic) \
