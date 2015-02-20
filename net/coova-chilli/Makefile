@@ -36,6 +36,7 @@ PKG_CONFIG_DEPENDS := \
   COOVACHILLI_OPENSSL
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/kernel.mk
 
 define Package/coova-chilli
   SUBMENU:=Captive Portals
@@ -61,6 +62,38 @@ define Package/coova-chilli/config
   source "$(SOURCE)/Config.in"
 endef
 
+define KernelPackage/ipt-coova
+  URL:=http://www.coova.org/CoovaChilli
+  SUBMENU:=Netfilter Extensions
+  DEPENDS:=coova-chilli +kmod-ipt-core +libxtables
+  TITLE:=Coova netfilter module
+  FILES:=$(PKG_BUILD_DIR)/src/linux/xt_*.$(LINUX_KMOD_SUFFIX)
+  AUTOLOAD:=$(call AutoProbe,xt_coova)
+endef
+
+define KernelPackage/ipt-coova/description
+	Netfilter kernel module for CoovaChilli
+	Includes:
+	- coova
+endef
+
+DISABLE_NLS=
+
+TARGET_CFLAGS += $(FPIC)
+
+CONFIGURE_VARS += \
+       ARCH="$(LINUX_KARCH)" \
+       KERNEL_DIR="$(LINUX_DIR)"
+
+MAKE_FLAGS += \
+       ARCH="$(LINUX_KARCH)" \
+       KERNEL_DIR="$(LINUX_DIR)"
+
+MAKE_INSTALL_FLAGS += \
+       ARCH="$(LINUX_KARCH)" \
+       KERNEL_DIR="$(LINUX_DIR)" \
+       INSTALL_MOD_PATH="$(PKG_INSTALL_DIR)"
+
 define Build/Prepare
 $(call Build/Prepare/Default)
 	( cd $(PKG_BUILD_DIR) ; \
@@ -82,6 +115,7 @@ define Build/Configure
 	$(if $(CONFIG_COOVACHILLI_MATRIXSSL),--with,--without)-matrixssl \
 	$(if $(CONFIG_COOVACHILLI_CYASSL),--with,--without)-cyaxssl \
 	$(if $(CONFIG_COOVACHILLI_OPENSSL),--with,--without)-openssl \
+	$(if $(CONFIG_PACKAGE_kmod-ipt-coova),--with-nfcoova) \
 	)
 endef
 
@@ -100,6 +134,9 @@ define Package/coova-chilli/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/chilli* $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/iptables
+	$(CP) $(PKG_INSTALL_DIR)/usr/iptables/lib*.so $(1)/usr/lib/iptables
 endef
 
 $(eval $(call BuildPackage,coova-chilli))
+$(eval $(call KernelPackage,ipt-coova))
