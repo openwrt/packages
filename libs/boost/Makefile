@@ -45,11 +45,11 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_boost-test \
 	CONFIG_PACKAGE_boost-thread \
 	CONFIG_PACKAGE_boost-wave \
-    CONFIG_PACKAGE_boost-atomic \
-    CONFIG_PACKAGE_boost-context \
-    CONFIG_PACKAGE_boost-container \
-    CONFIG_PACKAGE_boost-coroutine \
-    CONFIG_PACKAGE_boost-log \
+	CONFIG_PACKAGE_boost-atomic \
+	CONFIG_PACKAGE_boost-context \
+	CONFIG_PACKAGE_boost-container \
+	CONFIG_PACKAGE_boost-coroutine \
+	CONFIG_PACKAGE_boost-log \
 
 
 
