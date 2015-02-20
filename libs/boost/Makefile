@@ -12,10 +12,12 @@
 
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/nls.mk
+include $(INCLUDE_DIR)/target.mk 
 
 PKG_NAME:=boost
 PKG_VERSION:=1_57_0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
@@ -26,7 +28,7 @@ PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com> (Modified from Mirko Vogt <mirko@openwrt.org> Boost 1.51 Original Makefile and patches)
 
 
-PKG_BUILD_DEPENDS:=boost/host
+PKG_BUILD_DEPENDS += boost/host 
 PKG_BUILD_PARALLEL:=0
 PKG_USE_MIPS16:=0
 
@@ -45,7 +47,12 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_boost-test \
 	CONFIG_PACKAGE_boost-thread \
 	CONFIG_PACKAGE_boost-wave \
-        CONFIG_PACKAGE_boost-atomic \
+	CONFIG_PACKAGE_boost-atomic \
+	CONFIG_PACKAGE_boost-context \
+	CONFIG_PACKAGE_boost-container \
+	CONFIG_PACKAGE_boost-coroutine \
+	CONFIG_PACKAGE_boost-log \
+
 
 
 include $(INCLUDE_DIR)/package.mk
@@ -111,6 +118,7 @@ endef
 define Package/boost-locale
   $(call Package/boost/Default)
   TITLE+= (locale)
+  DEPENDS+= $(ICONV_DEPENDS)
 endef
 
 define Package/boost-math
@@ -183,6 +191,28 @@ define Package/boost-wave
   DEPENDS+= +boost-date_time +boost-thread +boost-filesystem
 endef
 
+define Package/boost-context
+  $(call Package/boost/Default)
+  TITLE+= (context)
+endef
+
+define Package/boost-container
+  $(call Package/boost/Default)
+  TITLE+= (container)
+endef
+
+define Package/boost-coroutine
+  $(call Package/boost/Default)
+  TITLE+= (coroutine)
+  DEPENDS+= +boost-system +boost-chrono +boost-context +boost-thread
+endef
+
+define Package/boost-log
+  $(call Package/boost/Default)
+  TITLE+= (log)
+  DEPENDS+= +boost-system +boost-chrono +boost-date_time +boost-thread +boost-filesystem +boost-regex
+endef
+
 define Package/boost
   $(call Package/boost/Default)
   TITLE+= (header-only)
@@ -200,7 +230,27 @@ endef
 CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
 TARGET_LDFLAGS += -pthread -lrt
 
+
+
+
+ifneq ($(findstring mips,$(ARCH)),)
+    ifeq ($(ARCH),mips64)
+        BOOST_ABI = 64
+    else ifeq ($(ARCH),octeon)
+        BOOST_ABI = 64
+    else
+        BOOST_ABI = o32
+    endif
+else ifeq ($(ARCH),arm)
+	BOOST_ABI = aapcs
+else
+	BOOST_ABI = sysv
+endif
+
+
+
 define Build/Compile
+	echo "Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu $(CPU_TYPE) $(CPU_SUBTYPE)";
 	( cd $(PKG_BUILD_DIR) ; \
 		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
 		$(if $(CONFIG_PACKAGE_boost-python), \
@@ -209,7 +259,7 @@ define Build/Compile
 		) \
 		bjam \
 			'-sBUILD=release <optimization>space <inlining>on <debug-symbols>off' \
-			--toolset=gcc-$(ARCH) --build-type=minimal --layout=system \
+			--toolset=gcc-$(ARCH) --build-type=minimal --layout=system abi=$(BOOST_ABI) \
 			--disable-long-double \
 			$(CONFIGURE_ARGS) \
 			$(if $(CONFIG_PACKAGE_boost-atomic),,--without-atomic) \
@@ -220,7 +270,8 @@ define Build/Compile
 			$(if $(CONFIG_PACKAGE_boost-graph),,--without-graph) \
 			$(if $(CONFIG_PACKAGE_boost-graph_parallel),,--without-graph_parallel) \
 			$(if $(CONFIG_PACKAGE_boost-iostreams),,--without-iostreams) \
-			$(if $(CONFIG_PACKAGE_boost-locale),,--without-locale) \
+			$(if $(CONFIG_PACKAGE_boost-locale),boost.locale.iconv=on -sICONV_PATH=$(ICONV_PREFIX) boost.locale.posix=$(if $(USE_UCLIBC),on,off), \
+				--without-locale boost.locale.iconv=off) \
 			$(if $(CONFIG_PACKAGE_boost-math),,--without-math) \
 			$(if $(CONFIG_PACKAGE_boost-mpi),,--without-mpi) \
 			$(if $(CONFIG_PACKAGE_boost-program_options),,--without-program_options) \
@@ -234,6 +285,10 @@ define Build/Compile
 			$(if $(CONFIG_PACKAGE_boost-thread),,--without-thread) \
 			$(if $(CONFIG_PACKAGE_boost-timer),,--without-timer) \
 			$(if $(CONFIG_PACKAGE_boost-wave),,--without-wave) \
+			$(if $(CONFIG_PACKAGE_boost-context),,--without-context) \
+			$(if $(CONFIG_PACKAGE_boost-container),,--without-container) \
+			$(if $(CONFIG_PACKAGE_boost-coroutine),,--without-coroutine) \
+			$(if $(CONFIG_PACKAGE_boost-log),,--without-log) \
 			\
 			$(if $(CONFIG_PACKAGE_boost-iostreams),-sNO_BZIP2=1 -sZLIB_INCLUDE=$(STAGING_DIR)/usr/include \
 				-sZLIB_LIBPATH=$(STAGING_DIR)/usr/lib) \
@@ -373,6 +428,24 @@ define Package/boost-wave/install
   $(call Package/boost/Default/install,$(1),wave)
 endef
 
+define Package/boost-context/install
+  $(call Package/boost/Default/install,$(1),context)
+endef
+
+define Package/boost-container/install
+  $(call Package/boost/Default/install,$(1),container)
+endef
+
+define Package/boost-coroutine/install
+  $(call Package/boost/Default/install,$(1),coroutine)
+endef
+
+define Package/boost-log/install
+  $(call Package/boost/Default/install,$(1),log)
+endef
+
+
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,boost))
 $(eval $(call BuildPackage,boost-atomic))
@@ -397,3 +470,7 @@ $(eval $(call BuildPackage,boost-test))
 $(eval $(call BuildPackage,boost-thread))
 $(eval $(call BuildPackage,boost-timer))
 $(eval $(call BuildPackage,boost-wave))
+$(eval $(call BuildPackage,boost-context))
+$(eval $(call BuildPackage,boost-container))
+$(eval $(call BuildPackage,boost-coroutine))
+$(eval $(call BuildPackage,boost-log))
