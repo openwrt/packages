@@ -30,7 +30,7 @@ define Package/$(PKG_NAME)/default
   TITLE:=mosquitto - an MQTT message broker
   URL:=http://www.mosquitto.org/
   MAINTAINER:=Karl Palsson <karlp@remake.is>
-  DEPENDS:= +librt
+  DEPENDS:= +librt +libuuid
   USERID:=mosquitto=200:mosquitto=200
 endef
 
