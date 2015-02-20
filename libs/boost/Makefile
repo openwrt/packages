@@ -202,7 +202,7 @@ endef
 define Package/boost-coroutine
   $(call Package/boost/Default)
   TITLE+= (coroutine)
-  DEPENDS+= +boost-system +boost-chrono +boost-context
+  DEPENDS+= +boost-system +boost-chrono +boost-context +boost-thread
 endef
 
 define Package/boost-log
