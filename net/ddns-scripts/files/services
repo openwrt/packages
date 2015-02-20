@@ -1,0 +1,93 @@
+# 44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+#
+# This file contains the update urls for various dynamic dns services.
+# Column one contains the service name, column two contains the update url.
+# within the update url there are 4 variables you can use: [USERNAME],
+# [PASSWORD], [DOMAIN] and [IP].  These are substituted for the username,
+# password, and domain name specified in the /etc/config/ddns file when an
+# update is performed.  The IP is substituted for the current ip address of the
+# router.  These variables are case sensitive, while urls generally are not, so
+# if you need to enter the same text in the url (which seems very unlikely) put
+# that text in lowercase, while the variables should remain in uppercase
+#
+# There are TONS of dynamic dns services out there. There's a huge list of them at:
+# http://www.dmoz.org/Computers/Software/Internet/Servers/Address_Management/Dynamic_DNS_Services/
+# If anyone has time they could update this file to be compatible with a bunch of them
+#
+# !!! Since ddns-scripts Version 2.x the update of IPv6 addresses is also supported
+# !!! This file is used for update of IPv4 adresses only. For IPv6 use services_ipv6
+#
+# !!! Since ddns-scripts Version 2.x the update via provider specific update scripts is supported.
+# !!! This scripts must be located at /usr/lib/ddns directory if defined inside this file.
+# !!! Use only the script name (without path). Sample:
+# !!! "example.com"	"update_sample.sh"
+#
+# 44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+
+"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"changeip.com"		"http://[USERNAME]:[PASSWORD]@nic.changeip.com/nic/update?u=[USERNAME]&p=[PASSWORD]&cmd=update&hostname=[DOMAIN]&ip=[IP]"
+"zoneedit.com"		"http://[USERNAME]:[PASSWORD]@dynamic.zoneedit.com/auth/dynamic.html?host=[DOMAIN]&dnsto=[IP]"
+"free.editdns.net"	"http://dyndns-free.editdns.net/api/dynLinux.php?p=[PASSWORD]&r=[DOMAIN]"
+
+# freedns.afraid.org is weird, you just need an update code, for which we use the password variable
+"freedns.afraid.org"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+
+# DNS Max and resellers' update urls
+"dnsmax.com"	"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=1&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
+"thatip.com"	"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=2&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
+
+# Hurricane Electric Dynamic DNS
+"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# DNSdynamic.org
+"dnsdynamic.org"	"http://[USERNAME]:[PASSWORD]@www.dnsdynamic.org/api/?hostname=[DOMAIN]&myip=[IP]"
+
+# dnsExit.com free dynamic DNS update url
+"dnsexit.com"	"http://www.dnsexit.com/RemoteUpdate.sv?login=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&myip=[IP]"
+
+# OVH
+"ovh.com" "http://[USERNAME]:[PASSWORD]@www.ovh.com/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
+
+# dns-o-matic is a free service by opendns.com for updating multiple hosts and
+# dynamic dns services in one api call. To update all your configured services
+# at once, use "all.dnsomatic.com as the hostname.
+"dnsomatic.com" "http://[USERNAME]:[PASSWORD]@updates.dnsomatic.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# 3322.org
+"3322.org"  "http://[USERNAME]:[PASSWORD]@members.3322.org/dyndns/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
+
+# namecheap.com
+"namecheap.com" "http://dynamicdns.park-your-domain.com/update?host=[USERNAME]&domain=[DOMAIN]&password=[PASSWORD]&ip=[IP]"
+
+# easydns.com dynamic DNS
+"easydns.com"	"http://[USERNAME]:[PASSWORD]@api.cp.easydns.com/dyn/tomato.php?hostname=[DOMAIN]&myip=[IP]"
+
+# Winco DDNS
+"ddns.com.br"	"http://[DOMAIN]:[PASSWORD]@members.ddns.com.br/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# Mythic Beasts (https://www.mythic-beasts.com) Dynamic DNS
+"mythic-beasts.com"	"http://dnsapi4.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20A%20DYNAMIC_IP"
+
+# Securepoint Dynamic-DNS-Service	(http://www.spdns.de)
+"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# duiadns.net - free dynamic DNS
+"duiadns.net"   "http://ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
+
+# Two-DNS - Simply. Connected. Everywhere.
+"twodns.de" "http://[USERNAME]:[PASSWORD]@update.twodns.de/update?hostname=[DOMAIN]&ip=[IP]"
+
+# MyDNS.JP
+"mydns.jp"	"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV4ADDR=[IP]"
+
+# LoopiaDNS
+"loopia.se" "http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
+
+# SelfHost.de
+"selfhost.de"	"http://carol.selfhost.de/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=1"
+
+# no-ip.pl nothing to do with no-ip.com (domain registered to www.domeny.tv) (IP autodetected by provider)
+"no-ip.pl"	"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
+
+# domains.google.com	non free service - require HTTPS communication
+"domains.google.com"	"https://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"

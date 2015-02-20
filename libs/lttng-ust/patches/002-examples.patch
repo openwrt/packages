@@ -1,0 +1,18 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -350,7 +350,14 @@ AC_ARG_WITH([lttng-system-rundir],
+ AC_DEFINE_UNQUOTED([LTTNG_SYSTEM_RUNDIR], ["$lttng_system_rundir"],
+ 	[LTTng system runtime directory])
+ 
+-AM_PATH_PYTHON([2.7],BUILD_GEN_TP_EXAMPLES=1,[:])
++AC_ARG_ENABLE([examples],
++	[AS_HELP_STRING([--enable-examples],[build examples [default=no]])],
++	[enable_examples=$enableval],
++	[enable_examples=no]
++)
++if test "x$enable_examples" = "xyes"; then
++  AM_PATH_PYTHON([2.7],BUILD_GEN_TP_EXAMPLES=1,[:])
++fi
+ AM_CONDITIONAL([BUILD_GEN_TP_EXAMPLES], [test $BUILD_GEN_TP_EXAMPLES], [Build examples requiring lttng-gen-tp])
+ 
+ AC_CONFIG_FILES([

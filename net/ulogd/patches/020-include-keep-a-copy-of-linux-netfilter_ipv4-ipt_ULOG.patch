@@ -1,0 +1,108 @@
+From 30e24dbfc7a8644e29664070e8c16e5c3997f87e Mon Sep 17 00:00:00 2001
+From: Pablo Neira Ayuso <pablo@netfilter.org>
+Date: Fri, 7 Nov 2014 18:33:01 +0100
+Subject: [PATCH] include: keep a copy of linux/netfilter_ipv4/ipt_ULOG.h
+
+This fixes compilation if you use a Linux kernel >= 3.17. This problem
+occurs since ULOG was removed from mainstream:
+
+http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=7200135bc1e61f1437dc326ae2ef2f310c50b4eb
+
+Closes: https://bugzilla.netfilter.org/show_bug.cgi?id=986
+Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
+---
+ configure.ac                             |  2 +-
+ include/linux/Makefile.am                |  4 +--
+ include/linux/netfilter_ipv4/Makefile.am |  1 +
+ include/linux/netfilter_ipv4/ipt_ULOG.h  | 49 ++++++++++++++++++++++++++++++++
+ 4 files changed, 53 insertions(+), 3 deletions(-)
+ create mode 100644 include/linux/netfilter_ipv4/Makefile.am
+ create mode 100644 include/linux/netfilter_ipv4/ipt_ULOG.h
+
+diff --git a/configure.ac b/configure.ac
+index 522c345..c5f573c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -142,7 +142,7 @@ dnl AM_CONDITIONAL(HAVE_PGSQL, test x$pgsqldir != x)
+ 
+ AC_CONFIG_FILES(include/Makefile include/ulogd/Makefile include/libipulog/Makefile \
+ 	  include/linux/Makefile include/linux/netfilter/Makefile \
+-	  libipulog/Makefile \
++	  include/linux/netfilter_ipv4/Makefile libipulog/Makefile \
+ 	  input/Makefile input/packet/Makefile input/flow/Makefile \
+ 	  input/sum/Makefile \
+ 	  filter/Makefile filter/raw2packet/Makefile filter/packet2flow/Makefile \
+diff --git a/include/linux/Makefile.am b/include/linux/Makefile.am
+index ca80d0d..18af1c2 100644
+--- a/include/linux/Makefile.am
++++ b/include/linux/Makefile.am
+@@ -1,2 +1,2 @@
+-
+-SUBDIRS = netfilter
++SUBDIRS = netfilter		\
++	  netfilter_ipv4
+diff --git a/include/linux/netfilter_ipv4/Makefile.am b/include/linux/netfilter_ipv4/Makefile.am
+new file mode 100644
+index 0000000..41819a3
+--- /dev/null
++++ b/include/linux/netfilter_ipv4/Makefile.am
+@@ -0,0 +1 @@
++noinst_HEADERS = ipt_ULOG.h
+diff --git a/include/linux/netfilter_ipv4/ipt_ULOG.h b/include/linux/netfilter_ipv4/ipt_ULOG.h
+new file mode 100644
+index 0000000..417aad2
+--- /dev/null
++++ b/include/linux/netfilter_ipv4/ipt_ULOG.h
+@@ -0,0 +1,49 @@
++/* Header file for IP tables userspace logging, Version 1.8
++ *
++ * (C) 2000-2002 by Harald Welte <laforge@gnumonks.org>
++ * 
++ * Distributed under the terms of GNU GPL */
++
++#ifndef _IPT_ULOG_H
++#define _IPT_ULOG_H
++
++#ifndef NETLINK_NFLOG
++#define NETLINK_NFLOG 	5
++#endif
++
++#define ULOG_DEFAULT_NLGROUP	1
++#define ULOG_DEFAULT_QTHRESHOLD	1
++
++#define ULOG_MAC_LEN	80
++#define ULOG_PREFIX_LEN	32
++
++#define ULOG_MAX_QLEN	50
++/* Why 50? Well... there is a limit imposed by the slab cache 131000
++ * bytes. So the multipart netlink-message has to be < 131000 bytes.
++ * Assuming a standard ethernet-mtu of 1500, we could define this up
++ * to 80... but even 50 seems to be big enough. */
++
++/* private data structure for each rule with a ULOG target */
++struct ipt_ulog_info {
++	unsigned int nl_group;
++	size_t copy_range;
++	size_t qthreshold;
++	char prefix[ULOG_PREFIX_LEN];
++};
++
++/* Format of the ULOG packets passed through netlink */
++typedef struct ulog_packet_msg {
++	unsigned long mark;
++	long timestamp_sec;
++	long timestamp_usec;
++	unsigned int hook;
++	char indev_name[IFNAMSIZ];
++	char outdev_name[IFNAMSIZ];
++	size_t data_len;
++	char prefix[ULOG_PREFIX_LEN];
++	unsigned char mac_len;
++	unsigned char mac[ULOG_MAC_LEN];
++	unsigned char payload[0];
++} ulog_packet_msg_t;
++
++#endif /*_IPT_ULOG_H*/
+-- 
+2.3.0
+

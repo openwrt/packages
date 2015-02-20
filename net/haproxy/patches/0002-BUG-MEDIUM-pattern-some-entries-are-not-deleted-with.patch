@@ -1,0 +1,38 @@
+From 623401b983185c1e0f6507e96557de3bc46fd41b Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <tfournier@exceliance.fr>
+Date: Fri, 6 Feb 2015 17:53:54 +0100
+Subject: [PATCH 2/2] BUG/MEDIUM: pattern: some entries are not deleted with
+ case insensitive match
+
+ACL or map entries are not deleted with the command "del acl" or "del map"
+if the case insentive flag is set.
+
+This is because the the case insensitive string are stored in a list and the
+default delete function associated with string looks in a tree. I add a check
+of the case insensitive flag and execute the delete function for lists if it
+is set.
+
+This patch must be backported in 1.5 version.
+(cherry picked from commit 73bc285be194f443dc7eab9c949e87e1dbe8f70c)
+---
+ src/pattern.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/pattern.c b/src/pattern.c
+index a6fc52d..b19ffe2 100644
+--- a/src/pattern.c
++++ b/src/pattern.c
+@@ -1308,6 +1308,10 @@ void pat_del_tree_str(struct pattern_expr *expr, struct pat_ref_elt *ref)
+ 	struct ebmb_node *node, *next_node;
+ 	struct pattern_tree *elt;
+ 
++	/* If the flag PAT_F_IGNORE_CASE is set, we cannot use trees */
++	if (expr->mflags & PAT_MF_IGNORE_CASE)
++		return pat_del_list_ptr(expr, ref);
++
+ 	/* browse each node of the tree. */
+ 	for (node = ebmb_first(&expr->pattern_tree), next_node = node ? ebmb_next(node) : NULL;
+ 	     node;
+-- 
+2.0.4
+

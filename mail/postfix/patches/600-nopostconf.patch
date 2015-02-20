@@ -1,9 +1,9 @@
 diff -Naur postfix-2.11.1/postfix-install postfix-2.11.1.patched/postfix-install
 --- postfix-2.11.1/postfix-install	2014-10-05 20:43:58.598876904 +0400
 +++ postfix-2.11.1.patched/postfix-install	2014-10-05 20:47:36.076700082 +0400
-@@ -729,21 +729,21 @@
- # Postfix releases, and software should not suddenly be installed in
- # the wrong place when Postfix is being upgraded.
+@@ -830,23 +830,23 @@
+     esac
+ done
  
 -bin/postconf -c $CONFIG_DIRECTORY -e \
 -    "daemon_directory = $daemon_directory" \
@@ -19,6 +19,8 @@ diff -Naur postfix-2.11.1/postfix-install postfix-2.11.1.patched/postfix-install
 -    "manpage_directory = $manpage_directory" \
 -    "sample_directory = $sample_directory" \
 -    "readme_directory = $readme_directory" \
+-    "shlib_directory = $shlib_directory" \
+-    "meta_directory = $meta_directory" \
 -|| exit 1
 +#bin/postconf -c $CONFIG_DIRECTORY -e \
 +#    "daemon_directory = $daemon_directory" \
@@ -34,6 +36,8 @@ diff -Naur postfix-2.11.1/postfix-install postfix-2.11.1.patched/postfix-install
 +#    "manpage_directory = $manpage_directory" \
 +#    "sample_directory = $sample_directory" \
 +#    "readme_directory = $readme_directory" \
++#    "shlib_directory = $shlib_directory" \
++#    "meta_directory = $meta_directory" \
 +#|| exit 1
  
  # If Postfix is being installed locally from source code, do the

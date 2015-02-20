@@ -1,0 +1,106 @@
+From: Wayne Davison <wayned@samba.org>
+Date: Wed, 31 Dec 2014 20:41:03 +0000 (-0800)
+Subject: Complain if an inc-recursive path is not right for its dir.
+X-Git-Url: https://git.samba.org/?p=rsync.git;a=commitdiff_plain;h=962f8b90045ab331fc04c9e65f80f1a53e68243b
+
+Complain if an inc-recursive path is not right for its dir.
+This ensures that a malicious sender can't use a just-sent
+symlink as a trasnfer path.
+---
+
+diff --git a/flist.c b/flist.c
+index c24672e..92e4b65 100644
+--- a/flist.c
++++ b/flist.c
+@@ -2435,8 +2435,9 @@ struct file_list *send_file_list(int f, int argc, char *argv[])
+ 	return flist;
+ }
+ 
+-struct file_list *recv_file_list(int f)
++struct file_list *recv_file_list(int f, int dir_ndx)
+ {
++	const char *good_dirname = NULL;
+ 	struct file_list *flist;
+ 	int dstart, flags;
+ 	int64 start_read;
+@@ -2492,6 +2493,23 @@ struct file_list *recv_file_list(int f)
+ 		flist_expand(flist, 1);
+ 		file = recv_file_entry(f, flist, flags);
+ 
++		if (inc_recurse) {
++			static const char empty_dir[] = "\0";
++			const char *cur_dir = file->dirname ? file->dirname : empty_dir;
++			if (relative_paths && *cur_dir == '/')
++				cur_dir++;
++			if (cur_dir != good_dirname) {
++				const char *d = dir_ndx >= 0 ? f_name(dir_flist->files[dir_ndx], NULL) : empty_dir;
++				if (strcmp(cur_dir, d) != 0) {
++					rprintf(FERROR,
++						"ABORTING due to invalid dir prefix from sender: %s (should be: %s)\n",
++						cur_dir, d);
++					exit_cleanup(RERR_PROTOCOL);
++				}
++				good_dirname = cur_dir;
++			}
++		}
++
+ 		if (S_ISREG(file->mode)) {
+ 			/* Already counted */
+ 		} else if (S_ISDIR(file->mode)) {
+@@ -2615,7 +2633,7 @@ void recv_additional_file_list(int f)
+ 			rprintf(FINFO, "[%s] receiving flist for dir %d\n",
+ 				who_am_i(), ndx);
+ 		}
+-		flist = recv_file_list(f);
++		flist = recv_file_list(f, ndx);
+ 		flist->parent_ndx = ndx;
+ 	}
+ }
+diff --git a/io.c b/io.c
+index b9a9bd0..a868fa9 100644
+--- a/io.c
++++ b/io.c
+@@ -1685,7 +1685,7 @@ void wait_for_receiver(void)
+ 				rprintf(FINFO, "[%s] receiving flist for dir %d\n",
+ 					who_am_i(), ndx);
+ 			}
+-			flist = recv_file_list(iobuf.in_fd);
++			flist = recv_file_list(iobuf.in_fd, ndx);
+ 			flist->parent_ndx = ndx;
+ #ifdef SUPPORT_HARD_LINKS
+ 			if (preserve_hard_links)
+diff --git a/main.c b/main.c
+index e7a13f7..713b818 100644
+--- a/main.c
++++ b/main.c
+@@ -1009,7 +1009,7 @@ static void do_server_recv(int f_in, int f_out, int argc, char *argv[])
+ 		filesfrom_fd = -1;
+ 	}
+ 
+-	flist = recv_file_list(f_in);
++	flist = recv_file_list(f_in, -1);
+ 	if (!flist) {
+ 		rprintf(FERROR,"server_recv: recv_file_list error\n");
+ 		exit_cleanup(RERR_FILESELECT);
+@@ -1183,7 +1183,7 @@ int client_run(int f_in, int f_out, pid_t pid, int argc, char *argv[])
+ 
+ 	if (write_batch && !am_server)
+ 		start_write_batch(f_in);
+-	flist = recv_file_list(f_in);
++	flist = recv_file_list(f_in, -1);
+ 	if (inc_recurse && file_total == 1)
+ 		recv_additional_file_list(f_in);
+ 
+diff --git a/rsync.c b/rsync.c
+index 68ff6b1..c3ecc51 100644
+--- a/rsync.c
++++ b/rsync.c
+@@ -364,7 +364,7 @@ int read_ndx_and_attrs(int f_in, int f_out, int *iflag_ptr, uchar *type_ptr,
+ 		}
+ 		/* Send all the data we read for this flist to the generator. */
+ 		start_flist_forward(ndx);
+-		flist = recv_file_list(f_in);
++		flist = recv_file_list(f_in, ndx);
+ 		flist->parent_ndx = ndx;
+ 		stop_flist_forward();
+ 	}

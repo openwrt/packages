@@ -18,6 +18,7 @@ start() {
 	    chmod o-rwx /var/run/seafile
 	fi
 
+	# append parameter "--fastcgi" here to start seahub in fastcgi mode
 	cd "/usr/share/seafile" && \
 	    sudo PYTHONPATH="$PYTHONPATH" -u seafile -E \
 	    "/usr/bin/seafile-admin" start

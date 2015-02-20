@@ -7,6 +7,10 @@ config OCSERV_PAM
 	bool "enable PAM"
 	default n
 
+config OCSERV_SECCOMP
+	bool "enable seccomp"
+	default n
+
 config OCSERV_PROTOBUF
 	bool "use external libprotobuf"
 	default y
