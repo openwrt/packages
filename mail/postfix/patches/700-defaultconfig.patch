@@ -1,7 +1,7 @@
 diff -Naur postfix-2.11.1/conf/main.cf postfix-2.11.1.patched/conf/main.cf
 --- postfix-2.11.1/conf/main.cf	2013-12-24 18:57:25.000000000 +0400
 +++ postfix-2.11.1.patched/conf/main.cf	2014-10-05 21:35:53.427534410 +0400
-@@ -21,43 +21,8 @@
+@@ -40,43 +40,8 @@
  #
  #soft_bounce = no
  
@@ -45,7 +45,7 @@ diff -Naur postfix-2.11.1/conf/main.cf postfix-2.11.1.patched/conf/main.cf
  # The default_privs parameter specifies the default rights used by
  # the local delivery agent for delivery to external file or command.
  # These rights are used in the absence of a recipient user context.
-@@ -613,45 +578,4 @@
+@@ -632,45 +597,4 @@
  #	-dmS $process_name gdb $daemon_directory/$process_name
  #	$process_id & sleep 1
  

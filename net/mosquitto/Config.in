@@ -1,0 +1,6 @@
+config MOSQUITTO_LWS
+    bool "libwebsockets support"
+    depends on PACKAGE_mosquitto
+    default y
+    help
+        Includes websockets support in the broker, via libwebsockets

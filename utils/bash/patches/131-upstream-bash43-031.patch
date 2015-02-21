@@ -1,0 +1,96 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-031
+
+Bug-Reported-by:	lolilolicon <lolilolicon@gmail.com>
+Bug-Reference-ID:	<CAMtVo_Nz=32Oq=zWTb6=+8gUNXOo2rRvud1W4oPnA-cgVk_ZqQ@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-08/msg00139.html
+
+Bug-Description:
+
+The new nameref assignment functionality introduced in bash-4.3 did not perform
+enough validation on the variable value and would create variables with
+invalid names.
+
+Patch (apply with `patch -p0'):
+
+--- a/subst.h
++++ b/subst.h
+@@ -47,6 +47,7 @@
+ #define ASS_MKASSOC	0x0004
+ #define ASS_MKGLOBAL	0x0008	/* force global assignment */
+ #define ASS_NAMEREF	0x0010	/* assigning to nameref variable */
++#define ASS_FROMREF	0x0020	/* assigning from value of nameref variable */
+ 
+ /* Flags for the string extraction functions. */
+ #define SX_NOALLOC	0x0001	/* just skip; don't return substring */
+--- a/variables.c
++++ b/variables.c
+@@ -2516,10 +2516,27 @@ bind_variable_internal (name, value, tab
+      HASH_TABLE *table;
+      int hflags, aflags;
+ {
+-  char *newval;
++  char *newname, *newval;
+   SHELL_VAR *entry;
++#if defined (ARRAY_VARS)
++  arrayind_t ind;
++  char *subp;
++  int sublen;
++#endif
+ 
++  newname = 0;
++#if defined (ARRAY_VARS)
++  if ((aflags & ASS_FROMREF) && (hflags & HASH_NOSRCH) == 0 && valid_array_reference (name))
++    {
++      newname = array_variable_name (name, &subp, &sublen);
++      if (newname == 0)
++	return (SHELL_VAR *)NULL;	/* XXX */
++      entry = hash_lookup (newname, table);
++    }
++  else
++#endif
+   entry = (hflags & HASH_NOSRCH) ? (SHELL_VAR *)NULL : hash_lookup (name, table);
++
+   /* Follow the nameref chain here if this is the global variables table */
+   if (entry && nameref_p (entry) && (invisible_p (entry) == 0) && table == global_variables->table)
+     {
+@@ -2550,6 +2567,16 @@ bind_variable_internal (name, value, tab
+       var_setvalue (entry, make_variable_value (entry, value, 0));
+       }
+     }
++#if defined (ARRAY_VARS)
++  else if (entry == 0 && newname)
++    {
++      entry = make_new_array_variable (newname);	/* indexed array by default */
++      if (entry == 0)
++	return entry;
++      ind = array_expand_index (name, subp, sublen);
++      bind_array_element (entry, ind, value, aflags);
++    }
++#endif
+   else if (entry == 0)
+     {
+       entry = make_new_variable (name, table);
+@@ -2670,7 +2697,8 @@ bind_variable (name, value, flags)
+ 			 normal. */
+ 		      if (nameref_cell (nv) == 0)
+ 			return (bind_variable_internal (nv->name, value, nvc->table, 0, flags));
+-		      return (bind_variable_internal (nameref_cell (nv), value, nvc->table, 0, flags));
++		      /* XXX - bug here with ref=array[index] */
++		      return (bind_variable_internal (nameref_cell (nv), value, nvc->table, 0, flags|ASS_FROMREF));
+ 		    }
+ 		  else
+ 		    v = nv;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 30
++#define PATCHLEVEL 31
+ 
+ #endif /* _PATCHLEVEL_H_ */

@@ -1,0 +1,47 @@
+From 4f267553aede76dc91133ba88c69f8b8faf00b72 Mon Sep 17 00:00:00 2001
+From: Jimmy Jones <jimmyjones2@gmx.co.uk>
+Date: Sat, 26 Jul 2014 21:48:38 +0100
+Subject: [PATCH] Fix JSON output on big endian systems
+
+Signed-off-by: Jimmy Jones <jimmyjones2@gmx.co.uk>
+---
+ output/ulogd_output_JSON.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/output/ulogd_output_JSON.c b/output/ulogd_output_JSON.c
+index e7ac642..3ad2620 100644
+--- a/output/ulogd_output_JSON.c
++++ b/output/ulogd_output_JSON.c
+@@ -158,7 +158,11 @@ static int json_interp(struct ulogd_pluginstance *upi)
+ 			break;
+ 		case ULOGD_RET_BOOL:
+ 		case ULOGD_RET_INT8:
++			json_object_set_new(msg, field_name, json_integer(key->u.value.i8));
++			break;
+ 		case ULOGD_RET_INT16:
++			json_object_set_new(msg, field_name, json_integer(key->u.value.i16));
++			break;
+ 		case ULOGD_RET_INT32:
+ 			json_object_set_new(msg, field_name, json_integer(key->u.value.i32));
+ 			break;
+@@ -171,10 +175,17 @@ static int json_interp(struct ulogd_pluginstance *upi)
+ 					json_object_set_new(msg, "action", json_string("blocked"));
+ 				break;
+ 			}
++			json_object_set_new(msg, field_name, json_integer(key->u.value.ui8));
++			break;
+ 		case ULOGD_RET_UINT16:
++			json_object_set_new(msg, field_name, json_integer(key->u.value.ui16));
++			break;
+ 		case ULOGD_RET_UINT32:
++			json_object_set_new(msg, field_name, json_integer(key->u.value.ui32));
++			break;
+ 		case ULOGD_RET_UINT64:
+ 			json_object_set_new(msg, field_name, json_integer(key->u.value.ui64));
++			break;
+ 		default:
+ 			/* don't know how to interpret this key. */
+ 			break;
+-- 
+2.3.0
+

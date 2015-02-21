@@ -1,5 +1,6 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
+#		2014-2015 Vitaly Protsko
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -35,7 +36,8 @@ endef
 CONFIGURE_ARGS:= \
 	--prefix=/usr \
 	--cross-root="$(STAGING_DIR) $(TOOLCHAIN_DIR)" \
-	--enable-shared
+	--enable-shared \
+	--without-libdbi \
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
@@ -63,12 +65,14 @@ define Package/gammu/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gammu-{smsd,smsd-inject,smsd-monitor} $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/lib{Gammu*,gsmsd*} $(1)/usr/lib
-	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/gammurc $(1)/etc/gammurc
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/smsd $(1)/etc/config/smsd
+	$(INSTALL_BIN) ./files/smsd.init $(1)/etc/init.d/smsd
 endef
 
 define Package/gammu/conffiles
-/etc/gammurc
+/etc/config/smsd
 endef
 
 $(eval $(call BuildPackage,gammu))

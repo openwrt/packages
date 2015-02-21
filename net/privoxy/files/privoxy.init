@@ -8,9 +8,6 @@ CFGFILE=/var/etc/privoxy.conf
 CFGTEMP=/var/etc/privoxy.conf.tmp
 
 _uci2conf() {
-	local _LOGDIR="/var/log"	# set default
-	local _LOGFILE="privoxy.log"	# set default
-
 	# redefined callback for options when calling config_load
 	option_cb()
 	{
@@ -19,21 +16,19 @@ _uci2conf() {
 		local __OPT="$1"
 		local __VAL="$2"
 		case $__OPT in
-			logdir)		# logdir handled later
-				_LOGDIR="$__VAL"  ;;
-			logfile)	# logfile handled later
-				_LOGFILE="$__VAL" ;;
+			confdir|templdir|temporary_directory|logdir|logfile)
+				# needs to be handled separately because we need to set permissions
+				# AND needs to be defined first because of a BUG inside privoxy
+				# require directories to be defined first inside config 
+				;;
+			debug_*)
+				[ $__VAL -eq 0 ] && return	# not set ignore
+				echo -e "debug\t$(echo $__OPT | sed -e 's#debug_##g')" >> $CFGTEMP ;;
 			*)
 				# detect list options (LENGTH) and ignore
 				echo $__OPT | grep -i "_LENGTH" >/dev/null 2>&1 && return
 				# detect list options (ITEM) and ignore
 				echo $__OPT | grep -i "_ITEM" >/dev/null 2>&1 && __OPT=$(echo $__OPT | sed -e "s#_ITEM.##g")
-				# filter debug_*
-				echo $__OPT | grep -i "debug_" >/dev/null 2>&1 && {
-					[ $__VAL -eq 0 ] && return	# not set ignore
-					__VAL=$(echo $__OPT | sed -e "s#debug_##g")
-					__OPT="debug"
-				}
 				# uci only accept "_" but we need "-"
 				local __OPT=$(echo $__OPT | sed -e "s#_#-#g")
 				# write to config
@@ -42,9 +37,11 @@ _uci2conf() {
 		esac
 	}
 
+	# temporary config file
+	# privoxy need read access
 	mkdir -m0755 -p /var/etc
-	echo "" > $CFGTEMP	# create tmp config file
-	chmod 644 $CFGTEMP	# garantee that privoxy can read
+	echo "" > $CFGTEMP
+	chmod 644 $CFGTEMP
 	chgrp privoxy $CFGTEMP
 
 	echo '### AUTO-GENERATED CONFIGURATION'	   >> $CFGTEMP
@@ -53,19 +50,53 @@ _uci2conf() {
 	echo '### SEE /etc/config/privoxy INSTEAD' >> $CFGTEMP
 	echo ''					   >> $CFGTEMP
 
-	config_load privoxy	# calling above option_cb()
+	# confdir
+	# privoxy needs read access (possibly write access)
+	_CONFDIR=$(uci -q get privoxy.privoxy.confdir) || _CONFDIR="/etc/privoxy"
+	chmod 755 $_CONFDIR
+	chmod 664 $_CONFDIR/*
+	chgrp privoxy $_CONFDIR $_CONFDIR/*
+	echo -e "confdir\t$_CONFDIR" >> $CFGTEMP
 
-	# write logdir/logfile to config
-	echo -e "logdir\t$_LOGDIR" >> $CFGTEMP
-	echo -e "logfile\t$_LOGFILE" >> $CFGTEMP
+	# templdir
+	# privoxy need read access
+	_TEMPLDIR=$(uci -q get privoxy.privoxy.templdir)	# no default needed
+	if [ -z "$_TEMPLDIR" ]; then
+		chmod 755 $_CONFDIR/templates
+		chmod 644 $_CONFDIR/templates/*
+		chgrp privoxy $_CONFDIR/templates $_CONFDIR/templates/*
+	else
+		chmod 755 $_TEMPLDIR
+		chmod 644 $_TEMPLDIR/*
+		chgrp privoxy $_TEMPLDIR $_TEMPLDIR/*
+		echo -e "templdir\t$_TEMPLDIR" >> $CFGTEMP
+	fi
 
-	# create logfile and set permissions
+	# logdir and logfile
+	# privoxy needs read/write access
+	_LOGDIR=$(uci -q get privoxy.privoxy.logdir)   || _LOGDIR="/var/log"
+	_LOGFILE=$(uci -q get privoxy.privoxy.logfile) || _LOGFILE="privoxy.log"
+	mkdir -m0755 -p $_LOGDIR
 	touch $_LOGDIR/$_LOGFILE
 	chmod 664 $_LOGDIR/$_LOGFILE
 	chown privoxy:privoxy $_LOGDIR/$_LOGFILE
+	echo -e "logdir\t$_LOGDIR" >> $CFGTEMP
+	echo -e "logfile\t$_LOGFILE" >> $CFGTEMP
+
+	# temporary-directory
+	# privoxy needs read/write access
+	_TMP_DIR=$(uci -q get privoxy.privoxy.temporary_directory)	# no default needed
+	if [ -n "$_TMP_DIR" ]; then
+		mkdir -m0750 -p $_TMP_DIR
+		chown privoxy:privoxy $_TMP_DIR
+		echo -e "temporary-directory\t$_TMP_DIR" >> $CFGTEMP
+	fi
+
+	config_load privoxy	# calling above option_cb() and write the rest into $CFGTEMP
 
 	# move temp to final privoxy readable configuration
 	mv -f $CFGTEMP $CFGFILE
+	return 0
 }
 
 boot() {

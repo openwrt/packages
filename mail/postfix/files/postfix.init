@@ -17,25 +17,30 @@ upgrade() {
 		echo "myhostname = $(uci get system.@system[0].hostname)" >> "$config_directory"/main.cf.default
 		echo "mydomain = $(uci get system.@system[0].hostname|sed -e "s/[^\.]*\.\(.*\)/\1/")" >> "$config_directory"/main.cf.default
 		ifconfig | grep "inet addr" | sed -e "s/.*inet addr:\([0-9.]*\).*Mask:/\1 /" | while read IP NETMASK; do eval "$(ipcalc.sh $IP $NETMASK)"; echo "$NETWORK/$PREFIX"; done | xargs echo "mynetworks =" >> "$config_directory"/main.cf.default
+		echo "mynetworks_style = subnet" >> "$config_directory"/main.cf.default
 
-		grep -qc "^sendmail_path" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^sendmail_path =" "$config_directory"/main.cf.default)"
-		grep -qc "^newaliases_path" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^newaliases_path =" "$config_directory"/main.cf.default)"
-		grep -qc "^mailq_path" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mailq_path =" "$config_directory"/main.cf.default)"
-		grep -qc "^html_directory" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^html_directory =" "$config_directory"/main.cf.default)"
-		grep -qc "^manpage_directory" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^manpage_directory =" "$config_directory"/main.cf.default)"
-		grep -qc "^sample_directory" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^sample_directory =" "$config_directory"/main.cf.default)"
-		grep -qc "^readme_directory" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^readme_directory =" "$config_directory"/main.cf.default)"
-		grep -qc "^command_directory" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^command_directory =" "$config_directory"/main.cf.default)"
-		grep -qc "^daemon_directory" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^daemon_directory =" "$config_directory"/main.cf.default)"
-		grep -qc "^data_directory" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^data_directory =" "$config_directory"/main.cf.default)"
-		grep -qc "^queue_directory" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^queue_directory =" "$config_directory"/main.cf.default)"
-		grep -qc "^config_directory" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^config_directory =" "$config_directory"/main.cf.default)"
-		grep -qc "^mail_spool_directory" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mail_spool_directory =" "$config_directory"/main.cf.default)"
-		grep -qc "^mail_owner" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mail_owner =" "$config_directory"/main.cf.default)"
-		grep -qc "^setgid_group" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^setgid_group =" "$config_directory"/main.cf.default)"
-		grep -qc "^myhostname" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^myhostname =" "$config_directory"/main.cf.default)"
-		grep -qc "^mydomain" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mydomain =" "$config_directory"/main.cf.default)"
-		grep -qc "^mynetworks" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mynetworks =" "$config_directory"/main.cf.default)"
+		grep -qc "^sendmail_path[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^sendmail_path =" "$config_directory"/main.cf.default)"
+		grep -qc "^newaliases_path[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^newaliases_path =" "$config_directory"/main.cf.default)"
+		grep -qc "^mailq_path[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mailq_path =" "$config_directory"/main.cf.default)"
+		grep -qc "^html_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^html_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^manpage_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^manpage_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^sample_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^sample_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^readme_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^readme_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^command_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^command_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^daemon_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^daemon_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^data_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^data_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^queue_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^queue_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^config_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^config_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^mail_spool_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mail_spool_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^mail_owner[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mail_owner =" "$config_directory"/main.cf.default)"
+		grep -qc "^setgid_group[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^setgid_group =" "$config_directory"/main.cf.default)"
+		grep -qc "^myhostname[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^myhostname =" "$config_directory"/main.cf.default)"
+		grep -qc "^mydomain[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mydomain =" "$config_directory"/main.cf.default)"
+		grep -qc "^mynetworks[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mynetworks =" "$config_directory"/main.cf.default)"
+		grep -qc "^mynetworks_style[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mynetworks_style =" "$config_directory"/main.cf.default)"
+		grep -qc "^shlib_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^shlib_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^meta_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^meta_directory =" "$config_directory"/main.cf.default)"
+		grep -qc "^smtputf8_enable[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^smtputf8_enable =" "$config_directory"/main.cf.default)"
 
 		postfix set-permissions
 		postfix post-install upgrade-source

@@ -1,0 +1,201 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-033
+
+Bug-Reported-by:	mickael9@gmail.com, Jan Rome <jan.rome@gmail.com>
+Bug-Reference-ID:	<20140907224046.382ED3610CC@mickael-laptop.localdomain>,
+			<540D661D.50908@gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-09/msg00029.html
+			http://lists.gnu.org/archive/html/bug-bash/2014-09/msg00030.html
+
+Bug-Description:
+
+Bash does not clean up the terminal state in all cases where bash or
+readline  modifies it and bash is subsequently terminated by a fatal signal.
+This happens when the `read' builtin modifies the terminal settings, both
+when readline is active and when it is not.  It occurs most often when a script
+installs a trap that exits on a signal without re-sending the signal to itself.
+
+Patch (apply with `patch -p0'):
+
+--- a/shell.c
++++ b/shell.c
+@@ -73,6 +73,7 @@
+ #endif
+ 
+ #if defined (READLINE)
++#  include <readline/readline.h>
+ #  include "bashline.h"
+ #endif
+ 
+@@ -909,6 +910,14 @@ exit_shell (s)
+   fflush (stdout);		/* XXX */
+   fflush (stderr);
+ 
++  /* Clean up the terminal if we are in a state where it's been modified. */
++#if defined (READLINE)
++  if (RL_ISSTATE (RL_STATE_TERMPREPPED) && rl_deprep_term_function)
++    (*rl_deprep_term_function) ();
++#endif
++  if (read_tty_modified ())
++    read_tty_cleanup ();
++
+   /* Do trap[0] if defined.  Allow it to override the exit status
+      passed to us. */
+   if (signal_is_trapped (0))
+--- a/builtins/read.def
++++ b/builtins/read.def
+@@ -140,10 +140,12 @@ static void reset_alarm __P((void));
+ procenv_t alrmbuf;
+ int sigalrm_seen;
+ 
+-static int reading;
++static int reading, tty_modified;
+ static SigHandler *old_alrm;
+ static unsigned char delim;
+ 
++static struct ttsave termsave;
++
+ /* In all cases, SIGALRM just sets a flag that we check periodically.  This
+    avoids problems with the semi-tricky stuff we do with the xfree of
+    input_string at the top of the unwind-protect list (see below). */
+@@ -188,7 +190,6 @@ read_builtin (list)
+   struct stat tsb;
+   SHELL_VAR *var;
+   TTYSTRUCT ttattrs, ttset;
+-  struct ttsave termsave;
+ #if defined (ARRAY_VARS)
+   WORD_LIST *alist;
+ #endif
+@@ -221,7 +222,7 @@ read_builtin (list)
+   USE_VAR(ps2);
+   USE_VAR(lastsig);
+ 
+-  sigalrm_seen = reading = 0;
++  sigalrm_seen = reading = tty_modified = 0;
+ 
+   i = 0;		/* Index into the string that we are reading. */
+   raw = edit = 0;	/* Not reading raw input by default. */
+@@ -438,6 +439,8 @@ read_builtin (list)
+ 	  retval = 128+SIGALRM;
+ 	  goto assign_vars;
+ 	}
++      if (interactive_shell == 0)
++	initialize_terminating_signals ();
+       old_alrm = set_signal_handler (SIGALRM, sigalrm);
+       add_unwind_protect (reset_alarm, (char *)NULL);
+ #if defined (READLINE)
+@@ -482,7 +485,10 @@ read_builtin (list)
+ 	  i = silent ? ttfd_cbreak (fd, &ttset) : ttfd_onechar (fd, &ttset);
+ 	  if (i < 0)
+ 	    sh_ttyerror (1);
++	  tty_modified = 1;
+ 	  add_unwind_protect ((Function *)ttyrestore, (char *)&termsave);
++	  if (interactive_shell == 0)
++	    initialize_terminating_signals ();
+ 	}
+     }
+   else if (silent)	/* turn off echo but leave term in canonical mode */
+@@ -497,7 +503,10 @@ read_builtin (list)
+       if (i < 0)
+ 	sh_ttyerror (1);
+ 
++      tty_modified = 1;
+       add_unwind_protect ((Function *)ttyrestore, (char *)&termsave);
++      if (interactive_shell == 0)
++	initialize_terminating_signals ();
+     }
+ 
+   /* This *must* be the top unwind-protect on the stack, so the manipulation
+@@ -588,6 +597,8 @@ read_builtin (list)
+ 	    }
+ 	  else
+ 	    lastsig = 0;
++	  if (terminating_signal && tty_modified)
++	    ttyrestore (&termsave);	/* fix terminal before exiting */
+ 	  CHECK_TERMSIG;
+ 	  eof = 1;
+ 	  break;
+@@ -978,6 +989,20 @@ ttyrestore (ttp)
+      struct ttsave *ttp;
+ {
+   ttsetattr (ttp->fd, ttp->attrs);
++  tty_modified = 0;
++}
++
++void
++read_tty_cleanup ()
++{
++  if (tty_modified)
++    ttyrestore (&termsave);
++}
++
++int
++read_tty_modified ()
++{
++  return (tty_modified);
+ }
+ 
+ #if defined (READLINE)
+--- a/builtins/common.h
++++ b/builtins/common.h
+@@ -122,6 +122,10 @@ extern void bash_logout __P((void));
+ /* Functions from getopts.def */
+ extern void getopts_reset __P((int));
+ 
++/* Functions from read.def */
++extern void read_tty_cleanup __P((void));
++extern int read_tty_modified __P((void));
++
+ /* Functions from set.def */
+ extern int minus_o_option_value __P((char *));
+ extern void list_minus_o_opts __P((int, int));
+--- a/bashline.c
++++ b/bashline.c
+@@ -202,6 +202,7 @@ extern int current_command_line_count, s
+ extern int last_command_exit_value;
+ extern int array_needs_making;
+ extern int posixly_correct, no_symbolic_links;
++extern int sigalrm_seen;
+ extern char *current_prompt_string, *ps1_prompt;
+ extern STRING_INT_ALIST word_token_alist[];
+ extern sh_builtin_func_t *last_shell_builtin, *this_shell_builtin;
+@@ -4208,8 +4209,9 @@ bash_event_hook ()
+ {
+   /* If we're going to longjmp to top_level, make sure we clean up readline.
+      check_signals will call QUIT, which will eventually longjmp to top_level,
+-     calling run_interrupt_trap along the way. */
+-  if (interrupt_state)
++     calling run_interrupt_trap along the way.  The check for sigalrm_seen is
++     to clean up the read builtin's state. */
++  if (terminating_signal || interrupt_state || sigalrm_seen)
+     rl_cleanup_after_signal ();
+   bashline_reset_event_hook ();
+   check_signals_and_traps ();	/* XXX */
+--- a/sig.c
++++ b/sig.c
+@@ -532,8 +532,10 @@ termsig_sighandler (sig)
+ #if defined (READLINE)
+   /* Set the event hook so readline will call it after the signal handlers
+      finish executing, so if this interrupted character input we can get
+-     quick response. */
+-  if (interactive_shell && interactive && no_line_editing == 0)
++     quick response.  If readline is active or has modified the terminal we
++     need to set this no matter what the signal is, though the check for
++     RL_STATE_TERMPREPPED is possibly redundant. */
++  if (RL_ISSTATE (RL_STATE_SIGHANDLER) || RL_ISSTATE (RL_STATE_TERMPREPPED))
+     bashline_set_event_hook ();
+ #endif
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 32
++#define PATCHLEVEL 33
+ 
+ #endif /* _PATCHLEVEL_H_ */

@@ -1,7 +1,7 @@
 diff -Naur postfix-2.11.1/src/util/sys_defs.h postfix-2.11.1.patched/src/util/sys_defs.h
 --- postfix-2.11.1/src/util/sys_defs.h	2013-09-30 00:51:55.000000000 +0400
 +++ postfix-2.11.1.patched/src/util/sys_defs.h	2014-09-29 03:11:48.962277971 +0400
-@@ -767,9 +767,8 @@
+@@ -768,9 +768,8 @@
  #define INTERNAL_LOCK	MYFLOCK_STYLE_FLOCK
  #define DEF_MAILBOX_LOCK "fcntl, dotlock"	/* RedHat >= 4.x */
  #define HAS_FSYNC

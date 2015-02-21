@@ -1,0 +1,13 @@
+diff --git a/autoconf/variables.mak.in b/autoconf/variables.mak.in
+index b67e467..6022434 100644
+--- a/autoconf/variables.mak.in
++++ b/autoconf/variables.mak.in
+@@ -65,7 +65,7 @@ DRVLIBS = @PTHREAD_LFLAGS@ @DRVLIBS@
+ X_LIBS = @X_LIBS@
+ X_EXTRA_LIBS = @X_EXTRA_LIBS@
+ 
+-CPPFLAGS = @CPPFLAGS@ -I$(topdir)/include $(EXTRAINCS)
++CPPFLAGS = -I$(topdir)/include @CPPFLAGS@ $(EXTRAINCS)
+ CFLAGS = $(CPPFLAGS) @CFLAGS@ @PTHREAD_CFLAGS@
+ CXXFLAGS = $(CPPFLAGS) @CXXFLAGS@ @PTHREAD_CFLAGS@
+ LDFLAGS = @LDFLAGS@

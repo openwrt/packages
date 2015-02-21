@@ -19,9 +19,12 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
-PKG_INSTALL:=1
+
 PKG_LICENSE:=LGPL-2.1 GPL-2.0
 PKG_LICENSE_FILES:=doc/COPYING doc/COPYING.LGPL
+
+PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -64,11 +67,6 @@ $(call Package/attr/Default/description)
 endef
 
 CONFIGURE_ARGS += --enable-static --enable-shared
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	(cd $(PKG_BUILD_DIR); ./autogen.sh;);
-endef
 
 define Package/attr/install
 	$(INSTALL_DIR) $(1)/usr/bin
