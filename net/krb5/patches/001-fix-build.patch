@@ -1,6 +1,6 @@
-diff -u --recursive krb5-1.12.1-vanilla/src/lib/krad/packet.c krb5-1.12.1/src/lib/krad/packet.c
---- krb5-1.12.1-vanilla/src/lib/krad/packet.c	2014-07-18 00:10:11.916603406 -0400
-+++ krb5-1.12.1/src/lib/krad/packet.c	2014-07-18 00:20:23.471574387 -0400
+diff -u --recursive krb5-1.13.1-vanilla/src/lib/krad/packet.c krb5-1.13.1/src/lib/krad/packet.c
+--- krb5-1.13.1-vanilla/src/lib/krad/packet.c	2015-02-22 10:08:38.213087138 -0500
++++ krb5-1.13.1/src/lib/krad/packet.c	2015-02-22 10:13:25.223709951 -0500
 @@ -253,7 +253,7 @@
  {
      krb5_error_code retval;
@@ -10,3 +10,36 @@ diff -u --recursive krb5-1.12.1-vanilla/src/lib/krad/packet.c krb5-1.12.1/src/li
      size_t attrset_len;
  
      pkt = packet_new();
+diff -u --recursive krb5-1.13.1-vanilla/src/lib/krb5/ccache/cc_file.c krb5-1.13.1/src/lib/krb5/ccache/cc_file.c
+--- krb5-1.13.1-vanilla/src/lib/krb5/ccache/cc_file.c	2015-02-22 10:08:38.211087133 -0500
++++ krb5-1.13.1/src/lib/krb5/ccache/cc_file.c	2015-02-22 10:14:15.410819464 -0500
+@@ -401,7 +401,7 @@
+ {
+     krb5_error_code ret;
+     struct k5buf buf;
+-    size_t maxsize;
++    size_t maxsize = 0;
+ 
+     *princ = NULL;
+     k5_cc_mutex_assert_locked(context, &((fcc_data *)id->data)->lock);
+@@ -1088,7 +1088,7 @@
+     krb5_fcc_cursor *fcursor = *cursor;
+     fcc_data *data = id->data;
+     struct k5buf buf;
+-    size_t maxsize;
++    size_t maxsize = 0;
+ 
+     memset(creds, 0, sizeof(*creds));
+     k5_cc_mutex_lock(context, &data->lock);
+diff -u --recursive krb5-1.13.1-vanilla/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c krb5-1.13.1/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
+--- krb5-1.13.1-vanilla/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c	2015-02-22 10:08:38.190087088 -0500
++++ krb5-1.13.1/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c	2015-02-22 10:17:37.981263250 -0500
+@@ -3593,7 +3593,7 @@
+ {
+     CK_ULONG i, r;
+     unsigned char *cp;
+-    size_t label_len;
++    size_t label_len = 0;
+     CK_ULONG count = 0;
+     CK_SLOT_ID_PTR slotlist;
+     CK_TOKEN_INFO tinfo;
