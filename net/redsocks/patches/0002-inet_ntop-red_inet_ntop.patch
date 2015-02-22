@@ -1,0 +1,161 @@
+From 6015b3a6f26e04dd5d78cd6c1320886fc9035612 Mon Sep 17 00:00:00 2001
+From: Leonid Evdokimov <leon@darkk.net.ru>
+Date: Tue, 10 Apr 2012 01:37:34 +0400
+Subject: [PATCH 02/12] inet_ntop -> red_inet_ntop
+
+---
+ redsocks.c | 13 ++++---------
+ redudp.c   | 19 +++++++++++--------
+ utils.c    | 37 +++++++++++++++++++++++++++++++++----
+ utils.h    |  7 +++++++
+ 4 files changed, 55 insertions(+), 21 deletions(-)
+
+diff --git a/redsocks.c b/redsocks.c
+index d085e10..ba5eab2 100644
+--- a/redsocks.c
++++ b/redsocks.c
+@@ -207,22 +207,17 @@ void redsocks_log_write_plain(
+ 	int saved_errno = errno;
+ 	struct evbuffer *fmt = evbuffer_new();
+ 	va_list ap;
+-	char clientaddr_str[INET6_ADDRSTRLEN], destaddr_str[INET6_ADDRSTRLEN];
++	char clientaddr_str[RED_INET_ADDRSTRLEN], destaddr_str[RED_INET_ADDRSTRLEN];
+ 
+ 	if (!fmt) {
+ 		log_errno(LOG_ERR, "evbuffer_new()");
+ 		// no return, as I have to call va_start/va_end
+ 	}
+ 
+-	if (!inet_ntop(clientaddr->sin_family, &clientaddr->sin_addr, clientaddr_str, sizeof(clientaddr_str)))
+-		strncpy(clientaddr_str, "???", sizeof(clientaddr_str));
+-	if (!inet_ntop(destaddr->sin_family, &destaddr->sin_addr, destaddr_str, sizeof(destaddr_str)))
+-		strncpy(destaddr_str, "???", sizeof(destaddr_str));
+-
+ 	if (fmt) {
+-		evbuffer_add_printf(fmt, "[%s:%i->%s:%i]: %s",
+-				clientaddr_str, ntohs(clientaddr->sin_port),
+-				destaddr_str, ntohs(destaddr->sin_port),
++		evbuffer_add_printf(fmt, "[%s->%s]: %s",
++				red_inet_ntop(clientaddr, clientaddr_str, sizeof(clientaddr_str)),
++				red_inet_ntop(destaddr, destaddr_str, sizeof(destaddr_str)),
+ 				orig_fmt);
+ 	}
+ 
+diff --git a/redudp.c b/redudp.c
+index 0a97852..9516a50 100644
+--- a/redudp.c
++++ b/redudp.c
+@@ -436,10 +436,9 @@ static void redudp_pkt_from_socks(int fd, short what, void *_arg)
+ 		return;
+ 
+ 	if (memcmp(&udprelayaddr, &client->udprelayaddr, sizeof(udprelayaddr)) != 0) {
+-		char buf[INET6_ADDRSTRLEN];
+-		const char *addr = inet_ntop(udprelayaddr.sin_family, &udprelayaddr.sin_addr, buf, sizeof(buf));
+-		redudp_log_error(client, LOG_NOTICE, "Got packet from unexpected address %s:%u.",
+-		                 addr ? addr : "?", ntohs(udprelayaddr.sin_port));
++		char buf[RED_INET_ADDRSTRLEN];
++		redudp_log_error(client, LOG_NOTICE, "Got packet from unexpected address %s.",
++		                 red_inet_ntop(&udprelayaddr, buf, sizeof(buf)));
+ 		return;
+ 	}
+ 
+@@ -459,10 +458,14 @@ static void redudp_pkt_from_socks(int fd, short what, void *_arg)
+ 	if (pkt.header.ip.port != client->instance->config.destaddr.sin_port ||
+ 	    pkt.header.ip.addr != client->instance->config.destaddr.sin_addr.s_addr)
+ 	{
+-		char buf[INET6_ADDRSTRLEN];
+-		const char *addr = inet_ntop(AF_INET, &pkt.header.ip.addr, buf, sizeof(buf));
+-		redudp_log_error(client, LOG_NOTICE, "Socks5 server relayed packet from unexpected address %s:%u.",
+-		                 addr ? addr : "?", ntohs(pkt.header.ip.port));
++		char buf[RED_INET_ADDRSTRLEN];
++		struct sockaddr_in pktaddr = {
++			.sin_family = AF_INET,
++			.sin_addr   = { pkt.header.ip.addr },
++			.sin_port   = pkt.header.ip.port,
++		};
++		redudp_log_error(client, LOG_NOTICE, "Socks5 server relayed packet from unexpected address %s.",
++		                 red_inet_ntop(&pktaddr, buf, sizeof(buf)));
+ 		return;
+ 	}
+ 
+diff --git a/utils.c b/utils.c
+index c6ced51..6e1f3af 100644
+--- a/utils.c
++++ b/utils.c
+@@ -18,6 +18,7 @@
+ #include <errno.h>
+ #include <assert.h>
+ #include <fcntl.h>
++#include <string.h>
+ #include <sys/socket.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+@@ -42,10 +43,9 @@ int red_recv_udp_pkt(int fd, char *buf, size_t buflen, struct sockaddr_in *inadd
+ 	}
+ 
+ 	if (pktlen >= buflen) {
+-		char buf[INET6_ADDRSTRLEN];
+-		const char *addr = inet_ntop(inaddr->sin_family, &inaddr->sin_addr, buf, sizeof(buf));
+-		log_error(LOG_WARNING, "wow! Truncated udp packet of size %zd from %s:%u! impossible! dropping it...",
+-		          pktlen, addr ? addr : "?", ntohs(inaddr->sin_port));
++		char buf[RED_INET_ADDRSTRLEN];
++		log_error(LOG_WARNING, "wow! Truncated udp packet of size %zd from %s! impossible! dropping it...",
++		          pktlen, red_inet_ntop(inaddr, buf, sizeof(buf)));
+ 		return -1;
+ 	}
+ 
+@@ -176,4 +176,33 @@ int red_is_socket_connected_ok(struct bufferevent *buffev)
+ 	}
+ }
+ 
++char *red_inet_ntop(const struct sockaddr_in* sa, char* buffer, size_t buffer_size)
++{
++	const char *retval = 0;
++	size_t len = 0;
++	uint16_t port;
++	const char placeholder[] = "???:???";
++
++	assert(buffer_size >= sizeof(placeholder));
++
++	memset(buffer, buffer_size, 0);
++	if (sa->sin_family == AF_INET) {
++		retval = inet_ntop(AF_INET, &sa->sin_addr, buffer, buffer_size);
++		port = ((struct sockaddr_in*)sa)->sin_port;
++	}
++	else if (sa->sin_family == AF_INET6) {
++		retval = inet_ntop(AF_INET6, &((const struct sockaddr_in6*)sa)->sin6_addr, buffer, buffer_size);
++		port = ((struct sockaddr_in6*)sa)->sin6_port;
++	}
++	if (retval) {
++		assert(retval == buffer);
++		len = strlen(retval);
++		snprintf(buffer + len, buffer_size - len, ":%d", ntohs(port));
++	}
++	else {
++		strcpy(buffer, placeholder);
++	}
++	return buffer;
++}
++
+ /* vim:set tabstop=4 softtabstop=4 shiftwidth=4: */
+diff --git a/utils.h b/utils.h
+index f691b77..d3af00f 100644
+--- a/utils.h
++++ b/utils.h
+@@ -57,6 +57,13 @@ int fcntl_nonblock(int fd);
+ 				(what) & EVBUFFER_TIMEOUT ? "EVBUFFER_TIMEOUT" : "0", \
+ 				(what) & ~(EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF|EVBUFFER_ERROR|EVBUFFER_TIMEOUT)
+ 
++#if INET6_ADDRSTRLEN < INET_ADDRSTRLEN
++#	error Impossible happens: INET6_ADDRSTRLEN < INET_ADDRSTRLEN
++#else
++#	define RED_INET_ADDRSTRLEN (INET6_ADDRSTRLEN + 1 + 5 + 1) // addr + : + port + \0
++#endif
++char *red_inet_ntop(const struct sockaddr_in* sa, char* buffer, size_t buffer_size);
++
+ /* vim:set tabstop=4 softtabstop=4 shiftwidth=4: */
+ /* vim:set foldmethod=marker foldlevel=32 foldmarker={,}: */
+ #endif /* UTILS_H_SAT_FEB__2_02_24_05_2008 */
+-- 
+1.9.1
+
