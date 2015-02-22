@@ -11,7 +11,6 @@ PKG_NAME:=upmpdcli
 PKG_VERSION:=0.9.0
 PKG_RELEASE:=2
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.lesbonscomptes.com/upmpdcli/downloads
 PKG_MD5SUM:=0e7b86037f19ea3a08067409af6f6902

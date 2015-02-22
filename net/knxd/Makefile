@@ -25,7 +25,6 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/Makki1/knxd.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_CAT:=zcat
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_BUILD_DEPENDS:=pthsem argp-standalone

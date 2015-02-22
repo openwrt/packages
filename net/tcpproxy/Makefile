@@ -15,7 +15,6 @@ PKG_NAME:=tcpproxy
 PKG_VERSION:=1.1
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.spreadspace.org/tcpproxy/releases/
 PKG_MD5SUM:=55126473bcde635f9ee019c6caf19bb7

@@ -12,11 +12,10 @@ PKG_VERSION:=1.2.9
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/ellzey/libevhtp/archive/
 PKG_MD5SUM:=428a8d179fcc0cadedd914ed6456e08f
-PKG_CAT:=zcat
+
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

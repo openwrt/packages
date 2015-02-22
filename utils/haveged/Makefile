@@ -17,8 +17,6 @@ PKG_SOURCE_URL:=http://www.issihosts.com/$(PKG_NAME) \
 PKG_MD5SUM:=015ff58cd10607db0e0de60aeca2f5f8
 PKG_LICENSE:=GPLv3
 
-#ensure this is consistent with the dir in the tarball!!!
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
 
 PKG_BUILD_PARALLEL:=1

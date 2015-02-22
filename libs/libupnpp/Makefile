@@ -11,7 +11,6 @@ PKG_NAME:=libupnpp
 PKG_VERSION:=0.9.0
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.lesbonscomptes.com/upmpdcli/downloads
 PKG_MD5SUM:=ff218bbe2df6cf70b73843d951ef838e
