@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apcupsd
 PKG_VERSION:=3.14.13
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0
@@ -29,12 +29,21 @@ define Package/apcupsd
   URL:=http://www.apcupsd.org/
 endef
 
+define Package/apcupsd-cgi
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=+apcupsd +libgd
+  TITLE:=UPS control software (CGI)
+  URL:=http://www.apcupsd.org/
+endef
+
 define Build/Configure
 	$(CP) $(SCRIPT_DIR)/config.* $(PKG_BUILD_DIR)/autoconf/
 	$(call Build/Configure/Default, \
 		--with-distname=unknown \
 		--sysconfdir=/etc/apcupsd \
 		--enable-usb \
+		--enable-cgi \
 		--without-x \
 	)
 endef
@@ -65,6 +74,15 @@ define Package/apcupsd/install
 	$(INSTALL_BIN)	./files/apcupsd.init $(1)/etc/init.d/apcupsd
 endef
 
+define Package/apcupsd-cgi/install
+	$(INSTALL_DIR) $(1)/www/cgi-bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/etc/apcupsd/*.cgi $(1)/www/cgi-bin
+	$(INSTALL_DIR) $(1)/etc/apcupsd
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/apcupsd/multimon.conf $(1)/etc/apcupsd/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/apcupsd/apcupsd.css $(1)/etc/apcupsd/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/apcupsd/hosts.conf $(1)/etc/apcupsd/
+endef
+
 define Package/apcupsd/conffiles
 /etc/apcupsd/apcupsd.conf
 /etc/apcupsd/apcupsd_mail.conf
@@ -76,3 +94,4 @@ define Package/apcupsd/conffiles
 endef
 
 $(eval $(call BuildPackage,apcupsd))
+$(eval $(call BuildPackage,apcupsd-cgi))
