@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=forked-daapd
-PKG_VERSION:=22.2
-PKG_RELEASE:=20150129
-PKG_REV:=77f206c11855d2d84688a6e7cd9c8932e8a89205
+PKG_VERSION:=22.3
+PKG_RELEASE:=20150222
+PKG_REV:=81b0d330691ce22879514af04c7d831bca8a6e19
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -36,7 +36,7 @@ TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
 URL:=https://github.com/ejurgensen/forked-daapd
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
 	+libevent2 +libdaemon +libantlr3c +confuse +glib2 +alsa-lib +libffmpeg-full \
-	+mxml +libavl +libavahi-client +sqlite3-cli +libplist +libcurl
+	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl
 endef
 
 define Package/forked-daapd/conffiles
