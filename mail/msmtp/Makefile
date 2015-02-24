@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/msmtp
@@ -124,6 +124,7 @@ endef
 Package/msmtp-nossl/conffiles = $(Package/msmtp/conffiles)
 Package/msmtp-nossl/install = $(Package/msmtp/install)
 Package/msmtp-nossl/postinst = $(Package/msmtp/postinst)
+Package/msmtp-nossl/prerm = $(Package/msmtp/prerm)
 
 define Package/msmtp-queue/install
 	$(INSTALL_DIR) $(1)/usr/bin
