@@ -47,7 +47,9 @@ CONFIGURE_ARGS += \
 		--with-sysconfsubdir=e2guardian \
 		--with-proxyuser=root \
 		--with-proxygroup=root \
-		--enable-pcre=yes
+		--enable-pcre=yes \
+		--with-piddir=/tmp/e2guardian/ \
+		--enable-clamd=yes
 
 define Build/Configure
 	$(call Build/Configure/Default,$CONFIGURE_ARGS)
