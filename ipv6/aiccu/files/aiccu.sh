@@ -36,7 +36,7 @@ proto_aiccu_setup() {
 	[ -n "$server" ] && echo "server $server" >> "$CFGFILE"
 	[ -n "$protocol" ] && echo "protocol $protocol" >> "$CFGFILE"
 	[ -n "$tunnelid" ] && echo "tunnel_id $tunnelid" >> "$CFGFILE"
-	[ -n "$requiretls" ] && echo "requiretls $requiretls" >> "$CFGFILE"
+	[ "$requiretls" == 1 ] && echo "requiretls true" >> "$CFGFILE"
 	[ "$nat" == 1 ] && echo "behindnat true" >> "$CFGFILE"
 	[ "$heartbeat" == 1 ] && echo "makebeats true" >> "$CFGFILE"
 	[ "$verbose" == 1 ] && echo "verbose true" >> "$CFGFILE"
