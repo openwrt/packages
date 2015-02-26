@@ -36,7 +36,7 @@ CONFIGURE_ARGS:= \
 	--prefix=/usr \
 	--cross-root="$(STAGING_DIR) $(TOOLCHAIN_DIR)" \
 	--enable-shared \
-	--without-libdbi \
+	--without-libdbi
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
@@ -66,12 +66,12 @@ define Package/gammu/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/lib{Gammu*,gsmsd*} $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/smsd $(1)/etc/config/smsd
-	$(INSTALL_BIN) ./files/smsd.init $(1)/etc/init.d/smsd
+	$(INSTALL_CONF) ./files/gammu $(1)/etc/config/gammu
+	$(INSTALL_BIN) ./files/gammu.init $(1)/etc/init.d/gammu
 endef
 
 define Package/gammu/conffiles
-/etc/config/smsd
+/etc/config/gammu
 endef
 
 $(eval $(call BuildPackage,gammu))
