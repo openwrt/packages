@@ -11,11 +11,9 @@ PKG_NAME:=libsodium
 PKG_VERSION:=1.0.2
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libsodium.org/libsodium/releases
 PKG_MD5SUM:=dc40eb23e293448c6fc908757738003f
-PKG_CAT:=zcat
 
 PKG_FIXUP:=libtool autoreconf
 PKG_USE_MIPS16:=0

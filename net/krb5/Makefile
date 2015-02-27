@@ -1,14 +1,24 @@
+#
+# Copyright (C) 2009-2015 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
-PKG_VERSION:=1.12.1
+PKG_VERSION:=1.13.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=krb5-$(PKG_VERSION)-signed.tar
-PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.12/
-PKG_MD5SUM:=524b1067b619cb5bf780759b6884c3f5
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=NOTICE
+
+PKG_SOURCE:=krb5-$(PKG_VERSION)-signed.tar
+PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.13/
+PKG_MD5SUM:=567586cdf02aa8c842c2fab7a94f3c1f
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -23,7 +33,6 @@ define Package/krb5/Default
 	CATEGORY:=Network
 	TITLE:=Kerberos
 	URL:=http://web.mit.edu/kerberos/
-	MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
 define Package/krb5-libs
@@ -33,7 +42,6 @@ define Package/krb5-libs
 	DEPENDS:=+libncurses
 	TITLE:=Kerberos 5 Shared Libraries
 	URL:=http://web.mit.edu/kerberos/
-	MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
 define Package/krb5-server

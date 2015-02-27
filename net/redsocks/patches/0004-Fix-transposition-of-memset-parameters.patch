@@ -1,0 +1,25 @@
+From b60b492602448b59aea194afd4991910d3613e5c Mon Sep 17 00:00:00 2001
+From: Cody Schafer <jmesmon@gmail.com>
+Date: Tue, 24 Apr 2012 04:33:13 -0500
+Subject: [PATCH 04/12] Fix transposition of memset parameters.
+
+---
+ utils.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/utils.c b/utils.c
+index afdeea8..31c6894 100644
+--- a/utils.c
++++ b/utils.c
+@@ -222,7 +222,7 @@ char *red_inet_ntop(const struct sockaddr_in* sa, char* buffer, size_t buffer_si
+ 
+ 	assert(buffer_size >= sizeof(placeholder));
+ 
+-	memset(buffer, buffer_size, 0);
++	memset(buffer, 0, buffer_size);
+ 	if (sa->sin_family == AF_INET) {
+ 		retval = inet_ntop(AF_INET, &sa->sin_addr, buffer, buffer_size);
+ 		port = ((struct sockaddr_in*)sa)->sin_port;
+-- 
+1.9.1
+

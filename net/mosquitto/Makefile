@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
 PKG_VERSION:=1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
@@ -20,9 +20,6 @@ PKG_MD5SUM:=cd879f5964311501ba8e2275add71484
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-
-MAKE_FLAGS+=WITH_DOCS=no
-MAKE_FLAGS+=WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
 
 define Package/$(PKG_NAME)/default
   SECTION:=net
@@ -186,8 +183,11 @@ endef
 Package/libmosquitto-nossl/install = $(Package/libmosquitto/install)
 
 # Applies to all...
+MAKE_FLAGS += WITH_DOCS=no
 ifeq ($(BUILD_VARIANT),nossl)
-        MAKE_FLAGS += WITH_TLS=no
+        MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
+else
+	MAKE_FLAGS += WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
 endif
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

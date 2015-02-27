@@ -11,11 +11,9 @@ PKG_NAME:=dnscrypt-proxy
 PKG_VERSION:=1.4.3
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.dnscrypt.org/dnscrypt-proxy
 PKG_MD5SUM:=54d172236a8f321fb5689ff81767f1ba
-PKG_CAT:=zcat
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
