@@ -83,6 +83,7 @@ CONFIGURE_ARGS += \
 	--with-libpcre-libraries="$(STAGING_DIR)/usr/lib" \
 	--with-daq-includes="$(STAGING_DIR)/usr/include" \
 	--with-daq-libraries="$(STAGING_DIR)/usr/lib" \
+	--sysconfdir="/etc/snort" \
 	--disable-static-daq
 
 CONFIGURE_VARS += \
@@ -163,9 +164,6 @@ define Package/snort/install
 
 	$(INSTALL_DIR) $(1)/etc/snort
 	$(INSTALL_CONF) \
-		$(PKG_BUILD_DIR)/etc/snort.conf \
-		$(1)/etc/snort/
-	$(INSTALL_CONF) \
 		$(PKG_BUILD_DIR)/etc/attribute_table.dtd \
 		$(1)/etc/snort/
 	$(INSTALL_CONF) \
@@ -195,6 +193,13 @@ define Package/snort/install
 	$(INSTALL_CONF) \
 		./files/snort.config \
 		$(1)/etc/config/snort
+
+	$(INSTALL_DIR) $(1)/etc/snort
+	$(INSTALL_CONF) ./files/configs/config1_advanced.conf $(1)/etc/snort/
+	$(INSTALL_CONF) ./files/configs/config2_engine.conf $(1)/etc/snort/
+	$(INSTALL_CONF) ./files/configs/config3_preprocessors.conf $(1)/etc/snort/
+	$(INSTALL_CONF) ./files/configs/config4_other.conf $(1)/etc/snort/
+	$(INSTALL_CONF) ./files/configs/config5_rules.conf $(1)/etc/snort/
 endef
 
 $(eval $(call BuildPackage,snort))
