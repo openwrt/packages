@@ -1,0 +1,71 @@
+--- a/debug/Makefile.am
++++ b/debug/Makefile.am
+@@ -27,8 +27,8 @@ raddebug_LDADD   += -lsqlite3
+ endif
+ 
+ # define library directories
+-raddebug_LDFLAGS = -L../src/.libs -L$(prefix)/lib -L/usr/lib
+-INCLUDES         += -I$(prefix)/include -I/usr/include
++raddebug_LDFLAGS = -L../src/.libs -L$(prefix)/lib
++INCLUDES         += -I$(prefix)/include
+ 
+ if MYSQL
+ raddebug_LDFLAGS += -L$(prefix)/lib64/mysql -L$(prefix)/lib/mysql -L/usr/lib64/mysql -L/usr/lib/mysql
+@@ -39,6 +39,6 @@ INCLUDES         += -I$(prefix)/pgsql/in
+ endif
+ endif
+ 
+-if CROSSCOMPILE
+-raddebug_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+-endif
++#if CROSSCOMPILE
++#raddebug_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
++#endif
+--- a/msgRouter/Makefile.am
++++ b/msgRouter/Makefile.am
+@@ -27,8 +27,8 @@ radmrouted_LDADD   += -lsqlite3
+ endif
+ 
+ # define library directories
+-radmrouted_LDFLAGS = -L../src/.libs -L$(prefix)/lib -L/usr/lib
+-INCLUDES           += -I$(prefix)/include -I/usr/include
++radmrouted_LDFLAGS = -L../src/.libs -L$(prefix)/lib
++INCLUDES           += -I$(prefix)/include
+ 
+ if MYSQL
+ radmrouted_LDFLAGS += -L$(prefix)/lib64/mysql -L$(prefix)/lib/mysql -L/usr/lib64/mysql -L/usr/lib/mysql
+@@ -39,6 +39,6 @@ INCLUDES           += -I$(prefix)/pgsql/
+ endif
+ endif
+ 
+-if CROSSCOMPILE
+-radmrouted_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+-endif
++#if CROSSCOMPILE
++#radmrouted_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
++#endif
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -34,9 +34,6 @@ PGSQL_HDRS	= \
+ 		$(top_srcdir)/database/postgresql/_pg-types.h
+ endif
+ if SQLITE
+-SQ_INCLUDES 	= \
+-		-I$(prefix)/include \
+-		-I/usr/include
+ SQ_SOURCES	= \
+ 		$(top_srcdir)/src/radsqlite.c
+ SQLITE_HDRS	= \
+@@ -46,11 +43,9 @@ endif
+ # define include directories
+ INCLUDES = \
+ 		-I$(top_srcdir)/h \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		$(MY_INCLUDES) \
+-		$(PG_INCLUDES) \
+-		$(SQ_INCLUDES)
++		$(PG_INCLUDES)
+ 
+ 
+ 
