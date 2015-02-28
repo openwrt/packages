@@ -1,0 +1,20 @@
+--- a/wviewconfig/wviewconfig.sh
++++ b/wviewconfig/wviewconfig.sh
+@@ -206,7 +206,7 @@ get_wview_conf_interactive()
+         cd $WVIEW_CONF_DIR
+ 
+ 		# Edit parms one at a time:
+-		gawk -F"|" '{ 
++		awk -F"|" '{ 
+ 		sysstring=sprintf("./editparm \"%s\" \"%s\" \"%s\" \"%s\"", $1, $2, $3, $4)
+ 		system(sysstring)
+ 		}' $WVIEW_CONF_DIR/parms.out
+@@ -234,7 +234,7 @@ set_config_from_file()
+         cd $WVIEW_CONF_DIR
+ 
+ 		# Update parms one at a time:
+-		gawk -F"=" '{ 
++		awk -F"=" '{ 
+ 		sysstring=sprintf("./updateparm \"%s\" \"%s\"", $1, $2)
+ 		system(sysstring)
+ 		}' $SET_FILE
