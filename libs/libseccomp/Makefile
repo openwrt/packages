@@ -51,8 +51,6 @@ define Package/libseccomp/description
 endef
 
 define Build/Configure
-	$(SED) 's,-I$$$${includedir},,g' $(PKG_BUILD_DIR)/configure
-	$(SED) 's,-L$$$${libdir},,g' $(PKG_BUILD_DIR)/configure
 	$(call Build/Configure/Default)
 endef
 
