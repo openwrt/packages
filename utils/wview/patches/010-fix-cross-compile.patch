@@ -1,0 +1,489 @@
+--- a/alarms/Makefile.am
++++ b/alarms/Makefile.am
+@@ -8,7 +8,6 @@ bin_PROGRAMS    = wvalarmd
+ # define include directories
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -36,9 +35,7 @@ wvalarmd_SOURCES  = \
+ wvalarmd_LDADD   =
+ 
+ # define library directories
+-wvalarmd_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wvalarmd_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/cwop/Makefile.am
++++ b/cwop/Makefile.am
+@@ -8,7 +8,6 @@ bin_PROGRAMS    = wvcwopd
+ # define include directories
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -32,9 +31,7 @@ wvcwopd_SOURCES  = \
+ wvcwopd_LDADD   =
+ 
+ # define library directories
+-wvcwopd_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wvcwopd_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/ftp/Makefile.am
++++ b/ftp/Makefile.am
+@@ -7,7 +7,6 @@ bin_PROGRAMS    = wviewftpd
+ 
+ # define include directories
+ INCLUDES = 	-I$(top_srcdir)/common \
+-		-I$(prefix)/include \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+ 		-D_GNU_SOURCE
+@@ -33,9 +32,7 @@ wviewftpd_SOURCES  = \
+ wviewftpd_LDADD   = -lssl -lcurl
+ 
+ # define library directories
+-wviewftpd_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wviewftpd_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/htmlgenerator/Makefile.am
++++ b/htmlgenerator/Makefile.am
+@@ -8,7 +8,6 @@ bin_PROGRAMS       = htmlgend
+ # define include directories
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -66,9 +65,7 @@ htmlgend_SOURCES   = \
+ htmlgend_LDADD   =
+ 
+ # define library directories
+-htmlgend_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-htmlgend_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/http/Makefile.am
++++ b/http/Makefile.am
+@@ -8,9 +8,6 @@ bin_PROGRAMS    = wvhttpd
+ # define include directories
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+-		-I$(prefix)/include \
+-		-I/usr/include \
+-		-I/usr/local/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -38,9 +35,7 @@ wvhttpd_SOURCES  = \
+ wvhttpd_LDADD     = -lssl -lcurl
+ 
+ # define library directories
+-wvhttpd_LDFLAGS   = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wvhttpd_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/procmon/Makefile.am
++++ b/procmon/Makefile.am
+@@ -8,7 +8,6 @@ bin_PROGRAMS    = wvpmond
+ # define include directories
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -33,9 +32,7 @@ wvpmond_SOURCES  = \
+ wvpmond_LDADD   =
+ 
+ # define library directories
+-wvpmond_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wvpmond_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/ssh/Makefile.am
++++ b/ssh/Makefile.am
+@@ -7,7 +7,6 @@ bin_PROGRAMS = wviewsshd
+ 
+ # define include directories
+ INCLUDES = 	-I$(top_srcdir)/common \
+-		-I$(prefix)/include \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+ 		-D_GNU_SOURCE
+@@ -33,9 +32,7 @@ wviewsshd_SOURCES  = \
+ wviewsshd_LDADD   =
+ 
+ # define library directories
+-wviewsshd_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wviewsshd_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/stations/Simulator/Makefile.am
++++ b/stations/Simulator/Makefile.am
+@@ -7,7 +7,6 @@ bin_PROGRAMS    = wviewd_sim
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -52,9 +51,7 @@ wviewd_sim_SOURCES     = \
+ wviewd_sim_LDADD       =
+ 
+ # define library directories
+-wviewd_sim_LDFLAGS     = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wviewd_sim_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/stations/TE923/Makefile.am
++++ b/stations/TE923/Makefile.am
+@@ -7,7 +7,6 @@ bin_PROGRAMS	= wviewd_te923
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -53,11 +52,9 @@ wviewd_te923_SOURCES     = \
+ 
+ if DARWIN
+ wviewd_te923_SOURCES	+= $(top_srcdir)/stations/common/hidapi-osx.c
+-wviewd_te923_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib -framework IOKit -framework CoreFoundation
+ wviewd_te923_LDADD	=
+ else
+ wviewd_te923_SOURCES	+= $(top_srcdir)/stations/common/hidapi-linux.c
+-wviewd_te923_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+ if FREEBSD
+ wviewd_te923_LDADD		= -lusb
+ else
+--- a/stations/TWI/Makefile.am
++++ b/stations/TWI/Makefile.am
+@@ -7,7 +7,6 @@ bin_PROGRAMS    = wviewd_twi
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -57,9 +56,7 @@ wviewd_twi_SOURCES     = \
+ wviewd_twi_LDADD       =
+ 
+ # define library directories
+-wviewd_twi_LDFLAGS     = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wviewd_twi_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/stations/VantagePro/Makefile.am
++++ b/stations/VantagePro/Makefile.am
+@@ -9,7 +9,6 @@ bin_PROGRAMS    = wviewd_vpro
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -56,9 +55,7 @@ wviewd_vpro_SOURCES     = \
+ wviewd_vpro_LDADD       =
+ 
+ # define library directories
+-wviewd_vpro_LDFLAGS     = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wviewd_vpro_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/stations/VantagePro/vpconfig/Makefile.am
++++ b/stations/VantagePro/vpconfig/Makefile.am
+@@ -13,7 +13,6 @@ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+ 		-I$(top_srcdir)/stations/VantagePro \
+-		-I$(prefix)/include \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+ 		-D_VP_CONFIG_ONLY \
+@@ -40,10 +39,8 @@ vpconfig_SOURCES  = \
+ vpconfig_LDADD   =
+ 
+ # define library directories
+-vpconfig_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-vpconfig_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+ CLEANFILES = $(bin_SCRIPTS)
+--- a/stations/Virtual/Makefile.am
++++ b/stations/Virtual/Makefile.am
+@@ -7,7 +7,6 @@ bin_PROGRAMS    = wviewd_virtual
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -58,9 +57,7 @@ wviewd_virtual_SOURCES     = \
+ wviewd_virtual_LDADD     =
+ 
+ # define library directories
+-wviewd_virtual_LDFLAGS   = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wviewd_virtual_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/stations/WH1080/Makefile.am
++++ b/stations/WH1080/Makefile.am
+@@ -7,7 +7,6 @@ bin_PROGRAMS	= wviewd_wh1080
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -53,11 +52,9 @@ wviewd_wh1080_SOURCES     = \
+ 
+ if DARWIN
+ wviewd_wh1080_SOURCES	+= $(top_srcdir)/stations/common/hidapi-osx.c
+-wviewd_wh1080_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib -framework IOKit -framework CoreFoundation
+ wviewd_wh1080_LDADD	=
+ else
+ wviewd_wh1080_SOURCES	+= $(top_srcdir)/stations/common/hidapi-linux.c
+-wviewd_wh1080_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+ if FREEBSD
+ wviewd_wh1080_LDADD		= -lusb
+ else
+--- a/stations/WMR918/Makefile.am
++++ b/stations/WMR918/Makefile.am
+@@ -7,7 +7,6 @@ bin_PROGRAMS    = wviewd_wmr918
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -56,9 +55,7 @@ wviewd_wmr918_SOURCES     = \
+ wviewd_wmr918_LDADD       =
+ 
+ # define library directories
+-wviewd_wmr918_LDFLAGS     = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wviewd_wmr918_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/stations/WMRUSB/Makefile.am
++++ b/stations/WMRUSB/Makefile.am
+@@ -7,7 +7,6 @@ bin_PROGRAMS    = wviewd_wmrusb
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -52,11 +51,9 @@ wviewd_wmrusb_SOURCES     = \
+ 
+ if DARWIN
+ wviewd_wmrusb_SOURCES	+= $(top_srcdir)/stations/common/hidapi-osx.c
+-wviewd_wmrusb_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib -framework IOKit -framework CoreFoundation
+ wviewd_wmrusb_LDADD		=
+ else
+ wviewd_wmrusb_SOURCES	+= $(top_srcdir)/stations/common/hidapi-linux.c
+-wviewd_wmrusb_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+ if FREEBSD
+ wviewd_wmrusb_LDADD		= -lusb
+ else
+--- a/stations/WS-2300/Makefile.am
++++ b/stations/WS-2300/Makefile.am
+@@ -7,7 +7,6 @@ bin_PROGRAMS    = wviewd_ws2300
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -56,9 +55,7 @@ wviewd_ws2300_SOURCES     = \
+ wviewd_ws2300_LDADD       =
+ 
+ # define library directories
+-wviewd_ws2300_LDFLAGS     = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wviewd_ws2300_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/stations/WXT510/Makefile.am
++++ b/stations/WXT510/Makefile.am
+@@ -10,7 +10,6 @@ bin_PROGRAMS    = wviewd_wxt510
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+-		-I$(prefix)/include \
+ 		-D_GNU_SOURCE \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -59,9 +58,7 @@ wviewd_wxt510_SOURCES     = \
+ wviewd_wxt510_LDADD       =
+ 
+ # define library directories
+-wviewd_wxt510_LDFLAGS     = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wviewd_wxt510_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/stations/WXT510/wxt510config/Makefile.am
++++ b/stations/WXT510/wxt510config/Makefile.am
+@@ -8,7 +8,6 @@ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/common \
+ 		-I$(top_srcdir)/stations/WXT510 \
+-		-I$(prefix)/include \
+ 		-D_WXT510_CONFIG_ONLY \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+@@ -38,9 +37,7 @@ wxt510config_SOURCES  = \
+ wxt510config_LDADD   =
+ 
+ # define library directories
+-wxt510config_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wxt510config_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/utilities/archive-be2le/Makefile.am
++++ b/utilities/archive-be2le/Makefile.am
+@@ -8,7 +8,6 @@ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/VantagePro \
+ 		-I$(top_srcdir)/utilities \
+-		-I$(prefix)/include \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+ 		-DBUILD_UTILITIES \
+@@ -31,9 +30,7 @@ arc_be2le_SOURCES  = \
+ arc_be2le_LDADD   =
+ 
+ # define library directories
+-arc_be2le_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-arc_be2le_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/utilities/archive-le2be/Makefile.am
++++ b/utilities/archive-le2be/Makefile.am
+@@ -8,7 +8,6 @@ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/VantagePro \
+ 		-I$(top_srcdir)/utilities \
+-		-I$(prefix)/include \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+ 		-DBUILD_UTILITIES \
+@@ -31,9 +30,7 @@ arc_le2be_SOURCES  = \
+ arc_le2be_LDADD   =
+ 
+ # define library directories
+-arc_le2be_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-arc_le2be_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/utilities/hilowcreate/Makefile.am
++++ b/utilities/hilowcreate/Makefile.am
+@@ -6,7 +6,6 @@ bin_PROGRAMS = hilowcreate
+ # define include directories
+ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+-		-I$(prefix)/include \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+ 		-DBUILD_UTILITIES=1 \
+@@ -28,9 +27,7 @@ hilowcreate_SOURCES  = \
+ hilowcreate_LDADD   =
+ 
+ # define library directories
+-hilowcreate_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-hilowcreate_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/utilities/sqlite2wlk/Makefile.am
++++ b/utilities/sqlite2wlk/Makefile.am
+@@ -8,7 +8,6 @@ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/VantagePro \
+ 		-I$(top_srcdir)/utilities \
+-		-I$(prefix)/include \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+ 		-DBUILD_UTILITIES \
+@@ -29,9 +28,7 @@ sqlite2wlk_SOURCES  = \
+ sqlite2wlk_LDADD   =
+ 
+ # define library directories
+-sqlite2wlk_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-sqlite2wlk_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 
+--- a/utilities/wlk2sqlite/Makefile.am
++++ b/utilities/wlk2sqlite/Makefile.am
+@@ -8,7 +8,6 @@ INCLUDES = \
+ 		-I$(top_srcdir)/common \
+ 		-I$(top_srcdir)/stations/VantagePro \
+ 		-I$(top_srcdir)/utilities \
+-		-I$(prefix)/include \
+ 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
+ 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
+ 		-DBUILD_UTILITIES \
+@@ -29,9 +28,7 @@ wlk2sqlite_SOURCES  = \
+ wlk2sqlite_LDADD   =
+ 
+ # define library directories
+-wlk2sqlite_LDFLAGS = -L$(prefix)/lib -L/usr/lib
+ 
+ if CROSSCOMPILE
+-wlk2sqlite_LDFLAGS += $(prefix)/lib/crt1.o $(prefix)/lib/crti.o $(prefix)/lib/crtn.o
+ endif
+ 

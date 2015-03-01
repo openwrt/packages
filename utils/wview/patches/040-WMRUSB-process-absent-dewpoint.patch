@@ -1,0 +1,31 @@
+Index: wview-5.19.0-jgoerzen/stations/WMRUSB/wmrusbprotocol.c
+===================================================================
+--- wview-5.19.0-jgoerzen.orig/stations/WMRUSB/wmrusbprotocol.c	2012-12-15 15:32:03.000000000 +0000
++++ wview-5.19.0-jgoerzen/stations/WMRUSB/wmrusbprotocol.c	2012-12-15 15:36:47.199715376 +0000
+@@ -69,12 +69,9 @@
+ {
+     a &= 0xff;
+     b &= 0xff;
+-    int t = ( b << 8 ) | a;
+-    if( t & 0x8000 )
+-    {
+-        t &= 0x7FFF;
++    int t = ((b & 0x0f) << 8) | a;
++    if (b & 0x80)
+         return -( t / 10.0 );
+-    }
+     else
+     {
+         return ( t / 10.0 );
+     }
+ }
+@@ -200,6 +197,9 @@
+             return;
+         }
+ 
++        if (ptr[5] & 0x20)
++            dew = ARCHIVE_VALUE_NULL;
++
+         wmrWork.sensorData.humidity[sensor] = humid;
+         wmrWork.sensorData.temp[sensor]     = temp;
+         wmrWork.sensorData.dewpoint[sensor] = dew;

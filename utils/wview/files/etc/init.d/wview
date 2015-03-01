@@ -1,0 +1,55 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+CONF_DIRECTORY=/etc/wview
+RUN_DIRECTORY=/var/wview
+WVIEW_INSTALL_DIR=/usr/bin
+
+WVIEWD_FILE=`cat $CONF_DIRECTORY/wview-binary`
+WVIEWD_BIN=$WVIEW_INSTALL_DIR/$WVIEWD_FILE
+
+WVIEWD_FILE=`cat $CONF_DIRECTORY/wview-binary`
+WVIEWD_BIN=$WVIEW_INSTALL_DIR/$WVIEWD_FILE
+HTMLD_BIN=$WVIEW_INSTALL_DIR/htmlgend
+FTPD_BIN=$WVIEW_INSTALL_DIR/wviewftpd
+SSHD_BIN=$WVIEW_INSTALL_DIR/wviewsshd
+ALARMD_BIN=$WVIEW_INSTALL_DIR/wvalarmd
+CWOPD_BIN=$WVIEW_INSTALL_DIR/wvcwopd
+HTTP_BIN=$WVIEW_INSTALL_DIR/wvhttpd
+RADROUTER_BIN=$WVIEW_INSTALL_DIR/radmrouted
+PMOND_BIN=$WVIEW_INSTALL_DIR/wvpmond
+
+RADROUTER_PID=$RUN_DIRECTORY/radmrouted.pid
+WVIEWD_PID=$RUN_DIRECTORY/wviewd.pid
+HTMLD_PID=$RUN_DIRECTORY/htmlgend.pid
+FTPD_PID=$RUN_DIRECTORY/wviewftpd.pid
+SSHD_PID=$RUN_DIRECTORY/wviewsshd.pid
+ALARMD_PID=$RUN_DIRECTORY/wvalarmd.pid
+CWOPD_PID=$RUN_DIRECTORY/wvcwopd.pid
+HTTP_PID=$RUN_DIRECTORY/wvhttpd.pid
+PMOND_PID=$RUN_DIRECTORY/wvpmond.pid
+
+start() {
+	mkdir /mnt/extusb 2> /dev/null
+	mount /dev/sda1 /mnt/extusb 2> /dev/null
+	mkdir $RUN_DIRECTORY 2> /dev/null
+	ln -snf /mnt/extusb/wview-html $CONF_DIRECTORY/html
+	ln -snf /mnt/extusb/wview-data/measurements-archive /var/wview/archive
+	start-stop-daemon -S -x $RADROUTER_BIN -- 1 $RUN_DIRECTORY
+	sleep 1
+	start-stop-daemon -S -x $WVIEWD_BIN
+	sleep 1
+	for i in HTMLD ALARMD CWOPD HTTP FTPD SSHD PMOND; do
+		start-stop-daemon -S -x $(eval echo \$$(echo ${i}_BIN))
+	done
+}
+
+stop() {
+	for i in RADROUTER WVIEWD HTMLD ALARMD CWOPD HTTP FTPD SSHD PMOND; do
+		PID_FILE=$(eval echo \$$(echo ${i}_PID)) 
+	        start-stop-daemon -K -s TERM -p	$PID_FILE
+	        rm -f $PID_FILE
+	done
+}
+
