@@ -50,7 +50,8 @@ endef
 define Package/openvswitch
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+libpcap +libopenssl +librt +libatomic +kmod-openvswitch
+  DEPENDS:=+libpcap +libopenssl +librt +libatomic +kmod-openvswitch \
+           @(LINUX_3_8||LINUX_3_10||LINUX_3_13||LINUX_3_14)
 endef
 
 define Package/openvswitch/description
