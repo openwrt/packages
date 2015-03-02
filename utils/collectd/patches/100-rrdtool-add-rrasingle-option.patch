@@ -34,7 +34,7 @@
  		double tmp = atof (value);
 --- a/src/utils_rrdcreate.c
 +++ b/src/utils_rrdcreate.c
-@@ -211,6 +211,9 @@ static int rra_get (char ***ret, const v
+@@ -212,6 +212,9 @@ static int rra_get (char ***ret, const v
      rts_num = rra_timespans_num;
    }
  
