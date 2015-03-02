@@ -17,6 +17,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=f66c0c3d630aaff1c4d589bc4d884067f00b6529
 
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 PKG_MAINTAINER:=Martin Johansson <martin@fatbob.nu>
 PKG_LICENSE:=BSD-3-Clause
@@ -68,11 +69,6 @@ define Build/Compile
 	CFLAGS="$(TARGET_CFLAGS)" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 	$(MAKE) -C $(PKG_BUILD_DIR)/src all
-endef
-
-define Build/Configure
-	cd $(PKG_BUILD_DIR) && ./autogen.sh
-	$(call Build/Configure/Default)
 endef
 
 define Package/umurmur-openssl/conffiles

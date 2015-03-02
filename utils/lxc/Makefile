@@ -20,7 +20,9 @@ PKG_MD5SUM:=ab1cbabf859abc15165050c854979c5c
 
 PKG_BUILD_DEPENDS:=lua
 PKG_BUILD_PARALLEL:=1
+
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -117,11 +119,6 @@ CONFIGURE_ARGS += \
 MAKE_FLAGS += \
 	LUA_INSTALL_CMOD="/usr/lib/lua" \
 	LUA_INSTALL_LMOD="/usr/lib/lua"
-
-define Build/Configure
-	( cd $(PKG_BUILD_DIR); ./autogen.sh );
-	$(call Build/Configure/Default)
-endef
 
 
 define Build/InstallDev

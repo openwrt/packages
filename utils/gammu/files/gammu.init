@@ -5,7 +5,7 @@ START=98
 
 USE_PROCD=1
 PROG=/usr/bin/gammu-smsd
-CONFPFX=/var/smsd
+CONFPFX=/var/gammu
 
 start_instance() {
 	local conf="$1"
@@ -15,7 +15,7 @@ start_instance() {
 	config_get_bool item "$conf" enabled 0
 	[ $item = 0 ] && return
 
-	echo -e "; dont edit. instead look into /etc/config/smsd\n[gammu]\n" > $conffile
+	echo -e "; dont edit. instead look into /etc/config/gammu\n[gammu]\n" > $conffile
 
 	config_get item "$conf" device
 	[ -z "$item" ] && return
@@ -107,10 +107,10 @@ start_instance() {
 }
 
 start_service() {
-	config_load smsd
+	config_load gammu
 	config_foreach start_instance daemon
 }
 
 service_triggers() {
-	procd_add_reload_trigger "smsd"
+	procd_add_reload_trigger "gammu"
 }
