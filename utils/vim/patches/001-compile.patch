@@ -1,0 +1,41 @@
+--- a/src/auto/configure
++++ b/src/auto/configure
+@@ -12294,37 +12294,8 @@ _ACEOF
+ 
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking uint32_t is 32 bits" >&5
+ $as_echo_n "checking uint32_t is 32 bits... " >&6; }
+-if test "$cross_compiling" = yes; then :
+-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cannot check uint32_t when cross-compiling." >&5
+-$as_echo "$as_me: WARNING: cannot check uint32_t when cross-compiling." >&2;}
+-else
+-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+-/* end confdefs.h.  */
+-
+-#ifdef HAVE_STDINT_H
+-# include <stdint.h>
+-#endif
+-#ifdef HAVE_INTTYPES_H
+-# include <inttypes.h>
+-#endif
+-main() {
+-  uint32_t nr1 = (uint32_t)-1;
+-  uint32_t nr2 = (uint32_t)0xffffffffUL;
+-  if (sizeof(uint32_t) != 4 || nr1 != 0xffffffffUL || nr2 + 1 != 0) exit(1);
+-  exit(0);
+-}
+-_ACEOF
+-if ac_fn_c_try_run "$LINENO"; then :
+-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ok" >&5
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming ok" >&5
+ $as_echo "ok" >&6; }
+-else
+-  as_fn_error "WRONG!  uint32_t not defined correctly." "$LINENO" 5
+-fi
+-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+-  conftest.$ac_objext conftest.beam conftest.$ac_ext
+-fi
+-
+-
+ 
+ bcopy_test_prog='
+ #include "confdefs.h"
