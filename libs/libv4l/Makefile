@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 # Copyright (C) 2009 David Cooper <dave@kupesoft.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -9,18 +9,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l-utils
-PKG_VERSION:=1.2.1
-PKG_RELEASE:=2
-PKG_USE_MIPS16:=0
+PKG_VERSION:=1.6.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.linuxtv.org/downloads/v4l-utils
-PKG_MD5SUM:=4cc0fb4ded302ea9e89e5e1b56a7252b
+PKG_MD5SUM:=9cb3c178f937954e65bf30920af433ef
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING COPYING.libv4l
+
+PKG_USE_MIPS16:=0
+PKG_INSTALL:=1
 
 PKG_BUILD_DEPENDS:=argp-standalone
 
@@ -73,23 +75,14 @@ define Package/v4l-utils/description
   This package contains the video4linux utilities.
 endef
 
-TARGET_CFLAGS += $(FPIC)
+TARGET_CFLAGS += $(FPIC) -std=gnu99
 TARGET_LDFLAGS += -largp
 
 CONFIGURE_ARGS+= \
+	--disable-doxygen-doc \
 	--disable-libdvbv5 \
 	--disable-qv4l2 \
 	--without-jpeg \
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		all install
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		LINKTYPE="static" \
-		all install
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
