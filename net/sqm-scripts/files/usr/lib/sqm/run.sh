@@ -9,16 +9,37 @@
 
 . /lib/functions.sh
 
-STOP=$1
+STOP=
 ACTIVE_STATE_PREFIX="SQM_active_on_"
 ACTIVE_STATE_FILE_DIR="/var/run/SQM"
 mkdir -p ${ACTIVE_STATE_FILE_DIR}
+PROTO_STATE_FILE_LIST=$( ls ${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}* 2> /dev/null )
+
+
+case ${1} in
+    stop)
+        logger -t SQM -s "run.sh stop"
+	STOP=$1
+        ;;
+    interface)
+	START_ON_IF=$2	# only process this interface
+	logger -t SQM -s "Re/starting sqm on interface ${START_ON_IF}"
+	# TODO if $2 is empty just bail...
+	if [ -z ${START_ON_IF} ] ;
+	then
+	    logger -t SQM -s "Interface name missing, nothing to do, bailing out"
+	    return 0
+	fi
+	# only try to restart the just hotplugged interface, so reduce the list of interfaces to stop to the specified one
+	PROTO_STATE_FILE_LIST=${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}${START_ON_IF}
+	;;
+esac
+
 
 # the current uci config file does not necessarily contain sections for all interfaces with active
 # SQM instances, so use the ACTIVE_STATE_FILES to detect the interfaces on which to stop SQM.
 # Currently the .qos scripts start with stopping any existing traffic shaping so this should not
 # effectively change anything...
-PROTO_STATE_FILE_LIST=$( ls ${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}* 2> /dev/null )
 for STATE_FILE in ${PROTO_STATE_FILE_LIST} ; do
     if [ -f ${STATE_FILE} ] ;
     then
@@ -35,6 +56,11 @@ config_load sqm
 run_simple_qos() {
 	local section="$1"
 	export IFACE=$(config_get "$section" interface)
+
+	# If called explicitly for one interface only , so ignore anything else
+	[ -n "${START_ON_IF}" -a "$START_ON_IF" != "$IFACE" ] && return
+	#logger -t SQM -s "marching on..."
+
 	ACTIVE_STATE_FILE_FQN="${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}${IFACE}"	# this marks interfaces as active with SQM
 	[ -f "${ACTIVE_STATE_FILE_FQN}" ] && logger -t SQM -s "Uh, oh, ${ACTIVE_STATE_FILE_FQN} should already be stopped."	# Not supposed to happen
 
