@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dkolf.de/src/dkjson-lua.fsl/tarball/
-PKG_MD5SUM:=dbe706722dd64308172cf8e37395e762
+PKG_MD5SUM:=af6b5f3df681e208f1dfb1a724a87e7c
 PKG_LICENSE:=MIT
 
 include $(INCLUDE_DIR)/package.mk
