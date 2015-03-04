@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
 PKG_VERSION:=3.3.13
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -114,6 +114,7 @@ endef
 CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
+	--disable-rpath \
 	--disable-libdane \
 	--disable-guile \
 	--disable-nls \
@@ -123,7 +124,8 @@ CONFIGURE_ARGS+= \
 	--disable-tests \
 	--disable-rsa-export \
 	--with-default-trust-store-dir=/etc/ssl/certs/ \
-	--disable-crywrap
+	--disable-crywrap \
+	--with-librt-prefix="$(STAGING_DIR)/"
 
 ifneq ($(CONFIG_GNUTLS_EXT_LIBTASN1),y)
 CONFIGURE_ARGS += --with-included-libtasn1
@@ -174,13 +176,6 @@ CONFIGURE_ARGS += --enable-cryptodev
 endif
 
 TARGET_CFLAGS += $(FPIC)
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
-
-define Build/Configure
-	$(SED) 's,-I$$$${includedir},,g' $(PKG_BUILD_DIR)/configure
-	$(SED) 's,-L$$$${libdir},,g' $(PKG_BUILD_DIR)/configure
-	$(call Build/Configure/Default)
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib/pkgconfig
