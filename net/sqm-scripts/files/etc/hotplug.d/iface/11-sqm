@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# teach SQM to re-enable itself when an interface re-appears
+logger -t SQM -s "hotplug on interface: ${DEVICE} action: ${ACTION}"
+
+[ "$ACTION" = ifup ] && /usr/lib/sqm/run.sh interface ${DEVICE}
+
