@@ -23,7 +23,7 @@ case ${1} in
         ;;
     interface)
 	START_ON_IF=$2	# only process this interface
-	logger -t SQM -s "Re/starting sqm on interface ${START_ON_IF}"
+	logger -t SQM -s "Trying to re-start SQM on interface ${START_ON_IF}"
 	# TODO if $2 is empty just bail...
 	if [ -z ${START_ON_IF} ] ;
 	then
@@ -108,6 +108,14 @@ run_simple_qos() {
 	     logger -t SQM -s "${0} SQM qdiscs on ${IFACE} removed"
 	     return 0
 	fi
+	# in case of spurious hotplug events, try double check whether the interface is really up
+	if [ ! -d /sys/class/net/${IFACE} ] ;
+	then
+	    echo "${IFACE} does currently not exist, not even trying to start SQM on nothing." > /dev/kmsg
+	    logger -t SQM -s "${IFACE} does currently not exist, not even trying to start SQM on nothing."
+	    return 0
+	fi
+
 	logger -t SQM -s "${0} Queue Setup Script: ${SCRIPT}"
 	[ -x "$SCRIPT" ] && { $SCRIPT ; touch ${ACTIVE_STATE_FILE_FQN}; }
 }
