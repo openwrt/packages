@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2014 OpenWrt.org
+# Copyright (C) 2011-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.4.4
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -106,28 +106,18 @@ CONFIGURE_ARGS += \
 	--disable-osx_video \
 	--disable-quicktime \
 	--disable-vcd \
-	--disable-alsa \
 	--disable-assrender \
-	--disable-amrwb \
 	--disable-apexsink \
 	--disable-bz2 \
-	--disable-cdaudio \
-	--disable-celt \
-	--disable-cog \
 	--disable-dc1394 \
 	--disable-directfb \
-	--disable-dirac \
 	--disable-dts \
-	--disable-divx \
 	--disable-resindvd \
-	--disable-metadata \
 	--disable-faac \
 	--disable-faad \
 	--disable-fbdev \
 	--disable-flite \
 	--disable-gsm \
-	--disable-jack \
-	--disable-jp2k \
 	--disable-kate \
 	--disable-ladspa \
 	--disable-lv2 \
@@ -137,7 +127,6 @@ CONFIGURE_ARGS += \
 	--disable-mpeg2enc \
 	--disable-mplex \
 	--disable-musepack \
-	--disable-musicbrainz \
 	--disable-mythtv \
 	--disable-nas \
 	--disable-neon \
@@ -151,8 +140,6 @@ CONFIGURE_ARGS += \
 	--disable-soundtouch \
 	--disable-spc \
 	--disable-gme \
-	--disable-swfdec \
-	--disable-theoradec \
 	--disable-xvid \
 	--disable-dvb \
 	--disable-wininet \
@@ -160,7 +147,6 @@ CONFIGURE_ARGS += \
 	--disable-vdpau \
 	--disable-schro \
 	--disable-zbar \
-	--disable-vp8 \
 	--disable-srtp \
 	\
 	--without-libiconv-prefix \
@@ -275,6 +261,7 @@ $(eval $(call GstBuildPlugin,rawparse,rawparse support,audio video,,))
 $(eval $(call GstBuildPlugin,rfbsrc,librfb support,video,,))
 $(eval $(call GstBuildPlugin,sdpelem,sdp support,rtp sdp,,))
 $(eval $(call GstBuildPlugin,segmentclip,segmentclip support,audio,,))
+$(eval $(call GstBuildPlugin,shm,POSIX shared memory source and sink,,,+librt))
 $(eval $(call GstBuildPlugin,siren,siren support,audio rtp,,))
 $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
