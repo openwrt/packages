@@ -36,13 +36,13 @@ nolog() {
 # will append "BindAddress 192.168.1.1" if uci bind_address is '192.168.1.1'
 append_config_option() {
   local val=""
-  local cfg="$1"
-  local config_file="$2"
+  local config_file="$1"
+  local cfg="$2"
   local option_name="$3"
   local config_counterpart="$4"
   local default="$5"
   config_get val "$cfg" "$option_name" "$default"
-  [ -n "$val" ] && echo "" >> $config_file
+  [ -n "$val" ] && echo "$config_counterpart $val" >> $config_file
 }
 
 setup_user_authentication() {
