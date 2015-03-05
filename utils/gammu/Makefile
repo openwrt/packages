@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gammu
 PKG_VERSION:=1.34.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://dl.cihar.com/gammu/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -31,9 +31,11 @@ define Package/gammu
 	URL:=http://dl.cihar.com/gammu/releases/
 	DEPENDS:=+libpthread +libcurl +glib2 $(ICONV_DEPENDS) $(INTL_DEPENDS)
 	DEPENDS+=+PACKAGE_python:python +PACKAGE_bluez-libs:bluez-libs
-	DEPENDS+=+PACKAGE_libmysqlclient:libmysqlclient +PACKAGE_unixodbc:unixodbc
+	DEPENDS+=+PACKAGE_libmysqlclient:libmysqlclient +PACKAGE_unixodbc:unixodbc +PACKAGE_libpq:libpq
 	DEPENDS+=+PACKAGE_libusb-1.0:libusb-1.0
 endef
+
+CMAKE_OPTIONS += -DWITH_LibDBI:BOOL=OFF
 
 
 define Build/InstallDev
