@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=nodogsplash
 PKG_FIXUP:=autoreconf
 PKG_VERSION:=0.9_beta9.9.9
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz

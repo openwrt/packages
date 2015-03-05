@@ -172,6 +172,13 @@ generate_uci_config() {
   append_config_option "$CONFIGFILE" "$cfg" gatewayaddress GatewayAddress
   append_config_option "$CONFIGFILE" "$cfg" gatewayport GatewayPort
   append_config_option "$CONFIGFILE" "$cfg" maxclients MaxClients
+  append_config_option "$CONFIGFILE" "$cfg" webroot webroot
+  append_config_option "$CONFIGFILE" "$cfg" debuglevel debuglevel
+  append_config_option "$CONFIGFILE" "$cfg" splashpage splashpage
+  append_config_option "$CONFIGFILE" "$cfg" pagesdir pagesdir
+  append_config_option "$CONFIGFILE" "$cfg" checkinterval checkinterval
+  append_config_option "$CONFIGFILE" "$cfg" syslogfacility syslogfacility
+  append_config_option "$CONFIGFILE" "$cfg" gatewayiprange gatewayiprange
   append_config_option "$CONFIGFILE" "$cfg" imagedir ImagesDir
   append_config_option "$CONFIGFILE" "$cfg" redirecturl RedirectURL
   append_config_option "$CONFIGFILE" "$cfg" clientidletimeout ClientIdleTimeout
@@ -181,6 +188,22 @@ generate_uci_config() {
   append_config_option "$CONFIGFILE" "$cfg" macmechanism MACMechanism
   append_config_option "$CONFIGFILE" "$cfg" uploadlimit UploadLimit
   append_config_option "$CONFIGFILE" "$cfg" downloadlimit DownloadLimit
+  append_config_option "$CONFIGFILE" "$cfg" remoteauthenticatoraction remoteauthenticatoraction
+  append_config_option "$CONFIGFILE" "$cfg" enablepreauth enablepreauth
+  append_config_option "$CONFIGFILE" "$cfg" binvoucher binvoucher
+  append_config_option "$CONFIGFILE" "$cfg" forcevoucher forcevoucher
+  append_config_option "$CONFIGFILE" "$cfg" passwordauthentication passwordauthentication
+  append_config_option "$CONFIGFILE" "$cfg" usernameauthentication usernameauthentication
+  append_config_option "$CONFIGFILE" "$cfg" passwordattempts passwordattempts
+  append_config_option "$CONFIGFILE" "$cfg" username username
+  append_config_option "$CONFIGFILE" "$cfg" password password
+  append_config_option "$CONFIGFILE" "$cfg" authenticateimmediately authenticateimmediately
+  append_config_option "$CONFIGFILE" "$cfg" decongesthttpdthreads decongesthttpdthreads
+  append_config_option "$CONFIGFILE" "$cfg" httpdthreadthreshold httpdthreadthreshold
+  append_config_option "$CONFIGFILE" "$cfg" httpdthreaddelayms httpdthreaddelayms
+  append_config_option "$CONFIGFILE" "$cfg" fw_mark_authenticated fw_mark_authenticated
+  append_config_option "$CONFIGFILE" "$cfg" fw_mark_trusted fw_mark_trusted
+  append_config_option "$CONFIGFILE" "$cfg" fw_mark_blocked fw_mark_blocked
 
   config_get download "$cfg" downloadlimit
   config_get upload "$cfg" uploadlimit
