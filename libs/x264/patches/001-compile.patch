@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -171,7 +171,7 @@
+ 
+ $(LIBX264): $(GENERATED) .depend $(OBJS) $(OBJASM)
+ 	rm -f $(LIBX264)
+-	$(AR)$@ $(OBJS) $(OBJASM)
++	$(AR) ar $@ $(OBJS) $(OBJASM)
+ 	$(if $(RANLIB), $(RANLIB) $@)
+ 
+ $(SONAME): $(GENERATED) .depend $(OBJS) $(OBJASM) $(OBJSO)
