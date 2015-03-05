@@ -1,7 +1,6 @@
-diff -u --recursive gst-plugins-good-1.0.7-vanilla/configure.ac gst-plugins-good-1.0.7/configure.ac
---- gst-plugins-good-1.0.7-vanilla/configure.ac	2013-06-01 19:56:23.004218467 -0500
-+++ gst-plugins-good-1.0.7/configure.ac	2013-06-01 19:56:52.919033496 -0500
-@@ -1157,7 +1157,6 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -1083,7 +1083,6 @@ sys/sunaudio/Makefile
  sys/v4l2/Makefile
  sys/waveform/Makefile
  sys/ximage/Makefile
@@ -9,10 +8,9 @@ diff -u --recursive gst-plugins-good-1.0.7-vanilla/configure.ac gst-plugins-good
  tests/Makefile
  tests/check/Makefile
  tests/examples/Makefile
-diff -u --recursive gst-plugins-good-1.0.7-vanilla/Makefile.am gst-plugins-good-1.0.7/Makefile.am
---- gst-plugins-good-1.0.7-vanilla/Makefile.am	2013-06-01 19:56:23.043216922 -0500
-+++ gst-plugins-good-1.0.7/Makefile.am	2013-06-01 19:56:43.671399777 -0500
-@@ -2,7 +2,6 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,7 +2,6 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-d
  
  ALWAYS_SUBDIRS =		\
  	gst sys ext 		\
@@ -20,10 +18,9 @@ diff -u --recursive gst-plugins-good-1.0.7-vanilla/Makefile.am gst-plugins-good-
  	common			\
  	m4			\
  	pkgconfig
-diff -u --recursive gst-plugins-good-1.0.7-vanilla/Makefile.in gst-plugins-good-1.0.7/Makefile.in
---- gst-plugins-good-1.0.7-vanilla/Makefile.in	2013-06-01 19:56:23.043216922 -0500
-+++ gst-plugins-good-1.0.7/Makefile.in	2013-06-01 19:56:47.703240080 -0500
-@@ -522,7 +522,6 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -570,7 +570,6 @@ top_srcdir = @top_srcdir@
  DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
  ALWAYS_SUBDIRS = \
  	gst sys ext 		\
