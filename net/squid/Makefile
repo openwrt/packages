@@ -122,6 +122,9 @@ define Package/squid/install
 
 	$(INSTALL_DIR) $(1)/usr/share/squid/errors/templates/
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/squid/errors/templates/* $(1)/usr/share/squid/errors/templates/
+
+	$(INSTALL_DIR) $(1)/itus
+	$(INSTALL_BIN) ./files/squid.sh $(1)/itus/squid.sh
 endef
 
 define Package/squid-mod-cachemgr/install
