@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.4.4
-PKG_RELEASE:=5
+PKG_VERSION:=1.4.5
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -19,9 +19,9 @@ PKG_LICENSE_FILES:=COPYING.LIB COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_MD5SUM:=972c6e22dd2e44fcf0b04b9d810a56be
+PKG_MD5SUM:=e0bb39412cf4a48fe0397bcf3a7cd451
 
-PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base liboil
+PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -148,9 +148,11 @@ CONFIGURE_ARGS += \
 	--disable-schro \
 	--disable-zbar \
 	--disable-srtp \
+	--disable-hls \
 	\
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
+	--with-libgcrypt-prefix="$(STAGING_DIR)/usr" \
 	--without-x \
 
 TARGET_CFLAGS+= -std=gnu99
