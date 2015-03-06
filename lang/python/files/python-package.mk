@@ -25,6 +25,9 @@ define HostPython
 	(	export PYTHONPATH="$(PYTHONPATH)"; \
 		export PYTHONOPTIMIZE=""; \
 		export PYTHONDONTWRITEBYTECODE=1; \
+		export _python_sysroot="$(STAGING_DIR)"; \
+		export _python_prefix="/usr"; \
+		export _python_exec_prefix="/usr"; \
 		$(1) \
 		$(HOST_PYTHON_BIN) $(2); \
 	)
