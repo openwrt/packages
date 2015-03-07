@@ -6,8 +6,6 @@ STOP=20
 NAME=knxd
 PROG=/usr/bin/$NAME
 
-. /lib/functions.sh
-
 start() {
         local options url
         config_load "$NAME"
@@ -19,4 +17,3 @@ start() {
 stop() {
         service_stop $PROG
 }
-
