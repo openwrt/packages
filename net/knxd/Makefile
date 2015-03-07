@@ -11,8 +11,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
-PKG_REV:=9cdcf0f25d34ed7939ecc41029caf6213581baa8
-PKG_VERSION:=2015-02-13
+PKG_REV:=a63bc660d305e26ce3ed038607d387758fad8413
+PKG_VERSION:=2015-03-06
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
@@ -22,7 +22,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/Makki1/knxd.git
+PKG_SOURCE_URL:=git://github.com/knxd/knxd.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE_VERSION:=$(PKG_REV)
 
@@ -36,8 +36,8 @@ include $(INCLUDE_DIR)/package.mk
 define Package/knxd
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=Eib KNX deamon
-  URL:=https://github.com/Makki1/knxd
+  TITLE:=EIB KNX daemon
+  URL:=https://github.com/knxd/knxd
   DEPENDS:=pthsem libusb-1.0
 endef
 
@@ -52,8 +52,8 @@ endef
 define Package/knxd-tools
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=Eib KNX Utils
-  URL:=https://github.com/Makki1/knxd
+  TITLE:=EIB KNX Utils
+  URL:=https://github.com/knxd/knxd
   DEPENDS:=pthsem libusb-1.0
 endef
 
