@@ -85,19 +85,19 @@ CONFIGURE_ARGS += \
 	--without-libintl-prefix \
 	--without-libgsasl \
 	--without-libidn \
-	--without-gnome-keyring \
+	--without-libsecret \
 	--without-macosx-keyring \
 
 MAKE_FLAGS :=
 
 ifeq ($(BUILD_VARIANT),ssl)
 	CONFIGURE_ARGS += \
-		--with-ssl=openssl
+		--with-tls=openssl
 endif
 
 ifeq ($(BUILD_VARIANT),nossl)
 	CONFIGURE_ARGS += \
-		--with-ssl=no
+		--with-tls=no
 endif
 
 define Package/msmtp/install
