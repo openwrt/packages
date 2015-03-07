@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/msmtp
@@ -87,6 +87,10 @@ CONFIGURE_ARGS += \
 	--without-libidn \
 	--without-libsecret \
 	--without-macosx-keyring \
+
+ifneq ($(CONFIG_USE_UCLIBC),)
+  CONFIGURE_ARGS += --disable-gai-idn
+endif
 
 MAKE_FLAGS :=
 
