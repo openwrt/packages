@@ -1,7 +1,6 @@
-diff -u --recursive gst-plugins-good-1.0.7-vanilla/Makefile.am gst-plugins-good-1.0.7/Makefile.am
---- gst-plugins-good-1.0.7-vanilla/Makefile.am	2013-06-01 19:54:57.652601127 -0500
-+++ gst-plugins-good-1.0.7/Makefile.am	2013-06-01 19:55:15.281902215 -0500
-@@ -3,7 +3,6 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -3,7 +3,6 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-d
  ALWAYS_SUBDIRS =		\
  	gst sys ext 		\
  	tests			\
@@ -9,10 +8,9 @@ diff -u --recursive gst-plugins-good-1.0.7-vanilla/Makefile.am gst-plugins-good-
  	po			\
  	common			\
  	m4			\
-diff -u --recursive gst-plugins-good-1.0.7-vanilla/Makefile.in gst-plugins-good-1.0.7/Makefile.in
---- gst-plugins-good-1.0.7-vanilla/Makefile.in	2013-06-01 19:54:57.692599541 -0500
-+++ gst-plugins-good-1.0.7/Makefile.in	2013-06-01 19:55:23.025595255 -0500
-@@ -523,7 +523,6 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -571,7 +571,6 @@ DISTCHECK_CONFIGURE_FLAGS = --enable-gtk
  ALWAYS_SUBDIRS = \
  	gst sys ext 		\
  	tests			\

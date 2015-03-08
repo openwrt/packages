@@ -1,0 +1,3 @@
+#!/bin/sh
+
+[ "$ACTION" = ifup ] && /usr/lib/sqm/run.sh interface ${DEVICE}

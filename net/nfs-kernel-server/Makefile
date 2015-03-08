@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
 PKG_VERSION:=1.3.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MD5SUM:=1e2f3c1ed468dee02d00c534c002ea10
 
 PKG_SOURCE_URL:=@SF/nfs
@@ -85,6 +85,7 @@ CONFIGURE_ARGS += \
 	--disable-nfsdcld
 
 CONFIGURE_VARS += \
+	libblkid_cv_is_recent=yes \
 	CONFIG_SQLITE3_TRUE="\#" \
 	CONFIG_NFSDCLD_TRUE="\#"
 

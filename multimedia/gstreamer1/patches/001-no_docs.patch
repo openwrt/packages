@@ -1,7 +1,6 @@
-diff -u --recursive gstreamer-1.0.7-vanilla/Makefile.am gstreamer-1.0.7/Makefile.am
---- gstreamer-1.0.7-vanilla/Makefile.am	2013-06-01 18:47:44.498057069 -0500
-+++ gstreamer-1.0.7/Makefile.am	2013-06-01 19:01:41.634143861 -0500
-@@ -8,7 +8,6 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -8,7 +8,6 @@ aclocal_DATA = gst-element-check-@GST_AP
  
  SUBDIRS = pkgconfig \
  	gst libs plugins tests \
@@ -9,7 +8,7 @@ diff -u --recursive gstreamer-1.0.7-vanilla/Makefile.am gstreamer-1.0.7/Makefile
  	po \
  	m4 \
  	common
-@@ -20,7 +19,6 @@
+@@ -20,7 +19,6 @@ endif
  # These are all the possible subdirs
  DIST_SUBDIRS = pkgconfig \
  	gst libs plugins tools tests \
@@ -17,10 +16,9 @@ diff -u --recursive gstreamer-1.0.7-vanilla/Makefile.am gstreamer-1.0.7/Makefile
  	po \
  	m4 \
  	common
-diff -u --recursive gstreamer-1.0.7-vanilla/Makefile.in gstreamer-1.0.7/Makefile.in
---- gstreamer-1.0.7-vanilla/Makefile.in	2013-06-01 18:47:44.533056863 -0500
-+++ gstreamer-1.0.7/Makefile.in	2013-06-01 19:02:04.529246907 -0500
-@@ -508,13 +508,12 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -554,13 +554,12 @@ top_srcdir = @top_srcdir@
  DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc --enable-docbook
  aclocaldir = $(datadir)/aclocal
  aclocal_DATA = gst-element-check-@GST_API_VERSION@.m4
