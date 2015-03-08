@@ -76,12 +76,15 @@ endif
 endef
 
 define Package/ipsec-tools/install
-	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/racoon.conf $(1)/etc/racoon.conf
 	$(INSTALL_DIR) $(1)/etc/racoon
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/src/racoon/samples/psk.txt $(1)/etc/racoon/
+	$(INSTALL_CONF) ./files/functions.sh $(1)/etc/racoon/
+	$(INSTALL_BIN) ./files/p1client-up $(1)/etc/racoon/
+	$(INSTALL_BIN) ./files/p1client-down $(1)/etc/racoon/
+	$(INSTALL_BIN) ./files/vpnctl $(1)/etc/racoon/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/racoon.init $(1)/etc/init.d/racoon
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/racoon $(1)/etc/config/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libipsec.so.* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libracoon.so.* $(1)/usr/lib/
@@ -93,8 +96,7 @@ define Package/ipsec-tools/install
 endef
 
 define Package/ipsec-tools/conffiles
-/etc/racoon.conf
-/etc/racoon/psk.txt
+/etc/config/racoon
 endef
 
 $(eval $(call BuildPackage,ipsec-tools))

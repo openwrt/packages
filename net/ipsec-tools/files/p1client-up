@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+
+log="logger -t p1client-up[$$]"
+
+. /lib/functions.sh
+. /etc/racoon/functions.sh
+
+if [ -z "$SPLIT_INCLUDE_CIDR" ]; then
+  $log "Connection without server-pushed routing is not supported"
+  exit 1
+fi
+
+$log "Setting up tunnel to server $REMOTE_ADDR"
+$log "Making tunnel(-s) to $SPLIT_INCLUDE_CIDR through $INTERNAL_ADDR4"
+
+get_fieldval data dev "$(/usr/sbin/ip route get $REMOTE_ADDR)"
+ip address add $INTERNAL_ADDR4/32 dev $data
+
+manage_sa add 0.0.0.0/0 "$SPLIT_INCLUDE_CIDR" $REMOTE_ADDR
+
+config_load racoon
+config_get confIntZone racoon int_zone lan
+config_get confExtZone racoon ext_zone wan
+
+manage_fw add $confIntZone $confExtZone "$INTERNAL_ADDR4 $SPLIT_INCLUDE_CIDR"
+
+
+# EOF /etc/racoon/p1client-up
