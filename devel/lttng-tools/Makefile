@@ -34,6 +34,8 @@ define Package/lttng-tools
   DEPENDS:= +lttng-ust +libpopt +libxml2
 endef
 
+CONFIGURE_ARGS += --disable-kmod
+
 TARGET_LDFLAGS += -lurcu-bp
 
 MAKE_FLAGS += V="$(V)"
