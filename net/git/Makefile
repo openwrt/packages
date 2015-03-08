@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git
 PKG_VERSION:=2.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/scm/git/
@@ -17,6 +17,7 @@ PKG_MD5SUM:=e5880760d1f43f4f49b3bf94b9046eee
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -57,9 +58,7 @@ define Build/Configure
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		configure
 
-	( cd $(PKG_BUILD_DIR); \
-		./configure --prefix=/usr \
-	);
+	$(call Build/Configure/Default,)
 endef
 
 define Package/git/install
