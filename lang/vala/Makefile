@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -16,7 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/vala/0.26/
 PKG_MD5SUM:=723a03b822d4cc47abc4019685970a3e
 
-PKG_BUILD_DEPENDS:=glib2/host vala/host
+PKG_BUILD_DEPENDS:=glib2 glib2/host vala/host
 HOST_BUILD_DEPENDS:=glib2/host
 
 include $(INCLUDE_DIR)/host-build.mk
