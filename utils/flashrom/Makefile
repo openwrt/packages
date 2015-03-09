@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flashrom
 PKG_VERSION:=0.9.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.flashrom.org/releases
@@ -22,13 +22,22 @@ PKG_LICENSE_FILES:=COPYING
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include flashrom.mk
 
 define Package/flashrom
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=FlashROM Utility
   URL:=http://www.flashrom.org/
-  DEPENDS:=+zlib +pciutils +(TARGET_x86||TARGET_x86_64):dmidecode +libftdi
+  DEPENDS:=\
+	+(TARGET_x86||TARGET_x86_64):dmidecode \
+	+FLASHROM_FTDI:libftdi \
+	+FLASHROM_PCI:pciutils \
+	+FLASHROM_USB:libusb-compat
+endef
+
+define Package/flashrom/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/flashrom/description
