@@ -241,7 +241,7 @@ $(foreach package, $(PYTHON_PACKAGES),  \
 
 $(eval $(call PyPackage,python-base))
 $(eval $(call PyPackage,python-light))
-$(eval $(call PyPackage,python))
+#$(eval $(call PyPackage,python))
 
 $(eval $(call BuildPackage,python-base))
 $(eval $(call BuildPackage,python-light))
