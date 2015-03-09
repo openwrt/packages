@@ -11,8 +11,6 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  chipmunk/Makefile | 5 ++++-
  1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/chipmunk/Makefile b/chipmunk/Makefile
-index e402128..fd41dbe 100644
 --- a/chipmunk/Makefile
 +++ b/chipmunk/Makefile
 @@ -32,10 +32,13 @@ DEBUG_ON := -g
@@ -30,6 +28,3 @@ index e402128..fd41dbe 100644
  
  BUILDFILE = BUILD
  BUILDNO := `cat $(BUILDFILE)`
--- 
-2.3.1
-
