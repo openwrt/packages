@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aria2
-PKG_VERSION:=1.18.7
+PKG_VERSION:=1.18.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/aria2
-PKG_MD5SUM:=36e92af92b4370817c577ed802546842
+PKG_MD5SUM:=aef4bfc78b612ee1374cb4abb5385b8c
 PKG_INSTALL:=1
 
 PKG_MAINTAINER:=Imre Kaloz <kaloz@openwrt.org>
@@ -60,6 +60,7 @@ CONFIGURE_ARGS += \
 	--without-libexpat \
 	--without-libcares \
 	--without-sqlite3 \
+	--without-libuv \
 	--with-libz
 
 define Package/aria2/install
