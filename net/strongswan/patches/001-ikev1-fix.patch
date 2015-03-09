@@ -1,0 +1,48 @@
+From 627f870ee6256b4b2e36e9ca768fc578febbccef Mon Sep 17 00:00:00 2001
+From: Tobias Brunner <tobias@strongswan.org>
+Date: Tue, 10 Feb 2015 19:03:44 +0100
+Subject: [PATCH] ikev1: Set protocol ID and SPIs in INITIAL-CONTACT
+ notification payloads
+
+The payload we sent before is not compliant with RFC 2407 and thus some
+peers might abort negotiation (e.g. with an INVALID-PROTOCOL-ID error).
+---
+ src/libcharon/sa/ikev1/tasks/main_mode.c | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/src/libcharon/sa/ikev1/tasks/main_mode.c b/src/libcharon/sa/ikev1/tasks/main_mode.c
+index 5065e70ffc25..3ea4a2a85e4f 100644
+--- a/src/libcharon/sa/ikev1/tasks/main_mode.c
++++ b/src/libcharon/sa/ikev1/tasks/main_mode.c
+@@ -213,6 +213,10 @@ static void add_initial_contact(private_main_mode_t *this, message_t *message,
+ {
+ 	identification_t *idr;
+ 	host_t *host;
++	notify_payload_t *notify;
++	ike_sa_id_t *ike_sa_id;
++	u_int64_t spi_i, spi_r;
++	chunk_t spi;
+ 
+ 	idr = this->ph1->get_id(this->ph1, this->peer_cfg, FALSE);
+ 	if (idr && !idr->contains_wildcards(idr))
+@@ -224,8 +228,15 @@ static void add_initial_contact(private_main_mode_t *this, message_t *message,
+ 			if (!charon->ike_sa_manager->has_contact(charon->ike_sa_manager,
+ 										idi, idr, host->get_family(host)))
+ 			{
+-				message->add_notify(message, FALSE, INITIAL_CONTACT_IKEV1,
+-									chunk_empty);
++				notify = notify_payload_create_from_protocol_and_type(
++								PLV1_NOTIFY, PROTO_IKE, INITIAL_CONTACT_IKEV1);
++				ike_sa_id = this->ike_sa->get_id(this->ike_sa);
++				spi_i = ike_sa_id->get_initiator_spi(ike_sa_id);
++				spi_r = ike_sa_id->get_responder_spi(ike_sa_id);
++				spi = chunk_cata("cc", chunk_from_thing(spi_i),
++								 chunk_from_thing(spi_r));
++				notify->set_spi_data(notify, spi);
++				message->add_payload(message, (payload_t*)notify);
+ 			}
+ 		}
+ 	}
+-- 
+1.9.1
+
