@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -13744,14 +13744,7 @@ fi
+@@ -13821,14 +13821,7 @@ fi
  # Find the right directory to put the root-mode PID file in
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking pid file location" >&5
  $as_echo_n "checking pid file location... " >&6; }
