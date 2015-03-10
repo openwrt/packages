@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tar
 PKG_VERSION:=1.28
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tar
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+bzip2
+  DEPENDS:=+bzip2 +libacl +libattr
   TITLE:=GNU tar
   URL:=http://www.gnu.org/software/tar/
 endef
