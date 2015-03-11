@@ -256,13 +256,14 @@ mwan3_set_policies_iptables()
 
 mwan3_set_user_rules_iptables()
 {
-	local proto src_ip src_port dest_ip dest_port use_policy
+	local proto src_ip src_port dest_ip dest_port mark use_policy
 
 	config_get proto $1 proto all
 	config_get src_ip $1 src_ip 0.0.0.0/0
 	config_get src_port $1 src_port 0:65535
 	config_get dest_ip $1 dest_ip 0.0.0.0/0
 	config_get dest_port $1 dest_port 0:65535
+    config_get mark $1 mark 0/0xff00
 	config_get use_policy $1 use_policy
 
 	if [ -n "$use_policy" ]; then
@@ -278,10 +279,11 @@ mwan3_set_user_rules_iptables()
 
 		case $proto in
 			tcp|udp)
-			$IPT -A mwan3_rules -p $proto -s $src_ip -d $dest_ip -m multiport --sports $src_port -m multiport --dports $dest_port -m mark --mark 0/0xff00 -m comment --comment "$1" -j $use_policy &> /dev/null
+			$IPT -A mwan3_rules -p $proto -s $src_ip -d $dest_ip -m multiport --sports $src_port -m multiport --dports $dest_port -m mark --mark $mark -m comment --comment "$1" -j $use_policy &> /dev/null
 			;;
 			*)
-			$IPT -A mwan3_rules -p $proto -s $src_ip -d $dest_ip -m mark --mark 0/0xff00 -m comment --comment "$1" -j $use_policy &> /dev/null
+			$IPT -A mwan3_rules -p $proto -s $src_ip -d $dest_ip -m mark --mark $mark -m comment --comment "$1" -j $use_policy &> /dev/null
+
 			;;
 		esac
 	fi

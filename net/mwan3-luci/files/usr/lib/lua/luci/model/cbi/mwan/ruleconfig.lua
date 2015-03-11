@@ -81,6 +81,9 @@ proto = mwan_rule:option(Value, "proto", translate("Protocol"),
 	proto:value("esp")
 	cbiAddProtocol(proto)
 
+mark = mwan_rule:option(Value, "mark", translate("Mark"),
+	translate("May be entered as a single number 0x00 or 0x00/0xff00"))
+
 use_policy = mwan_rule:option(Value, "use_policy", translate("Policy assigned"))
 	cbiAddPolicy(use_policy)
 	use_policy:value("unreachable", translate("unreachable (reject)"))
