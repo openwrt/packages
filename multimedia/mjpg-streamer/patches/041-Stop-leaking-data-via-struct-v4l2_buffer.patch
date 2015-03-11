@@ -1,0 +1,242 @@
+From 11b28b36a8711b53658e8bbc50435595522f91ba Mon Sep 17 00:00:00 2001
+From: Olliver Schinagl <o.schinagl@ultimaker.com>
+Date: Wed, 29 Oct 2014 11:21:16 +0100
+Subject: [PATCH 2/7] Stop leaking data via struct v4l2_buffer
+
+Before the 3.16 kernel, the v4l2_buffer was leaking data and violating
+its own spec. Since 3.16 this has been corrected and after calling the
+QBUF ioctl, the struct gets cleaned up.
+
+Right now, input_uvc assumes the buffer is valid at all times. This no
+longer being true, this patch removes the v4l2_buffer from the vdIn
+struct. Certain values are still needed outside of this buffer however,
+the length buffer in the buffer array 'mem' and the timestamp. These are
+now stored in the vdIn struct.
+
+All of this is still somewhat hackish, as a) the processing of the image
+should really be done inside the uvcGrab function between the queuing
+and dequeing of the buffers (or separate that into 3 functions, deq, q
+and process and call them from input_uvc). b) we are still copying the
+image using memcpy, which is something we don't really want and defeats
+the purpose of using a mmap in the first place. Changing this however
+requires some heavier re-architecting and in the end, may still not be avoided.
+
+More information about this bug and change can be found on the
+linux-media mailing list[0] with the title uvcvideo fails on 3.16 and
+3.17 kernels.
+
+[0] http://www.spinics.net/lists/linux-media/msg81515.html
+
+Signed-off-by: Olliver Schinagl <o.schinagl@ultimaker.com>
+---
+ plugins/input_uvc/input_uvc.c |  6 ++--
+ plugins/input_uvc/v4l2uvc.c   | 64 +++++++++++++++++++++++--------------------
+ plugins/input_uvc/v4l2uvc.h   |  4 ++-
+ 3 files changed, 41 insertions(+), 33 deletions(-)
+
+diff --git a/plugins/input_uvc/input_uvc.c b/plugins/input_uvc/input_uvc.c
+index 64f66cb..64ef56c 100644
+--- a/plugins/input_uvc/input_uvc.c
++++ b/plugins/input_uvc/input_uvc.c
+@@ -500,8 +500,8 @@ void *cam_thread(void *arg)
+         if (pcontext->videoIn->soft_framedrop == 1) {
+             unsigned long last = pglobal->in[pcontext->id].timestamp.tv_sec * 1000 +
+                                 (pglobal->in[pcontext->id].timestamp.tv_usec/1000); // convert to ms
+-            unsigned long current = pcontext->videoIn->buf.timestamp.tv_sec * 1000 +
+-                                    pcontext->videoIn->buf.timestamp.tv_usec/1000; // convert to ms
++            unsigned long current = pcontext->videoIn->tmptimestamp.tv_sec * 1000 +
++                                    pcontext->videoIn->tmptimestamp.tv_usec/1000; // convert to ms
+ 
+             // if the requested time did not esplashed skip the frame
+             if ((current - last) < pcontext->videoIn->frame_period_time) {
+@@ -543,7 +543,7 @@ void *cam_thread(void *arg)
+ #endif
+ 
+         /* copy this frame's timestamp to user space */
+-        pglobal->in[pcontext->id].timestamp = pcontext->videoIn->buf.timestamp;
++        pglobal->in[pcontext->id].timestamp = pcontext->videoIn->tmptimestamp;
+ 
+         /* signal fresh_frame */
+         pthread_cond_broadcast(&pglobal->in[pcontext->id].db_update);
+diff --git a/plugins/input_uvc/v4l2uvc.c b/plugins/input_uvc/v4l2uvc.c
+index d11510c..7ec5eec 100644
+--- a/plugins/input_uvc/v4l2uvc.c
++++ b/plugins/input_uvc/v4l2uvc.c
+@@ -217,6 +217,9 @@ static int init_v4l2(struct vdIn *vd)
+ {
+     int i;
+     int ret = 0;
++    struct v4l2_buffer buf;
++
++
+     if((vd->fd = OPEN_VIDEO(vd->videodevice, O_RDWR)) == -1) {
+         perror("ERROR opening V4L interface");
+         DBG("errno: %d", errno);
+@@ -375,26 +378,27 @@ static int init_v4l2(struct vdIn *vd)
+      * map the buffers
+      */
+     for(i = 0; i < NB_BUFFER; i++) {
+-        memset(&vd->buf, 0, sizeof(struct v4l2_buffer));
+-        vd->buf.index = i;
+-        vd->buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+-        vd->buf.memory = V4L2_MEMORY_MMAP;
+-        ret = xioctl(vd->fd, VIDIOC_QUERYBUF, &vd->buf);
++        memset(&buf, 0, sizeof(struct v4l2_buffer));
++        buf.index = i;
++        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
++        buf.memory = V4L2_MEMORY_MMAP;
++        ret = xioctl(vd->fd, VIDIOC_QUERYBUF, &buf);
+         if(ret < 0) {
+             perror("Unable to query buffer");
+             goto fatal;
+         }
+ 
+         if(debug)
+-            fprintf(stderr, "length: %u offset: %u\n", vd->buf.length, vd->buf.m.offset);
++            fprintf(stderr, "length: %u offset: %u\n", buf.length, buf.m.offset);
+ 
+         vd->mem[i] = mmap(0 /* start anywhere */ ,
+-                          vd->buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, vd->fd,
+-                          vd->buf.m.offset);
++                          buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, vd->fd,
++                          buf.m.offset);
+         if(vd->mem[i] == MAP_FAILED) {
+             perror("Unable to map buffer");
+             goto fatal;
+         }
++	vd->memlength[i] = buf.length;
+         if(debug)
+             fprintf(stderr, "Buffer mapped at address %p.\n", vd->mem[i]);
+     }
+@@ -403,11 +407,11 @@ static int init_v4l2(struct vdIn *vd)
+      * Queue the buffers.
+      */
+     for(i = 0; i < NB_BUFFER; ++i) {
+-        memset(&vd->buf, 0, sizeof(struct v4l2_buffer));
+-        vd->buf.index = i;
+-        vd->buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+-        vd->buf.memory = V4L2_MEMORY_MMAP;
+-        ret = xioctl(vd->fd, VIDIOC_QBUF, &vd->buf);
++        memset(&buf, 0, sizeof(struct v4l2_buffer));
++        buf.index = i;
++        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
++        buf.memory = V4L2_MEMORY_MMAP;
++        ret = xioctl(vd->fd, VIDIOC_QBUF, &buf);
+         if(ret < 0) {
+             perror("Unable to queue buffer");
+             goto fatal;;
+@@ -499,17 +503,18 @@ int memcpy_picture(unsigned char *out, unsigned char *buf, int size)
+ int uvcGrab(struct vdIn *vd)
+ {
+ #define HEADERFRAME1 0xaf
++    struct v4l2_buffer buf;
+     int ret;
+ 
+     if(vd->streamingState == STREAMING_OFF) {
+         if(video_enable(vd))
+             goto err;
+     }
+-    memset(&vd->buf, 0, sizeof(struct v4l2_buffer));
+-    vd->buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+-    vd->buf.memory = V4L2_MEMORY_MMAP;
++    memset(&buf, 0, sizeof(struct v4l2_buffer));
++    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
++    buf.memory = V4L2_MEMORY_MMAP;
+ 
+-    ret = xioctl(vd->fd, VIDIOC_DQBUF, &vd->buf);
++    ret = xioctl(vd->fd, VIDIOC_DQBUF, &buf);
+     if(ret < 0) {
+         perror("Unable to dequeue buffer");
+         goto err;
+@@ -517,33 +522,34 @@ int uvcGrab(struct vdIn *vd)
+ 
+     switch(vd->formatIn) {
+     case V4L2_PIX_FMT_MJPEG:
+-        if(vd->buf.bytesused <= HEADERFRAME1) {
++        if(buf.bytesused <= HEADERFRAME1) {
+             /* Prevent crash
+                                                         * on empty image */
+             fprintf(stderr, "Ignoring empty buffer ...\n");
+             return 0;
+         }
+ 
+-        /* memcpy(vd->tmpbuffer, vd->mem[vd->buf.index], vd->buf.bytesused);
++        /* memcpy(vd->tmpbuffer, vd->mem[buf.index], buf.bytesused);
+ 
+-        memcpy (vd->tmpbuffer, vd->mem[vd->buf.index], HEADERFRAME1);
++        memcpy (vd->tmpbuffer, vd->mem[buf.index], HEADERFRAME1);
+         memcpy (vd->tmpbuffer + HEADERFRAME1, dht_data, sizeof(dht_data));
+-        memcpy (vd->tmpbuffer + HEADERFRAME1 + sizeof(dht_data), vd->mem[vd->buf.index] + HEADERFRAME1, (vd->buf.bytesused - HEADERFRAME1));
++        memcpy (vd->tmpbuffer + HEADERFRAME1 + sizeof(dht_data), vd->mem[buf.index] + HEADERFRAME1, (buf.bytesused - HEADERFRAME1));
+         */
+ 
+-        memcpy(vd->tmpbuffer, vd->mem[vd->buf.index], vd->buf.bytesused);
+-	vd->tmpbytesused = vd->buf.bytesused;
++        memcpy(vd->tmpbuffer, vd->mem[buf.index], buf.bytesused);
++	vd->tmpbytesused = buf.bytesused;
++	vd->tmptimestamp = buf.timestamp;
+ 
+         if(debug)
+-            fprintf(stderr, "bytes in used %d \n", vd->buf.bytesused);
++            fprintf(stderr, "bytes in used %d \n", buf.bytesused);
+         break;
+     case V4L2_PIX_FMT_RGB565:
+     case V4L2_PIX_FMT_YUYV:
+     case V4L2_PIX_FMT_RGB24:
+-        if(vd->buf.bytesused > vd->framesizeIn)
+-            memcpy(vd->framebuffer, vd->mem[vd->buf.index], (size_t) vd->framesizeIn);
++        if(buf.bytesused > vd->framesizeIn)
++            memcpy(vd->framebuffer, vd->mem[buf.index], (size_t) vd->framesizeIn);
+         else
+-            memcpy(vd->framebuffer, vd->mem[vd->buf.index], (size_t) vd->buf.bytesused);
++            memcpy(vd->framebuffer, vd->mem[buf.index], (size_t) buf.bytesused);
+         break;
+ 
+     default:
+@@ -551,7 +557,7 @@ int uvcGrab(struct vdIn *vd)
+         break;
+     }
+ 
+-    ret = xioctl(vd->fd, VIDIOC_QBUF, &vd->buf);
++    ret = xioctl(vd->fd, VIDIOC_QBUF, &buf);
+     if(ret < 0) {
+         perror("Unable to requeue buffer");
+         goto err;
+@@ -947,7 +953,7 @@ int setResolution(struct vdIn *vd, int width, int height)
+         DBG("Unmap buffers\n");
+         int i;
+         for(i = 0; i < NB_BUFFER; i++)
+-            munmap(vd->mem[i], vd->buf.length);
++            munmap(vd->mem[i], vd->memlength[i]);
+ 
+         if(CLOSE_VIDEO(vd->fd) == 0) {
+             DBG("Device closed successfully\n");
+diff --git a/plugins/input_uvc/v4l2uvc.h b/plugins/input_uvc/v4l2uvc.h
+index 2c7c8ba..e625957 100644
+--- a/plugins/input_uvc/v4l2uvc.h
++++ b/plugins/input_uvc/v4l2uvc.h
+@@ -35,6 +35,7 @@
+ #include <sys/ioctl.h>
+ #include <sys/mman.h>
+ #include <sys/select.h>
++#include <sys/time.h>
+ 
+ #include <linux/types.h>          /* for videodev2.h */
+ #include <linux/videodev2.h>
+@@ -79,11 +80,12 @@ struct vdIn {
+     char *pictName;
+     struct v4l2_capability cap;
+     struct v4l2_format fmt;
+-    struct v4l2_buffer buf;
+     struct v4l2_requestbuffers rb;
+     void *mem[NB_BUFFER];
++    int memlength[NB_BUFFER];
+     unsigned char *tmpbuffer;
+     int tmpbytesused;
++    struct timeval tmptimestamp;
+     unsigned char *framebuffer;
+     streaming_state streamingState;
+     int grabmethod;
+-- 
+1.9.1
+
