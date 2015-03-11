@@ -47,6 +47,7 @@ define Package/wshaper/install
 	$(INSTALL_DIR) $(1)/usr/sbin/ $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) ./files/wshaper.htb $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/wshaper.init $(1)/etc/init.d/wshaper
+	$(INSTALL_BIN) ./files/wshaper.iface $(1)/etc/hotplug.d/iface/10-wshaper
 	$(INSTALL_DATA) ./files/wshaper.config $(1)/etc/config/wshaper
 endef
 
