@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=taskwarrior
-PKG_VERSION:=2.4.0
+PKG_VERSION:=2.4.1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=task-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.taskwarrior.org/download/
-PKG_MD5SUM:=de4b64b3d28bb9636af219a486552cd0
+PKG_MD5SUM:=f250f3fb3922e4153c6ad1b1270dceb8
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/task-$(PKG_VERSION)
