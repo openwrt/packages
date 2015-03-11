@@ -209,8 +209,8 @@ define PyPackage/python-base/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
 endef
 
-# Dummy rule so that the package gets picked up
-define Package/python/install
+define PyPackage/python/filespec
+-|$(PYTHON_PKG_DIR)
 endef
 
 HOST_CFLAGS+= \
