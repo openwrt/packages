@@ -37,9 +37,9 @@ send_alert "$(echo -e "$EVENT_INFO\n\n$CURRENT_STATUS\n\n$MWAN_LOG")"
 
 mwan3_set_chnroute_iptables()
 {
-    local chnroutef
-
-    chnroutef="/etc/chinadns_chnroute.txt"
+    if ! $IPT -S mwan3_rules &> /dev/null; then
+        $IPT -N mwan3_rules
+    fi
 
     if ! $IPT -S mwan3_chnroute_target &> /dev/null; then
         $IPT -N mwan3_chnroute_target
@@ -49,13 +49,7 @@ mwan3_set_chnroute_iptables()
 
     if ! $IPT -S mwan3_chnroute &> /dev/null; then
         $IPT -N mwan3_chnroute
-        if [ -f "$chnroutef" ]; then
-            for LINE in `cat $chnroutef`
-            do
-                $IPT -A mwan3_chnroute -d $LINE -j mwan3_chnroute_target
-            done
-        fi
-        $IPT -A mwan3_chnroute -j mwan3_rules
+        $IPT -t mangle -A mwan3_chnroute -m set --match-set chnip dst -j mwan3_chnroute_target
     fi
     if $IPT -S mwan3_chnroute &> /dev/null; then
         if ! $IPT -S mwan3_chnroute | grep mwan3_rules &> /dev/null; then
@@ -67,6 +61,21 @@ mwan3_set_chnroute_iptables()
             $IPT -I mwan3_hook 4 -m mark --mark 0x0/0xff00 -j mwan3_chnroute
         fi
     fi
+    if ! $IPT -S mwan3_vpnroute_target &> /dev/null; then
+        $IPT -N mwan3_vpnroute_target
+        $IPT -A mwan3_vpnroute_target -j MARK --set-xmark 0xfb00/0xff00
+        $IPT -A mwan3_vpnroute_target -j mwan3_rules
+    fi
+    if ! $IPT -S mwan3_vpnroute &> /dev/null; then
+        $IPT -N mwan3_vpnroute
+        $IPT -t mangle -A mwan3_vpnroute -m set --match-set redir dst -j mwan3_vpnroute_target
+    fi
+    if $IPT -S mwan3_hook &> /dev/null; then
+        if ! $IPT -S mwan3_hook | grep mwan3_vpnroute &> /dev/null; then
+            $IPT -I mwan3_hook 4 -m mark --mark 0x0/0xff00 -j mwan3_vpnroute
+        fi
+    fi
+
     $LOG notice "mwan3 set chnroute iptables"
 }
 
