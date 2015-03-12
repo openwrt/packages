@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libseccomp
 PKG_VERSION:=2.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -20,6 +20,9 @@ PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 PKG_INSTALL:=1
 PKG_LIBTOOL_PATHS:=. lib
 PKG_CHECK_FORMAT_SECURITY:=0
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_KERNEL_SECCOMP
 
 include $(INCLUDE_DIR)/package.mk
 
