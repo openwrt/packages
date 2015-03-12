@@ -43,7 +43,7 @@ mwan3_set_chnroute_iptables()
 
     if ! $IPT -S mwan3_chnroute_target &> /dev/null; then
         $IPT -N mwan3_chnroute_target
-        $IPT -A mwan3_chnroute_target -j MARK --set-xmark 0xff0000/0xff0000
+        $IPT -A mwan3_chnroute_target -j MARK --set-xmark 0xfc00/0xff00
         $IPT -A mwan3_chnroute_target -j mwan3_rules
     fi
 
