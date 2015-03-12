@@ -1,0 +1,87 @@
+From 19202b54698b343a0207d7e213448e32b8e58fc3 Mon Sep 17 00:00:00 2001
+From: Olliver Schinagl <o.schinagl@ultimaker.com>
+Date: Wed, 29 Oct 2014 09:34:41 +0100
+Subject: [PATCH 1/7] Buffer the bytesused variable from struct v4l2_buffer
+
+Starting with kernel versions 3.16, (DE)Queing of buffers has been fixed
+after it was leaking data for ages. in the struct v4l2_buffer is the
+bytesused element which indicates the size of the buffer. This however
+gets cleared whenever the buffer gets requeued and is thus no longer
+valid.
+
+This patch copies the bytesused variable so it is available until the
+next frame captured again.
+
+Signed-off-by: Olliver Schinagl <o.schinagl@ultimaker.com>
+---
+ plugins/input_uvc/input_uvc.c | 6 +++---
+ plugins/input_uvc/v4l2uvc.c   | 2 ++
+ plugins/input_uvc/v4l2uvc.h   | 1 +
+ 3 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/plugins/input_uvc/input_uvc.c b/plugins/input_uvc/input_uvc.c
+index e6c74fd..64f66cb 100644
+--- a/plugins/input_uvc/input_uvc.c
++++ b/plugins/input_uvc/input_uvc.c
+@@ -482,7 +482,7 @@ void *cam_thread(void *arg)
+             exit(EXIT_FAILURE);
+         }
+ 
+-        //DBG("received frame of size: %d from plugin: %d\n", pcontext->videoIn->buf.bytesused, pcontext->id);
++        //DBG("received frame of size: %d from plugin: %d\n", pcontext->videoIn->tmpbytesused, pcontext->id);
+ 
+         /*
+          * Workaround for broken, corrupted frames:
+@@ -491,7 +491,7 @@ void *cam_thread(void *arg)
+          * For example a VGA (640x480) webcam picture is normally >= 8kByte large,
+          * corrupted frames are smaller.
+          */
+-        if(pcontext->videoIn->buf.bytesused < minimum_size) {
++        if(pcontext->videoIn->tmpbytesused < minimum_size) {
+             DBG("dropping too small frame, assuming it as broken\n");
+             continue;
+         }
+@@ -529,7 +529,7 @@ void *cam_thread(void *arg)
+         } else {
+         #endif
+             //DBG("copying frame from input: %d\n", (int)pcontext->id);
+-            pglobal->in[pcontext->id].size = memcpy_picture(pglobal->in[pcontext->id].buf, pcontext->videoIn->tmpbuffer, pcontext->videoIn->buf.bytesused);
++            pglobal->in[pcontext->id].size = memcpy_picture(pglobal->in[pcontext->id].buf, pcontext->videoIn->tmpbuffer, pcontext->videoIn->tmpbytesused);
+         #ifndef NO_LIBJPEG
+         }
+         #endif
+diff --git a/plugins/input_uvc/v4l2uvc.c b/plugins/input_uvc/v4l2uvc.c
+index c5a5aa4..d11510c 100644
+--- a/plugins/input_uvc/v4l2uvc.c
++++ b/plugins/input_uvc/v4l2uvc.c
+@@ -532,6 +532,7 @@ int uvcGrab(struct vdIn *vd)
+         */
+ 
+         memcpy(vd->tmpbuffer, vd->mem[vd->buf.index], vd->buf.bytesused);
++	vd->tmpbytesused = vd->buf.bytesused;
+ 
+         if(debug)
+             fprintf(stderr, "bytes in used %d \n", vd->buf.bytesused);
+@@ -570,6 +571,7 @@ int close_v4l2(struct vdIn *vd)
+     if(vd->tmpbuffer)
+         free(vd->tmpbuffer);
+     vd->tmpbuffer = NULL;
++    vd->tmpbytesused = 0;
+     free(vd->framebuffer);
+     vd->framebuffer = NULL;
+     free(vd->videodevice);
+diff --git a/plugins/input_uvc/v4l2uvc.h b/plugins/input_uvc/v4l2uvc.h
+index 022c57e..2c7c8ba 100644
+--- a/plugins/input_uvc/v4l2uvc.h
++++ b/plugins/input_uvc/v4l2uvc.h
+@@ -83,6 +83,7 @@ struct vdIn {
+     struct v4l2_requestbuffers rb;
+     void *mem[NB_BUFFER];
+     unsigned char *tmpbuffer;
++    int tmpbytesused;
+     unsigned char *framebuffer;
+     streaming_state streamingState;
+     int grabmethod;
+-- 
+1.9.1
+
