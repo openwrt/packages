@@ -177,7 +177,7 @@ PYTHON_BASE_LIB_FILES:= \
 	/usr/lib/python$(PYTHON_VERSION)/UserDict.py \
 	/usr/lib/python$(PYTHON_VERSION)/warnings.py
 
-PYTHON_BASE_LIB_FILES+=$(PYTHON_BASE_LIB_FILES)
+PYTHON_LIB_FILES_DEL+=$(PYTHON_BASE_LIB_FILES)
 
 define PyPackage/python-base/filespec
 +|/usr/bin/python$(PYTHON_VERSION)
