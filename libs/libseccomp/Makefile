@@ -53,10 +53,6 @@ define Package/libseccomp/description
  This package contains the seccomp library.
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default)
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib/pkgconfig
 	$(CP) \
