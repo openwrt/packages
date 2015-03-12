@@ -122,6 +122,7 @@ SNMP_MIB_MODULES_INCLUDED = \
 	ucd-snmp/loadave \
 	ucd-snmp/memory \
 	ucd-snmp/pass \
+	ucd-snmp/pass_persist \
 	ucd-snmp/proc \
 	ucd-snmp/vmstat \
 	util_funcs \
