@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2014 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pthsem
 PKG_VERSION:=2.0.8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=LGPL-2.1+
@@ -37,26 +37,19 @@ define Package/pthsem/description
   pthsem is an extend version, with support for semaphores added. It can be installed parallel to a normal pth.
 endef
 
-MAKE_FLAGS += \
-	OPTIM="$(TARGET_CFLAGS)" \
-	CFLAGS="$(TARGET_CFLAGS)" \
-	DESTDIR="$(PKG_INSTALL_DIR)"
-
 define Build/InstallDev
-	$(INSTALL_DIR) $(2)/bin
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/pthsem-config \
-		$(2)/bin/
-	$(SED) \
-		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
-		$(2)/bin/pthsem-config
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/pthsem-config $(1)/usr/bin/
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/pthsem-config
 
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP)   $(PKG_INSTALL_DIR)/usr/include/*.h \
-		$(1)/usr/include/
+	$(CP)   $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP)   $(PKG_INSTALL_DIR)/usr/lib/libpthsem.{a,la,so*} \
-		$(1)/usr/lib/
+	$(CP)   $(PKG_INSTALL_DIR)/usr/lib/libpthsem.{a,la,so*} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/pthsem.pc $(1)/usr/lib/pkgconfig/
+	$(INSTALL_DIR) $(2)/bin
+	$(LN) ../../usr/bin/pthsem-config $(2)/bin/
 endef
 
 define Package/pthsem/install
