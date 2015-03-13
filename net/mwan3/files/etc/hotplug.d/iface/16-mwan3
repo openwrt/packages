@@ -41,34 +41,19 @@ mwan3_set_chnroute_iptables()
         $IPT -N mwan3_rules
     fi
 
-    if ! $IPT -S mwan3_chnroute_target &> /dev/null; then
-        $IPT -N mwan3_chnroute_target
-        $IPT -A mwan3_chnroute_target -j MARK --set-xmark 0xfc00/0xff00
-        $IPT -A mwan3_chnroute_target -j mwan3_rules
-    fi
-
     if ! $IPT -S mwan3_chnroute &> /dev/null; then
         $IPT -N mwan3_chnroute
-        $IPT -t mangle -A mwan3_chnroute -m set --match-set chnip dst -j mwan3_chnroute_target
-    fi
-    if $IPT -S mwan3_chnroute &> /dev/null; then
-        if ! $IPT -S mwan3_chnroute | grep mwan3_rules &> /dev/null; then
-            $IPT -A mwan3_chnroute -j mwan3_rules
-        fi
+        $IPT -t mangle -A mwan3_chnroute -m set --match-set chnip dst -j MARK --set-xmark 0xfc/0x00ff
     fi
     if $IPT -S mwan3_hook &> /dev/null; then
         if ! $IPT -S mwan3_hook | grep mwan3_chnroute &> /dev/null; then
             $IPT -I mwan3_hook 4 -m mark --mark 0x0/0xff00 -j mwan3_chnroute
         fi
     fi
-    if ! $IPT -S mwan3_vpnroute_target &> /dev/null; then
-        $IPT -N mwan3_vpnroute_target
-        $IPT -A mwan3_vpnroute_target -j MARK --set-xmark 0xfb00/0xff00
-        $IPT -A mwan3_vpnroute_target -j mwan3_rules
-    fi
+
     if ! $IPT -S mwan3_vpnroute &> /dev/null; then
         $IPT -N mwan3_vpnroute
-        $IPT -t mangle -A mwan3_vpnroute -m set --match-set redir dst -j mwan3_vpnroute_target
+        $IPT -t mangle -A mwan3_vpnroute -m set --match-set redir dst -j MARK --set-xmark 0xfb/0x00ff
     fi
     if $IPT -S mwan3_hook &> /dev/null; then
         if ! $IPT -S mwan3_hook | grep mwan3_vpnroute &> /dev/null; then

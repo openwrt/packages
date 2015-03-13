@@ -192,6 +192,7 @@ mwan3_set_policy()
 
 			total_weight=$weight
 			$IPT -F mwan3_policy_$policy
+            $IPT -A mwan3_policy_$policy -j MARK --and-mark 0xff00
 			$IPT -A mwan3_policy_$policy -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE $weight $weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
 
 			lowest_metric=$metric
