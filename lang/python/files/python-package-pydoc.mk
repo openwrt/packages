@@ -12,6 +12,7 @@ $(call Package/python/Default)
 endef
 
 $(eval $(call PyBasePackage,python-pydoc, \
+	/usr/lib/python$(PYTHON_VERSION)/doctest.py \
 	/usr/lib/python$(PYTHON_VERSION)/pydoc.py \
 	/usr/lib/python$(PYTHON_VERSION)/pydoc_data \
 ))
