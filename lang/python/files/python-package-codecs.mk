@@ -12,6 +12,7 @@ $(call Package/python/Default)
 endef
 
 $(eval $(call PyBasePackage,python-codecs, \
+	/usr/lib/python$(PYTHON_VERSION)/encodings \
 	/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_codecs_cn.so \
 	/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_codecs_hk.so \
 	/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_codecs_iso2022.so \

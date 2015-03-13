@@ -5,13 +5,14 @@
 # See /LICENSE for more information.
 #
 
-define Package/python-bsddb
+define Package/python-db
 $(call Package/python/Default)
-  TITLE:=Python $(PYTHON_VERSION) bsddb module
+  TITLE:=Python $(PYTHON_VERSION) db module
   DEPENDS:=+python-light +libdb47
 endef
 
-$(eval $(call PyBasePackage,python-bsddb, \
+$(eval $(call PyBasePackage,python-db, \
 	/usr/lib/python$(PYTHON_VERSION)/bsddb \
 	/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_bsddb.so \
+	/usr/lib/python$(PYTHON_VERSION)/lib-dynload/dbm.so \
 ))
