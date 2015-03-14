@@ -1,3 +1,16 @@
+config rule '80_OneIF'
+	option dest_port '80'
+	option proto 'tcp'
+	option use_policy 'default'
+
+config rule '443_OneIF'
+	option dest_port '443'
+	option proto 'tcp'
+	option use_policy 'default'
+
+config rule 'default_rule'
+	option dest_ip '0.0.0.0/0'
+	option use_policy 'balanced'
 
 config interface 'wan'
 	option enabled '1'
@@ -14,12 +27,9 @@ config policy 'balanced'
 	list use_member 'wan_m1_w1'
 	option last_resort 'default'
 
-config rule 'default_rule'
-	option dest_ip '0.0.0.0/0'
-	option use_policy 'balanced'
-
 config member 'wan_m1_w1'
 	option interface 'wan'
 	option metric '1'
 	option weight '1'
+
 
