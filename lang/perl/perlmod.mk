@@ -3,7 +3,7 @@
 
 # Build environment
 HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
-ifneq ($(CONFIG_USE_EGLIBC),)
+ifneq ($(CONFIG_USE_GLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif

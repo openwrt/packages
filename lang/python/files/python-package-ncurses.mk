@@ -12,6 +12,7 @@ $(call Package/python/Default)
 endef
 
 $(eval $(call PyBasePackage,python-ncurses, \
+	/usr/lib/python$(PYTHON_VERSION)/curses \
 	/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_curses.so \
 	/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_curses_panel.so \
 ))

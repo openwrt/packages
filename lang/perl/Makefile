@@ -36,7 +36,7 @@ HOST_BUILD_PARALLEL:=1
 
 # Variables used during configuration/build
 HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
-ifneq ($(CONFIG_USE_EGLIBC),)
+ifneq ($(CONFIG_USE_GLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
@@ -50,7 +50,7 @@ ifdef CONFIG_PERL_THREADS
 	PERL_CONFIG_SUFFIX:=-mt
 
 	# uclibc doesn't provide crypt_r(). Enable crypt() usage for glibc builds only
-	ifdef CONFIG_USE_EGLIBC
+	ifdef CONFIG_USE_GLIBC
 		CRYPT_R_PROTO:=REENTRANT_PROTO_B_CCS
 		CRYPT:=define
 	else
@@ -79,7 +79,7 @@ define Package/perl
   CATEGORY:=Languages
   TITLE:=The Perl intepreter
   URL:=http://www.perl.com/
-  DEPENDS:=+USE_EGLIBC:libbsd +PERL_THREADS:libpthread
+  DEPENDS:=+USE_GLIBC:libbsd +PERL_THREADS:libpthread
 endef
 
 define Package/perl/description
