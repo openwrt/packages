@@ -156,6 +156,7 @@ define Build/InstallDev
 endef
 
 PYTHON3_BASE_LIB_FILES:= \
+	/usr/lib/python$(PYTHON_VERSION)/encodings \
 	/usr/lib/python$(PYTHON_VERSION)/_collections_abc.py \
 	/usr/lib/python$(PYTHON_VERSION)/_sitebuiltins.py \
 	/usr/lib/python$(PYTHON_VERSION)/_sysconfigdata.py \

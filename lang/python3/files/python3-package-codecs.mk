@@ -12,7 +12,6 @@ $(call Package/python3/Default)
 endef
 
 $(eval $(call Py3BasePackage,python3-codecs, \
-	/usr/lib/python$(PYTHON3_VERSION)/encodings \
 	/usr/lib/python$(PYTHON3_VERSION)/lib-dynload/_codecs_cn.$(PYTHON3_SO_SUFFIX) \
 	/usr/lib/python$(PYTHON3_VERSION)/lib-dynload/_codecs_hk.$(PYTHON3_SO_SUFFIX) \
 	/usr/lib/python$(PYTHON3_VERSION)/lib-dynload/_codecs_iso2022.$(PYTHON3_SO_SUFFIX) \
