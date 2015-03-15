@@ -1,0 +1,32 @@
+--- git-2.3.0/configure.ac.old	2015-03-08 01:19:33.675810197 -0300
++++ git-2.3.0/configure.ac	2015-03-08 01:27:10.688033125 -0300
+@@ -844,7 +844,8 @@
+ 		FILE *f = fopen(".", "r");
+ 		return f && fread(&c, 1, 1, f)]])],
+ 	[ac_cv_fread_reads_directories=no],
+-	[ac_cv_fread_reads_directories=yes])
++	[ac_cv_fread_reads_directories=yes],
++	[ac_cv_fread_reads_directories=no])
+ ])
+ if test $ac_cv_fread_reads_directories = yes; then
+ 	FREAD_READS_DIRECTORIES=UnfortunatelyYes
+@@ -878,7 +879,8 @@
+ 		  if (snprintf(buf, 3, "%s", "12345") != 5
+ 		      || strcmp(buf, "12")) return 1]])],
+ 	[ac_cv_snprintf_returns_bogus=no],
+-	[ac_cv_snprintf_returns_bogus=yes])
++	[ac_cv_snprintf_returns_bogus=yes],
++	[ac_cv_snprintf_returns_bogus=no])
+ ])
+ if test $ac_cv_snprintf_returns_bogus = yes; then
+ 	SNPRINTF_RETURNS_BOGUS=UnfortunatelyYes
+@@ -901,7 +903,8 @@
+ #endif
+ ]),
+ 	[ac_cv_sane_mode_bits=yes],
+-	[ac_cv_sane_mode_bits=no])
++	[ac_cv_sane_mode_bits=no],
++	[ac_cv_sane_mode_bits=yes])
+ ])
+ if test $ac_cv_sane_mode_bits = yes; then
+ 	NEEDS_MODE_TRANSLATION=
