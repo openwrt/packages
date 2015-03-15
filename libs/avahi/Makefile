@@ -70,7 +70,7 @@ endef
 define Package/avahi-autoipd
   $(call Package/avahi/Default)
   SUBMENU:=IP Addresses and Names
-  DEPENDS:=+libdaemon
+  DEPENDS:=+libdaemon +SSP_SUPPORT:libssp
   TITLE:=IPv4LL network address configuration daemon
 endef
 
