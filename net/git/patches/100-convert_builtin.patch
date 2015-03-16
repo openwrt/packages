@@ -7,14 +7,13 @@
 -PROGRAM_OBJS += credential-store.o
 -PROGRAM_OBJS += daemon.o
 -PROGRAM_OBJS += fast-import.o
--PROGRAM_OBJS += http-backend.o
+ PROGRAM_OBJS += http-backend.o
 -PROGRAM_OBJS += imap-send.o
 -PROGRAM_OBJS += sh-i18n--envsubst.o
 -PROGRAM_OBJS += shell.o
 -PROGRAM_OBJS += show-index.o
 -PROGRAM_OBJS += upload-pack.o
 -PROGRAM_OBJS += remote-testsvn.o
-+PROGRAM_OBJS += http-backend.o
  
  # Binary suffix, set to .exe for Windows builds
  X =
@@ -30,7 +29,7 @@
  
  GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
  EXTLIBS =
-@@ -1070,7 +1067,7 @@ endif
+@@ -1070,7 +1066,7 @@ endif
  EXTLIBS += -lz
  
  ifndef NO_OPENSSL
@@ -39,7 +38,7 @@
  	ifdef OPENSSLDIR
  		BASIC_CFLAGS += -I$(OPENSSLDIR)/include
  		OPENSSL_LINK = -L$(OPENSSLDIR)/$(lib) $(CC_LD_DYNPATH)$(OPENSSLDIR)/$(lib)
-@@ -1933,10 +1930,6 @@ endif
+@@ -1933,10 +1929,6 @@ endif
  git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
  	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
  
@@ -50,7 +49,7 @@
  git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
  	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
  		$(LIBS) $(CURL_LIBCURL)
-@@ -2254,10 +2247,11 @@ endif
+@@ -2254,10 +2246,11 @@ endif
  	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
  	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
  	{ test "$$bindir/" = "$$execdir/" || \
@@ -98,7 +97,7 @@
 +#include "../upload-pack.c"
 --- a/daemon.c
 +++ b/daemon.c
-@@ -1096,7 +1096,7 @@ static int serve(struct string_list *lis
+@@ -1193,7 +1193,7 @@ static int serve(struct string_list *lis
  	return service_loop(&socklist);
  }
  
@@ -107,7 +106,7 @@
  {
  	int listen_port = 0;
  	struct string_list listen_addr = STRING_LIST_INIT_NODUP;
-@@ -1292,12 +1292,13 @@ int main(int argc, char **argv)
+@@ -1389,12 +1389,13 @@ int main(int argc, char **argv)
  		store_pid(pid_file);
  
  	/* prepare argv for serving-processes */
@@ -128,7 +127,7 @@
  }
 --- a/fast-import.c
 +++ b/fast-import.c
-@@ -3350,7 +3350,7 @@ static void parse_argv(void)
+@@ -3354,7 +3354,7 @@ static void parse_argv(void)
  		read_marks();
  }
  
@@ -169,7 +168,7 @@
  	{ "index-pack", cmd_index_pack, RUN_SETUP_GENTLY },
  	{ "init", cmd_init_db, NO_SETUP },
  	{ "init-db", cmd_init_db, NO_SETUP },
-@@ -459,6 +462,7 @@ static struct cmd_struct commands[] = {
+@@ -459,6 +461,7 @@ static struct cmd_struct commands[] = {
  	{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
  	{ "rm", cmd_rm, RUN_SETUP },
  	{ "send-pack", cmd_send_pack, RUN_SETUP },
@@ -177,7 +176,7 @@
  	{ "shortlog", cmd_shortlog, RUN_SETUP_GENTLY | USE_PAGER },
  	{ "show", cmd_show, RUN_SETUP },
  	{ "show-branch", cmd_show_branch, RUN_SETUP },
-@@ -475,6 +479,7 @@ static struct cmd_struct commands[] = {
+@@ -475,6 +478,7 @@ static struct cmd_struct commands[] = {
  	{ "update-server-info", cmd_update_server_info, RUN_SETUP },
  	{ "upload-archive", cmd_upload_archive },
  	{ "upload-archive--writer", cmd_upload_archive_writer },
