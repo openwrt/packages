@@ -33,6 +33,13 @@ define HostPython
 	)
 endef
 
+# These configure args are needed in detection of path to Python header files
+# using autotools.
+CONFIGURE_ARGS += \
+	_python_sysroot="$(STAGING_DIR)" \
+	_python_prefix="/usr" \
+	_python_exec_prefix="/usr"
+
 PKG_USE_MIPS16:=0
 # This is required in addition to PKG_USE_MIPS16:=0 because otherwise MIPS16
 # flags are inherited from the Python base package (via sysconfig module)
