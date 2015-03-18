@@ -1,0 +1,82 @@
+#!/bin/sh
+
+# to enable this script uncomment the case loop at the bottom
+# to report mwan status on interface hotplug ifup/ifdown events modify the lines in the send_alert function
+
+send_alert()
+{
+# variable "$1" stores the MWAN status information
+# insert your code here to send the contents of "$1"
+echo "$1"
+}
+
+gather_event_info()
+{
+# create event information message
+local EVENT_INFO="Interface [ "$INTERFACE" ($DEVICE) ] on router [ "$(uci get -p /var/state system.@system[0].hostname)" ] has triggered a hotplug [ "$ACTION" ] event on "$(date +"%a %b %d %Y %T %Z")""
+
+# get current interface, policy and rule status
+local CURRENT_STATUS="$(/usr/sbin/mwan3 status)"
+
+# get last 50 MWAN systemlog messages
+local MWAN_LOG="$(echo -e "Last 50 MWAN systemlog entries. Newest entries sorted at the top:\n$(logread | grep mwan3 | tail -n 50 | sed 'x;1!H;$!d;x')")"
+
+# pass event info to send_alert function
+send_alert "$(echo -e "$EVENT_INFO\n\n$CURRENT_STATUS\n\n$MWAN_LOG")"
+}
+
+#case "$ACTION" in
+#	ifup)
+#		gather_event_info
+#	;;
+#
+#	ifdown)
+#		gather_event_info
+#	;;
+#esac
+
+mwan3_set_chnroute_iptables()
+{
+    if ! $IPT -S mwan3_rules &> /dev/null; then
+        $IPT -N mwan3_rules
+    fi
+
+    if ! $IPT -S mwan3_chnroute &> /dev/null; then
+        $IPT -N mwan3_chnroute
+        $IPT -t mangle -A mwan3_chnroute -m set --match-set chnip dst -j MARK --set-xmark 0xfc/0x00ff
+    fi
+    if $IPT -S mwan3_hook &> /dev/null; then
+        if ! $IPT -S mwan3_hook | grep mwan3_chnroute &> /dev/null; then
+            $IPT -I mwan3_hook 4 -m mark --mark 0x0/0xff00 -j mwan3_chnroute
+        fi
+    fi
+
+    if ! $IPT -S mwan3_vpnroute &> /dev/null; then
+        $IPT -N mwan3_vpnroute
+        $IPT -t mangle -A mwan3_vpnroute -m set --match-set redir dst -j MARK --set-xmark 0xfb/0x00ff
+    fi
+    if $IPT -S mwan3_hook &> /dev/null; then
+        if ! $IPT -S mwan3_hook | grep mwan3_vpnroute &> /dev/null; then
+            $IPT -I mwan3_hook 4 -m mark --mark 0x0/0xff00 -j mwan3_vpnroute
+        fi
+    fi
+
+    $LOG notice "mwan3 set chnroute iptables"
+}
+
+local IP IPT LOG
+
+IP="/usr/sbin/ip -4"
+IPT="/usr/sbin/iptables -t mangle -w"
+LOG="/usr/bin/logger -t mwan3 -p"
+
+case "$ACTION" in
+    ifup|ifdown)
+    mwan3_set_chnroute_iptables
+    ;;
+esac
+
+
+
+exit 0
+

@@ -88,6 +88,12 @@ proto = mwan_rule:option(DummyValue, "proto", translate("Protocol"))
 		return self.map:get(s, "proto") or "all"
 	end
 
+mark = mwan_rule:option(DummyValue, "mark", translate("Mark"))
+	mark.rawhtml = true
+	function mark.cfgvalue(self, s)
+		return self.map:get(s, "mark") or "&#8212;"
+	end
+
 use_policy = mwan_rule:option(DummyValue, "use_policy", translate("Policy assigned"))
 	use_policy.rawhtml = true
 	function use_policy.cfgvalue(self, s)
