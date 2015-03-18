@@ -1,0 +1,12 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2008 OpenWrt.org
+
+START=90
+USE_PROCD=1
+
+start_service() {
+	procd_open_instance
+	procd_set_param command /usr/bin/stunnel /etc/stunnel/stunnel.conf
+	procd_set_param respawn # respawn automatically if something died
+	procd_close_instance
+}
