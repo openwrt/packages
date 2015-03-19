@@ -216,7 +216,6 @@ define Package/libnetsnmp/install
 endef
 
 define Package/snmpd/conffiles
-/etc/default/snmpd
 /etc/config/snmpd
 endef
 
@@ -225,8 +224,6 @@ define Package/snmpd/install
 	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
 	$(INSTALL_DIR) $(1)/etc/snmp
 	ln -sf /var/run/snmpd.conf $(1)/etc/snmp/
-	$(INSTALL_DIR) $(1)/etc/default
-	$(INSTALL_DATA) ./files/snmpd.default $(1)/etc/default/snmpd
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -234,7 +231,6 @@ define Package/snmpd/install
 endef
 
 define Package/snmpd-static/conffiles
-/etc/default/snmpd
 /etc/config/snmpd
 endef
 
@@ -243,8 +239,6 @@ define Package/snmpd-static/install
 	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
 	$(INSTALL_DIR) $(1)/etc/snmp
 	ln -sf /var/run/snmpd.conf $(1)/etc/snmp/
-	$(INSTALL_DIR) $(1)/etc/default
-	$(INSTALL_DATA) ./files/snmpd.default $(1)/etc/default/snmpd
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin
