@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linknx
 PKG_VERSION:=0.0.1.32
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_MD5SUM:=7ecc1208f59bceb05068c752b2250b63
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
@@ -17,6 +17,7 @@ PKG_LICENSE:=GPL-2.0+
 
 PKG_SOURCE_URL:=@SF/linknx
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_BUILD_DEPENDS:=argp-standalone
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,7 +26,7 @@ define Package/linknx
   CATEGORY:=Network
   TITLE:=KNX home automation platform
   URL:=http://sourceforge.net/projects/linknx/
-  DEPENDS:=+pthsem +argp-standalone +lua +luac +libstdcpp +libcurl +libesmtp
+  DEPENDS:=+pthsem +lua +luac +libstdcpp +libcurl +libesmtp
 endef
 
 CONFIGURE_ARGS+= \
@@ -37,7 +38,7 @@ CONFIGURE_ARGS+= \
 	--without-mysql
 
 EXTRA_LDFLAGS+= \
-        -fno-builtin
+	-fno-builtin
 
 define Package/linknx/install
 	$(INSTALL_DIR) $(1)/usr/bin
