@@ -89,7 +89,7 @@ sc.default = "simple.qos"
 sc.rmempty = false
 sc.description = qos_desc
 
-ad = s:taboption("tab_qdisc", Flag, "qdisc_advanced", translate("Show Advanced Configuration"))
+ad = s:taboption("tab_qdisc", Flag, "qdisc_advanced", translate("Show and Use Advanced Configuration"))
 ad.default = false
 ad.rmempty = true
 
@@ -121,7 +121,7 @@ eecn.default = "NOECN"
 eecn.rmempty = true
 eecn:depends("qdisc_advanced", "1")
 
-ad2 = s:taboption("tab_qdisc", Flag, "qdisc_really_really_advanced", translate("Show Dangerous Configuration"))
+ad2 = s:taboption("tab_qdisc", Flag, "qdisc_really_really_advanced", translate("Show and Use Dangerous Configuration"))
 ad2.default = false
 ad2.rmempty = true
 ad2:depends("qdisc_advanced", "1")
@@ -140,12 +140,12 @@ elim.rmempty = true
 elim:depends("qdisc_really_really_advanced", "1")
 
 
-itarg = s:taboption("tab_qdisc", Value, "itarget", translate("Latency target for ingress, e.g 5ms [units: s, ms, or  us]; leave empty for default, or auto for automatic selection."))
+itarg = s:taboption("tab_qdisc", Value, "itarget", translate("Latency target for ingress, e.g 5ms [units: s, ms, or  us]; leave empty for automatic selection, put in the word default for the qdisc's default."))
 itarg.datatype = "string"
 itarg.rmempty = true
 itarg:depends("qdisc_really_really_advanced", "1")
 
-etarg = s:taboption("tab_qdisc", Value, "etarget", translate("Latency target for egress, e.g. 5ms [units: s, ms, or  us]; leave empty for default, or auto for automatic selection."))
+etarg = s:taboption("tab_qdisc", Value, "etarget", translate("Latency target for egress, e.g. 5ms [units: s, ms, or  us]; leave empty for automatic selection, put in the word default for the qdisc's default."))
 etarg.datatype = "string"
 etarg.rmempty = true
 etarg:depends("qdisc_really_really_advanced", "1")

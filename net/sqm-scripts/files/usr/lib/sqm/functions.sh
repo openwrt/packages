@@ -253,8 +253,8 @@ get_target() {
 	# either e.g. 100ms or auto
 	CUR_TARGET_VALUE=$( echo ${CUR_TARGET} | grep -o -e \^'[[:digit:]]\+' )
 	CUR_TARGET_UNIT=$( echo ${CUR_TARGET} | grep -o -e '[[:alpha:]]\+'\$ )
-#	[ ! -z "$CUR_TARGET" ] && sqm_logger "CUR_TARGET_VALUE: $CUR_TARGET_VALUE"
-#	[ ! -z "$CUR_TARGET" ] && sqm_logger "CUR_TARGET_UNIT: $CUR_TARGET_UNIT"
+	#[ ! -z "$CUR_TARGET" ] && sqm_logger "CUR_TARGET_VALUE: $CUR_TARGET_VALUE"
+	#[ ! -z "$CUR_TARGET" ] && sqm_logger "CUR_TARGET_UNIT: $CUR_TARGET_UNIT"
 	
 	AUTO_TARGET=
 	UNIT_VALID=
@@ -271,14 +271,42 @@ get_target() {
 					;;
 			    esac
 			fi
-			case ${CUR_TARGET_UNIT} in
-			    auto|Auto|AUTO) 
+			# empty field in GUI or undefined GUI variable now defaults to auto
+			if [ -z "${CUR_TARGET_VALUE}" -a -z "${CUR_TARGET_UNIT}" ];
+    			then			
 				if [ ! -z "${CUR_LINK_KBPS}" ];
 				then
 				    TMP_TARGET_US=$( adapt_target_to_slow_link $CUR_LINK_KBPS )
 				    TMP_INTERVAL_STRING=$( adapt_interval_to_slow_link $TMP_TARGET_US )
 				    CUR_TARGET_STRING="target ${TMP_TARGET_US}us ${TMP_INTERVAL_STRING}"
 				    AUTO_TARGET="1"
+				    sqm_logger "get_target defaulting to auto." 
+			    	else
+				    sqm_logger "required link bandwidth in kbps not passed to get_target()." 
+				fi
+			fi
+			# but still allow explicit use of the keyword auto for backward compatibility
+                        case ${CUR_TARGET_UNIT} in
+                            auto|Auto|AUTO)
+                                if [ ! -z "${CUR_LINK_KBPS}" ];
+                                then
+                                    TMP_TARGET_US=$( adapt_target_to_slow_link $CUR_LINK_KBPS )
+                                    TMP_INTERVAL_STRING=$( adapt_interval_to_slow_link $TMP_TARGET_US )
+                                    CUR_TARGET_STRING="target ${TMP_TARGET_US}us ${TMP_INTERVAL_STRING}"
+                                    AUTO_TARGET="1"
+                                else
+                                    sqm_logger "required link bandwidth in kbps not passed to get_target()."
+                                fi
+                            ;;
+                        esac
+			
+			case ${CUR_TARGET_UNIT} in
+			    default|Default|DEFAULT) 
+				if [ ! -z "${CUR_LINK_KBPS}" ];
+				then
+				    CUR_TARGET_STRING=""	# return nothing so the default target is not over-ridden...
+				    AUTO_TARGET="1"
+				    #sqm_logger "get_target using qdisc default, no explicit target string passed."
 			    	else
 			    	    sqm_logger "required link bandwidth in kbps not passed to get_target()." 
 			        fi
@@ -288,7 +316,7 @@ get_target() {
 			    then
 			    if [ -z "${CUR_TARGET_VALUE}" -o -z "${UNIT_VALID}" ];
 			    then 
-				[ -z "$AUTO_TARGET" ] && sqm_logger "${CUR_TARGET} is not a well formed tc target specifier; e.g.: 5ms (or s, us), or the string auto."
+				[ -z "$AUTO_TARGET" ] && sqm_logger "${CUR_TARGET} is not a well formed tc target specifier; e.g.: 5ms (or s, us), or one of the strings auto or default."
 			    fi
 			fi
 		    ;;
