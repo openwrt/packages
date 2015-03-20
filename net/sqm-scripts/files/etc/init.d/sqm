@@ -4,7 +4,7 @@ START=50
 
 reload()
 {
-/usr/lib/sqm/run.sh
+/usr/lib/sqm/run.sh start
 }
 
 restart()
