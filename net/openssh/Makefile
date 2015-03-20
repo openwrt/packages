@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/openssh/Default
 	SECTION:=net
 	CATEGORY:=Network
-	DEPENDS:=+libopenssl +zlib +SSP_SUPPORT:libssp
+	DEPENDS:=+libopenssl +zlib
 	TITLE:=OpenSSH
 	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 	URL:=http://www.openssh.com/
@@ -124,7 +124,6 @@ endef
 define Package/openssh-sftp-server
 	$(call Package/openssh/Default)
 	TITLE+= SFTP server
-	DEPENDS:=+SSP_SUPPORT:libssp
 endef
 
 define Package/openssh-sftp-server/description
