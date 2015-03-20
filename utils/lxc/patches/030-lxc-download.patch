@@ -1,0 +1,43 @@
+--- a/templates/lxc-download.in
++++ b/templates/lxc-download.in
+@@ -39,7 +39,7 @@ DOWNLOAD_LIST_IMAGES="false"
+ DOWNLOAD_MODE="system"
+ DOWNLOAD_READY_GPG="false"
+ DOWNLOAD_RELEASE=
+-DOWNLOAD_SERVER="images.linuxcontainers.org"
++DOWNLOAD_SERVER="virtualwrt.org/containers/"
+ DOWNLOAD_SHOW_GPG_WARNING="true"
+ DOWNLOAD_SHOW_HTTP_WARNING="true"
+ DOWNLOAD_TARGET="system"
+@@ -257,14 +257,6 @@ for bin in tar xz wget; do
+     fi
+ done
+ 
+-# Check for GPG
+-if [ "$DOWNLOAD_VALIDATE" = "true" ]; then
+-    if ! type gpg >/dev/null 2>&1; then
+-        echo "ERROR: Missing recommended tool: gpg" 1>&2
+-        echo "You can workaround this by using --no-validate." 1>&2
+-        exit 1
+-    fi
+-fi
+ 
+ # Check that we have all variables we need
+ if [ -z "$LXC_NAME" ] || [ -z "$LXC_PATH" ] || [ -z "$LXC_ROOTFS" ]; then
+@@ -456,16 +448,9 @@ if [ "$DOWNLOAD_USE_CACHE" = "false" ];
+         echo "Downloading the rootfs"
+         download_file $DOWNLOAD_URL/rootfs.tar.xz \
+             ${DOWNLOAD_TEMP}/rootfs.tar.xz normal
+-        download_sig  $DOWNLOAD_URL/rootfs.tar.xz.asc \
+-             ${DOWNLOAD_TEMP}/rootfs.tar.xz.asc normal
+-        gpg_validate ${DOWNLOAD_TEMP}/rootfs.tar.xz.asc
+-
+         echo "Downloading the metadata"
+         download_file $DOWNLOAD_URL/meta.tar.xz \
+             ${DOWNLOAD_TEMP}/meta.tar.xz normal
+-        download_sig  $DOWNLOAD_URL/meta.tar.xz.asc \
+-            ${DOWNLOAD_TEMP}/meta.tar.xz.asc normal
+-        gpg_validate ${DOWNLOAD_TEMP}/meta.tar.xz.asc
+ 
+         if [ -d $LXC_CACHE_PATH ]; then
+             rm -Rf $LXC_CACHE_PATH
