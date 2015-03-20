@@ -1,0 +1,42 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -31,8 +31,6 @@ AC_CHECK_LIB([pthread], [pthread_create]
+ # with it, but don't consider it an error.
+ # PKG_CHECK_MODULES only validates that pkg-config returns stuff; it doesn't
+ # validate that these are correct, so check lib to make sure they're right.
+-PKG_CHECK_MODULES([gnutls], [gnutls],,
+-	[AC_MSG_WARN([No pkg-config for libgnutls])])
+ PKG_CHECK_MODULES([ao], [ao],,
+ 	[AC_MSG_WARN([No pkg-config for libao])])
+ PKG_CHECK_MODULES([mad], [mad],,
+@@ -42,12 +40,28 @@ PKG_CHECK_MODULES([json], [json-c],,
+ 		[PKG_CHECK_MODULES([json], [json0],,
+ 			[AC_MSG_WARN([No pkg-config for json-c (aka libjson0, libjson)])])])])
+ 
++
+ # Network communication stuff:
+ AC_CHECK_LIB([gcrypt], [gcry_cipher_open],,
+ 	[AC_MSG_ERROR([Cannot find required library: libgcrypt],1)])
+-AC_CHECK_LIB([gnutls], [gnutls_record_recv],,
++# Check for SSL option
++AC_ARG_WITH(polarssl, [  --with-polarssl	Build waitress with PolarSSL (default GNUTLS)], [
++  AC_MSG_RESULT(>>Using PolarSSL)
++  HAS_POLARSSL=1
++  AC_DEFINE([USE_POLARSSL], 1, [Build for PolarSSL])
++  PKG_CHECK_MODULES([polarssl], [polarssl],,
++		[AC_MSG_WARN([No pkg-config for libpolarssl])])
++  AC_CHECK_LIB([polarssl], [ssl_set_session],,
++		[AC_MSG_ERROR([Cannot find required library: libpolarssl (aka polarssl)],1)])] )
++AM_CONDITIONAL([USE_POLARSSL],[test "x$HAS_POLARSSL" = "x1"])
++
++if test "x$HAS_POLARSSL" != x1 ; then
++  PKG_CHECK_MODULES([gnutls], [gnutls],,
++	[AC_MSG_WARN([No pkg-config for libgnutls])])
++  AC_CHECK_LIB([gnutls], [gnutls_record_recv],,
+ 	[AC_MSG_ERROR([Cannot find required library: libgnutls (aka gnutls)],1)])
+-AC_CHECK_FUNCS(gnutls_transport_set_int2 gnutls_sec_param_to_pk_bits)
++  AC_CHECK_FUNCS(gnutls_transport_set_int2 gnutls_sec_param_to_pk_bits)
++fi
+ 
+ # Bloody json library may be linked via -ljson, or -ljson-c depending on
+ # the platform.  Try both.
