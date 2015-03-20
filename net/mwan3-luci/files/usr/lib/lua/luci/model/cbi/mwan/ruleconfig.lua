@@ -81,6 +81,19 @@ proto = mwan_rule:option(Value, "proto", translate("Protocol"),
 	proto:value("esp")
 	cbiAddProtocol(proto)
 
+sticky = mwan_rule:option(ListValue, "sticky", translate("Sticky"),
+	translate("Traffic from the same source IP address that previously matched this rule within the sticky timeout period will use the same WAN interface"))
+	sticky.default = "0"
+	sticky:value("1", translate("Yes"))
+	sticky:value("0", translate("No"))
+
+timeout = mwan_rule:option(Value, "timeout", translate("Sticky timeout"),
+	translate("Seconds. Acceptable values: 1-1000000. Defaults to 600 if not set"))
+	timeout.datatype = "range(1, 1000000)"
+
+ipset = mwan_rule:option(Value, "ipset", translate("IPset"),
+	translate("Name of IPset rule. Requires IPset rule in /etc/dnsmasq.conf (eg \"ipset=/youtube.com/youtube\")"))
+
 use_policy = mwan_rule:option(Value, "use_policy", translate("Policy assigned"))
 	cbiAddPolicy(use_policy)
 	use_policy:value("unreachable", translate("unreachable (reject)"))

@@ -1,12 +1,14 @@
-config rule '80_OneIF'
+config rule 'http'
+	option sticky '1'
 	option dest_port '80'
 	option proto 'tcp'
-	option use_policy 'default'
+	option use_policy 'balanced'
 
-config rule '443_OneIF'
+config rule 'https'
+	option sticky '1'
 	option dest_port '443'
 	option proto 'tcp'
-	option use_policy 'default'
+	option use_policy 'balanced'
 
 config rule 'default_rule'
 	option dest_ip '0.0.0.0/0'
@@ -31,5 +33,4 @@ config member 'wan_m1_w1'
 	option interface 'wan'
 	option metric '1'
 	option weight '1'
-
 

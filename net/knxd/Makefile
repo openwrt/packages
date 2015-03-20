@@ -11,13 +11,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
-PKG_VERSION=2015-03-06-$(PKG_SOURCE_VERSION)
+PKG_VERSION=2015-03-17-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/knxd/knxd.git
-PKG_SOURCE_VERSION:=a63bc660d305e26ce3ed038607d387758fad8413
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=2c6c6732a684dffb87b391ea92cccdf07c8385b8
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
@@ -26,7 +26,7 @@ PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -37,7 +37,7 @@ define Package/knxd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=EIB KNX daemon
-  DEPENDS:=+pthsem +libusb-1.0
+  DEPENDS:=+pthsem +argp-standalone +libusb-1.0
 endef
 
 define Package/knxd/description
@@ -55,7 +55,7 @@ define Package/libeibclient
   DEPENDS:=+pthsem
 endef
 
-define Package/knxd-tools/description
+define Package/libeibclient/description
 EIB KNX client library
 endef
 
@@ -84,9 +84,8 @@ CONFIGURE_ARGS+= \
 	--without-pth-test \
 	--without-libstdc
 
-TARGET_CFLAGS+= \
-	$(FPIC) \
-	-fno-builtin -nodefaultlibs -lc -lm -lgcc -largp -lpthsem
+EXTRA_LDFLAGS+= \
+	-fno-builtin -nodefaultlibs -lc -lgcc
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
