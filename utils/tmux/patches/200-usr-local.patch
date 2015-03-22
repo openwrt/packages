@@ -1,0 +1,14 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -101,9 +101,9 @@ bin_PROGRAMS = tmux$(EXEEXT)
+ @IS_DEBUG_TRUE@@IS_GCC_TRUE@	-Wdeclaration-after-statement
+ @IS_DEBUG_TRUE@@IS_GCC_TRUE@am__append_4 = -DDEBUG
+ @IS_DEBUG_FALSE@@IS_GCC_TRUE@am__append_5 = -O2
+-@IS_GCC4_TRUE@@IS_GCC_TRUE@am__append_6 = -iquote. -I/usr/local/include
++@IS_GCC4_TRUE@@IS_GCC_TRUE@am__append_6 = -iquote.
+ @IS_DEBUG_TRUE@@IS_GCC4_TRUE@@IS_GCC_TRUE@am__append_7 = -Wno-pointer-sign
+-@IS_GCC4_FALSE@@IS_GCC_TRUE@am__append_8 = -I. -I- -I/usr/local/include
++@IS_GCC4_FALSE@@IS_GCC_TRUE@am__append_8 = -I. -I-
+ 
+ # Set flags for Solaris.
+ @IS_GCC_TRUE@@IS_SUNOS_TRUE@am__append_9 = -D_XPG6 -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS
