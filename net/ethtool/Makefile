@@ -29,7 +29,6 @@ define Package/ethtool
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Display or change ethernet card settings
-  DEPENDS:=+SSP_SUPPORT:libssp
   URL:=http://www.kernel.org/pub/software/network/ethtool/
 endef
 
