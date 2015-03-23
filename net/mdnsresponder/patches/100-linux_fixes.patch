@@ -84,7 +84,7 @@
  }
 --- a/mDNSPosix/mDNSPosix.c
 +++ b/mDNSPosix/mDNSPosix.c
-@@ -136,7 +136,7 @@ mDNSlocal void SockAddrTomDNSAddr(const
+@@ -138,7 +138,7 @@ mDNSlocal void SockAddrTomDNSAddr(const
  
  // mDNS core calls this routine when it needs to send a packet.
  mDNSexport mStatus mDNSPlatformSendUDP(const mDNS *const m, const void *const msg, const mDNSu8 *const end,
@@ -93,7 +93,7 @@
                                         mDNSIPPort dstPort, mDNSBool useBackgroundTrafficClass)
  {
      int err = 0;
-@@ -574,9 +574,17 @@ mDNSlocal void FreePosixNetworkInterface
+@@ -583,9 +583,17 @@ mDNSlocal void FreePosixNetworkInterface
  {
      assert(intf != NULL);
      if (intf->intfName != NULL) free((void *)intf->intfName);
@@ -111,9 +111,9 @@
 +        assert(rv == 0);
 +      }
  #endif
-     free(intf);
- }
-@@ -703,6 +711,29 @@ mDNSlocal int SetupSocket(struct sockadd
+ 
+     // Move interface to the RecentInterfaces list for a minute
+@@ -724,6 +732,29 @@ mDNSlocal int SetupSocket(struct sockadd
              if (err < 0) { err = errno; perror("setsockopt - IP_MULTICAST_TTL"); }
          }
  
@@ -143,7 +143,7 @@
          // And start listening for packets
          if (err == 0)
          {
-@@ -784,6 +815,29 @@ mDNSlocal int SetupSocket(struct sockadd
+@@ -805,6 +836,29 @@ mDNSlocal int SetupSocket(struct sockadd
              if (err < 0) { err = errno; perror("setsockopt - IPV6_MULTICAST_HOPS"); }
          }
  
@@ -173,7 +173,7 @@
          // And start listening for packets
          if (err == 0)
          {
-@@ -815,7 +869,12 @@ mDNSlocal int SetupSocket(struct sockadd
+@@ -836,7 +890,12 @@ mDNSlocal int SetupSocket(struct sockadd
      }
  
      // Clean up
@@ -187,7 +187,7 @@
      assert((err == 0) == (*sktPtr != -1));
      return err;
  }
-@@ -994,7 +1053,7 @@ mDNSlocal mStatus OpenIfNotifySocket(int
+@@ -1026,7 +1085,7 @@ mDNSlocal mStatus OpenIfNotifySocket(int
      /* Subscribe the socket to Link & IP addr notifications. */
      mDNSPlatformMemZero(&snl, sizeof snl);
      snl.nl_family = AF_NETLINK;
@@ -196,7 +196,7 @@
      ret = bind(sock, (struct sockaddr *) &snl, sizeof snl);
      if (0 == ret)
          *pFD = sock;
-@@ -1072,11 +1131,18 @@ mDNSlocal mDNSu32       ProcessRoutingNo
+@@ -1104,11 +1163,18 @@ mDNSlocal mDNSu32       ProcessRoutingNo
          PrintNetLinkMsg(pNLMsg);
  #endif
  
@@ -217,7 +217,7 @@
  
          // Advance pNLMsg to the next message in the buffer
          if ((pNLMsg->nlmsg_flags & NLM_F_MULTI) != 0 && pNLMsg->nlmsg_type != NLMSG_DONE)
-@@ -1247,8 +1313,12 @@ mDNSexport mStatus mDNSPlatformInit(mDNS
+@@ -1279,8 +1345,12 @@ mDNSexport mStatus mDNSPlatformInit(mDNS
      if (err == mStatus_NoError) err = SetupSocket(&sa, zeroIPPort, 0, &m->p->unicastSocket6);
  #endif
  
@@ -230,7 +230,7 @@
  
      // Tell mDNS core about DNS Servers
      mDNS_Lock(m);
-@@ -1281,9 +1351,17 @@ mDNSexport void mDNSPlatformClose(mDNS *
+@@ -1313,9 +1383,17 @@ mDNSexport void mDNSPlatformClose(mDNS *
  {
      assert(m != NULL);
      ClearInterfaceList(m);
@@ -250,7 +250,7 @@
  #endif
  }
  
-@@ -1533,14 +1611,14 @@ mDNSexport mStatus    mDNSPlatformClearS
+@@ -1571,14 +1649,14 @@ mDNSexport mStatus    mDNSPlatformClearS
  mDNSexport mDNSu16 mDNSPlatformGetUDPPort(UDPSocket *sock)
  {
      (void) sock; // unused

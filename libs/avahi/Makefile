@@ -56,7 +56,7 @@ define Package/libavahi/Default
   SECTION:=libs
   CATEGORY:=Libraries
   PROVIDES:=libavahi
-  DEPENDS:=+libpthread +SSP_SUPPORT:libssp
+  DEPENDS:=+libpthread
 endef
 
 define Package/libavahi/description
@@ -155,7 +155,7 @@ endef
 define Package/avahi-dnsconfd
   $(call Package/avahi/Default)
   SUBMENU:=IP Addresses and Names
-  DEPENDS:=+libavahi +libdaemon +libpthread +SSP_SUPPORT:libssp
+  DEPENDS:=+libavahi +libdaemon +libpthread
   TITLE:=A Unicast DNS server using avahi-daemon
 endef
 

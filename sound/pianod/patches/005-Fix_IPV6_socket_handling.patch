@@ -1,0 +1,29 @@
+--- a/src/libwaitress/waitress.c
++++ b/src/libwaitress/waitress.c
+@@ -813,7 +813,14 @@ static WaitressReturn_t WaitressConnect
+ 					sizeof (sockopt));
+ 
+ 			/* non-blocking connect will return immediately */
+-			connect (sock, gacurr->ai_addr, gacurr->ai_addrlen);
++			if (connect (sock, gacurr->ai_addr, gacurr->ai_addrlen) == -1) {
++				// Error if not in-progress or immediate success
++				if (errno != EINPROGRESS) {
++					// Close socket and try alternatives
++					close (sock);
++					continue;
++				}
++			}
+ 
+ 			pollres = WaitressPollLoop (sock, POLLOUT, waith->timeout);
+ 			if (pollres == 0) {
+--- a/src/libfootball/fb_service.c
++++ b/src/libfootball/fb_service.c
+@@ -111,6 +111,8 @@ static bool fb_setup_socket (FB_SERVICE
+ 		service->socket [which] = 0;
+ 	} else {
+         fb_perror ("socket");
++        // Element must be zero (not -1)
++        service->socket [which] = 0;
+ 	};
+ 	return false;
+ }

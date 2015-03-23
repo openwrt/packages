@@ -8,11 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-penlight
-PKG_VERSION:=1.3.1
+PKG_VERSION:=1.3.2
 PKG_RELEASE:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/Penlight-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/stevedonovan/Penlight/archive/
+PKG_MD5SUM:=0315a39834bb6fab07741ec04ede1bf4
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILE:=LICENSE.md
 
