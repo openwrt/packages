@@ -124,6 +124,8 @@ endef
 define Package/openssh-sftp-server
 	$(call Package/openssh/Default)
 	TITLE+= SFTP server
+	# Strip dependencies to avoid pulling in OpenSSL etc.
+	DEPENDS:=
 endef
 
 define Package/openssh-sftp-server/description
