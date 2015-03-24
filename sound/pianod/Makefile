@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pianod
 PKG_VERSION:=173
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://deviousfish.com/Downloads/pianod/
@@ -63,7 +63,7 @@ CONFIGURE_ARGS+= --with-polarssl
 PIANOD_CLIENT:=pianod-client-compiled-51.tar.gz
 
 define Download/pianod-client
-  URL:=$(PKG_SOURCE_URL)/Devel
+  URL:=$(PKG_SOURCE_URL)
   FILE:=$(PIANOD_CLIENT)
   MD5SUM:=abbdee5627bcee6a00c8304da8b4e2e7
 endef
