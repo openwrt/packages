@@ -32,7 +32,7 @@ define Package/pulseaudio/Default
   SECTION:=sound
   CATEGORY:=Sound
   DEPENDS:=+libspeexdsp +libsndfile +libltdl +libpthread \
-	+librt +alsa-lib +libjson +libopenssl +libwrap +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
+	+librt +alsa-lib +libjson-c +libopenssl +libwrap +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Network sound server
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.pulseaudio.org
