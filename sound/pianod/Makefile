@@ -75,7 +75,7 @@ endef
 
 define Build/Prepare
     $(call Build/Prepare/Default)
-    ifeq ($(CONFIG_PACKAGE_pianod-client),y)
+    ifneq ($(CONFIG_PACKAGE_pianod-client),)
 	$(eval $(call Download,pianod-client))
 	mkdir -p $(PKG_BUILD_DIR)/pianod-client
 	$(TAR) -xf $(DL_DIR)/$(PIANOD_CLIENT) --strip=1 -C $(PKG_BUILD_DIR)/pianod-client
