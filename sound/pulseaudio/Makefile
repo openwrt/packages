@@ -42,6 +42,7 @@ endef
 
 define Package/pulseaudio-daemon
   $(call Package/pulseaudio/Default)
+  DEPENDS+=+libjson-c
 endef
 
 define Package/pulseaudio/Default/description
