@@ -52,7 +52,7 @@ CAMBOZOLA:=cambozola-latest.tar.gz
 define Download/cambozola
   URL:=http://www.andywilcock.com/code/cambozola
   FILE:=$(CAMBOZOLA)
-  MD5SUM:=6c48fd994685d4d72668850eeb613e24
+  MD5SUM:=c9b0da91f8e6e72efccd307e04e2b75b
 endef
 
 # Fetch latest cambozola that works with latest Java(s)
