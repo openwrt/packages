@@ -13,27 +13,37 @@ STOP=
 ACTIVE_STATE_PREFIX="SQM_active_on_"
 ACTIVE_STATE_FILE_DIR="/var/run/SQM"
 mkdir -p ${ACTIVE_STATE_FILE_DIR}
-PROTO_STATE_FILE_LIST=$( ls ${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}* 2> /dev/null )
+
+
+START_ON_IF=$2	# only process this interface
+# TODO if $2 is empty select all interfaces with running sqm instance
+if [ -z ${START_ON_IF} ] ;
+then
+    # find all interfaces with active sqm instance
+    logger -t SQM -s "Trying to start/stop SQM on all interfaces."
+    PROTO_STATE_FILE_LIST=$( ls ${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}* 2> /dev/null )
+else
+    # only try to restart the just hotplugged interface, so reduce the list of interfaces to stop to the specified one
+    logger -t SQM -s "Trying to start/stop SQM on interface ${START_ON_IF}"
+    PROTO_STATE_FILE_LIST=${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}${START_ON_IF}
+fi
+
+
 
 
 case ${1} in
+    start)
+	# just run through, same as passing no argument
+	;;
     stop)
         logger -t SQM -s "run.sh stop"
 	STOP=$1
         ;;
-    interface)
-	START_ON_IF=$2	# only process this interface
-	logger -t SQM -s "Trying to re-start SQM on interface ${START_ON_IF}"
-	# TODO if $2 is empty just bail...
-	if [ -z ${START_ON_IF} ] ;
-	then
-	    logger -t SQM -s "Interface name missing, nothing to do, bailing out"
-	    return 0
-	fi
-	# only try to restart the just hotplugged interface, so reduce the list of interfaces to stop to the specified one
-	PROTO_STATE_FILE_LIST=${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}${START_ON_IF}
-	;;
 esac
+
+
+
+
 
 
 # the current uci config file does not necessarily contain sections for all interfaces with active

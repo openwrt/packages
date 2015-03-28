@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -36,6 +36,11 @@ define Package/libpcre
   TITLE:=A Perl Compatible Regular Expression library
 endef
 
+define Package/libpcre16
+  $(call Package/libpcre/default)
+  TITLE:=A Perl Compatible Regular Expression library (16bit support)
+endef
+
 define Package/libpcrecpp
   $(call Package/libpcre/default)
   TITLE:=C++ wrapper for Perl Compatible Regular Expression library
@@ -47,6 +52,7 @@ TARGET_CFLAGS += $(FPIC)
 CONFIGURE_ARGS += \
 	--enable-utf8 \
 	--enable-unicode-properties \
+	--enable-pcre16 \
 
 ifneq ($(CONFIG_PACKAGE_libpcrecpp),)
   CONFIGURE_ARGS+= --enable-cpp
@@ -68,7 +74,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/pcre*.h $(1)/usr/include/
 
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre*.{a,so*} $(1)/usr/lib//
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre*.{a,so*} $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpcre*.pc $(1)/usr/lib/pkgconfig/
@@ -77,6 +83,12 @@ endef
 define Package/libpcre/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre{,posix}.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre.so $(1)/usr/lib/
+endef
+
+define Package/libpcre16/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre16.so* $(1)/usr/lib/
 endef
 
 define Package/libpcrecpp/install
@@ -85,4 +97,5 @@ define Package/libpcrecpp/install
 endef
 
 $(eval $(call BuildPackage,libpcre))
+$(eval $(call BuildPackage,libpcre16))
 $(eval $(call BuildPackage,libpcrecpp))
