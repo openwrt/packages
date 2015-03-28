@@ -1,0 +1,14 @@
+--- a/Makefile
++++ b/Makefile
+@@ -28,8 +28,9 @@ install: ${TGT} 
+ 	if [ ! -d ${BINDIR} ]; then mkdir -p ${BINDIR};fi
+ 	if [ ! -d ${CONFDIR} ]; then mkdir -p ${CONFDIR};fi
+ 	cp ${TGT} ${BINDIR}/${TGT}
+-	${BINDIR}/${TGT} -C -c /tmp/no-ip2.conf
+-	mv /tmp/no-ip2.conf ${CONFDIR}/no-ip2.conf
++	echo "# run this to autoconfigure:" >no-ip2.conf
++	echo "# ${TGT} -C -c /etc/no-ip2.conf " >>no-ip2.conf
++	mv no-ip2.conf ${CONFDIR}/no-ip2.conf
+ 
+ package: ${TGT}
+ 	rm  -f *.bak

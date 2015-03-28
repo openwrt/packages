@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+START=99
+
+BIN=noip2
+
+start() {
+    if [ ! -e /etc/no-ip2.conf ]; then
+        echo "No configuration file.  Run this to configure:"
+        echo "noip2 -C -c /etc/no-ip2.conf"
+        exit 1
+    fi
+    $BIN 
+}
+
+stop() {
+    $BIN -k
+}
+
+reload() {
+    stop
+    start         
+}
