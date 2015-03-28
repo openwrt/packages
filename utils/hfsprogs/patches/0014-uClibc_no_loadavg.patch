@@ -1,0 +1,15 @@
+--- diskdev_cmds-332.25/newfs_hfs.tproj/makehfs.c	2015-03-27 21:58:04.163171675 -0700
++++ hfsprogs-332.25/newfs_hfs.tproj/makehfs.c	2015-03-27 21:56:03.687175020 -0700
+@@ -2119,10 +2119,12 @@
+ 		sysctl(mib, 2, sysctlstring, &datalen, NULL, 0);
+ 		SHA1_Update(&context, sysctlstring, datalen);
+ #endif
++#ifndef __UCLIBC__
+ 		/* The system's load average: */
+ 		datalen = sizeof(sysloadavg);
+ 		getloadavg(sysloadavg, 3);
+ 		SHA1_Update(&context, &sysloadavg, datalen);
++#endif
+ 
+ 		/* The system's VM statistics: */
+ #if !LINUX
