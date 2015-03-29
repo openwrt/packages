@@ -36,7 +36,7 @@ endef
 
 define Package/spawn-fcgi/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/spawn-fcgi $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/spawn-fcgi $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,spawn-fcgi))
