@@ -111,6 +111,10 @@ MAKE_FLAGS+=\
 	LD="$(TARGET_CC)" \
 	PGEN=pgen3
 
+ifeq ($(ARCH),i386)
+MAKE_FLAGS+=PYTHON_DECIMAL_WITH_MACHINE=ansi32
+endif
+
 EXTRA_CFLAGS+= \
 	-DNDEBUG -fno-inline
 EXTRA_LDFLAGS+= \
