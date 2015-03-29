@@ -1,0 +1,34 @@
+Index: transmission-2.84/libtransmission/bitfield.c
+===================================================================
+--- transmission-2.84.orig/libtransmission/bitfield.c
++++ transmission-2.84/libtransmission/bitfield.c
+@@ -7,6 +7,8 @@
+  * $Id: bitfield.c 14302 2014-06-29 01:42:38Z jordan $
+  */
+ 
++#define __NEED_ssize_t
++
+ #include <assert.h>
+ #include <stdlib.h> /* realloc () */
+ #include <string.h> /* memset */
+@@ -15,6 +17,7 @@
+ #include "bitfield.h"
+ #include "utils.h" /* tr_new0 () */
+ 
++
+ const tr_bitfield TR_BITFIELD_INIT = { NULL, 0, 0, 0, false, false };
+ 
+ /****
+Index: transmission-2.84/libtransmission/fdlimit.h
+===================================================================
+--- transmission-2.84.orig/libtransmission/fdlimit.h
++++ transmission-2.84/libtransmission/fdlimit.h
+@@ -11,6 +11,8 @@
+  #error only libtransmission should #include this header.
+ #endif
+ 
++#define __NEED_off_t
++
+ #include "transmission.h"
+ #include "net.h"
+ 
