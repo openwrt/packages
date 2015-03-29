@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=3.17.3
-PKG_RELEASE:=2
+PKG_VERSION:=3.19.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs/
-PKG_MD5SUM:=6716b4b109dd909af63ab3becbad67a6
+PKG_MD5SUM:=ec3b3c99df18633ddc9e41f0680c5a51
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -23,6 +23,8 @@ PKG_LICENSE_FILES:=COPYING
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=libacl
+
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -46,15 +48,9 @@ progs = btrfs btrfsck btrfs-convert btrfs-debug-tree btrfs-find-root \
 	btrfs-image btrfs-map-logical btrfs-show-super btrfstune \
 	btrfs-zero-log fsck.btrfs mkfs.btrfs
 
-
-MAKE_FLAGS+=\
-	CC="$(TARGET_CC)" \
-	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS)" \
-	LDFLAGS="$(TARGET_LDFLAGS)" \
-	prefix=/usr \
-	DESTDIR=$(PKG_INSTALL_DIR) \
-	DISABLE_BACKTRACE=1 \
-	DISABLE_DOCUMENTATION=1
+CONFIGURE_ARGS += \
+	--disable-backtrace \
+	--disable-documentation
 
 define Package/btrfs-progs/install
 	$(INSTALL_DIR) $(1)/usr/lib
