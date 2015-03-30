@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prosody
-PKG_VERSION:=0.9.7
-PKG_RELEASE:=2
+PKG_VERSION:=0.9.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://prosody.im/downloads/source
-PKG_MD5SUM:=47de7f593279e327792df78cfa93e8a7
+PKG_MD5SUM:=5144cd832a1860443e21e336dc560ee7
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=MIT/X11
 
