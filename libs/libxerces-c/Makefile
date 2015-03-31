@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxerces-c
-PKG_VERSION:=3.1.1
+PKG_VERSION:=3.1.2
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://git.apache.org/xerces-c.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=Xerces-C_3_1_1
+PKG_SOURCE_VERSION:=Xerces-C_3_1_2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
@@ -22,10 +22,11 @@ PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
-PKG_FIXUP:=libtool
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/uclibc++.mk
+include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_ARGS += \
@@ -34,14 +35,7 @@ CONFIGURE_ARGS += \
 	--enable-netaccessor-socket \
 	--enable-msgloader-inmemory
 
-TARGET_CFLAGS += \
-	-I$(STAGING_DIR)/usr/lib/libiconv-full/include
-
-TARGET_CPPFLAGS += \
-	-I$(STAGING_DIR)/usr/lib/libiconv-full/include
-
 TARGET_LDFLAGS += \
-	-L$(STAGING_DIR)/usr/lib/libiconv-full/lib \
 	-lm
 
 define Package/libxerces-c
@@ -49,7 +43,7 @@ define Package/libxerces-c
   CATEGORY:=Libraries
   TITLE:=Validating XML parser library for C++
   URL:=http://xerces.apache.org/
-  DEPENDS:=$(CXX_DEPENDS) +libc +libiconv +libpthread
+  DEPENDS:=$(CXX_DEPENDS) $(ICONV_DEPENDS) +libc +libpthread
 endef
 
 define Package/libxerces-c-samples
@@ -58,12 +52,6 @@ define Package/libxerces-c-samples
   TITLE:=Validating XML parser library for C++ (samples)
   URL:=http://xerces.apache.org/
   DEPENDS:=+libxerces-c
-endef
-
-define Build/Configure
-	(cd $(PKG_BUILD_DIR)/$(CONFIGURE_PATH); \
-	./reconf;)
-	$(call Build/Configure/Default)
 endef
 
 define Package/libxerces-c/description
