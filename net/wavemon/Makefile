@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2014 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,14 +9,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wavemon
 PKG_VERSION:=0.7.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://eden-feed.erg.abdn.ac.uk/wavemon/stable-releases
-PKG_MD5SUM:=c60e25feb8b1785cf14371556f0613f4
+PKG_SOURCE:=v$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/uoaerg/wavemon/archive
+PKG_MD5SUM:=cd0049f174745d32b4fdf3b63d897bad
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
+PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -24,11 +26,10 @@ include $(INCLUDE_DIR)/package.mk
 define Package/wavemon
   SECTION:=net
   CATEGORY:=Network
-  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
   TITLE:=N-curses based wireless network devices monitor
   DEPENDS:=+libncurses +libpthread
   SUBMENU:=wireless
-  URL:=http://eden-feed.erg.abdn.ac.uk/wavemon/
+  URL:=https://github.com/uoaerg/wavemon/releases
 endef
 
 define Package/wavemon/description
@@ -48,7 +49,7 @@ MAKE_FLAGS += \
 
 define Package/wavemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/wavemon $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wavemon $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,wavemon))
