@@ -46,8 +46,6 @@ $(call Package/bluez/Default)
 endef
 
 define Package/bluez-utils/conffiles
-/etc/bluetooth/hcid.conf
-/etc/bluetooth/rfcomm.conf
 /etc/config/bluetooth
 endef
 
