@@ -82,8 +82,8 @@ endef
 
 define Package/bmx6-json
   $(call Package/bmx6/Default)
-  DEPENDS:=bmx6 +libjson
-  TITLE:=json plugin based on jsonc
+  DEPENDS:=bmx6 +libjson-c
+  TITLE:=json plugin based on json-c
 endef
 
 define Package/bmx6-sms
