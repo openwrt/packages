@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluez
-PKG_VERSION:=5.28
+PKG_VERSION:=5.29
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.kernel.org/pub/linux/bluetooth/
-PKG_MD5SUM:=bc20a8285530758c68f6a60e4ca62a15
+PKG_MD5SUM:=aa9dc91689695a486c78c131cd68673e
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
@@ -46,8 +46,6 @@ $(call Package/bluez/Default)
 endef
 
 define Package/bluez-utils/conffiles
-/etc/bluetooth/hcid.conf
-/etc/bluetooth/rfcomm.conf
 /etc/config/bluetooth
 endef
 

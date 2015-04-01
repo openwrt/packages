@@ -1,16 +1,20 @@
---- a/mkfs.c
-+++ b/mkfs.c
-@@ -34,7 +34,7 @@
+Index: btrfs-progs-v3.19.1/mkfs.c
+===================================================================
+--- btrfs-progs-v3.19.1.orig/mkfs.c
++++ btrfs-progs-v3.19.1/mkfs.c
+@@ -31,7 +31,7 @@
  #include <getopt.h>
  #include <uuid/uuid.h>
  #include <ctype.h>
 -#include <sys/xattr.h>
 +#include <attr/xattr.h>
+ #include <limits.h>
+ #include <linux/limits.h>
  #include <blkid/blkid.h>
- #include <ftw.h>
- #include "ctree.h"
---- a/props.c
-+++ b/props.c
+Index: btrfs-progs-v3.19.1/props.c
+===================================================================
+--- btrfs-progs-v3.19.1.orig/props.c
++++ btrfs-progs-v3.19.1/props.c
 @@ -17,7 +17,7 @@
  #include <sys/stat.h>
  #include <sys/ioctl.h>
@@ -20,9 +24,11 @@
  #include <fcntl.h>
  #include <unistd.h>
  
---- a/cmds-receive.c
-+++ b/cmds-receive.c
-@@ -39,7 +39,7 @@
+Index: btrfs-progs-v3.19.1/cmds-receive.c
+===================================================================
+--- btrfs-progs-v3.19.1.orig/cmds-receive.c
++++ btrfs-progs-v3.19.1/cmds-receive.c
+@@ -34,7 +34,7 @@
  #include <sys/ioctl.h>
  #include <sys/time.h>
  #include <sys/types.h>
@@ -31,9 +37,11 @@
  #include <uuid/uuid.h>
  
  #include "ctree.h"
---- a/cmds-restore.c
-+++ b/cmds-restore.c
-@@ -34,7 +34,7 @@
+Index: btrfs-progs-v3.19.1/cmds-restore.c
+===================================================================
+--- btrfs-progs-v3.19.1.orig/cmds-restore.c
++++ btrfs-progs-v3.19.1/cmds-restore.c
+@@ -32,7 +32,7 @@
  #include <regex.h>
  #include <getopt.h>
  #include <sys/types.h>
@@ -42,14 +50,30 @@
  
  #include "ctree.h"
  #include "disk-io.h"
---- a/Makefile
-+++ b/Makefile
-@@ -26,7 +26,7 @@ TESTS = fsck-tests.sh convert-tests.sh
- INSTALL = install
- prefix ?= /usr/local
- bindir = $(prefix)/bin
--lib_LIBS = -luuid -lblkid -lm -lz -llzo2 -L.
-+lib_LIBS = -lattr -luuid -lblkid -lm -lz -llzo2 -L.
- libdir ?= $(prefix)/lib
- incdir = $(prefix)/include/btrfs
- LIBS = $(lib_LIBS) $(libs_static)
+Index: btrfs-progs-v3.19.1/Makefile.in
+===================================================================
+--- btrfs-progs-v3.19.1.orig/Makefile.in
++++ btrfs-progs-v3.19.1/Makefile.in
+@@ -21,7 +21,7 @@ CFLAGS = @CFLAGS@ \
+ LDFLAGS = @LDFLAGS@ \
+ 	  -rdynamic
+ 
+-LIBS = @UUID_LIBS@ @BLKID_LIBS@ @ZLIB_LIBS@ @LZO2_LIBS@ -L. -pthread
++LIBS = @ATTR_LIBS@ @UUID_LIBS@ @BLKID_LIBS@ @ZLIB_LIBS@ @LZO2_LIBS@ -L. -pthread
+ LIBBTRFS_LIBS = $(LIBS)
+ 
+ # Static compilation flags
+Index: btrfs-progs-v3.19.1/configure.ac
+===================================================================
+--- btrfs-progs-v3.19.1.orig/configure.ac
++++ btrfs-progs-v3.19.1/configure.ac
+@@ -115,6 +115,9 @@ dnl
+ dnl The default PKG_CHECK_MODULES() action-if-not-found is end the
+ dnl execution with error. The static libs are optional.
+ 
++PKG_CHECK_MODULES(ATTR, [libattr])
++PKG_STATIC(BLKID_LIBS_STATIC, [libattr])
++
+ PKG_CHECK_MODULES(BLKID, [blkid])
+ PKG_STATIC(BLKID_LIBS_STATIC, [blkid])
+ 

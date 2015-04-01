@@ -1,0 +1,30 @@
+Index: ntfs-3g-2014.2.15-1-fuseint/libfuse-lite/fusermount.c
+===================================================================
+--- ntfs-3g-2014.2.15-1-fuseint.orig/libfuse-lite/fusermount.c
++++ ntfs-3g-2014.2.15-1-fuseint/libfuse-lite/fusermount.c
+@@ -36,6 +36,10 @@
+ 
+ #define FUSE_DEV_NEW "/dev/fuse"
+ 
++#ifndef _PATH_MOUNTED
++#define _PATH_MOUNTED "/proc/mounts"
++#endif
++
+ #ifndef MS_DIRSYNC
+ #define MS_DIRSYNC 128
+ #endif
+Index: ntfs-3g-2014.2.15-1-fuseint/libfuse-lite/mount_util.c
+===================================================================
+--- ntfs-3g-2014.2.15-1-fuseint.orig/libfuse-lite/mount_util.c
++++ ntfs-3g-2014.2.15-1-fuseint/libfuse-lite/mount_util.c
+@@ -255,6 +255,10 @@ int fuse_mnt_check_fuseblk(void)
+ 
+ #else /* __SOLARIS__ */
+ 
++#ifndef _PATH_MOUNTED
++#define _PATH_MOUNTED "/proc/mounts"
++#endif /* _PATH_MOUNTED */
++
+ static int mtab_needs_update(const char *mnt)
+ {
+ 	int res;
