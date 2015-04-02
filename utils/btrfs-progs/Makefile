@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
 PKG_VERSION:=3.19.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs/
@@ -32,7 +32,7 @@ define Package/btrfs-progs
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Filesystem
-  DEPENDS:=+libattr +libuuid +zlib +libext2fs +libblkid +liblzo +libpthread
+  DEPENDS:=+libattr +libuuid +zlib +libblkid +liblzo +libpthread
   TITLE:=Btrfs filesystems utilities
   URL:=http://btrfs.wiki.kernel.org/
 endef
@@ -44,12 +44,12 @@ define Package/btrfs-progs/description
  GPL and open for contribution from anyone.
 endef
 
-progs = btrfs btrfsck btrfs-convert btrfs-debug-tree btrfs-find-root \
-	btrfs-image btrfs-map-logical btrfs-show-super btrfstune \
-	btrfs-zero-log fsck.btrfs mkfs.btrfs
+progs = btrfs btrfs-debug-tree btrfs-find-root btrfs-image btrfs-map-logical \
+	btrfs-show-super btrfstune btrfs-zero-log fsck.btrfs mkfs.btrfs
 
 CONFIGURE_ARGS += \
 	--disable-backtrace \
+	--disable-convert \
 	--disable-documentation
 
 define Package/btrfs-progs/install
@@ -57,6 +57,7 @@ define Package/btrfs-progs/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libbtrfs.so* $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(addprefix $(PKG_INSTALL_DIR)/usr/bin/, $(progs)) $(1)/usr/bin/
+	ln -s btrfs $(1)/usr/bin/btrfsck
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/btrfs-scan.init $(1)/etc/init.d/btrfs-scan
 endef
