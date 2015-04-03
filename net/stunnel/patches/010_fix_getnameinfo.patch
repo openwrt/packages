@@ -1,6 +1,6 @@
 --- a/src/prototypes.h
 +++ b/src/prototypes.h
-@@ -559,7 +559,7 @@ extern GETNAMEINFO s_getnameinfo;
+@@ -590,7 +590,7 @@ extern GETNAMEINFO s_getnameinfo;
  
  #endif /* USE_WIN32 */
  
@@ -11,7 +11,7 @@
  
 --- a/src/resolver.c
 +++ b/src/resolver.c
-@@ -535,8 +535,9 @@ const char *s_gai_strerror(int err) {
+@@ -538,8 +538,9 @@ const char *s_gai_strerror(int err) {
  /* implementation is limited to functionality needed by stunnel */
  
  #ifndef HAVE_GETNAMEINFO
