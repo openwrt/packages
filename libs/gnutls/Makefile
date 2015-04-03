@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
-PKG_VERSION:=3.3.13
-PKG_RELEASE:=3
+PKG_VERSION:=3.3.14
+PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3
-PKG_MD5SUM:=a7387fe8bf3e604bf518a6da9ab2a4e6
+PKG_MD5SUM:=7f4465f8c564cf9cb8f5cb38b909f7ca
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 
 PKG_INSTALL:=1
