@@ -97,7 +97,7 @@ define Build/InstallDev
 endef
 
 define Package/bluez-examples/install
-	$(INSTALL_DIR) $(1)/usr/bin/bluez/
+	$(INSTALL_DIR) $(1)/usr/bin/bluez
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/test/* $(1)/usr/bin/bluez/
 endef
 
@@ -109,8 +109,8 @@ endef
 define Package/bluez-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/bluetooth/bluetoothd $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/bluetooth/obexd $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bluetooth/bluetoothd $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bluetooth/obexd $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/bluetooth.config $(1)/etc/config/bluetooth
 	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d/
