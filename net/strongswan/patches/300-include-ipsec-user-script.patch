@@ -13,5 +13,5 @@
 +
 +[ -e /etc/ipsec.user ] && . /etc/ipsec.user "$1"
  
- # things that this script gets (from ipsec_pluto(8) man page)
- #
+ #      PLUTO_VERSION
+ #              indicates  what  version of this interface is being

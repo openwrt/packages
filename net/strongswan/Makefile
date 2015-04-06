@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.2.2
-PKG_RELEASE:=2
+PKG_VERSION:=5.3.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
-PKG_MD5SUM:=7ee1a33060b2bde35be0f6d78a1d26d0
+PKG_MD5SUM:=c52d4228231c2025d9c320d0e9990327
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 
@@ -407,7 +407,7 @@ endef
 
 define Plugin/updown/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/{_updown,_updown_espmark} $(1)/usr/lib/ipsec/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/_updown $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-updown.so $(1)/usr/lib/ipsec/plugins/
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
