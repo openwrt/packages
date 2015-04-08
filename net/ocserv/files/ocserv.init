@@ -34,7 +34,7 @@ setup_config() {
 	ipv6_addr=`echo $ip6addr|cut -d '/' -f 1`
 	ipv6_prefix=`echo $ip6addr|cut -d '/' -f 2`
 
-	test $auth = "plain" && authsuffix="\[/var/etc/ocpasswd\]"
+	test $auth = "plain" && authsuffix="\[passwd=/var/etc/ocpasswd\]"
 
 	dyndns="false"
 	hostname=`uci show ddns|grep domain|head -1|cut -d '=' -f 2 2>/dev/null`

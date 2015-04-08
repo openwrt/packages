@@ -1,0 +1,104 @@
+From 0967f05f8d7665a67f3cb0fbed46c48dc7ec74cb Mon Sep 17 00:00:00 2001
+From: Nikos Mavrogiannopoulos <nmav@redhat.com>
+Date: Tue, 31 Mar 2015 10:13:08 +0200
+Subject: [PATCH] sec-mod: do not impose timeouts on reads from main
+
+---
+ src/sec-mod.c | 60 ++++++++++++++++++++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 53 insertions(+), 7 deletions(-)
+
+diff --git a/src/sec-mod.c b/src/sec-mod.c
+index b824e87..5a0763d 100644
+--- a/src/sec-mod.c
++++ b/src/sec-mod.c
+@@ -404,7 +404,56 @@ static void check_other_work(sec_mod_st *sec)
+ }
+ 
+ static
+-int serve_request(sec_mod_st *sec, int cfd, unsigned is_main, uint8_t *buffer, unsigned buffer_size)
++int serve_request_main(sec_mod_st *sec, int cfd, uint8_t *buffer, unsigned buffer_size)
++{
++	int ret, e;
++	unsigned cmd, length;
++	uint16_t l16;
++	void *pool = buffer;
++
++	/* read request */
++	ret = force_read(cfd, buffer, 3);
++	if (ret == 0)
++		goto leave;
++	else if (ret < 3) {
++		e = errno;
++		seclog(sec, LOG_INFO, "error receiving msg head: %s",
++		       strerror(e));
++		ret = ERR_BAD_COMMAND;
++		goto leave;
++	}
++
++	cmd = buffer[0];
++	memcpy(&l16, &buffer[1], 2);
++	length = l16;
++
++	if (length > buffer_size - 4) {
++		seclog(sec, LOG_INFO, "too big message (%d)", length);
++		ret = ERR_BAD_COMMAND;
++		goto leave;
++	}
++
++	/* read the body */
++	ret = force_read(cfd, buffer, length);
++	if (ret < 0) {
++		e = errno;
++		seclog(sec, LOG_INFO, "error receiving msg body: %s",
++		       strerror(e));
++		ret = ERR_BAD_COMMAND;
++		goto leave;
++	}
++
++	ret = process_packet_from_main(pool, cfd, sec, cmd, buffer, ret);
++	if (ret < 0) {
++		seclog(sec, LOG_INFO, "error processing data for '%s' command (%d)", cmd_request_to_str(cmd), ret);
++	}
++	
++ leave:
++	return ret;
++}
++
++static
++int serve_request(sec_mod_st *sec, int cfd, uint8_t *buffer, unsigned buffer_size)
+ {
+ 	int ret, e;
+ 	unsigned cmd, length;
+@@ -443,10 +492,7 @@ int serve_request(sec_mod_st *sec, int cfd, unsigned is_main, uint8_t *buffer, u
+ 		goto leave;
+ 	}
+ 
+-	if (is_main)
+-		ret = process_packet_from_main(pool, cfd, sec, cmd, buffer, ret);
+-	else
+-		ret = process_packet(pool, cfd, sec, cmd, buffer, ret);
++	ret = process_packet(pool, cfd, sec, cmd, buffer, ret);
+ 	if (ret < 0) {
+ 		seclog(sec, LOG_INFO, "error processing data for '%s' command (%d)", cmd_request_to_str(cmd), ret);
+ 	}
+@@ -677,7 +723,7 @@ void sec_mod_server(void *main_pool, struct perm_cfg_st *perm_config, const char
+ 			if (buffer == NULL) {
+ 				seclog(sec, LOG_ERR, "error in memory allocation");
+ 			} else {
+-				ret = serve_request(sec, cmd_fd, 1, buffer, buffer_size);
++				ret = serve_request_main(sec, cmd_fd, buffer, buffer_size);
+ 				if (ret < 0 && ret == ERR_BAD_COMMAND) {
+ 					seclog(sec, LOG_ERR, "error processing command from main");
+ 					exit(1);
+@@ -710,7 +756,7 @@ void sec_mod_server(void *main_pool, struct perm_cfg_st *perm_config, const char
+ 				if (buffer == NULL) {
+ 					seclog(sec, LOG_ERR, "error in memory allocation");
+ 				} else {
+-					serve_request(sec, cfd, 0, buffer, buffer_size);
++					serve_request(sec, cfd, buffer, buffer_size);
+ 					talloc_free(buffer);
+ 				}
+ 			}
+-- 
+2.1.4
+
