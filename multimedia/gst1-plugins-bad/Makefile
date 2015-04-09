@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.4.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -257,6 +257,7 @@ $(eval $(call GstBuildPlugin,mpegpsmux,mpegpsmux support,,,))
 #$(eval $(call GstBuildPlugin,mpegtsdemux,mpegtsdemux support,mpegts pbutils tag,,))
 #$(eval $(call GstBuildPlugin,mpegtsmux,mpegtsmux support,video,,))
 $(eval $(call GstBuildPlugin,mxf,mxf support,audio video,,))
+$(eval $(call GstBuildPlugin,opus,OPUS plugin library,audio tag rtp,,+libopus))
 $(eval $(call GstBuildPlugin,pcapparse,pcapparse support,,,))
 $(eval $(call GstBuildPlugin,pnm,pnm support,video,,))
 $(eval $(call GstBuildPlugin,rawparse,rawparse support,audio video,,))

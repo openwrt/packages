@@ -1,0 +1,34 @@
+From 99dd4a6e03b669a5b5fe234fa665b75bbd95c593 Mon Sep 17 00:00:00 2001
+From: Nikos Mavrogiannopoulos <nmav@redhat.com>
+Date: Tue, 7 Apr 2015 17:13:29 +0200
+Subject: [PATCH] reject bad commands from main
+
+---
+ src/sec-mod.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/sec-mod.c b/src/sec-mod.c
+index 5a0763d..7783264 100644
+--- a/src/sec-mod.c
++++ b/src/sec-mod.c
+@@ -325,7 +325,7 @@ int process_packet_from_main(void *pool, int cfd, sec_mod_st * sec, cmd_request_
+ 					     data.data);
+ 		if (msg == NULL) {
+ 			seclog(sec, LOG_INFO, "error unpacking auth ban ip reply\n");
+-			return -1;
++			return ERR_BAD_COMMAND;
+ 		}
+ 
+ 		handle_sec_auth_ban_ip_reply(cfd, sec, msg);
+@@ -342,7 +342,7 @@ int process_packet_from_main(void *pool, int cfd, sec_mod_st * sec, cmd_request_
+ 						      data.data);
+ 			if (msg == NULL) {
+ 				seclog(sec, LOG_INFO, "error unpacking session close\n");
+-				return -1;
++				return ERR_BAD_COMMAND;
+ 			}
+ 
+ 			ret = handle_sec_auth_session_cmd(cfd, sec, msg, cmd);
+-- 
+2.1.4
+
