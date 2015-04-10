@@ -51,6 +51,7 @@ start_service() {
     # Routing script
     procd_append_param command -r /usr/sbin/hnetd-routing
 
+    # Prefix assignment (pa)
     config_get val pa ip4prefix
     [ -n "$val" ] && procd_append_param command --ip4prefix $val
 
@@ -60,15 +61,36 @@ start_service() {
     config_get val pa ulamode
     [ -n "$val" ] && procd_append_param command --ulamode $val
 
+    # Service discovery (sd)
     config_get val sd router_name
     [ -n "$val" ] && procd_append_param command -n $val
 
     config_get val sd domain_name
     [ -n "$val" ] && procd_append_param command -m $val
 
+    # Security (needs security-enabled build)
+    config_get val security password
+    [ -n "$val" ] && procd_append_param command --password $val
+
+    config_get val security certificate_file
+    [ -n "$val" ] && procd_append_param command --certificate $val
+
+    config_get val security private_key_file
+    [ -n "$val" ] && procd_append_param command --privatekey $val
+
+    config_get val security trust_store
+    [ -n "$val" ] && procd_append_param command --trust $val
+
+    config_get val security trust_certificate_file
+    [ -n "$val" ] && procd_append_param command --verify-path $val
+
     # For more verbose logging, uncomment this:
     #procd_append_param command --loglevel 7
 
     procd_set_param respawn
     procd_close_instance
+}
+
+service_triggers() {
+    procd_add_reload_trigger "hnet"
 }
