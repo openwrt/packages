@@ -80,7 +80,7 @@ define Build/Configure
 	$(if $(CONFIG_COOVACHILLI_LARGELIMITS),--enable,--disable)-largelimits \
 	$(if $(CONFIG_COOVACHILLI_UAMDOMAINFILE),--enable,--disable)-uamdomainfile \
 	$(if $(CONFIG_COOVACHILLI_MATRIXSSL),--with,--without)-matrixssl \
-	$(if $(CONFIG_COOVACHILLI_CYASSL),--with,--without)-cyaxssl \
+	$(if $(CONFIG_COOVACHILLI_CYASSL),--with,--without)-cyassl \
 	$(if $(CONFIG_COOVACHILLI_OPENSSL),--with,--without)-openssl \
 	)
 endef
