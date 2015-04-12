@@ -3,4 +3,4 @@
 
 SUMO_HOME=/usr/share/sumo sumo-bin $@
 
-exit 0
+exit $?
