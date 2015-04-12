@@ -1,9 +1,15 @@
+#
+# Copyright (C) 2008-2015 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 # Version == major.minor.patch
 # increase on new functionality (minor) or patches (patch)
-PKG_VERSION:=2.4.0
+PKG_VERSION:=2.4.1
 # Release == build
 # increase on changes of services files or tld_names.dat
 PKG_RELEASE:=1
@@ -103,6 +109,7 @@ define Build/Compile
 		-e '/^\/\/\s/d'	\
 		-e '/^\s*$$$$/d'	$$$$FILE; \
 	done
+	gzip -9 $(PKG_BUILD_DIR)/files/tld_names.dat
 endef
 
 define Package/$(PKG_NAME)/conffiles
@@ -158,7 +165,7 @@ endef
 define Package/$(PKG_NAME)_cloudflare/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/update_CloudFlare.sh $(1)/usr/lib/ddns
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/tld_names.dat $(1)/usr/lib/ddns
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/tld_names.dat.gz $(1)/usr/lib/ddns
 endef
 define Package/$(PKG_NAME)_cloudflare/postinst
 	#!/bin/sh
