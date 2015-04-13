@@ -1,0 +1,11 @@
+--- apinger-0.6.1/Makefile.am.orig	2015-04-08 16:47:40.999990050 +0000
++++ apinger-0.6.1/Makefile.am	2015-04-08 16:48:07.565220137 +0000
+@@ -1,7 +1,7 @@
+ 
+ EXTRA_DIST = autogen.sh TODO BUGS
+ 
+-SUBDIRS = src doc
++SUBDIRS = src
+ 
+ .PHONY: ChangeLog
+ 

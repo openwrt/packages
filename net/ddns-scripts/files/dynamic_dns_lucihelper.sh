@@ -22,8 +22,8 @@
 # preset some variables, wrong or not set in dynamic_dns_functions.sh
 SECTION_ID="lucihelper"
 LOGFILE="$LOGDIR/$SECTION_ID.log"
-DATFILE="$RUNDIR/$SECTION_ID.dat"	# save stdout data of WGet and other extern programs called
-ERRFILE="$RUNDIR/$SECTION_ID.err"	# save stderr output of WGet and other extern programs called
+DATFILE="$RUNDIR/$SECTION_ID.$$.dat"	# save stdout data of WGet and other extern programs called
+ERRFILE="$RUNDIR/$SECTION_ID.$$.err"	# save stderr output of WGet and other extern programs called
 VERBOSE_MODE=0		# no console logging
 # global variables normally set by reading DDNS UCI configuration
 use_syslog=0		# no syslog

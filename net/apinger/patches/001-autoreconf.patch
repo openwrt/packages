@@ -1,0 +1,13 @@
+--- apinger-0.6.1/acinclude.m4	2003-10-21 12:44:48.000000000 +0000
++++ apinger-0.6.1/acinclude.m4	2015-04-08 15:27:37.451903960 +0000
+@@ -39,9 +39,7 @@
+ 		[$jk_inet_includes
+ $jk_icmp_includes])
+ 
+-AC_CHECK_MEMBERS([struct icmp.icmp_type, struct icmp.icmp_code,\
+-struct icmp.icmp_cksum, struct icmp.icmp_seq,\
+-struct icmp.icmp_id],[],
++AC_CHECK_MEMBERS([struct icmp.icmp_type, struct icmp.icmp_code,struct icmp.icmp_cksum, struct icmp.icmp_seq,struct icmp.icmp_id],[],
+ 		AC_MSG_ERROR(struct icmp not defined or not compatible),
+ 		[$jk_inet_includes
+ $jk_icmp_includes])

@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
-PKG_VERSION:=3.3.0
-PKG_RELEASE:=3
-PKG_USE_MIPS16:=0
+PKG_VERSION:=3.3.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
-PKG_MD5SUM:=bf6ce5c50b273ffc2d27f659e929a37e
+PKG_MD5SUM:=86d5462e5cfc2a4341a2b91ce3ed0f09
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
+PKG_USE_MIPS16:=0
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

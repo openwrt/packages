@@ -1,0 +1,11 @@
+--- apinger-0.6.1/src/apinger.conf.orig	2015-04-08 16:05:24.558919722 +0000
++++ apinger-0.6.1/src/apinger.conf	2015-04-08 16:07:47.089170236 +0000
+@@ -9,7 +9,7 @@
+ 
+ ## User and group the pinger should run as
+ user "nobody"
+-group "nobody"
++group "nogroup"
+ 
+ ## Mailer to use (default: "/usr/lib/sendmail -t")
+ #mailer "/var/qmail/bin/qmail-inject" 
