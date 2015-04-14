@@ -1,0 +1,31 @@
+From 3b472b59e00b2be96cc1ef56fe30b64e7404d9ec Mon Sep 17 00:00:00 2001
+From: Tomofumi Hayashi <s1061123@gmail.com>
+Date: Mon, 9 Mar 2015 17:33:10 +0900
+Subject: [PATCH] Fix get_portmappings_in_range() in non-expand case.
+
+In get_portmappings_in_range(), array[] is not updated when
+realloc() is not called, hence get_portmappings_in_range() is
+always null. This fix changes to fill array[].
+---
+ miniupnpd/netfilter/iptcrdr.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/miniupnpd/netfilter/iptcrdr.c b/miniupnpd/netfilter/iptcrdr.c
+index 99678e7..c7b8b7b 100644
+--- a/miniupnpd/netfilter/iptcrdr.c
++++ b/miniupnpd/netfilter/iptcrdr.c
+@@ -1434,9 +1434,9 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
+ 							break;
+ 						}
+ 						array = tmp;
+-						array[*number] = eport;
+-						(*number)++;
+ 					}
++					array[*number] = eport;
++					(*number)++;
+ 				}
+ 			}
+ 		}
+-- 
+2.1.4
+
