@@ -7,13 +7,13 @@ In get_portmappings_in_range(), array[] is not updated when
 realloc() is not called, hence get_portmappings_in_range() is
 always null. This fix changes to fill array[].
 ---
- miniupnpd/netfilter/iptcrdr.c | 4 ++--
+ netfilter/iptcrdr.c | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/miniupnpd/netfilter/iptcrdr.c b/miniupnpd/netfilter/iptcrdr.c
+diff --git a/netfilter/iptcrdr.c b/netfilter/iptcrdr.c
 index 99678e7..c7b8b7b 100644
---- a/miniupnpd/netfilter/iptcrdr.c
-+++ b/miniupnpd/netfilter/iptcrdr.c
+--- a/netfilter/iptcrdr.c
++++ b/netfilter/iptcrdr.c
 @@ -1434,9 +1434,9 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
  							break;
  						}
