@@ -1,0 +1,33 @@
+From fc940eb2bf0bbd7adf5b283f28bcff136501ae7f Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Fri, 13 Mar 2015 16:18:25 +0100
+Subject: [PATCH 4/9] BUG/MEDIUM: peers: correctly configure the client timeout
+
+The peers frontend timeout was mistakenly set on timeout.connect instead
+of timeout.client, resulting in no timeout being applied to the peers
+connections. The impact is just that peers can establish connections and
+remain connected until they speak. Once they start speaking, only one of
+them will still be accepted, and old sessions will be killed, so the
+problem is limited. This fix should however be backported to 1.5 since
+it was introduced in 1.5-dev3 with peers.
+(cherry picked from commit 9ff95bb18c4cd9ae747fa5b3bef6d3f94e54172f)
+---
+ src/cfgparse.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index a91e027..b7613b8 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -1834,7 +1834,7 @@ int cfg_parse_peers(const char *file, int linenum, char **args, int kwm)
+ 				curpeers->peers_fe->cap = PR_CAP_FE;
+ 				curpeers->peers_fe->maxconn = 0;
+ 				curpeers->peers_fe->conn_retries = CONN_RETRIES;
+-				curpeers->peers_fe->timeout.connect = 5000;
++				curpeers->peers_fe->timeout.client = MS_TO_TICKS(5000);
+ 				curpeers->peers_fe->accept = peer_accept;
+ 				curpeers->peers_fe->options2 |= PR_O2_INDEPSTR | PR_O2_SMARTCON | PR_O2_SMARTACC;
+ 				curpeers->peers_fe->conf.args.file = curpeers->peers_fe->conf.file = strdup(file);
+-- 
+2.0.5
+
