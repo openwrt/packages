@@ -23,6 +23,10 @@
 #include <stdio.h>
 #include <netdb.h>
 
+static void sighandler(__attribute__((unused)) int signal)
+{
+}
+
 int main(int argc, const char *argv[])
 {
 	char buf[INET6_ADDRSTRLEN], prefix[INET6_ADDRSTRLEN + 4];
@@ -47,6 +51,8 @@ int main(int argc, const char *argv[])
 	
 	if (!argv[3] || !argv[4] || !(fp = fopen(buf, "wx")))
 		return 1;
+
+	signal(SIGTERM, sighandler);
 
 	prefix[sizeof(prefix) - 1] = 0;
 	strncpy(prefix, argv[3], sizeof(prefix) - 1);
@@ -108,6 +114,12 @@ int main(int argc, const char *argv[])
 		chdir("/");
 		setsid();
 		pause();
+
+		nat46 = fopen("/proc/net/nat46/control", "w");
+		if (nat46) {
+			fprintf(nat46, "del %s\n", argv[1]);
+			fclose(nat46);
+		}
 	} else {
 		fprintf(fp, "%d\n", pid);
 	}
