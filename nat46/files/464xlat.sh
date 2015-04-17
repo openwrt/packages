@@ -22,7 +22,7 @@
 proto_464xlat_setup() {
 	local cfg="$1"
 	local iface="$2"
-	local link="464xlat-$cfg"
+	local link="464-$cfg"
 
 	local ip6addr ip6prefix tunlink zone
 	json_get_vars ip6addr ip6prefix tunlink zone
