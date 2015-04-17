@@ -10,3 +10,6 @@ start_service() {
 	procd_set_param respawn # respawn automatically if something died
 	procd_close_instance
 }
+stop_service() {
+	kill $(ps | grep [s]tunnel | awk '{print $1}') > /dev/null
+}
