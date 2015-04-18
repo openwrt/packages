@@ -1,0 +1,103 @@
+From 3fdbb1f797ee9fe9260af92f5d7ea760684cd271 Mon Sep 17 00:00:00 2001
+From: Steven Barth <steven@midlink.org>
+Date: Tue, 18 Feb 2014 13:18:32 +0100
+Subject: [PATCH] Allow routes with source ::/128 for SAS on Linux
+
+Linux uses the source-address :: (unspecified) to lookup routes in the
+routing table for connections that are not bound to a specific source
+address (e.g. ping6 2001:db8::1). If all default routes are
+source-restricted a command like above will result in a "Permission
+denied" error and no packets are being sent. Adding a default route with
+source ::/128 avoids this issue.
+
+This patch excludes ::/128 from the "martian_prefix" check for source
+prefixes and thus allows such auxiliary routes to be distributed.
+
+Signed-off-by: Steven Barth <cyrus@openwrt.org>
+---
+ kernel_netlink.c | 4 ++--
+ route.c          | 4 ++--
+ util.c           | 4 ++--
+ util.h           | 2 +-
+ xroute.c         | 2 +-
+ 5 files changed, 8 insertions(+), 8 deletions(-)
+
+--- a/kernel_netlink.c
++++ b/kernel_netlink.c
+@@ -1242,8 +1242,8 @@ filter_kernel_routes(struct nlmsghdr *nh
+     if(rc < 0)
+         return 0;
+ 
+-    if(martian_prefix(current_route->prefix, current_route->plen) ||
+-       martian_prefix(current_route->src_prefix, current_route->src_plen))
++    if(martian_prefix(current_route->prefix, current_route->plen, 0) ||
++       martian_prefix(current_route->src_prefix, current_route->src_plen, 1))
+         return 0;
+ 
+     /* Ignore default unreachable routes; no idea where they come from. */
+@@ -1944,7 +1944,7 @@ filter_kernel_rules(struct nlmsghdr *nh,
+     kdebugf("filter_rules: from %s prio %d table %d\n",
+             format_prefix(src, src_plen), priority, table);
+ 
+-    if(martian_prefix(src, src_plen) || !has_priority)
++    if(martian_prefix(src, src_plen, 1) || !has_priority)
+         return 0;
+ 
+     i = priority - src_table_prio;
+--- a/route.c
++++ b/route.c
+@@ -901,12 +901,12 @@ update_route(const unsigned char *id,
+     if(memcmp(id, myid, 8) == 0)
+         return NULL;
+ 
+-    if(martian_prefix(prefix, plen)) {
++    if(martian_prefix(prefix, plen, 0)) {
+         fprintf(stderr, "Rejecting martian route to %s through %s.\n",
+                 format_prefix(prefix, plen), format_address(nexthop));
+         return NULL;
+     }
+-    if(src_plen != 0 && martian_prefix(src_prefix, src_plen)) {
++    if(src_plen != 0 && martian_prefix(src_prefix, src_plen, 1)) {
+         fprintf(stderr, "Rejecting martian route to %s from %s through %s.\n",
+                 format_prefix(prefix, plen),
+                 format_prefix(src_prefix, src_plen), format_eui64(id));
+--- a/util.c
++++ b/util.c
+@@ -437,13 +437,13 @@ wait_for_fd(int direction, int fd, int m
+ }
+ 
+ int
+-martian_prefix(const unsigned char *prefix, int plen)
++martian_prefix(const unsigned char *prefix, int plen, int is_source)
+ {
+     return
+         (plen >= 8 && prefix[0] == 0xFF) ||
+         (plen >= 10 && prefix[0] == 0xFE && (prefix[1] & 0xC0) == 0x80) ||
+         (plen >= 128 && memcmp(prefix, zeroes, 15) == 0 &&
+-         (prefix[15] == 0 || prefix[15] == 1)) ||
++         ((prefix[15] == 0 && !is_source) || prefix[15] == 1)) ||
+         (plen >= 96 && v4mapped(prefix) &&
+          ((plen >= 104 && (prefix[12] == 127 || prefix[12] == 0)) ||
+           (plen >= 100 && (prefix[12] & 0xE0) == 0xE0)));
+--- a/util.h
++++ b/util.h
+@@ -106,7 +106,7 @@ int parse_net(const char *net, unsigned
+               int *af_r);
+ int parse_eui64(const char *eui, unsigned char *eui_r);
+ int wait_for_fd(int direction, int fd, int msecs);
+-int martian_prefix(const unsigned char *prefix, int plen) ATTRIBUTE ((pure));
++int martian_prefix(const unsigned char *prefix, int plen, int is_source) ATTRIBUTE ((pure));
+ int linklocal(const unsigned char *address) ATTRIBUTE ((pure));
+ int v4mapped(const unsigned char *address) ATTRIBUTE ((pure));
+ void v4tov6(unsigned char *dst, const unsigned char *src);
+--- a/xroute.c
++++ b/xroute.c
+@@ -266,7 +266,7 @@ check_xroutes(int send_updates)
+     /* Add any new routes */
+ 
+     for(i = 0; i < numroutes; i++) {
+-        if(martian_prefix(routes[i].prefix, routes[i].plen))
++        if(martian_prefix(routes[i].prefix, routes[i].plen, 0))
+             continue;
+         metric = redistribute_filter(routes[i].prefix, routes[i].plen,
+                                      routes[i].src_prefix, routes[i].src_plen,
