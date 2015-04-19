@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqm-scripts
 PKG_VERSION:=8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPLv2
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -20,7 +20,7 @@ define Package/sqm-scripts
   SECTION:=net
   CATEGORY:=Base system
   DEPENDS:=+tc +kmod-sched +kmod-ifb iptables +ip \
-	+iptables-mod-filter +iptables-mod-ipopt +iptables-mod-conntrack-extra
+	+iptables-mod-ipopt +iptables-mod-conntrack-extra
   TITLE:=SQM Scripts (QoS)
   PKGARCH:=all
   MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
