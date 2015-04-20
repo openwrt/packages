@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
-PKG_VERSION:=3.3.14
+PKG_VERSION:=3.4.0
 PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3
-PKG_MD5SUM:=7f4465f8c564cf9cb8f5cb38b909f7ca
+PKG_SOURCE_URL:=ftp://ftp.gnutls.org/gcrypt/gnutls/v3.4
+PKG_MD5SUM:=aa015c2666b031044edfb01b01980d84
+PKG_FIXUP:=autoreconf
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 
 PKG_INSTALL:=1
@@ -104,6 +105,7 @@ define Package/libgnutls-openssl
 $(call Package/gnutls/Default)
   TITLE+= (OpenSSL compat library)
   DEPENDS+= +libgnutls
+  CONFIGURE_ARGS+= --enable-openssl-compatibility
 endef
 
 define Package/libgnutls-openssl/description
@@ -122,7 +124,6 @@ CONFIGURE_ARGS+= \
 	--enable-local-libopts \
 	--disable-doc \
 	--disable-tests \
-	--disable-rsa-export \
 	--with-default-trust-store-dir=/etc/ssl/certs/ \
 	--disable-crywrap \
 	--with-librt-prefix="$(STAGING_DIR)/"
@@ -183,12 +184,10 @@ define Build/InstallDev
 		$(PKG_INSTALL_DIR)/usr/include/gnutls \
 		$(1)/usr/include/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libgnutls{,-openssl}.{a,so*} \
-		$(1)/usr/lib/
-	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/gnutls.pc \
 		$(1)/usr/lib/pkgconfig/
 endef
+
 
 define Package/certtool/conffiles
 /etc/gnutls/certtool.cfg
