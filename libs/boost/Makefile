@@ -16,14 +16,14 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/target.mk 
 
 PKG_NAME:=boost
-PKG_VERSION:=1_57_0
-PKG_RELEASE:=3
+PKG_VERSION:=1_58_0
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_VERSION)
-PKG_MD5SUM:=25f9a8ac28beeb5ab84aa98510305299
+PKG_MD5SUM:=5a5d5614d9a07672e1ab2a250b5defc5
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
@@ -33,6 +33,7 @@ PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
+
 
 define Package/boost/Default
   SECTION:=libs
@@ -135,7 +136,7 @@ endef
 $(eval $(call DefineBoostLibrary,atomic,system,))
 $(eval $(call DefineBoostLibrary,chrono,system,))
 $(eval $(call DefineBoostLibrary,container,,))
-$(eval $(call DefineBoostLibrary,context,,))
+$(eval $(call DefineBoostLibrary,context,chrono system thread,))
 $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,))
 $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
@@ -149,6 +150,10 @@ $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,))
 $(eval $(call DefineBoostLibrary,program_options,,))
 $(eval $(call DefineBoostLibrary,random,system,))
+
+# We need a beter way to provide this package, information regarding the Python packages
+#  such as Python version and directories locations. 
+# Python 2.7 version is for now hard-coded. Python 3 is (until this date) broken in the trunk tree.
 $(eval $(call DefineBoostLibrary,python,,+PACKAGE_boost-python:python))
 $(eval $(call DefineBoostLibrary,regex,,))
 $(eval $(call DefineBoostLibrary,serialization,,))
