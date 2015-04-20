@@ -14,7 +14,7 @@ diff --git a/lib/netdev-linux.c b/lib/netdev-linux.c
 index 9bdbbdf..9eaac33 100644
 --- a/lib/netdev-linux.c
 +++ b/lib/netdev-linux.c
-@@ -2566,7 +2566,7 @@ update_flags(struct netdev_linux *netdev, enum netdev_flags off,
+@@ -2709,7 +2709,7 @@ update_flags(struct netdev_linux *netdev, enum netdev_flags off,
               enum netdev_flags on, enum netdev_flags *old_flagsp)
      OVS_REQUIRES(netdev->mutex)
  {

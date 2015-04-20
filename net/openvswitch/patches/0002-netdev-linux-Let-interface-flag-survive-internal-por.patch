@@ -21,7 +21,7 @@ diff --git a/lib/netdev-linux.c b/lib/netdev-linux.c
 index 9eaac33..423e72e 100644
 --- a/lib/netdev-linux.c
 +++ b/lib/netdev-linux.c
-@@ -2569,7 +2569,13 @@ update_flags(struct netdev_linux *netdev, enum netdev_flags off,
+@@ -2712,7 +2712,13 @@ update_flags(struct netdev_linux *netdev, enum netdev_flags off,
      unsigned int old_flags, new_flags;
      int error = 0;
  
