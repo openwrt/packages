@@ -1,0 +1,32 @@
+#!/bin/sh /etc/rc.common
+
+START=90
+STOP=85
+
+USE_PROCD=1
+
+start_service()
+{
+	[ -f /etc/uci-defaults/cjdns ] && ( . /etc/uci-defaults/cjdns )
+
+	procd_open_instance
+	procd_set_param respawn
+	procd_set_param command /bin/ash -c "cjdrouteconf get | tee /tmp/etc/cjdroute.conf | cjdroute --nobg | logger -t cjdns"
+	procd_close_instance
+}
+
+stop_service()
+{
+	killall cjdroute
+}
+
+reload_service()
+{
+	# cat /tmp/etc/cjdroute.conf | cjdrouteconf reload
+	restart
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger cjdns
+}
