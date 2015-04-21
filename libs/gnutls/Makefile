@@ -105,7 +105,6 @@ define Package/libgnutls-openssl
 $(call Package/gnutls/Default)
   TITLE+= (OpenSSL compat library)
   DEPENDS+= +libgnutls
-  CONFIGURE_ARGS+= --enable-openssl-compatibility
 endef
 
 define Package/libgnutls-openssl/description
@@ -124,6 +123,7 @@ CONFIGURE_ARGS+= \
 	--enable-local-libopts \
 	--disable-doc \
 	--disable-tests \
+	--enable-openssl-compatibility \
 	--with-default-trust-store-dir=/etc/ssl/certs/ \
 	--disable-crywrap \
 	--with-librt-prefix="$(STAGING_DIR)/"
