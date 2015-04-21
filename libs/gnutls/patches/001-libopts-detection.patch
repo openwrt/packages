@@ -1,0 +1,84 @@
+diff --git a/configure.ac b/configure.ac
+index 7c454cd..185ebb6 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -64,7 +64,7 @@ if test "$enable_tools" != "no" || test "$enable_doc" != "no"; then
+ ***
+ *** autogen not found. Will not link against libopts.
+ *** ]])
+-    enable_local_libopts=yes
++    included_libopts=yes
+   fi
+ fi
+ 
+@@ -523,7 +523,7 @@ fi
+ 
+ AM_CONDITIONAL(ENABLE_TROUSERS, test "$with_tpm" != "no")
+ 
+-enable_local_libopts=no
++included_libopts=no
+ if test "$enable_tools" != "no" || test "$enable_doc" != "no"; then
+ 	LIBOPTS_CHECK([src/libopts])
+ 	if test "$NEED_LIBOPTS_DIR" = "true";then
+@@ -540,15 +540,17 @@ if test "$enable_tools" != "no" || test "$enable_doc" != "no"; then
+ 		if test -z "$missing_baks"; then
+ 			AC_SUBST([AUTOGEN], [/bin/true])
+ 		fi
+-		enable_local_libopts=yes
++		included_libopts=yes
+ 	fi
+ else
+ 	# Need to ensure the relevant conditionals get set
+ 	gl_STDNORETURN_H
+ 	AM_CONDITIONAL([INSTALL_LIBOPTS],[false])
+ 	AM_CONDITIONAL([NEED_LIBOPTS], [false])
++	included_libopts=yes
+ fi
+-AM_CONDITIONAL(NEED_LIBOPTS, test "$enable_local_libopts" = "yes")
++
++AM_CONDITIONAL(NEED_LIBOPTS, test "$included_libopts" = "yes")
+ 
+ AC_CHECK_TYPE(ssize_t,
+   [
+@@ -896,7 +898,7 @@ AC_MSG_NOTICE([summary of build options:
+   Compiler:             ${CC}
+   CFlags:               ${CFLAGS}
+   Library types:        Shared=${enable_shared}, Static=${enable_static}
+-  Local libopts:        ${enable_local_libopts}
++  Local libopts:        ${included_libopts}
+   Local libtasn1:       ${included_libtasn1}
+   Use nettle-mini:      ${mini_nettle}
+ ])
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 4105ab6..b907249 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -30,13 +30,6 @@ if ENABLE_CRYWRAP
+ SUBDIRS += crywrap
+ endif
+ 
+-if NEED_LIBOPTS
+-LIBOPTS = libopts/libopts.la
+-SUBDIRS += libopts
+-else
+-LIBOPTS = $(LIBOPTS_LDADD)
+-endif
+-
+ EXTRA_DIST = args-std.def
+ 
+ AM_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
+@@ -49,6 +42,14 @@ AM_CPPFLAGS = \
+ 	-I$(srcdir)/../extra/includes	\
+ 	$(LIBOPTS_CFLAGS)
+ 
++if NEED_LIBOPTS
++LIBOPTS = libopts/libopts.la
++SUBDIRS += libopts
++AM_CPPFLAGS += -I$(srcdir)/libopts
++else
++LIBOPTS = $(LIBOPTS_LDADD)
++endif
++
+ bin_PROGRAMS = psktool gnutls-cli-debug certtool
+ if ENABLE_SRP
+ bin_PROGRAMS += srptool

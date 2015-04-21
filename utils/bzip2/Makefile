@@ -21,12 +21,17 @@ PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
+define Package/bzip2/Default
+  SUBMENU:=Compression
+  URL:=http://www.bzip.org/
+endef
+
 define Package/libbz2
+$(call Package/bzip2/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=
   TITLE:=bzip2 library.
-  URL:=http://www.bzip.org/
 endef
 
 define Package/libbz2/description
@@ -35,11 +40,11 @@ define Package/libbz2/description
 endef
 
 define Package/bzip2
+$(call Package/bzip2/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libbz2
   TITLE:=bzip2 is a compression utility.
-  URL:=http://www.bzip.org/
 endef
 
 define Package/bzip2/description
