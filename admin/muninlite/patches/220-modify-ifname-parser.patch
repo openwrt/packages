@@ -1,0 +1,22 @@
+--- a/plugins/if_
++++ b/plugins/if_
+@@ -26,7 +26,7 @@ config_if() {
+   fi
+ }
+ fetch_if() {
+-  IINFO=$(grep "$1:" /proc/net/dev | cut -d: -f2 | sed -e 's/  / /g')
++  IINFO=$(cat /proc/net/dev | sed -e 's/-/_/g' | grep "$1:" | cut -d: -f2 | sed -e 's/  */ /g' -e 's/^[ \t]*//')
+   echo "down.value" $(echo $IINFO | cut -d\  -f1)
+   echo "up.value" $(echo $IINFO | cut -d\  -f9)
+ }
+--- a/plugins/if_err_
++++ b/plugins/if_err_
+@@ -15,7 +15,7 @@ config_if_err() {
+   echo "trans.warning 1"
+ }
+ fetch_if_err() {
+-  IINFO=$(grep "$1:" /proc/net/dev | cut -d: -f2 | sed -e 's/  / /g')
++  IINFO=$(cat /proc/net/dev | sed -e 's/-/_/g' | grep "$1:" | cut -d: -f2 | sed -e 's/  */ /g' -e 's/^[ \t]*//')
+   echo "rcvd.value" $(echo $IINFO | cut -d\  -f3)
+   echo "trans.value" $(echo $IINFO | cut -d\  -f11)
+ }
