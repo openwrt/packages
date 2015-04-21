@@ -24,7 +24,7 @@ Signed-off-by: Steven Barth <cyrus@openwrt.org>
 
 --- a/kernel_netlink.c
 +++ b/kernel_netlink.c
-@@ -1242,8 +1242,8 @@ filter_kernel_routes(struct nlmsghdr *nh
+@@ -1243,8 +1243,8 @@ filter_kernel_routes(struct nlmsghdr *nh
      if(rc < 0)
          return 0;
  
@@ -35,7 +35,7 @@ Signed-off-by: Steven Barth <cyrus@openwrt.org>
          return 0;
  
      /* Ignore default unreachable routes; no idea where they come from. */
-@@ -1944,7 +1944,7 @@ filter_kernel_rules(struct nlmsghdr *nh,
+@@ -1946,7 +1946,7 @@ filter_kernel_rules(struct nlmsghdr *nh,
      kdebugf("filter_rules: from %s prio %d table %d\n",
              format_prefix(src, src_plen), priority, table);
  
@@ -46,7 +46,7 @@ Signed-off-by: Steven Barth <cyrus@openwrt.org>
      i = priority - src_table_prio;
 --- a/route.c
 +++ b/route.c
-@@ -901,12 +901,12 @@ update_route(const unsigned char *id,
+@@ -809,12 +809,12 @@ update_route(const unsigned char *id,
      if(memcmp(id, myid, 8) == 0)
          return NULL;
  
@@ -92,7 +92,7 @@ Signed-off-by: Steven Barth <cyrus@openwrt.org>
  void v4tov6(unsigned char *dst, const unsigned char *src);
 --- a/xroute.c
 +++ b/xroute.c
-@@ -266,7 +266,7 @@ check_xroutes(int send_updates)
+@@ -264,7 +264,7 @@ check_xroutes(int send_updates)
      /* Add any new routes */
  
      for(i = 0; i < numroutes; i++) {
