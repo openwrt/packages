@@ -36,8 +36,14 @@ endef
 define Build/Configure
 endef
 
+PKG_DO_VARS:=
+
 ifneq ($(CONFIG_KERNEL_SECCOMP_FILTER),y)
-PKG_DO_VARS:=Seccomp_NO=1
+PKG_DO_VARS+= Seccomp_NO=1
+endif
+
+ifneq ($(CONFIG_USE_UCLIBC),)
+PKG_DO_VARS+= UCLIBC=1
 endif
 
 define Build/Compile
@@ -47,7 +53,6 @@ define Build/Compile
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 	SYSTEM="linux" \
 	TARGET_ARCH="$(CONFIG_ARCH)" \
-	UCLIBC=1 \
 	SSP_SUPPORT="$(CONFIG_SSP_SUPPORT)" \
 	$(PKG_DO_VARS) \
 	$(PKG_BUILD_DIR)/do
