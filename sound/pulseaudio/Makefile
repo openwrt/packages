@@ -31,8 +31,8 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/pulseaudio/Default
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+libspeexdsp +libsndfile +libltdl +libpthread \
-	+librt +alsa-lib +libjson +libopenssl +libwrap +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:=+dbus +libavahi-client +libspeexdsp +libsndfile +libltdl +libpthread \
+	+librt +sbc +alsa-lib +libjson-c +libopenssl +libwrap +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Network sound server
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.pulseaudio.org
@@ -96,11 +96,11 @@ CONFIGURE_ARGS += \
 	--disable-jack \
 	--disable-asyncns \
 	--disable-lirc \
-	--disable-bluez \
+	--enable-bluez5 \
 	--disable-udev \
 	--without-fftw \
-	--disable-avahi \
-	--disable-dbus
+	--enable-avahi \
+	--enable-dbus
 
 CONFIGURE_VARS += \
 	PKG_CONFIG_LIBDIR="$(STAGING_DIR)/usr/lib/pkgconfig"
