@@ -84,7 +84,9 @@ endef
 
 CONFIGURE_ARGS += \
 	--without-gpgme \
-	--with-iptables=/usr/sbin/iptables
+	--with-iptables=/usr/sbin/iptables \
+	$(call autoconf_bool,CONFIG_SSP_SUPPORT,stack-protector)
+
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
