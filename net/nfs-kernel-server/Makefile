@@ -77,12 +77,16 @@ CONFIGURE_ARGS += \
 	--disable-gss \
 	--disable-nfsv4 \
 	--disable-nfsv41 \
-	--disable-ipv6 \
 	--enable-static \
 	--enable-shared \
 	--disable-caps \
 	--disable-tirpc \
 	--disable-nfsdcld
+
+ifeq ($(CONFIG_IPV6),n)
+CONFIGURE_ARGS+= \
+	--disable-ipv6
+endif
 
 CONFIGURE_VARS += \
 	libblkid_cv_is_recent=yes \
@@ -102,9 +106,13 @@ HOST_CONFIGURE_ARGS += \
 	--disable-gss \
 	--disable-nfsv4 \
 	--disable-nfsv41 \
-	--disable-ipv6 \
 	--disable-tirpc \
 	--without-tcp-wrappers
+
+ifeq ($(CONFIG_IPV6),n)
+HOST_CONFIGURE_ARGS+= \
+	--disable-ipv6
+endif
 
 HOST_CONFIGURE_VARS += \
 	ac_cv_lib_event_event_dispatch=yes \

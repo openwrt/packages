@@ -51,6 +51,11 @@ CONFIGURE_ARGS+= \
 	--disable-instrumentation \
 	--with-zlib=$(STAGING_DIR)/usr
 
+ifeq ($(CONFIG_IPV6),y)
+CONFIGURE_ARGS+= \
+	--enable-ipv6
+endif
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/torrent $(1)/usr/include/

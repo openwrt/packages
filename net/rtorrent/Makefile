@@ -79,6 +79,10 @@ ifeq ($(BUILD_VARIANT),rpc)
 		--with-xmlrpc-c
 endif
 
+ifeq ($(CONFIG_IPV6),y)
+	CONFIGURE_ARGS+= \
+		--enable-ipv6
+endif
 
 define Package/rtorrent/install
 	$(INSTALL_DIR) $(1)/usr/bin

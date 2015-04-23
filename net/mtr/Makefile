@@ -47,6 +47,11 @@ CONFIGURE_ARGS += \
 	--without-gtk \
 	--without-glib \
 
+ifeq ($(CONFIG_IPV6),n)
+CONFIGURE_ARGS+= \
+	--disable-ipv6
+endif
+
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); touch \
 		configure.in \
