@@ -42,7 +42,7 @@ define Package/fwknopd
   CATEGORY:=Network
   SUBMENU:=Firewall
   TITLE+= Daemon
-  DEPENDS:=+iptables +libfko +libpcap
+  DEPENDS:=+iptables +libfko +libpcap +SSP_SUPPORT:libssp
 endef
 
 define Package/fwknopd/description
@@ -61,7 +61,7 @@ define Package/fwknop
   CATEGORY:=Network
   SUBMENU:=Firewall
   TITLE+= Client
-  DEPENDS:=+libfko
+  DEPENDS:=+libfko +SSP_SUPPORT:libssp
 endef
 
 define Package/fwknop/description
@@ -84,7 +84,9 @@ endef
 
 CONFIGURE_ARGS += \
 	--without-gpgme \
-	--with-iptables=/usr/sbin/iptables
+	--with-iptables=/usr/sbin/iptables \
+	$(call autoconf_bool,CONFIG_SSP_SUPPORT,stack-protector)
+
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
