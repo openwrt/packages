@@ -814,11 +814,16 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-rpath \
-	--enable-ipv6 \
 	--disable-install-doc \
 	--disable-install-capi \
 	--with-ruby-version=minor \
 	--with-iconv-dir=$(ICONV_PREFIX) \
+
+
+ifeq ($(CONFIG_IPV6),y)
+CONFIGURE_ARGS+= \
+	--enable-ipv6
+endif
 
 ifndef CONFIG_RUBY_DIGEST_USE_OPENSSL
 CONFIGURE_ARGS += \

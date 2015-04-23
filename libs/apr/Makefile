@@ -37,8 +37,13 @@ TARGET_CPPFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 
 CONFIGURE_ARGS += \
 	--with-devrandom=/dev/urandom \
-	--disable-dso \
+	--disable-dso
+
+ifeq ($(CONFIG_IPV6),y)
+CONFIGURE_ARGS+= \
 	--enable-ipv6
+endif
+
 
 # XXX: ac_cv_sizeof_struct_iovec=1 is just to trick configure
 CONFIGURE_VARS += \

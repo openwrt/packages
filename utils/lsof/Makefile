@@ -32,9 +32,15 @@ define Package/lsof
   URL:=http://people.freebsd.org/~abe/
 endef
 
+ifeq ($(CONFIG_IPV6),y)
+  LINUX_CLIB_IPV6="-DHASIPv6"
+else
+  LINUX_CLIB_IPV6=
+endif
+
 define Build/Configure
 	cd $(PKG_BUILD_DIR); \
-		LINUX_CLIB="-DGLIBCV=2" \
+		LINUX_CLIB="-DGLIBCV=2 $(LINUX_CLIB_IPV6)" \
 		LSOF_CC="$(TARGET_CC)" \
 		LSOF_INCLUDE="-I$(STAGING_DIR)/usr/include" \
 		LSOF_VSTR="$(LINUX_VERSION)" \
