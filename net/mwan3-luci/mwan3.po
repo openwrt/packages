@@ -1,15 +1,16 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"PO-Revision-Date: 2013-10-08 16:16+0200\n"
-"Last-Translator:  GuoGuo<gch981213@gmail.com>\n"
-"Language-Team: none\n"
+"Project-Id-Version: mwan translate\n"
+"PO-Revision-Date: 2015-04-22 20:42+0800\n"
+"Last-Translator: GuoGuo <gch981213@gmail.com>\n"
+"Language-Team: GuoGuo <gch981213@gmail.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Pootle 2.0.6\n"
+"X-Generator: Poedit 1.7.5\n"
+"POT-Creation-Date: \n"
 
 msgid "Load Balancing"
 msgstr "负载均衡"
@@ -146,6 +147,12 @@ msgstr "使用的成员"
 msgid "Currently Configured Members"
 msgstr "当前已经配置好的成员"
 
+msgid "Last resort"
+msgstr "备用成员"
+
+msgid "When all policy members are offline use this behavior for matched traffic"
+msgstr "当策略中的所有成员都无法使用的时候,对使用该策略的流量使用这个操作."
+
 msgid "MWAN Rule Configuration"
 msgstr "MWAN负载均衡 通信规则配置"
 
@@ -160,3 +167,61 @@ msgstr "使用的策略"
 
 msgid "Currently Configured Policies"
 msgstr "当前已经配置好的策略"
+
+msgid "Source address"
+msgstr "源地址"
+
+msgid "Supports CIDR notation (eg \"192.168.100.0/24\") without quotes"
+msgstr "支持CIDR记法(例如\"192.168.100.0/24\") 不含引号."
+
+msgid "Source port"
+msgstr "源端口"
+
+msgid "Destination address"
+msgstr "目标地址"
+
+msgid "Destination port"
+msgstr "目标端口"
+
+msgid "Protocol"
+msgstr "通信协议"
+
+msgid "View the contents of /etc/protocols for protocol descriptions"
+msgstr "请查看 /etc/protocols 获取可选协议详情."
+
+msgid "Sticky"
+msgstr "粘滞模式"
+
+msgid "Traffic from the same source IP address that previously matched this rule within the sticky timeout period will use the same WAN interface"
+msgstr "在设定的\"粘滞延时\"内匹配该规则的来自同一源IP地址的流量将会使用同一个WAN出口."
+
+msgid "Yes"
+msgstr "是"
+
+msgid "No"
+msgstr "否"
+
+msgid "Sticky timeout"
+msgstr "粘滞延时"
+
+msgid "IPset"
+msgstr "IPset列表名称"
+
+msgid "Name of IPset rule. Requires IPset rule in /etc/dnsmasq.conf (eg \"ipset=/youtube.com/youtube\")"
+msgstr "匹配IPset规则列表名称."
+
+msgid "unreachable (reject)"
+msgstr "拒绝该流量"
+
+msgid "blackhole (drop)"
+msgstr "丢弃该流量"
+
+msgid "default (use main routing table)"
+msgstr "使用系统默认路由表"
+
+msgid "May be entered as a single or multiple port(s) (eg \"22\" or \"80,443\") or as a portrange (eg \"1024:2048\") without quotes"
+msgstr "可以输入一个或多个端口(例如\"22\"或者\"80,443\") 或者是一个端口范围(例如\"1024:2048\")不含引号"
+
+msgid "Seconds. Acceptable values: 1-1000000. Defaults to 600 if not set"
+msgstr "单位为秒.支持1~1000000的数值.留空则使用默认值600秒."
+
