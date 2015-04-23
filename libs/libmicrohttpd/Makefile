@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmicrohttpd
 PKG_VERSION:=0.9.38
-PKG_RELEASE:=1.1
+PKG_RELEASE:=1.2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/libmicrohttpd
@@ -29,7 +29,7 @@ define Package/libmicrohttpd
 	CATEGORY:=Libraries
 	TITLE:=GNU libmicrohttpd is a library that runs an HTTP server.
 	URL:=http://www.gnu.org/software/libmicrohttpd/
-	DEPENDS:=+libpthread +libgcrypt +libgnutls +libgpg-error +libcrypto +libopenssl
+	DEPENDS:=+libpthread +libgcrypt +libgnutls +libgpg-error +libopenssl
 endef
 
 define Package/libmicrohttpd/description
