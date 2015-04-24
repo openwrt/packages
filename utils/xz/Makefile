@@ -38,7 +38,6 @@ $(call Package/xz/Default)
 endef
 
 define Package/liblzma
-$(call Package/xz/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libpthread
