@@ -395,6 +395,7 @@ FFMPEG_CONFIGURE:= \
 	--disable-mipsfpu \
 	\
 	--disable-dxva2 \
+	--disable-lzma \
 	--disable-vaapi \
 	--disable-vda \
 	--disable-vdpau \
