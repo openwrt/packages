@@ -50,8 +50,8 @@ Package/libpam-db/description=$(Package/libpam/description)
 
 
 ifeq ($(BUILD_VARIANT),nodb)
+ TARGET_CFLAGS += $(FPIC)
  define Build/Configure
-TARGET_CFLAGS += $(FPIC)
 	$(call Build/Configure/Default, \
 		--enable-shared \
 		--enable-static \
