@@ -1,0 +1,22 @@
+diff --git a/src/sec-mod-auth.c b/src/sec-mod-auth.c
+index 4ee6f57..2fc02b5 100644
+--- a/src/sec-mod-auth.c
++++ b/src/sec-mod-auth.c
+@@ -500,7 +500,7 @@ int handle_sec_auth_session_close(int cfd, sec_mod_st *sec, const SecAuthSession
+ 		                (pack_func) cli_stats_msg__pack);
+ 	}
+ 
+-	if (e->status != PS_AUTH_COMPLETED) {
++	if (e->status < PS_AUTH_COMPLETED) {
+ 		seclog(sec, LOG_DEBUG, "session close received in unauthenticated client %s "SESSION_STR"!", e->auth_info.username, e->auth_info.psid);
+ 		return send_msg(e, cfd, SM_CMD_AUTH_CLI_STATS, &rep,
+ 		                (pack_size_func) cli_stats_msg__get_packed_size,
+@@ -604,7 +604,7 @@ int handle_sec_auth_stats_cmd(sec_mod_st * sec, const CliStatsMsg * req)
+ 		e->stats.uptime = req->uptime;
+ 
+ 	if (req->has_invalidate_cookie && req->invalidate_cookie != 0) {
+-		seclog(sec, LOG_INFO, "invalidating session user '%s' "SESSION_STR,
++		seclog(sec, LOG_INFO, "invalidating session of user '%s' "SESSION_STR,
+ 			e->auth_info.username, e->auth_info.psid);
+ 		e->status = PS_AUTH_USER_TERM;
+ 	}
