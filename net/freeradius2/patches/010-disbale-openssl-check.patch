@@ -1,6 +1,8 @@
---- a/configure.in
-+++ b/configure.in
-@@ -796,35 +796,6 @@ if test "x$WITH_OPENSSL" = xyes; then
+Index: freeradius-server-2.2.7/configure.in
+===================================================================
+--- freeradius-server-2.2.7.orig/configure.in
++++ freeradius-server-2.2.7/configure.in
+@@ -820,35 +820,6 @@ if test "x$WITH_OPENSSL" = xyes; then
      OPENSSL_INCLUDE="-DOPENSSL_NO_KRB5"
    fi
  
