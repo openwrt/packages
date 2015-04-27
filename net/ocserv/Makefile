@@ -58,6 +58,7 @@ CONFIGURE_ARGS+= \
 	--enable-local-libopts \
 	--with-libreadline-prefix="$(STAGING_DIR)/" \
 	--without-libnl \
+	--without-gssapi \
 	--with-libcrypt-prefix="$(STAGING_DIR)/" \
 
 ifneq ($(CONFIG_OCSERV_PAM),y)
