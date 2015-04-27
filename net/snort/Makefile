@@ -83,7 +83,8 @@ CONFIGURE_ARGS += \
 	--with-libpcre-libraries="$(STAGING_DIR)/usr/lib" \
 	--with-daq-includes="$(STAGING_DIR)/usr/include" \
 	--with-daq-libraries="$(STAGING_DIR)/usr/lib" \
-	--disable-static-daq
+	--disable-static-daq \
+	--disable-lzma
 
 CONFIGURE_VARS += \
 	CPPFLAGS="$$$$CPPFLAGS -I$(STAGING_DIR)/usr/include/mysql" \
