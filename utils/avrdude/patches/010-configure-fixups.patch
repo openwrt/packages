@@ -1,0 +1,18 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -35,6 +35,7 @@ AC_CONFIG_HEADERS(ac_cfg.h)
+ 
+ # Checks for programs.
+ AC_PROG_CC
++AC_PROG_CPP
+ AC_PROG_INSTALL
+ AC_PROG_SED
+ AC_PROG_YACC
+@@ -183,6 +184,7 @@ fi
+ AC_SUBST(LIBPTHREAD, $LIBPTHREAD)
+ # Checks for header files.
+ AC_CHECK_HEADERS([limits.h stdlib.h string.h])
++AC_CHECK_HEADERS([inttypes.h stdint.h])
+ AC_CHECK_HEADERS([fcntl.h sys/ioctl.h sys/time.h termios.h unistd.h])
+ AC_CHECK_HEADERS([ddk/hidsdi.h],,,[#include <windows.h>
+ #include <setupapi.h>])
