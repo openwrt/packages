@@ -23,7 +23,7 @@ EOF
   fi
 
   # enable auto-peering on ethernet
-  uci show network.lan | grep type=bridge >/dev/null 2>&1
+  uci show network.lan | grep bridge >/dev/null 2>&1
   if [ $? -eq 0 ]; then
     # most routers will set up an ethernet bridge for the lan
     ifname="br-lan"
