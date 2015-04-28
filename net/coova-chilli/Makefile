@@ -135,7 +135,7 @@ define Package/coova-chilli/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/iptables
-	$(CP) $(PKG_INSTALL_DIR)/usr/iptables/lib*.so $(1)/usr/lib/iptables
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/iptables/lib*.so $(1)/usr/lib/iptables/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/chilli.init $(1)/etc/init.d/chilli
 	$(INSTALL_DIR) $(1)/etc/config
