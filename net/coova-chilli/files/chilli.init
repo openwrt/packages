@@ -1,0 +1,61 @@
+#!/bin/sh /etc/rc.common
+
+START=30
+STOP=90
+
+config_cb() {
+    chilli_inst=$2
+    if [ "$chilli_inst" != "" ]
+    then
+       rm -f /var/run/chilli_${chilli_inst}*
+       chilli_conf=/var/run/chilli_${chilli_inst}.conf
+       eval "start_chilli_$chilli_inst=1"
+    fi
+}
+
+option_cb() {
+    case "$1" in
+        # UCI settings
+       network)
+           . /lib/functions/network.sh
+           local ifname
+           network_get_device ifname $2
+           echo "dhcpif=\"$ifname\"" >> $chilli_conf
+           ;;
+       disabled)
+           eval "start_chilli_$chilli_inst=0"
+           ;;
+        # boolean settings
+       dhcpbroadcast|nodynip|vlanlocation|locationstopstart|locationcopycalled|locationimmediateupdate|locationopt82|coanoipcheck|noradallow|proxymacaccept|proxyonacct|dhcpmacset|dhcpradius|noc2c|eapolenable|uamanydns|uamanyip|uamnatanyip|nouamsuccess|nowispr1|nowispr2|domaindnslocal|radsec|macauth|macreauth|macauthdeny|macallowlocal|strictmacauth|strictdhcp|ieee8021q|only8021q|radiusoriginalurl|swapoctets|statusfilesave|wpaguests|openidauth|papalwaysok|mschapv2|chillixml|acctupdate|dnsparanoia|seskeepalive|usetap|noarpentries|framedservice|scalewin|redir|injectwispr|redirurl|routeonetone|nousergardendata|uamgardendata|uamotherdata|withunixipc|uamallowpost|redirssl|uamuissl|layer3|patricia|redirdnsreq|dhcpnotidle|ipv6|ipv6only)
+           [ "$2" = "true" -o "$2" = "1" ] && echo "$1" >> $chilli_conf
+           ;;
+       *)
+           echo "$1=\"$2\"" >> $chilli_conf
+           ;;
+    esac
+}
+
+start_chilli() {
+    local cfg="$1"
+    local start_chilli=$(eval "echo \$start_chilli_$cfg")
+    [ "$start_chilli" = "0" ] && return
+    local base=/var/run/chilli_${cfg}
+    chilli -c ${base}.conf \
+       --pidfile ${base}.pid \
+       --cmdsocket ${base}.sock \
+       --unixipc ${base}.ipc &
+}
+
+start() {
+    config_load chilli
+    config_foreach start_chilli chilli
+}
+
+stop() {
+    ls /var/run/chilli*.pid 2>/dev/null && {
+       kill $(cat /var/run/chilli*.pid)
+       sleep 1
+       killall -9 chilli
+       rm -f /var/run/chilli*
+    }
+}
