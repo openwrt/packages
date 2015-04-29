@@ -82,7 +82,8 @@ CONFIGURE_ARGS += \
 	--with-libminiupnpc-dir="$(STAGING_DIR)/usr" \
 	--enable-nat-pmp \
 	--with-libnatpmp-dir="$(STAGING_DIR)/usr" \
-	--disable-asciidoc
+	--disable-asciidoc \
+	--disable-seccomp
 
 ifneq ($(CONFIG_SSP_SUPPORT),y)
 	CONFIGURE_ARGS += \
