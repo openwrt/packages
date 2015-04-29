@@ -1,14 +1,16 @@
-From f7cfd36b8a93afd326c0d9378e99576c616bd3fc Mon Sep 17 00:00:00 2001
+From fedfd6685e5f81f0460beb4c448a30e7a6cfbd31 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 29 Apr 2015 14:21:12 +0800
-Subject: [PATCH 3/7] xl2tpd-control: open control file with O_NONBLOCK.
+Subject: [PATCH 202/210] xl2tpd-control: open control file with O_NONBLOCK.
 
 Otherwise xl2tpd-control would block indefinitely in case xl2tpd is
 not running.
 ---
- xl2tpd-control.c | 10 +++++++++-
+ xl2tpd-control.c |   10 +++++++++-
  1 file changed, 9 insertions(+), 1 deletion(-)
 
+diff --git a/xl2tpd-control.c b/xl2tpd-control.c
+index 9b6235d..973ee87 100644
 --- a/xl2tpd-control.c
 +++ b/xl2tpd-control.c
 @@ -246,7 +246,7 @@ int main (int argc, char *argv[])
@@ -35,3 +37,6 @@ not running.
      
      /* pass command to control pipe */
      if (write (control_fd, buf, ftell (mesf)) < 0)
+-- 
+1.7.10.4
+
