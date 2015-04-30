@@ -92,6 +92,7 @@ c:value("codel")
 c:value("ns2_codel")
 c:value("pie")
 c:value("sfq")
+c:value("cake")
 c.default = "fq_codel"
 c.rmempty = false
 
