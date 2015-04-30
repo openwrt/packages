@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=2.5.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
@@ -108,7 +108,7 @@ FFMPEG_CUSTOM_PARSERS:= \
 	mpegvideo \
 
 FFMPEG_CUSTOM_PROTOCOLS:= \
-	file http pipe rtp tcp udp
+	file http icecast pipe rtp tcp udp
 
 FFMPEG_MINI_DECODERS:= \
 	aac \
@@ -202,7 +202,7 @@ FFMPEG_AUDIO_PARSERS:= \
 	mpegaudio \
 
 FFMPEG_AUDIO_PROTOCOLS:= \
-	file http rtp tcp udp
+	file http icecast rtp tcp udp
 
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
