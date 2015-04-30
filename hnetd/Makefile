@@ -37,7 +37,7 @@ define Package/hnetd/Default
   CATEGORY:=Network
   TITLE:=HNCP Homenet daemon - $(2)
   URL:=https://github.com/sbyx/hnetd
-  DEPENDS:=+odhcpd +odhcp6c +netifd $(3)
+  DEPENDS:=+odhcpd +odhcp6c +netifd +ip $(3)
   DEPENDS+=+@IPV6
   VARIANT:=$1
 endef
