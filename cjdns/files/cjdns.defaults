@@ -18,7 +18,7 @@ EOF
 
   # make sure config is present (might fail for any reason)
   uci get cjdns.cjdns.ipv6 >/dev/null 2>&1
-  if [ $? -ne 0]; then
+  if [ $? -ne 0 ]; then
     exit 1
   fi
 
