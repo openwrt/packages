@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-lzlib
 PKG_VERSION:=0.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
@@ -18,8 +18,6 @@ PKG_SOURCE_URL:=https://github.com/LuaDist/lzlib.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=9fa3993bb4504fbbc10511cde141e1c6a48c072d
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -36,8 +34,9 @@ define Package/lua-lzlib/description
 	A library to access zlib library functions and also to read/write gzip files using an interface similar to the base io package. 
 endef
 
-define Build/Install
-endef
+MAKE_FLAGS += \
+	LUA="$(STAGING_DIR)/usr" \
+	OFLAGS="$(TARGET_CFLAGS)" \
 
 define Package/lua-lzlib/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua

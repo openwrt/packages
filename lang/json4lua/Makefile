@@ -11,8 +11,12 @@ PKG_NAME:=json4lua
 PKG_VERSION:=0.9.53
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/amrhassan/$(PKG_NAME)/archive/
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/amrhassan/json4lua.git
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+
 PKG_MAINTAINER:=Amr Hassan <amr.hassan@gmail.com>
 PKG_LICENSE=MIT
 
