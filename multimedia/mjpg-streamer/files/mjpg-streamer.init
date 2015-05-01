@@ -43,6 +43,13 @@ start_instance() {
 		config_get fps "$s" 'fps'
 		[ -n "$fps" ] && input_arg="${input_arg} --fps $fps"
 
+		config_get_bool yuv "$s" 'yuv' 0
+		if [ $yuv -ne 0 ]; then
+			input_arg="${input_arg} --yuv"
+			config_get quality "$s" 'quality'
+			[ -n "$quality" ] && input_arg="${input_arg} --quality $quality"
+		fi
+
 		config_get resolution "$s" 'resolution'
 		[ -n "$resolution" ] && input_arg="${input_arg} --resolution $resolution"
 
