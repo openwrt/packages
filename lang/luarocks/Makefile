@@ -11,8 +11,12 @@ PKG_NAME:=luarocks
 PKG_VERSION:=2.2.0-rc1
 PKG_RELEASE:=2
 
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/keplerproject/$(PKG_NAME)/archive/
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/keplerproject/luarocks.git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+
 PKG_MAINTAINER:=Amr Hassan <amr.hassan@gmail.com>
 PKG_INSTALL=1
 PKG_BUILD_DEPENDS:=lua/host luac/host
