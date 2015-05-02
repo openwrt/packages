@@ -18,26 +18,28 @@ EOF
 
   # make sure config is present (might fail for any reason)
   uci get cjdns.cjdns.ipv6 >/dev/null 2>&1
-  if [ $? -ne 0]; then
+  if [ $? -ne 0 ]; then
     exit 1
   fi
 
-  # enable auto-peering on ethernet
-  uci show network.lan | grep bridge >/dev/null 2>&1
+  # enable auto-peering on ethernet interface lan, if existing
+  uci get network.lan | grep interface >/dev/null 2>&1
   if [ $? -eq 0 ]; then
-    # most routers will set up an ethernet bridge for the lan
-    ifname="br-lan"
-  else
-    # docker containers don't have permission to create bridges by default,
-    # so we bind to the underlying interface instead (likely eth0)
-    ifname=`uci get network.lan.ifname`
-  fi
-  uci -q batch <<-EOF >/dev/null
-    add cjdns eth_interface
-    set cjdns.@eth_interface[-1].beacon=2
-    set cjdns.@eth_interface[-1].bind=$ifname
+    uci get network.lan.type | grep bridge >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      # most routers will set up an ethernet bridge for the lan
+      ifname="br-lan"
+    else
+      # docker containers don't have permission to create bridges by default,
+      # so we bind to the underlying interface instead (likely eth0)
+      ifname=`uci get network.lan.ifname`
+    fi
+    uci -q batch <<-EOF >/dev/null
+      add cjdns eth_interface
+      set cjdns.@eth_interface[-1].beacon=2
+      set cjdns.@eth_interface[-1].bind=$ifname
 EOF
-
+  fi
   # set the tun interface name
   uci set cjdns.cjdns.tun_device=tuncjdns
 
