@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
-PKG_VERSION:=4.0.6
+PKG_VERSION:=4.1.2
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/haiwen/seafile.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=adf9a875a960c1471bf6c93fce397c576e985bb3
+PKG_SOURCE_VERSION:=c0166019c712e2e1d5e532fd5f7401b1b72db6d8
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -33,7 +33,7 @@ define Package/seafile-server
 		+sqlite3-cli +python-mysql +jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 \
 		+libmysqlclient +libevhtp +libpthread +libuuid \
 		+bash +sudo +procps +procps-pkill $(ICONV_DEPENDS)
-    EXTRA_DEPENDS:=seafile-ccnet (=4.0.6-1e1aeae83cc33356ebd5f064f4a4c148186b814d), seafile-seahub (=4.0.6-739b32b02c4803448d5cb75b3e22ec0073930aed)
+    EXTRA_DEPENDS:=seafile-ccnet (=4.1.2-a73109f09af4ecc49cdc4c57cdde51b38e15c31a), seafile-seahub (=4.1.2-3fb1288f920de03a4e2e6a06b60671ce98971742)
 endef
 
 define Package/seafile-server/description
