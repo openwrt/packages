@@ -90,6 +90,13 @@ if ! id -u seafile >/dev/null 2>&1; then
 chown -R seafile:seafile /usr/share/seafile/
 chmod -R o-rwx /usr/share/seafile/
 
+if [ ! -f /etc/config/seafile ]; then
+cat <<EOF > /etc/config/seafile
+# Start Seahub in fastcgi mode - 1 = enable, 0 = disable
+SEAHUB_FASTCGI=0
+EOF
+fi
+
 if [ ! -d "/usr/share/seafile/seafile-data" ]
 then
    echo "*** Installation completed, running configuration script..."
