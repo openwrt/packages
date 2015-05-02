@@ -52,7 +52,7 @@ define perlmod/host/Install
 endef
 
 define perlmod/Configure
-	(cd $(PKG_BUILD_DIR); \
+	(cd $(if $(3),$(3),$(PKG_BUILD_DIR)); \
 	PERL_MM_USE_DEFAULT=1 \
 	$(2) \
 	$(PERL_CMD) Makefile.PL \
