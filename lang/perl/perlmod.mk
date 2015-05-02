@@ -108,7 +108,7 @@ endef
 define perlmod/Compile
 	PERL5LIB=$(PERL_LIB) \
 	$(2) \
-	$(MAKE) -C $(PKG_BUILD_DIR) \
+	$(MAKE) -C $(if $(3),$(3),$(PKG_BUILD_DIR)) \
 		$(1) \
 		install
 endef
