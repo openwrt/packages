@@ -40,6 +40,10 @@ define Package/seafile-server/description
    Open source cloud storage with advanced features on privacy protection and teamwork.
 endef
 
+define Package/seafile-server/conffiles
+/etc/config/seafile
+endef
+
 CONFIGURE_ARGS += --disable-riak \
 		    --disable-client \
 		    --disable-fuse \
@@ -60,6 +64,7 @@ define Package/seafile-server/install
 	$(INSTALL_DIR) $(1)/usr/lib/python2.7/site-packages
 	$(INSTALL_DIR) $(1)/usr/share/seafile/seafile-server/runtime
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/config
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python2.7/site-packages/seafile/ $(1)/usr/lib/python2.7/site-packages/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python2.7/site-packages/seaserv/ $(1)/usr/lib/python2.7/site-packages/
@@ -71,6 +76,7 @@ define Package/seafile-server/install
 	$(CP) $(PKG_BUILD_DIR)/scripts/sqlite2mysql.sh $(1)/usr/share/seafile/seafile-server/
 	$(CP) $(PKG_BUILD_DIR)/scripts/upgrade/ $(1)/usr/share/seafile/seafile-server/
 	$(INSTALL_BIN) ./files/seafile.init $(1)/etc/init.d/seafile
+	$(CP) ./files/seafile.conf $(1)/etc/config/seafile
 endef
 
 define Build/InstallDev
@@ -89,13 +95,6 @@ if ! id -u seafile >/dev/null 2>&1; then
 
 chown -R seafile:seafile /usr/share/seafile/
 chmod -R o-rwx /usr/share/seafile/
-
-if [ ! -f /etc/config/seafile ]; then
-cat <<EOF > /etc/config/seafile
-# Start Seahub in fastcgi mode - 1 = enable, 0 = disable
-SEAHUB_FASTCGI=0
-EOF
-fi
 
 if [ ! -d "/usr/share/seafile/seafile-data" ]
 then
