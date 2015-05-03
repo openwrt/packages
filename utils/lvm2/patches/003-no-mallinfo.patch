@@ -1,0 +1,13 @@
+Index: LVM2.2.02.118/lib/mm/memlock.c
+===================================================================
+--- LVM2.2.02.118.orig/lib/mm/memlock.c
++++ LVM2.2.02.118/lib/mm/memlock.c
+@@ -137,7 +137,7 @@ static void _touch_memory(void *mem, siz
+ 
+ static void _allocate_memory(void)
+ {
+-#ifndef VALGRIND_POOL
++#if defined(__GLIBC__) && !defined(VALGRIND_POOL)
+ 	void *stack_mem;
+ 	struct rlimit limit;
+ 	int i, area = 0, missing = _size_malloc_tmp, max_areas = 32, hblks;

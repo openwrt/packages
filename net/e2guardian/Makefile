@@ -14,9 +14,11 @@ PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/e2guardian/e2guardian/archive/
-PKG_MD5SUM:=f8ffac7ac4f040b672cc4e62121bf4c5
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/e2guardian/e2guardian.git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

@@ -406,6 +406,10 @@ config FFMPEG_CUSTOM_PROTOCOL_file
 config FFMPEG_CUSTOM_PROTOCOL_http
 	bool "http:"
 
+config FFMPEG_CUSTOM_PROTOCOL_icecast
+	bool "icecast:"
+	select FFMPEG_CUSTOM_PROTOCOL_http
+
 config FFMPEG_CUSTOM_PROTOCOL_pipe
 	bool "pipe:"
 

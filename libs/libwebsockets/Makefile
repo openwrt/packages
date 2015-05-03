@@ -1,19 +1,24 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
+#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
-
 PKG_VERSION:=1.3-chrome37-firefox30
 PKG_RELEASE:=1
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/warmcat/$(PKG_NAME)/archive/
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/warmcat/libwebsockets.git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
+
 PKG_LICENSE:=LGPL-2.1+exception
 PKG_LICENSE_FILES:=LICENSE
 

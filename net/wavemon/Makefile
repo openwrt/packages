@@ -11,9 +11,12 @@ PKG_NAME:=wavemon
 PKG_VERSION:=0.7.6
 PKG_RELEASE:=2
 
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/uoaerg/wavemon/archive
-PKG_MD5SUM:=cd0049f174745d32b4fdf3b63d897bad
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/uoaerg/wavemon.git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>

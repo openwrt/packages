@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=2.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LIBVER:=2.2
 
@@ -575,7 +575,7 @@ endef
 define Package/ruby-psych
 $(call Package/ruby/Default)
   TITLE+=YAML parser and emitter
-  DEPENDS:=ruby +ruby-bigdecimal +ruby-datetime +ruby-misc +ruby-enc
+  DEPENDS:=ruby +ruby-bigdecimal +ruby-datetime +ruby-misc +ruby-enc +libyaml
 endef
 
 define Package/ruby-psych/description
@@ -803,6 +803,7 @@ HOST_CONFIGURE_ARGS += \
 	--disable-install-rdoc \
 	--disable-install-capi \
 	--with-static-linked-ext \
+	--with-out-ext=tk,tk/tkutil,win32,win32ole,dbm,gdbm,readline \
 
 # even not used, host build with restricted exts results in gems not being
 # compiling for target (probably some cross compiling problem like checking
@@ -819,6 +820,7 @@ CONFIGURE_ARGS += \
 	--disable-install-capi \
 	--with-ruby-version=minor \
 	--with-iconv-dir=$(ICONV_PREFIX) \
+	--with-out-ext=tk,tk/tkutil,win32,win32ole
 
 ifndef CONFIG_RUBY_DIGEST_USE_OPENSSL
 CONFIGURE_ARGS += \
@@ -880,7 +882,6 @@ define Package/ruby-datetime/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
 		usr/lib/ruby/$(PKG_LIBVER)/time.rb \
 		usr/lib/ruby/$(PKG_LIBVER)/date.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/date/ \
 		usr/lib/ruby/$(PKG_LIBVER)/*/date_core.so \
 	) | ( cd $(1); $(TAR) -xf - )
 endef
@@ -1258,7 +1259,6 @@ endef
 
 define Package/ruby-socket/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
-		usr/lib/ruby/$(PKG_LIBVER)/gserver.rb \
 		usr/lib/ruby/$(PKG_LIBVER)/ipaddr.rb \
 		usr/lib/ruby/$(PKG_LIBVER)/resolv-replace.rb \
 		usr/lib/ruby/$(PKG_LIBVER)/resolv.rb \

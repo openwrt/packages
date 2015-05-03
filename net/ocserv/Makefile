@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ocserv
-PKG_VERSION:=0.10.2
+PKG_VERSION:=0.10.4
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/ocserv/
-PKG_MD5SUM:=32ce2c2a00a97ab7c27e571aae207b2d
+PKG_MD5SUM:=6df31778642320ea7b90f314c4c9a897
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
@@ -58,6 +58,7 @@ CONFIGURE_ARGS+= \
 	--enable-local-libopts \
 	--with-libreadline-prefix="$(STAGING_DIR)/" \
 	--without-libnl \
+	--without-gssapi \
 	--with-libcrypt-prefix="$(STAGING_DIR)/" \
 
 ifneq ($(CONFIG_OCSERV_PAM),y)
