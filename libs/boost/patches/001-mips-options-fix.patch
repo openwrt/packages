@@ -5,7 +5,7 @@
          {
              local arch = [ feature.get-values architecture : $(properties) ] ;
 -            if $(arch) != arm
-+            if $(arch) != arm && $(arch) != mips1
++            if $(arch) = power || $(arch) = sparc || $(arch) = x86
              {
                  if $(model) = 32
                  {
