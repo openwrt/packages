@@ -1,13 +1,28 @@
-Index: LVM2.2.02.118/lib/mm/memlock.c
+Index: LVM2.2.02.119/lib/mm/memlock.c
 ===================================================================
---- LVM2.2.02.118.orig/lib/mm/memlock.c
-+++ LVM2.2.02.118/lib/mm/memlock.c
-@@ -137,7 +137,7 @@ static void _touch_memory(void *mem, siz
+--- LVM2.2.02.119.orig/lib/mm/memlock.c
++++ LVM2.2.02.119/lib/mm/memlock.c
+@@ -161,12 +161,15 @@ static void _allocate_memory(void)
+          *  memory on free(), this is good enough for our purposes.
+          */
+ 	while (missing > 0) {
++#ifdef __GLIBC__
+ 		struct mallinfo inf = mallinfo();
+ 		hblks = inf.hblks;
++#endif
  
- static void _allocate_memory(void)
- {
--#ifndef VALGRIND_POOL
-+#if defined(__GLIBC__) && !defined(VALGRIND_POOL)
- 	void *stack_mem;
- 	struct rlimit limit;
- 	int i, area = 0, missing = _size_malloc_tmp, max_areas = 32, hblks;
+ 		if ((areas[area] = malloc(_size_malloc_tmp)))
+ 			_touch_memory(areas[area], _size_malloc_tmp);
+ 
++#ifdef __GLIBC__
+ 		inf = mallinfo();
+ 
+ 		if (hblks < inf.hblks) {
+@@ -179,6 +182,7 @@ static void _allocate_memory(void)
+ 			++ area;
+ 			missing -= _size_malloc_tmp;
+ 		}
++#endif
+ 
+ 		if (area == max_areas && missing > 0) {
+ 			/* Too bad. Warn the user and proceed, as things are
