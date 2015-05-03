@@ -18,11 +18,30 @@ Index: LVM2.2.02.119/lib/mm/memlock.c
  		inf = mallinfo();
  
  		if (hblks < inf.hblks) {
-@@ -179,6 +182,7 @@ static void _allocate_memory(void)
+@@ -176,9 +179,12 @@ static void _allocate_memory(void)
+ 			free(areas[area]);
+ 			_size_malloc_tmp /= 2;
+ 		} else {
++#endif
  			++ area;
  			missing -= _size_malloc_tmp;
++#ifdef __GLIBC__
  		}
 +#endif
  
  		if (area == max_areas && missing > 0) {
  			/* Too bad. Warn the user and proceed, as things are
+@@ -467,8 +473,13 @@ static void _lock_mem(struct cmd_context
+ 	 * will not block memory locked thread
+ 	 * Note: assuming _memlock_count_daemon is updated before _memlock_count
+ 	 */
++#ifdef __GLIBC__
+ 	_use_mlockall = _memlock_count_daemon ? 1 :
+ 		find_config_tree_bool(cmd, activation_use_mlockall_CFG, NULL);
++#else
++	/* always use mlockall on musl */
++	_use_mlockall = 1;
++#endif
+ 
+ 	if (!_use_mlockall) {
+ 		if (!*_procselfmaps &&
