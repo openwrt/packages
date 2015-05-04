@@ -1,5 +1,7 @@
---- a/Makefile.in
-+++ b/Makefile.in
+Index: apr-1.5.2/Makefile.in
+===================================================================
+--- apr-1.5.2.orig/Makefile.in
++++ apr-1.5.2/Makefile.in
 @@ -3,6 +3,7 @@ srcdir=@srcdir@
  VPATH=@srcdir@
  top_srcdir=@apr_srcdir@
@@ -8,9 +10,11 @@
  
  #
  # APR (Apache Portable Runtime) library Makefile.
---- a/configure.in
-+++ b/configure.in
-@@ -246,9 +246,6 @@ case $host in
+Index: apr-1.5.2/configure.in
+===================================================================
+--- apr-1.5.2.orig/configure.in
++++ apr-1.5.2/configure.in
+@@ -245,9 +245,6 @@ case $host in
      gcc $CFLAGS $CPPFLAGS -o $LIBTOOL.exe $LIBTOOL.c
      ;;
  *)
