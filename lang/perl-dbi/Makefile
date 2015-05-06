@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-dbi
 PKG_VERSION:=1.633
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/T/TI/TIMB/
 PKG_SOURCE:=DBI-$(PKG_VERSION).tar.gz
