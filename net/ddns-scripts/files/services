@@ -91,3 +91,6 @@
 
 # domains.google.com	non free service - require HTTPS communication
 "domains.google.com"	"https://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# system-ns.com - free lifetime dynamic dns for personal use. Use your token from profile as PASSWORD option
+"system-ns.com"		"https://system-ns.com/api?type=dynamic&domain=[DOMAIN]&command=set&token=[PASSWORD]&ip=[IP]"
