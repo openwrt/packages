@@ -43,6 +43,8 @@ define Package/$(PKG_NAME)/Default
 	CATEGORY:=Libraries
 	TITLE:=libwebsockets
 	DEPENDS:=+zlib
+	URL:=https://libwebsockets.org
+	MAINTAINER:=Karl Palsson <karlp@remake.is>
 endef
 
 define Package/libwebsockets-openssl
