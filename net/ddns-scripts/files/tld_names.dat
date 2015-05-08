@@ -830,6 +830,7 @@ edu.et
 biz.et
 name.et
 info.et
+net.et
 
 // eu : http://en.wikipedia.org/wiki/.eu
 eu
@@ -936,6 +937,11 @@ org.gi
 // gl : http://en.wikipedia.org/wiki/.gl
 // http://nic.gl
 gl
+co.gl
+com.gl
+edu.gl
+net.gl
+org.gl
 
 // gm : http://www.nic.gm/htmlpages%5Cgm-policy.htm
 gm
@@ -3639,6 +3645,7 @@ ltd.lk
 assn.lk
 grp.lk
 hotel.lk
+ac.lk
 
 // lr : http://psg.com/dns/lr/lr.txt
 // Submitted by registry <randy@psg.com> 2008-06-17
@@ -4485,9 +4492,9 @@ mobi.ng
 // ni : http://www.nic.ni/dominios.htm
 *.ni
 
-// nl : http://www.domain-registry.nl/ace.php/c,728,122,,,,Home.html
-// Confirmed by registry <Antoin.Verschuren@sidn.nl> (with technical
-// reservations) 2008-06-08
+// nl : http://en.wikipedia.org/wiki/.nl
+// https://www.sidn.nl/
+// ccTLD for the Netherlands
 nl
 
 // BV.nl will be a registry for dutch BV's (besloten vennootschap)
@@ -5551,14 +5558,11 @@ gos.pk
 info.pk
 
 // pl http://www.dns.pl/english/index.html
-// confirmed on 26.09.2014 from Bogna Tchórzewska <partner@dns.pl>
+// updated by .PL registry on 2015-04-28
 pl
 com.pl
 net.pl
 org.pl
-info.pl
-waw.pl
-gov.pl
 // pl functional domains (http://www.dns.pl/english/index.html)
 aid.pl
 agro.pl
@@ -5568,6 +5572,7 @@ biz.pl
 edu.pl
 gmina.pl
 gsm.pl
+info.pl
 mail.pl
 miasta.pl
 media.pl
@@ -5589,16 +5594,55 @@ tm.pl
 tourism.pl
 travel.pl
 turystyka.pl
-// Government domains (administred by ippt.gov.pl)
-uw.gov.pl
-um.gov.pl
+// Government domains
+gov.pl
+ap.gov.pl
+ic.gov.pl
+is.gov.pl
+us.gov.pl
+kmpsp.gov.pl
+kppsp.gov.pl
+kwpsp.gov.pl
+psp.gov.pl
+wskr.gov.pl
+kwp.gov.pl
+mw.gov.pl
 ug.gov.pl
+um.gov.pl
+umig.gov.pl
+ugim.gov.pl
 upow.gov.pl
+uw.gov.pl
 starostwo.gov.pl
+pa.gov.pl
+po.gov.pl
+psse.gov.pl
+pup.gov.pl
+rzgw.gov.pl
+sa.gov.pl
 so.gov.pl
 sr.gov.pl
-po.gov.pl
-pa.gov.pl
+wsa.gov.pl
+sko.gov.pl
+uzs.gov.pl
+wiih.gov.pl
+winb.gov.pl
+pinb.gov.pl
+wios.gov.pl
+witd.gov.pl
+wzmiuw.gov.pl
+piw.gov.pl
+wiw.gov.pl
+griw.gov.pl
+wif.gov.pl
+oum.gov.pl
+sdn.gov.pl
+zp.gov.pl
+uppo.gov.pl
+mup.gov.pl
+wuoz.gov.pl
+konsulat.gov.pl
+oirm.gov.pl
 // pl regional domains (http://www.dns.pl/english/index.html)
 augustow.pl
 babia-gora.pl
@@ -5706,6 +5750,7 @@ ustka.pl
 walbrzych.pl
 warmia.pl
 warszawa.pl
+waw.pl
 wegrow.pl
 wielun.pl
 wlocl.pl
@@ -6871,141 +6916,183 @@ edu.ws
 yt
 
 // IDN ccTLDs
-// Please sort by ISO 3166 ccTLD, then punicode string
-// when submitting patches and follow this format:
-// <Punicode> ("<english word>" <language>) : <ISO 3166 ccTLD>
-// [optional sponsoring org]
-// <URL>
+// When submitting patches, please maintain a sort by ISO 3166 ccTLD, then
+// U-label, and follow this format:
+// // A-Label ("<Latin renderings>", <language name>[, variant info]) : <ISO 3166 ccTLD>
+// // [sponsoring org]
+// U-Label
 
-// xn--mgbaam7a8h ("Emerat" Arabic) : AE
+// xn--mgbaam7a8h ("Emerat", Arabic) : AE
 // http://nic.ae/english/arabicdomain/rules.jsp
 امارات
 xn--mgbaam7a8h
 
-// xn--54b7fta0cc ("Bangla" Bangla) : BD
+// xn--y9a3aq ("hye", Armenian) : AM
+// ISOC AM (operated by .am Registry)
+հայ
+xn--y9a3aq
+
+// xn--54b7fta0cc ("Bangla", Bangla) : BD
 বাংলা
 xn--54b7fta0cc
 
-// xn--fiqs8s ("China" Chinese-Han-Simplified <.Zhongguo>) : CN
+// xn--90ais ("bel", Belarusian/Russian Cyrillic) : BY
+// Operated by .by registry
+бел
+xn--90ais
+
+// xn--fiqs8s ("Zhongguo/China", Chinese, Simplified) : CN
 // CNNIC
 // http://cnnic.cn/html/Dir/2005/10/11/3218.htm
 中国
 xn--fiqs8s
 
-// xn--fiqz9s ("China" Chinese-Han-Traditional <.Zhongguo>) : CN
+// xn--fiqz9s ("Zhongguo/China", Chinese, Traditional) : CN
 // CNNIC
 // http://cnnic.cn/html/Dir/2005/10/11/3218.htm
 中國
 xn--fiqz9s
 
-// xn--lgbbat1ad8j ("Algeria / Al Jazair" Arabic) : DZ
+// xn--lgbbat1ad8j ("Algeria/Al Jazair", Arabic) : DZ
 الجزائر
 xn--lgbbat1ad8j
 
-// xn--wgbh1c ("Egypt" Arabic .masr) : EG
+// xn--wgbh1c ("Egypt/Masr", Arabic) : EG
 // http://www.dotmasr.eg/
 مصر
 xn--wgbh1c
 
-// xn--node ("ge" Georgian (Mkhedruli)) : GE
+// xn--node ("ge", Georgian Mkhedruli) : GE
 გე
 xn--node
 
-// xn--j6w193g ("Hong Kong" Chinese-Han) : HK
+// xn--qxam ("el", Greek) : GR
+// Hellenic Ministry of Infrastructure, Transport, and Networks
+ελ
+xn--qxam
+
+// xn--j6w193g ("Hong Kong", Chinese) : HK
 // https://www2.hkirc.hk/register/rules.jsp
 香港
 xn--j6w193g
 
-// xn--h2brj9c ("Bharat" Devanagari) : IN
+// xn--h2brj9c ("Bharat", Devanagari) : IN
 // India
 भारत
 xn--h2brj9c
 
-// xn--mgbbh1a71e ("Bharat" Arabic) : IN
+// xn--mgbbh1a71e ("Bharat", Arabic) : IN
 // India
 بھارت
 xn--mgbbh1a71e
 
-// xn--fpcrj9c3d ("Bharat" Telugu) : IN
+// xn--fpcrj9c3d ("Bharat", Telugu) : IN
 // India
 భారత్
 xn--fpcrj9c3d
 
-// xn--gecrj9c ("Bharat" Gujarati) : IN
+// xn--gecrj9c ("Bharat", Gujarati) : IN
 // India
 ભારત
 xn--gecrj9c
 
-// xn--s9brj9c ("Bharat" Gurmukhi) : IN
+// xn--s9brj9c ("Bharat", Gurmukhi) : IN
 // India
 ਭਾਰਤ
 xn--s9brj9c
 
-// xn--45brj9c ("Bharat" Bengali) : IN
+// xn--45brj9c ("Bharat", Bengali) : IN
 // India
 ভারত
 xn--45brj9c
 
-// xn--xkc2dl3a5ee0h ("India" Tamil) : IN
+// xn--xkc2dl3a5ee0h ("India", Tamil) : IN
 // India
 இந்தியா
 xn--xkc2dl3a5ee0h
 
-// xn--mgba3a4f16a ("Iran" Persian) : IR
+// xn--mgba3a4f16a ("Iran", Persian) : IR
 ایران
 xn--mgba3a4f16a
 
-// xn--mgba3a4fra ("Iran" Arabic) : IR
+// xn--mgba3a4fra ("Iran", Arabic) : IR
 ايران
 xn--mgba3a4fra
 
-// xn--mgbayh7gpa ("al-Ordon" Arabic) : JO
+// xn--mgbtx2b ("Iraq", Arabic) : IQ
+// Communications and Media Commission
+عراق
+xn--mgbtx2b
+
+// xn--mgbayh7gpa ("al-Ordon", Arabic) : JO
 // National Information Technology Center (NITC)
 // Royal Scientific Society, Al-Jubeiha
 الاردن
 xn--mgbayh7gpa
 
-// xn--3e0b707e ("Republic of Korea" Hangul) : KR
+// xn--3e0b707e ("Republic of Korea", Hangul) : KR
 한국
 xn--3e0b707e
 
-// xn--80ao21a ("Kaz" Kazakh) : KZ
+// xn--80ao21a ("Kaz", Kazakh) : KZ
 қаз
 xn--80ao21a
 
-// xn--fzc2c9e2c ("Lanka" Sinhalese-Sinhala) : LK
+// xn--fzc2c9e2c ("Lanka", Sinhalese-Sinhala) : LK
 // http://nic.lk
 ලංකා
 xn--fzc2c9e2c
 
-// xn--xkc2al3hye2a ("Ilangai" Tamil) : LK
+// xn--xkc2al3hye2a ("Ilangai", Tamil) : LK
 // http://nic.lk
 இலங்கை
 xn--xkc2al3hye2a
 
-// xn--mgbc0a9azcg ("Morocco / al-Maghrib" Arabic) : MA
+// xn--mgbc0a9azcg ("Morocco/al-Maghrib", Arabic) : MA
 المغرب
 xn--mgbc0a9azcg
 
-// xn--l1acc ("mon" Mongolian) : MN
+// xn--d1alf ("mkd", Macedonian) : MK
+// MARnet
+мкд
+xn--d1alf
+
+// xn--l1acc ("mon", Mongolian) : MN
 мон
 xn--l1acc
 
-// xn--mgbx4cd0ab ("Malaysia" Malay) : MY
+// xn--mix891f ("Macao", Chinese, Traditional) : MO
+// MONIC / HNET Asia (Registry Operator for .mo)
+澳門
+xn--mix891f
+
+// xn--mix082f ("Macao", Chinese, Simplified) : MO
+澳门
+xn--mix082f
+
+// xn--mgbx4cd0ab ("Malaysia", Malay) : MY
 مليسيا
 xn--mgbx4cd0ab
 
-// xn--mgb9awbf ("Oman" Arabic) : OM
+// xn--mgb9awbf ("Oman", Arabic) : OM
 عمان
 xn--mgb9awbf
 
-// xn--ygbi2ammx ("Falasteen" Arabic) : PS
+// xn--mgbai9azgqp6j ("Pakistan", Urdu/Arabic) : PK
+پاکستان
+xn--mgbai9azgqp6j
+
+// xn--mgbai9a5eva00b ("Pakistan", Urdu/Arabic, variant) : PK
+پاكستان
+xn--mgbai9a5eva00b
+
+// xn--ygbi2ammx ("Falasteen", Arabic) : PS
 // The Palestinian National Internet Naming Authority (PNINA)
 // http://www.pnina.ps
 فلسطين
 xn--ygbi2ammx
 
-// xn--90a3ac ("srb" Cyrillic) : RS
+// xn--90a3ac ("srb", Cyrillic) : RS
 // http://www.rnids.rs/en/the-.срб-domain
 срб
 xn--90a3ac
@@ -7022,78 +7109,83 @@ xn--o1ach.xn--90a3ac
 ак.срб
 xn--80au.xn--90a3ac
 
-// xn--p1ai ("rf" Russian-Cyrillic) : RU
+// xn--p1ai ("rf", Russian-Cyrillic) : RU
 // http://www.cctld.ru/en/docs/rulesrf.php
 рф
 xn--p1ai
 
-// xn--wgbl6a ("Qatar" Arabic) : QA
+// xn--wgbl6a ("Qatar", Arabic) : QA
 // http://www.ict.gov.qa/
 قطر
 xn--wgbl6a
 
-// xn--mgberp4a5d4ar ("AlSaudiah" Arabic) : SA
+// xn--mgberp4a5d4ar ("AlSaudiah", Arabic) : SA
 // http://www.nic.net.sa/
 السعودية
 xn--mgberp4a5d4ar
 
-// xn--mgberp4a5d4a87g ("AlSaudiah" Arabic) variant : SA
+// xn--mgberp4a5d4a87g ("AlSaudiah", Arabic, variant) : SA
 السعودیة
 xn--mgberp4a5d4a87g
 
-// xn--mgbqly7c0a67fbc ("AlSaudiah" Arabic) variant : SA
+// xn--mgbqly7c0a67fbc ("AlSaudiah", Arabic, variant) : SA
 السعودیۃ
 xn--mgbqly7c0a67fbc
 
-// xn--mgbqly7cvafr ("AlSaudiah" Arabic) variant : SA
+// xn--mgbqly7cvafr ("AlSaudiah", Arabic, variant) : SA
 السعوديه
 xn--mgbqly7cvafr
 
-// xn--ogbpf8fl ("Syria" Arabic) : SY
-سورية
-xn--ogbpf8fl
+// xn--mgbpl2fh ("sudan", Arabic) : SD
+// Operated by .sd registry
+سودان
+xn--mgbpl2fh
 
-// xn--mgbtf8fl ("Syria" Arabic) variant : SY
-سوريا
-xn--mgbtf8fl
-
-// xn--yfro4i67o Singapore ("Singapore" Chinese-Han) : SG
+// xn--yfro4i67o Singapore ("Singapore", Chinese) : SG
 新加坡
 xn--yfro4i67o
 
-// xn--clchc0ea0b2g2a9gcd ("Singapore" Tamil) : SG
+// xn--clchc0ea0b2g2a9gcd ("Singapore", Tamil) : SG
 சிங்கப்பூர்
 xn--clchc0ea0b2g2a9gcd
 
-// xn--o3cw4h ("Thai" Thai) : TH
+// xn--ogbpf8fl ("Syria", Arabic) : SY
+سورية
+xn--ogbpf8fl
+
+// xn--mgbtf8fl ("Syria", Arabic, variant) : SY
+سوريا
+xn--mgbtf8fl
+
+// xn--o3cw4h ("Thai", Thai) : TH
 // http://www.thnic.co.th
 ไทย
 xn--o3cw4h
 
-// xn--pgbs0dh ("Tunis") : TN
+// xn--pgbs0dh ("Tunisia", Arabic) : TN
 // http://nic.tn
 تونس
 xn--pgbs0dh
 
-// xn--kpry57d ("Taiwan" Chinese-Han-Traditional) : TW
+// xn--kpry57d ("Taiwan", Chinese, Traditional) : TW
 // http://www.twnic.net/english/dn/dn_07a.htm
 台灣
 xn--kpry57d
 
-// xn--kprw13d ("Taiwan" Chinese-Han-Simplified) : TW
+// xn--kprw13d ("Taiwan", Chinese, Simplified) : TW
 // http://www.twnic.net/english/dn/dn_07a.htm
 台湾
 xn--kprw13d
 
-// xn--nnx388a ("Taiwan") variant : TW
+// xn--nnx388a ("Taiwan", Chinese, variant) : TW
 臺灣
 xn--nnx388a
 
-// xn--j1amh ("ukr" Cyrillic) : UA
+// xn--j1amh ("ukr", Cyrillic) : UA
 укр
 xn--j1amh
 
-// xn--mgb2ddes ("AlYemen" Arabic) : YE
+// xn--mgb2ddes ("AlYemen", Arabic) : YE
 اليمن
 xn--mgb2ddes
 
@@ -7113,7 +7205,7 @@ xxx
 *.zw
 
 
-// List of new gTLDs imported from https://newgtlds.icann.org/newgtlds.csv on 2015-04-07T06:02:08Z
+// List of new gTLDs imported from https://newgtlds.icann.org/newgtlds.csv on 2015-05-06T09:31:08Z
 
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -7166,6 +7258,9 @@ africa
 // africamagic : 2015-03-05 Electronic Media Network (Pty) Ltd
 africamagic
 
+// agakhan : 2015-04-23 Fondation Aga Khan (Aga Khan Foundation)
+agakhan
+
 // agency : 2013-11-14 Steel Falls, LLC
 agency
 
@@ -7177,6 +7272,9 @@ airforce
 
 // airtel : 2014-10-24 Bharti Airtel Limited
 airtel
+
+// akdn : 2015-04-23 Fondation Aga Khan (Aga Khan Foundation)
+akdn
 
 // alibaba : 2015-01-15 Alibaba Group Holding Limited
 alibaba
@@ -7249,6 +7347,9 @@ axa
 
 // azure : 2014-12-18 Microsoft Corporation
 azure
+
+// baby : 2015-04-09 Johnson & Johnson Services, Inc.
+baby
 
 // baidu : 2015-01-08 Baidu, Inc.
 baidu
@@ -7481,13 +7582,16 @@ cba
 // cbn : 2014-08-22 The Christian Broadcasting Network, Inc.
 cbn
 
+// ceb : 2015-04-09 The Corporate Executive Board Company
+ceb
+
 // center : 2013-11-07 Tin Mill, LLC
 center
 
 // ceo : 2013-11-07 CEOTLD Pty Ltd
 ceo
 
-// cern : 2014-06-05 European Organization for Nuclear Research (
+// cern : 2014-06-05 European Organization for Nuclear Research ("CERN")
 cern
 
 // cfa : 2014-08-28 CFA Institute
@@ -7496,8 +7600,14 @@ cfa
 // cfd : 2014-12-11 IG Group Holdings PLC
 cfd
 
+// chanel : 2015-04-09 Chanel International B.V.
+chanel
+
 // channel : 2014-05-08 Charleston Road Registry Inc.
 channel
+
+// chase : 2015-04-30 JPMorgan Chase & Co.
+chase
 
 // chat : 2014-12-04 Sand Fields, LLC
 chat
@@ -7549,6 +7659,9 @@ clinic
 
 // clothing : 2013-08-27 Steel Lake, LLC
 clothing
+
+// cloud : 2015-04-16 ARUBA S.p.A.
+cloud
 
 // club : 2013-11-08 .CLUB DOMAINS, LLC
 club
@@ -7976,7 +8089,7 @@ garden
 // gbiz : 2014-07-17 Charleston Road Registry Inc.
 gbiz
 
-// gdn : 2014-07-31 Joint Stock Company
+// gdn : 2014-07-31 Joint Stock Company "Navigation-information systems"
 gdn
 
 // gea : 2014-12-04 GEA Group Aktiengesellschaft
@@ -8246,6 +8359,9 @@ java
 // jcb : 2014-11-20 JCB Co., Ltd.
 jcb
 
+// jcp : 2015-04-23 JCP Media, Inc.
+jcp
+
 // jetzt : 2014-01-09 New TLD Company AB
 jetzt
 
@@ -8273,6 +8389,9 @@ jot
 // joy : 2014-12-18 Amazon EU S.à r.l.
 joy
 
+// jpmorgan : 2015-04-30 JPMorgan Chase & Co.
+jpmorgan
+
 // jprs : 2014-09-18 Japan Registry Services Co., Ltd.
 jprs
 
@@ -8284,6 +8403,15 @@ kaufen
 
 // kddi : 2014-09-12 KDDI CORPORATION
 kddi
+
+// kerryhotels : 2015-04-30 Kerry Trading Co. Limited
+kerryhotels
+
+// kerrylogistics : 2015-04-09 Kerry Trading Co. Limited
+kerrylogistics
+
+// kerryproperties : 2015-04-09 Kerry Trading Co. Limited
+kerryproperties
 
 // kfh : 2014-12-04 Kuwait Finance House
 kfh
@@ -8306,6 +8434,9 @@ koeln
 // komatsu : 2015-01-08 Komatsu Ltd.
 komatsu
 
+// kpmg : 2015-04-23 KPMG International Cooperative (KPMG International Genossenschaft)
+kpmg
+
 // kpn : 2015-01-08 Koninklijke KPN N.V.
 kpn
 
@@ -8314,6 +8445,9 @@ krd
 
 // kred : 2013-12-19 KredTLD Pty Ltd
 kred
+
+// kuokgroup : 2015-04-09 Kerry Trading Co. Limited
+kuokgroup
 
 // kyknet : 2015-03-05 Electronic Media Network (Pty) Ltd
 kyknet
@@ -8348,7 +8482,7 @@ law
 // lawyer : 2014-03-20
 lawyer
 
-// lds : 2014-03-20 IRI Domain Management, LLC (
+// lds : 2014-03-20 IRI Domain Management, LLC ("Applicant")
 lds
 
 // lease : 2014-03-06 Victor Trail, LLC
@@ -8359,6 +8493,9 @@ leclerc
 
 // legal : 2014-10-16 Blue Falls, LLC
 legal
+
+// lexus : 2015-04-23 TOYOTA MOTOR CORPORATION
+lexus
 
 // lgbt : 2014-05-08 Afilias Limited
 lgbt
@@ -8510,6 +8647,9 @@ microsoft
 // mini : 2014-01-09 Bayerische Motoren Werke Aktiengesellschaft
 mini
 
+// mls : 2015-04-23 The Canadian Real Estate Association
+mls
+
 // mma : 2014-11-07 MMA IARD
 mma
 
@@ -8528,6 +8668,9 @@ moe
 // moi : 2014-12-18 Amazon EU S.à r.l.
 moi
 
+// mom : 2015-04-16 Uniregistry, Corp.
+mom
+
 // monash : 2013-09-30 Monash University
 monash
 
@@ -8537,7 +8680,7 @@ money
 // montblanc : 2014-06-23 Richemont DNS Inc.
 montblanc
 
-// mormon : 2013-12-05 IRI Domain Management, LLC (
+// mormon : 2013-12-05 IRI Domain Management, LLC ("Applicant")
 mormon
 
 // mortgage : 2014-03-20
@@ -8650,6 +8793,9 @@ nyc
 
 // obi : 2014-09-25 OBI Group Holding SE & Co. KGaA
 obi
+
+// observer : 2015-04-30 Guardian News and Media Limited
+observer
 
 // office : 2015-03-12 Microsoft Corporation
 office
@@ -8812,6 +8958,9 @@ properties
 
 // property : 2014-05-22 Uniregistry, Corp.
 property
+
+// protection : 2015-04-23 Symantec Corporation
+protection
 
 // pub : 2013-12-12 United TLD Holdco Ltd.
 pub
@@ -8990,7 +9139,7 @@ sbs
 // sca : 2014-03-13 SVENSKA CELLULOSA AKTIEBOLAGET SCA (publ)
 sca
 
-// scb : 2014-02-20 The Siam Commercial Bank Public Company Limited (
+// scb : 2014-02-20 The Siam Commercial Bank Public Company Limited ("SCB")
 scb
 
 // schmidt : 2014-04-03 SALM S.A.S.
@@ -9041,6 +9190,9 @@ sexy
 // sharp : 2014-05-01 Sharp Corporation
 sharp
 
+// shaw : 2015-04-23 Shaw Cablesystems G.P.
+shaw
+
 // shia : 2014-09-04 Asia Green IT System Bilgisayar San. ve Tic. Ltd. Sti.
 shia
 
@@ -9067,6 +9219,9 @@ singles
 
 // site : 2015-01-15 DotSite Inc.
 site
+
+// ski : 2015-04-09 STARTING DOT LIMITED
+ski
 
 // skin : 2015-01-15 L'Oréal
 skin
@@ -9149,6 +9304,9 @@ stockholm
 // storage : 2014-12-22 Self Storage Company LLC
 storage
 
+// store : 2015-04-09 DotStore Inc.
+store
+
 // studio : 2015-02-11 Spring Goodbye, LLC
 studio
 
@@ -9203,13 +9361,16 @@ tab
 // taipei : 2014-07-10 Taipei City Government
 taipei
 
+// talk : 2015-04-09 Amazon EU S.à r.l.
+talk
+
 // taobao : 2015-01-15 Alibaba Group Holding Limited
 taobao
 
 // tatamotors : 2015-03-12 Tata Motors Ltd
 tatamotors
 
-// tatar : 2014-04-24 Limited Liability Company
+// tatar : 2014-04-24 Limited Liability Company "Coordination Center of Regional Domain of Tatarstan Republic"
 tatar
 
 // tattoo : 2013-08-30 Uniregistry, Corp.
@@ -9250,6 +9411,9 @@ thd
 
 // theater : 2015-03-19 Blue Tigers, LLC
 theater
+
+// theguardian : 2015-04-30 Guardian News and Media Limited
+theguardian
 
 // tickets : 2015-02-05 Accent Media Limited
 tickets
@@ -9295,6 +9459,9 @@ tours
 
 // town : 2014-03-06 Koko Moon, LLC
 town
+
+// toyota : 2015-04-23 TOYOTA MOTOR CORPORATION
+toyota
 
 // toys : 2014-03-06 Pioneer Orchard, LLC
 toys
@@ -9643,6 +9810,10 @@ xn--efvy88h
 工行
 xn--estv75g
 
+// xn--fct429k : 2015-04-09 Amazon EU S.à r.l.
+家電
+xn--fct429k
+
 // xn--fhbei : 2015-01-15 VeriSign Sarl
 كوم
 xn--fhbei
@@ -9815,6 +9986,10 @@ xn--vhquv
 信息
 xn--vuq861b
 
+// xn--w4r85el8fhu5dnra : 2015-04-30 Kerry Trading Co. Limited
+嘉里大酒店
+xn--w4r85el8fhu5dnra
+
 // xn--xhq521b : 2013-11-14 Guangzhou YU Wei Information Technology Co., Ltd.
 广东
 xn--xhq521b
@@ -9846,6 +10021,9 @@ yoga
 
 // yokohama : 2013-12-12 GMO Registry, Inc.
 yokohama
+
+// you : 2015-04-09 Amazon EU S.à r.l.
+you
 
 // youtube : 2014-05-01 Charleston Road Registry Inc.
 youtube
@@ -10289,6 +10467,66 @@ webhop.org
 worse-than.tv
 writesthisblog.com
 
+// EU.org https://eu.org/
+// Submitted by Pierre Beyssac <hostmaster@eu.org> 2015-04-17
+
+eu.org
+al.eu.org
+asso.eu.org
+at.eu.org
+au.eu.org
+be.eu.org
+bg.eu.org
+ca.eu.org
+cd.eu.org
+ch.eu.org
+cn.eu.org
+cy.eu.org
+cz.eu.org
+de.eu.org
+dk.eu.org
+edu.eu.org
+ee.eu.org
+es.eu.org
+fi.eu.org
+fr.eu.org
+gr.eu.org
+hr.eu.org
+hu.eu.org
+ie.eu.org
+il.eu.org
+in.eu.org
+int.eu.org
+is.eu.org
+it.eu.org
+jp.eu.org
+kr.eu.org
+lt.eu.org
+lu.eu.org
+lv.eu.org
+mc.eu.org
+me.eu.org
+mk.eu.org
+mt.eu.org
+my.eu.org
+net.eu.org
+ng.eu.org
+nl.eu.org
+no.eu.org
+nz.eu.org
+paris.eu.org
+pl.eu.org
+pt.eu.org
+q-a.eu.org
+ro.eu.org
+ru.eu.org
+se.eu.org
+si.eu.org
+sk.eu.org
+tr.eu.org
+uk.eu.org
+us.eu.org
+
 // Fastly Inc. http://www.fastly.com/
 // Submitted by Vladimir Vuksan <vladimir@fastly.com> 2013-05-31
 a.ssl.fastly.net
@@ -10391,6 +10629,10 @@ co.pl
 azurewebsites.net
 azure-mobile.net
 cloudapp.net
+
+// Neustar Inc.
+// Submitted by Trung Tran <Trung.Tran@neustar.biz> 2015-04-23
+4u.com
 
 // NFSN, Inc. : https://www.NearlyFreeSpeech.NET/
 // Submitted by Jeff Wheelhouse <support@nearlyfreespeech.net> 2014-02-02
