@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mjpg-streamer
 PKG_REV:=182
 PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).1.tar.bz2
@@ -49,12 +49,12 @@ define Package/mjpg-streamer/conffiles
 /etc/config/mjpg-streamer
 endef
 
-CAMBOZOLA:=cambozola-latest.tar.gz
+CAMBOZOLA:=cambozola-0.936.tar.gz
 
 define Download/cambozola
   URL:=http://www.andywilcock.com/code/cambozola
   FILE:=$(CAMBOZOLA)
-  MD5SUM:=c9b0da91f8e6e72efccd307e04e2b75b
+  MD5SUM:=35c45188aa9635aef2b745c35c311396
 endef
 
 # Fetch latest cambozola that works with latest Java(s)
