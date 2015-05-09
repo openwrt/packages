@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwknop
 PKG_VERSION:=2.6.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.cipherdyne.org/fwknop/download
@@ -102,6 +102,8 @@ define Build/InstallDev
 endef
 
 define Package/fwknopd/install
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/fwknopd $(1)/etc/config/fwknopd
 	$(INSTALL_DIR) $(1)/etc/fwknop
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/fwknop/{access,fwknopd}.conf \
 		$(1)/etc/fwknop/
@@ -109,6 +111,10 @@ define Package/fwknopd/install
 	$(INSTALL_BIN) ./files/fwknopd.init $(1)/etc/init.d/fwknopd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fwknopd $(1)/usr/sbin/
+endef
+
+define Package/fwknopd/conffiles
+	/etc/config/fwknopd
 endef
 
 define Package/fwknop/install
