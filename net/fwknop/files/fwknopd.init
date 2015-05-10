@@ -5,7 +5,6 @@
 # list of contributors, see the file 'CREDITS'.
 #
 . /lib/functions.sh
-UCI_ENABLED=0
 START=60
 
 FWKNOPD_BIN=/usr/sbin/fwknopd
