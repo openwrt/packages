@@ -1,0 +1,13 @@
+Index: cryptodev-linux-1.7/ioctl.c
+===================================================================
+--- cryptodev-linux-1.7.orig/ioctl.c
++++ cryptodev-linux-1.7/ioctl.c
+@@ -546,7 +546,7 @@ static int
+ clonefd(struct file *filp)
+ {
+ 	int ret;
+-	ret = get_unused_fd();
++	ret = get_unused_fd_flags(0);
+ 	if (ret >= 0) {
+ 			get_file(filp);
+ 			fd_install(ret, filp);
