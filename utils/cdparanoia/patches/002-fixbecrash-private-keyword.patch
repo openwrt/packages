@@ -1,0 +1,908 @@
+diff -ur cdparanoia-III-10.2/interface/cdda_interface.h cdparanoia/interface/cdda_interface.h
+--- cdparanoia-III-10.2/interface/cdda_interface.h	2008-09-11 12:43:52.000000000 +0200
++++ cdparanoia/interface/cdda_interface.h	2009-01-28 18:02:11.000000000 +0100
+@@ -84,7 +84,7 @@
+   int is_atapi;
+   int is_mmc;
+ 
+-  cdda_private_data_t *private;
++  cdda_private_data_t *private_data;
+   void         *reserved;
+   unsigned char inqbytes[4];
+ 
+diff -ur cdparanoia-III-10.2/interface/cooked_interface.c cdparanoia/interface/cooked_interface.c
+--- cdparanoia-III-10.2/interface/cooked_interface.c	2008-08-26 11:55:22.000000000 +0200
++++ cdparanoia/interface/cooked_interface.c	2009-01-28 18:02:11.000000000 +0100
+@@ -13,13 +13,13 @@
+ static int timed_ioctl(cdrom_drive *d, int fd, int command, void *arg){
+   struct timespec tv1;
+   struct timespec tv2;
+-  int ret1=clock_gettime(d->private->clock,&tv1);
++  int ret1=clock_gettime(d->private_data->clock,&tv1);
+   int ret2=ioctl(fd, command,arg);
+-  int ret3=clock_gettime(d->private->clock,&tv2);
++  int ret3=clock_gettime(d->private_data->clock,&tv2);
+   if(ret1<0 || ret3<0){
+-    d->private->last_milliseconds=-1;
++    d->private_data->last_milliseconds=-1;
+   }else{
+-    d->private->last_milliseconds = (tv2.tv_sec-tv1.tv_sec)*1000. + (tv2.tv_nsec-tv1.tv_nsec)/1000000.;
++    d->private_data->last_milliseconds = (tv2.tv_sec-tv1.tv_sec)*1000. + (tv2.tv_nsec-tv1.tv_nsec)/1000000.;
+   }
+   return ret2;
+ }
+diff -ur cdparanoia-III-10.2/interface/interface.c cdparanoia/interface/interface.c
+--- cdparanoia-III-10.2/interface/interface.c	2008-09-11 12:43:52.000000000 +0200
++++ cdparanoia/interface/interface.c	2009-01-28 18:02:11.000000000 +0100
+@@ -39,9 +39,9 @@
+     if(d->drive_model)free(d->drive_model);
+     if(d->cdda_fd!=-1)close(d->cdda_fd);
+     if(d->ioctl_fd!=-1 && d->ioctl_fd!=d->cdda_fd)close(d->ioctl_fd);
+-    if(d->private){
+-      if(d->private->sg_hd)free(d->private->sg_hd);
+-      free(d->private);
++    if(d->private_data){
++      if(d->private_data->sg_hd)free(d->private_data->sg_hd);
++      free(d->private_data);
+     }
+ 
+     free(d);
+@@ -90,11 +90,11 @@
+       }
+   }
+ 
++  if(d->bigendianp==-1)d->bigendianp=data_bigendianp(d);
++
+   if((ret=d->enable_cdda(d,1)))
+     return(ret);
+     
+-  /*  d->select_speed(d,d->maxspeed); most drives are full speed by default */
+-  if(d->bigendianp==-1)d->bigendianp=data_bigendianp(d);
+   return(0);
+ }
+ 
+@@ -118,7 +118,7 @@
+ 	if(d->bigendianp==-1) /* not determined yet */
+ 	  d->bigendianp=data_bigendianp(d);
+ 	
+-	if(d->bigendianp!=bigendianp()){
++	if(buffer && d->bigendianp!=bigendianp()){
+ 	  int i;
+ 	  u_int16_t *p=(u_int16_t *)buffer;
+ 	  long els=sectors*CD_FRAMESIZE_RAW/2;
+@@ -127,7 +127,7 @@
+ 	}
+       }	
+     }
+-    if(ms)*ms=d->private->last_milliseconds;
++    if(ms)*ms=d->private_data->last_milliseconds;
+     return(sectors);
+   }
+   
+diff -ur cdparanoia-III-10.2/interface/scan_devices.c cdparanoia/interface/scan_devices.c
+--- cdparanoia-III-10.2/interface/scan_devices.c	2008-08-26 11:55:22.000000000 +0200
++++ cdparanoia/interface/scan_devices.c	2009-01-28 18:02:11.000000000 +0100
+@@ -264,11 +264,11 @@
+   d->interface=COOKED_IOCTL;
+   d->bigendianp=-1; /* We don't know yet... */
+   d->nsectors=-1;
+-  d->private=calloc(1,sizeof(*d->private));
++  d->private_data=calloc(1,sizeof(*d->private_data));
+   {
+     /* goddamnit */
+     struct timespec tv;
+-    d->private->clock=(clock_gettime(CLOCK_MONOTONIC,&tv)<0?CLOCK_REALTIME:CLOCK_MONOTONIC);
++    d->private_data->clock=(clock_gettime(CLOCK_MONOTONIC,&tv)<0?CLOCK_REALTIME:CLOCK_MONOTONIC);
+   }
+   idmessage(messagedest,messages,"\t\tCDROM sensed: %s\n",description);
+   return(d);
+@@ -674,15 +674,15 @@
+   d->bigendianp=-1; /* We don't know yet... */
+   d->nsectors=-1;
+   d->messagedest = messagedest;
+-  d->private=calloc(1,sizeof(*d->private));
++  d->private_data=calloc(1,sizeof(*d->private_data));
+   {
+     /* goddamnit */
+     struct timespec tv;
+-    d->private->clock=(clock_gettime(CLOCK_MONOTONIC,&tv)<0?CLOCK_REALTIME:CLOCK_MONOTONIC);
++    d->private_data->clock=(clock_gettime(CLOCK_MONOTONIC,&tv)<0?CLOCK_REALTIME:CLOCK_MONOTONIC);
+   }
+   if(use_sgio){
+     d->interface=SGIO_SCSI;
+-    d->private->sg_buffer=(unsigned char *)(d->private->sg_hd=malloc(MAX_BIG_BUFF_SIZE));
++    d->private_data->sg_buffer=(unsigned char *)(d->private_data->sg_hd=malloc(MAX_BIG_BUFF_SIZE));
+     g_fd=d->cdda_fd=dup(d->ioctl_fd);
+   }else{
+     version=verify_SG_version(d,messagedest,messages);
+@@ -696,8 +696,8 @@
+     }
+ 
+     /* malloc our big buffer for scsi commands */
+-    d->private->sg_hd=malloc(MAX_BIG_BUFF_SIZE);
+-    d->private->sg_buffer=((unsigned char *)d->private->sg_hd)+SG_OFF;
++    d->private_data->sg_hd=malloc(MAX_BIG_BUFF_SIZE);
++    d->private_data->sg_buffer=((unsigned char *)d->private_data->sg_hd)+SG_OFF;
+   }
+ 
+   {
+@@ -772,9 +772,9 @@
+   if(i_fd!=-1)close(i_fd);
+   if(g_fd!=-1)close(g_fd);
+   if(d){
+-    if(d->private){
+-      if(d->private->sg_hd)free(d->private->sg_hd);
+-      free(d->private);
++    if(d->private_data){
++      if(d->private_data->sg_hd)free(d->private_data->sg_hd);
++      free(d->private_data);
+     }
+     free(d);
+   }
+@@ -821,7 +821,7 @@
+   d->interface=TEST_INTERFACE;
+   d->bigendianp=-1; /* We don't know yet... */
+   d->nsectors=-1;
+-  d->private=calloc(1,sizeof(*d->private));
++  d->private_data=calloc(1,sizeof(*d->private_data));
+   d->drive_model=copystring("File based test interface");
+   idmessage(messagedest,messages,"\t\tCDROM sensed: %s\n",d->drive_model);
+   
+diff -ur cdparanoia-III-10.2/interface/scsi_interface.c cdparanoia/interface/scsi_interface.c
+--- cdparanoia-III-10.2/interface/scsi_interface.c	2008-09-11 22:33:30.000000000 +0200
++++ cdparanoia/interface/scsi_interface.c	2009-01-28 18:02:11.000000000 +0100
+@@ -15,13 +15,13 @@
+ static int timed_ioctl(cdrom_drive *d, int fd, int command, void *arg){
+   struct timespec tv1;
+   struct timespec tv2;
+-  int ret1=clock_gettime(d->private->clock,&tv1);
++  int ret1=clock_gettime(d->private_data->clock,&tv1);
+   int ret2=ioctl(fd, command,arg);
+-  int ret3=clock_gettime(d->private->clock,&tv2);
++  int ret3=clock_gettime(d->private_data->clock,&tv2);
+   if(ret1<0 || ret3<0){
+-    d->private->last_milliseconds=-1;
++    d->private_data->last_milliseconds=-1;
+   }else{
+-    d->private->last_milliseconds = (tv2.tv_sec-tv1.tv_sec)*1000. + (tv2.tv_nsec-tv1.tv_nsec)/1000000.;
++    d->private_data->last_milliseconds = (tv2.tv_sec-tv1.tv_sec)*1000. + (tv2.tv_nsec-tv1.tv_nsec)/1000000.;
+   }
+   return ret2;
+ }
+@@ -96,7 +96,7 @@
+ static void clear_garbage(cdrom_drive *d){
+   fd_set fdset;
+   struct timeval tv;
+-  struct sg_header *sg_hd=d->private->sg_hd;
++  struct sg_header *sg_hd=d->private_data->sg_hd;
+   int flag=0;
+ 
+   /* clear out any possibly preexisting garbage */
+@@ -185,7 +185,7 @@
+   struct timespec tv2;
+   int tret1,tret2;
+   int status = 0;
+-  struct sg_header *sg_hd=d->private->sg_hd;
++  struct sg_header *sg_hd=d->private_data->sg_hd;
+   long writebytes=SG_OFF+cmd_len+in_size;
+ 
+   /* generic scsi device services */
+@@ -195,7 +195,7 @@
+ 
+   memset(sg_hd,0,sizeof(sg_hd)); 
+   memset(sense_buffer,0,SG_MAX_SENSE); 
+-  memcpy(d->private->sg_buffer,cmd,cmd_len+in_size);
++  memcpy(d->private_data->sg_buffer,cmd,cmd_len+in_size);
+   sg_hd->twelve_byte = cmd_len == 12;
+   sg_hd->result = 0;
+   sg_hd->reply_len = SG_OFF + out_size;
+@@ -209,7 +209,7 @@
+      tell if the command failed.  Scared yet? */
+ 
+   if(bytecheck && out_size>in_size){
+-    memset(d->private->sg_buffer+cmd_len+in_size,bytefill,out_size-in_size); 
++    memset(d->private_data->sg_buffer+cmd_len+in_size,bytefill,out_size-in_size); 
+     /* the size does not remove cmd_len due to the way the kernel
+        driver copies buffers */
+     writebytes+=(out_size-in_size);
+@@ -243,7 +243,7 @@
+   }
+ 
+   sigprocmask (SIG_BLOCK, &(d->sigset), NULL );
+-  tret1=clock_gettime(d->private->clock,&tv1);  
++  tret1=clock_gettime(d->private_data->clock,&tv1);  
+   errno=0;
+   status = write(d->cdda_fd, sg_hd, writebytes );
+ 
+@@ -289,7 +289,7 @@
+     }
+   }
+ 
+-  tret2=clock_gettime(d->private->clock,&tv2);  
++  tret2=clock_gettime(d->private_data->clock,&tv2);  
+   errno=0;
+   status = read(d->cdda_fd, sg_hd, SG_OFF + out_size);
+   sigprocmask ( SIG_UNBLOCK, &(d->sigset), NULL );
+@@ -313,7 +313,7 @@
+   if(bytecheck && in_size+cmd_len<out_size){
+     long i,flag=0;
+     for(i=in_size;i<out_size;i++)
+-      if(d->private->sg_buffer[i]!=bytefill){
++      if(d->private_data->sg_buffer[i]!=bytefill){
+ 	flag=1;
+ 	break;
+       }
+@@ -326,9 +326,9 @@
+ 
+   errno=0;
+   if(tret1<0 || tret2<0){
+-    d->private->last_milliseconds=-1;
++    d->private_data->last_milliseconds=-1;
+   }else{
+-    d->private->last_milliseconds = (tv2.tv_sec-tv1.tv_sec)*1000 + (tv2.tv_nsec-tv1.tv_nsec)/1000000;
++    d->private_data->last_milliseconds = (tv2.tv_sec-tv1.tv_sec)*1000 + (tv2.tv_nsec-tv1.tv_nsec)/1000000;
+   }
+   return(0);
+ }
+@@ -347,7 +347,7 @@
+ 
+   memset(&hdr,0,sizeof(hdr));
+   memset(sense,0,sizeof(sense));
+-  memcpy(d->private->sg_buffer,cmd+cmd_len,in_size);
++  memcpy(d->private_data->sg_buffer,cmd+cmd_len,in_size);
+ 
+   hdr.cmdp = cmd;
+   hdr.cmd_len = cmd_len;
+@@ -355,7 +355,7 @@
+   hdr.mx_sb_len = SG_MAX_SENSE;
+   hdr.timeout = 50000;
+   hdr.interface_id = 'S';
+-  hdr.dxferp =  d->private->sg_buffer;
++  hdr.dxferp =  d->private_data->sg_buffer;
+   hdr.flags = SG_FLAG_DIRECT_IO;  /* direct IO if we can get it */
+ 
+   /* scary buffer fill hack */
+@@ -400,7 +400,7 @@
+   if(bytecheck && in_size<out_size){
+     long i,flag=0;
+     for(i=in_size;i<out_size;i++)
+-      if(d->private->sg_buffer[i]!=bytefill){
++      if(d->private_data->sg_buffer[i]!=bytefill){
+ 	flag=1;
+ 	break;
+       }
+@@ -412,7 +412,7 @@
+   }
+ 
+   /* Can't rely on .duration because we can't be certain kernel has HZ set to something useful */
+-  /* d->private->last_milliseconds = hdr.duration; */
++  /* d->private_data->last_milliseconds = hdr.duration; */
+ 
+   errno = 0;
+   return 0;
+@@ -445,9 +445,9 @@
+ 
+   handle_scsi_cmd(d, cmd, 6, 0, 56, 0,0, sense);
+ 
+-  key = d->private->sg_buffer[2] & 0xf;
+-  ASC = d->private->sg_buffer[12];
+-  ASCQ = d->private->sg_buffer[13];
++  key = d->private_data->sg_buffer[2] & 0xf;
++  ASC = d->private_data->sg_buffer[12];
++  ASCQ = d->private_data->sg_buffer[13];
+   
+   if(key == 2 && ASC == 4 && ASCQ == 1) return 0;
+   return 1;
+@@ -492,7 +492,7 @@
+   if (handle_scsi_cmd (d, cmd, 10, 0, size+4,'\377',1,sense)) return(1);
+ 
+   {
+-    unsigned char *b=d->private->sg_buffer;
++    unsigned char *b=d->private_data->sg_buffer;
+     if(b[0])return(1); /* Handles only up to 256 bytes */
+     if(b[6])return(1); /* Handles only up to 256 bytes */
+ 
+@@ -604,8 +604,8 @@
+ static unsigned int get_orig_sectorsize(cdrom_drive *d){
+   if(mode_sense(d,12,0x01))return(-1);
+ 
+-  d->orgdens = d->private->sg_buffer[4];
+-  return(d->orgsize = ((int)(d->private->sg_buffer[10])<<8)+d->private->sg_buffer[11]);
++  d->orgdens = d->private_data->sg_buffer[4];
++  return(d->orgsize = ((int)(d->private_data->sg_buffer[10])<<8)+d->private_data->sg_buffer[11]);
+ }
+ 
+ /* switch CDROM scsi drives to given sector size  */
+@@ -664,8 +664,8 @@
+     return(-4);
+   }
+ 
+-  first=d->private->sg_buffer[2];
+-  last=d->private->sg_buffer[3];
++  first=d->private_data->sg_buffer[2];
++  last=d->private_data->sg_buffer[3];
+   tracks=last-first+1;
+ 
+   if (last > MAXTRK || first > MAXTRK || last<0 || first<0) {
+@@ -683,7 +683,7 @@
+       return(-5);
+     }
+     {
+-      scsi_TOC *toc=(scsi_TOC *)(d->private->sg_buffer+4);
++      scsi_TOC *toc=(scsi_TOC *)(d->private_data->sg_buffer+4);
+ 
+       d->disc_toc[i-first].bFlags=toc->bFlags;
+       d->disc_toc[i-first].bTrack=i;
+@@ -704,7 +704,7 @@
+     return(-2);
+   }
+   {
+-    scsi_TOC *toc=(scsi_TOC *)(d->private->sg_buffer+4);
++    scsi_TOC *toc=(scsi_TOC *)(d->private_data->sg_buffer+4);
+     
+     d->disc_toc[i-first].bFlags=toc->bFlags;
+     d->disc_toc[i-first].bTrack=0xAA;
+@@ -738,7 +738,7 @@
+   }
+ 
+   /* copy to our structure and convert start sector */
+-  tracks = d->private->sg_buffer[1];
++  tracks = d->private_data->sg_buffer[1];
+   if (tracks > MAXTRK) {
+     cderror(d,"003: CDROM reporting illegal number of tracks\n");
+     return(-3);
+@@ -754,33 +754,33 @@
+       return(-5);
+     }
+     
+-    d->disc_toc[i].bFlags = d->private->sg_buffer[10];
++    d->disc_toc[i].bFlags = d->private_data->sg_buffer[10];
+     d->disc_toc[i].bTrack = i + 1;
+ 
+     d->disc_toc[i].dwStartSector= d->adjust_ssize * 
+-	(((signed char)(d->private->sg_buffer[2])<<24) | 
+-	 (d->private->sg_buffer[3]<<16)|
+-	 (d->private->sg_buffer[4]<<8)|
+-	 (d->private->sg_buffer[5]));
++	(((signed char)(d->private_data->sg_buffer[2])<<24) | 
++	 (d->private_data->sg_buffer[3]<<16)|
++	 (d->private_data->sg_buffer[4]<<8)|
++	 (d->private_data->sg_buffer[5]));
+   }
+ 
+   d->disc_toc[i].bFlags = 0;
+   d->disc_toc[i].bTrack = i + 1;
+-  memcpy (&foo, d->private->sg_buffer+2, 4);
+-  memcpy (&bar, d->private->sg_buffer+6, 4);
++  memcpy (&foo, d->private_data->sg_buffer+2, 4);
++  memcpy (&bar, d->private_data->sg_buffer+6, 4);
+   d->disc_toc[i].dwStartSector = d->adjust_ssize * (be32_to_cpu(foo) +
+ 						    be32_to_cpu(bar));
+ 
+   d->disc_toc[i].dwStartSector= d->adjust_ssize * 
+-    ((((signed char)(d->private->sg_buffer[2])<<24) | 
+-      (d->private->sg_buffer[3]<<16)|
+-      (d->private->sg_buffer[4]<<8)|
+-      (d->private->sg_buffer[5]))+
++    ((((signed char)(d->private_data->sg_buffer[2])<<24) | 
++      (d->private_data->sg_buffer[3]<<16)|
++      (d->private_data->sg_buffer[4]<<8)|
++      (d->private_data->sg_buffer[5]))+
+      
+-     ((((signed char)(d->private->sg_buffer[6])<<24) | 
+-       (d->private->sg_buffer[7]<<16)|
+-       (d->private->sg_buffer[8]<<8)|
+-       (d->private->sg_buffer[9]))));
++     ((((signed char)(d->private_data->sg_buffer[6])<<24) | 
++       (d->private_data->sg_buffer[7]<<16)|
++       (d->private_data->sg_buffer[8]<<8)|
++       (d->private_data->sg_buffer[9]))));
+ 
+ 
+   d->cd_extra = FixupTOC(d,tracks+1);
+@@ -817,7 +817,7 @@
+   cmd[8] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,10,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -836,7 +836,7 @@
+   cmd[9] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -854,7 +854,7 @@
+   cmd[8] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,10,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -872,7 +872,7 @@
+   cmd[9] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -890,7 +890,7 @@
+   cmd[8] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,10,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -908,7 +908,7 @@
+   cmd[9] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -922,7 +922,7 @@
+   cmd[8] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -936,7 +936,7 @@
+   cmd[8] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -950,7 +950,7 @@
+   cmd[8] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -964,7 +964,7 @@
+   cmd[8] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -978,7 +978,7 @@
+   cmd[8] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -992,7 +992,7 @@
+   cmd[8] = sectors;
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -1026,7 +1026,7 @@
+ 
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -1039,7 +1039,7 @@
+ 
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -1052,7 +1052,7 @@
+   
+   if((ret=handle_scsi_cmd(d,cmd,12,0,sectors * CD_FRAMESIZE_RAW,'\177',1,sense)))
+     return(ret);
+-  if(p)memcpy(p,d->private->sg_buffer,sectors*CD_FRAMESIZE_RAW);
++  if(p)memcpy(p,d->private_data->sg_buffer,sectors*CD_FRAMESIZE_RAW);
+   return(0);
+ }
+ 
+@@ -1275,7 +1275,7 @@
+ static int count_2352_bytes(cdrom_drive *d){
+   long i;
+   for(i=2351;i>=0;i--)
+-    if(d->private->sg_buffer[i]!=(unsigned char)'\177')
++    if(d->private_data->sg_buffer[i]!=(unsigned char)'\177')
+       return(((i+3)>>2)<<2);
+ 
+   return(0);
+@@ -1284,7 +1284,7 @@
+ static int verify_nonzero(cdrom_drive *d){
+   long i,flag=0;
+   for(i=0;i<2352;i++)
+-    if(d->private->sg_buffer[i]!=0){
++    if(d->private_data->sg_buffer[i]!=0){
+       flag=1;
+       break;
+     }
+@@ -1298,7 +1298,7 @@
+ 
+ static int verify_read_command(cdrom_drive *d){
+   int i,j,k;
+-  int audioflag=0;
++  int audioflag=1;
+ 
+   int  (*enablecommand)  (struct cdrom_drive *d, int speed);
+   long (*readcommand)   (struct cdrom_drive *d, void *p, long begin, 
+@@ -1313,7 +1313,7 @@
+      for data */
+ 
+   if(d->enable_cdda(d,1)==0){
+-    
++    audioflag=0;
+     for(i=1;i<=d->tracks;i++){
+       if(cdda_track_audiop(d,i)==1){
+ 	long firstsector=cdda_track_firstsector(d,i);
+@@ -1358,115 +1358,111 @@
+     /* NEC test must come before sony; the nec drive expects d8 to be
+        10 bytes, and a 12 byte verson (Sony) crashes the drive */
+ 
+-    for(j=0;j<15;j++){
+-      int densitypossible=1;
+-
+-      switch(j){
++    for(i=0;i<5;i++){
++      switch(i){
+       case 0:
+-	d->read_audio=scsi_read_28;
+-	rs="28 0x,00";
++	d->density=0;
++	d->enable_cdda=Dummy;
++	es="none    ";
+ 	break;
+       case 1:
+-	d->read_audio=scsi_read_A8;
+-	rs="a8 0x,00";
++	d->density=0;
++	d->enable_cdda=scsi_enable_cdda;
++	es="yes/0x00";
+ 	break;
+-
+       case 2:
+-	d->read_audio=scsi_read_mmcB;
+-	rs="be 02,10";
+-	densitypossible=0;
++	d->density=0x04;
++	d->enable_cdda=scsi_enable_cdda;
++	es="yes/0x04";
+ 	break;
+       case 3:
+-	d->read_audio=scsi_read_mmc2B;
+-	rs="be 02,f8";
+-	densitypossible=0;
++	d->density=0x82;
++	d->enable_cdda=scsi_enable_cdda;
++	es="yes/0x82";
+ 	break;
+       case 4:
+-	d->read_audio=scsi_read_mmc3B;
+-	rs="be 06,f8";
+-	densitypossible=0;
+-	break;
+-
+-      case 5:
+-	d->read_audio=scsi_read_mmc;
+-	rs="be 00,10";
+-	densitypossible=0;
+-	break;
+-      case 6:
+-	d->read_audio=scsi_read_mmc2;
+-	rs="be 00,f8";
+-	densitypossible=0;
+-	break;
+-      case 7:
+-	d->read_audio=scsi_read_mmc3;
+-	rs="be 04,f8";
+-	densitypossible=0;
+-	break;
+-
+-      case 8:
+-	d->read_audio=scsi_read_msf;
+-	rs="b9 00,10";
+-	densitypossible=0;
+-	break;
+-      case 9:
+-	d->read_audio=scsi_read_msf2;
+-	rs="b9 00,f8";
+-	densitypossible=0;
+-	break;
+-      case 10:
+-	d->read_audio=scsi_read_msf3;
+-	rs="b9 04,f8";
+-	densitypossible=0;
+-	break;
+-
+-      case 11:
+-	d->read_audio=scsi_read_D4_10;
+-	rs="d4(10)0x";
+-	break;
+-      case 12:
+-	d->read_audio=scsi_read_D4_12;
+-	rs="d4(12)0x";
+-	break;
+-      case 13:
+-	d->read_audio=scsi_read_D5;
+-	rs="d5 0x,00";
+-	break;
+-      case 14:
+-	d->read_audio=scsi_read_D8;
+-	rs="d8 0x,00";
++	d->density=0x81;
++	d->enable_cdda=scsi_enable_cdda;
++	es="yes/0x81";
+ 	break;
+       }
+-      
+-      for(i=0;i<5;i++){
+-	switch(i){
++
++      for(j=0;j<15;j++){
++	
++	switch(j){
+ 	case 0:
+-	  d->density=0;
+-	  d->enable_cdda=Dummy;
+-	  es="none    ";
+-	  if(!densitypossible)i=5; /* short circuit MMC style commands */
++	  d->read_audio=scsi_read_28;
++	  rs="28 0x,00";
+ 	  break;
+ 	case 1:
+-	  d->density=0;
+-	  d->enable_cdda=scsi_enable_cdda;
+-	  es="yes/0x00";
++	  d->read_audio=scsi_read_A8;
++	  rs="a8 0x,00";
+ 	  break;
++	  
++	  /* 2 through 10 do not allow/require density */
+ 	case 2:
+-	  d->density=0x04;
+-	  d->enable_cdda=scsi_enable_cdda;
+-	  es="yes/0x04";
+-	  break;
++	  d->read_audio=scsi_read_mmcB;
++	  rs="be 02,10";
++	  if(i==0)break;
+ 	case 3:
+-	  d->density=0x82;
+-	  d->enable_cdda=scsi_enable_cdda;
+-	  es="yes/0x82";
+-	  break;
++	  j=3;
++	  d->read_audio=scsi_read_mmc2B;
++	  rs="be 02,f8";
++	  if(i==0)break;
+ 	case 4:
+-	  d->density=0x81;
+-	  d->enable_cdda=scsi_enable_cdda;
+-	  es="yes/0x81";
++	  j=4;
++	  d->read_audio=scsi_read_mmc3B;
++	  rs="be 06,f8";
++	  if(i==0)break;
++	case 5:
++	  j=5;
++	  d->read_audio=scsi_read_mmc;
++	  rs="be 00,10";
++	  if(i==0)break;
++	case 6:
++	  j=6;
++	  d->read_audio=scsi_read_mmc2;
++	  rs="be 00,f8";
++	  if(i==0)break;
++	case 7:
++	  j=7;
++	  d->read_audio=scsi_read_mmc3;
++	  rs="be 04,f8";
++	  if(i==0)break;
++	case 8:
++	  j=8;
++	  d->read_audio=scsi_read_msf;
++	  rs="b9 00,10";
++	  if(i==0)break;
++	case 9:
++	  j=9;
++	  d->read_audio=scsi_read_msf2;
++	  rs="b9 00,f8";
++	  if(i==0)break;
++	case 10:
++	  j=10;
++	  d->read_audio=scsi_read_msf3;
++	  rs="b9 04,f8";
++	  if(i==0)break;
++	
++	case 11:
++	  d->read_audio=scsi_read_D4_10;
++	  rs="d4(10)0x";
++	  break;
++	case 12:
++	  d->read_audio=scsi_read_D4_12;
++	  rs="d4(12)0x";
++	  break;
++	case 13:
++	  d->read_audio=scsi_read_D5;
++	  rs="d5 0x,00";
++	  break;
++	case 14:
++	  d->read_audio=scsi_read_D8;
++	  rs="d8 0x,00";
+ 	  break;
+ 	}
+-
++	
+ 	cdmessage(d,"\ttest -> density: [");
+ 	cdmessage(d,es);
+ 	cdmessage(d,"]  command: [");
+@@ -1525,21 +1521,21 @@
+ 	  if(zeroflag){
+ 	    char buffer[256];
+ 	    sprintf(buffer,"\t\tDrive returned %d packet(s), but contents\n"
+-		        "\t\twere entirely zero\n",zeroflag);
++		    "\t\twere entirely zero\n",zeroflag);
+ 	    cdmessage(d,buffer);
+ 	  }
+ 	}
+       }
+     }
+-
++    
+     /* D'oh. */
+     d->density=density;
+     d->read_audio=readcommand;
+     d->enable_cdda=enablecommand;
+-
++    
+     cdmessage(d,"\tUnable to find any suitable command set from probe;\n"
+ 	      "\tdrive probably not CDDA capable.\n");
+-
++    
+     cderror(d,"006: Could not read any data from drive\n");
+ 
+   }
+@@ -1625,7 +1621,7 @@
+   d->is_mmc=0;
+   if(mode_sense(d,22,0x2A)==0){
+   
+-    b=d->private->sg_buffer;
++    b=d->private_data->sg_buffer;
+     b+=b[3]+4;
+     
+     if((b[0]&0x3F)==0x2A){
+@@ -1673,7 +1669,7 @@
+     cderror(d,"008: Unable to identify CDROM model\n");
+     return(NULL);
+   }
+-  return (d->private->sg_buffer);
++  return (d->private_data->sg_buffer);
+ }
+ 
+ int scsi_init_drive(cdrom_drive *d){
+@@ -1690,33 +1686,20 @@
+   if(d->is_atapi)d->lun=0; /* it should already be; just to make sure */
+       
+   if(d->is_mmc){
+-
+     d->read_audio = scsi_read_mmc2B;
+     d->bigendianp=0;
+-
+     check_exceptions(d,mmc_list);
+-
+   }else{
+-    
+     if(d->is_atapi){
+       /* Not MMC maybe still uses 0xbe */
+-
+       d->read_audio = scsi_read_mmc2B;
+       d->bigendianp=0;
+-
+       check_exceptions(d,atapi_list);
+-
+     }else{
+-
+       check_exceptions(d,scsi_list);
+-
+     }
+   }
+ 
+-  if(!d->is_atapi)set_sectorsize(d,2048); /* we really do want the
+-					     sector size at 2048 to begin.*/
+-  d->enable_cdda(d,0);
+-
+   d->read_toc = (!memcmp(d->drive_model, "IMS", 3) && !d->is_atapi) ? scsi_read_toc2 : 
+     scsi_read_toc;
+   d->set_speed = scsi_set_speed;
+@@ -1742,8 +1725,8 @@
+   check_cache(d);
+ 
+   d->error_retry=1;
+-  d->private->sg_hd=realloc(d->private->sg_hd,d->nsectors*CD_FRAMESIZE_RAW + SG_OFF + 128);
+-  d->private->sg_buffer=((unsigned char *)d->private->sg_hd)+SG_OFF;
++  d->private_data->sg_hd=realloc(d->private_data->sg_hd,d->nsectors*CD_FRAMESIZE_RAW + SG_OFF + 128);
++  d->private_data->sg_buffer=((unsigned char *)d->private_data->sg_hd)+SG_OFF;
+   d->report_all=1;
+   return(0);
+ }
+diff -ur cdparanoia-III-10.2/interface/test_interface.c cdparanoia/interface/test_interface.c
+--- cdparanoia-III-10.2/interface/test_interface.c	2008-09-11 22:33:30.000000000 +0200
++++ cdparanoia/interface/test_interface.c	2009-01-28 18:02:11.000000000 +0100
+@@ -66,9 +66,9 @@
+   if(!fd)fd=fdopen(d->cdda_fd,"r");
+ 
+   if(begin<lastread)
+-    d->private->last_milliseconds=20;
++    d->private_data->last_milliseconds=20;
+   else
+-    d->private->last_milliseconds=sectors;
++    d->private_data->last_milliseconds=sectors;
+ 
+ #ifdef CDDA_TEST_UNDERRUN
+   sectors-=1;
+diff -ur cdparanoia-III-10.2/main.c cdparanoia/main.c
+--- cdparanoia-III-10.2/main.c	2008-09-11 23:11:02.000000000 +0200
++++ cdparanoia/main.c	2009-01-28 18:02:11.000000000 +0100
+@@ -746,7 +746,7 @@
+       break;
+     case 'p':
+       output_type=0;
+-      output_endian=-1;
++      output_endian=bigendianp();
+       break;
+     case 'r':
+       output_type=0;
+diff -ur cdparanoia-III-10.2/version.h cdparanoia/version.h
+--- cdparanoia-III-10.2/version.h	2008-09-11 22:33:30.000000000 +0200
++++ cdparanoia/version.h	2009-01-28 18:02:11.000000000 +0100
+@@ -1,11 +1,11 @@
+ /******************************************************************
+  * CopyPolicy: GNU Public License 2 applies
+  * 
+- * cdda_paranoia generation III release 10.2
++ * cdda_paranoia generation III release 10.3
+  * Copyright (C) 2008 Monty monty@xiph.org
+  *
+  ******************************************************************/
+ 
+ 
+-#define VERSIONNUM "10.2"
+-#define VERSION "cdparanoia III release " VERSIONNUM " (September 11, 2008)\n"
++#define VERSIONNUM "10.3pre"
++#define VERSION "cdparanoia III release " VERSIONNUM " (September 16, 2008)\n"
