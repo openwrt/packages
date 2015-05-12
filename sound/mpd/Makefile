@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.18.21
+PKG_VERSION:=0.18.23
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.18/
-PKG_MD5SUM:=945879f55acc256d30a5f69787338ceb
+PKG_MD5SUM:=fcdfe8b3a7a21a87b6776204e6eb7814
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
@@ -161,7 +161,6 @@ ifeq ($(BUILD_VARIANT),full)
 
   CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_BUILD_PATENTED,aac) \
-	$(call autoconf_bool,CONFIG_AUDIO_SUPPORT,alsa) \
 	--enable-audiofile \
 	--enable-fifo \
 	--enable-ffmpeg \
@@ -185,7 +184,6 @@ ifeq ($(BUILD_VARIANT),mini)
   # oggflac is not compatible with tremor
   CONFIGURE_ARGS += \
 	--disable-aac \
-	--disable-alsa \
 	--disable-audiofile \
 	--disable-fifo \
 	--disable-ffmpeg \
