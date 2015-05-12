@@ -41,7 +41,7 @@ define Build/Compile
 	LUA_INC="-I$(STAGING_DIR)/usr/include/" \
 	LUA_LIBDIR="$(STAGING_DIR)/usr/lib/" \
 	COMPAT_DIR="$(PKG_BUILD_DIR)/compat-5.1r5" \
-	LIB_OPTION="-shared $(TARGET_LDFLAGS)" \
+	LDFLAGS="-shared $(TARGET_LDFLAGS)" \
 	CC="$(TARGET_CC) $(TARGET_CFLAGS) $(FPIC) -std=c99" \
 	LD="$(TARGET_CROSS)ld -shared" 
 endef
