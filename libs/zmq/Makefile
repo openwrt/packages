@@ -44,7 +44,7 @@ define Package/libzmq
   $(call Package/libzmq/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libuuid +libpthread +librt $(CXX_DEPENDS)
+  DEPENDS:=+libuuid +libpthread +librt +libsodium $(CXX_DEPENDS)
   TITLE+= (library)
   URL:=
 endef
