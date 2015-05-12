@@ -26,7 +26,7 @@ define KernelPackage/lttng
   SUBMENU:=Other modules
   TITLE:=Linux Trace Toolkit: next generation (kernel modules)
   URL:=https://lttng.org/
-  DEPENDS:= @!TARGET_uml @KERNEL_FTRACE
+  DEPENDS:= @!TARGET_uml @KERNEL_FTRACE_SYSCALLS
   FILES:= \
 	$(PKG_BUILD_DIR)/lttng-*.$(LINUX_KMOD_SUFFIX) \
 	$(PKG_BUILD_DIR)/lib/lttng-*.$(LINUX_KMOD_SUFFIX) \
