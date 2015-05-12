@@ -33,6 +33,10 @@ apt.datatype = "port"
 apw = s:taboption("admin", Value, "admin_password", translate("Password"))
 apw.datatype = "string"
 
+-- Security
+s:tab("security", translate("Security"), translate("Functionality related to hardening the cjdroute process."))
+s:taboption("security", Flag, "seccomp", translate("SecComp sandboxing"))
+
 -- UDP Interfaces
 udp_interfaces = m:section(TypedSection, "udp_interface", translate("UDP Interfaces"),
   translate("These interfaces allow peering via public IP networks, such as the Internet, or many community-operated wireless networks. IPv6 addresses should be entered with square brackets, like so: <code>[2001::1]</code>."))
