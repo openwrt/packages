@@ -10,7 +10,14 @@ common.uci = UCI
 -- @return table with configuration defaults
 function UCI.defaults()
   return {
-    security = { { exemptAngel = 1, setuser = "nobody" } },
+    security = {
+      { setuser = "nobody", keepNetAdmin = 1 },
+      { chroot = "/var/run/" },
+      { nofiles = 0 },
+      { noforks = 1 },
+      { seccomp = 0 },
+      { setupComplete = 1 }
+    },
     router = {
         ipTunnel = { outgoingConnections = {}, allowedConnections = {} },
         interface = { type = "TUNInterface" }
@@ -43,6 +50,12 @@ function UCI.get()
 
   if config.tun_device and string.len(config.tun_device) > 0 then
     obj.router.interface.tunDevice = config.tun_device
+  end
+
+  for i,section in pairs(obj.security) do
+    if type(section.seccomp) == "number" then
+      obj.security[i].seccomp = tonumber(config.seccomp)
+    end
   end
 
   cursor:foreach("cjdns", "iptunnel_outgoing", function(outgoing)
@@ -127,13 +140,25 @@ function UCI.set(obj)
     private_key = obj.privateKey,
     admin_password = obj.admin.password,
     admin_address = admin_address,
-    admin_port = admin_port,
+    admin_port = admin_port
   })
 
   if obj.router.interface.tunDevice then
     UCI.cursor_section(cursor, "cjdns", "cjdns", "cjdns", {
       tun_device = tostring(obj.router.interface.tunDevice)
     })
+  end
+
+  if obj.security then
+    for i,section in pairs(obj.security) do
+      for key,value in pairs(section) do
+        if key == "seccomp" then
+          UCI.cursor_section(cursor, "cjdns", "cjdns", "cjdns", {
+            seccomp = tonumber(value)
+          })
+        end
+      end
+    end
   end
 
   if obj.router.ipTunnel.outgoingConnections then
