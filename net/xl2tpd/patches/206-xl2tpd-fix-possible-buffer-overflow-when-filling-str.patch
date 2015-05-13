@@ -1,0 +1,22 @@
+From 1e8b82388578a622c5caf8fa04c238fdd7808ecc Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Thu, 30 Apr 2015 13:53:40 +0800
+Subject: [PATCH 6/7] xl2tpd: fix possible buffer overflow when filling
+ stropt[].
+
+---
+ xl2tpd.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/xl2tpd.c
++++ b/xl2tpd.c
+@@ -490,7 +490,8 @@ int start_pppd (struct call *c, struct p
+ 
+     {
+         struct ppp_opts *p = opts;
+-        while (p)
++        int maxn_opts = sizeof(stropt) / sizeof(stropt[0]) - 1;
++        while (p && pos < maxn_opts)
+         {
+             stropt[pos] = strdup (p->option);
+             pos++;

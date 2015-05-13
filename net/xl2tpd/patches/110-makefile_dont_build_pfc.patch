@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -107,10 +107,10 @@ BINDIR?=$(DESTDIR)${PREFIX}/bin
+@@ -113,10 +113,10 @@ BINDIR?=$(DESTDIR)${PREFIX}/bin
  MANDIR?=$(DESTDIR)${PREFIX}/share/man
  
  
@@ -13,7 +13,7 @@
  
  $(EXEC): $(OBJS) $(HDRS)
  	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
-@@ -118,14 +118,10 @@ $(EXEC): $(OBJS) $(HDRS)
+@@ -124,14 +124,10 @@ $(EXEC): $(OBJS) $(HDRS)
  $(CONTROL_EXEC): $(CONTROL_SRCS)
  	$(CC) $(CFLAGS) $(LDFLAGS) $(CONTROL_SRCS) -o $@
  
@@ -29,7 +29,7 @@
  	install -d -m 0755 ${SBINDIR}
  	install -m 0755 $(EXEC) ${SBINDIR}/$(EXEC)
  	install -d -m 0755 ${MANDIR}/man5
-@@ -133,11 +129,6 @@ install: ${EXEC} pfc ${CONTROL_EXEC}
+@@ -139,11 +135,6 @@ install: ${EXEC} pfc ${CONTROL_EXEC}
  	install -m 0644 doc/xl2tpd.8 ${MANDIR}/man8/
  	install -m 0644 doc/xl2tpd.conf.5 doc/l2tp-secrets.5 \
  		 ${MANDIR}/man5/

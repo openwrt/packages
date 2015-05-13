@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -91,7 +91,8 @@ OSFLAGS+= -DUSE_KERNEL
+@@ -97,7 +97,8 @@ OSFLAGS+= -DUSE_KERNEL
  
  IPFLAGS?= -DIP_ALLOCATION
  

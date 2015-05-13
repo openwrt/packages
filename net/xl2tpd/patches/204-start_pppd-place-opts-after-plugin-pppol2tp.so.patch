@@ -1,0 +1,62 @@
+From 7a343f7b79b70a8e7e04b2bd465d344ad0ef4c49 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Wed, 29 Apr 2015 16:30:17 +0800
+Subject: [PATCH 4/7] start_pppd: place opts after "plugin pppol2tp.so".
+
+so that plugin options like pppol2tp_debug_mark can be recognized by pppd.
+---
+ xl2tpd.c | 21 ++++++++++-----------
+ 1 file changed, 10 insertions(+), 11 deletions(-)
+
+--- a/xl2tpd.c
++++ b/xl2tpd.c
+@@ -382,7 +382,6 @@ int start_pppd (struct call *c, struct p
+     /* char a, b; */
+     char tty[512];
+     char *stropt[80];
+-    struct ppp_opts *p;
+ #ifdef USE_KERNEL
+     struct sockaddr_pppol2tp sax;
+     int flags;
+@@ -396,16 +395,7 @@ int start_pppd (struct call *c, struct p
+     struct call *sc;
+     struct tunnel *st;
+ 
+-    p = opts;
+     stropt[0] = strdup (PPPD);
+-    while (p)
+-    {
+-        stropt[pos] = (char *) malloc (strlen (p->option) + 1);
+-        strncpy (stropt[pos], p->option, strlen (p->option) + 1);
+-        pos++;
+-        p = p->next;
+-    }
+-    stropt[pos] = NULL;
+     if (c->pppd > 0)
+     {
+         l2tp_log(LOG_WARNING, "%s: PPP already started on call!\n", __FUNCTION__);
+@@ -467,7 +457,6 @@ int start_pppd (struct call *c, struct p
+         snprintf (stropt[pos], 10, "%d", c->ourcid);
+             pos++;
+        }
+-        stropt[pos] = NULL;
+     }
+     else
+ #endif
+@@ -497,6 +486,16 @@ int start_pppd (struct call *c, struct p
+             return -EINVAL;
+         }
+         stropt[pos++] = strdup(tty);
++    }
++
++    {
++        struct ppp_opts *p = opts;
++        while (p)
++        {
++            stropt[pos] = strdup (p->option);
++            pos++;
++            p = p->next;
++        }
+         stropt[pos] = NULL;
+     }
+ 
