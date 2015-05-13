@@ -15,7 +15,7 @@ PKG_MAINTAINER=Daniel Golle <daniel@makrotopia.org>
 
 PKG_SOURCE:=$(PKG_NAME)-udeb_$(PKG_VERSION)_all.udeb
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/d/debootstrap
-PKG_MD5SUM:=0f0ce1195a08f2809673d8e867fa61e6
+PKG_MD5SUM:=b7e98013966e595ba50230f60efe7cbe
 PKG_LICENSE:=Unique
 PKG_LICENSE_FILES:=debian/copyright
 
