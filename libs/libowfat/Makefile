@@ -14,7 +14,7 @@ PKG_VERSION:=$(LOWFAT_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://dl.fefe.de
+PKG_SOURCE_URL:=http://www.fefe.de/libowfat
 PKG_MD5SUM:=f0119532ea834ce9e80afe49d7d85512
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0
