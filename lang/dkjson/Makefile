@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dkjson
 PKG_VERSION:=2.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=https://github.com/LuaDist/dkjson.git
 PKG_SOURCE_PROTO:=git
