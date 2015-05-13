@@ -8,11 +8,11 @@ Subject: [PATCH 20/26] OpenPGP: Don't use sc_log in openpgp-tool.
  src/tools/openpgp-tool.c | 21 +++++++++++----------
  1 file changed, 11 insertions(+), 10 deletions(-)
 
-diff --git a/src/tools/openpgp-tool.c b/src/tools/openpgp-tool.c
-index a0334ca..505abd9 100644
---- a/src/tools/openpgp-tool.c
-+++ b/src/tools/openpgp-tool.c
-@@ -414,8 +414,6 @@ int do_genkey(sc_card_t *card, u8 key_id, unsigned int key_len)
+Index: opensc-20150513/src/tools/openpgp-tool.c
+===================================================================
+--- opensc-20150513.orig/src/tools/openpgp-tool.c
++++ opensc-20150513/src/tools/openpgp-tool.c
+@@ -414,8 +414,6 @@ int do_genkey(sc_card_t *card, u8 key_id
  	sc_path_t path;
  	sc_file_t *file;
  
@@ -21,7 +21,7 @@ index a0334ca..505abd9 100644
  	if (key_id < 1 || key_id > 3) {
  		printf("Unknown key ID %d.\n", key_id);
  		return 1;
-@@ -479,14 +477,14 @@ int delete_key_gnuk(sc_card_t *card, u8 key_id)
+@@ -479,14 +477,14 @@ int delete_key_gnuk(sc_card_t *card, u8
  	u8 *data = NULL;
  
  	/* Delete fingerprint */
@@ -39,7 +39,7 @@ index a0334ca..505abd9 100644
  
  	if (key_id == 1)
  		data = "\x4D\x02\xB6";
-@@ -534,15 +532,18 @@ int delete_key_openpgp(sc_card_t *card, u8 key_id)
+@@ -534,15 +532,18 @@ int delete_key_openpgp(sc_card_t *card,
  		/* Build APDU from binary array */
  		r = sc_bytes2apdu(card->ctx, buf, len0, &apdu);
  		if (r) {
@@ -61,7 +61,7 @@ index a0334ca..505abd9 100644
  	}
  	/* TODO: Rewrite Extended Header List.
  	 * Not support by OpenGPG v2 yet */
-@@ -557,7 +558,7 @@ int delete_key(sc_card_t *card, u8 key_id)
+@@ -557,7 +558,7 @@ int delete_key(sc_card_t *card, u8 key_i
  	LOG_FUNC_CALLED(ctx);
  	/* Check key ID */
  	if (key_id < 1 || key_id > 3) {
@@ -79,6 +79,3 @@ index a0334ca..505abd9 100644
  		exit_status = EXIT_FAILURE;
  		goto out;
  	}
--- 
-2.1.3
-

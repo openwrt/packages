@@ -9,11 +9,11 @@ Subject: [PATCH 19/26] OpenPGP: Make indentation consistent (space -> tab).
  src/tools/openpgp-tool.c     | 56 ++++++++++++++++++++++----------------------
  2 files changed, 39 insertions(+), 39 deletions(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 037ef73..ae40940 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -192,12 +192,12 @@ static struct do_info		pgp1_objects[] = {	/* OpenPGP card spec 1.1 */
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -194,12 +194,12 @@ static struct do_info		pgp1_objects[] =
  	{ 0x5f35, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  NULL,               sc_put_data },
  	{ 0x5f50, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  sc_get_data,        sc_put_data },
  	{ 0x7f49, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, NULL,               NULL        },
@@ -32,7 +32,7 @@ index 037ef73..ae40940 100644
  	{ 0, 0, 0, NULL, NULL },
  };
  
-@@ -253,11 +253,11 @@ static struct do_info		pgp2_objects[] = {	/* OpenPGP card spec 2.0 */
+@@ -255,11 +255,11 @@ static struct do_info		pgp2_objects[] =
  	/* The 0xA401, 0xB601, 0xB801 are just symbolic, it does not represent any real DO.
  	 * However, their R/W access condition may block the process of importing key in pkcs15init.
  	 * So we set their accesses condition as WRITE_PIN3 (writable). */
@@ -49,10 +49,10 @@ index 037ef73..ae40940 100644
  	{ 0, 0, 0, NULL, NULL },
  };
  
-diff --git a/src/tools/openpgp-tool.c b/src/tools/openpgp-tool.c
-index 374819a..a0334ca 100644
---- a/src/tools/openpgp-tool.c
-+++ b/src/tools/openpgp-tool.c
+Index: opensc-20150513/src/tools/openpgp-tool.c
+===================================================================
+--- opensc-20150513.orig/src/tools/openpgp-tool.c
++++ opensc-20150513/src/tools/openpgp-tool.c
 @@ -37,11 +37,11 @@
  #include "util.h"
  #include "libopensc/log.h"
@@ -70,7 +70,7 @@ index 374819a..a0334ca 100644
  
  /* define structures */
  struct ef_name_map {
-@@ -142,10 +142,10 @@ static const struct ef_name_map openpgp_data[] = {
+@@ -142,10 +142,10 @@ static const struct ef_name_map openpgp_
  static void show_version(void)
  {
  	fprintf(stderr,
@@ -85,7 +85,7 @@ index 374819a..a0334ca 100644
  }
  
  
-@@ -176,16 +176,16 @@ static char *prettify_language(char *str)
+@@ -176,16 +176,16 @@ static char *prettify_language(char *str
  {
  	if (str != NULL) {
  		switch (strlen(str)) {
@@ -121,7 +121,7 @@ index 374819a..a0334ca 100644
  		}
  	}
  	return NULL;
-@@ -218,7 +218,7 @@ static void display_data(const struct ef_name_map *mapping, char *value)
+@@ -218,7 +218,7 @@ static void display_data(const struct ef
  				char *envvar;
  
  				envvar = malloc(strlen(mapping->env_name) +
@@ -130,7 +130,7 @@ index 374819a..a0334ca 100644
  				if (envvar != NULL) {
  					strcpy(envvar, mapping->env_name);
  					strcat(envvar, "=");
-@@ -346,20 +346,20 @@ static int do_userinfo(sc_card_t *card)
+@@ -344,20 +344,20 @@ static int do_userinfo(sc_card_t *card)
  		if (!count)
  			continue;
  
@@ -177,6 +177,3 @@ index 374819a..a0334ca 100644
  		return EXIT_FAILURE;
  	}
  
--- 
-2.1.3
-

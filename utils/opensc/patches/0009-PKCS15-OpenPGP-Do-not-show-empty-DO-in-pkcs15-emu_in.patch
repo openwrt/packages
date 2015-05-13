@@ -9,11 +9,11 @@ Subject: [PATCH 09/26] PKCS15-OpenPGP: Do not show empty DO in pkcs15
  src/libopensc/pkcs15-openpgp.c | 18 ++++++++++++++++++
  1 file changed, 18 insertions(+)
 
-diff --git a/src/libopensc/pkcs15-openpgp.c b/src/libopensc/pkcs15-openpgp.c
-index fea2805..51a2032 100644
---- a/src/libopensc/pkcs15-openpgp.c
-+++ b/src/libopensc/pkcs15-openpgp.c
-@@ -381,16 +381,34 @@ sc_pkcs15emu_openpgp_add_data(sc_pkcs15_card_t *p15card)
+Index: opensc-20150513/src/libopensc/pkcs15-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/pkcs15-openpgp.c
++++ opensc-20150513/src/libopensc/pkcs15-openpgp.c
+@@ -383,16 +383,34 @@ sc_pkcs15emu_openpgp_add_data(sc_pkcs15_
  		sc_pkcs15_object_t dat_obj;
  		char name[8];
  		char path[9];
@@ -48,6 +48,3 @@ index fea2805..51a2032 100644
  		sc_log(ctx, "Add %s data object", name);
  		r = sc_pkcs15emu_add_data_object(p15card, &dat_obj, &dat_info);
  	}
--- 
-2.1.3
-

@@ -8,10 +8,10 @@ Subject: [PATCH 06/26] openpgp-tool: Support deleting key in Gnuk.
  src/tools/openpgp-tool.c | 142 +++++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 142 insertions(+)
 
-diff --git a/src/tools/openpgp-tool.c b/src/tools/openpgp-tool.c
-index de1c9d4..374819a 100644
---- a/src/tools/openpgp-tool.c
-+++ b/src/tools/openpgp-tool.c
+Index: opensc-20150513/src/tools/openpgp-tool.c
+===================================================================
+--- opensc-20150513.orig/src/tools/openpgp-tool.c
++++ opensc-20150513/src/tools/openpgp-tool.c
 @@ -41,6 +41,7 @@
  #define	OPT_PRETTY	257
  #define	OPT_VERIFY	258
@@ -20,7 +20,7 @@ index de1c9d4..374819a 100644
  
  /* define structures */
  struct ef_name_map {
-@@ -79,6 +80,7 @@ static char *pin = NULL;
+@@ -79,6 +80,7 @@ static const char *pin = NULL;
  static int opt_dump_do = 0;
  static u8 do_dump_idx;
  static int opt_erase = 0;
@@ -44,7 +44,7 @@ index de1c9d4..374819a 100644
  /* d */ "Dump private data object number <arg> (i.e. PRIVATE-DO-<arg>)"
  };
  
-@@ -302,6 +306,14 @@ static int decode_options(int argc, char **argv)
+@@ -300,6 +304,14 @@ static int decode_options(int argc, char
  		case 'E':
  			opt_erase++;
  			break;
@@ -59,7 +59,7 @@ index de1c9d4..374819a 100644
  		default:
  			util_print_usage_and_die(app_name, options, option_help, NULL);
  		}
-@@ -457,6 +469,133 @@ int do_verify(sc_card_t *card, char *type, char *pin)
+@@ -457,6 +469,133 @@ int do_verify(sc_card_t *card, char *typ
  	return r;
  }
  
@@ -203,6 +203,3 @@ index de1c9d4..374819a 100644
  	if (opt_erase)
  		exit_status != do_erase(card);
  
--- 
-2.1.3
-
