@@ -28,7 +28,8 @@ include $(INCLUDE_DIR)/package.mk
 
 LXC_APPLETS_BIN += \
 	attach autostart cgroup clone config console create destroy execute \
-	freeze info monitor snapshot start stop unfreeze unshare usernsexec wait
+	freeze info monitor snapshot start stop unfreeze unshare usernsexec wait \
+	device
 
 LXC_APPLETS_LIB += \
 	monitord user-nic
