@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zeromq
 PKG_VERSION:=4.0.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=LICENCE.txt
@@ -31,28 +31,26 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libzmq/Default
-  TITLE:=ZeroMQ - Code Connected 
-  URL:=http://www.zeromq.org/
-endef
-
-define Package/libzmq/Default/description
-  A replacment for raw socket developing library 
-endef
-
 define Package/libzmq
-  $(call Package/libzmq/Default)
+  TITLE:=ZeroMQ - Message Queue engine
+  URL:=http://www.zeromq.org/
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libuuid +libpthread +librt $(CXX_DEPENDS)
-  TITLE+= (library)
-  URL:=
+  DEPENDS:=+libuuid +libpthread +librt +PACKAGE_libsodium:libsodium $(CXX_DEPENDS)
+  MENU:=1
+endef
+
+define Package/libzmq/config
+ config LIBZMQ_CURVEZMQ
+	bool "Include support for CurveZMQ security"
+	depends on PACKAGE_libzmq
+	default y
+	select PACKAGE_libsodium
 endef
 
 define Package/libzmq/description
-  $(call Package/libzmq/Default/description)
- This package contains the ZeroMQ shared library, used by other
- programs.
+ This package contains the ZeroMQ messaging engine shared library.
+ CurveZMQ security protocols are optional using libsodium.
 endef
 
 # add extra configure flags here
