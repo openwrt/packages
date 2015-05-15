@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2014 OpenWrt.org
+# Copyright (C) 2011-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,13 +10,12 @@ define Package/php5-pecl/Default
   SECTION:=lang
   CATEGORY:=Languages
   URL:=http://pecl.php.net/
-  MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
   DEPENDS:=php5
 endef
 
-define Build/Configure
+define Build/Prepare
+	$(Build/Prepare/Default)
 	( cd $(PKG_BUILD_DIR); $(STAGING_DIR_HOST)/usr/bin/phpize )
-	$(Build/Configure/Default)
 endef
 
 CONFIGURE_ARGS+= \
