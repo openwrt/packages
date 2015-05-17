@@ -103,6 +103,7 @@ CONFIGURE_ARGS += \
 	--enable-NMEA \
 	--enable-LOCAL-CLOCK \
 	--enable-SHM \
+	--enable-ATOM \
 	--enable-linuxcaps \
 	--with-yielding-select=yes \
 	--with-crypto \
