@@ -9,12 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dkjson
 PKG_VERSION:=2.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://dkolf.de/src/dkjson-lua.fsl/tarball/
-PKG_MD5SUM:=af6b5f3df681e208f1dfb1a724a87e7c
+PKG_SOURCE_URL:=https://github.com/LuaDist/dkjson.git
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=e72ba0c9f5d8b8746fc306f6189a819dbb5cd0be
 PKG_LICENSE:=MIT
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.bz2
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 

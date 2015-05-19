@@ -10,11 +10,11 @@ I used a string presentation before and it needed an extra conversion step.
  src/libopensc/card-openpgp.c | 47 +++++++++++++++++++++++---------------------
  1 file changed, 25 insertions(+), 22 deletions(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index ae40940..724fe73 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -2347,24 +2347,27 @@ out:
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -2358,24 +2358,27 @@ out:
  static int pgp_erase_card(sc_card_t *card)
  {
  	sc_context_t *ctx = card->ctx;
@@ -56,7 +56,7 @@ index ae40940..724fe73 100644
  
  	LOG_FUNC_CALLED(ctx);
  
-@@ -2376,17 +2379,17 @@ static int pgp_erase_card(sc_card_t *card)
+@@ -2387,17 +2390,17 @@ static int pgp_erase_card(sc_card_t *car
  	sc_log(ctx, "Card is OpenPGP v2. Erase card.");
  
  	/* Iterate over 10 commands above */
@@ -82,6 +82,3 @@ index ae40940..724fe73 100644
  		if (r) {
  			sc_log(ctx, "Failed to build APDU");
  			LOG_FUNC_RETURN(ctx, SC_ERROR_INTERNAL);
--- 
-2.1.3
-

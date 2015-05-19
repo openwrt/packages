@@ -12,11 +12,11 @@ leading to that we cannot read their data later, even if we verified PIN.
  src/libopensc/card-openpgp.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index c785a55..1cc3923 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -357,7 +357,7 @@ pgp_init(sc_card_t *card)
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -365,7 +365,7 @@ pgp_init(sc_card_t *card)
  
  	/* Populate MF - add matching blobs listed in the pgp_objects table. */
  	for (info = priv->pgp_objects; (info != NULL) && (info->id > 0); info++) {
@@ -25,6 +25,3 @@ index c785a55..1cc3923 100644
  		    (info->get_fn != NULL)) {
  			child = pgp_new_blob(card, priv->mf, info->id, sc_file_new());
  
--- 
-2.1.3
-

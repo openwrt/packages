@@ -8,11 +8,11 @@ Subject: [PATCH 25/26] Replace hardcode.
  src/libopensc/card-openpgp.c | 72 +++++++++++++++++++++++++-------------------
  1 file changed, 41 insertions(+), 31 deletions(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 94c69ae..1e6e338 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -152,6 +152,24 @@ static int		pgp_get_pubkey(sc_card_t *, unsigned int,
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -154,6 +154,24 @@ static int		pgp_get_pubkey(sc_card_t *,
  static int		pgp_get_pubkey_pem(sc_card_t *, unsigned int,
  				u8 *, size_t);
  
@@ -37,7 +37,7 @@ index 94c69ae..1e6e338 100644
  static struct do_info		pgp1_objects[] = {	/* OpenPGP card spec 1.1 */
  	{ 0x004f, SIMPLE,      READ_ALWAYS | WRITE_NEVER, NULL,               NULL        },
  	{ 0x005b, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  NULL,               sc_put_data },
-@@ -192,12 +210,12 @@ static struct do_info		pgp1_objects[] = {	/* OpenPGP card spec 1.1 */
+@@ -194,12 +212,12 @@ static struct do_info		pgp1_objects[] =
  	{ 0x5f35, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  NULL,               sc_put_data },
  	{ 0x5f50, SIMPLE,      READ_ALWAYS | WRITE_PIN3,  sc_get_data,        sc_put_data },
  	{ 0x7f49, CONSTRUCTED, READ_ALWAYS | WRITE_NEVER, NULL,               NULL        },
@@ -56,7 +56,7 @@ index 94c69ae..1e6e338 100644
  	{ 0, 0, 0, NULL, NULL },
  };
  
-@@ -246,30 +264,21 @@ static struct do_info		pgp2_objects[] = {	/* OpenPGP card spec 2.0 */
+@@ -248,30 +266,21 @@ static struct do_info		pgp2_objects[] =
  	{ 0x5f52, SIMPLE,      READ_ALWAYS | WRITE_NEVER, sc_get_data,        NULL        },
  	/* The 7F21 is constructed DO in spec, but in practice, its content can be retrieved
  	 * as simple DO (no need to parse TLV). */
@@ -94,7 +94,7 @@ index 94c69ae..1e6e338 100644
  #define DRVDATA(card)        ((struct pgp_priv_data *) ((card)->drv_data))
  struct pgp_priv_data {
  	pgp_blob_t *		mf;
-@@ -747,8 +756,9 @@ pgp_read_blob(sc_card_t *card, pgp_blob_t *blob)
+@@ -755,8 +764,9 @@ pgp_read_blob(sc_card_t *card, pgp_blob_
  
  		/* Buffer length for Gnuk pubkey */
  		if (card->type == SC_CARD_TYPE_OPENPGP_GNUK &&
@@ -106,7 +106,7 @@ index 94c69ae..1e6e338 100644
  			buf_len = MAXLEN_RESP_PUBKEY_GNUK;
  		}
  
-@@ -1804,11 +1814,11 @@ pgp_update_pubkey_blob(sc_card_t *card, u8* modulus, size_t modulus_len,
+@@ -1812,11 +1822,11 @@ pgp_update_pubkey_blob(sc_card_t *card,
  	LOG_FUNC_CALLED(card->ctx);
  
  	if (key_id == SC_OPENPGP_KEY_SIGN)
@@ -121,7 +121,7 @@ index 94c69ae..1e6e338 100644
  	else {
  		sc_log(card->ctx, "Unknown key id %X.", key_id);
  		LOG_FUNC_RETURN(card->ctx, SC_ERROR_INVALID_ARGUMENTS);
-@@ -2501,17 +2511,17 @@ pgp_delete_file(sc_card_t *card, const sc_path_t *path)
+@@ -2514,17 +2524,17 @@ pgp_delete_file(sc_card_t *card, const s
  		LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_SUPPORTED);
  
  	if (card->type != SC_CARD_TYPE_OPENPGP_GNUK &&
@@ -143,6 +143,3 @@ index 94c69ae..1e6e338 100644
  		r = gnuk_delete_key(card, 3);
  	}
  	else {
--- 
-2.1.3
-

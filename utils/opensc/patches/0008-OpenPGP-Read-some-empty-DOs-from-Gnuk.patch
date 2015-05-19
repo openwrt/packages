@@ -10,11 +10,11 @@ So, we will consider them exist in driver.
  src/libopensc/card-openpgp.c | 25 +++++++++++++++++++++++++
  1 file changed, 25 insertions(+)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 91c311b..e7b25c0 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -815,6 +815,23 @@ pgp_get_blob(sc_card_t *card, struct blob *blob, unsigned int id,
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -823,6 +823,23 @@ pgp_get_blob(sc_card_t *card, struct blo
  		}
  	}
  
@@ -38,7 +38,7 @@ index 91c311b..e7b25c0 100644
  	return SC_ERROR_FILE_NOT_FOUND;
  }
  
-@@ -1149,6 +1166,14 @@ pgp_get_data(sc_card_t *card, unsigned int tag, u8 *buf, size_t buf_len)
+@@ -1157,6 +1174,14 @@ pgp_get_data(sc_card_t *card, unsigned i
  	LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
  
  	r = sc_check_sw(card, apdu.sw1, apdu.sw2);
@@ -53,6 +53,3 @@ index 91c311b..e7b25c0 100644
  	LOG_TEST_RET(card->ctx, r, "Card returned error");
  
  	LOG_FUNC_RETURN(card->ctx, apdu.resplen);
--- 
-2.1.3
-
