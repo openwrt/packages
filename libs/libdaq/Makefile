@@ -11,7 +11,8 @@ PKG_NAME:=libdaq
 PKG_VERSION:=2.0.4
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/
+PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
+	@SF/snort
 PKG_SOURCE:=daq-$(PKG_VERSION).tar.gz
 PKG_MD5SUM:=65e51d72e9d5d8b397e192e4e5857eff
 PKG_BUILD_DIR:=$(BUILD_DIR)/daq-$(PKG_VERSION)
