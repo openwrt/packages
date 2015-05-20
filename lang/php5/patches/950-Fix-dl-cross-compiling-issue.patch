@@ -1,7 +1,6 @@
-diff -u --recursive php-5.6.6-vanilla/configure.in php-5.6.6/configure.in
---- php-5.6.6-vanilla/configure.in	2015-02-26 22:10:51.865487530 -0500
-+++ php-5.6.6/configure.in	2015-02-26 22:29:59.043102135 -0500
-@@ -453,7 +453,10 @@
+--- a/configure.in
++++ b/configure.in
+@@ -453,7 +453,10 @@ PHP_CHECK_FUNC(gethostname, nsl)
  PHP_CHECK_FUNC(gethostbyaddr, nsl)
  PHP_CHECK_FUNC(yp_get_default_domain, nsl)
  
@@ -13,10 +12,9 @@ diff -u --recursive php-5.6.6-vanilla/configure.in php-5.6.6/configure.in
  if test "$ac_cv_func_dlopen" = "yes"; then
    AC_DEFINE(HAVE_LIBDL, 1, [ ])
  fi
-diff -u --recursive php-5.6.6-vanilla/ext/fileinfo/config.m4 php-5.6.6/ext/fileinfo/config.m4
---- php-5.6.6-vanilla/ext/fileinfo/config.m4	2015-02-26 22:10:51.639487135 -0500
-+++ php-5.6.6/ext/fileinfo/config.m4	2015-02-26 22:22:47.645609128 -0500
-@@ -46,6 +46,10 @@
+--- a/ext/fileinfo/config.m4
++++ b/ext/fileinfo/config.m4
+@@ -46,6 +46,10 @@ int main(void)
      AC_MSG_RESULT(no)
      AC_MSG_NOTICE(using libmagic strcasestr implementation)
      libmagic_sources="$libmagic_sources libmagic/strcasestr.c"
@@ -27,10 +25,9 @@ diff -u --recursive php-5.6.6-vanilla/ext/fileinfo/config.m4 php-5.6.6/ext/filei
    ])
  
    PHP_NEW_EXTENSION(fileinfo, fileinfo.c $libmagic_sources, $ext_shared,,-I@ext_srcdir@/libmagic)
-diff -u --recursive php-5.6.6-vanilla/ext/opcache/config.m4 php-5.6.6/ext/opcache/config.m4
---- php-5.6.6-vanilla/ext/opcache/config.m4	2015-02-26 22:10:51.790487399 -0500
-+++ php-5.6.6/ext/opcache/config.m4	2015-02-26 22:34:19.240414394 -0500
-@@ -341,7 +341,14 @@
+--- a/ext/opcache/config.m4
++++ b/ext/opcache/config.m4
+@@ -227,7 +227,14 @@ AC_TRY_RUN([
  	flock_type=linux
      AC_DEFINE([HAVE_FLOCK_LINUX], [], [Struct flock is Linux-type])
      AC_MSG_RESULT("yes")
@@ -46,7 +43,7 @@ diff -u --recursive php-5.6.6-vanilla/ext/opcache/config.m4 php-5.6.6/ext/opcach
  
  AC_MSG_CHECKING("whether flock struct is BSD ordered")
  AC_TRY_RUN([
-@@ -357,7 +364,12 @@
+@@ -243,7 +250,12 @@ AC_TRY_RUN([
  	flock_type=bsd
      AC_DEFINE([HAVE_FLOCK_BSD], [], [Struct flock is BSD-type]) 
      AC_MSG_RESULT("yes")
