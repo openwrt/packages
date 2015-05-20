@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xz
 PKG_VERSION:=5.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://tukaani.org/xz
@@ -92,6 +92,10 @@ define Build/InstallDev
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/liblzma.pc \
 		$(1)/usr/lib/pkgconfig/
+endef
+
+define Package/xz-utils/install
+	true
 endef
 
 define Package/liblzma/install
