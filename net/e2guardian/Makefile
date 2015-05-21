@@ -8,18 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=e2guardian
-PKG_VERSION:=3.0.4
+PKG_VERSION:=3.1.2
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/e2guardian/e2guardian.git
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-
+PKG_SOURCE:=v$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/e2guardian/e2guardian/archive/
+PKG_MD5SUM:=85cfa16074737dbc3935f93dfcded285
+PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
@@ -47,9 +45,12 @@ CONFIGURE_VARS += \
 
 CONFIGURE_ARGS += \
 		--with-sysconfsubdir=e2guardian \
-		--with-proxyuser=root \
-		--with-proxygroup=root \
-		--enable-pcre=yes
+		--with-proxyuser=nobody \
+		--with-proxygroup=nogroup \
+		--enable-pcre=yes \
+		--with-piddir=/tmp/e2guardian/ \
+		--enable-sslextralists=no \
+		--enable-sslmitm=no
 
 define Build/Configure
 	$(call Build/Configure/Default,$CONFIGURE_ARGS)
