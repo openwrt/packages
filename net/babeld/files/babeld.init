@@ -7,6 +7,7 @@ START=70
 pidfile='/var/run/babeld.pid'
 CONFIGFILE='/var/etc/babeld.conf'
 OTHERCONFIGFILE="/etc/babeld.conf"
+OTHERCONFIGDIR="/tmp/babeld.d/"
 EXTRA_COMMANDS="status"
 EXTRA_HELP="        status Dump Babel's table to the log file."
 
@@ -204,8 +205,14 @@ babel_config_cb() {
 start() {
 	mkdir -p /var/lib
 	mkdir -p /var/etc
+	mkdir -p $OTHERCONFIGDIR
+
 	# Start by emptying the generated config file
 	>"$CONFIGFILE"
+	# Import dynamic config files
+	for f in $OTHERCONFIGDIR/*.conf; do
+		[ -f "$f" ] && cat $f >> $CONFIGFILE
+	done
 	# First load the whole config file, without callbacks, so that we are
 	# aware of all "ignore" options in the second pass.
 	config_load babeld
