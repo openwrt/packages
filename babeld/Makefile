@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=babeld
 PKG_VERSION:=1.6.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.pps.univ-paris-diderot.fr/~jch/software/files/
@@ -25,7 +25,7 @@ define Package/babeld
   TITLE:=A loop-free distance-vector routing protocol
   URL:=http://www.pps.univ-paris-diderot.fr/~jch/software/babel/
   MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>
-  DEPENDS:=+kmod-ipv6 +librt
+  DEPENDS:=+kmod-ipv6
 endef
 
 define Package/babeld/description
@@ -45,6 +45,7 @@ endef
 
 MAKE_FLAGS+= \
 	CFLAGS="$(TARGET_CFLAGS)" \
+	LDLIBS="" \
 
 define Package/babeld/install
 	$(INSTALL_DIR) $(1)/usr/sbin
