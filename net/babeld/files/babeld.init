@@ -13,7 +13,7 @@ EXTRA_HELP="        status Dump Babel's table to the log file."
 
 # Options to ignore for the global section (old options that are translated
 # for backward compatibility with old configuration files)
-ignored_options="carrier_sense assume_wireless no_split_horizon random_router_id multicast_address port hello_interval wired_hello_interval smoothing_half_time duplication_priority local_server conf_file"
+ignored_options="carrier_sense assume_wireless no_split_horizon random_router_id multicast_address port hello_interval wired_hello_interval smoothing_half_time duplication_priority local_server conf_file conf_dir"
 
 # Append a line to the configuration file
 cfg_append() {
@@ -109,6 +109,13 @@ parse_old_global_options() {
 	[ "$_bool" -eq 1 ] && add_default_option "wired" "false"
 	config_get_bool _bool "$section" 'no_split_horizon' 0
 	[ "$_bool" -eq 1 ] && add_default_option "split_horizon" "false"
+        # Configure alternative configuration file and directory
+	local conf_file
+	config_get conf_file "$section" "conf_file"
+	[ -n "$conf_file" ] && OTHERCONFIGFILE="$conf_file"
+	local conf_dir
+	config_get conf_dir "$section" "conf_dir"
+	[ -n "$conf_dir" ] && OTHERCONFIGDIR="$conf_dir"
 }
 
 babel_filter() {
