@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,14 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=umurmur
-PKG_VERSION:=0.2.15
+PKG_VERSION:=0.2.16
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git://github.com/fatbob313/umurmur.git
+PKG_SOURCE_URL:=git://github.com/umurmur/umurmur.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=f66c0c3d630aaff1c4d589bc4d884067f00b6529
+PKG_SOURCE_VERSION:=0.2.16
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
