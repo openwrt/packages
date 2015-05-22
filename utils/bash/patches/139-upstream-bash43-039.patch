@@ -1,0 +1,52 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-039
+
+Bug-Reported-by:	SN <poczta-sn@gazeta.pl>
+Bug-Reference-ID:	<54E2554C.205@gazeta.pl>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2015-02/msg00060.html
+
+Bug-Description:
+
+Using the output of `declare -p' when run in a function can result in variables
+that are invisible to `declare -p'.  This problem occurs when an assignment
+builtin such as `declare' receives a quoted compound array assignment as one of
+its arguments.
+
+Patch (apply with `patch -p0'):
+
+--- a/arrayfunc.c
++++ b/arrayfunc.c
+@@ -404,6 +404,9 @@ assign_array_var_from_word_list (var, li
+       (*var->assign_func) (var, l->word->word, i, 0);
+     else
+       array_insert (a, i, l->word->word);
++
++  VUNSETATTR (var, att_invisible);	/* no longer invisible */
++
+   return var;
+ }
+ 
+@@ -634,6 +637,10 @@ assign_array_var_from_string (var, value
+ 
+   if (nlist)
+     dispose_words (nlist);
++
++  if (var)
++    VUNSETATTR (var, att_invisible);	/* no longer invisible */
++
+   return (var);
+ }
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 38
++#define PATCHLEVEL 39
+ 
+ #endif /* _PATCHLEVEL_H_ */
