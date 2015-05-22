@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.0.17
+PKG_VERSION:=9.4.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 PKG_LICENSE:=PostgreSQL
@@ -18,10 +18,11 @@ PKG_SOURCE_URL:=\
 	http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v$(PKG_VERSION) \
 	http://ftp.be.postgresql.org/postgresql/source/v$(PKG_VERSION) \
 	ftp://ftp-archives.postgresql.org/pub/source/v$(PKG_VERSION)
-PKG_MD5SUM:=46bf3ef3761c091fb0d2e25012c1709e
+PKG_MD5SUM:=2cf30f50099ff1109d0aa517408f8eff
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
+PKG_MACRO_PATHS:=config
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -85,17 +86,13 @@ define Build/Configure
 			--enable-static \
 			--disable-integer-datetimes \
 			--disable-rpath \
-			--without-java \
-			--without-krb4 \
 			--without-krb5 \
 			--without-openssl \
 			--without-pam \
 			--without-perl \
 			--without-python \
 			--without-readline \
-			--without-rendezvous \
 			--without-tcl \
-			--without-tk \
 			--with-zlib="yes" \
 			--enable-depend \
 			--with-system-timezone=/tmp \
@@ -141,16 +138,12 @@ define Build/Configure
 			--enable-static \
 			--disable-integer-datetimes \
 			--disable-rpath \
-			--without-java \
-			--without-krb4 \
 			--without-krb5 \
 			--without-openssl \
 			--without-pam \
 			--without-perl \
 			--without-python \
-			--without-rendezvous \
 			--without-tcl \
-			--without-tk \
 			--with-zlib="yes" \
 			--enable-depend \
 			$(if $(CONFIG_TARGET_avr32),--disable-spinlocks) \
@@ -242,6 +235,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config_manual.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/postgres_ext.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config_ext.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/postgresql $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpq.{a,so*} $(1)/usr/lib/
