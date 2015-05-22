@@ -1,0 +1,74 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-034
+
+Bug-Reported-by:	Dreamcat4 <dreamcat4@gmail.com>
+Bug-Reference-ID:	<CAN39uTpAEs2GFu4ebC_SfSVMRTh-DJ9YanrY4BZZ3OO+CCHjng@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2015-05/msg00001.html
+
+Bug-Description:
+
+If neither the -f nor -v options is supplied to unset, and a name argument is
+found to be a function and unset, subsequent name arguments are not treated as
+variables before attempting to unset a function by that name.
+
+Patch (apply with `patch -p0'):
+
+--- a/builtins/set.def
++++ b/builtins/set.def
+@@ -751,9 +751,11 @@ unset_builtin (list)
+   WORD_LIST *list;
+ {
+   int unset_function, unset_variable, unset_array, opt, nameref, any_failed;
++  int global_unset_func, global_unset_var;
+   char *name;
+ 
+   unset_function = unset_variable = unset_array = nameref = any_failed = 0;
++  global_unset_func = global_unset_var = 0;
+ 
+   reset_internal_getopt ();
+   while ((opt = internal_getopt (list, "fnv")) != -1)
+@@ -761,10 +763,10 @@ unset_builtin (list)
+       switch (opt)
+ 	{
+ 	case 'f':
+-	  unset_function = 1;
++	  global_unset_func = 1;
+ 	  break;
+ 	case 'v':
+-	  unset_variable = 1;
++	  global_unset_var = 1;
+ 	  break;
+ 	case 'n':
+ 	  nameref = 1;
+@@ -777,7 +779,7 @@ unset_builtin (list)
+ 
+   list = loptend;
+ 
+-  if (unset_function && unset_variable)
++  if (global_unset_func && global_unset_var)
+     {
+       builtin_error (_("cannot simultaneously unset a function and a variable"));
+       return (EXECUTION_FAILURE);
+@@ -795,6 +797,9 @@ unset_builtin (list)
+ 
+       name = list->word->word;
+ 
++      unset_function = global_unset_func;
++      unset_variable = global_unset_var;
++
+ #if defined (ARRAY_VARS)
+       unset_array = 0;
+       if (!unset_function && valid_array_reference (name))
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 33
++#define PATCHLEVEL 34
+ 
+ #endif /* _PATCHLEVEL_H_ */

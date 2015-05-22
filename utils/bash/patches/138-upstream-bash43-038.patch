@@ -1,0 +1,67 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-038
+
+Bug-Reported-by:	worley@alum.mit.edu (Dale R. Worley)
+Bug-Reference-ID:	<201406100051.s5A0pCeB014978@hobgoblin.ariadne.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-06/msg00028.html
+
+Bug-Description:
+
+There are a number of instances where `time' is not recognized as a reserved
+word when the shell grammar says it should be.
+
+Patch (apply with `patch -p0'):
+
+--- a/parse.y
++++ b/parse.y
+@@ -2818,11 +2818,16 @@ time_command_acceptable ()
+     case AND_AND:
+     case OR_OR:
+     case '&':
++    case WHILE:
+     case DO:
++    case UNTIL:
++    case IF:
+     case THEN:
++    case ELIF:
+     case ELSE:
+     case '{':		/* } */
+-    case '(':		/* ) */
++    case '(':		/* )( */
++    case ')':		/* only valid in case statement */
+     case BANG:		/* ! time pipeline */
+     case TIME:		/* time time pipeline */
+     case TIMEOPT:	/* time -p time pipeline */
+--- a/y.tab.c
++++ b/y.tab.c
+@@ -5130,11 +5130,16 @@ time_command_acceptable ()
+     case AND_AND:
+     case OR_OR:
+     case '&':
++    case WHILE:
+     case DO:
++    case UNTIL:
++    case IF:
+     case THEN:
++    case ELIF:
+     case ELSE:
+     case '{':		/* } */
+-    case '(':		/* ) */
++    case '(':		/* )( */
++    case ')':		/* only valid in case statement */
+     case BANG:		/* ! time pipeline */
+     case TIME:		/* time time pipeline */
+     case TIMEOPT:	/* time -p time pipeline */
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 37
++#define PATCHLEVEL 38
+ 
+ #endif /* _PATCHLEVEL_H_ */
