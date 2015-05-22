@@ -87,7 +87,7 @@ errorReliability = 0
 interfaceCheck()
 
 
-m5 = Map("mwan3", translate("MWAN Interface Configuration - " .. arg[1]),
+m5 = Map("mwan3", translate("MWAN Interface Configuration - ") .. arg[1],
 	translate(interfaceWarnings()))
 	m5.redirect = dsp.build_url("admin", "network", "mwan", "configuration", "interface")
 

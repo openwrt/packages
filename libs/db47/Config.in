@@ -1,0 +1,55 @@
+config DB47_ARCHIVE
+	bool "Include db_archive"
+	depends on PACKAGE_db47-util
+	default y
+
+config DB47_CHECKPOINT
+	bool "Include db_checkpoint"
+	depends on PACKAGE_db47-util
+	default y
+
+config DB47_DEADLOCK
+	bool "Include db_deadlock"
+	depends on PACKAGE_db47-util
+	default y
+
+config DB47_DUMP
+	bool "Include db_dump"
+	depends on PACKAGE_db47-util
+	default y
+
+config DB47_HOTBACKUP
+	bool "Include db_hotbackup"
+	depends on PACKAGE_db47-util
+	default y
+
+config DB47_LOAD
+	bool "Include db_load"
+	depends on PACKAGE_db47-util
+        default y
+
+config DB47_PRINTLOG
+	bool "Include db_printlog"
+	depends on PACKAGE_db47-util
+        default y
+
+config DB47_RECOVER
+	bool "Include db_recover"
+	depends on PACKAGE_db47-util
+        default y
+
+config DB47_STAT
+	bool "Include db_stat"
+	depends on PACKAGE_db47-util
+        default y
+
+config DB47_UPGRADE
+	bool "Include db_upgrade"
+	depends on PACKAGE_db47-util
+        default y
+
+config DB47_VERIFY
+	bool "Include db_verify"
+	depends on PACKAGE_db47-util
+        default y
+
