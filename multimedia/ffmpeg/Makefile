@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=2.6.2
+PKG_VERSION:=2.6.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=e75d598921285d6775f20164a91936ac
+PKG_MD5SUM:=e2cc3c209f91393d35ab58598e41cf22
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -125,7 +125,7 @@ FFMPEG_MINI_DECODERS:= \
 	wmav1 \
 	wmav2 \
 
-FFMPEG_MINI_DEMUXERS := \
+FFMPEG_MINI_DEMUXERS:= \
 	aac \
 	ac3 \
 	avi \
@@ -144,7 +144,7 @@ FFMPEG_MINI_PARSERS:= \
 	mpeg4video \
 	mpegaudio \
 
-FFMPEG_MINI_PROTOCOLS := \
+FFMPEG_MINI_PROTOCOLS:= \
 	file \
 
 FFMPEG_AUDIO_DECODERS:= \

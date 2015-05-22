@@ -10,11 +10,11 @@ Command: openpgp-tool --erase
  src/tools/openpgp-tool.c     | 22 ++++++++++++++-
  2 files changed, 85 insertions(+), 1 deletion(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 1cc3923..7349876 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -2195,6 +2195,66 @@ out:
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -2206,6 +2206,66 @@ out:
  
  #endif /* ENABLE_OPENSSL */
  
@@ -81,7 +81,7 @@ index 1cc3923..7349876 100644
  /* ABI: card ctl: perform special card-specific operations */
  static int pgp_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
  {
-@@ -2219,6 +2279,10 @@ static int pgp_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
+@@ -2232,6 +2292,10 @@ static int pgp_card_ctl(sc_card_t *card,
  		LOG_FUNC_RETURN(card->ctx, r);
  		break;
  #endif /* ENABLE_OPENSSL */
@@ -92,12 +92,12 @@ index 1cc3923..7349876 100644
  	}
  
  	LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_SUPPORTED);
-diff --git a/src/tools/openpgp-tool.c b/src/tools/openpgp-tool.c
-index a24a395..de1c9d4 100644
---- a/src/tools/openpgp-tool.c
-+++ b/src/tools/openpgp-tool.c
+Index: opensc-20150513/src/tools/openpgp-tool.c
+===================================================================
+--- opensc-20150513.orig/src/tools/openpgp-tool.c
++++ opensc-20150513/src/tools/openpgp-tool.c
 @@ -78,6 +78,7 @@ static int opt_pin = 0;
- static char *pin = NULL;
+ static const char *pin = NULL;
  static int opt_dump_do = 0;
  static u8 do_dump_idx;
 +static int opt_erase = 0;
@@ -120,7 +120,7 @@ index a24a395..de1c9d4 100644
  	"Verify PIN (CHV1, CHV2, CHV3...)",
  	"PIN string",
  /* d */ "Dump private data object number <arg> (i.e. PRIVATE-DO-<arg>)"
-@@ -232,7 +235,7 @@ static int decode_options(int argc, char **argv)
+@@ -232,7 +235,7 @@ static int decode_options(int argc, char
  {
  	int c;
  
@@ -129,7 +129,7 @@ index a24a395..de1c9d4 100644
  		switch (c) {
  		case 'r':
  			opt_reader = optarg;
-@@ -296,6 +299,8 @@ static int decode_options(int argc, char **argv)
+@@ -294,6 +297,8 @@ static int decode_options(int argc, char
  			do_dump_idx = optarg[0] - '0';
  			opt_dump_do++;
  			actions++;
@@ -138,7 +138,7 @@ index a24a395..de1c9d4 100644
  			break;
  		default:
  			util_print_usage_and_die(app_name, options, option_help, NULL);
-@@ -452,6 +457,18 @@ int do_verify(sc_card_t *card, char *type, char *pin)
+@@ -452,6 +457,18 @@ int do_verify(sc_card_t *card, char *typ
  	return r;
  }
  
@@ -167,6 +167,3 @@ index a24a395..de1c9d4 100644
  out:
  	sc_unlock(card);
  	sc_disconnect_card(card);
--- 
-2.1.3
-

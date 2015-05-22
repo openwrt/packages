@@ -1,0 +1,12 @@
+Index: xl2tpd-1.3.7pre20141126/xl2tpd-control.c
+===================================================================
+--- xl2tpd-1.3.7pre20141126.orig/xl2tpd-control.c
++++ xl2tpd-1.3.7pre20141126/xl2tpd-control.c
+@@ -12,6 +12,7 @@
+  
+ #define _GNU_SOURCE
+ 
++#include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>
+ #include <stdarg.h>

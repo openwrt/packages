@@ -1,0 +1,10 @@
+--- a/src/shell.c
++++ b/src/shell.c
+@@ -33,6 +33,7 @@
+ #include <stdlib.h>
+ #include <unistd.h>
++#include <sys/wait.h>
+ 
+ void shell_draw() {
+   char *full_path;
+   int res;

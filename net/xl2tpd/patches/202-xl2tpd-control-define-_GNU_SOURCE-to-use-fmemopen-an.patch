@@ -1,0 +1,21 @@
+From 76f444d284c0b0a351a488954e0d39b72a0ce211 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Wed, 29 Apr 2015 10:32:37 +0800
+Subject: [PATCH 2/7] xl2tpd-control: define _GNU_SOURCE to use fmemopen() and
+ friends.
+
+---
+ xl2tpd-control.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/xl2tpd-control.c
++++ b/xl2tpd-control.c
+@@ -10,6 +10,8 @@
+  *
+  */
+  
++#define _GNU_SOURCE
++
+ #include <stdio.h>
+ #include <string.h>
+ #include <stdarg.h>
