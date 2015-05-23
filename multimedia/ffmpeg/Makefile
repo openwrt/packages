@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=2.6.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
@@ -162,6 +162,7 @@ FFMPEG_AUDIO_DECODERS:= \
 	mp3* \
 	mpc7 \
 	mpc8 \
+	opus \
 	pcm_* \
 	vorbis \
 	wavpack \
@@ -197,9 +198,10 @@ FFMPEG_AUDIO_DEMUXERS:= \
 FFMPEG_AUDIO_PARSERS:= \
 	aac \
 	aac_latm \
-	flac \
 	ac3 \
+	flac \
 	mpegaudio \
+	opus \
 
 FFMPEG_AUDIO_PROTOCOLS:= \
 	file http icecast rtp tcp udp
@@ -308,7 +310,7 @@ endef
 define Package/libffmpeg-audio-dec
 $(call Package/libffmpeg/Default)
  TITLE+= (audio)
- DEPENDS+= @DEVEL +libopus +libspeex
+ DEPENDS+= @BUILD_PATENTED +libspeex
  VARIANT:=audio-dec
 endef
 
@@ -462,7 +464,6 @@ ifeq ($(BUILD_VARIANT),audio-dec)
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_AUDIO_DEMUXERS)) \
 	$(call FFMPEG_ENABLE,parser,$(FFMPEG_AUDIO_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_AUDIO_PROTOCOLS)) \
-	--enable-libopus --enable-decoder=libopus \
 	--enable-libspeex --enable-decoder=libspeex \
 	--disable-decoder=pcm_bluray,pcm_dvd \
 
