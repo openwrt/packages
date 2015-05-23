@@ -1,0 +1,48 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-035
+
+Bug-Reported-by:	<romerox.adrian@gmail.com>
+Bug-Reference-ID:	<CABV5r3zhPXmSKUe9uedeGc5YFBM2njJ1iVmY2h5neWdQpDBQug@mail.gmail.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-08/msg00045.html
+
+Bug-Description:
+
+A locale with a long name can trigger a buffer overflow and core dump.  This
+applies on systems that do not have locale_charset in libc, are not using
+GNU libiconv, and are not using the libintl that ships with bash in lib/intl.
+
+Patch (apply with `patch -p0'):
+
+--- a/lib/sh/unicode.c
++++ b/lib/sh/unicode.c
+@@ -78,13 +78,15 @@ stub_charset ()
+   s = strrchr (locale, '.');
+   if (s)
+     {
+-      strcpy (charsetbuf, s+1);
++      strncpy (charsetbuf, s+1, sizeof (charsetbuf) - 1);
++      charsetbuf[sizeof (charsetbuf) - 1] = '\0';
+       t = strchr (charsetbuf, '@');
+       if (t)
+ 	*t = 0;
+       return charsetbuf;
+     }
+-  strcpy (charsetbuf, locale);
++  strncpy (charsetbuf, locale, sizeof (charsetbuf) - 1);
++  charsetbuf[sizeof (charsetbuf) - 1] = '\0';
+   return charsetbuf;
+ }
+ #endif
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 34
++#define PATCHLEVEL 35
+ 
+ #endif /* _PATCHLEVEL_H_ */
