@@ -6,10 +6,10 @@ START=90
 
 start() {
         logger -t 'emailrelay' "Starting emailrelay service."
-        service_start emailrelay --as-server --poll 60 --forward-to smtpserver:smtpport --spool-dir /tmp --client-tls --client-auth /etc/emailrelay.auth --server-auth /etc/emailrelay.auth --log
+        service_start /usr/bin/emailrelay --as-server --poll 60 --forward-to smtpserver:smtpport --spool-dir /tmp --client-tls --client-auth /etc/emailrelay.auth --server-auth /etc/emailrelay.auth --log
 }
 
 stop() {
         logger -t 'emailrelay' "Stopping emailrelay service."
-        killall -9 emailrelay
+        service_stop /usr/bin/emailrelay
 }
