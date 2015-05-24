@@ -71,7 +71,8 @@ ifeq ($(BUILD_VARIANT),tls)
  define Build/Compile
 	$(SED) 's/#undef VSF_BUILD_SSL/#define VSF_BUILD_SSL/' $(PKG_BUILD_DIR)/builddefs.h
 	$(SED) 's/#define VSF_BUILD_PAM/#undef VSF_BUILD_PAM/' $(PKG_BUILD_DIR)/builddefs.h
-	$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile
+	$(if $(CONFIG_LIBC_USE_GLIBC),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile)
+	$(if $(CONFIG_LIBC_USE_MUSL),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile)
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
@@ -83,7 +84,8 @@ endif
 ifeq ($(BUILD_VARIANT),pam)
  define Build/Compile
 	$(SED) 's/#undef VSF_BUILD_SSL/#define VSF_BUILD_SSL/' $(PKG_BUILD_DIR)/builddefs.h
-	$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile
+	$(if $(CONFIG_LIBC_USE_GLIBC),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile)
+	$(if $(CONFIG_LIBC_USE_MUSL),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile)
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
