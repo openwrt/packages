@@ -1,16 +1,18 @@
-From 8c5853b8e22f34bc1c1acba278f7850ab7946894 Mon Sep 17 00:00:00 2001
+From 7973d45a0e1716ddc6bfb6caf600f826f59a7932 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Tue, 28 Apr 2015 21:26:15 +0800
-Subject: [PATCH 1/7] xl2tpd-control: check end-of-file when reading pipe to
- avoid dead loop.
+Subject: [PATCH 200/210] xl2tpd-control: check end-of-file when reading pipe
+ to avoid dead loop.
 
 ---
- xl2tpd-control.c | 11 +++++++----
+ xl2tpd-control.c |   11 +++++++----
  1 file changed, 7 insertions(+), 4 deletions(-)
 
+diff --git a/xl2tpd-control.c b/xl2tpd-control.c
+index feafe10..e5904d8 100644
 --- a/xl2tpd-control.c
 +++ b/xl2tpd-control.c
-@@ -306,17 +306,20 @@ int read_result(int result_fd, char* buf
+@@ -306,17 +306,20 @@ int read_result(int result_fd, char* buf, ssize_t size)
      /*FIXME: there is a chance to hang up reading.
               Should I create watching thread with timeout?
       */
@@ -35,3 +37,6 @@ Subject: [PATCH 1/7] xl2tpd-control: check end-of-file when reading pipe to
      buf[readed] = '\0';
      
      /* scan result code */
+-- 
+1.7.10.4
+

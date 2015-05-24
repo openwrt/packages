@@ -1,15 +1,25 @@
-From d4a484db1684cce15966bb722644416f90253ea7 Mon Sep 17 00:00:00 2001
+From 07e522cd7e223517389582a8eb647a4a6a8a5cf8 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Thu, 30 Apr 2015 13:53:11 +0800
-Subject: [PATCH 5/7] xl2tpd-control: cleaup result file atexit().
+Subject: [PATCH 203/210] xl2tpd-control: cleaup result file atexit().
 
 ---
- xl2tpd-control.c | 20 +++++++++++++-------
- 1 file changed, 13 insertions(+), 7 deletions(-)
+ xl2tpd-control.c |   21 ++++++++++++++-------
+ 1 file changed, 14 insertions(+), 7 deletions(-)
 
+diff --git a/xl2tpd-control.c b/xl2tpd-control.c
+index 973ee87..abc0324 100644
 --- a/xl2tpd-control.c
 +++ b/xl2tpd-control.c
-@@ -35,6 +35,9 @@
+@@ -12,6 +12,7 @@
+  
+ #define _GNU_SOURCE
+ 
++#include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>
+ #include <stdarg.h>
+@@ -35,6 +36,9 @@
  #define TUNNEL_REQUIRED 1
  #define TUNNEL_NOT_REQUIRED 0
  
@@ -19,7 +29,7 @@ Subject: [PATCH 5/7] xl2tpd-control: cleaup result file atexit().
  int log_level = ERROR_LEVEL;
  
  void print_error (int level, const char *fmt, ...);
-@@ -117,6 +120,14 @@ void help()
+@@ -117,6 +121,14 @@ void help()
      );
  }
  
@@ -34,7 +44,7 @@ Subject: [PATCH 5/7] xl2tpd-control: cleaup result file atexit().
  int main (int argc, char *argv[])
  {
      char* control_filename = NULL;
-@@ -195,11 +206,11 @@ int main (int argc, char *argv[])
+@@ -195,11 +207,11 @@ int main (int argc, char *argv[])
      FILE* mesf = fmemopen (buf, CONTROL_PIPE_MESSAGE_SIZE, "w");
  
      /* create result pipe for reading */
@@ -48,7 +58,7 @@ Subject: [PATCH 5/7] xl2tpd-control: cleaup result file atexit().
      if (result_fd < 0)
      {
          print_error (ERROR_LEVEL,
-@@ -293,11 +304,6 @@ int main (int argc, char *argv[])
+@@ -293,11 +305,6 @@ int main (int argc, char *argv[])
      );
      printf ("%s", rbuf);
      
@@ -60,3 +70,6 @@ Subject: [PATCH 5/7] xl2tpd-control: cleaup result file atexit().
      return command_result_code;
  }
  
+-- 
+1.7.10.4
+
