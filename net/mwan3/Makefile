@@ -40,8 +40,8 @@ endef
 
 define Package/mwan3/install
         $(INSTALL_DIR) $(1)/usr/sbin
-        $(INSTALL_BIN) ./files/mwan3.sbin $(1)/usr/sbin
-        $(INSTALL_BIN) ./files/mwan3track.sbin $(1)/usr/sbin
+        $(INSTALL_BIN) ./files/mwan3.sbin $(1)/usr/sbin/mwan3
+        $(INSTALL_BIN) ./files/mwan3track.sbin $(1)/usr/sbin/mwan3track
         $(INSTALL_DIR) $(1)/etc/config
         $(INSTALL_DATA) ./files/mwan3.config $(1)/etc/config/mwan3
         $(INSTALL_DIR) $(1)/etc/hotplug.d/iface/
