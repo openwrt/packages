@@ -66,7 +66,6 @@ load_tunnelD() {
 	config_get localaddress $1 localaddress "*"
 	config_get localport	$1 localport
 
-        [ "$remoteport" -gt 0 ] || append_string "error" "[tunnelD: $1]remoteport must be a positive integer" "; "
         [ "$localport" -gt 0 ] 	|| append_string "error" "[tunnelD: $1]localport must be a positive integer" "; "
 	[ -n "$error" ] && return 1
 
