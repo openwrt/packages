@@ -12,7 +12,9 @@ PKG_VERSION:=2.2.5
 PKG_RELEASE:=2
 
 PKG_SOURCE:=freeradius-server-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.freeradius.org/pub/freeradius/
+PKG_SOURCE_URL:=\
+	ftp://ftp.freeradius.org/pub/freeradius/ \
+	ftp://ftp.freeradius.org/pub/freeradius/old/
 PKG_MD5SUM:=40535bace507d7a3134c3d858f3cbc5a
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
