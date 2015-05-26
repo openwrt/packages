@@ -1,15 +1,3 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -58,9 +58,6 @@
-  [build_tools=$withval], [build_tools=yes])
- 
- AM_CONDITIONAL(BUILD_TOOLS, [test "x$build_tools" = "xyes" ])
--if test x$build_tools = xyes ; then
--	PKG_CHECK_MODULES(png, "libpng")
--fi
- 
- dnl --with-tests
- AC_ARG_WITH([tests], [AS_HELP_STRING([--with-tests], [build tests [default=no]])],
 --- a/qrenc.c
 +++ b/qrenc.c
 @@ -25,7 +25,6 @@
@@ -291,3 +279,28 @@
  	if(optind < argc) {
  		intext = (unsigned char *)argv[optind];
  		length = strlen((char *)intext);
+--- a/configure.ac
++++ b/configure.ac
+@@ -58,9 +58,6 @@
+  [build_tools=$withval], [build_tools=yes])
+ 
+ AM_CONDITIONAL(BUILD_TOOLS, [test "x$build_tools" = "xyes" ])
+-if test x$build_tools = xyes ; then
+-	PKG_CHECK_MODULES(png, "libpng")
+-fi
+ 
+ dnl --with-tests
+ AC_ARG_WITH([tests], [AS_HELP_STRING([--with-tests], [build tests [default=no]])],
+@@ -80,12 +77,6 @@
+ echo "/* #undef WITH_TESTS */" >>confdefs.h
+ fi
+ 
+-if test x$build_tests = xyes ; then
+-	SDL_REQUIRED_VERSION=1.2.0
+-	AM_PATH_SDL($SDL_REQUIRED_VERSION,,AC_MSG_WARN([*** SDL $SDL_REQUIRED_VERSION or better is required.]))
+-	AC_MSG_NOTICE([SDL check done.])
+-	AM_ICONV_LINK
+-fi
+ AM_CONDITIONAL(HAVE_SDL, [test "x$SDL_CFLAGS" != "x" ])
+ 
+ 
