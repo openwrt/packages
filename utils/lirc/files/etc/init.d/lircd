@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+
+# starts befor and stops after squeezelite
+START=98
+STOP=2
+
+start() {
+	mkdir -p /var/run/lirc
+	service_start /usr/sbin/lircd --driver=dev/input --device=/dev/input/event0 --pidfile /var/run/lirc/lircd.pid
+}
+
+stop() {
+	service_stop /usr/sbin/lircd
+}
