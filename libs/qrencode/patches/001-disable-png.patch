@@ -1,15 +1,3 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -58,9 +58,6 @@ AC_ARG_WITH([tools], [AS_HELP_STRING([--
-  [build_tools=$withval], [build_tools=yes])
- 
- AM_CONDITIONAL(BUILD_TOOLS, [test "x$build_tools" = "xyes" ])
--if test x$build_tools = xyes ; then
--	PKG_CHECK_MODULES(png, "libpng")
--fi
- 
- dnl --with-tests
- AC_ARG_WITH([tests], [AS_HELP_STRING([--with-tests], [build tests [default=no]])],
 --- a/qrenc.c
 +++ b/qrenc.c
 @@ -25,7 +25,6 @@
@@ -20,7 +8,7 @@
  #include <getopt.h>
  
  #include "qrencode.h"
-@@ -49,7 +48,6 @@ static unsigned int bg_color[4] = {255,
+@@ -49,7 +48,6 @@
  static int verbose = 0;
  
  enum imageType {
@@ -28,7 +16,7 @@
  	EPS_TYPE,
  	SVG_TYPE,
  	ANSI_TYPE,
-@@ -60,7 +58,7 @@ enum imageType {
+@@ -60,7 +58,7 @@
  	ANSIUTF8_TYPE
  };
  
@@ -37,7 +25,7 @@
  
  static const struct option options[] = {
  	{"help"         , no_argument      , NULL, 'h'},
-@@ -96,13 +94,13 @@ static void usage(int help, int longopt)
+@@ -96,13 +94,13 @@
  		if(longopt) {
  			fprintf(stderr,
  "Usage: qrencode [OPTION]... [STRING]\n"
@@ -53,7 +41,7 @@
  "               (suffix is removed from FILENAME, if specified)\n"
  "  -s NUMBER, --size=NUMBER\n"
  "               specify module size in dots (pixels). (default=3)\n\n"
-@@ -116,9 +114,9 @@ static void usage(int help, int longopt)
+@@ -116,9 +114,9 @@
  "               specify the width of the margins. (default=4 (2 for Micro QR)))\n\n"
  "  -d NUMBER, --dpi=NUMBER\n"
  "               specify the DPI of the generated PNG. (default=72)\n\n"
@@ -65,7 +53,7 @@
  "  -S, --structured\n"
  "               make structured symbols. Version must be specified.\n\n"
  "  -k, --kanji  assume that the input text contains kanji (shift-jis).\n\n"
-@@ -133,7 +131,7 @@ static void usage(int help, int longopt)
+@@ -133,7 +131,7 @@
  "      --background=RRGGBB[AA]\n"
  "               specify foreground/background color in hexadecimal notation.\n"
  "               6-digit (RGB) or 8-digit (RGBA) form are supported.\n"
@@ -74,7 +62,7 @@
  "  -V, --version\n"
  "               display the version number and copyrights of the qrencode.\n\n"
  "      --verbose\n"
-@@ -153,12 +151,12 @@ static void usage(int help, int longopt)
+@@ -153,12 +151,12 @@
  		} else {
  			fprintf(stderr,
  "Usage: qrencode [OPTION]... [STRING]\n"
@@ -89,7 +77,7 @@
  "               (suffix is removed from FILENAME, if specified)\n"
  "  -s NUMBER    specify module size in dots (pixels). (default=3)\n"
  "  -l {LMQH}    specify error correction level from L (lowest) to H (highest).\n"
-@@ -166,8 +164,8 @@ static void usage(int help, int longopt)
+@@ -166,8 +164,8 @@
  "  -v NUMBER    specify the version of the symbol. (default=auto)\n"
  "  -m NUMBER    specify the width of the margins. (default=4 (2 for Micro))\n"
  "  -d NUMBER    specify the DPI of the generated PNG. (default=72)\n"
@@ -100,7 +88,7 @@
  "  -S           make structured symbols. Version must be specified.\n"
  "  -k           assume that the input text contains kanji (shift-jis).\n"
  "  -c           encode lower-case alphabet characters in 8-bit mode. (default)\n"
-@@ -178,7 +176,7 @@ static void usage(int help, int longopt)
+@@ -178,7 +176,7 @@
  "  --background=RRGGBB[AA]\n"
  "               specify foreground/background color in hexadecimal notation.\n"
  "               6-digit (RGB) or 8-digit (RGBA) form are supported.\n"
@@ -109,7 +97,7 @@
  "  -V           display the version number and copyrights of the qrencode.\n"
  "  [STRING]     input data. If it is not specified, data will be taken from\n"
  "               standard input.\n"
-@@ -253,128 +251,6 @@ static FILE *openFile(const char *outfil
+@@ -253,128 +251,6 @@
  	return fp;
  }
  
@@ -238,7 +226,7 @@
  static int writeEPS(QRcode *qrcode, const char *outfile)
  {
  	FILE *fp;
-@@ -831,9 +707,6 @@ static void qrencode(const unsigned char
+@@ -831,9 +707,6 @@
  	}
  
  	switch(image_type) {
@@ -248,7 +236,7 @@
  		case EPS_TYPE:
  			writeEPS(qrcode, outfile);
  			break;
-@@ -887,9 +760,6 @@ static void qrencodeStructured(const uns
+@@ -887,9 +760,6 @@
  	size_t suffix_size;
  
  	switch(image_type) {
@@ -258,7 +246,7 @@
  		case EPS_TYPE:
  			type_suffix = ".eps";
  			break;
-@@ -948,9 +818,6 @@ static void qrencodeStructured(const uns
+@@ -948,9 +818,6 @@
  		}
  
  		switch(image_type) {
@@ -268,7 +256,7 @@
  			case EPS_TYPE: 
  				writeEPS(p->code, filename);
  				break;
-@@ -1062,9 +929,7 @@ int main(int argc, char **argv)
+@@ -1062,9 +929,7 @@
  				}
  				break;
  			case 't':
@@ -279,7 +267,7 @@
  					image_type = EPS_TYPE;
  				} else if(strcasecmp(optarg, "svg") == 0) {
  					image_type = SVG_TYPE;
-@@ -1133,11 +998,6 @@ int main(int argc, char **argv)
+@@ -1133,11 +998,6 @@
  		exit(EXIT_SUCCESS);
  	}
  
@@ -291,106 +279,28 @@
  	if(optind < argc) {
  		intext = (unsigned char *)argv[optind];
  		length = strlen((char *)intext);
---- a/configure
-+++ b/configure
-@@ -12646,100 +12646,6 @@ else
-   BUILD_TOOLS_FALSE=
+--- a/configure.ac
++++ b/configure.ac
+@@ -58,9 +58,6 @@
+  [build_tools=$withval], [build_tools=yes])
+ 
+ AM_CONDITIONAL(BUILD_TOOLS, [test "x$build_tools" = "xyes" ])
+-if test x$build_tools = xyes ; then
+-	PKG_CHECK_MODULES(png, "libpng")
+-fi
+ 
+ dnl --with-tests
+ AC_ARG_WITH([tests], [AS_HELP_STRING([--with-tests], [build tests [default=no]])],
+@@ -80,12 +77,6 @@
+ echo "/* #undef WITH_TESTS */" >>confdefs.h
  fi
  
--if test x$build_tools = xyes ; then
--
--pkg_failed=no
--{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for png" >&5
--$as_echo_n "checking for png... " >&6; }
--
--if test -n "$png_CFLAGS"; then
--    pkg_cv_png_CFLAGS="$png_CFLAGS"
-- elif test -n "$PKG_CONFIG"; then
--    if test -n "$PKG_CONFIG" && \
--    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\"libpng\"\""; } >&5
--  ($PKG_CONFIG --exists --print-errors ""libpng"") 2>&5
--  ac_status=$?
--  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
--  test $ac_status = 0; }; then
--  pkg_cv_png_CFLAGS=`$PKG_CONFIG --cflags ""libpng"" 2>/dev/null`
--		      test "x$?" != "x0" && pkg_failed=yes
--else
--  pkg_failed=yes
+-if test x$build_tests = xyes ; then
+-	SDL_REQUIRED_VERSION=1.2.0
+-	AM_PATH_SDL($SDL_REQUIRED_VERSION,,AC_MSG_WARN([*** SDL $SDL_REQUIRED_VERSION or better is required.]))
+-	AC_MSG_NOTICE([SDL check done.])
+-	AM_ICONV_LINK
 -fi
-- else
--    pkg_failed=untried
--fi
--if test -n "$png_LIBS"; then
--    pkg_cv_png_LIBS="$png_LIBS"
-- elif test -n "$PKG_CONFIG"; then
--    if test -n "$PKG_CONFIG" && \
--    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\"libpng\"\""; } >&5
--  ($PKG_CONFIG --exists --print-errors ""libpng"") 2>&5
--  ac_status=$?
--  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
--  test $ac_status = 0; }; then
--  pkg_cv_png_LIBS=`$PKG_CONFIG --libs ""libpng"" 2>/dev/null`
--		      test "x$?" != "x0" && pkg_failed=yes
--else
--  pkg_failed=yes
--fi
-- else
--    pkg_failed=untried
--fi
--
--
--
--if test $pkg_failed = yes; then
--   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
--$as_echo "no" >&6; }
--
--if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
--        _pkg_short_errors_supported=yes
--else
--        _pkg_short_errors_supported=no
--fi
--        if test $_pkg_short_errors_supported = yes; then
--	        png_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs ""libpng"" 2>&1`
--        else
--	        png_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs ""libpng"" 2>&1`
--        fi
--	# Put the nasty error message in config.log where it belongs
--	echo "$png_PKG_ERRORS" >&5
--
--	as_fn_error $? "Package requirements (\"libpng\") were not met:
--
--$png_PKG_ERRORS
--
--Consider adjusting the PKG_CONFIG_PATH environment variable if you
--installed software in a non-standard prefix.
--
--Alternatively, you may set the environment variables png_CFLAGS
--and png_LIBS to avoid the need to call pkg-config.
--See the pkg-config man page for more details." "$LINENO" 5
--elif test $pkg_failed = untried; then
--     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
--$as_echo "no" >&6; }
--	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
--$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
--as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
--is in your PATH or set the PKG_CONFIG environment variable to the full
--path to pkg-config.
--
--Alternatively, you may set the environment variables png_CFLAGS
--and png_LIBS to avoid the need to call pkg-config.
--See the pkg-config man page for more details.
--
--To get pkg-config, see <http://pkg-config.freedesktop.org/>.
--See \`config.log' for more details" "$LINENO" 5; }
--else
--	png_CFLAGS=$pkg_cv_png_CFLAGS
--	png_LIBS=$pkg_cv_png_LIBS
--        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
--$as_echo "yes" >&6; }
--
--fi
--fi
--
+ AM_CONDITIONAL(HAVE_SDL, [test "x$SDL_CFLAGS" != "x" ])
  
- # Check whether --with-tests was given.
- if test "${with_tests+set}" = set; then :
+ 
