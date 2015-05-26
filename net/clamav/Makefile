@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamav
-PKG_VERSION:=0.98.6
+PKG_VERSION:=0.98.7
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.sourceforge.net/project/clamav/clamav/$(PKG_VERSION)/
-PKG_MD5SUM:=7f4f7e82a09e42c4ebf153d6d452d9d8
+PKG_SOURCE_URL:=http://sourceforge.net/projects/clamav/files/clamav/$(PKG_VERSION)/
+PKG_MD5SUM:=157c601161da1c2d5a0e48ea1b49e067
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

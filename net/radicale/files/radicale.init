@@ -208,7 +208,7 @@ stop() {
 	local _PID=$(eval "$PGREP")
 	[ -z "$_PID" ] && return 0	# not running
 	kill -15 $_PID 2>/dev/null
-	sleep 1			# give time to shutdown
+	sleep 3			# give time to shutdown
 	local _tmp=$(eval "$PGREP")
 	if [ -z "$_tmp" ]; then
 		logger -p user.notice -t "radicale[$_PID]" "Service shutdown successfully"

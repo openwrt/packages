@@ -9,7 +9,7 @@
  #if defined(__APPLE__) && defined(__MACH__)
  #include <util.h>
  #endif
-@@ -1661,7 +1661,8 @@ isakmp_cfg_accounting_system(port, raddr
+@@ -1664,7 +1664,8 @@ isakmp_cfg_accounting_system(port, raddr
  	int inout;
  {
  	int error = 0;
@@ -19,7 +19,7 @@
  	char addr[NI_MAXHOST];
  	
  	if (usr == NULL || usr[0]=='\0') {
-@@ -1670,34 +1671,37 @@ isakmp_cfg_accounting_system(port, raddr
+@@ -1673,34 +1674,37 @@ isakmp_cfg_accounting_system(port, raddr
  		return -1;
  	}
  

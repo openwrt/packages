@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qrencode
 PKG_VERSION:=3.4.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://fukuchi.org/works/qrencode/
@@ -17,7 +17,7 @@ PKG_MD5SUM:=be545f3ce36ea8fbb58612d72c4222de
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=LGPL-2.1+
 PKG_INSTALL:=1
-PKG:FIXUP:=autoreconf
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 

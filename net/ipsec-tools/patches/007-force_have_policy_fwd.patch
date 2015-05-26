@@ -1,8 +1,6 @@
-diff --git a/configure.ac b/configure.ac
-index 8506245..eca8895 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -724,7 +724,8 @@ case $host in
+@@ -732,7 +732,8 @@ case $host in
  			],
  			[AC_MSG_RESULT(yes)
  			 AC_DEFINE([HAVE_POLICY_FWD], [], [Have forward policy])],
