@@ -21,6 +21,8 @@ PKG:FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
+PKG_BUILD_DEPENDS:=libpng
+
 define Package/libqrencode
   SECTION:=libs
   CATEGORY:=Libraries
