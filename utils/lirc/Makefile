@@ -4,6 +4,8 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=lirc
 PKG_VERSION:=0.8.7
 PKG_RELEASE:=1
+PKG_MAINTAINER:= Andrew Kazakov <squeezewrt.ak@gmail.com>
+PKG_LICENSE:=GPL-2.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/${PKG_NAME}
@@ -17,8 +19,6 @@ define Package/lirc/Default
     SECTION:=utils
     CATEGORY:=Utilities
     URL:=http://lirc.org/
-    PKG_MAINTAINER:= Andrew Kazakov <squeezewrt.ak@gmail.com>
-    PKG_LICENSE:=GPL-2.0+
 endef
 
 define Package/lirc
