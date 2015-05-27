@@ -3,6 +3,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luci-app-squeezelite
 PKG_VERSION:=1.8
 PKG_RELEASE:=1
+PKG_LICENSE:=GPL-2.0+
+PKG_MAINTAINER:= Andrew Kazakov <squeezewrt.ak@gmail.com>
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
@@ -14,8 +16,6 @@ define Package/luci-app-squeezelite
     SUBMENU:=3. Applications
     TITLE:= squeezelite configuration and status module
     DEPENDS:=+luci +squeezelite
-    PKG_LICENSE:=GPL-2.0+
-    PKG_MAINTAINER:= Andrew Kazakov <squeezewrt.ak@gmail.com>
 endef
 
 define Package/luci-app-squeezelite/description
