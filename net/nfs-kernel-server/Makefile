@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
 PKG_VERSION:=1.3.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MD5SUM:=1e2f3c1ed468dee02d00c534c002ea10
 
 PKG_SOURCE_URL:=@SF/nfs
@@ -77,12 +77,12 @@ CONFIGURE_ARGS += \
 	--disable-gss \
 	--disable-nfsv4 \
 	--disable-nfsv41 \
-	--disable-ipv6 \
 	--enable-static \
 	--enable-shared \
 	--disable-caps \
 	--disable-tirpc \
-	--disable-nfsdcld
+	--disable-nfsdcld \
+	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
 CONFIGURE_VARS += \
 	libblkid_cv_is_recent=yes \
