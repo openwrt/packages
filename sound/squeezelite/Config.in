@@ -1,0 +1,33 @@
+# Squeezelite configuration
+
+if PACKAGE_squeezelite
+
+config SQUEEZELITE_FLAC
+	bool "FLAC decode support"
+	select PACKAGE_libflac
+	help
+		libflac will be included in the image
+	default n
+
+config SQUEEZELITE_MAD
+	bool "MP3 decode support"
+	select PACKAGE_libmad
+	help
+		libmad will be included in the image
+	default n
+
+config SQUEEZELITE_OGG
+	bool "OGG decode support"
+	select PACKAGE_libvorbis
+	help
+		libvorbis will be included in the image
+	default n
+
+config SQUEEZELITE_AAC
+	bool "AAC decode support"
+	select PACKAGE_libfaad2
+	help
+		libfaad2 will be included in the image
+	default n
+
+endif
