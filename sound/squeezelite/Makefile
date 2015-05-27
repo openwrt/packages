@@ -3,6 +3,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=squeezelite
 PKG_VERSION:=1.8
 PKG_RELEASE=1
+PKG_LICENSE:=GPL-2.0+
+PKG_MAINTAINER:= Andrew Kazakov <squeezewrt.ak@gmail.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://code.google.com/p/squeezelite/
@@ -18,8 +20,6 @@ define Package/$(PKG_NAME)
 	SECTION:=sound
 	CATEGORY:=Sound
 	TITLE:=Headless squeezebox emulator for linux/osx/windows
-	PKG_LICENSE:=GPL-2.0+
-	PKG_MAINTAINER:= Andrew Kazakov <squeezewrt.ak@gmail.com>
 	DEPENDS:= +alsa-lib +kmod-usb-audio
 	MENU:=1
 endef
