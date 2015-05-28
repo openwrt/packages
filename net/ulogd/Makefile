@@ -50,6 +50,12 @@ define Package/ulogd-mod-dbi
   TITLE:=Output plugin for logging to a database using libdbi
 endef
 
+define Package/ulogd-mod-json
+  $(call Package/ulogd/Default)
+  DEPENDS:=ulogd +jansson
+  TITLE:=JSON output plugin
+endef
+
 define Package/ulogd-mod-mysql
   $(call Package/ulogd/Default)
   DEPENDS:=ulogd +libmysqlclient
@@ -188,6 +194,7 @@ ULOGD_EXTRA_PLUGINS:= \
 
 $(eval $(call BuildPackage,ulogd))
 $(eval $(call BuildPlugin,dbi,output_DBI))
+$(eval $(call BuildPlugin,json,output_JSON))
 $(eval $(call BuildPlugin,mysql,output_MYSQL))
 $(eval $(call BuildPlugin,nfacct,inpflow_NFACCT))
 $(eval $(call BuildPlugin,nfct,inpflow_NFCT))
