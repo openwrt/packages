@@ -38,7 +38,7 @@ define Package/ocserv
   TITLE:=OpenConnect VPN server
   URL:=http://www.infradead.org/ocserv/
   MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
-  DEPENDS:= +OCSERV_HTTP_PARSER:libhttp-parser +OCSERV_SECCOMP:libseccomp +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c +kmod-tun
+  DEPENDS:= +OCSERV_RADIUS:freeradius-client +OCSERV_HTTP_PARSER:libhttp-parser +OCSERV_SECCOMP:libseccomp +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c +kmod-tun
   USERID:=ocserv=72:ocserv=72
 endef
 
@@ -63,6 +63,10 @@ CONFIGURE_ARGS+= \
 
 ifneq ($(CONFIG_OCSERV_PAM),y)
 CONFIGURE_ARGS += --without-pam
+endif
+
+ifneq ($(CONFIG_OCSERV_RADIUS),y)
+CONFIGURE_ARGS += --without-radius
 endif
 
 ifneq ($(CONFIG_OCSERV_SECCOMP),y)
