@@ -52,7 +52,7 @@ define Package/hnet-full
   URL:=https://github.com/sbyx/hnetd
   DEPENDS:=+hnetd-nossl +luci-app-hnet
   # Routing
-  DEPENDS+=+babels
+  DEPENDS+=+babeld
   # Service discovery
   DEPENDS+=+ohybridproxy
   # Distributed PCP support
@@ -66,7 +66,7 @@ define Package/hnet-full-secure
   URL:=https://github.com/sbyx/hnetd
   DEPENDS:=+hnetd-openssl +luci-app-hnet
   # Routing
-  DEPENDS+=+babels
+  DEPENDS+=+babeld
   # Service discovery
   DEPENDS+=+ohybridproxy
   # Distributed PCP support
