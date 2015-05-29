@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=lsof
 PKG_VERSION:=4.86
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION)+dfsg.orig.tar.gz
 PKG_SOURCE_URL:=http://ftp2.de.debian.org/debian/pool/main/l/lsof
@@ -32,9 +32,15 @@ define Package/lsof
   URL:=http://people.freebsd.org/~abe/
 endef
 
+ifeq ($(CONFIG_IPV6),y)
+  LINUX_CLIB_IPV6="-DHASIPv6"
+else
+  LINUX_CLIB_IPV6=
+endif
+
 define Build/Configure
 	cd $(PKG_BUILD_DIR); \
-		LINUX_CLIB="-DGLIBCV=2" \
+		LINUX_CLIB="-DGLIBCV=2 $(LINUX_CLIB_IPV6)" \
 		LSOF_CC="$(TARGET_CC)" \
 		LSOF_INCLUDE="-I$(STAGING_DIR)/usr/include" \
 		LSOF_VSTR="$(LINUX_VERSION)" \
