@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=bridge-utils
 PKG_VERSION:=1.5
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://git.kernel.org/pub/scm/linux/kernel/git/shemminger/bridge-utils.git
@@ -47,6 +47,13 @@ CONFIGURE_ARGS += \
 define Package/bridge/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/brctl/brctl $(1)/usr/sbin
+endef
+
+define Package/bridge/prerm
+#!/bin/sh
+$${IPKG_INSTROOT}/bin/busybox brctl -h 2>&1 | grep -q BusyBox && \
+ln -sf ../../bin/busybox $${IPKG_INSTROOT}/usr/sbin/brctl
+exit 0
 endef
 
 $(eval $(call BuildPackage,bridge))
