@@ -20,6 +20,7 @@ define Package/$(PKG_NAME)
     SECTION:=sound
     CATEGORY:=Sound
     TITLE:=Headless squeezebox emulator for linux/osx/windows
+    URL:=https://code.google.com/p/squeezelite/
     DEPENDS:= +alsa-lib +kmod-usb-audio
     MENU:=1
 endef
