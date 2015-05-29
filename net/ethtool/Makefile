@@ -40,7 +40,7 @@ define Package/ethtool/description
 endef
 
 define Package/ethtool/config
-	source "$(SOURCE)/Config.in
+	source "$(SOURCE)/Config.in"
 endef
 
 ifeq ($(CONFIG_ETHTOOL_PRETTY_DUMP),y)
