@@ -51,7 +51,7 @@ TARGET_CFLAGS += $(FPIC)
 CONFIGURE_ARGS += \
 	--disable-debug \
 	--disable-ares \
-	--enable-ipv6 \
+	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--enable-shared \
 	--enable-static \
 	--disable-manual \
