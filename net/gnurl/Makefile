@@ -42,34 +42,51 @@ define Package/libgnurl
   $(call Package/gnurl/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libgnutls +libidn
+  DEPENDS:=+libgnutls +libidn +zlib
   TITLE:=A client-side HTTP/HTTPS transfer library
 endef
 
 TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
-	--disable-debug \
-	--disable-ares \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
+	--with-gnutls="$(STAGING_DIR)/usr" \
+	--with-libidn="$(STAGING_DIR)/usr" \
+	--with-zlib="$(STAGING_DIR)/usr" \
+	--enable-tls-srp \
 	--enable-shared \
 	--enable-static \
-	--disable-manual \
-	--disable-ldap \
-	--disable-ldaps \
-	--with-gnutls="$(STAGING_DIR)/usr" \
-	--with-ipv6 \
-	--with-libidn="$(STAGING_DIR)/usr" \
 	--without-axtls \
-	--without-ca-bundle \
-	--without-ca-path \
-	--without-cyassl \
+	--without-libssh2 \
 	--without-libmetalink \
+	--without-winidn \
 	--without-librtmp \
+	--without-nghttp2 \
 	--without-nss \
+	--without-cyassl \
 	--without-polarssl \
 	--without-ssl \
-	--without-zlib
+	--without-winssl \
+	--without-darwinssl \
+	--disable-ares \
+	--disable-sspi \
+	--disable-ntlm-wb \
+	--disable-ldap \
+	--disable-ldaps \
+	--disable-rtsp \
+	--disable-dict \
+	--disable-telnet \
+	--disable-tftp \
+	--disable-pop3 \
+	--disable-imap \
+	--disable-smtp \
+	--disable-gopher \
+	--disable-file \
+	--disable-ftp \
+	--disable-smb \
+	--disable-debug \
+	--disable-manual \
+	--disable-verbose
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
