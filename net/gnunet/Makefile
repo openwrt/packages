@@ -16,7 +16,6 @@ PKG_RELEASE:=1
 #  - split into small packages
 #  - create meta-packages for common setups
 #  - allow building with mysql or postgresql
-#  - package gnurl (?)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -44,12 +43,16 @@ CONFIGURE_ARGS+= \
 	--without-mysql \
 	--without-postgresql
 
+TARGET_LDFLAGS+= -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
+
 define Package/gnunet
   SECTION:=net
   CATEGORY:=Network
   TITLE:=GNUnet peer-to-peer framework focusing on security
-  DEPENDS:=+kmod-tun +libextractor +libgnurl +libgnutls +libidn \
-           +libmicrohttpd +libunistring +libsqlite3
+  DEPENDS:=+bluez-libs +ca-certificates +certtool +libextractor +libgst1app  \
+           +libgst1audio +glib2 +kmod-tun +libglpk +libgnurl +libgnutls      \
+           +libgstreamer1 +libidn +libmicrohttpd +libopus +libogg            \
+           +libunistring +libsqlite3 +pulseaudio-daemon +openssl-util
   URL:=https://www.gnunet.org/
   USERID:=gnunet=400:gnunet=400
 endef
@@ -71,6 +74,8 @@ define Package/gnunet/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/*.so $(1)/usr/lib/gnunet
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/* $(1)/usr/lib/gnunet/libexec
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/*.html $(1)/usr/share/gnunet
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/*.png $(1)/usr/share/gnunet
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/hellos/* $(1)/usr/share/gnunet/hellos
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/* $(1)/usr/share/gnunet/config.d
 	$(INSTALL_DIR) $(1)/etc/init.d/
