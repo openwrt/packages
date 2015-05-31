@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=35839
+PKG_SOURCE_VERSION:=35844
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
@@ -35,16 +35,23 @@ include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_ARGS+= \
 	--disable-rpath \
-	--with-libunistring-prefix \
-	--without-postgresql \
-	--without-mysql
+	--with-extractor=$(STAGING_DIR)/usr \
+	--with-gnutls=$(STAGING_DIR)/usr \
+	--with-libgnurl=$(STAGING_DIR)/usr \
+	--with-libunistring-prefix=$(STAGING_DIR)/usr \
+	--with-ltdl \
+	--with-microhttpd=$(STAGING_DIR)/usr \
+	--without-mysql \
+	--without-postgresql
 
 define Package/gnunet
   SECTION:=net
   CATEGORY:=Network
   TITLE:=GNUnet peer-to-peer framework focusing on security
-  DEPENDS:=+libextractor +libidn +libmicrohttpd +libunistring +libgnutls +libsqlite3 +kmod-tun
+  DEPENDS:=+kmod-tun +libextractor +libgnurl +libgnutls +libidn \
+           +libmicrohttpd +libunistring +libsqlite3
   URL:=https://www.gnunet.org/
+  USERID:=gnunet=400:gnunet=400
 endef
 
 define Package/gnunet/description
@@ -65,7 +72,9 @@ define Package/gnunet/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/*.so $(1)/usr/lib/gnunet
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/* $(1)/usr/lib/gnunet/libexec
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/hellos/* $(1)/usr/share/gnunet/hellos
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/* $(1)/usr/share/gnunet/config.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/* $(1)/usr/share/gnunet/config.d
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/gnunet.init $(1)/etc/init.d/gnunet
 endef
 
 define Build/InstallDev
