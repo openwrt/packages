@@ -8,12 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libextractor
-PKG_VERSION:=1.3
+PKG_VERSION:=2
 PKG_RELEASE:=$(PKG_SOURCE_VERSION)
 
 # ToDo:
 # - package missing optional dependencies: libexiv2, giflib, gsf, librpm, smf, tidy
-# - fix gstreamer-0.10 bindings
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -30,6 +29,7 @@ PLUGINS:= \
 	deb \
 	dvi \
 	flac:+libflac \
+	gstreamer:+libgstreamer1:+libgst1app:+libgst1pbutils:+libgst1tag \
 	it \
 	jpeg:+libjpeg \
 	man \
@@ -55,8 +55,7 @@ include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_ARGS += \
 	--enable-ffmpeg \
-	--without-gstreamer \
-	--without-gtk \
+	--with-gstreamer \
 	--disable-gsf \
 	--disable-rpath
 
