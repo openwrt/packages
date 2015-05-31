@@ -67,11 +67,11 @@ alfred_start()
 	append alfred_args "$args"
 	enable=1
 
-        config_get_bool start_vis "$section" start_vis 0
-        if [ "$start_vis" = 1 ] && [ -x /usr/sbin/batadv-vis ]; then
-                vis_enable=1
-                append vis_args "-i $batmanif -s"
-        fi
+	config_get_bool start_vis "$section" start_vis 0
+	if [ "$start_vis" = 1 ] && [ -x /usr/sbin/batadv-vis ]; then
+		vis_enable=1
+		append vis_args "-i $batmanif -s"
+	fi
 
 	config_get_bool run_facters "$section" run_facters 0
 
