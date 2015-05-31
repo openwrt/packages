@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libextractor
-PKG_VERSION:=2
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=1.3
+PKG_RELEASE:=2
 
 # ToDo:
 # - package missing optional dependencies: libexiv2, giflib, gsf, librpm, smf, tidy
