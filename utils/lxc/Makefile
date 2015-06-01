@@ -27,8 +27,9 @@ PKG_FIXUP:=autoreconf
 include $(INCLUDE_DIR)/package.mk
 
 LXC_APPLETS_BIN += \
-	attach autostart cgroup clone config console create destroy execute \
-	freeze info monitor snapshot start stop unfreeze unshare usernsexec wait
+	attach autostart cgroup clone config console create destroy device \
+	execute freeze info monitor snapshot start stop unfreeze unshare \
+	usernsexec wait
 
 LXC_APPLETS_LIB += \
 	monitord user-nic
