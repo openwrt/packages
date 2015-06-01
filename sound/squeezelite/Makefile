@@ -65,9 +65,9 @@ define Package/$(PKG_NAME)/config
 
 	config SQUEEZELITE_WMA
 	    bool "compile with WMA decode support"
-	    select PACKAGE_libffmpeg-audio-dec
+	    select PACKAGE_libffmpeg-mini
 	    help
-		libffmpeg-audio-dec will be compiled and included in the image
+		libffmpeg-mini will be compiled and included in the image
 	    default n
 
     endif
@@ -77,7 +77,7 @@ ifeq ($(CONFIG_SQUEEZELITE_LIRC),y)
     PKG_BUILD_DEPENDS+= lirc
 endif
 ifeq ($(CONFIG_SQUEEZELITE_WMA),y)
-    PKG_BUILD_DEPENDS+= libffmpeg-audio-dec
+    PKG_BUILD_DEPENDS+= libffmpeg-mini
 endif
 
 define Package/$(PKG_NAME)/description
