@@ -16,9 +16,26 @@ pid_file_alfred="/var/run/alfred.pid"
 pid_file_vis="/var/run/batadv-vis.pid"
 enable=0
 vis_enable=0
-batmanif=""
 SERVICE_DAEMONIZE=1
 SERVICE_WRITE_PID=1
+
+wait_for_dir()
+{
+	local ifce="$1" dir="$2"
+
+	if ! [ -d "$dir" ] ; then
+		timeout=30
+		echo "${initscript}: waiting $timeout secs for $ifce interface..."
+		for i in $(seq $timeout); do
+			sleep 1
+			[ -d "$dir" ] && break
+			if [ $i == $timeout ] ; then
+				echo "${initscript}: $ifce not detected, alfred not starting."
+				exit 1
+			fi
+		done
+	fi
+}
 
 alfred_start()
 {
@@ -41,14 +58,20 @@ alfred_start()
 	config_get batmanif "$section" batmanif
 	append args "-b $batmanif"
 
+	if [ "$batmanif" != "none" ]; then
+		wait_for_dir "$batmanif" "/sys/class/net/$batmanif/mesh"
+	fi
+
+	wait_for_dir "$interface" "/sys/class/net/$interface/"
+
 	append alfred_args "$args"
 	enable=1
 
-        config_get_bool start_vis "$section" start_vis 0
-        if [ "$start_vis" = 1 ] && [ -x /usr/sbin/batadv-vis ]; then
-                vis_enable=1
-                append vis_args "-i $batmanif -s"
-        fi
+	config_get_bool start_vis "$section" start_vis 0
+	if [ "$start_vis" = 1 ] && [ -x /usr/sbin/batadv-vis ]; then
+		vis_enable=1
+		append vis_args "-i $batmanif -s"
+	fi
 
 	config_get_bool run_facters "$section" run_facters 0
 
@@ -62,20 +85,6 @@ start()
 
 	if [ "$enable" = "0" ]; then
 		exit 0
-	fi
-
-	mesh_dir="/sys/class/net/$batmanif/mesh/"
-	if ! [ -d "$mesh_dir" ] ; then
-		timeout=30
-		echo "${initscript}: waiting $timeout secs for $batmanif interface..."
-		for i in $(seq $timeout); do
-			sleep 1
-			[ -d "$mesh_dir" ] && break
-			if [ $i == $timeout ] ; then
-				echo "${initscript}: $batmanif not detected, alfred not starting."
-				exit 1
-			fi
-		done
 	fi
 
 	echo "${initscript}: starting alfred"
