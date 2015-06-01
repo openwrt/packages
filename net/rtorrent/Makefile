@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtorrent
-PKG_VERSION:=0.9.4-git-0
+PKG_VERSION:=0.9.4-git-1
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
@@ -72,7 +72,8 @@ TARGET_LDFLAGS += -lz -lpthread -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
 CONFIGURE_ARGS+= \
 	--enable-shared \
 	--disable-static \
-	--disable-debug
+	--disable-debug \
+	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
 ifeq ($(BUILD_VARIANT),rpc)
 	CONFIGURE_ARGS += \

@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcsh
-PKG_VERSION:=6.18.01
+PKG_VERSION:=6.19.00
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.astron.com/pub/tcsh/
-PKG_MD5SUM:=6eed09dbd4223ab5b6955378450d228a
+PKG_SOURCE_URL:=http://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/
+PKG_MD5SUM:=f5f854833578647795bc906dd4bcb5d5
 PKG_LICENSE:=BSD-4-Clause-UC
 PKG_LICENSE_FILES:=Copyright
 

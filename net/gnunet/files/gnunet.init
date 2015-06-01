@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=50
+STOP=10
+
+USE_PROCD=1
+PROG=/usr/lib/gnunet/libexec/gnunet-service-arm
+CONFIGFILE=/var/run/gnunet/gnunet.conf
+
+start_service() {
+	if [ ! -e /var/run/gnunet ]; then
+		mkdir -p /var/run/gnunet
+		chmod 0750 /var/run/gnunet
+		chown gnunet:gnunet /var/run/gnunet
+		touch $CONFIGFILE
+		chown gnunet:gnunet $CONFIGFILE
+		chmod 0600 $CONFIGFILE
+	fi
+	procd_open_instance
+	procd_set_param user gnunet
+	procd_set_param command $PROG -c $CONFIGFILE
+	procd_set_param respawn
+	procd_close_instance
+}

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #               2014 Noah Meyerhans <frodo@morgul.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ipsec-tools
 PKG_VERSION:=0.8.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER := "Noah Meyerhans <frodo@morgul.net>"
 PKG_LICENSE := BSD-3-Clause
 

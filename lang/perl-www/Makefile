@@ -33,7 +33,7 @@ define Package/perl-www
 endef
 
 define Build/Configure
-	$(call perlmod/Configure,-n,)
+	$(call perlmod/Configure,,)
 endef
 
 define Build/Compile

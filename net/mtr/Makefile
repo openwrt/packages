@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
 PKG_VERSION:=0.86
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.bitwizard.nl/mtr
@@ -46,6 +46,7 @@ endef
 CONFIGURE_ARGS += \
 	--without-gtk \
 	--without-glib \
+	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); touch \
