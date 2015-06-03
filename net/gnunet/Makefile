@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnunet
 PKG_SOURCE_VERSION:=35856
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # ToDo:
 #  - build packages using templates and lists
@@ -140,7 +140,7 @@ define Package/gnunet/install
 	$(INSTALL_DIR) $(1)/usr/share/gnunet/config.d $(1)/usr/share/gnunet/hellos
 
 	( for bin in arm ats core ecc identity nat-server nse \
-	    peerinfo revocation scalarproduct transport uri; do \
+	    peerinfo revocation scalarproduct statistics transport uri; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ ; \
 	done )
 
@@ -151,7 +151,7 @@ define Package/gnunet/install
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
 	done )
 
-	( for plug in ats_proportional block_dht block_regex \
+	( for plug in ats_proportional block_dht block_regex datacache_heap  \
 	    transport_http_client transport_http_server \
 	    transport_https_client transport_https_server \
 	    transport_tcp transport_udp transport_unix transport_wlan; do \
@@ -208,13 +208,13 @@ endef
 define Package/gnunet-fs/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/gnunet/libexec
 	$(INSTALL_DIR) $(1)/usr/share/gnunet/config.d
-	( for bin in auto-share directory download download-manager.scm fs publish unindex; do \
+	( for bin in auto-share directory download download-manager.scm fs publish unindex search; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ ; \
 	done )
 	( for lib in fs; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
 	done )
-	( for plug in block_fs datacache_heap datacache_sqlite; do \
+	( for plug in block_fs ; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$plug*.so $(1)/usr/lib/gnunet ; \
 	done )
 	( for lex in helper-fs-publish service-fs; do \
@@ -255,7 +255,7 @@ define Package/gnunet-storage/install
 	( for lib in datastore peerstore; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
 	done )
-	( for plug in datastore_heap datastore_sqlite namecache_sqlite namestore_sqlite; do \
+	( for plug in datacache_sqlite datastore_heap datastore_sqlite namecache_sqlite namestore_sqlite; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$plug*.so $(1)/usr/lib/gnunet ; \
 	done )
 	( for lex in daemon-latency-logger namestore-fcfsd service-datastore service-peerstore; do \
