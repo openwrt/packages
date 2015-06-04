@@ -84,7 +84,7 @@ define BuildComponent
     $$(call Package/gnunet/Default)
     TITLE+= $(2)
     DEPENDS:=gnunet $(DEPENDS_$(1))
-    DEFAULT:=$(3)
+    $(if $(3),DEFAULT:=y if PACKAGE_gnunet)
   endef
 
   define Package/gnunet-$(1)/install
@@ -222,11 +222,11 @@ LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit  helper-vpn service-vpn
 CONF_vpn:=exit pt vpn
 
 $(eval $(call BuildPackage,gnunet))
-$(eval $(call BuildComponent,conversation,conversation component,n))
-$(eval $(call BuildComponent,experiments,experimental components,n))
-$(eval $(call BuildComponent,fs,file-sharing components,n))
-$(eval $(call BuildComponent,gns,name resolving components,y))
-$(eval $(call BuildComponent,storage,storage components,n))
-$(eval $(call BuildComponent,transport-bluetooth,bluetooth transport,n))
-$(eval $(call BuildComponent,utils,administration utililties,n))
+$(eval $(call BuildComponent,conversation,conversation component,))
+$(eval $(call BuildComponent,experiments,experimental components,))
+$(eval $(call BuildComponent,fs,file-sharing components,))
+$(eval $(call BuildComponent,gns,name resolution components,y))
+$(eval $(call BuildComponent,storage,storage components,))
+$(eval $(call BuildComponent,transport-bluetooth,bluetooth transport,))
+$(eval $(call BuildComponent,utils,administration utililties,))
 $(eval $(call BuildComponent,vpn,vpn components,y))
