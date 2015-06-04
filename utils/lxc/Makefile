@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause GPL-2.0
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
@@ -94,7 +94,7 @@ define Package/liblxc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=LXC userspace library
-  DEPENDS:= lxc +libcap +libpthread
+  DEPENDS:= lxc +libcap +libpthread +LXC_SECCOMP:libseccomp
 endef
 
 define Package/lxc-lua
@@ -113,9 +113,14 @@ CONFIGURE_ARGS += \
 	--disable-apparmor \
 	--disable-doc \
 	--disable-examples \
-	--disable-seccomp
 	--enable-lua=yes \
-	--with-lua-pc="$(STAGING_DIR)/usr/lib/pkgconfig/lua.pc" \
+	--with-lua-pc="$(STAGING_DIR)/usr/lib/pkgconfig/lua.pc"
+
+ifeq ($(CONFIG_LXC_SECCOMP),y)
+CONFIGURE_ARGS += --enable-seccomp
+else
+CONFIGURE_ARGS += --disable-seccomp
+endif
 
 MAKE_FLAGS += \
 	LUA_INSTALL_CMOD="/usr/lib/lua" \
