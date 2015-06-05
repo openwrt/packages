@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=35856
+PKG_SOURCE_VERSION:=35865
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
 # ToDo:
 #  - break-out transports
@@ -85,6 +85,7 @@ define BuildComponent
     TITLE+= $(2)
     DEPENDS:=gnunet $(DEPENDS_$(1))
     $(if $(3),DEFAULT:=y if PACKAGE_gnunet)
+    $(if $(USERID_$(1)),USERID:=$(USERID_$(1)))
   endef
 
   define Package/gnunet-$(1)/install
@@ -131,14 +132,14 @@ define Package/gnunet/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/gnunet/libexec
 	$(INSTALL_DIR) $(1)/usr/share/gnunet/config.d $(1)/usr/share/gnunet/hellos
 
-	( for bin in arm ats core ecc identity nat-server nse \
-	    peerinfo revocation scalarproduct statistics transport uri; do \
+	( for bin in arm ats core config ecc identity nat-server nse \
+	    peerinfo peerstore revocation scalarproduct statistics transport uri; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ ; \
 	done )
 
 	( for lib in arm ats block cadet core datacache dht \
 	    dns dnsparser dnsstub fragmentation friends hello identity nat nse \
-	    peerinfo regexblock regex revocation scalarproduct set \
+	    peerinfo peerstore regexblock regex revocation scalarproduct set \
 	    statistics transport util; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
 	done )
@@ -153,14 +154,15 @@ define Package/gnunet/install
 	( for lex in daemon-hostlist daemon-topology helper-nat-client \
 	    helper-nat-server service-arm service-ats service-cadet \
 	    service-core service-dht service-identity service-nse \
-	    service-peerinfo service-regex service-revocation \
-	    service-scalarproduct-alice service-scalarproduct-bob \
-	    service-set service-statistics service-transport; do \
+	    service-peerinfo service-peerstore service-regex \
+	    service-revocation service-scalarproduct-alice \
+	    service-scalarproduct-bob service-set service-statistics \
+	    service-transport; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/gnunet-$$$$lex $(1)/usr/lib/gnunet/libexec ; \
 	done )
 
-	( for conf in arm ats cadet core datacache dht hostlist \
-	    identity nat nse peerinfo regex revocation scalarproduct \
+	( for conf in arm ats cadet core datacache dht hostlist identity \
+	    nat nse peerinfo peerstore regex revocation scalarproduct \
 	    set statistics topology transport util; do \
 		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/$$$$conf.conf $(1)/usr/share/gnunet/config.d ; \
 	done )
@@ -169,7 +171,6 @@ define Package/gnunet/install
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/gnunet.init $(1)/etc/init.d/gnunet
 endef
-
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/gnunet $(1)/usr/lib/pkgconfig
@@ -196,18 +197,19 @@ LIB_EXEC_fs:=helper-fs-publish service-fs
 CONF_fs:=fs
 
 DEPENDS_gns:=+gnunet-vpn
-BIN_gns:=gns namecache resolver
+USERID_gns:=gnunetdns=401:gnunetdns=401
+BIN_gns:=gns gns-import.sh namecache namestore resolver
 LIB_gns:=gns gnsrecord namecache namestore
 PLUGIN_gns:=block_dns block_gns gnsrecord_dns gnsrecord_gns
-LIBEXEC_gns:=dns2gns gns-proxy helper-dns service-dns service-gns service-namecache service-resolver
-CONF_gns:=dns gns namecache resolver
+LIBEXEC_gns:=dns2gns gns-proxy helper-dns namestore-fcfsd service-dns service-gns service-namecache service-namestore service-resolver
+CONF_gns:=dns gns namecache namestore resolver
 
 DEPENDS_storage:=+gnunet-gns +libsqlite3
-BIN_storage:=datastore peerstore
-LIB_storage:=datastore peerstore
+BIN_storage:=datastore
+LIB_storage:=datastore
 PLUGIN_storage:=datacache_sqlite datastore_heap datastore_sqlite namecache_sqlite namestore_sqlite
-LIBEXEC_storage:=daemon-latency-logger namestore-fcfsd service-datastore service-peerstore
-CONF_storage:=datastore peerstore
+LIBEXEC_storage:=daemon-latency-logger service-datastore
+CONF_storage:=datastore
 
 DEPENDS_transport-bluetooth:=+bluez-libs
 PLUGIN_transport-bluetooth:=transport_bluetooth
@@ -218,7 +220,7 @@ BIN_utils:=config gns-import.sh gns-proxy-setup-ca transport-certificate-creatio
 
 DEPENDS_vpn:=+kmod-tun
 LIB_vpn:=tun vpn
-LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit  helper-vpn service-vpn
+LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit helper-vpn service-vpn
 CONF_vpn:=exit pt vpn
 
 $(eval $(call BuildPackage,gnunet))
