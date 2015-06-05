@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnunet
 PKG_SOURCE_VERSION:=35865
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # ToDo:
 #  - break-out transports
@@ -207,7 +207,7 @@ CONF_gns:=dns gns namecache namestore resolver
 DEPENDS_storage:=+gnunet-gns +libsqlite3
 BIN_storage:=datastore
 LIB_storage:=datastore
-PLUGIN_storage:=datacache_sqlite datastore_heap datastore_sqlite namecache_sqlite namestore_sqlite
+PLUGIN_storage:=datacache_sqlite datastore_heap datastore_sqlite namecache_sqlite namestore_sqlite peerstore_sqlite
 LIBEXEC_storage:=daemon-latency-logger service-datastore
 CONF_storage:=datastore
 
