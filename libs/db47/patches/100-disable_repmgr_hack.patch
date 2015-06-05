@@ -1,0 +1,11 @@
+--- a/dist/configure
++++ b/dist/configure
+@@ -32451,7 +32451,7 @@ if test "$db_cv_build_replication" = yes
+ 
+ 	case "$db_cv_mutex" in
+ 	POSIX/pthread*|Solaris/lwp)
+-		db_cv_build_replication_mgr=yes;;
++		db_cv_build_replication_mgr=no;;
+ 	esac
+ 	if test "$db_cv_pthread_api" = yes; then
+ 		db_cv_build_replication_mgr=yes
