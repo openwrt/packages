@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnurl
 PKG_VERSION:=7.40.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnunet.org/sites/default/files
@@ -53,7 +53,6 @@ CONFIGURE_ARGS += \
 	--with-gnutls="$(STAGING_DIR)/usr" \
 	--with-libidn="$(STAGING_DIR)/usr" \
 	--with-zlib="$(STAGING_DIR)/usr" \
-	--enable-tls-srp \
 	--enable-shared \
 	--enable-static \
 	--without-axtls \
