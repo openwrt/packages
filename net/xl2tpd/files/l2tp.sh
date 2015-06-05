@@ -86,7 +86,7 @@ proto_l2tp_setup() {
 	echo "${ipv6:++ipv6} ${pppd_options}" >> "${optfile}"
 	echo "${mtu:+mtu $mtu mru $mtu}" >> "${optfile}"
 
-	xl2tpd-control add l2tp-${interface} pppoptfile=${optfile} lns=${server} timeout=20 || {
+	xl2tpd-control add l2tp-${interface} pppoptfile=${optfile} lns=${server} || {
 		echo "xl2tpd-control: Add l2tp-$interface failed" >&2
 		proto_setup_failed "$interface"
 		exit 1
