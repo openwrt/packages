@@ -14,7 +14,7 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -92,7 +92,7 @@ include ./files/python3-package-*.mk
 
 define Package/python3
 $(call Package/python3/Default)
-  DEPENDS:=+python3-light $(foreach package,$(PYTHON3_PACKAGES),+$(package))
+  DEPENDS:=+python3-light $(foreach package,$(filter-out python3-dev python3-lib2to3,$(PYTHON3_PACKAGES)),+$(package))
 endef
 
 define Package/python3/description
@@ -179,12 +179,10 @@ endef
 
 define Py3Package/python3-light/filespec
 +|/usr/lib/python$(PYTHON_VERSION)
--|/usr/lib/python$(PYTHON_VERSION)/config-$(PYTHON_VERSION)
 -|/usr/lib/python$(PYTHON_VERSION)/distutils/cygwinccompiler.py
 -|/usr/lib/python$(PYTHON_VERSION)/distutils/command/wininst*
 -|/usr/lib/python$(PYTHON_VERSION)/ensurepip
 -|/usr/lib/python$(PYTHON_VERSION)/idlelib
--|/usr/lib/python$(PYTHON_VERSION)/lib2to3
 -|/usr/lib/python$(PYTHON_VERSION)/tkinter
 -|/usr/lib/python$(PYTHON_VERSION)/turtledemo
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_test*.so
