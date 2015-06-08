@@ -1,0 +1,40 @@
+config global
+	option 'failfast'	'no'
+	option 'pidfile'	'/var/run/olsrd2.pid'
+	option 'lockfile'	'/var/lock/olsrd2'
+
+config log
+	option 'syslog'		'true'
+	option 'stderr'		'true'
+#	option 'file'		'/var/log/olsrd2.log'
+#	option 'info'		'all'
+#	option 'debug'		'all'
+
+config telnet
+#	option 'port' '2009'
+
+config olsrv2
+# list 'lan' '::/0'
+# list 'lan' '0.0.0.0/0'
+
+config interface
+	option 'ifname' 'loopback'
+
+config interface
+	list 'ifname' 'WIFI'
+	list 'ifname' 'wlanadhoc'
+	list 'ifname' 'wlanadhocRADIO1'
+
+config interface
+	list 'ifname' 'wan'
+	option 'ignore' '1'
+#	option 'rx_bitrate' '100M'
+#	option 'tx_bitrate' '100M'
+#	option 'signal' '-20'
+
+config interface
+	list 'ifname' 'lan'
+	option 'ignore' '1'
+#	option 'rx_bitrate' '1G'
+#	option 'tx_bitrate' '1G'
+#	option 'signal' '-10'

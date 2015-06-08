@@ -1,0 +1,24 @@
+config global
+	option 'failfast'	'no'
+	option 'pidfile'	'/var/run/dlep_proxy.pid'
+	option 'lockfile'	'/var/lock/dlep_proxy'
+
+config log
+	option 'syslog'		'true'
+	option 'stderr'		'true'
+#	option 'file'		'/var/log/dlep_proxy.log'
+#	option 'info'		'all'
+#	option 'debug'		'all'
+
+config telnet
+#	option 'port' '2009'
+
+#config dlep_radio
+#  list 'name' 'eth0'
+#  option 'datapath_if' 'eth1'
+#  option 'not_proxied' 'false'
+#  option 'proxied' 'true'
+
+#config dlep-router
+#  list 'name' 'eth0'
+#  option 'datapath_if' 'eth0'
