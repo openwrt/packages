@@ -25,7 +25,9 @@ start_service() {
 		return 1
 	}
 
-	mkdir -p $(dirname $CONFIGFILE)
+	config_dir=$(dirname $CONFIGFILE)
+	[ -d $config_dir ] || mkdir -p $config_dir && chown nobody:nogroup $config_dir
+	[ -d $coredump_dir ] || mkdir -p $coredump_dir && chown nobody:nogroup $coredump_dir
 
 	cat $config_file > $CONFIGFILE
 	echo http_port $http_port >> $CONFIGFILE
