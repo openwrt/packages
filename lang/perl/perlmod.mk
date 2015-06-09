@@ -1,7 +1,7 @@
 # This makefile simplifies perl module builds.
 #
 
-PERL_VERSION:=5.20
+PERL_VERSION:=5.22
 
 # Build environment
 HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
