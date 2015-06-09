@@ -12,7 +12,7 @@ PKG_VERSION:=5.20.2
 PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
-		http://www.cpan.org/src/5.0/perl-5.20.0.tar.gz \
+		http://www.cpan.org/src/5.0 \
 		ftp://ftp.mpi-sb.mpg.de/pub/perl/CPAN/src/5.0 \
 		http://ftp.mpi-sb.mpg.de/pub/perl/CPAN/src/5.0 \
 		ftp://ftp.gmd.de/mirrors/CPAN/src/5.0 \
@@ -157,8 +157,8 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/5.20 $(1)/usr/lib/perl5/
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/$(PERL_VERSION)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/$(PERL_VERSION) $(1)/usr/lib/perl5/
 endef
 
 define Package/perl/install
@@ -166,8 +166,8 @@ define Package/perl/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/perl$(PKG_VERSION) $(1)/usr/bin
 	ln -nsf perl$(PKG_VERSION) $(1)/usr/bin/perl
 	
-	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/CORE
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/5.20/CORE/libperl.so $(1)/usr/lib/perl5/5.20/CORE/
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/$(PERL_VERSION)/CORE
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/$(PERL_VERSION)/CORE/libperl.so $(1)/usr/lib/perl5/$(PERL_VERSION)/CORE/
 endef
 
 
@@ -191,9 +191,9 @@ define Package/perl-tests-common/install
 	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)
 	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)/Porting
 	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)/regen
-	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/XS
-	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/auto/XS
-	$(INSTALL_DIR) $(1)/usr/lib/perl5/5.20/unicore
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/$(PERL_VERSION)/XS
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/$(PERL_VERSION)/auto/XS
+	$(INSTALL_DIR) $(1)/usr/lib/perl5/$(PERL_VERSION)/unicore
 	
 	$(CP) $(PKG_BUILD_DIR)/t $(1)/$(PERL_TESTSDIR)
 	$(CP) $(PKG_BUILD_DIR)/Porting $(1)/$(PERL_TESTSDIR)
@@ -202,12 +202,15 @@ define Package/perl-tests-common/install
 	$(CP) $(PKG_BUILD_DIR)/TestInit.pm $(1)/$(PERL_TESTSDIR)
 	$(CP) $(PKG_BUILD_DIR)/vutil.c $(1)/$(PERL_TESTSDIR)
 	$(CP) $(PKG_BUILD_DIR)/vxs.inc $(1)/$(PERL_TESTSDIR)
-	$(CP) $(PKG_BUILD_DIR)/lib/XS $(1)/usr/lib/perl5/5.20/
-	$(CP) $(PKG_BUILD_DIR)/lib/auto/XS $(1)/usr/lib/perl5/5.20/auto
-	$(CP) $(PKG_BUILD_DIR)/lib/vmsish.pm $(1)/usr/lib/perl5/5.20/
-	$(CP) $(PKG_BUILD_DIR)/lib/unicore/TestProp.pl $(1)/usr/lib/perl5/5.20/unicore
+	$(CP) $(PKG_BUILD_DIR)/lib/XS $(1)/usr/lib/perl5/$(PERL_VERSION)/
+	$(CP) $(PKG_BUILD_DIR)/lib/auto/XS $(1)/usr/lib/perl5/$(PERL_VERSION)/auto
+	$(CP) $(PKG_BUILD_DIR)/lib/vmsish.pm $(1)/usr/lib/perl5/$(PERL_VERSION)/
+	$(CP) $(PKG_BUILD_DIR)/lib/unicore/TestProp.pl $(1)/usr/lib/perl5/$(PERL_VERSION)/unicore
 	$(CP) files/perl-run_tests.sh $(1)/$(PERL_TESTSDIR)/run_tests.sh
-	sed -e 's!%%PERL_DISABLEDTESTS%%!$(PERL_DISABLEDTESTS)!' -i $(1)/$(PERL_TESTSDIR)/run_tests.sh
+	sed \
+		-e 's!%%PERL_DISABLEDTESTS%%!$(PERL_DISABLEDTESTS)!' \
+		-e 's!%%PERL_VERSION%%!$(PERL_VERSION)!' \
+		-i $(1)/$(PERL_TESTSDIR)/run_tests.sh
 	$(CP) $(PKG_BUILD_DIR)/config_h.SH $(1)/$(PERL_TESTSDIR)
 	$(CP) $(PKG_BUILD_DIR)/perl.h $(1)/$(PERL_TESTSDIR)
 endef
