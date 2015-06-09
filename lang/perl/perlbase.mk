@@ -233,20 +233,6 @@ endef
 $(eval $(call BuildPackage,perlbase-bytes))
 
 
-define Package/perlbase-cgi
-$(call Package/perlbase-template)
-TITLE:=CGI perl module
-DEPENDS+=+perlbase-base +perlbase-essential +perlbase-file +perlbase-if
-endef
-
-define Package/perlbase-cgi/install
-$(call perlmod/Install,$(1),CGI CGI.pm,)
-$(call perlmod/InstallBaseTests,$(1),cpan/CGI/t)
-endef
-
-$(eval $(call BuildPackage,perlbase-cgi))
-
-
 define Package/perlbase-charnames
 $(call Package/perlbase-template)
 TITLE:=charnames perl module
@@ -583,7 +569,7 @@ endef
 define Package/perlbase-extutils/install
 $(call perlmod/Install,$(1),ExtUtils,ExtUtils/MakeMaker/FAQ.pod ExtUtils/MakeMaker/Tutorial.pod ExtUtils/ParseXS.pm ExtUtils/ParseXS/Utilities.pm)
 $(call perlmod/Install/NoStrip,$(1),ExtUtils/ParseXS.pm ExtUtils/ParseXS/Utilities.pm,)
-$(call perlmod/InstallBaseTests,$(1),cpan/ExtUtils-Constant/t cpan/ExtUtils-MakeMaker/t dist/ExtUtils-CBuilder/t dist/ExtUtils-Command/t dist/ExtUtils-Install/t dist/ExtUtils-Manifest/t dist/ExtUtils-ParseXS/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/ExtUtils-Constant/t cpan/ExtUtils-MakeMaker/t dist/ExtUtils-CBuilder/t dist/ExtUtils-ParseXS/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-extutils))
@@ -949,9 +935,8 @@ DEPENDS+=+perlbase-config +perlbase-cwd +perlbase-data +perlbase-essential +perl
 endef
 
 define Package/perlbase-module/install
-$(call perlmod/Install,$(1),Module,Module/Build Module/Build.pm Module/Build/API.pod Module/Build/Authoring.pod)
-$(call perlmod/Install/NoStrip,$(1),Module/Build Module/Build.pm,Module/Build/API.pod Module/Build/Authoring.pod)
-$(call perlmod/InstallBaseTests,$(1),cpan/Module-Build/lib cpan/Module-Build/t cpan/Module-Load-Conditional/t cpan/Module-Load/t cpan/Module-Loaded/t cpan/Module-Metadata/lib cpan/Module-Metadata/t dist/Module-CoreList/t)
+$(call perlmod/Install,$(1),Module,)
+$(call perlmod/InstallBaseTests,$(1),cpan/Module-Load-Conditional/t cpan/Module-Load/t cpan/Module-Loaded/t cpan/Module-Metadata/lib cpan/Module-Metadata/t dist/Module-CoreList/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-module))
@@ -1064,20 +1049,6 @@ $(call perlmod/InstallBaseTests,$(1),cpan/Perl-OSType/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-ostype))
-
-
-define Package/perlbase-package
-$(call Package/perlbase-template)
-TITLE:=Package perl module
-DEPENDS+=+perlbase-essential +perlbase-if
-endef
-
-define Package/perlbase-package/install
-$(call perlmod/Install,$(1),Package,)
-$(call perlmod/InstallBaseTests,$(1),cpan/Package-Constants/t)
-endef
-
-$(eval $(call BuildPackage,perlbase-package))
 
 
 define Package/perlbase-params
