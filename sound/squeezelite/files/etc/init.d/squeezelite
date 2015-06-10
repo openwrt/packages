@@ -3,17 +3,6 @@
 START=99
 STOP=1
 
-mklirccmd() {
-	local cmd
-	config_get cmd options "$1" "$2"
-
-	echo "begin"
-	echo "    prog = squeezelite"
-	echo "    button = $cmd"
-	echo "    config = $3"
-	echo "end"
-}
-
 mkcodeccmd() {
 	local codec
 	config_get codec options "$1" 0
@@ -150,38 +139,7 @@ mkcmdline() {
 		dop=""
 	fi
 
-	local lirc
-	config_get lirc options ircontrol 0
-	if [ $lirc -eq 1 ]
-	then
-		local cmd
-		cmd=`mklirccmd lirc_voldown KEY_VOLUMEDOWN voldown`
-		echo "$cmd" >  /tmp/squeezelite.lircrc
-		cmd=`mklirccmd lirc_volup KEY_VOLUMEUP volup`
-		echo "$cmd" >> /tmp/squeezelite.lircrc
-		cmd=`mklirccmd lirc_rew KEY_PREVIOUSSONG rew`
-		echo "$cmd" >> /tmp/squeezelite.lircrc
-		cmd=`mklirccmd lirc_fwd KEY_NEXTSONG fwd`
-		echo "$cmd" >> /tmp/squeezelite.lircrc
-		cmd=`mklirccmd lirc_pause KEY_PLAYPAUSE pause`
-		echo "$cmd" >> /tmp/squeezelite.lircrc
-		cmd=`mklirccmd lirc_play KEY_PLAY play`
-		echo "$cmd" >> /tmp/squeezelite.lircrc
-		cmd=`mklirccmd lirc_muting KEY_MUTE muting`
-		echo "$cmd" >> /tmp/squeezelite.lircrc
-		cmd=`mklirccmd lirc_power KEY_POWER power`
-		echo "$cmd" >> /tmp/squeezelite.lircrc
-		cmd=`mklirccmd lirc_power_on KEY_POWER power_on`
-		echo "$cmd" >> /tmp/squeezelite.lircrc
-		cmd=`mklirccmd lirc_power_off KEY_POWER power_off`
-		echo "$cmd" >> /tmp/squeezelite.lircrc
-
-		lirc="-i /tmp/squeezelite.lircrc"
-	else
-		lirc=""
-	fi
-
-	local cmdline="-z $name $device $max_sr $close_delay $model_name $specific_server $priority $specific_bufsiz $specific_devopen $alsa_vctrl $codecs $dop $lirc"
+	local cmdline="-z $name $device $max_sr $close_delay $model_name $specific_server $priority $specific_bufsiz $specific_devopen $alsa_vctrl $codecs $dop"
 	echo "$cmdline"
 }
 

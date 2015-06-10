@@ -28,13 +28,6 @@ endef
 define Package/$(PKG_NAME)/config
     if PACKAGE_squeezelite
 
-	config SQUEEZELITE_LIRC
-	    bool "compile with LIRC support"
-	    select PACKAGE_lirc
-	    help
-		will be compiled with LIRC support and lirc will be included in the image
-	    default n
-
 	config SQUEEZELITE_FLAC
 	    bool "FLAC decode support"
 	    select PACKAGE_libflac
@@ -73,9 +66,6 @@ define Package/$(PKG_NAME)/config
     endif
 endef
 
-ifeq ($(CONFIG_SQUEEZELITE_LIRC),y)
-    PKG_BUILD_DEPENDS+= lirc
-endif
 ifeq ($(CONFIG_SQUEEZELITE_WMA),y)
     PKG_BUILD_DEPENDS+= libffmpeg-mini
 endif
@@ -90,9 +80,6 @@ endef
 
 TARGET_CFLAGS+= -Wall -fPIC -O2 -DSELFPIPE -DDSD
 
-ifeq ($(CONFIG_SQUEEZELITE_LIRC),y)
-    TARGET_CFLAGS+= -DIR
-endif
 ifeq ($(CONFIG_SQUEEZELITE_WMA),y)
     TARGET_CFLAGS+= -DFFMPEG
 endif
