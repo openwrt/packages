@@ -1,0 +1,32 @@
+Index: pcre-8.37/pcre_compile.c
+===================================================================
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -7177,14 +7177,26 @@
+           number. If the name is not found, set the value to 0 for a forward
+           reference. */
+ 
++          recno = 0;
+           ng = cd->named_groups;
+           for (i = 0; i < cd->names_found; i++, ng++)
+             {
+             if (namelen == ng->length &&
+                 STRNCMP_UC_UC(name, ng->name, namelen) == 0)
+-              break;
++              {
++              open_capitem *oc;
++              recno = ng->number;
++              if (is_recurse) break;
++              for (oc = cd->open_caps; oc != NULL; oc = oc->next)         
++                {          
++                if (oc->number == recno)                                     
++                  {               
++                  oc->flag = TRUE;                                      
++                  break;
++                  }                                                         
++                }                          
++              }    
+             }
+-          recno = (i < cd->names_found)? ng->number : 0;
+ 
+           /* Count named back references. */

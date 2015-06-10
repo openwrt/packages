@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.3.0
+PKG_VERSION:=5.3.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
-PKG_MD5SUM:=c52d4228231c2025d9c320d0e9990327
+PKG_MD5SUM:=fab014be1477ef4ebf9a765e10f8802c
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 
@@ -56,7 +56,6 @@ PKG_MOD_AVAILABLE:= \
 	md5 \
 	mysql \
 	openssl \
-	padlock \
 	pem \
 	pgp \
 	pkcs1 \
@@ -71,7 +70,6 @@ PKG_MOD_AVAILABLE:= \
 	smp \
 	socket-default \
 	socket-dynamic \
-	sql \
 	sqlite \
 	stroke \
 	test-vectors \
@@ -166,7 +164,6 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-md5 \
 	+strongswan-mod-mysql \
 	+strongswan-mod-openssl \
-	+TARGET_x86:strongswan-mod-padlock \
 	+strongswan-mod-pem \
 	+strongswan-mod-pgp \
 	+strongswan-mod-pkcs1 \
@@ -180,7 +177,6 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-sha2 \
 	+strongswan-mod-smp \
 	+strongswan-mod-socket-default \
-	+strongswan-mod-sql \
 	+strongswan-mod-sqlite \
 	+strongswan-mod-stroke \
 	+strongswan-mod-test-vectors \
@@ -435,7 +431,7 @@ $(eval $(call BuildPlugin,aes,AES crypto,))
 $(eval $(call BuildPlugin,af-alg,AF_ALG crypto interface to Linux Crypto API,+kmod-crypto-user))
 $(eval $(call BuildPlugin,agent,SSH agent signing,))
 $(eval $(call BuildPlugin,attr,file based config,))
-$(eval $(call BuildPlugin,attr-sql,SQL based config,+strongswan-mod-sql +strongswan-charon))
+$(eval $(call BuildPlugin,attr-sql,SQL based config,+strongswan-charon))
 $(eval $(call BuildPlugin,blowfish,Blowfish crypto,))
 $(eval $(call BuildPlugin,ccm,CCM AEAD wrapper crypto,))
 $(eval $(call BuildPlugin,cmac,CMAC crypto,))
@@ -466,9 +462,8 @@ $(eval $(call BuildPlugin,load-tester,load testing,))
 $(eval $(call BuildPlugin,nonce,nonce genereation,))
 $(eval $(call BuildPlugin,md4,MD4 crypto,))
 $(eval $(call BuildPlugin,md5,MD5 crypto,))
-$(eval $(call BuildPlugin,mysql,MySQL database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-mysql:libmysqlclient-r))
+$(eval $(call BuildPlugin,mysql,MySQL database interface,+PACKAGE_strongswan-mod-mysql:libmysqlclient-r))
 $(eval $(call BuildPlugin,openssl,OpenSSL crypto,+PACKAGE_strongswan-mod-openssl:libopenssl))
-$(eval $(call BuildPlugin,padlock,VIA PadLock crypto,@TARGET_x86))
 $(eval $(call BuildPlugin,pem,PEM decoding,))
 $(eval $(call BuildPlugin,pgp,PGP key decoding,))
 $(eval $(call BuildPlugin,pkcs1,PKCS1 key decoding,))
@@ -483,8 +478,7 @@ $(eval $(call BuildPlugin,sha2,SHA2 crypto,))
 $(eval $(call BuildPlugin,smp,SMP configuration and control interface,+PACKAGE_strongswan-mod-smp:libxml2))
 $(eval $(call BuildPlugin,socket-default,default socket implementation for charon,))
 $(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charon,))
-$(eval $(call BuildPlugin,sql,SQL database interface,))
-$(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-sqlite:libsqlite3))
+$(eval $(call BuildPlugin,sqlite,SQLite database interface,+PACKAGE_strongswan-mod-sqlite:libsqlite3))
 $(eval $(call BuildPlugin,stroke,Stroke,+strongswan-utils))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci))

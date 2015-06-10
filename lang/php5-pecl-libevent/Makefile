@@ -11,7 +11,7 @@ PECL_NAME:=libevent
 PECL_LONGNAME:=Libevent - event notification
 
 PKG_VERSION:=0.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MD5SUM:=e091371a9e714098a4c04a6e3daeb56a
 
 PKG_NAME:=php5-pecl-$(PECL_NAME)
@@ -34,5 +34,5 @@ include ../php5/pecl.mk
 
 CONFIGURE_ARGS+= --with-libevent=shared,"$(STAGING_DIR)/usr"
 
-$(eval $(call PECLPackage,$(PECL_NAME),$(PECL_LONGNAME),+libevent2))
+$(eval $(call PECLPackage,$(PECL_NAME),$(PECL_LONGNAME),+libevent2 +php5-mod-sockets))
 $(eval $(call BuildPackage,$(PKG_NAME)))

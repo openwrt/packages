@@ -89,11 +89,11 @@ CONFIGURE_ARGS += \
 	--disable-arch-native \
 	--with-krb5-config=no \
 	--without-libcap \
-	--without-netfilter-conntrack \
+	--without-netfilter-conntrack
 
 CONFIGURE_VARS += \
 	ac_cv_header_linux_netfilter_ipv4_h=yes \
-	ac_cv_epoll_works=yes \
+	ac_cv_epoll_works=yes
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/lib all

@@ -14,6 +14,7 @@ start_service() {
 
 	procd_open_instance
 	procd_set_param command $BIN -D -l -p "$PID_F"
+	procd_set_param respawn
 	procd_close_instance
 }
 
