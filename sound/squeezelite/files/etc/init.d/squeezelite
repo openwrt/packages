@@ -96,7 +96,7 @@ mkcmdline() {
 	config_get specific_devopen options specific_devopen 0
 	if [ $specific_devopen -ne 0 ]
 	then
-		local alsa_buffer, alsa_period, alsa_format, alsa_mmap
+		local alsa_buffer
 
 		config_get alsa_buffer options alsa_buffer 0
 		if [ $alsa_buffer -eq 0 ]
@@ -104,18 +104,21 @@ mkcmdline() {
 			alsa_buffer=""
 		fi
     
+		local alsa_period
 		config_get alsa_period options alsa_period 0
 		if [ $alsa_period -eq 0 ]
 		then
 			alsa_period=""
 		fi
     
+		local alsa_format
 		config_get alsa_format options alsa_format 0
 		if [ $alsa_format = "0" ]
 		then
 			alsa_format=""
 		fi
 
+		local alsa_mmap
 		config_get alsa_mmap options alsa_mmap 0
 
 		specific_devopen="-a $alsa_buffer:$alsa_period:$alsa_format:$alsa_mmap"
