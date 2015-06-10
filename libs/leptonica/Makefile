@@ -16,6 +16,9 @@ PKG_SOURCE_URL:=http://www.leptonica.com/source/
 PKG_MD5SUM:=7581db29f8442197ce68e766c6047c4b
 PKG_MAINTAINER:=Oliver Ertl <oliver-ertl@t-online.de>
 
+PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILES:=COPYING
+
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
