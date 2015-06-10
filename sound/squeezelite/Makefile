@@ -33,35 +33,35 @@ define Package/$(PKG_NAME)/config
 	    select PACKAGE_libflac
 	    help
 		libflac will be included in the image
-	    default n
+	    default y
 
 	config SQUEEZELITE_MAD
 	    bool "MP3 decode support"
 	    select PACKAGE_libmad
 	    help
 		libmad will be included in the image
-	    default n
+	    default y
 
 	config SQUEEZELITE_OGG
 	    bool "OGG decode support"
 	    select PACKAGE_libvorbis
 	    help
 		libvorbis will be included in the image
-	    default n
+	    default y
 
 	config SQUEEZELITE_AAC
 	    bool "AAC decode support"
 	    select PACKAGE_libfaad2
 	    help
 		libfaad2 will be included in the image
-	    default n
+	    default y
 
 	config SQUEEZELITE_WMA
 	    bool "WMA and ALAC decode support"
 	    select PACKAGE_libffmpeg-mini
 	    help
 		libffmpeg-mini will be compiled and included in the image
-	    default n
+	    default y
 
     endif
 endef
