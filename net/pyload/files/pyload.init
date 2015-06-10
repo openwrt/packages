@@ -1,0 +1,12 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2011 OpenWrt.org
+
+START=94
+
+start() {
+	/usr/bin/python /usr/share/python/pyload/pyLoadCore.py --configdir=/etc/pyload --daemon
+}
+
+stop() {
+	/usr/bin/python /usr/share/python/pyload/pyLoadCore.py --configdir=/etc/pyload --quit
+}
