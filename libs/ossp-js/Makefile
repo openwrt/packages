@@ -16,6 +16,9 @@ PKG_SOURCE_URL:=ftp://ftp.ossp.org/pkg/lib/js/
 PKG_MD5SUM:=07f6cad7e03fd74a949588c3d4b333de
 PKG_MAINTAINER:=Oliver Ertl <oliver-ertl@t-online.de>
 
+PKG_LICENSE:=MPL-1.0
+PKG_LICENSE_FILES:=COPYING
+
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
 
