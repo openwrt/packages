@@ -16,6 +16,9 @@ PKG_SOURCE_URL:=http://download.pyload.org/
 PKG_MD5SUM:=28876150af22999b6f539c8579d3b415
 PKG_MAINTAINER:=Oliver Ertl <oliver-ertl@t-online.de>
 
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=LICENSE
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/
 
 include $(INCLUDE_DIR)/package.mk
