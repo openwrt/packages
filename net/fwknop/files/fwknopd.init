@@ -5,7 +5,7 @@
 # list of contributors, see the file 'CREDITS'.
 #
 . /lib/functions.sh
-START=60
+START=95
 
 FWKNOPD_BIN=/usr/sbin/fwknopd
 
@@ -36,6 +36,13 @@ reload()
 gen_confs()
 {
 	[ -f /tmp/access.conf.tmp ] && rm /tmp/access.conf.tmp
+	if [`uci get fwknopd.@access[0].PCAP_INTF` = ""]
+	then
+		. /lib/functions/network.sh
+		network_get_physdev device wan
+		uci set fwknopd.@config[0].PCAP_INTF="$device"
+		uci commit
+	fi
 	config_cb() {
 		local type="$1"
 		local name="$2"
