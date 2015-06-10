@@ -11,7 +11,7 @@ PKG_SOURCE_URL:=https://code.google.com/p/squeezelite/
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=8b8dfe6918ebe45ade5f3d9b68d453d7b8128d99
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_BUILD_DEPENDS:=alsa-lib libflac libmad libvorbis libfaad2
+PKG_BUILD_DEPENDS:=alsa-lib libflac libmad libvorbis libfaad2 libffmpeg-mini
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -57,7 +57,7 @@ define Package/$(PKG_NAME)/config
 	    default n
 
 	config SQUEEZELITE_WMA
-	    bool "compile with WMA decode support"
+	    bool "WMA and ALAC decode support"
 	    select PACKAGE_libffmpeg-mini
 	    help
 		libffmpeg-mini will be compiled and included in the image
@@ -65,10 +65,6 @@ define Package/$(PKG_NAME)/config
 
     endif
 endef
-
-ifeq ($(CONFIG_SQUEEZELITE_WMA),y)
-    PKG_BUILD_DEPENDS+= libffmpeg-mini
-endif
 
 define Package/$(PKG_NAME)/description
     Squeezelite is a small headless squeezebox emulator for linux using alsa audio output 
@@ -78,11 +74,7 @@ define Package/$(PKG_NAME)/description
     Native support of dsd playback to dop capable dac or via conversion to pcm and resampling
 endef
 
-TARGET_CFLAGS+= -Wall -fPIC -O2 -DSELFPIPE -DDSD
-
-ifeq ($(CONFIG_SQUEEZELITE_WMA),y)
-    TARGET_CFLAGS+= -DFFMPEG
-endif
+TARGET_CFLAGS+= -Wall -fPIC -O2 -DSELFPIPE -DDSD -DFFMPEG
 
 TARGET_LDFLAGS+= -lasound -lpthread -lm -lrt
 
