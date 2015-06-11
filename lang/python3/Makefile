@@ -14,11 +14,11 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.python.org/ftp/python/$(PKG_VERSION)
+PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
 PKG_MD5SUM:=d149d2812f10cbe04c042232e7964171
 
 PKG_LICENSE:=PSF
@@ -41,7 +41,7 @@ define Package/python3/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python $(PYTHON_VERSION) programming language
-  URL:=http://www.python.org/
+  URL:=https://www.python.org/
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
