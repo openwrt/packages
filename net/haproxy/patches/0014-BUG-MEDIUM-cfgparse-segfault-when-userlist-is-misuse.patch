@@ -1,0 +1,41 @@
+From faf3315f77c527e6e1d027deb7e853cdf6af5858 Mon Sep 17 00:00:00 2001
+From: William Lallemand <wlallemand@haproxy.com>
+Date: Thu, 28 May 2015 18:03:51 +0200
+Subject: [PATCH 14/14] BUG/MEDIUM: cfgparse: segfault when userlist is misused
+
+If the 'userlist' keyword parsing returns an error and no userlist were
+previously created. The parsing of 'user' and 'group' leads to NULL
+derefence.
+
+The userlist pointer is now tested to prevent this issue.
+(cherry picked from commit 4ac9f546120d42be8147e3d90588e7b9738af0cc)
+---
+ src/cfgparse.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index 3c3383d..392a78d 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -5668,6 +5668,9 @@ cfg_parse_users(const char *file, int linenum, char **args, int kwm)
+ 			goto out;
+ 		}
+ 
++		if (!userlist)
++			goto out;
++
+ 		for (ag = userlist->groups; ag; ag = ag->next)
+ 			if (!strcmp(ag->name, args[1])) {
+ 				Warning("parsing [%s:%d]: ignoring duplicated group '%s' in userlist '%s'.\n",
+@@ -5718,6 +5721,8 @@ cfg_parse_users(const char *file, int linenum, char **args, int kwm)
+ 			err_code |= ERR_ALERT | ERR_FATAL;
+ 			goto out;
+ 		}
++		if (!userlist)
++			goto out;
+ 
+ 		for (newuser = userlist->users; newuser; newuser = newuser->next)
+ 			if (!strcmp(newuser->user, args[1])) {
+-- 
+2.0.5
+

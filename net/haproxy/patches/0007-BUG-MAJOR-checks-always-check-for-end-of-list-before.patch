@@ -1,0 +1,90 @@
+From 97fccc87f1297d189ee80735e5b8746c34956eda Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 13 May 2015 12:08:21 +0200
+Subject: [PATCH 7/8] BUG/MAJOR: checks: always check for end of list before
+ proceeding
+
+This is the most important fix of this series. There's a risk of endless
+loop and crashes caused by the fact that we go past the head of the list
+when skipping to next rule, without checking if it's still a valid element.
+Most of the time, the ->action field is checked, which points to the proxy's
+check_req pointer (generally NULL), meaning the element is confused with a
+TCPCHK_ACT_SEND action.
+
+The situation was accidently made worse with the addition of tcp-check
+comment since it also skips list elements. However, since the action that
+makes it go forward is TCPCHK_ACT_COMMENT (3), there's little chance to
+see this as a valid pointer, except on 64-bit machines where it can match
+the end of a check_req string pointer.
+
+This fix heavily depends on previous cleanup and both must be backported
+to 1.5 where the bug is present.
+(cherry picked from commit f2c87353a7f8160930b5f342bb6d6ad0991ee3d1)
+[wt: this patch differs significantly from 1.6 since we don't have comments]
+---
+ src/cfgparse.c |  4 +++-
+ src/checks.c   | 12 ++++++++++++
+ 2 files changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index 746c7eb..dba59d1 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -4368,7 +4368,9 @@ stats_error_parsing:
+ 			l = (struct list *)&curproxy->tcpcheck_rules;
+ 			if (l->p != l->n) {
+ 				tcpcheck = (struct tcpcheck_rule *)l->n;
+-				if (tcpcheck && tcpcheck->action != TCPCHK_ACT_CONNECT) {
++
++				if (&tcpcheck->list != &curproxy->tcpcheck_rules
++				    && tcpcheck->action != TCPCHK_ACT_CONNECT) {
+ 					Alert("parsing [%s:%d] : first step MUST also be a 'connect' when there is a 'connect' step in the tcp-check ruleset.\n",
+ 					      file, linenum);
+ 					err_code |= ERR_ALERT | ERR_FATAL;
+diff --git a/src/checks.c b/src/checks.c
+index a0c42f2..e13d561 100644
+--- a/src/checks.c
++++ b/src/checks.c
+@@ -2057,6 +2057,9 @@ static void tcpcheck_main(struct connection *conn)
+ 			/* allow next rule */
+ 			check->current_step = (struct tcpcheck_rule *)check->current_step->list.n;
+ 
++			if (&check->current_step->list == head)
++				break;
++
+ 			/* don't do anything until the connection is established */
+ 			if (!(conn->flags & CO_FL_CONNECTED)) {
+ 				/* update expire time, should be done by process_chk */
+@@ -2110,6 +2113,9 @@ static void tcpcheck_main(struct connection *conn)
+ 
+ 			/* go to next rule and try to send */
+ 			check->current_step = (struct tcpcheck_rule *)check->current_step->list.n;
++
++			if (&check->current_step->list == head)
++				break;
+ 		} /* end 'send' */
+ 		else if (check->current_step->action == TCPCHK_ACT_EXPECT) {
+ 			if (unlikely(check->result == CHK_RES_FAILED))
+@@ -2196,6 +2202,9 @@ static void tcpcheck_main(struct connection *conn)
+ 					/* allow next rule */
+ 					check->current_step = (struct tcpcheck_rule *)check->current_step->list.n;
+ 
++					if (&check->current_step->list == head)
++						break;
++
+ 					if (check->current_step->action == TCPCHK_ACT_EXPECT)
+ 						goto tcpcheck_expect;
+ 					__conn_data_stop_recv(conn);
+@@ -2208,6 +2217,9 @@ static void tcpcheck_main(struct connection *conn)
+ 					/* allow next rule */
+ 					check->current_step = (struct tcpcheck_rule *)check->current_step->list.n;
+ 
++					if (&check->current_step->list == head)
++						break;
++
+ 					if (check->current_step->action == TCPCHK_ACT_EXPECT)
+ 						goto tcpcheck_expect;
+ 					__conn_data_stop_recv(conn);
+-- 
+2.0.5
+

@@ -1,0 +1,53 @@
+From b94a6d5a37499ce6649ad58f4a8c4664779abd8b Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 13 May 2015 11:38:17 +0200
+Subject: [PATCH 5/8] BUG/MEDIUM: checks: do not dereference head of a
+ tcp-check at the end
+
+When the end of the list is reached, the current step's action is checked
+to know if we must poll or not. Unfortunately, the main reason for going
+there is that we walked past the end of list and current_step points to
+the head. We cannot dereference ->action since it does not belong to this
+structure and can definitely crash if the address is not mapped.
+
+This bug is unlikely to cause a crash since the action appears just after
+the list, and corresponds to the "char *check_req" pointer in the proxy
+struct, and it seems that we can't go there with current_step being null.
+At worst it can cause the check to register for recv events.
+
+This fix needs to be backported to 1.5 since the code is incorrect there
+as well.
+(cherry picked from commit 53c5a049e1f4dbf67412472e23690dc6b3c8d0f8)
+---
+ src/checks.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/src/checks.c b/src/checks.c
+index cfdfe8c..a887be1 100644
+--- a/src/checks.c
++++ b/src/checks.c
+@@ -2237,10 +2237,12 @@ static void tcpcheck_main(struct connection *conn)
+ 	goto out_end_tcpcheck;
+ 
+  out_need_io:
++	/* warning, current_step may now point to the head */
+ 	if (check->bo->o)
+ 		__conn_data_want_send(conn);
+ 
+-	if (check->current_step->action == TCPCHK_ACT_EXPECT)
++	if (&check->current_step->list != head &&
++	    check->current_step->action == TCPCHK_ACT_EXPECT)
+ 		__conn_data_want_recv(conn);
+ 	return;
+ 
+@@ -2256,7 +2258,6 @@ static void tcpcheck_main(struct connection *conn)
+ 		conn->flags |= CO_FL_ERROR;
+ 
+ 	__conn_data_stop_both(conn);
+-
+ 	return;
+ }
+ 
+-- 
+2.0.5
+
