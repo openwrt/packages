@@ -44,21 +44,23 @@ section_enabled() {
 
 transmission() {
 	local cfg="$1"
-	#give transmission 3/5 of the memory of the system
 	local USE
-	local MEM=`grep MemTotal /proc/meminfo|sed 's/ \+/ /g'|cut -d ' ' -f 2`
-	if test "$MEM" -gt 1;then
-		USE=`expr $MEM \* 3000 / 5`
-	fi
 
 	local user
 	local download_dir
+	local mem_percentage
 
 	section_enabled "$section" || return 1
 
 	config_get config_dir "$cfg" 'config_dir' '/var/etc/transmission'
 	config_get user "$cfg" 'user'
 	config_get download_dir "$cfg" 'download_dir' '/var/etc/transmission'
+	config_get mem_percentage "$cfg" 'mem_percentage' '50'
+
+	local MEM=$(grep MemTotal /proc/meminfo|sed 's/ \+/ /g'|cut -d ' ' -f 2)
+	if test "$MEM" -gt 1;then
+		USE=$(expr $MEM \* $mem_percentage \* 10)
+	fi
 
 	config_file="$config_dir/settings.json"
 	[ -d $config_dir ] || {
