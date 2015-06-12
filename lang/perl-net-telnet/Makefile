@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-net-telnet
 PKG_VERSION:=3.04
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/J/JR/JROGERS/
 PKG_SOURCE:=Net-Telnet-$(PKG_VERSION).tar.gz

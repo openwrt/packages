@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www-mechanize
 PKG_VERSION:=1.74
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=WWW-Mechanize-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
