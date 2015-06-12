@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libextractor
 PKG_VERSION:=1.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 # ToDo:
-# - package missing optional dependencies: libexiv2, giflib, gsf, librpm, smf, tidy
+# - package missing optional dependencies: libexiv2, gsf, librpm, smf, tidy
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -29,6 +29,7 @@ PLUGINS:= \
 	deb \
 	dvi \
 	flac:+libflac \
+	gif:+giflib \
 	gstreamer:+libgstreamer1:+libgst1app:+libgst1pbutils:+libgst1tag \
 	it \
 	jpeg:+libjpeg \
