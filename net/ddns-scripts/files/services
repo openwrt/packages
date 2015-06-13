@@ -89,5 +89,8 @@
 # no-ip.pl nothing to do with no-ip.com (domain registered to www.domeny.tv) (IP autodetected by provider)
 "no-ip.pl"	"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
 
+# no-ip.com aka noip.com
+"no-ip.com" "http://[USERNAME]:[PASSWORD]@dynupdate.no-ip.com/nic/update/?hostname=[DOMAIN]&myip=[IP]"
+
 # domains.google.com	non free service - require HTTPS communication
 "domains.google.com"	"https://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
