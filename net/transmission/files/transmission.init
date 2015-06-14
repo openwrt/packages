@@ -57,7 +57,7 @@ transmission() {
 	config_get download_dir "$cfg" 'download_dir' '/var/etc/transmission'
 	config_get mem_percentage "$cfg" 'mem_percentage' '50'
 
-	local MEM=$(grep MemTotal /proc/meminfo|sed 's/ \+/ /g'|cut -d ' ' -f 2)
+	local MEM=$(sed -ne 's!^MemTotal:[[:space:]]*\([0-9]*\) kB$!\1!p' /proc/meminfo)
 	if test "$MEM" -gt 1;then
 		USE=$(expr $MEM \* $mem_percentage \* 10)
 	fi
