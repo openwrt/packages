@@ -1,7 +1,5 @@
-Index: LVM2.2.02.120/lib/commands/toolcontext.c
-===================================================================
---- LVM2.2.02.120.orig/lib/commands/toolcontext.c
-+++ LVM2.2.02.120/lib/commands/toolcontext.c
+--- a/lib/commands/toolcontext.c
++++ b/lib/commands/toolcontext.c
 @@ -1637,8 +1637,10 @@ struct cmd_context *create_toolcontext(u
  				       unsigned threaded)
  {
@@ -31,10 +29,8 @@ Index: LVM2.2.02.120/lib/commands/toolcontext.c
  	if (cmd->linebuffer) {
  		/* Reset stream buffering to defaults */
  		if (is_valid_fd(STDIN_FILENO) &&
-Index: LVM2.2.02.120/tools/lvmcmdline.c
-===================================================================
---- LVM2.2.02.120.orig/tools/lvmcmdline.c
-+++ LVM2.2.02.120/tools/lvmcmdline.c
+--- a/tools/lvmcmdline.c
++++ b/tools/lvmcmdline.c
 @@ -1606,6 +1606,7 @@ int lvm_split(char *str, int *argc, char
  /* Make sure we have always valid filedescriptors 0,1,2 */
  static int _check_standard_fds(void)
