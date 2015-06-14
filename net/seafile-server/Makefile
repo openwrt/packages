@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=4.1.2
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_RELEASE=$(PKG_SOURCE_VERSION)-2
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
@@ -31,7 +31,7 @@ define Package/seafile-server
     URL:=http://seafile.com/
     DEPENDS:=+shadow-useradd +libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub \
 		+sqlite3-cli +python-mysql +jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 \
-		+libmysqlclient +libevhtp +libpthread +libuuid \
+		+libmysqlclient +libpthread +libuuid \
 		+bash +sudo +procps +procps-pkill $(ICONV_DEPENDS)
     EXTRA_DEPENDS:=seafile-ccnet (=4.1.2-a73109f09af4ecc49cdc4c57cdde51b38e15c31a), seafile-seahub (=4.1.2-3fb1288f920de03a4e2e6a06b60671ce98971742)
 endef
@@ -54,7 +54,8 @@ CONFIGURE_ARGS += --disable-riak \
 		    --disable-console
 
 PKG_BUILD_DEPENDS:=vala/host \
-		    libsearpc/host
+		    libsearpc/host \
+		    libevhtp-1.1
 
 TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -liconv \
 		    -L$(STAGING_DIR)/usr/lib/mysql -lmysqlclient -lz
