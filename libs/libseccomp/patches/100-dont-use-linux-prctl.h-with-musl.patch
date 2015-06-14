@@ -8,7 +8,7 @@ Index: libseccomp-2.2.1/src/system.h
  #include <linux/filter.h>
 +#ifdef __GLIBC__
  #include <linux/prctl.h>
-+#endef
++#endif
  
  #include "configure.h"
  
