@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale
 PKG_VERSION:=0.10
-PKG_RELEASE:=1
-PKG_MAINTAINER:=Christian Schoenebeck <chris5560@web.de>
+PKG_RELEASE:=2
+PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
