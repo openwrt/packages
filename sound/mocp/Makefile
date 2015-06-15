@@ -40,8 +40,9 @@ endef
 
 TARGET_CFLAGS+=-D_GNU_SOURCE
 
-define Build/Configure
-	$(call Build/Configure/Default, \
+TARGET_CPPFLAGS+=-P
+
+CONFIGURE_ARGS+= \
 		$(if $(CONFIG_BUILD_PATENTED),,--without-mp3) \
 		--enable-shared \
 		--disable-static \
@@ -53,8 +54,7 @@ define Build/Configure
 		--without-musepack \
 		--without-rcc \
 		$(if $(CONFIG_PACKAGE_libncursesw),--with-ncursesw --without-ncurses,--with-ncurses --without-ncursesw) \
-	)
-endef
+		--with-bdb-dir="$(STAGING_DIR)/usr"
 
 define Package/moc/install
 	$(INSTALL_DIR) $(1)/usr/bin
