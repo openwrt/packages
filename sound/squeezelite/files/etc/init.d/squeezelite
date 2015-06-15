@@ -1,0 +1,154 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=1
+
+mkcodeccmd() {
+	local codec
+	config_get codec options "$1" 0
+	if [ $codec -eq 0 ]
+	then
+		if [ -z "$3" ]
+		then
+			echo "-e $2"
+		else
+			echo "$3,$2"
+		fi
+	else
+		echo "$3"
+	fi
+}
+
+mkcmdline() {
+	config_load squeezelite
+
+	local name
+	config_get name options name "SqueezeWRT"
+	name="-n $name"
+
+	local device
+	config_get device options device "hw:0,0"
+	device="-o $device"
+
+	local max_sr
+	config_get max_sr options max_sr 0
+	if [ $max_sr -eq 0 ]
+	then
+		max_sr=""
+	else
+		max_sr="-r $max_sr"
+
+		local sr_delay
+		config_get sr_delay options sr_delay 0
+		if [ $sr_delay -ne 0 ]
+		then
+			max_sr="$max_sr:$sr_delay"
+		fi
+	fi
+
+	local close_delay
+	config_get close_delay options close_delay 0
+	if [ $close_delay -ne 0 ]
+	then
+		close_delay="-C $close_delay"
+	else
+		close_delay=""
+	fi
+
+	local model_name
+	config_get model_name options model_name "SqueezeLite"
+	model_name="-M $model_name"
+
+	local specific_server
+	config_get specific_server options specific_server 0
+	if [ $specific_server -ne 0 ]
+	then
+		local server_addr, server_port
+		config_get server_addr options server_addr "127.0.0.1"
+		config_get server_port options server_port 3483
+		specific_server="-s $server_addr:$server_port"
+	else
+		specific_server=""
+	fi
+
+	local priority
+	config_get priority options priority 0
+	if [ $priority -ne 0 ]
+	then
+		priority="-p $priority"
+	else
+		priority=""
+	fi
+
+	local specific_bufsiz
+	config_get specific_bufsiz options specific_bufsiz 0
+	if [ $specific_bufsiz -ne 0 ]
+	then
+		local stream_bufsiz, out_bufsiz
+		config_get stream_bufsiz options stream_bufsiz 2048
+		config_get out_bufsiz options out_bufsiz 3763
+		specific_bufsiz="-b $stream_bufsiz:$out_bufsiz"
+	else
+		specific_bufsiz=""
+	fi
+
+	local specific_devopen
+	config_get specific_devopen options specific_devopen 0
+	if [ $specific_devopen -ne 0 ]
+	then
+		local alsa_buffer, alsa_period, alsa_format, alsa_mmap
+
+		config_get alsa_buffer options alsa_buffer 0
+		if [ $alsa_buffer -eq 0 ]
+		then
+			alsa_buffer=""
+		fi
+    
+		config_get alsa_period options alsa_period 0
+		if [ $alsa_period -eq 0 ]
+		then
+			alsa_period=""
+		fi
+    
+		config_get alsa_format options alsa_format 0
+		if [ $alsa_format = "0" ]
+		then
+			alsa_format=""
+		fi
+
+		config_get alsa_mmap options alsa_mmap 0
+
+		specific_devopen="-a $alsa_buffer:$alsa_period:$alsa_format:$alsa_mmap"
+ 	else
+		specific_devopen="-a 200:::"
+	fi
+
+	local codecs=""
+	codecs=`mkcodeccmd decode_flac flac "$codecs"`
+	codecs=`mkcodeccmd decode_mp3 mp3 "$codecs"`
+	codecs=`mkcodeccmd decode_aac aac "$codecs"`
+	codecs=`mkcodeccmd decode_ogg ogg "$codecs"`
+	codecs=`mkcodeccmd decode_wma_alac wma,alac "$codecs"`
+
+	local dop
+	config_get dop options dsd_over_pcm 0
+	if [ $dop -eq 1 ]
+	then
+		dop="-D"
+	else
+		dop=""
+	fi
+
+	local cmdline="-z $name $device $max_sr $close_delay $model_name $specific_server $priority $specific_bufsiz $specific_devopen $alsa_vctrl $codecs $dop"
+	echo "$cmdline"
+}
+
+start() {
+	local cmdline=`mkcmdline`
+	echo "$cmdline" > /tmp/squeezelite.cmdline
+	service_start /usr/bin/squeezelite $cmdline
+}
+
+stop() {
+	service_stop /usr/bin/squeezelite
+}
