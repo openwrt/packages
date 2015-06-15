@@ -1,0 +1,77 @@
+From 76a06b2804bcdba0fb2c19f834bdb511ce3cf344 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 20 May 2015 10:39:04 +0200
+Subject: [PATCH 09/10] BUG/MEDIUM: peers: apply a random reconnection timeout
+
+Commit 9ff95bb ("BUG/MEDIUM: peers: correctly configure the client timeout")
+uncovered an old bug in the peers : upon disconnect, we reconnect immediately.
+This sometimes results in both ends to do the same thing in parallel causing
+a loop of connect/accept/close/close that can last several seconds. The risk
+of occurrence of the trouble increases with latency, and is emphasized by the
+fact that idle connections are now frequently recycled (after 5s of idle).
+
+In order to avoid this we must apply a random delay before reconnecting.
+Fortunately the mechanism already supports a reconnect delay, so here we
+compute the random timeout when killing a session. The delay is 50ms plus
+a random between 0 and 2 seconds. Ideally an exponential back-off would
+be preferred but it's preferable to keep the fix simple.
+
+This bug was reported by Marco Corte.
+
+This fix must be backported to 1.5 since the fix above was backported into
+1.5.12.
+(cherry picked from commit b4e34da692d8a7f6837ad16b3389f5830dbc11d2)
+---
+ src/peers.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/src/peers.c b/src/peers.c
+index b196d88..159f0a4 100644
+--- a/src/peers.c
++++ b/src/peers.c
+@@ -1063,6 +1063,7 @@ static void peer_session_forceshutdown(struct session * session)
+ {
+ 	struct stream_interface *oldsi = NULL;
+ 	struct appctx *appctx = NULL;
++	struct peer_session *ps;
+ 	int i;
+ 
+ 	for (i = 0; i <= 1; i++) {
+@@ -1079,6 +1080,14 @@ static void peer_session_forceshutdown(struct session * session)
+ 	if (!appctx)
+ 		return;
+ 
++	ps = (struct peer_session *)appctx->ctx.peers.ptr;
++	/* we're killing a connection, we must apply a random delay before
++	 * retrying otherwise the other end will do the same and we can loop
++	 * for a while.
++	 */
++	if (ps)
++		ps->reconnect = tick_add(now_ms, MS_TO_TICKS(50 + random() % 2000));
++
+ 	/* call release to reinit resync states if needed */
+ 	peer_session_release(oldsi);
+ 	appctx->st0 = PEER_SESS_ST_END;
+@@ -1352,8 +1361,8 @@ static struct task *process_peer_sync(struct task * task)
+ 				if (!ps->session) {
+ 					/* no active session */
+ 					if (ps->statuscode == 0 ||
+-					    ps->statuscode == PEER_SESS_SC_SUCCESSCODE ||
+ 					    ((ps->statuscode == PEER_SESS_SC_CONNECTCODE ||
++					      ps->statuscode == PEER_SESS_SC_SUCCESSCODE ||
+ 					      ps->statuscode == PEER_SESS_SC_CONNECTEDCODE) &&
+ 					     tick_is_expired(ps->reconnect, now_ms))) {
+ 						/* connection never tried
+@@ -1364,8 +1373,7 @@ static struct task *process_peer_sync(struct task * task)
+ 						/* retry a connect */
+ 						ps->session = peer_session_create(ps->peer, ps);
+ 					}
+-					else if (ps->statuscode == PEER_SESS_SC_CONNECTCODE ||
+-						 ps->statuscode == PEER_SESS_SC_CONNECTEDCODE) {
++					else if (!tick_is_expired(ps->reconnect, now_ms)) {
+ 						/* If previous session failed during connection
+ 						 * but reconnection timer is not expired */
+ 
+-- 
+2.0.5
+

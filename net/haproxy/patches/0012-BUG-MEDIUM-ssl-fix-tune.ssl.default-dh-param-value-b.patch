@@ -1,0 +1,98 @@
+From 5d769ca828fdb055052b3dbc232864bdf2853c9f Mon Sep 17 00:00:00 2001
+From: Remi Gacogne <rgacogne@aquaray.fr>
+Date: Thu, 28 May 2015 16:23:00 +0200
+Subject: [PATCH 12/14] BUG/MEDIUM: ssl: fix tune.ssl.default-dh-param value
+ being overwritten
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Hervé Commowick reported that the logic used to avoid complaining about
+ssl-default-dh-param not being set when static DH params are present
+in the certificate file was clearly wrong when more than one sni_ctx
+is used.
+This patch stores whether static DH params are being used for each
+SSL_CTX individually, and does not overwrite the value of
+tune.ssl.default-dh-param.
+(cherry picked from commit 4f902b88323927c9d25d391a809e3678ac31df41)
+---
+ src/ssl_sock.c | 28 +++++++++++++++++++++++-----
+ 1 file changed, 23 insertions(+), 5 deletions(-)
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index a78fc6a..0f7819b 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -47,6 +47,9 @@
+ #ifdef SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB
+ #include <openssl/ocsp.h>
+ #endif
++#ifndef OPENSSL_NO_DH
++#include <openssl/dh.h>
++#endif
+ 
+ #include <common/buffer.h>
+ #include <common/compat.h>
+@@ -107,6 +110,7 @@ int sslconns = 0;
+ int totalsslconns = 0;
+ 
+ #ifndef OPENSSL_NO_DH
++static int ssl_dh_ptr_index = -1;
+ static DH *local_dh_1024 = NULL;
+ static DH *local_dh_2048 = NULL;
+ static DH *local_dh_4096 = NULL;
+@@ -1076,10 +1080,12 @@ int ssl_sock_load_dh_params(SSL_CTX *ctx, const char *file)
+ 	if (dh) {
+ 		ret = 1;
+ 		SSL_CTX_set_tmp_dh(ctx, dh);
+-		/* Setting ssl default dh param to the size of the static DH params
+-		   found in the file. This way we know that there is no use
+-		   complaining later about ssl-default-dh-param not being set. */
+-		global.tune.ssl_default_dh_param = DH_size(dh) * 8;
++
++		if (ssl_dh_ptr_index >= 0) {
++			/* store a pointer to the DH params to avoid complaining about
++			   ssl-default-dh-param not being set for this SSL_CTX */
++			SSL_CTX_set_ex_data(ctx, ssl_dh_ptr_index, dh);
++		}
+ 	}
+ 	else {
+ 		/* Clear openssl global errors stack */
+@@ -1274,6 +1280,12 @@ static int ssl_sock_load_cert_file(const char *path, struct bind_conf *bind_conf
+ 	 * the tree, so it will be discovered and cleaned in time.
+ 	 */
+ #ifndef OPENSSL_NO_DH
++	/* store a NULL pointer to indicate we have not yet loaded
++	   a custom DH param file */
++	if (ssl_dh_ptr_index >= 0) {
++		SSL_CTX_set_ex_data(ctx, ssl_dh_ptr_index, NULL);
++	}
++
+ 	ret = ssl_sock_load_dh_params(ctx, path);
+ 	if (ret < 0) {
+ 		if (err)
+@@ -1593,7 +1605,9 @@ int ssl_sock_prepare_ctx(struct bind_conf *bind_conf, SSL_CTX *ctx, struct proxy
+ 
+ 	/* If tune.ssl.default-dh-param has not been set and
+ 	   no static DH params were in the certificate file. */
+-	if (global.tune.ssl_default_dh_param == 0) {
++	if (global.tune.ssl_default_dh_param == 0 &&
++	    (ssl_dh_ptr_index == -1 ||
++	     SSL_CTX_get_ex_data(ctx, ssl_dh_ptr_index) == NULL)) {
+ 		ciphers = ctx->cipher_list;
+ 
+ 		if (ciphers) {
+@@ -4715,6 +4729,10 @@ static void __ssl_sock_init(void)
+ 	bind_register_keywords(&bind_kws);
+ 	srv_register_keywords(&srv_kws);
+ 	cfg_register_keywords(&cfg_kws);
++
++#ifndef OPENSSL_NO_DH
++	ssl_dh_ptr_index = SSL_CTX_get_ex_new_index(0, NULL, NULL, NULL, NULL);
++#endif
+ }
+ 
+ __attribute__((destructor))
+-- 
+2.0.5
+
