@@ -1,6 +1,6 @@
---- aiccu/unix-console/Makefile.orig	2007-09-02 23:19:39.000000000 +0200
-+++ aiccu/unix-console/Makefile	2007-09-02 23:20:11.000000000 +0200
-@@ -25,7 +25,8 @@
+--- a/unix-console/Makefile
++++ b/unix-console/Makefile
+@@ -25,7 +25,8 @@ CWARNS += -W -Wall -Wshadow -Wpointer-ar
  # CWARNS += -Wpacked
  
  #CFLAGS	+= $(CWARNS) -D_GNU_SOURCE -D_DEBUG -g3 -O0
@@ -10,7 +10,7 @@
  CC      = @gcc
  RM      = rm
  
-@@ -40,25 +41,25 @@
+@@ -40,25 +41,25 @@ CFLAGS	+= -D AICCU_CONSOLE
  # GnuTLS Support ?
  # Used by TIC to secure that communication
  # Currently defaultly builds only on Linux, but other platforms might easily also support it
@@ -41,7 +41,7 @@
  CFLAGS	+= -D AICCU_TYPE="\"freebsd4\""
  SRCS	+= ../common/aiccu_freebsd4.c
  OBJS	+= ../common/aiccu_freebsd4.o
-@@ -71,7 +72,7 @@
+@@ -71,7 +72,7 @@ endif
  endif
  
  # DragonFlyBSD
@@ -50,7 +50,7 @@
  CFLAGS	+= -D_DFBSD -D NEED_IFHEAD -D AICCU_TYPE="\"dragonfly\""
  SRCS	+= ../common/aiccu_freebsd4.c
  OBJS	+= ../common/aiccu_freebsd4.o
-@@ -79,7 +80,7 @@
+@@ -79,7 +80,7 @@ CFLAGS	+= -pthread
  endif
  
  # NetBSD
@@ -59,7 +59,7 @@
  CFLAGS	+= -D_NETBSD -D AICCU_TYPE="\"kame\""
  
  # Check if net/if_tun.h has TUNSIFHEAD and enable support for it
-@@ -97,10 +98,10 @@
+@@ -97,10 +98,10 @@ CFLAGS	+= -pthread -D_NETBSD_SOURCE
  endif
  
  # OpenBSD
@@ -72,7 +72,7 @@
  CFLAGS	+= -D AICCU_TYPE="\"openbsd2\""
  SRCS	+= ../common/aiccu_openbsd2.c
  OBJS	+= ../common/aiccu_openbsd2.o
-@@ -114,7 +115,7 @@
+@@ -114,7 +115,7 @@ CFLAGS	+= -pthread
  endif
  
  # Darwin
@@ -81,7 +81,7 @@
  CFLAGS	+= -D_DARWIN -D NEED_IFHEAD -D AICCU_TYPE="\"darwin\""
  SRCS	+= ../common/aiccu_darwin.c
  OBJS	+= ../common/aiccu_darwin.o
-@@ -122,7 +123,7 @@
+@@ -122,7 +123,7 @@ LDFLAGS	+= -lresolv
  endif
  
  # SunOS / Solaris
@@ -90,7 +90,7 @@
  CFLAGS	+= -D_SUNOS -D AICCU_TYPE="\"sunos\""
  SRCS	+= ../common/aiccu_sunos.c
  OBJS	+= ../common/aiccu_sunos.o
-@@ -130,7 +131,7 @@
+@@ -130,7 +131,7 @@ LDFLAGS	+= -lsocket -lnsl -lresolv
  endif
  
  # AIX
