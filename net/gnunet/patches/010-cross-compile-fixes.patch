@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -194,7 +194,7 @@ AM_CONDITIONAL(GNU, test "$build_target"
+@@ -189,7 +189,7 @@ AM_CONDITIONAL(GNU, test "$build_target"
  AC_MSG_RESULT([$build_target])
  AC_SUBST(build_target)
  AM_CONDITIONAL([am__fastdepOBJC], false)
