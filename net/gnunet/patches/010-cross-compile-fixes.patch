@@ -1,7 +1,5 @@
-Index: gnunet-0.10.1/configure.ac
-===================================================================
---- gnunet-0.10.1.orig/configure.ac
-+++ gnunet-0.10.1/configure.ac
+--- a/configure.ac
++++ b/configure.ac
 @@ -194,7 +194,7 @@ AM_CONDITIONAL(GNU, test "$build_target"
  AC_MSG_RESULT([$build_target])
  AC_SUBST(build_target)
