@@ -3,9 +3,9 @@
 @@ -38,6 +38,8 @@
  #include <unistd.h>
  
- #ifdef __UCLIBC__
+ #ifndef __GLIBC__
 +#define IP_MULTICAST_ALL 49
 +
  #include "sourcefilter.cpp"
- #endif /* __UCLIBC__ */
+ #endif /* __GLIBC__ */
  
