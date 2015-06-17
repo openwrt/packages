@@ -10,8 +10,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zeromq
-PKG_VERSION:=4.0.5
-PKG_RELEASE:=2
+PKG_VERSION:=4.1.1
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=LICENCE.txt
@@ -57,6 +57,12 @@ endef
 CONFIGURE_ARGS += \
 	--enable-static \
 	--enable-shared
+
+ifneq ($(CONFIG_PACKAGE_libsodium),)
+  CONFIGURE_ARGS+= --with-libsodium
+else
+  CONFIGURE_ARGS+= --without-libsodium
+endif
 
 # add make variable overrides here
 MAKE_FLAGS +=
