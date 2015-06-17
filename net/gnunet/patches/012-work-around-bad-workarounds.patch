@@ -1,7 +1,5 @@
-Index: gnunet-0.10.1-svn35844/m4/libgnurl.m4
-===================================================================
---- gnunet-0.10.1-svn35844.orig/m4/libgnurl.m4
-+++ gnunet-0.10.1-svn35844/m4/libgnurl.m4
+--- a/m4/libgnurl.m4
++++ b/m4/libgnurl.m4
 @@ -146,7 +146,7 @@ AC_DEFUN([LIBGNURL_CHECK_CONFIG],
             _libgnurl_save_libs=$LIBS
             LIBS="$LIBGNURL $LIBS"
@@ -11,10 +9,8 @@ Index: gnunet-0.10.1-svn35844/m4/libgnurl.m4
  /* Try and use a few common options to force a failure if we are
     missing symbols or can't link. */
  int x;
-Index: gnunet-0.10.1-svn35844/src/gns/gnunet-gns-proxy.c
-===================================================================
---- gnunet-0.10.1-svn35844.orig/src/gns/gnunet-gns-proxy.c
-+++ gnunet-0.10.1-svn35844/src/gns/gnunet-gns-proxy.c
+--- a/src/gns/gnunet-gns-proxy.c
++++ b/src/gns/gnunet-gns-proxy.c
 @@ -29,7 +29,7 @@
   */
  #include "platform.h"
@@ -24,10 +20,8 @@ Index: gnunet-0.10.1-svn35844/src/gns/gnunet-gns-proxy.c
  #include <gnutls/gnutls.h>
  #include <gnutls/x509.h>
  #include <gnutls/abstract.h>
-Index: gnunet-0.10.1-svn35844/src/gns/test_gns_proxy.c
-===================================================================
---- gnunet-0.10.1-svn35844.orig/src/gns/test_gns_proxy.c
-+++ gnunet-0.10.1-svn35844/src/gns/test_gns_proxy.c
+--- a/src/gns/test_gns_proxy.c
++++ b/src/gns/test_gns_proxy.c
 @@ -24,7 +24,7 @@
   * @author Martin Schanzenbach
   */
@@ -37,10 +31,8 @@ Index: gnunet-0.10.1-svn35844/src/gns/test_gns_proxy.c
  #include <microhttpd.h>
  #include "gnunet_namestore_service.h"
  #include "gnunet_gns_service.h"
-Index: gnunet-0.10.1-svn35844/src/hostlist/gnunet-daemon-hostlist_client.c
-===================================================================
---- gnunet-0.10.1-svn35844.orig/src/hostlist/gnunet-daemon-hostlist_client.c
-+++ gnunet-0.10.1-svn35844/src/hostlist/gnunet-daemon-hostlist_client.c
+--- a/src/hostlist/gnunet-daemon-hostlist_client.c
++++ b/src/hostlist/gnunet-daemon-hostlist_client.c
 @@ -29,7 +29,7 @@
  #include "gnunet_statistics_service.h"
  #include "gnunet_transport_service.h"
@@ -50,10 +42,8 @@ Index: gnunet-0.10.1-svn35844/src/hostlist/gnunet-daemon-hostlist_client.c
  
  
  /**
-Index: gnunet-0.10.1-svn35844/src/pt/test_gns_vpn.c
-===================================================================
---- gnunet-0.10.1-svn35844.orig/src/pt/test_gns_vpn.c
-+++ gnunet-0.10.1-svn35844/src/pt/test_gns_vpn.c
+--- a/src/pt/test_gns_vpn.c
++++ b/src/pt/test_gns_vpn.c
 @@ -24,7 +24,7 @@
   * @author Martin Schanzenbach
   */
@@ -63,10 +53,8 @@ Index: gnunet-0.10.1-svn35844/src/pt/test_gns_vpn.c
  #include <microhttpd.h>
  #include "gnunet_identity_service.h"
  #include "gnunet_namestore_service.h"
-Index: gnunet-0.10.1-svn35844/src/pt/test_gnunet_vpn.c
-===================================================================
---- gnunet-0.10.1-svn35844.orig/src/pt/test_gnunet_vpn.c
-+++ gnunet-0.10.1-svn35844/src/pt/test_gnunet_vpn.c
+--- a/src/pt/test_gnunet_vpn.c
++++ b/src/pt/test_gnunet_vpn.c
 @@ -24,7 +24,7 @@
   * @author Christian Grothoff
   */
@@ -76,10 +64,8 @@ Index: gnunet-0.10.1-svn35844/src/pt/test_gnunet_vpn.c
  #include <microhttpd.h>
  #include "gnunet_vpn_service.h"
  #include "gnunet_testing_lib.h"
-Index: gnunet-0.10.1-svn35844/src/transport/plugin_transport_http.h
-===================================================================
---- gnunet-0.10.1-svn35844.orig/src/transport/plugin_transport_http.h
-+++ gnunet-0.10.1-svn35844/src/transport/plugin_transport_http.h
+--- a/src/transport/plugin_transport_http.h
++++ b/src/transport/plugin_transport_http.h
 @@ -41,7 +41,7 @@
  #include "gnunet_os_lib.h"
  #include "gnunet_nat_lib.h"
@@ -89,10 +75,8 @@ Index: gnunet-0.10.1-svn35844/src/transport/plugin_transport_http.h
  
  
  #define DEBUG_HTTP GNUNET_EXTRA_LOGGING
-Index: gnunet-0.10.1-svn35844/src/transport/plugin_transport_http_client.c
-===================================================================
---- gnunet-0.10.1-svn35844.orig/src/transport/plugin_transport_http_client.c
-+++ gnunet-0.10.1-svn35844/src/transport/plugin_transport_http_client.c
+--- a/src/transport/plugin_transport_http_client.c
++++ b/src/transport/plugin_transport_http_client.c
 @@ -49,7 +49,7 @@
  #include "gnunet_protocols.h"
  #include "gnunet_transport_plugin.h"

@@ -1,0 +1,29 @@
+From 6f2fd55ef7621fd7ab7897aee2c2651b6faf9e6a Mon Sep 17 00:00:00 2001
+From: Paul Barker <paul@paulbarker.me.uk>
+Date: Wed, 20 Aug 2014 11:56:11 +0200
+Subject: [PATCH] Fix musl build failure
+
+Include <limits.h> for PATH_MAX.
+
+Signed-off-by: Paul Barker <paul@paulbarker.me.uk>
+
+Upstream-status: Pending
+---
+ proc/readproc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/proc/readproc.c b/proc/readproc.c
+index 4fad11d..c5b1869 100644
+--- a/proc/readproc.c
++++ b/proc/readproc.c
+@@ -26,6 +26,7 @@
+ #include <sys/dir.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#include <limits.h>
+ 
+ // sometimes it's easier to do this manually, w/o gcc helping
+ #ifdef PROF
+-- 
+1.9.1
+
