@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=5.20.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 		http://www.cpan.org/src/5.0/perl-5.20.0.tar.gz \
@@ -128,6 +128,26 @@ define Build/Configure
 		-e 's!%%HOSTGENERATE%%!$(HOST_PERL_PREFIX)/bin/generate_uudmap!g' \
 		files/config.sh-$(patsubst i386,i486,$(ARCH))$(PERL_CONFIG_SUFFIX).in \
 		> $(PKG_BUILD_DIR)/config.sh
+  ifeq ($(CONFIG_USE_MUSL),y)
+	sed -i \
+		-e "s,\(d_stdio_ptr_lval=\)'define',\1'undef',g" \
+		-e "s,\(d_stdio_ptr_lval_sets_cnt=\)'define',\1'undef',g" \
+		-e "s,\(d_stdiobase=\)'define',\1'undef',g" \
+		-e "s,\(d_stdstdio=\)'define',\1'undef',g" \
+		-e "s,\(d_getnetbyname_r=\)'define',\1'undef',g" \
+		-e "s,\(getprotobyname_r=\)'define',\1'undef',g" \
+		-e "s,\(getpwent_r=\)'define',\1'undef',g" \
+		-e "s,\(getservent_r=\)'define',\1'undef',g" \
+		-e "s,\(gethostent_r=\)'define',\1'undef',g" \
+		-e "s,\(getnetent_r=\)'define',\1'undef',g" \
+		-e "s,\(getnetbyaddr_r=\)'define',\1'undef',g" \
+		-e "s,\(getprotoent_r=\)'define',\1'undef',g" \
+		-e "s,\(getprotobynumber_r=\)'define',\1'undef',g" \
+		-e "s,\(getgrent_r=\)'define',\1'undef',g" \
+		-e "s,\(i_fcntl=\)'undef',\1'define',g" \
+		-e "s,\(h_fcntl=\)'false',\1'true',g" \
+		$(PKG_BUILD_DIR)/config.sh
+  endif
 	(cd $(PKG_BUILD_DIR) && ./Configure -S)
 	install -m 0644 $(PKG_BUILD_DIR)/config.h $(PKG_BUILD_DIR)/xconfig.h
 endef
