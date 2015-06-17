@@ -36,8 +36,29 @@ s.addremove = true -- set to true to allow adding SQM instances in the GUI
 s.anonymous = true
 
 -- BASIC
-e = s:taboption("tab_basic", Flag, "enabled", translate("Enable"))
+e = s:taboption("tab_basic", Flag, "enabled", translate("Enable this SQM instance."))
 e.rmempty = false
+
+-- sm: following jow's advise, be helpful to the user and enable
+--     sqm's init script if even a single sm instance/interface
+--     is enabled; this is unexpected in that the init script gets
+--     enabled as soon as at least one sqm instance is enabled
+--     and that state is saved, so it does not require "Save & Apply"
+--     to effect the init scripts.
+--     the implementation was inpired/lifted from 
+--     https://github.com/openwrt/luci/blob/master/applications/luci-app-minidlna/luasrc/model/cbi/minidlna.lua
+function e.write(self, section, value)
+    if value == "1" then
+	luci.sys.init.enable("sqm")
+	m.message = translate("The SQM GUI has just enabled the sqm initscript on your behalf. Remember to disable the sqm initscript manually under System Startup menu in case this change was not wished for.")
+--	luci.sys.call("/etc/init.d/sqm start >/dev/null")
+--    else
+--	luci.sys.call("/etc/init.d/sqm stop >/dev/null")
+--	luci.sys.init.disable("sqm")
+    end
+    return Flag.write(self, section, value)
+end
+-- TODO: inform the user what we just did...
 
 n = s:taboption("tab_basic", ListValue, "interface", translate("Interface name"))
 -- sm lifted from luci-app-wol, the original implementation failed to show pppoe-ge00 type interface names
