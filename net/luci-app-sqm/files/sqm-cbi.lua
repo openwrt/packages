@@ -110,7 +110,7 @@ sc.default = "simple.qos"
 sc.rmempty = false
 sc.description = qos_desc
 
-ad = s:taboption("tab_qdisc", Flag, "qdisc_advanced", translate("Show and Use Advanced Configuration"))
+ad = s:taboption("tab_qdisc", Flag, "qdisc_advanced", translate("Show and Use Advanced Configuration. Advanced options will only be used as long as this box is checked."))
 ad.default = false
 ad.rmempty = true
 
@@ -142,7 +142,7 @@ eecn.default = "NOECN"
 eecn.rmempty = true
 eecn:depends("qdisc_advanced", "1")
 
-ad2 = s:taboption("tab_qdisc", Flag, "qdisc_really_really_advanced", translate("Show and Use Dangerous Configuration"))
+ad2 = s:taboption("tab_qdisc", Flag, "qdisc_really_really_advanced", translate("Show and Use Dangerous Configuration. Dangerous options will only be used as long as this box is checked."))
 ad2.default = false
 ad2.rmempty = true
 ad2:depends("qdisc_advanced", "1")
@@ -199,7 +199,7 @@ po:depends("linklayer", "ethernet")
 po:depends("linklayer", "atm")
 
 
-adll = s:taboption("tab_linklayer", Flag, "linklayer_advanced", translate("Show Advanced Linklayer Options, (only needed if MTU > 1500)"))
+adll = s:taboption("tab_linklayer", Flag, "linklayer_advanced", translate("Show Advanced Linklayer Options, (only needed if MTU > 1500). Advanced options will only be used as long as this box is checked."))
 adll.rmempty = true
 adll:depends("linklayer", "ethernet")
 -- adll:depends("linklayer", "adsl")
