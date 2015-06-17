@@ -1,0 +1,25 @@
+#!/bin/ash /etc/rc.common
+# Copyright (C) 2009-2010 OpenWrt.org
+
+START=99
+STOP=80
+
+ACPID_BIN="/usr/sbin/acpid"
+ACPID_PID="/var/run/acpid.pid"
+
+start() {
+    [ -x "$ACPID_BIN" ] || return 1
+    start-stop-daemon -S -x $ACPID_BIN -p $ACPID_PID
+}
+
+boot() {
+	# Do nothing on boot
+    	[ -x "$ACPID_BIN" ] || return 1
+	start-stop-daemon -S -x $ACPID_BIN -p $ACPID_PID
+	exit 0
+}
+
+stop() {
+	service_kill ${ACPID_BIN##*/} $ACPID_PID
+	rm -f $ACPID_PID
+}
