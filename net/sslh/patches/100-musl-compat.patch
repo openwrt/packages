@@ -1,0 +1,12 @@
+--- a/probe.c
++++ b/probe.c
+@@ -25,6 +25,9 @@
+ #include <ctype.h>
+ #include "probe.h"
+ 
++#ifndef REG_STARTEND
++#define REG_STARTEND 0
++#endif
+ 
+ 
+ static int is_ssh_protocol(const char *p, int len, struct proto*);
