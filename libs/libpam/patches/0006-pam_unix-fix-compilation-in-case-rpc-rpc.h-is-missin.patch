@@ -1,4 +1,4 @@
-From 596797ab7f46fb4d0338e75db7c0d1019cd4df87 Mon Sep 17 00:00:00 2001
+From 2e3ed4c6fb09f84fede589047d37d11783202d34 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 17 Jun 2015 18:16:18 +0800
 Subject: [PATCH 6/7] pam_unix: fix compilation in case rpc/rpc.h is missing.

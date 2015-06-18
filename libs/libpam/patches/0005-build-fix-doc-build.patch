@@ -1,4 +1,4 @@
-From df7abf333d19aefd166f613b696345732ae4c9c8 Mon Sep 17 00:00:00 2001
+From 1563e57ea8ab9d123f765129a6840929ef58ff7a Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 17 Jun 2015 20:38:41 +0800
 Subject: [PATCH 5/7] build: fix doc build.
