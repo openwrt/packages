@@ -4,9 +4,9 @@
  #include <numeric>
  #include <unistd.h>
  
-+#ifdef __UCLIBC__
++#ifndef __GLIBC__
 +#include "sourcefilter.cpp"
-+#endif /* __UCLIBC__ */
++#endif /* __GLIBC__ */
 +
  std::string ipAddrResolver(std::string ipAddr)
  {
