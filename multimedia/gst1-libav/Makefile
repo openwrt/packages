@@ -185,7 +185,7 @@ CONFIGURE_ARGS += \
 	--disable-yasm"
 
 # XXX: trick to force use of embedded Libav headers
-TARGET_CFLAGS += $(TARGET_CPPFLAGS)
+TARGET_CFLAGS += $(TARGET_CPPFLAGS) -D_GNU_SOURCE
 TARGET_CPPFLAGS :=
 
 TARGET_LDFLAGS += $(FPIC)
