@@ -228,6 +228,7 @@ smpu.rmempty = true
 smpu:depends("linklayer_advanced", "1")
 
 lla = s:taboption("tab_linklayer", ListValue, "linklayer_adaptation_mechanism", translate("Which linklayer adaptation mechanism to use; for testing only"))
+lla:value("cake")
 lla:value("htb_private")
 lla:value("tc_stab", "tc_stab ("..translate("default")..")")
 lla.default = "tc_stab"

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqm-scripts
 PKG_VERSION:=8
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_LICENSE:=GPLv2
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
