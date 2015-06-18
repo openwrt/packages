@@ -92,7 +92,7 @@ LQ="quantum `get_mtu $IFACE $CEIL`"
 $TC qdisc del dev $IFACE root 2> /dev/null
 case $QDISC in
 	cake*) 
-	    $TC qdisc add dev $IFACE root $QDISC bandwidth ${CEIL}kbit get_cake_lla_string ${EQDISC_OPTS}
+	    $TC qdisc add dev $IFACE root `get_stab_string` $QDISC bandwidth ${CEIL}kbit `get_cake_lla_string` ${EQDISC_OPTS}
 	    ;;
 	*) 	
 	    $TC qdisc add dev $IFACE root handle 1: `get_stab_string` htb default 12
@@ -159,42 +159,43 @@ $TC qdisc del dev $DEV root  2> /dev/null
 
 if [ "$SQUASH_INGRESS" = "1" ]
 then
-sqm_logger "Do not perform DSCP based filtering on ingress. (1-tier classification)"
-# Revert to no dscp based filtering
-case $QDISC in
-	cake*) 
-	    $TC qdisc add dev $DEV root $QDISC bandwidth ${DOWNLINK}kbit besteffort get_cake_lla_string ${IQDISC_OPTS}
-	    ;;
-	*) 	
-	    $TC qdisc add dev $DEV root handle 1: `get_stab_string` htb default 10
-	    $TC class add dev $DEV parent 1: classid 1:1 htb $LQ rate ${DOWNLINK}kbit ceil ${DOWNLINK}kbit `get_htb_adsll_string`
-	    $TC class add dev $DEV parent 1:1 classid 1:10 htb $LQ rate ${DOWNLINK}kbit ceil ${DOWNLINK}kbit prio 0 `get_htb_adsll_string`
-	    $TC qdisc add dev $DEV parent 1:10 handle 110: $QDISC `get_limit ${ILIMIT}` `get_target "${ITARGET}" ${DOWNLINK}` `get_ecn ${IECN}` `get_flows ${DOWNLINK}` ${IQDISC_OPTS}
-	    ;;
-esac
+	sqm_logger "Do not perform DSCP based filtering on ingress. (1-tier classification)"
+	# Revert to no dscp based filtering
+	case $QDISC in
+		cake*) 
+		    $TC qdisc add dev $DEV root `get_stab_string` $QDISC bandwidth ${DOWNLINK}kbit besteffort `get_cake_lla_string` ${IQDISC_OPTS}
+		    ;;
+		*) 	
+		    $TC qdisc add dev $DEV root handle 1: `get_stab_string` htb default 10
+		    $TC class add dev $DEV parent 1: classid 1:1 htb $LQ rate ${DOWNLINK}kbit ceil ${DOWNLINK}kbit `get_htb_adsll_string`
+		    $TC class add dev $DEV parent 1:1 classid 1:10 htb $LQ rate ${DOWNLINK}kbit ceil ${DOWNLINK}kbit prio 0 `get_htb_adsll_string`
+		    $TC qdisc add dev $DEV parent 1:10 handle 110: $QDISC `get_limit ${ILIMIT}` `get_target "${ITARGET}" ${DOWNLINK}` `get_ecn ${IECN}` `get_flows ${DOWNLINK}` ${IQDISC_OPTS}
+		    ;;
+	esac
 
 else
-sqm_logger "Perform DSCP based filtering on ingress. (3-tier classification)"
-case $QDISC in
-	cake*) $TC qdisc add dev $IFACE root $QDISC bandwidth ${DOWNLINK}kbit $CAKE_OPTS;;
-	*) 	
-$TC qdisc add dev $DEV root handle 1: `get_stab_string` htb default 12
-$TC class add dev $DEV parent 1: classid 1:1 htb $LQ rate ${CEIL}kbit ceil ${CEIL}kbit `get_htb_adsll_string`
-$TC class add dev $DEV parent 1:1 classid 1:10 htb $LQ rate ${CEIL}kbit ceil ${CEIL}kbit prio 0 `get_htb_adsll_string`
-$TC class add dev $DEV parent 1:1 classid 1:11 htb $LQ rate 32kbit ceil ${PRIO_RATE}kbit prio 1 `get_htb_adsll_string`
-$TC class add dev $DEV parent 1:1 classid 1:12 htb $LQ rate ${BE_RATE}kbit ceil ${BE_CEIL}kbit prio 2 `get_htb_adsll_string`
-$TC class add dev $DEV parent 1:1 classid 1:13 htb $LQ rate ${BK_RATE}kbit ceil ${BE_CEIL}kbit prio 3 `get_htb_adsll_string`
+    sqm_logger "Perform DSCP based filtering on ingress. (3-tier classification)"
+    case $QDISC in
+    	    cake*) 
+    		    $TC qdisc add dev $IFACE root `get_stab_string` $QDISC bandwidth ${DOWNLINK}kbit `get_cake_lla_string` $CAKE_OPTS ${IQDISC_OPTS}
+    		    ;;
+	    *) 	
+		    $TC qdisc add dev $DEV root handle 1: `get_stab_string` htb default 12
+		    $TC class add dev $DEV parent 1: classid 1:1 htb $LQ rate ${CEIL}kbit ceil ${CEIL}kbit `get_htb_adsll_string`
+		    $TC class add dev $DEV parent 1:1 classid 1:10 htb $LQ rate ${CEIL}kbit ceil ${CEIL}kbit prio 0 `get_htb_adsll_string`
+		    $TC class add dev $DEV parent 1:1 classid 1:11 htb $LQ rate 32kbit ceil ${PRIO_RATE}kbit prio 1 `get_htb_adsll_string`
+		    $TC class add dev $DEV parent 1:1 classid 1:12 htb $LQ rate ${BE_RATE}kbit ceil ${BE_CEIL}kbit prio 2 `get_htb_adsll_string`
+		    $TC class add dev $DEV parent 1:1 classid 1:13 htb $LQ rate ${BK_RATE}kbit ceil ${BE_CEIL}kbit prio 3 `get_htb_adsll_string`
 
-# I'd prefer to use a pre-nat filter but that causes permutation...
+		    # I'd prefer to use a pre-nat filter but that causes permutation...
 
-$TC qdisc add dev $DEV parent 1:11 handle 110: $QDISC `get_limit ${ILIMIT}` `get_target "${ITARGET}" ${DOWNLINK}` `get_ecn ${IECN}` `get_quantum 500` `get_flows ${PRIO_RATE}` ${IQDISC_OPTS}
-$TC qdisc add dev $DEV parent 1:12 handle 120: $QDISC `get_limit ${ILIMIT}` `get_target "${ITARGET}" ${DOWNLINK}` `get_ecn ${IECN}` `get_quantum 1500` `get_flows ${BE_RATE}` ${IQDISC_OPTS}
-$TC qdisc add dev $DEV parent 1:13 handle 130: $QDISC `get_limit ${ILIMIT}` `get_target "${ITARGET}" ${DOWNLINK}` `get_ecn ${IECN}` `get_quantum 300` `get_flows ${BK_RATE}` ${IQDISC_OPTS}
+		    $TC qdisc add dev $DEV parent 1:11 handle 110: $QDISC `get_limit ${ILIMIT}` `get_target "${ITARGET}" ${DOWNLINK}` `get_ecn ${IECN}` `get_quantum 500` `get_flows ${PRIO_RATE}` ${IQDISC_OPTS}
+		    $TC qdisc add dev $DEV parent 1:12 handle 120: $QDISC `get_limit ${ILIMIT}` `get_target "${ITARGET}" ${DOWNLINK}` `get_ecn ${IECN}` `get_quantum 1500` `get_flows ${BE_RATE}` ${IQDISC_OPTS}
+		    $TC qdisc add dev $DEV parent 1:13 handle 130: $QDISC `get_limit ${ILIMIT}` `get_target "${ITARGET}" ${DOWNLINK}` `get_ecn ${IECN}` `get_quantum 300` `get_flows ${BK_RATE}` ${IQDISC_OPTS}
 
-diffserv $DEV
-;;
-esac
-
+		    diffserv $DEV
+		    ;;
+    esac
 fi
 
 ifconfig $DEV up

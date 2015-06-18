@@ -19,7 +19,7 @@ LQ="quantum `get_mtu $IFACE ${UPLINK}`"
 $TC qdisc del dev $IFACE root 2>/dev/null
 case $QDISC in
 	cake*) 
-	    $TC qdisc add dev $IFACE root cake bandwidth ${UPLINK}kbit besteffort get_cake_lla_string ${EQDISC_OPTS}
+	    $TC qdisc add dev $IFACE root `get_stab_string` cake bandwidth ${UPLINK}kbit besteffort `get_cake_lla_string` ${EQDISC_OPTS}
 	    ;;
 	*)
 	    $TC qdisc add dev $IFACE root handle 1: `get_stab_string` htb default 10
@@ -42,7 +42,7 @@ LQ="quantum `get_mtu $IFACE ${DOWNLINK}`"
 $TC qdisc del dev $DEV root 2>/dev/null
 case $QDISC in
 	cake*) 
-	    $TC qdisc add dev $DEV root cake bandwidth ${DOWNLINK}kbit besteffort get_cake_lla_string ${IQDISC_OPTS}
+	    $TC qdisc add dev $DEV root `get_stab_string` cake bandwidth ${DOWNLINK}kbit besteffort `get_cake_lla_string` ${IQDISC_OPTS}
 	    ;;
 	*)
 	    $TC qdisc add dev $DEV root handle 1: `get_stab_string` htb default 10
