@@ -1,4 +1,4 @@
-From 9e2fa22891a87592c1a04801623fea5be40cb581 Mon Sep 17 00:00:00 2001
+From c681bd104627139eac2f40fe303e1f67676233e8 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 17 Jun 2015 15:33:43 +0800
 Subject: [PATCH 7/7] Check if innetgr is available at compile time.

@@ -1,4 +1,4 @@
-From 173164996ca7daf3fa705f2a0bb2991b0d5d2083 Mon Sep 17 00:00:00 2001
+From bac1ee3033cf22e31730fe3e77ca82bd5ebba692 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 17 Jun 2015 21:18:05 +0800
 Subject: [PATCH 3/7] build: ignore pam_lastlog when logwtmp is not available.
@@ -13,10 +13,10 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  2 files changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 3c4d8bb..8de6edf 100644
+index 084071a..ca4bf5b 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -544,8 +544,10 @@ AC_CHECK_FUNCS(getutent_r getpwnam_r getpwuid_r getgrnam_r getgrgid_r getspnam_r
+@@ -536,8 +536,10 @@ AC_CHECK_FUNCS(getutent_r getpwnam_r getpwuid_r getgrnam_r getgrgid_r getspnam_r
  AC_CHECK_FUNCS(getgrouplist getline getdelim)
  AC_CHECK_FUNCS(inet_ntop inet_pton innetgr)
  AC_CHECK_FUNCS([ruserok_af ruserok], [break])
