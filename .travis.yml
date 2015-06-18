@@ -1,0 +1,13 @@
+
+install:
+    - sudo apt-get update
+    - sudo apt-get install git-core build-essential libssl-dev libncurses5-dev unzip subversion
+
+before_script:
+    - wget https://raw.githubusercontent.com/claudyus/owrt-package-test/master/owrt-pkgtest
+    - sudo mv owrt-pkgtest /usr/local/bin
+    - sudo chmod a+x /usr/local/bin/owrt-pkgtest
+
+script:
+    - export PACKAGE_TEST=`git show HEAD | grep "+++ b" | grep Makefile | cut -d / -f 3 | uniq | head -n 1` #bad
+    - owrt-pkgtest $PACKAGE_TEST  # move this part in a script?
