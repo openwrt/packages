@@ -146,6 +146,7 @@ define Build/Configure
 		-e "s,\(getgrent_r=\)'define',\1'undef',g" \
 		-e "s,\(i_fcntl=\)'undef',\1'define',g" \
 		-e "s,\(h_fcntl=\)'false',\1'true',g" \
+		-e "s,\(d_strerror_r=\)'define',\1'undef',g" \
 		$(PKG_BUILD_DIR)/config.sh
   endif
 	(cd $(PKG_BUILD_DIR) && ./Configure -S)
