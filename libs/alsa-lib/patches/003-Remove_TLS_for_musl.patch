@@ -1,0 +1,11 @@
+--- a/src/error.c
++++ b/src/error.c
+@@ -61,7 +61,7 @@ const char *snd_strerror(int errnum)
+ }
+ 
+ #ifndef DOC_HIDDEN
+-#ifdef HAVE___THREAD
++#if defined(HAVE___THREAD) && (defined(__GLIBC__) || defined(__UCLIBC__))
+ #define TLS_PFX		__thread
+ #else
+ #define TLS_PFX		/* NOP */
