@@ -70,6 +70,7 @@ PKG_MOD_AVAILABLE:= \
 	smp \
 	socket-default \
 	socket-dynamic \
+	sql \
 	sqlite \
 	stroke \
 	test-vectors \
@@ -177,6 +178,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-sha2 \
 	+strongswan-mod-smp \
 	+strongswan-mod-socket-default \
+	+strongswan-mod-sql \
 	+strongswan-mod-sqlite \
 	+strongswan-mod-stroke \
 	+strongswan-mod-test-vectors \
@@ -462,7 +464,7 @@ $(eval $(call BuildPlugin,load-tester,load testing,))
 $(eval $(call BuildPlugin,nonce,nonce genereation,))
 $(eval $(call BuildPlugin,md4,MD4 crypto,))
 $(eval $(call BuildPlugin,md5,MD5 crypto,))
-$(eval $(call BuildPlugin,mysql,MySQL database interface,+PACKAGE_strongswan-mod-mysql:libmysqlclient-r))
+$(eval $(call BuildPlugin,mysql,MySQL database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-mysql:libmysqlclient-r))
 $(eval $(call BuildPlugin,openssl,OpenSSL crypto,+PACKAGE_strongswan-mod-openssl:libopenssl))
 $(eval $(call BuildPlugin,pem,PEM decoding,))
 $(eval $(call BuildPlugin,pgp,PGP key decoding,))
@@ -478,7 +480,8 @@ $(eval $(call BuildPlugin,sha2,SHA2 crypto,))
 $(eval $(call BuildPlugin,smp,SMP configuration and control interface,+PACKAGE_strongswan-mod-smp:libxml2))
 $(eval $(call BuildPlugin,socket-default,default socket implementation for charon,))
 $(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charon,))
-$(eval $(call BuildPlugin,sqlite,SQLite database interface,+PACKAGE_strongswan-mod-sqlite:libsqlite3))
+$(eval $(call BuildPlugin,sql,SQL database interface,))
+$(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-sqlite:libsqlite3))
 $(eval $(call BuildPlugin,stroke,Stroke,+strongswan-utils))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci))
