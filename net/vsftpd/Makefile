@@ -92,6 +92,7 @@ ifeq ($(BUILD_VARIANT),pam)
  define Build/Compile
 	$(SED) 's/#undef VSF_BUILD_SSL/#define VSF_BUILD_SSL/' $(PKG_BUILD_DIR)/builddefs.h
 	$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile
+	$(SED) 's/-lcrypt -lnsl/$(NLSSTRING)/' $(PKG_BUILD_DIR)/Makefile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
