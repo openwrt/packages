@@ -40,7 +40,7 @@ define Package/libnetfilter-queue/description
  that have been queued by the kernel packet filter.
 endef
 
-TARGET_CFLAGS += $(FPIC)
+TARGET_CFLAGS += $(FPIC) -D_GNU_SOURCE
 
 CONFIGURE_ARGS += \
 	--enable-static \
