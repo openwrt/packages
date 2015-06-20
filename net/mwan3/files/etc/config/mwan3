@@ -1,9 +1,3 @@
-config rule 'http'
-	option sticky '1'
-	option dest_port '80'
-	option proto 'tcp'
-	option use_policy 'balanced'
-
 config rule 'https'
 	option sticky '1'
 	option dest_port '443'
