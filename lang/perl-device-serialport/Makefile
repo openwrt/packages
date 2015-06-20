@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-device-serialport
 PKG_VERSION:=1.04
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/C/CO/COOK/
 PKG_SOURCE:=Device-SerialPort-$(PKG_VERSION).tar.gz

@@ -1,0 +1,10 @@
+--- a/utmp.c
++++ b/utmp.c
+@@ -33,6 +33,7 @@
+ #include "config.h"
+ #include "screen.h"
+ #include "extern.h"
++#include "os.h"
+ 
+ #ifdef HAVE_UTEMPTER
+ #include <utempter.h>

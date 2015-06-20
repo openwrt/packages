@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vsftpd
 PKG_VERSION:=3.0.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://security.appspot.com/downloads/
@@ -56,6 +56,7 @@ endef
 
 Package/vsftpd-tls/conffiles=$(Package/vsftpd/conffiles)
 
+
 ifeq ($(BUILD_VARIANT),notls)
  define Build/Compile
 	$(SED) 's/#define VSF_BUILD_PAM/#undef VSF_BUILD_PAM/' $(PKG_BUILD_DIR)/builddefs.h
@@ -71,8 +72,8 @@ ifeq ($(BUILD_VARIANT),tls)
  define Build/Compile
 	$(SED) 's/#undef VSF_BUILD_SSL/#define VSF_BUILD_SSL/' $(PKG_BUILD_DIR)/builddefs.h
 	$(SED) 's/#define VSF_BUILD_PAM/#undef VSF_BUILD_PAM/' $(PKG_BUILD_DIR)/builddefs.h
-	$(if $(CONFIG_LIBC_USE_GLIBC),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile)
-	$(if $(CONFIG_LIBC_USE_MUSL),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile)
+	$(if $(CONFIG_USE_GLIBC),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile)
+	$(if $(CONFIG_USE_MUSL),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile)
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
@@ -84,8 +85,8 @@ endif
 ifeq ($(BUILD_VARIANT),pam)
  define Build/Compile
 	$(SED) 's/#undef VSF_BUILD_SSL/#define VSF_BUILD_SSL/' $(PKG_BUILD_DIR)/builddefs.h
-	$(if $(CONFIG_LIBC_USE_GLIBC),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile)
-	$(if $(CONFIG_LIBC_USE_MUSL),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile)
+	$(if $(CONFIG_USE_GLIBC),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile)
+	$(if $(CONFIG_USE_MUSL),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile)
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \

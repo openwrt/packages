@@ -1,13 +1,15 @@
 # This makefile simplifies perl module builds.
 #
 
+PERL_VERSION:=5.22
+
 # Build environment
 HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
 ifneq ($(CONFIG_USE_GLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
-PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl5.20.0
+PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl$(PERL_VERSION).0
 
 MOD_CFLAGS_PERL:=-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $(TARGET_CFLAGS) $(TARGET_CPPFLAGS)
 ifdef CONFIG_PERL_THREADS
@@ -15,7 +17,7 @@ ifdef CONFIG_PERL_THREADS
 endif
 
 # Module install prefix
-PERL_SITELIB:=/usr/lib/perl5/5.20
+PERL_SITELIB:=/usr/lib/perl5/$(PERL_VERSION)
 PERL_TESTSDIR:=/usr/share/perl/perl-tests
 PERLBASE_TESTSDIR:=/usr/share/perl/perlbase-tests
 PERLMOD_TESTSDIR:=/usr/share/perl/perlmod-tests
@@ -102,7 +104,7 @@ define perlmod/Configure
 		LINKTYPE=dynamic \
 		DESTDIR=$(PKG_INSTALL_DIR) \
 	);
-	sed 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/5.20/CORE/!' -i $(PKG_BUILD_DIR)/Makefile
+	sed 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/$(PERL_VERSION)/CORE/!' -i $(PKG_BUILD_DIR)/Makefile
 endef
 
 define perlmod/Compile
