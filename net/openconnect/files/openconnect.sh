@@ -10,6 +10,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "serverhash"
 	proto_config_add_string "authgroup"
 	proto_config_add_string "password"
+	proto_config_add_string "password2"
 	proto_config_add_string "token_mode"
 	proto_config_add_string "token_secret"
 	proto_config_add_string "interface"
@@ -22,7 +23,7 @@ proto_openconnect_init_config() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port username serverhash authgroup password interface token_mode token_secret os csd_wrapper
+	json_get_vars server port username serverhash authgroup password password2 interface token_mode token_secret os csd_wrapper
 
 	grep -q tun /proc/modules || insmod tun
 
@@ -65,6 +66,7 @@ proto_openconnect_setup() {
 		mkdir -p /var/etc
 		pwfile="/var/etc/openconnect-$config.passwd"
 		echo "$password" > "$pwfile"
+		[ -n "$password2" ] && echo "$password2" >> "$pwfile"
 		append cmdline "--passwd-on-stdin"
 	}
 
