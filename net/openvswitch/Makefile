@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openvswitch
 
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=2.3.90
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=Apache-2.0
@@ -54,7 +54,7 @@ endef
 define Package/openvswitch
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+libpcap +libopenssl +librt +libatomic +kmod-openvswitch @($(SUPPORTED_KERNELS))
+  DEPENDS:=+libpcap +libopenssl +librt +kmod-openvswitch @($(SUPPORTED_KERNELS))
 endef
 
 define Package/openvswitch/description
