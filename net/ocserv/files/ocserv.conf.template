@@ -18,7 +18,7 @@ auth = "|AUTH|"
 # A banner to be displayed on clients
 banner = "Welcome to OpenWRT"
 
-isolate-workers = true
+#isolate-workers = true
 
 # When the server has a dynamic DNS address (that may change),
 # should set that to true to ask the client to resolve again on

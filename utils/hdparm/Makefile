@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hdparm
-PKG_VERSION:=9.45
+PKG_VERSION:=9.47
 PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_MD5SUM:=1c75d0751a44928b6c4bc81fb16d7fe8
+PKG_MD5SUM:=560c1d8af7f696239cbbca7cd146304a
 PKG_MAINTAINER:=Richard Kunze <richard.kunze@web.de>
 PKG_LICENSE:=BSD-Style Open Source License
 

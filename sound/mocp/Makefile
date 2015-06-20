@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=moc
 PKG_VERSION:=2.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ftp.daper.net/pub/soft/moc/stable/
@@ -37,6 +37,8 @@ endef
 define Package/moc/description
 	MOC (music on console) is a console audio player for LINUX/UNIX designed to be powerful and easy to use.
 endef
+
+TARGET_CFLAGS+=-D_GNU_SOURCE
 
 define Build/Configure
 	$(call Build/Configure/Default, \

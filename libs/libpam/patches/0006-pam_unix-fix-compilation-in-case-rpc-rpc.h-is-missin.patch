@@ -1,0 +1,29 @@
+From 2e3ed4c6fb09f84fede589047d37d11783202d34 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Wed, 17 Jun 2015 18:16:18 +0800
+Subject: [PATCH 6/7] pam_unix: fix compilation in case rpc/rpc.h is missing.
+
+* modules/pam_unix/pam_unix_passwd.c: conditional compile on the
+  availability of rpc/rpc.h
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ modules/pam_unix/pam_unix_passwd.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/modules/pam_unix/pam_unix_passwd.c b/modules/pam_unix/pam_unix_passwd.c
+index 2d330e5..970724a 100644
+--- a/modules/pam_unix/pam_unix_passwd.c
++++ b/modules/pam_unix/pam_unix_passwd.c
+@@ -336,7 +336,7 @@ static int _do_setpass(pam_handle_t* pamh, const char *forwho,
+ 	}
+ 
+ 	if (on(UNIX_NIS, ctrl) && _unix_comesfromsource(pamh, forwho, 0, 1)) {
+-#ifdef HAVE_NIS
++#if defined(HAVE_NIS) && defined(HAVE_RPC_RPC_H)
+ 	  if ((master=getNISserver(pamh, ctrl)) != NULL) {
+ 		struct timeval timeout;
+ 		struct yppasswd yppwd;
+-- 
+1.7.10.4
+
