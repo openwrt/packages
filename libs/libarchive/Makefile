@@ -22,12 +22,23 @@ PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libarchive
-  SECTION:=libs
-  CATEGORY:=Libraries
-  DEPENDS:=+libopenssl +zlib
-  TITLE:=Multi-format archive and compression library
-  URL:=http://www.libarchive.org/
+define Package/$(PKG_NAME)/Default
+	SECTION:=libs
+	CATEGORY:=Libraries
+	DEPENDS:=+zlib
+	TITLE:=Multi-format archive and compression library
+	URL:=http://www.libarchive.org/
+endef
+
+define Package/$(PKG_NAME)
+	$(call Package/$(PKG_NAME)/Default)
+	DEPENDS += +libopenssl
+endef
+
+define Package/$(PKG_NAME)-noopenssl
+	$(call Package/$(PKG_NAME)/Default)
+	TITLE += (without OpenSSL dependency)
+	VARIANT:=noopenssl
 endef
 
 CONFIGURE_ARGS += \
@@ -43,6 +54,12 @@ CONFIGURE_ARGS += \
 	--without-expat \
 	--without-xml2
 
+ifeq ($(BUILD_VARIANT),noopenssl)
+	CONFIGURE_ARGS += --without-openssl
+else
+	CONFIGURE_ARGS += --with-openssl
+endif
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
@@ -54,5 +71,7 @@ define Package/libarchive/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so.* $(1)/usr/lib/
 endef
+Package/$(PKG_NAME)-noopenssl/install = $(Package/$(PKG_NAME)/install)
 
 $(eval $(call BuildPackage,libarchive))
+$(eval $(call BuildPackage,libarchive-noopenssl))
