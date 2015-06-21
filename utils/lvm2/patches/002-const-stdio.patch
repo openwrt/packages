@@ -31,7 +31,7 @@
  		if (is_valid_fd(STDIN_FILENO) &&
 --- a/tools/lvmcmdline.c
 +++ b/tools/lvmcmdline.c
-@@ -1606,6 +1606,7 @@ int lvm_split(char *str, int *argc, char
+@@ -1635,6 +1635,7 @@ int lvm_split(char *str, int *argc, char
  /* Make sure we have always valid filedescriptors 0,1,2 */
  static int _check_standard_fds(void)
  {
@@ -39,7 +39,7 @@
  	int err = is_valid_fd(STDERR_FILENO);
  
  	if (!is_valid_fd(STDIN_FILENO) &&
-@@ -1632,6 +1633,12 @@ static int _check_standard_fds(void)
+@@ -1661,6 +1662,12 @@ static int _check_standard_fds(void)
  		       strerror(errno));
  		return 0;
  	}
