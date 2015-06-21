@@ -25,7 +25,7 @@ PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_INSTALL:=1
 
 PLUGINS:= \
-	archive:+libarchive \
+	archive:+libarchive-noopenssl \
 	deb \
 	dvi \
 	flac:+libflac \
