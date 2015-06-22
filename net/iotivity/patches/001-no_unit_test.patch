@@ -1,0 +1,11 @@
+--- a/resource/SConscript
++++ b/resource/SConscript
+@@ -61,7 +61,7 @@ if target_os == 'linux':
+ 	SConscript('csdk/stack/samples/linux/secure/SConscript')
+ 
+ 	# Build C/C++ unit tests
+-	SConscript('unit_tests.scons')
++	# SConscript('unit_tests.scons')
+ 
+ elif target_os == 'darwin':
+ 	# Build linux samples for now.
