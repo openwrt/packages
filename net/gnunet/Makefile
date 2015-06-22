@@ -8,16 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=35949
+PKG_SOURCE_VERSION:=35963
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # ToDo:
 #  - break-out transports
 #    -> get rid of microhttpd and gnurl dependency for gns and vpn
 #       requires upstream to split config files
-#  - break-out {peer,name,data}store
-#  - building and package mysql or postgresql storage backends
+#  - break-out {peer,name,data}store for each backend
 #  - package testing stuff
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -36,15 +35,15 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_ARGS+= \
-	--disable-rpath \
+	--with-ltdl \
+	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-mysql),--with-mysql="$(STAGING_DIR)/usr",--without-mysql) \
+	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-pgsql),--with-postgresql="$(STAGING_DIR)/usr/bin/pg_config",--without-postgresql) \
+	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-sqlite),--with-sqlite="$(STAGING_DIR)/usr",--without-sqlite) \
 	--with-extractor=$(STAGING_DIR)/usr \
 	--with-gnutls=$(STAGING_DIR)/usr \
 	--with-libgnurl=$(STAGING_DIR)/usr \
 	--with-libunistring-prefix=$(STAGING_DIR)/usr \
-	--with-ltdl \
-	--with-microhttpd=$(STAGING_DIR)/usr \
-	--without-mysql \
-	--without-postgresql
+	--with-microhttpd=$(STAGING_DIR)/usr
 
 # ToDo: request upstream to provide --with-pulseaudio=...
 TARGET_LDFLAGS+= -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
@@ -189,7 +188,7 @@ CONF_conversation:=conversation
 DEPENDS_experiments:=+libglpk
 PLUGIN_experiments:=ats_mlp ats_ril
 
-DEPENDS_fs:=+gnunet-storage +libextractor
+DEPENDS_fs:=+gnunet-datastore +libextractor
 BIN_fs:=auto-share directory download download-manager.scm fs publish unindex search
 LIB_fs:=fs
 PLUGIN_fs:=block_fs
@@ -204,12 +203,23 @@ PLUGIN_gns:=block_dns block_gns gnsrecord_dns gnsrecord_gns
 LIBEXEC_gns:=dns2gns gns-proxy helper-dns namestore-fcfsd service-dns service-gns service-namecache service-namestore service-resolver
 CONF_gns:=dns gns namecache namestore resolver
 
-DEPENDS_storage:=+gnunet-gns +libsqlite3
-BIN_storage:=datastore
-LIB_storage:=datastore
-PLUGIN_storage:=datacache_sqlite datastore_heap datastore_sqlite namecache_sqlite namestore_sqlite peerstore_sqlite
-LIBEXEC_storage:=daemon-latency-logger service-datastore
-CONF_storage:=datastore
+DEPENDS_datastore:=+gnunet-gns +libsqlite3
+BIN_datastore:=datastore
+LIB_datastore:=datastore
+PLUGIN_datastore:=datacache_sqlite datastore_heap datastore_sqlite namecache_sqlite namestore_sqlite peerstore_sqlite
+LIBEXEC_datastore:=daemon-latency-logger service-datastore
+CONF_datastore:=datastore
+
+DEPENDS_mysql:=+gnunet-gns +gnunet-datastore +libmysqlclient
+LIB_mysql:=mysql
+PLUGIN_mysql:=datastore_mysql
+
+DEPENDS_pgsql:=+gnunet-gns +gnunet-datastore +libpq
+LIB_pgsql:=postgres
+PLUGIN_pgsql:=datacache_postgres datastore_postgres namecache_postgres namestore_postgres
+
+DEPENDS_sqlite:=+gnunet-gns +gnunet-datastore +libsqlite3
+PLUGIN_sqlite:=datacache_sqlite datastore_sqlite namecache_sqlite namestore_sqlite peerstore_sqlite
 
 DEPENDS_transport-bluetooth:=+bluez-libs
 PLUGIN_transport-bluetooth:=transport_bluetooth
@@ -228,7 +238,10 @@ $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,experiments,experimental components,))
 $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))
-$(eval $(call BuildComponent,storage,storage components,))
+$(eval $(call BuildComponent,datastore,storage components,))
 $(eval $(call BuildComponent,transport-bluetooth,bluetooth transport,))
 $(eval $(call BuildComponent,utils,administration utililties,))
 $(eval $(call BuildComponent,vpn,vpn components,y))
+$(eval $(call BuildComponent,mysql,mySQL datastore backend,))
+$(eval $(call BuildComponent,pgsql,PostgreSQL backends,))
+$(eval $(call BuildComponent,sqlite,libsqlite3 backends,y))
