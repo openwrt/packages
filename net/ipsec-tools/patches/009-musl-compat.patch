@@ -1,0 +1,187 @@
+--- a/src/racoon/grabmyaddr.c
++++ b/src/racoon/grabmyaddr.c
+@@ -47,7 +47,6 @@
+ #include <net/route.h>
+ #include <net/if.h>
+ #include <net/if_dl.h>
+-#include <sys/sysctl.h>
+ #define USE_ROUTE
+ #endif
+ 
+--- a/src/racoon/pfkey.c
++++ b/src/racoon/pfkey.c
+@@ -59,7 +59,6 @@
+ #include <sys/param.h>
+ #include <sys/socket.h>
+ #include <sys/queue.h>
+-#include <sys/sysctl.h>
+ 
+ #include <net/route.h>
+ #include <net/pfkeyv2.h>
+--- a/src/setkey/setkey.c
++++ b/src/setkey/setkey.c
+@@ -40,7 +40,6 @@
+ #include <sys/socket.h>
+ #include <sys/time.h>
+ #include <sys/stat.h>
+-#include <sys/sysctl.h>
+ #include <err.h>
+ #include <netinet/in.h>
+ #include <net/pfkeyv2.h>
+--- a/src/libipsec/ipsec_strerror.h
++++ b/src/libipsec/ipsec_strerror.h
+@@ -34,6 +34,8 @@
+ #ifndef _IPSEC_STRERROR_H
+ #define _IPSEC_STRERROR_H
+ 
++#include <sys/cdefs.h>
++
+ extern int __ipsec_errcode;
+ extern void __ipsec_set_strerror __P((const char *));
+ 
+--- a/src/libipsec/libpfkey.h
++++ b/src/libipsec/libpfkey.h
+@@ -34,6 +34,8 @@
+ #ifndef _LIBPFKEY_H
+ #define _LIBPFKEY_H
+ 
++#include <sys/cdefs.h>
++
+ #ifndef KAME_LIBPFKEY_H
+ #define KAME_LIBPFKEY_H
+ 
+--- a/src/racoon/backupsa.c
++++ b/src/racoon/backupsa.c
+@@ -276,9 +276,9 @@ do { 								\
+ 		GETNEXTNUM(sa_args.a_keylen, strtoul);
+ 		GETNEXTNUM(sa_args.flags, strtoul);
+ 		GETNEXTNUM(sa_args.l_alloc, strtoul);
+-		GETNEXTNUM(sa_args.l_bytes, strtouq);
+-		GETNEXTNUM(sa_args.l_addtime, strtouq);
+-		GETNEXTNUM(sa_args.l_usetime, strtouq);
++		GETNEXTNUM(sa_args.l_bytes, strtoull);
++		GETNEXTNUM(sa_args.l_addtime, strtoull);
++		GETNEXTNUM(sa_args.l_usetime, strtoull);
+ 		GETNEXTNUM(sa_args.seq, strtoul);
+ 
+ #undef GETNEXTNUM
+--- a/src/racoon/cftoken.l
++++ b/src/racoon/cftoken.l
+@@ -77,6 +77,10 @@
+ 
+ #include "cfparse.h"
+ 
++#ifndef GLOB_TILDE
++#define GLOB_TILDE 0
++#endif
++
+ int yyerrorcount = 0;
+ 
+ #if defined(YIPS_DEBUG)
+--- a/src/racoon/logger.h
++++ b/src/racoon/logger.h
+@@ -34,6 +34,8 @@
+ #ifndef _LOGGER_H
+ #define _LOGGER_H
+ 
++#include <sys/cdefs.h>
++
+ struct log {
+ 	int head;
+ 	int siz;
+--- a/src/racoon/misc.h
++++ b/src/racoon/misc.h
+@@ -34,6 +34,8 @@
+ #ifndef _MISC_H
+ #define _MISC_H
+ 
++#include <sys/cdefs.h>
++
+ #define BIT2STR(b) bit2str(b, sizeof(b)<<3)
+ 
+ #ifdef HAVE_FUNC_MACRO
+--- a/src/racoon/missing/crypto/sha2/sha2.h
++++ b/src/racoon/missing/crypto/sha2/sha2.h
+@@ -40,6 +40,8 @@
+ #ifndef __SHA2_H__
+ #define __SHA2_H__
+ 
++#include <sys/cdefs.h>
++
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+--- a/src/racoon/netdb_dnssec.h
++++ b/src/racoon/netdb_dnssec.h
+@@ -34,6 +34,8 @@
+ #ifndef _NETDB_DNSSEC_H
+ #define _NETDB_DNSSEC_H
+ 
++#include <sys/cdefs.h>
++
+ #ifndef T_CERT
+ #define T_CERT	37		/* defined by RFC2538 section 2 */
+ #endif
+--- a/src/racoon/plog.h
++++ b/src/racoon/plog.h
+@@ -34,6 +34,8 @@
+ #ifndef _PLOG_H
+ #define _PLOG_H
+ 
++#include <sys/cdefs.h>
++
+ #ifdef HAVE_STDARG_H
+ #include <stdarg.h>
+ #else
+--- a/src/racoon/str2val.h
++++ b/src/racoon/str2val.h
+@@ -34,6 +34,8 @@
+ #ifndef _STR2VAL_H
+ #define _STR2VAL_H
+ 
++#include <sys/cdefs.h>
++
+ extern caddr_t val2str __P((const char *, size_t));
+ extern char *str2val __P((const char *, int, size_t *));
+ 
+--- a/src/racoon/vmbuf.h
++++ b/src/racoon/vmbuf.h
+@@ -34,6 +34,8 @@
+ #ifndef _VMBUF_H
+ #define _VMBUF_H
+ 
++#include <sys/cdefs.h>
++
+ /*
+  *	bp      v
+  *	v       v
+--- a/src/setkey/extern.h
++++ b/src/setkey/extern.h
+@@ -1,6 +1,6 @@
+ /*	$NetBSD: extern.h,v 1.5 2009/03/06 11:45:03 tteras Exp $	*/
+ 
+-
++#include <sys/cdefs.h>
+ 
+ void parse_init __P((void));
+ int parse __P((FILE **));
+--- a/src/racoon/isakmp_cfg.c
++++ b/src/racoon/isakmp_cfg.c
+@@ -1694,8 +1694,6 @@ isakmp_cfg_accounting_system(port, raddr
+ 			"Accounting : '%s' logging on '%s' from %s.\n",
+ 			ut.ut_name, ut.ut_line, ut.ut_host);
+ 
+-		login(&ut);
+-		
+ 		break;
+ 	case ISAKMP_CFG_LOGOUT:	
+ 
+@@ -1703,8 +1701,6 @@ isakmp_cfg_accounting_system(port, raddr
+ 			"Accounting : '%s' unlogging from '%s'.\n",
+ 			usr, term);
+ 
+-		logout(term);
+-		
+ 		break;
+ 	default:
+ 		plog(LLV_ERROR, LOCATION, NULL, "Unepected inout\n");
