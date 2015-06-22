@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
 PKG_VERSION:=17.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/ \
@@ -232,6 +232,8 @@ HOST_CONFIGURE_ARGS += \
 	--disable-smp-support \
 	--without-javac
 
+HOST_CFLAGS += -D_GNU_SOURCE
+
 define Host/Compile
 	$(MAKE) -C $(HOST_BUILD_DIR) all
 endef
@@ -257,6 +259,7 @@ CONFIGURE_VARS += \
 	erl_xcomp_getaddrinfo=no \
 	erl_xcomp_sysroot="$(STAGING_DIR)"
 
+EXTRA_CFLAGS+=-D_GNU_SOURCE
 EXTRA_LDFLAGS+=-lz
 
 define Build/Compile
