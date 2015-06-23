@@ -1,0 +1,11 @@
+--- cups-1.5.4/backend/ipp.c	(revision 10619)
++++ cups-1.5.4/backend/ipp.c	(working copy)
+@@ -952,6 +952,8 @@
+ 	_cupsLangPrintFilter(stderr, "ERROR",
+ 	                     _("Unable to get printer status."));
+         sleep(10);
++
++	httpReconnect(http);
+       }
+
+       ippDelete(supported);
