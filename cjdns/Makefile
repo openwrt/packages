@@ -79,11 +79,14 @@ endif
 define Build/Compile
 	CROSS="true" \
 	CC="$(TARGET_CC)" \
+	AR="$(TARGET_AR)" \
+	RANLIB="$(TARGET_RANLIB)" \
 	CFLAGS="$(TARGET_CFLAGS)" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 	SYSTEM="linux" \
 	TARGET_ARCH="$(CONFIG_ARCH)" \
 	SSP_SUPPORT="$(CONFIG_SSP_SUPPORT)" \
+	GYP_ADDITIONAL_ARGS="-f make-linux" \
 	$(PKG_DO_VARS) \
 	$(PKG_BUILD_DIR)/do
 endef
