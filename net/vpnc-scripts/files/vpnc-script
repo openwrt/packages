@@ -87,16 +87,29 @@ do_connect() {
 		rm -f $DNSMASQ_FILE
 		echo "$SDNS" | while read i; do
 			if [ -n "$INTERNAL_IP4_DNS" ];then
-				echo "server=/$i/$INTERNAL_IP4_DNS" >> $DNSMASQ_FILE
+				for dns in "$INTERNAL_IP4_DNS";do
+					echo "server=/$i/$dns" >> $DNSMASQ_FILE
+				done
 			fi
 			if [ -n "$INTERNAL_IP6_DNS" ];then
-				echo "server=/$i/$INTERNAL_IP6_DNS" >> $DNSMASQ_FILE
+				for dns in "$INTERNAL_IP6_DNS";do
+					echo "server=/$i/$dns" >> $DNSMASQ_FILE
+				done
 			fi
 			echo "rebind-domain-ok=$i" >> $DNSMASQ_FILE
 		done
 		/etc/init.d/dnsmasq restart
 	else
-		[ -n "$INTERNAL_IP4_DNS" ] && proto_add_dns_server "$INTERNAL_IP4_DNS"
+		if [ -n "$INTERNAL_IP4_DNS" ];then
+			for dns in "$INTERNAL_IP4_DNS";do
+				proto_add_dns_server "$dns"
+			done
+		fi
+		if [ -n "$INTERNAL_IP6_DNS" ];then
+			for dns in "$INTERNAL_IP6_DNS";do
+				proto_add_dns_server "$dns"
+			done
+		fi
 		[ -n "$CISCO_DEF_DOMAIN" ] && proto_add_dns_search "$CISCO_DEF_DOMAIN"
 	fi
 
