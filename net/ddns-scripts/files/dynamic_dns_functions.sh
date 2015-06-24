@@ -486,8 +486,8 @@ verify_host_port() {
 			__IPV4=$(cat $DATFILE | awk -F "address " '/has address/ {print $2; exit}' )
 			__IPV6=$(cat $DATFILE | awk -F "address " '/has IPv6/ {print $2; exit}' )
 		else	# use BusyBox nslookup
-			__IPV4=$(cat $DATFILE | sed -ne "3,\$ { s/^Address[0-9 ]\{0,\}: \($IPV4_REGEX\).*$/\\1/p }")
-			__IPV6=$(cat $DATFILE | sed -ne "3,\$ { s/^Address[0-9 ]\{0,\}: \($IPV6_REGEX\).*$/\\1/p }")
+			__IPV4=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV4_REGEX\).*$/\\1/p }")
+			__IPV6=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV6_REGEX\).*$/\\1/p }")
 		fi
 	}
 
@@ -966,7 +966,7 @@ get_registered_ip() {
 			if [ "$__PROG" = "BIND host" ]; then
 				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
 			else
-				__DATA=$(cat $DATFILE | sed -ne "3,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
+				__DATA=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
 			fi
 			[ -n "$__DATA" ] && {
 				write_log 7 "Registered IP '$__DATA' detected"
