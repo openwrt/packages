@@ -1,0 +1,416 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2011 OpenWrt.org
+# Copyright (C) 2008  Alina Friedrichsen <x-alina@gmx.net>
+
+START=50
+
+SERVICE_USE_PID=1
+
+RADVD_INTERFACE_STRING_OPTIONS='MaxRtrAdvInterval MinRtrAdvInterval MinDelayBetweenRAs AdvLinkMTU AdvReachableTime AdvRetransTimer AdvCurHopLimit AdvDefaultLifetime AdvDefaultPreference HomeAgentLifetime HomeAgentPreference'
+RADVD_INTERFACE_BOOLEAN_OPTIONS='IgnoreIfMissing AdvSendAdvert UnicastOnly AdvManagedFlag AdvOtherConfigFlag AdvSourceLLAddress AdvHomeAgentFlag AdvHomeAgentInfo AdvMobRtrSupportFlag AdvIntervalOpt'
+
+RADVD_PREFIX_STRING_OPTIONS='AdvValidLifetime AdvPreferredLifetime'
+RADVD_PREFIX_BOOLEAN_OPTIONS='AdvOnLink AdvAutonomous AdvRouterAddr DeprecatePrefix DecrementLifetimes'
+
+RADVD_ROUTE_STRING_OPTIONS='AdvRouteLifetime AdvRoutePreference'
+RADVD_ROUTE_BOOLEAN_OPTIONS='RemoveRoute'
+
+RADVD_RDNSS_STRING_OPTIONS='AdvRDNSSLifetime FlushRDNSS'
+
+RADVD_DNSSL_STRING_OPTIONS='AdvDNSSLLifetime FlushDNSSL'
+
+validate_varname() {
+	local varname=$1
+	[ -z "$varname" -o "$varname" != "${varname%%[!A-Za-z0-9_]*}" ] && return 1
+	return 0
+}
+
+validate_ip6addr() {
+	local ip6addr=$1
+	[ -z "$ip6addr" -o "$ip6addr" != "${ip6addr%%[!A-Fa-f0-9.:]*}" ] && return 1
+	return 0
+}
+
+validate_ip6prefix() {
+	local ip6prefix=$1
+	[ -z "$ip6prefix" -o "$ip6prefix" != "${ip6prefix%%[!A-Fa-f0-9./:]*}" ] && return 1
+	return 0
+}
+
+validate_radvd_string() {
+	local radvd_string=$1
+	[ -z "$radvd_string" -o "$radvd_string" != "${radvd_string%%[!A-Za-z0-9.:_-]*}" ] && return 1
+	return 0
+}
+
+get_ip6addr() {
+	local ifname=$1
+	local scope=$2
+	local iproute2_scope
+	local ifconfig_scope
+	local ip6addr
+
+	case "$scope" in
+		host) iproute2_scope=host ifconfig_scope=Host;;
+		link) iproute2_scope=link ifconfig_scope=Link;;
+		site) iproute2_scope=site ifconfig_scope=Site;;
+		global) iproute2_scope=global ifconfig_scope=Global;;
+		"") get_ip6addr "$ifname" global || get_ip6addr "$ifname" site; return;;
+		*) return 1;;
+	esac
+
+	ip6addr=$(LANG=C ip -f inet6 -- addr show dev "$ifname" 2> /dev/null | sed -n -e 's/^  *inet6 \([A-Fa-f0-9.:]*[/][0-9]*\) scope '"$iproute2_scope"' $/\1/p' | head -n 1)
+	if [ -z "$ip6addr" ]; then
+		ip6addr=$(LANG=C ifconfig "$ifname" 2> /dev/null | sed -n -e 's/^  *inet6 addr: \([A-Fa-f0-9.:]*[/][0-9]*\) Scope:'"$ifconfig_scope"'$/\1/p' | tail -n 1)
+		[ -z "$ip6addr" ] && return 1
+	fi
+
+	printf '%s\n' "$ip6addr"
+
+	return 0
+}
+
+radvd_find_config_file() {
+	local cfg=$1
+	validate_varname "$cfg" || return 0
+
+	config_get_bool ignore "$cfg" ignore 0
+	[ "$ignore" -ne 0 ] && return 0
+	config_get RADVD_CONFIG_FILE "$cfg" config_file
+
+	return 0
+}
+
+radvd_add_interface() {
+	local cfg=$1
+	validate_varname "$cfg" || return 0
+	local ignore
+	local interfaces
+	local interface
+	local list_interface
+	local exist
+
+	config_get_bool ignore "$cfg" ignore 0
+	[ "$ignore" -ne 0 ] && return 0
+
+	config_get interfaces "$cfg" interface
+	for interface in $interfaces; do
+		validate_varname "$interface" || continue
+		exist=0
+		for list_interface in $RADVD_INTERFACES; do
+			[ "$interface" = "$list_interface" ] && exist=1
+		done
+		[ "$exist" -eq 0 ] && RADVD_INTERFACES="$RADVD_INTERFACES $interface"
+	done
+
+	return 0
+}
+
+radvd_write_interface() {
+	local cfg=$1
+	validate_varname "$cfg" || return 0
+	local ignore
+	local interfaces
+	local interface
+	local name
+	local value
+
+	config_get_bool ignore "$cfg" ignore 0
+	[ "$ignore" -ne 0 ] && return 0
+
+	config_get interfaces "$cfg" interface
+	exist=0
+	for interface in $interfaces; do
+		[ "$INTERFACE" = "$interface" ] && exist=1
+	done
+	[ "$exist" -eq 0 ] && return 0
+
+	for name in $RADVD_INTERFACE_STRING_OPTIONS; do
+		config_get value "$cfg" "$name"
+		validate_radvd_string "$value" || continue
+		printf '\t%s %s;\n' "$name" "$value"
+	done
+
+	for name in $RADVD_INTERFACE_BOOLEAN_OPTIONS; do
+		config_get value "$cfg" "$name"
+		[ -z "$value" ] && continue
+		config_get_bool value "$cfg" "$name" 0
+		if [ "$value" -ne 0 ]; then 
+			printf '\t%s on;\n' "$name"
+		else
+			printf '\t%s off;\n' "$name"
+		fi
+	done
+
+	config_get clients "$cfg" client
+	if [ -n "$clients" ]; then
+	        printf '\n\tclients\n\t{\n'
+
+	        for client in $clients; do
+        	        validate_ip6addr "$client" || continue
+                	printf '\t\t%s;\n' "$client"
+	        done
+
+	        printf '\t};\n'
+	fi
+
+	return 0
+}
+
+radvd_write_prefix() {
+	local cfg=$1
+	validate_varname "$cfg" || return 0
+	local ignore
+	local interfaces
+	local interface
+	local device
+	local prefixes
+	local prefix
+	local name
+	local value
+	local cfgt
+
+	config_get_bool ignore "$cfg" ignore 0
+	[ "$ignore" -ne 0 ] && return 0
+
+	config_get interfaces "$cfg" interface
+	exist=0
+	for interface in $interfaces; do
+		[ "$INTERFACE" = "$interface" ] && exist=1
+	done
+	[ "$exist" -eq 0 ] && return 0
+
+	config_get prefixes "$cfg" prefix
+	if [ -z "$prefixes" ]; then
+		prefixes=$(get_ip6addr "$IFNAME") || return 0
+	fi
+
+	for prefix in $prefixes; do
+		validate_ip6prefix "$prefix" || continue
+		printf '\n\tprefix %s\n\t{\n' "$prefix"
+
+		for name in $RADVD_PREFIX_STRING_OPTIONS; do
+			config_get value "$cfg" "$name"
+			validate_radvd_string "$value" || continue
+			printf '\t\t%s %s;\n' "$name" "$value"
+		done
+
+		for name in $RADVD_PREFIX_BOOLEAN_OPTIONS; do
+			config_get value "$cfg" "$name"
+			[ -z "$value" ] && continue
+			config_get_bool value "$cfg" "$name" 0
+			if [ "$value" -ne 0 ]; then 
+				printf '\t\t%s on;\n' "$name"
+			else
+				printf '\t\t%s off;\n' "$name"
+			fi
+		done
+
+		config_get value "$cfg" Base6Interface
+		if [ -n "$value" ]; then
+			if network_get_device device "$value"; then
+				printf '\t\t%s %s;\n' "Base6Interface" "$device"
+			fi
+		fi
+
+		config_get value "$cfg" Base6to4Interface
+		if [ -n "$value" ]; then
+			if network_get_device device "$value"; then
+				printf '\t\t%s %s;\n' "Base6to4Interface" "$device"
+			fi
+		fi
+
+		printf '\t};\n'
+	done
+
+	return 0
+}
+
+radvd_write_route() {
+	local cfg=$1
+	validate_varname "$cfg" || return 0
+	local ignore
+	local interfaces
+	local interface
+	local prefixes
+	local prefix
+	local name
+	local value
+
+	config_get_bool ignore "$cfg" ignore 0
+	[ "$ignore" -ne 0 ] && return 0
+
+	config_get interfaces "$cfg" interface
+	exist=0
+	for interface in $interfaces; do
+		[ "$INTERFACE" = "$interface" ] && exist=1
+	done
+	[ "$exist" -eq 0 ] && return 0
+
+	config_get prefixes "$cfg" prefix
+	for prefix in $prefixes; do
+		validate_ip6prefix "$prefix" || continue
+		printf '\n\troute %s\n\t{\n' "$prefix"
+
+		for name in $RADVD_ROUTE_STRING_OPTIONS; do
+			config_get value "$cfg" "$name"
+			validate_radvd_string "$value" || continue
+			printf '\t\t%s %s;\n' "$name" "$value"
+		done
+
+		for name in $RADVD_ROUTE_BOOLEAN_OPTIONS; do
+			config_get value "$cfg" "$name"
+			[ -z "$value" ] && continue
+			config_get_bool value "$cfg" "$name" 0
+			if [ "$value" -ne 0 ]; then 
+				printf '\t\t%s on;\n' "$name"
+			else
+				printf '\t\t%s off;\n' "$name"
+			fi
+		done
+
+		printf '\t};\n'
+	done
+
+	return 0
+}
+
+radvd_write_rdnss() {
+	local cfg=$1
+	validate_varname "$cfg" || return 0
+	local ignore
+	local interfaces
+	local interface
+	local addrs
+	local addr
+	local addr_list
+	local name
+	local value
+	local i
+
+	config_get_bool ignore "$cfg" ignore 0
+	[ "$ignore" -ne 0 ] && return 0
+
+	config_get interfaces "$cfg" interface
+	exist=0
+	for interface in $interfaces; do
+		[ "$INTERFACE" = "$interface" ] && exist=1
+	done
+	[ "$exist" -eq 0 ] && return 0
+
+	config_get addrs "$cfg" addr
+	i=0
+	for addr in $addrs; do
+		[ "$i" -ge 3 ] && break
+		validate_ip6addr "$addr" || continue
+		addr_list="$addr_list $addr"
+		i=$(($i+1))
+	done
+
+	if [ -z "$addr_list" ]; then
+		addr=$(get_ip6addr "$IFNAME" link) || return 0
+		addr_list=" ${addr%%[/]*}"
+	fi
+
+	printf '\n\tRDNSS%s\n\t{\n' "$addr_list"
+
+	for name in $RADVD_RDNSS_STRING_OPTIONS; do
+		config_get value "$cfg" "$name"
+		validate_radvd_string "$value" || continue
+		printf '\t\t%s %s;\n' "$name" "$value"
+	done
+
+	printf '\t};\n'
+
+	return 0
+}
+
+radvd_write_dnssl() {
+	local cfg=$1
+	validate_varname "$cfg" || return 0
+	local ignore
+	local interfaces
+	local interface
+	local suffixes
+	local suffix
+	local suffix_list
+	local name
+	local value
+
+	config_get_bool ignore "$cfg" ignore 0
+	[ "$ignore" -ne 0 ] && return 0
+
+	config_get interfaces "$cfg" interface
+	exist=0
+	for interface in $interfaces; do
+		[ "$INTERFACE" = "$interface" ] && exist=1
+	done
+	[ "$exist" -eq 0 ] && return 0
+
+	config_get suffixes "$cfg" suffix
+	for suffix in $suffixes; do
+		validate_radvd_string "$suffix" || continue
+		suffix_list="$suffix_list $suffix"
+	done
+
+	printf '\n\tDNSSL%s\n\t{\n' "$suffix_list"
+
+	for name in $RADVD_DNSSL_STRING_OPTIONS; do
+		config_get value "$cfg" "$name"
+		validate_radvd_string "$value" || continue
+		printf '\t\t%s %s;\n' "$name" "$value"
+	done
+
+	printf '\t};\n'
+
+	return 0
+}
+
+radvd_write_config() {
+	. /lib/functions/network.sh
+
+	RADVD_INTERFACES=
+	config_foreach radvd_add_interface interface
+	config_foreach radvd_add_interface prefix
+	config_foreach radvd_add_interface route
+	config_foreach radvd_add_interface RDNSS
+	config_foreach radvd_add_interface DNSSL
+
+	for INTERFACE in $RADVD_INTERFACES; do
+		network_get_device IFNAME "$INTERFACE" || continue
+		printf 'interface %s\n{\n' "$IFNAME"
+		config_foreach radvd_write_interface interface
+		config_foreach radvd_write_prefix prefix
+		config_foreach radvd_write_route route
+		config_foreach radvd_write_rdnss rdnss
+		config_foreach radvd_write_dnssl dnssl
+		printf '};\n\n'
+	done
+
+	return 0
+}
+
+start() {
+	config_load radvd
+
+	RADVD_CONFIG_FILE=
+	config_foreach radvd_find_config_file radvd
+
+	if [ -z "$RADVD_CONFIG_FILE" ]; then
+		mkdir -p -- /var/etc/
+		radvd_write_config > /var/etc/radvd.conf
+		if [ -s "/var/etc/radvd.conf" ]; then
+			RADVD_CONFIG_FILE=/var/etc/radvd.conf
+		fi
+	fi
+
+	[ -z "$RADVD_CONFIG_FILE" ] && return 1
+
+	sysctl -w net.ipv6.conf.all.forwarding=1 > /dev/null 2> /dev/null
+
+	service_start /usr/sbin/radvd -C "$RADVD_CONFIG_FILE" -m stderr_syslog -p /var/run/radvd.pid
+}
+
+stop() {
+	service_stop /usr/sbin/radvd
+}
