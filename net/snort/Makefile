@@ -11,6 +11,9 @@ PKG_NAME:=snort
 PKG_VERSION:=2.9.7.2
 PKG_RELEASE:=3
 
+PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
 	@SF/$(PKG_NAME)
