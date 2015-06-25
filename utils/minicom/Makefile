@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minicom
 PKG_VERSION:=2.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/3977/
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/minicom
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=$(ICONV_DEPENDS) +libncurses
+  DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +libncurses
   TITLE:=Terminal emulation program
   URL:=http://alioth.debian.org/projects/minicom/
   SUBMENU:=Terminal
