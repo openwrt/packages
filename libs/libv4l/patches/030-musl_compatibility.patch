@@ -1,6 +1,6 @@
 --- a/lib/libv4lconvert/libv4lsyscall-priv.h
 +++ b/lib/libv4lconvert/libv4lsyscall-priv.h
-@@ -35,14 +35,19 @@
+@@ -35,18 +35,23 @@
     which is broken on some systems and doesn't include them itself :( */
  
  #ifdef linux
@@ -14,12 +14,16 @@
 +#undef SYS_mmap2
  #define	SYS_mmap2 __NR_mmap2
  #define	MMAP2_PAGE_SHIFT 12
-+#if !(defined(__UCLIBC__) || defined(__GLIBC__))
-+typedef off_t __off_t;
-+#endif
  #else
  #define	SYS_mmap2 SYS_mmap
  #define	MMAP2_PAGE_SHIFT 0
+ #endif
++#if !(defined(__UCLIBC__) || defined(__GLIBC__))
++typedef off_t __off_t;
++#endif
+ #endif
+ 
+ #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 --- a/lib/libv4l1/v4l1compat.c
 +++ b/lib/libv4l1/v4l1compat.c
 @@ -62,7 +62,7 @@ LIBV4L_PUBLIC int open(const char *file,
