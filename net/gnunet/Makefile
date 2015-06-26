@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=35963
+PKG_SOURCE_VERSION:=35991
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 # ToDo:
 #  - break-out transports
