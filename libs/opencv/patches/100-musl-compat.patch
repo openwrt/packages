@@ -1,0 +1,33 @@
+--- a/modules/core/src/system.cpp
++++ b/modules/core/src/system.cpp
+@@ -164,7 +164,7 @@ std::wstring GetTempFileNameWinRT(std::w
+ #if defined ANDROID
+ #include <sys/sysconf.h>
+ #else
+-#include <sys/sysctl.h>
++#include <linux/sysctl.h>
+ #endif
+ #endif
+ 
+--- a/modules/highgui/src/cap_ffmpeg_impl.hpp
++++ b/modules/highgui/src/cap_ffmpeg_impl.hpp
+@@ -131,7 +131,7 @@ extern "C" {
+     #include <unistd.h>
+     #include <stdio.h>
+     #include <sys/types.h>
+-    #include <sys/sysctl.h>
++    #include <linux/sysctl.h>
+ #endif
+ 
+ #ifndef MIN
+--- a/modules/core/src/parallel.cpp
++++ b/modules/core/src/parallel.cpp
+@@ -57,7 +57,7 @@
+     #if defined ANDROID
+         #include <sys/sysconf.h>
+     #else
+-        #include <sys/sysctl.h>
++        #include <linux/sysctl.h>
+     #endif
+ #endif
+ 
