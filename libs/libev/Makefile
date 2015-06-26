@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libev
-PKG_VERSION:=4.19
+PKG_VERSION:=4.20
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dist.schmorp.de/libev/Attic/
-PKG_MD5SUM:=01d1c672697f649b4f94abd0b70584ff
+PKG_MD5SUM:=1cac539cfc560f381a490c9fba940de9
 PKG_LICENSE:=BSD-2-Clause
 PKG_MAINTAINER:=Karl Palsson <karlp@tweak.net.au>
 
