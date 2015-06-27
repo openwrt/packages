@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=screen
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/screen
@@ -40,6 +40,10 @@ define Build/Configure
 	)
 	# XXX: memmove() works well with overlapped memory areas
 	echo "#define USEMEMMOVE 1" >>$(PKG_BUILD_DIR)/config.h
+  ifeq ($(CONFIG_USE_MUSL),y)
+	# XXX: assume a working getlogin() for musl
+	echo "#undef BUGGYGETLOGIN" >>$(PKG_BUILD_DIR)/config.h
+  endif
 endef
 
 define Package/screen/install
