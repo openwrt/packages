@@ -40,10 +40,6 @@ define Build/Configure
 	)
 	# XXX: memmove() works well with overlapped memory areas
 	echo "#define USEMEMMOVE 1" >>$(PKG_BUILD_DIR)/config.h
-  ifeq ($(CONFIG_USE_MUSL),y)
-	# XXX: assume a working getlogin() for musl
-	echo "#undef BUGGYGETLOGIN" >>$(PKG_BUILD_DIR)/config.h
-  endif
 endef
 
 define Package/screen/install
