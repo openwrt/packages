@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ddns-scripts
 # Version == major.minor.patch
 # increase on new functionality (minor) or patches (patch)
-PKG_VERSION:=2.4.2
+PKG_VERSION:=2.4.3
 # Release == build
 # increase on changes of services files or tld_names.dat
 PKG_RELEASE:=1
