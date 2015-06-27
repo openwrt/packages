@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luaposix
 PKG_VERSION:=v33.2.1
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/luaposix/luaposix/archive/
@@ -41,6 +41,9 @@ endef
 CONFIGURE_VARS += ac_cv_path_LDOC=""
 
 TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99
+ifeq ($(CONFIG_USE_MUSL),y)
+  TARGET_CFLAGS += -D_POSIX_PRIORITY_SCHEDULING
+endif
 
 ifneq ($(CONFIG_USE_GLIBC),)
   ifeq ($(CONFIG_EGLIBC_OPTION_EGLIBC_UTMP),)

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.18.23
+PKG_VERSION:=0.19.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.18/
-PKG_MD5SUM:=fcdfe8b3a7a21a87b6776204e6eb7814
+PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.19/
+PKG_MD5SUM:=da4bc3e47afd0faf9e7a67168e012102
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
@@ -28,15 +28,15 @@ PKG_CONFIG_DEPENDS:= \
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
 
 define Package/mpd/Default
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=Music Player Daemon
   URL:=http://www.musicpd.org/
-  DEPENDS:= +glib2 +libcurl +libpthread +libmpdclient $(ICONV_DEPENDS) +libstdcpp \
-	    +libflac +BUILD_PATENTED:libmad +libvorbisidec +AUDIO_SUPPORT:alsa-lib
+  DEPENDS:= +glib2 +libcurl +libpthread +libmpdclient +libstdcpp \
+	    +libflac +BUILD_PATENTED:libmad +libvorbisidec +AUDIO_SUPPORT:alsa-lib \
+            +boost +boost-container +libexpat
 endef
 
 define Package/mpd/Default/description
@@ -51,7 +51,7 @@ $(call Package/mpd/Default)
   TITLE+= (full)
   DEPENDS+= \
 	+libaudiofile +BUILD_PATENTED:libfaad2 +libffmpeg +libid3tag \
-	+libmms +libogg +libsndfile +libvorbis
+	+libmms +libogg +libsndfile +libvorbis +libupnp
   PROVIDES:=mpd
   VARIANT:=full
 endef
@@ -105,17 +105,15 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-debug \
 	--disable-documentation \
-	--disable-gprof \
 	--disable-test \
 	--disable-werror \
 	\
 	--disable-ao \
 	--disable-bzip2 \
-	--enable-cue \
-	--disable-ffado \
 	--disable-fluidsynth \
 	--disable-gme \
 	--enable-inotify \
+	--disable-icu \
 	--disable-eventfd \
 	--disable-iso9660 \
 	--disable-jack \
@@ -126,13 +124,11 @@ CONFIGURE_ARGS += \
 	--disable-modplug \
 	--disable-mpc \
 	--disable-mpg123 \
-	--disable-mvp \
 	--disable-openal \
 	--disable-opus \
 	--disable-pulse \
 	--disable-sidplay \
 	--disable-solaris-output \
-	--disable-soup \
 	--disable-sqlite \
 	--disable-twolame-encoder \
 	--enable-wave-encoder \
@@ -155,11 +151,12 @@ CONFIGURE_VARS += \
 	$(if $(CONFIG_BUILD_PATENTED),MAD_CFLAGS="$(TARGET_CFLAGS)") \
 	$(if $(CONFIG_BUILD_PATENTED),MAD_LIBS="$(TARGET_LDFLAGS) -lmad") \
 
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-liconv)
+TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
 
 ifeq ($(BUILD_VARIANT),full)
 
   CONFIGURE_ARGS += \
+	--enable-upnp \
 	$(call autoconf_bool,CONFIG_BUILD_PATENTED,aac) \
 	--enable-audiofile \
 	--enable-fifo \
@@ -183,14 +180,13 @@ ifeq ($(BUILD_VARIANT),mini)
 
   # oggflac is not compatible with tremor
   CONFIGURE_ARGS += \
+	--disable-upnp \
 	--disable-aac \
 	--disable-audiofile \
 	--disable-fifo \
 	--disable-ffmpeg \
 	--disable-id3 \
-	--disable-lastfm \
 	--disable-mms \
-	--disable-oggflac \
 	--disable-pipe-output \
 	--disable-recorder-output \
 	--disable-shout \

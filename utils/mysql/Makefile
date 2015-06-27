@@ -62,11 +62,6 @@ ifneq ($(CONFIG_USE_UCLIBCXX),)
   TARGET_CXX=g++-uc
 endif
 
-ifeq ($(ARCH),powerpc)
-  TARGET_CFLAGS += -fno-stack-protector
-endif
-
-
 TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \

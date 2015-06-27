@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -17,6 +17,8 @@ PKG_MD5SUM:=5f290355187e5ce0423fb7e388e65b9d
 PKG_LICENSE=GPLv2
 
 include $(INCLUDE_DIR)/package.mk
+
+TARGET_CPPFLAGS += -I$(PKG_BUILD_DIR)/include
 
 define Package/sstp-client
   SECTION:=net

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ulogd
 PKG_VERSION:=2.0.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.netfilter.org/pub/ulogd/ \
@@ -123,6 +123,9 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_ulogd-mod-mysql \
 	CONFIG_PACKAGE_ulogd-mod-pgsql \
 	CONFIG_PACKAGE_ulogd-mod-sqlite \
+
+TARGET_CFLAGS += \
+	-D_GNU_SOURCE \
 
 CONFIGURE_ARGS += \
 	--enable-nfacct \
