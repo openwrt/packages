@@ -83,6 +83,8 @@ define Package/sudo/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sudo/*.so* $(1)/usr/lib/sudo/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sudo.init $(1)/etc/init.d/sudo
+	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
+	$(INSTALL_DATA) ./files/sudo.upgrade $(1)/lib/upgrade/keep.d/sudo
 endef
 
 define Package/sudo/postinst
