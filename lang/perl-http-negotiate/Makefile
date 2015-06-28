@@ -29,7 +29,7 @@ define Package/perl-http-negotiate
   CATEGORY:=Languages
   TITLE:=Choose a variant to serve
   URL:=http://search.cpan.org/dist/HTTP-Negotiate/
-  DEPENDS:=perl
+  DEPENDS:=perl +perl-http-message +perlbase-essential
 endef
 
 define Build/Configure

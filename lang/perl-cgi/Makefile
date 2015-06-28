@@ -29,7 +29,7 @@ define Package/perl-cgi
   CATEGORY:=Languages
   TITLE:=Handle Common Gateway Interface requests and responses
   URL:=http://search.cpan.org/dist/CGI/
-  DEPENDS:=perl +perl-html-parser +perlbase-essential +perlbase-if +perlbase-file +perlbase-encode +perlbase-config +perlbase-utf8 +perlbase-base +perl-cgi
+  DEPENDS:=perl +perl-html-parser +perlbase-base +perlbase-config +perlbase-encode +perlbase-essential +perlbase-file +perlbase-if +perlbase-utf8
 endef
 
 define Build/Configure

@@ -29,7 +29,7 @@ define Package/perl-www
   CATEGORY:=Languages
   TITLE:=WWW client/server library for Perl (aka LWP)
   URL:=http://search.cpan.org/dist/libwww-perl/
-  DEPENDS:=perl +perl-html-parser +perl-html-tagset +perl-uri
+  DEPENDS:=perl +perl-encode-locale +perl-file-listing +perl-html-parser +perl-http-cookies +perl-http-daemon +perl-http-date +perl-http-message +perl-http-negotiate +perl-lwp-mediatypes +perl-net-http +perl-uri +perl-www-robotrules +perlbase-base +perlbase-digest +perlbase-encode +perlbase-essential +perlbase-io +perlbase-mime +perlbase-net
 endef
 
 define Build/Configure

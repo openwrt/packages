@@ -29,7 +29,7 @@ define Package/perl-www-robotrules
   CATEGORY:=Languages
   TITLE:=database of robots.txt-derived permissions
   URL:=http://search.cpan.org/dist/WWW-RobotRules/
-  DEPENDS:=perl +perl-uri +perlbase-anydbm-file +perlbase-fcntl +perlbase-essential +perl-www-robotrules
+  DEPENDS:=perl +perl-uri +perlbase-anydbm-file +perlbase-essential +perlbase-fcntl
 endef
 
 define Build/Configure

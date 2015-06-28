@@ -29,7 +29,7 @@ define Package/perl-uri
   CATEGORY:=Languages
   TITLE:=Manipulates and accesses URI strings
   URL:=http://search.cpan.org/dist/URI/
-  DEPENDS:=perl
+  DEPENDS:=perl +perlbase-essential +perlbase-integer +perlbase-mime +perlbase-scalar +perlbase-utf8
 endef
 
 define Build/Configure

@@ -29,7 +29,7 @@ define Package/perl-http-daemon
   CATEGORY:=Languages
   TITLE:=A simple http server class
   URL:=http://search.cpan.org/dist/HTTP-Daemon/
-  DEPENDS:=perl +perl-http-message +perl-http-date +perl-lwp-mediatypes
+  DEPENDS:=perl +perl-http-date +perl-http-message +perl-lwp-mediatypes +perlbase-essential +perlbase-io +perlbase-sys
 endef
 
 define Build/Configure

@@ -29,7 +29,7 @@ define Package/perl-www-mechanize
   CATEGORY:=Languages
   TITLE:=Perl WWW Mechanize
   URL:=http://search.cpan.org/dist/WWW-Mechanize/
-  DEPENDS:=perl +perl-www
+  DEPENDS:=perl +perl-cgi +perl-html-form +perl-html-parser +perl-html-tree +perl-http-daemon +perl-http-message +perl-http-server-simple +perl-test-warn +perl-uri +perl-www +perlbase-base +perlbase-essential +perlbase-file +perlbase-findbin +perlbase-getopt +perlbase-pod +perlbase-test
 endef
 
 define Build/Configure

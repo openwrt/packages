@@ -29,7 +29,7 @@ define Package/perl-file-listing
   CATEGORY:=Languages
   TITLE:=Parse directory listing
   URL:=http://search.cpan.org/dist/File-Listing/
-  DEPENDS:=perl +perl-http-date
+  DEPENDS:=perl +perl-http-date +perlbase-essential
 endef
 
 define Build/Configure

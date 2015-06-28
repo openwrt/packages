@@ -29,7 +29,7 @@ define Package/perl-net-http
   CATEGORY:=Languages
   TITLE:=Low-level HTTP connection (client)
   URL:=http://search.cpan.org/dist/Net-HTTP/
-  DEPENDS:=perl +perlbase-io +perl-uri +perlbase-compress +perlbase-essential +perl-net-http
+  DEPENDS:=perl +perl-uri +perlbase-compress +perlbase-essential +perlbase-io
 endef
 
 define Build/Configure

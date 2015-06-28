@@ -29,7 +29,7 @@ define Package/perl-html-form
   CATEGORY:=Languages
   TITLE:=Class that represents an HTML form element
   URL:=http://search.cpan.org/dist/HTML-Form/
-  DEPENDS:=perl +perl-http-message +perlbase-encode +perl-uri +perl-html-parser +perlbase-essential
+  DEPENDS:=perl +perl-html-parser +perl-http-message +perl-uri +perlbase-encode +perlbase-essential
 endef
 
 define Build/Configure

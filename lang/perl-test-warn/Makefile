@@ -29,7 +29,7 @@ define Package/perl-test-warn
   CATEGORY:=Languages
   TITLE:=Perl extension to test methods for warnings
   URL:=http://search.cpan.org/dist/Test-Warn/
-  DEPENDS:=perl +perlbase-test +perl-sub-uplevel +perlbase-essential
+  DEPENDS:=perl +perl-sub-uplevel +perlbase-essential +perlbase-test
 endef
 
 define Build/Configure

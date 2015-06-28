@@ -29,7 +29,7 @@ define Package/perl-http-cookies
   CATEGORY:=Languages
   TITLE:=HTTP cookie jars
   URL:=http://search.cpan.org/dist/HTTP-Cookies/
-  DEPENDS:=perl +perl-http-date +perl-http-message
+  DEPENDS:=perl +perl-http-date +perl-http-message +perlbase-essential +perlbase-time
 endef
 
 define Build/Configure

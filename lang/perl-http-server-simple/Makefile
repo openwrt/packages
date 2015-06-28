@@ -29,7 +29,7 @@ define Package/perl-http-server-simple
   CATEGORY:=Languages
   TITLE:=Lightweight HTTP server
   URL:=http://search.cpan.org/dist/HTTP-Server-Simple/
-  DEPENDS:=perl +perlbase-socket +perl-cgi +perlbase-test +perlbase-essential +perlbase-filehandle +perlbase-base +perl-http-server-simple
+  DEPENDS:=perl +perl-cgi +perlbase-base +perlbase-essential +perlbase-filehandle +perlbase-socket +perlbase-test
 endef
 
 define Build/Configure

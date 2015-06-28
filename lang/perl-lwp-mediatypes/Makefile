@@ -29,7 +29,7 @@ define Package/perl-lwp-mediatypes
   CATEGORY:=Languages
   TITLE:=Guess media type for a file or a URL
   URL:=http://search.cpan.org/dist/LWP-MediaTypes/
-  DEPENDS:=perl
+  DEPENDS:=perl +perlbase-essential
 endef
 
 define Build/Configure

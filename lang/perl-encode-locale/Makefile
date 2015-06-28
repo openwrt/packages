@@ -29,7 +29,7 @@ define Package/perl-encode-locale
   CATEGORY:=Languages
   TITLE:=Determine the locale encoding
   URL:=http://search.cpan.org/dist/Encode-Locale/
-  DEPENDS:=perl
+  DEPENDS:=perl +perlbase-base +perlbase-encode +perlbase-essential
 endef
 
 define Build/Configure
