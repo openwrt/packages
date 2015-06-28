@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linknx
 PKG_VERSION:=0.0.1.32
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_MD5SUM:=7ecc1208f59bceb05068c752b2250b63
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
@@ -18,6 +18,7 @@ PKG_LICENSE:=GPL-2.0+
 PKG_SOURCE_URL:=@SF/linknx
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_BUILD_DEPENDS:=argp-standalone
+PKG_FORTIFY_SOURCE:=1
 
 include $(INCLUDE_DIR)/package.mk
 
