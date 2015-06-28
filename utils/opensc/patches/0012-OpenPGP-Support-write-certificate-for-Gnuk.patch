@@ -8,11 +8,11 @@ Subject: [PATCH 12/26] OpenPGP: Support write certificate for Gnuk.
  src/libopensc/card-openpgp.c | 158 +++++++++++++++++++++++++++++++++----------
  1 file changed, 123 insertions(+), 35 deletions(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 1913eca..7cea84f 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -727,6 +727,8 @@ pgp_iterate_blobs(struct blob *blob, int level, void (*func)())
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -735,6 +735,8 @@ pgp_iterate_blobs(struct blob *blob, int
  static int
  pgp_read_blob(sc_card_t *card, struct blob *blob)
  {
@@ -21,7 +21,7 @@ index 1913eca..7cea84f 100644
  	if (blob->data != NULL)
  		return SC_SUCCESS;
  	if (blob->info == NULL)
-@@ -737,6 +739,11 @@ pgp_read_blob(sc_card_t *card, struct blob *blob)
+@@ -745,6 +747,11 @@ pgp_read_blob(sc_card_t *card, struct bl
  		size_t	buf_len = (card->caps & SC_CARD_CAP_APDU_EXT)
  				  ? sizeof(buffer) : 256;
  
@@ -33,7 +33,7 @@ index 1913eca..7cea84f 100644
  		/* Buffer length for Gnuk pubkey */
  		if (card->type == SC_CARD_TYPE_OPENPGP_GNUK &&
  		    (blob->id == 0xa400 || blob->id == 0xb600 || blob->id == 0xb800
-@@ -1192,49 +1199,75 @@ pgp_get_data(sc_card_t *card, unsigned int tag, u8 *buf, size_t buf_len)
+@@ -1200,49 +1207,75 @@ pgp_get_data(sc_card_t *card, unsigned i
  	LOG_FUNC_RETURN(card->ctx, apdu.resplen);
  }
  
@@ -143,7 +143,7 @@ index 1913eca..7cea84f 100644
  
  	/* Extended Header list (004D DO) needs a variant of PUT DATA command */
  	if (tag == 0x004D) {
-@@ -1260,15 +1293,70 @@ pgp_put_data(sc_card_t *card, unsigned int tag, const u8 *buf, size_t buf_len)
+@@ -1268,15 +1301,70 @@ pgp_put_data(sc_card_t *card, unsigned i
  		apdu.lc = buf_len;
  	}
  	else {
@@ -215,6 +215,3 @@ index 1913eca..7cea84f 100644
  	/* Instruct more in case of error */
  	if (r == SC_ERROR_SECURITY_STATUS_NOT_SATISFIED) {
  		sc_debug(card->ctx, SC_LOG_DEBUG_VERBOSE, "Please verify PIN first.");
--- 
-2.1.3
-

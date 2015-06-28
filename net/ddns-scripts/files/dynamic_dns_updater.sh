@@ -120,7 +120,7 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 
 # set defaults if not defined
 [ -z "$enabled" ]	  && enabled=0
-[ -z "$retry_count" ]	  && retry_count=5
+[ -z "$retry_count" ]	  && retry_count=0	# endless retry
 [ -z "$use_syslog" ]      && use_syslog=2	# syslog "Notice"
 [ -z "$use_https" ]       && use_https=0	# not use https
 [ -z "$use_logfile" ]     && use_logfile=1	# use logfile by default

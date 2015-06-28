@@ -1,0 +1,11 @@
+--- -	2015-05-19 16:29:09.614344473 +0200
++++ protobuf-2.6.1/src/google/protobuf/stubs/atomicops_internals_mips_gcc.h	2015-05-19 13:49:52.127442746 +0200
+@@ -150,7 +150,7 @@
+ }
+ 
+ inline void MemoryBarrier() {
+-  __asm__ __volatile__("sync" : : : "memory");
++  __asm__ __volatile__(".set mips2; sync; .set mips0" : : : "memory");
+ }
+ 
+ inline void Acquire_Store(volatile Atomic32* ptr, Atomic32 value) {

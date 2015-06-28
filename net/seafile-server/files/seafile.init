@@ -7,8 +7,13 @@ EXTRA_HELP="	setup	Runs the setup script
 	reset_admin	Alias to create_admin"
 EXTRA_COMMANDS="setup create_admin reset_admin"
 
-export PATH="/usr/share/seafile/seafile-server/seahub/thirdpart:$PATH"
-export PYTHONPATH="/usr/share/seafile/seafile-server/seahub/thirdpart:$PYTHONPATH"
+SEAHUB_FASTCGI=0
+
+[ -f /etc/config/seafile ] && \
+    . /etc/config/seafile
+
+export PATH="/usr/share/seafile/seafile-server/seahub/thirdpart:${PATH}"
+export PYTHONPATH="/usr/share/seafile/seafile-server/seahub/thirdpart:${PYTHONPATH}"
 
 start() {
 	if [ ! -d /var/run/seafile ]
@@ -18,27 +23,32 @@ start() {
 	    chmod o-rwx /var/run/seafile
 	fi
 
-	# append parameter "--fastcgi" here to start seahub in fastcgi mode
-	cd "/usr/share/seafile" && \
-	    sudo PYTHONPATH="$PYTHONPATH" -u seafile -E \
-	    "/usr/bin/seafile-admin" start
+	if [ ${SEAHUB_FASTCGI} -eq 1 ]; then
+	    cd "/usr/share/seafile" && \
+		sudo PYTHONPATH="${PYTHONPATH}" -u seafile -E \
+		"/usr/bin/seafile-admin" start --fastcgi
+	else
+	    cd "/usr/share/seafile" && \
+		sudo PYTHONPATH="${PYTHONPATH}" -u seafile -E \
+		"/usr/bin/seafile-admin" start
+	fi
 }
 
 stop() {
 	cd "/usr/share/seafile" && \
-	    sudo PYTHONPATH="$PYTHONPATH" -u seafile -E \
+	    sudo PYTHONPATH="${PYTHONPATH}" -u seafile -E \
 	    "/usr/bin/seafile-admin" stop
 }
 
 setup() {
 	cd "/usr/share/seafile" && \
-	    sudo PYTHONPATH="$PYTHONPATH" -u seafile -E \
+	    sudo PYTHONPATH="${PYTHONPATH}" -u seafile -E \
 	    "/usr/bin/seafile-admin" setup
 }
 
 create_admin() {
 	cd "/usr/share/seafile" && \
-	    sudo PYTHONPATH="$PYTHONPATH" -u seafile -E \
+	    sudo PYTHONPATH="${PYTHONPATH}" -u seafile -E \
 	    "/usr/bin/seafile-admin" create-admin
 }
 

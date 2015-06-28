@@ -18,7 +18,7 @@
  echosrv: $(OBJS) echosrv.o
  	$(CC) $(CFLAGS) $(LDFLAGS) -o echosrv echosrv.o probe.o common.o $(LIBS)
  
-@@ -86,7 +82,7 @@ distclean: clean
+@@ -85,7 +81,7 @@ distclean: clean
  	rm -f tags cscope.*
  
  clean:

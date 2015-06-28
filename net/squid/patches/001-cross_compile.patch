@@ -1,17 +1,17 @@
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -7742,7 +7742,7 @@ cache_cf.o: cf_parser.cci
+@@ -7759,7 +7759,7 @@ cache_cf.o: cf_parser.cci
  
  # cf_gen builds the configuration files.
  cf_gen$(EXEEXT): $(cf_gen_SOURCES) $(cf_gen_DEPENDENCIES) cf_gen_defines.cci
--	$(HOSTCXX) -o $@ $(srcdir)/cf_gen.cc -I$(srcdir) -I$(top_builddir)/include/ -I$(top_builddir)/src
+-	$(BUILDCXX) $(BUILDCXXFLAGS) -o $@ $(srcdir)/cf_gen.cc -I$(srcdir) -I$(top_builddir)/include/ -I$(top_builddir)/src
 +	g++ -o $@ $(srcdir)/cf_gen.cc -I$(srcdir) -I$(top_builddir)/include/ -I$(top_builddir)/src
  
  # squid.conf.default is built by cf_gen when making cf_parser.cci
  squid.conf.default squid.conf.documented: cf_parser.cci
 --- a/configure
 +++ b/configure
-@@ -22226,7 +22226,7 @@ $as_echo_n "checking whether the SSL_get
+@@ -22935,7 +22935,7 @@ $as_echo_n "checking whether the SSL_get
    if test "$cross_compiling" = yes; then :
    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
  $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
@@ -20,7 +20,7 @@
  See \`config.log' for more details" "$LINENO" 5; }
  else
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-@@ -22274,7 +22274,7 @@ $as_echo_n "checking whether the workaro
+@@ -22983,7 +22983,7 @@ $as_echo_n "checking whether the workaro
    if test "$cross_compiling" = yes; then :
    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
  $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
@@ -29,7 +29,7 @@
  See \`config.log' for more details" "$LINENO" 5; }
  else
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-@@ -24924,7 +24924,7 @@ else
+@@ -28201,7 +28201,7 @@ else
      if test "$cross_compiling" = yes; then :
    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
  $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
@@ -38,7 +38,7 @@
  See \`config.log' for more details" "$LINENO" 5; }
  else
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-@@ -24949,7 +24949,7 @@ else
+@@ -28226,7 +28226,7 @@ else
      if test "$cross_compiling" = yes; then :
    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
  $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}

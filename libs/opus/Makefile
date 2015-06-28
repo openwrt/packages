@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opus
 PKG_VERSION:=1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/opus/
@@ -31,10 +31,14 @@ define Package/libopus
 endef
 
 define Package/libopus/description
- Opus is a totally open, royalty-free, highly versatile audio codec. Opus is 
- unmatched for interactive speech and music transmission over the Internet, but 
+ Opus is a totally open, royalty-free, highly versatile audio codec. Opus is
+ unmatched for interactive speech and music transmission over the Internet, but
  is also intended for storage and streaming applications.
 endef
+
+CONFIGURE_ARGS+= \
+	--disable-doc \
+	--disable-extra-programs
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

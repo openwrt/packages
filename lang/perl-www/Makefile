@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www
 PKG_VERSION:=5.837
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS/
 PKG_SOURCE:=libwww-perl-$(PKG_VERSION).tar.gz
@@ -33,7 +33,7 @@ define Package/perl-www
 endef
 
 define Build/Configure
-	$(call perlmod/Configure,-n,)
+	$(call perlmod/Configure,,)
 endef
 
 define Build/Compile

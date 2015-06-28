@@ -1,0 +1,58 @@
+Binary files a/ipkg-ar71xx/mjpg-streamer/usr/lib/input_uvc.so and b/ipkg-ar71xx/mjpg-streamer/usr/lib/input_uvc.so differ
+diff -ur a/plugins/input_uvc/input_uvc.c b/plugins/input_uvc/input_uvc.c
+--- a/plugins/input_uvc/input_uvc.c     2015-03-02 09:14:05.000000000 +0200
++++ b/plugins/input_uvc/input_uvc.c     2015-03-02 09:18:22.000000000 +0200
+@@ -311,6 +311,10 @@
+     }
+     memset(cams[id].videoIn, 0, sizeof(struct vdIn));
+ 
++    /* Non-MJPEG formats seem to fail with unlimited FPS */
++    if (format != V4L2_PIX_FMT_MJPEG && fps == -1)
++        fps = 15;
++
+     /* display the parsed values */
+     IPRINT("Using V4L2 device.: %s\n", dev);
+     IPRINT("Desired Resolution: %i x %i\n", width, height);
+diff -ur a/plugins/input_uvc/jpeg_utils.c b/plugins/input_uvc/jpeg_utils.c
+--- a/plugins/input_uvc/jpeg_utils.c    2015-03-02 09:17:02.000000000 +0300
++++ b/plugins/input_uvc/jpeg_utils.c    2015-03-02 09:25:18.000000000 +0200
+@@ -198,7 +198,7 @@
+             }
+ 
+             row_pointer = (JSAMPROW*)line_buffer;
+-            jpeg_write_scanlines(&cinfo, row_pointer, 1);
++            jpeg_write_scanlines(&cinfo, &row_pointer, 1);
+         }
+     } else if (vd->formatIn == V4L2_PIX_FMT_RGB565) {
+         while(cinfo.next_scanline < vd->height) {
+@@ -220,7 +220,7 @@
+             }
+ 
+             row_pointer = (JSAMPROW*)line_buffer;
+-            jpeg_write_scanlines(&cinfo, row_pointer, 1);
++            jpeg_write_scanlines(&cinfo, &row_pointer, 1);
+         }
+     } else if (vd->formatIn == V4L2_PIX_FMT_RGB24) {
+         jpeg_write_scanlines(&cinfo, (JSAMPROW*)vd->framebuffer, vd->height);
+diff -ur a/plugins/input_uvc/v4l2uvc.c b/plugins/input_uvc/v4l2uvc.c
+--- a/plugins/input_uvc/v4l2uvc.c       2015-03-02 09:14:05.000000000 +0200
++++ b/plugins/input_uvc/v4l2uvc.c       2015-03-02 09:22:09.000000000 +0200
+@@ -338,11 +338,15 @@
+                         vd->frame_period_time = 1000/vd->fps; // calcualate frame period time in ms
+                         IPRINT("Frame period time ......: %ld ms\n", vd->frame_period_time);
+ 
+-                        // set FPS to maximum in order to minimize the lagging
+                         memset(setfps, 0, sizeof(struct v4l2_streamparm));
+                         setfps->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                         setfps->parm.capture.timeperframe.numerator = 1;
+-                        setfps->parm.capture.timeperframe.denominator = 255;
++                       if (vd->formatIn == V4L2_PIX_FMT_MJPEG)
++                           // set FPS to maximum in order to minimize the lagging
++                           setfps->parm.capture.timeperframe.denominator = 255;
++                       else
++                           setfps->parm.capture.timeperframe.denominator = vd->fps;
++
+                         ret = xioctl(vd->fd, VIDIOC_S_PARM, setfps);
+                         if (ret) {
+                             perror("Unable to set the FPS\n");
+

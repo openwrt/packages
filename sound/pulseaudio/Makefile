@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
 PKG_VERSION:=6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://freedesktop.org/software/pulseaudio/releases/
@@ -27,12 +27,11 @@ PKG_INSTALL = 1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-#TODO: split pulse into executable and library (or even better into several libraries since they're used as loadable modules, so not linked into)
 define Package/pulseaudio/Default
   SECTION:=sound
   CATEGORY:=Sound
   DEPENDS:=+libspeexdsp +libsndfile +libltdl +libpthread \
-	+librt +alsa-lib +libjson +libopenssl +libwrap +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
+	+librt +alsa-lib +libopenssl +libwrap +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Network sound server
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.pulseaudio.org
@@ -42,6 +41,7 @@ endef
 
 define Package/pulseaudio-daemon
   $(call Package/pulseaudio/Default)
+  DEPENDS+= +libjson-c
 endef
 
 define Package/pulseaudio/Default/description
@@ -62,7 +62,7 @@ endef
 define Package/pulseaudio-tools
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+libsndfile pulseaudio
+  DEPENDS:=+libsndfile +pulseaudio
   TITLE:=Tools for Pulseaudio
   URL:=http://www.pulseaudio.org
 endef

@@ -1,12 +1,14 @@
---- a/libtransmission/fdlimit.c	2014-07-01 20:08:59.000000000 +0300
-+++ b/libtransmission/fdlimit.c	2014-07-13 13:30:17.000000000 +0300
-@@ -22,7 +22,8 @@
+--- a/libtransmission/fdlimit.c
++++ b/libtransmission/fdlimit.c
+@@ -22,11 +22,6 @@
   #include <fcntl.h>
  #endif
- 
+
 -#ifdef HAVE_FALLOCATE64
-+/* no need to define fallocate64 in glibc/eglibc case */
-+#if defined(__UCLIBC__) && (HAVE_FALLOCATE64)
-   /* FIXME can't find the right #include voodoo to pick up the declaration.. */
-   extern int fallocate64 (int fd, int mode, uint64_t offset, uint64_t len);
+-  /* FIXME can't find the right #include voodoo to pick up the declaration.. */
+-  extern int fallocate64 (int fd, int mode, uint64_t offset, uint64_t len);
+-#endif
+-
+ #ifdef HAVE_XFS_XFS_H
+  #include <xfs/xfs.h>
  #endif

@@ -8,11 +8,11 @@ Subject: [PATCH 15/26] OpenPGP: Delete key as file, for Gnuk.
  src/libopensc/card-openpgp.c | 51 +++++++++++++++++++++++++++++++++++++++++++-
  1 file changed, 50 insertions(+), 1 deletion(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 7a77a71..4d0500d 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -2435,6 +2435,44 @@ static int pgp_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -2448,6 +2448,44 @@ static int pgp_card_ctl(sc_card_t *card,
  	LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_SUPPORTED);
  }
  
@@ -57,7 +57,7 @@ index 7a77a71..4d0500d 100644
  /* ABI: DELETE FILE */
  static int
  pgp_delete_file(sc_card_t *card, const sc_path_t *path)
-@@ -2442,6 +2480,7 @@ pgp_delete_file(sc_card_t *card, const sc_path_t *path)
+@@ -2455,6 +2493,7 @@ pgp_delete_file(sc_card_t *card, const s
  	struct pgp_priv_data *priv = DRVDATA(card);
  	struct blob *blob;
  	sc_file_t *file;
@@ -65,7 +65,7 @@ index 7a77a71..4d0500d 100644
  	int r;
  
  	LOG_FUNC_CALLED(card->ctx);
-@@ -2457,10 +2496,20 @@ pgp_delete_file(sc_card_t *card, const sc_path_t *path)
+@@ -2470,10 +2509,20 @@ pgp_delete_file(sc_card_t *card, const s
  	if (blob == priv->mf)
  		LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_SUPPORTED);
  
@@ -87,6 +87,3 @@ index 7a77a71..4d0500d 100644
  	else {
  		/* call pgp_put_data() with zero-sized NULL-buffer to zap the DO contents */
  		r = pgp_put_data(card, file->id, NULL, 0);
--- 
-2.1.3
-

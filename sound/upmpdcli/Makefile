@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upmpdcli
-PKG_VERSION:=0.9.0
-PKG_RELEASE:=2
+PKG_VERSION:=0.11.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.lesbonscomptes.com/upmpdcli/downloads
-PKG_MD5SUM:=0e7b86037f19ea3a08067409af6f6902
+PKG_MD5SUM:=40eb2a1988ca367a690fb2506e0f73c1
 PKG_MAINTAINER:=Petko Bordjukov <bordjukov@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -29,10 +29,15 @@ define Package/upmpdcli
   DEPENDS+= +libupnpp +libmpdclient
   TITLE:=A UPnP front-end to MPD, the Music Player Daemon
   USERID:=upmpdcli=89:upmpdcli=89
+  MENU:=1
 endef
 
 define Package/upmpdcli/description
 upmpdcli implements an UPnP Media Renderer, using MPD to perform the real work.
+endef
+
+define Package/upmpdcli/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/upmpdcli/install
@@ -42,8 +47,14 @@ define Package/upmpdcli/install
 	$(INSTALL_CONF) ./files/upmpdcli.config $(1)/etc/config/upmpdcli
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/upmpdcli $(1)/usr/bin/
+ifeq ($(CONFIG_PACKAGE_UPMPDCLI_SCCTL),y)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scctl $(1)/usr/bin/
+endif
 	$(INSTALL_DIR) $(1)/usr/share/upmpdcli
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/upmpdcli/* $(1)/usr/share/upmpdcli/
+ifneq ($(CONFIG_PACKAGE_UPMPDCLI_SC_WEB_INTERFACE),y)
+	$(RM) -rf $(PKG_INSTALL_DIR)/usr/share/upmpdcli/web
+endif
+	$(CP) -r $(PKG_INSTALL_DIR)/usr/share/upmpdcli $(1)/usr/share/
 	$(INSTALL_DATA) ./files/upmpdcli.png $(1)/usr/share/upmpdcli/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/upmpdcli.init $(1)/etc/init.d/upmpdcli

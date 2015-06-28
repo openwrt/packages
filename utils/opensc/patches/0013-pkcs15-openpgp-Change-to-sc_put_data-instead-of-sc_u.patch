@@ -9,11 +9,11 @@ Subject: [PATCH 13/26] pkcs15-openpgp: Change to sc_put_data instead of
  src/pkcs15init/pkcs15-openpgp.c | 5 ++---
  1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/src/pkcs15init/pkcs15-openpgp.c b/src/pkcs15init/pkcs15-openpgp.c
-index 1455580..be1291e 100755
---- a/src/pkcs15init/pkcs15-openpgp.c
-+++ b/src/pkcs15init/pkcs15-openpgp.c
-@@ -279,10 +279,9 @@ static int openpgp_store_data(struct sc_pkcs15_card *p15card, struct sc_profile
+Index: opensc-20150513/src/pkcs15init/pkcs15-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/pkcs15init/pkcs15-openpgp.c
++++ opensc-20150513/src/pkcs15init/pkcs15-openpgp.c
+@@ -279,10 +279,9 @@ static int openpgp_store_data(struct sc_
  		r = sc_select_file(card, path, &file);
  		LOG_TEST_RET(card->ctx, r, "Cannot select cert file");
  		r = sc_pkcs15init_authenticate(profile, p15card, file, SC_AC_OP_UPDATE);
@@ -26,6 +26,3 @@ index 1455580..be1291e 100755
  		break;
  
  	case SC_PKCS15_TYPE_DATA_OBJECT:
--- 
-2.1.3
-

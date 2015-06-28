@@ -1,6 +1,6 @@
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -2038,7 +2038,7 @@ unit_tests = $(am__append_32) unit/test-
+@@ -2055,7 +2055,7 @@ unit_tests = $(am__append_32) unit/test-
  @CLIENT_TRUE@					monitor/uuid.h monitor/uuid.c
  
  @CLIENT_TRUE@client_bluetoothctl_LDADD = gdbus/libgdbus-internal.la @GLIB_LIBS@ @DBUS_LIBS@ \
@@ -9,7 +9,16 @@
  
  @MONITOR_TRUE@monitor_btmon_SOURCES = monitor/main.c monitor/bt.h \
  @MONITOR_TRUE@				monitor/display.h monitor/display.c \
-@@ -2245,13 +2245,13 @@ unit_tests = $(am__append_32) unit/test-
+@@ -2226,7 +2226,7 @@ unit_tests = $(am__append_32) unit/test-
+ @EXPERIMENTAL_TRUE@tools_hcieventmask_LDADD = lib/libbluetooth-internal.la
+ @EXPERIMENTAL_TRUE@tools_btmgmt_SOURCES = tools/btmgmt.c src/uuid-helper.c client/display.c
+ @EXPERIMENTAL_TRUE@tools_btmgmt_LDADD = lib/libbluetooth-internal.la src/libshared-mainloop.la \
+-@EXPERIMENTAL_TRUE@				-lreadline
++@EXPERIMENTAL_TRUE@				-lreadline -lncurses
+ 
+ @EXPERIMENTAL_TRUE@tools_btinfo_SOURCES = tools/btinfo.c monitor/bt.h
+ @EXPERIMENTAL_TRUE@tools_btinfo_LDADD = src/libshared-mainloop.la
+@@ -2266,13 +2266,13 @@ unit_tests = $(am__append_32) unit/test-
  @READLINE_TRUE@				client/display.h
  
  @READLINE_TRUE@attrib_gatttool_LDADD = lib/libbluetooth-internal.la \
@@ -25,7 +34,7 @@
  
  @READLINE_TRUE@tools_obex_server_tool_SOURCES = $(gobex_sources) $(btio_sources) \
  @READLINE_TRUE@						tools/obex-server-tool.c
-@@ -2261,13 +2261,13 @@ unit_tests = $(am__append_32) unit/test-
+@@ -2282,13 +2282,13 @@ unit_tests = $(am__append_32) unit/test-
  @READLINE_TRUE@				client/display.h client/display.c
  
  @READLINE_TRUE@tools_bluetooth_player_LDADD = gdbus/libgdbus-internal.la \

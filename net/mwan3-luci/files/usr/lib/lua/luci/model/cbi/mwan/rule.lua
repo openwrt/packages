@@ -88,6 +88,39 @@ proto = mwan_rule:option(DummyValue, "proto", translate("Protocol"))
 		return self.map:get(s, "proto") or "all"
 	end
 
+sticky = mwan_rule:option(DummyValue, "sticky", translate("Sticky"))
+	sticky.rawhtml = true
+	function sticky.cfgvalue(self, s)
+		if self.map:get(s, "sticky") == "1" then
+			stickied = 1
+			return "Yes"
+		else
+			stickied = nil
+			return "No"
+		end
+	end
+
+timeout = mwan_rule:option(DummyValue, "timeout", translate("Sticky timeout"))
+	timeout.rawhtml = true
+	function timeout.cfgvalue(self, s)
+		if stickied then
+			local timeoutValue = self.map:get(s, "timeout")
+			if timeoutValue then
+				return timeoutValue .. "s"
+			else
+				return "600s"
+			end
+		else
+			return "&#8212;"
+		end
+	end
+
+ipset = mwan_rule:option(DummyValue, "ipset", translate("IPset"))
+	ipset.rawhtml = true
+	function ipset.cfgvalue(self, s)
+		return self.map:get(s, "ipset") or "&#8212;"
+	end
+
 use_policy = mwan_rule:option(DummyValue, "use_policy", translate("Policy assigned"))
 	use_policy.rawhtml = true
 	function use_policy.cfgvalue(self, s)

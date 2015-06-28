@@ -35,7 +35,10 @@ define Package/bogofilter/description
 	Bogofilter is a fast Bayesian spam filter
 endef
 
-CONFIGURE_ARGS += --disable-unicode
+CONFIGURE_ARGS += \
+	--disable-unicode \
+	--with-libdb-prefix=$(STAGING_DIR) \
+	--with-included-gsl
 
 define Package/bogofilter/install
 	$(INSTALL_DIR)  $(1)/etc/ \

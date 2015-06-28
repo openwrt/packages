@@ -60,11 +60,11 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_DECODER_ape
 	select FFMPEG_CUSTOM_DECODER_atrac3
 	select FFMPEG_CUSTOM_DECODER_flac
-	select FFMPEG_CUSTOM_SELECT_libopus
 	select FFMPEG_CUSTOM_DECODER_mp2
 	select FFMPEG_CUSTOM_DECODER_mp3
 	select FFMPEG_CUSTOM_DECODER_mpc7
 	select FFMPEG_CUSTOM_DECODER_mpc8
+	select FFMPEG_CUSTOM_DECODER_opus
 	select FFMPEG_CUSTOM_DECODER_pcm_s16be
 	select FFMPEG_CUSTOM_DECODER_pcm_s16le
 	select FFMPEG_CUSTOM_SELECT_speex
@@ -98,9 +98,10 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_DEMUXER_wv
 	select FFMPEG_CUSTOM_PARSER_aac
 	select FFMPEG_CUSTOM_PARSER_aac_latm
-	select FFMPEG_CUSTOM_PARSER_flac
 	select FFMPEG_CUSTOM_PARSER_ac3
+	select FFMPEG_CUSTOM_PARSER_flac
 	select FFMPEG_CUSTOM_PARSER_mpegaudio
+	select FFMPEG_CUSTOM_PARSER_opus
 	select FFMPEG_CUSTOM_PROTOCOL_file
 	select FFMPEG_CUSTOM_PROTOCOL_http
 	select FFMPEG_CUSTOM_PROTOCOL_rtp
@@ -228,6 +229,9 @@ config FFMPEG_CUSTOM_DECODER_mpc7
 config FFMPEG_CUSTOM_DECODER_mpc8
 	bool "Musepack 8"
 	select FFMPEG_CUSTOM_DEMUXER_mpc8
+
+config FFMPEG_CUSTOM_DECODER_opus
+	bool "Opus"
 
 config FFMPEG_CUSTOM_DECODER_pcm_s16be
 	bool "PCM signed 16-bit big-endian"
@@ -398,6 +402,9 @@ config FFMPEG_CUSTOM_PARSER_mpegvideo
 config FFMPEG_CUSTOM_PARSER_mpeg4video
 	bool "MPEG-4 Video"
 
+config FFMPEG_CUSTOM_PARSER_opus
+	bool "Opus"
+
 comment "Protocols ---"
 
 config FFMPEG_CUSTOM_PROTOCOL_file
@@ -405,6 +412,10 @@ config FFMPEG_CUSTOM_PROTOCOL_file
 
 config FFMPEG_CUSTOM_PROTOCOL_http
 	bool "http:"
+
+config FFMPEG_CUSTOM_PROTOCOL_icecast
+	bool "icecast:"
+	select FFMPEG_CUSTOM_PROTOCOL_http
 
 config FFMPEG_CUSTOM_PROTOCOL_pipe
 	bool "pipe:"

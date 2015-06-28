@@ -1,0 +1,116 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=90
+STOP=10
+
+USE_PROCD=1
+PROG=/usr/sbin/clamd
+CLAMD_CONFIGFILE="/tmp/clamav/clamd.conf"
+
+validate_clamav_section() {
+	uci_validate_section clamav clamav "${1}" \
+		'clamd_config_file:string' \
+		'LogFile:string' \
+		'LogFileMaxSize:string' \
+		'LogVerbose:string' \
+		'ExtendedDetectionInfo:string' \
+		'LogTime:string' \
+		'OfficialDatabaseOnly:string' \
+		'StreamMinPort:uinteger' \
+		'StreamMaxPort:uinteger' \
+		'MaxThreads:uinteger' \
+		'ReadTimeout:uinteger' \
+		'CommandReadTimeout:uinteger' \
+		'MaxDirectoryRecursion:uinteger' \
+		'FollowDirectorySymlinks:string' \
+		'FollowFileSymlinks:string' \
+		'SelfCheck:uinteger' \
+		'DetectPUA:string' \
+		'ScanPE:string' \
+		'DisableCertCheck:string' \
+		'ScanELF:string' \
+		'DetectBrokenExecutables:string' \
+		'ScanOLE2:string' \
+		'ScanPDF:string' \
+		'ScanSWF:string' \
+		'ScanMail:string' \
+		'ScanPartialMessages:string' \
+		'ScanArchive:string' \
+		'TemporaryDirectory:string' \
+		'ArchiveBlockEncrypted:string' \
+		'MaxFileSize:string' \
+		'LocalSocket:string' \
+		'User:string' \
+		'ExitOnOOM:string'
+}
+
+start_service() {
+	local clamd_config_file LogFile LogTime StreamMinPort \
+		StreamMaxPort MaxThreads ReadTimeout CommandReadTimeout MaxDirectoryRecursion \
+		FollowFileSymlinks FollowDirectorySymlinks SelfCheck DetectPUA ScanPE DisableCertCheck \
+		ScanELF DetectBrokenExecutables ScanOLE2 ScanPDF ScanSWF ScanMail ScanPartialMessages \
+		ScanArchive TemporaryDirectory ArchiveBlockEncrypted MaxFileSize LocalSocket User
+
+	validate_clamav_section clamav || {
+		echo "validation failed"
+		return 1
+	}
+
+	mkdir -p /usr/share/clamav
+	mkdir -p /etc/clamav/
+	mkdir -p /var/run/clamav/
+	chmod a+rw /var/run/clamav
+
+	mkdir -p $(dirname $CLAMD_CONFIGFILE)
+	ln -sf $clamd_config_file $CLAMD_CONFIGFILE
+
+	echo "LogFile " $LogFile > $CLAMD_CONFIGFILE
+	echo "LogFileMaxSize " $LogFileMaxSize >> $CLAMD_CONFIGFILE
+	echo "LogVerbose " $LogVerbose >> $CLAMD_CONFIGFILE
+	echo "ExtendedDetectionInfo " $ExtendedDetectionInfo >> $CLAMD_CONFIGFILE
+	echo "LogTime " $LogTime >> $CLAMD_CONFIGFILE
+	echo "OfficialDatabaseOnly " $OfficialDatabaseOnly >> $CLAMD_CONFIGFILE
+	echo "StreamMinPort " $StreamMinPort >> $CLAMD_CONFIGFILE
+	echo "StreamMaxPort " $StreamMaxPort >> $CLAMD_CONFIGFILE
+	echo "MaxThreads " $MaxThreads >> $CLAMD_CONFIGFILE
+	echo "ReadTimeout " $ReadTimeout >> $CLAMD_CONFIGFILE
+	echo "CommandReadTimeout " $CommandReadTimeout >> $CLAMD_CONFIGFILE
+	echo "MaxDirectoryRecursion " $MaxDirectoryRecursion >> $CLAMD_CONFIGFILE
+	echo "FollowDirectorySymlinks " $FollowDirectorySymlinks >> $CLAMD_CONFIGFILE
+	echo "FollowFileSymlinks " $FollowFileSymlinks >> $CLAMD_CONFIGFILE
+	echo "SelfCheck " $SelfCheck >> $CLAMD_CONFIGFILE
+	echo "DetectPUA " $DetectPUA >> $CLAMD_CONFIGFILE
+	echo "ScanPE " $ScanPE >> $CLAMD_CONFIGFILE
+	echo "DisableCertCheck " $DisableCertCheck >> $CLAMD_CONFIGFILE
+	echo "ScanELF " $ScanELF >> $CLAMD_CONFIGFILE
+	echo "DetectBrokenExecutables " $DetectBrokenExecutables >> $CLAMD_CONFIGFILE
+	echo "ScanOLE2 " $ScanOLE2 >> $CLAMD_CONFIGFILE
+	echo "ScanPDF " $ScanPDF >> $CLAMD_CONFIGFILE
+	echo "ScanSWF " $ScanSWF >> $CLAMD_CONFIGFILE
+	echo "ScanMail " $ScanMail >> $CLAMD_CONFIGFILE
+	echo "ScanPartialMessages " $ScanPartialMessages >> $CLAMD_CONFIGFILE
+	echo "ScanArchive " $ScanArchive >> $CLAMD_CONFIGFILE
+	echo "TemporaryDirectory " $TemporaryDirectory >> $CLAMD_CONFIGFILE
+	echo "ArchiveBlockEncrypted " $ArchiveBlockEncrypted >> $CLAMD_CONFIGFILE
+	echo "MaxFileSize " $MaxFileSize >> $CLAMD_CONFIGFILE
+	echo "LocalSocket " $LocalSocket >> $CLAMD_CONFIGFILE
+	echo "User " $User >> $CLAMD_CONFIGFILE
+	echo "ExitOnOOM " $ExitOnOOM >> $CLAMD_CONFIGFILE
+
+	procd_open_instance
+	procd_set_param command $PROG -c $CLAMD_CONFIGFILE
+	procd_set_param file $CLAMD_CONFIGFILE
+	procd_close_instance
+}
+
+stop_service()
+{
+	service_stop ${PROG}
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "clamav"
+	procd_add_validation validate_clamav_section
+}

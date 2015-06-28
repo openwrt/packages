@@ -10,11 +10,11 @@ When write certificate with odd length to Gnuk, we add zero padding to make it e
  src/libopensc/card-openpgp.c | 20 ++++++++++++++++++--
  1 file changed, 18 insertions(+), 2 deletions(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 7cea84f..7a77a71 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -1208,6 +1208,10 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -1216,6 +1216,10 @@ static int gnuk_write_certificate(sc_car
  	sc_apdu_t apdu;
  	u8 *part;
  	size_t plen;
@@ -25,7 +25,7 @@ index 7cea84f..7a77a71 100644
  	int r = SC_SUCCESS;
  
  	LOG_FUNC_CALLED(ctx);
-@@ -1238,8 +1242,20 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+@@ -1246,8 +1250,20 @@ static int gnuk_write_certificate(sc_car
  			sc_format_apdu(card, &apdu, SC_APDU_CASE_3_SHORT, 0xD6, i, 0);
  		}
  		apdu.flags |= SC_APDU_FLAGS_CHAINING;
@@ -48,6 +48,3 @@ index 7cea84f..7a77a71 100644
  
  		r = sc_transmit_apdu(card, &apdu);
  		LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
--- 
-2.1.3
-

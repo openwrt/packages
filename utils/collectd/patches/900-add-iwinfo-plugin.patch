@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -568,6 +568,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
+@@ -580,6 +580,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
  have_termios_h="no"
  AC_CHECK_HEADERS(termios.h, [have_termios_h="yes"])
  
@@ -10,7 +10,7 @@
  #
  # Checks for typedefs, structures, and compiler characteristics.
  #
-@@ -4819,6 +4822,7 @@ plugin_interface="no"
+@@ -4841,6 +4844,7 @@ plugin_interface="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
@@ -18,7 +18,7 @@
  plugin_libvirt="no"
  plugin_load="no"
  plugin_memory="no"
-@@ -5157,6 +5161,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
+@@ -5179,6 +5183,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
  AC_PLUGIN([iptables],    [$with_libiptc],      [IPTables rule counters])
  AC_PLUGIN([ipvs],        [$plugin_ipvs],       [IPVS connection statistics])
  AC_PLUGIN([irq],         [$plugin_irq],        [IRQ statistics])
@@ -26,7 +26,7 @@
  AC_PLUGIN([java],        [$with_java],         [Embed the Java Virtual Machine])
  AC_PLUGIN([libvirt],     [$plugin_libvirt],    [Virtual machine statistics])
  AC_PLUGIN([load],        [$plugin_load],       [System load])
-@@ -5458,6 +5463,7 @@ Configuration:
+@@ -5480,6 +5485,7 @@ Configuration:
      protobuf-c  . . . . . $have_protoc_c
      oracle  . . . . . . . $with_oracle
      python  . . . . . . . $with_python
@@ -34,7 +34,7 @@
  
    Features:
      daemon mode . . . . . $enable_daemon
-@@ -5502,6 +5508,7 @@ Configuration:
+@@ -5524,6 +5530,7 @@ Configuration:
      iptables  . . . . . . $enable_iptables
      ipvs  . . . . . . . . $enable_ipvs
      irq . . . . . . . . . $enable_irq
@@ -52,7 +52,7 @@
  #@BUILD_PLUGIN_JAVA_TRUE@LoadPlugin java
  #@BUILD_PLUGIN_LIBVIRT_TRUE@LoadPlugin libvirt
  @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
-@@ -467,6 +468,12 @@
+@@ -502,6 +503,12 @@
  #	IgnoreSelected true
  #</Plugin>
  
@@ -67,7 +67,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -2056,6 +2056,27 @@ and all other interrupts are collected.
+@@ -2077,6 +2077,27 @@ and all other interrupts are collected.
  
  =back
  

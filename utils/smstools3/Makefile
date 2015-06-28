@@ -22,7 +22,7 @@ PKG_SOURCE_URL:=http://smstools3.kekekasvi.com/packages/
 PKG_MD5SUM:=0241ef60e646fac1a06254a848e61ed7
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
-PKG_BUILD_DEPENDS:=libiconv-full iconv socket nsl
+PKG_BUILD_DEPENDS:=libiconv-full iconv
 
 include $(INCLUDE_DIR)/package.mk
 

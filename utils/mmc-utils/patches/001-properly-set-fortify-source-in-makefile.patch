@@ -1,0 +1,11 @@
+Index: mmc-utils-f4eb241519f8d500ce6068a70d2389be39ac5189/Makefile
+===================================================================
+--- mmc-utils-f4eb241519f8d500ce6068a70d2389be39ac5189.orig/Makefile
++++ mmc-utils-f4eb241519f8d500ce6068a70d2389be39ac5189/Makefile
+@@ -1,5 +1,5 @@
+ CC ?= gcc
+-AM_CFLAGS = -D_FILE_OFFSET_BITS=64 -D_FORTIFY_SOURCE=2
++AM_CFLAGS = -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
+ CFLAGS ?= -g -O2
+ objects = \
+ 	mmc.o \

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,18 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xl2tpd
-PKG_VERSION:=1.3.6
-PKG_RELEASE:=1
+PKG_VERSION:=1.3.7pre20150524
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
-
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/xelerance/xl2tpd.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=5619e1771048e74b729804e8602f409af0f3faea
+PKG_SOURCE_VERSION:=1cda2a266e2e957b81019d63a8902b28304a0ac4
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_INSTALL:=1
@@ -32,7 +30,7 @@ define Package/xl2tpd
   TITLE:=An L2TP (Layer 2 Tunneling Protocol) daemon
   URL:=http://www.xelerance.com/software/xl2tpd/
   SUBMENU:=VPN
-  DEPENDS:=+ppp-mod-pppol2tp +ip +resolveip
+  DEPENDS:=+ppp-mod-pppol2tp +resolveip
 endef
 
 define Package/xl2tpd/description

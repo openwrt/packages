@@ -1,0 +1,59 @@
+--- a/src/libpiano/config.h
++++ /dev/null
+@@ -1 +0,0 @@
+-#define PACKAGE "libpiano"
+--- a/src/libwaitress/config.h
++++ /dev/null
+@@ -1 +0,0 @@
+-#define PACKAGE "libwaitress"
+--- a/src/libpiano/piano.h
++++ b/src/libpiano/piano.h
+@@ -39,6 +39,8 @@ THE SOFTWARE.
+  * http://pan-do-ra-api.wikia.com
+  */
+ 
++#define LIBPIANO_NAME "libpiano"
++
+ #define PIANO_RPC_HOST "tuner.pandora.com"
+ #define PIANO_RPC_PATH "/services/json/?"
+ 
+--- a/src/libwaitress/waitress.c
++++ b/src/libwaitress/waitress.c
+@@ -918,14 +918,14 @@ static WaitressReturn_t WaitressSendRequ
+ 	if (WaitressProxyEnabled (waith) && !waith->url.tls) {
+ 		snprintf (buf, WAITRESS_BUFFER_SIZE,
+ 			"%s http://%s:%s/%s HTTP/" WAITRESS_HTTP_VERSION "\r\n"
+-			"Host: %s\r\nUser-Agent: " PACKAGE "\r\nConnection: Close\r\n",
++			"Host: %s\r\nUser-Agent: " LIBWAITRESS_NAME "\r\nConnection: Close\r\n",
+ 			(waith->method == WAITRESS_METHOD_GET ? "GET" : "POST"),
+ 			waith->url.host,
+ 			WaitressDefaultPort (&waith->url), path, waith->url.host);
+ 	} else {
+ 		snprintf (buf, WAITRESS_BUFFER_SIZE,
+ 			"%s /%s HTTP/" WAITRESS_HTTP_VERSION "\r\n"
+-			"Host: %s\r\nUser-Agent: " PACKAGE "\r\nConnection: Close\r\n",
++			"Host: %s\r\nUser-Agent: " LIBWAITRESS_NAME "\r\nConnection: Close\r\n",
+ 			(waith->method == WAITRESS_METHOD_GET ? "GET" : "POST"),
+ 			path, waith->url.host);
+ 	}
+--- a/src/libwaitress/waitress.h
++++ b/src/libwaitress/waitress.h
+@@ -29,6 +29,8 @@ THE SOFTWARE.
+ #include <stdbool.h>
+ #include <gnutls/gnutls.h>
+ 
++#define LIBWAITRESS_NAME "libwaitress"
++
+ #define WAITRESS_BUFFER_SIZE 10*1024
+ 
+ typedef enum {
+--- a/src/libpiano/request.c
++++ b/src/libpiano/request.c
+@@ -40,6 +40,7 @@ THE SOFTWARE.
+ #include <stdio.h>
+ #include <string.h>
+ /* needed for urlencode */
++#include <config.h>
+ #include <waitress.h>
+ 
+ #include "piano.h"

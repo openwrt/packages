@@ -1,0 +1,94 @@
+#!/bin/sh /etc/rc.common
+#
+# Fwknop is developed primarily by the people listed in the file 'AUTHORS'.
+# Copyright (C) 2009-2014 fwknop developers and contributors. For a full
+# list of contributors, see the file 'CREDITS'.
+#
+. /lib/functions.sh
+START=95
+
+FWKNOPD_BIN=/usr/sbin/fwknopd
+
+start()
+{
+	gen_confs
+        $FWKNOPD_BIN 
+}
+
+stop()
+{
+        $FWKNOPD_BIN -K
+}
+
+restart()
+{
+    stop;
+    sleep 1;
+    start;
+}
+
+reload()
+{
+	gen_confs
+        $FWKNOPD_BIN -R
+}
+
+gen_confs()
+{
+	[ -f /tmp/access.conf.tmp ] && rm /tmp/access.conf.tmp
+	if [`uci get fwknopd.@access[0].PCAP_INTF` = ""]
+	then
+		. /lib/functions/network.sh
+		network_get_physdev device wan
+		uci set fwknopd.@config[0].PCAP_INTF="$device"
+		uci commit
+	fi
+	config_cb() {
+		local type="$1"
+		local name="$2"
+		if [ "$type" = "global" ]; then
+			option_cb() {
+				local option="$1"
+				local value="$2"
+				if [ "$option" = "uci_enabled" ] && [ "$value" -eq 1 ] ; then
+					> /etc/fwknop/fwknopd.conf
+					> /etc/fwknop/access.conf
+					UCI_ENABLED=1
+				fi
+			}
+		elif [ "$type" = "config" ]; then
+			option_cb() {
+				local option="$1"
+				local value="$2"
+				if [ $UCI_ENABLED ]; then
+					echo "$option $value" >> /etc/fwknop/fwknopd.conf  #writing each option to fwknopd.conf
+				fi
+			}
+		elif [ "$type" = "access" ]
+		then
+			if [ -f /tmp/access.conf.tmp ] ; then
+				cat /tmp/access.conf.tmp >> /etc/fwknop/access.conf
+				rm /tmp/access.conf.tmp
+			fi
+			option_cb() {
+				local option="$1"
+				local value="$2"
+				if [ $UCI_ENABLED ] && [ $option = "SOURCE" ]; then
+					echo "$option $value" >> /etc/fwknop/access.conf  #writing each option to access.conf
+				fi
+				if [ $UCI_ENABLED ] && [ $option != "SOURCE" ]; then
+					echo "$option $value" >> /tmp/access.conf.tmp  #writing each option to access.conf
+				fi
+			}
+		fi
+	}
+
+	if [ -f /etc/config/fwknopd ]; then
+		config_load fwknopd
+		if [ -f /tmp/access.conf.tmp ] ; then
+			cat /tmp/access.conf.tmp >> /etc/fwknop/access.conf
+			rm /tmp/access.conf.tmp
+		fi
+	fi
+
+}

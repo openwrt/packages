@@ -11,11 +11,11 @@ Only one DO is supported now.
  src/pkcs15init/pkcs15-openpgp.c | 38 +++++++++++++++++++++++++++++++++++++-
  2 files changed, 38 insertions(+), 2 deletions(-)
 
-diff --git a/src/libopensc/pkcs15-openpgp.c b/src/libopensc/pkcs15-openpgp.c
-index 51a2032..4cc1c39 100644
---- a/src/libopensc/pkcs15-openpgp.c
-+++ b/src/libopensc/pkcs15-openpgp.c
-@@ -393,7 +393,7 @@ sc_pkcs15emu_openpgp_add_data(sc_pkcs15_card_t *p15card)
+Index: opensc-20150513/src/libopensc/pkcs15-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/pkcs15-openpgp.c
++++ opensc-20150513/src/libopensc/pkcs15-openpgp.c
+@@ -395,7 +395,7 @@ sc_pkcs15emu_openpgp_add_data(sc_pkcs15_
  		 */
  		r = read_file(p15card->card, path, content, sizeof(content));
  		if (r <= 0 ) {
@@ -24,11 +24,11 @@ index 51a2032..4cc1c39 100644
  			/* Skip */
  			continue;
  		}
-diff --git a/src/pkcs15init/pkcs15-openpgp.c b/src/pkcs15init/pkcs15-openpgp.c
-index f3a4962..1455580 100755
---- a/src/pkcs15init/pkcs15-openpgp.c
-+++ b/src/pkcs15init/pkcs15-openpgp.c
-@@ -236,13 +236,16 @@ static int openpgp_emu_update_tokeninfo(sc_profile_t *profile, sc_pkcs15_card_t
+Index: opensc-20150513/src/pkcs15init/pkcs15-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/pkcs15init/pkcs15-openpgp.c
++++ opensc-20150513/src/pkcs15init/pkcs15-openpgp.c
+@@ -236,13 +236,16 @@ static int openpgp_emu_update_tokeninfo(
  }
  
  static int openpgp_store_data(struct sc_pkcs15_card *p15card, struct sc_profile *profile,
@@ -46,7 +46,7 @@ index f3a4962..1455580 100755
  	int r;
  
  	LOG_FUNC_CALLED(card->ctx);
-@@ -282,6 +285,39 @@ static int openpgp_store_data(struct sc_pkcs15_card *p15card, struct sc_profile
+@@ -282,6 +285,39 @@ static int openpgp_store_data(struct sc_
  			                     content->len, 0);
  		break;
  
@@ -86,6 +86,3 @@ index f3a4962..1455580 100755
  	default:
  		r = SC_ERROR_NOT_IMPLEMENTED;
  	}
--- 
-2.1.3
-

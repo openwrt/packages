@@ -1,21 +1,23 @@
 # This makefile simplifies perl module builds.
 #
 
+PERL_VERSION:=5.22
+
 # Build environment
 HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
-ifneq ($(CONFIG_USE_EGLIBC),)
+ifneq ($(CONFIG_USE_GLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
-PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl5.20.0
+PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl$(PERL_VERSION).0
 
-MOD_CFLAGS_PERL:=$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)
+MOD_CFLAGS_PERL:=-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $(TARGET_CFLAGS) $(TARGET_CPPFLAGS)
 ifdef CONFIG_PERL_THREADS
 	MOD_CFLAGS_PERL+= -D_REENTRANT -D_GNU_SOURCE
 endif
 
 # Module install prefix
-PERL_SITELIB:=/usr/lib/perl5/5.20
+PERL_SITELIB:=/usr/lib/perl5/$(PERL_VERSION)
 PERL_TESTSDIR:=/usr/share/perl/perl-tests
 PERLBASE_TESTSDIR:=/usr/share/perl/perlbase-tests
 PERLMOD_TESTSDIR:=/usr/share/perl/perlmod-tests
@@ -52,10 +54,10 @@ define perlmod/host/Install
 endef
 
 define perlmod/Configure
-	(cd $(PKG_BUILD_DIR); \
+	(cd $(if $(3),$(3),$(PKG_BUILD_DIR)); \
 	PERL_MM_USE_DEFAULT=1 \
 	$(2) \
-	$(PERL_CMD) Makefile.PL \
+	$(PERL_CMD) -MConfig -e '$$$${tied %Config::Config}{cpprun}="$(GNU_TARGET_NAME)-cpp -E"; do "Makefile.PL"' \
 		$(1) \
 		AR=ar \
 		CC=$(GNU_TARGET_NAME)-gcc \
@@ -67,7 +69,7 @@ define perlmod/Configure
 		EXE_EXT=" " \
 		FULL_AR=$(GNU_TARGET_NAME)-ar \
 		LD=$(GNU_TARGET_NAME)-gcc \
-		LDDLFLAGS="-shared $(TARGET_LDFLAGS)"  \
+		LDDLFLAGS="-shared -rdynamic $(TARGET_LDFLAGS)"  \
 		LDFLAGS="$(EXTRA_LIBDIRS:%=-L%) $(EXTRA_LIBS:%=-l%) " \
 		LIBC=" " \
 		LIB_EXT=.a \
@@ -102,13 +104,13 @@ define perlmod/Configure
 		LINKTYPE=dynamic \
 		DESTDIR=$(PKG_INSTALL_DIR) \
 	);
-	sed 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/5.20/CORE/!' -i $(PKG_BUILD_DIR)/Makefile
+	sed 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/$(PERL_VERSION)/CORE/!' -i $(PKG_BUILD_DIR)/Makefile
 endef
 
 define perlmod/Compile
 	PERL5LIB=$(PERL_LIB) \
 	$(2) \
-	$(MAKE) -C $(PKG_BUILD_DIR) \
+	$(MAKE) -C $(if $(3),$(3),$(PKG_BUILD_DIR)) \
 		$(1) \
 		install
 endef

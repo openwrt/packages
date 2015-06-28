@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2005-2010 OpenWrt.org
+# Copyright (C) 2014-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,18 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libseccomp
-PKG_VERSION:=2.2.0
+PKG_VERSION:=2.2.1
 PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/seccomp/libseccomp/releases/download/v$(PKG_VERSION)/
-PKG_MD5SUM:=e9509301a1fc024cd10127ac1f31792a
+PKG_MD5SUM:=068af8e1bc36fcd4b326ee83875ab4fd
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 
 PKG_INSTALL:=1
 PKG_LIBTOOL_PATHS:=. lib
 PKG_CHECK_FORMAT_SECURITY:=0
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_KERNEL_SECCOMP
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -48,12 +51,6 @@ endef
 
 define Package/libseccomp/description
  This package contains the seccomp library.
-endef
-
-define Build/Configure
-	$(SED) 's,-I$$$${includedir},,g' $(PKG_BUILD_DIR)/configure
-	$(SED) 's,-L$$$${libdir},,g' $(PKG_BUILD_DIR)/configure
-	$(call Build/Configure/Default)
 endef
 
 define Build/InstallDev

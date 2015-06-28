@@ -1,6 +1,8 @@
---- a/src/Makefile.in	2013-09-20 23:52:15.000000000 +0300
-+++ b/src/Makefile.in	2014-05-03 23:06:17.000000000 +0300
-@@ -76,7 +76,6 @@
+diff --git a/src/Makefile.in b/src/Makefile.in
+index 31d45f7..d249f67 100644
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -86,7 +86,6 @@ POST_INSTALL = :
  NORMAL_UNINSTALL = :
  PRE_UNINSTALL = :
  POST_UNINSTALL = :
@@ -8,7 +10,7 @@
  @INCLUDE_LUASHELL_TRUE@@USE_LUA_TRUE@am__append_1 = h_lua.c h_lua.h
  @INCLUDE_LUACSHELL_TRUE@@USE_LUA_TRUE@am__append_2 = h_luac.c h_luac.h
  bin_PROGRAMS = haserl$(EXEEXT)
-@@ -115,9 +114,6 @@
+@@ -124,9 +123,6 @@ am__DEPENDENCIES_1 =
  haserl_DEPENDENCIES = $(am__DEPENDENCIES_1)
  haserl_LINK = $(CCLD) $(haserl_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
  	$(LDFLAGS) -o $@
@@ -18,7 +20,7 @@
  AM_V_P = $(am__v_P_@AM_V@)
  am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
  am__v_P_0 = false
-@@ -150,8 +146,8 @@
+@@ -159,8 +155,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
  am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
  am__v_CCLD_0 = @echo "  CCLD    " $@;
  am__v_CCLD_1 = 
@@ -29,7 +31,7 @@
  am__can_run_installinfo = \
    case $$AM_UPDATE_INFO_DIR in \
      n|no|NO) false;; \
-@@ -273,7 +269,7 @@
+@@ -284,7 +280,7 @@ target_alias = @target_alias@
  top_build_prefix = @top_build_prefix@
  top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
@@ -38,7 +40,7 @@
  
  # Not strictly required, but we explicitly do not distribute the generated inc file
  nodist_haserl_SOURCES = haserl_lualib.inc
-@@ -386,10 +382,6 @@
+@@ -396,10 +392,6 @@ haserl$(EXEEXT): $(haserl_OBJECTS) $(haserl_DEPENDENCIES) $(EXTRA_haserl_DEPENDE
  	@rm -f haserl$(EXEEXT)
  	$(AM_V_CCLD)$(haserl_LINK) $(haserl_OBJECTS) $(haserl_LDADD) $(LIBS)
  
@@ -49,7 +51,7 @@
  mostlyclean-compile:
  	-rm -f *.$(OBJEXT)
  
-@@ -406,7 +398,6 @@
+@@ -416,7 +408,6 @@ distclean-compile:
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/haserl-haserl.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/haserl-rfc2388.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/haserl-sliding_buffer.Po@am__quote@
@@ -57,8 +59,8 @@
  
  .c.o:
  @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@@ -758,17 +749,13 @@
- 	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS
+@@ -770,17 +761,13 @@ uninstall-am: uninstall-binPROGRAMS
+ .PRECIOUS: Makefile
  
  
 -# lua2c_LIBS ?= -llua -ldl -lm

@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
-PKG_VERSION:=4.0.6
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=4.1.2
+PKG_RELEASE=$(PKG_SOURCE_VERSION)-2
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/haiwen/seafile.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=adf9a875a960c1471bf6c93fce397c576e985bb3
+PKG_SOURCE_VERSION:=c0166019c712e2e1d5e532fd5f7401b1b72db6d8
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -31,13 +31,17 @@ define Package/seafile-server
     URL:=http://seafile.com/
     DEPENDS:=+shadow-useradd +libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub \
 		+sqlite3-cli +python-mysql +jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 \
-		+libmysqlclient +libevhtp +libpthread +libuuid \
+		+libmysqlclient +libpthread +libuuid \
 		+bash +sudo +procps +procps-pkill $(ICONV_DEPENDS)
-    EXTRA_DEPENDS:=seafile-ccnet (=4.0.6-1e1aeae83cc33356ebd5f064f4a4c148186b814d), seafile-seahub (=4.0.6-739b32b02c4803448d5cb75b3e22ec0073930aed)
+    EXTRA_DEPENDS:=seafile-ccnet (=4.1.2-a73109f09af4ecc49cdc4c57cdde51b38e15c31a), seafile-seahub (=4.1.2-3fb1288f920de03a4e2e6a06b60671ce98971742)
 endef
 
 define Package/seafile-server/description
    Open source cloud storage with advanced features on privacy protection and teamwork.
+endef
+
+define Package/seafile-server/conffiles
+/etc/config/seafile
 endef
 
 CONFIGURE_ARGS += --disable-riak \
@@ -50,7 +54,8 @@ CONFIGURE_ARGS += --disable-riak \
 		    --disable-console
 
 PKG_BUILD_DEPENDS:=vala/host \
-		    libsearpc/host
+		    libsearpc/host \
+		    libevhtp-1.1
 
 TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -liconv \
 		    -L$(STAGING_DIR)/usr/lib/mysql -lmysqlclient -lz
@@ -60,6 +65,7 @@ define Package/seafile-server/install
 	$(INSTALL_DIR) $(1)/usr/lib/python2.7/site-packages
 	$(INSTALL_DIR) $(1)/usr/share/seafile/seafile-server/runtime
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/config
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python2.7/site-packages/seafile/ $(1)/usr/lib/python2.7/site-packages/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python2.7/site-packages/seaserv/ $(1)/usr/lib/python2.7/site-packages/
@@ -71,6 +77,7 @@ define Package/seafile-server/install
 	$(CP) $(PKG_BUILD_DIR)/scripts/sqlite2mysql.sh $(1)/usr/share/seafile/seafile-server/
 	$(CP) $(PKG_BUILD_DIR)/scripts/upgrade/ $(1)/usr/share/seafile/seafile-server/
 	$(INSTALL_BIN) ./files/seafile.init $(1)/etc/init.d/seafile
+	$(CP) ./files/seafile.conf $(1)/etc/config/seafile
 endef
 
 define Build/InstallDev

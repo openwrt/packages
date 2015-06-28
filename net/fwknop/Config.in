@@ -1,0 +1,12 @@
+#fwknop config
+menu "Configuration"
+	depends on PACKAGE_fwknopd
+
+config FWKNOPD_GPG
+	bool "Enable GPG support"
+	select PACKAGE_gnupg
+	default n
+
+
+
+endmenu

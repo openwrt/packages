@@ -1,0 +1,279 @@
+menu "Flashrom configuration"
+	depends on PACKAGE_flashrom
+
+	choice
+		prompt "Default Programmer"
+		default DEFPROG_INTERNAL if FLASHROM_PCI
+		default DEFPROG_LINUX_SPI
+
+		config DEFPROG_INTERNAL
+			depends on FRPROG_INTERNAL
+			bool "Internal"
+
+		config DEFPROG_LINUX_SPI
+			depends on FRPROG_LINUX_SPI
+			bool "Linux SPI"
+
+		config DEFPROG_SERPROG
+			depends on FRPROG_SERPROG
+			bool "Serial"
+
+		config DEFPROG_RAYER_SPI
+			depends on FRPROG_RAYER_SPI
+			bool "Rayer SPI"
+
+		config DEFPROG_PONY_SPI
+			depends on FRPROG_PONY_SPI
+			bool "Pony SPI"
+
+		config DEFPROG_NIC3COM
+			depends on FRPROG_NIC3COM
+			bool "NIC3Com"
+
+		config DEFPROG_GFXNVIDIA
+			depends on FRPROG_GFXNVIDIA
+			bool "GFX Nvidia"
+
+		config DEFPROG_SATASII
+			depends on FRPROG_SATASII
+			bool "SATASII"
+
+#		config DEFPROG_ATAHPT
+#			depends on FRPROG_ATAHPT
+#			bool "Highpoint (HPT) ATA/RAID"
+
+		config DEFPROG_ATAVIA
+			depends on FRPROG_ATAVIA
+			bool "ATAVIA"
+
+		config DEFPROG_FT2232_SPI
+			depends on FRPROG_FT2232_SPI
+			bool "FT2232 SPI"
+
+		config DEFPROG_USBBLASTER_SPI
+			depends on FRPROG_USBBLASTER_SPI
+			bool "USBBlaster SPI"
+
+#		config DEFPROG_MSTARDDC_SPI
+#			depends on FRPROG_MSTARDDC_SPI
+#			bool "MSTAR DDC SPI"
+
+		config DEFPROG_PICKIT2_SPI
+			depends on FRPROG_PICKIT2_SPI
+			bool "PICkit2 SPI"
+
+		config DEFPROG_DUMMY
+			depends on FRPROG_DUMMY
+			bool "Dummy"
+
+		config DEFPROG_DRKAISER
+			depends on FRPROG_DRKAISER
+			bool "Dr. Kaiser"
+
+		config DEFPROG_NICREALTEK
+			depends on FRPROG_NICREALTEK
+			bool "Realtek NICs"
+
+#		config DEFPROG_NICNATSEMI
+#			depends on FRPROG_NICNATSEMI
+#			bool "National Semiconductor NICs"
+
+		config DEFPROG_NICINTEL
+			depends on FRPROG_NICINTEL
+			bool "Intel NICs"
+
+		config DEFPROG_NICINTEL_SPI
+			depends on FRPROG_NICINTEL_SPI
+			bool "Intel NICs SPI"
+
+		config DEFPROG_NICINTEL_EEPROM
+			depends on FRPROG_NICINTEL_EEPROM
+			bool "Intel NICs EEPROM"
+
+		config DEFPROG_OGP_SPI
+			depends on FRPROG_OGP_SPI
+			bool "OGP SPI"
+
+		config DEFPROG_BUSPIRATE_SPI
+			depends on FRPROG_BUSPIRATE_SPI
+			bool "SPI BUS Pirate"
+
+#		config DEFPROG_DEDIPROG
+#			depends on FRPROG_DEDIPROG
+#			bool "Dediprog SF100"
+
+		config DEFPROG_SATAMV
+			depends on FRPROG_SATAMV
+			bool "Marvell SATA"
+
+		config DEFPROG_IT8212
+			depends on FRPROG_IT8212
+			bool "ITE IT8212F PATA"
+	endchoice
+
+
+	menu "Misc Programmers"
+		config FRPROG_LINUX_SPI
+			bool "Linux SPI"
+			default y
+
+#		config FRPROG_MSTARDDC_SPI
+#			bool "MSTAR DDC"
+#			default n
+
+		config FRPROG_DUMMY
+			bool "Dummy"
+			default y
+	endmenu
+
+
+	config FLASHROM_FTDI
+		bool "FTDI Support"
+		default y
+
+	menu "FTDI Programmers"
+		depends on FLASHROM_FTDI
+
+		config FRPROG_FT2232_SPI
+			depends on FLASHROM_FTDI
+			bool "FT2232 SPI"
+			default y
+
+		config FRPROG_USBBLASTER_SPI
+			depends on FLASHROM_FTDI
+			bool "USBBlaster SPI"
+			default y
+	endmenu
+
+
+	config FLASHROM_PCI
+		bool "PCI Support"
+		default y if (TARGET_x86||TARGET_x86_64)
+
+	menu "PCI Programmers"
+		depends on FLASHROM_PCI
+
+		config FRPROG_INTERNAL
+			depends on FLASHROM_PCI
+			bool "Internal"
+			default y
+
+		config FRPROG_RAYER_SPI
+			depends on FLASHROM_PCI
+			bool "Rayer SPI"
+			default y
+
+		config FRPROG_NIC3COM
+			depends on FLASHROM_PCI
+			bool "NIC3Com"
+			default y
+
+		config FRPROG_GFXNVIDIA
+			depends on FLASHROM_PCI
+			bool "GFX Nvidia"
+			default y
+
+		config FRPROG_SATASII
+			depends on FLASHROM_PCI
+			bool "SATASII"
+			default y
+
+#		config FRPROG_ATAHPT
+#			depends on FLASHROM_PCI
+#			bool "Highpoint (HPT) ATA/RAID"
+#			default n
+
+		config FRPROG_ATAVIA
+			depends on FLASHROM_PCI
+			bool "ATAVIA"
+			default y
+
+		config FRPROG_IT8212
+			depends on FLASHROM_PCI
+			bool "ITE IT8212F PATA"
+			default y
+
+		config FRPROG_DRKAISER
+			depends on FLASHROM_PCI
+			bool "Dr. Kaiser"
+			default y
+
+		config FRPROG_NICREALTEK
+			depends on FLASHROM_PCI
+			bool "Realtek NICs"
+			default y
+
+#		config FRPROG_NICNATSEMI
+#			depends on FLASHROM_PCI
+#			bool "National Semiconductor NICs"
+#			default n
+
+		config FRPROG_NICINTEL
+			depends on FLASHROM_PCI
+			bool "Intel NICs"
+			default y
+
+		config FRPROG_NICINTEL_SPI
+			depends on FLASHROM_PCI
+			bool "Intel NICs SPI"
+			default y
+
+		config FRPROG_NICINTEL_EEPROM
+			depends on FLASHROM_PCI
+			bool "Intel NICs EEPROM"
+			default y
+
+		config FRPROG_OGP_SPI
+			depends on FLASHROM_PCI
+			bool "OGP SPI"
+			default y
+
+		config FRPROG_SATAMV
+			depends on FLASHROM_PCI
+			bool "Marvell SATA"
+			default y
+	endmenu
+
+
+	config FLASHROM_SERIAL
+		bool "Serial Support"
+		default y
+
+	menu "Serial Programmers"
+		depends on FLASHROM_SERIAL
+
+		config FRPROG_SERPROG
+			depends on FLASHROM_SERIAL
+			bool "Serial"
+			default y
+
+		config FRPROG_PONY_SPI
+			depends on FLASHROM_SERIAL
+			bool "Pony SPI"
+			default y
+
+		config FRPROG_BUSPIRATE_SPI
+			depends on FLASHROM_SERIAL
+			bool "SPI BUS Pirate"
+			default y
+	endmenu
+
+
+	config FLASHROM_USB
+		bool "USB Support"
+		default y
+
+	menu "USB Programmers"
+		depends on FLASHROM_USB
+
+		config FRPROG_PICKIT2_SPI
+			depends on FLASHROM_USB
+			bool "PICkit2 SPI"
+			default y
+
+#		config FRPROG_DEDIPROG
+#			depends on FLASHROM_USB
+#			bool "Dediprog SF100"
+#			default n
+	endmenu
+endmenu

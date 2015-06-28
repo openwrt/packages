@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lttng-modules
-PKG_VERSION:=2.6.0
+PKG_VERSION:=2.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://lttng.org/files/$(PKG_NAME)/
-PKG_MD5SUM:=a058ab037daaca293a54934d7b9f9c98
+PKG_MD5SUM:=ccfb50ad922cdaf54a809e2d9de23da4
 
 PKG_LICENSE:=LGPL-2.1 GPL-2.0 MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -26,7 +26,7 @@ define KernelPackage/lttng
   SUBMENU:=Other modules
   TITLE:=Linux Trace Toolkit: next generation (kernel modules)
   URL:=https://lttng.org/
-  DEPENDS:= @!TARGET_uml @KERNEL_FTRACE
+  DEPENDS:= @!TARGET_uml @KERNEL_FTRACE_SYSCALLS
   FILES:= \
 	$(PKG_BUILD_DIR)/lttng-*.$(LINUX_KMOD_SUFFIX) \
 	$(PKG_BUILD_DIR)/lib/lttng-*.$(LINUX_KMOD_SUFFIX) \

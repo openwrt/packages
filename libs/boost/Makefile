@@ -16,211 +16,156 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/target.mk 
 
 PKG_NAME:=boost
-PKG_VERSION:=1_57_0
-PKG_RELEASE:=2
+PKG_VERSION:=1_58_0
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_VERSION)
-PKG_MD5SUM:=25f9a8ac28beeb5ab84aa98510305299
+PKG_MD5SUM:=5a5d5614d9a07672e1ab2a250b5defc5
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
-PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com> (Modified from Mirko Vogt <mirko@openwrt.org> Boost 1.51 Original Makefile and patches)
-
+PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
 PKG_BUILD_DEPENDS += boost/host 
 PKG_BUILD_PARALLEL:=0
 PKG_USE_MIPS16:=0
 
-PKG_CONFIG_DEPENDS := \
-	CONFIG_PACKAGE_boost-date_time \
-	CONFIG_PACKAGE_boost-filesystem \
-	CONFIG_PACKAGE_boost-graph \
-	CONFIG_PACKAGE_boost-iostreams \
-	CONFIG_PACKAGE_boost-math \
-	CONFIG_PACKAGE_boost-program_options \
-	CONFIG_PACKAGE_boost-python \
-	CONFIG_PACKAGE_boost-regex \
-	CONFIG_PACKAGE_boost-serialization \
-	CONFIG_PACKAGE_boost-signals \
-	CONFIG_PACKAGE_boost-system \
-	CONFIG_PACKAGE_boost-test \
-	CONFIG_PACKAGE_boost-thread \
-	CONFIG_PACKAGE_boost-wave \
-	CONFIG_PACKAGE_boost-atomic \
-	CONFIG_PACKAGE_boost-context \
-	CONFIG_PACKAGE_boost-container \
-	CONFIG_PACKAGE_boost-coroutine \
-	CONFIG_PACKAGE_boost-log \
-
-
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
+
 
 define Package/boost/Default
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=Boost C++ source libraries
+  TITLE:=Boost C++ source library
   URL:=http://www.boost.org
   DEPENDS:=+libstdcpp +libpthread +librt
 endef
 
-define Package/boost/Default/description
+define Package/boost/description/Default
   Boost provides free peer-reviewed portable C++ source libraries
 endef
 
-define Package/boost-atomic
-  $(call Package/boost/Default)
-  TITLE+= (atomic)
-  DEPENDS+= +boost-system
+BOOST_LIBS =
+
+define Package/boost-libs
+$(call Package/boost/Default)
+  TITLE+= (all libs)
+  DEPENDS+= $(BOOST_DEPENDS)
+  HIDDEN:=1
 endef
 
-define Package/boost-chrono
-  $(call Package/boost/Default)
-  TITLE+= (chrono)
-  DEPENDS+= +boost-system
+define Package/boost-libs/description
+$(call Package/boost/description/Default)
+ .
+ This meta package contains only dependencies to the other libraries from
+ the boost libraries collection.
 endef
 
-define Package/boost-date_time
-  $(call Package/boost/Default)
-  TITLE+= (date_time)
+# Create a meta-package of dependent libraries (for ALL)
+define Package/boost-libs/install
+  true
 endef
 
-define Package/boost-exception
-  $(call Package/boost/Default)
-  TITLE+= (exception)
-endef
-
-define Package/boost-filesystem
-  $(call Package/boost/Default)
-  TITLE+= (filesystem)
-  DEPENDS+= +boost-system
-endef
-
-define Package/boost-graph
-  $(call Package/boost/Default)
-  TITLE+= (graph)
-  DEPENDS+= +boost-regex
-endef
-
-define Package/boost-graph_parallel
-  $(call Package/boost/Default)
-  TITLE+= (graph_parallel)
-endef
-
-define Package/boost-iostreams
-  $(call Package/boost/Default)
-  TITLE+= (iostreams)
-  DEPENDS+= +zlib
-endef
-
-define Package/boost-locale
-  $(call Package/boost/Default)
-  TITLE+= (locale)
-  DEPENDS+= $(ICONV_DEPENDS)
-endef
-
-define Package/boost-math
-  $(call Package/boost/Default)
-  TITLE+= (math)
-endef
-
-define Package/boost-mpi
-  $(call Package/boost/Default)
-  TITLE+= (mpi)
-endef
-
-define Package/boost-program_options
-  $(call Package/boost/Default)
-  TITLE+= (program_options)
-endef
-
-define Package/boost-python
-  $(call Package/boost/Default)
-  TITLE+= (python)
-  DEPENDS+= +PACKAGE_boost-python:python
-endef
-
-define Package/boost-random
-  $(call Package/boost/Default)
-  TITLE+= (random)
-  DEPENDS+= +boost-system
-endef
-
-define Package/boost-regex
-  $(call Package/boost/Default)
-  TITLE+= (regex)
-endef
-
-define Package/boost-serialization
-  $(call Package/boost/Default)
-  TITLE+= (serialization)
-endef
-
-define Package/boost-signals
-  $(call Package/boost/Default)
-  TITLE+= (signals)
-endef
-
-define Package/boost-system
-  $(call Package/boost/Default)
-  TITLE+= (system)
-endef
-
-define Package/boost-test
-  $(call Package/boost/Default)
-  TITLE+= (test)
-endef
-
-define Package/boost-thread
-  $(call Package/boost/Default)
-  TITLE+= (thread)
-  DEPENDS+= +boost-system +boost-chrono +boost-atomic
-endef
-
-define Package/boost-timer
-  $(call Package/boost/Default)
-  TITLE+= (timer)
-  DEPENDS+= boost-chrono
-endef
-
-define Package/boost-wave
-  $(call Package/boost/Default)
-  TITLE+= (wave)
-  DEPENDS+= +boost-date_time +boost-thread +boost-filesystem
-endef
-
-define Package/boost-context
-  $(call Package/boost/Default)
-  TITLE+= (context)
-endef
-
-define Package/boost-container
-  $(call Package/boost/Default)
-  TITLE+= (container)
-endef
-
-define Package/boost-coroutine
-  $(call Package/boost/Default)
-  TITLE+= (coroutine)
-  DEPENDS+= +boost-system +boost-chrono +boost-context +boost-thread
-endef
-
-define Package/boost-log
-  $(call Package/boost/Default)
-  TITLE+= (log)
-  DEPENDS+= +boost-system +boost-chrono +boost-date_time +boost-thread +boost-filesystem +boost-regex
+define Package/boost/install
+  true
 endef
 
 define Package/boost
   $(call Package/boost/Default)
-  TITLE+= (header-only)
-  BUILDONLY:=1
+  TITLE+= packages
+  DEPENDS:=+ALL:boost-libs +ALL:boost-test
+endef
+
+define Package/boost/config
+    menu "Select Boost libraries"
+      depends on PACKAGE_boost
+
+    config boost-libs-all
+      bool "Include all Boost libraries"
+      select PACKAGE_boost-libs
+
+   config boost-test-pkg
+     bool "Boost test package"
+     select PACKAGE_boost-test
+
+    comment "Libraries"
+
+    $(foreach lib,$(BOOST_LIBS), \
+        config PACKAGE_boost-$(lib)
+           prompt "Boost $(lib) library"
+
+   )
+
+  endmenu
+
+endef
+
+PKG_CONFIG_DEPENDS:= CONFIG_PACKAGE_boost-test
+
+define Package/boost-test
+  $(call Package/boost/Default)
+  TITLE+= (test)
+  HIDDEN:=1
 endef
 
 define Build/Configure
 endef
+
+# 1: short name
+# 2: dependencies on other boost libraries (short name)
+# 3: dependencies on other packages
+define DefineBoostLibrary
+
+  BOOST_DEPENDS+= +boost-$(1) 
+  BOOST_LIBS+= $(1)
+
+  PKG_CONFIG_DEPENDS+= CONFIG_PACKAGE_boost-$(1)
+
+  define Package/boost-$(1)
+    $(call Package/boost/Default)
+    TITLE+= ($(1))
+    DEPENDS+= $$(foreach lib,$(2),+boost-$$(lib)) $(3)
+    HIDDEN:=1
+  endef
+
+  define Package/boost-$(1)/description
+   $(call Package/boost/description/Default)
+   .
+   This package contains the Boost $(1) library.
+  endef
+endef
+
+$(eval $(call DefineBoostLibrary,atomic,system,))
+$(eval $(call DefineBoostLibrary,chrono,system,))
+$(eval $(call DefineBoostLibrary,container,,))
+$(eval $(call DefineBoostLibrary,context,chrono system thread,))
+$(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,))
+$(eval $(call DefineBoostLibrary,date_time,,))
+#$(eval $(call DefineBoostLibrary,exception,,))
+$(eval $(call DefineBoostLibrary,filesystem,system,))
+$(eval $(call DefineBoostLibrary,graph,regex,))
+#$(eval $(call DefineBoostLibrary,graph_parallel,,))
+$(eval $(call DefineBoostLibrary,iostreams,,+zlib))
+$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS)))
+$(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
+$(eval $(call DefineBoostLibrary,math,,))
+#$(eval $(call DefineBoostLibrary,mpi,,))
+$(eval $(call DefineBoostLibrary,program_options,,))
+$(eval $(call DefineBoostLibrary,random,system,))
+
+# We need a beter way to provide this package, information regarding the Python packages
+#  such as Python version and directories locations. 
+# Python 2.7 version is for now hard-coded. Python 3 is (until this date) broken in the trunk tree.
+$(eval $(call DefineBoostLibrary,python,,+PACKAGE_boost-python:python))
+$(eval $(call DefineBoostLibrary,regex,,))
+$(eval $(call DefineBoostLibrary,serialization,,))
+$(eval $(call DefineBoostLibrary,signals,,))
+$(eval $(call DefineBoostLibrary,system,,))
+$(eval $(call DefineBoostLibrary,thread,system chrono atomic,))
+$(eval $(call DefineBoostLibrary,timer,chrono))
+$(eval $(call DefineBoostLibrary,wave,date_time thread filesystem,))
 
 define Host/Compile
 	# bjam does not provide a configure-script nor a Makefile
@@ -231,26 +176,22 @@ CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
 TARGET_LDFLAGS += -pthread -lrt
 
 
-
-
 ifneq ($(findstring mips,$(ARCH)),)
-    ifeq ($(ARCH),mips64)
-        BOOST_ABI = 64
-    else ifeq ($(ARCH),octeon)
-        BOOST_ABI = 64
-    else
-        BOOST_ABI = o32
+    BOOST_ABI = o32
+    ifneq ($(findstring 64,$(ARCH)),)
+        BOOST_ABI = o64
     endif
-else ifeq ($(ARCH),arm)
-	BOOST_ABI = aapcs
+else ifneq ($(findstring arm,$(ARCH)),)
+    BOOST_ABI = aapcs
+else ifeq ($(ARCH),aarch64)
+    BOOST_ABI = aapcs
 else
-	BOOST_ABI = sysv
+    BOOST_ABI = sysv
 endif
 
 
-
 define Build/Compile
-	echo "Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu $(CPU_TYPE) $(CPU_SUBTYPE)";
+	$(info Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu $(CPU_TYPE) $(CPU_SUBTYPE))
 	( cd $(PKG_BUILD_DIR) ; \
 		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
 		$(if $(CONFIG_PACKAGE_boost-python), \
@@ -262,33 +203,13 @@ define Build/Compile
 			--toolset=gcc-$(ARCH) --build-type=minimal --layout=system abi=$(BOOST_ABI) \
 			--disable-long-double \
 			$(CONFIGURE_ARGS) \
-			$(if $(CONFIG_PACKAGE_boost-atomic),,--without-atomic) \
-			$(if $(CONFIG_PACKAGE_boost-chrono),,--without-chrono) \
-			$(if $(CONFIG_PACKAGE_boost-date_time),,--without-date_time) \
-			$(if $(CONFIG_PACKAGE_boost-exception),,--without-exception) \
-			$(if $(CONFIG_PACKAGE_boost-filesystem),,--without-filesystem) \
-			$(if $(CONFIG_PACKAGE_boost-graph),,--without-graph) \
-			$(if $(CONFIG_PACKAGE_boost-graph_parallel),,--without-graph_parallel) \
-			$(if $(CONFIG_PACKAGE_boost-iostreams),,--without-iostreams) \
-			$(if $(CONFIG_PACKAGE_boost-locale),boost.locale.iconv=on -sICONV_PATH=$(ICONV_PREFIX) boost.locale.posix=$(if $(USE_UCLIBC),on,off), \
-				--without-locale boost.locale.iconv=off) \
-			$(if $(CONFIG_PACKAGE_boost-math),,--without-math) \
-			$(if $(CONFIG_PACKAGE_boost-mpi),,--without-mpi) \
-			$(if $(CONFIG_PACKAGE_boost-program_options),,--without-program_options) \
-			$(if $(CONFIG_PACKAGE_boost-python),,--without-python) \
-			$(if $(CONFIG_PACKAGE_boost-random),,--without-random) \
-			$(if $(CONFIG_PACKAGE_boost-regex),,--without-regex) \
-			$(if $(CONFIG_PACKAGE_boost-serialization),,--without-serialization) \
-			$(if $(CONFIG_PACKAGE_boost-signals),,--without-signals) \
-			$(if $(CONFIG_PACKAGE_boost-system),,--without-system) \
+			--without-mpi \
 			$(if $(CONFIG_PACKAGE_boost-test),,--without-test) \
-			$(if $(CONFIG_PACKAGE_boost-thread),,--without-thread) \
-			$(if $(CONFIG_PACKAGE_boost-timer),,--without-timer) \
-			$(if $(CONFIG_PACKAGE_boost-wave),,--without-wave) \
-			$(if $(CONFIG_PACKAGE_boost-context),,--without-context) \
-			$(if $(CONFIG_PACKAGE_boost-container),,--without-container) \
-			$(if $(CONFIG_PACKAGE_boost-coroutine),,--without-coroutine) \
-			$(if $(CONFIG_PACKAGE_boost-log),,--without-log) \
+			$(foreach lib,$(BOOST_LIBS), \
+				$(if $(CONFIG_PACKAGE_boost-$(lib)),,--without-$(lib)) \
+			) \
+			$(if $(CONFIG_PACKAGE_boost-locale),boost.locale.iconv=on -sICONV_PATH=$(ICONV_PREFIX) boost.locale.posix=$(if $(USE_UCLIBC),on,off), \
+				boost.locale.iconv=off) \
 			\
 			$(if $(CONFIG_PACKAGE_boost-iostreams),-sNO_BZIP2=1 -sZLIB_INCLUDE=$(STAGING_DIR)/usr/include \
 				-sZLIB_LIBPATH=$(STAGING_DIR)/usr/lib) \
@@ -335,74 +256,6 @@ define Package/boost/Default/install
 		$(1)/usr/lib/
 endef
 
-define Package/boost-atomic/install
-  $(call Package/boost/Default/install,$(1),atomic)
-endef
-
-define Package/boost-chrono/install
-  $(call Package/boost/Default/install,$(1),chrono)
-endef
-
-define Package/boost-date_time/install
-  $(call Package/boost/Default/install,$(1),date_time)
-endef
-
-define Package/boost-exception/install
-  $(call Package/boost/Default/install,$(1),exception)
-endef
-
-define Package/boost-filesystem/install
-  $(call Package/boost/Default/install,$(1),filesystem)
-endef
-
-define Package/boost-graph/install
-  $(call Package/boost/Default/install,$(1),graph)
-endef
-
-define Package/boost-graph_parallel/install
-  $(call Package/boost/Default/install,$(1),graph_parallel)
-endef
-
-define Package/boost-iostreams/install
-  $(call Package/boost/Default/install,$(1),iostreams)
-endef
-
-define Package/boost-math/install
-  $(call Package/boost/Default/install,$(1),math)
-endef
-
-define Package/boost-mpi/install
-  $(call Package/boost/Default/install,$(1),mpi)
-endef
-
-define Package/boost-program_options/install
-  $(call Package/boost/Default/install,$(1),program_options)
-endef
-
-define Package/boost-python/install
-  $(call Package/boost/Default/install,$(1),python)
-endef
-
-define Package/boost-random/install
-  $(call Package/boost/Default/install,$(1),random)
-endef
-
-define Package/boost-regex/install
-  $(call Package/boost/Default/install,$(1),regex)
-endef
-
-define Package/boost-serialization/install
-  $(call Package/boost/Default/install,$(1),serialization)
-endef
-
-define Package/boost-signals/install
-  $(call Package/boost/Default/install,$(1),signals)
-endef
-
-define Package/boost-system/install
-  $(call Package/boost/Default/install,$(1),system)
-endef
-
 define Package/boost-test/install
 	$(INSTALL_DIR) \
 		$(1)/usr/lib
@@ -416,61 +269,18 @@ define Package/boost-test/install
 		$(1)/usr/lib/
 endef
 
-define Package/boost-thread/install
-  $(call Package/boost/Default/install,$(1),thread)
+define BuildBoostLibrary
+  define Package/boost-$(1)/install
+	$(call Package/boost/Default/install,$$(1),$(1))
+  endef
+
+  $$(eval $$(call BuildPackage,boost-$(1)))
 endef
-
-define Package/boost-timer/install
-  $(call Package/boost/Default/install,$(1),timer)
-endef
-
-define Package/boost-wave/install
-  $(call Package/boost/Default/install,$(1),wave)
-endef
-
-define Package/boost-context/install
-  $(call Package/boost/Default/install,$(1),context)
-endef
-
-define Package/boost-container/install
-  $(call Package/boost/Default/install,$(1),container)
-endef
-
-define Package/boost-coroutine/install
-  $(call Package/boost/Default/install,$(1),coroutine)
-endef
-
-define Package/boost-log/install
-  $(call Package/boost/Default/install,$(1),log)
-endef
-
-
 
 $(eval $(call HostBuild))
-$(eval $(call BuildPackage,boost))
-$(eval $(call BuildPackage,boost-atomic))
-$(eval $(call BuildPackage,boost-chrono))
-$(eval $(call BuildPackage,boost-date_time))
-#$(eval $(call BuildPackage,boost-exception))
-$(eval $(call BuildPackage,boost-filesystem))
-$(eval $(call BuildPackage,boost-graph))
-#$(eval $(call BuildPackage,boost-graph_parallel))
-$(eval $(call BuildPackage,boost-iostreams))
-$(eval $(call BuildPackage,boost-locale))
-$(eval $(call BuildPackage,boost-math))
-#$(eval $(call BuildPackage,boost-mpi))
-$(eval $(call BuildPackage,boost-program_options))
-$(eval $(call BuildPackage,boost-random))
-$(eval $(call BuildPackage,boost-python))
-$(eval $(call BuildPackage,boost-regex))
-$(eval $(call BuildPackage,boost-serialization))
-$(eval $(call BuildPackage,boost-signals))
-$(eval $(call BuildPackage,boost-system))
+
+$(foreach lib,$(BOOST_LIBS),$(eval $(call BuildBoostLibrary,$(lib))))
 $(eval $(call BuildPackage,boost-test))
-$(eval $(call BuildPackage,boost-thread))
-$(eval $(call BuildPackage,boost-timer))
-$(eval $(call BuildPackage,boost-wave))
-$(eval $(call BuildPackage,boost-context))
-$(eval $(call BuildPackage,boost-container))
-$(eval $(call BuildPackage,boost-coroutine))
-$(eval $(call BuildPackage,boost-log))
+
+$(eval $(call BuildPackage,boost-libs))
+$(eval $(call BuildPackage,boost))

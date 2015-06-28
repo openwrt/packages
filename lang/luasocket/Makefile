@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luasocket
 PKG_SOURCE_VERSION:=6d5e40c324c84d9c1453ae88e0ad5bdd0a631448
 PKG_VERSION:=3.0-rc1-20130909
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/diegonehab/luasocket.git
@@ -56,6 +56,7 @@ define Package/luasocket/install
 	ln -sf ../mime.so.1.0.3 $(1)/usr/lib/lua/mime/core.so
 	$(INSTALL_DIR) $(1)/usr/lib/lua/socket
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/{ftp,http,smtp,tp,url,headers}.lua $(1)/usr/lib/lua/socket
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/unix.so $(1)/usr/lib/lua/socket
 	ln -sf ../socket.so.3.0-rc1 $(1)/usr/lib/lua/socket/core.so
 endef
 

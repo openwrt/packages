@@ -1,12 +1,12 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 
 PYTHON_VERSION:=2.7
-PYTHON_VERSION_MICRO:=9
+PYTHON_VERSION_MICRO:=10
 
 PYTHON_DIR:=$(STAGING_DIR)/usr
 PYTHON_BIN_DIR:=$(PYTHON_DIR)/bin
@@ -25,10 +25,20 @@ define HostPython
 	(	export PYTHONPATH="$(PYTHONPATH)"; \
 		export PYTHONOPTIMIZE=""; \
 		export PYTHONDONTWRITEBYTECODE=1; \
+		export _python_sysroot="$(STAGING_DIR)"; \
+		export _python_prefix="/usr"; \
+		export _python_exec_prefix="/usr"; \
 		$(1) \
 		$(HOST_PYTHON_BIN) $(2); \
 	)
 endef
+
+# These configure args are needed in detection of path to Python header files
+# using autotools.
+CONFIGURE_ARGS += \
+	_python_sysroot="$(STAGING_DIR)" \
+	_python_prefix="/usr" \
+	_python_exec_prefix="/usr"
 
 PKG_USE_MIPS16:=0
 # This is required in addition to PKG_USE_MIPS16:=0 because otherwise MIPS16

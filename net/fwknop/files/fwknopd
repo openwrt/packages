@@ -1,0 +1,9 @@
+config global
+#	option uci_enabled '1'
+
+config access
+	option SOURCE 'ANY'
+	option HMAC_KEY 'CHANGEME'
+	option KEY 'CHANGEME'
+
+config config

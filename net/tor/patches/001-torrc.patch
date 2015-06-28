@@ -14,7 +14,7 @@
  
  ## The port on which Tor will listen for local connections from Tor
  ## controller applications, as documented in control-spec.txt.
-@@ -187,3 +187,4 @@
+@@ -190,3 +190,4 @@
  ## address manually to your friends, uncomment this line:
  #PublishServerDescriptor 0
  

@@ -2,14 +2,15 @@
 . /lib/functions.sh
 
 IP="/usr/sbin/ip -4"
+IPS="/usr/sbin/ipset"
 IPT="/usr/sbin/iptables -t mangle -w"
 
 help()
-{                                                                    
-	cat <<EOF                                                                                      
-Syntax: mwan3 [command]                                                                          
-                                                                                                       
-Available commands:                                                                                    
+{
+	cat <<EOF
+Syntax: mwan3 [command]
+
+Available commands:
 	start           Load iptables rules, ip rules and ip routes
 	stop            Unload iptables rules, ip rules and ip routes
 	restart         Reload iptables rules, ip rules and ip routes
@@ -54,11 +55,11 @@ ifup()
 	if [ -n "$2" ]; then
 		echo "Too many arguments. Usage: mwan3 ifup <interface>" && exit 0
 	fi
-	
+
 	config_get enabled "$1" enabled 0
 
 	device=$(uci get -p /var/state network.$1.ifname) &> /dev/null
-	
+
 	if [ -n "$device" ] ; then
 		[ "$enabled" -eq 1 ] && ACTION=ifup INTERFACE=$1 DEVICE=$device /sbin/hotplug-call iface
 	fi
@@ -71,14 +72,14 @@ interfaces()
 	config_load mwan3
 
 	echo "Interface status:"
-	
+
 	check_iface_status()
 	{
 		let iface_id++
 		device=$(uci get -p /var/state network.$1.ifname) &> /dev/null
 
 		if [ -z "$device" ]; then
-			echo "Interface $1 is unknown"
+			echo " interface $1 is unknown"
 			return 0
 		fi
 
@@ -92,21 +93,21 @@ interfaces()
 
 		if [ -n "$($IP rule | awk '$5 == "'$device'"')" -a -n "$($IPT -S mwan3_iface_$1 2> /dev/null)" -a -n "$($IP route list table $iface_id default dev $device 2> /dev/null)" ]; then
 			if [ -n "$(uci get -p /var/state mwan3.$1.track_ip 2> /dev/null)" ]; then
-				echo "Interface $1 is online (tracking $tracking)"
+				echo " interface $1 is online (tracking $tracking)"
 			else
-				echo "Interface $1 is online"
+				echo " interface $1 is online"
 			fi
 		elif [ -n "$($IP rule | awk '$5 == "'$device'"')" -o -n "$($IPT -S mwan3_iface_$1 2> /dev/null)" -o -n "$($IP route list table $iface_id default dev $device 2> /dev/null)" ]; then
-			echo "Interface $1 error"
+			echo " interface $1 error"
 		else
 			if [ "$enabled" -eq 1 ]; then
 				if [ -n "$(uci get -p /var/state mwan3.$1.track_ip 2> /dev/null)" ]; then
-					echo "Interface $1 is offline (tracking $tracking)"
+					echo " interface $1 is offline (tracking $tracking)"
 				else
-					echo "Interface $1 is offline"
+					echo " interface $1 is offline"
 				fi
 			else
-				echo "Interface $1 is disabled"
+				echo " interface $1 is disabled"
 			fi
 		fi
 	}
@@ -141,17 +142,19 @@ policies()
 }
 rules()
 {
+	local address
+
 	if [ -n "$($IPT -S mwan3_connected 2> /dev/null)" ]; then
 		echo "Known networks:"
-		echo "destination policy hits" | awk '{ printf "%-19s%-19s%-9s%s\n",$1,$2,$3}' | awk '1; {gsub(".","-")}1'
-		$IPT -L mwan3_connected -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_//' | awk '{printf "%-19s%-19s%-9s%s\n",$9,"default",$1}'
+		for address in $($IPS list mwan3_connected | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}'); do
+			echo " $address"
+		done
 		echo -e
 	fi
 
 	if [ -n "$($IPT -S mwan3_rules 2> /dev/null)" ]; then
 		echo "Active rules:"
-		echo "source destination proto src-port dest-port policy hits" | awk '{ printf "%-19s%-19s%-7s%-14s%-14s%-16s%-9s%s\n",$1,$2,$3,$4,$5,$6,$7}' | awk '1; {gsub(".","-")}1'
-		$IPT -L mwan3_rules -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_//' | awk '{ printf "%-19s%-19s%-7s%-14s%-14s%-16s%-9s%s\n",$8,$9,$4,$12,$15,$3,$1}'
+		$IPT -L mwan3_rules -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_/- /' | sed 's/mwan3_rule_/S /'
 		echo -e
 	fi
 }
@@ -171,7 +174,7 @@ start()
 
 stop()
 {
-	local route rule table
+	local ipset route rule table
 
 	killall mwan3track &> /dev/null
 	rm /var/run/mwan3track-* &> /dev/null
@@ -186,7 +189,6 @@ stop()
 
 	$IPT -D PREROUTING -j mwan3_hook &> /dev/null
 	$IPT -D OUTPUT -j mwan3_hook &> /dev/null
-	$IPT -D OUTPUT -j mwan3_output_hook &> /dev/null
 
 	for table in $($IPT -S | awk '{print $2}' | grep mwan3 | sort -u); do
 		$IPT -F $table &> /dev/null
@@ -194,6 +196,10 @@ stop()
 
 	for table in $($IPT -S | awk '{print $2}' | grep mwan3 | sort -u); do
 		$IPT -X $table &> /dev/null
+	done
+
+	for ipset in $(ipset -n list | grep mwan3); do
+		$IPS destroy $ipset
 	done
 }
 

@@ -9,11 +9,11 @@ Subject: [PATCH 21/26] OpenPGP: Don't reimplement gnuk_delete_key in
  src/tools/openpgp-tool.c | 64 ++++++------------------------------------------
  1 file changed, 8 insertions(+), 56 deletions(-)
 
-diff --git a/src/tools/openpgp-tool.c b/src/tools/openpgp-tool.c
-index 505abd9..a7796e7 100644
---- a/src/tools/openpgp-tool.c
-+++ b/src/tools/openpgp-tool.c
-@@ -468,38 +468,6 @@ int do_verify(sc_card_t *card, char *type, char *pin)
+Index: opensc-20150513/src/tools/openpgp-tool.c
+===================================================================
+--- opensc-20150513.orig/src/tools/openpgp-tool.c
++++ opensc-20150513/src/tools/openpgp-tool.c
+@@ -468,38 +468,6 @@ int do_verify(sc_card_t *card, char *typ
  }
  
  /**
@@ -52,7 +52,7 @@ index 505abd9..a7796e7 100644
   * Delete key, for OpenPGP card.
   * This function is not complete and is reserved for future version (> 2) of OpenPGP card.
   **/
-@@ -547,32 +515,13 @@ int delete_key_openpgp(sc_card_t *card, u8 key_id)
+@@ -547,32 +515,13 @@ int delete_key_openpgp(sc_card_t *card,
  	}
  	/* TODO: Rewrite Extended Header List.
  	 * Not support by OpenGPG v2 yet */
@@ -87,7 +87,7 @@ index 505abd9..a7796e7 100644
  	int r = SC_SUCCESS;
  
  	/* Currently, only Gnuk supports deleting keys */
-@@ -586,13 +535,16 @@ int do_delete_key(sc_card_t *card, u8 key_id)
+@@ -586,13 +535,16 @@ int do_delete_key(sc_card_t *card, u8 ke
  		return SC_ERROR_INVALID_ARGUMENTS;
  	}
  	if (key_id == 1 || key_id == 'a') {
@@ -107,6 +107,3 @@ index 505abd9..a7796e7 100644
  	}
  	return r;
  }
--- 
-2.1.3
-

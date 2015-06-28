@@ -1,6 +1,5 @@
-diff -u --recursive gst-plugins-ugly-1.0.7-vanilla/Makefile.am gst-plugins-ugly-1.0.7/Makefile.am
---- gst-plugins-ugly-1.0.7-vanilla/Makefile.am	2013-06-01 19:59:16.988330482 -0500
-+++ gst-plugins-ugly-1.0.7/Makefile.am	2013-06-01 19:59:28.455876771 -0500
+--- a/Makefile.am
++++ b/Makefile.am
 @@ -1,7 +1,7 @@
  DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
  
@@ -10,10 +9,9 @@ diff -u --recursive gst-plugins-ugly-1.0.7-vanilla/Makefile.am gst-plugins-ugly-
  
  # include before EXTRA_DIST for win32 assignment
  include $(top_srcdir)/common/win32.mak
-diff -u --recursive gst-plugins-ugly-1.0.7-vanilla/Makefile.in gst-plugins-ugly-1.0.7/Makefile.in
---- gst-plugins-ugly-1.0.7-vanilla/Makefile.in	2013-06-01 19:59:16.988330482 -0500
-+++ gst-plugins-ugly-1.0.7/Makefile.in	2013-06-01 19:59:39.840426385 -0500
-@@ -453,7 +453,7 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -502,7 +502,7 @@ top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
  DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
  SUBDIRS = \

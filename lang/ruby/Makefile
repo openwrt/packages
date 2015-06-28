@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,14 +10,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=2.2.0
-PKG_RELEASE:=1
+PKG_VERSION:=2.2.2
+PKG_RELEASE:=3
 
 PKG_LIBVER:=2.2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_LIBVER)/
-PKG_MD5SUM:=d03cd4690fec1fff81d096d1c1255fde
+PKG_MD5SUM:=af6eb4fa7247f1f7b2e19c8e6f3e3145
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -575,7 +575,7 @@ endef
 define Package/ruby-psych
 $(call Package/ruby/Default)
   TITLE+=YAML parser and emitter
-  DEPENDS:=ruby +ruby-bigdecimal +ruby-datetime +ruby-misc +ruby-enc
+  DEPENDS:=ruby +ruby-bigdecimal +ruby-datetime +ruby-misc +ruby-enc +libyaml
 endef
 
 define Package/ruby-psych/description
@@ -803,16 +803,24 @@ HOST_CONFIGURE_ARGS += \
 	--disable-install-rdoc \
 	--disable-install-capi \
 	--with-static-linked-ext \
+	--with-out-ext=tk,tk/tkutil,win32,win32ole,dbm,gdbm,readline \
+
+# even not used, host build with restricted exts results in gems not being
+# compiling for target (probably some cross compiling problem like checking
+# host for selecting target features)
+#	--with-out-ext \
+#	--with-ext=thread,stringio \
 
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-rpath \
-	--enable-ipv6 \
+	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-install-doc \
 	--disable-install-capi \
 	--with-ruby-version=minor \
 	--with-iconv-dir=$(ICONV_PREFIX) \
+	--with-out-ext=tk,tk/tkutil,win32,win32ole
 
 ifndef CONFIG_RUBY_DIGEST_USE_OPENSSL
 CONFIGURE_ARGS += \
@@ -874,7 +882,6 @@ define Package/ruby-datetime/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
 		usr/lib/ruby/$(PKG_LIBVER)/time.rb \
 		usr/lib/ruby/$(PKG_LIBVER)/date.rb \
-		usr/lib/ruby/$(PKG_LIBVER)/date/ \
 		usr/lib/ruby/$(PKG_LIBVER)/*/date_core.so \
 	) | ( cd $(1); $(TAR) -xf - )
 endef
@@ -1252,7 +1259,6 @@ endef
 
 define Package/ruby-socket/install
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
-		usr/lib/ruby/$(PKG_LIBVER)/gserver.rb \
 		usr/lib/ruby/$(PKG_LIBVER)/ipaddr.rb \
 		usr/lib/ruby/$(PKG_LIBVER)/resolv-replace.rb \
 		usr/lib/ruby/$(PKG_LIBVER)/resolv.rb \

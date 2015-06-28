@@ -24,4 +24,5 @@ start() {
 
 stop() {
 	killall dynamic_dns_updater.sh 2>/dev/null
+	return 0 # if killall fails, ignore
 }

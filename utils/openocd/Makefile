@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd
-PKG_VERSION:=v0.8.0-258-gd537cfa
-PKG_RELEASE:=2
+PKG_VERSION:=v0.9.0
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://git.code.sf.net/p/openocd/code
@@ -56,6 +56,7 @@ endef
 CONFIGURE_ARGS += \
 	--prefix="/usr" \
 	--disable-werror \
+	MAKEINFO=true \
 	--enable-dummy \
 	--enable-sysfsgpio \
 	--enable-usb_blaster_libftdi \

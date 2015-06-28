@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwknop
-PKG_VERSION:=2.6.5
-PKG_RELEASE:=1
+PKG_VERSION:=2.6.6
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.cipherdyne.org/fwknop/download
-PKG_MD5SUM:=1ae000a499bf604a2aeef4d0a7a178c8
+PKG_MD5SUM:=1372aeaf1e33ab1d6b9906ef9b5cd02e
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=GPLv2
 PKG_INSTALL:=1
@@ -42,7 +42,7 @@ define Package/fwknopd
   CATEGORY:=Network
   SUBMENU:=Firewall
   TITLE+= Daemon
-  DEPENDS:=+iptables +libfko +libpcap
+  DEPENDS:=+iptables +libfko +libpcap +FWKNOP_GPG:gnupg
 endef
 
 define Package/fwknopd/description
@@ -53,6 +53,10 @@ endef
 define Package/fwknopd/conffiles
 /etc/fwknop/access.conf
 /etc/fwknop/fwknopd.conf
+endef
+
+define Package/fwknopd/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/fwknop
@@ -82,8 +86,12 @@ define Package/libfko/description
   This package contains the libfko shared library.
 endef
 
+
+ifeq ($(CONFIG_FWKNOPD_GPG),n)
+	CONFIGURE_ARGS += --without-gpgme 
+endif
+
 CONFIGURE_ARGS += \
-	--without-gpgme \
 	--with-iptables=/usr/sbin/iptables
 
 define Build/InstallDev
@@ -94,14 +102,19 @@ define Build/InstallDev
 endef
 
 define Package/fwknopd/install
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/fwknopd $(1)/etc/config/fwknopd
 	$(INSTALL_DIR) $(1)/etc/fwknop
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/fwknop/{access,fwknopd}.conf \
 		$(1)/etc/fwknop/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/extras/fwknop.init.openwrt \
-		$(1)/etc/init.d/fwknopd
+	$(INSTALL_BIN) ./files/fwknopd.init $(1)/etc/init.d/fwknopd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fwknopd $(1)/usr/sbin/
+endef
+
+define Package/fwknopd/conffiles
+	/etc/config/fwknopd
 endef
 
 define Package/fwknop/install

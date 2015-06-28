@@ -9,11 +9,11 @@ Subject: [PATCH 11/26] OpenPGP: Provide enough buffer to read pubkey from
  src/libopensc/card-openpgp.c | 28 +++++++++++++++++++++++-----
  1 file changed, 23 insertions(+), 5 deletions(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index e7b25c0..1913eca 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -263,7 +263,12 @@ static struct do_info		pgp2_objects[] = {	/* OpenPGP card spec 2.0 */
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -265,7 +265,12 @@ static struct do_info		pgp2_objects[] =
  
  /* The DO holding X.509 certificate is constructed but does not contain child DO.
   * We should notice this when building fake file system later. */
@@ -27,7 +27,7 @@ index e7b25c0..1913eca 100644
  
  #define DRVDATA(card)        ((struct pgp_priv_data *) ((card)->drv_data))
  struct pgp_priv_data {
-@@ -731,6 +736,14 @@ pgp_read_blob(sc_card_t *card, struct blob *blob)
+@@ -739,6 +744,14 @@ pgp_read_blob(sc_card_t *card, struct bl
  		u8 	buffer[2048];
  		size_t	buf_len = (card->caps & SC_CARD_CAP_APDU_EXT)
  				  ? sizeof(buffer) : 256;
@@ -42,7 +42,7 @@ index e7b25c0..1913eca 100644
  		int	r = blob->info->get_fn(card, blob->id, buffer, buf_len);
  
  		if (r < 0) {	/* an error occurred */
-@@ -1828,6 +1841,7 @@ static int pgp_gen_key(sc_card_t *card, sc_cardctl_openpgp_keygen_info_t *key_in
+@@ -1836,6 +1849,7 @@ static int pgp_gen_key(sc_card_t *card,
  	u8 apdu_case;
  	u8 *apdu_data;
  	size_t apdu_le;
@@ -50,7 +50,7 @@ index e7b25c0..1913eca 100644
  	int r = SC_SUCCESS;
  
  	LOG_FUNC_CALLED(card->ctx);
-@@ -1868,23 +1882,27 @@ static int pgp_gen_key(sc_card_t *card, sc_cardctl_openpgp_keygen_info_t *key_in
+@@ -1876,23 +1890,27 @@ static int pgp_gen_key(sc_card_t *card,
  		apdu_case = SC_APDU_CASE_4_EXT;
  	}
  	else {
@@ -82,6 +82,3 @@ index e7b25c0..1913eca 100644
  
  	/* Send */
  	sc_log(card->ctx, "Waiting for the card to generate key...");
--- 
-2.1.3
-

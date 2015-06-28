@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -12,11 +12,11 @@ include ./files/python-package.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=38d530f7efc373d64a8fb1637e3baaa7
+PKG_MD5SUM:=c685ef0b8e9f27b5e3db5db12b268ac6
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -54,7 +54,7 @@ endef
 define Package/python-base
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) interpreter
-  DEPENDS:=+libpthread +zlib +libffi +libopenssl
+  DEPENDS:=+libpthread +zlib
 endef
 
 define Package/python-base/description
@@ -62,13 +62,44 @@ define Package/python-base/description
   for the interpreter to start.
 endef
 
+define Package/python-light
+$(call Package/python/Default)
+  TITLE:=Python $(PYTHON_VERSION) light installation
+  DEPENDS:=+python-base +libffi +libbz2
+endef
+
+define Package/python-light/description
+  This package is essentially the python-base package plus
+  a few of the rarely used (and big) libraries stripped out
+  into separate packages.
+endef
+
+# Define newline here, since it's not defined in OpenWRT
+define newline
+
+
+endef
+
+PYTHON_LIB_FILES_DEL:=
+PYTHON_PACKAGES:=
+define PyBasePackage
+  PYTHON_PACKAGES+=$(1)
+  PYTHON_LIB_FILES_DEL+=$(2)
+  define PyPackage/$(1)/filespec
+    $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
+  endef
+endef
+
+include ./files/python-package-*.mk
+
 define Package/python
 $(call Package/python/Default)
-  DEPENDS:=+python-base +libncursesw +libbz2 +libgdbm +libsqlite3 +libexpat +libdb47
+  DEPENDS:=+python-light $(foreach package,$(PYTHON_PACKAGES),+$(package))
 endef
 
 define Package/python/description
   This package contains the (almost) full Python install.
+  It's python-light + all other packages.
 endef
 
 MAKE_FLAGS+=\
@@ -124,31 +155,36 @@ define Build/InstallDev
 		$(1)/usr/lib/python$(PYTHON_VERSION)/
 endef
 
+PYTHON_BASE_LIB_FILES:= \
+	/usr/lib/python$(PYTHON_VERSION)/_abcoll.py \
+	/usr/lib/python$(PYTHON_VERSION)/_sysconfigdata.py \
+	/usr/lib/python$(PYTHON_VERSION)/_weakrefset.py \
+	/usr/lib/python$(PYTHON_VERSION)/abc.py \
+	/usr/lib/python$(PYTHON_VERSION)/copy_reg.py \
+	/usr/lib/python$(PYTHON_VERSION)/genericpath.py \
+	/usr/lib/python$(PYTHON_VERSION)/linecache.py \
+	/usr/lib/python$(PYTHON_VERSION)/posixpath.py \
+	/usr/lib/python$(PYTHON_VERSION)/os.py \
+	/usr/lib/python$(PYTHON_VERSION)/re.py \
+	/usr/lib/python$(PYTHON_VERSION)/site.py \
+	/usr/lib/python$(PYTHON_VERSION)/sre_compile.py \
+	/usr/lib/python$(PYTHON_VERSION)/sre_constants.py \
+	/usr/lib/python$(PYTHON_VERSION)/sre_parse.py \
+	/usr/lib/python$(PYTHON_VERSION)/sysconfig.py \
+	/usr/lib/python$(PYTHON_VERSION)/stat.py \
+	/usr/lib/python$(PYTHON_VERSION)/traceback.py \
+	/usr/lib/python$(PYTHON_VERSION)/types.py \
+	/usr/lib/python$(PYTHON_VERSION)/UserDict.py \
+	/usr/lib/python$(PYTHON_VERSION)/warnings.py
+
+PYTHON_LIB_FILES_DEL+=$(PYTHON_BASE_LIB_FILES)
+
 define PyPackage/python-base/filespec
 +|/usr/bin/python$(PYTHON_VERSION)
-+|/usr/lib/python$(PYTHON_VERSION)/_abcoll.py
-+|/usr/lib/python$(PYTHON_VERSION)/_sysconfigdata.py
-+|/usr/lib/python$(PYTHON_VERSION)/_weakrefset.py
-+|/usr/lib/python$(PYTHON_VERSION)/abc.py
-+|/usr/lib/python$(PYTHON_VERSION)/copy_reg.py
-+|/usr/lib/python$(PYTHON_VERSION)/genericpath.py
-+|/usr/lib/python$(PYTHON_VERSION)/linecache.py
-+|/usr/lib/python$(PYTHON_VERSION)/posixpath.py
-+|/usr/lib/python$(PYTHON_VERSION)/os.py
-+|/usr/lib/python$(PYTHON_VERSION)/re.py
-+|/usr/lib/python$(PYTHON_VERSION)/site.py
-+|/usr/lib/python$(PYTHON_VERSION)/sre_compile.py
-+|/usr/lib/python$(PYTHON_VERSION)/sre_constants.py
-+|/usr/lib/python$(PYTHON_VERSION)/sre_parse.py
-+|/usr/lib/python$(PYTHON_VERSION)/sysconfig.py
-+|/usr/lib/python$(PYTHON_VERSION)/stat.py
-+|/usr/lib/python$(PYTHON_VERSION)/traceback.py
-+|/usr/lib/python$(PYTHON_VERSION)/types.py
-+|/usr/lib/python$(PYTHON_VERSION)/UserDict.py
-+|/usr/lib/python$(PYTHON_VERSION)/warnings.py
+$(subst $(space),$(newline),$(foreach lib_file,$(PYTHON_BASE_LIB_FILES),+|$(lib_file)))
 endef
 
-define PyPackage/python/filespec
+define PyPackage/python-light/filespec
 +|/usr/lib/python$(PYTHON_VERSION)
 -|/usr/lib/python$(PYTHON_VERSION)/config
 -|/usr/lib/python$(PYTHON_VERSION)/distutils/cygwinccompiler.py
@@ -164,32 +200,17 @@ define PyPackage/python/filespec
 -|/usr/lib/python$(PYTHON_VERSION)/*/test
 -|/usr/lib/python$(PYTHON_VERSION)/*/tests
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/readline.so
--|/usr/lib/python$(PYTHON_VERSION)/_abcoll.py
--|/usr/lib/python$(PYTHON_VERSION)/_sysconfigdata.py
--|/usr/lib/python$(PYTHON_VERSION)/_weakrefset.py
--|/usr/lib/python$(PYTHON_VERSION)/abc.py
--|/usr/lib/python$(PYTHON_VERSION)/copy_reg.py
--|/usr/lib/python$(PYTHON_VERSION)/genericpath.py
--|/usr/lib/python$(PYTHON_VERSION)/linecache.py
--|/usr/lib/python$(PYTHON_VERSION)/posixpath.py
--|/usr/lib/python$(PYTHON_VERSION)/os.py
--|/usr/lib/python$(PYTHON_VERSION)/re.py
--|/usr/lib/python$(PYTHON_VERSION)/site.py
--|/usr/lib/python$(PYTHON_VERSION)/sre_compile.py
--|/usr/lib/python$(PYTHON_VERSION)/sre_constants.py
--|/usr/lib/python$(PYTHON_VERSION)/sre_parse.py
--|/usr/lib/python$(PYTHON_VERSION)/sysconfig.py
--|/usr/lib/python$(PYTHON_VERSION)/stat.py
--|/usr/lib/python$(PYTHON_VERSION)/traceback.py
--|/usr/lib/python$(PYTHON_VERSION)/types.py
--|/usr/lib/python$(PYTHON_VERSION)/UserDict.py
--|/usr/lib/python$(PYTHON_VERSION)/warnings.py
+$(subst $(space),$(newline),$(foreach lib_file,$(PYTHON_LIB_FILES_DEL),-|$(lib_file)))
 endef
 
 define PyPackage/python-base/install
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
+endef
+
+define PyPackage/python/filespec
+-|$(PYTHON_PKG_DIR)
 endef
 
 HOST_CFLAGS+= \
@@ -213,8 +234,15 @@ endef
 
 $(eval $(call HostBuild))
 
+$(foreach package, $(PYTHON_PACKAGES),  \
+	$(eval $(call PyPackage,$(package))) \
+	$(eval $(call BuildPackage,$(package))) \
+)
+
 $(eval $(call PyPackage,python-base))
+$(eval $(call PyPackage,python-light))
 $(eval $(call PyPackage,python))
 
 $(eval $(call BuildPackage,python-base))
+$(eval $(call BuildPackage,python-light))
 $(eval $(call BuildPackage,python))

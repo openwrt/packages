@@ -37,7 +37,7 @@ PIDFILE=""		# pid file
 UPDFILE=""		# store UPTIME of last update
 DATFILE=""		# save stdout data of WGet and other external programs called
 ERRFILE=""		# save stderr output of WGet and other external programs called
-TLDFILE=/usr/lib/ddns/tld_names.dat	# TLD file used by split_FQDN
+TLDFILE=/usr/lib/ddns/tld_names.dat.gz	# TLD file used by split_FQDN
 
 CHECK_SECONDS=0		# calculated seconds out of given
 FORCE_SECONDS=0		# interval and unit
@@ -486,8 +486,8 @@ verify_host_port() {
 			__IPV4=$(cat $DATFILE | awk -F "address " '/has address/ {print $2; exit}' )
 			__IPV6=$(cat $DATFILE | awk -F "address " '/has IPv6/ {print $2; exit}' )
 		else	# use BusyBox nslookup
-			__IPV4=$(cat $DATFILE | sed -ne "3,\$ { s/^Address[0-9 ]\{0,\}: \($IPV4_REGEX\).*$/\\1/p }")
-			__IPV6=$(cat $DATFILE | sed -ne "3,\$ { s/^Address[0-9 ]\{0,\}: \($IPV6_REGEX\).*$/\\1/p }")
+			__IPV4=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV4_REGEX\).*$/\\1/p }")
+			__IPV6=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV6_REGEX\).*$/\\1/p }")
 		fi
 	}
 
@@ -966,7 +966,7 @@ get_registered_ip() {
 			if [ "$__PROG" = "BIND host" ]; then
 				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
 			else
-				__DATA=$(cat $DATFILE | sed -ne "3,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
+				__DATA=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
 			fi
 			[ -n "$__DATA" ] && {
 				write_log 7 "Registered IP '$__DATA' detected"
@@ -1058,43 +1058,63 @@ split_FQDN() {
 	# $4	name of variable to store Host/Subdomain
 
 	[ $# -ne 4 ] && write_log 12 "Error calling 'split_FQDN()' - wrong number of parameters"
+	[ -z "$1"  ] && write_log 12 "Error calling 'split_FQDN()' - missing FQDN to split"
+	[ -f $TLDFILE ] || write_log 12 "Error calling 'split_FQDN()' - missing file '$TLDFILE'"
 
-	_SET="$@"					# save given parameters
-	local _FHOST _FTLD _FOUND
-	local _FDOM=$(echo "$1" | tr [A-Z] [a-z])	# to lower
+	local _HOST _FDOM _CTLD _FTLD
+	local _SET="$@"					# save given function parameters
 
-	set -- $(echo "$_FDOM" | tr "." " ")		# replace DOT with SPACE and set as script parameters
-	_FDOM=""					# clear variable for later reuse
+	local _PAR=$(echo "$1" | tr [A-Z] [a-z] | tr "." " ")	# to lower and replace DOT with SPACE
+	set -- $_PAR					# set new as function parameters
+	_PAR=""						# clear variable for later reuse
+	while [ -n "$1" ] ; do				# as long we have parameters
+		_PAR="$1 $_PAR"				# invert order of parameters
+		shift
+	done
+	set -- $_PAR					# use new as function parameters
+	_PAR=""						# clear variable
 
 	while [ -n "$1" ] ; do				# as long we have parameters
-		_FTLD=$(echo $@ | tr " " ".")		# build back dot separated as TLD
-		# look if match excludes "!" in tld_names.dat
-		grep -E "^!$_FTLD$" $TLDFILE >/dev/null 2>&1 || {
-			# Don't match excludes
-			# check if match any "*" in tld_names.dat
-			grep -E "^*.$_FTLD$" $TLDFILE >/dev/null 2>&1 && {
-				_FOUND="VALID"
-				break	# found leave while
-			}
-			# check if exact match in tld_names.dat
-			grep -E "^$_FTLD$" $TLDFILE >/dev/null 2>&1 && {
-				_FOUND="VALID"
-				break	# found leave while
-			}
+		if [ -z "$_CTLD" ]; then 		# first loop
+			_CTLD="$1"			# CURRENT TLD to look at
+			shift
+		else
+			_CTLD="$1.$_CTLD"		# Next TLD to look at
+			shift
+		fi
+		# check if TLD exact match in tld_names.dat, save TLD
+		zcat $TLDFILE | grep -E "^$_CTLD$" >/dev/null 2>&1 && {
+			_FTLD="$_CTLD"		# save found
+			_FDOM="$1"		# save domain next step might be invalid
+			continue
 		}
-		# nothing match so
-		_FHOST="$_FHOST $_FDOM"		# append DOMAIN to last found HOST
-		_FDOM="$1"			# set 1st parameter as DOMAIN
-		_FTLD=""			# clear TLD
-		shift				# delete 1st parameter and retry with the rest
+		# check if match any "*" in tld_names.dat,
+		zcat $TLDFILE | grep -E "^\*.$_CTLD$" >/dev/null 2>&1 && {
+			[ -z "$1" ] && break	# no more data break
+			# check if next level TLD match excludes "!" in tld_names.dat
+			if zcat $TLDFILE | grep -E "^!$1.$_CTLD$" >/dev/null 2>&1 ; then
+				_FTLD="$_CTLD"	# Yes
+			else
+				_FTLD="$1.$_CTLD"
+				shift
+			fi
+			_FDOM="$1"; shift
+		}
+		[ -n "$_FTLD" ] && break	# we have something valid, break
 	done
 
+	# the leftover parameters are the HOST/SUBDOMAIN
+	while [ -n "$1" ]; do
+		_HOST="$1 $HOST"		# remember we need to invert
+		shift
+	done
+	_HOST=$(echo $_HOST | tr " " ".")	# insert DOT
+
 	set -- $_SET				# set back parameters from function call
-	[ -n "$_FHOST" ] && _FHOST=$(echo $_FHOST | tr " " ".")	# put dots back into HOST
-	[ -n "$_FOUND" ] && {
-		eval "$2=$_FTLD"	# set found TLD
-		eval "$3=$_FDOM"	# set found registrable domain
-		eval "$4=$_FHOST"	# set found HOST/SUBDOMAIN
+	[ -n "$_FTLD" ] && {
+		eval "$2=$_FTLD"		# set TLD
+		eval "$3=$_FDOM"		# set registrable domain
+		eval "$4=$_HOST"		# set HOST/SUBDOMAIN
 		return 0
 	}
 	eval "$2=''"		# clear TLD

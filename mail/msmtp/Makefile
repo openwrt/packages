@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
-PKG_VERSION:=1.6.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.6.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/msmtp
-PKG_MD5SUM:=6ebba4809bbc665b8a665a018d1a5ee1
+PKG_MD5SUM:=3baca93c7e5f1aa9d36a2e5b38739ab9
 
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
@@ -85,19 +85,23 @@ CONFIGURE_ARGS += \
 	--without-libintl-prefix \
 	--without-libgsasl \
 	--without-libidn \
-	--without-gnome-keyring \
+	--without-libsecret \
 	--without-macosx-keyring \
+
+ifneq ($(CONFIG_USE_UCLIBC),)
+  CONFIGURE_ARGS += --disable-gai-idn
+endif
 
 MAKE_FLAGS :=
 
 ifeq ($(BUILD_VARIANT),ssl)
 	CONFIGURE_ARGS += \
-		--with-ssl=openssl
+		--with-tls=openssl
 endif
 
 ifeq ($(BUILD_VARIANT),nossl)
 	CONFIGURE_ARGS += \
-		--with-ssl=no
+		--with-tls=no
 endif
 
 define Package/msmtp/install

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=3.17.3
-PKG_RELEASE:=2
+PKG_VERSION:=3.19.1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs/
-PKG_MD5SUM:=6716b4b109dd909af63ab3becbad67a6
+PKG_MD5SUM:=ec3b3c99df18633ddc9e41f0680c5a51
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -24,13 +24,15 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=libacl
 
+PKG_FIXUP:=autoreconf
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/btrfs-progs
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Filesystem
-  DEPENDS:=+libattr +libuuid +zlib +libext2fs +libblkid +liblzo +libpthread
+  DEPENDS:=+libattr +libuuid +zlib +libblkid +liblzo +libpthread
   TITLE:=Btrfs filesystems utilities
   URL:=http://btrfs.wiki.kernel.org/
 endef
@@ -42,25 +44,20 @@ define Package/btrfs-progs/description
  GPL and open for contribution from anyone.
 endef
 
-progs = btrfs btrfsck btrfs-convert btrfs-debug-tree btrfs-find-root \
-	btrfs-image btrfs-map-logical btrfs-show-super btrfstune \
-	btrfs-zero-log fsck.btrfs mkfs.btrfs
+progs = btrfs btrfs-debug-tree btrfs-find-root btrfs-image btrfs-map-logical \
+	btrfs-show-super btrfstune btrfs-zero-log fsck.btrfs mkfs.btrfs
 
-
-MAKE_FLAGS+=\
-	CC="$(TARGET_CC)" \
-	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS)" \
-	LDFLAGS="$(TARGET_LDFLAGS)" \
-	prefix=/usr \
-	DESTDIR=$(PKG_INSTALL_DIR) \
-	DISABLE_BACKTRACE=1 \
-	DISABLE_DOCUMENTATION=1
+CONFIGURE_ARGS += \
+	--disable-backtrace \
+	--disable-convert \
+	--disable-documentation
 
 define Package/btrfs-progs/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libbtrfs.so* $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(addprefix $(PKG_INSTALL_DIR)/usr/bin/, $(progs)) $(1)/usr/bin/
+	$(LN) btrfs $(1)/usr/bin/btrfsck
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/btrfs-scan.init $(1)/etc/init.d/btrfs-scan
 endef

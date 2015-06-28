@@ -79,6 +79,7 @@ CONFIGURE_VARS += \
 	ac_cv_file__etc_TIMEZONE=no
 
 CONFIGURE_ARGS += \
+	--without-system-verto \
 	--without-tcl \
 	--without-libedit \
 	--localstatedir=/etc

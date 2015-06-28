@@ -8,4 +8,4 @@
 +#include <blkid/blkid.h>
  #endif
  
- #include "device-types.h"
+ #ifdef UDEV_SYNC_SUPPORT

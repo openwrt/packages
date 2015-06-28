@@ -1,0 +1,30 @@
+From 26f8177f799f3cf781ed89cb28f771da7ef22421 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=81lvaro=20Fern=C3=A1ndez=20Rojas?= <noltari@gmail.com>
+Date: Thu, 5 Mar 2015 13:42:09 +0100
+Subject: [PATCH] fix build on Mac OS X
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
+---
+ chipmunk/Makefile | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+--- a/chipmunk/Makefile
++++ b/chipmunk/Makefile
+@@ -32,10 +32,13 @@ DEBUG_ON := -g
+ ALL_CFLAGS = -W -Wall -Werror --pedantic $(CFLAGS)
+ 
+ SYSTEM=$(shell uname 2>/dev/null)
+-ifneq (,$(filter $(SYSTEM),FreeBSD Darwin))
++ifneq (,$(filter $(SYSTEM),FreeBSD))
+ MAKE := gmake
+ GZIP := /usr/bin/gzip
+ endif
++ifneq (,$(filter $(SYSTEM),Darwin))
++GZIP := /usr/bin/gzip
++endif
+ 
+ BUILDFILE = BUILD
+ BUILDNO := `cat $(BUILDFILE)`

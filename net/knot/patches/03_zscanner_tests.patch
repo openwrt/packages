@@ -34,8 +34,8 @@ index 846f351..272856c 100644
  TESTS_DIR="$SOURCE"/data
  ZSCANNER_TOOL="$BUILD"/zscanner-tool
  
--plan 69
-+plan 67
+-plan 71
++plan 69
  
  mkdir -p "$TMPDIR"/includes/
  for a in 1 2 3 4 5 6; do

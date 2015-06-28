@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PERL_TESTSDIR="/usr/share/perl/perl-tests"
-PERL_LIBDIR="/usr/lib/perl5/5.20/"
+PERL_LIBDIR="/usr/lib/perl5/%%PERL_VERSION%%/"
 PERL_DISABLEDTESTS="%%PERL_DISABLEDTESTS%%"
 
 if [ ! -f "$PERL_TESTSDIR/__prepared" ]; then

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -12,7 +12,7 @@ BASE_VERSION:=4.7.25
 
 PKG_NAME:=db47
 PKG_VERSION:=$(BASE_VERSION).4.NC
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/db-$(BASE_VERSION).NC
 PKG_SOURCE:=db-$(BASE_VERSION).NC.tar.gz
@@ -62,7 +62,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-java \
-	--with-mutex=UNIX/fcntl \
+	--with-mutex=POSIX/pthreads/library \
 	--disable-tcl \
 	--disable-rpc \
 	--enable-compat185 \

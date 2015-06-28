@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2005-2010 OpenWrt.org
+# Copyright (C) 2005-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
-PKG_VERSION:=3.3.12
+PKG_VERSION:=3.4.2
 PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3
-PKG_MD5SUM:=a37b20b4352a5f542367ded904729c90
+PKG_SOURCE_URL:=ftp://ftp.gnutls.org/gcrypt/gnutls/v3.4
+PKG_MD5SUM:=4fb4a6253e09aa070e6c467cbb51ba33
+#PKG_FIXUP:=autoreconf gettext-version
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
+PKG_LICENSE:=LGPLv2.1+
 
 PKG_INSTALL:=1
 PKG_LIBTOOL_PATHS:=. lib
@@ -114,6 +116,7 @@ endef
 CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
+	--disable-rpath \
 	--disable-libdane \
 	--disable-guile \
 	--disable-nls \
@@ -121,9 +124,10 @@ CONFIGURE_ARGS+= \
 	--enable-local-libopts \
 	--disable-doc \
 	--disable-tests \
-	--disable-rsa-export \
+	--enable-openssl-compatibility \
 	--with-default-trust-store-dir=/etc/ssl/certs/ \
-	--disable-crywrap
+	--disable-crywrap \
+	--with-librt-prefix="$(LIBRT_ROOT_DIR)/"
 
 ifneq ($(CONFIG_GNUTLS_EXT_LIBTASN1),y)
 CONFIGURE_ARGS += --with-included-libtasn1
@@ -174,26 +178,20 @@ CONFIGURE_ARGS += --enable-cryptodev
 endif
 
 TARGET_CFLAGS += $(FPIC)
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
-
-define Build/Configure
-	$(SED) 's,-I$$$${includedir},,g' $(PKG_BUILD_DIR)/configure
-	$(SED) 's,-L$$$${libdir},,g' $(PKG_BUILD_DIR)/configure
-	$(call Build/Configure/Default)
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib/pkgconfig
 	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/libgnutls.so* \
+		$(1)/usr/lib/
+	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/gnutls \
 		$(1)/usr/include/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libgnutls{,-openssl}.{a,so*} \
-		$(1)/usr/lib/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/gnutls.pc \
 		$(1)/usr/lib/pkgconfig/
 endef
+
 
 define Package/certtool/conffiles
 /etc/gnutls/certtool.cfg

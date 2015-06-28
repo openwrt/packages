@@ -1,0 +1,11 @@
+--- a/xl2tpd.c
++++ b/xl2tpd.c
+@@ -30,7 +30,7 @@
+ #include <errno.h>
+ #include <unistd.h>
+ #include <time.h>
+-#if (__GLIBC__ < 2)
++#if defined (__GLIBC__) && (__GLIBC__ < 2)
+ # if defined(FREEBSD) || defined(OPENBSD)
+ #  include <sys/signal.h>
+ # elif defined(LINUX)

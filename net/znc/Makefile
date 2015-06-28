@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
-PKG_VERSION:=1.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.6.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
 		http://znc.in/releases/archive
-PKG_MD5SUM:=630cb74db34d2d5451ba30b47869f6bb
+PKG_MD5SUM:=674d8c1277752dcc627b96e33a63376e
 
 PKG_MAINTAINER:=Jonas Gorski <jogo@openwrt.org>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 
 
@@ -33,7 +34,7 @@ endef
 
 define Package/znc
   $(Package/znc/default)
-  DEPENDS:=+libopenssl +libpthread +libstdcpp
+  DEPENDS:=+libopenssl +libpthread +libstdcpp @GCC_VERSION_4_8||GCC_VERSION_4_9
   MENU:=1
 endef
 
@@ -135,6 +136,8 @@ endef
 $(eval $(call module,adminlog,Log user connects and disconnects and failed \
 	logins to file or syslog.))
 
+$(eval $(call module,alias,Provides bouncer-side command alias support.))
+
 $(eval $(call module,autoattach,Reattaches you to channels on activity.))
 
 $(eval $(call module,autocycle,Cycles a channel when you are the only one in \
@@ -197,6 +200,8 @@ $(eval $(call module,flooddetach,This module detaches you from channels which \
 $(eval $(call module,identfile,Places the ident of a user to a file when they \
 	 are trying to connect.))
 
+$(eval $(call module,imapauth,Allow users to authenticate via IMAP.))
+
 $(eval $(call module,keepnick,Tries to get you your primary nick.))
 
 $(eval $(call module,kickrejoin,Implements auto-rejoin-on-kick.))
@@ -207,6 +212,8 @@ $(eval $(call module,listsockets,This module displays a list of all open \
 	sockets in ZNC.))
 
 $(eval $(call module,log,Log conversations to file.))
+
+$(eval $(call module,missingmotd,Sends 422 to clients when they login.))
 
 $(eval $(call module,modules_online,This module fakes the online status of \
 	ZNC-*users.))

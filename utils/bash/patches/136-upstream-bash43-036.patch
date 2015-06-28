@@ -1,0 +1,48 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-036
+
+Bug-Reported-by:	emanuelczirai@cryptolab.net
+Bug-Reference-ID:	<f962e4f556da5ebfadaf7afe9c78a8cb@cryptolab.net>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2015-02/msg00071.html
+
+Bug-Description:
+
+When evaluating and setting integer variables, and the assignment fails to
+create a variable (for example, when performing an operation on an array
+variable with an invalid subscript), bash attempts to dereference a null
+pointer, causing a segmentation violation.
+
+Patch (apply with `patch -p0'):
+
+--- a/variables.c
++++ b/variables.c
+@@ -2833,10 +2833,12 @@ bind_int_variable (lhs, rhs)
+ #endif
+     v = bind_variable (lhs, rhs, 0);
+ 
+-  if (v && isint)
+-    VSETATTR (v, att_integer);
+-
+-  VUNSETATTR (v, att_invisible);
++  if (v)
++    {
++      if (isint)
++	VSETATTR (v, att_integer);
++      VUNSETATTR (v, att_invisible);
++    }
+ 
+   return (v);
+ }
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 35
++#define PATCHLEVEL 36
+ 
+ #endif /* _PATCHLEVEL_H_ */

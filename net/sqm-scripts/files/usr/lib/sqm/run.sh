@@ -9,16 +9,47 @@
 
 . /lib/functions.sh
 
-STOP=$1
+STOP=
 ACTIVE_STATE_PREFIX="SQM_active_on_"
 ACTIVE_STATE_FILE_DIR="/var/run/SQM"
 mkdir -p ${ACTIVE_STATE_FILE_DIR}
+
+
+START_ON_IF=$2	# only process this interface
+# TODO if $2 is empty select all interfaces with running sqm instance
+if [ -z ${START_ON_IF} ] ;
+then
+    # find all interfaces with active sqm instance
+    logger -t SQM -s "Trying to start/stop SQM on all interfaces."
+    PROTO_STATE_FILE_LIST=$( ls ${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}* 2> /dev/null )
+else
+    # only try to restart the just hotplugged interface, so reduce the list of interfaces to stop to the specified one
+    logger -t SQM -s "Trying to start/stop SQM on interface ${START_ON_IF}"
+    PROTO_STATE_FILE_LIST=${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}${START_ON_IF}
+fi
+
+
+
+
+case ${1} in
+    start)
+	# just run through, same as passing no argument
+	;;
+    stop)
+        logger -t SQM -s "run.sh stop"
+	STOP=$1
+        ;;
+esac
+
+
+
+
+
 
 # the current uci config file does not necessarily contain sections for all interfaces with active
 # SQM instances, so use the ACTIVE_STATE_FILES to detect the interfaces on which to stop SQM.
 # Currently the .qos scripts start with stopping any existing traffic shaping so this should not
 # effectively change anything...
-PROTO_STATE_FILE_LIST=$( ls ${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}* 2> /dev/null )
 for STATE_FILE in ${PROTO_STATE_FILE_LIST} ; do
     if [ -f ${STATE_FILE} ] ;
     then
@@ -35,6 +66,11 @@ config_load sqm
 run_simple_qos() {
 	local section="$1"
 	export IFACE=$(config_get "$section" interface)
+
+	# If called explicitly for one interface only , so ignore anything else
+	[ -n "${START_ON_IF}" -a "$START_ON_IF" != "$IFACE" ] && return
+	#logger -t SQM -s "marching on..."
+
 	ACTIVE_STATE_FILE_FQN="${ACTIVE_STATE_FILE_DIR}/${ACTIVE_STATE_PREFIX}${IFACE}"	# this marks interfaces as active with SQM
 	[ -f "${ACTIVE_STATE_FILE_FQN}" ] && logger -t SQM -s "Uh, oh, ${ACTIVE_STATE_FILE_FQN} should already be stopped."	# Not supposed to happen
 
@@ -82,6 +118,14 @@ run_simple_qos() {
 	     logger -t SQM -s "${0} SQM qdiscs on ${IFACE} removed"
 	     return 0
 	fi
+	# in case of spurious hotplug events, try double check whether the interface is really up
+	if [ ! -d /sys/class/net/${IFACE} ] ;
+	then
+	    echo "${IFACE} does currently not exist, not even trying to start SQM on nothing." > /dev/kmsg
+	    logger -t SQM -s "${IFACE} does currently not exist, not even trying to start SQM on nothing."
+	    return 0
+	fi
+
 	logger -t SQM -s "${0} Queue Setup Script: ${SCRIPT}"
 	[ -x "$SCRIPT" ] && { $SCRIPT ; touch ${ACTIVE_STATE_FILE_FQN}; }
 }

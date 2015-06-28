@@ -1,0 +1,14 @@
+--- a/test/test-libevdev-init.c
++++ b/test/test-libevdev-init.c
+@@ -32,6 +32,11 @@
+ #include <libevdev/libevdev-uinput.h>
+ #include "test-common.h"
+ 
++/* work-around CLOCK_MONOTONIC_RAW definition missing in uClibc */
++#ifndef CLOCK_MONOTONIC_RAW
++#define CLOCK_MONOTONIC_RAW 4
++#endif
++
+ START_TEST(test_new_device)
+ {
+ 	struct libevdev *dev;

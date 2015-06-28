@@ -1,0 +1,427 @@
+diff --git a/CREDITS b/CREDITS
+index de17d9e..38e2108 100644
+--- a/CREDITS
++++ b/CREDITS
+@@ -1,5 +1,6 @@
+ Jonathan Bennett
+     - Contributed OpenWRT support - see the extras/openwrt/ directory.
++    - Suggested the addition of the --key-gen option to fwknopd.
+ 
+ Sebastien Jeanquier
+     - Assisted with getting fwknop included in BackTrack Linux - the choice
+diff --git a/ChangeLog b/ChangeLog
+index 21a5093..4daf008 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,3 +1,8 @@
++fwknop-2.6.7 (05//2015):
++    - Added --key-gen to fwknopd. This feature was suggested by Jonathan
++      Bennett, and will help with ease of use efforts. The first platform to
++      take advantage of this will likely be OpenWRT thanks to Jonathan.
++
+ fwknop-2.6.6 (04/23/2015):
+     - [server] Add the ability for fwknopd to function as an generic SPA
+       gateway. This allows scenarios such as the fwknopd system providing DHCP
+diff --git a/client/config_init.c b/client/config_init.c
+index cdb233d..f0ae135 100644
+--- a/client/config_init.c
++++ b/client/config_init.c
+@@ -199,7 +199,7 @@ static int critical_var_array[] =
+ };
+ 
+ /**
+- * @brief Generate Rijndael + HMAC keys from /dev/random (base64 encoded) and exit.
++ * @brief Generate Rijndael + HMAC keys from /dev/urandom (base64 encoded).
+  *
+  * @param options FKO command line option structure
+  */
+diff --git a/client/fwknop_common.h b/client/fwknop_common.h
+index aef20c4..c57db02 100644
+--- a/client/fwknop_common.h
++++ b/client/fwknop_common.h
+@@ -69,8 +69,6 @@
+ #define MAX_HOSTNAME_LEN            70
+ #define MAX_URL_HOST_LEN            256
+ #define MAX_URL_PATH_LEN            1024
+-#define MAX_KEY_LEN                 128
+-#define MAX_B64_KEY_LEN             180
+ 
+ /* fwknop client configuration parameters and values
+ */
+@@ -156,10 +154,10 @@ typedef struct fko_cli_options
+     unsigned char   use_gpg;
+     unsigned char   use_gpg_agent;
+     unsigned char   gpg_no_signing_pw;
++    unsigned char   key_gen;
+     int             time_offset_plus;
+     int             time_offset_minus;
+     int             fw_timeout;
+-    int             key_gen;
+ 
+     char            use_rc_stanza[MAX_LINE_LEN];
+     unsigned char   got_named_stanza;
+diff --git a/common/common.h b/common/common.h
+index b63e7c2..c7b2e57 100644
+--- a/common/common.h
++++ b/common/common.h
+@@ -157,6 +157,9 @@ enum {
+ #define MAX_GPG_KEY_ID      128
+ #define MAX_USERNAME_LEN    30
+ 
++#define MAX_KEY_LEN                 128
++#define MAX_B64_KEY_LEN             180
++
+ /* Command line argument / argv handling
+ */
+ #define MAX_CMDLINE_ARGS            30                  /*!< should be way more than enough */
+diff --git a/doc/fwknop.man.asciidoc b/doc/fwknop.man.asciidoc
+index 070ac77..efa99a7 100644
+--- a/doc/fwknop.man.asciidoc
++++ b/doc/fwknop.man.asciidoc
+@@ -196,6 +196,11 @@ GENERAL OPTIONS
+     keys are generally more secure than passphrases that are typed in from the
+     command line.
+ 
++*--key-gen-file*='<file>'::
++    Write generated keys to the specified file. Note that the file is
++    overwritten if it already exists. If this option is not given, then
++    *--key-gen* writes the keys to stdout.
++
+ *--key-len*='<length>'::
+     Specify the number of bytes for a generated Rijndael key. The maximum size
+     is currently 128 bytes.
+diff --git a/server/cmd_opts.h b/server/cmd_opts.h
+index bc1eee1..d7a645c 100644
+--- a/server/cmd_opts.h
++++ b/server/cmd_opts.h
+@@ -141,6 +141,10 @@ enum {
+     FW_LIST         = 0x200,
+     FW_LIST_ALL,
+     FW_FLUSH,
++    KEY_GEN_FILE,
++    KEY_LEN,
++    HMAC_KEY_LEN,
++    HMAC_DIGEST_TYPE,
+     AFL_PKT_FILE,
+     GPG_HOME_DIR,
+     GPG_EXE_PATH,
+@@ -178,7 +182,12 @@ static struct option cmd_opts[] =
+     {"fault-injection-tag",  1, NULL, FAULT_INJECTION_TAG},
+     {"help",                 0, NULL, 'h'},
+     {"interface",            1, NULL, 'i'},
+-    {"kill",                 0, NULL, 'K'},
++    {"key-gen",              0, NULL, 'k'},
++    {"key-gen-file",         1, NULL, KEY_GEN_FILE },
++    {"key-len",              1, NULL, KEY_LEN },
++    {"hmac-key-len",         1, NULL, HMAC_KEY_LEN },
++    {"hmac-digest-type",     1, NULL, HMAC_DIGEST_TYPE },
++    {"kill",                 0, NULL, 'K' },
+     {"fw-flush",             0, NULL, FW_FLUSH },
+     {"fw-list",              0, NULL, FW_LIST },
+     {"fw-list-all",          0, NULL, FW_LIST_ALL },
+diff --git a/server/config_init.c b/server/config_init.c
+index 0ddceee..2f1d293 100644
+--- a/server/config_init.c
++++ b/server/config_init.c
+@@ -201,6 +201,69 @@ validate_int_var_ranges(fko_srv_options_t *opts)
+     return;
+ }
+ 
++/**
++ * @brief Generate Rijndael + HMAC keys from /dev/urandom (base64 encoded).
++ *
++ * @param options FKO command line option structure
++ */
++static void
++generate_keys(fko_srv_options_t *options)
++{
++    char key_base64[MAX_B64_KEY_LEN+1];
++    char hmac_key_base64[MAX_B64_KEY_LEN+1];
++
++    FILE  *key_gen_file_ptr = NULL;
++    int res;
++
++    /* Set defaults and validate for --key-gen mode
++    */
++    if(options->key_len == 0)
++        options->key_len = FKO_DEFAULT_KEY_LEN;
++
++    if(options->hmac_key_len == 0)
++        options->hmac_key_len = FKO_DEFAULT_HMAC_KEY_LEN;
++
++    if(options->hmac_type == 0)
++        options->hmac_type = FKO_DEFAULT_HMAC_MODE;
++
++    /* Zero out the key buffers */
++    memset(key_base64, 0x00, sizeof(key_base64));
++    memset(hmac_key_base64, 0x00, sizeof(hmac_key_base64));
++
++    /* Generate the key through libfko */
++    res = fko_key_gen(key_base64, options->key_len,
++            hmac_key_base64, options->hmac_key_len,
++            options->hmac_type);
++
++    if(res != FKO_SUCCESS)
++    {
++        log_msg(LOG_ERR, "%s: fko_key_gen: Error %i - %s",
++            MY_NAME, res, fko_errstr(res));
++        clean_exit(options, NO_FW_CLEANUP, EXIT_FAILURE);
++    }
++
++    if(options->key_gen_file[0] != '\0')
++    {
++        if ((key_gen_file_ptr = fopen(options->key_gen_file, "w")) == NULL)
++        {
++            log_msg(LOG_ERR, "Unable to create key gen file: %s: %s",
++                options->key_gen_file, strerror(errno));
++            clean_exit(options, NO_FW_CLEANUP, EXIT_FAILURE);
++        }
++        fprintf(key_gen_file_ptr, "KEY_BASE64: %s\nHMAC_KEY_BASE64: %s\n",
++            key_base64, hmac_key_base64);
++        fclose(key_gen_file_ptr);
++        fprintf(stdout, "[+] Wrote Rijndael and HMAC keys to: %s",
++            options->key_gen_file);
++    }
++    else
++    {
++        fprintf(stdout, "KEY_BASE64: %s\nHMAC_KEY_BASE64: %s\n",
++                key_base64, hmac_key_base64);
++    }
++    clean_exit(options, NO_FW_CLEANUP, EXIT_SUCCESS);
++}
++
+ /* Parse the config file...
+ */
+ static void
+@@ -427,7 +490,7 @@ validate_options(fko_srv_options_t *opts)
+     if(opts->config[CONF_ENABLE_DIGEST_PERSISTENCE] == NULL)
+         set_config_entry(opts, CONF_ENABLE_DIGEST_PERSISTENCE,
+             DEF_ENABLE_DIGEST_PERSISTENCE);
+-            
++
+     /* Enable destination rule.
+     */
+     if(opts->config[CONF_ENABLE_DESTINATION_RULE] == NULL)
+@@ -928,8 +991,9 @@ config_init(fko_srv_options_t *opts, int argc, char **argv)
+ 
+     /* First, scan the command-line args for -h/--help or an alternate
+      * configuration file. If we find an alternate config file, use it,
+-     * otherwise use the default.  We also grab any override config files
+-     * as well.
++     * otherwise use the default. We also grab any override config files
++     * as well. In addition, we handle key generation here since this is
++     * independent of configuration parsing.
+     */
+     while ((cmd_arg = getopt_long(argc, argv,
+             GETOPTS_OPTION_STRING, cmd_opts, &index)) != -1) {
+@@ -952,6 +1016,45 @@ config_init(fko_srv_options_t *opts, int argc, char **argv)
+                 if(got_override_config > 0)
+                     break;
+ 
++            case 'k':
++                opts->key_gen = 1;
++                break;
++            case KEY_GEN_FILE:
++                opts->key_gen = 1;
++                strlcpy(opts->key_gen_file, optarg, sizeof(opts->key_gen_file));
++                break;
++            case KEY_LEN:  /* used in --key-gen mode only */
++                opts->key_len = strtol_wrapper(optarg, 1,
++                        MAX_KEY_LEN, NO_EXIT_UPON_ERR, &is_err);
++                if(is_err != FKO_SUCCESS)
++                {
++                    log_msg(LOG_ERR,
++                            "Invalid key length '%s', must be in [%d-%d]",
++                            optarg, 1, MAX_KEY_LEN);
++                    clean_exit(opts, NO_FW_CLEANUP, EXIT_FAILURE);
++                }
++                break;
++            case HMAC_DIGEST_TYPE:  /* used in --key-gen mode only */
++                if((opts->hmac_type = hmac_digest_strtoint(optarg)) < 0)
++                {
++                    log_msg(LOG_ERR,
++                        "* Invalid hmac digest type: %s, use {md5,sha1,sha256,sha384,sha512}",
++                        optarg);
++                    clean_exit(opts, NO_FW_CLEANUP, EXIT_FAILURE);
++                }
++                break;
++            case HMAC_KEY_LEN:  /* used in --key-gen mode only */
++                opts->hmac_key_len = strtol_wrapper(optarg, 1,
++                        MAX_KEY_LEN, NO_EXIT_UPON_ERR, &is_err);
++                if(is_err != FKO_SUCCESS)
++                {
++                    log_msg(LOG_ERR,
++                            "Invalid hmac key length '%s', must be in [%d-%d]",
++                            optarg, 1, MAX_KEY_LEN);
++                    clean_exit(opts, NO_FW_CLEANUP, EXIT_FAILURE);
++                }
++                break;
++
+             /* Look for override configuration file arg.
+             */
+             case 'O':
+@@ -965,6 +1068,9 @@ config_init(fko_srv_options_t *opts, int argc, char **argv)
+         }
+     }
+ 
++    if(opts->key_gen)
++        generate_keys(opts);
++
+     /* If no alternate configuration file was specified, we use the
+      * default.
+     */
+diff --git a/server/fwknopd_common.h b/server/fwknopd_common.h
+index ecf2a81..8c33eaa 100644
+--- a/server/fwknopd_common.h
++++ b/server/fwknopd_common.h
+@@ -585,10 +585,14 @@ typedef struct fko_srv_options
+     unsigned char   fw_list;            /* List current firewall rules */
+     unsigned char   fw_list_all;        /* List all current firewall rules */
+     unsigned char   fw_flush;           /* Flush current firewall rules */
++    unsigned char   key_gen;            /* Generate keys and exit */
++    unsigned char   exit_after_parse_config; /* Parse config and exit */
++
++    /* Operational flags
++    */
+     unsigned char   test;               /* Test mode flag */
+     unsigned char   afl_fuzzing;        /* SPA pkts from stdin for AFL fuzzing */
+     unsigned char   verbose;            /* Verbose mode flag */
+-    unsigned char   exit_after_parse_config; /* Parse config and exit */
+     unsigned char   enable_udp_server;  /* Enable UDP server mode */
+ 
+     unsigned char   firewd_disable_check_support; /* Don't use firewall-cmd ... -C */
+@@ -605,6 +609,13 @@ typedef struct fko_srv_options
+     int             tcp_server_pid;
+     int             lock_fd;
+ 
++    /* Values used in --key-gen mode only
++    */
++    char key_gen_file[MAX_PATH_LEN];
++    int  key_len;
++    int  hmac_key_len;
++    int  hmac_type;
++
+ #if USE_FILE_CACHE
+     struct digest_cache_list *digest_cache;   /* In-memory digest cache list */
+ #endif
+diff --git a/test/tests/basic_operations.pl b/test/tests/basic_operations.pl
+index f4dde2e..76a509d 100644
+--- a/test/tests/basic_operations.pl
++++ b/test/tests/basic_operations.pl
+@@ -390,6 +390,14 @@
+         'exec_err' => $YES,
+         'cmdline'  => "$default_client_args --key-gen -K " . 'A'x1030
+     },
++    {
++        'category' => 'basic operations',
++        'subcategory' => 'server',
++        'detail'   => '--key-gen file path (-K) too long',
++        'function' => \&generic_exec,
++        'exec_err' => $YES,
++        'cmdline'  => "$fwknopdCmd --key-gen --key-gen-file " . 'A'x1030
++    },
+ 
+     {
+         'category' => 'basic operations',
+diff --git a/test/tests/rijndael.pl b/test/tests/rijndael.pl
+index 26aab6a..34af65e 100644
+--- a/test/tests/rijndael.pl
++++ b/test/tests/rijndael.pl
+@@ -421,33 +421,6 @@
+         'key_file' => $cf{'rc_named_key'},
+     },
+ 
+-    ### --key-gen tests
+-    {
+-        'category' => 'Rijndael',
+-        'subcategory' => 'client',
+-        'detail'   => '--key-gen',
+-        'function' => \&generic_exec,
+-        'cmdline'  => "$fwknopCmd --key-gen",
+-        'positive_output_matches' => [qr/^KEY_BASE64\:?\s\S{10}/,
+-            qw/HMAC_KEY_BASE64\:?\s\S{10}/],
+-    },
+-    {
+-        'category' => 'Rijndael',
+-        'subcategory' => 'client',
+-        'detail'   => "--key-gen $uniq_keys key uniqueness",
+-        'function' => \&key_gen_uniqueness,
+-        'cmdline'  => "$fwknopCmd --key-gen",   ### no valgrind string (too slow for 100 client exec's)
+-        'disable_valgrind' => $YES,
+-    },
+-    {
+-        'category' => 'Rijndael',
+-        'subcategory' => 'client',
+-        'detail'   => '--key-gen to file',
+-        'function' => \&generic_exec,
+-        'cmdline'  => "$fwknopCmd --key-gen --key-gen-file $key_gen_file",
+-        'positive_output_matches' => [qr/Wrote.*\skeys/],
+-    },
+-
+     ### rc file tests
+     {
+         'category' => 'Rijndael',
+diff --git a/test/tests/rijndael_hmac.pl b/test/tests/rijndael_hmac.pl
+index fc1a8af..fd80f04 100644
+--- a/test/tests/rijndael_hmac.pl
++++ b/test/tests/rijndael_hmac.pl
+@@ -58,6 +58,59 @@
+         'exec_err' => $YES,
+     },
+ 
++    ### --key-gen tests
++    {
++        'category' => 'Rijndael+HMAC',
++        'subcategory' => 'client',
++        'detail'   => '--key-gen',
++        'function' => \&generic_exec,
++        'cmdline'  => "$fwknopCmd --key-gen",
++        'positive_output_matches' => [qr/^KEY_BASE64\:?\s\S{10}/,
++            qw/HMAC_KEY_BASE64\:?\s\S{10}/],
++    },
++    {
++        'category' => 'Rijndael+HMAC',
++        'subcategory' => 'server',
++        'detail'   => '--key-gen',
++        'function' => \&generic_exec,
++        'cmdline'  => "$fwknopdCmd --key-gen",
++        'positive_output_matches' => [qr/^KEY_BASE64\:?\s\S{10}/,
++            qw/HMAC_KEY_BASE64\:?\s\S{10}/],
++    },
++    {
++        'category' => 'Rijndael+HMAC',
++        'subcategory' => 'client',
++        'detail'   => "--key-gen $uniq_keys key uniqueness",
++        'function' => \&key_gen_uniqueness,
++        'cmdline'  => "$fwknopCmd --key-gen",   ### no valgrind string (too slow for 100 exec's)
++        'disable_valgrind' => $YES,
++    },
++    {
++        'category' => 'Rijndael+HMAC',
++        'subcategory' => 'server',
++        'detail'   => "--key-gen $uniq_keys key uniqueness",
++        'function' => \&key_gen_uniqueness,
++        'cmdline'  => "$fwknopdCmd --key-gen",   ### no valgrind string (too slow for 100 exec's)
++        'disable_valgrind' => $YES,
++    },
++    {
++        'category' => 'Rijndael+HMAC',
++        'subcategory' => 'client',
++        'detail'   => '--key-gen to file',
++        'function' => \&generic_exec,
++        'cmdline'  => "$fwknopCmd --key-gen --key-gen-file $key_gen_file",
++        'positive_output_matches' => [qr/Wrote.*\skeys/],
++    },
++    {
++        'category' => 'Rijndael+HMAC',
++        'subcategory' => 'server',
++        'detail'   => '--key-gen to file',
++        'function' => \&generic_exec,
++        'cmdline'  => "$fwknopdCmd --key-gen --key-gen-file $key_gen_file",
++        'positive_output_matches' => [qr/Wrote.*\skeys/],
++    },
++
++    ### complete cycle tests
+     {
+         'category' => 'Rijndael+HMAC',
+         'subcategory' => 'client+server',

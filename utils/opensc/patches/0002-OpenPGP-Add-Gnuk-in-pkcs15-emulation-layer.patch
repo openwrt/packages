@@ -9,11 +9,11 @@ Subject: [PATCH 02/26] OpenPGP: Add Gnuk in pkcs15 emulation layer.
  src/libopensc/pkcs15-syn.c     | 1 +
  2 files changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/src/libopensc/pkcs15-openpgp.c b/src/libopensc/pkcs15-openpgp.c
-index 4daaa98..fdf720a 100644
---- a/src/libopensc/pkcs15-openpgp.c
-+++ b/src/libopensc/pkcs15-openpgp.c
-@@ -151,7 +151,8 @@ sc_pkcs15emu_openpgp_init(sc_pkcs15_card_t *p15card)
+Index: opensc-20150513/src/libopensc/pkcs15-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/pkcs15-openpgp.c
++++ opensc-20150513/src/libopensc/pkcs15-openpgp.c
+@@ -153,7 +153,8 @@ sc_pkcs15emu_openpgp_init(sc_pkcs15_card
  	u8		c4data[10];
  	u8		c5data[70];
  	int		r, i;
@@ -23,7 +23,7 @@ index 4daaa98..fdf720a 100644
  	sc_path_t path;
  	sc_file_t *file;
  
-@@ -363,7 +364,8 @@ failed:	sc_debug(card->ctx, SC_LOG_DEBUG_NORMAL, "Failed to initialize OpenPGP e
+@@ -365,7 +366,8 @@ failed:	sc_debug(card->ctx, SC_LOG_DEBUG
  
  static int openpgp_detect_card(sc_pkcs15_card_t *p15card)
  {
@@ -33,11 +33,11 @@ index 4daaa98..fdf720a 100644
  		return SC_SUCCESS;
  	else
  		return SC_ERROR_WRONG_CARD;
-diff --git a/src/libopensc/pkcs15-syn.c b/src/libopensc/pkcs15-syn.c
-index ffbf642..d2c086c 100644
---- a/src/libopensc/pkcs15-syn.c
-+++ b/src/libopensc/pkcs15-syn.c
-@@ -115,6 +115,7 @@ int sc_pkcs15_is_emulation_only(sc_card_t *card)
+Index: opensc-20150513/src/libopensc/pkcs15-syn.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/pkcs15-syn.c
++++ opensc-20150513/src/libopensc/pkcs15-syn.c
+@@ -117,6 +117,7 @@ int sc_pkcs15_is_emulation_only(sc_card_
  		case SC_CARD_TYPE_GEMSAFEV1_PTEID:
  		case SC_CARD_TYPE_OPENPGP_V1:
  		case SC_CARD_TYPE_OPENPGP_V2:
@@ -45,6 +45,3 @@ index ffbf642..d2c086c 100644
  		case SC_CARD_TYPE_SC_HSM:
  		case SC_CARD_TYPE_DNIE_BASE:
  		case SC_CARD_TYPE_DNIE_BLANK:
--- 
-2.1.3
-

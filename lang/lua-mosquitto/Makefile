@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013 OpenWrt.org
+# Copyright (C) 2013-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -13,10 +13,11 @@ PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/flukso/$(PKG_NAME)/archive/
-PKG_MD5SUM:=fd26fa08fc855ba4a66ce521fe5aae13
+PKG_SOURCE_URL:=https://github.com/flukso/lua-mosquitto.git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 

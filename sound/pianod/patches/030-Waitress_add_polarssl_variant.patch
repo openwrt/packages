@@ -1,0 +1,333 @@
+--- a/src/libwaitress/waitress.h
++++ b/src/libwaitress/waitress.h
+@@ -27,7 +27,12 @@ THE SOFTWARE.
+ #include <stdlib.h>
+ #include <unistd.h>
+ #include <stdbool.h>
++
++#if defined(USE_POLARSSL)
++typedef struct _polarssl_ctx polarssl_ctx;
++#else
+ #include <gnutls/gnutls.h>
++#endif
+ 
+ #define LIBWAITRESS_NAME "libwaitress"
+ 
+@@ -102,8 +107,9 @@ typedef struct {
+ 	WaitressUrl_t url;
+ 	WaitressUrl_t proxy;
+ 
++#if !defined(USE_POLARSSL)
+ 	gnutls_certificate_credentials_t tlsCred;
+-
++#endif
+ 	/* per-request data */
+ 	struct {
+ 		int sockfd;
+@@ -121,7 +127,11 @@ typedef struct {
+ 		WaitressReturn_t (*read) (void *, char *, const size_t, size_t *);
+ 		WaitressReturn_t (*write) (void *, const char *, const size_t);
+ 
++#if defined(USE_POLARSSL)
++		polarssl_ctx* sslCtx;
++#else
+ 		gnutls_session_t tlsSession;
++#endif
+ 	} request;
+ } WaitressHandle_t;
+ 
+--- a/src/pianod.c
++++ b/src/pianod.c
+@@ -531,8 +531,11 @@ static bool initialize_libraries (APPSTA
+ 	gcry_check_version (NULL);
+ 	gcry_control (GCRYCTL_DISABLE_SECMEM, 0);
+ 	gcry_control (GCRYCTL_INITIALIZATION_FINISHED, 0);
++
++#if !defined(USE_POLARSSL)
+ 	int crystatus = gnutls_global_init ();
+ 	if (crystatus == GNUTLS_E_SUCCESS) {
++#endif
+ 		PianoReturn_t status = PianoInit (&app->ph, app->settings.partnerUser, app->settings.partnerPassword,
+ 										  app->settings.device, app->settings.inkey, app->settings.outkey);
+ 		if (status == PIANO_RET_OK) {
+@@ -545,11 +548,13 @@ static bool initialize_libraries (APPSTA
+ 		} else {
+ 			flog (LOG_ERROR, "initialize_libraries: PianoInit: %s", PianoErrorToStr (status));
+ 		}
++#if !defined(USE_POLARSSL)
+ 		gnutls_global_deinit ();
+ 	} else {
+ 		flog (LOG_ERROR, "initialize_libraries: gnutls_global_init: %s", gcry_strerror (crystatus));
+ 
+ 	}
++#endif
+ 	return false;
+ }
+ 
+@@ -728,7 +733,9 @@ int main (int argc, char **argv) {
+ 		PianoDestroyPlaylist (app.song_history);
+ 		PianoDestroyPlaylist (app.playlist);
+ 		WaitressFree (&app.waith);
++#if !defined(USE_POLARSSL)
+ 		gnutls_global_deinit ();
++#endif
+ 		settings_destroy (&app.settings);
+ 	}
+ 	
+--- a/src/libwaitress/waitress.c
++++ b/src/libwaitress/waitress.c
+@@ -41,11 +41,33 @@ THE SOFTWARE.
+ #include <assert.h>
+ #include <stdint.h>
+ 
+-#include <gnutls/x509.h>
+ 
+ #include "config.h"
+ #include "waitress.h"
+ 
++#if defined(USE_POLARSSL)
++
++#include <polarssl/ssl.h>
++#include <polarssl/entropy.h>
++#include <polarssl/ctr_drbg.h>
++#include <polarssl/x509.h>
++#include <polarssl/sha1.h>
++
++struct _polarssl_ctx
++{
++	ssl_context		ssl;
++	ssl_session		session;
++	entropy_context		entrophy;
++	ctr_drbg_context	rnd;
++};
++
++#else
++
++// Use gnutls by default (USE_POLARSSL not defined)
++#include <gnutls/x509.h>
++
++#endif
++
+ #define strcaseeq(a,b) (strcasecmp(a,b) == 0)
+ #define WAITRESS_HTTP_VERSION "1.1"
+ 
+@@ -56,6 +78,13 @@ typedef struct {
+ 
+ static WaitressReturn_t WaitressReceiveHeaders (WaitressHandle_t *, size_t *);
+ 
++// gnutls wants (void *) and polarssl want (unsigned char *)
++#if defined(USE_POLARSSL)
++#define BUFFER_CAST unsigned char
++#else
++#define BUFFER_CAST void
++#endif
++
+ #define READ_RET(buf, count, size) \
+ 		if ((wRet = waith->request.read (waith, buf, count, size)) != \
+ 				WAITRESS_RET_OK) { \
+@@ -444,7 +473,7 @@ static int WaitressPollLoop (int fd, sho
+  *	@param write count bytes
+  *	@return number of written bytes or -1 on error
+  */
+-static ssize_t WaitressPollWrite (void *data, const void *buf, size_t count) {
++static ssize_t WaitressPollWrite (void *data, const BUFFER_CAST *buf, size_t count) {
+ 	int pollres = -1;
+ 	ssize_t retSize;
+ 	WaitressHandle_t *waith = data;
+@@ -478,13 +507,20 @@ static WaitressReturn_t WaitressOrdinary
+ 	return waith->request.readWriteRet;
+ }
+ 
+-static WaitressReturn_t WaitressGnutlsWrite (void *data, const char *buf,
++static WaitressReturn_t WaitressTlsWrite (void *data, const char *buf,
+ 		const size_t size) {
+ 	WaitressHandle_t *waith = data;
++#if defined(USE_POLARSSL)
++
++	if (ssl_write (&waith->request.sslCtx->ssl, buf, size) < 0) {
++		return WAITRESS_RET_TLS_WRITE_ERR;
++	}
++#else
+ 
+ 	if (gnutls_record_send (waith->request.tlsSession, buf, size) < 0) {
+ 		return WAITRESS_RET_TLS_WRITE_ERR;
+ 	}
++#endif
+ 	return waith->request.readWriteRet;
+ }
+ 
+@@ -494,7 +530,7 @@ static WaitressReturn_t WaitressGnutlsWr
+  *	@param buffer size
+  *	@return number of read bytes or -1 on error
+  */
+-static ssize_t WaitressPollRead (void *data, void *buf, size_t count) {
++static ssize_t WaitressPollRead (void *data, BUFFER_CAST *buf, size_t count) {
+ 	int pollres = -1;
+ 	ssize_t retSize;
+ 	WaitressHandle_t *waith = data;
+@@ -531,16 +567,34 @@ static WaitressReturn_t WaitressOrdinary
+ 	return waith->request.readWriteRet;
+ }
+ 
+-static WaitressReturn_t WaitressGnutlsRead (void *data, char *buf,
++static WaitressReturn_t WaitressTlsRead (void *data, char *buf,
+ 		const size_t size, size_t *retSize) {
+ 	WaitressHandle_t *waith = data;
+ 
++#if defined(USE_POLARSSL)
++	int ret;
++
++	*retSize = 0;
++	waith->request.readWriteRet = WAITRESS_RET_OK;
++	ret = ssl_read (&waith->request.sslCtx->ssl, buf, size);
++
++	if (ret < 0) {
++		if (ret != POLARSSL_ERR_SSL_PEER_CLOSE_NOTIFY) {
++			waith->request.readWriteRet = WAITRESS_RET_TLS_READ_ERR;
++		}
++
++		return waith->request.readWriteRet;
++	}
++
++	*retSize = ret;
++#else
+ 	ssize_t ret = gnutls_record_recv (waith->request.tlsSession, buf, size);
+ 	if (ret < 0) {
+ 		return WAITRESS_RET_TLS_READ_ERR;
+ 	} else {
+ 		*retSize = ret;
+ 	}
++#endif
+ 	return waith->request.readWriteRet;
+ }
+ 
+@@ -727,10 +781,28 @@ static int WaitressParseStatusline (cons
+ /*	verify server certificate
+  */
+ static WaitressReturn_t WaitressTlsVerify (const WaitressHandle_t *waith) {
++
++#if defined(USE_POLARSSL)
++	unsigned char fingerprint[20];
++
++	const x509_crt* cert = ssl_get_peer_cert (&waith->request.sslCtx->ssl);
++
++	if (NULL == cert) {
++		return WAITRESS_RET_TLS_HANDSHAKE_ERR;
++	}
++
++	sha1 (cert->raw.p, cert->raw.len, fingerprint);
++
++	if (memcmp (fingerprint, waith->tlsFingerprint, sizeof (fingerprint)) != 0) {
++		return WAITRESS_RET_TLS_FINGERPRINT_MISMATCH;
++	}
++
++#else
+ 	gnutls_session_t session = waith->request.tlsSession;
+ 	unsigned int certListSize;
+ 	const gnutls_datum_t *certList;
+ 	gnutls_x509_crt_t cert;
++	char fingerprint[20];
+ 
+ 	if (gnutls_certificate_type_get (session) != GNUTLS_CRT_X509) {
+ 		return WAITRESS_RET_TLS_HANDSHAKE_ERR;
+@@ -750,7 +822,6 @@ static WaitressReturn_t WaitressTlsVerif
+ 		return WAITRESS_RET_TLS_HANDSHAKE_ERR;
+ 	}
+ 
+-	char fingerprint[20];
+ 	size_t fingerprintSize = sizeof (fingerprint);
+ 	if (gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1, fingerprint,
+ 			&fingerprintSize) != 0) {
+@@ -763,7 +834,7 @@ static WaitressReturn_t WaitressTlsVerif
+ 	}
+ 
+ 	gnutls_x509_crt_deinit (cert);
+-
++#endif
+ 	return WAITRESS_RET_OK;
+ }
+ 
+@@ -876,6 +947,12 @@ static WaitressReturn_t WaitressConnect
+ 			}
+ 		}
+ 
++#if defined(USE_POLARSSL)
++		ssl_set_hostname (&waith->request.sslCtx->ssl, waith->url.host);
++		if (ssl_handshake (&waith->request.sslCtx->ssl) != 0) {
++			return WAITRESS_RET_TLS_HANDSHAKE_ERR;
++		}
++#else
+ 		/* Ignore return code as connection will likely still succeed */
+ 		gnutls_server_name_set (waith->request.tlsSession, GNUTLS_NAME_DNS,
+ 				waith->url.host, strlen (waith->url.host));
+@@ -883,14 +960,15 @@ static WaitressReturn_t WaitressConnect
+ 		if (gnutls_handshake (waith->request.tlsSession) != GNUTLS_E_SUCCESS) {
+ 			return WAITRESS_RET_TLS_HANDSHAKE_ERR;
+ 		}
++#endif
+ 
+ 		if ((wRet = WaitressTlsVerify (waith)) != WAITRESS_RET_OK) {
+ 			return wRet;
+ 		}
+ 
+ 		/* now we can talk encrypted */
+-		waith->request.read = WaitressGnutlsRead;
+-		waith->request.write = WaitressGnutlsWrite;
++		waith->request.read = WaitressTlsRead;
++		waith->request.write = WaitressTlsWrite;
+ 	}
+ 
+ 	return WAITRESS_RET_OK;
+@@ -1116,6 +1194,21 @@ WaitressReturn_t WaitressFetchCall (Wait
+ 	waith->request.contentLengthKnown = false;
+ 
+ 	if (waith->url.tls) {
++#if defined(USE_POLARSSL)
++		waith->request.sslCtx = calloc (1, sizeof(polarssl_ctx));
++
++		entropy_init (&waith->request.sslCtx->entrophy);
++		ctr_drbg_init (&waith->request.sslCtx->rnd, entropy_func, &waith->request.sslCtx->entrophy, "libwaitress", 11);
++		ssl_init (&waith->request.sslCtx->ssl);
++
++		ssl_set_endpoint (&waith->request.sslCtx->ssl, SSL_IS_CLIENT);
++		ssl_set_authmode (&waith->request.sslCtx->ssl, SSL_VERIFY_NONE);
++		ssl_set_rng (&waith->request.sslCtx->ssl, ctr_drbg_random, &waith->request.sslCtx->rnd);
++		ssl_set_session (&waith->request.sslCtx->ssl, &waith->request.sslCtx->session);
++		ssl_set_bio (&waith->request.sslCtx->ssl,
++			     WaitressPollRead, waith,
++			     WaitressPollWrite, waith);
++#else
+ 		gnutls_init (&waith->request.tlsSession, GNUTLS_CLIENT);
+ 		gnutls_set_default_priority (waith->request.tlsSession);
+ 
+@@ -1133,6 +1226,7 @@ WaitressReturn_t WaitressFetchCall (Wait
+ 				WaitressPollRead);
+ 		gnutls_transport_set_push_function (waith->request.tlsSession,
+ 				WaitressPollWrite);
++#endif
+ 	}
+ 
+ 	/* buffer is required for connect already */
+@@ -1144,15 +1238,22 @@ WaitressReturn_t WaitressFetchCall (Wait
+ 		if ((wRet = WaitressSendRequest (waith)) == WAITRESS_RET_OK) {
+ 			wRet = WaitressReceiveResponse (waith);
+ 		}
++#if !defined(USE_POLARSSL)
+ 		if (waith->url.tls) {
+ 			gnutls_bye (waith->request.tlsSession, GNUTLS_SHUT_RDWR);
+ 		}
++#endif
+ 	}
+ 
+ 	/* cleanup */
+ 	if (waith->url.tls) {
++#if defined(USE_POLARSSL)
++		ssl_free (&waith->request.sslCtx->ssl);
++		free (waith->request.sslCtx);
++#else
+ 		gnutls_deinit (waith->request.tlsSession);
+ 		gnutls_certificate_free_credentials (waith->tlsCred);
++#endif
+ 	}
+ 	if (waith->request.sockfd != -1) {
+ 		close (waith->request.sockfd);

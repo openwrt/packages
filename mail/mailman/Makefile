@@ -10,8 +10,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mailman
 PKG_RELEASE:=1
 PKG_SOURCE_URL:=ftp://ftp.gnu.org/gnu/mailman/ http://ftp.gnu.org/gnu/mailman/
-PKG_VERSION:=2.1.18-1
-PKG_MD5SUM:=dc861ed9698a98499a951eaef7d4db9f
+PKG_VERSION:=2.1.20
+PKG_MD5SUM:=96819640406f90a12bc28edd3dc09d4a
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=GPL-2.0+
@@ -24,7 +24,7 @@ define Package/mailman
   CATEGORY:=Mail
   TITLE:=The GNU Mailing List Manager
   URL:=http://www.gnu.org/software/mailman/
-  DEPENDS:=+postfix +python-mini +uhttpd +python-dns #+python-dev
+  DEPENDS:=+postfix +python +uhttpd +python-dns
 endef
 
 define Package/mailman/description

@@ -1,0 +1,14 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -13,11 +13,6 @@ AC_LANG([C++])
+ 
+ dnl the debug check has to be made before the program checks
+ dnl because it modifies CXXFLAGS
+-if test x$CXX = xclang++; then
+-    CXXFLAGS="-msse2 $CXXFLAGS"
+-else
+-    CXXFLAGS="-msse2 -mfpmath=sse $CXXFLAGS"
+-fi
+ AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug],[enable sumo debugging code [default=no].])])
+ if test x$enable_debug = xyes; then
+     AC_DEFINE(_DEBUG, 1, [Define to 1 in order to enable sumo debugging code.])

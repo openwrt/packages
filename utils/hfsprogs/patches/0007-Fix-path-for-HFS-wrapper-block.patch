@@ -1,0 +1,23 @@
+From: =?UTF-8?q?Rog=C3=A9rio=20Brito?= <rbrito@ime.usp.br>
+Date: Thu, 24 Oct 2013 01:11:21 -0200
+Subject: Fix path for HFS wrapper block
+
+Fix the installation of the HFS wrapper block to be compliant in Linux
+systems (since it is arch independent).
+---
+ newfs_hfs.tproj/makehfs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/newfs_hfs.tproj/makehfs.c b/newfs_hfs.tproj/makehfs.c
+index 7609779..2233ef7 100644
+--- a/newfs_hfs.tproj/makehfs.c
++++ b/newfs_hfs.tproj/makehfs.c
+@@ -70,7 +70,7 @@ extern Boolean _CFStringGetFileSystemRepresentation(CFStringRef string, UInt8 *b
+ #include "readme.h"
+ 
+ 
+-#define HFS_BOOT_DATA	"/usr/share/misc/hfsbootdata"
++#define HFS_BOOT_DATA	"/usr/share/hfsprogs/hfsbootdata"
+ 
+ #define HFS_JOURNAL_FILE	".journal"
+ #define HFS_JOURNAL_INFO	".journal_info_block"

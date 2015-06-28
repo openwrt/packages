@@ -38,3 +38,6 @@
 
 # IPv6 @ freedns.afraid.org
 "freedns.afraid.org"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+
+# IPv6 @ LoopiaDNS
+"loopia.se" "http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"

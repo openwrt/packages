@@ -37,6 +37,9 @@ ipt -t mangle -A QOS_MARK_${IFACE} -m tos  --tos Minimize-Delay -j MARK --set-ma
 
 # Turn it on. Preserve classification if already performed
 
+#sm: is it correct to do this in $IFACE? Should ingress not be on $DEV? since HTB acts on $DEV?
+#	SQUASH also does not work on $DEV (that is the IFB will still see the incoming ToS bits whether we squash or not)
+#	SQUASH is still useful to protect internal machines...
 if [ "$SQUASH_DSCP" = "1" ]
 then
 sqm_logger "Squashing differentiated services code points (DSCP) from ingress."

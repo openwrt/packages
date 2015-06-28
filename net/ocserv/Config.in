@@ -11,6 +11,10 @@ config OCSERV_SECCOMP
 	bool "enable seccomp"
 	default n
 
+config OCSERV_RADIUS
+	bool "enable radius authentication"
+	default n
+
 config OCSERV_PROTOBUF
 	bool "use external libprotobuf"
 	default y

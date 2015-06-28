@@ -1,0 +1,20 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -232,7 +232,7 @@ 
+ CTAGS = ctags
+ CSCOPE = cscope
+ DIST_SUBDIRS = support genfft kernel simd-support dft rdft reodft api \
+-	libbench2 . threads tests mpi doc tools m4
++	libbench2 . threads mpi doc tools m4
+ DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+ distdir = $(PACKAGE)-$(VERSION)
+ top_distdir = $(distdir)
+@@ -444,7 +444,7 @@
+ #
+ @COMBINED_THREADS_TRUE@CHICKEN_EGG = threads .
+ SUBDIRS = support $(GENFFT) kernel simd-support dft rdft reodft api	\
+-libbench2 $(CHICKEN_EGG) tests mpi doc tools m4
++libbench2 $(CHICKEN_EGG) mpi m4
+ 
+ EXTRA_DIST = COPYRIGHT bootstrap.sh CONVENTIONS fftw.pc.in
+ SIMD_LIBS = \

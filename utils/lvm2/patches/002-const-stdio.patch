@@ -1,0 +1,54 @@
+--- a/lib/commands/toolcontext.c
++++ b/lib/commands/toolcontext.c
+@@ -1637,8 +1637,10 @@ struct cmd_context *create_toolcontext(u
+ 				       unsigned threaded)
+ {
+ 	struct cmd_context *cmd;
++#if defined(__GLIBC__) && !defined(VALGRIND_POOL)
+ 	FILE *new_stream;
+ 	int flags;
++#endif
+ 
+ #ifdef M_MMAP_MAX
+ 	mallopt(M_MMAP_MAX, 0);
+@@ -1674,7 +1676,7 @@ struct cmd_context *create_toolcontext(u
+ 	/* FIXME Make this configurable? */
+ 	reset_lvm_errno(1);
+ 
+-#ifndef VALGRIND_POOL
++#if defined(__GLIBC__) && !defined(VALGRIND_POOL)
+ 	/* Set in/out stream buffering before glibc */
+ 	if (set_buffering) {
+ 		/* Allocate 2 buffers */
+@@ -2047,7 +2049,7 @@ void destroy_toolcontext(struct cmd_cont
+ 	if (cmd->libmem)
+ 		dm_pool_destroy(cmd->libmem);
+ 
+-#ifndef VALGRIND_POOL
++#if defined(__GLIBC__) && !defined(VALGRIND_POOL)
+ 	if (cmd->linebuffer) {
+ 		/* Reset stream buffering to defaults */
+ 		if (is_valid_fd(STDIN_FILENO) &&
+--- a/tools/lvmcmdline.c
++++ b/tools/lvmcmdline.c
+@@ -1635,6 +1635,7 @@ int lvm_split(char *str, int *argc, char
+ /* Make sure we have always valid filedescriptors 0,1,2 */
+ static int _check_standard_fds(void)
+ {
++#ifdef __GLIBC__
+ 	int err = is_valid_fd(STDERR_FILENO);
+ 
+ 	if (!is_valid_fd(STDIN_FILENO) &&
+@@ -1661,6 +1662,12 @@ static int _check_standard_fds(void)
+ 		       strerror(errno));
+ 		return 0;
+ 	}
++#else
++	if (!is_valid_fd(STDERR_FILENO) ||
++	    !is_valid_fd(STDOUT_FILENO) ||
++	    !is_valid_fd(STDIN_FILENO))
++		return 0;
++#endif
+ 
+ 	return 1;
+ }

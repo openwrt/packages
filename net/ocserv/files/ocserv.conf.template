@@ -18,7 +18,7 @@ auth = "|AUTH|"
 # A banner to be displayed on clients
 banner = "Welcome to OpenWRT"
 
-isolate-workers = true
+#isolate-workers = true
 
 # When the server has a dynamic DNS address (that may change),
 # should set that to true to ask the client to resolve again on
@@ -35,7 +35,7 @@ max-clients = |MAX_CLIENTS|
 
 # Limit the number of client connections to one every X milliseconds 
 # (X is the provided value). Set to zero for no limit.
-#rate-limit-ms = 100
+rate-limit-ms = 100
 
 # Limit the number of identical clients (i.e., users connecting 
 # multiple times). Unset or set to zero for unlimited.
@@ -141,6 +141,27 @@ auth-timeout = 40
 # The time (in seconds) that a client is not allowed to reconnect after 
 # a failed authentication attempt.
 min-reauth-time = 360
+
+# Banning clients in ocserv works with a point system. IP addresses
+# that get a score over that configured number are banned for
+# min-reauth-time seconds. By default a wrong password attempt is 10 points,
+# a KKDCP POST is 1 point, and a connection is 1 point. Note that
+# due to difference processes being involved the count of points
+# will not be real-time precise.
+#
+# Score banning cannot be reliably used when receiving proxied connections
+# locally from an HTTP server (i.e., when listen-clear-file is used).
+#
+# Set to zero to disable.
+max-ban-score = 50
+
+# The time (in seconds) that all score kept for a client is reset.
+ban-reset-time = 300
+
+# In case you'd like to change the default points.
+#ban-points-wrong-password = 10
+#ban-points-connection = 1
+#ban-points-kkdcp = 1
 
 # Cookie timeout (in seconds)
 # which he can reconnect. That cookie will be invalided if not

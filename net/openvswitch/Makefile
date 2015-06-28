@@ -11,8 +11,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openvswitch
 
-PKG_RELEASE:=2
-PKG_VERSION:=2.3.1
+PKG_RELEASE:=3
+PKG_VERSION:=2.3.90
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -21,14 +21,18 @@ PKG_USE_MIPS16:=0
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/openvswitch/ovs
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=0dfed4ba9c8a16a1f316d709b7831a4e139472d4
+PKG_SOURCE_VERSION:=58be9c9fd732b5bdd3d4c2e9b8cc2313f570094d
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+
+PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+
+SUPPORTED_KERNELS:=LINUX_3_8||LINUX_3_10||LINUX_3_13||LINUX_3_14||LINUX_3_18||LINUX_4_0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
 $(call include_mk, python-package.mk)
-
-PKG_FIXUP=libtool
 
 define Package/openvswitch/Default
   SECTION:=net
@@ -50,7 +54,7 @@ endef
 define Package/openvswitch
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+libpcap +libopenssl +librt +libatomic +kmod-openvswitch
+  DEPENDS:=+libpcap +libopenssl +librt +kmod-openvswitch @($(SUPPORTED_KERNELS))
 endef
 
 define Package/openvswitch/description
@@ -94,7 +98,7 @@ define KernelPackage/openvswitch
   SUBMENU:=Network Support
   TITLE:=Open vSwitch Kernel Package
   KCONFIG:=CONFIG_BRIDGE
-  DEPENDS:=+kmod-stp +kmod-ipv6 +kmod-gre +kmod-lib-crc32c +kmod-vxlan
+  DEPENDS:=+kmod-stp +kmod-ipv6 +kmod-gre +kmod-lib-crc32c +kmod-vxlan @($(SUPPORTED_KERNELS))
   FILES:= \
 	$(PKG_BUILD_DIR)/datapath/linux/openvswitch.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,21,openvswitch)
@@ -110,35 +114,7 @@ CONFIGURE_ARGS += --enable-ndebug
 CONFIGURE_ARGS += --disable-ssl
 CONFIGURE_ARGS += --enable-shared
 
-TARGET_CFLAGS += -flto
-
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); \
-		autoreconf -v --install --force || exit 1 \
-	);
-	$(call Build/Configure/Default,$(CONFIGURE_ARGS))
-endef
-
-KCFLAGS=
-ifeq ($(CONFIG_GCC_VERSION_4_9),y)
-KCFLAGS:=-Wno-error=date-time
-endif
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="-I$(PKG_BUILD_DIR)/lib $(TARGET_CFLAGS) -std=gnu99" \
-		LDFLAGS="-L$(PKG_BUILD_DIR)/lib $(TARGET_LDFLAGS)" \
-		LDFLAGS_MODULES="$(TARGET_LDFLAGS) -L$(PKG_BUILD_DIR)/lib" \
-		STAGING_DIR="$(STAGING_DIR)" \
-		DESTDIR="$(PKG_INSTALL_DIR)/usr" \
-		CROSS_COMPILE="$(TARGET_CROSS)" \
-		ARCH="$(LINUX_KARCH)" \
-		SUBDIRS="$(PKG_BUILD_DIR)/datapath/linux" \
-		PATH="$(TARGET_PATH)" \
-		EXTRA_CFLAGS="$(KCFLAGS)" \
-		KCC="$(KERNEL_CC)"
-endef
+TARGET_CFLAGS += -flto -std=gnu99
 
 define Package/openvswitch/install
 	$(INSTALL_DIR) $(1)/etc/openvswitch
@@ -147,10 +123,10 @@ define Package/openvswitch/install
 	$(INSTALL_BIN) ./files/etc/init.d/openvswitch.init $(1)/etc/init.d/openvswitch
 
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/lib/.libs/libsflow-$(PKG_VERSION).so  $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/lib/.libs/libopenvswitch-$(PKG_VERSION).so  $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/ofproto/.libs/libofproto-$(PKG_VERSION).so  $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/ovsdb/.libs/libovsdb-$(PKG_VERSION).so  $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/lib/.libs/libsflow.so*  $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/lib/.libs/libopenvswitch.so*  $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/ofproto/.libs/libofproto.so*  $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/ovsdb/.libs/libovsdb.so*  $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-appctl $(1)/usr/bin/

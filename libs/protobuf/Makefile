@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,15 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
-PKG_VERSION:=2.5.0
+PKG_VERSION:=2.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://protobuf.googlecode.com/files
-PKG_MD5SUM:=a72001a9067a4c2c4e0e836d0f92ece4
+PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
+PKG_MD5SUM:=11aaac2d704eef8efd1867a807865d85
+
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=protobuf/host
-PKG_USE_MIPS16:=0
+PKG_USE_MIPS16:=0# MIPS16 prevents protobuf's usage of the 'sync' asm-opcode
 
 PKG_INSTALL:=1
 
@@ -38,15 +41,7 @@ define Package/protobuf/description
  of its internal RPC protocols and file formats.
 endef
 
-define Host/Compile
-	$(MAKE) -C $(HOST_BUILD_DIR)
-endef
-
-define Host/Install
-	$(MAKE) -C $(HOST_BUILD_DIR) install
-endef
-
-CONFIGURE_ARGS += --with-protoc=$(HOST_BUILD_DIR)/src/protoc
+CONFIGURE_ARGS += --with-protoc=$(STAGING_DIR_HOST)/bin/protoc
 
 define Build/InstallDev
 	$(INSTALL_DIR) \

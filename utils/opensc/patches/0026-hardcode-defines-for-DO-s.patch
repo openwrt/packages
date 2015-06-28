@@ -7,11 +7,11 @@ Subject: [PATCH 26/26] hardcode->defines for DO's
  src/libopensc/card-openpgp.c | 16 ++++++++++++++--
  1 file changed, 14 insertions(+), 2 deletions(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index 1e6e338..8464914 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -164,6 +164,18 @@ static int		pgp_get_pubkey_pem(sc_card_t *, unsigned int,
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -166,6 +166,18 @@ static int		pgp_get_pubkey_pem(sc_card_t
  #define DO_SIGN_SYM              0xb601
  #define DO_ENCR_SYM              0xb801
  #define DO_AUTH_SYM              0xa401
@@ -30,7 +30,7 @@ index 1e6e338..8464914 100644
  /* Maximum length for response buffer when reading pubkey. This value is calculated with
   * 4096-bit key length */
  #define MAXLEN_RESP_PUBKEY       527
-@@ -851,7 +863,7 @@ pgp_get_blob(sc_card_t *card, pgp_blob_t *blob, unsigned int id,
+@@ -859,7 +871,7 @@ pgp_get_blob(sc_card_t *card, pgp_blob_t
  	/* Special case:
  	 * Gnuk does not have default value for children of DO 65 (DOs 5B, 5F2D, 5F35)
  	 * So, if these blob was not found, we create it. */
@@ -39,7 +39,7 @@ index 1e6e338..8464914 100644
  		sc_log(card->ctx, "Create blob %X under %X", id, blob->id);
  		child = pgp_new_blob(card, blob, id, sc_file_new());
  		if (child) {
-@@ -1198,7 +1210,7 @@ pgp_get_data(sc_card_t *card, unsigned int tag, u8 *buf, size_t buf_len)
+@@ -1206,7 +1218,7 @@ pgp_get_data(sc_card_t *card, unsigned i
  	/* For Gnuk card, if there is no certificate, it returns error instead of empty data.
  	 * So, for this case, we ignore error and consider success */
  	if (r == SC_ERROR_DATA_OBJECT_NOT_FOUND && card->type == SC_CARD_TYPE_OPENPGP_GNUK
@@ -48,6 +48,3 @@ index 1e6e338..8464914 100644
  		r = SC_SUCCESS;
  		apdu.resplen = 0;
  	}
--- 
-2.1.3
-

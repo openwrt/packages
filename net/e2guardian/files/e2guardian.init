@@ -7,13 +7,15 @@ STOP=10
 USE_PROCD=1
 PROG=/usr/sbin/e2guardian
 CONFIGFILE="/tmp/e2guardian/e2guardian.conf"
+LOGFILE="/tmp/e2guardian/access.log"
+GROUPCONFIG="/tmp/e2guardian/e2guardianf1.conf"
 
 validate_e2guardian_section() {
 	uci_validate_section e2guardian e2guardian "${1}" \
-		'config_file:string' \
 		'accessdeniedaddress:string' \
 		'bannediplist:string' \
 		'contentscanexceptions:string' \
+		'contentscanner:string'
 		'contentscannertimeout:uinteger' \
 		'createlistcachefiles:string' \
 		'custombannedflashfile:string' \
@@ -83,7 +85,7 @@ validate_e2guardian_section() {
 
 start_service() {
 
-	local config_file accessdeniedaddress bannediplist contentscanexceptions contentscannertimeout \
+	local accessdeniedaddress bannediplist contentscanexceptions contentscanner contentscannertimeout \
 		createlistcachefiles custombannedflashfile custombannedimagefile deletedownloadedtempfiles \
 		downloadmanager exceptioniplist filecachedir loglocation \
 		filtergroups filtergroupslist filterip filterports forcequicksearch forwardedfor hexdecodecontent \
@@ -102,10 +104,26 @@ start_service() {
 	}
 
 	mkdir -p $(dirname $CONFIGFILE)
-	ln -sf $config_file $(dirname $CONFIGFILE)
+	chown -R nobody:nogroup $(dirname $CONFIGFILE)
+
+	mkdir -p $(dirname $loglocation)
+	chown -R nobody:nogroup $(dirname $loglocation)
+
+	touch $loglocation
+	chown nobody:nogroup $loglocation
+
+	ln -sf $loglocation $(dirname $LOGFILE)
+	ln -sf /etc/e2guardian/e2guardian.conf $CONFIGFILE
+	ln -sf /etc/e2guardian/e2guardianf1.conf $GROUPCONFIG
 
 	echo "accessdeniedaddress = " $accessdeniedaddress > $CONFIGFILE
 	echo "bannediplist = " $bannediplist >> $CONFIGFILE
+
+	if [  "$contentscanner" != ""  ]
+	then
+		echo "contentscanner = " $contentscanner >> $CONFIGFILE
+	fi
+
 	echo "contentscanexceptions = " $contentscanexceptions >> $CONFIGFILE
 	echo "contentscannertimeout = " $contentscannertimeout >> $CONFIGFILE
 	echo "createlistcachefiles = " $createlistcachefiles >> $CONFIGFILE
@@ -174,15 +192,17 @@ start_service() {
 	echo "weightedphrasemode = " $weightedphrasemode >> $CONFIGFILE
 
 	procd_open_instance
-	procd_set_param command $PROG -N -c "$CONFIGFILE"
+	procd_set_param command $PROG -c $CONFIGFILE
 	procd_set_param file $CONFIGFILE
-	procd_set_param respawn
 	procd_close_instance
+
 }
 
 stop_service()
 {
-	e2guardian -s | awk -F':' '{ print $2}' | xargs kill -9
+	PID=`cat /tmp/e2guardian/e2guardian.pid`
+	kill $PID
+	rm -f /tmp/e2guardian/e2guardian.pid
 }
 
 service_triggers()

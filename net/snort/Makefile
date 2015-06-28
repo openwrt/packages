@@ -8,30 +8,35 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort
-PKG_VERSION:=2.9.7.0
-PKG_RELEASE:=1
+PKG_VERSION:=2.9.7.2
+PKG_RELEASE:=3
+
+PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/
-PKG_MD5SUM:=c2a45bc56441ee9456478f219dd8d1e2
+PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
+	@SF/$(PKG_NAME)
+PKG_MD5SUM:=b01e9964827394c39194a0147bc15705
 
 PKG_BUILD_DEPENDS:=librpc
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/snort/Default
+define Package/snort
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libdaq +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib
+  DEPENDS:=+libdaq +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +SNORT_MYSQL:libmysqlclient +SNORT_PGSQL:libpq +SNORT_PGSQL:libuuid +SNORT_LZMA:liblzma
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
+  MENU:=1
 endef
 
-define Package/snort/Default/description
+define Package/snort/description
   Snort is an open source network intrusion detection and prevention system.
   It is capable of performing real-time traffic analysis, alerting, blocking
   and packet logging on IP networks.  It utilizes a combination of protocol
@@ -39,37 +44,8 @@ define Package/snort/Default/description
   attacks.
 endef
 
-define Package/snort
-  $(call Package/snort/Default)
-  VARIANT:=basic
-endef
-
-define Package/snort/description
-  $(call Package/snort/Default/description)
-endef
-
-define Package/snort-mysql
-  $(call Package/snort/Default)
-  DEPENDS+= +libmysqlclient
-  TITLE+= (MySQL)
-  VARIANT:=mysql
-endef
-
-define Package/snort-mysql/description
-  $(call Package/snort/Default/description)
-  This package contains snort with support for logging to a MySQL database.
-endef
-
-define Package/snort-pgsql
-  $(call Package/snort/Default)
-  DEPENDS+= +libpq +libuuid
-  TITLE+= (PostgreSQL)
-  VARIANT:=pgsql
-endef
-
-define Package/snort-pgsql/description
-  $(call Package/snort/Default/description)
-  This package contains snort with support for logging to a PostgreSQL database.
+define Package/snort/config
+	source "$(SOURCE)/Config.in"
 endef
 
 CONFIGURE_ARGS += \
@@ -85,6 +61,21 @@ CONFIGURE_ARGS += \
 	--with-daq-libraries="$(STAGING_DIR)/usr/lib" \
 	--disable-static-daq
 
+ifeq ($(CONFIG_SNORT_MYSQL),)
+CONFIGURE_ARGS += \
+	--without-mysql
+endif
+
+ifeq ($(CONFIG_PGSQL),)
+CONFIGURE_ARGS += \
+	--without-postgresql
+endif
+
+ifeq ($(CONFIG_SNORT_LZMA),)
+CONFIGURE_ARGS += \
+	--disable-lzma
+endif
+
 CONFIGURE_VARS += \
 	CPPFLAGS="$$$$CPPFLAGS -I$(STAGING_DIR)/usr/include/mysql" \
 	LDFLAGS="$$$$LDFLAGS -L$(STAGING_DIR)/usr/lib/mysql" \
@@ -92,24 +83,6 @@ CONFIGURE_VARS += \
 
 MAKE_FLAGS += \
 	extra_incl=""
-
-ifeq ($(BUILD_VARIANT),basic)
-  CONFIGURE_ARGS += \
-	--without-mysql \
-	--without-postgresql
-endif
-ifeq ($(BUILD_VARIANT),mysql)
-  CONFIGURE_VARS += \
-	mysql_has_reconnect=yes
-  CONFIGURE_ARGS += \
-	--with-mysql="$(STAGING_DIR)/usr" \
-	--without-postgresql
-endif
-ifeq ($(BUILD_VARIANT),pgsql)
-  CONFIGURE_ARGS += \
-	--without-mysql \
-	--with-postgresql="$(STAGING_DIR)/usr"
-endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/snort/dynamic_preproc
@@ -134,12 +107,6 @@ define Package/snort/conffiles
 /etc/config/snort
 /etc/snort/snort.conf
 endef
-
-Package/snort-mysql/conffiles = $(Package/snort/conffiles)
-Package/snort-mysql/install = $(Package/snort/install)
-
-Package/snort-pgsql/conffiles = $(Package/snort/conffiles)
-Package/snort-pgsql/install = $(Package/snort/install)
 
 define Package/snort/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -198,5 +165,4 @@ define Package/snort/install
 endef
 
 $(eval $(call BuildPackage,snort))
-$(eval $(call BuildPackage,snort-mysql))
-$(eval $(call BuildPackage,snort-pgsql))
+

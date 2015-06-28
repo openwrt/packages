@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/diffutils
   SECTION:=devel
   CATEGORY:=Development
-  DEPENDS:=+USE_EGLIBC:librt
+  DEPENDS:=+USE_GLIBC:librt
   TITLE:=diffutils
   URL:=http://www.gnu.org/software/diffutils/
 endef

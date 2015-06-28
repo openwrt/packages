@@ -8,11 +8,11 @@ Subject: [PATCH 17/26] OpenPGP: Make code neater
  src/libopensc/card-openpgp.c | 8 ++------
  1 file changed, 2 insertions(+), 6 deletions(-)
 
-diff --git a/src/libopensc/card-openpgp.c b/src/libopensc/card-openpgp.c
-index beeee83..ca0d01b 100644
---- a/src/libopensc/card-openpgp.c
-+++ b/src/libopensc/card-openpgp.c
-@@ -1222,10 +1222,7 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+Index: opensc-20150513/src/libopensc/card-openpgp.c
+===================================================================
+--- opensc-20150513.orig/src/libopensc/card-openpgp.c
++++ opensc-20150513/src/libopensc/card-openpgp.c
+@@ -1230,10 +1230,7 @@ static int gnuk_write_certificate(sc_car
  		r = sc_transmit_apdu(card, &apdu);
  		LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
  		/* Check response */
@@ -24,7 +24,7 @@ index beeee83..ca0d01b 100644
  	}
  
  	/* Ref: gnuk_put_binary_libusb.py and gnuk_token.py in Gnuk source tree */
-@@ -1262,8 +1259,7 @@ static int gnuk_write_certificate(sc_card_t *card, const u8 *buf, size_t length)
+@@ -1270,8 +1267,7 @@ static int gnuk_write_certificate(sc_car
  		r = sc_transmit_apdu(card, &apdu);
  		LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
  		/* Check response */
@@ -34,6 +34,3 @@ index beeee83..ca0d01b 100644
  
  		/* To next part */
  		i++;
--- 
-2.1.3
-

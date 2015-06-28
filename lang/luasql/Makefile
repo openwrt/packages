@@ -11,9 +11,11 @@ PKG_NAME:=luasql
 PKG_VERSION:=2.3.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/keplerproject/luasql/archive/
-PKG_MD5SUM:=af9f0f3a2313a1fcf88c40700092048d
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/keplerproject/luasql.git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=docs/us/license.html

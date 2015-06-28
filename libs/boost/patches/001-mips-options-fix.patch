@@ -1,0 +1,11 @@
+--- boost_1_58_0/tools/build/src/tools/gcc.jam 2015-04-23 12:01:37.723438995 +0200
++++ boost_1_58_0/tools/build/src/tools/gcc.jam 2015-04-23 12:00:21.427441384 +0200
+@@ -451,7 +451,7 @@
+         else
+         {
+             local arch = [ feature.get-values architecture : $(properties) ] ;
+-            if $(arch) != arm
++            if $(arch) = power || $(arch) = sparc || $(arch) = x86
+             {
+                 if $(model) = 32
+                 {

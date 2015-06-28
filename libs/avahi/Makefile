@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.6.31
-PKG_RELEASE:=11
+PKG_RELEASE:=12
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://avahi.org/download/
@@ -56,7 +56,7 @@ define Package/libavahi/Default
   SECTION:=libs
   CATEGORY:=Libraries
   PROVIDES:=libavahi
-  DEPENDS:=+libpthread +SSP_SUPPORT:libssp
+  DEPENDS:=+libpthread
 endef
 
 define Package/libavahi/description
@@ -100,6 +100,7 @@ define Package/avahi-nodbus-daemon
   SUBMENU:=IP Addresses and Names
   DEPENDS:=+libavahi-nodbus-support +libexpat +librt +libdaemon
   TITLE+= (daemon)
+  USERID:=avahi=105:avahi=105
 endef
 
 define Package/avahi-daemon/description
@@ -155,7 +156,7 @@ endef
 define Package/avahi-dnsconfd
   $(call Package/avahi/Default)
   SUBMENU:=IP Addresses and Names
-  DEPENDS:=+libavahi +libdaemon +libpthread +SSP_SUPPORT:libssp
+  DEPENDS:=+libavahi +libdaemon +libpthread
   TITLE:=A Unicast DNS server using avahi-daemon
 endef
 

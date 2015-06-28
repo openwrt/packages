@@ -1,0 +1,75 @@
+--- a/src/libwaitress/waitress.c
++++ b/src/libwaitress/waitress.c
+@@ -805,34 +805,37 @@ static WaitressReturn_t WaitressConnect
+ 			int pollres;
+ 
+ 			/* we need shorter timeouts for connect() */
+-			fcntl (sock, F_SETFL, O_NONBLOCK);
++			pollres = fcntl (sock, F_SETFL, O_NONBLOCK);
++			assert (pollres != -1);
+ 
+-			/* increase socket receive buffer */
+-			const int sockopt = 256*1024;
+-			setsockopt (sock, SOL_SOCKET, SO_RCVBUF, &sockopt,
+-					sizeof (sockopt));
+-
+-			/* non-blocking connect will return immediately */
+-			connect (sock, gacurr->ai_addr, gacurr->ai_addrlen);
+-
+-			pollres = WaitressPollLoop (sock, POLLOUT, waith->timeout);
+-			if (pollres == 0) {
+-				ret = WAITRESS_RET_TIMEOUT;
+-			} else if (pollres == -1) {
+-				ret = WAITRESS_RET_ERR;
+-			} else {
+-				/* check connect () return value */
+-				socklen_t pollresSize = sizeof (pollres);
+-				getsockopt (sock, SOL_SOCKET, SO_ERROR, &pollres,
+-						&pollresSize);
+-				if (pollres != 0) {
+-					ret = WAITRESS_RET_CONNECT_REFUSED;
++			if (connect (sock, gacurr->ai_addr, gacurr->ai_addrlen) != -1) {
++				/* working */
++				waith->request.sockfd = sock;
++				break;
++			} else if (errno == EINPROGRESS) {
++				/* wait for connect to succeed */
++				pollres = WaitressPollLoop (sock, POLLOUT, waith->timeout);
++				if (pollres == 0) {
++					ret = WAITRESS_RET_TIMEOUT;
++				} else if (pollres == -1) {
++					ret = WAITRESS_RET_ERR;
+ 				} else {
+-					/* this one is working */
+-					waith->request.sockfd = sock;
+-					break;
++					/* check connect () return value */
++					socklen_t pollresSize = sizeof (pollres);
++					getsockopt (sock, SOL_SOCKET, SO_ERROR, &pollres,
++							&pollresSize);
++					if (pollres != 0) {
++						ret = WAITRESS_RET_CONNECT_REFUSED;
++					} else {
++						/* this one is working */
++						waith->request.sockfd = sock;
++						break;
++					}
+ 				}
++			} else {
++				ret = WAITRESS_RET_ERR;
+ 			}
++
+ 			close (sock);
+ 		}
+ 	}
+--- a/src/libfootball/fb_service.c
++++ b/src/libfootball/fb_service.c
+@@ -111,6 +111,8 @@ static bool fb_setup_socket (FB_SERVICE
+ 		service->socket [which] = 0;
+ 	} else {
+         fb_perror ("socket");
++        // Element must be zero (not -1)
++        service->socket [which] = 0;
+ 	};
+ 	return false;
+ }
