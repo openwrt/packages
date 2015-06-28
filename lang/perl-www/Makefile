@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2014 OpenWrt.org
+# Copyright (C) 2013-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www
-PKG_VERSION:=5.837
-PKG_RELEASE:=3
+PKG_VERSION:=6.13
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS/
+PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
 PKG_SOURCE:=libwww-perl-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=9bbf1bce482b0bac98bb4f04253c03d0
+PKG_MD5SUM:=85b36bcd2fd2450718ee14f894f0d3d1
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
@@ -41,7 +41,7 @@ define Build/Compile
 endef
 
 define Package/perl-www/install
-	$(call perlmod/Install,$(1),File HTML HTTP LWP LWP.pm Net WWW)
+	$(call perlmod/Install,$(1),LWP.pm auto/LWP LWP)
 endef
 
 
