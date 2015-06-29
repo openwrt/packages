@@ -1,0 +1,43 @@
+--- a/src/client_list.c
++++ b/src/client_list.c
+@@ -36,7 +36,7 @@
+ #include <pthread.h>
+ #include <sys/wait.h>
+ #include <sys/types.h>
+-#include <sys/unistd.h>
++#include <unistd.h>
+ 
+ #include <string.h>
+ 
+--- a/src/firewall.c
++++ b/src/firewall.c
+@@ -37,7 +37,7 @@
+ #include <pthread.h>
+ #include <sys/wait.h>
+ #include <sys/types.h>
+-#include <sys/unistd.h>
++#include <unistd.h>
+ 
+ #include <string.h>
+ 
+--- a/src/util.c
++++ b/src/util.c
+@@ -38,7 +38,7 @@
+ #include <pthread.h>
+ #include <sys/wait.h>
+ #include <sys/types.h>
+-#include <sys/unistd.h>
++#include <unistd.h>
+ #include <netinet/in.h>
+ #include <sys/ioctl.h>
+ #include <arpa/inet.h>
+--- a/libhttpd/protocol.c
++++ b/libhttpd/protocol.c
+@@ -25,6 +25,7 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <time.h>
++#include <fcntl.h>
+ 
+ #if defined(_WIN32) 
+ #else
