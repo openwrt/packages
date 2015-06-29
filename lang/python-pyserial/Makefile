@@ -11,6 +11,7 @@ PKG_NAME:=python-pyserial
 PKG_VERSION:=2.7
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Micke Prag <micke.prag@telldus.se>
+PKG_LICENSE:=Python-2.0
 
 PKG_SOURCE:=pyserial-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://pypi.python.org/packages/source/p/pyserial/
