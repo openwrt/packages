@@ -17,6 +17,7 @@ PKG_MD5SUM:=99180208ec2a82ce71f55b0d7389f1b3
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 PKG_LICENSE:=GPL-3.0
 
+PKG_FORTIFY_SOURCE:=0
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
