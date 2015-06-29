@@ -1,0 +1,41 @@
+From 2c30fa7eb71b24f05b55ff03d6c81fc8572a6f4d Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Mon, 29 Jun 2015 18:36:01 +0200
+Subject: [PATCH] gnutls: use default system trust storage if no other CA is
+ set
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ lib/vtls/gtls.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+--- a/lib/vtls/gtls.c
++++ b/lib/vtls/gtls.c
+@@ -420,6 +420,27 @@ gtls_connect_step1(struct connectdata *c
+     return CURLE_SSL_CONNECT_ERROR;
+   }
+ 
++  if(
++#ifdef USE_TLS_SRP
++      data->set.ssl.authtype != CURL_TLSAUTH_SRP &&
++#endif
++#ifdef HAS_CAPATH
++     !data->set.ssl.CApath &&
++#endif
++     !data->set.ssl.CAfile) {
++    /* add default system trust on supported systems */
++    rc = gnutls_certificate_set_x509_system_trust(conn->ssl[sockindex].cred);
++
++    if(rc < 0) {
++      infof(data, "error importing system trust storage (%s)\n",
++            gnutls_strerror(rc));
++      if(data->set.ssl.verifypeer)
++        return CURLE_SSL_CACERT;
++    }
++    else
++      infof(data, "found %d certificates in system trust storage\n", rc);
++  }
++
+ #ifdef USE_TLS_SRP
+   if(data->set.ssl.authtype == CURL_TLSAUTH_SRP) {
+     infof(data, "Using TLS-SRP username: %s\n", data->set.ssl.username);
