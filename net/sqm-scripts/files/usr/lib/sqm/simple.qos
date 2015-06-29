@@ -177,7 +177,7 @@ else
     sqm_logger "Perform DSCP based filtering on ingress. (3-tier classification)"
     case $QDISC in
     	    cake*) 
-    		    $TC qdisc add dev $IFACE root `get_stab_string` $QDISC bandwidth ${DOWNLINK}kbit `get_cake_lla_string` $CAKE_OPTS ${IQDISC_OPTS}
+    		    $TC qdisc add dev $DEV root `get_stab_string` $QDISC bandwidth ${DOWNLINK}kbit `get_cake_lla_string` $CAKE_OPTS ${IQDISC_OPTS}
     		    ;;
 	    *) 	
 		    $TC qdisc add dev $DEV root handle 1: `get_stab_string` htb default 12
