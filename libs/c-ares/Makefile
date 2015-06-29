@@ -22,6 +22,9 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+TARGET_CPPFLAGS += $(filter -D%,$(TARGET_CFLAGS))
+TARGET_CFLAGS := $(filter-out -D%,$(TARGET_CFLAGS))
+
 define Package/libcares
   SECTION:=libs
   CATEGORY:=Libraries
