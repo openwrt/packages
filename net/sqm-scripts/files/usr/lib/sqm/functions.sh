@@ -6,7 +6,7 @@
 
 #improve the logread output
 sqm_logger() {
-    logger -t SQM -s ${1}
+    logger -t SQM -s "${1}"
 }
 
 insmod() {
