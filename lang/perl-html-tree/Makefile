@@ -28,7 +28,7 @@ define Package/perl-html-tree
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=represent and create HTML syntax trees
+  TITLE:=Represent and create HTML syntax trees
   URL:=http://search.cpan.org/dist/HTML-Tree/
   DEPENDS:=perl +perl-html-parser +perl-html-tagset
 endef
