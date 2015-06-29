@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.4.1
+PKG_VERSION:=9.4.4
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 PKG_LICENSE:=PostgreSQL
@@ -18,7 +18,7 @@ PKG_SOURCE_URL:=\
 	http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v$(PKG_VERSION) \
 	http://ftp.be.postgresql.org/postgresql/source/v$(PKG_VERSION) \
 	ftp://ftp-archives.postgresql.org/pub/source/v$(PKG_VERSION)
-PKG_MD5SUM:=2cf30f50099ff1109d0aa517408f8eff
+PKG_MD5SUM:=1fe952c44ed26d7e6a335cf991a9c1c6
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
@@ -59,6 +59,7 @@ define Package/pgsql-server
   TITLE:=PostgreSQL databases Server
   URL:=http://www.postgresql.org/
   SUBMENU:=database
+  USERID:=postgres=5432:postgres=5432
 endef
 
 define Package/pgsql-server/description
@@ -86,7 +87,9 @@ define Build/Configure
 			--enable-static \
 			--disable-integer-datetimes \
 			--disable-rpath \
-			--without-krb5 \
+			--without-bonjour \
+			--without-gssapi \
+			--without-ldap \
 			--without-openssl \
 			--without-pam \
 			--without-perl \
@@ -138,7 +141,9 @@ define Build/Configure
 			--enable-static \
 			--disable-integer-datetimes \
 			--disable-rpath \
-			--without-krb5 \
+			--without-bonjour \
+			--without-gssapi \
+			--without-ldap \
 			--without-openssl \
 			--without-pam \
 			--without-perl \
@@ -198,32 +203,6 @@ endef
 
 define Package/pgsql-server/conffiles
 /etc/config/postgresql
-endef
-
-define Package/pgsql-server/postinst
-#!/bin/sh
-grep -q '^postgres:' /etc/passwd && exit 0
-group=$$(grep '^postgres:' /etc/group | cut -f3 -d:)
-if [ -z "$${group}" ] ; then
-	group=1000
-	tst=$$(cat /etc/group | grep ":$${group}:")
-	while [ -n "$${tst}" ] ; do
-		group=$$(($${group}+1))
-		tst=$$(cat /etc/group | grep ":$${group}:")
-	done
-	echo "postgres:x:$${group}:" >>/etc/group
-fi
-
-user=$$(cat /etc/passwd | grep "^postgres:")
-if [ -z "$${user}" ] ; then
-	num="$${group}"
-	tst=$$(cat /etc/passwd | grep ":.*:$${num}:")
-	while [ -n "$${tst}" ] ; do
-		num=$$(($${num}+1))
-		tst=$$(cat /etc/passwd | grep ":.*:$${num}:")
-	done
-	echo "postgres:*:$${num}:$${group}:PostgreSQL administrator:/tmp:/bin/ash" >>/etc/passwd
-fi
 endef
 
 define Build/InstallDev
