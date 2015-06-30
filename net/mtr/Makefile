@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mtr
 PKG_REV:=dd2b750
 PKG_VERSION:=0.85+newdns-$(PKG_REV)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/traviscross/mtr.git
