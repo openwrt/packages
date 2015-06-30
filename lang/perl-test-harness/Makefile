@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-test-harness
 PKG_VERSION:=3.35
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/L/LE/LEONT/
 PKG_SOURCE:=Test-Harness-$(PKG_VERSION).tar.gz
@@ -29,7 +29,7 @@ define Package/perl-test-harness
   CATEGORY:=Languages
   TITLE:=Perl Test Harness
   URL:=http://search.cpan.org/dist/Test-Harness/
-  DEPENDS:=perl
+  DEPENDS:=perl +perlbase-base +perlbase-benchmark +perlbase-config +perlbase-essential +perlbase-file +perlbase-getopt +perlbase-io +perlbase-posix +perlbase-text
 endef
 
 define Build/Configure

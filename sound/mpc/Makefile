@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpc
-PKG_VERSION:=0.26
-PKG_RELEASE:=2
+PKG_VERSION:=0.27
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpc/0
-PKG_MD5SUM:=d4f37e7e6b32c804a870192d1eb86199
+PKG_MD5SUM:=d9430db9b9d7fb1eadbe4d13e8d97c66
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>

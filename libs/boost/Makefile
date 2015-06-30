@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/target.mk
 
 PKG_NAME:=boost
 PKG_VERSION:=1_58_0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
@@ -65,6 +65,10 @@ endef
 
 # Create a meta-package of dependent libraries (for ALL)
 define Package/boost-libs/install
+  true
+endef
+
+define Package/boost/install
   true
 endef
 

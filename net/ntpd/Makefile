@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntp
 PKG_VERSION:=4.2.8p2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
@@ -93,7 +93,9 @@ endef
 CONFIGURE_VARS += \
 	ac_cv_header_md5_h=no \
 	ac_cv_lib_rt_sched_setscheduler=no \
-	ac_cv_header_dns_sd_h=no
+	ac_cv_header_dns_sd_h=no \
+	hw_cv_func_snprintf_c99=yes \
+	hw_cv_func_vsnprintf_c99=yes \
 
 CONFIGURE_ARGS += \
 	--disable-all-clocks \

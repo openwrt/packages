@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-dbi
 PKG_VERSION:=1.633
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/T/TI/TIMB/
 PKG_SOURCE:=DBI-$(PKG_VERSION).tar.gz
@@ -31,7 +31,7 @@ define Package/perl-dbi
   CATEGORY:=Languages
   TITLE:=Database independent interface for Perl
   URL:=http://search.cpan.org/dist/DBI/
-  DEPENDS:=perl +perlbase-essential
+  DEPENDS:=perl +perlbase-base +perlbase-config +perlbase-cwd +perlbase-data +perlbase-dynaloader +perlbase-errno +perlbase-essential +perlbase-fcntl +perlbase-file +perlbase-io +perlbase-ipc +perlbase-scalar +perlbase-storable +perlbase-symbol +perlbase-tie +perlbase-universal +perlbase-utf8
 endef
 
 define Build/Configure
