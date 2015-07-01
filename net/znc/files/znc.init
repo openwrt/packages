@@ -39,6 +39,7 @@ add_network() {
 	echo "	<Network $name>" >> $ZNC_CONFIG
 	config_list_foreach "$network" server "add_param \"		Server\""
 	config_list_foreach "$network" channel "add_chan"
+	echo "	</Network>" >> $ZNC_CONFIG
 }
 
 znc_global() {
