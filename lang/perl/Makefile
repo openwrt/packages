@@ -153,6 +153,7 @@ define Package/perl-tests-common/install
 	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)
 	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)/Porting
 	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)/regen
+	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)/lib
 	$(INSTALL_DIR) $(1)/usr/lib/perl5/$(PERL_VERSION)/XS
 	$(INSTALL_DIR) $(1)/usr/lib/perl5/$(PERL_VERSION)/auto/XS
 	$(INSTALL_DIR) $(1)/usr/lib/perl5/$(PERL_VERSION)/unicore
@@ -167,6 +168,8 @@ define Package/perl-tests-common/install
 	$(CP) $(PKG_BUILD_DIR)/lib/XS $(1)/usr/lib/perl5/$(PERL_VERSION)/
 	$(CP) $(PKG_BUILD_DIR)/lib/auto/XS $(1)/usr/lib/perl5/$(PERL_VERSION)/auto
 	$(CP) $(PKG_BUILD_DIR)/lib/vmsish.pm $(1)/usr/lib/perl5/$(PERL_VERSION)/
+	$(CP) $(PKG_BUILD_DIR)/lib/vmsish.t $(1)/$(PERL_TESTSDIR)/lib
+	$(CP) $(PKG_BUILD_DIR)/lib/Internals.t $(1)/$(PERL_TESTSDIR)/lib
 	$(CP) $(PKG_BUILD_DIR)/lib/unicore/TestProp.pl $(1)/usr/lib/perl5/$(PERL_VERSION)/unicore
 	$(CP) files/perl-run_tests.sh $(1)/$(PERL_TESTSDIR)/run_tests.sh
 	sed \
