@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-device-serialport
 PKG_VERSION:=1.04
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/C/CO/COOK/
 PKG_SOURCE:=Device-SerialPort-$(PKG_VERSION).tar.gz
@@ -29,7 +29,7 @@ define Package/perl-device-serialport
   CATEGORY:=Languages
   TITLE:=A POSIX-based version of the Win32::SerialPort module
   URL:=http://search.cpan.org/dist/Device-SerialPort/
-  DEPENDS:=perl +perlbase-essential
+  DEPENDS:=perl +perlbase-essential +perlbase-io +perlbase-posix +perlbase-test +perlbase-xsloader
 endef
 
 define Package/perl-device-serialport/description

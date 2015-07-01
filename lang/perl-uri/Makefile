@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-uri
-PKG_VERSION:=1.67
-PKG_RELEASE:=2
+PKG_VERSION:=1.68
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
 PKG_SOURCE:=URI-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=d0ef53b6c63bcc02ba55f405c30741e3
+PKG_MD5SUM:=4a954ab8d79f831616ca817ba4b26cb9
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
@@ -29,7 +29,7 @@ define Package/perl-uri
   CATEGORY:=Languages
   TITLE:=Manipulates and accesses URI strings
   URL:=http://search.cpan.org/dist/URI/
-  DEPENDS:=perl
+  DEPENDS:=perl +perlbase-essential +perlbase-integer +perlbase-mime +perlbase-scalar +perlbase-utf8
 endef
 
 define Build/Configure

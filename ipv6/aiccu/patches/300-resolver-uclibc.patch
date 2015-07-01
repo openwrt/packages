@@ -5,7 +5,7 @@
  int getrrs(const char *label, int rrtype, void gotrec(unsigned int num, int type, const char *record))
  {
 -#ifdef _LINUX
-+#if defined(_LINUX) && defined(__GLIBC__)
++#if defined(_LINUX) && defined(__GLIBC__) && !defined(__UCLIBC__)
  	struct __res_state	res;
  #endif
  	unsigned char		answer[8192];
@@ -14,7 +14,7 @@
  	uint32_t		ttl = 0;
  
 -#ifdef _LINUX
-+#if defined(_LINUX) && defined(__GLIBC__)
++#if defined(_LINUX) && defined(__GLIBC__) && !defined(__UCLIBC__)
  	memset(&res, 0, sizeof(res));
  	res.options = RES_DEBUG;
  	res_ninit(&res);
@@ -23,18 +23,7 @@
  
  	memset(answer, 0, sizeof(answer));
 -#ifdef _LINUX
-+#if defined(_LINUX) && defined(__GLIBC__)
++#if defined(_LINUX) && defined(__GLIBC__) && !defined(__UCLIBC__)
  	ret = res_nquery(&res, label, C_IN, rrtype, answer, sizeof(answer));
  #else
  	ret = res_query(label, C_IN, rrtype, answer, sizeof(answer));
---- a/common/dn_skipname.c
-+++ b/common/dn_skipname.c
-@@ -9,7 +9,7 @@
-  * return:
-  *      0 on success, -1 (with errno set) on failure.
-  */
--int ns_name_skip(const u_char **ptrptr, const u_char *eom)
-+static int ns_name_skip(const u_char **ptrptr, const u_char *eom)
- {
- 	const u_char *cp;
- 	u_int n;

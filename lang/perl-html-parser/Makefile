@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-html-parser
 PKG_VERSION:=3.71
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS/
 PKG_SOURCE:=HTML-Parser-$(PKG_VERSION).tar.gz
@@ -29,7 +29,7 @@ define Package/perl-html-parser
   CATEGORY:=Languages
   TITLE:=A collection of modules that parse HTML text documents
   URL:=http://search.cpan.org/dist/HTML-Parser/
-  DEPENDS:=perl +perl-html-tagset +perl-uri
+  DEPENDS:=perl +perl-html-tagset +perlbase-essential +perlbase-xsloader
 endef
 
 define Build/Configure

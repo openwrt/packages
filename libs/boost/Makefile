@@ -226,16 +226,9 @@ define Build/InstallDev
 		$(1)/usr/include/boost/ \
 		# copies _all_ header files - independent of <--with-library>-argument above
 
-	if [ -d $(PKG_INSTALL_DIR)/lib ]; then \
-		$(INSTALL_DIR) \
-			$(1)/usr/lib; \
-		$(CP) \
-			$(PKG_INSTALL_DIR)/lib/*.a \
-			$(1)/usr/lib/; \
-		$(CP) \
-			$(PKG_INSTALL_DIR)/lib/*.so* \
-			$(1)/usr/lib/; \
-	fi
+	$(INSTALL_DIR) $(1)/usr/lib
+	-$(CP) $(PKG_INSTALL_DIR)/lib/*.a $(1)/usr/lib/
+	-$(CP) $(PKG_INSTALL_DIR)/lib/*.so* $(1)/usr/lib/
 endef
 
 define Host/Install
