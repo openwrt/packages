@@ -46,7 +46,7 @@ TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
 # native extensions on the target machine at the moment
 PERL_DISABLEDTESTS:=cpan/ExtUtils-Constant cpan/ExtUtils-MakeMaker
 # We're on Linux, so don't even package them
-PERL_DISABLEDTESTS+=cpan/Win32API-File cpan/Win32 ext/VMS-DCLsym ext/VMS-Filespec ext/VMS-Stdio ext/Win32CORE
+PERL_DISABLEDTESTS+=cpan/Win32API-File cpan/Win32 ext/VMS-DCLsym ext/VMS-Filespec ext/VMS-Stdio ext/Win32CORE os2/
 # NDBM and ODBM not supported
 PERL_DISABLEDTESTS+=ext/NDBM_File ext/ODBM_File
 
