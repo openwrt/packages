@@ -38,7 +38,9 @@ add_network() {
 	config_get name "$network" name
 	echo "	<Network $name>" >> $ZNC_CONFIG
 	config_list_foreach "$network" server "add_param \"		Server\""
+	config_list_foreach "$network" fingerprint "add_param \"		trustedserverfingerprint\""
 	config_list_foreach "$network" channel "add_chan"
+	echo "	</Network>" >> $ZNC_CONFIG
 }
 
 znc_global() {
@@ -142,6 +144,7 @@ add_user() {
 	if [ "$server" ]; then
 		echo "	<Network Default>" >> $ZNC_CONFIG
 		config_list_foreach "$user" server "add_param \"		Server\""
+		config_list_foreach "$user" fingerprint "add_param \"		trustedserverfingerprint\""
 		config_list_foreach "$user" channel "add_chan"
 		echo "	</Network>" >> $ZNC_CONFIG
 	fi

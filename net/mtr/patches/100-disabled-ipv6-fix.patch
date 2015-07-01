@@ -1,0 +1,49 @@
+--- a/net.c
++++ b/net.c
+@@ -307,9 +307,11 @@ void net_send_tcp(int index)
+   struct sockaddr_storage local;
+   struct sockaddr_storage remote;
+   struct sockaddr_in *local4 = (struct sockaddr_in *) &local;
+-  struct sockaddr_in6 *local6 = (struct sockaddr_in6 *) &local;
+   struct sockaddr_in *remote4 = (struct sockaddr_in *) &remote;
++#ifdef ENABLE_IPV6
++  struct sockaddr_in6 *local6 = (struct sockaddr_in6 *) &local;
+   struct sockaddr_in6 *remote6 = (struct sockaddr_in6 *) &remote;
++#endif
+   socklen_t len;
+ 
+   ttl = index + 1;
+@@ -566,8 +568,10 @@ void net_send_query(int index)
+ 
+   /* sendto() assumes packet length includes the IPv4 header but not the 
+      IPv6 header. */
+-  spacketsize = abs(packetsize)	-
+-		( ( af == AF_INET ) ? 0 : sizeof (struct ip6_hdr) );
++  spacketsize = abs(packetsize);
++#ifdef ENABLE_IPV6
++  spacketsize -= ( ( af == AF_INET ) ? 0 : sizeof (struct ip6_hdr) );
++#endif
+   rv = sendto(sendsock, packet, spacketsize, 0, remotesockaddr, salen);
+   if (first && (rv < 0) && ((errno == EINVAL) || (errno == EMSGSIZE))) {
+     /* Try the first packet again using host byte order. */
+--- a/dns.c
++++ b/dns.c
+@@ -49,7 +49,7 @@
+ #include <unistd.h>
+ #include <fcntl.h>
+ //#include <ctype.h>
+-//#include <string.h>
++#include <string.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <signal.h>
+--- a/net.h
++++ b/net.h
+@@ -20,6 +20,7 @@
+ #include <netdb.h>
+ #include <arpa/inet.h>
+ #include <netinet/in.h>
++#include <sys/select.h>
+ #include <sys/socket.h>
+ #ifdef ENABLE_IPV6
+ #include <netinet/ip6.h>
