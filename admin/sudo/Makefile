@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
 PKG_VERSION:=1.8.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=doc/LICENSE
 
@@ -40,6 +40,7 @@ endef
 
 define Package/sudo/conffiles
 /etc/sudoers
+/etc/sudoers.d/
 endef
 
 CONFIGURE_ARGS+= \
