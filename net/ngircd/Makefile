@@ -10,6 +10,9 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ngircd
 PKG_VERSION:=18
 PKG_RELEASE:=1
+PKG_MAINTAINER:=Claudio Leite <leitec@staticky.com>
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
