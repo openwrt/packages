@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2012 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ngircd
-PKG_VERSION:=18
+PKG_VERSION:=22.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Claudio Leite <leitec@staticky.com>
 PKG_LICENSE:=GPL-2.0
@@ -18,7 +18,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
         http://ngircd.barton.de/pub/ngircd/ \
         ftp://ftp.berlios.de/pub/ngircd/
-PKG_MD5SUM:=4958c8b2d128cf3e9888af3f782892a1
+PKG_MD5SUM:=586c4fef1fbb77dcbe723e9136ec08eb
 
 PKG_INSTALL:=1
 
@@ -71,6 +71,11 @@ define Package/ngircd-nossl/description
   This package is built without OpenSSL support.
 endef
 
+ifeq ($(CONFIG_IPV6),y)
+	CONFIGURE_ARGS += \
+		--enable-ipv6
+endif
+
 ifeq ($(BUILD_VARIANT),ssl)
 	CONFIGURE_ARGS += \
 		--with-openssl="$(STAGING_DIR)/usr"
@@ -80,6 +85,14 @@ ifeq ($(BUILD_VARIANT),nossl)
 	CONFIGURE_ARGS += \
 		--without-openssl
 endif
+
+# The test for HAVE_WORKING_GETADDRINFO fails
+# when cross-compiling.
+#
+define Build/Configure
+	$(call Build/Configure/Default)
+	$(SED) 's/\/\* #undef HAVE_WORKING_GETADDRINFO \*\//#define HAVE_WORKING_GETADDRINFO 1/' $(PKG_BUILD_DIR)/src/config.h
+endef
 
 define Package/ngircd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
