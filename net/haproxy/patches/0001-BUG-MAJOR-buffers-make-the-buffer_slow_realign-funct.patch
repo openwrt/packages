@@ -1,0 +1,140 @@
+From 27187ab56a2f1104818c2f21c5139c1edd8b838f Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 2 Jul 2015 12:50:23 +0200
+Subject: BUG/MAJOR: buffers: make the buffer_slow_realign() function respect
+ output data
+
+The function buffer_slow_realign() was initially designed for requests
+only and did not consider pending outgoing data. This causes a problem
+when called on responses where data remain in the buffer, which may
+happen with pipelined requests when the client is slow to read data.
+
+The user-visible effect is that if less than <maxrewrite> bytes are
+present in the buffer from a previous response and these bytes cross
+the <maxrewrite> boundary close to the end of the buffer, then a new
+response will cause a realign and will destroy these pending data and
+move the pointer to what's believed to contain pending output data.
+Thus the client receives the crap that lies in the buffer instead of
+the original output bytes.
+
+This new implementation now properly realigns everything including the
+outgoing data which are moved to the end of the buffer while the input
+data are moved to the beginning.
+
+This implementation still uses a buffer-to-buffer copy which is not
+optimal in terms of performance and which should be replaced by a
+buffer switch later.
+
+Prior to this patch, the following script would return different hashes
+on each round when run from a 100 Mbps-connected machine :
+
+  i=0
+  while usleep 100000; do
+    echo round $((i++))
+    set -- $(nc6 0 8001 < 1kreq5k.txt | grep -v '^[0-9A-Z]' | md5sum)
+    if [ "$1" != "3861afbb6566cd48740ce01edc426020" ]; then echo $1;break;fi
+  done
+
+The file contains 1000 times this request with "Connection: close" on the
+last one :
+
+  GET /?s=5k&R=1 HTTP/1.1
+
+The config is very simple :
+
+  global
+        tune.bufsize 16384
+        tune.maxrewrite 8192
+
+  defaults
+        mode http
+        timeout client 10s
+        timeout server 5s
+        timeout connect 3s
+
+  listen px
+        bind :8001
+        option http-server-close
+        server s1 127.0.0.1:8000
+
+And httpterm-1.7.2 is used as the server on port 8000.
+
+After the fix, 1 million requests were sent and all returned the same
+contents.
+
+Many thanks to Charlie Smurthwaite of atechmedia.com for his precious
+help on this issue, which would not have been diagnosed without his
+very detailed traces and numerous tests.
+
+The patch must be backported to 1.5 which is where the bug was introduced.
+---
+ src/buffer.c | 49 +++++++++++++++++++++++++++++--------------------
+ 1 file changed, 29 insertions(+), 20 deletions(-)
+
+diff --git a/src/buffer.c b/src/buffer.c
+index 3c7f6cc..b083768 100644
+--- a/src/buffer.c
++++ b/src/buffer.c
+@@ -136,30 +136,39 @@ int buffer_insert_line2(struct buffer *b, char *pos, const char *str, int len)
+ 	return delta;
+ }
+ 
+-/* This function realigns input data in a possibly wrapping buffer so that it
+- * becomes contiguous and starts at the beginning of the buffer area. The
+- * function may only be used when the buffer's output is empty.
++/* This function realigns a possibly wrapping buffer so that the input part is
++ * contiguous and starts at the beginning of the buffer and the output part
++ * ends at the end of the buffer. This provides the best conditions since it
++ * allows the largest inputs to be processed at once and ensures that once the
++ * output data leaves, the whole buffer is available at once.
+  */
+ void buffer_slow_realign(struct buffer *buf)
+ {
+-	/* two possible cases :
+-	 *   - the buffer is in one contiguous block, we move it in-place
+-	 *   - the buffer is in two blocks, we move it via the swap_buffer
+-	 */
+-	if (buf->i) {
+-		int block1 = buf->i;
+-		int block2 = 0;
+-		if (buf->p + buf->i > buf->data + buf->size) {
+-			/* non-contiguous block */
+-			block1 = buf->data + buf->size - buf->p;
+-			block2 = buf->p + buf->i - (buf->data + buf->size);
+-		}
+-		if (block2)
+-			memcpy(swap_buffer, buf->data, block2);
+-		memmove(buf->data, buf->p, block1);
+-		if (block2)
+-			memcpy(buf->data + block1, swap_buffer, block2);
++	int block1 = buf->o;
++	int block2 = 0;
++
++	/* process output data in two steps to cover wrapping */
++	if (block1 > buf->p - buf->data) {
++		block2 = buf->p - buf->data;
++		block1 -= block2;
+ 	}
++	memcpy(swap_buffer + buf->size - buf->o, bo_ptr(buf), block1);
++	memcpy(swap_buffer + buf->size - block2, buf->data, block2);
++
++	/* process input data in two steps to cover wrapping */
++	block1 = buf->i;
++	block2 = 0;
++
++	if (block1 > buf->data + buf->size - buf->p) {
++		block1 = buf->data + buf->size - buf->p;
++		block2 = buf->i - block1;
++	}
++	memcpy(swap_buffer, bi_ptr(buf), block1);
++	memcpy(swap_buffer + block1, buf->data, block2);
++
++	/* reinject changes into the buffer */
++	memcpy(buf->data, swap_buffer, buf->i);
++	memcpy(buf->data + buf->size - buf->o, swap_buffer + buf->size - buf->o, buf->o);
+ 
+ 	buf->p = buf->data;
+ }
+-- 
+1.7.12.1
+
