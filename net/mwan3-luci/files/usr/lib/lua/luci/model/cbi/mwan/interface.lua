@@ -6,7 +6,7 @@ function interfaceCheck() -- find issues with too many interfaces, reliability a
 			local interfaceName = section[".name"]
 			interfaceNumber = interfaceNumber+1 -- count number of mwan interfaces configured
 			-- create list of metrics for none and duplicate checking
-			local metricValue = ut.trim(sys.exec("uci get -p /var/state network." .. interfaceName .. ".metric"))
+			local metricValue = ut.trim(sys.exec("uci -p /var/state get network." .. interfaceName .. ".metric"))
 			if metricValue == "" then
 				errorFound = 1
 				errorNoMetricList = errorNoMetricList .. interfaceName .. " "
@@ -14,17 +14,17 @@ function interfaceCheck() -- find issues with too many interfaces, reliability a
 				metricList = metricList .. interfaceName .. " " .. metricValue .. "\n"
 			end
 			-- check if any interfaces have a higher reliability requirement than tracking IPs configured
-			local trackingNumber = tonumber(ut.trim(sys.exec("echo $(uci get -p /var/state mwan3." .. interfaceName .. ".track_ip) | wc -w")))
+			local trackingNumber = tonumber(ut.trim(sys.exec("echo $(uci -p /var/state get mwan3." .. interfaceName .. ".track_ip) | wc -w")))
 			if trackingNumber > 0 then
-				local reliabilityNumber = tonumber(ut.trim(sys.exec("uci get -p /var/state mwan3." .. interfaceName .. ".reliability")))
+				local reliabilityNumber = tonumber(ut.trim(sys.exec("uci -p /var/state get mwan3." .. interfaceName .. ".reliability")))
 				if reliabilityNumber and reliabilityNumber > trackingNumber then
 					errorFound = 1
 					errorReliabilityList = errorReliabilityList .. interfaceName .. " "
 				end
 			end
 			-- check if any interfaces are not properly configured in /etc/config/network or have no default route in main routing table
-			if ut.trim(sys.exec("uci get -p /var/state network." .. interfaceName)) == "interface" then
-				local interfaceDevice = ut.trim(sys.exec("uci get -p /var/state network." .. interfaceName .. ".ifname"))
+			if ut.trim(sys.exec("uci -p /var/state get network." .. interfaceName)) == "interface" then
+				local interfaceDevice = ut.trim(sys.exec("uci -p /var/state get network." .. interfaceName .. ".ifname"))
 				if interfaceDevice == "uci: Entry not found" or interfaceDevice == "" then
 					errorFound = 1
 					errorNetConfigList = errorNetConfigList .. interfaceName .. " "
@@ -220,7 +220,7 @@ up = mwan_interface:option(DummyValue, "up", translate("Interface up"))
 metric = mwan_interface:option(DummyValue, "metric", translate("Metric"))
 	metric.rawhtml = true
 	function metric.cfgvalue(self, s)
-		local metricValue = sys.exec("uci get -p /var/state network." .. s .. ".metric")
+		local metricValue = sys.exec("uci -p /var/state get network." .. s .. ".metric")
 		if metricValue ~= "" then
 			return metricValue
 		else
