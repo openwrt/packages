@@ -1,10 +1,10 @@
 -- ------ extra functions ------ --
 
 function ruleCheck() -- determine if rule needs a protocol specified
-	local sourcePort = ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".src_port"))
-	local destPort = ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".dest_port"))
+	local sourcePort = ut.trim(sys.exec("uci -p /var/state get mwan3." .. arg[1] .. ".src_port"))
+	local destPort = ut.trim(sys.exec("uci -p /var/state get mwan3." .. arg[1] .. ".dest_port"))
 	if sourcePort ~= "" or destPort ~= "" then -- ports configured
-		local protocol = ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".proto"))
+		local protocol = ut.trim(sys.exec("uci -p /var/state get mwan3." .. arg[1] .. ".proto"))
 		if protocol == "" or protocol == "all" then -- no or improper protocol
 			error_protocol = 1
 		end

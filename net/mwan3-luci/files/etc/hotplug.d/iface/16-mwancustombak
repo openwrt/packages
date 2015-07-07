@@ -13,7 +13,7 @@ send_alert()
 gather_event_info()
 {
 	# create event information message
-	local EVENT_INFO="Interface [ "$INTERFACE" ($DEVICE) ] on router [ "$(uci get -p /var/state system.@system[0].hostname)" ] has triggered a hotplug [ "$ACTION" ] event on "$(date +"%a %b %d %Y %T %Z")""
+	local EVENT_INFO="Interface [ "$INTERFACE" ($DEVICE) ] on router [ "$(uci -p /var/state get system.@system[0].hostname)" ] has triggered a hotplug [ "$ACTION" ] event on "$(date +"%a %b %d %Y %T %Z")""
 
 	# get current interface, policy and rule status
 	local CURRENT_STATUS="$(/usr/sbin/mwan3 status)"
