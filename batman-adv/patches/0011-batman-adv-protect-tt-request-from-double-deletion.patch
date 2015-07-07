@@ -1,7 +1,7 @@
 From 9bac35c1e4fab662522371f81147963e19693409 Mon Sep 17 00:00:00 2001
 From: Marek Lindner <mareklindner@neomailbox.ch>
 Date: Mon, 22 Jun 2015 00:36:28 +0800
-Subject: [PATCH 11/13] batman-adv: protect tt request from double deletion
+Subject: [PATCH 11/17] batman-adv: protect tt request from double deletion
 
 The list_del() calls were changed to list_del_init() to prevent
 an accidental double deletion in batadv_tt_req_node_new().

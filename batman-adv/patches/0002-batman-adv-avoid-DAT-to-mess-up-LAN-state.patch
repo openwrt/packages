@@ -1,7 +1,7 @@
 From 9bbd794030657fe0d38590cd67d4801b989cebf9 Mon Sep 17 00:00:00 2001
 From: Antonio Quartulli <antonio@meshcoding.com>
 Date: Mon, 1 Jun 2015 17:29:57 +0200
-Subject: [PATCH 02/13] batman-adv: avoid DAT to mess up LAN state
+Subject: [PATCH 02/17] batman-adv: avoid DAT to mess up LAN state
 
 When a node running DAT receives an ARP request from the LAN for the
 first time, it is likely that this node will request the ARP entry

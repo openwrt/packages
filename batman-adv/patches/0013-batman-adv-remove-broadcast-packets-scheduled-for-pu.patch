@@ -1,7 +1,7 @@
 From 07bec2d4dec83f024baf166b95cf037be3a7eca5 Mon Sep 17 00:00:00 2001
 From: Simon Wunderlich <simon@open-mesh.com>
 Date: Wed, 24 Jun 2015 14:50:20 +0200
-Subject: [PATCH 13/13] batman-adv: remove broadcast packets scheduled for
+Subject: [PATCH 13/17] batman-adv: remove broadcast packets scheduled for
  purged outgoing if
 
 When an interface is purged, the broadcast packets scheduled for this

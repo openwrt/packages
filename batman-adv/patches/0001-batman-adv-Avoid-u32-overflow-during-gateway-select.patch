@@ -1,7 +1,7 @@
 From f63c54bba31d2c86269982fd8efdfb618f1daabe Mon Sep 17 00:00:00 2001
 From: Ruben Wisniewski <ruben@freifunk-nrw.de>
 Date: Tue, 26 May 2015 18:34:27 +0200
-Subject: [PATCH 01/13] batman-adv: Avoid u32 overflow during gateway select
+Subject: [PATCH 01/17] batman-adv: Avoid u32 overflow during gateway select
 
 The gateway selection based on fast connections is using a single value
 calculated from the average tq (0-255) and the download bandwidth (in
