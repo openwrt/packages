@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2013 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
-PKG_VERSION:=2.2.4
+PKG_VERSION:=3.1.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/netatalk
-PKG_MD5SUM:=40753a32340c24e4ec395aeb55ef056e
+PKG_MD5SUM:=831ec8bf9e084b64f965d16c528af299
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -25,7 +25,7 @@ define Package/netatalk
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Filesystem
-  DEPENDS:=+attr +libdb47 +libgcrypt +libopenssl $(LIBRPC_DEPENDS)
+  DEPENDS:=+libattr +libdb47 +libgcrypt +libopenssl $(LIBRPC_DEPENDS)
   TITLE:=netatalk
   URL:=http://netatalk.sourceforge.net
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -38,49 +38,43 @@ define Package/netatalk/decription
 endef
 
 define Package/netatalk/conffiles
-/etc/netatalk/afpd.conf
+/etc/afp.conf
 endef
 
-TARGET_CFLAGS += -std=gnu99
+TARGET_CFLAGS += -std=gnu99 -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
 TARGET_LDFLAGS += $(LIBRPC)
 
 CONFIGURE_ARGS += \
-	--disable-afs \
-	--enable-hfs \
-	--disable-debugging \
 	--disable-shell-check \
-	--disable-timelord \
-	--disable-a2boot \
-	--disable-cups \
 	--disable-tcp-wrappers \
-	--with-cnid-default-backend=dbd \
+	--disable-admin-group \
+	--disable-zeroconf \
 	--with-bdb="$(STAGING_DIR)/usr/" \
 	--with-libgcrypt-dir="$(STAGING_DIR)/usr" \
 	--with-ssl-dir="$(STAGING_DIR)/usr" \
 	--with-uams-path="/usr/lib/uams" \
 	--without-acls \
-	--without-pam \
-	--disable-admin-group \
-	--disable-srvloc \
-	--disable-zeroconf \
-	$(if $(CONFIG_SHADOW_PASSWORDS),--with-shadow,--without-shadow) \
-	--without-ldap
+	--without-afpstats \
+	--without-ldap \
+	--without-kerberos \
+	$(if $(CONFIG_SHADOW_PASSWORDS),--with-shadow,--without-shadow)
 
 define Package/netatalk/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/lib/uams
-	$(INSTALL_DIR) $(1)/etc/netatalk
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ad $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/afppasswd $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/afpd $(1)/usr/sbin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/cnid_dbd $(1)/usr/sbin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/cnid_metad $(1)/usr/sbin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/apple_dump $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/cnid2_create $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dbd $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/uams/*.so $(1)/usr/lib/uams/
-	$(CP) ./files/AppleVolumes.default $(1)/etc/netatalk/
-	$(CP) $(PKG_INSTALL_DIR)/etc/netatalk/AppleVolumes.system $(1)/etc/netatalk/
-	$(INSTALL_CONF) ./files/afpd.conf $(1)/etc/netatalk/
-	$(INSTALL_BIN) ./files/afpd.init $(1)/etc/init.d/afpd
+	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/afp.conf $(1)/etc/
+	$(INSTALL_BIN) ./files/afpd.init $(1)/etc/init.d/netatalk
 endef
 
 $(eval $(call BuildPackage,netatalk))
+
