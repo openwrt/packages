@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freetype
 PKG_VERSION:=2.5.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/freetype
@@ -64,7 +64,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/freetype2.pc $(1)/usr/lib/pkgconfig/
 
 	$(SED) \
-		's,^\(prefix\|exec_prefix\)=.*,\1="$(STAGING_DIR)/usr",g' \
+		's,^\(prefix\|exec_prefix\)=.*,\1="$(STAGING_DIR)/usr",; \
+		 s,^\(includedir\)=.*,\1="$(STAGING_DIR)/usr/include",' \
 		 $(2)/bin/freetype-config
 	$(SED) \
 		's,/usr/include,$$$${prefix}/include,g' \
