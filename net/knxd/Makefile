@@ -11,12 +11,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
-PKG_VERSION=2015-06-02-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_VERSION=2015-06-27-$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/knxd/knxd.git
-PKG_SOURCE_VERSION:=3d3b1a5e8112397d297625d673a2a94507f9ebce
+PKG_SOURCE_VERSION:=50e7f6e6bfa13c2b6140b0f76aaa70234bf44b1d
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
 
@@ -38,7 +38,7 @@ define Package/knxd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=EIB KNX daemon
-  DEPENDS:=+pthsem +libusb-1.0
+  DEPENDS:=+pthsem +libusb-1.0 +libstdcpp
 endef
 
 define Package/knxd/description
@@ -86,7 +86,7 @@ CONFIGURE_ARGS+= \
 	--without-libstdc
 
 EXTRA_LDFLAGS+= \
-	-fno-builtin -nodefaultlibs -lc -lgcc
+       -fno-builtin -largp
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

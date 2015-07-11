@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2011 segal.ubi.pt
-# Copyright (C) 2010-2014 OpenWrt.org
+# Copyright (C) 2010-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntripclient
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-2.0+
 
 PKG_SOURCE:=$(PKG_NAME).zip
@@ -36,6 +36,7 @@ endef
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	unzip $(DL_DIR)/$(PKG_SOURCE) -d $(PKG_BUILD_DIR)
+	$(call Build/Prepare/Default)
 endef
 
 MAKE_FLAGS += \

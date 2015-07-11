@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
 PKG_VERSION:=1.5.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -109,7 +109,6 @@ define Package/libunbound/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-ecdsa \
 	--disable-gost \
 	--enable-allsymbols \
 	--with-libexpat="$(STAGING_DIR)/usr" \

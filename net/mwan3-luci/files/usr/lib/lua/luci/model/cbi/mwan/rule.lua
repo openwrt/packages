@@ -3,10 +3,10 @@
 function ruleCheck() -- determine if rules needs a proper protocol configured
 	uci.cursor():foreach("mwan3", "rule",
 		function (section)
-			local sourcePort = ut.trim(sys.exec("uci get -p /var/state mwan3." .. section[".name"] .. ".src_port"))
-			local destPort = ut.trim(sys.exec("uci get -p /var/state mwan3." .. section[".name"] .. ".dest_port"))
+			local sourcePort = ut.trim(sys.exec("uci -p /var/state get mwan3." .. section[".name"] .. ".src_port"))
+			local destPort = ut.trim(sys.exec("uci -p /var/state get mwan3." .. section[".name"] .. ".dest_port"))
 			if sourcePort ~= "" or destPort ~= "" then -- ports configured
-				local protocol = ut.trim(sys.exec("uci get -p /var/state mwan3." .. section[".name"] .. ".proto"))
+				local protocol = ut.trim(sys.exec("uci -p /var/state get mwan3." .. section[".name"] .. ".proto"))
 				if protocol == "" or protocol == "all" then -- no or improper protocol
 					error_protocol_list = error_protocol_list .. section[".name"] .. " "
 				end

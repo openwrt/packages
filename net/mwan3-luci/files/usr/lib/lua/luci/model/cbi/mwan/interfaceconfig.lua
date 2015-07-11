@@ -1,13 +1,13 @@
 -- ------ extra functions ------ --
 
 function interfaceCheck()
-	metricValue = ut.trim(sys.exec("uci get -p /var/state network." .. arg[1] .. ".metric"))
+	metricValue = ut.trim(sys.exec("uci -p /var/state get network." .. arg[1] .. ".metric"))
 	if metricValue == "" then -- no metric
 		errorNoMetric = 1
 	else -- if metric exists create list of interface metrics to compare against for duplicates
 		uci.cursor():foreach("mwan3", "interface",
 			function (section)
-				local metricValue = ut.trim(sys.exec("uci get -p /var/state network." .. section[".name"] .. ".metric"))
+				local metricValue = ut.trim(sys.exec("uci -p /var/state get network." .. section[".name"] .. ".metric"))
 				metricList = metricList .. section[".name"] .. " " .. metricValue .. "\n"
 			end
 		)
@@ -22,16 +22,16 @@ function interfaceCheck()
 		end
 	end
 	-- check if this interface has a higher reliability requirement than track IPs configured
-	local trackingNumber = tonumber(ut.trim(sys.exec("echo $(uci get -p /var/state mwan3." .. arg[1] .. ".track_ip) | wc -w")))
+	local trackingNumber = tonumber(ut.trim(sys.exec("echo $(uci -p /var/state get mwan3." .. arg[1] .. ".track_ip) | wc -w")))
 	if trackingNumber > 0 then
-		local reliabilityNumber = tonumber(ut.trim(sys.exec("uci get -p /var/state mwan3." .. arg[1] .. ".reliability")))
+		local reliabilityNumber = tonumber(ut.trim(sys.exec("uci -p /var/state get mwan3." .. arg[1] .. ".reliability")))
 		if reliabilityNumber and reliabilityNumber > trackingNumber then
 			errorReliability = 1
 		end
 	end
 	-- check if any interfaces are not properly configured in /etc/config/network or have no default route in main routing table
-	if ut.trim(sys.exec("uci get -p /var/state network." .. arg[1])) == "interface" then
-		local interfaceDevice = ut.trim(sys.exec("uci get -p /var/state network." .. arg[1] .. ".ifname"))
+	if ut.trim(sys.exec("uci -p /var/state get network." .. arg[1])) == "interface" then
+		local interfaceDevice = ut.trim(sys.exec("uci -p /var/state get network." .. arg[1] .. ".ifname"))
 		if interfaceDevice == "uci: Entry not found" or interfaceDevice == "" then
 			errorNetConfig = 1
 			errorRoute = 1
