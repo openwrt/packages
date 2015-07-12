@@ -9,37 +9,76 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=1.5.2
-PKG_RELEASE:=06
+PKG_VERSION:=1.5.14
+PKG_RELEASE:=00
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.5/src/
-PKG_MD5SUM:=e854fed32ea751d6db7f366cb910225a
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MD5SUM:=ad9d7262b96ba85a0f8c6acc6cb9edde
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/haproxy
+define Package/haproxy/Default
   SUBMENU:=Web Servers/Proxies
   SECTION:=net
   CATEGORY:=Network
   TITLE:=The Reliable, High Performance TCP/HTTP Load Balancer
   URL:=http://haproxy.1wt.eu/
-  DEPENDS:=+libpcre +libltdl +libopenssl +zlib +libpthread
 endef
 
-define Package/haproxy/conffiles
+define Package/haproxy/Default/conffiles
 /etc/haproxy.cfg
 endef
 
+define Package/haproxy/Default/description
+ Open source Reliable, High Performance TCP/HTTP Load Balancer.
+endef
+
+define Package/haproxy
+  DEPENDS+= +libpcre +libltdl +zlib +libpthread +libopenssl
+  TITLE+= (with SSL support)
+  VARIANT:=ssl
+$(call Package/haproxy/Default)
+endef
+
+define Package/haproxy/conffiles
+$(call Package/haproxy/Default/conffiles)
+endef
+
 define Package/haproxy/description
-  Open source High Performance TCP/HTTP Load Balancer
+$(call Package/haproxy/Default/description)
+ This package is built with SSL support.
+endef
+
+define Package/haproxy-nossl
+  TITLE+= (without SSL support)
+  VARIANT:=nossl
+  DEPENDS+= +libpcre +libltdl +zlib +libpthread
+  TITLE+= (with SSL support)
+$(call Package/haproxy/Default)
+endef
+
+define Package/haproxy-nossl/conffiles
+$(call Package/haproxy/Default/conffiles)
+endef
+
+define Package/haproxy-nossl/description
+$(call Package/haproxy/Default/description)
+ This package is built without SSL support.
 endef
 
 ifeq ($(CONFIG_avr32),y)
   LINUX_TARGET:=linux26
 else
   LINUX_TARGET:=linux2628
+endif
+
+ifeq ($(BUILD_VARIANT),ssl)
+	USE_OPENSSL=USE_OPENSSL=1
+else
+	USE_OPENSSL=
 endif
 
 define Build/Compile
@@ -49,22 +88,16 @@ define Build/Compile
 		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		ADDLIB="-lcrypto" \
-		PCREDIR="$(STAGING_DIR)/usr/include" \
+		PCREDIR="$(STAGING_DIR)/usr" \
 		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
-		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 USE_OPENSSL=1 \
+		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 $(USE_OPENSSL) \
 		USE_ZLIB=yes USE_PCRE=1 \
 		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
 		install
 
 	$(MAKE) -C $(PKG_BUILD_DIR)/contrib/halog \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
-		LD="$(TARGET_CC)" \
-		LDFLAGS="$(TARGET_LDFLAGS)" \
-		ADDLIB="-lcrypto" \
-		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
+		CC="$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
+		OPTIMIZE="" \
 		halog
 endef
 
@@ -79,9 +112,11 @@ define Package/haproxy/install
 	$(INSTALL_BIN) ./files/haproxy.hotplug $(1)/etc/hotplug.d/net/90-haproxy
 endef
 
+Package/haproxy-nossl/install = $(Package/haproxy/install)
+
 define Package/halog
 	MENU:=1
-	$(call Package/haproxy)
+	$(call Package/haproxy/Default)
 	TITLE+= halog
 	DEPENDS:=haproxy
 endef
@@ -95,5 +130,6 @@ define Package/halog/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/halog/halog $(1)/usr/bin/
 endef
 
+$(eval $(call BuildPackage,haproxy-nossl))
 $(eval $(call BuildPackage,haproxy))
 $(eval $(call BuildPackage,halog))
