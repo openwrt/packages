@@ -6,7 +6,7 @@
 
 #improve the logread output
 sqm_logger() {
-    logger -t SQM -s ${1}
+    logger -t SQM -s "${1}"
 }
 
 insmod() {
@@ -138,6 +138,23 @@ get_stab_string() {
 	fi
 	echo ${STABSTRING}
 }
+
+#sm: cake knows how to handle ATM and per packet overhead, so expose and use this...
+get_cake_lla_string() {
+	STABSTRING=""
+	if [ "${LLAM}" = "cake" -a "${LINKLAYER}" != "none" ]; 
+	then
+		if [ "${LINKLAYER}" = "atm" ];
+		then
+		    STABSTRING="atm"
+		fi
+		
+		STABSTRING="${STABSTRING} overhead ${OVERHEAD}"
+		sqm_logger "cake link layer adjustments: ${STABSTRING}"
+	fi
+	echo ${STABSTRING}
+}
+
 
 sqm_stop() {
 	$TC qdisc del dev $IFACE ingress
