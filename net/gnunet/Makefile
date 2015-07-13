@@ -8,11 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36048
+PKG_SOURCE_VERSION:=36060
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 # ToDo:
+#  - properly deal with persistency
 #  - break-out {peer,name,data}store for each backend
 #  - package testing stuff
 
@@ -210,7 +211,7 @@ CONF_gns:=dns gns namecache namestore resolver
 DEPENDS_datastore:=+gnunet-gns +libsqlite3
 BIN_datastore:=datastore
 LIB_datastore:=datastore
-PLUGIN_datastore:=datacache_sqlite datastore_heap datastore_sqlite namecache_sqlite namestore_sqlite peerstore_sqlite
+PLUGIN_datastore:=datastore_heap
 LIBEXEC_datastore:=daemon-latency-logger service-datastore
 CONF_datastore:=datastore
 
@@ -230,9 +231,10 @@ PLUGIN_transport-bluetooth:=transport_bluetooth
 LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
 
 DEPENDS_utils:=+certtool +openssl-util
-BIN_utils:=config gns-proxy-setup-ca transport-certificate-creation
+BIN_utils:=gns-proxy-setup-ca transport-certificate-creation
 
 DEPENDS_vpn:=+kmod-tun
+BIN_vpn:=vpn
 LIB_vpn:=tun vpn
 LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit helper-vpn service-vpn
 CONF_vpn:=exit pt vpn
