@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -4154,44 +4154,6 @@ fi
+@@ -4155,44 +4155,6 @@ fi
  rm -f conftest*
  
  

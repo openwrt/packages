@@ -75,14 +75,14 @@ config rule
         option target 'ACCEPT'
         option src 'wan'
         option proto 'tcp'
-        option dest_port '443'
+        option dest_port '4443'
         option name 'vpn'
 
 config rule
         option target 'ACCEPT'
         option src 'wan'
         option proto 'udp'
-        option dest_port '443'
+        option dest_port '4443'
         option name 'vpn'
 -----------------------------------------------------------------
 
