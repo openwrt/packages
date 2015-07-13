@@ -10,10 +10,9 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnunet
 PKG_SOURCE_VERSION:=36060
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # ToDo:
-#  - properly deal with persistency
 #  - break-out {peer,name,data}store for each backend
 #  - package testing stuff
 

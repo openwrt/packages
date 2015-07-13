@@ -39,11 +39,29 @@ prepare_config() {
 	chown root:gnunet $CONFIGFILE
 	chmod 0640 $CONFIGFILE
 	gnunet-config -c $CONFIGFILE -s PATHS -o GNUNET_HOME -V $GNUNET_HOME
-	# enable gns2dns service
-	defaultservices=$( gnunet-config -c /tmp/run/gnunet/gnunet.conf -s arm -o DEFAULTSERVICES )
-	defaultservices="$defaultservices dns2gns"
+
+	# minimal persistency in /etc/gnunet
+	[ ! -d /etc/gnunet ] && {
+		mkdir -p /etc/gnunet
+		chown gnunet:gnunet /etc/gnunet
+	}
+	gnunet-config -c $CONFIGFILE -s PATHS -o GNUNET_CONFIG_HOME -V /etc/gnunet
+	gnunet-config -c $CONFIGFILE -s PEER -o PRIVATE_KEY -V /etc/gnunet/private_key.ecc
+	gnunet-config -c $CONFIGFILE -s identity -o EGODIR -V /etc/gnunet/identity/egos
+	gnunet-config -c $CONFIGFILE -s revocation -o DATABASE -V /etc/gnunet/revocation.dat
+	gnunet-config -c $CONFIGFILE -s nse -o PROOFFILE -V /etc/gnunet/proof.dat
+	gnunet-config -c $CONFIGFILE -s namestore-sqlite -o FILENAME -V /etc/gnunet/namestore.sqlite
+
+	# minimal datastore (todo: make this configurable)
+	gnunet-config -c $CONFIGFILE -s datastore -o QUOTA -V "4 MB"
+
+	# limit dhtcache memory usage to 4 MB
+	gnunet-config -c $CONFIGFILE -s dhtcache -o QUOTA -V "4 MB"
+
+	# enable dns2gns
+	gnunet-config -c $CONFIGFILE -s dns2gns -o AUTOSTART -V YES
+
 	# enable all installed transport plugins
-	gnunet-config -c $CONFIGFILE -s arm -o DEFAULTSERVICES -V "$defaultservices"
 	transport_plugins=$(gnunet-config -c $CONFIGFILE -s transport -o PLUGINS)
 	for transplug in /usr/lib/gnunet/libgnunet_plugin_transport_*.so; do
 		transplug=$( echo $transplug |
