@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36060
+PKG_SOURCE_VERSION:=36068
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 # ToDo:
 #  - break-out {peer,name,data}store for each backend
@@ -171,6 +171,20 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.{la,so}* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/gnunet/*.h $(1)/usr/include/gnunet
+endef
+
+define Package/gnunet/postinst
+#!/bin/sh
+grep -qc "/etc/gnunet" "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null ||
+	echo "/etc/gnunet/" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
+
+endef
+
+define Package/gnunet/postrm
+#!/bin/sh
+grep -qc "/etc/gnunet" "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null &&
+	sed -i '/\/etc\/gnunet/d' "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
+
 endef
 
 DEPENDS_conversation:=+gnunet-gns +libgst1app +libgst1audio +libgstreamer1 +glib2 +pulseaudio-daemon +libopus +libogg
