@@ -619,3 +619,31 @@ type		^@ TO ÿ
 
 :querysr		Search & replace query window
 type		^@ TO ÿ
+
+:shell			Input to shell windows
+:inherit main
+""		^C		Abort
+""		^D		Eof
+"	"	^I		Tab
+""		^H		Backspace
+""		^M		Return
+""		^?		Backspace
+
+:vtshell		Input to ANSI shell windows
+:inherit main
+"[A"		 [ A
+"[A"		.ku
+"[B"		 [ B
+"[B"		.kd
+"[C"		 [ C
+"[C"		.kr
+"[D"		 [ D
+"[D"		.kl
+""		^A		BOL for bash
+""		^C		Abort
+""		^D		Eof
+""		^E		EOL for bash
+"	"	^I		Tab
+""		^H		Backspace
+""		^M		Return
+""		^?		Backspace

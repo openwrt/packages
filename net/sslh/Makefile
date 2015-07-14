@@ -38,6 +38,7 @@ define Build/Compile
 		CFLAGS="$(TARGET_CFLAGS)" \
 		USELIBCONFIG= \
 		USELIBWRAP= \
+		USELIBPCRE= \
 		all
 endef
 

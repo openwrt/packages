@@ -8,14 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36019
+PKG_SOURCE_VERSION:=36068
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 # ToDo:
-#  - break-out transports
-#    -> get rid of microhttpd and gnurl dependency for gns and vpn
-#       requires upstream to split config files
 #  - break-out {peer,name,data}store for each backend
 #  - package testing stuff
 
@@ -74,8 +71,8 @@ define Package/gnunet/description
  well as many missing features in this release.
 
  This package provides the core components of GNUnet including the
- CADET routing engine, a DHT implementation and most transports as well
- as their helpers.
+ CADET routing engine, a DHT implementation and basic transports as
+ well as their helpers.
 endef
 
 define BuildComponent
@@ -144,9 +141,7 @@ define Package/gnunet/install
 	done )
 
 	( for plug in ats_proportional block_dht block_regex datacache_heap  \
-	    transport_http_client transport_http_server \
-	    transport_https_client transport_https_server \
-	    transport_tcp transport_udp transport_unix transport_wlan; do \
+	    transport_tcp transport_udp transport_unix; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$plug*.so $(1)/usr/lib/gnunet ; \
 	done )
 
@@ -178,12 +173,35 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/gnunet/*.h $(1)/usr/include/gnunet
 endef
 
+define Package/gnunet/postinst
+#!/bin/sh
+grep -qc "/etc/gnunet" "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null ||
+	echo "/etc/gnunet/" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
+
+endef
+
+define Package/gnunet/postrm
+#!/bin/sh
+grep -qc "/etc/gnunet" "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null &&
+	sed -i '/\/etc\/gnunet/d' "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
+
+endef
+
 DEPENDS_conversation:=+gnunet-gns +libgst1app +libgst1audio +libgstreamer1 +glib2 +pulseaudio-daemon +libopus +libogg
 BIN_conversation:=conversation conversation-test
 LIB_conversation:=conversation microphone speaker
 PLUGIN_conversation:=gnsrecord_conversation
 LIBEXEC_conversation:=helper-audio-playback helper-audio-record
 CONF_conversation:=conversation
+
+DEPENDS_transport-http_client:=+libgnurl
+PLUGIN_transport-http_client:=transport_http_client transport_https_client
+
+DEPENDS_transport-http_server:=+libmicrohttpd
+PLUGIN_transport-http_server:=transport_http_server transport_https_server
+
+PLUGIN_transport-wifi:=transport_wlan
+LIBEXEC_transport-wifi:=helper-transport-wlan
 
 DEPENDS_experiments:=+libglpk
 PLUGIN_experiments:=ats_mlp ats_ril
@@ -192,7 +210,7 @@ DEPENDS_fs:=+gnunet-datastore +libextractor
 BIN_fs:=auto-share directory download download-manager.scm fs publish unindex search
 LIB_fs:=fs
 PLUGIN_fs:=block_fs
-LIB_EXEC_fs:=helper-fs-publish service-fs
+LIBEXEC_fs:=helper-fs-publish service-fs
 CONF_fs:=fs
 
 DEPENDS_gns:=+gnunet-vpn
@@ -206,7 +224,7 @@ CONF_gns:=dns gns namecache namestore resolver
 DEPENDS_datastore:=+gnunet-gns +libsqlite3
 BIN_datastore:=datastore
 LIB_datastore:=datastore
-PLUGIN_datastore:=datacache_sqlite datastore_heap datastore_sqlite namecache_sqlite namestore_sqlite peerstore_sqlite
+PLUGIN_datastore:=datastore_heap
 LIBEXEC_datastore:=daemon-latency-logger service-datastore
 CONF_datastore:=datastore
 
@@ -226,9 +244,10 @@ PLUGIN_transport-bluetooth:=transport_bluetooth
 LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
 
 DEPENDS_utils:=+certtool +openssl-util
-BIN_utils:=config gns-import.sh gns-proxy-setup-ca transport-certificate-creation
+BIN_utils:=gns-proxy-setup-ca transport-certificate-creation
 
 DEPENDS_vpn:=+kmod-tun
+BIN_vpn:=vpn
 LIB_vpn:=tun vpn
 LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit helper-vpn service-vpn
 CONF_vpn:=exit pt vpn
@@ -240,6 +259,9 @@ $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))
 $(eval $(call BuildComponent,datastore,storage components,))
 $(eval $(call BuildComponent,transport-bluetooth,bluetooth transport,))
+$(eval $(call BuildComponent,transport-http_client,HTTP/HTTPS client transport,y))
+$(eval $(call BuildComponent,transport-http_server,HTTP/HTTPS server transport,))
+$(eval $(call BuildComponent,transport-wlan,WLAN transport,))
 $(eval $(call BuildComponent,utils,administration utililties,))
 $(eval $(call BuildComponent,vpn,vpn components,y))
 $(eval $(call BuildComponent,mysql,mySQL datastore backend,))

@@ -1,5 +1,10 @@
 The openconnect server expects to be configured using the uci interface.
 
+It is recommended to setup a dynamic DNS address with openwrt prior
+to starting the server. That is because during the first startup
+a certificate file which contain the setup dynamic DNS name will be
+created.
+
 To setup a server the provides access to LAN with network address
 10.100.2.0/255.255.255.0 using the VPN address range
 10.100.3.0/255.255.255.0 add the following to /etc/config/ocserv:
@@ -65,6 +70,20 @@ config forwarding
 config forwarding
         option dest 'vpn'
         option src 'lan'
+
+config rule
+        option target 'ACCEPT'
+        option src 'wan'
+        option proto 'tcp'
+        option dest_port '4443'
+        option name 'vpn'
+
+config rule
+        option target 'ACCEPT'
+        option src 'wan'
+        option proto 'udp'
+        option dest_port '4443'
+        option name 'vpn'
 -----------------------------------------------------------------
 
 

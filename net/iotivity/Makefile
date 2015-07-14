@@ -33,7 +33,7 @@ include $(INCLUDE_DIR)/scons.mk
 define Package/iotivity
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:= +libpthread +librt +libstdcpp +libuuid
+  DEPENDS:=@!USE_UCLIBC +libpthread +librt +libstdcpp +libuuid
   TITLE:=IoTivity Library
   URL:=https://www.iotivity.org
 endef

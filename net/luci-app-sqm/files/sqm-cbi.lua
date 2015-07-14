@@ -36,8 +36,29 @@ s.addremove = true -- set to true to allow adding SQM instances in the GUI
 s.anonymous = true
 
 -- BASIC
-e = s:taboption("tab_basic", Flag, "enabled", translate("Enable"))
+e = s:taboption("tab_basic", Flag, "enabled", translate("Enable this SQM instance."))
 e.rmempty = false
+
+-- sm: following jow's advise, be helpful to the user and enable
+--     sqm's init script if even a single sm instance/interface
+--     is enabled; this is unexpected in that the init script gets
+--     enabled as soon as at least one sqm instance is enabled
+--     and that state is saved, so it does not require "Save & Apply"
+--     to effect the init scripts.
+--     the implementation was inpired/lifted from 
+--     https://github.com/openwrt/luci/blob/master/applications/luci-app-minidlna/luasrc/model/cbi/minidlna.lua
+function e.write(self, section, value)
+    if value == "1" then
+	luci.sys.init.enable("sqm")
+	m.message = translate("The SQM GUI has just enabled the sqm initscript on your behalf. Remember to disable the sqm initscript manually under System Startup menu in case this change was not wished for.")
+--	luci.sys.call("/etc/init.d/sqm start >/dev/null")
+--    else
+--	luci.sys.call("/etc/init.d/sqm stop >/dev/null")
+--	luci.sys.init.disable("sqm")
+    end
+    return Flag.write(self, section, value)
+end
+-- TODO: inform the user what we just did...
 
 n = s:taboption("tab_basic", ListValue, "interface", translate("Interface name"))
 -- sm lifted from luci-app-wol, the original implementation failed to show pppoe-ge00 type interface names
@@ -71,6 +92,7 @@ c:value("codel")
 c:value("ns2_codel")
 c:value("pie")
 c:value("sfq")
+c:value("cake")
 c.default = "fq_codel"
 c.rmempty = false
 
@@ -89,7 +111,7 @@ sc.default = "simple.qos"
 sc.rmempty = false
 sc.description = qos_desc
 
-ad = s:taboption("tab_qdisc", Flag, "qdisc_advanced", translate("Show and Use Advanced Configuration"))
+ad = s:taboption("tab_qdisc", Flag, "qdisc_advanced", translate("Show and Use Advanced Configuration. Advanced options will only be used as long as this box is checked."))
 ad.default = false
 ad.rmempty = true
 
@@ -121,7 +143,7 @@ eecn.default = "NOECN"
 eecn.rmempty = true
 eecn:depends("qdisc_advanced", "1")
 
-ad2 = s:taboption("tab_qdisc", Flag, "qdisc_really_really_advanced", translate("Show and Use Dangerous Configuration"))
+ad2 = s:taboption("tab_qdisc", Flag, "qdisc_really_really_advanced", translate("Show and Use Dangerous Configuration. Dangerous options will only be used as long as this box is checked."))
 ad2.default = false
 ad2.rmempty = true
 ad2:depends("qdisc_advanced", "1")
@@ -178,7 +200,7 @@ po:depends("linklayer", "ethernet")
 po:depends("linklayer", "atm")
 
 
-adll = s:taboption("tab_linklayer", Flag, "linklayer_advanced", translate("Show Advanced Linklayer Options, (only needed if MTU > 1500)"))
+adll = s:taboption("tab_linklayer", Flag, "linklayer_advanced", translate("Show Advanced Linklayer Options, (only needed if MTU > 1500). Advanced options will only be used as long as this box is checked."))
 adll.rmempty = true
 adll:depends("linklayer", "ethernet")
 -- adll:depends("linklayer", "adsl")
@@ -206,6 +228,7 @@ smpu.rmempty = true
 smpu:depends("linklayer_advanced", "1")
 
 lla = s:taboption("tab_linklayer", ListValue, "linklayer_adaptation_mechanism", translate("Which linklayer adaptation mechanism to use; for testing only"))
+lla:value("cake")
 lla:value("htb_private")
 lla:value("tc_stab", "tc_stab ("..translate("default")..")")
 lla.default = "tc_stab"

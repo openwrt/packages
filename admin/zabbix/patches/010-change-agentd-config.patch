@@ -10,8 +10,8 @@
 -# Mandatory: no
 -# Default:
 -# PidFile=/tmp/zabbix_agentd.pid
-+# Only /var/run/zabbix_agentd.pid supported
-+PidFile=/var/run/zabbix_agentd.pid
++# We do not need PidFile with procd
++# PidFile=/var/run/zabbix_agentd.pid
  
  ### Option: LogFile
  #	Name of log file.

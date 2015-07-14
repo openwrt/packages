@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.35
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://download.lighttpd.net/lighttpd/releases-1.4.x
@@ -60,7 +60,7 @@ CONFIGURE_ARGS+= \
 	--without-fam \
 	--without-gdbm \
 	--without-ldap \
-	--without-lua \
+	--with-lua \
 	--without-memcache \
 	--with-pcre \
 	--without-valgrind \
@@ -161,7 +161,7 @@ $(eval $(call BuildPlugin,access,Access restrictions,,30))
 $(eval $(call BuildPlugin,accesslog,Access logging,,30))
 $(eval $(call BuildPlugin,alias,Directory alias,,30))
 $(eval $(call BuildPlugin,cgi,CGI,,30))
-$(eval $(call BuildPlugin,cml,Cache Meta Language,,30))
+$(eval $(call BuildPlugin,cml,Cache Meta Language,+liblua,30))
 $(eval $(call BuildPlugin,compress,Compress output,+PACKAGE_lighttpd-mod-compress:zlib,30))
 $(eval $(call BuildPlugin,evasive,Evasive,,30))
 $(eval $(call BuildPlugin,evhost,Exnhanced Virtual-Hosting,,30))
@@ -169,7 +169,7 @@ $(eval $(call BuildPlugin,expire,Expire,,30))
 $(eval $(call BuildPlugin,extforward,Extract client,,30))
 $(eval $(call BuildPlugin,fastcgi,FastCGI,,30))
 $(eval $(call BuildPlugin,flv_streaming,FLV streaming,,30))
-$(eval $(call BuildPlugin,magnet,Magnet,,30))
+$(eval $(call BuildPlugin,magnet,Magnet,+liblua,30))
 $(eval $(call BuildPlugin,mysql_vhost,Mysql virtual hosting,+PACKAGE_lighttpd-mod-mysql_vhost:libmysqlclient,30))
 $(eval $(call BuildPlugin,proxy,Proxy,,30))
 $(eval $(call BuildPlugin,rewrite,URL rewriting,+PACKAGE_lighttpd-mod-rewrite:libpcre,30))
