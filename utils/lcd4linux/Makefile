@@ -26,7 +26,7 @@ LCD4LINUX_DRIVERS:= \
 	Curses \
 	Cwlinux \
 	D4D \
-	$(if $(CONFIG_BROKEN),DPF) \
+	DPF \
 	EA232graphic \
 	EFN \
 	FutabaVFD \
