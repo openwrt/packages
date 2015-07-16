@@ -10,11 +10,9 @@ Subject: [PATCH] gtls: add support for CURLOPT_CAPATH
  lib/vtls/gtls.h                    |  3 +++
  4 files changed, 29 insertions(+), 5 deletions(-)
 
-diff --git a/acinclude.m4 b/acinclude.m4
-index 6ed7ffb..ca01869 100644
 --- a/acinclude.m4
 +++ b/acinclude.m4
-@@ -2615,8 +2615,8 @@ AC_HELP_STRING([--without-ca-path], [Don't use a default CA path]),
+@@ -2614,8 +2614,8 @@ AC_HELP_STRING([--without-ca-path], [Don
      capath="no"
    elif test "x$want_capath" != "xno" -a "x$want_capath" != "xunset"; then
      dnl --with-ca-path given
@@ -25,11 +23,9 @@ index 6ed7ffb..ca01869 100644
      fi
      capath="$want_capath"
      ca="no"
-diff --git a/docs/libcurl/opts/CURLOPT_CAPATH.3 b/docs/libcurl/opts/CURLOPT_CAPATH.3
-index 642953d..6695f9f 100644
 --- a/docs/libcurl/opts/CURLOPT_CAPATH.3
 +++ b/docs/libcurl/opts/CURLOPT_CAPATH.3
-@@ -43,9 +43,8 @@ All TLS based protocols: HTTPS, FTPS, IMAPS, POP3, SMTPS etc.
+@@ -43,9 +43,8 @@ All TLS based protocols: HTTPS, FTPS, IM
  .SH EXAMPLE
  TODO
  .SH AVAILABILITY
@@ -41,13 +37,11 @@ index 642953d..6695f9f 100644
  .SH RETURN VALUE
  Returns CURLE_OK if TLS enabled, and CURLE_UNKNOWN_OPTION if not, or
  CURLE_OUT_OF_MEMORY if there was insufficient heap space.
-diff --git a/lib/vtls/gtls.c b/lib/vtls/gtls.c
-index 05aef19..c792540 100644
 --- a/lib/vtls/gtls.c
 +++ b/lib/vtls/gtls.c
-@@ -97,6 +97,10 @@ static bool gtls_inited = FALSE;
- #  if (GNUTLS_VERSION_NUMBER >= 0x03020d)
- #    define HAS_OCSP
+@@ -98,6 +98,10 @@ static bool gtls_inited = FALSE;
+ #      define HAS_ALPN
+ #    endif
  #  endif
 +
 +#  if (GNUTLS_VERSION_NUMBER >= 0x030306)
@@ -55,8 +49,8 @@ index 05aef19..c792540 100644
 +#  endif
  #endif
  
- #ifdef HAS_OCSP
-@@ -462,6 +466,24 @@ gtls_connect_step1(struct connectdata *conn,
+ /*
+@@ -463,6 +467,24 @@ gtls_connect_step1(struct connectdata *c
              rc, data->set.ssl.CAfile);
    }
  
@@ -81,13 +75,11 @@ index 05aef19..c792540 100644
    if(data->set.ssl.CRLfile) {
      /* set the CRL list file */
      rc = gnutls_certificate_set_x509_crl_file(conn->ssl[sockindex].cred,
-diff --git a/lib/vtls/gtls.h b/lib/vtls/gtls.h
-index c3867e5..af1cb5b 100644
 --- a/lib/vtls/gtls.h
 +++ b/lib/vtls/gtls.h
-@@ -54,6 +54,9 @@ bool Curl_gtls_cert_status_request(void);
- /* Set the API backend definition to GnuTLS */
- #define CURL_SSL_BACKEND CURLSSLBACKEND_GNUTLS
+@@ -53,6 +53,9 @@ void Curl_gtls_md5sum(unsigned char *tmp
+                       unsigned char *md5sum, /* output */
+                       size_t md5len);
  
 +/* this backend supports the CAPATH option */
 +#define have_curlssl_ca_path 1
@@ -95,6 +87,3 @@ index c3867e5..af1cb5b 100644
  /* API setup for GnuTLS */
  #define curlssl_init Curl_gtls_init
  #define curlssl_cleanup Curl_gtls_cleanup
--- 
-2.4.4
-
