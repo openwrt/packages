@@ -1,58 +1,58 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -580,6 +580,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
+@@ -589,6 +589,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
  have_termios_h="no"
  AC_CHECK_HEADERS(termios.h, [have_termios_h="yes"])
  
 +# For the iwinfo plugin
 +AC_CHECK_LIB(iwinfo, iwinfo_backend, [with_iwinfo="yes"], [with_iwinfo="no (libiwinfo not found)"], [])
 +
- #
- # Checks for typedefs, structures, and compiler characteristics.
- #
-@@ -4841,6 +4844,7 @@ plugin_interface="no"
+ # For the turbostat plugin
+ have_asm_msrindex_h="no"
+ AC_CHECK_HEADERS(asm/msr-index.h, [have_asm_msrindex_h="yes"])
+@@ -5171,6 +5174,7 @@ plugin_interface="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
 +plugin_iwinfo="no"
- plugin_libvirt="no"
  plugin_load="no"
+ plugin_log_logstash="no"
  plugin_memory="no"
-@@ -5179,6 +5183,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
+@@ -5562,6 +5566,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
  AC_PLUGIN([iptables],    [$with_libiptc],      [IPTables rule counters])
  AC_PLUGIN([ipvs],        [$plugin_ipvs],       [IPVS connection statistics])
  AC_PLUGIN([irq],         [$plugin_irq],        [IRQ statistics])
 +AC_PLUGIN([iwinfo],      [$with_iwinfo],       [Common iwinfo wireless statistics])
  AC_PLUGIN([java],        [$with_java],         [Embed the Java Virtual Machine])
- AC_PLUGIN([libvirt],     [$plugin_libvirt],    [Virtual machine statistics])
  AC_PLUGIN([load],        [$plugin_load],       [System load])
-@@ -5480,6 +5485,7 @@ Configuration:
-     protobuf-c  . . . . . $have_protoc_c
+ AC_PLUGIN([logfile],     [yes],                [File logging plugin])
+@@ -5891,6 +5896,7 @@ Configuration:
      oracle  . . . . . . . $with_oracle
+     protobuf-c  . . . . . $have_protoc_c
      python  . . . . . . . $with_python
 +    iwinfo  . . . . . . . $with_iwinfo
  
    Features:
      daemon mode . . . . . $enable_daemon
-@@ -5524,6 +5530,7 @@ Configuration:
+@@ -5940,6 +5946,7 @@ Configuration:
      iptables  . . . . . . $enable_iptables
      ipvs  . . . . . . . . $enable_ipvs
      irq . . . . . . . . . $enable_irq
 +    iwinfo  . . . . . . . $enable_iwinfo
      java  . . . . . . . . $enable_java
-     libvirt . . . . . . . $enable_libvirt
      load  . . . . . . . . $enable_load
+     logfile . . . . . . . $enable_logfile
 --- a/src/collectd.conf.in
 +++ b/src/collectd.conf.in
-@@ -109,6 +109,7 @@
+@@ -128,6 +128,7 @@
  #@BUILD_PLUGIN_IPMI_TRUE@LoadPlugin ipmi
  #@BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
  #@BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
 +#@BUILD_PLUGIN_IWINFO_TRUE@LoadPlugin iwinfo
  #@BUILD_PLUGIN_JAVA_TRUE@LoadPlugin java
- #@BUILD_PLUGIN_LIBVIRT_TRUE@LoadPlugin libvirt
  @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
-@@ -502,6 +503,12 @@
+ #@BUILD_PLUGIN_LPAR_TRUE@LoadPlugin lpar
+@@ -582,6 +583,12 @@
  #	IgnoreSelected true
  #</Plugin>
  
@@ -62,12 +62,12 @@
 +#   Interface "wlan0"
 +#</Plugin>
 +
- #<Plugin "java">
+ #<Plugin java>
  #	JVMArg "-verbose:jni"
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -2077,6 +2077,27 @@ and all other interrupts are collected.
+@@ -2572,6 +2572,27 @@ and all other interrupts are collected.
  
  =back
  
@@ -250,17 +250,15 @@
 +}
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -530,6 +530,15 @@ collectd_LDADD += "-dlopen" irq.la
- collectd_DEPENDENCIES += irq.la
+@@ -459,6 +459,13 @@ irq_la_SOURCES = irq.c \
+ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  endif
  
 +if BUILD_PLUGIN_IWINFO
 +pkglib_LTLIBRARIES += iwinfo.la
-+iwinfo_la_SOURCES = iwinfo.c
++iwinfo_la_SOURCES = iwinfo.c utils_ignorelist.c utils_ignorelist.h
 +iwinfo_la_LDFLAGS = -module -avoid-version
 +iwinfo_la_LIBADD = -liwinfo
-+collectd_LDADD += "-dlopen" iwinfo.la
-+collectd_DEPENDENCIES += iwinfo.la
 +endif
 +
  if BUILD_PLUGIN_JAVA
@@ -268,12 +266,11 @@
  java_la_SOURCES = java.c
 --- a/src/types.db
 +++ b/src/types.db
-@@ -195,7 +195,7 @@ voltage			value:GAUGE:U:U
+@@ -227,6 +227,7 @@ voltage			value:GAUGE:U:U
  vs_memory		value:GAUGE:0:9223372036854775807
  vs_processes		value:GAUGE:0:65535
  vs_threads		value:GAUGE:0:65535
--
 +stations		value:GAUGE:0:256
+ 
  #
  # Legacy types
- # (required for the v5 upgrade target)
