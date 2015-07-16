@@ -1,14 +1,14 @@
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -4,7 +4,7 @@ SUBDIRS += liboconfig
- endif
+@@ -7,7 +7,7 @@ SUBDIRS += daemon
+ PLUGIN_LDFLAGS = -module -avoid-version -export-symbols-regex '\<module_register\>'
  
  if COMPILER_IS_GCC
 -AM_CFLAGS = -Wall -Werror
 +AM_CFLAGS = -Wall
  endif
  
- AM_CPPFLAGS = -DPREFIX='"${prefix}"'
+ AM_CPPFLAGS = -I$(srcdir)/daemon
 --- a/src/libcollectdclient/Makefile.am
 +++ b/src/libcollectdclient/Makefile.am
 @@ -1,7 +1,7 @@
