@@ -89,6 +89,9 @@ define Build/Configure
 			$(if $(CONFIG_mips64)$(CONFIG_mips64el),--with-arch=mips64 \
 			--with-abi=$(subst ",,$(CONFIG_MIPS64_ABI))) \
 	);
+	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/mpfr/
+	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/gmp/
+	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/mpc/
 endef
 
 define Build/Compile
