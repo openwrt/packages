@@ -102,17 +102,6 @@ $(call Package/gnutls/Default/description)
 endef
 
 
-define Package/libgnutls-openssl
-$(call Package/gnutls/Default)
-  TITLE+= (OpenSSL compat library)
-  DEPENDS+= +libgnutls
-endef
-
-define Package/libgnutls-openssl/description
-$(call Package/gnutls/Default/description)
- This package contains the GnuTLS OpenSSL compatibility layer shared library.
-endef
-
 CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
@@ -124,7 +113,6 @@ CONFIGURE_ARGS+= \
 	--enable-local-libopts \
 	--disable-doc \
 	--disable-tests \
-	--enable-openssl-compatibility \
 	--with-default-trust-store-dir=/etc/ssl/certs/ \
 	--disable-crywrap \
 	--with-librt-prefix="$(LIBRT_ROOT_DIR)/"
@@ -241,13 +229,6 @@ define Package/libgnutls/install
 endef
 
 
-define Package/libgnutls-openssl/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnutls-openssl.so.* $(1)/usr/lib/
-endef
-
-
 $(eval $(call BuildPackage,certtool))
 $(eval $(call BuildPackage,gnutls-utils))
 $(eval $(call BuildPackage,libgnutls))
-$(eval $(call BuildPackage,libgnutls-openssl))

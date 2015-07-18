@@ -32,9 +32,11 @@ fix_libexec_permissions() {
 }
 
 prepare_config() {
-	mkdir -p $GNUNET_HOME
-	chown gnunet:gnunet $GNUNET_HOME
-	chmod 0750 $GNUNET_HOME
+	if [ ! -e "$GNUNET_HOME" ]; then
+		mkdir -p $GNUNET_HOME
+		chown gnunet:gnunet $GNUNET_HOME
+		chmod 0750 $GNUNET_HOME
+	fi
 	touch $CONFIGFILE
 	chown root:gnunet $CONFIGFILE
 	chmod 0640 $CONFIGFILE
@@ -74,7 +76,7 @@ prepare_config() {
 
 start_service() {
 	fix_libexec_permissions
-	[ ! -e $GNUNET_HOME ] && prepare_config
+	prepare_config
 
 	procd_open_instance
 	procd_set_param user gnunet

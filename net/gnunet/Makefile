@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36068
+PKG_SOURCE_VERSION:=36094
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
@@ -162,8 +162,10 @@ define Package/gnunet/install
 	done )
 
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/hellos/* $(1)/usr/share/gnunet/hellos
-	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/gnunet.init $(1)/etc/init.d/gnunet
+	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
+	$(INSTALL_DATA) ./files/gnunet.upgrade $(1)/lib/upgrade/keep.d/gnunet
 endef
 
 define Build/InstallDev
@@ -171,20 +173,6 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.{la,so}* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/gnunet/*.h $(1)/usr/include/gnunet
-endef
-
-define Package/gnunet/postinst
-#!/bin/sh
-grep -qc "/etc/gnunet" "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null ||
-	echo "/etc/gnunet/" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
-
-endef
-
-define Package/gnunet/postrm
-#!/bin/sh
-grep -qc "/etc/gnunet" "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null &&
-	sed -i '/\/etc\/gnunet/d' "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
-
 endef
 
 DEPENDS_conversation:=+gnunet-gns +libgst1app +libgst1audio +libgstreamer1 +glib2 +pulseaudio-daemon +libopus +libogg

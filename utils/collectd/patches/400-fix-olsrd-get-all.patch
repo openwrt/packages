@@ -1,6 +1,6 @@
 --- a/src/olsrd.c
 +++ b/src/olsrd.c
-@@ -653,7 +653,7 @@ static int olsrd_read (void) /* {{{ */
+@@ -658,7 +658,7 @@ static int olsrd_read (void) /* {{{ */
    if (fh == NULL)
      return (-1);
  
