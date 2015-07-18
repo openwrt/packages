@@ -1,6 +1,6 @@
---- a/src/metadata.hpp	2015-06-17 21:39:33.629934688 +0800
-+++ b/src/metadata.hpp	2014-10-14 22:07:36.000000000 +0800
-@@ -31,7 +31,7 @@
+--- a/src/metadata.hpp
++++ b/src/metadata.hpp
+@@ -31,7 +31,7 @@ namespace zmq
      {
          public:
  
@@ -9,8 +9,8 @@
  
              metadata_t (const dict_t &dict);
              virtual ~metadata_t ();
---- a/src/socket_base.cpp	2015-06-17 21:42:26.289413233 +0800
-+++ b/src/socket_base.cpp	2015-06-02 18:31:00.000000000 +0800
+--- a/src/socket_base.cpp
++++ b/src/socket_base.cpp
 @@ -20,6 +20,7 @@
  #include <new>
  #include <string>
@@ -19,9 +19,9 @@
  
  #include "platform.hpp"
  
---- a/src/stream_engine.cpp	2015-06-17 21:57:29.599443517 +0800
-+++ b/src/stream_engine.cpp	2015-06-02 18:31:00.000000000 +0800
-@@ -198,7 +198,7 @@
+--- a/src/stream_engine.cpp
++++ b/src/stream_engine.cpp
+@@ -198,7 +198,7 @@ void zmq::stream_engine_t::plug (io_thre
              //  Compile metadata.
              typedef metadata_t::dict_t properties_t;
              properties_t properties;
@@ -30,7 +30,7 @@
              zmq_assert (metadata == NULL);
              metadata = new (std::nothrow) metadata_t (properties);
          }
-@@ -805,7 +805,7 @@
+@@ -805,7 +805,7 @@ void zmq::stream_engine_t::mechanism_rea
  
      //  If we have a peer_address, add it to metadata
      if (!peer_address.empty()) {

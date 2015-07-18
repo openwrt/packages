@@ -34,7 +34,7 @@
  		double tmp = atof (value);
 --- a/src/utils_rrdcreate.c
 +++ b/src/utils_rrdcreate.c
-@@ -212,6 +212,9 @@ static int rra_get (char ***ret, const v
+@@ -217,6 +217,9 @@ static int rra_get (char ***ret, const v
      rts_num = rra_timespans_num;
    }
  
@@ -46,7 +46,7 @@
    if ((rra_def = (char **) malloc ((rra_max + 1) * sizeof (char *))) == NULL)
 --- a/src/utils_rrdcreate.h
 +++ b/src/utils_rrdcreate.h
-@@ -36,6 +36,8 @@ struct rrdcreate_config_s
+@@ -41,6 +41,8 @@ struct rrdcreate_config_s
    int *timespans;
    size_t timespans_num;
  

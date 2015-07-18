@@ -8,12 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36060
+PKG_SOURCE_VERSION:=36094
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 # ToDo:
-#  - properly deal with persistency
 #  - break-out {peer,name,data}store for each backend
 #  - package testing stuff
 
@@ -163,8 +162,10 @@ define Package/gnunet/install
 	done )
 
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/hellos/* $(1)/usr/share/gnunet/hellos
-	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/gnunet.init $(1)/etc/init.d/gnunet
+	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
+	$(INSTALL_DATA) ./files/gnunet.upgrade $(1)/lib/upgrade/keep.d/gnunet
 endef
 
 define Build/InstallDev

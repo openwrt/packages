@@ -1,0 +1,10 @@
+--- a/compat.c
++++ b/compat.c
+@@ -63,6 +63,7 @@ int snprintf(char *str, size_t size, con
+ 
+ #ifndef HAVE_STRNSTR
+ #include <string.h>
++#include <sys/types.h>
+ /* FUNCTION PROGRAMER: Siberiaic Sang */
+ char *strnstr(const char *haystack, const char *needle, size_t haystacklen)
+ {

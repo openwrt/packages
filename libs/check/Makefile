@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=check
 PKG_VERSION:=0.9.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/check
@@ -40,6 +40,9 @@ define Package/check/description
 endef
 
 TARGET_CFLAGS += $(FPIC)
+CONFIGURE_VARS += \
+	hw_cv_func_snprintf_c99=yes \
+	hw_cv_func_vsnprintf_c99=yes \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

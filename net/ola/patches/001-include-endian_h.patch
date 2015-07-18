@@ -1,0 +1,15 @@
+diff --git a/common/network/NetworkUtils.cpp b/common/network/NetworkUtils.cpp
+index 3914818..094a311 100644
+--- a/common/network/NetworkUtils.cpp
++++ b/common/network/NetworkUtils.cpp
+@@ -39,6 +39,10 @@ typedef uint32_t in_addr_t;
+ #include <resolv.h>
+ #endif
+ 
++#ifdef HAVE_ENDIAN_H
++#include <endian.h>
++#endif
++
+ #if defined(HAVE_LINUX_NETLINK_H) && defined(HAVE_LINUX_RTNETLINK_H)
+ #define USE_NETLINK_FOR_DEFAULT_ROUTE 1
+ #include <linux/netlink.h>
