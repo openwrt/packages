@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2c-tools
-PKG_VERSION:=3.1.1
+PKG_VERSION:=3.1.2
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://dl.lm-sensors.org/i2c-tools/releases/ \
-                http://web.archive.org/web/20150326044243/http://dl.lm-sensors.org/i2c-tools/releases/
+PKG_SOURCE_URL:=http://dl.lm-sensors.org/i2c-tools/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=0fdbff53ebd0b8d9249256d6c56480b1
+PKG_MD5SUM:=7104a1043d11a5e2c7b131614eb1b962
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=PACKAGE_python-smbus:python
