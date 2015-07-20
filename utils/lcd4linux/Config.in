@@ -79,7 +79,8 @@ config LCD4LINUX_CUSTOM_DRIVER_D4D
 config LCD4LINUX_CUSTOM_DRIVER_dpf
 	bool
 	prompt "dpf"
-	select LCD4LINUX_CUSTOM_NEEDS_libdpf
+	select LCD4LINUX_CUSTOM_NEEDS_libusb
+	select LCD4LINUX_CUSTOM_NEEDS_libgd
 
 config LCD4LINUX_CUSTOM_DRIVER_EA232graphic
 	bool
