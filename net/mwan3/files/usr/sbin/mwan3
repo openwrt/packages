@@ -58,7 +58,7 @@ ifup()
 
 	config_get enabled "$1" enabled 0
 
-	device=$(uci get -p /var/state network.$1.ifname) &> /dev/null
+	device=$(uci -p /var/state get network.$1.ifname) &> /dev/null
 
 	if [ -n "$device" ] ; then
 		[ "$enabled" -eq 1 ] && ACTION=ifup INTERFACE=$1 DEVICE=$device /sbin/hotplug-call iface
@@ -76,7 +76,7 @@ interfaces()
 	check_iface_status()
 	{
 		let iface_id++
-		device=$(uci get -p /var/state network.$1.ifname) &> /dev/null
+		device=$(uci -p /var/state get network.$1.ifname) &> /dev/null
 
 		if [ -z "$device" ]; then
 			echo " interface $1 is unknown"
@@ -92,7 +92,7 @@ interfaces()
 		fi
 
 		if [ -n "$($IP rule | awk '$5 == "'$device'"')" -a -n "$($IPT -S mwan3_iface_$1 2> /dev/null)" -a -n "$($IP route list table $iface_id default dev $device 2> /dev/null)" ]; then
-			if [ -n "$(uci get -p /var/state mwan3.$1.track_ip 2> /dev/null)" ]; then
+			if [ -n "$(uci -p /var/state get mwan3.$1.track_ip 2> /dev/null)" ]; then
 				echo " interface $1 is online (tracking $tracking)"
 			else
 				echo " interface $1 is online"
@@ -101,7 +101,7 @@ interfaces()
 			echo " interface $1 error"
 		else
 			if [ "$enabled" -eq 1 ]; then
-				if [ -n "$(uci get -p /var/state mwan3.$1.track_ip 2> /dev/null)" ]; then
+				if [ -n "$(uci -p /var/state get mwan3.$1.track_ip 2> /dev/null)" ]; then
 					echo " interface $1 is offline (tracking $tracking)"
 				else
 					echo " interface $1 is offline"
