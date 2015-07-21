@@ -1,0 +1,13 @@
+Index: bmx6-r2014112401/lib/bmx6_json/json.c
+===================================================================
+--- bmx6-r2014112401.orig/lib/bmx6_json/json.c
++++ bmx6-r2014112401/lib/bmx6_json/json.c
+@@ -27,7 +27,7 @@
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <stdint.h>
+-#include <json/json.h>
++#include <json-c/json.h>
+ //#include <dirent.h>
+ //#include <sys/inotify.h>
+ 
