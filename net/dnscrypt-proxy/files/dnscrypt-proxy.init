@@ -8,14 +8,16 @@ start_instance () {
 	config_get port            "$section" 'port'
 	config_get resolver        "$section" 'resolver'
 	config_get resolvers_list  "$section" 'resolvers_list'
+	config_get client_key      "$section" 'client_key'
 	config_get_bool ephemeral_keys "$section" 'ephemeral_keys'
 
 	service_start /usr/sbin/dnscrypt-proxy -d \
 		-a ${address}:${port} \
 		-u nobody \
 		-L ${resolvers_list:-'/usr/share/dnscrypt-proxy/dnscrypt-resolvers.csv'} \
-		-R ${resolver:-'opendns'} \
-		${ephemeral_keys:+'-E'}
+		-R ${resolver:-'cisco'} \
+		${ephemeral_keys:+'-E'} \
+		${client_key:+'--client-key='$client_key}
 }
 
 start() {
