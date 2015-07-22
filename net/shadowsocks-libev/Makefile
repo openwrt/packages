@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadowsocks-libev
-PKG_VERSION:=2.2.2
+PKG_VERSION:=2.2.3
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/shadowsocks/shadowsocks-libev.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
-PKG_SOURCE_VERSION:=4883903e657095b93f88a3a3b9a0dccdffdaa397
+PKG_SOURCE_VERSION:=2b1eef11973de3f7380401fd20f937e84bc2b756
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MAINTAINER:=Jian Chang <aa65535@live.com>
 
@@ -36,14 +36,14 @@ define Package/shadowsocks-libev/Default
 	TITLE:=Lightweight Secured Socks5 Proxy $(2)
 	URL:=https://github.com/shadowsocks/shadowsocks-libev
 	VARIANT:=$(1)
-	DEPENDS:=$(3) +resolveip +ipset +ip +iptables-mod-tproxy
+	DEPENDS:=$(3) +libpthread +ipset +ip +iptables-mod-tproxy
 endef
 
 Package/shadowsocks-libev = $(call Package/shadowsocks-libev/Default,openssl,(OpenSSL),+libopenssl)
 Package/shadowsocks-libev-polarssl = $(call Package/shadowsocks-libev/Default,polarssl,(PolarSSL),+libpolarssl)
 
 define Package/shadowsocks-libev/description
-Shadowsocks-libev is a lightweight secured scoks5 proxy for embedded devices and low end boxes.
+Shadowsocks-libev is a lightweight secured socks5 proxy for embedded devices and low end boxes.
 endef
 
 Package/shadowsocks-libev-polarssl/description = $(Package/shadowsocks-libev/description)
