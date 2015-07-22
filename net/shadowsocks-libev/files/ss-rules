@@ -16,6 +16,8 @@ usage() {
 		    -e <extra_options>      extra options for iptables
 		    -o                      apply the rules to the OUTPUT chain
 		    -u                      enable udprelay mode, TPROXY is required
+		    -U                      enable udprelay mode, using different IP
+		                            and ports for TCP and UDP
 		    -f                      flush the rules
 EOF
 }
@@ -69,7 +71,7 @@ EOF
 fw_rule() {
 	$ipt_n -N SS_SPEC_WAN_FW && \
 	$ipt_n -A SS_SPEC_WAN_FW -p tcp \
-		-j REDIRECT --to-ports $LOCAL_PORT 2>/dev/null || {
+		-j REDIRECT --to-ports $local_port 2>/dev/null || {
 		loger 3 "Can't redirect, please check the iptables."
 		exit 1
 	}
@@ -111,7 +113,7 @@ EOF
 }
 
 tp_rule() {
-	[ "$TPROXY" = 1 ] || return 0
+	[ -n "$TPROXY" ] || return 0
 	ip rule add fwmark 0x01/0x01 table 100
 	ip route add local 0.0.0.0/0 dev lo table 100
 	$ipt_m -N SS_SPEC_TPROXY
@@ -123,12 +125,18 @@ tp_rule() {
 	return $?
 }
 
-while getopts ":s:l:c:i:e:a:b:w:ouf" arg; do
+while getopts ":s:l:S:L:i:e:a:b:w:ouUf" arg; do
 	case $arg in
 		s)
-			SERVER=$OPTARG
+			server=$OPTARG
 			;;
 		l)
+			local_port=$OPTARG
+			;;
+		S)
+			SERVER=$OPTARG
+			;;
+		L)
 			LOCAL_PORT=$OPTARG
 			;;
 		i)
@@ -152,6 +160,9 @@ while getopts ":s:l:c:i:e:a:b:w:ouf" arg; do
 		u)
 			TPROXY=1
 			;;
+		U)
+			TPROXY=2
+			;;
 		f)
 			flush_r
 			exit 0
@@ -159,16 +170,20 @@ while getopts ":s:l:c:i:e:a:b:w:ouf" arg; do
 	esac
 done
 
-if [ -z "$SERVER" -o -z "$LOCAL_PORT" ]; then
+if [ -z "$server" -o -z "$local_port" ]; then
 	usage
 	exit 2
 fi
 
-SERVER=$(resolveip -t60 $SERVER)
+if [ "$TPROXY" = 1 ]; then
+	SERVER=$server
+	LOCAL_PORT=$local_port
+fi
 
-if [ -z "$SERVER" ]; then
-	loger 3 "Can't resolve the server hostname."
-	exit 1
+if [ "$TPROXY" = 2 ]; then
+	if [ -z "$SERVER" -o -z "$LOCAL_PORT" ]; then
+		loger 3 "Please use -S and -L specifies IP and port for UDP."
+	fi
 fi
 
 if [ -f "$IGNORE" ]; then
@@ -176,6 +191,7 @@ if [ -f "$IGNORE" ]; then
 fi
 
 IPLIST=$(cat <<-EOF | grep -E "^([0-9]{1,3}\.){3}[0-9]{1,3}"
+	$server
 	$SERVER
 	0.0.0.0/8
 	10.0.0.0/8
