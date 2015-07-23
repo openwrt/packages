@@ -62,6 +62,7 @@ prepare_config() {
 
 	# enable dns2gns
 	gnunet-config -c $CONFIGFILE -s dns2gns -o AUTOSTART -V YES
+	gnunet-config -c $CONFIGFILE -s dns2gns -o FORCESTART -V YES
 
 	# enable all installed transport plugins
 	transport_plugins=$(gnunet-config -c $CONFIGFILE -s transport -o PLUGINS)
