@@ -64,7 +64,6 @@ MAKE_FLAGS := \
 	NO_MKSTEMPS="YesPlease" \
 	NO_GETTEXT="YesPlease" \
 	NO_UNIX_SOCKETS="YesPlease" \
-	NO_IPV6="YesPlease" \
 	NO_ICONV="YesPlease" \
 	NO_NSEC="YesPlease" \
 	NO_PERL="YesPlease" \
@@ -88,6 +87,7 @@ define Package/git/install
 	$(RM) $(PKG_INSTALL_DIR)/usr/bin/git-cvsserver
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/git-* $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib/git-core
+	$(LN) /usr/bin/git $(1)/usr/lib/git-core/git
 	( cd $(PKG_INSTALL_DIR); $(TAR) \
 		--exclude=usr/lib/git-core/git-http-backend \
 		--exclude=usr/lib/git-core/git-http-fetch \
