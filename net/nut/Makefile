@@ -28,6 +28,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_NUT_CLIENTS_UPSMON \
 	CONFIG_NUT_CLIENTS_UPSRW \
 	CONFIG_NUT_CLIENTS_UPSSCHED \
+	CONFIG_NUT_CLIENTS_CGI \
 	CONFIG_NUT_DRIVER_SERIAL \
 	CONFIG_NUT_DRIVER_SNMP \
 	CONFIG_NUT_DRIVER_USB \
@@ -57,7 +58,8 @@ define Package/nut
 	DEPENDS:= \
 		+NUT_DRIVER_SNMP:libnetsnmp \
 		+NUT_DRIVER_USB:libusb-compat \
-		+NUT_SSL:libopenssl
+		+NUT_SSL:libopenssl \
+		+NUT_CLIENTS_CGI:libgd
 	MENU:=1
 endef
 
@@ -111,6 +113,35 @@ define Package/nut/install
 	$(if $(CONFIG_NUT_CLIENTS_UPSSCHED),$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upssched.conf.sample $(1)/etc/nut/upssched.conf)
 endef
 
+define Package/nut-web-cgi
+	$(call Package/nut/Default)
+	TITLE:=Web CGI interface
+endef
+
+define Package/nut-web-cgi/description
+The CGI programs are clients that run through your web server.
+They allow you to see UPS status and perform certain administrative
+commands from any web browser. Javascript and cookies are not required.
+endef
+
+define Package/nut-web-cgi/conffiles
+	/etc/nut/hosts.conf
+	/etc/nut/upsset.conf
+	/etc/nut/upsstats.html
+	/etc/nut/upsstats-single.html
+endef
+
+define Package/nut-web-cgi/install
+	$(INSTALL_DIR) $(1)/etc/nut
+	$(INSTALL_DIR) $(1)/usr/share/www/cgi-bin
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/hosts.conf.sample $(1)/etc/nut/hosts.conf
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsset.conf.sample $(1)/etc/nut/upsset.conf
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats.html.sample $(1)/etc/nut/upsstats.html
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats-single.html.sample $(1)/etc/nut/upsstats-single.html
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/www/nut $(1)/usr/share/www/
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/www/cgi-bin/nut $(1)/usr/share/www/cgi-bin/
+endef
+
 # Dealing with all of the drivers is very repetitive, but the previous
 # maintainer had a neat solution which just needed some tweaking.
 define DriverPackage
@@ -126,7 +157,7 @@ define DriverPackage
 	# new version of nut we will need to provide descriptions for any new
 	# drivers.
         define Package/nut-driver-$(2)/description
-		
+
         endef
         define Package/nut-driver-$(2)/install
         	$(INSTALL_DIR) $$(1)/lib/nut
@@ -284,9 +315,13 @@ CONFIGURE_ARGS += \
 	--sysconfdir=/etc/nut \
 	--with-drvpath=/lib/nut \
 	--with-statepath=/var/run \
-	--datadir=/usr/share/nut
+	--datadir=/usr/share/nut \
+	--$(if $(CONFIG_NUT_CLIENTS_CGI),with,without)-cgi \
+	--with-htmlpath=/usr/share/www/nut \
+	--with-cgipath=/usr/share/www/cgi-bin/nut
 
 $(eval $(call BuildPackage,nut))
+$(eval $(call BuildPackage,nut-web-cgi))
 $(foreach d,$(filter-out $(SERIAL_DRIVERLIST_IGNORE),$(SERIAL_DRIVERLIST)),$(eval $(call BuildPackage,nut-driver-$(d))))
 $(foreach d,$(SNMP_DRIVERLIST),$(eval $(call BuildPackage,nut-driver-$(d))))
 $(foreach d,$(USB_LIBUSB_DRIVERLIST),$(eval $(call BuildPackage,nut-driver-$(d))))
