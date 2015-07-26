@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2013 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
-PKG_VERSION:=1.4.35
-PKG_RELEASE:=5
+PKG_VERSION:=1.4.36
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://download.lighttpd.net/lighttpd/releases-1.4.x
-PKG_MD5SUM:=c7ae774eab4cb7ac85e41b712f4ee9ba
+PKG_MD5SUM:=1843daffcb018aa528f6d15d43544654
 
 PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=COPYING
