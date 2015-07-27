@@ -38,6 +38,12 @@ config NGINX_LUA
 	help
 		Enable support for LUA scripts.
 
+config NGINX_SUB_MULTIFILTER
+	bool
+	prompt "Enable SUB_MULTIFILTER module"
+	help
+		Enable support for ngx_http_substitutions_filter_module.
+
 config NGINX_PCRE
 	bool
 	prompt "Enable PCRE library usage"

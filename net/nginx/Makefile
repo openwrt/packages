@@ -49,7 +49,8 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_LIMIT_REQ \
 	CONFIG_NGINX_HTTP_EMPTY_GIF \
 	CONFIG_NGINX_HTTP_BROWSER \
-	CONFIG_NGINX_HTTP_UPSTREAM_IP_HASH
+	CONFIG_NGINX_HTTP_UPSTREAM_IP_HASH \
+	CONFIG_NGINX_SUB_MULTIFILTER
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -98,8 +99,13 @@ ifeq ($(CONFIG_NGINX_DAV),y)
   ADDITIONAL_MODULES += --with-http_dav_module
 endif
 ifeq ($(CONFIG_NGINX_LUA),y)
+  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/lua-nginx/deps/ngx_devel_kit
   ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/lua-nginx
 endif
+ifeq ($(CONFIG_NGINX_SUB_MULTIFILTER),y)
+  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/sub-nginx
+endif
+
 ifneq ($(CONFIG_NGINX_HTTP_CACHE),y)
   ADDITIONAL_MODULES += --without-http-cache
 endif
@@ -218,6 +224,7 @@ define Build/Prepare
 	$(if $(CONFIG_NGINX_NAXSI),$(call Prepare/nginx-naxsi))
 	$(if $(CONFIG_NGINX_SYSLOG),$(call Prepare/nginx-syslog))
 	$(if $(CONFIG_NGINX_HTTP_UPSTREAM_CHECK),$(call Prepare/nginx-upstream-check))
+	$(if $(CONFIG_NGINX_SUB_MULTIFILTER),$(call Prepare/sub-nginx))
 endef
 
 define Download/lua-nginx
@@ -228,11 +235,25 @@ define Download/lua-nginx
 	PROTO:=git
 endef
 
+define Download/sub-nginx
+	VERSION:=131c030cbb284c7eb22a1c5184236d0983391441
+	SUBDIR:=sub-nginx
+	FILE:=sub-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+	URL:=https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git
+	PROTO:=git
+endef
+
 define  Prepare/lua-nginx
 	$(eval $(call Download,lua-nginx))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
 	$(call PatchDir,$(PKG_BUILD_DIR),./patches-lua-nginx)
 endef
+
+define  Prepare/sub-nginx
+	$(eval $(call Download,sub-nginx))
+	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+endef
+
 
 define Download/nginx-upstream-check
 	VERSION:=d40b9f956d9d978005bb15616d2f283d4e3d2031
