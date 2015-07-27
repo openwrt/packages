@@ -91,3 +91,6 @@
 
 # domains.google.com	non free service - require HTTPS communication
 "domains.google.com"	"https://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# no-ip.com
+"no-ip.com" "https://[USERNAME]:[PASSWORD]@dynupdate.no-ip.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
