@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/target.mk
 
 PKG_NAME:=boost
 PKG_VERSION:=1_58_0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
@@ -34,13 +34,13 @@ PKG_USE_MIPS16:=0
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
-
+# For now, the combination TARGET_mpc85xx&&USE_UCLIBC disables boost due to incompatibility
 define Package/boost/Default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Boost C++ source library
   URL:=http://www.boost.org
-  DEPENDS:=+libstdcpp +libpthread +librt
+  DEPENDS:=@(!(TARGET_mpc85xx&&USE_UCLIBC)) +libstdcpp +libpthread +librt
 endef
 
 define Package/boost/description/Default
@@ -72,10 +72,11 @@ define Package/boost/install
   true
 endef
 
+# For now, the combination TARGET_mpc85xx&&USE_UCLIBC disables boost due to incompatibility
 define Package/boost
   $(call Package/boost/Default)
   TITLE+= packages
-  DEPENDS:=+ALL:boost-libs +ALL:boost-test
+  DEPENDS:=@(!(TARGET_mpc85xx&&USE_UCLIBC)) +ALL:boost-libs +ALL:boost-test
 endef
 
 define Package/boost/config
@@ -107,7 +108,7 @@ PKG_CONFIG_DEPENDS:= CONFIG_PACKAGE_boost-test
 define Package/boost-test
   $(call Package/boost/Default)
   TITLE+= (test)
-  HIDDEN:=1
+  HIDDEN:=1  
 endef
 
 define Build/Configure
@@ -148,7 +149,7 @@ $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
 #$(eval $(call DefineBoostLibrary,graph_parallel,,))
 $(eval $(call DefineBoostLibrary,iostreams,,+zlib))
-$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS)))
+$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS) +@BUILD_NLS))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,))
