@@ -1,0 +1,48 @@
+
+# for more information:
+# http://bmx6.net/projects/bmx6/wiki
+# options execute: bmx6 --help
+
+config 'bmx6' 'general'
+#       option 'runtimeDir' '/var/run/bmx6'
+
+
+#config 'plugin'
+#        option 'plugin' 'bmx6_config.so'
+
+#config 'plugin'
+#        option 'plugin' 'bmx6_json.so'
+
+#config 'plugin'
+#        option 'plugin' 'bmx6_table.so'
+
+#config 'plugin'
+#        option 'plugin' 'bmx6_sms.so'
+
+
+config 'dev' 'mesh_1'
+        option 'dev' 'br-lan'
+
+config 'dev' 'mesh_2'
+        option 'dev' 'wlan0'
+
+config 'tunDev' default
+        option 'tunDev' 'default'
+        option 'tun6Address' '2012:0:0:6666::1/64'
+        option 'tun4Address' '10.66.66.1/24'
+
+
+#config 'tunOut'
+#        option 'tunOut' 'ip6'
+#        option 'network' '2012::/16'
+#        option 'exportDistance' '0'
+
+#config 'tunOut'
+#        option 'tunOut' 'ip4'
+#        option 'network' '10.0.0.0/9'
+#        option 'minPrefixLen' '27'
+
+
+
+
+

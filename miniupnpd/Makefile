@@ -46,7 +46,7 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	echo "OpenWrt/$(OPENWRTVERSION)" | tr \(\)\  _ >$(PKG_BUILD_DIR)/os.openwrt
+	echo "OpenWrt" | tr \(\)\  _ >$(PKG_BUILD_DIR)/os.openwrt
 endef
 
 MAKE_FLAGS += \

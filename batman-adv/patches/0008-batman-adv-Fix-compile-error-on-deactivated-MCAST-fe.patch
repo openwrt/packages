@@ -1,7 +1,7 @@
 From 256776ef8562744f90ac9379364df4cf88291b49 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Linus=20L=C3=BCssing?= <linus.luessing@c0d3.blue>
 Date: Thu, 18 Jun 2015 06:47:19 +0200
-Subject: [PATCH 08/13] batman-adv: Fix compile error on deactivated MCAST
+Subject: [PATCH 08/17] batman-adv: Fix compile error on deactivated MCAST
  feature
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

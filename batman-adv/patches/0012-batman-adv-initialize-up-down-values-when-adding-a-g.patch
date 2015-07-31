@@ -1,7 +1,7 @@
 From 3c92b633715b7eca80dc7a2347e0e4dbcce1f018 Mon Sep 17 00:00:00 2001
 From: Simon Wunderlich <simon@open-mesh.com>
 Date: Wed, 24 Jun 2015 14:50:19 +0200
-Subject: [PATCH 12/13] batman-adv: initialize up/down values when adding a
+Subject: [PATCH 12/17] batman-adv: initialize up/down values when adding a
  gateway
 
 Without this initialization, gateways which actually announce up/down

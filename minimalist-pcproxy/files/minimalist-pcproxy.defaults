@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ `uci get -q upnpd.config._pcproxy_configured` = "1" ]
+if [ `uci -q get upnpd.config._pcproxy_configured` = "1" ]
 then
     exit
 fi

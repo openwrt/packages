@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hnetd
-PKG_SOURCE_VERSION:=18ee17f3d18a4c0159e53e0716831bf2fbe506cd
-PKG_VERSION:=2015-06-17-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=a6b4b6f1f5d38646fa11064cf7394719e048bc87
+PKG_VERSION:=2015-07-28-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -37,7 +37,7 @@ define Package/hnetd/Default
   CATEGORY:=Network
   TITLE:=HNCP Homenet daemon - $(2)
   URL:=https://github.com/sbyx/hnetd
-  DEPENDS:=+odhcpd +odhcp6c +netifd +ip $(3)
+  DEPENDS:=+odhcpd +odhcp6c +netifd $(3)
   DEPENDS+=+@IPV6
   VARIANT:=$1
 endef
@@ -50,7 +50,7 @@ define Package/hnet-full
   CATEGORY:=Network
   TITLE:=HNCP Homenet metapackage
   URL:=https://github.com/sbyx/hnetd
-  DEPENDS:=+hnetd-nossl +luci-app-hnet
+  DEPENDS:=+hnetd-nossl +luci-app-hnet +ip
   # Routing
   DEPENDS+=+babeld
   # Service discovery
@@ -62,9 +62,23 @@ endef
 define Package/hnet-full-secure
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=HNCP Homenet metapackage
+  TITLE:=HNCP Homenet metapackage (w/ SSL)
   URL:=https://github.com/sbyx/hnetd
-  DEPENDS:=+hnetd-openssl +luci-app-hnet
+  DEPENDS:=+hnetd-openssl +luci-app-hnet +ip
+  # Routing
+  DEPENDS+=+babeld
+  # Service discovery
+  DEPENDS+=+ohybridproxy
+  # Distributed PCP support
+  DEPENDS+=+miniupnpd +minimalist-pcproxy
+endef
+
+define Package/hnet-full-l2tp
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=HNCP Homenet metapackage (w/ L2TP)
+  URL:=https://github.com/sbyx/hnetd
+  DEPENDS:=+hnetd-nossl +luci-app-hnet +ip-full +kmod-l2tp-eth
   # Routing
   DEPENDS+=+babeld
   # Service discovery
@@ -116,6 +130,11 @@ define Package/hnet-full-secure/install
 	true
 endef
 
+define Package/hnet-full-l2tp/install
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generic/tunnel.script $(1)/usr/sbin/hnetd-tunnel
+endef
+
 define Package/luci-app-hnet/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
 	$(INSTALL_DIR) $(1)/www
@@ -137,4 +156,5 @@ $(eval $(call BuildPackage,hnetd-nossl))
 $(eval $(call BuildPackage,hnetd-openssl))
 $(eval $(call BuildPackage,hnet-full))
 $(eval $(call BuildPackage,hnet-full-secure))
+$(eval $(call BuildPackage,hnet-full-l2tp))
 $(eval $(call BuildPackage,luci-app-hnet))

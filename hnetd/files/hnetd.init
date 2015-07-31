@@ -51,6 +51,9 @@ start_service() {
     # Routing script
     procd_append_param command -r /usr/sbin/hnetd-routing
 
+    [ -x /usr/sbin/hnetd-tunnel ] && \
+         procd_append_param command -t /usr/sbin/hnetd-tunnel
+
     # Prefix assignment (pa)
     config_get val pa ip4prefix
     [ -n "$val" ] && procd_append_param command --ip4prefix $val

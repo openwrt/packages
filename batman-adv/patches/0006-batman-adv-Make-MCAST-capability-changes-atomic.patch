@@ -1,7 +1,7 @@
 From 201a54ba710ab7f40b82ad3c109f702c47d0761f Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Linus=20L=C3=BCssing?= <linus.luessing@c0d3.blue>
 Date: Tue, 16 Jun 2015 17:10:25 +0200
-Subject: [PATCH 06/13] batman-adv: Make MCAST capability changes atomic
+Subject: [PATCH 06/17] batman-adv: Make MCAST capability changes atomic
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

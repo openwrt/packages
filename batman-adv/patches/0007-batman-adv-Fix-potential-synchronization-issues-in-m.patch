@@ -1,7 +1,7 @@
 From 7f220ed1f063be00833bd34a013c8f3f45884031 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Linus=20L=C3=BCssing?= <linus.luessing@c0d3.blue>
 Date: Tue, 16 Jun 2015 17:10:26 +0200
-Subject: [PATCH 07/13] batman-adv: Fix potential synchronization issues in
+Subject: [PATCH 07/17] batman-adv: Fix potential synchronization issues in
  mcast tvlv handler
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
