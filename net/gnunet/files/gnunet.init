@@ -55,7 +55,10 @@ prepare_config() {
 	gnunet-config -c $CONFIGFILE -s namestore-sqlite -o FILENAME -V /etc/gnunet/namestore.sqlite
 
 	# minimal datastore (todo: make this configurable)
+	gnunet-config -c $CONFIGFILE -s datastore -o DATABASE -V heap
 	gnunet-config -c $CONFIGFILE -s datastore -o QUOTA -V "4 MB"
+	gnunet-config -c $CONFIGFILE -s fs -o CONTENT_PUSHING -V NO
+	gnunet-config -c $CONFIGFILE -s fs -o CONTENT_CACHING -V NO
 
 	# limit dhtcache memory usage to 4 MB
 	gnunet-config -c $CONFIGFILE -s dhtcache -o QUOTA -V "4 MB"
@@ -73,6 +76,19 @@ prepare_config() {
 			transport_plugins="$transport_plugins $transplug"
 	done
 	gnunet-config -c $CONFIGFILE -s transport -o PLUGINS -V "$transport_plugins"
+
+	gnunet-config -c $CONFIGFILE -s pt -o FORCESTART -V YES
+	gnunet-config -c $CONFIGFILE -s exit -o AUTOSTART -V YES
+	gnunet-config -c $CONFIGFILE -s exit -o FORCESTART -V YES
+	gnunet-config -c $CONFIGFILE -s exit -o EXIT_IPV4 -V YES
+	# ssh and www services
+#	gnunet-config -c $CONFIGFILE -s exit -o EXIT_RANGE_IPV4_POLICY -V "169.254.86.1:22;169.254.86.1:80;"
+#	gnunet-config -c $CONFIGFILE -s ssh.gnunet. -o TCP_REDIRECTS -V "22:169.254.86.1:22"
+#	gnunet-config -c $CONFIGFILE -s www.gnunet. -o TCP_REDIRECTS -V "80:169.254.86.1:80"
+	# iperf (TCP) and echo (UDP) for battlemesh
+	gnunet-config -c $CONFIGFILE -s exit -o EXIT_RANGE_IPV4_POLICY -V "169.254.86.1:7;169.254.86.1:5201;"
+	gnunet-config -c $CONFIGFILE -s iperf.gnunet. -o TCP_REDIRECTS -V "5201:169.254.86.1:5201"
+	gnunet-config -c $CONFIGFILE -s echo.gnunet. -o UDP_REDIRECTS -V "7:169.254.86.1:7"
 }
 
 start_service() {
