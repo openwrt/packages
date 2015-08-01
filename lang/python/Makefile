@@ -218,13 +218,14 @@ HOST_CFLAGS+= \
 	-I/usr/include/ncurses
 
 HOST_CONFIGURE_ARGS+= \
-	--without-cxx-main \
-	--without-pymalloc \
-	--with-threads \
-	--prefix=$(STAGING_DIR_HOST) \
-	--with-ensurepip=upgrade \
-	CONFIG_SITE= \
-	CFLAGS="$(HOST_CFLAGS)"
+    --without-cxx-main \
+    --without-pymalloc \
+    --with-threads \
+    --with-system-expat=$(STAGING_DIR_HOST) \
+    --prefix=$(STAGING_DIR_HOST) \
+    --with-ensurepip=upgrade \
+    CONFIG_SITE= \
+    CFLAGS="$(HOST_CFLAGS)"
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
