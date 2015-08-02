@@ -1,0 +1,15 @@
+--- a/deps/v8/build/toolchain.gypi
++++ b/deps/v8/build/toolchain.gypi
+@@ -50,10 +50,10 @@
+     'arm_test_noprobe%': 'off',
+ 
+     # Similar to vfp but on MIPS.
+-    'v8_can_use_fpu_instructions%': 'true',
++    'v8_can_use_fpu_instructions%': 'false',
+ 
+     # Similar to the ARM hard float ABI but on MIPS.
+-    'v8_use_mips_abi_hardfloat%': 'true',
++    'v8_use_mips_abi_hardfloat%': 'false',
+ 
+     # Default arch variant for MIPS.
+     'mips_arch_variant%': 'r2',
