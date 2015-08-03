@@ -222,6 +222,7 @@ HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
+	--with-system-expat=$(STAGING_DIR_HOST) \
 	--prefix=$(STAGING_DIR_HOST) \
 	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
