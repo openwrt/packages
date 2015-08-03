@@ -47,25 +47,14 @@ prepare_config() {
 		mkdir -p /etc/gnunet
 		chown gnunet:gnunet /etc/gnunet
 	}
+
+	# defaults paths
 	gnunet-config -c $CONFIGFILE -s PATHS -o GNUNET_CONFIG_HOME -V /etc/gnunet
 	gnunet-config -c $CONFIGFILE -s PEER -o PRIVATE_KEY -V /etc/gnunet/private_key.ecc
 	gnunet-config -c $CONFIGFILE -s identity -o EGODIR -V /etc/gnunet/identity/egos
 	gnunet-config -c $CONFIGFILE -s revocation -o DATABASE -V /etc/gnunet/revocation.dat
 	gnunet-config -c $CONFIGFILE -s nse -o PROOFFILE -V /etc/gnunet/proof.dat
 	gnunet-config -c $CONFIGFILE -s namestore-sqlite -o FILENAME -V /etc/gnunet/namestore.sqlite
-
-	# minimal datastore (todo: make this configurable)
-	gnunet-config -c $CONFIGFILE -s datastore -o DATABASE -V heap
-	gnunet-config -c $CONFIGFILE -s datastore -o QUOTA -V "4 MB"
-	gnunet-config -c $CONFIGFILE -s fs -o CONTENT_PUSHING -V NO
-	gnunet-config -c $CONFIGFILE -s fs -o CONTENT_CACHING -V NO
-
-	# limit dhtcache memory usage to 4 MB
-	gnunet-config -c $CONFIGFILE -s dhtcache -o QUOTA -V "4 MB"
-
-	# enable dns2gns
-	gnunet-config -c $CONFIGFILE -s dns2gns -o AUTOSTART -V YES
-	gnunet-config -c $CONFIGFILE -s dns2gns -o FORCESTART -V YES
 
 	# enable all installed transport plugins
 	transport_plugins=$(gnunet-config -c $CONFIGFILE -s transport -o PLUGINS)
@@ -77,18 +66,27 @@ prepare_config() {
 	done
 	gnunet-config -c $CONFIGFILE -s transport -o PLUGINS -V "$transport_plugins"
 
-	gnunet-config -c $CONFIGFILE -s pt -o FORCESTART -V YES
-	gnunet-config -c $CONFIGFILE -s exit -o AUTOSTART -V YES
-	gnunet-config -c $CONFIGFILE -s exit -o FORCESTART -V YES
-	gnunet-config -c $CONFIGFILE -s exit -o EXIT_IPV4 -V YES
-	# ssh and www services
-#	gnunet-config -c $CONFIGFILE -s exit -o EXIT_RANGE_IPV4_POLICY -V "169.254.86.1:22;169.254.86.1:80;"
-#	gnunet-config -c $CONFIGFILE -s ssh.gnunet. -o TCP_REDIRECTS -V "22:169.254.86.1:22"
-#	gnunet-config -c $CONFIGFILE -s www.gnunet. -o TCP_REDIRECTS -V "80:169.254.86.1:80"
-	# iperf (TCP) and echo (UDP) for battlemesh
-	gnunet-config -c $CONFIGFILE -s exit -o EXIT_RANGE_IPV4_POLICY -V "169.254.86.1:7;169.254.86.1:5201;"
-	gnunet-config -c $CONFIGFILE -s iperf.gnunet. -o TCP_REDIRECTS -V "5201:169.254.86.1:5201"
-	gnunet-config -c $CONFIGFILE -s echo.gnunet. -o UDP_REDIRECTS -V "7:169.254.86.1:7"
+	# apply config from UCI
+	_gnunet_section=""
+	config_cb()
+	{
+		# $1    "Type"
+		# $2    "Name"
+		local __TYPE="$1"
+		local __NAME="$2"
+		[ "${__TYPE}" = "gnunet-config" ] && _gnunet_section="${__NAME}"
+		[ "${__TYPE}" = "gnunet-exit-service" ] && _gnunet_section="${__NAME}.gnunet."
+	}
+	option_cb() {
+		# $1    name of variable
+		# $2    value
+		local __OPT="$1"
+		local __VAL="$2"
+		gnunet-config -c $CONFIGFILE -s ${_gnunet_section} -o ${__OPT} -V "${__VAL}"
+	}
+	config_load gnunet
+
+	return 0
 }
 
 start_service() {
