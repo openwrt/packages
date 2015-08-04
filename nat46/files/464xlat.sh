@@ -84,7 +84,7 @@ proto_464xlat_setup() {
 }
 
 proto_464xlat_teardown() {
-	464xlatcfg "464xlat-$1"
+	464xlatcfg "464-$1"
 }
 
 proto_464xlat_init_config() {
