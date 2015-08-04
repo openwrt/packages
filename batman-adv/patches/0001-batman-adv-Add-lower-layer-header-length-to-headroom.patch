@@ -1,0 +1,88 @@
+batman-adv: Add lower layer header length to headroom
+
+The maximum of hard_header_len and needed_headroom of all slave interfaces
+of a batman-adv device must be used to define the batman-adv device
+headroom/header_len. This is required to avoid too small headroom problems
+when these slave devices try to send the encapsulated packet.
+
+The batman-adv therefore uses:
+
+	needed_headroom = max(0, dev[0].needed_headroom, ...,
+			      dev[n].needed_headroom)
+	hard_header_len = max(ETH_HLEN, dev[0].hard_header_len, ...,
+			      dev[n].hard_header_len) + ETH_HLEN +
+			  max(sizeof(batadv_*cast_packet))
+
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+---
+ net/batman-adv/hard-interface.c | 33 +++++++++++++++++++++++++++++++++
+ net/batman-adv/soft-interface.c |  2 +-
+ 2 files changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/net/batman-adv/hard-interface.c b/net/batman-adv/hard-interface.c
+index f4a15d2e5eaf..a501aae1077b 100644
+--- a/net/batman-adv/hard-interface.c
++++ b/net/batman-adv/hard-interface.c
+@@ -252,12 +252,45 @@ static void batadv_check_known_mac_addr(const struct net_device *net_dev)
+ 	rcu_read_unlock();
+ }
+ 
++/**
++ * batadv_hardif_recalc_headroom() - Recalculate skbuff headroom parameters
++ * @soft_iface: netdev struct of the mesh interface
++ */
++static void batadv_hardif_recalc_headroom(struct net_device *soft_iface)
++{
++	const struct batadv_hard_iface *hard_iface;
++	unsigned short hard_header_len = ETH_HLEN;
++	unsigned short needed_headroom = 0;
++
++	rcu_read_lock();
++	list_for_each_entry_rcu(hard_iface, &batadv_hardif_list, list) {
++		if ((hard_iface->if_status != BATADV_IF_ACTIVE) &&
++		    (hard_iface->if_status != BATADV_IF_TO_BE_ACTIVATED))
++			continue;
++
++		if (hard_iface->soft_iface != soft_iface)
++			continue;
++
++		hard_header_len = max_t(unsigned short, hard_header_len,
++					hard_iface->net_dev->hard_header_len);
++
++		needed_headroom = max_t(unsigned short, needed_headroom,
++					hard_iface->net_dev->needed_headroom);
++	}
++	rcu_read_unlock();
++
++	soft_iface->needed_headroom = needed_headroom;
++	soft_iface->hard_header_len = hard_header_len + batadv_max_header_len();
++}
++
+ int batadv_hardif_min_mtu(struct net_device *soft_iface)
+ {
+ 	struct batadv_priv *bat_priv = netdev_priv(soft_iface);
+ 	const struct batadv_hard_iface *hard_iface;
+ 	int min_mtu = INT_MAX;
+ 
++	batadv_hardif_recalc_headroom(soft_iface);
++
+ 	rcu_read_lock();
+ 	list_for_each_entry_rcu(hard_iface, &batadv_hardif_list, list) {
+ 		if ((hard_iface->if_status != BATADV_IF_ACTIVE) &&
+diff --git a/net/batman-adv/soft-interface.c b/net/batman-adv/soft-interface.c
+index 36b23f31df2a..b4c110791203 100644
+--- a/net/batman-adv/soft-interface.c
++++ b/net/batman-adv/soft-interface.c
+@@ -948,7 +948,7 @@ static void batadv_softif_init_early(struct net_device *dev)
+ 	 */
+ 	dev->mtu = ETH_DATA_LEN;
+ 	/* reserve more space in the skbuff for our header */
+-	dev->hard_header_len = batadv_max_header_len();
++	dev->hard_header_len = ETH_HLEN + batadv_max_header_len();
+ 
+ 	/* generate random address */
+ 	eth_hw_addr_random(dev);
+-- 
+2.5.0
+
+

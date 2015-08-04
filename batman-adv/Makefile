@@ -10,9 +10,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2015.0
+PKG_VERSION:=2015.1
 PKG_RELEASE:=1
-PKG_MD5SUM:=178b082266a8bfb3041178a0c821d843
+PKG_MD5SUM:=45f98d315b4290dc208e01190193c514
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -29,7 +29,7 @@ define KernelPackage/batman-adv
   SUBMENU:=Network Support
   DEPENDS:=+KMOD_BATMAN_ADV_BLA:kmod-lib-crc16 +kmod-crypto-core +kmod-crypto-crc32c +kmod-lib-crc32c
   TITLE:=B.A.T.M.A.N. Adv
-  FILES:=$(PKG_BUILD_DIR)/batman-adv.$(LINUX_KMOD_SUFFIX)
+  FILES:=$(PKG_BUILD_DIR)/net/batman-adv/batman-adv.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,50,batman-adv)
 endef
 
@@ -65,7 +65,7 @@ MAKE_BATMAN_ADV_ARGS += \
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(SED) '/#define _NET_BATMAN_ADV_MAIN_H_/a\#undef CONFIG_MODULE_STRIPPED' \
-		$(PKG_BUILD_DIR)/main.h
+		$(PKG_BUILD_DIR)/net/batman-adv/main.h
 endef
 
 define Build/Compile
