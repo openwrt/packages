@@ -65,13 +65,12 @@ define Build/InstallDev
 
 	$(SED) \
 		's,^\(prefix\|exec_prefix\)=.*,\1="$(STAGING_DIR)/usr",; \
-		 s,^\(includedir\)=.*,\1="$(STAGING_DIR)/usr/include",' \
+		 s,^\(includedir\)=.*,\1="$(STAGING_DIR)/usr/include",; \
+		 s,^\(libdir\)=.*,\1="$(STAGING_DIR)/usr/lib",' \
 		 $(2)/bin/freetype-config
 	$(SED) \
-		's,/usr/include,$$$${prefix}/include,g' \
-		 $(1)/usr/lib/pkgconfig/freetype2.pc
-	$(SED) \
-		's,/usr/lib,$$$${exec_prefix}/lib,g' \
+		's,/usr/include,$$$${prefix}/include,g; \
+		 s,/usr/lib,$$$${exec_prefix}/lib,g' \
 		 $(1)/usr/lib/pkgconfig/freetype2.pc
 endef
 
