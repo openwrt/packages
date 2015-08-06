@@ -228,3 +228,7 @@ start_service() {
 stop_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
 }
+
+service_triggers(){
+	procd_add_reload_trigger 'snmpd'
+}
