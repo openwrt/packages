@@ -1,12 +1,5 @@
 #!/bin/sh
 
-daemon=dlep_radio
+DAEMON='dlep_radio'
 
-case "$ACTION" in
-	ifup)
-		. /etc/rc.common /etc/init.d/${daemon} enabled && {
-			logger -t '${daemon}[hotplug]' -p daemon.info 'reloading configuration'
-			. /etc/rc.common /etc/init.d/${daemon} reload
-		}
-	;;
-esac
+. /lib/functions/oonf_hotplug.sh
