@@ -8,23 +8,5 @@ config rule 'default_rule'
 	option dest_ip '0.0.0.0/0'
 	option use_policy 'balanced'
 
-config interface 'wan'
-	option enabled '1'
-	option count '1'
-	option timeout '2'
-	option interval '5'
-	option down '3'
-	option up '8'
-	list track_ip '114.114.114.114'
-	list track_ip '114.114.115.115'
-	option reliability '1'
-
 config policy 'balanced'
-	list use_member 'wan_m1_w1'
 	option last_resort 'default'
-
-config member 'wan_m1_w1'
-	option interface 'wan'
-	option metric '1'
-	option weight '1'
-
