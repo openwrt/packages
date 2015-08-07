@@ -26,7 +26,6 @@ define Package/pps-tools
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=PPS-tools
-  DEPENDS:=@LINUX_3_10||@LINUX_3_13||@LINUX_3_14||@LINUX_3_18
 endef
 
 define Package/pps-tools/description

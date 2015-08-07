@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36139
+PKG_SOURCE_VERSION:=36190
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
@@ -167,6 +167,8 @@ define Package/gnunet/install
 	$(INSTALL_BIN) ./files/gnunet.init $(1)/etc/init.d/gnunet
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) ./files/gnunet.upgrade $(1)/lib/upgrade/keep.d/gnunet
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/gnunet.defaults $(1)/etc/uci-defaults/gnunet
 endef
 
 define Build/InstallDev
