@@ -18,6 +18,7 @@ PKG_MD5SUM:=69bc0353323112f42ad4f9cf351bc3e5
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_HOST_ONLY:=1
+HOST_BUILD_DEPENDS:=perl-xml-parser/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
