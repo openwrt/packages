@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -29,6 +29,8 @@ define Package/intltool
   URL:=http://www.freedesktop.org/wiki/Software/intltool
   BUILDONLY:=1
 endef
+
+HOST_CONFIGURE_ARGS += ac_cv_path_PERL=$(STAGING_DIR_HOST)/usr/bin/perl
 
 define Package/intltool/description
   intltool is a set of tools to centralize translation of many different
