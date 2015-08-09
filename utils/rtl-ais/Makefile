@@ -7,14 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtl-ais
-PKG_VERSION:=20150713
+PKG_VERSION:=20150722
 
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/dgiardini/rtl-ais.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=d1084f6514cb161266f5bc5c6662070ad7c87560
+PKG_SOURCE_VERSION:=b805be0164475e58a73b57763a8cbbf8a2bd0ded
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_LICENSE:=GPL-2.0+
@@ -37,10 +37,17 @@ define Package/rtl-ais/description
   System) used on ships and by vessel traffic services
 endef
 
+define Package/rtl-ais/conffiles
+/etc/config/rtl_ais
+endef
 
 define Package/rtl-ais/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rtl_ais $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/rtl_ais.init $(1)/etc/init.d/rtl_ais
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/uci_rtl_ais $(1)/etc/config/rtl_ais
 endef
 
 $(eval $(call BuildPackage,rtl-ais))
