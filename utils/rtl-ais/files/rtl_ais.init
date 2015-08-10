@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=99
+
+USE_PROCD=1
+PROG=/usr/bin/rtl_ais
+
+start_service() {
+	enabled="$(uci_get rtl_ais @rtl_ais[0] enabled 0)"
+	ppm="$(uci_get rtl_ais @rtl_ais[0] ppm 0)"
+
+        [ "$enabled" != "1" ] && return
+
+        procd_open_instance
+        procd_set_param command "$PROG" -p "$ppm"
+        procd_set_param respawn
+        procd_close_instance
+}
