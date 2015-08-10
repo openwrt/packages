@@ -42,6 +42,7 @@ oonf_add_devices_to_configuration()
   # olsrd2.@interface[2].ifname='wan lan wlanadhoc wlanadhocRADIO1'
 
   # /var is in ramdisc/tmpfs
+  mkdir -p /var/etc
   uci export ${DAEMON} >"/var/etc/${DAEMON}_dev"
 
   while section="$( uci -q -c /etc/config get "${DAEMON}.@[${i}]" )"; do {
