@@ -36,28 +36,10 @@ HOST_BUILD_PARALLEL:=1
 
 # Variables used during configuration/build
 HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
-ifneq ($(CONFIG_USE_GLIBC),)
-	EXTRA_LIBS:=bsd
-	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
-endif
 
 # Filter -g3, it will break Compress-Raw-Zlib
 TARGET_CFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CFLAGS))
 TARGET_CPPFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CPPFLAGS))
-
-# Handle threading
-ifdef CONFIG_PERL_THREADS
-	PERL_CONFIG_SUFFIX:=-mt
-
-	# uclibc doesn't provide crypt_r(). Enable crypt() usage for glibc builds only
-	ifdef CONFIG_USE_GLIBC
-		CRYPT_R_PROTO:=REENTRANT_PROTO_B_CCS
-		CRYPT:=define
-	else
-		CRYPT_R_PROTO:=0
-		CRYPT:=undef
-	endif
-endif
 
 # A list of disabled tests
 # ExtUtils tests are disabled for now as we don't support building
@@ -110,45 +92,24 @@ endef
 
 # Target perl
 define Build/Configure
-	sed \
-		-e 's!%%CC%%!$(TARGET_CC)!g' \
-		-e 's!%%CFLAGS%%!$(TARGET_CFLAGS_PERL) $(TARGET_CPPFLAGS_PERL)!g' \
-		-e 's!%%CPP%%!$(TARGET_CROSS)gcc -E!g' \
-		-e 's!%%AR%%!$(TARGET_CROSS)ar!g' \
-		-e 's!%%LD%%!$(TARGET_CROSS)gcc!g' \
-		-e 's!%%LDFLAGS%%!-rdynamic $(TARGET_LDFLAGS)!g' \
-		-e 's!%%LIBDIRS%%!$(STAGING_DIR)/lib $(STAGING_DIR)/usr/lib!g' \
-		-e 's!%%INCDIRS%%!$(STAGING_DIR)/include $(STAGING_DIR)/usr/include!g' \
-		-e 's!%%EXTRA_PERLLIBS%%!$(EXTRA_LIBS:%=-l%)!g' \
-		-e 's!%%EXTRA_PERLLIBDIRS%%!$(EXTRA_LIBDIRS:%=-L%)!g' \
-		-e 's!%%IPV6%%!$(if $($(CONFIG_IPV6)),define,undef)!g' \
-		-e 's!%%HOSTMINIPERL%%!$(HOST_PERL_PREFIX)/bin/perl!g' \
-		-e 's!%%CRYPT_R_PROTO%%!$(CRYPT_R_PROTO)!g' \
-		-e 's!%%CRYPT%%!$(CRYPT)!g' \
-		-e 's!%%HOSTGENERATE%%!$(HOST_PERL_PREFIX)/bin/generate_uudmap!g' \
-		files/config.sh-$(patsubst i386,i486,$(ARCH))$(PERL_CONFIG_SUFFIX).in \
-		> $(PKG_BUILD_DIR)/config.sh
-  ifeq ($(CONFIG_USE_MUSL),y)
-	sed -i \
-		-e "s,\(d_stdio_ptr_lval=\)'define',\1'undef',g" \
-		-e "s,\(d_stdio_ptr_lval_sets_cnt=\)'define',\1'undef',g" \
-		-e "s,\(d_stdiobase=\)'define',\1'undef',g" \
-		-e "s,\(d_stdstdio=\)'define',\1'undef',g" \
-		-e "s,\(d_getnetbyname_r=\)'define',\1'undef',g" \
-		-e "s,\(getprotobyname_r=\)'define',\1'undef',g" \
-		-e "s,\(getpwent_r=\)'define',\1'undef',g" \
-		-e "s,\(getservent_r=\)'define',\1'undef',g" \
-		-e "s,\(gethostent_r=\)'define',\1'undef',g" \
-		-e "s,\(getnetent_r=\)'define',\1'undef',g" \
-		-e "s,\(getnetbyaddr_r=\)'define',\1'undef',g" \
-		-e "s,\(getprotoent_r=\)'define',\1'undef',g" \
-		-e "s,\(getprotobynumber_r=\)'define',\1'undef',g" \
-		-e "s,\(getgrent_r=\)'define',\1'undef',g" \
-		-e "s,\(i_fcntl=\)'undef',\1'define',g" \
-		-e "s,\(h_fcntl=\)'false',\1'true',g" \
-		-e "s,\(d_strerror_r=\)'define',\1'undef',g" \
-		$(PKG_BUILD_DIR)/config.sh
-  endif
+	$(PERL_CMD) files/perlconfig.pl -Dowrt:target_cc='$(TARGET_CC)' \
+	                                -Dowrt:target_cross='$(TARGET_CROSS)' \
+	                                -Dowrt:cflags='$(TARGET_CFLAGS_PERL) $(TARGET_CPPFLAGS_PERL)' \
+	                                -Dowrt:ldflags='-rdynamic $(TARGET_LDFLAGS)' \
+	                                -Dowrt:libc=$(CONFIG_LIBC) \
+	                                -Dowrt:ipv6=$(if $($(CONFIG_IPV6)),define,undef) \
+	                                -Dowrt:threads=$(if $(CONFIG_PERL_THREADS),yes,no) \
+	                                -Dowrt:staging_dir='$(STAGING_DIR)' \
+	                                -Dowrt:host_perl_prefix='$(HOST_PERL_PREFIX)' \
+	                                files/version.config \
+	                                files/base.config \
+	                                files/$(patsubst i386,i486,$(ARCH)).config \
+	                                files/architecture.config \
+	                                files/signal.config \
+	                                files/threads.config \
+	                                files/libc.config \
+	                                files/misc.config \
+	                                > $(PKG_BUILD_DIR)/config.sh
 	(cd $(PKG_BUILD_DIR) && ./Configure -S)
 	install -m 0644 $(PKG_BUILD_DIR)/config.h $(PKG_BUILD_DIR)/xconfig.h
 endef
