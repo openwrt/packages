@@ -67,16 +67,6 @@ proto_464xlat_setup() {
 	  		json_add_string src_ip $ip6addr
 	  		json_add_string target ACCEPT
 	  	json_close_object
-	  	json_add_object ""
-	  		json_add_string type rule
-	  		json_add_string family inet6
-	  		json_add_string proto all
-	  		json_add_string direction out
-			json_add_string dest "$zone"
-			json_add_string src "$zone"
-	  		json_add_string dest_ip $ip6addr
-	  		json_add_string target ACCEPT
-	  	json_close_object
 	json_close_array
 	proto_close_data
 
@@ -84,7 +74,7 @@ proto_464xlat_setup() {
 }
 
 proto_464xlat_teardown() {
-	464xlatcfg "464xlat-$1"
+	464xlatcfg "464-$1"
 }
 
 proto_464xlat_init_config() {
