@@ -38,13 +38,5 @@ define Package/intltool/description
   file formats using GNU gettext-compatible PO files.
 endef
 
-define Require/perl-xml-parser
-  perl -e 'use XML::Parser;'
-endef
-
-$(eval $(call Require,perl-xml-parser, \
-	Please install Perl XML::Parser \
-))
-
 $(eval $(call BuildPackage,intltool))
 $(eval $(call HostBuild))
