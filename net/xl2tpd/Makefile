@@ -39,9 +39,8 @@ It does implement both LAC and LNS role in a L2TP networking architecture. The
 main goal of this protocol is to tunnel PPP frame trough an IP network.
 endef
 
-# XXX: CFLAGS are already set by Build/Compile/Default
-MAKE_FLAGS+= \
-	OFLAGS=""
+# Use optimization options from OpenWrt build system
+MAKE_FLAGS += OFLAGS=""
 
 define Package/xl2tpd/conffiles
 /etc/xl2tpd/xl2tpd.conf
