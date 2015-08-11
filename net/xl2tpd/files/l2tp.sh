@@ -67,22 +67,29 @@ proto_l2tp_setup() {
 	local interval="${keepalive##*[, ]}"
 	[ "$interval" != "$keepalive" ] || interval=5
 
-	mkdir -p /tmp/l2tp
+	keepalive="${keepalive:+lcp-echo-interval $interval lcp-echo-failure ${keepalive%%[, ]*}}"
+	username="${username:+user \"$username\" password \"$password\"}"
+	ipv6="${ipv6:++ipv6}"
+	mtu="${mtu:+mtu $mtu mru $mtu}"
 
-	echo "${keepalive:+lcp-echo-interval $interval lcp-echo-failure ${keepalive%%[, ]*}}" > "${optfile}"
-	echo "usepeerdns" >> "${optfile}"
-	echo "nodefaultroute" >> "${optfile}"
-	echo "${username:+user \"$username\" password \"$password\"}" >> "${optfile}"
-	echo "ipparam \"$interface\"" >> "${optfile}"
-	echo "ifname \"l2tp-$interface\"" >> "${optfile}"
-	echo "ip-up-script /lib/netifd/ppp-up" >> "${optfile}"
-	echo "ipv6-up-script /lib/netifd/ppp-up" >> "${optfile}"
-	echo "ip-down-script /lib/netifd/ppp-down" >> "${optfile}"
-	echo "ipv6-down-script /lib/netifd/ppp-down" >> "${optfile}"
-	# Don't wait for LCP term responses; exit immediately when killed.
-	echo "lcp-max-terminate 0" >> "${optfile}"
-	echo "${ipv6:++ipv6} ${pppd_options}" >> "${optfile}"
-	echo "${mtu:+mtu $mtu mru $mtu}" >> "${optfile}"
+	mkdir -p /tmp/l2tp
+	cat <<EOF >"$optfile"
+usepeerdns
+nodefaultroute
+ipparam "$interface"
+ifname "l2tp-$interface"
+ip-up-script /lib/netifd/ppp-up
+ipv6-up-script /lib/netifd/ppp-up
+ip-down-script /lib/netifd/ppp-down
+ipv6-down-script /lib/netifd/ppp-down
+# Don't wait for LCP term responses; exit immediately when killed.
+lcp-max-terminate 0
+$keepalive
+$username
+$ipv6
+$mtu
+$pppd_options
+EOF
 
 	xl2tpd-control add l2tp-${interface} pppoptfile=${optfile} lns=${server} || {
 		echo "xl2tpd-control: Add l2tp-$interface failed" >&2
