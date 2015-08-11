@@ -8,17 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aircrack-ng
-PKG_VERSION:=1.2-rc1
+PKG_VERSION:=1.2-rc3
 PKG_RELEASE:=1
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.aircrack-ng.org/ \
 		http://archive.aircrack-ng.org/aircrack-ng/$(PKG_VERSION)/
-PKG_MD5SUM:=c2f8648c92f7e46051c86c618d4fb0d5
+PKG_MD5SUM:=3f4096808c916baa8872a5ad138a9c35
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+
+PKG_MAINTAINER:=Rick Farina <zerochaos@gentoo.org>
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,7 +31,6 @@ define Package/aircrack-ng
   DEPENDS:=+libpcap +libpthread +libopenssl +libnl-core +libnl-genl +wireless-tools +ethtool
   TITLE:=WLAN tools for breaking 802.11 WEP/WPA keys
   URL:=http://www.aircrack-ng.org/
-  MAINTAINER:=Rick Farina <zerochaos@gentoo.org>
   SUBMENU:=wireless
 endef
 

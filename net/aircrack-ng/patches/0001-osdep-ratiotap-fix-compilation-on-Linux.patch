@@ -1,0 +1,36 @@
+From 85fde8b32b2095d60cead683c958487701221125 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Wed, 30 Dec 2015 10:39:56 +0800
+Subject: [PATCH] osdep: ratiotap: fix compilation on Linux
+
+le16toh and le32toh should be already available by platform.h
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ src/osdep/radiotap/radiotap.c | 10 ----------
+ 1 file changed, 10 deletions(-)
+
+diff --git a/src/osdep/radiotap/radiotap.c b/src/osdep/radiotap/radiotap.c
+index 5542f64..ca2d2d9 100644
+--- a/src/osdep/radiotap/radiotap.c
++++ b/src/osdep/radiotap/radiotap.c
+@@ -19,16 +19,6 @@
+ 	#include "../byteorder.h"
+ #endif
+ 
+-#ifdef _BSD_SOURCE
+-#if __BYTE_ORDER == __LITTLE_ENDIAN
+-#define le16toh(x) (x)
+-#define le32toh(x) (x)
+-#else
+-#define le32toh(x) bswap_32 (x)
+-#endif
+-#endif
+-
+-
+ /* function prototypes and related defs are in radiotap_iter.h */
+ 
+ static const struct radiotap_align_size rtap_namespace_sizes[] = {
+-- 
+2.6.3
+
