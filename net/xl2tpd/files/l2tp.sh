@@ -39,8 +39,9 @@ proto_l2tp_setup() {
 		exit 1
 	}
 
-	if [ ! -p /var/run/xl2tpd/l2tp-control ]; then
-		/etc/init.d/xl2tpd start
+	# Start and wait for xl2tpd
+	if [ ! -p /var/run/xl2tpd/l2tp-control -o -z "$(pidof xl2tpd)" ]; then
+		/etc/init.d/xl2tpd restart
 
 		local wait_timeout=0
 		while [ ! -p /var/run/xl2tpd/l2tp-control ]; do
