@@ -103,17 +103,6 @@ proto_l2tp_teardown() {
 	local optfile="/tmp/l2tp/options.${interface}"
 
 	rm -f ${optfile}
-	case "$ERROR" in
-		11|19)
-			proto_notify_error "$interface" AUTH_FAILED
-			proto_block_restart "$interface"
-		;;
-		2)
-			proto_notify_error "$interface" INVALID_OPTIONS
-			proto_block_restart "$interface"
-		;;
-	esac
-
 	if [ -p /var/run/xl2tpd/l2tp-control ]; then
 		xl2tpd-control remove l2tp-${interface} || {
 			echo "xl2tpd-control: Remove l2tp-$interface failed" >&2
