@@ -42,6 +42,26 @@ endef
 # Use optimization options from OpenWrt build system
 MAKE_FLAGS += OFLAGS=""
 
+ifneq (0,0)
+  # debugging options from Makefile of xl2tpd package
+  EXTRA_CFLAGS += \
+	-DDEBUG_ZLB \
+	-DDEBUG_HELLO \
+	-DDEBUG_CLOSE \
+	-DDEBUG_FLOW \
+	-DDEBUG_FILE \
+	-DDEBUG_AAA \
+	-DDEBUG_PAYLOAD \
+	-DDEBUG_CONTROL \
+	-DDEBUG_PPPD \
+	-DDEBUG_HIDDEN \
+	-DDEBUG_ENTROPY \
+	-DDEBUG_CONTROL_XMIT \
+	-DDEBUG_MAGIC \
+	-DDEBUG_FLOW_MORE \
+	-DDEBUG_AUTH
+endif
+
 define Package/xl2tpd/conffiles
 /etc/xl2tpd/xl2tpd.conf
 /etc/xl2tpd/xl2tp-secrets
