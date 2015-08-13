@@ -1,0 +1,11 @@
+--- a/file.c
++++ b/file.c
+@@ -26,6 +26,8 @@
+ 
+ #include "fdm.h"
+ 
++#define ACCESSPERMS (S_IRWXU|S_IRWXG|S_IRWXO)
++
+ int	mklock(u_int, const char *);
+ void	rmlock(u_int, const char *);
+ int	lockfd(u_int, int);
