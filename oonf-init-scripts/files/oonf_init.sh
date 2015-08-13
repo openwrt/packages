@@ -42,7 +42,7 @@ oonf_add_devices_to_configuration()
   # olsrd2.@interface[2].ifname='wan lan wlanadhoc wlanadhocRADIO1'
 
   # /var is in ramdisc/tmpfs
-  uci export ${DAEMON} >"/var/etc/${DAEMON}_dev"
+  uci export ${DAEMON} >"/var/run/${DAEMON}_dev"
 
   while section="$( uci -q -c /etc/config get "${DAEMON}.@[${i}]" )"; do {
     echo "section: ${section}"
@@ -55,7 +55,7 @@ oonf_add_devices_to_configuration()
     case "$( uci -q get "${DAEMON}.@[${i}].ignore" )" in
       1|on|true|enabled|yes)
         oonf_log "removing/ignore section '$section'"
-        uci -q -c /var/etc delete "${DAEMON}_dev.@[${j}]"
+        uci -q -c /var/run delete "${DAEMON}_dev.@[${j}]"
         i=$(( i + 1 ))
 
         continue
@@ -70,15 +70,15 @@ oonf_add_devices_to_configuration()
       if [ ! -z "${device_name}" ]
       then
         # add option 'name' for 'ifname' (e.g. 'mywifi')
-        uci -q -c /var/etc add_list "${DAEMON}_dev.@[${i}].name=${device_name}"
+        uci -q -c /var/run add_list "${DAEMON}_dev.@[${i}].name=${device_name}"
       fi
     } done
     i=$(( $i + 1 ))
   } done
 
-  uci -q -c /var/etc commit "${DAEMON}_dev"
+  uci -q -c /var/run commit "${DAEMON}_dev"
 
-  oonf_log "wrote '/var/etc/${DAEMON}_dev'"
+  oonf_log "wrote '/var/run/${DAEMON}_dev'"
 }
 
 oonf_reread_config()
@@ -105,7 +105,7 @@ start()
   # produce coredumps
   ulimit -c unlimited
 
-  service_start /usr/sbin/${DAEMON} --set global.fork=true --load uci:///var/etc/${DAEMON}_dev
+  service_start /usr/sbin/${DAEMON} --set global.fork=true --load uci:///var/run/${DAEMON}_dev
 }
 
 stop()
