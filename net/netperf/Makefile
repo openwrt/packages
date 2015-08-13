@@ -26,6 +26,8 @@ define Package/netperf
   MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
 endef
 
+TARGET_CFLAGS+=-std=gnu89
+
 CONFIGURE_ARGS += --enable-demo
 
 define Package/netperf/install
