@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -18,6 +18,7 @@ PKG_MD5SUM:=69bc0353323112f42ad4f9cf351bc3e5
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_HOST_ONLY:=1
+HOST_BUILD_DEPENDS:=perl-xml-parser/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -30,18 +31,12 @@ define Package/intltool
   BUILDONLY:=1
 endef
 
+HOST_CONFIGURE_ARGS += ac_cv_path_PERL=$(STAGING_DIR_HOST)/usr/bin/perl
+
 define Package/intltool/description
   intltool is a set of tools to centralize translation of many different
   file formats using GNU gettext-compatible PO files.
 endef
-
-define Require/perl-xml-parser
-  perl -e 'use XML::Parser;'
-endef
-
-$(eval $(call Require,perl-xml-parser, \
-	Please install Perl XML::Parser \
-))
 
 $(eval $(call BuildPackage,intltool))
 $(eval $(call HostBuild))
