@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2012 OpenWrt.org
+
+SERVICE_PID_FILE=/var/run/freelan.pid
+SERVICE_USE_PID=1
+START=46
+
+start() {
+    service_start /usr/bin/freelan -c /etc/freelan/freelan.cfg -p /var/run/freelan.pid
+}
+
+stop() {
+    service_stop /usr/bin/freelan
+}
+
