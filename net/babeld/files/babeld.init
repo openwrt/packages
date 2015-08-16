@@ -166,6 +166,9 @@ babel_config_cb() {
 			local value="$2"
 			# Ignore old options
 			list_contains ignored_options "$option" && return
+			# Skip lists. They will be taken care of by list_cb
+			test "${option#*_ITEM}" != "$option" && return
+			test "${option#*_LENGTH}" != "$option" && return
 			cfg_append "${option//_/-} $value"
 		}
 	;;
