@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kplex
-PKG_VERSION:=20150728
+PKG_VERSION:=20150809
 
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
@@ -38,10 +38,15 @@ define Package/kplex/description
   Pseudo Terminals (ptys), Network Interfaces and Files.
 endef
 
+define Package/kplex/conffiles
+/etc/kplex.conf
+endef
 
 define Package/kplex/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/kplex $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/kplex.init $(1)/etc/init.d/kplex
 endef
 
 $(eval $(call BuildPackage,kplex))

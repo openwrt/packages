@@ -8,12 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36190
+PKG_SOURCE_VERSION:=36242
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 # ToDo:
-#  - UCI integration
 #  - break-out {peer,name,data}store for each backend
 #  - package testing stuff
 
@@ -237,7 +236,7 @@ LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
 DEPENDS_utils:=+certtool +openssl-util
 BIN_utils:=gns-proxy-setup-ca transport-certificate-creation
 
-DEPENDS_vpn:=+kmod-tun
+DEPENDS_vpn:=+kmod-tun +iptables
 BIN_vpn:=vpn
 LIB_vpn:=tun vpn
 LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit helper-vpn service-vpn

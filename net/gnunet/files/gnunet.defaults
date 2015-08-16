@@ -28,13 +28,9 @@ uci set gnunet.pt.FORCESTART=YES
 uci set gnunet.exit=gnunet-config
 uci set gnunet.exit.AUTOSTART=YES
 uci set gnunet.exit.FORCESTART=YES
-uci set gnunet.exit.EXIT_IPV4=YES
-uci set gnunet.exit.EXIT_RANGE_IPV4_POLICY="169.254.86.1:7;169.254.86.1:5201;"
 
-# iperf (TCP) and echo (UDP) for battlemesh
-uci set gnunet.iperf=gnunet-exit-service
-uci set gnunet.iperf.TCP_REDIRECTS="5201:169.254.86.1:5201"
-uci set gnunet.echo=gnunet-exit-service
-uci set gnunet.echo.UDP_REDIRECTS="7:169.254.86.1:7"
+# increase WORKDELAY to something more sane on small CPUs
+uci set gnunet.nse=gnunet-config
+uci set gnunet.nse.WORKDELAY='500 ms'
 
 uci commit gnunet

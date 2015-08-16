@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=xl2tpd
 PKG_VERSION:=1.3.7pre20150524
 PKG_RELEASE:=3
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 

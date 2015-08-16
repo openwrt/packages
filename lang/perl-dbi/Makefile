@@ -21,6 +21,8 @@ PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/DBI-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/DBI-$(PKG_VERSION)
 
+HOST_BUILD_DEPENDS:=perl/host
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include ../perl/perlmod.mk
