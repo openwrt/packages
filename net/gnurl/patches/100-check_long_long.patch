@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2879,6 +2879,7 @@ CURL_VERIFY_RUNTIMELIBS
+@@ -2954,6 +2954,7 @@ CURL_VERIFY_RUNTIMELIBS
  
  AC_CHECK_SIZEOF(size_t)
  AC_CHECK_SIZEOF(long)

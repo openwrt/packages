@@ -10,9 +10,9 @@ include $(TOPDIR)/rules.mk
 PECL_NAME:=raphf
 PECL_LONGNAME:=Resource and persistent handles factory
 
-PKG_VERSION:=1.0.4
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
-PKG_MD5SUM:=e5e7e5c3954a5fd31c034c347f22c4a5
+PKG_MD5SUM:=4d95c44dc28be089ce59bceb647b8db2
 
 PKG_NAME:=php5-pecl-raphf
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
