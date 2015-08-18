@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2011 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
-PKG_VERSION:=2.2.29
+PKG_VERSION:=2.2.31
 PKG_RELEASE:=1
 PKG_SOURCE_NAME:=httpd
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
@@ -17,7 +17,7 @@ PKG_LICENSE:=Apache License
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://mirrors.ibiblio.org/apache/httpd/ \
 		http://apache.imsam.info/httpd/
-PKG_MD5SUM:=579342fdeaa7b8b68d17fee91f8fab6e
+PKG_MD5SUM:=6c10e15835ab214464228a9beb7afba8
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
