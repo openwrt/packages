@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hnetd
-PKG_SOURCE_VERSION:=a6b4b6f1f5d38646fa11064cf7394719e048bc87
-PKG_VERSION:=2015-07-28-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=b5a03142135c9ab2680027d1fd8c149d2c46e74b
+PKG_VERSION:=2015-08-18-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -120,6 +120,7 @@ define Package/hnetd-$(BUILD_VARIANT)/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generic/hnetd-routing $(1)/usr/sbin/hnetd-routing
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/hnetd.defaults $(1)/etc/uci-defaults/x-hnetd.defaults
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generic/multicast.script $(1)/usr/sbin/hnet-multicast
 endef
 
 define Package/hnet-full/install

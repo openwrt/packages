@@ -14,6 +14,7 @@ OHP_SCRIPT=/usr/sbin/hnetd-ohp-script
 OHP_BINARY=/usr/sbin/ohybridproxy
 PCP_SCRIPT=/usr/sbin/hnetd-pcp-script
 PCP_BINARY=/usr/sbin/minimalist-pcproxy
+MULTICAST_SCRIPT=/usr/sbin/hnet-multicast
 
 start_service() {
     . /lib/functions.sh
@@ -36,6 +37,12 @@ start_service() {
         then
             procd_append_param command -n "$HOSTNAME"
         fi
+    fi
+	
+    # Enable multicast if present and installed
+    if [ -f "$MULTICAST_SCRIPT" ]
+    then
+        $MULTICAST_SCRIPT status && procd_append_param command -M "$MULTICAST_SCRIPT"
     fi
 
     # Enable PCP, if it's present
