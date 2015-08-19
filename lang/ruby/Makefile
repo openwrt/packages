@@ -10,14 +10,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=2.2.2
-PKG_RELEASE:=3
+PKG_VERSION:=2.2.3
+PKG_RELEASE:=1
 
 PKG_LIBVER:=2.2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_LIBVER)/
-PKG_MD5SUM:=af6eb4fa7247f1f7b2e19c8e6f3e3145
+PKG_MD5SUM:=f49a734729a71774d4a94a9a603114b2
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
