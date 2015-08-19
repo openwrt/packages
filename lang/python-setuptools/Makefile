@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools
-PKG_VERSION:=18.0.1
+PKG_VERSION:=18.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=setuptools-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/s/setuptools/
-PKG_MD5SUM:=cecd172c9ff7fd5f2e16b2fcc88bba51
+PKG_MD5SUM:=f72e87f34fbf07f299f6cb46256a0b06
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/setuptools-$(PKG_VERSION)
 
@@ -35,7 +35,8 @@ endef
 
 define Build/Compile
 	$(call Build/Compile/PyMod,,\
-		install --prefix="$(PKG_INSTALL_DIR)/usr" \
+		install --root="$(PKG_INSTALL_DIR)" --prefix="/usr" \
+		--single-version-externally-managed \
 	)
 endef
 
