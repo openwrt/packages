@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pip
 PKG_VERSION:=7.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=pip-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/p/pip/
@@ -36,34 +36,14 @@ endef
 
 define Build/Compile
 	$(call Build/Compile/PyMod,,\
-		install --prefix="$(PKG_INSTALL_DIR)/usr" \
+		install --root="$(PKG_INSTALL_DIR)" --prefix="/usr" \
+		--single-version-externally-managed \
 	)
 endef
 
-PYTHON_PIP_PKG_DIR:=$(PYTHON_PKG_DIR)/pip-$(PKG_VERSION)-py$(PYTHON_VERSION).egg/pip
 define PyPackage/python-pip/filespec
 +|$(PYTHON_PKG_DIR)
--|$(PYTHON_PIP_PKG_DIR)/_vendor/distlib/*.exe
-endef
-
-# Backup these files, so that they do not clash with python-setuptools
-# If we install python-pip python-setuptools, we want these to be replaced,
-# since python-pip replaces python-setuptools (when installed)
-define Package/python-pip/preinst
-#!/bin/sh
-cd "$${IPKG_INSTROOT}$(PYTHON_PKG_DIR)"
-mv -f easy-install.pth easy-install.pth.old
-mv -f site.py site.py.old
-exit 0
-endef
-
-# And put them back on remove
-define Package/python-pip/postrm
-#!/bin/sh
-cd "$${IPKG_INSTROOT}$(PYTHON_PKG_DIR)"
-mv -f easy-install.pth.old easy-install.pth
-mv -f site.py.old site.py
-exit 0
+-|$(PYTHON_PKG_DIR)/pip/_vendor/distlib/*.exe
 endef
 
 define PyPackage/python-pip/install
