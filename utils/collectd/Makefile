@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://collectd.org/files/
@@ -184,7 +184,6 @@ endif
 CONFIGURE_ARGS+= \
 	--disable-debug \
 	--enable-daemon \
-	--enable-getifaddrs \
 	--with-nan-emulation \
 	--without-libgcrypt
 

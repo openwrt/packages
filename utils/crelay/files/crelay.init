@@ -1,0 +1,24 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+NAME=crelay
+START=93
+
+PROG=/usr/bin/${NAME}
+
+USE_PROCD=1
+
+# Custom relay labels (for Web GUI)
+LABEL1=""
+LABEL2=""
+LABEL3=""
+LABEL4=""
+
+start_service() {
+	procd_open_instance
+
+	procd_set_param command "$PROG"
+	procd_append_param command -d "$LABEL1 $LABEL2 $LABEL3 $LABEL4"
+
+	procd_close_instance
+}
