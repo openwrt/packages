@@ -28,6 +28,7 @@ define Package/python-pip
   TITLE:=Tool for installing Python packages.
   URL:=https://pip.pypa.io
   DEPENDS:=+python +python-setuptools
+  MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
 define Package/python-pip/description
