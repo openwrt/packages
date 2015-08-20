@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
-PKG_VERSION:=1.6.0
-PKG_RELEASE:=3
+PKG_VERSION:=1.6.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
 		http://znc.in/releases/archive
-PKG_MD5SUM:=674d8c1277752dcc627b96e33a63376e
+PKG_MD5SUM:=8e29289e6229b6d2473de202170745ab
 
 PKG_MAINTAINER:=Jonas Gorski <jogo@openwrt.org>
 PKG_LICENSE:=Apache-2.0
