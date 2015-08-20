@@ -27,6 +27,7 @@ define Package/python-setuptools
   TITLE:=Tool for installing Python packages.
   URL:=https://bitbucket.org/pypa/setuptools
   DEPENDS:=+python
+  MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
 define Package/python-setuptools/description
