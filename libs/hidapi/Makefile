@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hidapi
 PKG_VERSION:=0.8.0-rc1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/signal11/hidapi.git
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/hidapi
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libusb-1.0 +libiconv +librt
+  DEPENDS:=+libusb-1.0 +librt $(ICONV_DEPENDS)
   TITLE:=Library to talk to HID devices
   URL:=http://www.signal11.us/oss/hidapi/
 endef
