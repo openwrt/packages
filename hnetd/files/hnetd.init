@@ -15,6 +15,7 @@ OHP_BINARY=/usr/sbin/ohybridproxy
 PCP_SCRIPT=/usr/sbin/hnetd-pcp-script
 PCP_BINARY=/usr/sbin/minimalist-pcproxy
 MULTICAST_SCRIPT=/usr/sbin/hnet-multicast
+WIFI_SCRIPT=/usr/sbin/autowifi
 
 start_service() {
     . /lib/functions.sh
@@ -43,6 +44,17 @@ start_service() {
     if [ -f "$MULTICAST_SCRIPT" ]
     then
         $MULTICAST_SCRIPT status && procd_append_param command -M "$MULTICAST_SCRIPT"
+    fi
+
+    config_get enableval wifi enable
+    if [ -f "$WIFI_SCRIPT" -a "$enableval" = "1" ]; then
+        wifiopt=$WIFI_SCRIPT
+        config_get ssidval wifi ssid
+        config_get passval wifi password
+        if [ -n "$ssidval" -a -n "$passval"  ]; then
+            wifiopt=${wifiopt},${ssidval}:${passval}
+        fi
+        procd_append_param command -w "$wifiopt"
     fi
 
     # Enable PCP, if it's present
