@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Copyright (C) 2009 OpenWrt.org
+
+
+case "$ACTION" in
+        add)
+                # You have to figure out your PRODUCT id. Uncomment the line below,
+                # attach and detach your HP USB printer to find your id in /tmp/hplip.test.
+                # It will look like "Found 3f0/1717/100 on /proc/bus/usb/002/009"
+                # Replace 3f0/1717/100 below with your id.
+                #
+                # echo "Found $PRODUCT on $DEVICE" > /tmp/hplip.test
+
+                [ "$PRODUCT" = "3f0/1717/100" ] && chown nobody $DEVICE && chmod 666 $DEVICE
+                ;;
+        remove)
+                # device is gone
+                ;;
+esac
