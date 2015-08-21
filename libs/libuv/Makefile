@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://libuv.org/dist/v$(PKG_VERSION)/
+PKG_SOURCE_URL:=http://dist.libuv.org/dist/v$(PKG_VERSION)/
 PKG_MD5SUM:=d116fbe695157b799fb8805477e24eff
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
