@@ -66,6 +66,10 @@ define Package/pgsql-server/description
 PostgreSQL databases Server.
 endef
 
+PGSQL_CONFIG_VARS:= \
+	pgac_cv_snprintf_long_long_int_format="%lld" \
+	pgac_cv_snprintf_size_t_support=yes
+
 ifeq ($(CONFIG_USE_UCLIBC),y)
 # PostgreSQL does not build against uClibc with locales
 # enabled, due to an uClibc bug, see
