@@ -11,7 +11,7 @@ PKG_NAME:=php
 PKG_VERSION:=5.6.12
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>, Michael Heimpold <mhei@heimpold.de>
 
 PKG_LICENSE:=PHPv3.01
 PKG_LICENSE_FILES:=LICENSE
@@ -55,7 +55,6 @@ define Package/php5/Default
   CATEGORY:=Languages
   TITLE:=PHP5 Hypertext preprocessor
   URL:=http://www.php.net/
-  MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
   DEPENDS:=php5
 endef
 

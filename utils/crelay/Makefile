@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crelay
-PKG_VERSION:=0.8-081415
+PKG_VERSION:=0.9
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ondrej1024/crelay
-PKG_SOURCE_VERSION:=037360cf143d705ea97b32ae22460f346ad2586f
+PKG_SOURCE_VERSION:=V$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
@@ -65,6 +65,7 @@ define Package/crelay/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/crelay $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/crelay.init $(1)/etc/init.d/crelay
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/conf/crelay.conf $(1)/etc
 endef
 
 $(eval $(call BuildPackage,crelay))

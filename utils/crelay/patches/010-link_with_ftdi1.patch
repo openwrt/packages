@@ -1,10 +1,10 @@
 --- a/src/Makefile
 +++ b/src/Makefile
-@@ -44,7 +44,7 @@ endif
+@@ -45,7 +45,7 @@ endif
  #ifdef DRV_SAINSMART
  ifeq ($(DRV_SAINSMART), y)
  SRC	+= relay_drv_sainsmart.c
--LIBS	+= -lftdi 
+-LIBS	+= -lftdi
 +LIBS	+= -lftdi1
  OPTS	+= -DDRV_SAINSMART
  endif
