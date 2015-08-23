@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=lsof
-PKG_VERSION:=4.86
-PKG_RELEASE:=3
+PKG_VERSION:=4.89
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION)+dfsg.orig.tar.gz
-PKG_SOURCE_URL:=http://ftp2.de.debian.org/debian/pool/main/l/lsof
-PKG_MD5SUM:=23420509564a897b76055f9d84d19068
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)+dfsg.orig
+PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://www.mirrorservice.org/sites/lsof.itap.purdue.edu/pub/tools/unix/lsof/ ftp://sunsite.ualberta.ca/pub/Mirror/lsof/ ftp://ftp.fu-berlin.de/pub/unix/tools/lsof
+PKG_MD5SUM:=1b9cd34f3fb86856a125abbf2be3a386
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=Unique
 PKG_LICENSE_FILES:=00README
@@ -32,17 +32,22 @@ define Package/lsof
   URL:=http://people.freebsd.org/~abe/
 endef
 
-ifeq ($(CONFIG_IPV6),y)
-  LINUX_CLIB_IPV6="-DHASIPv6"
+ifneq ($(CONFIG_IPV6),n)
+  LINUX_CLIB_IPV6=-DHASIPv6
 else
   LINUX_CLIB_IPV6=
 endif
+
+define Build/Prepare
+	$(PKG_UNPACK)
+	(cd $(PKG_BUILD_DIR) && tar -xf $(PKG_NAME)_$(PKG_VERSION)_src.tar && mv $(PKG_NAME)_$(PKG_VERSION)_src/* .)
+	$(Build/Patch)
+endef
 
 define Build/Configure
 	cd $(PKG_BUILD_DIR); \
 		LINUX_CLIB="-DGLIBCV=2 $(LINUX_CLIB_IPV6)" \
 		LSOF_CC="$(TARGET_CC)" \
-		LSOF_INCLUDE="-I$(STAGING_DIR)/usr/include" \
 		LSOF_VSTR="$(LINUX_VERSION)" \
 		LSOF_CFGF="$(TARGET_CFLAGS)" \
 		LSOF_CFGL="$(TARGET_LDFLAGS)" \
