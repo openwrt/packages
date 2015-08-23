@@ -1,0 +1,38 @@
+From 638bb8d70d6c7e5dc99975e0bf57d8ce0455e2cc Mon Sep 17 00:00:00 2001
+From: Paul Fertser <fercerpav@gmail.com>
+Date: Tue, 10 Jul 2012 11:25:00 +0400
+Subject: [PATCH 3/3] wash/wpsmon: use less useless spaces in output to fit
+ narrow terminals
+
+Signed-off-by: Paul Fertser <fercerpav@gmail.com>
+---
+ src/wpsmon.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/wpsmon.c b/src/wpsmon.c
+index 22a394f..e0948b3 100644
+--- a/src/wpsmon.c
++++ b/src/wpsmon.c
+@@ -262,8 +262,8 @@ void monitor(char *bssid, int passive, int source, int channel, int mode)
+ 
+ 	if(!header_printed)
+ 	{
+-		cprintf(INFO, "BSSID                  Channel       RSSI       WPS Version       WPS Locked        ESSID\n");
+-		cprintf(INFO, "---------------------------------------------------------------------------------------------------------------\n");
++		cprintf(INFO, "BSSID              Channel  RSSI  WPS Version  WPS Locked  ESSID\n");
++		cprintf(INFO, "--------------------------------------------------------------------------------------\n");
+ 		header_printed = 1;
+ 	}
+ 
+@@ -360,7 +360,7 @@ void parse_wps_settings(const u_char *packet, struct pcap_pkthdr *header, char *
+ 							break;
+ 					}
+ 
+-					cprintf(INFO, "%17s      %2d            %.2d        %d.%d               %s               %s\n", bssid, channel, rssi, (wps->version >> 4), (wps->version & 0x0F), lock_display, ssid);
++					cprintf(INFO, "%17s    %2d       %.2d   %d.%d          %s         %s\n", bssid, channel, rssi, (wps->version >> 4), (wps->version & 0x0F), lock_display, ssid);
+ 				}
+ 
+ 				if(probe_sent)
+-- 
+1.7.7
+
