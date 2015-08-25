@@ -28,7 +28,7 @@ define Package/bluelog/Default
   CATEGORY:=Utilities
   TITLE:=Bluetooth scanner and logger
   URL:=http://www.digifail.com/software/bluelog.shtml
-  DEPENDS:=+bluez-libs +kmod-bluetooth
+  DEPENDS:=+bluez-libs +kmod-bluetooth @BROKEN
 endef
 
 define Package/bluelog/Default/description
