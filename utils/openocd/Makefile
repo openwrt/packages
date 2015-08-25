@@ -26,6 +26,7 @@ PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/openocd
   SECTION:=utils
@@ -62,6 +63,8 @@ CONFIGURE_ARGS += \
 	--enable-usb_blaster_libftdi \
         --enable-openjtag_ftdi \
         --enable-presto_libftdi
+
+TARGET_LDFLAGS+= $(if $(ICONV_FULL),-liconv)
 
 define Build/Compile
         +$(MAKE_VARS) \
