@@ -348,10 +348,12 @@ endef
 
 define Package/strongswan/install
 	$(INSTALL_DIR) $(1)/etc
-	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.conf $(1)/etc/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/ipsec.conf $(1)/etc/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/strongswan.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/{libstrongswan.so.*,libhydra.so.*} $(1)/usr/lib/ipsec/
 	$(INSTALL_CONF) ./files/ipsec.secrets $(1)/etc/
+	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/ipsec.init $(1)/etc/init.d/ipsec
 endef
@@ -415,8 +417,6 @@ define Plugin/stroke/install
 	$(INSTALL_DIR) $(1)/etc/ipsec.d/private
 	$(INSTALL_DIR) $(1)/etc/ipsec.d/reqs
 
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/ipsec.conf $(1)/etc/
-
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/{starter,stroke} $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-stroke.so $(1)/usr/lib/ipsec/plugins/
@@ -427,7 +427,6 @@ define Plugin/updown/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/_updown $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-updown.so $(1)/usr/lib/ipsec/plugins/
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
 endef
 
 define Plugin/whitelist/install
