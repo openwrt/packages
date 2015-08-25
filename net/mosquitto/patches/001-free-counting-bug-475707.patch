@@ -1,0 +1,14 @@
+diff --git a/lib/memory_mosq.c b/lib/memory_mosq.c
+index b1f5bfd..4d8217d 100644
+--- a/lib/memory_mosq.c
++++ b/lib/memory_mosq.c
+@@ -54,6 +54,9 @@ void *mosquitto__calloc(size_t nmemb, size_t size)
+ void mosquitto__free(void *mem)
+ {
+ #ifdef REAL_WITH_MEMORY_TRACKING
++	if(!mem){
++		return;
++	}
+ 	memcount -= malloc_usable_size(mem);
+ #endif
+ 	free(mem);
