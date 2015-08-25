@@ -39,6 +39,7 @@ endef
 CONFIGURE_ARGS+= \
 	--disable-doc \
 	--disable-parport \
+	--enable-linuxgpio \
 
 define Package/avrdude/conffiles
 /etc/avrdude.conf
