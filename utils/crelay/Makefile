@@ -22,6 +22,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/crelay
   SECTION:=utils
@@ -52,6 +53,7 @@ TARGET_CFLAGS+= \
 	-I$(STAGING_DIR)/usr/include/libftdi1 \
 	-I$(STAGING_DIR)/usr/include/hidapi
 
+TARGET_LDFLAGS+= $(if $(ICONV_FULL),-liconv)
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/src \
