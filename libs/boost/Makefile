@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/target.mk
 
 PKG_NAME:=boost
 PKG_VERSION:=1_59_0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
@@ -177,6 +177,7 @@ endef
 CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
 TARGET_LDFLAGS += -pthread -lrt
 
+TARGET_CFLAGS += $(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H)
 
 ifneq ($(findstring mips,$(ARCH)),)
     BOOST_ABI = o32
