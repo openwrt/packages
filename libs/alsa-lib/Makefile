@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/lib/ \
 		http://alsa.cybermirror.org/lib/
 PKG_MD5SUM:=de67e0eca72474d6b1121037dafe1024
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net> \
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Peter Wagner <tripolar@gmx.at>
 
 PKG_LICENSE:=LGPLv2.1 GPLv2
