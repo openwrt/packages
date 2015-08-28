@@ -10,12 +10,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntripclient
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=3
-PKG_LICENSE:=GPL-2.0+
 
-PKG_SOURCE:=$(PKG_NAME).zip
-PKG_SOURCE_URL:=http://igs.bkg.bund.de/root_ftp/NTRIP/software/
-PKG_MD5SUM:=4b357fa648d74e4e13c4b5a2a39f5624
+PKG_RELEASE=$(PKG_SOURCE_VERSION)
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/nunojpg/ntripclient.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=dcfb2cb3e6f31b7291a94e7f86379c78ffc0d44e
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+
+PKG_LICENSE:=GPL-2.0+
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 
@@ -31,12 +35,6 @@ endef
 
 define Package/ntripclient/description
   Ntrip Version 2.0 Command Line Client, reading from Ntrip Version 1.0 or 2.0 Caster
-endef
-
-define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)
-	unzip $(DL_DIR)/$(PKG_SOURCE) -d $(PKG_BUILD_DIR)
-	$(call Build/Prepare/Default)
 endef
 
 MAKE_FLAGS += \

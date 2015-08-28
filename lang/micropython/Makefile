@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2010 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython
-PKG_VERSION=1.4.3-20150601-$(PKG_SOURCE_VERSION)
+PKG_VERSION=1.4.4-20150702-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/micropython/micropython.git
-PKG_SOURCE_VERSION:=3ac2d06bd13f1cedb8242eaacc6c608ac08c3520
+PKG_SOURCE_VERSION:=9220dc466a8d098ed669a33a617edd1118a3e35d
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz

@@ -1,0 +1,53 @@
+From cd444949f3176790101b8bdc9656831a03d8c01d Mon Sep 17 00:00:00 2001
+From: Paul Fertser <fercerpav@gmail.com>
+Date: Tue, 10 Jul 2012 11:13:29 +0400
+Subject: [PATCH 2/3] Use the current directory for storing and loading
+ sessions
+
+This allows the user to always explicitely choose (by changing the
+current directory before launching the program) where the session
+files should go. Useful e.g. to avoid hogging the precious space on
+embedded devices, just cd /tmp before starting the app.
+
+Signed-off-by: Paul Fertser <fercerpav@gmail.com>
+---
+ src/session.c |   16 +++-------------
+ 1 files changed, 3 insertions(+), 13 deletions(-)
+
+diff --git a/src/session.c b/src/session.c
+index d3af0c3..308f213 100644
+--- a/src/session.c
++++ b/src/session.c
+@@ -62,7 +62,7 @@ int restore_session()
+ 		memset(file, 0, FILENAME_MAX);
+ 
+ 		bssid = mac2str(get_bssid(), '\0');
+-		snprintf(file, FILENAME_MAX, "%s/%s.%s", CONF_DIR, bssid, CONF_EXT);
++		snprintf(file, FILENAME_MAX, "%s.%s", bssid, CONF_EXT);
+ 		free(bssid);
+ 	}
+ 
+@@ -199,18 +199,8 @@ int save_session()
+ 		}
+ 		else
+ 		{	
+-			/* 
+-			 * If the configuration directory exists, save the session file there; else, save it to the 
+-			 * current working directory.
+-			 */
+-			if(configuration_directory_exists())
+-			{
+-        			snprintf((char *) &file_name, FILENAME_MAX, "%s/%s.%s", CONF_DIR, bssid, CONF_EXT);
+-			}
+-			else
+-			{
+-				snprintf((char *) &file_name, FILENAME_MAX, "%s.%s", bssid, CONF_EXT);
+-			}
++			/* save session to the current directory */
++			snprintf((char *) &file_name, FILENAME_MAX, "%s.%s", bssid, CONF_EXT);
+ 		}
+ 
+ 		/* Don't bother saving anything if nothing has been done */
+-- 
+1.7.7
+

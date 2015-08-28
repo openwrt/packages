@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=memcached
 PKG_VERSION:=1.4.24
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://memcached.org/files
@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/memcached
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libevent +libpthread
+  DEPENDS:=+libevent2 +libpthread
   TITLE:=The high-performance, distributed memory object caching system
   URL:=http://memcached.org/
 endef

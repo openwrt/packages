@@ -54,6 +54,10 @@ define Build/Prepare
 # 	we have to download additional stuff before patching
 	(cd $(PKG_BUILD_DIR) && ./contrib/download_prerequisites)
 	$(Build/Patch)
+#	poor man's fix for `none-openwrt-linux' not recognized when building with musl
+	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/mpfr/
+	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/gmp/
+	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/mpc/
 endef
 
 

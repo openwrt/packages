@@ -1,0 +1,219 @@
+#!/bin/sh
+
+usage() {
+	cat <<-EOF
+		Usage: ss-rules [options]
+
+		Valid options are:
+
+		    -s <server_host>        hostname or ip of shadowsocks remote server
+		    -l <local_port>         port number of shadowsocks local server
+		    -i <ip_list_file>       a file content is bypassed ip list
+		    -a <lan_ips>            lan ip of access control, need a prefix to
+		                            define access control mode
+		    -b <wan_ips>            wan ip of will be bypassed
+		    -w <wan_ips>            wan ip of will be forwarded
+		    -e <extra_options>      extra options for iptables
+		    -o                      apply the rules to the OUTPUT chain
+		    -u                      enable udprelay mode, TPROXY is required
+		    -U                      enable udprelay mode, using different IP
+		                            and ports for TCP and UDP
+		    -f                      flush the rules
+EOF
+}
+
+loger() {
+	# 1.alert 2.crit 3.err 4.warn 5.notice 6.info 7.debug
+	logger -st ss-rules[$$] -p$1 $2
+}
+
+ipt_n="iptables -t nat"
+ipt_m="iptables -t mangle"
+
+flush_r() {
+	local IPT
+
+	IPT=$(iptables-save -t nat)
+	eval $(echo "$IPT" | grep "_SS_SPEC_RULE_" | \
+		sed -e 's/^-A/$ipt_n -D/' -e 's/$/;/')
+
+	for chain in $(echo "$IPT" | awk '/^:SS_SPEC/{print $1}'); do
+		$ipt_n -F ${chain:1} 2>/dev/null && $ipt_n -X ${chain:1}
+	done
+
+	IPT=$(iptables-save -t mangle)
+	eval $(echo "$IPT" | grep "_SS_SPEC_RULE_" | \
+		sed -e 's/^-A/$ipt_m -D/' -e 's/$/;/')
+
+	for chain in $(echo "$IPT" | awk '/^:SS_SPEC/{print $1}'); do
+		$ipt_m -F ${chain:1} 2>/dev/null && $ipt_m -X ${chain:1}
+	done
+
+	ip rule del fwmark 0x01/0x01 table 100 2>/dev/null
+	ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null
+	ipset -X ss_spec_lan_ac 2>/dev/null
+	ipset -X ss_spec_wan_ac 2>/dev/null
+	return 0
+}
+
+ipset_r() {
+	ipset -! -R <<-EOF || return 1
+		create ss_spec_wan_ac hash:net
+		$(echo -e "$IPLIST" | sed -e "s/^/add ss_spec_wan_ac /")
+		$(for ip in $WAN_FW_IP; do echo "add ss_spec_wan_ac $ip nomatch"; done)
+EOF
+	$ipt_n -N SS_SPEC_WAN_AC && \
+	$ipt_n -A SS_SPEC_WAN_AC -m set --match-set ss_spec_wan_ac dst -j RETURN && \
+	$ipt_n -A SS_SPEC_WAN_AC -j SS_SPEC_WAN_FW
+	return $?
+}
+
+fw_rule() {
+	$ipt_n -N SS_SPEC_WAN_FW && \
+	$ipt_n -A SS_SPEC_WAN_FW -p tcp \
+		-j REDIRECT --to-ports $local_port 2>/dev/null || {
+		loger 3 "Can't redirect, please check the iptables."
+		exit 1
+	}
+	return $?
+}
+
+ac_rule() {
+	local TAG ROUTECHAIN
+
+	if [ -n "$LAN_AC_IP" ]; then
+		if [ "${LAN_AC_IP:0:1}" = "w" ]; then
+			TAG="nomatch"
+		else
+			if [ "${LAN_AC_IP:0:1}" != "b" ]; then
+				loger 3 "Bad argument \`-a $LAN_AC_IP\`."
+				return 2
+			fi
+		fi
+	fi
+
+	ROUTECHAIN=PREROUTING
+	if iptables-save -t nat | grep -q "^:zone_lan_prerouting"; then
+		ROUTECHAIN=zone_lan_prerouting
+	fi
+
+	ipset -! -R <<-EOF || return 1
+		create ss_spec_lan_ac hash:net
+		$(for ip in ${LAN_AC_IP:1}; do echo "add ss_spec_lan_ac $ip $TAG"; done)
+EOF
+	$ipt_n -A $ROUTECHAIN -p tcp $EXT_ARGS \
+		-m set ! --match-set ss_spec_lan_ac src \
+		-m comment --comment "_SS_SPEC_RULE_" -j SS_SPEC_WAN_AC
+
+	if [ "$OUTPUT" = 1 ]; then
+		$ipt_n -A OUTPUT -p tcp $EXT_ARGS \
+			-m comment --comment "_SS_SPEC_RULE_" -j SS_SPEC_WAN_AC
+	fi
+	return $?
+}
+
+tp_rule() {
+	[ -n "$TPROXY" ] || return 0
+	ip rule add fwmark 0x01/0x01 table 100
+	ip route add local 0.0.0.0/0 dev lo table 100
+	$ipt_m -N SS_SPEC_TPROXY
+	$ipt_m -A SS_SPEC_TPROXY -p udp -m set ! --match-set ss_spec_wan_ac dst \
+		-j TPROXY --on-port $LOCAL_PORT --tproxy-mark 0x01/0x01
+	$ipt_m -A PREROUTING -p udp $EXT_ARGS \
+		-m set ! --match-set ss_spec_lan_ac src \
+		-m comment --comment "_SS_SPEC_RULE_" -j SS_SPEC_TPROXY
+	return $?
+}
+
+while getopts ":s:l:S:L:i:e:a:b:w:ouUf" arg; do
+	case $arg in
+		s)
+			server=$OPTARG
+			;;
+		l)
+			local_port=$OPTARG
+			;;
+		S)
+			SERVER=$OPTARG
+			;;
+		L)
+			LOCAL_PORT=$OPTARG
+			;;
+		i)
+			IGNORE=$OPTARG
+			;;
+		e)
+			EXT_ARGS=$OPTARG
+			;;
+		a)
+			LAN_AC_IP=$OPTARG
+			;;
+		b)
+			WAN_BP_IP=$(for ip in $OPTARG; do echo $ip; done)
+			;;
+		w)
+			WAN_FW_IP=$OPTARG
+			;;
+		o)
+			OUTPUT=1
+			;;
+		u)
+			TPROXY=1
+			;;
+		U)
+			TPROXY=2
+			;;
+		f)
+			flush_r
+			exit 0
+			;;
+	esac
+done
+
+if [ -z "$server" -o -z "$local_port" ]; then
+	usage
+	exit 2
+fi
+
+if [ "$TPROXY" = 1 ]; then
+	SERVER=$server
+	LOCAL_PORT=$local_port
+fi
+
+if [ "$TPROXY" = 2 ]; then
+	if [ -z "$SERVER" -o -z "$LOCAL_PORT" ]; then
+		loger 3 "Please use -S and -L specifies IP and port for UDP."
+	fi
+fi
+
+if [ -f "$IGNORE" ]; then
+	IGNORE_IP=$(cat $IGNORE 2>/dev/null)
+fi
+
+IPLIST=$(cat <<-EOF | grep -E "^([0-9]{1,3}\.){3}[0-9]{1,3}"
+	$server
+	$SERVER
+	0.0.0.0/8
+	10.0.0.0/8
+	100.64.0.0/10
+	127.0.0.0/8
+	169.254.0.0/16
+	172.16.0.0/12
+	192.0.0.0/24
+	192.0.2.0/24
+	192.88.99.0/24
+	192.168.0.0/16
+	198.18.0.0/15
+	198.51.100.0/24
+	203.0.113.0/24
+	224.0.0.0/4
+	240.0.0.0/4
+	255.255.255.255
+	$WAN_BP_IP
+	$IGNORE_IP
+EOF
+)
+
+flush_r && fw_rule && ipset_r && ac_rule && tp_rule
+
+exit $?

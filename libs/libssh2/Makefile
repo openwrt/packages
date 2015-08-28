@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libssh2
-PKG_VERSION:=1.4.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.6.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.libssh2.org/download
-PKG_MD5SUM:=071004c60c5d6f90354ad1b701013a0b
+PKG_MD5SUM:=00aabd6e714a5f42a4fb82ace20db1dd
 
 PKG_INSTALL:=1
 

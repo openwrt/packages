@@ -1,0 +1,243 @@
+--- a/include/common.h
++++ b/include/common.h
+@@ -1083,4 +1083,7 @@ int	parse_serveractive_element(char *str
+ 
+ char	*zbx_dyn_escape_shell_single_quote(const char *text);
+ 
++#define ZBX_RUN_BACKGROUND      0
++#define ZBX_RUN_FOREGROUND      1
++
+ #endif
+--- a/include/daemon.h
++++ b/include/daemon.h
+@@ -28,7 +28,7 @@ extern char	*CONFIG_PID_FILE;
+ 
+ #include "threads.h"
+ 
+-int	daemon_start(int allow_root, const char *user);
++int	daemon_start(int allow_root, const char *user, int run_foreground);
+ void	daemon_stop();
+ 
+ int	zbx_sigusr_send(int flags);
+@@ -36,6 +36,6 @@ int	zbx_sigusr_send(int flags);
+ #define ZBX_IS_RUNNING()	1
+ #define ZBX_DO_EXIT()
+ 
+-#define START_MAIN_ZABBIX_ENTRY(a, u)	daemon_start(a, u)
++#define START_MAIN_ZABBIX_ENTRY(a, u, f)	daemon_start(a, u, f)
+ 
+ #endif	/* ZABBIX_DAEMON_H */
+--- a/src/libs/zbxnix/daemon.c
++++ b/src/libs/zbxnix/daemon.c
+@@ -272,16 +272,17 @@ static void	set_daemon_signal_handlers()
+  *                                                                            *
+  * Purpose: init process as daemon                                            *
+  *                                                                            *
+- * Parameters: allow_root - allow root permission for application             *
+- *             user       - user on the system to which to drop the           *
+- *                          privileges                                        *
++ * Parameters: allow_root     - allow root permission for application         *
++ *             user           - user on the system to which to drop the       *
++ *                              privileges                                    *
++ *             run_foreground - should it close its controling tty            *
+  *                                                                            *
+  * Author: Alexei Vladishev                                                   *
+  *                                                                            *
+  * Comments: it doesn't allow running under 'root' if allow_root is zero      *
+  *                                                                            *
+  ******************************************************************************/
+-int	daemon_start(int allow_root, const char *user)
++int	daemon_start(int allow_root, const char *user, int run_foreground)
+ {
+ 	pid_t		pid;
+ 	struct passwd	*pwd;
+@@ -336,15 +337,22 @@ int	daemon_start(int allow_root, const c
+ #endif
+ 	}
+ 
+-	if (0 != (pid = zbx_fork()))
+-		exit(EXIT_SUCCESS);
++	if ( ZBX_RUN_FOREGROUND != run_foreground)
++		if (0 != (pid = zbx_fork()))
++			exit(EXIT_SUCCESS);
+ 
+ 	setsid();
+ 
+ 	signal(SIGHUP, SIG_IGN);
+ 
+-	if (0 != (pid = zbx_fork()))
+-		exit(EXIT_SUCCESS);
++	if ( ZBX_RUN_FOREGROUND == run_foreground) {
++		zabbix_log(LOG_LEVEL_INFORMATION, "Running in foreground...");
++	} else {
++		if (0 != (pid = zbx_fork()))
++			exit(EXIT_SUCCESS);
++	}
++
++
+ 
+ 	if (-1 == chdir("/"))	/* this is to eliminate warning: ignoring return value of chdir */
+ 		assert(0);
+--- a/src/zabbix_agent/zabbix_agentd.c
++++ b/src/zabbix_agent/zabbix_agentd.c
+@@ -62,6 +62,8 @@ const char	*progname = NULL;
+ 	static char	DEFAULT_CONFIG_FILE[]	= SYSCONFDIR "/zabbix_agentd.conf";
+ #endif
+ 
++int CONFIG_FOREGROUND = ZBX_RUN_BACKGROUND;
++
+ /* application TITLE */
+ const char	title_message[] = APPLICATION_NAME
+ #if defined(_WIN64)
+@@ -93,6 +95,7 @@ const char	usage_message[] =
+ const char	*help_message[] = {
+ 	"Options:",
+ 	"  -c --config <config-file>       Absolute path to the configuration file",
++	"  -f --foreground                 Run in foreground don't fork",
+ 	"  -p --print                      Print known items and exit",
+ 	"  -t --test <item key>            Test specified item and exit",
+ 	"  -h --help                       Display help information",
+@@ -127,6 +130,7 @@ const char	*help_message[] = {
+ /* COMMAND LINE OPTIONS */
+ static struct zbx_option	longopts[] =
+ {
++	{"foreground",		0,	NULL,	'f'},
+ 	{"config",		1,	NULL,	'c'},
+ 	{"help",		0,	NULL,	'h'},
+ 	{"version",		0,	NULL,	'V'},
+@@ -147,7 +151,7 @@ static struct zbx_option	longopts[] =
+ };
+ 
+ static char	shortopts[] =
+-	"c:hVpt:"
++	"c:hfVpt:"
+ #ifndef _WINDOWS
+ 	"R:"
+ #else
+@@ -241,6 +245,9 @@ static void	parse_commandline(int argc,
+ 	{
+ 		switch (ch)
+ 		{
++			case 'f':
++				CONFIG_FOREGROUND = ZBX_RUN_FOREGROUND;
++				break;
+ 			case 'c':
+ 				CONFIG_FILE = strdup(zbx_optarg);
+ 				break;
+@@ -944,7 +951,7 @@ int	main(int argc, char **argv)
+ 			break;
+ 	}
+ 
+-	START_MAIN_ZABBIX_ENTRY(CONFIG_ALLOW_ROOT, CONFIG_USER);
++	START_MAIN_ZABBIX_ENTRY(CONFIG_ALLOW_ROOT, CONFIG_USER, CONFIG_FOREGROUND);
+ 
+ 	exit(EXIT_SUCCESS);
+ }
+--- a/src/zabbix_proxy/proxy.c
++++ b/src/zabbix_proxy/proxy.c
+@@ -60,6 +60,7 @@ const char	usage_message[] = "[-hV] [-c
+ 
+ const char	*help_message[] = {
+ 	"Options:",
++	"  -f --foreground                 Run in foreground don't fork",
+ 	"  -c --config <file>              Absolute path to the configuration file",
+ 	"  -R --runtime-control <option>   Perform administrative functions",
+ 	"",
+@@ -84,6 +85,7 @@ const char	*help_message[] = {
+ /* long options */
+ static struct zbx_option	longopts[] =
+ {
++	{"foreground",		0,	NULL,	'f'},
+ 	{"config",		1,	NULL,	'c'},
+ 	{"runtime-control",	1,	NULL,	'R'},
+ 	{"help",		0,	NULL,	'h'},
+@@ -92,7 +94,7 @@ static struct zbx_option	longopts[] =
+ };
+ 
+ /* short options */
+-static char	shortopts[] = "c:n:hVR:";
++static char	shortopts[] = "c:n:fhVR:";
+ 
+ /* end of COMMAND LINE OPTIONS */
+ 
+@@ -202,6 +204,7 @@ char	*CONFIG_LOAD_MODULE_PATH	= NULL;
+ char	**CONFIG_LOAD_MODULE		= NULL;
+ 
+ char	*CONFIG_USER			= NULL;
++int	CONFIG_FOREGROUND		= ZBX_RUN_BACKGROUND;
+ 
+ /* web monitoring */
+ #ifdef HAVE_LIBCURL
+@@ -666,6 +669,9 @@ int	main(int argc, char **argv)
+ 	{
+ 		switch (ch)
+ 		{
++			case 'f':
++				CONFIG_FOREGROUND = ZBX_RUN_FOREGROUND;
++				break;
+ 			case 'c':
+ 				CONFIG_FILE = zbx_strdup(CONFIG_FILE, zbx_optarg);
+ 				break;
+@@ -705,7 +711,7 @@ int	main(int argc, char **argv)
+ 	init_ipmi_handler();
+ #endif
+ 
+-	return daemon_start(CONFIG_ALLOW_ROOT, CONFIG_USER);
++	return daemon_start(CONFIG_ALLOW_ROOT, CONFIG_USER, CONFIG_FOREGROUND);
+ }
+ 
+ int	MAIN_ZABBIX_ENTRY()
+--- a/src/zabbix_server/server.c
++++ b/src/zabbix_server/server.c
+@@ -64,6 +64,7 @@ const char	usage_message[] = "[-hV] [-c
+ 
+ const char	*help_message[] = {
+ 	"Options:",
++	"  -f --foreground                 Run in foreground don't fork",
+ 	"  -c --config <file>              Absolute path to the configuration file",
+ 	"  -R --runtime-control <option>   Perform administrative functions",
+ 	"",
+@@ -88,6 +89,7 @@ const char	*help_message[] = {
+ /* long options */
+ static struct zbx_option	longopts[] =
+ {
++	{"foreground",		0,	NULL,	'f'},
+ 	{"config",		1,	NULL,	'c'},
+ 	{"runtime-control",	1,	NULL,	'R'},
+ 	{"help",		0,	NULL,	'h'},
+@@ -96,7 +98,7 @@ static struct zbx_option	longopts[] =
+ };
+ 
+ /* short options */
+-static char	shortopts[] = "c:n:hVR:";
++static char	shortopts[] = "c:n:fhVR:";
+ 
+ /* end of COMMAND LINE OPTIONS */
+ 
+@@ -197,6 +199,7 @@ char	*CONFIG_LOAD_MODULE_PATH	= NULL;
+ char	**CONFIG_LOAD_MODULE		= NULL;
+ 
+ char	*CONFIG_USER			= NULL;
++int	CONFIG_FOREGROUND		= ZBX_RUN_BACKGROUND;
+ 
+ /* web monitoring */
+ #ifdef HAVE_LIBCURL
+@@ -631,6 +634,9 @@ int	main(int argc, char **argv)
+ 	{
+ 		switch (ch)
+ 		{
++			case 'f':
++				CONFIG_FOREGROUND = ZBX_RUN_FOREGROUND;
++				break;
+ 			case 'c':
+ 				CONFIG_FILE = zbx_strdup(CONFIG_FILE, zbx_optarg);
+ 				break;
+@@ -670,7 +676,7 @@ int	main(int argc, char **argv)
+ 	init_ipmi_handler();
+ #endif
+ 
+-	return daemon_start(CONFIG_ALLOW_ROOT, CONFIG_USER);
++	return daemon_start(CONFIG_ALLOW_ROOT, CONFIG_USER, CONFIG_FOREGROUND);
+ }
+ 
+ int	MAIN_ZABBIX_ENTRY()

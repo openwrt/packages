@@ -1,6 +1,6 @@
---- a/src/configfile.c
-+++ b/src/configfile.c
-@@ -105,7 +105,7 @@ static cf_global_option_t cf_global_opti
+--- a/src/daemon/configfile.c
++++ b/src/daemon/configfile.c
+@@ -109,7 +109,7 @@ static cf_global_option_t cf_global_opti
  	{"BaseDir",     NULL, PKGLOCALSTATEDIR},
  	{"PIDFile",     NULL, PIDFILE},
  	{"Hostname",    NULL, NULL},

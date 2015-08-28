@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.3.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
@@ -39,6 +39,7 @@ PKG_MOD_AVAILABLE:= \
 	eap-md5 \
 	eap-mschapv2 \
 	eap-radius \
+	eap-tls \
 	farp \
 	fips-prf \
 	gcm \
@@ -149,6 +150,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-eap-md5 \
 	+strongswan-mod-eap-mschapv2 \
 	+strongswan-mod-eap-radius \
+	+strongswan-mod-eap-tls \
 	+strongswan-mod-farp \
 	+strongswan-mod-fips-prf \
 	+strongswan-mod-gcm \
@@ -289,6 +291,18 @@ $(call Package/strongswan/description/Default)
  This package contains the pki & scepclient utilities.
 endef
 
+define Package/strongswan-libtls
+$(call Package/strongswan/Default)
+  TITLE+= libtls
+  DEPENDS:= +strongswan
+endef
+
+define Package/strongswan-libtls/description
+$(call Package/strongswan/description/Default)
+ This package contains libtls for strongSwan plugins eap-tls, eap-ttls,
+ eap-peap, tnc-tnccs
+endef
+
 define BuildPlugin
   define Package/strongswan-mod-$(1)
     $$(call Package/strongswan/Default)
@@ -334,10 +348,12 @@ endef
 
 define Package/strongswan/install
 	$(INSTALL_DIR) $(1)/etc
-	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.conf $(1)/etc/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/ipsec.conf $(1)/etc/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/strongswan.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/{libstrongswan.so.*,libhydra.so.*} $(1)/usr/lib/ipsec/
 	$(INSTALL_CONF) ./files/ipsec.secrets $(1)/etc/
+	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/ipsec.init $(1)/etc/init.d/ipsec
 endef
@@ -369,6 +385,11 @@ define Package/strongswan-utils/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/scepclient $(1)/usr/lib/ipsec/
 endef
 
+define Package/strongswan-libtls/install
+	$(INSTALL_DIR) $(1)/usr/lib/ipsec
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libtls.so.* $(1)/usr/lib/ipsec/
+endef
+
 define Plugin/duplicheck/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/duplicheck $(1)/usr/lib/ipsec/
@@ -396,8 +417,6 @@ define Plugin/stroke/install
 	$(INSTALL_DIR) $(1)/etc/ipsec.d/private
 	$(INSTALL_DIR) $(1)/etc/ipsec.d/reqs
 
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/ipsec.conf $(1)/etc/
-
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/{starter,stroke} $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-stroke.so $(1)/usr/lib/ipsec/plugins/
@@ -408,7 +427,6 @@ define Plugin/updown/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/_updown $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-updown.so $(1)/usr/lib/ipsec/plugins/
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
 endef
 
 define Plugin/whitelist/install
@@ -428,6 +446,7 @@ $(eval $(call BuildPackage,strongswan-full))
 $(eval $(call BuildPackage,strongswan-minimal))
 $(eval $(call BuildPackage,strongswan-charon))
 $(eval $(call BuildPackage,strongswan-utils))
+$(eval $(call BuildPackage,strongswan-libtls))
 $(eval $(call BuildPlugin,addrblock,RFC 3779 address block constraint support,))
 $(eval $(call BuildPlugin,aes,AES crypto,))
 $(eval $(call BuildPlugin,af-alg,AF_ALG crypto interface to Linux Crypto API,+kmod-crypto-user))
@@ -449,6 +468,7 @@ $(eval $(call BuildPlugin,eap-identity,EAP identity helper,))
 $(eval $(call BuildPlugin,eap-md5,EAP MD5 (CHAP) EAP auth,))
 $(eval $(call BuildPlugin,eap-mschapv2,EAP MS-CHAPv2 EAP auth,+strongswan-mod-md4 +strongswan-mod-des))
 $(eval $(call BuildPlugin,eap-radius,EAP RADIUS auth,))
+$(eval $(call BuildPlugin,eap-tls,EAP TLS auth,+strongswan-libtls))
 $(eval $(call BuildPlugin,farp,fake arp respsonses,))
 $(eval $(call BuildPlugin,fips-prf,FIPS PRF crypto,+strongswan-mod-sha1))
 $(eval $(call BuildPlugin,gcm,GCM AEAD wrapper crypto,))

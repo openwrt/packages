@@ -1,0 +1,30 @@
+--- a/main.c
++++ b/main.c
+@@ -187,6 +187,17 @@ static void sighandler(int signum) {
+ 	signal(signum, SIG_DFL);
+ }
+ 
++// Waits for nonzero MAC
++static void get_nonzero_mac(u8_t mac[], u32_t timeout_ms) {
++	u32_t wait_timeout = gettime_ms() + timeout_ms;
++	do{
++		get_mac(mac);
++		if ((mac[0]+mac[1]+mac[2]+mac[3]+mac[4]+mac[5]) != 0) {
++			break;
++		}
++	}while(wait_timeout > gettime_ms());
++}
++
+ int main(int argc, char **argv) {
+ 	char *server = NULL;
+ 	char *output_device = "default";
+@@ -240,7 +251,8 @@ int main(int argc, char **argv) {
+ #define MAXCMDLINE 512
+ 	char cmdline[MAXCMDLINE] = "";
+ 
+-	get_mac(mac);
++	// Waits for nonzero MAC
++	get_nonzero_mac(mac,10000);
+ 
+ 	for (i = 0; i < argc && (strlen(argv[i]) + strlen(cmdline) + 2 < MAXCMDLINE); i++) {
+ 		strcat(cmdline, argv[i]);

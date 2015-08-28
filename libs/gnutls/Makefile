@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
-PKG_VERSION:=3.4.2
+PKG_VERSION:=3.4.4.1
 PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=ftp://ftp.gnutls.org/gcrypt/gnutls/v3.4
-PKG_MD5SUM:=4fb4a6253e09aa070e6c467cbb51ba33
+PKG_MD5SUM:=474efaba6fd6c6c6c0ebac2a3f431946
 #PKG_FIXUP:=autoreconf gettext-version
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 PKG_LICENSE:=LGPLv2.1+
@@ -102,17 +102,6 @@ $(call Package/gnutls/Default/description)
 endef
 
 
-define Package/libgnutls-openssl
-$(call Package/gnutls/Default)
-  TITLE+= (OpenSSL compat library)
-  DEPENDS+= +libgnutls
-endef
-
-define Package/libgnutls-openssl/description
-$(call Package/gnutls/Default/description)
- This package contains the GnuTLS OpenSSL compatibility layer shared library.
-endef
-
 CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
@@ -124,7 +113,6 @@ CONFIGURE_ARGS+= \
 	--enable-local-libopts \
 	--disable-doc \
 	--disable-tests \
-	--enable-openssl-compatibility \
 	--with-default-trust-store-dir=/etc/ssl/certs/ \
 	--disable-crywrap \
 	--with-librt-prefix="$(LIBRT_ROOT_DIR)/"
@@ -241,13 +229,6 @@ define Package/libgnutls/install
 endef
 
 
-define Package/libgnutls-openssl/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnutls-openssl.so.* $(1)/usr/lib/
-endef
-
-
 $(eval $(call BuildPackage,certtool))
 $(eval $(call BuildPackage,gnutls-utils))
 $(eval $(call BuildPackage,libgnutls))
-$(eval $(call BuildPackage,libgnutls-openssl))

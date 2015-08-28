@@ -26,23 +26,24 @@ proto_openconnect_setup() {
 	json_get_vars server port username serverhash authgroup password password2 interface token_mode token_secret os csd_wrapper
 
 	grep -q tun /proc/modules || insmod tun
+	ifname="vpn-$config"
 
 	logger -t openconnect "initializing..."
-	serv_addr=
-	for ip in $(resolveip -t 10 "$server"); do
-		( proto_add_host_dependency "$config" "$ip" $interface )
-		serv_addr=1
-	done
-	[ -n "$serv_addr" ] || {
-		logger -t openconnect "Could not resolve server address: '$server'"
-		sleep 60
-		proto_setup_failed "$config"
-		exit 1
-	}
+#	serv_addr=
+#	for ip in $(resolveip -t 10 "$server"); do
+#		( proto_add_host_dependency "$interface" "$ip" "$ifname" )
+#		serv_addr=1
+#	done
+#	[ -n "$serv_addr" ] || {
+#		logger -t openconnect "Could not resolve server address: '$server'"
+#		sleep 5
+#		proto_setup_failed "$config"
+#		exit 1
+#	}
 
 	[ -n "$port" ] && port=":$port"
 
-	cmdline="$server$port -i vpn-$config --non-inter --syslog --script /lib/netifd/vpnc-script"
+	cmdline="$server$port -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script"
 
 	# migrate to standard config files
 	[ -f "/etc/config/openconnect-user-cert-vpn-$config.pem" ] && mv "/etc/config/openconnect-user-cert-vpn-$config.pem" "/etc/openconnect/user-cert-vpn-$config.pem"
