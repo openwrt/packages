@@ -23,6 +23,10 @@ PKG_BUILD_DEPENDS:=libzdb/host
 
 include $(INCLUDE_DIR)/package.mk
 
+ifeq ($(CONFIG_USE_MUSL),n)
+    LDFLAGS += -lnsl
+endif
+
 define Package/libzdb
     SECTION:=libs
     CATEGORY:=Libraries
