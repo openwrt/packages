@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.19.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.19/
@@ -28,13 +28,14 @@ PKG_CONFIG_DEPENDS:= \
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/mpd/Default
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=Music Player Daemon
   URL:=http://www.musicpd.org/
-  DEPENDS:= +glib2 +libcurl +libpthread +libmpdclient +libstdcpp \
+  DEPENDS:= +glib2 +libcurl +libpthread +libmpdclient +libstdcpp $(ICONV_DEPENDS) \
 	    +libflac +BUILD_PATENTED:libmad +libvorbisidec +AUDIO_SUPPORT:alsa-lib \
             +boost +boost-container +libexpat
 endef
@@ -151,7 +152,7 @@ CONFIGURE_VARS += \
 	$(if $(CONFIG_BUILD_PATENTED),MAD_CFLAGS="$(TARGET_CFLAGS)") \
 	$(if $(CONFIG_BUILD_PATENTED),MAD_LIBS="$(TARGET_LDFLAGS) -lmad") \
 
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
+TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-liconv)
 
 ifeq ($(BUILD_VARIANT),full)
 

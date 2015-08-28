@@ -42,7 +42,7 @@ endef
 define Package/pgsql-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq
+  DEPENDS:=+libpq @USE_UCLIBC:+librt
   TITLE:=Command Line Interface (CLI) to PostgreSQL databases
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -55,7 +55,7 @@ endef
 define Package/pgsql-server
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq
+  DEPENDS:=+libpq @USE_UCLIBC:+librt
   TITLE:=PostgreSQL databases Server
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -66,9 +66,25 @@ define Package/pgsql-server/description
 PostgreSQL databases Server.
 endef
 
+PGSQL_CONFIG_VARS:= \
+	pgac_cv_snprintf_long_long_int_format="%lld" \
+	pgac_cv_snprintf_size_t_support=yes
+
+ifeq ($(CONFIG_USE_UCLIBC),y)
+# PostgreSQL does not build against uClibc with locales
+# enabled, due to an uClibc bug, see
+# http://lists.uclibc.org/pipermail/uclibc/2014-April/048326.html
+# so overwrite automatic detection and disable locale support
+PGSQL_CONFIG_VARS+= \
+		pgac_cv_type_locale_t=no
+endif
+
+TARGET_CONFIGURE_OPTS+=$(PGSQL_CONFIG_VARS)
+
 # Need a native ecpg ,pg_config, and zic for build
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -f config.cache; \
+		$(PGSQL_CONFIG_VARS) \
 		./configure \
 			--prefix=/usr \
 			--exec-prefix=/usr \

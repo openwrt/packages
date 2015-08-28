@@ -16,14 +16,14 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/target.mk 
 
 PKG_NAME:=boost
-PKG_VERSION:=1_58_0
-PKG_RELEASE:=6
+PKG_VERSION:=1_59_0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_VERSION)
-PKG_MD5SUM:=5a5d5614d9a07672e1ab2a250b5defc5
+PKG_MD5SUM:=51528a0e3b33d9e10aaa311d9eb451e3
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
@@ -109,6 +109,7 @@ define Package/boost-test
   $(call Package/boost/Default)
   TITLE+= (test)
   HIDDEN:=1  
+  DEPENDS+=+boost-system +boost-timer
 endef
 
 define Build/Configure
@@ -176,6 +177,7 @@ endef
 CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
 TARGET_LDFLAGS += -pthread -lrt
 
+TARGET_CFLAGS += $(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H)
 
 ifneq ($(findstring mips,$(ARCH)),)
     BOOST_ABI = o32

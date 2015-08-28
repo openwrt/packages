@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,13 +10,15 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ntfs-3g
 PKG_RELEASE:=1
 
-PKG_VERSION:=2014.2.15
+PKG_VERSION:=2015.3.14
 PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://www.tuxera.com/opensource/
-PKG_MD5SUM:=f11d563816249d730a00498983485f3a
+PKG_MD5SUM:=8cd57768310e3b2be39b3191d808e241
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
+
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -35,7 +37,6 @@ define Package/ntfs-3g/common
   URL:=http://www.tuxera.com
   SUBMENU:=Filesystem
   TITLE:=Stable Read/Write NTFS Driver
-  MAINTAINER:=Bud <wrt_buddhay@gmx.net>
 endef
 
 define Package/ntfs-3g
@@ -88,22 +89,36 @@ endef
 
 define Package/ntfs-3g-utils
   $(call Package/ntfs-3g/common)
-  TITLE:=ntfs-3g utilities (ntfs-3g.secaudit, ntfs-3g.usermap)
+  TITLE:=ntfs-3g utilities (extra)
   DEPENDS+= +ntfs-3g
 endef
 
 define Package/ntfs-3g-utils/description
   Additional ntfs-3g utilities. Not included by default for size
-  considerations. All binaries except ntfs-3g, ntfs-3g.probe.
+  considerations.
 
   Currently:
    - ntfs-3g.secaudit
    - ntfs-3g.usermap
-
 endef
 
-# TODO: write a proper description
-# new in 2001.4.12
+define Package/ntfsprogs_ntfs-3g/description
+  Suite of NTFS utilities for doing neat things with NTFS.
+  Contains:
+   - mkntfs - Create an NTFS filesystem.
+   - ntfscat - Dump a file's content to the standard output.
+   - ntfsclone - Efficiently clone, backup, restore or rescue NTFS.
+   - ntfscluster - Locate the files which use the given sectors or clusters.
+   - ntfscmp - Compare two NTFS filesystems and tell the differences.
+   - ntfscp - Copy a file to an NTFS volume.
+   - ntfsfix - Check and fix some common errors, clear the LogFile.
+   - ntfsinfo - Show information about NTFS or one of the files or directories within it.
+   - ntfslabel - Show, or set, an NTFS filesystem's volume label.
+   - ntfsls - List information about files in a directory residing on an NTFS.
+   - ntfsresize - Resize NTFS without losing data.
+   - ntfsundelete - Recover deleted files from NTFS.
+endef
+
 define Package/ntfsprogs_ntfs-3g
   $(call Package/ntfs-3g/common)
   TITLE:=ntfsprogs (ntfs-3g)
@@ -199,7 +214,8 @@ endef
 
 define Package/ntfs-3g-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(FIND) $(PKG_INSTALL_DIR)/usr/bin/ -type f ! -name ntfs-3g.probe ! -name ntfs-3g -exec $(INSTALL_BIN) {} $(1)/usr/bin/ \;
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ntfs-3g.secaudit $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ntfs-3g.usermap $(1)/usr/bin
 endef
 
 define Package/ntfsprogs_ntfs-3g/install

@@ -1,8 +1,8 @@
 --- a/include/common.h
 +++ b/include/common.h
-@@ -1081,4 +1081,7 @@ int	parse_serveractive_element(char *str
- #define ZBX_SESSION_ACTIVE	0
- #define ZBX_SESSION_PASSIVE	1
+@@ -1083,4 +1083,7 @@ int	parse_serveractive_element(char *str
+ 
+ char	*zbx_dyn_escape_shell_single_quote(const char *text);
  
 +#define ZBX_RUN_BACKGROUND      0
 +#define ZBX_RUN_FOREGROUND      1
