@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vala
-PKG_VERSION:=0.28.0
+PKG_VERSION:=0.29.3
 PKG_RELEASE:=1
 PKG_LICENSE:=LGPL-2.1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/vala/0.28/
-PKG_MD5SUM:=8d4ceac3451a0d5497e7be38e5e4c2ad
+PKG_SOURCE_URL:=@GNOME/vala/0.29/
+PKG_MD5SUM:=939a2a9c20974db9badbc3f910fcae63
 
 PKG_BUILD_DEPENDS:=glib2 glib2/host vala/host
 HOST_BUILD_DEPENDS:=glib2/host
@@ -47,21 +47,21 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
-		$(1)/usr/share/vala-0.28/vapi \
+		$(1)/usr/share/vala-0.30/vapi \
 		$(1)/usr/lib \
 		$(1)/usr/share/pkgconfig \
 		$(1)/usr/bin
 
 	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/share/vala-0.28/vapi/* \
-		$(1)/usr/share/vala-0.28/vapi
+		$(PKG_INSTALL_DIR)/usr/share/vala-0.30/vapi/* \
+		$(1)/usr/share/vala-0.30/vapi
 
 	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/lib/libvala-0.28.{so*,la} \
+		$(PKG_INSTALL_DIR)/usr/lib/libvala-0.30.{so*,la} \
 		$(1)/usr/lib
 
 	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/{vala,vala-0.28,valac,valac-0.28,vapicheck,vapicheck-0.28,vapigen,vapigen-0.28,vala-gen-introspect,vala-gen-introspect-0.28} \
+		$(PKG_INSTALL_DIR)/usr/bin/{vala,vala-0.30,valac,valac-0.30,vapicheck,vapicheck-0.30,vapigen,vapigen-0.30,vala-gen-introspect,vala-gen-introspect-0.30} \
 		$(1)/usr/bin
 
 	$(INSTALL_DATA) \
