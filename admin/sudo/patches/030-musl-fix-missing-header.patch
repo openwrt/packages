@@ -1,0 +1,12 @@
+diff -rupN sudo-1.8.14p3.orig/include/sudo_util.h sudo-1.8.14p3/include/sudo_util.h
+--- sudo-1.8.14p3.orig/include/sudo_util.h	2015-07-22 14:22:49.000000000 +0200
++++ sudo-1.8.14p3/include/sudo_util.h	2015-08-30 18:41:24.509814946 +0200
+@@ -23,6 +23,8 @@
+ # include "compat/stdbool.h"
+ #endif /* HAVE_STDBOOL_H */
+ 
++#include <sys/types.h>
++
+ /*
+  * Macros for operating on struct timeval.
+  */
