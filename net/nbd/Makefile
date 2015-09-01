@@ -1,0 +1,53 @@
+#
+# Copyright (C) 2006-2011 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=nbd
+PKG_VERSION:=2.9.23
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=@SF/nbd
+PKG_MD5SUM:=065b6ded41887a08be6dbb8d77280f24
+PKG_MAINTAINER:=Marcin Jurkowski <marcin1j@gmail.com>
+
+PKG_INSTALL:=1
+
+include $(INCLUDE_DIR)/package.mk
+
+# -liconv due to glib2, to be revisited later
+include $(INCLUDE_DIR)/nls.mk
+
+PKG_BUILD_DEPENDS:=glib2 libintl
+
+define Package/nbd
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=Network Block Device utilities
+  URL:=http://nbd.sourceforge.net
+  DEPENDS:=+kmod-nbd
+endef
+
+define Package/nbd/description
+  This package contains the network block device client.
+endef
+
+CONFIGURE_ARGS+= \
+	--disable-glibtest
+
+define Build/Compile
+	$(MAKE) -C $(PKG_BUILD_DIR) \
+		nbd-client
+endef
+
+define Package/nbd/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nbd-client $(1)/usr/sbin/
+endef
+
+$(eval $(call BuildPackage,nbd))
