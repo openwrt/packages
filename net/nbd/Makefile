@@ -60,6 +60,14 @@ endef
 define Package/nbd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nbd-client $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/nbd-client.conf $(1)/etc/config/nbd-client
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/nbd-client.init $(1)/etc/init.d/nbd-client
+endef
+
+define Package/nbd/conffiles
+/etc/config/nbd-client
 endef
 
 $(eval $(call BuildPackage,nbd))
