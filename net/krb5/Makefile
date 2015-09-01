@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
 PKG_VERSION:=1.13.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -76,7 +76,8 @@ CONFIGURE_VARS += \
 	ac_cv_func_regcomp=yes \
 	ac_cv_printf_positional=yes \
 	ac_cv_file__etc_environment=no \
-	ac_cv_file__etc_TIMEZONE=no
+	ac_cv_file__etc_TIMEZONE=no \
+	krb5_cv_sys_rcdir=/tmp
 
 CONFIGURE_ARGS += \
 	--without-system-verto \
@@ -91,7 +92,6 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib \
 		$(1)/usr
-	rm -f $(1)/usr/lib/libcom_err*
 endef
 
 define Package/krb5-libs/install
