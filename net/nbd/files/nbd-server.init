@@ -1,9 +1,11 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2012 OpenWrt.org
+# Copyright (C) 2015 OpenWrt.org
 
 START=60
-SERVICE_USE_PID=1
+STOP=40
+USE_PROCD=1
 
+PROG=/usr/bin/nbd-server
 CONFIGFILE="/var/etc/nbd-server.conf"
 
 
@@ -81,28 +83,30 @@ config_handle_share() {
 	append_val_str listenaddr "$cfg" oldstyle_listenaddr
 }
 
-config_read() {
+start_instance() {
+	local cfg="$1"
+	local enabled
+
+	config_get_bool enabled "$cfg" 'enabled' '0'
+	[ "$enabled" = 0 ] && return 1
+
+	procd_open_instance
+	procd_set_param command $PROG --config-file=$CONFIGFILE
+	procd_set_param file $CONFIGFILE
+	procd_close_instance
+}
+
+start_service() {
+	config_load nbd-server
 
 	mkdir -p $(dirname $CONFIGFILE)
-	echo -n > $CONFIGFILE
-
-	config_load nbd-server
+	echo "# auto-generated config file from /etc/config/nbd-server" > $CONFIGFILE
 	config_foreach config_handle_generic nbd-server
 	config_foreach config_handle_share share
+
+	config_foreach start_instance nbd-server
 }
 
-start() {
-	config_read
-
-	if [ "$SERVICE_ENABLED" = "1" ]; then
-		service_start /usr/bin/nbd-server \
-			--pid-file /var/run/nbd-server.pid \
-			--config-file=$CONFIGFILE
-	fi
+service_triggers() {
+	procd_add_reload_trigger "nbd-server"
 }
-
-stop() {
-	service_stop /usr/bin/nbd-server
-}
-
-

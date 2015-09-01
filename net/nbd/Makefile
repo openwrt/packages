@@ -53,7 +53,7 @@ endef
 CONFIGURE_ARGS += \
 	--disable-glibtest
 
-TARGET_CFLAGS += --std=gnu99
+TARGET_CFLAGS += --std=gnu99 -DNODAEMON
 
 define Package/nbd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
