@@ -38,6 +38,16 @@ config NGINX_LUA
 	help
 		Enable support for LUA scripts.
 
+config NGINX_SPNEGO
+	bool
+	prompt "Enable SPNEGO module"
+	help
+		Enable support for Kerberos authentication via GSSAPI.
+
+		See https://github.com/stnoonan/spnego-http-auth-nginx-module
+		for specific instructions. Make sure the keytab file is
+		readable by user "nobody".
+
 config NGINX_PCRE
 	bool
 	prompt "Enable PCRE library usage"

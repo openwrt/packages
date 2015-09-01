@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.4.7
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
@@ -26,6 +26,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_SSL \
 	CONFIG_NGINX_DAV \
 	CONFIG_NGINX_LUA \
+	CONFIG_NGINX_SPNEGO \
 	CONFIG_NGINX_PCRE \
 	CONFIG_NGINX_HTTP_CACHE \
 	CONFIG_NGINX_HTTP_CHARSET \
@@ -59,7 +60,7 @@ define Package/nginx
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx web server
   URL:=http://nginx.org/
-  DEPENDS:=+NGINX_PCRE:libpcre +(NGINX_SSL||NGINX_HTTP_CACHE||NGINX_HTTP_AUTH_BASIC):libopenssl +NGINX_HTTP_GZIP:zlib +libpthread +NGINX_LUA:liblua
+  DEPENDS:=+NGINX_PCRE:libpcre +(NGINX_SSL||NGINX_HTTP_CACHE||NGINX_HTTP_AUTH_BASIC):libopenssl +NGINX_HTTP_GZIP:zlib +libpthread +NGINX_LUA:liblua +NGINX_SPNEGO:krb5-libs
   MENU:=1
 endef
 
@@ -99,6 +100,10 @@ ifeq ($(CONFIG_NGINX_DAV),y)
 endif
 ifeq ($(CONFIG_NGINX_LUA),y)
   ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/lua-nginx
+endif
+ifeq ($(CONFIG_NGINX_SPNEGO),y)
+  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/spnego-http-auth-nginx-module
+  TARGET_CFLAGS += -I $(STAGING_DIR)/usr/include/krb5
 endif
 ifneq ($(CONFIG_NGINX_HTTP_CACHE),y)
   ADDITIONAL_MODULES += --without-http-cache
@@ -215,6 +220,7 @@ endef
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(if $(CONFIG_NGINX_LUA),$(call Prepare/lua-nginx))
+	$(if $(CONFIG_NGINX_SPNEGO),$(call Prepare/spnego-http-auth-nginx-module))
 	$(if $(CONFIG_NGINX_NAXSI),$(call Prepare/nginx-naxsi))
 	$(if $(CONFIG_NGINX_SYSLOG),$(call Prepare/nginx-syslog))
 	$(if $(CONFIG_NGINX_HTTP_UPSTREAM_CHECK),$(call Prepare/nginx-upstream-check))
@@ -326,6 +332,19 @@ define Package/nginx-syslog/install
 	chmod 0640 $(1)/etc/nginx/nginx.conf.syslog
 endef
 
+
+define Download/spnego-http-auth-nginx-module
+	VERSION:=c85a38c595
+	SUBDIR:=spnego-http-auth-nginx-module
+	FILE:=spnego-http-auth-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+	URL:=https://github.com/stnoonan/spnego-http-auth-nginx-module
+	PROTO:=git
+endef
+
+define  Prepare/spnego-http-auth-nginx-module
+	$(eval $(call Download,spnego-http-auth-nginx-module))
+	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+endef
 
 $(eval $(call BuildPackage,nginx))
 $(eval $(call BuildPackage,nginx-naxsi))
