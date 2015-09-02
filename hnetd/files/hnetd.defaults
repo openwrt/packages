@@ -1,7 +1,14 @@
 #!/bin/sh
 
+# Why we tune dnsmasq?
+# localservice=0 => other hnetd instances can query for local names
+# rebind_protection=0 => accept RFC1918 names from the other hnetd instances
+# boguspriv=0 => allow reverse resolution of RFC1918 w/o local hosts entries
+
 uci batch <<EOF
 set dhcp.odhcpd.maindhcp=1
 set dhcp.@dnsmasq[0].localservice=0
+set dhcp.@dnsmasq[0].rebind_protection=0
+set dhcp.@dnsmasq[0].boguspriv=0
 commit dhcp
 EOF
