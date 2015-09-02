@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -14,6 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/nbd
 PKG_MD5SUM:=73d11644a28b9f335292cdb3bdc4b74b
+PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Marcin Jurkowski <marcin1j@gmail.com>
 
 PKG_INSTALL:=1
