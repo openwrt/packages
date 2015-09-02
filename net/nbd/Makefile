@@ -50,13 +50,10 @@ define Package/nbd-server/description
   This package contains the network block device server.
 endef
 
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
 	--disable-glibtest
 
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		nbd-client nbd-server
-endef
+TARGET_CFLAGS += --std=gnu99
 
 define Package/nbd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
