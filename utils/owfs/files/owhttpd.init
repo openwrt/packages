@@ -1,71 +1,81 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2009-2012 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 
-START=99
+START=95
+USE_PROCD=1
 
-SERVICE_WRITE_PID=1
-SERVICE_DAEMONIZE=1
+PROG=/usr/bin/owhttpd
 
-DEFAULT_SERVICE_UID=65534
-DEFAULT_SERVICE_GID=65534
+append_arg() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	local def="$4"
+	local val
 
-append_device() {
-	append devices "$1"
+	config_get val "$cfg" "$var"
+	[ -n "$val" -o -n "$def" ] && procd_append_param command $opt "${val:-$def}"
 }
 
+append_bool() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	local def="$4"
+	local val
 
-start_owfs_daemon() {
-	local program="$1"
-	local config="$1"
-	local args="--foreground --error_print=1 $2"
+	config_get_bool val "$cfg" "$var" "$def"
+	[ "$val" = 1 ] && procd_append_param command "$opt"
+}
 
+append_plain() {
+	procd_append_param command "$1"
+}
 
+append_param() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	local def="$4"
+	local val
+
+	config_get val "$cfg" "$var"
+	[ -n "$val" -o -n "$def" ] && procd_append_param "$opt" "${val:-$def}"
+}
+
+start_instance() {
+	local cfg="$1"
 	local enabled
-	config_get_bool enabled "$config" enabled 0
-	[ "${enabled}" -eq 0 ] && return 1
 
-	local readonly
-	config_get_bool readonly "$config" readonly 0
-	[ "${readonly}" -eq 1 ] && append args "--readonly"
+	config_get_bool enabled "$cfg" 'enabled' '0'
+	[ "$enabled" = 0 ] && return 1
 
-	local error_level
-	config_get error_level "$config" error_level
-	[ -n "${error_level}" ] && append args "--error_level=${error_level}"
+	procd_open_instance
 
-	local options
-	config_get options "$config" options
+	procd_set_param command "$PROG" --foreground --error_print=1
 
-	devices=""
-	config_list_foreach "$config" devices append_device
+	# common parameters
+	append_bool "$cfg" readonly "--readonly"
+	append_arg "$cfg" error_level "--error_level"
+	config_list_foreach "$cfg" options append_plain
+	config_list_foreach "$cfg" devices append_plain
+	append_param "$cfg" user user
 
-	config_get SERVICE_UID "$config" uid "$DEFAULT_SERVICE_UID"
-	config_get SERVICE_GID "$config" gid "$DEFAULT_SERVICE_GID"
+	# owhttpd-specific
+	append_arg "$cfg" port "--port"
+	append_arg "$cfg" max_connections "--max_connections"
 
-	service_start "/usr/bin/$program" $args $options $devices
+	procd_set_param respawn
+
+	procd_close_instance
+
 }
 
-start_owhttpd() {
-	local config="owhttpd"
-	local args=""
-
-	config_load "$config"
-
-	local port
-	config_get port "$config" port
-	[ -n "${port}" ] && append args "--port=${port}"
-
-	local max_connections
-	config_get max_connections "$config" max_connections
-	[ -n "${max_connections}" ] && append args "--max_connections=${max_connections}"
-
-	start_owfs_daemon "$config" "$args"
+service_triggers() {
+	procd_add_reload_trigger owhttpd
 }
 
-
-start() {
-	start_owhttpd
-}
-
-stop() {
-	service_stop /usr/bin/owhttpd
+start_service() {
+	config_load owhttpd
+	config_foreach start_instance owhttpd
 }
