@@ -1,0 +1,22 @@
+--- a/resource/csdk/security/provisioning/sample/SConscript
++++ b/resource/csdk/security/provisioning/sample/SConscript
+@@ -53,7 +53,7 @@ provisioning_env.PrependUnique(LIBS = ['
+ 
+ if env.get('SECURED') == '1':
+     provisioning_env.AppendUnique(LIBS = ['tinydtls'])
+-provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
++#provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
+ 
+ provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+ 
+--- a/resource/csdk/security/provisioning/SConscript
++++ b/resource/csdk/security/provisioning/SConscript
+@@ -62,7 +62,7 @@ provisioning_env.PrependUnique(LIBS = ['
+ 
+ provisioning_env.AppendUnique(LIBS = ['tinydtls'])
+ 
+-provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
++#provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
+ 
+ if target_os == 'android':
+ 	provisioning_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])

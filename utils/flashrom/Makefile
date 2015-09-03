@@ -46,6 +46,8 @@ define Package/flashrom/description
  /firmware images.
 endef
 
+TARGET_CFLAGS+=-std=gnu89
+
 MAKE_FLAGS += \
 	PREFIX="/usr"
 

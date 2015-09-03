@@ -9,7 +9,7 @@ Subject: [PATCH 3/4] 004-use-env.patch
 
 --- a/build_common/SConscript
 +++ b/build_common/SConscript
-@@ -106,6 +106,26 @@ tc_set_msg = '''
+@@ -129,6 +129,26 @@ tc_set_msg = '''
  * cause inexplicable errors.                                                  *
  *******************************************************************************
  '''
@@ -35,4 +35,4 @@ Subject: [PATCH 3/4] 004-use-env.patch
 +
  if env.get('VERBOSE') == False:
  	env['CCCOMSTR'] = "Compiling $TARGET"
- 	env['CXXCOMSTR'] = "Compiling $TARGET"
+ 	env['SHCCCOMSTR'] = "Compiling $TARGET"
