@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=madplay
 PKG_VERSION:=0.15.2b
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/mad \
@@ -20,14 +20,14 @@ PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Simon Peter <probono@puredarwin.org>
 
 PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/madplay
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+libid3tag +libmad
+  DEPENDS:=+libid3tag +libmad $(INTL_DEPENDS)
   TITLE:=MPEG audio player in fixed point
   URL:=http://sourceforge.net/projects/mad
 endef
@@ -57,7 +57,7 @@ endef
 
 define Package/madplay/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/madplay $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/madplay $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,madplay))
