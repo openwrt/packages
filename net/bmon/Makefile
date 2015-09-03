@@ -40,6 +40,9 @@ CONFIGURE_ARGS += \
 CONFIGURE_VARS += \
 	ac_cv_lib_nl_nl_connect=no \
 
+# Needed to compile some objects
+TARGET_CFLAGS+= -std=gnu99
+
 define Package/bmon/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/bmon $(1)/usr/sbin/
