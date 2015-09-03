@@ -60,10 +60,13 @@ PKG_MOD_AVAILABLE:= \
 	pem \
 	pgp \
 	pkcs1 \
+	pkcs7 \
 	pkcs8 \
 	pkcs11 \
+	pkcs12 \
 	pubkey \
 	random \
+	rc2 \
 	resolve \
 	revocation \
 	sha1 \
@@ -73,6 +76,7 @@ PKG_MOD_AVAILABLE:= \
 	socket-dynamic \
 	sql \
 	sqlite \
+	sshkey \
 	stroke \
 	test-vectors \
 	unity \
@@ -111,7 +115,7 @@ define Package/strongswan
 $(call Package/strongswan/Default)
   DEPENDS:= +libpthread +ip \
 	+kmod-crypto-authenc \
-	+kmod-ipsec +kmod-ipsec4 +kmod-ipsec6 \
+	+kmod-ipsec +kmod-ipsec4 +IPV6:kmod-ipsec6 \
 	+kmod-ipt-ipsec +iptables-mod-ipsec
 endef
 
@@ -170,10 +174,13 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-pem \
 	+strongswan-mod-pgp \
 	+strongswan-mod-pkcs1 \
+	+strongswan-mod-pkcs7 \
 	+strongswan-mod-pkcs8 \
 	+strongswan-mod-pkcs11 \
+	+strongswan-mod-pkcs12 \
 	+strongswan-mod-pubkey \
 	+strongswan-mod-random \
+	+strongswan-mod-rc2 \
 	+strongswan-mod-resolve \
 	+strongswan-mod-revocation \
 	+strongswan-mod-sha1 \
@@ -182,6 +189,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-socket-default \
 	+strongswan-mod-sql \
 	+strongswan-mod-sqlite \
+	+strongswan-mod-sshkey \
 	+strongswan-mod-stroke \
 	+strongswan-mod-test-vectors \
 	+strongswan-mod-uci \
@@ -226,11 +234,13 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-pkcs1 \
 	+strongswan-mod-pubkey \
 	+strongswan-mod-random \
+	+strongswan-mod-rc2 \
 	+strongswan-mod-resolve \
 	+strongswan-mod-revocation \
 	+strongswan-mod-sha1 \
 	+strongswan-mod-sha2 \
 	+strongswan-mod-socket-default \
+	+strongswan-mod-sshkey \
 	+strongswan-mod-stroke \
 	+strongswan-mod-updown \
 	+strongswan-mod-x509 \
@@ -489,10 +499,13 @@ $(eval $(call BuildPlugin,openssl,OpenSSL crypto,+PACKAGE_strongswan-mod-openssl
 $(eval $(call BuildPlugin,pem,PEM decoding,))
 $(eval $(call BuildPlugin,pgp,PGP key decoding,))
 $(eval $(call BuildPlugin,pkcs1,PKCS1 key decoding,))
+$(eval $(call BuildPlugin,pkcs7,PKCS7 key decoding,))
 $(eval $(call BuildPlugin,pkcs8,PKCS8 key decoding,))
 $(eval $(call BuildPlugin,pkcs11,PKCS11 key decoding,))
+$(eval $(call BuildPlugin,pkcs12,PKCS12 key decoding,))
 $(eval $(call BuildPlugin,pubkey,raw public key,))
 $(eval $(call BuildPlugin,random,RNG,))
+$(eval $(call BuildPlugin,rc2,RC2 crypto,))
 $(eval $(call BuildPlugin,resolve,DNS resolver,))
 $(eval $(call BuildPlugin,revocation,X509 CRL/OCSP revocation,))
 $(eval $(call BuildPlugin,sha1,SHA1 crypto,))
@@ -502,6 +515,7 @@ $(eval $(call BuildPlugin,socket-default,default socket implementation for charo
 $(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charon,))
 $(eval $(call BuildPlugin,sql,SQL database interface,))
 $(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-sqlite:libsqlite3))
+$(eval $(call BuildPlugin,sshkey,SSH key decoding,))
 $(eval $(call BuildPlugin,stroke,Stroke,+strongswan-utils))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci))

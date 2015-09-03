@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-http-message
 PKG_VERSION:=6.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER
 PKG_SOURCE:=HTTP-Message-$(PKG_VERSION).tar.gz
@@ -29,7 +29,7 @@ define Package/perl-http-message
   CATEGORY:=Languages
   TITLE:=HTTP style messages
   URL:=http://search.cpan.org/dist/HTTP-Message/
-  DEPENDS:=perl +perl-encode-locale +perl-http-date +perl-io-html +perl-lwp-mediatypes +perl-uri +perlbase-compress +perlbase-encode +perlbase-essential +perlbase-io +perlbase-mime
+  DEPENDS:=perl +perl-encode-locale +perl-http-date +perl-io-html +perl-lwp-mediatypes +perl-uri +perlbase-base +perlbase-compress +perlbase-encode +perlbase-essential +perlbase-io +perlbase-mime
 endef
 
 define Build/Configure

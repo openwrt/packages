@@ -1,6 +1,6 @@
 --- a/resource/SConscript
 +++ b/resource/SConscript
-@@ -61,7 +61,7 @@ if target_os == 'linux':
+@@ -67,7 +67,7 @@ if target_os == 'linux':
  	SConscript('csdk/stack/samples/linux/secure/SConscript')
  
  	# Build C/C++ unit tests
@@ -8,4 +8,17 @@
 +	# SConscript('unit_tests.scons')
  
  elif target_os == 'darwin':
- 	# Build linux samples for now.
+ 	env.Command('../../out/darwin/iotivity-csdk.framework',None,src_dir + '/tools/darwin/mkfwk_osx.sh')
+--- a/service/resource-encapsulation/SConscript
++++ b/service/resource-encapsulation/SConscript
+@@ -101,7 +101,7 @@ SConscript('examples/SConscript')
+ ######################################################################
+ # Build UnitTests Resource Client , resourceCache and resourceBroker
+ ################################################ ######################
+-SConscript('unittests/SConscript')
+-SConscript('src/resourceCache/unittests/SConscript')
+-SConscript('src/resourceBroker/unittest/SConscript')
++#SConscript('unittests/SConscript')
++#SConscript('src/resourceCache/unittests/SConscript')
++#SConscript('src/resourceBroker/unittest/SConscript')
+ 
