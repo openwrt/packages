@@ -27,6 +27,8 @@ PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
 
 PKG_INSTALL:=1
 
+PKG_CONFIG_DEPENDS := CONFIG_OPENSSL_WITH_EC
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/bind/Default
@@ -100,7 +102,7 @@ CONFIGURE_ARGS += \
 	--enable-epoll=yes \
 	--with-gost=no \
 	--with-gssapi=no \
-	--with-ecdsa=no \
+	--with-ecdsa=$(if $(CONFIG_OPENSSL_WITH_EC),yes,no) \
 	--with-readline=no
 
 CONFIGURE_VARS += \
