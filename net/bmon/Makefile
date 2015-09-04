@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bmon
-PKG_VERSION:=3.5
+PKG_VERSION:=3.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/tgraf/bmon/releases/download/v$(PKG_VERSION)/
-PKG_MD5SUM:=b7d0d055727f2cf1e452f26dfbf6a825
+PKG_MD5SUM:=162ce0d108ff32cbf44b874c5a7e8147
 PKG_MAINTAINER:=Baptiste Jonglez <openwrt-pkg@bitsofnetworks.org>
 PKG_LICENSE:=MIT
 
@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bmon
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+PACKAGE_libncursesw:libncursesw +!PACKAGE_libncursesw:libncurses +libnl +confuse
+  DEPENDS:=+PACKAGE_libncursesw:libncursesw +!PACKAGE_libncursesw:libncurses +libnl +confuse +terminfo
   TITLE:=bmon is a portable bandwidth monitor
   URL:=https://github.com/tgraf/bmon/
 endef
@@ -39,6 +39,9 @@ CONFIGURE_ARGS += \
 
 CONFIGURE_VARS += \
 	ac_cv_lib_nl_nl_connect=no \
+
+# Needed to compile some objects
+TARGET_CFLAGS+= -std=gnu99
 
 define Package/bmon/install
 	$(INSTALL_DIR) $(1)/usr/sbin
