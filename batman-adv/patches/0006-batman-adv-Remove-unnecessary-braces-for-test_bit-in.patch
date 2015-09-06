@@ -1,0 +1,41 @@
+From d126204d0471e0972142697f36364443a0bbc9cc Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Linus=20L=C3=BCssing?= <linus.luessing@c0d3.blue>
+Date: Fri, 14 Aug 2015 17:23:50 +0200
+Subject: [PATCH 6/9] batman-adv: Remove unnecessary braces for test_bit() in
+ MCAST
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Fixes: 1798ad3f ("batman-adv: Fix broken MCAST capability check")
+Signed-off-by: Linus Lüssing <linus.luessing@c0d3.blue>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ net/batman-adv/multicast.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/net/batman-adv/multicast.c b/net/batman-adv/multicast.c
+index 8bdd69f..4541f08 100644
+--- a/net/batman-adv/multicast.c
++++ b/net/batman-adv/multicast.c
+@@ -740,7 +740,7 @@ static void batadv_mcast_tvlv_ogm_handler_v1(struct batadv_priv *bat_priv,
+ 	 * is a completely new orig_node no need to decrease the counter.
+ 	 */
+ 	if (orig_mcast_enabled &&
+-	    !(test_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities))) {
++	    !test_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities)) {
+ 		if (orig_initialized)
+ 			atomic_dec(&bat_priv->mcast.num_disabled);
+ 		set_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities);
+@@ -798,7 +798,7 @@ void batadv_mcast_purge_orig(struct batadv_orig_node *orig)
+ 
+ 	spin_lock_bh(&orig->mcast_handler_lock);
+ 
+-	if (!(test_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities)) &&
++	if (!test_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities) &&
+ 	    test_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capa_initialized))
+ 		atomic_dec(&bat_priv->mcast.num_disabled);
+ 
+-- 
+2.5.0
+

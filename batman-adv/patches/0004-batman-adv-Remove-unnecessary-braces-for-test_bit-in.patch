@@ -1,0 +1,32 @@
+From af3558688698479a56034f0fcbca164be2052aa8 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Linus=20L=C3=BCssing?= <linus.luessing@c0d3.blue>
+Date: Fri, 14 Aug 2015 17:23:48 +0200
+Subject: [PATCH 4/9] batman-adv: Remove unnecessary braces for test_bit() in
+ DAT
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Fixes: de466678 ("batman-adv: Fix broken DAT capability check")
+Signed-off-by: Linus Lüssing <linus.luessing@c0d3.blue>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ net/batman-adv/distributed-arp-table.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/batman-adv/distributed-arp-table.c b/net/batman-adv/distributed-arp-table.c
+index 1caf7d2..63243a3 100644
+--- a/net/batman-adv/distributed-arp-table.c
++++ b/net/batman-adv/distributed-arp-table.c
+@@ -453,7 +453,7 @@ static bool batadv_is_orig_node_eligible(struct batadv_dat_candidate *res,
+ 	int j;
+ 
+ 	/* check if orig node candidate is running DAT */
+-	if (!(test_bit(BATADV_ORIG_CAPA_HAS_DAT, &candidate->capabilities)))
++	if (!test_bit(BATADV_ORIG_CAPA_HAS_DAT, &candidate->capabilities))
+ 		goto out;
+ 
+ 	/* Check if this node has already been selected... */
+-- 
+2.5.0
+

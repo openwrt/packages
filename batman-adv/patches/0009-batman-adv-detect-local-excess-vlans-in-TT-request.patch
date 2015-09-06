@@ -1,0 +1,55 @@
+From 2dd1d9f06ac1208b1921aa90d479c3940bc70b4f Mon Sep 17 00:00:00 2001
+From: Simon Wunderlich <sw@simonwunderlich.de>
+Date: Wed, 2 Sep 2015 20:09:56 +0200
+Subject: [PATCH 9/9] batman-adv: detect local excess vlans in TT request
+
+If the local representation of the global TT table of one originator has
+more VLAN entries than the respective TT update, there is some
+inconsistency present. By detecting and reporting this inconsistency,
+the global table gets updated and the excess VLAN will get removed in
+the process.
+
+Reported-by: Alessandro Bolletta <alessandro@mediaspot.net>
+Signed-off-by: Simon Wunderlich <sw@simonwunderlich.de>
+Acked-by: Antonio Quartulli <antonio@meshcoding.com>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ net/batman-adv/translation-table.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/net/batman-adv/translation-table.c b/net/batman-adv/translation-table.c
+index 9ac1a46..7e4657e 100644
+--- a/net/batman-adv/translation-table.c
++++ b/net/batman-adv/translation-table.c
+@@ -2394,8 +2394,8 @@ static bool batadv_tt_global_check_crc(struct batadv_orig_node *orig_node,
+ {
+ 	struct batadv_tvlv_tt_vlan_data *tt_vlan_tmp;
+ 	struct batadv_orig_node_vlan *vlan;
++	int i, orig_num_vlan;
+ 	uint32_t crc;
+-	int i;
+ 
+ 	/* check if each received CRC matches the locally stored one */
+ 	for (i = 0; i < num_vlan; i++) {
+@@ -2421,6 +2421,18 @@ static bool batadv_tt_global_check_crc(struct batadv_orig_node *orig_node,
+ 			return false;
+ 	}
+ 
++	/* check if any excess VLANs exist locally for the originator
++	 * which are not mentioned in the TVLV from the originator.
++	 */
++	rcu_read_lock();
++	orig_num_vlan = 0;
++	list_for_each_entry_rcu(vlan, &orig_node->vlan_list, list)
++		orig_num_vlan++;
++	rcu_read_unlock();
++
++	if (orig_num_vlan > num_vlan)
++		return false;
++
+ 	return true;
+ }
+ 
+-- 
+2.5.0
+
