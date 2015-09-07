@@ -1,0 +1,92 @@
+diff -rupN seafile-server-4.1.2.orig/lib/net.c seafile-server-4.1.2/lib/net.c
+--- seafile-server-4.1.2.orig/lib/net.c	2015-09-04 10:43:14.000000000 +0200
++++ seafile-server-4.1.2/lib/net.c	2015-09-04 10:46:36.738363233 +0200
+@@ -31,11 +31,7 @@
+ 
+ #include <fcntl.h>
+ 
+-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #include <event2/util.h>
+-#else
+-#include <evutil.h>
+-#endif
+ 
+ #include "net.h"
+ 
+diff -rupN seafile-server-4.1.2.orig/lib/net.h seafile-server-4.1.2/lib/net.h
+--- seafile-server-4.1.2.orig/lib/net.h	2015-09-04 10:43:14.000000000 +0200
++++ seafile-server-4.1.2/lib/net.h	2015-09-04 10:46:42.595357284 +0200
+@@ -19,11 +19,7 @@
+     #include <netinet/tcp.h>
+ #endif
+ 
+-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #include <event2/util.h>
+-#else
+-#include <evutil.h>
+-#endif
+ 
+ #ifdef WIN32
+     #define ECONNREFUSED WSAECONNREFUSED
+diff -rupN seafile-server-4.1.2.orig/lib/utils.h seafile-server-4.1.2/lib/utils.h
+--- seafile-server-4.1.2.orig/lib/utils.h	2015-09-04 10:43:14.000000000 +0200
++++ seafile-server-4.1.2/lib/utils.h	2015-09-04 10:46:47.761352039 +0200
+@@ -13,11 +13,7 @@
+ #include <stdlib.h>
+ #include <sys/stat.h>
+ 
+-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #include <event2/util.h>
+-#else
+-#include <evutil.h>
+-#endif
+ 
+ #ifdef __linux__
+ #include <endian.h>
+diff -rupN seafile-server-4.1.2.orig/server/access-file.c seafile-server-4.1.2/server/access-file.c
+--- seafile-server-4.1.2.orig/server/access-file.c	2015-09-04 10:43:14.000000000 +0200
++++ seafile-server-4.1.2/server/access-file.c	2015-09-04 10:46:05.514394990 +0200
+@@ -3,13 +3,9 @@
+ #define DEBUG_FLAG SEAFILE_DEBUG_HTTP
+ #include "log.h"
+ 
+-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #include <event2/event.h>
+ #include <event2/bufferevent.h>
+ #include <event2/bufferevent_struct.h>
+-#else
+-#include <event.h>
+-#endif
+ 
+ #include <evhtp.h>
+ 
+diff -rupN seafile-server-4.1.2.orig/server/http-server.c seafile-server-4.1.2/server/http-server.c
+--- seafile-server-4.1.2.orig/server/http-server.c	2015-09-04 10:43:14.000000000 +0200
++++ seafile-server-4.1.2/server/http-server.c	2015-09-04 10:46:15.905384414 +0200
+@@ -6,11 +6,7 @@
+ #include <locale.h>
+ #include <sys/types.h>
+ 
+-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #include <event2/event.h>
+-#else
+-#include <event.h>
+-#endif
+ 
+ #include <evhtp.h>
+ 
+diff -rupN seafile-server-4.1.2.orig/server/upload-file.c seafile-server-4.1.2/server/upload-file.c
+--- seafile-server-4.1.2.orig/server/upload-file.c	2015-09-04 10:43:14.000000000 +0200
++++ seafile-server-4.1.2/server/upload-file.c	2015-09-04 10:46:23.817376367 +0200
+@@ -6,11 +6,7 @@
+ #include <getopt.h>
+ #include <fcntl.h>
+ 
+-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #include <event2/event.h>
+-#else
+-#include <event.h>
+-#endif
+ 
+ #include <evhtp.h>
+ 
