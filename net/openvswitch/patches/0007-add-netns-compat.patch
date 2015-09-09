@@ -1,0 +1,93 @@
+diff --git a/datapath/datapath.h b/datapath/datapath.h
+index fdf35f0..02be8be 100644
+--- a/datapath/datapath.h
++++ b/datapath/datapath.h
+@@ -86,10 +86,8 @@ struct datapath {
+ 	/* Stats. */
+ 	struct dp_stats_percpu __percpu *stats_percpu;
+ 
+-#ifdef CONFIG_NET_NS
+ 	/* Network namespace ref. */
+-	struct net *net;
+-#endif
++	possible_net_t net;
+ 
+ 	u32 user_features;
+ };
+@@ -154,12 +152,12 @@ int lockdep_ovsl_is_held(void);
+ 
+ static inline struct net *ovs_dp_get_net(const struct datapath *dp)
+ {
+-	return read_pnet(&dp->net);
++	return ovs_compat_read_pnet(&dp->net);
+ }
+ 
+ static inline void ovs_dp_set_net(struct datapath *dp, struct net *net)
+ {
+-	write_pnet(&dp->net, net);
++	ovs_compat_write_pnet(&dp->net, net);
+ }
+ 
+ struct vport *ovs_lookup_vport(const struct datapath *dp, u16 port_no);
+diff --git a/datapath/linux/compat/include/net/net_namespace.h b/datapath/linux/compat/include/net/net_namespace.h
+index b7dbfe3..7763584 100644
+--- a/datapath/linux/compat/include/net/net_namespace.h
++++ b/datapath/linux/compat/include/net/net_namespace.h
+@@ -51,4 +51,57 @@ static void rpl_unregister_pernet_gen_##TYPE(struct rpl_pernet_operations *rpl_p
+ #define DEFINE_COMPAT_PNET_REG_FUNC(TYPE)
+ #endif /* 2.6.33 */
+ 
++/* In recent kernel versions (4.1) this type is defined ; for older versions we have to define it */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
++#define ovs_compat_read_pnet	read_pnet
++#define ovs_compat_write_pnet	write_pnet
++
++#if defined(CONFIG_NET_NS) && defined(NETNS_REFCNT_DEBUG)
++static inline struct net *hold_net(struct net *net)
++{
++	if (net)
++		atomic_inc(&net->use_count);
++	return net;
++}
++
++static inline void release_net(struct net *net)
++{
++	if (net)
++		atomic_dec(&net->use_count);
++}
++#else
++static inline struct net *hold_net(struct net *net)
++{
++	return net;
++}
++
++static inline void release_net(struct net *net)
++{
++}
++#endif
++
++#else /* lower than 4.1 */
++typedef struct {
++#ifdef CONFIG_NET_NS
++	struct net *net;
++#endif
++} possible_net_t;
++
++static inline void ovs_compat_write_pnet(possible_net_t *pnet, struct net *net)
++{
++#ifdef CONFIG_NET_NS
++	pnet->net = net;
++#endif
++}
++
++static inline struct net *ovs_compat_read_pnet(const possible_net_t *pnet)
++{
++#ifdef CONFIG_NET_NS
++	return pnet->net;
++#else
++	return &init_net;
++#endif
++}
++#endif /* 4.1.0 */
++
+ #endif /* net/net_namespace.h wrapper */
