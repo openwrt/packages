@@ -30,8 +30,11 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 CONFIGURE_ARGS+= \
+	--with-libiconv-prefix="$(ICONV_PREFIX)" \
+	--with-libintl-prefix="$(INTL_PREFIX)" \
 	--with-ltdl \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-mysql),--with-mysql="$(STAGING_DIR)/usr",--without-mysql) \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-pgsql),--with-postgresql="$(STAGING_DIR)/usr/bin/pg_config",--without-postgresql) \
@@ -56,7 +59,7 @@ define Package/gnunet
 $(call Package/gnunet/Default)
   TITLE+= - a peer-to-peer framework focusing on security
   DEPENDS:=+ca-certificates +libgnurl +libgnutls +libidn +libltdl \
-           +libmicrohttpd +libunistring +librt
+           +libmicrohttpd +libunistring +librt $(ICONV_DEPENDS) $(INTL_DEPENDS)
   USERID:=gnunet=400:gnunet=400
   MENU:=1
 endef
