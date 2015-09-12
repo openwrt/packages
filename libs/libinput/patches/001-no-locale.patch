@@ -1,6 +1,6 @@
 --- a/src/libinput-util.c
 +++ b/src/libinput-util.c
-@@ -215,18 +215,10 @@ parse_mouse_wheel_click_angle_property(c
+@@ -216,18 +216,10 @@ parse_mouse_wheel_click_angle_property(c
  double
  parse_trackpoint_accel_property(const char *prop)
  {

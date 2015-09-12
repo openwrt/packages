@@ -23,6 +23,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 PLUGINS:= \
 	archive:+libarchive-noopenssl \
@@ -53,6 +54,7 @@ PLUGINS:= \
 
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 CONFIGURE_ARGS += \
 	--enable-ffmpeg \
@@ -65,7 +67,7 @@ define Package/libextractor
 	CATEGORY:=Libraries
 	TITLE:=GNU Libextractor
 	URL:=https://www.gnu.org/software/libextractor/
-	DEPENDS:=+libbz2 +libltdl +librt +zlib
+	DEPENDS:=+libbz2 +libltdl +librt +zlib $(ICONV_DEPENDS) $(INTL_DEPENDS)
 	MENU:=1
 endef
 
