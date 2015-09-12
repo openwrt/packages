@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2014 OpenWrt.org
+# Copyright (C) 2011-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,10 +8,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcsh
 PKG_VERSION:=6.18.01
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.astron.com/pub/tcsh/
+PKG_SOURCE_URL:= \
+	http://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/ \
+	http://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/old/ \
+	ftp://ftp.astron.com/pub/tcsh/ \
+	ftp://ftp.astron.com/pub/tcsh/old
 PKG_MD5SUM:=6eed09dbd4223ab5b6955378450d228a
 PKG_LICENSE:=BSD-4-Clause-UC
 PKG_LICENSE_FILES:=Copyright
