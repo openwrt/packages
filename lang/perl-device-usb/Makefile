@@ -54,9 +54,7 @@ define Build/Configure
 	$(call perlmod/Compile,dynamic,_INLINE_C_NO_COMPILE_=1)
 	
 	# Configure _Inline
-	$(call perlmod/Configure,SITELIB=/foo,LIBUSB_INCDIR=$(STAGING_DIR)/usr/include/ \
-	                          LIBUSB_LIBDIR=$(STAGING_DIR)/usr/lib/ \
-	                        ,$(PKG_BUILD_DIR)/_Inline/build/Device/USB)
+	$(call perlmod/Configure,,,$(PKG_BUILD_DIR)/_Inline/build/Device/USB)
 	
 	# Prevent re-configuring Inline code
 	sed 's/^dynamic :: D.*$$$$//' -i $(PKG_BUILD_DIR)/Makefile
