@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://collectd.org/files/
@@ -33,7 +33,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	curl_json \
 	curl_xml \
 	dbi \
-	entropy \
 	ethstat \
 	genericjmx \
 	gmond \
@@ -95,6 +94,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	disk \
 	dns \
 	email \
+	entropy \
 	exec \
 	filecount \
 	fscache \
@@ -286,6 +286,7 @@ $(eval $(call BuildPlugin,df,disk space input,df,))
 $(eval $(call BuildPlugin,disk,disk usage/timing input,disk,))
 $(eval $(call BuildPlugin,dns,DNS traffic input,dns,+PACKAGE_collectd-mod-dns:libpcap))
 $(eval $(call BuildPlugin,email,email output,email,))
+$(eval $(call BuildPlugin,entropy,Entropy amount input,entropy,))
 $(eval $(call BuildPlugin,exec,process exec input,exec,))
 $(eval $(call BuildPlugin,filecount,file count input,filecount,))
 $(eval $(call BuildPlugin,fscache,file-system based caching framework input,fscache,))
