@@ -12,6 +12,8 @@ DNSMASQ_DIR=/tmp/dnsmasq.d
 DNSMASQ_SCRIPT=/etc/init.d/dnsmasq
 OHP_SCRIPT=/usr/sbin/hnetd-ohp-script
 OHP_BINARY=/usr/sbin/ohybridproxy
+DDZ_SCRIPT=/usr/sbin/hnetd-ddz-script
+DDZ_BINARY=/usr/sbin/zonestitcher
 PCP_SCRIPT=/usr/sbin/hnetd-pcp-script
 PCP_BINARY=/usr/sbin/minimalist-pcproxy
 MULTICAST_SCRIPT=/usr/sbin/hnet-multicast
@@ -37,6 +39,10 @@ start_service() {
         if [ -n "$HOSTNAME" ]
         then
             procd_append_param command -n "$HOSTNAME"
+        fi
+        if [ -f $DDZ_BINARY ]
+        then
+            procd_append_param command -z $DDZ_SCRIPT
         fi
     fi
 	

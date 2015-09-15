@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hnetd
-PKG_SOURCE_VERSION:=c0b0c31b8fa4fbe47208e49685ccc9976532738a
-PKG_VERSION:=2015-09-08-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=d802317b77b02af7b5a6531d2eba1d2b790cac9a
+PKG_VERSION:=2015-09-15-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -115,8 +115,9 @@ define Package/hnetd-$(BUILD_VARIANT)/install
 	$(INSTALL_BIN) ./files/hnetd.init $(1)/etc/init.d/hnetd
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/hnet.config $(1)/etc/config/hnet
-	$(INSTALL_BIN) ./files/ohp-script $(1)/usr/sbin/hnetd-ohp-script
-	$(INSTALL_BIN) ./files/pcp-script $(1)/usr/sbin/hnetd-pcp-script
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generic/ohp.script $(1)/usr/sbin/hnetd-ohp-script
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generic/ddz.script $(1)/usr/sbin/hnetd-ddz-script
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generic/pcp.script $(1)/usr/sbin/hnetd-pcp-script
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generic/hnetd-routing $(1)/usr/sbin/hnetd-routing
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/hnetd.defaults $(1)/etc/uci-defaults/x-hnetd.defaults
