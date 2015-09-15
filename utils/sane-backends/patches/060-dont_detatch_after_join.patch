@@ -1,0 +1,14 @@
+--- a/sanei/sanei_thread.c
++++ b/sanei/sanei_thread.c
+@@ -512,11 +512,6 @@ sanei_thread_waitpid( SANE_Pid pid, int
+ 		DBG(2, "* result = %d (%p)\n", stat, (void*)status );
+ 		result = pid;
+ 	}
+-	/* call detach in any case to make sure that the thread resources 
+-	 * will be freed, when the thread has terminated
+-	 */
+-	DBG(2, "* detaching thread(%ld)\n", pid );
+-	pthread_detach((pthread_t)pid);
+ 	if (status)
+ 		*status = stat;
+ 
