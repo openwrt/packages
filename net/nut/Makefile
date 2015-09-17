@@ -269,6 +269,7 @@ $(eval $(call DriverDescription,usb,nutdrv_qx,\
 	Driver for Q* protocol serial and USB based UPS equipment))
 
 CONFIGURE_ARGS += \
+	--with-dev \
 	--$(if $(CONFIG_NUT_DRIVER_SERIAL),with,without)-serial \
 	--$(if $(CONFIG_NUT_DRIVER_USB),with,without)-usb \
 	--$(if $(CONFIG_NUT_DRIVER_SNMP),with,without)-snmp \
@@ -285,6 +286,19 @@ CONFIGURE_ARGS += \
 	--with-drvpath=/lib/nut \
 	--with-statepath=/var/run \
 	--datadir=/usr/share/nut
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib/pkgconfig
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/lib*.so* \
+		$(1)/usr/lib/
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/include/*.h \
+		$(1)/usr/include/
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
+		$(1)/usr/lib/pkgconfig/
+endef
 
 $(eval $(call BuildPackage,nut))
 $(foreach d,$(filter-out $(SERIAL_DRIVERLIST_IGNORE),$(SERIAL_DRIVERLIST)),$(eval $(call BuildPackage,nut-driver-$(d))))
