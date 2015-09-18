@@ -1,0 +1,22 @@
+--- a/fetch-maildir.c
++++ b/fetch-maildir.c
+@@ -31,6 +31,8 @@
+ #include "fdm.h"
+ #include "fetch.h"
+ 
++#define GLOB_BRACE 0
++
+ int	fetch_maildir_commit(struct account *, struct mail *);
+ void	fetch_maildir_abort(struct account *);
+ u_int	fetch_maildir_total(struct account *);
+--- a/fetch-mbox.c
++++ b/fetch-mbox.c
+@@ -32,6 +32,8 @@
+ #include "fdm.h"
+ #include "fetch.h"
+ 
++#define GLOB_BRACE 0
++
+ int	fetch_mbox_commit(struct account *, struct mail *);
+ void	fetch_mbox_abort(struct account *);
+ u_int	fetch_mbox_total(struct account *);

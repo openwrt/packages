@@ -20,15 +20,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=joe
-PKG_VERSION:=4.0
-PKG_RELEASE:=4
+PKG_VERSION:=4.1
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=@SF/joe-editor
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=3c3b6d5089a29ddc746ee89bab59286e
+PKG_MD5SUM:=b8c9ab4295e3208ddbbaa9c1141564f9
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
-PKG_LICENCE:=GPL-1.0
+PKG_LICENCE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -49,9 +49,6 @@ endef
 define Package/joe/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/joe/joe $(1)/usr/bin/
-	for i in jmacs jstar rjoe jpico; do \
-	  ln -sf joe $(1)/usr/bin/$$$$i; \
-	done
 	$(INSTALL_DIR) $(1)/etc/joe
 	$(INSTALL_CONF) ./files/joerc $(1)/etc/joe/joerc
 endef
