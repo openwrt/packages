@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-http-server-simple
-PKG_VERSION:=0.50
+PKG_VERSION:=0.51
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/F/FA/FALCONE
+PKG_SOURCE_URL:=http://www.cpan.org/authors/id/B/BP/BPS
 PKG_SOURCE:=HTTP-Server-Simple-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=09704b016bc276ca78df6ad4a7d36af6
+PKG_MD5SUM:=ef736daddc7a32a29207fa4ed5f5d62e
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
