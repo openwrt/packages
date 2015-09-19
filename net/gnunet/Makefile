@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36242
+PKG_SOURCE_VERSION:=36366
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
@@ -26,7 +26,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_BUILD_PARALLEL:=1
-PKG_FIXUP:=autoreconf
+PKG_FIXUP:=gettext-version
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
