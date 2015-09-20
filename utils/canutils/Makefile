@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013 OpenWrt.org
+# Copyright (C) 2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -11,18 +11,18 @@ PKG_NAME:=canutils
 PKG_RELEASE=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/linux-can/can-utils
+PKG_SOURCE_URL:=https://github.com/linux-can/can-utils
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE_VERSION:=0e3ff3b3157e456d4b6343f5d4b42ef692bce538
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_FIXUP:=autoreconf
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=GPL-2.0+
 
-
 include $(INCLUDE_DIR)/package.mk
 
-FILES:=	canbusload can-calc-bit-timing candump \
+FILES:=canbusload can-calc-bit-timing candump \
 	cangen cangw canplayer cansniffer cansend
 
 
@@ -30,7 +30,6 @@ define Package/canutils-log-conversion
   TITLE:=canutils log conversion
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=canutils
 endef
 
 define PartGen
@@ -38,28 +37,18 @@ define Package/canutils-$(1)
   TITLE:=$(1) package from canutils
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=canutils
 endef
 endef
 
 define Package/canutils
   SECTION:=utils
   CATEGORY:=Utilities
-  URL=https://gitorious.org/linux-can
+  URL:=https://github.com/linux-can/can-utils
   TITLE:=CAN userspace utilities and tools
   MENU:=1
 endef
 
-define Build/Configure
-	( cd "$(PKG_BUILD_DIR)"; ./autogen.sh )
-	$(call Build/Configure/Default)
-endef
-
 $(foreach file,$(FILES),$(eval $(call PartGen,$(file))))
-
-define Package/canutils/install
-	true
-endef
 
 define Package/canutils-log-conversion/install
 	$(INSTALL_DIR) $(1)/usr/bin
