@@ -27,12 +27,13 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/mbtools
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Modbus tools
-  DEPENDS:=+glib2 +libmodbus
+  DEPENDS:=+glib2 +libmodbus $(INTL_DEPENDS)
 endef
 
 define Package/mbtools/description
@@ -41,6 +42,12 @@ define Package/mbtools/description
   as client or server (in TCP or RTU)
 endef
 
+ifneq ($(INTL_FULL),)
+TARGET_LDFLAGS += \
+	-L$(INTL_PREFIX)/lib \
+	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib
+
+endif
 
 define Package/mbtools/install
 	$(INSTALL_DIR) $(1)/usr/bin

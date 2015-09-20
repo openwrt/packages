@@ -14,12 +14,12 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=7d092d1bba6e17f0d9bd21b49e441dd5
+PKG_MD5SUM:=d149d2812f10cbe04c042232e7964171
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -31,7 +31,7 @@ HOST_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=python3/host
+PKG_BUILD_DEPENDS:=libbz2/host expat/host python3/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -77,15 +77,9 @@ define Package/python3-light/description
   into separate packages.
 endef
 
-# Define newline here, since it's not defined in OpenWRT
-define newline
-
-
-endef
-
 PYTHON3_LIB_FILES_DEL:=
 PYTHON3_PACKAGES:=
-PYTHON3_SO_SUFFIX:=cpython-34.so
+PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR).so
 define Py3BasePackage
   PYTHON3_PACKAGES+=$(1)
   PYTHON3_LIB_FILES_DEL+=$(2)
@@ -109,6 +103,7 @@ endef
 MAKE_FLAGS+=\
 	CROSS_COMPILE=yes \
 	LD="$(TARGET_CC)" \
+	FREEZE_IMPORTLIB=_freeze_importlib \
 	PGEN=pgen3
 
 ifeq ($(ARCH),i386)
@@ -224,6 +219,7 @@ HOST_CONFIGURE_ARGS+= \
 	--without-pymalloc \
 	--with-threads \
 	--prefix=$(STAGING_DIR_HOST) \
+	--with-system-expat=$(STAGING_DIR_HOST) \
 	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
@@ -237,6 +233,7 @@ define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR_HOST)/bin/pgen3
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Programs/_freeze_importlib $(STAGING_DIR_HOST)/bin/_freeze_importlib
 endef
 
 $(eval $(call HostBuild))
