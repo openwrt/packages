@@ -42,7 +42,7 @@ endef
 define Package/chrony/conffiles
 /etc/chrony/chrony.conf
 /etc/chrony/chrony.keys
-/etc/config/ntpd
+/etc/config/chrony
 endef
 
 CONFIGURE_ARGS+= \
@@ -65,9 +65,9 @@ define Package/chrony/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DIR) $(1)/etc/chrony
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN) ./files/ntpd.hotplug $(1)/etc/hotplug.d/iface/20-ntpd
-	$(INSTALL_BIN) ./files/ntpd.init $(1)/etc/init.d/ntpd
-	$(INSTALL_CONF) ./files/ntpd.config $(1)/etc/config/ntpd
+	$(INSTALL_BIN) ./files/chrony.hotplug $(1)/etc/hotplug.d/iface/20-chrony
+	$(INSTALL_BIN) ./files/chronyd.init $(1)/etc/init.d/chronyd
+	$(INSTALL_CONF) ./files/chrony.config $(1)/etc/config/chrony
 	$(INSTALL_CONF) ./files/chrony.conf $(1)/etc/chrony/chrony.conf
 	$(INSTALL_CONF) ./files/chrony.keys $(1)/etc/chrony/chrony.keys
 endef
