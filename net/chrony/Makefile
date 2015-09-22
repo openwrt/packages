@@ -41,6 +41,8 @@ endef
 
 define Package/chrony/conffiles
 /etc/chrony/chrony.conf
+/etc/chrony/chrony.keys
+/etc/config/ntpd
 endef
 
 CONFIGURE_ARGS+= \
