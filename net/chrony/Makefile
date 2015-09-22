@@ -27,7 +27,8 @@ define Package/chrony
   SUBMENU:=Time Synchronization
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=
+  DEPENDS:=+libcap
+  USERID:=chrony=323:chrony=323
   TITLE:=A versatile NTP client and server
   URL:=http://chrony.tuxfamily.org/
 endef
@@ -49,9 +50,9 @@ CONFIGURE_ARGS+= \
 	--sysconfdir=/etc/chrony \
 	--prefix=/usr \
 	--disable-readline \
-	--disable-linuxcaps \
 	--disable-rtc \
-	--disable-asyncdns
+	--disable-asyncdns \
+	--with-user=chrony
 
 define Package/chrony/install
 	$(INSTALL_DIR) $(1)/usr/bin/
