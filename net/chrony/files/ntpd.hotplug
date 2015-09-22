@@ -1,0 +1,21 @@
+COMMAND=/usr/bin/chronyc
+CHRONY_KEY=$(awk '/^1 / { print $2; }' /etc/chrony/chrony.keys)
+
+chrony_control() {
+$COMMAND << EOF
+password $CHRONY_KEY
+$1
+EOF
+}
+
+[ "$ACTION" = "ifup" -a "$INTERFACE" = "wan" ] && {
+	[ -x $COMMAND ] && [ -n "$CHRONY_KEY" ] &&{
+		chrony_control online
+	}
+}
+
+[ "$ACTION" = "ifdown" -a "$INTERFACE" = "wan" ] && {
+	[ -x $COMMAND ] && [ -n "$CHRONY_KEY" ] &&{
+		chrony_control offline
+	}
+}

@@ -1,0 +1,56 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=60
+
+start() {
+	[ ! -f /var/run/chronyd.pid ] && (
+		/usr/sbin/chronyd -f /etc/chrony/chrony.conf
+
+		local NTP_SERVERS
+		local NTP_SERVER
+		local CLIENT_NETWORKS
+		local NETNAME
+		config_load ntpd
+		config_get NTP_SERVERS $CONFIG_SECTION TimeServers
+		config_get CLIENT_NETWORKS $CONFIG_SECTION ClientAccessFrom
+		CHRONY_KEY=$(awk '/^1 / { print $2; }' /etc/chrony/chrony.keys)
+
+		. /lib/functions/network.sh
+
+		# Define servers and do a rapid series of time measurements
+		# to get up to date
+		(
+			echo password $CHRONY_KEY
+			for NTP_SERVER in $NTP_SERVERS; do
+				echo add server $NTP_SERVER
+			done
+			echo burst 5/5
+		) | chronyc > /dev/null 2>&1
+		# ... wait until a reference ID is found ...
+		while chronyc tracking | grep 'Reference ID.*0.0.0.0' >/dev/null ; do sleep 1; done
+		# ... and finally, adjust the time in a single step
+		# and allow clients to access the server
+		(
+			echo password $CHRONY_KEY
+			echo makestep
+			for NETNAME in $CLIENT_NETWORKS; do
+				local subnet
+				if network_get_subnet subnet "$NETNAME"; then
+					echo allow $subnet
+				fi
+			done
+		) | chronyc > /dev/null 2>&1
+	)
+}
+
+stop() {
+	[ -r /var/run/chronyd.pid ] && PID=$(cat /var/run/chronyd.pid)
+	[ -n "$PID" ] && kill $PID
+}
+
+restart() {
+	stop
+	while [ -r /var/run/chronyd.pid ] ; do sleep 1; done
+	start
+}
