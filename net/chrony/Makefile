@@ -25,7 +25,7 @@ define Package/chrony
   SUBMENU:=Time Synchronization
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libreadline +libncurses
+  DEPENDS:=
   TITLE:=A versatile NTP client and server
   URL:=http://chrony.tuxfamily.org/
 endef
@@ -46,8 +46,7 @@ CONFIGURE_ARGS+= \
 	--host-system=Linux \
 	--sysconfdir=/etc/chrony \
 	--prefix=/usr \
-	--with-readline-includes=$(STAGING_DIR)/usr/include \
-	--with-readline-library=$(STAGING_DIR)/usr/lib \
+	--disable-readline \
 	--disable-linuxcaps \
 	--disable-asyncdns
 
