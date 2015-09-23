@@ -56,6 +56,8 @@ CONFIGURE_ARGS+= \
 	--disable-asyncdns \
 	--with-user=chrony
 
+CONFIGURE_VARS+=CPPFLAGS=-DNDEBUG
+
 define Package/chrony/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin/
