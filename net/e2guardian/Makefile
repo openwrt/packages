@@ -8,17 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=e2guardian
-PKG_VERSION:=3.0.4
+PKG_VERSION:=3.2.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/e2guardian/e2guardian.git
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE:=v$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/archive/
+PKG_MD5SUM:=70613669ef00a480e3ebb62e12427cf4
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -52,6 +50,7 @@ CONFIGURE_ARGS += \
 		--enable-pcre=yes
 
 define Build/Configure
+	( cd $(PKG_BUILD_DIR); ./autogen.sh )
 	$(call Build/Configure/Default,$CONFIGURE_ARGS)
 endef
 
