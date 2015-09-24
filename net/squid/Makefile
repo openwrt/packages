@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
-PKG_VERSION:=3.5.2
-PKG_RELEASE:=2
+PKG_VERSION:=3.5.9
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.squid-cache.org/Versions/v3/3.5/
-PKG_MD5SUM:=0330ec9f69e333c2a81fa4502ba96a22
+PKG_MD5SUM:=fe7306a90a0ba2fc906e9a8c741cc8ea
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
