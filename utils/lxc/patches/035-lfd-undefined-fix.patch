@@ -1,0 +1,12 @@
+--- a/src/lxc/bdev.c
++++ b/src/lxc/bdev.c
+@@ -1936,3 +1936,3 @@ static int loop_mount(struct bdev *bdev)
+ {
+-	int lfd, ffd = -1, ret = -1;
++	int lfd = -1, ffd = -1, ret = -1;
+ 	struct loop_info64 lo;
+@@ -1974,3 +1974,3 @@ out:
+ 	if (ret < 0) {
+-		close(lfd);
++		if (lfd > -1) close(lfd);
+ 		bdev->lofd = -1;
