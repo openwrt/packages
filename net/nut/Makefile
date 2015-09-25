@@ -55,6 +55,7 @@ define Package/nut
 	$(call Package/nut/Default)
 	TITLE:=Network UPS Tools
 	DEPENDS:= \
+		+libpthread \
 		+NUT_DRIVER_SNMP:libnetsnmp \
 		+NUT_DRIVER_USB:libusb-compat \
 		+NUT_SSL:libopenssl
