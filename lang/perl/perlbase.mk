@@ -287,7 +287,6 @@ $(eval $(call BuildPackage,perlbase-compress))
 define Package/perlbase-config
 $(call Package/perlbase-template)
 TITLE:=Config perl module
-DEPENDS+=+perlbase-essential
 endef
 
 define Package/perlbase-config/install
@@ -554,6 +553,7 @@ $(eval $(call BuildPackage,perlbase-errno))
 define Package/perlbase-essential
 $(call Package/perlbase-template)
 TITLE:=essential perl module
+DEPENDS+=+perlbase-config
 endef
 
 define Package/perlbase-essential/install
@@ -1556,4 +1556,4 @@ endef
 $(eval $(call BuildPackage,perlbase-xsloader))
 
 
-# Generated Tue Aug 25 21:14:51 2015
+# Generated Fri Sep 25 07:47:59 2015
