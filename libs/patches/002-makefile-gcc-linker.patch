@@ -1,0 +1,33 @@
+--- a/examples/TestMasterMicroMod/Makefile.in
++++ b/examples/TestMasterMicroMod/Makefile.in
+@@ -56,7 +56,7 @@
+ 
+ 
+ $(TESTMASTERMICROMOD): $(OBJS)
+-	$(LD) $(CFLAGS) $(PROG_CFLAGS) ${PROGDEFINES} $(INCLUDES) -o $@ $(OBJS) $(EXE_CFLAGS)
++	$(CC) $(CFLAGS) $(PROG_CFLAGS) ${PROGDEFINES} $(INCLUDES) -o $@ $(OBJS) $(EXE_CFLAGS)
+ 
+ 	
+ TestMaster.c: TestMaster.od
+--- a/examples/TestMasterSlave/Makefile.in
++++ b/examples/TestMasterSlave/Makefile.in
+@@ -65,7 +65,7 @@
+ 
+ 
+ $(TESTMASTERSLAVE): $(OBJS)
+-	$(LD) $(CFLAGS) $(PROG_CFLAGS) ${PROGDEFINES} $(INCLUDES) -o $@ $(OBJS) $(EXE_CFLAGS)
++	$(CC) $(CFLAGS) $(PROG_CFLAGS) ${PROGDEFINES} $(INCLUDES) -o $@ $(OBJS) $(EXE_CFLAGS)
+ 	
+ TestSlave.c: TestSlave.od
+ 	$(MAKE) -C ../../objdictgen gnosis
+--- a/examples/CANOpenShell/Makefile.in
++++ b/examples/CANOpenShell/Makefile.in
+@@ -64,7 +64,7 @@
+ 	$(MAKE) -C ../../drivers/$(TARGET) libcanfestival_$(TARGET).a
+ 
+ $(CANOPENSHELL): $(OBJS)
+-	$(LD) $(CFLAGS) $(PROG_CFLAGS) ${PROGDEFINES} $(INCLUDES) -o $@ $(OBJS) $(EXE_CFLAGS)
++	$(CC) $(CFLAGS) $(PROG_CFLAGS) ${PROGDEFINES} $(INCLUDES) -o $@ $(OBJS) $(EXE_CFLAGS)
+ 	mkdir -p Debug; cp $(CANOPENSHELL) Debug
+ 	
+ CANOpenShellMasterOD.c: CANOpenShellMasterOD.od
