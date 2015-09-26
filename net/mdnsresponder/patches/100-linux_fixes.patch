@@ -313,7 +313,7 @@ index 6effa12..7c1d6eb 100755
  }
  
 diff --git a/mDNSPosix/mDNSUNP.c b/mDNSPosix/mDNSUNP.c
-index b392fc7..fe800af 100755
+index b392fc7..f551ad5 100755
 --- a/mDNSPosix/mDNSUNP.c
 +++ b/mDNSPosix/mDNSUNP.c
 @@ -63,6 +63,7 @@
@@ -357,9 +357,12 @@ index b392fc7..fe800af 100755
              myflags = 0;
              if (strncmp(lastname, ifname, IFNAMSIZ) == 0) {
                  if (doaliases == 0)
-@@ -205,7 +208,8 @@ gotError:
+@@ -204,8 +207,11 @@ gotError:
+         res0=NULL;
      }
  done:
++    if (fp)
++      fclose(fp);
      if (sockfd != -1) {
 -        assert(close(sockfd) == 0);
 +      int rv = close(sockfd);

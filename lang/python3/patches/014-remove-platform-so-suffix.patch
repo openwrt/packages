@@ -1,0 +1,26 @@
+diff --git a/configure b/configure
+index e823a08..84c525f 100755
+--- a/configure
++++ b/configure
+@@ -14365,7 +14365,7 @@ $as_echo_n "checking ABIFLAGS... " >&6; }
+ $as_echo "$ABIFLAGS" >&6; }
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking SOABI" >&5
+ $as_echo_n "checking SOABI... " >&6; }
+-SOABI='cpython-'`echo $VERSION | tr -d .`${ABIFLAGS}${PLATFORM_TRIPLET:+-$PLATFORM_TRIPLET}
++SOABI='cpython-'`echo $VERSION | tr -d .`
+ { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SOABI" >&5
+ $as_echo "$SOABI" >&6; }
+ 
+diff --git a/configure.ac b/configure.ac
+index 56a73df..1855af5 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -4314,7 +4314,7 @@ AC_SUBST(SOABI)
+ AC_MSG_CHECKING(ABIFLAGS)
+ AC_MSG_RESULT($ABIFLAGS)
+ AC_MSG_CHECKING(SOABI)
+-SOABI='cpython-'`echo $VERSION | tr -d .`${ABIFLAGS}${PLATFORM_TRIPLET:+-$PLATFORM_TRIPLET}
++SOABI='cpython-'`echo $VERSION | tr -d .`
+ AC_MSG_RESULT($SOABI)
+ 
+ AC_SUBST(EXT_SUFFIX)
