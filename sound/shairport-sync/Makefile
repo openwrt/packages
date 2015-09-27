@@ -45,7 +45,7 @@ endef
 
 define Package/shairport-sync
   $(Package/shairport-sync/Default)
-   DEPENDS:= +libpthread +libopenssl +libavahi-client +alsa-lib +libdaemon +libsoxr +libpopt +libconfig
+   DEPENDS:= +libpthread +libopenssl +libavahi-client @AUDIO_SUPPORT +alsa-lib +libdaemon +libsoxr +libpopt +libconfig
 endef
 
 define Package/shairport-sync/description
@@ -56,6 +56,8 @@ define Package/shairport-sync/description
   Thus, for example, synchronised multi-room audio is possible without difficulty.
   (Hence the name Shairport Sync, BTW.)
   Shairport Sync does not support AirPlay video or photo streaming.
+  Ensure Kernel Modules > Sound Support > kmod-sound-core is selected.
+  Also select kmod-usb-audio if you want to use USB-connected sound cards.
   See http://github.com/mikebrady/shairport-sync for more features and setup.
 endef
 
