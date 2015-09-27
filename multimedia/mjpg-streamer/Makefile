@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mjpg-streamer
 PKG_REV:=182
 PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).1.tar.bz2
@@ -98,6 +98,7 @@ endif
 ifeq ($(CONFIG_MJPG_STREAMER_OUTPUT_HTTP),y)
 	$(CP) $(PKG_BUILD_DIR)/output_http.so $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/usr/share/mjpg-streamer/www
+	$(INSTALL_DATA) ./files/robots.txt $(1)/usr/share/mjpg-streamer/www
     ifeq ($(CONFIG_MJPG_STREAMER_WWW),y)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/www/* $(1)/usr/share/mjpg-streamer/www
     else
