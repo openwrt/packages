@@ -54,6 +54,7 @@ define Package/shairport-sync/description
   Thus, for example, synchronised multi-room audio is possible without difficulty.
   (Hence the name Shairport Sync, BTW.)
   Shairport Sync does not support AirPlay video or photo streaming.
+  See http://github.com/mikebrady/shairport-sync for more features and setup.
 endef
 
 
