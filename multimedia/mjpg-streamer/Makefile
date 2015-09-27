@@ -97,11 +97,11 @@ ifeq ($(CONFIG_MJPG_STREAMER_OUTPUT_FILE),y)
 endif
 ifeq ($(CONFIG_MJPG_STREAMER_OUTPUT_HTTP),y)
 	$(CP) $(PKG_BUILD_DIR)/output_http.so $(1)/usr/lib
-	$(INSTALL_DIR) $(1)/www/webcam
+	$(INSTALL_DIR) $(1)/usr/share/mjpg-streamer/www
     ifeq ($(CONFIG_MJPG_STREAMER_WWW),y)
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/www/* $(1)/www/webcam
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/www/* $(1)/usr/share/mjpg-streamer/www
     else
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/www/stream_simple.html $(1)/www/webcam/index.html
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/www/stream_simple.html $(1)/usr/share/mjpg-streamer/www/index.html
     endif
 endif
 endef
