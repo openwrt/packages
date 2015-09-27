@@ -14,9 +14,16 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/mikebrady/shairport-sync.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+
+PKG_MAINTAINER:=Mike Brady <mikebrady@eircom.net>		
+		
+PKG_LICENSE:=MIT		
+PKG_LICENSE_FILES:=COPYING LICENSES shairport.c		
 
 PKG_BUILD_PARALLEL:=1
+
+PKG_FIXUP:=autoreconf
 
 PKG_BUILD_DEPENDS:= +libpthread +libopenssl +libavahi-client +alsa-lib +libdaemon +libsoxr +libconfig
 
@@ -28,11 +35,6 @@ CONFIGURE_ARGS+= \
 	--with-soxr \
 	--with-ssl=openssl \
 	--with-metadata
-
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); autoreconf -i -f)
-	$(call Build/Configure/Default, )
-endef
 
 define Package/shairport-sync/Default
   SECTION:=sound
