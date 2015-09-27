@@ -47,9 +47,8 @@ define Package/shairport-sync
 endef
 
 define Package/shairport-sync/description
-  Shairport Sync emulates an AirPort Express by playing synchronized audio
-  from iTunes and AirPlay sources including iPhones, Quicktime Player and
-  third party sources such as forkedDaapd.
+  Shairport Sync plays audio from iTunes and AirPlay sources, including
+  iOS devices, Quicktime Player and third party sources such as forkedDaapd.
   Audio played by a Shairport Sync-powered device stays synchronised with the source
   and hence with similar devices playing the same source.
   Thus, for example, synchronised multi-room audio is possible without difficulty.
@@ -62,10 +61,9 @@ define Package/shairport-sync/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/shairport-sync $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_BIN) ./files/init.d/shairport-sync $(1)/etc/init.d/
+	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/scripts/shairport-sync.conf $(1)/etc/shairport-sync.conf.sample
-	$(INSTALL_DATA) ./files/asound.conf $(1)/etc/
 endef
 
 
