@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=1.1.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.3
+PKG_RELEASE:=1
 
 PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause GPL-2.0
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://linuxcontainers.org/downloads/lxc/
-PKG_MD5SUM:=3ebadacf5fe8bfe689fd7a09812b682c
+PKG_MD5SUM:=197abb5a28ab0b689c737eb1951023fb
 
 PKG_BUILD_DEPENDS:=lua
 PKG_BUILD_PARALLEL:=1

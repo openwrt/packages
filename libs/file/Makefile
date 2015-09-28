@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.20
+PKG_VERSION:=5.25
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.astron.com/pub/file/
-PKG_MD5SUM:=5d5e13eb3e0e13839da869a31790faf2
+PKG_MD5SUM:=e6a972d4e10d9e76407a432f4a63cd4c
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=COPYING
@@ -83,6 +83,9 @@ define Package/file/install
 	$(SED) "/^#/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
 	$(SED) "/^$$$$/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/file/magic $(1)/usr/share/misc/
+
+	# For some reason both "magic" and "magic.mgc" MUST exist
+	ln -sf magic $(1)/usr/share/misc/magic.mgc
 endef
 
 define Package/libmagic/install
