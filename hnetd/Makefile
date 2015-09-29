@@ -54,7 +54,7 @@ define Package/hnet-full
   # Routing
   DEPENDS+=+babeld
   # Service discovery
-  DEPENDS+=+ohybridproxy
+  DEPENDS+=+ohybridproxy +zonestitcher
   # Distributed PCP support
   DEPENDS+=+miniupnpd +minimalist-pcproxy
 endef
@@ -68,7 +68,7 @@ define Package/hnet-full-secure
   # Routing
   DEPENDS+=+babeld
   # Service discovery
-  DEPENDS+=+ohybridproxy
+  DEPENDS+=+ohybridproxy +zonestitcher
   # Distributed PCP support
   DEPENDS+=+miniupnpd +minimalist-pcproxy
 endef
@@ -82,7 +82,7 @@ define Package/hnet-full-l2tp
   # Routing
   DEPENDS+=+babeld
   # Service discovery
-  DEPENDS+=+ohybridproxy
+  DEPENDS+=+ohybridproxy +zonestitcher
   # Distributed PCP support
   DEPENDS+=+miniupnpd +minimalist-pcproxy
 endef
