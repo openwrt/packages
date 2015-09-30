@@ -9,17 +9,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dump1090
 PKG_VERSION:=2015-09-28
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/mutability/dump1090.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=3b4c872ea67118de1399ba9979e71b504a36aca8
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILES:=COPYING,LICENSE
+PKG_LICENSE_FILES:=COPYING LICENSE
+
+PKG_BUILD_DEPENDS:=librtlsdr
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,12 +30,13 @@ define Package/dump1090/Default
   CATEGORY:=Utilities
   TITLE:=Mode S decoder for the Realtek RTL2832U
   URL:=https://github.com/mutability/dump1090
-  DEPENDS:=+libpthread +librtlsdr
+  DEPENDS:=+libpthread
 endef
 
 define Package/dump1090
   $(call Package/dump1090/Default)
   TITLE+= (dump1090)
+  DEPENDS+= +librtlsdr
 endef
 
 define Package/view1090
