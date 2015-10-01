@@ -185,6 +185,7 @@ CONFIGURE_ARGS+= \
 	--disable-debug \
 	--enable-daemon \
 	--with-nan-emulation \
+	--with-perl-bindings= \
 	--without-libgcrypt
 
 CONFIGURE_VARS+= \
