@@ -24,11 +24,12 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/madplay
+define Package/madplay/default
   SECTION:=sound
   CATEGORY:=Sound
   DEPENDS:=+libid3tag +libmad
-  TITLE:=MPEG audio player in fixed point
+  TITLE:=MPEG audio player in fixed point - $(1)
+  VARIANT:=$(1)
   URL:=http://sourceforge.net/projects/mad
 endef
 
@@ -39,6 +40,9 @@ define Package/madplay/description
 	full support for ID3 tags.
 endef
 
+Package/madplay-alsa=$(call Package/madplay/default,alsa)
+Package/madplay-oss=$(call Package/madplay/default,oss)
+
 define Build/Configure
 	$(call Build/Configure/Default, \
 		--enable-shared \
@@ -48,16 +52,27 @@ define Build/Configure
 		--disable-experimental \
 		--without-libiconv-prefix \
 		--without-libintl-prefix \
-		--without-alsa \
 		--without-esd \
 		, \
 		LIBS="-lz" \
 	)
 endef
 
-define Package/madplay/install
+ifeq ($(BUILD_VARIANT),madplay-alsa)
+	CONFIGURE_ARGS += \
+		--without-oss \
+		--with-alsa
+endif
+
+ifeq ($(BUILD_VARIANT),madplay-oss)
+	CONFIGURE_ARGS += \
+		--without-alsa
+endif
+
+define Package/madplay-$(BUILD_VARIANT)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/madplay $(1)/usr/bin/
 endef
 
-$(eval $(call BuildPackage,madplay))
+$(eval $(call BuildPackage,madplay-alsa))
+$(eval $(call BuildPackage,madplay-oss))
