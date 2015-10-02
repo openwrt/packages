@@ -1,0 +1,17 @@
+Backport of 780e6a76021a240e95007a04b723d827120afa95
+Subject: [PATCH] build: add libavltree, libcommon & libheap dependencies
+
+Otherwise it can break on very parallel builds since collectd link time
+arrives before one or more of these were built.
+
+--- a/src/daemon/Makefile.am
++++ b/src/daemon/Makefile.am
+@@ -49,7 +49,7 @@ collectd_CPPFLAGS =  $(AM_CPPFLAGS) $(LT
+ collectd_CFLAGS = $(AM_CFLAGS)
+ collectd_LDFLAGS = -export-dynamic
+ collectd_LDADD = libavltree.la libcommon.la libheap.la -lm
+-collectd_DEPENDENCIES =
++collectd_DEPENDENCIES = libavltree.la libcommon.la libheap.la
+ 
+ # Link to these libraries..
+ if BUILD_WITH_LIBRT
