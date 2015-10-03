@@ -8,7 +8,7 @@
 			delays are minimal. This program is essential, and must be running at
 			all times to actually make any use out of the drivers and clients.
 		default y
-		
+
 	config NUT_CLIENTS_UPSC
 		depends on PACKAGE_nut
 		bool "Include command line client (upsc)"
@@ -17,7 +17,7 @@
 			can be used inside shell scripts and other programs that need UPS data
 			but don't want to include the full interface.
 		default y
-		
+
 	config NUT_CLIENTS_UPSLOG
 		depends on PACKAGE_nut
 		bool "Include logging client (upslog)"
@@ -25,7 +25,7 @@
 			upslog is a daemon that will poll a UPS at periodic intervals, fetch the
 			variables that interest you, format them, and write them to a file.
 		default n
-		
+
 	config NUT_CLIENTS_UPSCMD
 		depends on PACKAGE_nut
 		bool "Include UPS controller (upscmd)"
@@ -36,7 +36,7 @@
 			this program to start and stop battery tests, invoke a front panel test
 			(beep!), turn the load on or off, and more.
 		default n
-		
+
 	config NUT_CLIENTS_UPSRW
 		depends on PACKAGE_nut
 		bool "Include UPS variable editor (upsrw)"
@@ -48,7 +48,7 @@
 			models support this feature. Typically, cheaper hardware does not
 			support any of them.
 		default n
-		
+
 	config NUT_CLIENTS_UPSMON
 		depends on PACKAGE_nut
 		bool "Include monitor and shutdown controller (upsmon)"
@@ -60,7 +60,7 @@
 			process. Every UPS that is defined in the upsmon.conf configuration file
 			is assigned a power value and a type (slave or master).
 		default y
-		
+
 	config NUT_CLIENTS_UPSSCHED
 		depends on NUT_CLIENTS_UPSMON
 		bool "Include helper for triggering events from upsmon (upssched)"
@@ -71,7 +71,16 @@
 			other uses that are possible.
 			You can alternatively write your own script and save some space.
 		default n
-	
+
+	config NUT_CLIENTS_CGI
+		depends on PACKAGE_nut
+		bool "Include web cgi interface"
+		help
+			The CGI programs are clients that run through your web server.
+			They allow you to see UPS status and perform certain administrative
+			commands from any web browser. Javascript and cookies are not required.
+		default n
+
 	config NUT_SSL
 		depends on PACKAGE_nut
 		bool "Build with support for OpenSSL"
@@ -83,25 +92,24 @@
 			are happy with using passwords to authenticate clients, you can save
 			some space and build NUT without SSL support.
 		default n
-	
+
 	config NUT_DRIVER_SERIAL
 		depends on PACKAGE_nut
 		bool "Build with support for serial drivers"
 		help
 			If you have a UPS connected via serial, select this.
 		default n
-	
+
 	config NUT_DRIVER_USB
 		depends on PACKAGE_nut
 		bool "Build with support for USB drivers"
 		help
 			If you have a UPS connected via USB, select this.
 		default y
-	
+
 	config NUT_DRIVER_SNMP
 		depends on PACKAGE_nut
 		bool "Build with support for SNMP drivers"
 		help
 			If you have a UPS you can connect to via SNMP, select this.
 		default n
-		
