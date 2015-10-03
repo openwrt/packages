@@ -1,0 +1,27 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2013-2015 OpenWrt.org
+
+NAME='shairport-sync'
+START=99
+USE_PROCD=1
+
+start_shairport_sync() {
+	procd_open_instance
+# Shairport Sync, from V2.4 onwards, reads its settings from /etc/shairport-sync.conf
+# Settings in /etc/config/shairport-sync.config are ignored.
+# A sample configuration file, with hints, is installed at /etc/shairport-sync.conf.sample.
+	procd_set_param command /usr/bin/$NAME
+	procd_set_param respawn
+	procd_close_instance
+}
+
+service_triggers() { 
+        procd_add_reload_trigger $NAME
+} 
+
+start_service() {
+	[ ! -f /etc/config/shairport-sync ] || logger "From Shairport Sync: Note that the /etc/config/shairport-sync settings file is no longer used -- use /etc/shairport-sync.conf instead."
+	[ ! -f /etc/config/shairport-sync ] || logger "From Shairport Sync: To stop this message, please remove the file /etc/config/shairport-sync." 
+	config_load $NAME
+	start_shairport_sync "main"
+}
