@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bmon
 PKG_VERSION:=3.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/tgraf/bmon/releases/download/v$(PKG_VERSION)/
@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bmon
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+PACKAGE_libncursesw:libncursesw +!PACKAGE_libncursesw:libncurses +libnl +confuse +terminfo
+  DEPENDS:=+PACKAGE_libncursesw:libncursesw +!PACKAGE_libncursesw:libncurses +libnl-core +libnl-route +confuse +terminfo
   TITLE:=bmon is a portable bandwidth monitor
   URL:=https://github.com/tgraf/bmon/
 endef
