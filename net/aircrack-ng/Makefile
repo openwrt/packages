@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/aircrack-ng
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpcap +libpthread +libopenssl +libnl +wireless-tools +ethtool
+  DEPENDS:=+libpcap +libpthread +libopenssl +libnl-core +libnl-genl +wireless-tools +ethtool
   TITLE:=WLAN tools for breaking 802.11 WEP/WPA keys
   URL:=http://www.aircrack-ng.org/
   MAINTAINER:=Rick Farina <zerochaos@gentoo.org>
