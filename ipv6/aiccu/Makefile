@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aiccu
 PKG_VERSION:=20070115
-PKG_RELEASE:=14
+PKG_RELEASE:=15
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.sixxs.net/archive/sixxs/aiccu/unix
@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/aiccu
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread +ip +kmod-sit +kmod-tun
+  DEPENDS:=+libpthread +ip +kmod-sit +kmod-tun +libgnutls
   TITLE:=SixXS Automatic IPv6 Connectivity Client Utility
   URL:=http://www.sixxs.net/tools/aiccu/
   MAINTAINER:=Ondrej Caletka <ondrej@caletka.cz>
@@ -36,7 +36,7 @@ endef
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
-		CC="$(TARGET_CC)" OS_NAME="Linux" OS_VERSION="$(LINUX_VERSION)" \
+		CC="$(TARGET_CC)" OS_NAME="Linux" OS_VERSION="$(LINUX_VERSION)" HAVE_GNUTLS=1 \
 		EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
 		EXTRA_LDFLAGS="$(TARGET_LDFLAGS) -pthread" \
 		DEBUG=0
