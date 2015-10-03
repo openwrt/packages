@@ -103,6 +103,7 @@ define Build/Compile/PyMod
 		cd $(PKG_BUILD_DIR)/$(strip $(1)); \
 		CC="$(TARGET_CC)" \
 		CCSHARED="$(TARGET_CC) $(FPIC)" \
+		CXX="$(TARGET_CXX)" \
 		LD="$(TARGET_CC)" \
 		LDSHARED="$(TARGET_CC) -shared" \
 		CFLAGS="$(TARGET_CFLAGS)" \

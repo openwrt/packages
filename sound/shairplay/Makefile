@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2014-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shairplay
-PKG_VERSION:=2014-10-27
-PKG_RELEASE:=2
+PKG_VERSION:=2015-09-29
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/juhovh/shairplay.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=64d59e3087f829006d091fa0d114efb50972a2bf
+PKG_SOURCE_VERSION:=498bc5bcdd305e04721f94a04b9f26a7da72673f
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
