@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zsh
-PKG_VERSION:=5.0.6
+PKG_VERSION:=5.1.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/zsh
-PKG_MD5SUM:=7150a6abc2aa1a79d81ed9a282594225
-PKG_MAINTAINER:=Vadim A. Misbakh-Soloviov <mva@mva.name>
+PKG_MD5SUM:=0e8ea3313300277a04cee80836507bae
+PKG_MAINTAINER:=Vadim A. Misbakh-Soloviov <openwrt-zsh@mva.name>
 PKG_LICENSE:=ZSH
 
 PKG_INSTALL:=1
