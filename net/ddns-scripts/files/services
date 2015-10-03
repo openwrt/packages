@@ -91,3 +91,6 @@
 
 # domains.google.com	non free service - require HTTPS communication
 "domains.google.com"	"https://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# Schokokeks Hosting, schokokeks.org
+"schokokeks.org" "http://[USERNAME]:[PASSWORD]@dyndns.schokokeks.org/nic/update?myip=[IP]"
