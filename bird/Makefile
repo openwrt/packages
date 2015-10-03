@@ -163,6 +163,8 @@ endef
 
 CONFIGURE_ARGS += --with-linux-headers="$(LINUX_DIR)"
 
+TARGET_CFLAGS+=-std=gnu89
+
 define Build/Template
 
 $(STAMP_BUILT)-$(2): $(STAMP_PREPARED)
