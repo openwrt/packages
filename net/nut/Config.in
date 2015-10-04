@@ -84,13 +84,6 @@
 			some space and build NUT without SSL support.
 		default n
 	
-	config NUT_DRIVER_SERIAL
-		depends on PACKAGE_nut
-		bool "Build with support for serial drivers"
-		help
-			If you have a UPS connected via serial, select this.
-		default n
-	
 	config NUT_DRIVER_USB
 		depends on PACKAGE_nut
 		bool "Build with support for USB drivers"
