@@ -19,7 +19,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tayga
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+ip +kmod-ipv6 +kmod-tun
+  DEPENDS:=+ip @IPV6 +kmod-tun
   TITLE:=Out-of-kernel stateless NAT64 implementation for Linux
   URL:=http://www.litech.org/tayga/
   MAINTAINER:=Ondrej Caletka <ondrej@caletka.cz>
