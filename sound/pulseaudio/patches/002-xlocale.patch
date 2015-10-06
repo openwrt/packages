@@ -1,0 +1,12 @@
+diff --git a/pulsecore/core-util.c b/pulsecore/core-util.c
+index ba31221..824368a 100644
+--- a/src/pulsecore/core-util.c
++++ b/src/pulsecore/core-util.c
+@@ -54,7 +54,6 @@
+ 
+ #ifdef HAVE_STRTOD_L
+ #include <locale.h>
+-#include <xlocale.h>
+ #endif
+ 
+ #ifdef HAVE_SCHED_H

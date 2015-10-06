@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-parse-recdescent
-PKG_VERSION:=1.967009
+PKG_VERSION:=1.967013
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/J/JT/JTBRAUN
 PKG_SOURCE:=Parse-RecDescent-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=6dab60d44451a9f57a261d1b5358753c
+PKG_MD5SUM:=98f582240556a4a92e5d57e480f9d39d
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

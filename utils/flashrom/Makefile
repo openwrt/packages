@@ -9,12 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flashrom
 PKG_VERSION:=0.9.8
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.flashrom.org/releases
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_MD5SUM:=ac513076b63ab7eb411a7694bb8f6fda
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -24,36 +27,83 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include flashrom.mk
 
-define Package/flashrom
+TARGET_CFLAGS+= \
+	-std=gnu89
+
+MAKE_FLAGS+= \
+	PREFIX="/usr"
+
+define Package/flashrom/default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=FlashROM Utility
   URL:=http://www.flashrom.org/
-  DEPENDS:=\
-	+(TARGET_x86||TARGET_x86_64):dmidecode \
-	+FLASHROM_FTDI:libftdi \
-	+FLASHROM_PCI:pciutils \
-	+FLASHROM_USB:libusb-compat
+  DEPENDS:=
 endef
 
-define Package/flashrom/config
-	source "$(SOURCE)/Config.in"
+define Package/flashrom
+  $(Package/flashrom/default)
+  TITLE+= (full)
+  DEPENDS+= \
+    +(PACKAGE_flashrom&&(TARGET_x86||TARGET_x86_64)):dmidecode \
+    +PACKAGE_flashrom:libftdi \
+    +PACKAGE_flashrom:libusb-compat \
+    +PACKAGE_flashrom:pciutils
+  VARIANT:=full
 endef
 
-define Package/flashrom/description
+define Package/flashrom-pci
+  $(Package/flashrom/default)
+  TITLE+= (pci)
+  DEPENDS+= \
+    +(PACKAGE_flashrom-pci&&(TARGET_x86||TARGET_x86_64)):dmidecode \
+    +PACKAGE_flashrom-pci:pciutils
+  VARIANT:=pci
+endef
+
+define Package/flashrom-spi
+  $(Package/flashrom/default)
+  TITLE+= (spi)
+  VARIANT:=spi
+endef
+
+define Package/flashrom-usb
+  $(Package/flashrom/default)
+  TITLE+= (usb)
+  DEPENDS+= \
+    +PACKAGE_flashrom-usb:libftdi \
+    +PACKAGE_flashrom-usb:libusb-compat
+  VARIANT:=usb
+endef
+
+define Package/flashrom/default/description
  flashrom is an utility for identifying, reading, writing, verifying
  and erasing flash chips. It's often used to flash BIOS/EFI/coreboot
  /firmware images.
 endef
-
-TARGET_CFLAGS+=-std=gnu89
-
-MAKE_FLAGS += \
-	PREFIX="/usr"
+Package/flashrom/description = $(Package/flashrom/default/description)
+Package/flashrom-pci/description = $(Package/flashrom/default/description)
+Package/flashrom-spi/description = $(Package/flashrom/default/description)
+Package/flashrom-usb/description = $(Package/flashrom/default/description)
 
 define Package/flashrom/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/flashrom $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/flashrom $(1)/usr/sbin/flashrom
+endef
+define Package/flashrom-pci/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/flashrom $(1)/usr/sbin/flashrom-pci
+endef
+define Package/flashrom-spi/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/flashrom $(1)/usr/sbin/flashrom-spi
+endef
+define Package/flashrom-usb/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/flashrom $(1)/usr/sbin/flashrom-usb
 endef
 
 $(eval $(call BuildPackage,flashrom))
+$(eval $(call BuildPackage,flashrom-pci))
+$(eval $(call BuildPackage,flashrom-spi))
+$(eval $(call BuildPackage,flashrom-usb))
