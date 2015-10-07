@@ -48,6 +48,7 @@ CONFIGURE_ARGS+= \
 	--prefix=/usr \
 	--disable-readline \
 	--disable-linuxcaps \
+	--disable-rtc \
 	--disable-asyncdns
 
 define Package/chrony/install
