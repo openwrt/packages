@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flashrom
 PKG_VERSION:=0.9.8
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.flashrom.org/releases
@@ -38,7 +38,6 @@ define Package/flashrom/default
   CATEGORY:=Utilities
   TITLE:=FlashROM Utility
   URL:=http://www.flashrom.org/
-  DEPENDS:=
 endef
 
 define Package/flashrom
@@ -50,6 +49,7 @@ define Package/flashrom
     +PACKAGE_flashrom:libusb-compat \
     +PACKAGE_flashrom:pciutils
   VARIANT:=full
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/flashrom-pci
