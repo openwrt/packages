@@ -1,0 +1,40 @@
+From 4785d9e6fcf107721602afbc61352475d56f921a Mon Sep 17 00:00:00 2001
+From: Benjamin Podszun <benjamin.podszun@gmail.com>
+Date: Tue, 11 Feb 2014 13:44:25 +0100
+Subject: [PATCH] Modify http.lua to do a host lookup first, to determine the
+ right address family to use (previously tcp was the default).
+
+---
+ src/http.lua | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/src/http.lua b/src/http.lua
+index 1d0eb50..12b815f 100644
+--- a/src/http.lua
++++ b/src/http.lua
+@@ -107,8 +107,16 @@ end
+ local metat = { __index = {} }
+ 
+ function _M.open(host, port, create)
+-    -- create socket with user connect function, or with default
+-    local c = socket.try((create or socket.tcp)())
++    -- create socket with user connect function, or do a lookup to default to
++    -- either tcp or tcp6 instead
++    if not create then
++	    create = socket.tcp
++	    local addrinfo, err = socket.dns.getaddrinfo(host)
++	    if addrinfo and addrinfo[1] and addrinfo[1].family == "inet6" then
++		    create = socket.tcp6
++	    end
++    end
++    local c = socket.try(create())
+     local h = base.setmetatable({ c = c }, metat)
+     -- create finalized try
+     h.try = socket.newtry(function() h:close() end)
+@@ -353,4 +361,4 @@ _M.request = socket.protect(function(reqt, body)
+     else return trequest(reqt) end
+ end)
+ 
+-return _M
+\ No newline at end of file
++return _M
