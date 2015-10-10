@@ -8,54 +8,33 @@
 menu "Configuration"
         depends on PACKAGE_nginx
 
-config NGINX_STUB_STATUS
-	bool
-	prompt "Enable stub status module"
-	help
-		Enable the stub status module which gives some status from the server.
-
-config NGINX_FLV
-	bool
-	prompt "Enable FLV module"
-	help
-		Provides the ability to seek within FLV (Flash) files using time-based offsets.
-
 config NGINX_SSL
 	bool
 	prompt "Enable SSL module"
 	help
 		Enable HTTPS/SSL support.
+	default n
 
 config NGINX_DAV
 	bool
 	prompt "Enable WebDAV module"
 	help
 		Enable the HTTP and WebDAV methods PUT, DELETE, MKCOL, COPY and MOVE.
+	default n
 
-config NGINX_LUA
+config NGINX_FLV
 	bool
-	prompt "Enable LUA module"
+	prompt "Enable FLV module"
 	help
-		Enable support for LUA scripts.
+		Provides the ability to seek within FLV (Flash) files using time-based offsets.
+	default n
 
-config NGINX_SPNEGO
+config NGINX_STUB_STATUS
 	bool
-	prompt "Enable SPNEGO module"
+	prompt "Enable stub status module"
 	help
-		Enable support for Kerberos authentication via GSSAPI.
-
-		See https://github.com/stnoonan/spnego-http-auth-nginx-module
-		for specific instructions. Make sure the keytab file is
-		readable by user "nobody".
-
-config NGINX_PCRE
-	bool
-	prompt "Enable PCRE library usage"
-	default y
-
-config NGINX_HTTP_CACHE
-	bool
-	prompt "Enable HTTP cache"
+		Enable the stub status module which gives some status from the server.
+	default n
 
 config NGINX_HTTP_CHARSET
 	bool
@@ -163,40 +142,34 @@ config NGINX_HTTP_BROWSER
 	prompt "Enable HTTP browser module"
 	default y
 
+config NGINX_HTTP_UPSTREAM_HASH
+	bool
+	prompt "Enable HTTP hash module"
+	default y
+
 config NGINX_HTTP_UPSTREAM_IP_HASH
 	bool
 	prompt "Enable HTTP IP hash module"
 	default y
 
-config NGINX_NAXSI
+config NGINX_HTTP_UPSTREAM_LEAST_CONN
 	bool
-	prompt "Enable NAXSI module"
-	select PACKAGE_nginx-naxsi
+	prompt "Enable HTTP least conn module"
 	default y
-	help
-		Enable support for NAXSI WAF.
 
-config NGINX_PROXYPROTOCOL
+config NGINX_HTTP_UPSTREAM_KEEPALIVE
 	bool
-	prompt "Enable HAProxy proxyprotocol"
-	select PACKAGE_nginx-proxyprotocol
-	select NGINX_SSL
-	default n
-	help
-		Enable support for PROXY PROTOCOL
-
-config NGINX_SYSLOG
-	bool
-	prompt "Enable Syslog module"
-	select PACKAGE_nginx-syslog
+	prompt "Enable HTTP keepalive module"
 	default y
-	help
-		Provides the ability log to a remote destination
 
-config NGINX_HTTP_UPSTREAM_CHECK
+config NGINX_HTTP_CACHE
 	bool
-	select NGINX_SSL
-	prompt "Enable HTTP upstream check module"
-	default n
+	prompt "Enable HTTP cache"
+	default y
+
+config NGINX_PCRE
+	bool
+	prompt "Enable PCRE library usage"
+	default y
 
 endmenu
