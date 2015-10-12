@@ -34,7 +34,7 @@ load_tunnelR() {
 	config_get localaddress $1 localaddress
 	config_get localport	$1 localport
 	
-        [ "$remoteport" -gt 0 ] || append_string "error" "[tunnelR: $1]remoteport must be a positive integer" "; "
+        [ "$remoteport" -ge 0 ] || append_string "error" "[tunnelR: $1]remoteport must be a positive integer or zero" "; "
         [ "$localport" -gt 0 ] 	|| append_string "error" "[tunnelR: $1]localport must be a positive integer" "; "
 	[ -n "$error" ] && return 1
 
@@ -51,7 +51,7 @@ load_tunnelL() {
 	config_get remoteaddress $1 remoteaddress
 	config_get remoteport 	$1 remoteport
 
-        [ "$remoteport" -gt 0 ] || append_string "error" "[tunnelL: $1]remoteport must be a positive integer" "; "
+        [ "$remoteport" -ge 0 ] || append_string "error" "[tunnelL: $1]remoteport must be a positive integer or zero" "; "
         [ "$localport" -gt 0 ] 	|| append_string "error" "[tunnelL: $1]localport must be a positive integer" "; "
 	[ -n "$error" ] && return 1
 
