@@ -11,7 +11,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open2300
 PKG_VERSION:=1.12
-PKG_RELEASE:=4
+PKG_RELEASE:=5
+PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_PROTO:=svn
 PKG_SOURCE_URL:=http://www.lavrsen.dk/svn/open2300/trunk
