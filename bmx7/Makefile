@@ -28,12 +28,12 @@ PKG_NAME:=bmx7
 
 PKG_SOURCE_PROTO:=git
 
+#PKG_SOURCE_URL:=file:///usr/src/bmx6/bmx6.git
 #PKG_SOURCE_URL:=git://bmx6.net/bmx6.git
 PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
-#PKG_SOURCE_URL:=file:///home/neumann/bmx6/bmx6.git
 
-PKG_REV:=4b21205c6873190b8e09e1dc3a4bd343b90ae174
-PKG_VERSION:=r2015091124
+PKG_REV:=0ea28331abfca5ebd6fa6788505cfed073ae1005
+PKG_VERSION:=r2015101201
 PKG_RELEASE:=4
 PKG_LICENSE:=GPL-2.0
 
@@ -61,7 +61,7 @@ define Package/bmx7/Default
   TITLE:=BMX7 layer 3 routing daemon
   URL:=http://bmx6.net/
   MAINTAINER:=Axel Neumann <neumann@cgws.de>
-  DEPENDS:=+zlib +libpolarssl +kmod-ip6-tunnel +kmod-iptunnel6 +kmod-tun @!bmx6
+  DEPENDS:=+zlib +libpolarssl @!bmx6
 endef
 
 define Package/bmx7/description
@@ -91,16 +91,22 @@ define Package/bmx7-sms
   TITLE:=sms plugin
 endef
 
+define Package/bmx7-tun
+  $(call Package/bmx7/Default)
+  DEPENDS:=bmx7 +kmod-ip6-tunnel +kmod-iptunnel6 +kmod-tun
+  TITLE:=ipip-based tunnel plugin (recommended!)
+endef
+
 #define Package/bmx7-quagga
 #  $(call Package/bmx7/Default)
-#  DEPENDS:=bmx7 +qmp-quagga @BROKEN
+#  DEPENDS:=bmx7 +bmx7-tun +qmp-quagga @BROKEN
 #  TITLE:=bmx7 quagga plugin to redistribute/export routes (needs manet/bmx patched quagga 0.99.21)
 #endef
 
 define Package/bmx7-table
   $(call Package/bmx7/Default)
-  DEPENDS:=bmx7
-  TITLE:=bmx7 table plugin to automatically announce routing-table routes via ip6ip tunnels
+  DEPENDS:=bmx7 +bmx7-tun
+  TITLE:=plugin to announce routes from tables via tunnels
 endef
 
 define Build/Configure
@@ -115,6 +121,17 @@ define Package/bmx7/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bmx6 $(1)/usr/sbin/bmx6
 endef
+
+define Package/bmx7/postinst
+#!/bin/sh
+# # check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	if [ -f /etc/sysupgrade.conf ] && ! grep bmx6 /etc/sysupgrade.conf; then
+		echo /etc/bmx6 >> /etc/sysupgrade.conf
+        fi
+fi
+endef
+
 
 define Package/bmx7-uci-config/conffiles
 /etc/config/bmx6
@@ -137,6 +154,11 @@ define Package/bmx7-sms/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_sms/bmx6_sms.so $(1)/usr/lib/bmx6_sms.so
 endef
 
+define Package/bmx7-tun/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_tun/bmx6_tun.so $(1)/usr/lib/bmx6_tun.so
+endef
+
 define Package/bmx7-table/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/bmx6_table/bmx6_table.so $(1)/usr/lib/bmx6_table.so
@@ -153,3 +175,4 @@ $(eval $(call BuildPackage,bmx7-json))
 $(eval $(call BuildPackage,bmx7-sms))
 #$(eval $(call BuildPackage,bmx7-quagga))
 $(eval $(call BuildPackage,bmx7-table))
+$(eval $(call BuildPackage,bmx7-tun))

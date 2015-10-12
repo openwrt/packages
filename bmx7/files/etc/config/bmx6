@@ -13,8 +13,6 @@ config 'bmx6' 'general'
 #config 'plugin'
 #        option 'plugin' 'bmx6_json.so'
 
-#config 'plugin'
-#        option 'plugin' 'bmx6_table.so'
 
 #config 'plugin'
 #        option 'plugin' 'bmx6_sms.so'
@@ -26,10 +24,19 @@ config 'dev' 'mesh_1'
 config 'dev' 'mesh_2'
         option 'dev' 'wlan0'
 
-config 'tunDev' default
-        option 'tunDev' 'default'
-        option 'tun6Address' '2012:0:0:6666::1/64'
-        option 'tun4Address' '10.66.66.1/24'
+
+
+#config 'plugin'
+#        option 'plugin' 'bmx6_tun.so'
+
+#config 'plugin'
+#        option 'plugin' 'bmx6_table.so'
+
+
+#config 'tunDev' default
+#        option 'tunDev' 'default'
+#        option 'tun6Address' '2012:0:0:6666::1/64'
+#        option 'tun4Address' '10.66.66.1/24'
 
 
 #config 'tunOut'
