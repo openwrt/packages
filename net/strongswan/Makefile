@@ -43,6 +43,7 @@ PKG_MOD_AVAILABLE:= \
 	eap-tls \
 	farp \
 	fips-prf \
+	forecast \
 	gcm \
 	gcrypt \
 	gmp \
@@ -160,6 +161,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-eap-tls \
 	+strongswan-mod-farp \
 	+strongswan-mod-fips-prf \
+	+strongswan-mod-forecast \
 	+strongswan-mod-gcm \
 	+strongswan-mod-gcrypt \
 	+strongswan-mod-gmp \
@@ -523,6 +525,7 @@ $(eval $(call BuildPlugin,eap-radius,EAP RADIUS auth,))
 $(eval $(call BuildPlugin,eap-tls,EAP TLS auth,+strongswan-libtls))
 $(eval $(call BuildPlugin,farp,fake arp respsonses,))
 $(eval $(call BuildPlugin,fips-prf,FIPS PRF crypto,+strongswan-mod-sha1))
+$(eval $(call BuildPlugin,forecast,forward multi/broadcast traffic,+kmod-ipt-conntrack-extra))
 $(eval $(call BuildPlugin,gcm,GCM AEAD wrapper crypto,))
 $(eval $(call BuildPlugin,gcrypt,libgcrypt,+PACKAGE_strongswan-mod-gcrypt:libgcrypt))
 $(eval $(call BuildPlugin,gmp,libgmp,+PACKAGE_strongswan-mod-gmp:libgmp))

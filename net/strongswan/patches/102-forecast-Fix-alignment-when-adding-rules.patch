@@ -1,0 +1,324 @@
+From 1f642f872abe39cb5a67a87c4e9b63c9d78657d7 Mon Sep 17 00:00:00 2001
+From: Tobias Brunner <tobias@strongswan.org>
+Date: Mon, 30 Nov 2015 16:30:22 +0100
+Subject: [PATCH 2/2] forecast: Fix alignment when adding rules
+
+Basically the same issue as with the connmark plugin.
+
+ #1212
+---
+ src/libcharon/plugins/forecast/forecast_listener.c | 247 +++++++++++----------
+ 1 file changed, 133 insertions(+), 114 deletions(-)
+
+diff --git a/src/libcharon/plugins/forecast/forecast_listener.c b/src/libcharon/plugins/forecast/forecast_listener.c
+index 63a8cb1..7e93617 100644
+--- a/src/libcharon/plugins/forecast/forecast_listener.c
++++ b/src/libcharon/plugins/forecast/forecast_listener.c
+@@ -1,4 +1,7 @@
+ /*
++ * Copyright (C) 2015 Tobias Brunner
++ * Hochschule fuer Technik Rapperswil
++ *
+  * Copyright (C) 2010-2014 Martin Willi
+  * Copyright (C) 2010-2014 revosec AG
+  *
+@@ -25,6 +28,15 @@
+ #include <collections/hashtable.h>
+ #include <threading/rwlock.h>
+
++/**
++ * Add a struct at the current position in the buffer
++ */
++#define ADD_STRUCT(pos, st, ...) ({\
++	typeof(pos) _cur = pos; pos += XT_ALIGN(sizeof(st));\
++	*(st*)_cur = (st){ __VA_ARGS__ };\
++	(st*)_cur;\
++})
++
+ typedef struct private_forecast_listener_t private_forecast_listener_t;
+
+ /**
+@@ -164,60 +176,60 @@ static bool manage_rule(struct iptc_handle *ipth, const char *chain,
+ static bool manage_pre_esp_in_udp(struct iptc_handle *ipth,
+								  entry_t *entry, bool add)
+ {
+-	struct {
+-		struct ipt_entry e;
+-		struct ipt_entry_match m;
+-		struct xt_udp udp;
+-		struct ipt_entry_target t;
+-		struct xt_mark_tginfo2 tm;
+-	} ipt = {
+-		.e  = {
+-			.target_offset = XT_ALIGN(sizeof(ipt.e) + sizeof(ipt.m) +
+-									  sizeof(ipt.udp)),
+-			.next_offset = sizeof(ipt),
+-			.ip = {
+-				.proto = IPPROTO_UDP,
+-			},
++	u_int16_t match_size	= XT_ALIGN(sizeof(struct ipt_entry_match)) +
++							  XT_ALIGN(sizeof(struct xt_udp));
++	u_int16_t target_offset = XT_ALIGN(sizeof(struct ipt_entry)) + match_size;
++	u_int16_t target_size	= XT_ALIGN(sizeof(struct ipt_entry_target)) +
++							  XT_ALIGN(sizeof(struct xt_mark_tginfo2));
++	u_int16_t entry_size	= target_offset + target_size;
++	u_char ipt[entry_size], *pos = ipt;
++	struct ipt_entry *e;
++
++	memset(ipt, 0, sizeof(ipt));
++	e = ADD_STRUCT(pos, struct ipt_entry,
++		.target_offset = target_offset,
++		.next_offset = entry_size,
++		.ip = {
++			.proto = IPPROTO_UDP,
+		},
+-		.m = {
+-			.u = {
+-				.user = {
+-					.match_size = XT_ALIGN(sizeof(ipt.m) + sizeof(ipt.udp)),
+-					.name = "udp",
+-				},
++	);
++	if (!host2in(entry->lhost, &e->ip.dst, &e->ip.dmsk) ||
++		!host2in(entry->rhost, &e->ip.src, &e->ip.smsk))
++	{
++		return FALSE;
++	}
++	ADD_STRUCT(pos, struct ipt_entry_match,
++		.u = {
++			.user = {
++				.match_size = match_size,
++				.name = "udp",
+			},
+		},
+-		.udp = {
+-			.spts = {
+-				entry->rhost->get_port(entry->rhost),
+-				entry->rhost->get_port(entry->lhost)
+-			},
+-			.dpts = {
+-				entry->lhost->get_port(entry->lhost),
+-				entry->lhost->get_port(entry->lhost)
+-			},
++	);
++	ADD_STRUCT(pos, struct xt_udp,
++		.spts = {
++			entry->rhost->get_port(entry->rhost),
++			entry->rhost->get_port(entry->lhost)
+		},
+-		.t = {
+-			.u = {
+-				.user = {
+-					.target_size = XT_ALIGN(sizeof(ipt.t) + sizeof(ipt.tm)),
+-					.name = "MARK",
+-					.revision = 2,
+-				},
+-			},
++		.dpts = {
++			entry->lhost->get_port(entry->lhost),
++			entry->lhost->get_port(entry->lhost)
+		},
+-		.tm = {
+-			.mark = entry->mark,
+-			.mask = ~0,
++	);
++	ADD_STRUCT(pos, struct ipt_entry_target,
++		.u = {
++			.user = {
++				.target_size = target_size,
++				.name = "MARK",
++				.revision = 2,
++			},
+		},
+-	};
+-
+-	if (!host2in(entry->lhost, &ipt.e.ip.dst, &ipt.e.ip.dmsk) ||
+-		!host2in(entry->rhost, &ipt.e.ip.src, &ipt.e.ip.smsk))
+-	{
+-		return FALSE;
+-	}
+-	return manage_rule(ipth, "PREROUTING", add, &ipt.e);
++	);
++	ADD_STRUCT(pos, struct xt_mark_tginfo2,
++		.mark = entry->mark,
++		.mask = ~0,
++	);
++	return manage_rule(ipth, "PREROUTING", add, e);
+ }
+
+ /**
+@@ -225,53 +237,53 @@ static bool manage_pre_esp_in_udp(struct iptc_handle *ipth,
+  */
+ static bool manage_pre_esp(struct iptc_handle *ipth, entry_t *entry, bool add)
+ {
+-	struct {
+-		struct ipt_entry e;
+-		struct ipt_entry_match m;
+-		struct xt_esp esp;
+-		struct ipt_entry_target t;
+-		struct xt_mark_tginfo2 tm;
+-	} ipt = {
+-		.e  = {
+-			.target_offset = XT_ALIGN(sizeof(ipt.e) + sizeof(ipt.m) +
+-									  sizeof(ipt.esp)),
+-			.next_offset = sizeof(ipt),
+-			.ip = {
+-				.proto = IPPROTO_ESP,
+-			},
++	u_int16_t match_size	= XT_ALIGN(sizeof(struct ipt_entry_match)) +
++							  XT_ALIGN(sizeof(struct xt_esp));
++	u_int16_t target_offset = XT_ALIGN(sizeof(struct ipt_entry)) + match_size;
++	u_int16_t target_size	= XT_ALIGN(sizeof(struct ipt_entry_target)) +
++							  XT_ALIGN(sizeof(struct xt_mark_tginfo2));
++	u_int16_t entry_size	= target_offset + target_size;
++	u_char ipt[entry_size], *pos = ipt;
++	struct ipt_entry *e;
++
++	memset(ipt, 0, sizeof(ipt));
++	e = ADD_STRUCT(pos, struct ipt_entry,
++		.target_offset = target_offset,
++		.next_offset = entry_size,
++		.ip = {
++			.proto = IPPROTO_ESP,
+		},
+-		.m = {
+-			.u = {
+-				.user = {
+-					.match_size = XT_ALIGN(sizeof(ipt.m) + sizeof(ipt.esp)),
+-					.name = "esp",
+-				},
++	);
++	if (!host2in(entry->lhost, &e->ip.dst, &e->ip.dmsk) ||
++		!host2in(entry->rhost, &e->ip.src, &e->ip.smsk))
++	{
++		return FALSE;
++	}
++	ADD_STRUCT(pos, struct ipt_entry_match,
++		.u = {
++			.user = {
++				.match_size = match_size,
++				.name = "esp",
+			},
+		},
+-		.esp = {
+-			.spis = { htonl(entry->spi), htonl(entry->spi) },
+-		},
+-		.t = {
+-			.u = {
+-				.user = {
+-					.target_size = XT_ALIGN(sizeof(ipt.t) + sizeof(ipt.tm)),
+-					.name = "MARK",
+-					.revision = 2,
+-				},
++	);
++	ADD_STRUCT(pos, struct xt_esp,
++		.spis = { htonl(entry->spi), htonl(entry->spi) },
++	);
++	ADD_STRUCT(pos, struct ipt_entry_target,
++		.u = {
++			.user = {
++				.target_size = target_size,
++				.name = "MARK",
++				.revision = 2,
+			},
+		},
+-		.tm = {
+-			.mark = entry->mark,
+-			.mask = ~0,
+-		},
+-	};
+-
+-	if (!host2in(entry->lhost, &ipt.e.ip.dst, &ipt.e.ip.dmsk) ||
+-		!host2in(entry->rhost, &ipt.e.ip.src, &ipt.e.ip.smsk))
+-	{
+-		return FALSE;
+-	}
+-	return manage_rule(ipth, "PREROUTING", add, &ipt.e);
++	);
++	ADD_STRUCT(pos, struct xt_mark_tginfo2,
++		.mark = entry->mark,
++		.mask = ~0,
++	);
++	return manage_rule(ipth, "PREROUTING", add, e);
+ }
+
+ /**
+@@ -291,45 +303,52 @@ static bool manage_pre(struct iptc_handle *ipth, entry_t *entry, bool add)
+  */
+ static bool manage_out(struct iptc_handle *ipth, entry_t *entry, bool add)
+ {
+-	struct {
+-		struct ipt_entry e;
+-		struct ipt_entry_target t;
+-		struct xt_mark_tginfo2 m;
+-	} ipt = {
+-		.e  = {
+-			.target_offset = XT_ALIGN(sizeof(ipt.e)),
+-			.next_offset = sizeof(ipt),
+-		},
+-		.t = {
+-			.u.user.target_size = XT_ALIGN(sizeof(ipt.t) + sizeof(ipt.m)),
+-			.u.user.name = "MARK",
+-			.u.user.revision = 2,
+-		},
+-		.m = {
+-			.mark = entry->mark,
+-			.mask = ~0,
++	u_int16_t target_offset = XT_ALIGN(sizeof(struct ipt_entry));
++	u_int16_t target_size	= XT_ALIGN(sizeof(struct ipt_entry_target)) +
++							  XT_ALIGN(sizeof(struct xt_mark_tginfo2));
++	u_int16_t entry_size	= target_offset + target_size;
++	u_char ipt[entry_size], *pos = ipt;
++	struct ipt_entry *e;
++
++	memset(ipt, 0, sizeof(ipt));
++	e = ADD_STRUCT(pos, struct ipt_entry,
++		.target_offset = target_offset,
++		.next_offset = entry_size,
++	);
++	ADD_STRUCT(pos, struct ipt_entry_target,
++		.u = {
++			.user = {
++				.target_size = target_size,
++				.name = "MARK",
++				.revision = 2,
++			},
+		},
+-	};
++	);
++	ADD_STRUCT(pos, struct xt_mark_tginfo2,
++		.mark = entry->mark,
++		.mask = ~0,
++	);
++
+	enumerator_t *enumerator;
+	traffic_selector_t *ts;
+
+	enumerator = array_create_enumerator(entry->rts);
+	while (enumerator->enumerate(enumerator, &ts))
+	{
+-		if (!ts2in(ts, &ipt.e.ip.dst, &ipt.e.ip.dmsk))
++		if (!ts2in(ts, &e->ip.dst, &e->ip.dmsk))
+		{
+			continue;
+		}
+-		if (ipt.e.ip.dst.s_addr == 0xffffffff ||
+-			ipt.e.ip.dst.s_addr == entry->broadcast ||
+-			memeq(&ipt.e.ip.dst.s_addr, "\xe0", 1))
++		if (e->ip.dst.s_addr == 0xffffffff ||
++			e->ip.dst.s_addr == entry->broadcast ||
++			memeq(&e->ip.dst.s_addr, "\xe0", 1))
+		{
+			/* skip broadcast/multicast selectors, they are shared and the mark
+			 * is set by the socket we use for reinjection */
+			continue;
+		}
+-		if (!manage_rule(ipth, "PREROUTING", add, &ipt.e) ||
+-			!manage_rule(ipth, "OUTPUT", add, &ipt.e))
++		if (!manage_rule(ipth, "PREROUTING", add, e) ||
++			!manage_rule(ipth, "OUTPUT", add, e))
+		{
+			enumerator->destroy(enumerator);
+			return FALSE;
+--
+2.4.10
