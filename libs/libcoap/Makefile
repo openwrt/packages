@@ -42,6 +42,10 @@ CONFIGURE_ARGS += \
 	--disable-examples \
 	--disable-documentation
 
+ifeq ($(CONFIG_BIG_ENDIAN),y)
+TARGET_CFLAGS += -DWORDS_BIGENDIAN
+endif
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
