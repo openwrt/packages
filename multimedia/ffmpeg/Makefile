@@ -367,6 +367,7 @@ FFMPEG_CONFIGURE:= \
 	--disable-runtime-cpudetect \
 	--disable-doc \
 	--disable-debug \
+	--disable-bzlib \
 	\
 	--enable-gpl \
 	--enable-version3 \
