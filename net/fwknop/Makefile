@@ -87,7 +87,7 @@ define Package/libfko/description
 endef
 
 
-ifeq ($(CONFIG_FWKNOPD_GPG),n)
+ifneq ($(CONFIG_FWKNOPD_GPG),y)
 	CONFIGURE_ARGS += --without-gpgme 
 endif
 
