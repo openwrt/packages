@@ -36,7 +36,7 @@ reload()
 gen_confs()
 {
 	[ -f /tmp/access.conf.tmp ] && rm /tmp/access.conf.tmp
-	if [`uci get fwknopd.@access[0].PCAP_INTF` = ""]
+	if [ "`uci get fwknopd.@config[0].PCAP_INTF`" = ""]
 	then
 		. /lib/functions/network.sh
 		network_get_physdev device wan
