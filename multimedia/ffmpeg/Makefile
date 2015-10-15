@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=2.8
+PKG_VERSION:=2.8.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=5eb3839e23c9ca396fabd0ebbe293ea2
+PKG_MD5SUM:=63b2cfeea930e942ff7579fd0064c5be
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -387,8 +387,6 @@ FFMPEG_CONFIGURE:= \
 	--disable-fma3 \
 	--disable-fma4 \
 	--disable-avx2 \
-	--disable-vfp \
-	--disable-neon \
 	--disable-inline-asm \
 	--disable-yasm \
 	--disable-mips32r2 \
@@ -402,6 +400,15 @@ FFMPEG_CONFIGURE:= \
 	--disable-vda \
 	--disable-vdpau \
 	--disable-outdevs
+
+# Detect Optimizations
+ifeq (,$(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)))
+	FFMPEG_CONFIGURE += --disable-vfp
+endif
+
+ifeq (,$(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)))
+	FFMPEG_CONFIGURE += --disable-neon
+endif
 
 ifeq ($(BUILD_VARIANT),custom)
 
