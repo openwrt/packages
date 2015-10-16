@@ -1,0 +1,42 @@
+From 95c99f69e026e8c57aecba545e51c97f3b284e75 Mon Sep 17 00:00:00 2001
+From: "Gary E. Miller" <gem@rellim.com>
+Date: Tue, 23 Jun 2015 14:36:26 -0700
+Subject: [PATCH] Remove a BSD-ism.
+
+CTRL('L') is a BSD-ism.  CTRL() is defined in sys/ttydefaults.h
+which does not always exist.  Instead of adding scons tests for
+needing CTRL() and its include files just replace with a simple
+constant.
+
+Needed for musl and found by Baruch Siach <baruch@tkos.co.il>
+---
+ gpsmon.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/gpsmon.c b/gpsmon.c
+index c3001c8..58c8300 100644
+--- a/gpsmon.c
++++ b/gpsmon.c
+@@ -583,6 +583,9 @@ static void select_packet_monitor(struct gps_device_t *device)
+ 	(void)wnoutrefresh(devicewin);
+ }
+ 
++/* Control-L character */
++#define CTRL_L 0x0C
++
+ static char *curses_get_command(void)
+ /* char-by-char nonblocking input, return accumulated command line on \n */
+ {
+@@ -591,7 +594,8 @@ static char *curses_get_command(void)
+     int c;
+ 
+     c = wgetch(cmdwin);
+-    if (c == CTRL('L')) {
++    if (CTRL_L == c) {
++        /* ^L is to repaint the screen */
+ 	(void)clearok(stdscr, true);
+ 	if (active != NULL && (*active)->initialize != NULL)
+ 	    (void)(*active)->initialize();
+-- 
+2.6.0
+
