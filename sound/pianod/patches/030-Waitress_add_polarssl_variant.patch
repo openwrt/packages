@@ -247,7 +247,7 @@
  	return WAITRESS_RET_OK;
  }
  
-@@ -876,6 +947,12 @@ static WaitressReturn_t WaitressConnect
+@@ -880,6 +951,12 @@ static WaitressReturn_t WaitressConnect
  			}
  		}
  
@@ -260,7 +260,7 @@
  		/* Ignore return code as connection will likely still succeed */
  		gnutls_server_name_set (waith->request.tlsSession, GNUTLS_NAME_DNS,
  				waith->url.host, strlen (waith->url.host));
-@@ -883,14 +960,15 @@ static WaitressReturn_t WaitressConnect
+@@ -887,14 +964,15 @@ static WaitressReturn_t WaitressConnect
  		if (gnutls_handshake (waith->request.tlsSession) != GNUTLS_E_SUCCESS) {
  			return WAITRESS_RET_TLS_HANDSHAKE_ERR;
  		}
@@ -278,7 +278,7 @@
  	}
  
  	return WAITRESS_RET_OK;
-@@ -1116,6 +1194,21 @@ WaitressReturn_t WaitressFetchCall (Wait
+@@ -1120,6 +1198,21 @@ WaitressReturn_t WaitressFetchCall (Wait
  	waith->request.contentLengthKnown = false;
  
  	if (waith->url.tls) {
@@ -300,7 +300,7 @@
  		gnutls_init (&waith->request.tlsSession, GNUTLS_CLIENT);
  		gnutls_set_default_priority (waith->request.tlsSession);
  
-@@ -1133,6 +1226,7 @@ WaitressReturn_t WaitressFetchCall (Wait
+@@ -1137,6 +1230,7 @@ WaitressReturn_t WaitressFetchCall (Wait
  				WaitressPollRead);
  		gnutls_transport_set_push_function (waith->request.tlsSession,
  				WaitressPollWrite);
@@ -308,7 +308,7 @@
  	}
  
  	/* buffer is required for connect already */
-@@ -1144,15 +1238,22 @@ WaitressReturn_t WaitressFetchCall (Wait
+@@ -1148,15 +1242,22 @@ WaitressReturn_t WaitressFetchCall (Wait
  		if ((wRet = WaitressSendRequest (waith)) == WAITRESS_RET_OK) {
  			wRet = WaitressReceiveResponse (waith);
  		}
