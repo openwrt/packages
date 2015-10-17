@@ -1,8 +1,6 @@
-diff --git a/setup.py b/setup.py
-index 7868b7b..10ec68f 100644
 --- a/setup.py
 +++ b/setup.py
-@@ -1067,6 +1067,7 @@ class PyBuildExt(build_ext):
+@@ -1069,6 +1069,7 @@ class PyBuildExt(build_ext):
                          if db_setup_debug: print "db lib: ", dblib, "not found"
  
          except db_found:
@@ -10,7 +8,7 @@ index 7868b7b..10ec68f 100644
              if db_setup_debug:
                  print "bsddb using BerkeleyDB lib:", db_ver, dblib
                  print "bsddb lib dir:", dblib_dir, " inc dir:", db_incdir
-@@ -1081,7 +1082,7 @@ class PyBuildExt(build_ext):
+@@ -1083,7 +1084,7 @@ class PyBuildExt(build_ext):
              exts.append(Extension('_bsddb', ['_bsddb.c'],
                                    depends = ['bsddb.h'],
                                    library_dirs=dblib_dir,
@@ -19,7 +17,7 @@ index 7868b7b..10ec68f 100644
                                    include_dirs=db_incs,
                                    libraries=dblibs))
          else:
-@@ -1292,10 +1293,11 @@ class PyBuildExt(build_ext):
+@@ -1294,10 +1295,11 @@ class PyBuildExt(build_ext):
                              break
                  elif cand == "bdb":
                      if db_incs is not None:

@@ -12,7 +12,7 @@ include ./files/python-package.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.python.org/ftp/python/$(PKG_VERSION)
@@ -21,6 +21,7 @@ PKG_MD5SUM:=c685ef0b8e9f27b5e3db5db12b268ac6
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
@@ -133,9 +134,11 @@ define Build/Prepare
 	$(CP) ./files/config.site $(PKG_BUILD_DIR)/config.site
 endef
 
+# Install python2-config for Samba 4
+# Do not copy 'python-config', which may conflict with python3
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
-	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
+	$(INSTALL_DIR) $(1)/usr/bin/ $(1)/usr/include/ $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
 	$(INSTALL_DATA) ./files/python-package.mk $(STAGING_DIR)/mk/
 	$(CP) \
@@ -153,6 +156,9 @@ define Build/InstallDev
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
 		$(1)/usr/lib/python$(PYTHON_VERSION)/
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/bin/python2*-config \
+		$(1)/usr/bin/
 endef
 
 PYTHON_BASE_LIB_FILES:= \

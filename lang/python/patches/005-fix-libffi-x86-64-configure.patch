@@ -1,5 +1,3 @@
-diff --git a/Modules/_ctypes/libffi/configure b/Modules/_ctypes/libffi/configure
-index 75f62a7..4d6c9f2 100755
 --- a/Modules/_ctypes/libffi/configure
 +++ b/Modules/_ctypes/libffi/configure
 @@ -17257,20 +17257,12 @@ case "$host" in
