@@ -1,0 +1,34 @@
+From 554daf066bf4a8eb7bbc8edc1a877a3afc0de38d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jason=20K=C3=B6lker?= <jason@koelker.net>
+Date: Wed, 2 Sep 2015 22:40:24 +0000
+Subject: [PATCH] datapath: Add net/ip6_checksum.h to stt.c
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+`csum_ipv6_magic` is an asm inline on most platforms. However if it is
+not defined (like on ppc64le) including <net/ip6_checksum.h> will fall
+back to the c implementation by wrapping it in an
+`#ifndef _HAVE_ARCH_IPV6_CSUM`.
+
+Signed-off-by: Jason Kölker <jason@koelker.net>
+Signed-off-by: Jesse Gross <jesse@nicira.com>
+---
+ datapath/linux/compat/stt.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/datapath/linux/compat/stt.c b/datapath/linux/compat/stt.c
+index b44f470..dd21753 100644
+--- a/datapath/linux/compat/stt.c
++++ b/datapath/linux/compat/stt.c
+@@ -30,6 +30,7 @@
+ #include <net/icmp.h>
+ #include <net/inet_ecn.h>
+ #include <net/ip.h>
++#include <net/ip6_checksum.h>
+ #include <net/net_namespace.h>
+ #include <net/netns/generic.h>
+ #include <net/sock.h>
+-- 
+2.1.4
+

@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openvswitch
 
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=2.4.0
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=Apache-2.0
@@ -21,7 +21,7 @@ PKG_USE_MIPS16:=0
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/openvswitch/ovs
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=1b05a9d3298f92525d1c2d91bec11abf0766fdf1
+PKG_SOURCE_VERSION:=b979c282ef040a20d09b8d6885648b09352f05db
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_BUILD_PARALLEL:=1
@@ -98,7 +98,7 @@ define KernelPackage/openvswitch
   SUBMENU:=Network Support
   TITLE:=Open vSwitch Kernel Package
   KCONFIG:=CONFIG_BRIDGE
-  DEPENDS:=+kmod-stp +kmod-ipv6 +kmod-gre +kmod-lib-crc32c +kmod-vxlan @($(SUPPORTED_KERNELS))
+  DEPENDS:=+kmod-stp @IPV6 +kmod-gre +kmod-lib-crc32c +kmod-vxlan @($(SUPPORTED_KERNELS))
   FILES:= \
 	$(PKG_BUILD_DIR)/datapath/linux/openvswitch.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,21,openvswitch)

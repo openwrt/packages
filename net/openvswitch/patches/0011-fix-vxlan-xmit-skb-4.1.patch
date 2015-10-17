@@ -1,0 +1,18 @@
+diff --git a/datapath/linux/compat/include/net/vxlan.h b/datapath/linux/compat/include/net/vxlan.h
+index 0d60c18..db4dfb6 100644
+--- a/datapath/linux/compat/include/net/vxlan.h
++++ b/datapath/linux/compat/include/net/vxlan.h
+@@ -99,8 +99,13 @@ static inline int rpl_vxlan_xmit_skb(struct vxlan_sock *vs,
+ 		return -ENOSYS;
+ 	}
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
++	return vxlan_xmit_skb(rt, vs->sock->sk, skb, src, dst, tos, ttl, df,
++			      src_port, dst_port, md, xnet, vxflags);
++#else
+ 	return vxlan_xmit_skb(rt, skb, src, dst, tos, ttl, df,
+ 			      src_port, dst_port, md, xnet, vxflags);
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)  */
+ }
+ 
+ #define vxlan_xmit_skb rpl_vxlan_xmit_skb

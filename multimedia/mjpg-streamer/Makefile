@@ -62,7 +62,7 @@ endef
 define Build/Prepare
     $(call Build/Prepare/Default)
     ifeq ($(CONFIG_MJPG_STREAMER_WWW),y)
-	$(eval $(call Download,cambozola))
+	$(call Download,cambozola)
 	$(TAR) -xvf $(DL_DIR)/$(CAMBOZOLA) --strip=2 --wildcards \
 		-C $(PKG_BUILD_DIR)/www */dist/cambozola.jar
     endif

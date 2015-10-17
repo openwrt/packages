@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.5.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://collectd.org/files/
@@ -185,6 +185,7 @@ CONFIGURE_ARGS+= \
 	--disable-debug \
 	--enable-daemon \
 	--with-nan-emulation \
+	--with-perl-bindings= \
 	--without-libgcrypt
 
 CONFIGURE_VARS+= \
@@ -314,7 +315,7 @@ $(eval $(call BuildPlugin,madwifi,MadWifi status input,madwifi,))
 #$(eval $(call BuildPlugin,mysql,MySQL status input,mysql,+PACKAGE_collectd-mod-mysql:libmysqlclient-r))
 $(eval $(call BuildPlugin,memory,physical memory usage input,memory,))
 $(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAGE_collectd-mod-modbus:libmodbus))
-$(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-netlink:ip @BROKEN))
+$(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-netlink:libmnl))
 $(eval $(call BuildPlugin,network,network input/output,network))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
 $(eval $(call BuildPlugin,ntpd,NTP daemon status input,ntpd,))
