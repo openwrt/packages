@@ -51,8 +51,11 @@ endef
 
 CAMBOZOLA:=cambozola-0.936.tar.gz
 
+# Distribution URL doesn't always have the correct version
+# Using the OpenWrt mirror provides a stable version
+#      orig-URL:=http://www.andywilcock.com/code/cambozola
 define Download/cambozola
-  URL:=http://www.andywilcock.com/code/cambozola
+  URL:=http://mirror2.openwrt.org/sources
   FILE:=$(CAMBOZOLA)
   MD5SUM:=35c45188aa9635aef2b745c35c311396
 endef
@@ -62,7 +65,7 @@ endef
 define Build/Prepare
     $(call Build/Prepare/Default)
     ifeq ($(CONFIG_MJPG_STREAMER_WWW),y)
-	$(call Download,cambozola)
+	$(eval $(call Download,cambozola))
 	$(TAR) -xvf $(DL_DIR)/$(CAMBOZOLA) --strip=2 --wildcards \
 		-C $(PKG_BUILD_DIR)/www */dist/cambozola.jar
     endif
