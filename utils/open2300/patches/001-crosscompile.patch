@@ -1,0 +1,139 @@
+--- a/Makefile
++++ b/Makefile
+@@ -15,87 +15,82 @@
+ prefix = /usr/local
+ exec_prefix = ${prefix}
+ bindir = ${exec_prefix}/bin
++libdir = ${prefix}/lib
+ 
+ #########################################
+ 
+ CC  = gcc
+-OBJ = open2300.o rw2300.o linux2300.o win2300.o
+-LOGOBJ = log2300.o rw2300.o linux2300.o win2300.o
+-FETCHOBJ = fetch2300.o rw2300.o linux2300.o win2300.o
+-WUOBJ = wu2300.o rw2300.o linux2300.o win2300.o
+-CWOBJ = cw2300.o rw2300.o linux2300.o win2300.o
+-DUMPOBJ = dump2300.o rw2300.o linux2300.o win2300.o
+-HISTOBJ = history2300.o rw2300.o linux2300.o win2300.o
+-HISTLOGOBJ = histlog2300.o rw2300.o linux2300.o win2300.o
+-DUMPBINOBJ = bin2300.o rw2300.o linux2300.o win2300.o
+-XMLOBJ = xml2300.o rw2300.o linux2300.o win2300.o
+-PGSQLOBJ = pgsql2300.o rw2300.o linux2300.o win2300.o
+-LIGHTOBJ = light2300.o rw2300.o linux2300.o win2300.o
+-INTERVALOBJ = interval2300.o rw2300.o linux2300.o win2300.o
+-MINMAXOBJ = minmax2300.o rw2300.o linux2300.o win2300.o
+-MYSQLHISTLOGOBJ = mysqlhistlog2300.o rw2300.o linux2300.o win2300.o
++LIB = lib2300
++LIB_C = rw2300.c linux2300.c
++LIBOBJ = rw2300.o linux2300.o
+ 
+ VERSION = 1.11
+ 
+ CFLAGS = -Wall -O3 -DVERSION=\"$(VERSION)\"
+-CC_LDFLAGS = -lm
+-CC_WINFLAG = 
+-# For Windows - comment the two line above and un-comment the two lines below.
+-#CC_LDFLAGS = -lm -lwsock32
+-#CC_WINFLAG = -mwindows
++CC_LDFLAGS = -L. -lm -l2300
++LFLAGS = -shared -Wl,-soname
+ INSTALL = install
++MAKE_EXEC = $(CC) $(CFLAGS) $@.c -o $@ $(CC_LDFLAGS)
+ 
+ ####### Build rules
+ 
+-all: open2300 dump2300 log2300 fetch2300 wu2300 cw2300 history2300 histlog2300 bin2300 xml2300 light2300 interval2300 minmax2300 mysql2300 mysqlhistlog2300
++all: open2300 dump2300 log2300 fetch2300 wu2300 cw2300 history2300 histlog2300 bin2300 xml2300 light2300 interval2300 minmax2300 #mysql2300 mysqlhistlog2300
+ 
+-open2300 : $(OBJ)
+-	$(CC) $(CFLAGS) -o $@ $(OBJ) $(CC_LDFLAGS)
+-	
+-dump2300 : $(DUMPOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(DUMPOBJ) $(CC_LDFLAGS)
++lib2300 :
++	$(CC) -c -fPIC $(CFLAGS) $(LIB_C)
++	$(CC) $(LFLAGS),$@.so -o $@.so.$(VERSION) $(LIBOBJ)
++	ln -sf $@.so.$(VERSION) $@.so
++
++open2300 : $(LIB)
++	$(MAKE_EXEC)
+ 	
+-log2300 : $(LOGOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(LOGOBJ) $(CC_LDFLAGS) $(CC_WINFLAG)
++dump2300 : $(LIB)
++	$(MAKE_EXEC)
+ 	
+-fetch2300 : $(FETCHOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(FETCHOBJ) $(CC_LDFLAGS)
++log2300 : $(LIB)
++	$(MAKE_EXEC)
+ 	
+-wu2300 : $(WUOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(WUOBJ) $(CC_LDFLAGS) $(CC_WINFLAG)
++fetch2300 : $(LIB)
++	$(MAKE_EXEC)
++
++srv2300 : $(LIB)
++	$(MAKE_EXEC)
++
++wu2300 : $(LIB)
++	$(MAKE_EXEC)
+ 	
+-cw2300 : $(CWOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(CWOBJ) $(CC_LDFLAGS) $(CC_WINFLAG)
++cw2300 : $(LIB)
++	$(MAKE_EXEC)
+ 
+-history2300 : $(HISTOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(HISTOBJ) $(CC_LDFLAGS)
++history2300 : $(LIB)
++	$(MAKE_EXEC)
+ 	
+-histlog2300 : $(HISTLOGOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(HISTLOGOBJ) $(CC_LDFLAGS) $(CC_WINFLAG)
++histlog2300 : $(LIB)
++	$(MAKE_EXEC)
+ 	
+-bin2300 : $(DUMPBINOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(DUMPBINOBJ) $(CC_LDFLAGS)
++bin2300 : $(LIB)
++	$(MAKE_EXEC)
+ 
+-xml2300 : $(XMLOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(XMLOBJ) $(CC_LDFLAGS) $(CC_WINFLAG)
++xml2300 : $(LIB)
++	$(MAKE_EXEC)
+ 
+-mysql2300:
+-	$(CC) $(CFLAGS) -o mysql2300 mysql2300.c rw2300.c linux2300.c $(CC_LDFLAGS) $(CC_WINFLAG) -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
++mysql2300: $(LIB)
++	$(CC) $(CFLAGS) $@.c -o $@ -I/usr/include/mysql -L/usr/lib/mysql $(CC_LDFLAGS) -lmysqlclient
+ 
+-pgsql2300: $(PGSQLOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(PGSQLOBJ) $(CC_LDFLAGS) $(CC_WINFLAG) -I/usr/include/pgsql -L/usr/lib/pgsql -lpq
++pgsql2300: $(LIB)
++	$(CC) $(CFLAGS) $@.c -o $@ -I/usr/include/pgsql -L/usr/lib/pgsql $(CC_LDFLAGS) -lpq
+ 
+-light2300: $(LIGHTOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(LIGHTOBJ) $(CC_LDFLAGS)
++light2300: $(LIB)
++	$(MAKE_EXEC)
+ 	
+-interval2300: $(INTERVALOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(INTERVALOBJ) $(CC_LDFLAGS)
++interval2300: $(LIB)
++	$(MAKE_EXEC)
+ 	
+-minmax2300: $(MINMAXOBJ)
+-	$(CC) $(CFLAGS) -o $@ $(MINMAXOBJ) $(CC_LDFLAGS) $(CC_WINFLAG)
++minmax2300: $(LIB)
++	$(MAKE_EXEC)
+ 	
+-mysqlhistlog2300 :
+-	$(CC) $(CFLAGS) -o mysqlhistlog2300 mysqlhistlog2300.c rw2300.c linux2300.c $(CC_LDFLAGS) $(CC_WINFLAG) -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
++mysqlhistlog2300 : $(LIB)
++	$(CC) $(CFLAGS) $@.c -o $@ -I/usr/include/mysql -L/usr/lib/mysql $(CC_LDFLAGS) -lmysqlclient
+ 
+ 
+ install:
