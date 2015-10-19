@@ -9,17 +9,21 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=cylon
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=1.1.0
+PKG_VERSION:=0.22.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=v0.22.0.tar.gz
-PKG_SOURCE_URL:=https://github.com/hybridgroup/cylon-firmata/archive/
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/hybridgroup/cylon-firmata.git
+PKG_SOURCE_VERSION:=0c37da77e48b3e2cc3a8d566822a17689de91b40
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_BUILD_DEPENDS:=node
 PKG_NODE_VERSION:=0.12.7
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILE:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
