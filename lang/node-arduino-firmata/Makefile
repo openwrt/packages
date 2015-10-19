@@ -12,14 +12,18 @@ PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.3.3
 PKG_RELEASE:=1
 
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/shokai/node-arduino-firmata/archive/
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/shokai/node-arduino-firmata.git
+PKG_SOURCE_VERSION:=16e76007edf218d72df590adbd711ac6b7432845
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_BUILD_DEPENDS:=node
 PKG_NODE_VERSION:=0.12.7
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
-PKG_LICENSE:=
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILE:=LICENSE.txt
 
 include $(INCLUDE_DIR)/package.mk
 
