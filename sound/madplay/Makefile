@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=madplay
 PKG_VERSION:=0.15.2b
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/mad \
@@ -41,7 +41,7 @@ define Package/madplay/description
 endef
 
 Package/madplay-alsa=$(call Package/madplay/default,alsa)
-Package/madplay-oss=$(call Package/madplay/default,oss)
+Package/madplay=$(call Package/madplay/default,oss)
 
 define Build/Configure
 	$(call Build/Configure/Default, \
@@ -64,7 +64,7 @@ ifeq ($(BUILD_VARIANT),madplay-alsa)
 		--with-alsa
 endif
 
-ifeq ($(BUILD_VARIANT),madplay-oss)
+ifeq ($(BUILD_VARIANT),madplay)
 	CONFIGURE_ARGS += \
 		--without-alsa
 endif
@@ -75,4 +75,4 @@ define Package/madplay-$(BUILD_VARIANT)/install
 endef
 
 $(eval $(call BuildPackage,madplay-alsa))
-$(eval $(call BuildPackage,madplay-oss))
+$(eval $(call BuildPackage,madplay))
