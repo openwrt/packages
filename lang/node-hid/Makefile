@@ -10,8 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=hid
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.4.0
-
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/node-hid/node-hid.git
@@ -23,7 +22,8 @@ PKG_BUILD_DEPENDS:=node
 PKG_NODE_VERSION:=0.12.7
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
-PKG_LICENSE:=MIT
+PKG_LICENSE:=Custom
+PKG_LICENSE_FILE:=
 
 include $(INCLUDE_DIR)/package.mk
 
