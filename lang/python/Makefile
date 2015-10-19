@@ -21,7 +21,7 @@ PKG_MD5SUM:=c685ef0b8e9f27b5e3db5db12b268ac6
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
 
-PKG_FIXUP:=autoreconf
+PKG_FIXUP:=libtool autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
