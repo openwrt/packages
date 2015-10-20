@@ -1,0 +1,11 @@
+--- a/src/lsm303/lsm303.h
++++ b/src/lsm303/lsm303.h
+@@ -34,7 +34,7 @@
+ 
+ /* LSM303 Address definitions */
+ #define LSM303_MAG 0x1E // assuming SA0 grounded
+-#define LSM303_ACC 0x18 // assuming SA0 grounded
++#define LSM303_ACC 0x1E // assuming SA0 grounded
+ 
+ /* LSM303 Register definitions */
+ #define CTRL_REG1_A 0x20
