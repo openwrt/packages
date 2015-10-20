@@ -2,5 +2,5 @@ COMMAND=/usr/bin/chronyc
 
 [ -x $COMMAND ] || exit 0
 
-[ "$ACTION" = "ifup" -a "$INTERFACE" = "wan" ] && $COMMAND -a online
-[ "$ACTION" = "ifdown" -a "$INTERFACE" = "wan" ] && $COMMAND -a offline
+[ "$ACTION" = "ifup" -a "$INTERFACE" = "wan" ] && $COMMAND online
+[ "$ACTION" = "ifdown" -a "$INTERFACE" = "wan" ] && $COMMAND offline
