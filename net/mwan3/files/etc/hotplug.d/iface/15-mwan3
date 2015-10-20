@@ -1,5 +1,41 @@
 #!/bin/sh
 
+local IP IPS IPT LOG
+
+[ -n "$ACTION" ] || exit 0
+[ -n "$INTERFACE" ] || exit 0
+
+if [ $ACTION == "ifup" ]; then
+        [ -n "$DEVICE" ] || exit 0
+fi
+
+if [ -x /usr/sbin/ip ]; then
+        IP="/usr/sbin/ip -4"
+elif [ -x /usr/bin/ip ]; then
+        IP="/usr/bin/ip -4"
+else
+        exit 1
+fi
+
+if [ -x /usr/sbin/ipset ]; then
+        IPS="/usr/sbin/ipset"
+else
+        exit 1
+fi
+
+if [ -x /usr/sbin/iptables ]; then
+        IPT="/usr/sbin/iptables -t mangle -w"
+else
+        exit 1
+fi
+
+if [ -x /usr/bin/logger ]; then
+        LOG="/usr/bin/logger -t mwan3 -p"
+else
+        exit 1
+fi
+
+
 mwan3_get_iface_id()
 {
 	let iface_count++
@@ -397,25 +433,6 @@ mwan3_ifupdown()
 	config_foreach mwan3_set_policies_iptables policy
 	config_foreach mwan3_set_user_rules_iptables rule
 }
-
-[ -n "$ACTION" ] || exit 0
-[ -n "$INTERFACE" ] || exit 0
-
-if [ $ACTION == "ifup" ]; then
-	[ -n "$DEVICE" ] || exit 0
-fi
-
-[ -x /usr/sbin/ip ] || exit 1
-[ -x /usr/sbin/ipset ] || exit 1
-[ -x /usr/sbin/iptables ] || exit 1
-[ -x /usr/bin/logger ] || exit 1
-
-local IP IPS IPT LOG
-
-IP="/usr/sbin/ip -4"
-IPS="/usr/sbin/ipset"
-IPT="/usr/sbin/iptables -t mangle -w"
-LOG="/usr/bin/logger -t mwan3 -p"
 
 case "$ACTION" in
 	ifup|ifdown)
