@@ -28,6 +28,9 @@ define Package/swig
   BUILDONLY:=1
 endef
 
+HOST_CONFIGURE_ARGS+= \
+	--without-pcre
+
 define Package/swig/description
   tool that generates bindings for various languages
 endef
