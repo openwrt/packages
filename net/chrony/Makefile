@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chrony
-PKG_VERSION:=2.1.1
+PKG_VERSION:=2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.tuxfamily.org/chrony/
-PKG_MD5SUM:=15e470a51ab6e09e65bc0a2fbc5299af
+PKG_MD5SUM:=17bc77d3d2ce942675f9600b60452717
 
 PKG_MAINTAINER:=Miroslav Lichvar <mlichvar0@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -41,7 +41,6 @@ endef
 
 define Package/chrony/conffiles
 /etc/chrony/chrony.conf
-/etc/chrony/chrony.keys
 /etc/config/chrony
 endef
 
@@ -51,6 +50,7 @@ CONFIGURE_ARGS+= \
 	--host-system=Linux \
 	--sysconfdir=/etc/chrony \
 	--prefix=/usr \
+	--chronysockdir=/var/run/chrony \
 	--disable-readline \
 	--disable-rtc \
 	--disable-asyncdns \
@@ -71,7 +71,6 @@ define Package/chrony/install
 	$(INSTALL_BIN) ./files/chronyd.init $(1)/etc/init.d/chronyd
 	$(INSTALL_CONF) ./files/chrony.config $(1)/etc/config/chrony
 	$(INSTALL_CONF) ./files/chrony.conf $(1)/etc/chrony/chrony.conf
-	$(INSTALL_CONF) ./files/chrony.keys $(1)/etc/chrony/chrony.keys
 endef
 
 $(eval $(call BuildPackage,chrony))
