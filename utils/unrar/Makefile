@@ -25,13 +25,18 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
+define Package/unrar/Default
+  TITLE:=UnRAR
+  URL:=http://www.rarlab.com/
+  DEPENDS:=$(CXX_DEPENDS) +libpthread
+endef
+
 define Package/unrar
+$(call Package/unrar/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Compression
-  TITLE:=UnRAR application
-  URL:=http://www.rarlab.com/
-  DEPENDS:=$(CXX_DEPENDS) +libpthread
+  TITLE+= application
 endef
 
 define Package/unrar/description
@@ -39,7 +44,21 @@ define Package/unrar/description
    the RAR compression scheme
 endef
 
-define Build/Configure
+define Package/libunrar
+$(call Package/unrar/Default)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE+= library
+endef
+
+define Package/libunrar/description
+  UnRAR library is a shared library that provides file extraction from RAR
+  archives
+endef
+
+define Build/Compile
+	$(call Build/Compile/Default)
+	$(call Build/Compile/Default,lib)
 endef
 
 define Package/unrar/install
@@ -47,4 +66,10 @@ define Package/unrar/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/unrar $(1)/usr/bin/
 endef
 
+define Package/libunrar/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/libunrar.so $(1)/usr/lib/
+endef
+
 $(eval $(call BuildPackage,unrar))
+$(eval $(call BuildPackage,libunrar))
