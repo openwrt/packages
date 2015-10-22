@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpg123
 PKG_VERSION:=1.22.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.mpg123.de/download/
@@ -43,7 +43,7 @@ define Package/mpg123
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=fast console mpeg audio player
-  DEPENDS+=+libmpg123 +alsa-lib +libsdl +libpthread
+  DEPENDS+=+libmpg123 +alsa-lib
 endef
 
 define Build/Configure
@@ -51,6 +51,7 @@ define Build/Configure
 		--enable-shared \
 		--enable-static \
 		--with-cpu=generic_nofpu \
+		--with-default-audio=alsa \
 	)
 endef
 
@@ -86,7 +87,8 @@ endef
 define Package/mpg123/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/mpg123 \
+		$(PKG_INSTALL_DIR)/usr/bin/mpg123{,-id3dump,-strip} \
+		$(PKG_INSTALL_DIR)/usr/bin/out123
 		$(1)/usr/bin
 
 	$(INSTALL_DIR) $(1)/usr/lib/mpg123
