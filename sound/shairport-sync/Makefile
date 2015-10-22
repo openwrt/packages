@@ -3,8 +3,7 @@
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
-# updated to work with latest source from abrasive
-#
+
 
 include $(TOPDIR)/rules.mk
 
