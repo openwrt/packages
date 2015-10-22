@@ -1,0 +1,5 @@
+# redirect/force all dns queries to port 53 of your router
+# configuration found in /etc/firewall.user
+#
+iptables -t nat -I PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53
+iptables -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53
