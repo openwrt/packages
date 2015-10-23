@@ -1,0 +1,11 @@
+--- a/package.json	2014-05-02 12:02:02.940515727 +0200
++++ b/package.json	2014-05-02 12:03:08.488512762 +0200
+@@ -69,7 +71,7 @@
+     "serialportterm": "./bin/serialportTerminal.js"
+   },
+   "scripts": {
+-    "install": "node-pre-gyp install --fallback-to-build",
++    "install": "node-pre-gyp reinstall --build-from-source --target_arch=${npm_config_arch}",
+     "test": "grunt --verbose"
+   }
+ }

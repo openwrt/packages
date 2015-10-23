@@ -1,0 +1,6 @@
+#!/bin/sh
+stty -F /dev/ttyS0 2500000 clocal cread cs8 -cstopb -parenb
+exec < /dev/ttyS0
+exec > /dev/ttyS0
+exec 2> /dev/ttyS0
+askfirst bin/ash --login

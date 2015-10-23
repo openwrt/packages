@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=2.4.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/zabbix
@@ -107,6 +107,7 @@ CONFIGURE_ARGS+= \
 	--enable-agent \
 	--enable-server \
 	--enable-proxy \
+	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-java \
 	--with-sqlite3="$(STAGING_DIR)/usr"
 

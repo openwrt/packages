@@ -1,0 +1,26 @@
+From 9540f9b93704e8e80ab2048954ca88d8e6eddf86 Mon Sep 17 00:00:00 2001
+From: John Crispin <blogic@openwrt.org>
+Date: Thu, 23 Jul 2015 16:43:42 +0200
+Subject: [PATCH 3/4] uart
+
+---
+ src/uart/uart.c |    3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/uart/uart.c b/src/uart/uart.c
+index 3ef55a4..5102f81 100644
+--- a/src/uart/uart.c
++++ b/src/uart/uart.c
+@@ -34,6 +34,9 @@
+ #include "uart.h"
+ #include "mraa_internal.h"
+ 
++#ifndef CMSPAR
++#define CMSPAR	  010000000000
++#endif
+ // This function takes an unsigned int and converts it to a B* speed_t
+ // that can be used with linux/posix termios
+ static speed_t
+-- 
+1.7.10.4
+
