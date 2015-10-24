@@ -3,6 +3,8 @@ module("luci.controller.mwan3", package.seeall)
 sys = require "luci.sys"
 ut = require "luci.util"
 
+ip = "/usr/bin/ip -4 "
+
 function index()
 	if not nixio.fs.access("/etc/config/mwan3") then
 		return
@@ -61,7 +63,7 @@ end
 
 function getInterfaceStatus(ruleNumber, interfaceName)
 	if ut.trim(sys.exec("uci -p /var/state get mwan3." .. interfaceName .. ".enabled")) == "1" then
-		if ut.trim(sys.exec("ip route list table " .. ruleNumber)) ~= "" then
+		if ut.trim(sys.exec(ip .. "route list table " .. ruleNumber)) ~= "" then
 			if ut.trim(sys.exec("uci -p /var/state get mwan3." .. interfaceName .. ".track_ip")) ~= "" then
 				return "online"
 			else
@@ -183,8 +185,8 @@ function diagnosticsData(interface, tool, task)
 				end
 			elseif tool == "rulechk" then
 				getInterfaceNumber()
-				local rule1 = sys.exec("ip rule | grep $(echo $((" .. interfaceNumber .. " + 1000)))")
-				local rule2 = sys.exec("ip rule | grep $(echo $((" .. interfaceNumber .. " + 2000)))")
+				local rule1 = sys.exec(ip .. "rule | grep $(echo $((" .. interfaceNumber .. " + 1000)))")
+				local rule2 = sys.exec(ip .. "rule | grep $(echo $((" .. interfaceNumber .. " + 2000)))")
 				if rule1 ~= "" and rule2 ~= "" then
 					results = "All required interface IP rules found:\n\n" .. rule1 .. rule2
 				elseif rule1 ~= "" or rule2 ~= "" then
@@ -194,7 +196,7 @@ function diagnosticsData(interface, tool, task)
 				end
 			elseif tool == "routechk" then
 				getInterfaceNumber()
-				local routeTable = sys.exec("ip route list table " .. interfaceNumber)
+				local routeTable = sys.exec(ip .. "route list table " .. interfaceNumber)
 				if routeTable ~= "" then
 					results = "Interface routing table " .. interfaceNumber .. " was found:\n\n" .. routeTable
 				else
@@ -283,17 +285,17 @@ function troubleshootingData()
 	mArray.routeshow = { routeShow }
 
 	-- ip rule show
-	local ipRuleShow = ut.trim(sys.exec("ip rule show"))
+	local ipRuleShow = ut.trim(sys.exec(ip .. "rule show"))
 		if ipRuleShow == "" then
 			ipRuleShow = "No data found"
 		end
 	mArray.iprule = { ipRuleShow }
 
 	-- ip route list table 1-250
-	local routeList, routeString = ut.trim(sys.exec("ip rule | sed 's/://g' | awk '$1>=2001 && $1<=2250' | awk '{print $NF}'")), ""
+	local routeList, routeString = ut.trim(sys.exec(ip .. "rule | sed 's/://g' | awk '$1>=2001 && $1<=2250' | awk '{print $NF}'")), ""
 		if routeList ~= "" then
 			for line in routeList:gmatch("[^\r\n]+") do
-				routeString = routeString .. line .. "\n" .. sys.exec("ip route list table " .. line)
+				routeString = routeString .. line .. "\n" .. sys.exec(ip .. "route list table " .. line)
 			end
 			routeString = ut.trim(routeString)
 		else
