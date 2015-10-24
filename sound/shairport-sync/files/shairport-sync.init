@@ -58,6 +58,7 @@ start_instance() {
 		append_num "$cfg" "$conf_file" resync_threshold "resync_threshold"
 		append_num "$cfg" "$conf_file" log_verbosity "log_verbosity"
 		append_str "$cfg" "$conf_file" ignore_volume_control "ignore_volume_control"
+		append_num "$cfg" "$conf_file" volume_range_db "volume_range_db"
 		echo -e "};\n" >> $conf_file
 
 		# Latencies
