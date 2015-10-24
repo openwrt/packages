@@ -255,6 +255,7 @@ define Package/collectd/install
 	$(INSTALL_CONF) ./files/collectd.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/collectd.init $(1)/etc/init.d/collectd
+	$(INSTALL_DIR) $(1)/etc/collectd/conf.d
 endef
 
 # 1: plugin name
