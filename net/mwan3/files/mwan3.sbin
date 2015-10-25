@@ -1,9 +1,26 @@
 #!/bin/sh
-. /lib/functions.sh
 
-IP="/usr/sbin/ip -4"
-IPS="/usr/sbin/ipset"
-IPT="/usr/sbin/iptables -t mangle -w"
+if [ -x /usr/sbin/ip ]; then
+        IP="/usr/sbin/ip -4"
+elif [ -x /usr/bin/ip ]; then
+        IP="/usr/bin/ip -4"
+else
+        exit 1
+fi
+
+if [ -x /usr/sbin/ipset ]; then
+        IPS="/usr/sbin/ipset"
+else
+        exit 1
+fi
+
+if [ -x /usr/sbin/iptables ]; then
+        IPT="/usr/sbin/iptables -t mangle -w"
+else
+        exit 1
+fi
+
+. /lib/functions.sh
 
 help()
 {

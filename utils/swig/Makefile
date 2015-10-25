@@ -16,6 +16,7 @@ PKG_INSTALL:=1
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILE:=LICENSE
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -26,6 +27,9 @@ define Package/swig
   TITLE:=swig binding generator
   BUILDONLY:=1
 endef
+
+HOST_CONFIGURE_ARGS+= \
+	--without-pcre
 
 define Package/swig/description
   tool that generates bindings for various languages
