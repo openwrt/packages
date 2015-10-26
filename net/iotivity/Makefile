@@ -92,6 +92,29 @@ define Package/iotivity-things-manager/description
     IoTivity things manager
 endef
 
+define Package/iotivity-resource-container-lib
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=iotivity +iotivity-cpp +boost-system +boost-thread +boost-date_time
+  TITLE:=IoTivity Resource Container library
+  URL:=https://www.iotivity.org
+endef
+
+define Package/iotivity-resource-container-sample
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=iotivity +iotivity-resource-container-lib
+  TITLE:=IoTivity Resource Container sample Application
+  URL:=https://www.iotivity.org
+endef
+
+define Package/iotivity-resource-container-hue
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=iotivity +iotivity-resource-container-lib +libcurl
+  TITLE:=IoTivity Resource Container Hue Bundle
+  URL:=https://www.iotivity.org
+endef
 
 define Package/iotivity-example-garage
   SECTION:=net
@@ -153,6 +176,9 @@ SCONS_OPTIONS += \
 	$(if $(CONFIG_PACKAGE_iotivity-things-manager-lib),libTGMSDK) \
 	$(if $(CONFIG_PACKAGE_iotivity-oic-middle),samples) \
 	$(if $(CONFIG_PACKAGE_iotivity-things-manager),ConServerApp ConClientApp BootstrapServerApp) \
+	$(if $(CONFIG_PACKAGE_iotivity-resource-container-lib),libResContainer) \
+	$(if $(CONFIG_PACKAGE_iotivity-resource-container-sample),containersample) \
+	$(if $(CONFIG_PACKAGE_iotivity-resource-container-hue),libHueBundle) \
 	$(if $(CONFIG_PACKAGE_iotivity-example-garage),examples) \
 
 
@@ -206,6 +232,24 @@ define Package/iotivity-things-manager/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/service/things-manager/sampleapp/linux/configuration/con-client $(1)/usr/bin/
 endef
 
+define Package/iotivity-resource-container-lib/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_common.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_client.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_server.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_container.so $(1)/usr/lib/
+endef
+
+define Package/iotivity-resource-container-sample/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/service/resource-container/ContainerSample  $(1)/usr/bin/
+endef
+
+define Package/iotivity-resource-container-hue/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/libHueBundle.so $(1)/usr/lib/
+endef
+
 define Package/iotivity-example-garage/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/resource/examples/garageclient $(1)/usr/bin/
@@ -218,4 +262,7 @@ $(eval $(call BuildPackage,iotivity-cpp))
 $(eval $(call BuildPackage,iotivity-things-manager-lib))
 $(eval $(call BuildPackage,iotivity-oic-middle))
 $(eval $(call BuildPackage,iotivity-things-manager))
+$(eval $(call BuildPackage,iotivity-resource-container-lib))
+$(eval $(call BuildPackage,iotivity-resource-container-sample))
+$(eval $(call BuildPackage,iotivity-resource-container-hue))
 $(eval $(call BuildPackage,iotivity-example-garage))
