@@ -1,22 +1,33 @@
+--- a/resource/csdk/connectivity/src/bt_le_adapter/linux/SConscript
++++ b/resource/csdk/connectivity/src/bt_le_adapter/linux/SConscript
+@@ -31,7 +31,7 @@ this_build_dir = os.path.join(root_build
+ 
+ # The Linux BLE adapter implementation uses GDBus to make D-Bus based
+ # method calls to BlueZ.  Pull in the necessary dependencies.
+-env.ParseConfig("pkg-config gio-unix-2.0 --cflags --libs")
++# env.ParseConfig("pkg-config gio-unix-2.0 --cflags --libs")
+ 
+ # Set up commands to generate GDBus code from the D-Bus introspection
+ # XML.
 --- a/resource/csdk/security/provisioning/sample/SConscript
 +++ b/resource/csdk/security/provisioning/sample/SConscript
-@@ -53,7 +53,7 @@ provisioning_env.PrependUnique(LIBS = ['
- 
- if env.get('SECURED') == '1':
-     provisioning_env.AppendUnique(LIBS = ['tinydtls'])
+@@ -58,7 +58,7 @@ if env.get('SECURED') == '1':
+ if env.get('DTLS_WITH_X509') == '1':
+ 	provisioning_env.AppendUnique(LIBS = ['CKManager'])
+ 	provisioning_env.AppendUnique(LIBS = ['asn1'])
 -provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
-+#provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
++# provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
  
  provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
  
 --- a/resource/csdk/security/provisioning/SConscript
 +++ b/resource/csdk/security/provisioning/SConscript
-@@ -62,7 +62,7 @@ provisioning_env.PrependUnique(LIBS = ['
- 
- provisioning_env.AppendUnique(LIBS = ['tinydtls'])
+@@ -73,7 +73,7 @@ provisioning_env.AppendUnique(LIBS = ['t
+ if env.get('DTLS_WITH_X509') == '1':
+ 	provisioning_env.AppendUnique(LIBS = ['CKManger'])
  
 -provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
-+#provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
++# provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
  
  if target_os == 'android':
  	provisioning_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
