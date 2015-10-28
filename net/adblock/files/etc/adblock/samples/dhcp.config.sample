@@ -1,0 +1,7 @@
+# tweaks for dnsmasq
+# configuration found in /etc/config/dhcp
+#
+config dnsmasq
+    option cachesize '1000'
+    option filterwin2k '0'
+    option logqueries '1'
