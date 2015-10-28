@@ -1,0 +1,26 @@
+# sample startup script
+# configuration found in /etc/rc.local
+#
+
+# start logging
+#
+/usr/bin/logger -t rc.local "start rc.local processing"
+
+# set home directory
+#
+export HOME=/root
+
+# resize /tmp partition to 256 MB
+#
+/usr/bin/logger -t rc.local "resize /tmp partition to 256 MB"
+mount tmpfs /tmp -t tmpfs -o remount,nosuid,nodev,noatime,size=256M
+
+# start adblock script
+#
+/usr/bin/logger -t rc.local "start adblock script"
+/usr/bin/adblock-update.sh >/dev/null 2>&1
+
+# write log and exit
+#
+/usr/bin/logger -t rc.local "finish rc.local processing"
+exit 0

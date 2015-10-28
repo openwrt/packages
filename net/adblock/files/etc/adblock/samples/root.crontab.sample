@@ -1,0 +1,8 @@
+# sample crontab script
+# configuration found in /etc/crontabs/root
+#
+
+# start adblock script twice a day
+#
+0 06 * * *    /usr/bin/adblock-update.sh &
+0 22 * * *    /usr/bin/adblock-update.sh &
