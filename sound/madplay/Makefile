@@ -19,6 +19,8 @@ PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Simon Peter <probono@puredarwin.org>
 
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,13 +29,13 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/madplay/default
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+libid3tag +libmad $(INTL_DEPENDS)
+  DEPENDS:=+libid3tag +libmad $(INTL_DEPENDS) $(2)
   TITLE:=MPEG audio player in fixed point - $(1)
   VARIANT:=$(1)
   URL:=http://sourceforge.net/projects/mad
 endef
 
-Package/madplay-alsa=$(call Package/madplay/default,alsa)
+Package/madplay-alsa=$(call Package/madplay/default,alsa,+alsa-lib)
 Package/madplay=$(call Package/madplay/default,oss)
 
 define Package/madplay/description
@@ -58,18 +60,23 @@ define Build/Configure
 	)
 endef
 
-ifeq ($(BUILD_VARIANT),madplay-alsa)
+ifeq ($(BUILD_VARIANT),alsa)
 	CONFIGURE_ARGS += \
 		--without-oss \
 		--with-alsa
 endif
 
-ifeq ($(BUILD_VARIANT),madplay)
+ifeq ($(BUILD_VARIANT),oss)
 	CONFIGURE_ARGS += \
 		--without-alsa
 endif
 
-define Package/madplay-$(BUILD_VARIANT)/install
+define Package/madplay/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/madplay $(1)/usr/bin/
+endef
+
+define Package/madplay-alsa/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/madplay $(1)/usr/bin/
 endef

@@ -8,21 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iotivity
-PKG_VERSION:=0.9.2
+PKG_VERSION:=1.0.0
 PKG_RELEASE=1
 
 PKG_SOURCE:=${PKG_NAME}-${PKG_VERSION}.tar.gz
 PKG_SOURCE_URL:=https://downloads.iotivity.org/${PKG_VERSION}/ \
 	http://mirrors.kernel.org/${PKG_NAME}/${PKG_VERSION}/
-PKG_MD5SUM:=cf32e10a8f355fe1327db98ffc9a6173
+PKG_MD5SUM:=4bcbabffc1734c664bbdf8fedfa60543
 PKG_USE_MIPS16:=0
 
 PKG_MAINTAINER:=Hauke Mehrtens <hauke.mehrtens@lantiq.com>
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.md
-
-PKG_BUILD_DEPENDS:= +boost +libexpat
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/scons.mk
@@ -69,32 +67,6 @@ define Package/iotivity-things-manager-lib/description
 endef
 
 
-define Package/iotivity-plugin-manager-lib
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=iotivity +iotivity-cpp +libexpat +boost +boost-system
-  TITLE:=IoTivity plugin manager lib
-  URL:=https://www.iotivity.org
-endef
-
-define Package/iotivity-plugin-manager-lib/description
-    IoTivity plugin manager lib
-endef
-
-
-define Package/iotivity-mqttclient
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=iotivity +iotivity-cpp +iotivity-plugin-manager-lib +boost +boost-system
-  TITLE:=IoTivity mqtt Client
-  URL:=https://www.iotivity.org
-endef
-
-define Package/iotivity-mqttclient/description
-    IoTivity mqtt Client
-endef
-
-
 define Package/iotivity-oic-middle
   SECTION:=net
   CATEGORY:=Network
@@ -120,6 +92,29 @@ define Package/iotivity-things-manager/description
     IoTivity things manager
 endef
 
+define Package/iotivity-resource-container-lib
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=iotivity +iotivity-cpp +boost-system +boost-thread +boost-date_time
+  TITLE:=IoTivity Resource Container library
+  URL:=https://www.iotivity.org
+endef
+
+define Package/iotivity-resource-container-sample
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=iotivity +iotivity-resource-container-lib
+  TITLE:=IoTivity Resource Container sample Application
+  URL:=https://www.iotivity.org
+endef
+
+define Package/iotivity-resource-container-hue
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=iotivity +iotivity-resource-container-lib +libcurl
+  TITLE:=IoTivity Resource Container Hue Bundle
+  URL:=https://www.iotivity.org
+endef
 
 define Package/iotivity-example-garage
   SECTION:=net
@@ -135,7 +130,7 @@ endef
 
 
 PKG_TINYCBOR_NAME:=tinycbor
-PKG_TINYCBOR_VERSION:=3e83c0dc6e55bc73e9a4a7343ab8e06c43127efa
+PKG_TINYCBOR_VERSION:=43e3ac9490cf19459ec7b7bd13df3b66810fb62a
 PKG_TINYCBOR_SOURCE:=$(PKG_TINYCBOR_NAME)-$(PKG_TINYCBOR_VERSION).tar.bz2
 PKG_TINYCBOR_PROTO:=git
 PKG_TINYCBOR_SOURCE_URL:=https://github.com/01org/tinycbor.git
@@ -152,15 +147,40 @@ define Download/iotivity-tinycbor
 endef
 $(eval $(call Download,iotivity-tinycbor))
 
+PKG_SQLITE_NAME:=sqlite
+PKG_SQLITE_VERSION:=3081101
+PKG_SQLITE_SOURCE:=$(PKG_SQLITE_NAME)-amalgamation-$(PKG_SQLITE_VERSION).zip
+PKG_SQLITE_SOURCE_URL:=http://www.sqlite.org/2015/
+PKG_SQLITE_SUBDIR:=$(PKG_SQLITE_NAME)
+PKG_SQLITE_MD5SUM:=94907e831502e2080b76e281cfa24dde
+
+define Download/iotivity-sqlite
+  FILE:=$(PKG_SQLITE_SOURCE)
+  URL:=$(PKG_SQLITE_SOURCE_URL)
+  VERSION:=$(PKG_SQLITE_VERSION)
+  SUBDIR:=$(PKG_SQLITE_SUBDIR)
+  MD5SUM:=$(PKG_SQLITE_MD5SUM)
+endef
+$(eval $(call Download,iotivity-sqlite))
+
 
 SCONS_OPTIONS += \
 	TARGET_OS=linux \
-	TARGET_TRANSPORT=ALL \
+	TARGET_TRANSPORT=IP \
 	TARGET_ARCH=$(ARCH) \
 	STAGING_DIR=$(STAGING_DIR) \
 	LOGGING=true \
 	SECURED=1 \
-	mqttclient examples samples libTGMSDK ConServerApp ConClientApp BootstrapServerApp
+	$(if $(CONFIG_PACKAGE_iotivity),liboctbstack) \
+	$(if $(CONFIG_PACKAGE_iotivity-cpp),liboc) \
+	$(if $(CONFIG_PACKAGE_iotivity-things-manager-lib),libTGMSDK) \
+	$(if $(CONFIG_PACKAGE_iotivity-oic-middle),samples) \
+	$(if $(CONFIG_PACKAGE_iotivity-things-manager),ConServerApp ConClientApp BootstrapServerApp) \
+	$(if $(CONFIG_PACKAGE_iotivity-resource-container-lib),libResContainer) \
+	$(if $(CONFIG_PACKAGE_iotivity-resource-container-sample),containersample) \
+	$(if $(CONFIG_PACKAGE_iotivity-resource-container-hue),libHueBundle) \
+	$(if $(CONFIG_PACKAGE_iotivity-example-garage),examples) \
+
 
 ifneq ($(findstring c,$(OPENWRT_VERBOSE)),)
   SCONS_OPTIONS += VERBOSE=true
@@ -169,6 +189,9 @@ endif
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(TAR) -C $(PKG_BUILD_DIR)/extlibs/tinycbor/ -xjf $(DL_DIR)/$(PKG_TINYCBOR_SOURCE)
+	unzip -d $(PKG_BUILD_DIR)/extlibs/sqlite3/ $(DL_DIR)/$(PKG_SQLITE_SOURCE)
+	mv $(PKG_BUILD_DIR)/extlibs/sqlite3/$(PKG_SQLITE_NAME)-amalgamation-$(PKG_SQLITE_VERSION)/sqlite3.h $(PKG_BUILD_DIR)/extlibs/sqlite3/
+	mv $(PKG_BUILD_DIR)/extlibs/sqlite3/$(PKG_SQLITE_NAME)-amalgamation-$(PKG_SQLITE_VERSION)/sqlite3.c $(PKG_BUILD_DIR)/extlibs/sqlite3/
 endef
 
 
@@ -197,16 +220,6 @@ define Package/iotivity-things-manager-lib/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/libTGMSDKLibrary.so $(1)/usr/lib/
 endef
 
-define Package/iotivity-plugin-manager-lib/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/libpmimpl.so $(1)/usr/lib/
-endef
-
-define Package/iotivity-mqttclient/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/service/protocol-plugin/sample-app/linux/mqtt/mqttclient $(1)/usr/bin/
-endef
-
 define Package/iotivity-oic-middle/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/examples/OICMiddle/OICMiddle $(1)/usr/bin/
@@ -219,6 +232,24 @@ define Package/iotivity-things-manager/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/service/things-manager/sampleapp/linux/configuration/con-client $(1)/usr/bin/
 endef
 
+define Package/iotivity-resource-container-lib/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_common.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_client.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_server.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_container.so $(1)/usr/lib/
+endef
+
+define Package/iotivity-resource-container-sample/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/service/resource-container/ContainerSample  $(1)/usr/bin/
+endef
+
+define Package/iotivity-resource-container-hue/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/libHueBundle.so $(1)/usr/lib/
+endef
+
 define Package/iotivity-example-garage/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/resource/examples/garageclient $(1)/usr/bin/
@@ -229,8 +260,9 @@ endef
 $(eval $(call BuildPackage,iotivity))
 $(eval $(call BuildPackage,iotivity-cpp))
 $(eval $(call BuildPackage,iotivity-things-manager-lib))
-$(eval $(call BuildPackage,iotivity-plugin-manager-lib))
-$(eval $(call BuildPackage,iotivity-mqttclient))
 $(eval $(call BuildPackage,iotivity-oic-middle))
 $(eval $(call BuildPackage,iotivity-things-manager))
+$(eval $(call BuildPackage,iotivity-resource-container-lib))
+$(eval $(call BuildPackage,iotivity-resource-container-sample))
+$(eval $(call BuildPackage,iotivity-resource-container-hue))
 $(eval $(call BuildPackage,iotivity-example-garage))
