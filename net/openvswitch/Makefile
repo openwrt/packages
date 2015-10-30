@@ -116,6 +116,9 @@ CONFIGURE_ARGS += --enable-shared
 
 TARGET_CFLAGS += -flto -std=gnu99
 
+CONFIGURE_VARS += KARCH=$(LINUX_KARCH)
+MAKE_FLAGS += ARCH="$(LINUX_KARCH)"
+
 define Package/openvswitch/install
 	$(INSTALL_DIR) $(1)/etc/openvswitch
 
