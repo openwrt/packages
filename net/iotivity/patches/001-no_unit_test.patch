@@ -1,6 +1,6 @@
 --- a/resource/SConscript
 +++ b/resource/SConscript
-@@ -67,7 +67,7 @@ if target_os == 'linux':
+@@ -71,7 +71,7 @@ if target_os == 'linux':
  	SConscript('csdk/stack/samples/linux/secure/SConscript')
  
  	# Build C/C++ unit tests
@@ -11,14 +11,30 @@
  	env.Command('../../out/darwin/iotivity-csdk.framework',None,src_dir + '/tools/darwin/mkfwk_osx.sh')
 --- a/service/resource-encapsulation/SConscript
 +++ b/service/resource-encapsulation/SConscript
-@@ -101,7 +101,7 @@ SConscript('examples/SConscript')
- ######################################################################
- # Build UnitTests Resource Client , resourceCache and resourceBroker
+@@ -113,10 +113,10 @@ SConscript('examples/SConscript')
+ # Build UnitTests Resource Client , resourceCache and resourceBroker and 
+ # DiscoveryManager
  ################################################ ######################
--SConscript('unittests/SConscript')
--SConscript('src/resourceCache/unittests/SConscript')
--SConscript('src/resourceBroker/unittest/SConscript')
-+#SConscript('unittests/SConscript')
-+#SConscript('src/resourceCache/unittests/SConscript')
-+#SConscript('src/resourceBroker/unittest/SConscript')
+-if target_os == 'linux':
+-    SConscript('unittests/SConscript')
+-    SConscript('src/resourceCache/unittests/SConscript')
+-    SConscript('src/resourceBroker/unittest/SConscript')
++# if target_os == 'linux':
++#     SConscript('unittests/SConscript')
++#     SConscript('src/resourceCache/unittests/SConscript')
++#     SConscript('src/resourceBroker/unittest/SConscript')
+ 
+ if target_os == 'android':
+     SConscript('android/SConscript')
+\ No newline at end of file
+--- a/service/things-manager/SConscript
++++ b/service/things-manager/SConscript
+@@ -71,6 +71,6 @@ SConscript('sampleapp/SConscript')
+ ######################################################################
+ # Build UnitTests Things Manager
+ ################################################ ######################
+-if target_os == 'linux':
+-    SConscript('unittests/SConscript')
++# if target_os == 'linux':
++#     SConscript('unittests/SConscript')
  
