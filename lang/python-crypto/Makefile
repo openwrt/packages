@@ -37,7 +37,10 @@ and various encryption algorithms (AES, DES, IDEA, RSA, ElGamal, etc.).
 endef
 
 define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+	$(call Build/Compile/PyMod,,\
+		install --prefix=/usr --root=$(PKG_INSTALL_DIR),\
+		CONFIG_BIG_ENDIAN="$(CONFIG_BIG_ENDIAN)" \
+	)
 endef
 
 define Package/python-crypto/install
