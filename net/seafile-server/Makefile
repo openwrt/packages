@@ -31,7 +31,7 @@ define Package/seafile-server
     TITLE:=Seafile server
     MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
     URL:=http://seafile.com/
-    DEPENDS:=+shadow-useradd +libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub \
+    DEPENDS:=+libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub \
 		+sqlite3-cli +python-mysql +jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 \
 		+libmysqlclient +libpthread +libuuid \
 		+bash +sudo +procps-ng +procps-ng-pkill $(ICONV_DEPENDS)
@@ -93,43 +93,50 @@ endef
 define Package/seafile-server/postinst
 #!/bin/sh
 
-if ! id -u seafile >/dev/null 2>&1; then
-    useradd seafile -d "/usr/share/seafile" -s /bin/sh; fi
+if ! group_exists seafile; then
+   group_add_next seafile; fi
+
+SEAFILE_GID=$$(grep -s '^seafile:' "$${IPKG_INSTROOT}/etc/group" | cut -d: -f3)
+
+if ! user_exists seafile; then
+   user_add seafile "" "$${SEAFILE_GID}" seafile /usr/share/seafile /bin/sh; fi
+
+if [ -z "$${IPKG_INSTROOT}" ]
+then
+   chown -R seafile:seafile /usr/share/seafile/
+   chmod -R o-rwx /usr/share/seafile/
+
+   if [ ! -d /usr/share/seafile/seafile-data ]
+   then
+      echo "*** Installation completed, running configuration script..."
+      /etc/init.d/seafile setup
+
+      if [ $$? -ne 0 ]
+      then
+         echo
+         echo "*** ERROR: Configuration failed. Please fix the issues if any and re-run the script using the command below:"
+         echo "*** \"/etc/init.d/seafile setup\""
+      fi
+
+      echo
+      echo "*** NOTE: you need to create an admin account before using Seafile."
+      echo "*** Please run \"/etc/init.d/seafile create_admin\" to do so."
+   else
+      echo "*** It seems you are upgrading from an older version."
+      echo "*** If so, please run the appropriate upgrade scripts before using the new version of Seafile."
+      echo "*** Upgrade scripts are located at \"/usr/share/seafile/seafile-server/upgrade\""
+      echo
+      echo "*** For more information, please read http://manual.seafile.com/deploy/upgrade.html"
+   fi
+else
+   cat > "$${IPKG_INSTROOT}/etc/uci-defaults/99_seafile-server" << EOF
+#!/bin/sh
 
 chown -R seafile:seafile /usr/share/seafile/
 chmod -R o-rwx /usr/share/seafile/
-
-if [ ! -d "/usr/share/seafile/seafile-data" ]
-then
-   echo "*** Installation completed, running configuration script..."
-   /etc/init.d/seafile setup
-
-   if [ $$? -ne 0 ]
-   then
-      echo
-      echo "*** ERROR: Configuration failed. Please fix the issues if any and re-run the script using the command below:"
-      echo "*** \"/etc/init.d/seafile setup\""
-   fi
-
-   echo
-   echo "*** NOTE: you need to create an admin account before using Seafile."
-   echo "*** Please run \"/etc/init.d/seafile create_admin\" to do so."
-else
-   echo "*** WARNING: it seems you are upgrading from an older version."
-   echo "*** If so, please run the appropriate upgrade script before using the new version of Seafile."
-   echo "*** Upgrade scripts are located at \"/usr/share/seafile/seafile-server/upgrade\""
-   echo
-   echo "*** For more information, please read http://manual.seafile.com/deploy/upgrade.html"
-   exit
+exit 0
+EOF
 fi
-
-/etc/init.d/seafile enable
-/etc/init.d/seafile restart
-endef
-
-define Package/seafile-server/prerm
-#!/bin/sh
-/etc/init.d/seafile stop
 endef
 
 $(eval $(call BuildPackage,seafile-server))
