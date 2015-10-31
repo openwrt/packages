@@ -31,9 +31,6 @@ setup_config() {
 	test -z $default_domain && enable_default_domain=""
 	test -z $ip6addr && enable_ipv6="#"
 
-	ipv6_addr=`echo $ip6addr|cut -d '/' -f 1`
-	ipv6_prefix=`echo $ip6addr|cut -d '/' -f 2`
-
 	test $auth = "plain" && authsuffix="\[passwd=/var/etc/ocpasswd\]"
 
 	dyndns="false"
@@ -55,8 +52,7 @@ setup_config() {
 	    -e "s/|COMPRESSION|/$enable_compression/g" \
 	    -e "s/|IPV4ADDR|/$ipaddr/g" \
 	    -e "s/|NETMASK|/$netmask/g" \
-	    -e "s/|IPV6ADDR|/$ipv6_addr/g" \
-	    -e "s/|IPV6PREFIX|/$ipv6_prefix/g" \
+	    -e "s#|IPV6ADDR|#$ip6addr#g" \
 	    -e "s/|ENABLE_IPV6|/$enable_ipv6/g" \
 	    /etc/ocserv/ocserv.conf.template > /var/etc/ocserv.conf
 }
