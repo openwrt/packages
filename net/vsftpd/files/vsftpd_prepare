@@ -190,7 +190,7 @@ if [ -z $max_login_fails ] || [ $max_login_fails -lt 1 ]; then max_login_fails=3
 output_const "max_login_fails" $max_login_fails
 
 # anonymous
-ftp_username=`get_value anonymous ftp_username`
+ftp_username=`get_value anonymous username`
 if [ -z $ftp_username ]; then ftp_username="ftp"; fi
 output_const "ftp_username" $ftp_username
 
