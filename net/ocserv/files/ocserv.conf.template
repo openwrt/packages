@@ -268,7 +268,6 @@ ipv4-netmask = |NETMASK|
 
 # The IPv6 subnet that leases will be given from.
 |ENABLE_IPV6|ipv6-network = |IPV6ADDR|
-|ENABLE_IPV6|ipv6-prefix = |IPV6PREFIX|
 
 # The domains over which the provided DNS should be used. Use
 # multiple lines for multiple domains.
