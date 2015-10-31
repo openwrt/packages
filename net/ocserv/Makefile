@@ -92,7 +92,6 @@ define Package/ocserv/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/ocpasswd $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/occtl $(1)/usr/bin/
-	$(INSTALL_BIN) ./files/ocserv-script $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/ocserv.init $(1)/etc/init.d/ocserv
 	$(INSTALL_DIR) $(1)/etc/ocserv
