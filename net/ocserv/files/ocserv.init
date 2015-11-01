@@ -55,6 +55,8 @@ setup_config() {
 	    -e "s#|IPV6ADDR|#$ip6addr#g" \
 	    -e "s/|ENABLE_IPV6|/$enable_ipv6/g" \
 	    /etc/ocserv/ocserv.conf.template > /var/etc/ocserv.conf
+
+	test -f /etc/ocserv/ocserv.conf.local && cat /etc/ocserv/ocserv.conf.local >> /var/etc/ocserv.conf
 }
 
 setup_users() {
