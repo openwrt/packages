@@ -1,0 +1,22 @@
+--- a/Makefile.classic
++++ b/Makefile.classic
+@@ -41,9 +41,6 @@ TCC = gcc -g -Os -Wall
+ # FOSSIL_ENABLE_MINIZ = 1
+ # TCC += -DFOSSIL_ENABLE_MINIZ
+ 
+-# To add support for HTTPS
+-TCC += -DFOSSIL_ENABLE_SSL
+-
+ #### Extra arguments for linking the finished binary.  Fossil needs
+ #    to link against the Z-Lib compression library unless the miniz
+ #    library in the source tree is being used.  There are no other
+@@ -58,9 +55,6 @@ ZLIB_LIB.  = $(ZLIB_LIB.0)
+ # If using zlib:
+ LIB = $(ZLIB_LIB.$(FOSSIL_ENABLE_MINIZ)) $(LDFLAGS)
+ 
+-# If using HTTPS:
+-LIB += -lcrypto -lssl
+-
+ #### Tcl shell for use in running the fossil testsuite.  If you do not
+ #    care about testing the end result, this can be blank.
+ #
