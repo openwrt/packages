@@ -1,15 +1,13 @@
---- a/setup.py	2015-10-30 23:30:22.334127083 +0800
-+++ b/setup.py	2015-10-30 23:33:03.856098660 +0800
-@@ -100,6 +100,12 @@
+--- a/setup.py
++++ b/setup.py
+@@ -100,6 +100,10 @@
          w(kwd.get("end", "\n"))
  
  def endianness_macro():
-+    if "CONFIG_BIG_ENDIAN" in os.environ:
-+        if os.environ["CONFIG_BIG_ENDIAN"] == "y":
-+            return ('PCT_BIG_ENDIAN', 1)
-+        else:
-+            return ('PCT_LITTLE_ENDIAN', 1)
-+    raise AssertionError("CONFIG_BIG_ENDIAN environment variable missing")
++    if os.environ["CONFIG_BIG_ENDIAN"] == "y":
++        return ('PCT_BIG_ENDIAN', 1)
++    else:
++        return ('PCT_LITTLE_ENDIAN', 1)
      s = struct.pack("@I", 0x33221100)
      if s == "\x00\x11\x22\x33".encode():     # little endian
          return ('PCT_LITTLE_ENDIAN', 1)
