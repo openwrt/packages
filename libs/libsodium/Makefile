@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsodium
-PKG_VERSION:=1.0.4
+PKG_VERSION:=1.0.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libsodium.org/libsodium/releases
-PKG_MD5SUM:=f3d077d856c3742515fa8fe12ddb2c0f
+PKG_MD5SUM:=69f0c5975d9f4b8e136616df34a43ff5
 
 PKG_FIXUP:=libtool autoreconf
 PKG_USE_MIPS16:=0
