@@ -46,7 +46,7 @@ proto_pppossh_setup() {
 	[ -n "$sshuser" ] || errmsg="${errmsg}Missing sshuser option\n"
 
 	json_get_values identity identity
-	[ -z "$identity" ] && identity="'$home/.ssh/id_rsa' '$home/.ssh/id_dsa'"
+	[ -z "$identity" ] && identity="$home/.ssh/id_rsa $home/.ssh/id_dsa"
 	for fn in $identity; do
 		[ -f "$fn" ] && opts="$opts -i $fn"
 	done
@@ -60,7 +60,7 @@ proto_pppossh_setup() {
 	opts="$opts ${port:+-p $port}"
 	opts="$opts ${ssh_options}"
 	opts="$opts $sshuser@$server"
-	pty="env 'HOME=$home' "$SSH" $opts pppd nodetach notty noauth"
+	pty="exec env 'HOME=$home' $SSH $opts pppd nodetach notty noauth"
 
 	ppp_generic_setup "$config" noauth pty "$pty" "$ipaddr:$peeraddr"
 }

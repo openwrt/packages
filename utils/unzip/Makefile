@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=unzip
 PKG_REV:=60
 PKG_VERSION:=6.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)$(PKG_REV).tar.gz
 PKG_SOURCE_URL:=@SF/infozip

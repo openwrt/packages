@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pppossh
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=GPLv2
 
@@ -18,7 +18,6 @@ define Package/pppossh
   SECTION:=net
   CATEGORY:=Network
   TITLE:=PPPoSSH (Point-to-Point Protocol over SSH)
-  URL:=https://github.com/yousong/waller
   DEPENDS:=+ppp +resolveip @(PACKAGE_dropbear||PACKAGE_openssh-client)
 endef
 
