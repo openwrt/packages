@@ -1,0 +1,11 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -3,7 +3,7 @@
+ 
+ AC_PREREQ([2.69])
+ AC_INIT([pianod],
+-	m4_esyscmd([svn info http://svn.deviousfish.com/pianod | grep Revision: | awk '{print $2}' | tr -d '\n']),
++	174-OpenWrt,
+ 	[pianod@lists.deviousfish.com],
+ 	,[http://deviousfish.com/pianod])
+ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
