@@ -29,6 +29,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
+VERSION="2.5.0-1"
 SECTION_ID=""		# hold config's section name
 VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
 
@@ -53,6 +54,9 @@ LOCAL_IP=""		# holds the local IP read from the box
 
 URL_USER=""		# url encoded $username from config file
 URL_PASS=""		# url encoded $password from config file
+URL_PENC=""		# url encoded $param_enc from config file
+
+SRV_ANSWER=""		# Answer given by service on success
 
 ERR_LAST=0		# used to save $? return code of program and function calls
 ERR_UPDATE=0		# error counter on different local and registered ip
@@ -299,40 +303,38 @@ urlencode() {
 # file /usr/lib/ddns/services_ipv6 for IPv6
 # $1	Name of Variable to store url to
 # $2	Name of Variable to store script to
+# $3	Name of Variable to store service answer to
 get_service_data() {
-	local __LINE __FILE __NAME __URL __SERVICES __DATA
-	local __SCRIPT=""
-	local __OLD_IFS=$IFS
-	local __NEWLINE_IFS='
-' # __NEWLINE_IFS
-	[ $# -ne 2 ] && write_log 12 "Error calling 'get_service_data()' - wrong number of parameters"
+	[ $# -ne 3 ] && write_log 12 "Error calling 'get_service_data()' - wrong number of parameters"
 
 	__FILE="/usr/lib/ddns/services"					# IPv4
 	[ $use_ipv6 -ne 0 ] && __FILE="/usr/lib/ddns/services_ipv6"	# IPv6
 
-	# remove any lines not containing data, and then make sure fields are enclosed in double quotes
-	__SERVICES=$(cat $__FILE | grep "^[\t ]*[^#]" | \
-		awk ' gsub("\x27", "\"") { if ($1~/^[^\"]*$/) $1="\""$1"\"" }; { if ( $NF~/^[^\"]*$/) $NF="\""$NF"\""  }; { print $0 }')
+	# workaround with variables; pipe create subshell with no give back of variable content
+	mkfifo pipe_$$
+	# only grep without # or whitespace at linestart | remove "
+#	grep -v -E "(^#|^[[:space:]]*$)" $__FILE | sed -e s/\"//g > pipe_$$ &
+	sed '/^#/d/^[ \t]*$/ds/\"//g' $__FILE  > pipe_$$ &
 
-	IFS=$__NEWLINE_IFS
-	for __LINE in $__SERVICES; do
-		# grep out proper parts of data and use echo to remove quotes
-		__NAME=$(echo $__LINE | grep -o "^[\t ]*\"[^\"]*\"" | xargs -r -n1 echo)
-		__DATA=$(echo $__LINE | grep -o "\"[^\"]*\"[\t ]*$" | xargs -r -n1 echo)
+	while read __SERVICE __DATA __ANSWER; do
+		if [ "$__SERVICE" = "$service_name" ]; then
+			# check if URL or SCRIPT is given
+			__URL=$(echo "$__DATA" | grep "^http")
+			[ -z "$__URL" ] && __SCRIPT="/usr/lib/ddns/$__DATA"
 
-		if [ "$__NAME" = "$service_name" ]; then
-			break			# found so leave for loop
+			eval "$1=\"$__URL\""
+			eval "$2=\"$__SCRIPT\""
+			eval "$3=\"$__ANSWER\""
+			rm pipe_$$
+			return 0
 		fi
-	done
-	IFS=$__OLD_IFS
+	done < pipe_$$
+	rm pipe_$$
 
-	# check if URL or SCRIPT is given
-	__URL=$(echo "$__DATA" | grep "^http")
-	[ -z "$__URL" ] && __SCRIPT="/usr/lib/ddns/$__DATA"
-
-	eval "$1=\"$__URL\""
-	eval "$2=\"$__SCRIPT\""
-	return 0
+	eval "$1=\"\""	# no service match clear variables
+	eval "$2=\"\""
+	eval "$3=\"\""
+	return 1
 }
 
 # Calculate seconds from interval and unit
@@ -793,19 +795,19 @@ send_update() {
 		local __URL __ERR
 
 		# do replaces in URL
-		__URL=$(echo $update_url | sed -e "s#\[USERNAME\]#$URL_USER#g" -e "s#\[PASSWORD\]#$URL_PASS#g" \
-					       -e "s#\[DOMAIN\]#$domain#g" -e "s#\[IP\]#$__IP#g")
+		__URL=$(echo $update_url | sed -e "s#\[USERNAME\]#$URL_USER#g"	-e "s#\[PASSWORD\]#$URL_PASS#g" \
+					       -e "s#\[PARAMENC\]#$URL_PENC#g"	-e "s#\[PARAMOPT\]#$param_opt#g" \
+					       -e "s#\[DOMAIN\]#$domain#g"	-e "s#\[IP\]#$__IP#g")
 		[ $use_https -ne 0 ] && __URL=$(echo $__URL | sed -e 's#^http:#https:#')
 
 		do_transfer "$__URL" || return 1
 
 		write_log 7 "DDNS Provider answered:\n$(cat $DATFILE)"
 
-		return 0
-		# TODO analyze providers answer
-		# "good" or "nochg"		= dyndns.com compatible API
-		# grep -i -E "good|nochg" $DATFILE >/dev/null 2>&1
-		# return $?	# "0" if found
+		[ -z "$SRV_ANSWER" ] && return 0	# not set then ignore
+
+		grep -i -E "$SRV_ANSWER" $DATFILE >/dev/null 2>&1
+		return $?	# "0" if found
 	fi
 }
 
@@ -943,13 +945,13 @@ get_registered_ip() {
 		fi
 		[ $force_dnstcp -eq 1 ] && __PROG="$__PROG -T"	# force TCP
 
-		__RUNPROG="$__PROG $domain $dns_server >$DATFILE 2>$ERRFILE"
+		__RUNPROG="$__PROG $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BIND host"
 	elif [ -x /usr/bin/nslookup ]; then	# last use BusyBox nslookup
 		[ $force_ipversion -ne 0 -o $force_dnstcp -ne 0 ] && \
 			write_log 14 "Busybox nslookup - no support to 'force IP Version' or 'DNS over TCP'"
 
-		__RUNPROG="/usr/bin/nslookup $domain $dns_server >$DATFILE 2>$ERRFILE"
+		__RUNPROG="/usr/bin/nslookup $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BusyBox nslookup"
 	else	# there must be an error
 		write_log 12 "Error in 'get_registered_ip()' - no supported Name Server lookup software accessible"
@@ -981,16 +983,16 @@ get_registered_ip() {
 		[ -n "$2" ] && return $__ERR		# $2 is given -> no retry
 		[ $VERBOSE_MODE -gt 1 ] && {
 			# VERBOSE_MODE > 1 then NO retry
-			write_log 4 "Get registered/public IP for '$domain' failed - Verbose Mode: $VERBOSE_MODE - NO retry on error"
+			write_log 4 "Get registered/public IP for '$lookup_host' failed - Verbose Mode: $VERBOSE_MODE - NO retry on error"
 			return $__ERR
 		}
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
 		# if error count > retry_count leave here
 		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-			write_log 14 "Get registered/public IP for '$domain' failed after $retry_count retries"
+			write_log 14 "Get registered/public IP for '$lookup_host' failed after $retry_count retries"
 
-		write_log 4 "Get registered/public IP for '$domain' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		write_log 4 "Get registered/public IP for '$lookup_host' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler

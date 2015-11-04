@@ -115,9 +115,13 @@ config service "myddns"
 #	option update_script   ""
 
 	###########
-	# You must specify your domain/host name, your username and your password
-	# as you get from you DDNS provider. Keep an eye on providers help pages.
+	# Keep an eye on providers help pages.
 	#
+	# FQDN of ONE of your defined host at DDNS provider
+	# REQUIRED to verify what the current IP at DNS using nslookup/host command
+	# default: none
+	option lookup_host ""
+
 	# Your DNS name / replace [DOMAIN] in update_url
 	# default: none
 	option domain ""
@@ -126,9 +130,20 @@ config service "myddns"
 	# default: none
 	option username ""
 
-	# Password of your DDNS service account / replace [PASSWORD] in update_url
+	# Password of your DDNS service account / replace [PASSWORD] in update url
 	# default: none
 	option password ""
+
+	###########
+	# Optional parameters for use inside update_url
+	#
+	# parameter that will be urlencoded before replacement of [PARAMENC] inside update url
+	# default: none
+	option param_enc ""
+
+	# parameter that repace [PARAMOPT] inside update url
+	# default: none
+	option param_opt ""
 
 	###########
 	# use HTTPS for secure communication with you DDNS provider
