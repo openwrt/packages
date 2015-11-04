@@ -33,7 +33,7 @@ __RET=0
 case "$1" in
 	get_registered_ip)
 		local IP
-		domain=$2			# Hostname/Domain
+		lookup_host=$2			# FQDN of host registered at DDNS
 		use_ipv6=${3:-"0"}		# Use IPv6 - default IPv4
 		force_ipversion=${4:-"0"}	# Force IP Version - default 0 - No
 		force_dnstcp=${5:-"0"}		# Force TCP on DNS - default 0 - No

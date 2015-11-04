@@ -25,7 +25,7 @@
 # 66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
 
 # IPv6 @ Securepoint Dynamic-DNS-Service
-"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	    "good|nochg"
 
 # IPv6 @ Hurricane Electric Dynamic DNS
 "he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"
@@ -41,3 +41,7 @@
 
 # IPv6 @ LoopiaDNS
 "loopia.se" "http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
+
+# Variomedia AG
+"variomedia.de" 	"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
