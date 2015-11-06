@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/target.mk
 
 PKG_NAME:=boost
 PKG_VERSION:=1_59_0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
@@ -203,6 +203,7 @@ define Build/Compile
 		) \
 		bjam \
 			'-sBUILD=release <optimization>space <inlining>on <debug-symbols>off' \
+			--ignore-site-config \
 			--toolset=gcc-$(ARCH) --build-type=minimal --layout=system abi=$(BOOST_ABI) \
 			--disable-long-double \
 			$(CONFIGURE_ARGS) \

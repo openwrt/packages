@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fossil
-PKG_VERSION:=1.33
+PKG_VERSION:=1.34
 PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-2-Clause
@@ -16,7 +16,7 @@ PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=$(PKG_NAME)-src-${PKG_VERSION}.tar.gz
 PKG_SOURCE_URL:=http://www.fossil-scm.org/download/
-PKG_MD5SUM:=53f8145084a2065d6cb734980c172c7e
+PKG_MD5SUM:=3d5a7da5c506a47784942236a788b29b
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-src-$(PKG_VERSION)
 
