@@ -268,7 +268,6 @@ ipv4-netmask = |NETMASK|
 
 # The IPv6 subnet that leases will be given from.
 |ENABLE_IPV6|ipv6-network = |IPV6ADDR|
-|ENABLE_IPV6|ipv6-prefix = |IPV6PREFIX|
 
 # The domains over which the provided DNS should be used. Use
 # multiple lines for multiple domains.
@@ -276,7 +275,7 @@ ipv4-netmask = |NETMASK|
 
 # Prior to leasing any IP from the pool ping it to verify that
 # it is not in use by another (unrelated to this server) host.
-ping-leases = false
+ping-leases = |PING_LEASES|
 
 # Unset to assign the default MTU of the device
 # mtu = 

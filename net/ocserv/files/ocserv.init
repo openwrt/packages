@@ -13,10 +13,46 @@ setup_config() {
 	config_get udp          $1 udp "1"
 	config_get auth         $1 auth "plain"
 	config_get cisco_compat $1 cisco_compat "1"
-	config_get ipaddr       $1 ipaddr "192.168.100.0"
-	config_get netmask      $1 netmask "255.255.255.0"
+	config_get ipaddr       $1 ipaddr ""
+	config_get netmask      $1 netmask ""
 	config_get ip6addr      $1 ip6addr ""
+	config_get proxy_arp    $1 proxy_arp "0"
+	config_get ping_leases  $1 ping_leases "0"
 	config_get default_domain  $1 default_domain ""
+
+	# Enable proxy arp, and make sure that ping leases is set to true in that case,
+	# to prevent conflicts.
+	if test "$proxy_arp" = 1;then
+		local ip
+		# IP address is empty. Auto-configure LAN + VPN.
+		if test -z "$ipaddr";then
+			local mask
+			mask=$(uci get network.lan.netmask)
+			if test "$mask" = "255.255.255.0";then
+				uci set dhcp.lan.start=100
+				uci set dhcp.lan.limit=91
+			fi
+			ip=$(uci get network.lan.ipaddr)
+			ipaddr="$(echo $ip|cut -d . -f1,2,3).192"
+			netmask="255.255.255.192"
+			uci set ocserv.config.ipaddr="$ipaddr"
+			uci set ocserv.config.netmask="$netmask"
+			uci commit
+		fi
+
+		if test -z "$ip6addr";then
+			ip6addr=$(uci get network.lan.ip6addr 2>/dev/null)
+			test -n "$ip6addr" && uci set ocserv.config.ip6addr="$ip6addr"
+			uci commit
+		fi
+
+		ping_leases=1
+		test -n "$ipaddr" && sysctl -w "net.ipv4.conf.$(uci get network.lan.ifname).proxy_arp"=1 >/dev/null
+		test -n "$ip6addr" && sysctl -w "net.ipv6.conf.$(uci get network.lan.ifname).proxy_ndp"=1 >/dev/null
+	else
+		test "$ipaddr" = "" && ipaddr="192.168.100.0"
+		test "$netmask" = "" && ipaddr="255.255.255.0"
+	fi
 
 	enable_default_domain="#"
 	enable_udp="#"
@@ -25,13 +61,12 @@ setup_config() {
 	test $predictable_ips = "1" && predictable_ips="true"
 	test $cisco_compat = "0" && cisco_compat="false"
 	test $cisco_compat = "1" && cisco_compat="true"
+	test $ping_leases = "0" && ping_leases="false"
+	test $ping_leases = "1" && ping_leases="true"
 	test $udp = "1" && enable_udp=""
 	test $compression = "1" && enable_compression=""
 	test -z $default_domain && enable_default_domain=""
 	test -z $ip6addr && enable_ipv6="#"
-
-	ipv6_addr=`echo $ip6addr|cut -d '/' -f 1`
-	ipv6_prefix=`echo $ip6addr|cut -d '/' -f 2`
 
 	test $auth = "plain" && authsuffix="\[passwd=/var/etc/ocpasswd\]"
 
@@ -50,14 +85,16 @@ setup_config() {
 	    -e "s/|DEFAULT_DOMAIN|/$default_domain/g" \
 	    -e "s/|ENABLE_DEFAULT_DOMAIN|/$enable_default_domain/g" \
 	    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
+	    -e "s/|PING_LEASES|/$ping_leases/g" \
 	    -e "s/|UDP|/$enable_udp/g" \
 	    -e "s/|COMPRESSION|/$enable_compression/g" \
 	    -e "s/|IPV4ADDR|/$ipaddr/g" \
 	    -e "s/|NETMASK|/$netmask/g" \
-	    -e "s/|IPV6ADDR|/$ipv6_addr/g" \
-	    -e "s/|IPV6PREFIX|/$ipv6_prefix/g" \
+	    -e "s#|IPV6ADDR|#$ip6addr#g" \
 	    -e "s/|ENABLE_IPV6|/$enable_ipv6/g" \
 	    /etc/ocserv/ocserv.conf.template > /var/etc/ocserv.conf
+
+	test -f /etc/ocserv/ocserv.conf.local && cat /etc/ocserv/ocserv.conf.local >> /var/etc/ocserv.conf
 }
 
 setup_users() {
@@ -166,3 +203,4 @@ start_service() {
 	procd_set_param respawn
 	procd_close_instance
 }
+
