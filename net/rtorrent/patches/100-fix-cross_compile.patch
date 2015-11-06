@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4,7 +4,6 @@ AC_DEFINE(API_VERSION, 8, api version)
+@@ -4,7 +4,6 @@ AC_DEFINE(API_VERSION, 9, api version)
  
  AM_INIT_AUTOMAKE
  AC_CONFIG_HEADERS(config.h)
