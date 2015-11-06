@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xz
-PKG_VERSION:=5.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=5.2.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://tukaani.org/xz
-PKG_MD5SUM:=d484910b26fec5aff99ee66350589e29
+PKG_SOURCE_URL:=http://tukaani.org/xz \
+		http://fossies.org/linux/misc
+PKG_MD5SUM:=f90c9a0c8b259aee2234c4e0d7fd70af
 
 PKG_LICENSE:=Public-Domain LGPL-2.1+ GPL-2.0+ GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
