@@ -232,7 +232,8 @@ mwan3_set_policy()
 			total_weight=$weight
 			$IPT -F mwan3_policy_$policy
 			$IPT -A mwan3_policy_$policy -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE $weight $weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
-
+			$IPT -I mwan3_policy_$policy -p tcp -m tcp --tcp-flags ALL NONE -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE $weight $weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
+			
 			lowest_metric=$metric
 
 		elif [ "$metric" -eq "$lowest_metric" ]; then
@@ -253,6 +254,7 @@ mwan3_set_policy()
 			probability="-m statistic --mode random --probability $probability"
 
 			$IPT -I mwan3_policy_$policy -m mark --mark 0x0/0xff00 $probability -m comment --comment "$INTERFACE $weight $total_weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
+			$IPT -I mwan3_policy_$policy -p tcp -m tcp --tcp-flags ALL NONE -m mark --mark 0x0/0xff00 -m comment --comment "$INTERFACE $weight $total_weight" -j MARK --set-xmark $(($iface_id*256))/0xff00
 		fi
 	fi
 }
