@@ -1,0 +1,10 @@
+--- a/plugins/df	2015-11-07 17:05:46.000000000 +0100
++++ b/plugins/df	2015-11-07 17:05:49.183925905 +0100
+@@ -19,6 +19,6 @@
+   do
+     PINFO=$(df -P $PART | tail -1);
+     PNAME=$(echo $PINFO | cut -d\  -f1 | sed 's/[\/.-]/_/g')
+-    echo "$PNAME.value" $(echo $PINFO | cut -f5 -d\  | sed -e 's/\%//g')
++    echo "$PNAME.value" $(echo $PINFO | sed -e 's/\%//g' -e 's/  */ /g' | cut -f5 -d' ')
+   done
+ }
