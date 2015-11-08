@@ -462,7 +462,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +    if (fh != NULL) {
 +        while (getline(&line, &len, fh) != -1) {
 +            if (strncmp(line, "machine", 7) == 0) {
-+                if (strstr(line, "MediaTek LinkIt Smart7688")) {
++                if (strstr(line, "MediaTek LinkIt Smart 7688")) {
 +                    platform_type = MRAA_MTK_LINKIT;
 +                }
 +            }
