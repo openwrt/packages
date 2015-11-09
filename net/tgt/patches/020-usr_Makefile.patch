@@ -1,5 +1,7 @@
---- tgt-1.0.48.orig/usr/Makefile	2014-06-04 15:03:53.000000000 +0300
-+++ tgt-1.0.48/usr/Makefile	2014-06-04 15:17:56.373670618 +0300
+diff --git a/usr/Makefile b/usr/Makefile
+index 1fae7e7..b05b970 100644
+--- a/usr/Makefile
++++ b/usr/Makefile
 @@ -1,13 +1,13 @@
  sbindir ?= $(PREFIX)/sbin
  libdir ?= $(PREFIX)/lib/tgt
@@ -18,7 +20,7 @@
  
  TGTD_OBJS += $(addprefix iscsi/, conn.o param.o session.o \
  		iscsid.o target.o chap.o sha1.o md5.o transport.o iscsi_tcp.o \
-@@ -25,8 +25,9 @@
+@@ -25,8 +25,9 @@ ifneq ($(SD_NOTIFY),)
  CFLAGS += -DUSE_SYSTEMD
  endif
  
@@ -30,8 +32,8 @@
  TGTD_OBJS += bs_aio.o
  LIBS += -laio
  endif
-@@ -55,7 +56,7 @@
- LIBS += -lsystemd-daemon
+@@ -55,7 +56,7 @@ ifneq ($(SD_NOTIFY),)
+ LIBS += -lsystemd
  endif
  
 -PROGRAMS += tgtd tgtadm tgtimg
@@ -39,7 +41,7 @@
  TGTD_OBJS += tgtd.o mgmt.o target.o scsi.o log.o driver.o util.o work.o \
  		concat_buf.o parser.o spc.o sbc.o mmc.o osd.o scc.o smc.o \
  		ssc.o libssc.o bs_rdwr.o bs_ssc.o \
-@@ -82,14 +83,8 @@
+@@ -82,14 +83,8 @@ tgtadm: $(TGTADM_OBJS)
  
  -include $(TGTADM_DEP)
  
