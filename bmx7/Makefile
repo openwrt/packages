@@ -32,8 +32,8 @@ PKG_SOURCE_PROTO:=git
 #PKG_SOURCE_URL:=git://bmx6.net/bmx6.git
 PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
 
-PKG_REV:=0ea28331abfca5ebd6fa6788505cfed073ae1005
-PKG_VERSION:=r2015101201
+PKG_REV:=b9f9322f67373402c3dd0212994512882a734f3b
+PKG_VERSION:=r2015111101
 PKG_RELEASE:=4
 PKG_LICENSE:=GPL-2.0
 
@@ -65,7 +65,7 @@ define Package/bmx7/Default
 endef
 
 define Package/bmx7/description
-BMX7 layer 3 routing daemon supporting IPv6, and IPv4 over IPv6
+BMX7 routing daemon supporting securely-entrusted IPv6 (and IPv4in6) routing
 endef
 
 define Package/bmx7
