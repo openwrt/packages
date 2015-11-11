@@ -19,17 +19,17 @@
  #endif
 --- a/sysdep.c
 +++ b/sysdep.c
-@@ -59,7 +59,9 @@
+@@ -59,6 +59,10 @@
  #if defined(__DragonFly__)
  #include <net/tun/if_tun.h>
  #elif defined(__linux__)
--#include <linux/if_tun.h>
-+# if defined(__GLIBC__) || defined(__UCLIBC__)
-+#  include <linux/if_tun.h>
++# if !defined(__GLIBC__) && !defined(__UCLIBC__)
++#  define _LINUX_IF_ETHER_H
++#  include <net/ethernet.h>
 +# endif
+ #include <linux/if_tun.h>
  #elif defined(__APPLE__)
  /* no header for tun */
- #elif defined(__CYGWIN__)
 --- a/config.c
 +++ b/config.c
 @@ -28,6 +28,7 @@
