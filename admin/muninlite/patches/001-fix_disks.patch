@@ -1,6 +1,6 @@
---- a/plugins/df	2015-11-07 17:05:46.000000000 +0100
-+++ b/plugins/df	2015-11-07 17:05:49.183925905 +0100
-@@ -19,6 +19,6 @@
+--- a/plugins/df
++++ b/plugins/df
+@@ -19,6 +19,6 @@ fetch_df() {
    do
      PINFO=$(df -P $PART | tail -1);
      PNAME=$(echo $PINFO | cut -d\  -f1 | sed 's/[\/.-]/_/g')
