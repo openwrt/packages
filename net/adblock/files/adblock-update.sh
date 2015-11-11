@@ -25,38 +25,21 @@
 
 # set script version
 #
-script_ver="0.11.0"
+adb_version="0.20.0"
 
 # get current pid and script directory
 #
 pid=$$
-script_dir="$(printf "${0}" | sed 's/\(.*\)\/.*/\1/')"
-
-# set temp variables
-#
-tmp_file="$(mktemp -tu)"
-tmp_dir="$(mktemp -d)"
-
-# source in adblock configuration
-#
-if [ -r "/etc/adblock/adblock.conf" ]
-then
-    . "/etc/adblock/adblock.conf"
-else
-    /usr/bin/logger -t "adblock[${pid}]" "adblock configuration not found"
-    rm -rf "${tmp_dir}" 2>/dev/null
-    exit 200
-fi
+adb_scriptdir="${0%/*}"
 
 # source in adblock function library
 #
-if [ -r "${script_dir}/adblock-helper.sh" ]
+if [ -r "${adb_scriptdir}/adblock-helper.sh" ]
 then
-    . "${script_dir}/adblock-helper.sh"
+    . "${adb_scriptdir}/adblock-helper.sh"
 else
-    /usr/bin/logger -t "adblock[${pid}]" "adblock function library not found"
-    rm -rf "${tmp_dir}" 2>/dev/null
-    exit 210
+    /usr/bin/logger -t "adblock[${pid}]" "error: adblock function library not found"
+    exit 200
 fi
 
 ################
@@ -69,7 +52,15 @@ trap "restore_msg='trap error'; f_restore" 1 2 3 10 11 15
 
 # start logging
 #
-/usr/bin/logger -t "adblock[${pid}]" "domain adblock processing started (${script_ver})"
+/usr/bin/logger -t "adblock[${pid}]" "info: domain adblock processing started (${adb_version})"
+
+# load environment
+#
+f_envload
+
+# parse environment
+#
+f_envparse
 
 # check environment
 #
@@ -83,32 +74,36 @@ f_wancheck
 #
 f_ntpcheck
 
-# download shallalist archive
+# check/start shallalist (pre-)processing
 #
-if [ "${shalla_ok}" = "true" ]
+if [ -n "${adb_arc_shalla}" ]
 then
-    curl --insecure --max-time "${max_time}" "${shalla_url}" -o "${shalla_archive}" 2>/dev/null
+    # download shallalist archive
+    #
+    shalla_archive="${adb_tmpdir}/shallalist.tar.gz"
+    shalla_file="${adb_tmpdir}/shallalist.txt"
+    curl --insecure --max-time "${max_time}" "${adb_arc_shalla}" -o "${shalla_archive}" 2>/dev/null
     rc=$?
     if [ $((rc)) -eq 0 ]
     then
-        /usr/bin/logger -t "adblock[${pid}]" "shallalist archive download finished"
+        /usr/bin/logger -t "adblock[${pid}]" "info: shallalist archive download finished"
     else
-        /usr/bin/logger -t "adblock[${pid}]" "shallalist archive download failed (${shalla_url})"
-        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist archive download failed (${shalla_url})" >> "${log_file}"
+        /usr/bin/logger -t "adblock[${pid}]" "error: shallalist archive download failed (${adb_arc_shalla})"
+        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist archive download failed (${adb_arc_shalla})" >> "${adb_logfile}"
         restore_msg="archive download failed"
         f_restore
     fi
 
     # extract shallalist archive
     #
-    tar -xzf "${shalla_archive}" -C "${tmp_dir}" 2>/dev/null
+    tar -xzf "${shalla_archive}" -C "${adb_tmpdir}" 2>/dev/null
     rc=$?
     if [ $((rc)) -eq 0 ]
     then
-        /usr/bin/logger -t "adblock[${pid}]" "shallalist archive extraction finished"
+        /usr/bin/logger -t "adblock[${pid}]" "info: shallalist archive extraction finished"
     else
-        /usr/bin/logger -t "adblock[${pid}]" "shallalist archive extraction failed"
-        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist archive extraction failed" >> "${log_file}"
+        /usr/bin/logger -t "adblock[${pid}]" "error: shallalist archive extraction failed"
+        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist archive extraction failed" >> "${adb_logfile}"
         restore_msg="archive extraction failed"
         f_restore
     fi
@@ -116,11 +111,11 @@ then
     # merge selected shallalist categories
     #
     > "${shalla_file}"
-    for category in ${shalla_cat}
+    for category in ${adb_cat_shalla}
     do
-        if [ -f "${tmp_dir}/BL/${category}/domains" ]
+        if [ -f "${adb_tmpdir}/BL/${category}/domains" ]
         then
-            cat "${tmp_dir}/BL/${category}/domains" >> "${shalla_file}" 2>/dev/null
+            cat "${adb_tmpdir}/BL/${category}/domains" >> "${shalla_file}" 2>/dev/null
             rc=$?
         else
             rc=220
@@ -135,23 +130,25 @@ then
     #
     if [ $((rc)) -eq 0 ]
     then
-        /usr/bin/logger -t "adblock[${pid}]" "shallalist (pre-)processing finished (${shalla_cat})"
+        adb_sources="${adb_sources} file:///${shalla_file}&ruleset=rset_shalla"
+        /usr/bin/logger -t "adblock[${pid}]" "info: shallalist (pre-)processing finished (${adb_cat_shalla})"
     else
-        /usr/bin/logger -t "adblock[${pid}]" "shallalist category merge failed (${rc}, ${shalla_cat})"
-        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist category merge failed (${rc}, ${shalla_cat})" >> "${log_file}"
+        /usr/bin/logger -t "adblock[${pid}]" "error: shallalist (pre-)processing failed (${rc}, ${adb_cat_shalla})"
+        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist (pre-)processing failed (${rc}, ${adb_cat_shalla})" >> "${adb_logfile}"
         restore_msg="shallalist merge failed"
         f_restore
     fi
 fi
 
-# loop through domain source list,
+# loop through active adblock domain sources,
 # prepare output and store all extracted domains in temp file
 #
-for src in ${adb_source}
+adb_sources="${adb_sources} file://${adb_blacklist}&ruleset=rset_default"
+for src in ${adb_sources}
 do
     # download selected adblock sources
     #
-    url="$(printf "${src}" | sed 's/\(\&ruleset=.*\)//g')"
+    url="${src//\&ruleset=*/}"
     check_url="$(printf "${url}" | sed -n '/^https:/p')"
     if [ -n "${check_url}" ]
     then
@@ -166,16 +163,16 @@ do
     #
     if [ $((rc)) -eq 0 ] && [ -n "${tmp_var}" ]
     then
-        eval "$(printf "${src}" | sed 's/\(.*\&ruleset=\)/ruleset=\$rset_/g')"
+        eval "$(printf "${src}" | sed 's/\(.*\&ruleset=\)/ruleset=\$/g')"
         tmp_var="$(printf "%s\n" "${tmp_var}" |  tr '[[:upper:]]' '[[:lower:]]')"
-        adb_count="$(printf "%s\n" "${tmp_var}" | eval "${ruleset}" | tee -a "${tmp_file}" | wc -l)"
-        /usr/bin/logger -t "adblock[${pid}]" "source download finished (${url}, ${adb_count} entries)"
+        adb_count="$(printf "%s\n" "${tmp_var}" | eval "${ruleset}" | tee -a "${adb_tmpfile}" | wc -l)"
+        /usr/bin/logger -t "adblock[${pid}]" "info: source download finished (${url}, ${adb_count} entries)"
     elif [ $((rc)) -eq 0 ] && [ -z "${tmp_var}" ]
     then
-        /usr/bin/logger -t "adblock[${pid}]" "empty source download finished (${url})"
+        /usr/bin/logger -t "adblock[${pid}]" "info: empty source download finished (${url})"
     else
-        /usr/bin/logger -t "adblock[${pid}]" "source download failed (${url})"
-        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: source download failed (${url})" >> "${log_file}"
+        /usr/bin/logger -t "adblock[${pid}]" "error: source download failed (${url})"
+        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: source download failed (${url})" >> "${adb_logfile}"
         restore_msg="download failed"
         f_restore
     fi
@@ -183,12 +180,12 @@ done
 
 # create empty destination file
 #
-> "${dns_file}"
+> "${adb_dnsfile}"
 
 # rewrite ad/abuse domain information to dns file,
 # remove duplicates and whitelist entries
 #
-grep -vxf "${adb_whitelist}" < "${tmp_file}" | eval "${dns_format}" | sort -u 2>/dev/null >> "${dns_file}"
+grep -vxf "${adb_whitelist}" < "${adb_tmpfile}" | eval "${adb_dnsformat}" | sort -u 2>/dev/null >> "${adb_dnsfile}"
 
 # write dns file footer
 #
