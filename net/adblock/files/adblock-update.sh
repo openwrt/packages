@@ -25,7 +25,7 @@
 
 # set script version
 #
-adb_version="0.20.0"
+adb_version="0.20.1"
 
 # get current pid and script directory
 #
@@ -164,7 +164,7 @@ do
     if [ $((rc)) -eq 0 ] && [ -n "${tmp_var}" ]
     then
         eval "$(printf "${src}" | sed 's/\(.*\&ruleset=\)/ruleset=\$/g')"
-        tmp_var="$(printf "%s\n" "${tmp_var}" |  tr '[[:upper:]]' '[[:lower:]]')"
+        tmp_var="$(printf "%s\n" "${tmp_var}" | tr '[A-Z]' '[a-z]')"
         adb_count="$(printf "%s\n" "${tmp_var}" | eval "${ruleset}" | tee -a "${adb_tmpfile}" | wc -l)"
         /usr/bin/logger -t "adblock[${pid}]" "info: source download finished (${url}, ${adb_count} entries)"
     elif [ $((rc)) -eq 0 ] && [ -z "${tmp_var}" ]
