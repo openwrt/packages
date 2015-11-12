@@ -256,6 +256,7 @@ f_envcheck()
     # check dns query log configuration
     #
     adb_querydir="${adb_queryfile%/*}"
+    query_pid="/var/run/adb_query.pid"
     if [ -n "${adb_querydir}" ] && [ -d "${adb_querydir}" ]
     then
         # check find capabilities
@@ -269,11 +270,16 @@ f_envcheck()
             query_ok="true"
             query_name="${adb_queryfile##*/}"
             query_ip="${adb_ip//./\\.}"
-            query_pid="/var/run/query.pid"
             adb_mounts="${adb_mounts} ${adb_querydir}"
         fi
     else
         query_ok="false"
+        if [ -s "${query_pid}" ]
+        then
+            kill -9 $(< "${query_pid}") 2>/dev/null
+            > "${query_pid}"
+            /usr/bin/logger -t "adblock[${pid}]" "info: remove old dns query log background process"
+        fi
         /usr/bin/logger -t "adblock[${pid}]" "info: dns query logging will be disabled"
     fi
 
@@ -293,7 +299,7 @@ f_envcheck()
                 exit 50
             elif [ $((av_space)) -lt $((adb_minspace)) ]
             then
-                /usr/bin/logger -t "adblock[${pid}]" "error: not enough space on device (${mp})"
+                /usr/bin/logger -t "adblock[${pid}]" "error: not enough space left on device (${mp})"
                 exit 55
             fi
         done
@@ -378,8 +384,8 @@ f_remove()
     #
     f_deltemp
 
-    # kill existing domain query log background process,
-    # housekeeping and start of a new process on daily basis
+    # remove existing domain query log background process,
+    # do housekeeping and start a new process on daily basis
     #
     if [ "${query_ok}" = "true" ] && [ "${ntp_ok}" = "true" ]
     then
@@ -389,7 +395,7 @@ f_remove()
             kill -9 $(< "${query_pid}") 2>/dev/null
             > "${query_pid}"
             find "${adb_backupdir}" -maxdepth 1 -type f -mtime +${adb_queryhistory} -name "${query_name}.*" -exec rm -f {} \; 2>/dev/null
-            /usr/bin/logger -t "adblock[${pid}]" "info: kill old query log background process and do logfile housekeeping"
+            /usr/bin/logger -t "adblock[${pid}]" "info: remove old dns query log background process and do logfile housekeeping"
         fi
         if [ ! -s "${query_pid}" ]
         then
