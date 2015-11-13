@@ -15,6 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/i/ipaddress
 PKG_MD5SUM:=12915e923b738107e47827478d553ba1
 
+PKG_BUILD_DEPENDS:=python python-setuptools
+
 PKG_LICENSE:=Python-2.0
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
