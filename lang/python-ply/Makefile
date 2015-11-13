@@ -15,6 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.dabeaz.com/ply
 PKG_MD5SUM:=94726411496c52c87c2b9429b12d5c50
 
+PKG_BUILD_DEPENDS:=python python-setuptools
+
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=README.md
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
