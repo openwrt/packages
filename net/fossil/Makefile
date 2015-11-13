@@ -44,7 +44,8 @@ MAKE_FLAGS := \
 	CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include -DFOSSIL_ENABLE_JSON" \
 	LDFLAGS="$(TARGET_LDFLAGS) -Wl,-rpath=$(TOOLCHAIN_DIR)/lib -L$(STAGING_DIR)/lib -L$(STAGING_DIR)/usr/lib" \
 
-undefine Build/Configure
+define Build/Configure
+endef
 
 define Build/Compile
 	$(call Build/Compile/Default, \
@@ -52,7 +53,8 @@ define Build/Compile
 	)
 endef
 
-undefine Build/Install
+define Build/Install
+endef
 
 define Package/fossil/conffiles
 /etc/config/fossil

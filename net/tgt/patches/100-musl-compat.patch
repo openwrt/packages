@@ -1,3 +1,5 @@
+diff --git a/usr/tgtd.h b/usr/tgtd.h
+index d8b2ac1..c6eee54 100644
 --- a/usr/tgtd.h
 +++ b/usr/tgtd.h
 @@ -9,6 +9,10 @@
@@ -5,12 +7,14 @@
  #endif
  
 +#ifndef __WORDSIZE
-+#include <sys/user.h>
++#include <sys/reg.h>
 +#endif
 +
  struct concat_buf;
  
  #define NR_SCSI_OPCODES		256
+diff --git a/usr/util.h b/usr/util.h
+index 0e34c35..3e2e63b 100644
 --- a/usr/util.h
 +++ b/usr/util.h
 @@ -16,6 +16,10 @@
@@ -18,19 +22,9 @@
  #include <linux/types.h>
  
 +#ifndef __WORDSIZE
-+#include <sys/user.h>
++#include <sys/reg.h>
 +#endif
 +
  #include "be_byteshift.h"
  
  #define roundup(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
---- a/usr/libssc.c
-+++ b/usr/libssc.c
-@@ -23,6 +23,7 @@
- #include <string.h>
- #include <unistd.h>
- #include <stdio.h>
-+#include <fcntl.h>
- #include "bs_ssc.h"
- #include "ssc.h"
- #include "be_byteshift.h"
