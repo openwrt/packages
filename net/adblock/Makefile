@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=0.11.0
+PKG_VERSION:=0.20.1
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dirk@brenken.org>
@@ -40,7 +40,7 @@ The script supports the following domain blacklist sites:
 endef
 
 define Package/$(PKG_NAME)/conffiles
-/etc/adblock/adblock.conf
+/etc/config/adblock
 /etc/adblock/adblock.whitelist
 /etc/adblock/adblock.blacklist
 endef
@@ -56,15 +56,19 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) ./files/usr/bin/adblock-update.sh $(1)/usr/bin/
-	$(INSTALL_DATA) ./files/usr/bin/adblock-helper.sh $(1)/usr/bin/
+	$(INSTALL_BIN) ./files/adblock-update.sh $(1)/usr/bin/
+	$(INSTALL_DATA) ./files/adblock-helper.sh $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/adblock.conf $(1)/etc/config/adblock
 
 	$(INSTALL_DIR) $(1)/etc/adblock
-	$(INSTALL_CONF) ./files/etc/adblock/adblock.* $(1)/etc/adblock/
-	$(INSTALL_CONF) ./files/etc/adblock/README.md $(1)/etc/adblock/
+	$(INSTALL_CONF) ./files/adblock.blacklist $(1)/etc/adblock/
+	$(INSTALL_CONF) ./files/adblock.whitelist $(1)/etc/adblock/
+	$(INSTALL_CONF) ./files/README.md $(1)/etc/adblock/
 
 	$(INSTALL_DIR) $(1)/etc/adblock/samples
-	$(INSTALL_CONF) ./files/etc/adblock/samples/*.sample $(1)/etc/adblock/samples/
+	$(INSTALL_CONF) ./files/samples/*.sample $(1)/etc/adblock/samples/
 
 	$(INSTALL_DIR) $(1)/www/adblock
 	$(INSTALL_DATA) ./files/www/adblock/* $(1)/www/adblock/
