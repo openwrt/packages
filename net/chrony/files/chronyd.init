@@ -1,15 +1,17 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 
-START=60
+START=15
 USE_PROCD=1
 PROG=/usr/sbin/chronyd
 CONFIGFILE=/var/etc/chrony.conf
+INCLUDEFILE=/etc/chrony/chrony.conf
 
 handle_source() {
 	local cfg=$1 sourcetype=$2 hostname minpoll maxpoll iburst
 
-	config_get hostname "$cfg" hostname
+	hostname=$NTP_SOURCE_HOSTNAME
+	[ -z "$hostname" ] && config_get hostname "$cfg" hostname
 	[ -z "$hostname" ] && return
 	config_get minpoll "$cfg" minpoll
 	config_get maxpoll "$cfg" maxpoll
@@ -19,7 +21,7 @@ handle_source() {
 		[ -n "$minpoll" ] && echo minpoll $minpoll
 		[ -n "$maxpoll" ] && echo maxpoll $maxpoll
 		[ "$iburst" = "1" ] && echo iburst
-	) >> $CONFIGFILE
+	)
 }
 
 handle_allow() {
@@ -30,12 +32,14 @@ handle_allow() {
 	config_get iface "$cfg" interface
 
 	if [ "$wan_iface" = "$iface" ]; then
-		echo allow >> $CONFIGFILE
+		echo allow 0/0
+	elif [ "$wan6_iface" = "$iface" ]; then
+		echo allow ::/0
 	else
 		network_get_subnets subnets $iface || \
 			network_get_subnets subnets6 $iface || continue
 		for subnet in $subnets $subnets6; do
-			echo allow $subnet >> $CONFIGFILE
+			echo allow $subnet
 		done
 	fi
 }
@@ -46,7 +50,7 @@ handle_makestep() {
 	config_get threshold "$cfg" threshold
 	config_get limit "$cfg" limit
 	[ -z "$threshold" -o -z "$limit" ] && return
-	echo makestep $threshold $limit >> $CONFIGFILE
+	echo makestep $threshold $limit
 }
 
 start_service() {
@@ -55,15 +59,18 @@ start_service() {
 	procd_open_instance
 	procd_set_param command $PROG -n -f $CONFIGFILE
 	procd_set_param file $CONFIGFILE
-	procd_set_param file /etc/chrony/chrony.conf
+	procd_set_param file $INCLUDEFILE
 	procd_close_instance
 
-	echo include /etc/chrony/chrony.conf > $CONFIGFILE
+	config_load chrony
+	mkdir -p $(dirname $CONFIGFILE)
 
-	config_load ntpd
-	config_foreach handle_source server server
-	config_foreach handle_source pool pool
-	config_foreach handle_source peer peer
-	config_foreach handle_allow allow
-	config_foreach handle_makestep makestep
+	(
+		echo include $INCLUDEFILE
+		config_foreach handle_source server server
+		config_foreach handle_source pool pool
+		config_foreach handle_source peer peer
+		config_foreach handle_allow allow
+		config_foreach handle_makestep makestep
+	) > $CONFIGFILE
 }
