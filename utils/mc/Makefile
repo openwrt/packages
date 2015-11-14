@@ -8,15 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.14
-PKG_RELEASE:=1.3
-PKG_MAINTAINER:=Dirk Brenken <dibdot@gmail.com>
+PKG_VERSION:=4.8.15
+PKG_RELEASE:=1
+PKG_MAINTAINER:=Dirk Brenken <dirk@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_MD5SUM:=fbdaddb9edcf8925dcf3231331a8720b
-
+PKG_MD5SUM:=7c1935433866fdf59a3c2d9b7dae81ad
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 
@@ -33,29 +32,32 @@ PKG_CONFIG_DEPENDS := \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/mc
-  SECTION:=utils
-  CATEGORY:=Utilities
-  DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
-  TITLE:=Midnight Commander - a powerful visual file manager
-  URL:=http://www.midnight-commander.org/
-  MENU:=1
+define Package/$(PKG_NAME)
+	SECTION:=utils
+	CATEGORY:=Utilities
+	DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
+	TITLE:=Midnight Commander - a powerful visual file manager
+	URL:=http://www.midnight-commander.org/
+	MENU:=1
 endef
 
-define Package/mc/config
+define Package/$(PKG_NAME)/config
 	source "$(SOURCE)/Config.in"
 endef
 
-define Package/mc/description
- GNU Midnight Commander is a visual file manager,
- licensed under GNU General Public License and therefore qualifies as Free Software.
- It's a feature rich full-screen text mode application that allows you to copy,
- move and delete files and whole directory trees, search for files
- and run commands in the subshell. Internal viewer and editor are included.
+define Package/$(PKG_NAME)/description
+GNU Midnight Commander is a visual file manager,
+licensed under GNU General Public License and therefore qualifies as Free Software.
+It's a feature rich full-screen text mode application that allows you to copy,
+move and delete files and whole directory trees, search for files
+and run commands in the subshell. Internal viewer and editor are included.
+
 endef
 
 CONFIGURE_ARGS += \
 	--disable-doxygen-doc \
+	--with-homedir=/etc/mc \
+	--with-included-gettext \
 	--with-screen=ncurses \
 	--without-gpm-mouse \
 	--without-x \
@@ -98,10 +100,13 @@ CONFIGURE_ARGS += \
 	--disable-vfs
 endif
 
-define Package/mc/install
+define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mc $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/mc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.charsets $(1)/etc/mc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.keymap $(1)/etc/mc	
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.ext $(1)/etc/mc	
 ifeq ($(CONFIG_MC_DIFFVIEWER),y)
 	ln -sf mc $(1)/usr/bin/mcdiff
 endif
@@ -111,12 +116,12 @@ endif
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.menu $(1)/etc/mc
 	$(INSTALL_DIR) $(1)/etc/mc/skins
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/skins/default.ini $(1)/etc/mc/skins
-	$(INSTALL_DIR) $(1)/root/.mc/cedit/Syntax
+	$(INSTALL_DIR) $(1)/etc/mc/mcedit/Syntax
 endef
 
-define Package/mc/conffiles
+define Package/$(PKG_NAME)/conffiles
 /etc/mc/mc.menu
 /etc/mc/skins/default.ini
 endef
 
-$(eval $(call BuildPackage,mc))
+$(eval $(call BuildPackage,$(PKG_NAME)))
