@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redsocks
-PKG_VERSION:=0.4
+PKG_VERSION:=0.4-20150907
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/darkk/redsocks.git
-PKG_SOURCE_VERSION:=release-0.4
+PKG_SOURCE_VERSION:=2118c616b4970a0436eceaa57a6e3451ec98ad2b
 
 PKG_MAINTAINER:=Johannes Morgenroth <jm@m-network.de>
 PKG_LICENSE:=Apache-2.0
