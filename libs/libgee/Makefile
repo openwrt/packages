@@ -17,7 +17,7 @@ PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://download.gnome.org/sources/libgee/0.18/
+PKG_SOURCE_URL:=@GNOME/libgee/0.18/
 PKG_MD5SUM:=29ea6125e653d7e60b49a9a9544abc96
 
 PKG_FIXUP:=autoreconf
