@@ -276,7 +276,7 @@ f_envcheck()
         query_ok="false"
         if [ -s "${query_pid}" ]
         then
-            kill -9 $(< "${query_pid}") 2>/dev/null
+            kill -9 $(cat "${query_pid}") 2>/dev/null
             > "${query_pid}"
             /usr/bin/logger -t "adblock[${pid}]" "info: remove old dns query log background process"
         fi
@@ -392,7 +392,7 @@ f_remove()
         query_date="$(date "+%Y%m%d")"
         if [ -s "${query_pid}" ] && [ ! -f "${adb_queryfile}.${query_date}" ]
         then
-            kill -9 $(< "${query_pid}") 2>/dev/null
+            kill -9 $(cat "${query_pid}") 2>/dev/null
             > "${query_pid}"
             find "${adb_backupdir}" -maxdepth 1 -type f -mtime +${adb_queryhistory} -name "${query_name}.*" -exec rm -f {} \; 2>/dev/null
             /usr/bin/logger -t "adblock[${pid}]" "info: remove old dns query log background process and do logfile housekeeping"
@@ -455,7 +455,7 @@ f_wancheck()
             do
                 if [ -d "/sys/class/net/${dev}" ]
                 then
-                    dev_out=$(< /sys/class/net/${dev}/operstate 2>/dev/null)
+                    dev_out="$(cat /sys/class/net/${dev}/operstate 2>/dev/null)"
                     if [ "${dev_out}" = "up" ]
                     then
                         /usr/bin/logger -t "adblock[${pid}]" "info: get wan/update interface: ${dev}, after ${cnt} loops"

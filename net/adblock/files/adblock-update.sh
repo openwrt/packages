@@ -25,7 +25,7 @@
 
 # set script version
 #
-adb_version="0.20.2"
+adb_version="0.20.3"
 
 # get current pid and script directory
 #
