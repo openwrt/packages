@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=oggfwd
 PKG_REV:=506088e5066abd086efc951670906187c120e9a3
 PKG_VERSION:=20150412
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=git://r-w-x.org/oggfwd.git
@@ -30,7 +30,7 @@ define Package/oggfwd
   SUBMENU:=Streaming
   TITLE:=Pipe media into icecast
   URL:=http://www.v2v.cc/~j/oggfwd
-  DEPENDS:=+libpthread +libshout
+  DEPENDS:=+libpthread +libshout-full
 endef
 
 define Package/oggfwd/description
