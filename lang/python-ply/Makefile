@@ -43,10 +43,10 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(PYTHON_LIB_DIR)/site-packages
+	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
 	$(CP) \
 		$(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-		$(PYTHON_LIB_DIR)/site-packages
+		$(1)$(PYTHON_PKG_DIR)
 endef
 
 $(eval $(call PyPackage,python-ply))
