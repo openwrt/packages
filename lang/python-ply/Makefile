@@ -42,5 +42,12 @@ define Build/Compile
 	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
 endef
 
+define Build/InstallDev
+	$(INSTALL_DIR) $(PYTHON_LIB_DIR)/site-packages
+	$(CP) \
+		$(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
+		$(PYTHON_LIB_DIR)/site-packages
+endef
+
 $(eval $(call PyPackage,python-ply))
 $(eval $(call BuildPackage,python-ply))
