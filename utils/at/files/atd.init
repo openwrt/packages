@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2011 OpenWrt.org
+
+START=50
+
+SERVICE_USE_PID=1
+
+start() {
+	[ -d /var/spool/cron/atjobs ] || {
+		mkdir -m 0755 -p /var/spool/cron/atjobs
+		touch /var/spool/cron/atjobs/.SEQ
+		chown -R nobody:nogroup /var/spool/cron/atjobs
+	}
+	[ -d /var/spool/cron/atspool ] || {
+		mkdir -m 0755 -p /var/spool/cron/atspool
+		chown -R nobody:nogroup /var/spool/cron/atspool
+	}
+	service_start /usr/sbin/atd
+}
+
+stop() {
+	service_stop /usr/sbin/atd
+}
