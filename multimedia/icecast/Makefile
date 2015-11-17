@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icecast
 PKG_VERSION:=2.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=André Gaul <andre@gaul.io>
 
@@ -29,6 +29,7 @@ define Package/icecast
   CATEGORY:=Multimedia
   DEPENDS:=+libcurl +libxml2 +libxslt +libogg +libopenssl
   TITLE:=A streaming media server for Ogg/Vorbis and MP3 audio streams
+  USERID:=icecast=87:icecast=87
   URL:=http://www.icecast.org/
 endef
 
