@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mjpg-streamer
 PKG_REV:=182
 PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).1.tar.bz2
