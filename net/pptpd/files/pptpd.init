@@ -1,0 +1,63 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=60
+USE_PROCD=1
+
+BIN=/usr/sbin/pptpd
+CONFIG=/var/etc/pptpd.conf
+CHAP_SECRETS=/var/etc/chap-secrets
+
+validate_login_section() {
+	uci_validate_section pptpd login "${1}" \
+		'username:string' \
+		'password:string'
+}
+
+validate_pptpd_section() {
+	uci_validate_section pptpd service "${1}" \
+		'enabled:uinteger' \
+		'localip:string' \
+		'remoteip:string'
+}
+
+setup_login() {
+	validate_login_section "${1}" || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ -n "${username}" ] || return 0
+	[ -n "${password}" ] || return 0
+
+	echo "${username} pptp-server ${password} *" >> $CHAP_SECRETS
+}
+
+setup_config() {
+	validate_pptpd_section "${1}" || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ "$enabled" -eq 0 ] && return 1
+
+	mkdir -p /var/etc
+	cp /etc/pptpd.conf $CONFIG
+
+	[ -n "$localip" ] && echo "localip  $localip" >> $CONFIG
+	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG
+
+	return 0
+}
+
+start_service() {
+	config_load pptpd
+	setup_config pptpd || return
+	config_foreach setup_login login
+
+	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
+
+	procd_open_instance
+	procd_set_param command $BIN -c $CONFIG
+	procd_close_instance
+}
