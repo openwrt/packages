@@ -8,6 +8,7 @@
 # $Id: Makefile $
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 
@@ -31,7 +32,6 @@ PKG_INSTALL:=1
 SUPPORTED_KERNELS:=LINUX_3_8||LINUX_3_10||LINUX_3_13||LINUX_3_14||LINUX_3_18||LINUX_4_0||LINUX_4_1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/kernel.mk
 $(call include_mk, python-package.mk)
 
 define Package/openvswitch/Default
