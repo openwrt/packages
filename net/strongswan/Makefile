@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.3.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
@@ -45,6 +45,7 @@ PKG_MOD_AVAILABLE:= \
 	gcm \
 	gcrypt \
 	gmp \
+	gmpdh \
 	ha \
 	hmac \
 	kernel-libipsec \
@@ -254,6 +255,37 @@ $(call Package/strongswan/description/Default)
  This meta-package contains only dependencies to match upstream defaults.
 endef
 
+
+define Package/strongswan-isakmp
+$(call Package/strongswan/Default)
+  TITLE+= (isakmp)
+  DEPENDS:= +strongswan \
+	+strongswan-charon \
+	+strongswan-mod-aes \
+	+strongswan-mod-des \
+	+strongswan-mod-gmpdh \
+	+strongswan-mod-hmac \
+	+strongswan-mod-kernel-netlink \
+	+strongswan-mod-md5 \
+	+strongswan-mod-nonce \
+	+strongswan-mod-pubkey \
+	+strongswan-mod-random \
+	+strongswan-mod-sha1 \
+	+strongswan-mod-socket-default \
+	+strongswan-mod-stroke \
+	+strongswan-mod-uci \
+	+strongswan-mod-updown \
+	+strongswan-utils
+endef
+
+define Package/strongswan-isakmp/description
+$(call Package/strongswan/description/Default)
+ This meta-package contains only dependencies to establish  ISAKMP /
+ IKE PSK connections, dropping other capabilities in favor of small size 
+ Can fit most routers even with 4Mb flash (after removing IPv6 support).
+endef
+
+
 define Package/strongswan-minimal
 $(call Package/strongswan/Default)
   TITLE+= (minimal)
@@ -376,6 +408,10 @@ define Package/strongswan-full/install
 	true
 endef
 
+define Package/strongswan-isakmp/install
+	true
+endef
+
 define Package/strongswan-minimal/install
 	true
 endef
@@ -454,6 +490,7 @@ $(eval $(call BuildPackage,strongswan))
 $(eval $(call BuildPackage,strongswan-default))
 $(eval $(call BuildPackage,strongswan-full))
 $(eval $(call BuildPackage,strongswan-minimal))
+$(eval $(call BuildPackage,strongswan-isakmp))
 $(eval $(call BuildPackage,strongswan-charon))
 $(eval $(call BuildPackage,strongswan-utils))
 $(eval $(call BuildPackage,strongswan-libtls))
@@ -484,6 +521,7 @@ $(eval $(call BuildPlugin,fips-prf,FIPS PRF crypto,+strongswan-mod-sha1))
 $(eval $(call BuildPlugin,gcm,GCM AEAD wrapper crypto,))
 $(eval $(call BuildPlugin,gcrypt,libgcrypt,+PACKAGE_strongswan-mod-gcrypt:libgcrypt))
 $(eval $(call BuildPlugin,gmp,libgmp,+PACKAGE_strongswan-mod-gmp:libgmp))
+$(eval $(call BuildPlugin,gmpdh,DH-Groups; no libgmp dep,))
 $(eval $(call BuildPlugin,ha,high availability cluster,))
 $(eval $(call BuildPlugin,hmac,HMAC crypto,))
 $(eval $(call BuildPlugin,kernel-libipsec,libipsec kernel interface,))
