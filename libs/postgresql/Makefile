@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.0.17
+PKG_VERSION:=9.4.4
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 PKG_LICENSE:=PostgreSQL
@@ -18,10 +18,11 @@ PKG_SOURCE_URL:=\
 	http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v$(PKG_VERSION) \
 	http://ftp.be.postgresql.org/postgresql/source/v$(PKG_VERSION) \
 	ftp://ftp-archives.postgresql.org/pub/source/v$(PKG_VERSION)
-PKG_MD5SUM:=46bf3ef3761c091fb0d2e25012c1709e
+PKG_MD5SUM:=1fe952c44ed26d7e6a335cf991a9c1c6
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
+PKG_MACRO_PATHS:=config
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -41,7 +42,7 @@ endef
 define Package/pgsql-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq
+  DEPENDS:=+libpq @USE_UCLIBC:+librt
   TITLE:=Command Line Interface (CLI) to PostgreSQL databases
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -54,19 +55,36 @@ endef
 define Package/pgsql-server
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq
+  DEPENDS:=+libpq @USE_UCLIBC:+librt
   TITLE:=PostgreSQL databases Server
   URL:=http://www.postgresql.org/
   SUBMENU:=database
+  USERID:=postgres=5432:postgres=5432
 endef
 
 define Package/pgsql-server/description
 PostgreSQL databases Server.
 endef
 
+PGSQL_CONFIG_VARS:= \
+	pgac_cv_snprintf_long_long_int_format="%lld" \
+	pgac_cv_snprintf_size_t_support=yes
+
+ifeq ($(CONFIG_USE_UCLIBC),y)
+# PostgreSQL does not build against uClibc with locales
+# enabled, due to an uClibc bug, see
+# http://lists.uclibc.org/pipermail/uclibc/2014-April/048326.html
+# so overwrite automatic detection and disable locale support
+PGSQL_CONFIG_VARS+= \
+		pgac_cv_type_locale_t=no
+endif
+
+TARGET_CONFIGURE_OPTS+=$(PGSQL_CONFIG_VARS)
+
 # Need a native ecpg ,pg_config, and zic for build
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -f config.cache; \
+		$(PGSQL_CONFIG_VARS) \
 		./configure \
 			--prefix=/usr \
 			--exec-prefix=/usr \
@@ -85,17 +103,15 @@ define Build/Configure
 			--enable-static \
 			--disable-integer-datetimes \
 			--disable-rpath \
-			--without-java \
-			--without-krb4 \
-			--without-krb5 \
+			--without-bonjour \
+			--without-gssapi \
+			--without-ldap \
 			--without-openssl \
 			--without-pam \
 			--without-perl \
 			--without-python \
 			--without-readline \
-			--without-rendezvous \
 			--without-tcl \
-			--without-tk \
 			--with-zlib="yes" \
 			--enable-depend \
 			--with-system-timezone=/tmp \
@@ -141,16 +157,14 @@ define Build/Configure
 			--enable-static \
 			--disable-integer-datetimes \
 			--disable-rpath \
-			--without-java \
-			--without-krb4 \
-			--without-krb5 \
+			--without-bonjour \
+			--without-gssapi \
+			--without-ldap \
 			--without-openssl \
 			--without-pam \
 			--without-perl \
 			--without-python \
-			--without-rendezvous \
 			--without-tcl \
-			--without-tk \
 			--with-zlib="yes" \
 			--enable-depend \
 			$(if $(CONFIG_TARGET_avr32),--disable-spinlocks) \
@@ -207,32 +221,6 @@ define Package/pgsql-server/conffiles
 /etc/config/postgresql
 endef
 
-define Package/pgsql-server/postinst
-#!/bin/sh
-grep -q '^postgres:' /etc/passwd && exit 0
-group=$$(grep '^postgres:' /etc/group | cut -f3 -d:)
-if [ -z "$${group}" ] ; then
-	group=1000
-	tst=$$(cat /etc/group | grep ":$${group}:")
-	while [ -n "$${tst}" ] ; do
-		group=$$(($${group}+1))
-		tst=$$(cat /etc/group | grep ":$${group}:")
-	done
-	echo "postgres:x:$${group}:" >>/etc/group
-fi
-
-user=$$(cat /etc/passwd | grep "^postgres:")
-if [ -z "$${user}" ] ; then
-	num="$${group}"
-	tst=$$(cat /etc/passwd | grep ":.*:$${num}:")
-	while [ -n "$${tst}" ] ; do
-		num=$$(($${num}+1))
-		tst=$$(cat /etc/passwd | grep ":.*:$${num}:")
-	done
-	echo "postgres:*:$${num}:$${group}:PostgreSQL administrator:/tmp:/bin/ash" >>/etc/passwd
-fi
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/bin/pg_config/pg_config.host $(1)/usr/bin/pg_config
@@ -242,6 +230,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config_manual.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/postgres_ext.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config_ext.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/postgresql $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpq.{a,so*} $(1)/usr/lib/
