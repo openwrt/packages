@@ -99,6 +99,60 @@ snmpd_access_add() {
 	echo "access $group $context $version $level $prefix $read $write $notify" >> $CONFIGFILE
 }
 
+snmpd_trap_hostname_add() {
+	local cfg="$1"
+	config_get hostname "$cfg" HostName
+	config_get port "$cfg" Port
+	config_get community "$cfg" Community
+	config_get type "$cfg" Type
+	echo "$type $hostname $community $port" >> $CONFIGFILE
+}
+
+snmpd_trap_ip_add() {
+	local cfg="$1"
+	config_get host_ip "$cfg" HostIP
+	config_get port "$cfg" Port
+	config_get community "$cfg" Community
+	config_get type "$cfg" Type
+	echo "$type $host_ip $community $port" >> $CONFIGFILE
+}
+
+snmpd_access_default_add() {
+	local cfg="$1"
+	config_get mode "$cfg" Mode
+	config_get community "$cfg" CommunityName
+	config_get oidrestrict "$cfg" RestrictOID
+	config_get oid "$cfg" RestrictedOID
+	echo -n "$mode $community default" >> $CONFIGFILE
+	[ "$oidrestrict" == "yes" ] && echo " $oid" >> $CONFIGFILE
+	[ "$oidrestrict" == "no" ] && echo "" >> $CONFIGFILE
+}
+
+snmpd_access_HostName_add() {
+	local cfg="$1"
+	config_get hostname "$cfg" HostName
+	config_get mode "$cfg" Mode
+	config_get community "$cfg" CommunityName
+	config_get oidrestrict "$cfg" RestrictOID
+	config_get oid "$cfg" RestrictedOID
+	echo -n "$mode $community $hostname" >> $CONFIGFILE
+	[ "$oidrestrict" == "yes" ] && echo " $oid" >> $CONFIGFILE
+	[ "$oidrestrict" == "no" ] && echo "" >> $CONFIGFILE
+}
+
+snmpd_access_HostIP_add() {
+	local cfg="$1"
+	config_get host_ip "$cfg" HostIP
+	config_get ip_mask "$cfg" IPMask
+	config_get mode "$cfg" Mode
+	config_get community "$cfg" CommunityName
+	config_get oidrestrict "$cfg" RestrictOID
+	config_get oid "$cfg" RestrictedOID
+	echo -n "$mode $community $host_ip/$ip_mask" >> $CONFIGFILE
+	[ "$oidrestrict" == "yes" ] && echo " $oid" >> $CONFIGFILE
+	[ "$oidrestrict" == "no" ] && echo "" >> $CONFIGFILE
+}
+
 snmpd_pass_add() {
 	local cfg="$1"
 	local pass='pass'
@@ -151,6 +205,11 @@ start_service() {
 	config_foreach snmpd_group_add group
 	config_foreach snmpd_view_add view
 	config_foreach snmpd_access_add access
+	config_foreach snmpd_trap_hostname_add trap_HostName
+	config_foreach snmpd_trap_ip_add trap_HostIP
+	config_foreach snmpd_access_default_add access_default
+	config_foreach snmpd_access_HostName_add access_HostName
+	config_foreach snmpd_access_HostIP_add access_HostIP
 	config_foreach snmpd_pass_add pass
 	config_foreach snmpd_exec_add exec
 	config_foreach snmpd_disk_add disk
@@ -168,4 +227,8 @@ start_service() {
 
 stop_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
+}
+
+service_triggers(){
+	procd_add_reload_trigger 'snmpd'
 }
