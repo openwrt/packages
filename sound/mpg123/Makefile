@@ -88,7 +88,7 @@ define Package/mpg123/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/mpg123{,-id3dump,-strip} \
-		$(PKG_INSTALL_DIR)/usr/bin/out123
+		$(PKG_INSTALL_DIR)/usr/bin/out123 \
 		$(1)/usr/bin
 
 	$(INSTALL_DIR) $(1)/usr/lib/mpg123

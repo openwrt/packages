@@ -25,7 +25,7 @@
 
 # set script version
 #
-adb_version="0.20.1"
+adb_version="0.20.3"
 
 # get current pid and script directory
 #
@@ -66,13 +66,13 @@ f_envparse
 #
 f_envcheck
 
+# check ntp time sync
+#
+f_ntpcheck
+
 # check wan update interface(s)
 #
 f_wancheck
-
-# check for ntp time sync
-#
-f_ntpcheck
 
 # check/start shallalist (pre-)processing
 #
@@ -89,7 +89,7 @@ then
         /usr/bin/logger -t "adblock[${pid}]" "info: shallalist archive download finished"
     else
         /usr/bin/logger -t "adblock[${pid}]" "error: shallalist archive download failed (${adb_arc_shalla})"
-        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist archive download failed (${adb_arc_shalla})" >> "${adb_logfile}"
+        printf "%s\n" "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist archive download failed (${adb_arc_shalla})" >> "${adb_logfile}"
         restore_msg="archive download failed"
         f_restore
     fi
@@ -103,7 +103,7 @@ then
         /usr/bin/logger -t "adblock[${pid}]" "info: shallalist archive extraction finished"
     else
         /usr/bin/logger -t "adblock[${pid}]" "error: shallalist archive extraction failed"
-        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist archive extraction failed" >> "${adb_logfile}"
+        printf "%s\n" "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist archive extraction failed" >> "${adb_logfile}"
         restore_msg="archive extraction failed"
         f_restore
     fi
@@ -134,7 +134,7 @@ then
         /usr/bin/logger -t "adblock[${pid}]" "info: shallalist (pre-)processing finished (${adb_cat_shalla})"
     else
         /usr/bin/logger -t "adblock[${pid}]" "error: shallalist (pre-)processing failed (${rc}, ${adb_cat_shalla})"
-        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist (pre-)processing failed (${rc}, ${adb_cat_shalla})" >> "${adb_logfile}"
+        printf "%s\n" "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: shallalist (pre-)processing failed (${rc}, ${adb_cat_shalla})" >> "${adb_logfile}"
         restore_msg="shallalist merge failed"
         f_restore
     fi
@@ -172,7 +172,7 @@ do
         /usr/bin/logger -t "adblock[${pid}]" "info: empty source download finished (${url})"
     else
         /usr/bin/logger -t "adblock[${pid}]" "error: source download failed (${url})"
-        printf "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: source download failed (${url})" >> "${adb_logfile}"
+        printf "%s\n" "$(/bin/date "+%d.%m.%Y %H:%M:%S") - error: source download failed (${url})" >> "${adb_logfile}"
         restore_msg="download failed"
         f_restore
     fi
