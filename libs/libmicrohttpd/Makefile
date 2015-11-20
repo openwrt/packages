@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmicrohttpd
-PKG_VERSION:=0.9.42
-PKG_RELEASE:=3
+PKG_VERSION:=0.9.44
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/libmicrohttpd
-PKG_MD5SUM:=3b9cf0b67fc8ebc9e69f53c6bc84a88d
+PKG_MD5SUM:=9101b5ebf8f71792938ae672da314da2
 
 PKG_MAINTAINER:=Martijn Zilverschoon <martijn@friedzombie.com>
 

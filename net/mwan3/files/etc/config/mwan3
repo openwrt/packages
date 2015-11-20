@@ -1,11 +1,10 @@
+
 config rule 'https'
-	option sticky '1'
 	option dest_port '443'
 	option proto 'tcp'
 	option use_policy 'balanced'
 
 config rule 'default_rule'
-	option dest_ip '0.0.0.0/0'
 	option use_policy 'balanced'
 
 config policy 'balanced'

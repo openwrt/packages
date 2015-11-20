@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.4.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -115,7 +115,6 @@ CONFIGURE_ARGS += \
 	--disable-resindvd \
 	--disable-faac \
 	--disable-faad \
-	--disable-fbdev \
 	--disable-flite \
 	--disable-gsm \
 	--disable-kate \
@@ -247,6 +246,7 @@ $(eval $(call GstBuildPlugin,camerabin2,camerabin support,basecamerabinsrc photo
 $(eval $(call GstBuildPlugin,dataurisrc,dataurisrc support,,,))
 $(eval $(call GstBuildPlugin,debugutilsbad,debugutils support,video,,))
 $(eval $(call GstBuildPlugin,dvdspu,dvdspu support,video,,))
+$(eval $(call GstBuildPlugin,fbdevsink,fbdev support,video,,))
 $(eval $(call GstBuildPlugin,festival,festival support,audio,,))
 $(eval $(call GstBuildPlugin,frei0r,frei0r support,controller video,,))
 $(eval $(call GstBuildPlugin,id3tag,id3tag support,tag,,))
