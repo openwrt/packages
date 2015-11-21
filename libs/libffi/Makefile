@@ -66,7 +66,7 @@ define Build/InstallDev
 
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libffi-$(PKG_VERSION)/include/*.h \
+		$(PKG_INSTALL_DIR)/usr/include/*.h \
 		$(1)/usr/include/
 endef
 

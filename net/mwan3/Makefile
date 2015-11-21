@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=1.6
-PKG_RELEASE:=3
+PKG_VERSION:=2.0
+PKG_RELEASE:=0
 PKG_MAINTAINER:=Jeroen Louwes <jeroen.louwes@gmail.com>
 PKG_LICENSE:=GPLv2
 
@@ -42,6 +42,8 @@ define Package/mwan3/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/mwan3.sbin $(1)/usr/sbin/mwan3
 	$(INSTALL_BIN) ./files/mwan3track.sbin $(1)/usr/sbin/mwan3track
+	$(INSTALL_DIR) $(1)/lib/mwan3
+	$(INSTALL_DATA) ./files/mwan3.sh $(1)/lib/mwan3/mwan3.sh
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/mwan3.config $(1)/etc/config/mwan3
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface/
