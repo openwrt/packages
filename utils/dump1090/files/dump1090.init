@@ -72,7 +72,7 @@ start_instance() {
 	append_bool "$cfg" no_fix "--no-fix"
 	append_bool "$cfg" no_crc_check "--no-crc-check"
 	append_bool "$cfg" phase_enhance "--phase-enhance"
-	append_bool "$cfg" agressive "--agressive"
+	append_bool "$cfg" aggressive "--aggressive"
 	append_bool "$cfg" mlat "--mlat"
 	append_bool "$cfg" stats "--stats"
 	append_bool "$cfg" stats_range "--stats-range"
