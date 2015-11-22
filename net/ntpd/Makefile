@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntp
-PKG_VERSION:=4.2.8p2
-PKG_RELEASE:=3
+PKG_VERSION:=4.2.8p4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
-PKG_MD5SUM:=fa37049383316322d060ec9061ac23a9
+PKG_MD5SUM:=6af96862b09324a8ef965ca76b759c8b
 
 PKG_LICENSE:=Unique
 PKG_LICENSE_FILES:=COPYRIGHT html/copyright.html
@@ -67,6 +67,7 @@ endef
 define Package/ntp-utils
 $(call Package/ntpd/Default)
   TITLE+= utilities
+  DEPENDS+= +libcap
 endef
 
 define Package/ntp-utils/description
@@ -78,6 +79,7 @@ endef
 define Package/ntp-keygen
 $(call Package/ntpd/Default)
   TITLE+=keygen
+  DEPENDS+= +libcap +libevent2-core
 endef
 
 define Package/ntp-keygen/description
