@@ -1,16 +1,16 @@
 --- a/libffi.pc.in
 +++ b/libffi.pc.in
-@@ -1,10 +1,10 @@
- prefix=@prefix@
+@@ -2,10 +2,10 @@ prefix=@prefix@
  exec_prefix=@exec_prefix@
  libdir=@libdir@
+ toolexeclibdir=@toolexeclibdir@
 -includedir=${libdir}/@PACKAGE_NAME@-@PACKAGE_VERSION@/include
 +includedir=@includedir@
  
  Name: @PACKAGE_NAME@
  Description: Library supporting Foreign Function Interfaces
  Version: @PACKAGE_VERSION@
--Libs: -L${libdir} -lffi
+-Libs: -L${toolexeclibdir} -lffi
 -Cflags: -I${includedir}
 +Libs: -lffi
 +Cflags:
@@ -25,7 +25,7 @@
  nodist_includes_HEADERS = ffi.h ffitarget.h
 --- a/include/Makefile.in
 +++ b/include/Makefile.in
-@@ -250,7 +250,7 @@ top_srcdir = @top_srcdir@
+@@ -314,7 +314,7 @@ top_srcdir = @top_srcdir@
  AUTOMAKE_OPTIONS = foreign
  DISTCLEANFILES = ffitarget.h
  EXTRA_DIST = ffi.h.in ffi_common.h
