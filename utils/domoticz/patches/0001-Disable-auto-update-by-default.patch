@@ -1,0 +1,25 @@
+From 3c56869fa6e8be19afac0259c09c59f6e8dd387c Mon Sep 17 00:00:00 2001
+From: David Woodhouse <David.Woodhouse@intel.com>
+Date: Fri, 20 Nov 2015 15:53:11 +0000
+Subject: [PATCH] Disable auto update by default
+
+---
+ main/SQLHelper.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/main/SQLHelper.cpp b/main/SQLHelper.cpp
+index abbad9c..915244f 100644
+--- a/main/SQLHelper.cpp
++++ b/main/SQLHelper.cpp
+@@ -1636,7 +1636,7 @@ bool CSQLHelper::OpenDatabase()
+ 	
+ 	if (!GetPreferencesVar("UseAutoUpdate", nValue))
+ 	{
+-		UpdatePreferencesVar("UseAutoUpdate", 1);
++		UpdatePreferencesVar("UseAutoUpdate", 0);
+ 	}
+ 
+ 	if (!GetPreferencesVar("UseAutoBackup", nValue))
+-- 
+2.5.0
+
