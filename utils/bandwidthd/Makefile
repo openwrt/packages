@@ -82,7 +82,7 @@ CONFIGURE_ARGS += \
         ac_cv_file__usr_local_pgsql_include=no
 endif
 
-EXTRA_CFLAGS+= $(TARGET_CPPFLAGS)
+EXTRA_CFLAGS+= $(TARGET_CPPFLAGS) -std=gnu89
 EXTRA_LDFLAGS+= $(TARGET_LDFLAGS) -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
 
 define Package/bandwidthd/install
