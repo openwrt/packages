@@ -47,6 +47,29 @@ f_envload()
 #
 f_envparse()
 {
+    # set the C locale, characters are single bytes, the charset is ASCII
+    # speeds up sort, grep etc., guarantees unique domains
+    #
+    LC_ALL=C
+
+    # set initial defaults (may be overwritten by adblock config options)
+    #
+    adb_if="adblock"
+    adb_minspace="20000"
+    adb_maxtime="60"
+    adb_maxloop="5"
+
+    # adblock device name auto detection
+    # derived from first entry in openwrt lan ifname config
+    #
+    adb_dev="$(uci get network.lan.ifname 2>/dev/null)"
+    adb_dev="${adb_dev/ *}"
+
+    # adblock ntp server name auto detection
+    # derived from ntp list found in openwrt ntp server config
+    #
+    adb_ntpsrv="$(uci get system.ntp.server 2>/dev/null)"
+
     # function to read/set global options by callback,
     # prepare list items and build option list for all others
     #
@@ -150,6 +173,14 @@ f_envparse()
     #
     adb_dnsfile="/tmp/dnsmasq.d/adlist.conf"
     adb_dnsformat="sed 's/^/address=\//;s/$/\/'${adb_ip}'/'"
+
+    # remove unused environment variables
+    #
+    env_list="$(set | grep -o "CONFIG_[A-Za-z_]*")"
+    for var in ${env_list}
+    do
+        unset "${var}" 2>/dev/null
+    done
 }
 
 #############################################
@@ -170,22 +201,33 @@ f_envcheck()
         fi
     done
 
+    # check main uhttpd configuration
+    #
+    check_uhttpd="$(uci get uhttpd.main.listen_http 2>/dev/null | grep -o "0.0.0.0")"
+    if [ -n "${check_uhttpd}" ]
+    then
+        rc=530
+        lan_ip="$(uci get network.lan.ipaddr 2>/dev/null)"
+        f_log "main uhttpd instance listens to all network interfaces, please bind uhttpd to LAN only (${lan_ip})" "${rc}"
+        f_deltemp
+    fi
+
     # check adblock network device configuration
     #
     if [ ! -d "/sys/class/net/${adb_dev}" ]
     then
-        rc=530
+        rc=535
         f_log "invalid adblock network device input (${adb_dev})" "${rc}"
         f_deltemp
     fi
 
     # check adblock network interface configuration
     #
-    check_if="$(printf "${adb_if}" | sed -n '/[^_0-9A-Za-z]/p')"
+    check_if="$(printf "${adb_if}" | sed -n '/[^._0-9A-Za-z]/p')"
     banned_if="$(printf "${adb_if}" | sed -n '/.*lan.*\|.*wan.*\|.*switch.*\|main\|globals\|loopback\|px5g/p')"
     if [ -n "${check_if}" ] || [ -n "${banned_if}" ]
     then
-        rc=535
+        rc=540
         f_log "invalid adblock network interface input (${adb_if})" "${rc}"
         f_deltemp
     fi
@@ -195,7 +237,7 @@ f_envcheck()
     check_ip="$(printf "${adb_ip}" | sed -n '/\([0-9]\{1,3\}\.\)\{3\}[0-9]\{1,3\}/p')"
     if [ -z "${check_ip}" ]
     then
-        rc=540
+        rc=545
         f_log "invalid adblock ip address input (${adb_ip})" "${rc}"
         f_deltemp
     fi
@@ -204,12 +246,12 @@ f_envcheck()
     #
     if [ ! -r "${adb_blacklist}" ]
     then
-        rc=545
+        rc=550
         f_log "adblock blacklist not found" "${rc}"
         f_deltemp
     elif [ ! -r "${adb_whitelist}" ]
     then
-        rc=550
+        rc=555
         f_log "adblock whitelist not found" "${rc}"
         f_deltemp
     fi
@@ -221,7 +263,7 @@ f_envcheck()
         f_space "${adb_tmpdir}"
         tmp_ok="true"
     else
-        rc=555
+        rc=560
         tmp_ok="false"
         f_log "temp directory not found" "${rc}"
         f_deltemp
@@ -229,22 +271,44 @@ f_envcheck()
 
     # check curl package dependency
     #
-    check="$(printf "${pkg_list}" | grep "^curl")"
+    check="$(printf "${pkg_list}" | grep "^curl -")"
     if [ -z "${check}" ]
     then
-        rc=560
+        rc=565
         f_log "curl package not found" "${rc}"
         f_deltemp
     fi
 
     # check wget package dependency
     #
-    check="$(printf "${pkg_list}" | grep "^wget")"
+    check="$(printf "${pkg_list}" | grep "^wget -")"
     if [ -z "${check}" ]
     then
-        rc=565
+        rc=570
         f_log "wget package not found" "${rc}"
         f_deltemp
+    fi
+
+    # check ca-certificates package and set wget/curl parms accordingly
+    #
+    check="$(printf "${pkg_list}" | grep "^ca-certificates -")"
+    if [ -z "${check}" ]
+    then
+        curl_parm="--insecure"
+        wget_parm="--no-check-certificate"
+    else
+        unset curl_parm
+        unset wget_parm
+    fi
+
+    # check total and swap memory
+    #
+    mem_total="$(cat /proc/meminfo | grep "MemTotal" | grep -o "[0-9]*")"
+    mem_free="$(cat /proc/meminfo | grep "MemFree" | grep -o "[0-9]*")"
+    swap_total="$(cat /proc/meminfo | grep "SwapTotal" | grep -o "[0-9]*")"
+    if [ $((mem_total)) -le 64000 ] && [ $((swap_total)) -eq 0 ]
+    then
+        f_log "please consider to add an external swap device to supersize your /tmp directory (total: ${mem_total}, free: ${mem_free}, swap: ${mem_swap})"
     fi
 
     # check backup configuration
@@ -341,7 +405,7 @@ f_envcheck()
             f_log "created new dynamic/volatile network interface (${adb_if}, ${adb_ip})"
         else
             f_log "failed to initialize new dynamic/volatile network interface (${adb_if}, ${adb_ip})" "${rc}"
-            f_deltemp
+            f_remove
         fi
     fi
 
@@ -357,7 +421,7 @@ f_envcheck()
             f_log "created new dynamic/volatile uhttpd instance (${adb_if}, ${adb_ip})"
         else
             f_log "failed to initialize new dynamic/volatile uhttpd instance (${adb_if}, ${adb_ip})" "${rc}"
-            f_deltemp
+            f_remove
         fi
     fi
 }
@@ -400,12 +464,12 @@ f_space()
             av_space="${available}"
             if [ $((av_space)) -eq 0 ]
             then
-                rc=570
+                rc=575
                 f_log "no space left on device/not mounted (${mp})" "${rc}"
                 exit ${rc}
             elif [ $((av_space)) -lt $((adb_minspace)) ]
             then
-                rc=575
+                rc=580
                 f_log "not enough space left on device (${mp})" "${rc}"
                 exit ${rc}
             fi
@@ -431,7 +495,7 @@ f_deltemp()
        rm -f "${adb_tmpfile}" >/dev/null 2>&1
     fi
     if [ -d "${adb_tmpdir}" ]
-    then
+        then
        rm -rf "${adb_tmpdir}" >/dev/null 2>&1
     fi
     f_log "domain adblock processing finished (${adb_version})"
@@ -509,7 +573,7 @@ f_wancheck()
     done
     if [ -z "${wan_ok}" ]
     then
-        rc=580
+        rc=585
         wan_ok="false"
         f_log "no wan/update interface(s) found (${adb_wandev# })" "${rc}"
         f_restore
@@ -543,7 +607,7 @@ f_ntpcheck()
     done
     if [ -z "${ntp_ok}" ]
     then
-        rc=585
+        rc=590
         ntp_ok="false"
         f_log "ntp time sync failed (${adb_ntpsrv# })" "${rc}"
         f_restore
