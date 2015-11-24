@@ -105,6 +105,22 @@ config ocservusers
 -----------------------------------------------------------------
 ```
 
+Setting up split-dns
+====================
+
+To allow the clients to resolv with the local domain add the following
+to the ocserv configuration file.
+
+```
+----/etc/config/ocserv-------------------------------------------
+config ocserv 'config'
+	option split_dns '1'
+	option default_domain 'mydomain'
+```
+
+The ```default_domain``` is optional and if not set, it will be autodetected
+from dnsmasq's configuration.
+
 
 Setting up the firewall
 =======================
