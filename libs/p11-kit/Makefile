@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=p11-kit
-PKG_VERSION:=0.20.7
+PKG_VERSION:=0.23.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=6648cad01a3080b685b8b3bf7372c91a
+PKG_MD5SUM:=96f073270c489c9a594e1c9413f42db8
 PKG_SOURCE_URL:=http://p11-glue.freedesktop.org/releases/
 
 PKG_INSTALL:=1
