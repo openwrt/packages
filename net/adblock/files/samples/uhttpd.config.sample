@@ -1,0 +1,3 @@
+    config uhttpd 'main'
+            list listen_http '192.168.1.1:80'
+            list listen_https '192.168.1.1:443'
