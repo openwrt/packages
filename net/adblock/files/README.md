@@ -10,15 +10,15 @@ and return the local ip address of your router and the internal web server deliv
 
 ## Main Features
 * support of the following domain blacklist sites (free for private usage, for commercial use please check their individual licenses):
-    * [pgl.yoyo.org](http://pgl.yoyo.org/adservers)
-    * [malwaredomains.com](http://malwaredomains.com)
-    * [zeustracker.abuse.ch](https://zeustracker.abuse.ch)
-    * [feodotracker.abuse.ch](https://feodotracker.abuse.ch)
-    * [palevotracker.abuse.ch](https://palevotracker.abuse.ch)
-    * [dshield.org](http://dshield.org)
-    * [shallalist.de](http://www.shallalist.de) (tested with the categories "adv" "costtraps" "downloads" "spyware" "tracker" "warez")
-    * [spam404.com](http://www.spam404.com)
-    * [winhelp2002.mvps.org](http://winhelp2002.mvps.org)
+    * [pgl.yoyo.org](http://pgl.yoyo.org/adservers), approx. 2.500 entries
+    * [malwaredomains.com](http://malwaredomains.com), approx. 16.000 entries
+    * [zeustracker.abuse.ch](https://zeustracker.abuse.ch), currently down
+    * [feodotracker.abuse.ch](https://feodotracker.abuse.ch), approx. 10 entries
+    * [palevotracker.abuse.ch](https://palevotracker.abuse.ch), approx. 10 entries
+    * [dshield.org](http://dshield.org), approx. 4.500 entries
+    * [shallalist.de](http://www.shallalist.de) (tested with the categories "adv" "costtraps" "downloads" "spyware" "tracker" "warez"), approx. 37.000 entries
+    * [spam404.com](http://www.spam404.com), approx. 5.000 entries
+    * [winhelp2002.mvps.org](http://winhelp2002.mvps.org), approx. 15.000 entries
 * blocklist parsing by fast & flexible regex rulesets
 * additional white- and blacklist support for manual overrides
 * separate dynamic adblock network interface
@@ -34,24 +34,26 @@ and return the local ip address of your router and the internal web server deliv
 * additional software packages:
     * curl
     * wget (due to an openwrt bug still needed for certain https requests - see ticket #19621)
-    * busybox find with *-mtime* support for logfile housekeeping (enabled by default with r47362, will be disabled if not found)
-* optional: mounted usb stick or any other storage device to overcome limited memory resources on embedded router devices
-* the above dependencies will be checked during package installation & script startup, please check console output or *logread -e "adblock"* for errors
+    * optional: busybox find with *-mtime* support for logfile housekeeping (enabled by default with r47362, will be disabled if not found)
+    * optional: coreutils-sort for reliable sort results, even on low memory systems
+* recommended: add an usb stick or any other storage device to supersize your /tmp directory with a swap partition (see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab))
+* the above dependencies and requirements will be checked during package installation & script startup, please check console output or *logread -e "adblock"* for errors
 
 ## Usage
 * select & install adblock package (*opkg install adblock*)
 * configure /etc/config/adblock to your needs, see additional comments in *adblock.conf.sample*
-* by default openwrt uhttpd config is bind to 0.0.0.0 (to all ports of your router). For a working adblock configuration you have to bind uHTTPd to the standard LAN port only, please change *listen_http* and *listen_https* accordingly
+* at least configure the ip address of the local adblock interface/uhttpd instance, needs to be a different subnet from the normal LAN
+* by default openwrts main uhttpd instance is bind to all ports of your router. For a working adblock setup you have to bind uhttpd to the standard LAN port only, please change listen_http accordingly
 * start /usr/bin/adblock-update.sh and check console output or *logread -e "adblock"* for errors
 
 ## Distributed samples
-* all sample configuration files stored in */etc/adblock/samples*.
-* to enable/disable additional domain query logging set the dnsmasq option *logqueries* accordingly, see *dhcp.config.sample*.
+* all sample configuration files stored in */etc/adblock/samples*
+* to enable/disable additional domain query logging set the dnsmasq option *logqueries* accordingly, see *dhcp.config.sample*
 * to bind uhttpd to standard LAN port only, see *uhttpd.config.sample*
-* for script autostart by rc.local and /tmp resizing on the fly see *rc.local.sample*.
-* for scheduled call of *adblock-update.sh* see *root.crontab.sample*.
-* to redirect/force all dns queries to your router see *firwall.user.sample*.
-* for further dnsmasq tweaks see *dnsmasq.conf.sample*.
+* for script autostart by rc.local and /tmp resizing on the fly see *rc.local.sample*
+* for scheduled call of *adblock-update.sh* see *root.crontab.sample*
+* to redirect/force all dns queries to your router see *firwall.user.sample*
+* for further dnsmasq tweaks see *dnsmasq.conf.sample*
 
 ## Examples
 

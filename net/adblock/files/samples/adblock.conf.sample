@@ -8,26 +8,9 @@ config adblock "global"
 	# needs to be a different subnet from the normal LAN
 	option adb_ip "192.168.2.1"
 	
-	# name of the physical adblock network device (check /sys/class/net/<dev>),
-	# should point to the default lan interface
-	option adb_dev "eth0"
-	
-	# name of the adblock network interface and uhttpd instance
-	option adb_if "adblock"
-	
 	# name of an "always accessible" domain,
 	# this domain will be used for the final nslookup check
 	option adb_domain "heise.de"
-	
-	# minimum required space for adlist, backups & logfiles (in kbyte)
-	# if you don't use all adblock sources, you can reduce this value accordingly
-	option adb_minspace "20000"
-	
-	# number of retries for wancheck and ntpcheck (see below)
-	option adb_maxloop "5"
-	
-	# download timeout for every adblock source (in seconds)
-	option adb_maxtime "60"
 	
 	# full path to static domain blacklist file (one domain per line)
 	option adb_blacklist "/etc/adblock/adblock.blacklist"
@@ -35,24 +18,19 @@ config adblock "global"
 	# full path to static domain whitelist file (one domain per line)
 	option adb_whitelist "/etc/adblock/adblock.whitelist"
 
-# list of devices that are allowed for adblock updates (check /sys/class/net/<dev>),
-# if no one found the last adlist backup will be used,
-# useful for (mobile) multiwan setups
+# list of wan devices that are allowed for adblock updates (check /sys/class/net/<dev>),
+# if no one found the last adlist backup will be restored,
+# useful only for (mobile) multiwan setups
 # disabled by default
 config service "wancheck"
 	option enabled "0"
 	list adb_wanlist "wan"
 
-# list of ntp time server pools,
 # check that ntp has adjusted the system time on this device,
 # will be used for logfile writing and logfile housekeeping
 # disabled by default
 config service "ntpcheck"
 	option enabled "0"
-	list adb_ntplist "0.pool.ntp.org"
-	list adb_ntplist "1.pool.ntp.org"
-	list adb_ntplist "2.pool.ntp.org"
-	list adb_ntplist "3.pool.ntp.org"
 
 # full path to backup file for adlist backups
 # disabled by default

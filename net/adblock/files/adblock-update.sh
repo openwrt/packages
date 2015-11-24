@@ -25,7 +25,7 @@
 
 # set script version
 #
-adb_version="0.21.0"
+adb_version="0.22.0"
 
 # get current pid and script directory
 #
@@ -67,7 +67,7 @@ f_envparse
 #
 f_envcheck
 
-# check/start shallalist (pre-)processing
+# start shallalist (pre-)processing
 #
 if [ -n "${adb_arc_shalla}" ]
 then
@@ -75,7 +75,7 @@ then
     #
     shalla_archive="${adb_tmpdir}/shallalist.tar.gz"
     shalla_file="${adb_tmpdir}/shallalist.txt"
-    curl --insecure --max-time "${adb_maxtime}" "${adb_arc_shalla}" -o "${shalla_archive}" 2>/dev/null
+    curl "${curl_parm}" --max-time "${adb_maxtime}" "${adb_arc_shalla}" -o "${shalla_archive}" 2>/dev/null
     rc=${?}
     if [ $((rc)) -eq 0 ]
     then
@@ -85,46 +85,31 @@ then
         f_restore
     fi
 
-    # extract shallalist archive
-    #
-    tar -xzf "${shalla_archive}" -C "${adb_tmpdir}" 2>/dev/null
-    rc=${?}
-    if [ $((rc)) -eq 0 ]
-    then
-        f_log "shallalist archive extraction finished"
-    else
-        f_log "shallalist archive extraction failed" "${rc}"
-        f_restore
-    fi
-
-    # merge selected shallalist categories
+    # extract and merge only domains of selected shallalist categories
     #
     > "${shalla_file}"
     for category in ${adb_cat_shalla}
     do
-        if [ -f "${adb_tmpdir}/BL/${category}/domains" ]
+        tar -C "${adb_tmpdir}" -xzf "${shalla_archive}" BL/${category}/domains 2>/dev/null
+        rc=${?}
+        if [ $((rc)) -eq 0 ]
         then
-            cat "${adb_tmpdir}/BL/${category}/domains" 2>/dev/null >> "${shalla_file}"
-            rc=${?}
+            if [ -r "${adb_tmpdir}/BL/${category}/domains" ]
+            then
+                cat "${adb_tmpdir}/BL/${category}/domains" >> "${shalla_file}" 2>/dev/null
+            fi
         else
-            rc=505
-        fi
-        if [ $((rc)) -ne 0 ]
-        then
-            break
+            f_log "shallalist archive extraction failed (${category})" "${rc}"
+            f_restore
         fi
     done
 
     # finish shallalist (pre-)processing
     #
-    if [ $((rc)) -eq 0 ]
-    then
-        adb_sources="${adb_sources} file:///${shalla_file}&ruleset=rset_shalla"
-        f_log "shallalist (pre-)processing finished (${adb_cat_shalla# })"
-    else
-        f_log "shallalist (pre-)processing failed (${adb_cat_shalla# })" "${rc}"
-        f_restore
-    fi
+    rm -f "${shalla_archive}" >/dev/null 2>&1
+    rm -rf "${adb_tmpdir}/BL" >/dev/null 2>&1 
+    adb_sources="${adb_sources} file:///${shalla_file}&ruleset=rset_shalla"
+    f_log "shallalist (pre-)processing finished (${adb_cat_shalla# })"
 fi
 
 # loop through active adblock domain sources,
@@ -139,10 +124,10 @@ do
     check_url="$(printf "${url}" | sed -n '/^https:/p')"
     if [ -n "${check_url}" ]
     then
-        tmp_var="$(wget --timeout="${adb_maxtime}" --tries=1 --output-document=- "${url}" 2>/dev/null)"
+        tmp_var="$(wget "${wget_parm}" --timeout="${adb_maxtime}" --tries=1 --output-document=- "${url}" 2>/dev/null)"
         rc=${?}
     else
-        tmp_var="$(curl --insecure --max-time "${adb_maxtime}" "${url}" 2>/dev/null)"
+        tmp_var="$(curl "${curl_parm}" --max-time "${adb_maxtime}" "${url}" 2>/dev/null)"
         rc=${?}
     fi
 
@@ -154,6 +139,11 @@ do
         tmp_var="$(printf "%s\n" "${tmp_var}" | tr '[A-Z]' '[a-z]')"
         count="$(printf "%s\n" "${tmp_var}" | eval "${ruleset}" | tee -a "${adb_tmpfile}" | wc -l)"
         f_log "source download finished (${url}, ${count} entries)"
+        if [ "${url}" = "file:///${shalla_file}" ]
+        then
+            rm -f "${shalla_file}" >/dev/null 2>&1
+        fi
+        unset tmp_var
     elif [ $((rc)) -eq 0 ] && [ -z "${tmp_var}" ]
     then
         f_log "empty source download finished (${url})"
@@ -163,14 +153,20 @@ do
     fi
 done
 
-# create empty destination file
+# remove whitelist domains, sort domains and make them unique
+# and finally rewrite ad/abuse domain information to dnsmasq file
 #
 > "${adb_dnsfile}"
-
-# rewrite ad/abuse domain information to dns file,
-# remove duplicates and whitelist entries
-#
-grep -vxf "${adb_whitelist}" < "${adb_tmpfile}" | eval "${adb_dnsformat}" | sort -u 2>/dev/null >> "${adb_dnsfile}"
+grep -vxf "${adb_whitelist}" < "${adb_tmpfile}" 2>/dev/null | sort -u 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null >> "${adb_dnsfile}" 2>/dev/null
+rc=${?}
+if [ $((rc)) -eq 0 ]
+then
+    unset adb_tmpfile
+    f_log "domain merging finished"
+else
+    f_log "domain merging failed" "${rc}"
+    f_restore
+fi
 
 # write dns file footer
 #
