@@ -69,7 +69,7 @@ setup_config() {
 	test $split_dns = "1" && enable_split_dns=""
 	test $compression = "1" && enable_compression=""
 
-	test $split_dns = "1" && test -z $default_domain && default_domain=$(uci get dhcp.@dnsmasq[0].domain)
+	test -z $default_domain && default_domain=$(uci get dhcp.@dnsmasq[0].domain)
 	test -n $default_domain && enable_default_domain=""
 	test -z $ip6addr && enable_ipv6="#"
 
