@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=0.20.3
+PKG_VERSION:=0.22.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dirk@brenken.org>
@@ -23,9 +23,10 @@ define Package/$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/description
-powerful adblock script to block ad/abuse domains
-When the dns server on your router receives dns requests, we will sort out queries that ask for the [A] resource records of ad servers
-and return the local ip address of your router and the internal web server delivers a transparent pixel instead.
+Powerful adblock script to block ad/abuse domains
+When the dns server on your router receives dns requests, we will sort out queries that ask for the [A]
+resource records of ad servers and return the local ip address of your router and the internal web server
+delivers a transparent pixel instead.
 The script supports the following domain blacklist sites:
   http://pgl.yoyo.org/adservers
   http://malwaredomains.com
@@ -36,6 +37,8 @@ The script supports the following domain blacklist sites:
   http://www.shallalist.de
   http://www.spam404.com
   http://winhelp2002.mvps.org
+
+Please read README.md in /etc/adblock for further information.
 
 endef
 

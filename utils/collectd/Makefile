@@ -60,7 +60,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	notify_desktop \
 	notify_email \
 	numa \
-	nut \
 	openldap \
 	openvz \
 	oracle \
@@ -126,6 +125,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	network \
 	nginx \
 	ntpd \
+	nut \
 	olsrd \
 	onewire \
 	openvpn \
@@ -320,7 +320,7 @@ $(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-ne
 $(eval $(call BuildPlugin,network,network input/output,network))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
 $(eval $(call BuildPlugin,ntpd,NTP daemon status input,ntpd,))
-#$(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut))
+$(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut))
 $(eval $(call BuildPlugin,olsrd,OLSRd status input,olsrd,))
 $(eval $(call BuildPlugin,onewire,onewire sensor input,onewire,+PACKAGE_collectd-mod-onewire:libow-capi @BROKEN))
 $(eval $(call BuildPlugin,openvpn,OpenVPN traffic/compression input,openvpn,))
