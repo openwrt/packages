@@ -138,13 +138,13 @@ f_envparse()
             done
         elif [ "${config}" = "wancheck" ]
         then
-           unset adb_wandev
+           unset adb_wandev 2>/dev/null
         elif [ "${config}" = "ntpcheck" ]
         then
-           unset adb_ntpsrv
+           unset adb_ntpsrv 2>/dev/null
         elif [ "${config}" = "shalla" ]
         then
-           unset adb_cat_shalla
+           unset adb_cat_shalla 2>/dev/null
         fi
     }
 
@@ -157,7 +157,7 @@ f_envparse()
     # set temp variables and counter
     #
     adb_tmpfile="$(mktemp -tu 2>/dev/null)"
-    adb_tmpdir="$(mktemp -d 2>/dev/null)"
+    adb_tmpdir="$(mktemp -p /tmp -d 2>/dev/null)"
 
     # set adblock source ruleset definitions
     #
@@ -173,14 +173,6 @@ f_envparse()
     #
     adb_dnsfile="/tmp/dnsmasq.d/adlist.conf"
     adb_dnsformat="sed 's/^/address=\//;s/$/\/'${adb_ip}'/'"
-
-    # remove unused environment variables
-    #
-    env_list="$(set | grep -o "CONFIG_[A-Za-z_]*")"
-    for var in ${env_list}
-    do
-        unset "${var}" 2>/dev/null
-    done
 }
 
 #############################################
@@ -294,11 +286,11 @@ f_envcheck()
     check="$(printf "${pkg_list}" | grep "^ca-certificates -")"
     if [ -z "${check}" ]
     then
-        curl_parm="--insecure"
-        wget_parm="--no-check-certificate"
+        curl_parm="-q --insecure"
+        wget_parm="--no-config --no-check-certificate"
     else
-        unset curl_parm
-        unset wget_parm
+        curl_parm="-q"
+        wget_parm="--no-config"
     fi
 
     # check total and swap memory
@@ -424,6 +416,16 @@ f_envcheck()
             f_remove
         fi
     fi
+
+    # remove no longer used environment variables
+    #
+    env_list="$(set | grep -o "CONFIG_[A-Za-z0-9_]*")"
+    for var in ${env_list}
+    do
+        unset "${var}" 2>/dev/null
+    done
+    unset env_list 2>/dev/null
+    unset pkg_list 2>/dev/null
 }
 
 ################################################
@@ -495,10 +497,10 @@ f_deltemp()
        rm -f "${adb_tmpfile}" >/dev/null 2>&1
     fi
     if [ -d "${adb_tmpdir}" ]
-        then
+    then
        rm -rf "${adb_tmpdir}" >/dev/null 2>&1
     fi
-    f_log "domain adblock processing finished (${adb_version})"
+    f_log "domain adblock processing finished (${adb_version}, ${openwrt_version})"
     exit ${rc}
 }
 
