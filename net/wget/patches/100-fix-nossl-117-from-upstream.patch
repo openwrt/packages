@@ -1,0 +1,132 @@
+From 1cb3af1e5b392ac2fae6d9ed8b5d7be399d9f37e Mon Sep 17 00:00:00 2001
+From: Ygal Blum <address@hidden>
+Date: Tue, 24 Nov 2015 11:24:54 +0200
+Subject: [PATCH] Fix compilation when without-ssl is selected
+
+---
+ src/ftp.c   |  2 ++
+ src/main.c  | 12 ++++++++++--
+ src/recur.c |  6 +++++-
+ src/retr.c  | 18 +++++++++++++++---
+ src/url.c   |  6 +++++-
+ 5 files changed, 37 insertions(+), 7 deletions(-)
+
+diff --git a/src/ftp.c b/src/ftp.c
+index 80420ef..5394b71 100644
+--- a/src/ftp.c
++++ b/src/ftp.c
+@@ -393,7 +393,9 @@ getftp (struct url *u, wgint passed_expected_bytes, wgint *qtyread,
+   if (!(cmd & DO_LOGIN))
+     {
+       csock = con->csock;
++#ifdef HAVE_SSL
+       using_data_security = con->st & DATA_CHANNEL_SECURITY;
++#endif
+     }
+   else                          /* cmd & DO_LOGIN */
+     {
+diff --git a/src/main.c b/src/main.c
+index 61a157a..4641008 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -1842,13 +1842,21 @@ only if outputting to a regular file.\n"));
+       else
+         {
+           if ((opt.recursive || opt.page_requisites)
+-              && ((url_scheme (*t) != SCHEME_FTP && url_scheme (*t) != SCHEME_FTPS)
++              && ((url_scheme (*t) != SCHEME_FTP
++#ifdef HAVE_SSL
++              && url_scheme (*t) != SCHEME_FTPS
++#endif
++              )
+                   || url_uses_proxy (url_parsed)))
+             {
+               int old_follow_ftp = opt.follow_ftp;
+ 
+               /* Turn opt.follow_ftp on in case of recursive FTP retrieval */
+-              if (url_scheme (*t) == SCHEME_FTP || url_scheme (*t) == SCHEME_FTPS)
++              if (url_scheme (*t) == SCHEME_FTP
++#ifdef HAVE_SSL
++                  || url_scheme (*t) == SCHEME_FTPS
++#endif
++                  )
+                 opt.follow_ftp = 1;
+ 
+               retrieve_tree (url_parsed, NULL);
+diff --git a/src/recur.c b/src/recur.c
+index 25cdbb7..b212ec6 100644
+--- a/src/recur.c
++++ b/src/recur.c
+@@ -610,7 +610,11 @@ download_child (const struct urlpos *upos, struct url *parent, int depth,
+   u_scheme_like_http = schemes_are_similar_p (u->scheme, SCHEME_HTTP);
+ 
+   /* 1. Schemes other than HTTP are normally not recursed into. */
+-  if (!u_scheme_like_http && !((u->scheme == SCHEME_FTP || u->scheme == SCHEME_FTPS) && opt.follow_ftp))
++  if (!u_scheme_like_http && !((u->scheme == SCHEME_FTP
++#ifdef HAVE_SSL
++      || u->scheme == SCHEME_FTPS
++#endif
++      ) && opt.follow_ftp))
+     {
+       DEBUGP (("Not following non-HTTP schemes.\n"));
+       reason = WG_RR_NONHTTP;
+diff --git a/src/retr.c b/src/retr.c
+index 318b09c..a6a9bd7 100644
+--- a/src/retr.c
++++ b/src/retr.c
+@@ -837,7 +837,11 @@ retrieve_url (struct url * orig_parsed, const char *origurl, char **file,
+          FTP.  In these cases we must decide whether the text is HTML
+          according to the suffix.  The HTML suffixes are `.html',
+          `.htm' and a few others, case-insensitive.  */
+-      if (redirection_count && local_file && (u->scheme == SCHEME_FTP || u->scheme == SCHEME_FTPS))
++      if (redirection_count && local_file && (u->scheme == SCHEME_FTP
++#ifdef HAVE_SSL
++          || u->scheme == SCHEME_FTPS
++#endif
++          ))
+         {
+           if (has_html_suffix_p (local_file))
+             *dt |= TEXTHTML;
+@@ -1099,12 +1103,20 @@ retrieve_from_file (const char *file, bool html, int *count)
+ 
+       proxy = getproxy (cur_url->url);
+       if ((opt.recursive || opt.page_requisites)
+-          && ((cur_url->url->scheme != SCHEME_FTP && cur_url->url->scheme != SCHEME_FTPS) || proxy))
++          && ((cur_url->url->scheme != SCHEME_FTP
++#ifdef HAVE_SSL
++          && cur_url->url->scheme != SCHEME_FTPS
++#endif
++          ) || proxy))
+         {
+           int old_follow_ftp = opt.follow_ftp;
+ 
+           /* Turn opt.follow_ftp on in case of recursive FTP retrieval */
+-          if (cur_url->url->scheme == SCHEME_FTP || cur_url->url->scheme == SCHEME_FTPS)
++          if (cur_url->url->scheme == SCHEME_FTP
++#ifdef HAVE_SSL
++              || cur_url->url->scheme == SCHEME_FTPS
++#endif
++              )
+             opt.follow_ftp = 1;
+ 
+           status = retrieve_tree (parsed_url ? parsed_url : cur_url->url,
+diff --git a/src/url.c b/src/url.c
+index 56079cd..c62867f 100644
+--- a/src/url.c
++++ b/src/url.c
+@@ -1787,7 +1787,11 @@ path_simplify (enum url_scheme scheme, char *path)
+               for (--t; t > beg && t[-1] != '/'; t--)
+                 ;
+             }
+-          else if (scheme == SCHEME_FTP || scheme == SCHEME_FTPS)
++          else if (scheme == SCHEME_FTP
++#ifdef HAVE_SSL
++              || scheme == SCHEME_FTPS
++#endif
++              )
+             {
+               /* If we're at the beginning, copy the "../" literally
+                  and move the beginning so a later ".." doesn't remove
+-- 
+1.9.1
+
