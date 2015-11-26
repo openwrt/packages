@@ -34,7 +34,7 @@ endef
 
 define Package/znc
   $(Package/znc/default)
-  DEPENDS:=+libopenssl +libpthread +libstdcpp @GCC_VERSION_4_8||GCC_VERSION_4_9
+  DEPENDS:=+libopenssl +libpthread +libstdcpp
   MENU:=1
 endef
 
