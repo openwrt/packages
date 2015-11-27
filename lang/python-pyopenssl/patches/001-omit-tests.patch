@@ -1,0 +1,27 @@
+diff --git a/setup.py b/setup.py
+index c376f87..6444fac 100755
+--- a/setup.py
++++ b/setup.py
+@@ -22,14 +22,7 @@ setup(name='pyOpenSSL', version=__version__,
+                      'OpenSSL.rand',
+                      'OpenSSL.crypto',
+                      'OpenSSL.SSL',
+-                     'OpenSSL.version',
+-                     'OpenSSL.test.__init__',
+-                     'OpenSSL.test.util',
+-                     'OpenSSL.test.test_crypto',
+-                     'OpenSSL.test.test_rand',
+-                     'OpenSSL.test.test_ssl',
+-                     'OpenSSL.test.test_tsafe',
+-                     'OpenSSL.test.test_util',],
++                     'OpenSSL.version',],
+       description = 'Python wrapper module around the OpenSSL library',
+       author = 'Jean-Paul Calderone',
+       author_email = 'exarkun@twistedmatrix.com',
+@@ -74,5 +67,4 @@ High-level wrapper around a subset of the OpenSSL library, includes
+         'Topic :: Security :: Cryptography',
+         'Topic :: Software Development :: Libraries :: Python Modules',
+         'Topic :: System :: Networking',
+-        ],
+-      test_suite="OpenSSL")
++        ])
