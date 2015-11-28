@@ -191,8 +191,8 @@ $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem r
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
 $(eval $(call DefineBoostLibrary,program_options,,))
-$(eval $(call DefineBoostLibrary,python,,+python))
-$(eval $(call DefineBoostLibrary,python3,,+python3))
+$(eval $(call DefineBoostLibrary,python,,+CONFIG_boost_python:python))
+$(eval $(call DefineBoostLibrary,python3,,+CONFIG_boost_python3:python3))
 $(eval $(call DefineBoostLibrary,random,system,))
 $(eval $(call DefineBoostLibrary,regex,,))
 $(eval $(call DefineBoostLibrary,serialization,,))
