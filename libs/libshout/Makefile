@@ -9,8 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libshout
 PKG_VERSION:=2.3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.us.xiph.org/releases/libshout/
 PKG_MD5SUM:=11765b2592e7ea623ccd93d3f8df172c
@@ -24,12 +25,25 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libshout
+define Package/libshout/default
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=Library which can be used to write a source client like ices
+  TITLE:=Shoutcast client library
   URL:=http://www.icecast.org/download.php
-  DEPENDS:= +libspeex +libtheora +libvorbis +libvorbisidec +libpthread
+  DEPENDS:= +libvorbis +libvorbisidec +libpthread
+endef
+
+define Package/libshout
+  $(call Package/libshout/default)
+  TITLE+= (no speex & theora)
+  VARIANT:=nospeex
+endef
+
+define Package/libshout-full
+  $(call Package/libshout/default)
+  TITLE+= (all codecs)
+  DEPENDS+= +libspeex +libtheora
+  VARIANT:=full
 endef
 
 define Package/libshout/description
@@ -40,9 +54,15 @@ define Package/libshout/description
  details.
 endef
 
+Package/libshout-full/description=Package/libshout/description
+
 CONFIGURE_ARGS += \
 	--enable-shared \
-	--enable-static \
+	--enable-static
+
+ifeq ($(BUILD_VARIANT),full)
+  CONFIGURE_ARGS += --with-theora=no --with-speex=no
+endif
 
 CONFIGURE_VARS += \
 	VORBIS_CFLAGS="-I$(STAGING_DIR)/usr/include/tremor/" \
@@ -64,5 +84,7 @@ define Package/libshout/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libshout.so.* $(1)/usr/lib/
 endef
+Package/libshout-full/install=Package/libshout/install
 
 $(eval $(call BuildPackage,libshout))
+$(eval $(call BuildPackage,libshout-full))

@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/target.mk
 
 PKG_NAME:=boost
 PKG_VERSION:=1_59_0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
@@ -111,18 +111,29 @@ define Package/boost/config
     menu "Select Boost libraries"
       depends on PACKAGE_boost
 		comment "Libraries"
-	    config boost-libs-all
-	    	bool "Include all Boost libraries"
+
+		config boost-libs-all
+		bool "Include all Boost libraries."
 	    	select PACKAGE_boost-libs	    	
 
 		config boost-test-pkg
-	    	bool "Boost test package"
+		bool "Boost test package."
 	    	select PACKAGE_boost-test
 	    
-    	$(foreach lib,$(BOOST_LIBS), \
-        	config PACKAGE_boost-$(lib)
-        	prompt "Boost $(lib) library"
-   		)
+		config boost-coroutine2
+		bool "Boost couroutine2 support."
+		select PACKAGE_boost-coroutine
+		default n
+
+		config boost-graph-parallel
+		bool "Boost parallel graph support."
+		select PACKAGE_boost-graph
+		default n
+
+		$(foreach lib,$(BOOST_LIBS), \
+		  config PACKAGE_boost-$(lib)
+		  prompt "Boost $(lib) library."
+		)
   	endmenu
 
 endef
@@ -163,6 +174,7 @@ define DefineBoostLibrary
   endef
 endef
 
+
 $(eval $(call DefineBoostLibrary,atomic,system,))
 $(eval $(call DefineBoostLibrary,chrono,system,))
 $(eval $(call DefineBoostLibrary,container,,))
@@ -179,9 +191,9 @@ $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem r
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
 $(eval $(call DefineBoostLibrary,program_options,,))
+$(eval $(call DefineBoostLibrary,python,,+python))
+$(eval $(call DefineBoostLibrary,python3,,+python3))
 $(eval $(call DefineBoostLibrary,random,system,))
-$(eval $(call DefineBoostLibrary,python,,+PACKAGE_boost-python:python))
-$(eval $(call DefineBoostLibrary,python3,,+PACKAGE_boost-python3:python3))
 $(eval $(call DefineBoostLibrary,regex,,))
 $(eval $(call DefineBoostLibrary,serialization,,))
 $(eval $(call DefineBoostLibrary,signals,,))
@@ -189,6 +201,7 @@ $(eval $(call DefineBoostLibrary,system,,+@boost-multi-threading))
 $(eval $(call DefineBoostLibrary,thread,system chrono atomic,))
 $(eval $(call DefineBoostLibrary,timer,chrono))
 $(eval $(call DefineBoostLibrary,wave,date_time thread filesystem,))
+
 
 define Host/Compile
 	# bjam does not provide a configure-script nor a Makefile
@@ -198,7 +211,10 @@ endef
 CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
 TARGET_LDFLAGS += -pthread -lrt
 
-TARGET_CFLAGS += $(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC
+TARGET_CFLAGS += \
+	$(if $(CONFIG_PACKAGE_boost-python), -I$(STAGING_DIR)/usr/include/python2.7/) \
+	$(if $(CONFIG_PACKAGE_boost-python3), -I$(STAGING_DIR)/usr/include/python3.5/) \
+	$(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC
 
 ifneq ($(findstring mips,$(ARCH)),)
     BOOST_ABI = o32
@@ -223,7 +239,7 @@ define Build/Compile
 				tools/build/src/user-config.jam; \
 		) \
 		$(if $(CONFIG_PACKAGE_boost-python), \
-			echo "using python : 2.7 : $(STAGING_DIR_ROOT)/usr/bin/python2 :	$(STAGING_DIR)/usr/include/python2.7/ ;" >> \
+			echo "using python : 2.7 : $(STAGING_DIR_ROOT)/usr/bin/python :	$(STAGING_DIR)/usr/include/python2.7/ ;" >> \
 				tools/build/src/user-config.jam; \
 		) \
 		bjam \
@@ -236,9 +252,13 @@ define Build/Compile
 			$(if $(CONFIG_boost-multi-threading),threading=multi,threading=single) \
 			$(CONFIGURE_ARGS) \
 			--without-mpi \
+			$(if $(CONFIG_boost-coroutine2),,--without-coroutine2) \
+			$(if $(CONFIG_boost-graph-parallel),,--without-graph_parallel) \
 			$(if $(CONFIG_PACKAGE_boost-test),,--without-test) \
 			$(foreach lib,$(BOOST_LIBS), \
-				$(if $(CONFIG_PACKAGE_boost-$(lib)),,--without-$(lib)) \
+				$(if $(findstring python,$(lib)), \
+				  $(if $(or $(CONFIG_PACKAGE_boost-python),$(CONFIG_PACKAGE_boost-python3)),,--without-python), \
+				  $(if $(CONFIG_PACKAGE_boost-$(lib)),,--without-$(lib))) \
 			) \
 			$(if $(CONFIG_PACKAGE_boost-locale),boost.locale.iconv=on -sICONV_PATH=$(ICONV_PREFIX) boost.locale.posix=$(if $(USE_MUSL),on,off), \
 				boost.locale.iconv=off) \
@@ -303,6 +323,5 @@ $(eval $(call HostBuild))
 
 $(foreach lib,$(BOOST_LIBS),$(eval $(call BuildBoostLibrary,$(lib))))
 $(eval $(call BuildPackage,boost-test))
-
 $(eval $(call BuildPackage,boost-libs))
 $(eval $(call BuildPackage,boost))

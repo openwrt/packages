@@ -1,0 +1,4 @@
+# main uhttpd instance listens only to internal LAN
+#
+    config uhttpd 'main'
+            list listen_http '192.168.1.1:80'

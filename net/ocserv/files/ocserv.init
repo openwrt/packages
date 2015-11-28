@@ -18,6 +18,7 @@ setup_config() {
 	config_get ip6addr      $1 ip6addr ""
 	config_get proxy_arp    $1 proxy_arp "0"
 	config_get ping_leases  $1 ping_leases "0"
+	config_get split_dns    $1 split_dns "0"
 	config_get default_domain  $1 default_domain ""
 
 	# Enable proxy arp, and make sure that ping leases is set to true in that case,
@@ -57,6 +58,7 @@ setup_config() {
 	enable_default_domain="#"
 	enable_udp="#"
 	enable_compression="#"
+	enable_split_dns="#"
 	test $predictable_ips = "0" && predictable_ips="false"
 	test $predictable_ips = "1" && predictable_ips="true"
 	test $cisco_compat = "0" && cisco_compat="false"
@@ -64,8 +66,11 @@ setup_config() {
 	test $ping_leases = "0" && ping_leases="false"
 	test $ping_leases = "1" && ping_leases="true"
 	test $udp = "1" && enable_udp=""
+	test $split_dns = "1" && enable_split_dns=""
 	test $compression = "1" && enable_compression=""
-	test -z $default_domain && enable_default_domain=""
+
+	test -z $default_domain && default_domain=$(uci get dhcp.@dnsmasq[0].domain)
+	test -n $default_domain && enable_default_domain=""
 	test -z $ip6addr && enable_ipv6="#"
 
 	test $auth = "plain" && authsuffix="\[passwd=/var/etc/ocpasswd\]"
@@ -84,6 +89,7 @@ setup_config() {
 	    -e "s/|PREDICTABLE_IPS|/$predictable_ips/g" \
 	    -e "s/|DEFAULT_DOMAIN|/$default_domain/g" \
 	    -e "s/|ENABLE_DEFAULT_DOMAIN|/$enable_default_domain/g" \
+	    -e "s/|ENABLE_SPLIT_DNS|/$enable_split_dns/g" \
 	    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
 	    -e "s/|PING_LEASES|/$ping_leases/g" \
 	    -e "s/|UDP|/$enable_udp/g" \

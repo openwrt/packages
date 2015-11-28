@@ -17,7 +17,7 @@ PKG_LICENSE:=LGPLv2.1
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://download.gnome.org/sources/grilo-plugins/0.2/
+PKG_SOURCE_URL:=@GNOME/grilo-plugins/0.2/
 PKG_MD5SUM:=62ecaad877b485a950259eef1ef38c18
 
 PKG_BUILD_DEPENDS:=glib2 grilo

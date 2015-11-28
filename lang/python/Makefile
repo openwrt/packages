@@ -29,7 +29,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=python/host
-HOST_BUILD_DEPENDS:=bzip2/host
+HOST_BUILD_DEPENDS:=bzip2/host expat/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -138,7 +138,10 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
 	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
-	$(INSTALL_DATA) ./files/python-package.mk $(STAGING_DIR)/mk/
+	$(INSTALL_DATA) \
+		./files/python-package.mk \
+		./files/python-host.mk \
+		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/

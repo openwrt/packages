@@ -271,7 +271,7 @@ ipv4-netmask = |NETMASK|
 
 # The domains over which the provided DNS should be used. Use
 # multiple lines for multiple domains.
-#split-dns = example.com
+|ENABLE_SPLIT_DNS|split-dns = |DEFAULT_DOMAIN|
 
 # Prior to leasing any IP from the pool ping it to verify that
 # it is not in use by another (unrelated to this server) host.

@@ -1,38 +1,64 @@
-# adblock configuration
+# adblock configuration sample
+#
+
+# generic options (always required)
 #
 config adblock "global"
+	# ip address of the local adblock interface/uhttpd instance,
+	# needs to be a different subnet from the normal LAN
 	option adb_ip "192.168.2.1"
-	option adb_dev "eth0"
-	option adb_if "adblock"
+	
+	# name of an "always accessible" domain,
+	# this domain will be used for the final nslookup check
 	option adb_domain "heise.de"
-	option adb_minspace "100000"
+	
+	# full path to static domain blacklist file (one domain per line)
 	option adb_blacklist "/etc/adblock/adblock.blacklist"
+
+	# full path to static domain whitelist file (one domain per line)
 	option adb_whitelist "/etc/adblock/adblock.whitelist"
 
+# list of wan devices that are allowed for adblock updates (check /sys/class/net/<dev>),
+# if no one found the last adlist backup will be restored,
+# useful only for (mobile) multiwan setups
+# disabled by default
 config service "wancheck"
 	option enabled "0"
 	list adb_wanlist "wan"
 
+# check that ntp has adjusted the system time on this device,
+# will be used for logfile writing and logfile housekeeping
+# disabled by default
 config service "ntpcheck"
 	option enabled "0"
-	list adb_ntplist "0.pool.ntp.org"
-	list adb_ntplist "1.pool.ntp.org"
-	list adb_ntplist "2.pool.ntp.org"
-	list adb_ntplist "3.pool.ntp.org"
 
+# full path to backup file for adlist backups
+# disabled by default
 config service "backup"
 	option enabled "0"
 	option adb_backupfile "/tmp/adlist.backup"
 
-config service "errorlog"
+# full path to debug logfile
+# by default adblock logs to syslog and stdout only
+# disabled by default
+config service "debuglog"
 	option enabled "0"
-	option adb_logfile "/tmp/error.log"
+	option adb_logfile "/tmp/adb_debug.log"
 
+# full path to domain query logfile
+# a background task will trace every dns request to file, to easily identify free and already blocked domains,
+# for this to work, you've to enable the dnsmasq option "logqueries" too.
+# the "queryhistory" option deletes query logfiles older than n days (req. busybox find with mtime support)
+# disabled by default
 config service "querylog"
 	option enabled "0"
-	option adb_queryfile "/tmp/query.log"
+	option adb_queryfile "/tmp/adb_query.log"
 	option adb_queryhistory "1"
 
+# different adblock list sources
+# please do not change the urls listed below, 
+# enable/disable sources as needed
+# for shallalist you can also enable/disable different ad categories
 config source "yoyo"
 	option enabled "1"
 	option adb_src_yoyo "http://pgl.yoyo.org/adservers/serverlist.php?hostformat=one-line&showintro=0&mimetype=plaintext&ruleset=rset_yoyo"
