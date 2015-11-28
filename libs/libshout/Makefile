@@ -60,8 +60,8 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static
 
-ifeq ($(BUILD_VARIANT),full)
-  CONFIGURE_ARGS += --with-theora=no --with-speex=no
+ifeq ($(BUILD_VARIANT),nospeex)
+  CONFIGURE_ARGS += --disable-theora --disable-speex
 endif
 
 CONFIGURE_VARS += \
@@ -84,7 +84,7 @@ define Package/libshout/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libshout.so.* $(1)/usr/lib/
 endef
-Package/libshout-full/install=Package/libshout/install
+Package/libshout-full/install=$(Package/libshout/install)
 
 $(eval $(call BuildPackage,libshout))
 $(eval $(call BuildPackage,libshout-full))
