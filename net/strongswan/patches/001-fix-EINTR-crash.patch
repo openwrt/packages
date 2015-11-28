@@ -1,0 +1,216 @@
+From ea651877c0bb6e129f52eb592cea3b10b2e3347b Mon Sep 17 00:00:00 2001
+From: Tobias Brunner <tobias@strongswan.org>
+Date: Thu, 19 Nov 2015 11:21:48 +0100
+Subject: [PATCH] sigwaitinfo() may fail with EINTR if an unblocked signal not
+ in the set is received
+
+ #1213.
+---
+ src/charon-cmd/charon-cmd.c               |  9 ++++-----
+ src/charon-nm/charon-nm.c                 |  9 ++++-----
+ src/charon-systemd/charon-systemd.c       |  9 ++++-----
+ src/charon-tkm/src/charon-tkm.c           |  9 ++++-----
+ src/charon/charon.c                       | 11 +++++------
+ src/conftest/conftest.c                   |  2 +-
+ src/frontends/osx/charon-xpc/charon-xpc.c |  7 ++++---
+ src/libfast/fast_dispatcher.c             |  6 +++++-
+ src/libstrongswan/utils/utils.c           |  5 ++++-
+ 9 files changed, 35 insertions(+), 32 deletions(-)
+
+diff --git a/src/charon-cmd/charon-cmd.c b/src/charon-cmd/charon-cmd.c
+index b8f943f..d3b31cc 100644
+--- a/src/charon-cmd/charon-cmd.c
++++ b/src/charon-cmd/charon-cmd.c
+@@ -115,6 +115,10 @@ static int run()
+		sig = sigwaitinfo(&set, NULL);
+		if (sig == -1)
+		{
++			if (errno == EINTR)
++			{	/* ignore signals we didn't wait for */
++				continue;
++			}
+			DBG1(DBG_DMN, "waiting for signal failed: %s", strerror(errno));
+			return 1;
+		}
+@@ -152,11 +156,6 @@ static int run()
+				charon->bus->alert(charon->bus, ALERT_SHUTDOWN_SIGNAL, sig);
+				return 1;
+			}
+-			default:
+-			{
+-				DBG1(DBG_DMN, "unknown signal %d received. Ignored", sig);
+-				break;
+-			}
+		}
+	}
+ }
+diff --git a/src/charon-nm/charon-nm.c b/src/charon-nm/charon-nm.c
+index 1773e7c..fb090e5 100644
+--- a/src/charon-nm/charon-nm.c
++++ b/src/charon-nm/charon-nm.c
+@@ -85,6 +85,10 @@ static void run()
+		sig = sigwaitinfo(&set, NULL);
+		if (sig == -1)
+		{
++			if (errno == EINTR)
++			{	/* ignore signals we didn't wait for */
++				continue;
++			}
+			DBG1(DBG_DMN, "waiting for signal failed: %s", strerror(errno));
+			return;
+		}
+@@ -102,11 +106,6 @@ static void run()
+				charon->bus->alert(charon->bus, ALERT_SHUTDOWN_SIGNAL, sig);
+				return;
+			}
+-			default:
+-			{
+-				DBG1(DBG_DMN, "unknown signal %d received. Ignored", sig);
+-				break;
+-			}
+		}
+	}
+ }
+diff --git a/src/charon-systemd/charon-systemd.c b/src/charon-systemd/charon-systemd.c
+index f302d45..4286cde 100644
+--- a/src/charon-systemd/charon-systemd.c
++++ b/src/charon-systemd/charon-systemd.c
+@@ -254,6 +254,10 @@ static int run()
+		sig = sigwaitinfo(&set, NULL);
+		if (sig == -1)
+		{
++			if (errno == EINTR)
++			{	/* ignore signals we didn't wait for */
++				continue;
++			}
+			DBG1(DBG_DMN, "waiting for signal failed: %s", strerror(errno));
+			return SS_RC_INITIALIZATION_FAILED;
+		}
+@@ -265,11 +269,6 @@ static int run()
+				charon->bus->alert(charon->bus, ALERT_SHUTDOWN_SIGNAL, sig);
+				return 0;
+			}
+-			default:
+-			{
+-				DBG1(DBG_DMN, "unknown signal %d received. Ignored", sig);
+-				break;
+-			}
+		}
+	}
+ }
+diff --git a/src/charon-tkm/src/charon-tkm.c b/src/charon-tkm/src/charon-tkm.c
+index 52d82f3..3923c8a 100644
+--- a/src/charon-tkm/src/charon-tkm.c
++++ b/src/charon-tkm/src/charon-tkm.c
+@@ -104,6 +104,10 @@ static void run()
+		sig = sigwaitinfo(&set, NULL);
+		if (sig == -1)
+		{
++			if (errno == EINTR)
++			{	/* ignore signals we didn't wait for */
++				continue;
++			}
+			DBG1(DBG_DMN, "waiting for signal failed: %s", strerror(errno));
+			return;
+		}
+@@ -121,11 +125,6 @@ static void run()
+				charon->bus->alert(charon->bus, ALERT_SHUTDOWN_SIGNAL, sig);
+				return;
+			}
+-			default:
+-			{
+-				DBG1(DBG_DMN, "unknown signal %d received. Ignored", sig);
+-				break;
+-			}
+		}
+	}
+ }
+diff --git a/src/charon/charon.c b/src/charon/charon.c
+index f03b6e1..4c2a9a4 100644
+--- a/src/charon/charon.c
++++ b/src/charon/charon.c
+@@ -98,7 +98,7 @@ static void run()
+ {
+	sigset_t set;
+
+-	/* handle SIGINT, SIGHUP ans SIGTERM in this handler */
++	/* handle SIGINT, SIGHUP and SIGTERM in this handler */
+	sigemptyset(&set);
+	sigaddset(&set, SIGINT);
+	sigaddset(&set, SIGHUP);
+@@ -112,6 +112,10 @@ static void run()
+		sig = sigwaitinfo(&set, NULL);
+		if (sig == -1)
+		{
++			if (errno == EINTR)
++			{	/* ignore signals we didn't wait for */
++				continue;
++			}
+			DBG1(DBG_DMN, "waiting for signal failed: %s", strerror(errno));
+			return;
+		}
+@@ -144,11 +148,6 @@ static void run()
+				charon->bus->alert(charon->bus, ALERT_SHUTDOWN_SIGNAL, sig);
+				return;
+			}
+-			default:
+-			{
+-				DBG1(DBG_DMN, "unknown signal %d received. Ignored", sig);
+-				break;
+-			}
+		}
+	}
+ }
+diff --git a/src/conftest/conftest.c b/src/conftest/conftest.c
+index 9348b64..edfe0ca 100644
+--- a/src/conftest/conftest.c
++++ b/src/conftest/conftest.c
+@@ -565,7 +565,7 @@ int main(int argc, char *argv[])
+	sigaddset(&set, SIGTERM);
+	sigprocmask(SIG_BLOCK, &set, NULL);
+
+-	while ((sig = sigwaitinfo(&set, NULL)) != -1)
++	while ((sig = sigwaitinfo(&set, NULL)) != -1 || errno == EINTR)
+	{
+		switch (sig)
+		{
+diff --git a/src/libfast/fast_dispatcher.c b/src/libfast/fast_dispatcher.c
+index b4c6ce3..66a2ee5 100644
+--- a/src/libfast/fast_dispatcher.c
++++ b/src/libfast/fast_dispatcher.c
+@@ -21,6 +21,7 @@
+ #include <fcgiapp.h>
+ #include <signal.h>
+ #include <unistd.h>
++#include <errno.h>
+
+ #include <utils/debug.h>
+ #include <threading/thread.h>
+@@ -389,7 +390,10 @@ METHOD(fast_dispatcher_t, waitsignal, void,
+	sigaddset(&set, SIGTERM);
+	sigaddset(&set, SIGHUP);
+	sigprocmask(SIG_BLOCK, &set, NULL);
+-	sigwaitinfo(&set, NULL);
++	while (sigwaitinfo(&set, NULL) == -1 && errno == EINTR)
++	{
++		/* wait for signal */
++	}
+ }
+
+ METHOD(fast_dispatcher_t, destroy, void,
+diff --git a/src/libstrongswan/utils/utils.c b/src/libstrongswan/utils/utils.c
+index 4e86165..40cb43d 100644
+--- a/src/libstrongswan/utils/utils.c
++++ b/src/libstrongswan/utils/utils.c
+@@ -124,7 +124,10 @@ void wait_sigint()
+	sigaddset(&set, SIGTERM);
+
+	sigprocmask(SIG_BLOCK, &set, NULL);
+-	sigwaitinfo(&set, NULL);
++	while (sigwaitinfo(&set, NULL) == -1 && errno == EINTR)
++	{
++		/* wait for signal */
++	}
+ }
+
+ #ifndef HAVE_SIGWAITINFO
