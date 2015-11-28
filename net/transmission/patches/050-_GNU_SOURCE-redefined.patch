@@ -1,0 +1,24 @@
+--- a/libtransmission/utils.c
++++ b/libtransmission/utils.c
+@@ -8,7 +8,9 @@
+  */
+ 
+ #ifdef HAVE_MEMMEM
++ #ifndef _GNU_SOURCE
+  #define _GNU_SOURCE /* glibc's string.h needs this to pick up memmem */
++ #endif
+ #endif
+ 
+ #if defined (XCODE_BUILD)
+--- a/third-party/dht/dht.c
++++ b/third-party/dht/dht.c
+@@ -29,7 +29,9 @@ THE SOFTWARE.
+    improvements to the author. */
+ 
+ /* For memmem. */
++#ifndef _GNU_SOURCE
+ #define _GNU_SOURCE
++#endif
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
