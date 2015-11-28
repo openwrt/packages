@@ -17,10 +17,10 @@ config MC_EDITOR
 
 config MC_SUBSHELL
 	bool "Enable concurrent subshell"
-	default n
+	default y
 	help
            This option enables concurrent subshell support.
-           Disabled by default.
+           Enabled by default.
 
 config MC_LARGEFILE
 	bool "Enable largefile support"
