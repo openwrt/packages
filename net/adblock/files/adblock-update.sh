@@ -25,12 +25,13 @@
 
 # set script version
 #
-adb_version="0.22.0"
+adb_version="0.22.1"
 
-# get current pid and script directory
+# get current pid, script directory and openwrt version
 #
 pid=${$}
 adb_scriptdir="${0%/*}"
+openwrt_version="$(cat /etc/openwrt_version 2>/dev/null)"
 
 # source in adblock function library
 #
@@ -53,7 +54,7 @@ trap "f_log 'trap error' '600'; f_restore" 1 2 3 10 11 15
 
 # start logging
 #
-f_log "domain adblock processing started (${adb_version})"
+f_log "domain adblock processing started (${adb_version}, ${openwrt_version})"
 
 # load environment
 #
@@ -75,7 +76,7 @@ then
     #
     shalla_archive="${adb_tmpdir}/shallalist.tar.gz"
     shalla_file="${adb_tmpdir}/shallalist.txt"
-    curl "${curl_parm}" --max-time "${adb_maxtime}" "${adb_arc_shalla}" -o "${shalla_archive}" 2>/dev/null
+    curl ${curl_parm} --max-time "${adb_maxtime}" "${adb_arc_shalla}" --output "${shalla_archive}" 2>/dev/null
     rc=${?}
     if [ $((rc)) -eq 0 ]
     then
@@ -96,7 +97,7 @@ then
         then
             if [ -r "${adb_tmpdir}/BL/${category}/domains" ]
             then
-                cat "${adb_tmpdir}/BL/${category}/domains" >> "${shalla_file}" 2>/dev/null
+                cat "${adb_tmpdir}/BL/${category}/domains" 2>/dev/null >> "${shalla_file}"
             fi
         else
             f_log "shallalist archive extraction failed (${category})" "${rc}"
@@ -124,10 +125,10 @@ do
     check_url="$(printf "${url}" | sed -n '/^https:/p')"
     if [ -n "${check_url}" ]
     then
-        tmp_var="$(wget "${wget_parm}" --timeout="${adb_maxtime}" --tries=1 --output-document=- "${url}" 2>/dev/null)"
+        tmp_var="$(wget ${wget_parm} --timeout="${adb_maxtime}" --tries=1 --output-document=- "${url}" 2>/dev/null)"
         rc=${?}
     else
-        tmp_var="$(curl "${curl_parm}" --max-time "${adb_maxtime}" "${url}" 2>/dev/null)"
+        tmp_var="$(curl ${curl_parm} --max-time "${adb_maxtime}" "${url}" 2>/dev/null)"
         rc=${?}
     fi
 
@@ -143,7 +144,7 @@ do
         then
             rm -f "${shalla_file}" >/dev/null 2>&1
         fi
-        unset tmp_var
+        unset tmp_var 2>/dev/null
     elif [ $((rc)) -eq 0 ] && [ -z "${tmp_var}" ]
     then
         f_log "empty source download finished (${url})"
@@ -157,11 +158,11 @@ done
 # and finally rewrite ad/abuse domain information to dnsmasq file
 #
 > "${adb_dnsfile}"
-grep -vxf "${adb_whitelist}" < "${adb_tmpfile}" 2>/dev/null | sort -u 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null >> "${adb_dnsfile}" 2>/dev/null
+grep -vxf "${adb_whitelist}" < "${adb_tmpfile}" 2>/dev/null | sort -u 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null >> "${adb_dnsfile}"
 rc=${?}
 if [ $((rc)) -eq 0 ]
 then
-    unset adb_tmpfile
+    rm -f "${adb_tmpfile}" >/dev/null 2>&1
     f_log "domain merging finished"
 else
     f_log "domain merging failed" "${rc}"
