@@ -1,0 +1,11 @@
+--- a/image_utils.c
++++ b/image_utils.c
+@@ -137,7 +137,7 @@ init_source(j_decompress_ptr cinfo)
+ 	return;
+ }
+ 
+-static int
++static boolean
+ fill_input_buffer(j_decompress_ptr cinfo)
+ {
+ 	struct my_src_mgr *src = (void *)cinfo->src;
