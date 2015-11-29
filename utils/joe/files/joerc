@@ -246,7 +246,6 @@ mode,"spaces",rtn	% % No tabs %Zspaces%
 }
 
 :windows		Bindings common to all windows
-type		^@ TO ÿ
 abort		^C
 abort		^K Q
 abort		^K ^Q
@@ -613,12 +612,6 @@ defm2down	M2DOWN
 
 :query			Single-key query window
 :inherit windows
-
-:querya			Single-key query window for quoting
-type		^@ TO ÿ
-
-:querysr		Search & replace query window
-type		^@ TO ÿ
 
 :shell			Input to shell windows
 :inherit main
