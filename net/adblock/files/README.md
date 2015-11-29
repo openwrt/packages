@@ -12,22 +12,24 @@ and return the local ip address of your router and the internal web server deliv
 * support of the following domain blacklist sites (free for private usage, for commercial use please check their individual licenses):
     * [pgl.yoyo.org](http://pgl.yoyo.org/adservers), approx. 2.500 entries
     * [malwaredomains.com](http://malwaredomains.com), approx. 16.000 entries
-    * [zeustracker.abuse.ch](https://zeustracker.abuse.ch), currently down
+    * [zeustracker.abuse.ch](https://zeustracker.abuse.ch), approx. 420 entries
     * [feodotracker.abuse.ch](https://feodotracker.abuse.ch), approx. 10 entries
     * [palevotracker.abuse.ch](https://palevotracker.abuse.ch), approx. 10 entries
     * [dshield.org](http://dshield.org), approx. 4.500 entries
-    * [shallalist.de](http://www.shallalist.de) (tested with the categories "adv" "costtraps" "downloads" "spyware" "tracker" "warez"), approx. 37.000 entries
+    * [shallalist.de](http://www.shallalist.de) (categories "adv" "costtraps" "spyware" "tracker" "warez" enabled by default), approx. 32.000 entries
+    * a short description of all shallalist categories can be found [online](http://www.shallalist.de/categories.html)
     * [spam404.com](http://www.spam404.com), approx. 5.000 entries
     * [winhelp2002.mvps.org](http://winhelp2002.mvps.org), approx. 15.000 entries
 * blocklist parsing by fast & flexible regex rulesets
 * additional white- and blacklist support for manual overrides
 * separate dynamic adblock network interface
 * separate dynamic uhttpd instance as pixel server
-* optional: quality checks and a powerful backup/restore handling to ensure a reliable dnsmasq service
+* adblock quality checks after list update to ensure a reliable dnsmasq service
+* optional: powerful adblock list backup/restore handling
 * optional: adblock updates only on pre-defined wan interfaces (useful for (mobile) multiwan setups)
-* optional: domain query logging as a background service to easily identify free and already blocked domains
+* optional: domain query logging as a background service to easily identify free and already blocked domains (see example output below)
+* optional: status & error logging to separate file (req. ntp time sync)
 * optional: ntp time sync
-* optional: status & error logging (req. ntp time sync)
 
 ## Prerequisites
 * [openwrt](https://openwrt.org) (tested only with trunk > r47025), CC should also work
@@ -41,8 +43,9 @@ and return the local ip address of your router and the internal web server deliv
 
 ## Usage
 * select & install adblock package (*opkg install adblock*)
-* configure /etc/config/adblock to your needs, see additional comments in *adblock.conf.sample*
+* configure */etc/config/adblock* to your needs, see additional comments in *adblock.conf.sample*
 * at least configure the ip address of the local adblock interface/uhttpd instance, needs to be a different subnet from the normal LAN
+* optional: add additional domain white- or blacklist entries, one domain per line (wildcards & regex are not allowed!), both list are located in */etc/adblock*
 * by default openwrts main uhttpd instance is bind to all ports of your router. For a working adblock setup you have to bind uhttpd to the standard LAN port only, please change listen_http accordingly
 * start /usr/bin/adblock-update.sh and check console output or *logread -e "adblock"* for errors
 
@@ -59,25 +62,24 @@ and return the local ip address of your router and the internal web server deliv
 
   stdout excerpt for successful adblock run:  
     
-    root@pi2wrt:~# /usr/bin/adblock-update.sh  
-    adblock[17771] info : domain adblock processing started (0.21.0)  
-    adblock[17771] info : get wan/update interface (wlan1), after 0 loops  
-    adblock[17771] info : get ntp time sync (0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org), after 0 loops  
-    adblock[17771] info : shallalist archive download finished  
-    adblock[17771] info : shallalist archive extraction finished  
-    adblock[17771] info : shallalist (pre-)processing finished (adv costtraps downloads spyware tracker warez)  
-    adblock[17771] info : source download finished (http://pgl.yoyo.org/adservers/serverlist.php?hostformat=one-line&showintro=0&mimetype=plaintext, 2426 entries)  
-    adblock[17771] info : source download finished (http://mirror1.malwaredomains.com/files/justdomains, 15275 entries)  
-    adblock[17771] info : source download finished (https://zeustracker.abuse.ch/blocklist.php?download=domainblocklist, 3 entries)  
-    adblock[17771] info : source download finished (https://feodotracker.abuse.ch/blocklist/?download=domainblocklist, 0 entries)  
-    adblock[17771] info : source download finished (https://palevotracker.abuse.ch/blocklists.php?download=domainblocklist, 11 entries)  
-    adblock[17771] info : source download finished (http://www.dshield.org/feeds/suspiciousdomains_Low.txt, 4542 entries)  
-    adblock[17771] info : source download finished (http://spam404bl.com/spam404scamlist.txt, 5193 entries)  
-    adblock[17771] info : source download finished (http://winhelp2002.mvps.org/hosts.txt, 13852 entries)  
-    adblock[17771] info : source download finished (file:////tmp/tmp.emlDeH/shallalist.txt, 36961 entries)  
-    adblock[17771] info : source download finished (file:///etc/adblock/adblock.blacklist, 1 entries)  
-    adblock[17771] info : new adblock list with 73090 domains loaded, backup generated  
-    adblock[17771] info : domain adblock processing finished (0.21.0)  
+    adblock[11541] info : domain adblock processing started (0.22.2, r47665, 29.11.2015 14:58:11)  
+    adblock[11541] info : wan update check will be disabled  
+    adblock[11541] info : get ntp time sync (192.168.254.254), after 0 loops  
+    adblock[11541] info : shallalist (pre-)processing started ...  
+    adblock[11541] info : shallalist (pre-)processing finished (adv costtraps spyware tracker warez)  
+    adblock[11541] info : source download finished (http://pgl.yoyo.org/adservers/serverlist.php?hostformat=one-line&showintro=0&mimetype=plaintext, 2423 entries)  
+    adblock[11541] info : source download finished (http://mirror1.malwaredomains.com/files/justdomains, 16016 entries)  
+    adblock[11541] info : source download finished (https://zeustracker.abuse.ch/blocklist.php?download=domainblocklist, 419 entries)  
+    adblock[11541] info : source download finished (https://feodotracker.abuse.ch/blocklist/?download=domainblocklist, 0 entries)  
+    adblock[11541] info : source download finished (https://palevotracker.abuse.ch/blocklists.php?download=domainblocklist, 12 entries)  
+    adblock[11541] info : source download finished (http://www.dshield.org/feeds/suspiciousdomains_Low.txt, 4542 entries)  
+    adblock[11541] info : source download finished (http://spam404bl.com/spam404scamlist.txt, 5193 entries)  
+    adblock[11541] info : source download finished (http://winhelp2002.mvps.org/hosts.txt, 13635 entries)  
+    adblock[11541] info : source download finished (file:////tmp/tmp.CgbMmO/shallalist.txt, 32446 entries)  
+    adblock[11541] info : empty source download finished (file:///etc/adblock/adblock.blacklist)  
+    adblock[11541] info : domain merging finished  
+    adblock[11541] info : new adblock list with 69646 domains loaded, backup generated  
+    adblock[11541] info : domain adblock processing finished (0.22.2, r47665, 29.11.2015 14:59:23)  
     
 
   generated domain blocklist for dnsmasq:  
