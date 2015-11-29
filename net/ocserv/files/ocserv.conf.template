@@ -343,8 +343,11 @@ config-per-group = /etc/ocserv/config-per-group/
 # The following example is from linux systems. %{R} should be something
 # like 192.168.2.0/24
 
-route-add-cmd = "/sbin/route add -net %{R} dev %{D}"
-route-del-cmd = "/sbin/route del -net %{R} dev %{D}"
+#route-add-cmd = "/usr/sbin/ip route add %{R} dev %{D}"
+#route-del-cmd = "/usr/sbin/ip route delete %{R} dev %{D}"
+
+route-add-cmd = "/sbin/route add -net %{RI} dev %{D}"
+route-del-cmd = "/sbin/route del -net %{RI} dev %{D}"
 
 # This option allows to forward a proxy. The special strings '%{U}'
 # and '%{G}', if present will be replaced by the username and group name.
@@ -376,3 +379,5 @@ cisco-client-compat = |CISCO_COMPAT|
 # Option to allow sending arbitrary custom headers to the client after
 # authentication and prior to VPN tunnel establishment.
 #custom-header = "X-My-Header: hi there"
+
+expose-iroutes = true
