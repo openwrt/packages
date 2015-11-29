@@ -25,7 +25,7 @@
 
 # set script version
 #
-adb_version="0.22.1"
+adb_version="0.22.2"
 
 # get current pid, script directory and openwrt version
 #
@@ -54,7 +54,7 @@ trap "f_log 'trap error' '600'; f_restore" 1 2 3 10 11 15
 
 # start logging
 #
-f_log "domain adblock processing started (${adb_version}, ${openwrt_version})"
+f_log "domain adblock processing started (${adb_version}, ${openwrt_version}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
 
 # load environment
 #
@@ -74,14 +74,13 @@ if [ -n "${adb_arc_shalla}" ]
 then
     # download shallalist archive
     #
+    f_log "shallalist (pre-)processing started ..."
     shalla_archive="${adb_tmpdir}/shallalist.tar.gz"
     shalla_file="${adb_tmpdir}/shallalist.txt"
     curl ${curl_parm} --max-time "${adb_maxtime}" "${adb_arc_shalla}" --output "${shalla_archive}" 2>/dev/null
     rc=${?}
-    if [ $((rc)) -eq 0 ]
+    if [ $((rc)) -ne 0 ]
     then
-        f_log "shallalist archive download finished"
-    else
         f_log "shallalist archive download failed (${adb_arc_shalla})" "${rc}"
         f_restore
     fi
@@ -91,15 +90,10 @@ then
     > "${shalla_file}"
     for category in ${adb_cat_shalla}
     do
-        tar -C "${adb_tmpdir}" -xzf "${shalla_archive}" BL/${category}/domains 2>/dev/null
+        tar -xOzf "${shalla_archive}" BL/${category}/domains 2>/dev/null >> "${shalla_file}"
         rc=${?}
-        if [ $((rc)) -eq 0 ]
+        if [ $((rc)) -ne 0 ]
         then
-            if [ -r "${adb_tmpdir}/BL/${category}/domains" ]
-            then
-                cat "${adb_tmpdir}/BL/${category}/domains" 2>/dev/null >> "${shalla_file}"
-            fi
-        else
             f_log "shallalist archive extraction failed (${category})" "${rc}"
             f_restore
         fi
@@ -157,9 +151,15 @@ done
 # remove whitelist domains, sort domains and make them unique
 # and finally rewrite ad/abuse domain information to dnsmasq file
 #
-> "${adb_dnsfile}"
-grep -vxf "${adb_whitelist}" < "${adb_tmpfile}" 2>/dev/null | sort -u 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null >> "${adb_dnsfile}"
-rc=${?}
+if [ -s "${adb_whitelist}" ]
+then
+    grep -Fvxf "${adb_whitelist}" "${adb_tmpfile}" 2>/dev/null | sort -u 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null > "${adb_dnsfile}"
+    rc=${?}
+else
+    sort -u "${adb_tmpfile}" 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null > "${adb_dnsfile}"
+    rc=${?}
+fi
+
 if [ $((rc)) -eq 0 ]
 then
     rm -f "${adb_tmpfile}" >/dev/null 2>&1
