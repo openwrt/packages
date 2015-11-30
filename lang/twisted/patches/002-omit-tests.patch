@@ -1,0 +1,32 @@
+diff -Nur a/setup.py b/setup.py
+--- a/setup.py	2015-11-29 11:30:46.000000000 +0800
++++ b/setup.py	2015-12-02 18:22:10.251268303 +0800
+@@ -49,11 +49,11 @@
+     scripts = getScripts()
+ 
+     setup_args.update(dict(
+-        packages=getPackages('twisted'),
++        packages=getPackages('twisted', ignore=['test']),
+         conditionalExtensions=getExtensions(),
+         scripts=scripts,
+         extras_require=_EXTRAS_REQUIRE,
+-        data_files=getDataFiles('twisted'),
++        data_files=getDataFiles('twisted', ignore=['test']),
+         **STATIC_PACKAGE_METADATA))
+ 
+     setup(**setup_args)
+diff -Nur a/twisted/python/dist.py b/twisted/python/dist.py
+--- a/twisted/python/dist.py	2015-11-29 11:30:47.000000000 +0800
++++ b/twisted/python/dist.py	2015-12-02 19:21:20.076370379 +0800
+@@ -268,11 +268,6 @@
+     """
+     extensions = [
+         ConditionalExtension(
+-            "twisted.test.raiser",
+-            ["twisted/test/raiser.c"],
+-            condition=lambda _: _isCPython),
+-
+-        ConditionalExtension(
+             "twisted.internet.iocpreactor.iocpsupport",
+             ["twisted/internet/iocpreactor/iocpsupport/iocpsupport.c",
+              "twisted/internet/iocpreactor/iocpsupport/winsock_pointers.c"],
