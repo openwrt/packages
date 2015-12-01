@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools
-PKG_VERSION:=18.5
+PKG_VERSION:=18.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=setuptools-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/s/setuptools/
-PKG_MD5SUM:=533c868f01169a3085177dffe5e768bb
+PKG_MD5SUM:=295d7aaef2da7d6ff10b522581da0cf9
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/setuptools-$(PKG_VERSION)
 
@@ -26,7 +26,7 @@ define Package/python-setuptools
   CATEGORY:=Languages
   TITLE:=Tool for installing Python packages.
   URL:=https://bitbucket.org/pypa/setuptools
-  DEPENDS:=+python
+  DEPENDS:=+python +ca-certificates
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
