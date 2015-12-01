@@ -61,6 +61,13 @@ define Build/Compile
 	$(call Build/Compile/Default,lib)
 endef
 
+define Build/InstallDev
+        $(INSTALL_DIR) $(STAGING_DIR)/include/unrar
+        $(CP) $(PKG_BUILD_DIR)/*.hpp $(STAGING_DIR)/include/unrar
+        $(INSTALL_DIR) $(STAGING_DIR)/lib
+        $(CP) $(PKG_BUILD_DIR)/libunrar.so $(STAGING_DIR)/lib
+endef
+
 define Package/unrar/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/unrar $(1)/usr/bin/
