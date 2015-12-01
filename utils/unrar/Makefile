@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unrar
 PKG_VERSION:=5.3.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.rarlab.com/rar
@@ -62,10 +62,10 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-        $(INSTALL_DIR) $(STAGING_DIR)/include/unrar
-        $(CP) $(PKG_BUILD_DIR)/*.hpp $(STAGING_DIR)/include/unrar
-        $(INSTALL_DIR) $(STAGING_DIR)/lib
-        $(CP) $(PKG_BUILD_DIR)/libunrar.so $(STAGING_DIR)/lib
+	$(INSTALL_DIR) $(1)/usr/include/unrar
+	$(CP) $(PKG_BUILD_DIR)/*.hpp $(1)/usr/include/unrar
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/libunrar.so $(1)/usr/lib
 endef
 
 define Package/unrar/install
