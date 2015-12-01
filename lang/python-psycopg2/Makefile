@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-psycopg2
 PKG_VERSION:=2.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Dmitry Trefilov <the-alien@live.ru>
 PKG_LICENSE:=LGPL-3.0+
 PKG_LICENSE_FILES:=LICENSE
@@ -39,9 +39,10 @@ define Package/python-psycopg2/description
 endef
 
 define Build/Compile
-	$(call Build/Compile/PyMod,.,build_py)
-	$(call Build/Compile/PyMod,,build_ext --pg-config="$(STAGING_DIR)/usr/bin/pg_config")
-	$(call Build/Compile/PyMod,.,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+	# The PATH var is required so that psycopg2's setup.py script finds pg_config
+	$(call Build/Compile/PyMod,., \
+		install --prefix=/usr --root=$(PKG_INSTALL_DIR), \
+		PATH=$(STAGING_DIR)/usr/bin:$(PATH))
 endef
 
 define Package/python-psycopg2/install
