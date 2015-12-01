@@ -195,7 +195,7 @@ f_envcheck()
 
     # check main uhttpd configuration
     #
-    check_uhttpd="$(uci get uhttpd.main.listen_http 2>/dev/null | grep -o "0.0.0.0")"
+    check_uhttpd="$(uci get uhttpd.main.listen_http 2>/dev/null | grep -Fo "0.0.0.0")"
     if [ -n "${check_uhttpd}" ]
     then
         rc=530
@@ -287,20 +287,20 @@ f_envcheck()
     if [ -z "${check}" ]
     then
         curl_parm="-q --insecure"
-        wget_parm="--no-config --no-check-certificate"
+        wget_parm="--no-config --no-hsts --no-check-certificate"
     else
         curl_parm="-q"
-        wget_parm="--no-config"
+        wget_parm="--no-config --no-hsts"
     fi
 
     # check total and swap memory
     #
-    mem_total="$(cat /proc/meminfo | grep "MemTotal" | grep -o "[0-9]*")"
-    mem_free="$(cat /proc/meminfo | grep "MemFree" | grep -o "[0-9]*")"
-    swap_total="$(cat /proc/meminfo | grep "SwapTotal" | grep -o "[0-9]*")"
+    mem_total="$(cat /proc/meminfo | grep -F "MemTotal" | grep -o "[0-9]*")"
+    mem_free="$(cat /proc/meminfo | grep -F "MemFree" | grep -o "[0-9]*")"
+    swap_total="$(cat /proc/meminfo | grep -F "SwapTotal" | grep -o "[0-9]*")"
     if [ $((mem_total)) -le 64000 ] && [ $((swap_total)) -eq 0 ]
     then
-        f_log "please consider to add an external swap device to supersize your /tmp directory (total: ${mem_total}, free: ${mem_free}, swap: ${mem_swap})"
+        f_log "please consider adding an external swap device to supersize your /tmp directory (total: ${mem_total}, free: ${mem_free}, swap: ${mem_swap})"
     fi
 
     # check backup configuration
@@ -323,7 +323,7 @@ f_envcheck()
     then
         # check find capabilities
         #
-        check="$(find --help 2>&1 | grep "mtime")"
+        check="$(find --help 2>&1 | grep -F "mtime")"
         if [ -z "${check}" ]
         then
             query_ok="false"
@@ -340,7 +340,7 @@ f_envcheck()
         if [ -s "${adb_querypid}" ]
         then
             kill -9 "$(cat "${adb_querypid}")" >/dev/null 2>&1
-            f_log "remove old dns query log background process (pid: $(cat "${adb_querypid}"))"
+            f_log "remove old dns query log background process (pid: $(cat "${adb_querypid}" 2>/dev/null))"
             > "${adb_querypid}"
         fi
     fi
@@ -442,11 +442,12 @@ f_log()
         then
             class="error"
             log_rc=", rc: ${log_rc}"
+            log_msg="${log_msg}${log_rc}"
         fi
-        /usr/bin/logger -s -t "adblock[${pid}] ${class}" "${log_msg}${log_rc}"
+        /usr/bin/logger -s -t "adblock[${pid}] ${class}" "${log_msg}"
         if [ "${log_ok}" = "true" ] && [ "${ntp_ok}" = "true" ]
         then
-            printf "%s\n" "$(/bin/date "+%d.%m.%Y %H:%M:%S") adblock[${pid}] ${class}: ${log_msg}${log_rc}" >> "${adb_logfile}"
+            printf "%s\n" "$(/bin/date "+%d.%m.%Y %H:%M:%S") adblock[${pid}] ${class}: ${log_msg}" >> "${adb_logfile}"
         fi
     fi
 }
@@ -500,7 +501,7 @@ f_deltemp()
     then
        rm -rf "${adb_tmpdir}" >/dev/null 2>&1
     fi
-    f_log "domain adblock processing finished (${adb_version}, ${openwrt_version})"
+    f_log "domain adblock processing finished (${adb_version}, ${openwrt_version}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
     exit ${rc}
 }
 
@@ -516,13 +517,13 @@ f_remove()
         then
             kill -9 "$(cat "${adb_querypid}")" >/dev/null 2>&1
             find "${adb_backupdir}" -maxdepth 1 -type f -mtime +"${adb_queryhistory}" -name "${query_name}.*" -exec rm -f {} \; 2>/dev/null
-            f_log "remove old dns query log background process (pid: $(cat "${adb_querypid}")) and do logfile housekeeping"
+            f_log "remove old domain query log background process (pid: $(cat "${adb_querypid}")) and do logfile housekeeping"
             > "${adb_querypid}"
         fi
         if [ ! -s "${adb_querypid}" ]
         then
-            ( logread -f 2>/dev/null & printf ${!} > "${adb_querypid}" ) | egrep -o "(query\[A\].*)|([a-z0-9\.\-]* is ${query_ip}$)" >> "${adb_queryfile}.${query_date}" &
-            f_log "new domain query log background process started (pid: $(cat "${adb_querypid}"))"
+            (logread -f 2>/dev/null & printf ${!} > "${adb_querypid}") | grep -Eo "(query\[A\].*)|([a-z0-9\.\-]* is ${query_ip}$)" >> "${adb_queryfile}.${query_date}" &
+            f_log "new domain query log background process started"
         fi
     fi
     f_deltemp
@@ -626,7 +627,7 @@ f_dnscheck()
     rc=${?}
     if [ -z "${dns_status}" ]
     then
-        dns_status="$(nslookup "${adb_domain}" 2>/dev/null | grep "${adb_ip}")"
+        dns_status="$(nslookup "${adb_domain}" 2>/dev/null | grep -F "${adb_ip}")"
         rc=${?}
         if [ -z "${dns_status}" ]
         then
