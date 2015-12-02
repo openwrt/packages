@@ -42,11 +42,6 @@ module designed to be easily integrated into applications that need to parse
 C source code.
 endef
 
-define PyPackage/python-pycparser/filespec
-+|$(PYTHON_PKG_DIR)
--|$(PYTHON_PKG_DIR)/pycparser/ply
-endef
-
 define Build/Compile
 	$(call Build/Compile/PyMod,,install --prefix="/usr" --root="$(PKG_INSTALL_DIR)")
 endef
