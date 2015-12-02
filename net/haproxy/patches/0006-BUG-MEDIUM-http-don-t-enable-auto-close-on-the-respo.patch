@@ -1,0 +1,49 @@
+From 3de8e7ab8d9125402cc1a8fb48ee475ee21d7d4c Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 25 Nov 2015 20:11:11 +0100
+Subject: [PATCH 06/10] BUG/MEDIUM: http: don't enable auto-close on the
+ response side
+
+There is a bug where "option http-keep-alive" doesn't force a response
+to stay in keep-alive if the server sends the FIN along with the response
+on the second or subsequent response. The reason is that the auto-close
+was forced enabled when recycling the HTTP transaction and it's never
+disabled along the response processing chain before the SHUTR gets a
+chance to be forwarded to the client side. The MSG_DONE state of the
+HTTP response properly disables it but too late.
+
+There's no more reason for enabling auto-close here, because either it
+doesn't matter in non-keep-alive modes because the connection is closed,
+or it is automatically enabled by process_stream() when it sees there's
+no analyser on the stream.
+
+This bug also affects 1.5 so a backport is desired.
+(cherry picked from commit 714ea78c9a09fe6a35a1f2d86af8f7fc9abb64d1)
+(cherry picked from commit a15091be17f27fcf4e3a84338df1a8b732e396a1)
+---
+ src/proto_http.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index b32e778..5facfbb 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -4946,11 +4946,13 @@ void http_end_txn_clean_session(struct session *s)
+ 			s->rep->flags |= CF_EXPECT_MORE;
+ 	}
+ 
+-	/* we're removing the analysers, we MUST re-enable events detection */
++	/* we're removing the analysers, we MUST re-enable events detection.
++	 * We don't enable close on the response channel since it's either
++	 * already closed, or in keep-alive with an idle connection handler.
++	 */
+ 	channel_auto_read(s->req);
+ 	channel_auto_close(s->req);
+ 	channel_auto_read(s->rep);
+-	channel_auto_close(s->rep);
+ 
+ 	/* we're in keep-alive with an idle connection, monitor it */
+ 	si_idle_conn(s->req->cons);
+-- 
+2.4.10
+
