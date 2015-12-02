@@ -36,10 +36,6 @@ define Package/keepalived/description
  Failover and monitoring daemon for Linux Virtual Server (LVS) clusters.
 endef
 
-define Package/keepalived/conffiles
-/etc/keepalived/keepalived.conf
-endef
-
 CONFIGURE_ARGS+= \
 	--enable-vrrp \
 	--enable-fwmark \
@@ -59,10 +55,11 @@ define Package/keepalived/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/keepalived $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/genhash $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/etc/keepalived
-	$(CP) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf $(1)/etc/keepalived/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/keepalived.init $(1)/etc/init.d/keepalived
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/keepalived.config $(1)/etc/config/keepalived
+	$(INSTALL_CONF) ./files/keepalived.config.sample $(1)/etc/config/keepalived.sample
 endef
 
 $(eval $(call BuildPackage,keepalived))
