@@ -1,0 +1,112 @@
+From c0d56134320e507c82952f3d2a03f76b701945cb Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 18 Nov 2015 11:59:55 +0100
+Subject: [PATCH 04/10] BUG/MEDIUM: http: switch the request channel to
+ no-delay once done.
+
+There's an issue when sending POST data that came in a second packet,
+the CF_NEVER_WAIT flag is not always set on the request channel, while
+the server is waiting for the request. We must always set this flag in
+this case since we're not going to shut down after sending, contrary
+to the response side.
+
+Note that option http-no-delay works around this issue.
+
+Reproducer :
+
+listen  px
+        mode http
+        timeout client 10s
+        timeout server 5s
+        timeout connect 3s
+        option http-server-close
+        #option http-no-delay
+        bind :8001
+        server s1 127.0.0.1:8003
+
+$ (printf "POST / HTTP/1.1\r\nTransfer-encoding: chunked\r\n\r\n"; sleep 0.01; printf "10\r\nAZERTYUIOPQSDFGH\r\n0\r\n\r\n") | nc6 0 8001
+
+Before this fix :
+
+12:03:31.946763 epoll_wait(3, {{EPOLLIN, {u32=5, u64=5}}}, 200, 1000) = 1
+12:03:32.634175 accept4(5, {sa_family=AF_INET, sin_port=htons(53849), sin_addr=inet_addr("127.0.0.1")}, [16], SOCK_NONBLOCK) = 6
+12:03:32.634318 setsockopt(6, SOL_TCP, TCP_NODELAY, [1], 4) = 0
+12:03:32.634434 accept4(5, 0x7ffccfbb2cf0, [128], SOCK_NONBLOCK) = -1 EAGAIN (Resource temporarily unavailable)
+12:03:32.634574 recvfrom(6, "POST / HTTP/1.1\r\nTransfer-encodi"..., 8192, 0, NULL, NULL) = 47
+12:03:32.634809 setsockopt(6, SOL_TCP, TCP_QUICKACK, [1], 4) = 0
+12:03:32.634952 socket(PF_INET, SOCK_STREAM, IPPROTO_TCP) = 7
+12:03:32.635031 fcntl(7, F_SETFL, O_RDONLY|O_NONBLOCK) = 0
+12:03:32.635089 setsockopt(7, SOL_TCP, TCP_NODELAY, [1], 4) = 0
+12:03:32.635153 connect(7, {sa_family=AF_INET, sin_port=htons(8003), sin_addr=inet_addr("127.0.0.1")}, 16) = -1 EINPROGRESS (Operation now in progress)
+12:03:32.635315 epoll_wait(3, {}, 200, 0) = 0
+12:03:32.635394 sendto(7, "POST / HTTP/1.1\r\nTransfer-encodi"..., 66, MSG_DONTWAIT|MSG_NOSIGNAL, NULL, 0) = 66
+12:03:32.635527 recvfrom(6, 0x7f0224e66024, 8192, 0, 0, 0) = -1 EAGAIN (Resource temporarily unavailable)
+12:03:32.635651 epoll_ctl(3, EPOLL_CTL_ADD, 6, {EPOLLIN|0x2000, {u32=6, u64=6}}) = 0
+12:03:32.635782 epoll_wait(3, {}, 200, 0) = 0
+12:03:32.635842 recvfrom(7, 0x7f0224e66024, 8192, 0, 0, 0) = -1 EAGAIN (Resource temporarily unavailable)
+12:03:32.635924 epoll_ctl(3, EPOLL_CTL_ADD, 7, {EPOLLIN|0x2000, {u32=7, u64=7}}) = 0
+12:03:32.636027 epoll_wait(3, {{EPOLLIN, {u32=6, u64=6}}}, 200, 1000) = 1
+12:03:32.644892 recvfrom(6, "10\r\nAZERTYUIOPQSDFGH\r\n0\r\n\r\n", 8192, 0, NULL, NULL) = 27
+12:03:32.645016 epoll_wait(3, {}, 200, 0) = 0
+12:03:32.645105 sendto(7, "10\r\nAZERTYUIOPQSDFGH\r\n0\r\n\r\n", 27, MSG_DONTWAIT|MSG_NOSIGNAL|MSG_MORE, NULL, 0) = 27
+
+After the fix :
+
+11:59:12.538617 connect(7, {sa_family=AF_INET, sin_port=htons(8003), sin_addr=inet_addr("127.0.0.1")}, 16) = -1 EINPROGRESS (Operation now in progress)
+11:59:12.538787 epoll_wait(3, {}, 200, 0) = 0
+11:59:12.538867 sendto(7, "POST / HTTP/1.1\r\nTransfer-encodi"..., 66, MSG_DONTWAIT|MSG_NOSIGNAL, NULL, 0) = 66
+11:59:12.539031 recvfrom(6, 0x7f832ce45024, 8192, 0, 0, 0) = -1 EAGAIN (Resource temporarily unavailable)
+11:59:12.539161 epoll_ctl(3, EPOLL_CTL_ADD, 6, {EPOLLIN|0x2000, {u32=6, u64=6}}) = 0
+11:59:12.539259 epoll_wait(3, {}, 200, 0) = 0
+11:59:12.539337 recvfrom(7, 0x7f832ce45024, 8192, 0, 0, 0) = -1 EAGAIN (Resource temporarily unavailable)
+11:59:12.539421 epoll_ctl(3, EPOLL_CTL_ADD, 7, {EPOLLIN|0x2000, {u32=7, u64=7}}) = 0
+11:59:12.539499 epoll_wait(3, {{EPOLLIN, {u32=6, u64=6}}}, 200, 1000) = 1
+11:59:12.548519 recvfrom(6, "10\r\nAZERTYUIOPQSDFGH\r\n0\r\n\r\n", 8192, 0, NULL, NULL) = 27
+11:59:12.548844 epoll_wait(3, {}, 200, 0) = 0
+11:59:12.549012 sendto(7, "10\r\nAZERTYUIOPQSDFGH\r\n0\r\n\r\n", 27, MSG_DONTWAIT|MSG_NOSIGNAL, NULL, 0) = 27
+11:59:12.549454 epoll_wait(3, {}, 200, 1000) = 0
+
+This fix must be backported to 1.6, 1.5 and 1.4.
+(cherry picked from commit 7f876a1eeb14ffae708327aad8a0b4b029da5e26)
+(cherry picked from commit 712a5339f384db62796aa4d4901e091dd7fd24dd)
+---
+ src/proto_http.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index e7e1785..b32e778 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -5001,6 +5001,13 @@ int http_sync_req_state(struct session *s)
+ 		 */
+ 		chn->cons->flags |= SI_FL_NOHALF;
+ 
++		/* In any case we've finished parsing the request so we must
++		 * disable Nagle when sending data because 1) we're not going
++		 * to shut this side, and 2) the server is waiting for us to
++		 * send pending data.
++		 */
++		chn->flags |= CF_NEVER_WAIT;
++
+ 		if (txn->rsp.msg_state == HTTP_MSG_ERROR)
+ 			goto wait_other_side;
+ 
+@@ -5015,7 +5022,6 @@ int http_sync_req_state(struct session *s)
+ 			/* if any side switches to tunnel mode, the other one does too */
+ 			channel_auto_read(chn);
+ 			txn->req.msg_state = HTTP_MSG_TUNNEL;
+-			chn->flags |= CF_NEVER_WAIT;
+ 			goto wait_other_side;
+ 		}
+ 
+@@ -5048,7 +5054,6 @@ int http_sync_req_state(struct session *s)
+ 			if ((txn->flags & TX_CON_WANT_MSK) == TX_CON_WANT_TUN) {
+ 				channel_auto_read(chn);
+ 				txn->req.msg_state = HTTP_MSG_TUNNEL;
+-				chn->flags |= CF_NEVER_WAIT;
+ 			}
+ 		}
+ 
+-- 
+2.4.10
+

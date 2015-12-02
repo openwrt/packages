@@ -1,0 +1,36 @@
+From 07ccb48add8c8cb0dd8a0f7d3f4994866d0ef32e Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 26 Nov 2015 18:32:39 +0100
+Subject: [PATCH 08/10] BUG/MEDIUM: cli: changing compression rate-limiting
+ must require admin level
+
+Right now it's possible to change the global compression rate limiting
+without the CLI being at the admin level.
+
+This fix must be backported to 1.6 and 1.5.
+(cherry picked from commit a1c2b2c4f3e65d198a0a4b25a4f655f7b307a855)
+(cherry picked from commit 9e5f1489c9f2d6926729890f249f7ebb9d3bfd43)
+---
+ src/dumpstats.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/dumpstats.c b/src/dumpstats.c
+index b4be2cd..b1bbf31 100644
+--- a/src/dumpstats.c
++++ b/src/dumpstats.c
+@@ -1695,6 +1695,12 @@ static int stats_sock_parse_request(struct stream_interface *si, char *line)
+ 				if (strcmp(args[3], "global") == 0) {
+ 					int v;
+ 
++					if (s->listener->bind_conf->level < ACCESS_LVL_ADMIN) {
++						appctx->ctx.cli.msg = stats_permission_denied_msg;
++						appctx->st0 = STAT_CLI_PRINT;
++						return 1;
++					}
++
+ 					if (!*args[4]) {
+ 						appctx->ctx.cli.msg = "Expects a maximum input byte rate in kB/s.\n";
+ 						appctx->st0 = STAT_CLI_PRINT;
+-- 
+2.4.10
+
