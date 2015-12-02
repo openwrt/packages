@@ -1,0 +1,34 @@
+From 4818bc3035bccc00d8c3fc9b14ec37366cac3059 Mon Sep 17 00:00:00 2001
+From: Jerome Duval <jerome.duval@gmail.com>
+Date: Mon, 2 Nov 2015 17:47:43 +0000
+Subject: [PATCH 01/10] BUG/BUILD: replace haproxy-systemd-wrapper with
+ $(EXTRA) in install-bin.
+
+[wt: this should be backported to 1.6 and 1.5 as well since some platforms
+ don't build the systemd-wrapper]
+(cherry picked from commit 796d2fc136359c31c5c35f00c0751890ab42a016)
+(cherry picked from commit 9d0b47d96825b0584ea81c826a96ed8babcc016b)
+---
+ Makefile | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 9556069..e3199b2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -719,10 +719,9 @@ install-doc:
+ 		install -m 644 doc/$$x.txt "$(DESTDIR)$(DOCDIR)" ; \
+ 	done
+ 
+-install-bin: haproxy haproxy-systemd-wrapper
++install-bin: haproxy $(EXTRA)
+ 	install -d "$(DESTDIR)$(SBINDIR)"
+-	install haproxy "$(DESTDIR)$(SBINDIR)"
+-	install haproxy-systemd-wrapper "$(DESTDIR)$(SBINDIR)"
++	install haproxy $(EXTRA) "$(DESTDIR)$(SBINDIR)"
+ 
+ install: install-bin install-man install-doc
+ 
+-- 
+2.4.10
+

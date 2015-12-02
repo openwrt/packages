@@ -1,0 +1,52 @@
+From e77015cdc18ab74aba61cdf57de56d06be5c2a4d Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 14 Jan 2015 11:48:58 +0100
+Subject: [PATCH 05/10] MINOR: config: extend the default max hostname length
+ to 64 and beyond
+
+Some users reported that the default max hostname length of 32 is too
+short in some environments. This patch does two things :
+
+  - it relies on the system's max hostname length as found in MAXHOSTNAMELEN
+    if it is set. This is the most logical thing to do as the system libs
+    generally present the appropriate value supported by the system. This
+    value is 64 on Linux and 256 on Solaris, to give a few examples.
+
+  - otherwise it defaults to 64
+
+It is still possible to override this value by defining MAX_HOSTNAME_LEN at
+build time. After some observation time, this patch may be backported to
+1.5 if it does not cause any build issue, as it is harmless and may help
+some users.
+(cherry picked from commit 75abcb3106e2c27ef983df885558cf94e01f717a)
+
+Cc: Lukas Tribus <luky-37@hotmail.com>
+Cc: jose.castro.leon@cern.ch
+
+[wt: no issue reported so far and Jose rightfully asked for it in 1.5]
+---
+ include/common/defaults.h | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/include/common/defaults.h b/include/common/defaults.h
+index 0075509..a191b8a 100644
+--- a/include/common/defaults.h
++++ b/include/common/defaults.h
+@@ -190,8 +190,12 @@
+ 
+ /* Maximum host name length */
+ #ifndef MAX_HOSTNAME_LEN
+-#define MAX_HOSTNAME_LEN	32
+-#endif
++#if MAXHOSTNAMELEN
++#define MAX_HOSTNAME_LEN	MAXHOSTNAMELEN
++#else
++#define MAX_HOSTNAME_LEN	64
++#endif // MAXHOSTNAMELEN
++#endif // MAX_HOSTNAME_LEN
+ 
+ /* Maximum health check description length */
+ #ifndef HCHK_DESC_LEN
+-- 
+2.4.10
+

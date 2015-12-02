@@ -1,0 +1,31 @@
+From 97ef6f99b8426ffdc97864fc8bb2d85c87cfdad0 Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <tfournier@arpalert.org>
+Date: Tue, 3 Nov 2015 19:17:37 +0100
+Subject: [PATCH 09/10] BUILD: freebsd: double declaration
+
+On freebsd, the macro LIST_PREV already exists in the header file
+<sys/queue.h>, and this makes a build error.
+
+This patch removes the macros before declaring it. This ensure
+that the error doesn't occurs.
+(cherry picked from commit 1db96672c4cd264ebca8197bec93a5ce1b23aaa9)
+(cherry picked from commit 6cf9c6b270e57f05abf72cd61f4facb5b6980d57)
+---
+ include/common/mini-clist.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/common/mini-clist.h b/include/common/mini-clist.h
+index 3c3f001..404b6fa 100644
+--- a/include/common/mini-clist.h
++++ b/include/common/mini-clist.h
+@@ -144,6 +144,7 @@ struct cond_wordlist {
+  * which contains list head <lh>, which is known as element <el> in
+  * struct pt.
+  */
++#undef LIST_PREV
+ #define LIST_PREV(lh, pt, el) (LIST_ELEM((lh)->p, pt, el))
+ 
+ /*
+-- 
+2.4.10
+

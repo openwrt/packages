@@ -1,0 +1,69 @@
+From 1af6a324c3206902f69bd2c9838e94ffb4cee3ae Mon Sep 17 00:00:00 2001
+From: Lukas Tribus <luky-37@hotmail.com>
+Date: Thu, 5 Nov 2015 13:59:30 +0100
+Subject: [PATCH 02/10] BUG/MINOR: acl: don't use record layer in req_ssl_ver
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The initial record layer version in a SSL handshake may be set to TLSv1.0
+or similar for compatibility reasons, this is allowed as per RFC5246
+Appendix E.1 [1]. Some implementations are Openssl [2] and NSS [3].
+
+A related issue has been fixed some time ago in commit 57d229747
+("BUG/MINOR: acl: req_ssl_sni fails with SSLv3 record version").
+
+Fix this by using the real client hello version instead of the record
+layer version.
+
+This was reported by Julien Vehent and analyzed by Cyril Bonté.
+The initial patch is from Julien Vehent as well.
+
+This should be backported to stable series, the req_ssl_ver keyword was
+first introduced in 1.3.16.
+
+[1] https://tools.ietf.org/html/rfc5246#appendix-E.1
+[2] https://github.com/openssl/openssl/commit/4a1cf50187659e60c5867ecbbc36e37b2605d2c3
+[3] https://bugzilla.mozilla.org/show_bug.cgi?id=774547
+(cherry picked from commit c93242cab986087f06a4655d14fec18eecb7f5f4)
+(cherry picked from commit b048a6eb3d9cb518e4a378e20ba2a801afec553c)
+---
+ src/payload.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/src/payload.c b/src/payload.c
+index f62163c..b8f1ca3 100644
+--- a/src/payload.c
++++ b/src/payload.c
+@@ -148,21 +148,24 @@ smp_fetch_req_ssl_ver(struct proxy *px, struct session *s, void *l7, unsigned in
+ 	data = (const unsigned char *)s->req->buf->p;
+ 	if ((*data >= 0x14 && *data <= 0x17) || (*data == 0xFF)) {
+ 		/* SSLv3 header format */
+-		if (bleft < 5)
++		if (bleft < 11)
+ 			goto too_short;
+ 
+-		version = (data[1] << 16) + data[2]; /* version: major, minor */
++		version = (data[1] << 16) + data[2]; /* record layer version: major, minor */
+ 		msg_len = (data[3] <<  8) + data[4]; /* record length */
+ 
+ 		/* format introduced with SSLv3 */
+ 		if (version < 0x00030000)
+ 			goto not_ssl;
+ 
+-		/* message length between 1 and 2^14 + 2048 */
+-		if (msg_len < 1 || msg_len > ((1<<14) + 2048))
++		/* message length between 6 and 2^14 + 2048 */
++		if (msg_len < 6 || msg_len > ((1<<14) + 2048))
+ 			goto not_ssl;
+ 
+ 		bleft -= 5; data += 5;
++
++		/* return the client hello client version, not the record layer version */
++		version = (data[4] << 16) + data[5]; /* client hello version: major, minor */
+ 	} else {
+ 		/* SSLv2 header format, only supported for hello (msg type 1) */
+ 		int rlen, plen, cilen, silen, chlen;
+-- 
+2.4.10
+
