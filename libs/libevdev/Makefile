@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libevdev
-PKG_VERSION:=1.4.4
+PKG_VERSION:=1.4.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.freedesktop.org/software/libevdev/
-PKG_MD5SUM:=b66443bb664cfaf2ba7b3f8c238ea951
+PKG_MD5SUM:=b123d91e31d279ecb37bea774f17aae1
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
