@@ -28,14 +28,27 @@ include $(INCLUDE_DIR)/package.mk
 define Package/aircrack-ng
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpcap +libpthread +libopenssl +libnl-core +libnl-genl +wireless-tools +ethtool
-  TITLE:=WLAN tools for breaking 802.11 WEP/WPA keys
+  DEPENDS:=+libpcap +libpthread +libopenssl +libnl-core +libnl-genl
+  TITLE:=WLAN tools (without airmon-ng) for breaking 802.11 WEP/WPA keys
   URL:=http://www.aircrack-ng.org/
   SUBMENU:=wireless
 endef
 
 define Package/aircrack-ng/description
   WLAN tools for breaking 802.11 WEP/WPA keys
+endef
+
+define Package/airmon-ng
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=@(PACKAGE_wireless-tools||PACKAGE_iw) +ethtool +procps +CONFIG_USB_SUPPORT:usbutils +CONFIG_PCI_SUPPORT:pciutils
+  TITLE:=Bash script designed to turn wireless cards into monitor mode.
+  URL:=http://www.aircrack-ng.org/
+  SUBMENU:=wireless
+endef
+
+define Package/airmon-ng/description
+  Bash script designed to turn wireless cards into monitor mode.
 endef
 
 MAKE_FLAGS += prefix=/usr \
@@ -49,6 +62,13 @@ define Package/aircrack-ng/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
+	rm -f $(1)/usr/sbin/airmon-ng
+endef
+
+define Package/airmon-ng/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/airmon-ng $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,aircrack-ng))
+$(eval $(call BuildPackage,airmon-ng))
