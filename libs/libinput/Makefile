@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libinput
-PKG_VERSION:=1.0.1
+PKG_VERSION:=1.1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.freedesktop.org/software/libinput/
-PKG_MD5SUM:=f390e592aa09f77dabceabeb2ddd4419
+PKG_MD5SUM:=4a3fc842ac0b7bf0fa306ea7badc31a0
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING

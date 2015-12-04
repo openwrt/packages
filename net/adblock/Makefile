@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=0.22.1
+PKG_VERSION:=0.22.2
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dirk@brenken.org>
@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
-	TITLE:=powerful adblock script to block ad/abuse domains
+	TITLE:=Powerful adblock script to block ad/abuse domains
 	DEPENDS:=+curl +wget
 	PKGARCH:=all
 endef
