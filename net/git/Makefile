@@ -53,6 +53,19 @@ $(call Package/git/description)
  This package allows git push/fetch over http(s) and ftp(s)
 endef
 
+define Package/gitweb
+$(call Package/git/Default)
+  DEPENDS:=git +perl +perl-cgi +perlbase-encode +perlbase-fcntl +perlbase-file +perlbase-time
+  TITLE:=gitweb CGI script
+endef
+
+define Package/gitweb/description
+$(call Package/git/description)
+
+  This package includes the gitweb CGI script that ships with git.
+endef
+
+
 MAKE_FLAGS := \
 	CC="$(TARGET_CC)" \
 	CFLAGS="$(TARGET_CFLAGS)" \
@@ -72,11 +85,22 @@ MAKE_FLAGS := \
 CONFIGURE_ARGS += \
 	--without-iconv \
 
+ifdef CONFIG_PACKAGE_gitweb
+  define Build/Compile/gitweb
+    $(call Build/Compile/Default, gitweb)
+  endef
+endif
+
 define Build/Configure
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		configure
 
 	$(call Build/Configure/Default,)
+endef
+
+define Build/Compile
+	$(call Build/Compile/Default,)
+	$(call Build/Compile/gitweb,)
 endef
 
 define Package/git/install
@@ -109,5 +133,12 @@ define Package/git-http/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/git-core/git-remote-https $(1)/usr/lib/git-core
 endef
 
+define Package/gitweb/install
+	$(call Build/Install/Default, gitwebdir=/usr/lib/gitweb install-gitweb)
+	$(INSTALL_DIR) $(1)/usr/lib/gitweb
+	$(CP) -r $(PKG_INSTALL_DIR)/usr/lib/gitweb/* $(1)/usr/lib/gitweb/
+endef
+
 $(eval $(call BuildPackage,git))
 $(eval $(call BuildPackage,git-http))
+$(eval $(call BuildPackage,gitweb))
