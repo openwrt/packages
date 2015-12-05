@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnunet
 PKG_SOURCE_VERSION:=36713
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 # ToDo:
 #  - break-out {peer,name,data}store for each backend
@@ -39,6 +39,7 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-mysql),--with-mysql="$(STAGING_DIR)/usr",--without-mysql) \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-pgsql),--with-postgresql="$(STAGING_DIR)/usr/bin/pg_config",--without-postgresql) \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-sqlite),--with-sqlite="$(STAGING_DIR)/usr",--without-sqlite) \
+	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-experiments),--enable-experimental,--disable-experimental) \
 	--with-extractor=$(STAGING_DIR)/usr \
 	--with-gnutls=$(STAGING_DIR)/usr \
 	--with-libgnurl=$(STAGING_DIR)/usr \
@@ -131,7 +132,7 @@ define Package/gnunet/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/gnunet/libexec
 	$(INSTALL_DIR) $(1)/usr/share/gnunet/config.d $(1)/usr/share/gnunet/hellos
 
-	( for bin in arm ats core config ecc identity nat-server nse \
+	( for bin in arm ats cadet core config ecc identity nat nat-server nse \
 	    peerinfo peerstore revocation scalarproduct statistics transport uri; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ ; \
 	done )
@@ -153,7 +154,8 @@ define Package/gnunet/install
 	    service-core service-dht service-identity service-nse \
 	    service-peerinfo service-peerstore service-regex \
 	    service-revocation service-scalarproduct-alice \
-	    service-scalarproduct-bob service-set service-statistics \
+	    service-scalarproduct-bob service-scalarproduct-ecc-alice \
+	    service-scalarproduct-ecc-bob service-set service-statistics \
 	    service-transport; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/gnunet-$$$$lex $(1)/usr/lib/gnunet/libexec ; \
 	done )
@@ -184,7 +186,7 @@ DEPENDS_conversation:=+gnunet-gns +libgst1app +libgst1audio +libgstreamer1 +glib
 BIN_conversation:=conversation conversation-test
 LIB_conversation:=conversation microphone speaker
 PLUGIN_conversation:=gnsrecord_conversation
-LIBEXEC_conversation:=helper-audio-playback helper-audio-record
+LIBEXEC_conversation:=helper-audio-playback helper-audio-record service-conversation
 CONF_conversation:=conversation
 
 DEPENDS_transport-http_client:=+libgnurl
@@ -196,8 +198,12 @@ PLUGIN_transport-http_server:=transport_http_server transport_https_server
 PLUGIN_transport-wlan:=transport_wlan
 LIBEXEC_transport-wlan:=helper-transport-wlan
 
-DEPENDS_experiments:=+libglpk
-PLUGIN_experiments:=ats_mlp ats_ril
+DEPENDS_experiments:=+libglpk +gnunet-sqlite
+BIN_experiments:=multicast rps
+LIB_experiments:=consensus dv env multicast psyc psycstore psycutil rps secretsharing social
+PLUGIN_experiments:=ats_mlp ats_ril namecache_flat namestore_flat psycstore_sqlite transport_dv
+LIBEXEC_experiments:=service-consensus service-dv service-evil-consensus service-multicast service-psyc service-psycstore service-rps service-secretsharing service-social
+CONF_experiments:=consensus dv multicast psyc psycstore rps secretsharing social
 
 DEPENDS_fs:=+gnunet-datastore +libextractor
 BIN_fs:=auto-share directory download download-manager.scm fs publish unindex search
@@ -237,7 +243,7 @@ PLUGIN_transport-bluetooth:=transport_bluetooth
 LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
 
 DEPENDS_utils:=+certtool +openssl-util
-BIN_utils:=gns-proxy-setup-ca transport-certificate-creation
+BIN_utils:=gns-proxy-setup-ca transport-certificate-creation scrypt
 
 DEPENDS_vpn:=+kmod-tun +iptables
 BIN_vpn:=vpn
