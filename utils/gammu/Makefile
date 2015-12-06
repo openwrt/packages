@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gammu
-PKG_VERSION:=1.36.6
+PKG_VERSION:=1.36.7
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://dl.cihar.com/gammu/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MD5SUM:=9047f0598602144a99153f5e61104529
+PKG_MD5SUM:=3687d789fd0697a1ea4f4ef57024e865
 PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
 PKG_LICENCE:=GPL-2.0
 
