@@ -835,6 +835,7 @@ TARGET_LDFLAGS += -L$(PKG_BUILD_DIR)
 
 MAKE_FLAGS += \
 	DESTDIR="$(PKG_INSTALL_DIR)" \
+	EXTLDFLAGS="$(TARGET_LDFLAGS)" \
 	SHELL="/bin/bash"
 
 define Package/ruby/install
