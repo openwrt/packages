@@ -8,7 +8,7 @@
 define Package/python-xml
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) xml libs
-  DEPENDS:=+python-light
+  DEPENDS:=+python-light +libexpat
 endef
 
 $(eval $(call PyBasePackage,python-xml, \
