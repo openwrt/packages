@@ -1,0 +1,32 @@
+From c33c3d63b54235804db26ad208fe2218990cc1aa Mon Sep 17 00:00:00 2001
+Message-Id: <c33c3d63b54235804db26ad208fe2218990cc1aa.1389188742.git.jlec@gentoo.org>
+In-Reply-To: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+References: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+From: Justin Lecher <jlec@gentoo.org>
+Date: Wed, 8 Jan 2014 14:44:47 +0100
+Subject: [PATCH 8/9] 08_manpages.diff
+
+Signed-off-by: Justin Lecher <jlec@gentoo.org>
+---
+ doc/nullmailer.7 | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/doc/nullmailer.7 b/doc/nullmailer.7
+index bb13b1a..33e2c4a 100644
+--- a/doc/nullmailer.7
++++ b/doc/nullmailer.7
+@@ -23,9 +23,11 @@ control file	used by
+ .I adminaddr	\fBnullmailer-queue
+ .I defaultdomain	\fBnullmailer-inject
+ .I defaulthost	\fBnullmailer-inject
++.I helohost	\fBnullmailer-send
+ .I idhost	\fBnullmailer-inject
+ .I me		\fBnullmailer-inject
+ .I pausetime	\fBnullmailer-send
+ .I remotes	\fBnullmailer-send
++.I sendtimeout	\fBnullmailer-send
+ .fi
+ .RE
+-- 
+1.8.5.2
+

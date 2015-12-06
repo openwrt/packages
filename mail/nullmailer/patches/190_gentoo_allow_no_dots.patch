@@ -1,0 +1,56 @@
+From b5c76a58e1a2387eb9851d47aabef6e42e3d3e29 Mon Sep 17 00:00:00 2001
+Message-Id: <b5c76a58e1a2387eb9851d47aabef6e42e3d3e29.1389188742.git.jlec@gentoo.org>
+In-Reply-To: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+References: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+From: Justin Lecher <jlec@gentoo.org>
+Date: Wed, 8 Jan 2014 14:45:15 +0100
+Subject: [PATCH 9/9] 12_allow_no_dots.diff
+
+Signed-off-by: Justin Lecher <jlec@gentoo.org>
+---
+ lib/hostname.cc | 10 +++++++---
+ src/queue.cc    |  4 ++--
+ 2 files changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/lib/hostname.cc b/lib/hostname.cc
+index 9af34a2..06b72f7 100644
+--- a/lib/hostname.cc
++++ b/lib/hostname.cc
+@@ -33,12 +33,16 @@ void read_hostnames()
+ {
+   int nome;
+   nome = 0;
+-  if (!config_read("me", me)) {
++  // introduced as bufix for #120660, #157259, #158412 in 1.00RC5-17;
++  // still there since it's more appropriate for Debian systems
++  if (!config_read("../mailname", me)) {
+     nome = 1;
+     me = "me";
+   }
+-  if (!config_read("defaultdomain", defaultdomain))
+-    defaultdomain = nome ? "defaultdomain" : me.c_str();
++  // allow defaultdomain to be empty for Debian
++  config_read("defaultdomain", defaultdomain);
++  // if (!config_read("defaultdomain", defaultdomain))
++    // defaultdomain = nome ? "defaultdomain" : me.c_str();
+   if (!config_read("defaulthost", defaulthost))
+     defaulthost = nome ? "defaulthost" : me.c_str();
+   canonicalize(defaulthost);
+diff --git a/src/queue.cc b/src/queue.cc
+index c5596b1..5045020 100644
+--- a/src/queue.cc
++++ b/src/queue.cc
+@@ -85,8 +85,8 @@ bool validate_addr(mystring& addr, bool doremap)
+     if(hostname == me || hostname == "localhost")
+       addr = adminaddr;
+   }
+-  else if(hostname.find_first('.') < 0)
+-    return false;
++  // else if(hostname.find_first('.') < 0)
++    // return false;
+   return true;
+ }
+ 
+-- 
+1.8.5.2
+

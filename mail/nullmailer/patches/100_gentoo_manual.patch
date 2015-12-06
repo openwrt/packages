@@ -1,0 +1,175 @@
+From eac41de59cf178ed346308cc54139fe9dcb9e0d7 Mon Sep 17 00:00:00 2001
+Message-Id: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+From: Justin Lecher <jlec@gentoo.org>
+Date: Wed, 8 Jan 2014 14:41:27 +0100
+Subject: [PATCH 1/9] 01_manual.diff
+
+Signed-off-by: Justin Lecher <jlec@gentoo.org>
+---
+ doc/nullmailer-inject.1 | 12 ++++++------
+ doc/nullmailer-queue.8  | 12 ++++++------
+ doc/nullmailer-send.8   | 12 ++++++------
+ doc/sendmail.1          | 14 ++++++++++----
+ 4 files changed, 28 insertions(+), 22 deletions(-)
+
+diff --git a/doc/nullmailer-inject.1 b/doc/nullmailer-inject.1
+index 58c7fcd..540f1c0 100644
+--- a/doc/nullmailer-inject.1
++++ b/doc/nullmailer-inject.1
+@@ -82,7 +82,7 @@ fields, the following line is appended to the message:
+ Address lists are expected to follow the syntax set out in RFC822.
+ The following is a simplified explanation of the syntax.
+ 
+-An address list is list of addresses seperated by commas.
++An address list is list of addresses separated by commas.
+ An individual address may have one of the following three forms:
+ .IR user@fqdn ,
+ .IR comment <user@fqdn> ,
+@@ -227,16 +227,16 @@ including
+ and
+ .BR idhost .
+ Defaults to the value of the
+-.I me
+-control file, if it exists, otherwise the literal name
++.I /etc/mailname
++system file, if it exists, otherwise the literal name
+ .IR defauldomain .
+ .TP
+ .B defaulthost
+ The content of this file is appended to any address that is missing a
+ host name.
+ Defaults to the value of the
+-.I me
+-control file, if it exists, otherwise the literal name
++.I /etc/mailname
++system file, if it exists, otherwise the literal name
+ .IR defaulthost .
+ .TP
+ .B idhost
+@@ -245,7 +245,7 @@ for the message.
+ Defaults to the canonicalized value of
+ .BR defaulthost .
+ .TP
+-.B me
++.B /etc/mailname
+ The fully-qualifiled host name of the computer running nullmailer.
+ Defaults to the literal name
+ .IR me .
+diff --git a/doc/nullmailer-queue.8 b/doc/nullmailer-queue.8
+index f51b068..50fa6f3 100644
+--- a/doc/nullmailer-queue.8
++++ b/doc/nullmailer-queue.8
+@@ -22,22 +22,22 @@ message to stdandard output.
+ .TP
+ .B adminaddr
+ If this file is not empty, all recipients to users at either
+-"localhost" (the literal string) or the canonical host name (from the
+-.I me
+-control file) are remapped to this address.
++"localhost" (the literal string) or the canonical host name (from
++.IR /etc/mailname )
++are remapped to this address.
+ This is provided to allow local daemons to be able to send email to
+ "somebody@localhost" and have it go somewhere sensible instead of
+ being bounced by your relay host. To send to multiple addresses, put
+ them all on one line separated by a comma.
+ .SH OTHER FILES
+ .TP
+-.B /var/nullmailer/queue
++.B /var/spool/nullmailer/queue
+ The directory into which the completed messages are moved.
+ .TP
+-.B /var/nullmailer/tmp
++.B /var/spool/nullmailer/tmp
+ The directory in which messages are formed temporarily.
+ .TP
+-.B /var/nullmailer/trigger
++.B /var/spool/nullmailer/trigger
+ A pipe used to trigger
+ .BR nullmailer-send
+ to immediately start sending the message from the queue.
+diff --git a/doc/nullmailer-send.8 b/doc/nullmailer-send.8
+index 014c2c4..38fb8aa 100644
+--- a/doc/nullmailer-send.8
++++ b/doc/nullmailer-send.8
+@@ -85,14 +85,14 @@ For example, to connect to port 2525 on your SMTP smart host,
+ which also requires SMTP authentication, use:
+ 
+ .EX
+-    smarthost.dom smtp --port=2525 --user=user --pass=pass
++    smarthost.dom smtp \-\-port=2525 \-\-user=user \-\-pass=pass
+ .EE
+ 
+ If your smarthost requires LOGIN authentication instead of the default
+ PLAIN method, use:
+ 
+ .EX
+-    smarthost.dom smtp --port=2525 --auth-login --user=user --pass=pass
++    smarthost.dom smtp \-\-port=2525 \-\-auth-login \-\-user=user \-\-pass=pass
+ .EE
+ 
+ Blank lines and lines starting with a pound are ignored. When called with
+@@ -115,16 +115,16 @@ If this is set to
+ will wait forever for messages to complete sending.
+ .SH FILES
+ .TP
+-.B /var/nullmailer/queue
++.B /var/spool/nullmailer/queue
+ The message queue.
+ .TP
+-.B /var/nullmailer/trigger
++.B /var/spool/nullmailer/trigger
+ A trigger file to cause immediate delivery.
+ .TP
+-.B /usr/local/etc/nullmailer
++.B /etc/nullmailer
+ The configuration directory.
+ .TP
+-.B /usr/local/libexec/nullmailer
++.B /usr/lib/nullmailer
+ The protocol program directory.
+ .SH SEE ALSO
+ nullmailer-queue(8),
+diff --git a/doc/sendmail.1 b/doc/sendmail.1
+index 28e1ca6..ada9447 100644
+--- a/doc/sendmail.1
++++ b/doc/sendmail.1
+@@ -17,8 +17,11 @@ It is used by programs that expect a
+ interface for sending email.
+ After parsing the command-line arguments, this program executes
+ .B nullmailer-inject
+-directly.
+-See the documentation for
++directly, unless the
++.I \-bs
++option is specified in which case this program executes
++.B nullmailer-smtpd
++to inject the mail.  See the documentation for
+ .B nullmailer-inject
+ for details on how messages are reformatted and queued.
+ .SH OPTIONS
+@@ -26,6 +29,9 @@ for details on how messages are reformatted and queued.
+ .B \-B TYPE
+ .TP
+ .B \-C FILE
++ \-bm        Read mail from standard input (default)
++ \-bp        List information about mail queue
++ \-bs        Handle SMTP commands on standard input
+ .TP
+ .B \-d DEBUG
+ .TP
+@@ -77,9 +83,9 @@ Sets the full name of the sender.
+ Sets the envelope sender address.
+ .TP
+ .B \-r ADDRESS
+-An alternate and obsolete form of the -f flag.
++An alternate and obsolete form of the \-f flag.
+ .TP
+ .B \-t
+ Read message for recipients and ignore the command-line arguments.
+ .SH SEE ALSO
+-nullmailer-inject(1)
++nullmailer-inject(1), nullmailer-smtpd(8)
+-- 
+1.8.5.2
+
