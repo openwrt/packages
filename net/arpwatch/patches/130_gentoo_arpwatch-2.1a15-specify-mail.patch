@@ -1,0 +1,175 @@
+Index: arpwatch-2.1a15/arpsnmp.8
+===================================================================
+--- arpwatch-2.1a15.orig/arpsnmp.8
++++ arpwatch-2.1a15/arpsnmp.8
+@@ -42,6 +42,12 @@ arpsnmp - keep track of ethernet/ip addr
+ ]
+ .br
+ .ti +8
++[
++.B -m
++.I addr
++]
++.br
++.ti +8
+ .I file
+ [
+ .I ...
+@@ -55,6 +61,13 @@ reads information from a file (usually g
+ .BR snmpwalk (8)).
+ .LP
+ The
++.B -m
++option is used to specify the e-mail address to which reports will be
++sent. By default, reports are sent to
++.I root
++on the local machine. (This feature comes from Debian).
++.LP
++The
+ .B -d
+ flag is used enable debugging. This also inhibits mailing the reports.
+ Instead, they are sent to
+Index: arpwatch-2.1a15/arpsnmp.c
+===================================================================
+--- arpwatch-2.1a15.orig/arpsnmp.c
++++ arpwatch-2.1a15/arpsnmp.c
+@@ -82,6 +82,7 @@ main(int argc, char **argv)
+ 	char options[] =
+ 		"d"
+ 		"f:"
++		"m:"
+ 		"s:"
+ 	;
+ 
+@@ -111,6 +112,10 @@ main(int argc, char **argv)
+ 			arpfile = optarg;
+ 			break;
+ 
++		case 'm':
++			mailaddress = optarg;
++			break;
++
+ 		case 's':
+ 			path_sendmail = optarg;
+ 			break;
+@@ -197,6 +202,7 @@ usage(void)
+ 	char usage[] =
+ 		"[-d] "
+ 		"[-f datafile] "
++		"[-m e-mail ] "
+ 		"[-s sendmail_path] "
+ 		"file [...]\n"
+ 	;
+Index: arpwatch-2.1a15/arpwatch.8
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.8
++++ arpwatch-2.1a15/arpwatch.8
+@@ -46,7 +46,7 @@ arpwatch - keep track of ethernet/ip add
+ [
+ .B -n
+ .IR net [/ width
+-]]
++] ]
+ .br
+ .ti +8
+ [
+@@ -56,6 +56,12 @@ arpwatch - keep track of ethernet/ip add
+ .br
+ .ti +8
+ [
++.B -m
++.I e-mail
++]
++.br
++.ti +8
++[
+ .B -s
+ .I sendmail_path
+ ]
+@@ -120,6 +126,13 @@ of reading from the network. In this cas
+ does not fork.
+ .LP
+ The
++.B -m
++option is used to specify the e-mail address to which reports will be
++sent. By default, reports are sent to
++.I root
++on the local machine. (This feature comes from Debian).
++.LP
++The
+ .B -s
+ flag is used to specify the path to the sendmail program. Any program that
+ takes the option -odi and then text from stdin can be substituted. This is
+Index: arpwatch-2.1a15/arpwatch.c
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.c
++++ arpwatch-2.1a15/arpwatch.c
+@@ -163,6 +163,7 @@ main(int argc, char **argv)
+ 		"n:"
+ 		"N"
+ 		"r:"
++		"m:"
+ 		"s:"
+ 		"p"
+ 		"a"
+@@ -216,6 +217,10 @@ main(int argc, char **argv)
+ 			rfilename = optarg;
+ 			break;
+ 
++		case 'm':
++			mailaddress = optarg;
++			break;
++
+ 		case 's':
+ 			path_sendmail = optarg;
+ 			break;
+@@ -784,6 +789,7 @@ usage(void)
+ 		"[-i interface] "
+ 		"[-n net[/width]] "
+ 		"[-r file] "
++		"[-m e-mail] "
+ 		"[-s sendmail_path] "
+ 		"[-p] "
+ 		"[-a] "
+Index: arpwatch-2.1a15/report.c
+===================================================================
+--- arpwatch-2.1a15.orig/report.c
++++ arpwatch-2.1a15/report.c
+@@ -242,7 +242,7 @@ report(register char *title, register u_
+ 	register FILE *f;
+ 	char tempfile[64], cpu[64], os[64];
+ 	char *fmt = "%20s: %s\n";
+-	char *watcher = WATCHER;
++	char *watcher = mailaddress;
+ 	char *watchee = WATCHEE;
+ 	char *sendmail = path_sendmail;
+ 	char *unknown = "<unknown>";
+Index: arpwatch-2.1a15/util.c
+===================================================================
+--- arpwatch-2.1a15.orig/util.c
++++ arpwatch-2.1a15/util.c
+@@ -50,6 +50,7 @@ static const char rcsid[] =
+ #include "ec.h"
+ #include "file.h"
+ #include "util.h"
++#include "addresses.h"
+ 
+ char *arpdir = ARPDIR;
+ char *arpfile = ARPFILE;
+@@ -63,6 +64,7 @@ int debug = 0;
+ int initializing = 1;			/* true if initializing */
+ int nopromisc = 0;			/* don't activate promisc mode by default */
+ int allsubnets = 0;			/* watch all attached subnets */
++char *mailaddress = WATCHER;
+ 
+ /* syslog() helper routine */
+ void
+Index: arpwatch-2.1a15/util.h
+===================================================================
+--- arpwatch-2.1a15.orig/util.h
++++ arpwatch-2.1a15/util.h
+@@ -19,3 +19,4 @@ extern int debug;
+ extern int initializing;
+ extern int nopromisc;
+ extern int allsubnets;
++extern char *mailaddress;

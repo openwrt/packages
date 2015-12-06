@@ -1,0 +1,103 @@
+Index: arpwatch-2.1a15/arpwatch.8
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.8
++++ arpwatch-2.1a15/arpwatch.8
+@@ -110,6 +110,11 @@ arpwatch - keep track of ethernet/ip add
+ .br
+ .ti +8
+ [
++.B -D
++]
++.br
++.ti +9
++[
+ .B -z
+ .I ignorenet/ignoremask
+ ]
+@@ -240,6 +245,10 @@ The
+ flags prevents arpwatch from sending reports by mail. (This feature comes from Debian).
+ .LP
+ The
++.B -D
++flag turns off reverse-DNS queries. This can speed up operations significantly.
++.LP
++The
+ .B -z
+ flag is used to set a range of ip addresses to ignore (such as a DHCP
+ range). Netmask is specified as 255.255.128.0. (This feature comes from Debian).
+Index: arpwatch-2.1a15/arpwatch.c
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.c
++++ arpwatch-2.1a15/arpwatch.c
+@@ -256,6 +256,7 @@ main(int argc, char **argv)
+ 		"u:"
+ 		"R:"
+ 		"Q"
++		"D"
+ 		"z:"
+ 	;
+ 	char *tmpptr;
+@@ -347,6 +348,10 @@ main(int argc, char **argv)
+ 			++quiet;
+ 			break;
+ 
++		case 'D':
++			++noreversedns;
++			break;
++
+ 		case 'z':
+ 			tmpptr = strtok(optarg, "/");
+ 			inet_aton(tmpptr, &ignore_net);
+@@ -958,6 +963,7 @@ usage(void)
+ 		"[-u username] "
+ 		"[-R seconds ] "
+ 		"[-Q] "
++		"[-D] "
+ 		"[-z ignorenet/ignoremask] "
+ 		"\n"
+ 	;
+Index: arpwatch-2.1a15/arpwatch.h
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.h
++++ arpwatch-2.1a15/arpwatch.h
+@@ -17,6 +17,7 @@ void bcopy(const void *, void *, size_t)
+ extern char *prog;
+ 
+ extern int nonewstations; /* Turns off new-station reporting. */
++extern int noreversedns; /* Turns off reverse-dns. */
+ 
+ #ifdef ETHER_HEADER_HAS_EA
+ #define ESRC(ep) ((ep)->ether_shost.ether_addr_octet)
+Index: arpwatch-2.1a15/dns.c
+===================================================================
+--- arpwatch-2.1a15.orig/dns.c
++++ arpwatch-2.1a15/dns.c
+@@ -71,6 +71,8 @@ typedef union {
+ } querybuf;
+ #endif
+ 
++int noreversedns = 0;
++
+ int
+ gethinfo(register char *hostname, register char *cpu, register int cpulen,
+     register char *os, register int oslen)
+@@ -84,6 +86,9 @@ gethinfo(register char *hostname, regist
+ 	register int type, class, buflen, ancount, qdcount;
+ 	querybuf qbuf;
+ 
++	if (noreversedns)
++		return (0);
++
+ 	qb = &qbuf;
+ 	n = res_query(hostname, C_IN, T_HINFO, qb->buf, sizeof(qb->buf));
+ 	if (n < 0)
+@@ -144,6 +149,9 @@ gethname(u_int32_t a)
+ 	register int32_t options;
+ 	register struct hostent *hp;
+ 
++	if (noreversedns)
++		return (intoa(a));
++
+ 	options = _res.options;
+ 	_res.options |= RES_AAONLY;
+ 	_res.options &= ~(RES_DEFNAMES | RES_DNSRCH);

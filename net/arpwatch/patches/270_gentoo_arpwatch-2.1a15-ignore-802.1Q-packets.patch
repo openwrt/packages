@@ -1,0 +1,48 @@
+From 5d852d6f81d4022d500ccfea3e9b84a1d3b07dd0 Mon Sep 17 00:00:00 2001
+From: Rob Leslie <rob@mars.org>
+Date: Sun, 10 Jun 2012 12:35:02 -0700
+Subject: [PATCH] Ignore 802.1Q frames
+
+Due to the way Linux packet filtering works, the pcap library will
+return ARP/RARP packets belonging to other VLANs when listening on the
+corresponding physical interface. This confuses arpwatch as it is not
+expecting such packets; the symptom is many "... sent bad hardware
+format ..." syslog messages.
+
+Since VLAN packets can be accessed via another interface and a separate
+arpwatch instance could be run there (if desired), we simply ignore all
+802.1Q frames.
+---
+ arpwatch.c |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
+
+Index: arpwatch-2.1a15/arpwatch.c
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.c
++++ arpwatch-2.1a15/arpwatch.c
+@@ -98,6 +98,10 @@ struct rtentry;
+ #define ETHERTYPE_APOLLO	0x8019
+ #endif
+ 
++#ifndef ETHERTYPE_VLAN
++#define	ETHERTYPE_VLAN		0x8100
++#endif
++
+ #ifndef IN_CLASSD_NET
+ #define IN_CLASSD_NET		0xf0000000
+ #endif
+@@ -645,6 +649,14 @@ sanity_ether(register struct ether_heade
+ 		return(0);
+ 	}
+ 
++	/* ignore 802.1Q (VLAN) frames */
++	if (eh->ether_type == ETHERTYPE_VLAN) {
++		if (debug)
++			syslog(LOG_INFO, "ignoring 802.1Q frame from %s\n",
++			    e2str(shost));
++		return(0);
++	}
++
+ 	/* XXX sysv r4 seems to use hardware format 6 */
+ 	if (ea->arp_hrd != ARPHRD_ETHER && ea->arp_hrd != 6) {
+ 		syslog(LOG_ERR, "%s sent bad hardware format 0x%x\n",

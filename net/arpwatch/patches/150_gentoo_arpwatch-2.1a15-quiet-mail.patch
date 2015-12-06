@@ -1,0 +1,95 @@
+Index: arpwatch-2.1a15/arpwatch.8
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.8
++++ arpwatch-2.1a15/arpwatch.8
+@@ -87,6 +87,11 @@ arpwatch - keep track of ethernet/ip add
+ .B -R
+ .I seconds
+ ]
++.br
++.ti +8
++[
++.B -Q
++]
+ .ad
+ .SH DESCRIPTION
+ .B Arpwatch
+@@ -197,6 +202,10 @@ or
+ .B -u
+ flags are used. (This feature comes from Debian).
+ .LP
++The
++.B -Q
++flags prevents arpwatch from sending reports by mail. (This feature comes from Debian).
++.LP
+ Note that an empty
+ .I arp.dat
+ file must be created before the first time you run
+Index: arpwatch-2.1a15/arpwatch.c
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.c
++++ arpwatch-2.1a15/arpwatch.c
+@@ -246,6 +246,7 @@ main(int argc, char **argv)
+ 		"p"
+ 		"a"
+ 		"u:"
++		"Q"
+ 	;
+ 
+ 	if (argv[0] == NULL)
+@@ -316,6 +317,11 @@ main(int argc, char **argv)
+ 			username = optarg;
+ 			break;
+ 
++		case 'Q':
++			++quiet;
++			break;
++
++
+ 		default:
+ 			usage();
+ 		}
+@@ -881,6 +887,7 @@ usage(void)
+ 		"[-p] "
+ 		"[-a] "
+ 		"[-u username] "
++		"[-Q ] "
+ 		"\n"
+ 	;
+ 
+Index: arpwatch-2.1a15/report.c
+===================================================================
+--- arpwatch-2.1a15.orig/report.c
++++ arpwatch-2.1a15/report.c
+@@ -274,6 +274,10 @@ report(register char *title, register u_
+ 		/* Syslog this event too */
+ 		dosyslog(LOG_NOTICE, title, a, e1, e2, interface);
+ 
++		/* return if watcher is an empty string */
++		if ( quiet )
++			return;
++
+ 		/* Update child depth */
+ 		++cdepth;
+ 
+Index: arpwatch-2.1a15/util.c
+===================================================================
+--- arpwatch-2.1a15.orig/util.c
++++ arpwatch-2.1a15/util.c
+@@ -65,6 +65,7 @@ int initializing = 1;			/* true if initi
+ int nopromisc = 0;			/* don't activate promisc mode by default */
+ int allsubnets = 0;			/* watch all attached subnets */
+ char *mailaddress = WATCHER;
++int quiet = 0;				/* send mail by default */
+ 
+ /* syslog() helper routine */
+ void
+Index: arpwatch-2.1a15/util.h
+===================================================================
+--- arpwatch-2.1a15.orig/util.h
++++ arpwatch-2.1a15/util.h
+@@ -20,3 +20,4 @@ extern int initializing;
+ extern int nopromisc;
+ extern int allsubnets;
+ extern char *mailaddress;
++extern int quiet;

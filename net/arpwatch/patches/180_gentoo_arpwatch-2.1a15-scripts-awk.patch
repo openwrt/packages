@@ -1,0 +1,33 @@
+Index: arpwatch-2.1a15/arp2ethers
+===================================================================
+--- arpwatch-2.1a15.orig/arp2ethers
++++ arpwatch-2.1a15/arp2ethers
+@@ -13,11 +13,10 @@
+ #	- sort
+ #
+ 
+-sort +2rn arp.dat | \
+-    awk 'NF == 4 { print }' | \
++export AWKPATH="$AWKPATH:/usr/share/arpwatch/awk"
++
++sort -k 3rn ${1:-/var/lib/arpwatch/arp.dat} | \
+     awk -f p.awk | \
+-    egrep -v '\.[0-9][0-9]*$' | \
+-    sed -e 's/	.*	/	/' | \
+     awk -f d.awk | \
+     awk -f e.awk | \
+     sort
+Index: arpwatch-2.1a15/massagevendor
+===================================================================
+--- arpwatch-2.1a15.orig/massagevendor
++++ arpwatch-2.1a15/massagevendor
+@@ -9,6 +9,9 @@
+ #
+ # - Deal with duplicates in oui.txt (concatenate company names)
+ #
++
++export AWKPATH="$AWKPATH:/usr/share/arpwatch/awk"
++
+ (sed -n \
+     -e 's/^\([0-9A-F][0-9A-F]\)-\([0-9A-F][0-9A-F]\)-\([0-9A-F][0-9A-F]\)  *(hex)[ 	]*\(..*\)/\1\2\3	\4/p' \
+     $* | \

@@ -1,0 +1,28 @@
+=== modified file 'Makefile.in'
+Index: arpwatch-2.1a15/Makefile.in
+===================================================================
+--- arpwatch-2.1a15.orig/Makefile.in
++++ arpwatch-2.1a15/Makefile.in
+@@ -97,11 +97,11 @@ all: $(ALL)
+ 
+ arpwatch: $(WOBJ) @V_PCAPDEP@
+ 	@rm -f $@
+-	$(CC) $(CFLAGS) -o $@ $(WOBJ) $(LIBS)
++	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(WOBJ) $(LIBS)
+ 
+ arpsnmp: $(SOBJ)
+ 	@rm -f $@
+-	$(CC) $(CFLAGS) -o $@ $(SOBJ) $(SLIBS)
++	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SOBJ) $(SLIBS)
+ 
+ version.o: version.c
+ version.c: $(srcdir)/VERSION
+@@ -109,7 +109,7 @@ version.c: $(srcdir)/VERSION
+ 	sed -e 's/.*/char version[] = "&";/' $(srcdir)/VERSION > $@
+ 
+ zap: zap.o intoa.o
+-	$(CC) $(CFLAGS) -o $@ zap.o intoa.o -lutil
++	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ zap.o intoa.o -lutil
+ 
+ install: force
+ 	$(INSTALL) -m 555 -o bin -g bin arpwatch $(DESTDIR)$(BINDEST)

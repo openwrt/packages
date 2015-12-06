@@ -1,0 +1,150 @@
+Patch from debian. Just reorders usage output and getopt options to ease adding new features.
+
+
+diff -Naru arpwatch-2.1a15.orig/arpsnmp.8 arpwatch-2.1a15/arpsnmp.8
+--- arpwatch-2.1a15.orig/arpsnmp.8	2006-09-22 17:18:02.000000000 +0400
++++ arpwatch-2.1a15/arpsnmp.8	2006-09-22 18:17:44.000000000 +0400
+@@ -27,10 +27,15 @@
+ .B arpsnmp
+ [
+ .B -d
+-] [
++]
++.br
++.ti +8
++[
+ .B -f
+ .I datafile
+ ]
++.br
++.ti +8
+ .I file
+ [
+ .I ...
+diff -Naru arpwatch-2.1a15.orig/arpsnmp.c arpwatch-2.1a15/arpsnmp.c
+--- arpwatch-2.1a15.orig/arpsnmp.c	2004-01-23 01:25:17.000000000 +0300
++++ arpwatch-2.1a15/arpsnmp.c	2006-09-22 18:17:15.000000000 +0400
+@@ -78,6 +78,10 @@
+ 	register char *cp;
+ 	register int op, i;
+ 	char errbuf[256];
++	char options[] =
++		"d"
++		"f:"
++	;
+ 
+ 	if ((cp = strrchr(argv[0], '/')) != NULL)
+ 		prog = cp + 1;
+@@ -90,7 +94,7 @@
+ 	}
+ 
+ 	opterr = 0;
+-	while ((op = getopt(argc, argv, "df:")) != EOF)
++	while ((op = getopt(argc, argv, options)) != EOF)
+ 		switch (op) {
+ 
+ 		case 'd':
+@@ -182,9 +186,14 @@
+ usage(void)
+ {
+ 	extern char version[];
++	char usage[] =
++		"[-d] "
++		"[-f datafile] "
++		"file [...]\n"
++	;
+ 
+ 	(void)fprintf(stderr, "Version %s\n", version);
+ 	(void)fprintf(stderr,
+-	    "usage: %s [-d] [-f datafile] file [...]\n", prog);
++	    "usage: %s %s", prog, usage);
+ 	exit(1);
+ }
+diff -Naru arpwatch-2.1a15.orig/arpwatch.8 arpwatch-2.1a15/arpwatch.8
+--- arpwatch-2.1a15.orig/arpwatch.8	2006-09-22 17:18:02.000000000 +0400
++++ arpwatch-2.1a15/arpwatch.8	2006-09-22 18:19:20.000000000 +0400
+@@ -28,10 +28,16 @@
+ .B arpwatch
+ [
+ .B -dN
+-] [
++]
++.br
++.ti +8
++[
+ .B -f
+ .I datafile
+-] [
++]
++.br
++.ti +8
++[
+ .B -i
+ .I interface
+ ]
+@@ -40,7 +46,10 @@
+ [
+ .B -n
+ .IR net [/ width
+-]] [
++]]
++.br
++.ti +8
++[
+ .B -r
+ .I file
+ ]
+diff -Naru arpwatch-2.1a15.orig/arpwatch.c arpwatch-2.1a15/arpwatch.c
+--- arpwatch-2.1a15.orig/arpwatch.c	2004-01-23 01:18:20.000000000 +0300
++++ arpwatch-2.1a15/arpwatch.c	2006-09-22 18:22:35.000000000 +0400
+@@ -153,6 +153,14 @@
+ 	register char *interface, *rfilename;
+ 	struct bpf_program code;
+ 	char errbuf[PCAP_ERRBUF_SIZE];
++	char options[] =
++		"d"
++		"f:"
++		"i:"
++		"n:"
++		"N"
++		"r:"
++	;
+ 
+ 	if (argv[0] == NULL)
+ 		prog = "arpwatch";
+@@ -170,7 +178,7 @@
+ 	interface = NULL;
+ 	rfilename = NULL;
+ 	pd = NULL;
+-	while ((op = getopt(argc, argv, "df:i:n:Nr:")) != EOF)
++	while ((op = getopt(argc, argv, options)) != EOF)
+ 		switch (op) {
+ 
+ 		case 'd':
+@@ -201,7 +209,6 @@
+ 		case 'r':
+ 			rfilename = optarg;
+ 			break;
+-
+ 		default:
+ 			usage();
+ 		}
+@@ -748,9 +755,16 @@
+ usage(void)
+ {
+ 	extern char version[];
++	char usage[] =
++		"[-dN] "
++		"[-f datafile] "
++		"[-i interface] "
++		"[-n net[/width]] "
++		"[-r file] "
++		"\n"
++	;
+ 
+ 	(void)fprintf(stderr, "Version %s\n", version);
+-	(void)fprintf(stderr, "usage: %s [-dN] [-f datafile] [-i interface]"
+-	    " [-n net[/width]] [-r file]\n", prog);
++	(void)fprintf(stderr, "usage: %s %s", prog, usage);
+ 	exit(1);
+ }

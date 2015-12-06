@@ -1,0 +1,95 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=90
+STOP=10
+
+USE_PROCD=1
+PROG=/usr/sbin/arpwatch
+NAME=arpwatch
+PIDCOUNT=0
+
+validate_section_arpwatch()
+{
+	if ! uci_validate_section arpwatch arpwatch "${1}" \
+		'network:string' \
+	        'emailaddress:string' \
+		'disablepromiscuous:bool:1' \
+		'bogonsalladdresses:bool:1' \
+		'nobogons:0' \
+		'nonewstations:0' \
+		'restartinterfacegone:uinteger:0' \
+		'noemails:bool:0' \
+		'noreversedns:bool:1' \
+		'enable:bool:1' \
+		'sendmailpath:string:/usr/sbin/sendmail' \
+		'runasuser:string:arpwatch'
+        then
+		return 1
+        fi
+
+	[ "$nobogons" = "1" ] && [ "$bogonsalladdresses" = "1" ] && return 1
+
+	[ -n "$emailaddress"  ] && [ "$noemails" = "1" ] && return 1
+
+	[ -z "$emailaddress" ] && [ "$noemails" = "0" ] && return 1
+
+	[ -n "$network" ] || return 1
+	
+	return 0
+}
+
+arpwatch_instance() {
+	local network emailaddress disablepromiscuous bogonsalladdresses nobogon nonewstations restartinterfacegone noemails noreversedns enable sendmailpath runasuser
+
+	validate_section_arpwatch "${1}" || {
+		echo "Validation failed"
+		return 1
+	}
+
+	[ "${enable}" = "0" ] && return 1
+	PIDCOUNT="$(( ${PIDCOUNT} + 1))"
+	local pid_file="/var/run/${NAME}.${PIDCOUNT}.pid"
+
+	touch /etc/arpwatch/arp.dat
+	chown -R $runasuser:$(id -g $runasuser) /etc/arpwatch
+	chmod 700 /etc/arpwatch
+
+	procd_open_instance
+	procd_set_param command "$PROG" -F -P "$pid_file"
+	[ -n "$emailaddress" ] && procd_append_param command -m "$emailaddress"
+	[ "$disablepromiscuous" = "1" ] && procd_append_param command -p
+	[ "$bogonsalladdresses" = "1" ] && procd_append_param command -a
+	[ "$nobogons" = "1" ] && procd_append_param command -N
+	[ "$nonewstations" = "1" ] && procd_append_param command -S
+	[ "$restartinterfacegone" != "0" ] && procd_append_param command -R "$restartinterfacegone"
+	[ "$restartinterfacegone" = "0" ] && procd_append_param command -u "$runasuser"
+	[ "$noemails" = "1" ] && procd_append_param command -Q
+	[ "$noemails" != "1" ] && procd_append_param command -s "$sendmailpath"
+	[ "$noreversedns" = "1" ] && procd_append_param command -D
+	local ifname
+	network_get_device ifname "$network"	
+	if [ -n "$ifname" ]; then
+		procd_append_param command -i "$ifname"
+		procd_append_param netdev "$ifname"
+	else
+		echo "Unable to find interface"
+		return 1
+	fi
+	procd_close_instance
+
+        return 0
+}
+
+start_service() {
+	. /lib/functions.sh
+	. /lib/functions/network.sh
+
+	config_load "${NAME}"
+	config_foreach arpwatch_instance arpwatch
+}
+
+service_triggers() {
+	procd_add_reload_trigger "arpwatch"
+	procd_add_validation validate_section_arpwatch
+}

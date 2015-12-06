@@ -1,0 +1,104 @@
+Index: arpwatch-2.1a15/arpwatch.8
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.8
++++ arpwatch-2.1a15/arpwatch.8
+@@ -60,6 +60,11 @@ arpwatch - keep track of ethernet/ip add
+ .br
+ .ti +9
+ [
++.B -S
++]
++.br
++.ti +9
++[
+ .B -r
+ .I file
+ ]
+@@ -155,6 +160,10 @@ The
+ flag disables reporting any bogons.
+ .LP
+ The
++.B -S
++flag disables reporting of new stations.
++.LP
++The
+ .B -r
+ flag is used to specify a savefile
+ (perhaps created by
+Index: arpwatch-2.1a15/arpwatch.c
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.c
++++ arpwatch-2.1a15/arpwatch.c
+@@ -247,6 +247,7 @@ main(int argc, char **argv)
+ 		"i:"
+ 		"n:"
+ 		"N"
++		"S"
+ 		"r:"
+ 		"m:"
+ 		"s:"
+@@ -310,6 +311,10 @@ main(int argc, char **argv)
+ 			++nobogons;
+ 			break;
+ 
++		case 'S':
++			++nonewstations;
++			break;
++
+ 		case 'r':
+ 			rfilename = optarg;
+ 			break;
+@@ -941,7 +946,7 @@ usage(void)
+ {
+ 	extern char version[];
+ 	char usage[] =
+-		"[-dN] "
++		"[-dNS] "
+ 		"[-f datafile] "
+ 		"[-i interface] "
+ 		"[-n net[/width]] "
+@@ -952,7 +957,7 @@ usage(void)
+ 		"[-a] "
+ 		"[-u username] "
+ 		"[-R seconds ] "
+-		"[-Q ] "
++		"[-Q] "
+ 		"[-z ignorenet/ignoremask] "
+ 		"\n"
+ 	;
+Index: arpwatch-2.1a15/arpwatch.h
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.h
++++ arpwatch-2.1a15/arpwatch.h
+@@ -16,6 +16,8 @@ void bcopy(const void *, void *, size_t)
+ 
+ extern char *prog;
+ 
++extern int nonewstations; /* Turns off new-station reporting. */
++
+ #ifdef ETHER_HEADER_HAS_EA
+ #define ESRC(ep) ((ep)->ether_shost.ether_addr_octet)
+ #define EDST(ep) ((ep)->ether_dhost.ether_addr_octet)
+Index: arpwatch-2.1a15/db.c
+===================================================================
+--- arpwatch-2.1a15.orig/db.c
++++ arpwatch-2.1a15/db.c
+@@ -86,6 +86,8 @@ static struct ainfo *ainfo_find(u_int32_
+ static void check_hname(struct ainfo *);
+ struct ainfo *newainfo(void);
+ 
++int nonewstations = 0;
++
+ int
+ ent_add(register u_int32_t a, register u_char *e, time_t t, register char *h,
+ 	char *interface)
+@@ -118,7 +120,8 @@ ent_add(register u_int32_t a, register u
+ 	if (ap->ecount == 0) {
+ 		ap->ecount = 1;
+ 		ap->elist[0] = elist_alloc(a, e, t, h, interface);
+-		report("new station", a, e, NULL, &t, NULL, interface);
++		if (!nonewstations)
++			report("new station", a, e, NULL, &t, NULL, interface);
+ 		return (1);
+ 	}
+ 
