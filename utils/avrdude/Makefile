@@ -29,7 +29,7 @@ define Package/avrdude
   CATEGORY:=Utilities
   TITLE:=AVR Downloader/UploaDEr
   URL:=http://www.nongnu.org/avrdude/
-  DEPENDS:=+libncurses +libreadline +libusb-compat +libftdi1 +libelf1
+  DEPENDS:=+libncurses +libreadline +libusb-compat +libftdi1
 endef
 
 define Package/avrdude/description
