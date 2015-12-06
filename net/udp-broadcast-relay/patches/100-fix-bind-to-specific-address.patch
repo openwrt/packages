@@ -1,0 +1,169 @@
+Index: udp-broadcast-relay-0.3/main.c
+===================================================================
+--- udp-broadcast-relay-0.3.orig/main.c
++++ udp-broadcast-relay-0.3/main.c
+@@ -51,6 +51,7 @@ http://www.netfor2.com/ip.htm
+ #include <stdio.h>
+ #include <linux/if.h>
+ #include <sys/ioctl.h>
++#include <stdlib.h>
+ 
+ main(int argc,char **argv)
+ {
+@@ -74,6 +75,7 @@ main(int argc,char **argv)
+ 	struct {
+ 		struct sockaddr_in dstaddr;
+ 		int ifindex;
++		int sockfd;
+ 	} ifs[MAXIFS];
+ 	
+ 	/* Address broadcast packet was sent from */
+@@ -239,68 +241,76 @@ main(int argc,char **argv)
+ 	/* Free our allocated buffer and close the socket */
+ 	close(fd);
+ 
+-	/* Create our broadcast receiving socket */
+-	if((rcv=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP)) < 0)
+-  	{
++        int maxfd = -1;
++
++	int curif;
++	for (curif = 0; curif <= maxifs; curif++) {
++	  /* Create our broadcast receiving socket */
++	  if((rcv=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP)) < 0)
++	  {
+   		perror("socket");
+   		exit(1);
+-  	};
++	  };
++	  ifs[curif].sockfd = rcv;
++	  if (rcv > maxfd) {
++	    maxfd = rcv;
++          }
+ 
+-	x = 1;
+-	if(setsockopt(rcv, SOL_SOCKET, SO_BROADCAST, (char*) &x, sizeof(int))<0){
++	  x = 1;
++	  if(setsockopt(rcv, SOL_SOCKET, SO_BROADCAST, (char*) &x, sizeof(int))<0){
+ 		perror("SO_BROADCAST on rcv");
+ 		exit(1);
+-	};
+-	if(setsockopt(rcv, SOL_IP, IP_RECVTTL, (char*) &x, sizeof(int))<0){
++	  };
++	  if(setsockopt(rcv, SOL_IP, IP_RECVTTL, (char*) &x, sizeof(int))<0){
+ 		perror("IP_RECVTTL on rcv");
+ 		exit(1);
+-	};
+-	if(setsockopt(rcv, SOL_IP, IP_PKTINFO, (char*) &x, sizeof(int))<0){
++	  };
++	  if(setsockopt(rcv, SOL_IP, IP_PKTINFO, (char*) &x, sizeof(int))<0){
+ 		perror("IP_PKTINFO on rcv");
+ 		exit(1);
+ 	};
+ 
+-	/* We bind it to broadcast addr on the given port */
+-	rcv_addr.sin_family = AF_INET;
+-	rcv_addr.sin_port = htons(port);
+-	rcv_addr.sin_addr.s_addr = INADDR_ANY;
++	  /* We bind it to broadcast addr on the given port */
++	  rcv_addr.sin_family = AF_INET;
++	  rcv_addr.sin_port = htons(port);
++	  rcv_addr.sin_addr.s_addr = ifs[curif].dstaddr.sin_addr.s_addr;
+ 
+-	if ( bind (rcv, (struct sockaddr *)&rcv_addr, sizeof(struct sockaddr_in) ) < 0 )
+-	{
++	  if ( bind (rcv, (struct sockaddr *)&rcv_addr, sizeof(struct sockaddr_in) ) < 0 )
++	  {
+ 		perror("bind");
+ 		fprintf(stderr,"A program is already bound to the broadcast address for the given port\n");
+ 		exit(1);
+-	}
++	  }
+ 	
+-	/* Set up a raw socket for sending our packets through */
+-	if((fd=socket(AF_INET,SOCK_RAW,IPPROTO_RAW)) < 0)
+-  	{
++	  /* Set up a raw socket for sending our packets through */
++	  if((fd=socket(AF_INET,SOCK_RAW,IPPROTO_RAW)) < 0)
++	  {
+   		perror("socket");
+   		exit(1);
+-  	};
++	  };
+ 
+-	/* Set dest port to that was provided on command line */
+-	*(u_short*)(gram+22)=(u_short)htons(port);
++	  /* Set dest port to that was provided on command line */
++	  *(u_short*)(gram+22)=(u_short)htons(port);
+ 	
+-	x=1;
+-	if (setsockopt(fd,SOL_SOCKET,SO_BROADCAST,(char*)&x,sizeof(x))<0)
+-	{
++	  x=1;
++	  if (setsockopt(fd,SOL_SOCKET,SO_BROADCAST,(char*)&x,sizeof(x))<0)
++	    {
+ 		perror("setsockopt SO_BROADCAST");
+ 		exit(1);
+-  	};
++	    };
+ 
+-	/* Enable IP header stuff on the raw socket */
+-	#ifdef IP_HDRINCL
+-	x=1;
+-	if (setsockopt(fd,IPPROTO_IP,IP_HDRINCL,(char*)&x,sizeof(x))<0)
+-	{
++	  /* Enable IP header stuff on the raw socket */
++          #ifdef IP_HDRINCL
++	  x=1;
++	  if (setsockopt(fd,IPPROTO_IP,IP_HDRINCL,(char*)&x,sizeof(x))<0)
++	    {
+ 		perror("setsockopt IP_HDRINCL");
+ 		exit(1);
+-  	};
+-	#else
+-	#error IP_HDRINCL support is required
+-	#endif
+-
++	    };
++	  #else
++	  #error IP_HDRINCL support is required
++	  #endif
++	}
+  	/* Fork to background */
+   if (! debug) {
+     if (forking && fork())
+@@ -315,6 +325,25 @@ main(int argc,char **argv)
+ 
+ 	for (;;) /* endless loop */
+ 	{
++          fd_set rfds;
++          FD_ZERO(&rfds);
++          for (curif = 0; curif <= maxifs; curif++) {
++            FD_SET(ifs[curif].sockfd, &rfds);
++          }
++          struct timeval tv;
++          int selretval;
++          tv.tv_sec = 30;
++          tv.tv_usec = 0;
++
++          selretval = select(maxfd + 1, &rfds, NULL, NULL, &tv);
++
++          if (selretval == -1) {
++            perror("Error detecting broadcast packet");
++	    continue;
++          } else if (selretval > 0) {
++            for (curif = 0; curif <= maxifs; curif++) {
++              if (FD_ISSET(ifs[curif].sockfd, &rfds)) {
++                rcv = ifs[curif].sockfd;
+ 		/* Receive a broadcast packet */
+ 		len = recvmsg(rcv,&rcv_msg,0);
+ 		if (len <= 0) continue;	/* ignore broken packets */
+@@ -378,5 +407,8 @@ main(int argc,char **argv)
+ 				perror("sendto");
+ 		}
+ 		DPRINT ("\n");
++              }
++            }
++          }
+ 	}
+ }
