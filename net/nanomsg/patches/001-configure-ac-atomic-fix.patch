@@ -1,0 +1,11 @@
+--- a/configure.ac	2015-10-04 00:51:30.581503000 -0700
++++ b/configure.ac	2015-10-04 00:52:27.469503000 -0700
+@@ -344,7 +344,7 @@
+     AC_DEFINE([NN_HAVE_GCC_ATOMIC_BUILTINS])
+ ])
+ 
+-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
++AC_LINK_IFELSE([AC_LANG_PROGRAM(
+     [[#include <atomic.h>]],
+     [[uint32_t value; atomic_cas_32 (&value, 0, 0); return 0;]])],[
+     AC_DEFINE([NN_HAVE_ATOMIC_SOLARIS])],[])
