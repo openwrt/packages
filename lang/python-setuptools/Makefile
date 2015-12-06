@@ -15,10 +15,15 @@ PKG_SOURCE:=setuptools-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/s/setuptools/
 PKG_MD5SUM:=295d7aaef2da7d6ff10b522581da0cf9
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/setuptools-$(PKG_VERSION)
+HOST_BUILD_DEPENDS:=python/host
 
+PKG_BUILD_DIR:=$(BUILD_DIR)/setuptools-$(PKG_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/setuptools-$(PKG_VERSION)
+
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
+$(call include_mk, python-host.mk)
 
 define Package/python-setuptools
   SUBMENU:=Python
@@ -52,6 +57,18 @@ define PyPackage/python-setuptools/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 endef
+
+define Host/Compile
+	$(call Build/Compile/HostPyMod,,\
+		install --root="$(STAGING_DIR_HOST)" --prefix="" \
+		--single-version-externally-managed \
+	)
+endef
+
+define Host/Install
+endef
+
+$(eval $(call HostBuild))
 
 $(eval $(call PyPackage,python-setuptools))
 $(eval $(call BuildPackage,python-setuptools))
