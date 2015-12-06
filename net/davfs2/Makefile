@@ -23,7 +23,7 @@ define Package/davfs2
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Filesystem
-  DEPENDS=+libopenssl +libneon +libiconv +libintl +libexpat +kmod-fuse +libfuse
+  DEPENDS=+libneon +libiconv +libintl +kmod-fuse +libfuse
   TITLE:=Mount a WebDAV resource as a regular file system.
   URL:=http://savannah.nongnu.org/projects/davfs2/
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
