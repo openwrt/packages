@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libradcli
-PKG_VERSION:=1.2.3
+PKG_VERSION:=1.2.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=radcli-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/radcli/radcli/releases/download/radcli_1_2_3/
-PKG_MD5SUM:=e283db7db2248cd6499aff69813cb1ed
+PKG_SOURCE_URL:=https://github.com/radcli/radcli/releases/download/$(PKG_VERSION)/
+PKG_MD5SUM:=b94e46e37668cc562ea5420d095a836b
 PKG_BUILD_DIR:=$(BUILD_DIR)/radcli-$(PKG_VERSION)
 
 PKG_INSTALL:=1
