@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=enum34
-PKG_VERSION:=1.0.4
+PKG_VERSION:=1.1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/e/enum34
-PKG_MD5SUM:=ac80f432ac9373e7d162834b264034b6
+PKG_MD5SUM:=5edaf22a14ec2769fc973a0443bf02d5
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=enum/LICENSE
@@ -34,6 +34,11 @@ endef
 define Package/python-enum34/description
 enum34 is the new Python stdlib enum module available in Python 3.4
 backported for previous versions of Python from 2.4 to 3.3.
+endef
+
+define PyPackage/python-enum34/filespec
++|$(PYTHON_PKG_DIR)
+-|$(PYTHON_PKG_DIR)/enum/test_enum.py
 endef
 
 define Build/Compile
