@@ -119,7 +119,7 @@ define Package/boost/config
 	    	bool "Compile Static Libraries"
 	    	help 
 	    		Compile static version of all selected boost libraries.
-	    	default n
+	    	default y
 
 	    config boost-shared-libs
 	    	bool "Compile Shared Libraries"
@@ -138,23 +138,28 @@ define Package/boost/config
 	    	bool "Use shared version of C and C++ runtimes for shared libraries."
 	    	help 
 	    		Determines if shared or static version of C and C++ runtimes should be used for shared libraries.
-	    	default n
+	    	default y
 	    	select boost-shared-libs
 
-
-	    config boost-multi-threading
-	    	bool "Multithread Support"	    	
+	    config boost-use-name-tags
+	    	bool "Use tagged names."
 	    	help 
-	    		Compile Boost libraries n multithread mode.
-	    	default y
+	    		Add name tags the lib files, to diferentiate each library version:
+	    		  "-mt" for multi-threading.
+	    		  "-d" for debugging.
+	    		  "-s" for runtime static link".
+	    		Might break compatibility with libraries that expect boost libs with default names.
+	    	default n	    	
 
 	    config boost-single-thread
+	    	depends on @boost-use-name-tags
 	    	bool "Single thread Support"	    	
 	    	help 
 	    		Compile Boost libraries in single-thread mode.
 	    	default n
 	    
 	    config boost-with-debug
+	    	depends on @boost-use-name-tags
 	    	bool "Boost Debug Support"	    	
 	    	help 
 	    		Compile Boost libraries with debug support.
@@ -174,7 +179,7 @@ define Package/boost/config
 	    	select PACKAGE_boost-test
 	    
 		config boost-coroutine2
-		depends on @GCC_USE_VERSION_5
+		depends on @GCC_VERSION_5
 		bool "Boost couroutine2 support."
 		select PACKAGE_boost-coroutine
 		default n
@@ -238,19 +243,19 @@ $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
-$(eval $(call DefineBoostLibrary,iostreams,,+zlib))
+$(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
 $(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS) +@BUILD_NLS))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
 $(eval $(call DefineBoostLibrary,program_options,,))
-$(eval $(call DefineBoostLibrary,python,,+CONFIG_boost_python:python))
-$(eval $(call DefineBoostLibrary,python3,,+CONFIG_boost_python3:python3))
+$(eval $(call DefineBoostLibrary,python,,+PACKAGE_boost-python:python))
+$(eval $(call DefineBoostLibrary,python3,,+PACKAGE_boost-python3:python3))
 $(eval $(call DefineBoostLibrary,random,system,))
 $(eval $(call DefineBoostLibrary,regex,,))
 $(eval $(call DefineBoostLibrary,serialization,,))
 $(eval $(call DefineBoostLibrary,signals,,))
-$(eval $(call DefineBoostLibrary,system,,+@boost-multi-threading))
+$(eval $(call DefineBoostLibrary,system,,))
 $(eval $(call DefineBoostLibrary,thread,system chrono atomic,))
 $(eval $(call DefineBoostLibrary,timer,chrono))
 $(eval $(call DefineBoostLibrary,wave,date_time thread filesystem,))
@@ -300,14 +305,14 @@ define Build/Compile
 			--ignore-site-config \
 			--toolset=gcc-$(ARCH) abi=$(BOOST_ABI) \
 			--disable-long-double \
-			--layout=tagged \
+			$(if $(CONFIG_boost-use-name-tags),--layout=tagged,--layout=system) \
 			$(if $(CONFIG_boost-with-debug),--build-type=complete,--build-type=minimal) \
 			$(if $(CONFIG_boost-static-libs),link=static,) \
 			$(if $(CONFIG_boost-runtime-static),runtime-link=static,runtime-link=shared) \
 			$(if $(CONFIG_boost-shared-libs),link=shared,) \
 			$(if $(CONFIG_boost-runtime-shared),runtime-link=shared,) \
 			$(if $(CONFIG_boost-single-thread),threading=single,) \
-			$(if $(CONFIG_boost-multi-threading),threading=multi,) \
+			threading=multi \
 			$(CONFIGURE_ARGS) \
 			--without-mpi \
 			$(if $(CONFIG_boost-coroutine2),,--without-coroutine2) \
