@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/target.mk
 
 PKG_NAME:=boost
 PKG_VERSION:=1_59_0
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
@@ -119,7 +119,7 @@ define Package/boost/config
 	    	bool "Compile Static Libraries"
 	    	help 
 	    		Compile static version of all selected boost libraries.
-	    	default n
+		default y
 
 	    config boost-shared-libs
 	    	bool "Compile Shared Libraries"
@@ -138,7 +138,7 @@ define Package/boost/config
 	    	bool "Use shared version of C and C++ runtimes for shared libraries."
 	    	help 
 	    		Determines if shared or static version of C and C++ runtimes should be used for shared libraries.
-	    	default n
+		default y
 	    	select boost-shared-libs
 
 
@@ -174,7 +174,7 @@ define Package/boost/config
 	    	select PACKAGE_boost-test
 	    
 		config boost-coroutine2
-		depends on @GCC_USE_VERSION_5
+		depends on @GCC_VERSION_5
 		bool "Boost couroutine2 support."
 		select PACKAGE_boost-coroutine
 		default n
@@ -238,14 +238,14 @@ $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
-$(eval $(call DefineBoostLibrary,iostreams,,+zlib))
+$(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
 $(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS) +@BUILD_NLS))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
 $(eval $(call DefineBoostLibrary,program_options,,))
-$(eval $(call DefineBoostLibrary,python,,+CONFIG_boost_python:python))
-$(eval $(call DefineBoostLibrary,python3,,+CONFIG_boost_python3:python3))
+$(eval $(call DefineBoostLibrary,python,,+PACKAGE_boost-python:python))
+$(eval $(call DefineBoostLibrary,python3,,+PACKAGE_boost-python3:python3))
 $(eval $(call DefineBoostLibrary,random,system,))
 $(eval $(call DefineBoostLibrary,regex,,))
 $(eval $(call DefineBoostLibrary,serialization,,))
