@@ -12,11 +12,11 @@ include ./files/python-package.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=6
+PKG_RELEASE:=1
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=c685ef0b8e9f27b5e3db5db12b268ac6
+PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
+PKG_MD5SUM:=1dbcc848b4cd8399a8199d000f9f823c
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -39,7 +39,7 @@ define Package/python/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python $(PYTHON_VERSION) programming language
-  URL:=http://www.python.org/
+  URL:=https://www.python.org/
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
@@ -77,8 +77,12 @@ endef
 
 PYTHON_LIB_FILES_DEL:=
 PYTHON_PACKAGES:=
+PYTHON_PACKAGES_DEPENDS:=
 define PyBasePackage
   PYTHON_PACKAGES+=$(1)
+  ifeq ($(3),)
+    PYTHON_PACKAGES_DEPENDS+=$(1)
+  endif
   PYTHON_LIB_FILES_DEL+=$(2)
   define PyPackage/$(1)/filespec
     $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
@@ -89,7 +93,7 @@ include ./files/python-package-*.mk
 
 define Package/python
 $(call Package/python/Default)
-  DEPENDS:=+python-light $(foreach package,$(PYTHON_PACKAGES),+$(package))
+  DEPENDS:=+python-light $(foreach package,$(PYTHON_PACKAGES_DEPENDS),+$(package))
 endef
 
 define Package/python/description
@@ -184,12 +188,10 @@ endef
 
 define PyPackage/python-light/filespec
 +|/usr/lib/python$(PYTHON_VERSION)
--|/usr/lib/python$(PYTHON_VERSION)/config
 -|/usr/lib/python$(PYTHON_VERSION)/distutils/cygwinccompiler.py
 -|/usr/lib/python$(PYTHON_VERSION)/distutils/command/wininst*
 -|/usr/lib/python$(PYTHON_VERSION)/ensurepip
 -|/usr/lib/python$(PYTHON_VERSION)/idlelib
--|/usr/lib/python$(PYTHON_VERSION)/lib2to3
 -|/usr/lib/python$(PYTHON_VERSION)/lib-tk
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_testcapi.so
 -|/usr/lib/python$(PYTHON_VERSION)/pdb.doc
