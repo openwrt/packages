@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/target.mk
 
 PKG_NAME:=boost
 PKG_VERSION:=1_59_0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
@@ -50,6 +50,33 @@ endef
 define Package/boost/description
 This package provides the Boost v1.59 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
+This package provides the following libraries:
+ - atomic
+ - chrono
+ - container
+ - context
+ - coroutine
+ - - coroutine2 (requires GCC v5 and up)
+ - date_time
+ - exception
+ - filesystem
+ - graph
+ - - graph-parallel
+ - iostreams
+ - locale
+ - log
+ - math
+ - program_options
+ - python
+ - python3
+ - random
+ - regex
+ - serialization
+ - signals
+ - system
+ - thread
+ - timer
+ - wave
 endef
 
 BOOST_LIBS =
@@ -89,23 +116,54 @@ define Package/boost/config
       depends on PACKAGE_boost
       	comment "Boost compilation options."
 	    config boost-static-libs
-	    	bool "Static Libraries Only"	    	
+	    	bool "Compile Static Libraries"
 	    	help 
-	    		Static compile of all selected boost libraries.
-	    	default n
+	    		Compile static version of all selected boost libraries.
+	    	default y
+
+	    config boost-shared-libs
+	    	bool "Compile Shared Libraries"
+	    	help 
+	    		Compile shared version of all selected boost libraries.
+	    	default y
 	    
 	    config boost-runtime-static
-	    	bool "Use static version of C and C++ runtimes."	    	
+	    	bool "Use static version of C and C++ runtimes for static libraries."	    	
 	    	help 
-	    		Determines if shared or static version of C and C++ runtimes should be used.
+	    		Determines if shared or static version of C and C++ runtimes should be used for static libraries.
 	    	default n
 	    	select boost-static-libs
 
-	    config boost-multi-threading
-	    	bool "Multithread Support"	    	
+	    config boost-runtime-shared
+	    	bool "Use shared version of C and C++ runtimes for shared libraries."
 	    	help 
-	    		Compile Boost libraries with multithread support.
+	    		Determines if shared or static version of C and C++ runtimes should be used for shared libraries.
 	    	default y
+	    	select boost-shared-libs
+
+	    config boost-use-name-tags
+	    	bool "Use tagged names."
+	    	help 
+	    		Add name tags the lib files, to diferentiate each library version:
+	    		  "-mt" for multi-threading.
+	    		  "-d" for debugging.
+	    		  "-s" for runtime static link".
+	    		Might break compatibility with libraries that expect boost libs with default names.
+	    	default n	    	
+
+	    config boost-single-thread
+	    	depends on @boost-use-name-tags
+	    	bool "Single thread Support"	    	
+	    	help 
+	    		Compile Boost libraries in single-thread mode.
+	    	default n
+	    
+	    config boost-with-debug
+	    	depends on @boost-use-name-tags
+	    	bool "Boost Debug Support"	    	
+	    	help 
+	    		Compile Boost libraries with debug support.
+	    	default n	    	
     endmenu
 
     menu "Select Boost libraries"
@@ -121,6 +179,7 @@ define Package/boost/config
 	    	select PACKAGE_boost-test
 	    
 		config boost-coroutine2
+		depends on @GCC_VERSION_5
 		bool "Boost couroutine2 support."
 		select PACKAGE_boost-coroutine
 		default n
@@ -184,20 +243,19 @@ $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
-#$(eval $(call DefineBoostLibrary,graph_parallel,,))
-$(eval $(call DefineBoostLibrary,iostreams,,+zlib))
+$(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
 $(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS) +@BUILD_NLS))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
 $(eval $(call DefineBoostLibrary,program_options,,))
-$(eval $(call DefineBoostLibrary,python,,+python))
-$(eval $(call DefineBoostLibrary,python3,,+python3))
+$(eval $(call DefineBoostLibrary,python,,+PACKAGE_boost-python:python))
+$(eval $(call DefineBoostLibrary,python3,,+PACKAGE_boost-python3:python3))
 $(eval $(call DefineBoostLibrary,random,system,))
 $(eval $(call DefineBoostLibrary,regex,,))
 $(eval $(call DefineBoostLibrary,serialization,,))
 $(eval $(call DefineBoostLibrary,signals,,))
-$(eval $(call DefineBoostLibrary,system,,+@boost-multi-threading))
+$(eval $(call DefineBoostLibrary,system,,))
 $(eval $(call DefineBoostLibrary,thread,system chrono atomic,))
 $(eval $(call DefineBoostLibrary,timer,chrono))
 $(eval $(call DefineBoostLibrary,wave,date_time thread filesystem,))
@@ -245,11 +303,16 @@ define Build/Compile
 		bjam \
 			'-sBUILD=release <optimization>space <inlining>on <debug-symbols>off' \
 			--ignore-site-config \
-			--toolset=gcc-$(ARCH) --build-type=minimal --layout=system abi=$(BOOST_ABI) \
+			--toolset=gcc-$(ARCH) abi=$(BOOST_ABI) \
 			--disable-long-double \
-			$(if $(CONFIG_boost-static-libs),link=static,link=shared) \
+			$(if $(CONFIG_boost-use-name-tags),--layout=tagged,--layout=system) \
+			$(if $(CONFIG_boost-with-debug),--build-type=complete,--build-type=minimal) \
+			$(if $(CONFIG_boost-static-libs),link=static,) \
 			$(if $(CONFIG_boost-runtime-static),runtime-link=static,runtime-link=shared) \
-			$(if $(CONFIG_boost-multi-threading),threading=multi,threading=single) \
+			$(if $(CONFIG_boost-shared-libs),link=shared,) \
+			$(if $(CONFIG_boost-runtime-shared),runtime-link=shared,) \
+			$(if $(CONFIG_boost-single-thread),threading=single,) \
+			threading=multi \
 			$(CONFIGURE_ARGS) \
 			--without-mpi \
 			$(if $(CONFIG_boost-coroutine2),,--without-coroutine2) \

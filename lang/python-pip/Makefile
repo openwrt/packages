@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pip
 PKG_VERSION:=7.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=pip-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/p/pip/
@@ -27,7 +27,7 @@ define Package/python-pip
   CATEGORY:=Languages
   TITLE:=Tool for installing Python packages.
   URL:=https://pip.pypa.io
-  DEPENDS:=+python +python-setuptools
+  DEPENDS:=+python +python-setuptools +ca-certificates
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 

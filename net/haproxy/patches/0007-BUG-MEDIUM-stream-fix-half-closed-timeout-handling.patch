@@ -1,0 +1,88 @@
+From 9154bc92ed11c6de75573dec341b6a0ce68bd0eb Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 25 Nov 2015 20:17:27 +0100
+Subject: [PATCH 07/10] BUG/MEDIUM: stream: fix half-closed timeout handling
+
+client-fin and server-fin are bogus. They are applied on the write
+side after a SHUTR was seen. The immediate effect is that sometimes
+if a SHUTR was seen after a SHUTW on the same side, the timeout is
+enabled again regardless of the fact that the output is already
+closed. This results in the timeout event not to be processed and
+a busy poll loop to happen until another timeout on the stream gets
+rid of it. Note that haproxy continues its job during this, it's just
+that it eats all the CPU trying to handle an event that it ignores.
+
+An reproducible case consists in having a client stop reading data from
+a server to ensure data remain in the response buffer, then the client
+sends a shutdown(write). If abortonclose is enabled on haproxy, the
+shutdown is passed to the server side and the server responds with a
+SHUTR that cannot immediately be forwarded to the client since the
+buffer is full. During this time the event is ignored and the task is
+woken again in loops.
+
+It is worth noting that the timeout handling since 1.5 is a bit fragile
+and that it might be possible that other similar conditions still exist,
+so the timeout handling should be audited regarding this issue.
+
+Many thanks to BaiYang for providing detailed information showing the
+problem in action.
+
+This bug also affects 1.5 thus the fix must be backported.
+(cherry picked from commit f25b3573d65fd2411c7537b7b0a4817b478df909)
+[Note for 1.5, it's in session.c here]
+(cherry picked from commit 44e86286159474a52dc74f80d3271504cc6f1550)
+---
+ src/session.c | 16 ----------------
+ 1 file changed, 16 deletions(-)
+
+diff --git a/src/session.c b/src/session.c
+index 7520a85..2b2ad78 100644
+--- a/src/session.c
++++ b/src/session.c
+@@ -2213,10 +2213,6 @@ struct task *process_session(struct task *t)
+ 	if (unlikely((s->req->flags & (CF_SHUTW|CF_SHUTW_NOW|CF_AUTO_CLOSE|CF_SHUTR)) ==
+ 		     (CF_AUTO_CLOSE|CF_SHUTR))) {
+ 		channel_shutw_now(s->req);
+-		if (tick_isset(s->fe->timeout.clientfin)) {
+-			s->rep->wto = s->fe->timeout.clientfin;
+-			s->rep->wex = tick_add(now_ms, s->rep->wto);
+-		}
+ 	}
+ 
+ 	/* shutdown(write) pending */
+@@ -2241,10 +2237,6 @@ struct task *process_session(struct task *t)
+ 		if (s->req->prod->flags & SI_FL_NOHALF)
+ 			s->req->prod->flags |= SI_FL_NOLINGER;
+ 		si_shutr(s->req->prod);
+-		if (tick_isset(s->fe->timeout.clientfin)) {
+-			s->rep->wto = s->fe->timeout.clientfin;
+-			s->rep->wex = tick_add(now_ms, s->rep->wto);
+-		}
+ 	}
+ 
+ 	/* it's possible that an upper layer has requested a connection setup or abort.
+@@ -2391,10 +2383,6 @@ struct task *process_session(struct task *t)
+ 	if (unlikely((s->rep->flags & (CF_SHUTW|CF_SHUTW_NOW|CF_AUTO_CLOSE|CF_SHUTR)) ==
+ 		     (CF_AUTO_CLOSE|CF_SHUTR))) {
+ 		channel_shutw_now(s->rep);
+-		if (tick_isset(s->be->timeout.serverfin)) {
+-			s->req->wto = s->be->timeout.serverfin;
+-			s->req->wex = tick_add(now_ms, s->req->wto);
+-		}
+ 	}
+ 
+ 	/* shutdown(write) pending */
+@@ -2417,10 +2405,6 @@ struct task *process_session(struct task *t)
+ 		if (s->rep->prod->flags & SI_FL_NOHALF)
+ 			s->rep->prod->flags |= SI_FL_NOLINGER;
+ 		si_shutr(s->rep->prod);
+-		if (tick_isset(s->be->timeout.serverfin)) {
+-			s->req->wto = s->be->timeout.serverfin;
+-			s->req->wex = tick_add(now_ms, s->req->wto);
+-		}
+ 	}
+ 
+ 	if (s->req->prod->state == SI_ST_DIS || s->req->cons->state == SI_ST_DIS)
+-- 
+2.4.10
+

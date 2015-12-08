@@ -1,0 +1,53 @@
+From 0f836e1361933721c5689c7943143fd6cd260148 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Cyril=20Bont=C3=A9?= <cyril.bonte@free.fr>
+Date: Thu, 26 Nov 2015 21:39:56 +0100
+Subject: [PATCH 10/10] BUG/MEDIUM: sample: urlp can't match an empty value
+
+Currently urlp fetching samples were able to find parameters with an empty
+value, but the return code depended on the value length. The final result was
+that acls using urlp couldn't match empty values.
+
+Example of acl which always returned "false":
+  acl MATCH_EMPTY urlp(foo) -m len 0
+
+The fix consists in unconditionally return 1 when the parameter is found.
+
+This fix must be backported to 1.6 and 1.5.
+(cherry picked from commit ce1ef4df0135f9dc1cb6691395eacb487015fe3e)
+(cherry picked from commit 6bd426cf35c95985712369ed528c10a5f80ad8fd)
+[ note: in 1.5 we have value+value_l instead of vstart+vend ]
+---
+ src/proto_http.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 5facfbb..3af7880 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -11050,9 +11050,11 @@ find_url_param_pos(char* query_string, size_t query_string_l,
+ }
+ 
+ /*
+- * Given a url parameter name, returns its value and size into *value and
+- * *value_l respectively, and returns non-zero. If the parameter is not found,
+- * zero is returned and value/value_l are not touched.
++ * Given a url parameter name and a query string, find the next value.
++ * An empty url_param_name matches the first available parameter.
++ * If the parameter is found, 1 is returned and *value / *value_l are updated
++ * to respectively provide a pointer to the value and its length.
++ * Otherwise, 0 is returned and value/value_l are not modified.
+  */
+ static int
+ find_url_param_value(char* path, size_t path_l,
+@@ -11082,7 +11084,7 @@ find_url_param_value(char* path, size_t path_l,
+ 
+ 	*value = value_start;
+ 	*value_l = value_end - value_start;
+-	return value_end != value_start;
++	return 1;
+ }
+ 
+ static int
+-- 
+2.4.10
+

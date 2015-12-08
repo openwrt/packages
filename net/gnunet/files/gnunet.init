@@ -73,7 +73,7 @@ prepare_config() {
 		# $1    "Type"
 		# $2    "Name"
 		local __TYPE="$1"
-		local __NAME="$2"
+		local __NAME="${2/_/-}"
 		[ "${__TYPE}" = "gnunet-config" ] && _gnunet_section="${__NAME}"
 		[ "${__TYPE}" = "gnunet-exit-service" ] && _gnunet_section="${__NAME}.gnunet."
 	}

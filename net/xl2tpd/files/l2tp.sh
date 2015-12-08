@@ -25,14 +25,14 @@ proto_l2tp_init_config() {
 proto_l2tp_setup() {
 	local interface="$1"
 	local optfile="/tmp/l2tp/options.${interface}"
+	local ip serv_addr server host
 
-	local ip serv_addr server
-	json_get_var server server && {
-		for ip in $(resolveip -t 5 "$server"); do
-			( proto_add_host_dependency "$interface" "$ip" )
-			serv_addr=1
-		done
-	}
+	json_get_var server server
+	host="${server%:*}"
+	for ip in $(resolveip -t 5 "$host"); do
+		( proto_add_host_dependency "$interface" "$ip" )
+		serv_addr=1
+	done
 	[ -n "$serv_addr" ] || {
 		echo "Could not resolve server address" >&2
 		sleep 5

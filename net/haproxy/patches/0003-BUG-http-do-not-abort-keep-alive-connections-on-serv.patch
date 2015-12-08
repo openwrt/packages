@@ -1,0 +1,37 @@
+From ef8a113d59e89b2214adf7ab9f9b0b75905a7050 Mon Sep 17 00:00:00 2001
+From: lsenta <laurent.senta@gmail.com>
+Date: Fri, 13 Nov 2015 10:44:22 +0100
+Subject: [PATCH 03/10] BUG: http: do not abort keep-alive connections on
+ server timeout
+
+When a server timeout is detected on the second or nth request of a keep-alive
+connection, HAProxy closes the connection without writing a response.
+Some clients would fail with a remote disconnected exception and some
+others would retry potentially unsafe requests.
+
+This patch removes the special case and makes sure a 504 timeout is
+written back whenever a server timeout is handled.
+
+Signed-off-by: lsenta <laurent.senta@gmail.com>
+(cherry picked from commit 1e1f41d0f3473d86da84dc3785b7d7cbef6e9044)
+(cherry picked from commit 1f279c0b116f7fbc208793fffbd256c3c736fc52)
+---
+ src/proto_http.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 17742c6..e7e1785 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -5782,8 +5782,6 @@ int http_wait_for_response(struct session *s, struct channel *rep, int an_bit)
+ 		else if (rep->flags & CF_READ_TIMEOUT) {
+ 			if (msg->err_pos >= 0)
+ 				http_capture_bad_message(&s->be->invalid_rep, s, msg, msg->msg_state, s->fe);
+-			else if (txn->flags & TX_NOT_FIRST)
+-				goto abort_keep_alive;
+ 
+ 			s->be->be_counters.failed_resp++;
+ 			if (objt_server(s->target)) {
+-- 
+2.4.10
+
