@@ -75,12 +75,6 @@ define Package/python-light/description
   into separate packages.
 endef
 
-# Define newline here, since it's not defined in OpenWRT
-define newline
-
-
-endef
-
 PYTHON_LIB_FILES_DEL:=
 PYTHON_PACKAGES:=
 define PyBasePackage
