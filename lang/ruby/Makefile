@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=2.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LIBVER:=2.2
 
@@ -833,9 +833,10 @@ endif
 
 TARGET_LDFLAGS += -L$(PKG_BUILD_DIR)
 
+CONFIGURE_VARS += XLDFLAGS="-L$(STAGING_DIR)/usr/lib"
+
 MAKE_FLAGS += \
 	DESTDIR="$(PKG_INSTALL_DIR)" \
-	EXTLDFLAGS="$(TARGET_LDFLAGS)" \
 	SHELL="/bin/bash"
 
 define Package/ruby/install
