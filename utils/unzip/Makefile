@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=unzip
 PKG_REV:=60
 PKG_VERSION:=6.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)$(PKG_REV).tar.gz
 PKG_SOURCE_URL:=@SF/infozip
@@ -59,7 +59,10 @@ endef
 
 define Package/unzip/install
 	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	$(INSTALL_BIN) \
+		$(PKG_INSTALL_DIR)/usr/bin/{funzip,unzip,unzipsfx,zipgrep} \
+		$(1)/usr/bin/
+	$(LN) unzip $(1)/usr/bin/zipinfo
 endef
 
 $(eval $(call BuildPackage,unzip))
