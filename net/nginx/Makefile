@@ -54,7 +54,8 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_UPSTREAM_KEEPALIVE \
 	CONFIG_NGINX_HTTP_UPSTREAM_ZONE \
 	CONFIG_NGINX_HTTP_CACHE \
-	CONFIG_NGINX_PCRE
+	CONFIG_NGINX_PCRE \
+	CONFIG_NGINX_MODULE_LUA
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -64,7 +65,7 @@ define Package/nginx
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx web server
   URL:=http://nginx.org/
-  DEPENDS:=+NGINX_PCRE:libpcre +(NGINX_SSL||NGINX_HTTP_CACHE||NGINX_HTTP_AUTH_BASIC):libopenssl +NGINX_HTTP_GZIP:zlib +libpthread
+  DEPENDS:=+NGINX_PCRE:libpcre +(NGINX_SSL||NGINX_HTTP_CACHE||NGINX_HTTP_AUTH_BASIC):libopenssl +NGINX_HTTP_GZIP:zlib +NGINX_MODULE_LUA:liblua +libpthread
   MENU:=1
 endef
 
@@ -184,12 +185,16 @@ endif
 ifneq ($(CONFIG_NGINX_HTTP_UPSTREAM_KEEPALIVE),y)
   ADDITIONAL_MODULES += --without-http_upstream_keepalive_module
 endif
+ifeq ($(CONFIG_NGINX_MODULE_LUA),y)
+  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/lua-nginx
+endif
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -DNGX_LUA_NO_BY_LUA_BLOCK
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Build/Configure
 	( cd $(PKG_BUILD_DIR) ; \
+		$(if $(CONFIG_NGINX_MODULE_LUA),LUA_INC=$(STAGING_DIR)/usr/include LUA_LIB=$(STAGING_DIR)/usr/lib) \
 		./configure \
 			--crossbuild=Linux::$(ARCH) \
 			--prefix=/usr \
@@ -216,6 +221,25 @@ define Package/nginx/install
 	$(INSTALL_DATA) $(addprefix $(PKG_INSTALL_DIR)/etc/nginx/,$(config_files)) $(1)/etc/nginx/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nginx.init $(1)/etc/init.d/nginx
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(if $(CONFIG_NGINX_MODULE_LUA),$(call Prepare/lua-nginx))
+endef
+
+define Download/lua-nginx
+	VERSION:=72244ea07d4e767ed676ce4c762edf4f0596e3e6
+	SUBDIR:=lua-nginx
+	FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+	URL:=git://github.com/openresty/lua-nginx-module.git
+	PROTO:=git
+endef
+
+define  Prepare/lua-nginx
+	$(eval $(call Download,lua-nginx))
+	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	$(call PatchDir,$(PKG_BUILD_DIR),./patches-lua-nginx)
 endef
 
 $(eval $(call BuildPackage,nginx))
