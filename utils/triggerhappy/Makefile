@@ -9,8 +9,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=triggerhappy
 PKG_VERSION:=0.3.4
-PKG_REV:=649bf670a012558393d7c41f3660d0a017edd982
-PKG_RELEASE:=2
+PKG_REV:=7e5abc69f215678e93a6b999524981c8b40bdcd9
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=git://github.com/wertarbyte/triggerhappy
