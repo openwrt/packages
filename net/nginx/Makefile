@@ -77,7 +77,7 @@ define Package/nginx/config
   source "$(SOURCE)/Config.in"
 endef
 
-config_files=nginx.conf mime.types fastcgi_params koi-utf koi-win win-utf
+config_files=nginx.conf mime.types
 
 define Package/nginx/conffiles
 /etc/nginx/
@@ -107,6 +107,8 @@ ifneq ($(CONFIG_NGINX_PCRE),y)
 endif
 ifneq ($(CONFIG_NGINX_HTTP_CHARSET),y)
   ADDITIONAL_MODULES += --without-http_charset_module
+else
+  config_files += koi-utf koi-win win-utf
 endif
 ifneq ($(CONFIG_NGINX_HTTP_GZIP),y)
   ADDITIONAL_MODULES += --without-http_gzip_module
@@ -146,6 +148,8 @@ ifneq ($(CONFIG_NGINX_HTTP_PROXY),y)
 endif
 ifneq ($(CONFIG_NGINX_HTTP_FASTCGI),y)
   ADDITIONAL_MODULES += --without-http_fastcgi_module
+else
+  config_files += fastcgi_params
 endif
 ifneq ($(CONFIG_NGINX_HTTP_UWSGI),y)
   ADDITIONAL_MODULES += --without-http_uwsgi_module
@@ -180,6 +184,9 @@ endif
 ifneq ($(CONFIG_NGINX_HTTP_UPSTREAM_KEEPALIVE),y)
   ADDITIONAL_MODULES += --without-http_upstream_keepalive_module
 endif
+
+TARGET_CFLAGS += -ffunction-sections -fdata-sections
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Build/Configure
 	( cd $(PKG_BUILD_DIR) ; \
