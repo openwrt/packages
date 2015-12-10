@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pip
 PKG_VERSION:=7.1.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=pip-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/p/pip/
@@ -48,8 +48,9 @@ define PyPackage/python-pip/filespec
 endef
 
 define PyPackage/python-pip/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
+	$(INSTALL_CONF) ./files/pip.conf $(1)/etc/
 endef
 
 $(eval $(call PyPackage,python-pip))
