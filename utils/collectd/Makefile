@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.5.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://collectd.org/files/
@@ -176,6 +176,15 @@ define Package/collectd/description
  and provides mechanismns to store the values in a variety of ways.
 endef
 
+define Package/collectd/config
+	config PACKAGE_COLLECTD_ENCRYPTED_NETWORK
+	bool "Enable ability to use encrypted networking"
+	default y if CRYPTO_DEFAULT
+	default n
+	depends on PACKAGE_collectd
+	select PACKAGE_collectd-mod-network
+endef
+
 ifneq ($(CONFIG_avr32),)
   TARGET_CFLAGS += -fsigned-char
 endif
@@ -185,8 +194,15 @@ CONFIGURE_ARGS+= \
 	--disable-debug \
 	--enable-daemon \
 	--with-nan-emulation \
-	--without-perl-bindings \
+	--without-perl-bindings
+
+ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
+CONFIGURE_ARGS+= \
+	--with-libgcrypt=$(STAGING_DIR)/include
+else
+CONFIGURE_ARGS+= \
 	--without-libgcrypt
+endif
 
 CONFIGURE_VARS+= \
 	CFLAGS="$$$$CFLAGS $(FPIC)" \
@@ -317,7 +333,7 @@ $(eval $(call BuildPlugin,madwifi,MadWifi status input,madwifi,))
 $(eval $(call BuildPlugin,memory,physical memory usage input,memory,))
 $(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAGE_collectd-mod-modbus:libmodbus))
 $(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-netlink:libmnl))
-$(eval $(call BuildPlugin,network,network input/output,network))
+$(eval $(call BuildPlugin,network,network input/output,network,+PACKAGE_COLLECTD_ENCRYPTED_NETWORK:libgcrypt))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
 $(eval $(call BuildPlugin,ntpd,NTP daemon status input,ntpd,))
 $(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut))
