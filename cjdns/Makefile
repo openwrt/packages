@@ -38,7 +38,7 @@ define Package/cjdns
 	TITLE:=Encrypted near-zero-conf mesh routing protocol
 	URL:=https://github.com/hyperboria/cjdns
 	MAINTAINER:=Lars Gierth <larsg@systemli.org>
-	DEPENDS:=+kmod-tun +kmod-ipv6 +libnl-tiny +libpthread +librt \
+	DEPENDS:=+kmod-tun +@IPV6 +libnl-tiny +libpthread +librt \
 		+libuci-lua +lua-bencode +dkjson +luasocket +lua-sha2
 endef
 

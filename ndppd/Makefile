@@ -32,7 +32,7 @@ define Package/ndppd
   TITLE:=NDP Proxy Daemon
   URL:=http://www.priv.nu/projects/ndppd/
   MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>
-  DEPENDS:=+kmod-ipv6 $(CXX_DEPENDS)
+  DEPENDS:=+@IPV6 $(CXX_DEPENDS)
 endef
 
 define Package/ndppd/description
