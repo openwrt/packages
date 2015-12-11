@@ -105,8 +105,6 @@ define Build/Compile/PyMod
 		$(3) \
 		, \
 		./setup.py $(2) \
-		, \
-		$(PYTHONPATH) \
 	)
 	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
 endef
