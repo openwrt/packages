@@ -140,13 +140,13 @@ define Build/InstallDev
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
 	$(CP) \
-		$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION) \
+		$(STAGING_DIR_HOST)/usr/lib/python$(PYTHON_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
 	$(CP) \
-		$(STAGING_DIR_HOST)/lib/pkgconfig/python.pc \
-		$(STAGING_DIR_HOST)/lib/pkgconfig/python2.pc \
-		$(STAGING_DIR_HOST)/lib/pkgconfig/python-$(PYTHON_VERSION).pc \
+		$(STAGING_DIR_HOST)/usr/lib/pkgconfig/python.pc \
+		$(STAGING_DIR_HOST)/usr/lib/pkgconfig/python2.pc \
+		$(STAGING_DIR_HOST)/usr/lib/pkgconfig/python-$(PYTHON_VERSION).pc \
 		$(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
@@ -219,8 +219,8 @@ HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
+	--prefix=$(STAGING_DIR_HOST)/usr \
 	--with-system-expat=$(STAGING_DIR_HOST) \
-	--prefix=$(STAGING_DIR_HOST) \
 	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
