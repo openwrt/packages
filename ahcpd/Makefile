@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2007-2011 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -25,7 +25,7 @@ define Package/ahcpd
   TITLE:=Ad-Hoc Configuration Protocol daemon
   URL:=http://www.pps.univ-paris-diderot.fr/~jch/software/ahcp/
   MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>
-  DEPENDS:=+kmod-ipv6 +ip +librt
+  DEPENDS:=+@IPV6 +ip +librt
 endef
 
 define Package/ahcpd/description
