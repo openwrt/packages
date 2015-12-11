@@ -11,15 +11,19 @@ HOST_PYTHON_PKG_DIR:=/usr/lib/python$(PYTHON_VERSION)/site-packages
 
 HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(STAGING_DIR_HOST)/$(HOST_PYTHON_PKG_DIR)
 define HostPython
-	ifeq ($(3),)
-		$(3):=$(PYTHONPATH)
+	ifeq ($(strip $(3)),HOST)
+		LOCAL_PYTHONPATH:=$(HOST_PYTHONPATH)
+		LOCAL_STAGING_DIR:=$(STAGING_DIR_HOST)
+	else
+		LOCAL_PYTHONPATH:=$(PYTHONPATH)
+		LOCAL_STAGING_DIR:=$(STAGING_DIR)
 	endif
-	(	export PYTHONPATH="$(3)"; \
+	(	export PYTHONPATH="$(LOCAL_PYTHONPATH)"; \
 		export PYTHONOPTIMIZE=""; \
 		export PYTHONDONTWRITEBYTECODE=1; \
-		export _python_sysroot="$(STAGING_DIR_HOST)"; \
-		export _python_prefix=""; \
-		export _python_exec_prefix=""; \
+		export _python_sysroot="$(LOCAL_STAGING_DIR)/usr"; \
+		export _python_prefix="/usr"; \
+		export _python_exec_prefix="/usr"; \
 		$(1) \
 		$(HOST_PYTHON_BIN) $(2); \
 	)
@@ -52,7 +56,7 @@ define Build/Compile/HostPyMod
 		, \
 		./setup.py $(2) \
 		, \
-		$(HOST_PYTHONPATH) \
+		HOST \
 	)
 endef
 
