@@ -14,12 +14,12 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=d149d2812f10cbe04c042232e7964171
+PKG_MD5SUM:=e9ea6f2623fffcdd871b7b19113fde80
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -31,7 +31,8 @@ HOST_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=libbz2/host expat/host python3/host
+PKG_BUILD_DEPENDS:=python3/host
+HOST_BUILD_DEPENDS:=bzip2/host expat/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -80,8 +81,12 @@ endef
 PYTHON3_LIB_FILES_DEL:=
 PYTHON3_PACKAGES:=
 PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR).so
+PYTHON3_PACKAGES_DEPENDS:=
 define Py3BasePackage
   PYTHON3_PACKAGES+=$(1)
+  ifeq ($(3),)
+    PYTHON3_PACKAGES_DEPENDS+=$(1)
+  endif
   PYTHON3_LIB_FILES_DEL+=$(2)
   define Py3Package/$(1)/filespec
     $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
@@ -92,7 +97,7 @@ include ./files/python3-package-*.mk
 
 define Package/python3
 $(call Package/python3/Default)
-  DEPENDS:=+python3-light $(foreach package,$(filter-out python3-dev python3-lib2to3,$(PYTHON3_PACKAGES)),+$(package))
+  DEPENDS:=+python3-light $(foreach package,$(PYTHON3_PACKAGES_DEPENDS),+$(package))
 endef
 
 define Package/python3/description
@@ -139,16 +144,23 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
-	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/pkgconfig
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
-	$(INSTALL_DATA) ./files/python3-package.mk $(STAGING_DIR)/mk/
+	$(INSTALL_DATA) \
+		./files/python3-package.mk \
+		./files/python3-host.mk \
+		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
 	$(CP) \
-		$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION) \
+		$(STAGING_DIR_HOST)/usr/lib/python$(PYTHON_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
+	$(CP) \
+		$(STAGING_DIR_HOST)/lib/pkgconfig/python3.pc \
+		$(STAGING_DIR_HOST)/lib/pkgconfig/python-$(PYTHON_VERSION).pc \
+		$(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config-$(PYTHON_VERSION) \
 		$(1)/usr/lib/python$(PYTHON_VERSION)/
@@ -216,7 +228,7 @@ HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
-	--prefix=$(STAGING_DIR_HOST) \
+	--prefix=$(STAGING_DIR_HOST)/usr \
 	--with-system-expat=$(STAGING_DIR_HOST) \
 	--with-ensurepip=upgrade \
 	CONFIG_SITE= \

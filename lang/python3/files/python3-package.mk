@@ -7,7 +7,7 @@
 
 PYTHON3_VERSION_MAJOR:=3
 PYTHON3_VERSION_MINOR:=5
-PYTHON3_VERSION_MICRO:=0
+PYTHON3_VERSION_MICRO:=1
 
 PYTHON3_VERSION:=$(PYTHON3_VERSION_MAJOR).$(PYTHON3_VERSION_MINOR)
 
@@ -24,17 +24,6 @@ HOST_PYTHON3_LIB_DIR:=$(STAGING_DIR_HOST)/lib/python$(PYTHON3_VERSION)
 HOST_PYTHON3_BIN:=$(STAGING_DIR_HOST)/bin/python3
 
 PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
-define HostPython3
-	(	export PYTHONPATH="$(PYTHON3PATH)"; \
-		export PYTHONOPTIMIZE=""; \
-		export PYTHONDONTWRITEBYTECODE=1; \
-		export _python_sysroot="$(STAGING_DIR)"; \
-		export _python_prefix="/usr"; \
-		export _python_exec_prefix="/usr"; \
-		$(1) \
-		$(HOST_PYTHON3_BIN) $(2); \
-	)
-endef
 
 # These configure args are needed in detection of path to Python header files
 # using autotools.
@@ -96,6 +85,8 @@ define Py3Package
 	$(call Py3Package/$(1)/install,$$(1))
   endef
 endef
+
+$(call include_mk, python3-host.mk)
 
 # $(1) => build subdir
 # $(2) => additional arguments to setup.py
