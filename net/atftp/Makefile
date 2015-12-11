@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atftp
 PKG_VERSION:=0.7.1
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=GPL-2.0
 
