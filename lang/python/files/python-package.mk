@@ -6,7 +6,7 @@
 #
 
 PYTHON_VERSION:=2.7
-PYTHON_VERSION_MICRO:=10
+PYTHON_VERSION_MICRO:=11
 
 PYTHON_DIR:=$(STAGING_DIR)/usr
 PYTHON_BIN_DIR:=$(PYTHON_DIR)/bin
@@ -17,21 +17,10 @@ PYTHON_PKG_DIR:=/usr/lib/python$(PYTHON_VERSION)/site-packages
 
 PYTHON:=python$(PYTHON_VERSION)
 
-HOST_PYTHON_LIB_DIR:=$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION)
+HOST_PYTHON_LIB_DIR:=$(STAGING_DIR_HOST)/usr/lib/python$(PYTHON_VERSION)
 HOST_PYTHON_BIN:=$(STAGING_DIR_HOST)/bin/python2
 
 PYTHONPATH:=$(PYTHON_LIB_DIR):$(STAGING_DIR)/$(PYTHON_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON_PKG_DIR)
-define HostPython
-	(	export PYTHONPATH="$(PYTHONPATH)"; \
-		export PYTHONOPTIMIZE=""; \
-		export PYTHONDONTWRITEBYTECODE=1; \
-		export _python_sysroot="$(STAGING_DIR)"; \
-		export _python_prefix="/usr"; \
-		export _python_exec_prefix="/usr"; \
-		$(1) \
-		$(HOST_PYTHON_BIN) $(2); \
-	)
-endef
 
 # These configure args are needed in detection of path to Python header files
 # using autotools.
@@ -93,6 +82,8 @@ define PyPackage
 	$(call PyPackage/$(1)/install,$$(1))
   endef
 endef
+
+$(call include_mk, python-host.mk)
 
 # $(1) => build subdir
 # $(2) => additional arguments to setup.py
