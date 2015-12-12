@@ -36,7 +36,7 @@ define Package/etherwake/description
 endef
 
 define Build/Compile
-	$(TARGET_CC) $(TARGET_CFLAGS) -D__UCLIBC__ $(PKG_BUILD_DIR)/ether-wake.c -o $(PKG_BUILD_DIR)/etherwake
+	$(TARGET_CC) $(TARGET_CFLAGS) -D__UCLIBC__ $(TARGET_LDFLAGS) $(PKG_BUILD_DIR)/ether-wake.c -o $(PKG_BUILD_DIR)/etherwake
 endef
 
 define Package/etherwake/install

@@ -5,7 +5,7 @@ The openconnect server expects to be configured using the uci interface.
 
 It is recommended to setup a dynamic DNS address with openwrt prior
 to starting the server. That is because during the first startup
-a certificate file which contain the setup dynamic DNS name will be
+a certificate file which will contain the dynamic DNS name will be
 created. You can always regenerate the certificate by deleting
 /etc/ocserv/server-key.pem.
 
@@ -15,6 +15,9 @@ approach (2) which provides clients with addresses of a separate private
 network. The former is suitable when you have "roadwarrior" type of clients
 connecting to the LAN, and the latter when you may need to connect
 multiple networks with the LAN.
+
+If for the client side you use OpenWRT it is recommended to check you
+have the latest vpnc-scripts and openconnect packages.
 
 
 1. Proxy-ARP Approach

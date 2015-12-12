@@ -1,0 +1,70 @@
+From 771a1407b15538697a7f38209e40dbbf58828d33 Mon Sep 17 00:00:00 2001
+From: Florian Fieber <florian@florianfieber.de>
+Date: Tue, 9 Jun 2015 15:59:04 +0200
+Subject: [PATCH] Remove self version checking
+
+Signed-off-by: Florian Fieber <florian@florianfieber.de>
+---
+ pip/basecommand.py | 10 ----------
+ pip/cmdoptions.py  | 10 ----------
+ 2 files changed, 20 deletions(-)
+
+diff --git a/pip/basecommand.py b/pip/basecommand.py
+index 854d113..c2337a4 100644
+--- a/pip/basecommand.py
++++ b/pip/basecommand.py
+@@ -22,7 +22,6 @@ from pip.status_codes import (
+ from pip.utils import get_prog, normalize_path
+ from pip.utils.deprecation import RemovedInPip8Warning
+ from pip.utils.logging import IndentingFormatter
+-from pip.utils.outdated import pip_version_check
+ 
+ 
+ __all__ = ['Command']
+@@ -237,15 +236,6 @@ class Command(object):
+             logger.critical('Exception:', exc_info=True)
+ 
+             return UNKNOWN_ERROR
+-        finally:
+-            # Check if we're using the latest version of pip available
+-            if (not options.disable_pip_version_check and not
+-                    getattr(options, "no_index", False)):
+-                with self._build_session(
+-                        options,
+-                        retries=0,
+-                        timeout=min(5, options.timeout)) as session:
+-                    pip_version_check(session)
+ 
+         return SUCCESS
+ 
+diff --git a/pip/cmdoptions.py b/pip/cmdoptions.py
+index 9a0446a..4fa29d3 100644
+--- a/pip/cmdoptions.py
++++ b/pip/cmdoptions.py
+@@ -514,15 +514,6 @@ no_clean = partial(
+     default=False,
+     help="Don't clean up build directories.")
+ 
+-disable_pip_version_check = partial(
+-    Option,
+-    "--disable-pip-version-check",
+-    dest="disable_pip_version_check",
+-    action="store_true",
+-    default=False,
+-    help="Don't periodically check PyPI to determine whether a new version "
+-         "of pip is available for download. Implied with --no-index.")
+-
+ # Deprecated, Remove later
+ always_unzip = partial(
+     Option,
+@@ -560,7 +551,6 @@ general_group = {
+         client_cert,
+         cache_dir,
+         no_cache,
+-        disable_pip_version_check,
+     ]
+ }
+ 
+-- 
+2.6.2
+
