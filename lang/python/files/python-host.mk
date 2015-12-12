@@ -11,22 +11,19 @@ HOST_PYTHON_PKG_DIR:=/usr/lib/python$(PYTHON_VERSION)/site-packages
 
 HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(STAGING_DIR_HOST)/$(HOST_PYTHON_PKG_DIR)
 define HostPython
-	ifeq ($(strip $(3)),HOST)
-		LOCAL_PYTHONPATH:=$(HOST_PYTHONPATH)
-		LOCAL_STAGING_DIR:=$(STAGING_DIR_HOST)
-	else
-		LOCAL_PYTHONPATH:=$(PYTHONPATH)
-		LOCAL_STAGING_DIR:=$(STAGING_DIR)
-	endif
-	(	export PYTHONPATH="$(LOCAL_PYTHONPATH)"; \
-		export PYTHONOPTIMIZE=""; \
-		export PYTHONDONTWRITEBYTECODE=1; \
-		export _python_sysroot="$(LOCAL_STAGING_DIR)/usr"; \
-		export _python_prefix="/usr"; \
-		export _python_exec_prefix="/usr"; \
-		$(1) \
-		$(HOST_PYTHON_BIN) $(2); \
-	)
+	if [ "$(strip $(3))" == "HOST" ]; then \
+		export PYTHONPATH:=$(HOST_PYTHONPATH); \
+		export _python_sysroot="$(STAGING_DIR_HOST)/usr"; \
+	else \
+		exort PYTHONPATH:=$(PYTHONPATH); \
+		export _python_sysroot:=$(STAGING_DIR)/usr; \
+	fi; \
+	export PYTHONOPTIMIZE=""; \
+	export PYTHONDONTWRITEBYTECODE=1; \
+	export _python_prefix="/usr"; \
+	export _python_exec_prefix="/usr"; \
+	$(1) \
+	$(HOST_PYTHON_BIN) $(2);
 endef
 
 # These configure args are needed in detection of path to Python header files
