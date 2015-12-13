@@ -13,13 +13,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
-PKG_VERSION:=7.00
+PKG_VERSION:=7.01
 PKG_RELEASE:=1
 PKG_MAINTAINER=Nuno Goncalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://nmap.org/dist/
-PKG_MD5SUM:=6cdf5d03cc3294b99d69dfca83f2f2ee
+PKG_MD5SUM:=7fa4edc592184c7addc14f5acb3fe6f7
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
