@@ -19,7 +19,7 @@ PKG_MD5SUM:=83efba4722a9674b97437d1d99af79db
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=glib2/host libpthread zlib libintl libffi
-HOST_BUILD_DEPENDS:=libintl/host libiconv/host libffi/host
+HOST_BUILD_DEPENDS:=gettext-full/host libiconv/host libffi/host
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
