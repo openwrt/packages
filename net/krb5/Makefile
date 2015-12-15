@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
-PKG_VERSION:=1.13.2
+PKG_VERSION:=1.13.3
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -16,9 +16,9 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=NOTICE
 
-PKG_SOURCE:=krb5-$(PKG_VERSION)-signed.tar
+PKG_SOURCE:=krb5-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.13/
-PKG_MD5SUM:=f7ebfa6c99c10b16979ebf9a98343189
+PKG_MD5SUM:=f99fb414932a4d8b1925e00ef31e7680
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -58,14 +58,6 @@ endef
 
 define Package/krb5/description
 	Kerberos
-endef
-
-define Build/Prepare
-	# Krb5 tarball contains signature and a second tarball
-	# containing source code.
-	tar xf "$(DL_DIR)/$(PKG_SOURCE)" -C "$(BUILD_DIR)"
-	tar xzf "$(BUILD_DIR)/krb5-$(PKG_VERSION).tar.gz" -C "$(BUILD_DIR)"
-	patch -p1 -d "$(PKG_BUILD_DIR)" < "$(PATCH_DIR)/001-fix-build.patch"
 endef
 
 CONFIGURE_PATH = ./src
