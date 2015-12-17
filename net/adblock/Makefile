@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=0.22.2
+PKG_VERSION:=0.40.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dirk@brenken.org>
@@ -37,8 +37,10 @@ The script supports the following domain blacklist sites:
   http://www.shallalist.de
   http://www.spam404.com
   http://winhelp2002.mvps.org
+  https://adaway.org
+  https://disconnect.me
 
-Please read README.md in /etc/adblock for further information.
+Please see README.md in /etc/adblock for further information.
 
 endef
 
