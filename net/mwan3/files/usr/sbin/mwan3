@@ -84,8 +84,10 @@ policies()
 {
 	echo "Current ipv4 policies:"
 	mwan3_report_policies_v4
+	echo -e
 	echo "Current ipv6 policies:"
 	mwan3_report_policies_v6
+	echo -e
 }
 
 connected()
@@ -154,8 +156,12 @@ stop()
 		done
 	done
 
-	for ipset in $($IPS -n list | sort | grep mwan3); do
-		$IPS destroy $ipset
+	for ipset in $($IPS -n list | grep mwan3_); do
+		$IPS -q destroy $ipset
+	done
+
+	for ipset in $($IPS -n list | grep mwan3 | grep -E '_v4|_v6'); do
+		$IPS -q destroy $ipset
 	done
 }
 
