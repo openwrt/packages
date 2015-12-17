@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntp
 PKG_VERSION:=4.2.8p4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
@@ -31,7 +31,7 @@ define Package/ntpd/Default
   TITLE:=ISC ntp
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.ntp.org/
-  DEPENDS:=+libopenssl +libpthread
+  DEPENDS:=+libopenssl +libpthread +libcap
 endef
 
 define Package/ntpd/Default/description
@@ -43,7 +43,6 @@ endef
 define Package/ntpd
 $(call Package/ntpd/Default)
   TITLE+= server
-  DEPENDS+= +libcap
   USERID:=ntp=123:ntp=123
 endef
 
@@ -67,7 +66,6 @@ endef
 define Package/ntp-utils
 $(call Package/ntpd/Default)
   TITLE+= utilities
-  DEPENDS+= +libcap
 endef
 
 define Package/ntp-utils/description
@@ -79,7 +77,7 @@ endef
 define Package/ntp-keygen
 $(call Package/ntpd/Default)
   TITLE+=keygen
-  DEPENDS+= +libcap +libevent2-core
+  DEPENDS+= +libevent2-core
 endef
 
 define Package/ntp-keygen/description
