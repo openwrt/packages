@@ -13,9 +13,9 @@ f_envload()
     #
     if [ -r "/lib/functions.sh" ]
     then
-        . /lib/functions.sh
+        . "/lib/functions.sh" 2>/dev/null
     else
-        rc=510
+        rc=500
         f_log "openwrt function library not found" "${rc}"
         f_deltemp
     fi
@@ -24,9 +24,9 @@ f_envload()
     #
     if [ -r "/usr/share/libubox/jshn.sh" ]
     then
-        . "/usr/share/libubox/jshn.sh"
+        . "/usr/share/libubox/jshn.sh" 2>/dev/null
     else
-        rc=515
+        rc=505
         f_log "openwrt json helpers library not found" "${rc}"
         f_deltemp
     fi
@@ -36,7 +36,7 @@ f_envload()
     pkg_list="$(opkg list-installed 2>/dev/null)"
     if [ -z "${pkg_list}" ]
     then
-        rc=520
+        rc=510
         f_log "empty openwrt package list" "${rc}"
         f_deltemp
     fi
@@ -48,16 +48,19 @@ f_envload()
 f_envparse()
 {
     # set the C locale, characters are single bytes, the charset is ASCII
-    # speeds up sort, grep etc., guarantees unique domains
+    # speeds up sort, grep etc.
     #
     LC_ALL=C
 
-    # set initial defaults (may be overwritten by adblock config options)
+    # set initial defaults (may be overwritten by setting appropriate adblock config options)
     #
     adb_if="adblock"
     adb_minspace="20000"
     adb_maxtime="60"
     adb_maxloop="5"
+    adb_unique="1"
+    adb_blacklist="/etc/adblock/adblock.blacklist"
+    adb_whitelist="/etc/adblock/adblock.whitelist"
 
     # adblock device name auto detection
     # derived from first entry in openwrt lan ifname config
@@ -90,7 +93,7 @@ f_envparse()
             {
                 local option="${1}"
                 local value="${2}"
-                local opt_out="$(printf "${option}" | sed -n '/.*_ITEM[0-9]$/p; /.*_LENGTH$/p; /enabled/p')"
+                local opt_out="$(printf "${option}" | sed -n '/.*_ITEM[0-9]$/p; /.*_LENGTH$/p; /enabled/p' 2>/dev/null)"
                 if [ -z "${opt_out}" ]
                 then
                     all_options="${all_options} ${option}"
@@ -127,7 +130,7 @@ f_envparse()
                 config_get value "${config}" "${option}"
                 if [ -n "${value}" ]
                 then
-                    local opt_src="$(printf "${option}" | sed -n '/^adb_src_[a-z0-9]*$/p')"
+                    local opt_src="$(printf "${option}" | sed -n '/^adb_src_[a-z0-9]*$/p' 2>/dev/null)"
                     if [ -n "${opt_src}" ]
                     then
                         adb_sources="${adb_sources} ${value}"
@@ -138,13 +141,13 @@ f_envparse()
             done
         elif [ "${config}" = "wancheck" ]
         then
-           unset adb_wandev 2>/dev/null
+           unset adb_wandev
         elif [ "${config}" = "ntpcheck" ]
         then
-           unset adb_ntpsrv 2>/dev/null
+           unset adb_ntpsrv
         elif [ "${config}" = "shalla" ]
         then
-           unset adb_cat_shalla 2>/dev/null
+           unset adb_cat_shalla
         fi
     }
 
@@ -154,25 +157,35 @@ f_envparse()
     config_foreach parse_config service
     config_foreach parse_config source
 
-    # set temp variables and counter
+    # set temp variables and defaults 
     #
     adb_tmpfile="$(mktemp -tu 2>/dev/null)"
     adb_tmpdir="$(mktemp -p /tmp -d 2>/dev/null)"
+    unset adb_srcfind
+    unset adb_revsrcfind
 
     # set adblock source ruleset definitions
     #
     rset_start="sed -r 's/[[:space:]]|[\[!#/:;_].*|[0-9\.]*localhost//g; s/[\^#/:;_\.\t ]*$//g'"
     rset_end="sed '/^[#/:;_\s]*$/d'"
-    rset_default="${rset_start} | ${rset_end}"
-    rset_yoyo="${rset_start} | sed 's/,/\n/g' | ${rset_end}"
+    rset_adaway="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-1]\{1,1\}//g' | ${rset_end}"
+    rset_blacklist="${rset_start} | ${rset_end}"
+    rset_disconnect="${rset_start} | ${rset_end}"
+    rset_dshield="${rset_start} | ${rset_end}"
+    rset_feodo="${rset_start} | ${rset_end}"
+    rset_malware="${rset_start} | ${rset_end}"
+    rset_palevo="${rset_start} | ${rset_end}"
     rset_shalla="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-9]\{1,3\}$//g' | ${rset_end}"
     rset_spam404="${rset_start} | sed 's/^\|\|//g' | ${rset_end}"
     rset_winhelp="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-1]\{1,1\}//g' | ${rset_end}"
+    rset_yoyo="${rset_start} | sed 's/,/\n/g' | ${rset_end}"
+    rset_zeus="${rset_start} | ${rset_end}"
 
-    # set adblock/dnsmasq destination file and format
+    # set dnsmasq defaults
     #
-    adb_dnsfile="/tmp/dnsmasq.d/adlist.conf"
+    adb_dnsdir="/tmp/dnsmasq.d"
     adb_dnsformat="sed 's/^/address=\//;s/$/\/'${adb_ip}'/'"
+    adb_dnsprefix="adb_list"
 }
 
 #############################################
@@ -180,14 +193,25 @@ f_envparse()
 #
 f_envcheck()
 {
-    # check required config variables
+    # check adblock config file
     #
-    adb_varlist="adb_ip adb_dev adb_if adb_domain adb_minspace adb_maxloop adb_maxtime adb_blacklist adb_whitelist"
+    check_config="$(grep -F "ruleset=rset_default" /etc/config/adblock 2>/dev/null)"
+    if [ -n "${check_config}" ]
+    then
+        rc=515
+        grep -Fv "#" "/etc/adblock/samples/adblock.conf.sample" > /etc/config/adblock
+        f_log "new default adblock config applied, please check your configuration settings in /etc/config/adblock" "${rc}"
+        f_deltemp
+    fi
+
+    # check required config options
+    #
+    adb_varlist="adb_ip adb_dev adb_domain"
     for var in ${adb_varlist}
     do
         if [ -z "$(eval printf \"\$"${var}"\")" ]
         then
-            rc=525
+            rc=520
             f_log "missing adblock config option (${var})" "${rc}"
             f_deltemp
         fi
@@ -195,12 +219,12 @@ f_envcheck()
 
     # check main uhttpd configuration
     #
-    check_uhttpd="$(uci get uhttpd.main.listen_http 2>/dev/null | grep -Fo "0.0.0.0")"
+    check_uhttpd="$(uci get uhttpd.main.listen_http 2>/dev/null | grep -Fo "0.0.0.0" 2>/dev/null)"
     if [ -n "${check_uhttpd}" ]
     then
-        rc=530
+        rc=525
         lan_ip="$(uci get network.lan.ipaddr 2>/dev/null)"
-        f_log "main uhttpd instance listens to all network interfaces, please bind uhttpd to LAN only (${lan_ip})" "${rc}"
+        f_log "please bind main uhttpd instance to LAN only (lan ip: ${lan_ip})" "${rc}"
         f_deltemp
     fi
 
@@ -208,29 +232,35 @@ f_envcheck()
     #
     if [ ! -d "/sys/class/net/${adb_dev}" ]
     then
-        rc=535
+        rc=530
         f_log "invalid adblock network device input (${adb_dev})" "${rc}"
         f_deltemp
     fi
 
     # check adblock network interface configuration
     #
-    check_if="$(printf "${adb_if}" | sed -n '/[^._0-9A-Za-z]/p')"
-    banned_if="$(printf "${adb_if}" | sed -n '/.*lan.*\|.*wan.*\|.*switch.*\|main\|globals\|loopback\|px5g/p')"
+    check_if="$(printf "${adb_if}" | sed -n '/[^._0-9A-Za-z]/p' 2>/dev/null)"
+    banned_if="$(printf "${adb_if}" | sed -n '/.*lan.*\|.*wan.*\|.*switch.*\|main\|globals\|loopback\|px5g/p' 2>/dev/null)"
     if [ -n "${check_if}" ] || [ -n "${banned_if}" ]
     then
-        rc=540
+        rc=535
         f_log "invalid adblock network interface input (${adb_if})" "${rc}"
         f_deltemp
     fi
 
     # check adblock ip address configuration
     #
-    check_ip="$(printf "${adb_ip}" | sed -n '/\([0-9]\{1,3\}\.\)\{3\}[0-9]\{1,3\}/p')"
+    check_ip="$(printf "${adb_ip}" | sed -n '/\([0-9]\{1,3\}\.\)\{3\}[0-9]\{1,3\}/p' 2>/dev/null)"
+    lan_ip="$(uci get network.lan.ipaddr 2>/dev/null)"
     if [ -z "${check_ip}" ]
     then
-        rc=545
+        rc=540
         f_log "invalid adblock ip address input (${adb_ip})" "${rc}"
+        f_deltemp
+    elif [ "${adb_ip}" = "${lan_ip}" ]
+    then
+        rc=545
+        f_log "adblock ip needs to be a different subnet from the normal LAN (adblock ip: ${adb_ip})" "${rc}"
         f_deltemp
     fi
 
@@ -263,7 +293,7 @@ f_envcheck()
 
     # check curl package dependency
     #
-    check="$(printf "${pkg_list}" | grep "^curl -")"
+    check="$(printf "${pkg_list}" | grep "^curl -" 2>/dev/null)"
     if [ -z "${check}" ]
     then
         rc=565
@@ -273,7 +303,7 @@ f_envcheck()
 
     # check wget package dependency
     #
-    check="$(printf "${pkg_list}" | grep "^wget -")"
+    check="$(printf "${pkg_list}" | grep "^wget -" 2>/dev/null)"
     if [ -z "${check}" ]
     then
         rc=570
@@ -281,31 +311,32 @@ f_envcheck()
         f_deltemp
     fi
 
-    # check ca-certificates package and set wget/curl parms accordingly
+    # check ca-certificates package and set wget/curl options accordingly
     #
-    check="$(printf "${pkg_list}" | grep "^ca-certificates -")"
+    check="$(printf "${pkg_list}" | grep "^ca-certificates -" 2>/dev/null)"
     if [ -z "${check}" ]
     then
-        curl_parm="-q --insecure"
-        wget_parm="--no-config --no-hsts --no-check-certificate"
+        curl_parm="-q --insecure --silent"
+        wget_parm="--no-config --no-hsts --no-check-certificate --quiet"
     else
-        curl_parm="-q"
-        wget_parm="--no-config --no-hsts"
+        curl_parm="-q --silent"
+        wget_parm="--no-config --no-hsts --quiet"
     fi
 
     # check total and swap memory
     #
-    mem_total="$(cat /proc/meminfo | grep -F "MemTotal" | grep -o "[0-9]*")"
-    mem_free="$(cat /proc/meminfo | grep -F "MemFree" | grep -o "[0-9]*")"
-    swap_total="$(cat /proc/meminfo | grep -F "SwapTotal" | grep -o "[0-9]*")"
+    mem_total="$(grep -F "MemTotal" "/proc/meminfo" 2>/dev/null | grep -o "[0-9]*" 2>/dev/null)"
+    mem_free="$(grep -F "MemFree" "/proc/meminfo" 2>/dev/null | grep -o "[0-9]*" 2>/dev/null)"
+    swap_total="$(grep -F "SwapTotal" "/proc/meminfo" 2>/dev/null | grep -o "[0-9]*" 2>/dev/null)"
     if [ $((mem_total)) -le 64000 ] && [ $((swap_total)) -eq 0 ]
     then
+        adb_unique=0
+        f_log "overall sort/unique processing will be disabled,"
         f_log "please consider adding an external swap device to supersize your /tmp directory (total: ${mem_total}, free: ${mem_free}, swap: ${mem_swap})"
     fi
 
     # check backup configuration
     #
-    adb_backupdir="${adb_backupfile%/*}"
     if [ -n "${adb_backupdir}" ] && [ -d "${adb_backupdir}" ]
     then
         f_space "${adb_backupdir}"
@@ -323,7 +354,7 @@ f_envcheck()
     then
         # check find capabilities
         #
-        check="$(find --help 2>&1 | grep -F "mtime")"
+        check="$(find --help 2>&1 | grep -F "mtime" 2>/dev/null)"
         if [ -z "${check}" ]
         then
             query_ok="false"
@@ -417,15 +448,9 @@ f_envcheck()
         fi
     fi
 
-    # remove no longer used environment variables
+    # remove no longer used package list
     #
-    env_list="$(set | grep -o "CONFIG_[A-Za-z0-9_]*")"
-    for var in ${env_list}
-    do
-        unset "${var}" 2>/dev/null
-    done
-    unset env_list 2>/dev/null
-    unset pkg_list 2>/dev/null
+    unset pkg_list
 }
 
 ################################################
@@ -461,7 +486,7 @@ f_space()
     if [ -d "${mp}" ]
     then
         df "${mp}" 2>/dev/null |\
-        tail -n1 |\
+        tail -n1 2>/dev/null |\
         while read filesystem overall used available scrap
         do
             av_space="${available}"
@@ -516,14 +541,31 @@ f_remove()
         if [ -s "${adb_querypid}" ] && [ ! -f "${adb_queryfile}.${query_date}" ]
         then
             kill -9 "$(cat "${adb_querypid}")" >/dev/null 2>&1
-            find "${adb_backupdir}" -maxdepth 1 -type f -mtime +"${adb_queryhistory}" -name "${query_name}.*" -exec rm -f {} \; 2>/dev/null
-            f_log "remove old domain query log background process (pid: $(cat "${adb_querypid}")) and do logfile housekeeping"
+            rc=${?}
+            if [ $((rc)) -eq 0 ]
+            then
+                find "${adb_backupdir}" -maxdepth 1 -type f -mtime +"${adb_queryhistory}" -name "${query_name}.*" -exec rm -f "{}" \; 2>/dev/null
+                rc=${?}
+            fi
+            if [ $((rc)) -eq 0 ]
+            then
+                f_log "remove old domain query log background process (pid: $(cat "${adb_querypid}")) and do logfile housekeeping"
+            else
+                f_log "error during domain query removal/housekeeping (pid: $(cat "${adb_querypid}"))"
+            fi
             > "${adb_querypid}"
         fi
         if [ ! -s "${adb_querypid}" ]
         then
-            (logread -f 2>/dev/null & printf ${!} > "${adb_querypid}") | grep -Eo "(query\[A\].*)|([a-z0-9\.\-]* is ${query_ip}$)" >> "${adb_queryfile}.${query_date}" &
-            f_log "new domain query log background process started"
+            (logread -f 2>/dev/null & printf ${!} > "${adb_querypid}") | grep -Eo "(query\[A\].*)|([a-z0-9\.\-]* is ${query_ip}$)" 2>/dev/null >> "${adb_queryfile}.${query_date}" &
+            rc=${?}
+            if [ $((rc)) -eq 0 ]
+            then
+                sleep 1
+                f_log "new domain query log background process started (pid: $(cat "${adb_querypid}"))"
+            else
+                f_log "error during domain query start"
+            fi
         fi
     fi
     f_deltemp
@@ -534,13 +576,33 @@ f_remove()
 #
 f_restore()
 {
-    if [ "${backup_ok}" = "true" ] && [ -f "${adb_backupfile}" ]
+    # remove bogus adblocklists
+    #
+    if [ -n "${adb_revsrclist}" ]
     then
-        cp -f "${adb_backupfile}" "${adb_dnsfile}" >/dev/null 2>&1
-        f_log "adblocklist backup restored"
-    else
-        > "${adb_dnsfile}"
-        f_log="empty adblocklist generated"
+        find "${adb_dnsdir}" -maxdepth 1 -type f \( ${adb_revsrcfind} \) -exec rm -f "{}" \; 2>/dev/null
+        if [ $((rc)) -eq 0 ]
+        then
+            f_log "bogus adblocklists removed"
+        else
+            f_log "error during removal of bogus adblocklists" "${rc}"
+            f_remove
+        fi
+    fi
+
+    # restore backups
+    #
+    if [ "${backup_ok}" = "true" ] && [ -d "${adb_backupdir}" ] && [ "$(printf "${adb_backupdir}/${adb_dnsprefix}."*)" != "${adb_backupdir}/${adb_dnsprefix}.*" ]
+    then
+        cp -f "${adb_backupdir}/${adb_dnsprefix}."* "${adb_dnsdir}" >/dev/null 2>&1
+        rc=${?}
+        if [ $((rc)) -eq 0 ]
+        then
+            f_log "all available backups restored"
+        else
+            f_log "error during restore" "${rc}"
+            f_remove
+        fi
     fi
     /etc/init.d/dnsmasq restart >/dev/null 2>&1
     f_remove
@@ -615,56 +677,4 @@ f_ntpcheck()
         f_log "ntp time sync failed (${adb_ntpsrv# })" "${rc}"
         f_restore
     fi
-}
-
-####################################################################
-# f_dnscheck: dnsmasq health check with newly generated adblock list
-#
-f_dnscheck()
-{
-    local dns_status
-    dns_status="$(logread -l 20 -e "dnsmasq" -e "FAILED to start up")"
-    rc=${?}
-    if [ -z "${dns_status}" ]
-    then
-        dns_status="$(nslookup "${adb_domain}" 2>/dev/null | grep -F "${adb_ip}")"
-        rc=${?}
-        if [ -z "${dns_status}" ]
-        then
-            if [ "${backup_ok}" = "true" ]
-            then
-                cp -f "${adb_dnsfile}" "${adb_backupfile}" >/dev/null 2>&1
-                f_log "new adblock list with ${adb_count} domains loaded, backup generated"
-            else
-                f_log "new adblock list with ${adb_count} domains loaded, no backup"
-            fi
-        else
-            f_log "nslookup probe failed" "${rc}"
-            f_restore
-        fi
-    else
-        f_log "dnsmasq probe failed" "${rc}"
-        f_restore
-    fi
-}
-
-##########################################################
-# f_footer: write footer with a few statistics to dns file
-#
-f_footer()
-{
-    local url
-    adb_count="$(wc -l < "${adb_dnsfile}")"
-    printf "%s\n" "####################################################" >> "${adb_dnsfile}"
-    printf "%s\n" "# last adblock list update: $(date +"%d.%m.%Y - %T")" >> "${adb_dnsfile}"
-    printf "%s\n" "# ${0##*/} (${adb_version}) - ${adb_count} ad/abuse domains blocked" >> "${adb_dnsfile}"
-    printf "%s\n" "# domain blacklist sources:" >> "${adb_dnsfile}"
-    for src in ${adb_sources}
-    do
-        url="${src//\&ruleset=*/}"
-        printf "%s\n" "# ${url}" >> "${adb_dnsfile}"
-    done
-    printf "%s\n" "#####" >> "${adb_dnsfile}"
-    printf "%s\n" "# ${adb_whitelist}" >> "${adb_dnsfile}"
-    printf "%s\n" "####################################################" >> "${adb_dnsfile}"
 }
