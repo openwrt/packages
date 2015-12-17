@@ -1,0 +1,13 @@
+Index: libgphoto2-2.5.9/libgphoto2/gphoto2-file.c
+===================================================================
+--- libgphoto2-2.5.9.orig/libgphoto2/gphoto2-file.c
++++ libgphoto2-2.5.9/libgphoto2/gphoto2-file.c
+@@ -553,7 +553,7 @@ gp_file_save (CameraFile *file, const ch
+ 	if (file->mtime) {
+ 		u.actime = file->mtime;
+ 		u.modtime = file->mtime;
+-		utime (filename, &u);
++		utimes (filename, &u);
+ 	}
+ 
+ 	return (GP_OK);
