@@ -12,11 +12,11 @@ HOST_PYTHON_PKG_DIR:=/usr/lib/python$(PYTHON_VERSION)/site-packages
 HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(STAGING_DIR_HOST)/$(HOST_PYTHON_PKG_DIR)
 define HostPython
 	if [ "$(strip $(3))" == "HOST" ]; then \
-		export PYTHONPATH:=$(HOST_PYTHONPATH); \
+		export PYTHONPATH="$(HOST_PYTHONPATH)"; \
 		export _python_sysroot="$(STAGING_DIR_HOST)/usr"; \
 	else \
-		exort PYTHONPATH:=$(PYTHONPATH); \
-		export _python_sysroot:=$(STAGING_DIR)/usr; \
+		export PYTHONPATH="$(PYTHONPATH)"; \
+		export _python_sysroot="$(STAGING_DIR)/usr"; \
 	fi; \
 	export PYTHONOPTIMIZE=""; \
 	export PYTHONDONTWRITEBYTECODE=1; \
