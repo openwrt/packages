@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=davfs2
 PKG_VERSION:=1.5.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/davfs2/
@@ -23,7 +23,7 @@ define Package/davfs2
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Filesystem
-  DEPENDS=+libneon +kmod-fuse +libfuse
+  DEPENDS=+libneon +kmod-fuse +libfuse $(ICONV_DEPENDS)
   TITLE:=Mount a WebDAV resource as a regular file system.
   URL:=http://savannah.nongnu.org/projects/davfs2/
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
