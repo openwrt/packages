@@ -1,5 +1,16 @@
+diff --git a/dhcp6.c b/dhcp6.c
+index b1f814a..b24567f 100644
 --- a/dhcp6.c
 +++ b/dhcp6.c
+@@ -33,7 +33,7 @@
+ #include <netinet/in.h>
+ #ifdef __linux__
+ #  define _LINUX_IN6_H
+-#  include <linux/ipv6.h>
++//#  include <linux/ipv6.h>
+ #endif
+ 
+ #include <ctype.h>
 @@ -1047,8 +1047,8 @@ logsend:
  
  	ctx = ifp->ctx->ipv6;
@@ -11,3 +22,29 @@
  	ctx->sndhdr.msg_iov[0].iov_len = state->send_len;
  
  	/* Set the outbound interface */
+diff --git a/ipv6.h b/ipv6.h
+index 088bfb3..c3b160a 100644
+--- a/ipv6.h
++++ b/ipv6.h
+@@ -35,7 +35,7 @@
+ 
+ #ifdef __linux__
+ #  define _LINUX_IN6_H
+-#  include <linux/ipv6.h>
++//#  include <linux/ipv6.h>
+ #endif
+ 
+ #include "dhcpcd.h"
+diff --git a/ipv6nd.c b/ipv6nd.c
+index 880678f..f70a497 100644
+--- a/ipv6nd.c
++++ b/ipv6nd.c
+@@ -35,7 +35,7 @@
+ 
+ #ifdef __linux__
+ #  define _LINUX_IN6_H
+-#  include <linux/ipv6.h>
++//#  include <linux/ipv6.h>
+ #endif
+ 
+ #include <errno.h>
