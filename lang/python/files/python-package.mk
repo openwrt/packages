@@ -109,3 +109,21 @@ define Build/Compile/PyMod
 	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
 endef
 
+define PyMod/Default
+  define Build/Compile
+	$$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+  endef
+
+  define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $$(1)$(PYTHON_PKG_DIR) $$(1)/usr/bin
+	if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then find $(PKG_INSTALL_DIR)/usr/bin -mindepth 1 -maxdepth 1 -type f -exec $(CP) \{\} $$(1)/usr/bin/ \; ; fi
+	find $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR) -mindepth 1 -maxdepth 1 \( -type f -o -type d \) -exec $(CP) \{\} $$(1)$(PYTHON_PKG_DIR)/ \;
+  endef
+
+  define Build/InstallDev
+	$(INSTALL_DIR) $$(1)/usr/bin $$(1)$(PYTHON_PKG_DIR)
+	if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then find $(PKG_INSTALL_DIR)/usr/bin -mindepth 1 -maxdepth 1 -type f -exec $(CP) \{\} $$(1)/usr/bin/ \; ; fi
+	find $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR) -mindepth 1 -maxdepth 1 \( -type f -o -type d \) -exec $(CP) \{\} $$(1)$(PYTHON_PKG_DIR)/ \;
+  endef
+endef
+
