@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mDNSResponder
 PKG_VERSION:=567
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=mDNSResponder-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://opensource.apple.com/tarballs/mDNSResponder/
@@ -85,6 +85,7 @@ endef
 # I have no idea why -lc is required, but without it, C library symbols are
 # not found:
 MAKE_FLAGS += \
+	LD="$(TARGET_CC)"  \
 	CFLAGS_DEBUG="$(TARGET_CFLAGS)" \
 	LINKOPTS=-lc \
 	LDCONFIG= \
