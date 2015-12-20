@@ -5,33 +5,34 @@ A lot of people already use adblocker plugins within their desktop browsers,
 but what if you are using your (smart) phone, tablet, watch or any other wlan gadget...  
 ...getting rid of annoying ads, trackers and other abuse sites (like facebook ;-) is simple: block them with your router.  
 
-When the dns server on your router receives dns requests, you’ll sort out queries that ask for the [A] resource records of ad servers  
-and return the local ip address of your router and the internal web server delivers a transparent pixel instead.
+When the dns server on your router receives dns requests, you’ll sort out queries that ask for the [A] resource records of ad servers and return the local ip address of your router and the internal web server delivers a transparent pixel instead.
 
 ## Main Features
 * support of the following domain blocklist sources (free for private usage, for commercial use please check their individual licenses):
-    * [pgl.yoyo.org](http://pgl.yoyo.org/adservers)
-    * => weekly updates, approx. 2.500 entries (enabled by default)
-    * [malwaredomains.com](http://malwaredomains.com)
-    * => daily updates, approx. 16.000 entries
-    * [zeustracker.abuse.ch](https://zeustracker.abuse.ch)
-    * => daily updates, approx. 440 entries
-    * [feodotracker.abuse.ch](https://feodotracker.abuse.ch)
-    * => daily updates, approx. 0-10 entries
-    * [palevotracker.abuse.ch](https://palevotracker.abuse.ch)
-    * => daily updates, approx. 15 entries
-    * [dshield.org](http://dshield.org)
-    * => daily updates, approx. 4.500 entries
-    * [shallalist.de](http://www.shallalist.de) (categories "adv" "costtraps" "spyware" "tracker" "warez" enabled by default)
-    * => daily updates, approx. 32.000 entries (a short description of all shallalist categories can be found [online](http://www.shallalist.de/categories.html))
-    * [spam404.com](http://www.spam404.com)
-    * => infrequent updates, approx. 5.000 entries
-    * [winhelp2002.mvps.org](http://winhelp2002.mvps.org)
-    * => infrequent updates, approx. 15.000 entries
     * [adaway.org](https://adaway.org)
     * => infrequent updates, approx. 400 entries
     * [disconnect.me](https://disconnect.me)
     * => numerous updates on the same day, approx. 6.500 entries
+    * [dshield.org](http://dshield.org)
+    * => daily updates, approx. 4.500 entries
+    * [feodotracker.abuse.ch](https://feodotracker.abuse.ch)
+    * => daily updates, approx. 0-10 entries
+    * [malwaredomains.com](http://malwaredomains.com)
+    * => daily updates, approx. 16.000 entries
+    * [palevotracker.abuse.ch](https://palevotracker.abuse.ch)
+    * => daily updates, approx. 15 entries
+    * [shallalist.de](http://www.shallalist.de) (categories "adv" "costtraps" "spyware" "tracker" "warez" enabled by default)
+    * => daily updates, approx. 32.000 entries (a short description of all shallalist categories can be found [online](http://www.shallalist.de/categories.html))
+    * [spam404.com](http://www.spam404.com)
+    * => infrequent updates, approx. 5.000 entries
+    * [whocares.org](http://someonewhocares.org)
+    * => weekly updates, approx. 12.000 entries
+    * [winhelp2002.mvps.org](http://winhelp2002.mvps.org)
+    * => infrequent updates, approx. 15.000 entries
+    * [yoyo.org](http://pgl.yoyo.org/adservers)
+    * => weekly updates, approx. 2.500 entries (enabled by default)
+    * [zeustracker.abuse.ch](https://zeustracker.abuse.ch)
+    * => daily updates, approx. 440 entries
 * each blocklist source will be updated and processed separately
 * timestamp check to download and process only updated blocklists
 * overall duplicate removal in separate blocklists (will be automatically disabled on low memory systems)
@@ -40,10 +41,11 @@ and return the local ip address of your router and the internal web server deliv
 * use of dynamic adblock network interface
 * use of dynamic uhttpd instance as pixel server
 * use of quality checks after adblocklist updates to ensure a reliable dnsmasq service
-* optional features (disabled by default): 
+* optional features (disabled by default):
     * powerful adblock list backup/restore handling
-    * adblock updates only on pre-defined wan interfaces (useful for (mobile) multiwan setups)
+    * wan interface check, useful for rc.local based autostart and (mobile) multiwan setups to update only on pre-defined wan interfaces
     * domain query logging as a background service to easily identify free and already blocked domains (see example output below)
+    * adblock statistics (req. query logging)
     * ntp time sync
     * status & error logging to separate file (req. ntp time sync)
 
@@ -78,44 +80,16 @@ and return the local ip address of your router and the internal web server deliv
 
 ## Examples
 
-  log of a full adblock run:  
+  adblock log file excerpt:  
     
-    adblock[1586] info : domain adblock processing started (0.40.0, r47670, 17.12.2015 10:50:09)  
-    adblock[1586] info : wan update check will be disabled  
-    adblock[1586] info : get ntp time sync (192.168.2.254), after 0 loops  
-    adblock[1586] info : created new dynamic/volatile network interface (adblock, 192.168.2.1)  
-    adblock[1586] info : created new dynamic/volatile uhttpd instance (adblock, 192.168.2.1)  
-    adblock[1586] info : shallalist (pre-)processing started ...  
-    adblock[1586] info : source download finished (http://pgl.yoyo.org/adservers/serverlist.php?hostformat=one-line&showintro=0&mimetype=plaintext, 2432 entries)  
-    adblock[1586] info : domain merging finished (yoyo)  
-    adblock[1586] info : source download finished (http://mirror1.malwaredomains.com/files/justdomains, 17368 entries)  
-    adblock[1586] info : domain merging finished (malware)  
-    adblock[1586] info : source download finished (https://zeustracker.abuse.ch/blocklist.php?download=domainblocklist, 440 entries)  
-    adblock[1586] info : domain merging finished (zeus)  
-    adblock[1586] info : no online timestamp received, current date will be used (feodo)  
-    adblock[1586] info : source download finished (https://feodotracker.abuse.ch/blocklist/?download=domainblocklist, 0 entries)  
-    adblock[1586] info : empty domain input received (feodo)  
-    adblock[1586] info : no online timestamp received, current date will be used (palevo)  
-    adblock[1586] info : source download finished (https://palevotracker.abuse.ch/blocklists.php?download=domainblocklist, 16 entries)  
-    adblock[1586] info : domain merging finished (palevo)  
-    adblock[1586] info : source download finished (http://www.dshield.org/feeds/suspiciousdomains_Low.txt, 4542 entries)  
-    adblock[1586] info : domain merging finished (dshield)  
-    adblock[1586] info : source download finished (http://spam404bl.com/spam404scamlist.txt, 5193 entries)  
-    adblock[1586] info : domain merging finished (spam404)  
-    adblock[1586] info : source download finished (http://winhelp2002.mvps.org/hosts.txt, 13635 entries)  
-    adblock[1586] info : domain merging finished (winhelp)  
-    adblock[1586] info : source download finished (https://adaway.org/hosts.txt, 410 entries)  
-    adblock[1586] info : domain merging finished (adaway)  
-    adblock[1586] info : source download finished (https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt, 6343 entries)  
-    adblock[1586] info : domain merging finished (disconnect)  
-    adblock[1586] info : source download finished (file:////tmp/tmp.FIhIBh/shallalist.txt, 32458 entries)  
-    adblock[1586] info : domain merging finished (shalla)  
-    adblock[1586] info : source download finished (file:///etc/adblock/adblock.blacklist, 1 entries)  
-    adblock[1586] info : domain merging finished (blacklist)  
-    adblock[1586] info : remove duplicates in separate adblocklists ...  
-    adblock[1586] info : adblocklists with overall 71552 domains loaded, new backups generated  
-    adblock[1586] info : new domain query log background process started (pid: 2416)  
-    adblock[1586] info : domain adblock processing finished (0.40.0, r47670, 17.12.2015 10:52:47)  
+    adblock[11780] info : domain adblock processing started (0.40.1, r47929, 20.12.2015 21:59:56)  
+    adblock[11780] info : backup/restore will be disabled  
+    adblock[11780] info : wan update check will be disabled  
+    adblock[11780] info : get ntp time sync (192.168.254.254), after 0 loops  
+    adblock[11780] info : source doesn't change, no update required (whocares)  
+    adblock[11780] info : adblocklists with overall 11619 domains loaded, backups disabled  
+    adblock[11780] info : adblock statistics for query date 20151220 (total: 2495, blocked: 154)  
+    adblock[11780] info : domain adblock processing finished (0.40.1, r47929, 20.12.2015 22:00:03)  
     
 
   domain blocklist for dnsmasq (disconnect.me after overall duplicate removal):  

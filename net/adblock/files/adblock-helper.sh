@@ -166,7 +166,7 @@ f_envparse()
 
     # set adblock source ruleset definitions
     #
-    rset_start="sed -r 's/[[:space:]]|[\[!#/:;_].*|[0-9\.]*localhost//g; s/[\^#/:;_\.\t ]*$//g'"
+    rset_start="sed -r 's/[[:space:]]|[\[!#/:;_].*|[0-9\.]*localhost.*//g; s/[\^#/:;_\.\t ]*$//g'"
     rset_end="sed '/^[#/:;_\s]*$/d'"
     rset_adaway="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-1]\{1,1\}//g' | ${rset_end}"
     rset_blacklist="${rset_start} | ${rset_end}"
@@ -177,6 +177,7 @@ f_envparse()
     rset_palevo="${rset_start} | ${rset_end}"
     rset_shalla="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-9]\{1,3\}$//g' | ${rset_end}"
     rset_spam404="${rset_start} | sed 's/^\|\|//g' | ${rset_end}"
+    rset_whocares="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-1]\{1,1\}//g' | ${rset_end}"
     rset_winhelp="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-1]\{1,1\}//g' | ${rset_end}"
     rset_yoyo="${rset_start} | sed 's/,/\n/g' | ${rset_end}"
     rset_zeus="${rset_start} | ${rset_end}"
@@ -538,6 +539,12 @@ f_remove()
     if [ "${query_ok}" = "true" ] && [ "${ntp_ok}" = "true" ]
     then
         query_date="$(date "+%Y%m%d")"
+        if [ -s "${adb_querypid}" ] && [ -f "${adb_queryfile}.${query_date}" ]
+        then
+            query_total="$(grep -F "query[A]" "${adb_queryfile}.${query_date}" 2>/dev/null | wc -l)"
+            query_blocked="$(grep -Fv "query[A]" "${adb_queryfile}.${query_date}" 2>/dev/null | wc -l)"
+            f_log "adblock statistics for query date ${query_date} (total: ${query_total}, blocked: ${query_blocked})"
+        fi
         if [ -s "${adb_querypid}" ] && [ ! -f "${adb_queryfile}.${query_date}" ]
         then
             kill -9 "$(cat "${adb_querypid}")" >/dev/null 2>&1
@@ -551,7 +558,7 @@ f_remove()
             then
                 f_log "remove old domain query log background process (pid: $(cat "${adb_querypid}")) and do logfile housekeeping"
             else
-                f_log "error during domain query removal/housekeeping (pid: $(cat "${adb_querypid}"))"
+                f_log "error during domain query removal/housekeeping (pid: $(cat "${adb_querypid}"))" "${rc}"
             fi
             > "${adb_querypid}"
         fi
@@ -564,7 +571,7 @@ f_remove()
                 sleep 1
                 f_log "new domain query log background process started (pid: $(cat "${adb_querypid}"))"
             else
-                f_log "error during domain query start"
+                f_log "error during domain query start" "${rc}"
             fi
         fi
     fi
