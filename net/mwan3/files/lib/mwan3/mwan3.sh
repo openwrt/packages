@@ -85,14 +85,14 @@ mwan3_set_general_iptables()
 			$IPT -N mwan3_ifaces_in
 		fi
 
-		if ! $IPT -S mwan3_ifaces_out &> /dev/null; then
-			$IPT -N mwan3_ifaces_out
-		fi
-
 		if ! $IPT -S mwan3_connected &> /dev/null; then
 			$IPT -N mwan3_connected
 			$IPS -! create mwan3_connected list:set
 			$IPT -A mwan3_connected -m set --match-set mwan3_connected dst -j MARK --set-xmark 0xff00/0xff00
+		fi
+
+		if ! $IPT -S mwan3_ifaces_out &> /dev/null; then
+			$IPT -N mwan3_ifaces_out
 		fi
 
 		if ! $IPT -S mwan3_rules &> /dev/null; then
@@ -103,8 +103,8 @@ mwan3_set_general_iptables()
 			$IPT -N mwan3_hook
 			$IPT -A mwan3_hook -j CONNMARK --restore-mark --nfmask 0xff00 --ctmask 0xff00
 			$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_ifaces_in
-			$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_ifaces_out
 			$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_connected
+			$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_ifaces_out
 			$IPT -A mwan3_hook -m mark --mark 0x0/0xff00 -j mwan3_rules
 			$IPT -A mwan3_hook -j CONNMARK --save-mark --nfmask 0xff00 --ctmask 0xff00
 			$IPT -A mwan3_hook -m mark ! --mark 0xff00/0xff00 -j mwan3_connected
@@ -529,12 +529,6 @@ mwan3_set_sticky_iptables()
 
 			[ -n "$id" ] || return 0
 
-			$IPS -! create mwan3_sticky_v4_$rule hash:ip,mark markmask 0xff00 timeout $timeout
-			$IPS -! create mwan3_sticky_v6_$rule hash:ip,mark markmask 0xff00 timeout $timeout family inet6
-			$IPS -! create mwan3_sticky_$rule list:set
-			$IPS -! add mwan3_sticky_$rule mwan3_sticky_v4_$rule
-			$IPS -! add mwan3_sticky_$rule mwan3_sticky_v6_$rule
-
 			for IPT in "$IPT4" "$IPT6"; do
 				if [ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -a -n "$($IPT -S mwan3_iface_out_$1 2> /dev/null)" ]; then
 					$IPT -I mwan3_rule_$rule -m mark --mark $(($id*256))/0xff00 -m set ! --match-set mwan3_sticky_$rule src,src -j MARK --set-xmark 0x0/0xff00
@@ -593,6 +587,12 @@ mwan3_set_user_iptables_rule()
 
 					$IPT -F mwan3_rule_$1
 				done
+
+				$IPS -! create mwan3_sticky_v4_$rule hash:ip,mark markmask 0xff00 timeout $timeout
+				$IPS -! create mwan3_sticky_v6_$rule hash:ip,mark markmask 0xff00 timeout $timeout family inet6
+				$IPS -! create mwan3_sticky_$rule list:set
+				$IPS -! add mwan3_sticky_$rule mwan3_sticky_v4_$rule
+				$IPS -! add mwan3_sticky_$rule mwan3_sticky_v6_$rule
 
 				config_foreach mwan3_set_sticky_iptables interface
 
