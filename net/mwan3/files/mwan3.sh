@@ -512,24 +512,35 @@ mwan3_create_policies_iptables()
 	config_list_foreach $1 use_member mwan3_set_policy
 }
 
+mwan3_set_policies_iptables()
+{
+	config_foreach mwan3_create_policies_iptables policy
+}
+
 mwan3_set_sticky_iptables()
 {
-	local id
+	local id iface
 
-	mwan3_get_iface_id id $1
+	for iface in $($IPT4 -S $policy | cut -s -d'"' -f2 | awk '{print $1}'); do
 
-	[ -n "$id" ] || return 0
+		if [ "$iface" == "$1" ]; then
 
-	$IPS -! create mwan3_sticky_v4_$rule hash:ip,mark markmask 0xff00 timeout $timeout
-	$IPS -! create mwan3_sticky_v6_$rule hash:ip,mark markmask 0xff00 timeout $timeout family inet6
-	$IPS -! create mwan3_sticky_$rule list:set
-	$IPS -! add mwan3_sticky_$rule mwan3_sticky_v4_$rule
-	$IPS -! add mwan3_sticky_$rule mwan3_sticky_v6_$rule
+			mwan3_get_iface_id id $1
 
-	for IPT in "$IPT4" "$IPT6"; do
-		if [ -n "$($IPT -S mwan3_iface_$1 2> /dev/null)" ]; then
-			$IPT -I mwan3_rule_$rule -m set ! --match-set mwan3_sticky_$rule src,src -j MARK --set-xmark 0x0/0xff00
-			$IPT -I mwan3_rule_$rule -m mark --mark 0/0xff00 -j MARK --set-xmark $(($id*256))/0xff00
+			[ -n "$id" ] || return 0
+
+			$IPS -! create mwan3_sticky_v4_$rule hash:ip,mark markmask 0xff00 timeout $timeout
+			$IPS -! create mwan3_sticky_v6_$rule hash:ip,mark markmask 0xff00 timeout $timeout family inet6
+			$IPS -! create mwan3_sticky_$rule list:set
+			$IPS -! add mwan3_sticky_$rule mwan3_sticky_v4_$rule
+			$IPS -! add mwan3_sticky_$rule mwan3_sticky_v6_$rule
+
+			for IPT in "$IPT4" "$IPT6"; do
+				if [ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -a -n "$($IPT -S mwan3_iface_out_$1 2> /dev/null)" ]; then
+					$IPT -I mwan3_rule_$rule -m mark --mark $(($id*256))/0xff00 -m set ! --match-set mwan3_sticky_$rule src,src -j MARK --set-xmark 0x0/0xff00
+					$IPT -I mwan3_rule_$rule -m mark --mark 0/0xff00 -j MARK --set-xmark $(($id*256))/0xff00
+				fi
+			done
 		fi
 	done
 }
@@ -556,14 +567,6 @@ mwan3_set_user_iptables_rule()
 	fi
 
 	if [ -n "$ipset" ]; then
-		if [ -z "$($IPS -n list $ipset 2> /dev/null)" ]; then
-			$IPS create $ipset list:set
-			$IPS create v4_$ipset hash:ip timeout 3600
-			$IPS create v6_$ipset hash:ip timeout 3600 family inet6
-			$IPS add $ipset v4_$ipset
-			$IPS add $ipset v6_$ipset
-		fi
-
 		ipset="-m set --match-set $ipset dst"
 	fi
 
@@ -579,8 +582,6 @@ mwan3_set_user_iptables_rule()
 
 				policy="mwan3_policy_$use_policy"
 
-				config_foreach mwan3_set_sticky_iptables interface
-
 				for IPT in "$IPT4" "$IPT6"; do
 					if ! $IPT -S $policy &> /dev/null; then
 						$IPT -N $policy
@@ -591,7 +592,11 @@ mwan3_set_user_iptables_rule()
 					fi
 
 					$IPT -F mwan3_rule_$1
+				done
 
+				config_foreach mwan3_set_sticky_iptables interface
+
+				for IPT in "$IPT4" "$IPT6"; do
 					$IPT -A mwan3_rule_$1 -m mark --mark 0/0xff00 -j $policy
 					$IPT -A mwan3_rule_$1 -m mark ! --mark 0xfc00/0xfc00 -j SET --del-set mwan3_sticky_$rule src,src
 					$IPT -A mwan3_rule_$1 -m mark ! --mark 0xfc00/0xfc00 -j SET --add-set mwan3_sticky_$rule src,src
