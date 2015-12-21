@@ -536,6 +536,10 @@ f_deltemp()
 #
 f_remove()
 {
+    local query_pid
+    local query_date
+    local query_total
+    local query_blocked
     if [ "${query_ok}" = "true" ] && [ "${ntp_ok}" = "true" ]
     then
         query_date="$(date "+%Y%m%d")"
@@ -547,20 +551,23 @@ f_remove()
         fi
         if [ -s "${adb_querypid}" ] && [ ! -f "${adb_queryfile}.${query_date}" ]
         then
-            kill -9 "$(cat "${adb_querypid}")" >/dev/null 2>&1
+            query_pid="$(cat "${adb_querypid}" 2>/dev/null)"
+            > "${adb_querypid}"
+            kill -9 "${query_pid}" >/dev/null 2>&1
             rc=${?}
             if [ $((rc)) -eq 0 ]
             then
                 find "${adb_backupdir}" -maxdepth 1 -type f -mtime +"${adb_queryhistory}" -name "${query_name}.*" -exec rm -f "{}" \; 2>/dev/null
                 rc=${?}
-            fi
-            if [ $((rc)) -eq 0 ]
-            then
-                f_log "remove old domain query log background process (pid: $(cat "${adb_querypid}")) and do logfile housekeeping"
+                if [ $((rc)) -eq 0 ]
+                then
+                    f_log "remove old domain query background process (pid: ${query_pid}) and do logfile housekeeping"
+                else
+                    f_log "error during domain query logfile housekeeping" "${rc}"
+                fi
             else
-                f_log "error during domain query removal/housekeeping (pid: $(cat "${adb_querypid}"))" "${rc}"
+                f_log "error during domain query background process removal (pid: ${query_pid})" "${rc}"
             fi
-            > "${adb_querypid}"
         fi
         if [ ! -s "${adb_querypid}" ]
         then
@@ -569,9 +576,9 @@ f_remove()
             if [ $((rc)) -eq 0 ]
             then
                 sleep 1
-                f_log "new domain query log background process started (pid: $(cat "${adb_querypid}"))"
+                f_log "new domain query log background process started (pid: $(cat "${adb_querypid}" 2>/dev/null))"
             else
-                f_log "error during domain query start" "${rc}"
+                f_log "error during domain query background process start" "${rc}"
             fi
         fi
     fi
