@@ -1,0 +1,13 @@
+diff --git a/src/kadmin/ktutil/ktutil_funcs.c b/src/kadmin/ktutil/ktutil_funcs.c
+index 20a348c..97baff0 100644
+--- a/src/kadmin/ktutil/ktutil_funcs.c
++++ b/src/kadmin/ktutil/ktutil_funcs.c
+@@ -67,7 +67,7 @@ krb5_error_code ktutil_delete(context, list, idx)
+     krb5_kt_list lp, prev;
+     int i;
+ 
+-    for (lp = *list, i = 1; lp; prev = lp, lp = lp->next, i++) {
++    for (prev = NULL, lp = *list, i = 1; lp; prev = lp, lp = lp->next, i++) {
+         if (i == idx) {
+             if (i == 1)
+                 *list = lp->next;
