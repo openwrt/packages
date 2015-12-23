@@ -53,6 +53,7 @@ validate_server_section() {
 		'StrictHostKeyChecking:or("yes", "no")' \
 		'TCPKeepAlive:or("yes", "no")' \
 		'VerifyHostKeyDNS:or("yes", "no")'
+	return $?
 }
 
 validate_tunnelR_section() {
@@ -61,6 +62,7 @@ validate_tunnelR_section() {
 		'remoteport:port' \
 		'localaddress:host' \
 		'localport:port'
+	return $?
 }
 
 validate_tunnelL_section() {
@@ -69,12 +71,14 @@ validate_tunnelL_section() {
 		'remoteport:port' \
 		'localaddress:or(host, "*"):*' \
 		'localport:port'
+	return $?
 }
 
 validate_tunnelD_section() {
 	uci_validate_section sshtunnel tunnelD "$1" \
 		'localaddress:or(host, "*"):*' \
 		'localport:port'
+	return $?
 }
 
 validate_tunnelW_section() {
@@ -82,6 +86,7 @@ validate_tunnelW_section() {
 		'vpntype:or("ethernet", "point-to-point"):point-to-point' \
 		'localdev:or("any", min(1))' \
 		'remotedev:or("any", min(1))'
+	return $?
 }
 
 load_tunnelR() {
