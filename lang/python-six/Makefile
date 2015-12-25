@@ -14,6 +14,8 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/s/six
 PKG_MD5SUM:=34eed507548117b2ab523ab14b2f8b55
+PKG_SOURCE_DIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_DIR)
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 
@@ -40,9 +42,5 @@ writing Python code that is compatible on both Python versions.  See the
 documentation for more information on what is provided.
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
-endef
-
-$(eval $(call PyPackage,python-six))
+$(eval $(call PyMod/Default))
 $(eval $(call BuildPackage,python-six))
