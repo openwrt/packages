@@ -14,6 +14,8 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/c/cffi
 PKG_MD5SUM:=deeba7c1fd32a66f1db587988d760c11
+PKG_SOURCE_DIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_DIR)
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 HOST_BUILD_DEPENDS:=libffi/host python/host python-setuptools/host python-pycparser/host
@@ -40,10 +42,6 @@ define Package/python-cffi/description
 Foreign Function Interface for Python calling C code.
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix="/usr" --root="$(PKG_INSTALL_DIR)")
-endef
-
 define Host/Compile
 	$(call Build/Compile/HostPyMod,,install --prefix="" --root="$(STAGING_DIR_HOST)")
 endef
@@ -52,6 +50,5 @@ define Host/Install
 endef
 
 $(eval $(call HostBuild))
-
-$(eval $(call PyPackage,python-cffi))
+$(eval $(call PyMod/Default))
 $(eval $(call BuildPackage,python-cffi))

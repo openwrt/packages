@@ -14,6 +14,8 @@ PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/p/pycparser
 PKG_MD5SUM:=a2bc8d28c923b4fe2b2c3b4b51a4f935
+PKG_SOURCE_DIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_DIR)
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 HOST_BUILD_DEPENDS:=python/host python-setuptools/host python-ply/host
@@ -42,10 +44,6 @@ module designed to be easily integrated into applications that need to parse
 C source code.
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix="/usr" --root="$(PKG_INSTALL_DIR)")
-endef
-
 define Host/Compile
 	$(call Build/Compile/HostPyMod,,install --prefix="" --root="$(STAGING_DIR_HOST)")
 endef
@@ -55,5 +53,5 @@ endef
 
 $(eval $(call HostBuild))
 
-$(eval $(call PyPackage,python-pycparser))
+$(eval $(call PyMod/Default))
 $(eval $(call BuildPackage,python-pycparser))
