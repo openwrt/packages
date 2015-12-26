@@ -1,6 +1,6 @@
 --- a/lib/commands/toolcontext.c
 +++ b/lib/commands/toolcontext.c
-@@ -1740,8 +1740,10 @@ struct cmd_context *create_toolcontext(u
+@@ -1741,8 +1741,10 @@ struct cmd_context *create_toolcontext(u
  				       unsigned set_filters)
  {
  	struct cmd_context *cmd;
@@ -11,7 +11,7 @@
  
  #ifdef M_MMAP_MAX
  	mallopt(M_MMAP_MAX, 0);
-@@ -1777,7 +1779,7 @@ struct cmd_context *create_toolcontext(u
+@@ -1778,7 +1780,7 @@ struct cmd_context *create_toolcontext(u
  	/* FIXME Make this configurable? */
  	reset_lvm_errno(1);
  
@@ -20,7 +20,7 @@
  	/* Set in/out stream buffering before glibc */
  	if (set_buffering) {
  		/* Allocate 2 buffers */
-@@ -2160,7 +2162,7 @@ void destroy_toolcontext(struct cmd_cont
+@@ -2161,7 +2163,7 @@ void destroy_toolcontext(struct cmd_cont
  	if (cmd->libmem)
  		dm_pool_destroy(cmd->libmem);
  
