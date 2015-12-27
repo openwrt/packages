@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_VERSION:=2.5.0
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=Apache-2.0
@@ -129,31 +129,30 @@ define Package/openvswitch/install
 	$(INSTALL_BIN) ./files/etc/init.d/openvswitch.init $(1)/etc/init.d/openvswitch
 
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/lib/.libs/libsflow.so*  $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/lib/.libs/libopenvswitch.so*  $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/ofproto/.libs/libofproto.so*  $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/ovsdb/.libs/libovsdb.so*  $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libofproto.so*  $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libopenvswitch.so*  $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libovsdb.so*  $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsflow.so*  $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-appctl $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-ofctl $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ovsdb/.libs/ovsdb-client $(1)/usr/bin/
-
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-dpctl $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-vsctl $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ovsdb/.libs/ovsdb-tool $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ovs-appctl $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ovs-ofctl $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ovsdb-client $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ovs-dpctl $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ovs-vsctl $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ovsdb-tool $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vswitchd/.libs/ovs-vswitchd $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ovsdb/.libs/ovsdb-server $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ovs-vswitchd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ovsdb-server $(1)/usr/sbin/
 
 	$(INSTALL_DIR) $(1)/usr/share/openvswitch/
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/vswitchd/vswitch.ovsschema $(1)/usr/share/openvswitch/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/usr/share/openvswitch/vswitch.ovsschema $(1)/usr/share/openvswitch/
 endef
 
 define Package/openvswitch-python/install
-	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
-	$(CP) $(PKG_BUILD_DIR)/python/ovs/ $(1)/usr/lib/python$(PYTHON_VERSION)/
+	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/ovs
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/openvswitch/python/ovs/* $(1)/usr/lib/python$(PYTHON_VERSION)/ovs
 endef
 
 define Package/openvswitch-ipsec/install
@@ -163,7 +162,7 @@ endef
 
 define Package/openvswitch-benchmark/install
 	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-benchmark $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ovs-benchmark $(1)/usr/bin/
 endef
 
 define Package/openvswitch/postinst
