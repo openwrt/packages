@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=5.6.8
+PKG_VERSION:=5.6.16
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>, Michael Heimpold <mhei@heimpold.de>
 
 PKG_LICENSE:=PHPv3.01
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_MD5SUM:=a5a6df33aade0cb5425e4374e3832f0b
+PKG_MD5SUM:=3f1d999ed1f9cb5713c9a0161c557f2f
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -36,7 +36,7 @@ PHP5_MODULES = \
 	json \
 	ldap \
 	mbstring mcrypt mysql mysqli \
-	openssl \
+	opcache openssl \
 	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql \
 	session shmop simplexml soap sockets sqlite3 sysvmsg sysvsem sysvshm \
 	tokenizer \
@@ -55,7 +55,6 @@ define Package/php5/Default
   CATEGORY:=Languages
   TITLE:=PHP5 Hypertext preprocessor
   URL:=http://www.php.net/
-  MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
   DEPENDS:=php5
 endef
 
@@ -274,6 +273,12 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-mysqli),)
   CONFIGURE_ARGS+= --with-mysqli=shared,"$(STAGING_DIR)/usr/bin/mysql_config"
 else
   CONFIGURE_ARGS+= --without-mysqli
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-opcache),)
+  CONFIGURE_ARGS+= --enable-opcache=shared
+else
+  CONFIGURE_ARGS+= --disable-opcache
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-openssl),)
@@ -508,7 +513,11 @@ define BuildModule
 	$(INSTALL_DIR) $$(1)/usr/lib/php
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/modules/$(subst -,_,$(1)).so $$(1)/usr/lib/php/
 	$(INSTALL_DIR) $$(1)/etc/php5
+      ifeq ($(4),zend)
+	echo "zend_extension=/usr/lib/php/$(subst -,_,$(1)).so" > $$(1)/etc/php5/$(subst -,_,$(1)).ini
+      else
 	echo "extension=$(subst -,_,$(1)).so" > $$(1)/etc/php5/$(subst -,_,$(1)).ini
+    endif
   endef
 
   $$(eval $$(call BuildPackage,php5-mod-$(1)))
@@ -540,6 +549,7 @@ $(eval $(call BuildModule,mbstring,MBString))
 $(eval $(call BuildModule,mcrypt,Mcrypt,+PACKAGE_php5-mod-mcrypt:libmcrypt +PACKAGE_php5-mod-mcrypt:libltdl))
 $(eval $(call BuildModule,mysql,MySQL,+PACKAGE_php5-mod-mysql:libmysqlclient))
 $(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php5-mod-mysqli:libmysqlclient))
+$(eval $(call BuildModule,opcache,OPcache,,zend))
 $(eval $(call BuildModule,openssl,OpenSSL,+PACKAGE_php5-mod-openssl:libopenssl))
 $(eval $(call BuildModule,pcntl,PCNTL))
 $(eval $(call BuildModule,pdo,PHP Data Objects))
