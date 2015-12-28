@@ -103,3 +103,6 @@
 
  #DtDNS
 "dtdns.com"	"http://www.dtdns.com/api/autodns.cfm?id=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
+
+# dy.fi Dynamic DNS for finnish users
+"dy.fi"      "http://[USERNAME]:[PASSWORD]@www.dy.fi/nic/update?hostname=[DOMAIN]"
