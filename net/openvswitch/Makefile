@@ -165,11 +165,6 @@ define Package/openvswitch-benchmark/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ovs-benchmark $(1)/usr/bin/
 endef
 
-define Package/openvswitch/postinst
-#!/bin/sh
-[ -n "$${IPKG_INSTROOT}" ] || /etc/init.d/openvswitch enable || true
-endef
-
 $(eval $(call BuildPackage,openvswitch))
 $(eval $(call BuildPackage,openvswitch-python))
 $(eval $(call BuildPackage,openvswitch-ipsec))
