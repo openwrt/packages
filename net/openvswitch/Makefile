@@ -28,7 +28,10 @@ PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
-SUPPORTED_KERNELS:=LINUX_3_8||LINUX_3_10||LINUX_3_13||LINUX_3_14||LINUX_3_18||LINUX_4_0||LINUX_4_1||LINUX_4_2||LINUX_4_3
+# Upstream package supports kernels between 2.6.32 and 4.3 
+# see https://github.com/openvswitch/ovs/blob/master/FAQ.md
+# This list is pruned to only those kernels used in OpenWRT
+SUPPORTED_KERNELS:=LINUX_3_18||LINUX_4_1||LINUX_4_3
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
