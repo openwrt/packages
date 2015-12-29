@@ -76,7 +76,7 @@ endef
 
 define Package/openvswitch-ipsec
   $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch Userspace Package
+  TITLE:=Open vSwitch GRE through IPsec tool
   DEPENDS:=@PACKAGE_openvswitch +PACKAGE_openvswitch:openvswitch-python
 endef
 
@@ -87,7 +87,7 @@ endef
 
 define Package/openvswitch-benchmark
   $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch Userspace Package
+  TITLE:=Open vSwitch flow setup benchmark utility
   DEPENDS:=@PACKAGE_openvswitch +PACKAGE_openvswitch:openvswitch
 endef
 
