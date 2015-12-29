@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openvswitch
 
 PKG_RELEASE:=3
-PKG_VERSION:=2.4.0
+PKG_VERSION:=2.5.0
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -21,14 +21,17 @@ PKG_USE_MIPS16:=0
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/openvswitch/ovs
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=b979c282ef040a20d09b8d6885648b09352f05db
+PKG_SOURCE_VERSION:=98b94d1e7002063ce2ea3c3221fe9234cac4e124
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
-SUPPORTED_KERNELS:=LINUX_3_8||LINUX_3_10||LINUX_3_13||LINUX_3_14||LINUX_3_18||LINUX_4_0||LINUX_4_1
+# Upstream package supports kernels between 2.6.32 and 4.3 
+# see https://github.com/openvswitch/ovs/blob/master/FAQ.md
+# This list is pruned to only those kernels used in OpenWRT
+SUPPORTED_KERNELS:=LINUX_3_18||LINUX_4_1||LINUX_4_3
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
@@ -98,7 +101,7 @@ define KernelPackage/openvswitch
   SUBMENU:=Network Support
   TITLE:=Open vSwitch Kernel Package
   KCONFIG:=CONFIG_BRIDGE
-  DEPENDS:=+kmod-stp @IPV6 +kmod-gre +kmod-lib-crc32c +kmod-vxlan @($(SUPPORTED_KERNELS))
+  DEPENDS:=+kmod-stp @IPV6 +kmod-gre +kmod-lib-crc32c +kmod-vxlan +kmod-nf-conntrack +kmod-nf-conntrack6 @($(SUPPORTED_KERNELS))
   FILES:= \
 	$(PKG_BUILD_DIR)/datapath/linux/openvswitch.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,21,openvswitch)
