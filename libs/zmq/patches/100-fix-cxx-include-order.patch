@@ -1,6 +1,6 @@
 --- a/src/mtrie.cpp
 +++ b/src/mtrie.cpp
-@@ -17,11 +17,11 @@
+@@ -27,11 +27,11 @@
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
  
@@ -16,7 +16,7 @@
  #include "windows.hpp"
 --- a/src/raw_encoder.cpp
 +++ b/src/raw_encoder.cpp
-@@ -17,6 +17,11 @@
+@@ -27,6 +27,11 @@
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
  
@@ -30,7 +30,7 @@
  #include "likely.hpp"
 --- a/src/trie.cpp
 +++ b/src/trie.cpp
-@@ -17,11 +17,11 @@
+@@ -27,11 +27,11 @@
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
  
@@ -46,7 +46,7 @@
  #include "windows.hpp"
 --- a/src/encoder.hpp
 +++ b/src/encoder.hpp
-@@ -29,7 +29,6 @@
+@@ -39,7 +39,6 @@
  #include <stddef.h>
  #include <string.h>
  #include <stdlib.h>
@@ -56,7 +56,7 @@
  #include "msg.hpp"
 --- a/src/v1_encoder.cpp
 +++ b/src/v1_encoder.cpp
-@@ -17,6 +17,11 @@
+@@ -27,6 +27,11 @@
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
  
@@ -70,7 +70,7 @@
  #include "likely.hpp"
 --- a/src/v2_encoder.cpp
 +++ b/src/v2_encoder.cpp
-@@ -17,6 +17,11 @@
+@@ -27,6 +27,11 @@
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
  
