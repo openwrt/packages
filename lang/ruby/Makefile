@@ -10,14 +10,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=2.2.3
+PKG_VERSION:=2.2.4
 PKG_RELEASE:=1
 
 PKG_LIBVER:=2.2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_LIBVER)/
-PKG_MD5SUM:=f49a734729a71774d4a94a9a603114b2
+PKG_MD5SUM:=c3d65f6d2ebe90dda81a37885ea244f5
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -832,6 +832,13 @@ CONFIGURE_ARGS += \
 endif
 
 TARGET_LDFLAGS += -L$(PKG_BUILD_DIR)
+
+# Ruby uses DLDFLAGS and not LDFLAGS for libraries. LDFLAGS is only for execs.
+# However, DLDFLAGS from configure is not passed to Makefile when target is linux.
+# XLDFLAGS is used by both libraries and execs. This is somehow brute force but
+# if will fix when some LD_FLAGS is needef for libraries. As side effect, it will
+# duplicate ld args for binaries.
+CONFIGURE_VARS += XLDFLAGS="$(TARGET_LDFLAGS)"
 
 MAKE_FLAGS += \
 	DESTDIR="$(PKG_INSTALL_DIR)" \
