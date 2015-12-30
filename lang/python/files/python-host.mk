@@ -13,10 +13,10 @@ HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(STAGING_DIR_HOST)/$(HOST_PYTHON_PKG_DI
 define HostPython
 	if [ "$(strip $(3))" == "HOST" ]; then \
 		export PYTHONPATH="$(HOST_PYTHONPATH)"; \
-		export _python_sysroot="$(STAGING_DIR_HOST)/usr"; \
+		export _python_sysroot="$(STAGING_DIR_HOST)"; \
 	else \
 		export PYTHONPATH="$(PYTHONPATH)"; \
-		export _python_sysroot="$(STAGING_DIR)/usr"; \
+		export _python_sysroot="$(STAGING_DIR)"; \
 	fi; \
 	export PYTHONOPTIMIZE=""; \
 	export PYTHONDONTWRITEBYTECODE=1; \
@@ -29,7 +29,7 @@ endef
 # These configure args are needed in detection of path to Python header files
 # using autotools.
 HOST_CONFIGURE_ARGS += \
-	_python_sysroot="$(STAGING_DIR_HOST)/usr" \
+	_python_sysroot="$(STAGING_DIR_HOST)" \
 	_python_prefix="/usr" \
 	_python_exec_prefix="/usr"
 
