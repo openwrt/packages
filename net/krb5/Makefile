@@ -60,14 +60,6 @@ define Package/krb5/description
 	Kerberos
 endef
 
-define Build/Prepare
-	# Krb5 tarball contains signature and a second tarball
-	# containing source code.
-	tar xf "$(DL_DIR)/$(PKG_SOURCE)" -C "$(BUILD_DIR)"
-	tar xzf "$(BUILD_DIR)/krb5-$(PKG_VERSION).tar.gz" -C "$(BUILD_DIR)"
-	patch -p1 -d "$(PKG_BUILD_DIR)" < "$(PATCH_DIR)/001-fix-build.patch"
-endef
-
 CONFIGURE_PATH = ./src
 
 CONFIGURE_VARS += \
