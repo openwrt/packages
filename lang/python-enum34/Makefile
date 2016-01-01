@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=enum34
-PKG_VERSION:=1.1.1
+PKG_VERSION:=1.1.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/e/enum34
-PKG_MD5SUM:=5edaf22a14ec2769fc973a0443bf02d5
+PKG_MD5SUM:=025bb71b3f9d2fad15d0ee53e48dc873
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=enum/LICENSE

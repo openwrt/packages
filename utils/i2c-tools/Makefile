@@ -11,7 +11,9 @@ PKG_NAME:=i2c-tools
 PKG_VERSION:=3.1.2
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://dl.lm-sensors.org/i2c-tools/releases/
+PKG_SOURCE_URL:=http://dl.lm-sensors.org/i2c-tools/releases/ \
+                http://fossies.org/linux/misc/
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_MD5SUM:=7104a1043d11a5e2c7b131614eb1b962
 

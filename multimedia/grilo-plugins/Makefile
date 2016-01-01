@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo-plugins
-PKG_VERSION:=0.2.16
+PKG_VERSION:=0.3.0
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -17,8 +17,8 @@ PKG_LICENSE:=LGPLv2.1
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/grilo-plugins/0.2/
-PKG_MD5SUM:=62ecaad877b485a950259eef1ef38c18
+PKG_SOURCE_URL:=@GNOME/grilo-plugins/0.3/
+PKG_MD5SUM:=670f0302a4b91c043a7c9f9222545fbe
 
 PKG_BUILD_DEPENDS:=glib2 grilo
 
@@ -54,7 +54,7 @@ CONFIGURE_ARGS += \
         --without-x \
 
 define Package/grilo-plugins/install
-	$(INSTALL_DIR) $(1)/usr/lib/grilo-0.2
+	$(INSTALL_DIR) $(1)/usr/lib/grilo-0.3
 endef
 
 define BuildPlugin
@@ -68,10 +68,10 @@ define BuildPlugin
   endef
 
   define Package/grilo-plugins-$(1)/install
-	$(INSTALL_DIR) $$(1)/usr/lib/grilo-0.2
+	$(INSTALL_DIR) $$(1)/usr/lib/grilo-0.3
 	for p in $(3); do \
-		$(CP) $(PKG_INSTALL_DIR)/usr/lib/grilo-0.2/libgrl$$$$$$$${p}.so $$(1)/usr/lib/grilo-0.2; \
-		$(CP) $(PKG_INSTALL_DIR)/usr/lib/grilo-0.2/grl-$$$$$$$${p}.xml $$(1)/usr/lib/grilo-0.2; \
+		$(CP) $(PKG_INSTALL_DIR)/usr/lib/grilo-0.3/libgrl$$$$$$$${p}.so $$(1)/usr/lib/grilo-0.3; \
+		$(CP) $(PKG_INSTALL_DIR)/usr/lib/grilo-0.3/grl-$$$$$$$${p}.xml $$(1)/usr/lib/grilo-0.3; \
 	done
   endef
 

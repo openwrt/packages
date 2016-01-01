@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=scapy
-PKG_VERSION:=2.2.0
+PKG_VERSION:=2.3.1
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=PKG-INFO
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=https://bitbucket.org/secdev/scapy/downloads/
-PKG_MD5SUM:=d68903c5d877820026dc544caa0b5d3c
+PKG_MD5SUM:=a30d828e59801d1d092219b349f1da9e
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 
