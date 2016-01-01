@@ -1,0 +1,36 @@
+diff -u --recursive gst-plugins-good-1.6.2-vanilla/configure.ac gst-plugins-good-1.6.2/configure.ac
+--- gst-plugins-good-1.6.2-vanilla/configure.ac	2016-01-01 12:00:52.525815362 -0500
++++ gst-plugins-good-1.6.2/configure.ac	2016-01-01 12:03:22.198982586 -0500
+@@ -1014,21 +1014,6 @@
+ sys/v4l2/Makefile
+ sys/waveform/Makefile
+ sys/ximage/Makefile
+-tests/Makefile
+-tests/check/Makefile
+-tests/examples/Makefile
+-tests/examples/audiofx/Makefile
+-tests/examples/cairo/Makefile
+-tests/examples/equalizer/Makefile
+-tests/examples/jack/Makefile
+-tests/examples/level/Makefile
+-tests/examples/pulse/Makefile
+-tests/examples/rtp/Makefile
+-tests/examples/shapewipe/Makefile
+-tests/examples/spectrum/Makefile
+-tests/examples/v4l2/Makefile
+-tests/files/Makefile
+-tests/icles/Makefile
+ common/Makefile
+ common/m4/Makefile
+ m4/Makefile
+diff -u --recursive gst-plugins-good-1.6.2-vanilla/Makefile.am gst-plugins-good-1.6.2/Makefile.am
+--- gst-plugins-good-1.6.2-vanilla/Makefile.am	2016-01-01 12:00:52.525815362 -0500
++++ gst-plugins-good-1.6.2/Makefile.am	2016-01-01 12:03:06.921556033 -0500
+@@ -2,7 +2,6 @@
+ 
+ ALWAYS_SUBDIRS =		\
+ 	gst sys ext 		\
+-	tests			\
+ 	docs			\
+ 	common			\
+ 	m4			\
