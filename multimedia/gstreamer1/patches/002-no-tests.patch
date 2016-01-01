@@ -1,0 +1,46 @@
+diff -u --recursive gstreamer-1.6.2-vanilla/configure.ac gstreamer-1.6.2/configure.ac
+--- gstreamer-1.6.2-vanilla/configure.ac	2016-01-01 12:01:10.863324404 -0500
++++ gstreamer-1.6.2/configure.ac	2016-01-01 12:05:07.794937166 -0500
+@@ -980,21 +980,6 @@
+ libs/gst/net/Makefile
+ plugins/Makefile
+ plugins/elements/Makefile
+-tests/Makefile
+-tests/benchmarks/Makefile
+-tests/check/Makefile
+-tests/misc/Makefile
+-tests/examples/Makefile
+-tests/examples/adapter/Makefile
+-tests/examples/controller/Makefile
+-tests/examples/stepping/Makefile
+-tests/examples/helloworld/Makefile
+-tests/examples/manual/Makefile
+-tests/examples/memory/Makefile
+-tests/examples/netclock/Makefile
+-tests/examples/ptp/Makefile
+-tests/examples/streamiddemux/Makefile
+-tests/examples/streams/Makefile
+ tools/Makefile
+ common/Makefile
+ common/m4/Makefile
+diff -u --recursive gstreamer-1.6.2-vanilla/Makefile.am gstreamer-1.6.2/Makefile.am
+--- gstreamer-1.6.2-vanilla/Makefile.am	2016-01-01 12:01:10.862324377 -0500
++++ gstreamer-1.6.2/Makefile.am	2016-01-01 12:05:03.190808129 -0500
+@@ -7,7 +7,7 @@
+ aclocal_DATA = gst-element-check-@GST_API_VERSION@.m4
+ 
+ SUBDIRS = pkgconfig \
+-	gst libs plugins tests \
++	gst libs plugins \
+ 	docs \
+ 	m4 \
+ 	common \
+@@ -19,7 +19,7 @@
+ 
+ # These are all the possible subdirs
+ DIST_SUBDIRS = pkgconfig \
+-	gst libs plugins tools tests \
++	gst libs plugins tools \
+ 	docs \
+ 	m4 \
+ 	common \
