@@ -1,0 +1,28 @@
+diff -u --recursive gst-plugins-bad-1.6.2-vanilla/configure.ac gst-plugins-bad-1.6.2/configure.ac
+--- gst-plugins-bad-1.6.2-vanilla/configure.ac	2016-01-01 10:40:17.883755147 -0500
++++ gst-plugins-bad-1.6.2/configure.ac	2016-01-01 10:41:14.832426692 -0500
+@@ -3455,7 +3455,6 @@
+ ext/xvid/Makefile
+ ext/zbar/Makefile
+ ext/dtls/Makefile
+-po/Makefile.in
+ docs/Makefile
+ docs/plugins/Makefile
+ docs/libs/Makefile
+diff -u --recursive gst-plugins-bad-1.6.2-vanilla/Makefile.am gst-plugins-bad-1.6.2/Makefile.am
+--- gst-plugins-bad-1.6.2-vanilla/Makefile.am	2016-01-01 10:40:17.883755147 -0500
++++ gst-plugins-bad-1.6.2/Makefile.am	2016-01-01 10:41:47.607858580 -0500
+@@ -2,11 +2,11 @@
+ 
+ SUBDIRS = \
+ 	gst-libs gst sys ext pkgconfig \
+-	m4 common docs tests po tools
++	m4 common docs tests tools
+ 
+ DIST_SUBDIRS = \
+ 	gst gst-libs sys ext pkgconfig \
+-	m4 common docs tests po tools
++	m4 common docs tests tools
+ 
+ # include before EXTRA_DIST for win32 assignment
+ include $(top_srcdir)/common/win32.mak
