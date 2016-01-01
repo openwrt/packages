@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
-PKG_VERSION:=1.13.3
+PKG_VERSION:=1.14
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -17,8 +17,8 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=NOTICE
 
 PKG_SOURCE:=krb5-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.13/
-PKG_MD5SUM:=f99fb414932a4d8b1925e00ef31e7680
+PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.14/
+PKG_MD5SUM:=0727968764d0208388b85ad31aafde24
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
