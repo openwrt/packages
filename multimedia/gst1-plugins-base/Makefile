@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
-PKG_VERSION:=1.4.5
+PKG_VERSION:=1.6.2
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -19,7 +19,7 @@ PKG_LICENSE_FILES:=COPYING.LIB COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-base/
-PKG_MD5SUM:=357165af625c0ca353ab47c5d843920e
+PKG_MD5SUM:=f530fbbe287edce79c55a37bd1a39fe2
 
 PKG_BUILD_DEPENDS:= libgstreamer1
 PKG_CONFIG_DEPENDS:= \
@@ -275,7 +275,7 @@ $(eval $(call GstBuildPlugin,audiotestsrc,audio test,audio tag controller,,))
 $(eval $(call GstBuildPlugin,playback,media decoder (v2),pbutils,,))
 $(eval $(call GstBuildPlugin,gio,GIO,,,))
 $(eval $(call GstBuildPlugin,ogg,Ogg,riff tag pbutils video,,+libogg))
-$(eval $(call GstBuildPlugin,tcp,TCP,,,))
+$(eval $(call GstBuildPlugin,tcp,TCP,net,,))
 $(eval $(call GstBuildPlugin,theora,Theora,tag video,,+libogg +libtheora))
 $(eval $(call GstBuildPlugin,typefindfunctions,'typefind' functions,audio pbutils tag video,,))
 $(eval $(call GstBuildPlugin,videoconvert,video format conversion,video,,))
