@@ -25,7 +25,7 @@
 
 # set script version
 #
-adb_version="0.40.0"
+adb_version="0.40.2"
 
 # get current pid, script directory and openwrt version
 #

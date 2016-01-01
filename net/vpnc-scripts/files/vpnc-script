@@ -91,12 +91,12 @@ do_connect() {
 				continue
 			fi
 			if [ -n "$INTERNAL_IP4_DNS" ];then
-				for dns in "$INTERNAL_IP4_DNS";do
+				for dns in $INTERNAL_IP4_DNS;do
 					echo "server=/$i/$dns" >> $DNSMASQ_FILE
 				done
 			fi
 			if [ -n "$INTERNAL_IP6_DNS" ];then
-				for dns in "$INTERNAL_IP6_DNS";do
+				for dns in $INTERNAL_IP6_DNS;do
 					echo "server=/$i/$dns" >> $DNSMASQ_FILE
 				done
 			fi
@@ -105,23 +105,23 @@ do_connect() {
 		/etc/init.d/dnsmasq restart
 	else
 		if [ -n "$INTERNAL_IP4_DNS" ];then
-			for dns in "$INTERNAL_IP4_DNS";do
+			for dns in $INTERNAL_IP4_DNS;do
 				proto_add_dns_server "$dns"
 			done
 		fi
 		if [ -n "$INTERNAL_IP6_DNS" ];then
-			for dns in "$INTERNAL_IP6_DNS";do
+			for dns in $INTERNAL_IP6_DNS;do
 				proto_add_dns_server "$dns"
 			done
 		fi
 		if [ -n "$CISCO_DEF_DOMAIN" ] && [ "$CISCO_DEF_DOMAIN" != "$LOCAL_DOMAIN" ];then
 			if [ -n "$INTERNAL_IP4_DNS" ];then
-				for dns in "$INTERNAL_IP4_DNS";do
+				for dns in $INTERNAL_IP4_DNS;do
 					echo "server=/$CISCO_DEF_DOMAIN/$dns" >> $DNSMASQ_FILE
 				done
 			fi
 			if [ -n "$INTERNAL_IP6_DNS" ];then
-				for dns in "$INTERNAL_IP6_DNS";do
+				for dns in $INTERNAL_IP6_DNS;do
 					echo "server=/$CISCO_DEF_DOMAIN/$dns" >> $DNSMASQ_FILE
 				done
 			fi

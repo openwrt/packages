@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=0.40.0
+PKG_VERSION:=0.40.2
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dirk@brenken.org>
@@ -28,17 +28,18 @@ When the dns server on your router receives dns requests, we will sort out queri
 resource records of ad servers and return the local ip address of your router and the internal web server
 delivers a transparent pixel instead.
 The script supports the following domain blacklist sites:
-  http://pgl.yoyo.org/adservers
-  http://malwaredomains.com
-  https://zeustracker.abuse.ch
-  https://feodotracker.abuse.ch
-  https://palevotracker.abuse.ch
-  http://dshield.org
-  http://www.shallalist.de
-  http://www.spam404.com
-  http://winhelp2002.mvps.org
   https://adaway.org
   https://disconnect.me
+  http://dshield.org
+  https://feodotracker.abuse.ch
+  http://malwaredomains.com
+  https://palevotracker.abuse.ch
+  http://www.shallalist.de
+  http://www.spam404.com
+  http://someonewhocares.org
+  http://winhelp2002.mvps.org
+  http://pgl.yoyo.org/adservers
+  https://zeustracker.abuse.ch
 
 Please see README.md in /etc/adblock for further information.
 

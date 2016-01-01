@@ -63,38 +63,6 @@ config service "querylog"
 # please do not change the urls listed below, 
 # enable/disable sources as needed
 # for shallalist you can also enable/disable different ad categories
-config source "yoyo"
-	option enabled "1"
-	option adb_src_yoyo "http://pgl.yoyo.org/adservers/serverlist.php?hostformat=one-line&showintro=0&mimetype=plaintext&ruleset=rset_yoyo"
-
-config source "malware"
-	option enabled "0"
-	option adb_src_malware "http://mirror1.malwaredomains.com/files/justdomains&ruleset=rset_malware"
-
-config source "zeus"
-	option enabled "0"
-	option adb_src_zeus "https://zeustracker.abuse.ch/blocklist.php?download=domainblocklist&ruleset=rset_zeus"
-
-config source "feodo"
-	option enabled "0"
-	option adb_src_feodo "https://feodotracker.abuse.ch/blocklist/?download=domainblocklist&ruleset=rset_feodo"
-
-config source "palevo"
-	option enabled "0"
-	option adb_src_palevo "https://palevotracker.abuse.ch/blocklists.php?download=domainblocklist&ruleset=rset_palevo"
-
-config source "dshield"
-	option enabled "0"
-	option adb_src_dshield "http://www.dshield.org/feeds/suspiciousdomains_Low.txt&ruleset=rset_dshield"
-
-config source "spam404"
-	option enabled "0"
-	option adb_src_spam404 "http://spam404bl.com/spam404scamlist.txt&ruleset=rset_spam404"
-
-config source "winhelp"
-	option enabled "0"
-	option adb_src_winhelp "http://winhelp2002.mvps.org/hosts.txt&ruleset=rset_winhelp"
-
 config source "adaway"
 	option enabled "0"
 	option adb_src_adaway "https://adaway.org/hosts.txt&ruleset=rset_adaway"
@@ -102,6 +70,22 @@ config source "adaway"
 config source "disconnect"
 	option enabled "0"
 	option adb_src_disconnect "https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt&ruleset=rset_disconnect"
+
+config source "dshield"
+	option enabled "0"
+	option adb_src_dshield "http://www.dshield.org/feeds/suspiciousdomains_Low.txt&ruleset=rset_dshield"
+
+config source "feodo"
+	option enabled "0"
+	option adb_src_feodo "https://feodotracker.abuse.ch/blocklist/?download=domainblocklist&ruleset=rset_feodo"
+
+config source "malware"
+	option enabled "0"
+	option adb_src_malware "http://mirror1.malwaredomains.com/files/justdomains&ruleset=rset_malware"
+
+config source "palevo"
+	option enabled "0"
+	option adb_src_palevo "https://palevotracker.abuse.ch/blocklists.php?download=domainblocklist&ruleset=rset_palevo"
 
 config source "shalla"
 	option enabled "0"
@@ -111,3 +95,23 @@ config source "shalla"
 	list adb_catlist "spyware"
 	list adb_catlist "tracker"
 	list adb_catlist "warez"
+
+config source "spam404"
+	option enabled "0"
+	option adb_src_spam404 "http://spam404bl.com/spam404scamlist.txt&ruleset=rset_spam404"
+
+config source "whocares"
+	option enabled "0"
+	option adb_src_whocares "http://someonewhocares.org/hosts/hosts&ruleset=rset_whocares"
+
+config source "winhelp"
+	option enabled "0"
+	option adb_src_winhelp "http://winhelp2002.mvps.org/hosts.txt&ruleset=rset_winhelp"
+
+config source "yoyo"
+	option enabled "1"
+	option adb_src_yoyo "http://pgl.yoyo.org/adservers/serverlist.php?hostformat=one-line&showintro=0&mimetype=plaintext&ruleset=rset_yoyo"
+
+config source "zeus"
+	option enabled "0"
+	option adb_src_zeus "https://zeustracker.abuse.ch/blocklist.php?download=domainblocklist&ruleset=rset_zeus"
