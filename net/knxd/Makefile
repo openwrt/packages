@@ -88,6 +88,9 @@ define Package/knxd/install
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/knxd.config $(1)/etc/config/knxd
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/knxd.defaults $(1)/etc/uci-defaults/knxd
 endef
 
 define Package/knxd-tools/install
