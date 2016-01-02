@@ -5,15 +5,29 @@ START=98
 STOP=20
 NAME=knxd
 PROG=/usr/bin/$NAME
+USE_PROCD=1
 
-start() {
-        local options url
-        config_load "$NAME"
-        config_get options args options ''
-        config_get url args url
-        service_start $PROG $options $url
+start_service() {
+	local options url
+	config_load "$NAME"
+	config_get options args options ''
+	config_get url args url
+	procd_open_instance
+	procd_set_param command $PROG $options $url
+	procd_set_param respawn
+	procd_close_instance
 }
 
-stop() {
-        service_stop $PROG
+stop_service() {
+	killall knxd
+}
+
+reload_service()
+{
+	restart
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger knxd
 }
