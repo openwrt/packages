@@ -1,9 +1,0 @@
-#!/bin/sh
-
-uci batch <<-EOF >/dev/null 2>/dev/null
-	add network route
-	set network.@route[-1].gateway="0.0.0.0"
-	set network.@route[-1].interface="lan"
-	set network.@route[-1].target="224.0.23.12"
-	commit network
-EOF
