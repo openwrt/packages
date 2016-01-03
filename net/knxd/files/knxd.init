@@ -35,7 +35,7 @@ start_service() {
 	append_parm args eibaddr "eibaddr" "0.0.1"
 	append_parm args layer2 "layer2"
 	append_bool args GroupCache "GroupCache" 0
-	append_parm args daemon "daemon" "/var/log/eibd.log"
+	append_parm args daemon "daemon" "/var/log/knxd.log"
 	append_bool args Discovery "Discovery" 1
 	append_parm args error "error" # "5"
 	append_parm args listen_tcp "listen-tcp" "6720"
