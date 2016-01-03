@@ -28,7 +28,7 @@ _uci2conf() {
 				# detect list options (LENGTH) and ignore
 				echo $__OPT | grep -i "_LENGTH" >/dev/null 2>&1 && return
 				# detect list options (ITEM) and ignore
-				echo $__OPT | grep -i "_ITEM" >/dev/null 2>&1 && __OPT=$(echo $__OPT | sed -e "s#_ITEM.##g")
+				echo $__OPT | grep -i "_ITEM" >/dev/null 2>&1 && __OPT=$(echo $__OPT | sed -e "s#_ITEM.*##g")
 				# uci only accept "_" but we need "-"
 				local __OPT=$(echo $__OPT | sed -e "s#_#-#g")
 				# write to config
