@@ -36,3 +36,21 @@
    if test "x$OPENSSL_LIBS" = x; then
      LIBS=$old_LIBS
      LDFLAGS="$old_LDFLAGS"
+--- a/src/main/version.c
++++ b/src/main/version.c
+@@ -43,6 +43,7 @@ static long ssl_built = OPENSSL_VERSION_
+  */
+ int ssl_check_version(int allow_vulnerable)
+ {
++#if 0
+ 	long ssl_linked;
+ 
+ 	/*
+@@ -74,6 +75,7 @@ int ssl_check_version(int allow_vulnerab
+ 			return -1;
+ 		}
+ 	}
++#endif
+ 
+ 	return 0;
+ }
