@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsodium
-PKG_VERSION:=1.0.7
+PKG_VERSION:=1.0.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libsodium.org/libsodium/releases
-PKG_MD5SUM:=8bdc92cee556526a51612709e976208a
+PKG_MD5SUM:=0a66b86fd3aab3fe4c858edcd2772760
 
 PKG_FIXUP:=libtool autoreconf
 PKG_USE_MIPS16:=0
