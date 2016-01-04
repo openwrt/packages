@@ -1,0 +1,41 @@
+diff -u --recursive gstreamer-1.6.2-vanilla/configure.ac gstreamer-1.6.2/configure.ac
+--- gstreamer-1.6.2-vanilla/configure.ac	2016-01-01 12:11:19.150392204 -0500
++++ gstreamer-1.6.2/configure.ac	2016-01-01 12:06:49.611795028 -0500
+@@ -983,18 +983,6 @@
+ tools/Makefile
+ common/Makefile
+ common/m4/Makefile
+-docs/Makefile
+-docs/design/Makefile
+-docs/faq/Makefile
+-docs/gst/Makefile
+-docs/gst/gstreamer.types
+-docs/libs/Makefile
+-docs/plugins/Makefile
+-docs/manual/Makefile
+-docs/pwg/Makefile
+-docs/slides/Makefile
+-docs/xsl/Makefile
+-docs/version.entities
+ m4/Makefile
+ pkgconfig/Makefile
+ stamp.h
+diff -u --recursive gstreamer-1.6.2-vanilla/Makefile.am gstreamer-1.6.2/Makefile.am
+--- gstreamer-1.6.2-vanilla/Makefile.am	2016-01-01 12:11:19.151392233 -0500
++++ gstreamer-1.6.2/Makefile.am	2016-01-01 12:06:41.546568365 -0500
+@@ -8,7 +8,6 @@
+ 
+ SUBDIRS = pkgconfig \
+ 	gst libs plugins \
+-	docs \
+ 	m4 \
+ 	common \
+ 	data
+@@ -20,7 +19,6 @@
+ # These are all the possible subdirs
+ DIST_SUBDIRS = pkgconfig \
+ 	gst libs plugins tools \
+-	docs \
+ 	m4 \
+ 	common \
+ 	data

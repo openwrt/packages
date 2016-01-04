@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=forked-daapd
-PKG_VERSION:=23.2
-PKG_RELEASE:=20150622
-PKG_REV:=227017ef5ba8df921b2f1db681a46494ec296b8b
+PKG_VERSION:=23.4
+PKG_RELEASE:=20160101
+PKG_REV:=90514de7c8d9bf06b54596bc66e0668181eee25a
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -28,6 +28,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/forked-daapd
 SECTION:=sound
@@ -36,7 +37,7 @@ TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
 URL:=https://github.com/ejurgensen/forked-daapd
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
 	+libevent2 +libdaemon +libantlr3c +confuse +alsa-lib +libffmpeg-full \
-	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl
+	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl $(ICONV_DEPENDS)
 endef
 
 define Package/forked-daapd/description

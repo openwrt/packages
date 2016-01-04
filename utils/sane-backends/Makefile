@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -59,7 +59,7 @@ define Package/sane-backends/config
       depends on PACKAGE_sane-backends
       prompt "Include all SANE backends (sane-backends-all)"
 
-    comment "Modules"
+    comment "Backends"
 
 $(foreach backend,$(SANE_BACKENDS), \
     $(eval \
@@ -115,7 +115,7 @@ $(call Package/sane-backends/Default)
   HIDDEN:=1
 endef
 
-define Package/sane-backends/description
+define Package/sane-backends-all/description
 $(call Package/sane-backends/Default/description)
 .
 Metapackage for selecting all SANE Backends
