@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale
-PKG_VERSION:=0.10
-PKG_RELEASE:=2
+PKG_VERSION:=1.1
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 
 PKG_LICENSE:=GPL-3.0
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=Radicale-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://pypi.python.org/packages/source/R/Radicale/
-PKG_MD5SUM:=32655d8893962956ead0ad690cca6044
+PKG_MD5SUM:=2e3f11d05d7a21ee412dfd7bd5c38961
 
 # needed for "r"adicale <-> "R"adicale
 PKG_BUILD_DIR:=$(BUILD_DIR)/Radicale-$(PKG_VERSION)
