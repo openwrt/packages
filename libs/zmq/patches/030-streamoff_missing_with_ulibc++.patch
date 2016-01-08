@@ -1,6 +1,6 @@
 --- a/src/blob.hpp
 +++ b/src/blob.hpp
-@@ -21,6 +21,7 @@
+@@ -31,6 +31,7 @@
  #define __ZMQ_BLOB_HPP_INCLUDED__
  
  #include <string>

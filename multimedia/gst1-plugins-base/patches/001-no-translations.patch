@@ -1,0 +1,30 @@
+diff -u --recursive gst-plugins-base-1.6.2-vanilla/configure.ac gst-plugins-base-1.6.2/configure.ac
+--- gst-plugins-base-1.6.2-vanilla/configure.ac	2016-01-01 10:40:17.931759357 -0500
++++ gst-plugins-base-1.6.2/configure.ac	2016-01-01 10:43:44.374351388 -0500
+@@ -921,7 +921,6 @@
+ docs/libs/Makefile
+ docs/plugins/Makefile
+ docs/version.entities
+-po/Makefile.in
+ common/Makefile
+ common/m4/Makefile
+ m4/Makefile
+diff -u --recursive gst-plugins-base-1.6.2-vanilla/Makefile.am gst-plugins-base-1.6.2/Makefile.am
+--- gst-plugins-base-1.6.2-vanilla/Makefile.am	2016-01-01 10:40:17.931759357 -0500
++++ gst-plugins-base-1.6.2/Makefile.am	2016-01-01 10:44:17.403209313 -0500
+@@ -13,7 +13,6 @@
+ 	tools 			\
+ 	tests 			\
+ 	docs			\
+-	po 			\
+ 	common 			\
+ 	m4
+ 
+@@ -24,7 +23,6 @@
+ 	gst sys ext		\
+ 	tools 			\
+ 	tests 			\
+-	po 			\
+ 	common 			\
+ 	m4
+ 

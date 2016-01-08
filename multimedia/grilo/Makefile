@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo
-PKG_VERSION:=0.2.14
+PKG_VERSION:=0.3.0
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -17,8 +17,8 @@ PKG_LICENSE:=LGPLv2.1
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/grilo/0.2/
-PKG_MD5SUM:=7eba405ada20fefcb877d534d9d4f
+PKG_SOURCE_URL:=@GNOME/grilo/0.3/
+PKG_MD5SUM:=f8a51aacc604dcc308e71f8bca4c57ae
 
 PKG_BUILD_DEPENDS:=glib2 libsoup libxml2
 
@@ -46,7 +46,7 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/grilo-0.2/ \
+		$(PKG_INSTALL_DIR)/usr/include/grilo-0.3/ \
 		$(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) \
@@ -56,6 +56,13 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
 		$(1)/usr/lib/pkgconfig/
+	$(INSTALL_DIR) $(STAGING_DIR_HOST)/share/vala-0.30/vapi/
+	# Note: this are compiled elsewhere because grilo refuses to
+	# generate VAPI files unless gobject-introspection exists;
+	# OpenWrt does not yet have a gobject-introspection package.
+	$(INSTALL_DATA) \
+		./files/*.vapi \
+		$(STAGING_DIR_HOST)/share/vala-0.30/vapi
 endef
 
 define Package/grilo/install

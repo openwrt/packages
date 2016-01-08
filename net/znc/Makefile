@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
-PKG_VERSION:=1.6.1
+PKG_VERSION:=1.6.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
 		http://znc.in/releases/archive
-PKG_MD5SUM:=8e29289e6229b6d2473de202170745ab
+PKG_MD5SUM:=89f6696ed366661f7432ece343fd19d0
 
 PKG_MAINTAINER:=Jonas Gorski <jogo@openwrt.org>
 PKG_LICENSE:=Apache-2.0
@@ -277,8 +277,18 @@ CONFIGURE_VARS += \
 	LIBS="-lstdc++ -lm -lssl -lcrypto $(LIBGCC_S) -lc"
 
 CONFIGURE_ARGS += \
-	--disable-c-ares \
-	--disable-perl
+	--disable-charset \
+	--disable-cyrus \
+	--disable-debug \
+	--enable-largefile \
+	--disable-perl \
+	--enable-poll \
+	--disable-python \
+	--enable-ssl \
+	--disable-swig \
+	--disable-tcl \
+	--enable-tdns \
+	--enable-zlib
 
 define Build/Configure
 	$(call Build/Configure/Default,)

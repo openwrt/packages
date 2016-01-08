@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -147,8 +147,10 @@ case "${host_os}" in
+@@ -148,8 +148,10 @@ case "${host_os}" in
      *linux*)
          # Define on Linux to enable all library features. Define if using a gnu compiler
          if test "x$GXX" = "xyes"; then

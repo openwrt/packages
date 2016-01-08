@@ -1,0 +1,21 @@
+diff -u --recursive gstreamer-1.6.2-vanilla/gst/gstplugin.c gstreamer-1.6.2/gst/gstplugin.c
+--- gstreamer-1.6.2-vanilla/gst/gstplugin.c	2016-01-01 12:37:38.178990140 -0500
++++ gstreamer-1.6.2/gst/gstplugin.c	2016-01-01 12:38:30.431328737 -0500
+@@ -732,15 +732,8 @@
+     goto return_error;
+   }
+ 
+-  flags = G_MODULE_BIND_LOCAL;
+-  /* libgstpython.so is the gst-python plugin loader. It needs to be loaded with
+-   * G_MODULE_BIND_LAZY.
+-   *
+-   * Ideally there should be a generic way for plugins to specify that they
+-   * need to be loaded with _LAZY.
+-   * */
+-  if (strstr (filename, "libgstpython"))
+-    flags |= G_MODULE_BIND_LAZY;
++  // No need to resolve all bindings until referenced
++  flags = G_MODULE_BIND_LOCAL | G_MODULE_BIND_LAZY;
+ 
+   module = g_module_open (filename, flags);
+   if (module == NULL) {

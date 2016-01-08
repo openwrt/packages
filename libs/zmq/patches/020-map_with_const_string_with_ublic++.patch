@@ -1,6 +1,6 @@
 --- a/src/metadata.hpp
 +++ b/src/metadata.hpp
-@@ -31,7 +31,7 @@ namespace zmq
+@@ -41,7 +41,7 @@ namespace zmq
      {
          public:
  
@@ -11,7 +11,7 @@
              virtual ~metadata_t ();
 --- a/src/socket_base.cpp
 +++ b/src/socket_base.cpp
-@@ -20,6 +20,7 @@
+@@ -30,6 +30,7 @@
  #include <new>
  #include <string>
  #include <algorithm>
@@ -21,7 +21,7 @@
  
 --- a/src/stream_engine.cpp
 +++ b/src/stream_engine.cpp
-@@ -198,7 +198,7 @@ void zmq::stream_engine_t::plug (io_thre
+@@ -208,7 +208,7 @@ void zmq::stream_engine_t::plug (io_thre
              //  Compile metadata.
              typedef metadata_t::dict_t properties_t;
              properties_t properties;
@@ -30,7 +30,7 @@
              zmq_assert (metadata == NULL);
              metadata = new (std::nothrow) metadata_t (properties);
          }
-@@ -805,7 +805,7 @@ void zmq::stream_engine_t::mechanism_rea
+@@ -815,7 +815,7 @@ void zmq::stream_engine_t::mechanism_rea
  
      //  If we have a peer_address, add it to metadata
      if (!peer_address.empty()) {

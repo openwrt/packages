@@ -1,0 +1,25 @@
+diff -u --recursive gst-plugins-ugly-1.6.2-vanilla/configure.ac gst-plugins-ugly-1.6.2/configure.ac
+--- gst-plugins-ugly-1.6.2-vanilla/configure.ac	2016-01-01 12:11:03.267943540 -0500
++++ gst-plugins-ugly-1.6.2/configure.ac	2016-01-01 12:13:30.992120335 -0500
+@@ -464,9 +464,6 @@
+ ext/sidplay/Makefile
+ ext/twolame/Makefile
+ ext/x264/Makefile
+-docs/Makefile
+-docs/plugins/Makefile
+-docs/version.entities
+ m4/Makefile
+ pkgconfig/Makefile
+ pkgconfig/gstreamer-plugins-ugly-uninstalled.pc
+diff -u --recursive gst-plugins-ugly-1.6.2-vanilla/Makefile.am gst-plugins-ugly-1.6.2/Makefile.am
+--- gst-plugins-ugly-1.6.2-vanilla/Makefile.am	2016-01-01 12:11:03.268943568 -0500
++++ gst-plugins-ugly-1.6.2/Makefile.am	2016-01-01 12:13:28.110038773 -0500
+@@ -1,7 +1,7 @@
+ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
+ 
+ SUBDIRS = \
+-	gst-libs gst ext docs m4 common pkgconfig
++	gst-libs gst ext m4 common pkgconfig
+ 
+ # include before EXTRA_DIST for win32 assignment
+ include $(top_srcdir)/common/win32.mak

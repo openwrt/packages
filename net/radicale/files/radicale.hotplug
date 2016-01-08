@@ -2,6 +2,8 @@
 
 # only (re-)start on ifup
 [ "$ACTION" = "ifup" ] || exit 0
+# only start if boot_delay is done
+[ -f /tmp/radicale.hotplug ] || exit 0
 
 _PID=$(ps | grep '[p]ython.*[r]adicale' 2>/dev/null | awk '{print $1}')
 kill -1 $_PID 2>/dev/null
