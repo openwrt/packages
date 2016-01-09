@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=automake
 PKG_VERSION:=1.15
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@GNU/automake
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -37,11 +37,15 @@ endef
 define Package/automake/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/automake-$(PKG_VERSION) \
-	  $(1)/usr/bin/automake
+	  $(1)/usr/bin/automake-$(PKG_VERSION)
+	$(LN) -r $(1)/usr/bin/automake-$(PKG_VERSION) $(1)/usr/bin/automake
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/aclocal-$(PKG_VERSION) \
-	  $(1)/usr/bin/aclocal
-	$(SED) 's|$(STAGING_DIR_HOST)|/usr|g' $(1)/usr/bin/automake
-	$(SED) 's|$(STAGING_DIR_HOST)|/usr|g' $(1)/usr/bin/aclocal
+	  $(1)/usr/bin/aclocal-$(PKG_VERSION)
+	$(LN) -r $(1)/usr/bin/aclocal-$(PKG_VERSION) $(1)/usr/bin/aclocal
+	$(SED) 's|$(STAGING_DIR_HOST)|/usr|g' \
+	  $(1)/usr/bin/automake-$(PKG_VERSION)
+	$(SED) 's|$(STAGING_DIR_HOST)|/usr|g' \
+	  $(1)/usr/bin/aclocal-$(PKG_VERSION)
 	$(INSTALL_DIR) $(1)/usr/share/automake-$(PKG_VERSION)
 
 	for dir in \
