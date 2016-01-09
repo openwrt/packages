@@ -1,0 +1,48 @@
+diff -u --recursive krb5-1.14-vanilla/src/kadmin/ktutil/ktutil_funcs.c krb5-1.14/src/kadmin/ktutil/ktutil_funcs.c
+--- krb5-1.14-vanilla/src/kadmin/ktutil/ktutil_funcs.c	2015-12-31 21:50:20.572824136 -0500
++++ krb5-1.14/src/kadmin/ktutil/ktutil_funcs.c	2015-12-31 22:11:26.603926597 -0500
+@@ -64,7 +64,7 @@
+     krb5_kt_list *list;
+     int idx;
+ {
+-    krb5_kt_list lp, prev;
++    krb5_kt_list lp, prev = NULL;
+     int i;
+ 
+     for (lp = *list, i = 1; lp; prev = lp, lp = lp->next, i++) {
+diff -u --recursive krb5-1.14-vanilla/src/lib/krad/packet.c krb5-1.14/src/lib/krad/packet.c
+--- krb5-1.14-vanilla/src/lib/krad/packet.c	2015-12-31 21:50:20.476819205 -0500
++++ krb5-1.14/src/lib/krad/packet.c	2015-12-31 22:05:32.041257903 -0500
+@@ -253,7 +253,7 @@
+ {
+     krb5_error_code retval;
+     krad_packet *pkt;
+-    uchar id;
++    uchar id = 0;
+     size_t attrset_len;
+ 
+     pkt = packet_new();
+diff -u --recursive krb5-1.14-vanilla/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c krb5-1.14/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
+--- krb5-1.14-vanilla/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c	2015-12-31 21:50:20.531822031 -0500
++++ krb5-1.14/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c	2015-12-31 22:08:32.871650805 -0500
+@@ -3618,7 +3618,7 @@
+ {
+     CK_ULONG i, r;
+     unsigned char *cp;
+-    size_t label_len;
++    size_t label_len = 0;
+     CK_ULONG count = 0;
+     CK_SLOT_ID_PTR slotlist;
+     CK_TOKEN_INFO tinfo;
+diff -u --recursive krb5-1.14-vanilla/src/util/profile/prof_file.c krb5-1.14/src/util/profile/prof_file.c
+--- krb5-1.14-vanilla/src/util/profile/prof_file.c	2015-12-31 21:50:20.474819103 -0500
++++ krb5-1.14/src/util/profile/prof_file.c	2015-12-31 21:59:08.551797171 -0500
+@@ -359,6 +359,8 @@
+         if (f == NULL)
+             return (errno != 0) ? errno : ENOENT;
+         set_cloexec_file(f);
++    } else {
++        f = NULL;
+     }
+ 
+     data->upd_serial++;
