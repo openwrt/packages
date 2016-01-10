@@ -1,8 +1,13 @@
+#
+# This software is licensed under the GPL-2.0 license
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=autoupgrader
 PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
+PKG_LICENSE:=GPL-2.0+
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/anirudt/autoupgrader/archive/
@@ -18,7 +23,7 @@ define Package/$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/description
-	This is a package which auto-updates the OPKG packages on boot.
+	This is a package which auto-upgrades the OPKG packages on boot.
 endef
 
 define Package/$(PKG_NAME)/install
