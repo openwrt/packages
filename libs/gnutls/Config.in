@@ -17,7 +17,6 @@ config GNUTLS_OCSP
 
 config GNUTLS_CRYPTODEV
 	bool "enable /dev/crypto support"
-	select PACKAGE_kmod-cryptodev
 	default n
 
 config GNUTLS_HEARTBEAT
