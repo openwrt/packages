@@ -57,55 +57,57 @@ cleanup() {
 	sed -i "#'##g" $DATFILE				# remove "'" (single quote)
 }
 
-# build url according to cloudflare client api at https://www.cloudflare.com/docs/client-api.html
-# to "rec_load_all" to detect rec_id needed for update
-__URL="https://www.cloudflare.com/api_json.html"	# https://www.cloudflare.com/api_json.html
-__URL="${__URL}?a=rec_load_all"				#  -d 'a=rec_load_all'
-__URL="${__URL}&tkn=$password"				#  -d 'tkn=8afbe6dea02407989af4dd4c97bb6e25'
-__URL="${__URL}&email=$username"			#  -d 'email=sample@example.com'
-__URL="${__URL}&z=$__DOMAIN"				#  -d 'z=example.com'
+[ -n "$rec_id" ] && __RECID="$rec_id" || {
+	# build url according to cloudflare client api at https://www.cloudflare.com/docs/client-api.html
+	# to "rec_load_all" to detect rec_id needed for update
+	__URL="https://www.cloudflare.com/api_json.html"	# https://www.cloudflare.com/api_json.html
+	__URL="${__URL}?a=rec_load_all"				#  -d 'a=rec_load_all'
+	__URL="${__URL}&tkn=$password"				#  -d 'tkn=8afbe6dea02407989af4dd4c97bb6e25'
+	__URL="${__URL}&email=$username"			#  -d 'email=sample@example.com'
+	__URL="${__URL}&z=$__DOMAIN"				#  -d 'z=example.com'
 
-# lets request the data
-do_transfer "$__URL" || return 1
+	# lets request the data
+	do_transfer "$__URL" || return 1
 
-cleanup				# cleanup dat file
-json_load "$(cat $DATFILE)"	# lets extract data
-__FOUND=0			# found record indicator
-json_get_var __RES "result"	# cloudflare result of last request
-json_get_var __MSG "msg"	# cloudflare error message
-[ "$__RES" != "success" ] && {
-	write_log 4 "'rec_load_all' failed with error: \n$__MSG"
-	return 1
+	cleanup				# cleanup dat file
+	json_load "$(cat $DATFILE)"	# lets extract data
+	__FOUND=0			# found record indicator
+	json_get_var __RES "result"	# cloudflare result of last request
+	json_get_var __MSG "msg"	# cloudflare error message
+	[ "$__RES" != "success" ] && {
+		write_log 4 "'rec_load_all' failed with error: \n$__MSG"
+		return 1
+	}
+
+	json_select "response"
+	json_select "recs"
+	json_select "objs"
+	json_get_keys __KEYS
+	for __KEY in $__KEYS; do
+		local __ZONE __DISPLAY __NAME __TYPE
+		json_select "$__KEY"
+	#	json_get_var __ZONE "zone_name"		# for debugging
+	#	json_get_var __DISPLAY "display_name"	# for debugging
+		json_get_var __NAME "name"
+		json_get_var __TYPE "type"
+		if [ "$__NAME" = "$domain" ]; then
+			# we must verify IPv4 and IPv6 because there might be both for the same host
+			[ \( $use_ipv6 -eq 0 -a "$__TYPE" = "A" \) -o \( $use_ipv6 -eq 1 -a "$__TYPE" = "AAAA" \) ] && {
+				__FOUND=1	# mark found
+				break		# found leave for loop
+			}
+		fi
+		json_select ..
+	done
+	[ $__FOUND -eq 0 ] && {
+		# we don't need to continue trying to update cloudflare because record to update does not exist
+		# user has to setup record first outside ddns-scripts
+		write_log 14 "No valid record found at Cloudflare setup. Please create first!"
+	}
+	json_get_var __RECID "rec_id"	# last thing to do get rec_id
+	json_cleanup			# cleanup
+	write_log 7 "rec_id '$__RECID' detected for host/domain '$domain'"
 }
-
-json_select "response"
-json_select "recs"
-json_select "objs"
-json_get_keys __KEYS
-for __KEY in $__KEYS; do
-	local __ZONE __DISPLAY __NAME __TYPE
-	json_select "$__KEY"
-#	json_get_var __ZONE "zone_name"		# for debugging
-#	json_get_var __DISPLAY "display_name"	# for debugging
-	json_get_var __NAME "name"
-	json_get_var __TYPE "type"
-	if [ "$__NAME" = "$domain" ]; then
-		# we must verify IPv4 and IPv6 because there might be both for the same host
-		[ \( $use_ipv6 -eq 0 -a "$__TYPE" = "A" \) -o \( $use_ipv6 -eq 1 -a "$__TYPE" = "AAAA" \) ] && {
-			__FOUND=1	# mark found
-			break		# found leave for loop
-		}
-	fi
-	json_select ..
-done
-[ $__FOUND -eq 0 ] && {
-	# we don't need to continue trying to update cloudflare because record to update does not exist
-	# user has to setup record first outside ddns-scripts
-	write_log 14 "No valid record found at Cloudflare setup. Please create first!"
-}
-json_get_var __RECID "rec_id"	# last thing to do get rec_id
-json_cleanup			# cleanup
-write_log 7 "rec_id '$__RECID' detected for host/domain '$domain'"
 
 # build url according to cloudflare client api at https://www.cloudflare.com/docs/client-api.html
 # for "rec_edit" to update IP address
