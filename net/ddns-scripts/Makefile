@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.5.0
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
@@ -88,10 +88,10 @@ define Package/$(PKG_NAME)_nsupdate/description
 endef
 define Package/$(PKG_NAME)_nsupdate/config
     help
-	The script directly updates a PowerDNS (or maybe bind server) via nsupdate 
-	from bind-client package. It requires 
+	The script directly updates a PowerDNS (or maybe bind server) via nsupdate
+	from bind-client package. It requires
 	"option dns_server" to be set to the server to be used by nsupdate.
-	"option username" should be set to the key name and 
+	"option username" should be set to the key name and
 	"option password" to the base64 encoded shared secret.
 
 endef
