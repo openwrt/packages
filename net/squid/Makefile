@@ -21,6 +21,9 @@ PKG_MD5SUM:=50016bf6e2d3a3a186a6c7236d251f63
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
+# uses libcom_err.la
+PKG_BUILD_DEP:=libext2fs
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/squid/Default
