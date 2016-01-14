@@ -52,9 +52,10 @@ define Build/InstallDev
 endef
 
 define Package/libinput/install
-	$(INSTALL_DIR) $(1)/usr/lib/udev
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/udev/* $(1)/usr/lib/udev
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{udev,*.so*} $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
 endef
 
 $(eval $(call BuildPackage,libinput))
