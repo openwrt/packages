@@ -1,7 +1,5 @@
-Index: perl-5.22.0/t/op/tie_fetch_count.t
-===================================================================
---- perl-5.22.0.orig/t/op/tie_fetch_count.t
-+++ perl-5.22.0/t/op/tie_fetch_count.t
+--- a/t/op/tie_fetch_count.t
++++ b/t/op/tie_fetch_count.t
 @@ -250,12 +250,17 @@ for ([chdir=>''],[chmod=>'0,'],[chown=>'
      check_count "$op $args\\\$tied_glob$postargs";
  }
