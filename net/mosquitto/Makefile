@@ -148,6 +148,9 @@ Package/$(PKG_NAME)-nossl/conffiles = $(Package/$(PKG_NAME)/conffiles)
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto $(1)/usr/sbin/mosquitto
+ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
+        $(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto_passwd $(1)/usr/sbin
+endif
 	$(INSTALL_DIR) $(1)/etc/mosquitto
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/mosquitto.conf $(1)/etc/mosquitto/mosquitto.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
