@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
-PKG_VERSION:=0.2.5.12
+PKG_VERSION:=0.2.7.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.torproject.org/dist \
 	https://archive.torproject.org/tor-package-archive
-PKG_MD5SUM:=89745069a7efb7aafd01ae263bd0fe5c
+PKG_MD5SUM:=cc19107b57136a68e8c563bf2d35b072
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de>
 PKG_LICENSE_FILES:=LICENSE
 
@@ -89,10 +89,10 @@ ifneq ($(CONFIG_SSP_SUPPORT),y)
 	CONFIGURE_ARGS += \
 		--disable-gcc-hardening
 	MAKE_FLAGS += \
-		CFLAGS="$(TARGET_CFLAGS)"
+		CFLAGS="$(TARGET_CFLAGS) -std=gnu99"
 else
 	MAKE_FLAGS += \
-		CFLAGS="$(TARGET_CFLAGS) -fPIC"	
+		CFLAGS="$(TARGET_CFLAGS) -fPIC -std=gnu99"	
 endif
 
 CONFIGURE_VARS += \
