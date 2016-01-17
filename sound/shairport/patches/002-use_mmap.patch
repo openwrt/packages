@@ -1,0 +1,22 @@
+Index: shairport-2014-10-28/audio_alsa.c
+===================================================================
+--- shairport-2014-10-28.orig/audio_alsa.c
++++ shairport-2014-10-28/audio_alsa.c
+@@ -162,7 +162,7 @@ static void start(int sample_rate) {
+ 
+     snd_pcm_hw_params_alloca(&alsa_params);
+     snd_pcm_hw_params_any(alsa_handle, alsa_params);
+-    snd_pcm_hw_params_set_access(alsa_handle, alsa_params, SND_PCM_ACCESS_RW_INTERLEAVED);
++    snd_pcm_hw_params_set_access(alsa_handle, alsa_params, SND_PCM_ACCESS_MMAP_INTERLEAVED);
+     snd_pcm_hw_params_set_format(alsa_handle, alsa_params, SND_PCM_FORMAT_S16);
+     snd_pcm_hw_params_set_channels(alsa_handle, alsa_params, 2);
+     snd_pcm_hw_params_set_rate_near(alsa_handle, alsa_params, (unsigned int *)&sample_rate, &dir);
+@@ -173,7 +173,7 @@ static void start(int sample_rate) {
+ }
+ 
+ static void play(short buf[], int samples) {
+-    int err = snd_pcm_writei(alsa_handle, (char*)buf, samples);
++    int err = snd_pcm_mmap_writei(alsa_handle, (char*)buf, samples);
+     if (err < 0)
+         err = snd_pcm_recover(alsa_handle, err, 0);
+     if (err < 0)
