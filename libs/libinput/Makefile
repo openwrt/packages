@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libinput
-PKG_VERSION:=1.1.1
+PKG_VERSION:=1.1.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.freedesktop.org/software/libinput/
-PKG_MD5SUM:=4a3fc842ac0b7bf0fa306ea7badc31a0
+PKG_MD5SUM:=0945318141c1a9f52857bbf65d175f32
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -52,9 +52,10 @@ define Build/InstallDev
 endef
 
 define Package/libinput/install
-	$(INSTALL_DIR) $(1)/usr/lib/udev
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/udev/* $(1)/usr/lib/udev
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{udev,*.so*} $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
 endef
 
 $(eval $(call BuildPackage,libinput))
