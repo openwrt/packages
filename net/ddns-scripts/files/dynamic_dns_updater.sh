@@ -1,21 +1,12 @@
 #!/bin/sh
 # /usr/lib/ddns/dynamic_dns_updater.sh
 #
-# Original written by Eric Paul Bishop, January 2008
 #.Distributed under the terms of the GNU General Public License (GPL) version 2.0
+# Original written by Eric Paul Bishop, January 2008
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
-#
-# extended and partial rewritten in August 2014 by
-#.Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
-# to support:
-# - IPv6 DDNS services
-# - DNS Server to retrieve registered IP including TCP transport (Ticket 7820)
-# - Proxy Server to send out updates
-# - force_interval=0 to run once (Luci Ticket 538)
-# - the usage of BIND's host command instead of BusyBox's nslookup if installed
-# - extended Verbose Mode and log file support for better error detection
-# - wait for interface to fully come up, before the first update is done
+# extended and partial rewritten
+#.2014-2016 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # variables in small chars are read from /etc/config/ddns
 # variables in big chars are defined inside these scripts as global vars
