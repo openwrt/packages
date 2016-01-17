@@ -12,7 +12,7 @@ PKG_VERSION:=1.5.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://archive.apache.org/dist/apr/
+PKG_SOURCE_URL:=@APACHE/apr/
 PKG_MD5SUM:=2202b18f269ad606d70e1864857ed93c
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=Apache License
