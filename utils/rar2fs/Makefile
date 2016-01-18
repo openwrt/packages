@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rar2fs
-PKG_VERSION:=1.21.0
+PKG_VERSION:=1.22.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=rar2fs-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/hasse69/rar2fs/releases/download/v$(PKG_VERSION)
-PKG_MD5SUM:=afe744740f9ca71986a798bba1fe8b44
+PKG_MD5SUM:=56b374b95d6d56dc94f24997749294fe
 PKG_MAINTAINER:=Nikolay Podoprigora <volzhanin@gmail.com>
 
 PKG_LICENSE:=GPL-3.0
