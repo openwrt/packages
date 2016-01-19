@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2011 OpenWrt.org
+
+START=99
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+start() {
+	mkdir -m 0755 -p /var/run/portsentry
+	SERVICE_PID_FILE="/var/run/portsentry-atcp.pid" \
+	service_start /usr/bin/portsentry -atcp
+	SERVICE_PID_FILE="/var/run/portsentry-audp.pid" \
+	service_start /usr/bin/portsentry -audp
+}
+
+stop() {
+	SERVICE_PID_FILE="/var/run/portsentry-atcp.pid" \
+	service_stop /usr/bin/portsentry
+	SERVICE_PID_FILE="/var/run/portsentry-audp.pid" \
+	service_stop /usr/bin/portsentry
+}

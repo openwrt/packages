@@ -1,0 +1,14 @@
+Index: portsentry_beta/portsentry.c
+===================================================================
+--- portsentry_beta.orig/portsentry.c	2007-09-20 17:30:32.000000000 +0200
++++ portsentry_beta/portsentry.c	2007-09-20 17:30:32.000000000 +0200
+@@ -1581,8 +1581,7 @@
+ Usage (void)
+ {
+   printf ("PortSentry - Port Scan Detector.\n");
+-  printf ("Copyright 1997-2003 Craig H. Rowland <craigrowland at users dot 
+-sourceforget dot net>\n");
++  printf ("Copyright 1997-2003 Craig H. Rowland <craigrowland at users dot sourceforget dot net>\n");
+   printf ("Licensing restrictions apply. Please see documentation\n");
+   printf ("Version: %s\n\n", VERSION);
+ #ifdef SUPPORT_STEALTH
