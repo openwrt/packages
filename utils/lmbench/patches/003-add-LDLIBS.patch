@@ -1,0 +1,30 @@
+--- a/scripts/build
++++ b/scripts/build
+@@ -18,7 +18,7 @@ done
+ 
+ trap 'rm -f ${BASE}$$.s ${BASE}$$.c ${BASE}$$.o ${BASE}$$; exit 1' 1 2 15
+ 
+-LDLIBS=-lm
++LDLIBS=${LDLIBS-"-lm -lrpc"}
+ 
+ # check for HP-UX's ANSI compiler
+ echo "main(int ac, char *av[]) { int i; }" > ${BASE}$$.c
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -38,6 +38,7 @@ CC=`../scripts/compiler`
+ MAKE=`../scripts/make`
+ AR=ar
+ ARCREATE=cr
++LDLIBS=
+ 
+ # base of installation location
+ BASE=/usr/local
+@@ -111,7 +112,7 @@ LIBOBJS= $O/lib_tcp.o $O/lib_udp.o $O/li
+ 	$O/lib_sched.o
+ 
+ lmbench: $(UTILS)
+-	@env CFLAGS=-O MAKE="$(MAKE)" MAKEFLAGS="$(MAKEFLAGS)" CC="$(CC)" OS="$(OS)" ../scripts/build all
++	@env CFLAGS=-O MAKE="$(MAKE)" MAKEFLAGS="$(MAKEFLAGS)" CC="$(CC)" OS="$(OS)" LDLIBS="$(LDLIBS)" ../scripts/build all
+ 	-@env CFLAGS=-O MAKE="$(MAKE)" MAKEFLAGS="k$(MAKEFLAGS)" CC="$(CC)" OS="$(OS)" ../scripts/build opt
+ 
+ results: lmbench
