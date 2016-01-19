@@ -668,7 +668,7 @@ do_transfer() {
 				__PROG="$__PROG --ca-certificate=${cacert}"
 			elif [ -d "$cacert" ]; then
 				__PROG="$__PROG --ca-directory=${cacert}"
-			else	# exit here because it makes no sense to start loop
+			elif [ -n "$cacert" ]; then		# exit here because it makes no sense to start loop
 				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
 			fi
 		fi
@@ -702,7 +702,7 @@ do_transfer() {
 				__PROG="$__PROG --cacert $cacert"
 			elif [ -d "$cacert" ]; then
 				__PROG="$__PROG --capath $cacert"
-			else	# exit here because it makes no sense to start loop
+			elif [ -n "$cacert" ]; then		# exit here because it makes no sense to start loop
 				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
 			fi
 		fi
