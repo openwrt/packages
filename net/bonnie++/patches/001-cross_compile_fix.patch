@@ -1,0 +1,32 @@
+--- a/configure
++++ b/configure
+@@ -4372,7 +4372,7 @@ if test "$cross_compiling" = yes; then
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   { (exit 0); exit 0; }; }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ /* confdefs.h.  */
+--- a/Makefile
++++ b/Makefile
+@@ -1,5 +1,7 @@
+ EXES=bonnie++ zcav getc_putc getc_putc_helper
+ EXE=bon_csv2html generate_randfile
++TARGET_CXX=g++
++TARGET_LINK=g++
+ 
+ all: $(EXE) $(EXES)
+ 
+@@ -10,8 +12,8 @@ eprefix=${prefix}
+ #MORE_WARNINGS=-Weffc++
+ WFLAGS=-Wall -W -Wshadow -Wpointer-arith -Wwrite-strings -pedantic -ffor-scope -Wcast-align -Wsign-compare -Wpointer-arith -Wwrite-strings -Wformat-security -Wswitch-enum -Winit-self $(MORE_WARNINGS)
+ CFLAGS=-O2  -DNDEBUG $(WFLAGS) $(MORECFLAGS)
+-CXX=g++ $(CFLAGS)
+-LINK=g++
++CXX=$(TARGET_CXX) $(CFLAGS)
++LINK=$(TARGET_LINK)
+ THREAD_LFLAGS=-lpthread
+ 
+ INSTALL=/usr/bin/install -c
