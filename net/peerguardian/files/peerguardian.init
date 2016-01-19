@@ -1,0 +1,11 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+START=50
+
+CONTROL_MAIN="/usr/lib/pgl/pglcmd.main"
+BIN=pgctl
+
+start() {
+	$BIN $1
+}
+
