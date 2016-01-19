@@ -37,6 +37,31 @@ wait_for_dir()
 	fi
 }
 
+wait_for_ll_address()
+{
+	local iface="$1"
+	local timeout=30
+
+	echo "${initscript}: waiting $timeout secs for $iface address..."
+	for i in $(seq $timeout); do
+		# We look for
+		# - the link-local address (starts with fe80)
+		# - without tentative flag (bit 0x40 in the flags field; the first char of the flags field begins 38 columns after the fe80 prefix
+		# - on interface $iface
+		if awk '
+			BEGIN { RET=1 }
+			/^fe80.{37} [012389ab]/ { if ($6 == "'"$iface"'") RET=0 }
+			END { exit RET }
+		' /proc/net/if_inet6; then
+			return
+		fi
+		sleep 1
+	done
+
+	echo "${initscript}: $iface address not detected, alfred not starting."
+	exit 1
+}
+
 alfred_start()
 {
 	local args=""
@@ -62,7 +87,7 @@ alfred_start()
 		wait_for_dir "$batmanif" "/sys/class/net/$batmanif/mesh"
 	fi
 
-	wait_for_dir "$interface" "/sys/class/net/$interface/"
+	wait_for_ll_address "$interface"
 
 	append alfred_args "$args"
 	enable=1
