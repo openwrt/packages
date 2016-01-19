@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=1.2.16
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.19
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.keepalived.org/software
-PKG_MD5SUM:=f834ab2cfc2e7300edf1bafaf4a5d83e
+PKG_MD5SUM:=5c98b06639dd50a6bff76901b53febb6
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
@@ -36,10 +36,6 @@ define Package/keepalived/description
  Failover and monitoring daemon for Linux Virtual Server (LVS) clusters.
 endef
 
-define Package/keepalived/conffiles
-/etc/keepalived/keepalived.conf
-endef
-
 CONFIGURE_ARGS+= \
 	--enable-vrrp \
 	--enable-fwmark \
@@ -59,10 +55,11 @@ define Package/keepalived/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/keepalived $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/genhash $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/etc/keepalived
-	$(CP) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf $(1)/etc/keepalived/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/keepalived.init $(1)/etc/init.d/keepalived
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/keepalived.config $(1)/etc/config/keepalived
+	$(INSTALL_CONF) ./files/keepalived.config.sample $(1)/etc/config/keepalived.sample
 endef
 
 $(eval $(call BuildPackage,keepalived))
