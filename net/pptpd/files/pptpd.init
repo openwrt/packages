@@ -20,7 +20,7 @@ validate_pptpd_section() {
 		'enabled:uinteger' \
 		'localip:string' \
 		'remoteip:string' \
-		'mppe:string:required,no40,no56,stateless'
+		'mppe:list(string):required no40 no56 stateless'
 }
 
 setup_login() {
@@ -51,7 +51,8 @@ setup_config() {
 
 	[ -n "$localip" ] && echo "localip  $localip" >> $CONFIG
 	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG
-	echo "mppe $mppe" >> $OPTIONS_PPTP
+
+	echo "mppe $(echo $mppe | sed -e 's/\s/,/g')" >> $OPTIONS_PPTP
 
 	return 0
 }
