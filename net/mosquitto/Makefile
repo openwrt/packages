@@ -188,7 +188,7 @@ Package/libmosquitto-nossl/install = $(Package/libmosquitto/install)
 # Applies to all...
 MAKE_FLAGS += WITH_DOCS=no
 ifeq ($(BUILD_VARIANT),nossl)
-        MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
+	MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
 else
 	MAKE_FLAGS += WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
 endif
