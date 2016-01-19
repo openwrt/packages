@@ -26,6 +26,7 @@ define Package/peerguardian
   CATEGORY:=Network
   SUBMENU:=P2P
   DEPENDS:=+libnetfilter-queue +zlib
+  TARGET_CFLAGS:= -D_GNU_SOURCE
   TITLE:=PeerGuardian for Linux
   URL:=http://phoenixlabs.org/
 endef
