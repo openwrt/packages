@@ -45,7 +45,8 @@ define Package/glib2/description
 endef
 
 HOST_CONFIGURE_ARGS += \
-	--disable-selinux
+	--disable-selinux \
+	--with-libiconv=gnu
 
 CONFIGURE_ARGS += \
 	--enable-shared \
