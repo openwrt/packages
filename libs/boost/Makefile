@@ -397,11 +397,11 @@ endef
 
 define Host/Install
 	$(INSTALL_DIR) \
-		$(STAGING_DIR_HOST)/bin
+		$(STAGING_DIR)/host/bin
 
 	$(CP) \
 		$(HOST_BUILD_DIR)/tools/build/src/engine/bin.*/b2 \
-		$(STAGING_DIR_HOST)/bin/
+		$(STAGING_DIR)/host/bin/
 endef
 
 define Package/boost/Default/install

@@ -491,10 +491,10 @@ define Build/InstallDev
 	mkdir -p $(PKG_BUILD_DIR)/staging/usr/bin
 	make -C $(PKG_BUILD_DIR) install INSTALL_ROOT=$(PKG_BUILD_DIR)/staging
 	rm -f $(PKG_BUILD_DIR)/staging/usr/bin/php
-	$(CP) $(PKG_BUILD_DIR)/staging/* $(STAGING_DIR_HOST)
-	sed -i -e "s#prefix='/usr'#prefix='$(STAGING_DIR_HOST)/usr'#" $(STAGING_DIR_HOST)/usr/bin/phpize
-	sed -i -e "s#exec_prefix=\"\`eval echo /usr\`\"#exec_prefix='$(STAGING_DIR_HOST)/usr'#" $(STAGING_DIR_HOST)/usr/bin/phpize
-	sed -i -e "s#prefix=\"/usr\"#prefix=\"$(STAGING_DIR_HOST)/usr\"#" $(STAGING_DIR_HOST)/usr/bin/php-config
+	$(CP) $(PKG_BUILD_DIR)/staging/* $(STAGING_DIR)/host
+	sed -i -e "s#prefix='/usr'#prefix='$(STAGING_DIR)/host/usr'#" $(STAGING_DIR)/host/usr/bin/phpize
+	sed -i -e "s#exec_prefix=\"\`eval echo /usr\`\"#exec_prefix='$(STAGING_DIR)/host/usr'#" $(STAGING_DIR)/host/usr/bin/phpize
+	sed -i -e "s#prefix=\"/usr\"#prefix=\"$(STAGING_DIR)/host/usr\"#" $(STAGING_DIR)/host/usr/bin/php-config
 endef
 
 define BuildModule
