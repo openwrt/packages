@@ -382,6 +382,7 @@ CONFIGURE_ARGS+= \
 EXTRA_LDFLAGS+= -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
 
 define Package/strongswan/conffiles
+/etc/ipsec.d/
 /etc/ipsec.conf
 /etc/ipsec.secrets
 /etc/ipsec.user
