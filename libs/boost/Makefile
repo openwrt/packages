@@ -288,7 +288,7 @@ $(eval $(call DefineBoostLibrary,date_time,,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
 $(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
-$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS) +@BUILD_NLS))
+$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS) @BUILD_NLS))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
