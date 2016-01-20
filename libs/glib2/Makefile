@@ -53,7 +53,7 @@ CONFIGURE_ARGS += \
 	--enable-debug=no \
 	--disable-selinux \
 	--disable-fam \
-	$(if $(ICONV_FULL),--with-libiconv=gnu)
+	--with-libiconv=gnu
 
 CONFIGURE_VARS += \
 	glib_cv_stack_grows=no \
