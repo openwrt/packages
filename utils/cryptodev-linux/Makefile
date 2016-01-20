@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=cryptodev-linux
 PKG_VERSION:=1.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.gna.org/cryptodev-linux/
@@ -31,7 +31,7 @@ define KernelPackage/cryptodev
   URL:=http://cryptodev-linux.org/
   MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
   VERSION:=$(LINUX_VERSION)+$(PKG_VERSION)-$(BOARD)-$(PKG_RELEASE)
-  DEPENDS:=+kmod-crypto-core +kmod-crypto-authenc +kmod-crypto-hash
+  DEPENDS:=+kmod-crypto-authenc +kmod-crypto-hash
   FILES:= \
 		$(PKG_BUILD_DIR)/cryptodev.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,50,$(CRYPTODEV_AUTOLOAD))
