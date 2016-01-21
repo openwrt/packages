@@ -152,7 +152,7 @@ generate_uci_config() {
 
   config_get val "$cfg" config
   if [ -n "$val" ] ; then
-    if [ -f "$val" ] ; then
+    if [ ! -f "$val" ] ; then
       nolog error "Configuration file '$file' doesn't exist"
       return 0
     fi
