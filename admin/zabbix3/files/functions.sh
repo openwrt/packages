@@ -1,5 +1,56 @@
 
-[ -f /usr/share/libubox/jshn.sh ] && . /usr/share/libubox/jshn.sh || return 1
+[ -f /usr/share/libubox/jshn.sh ] && . /usr/share/libubox/jshn.sh
+
+uci2config() {
+	local uciopts="
+allowroot:AllowRoot
+buffersend:BufferSend
+buffersize:BufferSize
+configfrequency:ConfigFrequency
+datasenderfrequency:DataSenderFrequency
+dbhost:DBHost
+dbname:DBName
+dbpassword:DBPassword
+dbsocket:DBSocket
+dbuser:DBUser
+debuglevel:DebugLevel
+enableremotecommands:EnableRemoteCommands
+heartbeatfrequency:HeartbeatFrequency
+hostmetadata:HostMetaData
+hostmetadataitem:HostMetaDataItem
+hostname:Hostname
+hostnameitem:HostnameItem
+listenport:ListenPort
+logfile:LogFile
+logremotecommands:LogRemoteCommands
+logtype:LogType
+maxlinespersecond:MaxLinesPerSecond
+proxylocalbuffer:ProxyLocalBuffer
+proxymode:ProxyMode
+proxyofflinebuffer:ProxyOfflineBuffer
+refreshactivechecks:RefreshActiveChecks
+serveractive:ServerActive
+serverport:ServerPort
+server:Server
+startagents:StartAgents
+tlsaccept:TLSAccept
+tlsconnect:TLSConnect
+tlspskfile:TLSPSKFile
+tlspskidentity:TLSPSKIdentity
+"
+	local enabled ucic zbxc module var
+	config_load "${NAME}"
+	config_get_bool enabled config enable
+	[ -z "$enabled" ] && exit
+	logger -s -t ${NAME} -p daemon.info "Generating conf from UCI"
+	for var in $uciopts; do
+		ucic=$(echo $var|cut -d ':' -f 1)
+		zbxc=$(echo $var|cut -d ':' -f 2)
+		config_get val config ${ucic}
+		[ -n "${val}" ] && echo "${zbxc}=${val}"
+		[ "$ucic" = "allowroot" ] && allowroot=$val
+	done >/var/run/${NAME}.conf.d/uci
+}
 
 discovery_init(){
   json_init
@@ -35,3 +86,4 @@ owrt_packagediscovery(){
  
  opkg list-installed | sed "s/ \- /\|/g" | ( IFS="|"; discovery_stdin "{#PACKAGE}" "{#VERSION}" )
 }
+

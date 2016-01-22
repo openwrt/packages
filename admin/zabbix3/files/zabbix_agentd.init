@@ -8,33 +8,7 @@ PROG=/usr/sbin/$NAME
 CONFIG=/etc/$NAME.conf
 SERVICE_PID_FILE=/var/run/$NAME.pid
 LOCKER=/lib/zabbix/zlock.sh
-
-ucivars="
-startagents:StartAgents
-timeout:Timeout
-server:Server
-serveractive:ServerActive
-refreshactivechecks:RefreshActiveChecks
-listenport:ListenPort
-hostname:Hostname
-hostnameitem:HostnameItem
-hostmetadata:HostMetaData
-hostmetadataitem:HostMetaDataItem
-startagents:StartAgents
-debuglevel:DebugLevel
-allowroot:AllowRoot
-buffersize:BufferSize
-buffersend:BufferSend
-enableremotecommands:EnableRemoteCommands
-logremotecommands:LogRemoteCommands
-maxlinespersecond:MaxLinesPerSecond
-logfile:LogFile
-logtype:LogType
-tlsconnect:TLSConnect
-tlsaccept:TLSAccept
-tlspskfile:TLSPSKFile
-tlspskidentity:TLSPSKIdentity
-"
+. /usr/lib/zabbix/functions.sh
 
 # $1 - configvar
 # $2 - module

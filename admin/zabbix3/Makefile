@@ -67,7 +67,7 @@ endef
 define Package/zabbix3-agentd
   $(call Package/zabbix3/Default)
   TITLE+= agentd
-  DEPENDS+= +zabbix3-core
+  DEPENDS+= +zabbix3-core +jshn
 endef
 
 define Package/zabbix3-extra-mac80211

@@ -7,18 +7,7 @@ NAME=zabbix_server
 PROG=/usr/sbin/$NAME
 CONFIG=/etc/$NAME.conf
 SERVICE_PID_FILE=/var/run/$NAME.pid
-
-ucivars="
-server:Server
-listenport:ListenPort
-debuglevel:DebugLevel
-logfile:LogFile
-dbhost:DBHost
-dbname:DBName
-dbuser:DBUser
-dbpassword:DBPassword
-dbsocket:DBSocket
-"
+. /usr/lib/zabbix/functions.sh
 
 uci2config() {
 	local enabled ucic zbxc module var
