@@ -52,8 +52,8 @@ define Host/Compile
 endef
 
 define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/lib/searpc-codegen.py $(STAGING_DIR_HOST)/bin/
+	$(INSTALL_DIR) $(STAGING_DIR)/host/bin
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/lib/searpc-codegen.py $(STAGING_DIR)/host/bin/
 endef
 
 $(eval $(call HostBuild))

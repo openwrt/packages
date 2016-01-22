@@ -145,12 +145,9 @@ endef
 
 Package/$(PKG_NAME)-nossl/conffiles = $(Package/$(PKG_NAME)/conffiles)
 
-define Package/$(PKG_NAME)/install
+define Package/mosquitto/install/default
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto $(1)/usr/sbin/mosquitto
-ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
-        $(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto_passwd $(1)/usr/sbin
-endif
 	$(INSTALL_DIR) $(1)/etc/mosquitto
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/mosquitto.conf $(1)/etc/mosquitto/mosquitto.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -158,8 +155,18 @@ endif
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/mosquitto.uci.convert $(1)/usr/bin
 endef
-Package/$(PKG_NAME)-nossl/install = $(Package/$(PKG_NAME)/install)
 
+define Package/mosquitto-nossl/install
+	$(call Package/mosquitto/install/default,$(1))
+endef
+
+define Package/mosquitto/install
+	$(call Package/mosquitto/install/default,$(1))
+ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto_passwd $(1)/usr/bin
+endif
+endef
 
 define Package/mosquitto-client/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -188,7 +195,7 @@ Package/libmosquitto-nossl/install = $(Package/libmosquitto/install)
 # Applies to all...
 MAKE_FLAGS += WITH_DOCS=no
 ifeq ($(BUILD_VARIANT),nossl)
-        MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
+	MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
 else
 	MAKE_FLAGS += WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
 endif

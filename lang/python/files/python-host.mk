@@ -5,15 +5,15 @@
 # See /LICENSE for more information.
 #
 
-HOST_PYTHON_INC_DIR:=$(STAGING_DIR_HOST)/include/python$(PYTHON_VERSION)
+HOST_PYTHON_INC_DIR:=$(STAGING_DIR)/host/include/python$(PYTHON_VERSION)
 
 HOST_PYTHON_PKG_DIR:=/usr/lib/python$(PYTHON_VERSION)/site-packages
 
-HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(STAGING_DIR_HOST)/$(HOST_PYTHON_PKG_DIR)
+HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(STAGING_DIR)/host/$(HOST_PYTHON_PKG_DIR)
 define HostPython
 	if [ "$(strip $(3))" == "HOST" ]; then \
 		export PYTHONPATH="$(HOST_PYTHONPATH)"; \
-		export _python_sysroot="$(STAGING_DIR_HOST)"; \
+		export _python_sysroot="$(STAGING_DIR)/host"; \
 	else \
 		export PYTHONPATH="$(PYTHONPATH)"; \
 		export _python_sysroot="$(STAGING_DIR)"; \
@@ -29,7 +29,7 @@ endef
 # These configure args are needed in detection of path to Python header files
 # using autotools.
 HOST_CONFIGURE_ARGS += \
-	_python_sysroot="$(STAGING_DIR_HOST)" \
+	_python_sysroot="$(STAGING_DIR)/host" \
 	_python_prefix="/usr" \
 	_python_exec_prefix="/usr"
 

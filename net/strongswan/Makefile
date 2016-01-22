@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.3.4
-PKG_RELEASE:=2
+PKG_VERSION:=5.3.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
-PKG_MD5SUM:=655a632a515c74a99f2e9cc337ab2f33
+PKG_MD5SUM:=a2f9ea185f27e7f8413d4cd2ee61efe4
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 
@@ -28,6 +28,7 @@ PKG_MOD_AVAILABLE:= \
 	ccm \
 	cmac \
 	constraints \
+	connmark \
 	coupling \
 	ctr \
 	curl \
@@ -144,6 +145,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-ccm \
 	+strongswan-mod-cmac \
 	+strongswan-mod-constraints \
+	+strongswan-mod-connmark \
 	+strongswan-mod-coupling \
 	+strongswan-mod-ctr \
 	+strongswan-mod-curl \
@@ -221,6 +223,7 @@ $(call Package/strongswan/Default)
 	+strongswan-charon \
 	+strongswan-mod-aes \
 	+strongswan-mod-attr \
+	+strongswan-mod-connmark \
 	+strongswan-mod-constraints \
 	+strongswan-mod-des \
 	+strongswan-mod-dnskey \
@@ -382,6 +385,7 @@ CONFIGURE_ARGS+= \
 EXTRA_LDFLAGS+= -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
 
 define Package/strongswan/conffiles
+/etc/ipsec.d/
 /etc/ipsec.conf
 /etc/ipsec.secrets
 /etc/ipsec.user
@@ -503,6 +507,7 @@ $(eval $(call BuildPlugin,attr-sql,SQL based config,+strongswan-charon))
 $(eval $(call BuildPlugin,blowfish,Blowfish crypto,))
 $(eval $(call BuildPlugin,ccm,CCM AEAD wrapper crypto,))
 $(eval $(call BuildPlugin,cmac,CMAC crypto,))
+$(eval $(call BuildPlugin,connmark,netfilter connection marking,))
 $(eval $(call BuildPlugin,constraints,advanced X509 constraint checking,))
 $(eval $(call BuildPlugin,coupling,IKEv2 plugin to couple peer certificates permanently to authentication,))
 $(eval $(call BuildPlugin,ctr,Counter Mode wrapper crypto,))

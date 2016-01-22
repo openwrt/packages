@@ -10,12 +10,12 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=cryptodev-linux
-PKG_VERSION:=1.7
-PKG_RELEASE:=2
+PKG_VERSION:=1.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.gna.org/cryptodev-linux/
-PKG_MD5SUM:=0b63b3481cf2c90386b35f057481d36b
+PKG_MD5SUM:=02644cc4cd02301e0b503a332eb2f0b5
 
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
