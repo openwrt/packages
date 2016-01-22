@@ -1,8 +1,7 @@
 
 [ -f /usr/share/libubox/jshn.sh ] && . /usr/share/libubox/jshn.sh
 
-uci2config() {
-	local uciopts="
+uciopts="
 allowroot:AllowRoot
 buffersend:BufferSend
 buffersize:BufferSize
@@ -38,6 +37,8 @@ tlsconnect:TLSConnect
 tlspskfile:TLSPSKFile
 tlspskidentity:TLSPSKIdentity
 "
+
+uci2config() {
 	local enabled ucic zbxc module var
 	config_load "${NAME}"
 	config_get_bool enabled config enable
@@ -50,6 +51,84 @@ tlspskidentity:TLSPSKIdentity
 		[ -n "${val}" ] && echo "${zbxc}=${val}"
 		[ "$ucic" = "allowroot" ] && allowroot=$val
 	done >/var/run/${NAME}.conf.d/uci
+}
+
+# Read all variables from global config section and generate /var/run/$1.conf.d/uci
+uci2agentconfig() {
+	local enabled ucic zbxc module var UCI_CONFIG_DIR cfg cfgf
+	config_load "${NAME}"
+	config_get_bool enabled config enable
+	[ -z "$enabled" ] && exit
+	logger -s -t ${NAME} -p daemon.info "Generating conf from UCI"
+	for var in $uciopts; do
+		ucic=$(echo $var|cut -d ':' -f 1)
+		zbxc=$(echo $var|cut -d ':' -f 2)
+		config_get val config ${ucic}
+		[ -n "${val}" ] && echo "${zbxc}=${val}"
+		[ "$ucic" = "allowroot" ] && allowroot=$val
+	done >/var/run/${NAME}.conf.d/uci
+
+	[ -z "$allowroot" ] && {
+		user_exists zabbix 53 || user_add zabbix 53
+		group_exists zabbix 53 || group_add zabbix 53
+		touch ${SERVICE_PID_FILE}
+		chown zabbix:zabbix ${SERVICE_PID_FILE}
+	}
+
+	for module in /lib/zabbix/*; do
+		m=$(basename ${module})
+		if [  -f "/etc/config/zabbix_$m" ]; then
+		  unset UCI_CONFIG_DIR
+		  cfg="zabbix_${m}"
+		  cfgf="/etc/config/${cfg}"
+		else
+		  UCI_CONFIG_DIR="${module}"
+		  cfg="config_uci"
+		  cfgf="${module}/${cfg}"
+		fi
+		[ "${cfgf}" -ot /var/run/${NAME}.conf.d/${m} ] && continue
+		if [ -d "${module}" ]; then
+			logger -s -t ${NAME} -p daemon.info "Generating userparameters for module ${m} from UCI"
+			(config_load ${cfg}
+			 config_foreach uci2userparm userparm "${m}" "${sudo}" "${allowroot}"
+			) >/var/run/${NAME}.conf.d/${m}
+		fi 
+	done
+}
+
+# $1 - configvar
+# $2 - module
+# $3 - sudo binary
+# $4 - allowroot
+uci2userparm() {
+	local name key ckey cmd lock zcmd sudo
+	config_get name "$1" name
+	config_get key "$1" key
+	config_get cmd "$1" cmd
+	config_get internal "$1" internal
+	config_get lock "$1" lock
+	config_get sudo "$1" sudo
+	
+	[ -n "${sudo}" ] && [ -n "$3" ] && [ -z "$4" ] && {
+		sudo="$3 ";
+	}
+	[ -n "${sudo}" ] && [ -z "$3" ] && [ "$4" != "1" ] && logger -s -t ${CONFIG} -p daemon.error "Disabling userparm $key (sudo is not available and allowroot=0)"
+	if [ -n "$lock" ] && [ -n "$cmd" ]; then
+		zcmd="${LOCKER} lock "${m}" '$lock' && ${sudo}$cmd; ${LOCKER} unlock "${m}" '$lock'"
+	else
+		if [ -n "$lock" ] && [ -n "$internal" ]; then
+			if echo ${key} | grep -q '*'; then args='$1 $2'; else args=""; fi
+			if [ "$internal" = "1" ]; then
+				zcmd="${LOCKER} lockrun '${m}' '$lock' $(echo ${key}|tr '.[]*' '_   ') ${args}"
+			else
+				zcmd="${LOCKER} lockrun '${m}' '$lock' ${internal}"
+			fi
+
+		else
+			zcmd="${sudo}$cmd"
+		fi
+	fi
+	echo "UserParameter=${key},${zcmd}"
 }
 
 discovery_init(){
