@@ -1,0 +1,14 @@
+
+menu "Core Zabbix configuration"
+	depends on PACKAGE_zabbix3-core
+
+	config ZABBIX3_SSL
+        	bool "Enable SSL support"
+       		default y
+
+	config ZABBIX3_LUA
+        	bool "Enable old agent checks using lua (deprecated)"
+       		default n
+
+endmenu
+
