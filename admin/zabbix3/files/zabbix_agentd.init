@@ -8,7 +8,7 @@ PROG=/usr/sbin/$NAME
 CONFIG=/etc/$NAME.conf
 SERVICE_PID_FILE=/var/run/$NAME.pid
 LOCKER=/lib/zabbix/zlock.sh
-. /usr/lib/zabbix/functions.sh
+. /lib/zabbix/functions.sh
 
 # $1 - configvar
 # $2 - module

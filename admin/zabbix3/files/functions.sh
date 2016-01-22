@@ -87,3 +87,22 @@ owrt_packagediscovery(){
  opkg list-installed | sed "s/ \- /\|/g" | ( IFS="|"; discovery_stdin "{#PACKAGE}" "{#VERSION}" )
 }
 
+fetch_uri(){
+	if [ -f "$1" ]; then
+		cat "$1"
+	else
+		wget -q -O- "$1"
+	fi
+}
+
+sqlite_sql(){
+	if which sqlite3 >/dev/null; then
+		echo "Feeding $1 to $2"
+		fetch_uri "$1" | sqlite3 "$2"
+	else
+		echo "Sqlite3 binary not found. Please install it: opkg update && opkg install sqlite3-cli"
+	fi
+}
+
+
+

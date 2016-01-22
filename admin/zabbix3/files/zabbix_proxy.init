@@ -7,7 +7,7 @@ NAME=zabbix_proxy
 PROG=/usr/sbin/$NAME
 CONFIG=/etc/$NAME.conf
 SERVICE_PID_FILE=/var/run/$NAME.pid
-. /usr/lib/zabbix/functions.sh
+. /lib/zabbix/functions.sh
 
 start() {
 	
