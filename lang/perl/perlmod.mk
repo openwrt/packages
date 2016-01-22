@@ -4,12 +4,12 @@
 PERL_VERSION:=5.22
 
 # Build environment
-HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
+HOST_PERL_PREFIX:=$(STAGING_DIR)/host/usr
 ifneq ($(CONFIG_USE_GLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
-PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl$(PERL_VERSION).0
+PERL_CMD:=$(STAGING_DIR)/host/usr/bin/perl$(PERL_VERSION).0
 
 MOD_CFLAGS_PERL:=-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $(TARGET_CFLAGS) $(TARGET_CPPFLAGS)
 ifdef CONFIG_PERL_THREADS
@@ -26,7 +26,7 @@ define perlmod/host/relink
 	rm -f $(1)/Makefile.aperl
 	$(MAKE) -C $(1) perl
 	$(CP) $(1)/perl $(PERL_CMD)
-	$(CP) $(1)/perl $(STAGING_DIR_HOST)/usr/bin/perl
+	$(CP) $(1)/perl $(STAGING_DIR)/host/usr/bin/perl
 endef
 
 define perlmod/host/Configure

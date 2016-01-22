@@ -41,7 +41,7 @@ endef
 CONFIGURE_ARGS = \
     --prefix=$(CONFIGURE_PREFIX) \
     --sysconfdir=/etc \
-    --with-lua=$(STAGING_DIR_HOST)
+    --with-lua=$(STAGING_DIR)/host
 
 define Build/Compile
 	$(call Build/Compile/Default,build)
