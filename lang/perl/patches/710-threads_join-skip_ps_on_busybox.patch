@@ -5,10 +5,8 @@ We can't provide either with busybox. Just skip it for now.
 
 Signed-off-by: Marcel Denia <naoir@gmx.net>
 
-Index: perl-5.22.0/dist/threads/t/join.t
-===================================================================
---- perl-5.22.0.orig/dist/threads/t/join.t
-+++ perl-5.22.0/dist/threads/t/join.t
+--- a/dist/threads/t/join.t
++++ b/dist/threads/t/join.t
 @@ -110,36 +110,41 @@ sub skip {
  
  # We parse ps output so this is OS-dependent.
