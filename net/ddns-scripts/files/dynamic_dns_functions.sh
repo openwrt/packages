@@ -1,20 +1,12 @@
 #!/bin/sh
 # /usr/lib/ddns/dynamic_dns_functions.sh
 #
-# Original written by Eric Paul Bishop, January 2008
 #.Distributed under the terms of the GNU General Public License (GPL) version 2.0
+# Original written by Eric Paul Bishop, January 2008
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
-#
-# extended and partial rewritten in August 2014 by
-#.Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
-# to support:
-# - IPv6 DDNS services
-# - setting DNS Server to retrieve current IP including TCP transport
-# - Proxy Server to send out updates or retrieving WEB based IP detection
-# - force_interval=0 to run once (useful for cron jobs etc.)
-# - the usage of BIND's host instead of BusyBox's nslookup if installed (DNS via TCP)
-# - extended Verbose Mode and log file support for better error detection
+# extended and partial rewritten
+#.2014-2016 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # function timeout
 # copied from http://www.ict.griffith.edu.au/anthony/software/timeout.sh
@@ -29,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.5.0-1"
+VERSION="2.6.0-1"
 SECTION_ID=""		# hold config's section name
 VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
 
@@ -668,7 +660,7 @@ do_transfer() {
 				__PROG="$__PROG --ca-certificate=${cacert}"
 			elif [ -d "$cacert" ]; then
 				__PROG="$__PROG --ca-directory=${cacert}"
-			else	# exit here because it makes no sense to start loop
+			elif [ -n "$cacert" ]; then		# it's not a file and not a directory but given
 				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
 			fi
 		fi
@@ -702,7 +694,7 @@ do_transfer() {
 				__PROG="$__PROG --cacert $cacert"
 			elif [ -d "$cacert" ]; then
 				__PROG="$__PROG --capath $cacert"
-			else	# exit here because it makes no sense to start loop
+			elif [ -n "$cacert" ]; then		# it's not a file and not a directory but given
 				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
 			fi
 		fi
@@ -927,7 +919,8 @@ get_registered_ip() {
 	# $2	(optional) if set, do not retry on error
 	local __CNT=0	# error counter
 	local __ERR=255
-	local __REGEX  __PROG  __RUNPROG  __DATA
+	local __REGEX  __PROG  __RUNPROG  __DATA  __IP
+	local __MUSL=$(/usr/bin/nslookup 127.0.0.1 0 >/dev/null 2>&1; echo $?) # 0 == busybox compiled with musl
 	# return codes
 	# 1	no IP detected
 
@@ -947,9 +940,35 @@ get_registered_ip() {
 
 		__RUNPROG="$__PROG $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BIND host"
+	elif [ -x /usr/bin/hostip ]; then	# hostip package installed
+		__PROG="/usr/bin/hostip"
+		[ $force_dnstcp -ne 0 ] && \
+			write_log 14 "hostip - no support for 'DNS over TCP'"
+
+		# is IP given as dns_server ?
+		__IP=$(echo $dns_server | grep -m 1 -o "$IPV4_REGEX")
+		[ -z "$__IP" ] && __IP=$(echo $dns_server | grep -m 1 -o "$IPV6_REGEX")
+
+		# we got NO ip for dns_server, so build command
+		[ -z "$__IP" -a -n "$dns_server" ] && {
+			__IP="\`/usr/bin/hostip"
+			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] && __IP="$__IP -6"
+			__IP="$__IP $dns_server | grep -m 1 -o"
+			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] \
+				&& __IP="$__IP '$IPV6_REGEX'" \
+				|| __IP="$__IP '$IPV4_REGEX'"
+			__IP="$__IP \`"
+		}
+
+		[ $use_ipv6 -eq 1 ] && __PROG="$__PROG -6"
+		[ -n "$dns_server" ] && __PROG="$__PROG -r $__IP"
+		__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
+		__PROG="hostip"
 	elif [ -x /usr/bin/nslookup ]; then	# last use BusyBox nslookup
 		[ $force_ipversion -ne 0 -o $force_dnstcp -ne 0 ] && \
 			write_log 14 "Busybox nslookup - no support to 'force IP Version' or 'DNS over TCP'"
+		[ $__MUSL -eq 0 -a -n "$dns_server" ] && \
+			write_log 14 "Busybox compiled with musl - nslookup - no support to set/use DNS Server"
 
 		__RUNPROG="/usr/bin/nslookup $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BusyBox nslookup"
@@ -967,6 +986,8 @@ get_registered_ip() {
 		else
 			if [ "$__PROG" = "BIND host" ]; then
 				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
+			elif [ "$__PROG" = "hostip" ]; then
+				__DATA=$(cat $DATFILE | grep -m 1 -o "$__REGEX")
 			else
 				__DATA=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
 			fi

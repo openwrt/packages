@@ -2,13 +2,8 @@
 # /usr/lib/ddns/luci_dns_helper.sh
 #
 #.Distributed under the terms of the GNU General Public License (GPL) version 2.0
-#
-# Written in August 2014 by
-#.Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2014-2016 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 # This script is used by luci-app-ddns
-# - getting registered IP
-# - check if possible to get local IP
-# - verifing given DNS- or Proxy-Server
 #
 # variables in small chars are read from /etc/config/ddns as parameter given here
 # variables in big chars are defined inside these scripts as gloval vars
