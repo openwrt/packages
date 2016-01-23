@@ -109,3 +109,6 @@
 
 # duckdns.org as in https://www.duckdns.org/install.jsp#openwrt and https://wiki.openwrt.org/doc/howto/ddns.client/duckdns
 "duckdns.org"    "http://www.duckdns.org/update?domains=[USERNAME]&token=[PASSWORD]&ip=[IP]"    "OK"
+
+# zzzz.io Free Dynamic DNS
+"zzzz.io"   "https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]"  "Updated|No change"

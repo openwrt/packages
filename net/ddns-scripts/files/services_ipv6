@@ -45,3 +45,5 @@
 # Variomedia AG
 "variomedia.de" 	"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
+# zzzz.io Free Dynamic DNS
+"zzzz.io"   "https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"    "Updated|No change"
