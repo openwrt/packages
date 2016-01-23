@@ -1,6 +1,6 @@
 --- a/hints/linux.sh
 +++ b/hints/linux.sh
-@@ -204,6 +204,24 @@ case "$libc" in
+@@ -221,6 +221,24 @@ case "$libc" in
      ;;
  esac
  
