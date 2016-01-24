@@ -29,7 +29,7 @@ define Package/lua-cjson
   CATEGORY:=Languages
   TITLE:=Lua CJSON parser
   URL:=https://github.com/mpx/lua-cjson
-  DEPENDS:= +lua +libzmq
+  DEPENDS:= +lua
 endef
 
 define Package/lua-cjson/description
