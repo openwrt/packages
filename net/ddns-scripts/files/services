@@ -22,6 +22,15 @@
 # !!! Use only the script name (without path). Sample:
 # !!! "example.com"	"update_sample.sh"
 #
+# !!! Since ddns-scripts Version 2.5.x additional parameters are supported
+# !!! and a given answer on success is checked (ignored by earlier versions)
+# !!! Additional parameters: [PARAMOPT] and [PARAMENC]; [PARAMENC] is send urlencoded
+#
+# Line syntax: "service" [TAB] "update_url" [TAB] "answer"
+# "service"	name used as "option service_name" inside /etc/config/ddns
+# "update_url"	update url as given by the provider; custom urls should not saved here
+# "answer"	single words inside providers answer string; use "|" to combine "or"
+#
 # 44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
 
 "dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
@@ -37,7 +46,7 @@
 "thatip.com"	"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=2&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
 
 # Hurricane Electric Dynamic DNS
-"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # DNSdynamic.org
 "dnsdynamic.org"	"http://[USERNAME]:[PASSWORD]@www.dnsdynamic.org/api/?hostname=[DOMAIN]&myip=[IP]"
@@ -48,10 +57,8 @@
 # OVH
 "ovh.com"	"http://[USERNAME]:[PASSWORD]@www.ovh.com/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
 
-# dns-o-matic is a free service by opendns.com for updating multiple hosts and
-# dynamic dns services in one api call. To update all your configured services
-# at once, use "all.dnsomatic.com as the hostname.
-"dnsomatic.com"	"http://[USERNAME]:[PASSWORD]@updates.dnsomatic.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+# dns-o-matic is a free service by opendns.com for updating multiple hosts
+"dnsomatic.com"	"http://[USERNAME]:[PASSWORD]@updates.dnsomatic.com/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # 3322.org
 "3322.org"	"http://[USERNAME]:[PASSWORD]@members.3322.org/dyndns/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
@@ -69,7 +76,7 @@
 "mythic-beasts.com"	"http://dnsapi4.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20A%20DYNAMIC_IP"
 
 # Securepoint Dynamic-DNS-Service	(http://www.spdns.de)
-"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	    "good|nochg"
+"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # duiadns.net - free dynamic DNS
 "duiadns.net"	"http://ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
@@ -84,7 +91,7 @@
 "loopia.se"	"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
 
 # SelfHost.de
-"selfhost.de"	"http://carol.selfhost.de/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=1"	    "good|nochg"
+"selfhost.de"	"http://carol.selfhost.de/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=1"	"good|nochg"
 
 # no-ip.pl nothing to do with no-ip.com (domain registered to www.domeny.tv) (IP autodetected by provider)
 "no-ip.pl"	"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
@@ -93,19 +100,22 @@
 "domains.google.com"	"http://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
 # Schokokeks Hosting, schokokeks.org
-"schokokeks.org"	"http://[USERNAME]:[PASSWORD]@dyndns.schokokeks.org/nic/update?myip=[IP]"
+"schokokeks.org"	"http://[USERNAME]:[PASSWORD]@dyndns.schokokeks.org/nic/update?myip=[IP]"	"good|nochg"
 
 # STRATO AG
 "strato.de"		"http://[USERNAME]:[PASSWORD]@dyndns.strato.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
 # Variomedia AG
-"variomedia.de" 	"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"variomedia.de" 	"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
  #DtDNS
 "dtdns.com"	"http://www.dtdns.com/api/autodns.cfm?id=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
 
-# dy.fi Dynamic DNS for finnish users
-"dy.fi"      "http://[USERNAME]:[PASSWORD]@www.dy.fi/nic/update?hostname=[DOMAIN]"
+# dy.fi Dynamic DNS for finnish users (IP autodetected by provider)
+"dy.fi"		"http://[USERNAME]:[PASSWORD]@www.dy.fi/nic/update?hostname=[DOMAIN]"	"good|nochg"
 
-# duckdns.org as in https://www.duckdns.org/install.jsp#openwrt and https://wiki.openwrt.org/doc/howto/ddns.client/duckdns
-"duckdns.org"    "http://www.duckdns.org/update?domains=[USERNAME]&token=[PASSWORD]&ip=[IP]"    "OK"
+# duckdns.org
+"duckdns.org"	"http://www.duckdns.org/update?domains=[USERNAME]&token=[PASSWORD]&ip=[IP]"	"OK"
+
+# zzzz.io Free Dynamic DNS
+"zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&ip=[IP]"	"Updated|No change"
