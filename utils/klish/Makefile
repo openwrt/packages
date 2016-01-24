@@ -14,6 +14,8 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://libcode.org/attachments/download/61/
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENCE
 PKG_MAINTAINER:=Takashi Umeno <umeno.takashi@gmail.com>
 PKG_MD5SUM:=4913259794d85585de0f8791c54ac633
 
