@@ -27,8 +27,7 @@ CMAKE_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-CMAKE_OPTIONS += $(if $(CONFIG_IPV6),,-DLWS_IPV6=)
-
+CMAKE_OPTIONS += -DLWS_IPV6=$(if $(CONFIG_IPV6),ON,OFF)
 CMAKE_OPTIONS += -DLWS_WITHOUT_TESTAPPS=ON
 
 # other options worth noting
