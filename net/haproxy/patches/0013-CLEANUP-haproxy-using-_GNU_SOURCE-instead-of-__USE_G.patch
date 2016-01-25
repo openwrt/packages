@@ -1,0 +1,43 @@
+From 21fab69d332bfafd0a214ee29d8ad0779a055988 Mon Sep 17 00:00:00 2001
+From: David Carlier <devnexen@gmail.com>
+Date: Tue, 8 Dec 2015 21:43:09 +0000
+Subject: [PATCH 13/13] CLEANUP: haproxy: using _GNU_SOURCE instead of
+ __USE_GNU macro.
+
+In order to properly enable sched_setaffinity, in some versions of Linux,
+it is rather _GNU_SOURCE than __USE_GNU (spotted on Alpine Linux for instance),
+also for the sake of consistency as __USE_GNU seems not used across the code and
+for last, it seems on Linux it is the best way to enable non portable code.
+On Linux glibc's based versions, it seems _GNU_SOURCE defines __USE_GNU
+it should be safe enough.
+(cherry picked from commit 7ece096767d329d0ea04b70a1fb2c8b8a96b47e0)
+(cherry picked from commit 5a0ac35503f88a7bc8ee2c4f865354fa6cc25901)
+---
+ src/haproxy.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/haproxy.c b/src/haproxy.c
+index b94252d..20480a1 100644
+--- a/src/haproxy.c
++++ b/src/haproxy.c
+@@ -25,6 +25,7 @@
+  *
+  */
+ 
++#define _GNU_SOURCE
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+@@ -47,9 +48,7 @@
+ #include <syslog.h>
+ #include <grp.h>
+ #ifdef USE_CPU_AFFINITY
+-#define __USE_GNU
+ #include <sched.h>
+-#undef __USE_GNU
+ #endif
+ 
+ #ifdef DEBUG_FULL
+-- 
+2.4.10
+
