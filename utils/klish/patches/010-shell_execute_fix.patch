@@ -1,7 +1,5 @@
-Index: klish-2.1.1/clish/shell/shell_execute.c
-===================================================================
---- klish-2.1.1.orig/clish/shell/shell_execute.c	2015-10-06 23:51:41.000000000 +0900
-+++ klish-2.1.1/clish/shell/shell_execute.c	2016-01-19 23:42:13.066357933 +0900
+--- a/clish/shell/shell_execute.c
++++ b/clish/shell/shell_execute.c
 @@ -19,13 +19,6 @@
  #include <signal.h>
  #include <fcntl.h>
