@@ -172,4 +172,9 @@ config NGINX_PCRE
 	prompt "Enable PCRE library usage"
 	default y
 
+config NGINX_NAXSI
+	bool
+	prompt "Enable NAXSI module"
+	default y
+
 endmenu

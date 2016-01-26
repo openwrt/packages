@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
-PKG_VERSION:=1.5-chrome47-firefox41
+PKG_VERSION:=1.6.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -27,8 +27,7 @@ CMAKE_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-CMAKE_OPTIONS += $(if $(CONFIG_IPV6),,-DLWS_IPV6=)
-
+CMAKE_OPTIONS += -DLWS_IPV6=$(if $(CONFIG_IPV6),ON,OFF)
 CMAKE_OPTIONS += -DLWS_WITHOUT_TESTAPPS=ON
 
 # other options worth noting
@@ -74,7 +73,7 @@ ifeq ($(BUILD_VARIANT),cyassl)
 # for cyassl, edit package/libs/cyassl/Makefile to include --enable-opensslextra
 # NOTE: it will compile without it, untested whether it it's needed?!
     CMAKE_OPTIONS += -DLWS_USE_CYASSL=ON
-    CMAKE_OPTIONS += -DLWS_CYASSL_LIB=$(STAGING_DIR)/usr/lib/libcyassl.so
+    CMAKE_OPTIONS += -DLWS_CYASSL_LIBRARIES=$(STAGING_DIR)/usr/lib/libcyassl.so
     CMAKE_OPTIONS += -DLWS_CYASSL_INCLUDE_DIRS=$(STAGING_DIR)/usr/include
 endif
 
