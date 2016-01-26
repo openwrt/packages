@@ -15,8 +15,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/dvtm-$(PKG_VERSION)
 PKG_SOURCE:=dvtm-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.brain-dump.org/projects/dvtm/
 PKG_MD5SUM:=887e162a3abe2ad8e86caefab20cdd63
-PKG_MAINTAINER:=Yunfan<jyf1987@gmail.com>
-PKG_CAT:=zcat
+PKG_MAINTAINER:=Yunfan Jiang<jyf1987@gmail.com>
 
 PKG_LICENSE:=MIT/X
 PKG_LICENSE_FILES:=COPYING
