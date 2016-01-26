@@ -2,7 +2,6 @@
 # configuration found in /etc/crontabs/root
 #
 
-# start adblock script twice a day
+# start adblock script once a day at 6 o'clock
 #
 0 06 * * *    /usr/bin/adblock-update.sh &
-0 22 * * *    /usr/bin/adblock-update.sh &
