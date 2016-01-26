@@ -23,23 +23,19 @@ PKG_LICENSE_FILES:=COPYING
 include $(INCLUDE_DIR)/package.mk
 
 define Package/dvtm
-  SECTION:=utils
-  CATEGORY:=Utilities
-  DEPENDS:=+libncursesw
-  TITLE:=dynamic virtual terminal manager
-  URL:=http://www.brain-dump.org/projects/dvtm/
+	SECTION:=utils
+	CATEGORY:=Utilities
+	DEPENDS:=+libncursesw
+	TITLE:=dynamic virtual terminal manager
+	URL:=http://www.brain-dump.org/projects/dvtm/
 endef
 
 define Package/dvtm/description
     dvtm brings the concept of tiling window management, popularized by X11-window managers like dwm to the console. As a console window manager it tries to make it easy to work with multiple console based programs.
 endef
 
-define Build/Configure
-  $(call Build/Configure/Default,--with-linux-headers=$(LINUX_DIR))
-endef
-
 define Package/dvtm/install
-        $(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/dvtm $(1)/usr/bin/
 endef
 
