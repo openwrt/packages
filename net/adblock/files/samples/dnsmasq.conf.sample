@@ -1,4 +1,4 @@
-# tell DHCP clients to not ask for proxy information
+# tell DHCP clients not to ask for proxy information
 # some clients - like Win7 - will constantly ask if not told "No!"
 # configuration found in /etc/dnsmasq
 #
