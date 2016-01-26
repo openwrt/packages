@@ -11,9 +11,11 @@ PKG_NAME:=protobuf
 PKG_VERSION:=2.6.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
-PKG_MD5SUM:=11aaac2d704eef8efd1867a807865d85
+PKG_SOURCE_URL:=https://github.com/google/protobuf.git
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=bba83652e1be610bdb7ee1566ad18346d98b843c
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -42,6 +44,18 @@ define Package/protobuf/description
 endef
 
 CONFIGURE_ARGS += --with-protoc=$(STAGING_DIR)/host/bin/protoc
+
+define Build/Configure
+	( cd $(PKG_BUILD_DIR); ./autogen.sh; )
+
+	$(call Build/Configure/Default)
+endef 
+
+define Host/Configure
+	( cd $(HOST_BUILD_DIR); ./autogen.sh; )
+
+	$(call Host/Configure/Default)
+endef 
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
