@@ -11,23 +11,22 @@ PKG_NAME:=dvtm
 PKG_VERSION:=0.15
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/dvtm-$(PKG_VERSION)
 PKG_SOURCE:=dvtm-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.brain-dump.org/projects/dvtm/
 PKG_MD5SUM:=887e162a3abe2ad8e86caefab20cdd63
-PKG_MAINTAINER:=Yunfan Jiang<jyf1987@gmail.com>
+PKG_MAINTAINER:=Yunfan Jiang <jyf1987@gmail.com>
 
 PKG_LICENSE:=MIT/X
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/dvtm
-	SECTION:=utils
-	CATEGORY:=Utilities
-	DEPENDS:=+libncursesw
-	TITLE:=dynamic virtual terminal manager
-	URL:=http://www.brain-dump.org/projects/dvtm/
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=+libncursesw
+  TITLE:=dynamic virtual terminal manager
+  URL:=http://www.brain-dump.org/projects/dvtm/
 endef
 
 define Package/dvtm/description
@@ -35,8 +34,8 @@ define Package/dvtm/description
 endef
 
 define Package/dvtm/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/dvtm $(1)/usr/bin/
+  $(INSTALL_DIR) $(1)/usr/bin
+  $(INSTALL_BIN) $(PKG_BUILD_DIR)/dvtm $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,dvtm))
