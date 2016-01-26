@@ -1,0 +1,11 @@
+--- a/src/bw_mem.c
++++ b/src/bw_mem.c
+@@ -65,7 +65,7 @@ main(int ac, char **av)
+ 	size_t	nbytes;
+ 	state_t	state;
+ 	int	c;
+-	char	*usage = "[-P <parallelism>] [-W <warmup>] [-N <repetitions>] <size> what [conflict]\nwhat: rd wr rdwr cp fwr frd fcp bzero bcopy\n<size> must be larger than 512";
++	char	*usage = "[-P <parallelism>] [-W <warmup>] [-N <repetitions>] <size> what [conflict]\nwhat: rd wr rdwr cp fwr frd fcp bzero bcopy\n<size> must be larger than 512\n";
+ 
+ 	state.overhead = 0;
+ 

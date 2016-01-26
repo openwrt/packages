@@ -1,0 +1,10 @@
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -144,6 +144,7 @@ install-target:
+ 	if [ ! -d $(BASE)/include ]; then mkdir $(BASE)/include; fi
+ 	if [ ! -d $(BASE)/lib ]; then mkdir $(BASE)/lib; fi
+ 	cp $(EXES) $(BASE)/bin
++	cp $(OPT_EXES) $(BASE)/bin
+ 	cp $(INCS) $(BASE)/include
+ 	cp $O/lmbench.a $(BASE)/lib/libmbench.a
+ 	cd ../doc; env MAKEFLAGS="$(MAKEFLAGS)" make CC="${CC}" OS="${OS}" BASE="$(BASE)" install

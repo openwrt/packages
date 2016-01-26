@@ -1,0 +1,11 @@
+--- a/src/bench.h
++++ b/src/bench.h
+@@ -77,7 +77,7 @@ typedef long long int64;
+ #endif /* HAVE_int64_t */
+ #endif /* HAVE_int64 */
+ 
+-#ifndef HAVE_socklen_t
++#if (!defined(HAVE_socklen_t) && !defined(__socklen_t_defined))
+ typedef int socklen_t;
+ #endif
+ 
