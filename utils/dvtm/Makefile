@@ -1,0 +1,47 @@
+#
+# Copyright (C) 2009-2015 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=dvtm
+PKG_VERSION:=0.15
+PKG_RELEASE:=1
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/dvtm-$(PKG_VERSION)
+PKG_SOURCE:=dvtm-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=http://www.brain-dump.org/projects/dvtm/
+PKG_MD5SUM:=887e162a3abe2ad8e86caefab20cdd63
+PKG_MAINTAINER:=Yunfan<jyf1987@gmail.com>
+PKG_CAT:=zcat
+
+PKG_LICENSE:=MIT/X
+PKG_LICENSE_FILES:=COPYING
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/dvtm
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=+libncursesw
+  TITLE:=dynamic virtual terminal manager
+  URL:=http://www.brain-dump.org/projects/dvtm/
+endef
+
+define Package/dvtm/description
+    dvtm brings the concept of tiling window management, popularized by X11-window managers like dwm to the console. As a console window manager it tries to make it easy to work with multiple console based programs.
+endef
+
+define Build/Configure
+  $(call Build/Configure/Default,--with-linux-headers=$(LINUX_DIR))
+endef
+
+define Package/dvtm/install
+        $(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/dvtm $(1)/usr/bin/
+endef
+
+$(eval $(call BuildPackage,dvtm))
