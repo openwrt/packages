@@ -1,20 +1,12 @@
 #!/bin/sh
 # /usr/lib/ddns/dynamic_dns_functions.sh
 #
-# Original written by Eric Paul Bishop, January 2008
 #.Distributed under the terms of the GNU General Public License (GPL) version 2.0
+# Original written by Eric Paul Bishop, January 2008
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
-#
-# extended and partial rewritten in August 2014 by
-#.Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
-# to support:
-# - IPv6 DDNS services
-# - setting DNS Server to retrieve current IP including TCP transport
-# - Proxy Server to send out updates or retrieving WEB based IP detection
-# - force_interval=0 to run once (useful for cron jobs etc.)
-# - the usage of BIND's host instead of BusyBox's nslookup if installed (DNS via TCP)
-# - extended Verbose Mode and log file support for better error detection
+# extended and partial rewritten
+#.2014-2016 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # function timeout
 # copied from http://www.ict.griffith.edu.au/anthony/software/timeout.sh
@@ -29,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.5.0-1"
+VERSION="2.6.0-1"
 SECTION_ID=""		# hold config's section name
 VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
 
@@ -467,12 +459,12 @@ verify_host_port() {
 	__IPV6=$(echo $__HOST | grep -m 1 -o "$IPV6_REGEX")
 	# if FQDN given get IP address
 	[ -z "$__IPV4" -a -z "$__IPV6" ] && {
-		if [ -x /usr/bin/host ]; then	# use BIND host if installed
+		if [ -n "$(which host)" ]; then	# use BIND host if installed
 			__PROG="BIND host"
-			__RUNPROG="/usr/bin/host -t ANY $__HOST >$DATFILE 2>$ERRFILE"
+			__RUNPROG="$(which host) -t ANY $__HOST >$DATFILE 2>$ERRFILE"
 		else	# use BusyBox nslookup
 			__PROG="BusyBox nslookup"
-			__RUNPROG="/usr/bin/nslookup $__HOST >$DATFILE 2>$ERRFILE"
+			__RUNPROG="$(which nslookup) $__HOST >$DATFILE 2>$ERRFILE"
 		fi
 		write_log 7 "#> $__RUNPROG"
 		eval $__RUNPROG
@@ -643,9 +635,8 @@ do_transfer() {
 	[ $# -ne 1 ] && write_log 12 "Error in 'do_transfer()' - wrong number of parameters"
 
 	# lets prefer GNU Wget because it does all for us - IPv4/IPv6/HTTPS/PROXY/force IP version
-	grep -i "\+ssl" /usr/bin/wget >/dev/null 2>&1	# check for Wget with SSL support
-	if [ $? -eq 0 -a $USE_CURL -eq 0 ]; then 	# except global option use_curl is set to "1"
-		__PROG="/usr/bin/wget -nv -t 1 -O $DATFILE -o $ERRFILE"	# non_verbose no_retry outfile errfile
+	if [ -n "$(which wget-ssl)" -a $USE_CURL -eq 0 ]; then 			# except global option use_curl is set to "1"
+		__PROG="$(which wget-ssl) -nv -t 1 -O $DATFILE -o $ERRFILE"	# non_verbose no_retry outfile errfile
 		# force network/ip to use for communication
 		if [ -n "$bind_network" ]; then
 			local __BINDIP
@@ -668,7 +659,7 @@ do_transfer() {
 				__PROG="$__PROG --ca-certificate=${cacert}"
 			elif [ -d "$cacert" ]; then
 				__PROG="$__PROG --ca-directory=${cacert}"
-			else	# exit here because it makes no sense to start loop
+			elif [ -n "$cacert" ]; then		# it's not a file and not a directory but given
 				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
 			fi
 		fi
@@ -679,9 +670,13 @@ do_transfer() {
 		__PROG="GNU Wget"		# reuse for error logging
 
 	# 2nd choice is cURL IPv4/IPv6/HTTPS
-	# libcurl might be compiled without Proxy Support (default in trunk)
-	elif [ -x /usr/bin/curl ]; then
-		__PROG="/usr/bin/curl -RsS -o $DATFILE --stderr $ERRFILE"
+	# libcurl might be compiled without Proxy or HTTPS Support
+	elif [ -n "$(which curl)" ]; then
+		__PROG="$(which curl) -RsS -o $DATFILE --stderr $ERRFILE"
+		# check HTTPS support
+		/usr/bin/curl -V | grep "Protocols:" | grep -F "https" >/dev/null 2>&1
+		[ $? -eq 1 -a $use_https -eq 1 ] && \
+			write_log 13 "cURL: libcurl compiled without https support"
 		# force network/interface-device to use for communication
 		if [ -n "$bind_network" ]; then
 			local __DEVICE
@@ -702,7 +697,7 @@ do_transfer() {
 				__PROG="$__PROG --cacert $cacert"
 			elif [ -d "$cacert" ]; then
 				__PROG="$__PROG --capath $cacert"
-			else	# exit here because it makes no sense to start loop
+			elif [ -n "$cacert" ]; then		# it's not a file and not a directory but given
 				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
 			fi
 		fi
@@ -720,9 +715,36 @@ do_transfer() {
 		__RUNPROG="$__PROG '$__URL'"	# build final command
 		__PROG="cURL"			# reuse for error logging
 
-	# busybox Wget (did not support neither IPv6 nor HTTPS)
-	elif [ -x /usr/bin/wget ]; then
-		__PROG="/usr/bin/wget -q -O $DATFILE"
+	# uclient-fetch possibly with ssl support if /lib/libustream-ssl.so installed
+	elif [ -n "$(which uclient-fetch)" ]; then
+		__PROG="$(which uclient-fetch) -q -O $DATFILE"
+		# force network/ip not supported
+		[ -n "$__BINDIP" ] && \
+			write_log 14 "uclient-fetch: FORCE binding to specific address not supported"
+		# force ip version not supported
+		[ $force_ipversion -eq 1 ] && \
+			write_log 14 "uclient-fetch: Force connecting to IPv4 or IPv6 addresses not supported"
+		# https possibly not supported
+		[ $use_https -eq 1 -a ! -f /lib/libustream-ssl.so ] && \
+			write_log 14 "uclient-fetch: no HTTPS support! Additional install one of ustream-ssl packages"
+		# proxy support
+		[ -z "$proxy" ] && __PROG="$__PROG -Y off" || __PROG="$__PROG -Y on"
+		# https & certificates
+		if [ $use_https -eq 1 ]; then
+			if [ "$cacert" = "IGNORE" ]; then
+				__PROG="$__PROG --no-check-certificate"
+			elif [ -f "$cacert" ]; then
+				__PROG="$__PROG --ca-certificate=$cacert"
+			elif [ -n "$cacert" ]; then		# it's not a file; nothing else supported
+				write_log 14 "No valid certificate file '$cacert' for HTTPS communication"
+			fi
+		fi
+		__RUNPROG="$__PROG '$__URL' 2>$ERRFILE"		# build final command
+		__PROG="uclient-fetch"				# reuse for error logging
+
+	# Busybox Wget or any other wget in search $PATH (did not support neither IPv6 nor HTTPS)
+	elif [ -n "$(which wget)" ]; then
+		__PROG="$(which wget) -q -O $DATFILE"
 		# force network/ip not supported
 		[ -n "$__BINDIP" ] && \
 			write_log 14 "BusyBox Wget: FORCE binding to specific address not supported"
@@ -739,7 +761,7 @@ do_transfer() {
 		__PROG="Busybox Wget"				# reuse for error logging
 
 	else
-		write_log 13 "Neither 'Wget' nor 'cURL' installed or executable"
+		write_log 13 "Neither 'Wget' nor 'cURL' nor 'uclient-fetch' installed or executable"
 	fi
 
 	while : ; do
@@ -851,7 +873,7 @@ get_local_ip () {
 						)
 					else
 						__DATA=$(awk '
-							/inet6/ && /: [0-9a-eA-E]/ && !/\/128/ {	# Filter IPv6 exclude fxxx and /128 prefix
+							/inet6/ && /: [0-9a-eA-E]/ {	# Filter IPv6 exclude fxxx
 							#   inet6 addr: 2001:db8::xxxx:xxxx/32 Scope:Global
 							FS="/";		# separator "/"
 							$0=$0;		# reread to activate separator
@@ -927,7 +949,8 @@ get_registered_ip() {
 	# $2	(optional) if set, do not retry on error
 	local __CNT=0	# error counter
 	local __ERR=255
-	local __REGEX  __PROG  __RUNPROG  __DATA
+	local __REGEX  __PROG  __RUNPROG  __DATA  __IP
+	local __MUSL=$(/usr/bin/nslookup 127.0.0.1 0 >/dev/null 2>&1; echo $?) # 0 == busybox compiled with musl
 	# return codes
 	# 1	no IP detected
 
@@ -937,8 +960,8 @@ get_registered_ip() {
 	# set correct regular expression
 	[ $use_ipv6 -eq 0 ] && __REGEX="$IPV4_REGEX" || __REGEX="$IPV6_REGEX"
 
-	if [ -x /usr/bin/host ]; then
-		__PROG="/usr/bin/host"
+	if [ -n "$(which host)" ]; then
+		__PROG="$(which host)"
 		[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -t A"  || __PROG="$__PROG -t AAAA"
 		if [ $force_ipversion -eq 1 ]; then			# force IP version
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4"  || __PROG="$__PROG -6"
@@ -947,11 +970,37 @@ get_registered_ip() {
 
 		__RUNPROG="$__PROG $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BIND host"
-	elif [ -x /usr/bin/nslookup ]; then	# last use BusyBox nslookup
+	elif [ -n "$(which hostip)" ]; then	# hostip package installed
+		__PROG="$(which hostip)"
+		[ $force_dnstcp -ne 0 ] && \
+			write_log 14 "hostip - no support for 'DNS over TCP'"
+
+		# is IP given as dns_server ?
+		__IP=$(echo $dns_server | grep -m 1 -o "$IPV4_REGEX")
+		[ -z "$__IP" ] && __IP=$(echo $dns_server | grep -m 1 -o "$IPV6_REGEX")
+
+		# we got NO ip for dns_server, so build command
+		[ -z "$__IP" -a -n "$dns_server" ] && {
+			__IP="\`/usr/bin/hostip"
+			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] && __IP="$__IP -6"
+			__IP="$__IP $dns_server | grep -m 1 -o"
+			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] \
+				&& __IP="$__IP '$IPV6_REGEX'" \
+				|| __IP="$__IP '$IPV4_REGEX'"
+			__IP="$__IP \`"
+		}
+
+		[ $use_ipv6 -eq 1 ] && __PROG="$__PROG -6"
+		[ -n "$dns_server" ] && __PROG="$__PROG -r $__IP"
+		__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
+		__PROG="hostip"
+	elif [ -n "$(which nslookup)" ]; then	# last use BusyBox nslookup
 		[ $force_ipversion -ne 0 -o $force_dnstcp -ne 0 ] && \
 			write_log 14 "Busybox nslookup - no support to 'force IP Version' or 'DNS over TCP'"
+		[ $__MUSL -eq 0 -a -n "$dns_server" ] && \
+			write_log 14 "Busybox compiled with musl - nslookup - no support to set/use DNS Server"
 
-		__RUNPROG="/usr/bin/nslookup $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
+		__RUNPROG="$(which nslookup) $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BusyBox nslookup"
 	else	# there must be an error
 		write_log 12 "Error in 'get_registered_ip()' - no supported Name Server lookup software accessible"
@@ -967,6 +1016,8 @@ get_registered_ip() {
 		else
 			if [ "$__PROG" = "BIND host" ]; then
 				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
+			elif [ "$__PROG" = "hostip" ]; then
+				__DATA=$(cat $DATFILE | grep -m 1 -o "$__REGEX")
 			else
 				__DATA=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
 			fi

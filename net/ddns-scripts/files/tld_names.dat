@@ -89,7 +89,6 @@ leasing.aero
 logistics.aero
 magazine.aero
 maintenance.aero
-marketplace.aero
 media.aero
 microlight.aero
 modelling.aero
@@ -112,7 +111,6 @@ show.aero
 skydiving.aero
 software.aero
 student.aero
-taxi.aero
 trader.aero
 trading.aero
 trainer.aero
@@ -154,13 +152,6 @@ org.al
 
 // am : http://en.wikipedia.org/wiki/.am
 am
-
-// an : http://www.una.an/an_domreg/default.asp
-an
-com.an
-net.an
-org.an
-edu.an
 
 // ao : http://en.wikipedia.org/wiki/.ao
 // http://www.dns.ao/REGISTR.DOC
@@ -1016,7 +1007,10 @@ gw
 gy
 co.gy
 com.gy
+edu.gy
+gov.gy
 net.gy
+org.gy
 
 // hk : https://www.hkdnr.hk
 // Submitted by registry <hk.tech@hkirc.hk> 2008-06-11
@@ -1176,7 +1170,7 @@ tv.im
 
 // in : http://en.wikipedia.org/wiki/.in
 // see also: https://registry.in/Policies
-// Please note, that nic.in is not an offical eTLD, but used by most
+// Please note, that nic.in is not an official eTLD, but used by most
 // government institutions.
 in
 co.in
@@ -4510,8 +4504,21 @@ gov.ng
 mil.ng
 mobi.ng
 
-// ni : http://www.nic.ni/dominios.htm
-*.ni
+// ni : http://www.nic.ni/
+com.ni
+gob.ni
+edu.ni
+org.ni
+nom.ni
+net.ni
+mil.ni
+co.ni
+biz.ni
+web.ni
+int.ni
+ac.ni
+in.ni
+info.ni
 
 // nl : http://en.wikipedia.org/wiki/.nl
 // https://www.sidn.nl/
@@ -6030,7 +6037,6 @@ kms.ru
 k-uralsk.ru
 kustanai.ru
 kuzbass.ru
-magnitka.ru
 mytis.ru
 nakhodka.ru
 nkz.ru
@@ -6379,10 +6385,6 @@ net.to
 org.to
 edu.to
 mil.to
-
-// tp : No registrations at this time.
-// Submitted by Ryan Sleevi <ryan.sleevi@gmail.com> 2014-01-03
-tp
 
 // subTLDs: https://www.nic.tr/forms/eng/policies.pdf
 // and: https://www.nic.tr/forms/politikalar.pdf
@@ -6822,8 +6824,8 @@ lib.wi.us
 // lib.wv.us Bug 941670 - Removed at request of Larry W Arnold <arnold@wvlc.lib.wv.us>
 lib.wy.us
 // k12.ma.us contains school districts in Massachusetts. The 4LDs are
-// managed indepedently except for private (PVT), charter (CHTR) and
-// parochial (PAROCH) schools. Those are delegated dorectly to the
+// managed independently except for private (PVT), charter (CHTR) and
+// parochial (PAROCH) schools. Those are delegated directly to the
 // 5LD operators. <k12-ma-hostmaster _ at _ rsuc.gweep.net>
 pvt.k12.ma.us
 chtr.k12.ma.us
@@ -7214,7 +7216,7 @@ xxx
 
 // za : http://www.zadna.org.za/content/page/domain-information
 ac.za
-agrica.za
+agric.za
 alt.za
 co.za
 edu.za
@@ -7238,7 +7240,7 @@ web.za
 *.zw
 
 
-// List of new gTLDs imported from https://newgtlds.icann.org/newgtlds.csv on 2015-10-11T22:21:58Z
+// List of new gTLDs imported from https://newgtlds.icann.org/newgtlds.csv on 2016-01-04T22:39:54Z
 
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -7411,6 +7413,9 @@ apple
 // aquarelle : 2014-07-24 Aquarelle.com
 aquarelle
 
+// arab : 2015-11-12 League of Arab States
+arab
+
 // aramco : 2014-11-20 Aramco Services Company
 aramco
 
@@ -7507,6 +7512,9 @@ barefoot
 // bargains : 2013-11-14 Half Hallow, LLC
 bargains
 
+// baseball : 2015-10-29 MLB Advanced Media DH, LLC
+baseball
+
 // basketball : 2015-08-20 Fédération Internationale de Basketball (FIBA)
 basketball
 
@@ -7533,6 +7541,9 @@ bcn
 
 // beats : 2015-05-14 Beats Electronics, LLC
 beats
+
+// beauty : 2015-12-03 L'Oréal
+beauty
 
 // beer : 2014-01-09 Top Level Domain Holdings Limited
 beer
@@ -7639,11 +7650,17 @@ bosch
 // bostik : 2015-05-28 Bostik SA
 bostik
 
+// boston : 2015-12-10 Boston Globe Media Partners, LLC
+boston
+
 // bot : 2014-12-18 Amazon EU S.à r.l.
 bot
 
 // boutique : 2013-11-14 Over Galley, LLC
 boutique
+
+// box : 2015-11-12 NS1 Limited
+box
 
 // bradesco : 2014-12-18 Banco Bradesco S.A.
 bradesco
@@ -7764,6 +7781,9 @@ casino
 
 // catering : 2013-12-05 New Falls. LLC
 catering
+
+// catholic : 2015-10-21 Pontificium Consilium de Comunicationibus Socialibus (PCCS) (Pontifical Council for Social Communication)
+catholic
 
 // cba : 2014-06-26 COMMONWEALTH BANK OF AUSTRALIA
 cba
@@ -7972,6 +7992,9 @@ crown
 // crs : 2014-04-03 Federated Co-operatives Limited
 crs
 
+// cruise : 2015-12-10 Viking River Cruises (Bermuda) Ltd.
+cruise
+
 // cruises : 2013-12-05 Spring Way, LLC
 cruises
 
@@ -8082,6 +8105,9 @@ discover
 
 // dish : 2015-07-30 Dish DBS Corporation
 dish
+
+// diy : 2015-11-05 Lifestyle Domain Holdings, Inc.
+diy
 
 // dnp : 2013-12-13 Dai Nippon Printing Co., Ltd.
 dnp
@@ -8365,6 +8391,9 @@ foundation
 // fox : 2015-09-11 FOX Registry, LLC
 fox
 
+// free : 2015-12-10 Amazon EU S.à r.l.
+free
+
 // fresenius : 2015-07-30 Fresenius Immobilien-Verwaltungs-GmbH
 fresenius
 
@@ -8554,6 +8583,9 @@ guitars
 // guru : 2013-08-27 Pioneer Cypress, LLC
 guru
 
+// hair : 2015-12-03 L'Oréal
+hair
+
 // hamburg : 2014-02-20 Hamburg Top-Level-Domain GmbH
 hamburg
 
@@ -8602,7 +8634,7 @@ hisamitsu
 // hitachi : 2014-10-31 Hitachi, Ltd.
 hitachi
 
-// hiv : 2014-03-13 dotHIV gemeinnuetziger e.V.
+// hiv : 2014-03-13
 hiv
 
 // hkt : 2015-05-14 PCCW-HKT DataCom Services Limited
@@ -9349,6 +9381,9 @@ ninja
 // nissan : 2014-03-27 NISSAN MOTOR CO., LTD.
 nissan
 
+// nissay : 2015-10-29 Nippon Life Insurance Company
+nissay
+
 // nokia : 2015-01-08 Nokia Corporation
 nokia
 
@@ -9604,7 +9639,7 @@ prof
 // progressive : 2015-07-23 Progressive Casualty Insurance Company
 progressive
 
-// promo : 2014-12-18 Play.PROMO Oy
+// promo : 2014-12-18
 promo
 
 // properties : 2013-12-05 Big Pass, LLC
@@ -9624,6 +9659,9 @@ prudential
 
 // pub : 2013-12-12 United TLD Holdco Ltd.
 pub
+
+// pwc : 2015-10-29 PricewaterhouseCoopers LLP
+pwc
 
 // qpon : 2013-11-14 dotCOOL, Inc.
 qpon
@@ -9735,6 +9773,9 @@ rio
 
 // rip : 2014-07-10 United TLD Holdco Ltd.
 rip
+
+// rmit : 2015-11-19 Royal Melbourne Institute of Technology
+rmit
 
 // rocher : 2014-12-18 Ferrero Trading Lux S.A.
 rocher
@@ -10288,6 +10329,9 @@ ubs
 // uconnect : 2015-07-30 FCA US LLC.
 uconnect
 
+// unicom : 2015-10-15 China United Network Communications Corporation Limited
+unicom
+
 // university : 2014-03-06 Little Station, LLC
 university
 
@@ -10374,6 +10418,9 @@ vodka
 
 // volkswagen : 2015-05-14 Volkswagen Group of America Inc.
 volkswagen
+
+// volvo : 2015-11-12 Volvo Holding Sverige Aktiebolag
+volvo
 
 // vote : 2013-11-21 Monolith Registry LLC
 vote
@@ -10583,6 +10630,10 @@ xn--6qq986b3xl
 москва
 xn--80adxhks
 
+// xn--80aqecdr1a : 2015-10-21 Pontificium Consilium de Comunicationibus Socialibus (PCCS) (Pontifical Council for Social Communication)
+католик
+xn--80aqecdr1a
+
 // xn--80asehdb : 2013-07-14 CORE Association
 онлайн
 xn--80asehdb
@@ -10763,6 +10814,10 @@ xn--mgbb9fbpob
 ابوظبي
 xn--mgbca7dzdo
 
+// xn--mgbi4ecexp : 2015-10-21 Pontificium Consilium de Comunicationibus Socialibus (PCCS) (Pontifical Council for Social Communication)
+كاثوليك
+xn--mgbi4ecexp
+
 // xn--mgbt3dhd : 2014-09-04 Asia Green IT System Bilgisayar San. ve Tic. Ltd. Sti.
 همراه
 xn--mgbt3dhd
@@ -10782,6 +10837,10 @@ xn--ngbc5azd
 // xn--ngbe9e0a : 2014-12-04 Kuwait Finance House
 بيتك
 xn--ngbe9e0a
+
+// xn--ngbrx : 2015-11-12 League of Arab States
+عرب
+xn--ngbrx
 
 // xn--nqv7f : 2013-11-14 Public Interest Registry
 机构
@@ -10834,6 +10893,10 @@ xn--t60b56a
 // xn--tckwe : 2015-01-15 VeriSign Sarl
 コム
 xn--tckwe
+
+// xn--tiq49xqyj : 2015-10-21 Pontificium Consilium de Comunicationibus Socialibus (PCCS) (Pontifical Council for Social Communication)
+天主教
+xn--tiq49xqyj
 
 // xn--unup4y : 2013-07-14 Spring Fields, LLC
 游戏
@@ -11071,6 +11134,10 @@ cupcake.is
 // DreamHost : http://www.dreamhost.com/
 // Submitted by Andrew Farmer <andrew.farmer@dreamhost.com> 2012-10-02
 dreamhosters.com
+
+// Drobo : http://www.drobo.com/
+// Submitted by Ricardo Padilha <rpadilha@drobo.com> 2015-12-17
+mydrobo.com
 
 // DuckDNS : http://www.duckdns.org/
 // Submitted by Richard Harper <richard@duckdns.org> 2015-05-17
@@ -11523,12 +11590,16 @@ blogspot.td
 blogspot.tw
 blogspot.ug
 blogspot.vn
+cloudfunctions.net
 codespot.com
 googleapis.com
 googlecode.com
 pagespeedmobilizer.com
 withgoogle.com
 withyoutube.com
+
+// Hashbang : https://hashbang.sh
+hashbang.sh
 
 // Heroku : https://www.heroku.com/
 // Submitted by Tom Maher <tmaher@heroku.com> 2013-05-02
@@ -11560,6 +11631,10 @@ bmoattachments.org
 // Submitted by Trung Tran <Trung.Tran@neustar.biz> 2015-04-23
 4u.com
 
+// ngrok : https://ngrok.com/
+// Submitted by Alan Shreve <alan@ngrok.com> 2015-11-10
+ngrok.io
+
 // NFSN, Inc. : https://www.NearlyFreeSpeech.NET/
 // Submitted by Jeff Wheelhouse <support@nearlyfreespeech.net> 2014-02-02
 nfshost.com
@@ -11579,6 +11654,10 @@ operaunite.com
 // OutSystems
 // Submitted by Duarte Santos <domain-admin@outsystemscloud.com> 2014-03-11
 outsystemscloud.com
+
+// Pagefront : https://www.pagefronthq.com/
+// Submitted by Jason Kriss <jason@pagefronthq.com> 2015-12-02
+pagefrontapp.com
 
 // .pl domains (grandfathered)
 art.pl
@@ -11601,6 +11680,11 @@ priv.at
 // Submitted by Daniel Dent (https://www.danieldent.com/) 2015-07-16
 qa2.com
 
+// Rackmaze LLC : https://www.rackmaze.com
+// Submitted by Kirill Pertsev <kika@rackmaze.com> 2015-12-02
+rackmaze.com
+rackmaze.net
+
 // Red Hat, Inc. OpenShift : https://openshift.redhat.com/
 // Submitted by Tim Kramer <tkramer@rhcloud.com> 2012-10-24
 rhcloud.com
@@ -11620,6 +11704,22 @@ pp.ua
 sinaapp.com
 vipsinaapp.com
 1kapp.com
+
+// Synology, Inc. : https://www.synology.com/
+// Submitted by Rony Weng <ronyweng@synology.com> 2015-12-02
+diskstation.me
+dscloud.biz
+dscloud.me
+dscloud.mobi
+dsmynas.com
+dsmynas.net
+dsmynas.org
+familyds.com
+familyds.net
+familyds.org
+i234.me
+myds.me
+synology.me
 
 // TASK geographical domains (www.task.gda.pl/uslugi/dns)
 gda.pl

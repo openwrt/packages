@@ -22,13 +22,22 @@
 # !!! Use only the script name (without path). Sample:
 # !!! "example.com"	"update_sample.sh"
 #
+# !!! Since ddns-scripts Version 2.5.x additional parameters are supported
+# !!! and a given answer on success is checked (ignored by earlier versions)
+# !!! Additional parameters: [PARAMOPT] and [PARAMENC]; [PARAMENC] is send urlencoded
+#
+# Line syntax: "service" [TAB] "update_url" [TAB] "answer"
+# "service"	name used as "option service_name" inside /etc/config/ddns
+# "update_url"	update url as given by the provider; custom urls should not saved here
+# "answer"	words inside providers answer string; use "|" to combine "or"
+#
 # 66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
 
 # IPv6 @ Securepoint Dynamic-DNS-Service
-"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	    "good|nochg"
+"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # IPv6 @ Hurricane Electric Dynamic DNS
-"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # IPv6 @ MyDNS.JP
 "mydns.jp"	"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV6ADDR=[IP]"
@@ -40,8 +49,13 @@
 "freedns.afraid.org"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
 
 # IPv6 @ LoopiaDNS
-"loopia.se" "http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
+"loopia.se"	"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
 
 # Variomedia AG
-"variomedia.de" 	"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"variomedia.de"		"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
+# IPv6 @ Dyn.com
+"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# zzzz.io Free Dynamic DNS
+"zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"	"Updated|No change"
