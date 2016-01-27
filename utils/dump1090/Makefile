@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dump1090
 PKG_VERSION:=2015-11-22
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/mutability/dump1090.git
@@ -53,7 +53,8 @@ define Package/view1090/description
 endef
 
 MAKE_FLAGS += \
-	CFLAGS="$(TARGET_CFLAGS)"
+	CFLAGS="$(TARGET_CFLAGS)" \
+	UNAME=Linux
 
 define Package/dump1090/install
 	$(INSTALL_DIR) $(1)/etc/init.d
