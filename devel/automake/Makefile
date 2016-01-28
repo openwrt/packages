@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=automake
 PKG_VERSION:=1.15
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=@GNU/automake
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -38,10 +38,10 @@ define Package/automake/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/automake-$(PKG_VERSION) \
 	  $(1)/usr/bin/automake-$(PKG_VERSION)
-	$(LN) -r $(1)/usr/bin/automake-$(PKG_VERSION) $(1)/usr/bin/automake
+	$(LN) automake-$(PKG_VERSION) $(1)/usr/bin/automake
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/aclocal-$(PKG_VERSION) \
 	  $(1)/usr/bin/aclocal-$(PKG_VERSION)
-	$(LN) -r $(1)/usr/bin/aclocal-$(PKG_VERSION) $(1)/usr/bin/aclocal
+	$(LN) aclocal-$(PKG_VERSION) $(1)/usr/bin/aclocal
 	$(SED) 's|$(STAGING_DIR_HOST)|/usr|g' \
 	  $(1)/usr/bin/automake-$(PKG_VERSION)
 	$(SED) 's|$(STAGING_DIR_HOST)|/usr|g' \
