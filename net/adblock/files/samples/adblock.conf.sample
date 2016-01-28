@@ -1,18 +1,30 @@
 # adblock configuration, for further information
-# please read /etc/adblock/samples/adblock.conf.sample
+# please see /etc/adblock/samples/adblock.conf.sample
 # and /etc/adblock/README.md
-#
 
-# generic options (always required)
-#
+# generic options (all optional!)
 config adblock "global"
-	# ip address of the local adblock interface/uhttpd instance,
-	# needs to be a different subnet from the normal LAN
-	option adb_ip "192.168.2.1"
+	# name (or space separated list of names) of the logical wan interface(s)
+	option adb_wanif "wan"
 
-	# name of an "always accessible" domain,
-	# this domain will be used for the final nslookup check
-	option adb_domain "heise.de"
+	# name of the logical lan interface
+	option adb_lanif "lan"
+
+	# uhttpd port for adblock instance
+	option adb_port "65535"
+
+	# ipv4 blackhole ip address for dnsmasq
+	# old class 'E' subnet, reserved for future use (certainly not used in normal setups)
+	option adb_nullipv4 "254.0.0.1"
+
+	# ipv6 mapped blackhole ip address for dnsmasq
+	option adb_nullipv6 "::ffff:fe00:0001"
+
+	# download timeout (in seconds) to get the adblock list sources
+	option adb_maxtime "60"
+
+	# max loops/timeout for wan check
+	option adb_maxloop "20"
 
 	# full path to static domain blacklist file (one domain per line)
 	# wildcards or regex expressions are not allowed
@@ -22,20 +34,6 @@ config adblock "global"
 	# wildcards or regex expressions are not allowed
 	option adb_whitelist "/etc/adblock/adblock.whitelist"
 
-# list of wan devices that are allowed for adblock updates (check /sys/class/net/<dev>),
-# if no one found the last adlist backup will be restored,
-# useful only for (mobile) multiwan setups
-# disabled by default
-config service "wancheck"
-	option enabled "0"
-	list adb_wanlist "wan"
-
-# check that ntp has adjusted the system time on this device,
-# will be used for logfile writing and logfile housekeeping
-# disabled by default
-config service "ntpcheck"
-	option enabled "0"
-
 # full path to backup directory for adlist backups
 # disabled by default
 config service "backup"
@@ -43,32 +41,23 @@ config service "backup"
 	option adb_backupdir "/tmp"
 
 # full path to debug logfile
-# by default adblock logs to syslog and stdout only
+# normally adblock logs to syslog and stdout only
 # disabled by default
 config service "debuglog"
 	option enabled "0"
 	option adb_logfile "/tmp/adb_debug.log"
 
-# full path to domain query logfile
-# a background task will trace every dns request to file, to easily identify free and already blocked domains,
-# for this to work, you've to enable the dnsmasq option "logqueries" too.
-# the "queryhistory" option deletes query logfiles older than n days (req. busybox find with mtime support)
-# disabled by default
-config service "querylog"
-	option enabled "0"
-	option adb_queryfile "/tmp/adb_query.log"
-	option adb_queryhistory "1"
-
-# different adblock list sources
-# please do not change the urls listed below, 
+# adblock list source definition
+# please do not change the URLs listed below,
 # enable/disable sources as needed
 # for shallalist you can also enable/disable different ad categories
+# 'adaway', 'disconnect' and 'yoyo' are enabled by default
 config source "adaway"
-	option enabled "0"
+	option enabled "1"
 	option adb_src_adaway "https://adaway.org/hosts.txt&ruleset=rset_adaway"
 
 config source "disconnect"
-	option enabled "0"
+	option enabled "1"
 	option adb_src_disconnect "https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt&ruleset=rset_disconnect"
 
 config source "dshield"
@@ -81,7 +70,11 @@ config source "feodo"
 
 config source "malware"
 	option enabled "0"
-	option adb_src_malware "http://mirror1.malwaredomains.com/files/justdomains&ruleset=rset_malware"
+	option adb_src_malware "https://mirror.cedia.org.ec/malwaredomains/justdomains&ruleset=rset_malware"
+
+config source "malwarelist"
+	option enabled "0"
+	option adb_src_malwarelist "http://www.malwaredomainlist.com/hostslist/hosts.txt&ruleset=rset_malwarelist"
 
 config source "palevo"
 	option enabled "0"
