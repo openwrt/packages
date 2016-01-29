@@ -1,0 +1,28 @@
+From a320fd146f802a851a396b2cde491711a4fb87cf Mon Sep 17 00:00:00 2001
+From: Emeric Brun <ebrun@haproxy.com>
+Date: Wed, 16 Dec 2015 15:28:12 +0100
+Subject: [PATCH 12/13] BUG/MEDIUM: peers: old stick table updates could be
+ repushed.
+
+Because the stick table updates tree was not properly initialized to EB_ROOT_UNIQUE.
+(cherry picked from commit 1c6235dbba0a67bad1d5e57ada88f28e1270a5cb)
+(cherry picked from commit 6e80935a77c8c2c67a982780a0f14c241f02f2aa)
+---
+ src/stick_table.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/stick_table.c b/src/stick_table.c
+index 48d5710..6310690 100644
+--- a/src/stick_table.c
++++ b/src/stick_table.c
+@@ -385,6 +385,7 @@ int stktable_init(struct stktable *t)
+ 	if (t->size) {
+ 		memset(&t->keys, 0, sizeof(t->keys));
+ 		memset(&t->exps, 0, sizeof(t->exps));
++		t->updates = EB_ROOT_UNIQUE;
+ 
+ 		t->pool = create_pool("sticktables", sizeof(struct stksess) + t->data_size + t->key_size, MEM_F_SHARED);
+ 
+-- 
+2.4.10
+

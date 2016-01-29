@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=u2pnpd
-PKG_VERSION:=0.1
+PKG_VERSION:=0.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/mhei/u2pnpd/releases/download/v$(PKG_VERSION)
-PKG_MD5SUM:=a98089923d93803fa90d03a504c98b8e
+PKG_MD5SUM:=ac6f378590d3e4e38b40e4b13f03b369
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING

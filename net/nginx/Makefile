@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.9.6
-PKG_RELEASE:=1
+PKG_VERSION:=1.9.9
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
-PKG_MD5SUM:=f6899825e7a8deadba4948ff84515ad6
+PKG_MD5SUM:=50fdfa08e93ead7a111cba5a5f5735af
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=2-clause BSD-like license
 
@@ -82,6 +82,11 @@ config_files=nginx.conf mime.types fastcgi_params koi-utf koi-win win-utf
 define Package/nginx/conffiles
 /etc/nginx/
 endef
+
+ADDITIONAL_MODULES:=
+ifeq ($(CONFIG_NGINX_NAXSI),y)
+  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nginx-naxsi/naxsi_src
+endif
 
 ADDITIONAL_MODULES:=
 ifeq ($(CONFIG_IPV6),y)
@@ -209,6 +214,31 @@ define Package/nginx/install
 	$(INSTALL_DATA) $(addprefix $(PKG_INSTALL_DIR)/etc/nginx/,$(config_files)) $(1)/etc/nginx/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nginx.init $(1)/etc/init.d/nginx
+ifeq ($(CONFIG_NGINX_NAXSI),y)
+	$(INSTALL_DIR) $(1)/etc/nginx
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-naxsi/naxsi_config/naxsi_core.rules $(1)/etc/nginx
+	chmod 0640 $(1)/etc/nginx/naxsi_core.rules
+endif
+	$(if $(CONFIG_NGINX_NAXSI),$($(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-naxsi/naxsi_config/naxsi_core.rules $(1)/etc/nginx))
+	$(if $(CONFIG_NGINX_NAXSI),$(chmod 0640 $(1)/etc/nginx/naxsi_core.rules))
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(if $(CONFIG_NGINX_NAXSI),$(call Prepare/nginx-naxsi))
+endef
+
+define Download/nginx-naxsi
+	VERSION:=6358c3d2e68a0c9e3ad11661c2a1f63fadc9b4f2
+	SUBDIR:=nginx-naxsi
+	FILE:=nginx-naxsi-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+	URL:=https://github.com/nbs-system/naxsi.git
+	PROTO:=git
+endef
+
+define  Prepare/nginx-naxsi
+	$(eval $(call Download,nginx-naxsi))
+	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
 endef
 
 $(eval $(call BuildPackage,nginx))
