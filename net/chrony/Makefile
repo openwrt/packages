@@ -27,7 +27,6 @@ define Package/chrony
   SUBMENU:=Time Synchronization
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libcap
   USERID:=chrony=323:chrony=323
   TITLE:=A versatile NTP client and server
   URL:=http://chrony.tuxfamily.org/
@@ -52,9 +51,7 @@ CONFIGURE_ARGS+= \
 	--prefix=/usr \
 	--chronysockdir=/var/run/chrony \
 	--disable-readline \
-	--disable-rtc \
-	--disable-asyncdns \
-	--with-user=chrony
+	--disable-privdrop
 
 CONFIGURE_VARS+=CPPFLAGS=-DNDEBUG
 
