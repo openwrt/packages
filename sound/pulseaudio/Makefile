@@ -181,11 +181,11 @@ define Package/pulseaudio-profiles/install
 		$(1)/usr/share/pulseaudio/alsa-mixer/paths \
 		$(1)/usr/share/pulseaudio/alsa-mixer/profile-sets
 
-	$(INSTALL_CONF) \
+	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/pulseaudio/alsa-mixer/paths/* \
 		$(1)/usr/share/pulseaudio/alsa-mixer/paths
 
-	$(INSTALL_CONF) \
+	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/pulseaudio/alsa-mixer/profile-sets/* \
 		$(1)/usr/share/pulseaudio/alsa-mixer/profile-sets
 endef
