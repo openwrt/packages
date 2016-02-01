@@ -60,7 +60,7 @@ define Package/nfs-utils
   $(call Package/nfs-kernel-server/Default)
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS+= +libevent +USE_UCLIBC:librpc
+  DEPENDS+= +libevent2 +USE_UCLIBC:librpc
   TITLE:=updated mount utility (includes nfs4)
 endef
 
