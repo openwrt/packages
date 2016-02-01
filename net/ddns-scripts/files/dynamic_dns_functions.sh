@@ -1158,7 +1158,7 @@ split_FQDN() {
 
 	# the leftover parameters are the HOST/SUBDOMAIN
 	while [ -n "$1" ]; do
-		_HOST="$1 $HOST"		# remember we need to invert
+		_HOST="$1 $_HOST"		# remember we need to invert
 		shift
 	done
 	_HOST=$(echo $_HOST | tr " " ".")	# insert DOT
