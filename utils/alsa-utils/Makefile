@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-utils
-PKG_VERSION:=1.0.29
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/utils/ \
 		http://alsa.cybermirror.org/utils/
-PKG_MD5SUM:=6b289bf874c4c9a63f4b3973093dd404
+PKG_MD5SUM:=b9d6102fbbd0b68040bb77023ed30c0c
 PKG_INSTALL:=1
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/alsa-utils
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+alsa-lib +libncurses +libpthread
+  DEPENDS:=+alsa-lib +libncurses +libpthread +fftw3
   TITLE:=ALSA (Advanced Linux Sound Architecture) utilities
   URL:=http://www.alsa-project.org/
 endef
@@ -31,7 +31,7 @@ endef
 define Package/alsa-utils-seq
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+alsa-lib +libpthread
+  DEPENDS:=+alsa-lib +libpthread +fftw3
   TITLE:=ALSA sequencer utilities
   URL:=http://www.alsa-project.org/
 endef
@@ -41,7 +41,7 @@ define Package/alsa-utils-tests
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=ALSA utilities test data (adds ~1.3M to image)
-  DEPENDS:=+alsa-lib +libpthread
+  DEPENDS:=+alsa-lib +libpthread +fftw3
 endef
 
 define Build/Configure
