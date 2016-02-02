@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
 PKG_VERSION:=1.2.16
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.keepalived.org/software
@@ -29,7 +29,7 @@ define Package/keepalived
   CATEGORY:=Network
   TITLE:=Failover and monitoring daemon for LVS clusters
   URL:=http://www.keepalived.org/
-  DEPENDS:=+libnl-genl +libopenssl
+  DEPENDS:=+PACKAGE_libnl-genl:libnl-genl +libopenssl
 endef
 
 define Package/keepalived/description
