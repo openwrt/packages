@@ -29,7 +29,7 @@ define Package/keepalived
   CATEGORY:=Network
   TITLE:=Failover and monitoring daemon for LVS clusters
   URL:=http://www.keepalived.org/
-  DEPENDS:=+libnl-genl +libopenssl
+  DEPENDS:=+PACKAGE_libnl-genl:libnl-genl +libopenssl
 endef
 
 define Package/keepalived/description
