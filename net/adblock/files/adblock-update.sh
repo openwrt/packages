@@ -23,9 +23,14 @@
 # environment #
 ###############
 
+# set the C locale, characters are single bytes, the charset is ASCII
+# speeds up things like sort, grep etc.
+#
+LC_ALL=C
+
 # set script version
 #
-adb_version="0.60.0"
+adb_version="0.60.1"
 
 # get current pid, script directory and openwrt version
 #
@@ -48,9 +53,9 @@ fi
 # main program #
 ################
 
-# call restore function on trap signals (HUP, INT, QUIT, BUS, SEGV, TERM)
+# call exit function on trap signals (HUP, INT, QUIT, BUS, SEGV, TERM)
 #
-trap "rc=255; f_log 'trap error' '${rc}'; f_restore" 1 2 3 10 11 15
+trap "rc=255; f_log 'error signal received/trapped' '${rc}'; f_exit" 1 2 3 10 11 15
 
 # start logging
 #
@@ -94,7 +99,7 @@ then
     fi
     if [ -z "${list_time}" ] || [ "${list_time}" != "${shalla_time}" ]
     then
-        wget ${wget_parm} --timeout="${adb_maxtime}" --tries=1 --output-document="${shalla_archive}" "${adb_arc_shalla}" 2>/dev/null
+        wget ${wget_parm} --timeout="${adb_maxtime}" --output-document="${shalla_archive}" "${adb_arc_shalla}" 2>/dev/null
         rc=${?}
         if [ $((rc)) -eq 0 ]
         then
@@ -126,7 +131,7 @@ then
             rc=0
         fi
     else
-        adb_srcfind="! -name ${adb_dnsprefix}.${src_name}"
+        adb_srclist="! -name ${adb_dnsprefix}.${src_name}"
         f_log "   source archive doesn't change, no update required"
     fi
 fi
@@ -152,11 +157,11 @@ do
 
     # prepare find statement with active adblock list sources
     #
-    if [ -z "${adb_srcfind}" ]
+    if [ -z "${adb_srclist}" ]
     then
-        adb_srcfind="! -name ${adb_dnsprefix}.${src_name}"
+        adb_srclist="! -name ${adb_dnsprefix}.${src_name}"
     else
-        adb_srcfind="${adb_srcfind} -a ! -name ${adb_dnsprefix}.${src_name}"
+        adb_srclist="${adb_srclist} -a ! -name ${adb_dnsprefix}.${src_name}"
     fi
 
     # only download adblock list with newer/updated timestamp
@@ -187,7 +192,7 @@ do
             tmp_domains="$(cat "${shalla_file}" 2>/dev/null)"
             rc=${?}
         else
-            tmp_domains="$(wget ${wget_parm} --timeout="${adb_maxtime}" --tries=1 --output-document=- "${url}" 2>/dev/null)"
+            tmp_domains="$(wget ${wget_parm} --timeout="${adb_maxtime}" --output-document=- "${url}" 2>/dev/null)"
             rc=${?}
         fi
     else
@@ -212,8 +217,8 @@ do
         f_log "   empty source download finished"
         continue
     else
-        f_log "   source download failed"
         rc=0
+        f_log "   source download failed"
         continue
     fi
 
@@ -233,11 +238,11 @@ do
 
         # prepare find statement with revised adblock list sources
         #
-        if [ -z "${adb_revsrcfind}" ]
+        if [ -z "${adb_revsrclist}" ]
         then
-            adb_revsrcfind="-name ${adb_dnsprefix}.${src_name}"
+            adb_revsrclist="-name ${adb_dnsprefix}.${src_name}"
         else
-            adb_revsrcfind="${adb_revsrcfind} -o -name ${adb_dnsprefix}.${src_name}"
+            adb_revsrclist="${adb_revsrclist} -o -name ${adb_dnsprefix}.${src_name}"
         fi
 
         # write preliminary adblock list footer
@@ -267,9 +272,9 @@ done
 
 # remove old adblock lists and their backups
 #
-if [ -n "${adb_srcfind}" ]
+if [ -n "${adb_srclist}" ]
 then
-    adb_rmfind="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srcfind} \) -print -exec rm -f "{}" \; 2>/dev/null)"
+    adb_rmfind="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \; 2>/dev/null)"
     if [ $((rc)) -eq 0 ] && [ -n "${adb_rmfind}" ]
     then
         f_log "no longer used adblock lists removed" "${rc}"
@@ -280,7 +285,7 @@ then
     fi
     if [ "${backup_ok}" = "true" ]
     then
-        find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srcfind} \) -exec rm -f "{}" \; 2>/dev/null
+        find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -exec rm -f "{}" \; 2>/dev/null
         if [ $((rc)) -ne 0 ]
         then
             f_log "error during removal of old backups" "${rc}"
@@ -302,7 +307,7 @@ fi
 #
 if [ $((adb_unique)) -eq 1 ]
 then
-    if [ -n "${adb_revsrcfind}" ]
+    if [ -n "${adb_revsrclist}" ]
     then
         f_log "remove duplicates in separate adblock lists"
 
@@ -352,10 +357,17 @@ else
     adb_count="$(head -qn -4 "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null | wc -l)"
 fi
 
+# restore adblock lists if overall count is null (i.e. all downloads failed)
+#
+if [ "${backup_ok}" = "true" ] && [ $((adb_count)) -eq 0 ]
+then
+    f_restore
+fi
+
 # restart dnsmasq with newly generated or deleted adblock lists,
 # check dnsmasq startup afterwards
 #
-if [ -n "${adb_revsrcfind}" ] || [ -n "${adb_rmfind}" ]
+if [ -n "${adb_revsrclist}" ] || [ -n "${adb_rmfind}" ]
 then
     /etc/init.d/dnsmasq restart >/dev/null 2>&1
     sleep 2
