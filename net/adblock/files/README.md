@@ -42,7 +42,7 @@ When the dns server on your router receives dns requests, you will sort out quer
 * overall duplicate removal in separate adblock lists (will be automatically disabled on low memory systems)
 * adblock source list parsing by fast & flexible regex rulesets
 * additional white- and blacklist support for manual overrides
-* quality checks during/after update of adblock lists to ensure a reliable dnsmasq service
+* quality checks during & after update of adblock lists to ensure a reliable dnsmasq service
 * wan update check, to wait for an active wan uplink before update
 * basic adblock statistics via iptables packet counters
 * status & error logging to stdout and syslog
@@ -53,9 +53,9 @@ When the dns server on your router receives dns requests, you will sort out quer
 
 ## Prerequisites
 * [openwrt](https://openwrt.org), tested with latest stable release (Chaos Calmer 15.05) and with current trunk (Designated Driver > r47025)
-* required software packages:
+* usual openwrt setup with 'iptables' & 'uhttpd', additional required software packages:
     * wget
-    * optional for IPv6 support: kmod-ipt-nat6
+    * optional: 'kmod-ipt-nat6' for IPv6 support
 * the above dependencies and requirements will be checked during package installation & script runtime, please check console output or *logread -e "adblock"* for errors
 
 ## Usage
@@ -70,7 +70,7 @@ When the dns server on your router receives dns requests, you will sort out quer
 * => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
 * add static, personal domain white- or blacklist entries, one domain per line (wildcards & regex are not allowed!), by default both lists are located in */etc/adblock*
 * enable the backup/restore feature, to restore automatically the latest, stable backup of your adblock lists in case of any processing error
-* enable the debug log feature for continuous logfile writing to monitor the adblock runs over a longer period
+* enable the logging feature for continuous logfile writing to monitor the adblock runs over a longer period
 
 ## Distributed samples
 * all sample configuration files stored in */etc/adblock/samples*
@@ -82,8 +82,8 @@ When the dns server on your router receives dns requests, you will sort out quer
 ## Background
 This adblock package is a dns/dnsmasq based adblock solution for openwrt.  
 Queries to ad/abuse domains are never forwarded and always replied with a local IP address which may be IPv4 or IPv6.  
-For that purpose adblock uses an ip address from the old reserved [class 'E'](https://tools.ietf.org/html/rfc1700) subnet (254.0.0.1 / ::ffff:fe00:0001) by default.  
-Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to internal adblock pixel server (in PREROUTING chain) or rejected (in FORWARD chain).  
+For that purpose adblock uses an ip address from the private 'TEST-NET-1' subnet (192.0.2.1 / ::ffff:c000:0201) by default.  
+Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to internal adblock pixel server (in PREROUTING chain) or rejected (in FORWARD and OUTPUT chain).  
 All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other openwrt related config files.
 
 ## Removal

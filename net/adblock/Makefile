@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=0.60.0
+PKG_VERSION:=0.60.1
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <openwrt@brenken.org>
