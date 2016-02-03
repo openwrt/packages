@@ -950,7 +950,7 @@ get_registered_ip() {
 	local __CNT=0	# error counter
 	local __ERR=255
 	local __REGEX  __PROG  __RUNPROG  __DATA  __IP
-	local __MUSL=$(/usr/bin/nslookup 127.0.0.1 0 >/dev/null 2>&1; echo $?) # 0 == busybox compiled with musl
+	local __MUSL=$(/usr/bin/nslookup 127.0.0.1 * >/dev/null 2>&1; echo $?) # 0 == busybox compiled with musl
 	# return codes
 	# 1	no IP detected
 
