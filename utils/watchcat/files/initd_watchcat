@@ -41,13 +41,11 @@ load_watchcat() {
 	[ -n "$pinghosts" -o "$mode" = "allways" ] \
 		|| append_string "error" "pinghosts must be set when in 'ping' mode" "; "
 	[ "$mode" = "ping" ] && {
-		if [ -n "$pingperiod" ]
-		then
+		if [ -n "$pingperiod" ]; then
 			timetoseconds "$pingperiod"
 			pingperiod="$seconds"
-			if [ "$pingperiod" -ge 0 ]
-			then
-				[ "$pingperiod" -le "$period" ] \
+			if [ "$pingperiod" -ge 0 ]; then
+				[ "$pingperiod" -lt "$period" ] \
 					|| append_string "error" "pingperiod must be less than period" "; "
 			else
 				append_string "error" 'pingperiod is not a valid time value (ex: "30"; "4m"; "6h"; "2d")' "; "
@@ -56,15 +54,13 @@ load_watchcat() {
 			pingperiod="$((period/20))"
 		fi
 	}
-	[ "$pingperiod" -lt "$period" -o "$mode" = "allways" ] \
-		|| append_string "error" "pingperiod is not recognized" "; "
+	
 	[ "$forcedelay" -ge 0 ] \
 		|| append_string "error" "forcedelay must be a integer greater or equal than 0, where 0 means disabled" "; "
 
 	[ -n "$error" ] && { logger -p user.err -t "watchcat" "reboot program $1 not started - $error"; return; }
 
-	if [ "$mode" = "allways" ]
-	then
+	if [ "$mode" = "allways" ]; then
 		/usr/bin/watchcat.sh "allways" "$period" "$forcedelay" &
 		logger -p user.info -t "wathchat" "started task (mode=$mode;period=$period;forcedelay=$forcedelay)" 
 	else
@@ -76,8 +72,7 @@ load_watchcat() {
 }
 
 stop() {
-	if [ -f "${PIDFILE}.pids" ]
-	then
+	if [ -f "${PIDFILE}.pids" ]; then
 		logger -p user.info -t "watchcat" "stopping all tasks"
 
 		while read pid
@@ -97,8 +92,7 @@ start() {
 	[ -f "${PIDFILE}.pids" ] && stop
 
 	config_load system
-	if [ -n "$(uci show system.@watchcat[0])" ] # at least one watchcat section exists
-	then
+	if [ -n "$(uci show system.@watchcat[0])" ]; then # at least one watchcat section exists
 		logger -p user.info -t "watchcat" "starting all tasks"
 		config_foreach load_watchcat watchcat
 		logger -p user.info -t "watchcat" "all tasks started"
