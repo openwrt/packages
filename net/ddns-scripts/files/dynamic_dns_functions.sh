@@ -950,7 +950,7 @@ get_registered_ip() {
 	local __CNT=0	# error counter
 	local __ERR=255
 	local __REGEX  __PROG  __RUNPROG  __DATA  __IP
-	local __MUSL=$(/usr/bin/nslookup 127.0.0.1 0 >/dev/null 2>&1; echo $?) # 0 == busybox compiled with musl
+	local __MUSL=$(/usr/bin/nslookup localhost 2>/dev/null | grep -q -e "^Server:"; echo $?) # 0 == busybox not compiled with musl
 	# return codes
 	# 1	no IP detected
 
@@ -997,7 +997,7 @@ get_registered_ip() {
 	elif [ -n "$(which nslookup)" ]; then	# last use BusyBox nslookup
 		[ $force_ipversion -ne 0 -o $force_dnstcp -ne 0 ] && \
 			write_log 14 "Busybox nslookup - no support to 'force IP Version' or 'DNS over TCP'"
-		[ $__MUSL -eq 0 -a -n "$dns_server" ] && \
+		[ $__MUSL -ne 0 -a -n "$dns_server" ] && \
 			write_log 14 "Busybox compiled with musl - nslookup - no support to set/use DNS Server"
 
 		__RUNPROG="$(which nslookup) $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
