@@ -272,6 +272,12 @@ while : ; do
 
 	get_local_ip LOCAL_IP		# read local IP
 
+	# on IPv6 we use expanded version to be shure when comparing
+	[ $use_ipv6 -eq 1 ] && {
+		expand_ipv6 "$LOCAL_IP" LOCAL_IP
+		expand_ipv6 "$REGISTERED_IP" REGISTERED_IP
+	}
+
 	# prepare update
 	# never updated or forced immediate then NEXT_TIME = 0
 	[ $FORCE_SECONDS -eq 0 -o $LAST_TIME -eq 0 ] \
