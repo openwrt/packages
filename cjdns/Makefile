@@ -66,7 +66,7 @@ endef
 define Build/Configure
 endef
 
-PKG_DO_VARS:=
+PKG_DO_VARS:=CJDNS_RELEASE_VERSION=$(PKG_SOURCE_VERSION)
 
 ifneq ($(CONFIG_KERNEL_SECCOMP_FILTER),y)
 PKG_DO_VARS+= Seccomp_NO=1
