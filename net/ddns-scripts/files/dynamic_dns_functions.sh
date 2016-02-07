@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.6.0-1"
+VERSION="2.6.1-1"
 SECTION_ID=""		# hold config's section name
 VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
 
@@ -950,7 +950,7 @@ get_registered_ip() {
 	local __CNT=0	# error counter
 	local __ERR=255
 	local __REGEX  __PROG  __RUNPROG  __DATA  __IP
-	local __MUSL=$(/usr/bin/nslookup 127.0.0.1 0 >/dev/null 2>&1; echo $?) # 0 == busybox compiled with musl
+	local __MUSL=$(nslookup localhost 2>&1 | grep -qF "(null)"; echo $?) # 0 == busybox compiled with musl "(null)" found
 	# return codes
 	# 1	no IP detected
 
@@ -1158,7 +1158,7 @@ split_FQDN() {
 
 	# the leftover parameters are the HOST/SUBDOMAIN
 	while [ -n "$1" ]; do
-		_HOST="$1 $HOST"		# remember we need to invert
+		_HOST="$1 $_HOST"		# remember we need to invert
 		shift
 	done
 	_HOST=$(echo $_HOST | tr " " ".")	# insert DOT
@@ -1174,4 +1174,69 @@ split_FQDN() {
 	eval "$3=''"		# clear registrable domain
 	eval "$4=''"		# clear HOST/SUBDOMAIN
 	return 1
+}
+
+expand_ipv6() {
+	# Original written for bash by
+	# Author:  Florian Streibelt <florian@f-streibelt.de>
+	# Date:    08.04.2012
+	# License: Public Domain, but please be fair and
+	#          attribute the original author(s) and provide
+	#          a link to the original source for corrections:
+	#.         https://github.com/mutax/IPv6-Address-checks
+
+	# $1	IPv6 t0 expand
+	# $2	name of variable to store expanded IPv6
+	[ $# -ne 2 ] && write_log 12 "Error calling 'expand_ipv6()' - wrong number of parameters"
+
+	INPUT="$(echo "$1" | tr 'A-F' 'a-f')"
+	[ "$INPUT" = "::" ] && INPUT="::0"	# special case ::
+
+	O=""
+
+	while [ "$O" != "$INPUT" ]; do
+		O="$INPUT"
+
+		# fill all words with zeroes
+		INPUT=$( echo "$INPUT" | sed	-e 's|:\([0-9a-f]\{3\}\):|:0\1:|g' \
+						-e 's|:\([0-9a-f]\{3\}\)$|:0\1|g' \
+						-e 's|^\([0-9a-f]\{3\}\):|0\1:|g' \
+						-e 's|:\([0-9a-f]\{2\}\):|:00\1:|g' \
+						-e 's|:\([0-9a-f]\{2\}\)$|:00\1|g' \
+						-e 's|^\([0-9a-f]\{2\}\):|00\1:|g' \
+						-e 's|:\([0-9a-f]\):|:000\1:|g' \
+						-e 's|:\([0-9a-f]\)$|:000\1|g' \
+						-e 's|^\([0-9a-f]\):|000\1:|g' )
+
+	done
+
+	# now expand the ::
+	ZEROES=""
+
+	echo "$INPUT" | grep -qs "::"
+	if [ "$?" -eq 0 ]; then
+		GRPS="$( echo "$INPUT" | sed  's|[0-9a-f]||g' | wc -m )"
+		GRPS=$(( GRPS-1 ))		# remove carriage return
+		MISSING=$(( 8-GRPS ))
+		while [ $MISSING -gt 0 ]; do
+			ZEROES="$ZEROES:0000"
+			MISSING=$(( MISSING-1 ))
+		done
+
+		# be careful where to place the :
+		INPUT=$( echo "$INPUT" | sed	-e 's|\(.\)::\(.\)|\1'$ZEROES':\2|g' \
+						-e 's|\(.\)::$|\1'$ZEROES':0000|g' \
+						-e 's|^::\(.\)|'$ZEROES':0000:\1|g;s|^:||g' )
+	fi
+
+	# an expanded address has 39 chars + CR
+	if [ $(echo $INPUT | wc -m) != 40 ]; then
+		write_log 4 "Error in 'expand_ipv6()' - invalid IPv6 found: '$1' expanded: '$INPUT'"
+		eval "$2='invalid'"
+		return 1
+	fi
+
+	# echo the fully expanded version of the address
+	eval "$2=$INPUT"
+	return 0
 }
