@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2015 OpenWrt.org
+# Copyright (C) 2008-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 #
@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale
-PKG_VERSION:=1.1
+PKG_VERSION:=1.1.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=Radicale-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://pypi.python.org/packages/source/R/Radicale/
-PKG_MD5SUM:=2e3f11d05d7a21ee412dfd7bd5c38961
+PKG_MD5SUM:=a29dd538377ea24cec83237a636122ae
 
 # needed for "r"adicale <-> "R"adicale
 PKG_BUILD_DIR:=$(BUILD_DIR)/Radicale-$(PKG_VERSION)
@@ -98,16 +98,21 @@ $(call Package/$(PKG_NAME)-py2/preinst)
 endef
 
 define Package/$(PKG_NAME)-py2/install
-	$(INSTALL_DIR)  $(1)/etc/init.d
-	$(INSTALL_BIN)  ./files/radicale.init $(1)/etc/init.d/radicale
-	$(INSTALL_DIR)  $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN)  ./files/radicale.hotplug $(1)/etc/hotplug.d/iface/80-radicale
-	$(INSTALL_DIR)  $(1)/etc/config
-	$(INSTALL_CONF) ./files/radicale.config $(1)/etc/config/radicale
+	$(INSTALL_DIR)	$(1)/etc/init.d
+	$(INSTALL_BIN)  ./files/radicale.init    $(1)/etc/init.d/radicale
 
-	$(INSTALL_DIR)  $(1)/etc/radicale/ssl
-	$(INSTALL_DATA) ./files/config.template  $(1)/etc/radicale/
-	$(INSTALL_DATA) ./files/logging.template $(1)/etc/radicale/
+	$(INSTALL_DIR)	$(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN)  ./files/radicale.hotplug $(1)/etc/hotplug.d/iface/80-radicale
+
+	$(INSTALL_DIR)	$(1)/etc/config
+	$(INSTALL_CONF) ./files/radicale.config  $(1)/etc/config/radicale
+
+	$(INSTALL_DIR)	$(1)/lib/upgrade/keep.d
+	$(INSTALL_DATA) ./files/radicale.upgrade $(1)/lib/upgrade/keep.d/radicale
+
+	$(INSTALL_DIR)	$(1)/etc/radicale/ssl
+	$(INSTALL_DATA) ./files/config.template  $(1)/etc/radicale/config.template
+	$(INSTALL_DATA) ./files/logging.template $(1)/etc/radicale/logging.template
 	$(INSTALL_DATA) ./files/radicale.users   $(1)/etc/radicale/users
 	$(INSTALL_DATA) ./files/radicale.rights  $(1)/etc/radicale/rights
 
