@@ -3,6 +3,10 @@
 
 START=50
 STOP=50
+EXTRA_COMMANDS="status abort flush"
+EXTRA_HELP="	status	Display the service status
+	abort	Stop the service abruptly. Running processes are signaled to stop immediately
+	flush	Force delivery: attempt to deliver every message in the deferred mail queue"
 
 upgrade() {
 	config_directory="$IPKG_INSTROOT"/etc/postfix
@@ -16,7 +20,7 @@ upgrade() {
 
 		echo "myhostname = $(uci get system.@system[0].hostname)" >> "$config_directory"/main.cf.default
 		echo "mydomain = $(uci get system.@system[0].hostname|sed -e "s/[^\.]*\.\(.*\)/\1/")" >> "$config_directory"/main.cf.default
-		ifconfig | grep "inet addr" | sed -e "s/.*inet addr:\([0-9.]*\).*Mask:/\1 /" | while read IP NETMASK; do eval "$(ipcalc.sh $IP $NETMASK)"; echo "$NETWORK/$PREFIX"; done | xargs echo "mynetworks =" >> "$config_directory"/main.cf.default
+		(eval $(ipcalc.sh $(uci get network.lan.ipaddr) $(uci get network.lan.netmask)); echo mynetworks = 127.0.0.0/8 $NETWORK/$PREFIX) >> "$config_directory"/main.cf.default
 		echo "mynetworks_style = subnet" >> "$config_directory"/main.cf.default
 
 		grep -qc "^sendmail_path[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^sendmail_path =" "$config_directory"/main.cf.default)"
@@ -36,7 +40,7 @@ upgrade() {
 		grep -qc "^setgid_group[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^setgid_group =" "$config_directory"/main.cf.default)"
 		grep -qc "^myhostname[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^myhostname =" "$config_directory"/main.cf.default)"
 		grep -qc "^mydomain[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mydomain =" "$config_directory"/main.cf.default)"
-		grep -qc "^mynetworks[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mynetworks =" "$config_directory"/main.cf.default)"
+		#grep -qc "^mynetworks[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mynetworks =" "$config_directory"/main.cf.default)" #Setting mynetworks_style is enough
 		grep -qc "^mynetworks_style[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^mynetworks_style =" "$config_directory"/main.cf.default)"
 		grep -qc "^shlib_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^shlib_directory =" "$config_directory"/main.cf.default)"
 		grep -qc "^meta_directory[^_]" "$config_directory"/main.cf >/dev/null || postconf -e "$(grep "^meta_directory =" "$config_directory"/main.cf.default)"
@@ -46,6 +50,8 @@ upgrade() {
 		postfix post-install upgrade-source
 		postfix upgrade-configuration
 		newaliases
+		postmap "$config_directory"/virtual
+		postfix check
 	fi
 }
 
@@ -61,4 +67,16 @@ stop() {
 reload() {
 	upgrade
 	postfix reload
+}
+
+status() {
+	postfix status
+}
+
+abort() {
+	postfix abort
+}
+
+flush() {
+	postfix flush
 }
