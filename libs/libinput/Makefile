@@ -31,7 +31,7 @@ define Package/libinput
   CATEGORY:=Libraries
   TITLE:=a library to handle input devices
   URL:=http://freedesktop.org/wiki/Software/libinput/
-  DEPENDS:=+libevdev +mtdev +udev
+  DEPENDS:=+libevdev +mtdev +eudev
 endef
 
 define Package/libinput/description
