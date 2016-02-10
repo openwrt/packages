@@ -1,7 +1,7 @@
-Index: bmx6-r2014112401/lib/bmx6_json/json.c
+Index: bmx7-r2014112401/lib/bmx7_json/json.c
 ===================================================================
---- bmx6-r2014112401.orig/lib/bmx6_json/json.c
-+++ bmx6-r2014112401/lib/bmx6_json/json.c
+--- bmx7-r2014112401.orig/lib/bmx7_json/json.c
++++ bmx7-r2014112401/lib/bmx7_json/json.c
 @@ -27,7 +27,7 @@
  #include <unistd.h>
  #include <fcntl.h>

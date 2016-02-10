@@ -1,21 +1,20 @@
 
 # for more information:
 # http://bmx6.net/projects/bmx6/wiki
-# options execute: bmx6 --help
+# options execute: bmx7 --help
 
-config 'bmx6' 'general'
-#       option 'runtimeDir' '/var/run/bmx6'
-
-
-#config 'plugin'
-#        option 'plugin' 'bmx6_config.so'
+config 'bmx7' 'general'
+#       option 'runtimeDir' '/var/run/bmx7'
+#	option 'trustedNodesDir' '/etc/bmx7/trustedNodes'
 
 #config 'plugin'
-#        option 'plugin' 'bmx6_json.so'
-
+#        option 'plugin' 'bmx7_config.so'
 
 #config 'plugin'
-#        option 'plugin' 'bmx6_sms.so'
+#        option 'plugin' 'bmx7_json.so'
+
+#config 'plugin'
+#        option 'plugin' 'bmx7_sms.so'
 
 
 config 'dev' 'mesh_1'
@@ -27,10 +26,10 @@ config 'dev' 'mesh_2'
 
 
 #config 'plugin'
-#        option 'plugin' 'bmx6_tun.so'
+#        option 'plugin' 'bmx7_tun.so'
 
 #config 'plugin'
-#        option 'plugin' 'bmx6_table.so'
+#        option 'plugin' 'bmx7_table.so'
 
 
 #config 'tunDev' default

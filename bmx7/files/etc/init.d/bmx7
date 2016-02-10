@@ -20,9 +20,9 @@
 
 START=91
 
-BIN=/usr/sbin/bmx6
-CONF=/etc/config/bmx6
-PID=/var/run/bmx6/pid
+BIN=/usr/sbin/bmx7
+CONF=/etc/config/bmx7
+PID=/var/run/bmx7/pid
 
 
 start() {
