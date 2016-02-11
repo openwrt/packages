@@ -1,0 +1,15 @@
+Index: eudev-3.1.5/src/udev/udev-builtin-input_id.c
+===================================================================
+--- eudev-3.1.5.orig/src/udev/udev-builtin-input_id.c
++++ eudev-3.1.5/src/udev/udev-builtin-input_id.c
+@@ -33,6 +33,10 @@
+ #include "udev.h"
+ #include "util.h"
+ 
++#ifndef BTN_TRIGGER_HAPPY
++#define BTN_TRIGGER_HAPPY 0x2c0
++#endif
++
+ /* we must use this kernel-compatible implementation */
+ #define BITS_PER_LONG (sizeof(unsigned long) * 8)
+ #define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
