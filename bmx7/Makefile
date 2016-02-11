@@ -28,12 +28,12 @@ PKG_NAME:=bmx7
 
 PKG_SOURCE_PROTO:=git
 
-PKG_SOURCE_URL:=file:///usr/src/bmx6/bmx6.git
+#PKG_SOURCE_URL:=file:///usr/src/bmx6/bmx6.git
 #PKG_SOURCE_URL:=git://bmx6.net/bmx6.git
-#PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
+PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
 
 PKG_REV:=0d2da286a19219caebf55a4234ab612fefac65ce
-PKG_VERSION:=r2016021001
+PKG_VERSION:=r2016021002
 PKG_RELEASE:=4
 PKG_LICENSE:=GPL-2.0
 
