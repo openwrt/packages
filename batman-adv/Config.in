@@ -24,3 +24,7 @@ config KMOD_BATMAN_ADV_NC
 	depends on PACKAGE_kmod-batman-adv
 	default n
 
+config KMOD_BATMAN_ADV_BATMAN_V
+	bool "enable batman v routing algorithm"
+	depends on PACKAGE_kmod-batman-adv
+	default n
