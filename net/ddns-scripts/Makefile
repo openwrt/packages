@@ -187,6 +187,8 @@ define Package/$(PKG_NAME)_no-ip_com/postinst
 	#!/bin/sh
 	echo -e '"No-IP.com"\t"update_No-IP.com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
 	echo -e '"NoIP.com"\t"update_No-IP.com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
+	echo -e '"no-ip.com"\t"update_No-IP.com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
+	echo -e '"noip.com"\t"update_No-IP.com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
 endef
 define Package/$(PKG_NAME)_no-ip_com/prerm
 	#!/bin/sh
