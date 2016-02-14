@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-HOST_PYTHON_INC_DIR:=$(STAGING_DIR)/host/include/python$(PYTHON_VERSION)
+HOST_PYTHON_INC_DIR:=$(STAGING_DIR)/host/usr/include/python$(PYTHON_VERSION)
 
 HOST_PYTHON_PKG_DIR:=/usr/lib/python$(PYTHON_VERSION)/site-packages
 
