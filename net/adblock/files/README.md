@@ -2,38 +2,41 @@
 
 ## Description
 A lot of people already use adblocker plugins within their desktop browsers,  
-but what if you are using your (smart) phone, tablet, watch or any other wlan gadget...  
-...getting rid of annoying ads, trackers and other abuse sites (like facebook ;-) is simple: block them with your router.  
+but what if you are using your (smart) phone, tablet, watch or any other wlan gadget...getting rid of annoying ads, trackers and other abuse sites (like facebook ;-) is simple: block them with your router.  
 
 When the dns server on your router receives dns requests, you will sort out queries that ask for the resource records of ad servers and return the local ip address of your router and the internal web server delivers a transparent pixel instead.
 
 ## Main Features
 * support of the following domain blocklist sources (free for private usage, for commercial use please check their individual licenses):
-    * [adaway.org](https://adaway.org)
+    * [adaway](https://adaway.org)
     * => infrequent updates, approx. 400 entries (enabled by default)
-    * [disconnect.me](https://disconnect.me)
+    * [disconnect](https://disconnect.me)
     * => numerous updates on the same day, approx. 6.500 entries (enabled by default)
-    * [dshield.org](http://dshield.org)
+    * [dshield](http://dshield.org)
     * => daily updates, approx. 4.500 entries
-    * [feodotracker.abuse.ch](https://feodotracker.abuse.ch)
+    * [feodotracker](https://feodotracker.abuse.ch)
     * => daily updates, approx. 0-10 entries
-    * [malwaredomains.com](http://malwaredomains.com)
+    * [malwaredomains](http://malwaredomains.com)
     * => daily updates, approx. 16.000 entries
-    * [malwaredomainlist.com](http://www.malwaredomainlist.com)
+    * [malwaredomainlist](http://www.malwaredomainlist.com)
     * => daily updates, approx. 1.500 entries
-    * [palevotracker.abuse.ch](https://palevotracker.abuse.ch)
+    * [openphish](https://openphish.com)
+    * => numerous updates on the same day, approx. 1.800 entries
+    * [palevotracker](https://palevotracker.abuse.ch)
     * => daily updates, approx. 15 entries
-    * [shallalist.de](http://www.shallalist.de) (categories "adv" "costtraps" "spyware" "tracker" "warez" enabled by default)
+    * [ruadlist+easylist](https://code.google.com/p/ruadlist)
+    * => weekly updates, approx. 2.000 entries (experimental support, may include false positives!)
+    * [shallalist](http://www.shallalist.de) (categories "adv" "costtraps" "spyware" "tracker" "warez" enabled by default)
     * => daily updates, approx. 32.000 entries (a short description of all shallalist categories can be found [online](http://www.shallalist.de/categories.html))
-    * [spam404.com](http://www.spam404.com)
+    * [spam404](http://www.spam404.com)
     * => infrequent updates, approx. 5.000 entries
-    * [whocares.org](http://someonewhocares.org)
+    * [whocares](http://someonewhocares.org)
     * => weekly updates, approx. 12.000 entries
-    * [winhelp2002.mvps.org](http://winhelp2002.mvps.org)
+    * [winhelp](http://winhelp2002.mvps.org)
     * => infrequent updates, approx. 15.000 entries
-    * [yoyo.org](http://pgl.yoyo.org/adservers)
+    * [yoyo](http://pgl.yoyo.org/adservers)
     * => weekly updates, approx. 2.500 entries (enabled by default)
-    * [zeustracker.abuse.ch](https://zeustracker.abuse.ch)
+    * [zeustracker](https://zeustracker.abuse.ch)
     * => daily updates, approx. 440 entries
 * zero-conf like automatic installation & setup, usually no manual changes needed (i.e. ip address, network devices etc.)
 * full IPv4 and IPv6 support
@@ -44,9 +47,10 @@ When the dns server on your router receives dns requests, you will sort out quer
 * additional white- and blacklist support for manual overrides
 * quality checks during & after update of adblock lists to ensure a reliable dnsmasq service
 * wan update check, to wait for an active wan uplink before update
-* basic adblock statistics via iptables packet counters
+* basic adblock statistics via iptables packet counters for each chain
 * status & error logging to stdout and syslog
 * use of dynamic uhttpd instance as adblock pixel server
+* openwrt init system support (start/stop/restart/reload)
 * optional features (disabled by default):
     * adblock list backup/restore
     * debug logging to separate file
@@ -56,42 +60,48 @@ When the dns server on your router receives dns requests, you will sort out quer
 * usual openwrt setup with 'iptables' & 'uhttpd', additional required software packages:
     * wget
     * optional: 'kmod-ipt-nat6' for IPv6 support
-* the above dependencies and requirements will be checked during package installation & script runtime, please check console output or *logread -e "adblock"* for errors
+* the above dependencies and requirements will be checked during package installation & script runtime
 
 ## Usage
 * install the adblock package (*opkg install adblock*)
-* optional: for an update installation please replace your existing */etc/config/adblock* with a copy of */etc/samples/adblock.conf.sample* to get the latest changes
+* start the adblock service with */etc/init.d/adblock start* and check *logread -e "adblock"* for adblock related information
 * optional: enable/disable your required adblock list sources in */etc/config/adblock* - 'adaway', 'disconnect' and 'yoyo' are enabled by default
-* start */usr/bin/adblock-update.sh* and check console output or *logread -e "adblock"* for errors
+* optional: maintain the adblock service in luci under 'System => Startup'
 
 ## Tweaks
 * there is no need to enable all blacklist sites at once, for normal use one to three adblock list sources should be sufficient
-* if you really need to handle all blacklists at once add an usb stick or any other storage device to supersize your /tmp directory with a swap partition
-* => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
+* if you really need to handle all blacklists at once add an usb stick or any other storage device to supersize your temp directory with a swap partition => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
 * add static, personal domain white- or blacklist entries, one domain per line (wildcards & regex are not allowed!), by default both lists are located in */etc/adblock*
 * enable the backup/restore feature, to restore automatically the latest, stable backup of your adblock lists in case of any processing error
 * enable the logging feature for continuous logfile writing to monitor the adblock runs over a longer period
+* for a scheduled call of the adblock service via */etc/init.d/adblock start* add an appropriate crontab entry
 
-## Distributed samples
-* all sample configuration files stored in */etc/adblock/samples*
-* for a fully blown adblock configuration with all explained options see *adblock.conf.sample*
-* for some dnsmasq tweaks see *dhcp.config.sample* and *dnsmasq.conf.sample*
-* for rc.local based autostart and /tmp resizing on the fly see *rc.local.sample*
-* for scheduled call of *adblock-update.sh* see *root.crontab.sample*
+## Further adblock config options
+* usually the adblock autodetection works quite well and no manual config overrides are needed, all options apply to 'global' adblock config section:
+    * adb\_enabled => main switch to enable/disable adblock service (default: '1' (enabled))
+    * adb\_cfgver => config version string (do not change!) - adblock checks this entry and automatically applies the current config, if none or an older revision was found.
+    * adb\_wanif => name of the logical wan interface (default: 'wan')
+    * adb\_lanif => name of the logical lan interface (default: 'lan')
+    * adb\_port => port of the adblock uhttpd instance (default: '65535')
+    * adb\_nullipv4 => IPv4 blackhole ip address (default: '192.0.2.1')
+    * adb\_nullipv6 => IPv6 blackhole ip address (default '::ffff:c000:0201')
+    * adb\_maxtime => download timeout limit in seconds (default: '60')
+    * adb\_maxloop => startup timeout limit in seconds to wait for an active wan interface (default: '20')
 
 ## Background
 This adblock package is a dns/dnsmasq based adblock solution for openwrt.  
 Queries to ad/abuse domains are never forwarded and always replied with a local IP address which may be IPv4 or IPv6.  
 For that purpose adblock uses an ip address from the private 'TEST-NET-1' subnet (192.0.2.1 / ::ffff:c000:0201) by default.  
-Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to internal adblock pixel server (in PREROUTING chain) or rejected (in FORWARD and OUTPUT chain).  
-All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other openwrt related config files.
+Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to internal adblock pixel server (in PREROUTING chain) or rejected (in FORWARD or OUTPUT chain).  
+All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other openwrt related config files.  
+There is *no* adblock background daemon running, the (scheduled) start of the adblock service keeps only the adblock lists up-to-date.
+
+## Support
+Please join the adblock discussion in this [openwrt forum thread](https://forum.openwrt.org/viewtopic.php?id=59803) or contact me by mail <openwrt@brenken.org>
 
 ## Removal
-* remove the adblock package (*opkg remove adblock*)
-* remove all script generated adblock lists in */tmp/dnsmasq.d/*
-* kill the running adblock uhttpd instance (ps | grep "[u]httpd.*\-h /www/adblock")
-* run /etc/init.d/dnsmasq restart
-* run /etc/init.d/firewall restart
+* stop all adblock related services with */etc/init.d/adblock stop*
+* optional: remove the adblock package (*opkg remove adblock*)
 
 Have fun!  
 Dirk  

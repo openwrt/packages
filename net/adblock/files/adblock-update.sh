@@ -28,14 +28,24 @@
 #
 LC_ALL=C
 
-# set script version
+# pid handling
 #
-adb_version="0.60.1"
+adb_pid="${$}"
+adb_pidfile="/var/run/adblock.pid"
 
-# get current pid, script directory and openwrt version
+if [ -r "${adb_pidfile}" ]
+then
+    rc=255
+    /usr/bin/logger -t "adblock[${adb_pid}] error" "adblock service already running ($(cat ${adb_pidfile} 2>/dev/null))"
+    exit ${rc}
+else
+    printf "${adb_pid}" > "${adb_pidfile}"
+fi
+
+# get current directory, script- and openwrt version
 #
-pid=${$}
 adb_scriptdir="${0%/*}"
+adb_scriptver="0.70.0"
 openwrt_version="$(cat /etc/openwrt_version 2>/dev/null)"
 
 # source in adblock function library
@@ -44,8 +54,8 @@ if [ -r "${adb_scriptdir}/adblock-helper.sh" ]
 then
     . "${adb_scriptdir}/adblock-helper.sh" 2>/dev/null
 else
-    rc=100
-    /usr/bin/logger -s -t "adblock[${pid}] error" "adblock function library not found, rc: ${rc}"
+    rc=254
+    /usr/bin/logger -t "adblock[${adb_pid}] error" "adblock function library not found"
     exit ${rc}
 fi
 
@@ -53,17 +63,17 @@ fi
 # main program #
 ################
 
-# call exit function on trap signals (HUP, INT, QUIT, BUS, SEGV, TERM)
+# call trap function on error signals (HUP, INT, QUIT, BUS, SEGV, TERM)
 #
-trap "rc=255; f_log 'error signal received/trapped' '${rc}'; f_exit" 1 2 3 10 11 15
-
-# start logging
-#
-f_log "domain adblock processing started (${adb_version}, ${openwrt_version}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
+trap "rc=253; f_log 'error signal received/trapped' '${rc}'; f_exit" 1 2 3 10 11 15
 
 # load environment
 #
 f_envload
+
+# start logging
+#
+f_log "domain adblock processing started (${adb_scriptver}, ${openwrt_version}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
 
 # parse environment
 #
@@ -90,7 +100,7 @@ then
     # only process shallalist archive with updated timestamp,
     # extract and merge only domains of selected shallalist categories
     #
-    shalla_time="$(wget ${wget_parm} --timeout=5 --server-response --spider "${adb_arc_shalla}" 2>&1 | grep -F "Last-Modified: " 2>/dev/null | tr -d '\r' 2>/dev/null)"
+    shalla_time="$(wget ${wget_parm} --timeout=10 --server-response --spider "${adb_arc_shalla}" 2>&1 | grep -F "Last-Modified: " 2>/dev/null | tr -d '\r' 2>/dev/null)"
     shalla_time="${shalla_time/*: /}"
     if [ -z "${shalla_time}" ]
     then
@@ -127,8 +137,9 @@ then
                 rc=0
             fi
         else
-            f_log "   source archive download failed"
             rc=0
+            adb_errsrclist="-name ${adb_dnsprefix}.${src_name}"
+            f_log "   source archive download failed"
         fi
     else
         adb_srclist="! -name ${adb_dnsprefix}.${src_name}"
@@ -173,7 +184,7 @@ do
     then
         url_time="${shalla_time}"
     else
-        url_time="$(wget ${wget_parm} --timeout=5 --server-response --spider "${url}" 2>&1 | grep -F "Last-Modified: " 2>/dev/null | tr -d '\r' 2>/dev/null)"
+        url_time="$(wget ${wget_parm} --timeout=10 --server-response --spider "${url}" 2>&1 | grep -F "Last-Modified: " 2>/dev/null | tr -d '\r' 2>/dev/null)"
         url_time="${url_time/*: /}"
     fi
     if [ -z "${url_time}" ]
@@ -218,6 +229,12 @@ do
         continue
     else
         rc=0
+        if [ -z "${adb_errsrclist}" ]
+        then
+            adb_errsrclist="-name ${adb_dnsprefix}.${src_name}"
+        else
+            adb_errsrclist="${adb_errsrclist} -o -name ${adb_dnsprefix}.${src_name}"
+        fi
         f_log "   source download failed"
         continue
     fi
@@ -256,7 +273,7 @@ do
                 count="$(wc -l < "${adb_dnsdir}/${adb_dnsprefix}.${src_name}")"
             fi
             printf "%s\n" "#------------------------------------------------------------------" >> "${adb_dnsfile}"
-            printf "%s\n" "# ${0##*/} (${adb_version}) - ${count} ad/abuse domains blocked" >> "${adb_dnsfile}"
+            printf "%s\n" "# ${0##*/} (${adb_scriptver}) - ${count} ad/abuse domains blocked" >> "${adb_dnsfile}"
             printf "%s\n" "# source: ${url}" >> "${adb_dnsfile}"
             printf "%s\n" "# last modified: ${url_time}" >> "${adb_dnsfile}"
             f_log "   domain merging finished"
@@ -270,36 +287,72 @@ do
     fi
 done
 
-# remove old adblock lists and their backups
+# remove disabled adblock lists and their backups
 #
 if [ -n "${adb_srclist}" ]
 then
-    adb_rmfind="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \; 2>/dev/null)"
-    if [ $((rc)) -eq 0 ] && [ -n "${adb_rmfind}" ]
+    rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \; 2>/dev/null)"
+    rc=${?}
+    if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
     then
-        f_log "no longer used adblock lists removed" "${rc}"
+        f_log "disabled adblock lists removed"
+        if [ "${backup_ok}" = "true" ]
+        then
+            rm_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \; 2>/dev/null)"
+            rc=${?}
+            if  [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
+            then
+                f_log "disabled adblock list backups removed"
+            elif [ $((rc)) -ne 0 ]
+            then
+                f_log "error during removal of disabled adblock list backups" "${rc}"
+                f_exit
+            fi
+        fi
     elif [ $((rc)) -ne 0 ]
     then
-        f_log "error during removal of old adblock lists" "${rc}"
+        f_log "error during removal of disabled adblock lists" "${rc}"
         f_exit
     fi
-    if [ "${backup_ok}" = "true" ]
-    then
-        find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -exec rm -f "{}" \; 2>/dev/null
-        if [ $((rc)) -ne 0 ]
-        then
-            f_log "error during removal of old backups" "${rc}"
-            f_exit
-        fi
-    fi
 else
-    rm -f "${adb_dnsdir}/${adb_dnsprefix}."* >/dev/null 2>&1
-    if [ "${backup_ok}" = "true" ]
+    rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" -print -exec rm -f "{}" \; 2>/dev/null)"
+    rc=${?}
+    if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
     then
-        rm -f "${adb_backupdir}/${adb_dnsprefix}."* >/dev/null 2>&1
-        f_log "all available adblock lists and backups removed"
-    else
-        f_log "all available adblock lists removed"
+        f_log "all adblock lists removed"
+        if [ "${backup_ok}" = "true" ]
+        then
+            rm_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" -print -exec rm -f "{}" \; 2>/dev/null)"
+            rc=${?}
+            if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
+            then
+                f_log "all adblock list backups removed"
+            elif [ $((rc)) -ne 0 ]
+            then
+                f_log "error during removal of all adblock list backups" "${rc}"
+                f_exit
+            fi
+        fi
+    elif [ $((rc)) -ne 0 ]
+    then
+        f_log "error during removal of all adblock lists" "${rc}"
+        f_exit
+    fi
+fi
+
+# partial restore of adblock lists in case of download errors
+#
+if [ "${backup_ok}" = "true" ] && [ -n "${adb_errsrclist}" ]
+then
+    restore_done="$(find "${adb_backupdir}" -maxdepth 1 -type f \( ${adb_errsrclist} \) -print -exec cp -pf "{}" "${adb_dnsdir}" \; 2>/dev/null)"
+    rc=${?}
+    if [ $((rc)) -eq 0 ] && [ -n "${restore_done}" ]
+    then
+        f_log "partial restore done"
+    elif [ $((rc)) -ne 0 ]
+    then
+        f_log "error during partial restore" "${rc}"
+        f_exit
     fi
 fi
 
@@ -340,7 +393,7 @@ then
                 count="$(wc -l < "${adb_dnsdir}/tmp.${list}")"
             fi
             printf "%s\n" "#------------------------------------------------------------------" >> "${adb_dnsdir}/tmp.${list}"
-            printf "%s\n" "# ${0##*/} (${adb_version}) - ${count} ad/abuse domains blocked" >> "${adb_dnsdir}/tmp.${list}"
+            printf "%s\n" "# ${0##*/} (${adb_scriptver}) - ${count} ad/abuse domains blocked" >> "${adb_dnsdir}/tmp.${list}"
             tail -qn -2 "${adb_dnsdir}/$adb_dnsprefix.${list}" 2>/dev/null >> "${adb_dnsdir}/tmp.${list}"
             mv -f "${adb_dnsdir}/tmp.${list}" "${adb_dnsdir}/${adb_dnsprefix}.${list}" >/dev/null 2>&1
         done
@@ -357,17 +410,10 @@ else
     adb_count="$(head -qn -4 "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null | wc -l)"
 fi
 
-# restore adblock lists if overall count is null (i.e. all downloads failed)
-#
-if [ "${backup_ok}" = "true" ] && [ $((adb_count)) -eq 0 ]
-then
-    f_restore
-fi
-
 # restart dnsmasq with newly generated or deleted adblock lists,
 # check dnsmasq startup afterwards
 #
-if [ -n "${adb_revsrclist}" ] || [ -n "${adb_rmfind}" ]
+if [ -n "${adb_revsrclist}" ] || [ -n "${rm_done}" ]
 then
     /etc/init.d/dnsmasq restart >/dev/null 2>&1
     sleep 2
@@ -386,28 +432,17 @@ fi
 
 # create adblock list backups
 #
-if [ "${backup_ok}" = "true" ] && [ "$(printf "${adb_dnsdir}/${adb_dnsprefix}."*)" != "${adb_dnsdir}/${adb_dnsprefix}.*" ]
+if [ "${backup_ok}" = "true" ] && [ -n "${adb_revsrclist}" ] && [ "$(printf "${adb_dnsdir}/${adb_dnsprefix}."*)" != "${adb_dnsdir}/${adb_dnsprefix}.*" ]
 then
-    for file in ${adb_dnsdir}/${adb_dnsprefix}.*
-    do
-        filename="${file##*/}"
-        if [ ! -f "${adb_backupdir}/${filename}" ] || [ "${file}" -nt "${adb_backupdir}/${filename}" ]
-        then
-            cp -pf "${file}" "${adb_backupdir}" 2>/dev/null
-            rc=${?}
-            if [ $((rc)) -ne 0 ]
-            then
-                f_log "error during backup of adblock list (${filename})" "${rc}"
-                f_exit
-            fi
-            backup_done="true"
-        fi
-    done
-    if [ "${backup_done}" = "true" ]
+    backup_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f \( ${adb_revsrclist} \) -print -exec cp -pf "{}" "${adb_backupdir}" \; 2>/dev/null)"
+    rc=${?}
+    if [ $((rc)) -eq 0 ] && [ -n "${backup_done}" ]
     then
         f_log "new adblock list backups generated"
-    else
-        f_log "adblock list backups are still valid, no new backups required"
+    elif [ $((rc)) -ne 0 ]
+    then
+        f_log "error during backup of adblock lists" "${rc}"
+        f_exit
     fi
 fi
 
