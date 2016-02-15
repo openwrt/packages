@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=zip
 PKG_REV:=30
 PKG_VERSION:=3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)$(PKG_REV).tar.gz
 PKG_SOURCE_URL:=@SF/infozip
@@ -48,8 +48,7 @@ define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) -f unix/Makefile generic \
 		prefix="$(PKG_INSTALL_DIR)/usr" \
 		CFLAGS="$(TARGET_CFLAGS)" \
-		CC="$(TARGET_CC) $(TARGET_CFLAGS) -O $(TARGET_CPPFLAGS) -I. -DUNIX" \
-		LD="$(TARGET_CC) $(TARGET_LDFLAGS)" \
+		CC="$(TARGET_CC) $(TARGET_CFLAGS) -O $(TARGET_CPPFLAGS) -I. -DUNIX $(TARGET_LDFLAGS)" \
 		IZ_BZIP2="no" \
 		install
 endef
