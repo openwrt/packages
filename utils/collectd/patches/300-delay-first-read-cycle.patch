@@ -9,4 +9,3 @@
  	rf->rf_effective_interval = rf->rf_interval;
  
  	pthread_mutex_lock (&read_lock);
-

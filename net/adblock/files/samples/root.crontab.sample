@@ -1,7 +1,0 @@
-# sample crontab script
-# configuration found in /etc/crontabs/root
-#
-
-# start adblock script once a day at 6 o'clock
-#
-0 06 * * *    /usr/bin/adblock-update.sh &

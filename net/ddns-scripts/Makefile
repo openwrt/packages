@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ddns-scripts
 # Version == major.minor.patch
 # increase on new functionality (minor) or patches (patch)
-PKG_VERSION:=2.6.0
+PKG_VERSION:=2.6.2
 # Release == build
 # increase on changes of services files or tld_names.dat
 PKG_RELEASE:=1
@@ -50,21 +50,19 @@ define Package/$(PKG_NAME)/config
 		  - Proxy server support
 		  - log file support
 		  - support to run once
-		.
 		Version: $(PKG_VERSION)-$(PKG_RELEASE)
 		Info   : http://wiki.openwrt.org/doc/howto/ddns.client
-		.
 		$(PKG_MAINTAINER)
 endef
 
 ##### **********************************
 define Package/$(PKG_NAME)_cloudflare
     $(call Package/$(PKG_NAME)/Default)
-    TITLE:=DDNS extension for CloudFlare
+    TITLE:=DDNS extension for CloudFlare.com
     DEPENDS:=$(PKG_NAME)
 endef
 define Package/$(PKG_NAME)_cloudflare/description
-    Dynamic DNS Client scripts extension for CloudFlare
+    Dynamic DNS Client scripts extension for CloudFlare.com
 endef
 
 ##### **********************************
@@ -164,33 +162,35 @@ endef
 ##### **********************************
 define Package/$(PKG_NAME)_cloudflare/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/update_CloudFlare.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/update_cloudflare_com.sh $(1)/usr/lib/ddns
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/tld_names.dat.gz $(1)/usr/lib/ddns
 endef
 define Package/$(PKG_NAME)_cloudflare/postinst
 	#!/bin/sh
-	echo -e '"CloudFlare"\t"update_CloudFlare.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
-	echo -e '"CloudFlare"\t"update_CloudFlare.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services_ipv6
+	echo -e '"cloudflare.com"\t"update_cloudflare_com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
+	echo -e '"cloudflare.com"\t"update_cloudflare_com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services_ipv6
+	/bin/sed -i '/service_name/s/CloudFlare/cloudflare\.com/g' $${IPKG_INSTROOT}/etc/config/ddns
 endef
 define Package/$(PKG_NAME)_cloudflare/prerm
 	#!/bin/sh
-	/bin/sed -i '/update_CloudFlare\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services
-	/bin/sed -i '/update_CloudFlare\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services_ipv6
+	/bin/sed -i '/update_cloudflare_com\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services
+	/bin/sed -i '/update_cloudflare_com\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services_ipv6
 endef
 
 ##### **********************************
 define Package/$(PKG_NAME)_no-ip_com/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/update_No-IP.com.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/update_no-ip_com.sh $(1)/usr/lib/ddns
 endef
 define Package/$(PKG_NAME)_no-ip_com/postinst
 	#!/bin/sh
-	echo -e '"No-IP.com"\t"update_No-IP.com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
-	echo -e '"NoIP.com"\t"update_No-IP.com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
+	echo -e '"no-ip.com"\t"update_no-ip_com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
+	/bin/sed -i '/service_name/s/NoIP\.com/no-ip\.com/g'  $${IPKG_INSTROOT}/etc/config/ddns
+	/bin/sed -i '/service_name/s/No-IP\.com/no-ip\.com/g' $${IPKG_INSTROOT}/etc/config/ddns
 endef
 define Package/$(PKG_NAME)_no-ip_com/prerm
 	#!/bin/sh
-	/bin/sed -i '/update_No-IP\.com\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services
+	/bin/sed -i '/update_no-ip_com\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services
 endef
 
 ##### **********************************
@@ -200,8 +200,9 @@ define Package/$(PKG_NAME)_nsupdate/install
 endef
 define Package/$(PKG_NAME)_nsupdate/postinst
 	#!/bin/sh
-	echo -e '"Bind-nsupdate"\t"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
-	echo -e '"Bind-nsupdate"\t"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services_ipv6
+	echo -e '"bind-nsupdate"\t"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
+	echo -e '"bind-nsupdate"\t"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services_ipv6
+	/bin/sed -i '/service_name/s/Bind-nsupdate/bind-nsupdate/g' $${IPKG_INSTROOT}/etc/config/ddns
 endef
 define Package/$(PKG_NAME)_nsupdate/prerm
 	#!/bin/sh
