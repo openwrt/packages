@@ -27,7 +27,8 @@ m = Map("bmx6", "bmx6")
 -- Getting json and Checking if bmx6-json is avaiable
 local options = bmx6json.get("options")
 if options == nil or options.OPTIONS == nil then
-	 m.message = "bmx6-json plugin is not running or some mistake in luci-bmx6 configuration, check /etc/config/luci-bmx6"
+	m.message = "bmx6-json plugin is not running or some mistake in luci-bmx6 configuration, check /etc/config/luci-bmx6"
+	return m
 else
 	options = options.OPTIONS
 end
