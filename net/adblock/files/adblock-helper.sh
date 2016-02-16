@@ -175,6 +175,7 @@ f_envparse()
     adb_prechain_ipv6="PREROUTING"
     adb_fwdchain_ipv6="forwarding_rule"
     adb_outchain_ipv6="output_rule"
+    adb_fetch="/usr/bin/wget"
     unset adb_srclist
     unset adb_revsrclist
     unset adb_errsrclist
@@ -370,36 +371,40 @@ f_envcheck()
 
     # check ipv4/iptables configuration
     #
-    if [ -n "${adb_wanif4}" ]
+    if [ -n "${adb_wanif4}" ] && [ -n "${adb_wandev4}" ]
     then
-        f_firewall "IPv4" "nat" "A" "${adb_prechain_ipv4}" "adb-prerouting" "-p tcp -d ${adb_nullipv4} --dport 80 -j REDIRECT --to-ports ${adb_port}"
-        f_firewall "IPv4" "nat" "A" "${adb_prechain_ipv4}" "adb-dns1" "-p udp --dport 53 -j REDIRECT"
-        f_firewall "IPv4" "nat" "A" "${adb_prechain_ipv4}" "adb-dns2" "-p tcp --dport 53 -j REDIRECT"
-        f_firewall "IPv4" "filter" "A" "${adb_fwdchain_ipv4}" "adb-forward1" "-p tcp -d ${adb_nullipv4} -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv4" "filter" "A" "${adb_fwdchain_ipv4}" "adb-forward2" "-d ${adb_nullipv4} -j REJECT --reject-with icmp-port-unreachable"
-        f_firewall "IPv4" "filter" "A" "${adb_outchain_ipv4}" "adb-output1" "-p tcp -d ${adb_nullipv4} -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv4" "filter" "A" "${adb_outchain_ipv4}" "adb-output2" "-d ${adb_nullipv4} -j REJECT --reject-with icmp-port-unreachable"
+        f_firewall "IPv4" "nat" "A" "${adb_prechain_ipv4}" "adb-prerouting" "! -i ${adb_wandev4} -p tcp -d ${adb_nullipv4} -m multiport --dports 80,443 -j REDIRECT --to-ports ${adb_port}"
+        f_firewall "IPv4" "nat" "A" "${adb_prechain_ipv4}" "adb-dns" "! -i ${adb_wandev4} -p udp --dport 53 -j REDIRECT"
+        f_firewall "IPv4" "nat" "A" "${adb_prechain_ipv4}" "adb-dns" "! -i ${adb_wandev4} -p tcp --dport 53 -j REDIRECT"
+        f_firewall "IPv4" "filter" "A" "${adb_fwdchain_ipv4}" "adb-forward" "! -i ${adb_wandev4} -p udp -d ${adb_nullipv4} -j REJECT --reject-with icmp-port-unreachable"
+        f_firewall "IPv4" "filter" "A" "${adb_fwdchain_ipv4}" "adb-forward" "! -i ${adb_wandev4} -p tcp -d ${adb_nullipv4} -j REJECT --reject-with tcp-reset"
+        f_firewall "IPv4" "filter" "A" "${adb_fwdchain_ipv4}" "adb-forward" "! -i ${adb_wandev4} -d ${adb_nullipv4} -j REJECT --reject-with icmp-proto-unreachable"
+        f_firewall "IPv4" "filter" "A" "${adb_outchain_ipv4}" "adb-output" "! -i ${adb_wandev4} -p udp -d ${adb_nullipv4} -j REJECT --reject-with icmp-port-unreachable"
+        f_firewall "IPv4" "filter" "A" "${adb_outchain_ipv4}" "adb-output" "! -i ${adb_wandev4} -p tcp -d ${adb_nullipv4} -j REJECT --reject-with tcp-reset"
+        f_firewall "IPv4" "filter" "A" "${adb_outchain_ipv4}" "adb-output" "! -i ${adb_wandev4} -d ${adb_nullipv4} -j REJECT --reject-with icmp-proto-unreachable"
         if [ "${fw_done}" = "true" ]
         then
-            f_log "created volatile IPv4 firewall ruleset for adblock"
+            f_log "created volatile IPv4 firewall ruleset"
             fw_done="false"
         fi
     fi
 
     # check ipv6/ip6tables configuration
     #
-    if [ -n "${adb_wanif6}" ]
+    if [ -n "${adb_wanif6}" ] && [ -n "${adb_wandev6}" ]
     then
-        f_firewall "IPv6" "nat" "A" "${adb_prechain_ipv6}" "adb-prerouting" "-p tcp -d ${adb_nullipv6} --dport 80 -j REDIRECT --to-ports ${adb_port}"
-        f_firewall "IPv6" "nat" "A" "${adb_prechain_ipv6}" "adb-dns1" "-p udp --dport 53 -j REDIRECT"
-        f_firewall "IPv6" "nat" "A" "${adb_prechain_ipv6}" "adb-dns2" "-p tcp --dport 53 -j REDIRECT"
-        f_firewall "IPv6" "filter" "A" "${adb_fwdchain_ipv6}" "adb-forward1" "-p tcp -d ${adb_nullipv6} -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv6" "filter" "A" "${adb_fwdchain_ipv6}" "adb-forward2" "-d ${adb_nullipv6} -j REJECT --reject-with icmp-port-unreachable"
-        f_firewall "IPv6" "filter" "A" "${adb_outchain_ipv6}" "adb-output1" "-p tcp -d ${adb_nullipv6} -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv6" "filter" "A" "${adb_outchain_ipv6}" "adb-output2" "-d ${adb_nullipv6} -j REJECT --reject-with icmp-port-unreachable"
+        f_firewall "IPv6" "nat" "A" "${adb_prechain_ipv6}" "adb-prerouting" "! -i ${adb_wandev6} -p tcp -d ${adb_nullipv6} -m multiport --dports 80,443 -j REDIRECT --to-ports ${adb_port}"
+        f_firewall "IPv6" "nat" "A" "${adb_prechain_ipv6}" "adb-dns" "! -i ${adb_wandev6} -p udp --dport 53 -j REDIRECT"
+        f_firewall "IPv6" "nat" "A" "${adb_prechain_ipv6}" "adb-dns" "! -i ${adb_wandev6} -p tcp --dport 53 -j REDIRECT"
+        f_firewall "IPv6" "filter" "A" "${adb_fwdchain_ipv6}" "adb-forward" "! -i ${adb_wandev6} -p udp -d ${adb_nullipv6} -j REJECT --reject-with icmp-port-unreachable"
+        f_firewall "IPv6" "filter" "A" "${adb_fwdchain_ipv6}" "adb-forward" "! -i ${adb_wandev6} -p tcp -d ${adb_nullipv6} -j REJECT --reject-with tcp-reset"
+        f_firewall "IPv6" "filter" "A" "${adb_fwdchain_ipv6}" "adb-forward" "! -i ${adb_wandev6} -d ${adb_nullipv6} -j REJECT --reject-with icmp-proto-unreachable"
+        f_firewall "IPv6" "filter" "A" "${adb_outchain_ipv6}" "adb-output" "! -i ${adb_wandev6} -p udp -d ${adb_nullipv6} -j REJECT --reject-with icmp-port-unreachable"
+        f_firewall "IPv6" "filter" "A" "${adb_outchain_ipv6}" "adb-output" "! -i ${adb_wandev6} -p tcp -d ${adb_nullipv6} -j REJECT --reject-with tcp-reset"
+        f_firewall "IPv6" "filter" "A" "${adb_outchain_ipv6}" "adb-output" "! -i ${adb_wandev6} -d ${adb_nullipv6} -j REJECT --reject-with icmp-proto-unreachable"
         if [ "${fw_done}" = "true" ]
         then
-            f_log "created volatile IPv6 firewall ruleset for adblock"
+            f_log "created volatile IPv6 firewall ruleset"
             fw_done="false"
         fi
     fi
@@ -411,7 +416,7 @@ f_envcheck()
     then
         if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
         then
-            uhttpd -h "/www/adblock" -k 0 -N 100 -T 5 -D -E "/adblock.html" -p "${adb_ipv4}:${adb_port}" -p "[${adb_ipv6}]:${adb_port}">/dev/null 2>&1
+            uhttpd -h "/www/adblock" -k 5 -N 200 -t 0 -T 1 -D -S -E "/adblock.html" -p "${adb_ipv4}:${adb_port}" -p "[${adb_ipv6}]:${adb_port}">/dev/null 2>&1
             rc=${?}
             if [ $((rc)) -eq 0 ]
             then
@@ -422,7 +427,7 @@ f_envcheck()
             fi
         elif [ -n "${adb_wanif4}" ]
         then
-            uhttpd -h "/www/adblock" -k 0 -N 100 -T 5 -D -E "/adblock.html" -p "${adb_ipv4}:${adb_port}" >/dev/null 2>&1
+            uhttpd -h "/www/adblock" -k 5 -N 200 -t 0 -T 1 -D -S -E "/adblock.html" -p "${adb_ipv4}:${adb_port}" >/dev/null 2>&1
             rc=${?}
             if [ $((rc)) -eq 0 ]
             then
@@ -433,7 +438,7 @@ f_envcheck()
             fi
         elif [ -n "${adb_wanif6}" ]
         then
-            uhttpd -h "/www/adblock" -k 0 -N 100 -T 5 -D -E "/adblock.html" -p "[${adb_ipv6}]:${adb_port}" >/dev/null 2>&1
+            uhttpd -h "/www/adblock" -k 5 -N 200 -t 0 -T 1 -D -S -E "/adblock.html" -p "[${adb_ipv6}]:${adb_port}" >/dev/null 2>&1
             rc=${?}
             if [ $((rc)) -eq 0 ]
             then
@@ -583,7 +588,7 @@ f_firewall()
 #
 f_log()
 {
-    local log_term
+    local log_parm
     local log_msg="${1}"
     local log_rc="${2}"
     local class="info "
@@ -592,7 +597,7 @@ f_log()
     #
     if [ -t 1 ]
     then
-        log_term="-s"
+        log_parm="-s"
     fi
 
     # log to different output devices, set log class accordingly
@@ -605,7 +610,7 @@ f_log()
             log_rc=", rc: ${log_rc}"
             log_msg="${log_msg}${log_rc}"
         fi
-        /usr/bin/logger ${log_term} -t "adblock[${adb_pid}] ${class}" "${log_msg}"
+        /usr/bin/logger ${log_parm} -t "adblock[${adb_pid}] ${class}" "${log_msg}"
         if [ "${log_ok}" = "true" ]
         then
             printf "%s\n" "$(/bin/date "+%d.%m.%Y %H:%M:%S") adblock[${adb_pid}] ${class}: ${log_msg}" >> "${adb_logfile}"
@@ -732,14 +737,14 @@ f_exit()
         if [ -n "${adb_wanif4}" ]
         then
             ipv4_prerouting="$(${iptv4} -t nat -vnL | awk '$11 ~ /^adb-prerouting$/ {sum += $1} END {print sum}')"
-            ipv4_forward="$(${iptv4} -vnL | awk '$11 ~ /^adb-forward[12]$/ {sum += $1} END {print sum}')"
-            ipv4_output="$(${iptv4} -vnL | awk '$11 ~ /^adb-output[12]$/ {sum += $1} END {print sum}')"
+            ipv4_forward="$(${iptv4} -vnL | awk '$11 ~ /^adb-forward$/ {sum += $1} END {print sum}')"
+            ipv4_output="$(${iptv4} -vnL | awk '$11 ~ /^adb-output$/ {sum += $1} END {print sum}')"
         fi
         if [ -n "${adb_wanif6}" ]
         then
             ipv6_prerouting="$(${iptv6} -t nat -vnL | awk '$11 ~ /^adb-prerouting$/ {sum += $1} END {print sum}')"
-            ipv6_forward="$(${iptv6} -vnL | awk '$11 ~ /^adb-forward[12]$/ {sum += $1} END {print sum}')"
-            ipv6_output="$(${iptv6} -vnL | awk '$11 ~ /^adb-output[12]$/ {sum += $1} END {print sum}')"
+            ipv6_forward="$(${iptv6} -vnL | awk '$11 ~ /^adb-forward$/ {sum += $1} END {print sum}')"
+            ipv6_output="$(${iptv6} -vnL | awk '$11 ~ /^adb-output$/ {sum += $1} END {print sum}')"
         fi
         if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
         then
