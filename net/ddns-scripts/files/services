@@ -111,7 +111,7 @@
 # Oray.com
 "Oray.com"	"http://[USERNAME]:[PASSWORD]@ddns.oray.com/ph/update?hostname=[DOMAIN]&myip=[IP]"
 
- #DtDNS
+# DtDNS
 "dtdns.com"	"http://www.dtdns.com/api/autodns.cfm?id=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
 
 # dy.fi Dynamic DNS for finnish users (IP autodetected by provider)
