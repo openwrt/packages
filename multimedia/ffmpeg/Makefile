@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=2.8.6
+PKG_VERSION:=3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=0cff5dae51375f0a31a651f986ed1534
+PKG_MD5SUM:=ef9b6634bb7c920efc940b4d55adf7b2
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -350,15 +350,11 @@ endef
 
 
 FFMPEG_CONFIGURE:= \
-	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" \
-	LDFLAGS="$(TARGET_LDFLAGS)" \
-	./configure \
 	--enable-cross-compile \
 	--cross-prefix="$(TARGET_CROSS)" \
 	--arch="$(ARCH)" \
 	--target-os=linux \
-	--prefix="/usr" \
-	--pkg-config="pkg-config" \
+	--pkg-config="$(STAGING_DIR_HOST)/bin/pkg-config" \
 	--enable-shared \
 	--enable-static \
 	--enable-small \
@@ -391,7 +387,7 @@ FFMPEG_CONFIGURE:= \
 	--disable-inline-asm \
 	--disable-yasm \
 	--disable-mips32r2 \
-	--disable-mipsdspr1 \
+	--disable-mipsdsp \
 	--disable-mipsdspr2 \
 	--disable-mipsfpu \
 	\
@@ -409,6 +405,11 @@ endif
 
 ifeq (,$(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)))
 	FFMPEG_CONFIGURE += --disable-neon
+endif
+
+# Enable thumb for mvebu Mamba
+ifneq (,$(CONFIG_TARGET_mvebu_Mamba))
+	FFMPEG_CONFIGURE += --enable-thumb
 endif
 
 ifeq ($(BUILD_VARIANT),custom)
@@ -503,9 +504,21 @@ ifneq ($(CONFIG_TARGET_x86),)
   TARGET_CFLAGS += -fomit-frame-pointer
 endif
 
-define Build/Configure
-	( cd $(PKG_BUILD_DIR); $(FFMPEG_CONFIGURE) )
-endef
+# Taken from package-defaults.mk
+CONFIGURE_ARGS:= \
+	--prefix=$(CONFIGURE_PREFIX) \
+	--bindir=$(CONFIGURE_PREFIX)/bin \
+	--datadir=$(CONFIGURE_PREFIX)/share \
+	--mandir=$(CONFIGURE_PREFIX)/man \
+	$(FFMPEG_CONFIGURE)
+
+# Suppress some warnings
+TARGET_CFLAGS+= \
+	$(FPIC) \
+	-Wno-unused-but-set-variable \
+	-Wno-deprecated-declarations \
+	-Wno-unused-function \
+	-Wno-unused-result
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
