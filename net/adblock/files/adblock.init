@@ -10,18 +10,23 @@ adb_logger="/usr/bin/logger"
 
 if [ -t 1 ]
 then
-    log_term="-s"
+    log_parm="-s"
+    unset bg_parm
+else
+    unset log_parm
+    bg_parm="&"
 fi
 
 if [ -r "${adb_pidfile}" ]
 then
-    "${adb_logger}" ${log_term} -t "adblock[${adb_pid}] error" "adblock service already running ($(cat ${adb_pidfile} 2>/dev/null))"
+    "${adb_logger}" ${log_parm} -t "adblock[${adb_pid}] error" "adblock service already running ($(cat ${adb_pidfile} 2>/dev/null))"
     exit 255
 fi
 
 start()
 {
-    "${adb_script}"
+    eval "${adb_script}" ${bg_parm}
+    return 0
 }
 
 restart()
@@ -53,7 +58,7 @@ stop()
 
     if [ -n "${rm_done}" ] || [ -n "${uhttpd_pid}" ]
     then
-        "${adb_logger}" ${log_term} -t "adblock[${adb_pid}] info " "all adblock related services stopped"
+        "${adb_logger}" ${log_parm} -t "adblock[${adb_pid}] info " "all adblock related services stopped"
     fi
     return 0
 }
