@@ -39,16 +39,11 @@ endef
 
 TARGET_CFLAGS += $(FPIC)
 
-CONFIGURE_VARS += CC="$(TARGET_CC) $(TARGET_CFLAGS)"
-
-define Build/Configure
-	$(call Build/Configure/Default, \
+CONFIGURE_ARGS+= \
 		--enable-shared \
 		--enable-static \
 		--disable-debugging \
-		--disable-profiling \
-	)
-endef
+		--disable-profiling
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
