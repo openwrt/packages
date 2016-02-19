@@ -45,7 +45,7 @@ fi
 # get current directory, script- and openwrt version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="0.70.1"
+adb_scriptver="0.70.2"
 openwrt_version="$(cat /etc/openwrt_version 2>/dev/null)"
 
 # source in adblock function library
