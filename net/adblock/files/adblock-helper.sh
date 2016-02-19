@@ -472,8 +472,13 @@ f_envcheck()
                     f_restore
                 fi
             fi
-            check="$(cat /sys/class/net/${adb_wandev}/operstate 2>/dev/null)"
-            if [ "${check}" = "up" ]
+            if [ -n "${adb_wandev4}" ]
+            then
+                rc="$(/bin/ping -c1 -W1 8.8.8.8 -I ${adb_wandev} >/dev/null 2>&1; printf $?)"
+            else
+                rc="$(/bin/ping -6 -c1 -W1 2001:4860:4860::8888 -I ${adb_wandev} >/dev/null 2>&1; printf $?)"
+            fi
+            if [ $((rc)) -eq 0  ]
             then
                 f_log "get active wan update interface/device (${adb_wanif}/${adb_wandev})"
                 break 2
