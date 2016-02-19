@@ -1,0 +1,24 @@
+--- a/id3tag.h
++++ b/id3tag.h
+@@ -25,6 +25,8 @@
+ # ifndef LIBID3TAG_ID3TAG_H
+ # define LIBID3TAG_ID3TAG_H
+ 
++#include <stdint.h>
++
+ # ifdef __cplusplus
+ extern "C" {
+ # endif
+@@ -36,10 +38,10 @@ extern "C" {
+ typedef unsigned char id3_byte_t;
+ typedef unsigned long id3_length_t;
+ 
+-typedef unsigned long id3_ucs4_t;
++typedef uint32_t id3_ucs4_t;
+ 
+ typedef unsigned char id3_latin1_t;
+-typedef unsigned short id3_utf16_t;
++typedef uint16_t id3_utf16_t;
+ typedef signed char id3_utf8_t;
+ 
+ struct id3_tag {

@@ -1,0 +1,12 @@
+--- a/compat.gperf
++++ b/compat.gperf
+@@ -241,6 +241,9 @@ int id3_compat_fixup(struct id3_tag *tag
+ 	continue;
+     }
+ 
++    if (string == 0)
++      continue;
++
+     if (id3_ucs4_length(string) < 4) {
+       free(string);
+       continue;

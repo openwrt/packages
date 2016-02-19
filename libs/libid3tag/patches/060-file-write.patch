@@ -1,0 +1,51 @@
+--- a/file.c
++++ b/file.c
+@@ -37,6 +37,10 @@
+ #  include <assert.h>
+ # endif
+ 
++# ifdef HAVE_SYS_STAT_H
++#  include <sys/stat.h>
++# endif
++
+ # include "id3tag.h"
+ # include "file.h"
+ # include "tag.h"
+@@ -575,6 +579,10 @@ static
+ int v2_write(struct id3_file *file,
+ 	     id3_byte_t const *data, id3_length_t length)
+ {
++  struct stat st;
++  char *buffer;
++  id3_length_t datalen, offset;
++  
+   assert(!data || length > 0);
+ 
+   if (data &&
+@@ -592,9 +600,25 @@ int v2_write(struct id3_file *file,
+   }
+ 
+   /* hard general case: rewrite entire file */
++  if (stat(file->path, &st) == -1)
++    return -1;
+ 
+-  /* ... */
++  offset = file->tags ? file->tags[0].length : 0;
++  datalen = st.st_size - offset;
++  if ((buffer = (char *) malloc(datalen)) == NULL)
++    return -1;
+ 
++  if (fseek(file->iofile, offset, SEEK_SET) == -1 ||
++      fread(buffer, datalen, 1, file->iofile) != 1 ||
++      fseek(file->iofile, 0, SEEK_SET) == -1 ||
++      fwrite(data, length, 1, file->iofile) != 1 ||
++      fwrite(buffer, datalen, 1, file->iofile) != 1 ||
++      fflush(file->iofile) == EOF) {
++    free(buffer);
++    return -1;
++  }
++  free(buffer);
++  
+  done:
+   return 0;
+ }
