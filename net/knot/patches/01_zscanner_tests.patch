@@ -1,0 +1,25 @@
+diff --git a/src/zscanner/tests/unittests.in b/src/zscanner/tests/unittests.in
+index 9a4af53..f9b45bf 100644
+--- a/src/zscanner/tests/unittests.in
++++ b/src/zscanner/tests/unittests.in
+@@ -1,15 +1,14 @@
+ #!/bin/sh
+ 
+-SOURCE=@top_srcdir@/src/zscanner/tests
+-BUILD=@top_builddir@/src/zscanner/tests
++SOURCE="."
++BUILD="/tmp/knot-test"
++mkdir -p "$BUILD"
+ 
+-. @top_srcdir@/libtap/tap/libtap.sh
+-
+-cd "$BUILD"
++. ../tap/libtap.sh
+ 
+ TMPDIR=$(test_tmpdir)
+ TESTS_DIR="$SOURCE"/data
+-ZSCANNER_TOOL="$BUILD"/zscanner-tool
++ZSCANNER_TOOL=./zscanner-tool
+ 
+ plan 71
+ 
