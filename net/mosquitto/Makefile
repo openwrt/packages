@@ -137,6 +137,16 @@ define Package/libmosquitto-nossl/description
     This package is built without SSL support
 endef
 
+define Package/libmosquittopp
+    SECTION:=libs
+    CATEGORY:=Libraries
+    DEPENDS:=+libmosquitto +libstdcpp
+    TITLE:= mosquitto - client c++ library
+endef
+
+define Package/libmosquittopp/description
+ C++ Library wrapper for libmosquitto.
+endef
 
 define Package/$(PKG_NAME)/conffiles
 /etc/mosquitto/mosquitto.conf
@@ -179,9 +189,12 @@ Package/mosquitto-client-nossl/install = $(Package/mosquitto-client/install)
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/lib/mosquitto.h $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/lib/cpp/mosquittopp.h $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/lib/cpp/libmosquittopp.so.1 $(1)/usr/lib/
 	$(LN) libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
+	$(LN) libmosquittopp.so.1 $(1)/usr/lib/libmosquittopp.so
 endef
 
 # This installs files on the target.  Compare with Build/InstallDev
@@ -191,6 +204,12 @@ define Package/libmosquitto/install
 	$(LN) libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
 endef
 Package/libmosquitto-nossl/install = $(Package/libmosquitto/install)
+
+define Package/libmosquittopp/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/cpp/libmosquittopp.so.1 $(1)/usr/lib/
+	$(LN) libmosquittopp.so.1 $(1)/usr/lib/libmosquittopp.so
+endef
 
 # Applies to all...
 MAKE_FLAGS += WITH_DOCS=no
@@ -204,5 +223,6 @@ $(eval $(call BuildPackage,$(PKG_NAME)))
 $(eval $(call BuildPackage,$(PKG_NAME)-nossl))
 $(eval $(call BuildPackage,libmosquitto))
 $(eval $(call BuildPackage,libmosquitto-nossl))
+$(eval $(call BuildPackage,libmosquittopp))
 $(eval $(call BuildPackage,mosquitto-client))
 $(eval $(call BuildPackage,mosquitto-client-nossl))
