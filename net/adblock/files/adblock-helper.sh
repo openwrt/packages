@@ -86,13 +86,14 @@ f_envparse()
     adb_port="65535"
     adb_nullipv4="192.0.2.1"
     adb_nullipv6="::ffff:c000:0201"
+    adb_probeipv4="8.8.8.8"
+    adb_probeipv6="2001:4860:4860::8888"
     adb_maxtime="60"
     adb_maxloop="20"
     adb_blacklist="/etc/adblock/adblock.blacklist"
     adb_whitelist="/etc/adblock/adblock.whitelist"
 
-    # function to read/set global options by callback,
-    # prepare list items and build option list for all others
+    # function to read global options by callback
     #
     config_cb()
     {
@@ -107,45 +108,39 @@ f_envparse()
                 eval "${option}=\"${value}\""
             }
         else
-            option_cb()
-            {
-                local option="${1}"
-                local value="${2}"
-                local opt_out="$(printf "${option}" | sed -n '/.*_ITEM[0-9]$/p; /.*_LENGTH$/p; /enabled/p' 2>/dev/null)"
-                if [ -z "${opt_out}" ]
-                then
-                    all_options="${all_options} ${option}"
-                fi
-            }
-            list_cb()
-            {
-                local list="${1}"
-                local value="${2}"
-                if [ "${list}" = "adb_catlist" ]
-                then
-                    adb_cat_shalla="${adb_cat_shalla} ${value}"
-                fi
-            }
+            reset_cb
         fi
     }
 
-    # function to iterate through option list, read/set all options in "enabled" sections
+    # function to iterate through config list, read only options in "enabled" sections
     #
+    adb_cfglist="adb_backupdir adb_logfile adb_src"
+    unset adb_sources
     parse_config()
     {
         local config="${1}"
         config_get switch "${config}" "enabled"
         if [ "${switch}" = "1" ]
         then
-            for option in ${all_options}
+            for option in ${adb_cfglist}
             do
                 config_get value "${config}" "${option}"
                 if [ -n "${value}" ]
                 then
-                    local opt_src="$(printf "${option}" | sed -n '/^adb_src_[a-z0-9]*$/p' 2>/dev/null)"
-                    if [ -n "${opt_src}" ]
+                    if [ "${option}" = "adb_src" ]
                     then
-                        adb_sources="${adb_sources} ${value}"
+                        if [ "${config}" = "shalla" ]
+                        then
+                            categories()
+                            {
+                                local cat="${1}"
+                                adb_cat_shalla="${adb_cat_shalla} ${cat}"
+                            }
+                            eval "adb_arc_shalla=\"${value}\""
+                            config_list_foreach "shalla" "adb_catlist" "categories"
+                        else
+                            adb_sources="${adb_sources} ${value}"
+                        fi
                     else
                         eval "${option}=\"${value}\""
                     fi
@@ -218,7 +213,23 @@ f_envparse()
         else
             network_get_device adb_wandev4 "${adb_wanif4}" 2>/dev/null
             network_get_device adb_wandev6 "${adb_wanif6}" 2>/dev/null
-            break
+            if [ -n "${adb_wandev4}" ]
+            then
+                rc="$(ping -q -4 -c1 -W1 -I${adb_wandev4} "${adb_probeipv4}" >/dev/null 2>&1; printf ${?})"
+                if [ $((rc)) -eq 0 ]
+                then
+                    f_log "get active IPv4 wan update interface/device (${adb_wanif4}/${adb_wandev4})"
+                    break
+                fi
+            elif [ -n "${adb_wandev6}" ]
+            then
+                rc="$(ping -q -6 -c1 -W1 -I${adb_wandev6} "${adb_probeipv6}" >/dev/null 2>&1; printf ${?})"
+                if [ $((rc)) -eq 0 ]
+                then
+                    f_log "get active IPv6 wan update interface/device (${adb_wanif6}/${adb_wandev6})"
+                    break
+                fi
+            fi
         fi
         if [ $((adb_cnt)) -ge $((adb_maxloop)) ]
         then
@@ -227,7 +238,6 @@ f_envparse()
             f_exit
         fi
         adb_cnt=$((adb_cnt + 1))
-        sleep 1
     done
 
     # get lan ip addresses
@@ -240,10 +250,6 @@ f_envparse()
         f_log "no valid IPv4/IPv6 configuration for given logical LAN interface found (${adb_lanif}), please set 'adb_lanif' manually" "${rc}"
         f_exit
     fi
-
-    # read system ntp server names
-    #
-    adb_ntpsrv="$(uci get system.ntp.server 2>/dev/null)"
 }
 
 #################################################
@@ -450,69 +456,6 @@ f_envcheck()
         fi
     fi
 
-    # wait for active wan update interface
-    #
-    while [ $((adb_cnt)) -le $((adb_maxloop)) ]
-    do
-        for interface in ${adb_wanif}
-        do
-            network_get_device adb_wandev "${interface}" 2>/dev/null
-            if [ -z "${adb_wandev}" ] || [ ! -d "/sys/class/net/${adb_wandev}" ]
-            then
-                if [ -n "${adb_wandev4}" ]
-                then
-                    adb_wandev="${adb_wandev4}"
-                else
-                    adb_wandev="${adb_wandev6}"
-                fi
-                if [ -z "${adb_wandev}" ] || [ ! -d "/sys/class/net/${adb_wandev}" ]
-                then
-                    rc=145
-                    f_log "no valid network device for given logical WAN interface found, please set 'adb_wanif' manually" "${rc}"
-                    f_restore
-                fi
-            fi
-            if [ -n "${adb_wandev4}" ]
-            then
-                rc="$(/bin/ping -c1 -W1 8.8.8.8 -I ${adb_wandev} >/dev/null 2>&1; printf $?)"
-            else
-                rc="$(/bin/ping -6 -c1 -W1 2001:4860:4860::8888 -I ${adb_wandev} >/dev/null 2>&1; printf $?)"
-            fi
-            if [ $((rc)) -eq 0  ]
-            then
-                f_log "get active wan update interface/device (${adb_wanif}/${adb_wandev})"
-                break 2
-            elif [ $((adb_cnt)) -eq $((adb_maxloop)) ]
-            then
-                rc=145
-                f_log "wan update interface/device not running (${adb_wanif}/${adb_wandev})" "${rc}"
-                f_restore
-            fi
-            adb_cnt=$((adb_cnt + 1))
-            sleep 1
-        done
-    done
-
-    # ntp time sync
-    #
-    if [ -n "${adb_ntpsrv}" ]
-    then
-        unset ntp_pool
-        for srv in ${adb_ntpsrv}
-        do
-            ntp_pool="${ntp_pool} -p ${srv}"
-        done
-        /usr/sbin/ntpd -nq ${ntp_pool} >/dev/null 2>&1
-        rc=${?}
-        if [ $((rc)) -eq 0 ]
-        then
-            f_log "get ntp time sync"
-        else
-            rc=0
-            f_log "ntp time sync failed"
-        fi
-    fi
-
     # set dnsmasq defaults
     #
     if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
@@ -536,6 +479,7 @@ f_envcheck()
 #
 f_depend()
 {
+    local check
     local package="${1}"
 
     check="$(printf "${pkg_list}" | grep "^${package} -" 2>/dev/null)"
