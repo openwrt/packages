@@ -30,7 +30,6 @@ pppoe_relay_instance() {
 }
 
 start_service() {
-    start_service() {
 	config_load pppoe
 	config_foreach pppoe_relay_instance pppoe_relay
 }

@@ -64,7 +64,7 @@ endef
 
 define Package/rp-pppoe-relay
   $(call Package/rp-pppoe/Default)
-  DEPENDS:=+rp-pppoe-common
+  DEPENDS:=+rp-pppoe-common @BROKEN
   TITLE+= relay
 endef
 
