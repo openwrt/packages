@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=0.80.0
+PKG_VERSION:=0.80.1
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <openwrt@brenken.org>
@@ -48,6 +48,9 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/adblock-update.sh $(1)/usr/bin/
 	$(INSTALL_DATA) ./files/adblock-helper.sh $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN) ./files/adblock.hotplug $(1)/etc/hotplug.d/iface/99-adblock
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/adblock.init $(1)/etc/init.d/adblock

@@ -45,7 +45,7 @@ fi
 # get current directory, script- and openwrt version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="0.80.0"
+adb_scriptver="0.80.1"
 openwrt_version="$(cat /etc/openwrt_version 2>/dev/null)"
 
 # source in adblock function library
@@ -100,7 +100,7 @@ then
     # only process shallalist archive with updated timestamp,
     # extract and merge only domains of selected shallalist categories
     #
-    shalla_time="$(${adb_fetch} ${wget_parm} --timeout=5 --server-response --spider "${adb_arc_shalla}" 2>&1 | grep -F "Last-Modified: " 2>/dev/null | tr -d '\r' 2>/dev/null)"
+    shalla_time="$(${adb_fetch} ${wget_parm} --server-response --spider "${adb_arc_shalla}" 2>&1 | grep -F "Last-Modified: " 2>/dev/null | tr -d '\r' 2>/dev/null)"
     shalla_time="${shalla_time/*: /}"
     if [ -z "${shalla_time}" ]
     then
@@ -109,7 +109,7 @@ then
     fi
     if [ -z "${list_time}" ] || [ "${list_time}" != "${shalla_time}" ]
     then
-        ${adb_fetch} ${wget_parm} --timeout="${adb_maxtime}" --output-document="${shalla_archive}" "${adb_arc_shalla}" 2>/dev/null
+        ${adb_fetch} ${wget_parm} --output-document="${shalla_archive}" "${adb_arc_shalla}" 2>/dev/null
         rc=${?}
         if [ $((rc)) -eq 0 ]
         then
@@ -184,7 +184,7 @@ do
     then
         url_time="${shalla_time}"
     else
-        url_time="$(${adb_fetch} ${wget_parm} --timeout=5 --server-response --spider "${url}" 2>&1 | grep -F "Last-Modified: " 2>/dev/null | tr -d '\r' 2>/dev/null)"
+        url_time="$(${adb_fetch} ${wget_parm} --server-response --spider "${url}" 2>&1 | grep -F "Last-Modified: " 2>/dev/null | tr -d '\r' 2>/dev/null)"
         url_time="${url_time/*: /}"
     fi
     if [ -z "${url_time}" ]
@@ -203,7 +203,7 @@ do
             tmp_domains="$(cat "${shalla_file}" 2>/dev/null)"
             rc=${?}
         else
-            tmp_domains="$(${adb_fetch} ${wget_parm} --timeout="${adb_maxtime}" --output-document=- "${url}" 2>/dev/null)"
+            tmp_domains="$(${adb_fetch} ${wget_parm} --output-document=- "${url}" 2>/dev/null)"
             rc=${?}
         fi
     else
@@ -413,7 +413,7 @@ fi
 # restart dnsmasq with newly generated or deleted adblock lists,
 # check dnsmasq startup afterwards
 #
-if [ -n "${adb_revsrclist}" ] || [ -n "${rm_done}" ]
+if [ -n "${adb_revsrclist}" ] || [ -n "${rm_done}" ] || [ -n "${restore_done}" ]
 then
     /etc/init.d/dnsmasq restart >/dev/null 2>&1
     sleep 2
