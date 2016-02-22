@@ -23,6 +23,11 @@ then
     exit 255
 fi
 
+boot()
+{
+    return 0
+}
+
 start()
 {
     eval "${adb_script}" ${bg_parm}
