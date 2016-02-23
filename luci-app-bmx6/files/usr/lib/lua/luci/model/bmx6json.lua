@@ -112,12 +112,16 @@ function wget(url, timeout)
 	if pid == 0 then
 		rfd:close()
 		nixio.dup(wfd, nixio.stdout)
-
-		local candidates = { "/usr/bin/wget", "/bin/wget" }
+		-- candidates for wget, try first ones with SSL support
+		local candidates = {{"/usr/bin/wget-ssl",1},{"/usr/bin/wget",0},{"/bin/wget",0}}
 		local _, bin
 		for _, bin in ipairs(candidates) do
-			if nixiofs.access(bin, "x") then
-				nixio.exec(bin, "-q", "-O", "-", url)
+			if nixiofs.access(bin[1], "x") then
+				if bin[2] == 0 then
+					nixio.exec(bin[1], "-q", "-O", "-", url)
+				else
+					nixio.exec(bin[1], "--no-check-certificate", "-q", "-O", "-", url)
+				end
 			end
 		end
 		return
