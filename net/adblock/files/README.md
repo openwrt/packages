@@ -25,7 +25,7 @@ When the dns server on your router receives dns requests, you will sort out quer
     * [palevotracker](https://palevotracker.abuse.ch)
     * => daily updates, approx. 15 entries
     * [ruadlist+easylist](https://code.google.com/p/ruadlist)
-    * => weekly updates, approx. 2.000 entries (experimental support, may include false positives!)
+    * => weekly updates, approx. 2.000 entries
     * [shallalist](http://www.shallalist.de) (categories "adv" "costtraps" "spyware" "tracker" "warez" enabled by default)
     * => daily updates, approx. 32.000 entries (a short description of all shallalist categories can be found [online](http://www.shallalist.de/categories.html))
     * [spam404](http://www.spam404.com)
@@ -51,6 +51,7 @@ When the dns server on your router receives dns requests, you will sort out quer
 * status & error logging to stdout and syslog
 * use of dynamic uhttpd instance as adblock pixel server
 * openwrt init system support (start/stop/restart/reload)
+* hotplug support, adblock start will be triggered by wan 'ifup' event
 * optional features (disabled by default):
     * adblock list backup/restore
     * debug logging to separate file
@@ -62,11 +63,21 @@ When the dns server on your router receives dns requests, you will sort out quer
     * optional: 'kmod-ipt-nat6' for IPv6 support
 * the above dependencies and requirements will be checked during package installation & script runtime
 
-## Usage
-* install the adblock package (*opkg install adblock*)
+## Installation & Usage
+* install the adblock package (*opkg update & opkg install adblock*)
 * start the adblock service with */etc/init.d/adblock start* and check *logread -e "adblock"* for adblock related information
 * optional: enable/disable your required adblock list sources in */etc/config/adblock* - 'adaway', 'disconnect' and 'yoyo' are enabled by default
 * optional: maintain the adblock service in luci under 'System => Startup'
+
+## LuCI adblock companion package
+For easy management of the various blocklist sources and and the adblock options there is also a nice & efficient LuCI frontend available.  
+Please install the package 'luci-app-adblock'. Then you will find the application in LuCI located under 'Services' menu.  
+Thanks to Hannu Nyman for this great adblock LuCI frontend!  
+
+## CC installation notes
+* currently the adblock package is *not* part of the CC package repository
+* download the latest adblock package *adblock_x.xx.x-1_all.ipk* from a DD snapshot [package directory](https://downloads.openwrt.org/snapshots/trunk/ar71xx/generic/packages/packages)
+* manual transfer the package to your router and install the opkg package as usual
 
 ## Tweaks
 * there is no need to enable all blacklist sites at once, for normal use one to three adblock list sources should be sufficient
@@ -84,17 +95,14 @@ When the dns server on your router receives dns requests, you will sort out quer
     * adb\_lanif => name of the logical lan interface (default: 'lan')
     * adb\_port => port of the adblock uhttpd instance (default: '65535')
     * adb\_nullipv4 => IPv4 blackhole ip address (default: '192.0.2.1')
-    * adb\_nullipv6 => IPv6 blackhole ip address (default '::ffff:c000:0201')
-    * adb\_maxtime => download timeout limit in seconds (default: '60')
-    * adb\_maxloop => startup timeout limit in seconds to wait for an active wan interface (default: '20')
+    * adb\_nullipv6 => IPv6 blackhole ip address (default: '::ffff:c000:0201')
 
 ## Background
 This adblock package is a dns/dnsmasq based adblock solution for openwrt.  
 Queries to ad/abuse domains are never forwarded and always replied with a local IP address which may be IPv4 or IPv6.  
 For that purpose adblock uses an ip address from the private 'TEST-NET-1' subnet (192.0.2.1 / ::ffff:c000:0201) by default.  
 Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to internal adblock pixel server (in PREROUTING chain) or rejected (in FORWARD or OUTPUT chain).  
-All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other openwrt related config files.  
-There is *no* adblock background daemon running, the (scheduled) start of the adblock service keeps only the adblock lists up-to-date.
+All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other openwrt related config files. There is *no* adblock background daemon running, the (scheduled) start of the adblock service keeps only the adblock lists up-to-date.
 
 ## Support
 Please join the adblock discussion in this [openwrt forum thread](https://forum.openwrt.org/viewtopic.php?id=59803) or contact me by mail <openwrt@brenken.org>

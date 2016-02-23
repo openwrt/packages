@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.44.1
+PKG_VERSION:=2.46.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
-PKG_SOURCE_URL:=@GNOME/glib/2.44
-PKG_MD5SUM:=83efba4722a9674b97437d1d99af79db
+PKG_SOURCE_URL:=@GNOME/glib/2.46
+PKG_MD5SUM:=7f815d6e46df68e070cb421ed7f1139e
 
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
