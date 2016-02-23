@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
-PKG_VERSION:=3081101
+PKG_VERSION:=3110000
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.sqlite.org/2015/
-PKG_MD5SUM:=298c8d6af7ca314f68de92bc7a356cbe
+PKG_SOURCE_URL:=http://www.sqlite.org/2016/
+PKG_MD5SUM:=a6cdc3e0a6e5087d620037ae0c48720d
 
 PKG_LICENSE:=PUBLICDOMAIN
 PKG_LICENSE_FILES:=
@@ -69,19 +69,11 @@ $(call Package/sqlite3/Default/description)
 endef
 
 TARGET_CFLAGS += $(FPIC) \
-	-DSQLITE_ENABLE_UNLOCK_NOTIFY \
+	-DSQLITE_ENABLE_UNLOCK_NOTIFY
 
 CONFIGURE_ARGS += \
 	--enable-shared \
-	--enable-static \
-
-CONFIGURE_VARS += \
-	config_BUILD_CC="$(HOSTCC)" \
-	config_BUILD_CFLAGS="-O2" \
-	config_TARGET_CC="$(TARGET_CC)" \
-	config_TARGET_CFLAGS="$(TARGET_CFLAGS)" \
-	config_TARGET_READLINE_INC="$(TARGET_CPPFLAGS)" \
-	config_TARGET_READLINE_LIBS="$(TARGET_LDFLAGS) -lreadline -lncurses" \
+	--enable-static
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
