@@ -117,3 +117,6 @@
 
 # zzzz.io Free Dynamic DNS
 "zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&ip=[IP]"	"Updated|No change"
+
+# dynu.com
+"dynu.com"  "http://api.dynu.com/nic/update?hostname=[DOMAIN]&myip=[IP]&username=[USERNAME]&password=[PASSWORD]"
