@@ -1,0 +1,12 @@
+Index: giflib-5.1.1/configure.ac
+===================================================================
+--- giflib-5.1.1.orig/configure.ac
++++ giflib-5.1.1/configure.ac
+@@ -20,7 +20,6 @@ AC_PROG_MAKE_SET
+ AM_PROG_CC_C_O
+ 
+ dnl Allow partial building on systems without xmlto
+-AC_CHECK_PROG([have_xmlto], [xmlto], ["yes"],["no"])
+ AM_CONDITIONAL([BUILD_DOC], [test "x${have_xmlto}" = "xyes"])
+ 
+ dnl Shared-library version
