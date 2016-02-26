@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36713
+PKG_SOURCE_VERSION:=36918
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
 # ToDo:
 #  - break-out {peer,name,data}store for each backend
@@ -39,7 +39,7 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-mysql),--with-mysql="$(STAGING_DIR)/usr",--without-mysql) \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-pgsql),--with-postgresql="$(STAGING_DIR)/usr/bin/pg_config",--without-postgresql) \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-sqlite),--with-sqlite="$(STAGING_DIR)/usr",--without-sqlite) \
-	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-experiments),--enable-experimental,--disable-experimental) \
+	--enable-experimental \
 	--with-extractor=$(STAGING_DIR)/usr \
 	--with-gnutls=$(STAGING_DIR)/usr \
 	--with-libgnurl=$(STAGING_DIR)/usr \
@@ -200,10 +200,16 @@ LIBEXEC_transport-wlan:=helper-transport-wlan
 
 DEPENDS_experiments:=+libglpk +gnunet-sqlite
 BIN_experiments:=multicast rps
-LIB_experiments:=consensus dv env multicast psyc psycstore psycutil rps secretsharing social
-PLUGIN_experiments:=ats_mlp ats_ril namecache_flat namestore_flat psycstore_sqlite transport_dv
-LIBEXEC_experiments:=service-consensus service-dv service-evil-consensus service-multicast service-psyc service-psycstore service-rps service-secretsharing service-social
-CONF_experiments:=consensus dv multicast psyc psycstore rps secretsharing social
+LIB_experiments:=consensus env multicast psyc psycstore psycutil rps secretsharing social
+PLUGIN_experiments:=ats_mlp ats_ril psycstore_sqlite
+LIBEXEC_experiments:=service-consensus service-dht-whanau service-dht-xvine service-evil-consensus service-multicast service-psyc service-psycstore service-rps service-secretsharing service-social
+CONF_experiments:=consensus multicast psyc psycstore rps secretsharing social
+
+# BIN_dv:=dv
+LIB_dv:=dv
+PLUGIN_dv:=transport_dv
+LIBEXEC_dv:=service-dv
+CONF_dv:=dv
 
 DEPENDS_fs:=+gnunet-datastore +libextractor
 BIN_fs:=auto-share directory download download-manager.scm fs publish unindex search
@@ -227,12 +233,15 @@ PLUGIN_datastore:=datastore_heap
 LIBEXEC_datastore:=daemon-latency-logger service-datastore
 CONF_datastore:=datastore
 
+DEPENDS_flat:=+gnunet-gns
+PLUGIN_flat:=namecache_flat namestore_flat
+
 DEPENDS_mysql:=+gnunet-gns +gnunet-datastore +libmysqlclient
 LIB_mysql:=mysql
 PLUGIN_mysql:=datastore_mysql
 
 DEPENDS_pgsql:=+gnunet-gns +gnunet-datastore +libpq
-LIB_pgsql:=postgres
+LIB_pgsql:=postgres pq
 PLUGIN_pgsql:=datacache_postgres datastore_postgres namecache_postgres namestore_postgres
 
 DEPENDS_sqlite:=+gnunet-gns +gnunet-datastore +libsqlite3
@@ -254,6 +263,7 @@ CONF_vpn:=exit pt vpn
 $(eval $(call BuildPackage,gnunet))
 $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,experiments,experimental components,))
+$(eval $(call BuildComponent,dv,distance-vector routing component,))
 $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))
 $(eval $(call BuildComponent,datastore,storage components,))
@@ -263,6 +273,7 @@ $(eval $(call BuildComponent,transport-http_server,HTTP/HTTPS server transport,)
 $(eval $(call BuildComponent,transport-wlan,WLAN transport,))
 $(eval $(call BuildComponent,utils,administration utililties,))
 $(eval $(call BuildComponent,vpn,vpn components,y))
+$(eval $(call BuildComponent,flat,flat storage backends,))
 $(eval $(call BuildComponent,mysql,mySQL datastore backend,))
 $(eval $(call BuildComponent,pgsql,PostgreSQL backends,))
 $(eval $(call BuildComponent,sqlite,libsqlite3 backends,y))
