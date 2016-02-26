@@ -46,7 +46,7 @@ endef
 
 HOST_CONFIGURE_ARGS += \
 	--disable-selinux \
-	--with-libiconv=gnu
+	--with-libiconv=no
 
 CONFIGURE_ARGS += \
 	--enable-shared \
