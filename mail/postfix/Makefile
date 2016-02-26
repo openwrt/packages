@@ -10,8 +10,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=postfix
 PKG_RELEASE:=1
 PKG_SOURCE_URL:=ftp://ftp.porcupine.org/mirrors/postfix-release/official/
-PKG_VERSION:=3.0.3
-PKG_MD5SUM:=61caffae689c11d09b4c972a394ae3b1
+PKG_VERSION:=3.0.4
+PKG_MD5SUM:=877365c99e1fb5d46e61da5b22df0255
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=IPL-1.0

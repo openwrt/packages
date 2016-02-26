@@ -86,10 +86,6 @@ f_envparse()
     adb_port="65535"
     adb_nullipv4="192.0.2.1"
     adb_nullipv6="::ffff:c000:0201"
-    adb_probeipv4="8.8.8.8"
-    adb_probeipv6="2001:4860:4860::8888"
-    adb_maxtime="60"
-    adb_maxloop="20"
     adb_blacklist="/etc/adblock/adblock.blacklist"
     adb_whitelist="/etc/adblock/adblock.whitelist"
 
@@ -198,47 +194,23 @@ f_envparse()
 
     # get logical wan update interfaces (with default route) and their device names
     #
-    while [ $((adb_cnt)) -le $((adb_maxloop)) ]
-    do
-        network_find_wan adb_wanif4 2>/dev/null
-        network_find_wan6 adb_wanif6 2>/dev/null
-        if [ -z "${adb_wanif4}" ] && [ -z "${adb_wanif6}" ]
-        then
-            network_flush_cache
-        elif [ "${adb_wanif4}" = "${adb_lanif}" ] || [ "${adb_wanif6}" = "${adb_lanif}" ]
-        then
-            rc=125
-            f_log "LAN only (${adb_lanif}) network, no valid IPv4/IPv6 wan update interface found" "${rc}"
-            f_exit
-        else
-            network_get_device adb_wandev4 "${adb_wanif4}" 2>/dev/null
-            network_get_device adb_wandev6 "${adb_wanif6}" 2>/dev/null
-            if [ -n "${adb_wandev4}" ]
-            then
-                rc="$(ping -q -4 -c1 -W1 -I${adb_wandev4} "${adb_probeipv4}" >/dev/null 2>&1; printf ${?})"
-                if [ $((rc)) -eq 0 ]
-                then
-                    f_log "get active IPv4 wan update interface/device (${adb_wanif4}/${adb_wandev4})"
-                    break
-                fi
-            elif [ -n "${adb_wandev6}" ]
-            then
-                rc="$(ping -q -6 -c1 -W1 -I${adb_wandev6} "${adb_probeipv6}" >/dev/null 2>&1; printf ${?})"
-                if [ $((rc)) -eq 0 ]
-                then
-                    f_log "get active IPv6 wan update interface/device (${adb_wanif6}/${adb_wandev6})"
-                    break
-                fi
-            fi
-        fi
-        if [ $((adb_cnt)) -ge $((adb_maxloop)) ]
-        then
-            rc=125
-            f_log "no valid IPv4/IPv6 wan update interface found" "${rc}"
-            f_exit
-        fi
-        adb_cnt=$((adb_cnt + 1))
-    done
+    network_find_wan adb_wanif4 2>/dev/null
+    network_find_wan6 adb_wanif6 2>/dev/null
+    if [ -z "${adb_wanif4}" ] && [ -z "${adb_wanif6}" ]
+    then
+        rc=125
+        f_log "no valid IPv4/IPv6 wan update interface found" "${rc}"
+        f_exit
+    elif [ "${adb_wanif4}" = "${adb_lanif}" ] || [ "${adb_wanif6}" = "${adb_lanif}" ]
+    then
+        rc=125
+        f_log "LAN only (${adb_lanif}) network, no valid IPv4/IPv6 wan update interface found" "${rc}"
+        f_exit
+    else
+        network_get_device adb_wandev4 "${adb_wanif4}" 2>/dev/null
+        network_get_device adb_wandev6 "${adb_wanif6}" 2>/dev/null
+        break
+    fi
 
     # get lan ip addresses
     #
@@ -287,12 +259,11 @@ f_envcheck()
 
     # check ca-certificates package and set wget parms accordingly
     #
+    wget_parm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=5 --connect-timeout=5 --read-timeout=5"
     check="$(printf "${pkg_list}" | grep "^ca-certificates -" 2>/dev/null)"
     if [ -z "${check}" ]
     then
-        wget_parm="--no-config --no-check-certificate --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=5"
-    else
-        wget_parm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=5"
+        wget_parm="${wget_parm} --no-check-certificate"
     fi
 
     # check adblock blacklist/whitelist configuration
@@ -326,16 +297,15 @@ f_envcheck()
         f_exit
     fi
 
-    # check total and swap memory
+    # memory check
     #
-    mem_total="$(grep -F "MemTotal" "/proc/meminfo" 2>/dev/null | grep -o "[0-9]*" 2>/dev/null)"
-    mem_free="$(grep -F "MemFree" "/proc/meminfo" 2>/dev/null | grep -o "[0-9]*" 2>/dev/null)"
-    swap_total="$(grep -F "SwapTotal" "/proc/meminfo" 2>/dev/null | grep -o "[0-9]*" 2>/dev/null)"
-    if [ $((mem_total)) -le 64000 ] && [ $((swap_total)) -eq 0 ]
+    mem_total="$(awk '$1 ~ /^MemTotal/ {print $2}' "/proc/meminfo" 2>/dev/null)"
+    mem_free="$(awk '$1 ~ /^MemFree/ {print $2}' "/proc/meminfo" 2>/dev/null)"
+    mem_swap="$(awk '$1 ~ /^SwapTotal/ {print $2}' "/proc/meminfo" 2>/dev/null)"
+    if [ $((mem_total)) -le 64000 ] && [ $((mem_swap)) -eq 0 ]
     then
         adb_unique=0
-        f_log "not enough memory, overall sort/unique processing will be disabled"
-        f_log "please consider adding an external swap device to supersize your temp directory (total: ${mem_total}, free: ${mem_free}, swap: ${mem_swap})"
+        f_log "not enough memory, overall sort processing will be disabled (total: ${mem_total}, free: ${mem_free}, swap: ${mem_swap})"
     fi
 
     # check backup configuration
@@ -382,12 +352,8 @@ f_envcheck()
         f_firewall "IPv4" "nat" "A" "${adb_prechain_ipv4}" "adb-prerouting" "! -i ${adb_wandev4} -p tcp -d ${adb_nullipv4} -m multiport --dports 80,443 -j REDIRECT --to-ports ${adb_port}"
         f_firewall "IPv4" "nat" "A" "${adb_prechain_ipv4}" "adb-dns" "! -i ${adb_wandev4} -p udp --dport 53 -j REDIRECT"
         f_firewall "IPv4" "nat" "A" "${adb_prechain_ipv4}" "adb-dns" "! -i ${adb_wandev4} -p tcp --dport 53 -j REDIRECT"
-        f_firewall "IPv4" "filter" "A" "${adb_fwdchain_ipv4}" "adb-forward" "! -i ${adb_wandev4} -p udp -d ${adb_nullipv4} -j REJECT --reject-with icmp-port-unreachable"
-        f_firewall "IPv4" "filter" "A" "${adb_fwdchain_ipv4}" "adb-forward" "! -i ${adb_wandev4} -p tcp -d ${adb_nullipv4} -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv4" "filter" "A" "${adb_fwdchain_ipv4}" "adb-forward" "! -i ${adb_wandev4} -d ${adb_nullipv4} -j REJECT --reject-with icmp-proto-unreachable"
-        f_firewall "IPv4" "filter" "A" "${adb_outchain_ipv4}" "adb-output" "! -i ${adb_wandev4} -p udp -d ${adb_nullipv4} -j REJECT --reject-with icmp-port-unreachable"
-        f_firewall "IPv4" "filter" "A" "${adb_outchain_ipv4}" "adb-output" "! -i ${adb_wandev4} -p tcp -d ${adb_nullipv4} -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv4" "filter" "A" "${adb_outchain_ipv4}" "adb-output" "! -i ${adb_wandev4} -d ${adb_nullipv4} -j REJECT --reject-with icmp-proto-unreachable"
+        f_firewall "IPv4" "filter" "A" "${adb_fwdchain_ipv4}" "adb-forward" "! -i ${adb_wandev4} -d ${adb_nullipv4} -j REJECT --reject-with icmp-host-unreachable"
+        f_firewall "IPv4" "filter" "A" "${adb_outchain_ipv4}" "adb-output" "! -i ${adb_wandev4} -d ${adb_nullipv4} -j REJECT --reject-with icmp-host-unreachable"
         if [ "${fw_done}" = "true" ]
         then
             f_log "created volatile IPv4 firewall ruleset"
@@ -402,12 +368,8 @@ f_envcheck()
         f_firewall "IPv6" "nat" "A" "${adb_prechain_ipv6}" "adb-prerouting" "! -i ${adb_wandev6} -p tcp -d ${adb_nullipv6} -m multiport --dports 80,443 -j REDIRECT --to-ports ${adb_port}"
         f_firewall "IPv6" "nat" "A" "${adb_prechain_ipv6}" "adb-dns" "! -i ${adb_wandev6} -p udp --dport 53 -j REDIRECT"
         f_firewall "IPv6" "nat" "A" "${adb_prechain_ipv6}" "adb-dns" "! -i ${adb_wandev6} -p tcp --dport 53 -j REDIRECT"
-        f_firewall "IPv6" "filter" "A" "${adb_fwdchain_ipv6}" "adb-forward" "! -i ${adb_wandev6} -p udp -d ${adb_nullipv6} -j REJECT --reject-with icmp-port-unreachable"
-        f_firewall "IPv6" "filter" "A" "${adb_fwdchain_ipv6}" "adb-forward" "! -i ${adb_wandev6} -p tcp -d ${adb_nullipv6} -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv6" "filter" "A" "${adb_fwdchain_ipv6}" "adb-forward" "! -i ${adb_wandev6} -d ${adb_nullipv6} -j REJECT --reject-with icmp-proto-unreachable"
-        f_firewall "IPv6" "filter" "A" "${adb_outchain_ipv6}" "adb-output" "! -i ${adb_wandev6} -p udp -d ${adb_nullipv6} -j REJECT --reject-with icmp-port-unreachable"
-        f_firewall "IPv6" "filter" "A" "${adb_outchain_ipv6}" "adb-output" "! -i ${adb_wandev6} -p tcp -d ${adb_nullipv6} -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv6" "filter" "A" "${adb_outchain_ipv6}" "adb-output" "! -i ${adb_wandev6} -d ${adb_nullipv6} -j REJECT --reject-with icmp-proto-unreachable"
+        f_firewall "IPv6" "filter" "A" "${adb_fwdchain_ipv6}" "adb-forward" "! -i ${adb_wandev6} -d ${adb_nullipv6} -j REJECT --reject-with icmp6-addr-unreachable"
+        f_firewall "IPv6" "filter" "A" "${adb_outchain_ipv6}" "adb-output" "! -i ${adb_wandev6} -d ${adb_nullipv6} -j REJECT --reject-with icmp6-addr-unreachable"
         if [ "${fw_done}" = "true" ]
         then
             f_log "created volatile IPv6 firewall ruleset"
@@ -691,9 +653,9 @@ f_exit()
         fi
         if [ -n "${adb_wanif6}" ]
         then
-            ipv6_prerouting="$(${iptv6} -t nat -vnL | awk '$11 ~ /^adb-prerouting$/ {sum += $1} END {print sum}')"
-            ipv6_forward="$(${iptv6} -vnL | awk '$11 ~ /^adb-forward$/ {sum += $1} END {print sum}')"
-            ipv6_output="$(${iptv6} -vnL | awk '$11 ~ /^adb-output$/ {sum += $1} END {print sum}')"
+            ipv6_prerouting="$(${iptv6} -t nat -vnL | awk '$10 ~ /^adb-prerouting$/ {sum += $1} END {print sum}')"
+            ipv6_forward="$(${iptv6} -vnL | awk '$10 ~ /^adb-forward$/ {sum += $1} END {print sum}')"
+            ipv6_output="$(${iptv6} -vnL | awk '$10 ~ /^adb-output$/ {sum += $1} END {print sum}')"
         fi
         if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
         then

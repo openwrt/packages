@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-utils
-PKG_VERSION:=1.0.29
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/utils/ \
 		http://alsa.cybermirror.org/utils/
-PKG_MD5SUM:=6b289bf874c4c9a63f4b3973093dd404
+PKG_MD5SUM:=b9d6102fbbd0b68040bb77023ed30c0c
 PKG_INSTALL:=1
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/alsa-utils
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+alsa-lib +libncurses +libpthread
+  DEPENDS:=+alsa-lib +libncursesw +libpthread
   TITLE:=ALSA (Advanced Linux Sound Architecture) utilities
   URL:=http://www.alsa-project.org/
 endef
@@ -44,16 +44,12 @@ define Package/alsa-utils-tests
   DEPENDS:=+alsa-lib +libpthread
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default, \
+CONFIGURE_ARGS+= \
 		--disable-rpath \
 		--disable-alsatest \
+		--disable-bat \
 		--disable-xmlto \
-		, \
-		ac_cv_prog_ncurses5_config=no \
-		ac_cv_prog_ncursesw5_config=no \
-	)
-endef
+		--with-curses=ncursesw
 
 define Package/alsa-utils/install
 	$(INSTALL_DIR) $(1)/usr/{s,}bin
