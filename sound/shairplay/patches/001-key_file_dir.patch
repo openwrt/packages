@@ -1,6 +1,6 @@
 --- a/src/shairplay.c
 +++ b/src/shairplay.c
-@@ -346,7 +346,7 @@ main(int argc, char *argv[])
+@@ -350,7 +350,7 @@ main(int argc, char *argv[])
  	raop_cbs.audio_destroy = audio_destroy;
  	raop_cbs.audio_set_volume = audio_set_volume;
  
