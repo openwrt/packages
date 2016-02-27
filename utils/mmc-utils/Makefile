@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mmc-utils
-PKG_VERSION=2015-05-01-$(PKG_SOURCE_VERSION)
+PKG_VERSION=2016-02-23-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://git.kernel.org/pub/scm/linux/kernel/git/cjb/mmc-utils.git
-PKG_SOURCE_VERSION:=d0b46442b50794217e53b2455c1344c548d9d088
+PKG_SOURCE_VERSION:=4af1749d23503c25f692a60f23d295d16ddcfb61
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
 
