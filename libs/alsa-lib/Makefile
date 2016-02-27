@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -43,15 +43,12 @@ endef
 
 TARGET_CFLAGS += $(FPIC)
 
-define Build/Configure
-	$(call Build/Configure/Default, \
+CONFIGURE_ARGS+= \
 		--disable-python \
 		--disable-debug \
 		--without-debug \
 		$(SOFT_FLOAT_CONFIG_OPTION) \
-		--with-versioned=no \
-	)
-endef
+		--with-versioned=no
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
