@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,8 +9,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shairport-sync
-PKG_VERSION:=2.6
-PKG_RELEASE:=2
+PKG_VERSION:=2.8.0
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/mikebrady/shairport-sync.git
@@ -35,20 +35,21 @@ define Package/shairport-sync/default
   CATEGORY:=Sound
   TITLE:=AirPlay compatible audio player
   DEPENDS:=@AUDIO_SUPPORT +libpthread +alsa-lib +libconfig +libdaemon +libpopt
+  PROVIDES:=shairport-sync
   URL:=http://github.com/mikebrady/shairport-sync
 endef
 
 define Package/shairport-sync-openssl
   $(Package/shairport-sync/default)
   TITLE+= (openssl)
-  DEPENDS+= +PACKAGE_shairport-sync-openssl:libopenssl +libavahi-client +libsoxr
+  DEPENDS+= +libopenssl +libavahi-client +libsoxr
   VARIANT:=openssl
 endef
 
 define Package/shairport-sync-polarssl
   $(Package/shairport-sync/default)
   TITLE+= (polarssl)
-  DEPENDS+= +PACKAGE_shairport-sync-polarssl:libpolarssl +libavahi-client +libsoxr
+  DEPENDS+= +libpolarssl +libavahi-client +libsoxr
   VARIANT:=polarssl
   DEFAULT_VARIANT:=1
 endef
