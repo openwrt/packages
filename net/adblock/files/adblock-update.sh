@@ -1,30 +1,12 @@
 #!/bin/sh
-#######################################################
-# ad/abuse domain blocking script for dnsmasq/openwrt #
-# written by Dirk Brenken (openwrt@brenken.org)       #
-#######################################################
+# ad/abuse domain blocking script for dnsmasq/openwrt
+# written by Dirk Brenken (openwrt@brenken.org)
 
-# LICENSE
-# ========
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
+# This is free software, licensed under the GNU General Public License v3.
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-###############
-# environment #
-###############
-
-# set the C locale, characters are single bytes, the charset is ASCII
-# speeds up things like sort, grep etc.
+# set the C locale
 #
 LC_ALL=C
 
@@ -45,7 +27,7 @@ fi
 # get current directory, script- and openwrt version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="0.80.1"
+adb_scriptver="0.90.0"
 openwrt_version="$(cat /etc/openwrt_version 2>/dev/null)"
 
 # source in adblock function library
@@ -59,13 +41,9 @@ else
     exit ${rc}
 fi
 
-################
-# main program #
-################
-
 # call trap function on error signals (HUP, INT, QUIT, BUS, SEGV, TERM)
 #
-trap "rc=253; f_log 'error signal received/trapped' '${rc}'; f_exit" 1 2 3 10 11 15
+trap "rc=250; f_log 'error signal received/trapped' '${rc}'; f_exit" 1 2 3 10 11 15
 
 # load environment
 #
@@ -93,15 +71,13 @@ then
     shalla_file="${adb_tmpdir}/shallalist.txt"
     src_name="shalla"
     adb_dnsfile="${adb_dnsdir}/${adb_dnsprefix}.${src_name}"
-    list_time="$(grep -F "# last modified: " "${adb_dnsfile}" 2>/dev/null)"
-    list_time="${list_time/*: /}"
+    list_time="$(awk '$0 ~ /^# last modified/ {printf substr($0,18)}' "${adb_dnsfile}" 2>/dev/null)"
     f_log "=> (pre-)processing adblock source '${src_name}'"
 
     # only process shallalist archive with updated timestamp,
     # extract and merge only domains of selected shallalist categories
     #
-    shalla_time="$(${adb_fetch} ${wget_parm} --server-response --spider "${adb_arc_shalla}" 2>&1 | grep -F "Last-Modified: " 2>/dev/null | tr -d '\r' 2>/dev/null)"
-    shalla_time="${shalla_time/*: /}"
+    shalla_time="$(${adb_fetch} ${wget_parm} --server-response --spider "${adb_arc_shalla}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}' 2>/dev/null)"
     if [ -z "${shalla_time}" ]
     then
         shalla_time="$(date)"
@@ -162,8 +138,7 @@ do
     url="${src/\&ruleset=*/}"
     src_name="${src/*\&ruleset=rset_/}"
     adb_dnsfile="${adb_dnsdir}/${adb_dnsprefix}.${src_name}"
-    list_time="$(grep -F "# last modified: " "${adb_dnsfile}" 2>/dev/null)"
-    list_time="${list_time/*: /}"
+    list_time="$(awk '$0 ~ /^# last modified/ {printf substr($0,18)}' "${adb_dnsfile}" 2>/dev/null)"
     f_log "=> processing adblock source '${src_name}'"
 
     # prepare find statement with active adblock list sources
@@ -184,8 +159,7 @@ do
     then
         url_time="${shalla_time}"
     else
-        url_time="$(${adb_fetch} ${wget_parm} --server-response --spider "${url}" 2>&1 | grep -F "Last-Modified: " 2>/dev/null | tr -d '\r' 2>/dev/null)"
-        url_time="${url_time/*: /}"
+        url_time="$(${adb_fetch} ${wget_parm} --server-response --spider "${url}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}' 2>/dev/null)"
     fi
     if [ -z "${url_time}" ]
     then
@@ -262,19 +236,11 @@ do
             adb_revsrclist="${adb_revsrclist} -o -name ${adb_dnsprefix}.${src_name}"
         fi
 
-        # write preliminary adblock list footer
+        # write preliminary footer
         #
         if [ $((rc)) -eq 0 ]
         then
-            if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
-            then
-                count="$(($(wc -l < "${adb_dnsdir}/${adb_dnsprefix}.${src_name}") / 2))"
-            else
-                count="$(wc -l < "${adb_dnsdir}/${adb_dnsprefix}.${src_name}")"
-            fi
-            printf "%s\n" "#------------------------------------------------------------------" >> "${adb_dnsfile}"
-            printf "%s\n" "# ${0##*/} (${adb_scriptver}) - ${count} ad/abuse domains blocked" >> "${adb_dnsfile}"
-            printf "%s\n" "# source: ${url}" >> "${adb_dnsfile}"
+            printf "%s\n" "#---------------------------------------------" >> "${adb_dnsfile}"
             printf "%s\n" "# last modified: ${url_time}" >> "${adb_dnsfile}"
             f_log "   domain merging finished"
         else
@@ -356,44 +322,35 @@ then
     fi
 fi
 
-# make separate adblock lists unique
+# make separate adblock lists entries unique
 #
-if [ $((adb_unique)) -eq 1 ]
+if [ "${mem_ok}" != "false" ]
 then
     if [ -n "${adb_revsrclist}" ]
     then
         f_log "remove duplicates in separate adblock lists"
 
-        # generate a temporary, unique overall list
+        # generate a temporary unique overall list
         #
-        head -qn -4 "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null | sort -u 2>/dev/null > "${adb_dnsdir}/tmp.overall"
+        head -qn -2 "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null | sort -u 2>/dev/null > "${adb_dnsdir}/tmp.overall"
 
         # loop through all separate lists, ordered by size (ascending)
         #
         for list in $(ls -Sr "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null)
         do
-            # check separate lists vs. overall list,
-            # rewrite only duplicate entries back to separate lists
+            # check original separate list vs. temporary overall list,
+            # rewrite only duplicate entries back to temporary separate list
             #
             list="${list/*./}"
             sort "${adb_dnsdir}/tmp.overall" "${adb_dnsdir}/${adb_dnsprefix}.${list}" 2>/dev/null | uniq -d 2>/dev/null > "${adb_dnsdir}/tmp.${list}"
 
-            # remove these entries from overall list,
-            # rewrite only unique entries back to overall list
+            # rewrite only unique entries back to temporary overall list
             #
             tmp_unique="$(sort "${adb_dnsdir}/tmp.overall" "${adb_dnsdir}/tmp.${list}" 2>/dev/null | uniq -u 2>/dev/null)"
             printf "%s\n" "${tmp_unique}" > "${adb_dnsdir}/tmp.overall"
 
-            # write final adblocklist footer
+            # write unique result back to original separate list (with list footer)
             #
-            if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
-            then
-                count="$(($(wc -l < "${adb_dnsdir}/tmp.${list}") / 2))"
-            else
-                count="$(wc -l < "${adb_dnsdir}/tmp.${list}")"
-            fi
-            printf "%s\n" "#------------------------------------------------------------------" >> "${adb_dnsdir}/tmp.${list}"
-            printf "%s\n" "# ${0##*/} (${adb_scriptver}) - ${count} ad/abuse domains blocked" >> "${adb_dnsdir}/tmp.${list}"
             tail -qn -2 "${adb_dnsdir}/$adb_dnsprefix.${list}" 2>/dev/null >> "${adb_dnsdir}/tmp.${list}"
             mv -f "${adb_dnsdir}/tmp.${list}" "${adb_dnsdir}/${adb_dnsprefix}.${list}" >/dev/null 2>&1
         done
@@ -401,14 +358,19 @@ then
     fi
 fi
 
-# get overall count
+# set separate list count & get overall count
 #
-if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
-then
-    adb_count="$(($(head -qn -4 "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null | wc -l) / 2))"
-else
-    adb_count="$(head -qn -4 "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null | wc -l)"
-fi
+for list in $(ls -Sr "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null)
+do
+    list="${list/*./}"
+    count="$(head -qn -2 "${adb_dnsdir}/${adb_dnsprefix}.${list}" | wc -l)"
+    if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
+    then
+        count=$((count / 2))
+    fi
+    printf "%s\n" "# ${0##*/} (${adb_scriptver}) - ${count} ad/abuse domains blocked" >> "${adb_dnsdir}/${adb_dnsprefix}.${list}"
+    adb_count=$((adb_count + count))
+done
 
 # restart dnsmasq with newly generated or deleted adblock lists,
 # check dnsmasq startup afterwards
@@ -416,13 +378,13 @@ fi
 if [ -n "${adb_revsrclist}" ] || [ -n "${rm_done}" ] || [ -n "${restore_done}" ]
 then
     /etc/init.d/dnsmasq restart >/dev/null 2>&1
-    sleep 2
+    sleep 1
     dns_status="$(ps 2>/dev/null | grep "[d]nsmasq" 2>/dev/null)"
     if [ -n "${dns_status}" ]
     then
         f_log "adblock lists with overall ${adb_count} domains loaded"
     else
-        rc=105
+        rc=100
         f_log "dnsmasq restart failed, please check 'logread' output" "${rc}"
         f_restore
     fi

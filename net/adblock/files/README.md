@@ -46,15 +46,13 @@ When the dns server on your router receives dns requests, you will sort out quer
 * adblock source list parsing by fast & flexible regex rulesets
 * additional white- and blacklist support for manual overrides
 * quality checks during & after update of adblock lists to ensure a reliable dnsmasq service
-* wan update check, to wait for an active wan uplink before update
 * basic adblock statistics via iptables packet counters for each chain
 * status & error logging to stdout and syslog
 * use of dynamic uhttpd instance as adblock pixel server
+* use of dynamic iptables ruleset for adblock related redirects/rejects
 * openwrt init system support (start/stop/restart/reload)
 * hotplug support, adblock start will be triggered by wan 'ifup' event
-* optional features (disabled by default):
-    * adblock list backup/restore
-    * debug logging to separate file
+* optional: adblock list backup/restore (disabled by default)
 
 ## Prerequisites
 * [openwrt](https://openwrt.org), tested with latest stable release (Chaos Calmer 15.05) and with current trunk (Designated Driver > r47025)
@@ -81,28 +79,29 @@ Thanks to Hannu Nyman for this great adblock LuCI frontend!
 
 ## Tweaks
 * there is no need to enable all blacklist sites at once, for normal use one to three adblock list sources should be sufficient
-* if you really need to handle all blacklists at once add an usb stick or any other storage device to supersize your temp directory with a swap partition => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
-* add static, personal domain white- or blacklist entries, one domain per line (wildcards & regex are not allowed!), by default both lists are located in */etc/adblock*
-* enable the backup/restore feature, to restore automatically the latest, stable backup of your adblock lists in case of any processing error
-* enable the logging feature for continuous logfile writing to monitor the adblock runs over a longer period
+* if you really need to handle all blacklists at once add an usb stick or any other storage device to enlarge your temp directory with a swap partition => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
+* add personal domain white- or blacklist entries as an additional blocklist source, one domain per line (wildcards & regex are not allowed!), by default both empty lists are located in */etc/adblock*
+* enable the backup/restore feature, to restore automatically the latest stable backup of your adblock lists in case of any (partial) processing error (i.e. a single blocklist source server is down). Please use an (external) solid partition and *not* your volatile router temp directory for this
 * for a scheduled call of the adblock service via */etc/init.d/adblock start* add an appropriate crontab entry
 
 ## Further adblock config options
 * usually the adblock autodetection works quite well and no manual config overrides are needed, all options apply to 'global' adblock config section:
-    * adb\_enabled => main switch to enable/disable adblock service (default: '1' (enabled))
+    * adb\_enabled => main switch to enable/disable adblock service (default: '1', enabled)
     * adb\_cfgver => config version string (do not change!) - adblock checks this entry and automatically applies the current config, if none or an older revision was found.
     * adb\_wanif => name of the logical wan interface (default: 'wan')
     * adb\_lanif => name of the logical lan interface (default: 'lan')
     * adb\_port => port of the adblock uhttpd instance (default: '65535')
     * adb\_nullipv4 => IPv4 blackhole ip address (default: '192.0.2.1')
     * adb\_nullipv6 => IPv6 blackhole ip address (default: '::ffff:c000:0201')
+    * adb\_forcedns => redirect all DNS queries to local dnsmasq resolver (default: '1', enabled)
 
 ## Background
 This adblock package is a dns/dnsmasq based adblock solution for openwrt.  
 Queries to ad/abuse domains are never forwarded and always replied with a local IP address which may be IPv4 or IPv6.  
 For that purpose adblock uses an ip address from the private 'TEST-NET-1' subnet (192.0.2.1 / ::ffff:c000:0201) by default.  
 Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to internal adblock pixel server (in PREROUTING chain) or rejected (in FORWARD or OUTPUT chain).  
-All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other openwrt related config files. There is *no* adblock background daemon running, the (scheduled) start of the adblock service keeps only the adblock lists up-to-date.
+All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other openwrt related config files.  
+There is *no* adblock background daemon running, the (scheduled) start of the adblock service keeps only the adblock lists up-to-date.
 
 ## Support
 Please join the adblock discussion in this [openwrt forum thread](https://forum.openwrt.org/viewtopic.php?id=59803) or contact me by mail <openwrt@brenken.org>
