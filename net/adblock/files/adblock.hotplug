@@ -1,14 +1,16 @@
 #!/bin/sh
 #
 
-if [ -f "/var/run/adblock.pid" ] || [ "${ACTION}" != "ifup" ]
+adb_pid="${$}"
+adb_pidfile="/var/run/adblock.pid"
+adb_logger="/usr/bin/logger"
+
+if [ -f "${adb_pidfile}" ] || [ "${ACTION}" != "ifup" ]
 then
     exit 0
 fi
 
 . /lib/functions/network.sh
-adb_pid="${$}"
-adb_logger="/usr/bin/logger"
 network_find_wan adb_wanif4
 network_find_wan6 adb_wanif6
 

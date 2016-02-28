@@ -36,6 +36,7 @@ start()
 
 restart()
 {
+    stop
     start
 }
 
