@@ -721,9 +721,10 @@ do_transfer() {
 		# force network/ip not supported
 		[ -n "$__BINDIP" ] && \
 			write_log 14 "uclient-fetch: FORCE binding to specific address not supported"
-		# force ip version not supported
-		[ $force_ipversion -eq 1 ] && \
-			write_log 14 "uclient-fetch: Force connecting to IPv4 or IPv6 addresses not supported"
+		# force ip version to use
+		if [ $force_ipversion -eq 1 ]; then
+			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"       # force IPv4/IPv6
+		fi
 		# https possibly not supported
 		[ $use_https -eq 1 -a ! -f /lib/libustream-ssl.so ] && \
 			write_log 14 "uclient-fetch: no HTTPS support! Additional install one of ustream-ssl packages"
