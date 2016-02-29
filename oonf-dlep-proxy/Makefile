@@ -21,7 +21,7 @@ CMAKE_OPTIONS=-D OONF_NO_WERROR:Bool=true \
               -D OONF_NO_TESTING:Bool=true \
               -D UCI:Bool=true \
               -D OONF_APP_DEFAULT_CFG_HANDLER:String=uci \
-              -D OONF_STATIC_PLUGINS:String="class;clock;interface;layer2;packet_socket;socket;stream_socket;telnet;timer;viewer;os_clock;os_socket;os_interface;os_system;nl80211_listener;layer2info;systeminfo;cfg_uciloader;cfg_compact;dlep_proxy" \
+              -D OONF_STATIC_PLUGINS:String="class;clock;interface;layer2;packet_socket;socket;stream_socket;telnet;timer;viewer;os_clock;os_fd;os_interface;os_system;nl80211_listener;layer2info;systeminfo;cfg_uciloader;cfg_compact;dlep_proxy" \
               -D OONF_LIB_GIT:String=v$(PKG_VERSION)-archive \
               -D OONF_VERSION:String=$(PKG_VERSION) \
               -D INSTALL_LIB_DIR:Path=lib/oonf \
