@@ -1,0 +1,411 @@
+From a4d7f5ee6f36decdcd18d70078e1f0a847fe9b24 Mon Sep 17 00:00:00 2001
+From: Tobias Brunner <tobias@strongswan.org>
+Date: Mon, 30 Nov 2015 16:04:35 +0100
+Subject: [PATCH 1/2] connmark: Fix alignment when adding rules
+
+The structs that make up a message sent to the kernel have all to be
+aligned with XT_ALIGN.  That was not necessarily the case when
+initializing the complete message as struct.
+
+ #1212
+---
+ src/libcharon/plugins/connmark/connmark_listener.c | 332 +++++++++++----------
+ 1 file changed, 172 insertions(+), 160 deletions(-)
+
+diff --git a/src/libcharon/plugins/connmark/connmark_listener.c b/src/libcharon/plugins/connmark/connmark_listener.c
+index 23df690..cd53701 100644
+--- a/src/libcharon/plugins/connmark/connmark_listener.c
++++ b/src/libcharon/plugins/connmark/connmark_listener.c
+@@ -1,4 +1,7 @@
+ /*
++ * Copyright (C) 2015 Tobias Brunner
++ * Hochschule fuer Technik Rapperswil
++ *
+  * Copyright (C) 2014 Martin Willi
+  * Copyright (C) 2014 revosec AG
+  *
+@@ -25,6 +28,14 @@
+ #include <linux/netfilter/xt_policy.h>
+ #include <linux/netfilter/xt_CONNMARK.h>
+
++/**
++ * Add a struct at the current position in the buffer
++ */
++#define ADD_STRUCT(pos, st, ...) ({\
++	typeof(pos) _cur = pos; pos += XT_ALIGN(sizeof(st));\
++	*(st*)_cur = (st){ __VA_ARGS__ };\
++	(st*)_cur;\
++})
+
+ typedef struct private_connmark_listener_t private_connmark_listener_t;
+
+@@ -108,54 +119,54 @@ static bool manage_pre_esp_in_udp(private_connmark_listener_t *this,
+								  u_int mark, u_int32_t spi,
+								  host_t *dst, host_t *src)
+ {
+-	struct {
+-		struct ipt_entry e;
+-		struct ipt_entry_match m;
+-		struct xt_udp udp;
+-		struct ipt_entry_target t;
+-		struct xt_mark_tginfo2 tm;
+-	} ipt = {
+-		.e  = {
+-			.target_offset = XT_ALIGN(sizeof(ipt.e) + sizeof(ipt.m) +
+-									  sizeof(ipt.udp)),
+-			.next_offset = sizeof(ipt),
+-			.ip = {
+-				.proto = IPPROTO_UDP,
+-			},
++	u_int16_t match_size	= XT_ALIGN(sizeof(struct ipt_entry_match)) +
++							  XT_ALIGN(sizeof(struct xt_udp));
++	u_int16_t target_offset = XT_ALIGN(sizeof(struct ipt_entry)) + match_size;
++	u_int16_t target_size	= XT_ALIGN(sizeof(struct ipt_entry_target)) +
++							  XT_ALIGN(sizeof(struct xt_mark_tginfo2));
++	u_int16_t entry_size	= target_offset + target_size;
++	u_char ipt[entry_size], *pos = ipt;
++	struct ipt_entry *e;
++
++	memset(ipt, 0, sizeof(ipt));
++	e = ADD_STRUCT(pos, struct ipt_entry,
++		.target_offset = target_offset,
++		.next_offset = entry_size,
++		.ip = {
++			.proto = IPPROTO_UDP,
+		},
+-		.m = {
+-			.u = {
+-				.user = {
+-					.match_size = XT_ALIGN(sizeof(ipt.m) + sizeof(ipt.udp)),
+-					.name = "udp",
+-				},
++	);
++	if (!host2in(dst, &e->ip.dst, &e->ip.dmsk) ||
++		!host2in(src, &e->ip.src, &e->ip.smsk))
++	{
++		return FALSE;
++	}
++	ADD_STRUCT(pos, struct ipt_entry_match,
++		.u = {
++			.user = {
++				.match_size = match_size,
++				.name = "udp",
+			},
+		},
+-		.udp = {
+-			.spts = { src->get_port(src), src->get_port(src) },
+-			.dpts = { dst->get_port(dst), dst->get_port(dst) },
+-		},
+-		.t = {
+-			.u = {
+-				.user = {
+-					.target_size = XT_ALIGN(sizeof(ipt.t) + sizeof(ipt.tm)),
+-					.name = "MARK",
+-					.revision = 2,
+-				},
++	);
++	ADD_STRUCT(pos, struct xt_udp,
++		.spts = { src->get_port(src), src->get_port(src) },
++		.dpts = { dst->get_port(dst), dst->get_port(dst) },
++	);
++	ADD_STRUCT(pos, struct ipt_entry_target,
++		.u = {
++			.user = {
++				.target_size = target_size,
++				.name = "MARK",
++				.revision = 2,
+			},
+		},
+-		.tm = {
+-			.mark = mark,
+-			.mask = ~0,
+-		},
+-	};
+-
+-	if (!host2in(dst, &ipt.e.ip.dst, &ipt.e.ip.dmsk) ||
+-		!host2in(src, &ipt.e.ip.src, &ipt.e.ip.smsk))
+-	{
+-		return FALSE;
+-	}
+-	return manage_rule(ipth, "PREROUTING", add, &ipt.e);
++	);
++	ADD_STRUCT(pos, struct xt_mark_tginfo2,
++		.mark = mark,
++		.mask = ~0,
++	);
++	return manage_rule(ipth, "PREROUTING", add, e);
+ }
+
+ /**
+@@ -166,53 +177,53 @@ static bool manage_pre_esp(private_connmark_listener_t *this,
+						   u_int mark, u_int32_t spi,
+						   host_t *dst, host_t *src)
+ {
+-	struct {
+-		struct ipt_entry e;
+-		struct ipt_entry_match m;
+-		struct xt_esp esp;
+-		struct ipt_entry_target t;
+-		struct xt_mark_tginfo2 tm;
+-	} ipt = {
+-		.e  = {
+-			.target_offset = XT_ALIGN(sizeof(ipt.e) + sizeof(ipt.m) +
+-									  sizeof(ipt.esp)),
+-			.next_offset = sizeof(ipt),
+-			.ip = {
+-				.proto = IPPROTO_ESP,
+-			},
++	u_int16_t match_size	= XT_ALIGN(sizeof(struct ipt_entry_match)) +
++							  XT_ALIGN(sizeof(struct xt_esp));
++	u_int16_t target_offset = XT_ALIGN(sizeof(struct ipt_entry)) + match_size;
++	u_int16_t target_size	= XT_ALIGN(sizeof(struct ipt_entry_target)) +
++							  XT_ALIGN(sizeof(struct xt_mark_tginfo2));
++	u_int16_t entry_size	= target_offset + target_size;
++	u_char ipt[entry_size], *pos = ipt;
++	struct ipt_entry *e;
++
++	memset(ipt, 0, sizeof(ipt));
++	e = ADD_STRUCT(pos, struct ipt_entry,
++		.target_offset = target_offset,
++		.next_offset = entry_size,
++		.ip = {
++			.proto = IPPROTO_ESP,
+		},
+-		.m = {
+-			.u = {
+-				.user = {
+-					.match_size = XT_ALIGN(sizeof(ipt.m) + sizeof(ipt.esp)),
+-					.name = "esp",
+-				},
++	);
++	if (!host2in(dst, &e->ip.dst, &e->ip.dmsk) ||
++		!host2in(src, &e->ip.src, &e->ip.smsk))
++	{
++		return FALSE;
++	}
++	ADD_STRUCT(pos, struct ipt_entry_match,
++		.u = {
++			.user = {
++				.match_size = match_size,
++				.name = "esp",
+			},
+		},
+-		.esp = {
+-			.spis = { htonl(spi), htonl(spi) },
+-		},
+-		.t = {
+-			.u = {
+-				.user = {
+-					.target_size = XT_ALIGN(sizeof(ipt.t) + sizeof(ipt.tm)),
+-					.name = "MARK",
+-					.revision = 2,
+-				},
++	);
++	ADD_STRUCT(pos, struct xt_esp,
++		.spis = { htonl(spi), htonl(spi) },
++	);
++	ADD_STRUCT(pos, struct ipt_entry_target,
++		.u = {
++			.user = {
++				.target_size = target_size,
++				.name = "MARK",
++				.revision = 2,
+			},
+		},
+-		.tm = {
+-			.mark = mark,
+-			.mask = ~0,
+-		},
+-	};
+-
+-	if (!host2in(dst, &ipt.e.ip.dst, &ipt.e.ip.dmsk) ||
+-		!host2in(src, &ipt.e.ip.src, &ipt.e.ip.smsk))
+-	{
+-		return FALSE;
+-	}
+-	return manage_rule(ipth, "PREROUTING", add, &ipt.e);
++	);
++	ADD_STRUCT(pos, struct xt_mark_tginfo2,
++		.mark = mark,
++		.mask = ~0,
++	);
++	return manage_rule(ipth, "PREROUTING", add, e);
+ }
+
+ /**
+@@ -238,59 +249,59 @@ static bool manage_in(private_connmark_listener_t *this,
+					  u_int mark, u_int32_t spi,
+					  traffic_selector_t *dst, traffic_selector_t *src)
+ {
+-	struct {
+-		struct ipt_entry e;
+-		struct ipt_entry_match m;
+-		struct xt_policy_info p;
+-		struct ipt_entry_target t;
+-		struct xt_connmark_tginfo1 cm;
+-	} ipt = {
+-		.e  = {
+-			.target_offset = XT_ALIGN(sizeof(ipt.e) + sizeof(ipt.m) +
+-									  sizeof(ipt.p)),
+-			.next_offset = sizeof(ipt),
+-		},
+-		.m = {
+-			.u = {
+-				.user = {
+-					.match_size = XT_ALIGN(sizeof(ipt.m) + sizeof(ipt.p)),
+-					.name = "policy",
+-				},
++	u_int16_t match_size	= XT_ALIGN(sizeof(struct ipt_entry_match)) +
++							  XT_ALIGN(sizeof(struct xt_policy_info));
++	u_int16_t target_offset = XT_ALIGN(sizeof(struct ipt_entry)) + match_size;
++	u_int16_t target_size	= XT_ALIGN(sizeof(struct ipt_entry_target)) +
++							  XT_ALIGN(sizeof(struct xt_connmark_tginfo1));
++	u_int16_t entry_size	= target_offset + target_size;
++	u_char ipt[entry_size], *pos = ipt;
++	struct ipt_entry *e;
++
++	memset(ipt, 0, sizeof(ipt));
++	e = ADD_STRUCT(pos, struct ipt_entry,
++		.target_offset = target_offset,
++		.next_offset = entry_size,
++	);
++	if (!ts2in(dst, &e->ip.dst, &e->ip.dmsk) ||
++		!ts2in(src, &e->ip.src, &e->ip.smsk))
++	{
++		return FALSE;
++	}
++	ADD_STRUCT(pos, struct ipt_entry_match,
++		.u = {
++			.user = {
++				.match_size = match_size,
++				.name = "policy",
+			},
+		},
+-		.p = {
+-			.pol = {
+-				{
+-					.spi = spi,
+-					.match.spi = 1,
+-				},
++	);
++	ADD_STRUCT(pos, struct xt_policy_info,
++		.pol = {
++			{
++				.spi = spi,
++				.match.spi = 1,
+			},
+-			.len = 1,
+-			.flags = XT_POLICY_MATCH_IN,
+		},
+-		.t = {
+-			.u = {
+-				.user = {
+-					.target_size = XT_ALIGN(sizeof(ipt.t) + sizeof(ipt.cm)),
+-					.name = "CONNMARK",
+-					.revision = 1,
+-				},
++		.len = 1,
++		.flags = XT_POLICY_MATCH_IN,
++	);
++	ADD_STRUCT(pos, struct ipt_entry_target,
++		.u = {
++			.user = {
++				.target_size = target_size,
++				.name = "CONNMARK",
++				.revision = 1,
+			},
+		},
+-		.cm = {
+-			.ctmark = mark,
+-			.ctmask = ~0,
+-			.nfmask = ~0,
+-			.mode = XT_CONNMARK_SET,
+-		},
+-	};
+-
+-	if (!ts2in(dst, &ipt.e.ip.dst, &ipt.e.ip.dmsk) ||
+-		!ts2in(src, &ipt.e.ip.src, &ipt.e.ip.smsk))
+-	{
+-		return FALSE;
+-	}
+-	return manage_rule(ipth, "INPUT", add, &ipt.e);
++	);
++	ADD_STRUCT(pos, struct xt_connmark_tginfo1,
++		.ctmark = mark,
++		.ctmask = ~0,
++		.nfmask = ~0,
++		.mode = XT_CONNMARK_SET,
++	);
++	return manage_rule(ipth, "INPUT", add, e);
+ }
+
+ /**
+@@ -300,37 +311,38 @@ static bool manage_out(private_connmark_listener_t *this,
+					   struct iptc_handle *ipth, bool add,
+					   traffic_selector_t *dst, traffic_selector_t *src)
+ {
+-	struct {
+-		struct ipt_entry e;
+-		struct ipt_entry_target t;
+-		struct xt_connmark_tginfo1 cm;
+-	} ipt = {
+-		.e  = {
+-			.target_offset = XT_ALIGN(sizeof(ipt.e)),
+-			.next_offset = sizeof(ipt),
+-		},
+-		.t = {
+-			.u = {
+-				.user = {
+-					.target_size = XT_ALIGN(sizeof(ipt.t) + sizeof(ipt.cm)),
+-					.name = "CONNMARK",
+-					.revision = 1,
+-				},
+-			},
+-		},
+-		.cm = {
+-			.ctmask = ~0,
+-			.nfmask = ~0,
+-			.mode = XT_CONNMARK_RESTORE,
+-		},
+-	};
+-
+-	if (!ts2in(dst, &ipt.e.ip.dst, &ipt.e.ip.dmsk) ||
+-		!ts2in(src, &ipt.e.ip.src, &ipt.e.ip.smsk))
++	u_int16_t target_offset = XT_ALIGN(sizeof(struct ipt_entry));
++	u_int16_t target_size	= XT_ALIGN(sizeof(struct ipt_entry_target)) +
++							  XT_ALIGN(sizeof(struct xt_connmark_tginfo1));
++	u_int16_t entry_size	= target_offset + target_size;
++	u_char ipt[entry_size], *pos = ipt;
++	struct ipt_entry *e;
++
++	memset(ipt, 0, sizeof(ipt));
++	e = ADD_STRUCT(pos, struct ipt_entry,
++		.target_offset = target_offset,
++		.next_offset = entry_size,
++	);
++	if (!ts2in(dst, &e->ip.dst, &e->ip.dmsk) ||
++		!ts2in(src, &e->ip.src, &e->ip.smsk))
+	{
+		return FALSE;
+	}
+-	return manage_rule(ipth, "OUTPUT", add, &ipt.e);
++	ADD_STRUCT(pos, struct ipt_entry_target,
++		.u = {
++			.user = {
++				.target_size = target_size,
++				.name = "CONNMARK",
++				.revision = 1,
++			},
++		},
++	);
++	ADD_STRUCT(pos, struct xt_connmark_tginfo1,
++		.ctmask = ~0,
++		.nfmask = ~0,
++		.mode = XT_CONNMARK_RESTORE,
++	);
++	return manage_rule(ipth, "OUTPUT", add, e);
+ }
+
+ /**
+--
+2.4.10
