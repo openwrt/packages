@@ -31,14 +31,14 @@ start_service() {
 	config_dir=$(dirname $CONFIGFILE)
 	[ -d $config_dir ] || mkdir -p $config_dir && chown nobody:nogroup $config_dir
 	[ -d $coredump_dir ] || mkdir -p $coredump_dir && chown nobody:nogroup $coredump_dir
-	[ "$ssldb" ] && ( [ -f "$ssldb"/size ] || /usr/lib/squid/ssl_crtd -c -s $ssldb && chown -R nobody:nogroup $ssldb )
+	[ "$ssldb" ] && ( [ -f "$ssldb"/size ] || /usr/lib/squid/security_file_certgen -c -s $ssldb && chown -R nobody:nogroup $ssldb )
 
 	cat $config_file > $CONFIGFILE
 	echo http_port $http_port $http_port_options >> $CONFIGFILE
 	echo coredump_dir $coredump_dir >> $CONFIGFILE
 	echo visible_hostname $visible_hostname >> $CONFIGFILE
 	echo pinger_enable $pinger_enable >> $CONFIGFILE
-	[ "$ssldb" ] && echo sslcrtd_program /usr/lib/squid/ssl_crtd -s $ssldb $ssldb_options >> $CONFIGFILE
+	[ "$ssldb" ] && echo sslcrtd_program /usr/lib/squid/security_file_certgen -s $ssldb $ssldb_options >> $CONFIGFILE
 	$PROG -s -f $CONFIGFILE -N -z 2>/dev/null
 
 	procd_open_instance
