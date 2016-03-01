@@ -230,5 +230,12 @@ stop_service() {
 }
 
 service_triggers(){
+	local script=$(readlink "$initscript")
+	local name=$(basename ${script:-$initscript})
+
+	procd_open_trigger
+	procd_add_raw_trigger "interface.*" 2000 /etc/init.d/$name reload
+	procd_close_trigger
+
 	procd_add_reload_trigger 'snmpd'
 }
