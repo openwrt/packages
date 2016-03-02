@@ -1,0 +1,72 @@
+--- a/slimproto.c
++++ b/slimproto.c
+@@ -20,6 +20,7 @@
+ 
+ #include "squeezelite.h"
+ #include "slimproto.h"
++#include <ifaddrs.h>
+ 
+ static log_level loglevel;
+ 
+@@ -735,6 +736,7 @@ in_addr_t discover_server(void) {
+ 	struct sockaddr_in s;
+ 	char *buf;
+ 	struct pollfd pollinfo;
++	struct ifaddrs *ifaddr = NULL, *ifa = NULL;
+ 
+ 	int disc_sock = socket(AF_INET, SOCK_DGRAM, 0);
+ 
+@@ -752,15 +754,39 @@ in_addr_t discover_server(void) {
+ 	pollinfo.events = POLLIN;
+ 
+ 	do {
++		// Walk on network interfaces
++		if (ifa == NULL) {
++			if (ifaddr != NULL) {
++				freeifaddrs(ifaddr);
++			}
++
++			if (getifaddrs(&ifaddr) == -1) {
++				ifaddr = NULL;
++				LOG_INFO("getifaddrs error: %s", strerror(errno));
++			}
++			else {
++				ifa = ifaddr;
++			}
++		}
++		else {
++			ifa = ifa->ifa_next;
++		}
++
++		// Bind socket to next network interface
++		if (ifa != NULL) {
++			setsockopt(disc_sock, SOL_SOCKET, SO_BINDTODEVICE, ifa->ifa_name, strlen(ifa->ifa_name));
++		}
++		else {
++			setsockopt(disc_sock, SOL_SOCKET, SO_BINDTODEVICE, "", 0);
++		}
+ 
+ 		LOG_INFO("sending discovery");
+ 		memset(&s, 0, sizeof(s));
+ 
+ 		if (sendto(disc_sock, buf, 1, 0, (struct sockaddr *)&d, sizeof(d)) < 0) {
+-			LOG_INFO("error sending disovery");
++			LOG_INFO("error sending disovery: %s", strerror(errno));
+ 		}
+-
+-		if (poll(&pollinfo, 1, 5000) == 1) {
++		else if (poll(&pollinfo, 1, 5000) == 1) {
+ 			char readbuf[10];
+ 			socklen_t slen = sizeof(s);
+ 			recvfrom(disc_sock, readbuf, 10, 0, (struct sockaddr *)&s, &slen);
+@@ -769,6 +795,10 @@ in_addr_t discover_server(void) {
+ 
+ 	} while (s.sin_addr.s_addr == 0 && running);
+ 
++	if (ifaddr != NULL) {
++		freeifaddrs(ifaddr);
++	}
++
+ 	closesocket(disc_sock);
+ 
+ 	return s.sin_addr.s_addr;
