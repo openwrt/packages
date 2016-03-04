@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oonf-olsrd2
-PKG_VERSION:=0.9.2
-PKG_REV:=d1780791bd449f578a37a2b3103682169d9a01a9
+PKG_VERSION:=0.11.0
+PKG_REV:=9846dd00aa766baa9d62d69ff8a1a323e5da2d68
 PKG_RELEASE:=$(PKG_REV)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -21,7 +21,7 @@ CMAKE_OPTIONS=-D OONF_NO_WERROR:Bool=true \
               -D OONF_NO_TESTING:Bool=true \
               -D UCI:Bool=true \
               -D OONF_APP_DEFAULT_CFG_HANDLER:String=uci \
-              -D OONF_STATIC_PLUGINS:String="class;clock;duplicate_set;interface;layer2;packet_socket;rfc5444;socket;stream_socket;telnet;timer;viewer;os_clock;os_socket;os_interface;os_routing;os_system;nhdp;olsrv2;ff_dat_metric;neighbor_probing;nl80211_listener;link_config;layer2info;systeminfo;cfg_uciloader;cfg_compact;nhdpinfo;olsrv2info;netjsoninfo" \
+              -D OONF_STATIC_PLUGINS:String="class;clock;duplicate_set;interface;layer2;packet_socket;rfc5444;socket;stream_socket;telnet;timer;viewer;os_clock;os_fd;os_interface;os_routing;os_system;nhdp;olsrv2;ff_dat_metric;neighbor_probing;nl80211_listener;link_config;layer2info;systeminfo;cfg_uciloader;cfg_compact;nhdpinfo;olsrv2info;netjsoninfo" \
               -D OONF_LIB_GIT:String=v$(PKG_VERSION)-archive \
               -D OONF_VERSION:String=$(PKG_VERSION) \
               -D INSTALL_LIB_DIR:Path=lib/oonf \
