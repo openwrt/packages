@@ -703,16 +703,24 @@ olsrd_setup_smartgw_rules() {
 	IP6T=$(which ip6tables)
 
 	# Delete smartgw firewall rules first
-	for IPT in $IP4T $IP6T; do
-		while $IPT -D forwarding_rule -o tnl_+ -j ACCEPT 2> /dev/null; do :;done
+	if [ "$UCI_CONF_NAME" == "olsrd6" ]; then
+		while $IP6T -D forwarding_rule -o tnl_+ -j ACCEPT 2> /dev/null; do :;done
 		for IFACE in $wanifnames; do
-			while $IPT -D forwarding_rule -i tunl0 -o $IFACE -j ACCEPT 2> /dev/null; do :; done
+			while $IP6T -D forwarding_rule -i tunl0 -o $IFACE -j ACCEPT 2> /dev/null; do :; done
 		done
 		for IFACE in $ifsglobal; do
-			while $IPT -D input_rule -i $IFACE -p 4 -j ACCEPT 2> /dev/null; do :; done
+			while $IP6T -D input_rule -i $IFACE -p 4 -j ACCEPT 2> /dev/null; do :; done
 		done
-	done
-	while $IP4T -t nat -D postrouting_rule -o tnl_+ -j MASQUERADE 2> /dev/null; do :;done
+	else
+		while $IP4T -D forwarding_rule -o tnl_+ -j ACCEPT 2> /dev/null; do :;done
+		for IFACE in $wanifnames; do
+			while $IP4T -D forwarding_rule -i tunl0 -o $IFACE -j ACCEPT 2> /dev/null; do :; done
+		done
+		for IFACE in $ifsglobal; do
+			while $IP4T -D input_rule -i $IFACE -p 4 -j ACCEPT 2> /dev/null; do :; done
+		done
+		while $IP4T -t nat -D postrouting_rule -o tnl_+ -j MASQUERADE 2> /dev/null; do :;done
+	fi
 
 	if [ "$smartgateway" == "yes" ]; then
 		log "$funcname() Notice: Inserting firewall rules for SmartGateway"
