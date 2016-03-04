@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ply
 PKG_VERSION:=3.8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.dabeaz.com/ply
@@ -45,15 +45,8 @@ define Build/Compile
 	$(call Build/Compile/PyMod,,install --prefix="/usr" --root="$(PKG_INSTALL_DIR)")
 endef
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(CP) \
-		$(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-		$(1)$(PYTHON_PKG_DIR)
-endef
-
 define Host/Compile
-	$(call Build/Compile/HostPyMod,,install --prefix="/usr" --root="$(STAGING_DIR)/host")
+	$(call Build/Compile/HostPyMod,,install --prefix="" --root="$(STAGING_DIR)/host")
 endef
 
 define Host/Install
