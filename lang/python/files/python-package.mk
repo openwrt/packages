@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -16,9 +16,6 @@ PYTHON_LIB_DIR:=$(PYTHON_DIR)/lib/python$(PYTHON_VERSION)
 PYTHON_PKG_DIR:=/usr/lib/python$(PYTHON_VERSION)/site-packages
 
 PYTHON:=python$(PYTHON_VERSION)
-
-HOST_PYTHON_LIB_DIR:=$(STAGING_DIR)/host/usr/lib/python$(PYTHON_VERSION)
-HOST_PYTHON_BIN:=$(STAGING_DIR)/host/bin/python2
 
 PYTHONPATH:=$(PYTHON_LIB_DIR):$(STAGING_DIR)/$(PYTHON_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON_PKG_DIR)
 
