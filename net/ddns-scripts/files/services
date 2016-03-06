@@ -37,7 +37,9 @@
 "changeip.com"		"http://[USERNAME]:[PASSWORD]@nic.changeip.com/nic/update?u=[USERNAME]&p=[PASSWORD]&cmd=update&hostname=[DOMAIN]&ip=[IP]"
 "zoneedit.com"		"http://[USERNAME]:[PASSWORD]@dynamic.zoneedit.com/auth/dynamic.html?host=[DOMAIN]&dnsto=[IP]"
 "free.editdns.net"	"http://dyndns-free.editdns.net/api/dynLinux.php?p=[PASSWORD]&r=[DOMAIN]"
-"freedns.afraid.org"  "http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# freedns.afraid.org is weird, you just need an update code, for which we use the password variable
+"freedns.afraid.org"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
 
 # DNS Max and resellers' update urls
 "dnsmax.com"	"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=1&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
@@ -120,3 +122,15 @@
 
 # dynu.com
 "dynu.com"  "http://api.dynu.com/nic/update?hostname=[DOMAIN]&myip=[IP]&username=[USERNAME]&password=[PASSWORD]"
+
+# nubem.com
+"nubem.com"	"http://[USERNAME]:[PASSWORD]@nubem.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# nettica.com
+"nettica.com"	"http://www.nettica.com/Domain/Update.aspx?U=[USERNAME]&PC=[PASSWORD]&FQDN=[DOMAIN]&N=[IP]"
+
+# zerigo.com
+"zerigo.com"	"http://update.zerigo.com/dynamic?host=[DOMAIN]&ip=[IP]&user=[USERNAME]&password=[PASSWORD]"
+
+# regfish.de
+"regfish.de"	"http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv4=[IP]"	"success|100|101"
