@@ -29,7 +29,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=python/host
-HOST_BUILD_DEPENDS:=bzip2/host expat/host
+HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -222,6 +222,7 @@ HOST_CONFIGURE_ARGS+= \
 	--without-pymalloc \
 	--with-threads \
 	--with-system-expat=$(STAGING_DIR)/host \
+	--with-system-ffi="$(STAGING_DIR)/host" \
 	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
