@@ -27,7 +27,7 @@ fi
 # get current directory, script- and openwrt version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="0.90.0"
+adb_scriptver="0.91.0"
 openwrt_version="$(cat /etc/openwrt_version 2>/dev/null)"
 
 # source in adblock function library
@@ -189,8 +189,8 @@ do
     #
     if [ $((rc)) -eq 0 ] && [ -n "${tmp_domains}" ]
     then
-        eval "$(printf "${src}" | sed 's/\(.*\&ruleset=\)/ruleset=\$/g')"
-        count="$(printf "%s\n" "${tmp_domains}" | tr '[A-Z]' '[a-z]' | eval "${ruleset}" | tee "${adb_tmpfile}" | wc -l)"
+        eval "src_rset=\${rset_${src_name}}"
+        count="$(printf "%s\n" "${tmp_domains}" | eval "${src_rset}" | tee "${adb_tmpfile}" | wc -l)"
         f_log "   source download finished (${count} entries)"
         if [ "${src_name}" = "shalla" ]
         then
@@ -220,10 +220,10 @@ do
     then
         if [ -s "${adb_whitelist}" ]
         then
-            grep -Fvxf "${adb_whitelist}" "${adb_tmpfile}" 2>/dev/null | sort 2>/dev/null | uniq -u 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null > "${adb_dnsfile}"
+            grep -Fvxf "${adb_whitelist}" "${adb_tmpfile}" 2>/dev/null | sort -u 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null > "${adb_dnsfile}"
             rc=${?}
         else
-            sort "${adb_tmpfile}" 2>/dev/null | uniq -u 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null > "${adb_dnsfile}"
+            sort -u "${adb_tmpfile}" 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null > "${adb_dnsfile}"
             rc=${?}
         fi
 
@@ -242,6 +242,7 @@ do
         then
             printf "%s\n" "#---------------------------------------------" >> "${adb_dnsfile}"
             printf "%s\n" "# last modified: ${url_time}" >> "${adb_dnsfile}"
+            printf "%s\n" "##" >> "${adb_dnsfile}"
             f_log "   domain merging finished"
         else
             f_log "   domain merging failed" "${rc}"
@@ -332,7 +333,7 @@ then
 
         # generate a temporary unique overall list
         #
-        head -qn -2 "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null | sort -u 2>/dev/null > "${adb_dnsdir}/tmp.overall"
+        head -qn -3 "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null | sort -u 2>/dev/null > "${adb_dnsdir}/tmp.overall"
 
         # loop through all separate lists, ordered by size (ascending)
         #
@@ -351,7 +352,7 @@ then
 
             # write unique result back to original separate list (with list footer)
             #
-            tail -qn -2 "${adb_dnsdir}/$adb_dnsprefix.${list}" 2>/dev/null >> "${adb_dnsdir}/tmp.${list}"
+            tail -qn 3 "${adb_dnsdir}/$adb_dnsprefix.${list}" 2>/dev/null >> "${adb_dnsdir}/tmp.${list}"
             mv -f "${adb_dnsdir}/tmp.${list}" "${adb_dnsdir}/${adb_dnsprefix}.${list}" >/dev/null 2>&1
         done
         rm -f "${adb_dnsdir}/tmp.overall" >/dev/null 2>&1
@@ -363,12 +364,16 @@ fi
 for list in $(ls -Sr "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null)
 do
     list="${list/*./}"
-    count="$(head -qn -2 "${adb_dnsdir}/${adb_dnsprefix}.${list}" | wc -l)"
+    count="$(head -qn -3 "${adb_dnsdir}/${adb_dnsprefix}.${list}" | wc -l)"
     if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
     then
         count=$((count / 2))
     fi
-    printf "%s\n" "# ${0##*/} (${adb_scriptver}) - ${count} ad/abuse domains blocked" >> "${adb_dnsdir}/${adb_dnsprefix}.${list}"
+    if [ "$(tail -qn 1 "${adb_dnsdir}/${adb_dnsprefix}.${list}")" = "##" ]
+    then
+        last_line="# ${0##*/} (${adb_scriptver}) - ${count} ad\/abuse domains blocked"
+        sed -i "s/^##$/${last_line}/" "${adb_dnsdir}/${adb_dnsprefix}.${list}"
+    fi
     adb_count=$((adb_count + count))
 done
 
