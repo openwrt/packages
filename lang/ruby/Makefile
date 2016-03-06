@@ -10,14 +10,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=2.2.4
-PKG_RELEASE:=2
+PKG_VERSION:=2.3.0
+PKG_RELEASE:=1
 
-PKG_LIBVER:=2.2
+PKG_LIBVER:=2.3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_LIBVER)/
-PKG_MD5SUM:=c3d65f6d2ebe90dda81a37885ea244f5
+PKG_MD5SUM:=f0d9f9bbdc87372ca98988a571875819
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -35,8 +35,12 @@ HOST_CONFIGURE_ARGS += \
 	--disable-install-doc \
 	--disable-install-rdoc \
 	--disable-install-capi \
-	--with-static-linked-ext \
+	--without-gmp \
 	--with-out-ext=tk,tk/tkutil,win32,win32ole,dbm,gdbm,readline \
+
+# Does not compile with this. Workaround is --without-gmp
+# https://bugs.ruby-lang.org/issues/11940
+	#--with-static-linked-ext \
 
 # even not used, host build with restricted exts results in gems not being
 # compiled for target (probably some cross compiling problem like checking
@@ -81,6 +85,13 @@ define Build/InstallDev
 	( cd $(PKG_INSTALL_DIR); $(TAR) -cf - \
 		. \
 	) | ( cd $(1); $(TAR) -xf - )
+endef
+
+define Host/Install
+	# When ruby version is updated, make install asks in some cases before replace
+	# an existing different file. Remove them before install and avoid the interaction
+	rm -f $(HOST_BUILD_PREFIX)/bin/rake
+	$(call Host/Install/Default)
 endef
 
 define Package/ruby/Default
@@ -196,6 +207,7 @@ endef
 define Package/ruby-cgi/files
 /usr/lib/ruby/$(PKG_LIBVER)/cgi
 /usr/lib/ruby/$(PKG_LIBVER)/cgi.rb
+/usr/lib/ruby/$(PKG_LIBVER)/*/cgi/escape.so
 endef
 
 define Package/ruby-csv/files
@@ -224,6 +236,18 @@ define Package/ruby-debuglib/files
 /usr/lib/ruby/$(PKG_LIBVER)/tracer.rb
 /usr/lib/ruby/$(PKG_LIBVER)/benchmark.rb
 /usr/lib/ruby/$(PKG_LIBVER)/*/objspace.so
+endef
+
+define Package/ruby-did-you-mean/files
+/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/did_you_mean-*.gemspec
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/
+endef
+define Package/ruby-did-you-mean/files-excluded
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/benchmark
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/doc
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/evaluation
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/test
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/*.md
 endef
 
 define Package/ruby-digest/description
@@ -363,6 +387,7 @@ define Package/ruby-minitest/files
 endef
 define Package/ruby-minitest/files-excluded
 /usr/lib/ruby/gems/$(PKG_LIBVER)/gems/minitest-*/test
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/minitest-*/*.rdoc
 /usr/lib/ruby/gems/$(PKG_LIBVER)/gems/minitest-*/*.txt
 endef
 
@@ -413,6 +438,15 @@ define Package/ruby-net/files
 /usr/lib/ruby/$(PKG_LIBVER)/net/*
 endef
 
+define Package/ruby-net-telnet/files
+/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/net-telnet-*.gemspec
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/net-telnet-*/
+endef
+define Package/ruby-net-telnet/files-excluded
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/net-telnet-*/*.md
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/net-telnet-*/*.txt
+endef
+
 define Package/ruby-nkf/files
 /usr/lib/ruby/$(PKG_LIBVER)/kconv.rb
 /usr/lib/ruby/$(PKG_LIBVER)/*/nkf.so
@@ -456,6 +490,7 @@ endef
 define Package/ruby-psych/files
 /usr/lib/ruby/$(PKG_LIBVER)/psych
 /usr/lib/ruby/$(PKG_LIBVER)/psych.rb
+/usr/lib/ruby/$(PKG_LIBVER)/psych_jars.rb
 /usr/lib/ruby/$(PKG_LIBVER)/*/psych.so
 /usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/psych-*.gemspec
 endef
@@ -466,18 +501,20 @@ define Package/ruby-racc/files
 endef
 
 define Package/ruby-rake/files
-/usr/lib/ruby/$(PKG_LIBVER)/rake/
-/usr/lib/ruby/$(PKG_LIBVER)/rake.rb
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/rake-*.gemspec
+/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/rake-*.gemspec
 /usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/
+endef
+define Package/ruby-rake/files-excluded
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/doc
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/test
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/*.rdoc
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/*.txt
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-10.4.2/lib/rake/runtest.rb
 endef
 define Package/ruby-rake/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/rake $(1)/usr/bin/;
 	$(call RubyBuildPackage/install,rake,$(1))
-endef
-define Package/ruby-rake/files-excluded
-/usr/lib/ruby/$(PKG_LIBVER)/rake/runtest.rb
 endef
 
 define Package/ruby-rbconfig/files
@@ -660,6 +697,7 @@ $(eval $(call RubyBuildPackage,csv,CSV library,+ruby-patterns +ruby-datetime +ru
 $(eval $(call RubyBuildPackage,datetime,date library))
 $(eval $(call RubyBuildPackage,dbm,support for dbm,+libdb47))
 $(eval $(call RubyBuildPackage,debuglib,debug library,+ruby-multithread +ruby-prettyprint))
+$(eval $(call RubyBuildPackage,did-you-mean,did you mean? experience,+ruby-misc))
 $(eval $(call RubyBuildPackage,digest,Digest Library,+RUBY_DIGEST_USE_OPENSSL:libopenssl))
 $(eval $(call RubyBuildPackage,drb,distributed object system,+ruby-filelib +ruby-patterns +ruby-socket))
 $(eval $(call RubyBuildPackage,enc,character re-coding library charset (small subset),))
@@ -679,8 +717,9 @@ $(eval $(call RubyBuildPackage,misc,standard libraries subset (miscelaneous file
 $(eval $(call RubyBuildPackage,mkmf,makefile library,+ruby-filelib +ruby-optparse +ruby-rbconfig))
 $(eval $(call RubyBuildPackage,multithread,multithread library,+ruby-misc))
 $(eval $(call RubyBuildPackage,net,Network Protocols Library,+ruby-datetime +ruby-digest +ruby-filelib +ruby-uri))
+$(eval $(call RubyBuildPackage,net-telnet,telnet client,+ruby-net))
 $(eval $(call RubyBuildPackage,nkf,Network Kanji Filter,+ruby-enc))
-$(eval $(call RubyBuildPackage,openssl,support for openssl,+ruby-enc +ruby-misc +libopenssl))
+$(eval $(call RubyBuildPackage,openssl,support for openssl,+ruby-enc +ruby-multithread +libopenssl))
 $(eval $(call RubyBuildPackage,optparse,command-line option analysis,+ruby-misc))
 $(eval $(call RubyBuildPackage,patterns,design patterns implementation,+ruby-multithread))
 $(eval $(call RubyBuildPackage,powerassert,Gem power_assert,+ruby-ripper))
