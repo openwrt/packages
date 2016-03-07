@@ -33,7 +33,7 @@ define Package/python-cffi
 	SUBMENU:=Python
 	TITLE:=python-cffi
 	URL:=http://cffi.readthedocs.org/
-	DEPENDS:=+libffi +python-light +python-pycparser @BROKEN
+	DEPENDS:=+libffi +python-light +python-pycparser
 endef
 
 define Package/python-cffi/description
