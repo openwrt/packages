@@ -397,7 +397,7 @@ olsrd_write_olsrd() {
 	[ "$OLSRD_COUNT" -gt 0 ] && return 0
 
 	config_get ipversion "$cfg" IpVersion
-	if [ "$UCI_CONF_NAME" == "olsrd6" ]; then
+	if [ "$UCI_CONF_NAME" = "olsrd6" ]; then
 	        OLSRD_OLSRD_SCHEMA="$OLSRD_OLSRD_SCHEMA IpVersion=6"
 	        if [ "$ipversion" = "6and4" ]; then
 		        error "IpVersion 6and4 not supported in olsrd6"
@@ -703,7 +703,7 @@ olsrd_setup_smartgw_rules() {
 	IP6T=$(which ip6tables)
 
 	# Delete smartgw firewall rules first
-	if [ "$UCI_CONF_NAME" == "olsrd6" ]; then
+	if [ "$UCI_CONF_NAME" = "olsrd6" ]; then
 		while $IP6T -D forwarding_rule -o tnl_+ -j ACCEPT 2> /dev/null; do :;done
 		for IFACE in $wanifnames; do
 			while $IP6T -D forwarding_rule -i tunl0 -o $IFACE -j ACCEPT 2> /dev/null; do :; done
@@ -722,10 +722,10 @@ olsrd_setup_smartgw_rules() {
 		while $IP4T -t nat -D postrouting_rule -o tnl_+ -j MASQUERADE 2> /dev/null; do :;done
 	fi
 
-	if [ "$smartgateway" == "yes" ]; then
+	if [ "$smartgateway" = "yes" ]; then
 		log "$funcname() Notice: Inserting firewall rules for SmartGateway"
-		if [ ! "$smartgatewayuplink" == "none" ]; then
-			if [ "$smartgatewayuplink" == "ipv4" ]; then
+		if [ ! "$smartgatewayuplink" = "none" ]; then
+			if [ "$smartgatewayuplink" = "ipv4" ]; then
 				# Allow everything to be forwarded to tnl_+ and use NAT for it
 				$IP4T -I forwarding_rule -o tnl_+ -j ACCEPT
 				$IP4T -t nat -I postrouting_rule -o tnl_+ -j MASQUERADE
@@ -739,7 +739,7 @@ olsrd_setup_smartgw_rules() {
 				for IFACE in $ifsglobal; do
 					$IP4T -I input_rule -i $IFACE -p 4 -j ACCEPT
 				done
-			elif [ "$smartgatewayuplink" == "ipv6" ]; then
+			elif [ "$smartgatewayuplink" = "ipv6" ]; then
 				$IP6T -I forwarding_rule -o tnl_+ -j ACCEPT
 				if [ "$nowan"="0" ]; then
 					for IFACE in $wanifnames; do
