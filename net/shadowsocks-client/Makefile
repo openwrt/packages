@@ -5,7 +5,7 @@ PKG_VERSION:=0.6
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=http://github.com/zhao-gang/shadowsocks-tiny.git
+PKG_SOURCE_URL:=https://github.com/zhao-gang/shadowsocks-tiny.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=b59d754f838213d60b908aed0b7d4d5a81f273e2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
