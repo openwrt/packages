@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pkg-config
-PKG_VERSION:=0.29
-PKG_RELEASE:=2
+PKG_VERSION:=0.29.1
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://pkgconfig.freedesktop.org/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=77f27dce7ef88d0634d0d6f90e03a77f
+PKG_MD5SUM:=f739a28cae4e0ca291f82d1d41ef107d
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
 PKG_LICENSE:=GPL-2+
 
