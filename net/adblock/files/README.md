@@ -62,7 +62,7 @@ When the dns server on your router receives dns requests, you will sort out quer
 * the above dependencies and requirements will be checked during package installation & script runtime
 
 ## Installation & Usage
-* install the adblock package (*opkg update & opkg install adblock*)
+* install the adblock package (*opkg update & opkg install adblock*) (for Chaos Calmer see [Chaos Calmer installation notes](#chaos-calmer-installation-notes))
 * start the adblock service with */etc/init.d/adblock start* and check *logread -e "adblock"* for adblock related information
 * optional: enable/disable your required adblock list sources in */etc/config/adblock* - 'adaway', 'disconnect' and 'yoyo' are enabled by default
 * optional: maintain the adblock service in luci under 'System => Startup'
@@ -72,9 +72,9 @@ For easy management of the various blocklist sources and and the adblock options
 Please install the package 'luci-app-adblock'. Then you will find the application in LuCI located under 'Services' menu.  
 Thanks to Hannu Nyman for this great adblock LuCI frontend!  
 
-## CC installation notes
-* currently the adblock package is *not* part of the CC package repository
-* download the latest adblock package *adblock_x.xx.x-1_all.ipk* from a DD snapshot [package directory](https://downloads.openwrt.org/snapshots/trunk/ar71xx/generic/packages/packages)
+## Chaos Calmer installation notes
+* currently the adblock package is *not* part of the Chaos Calmer package repository
+* download the latest adblock package *adblock_x.xx.x-1_all.ipk* from a Development Snapshot [package directory](https://downloads.openwrt.org/snapshots/trunk/ar71xx/nand/packages/packages/)
 * manual transfer the package to your router and install the opkg package as usual
 
 ## Tweaks
