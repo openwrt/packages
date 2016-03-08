@@ -10,6 +10,15 @@
 #
 LC_ALL=C
 
+# script debug switch (disabled by default)
+# set 'DEBUG=1' to enable script debugging
+#
+DEBUG=0
+if [ $((DEBUG)) -eq 0 ]
+then
+    exec 2>/dev/null
+fi
+
 # pid handling
 #
 adb_pid="${$}"
@@ -18,7 +27,7 @@ adb_pidfile="/var/run/adblock.pid"
 if [ -r "${adb_pidfile}" ]
 then
     rc=255
-    /usr/bin/logger -t "adblock[${adb_pid}] error" "adblock service already running ($(cat ${adb_pidfile} 2>/dev/null))"
+    /usr/bin/logger -s -t "adblock[${adb_pid}] error" "adblock service already running ($(cat ${adb_pidfile}))"
     exit ${rc}
 else
     printf "${adb_pid}" > "${adb_pidfile}"
@@ -27,17 +36,18 @@ fi
 # get current directory, script- and openwrt version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="0.91.0"
-openwrt_version="$(cat /etc/openwrt_version 2>/dev/null)"
+adb_scriptver="1.0.0"
+openwrt_version="$(cat /etc/openwrt_version)"
 
 # source in adblock function library
 #
 if [ -r "${adb_scriptdir}/adblock-helper.sh" ]
 then
-    . "${adb_scriptdir}/adblock-helper.sh" 2>/dev/null
+    . "${adb_scriptdir}/adblock-helper.sh"
 else
     rc=254
-    /usr/bin/logger -t "adblock[${adb_pid}] error" "adblock function library not found"
+    /usr/bin/logger -s -t "adblock[${adb_pid}] error" "adblock function library not found"
+    rm -f "${adb_pidfile}"
     exit ${rc}
 fi
 
@@ -71,13 +81,16 @@ then
     shalla_file="${adb_tmpdir}/shallalist.txt"
     src_name="shalla"
     adb_dnsfile="${adb_dnsdir}/${adb_dnsprefix}.${src_name}"
-    list_time="$(awk '$0 ~ /^# last modified/ {printf substr($0,18)}' "${adb_dnsfile}" 2>/dev/null)"
+    if [ -r "${adb_dnsfile}" ]
+    then
+        list_time="$(awk '$0 ~ /^# last modified/ {printf substr($0,18)}' "${adb_dnsfile}")"
+    fi
     f_log "=> (pre-)processing adblock source '${src_name}'"
 
     # only process shallalist archive with updated timestamp,
     # extract and merge only domains of selected shallalist categories
     #
-    shalla_time="$(${adb_fetch} ${wget_parm} --server-response --spider "${adb_arc_shalla}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}' 2>/dev/null)"
+    shalla_time="$(${adb_fetch} ${wget_parm} --server-response --spider "${adb_arc_shalla}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}')"
     if [ -z "${shalla_time}" ]
     then
         shalla_time="$(date)"
@@ -85,14 +98,14 @@ then
     fi
     if [ -z "${list_time}" ] || [ "${list_time}" != "${shalla_time}" ]
     then
-        ${adb_fetch} ${wget_parm} --output-document="${shalla_archive}" "${adb_arc_shalla}" 2>/dev/null
+        ${adb_fetch} ${wget_parm} --output-document="${shalla_archive}" "${adb_arc_shalla}"
         rc=${?}
         if [ $((rc)) -eq 0 ]
         then
             > "${shalla_file}"
             for category in ${adb_cat_shalla}
             do
-                tar -xOzf "${shalla_archive}" BL/${category}/domains 2>/dev/null >> "${shalla_file}"
+                tar -xOzf "${shalla_archive}" BL/${category}/domains >> "${shalla_file}"
                 rc=${?}
                 if [ $((rc)) -ne 0 ]
                 then
@@ -103,8 +116,8 @@ then
 
             # remove temporary files
             #
-            rm -f "${shalla_archive}" >/dev/null 2>&1
-            rm -rf "${adb_tmpdir}/BL" >/dev/null 2>&1 
+            rm -f "${shalla_archive}"
+            rm -rf "${adb_tmpdir}/BL"
             if [ $((rc)) -eq 0 ]
             then
                 adb_sources="${adb_sources} ${shalla_file}&ruleset=rset_shalla"
@@ -138,7 +151,10 @@ do
     url="${src/\&ruleset=*/}"
     src_name="${src/*\&ruleset=rset_/}"
     adb_dnsfile="${adb_dnsdir}/${adb_dnsprefix}.${src_name}"
-    list_time="$(awk '$0 ~ /^# last modified/ {printf substr($0,18)}' "${adb_dnsfile}" 2>/dev/null)"
+    if [ -r "${adb_dnsfile}" ]
+    then
+        list_time="$(awk '$0 ~ /^# last modified/ {printf substr($0,18)}' "${adb_dnsfile}")"
+    fi
     f_log "=> processing adblock source '${src_name}'"
 
     # prepare find statement with active adblock list sources
@@ -154,12 +170,12 @@ do
     #
     if [ "${src_name}" = "blacklist" ]
     then
-        url_time="$(date -r "${adb_blacklist}" 2>/dev/null)"
+        url_time="$(date -r "${adb_blacklist}")"
     elif [ "${src_name}" = "shalla" ]
     then
         url_time="${shalla_time}"
     else
-        url_time="$(${adb_fetch} ${wget_parm} --server-response --spider "${url}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}' 2>/dev/null)"
+        url_time="$(${adb_fetch} ${wget_parm} --server-response --spider "${url}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}')"
     fi
     if [ -z "${url_time}" ]
     then
@@ -170,14 +186,14 @@ do
     then
         if [ "${src_name}" = "blacklist" ]
         then
-            tmp_domains="$(cat "${adb_blacklist}" 2>/dev/null)"
+            tmp_domains="$(cat "${adb_blacklist}")"
             rc=${?}
         elif [ "${src_name}" = "shalla" ]
         then
-            tmp_domains="$(cat "${shalla_file}" 2>/dev/null)"
+            tmp_domains="$(cat "${shalla_file}")"
             rc=${?}
         else
-            tmp_domains="$(${adb_fetch} ${wget_parm} --output-document=- "${url}" 2>/dev/null)"
+            tmp_domains="$(${adb_fetch} ${wget_parm} --output-document=- "${url}")"
             rc=${?}
         fi
     else
@@ -194,7 +210,7 @@ do
         f_log "   source download finished (${count} entries)"
         if [ "${src_name}" = "shalla" ]
         then
-            rm -f "${shalla_file}" >/dev/null 2>&1
+            rm -f "${shalla_file}"
         fi
         unset tmp_domains
     elif [ $((rc)) -eq 0 ] && [ -z "${tmp_domains}" ]
@@ -220,10 +236,10 @@ do
     then
         if [ -s "${adb_whitelist}" ]
         then
-            grep -Fvxf "${adb_whitelist}" "${adb_tmpfile}" 2>/dev/null | sort -u 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null > "${adb_dnsfile}"
+            grep -Fvxf "${adb_whitelist}" "${adb_tmpfile}" | sort -u | eval "${adb_dnsformat}" > "${adb_dnsfile}"
             rc=${?}
         else
-            sort -u "${adb_tmpfile}" 2>/dev/null | eval "${adb_dnsformat}" 2>/dev/null > "${adb_dnsfile}"
+            sort -u "${adb_tmpfile}" | eval "${adb_dnsformat}" > "${adb_dnsfile}"
             rc=${?}
         fi
 
@@ -258,14 +274,14 @@ done
 #
 if [ -n "${adb_srclist}" ]
 then
-    rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \; 2>/dev/null)"
+    rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \;)"
     rc=${?}
     if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
     then
         f_log "disabled adblock lists removed"
         if [ "${backup_ok}" = "true" ]
         then
-            rm_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \; 2>/dev/null)"
+            rm_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \;)"
             rc=${?}
             if  [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
             then
@@ -282,14 +298,14 @@ then
         f_exit
     fi
 else
-    rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" -print -exec rm -f "{}" \; 2>/dev/null)"
+    rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" -print -exec rm -f "{}" \;)"
     rc=${?}
     if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
     then
         f_log "all adblock lists removed"
         if [ "${backup_ok}" = "true" ]
         then
-            rm_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" -print -exec rm -f "{}" \; 2>/dev/null)"
+            rm_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" -print -exec rm -f "{}" \;)"
             rc=${?}
             if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
             then
@@ -311,7 +327,7 @@ fi
 #
 if [ "${backup_ok}" = "true" ] && [ -n "${adb_errsrclist}" ]
 then
-    restore_done="$(find "${adb_backupdir}" -maxdepth 1 -type f \( ${adb_errsrclist} \) -print -exec cp -pf "{}" "${adb_dnsdir}" \; 2>/dev/null)"
+    restore_done="$(find "${adb_backupdir}" -maxdepth 1 -type f \( ${adb_errsrclist} \) -print -exec cp -pf "{}" "${adb_dnsdir}" \;)"
     rc=${?}
     if [ $((rc)) -eq 0 ] && [ -n "${restore_done}" ]
     then
@@ -333,35 +349,35 @@ then
 
         # generate a temporary unique overall list
         #
-        head -qn -3 "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null | sort -u 2>/dev/null > "${adb_dnsdir}/tmp.overall"
+        head -qn -3 "${adb_dnsdir}/${adb_dnsprefix}."* | sort -u > "${adb_dnsdir}/tmp.overall"
 
         # loop through all separate lists, ordered by size (ascending)
         #
-        for list in $(ls -Sr "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null)
+        for list in $(ls -Sr "${adb_dnsdir}/${adb_dnsprefix}."*)
         do
             # check original separate list vs. temporary overall list,
             # rewrite only duplicate entries back to temporary separate list
             #
             list="${list/*./}"
-            sort "${adb_dnsdir}/tmp.overall" "${adb_dnsdir}/${adb_dnsprefix}.${list}" 2>/dev/null | uniq -d 2>/dev/null > "${adb_dnsdir}/tmp.${list}"
+            sort "${adb_dnsdir}/tmp.overall" "${adb_dnsdir}/${adb_dnsprefix}.${list}" | uniq -d > "${adb_dnsdir}/tmp.${list}"
 
             # rewrite only unique entries back to temporary overall list
             #
-            tmp_unique="$(sort "${adb_dnsdir}/tmp.overall" "${adb_dnsdir}/tmp.${list}" 2>/dev/null | uniq -u 2>/dev/null)"
+            tmp_unique="$(sort "${adb_dnsdir}/tmp.overall" "${adb_dnsdir}/tmp.${list}" | uniq -u)"
             printf "%s\n" "${tmp_unique}" > "${adb_dnsdir}/tmp.overall"
 
             # write unique result back to original separate list (with list footer)
             #
-            tail -qn 3 "${adb_dnsdir}/$adb_dnsprefix.${list}" 2>/dev/null >> "${adb_dnsdir}/tmp.${list}"
-            mv -f "${adb_dnsdir}/tmp.${list}" "${adb_dnsdir}/${adb_dnsprefix}.${list}" >/dev/null 2>&1
+            tail -qn 3 "${adb_dnsdir}/$adb_dnsprefix.${list}" >> "${adb_dnsdir}/tmp.${list}"
+            mv -f "${adb_dnsdir}/tmp.${list}" "${adb_dnsdir}/${adb_dnsprefix}.${list}"
         done
-        rm -f "${adb_dnsdir}/tmp.overall" >/dev/null 2>&1
+        rm -f "${adb_dnsdir}/tmp.overall"
     fi
 fi
 
 # set separate list count & get overall count
 #
-for list in $(ls -Sr "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null)
+for list in $(ls -Sr "${adb_dnsdir}/${adb_dnsprefix}."*)
 do
     list="${list/*./}"
     count="$(head -qn -3 "${adb_dnsdir}/${adb_dnsprefix}.${list}" | wc -l)"
@@ -382,10 +398,10 @@ done
 #
 if [ -n "${adb_revsrclist}" ] || [ -n "${rm_done}" ] || [ -n "${restore_done}" ]
 then
-    /etc/init.d/dnsmasq restart >/dev/null 2>&1
+    /etc/init.d/dnsmasq restart
     sleep 1
-    dns_status="$(ps 2>/dev/null | grep "[d]nsmasq" 2>/dev/null)"
-    if [ -n "${dns_status}" ]
+    rc="$(ps | grep -q "[d]nsmasq"; printf ${?})"
+    if [ $((rc)) -eq 0 ]
     then
         f_log "adblock lists with overall ${adb_count} domains loaded"
     else
@@ -401,7 +417,7 @@ fi
 #
 if [ "${backup_ok}" = "true" ] && [ -n "${adb_revsrclist}" ] && [ "$(printf "${adb_dnsdir}/${adb_dnsprefix}."*)" != "${adb_dnsdir}/${adb_dnsprefix}.*" ]
 then
-    backup_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f \( ${adb_revsrclist} \) -print -exec cp -pf "{}" "${adb_backupdir}" \; 2>/dev/null)"
+    backup_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f \( ${adb_revsrclist} \) -print -exec cp -pf "{}" "${adb_backupdir}" \;)"
     rc=${?}
     if [ $((rc)) -eq 0 ] && [ -n "${backup_done}" ]
     then
