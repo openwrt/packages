@@ -45,6 +45,9 @@
 # IPv6 @ no-ip.pl nothing to do with no-ip.com (domain registered to www.domeny.tv) (IP autodetected by provider)
 "no-ip.pl"	"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
 
+# nsupdate.info - a free service - supports https
+"nsupdate.info" "http://[USERNAME]:[PASSWORD]@ipv6.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
 # IPv6 @ freedns.afraid.org
 "freedns.afraid.org"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
 
