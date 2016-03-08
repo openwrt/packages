@@ -265,18 +265,15 @@ get_registered_ip REGISTERED_IP "NO_RETRY"
 ERR_LAST=$?
 #     No error    or     No IP set	 otherwise retry
 [ $ERR_LAST -eq 0 -o $ERR_LAST -eq 127 ] || get_registered_ip REGISTERED_IP
+# on IPv6 we use expanded version to be shure when comparing
+[ $use_ipv6 -eq 1 ] && expand_ipv6 "$REGISTERED_IP" REGISTERED_IP
 
 # loop endlessly, checking ip every check_interval and forcing an updating once every force_interval
 write_log 6 "Starting main loop at $(eval $DATE_PROG)"
 while : ; do
 
 	get_local_ip LOCAL_IP		# read local IP
-
-	# on IPv6 we use expanded version to be shure when comparing
-	[ $use_ipv6 -eq 1 ] && {
-		expand_ipv6 "$LOCAL_IP" LOCAL_IP
-		expand_ipv6 "$REGISTERED_IP" REGISTERED_IP
-	}
+	[ $use_ipv6 -eq 1 ] && expand_ipv6 "$LOCAL_IP" LOCAL_IP	# on IPv6 we use expanded version
 
 	# prepare update
 	# never updated or forced immediate then NEXT_TIME = 0
@@ -332,6 +329,7 @@ while : ; do
 
 	REGISTERED_IP=""		# clear variable
 	get_registered_ip REGISTERED_IP	# get registered/public IP
+	[ $use_ipv6 -eq 1 ] && expand_ipv6 "$REGISTERED_IP" REGISTERED_IP	# on IPv6 we use expanded version
 
 	# IP's are still different
 	if [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
