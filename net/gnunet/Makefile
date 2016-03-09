@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36713
+PKG_SOURCE_VERSION:=36918
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=3
+PKG_RELEASE:=2
 
 # ToDo:
 #  - break-out {peer,name,data}store for each backend
@@ -39,7 +39,7 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-mysql),--with-mysql="$(STAGING_DIR)/usr",--without-mysql) \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-pgsql),--with-postgresql="$(STAGING_DIR)/usr/bin/pg_config",--without-postgresql) \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-sqlite),--with-sqlite="$(STAGING_DIR)/usr",--without-sqlite) \
-	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-experiments),--enable-experimental,--disable-experimental) \
+	--enable-experimental \
 	--with-extractor=$(STAGING_DIR)/usr \
 	--with-gnutls=$(STAGING_DIR)/usr \
 	--with-libgnurl=$(STAGING_DIR)/usr \
@@ -198,12 +198,15 @@ PLUGIN_transport-http_server:=transport_http_server transport_https_server
 PLUGIN_transport-wlan:=transport_wlan
 LIBEXEC_transport-wlan:=helper-transport-wlan
 
-DEPENDS_experiments:=+libglpk +gnunet-sqlite
-BIN_experiments:=multicast rps
-LIB_experiments:=consensus dv env multicast psyc psycstore psycutil rps secretsharing social
-PLUGIN_experiments:=ats_mlp ats_ril namecache_flat namestore_flat psycstore_sqlite transport_dv
-LIBEXEC_experiments:=service-consensus service-dv service-evil-consensus service-multicast service-psyc service-psycstore service-rps service-secretsharing service-social
-CONF_experiments:=consensus dv multicast psyc psycstore rps secretsharing social
+DEPENDS_experiments:=+libglpk
+PLUGIN_experiments:=ats_mlp ats_ril
+LIBEXEC_experiments:=service-dht-whanau service-dht-xvine
+
+# BIN_dv:=dv
+LIB_dv:=dv
+PLUGIN_dv:=transport_dv
+LIBEXEC_dv:=service-dv
+CONF_dv:=dv
 
 DEPENDS_fs:=+gnunet-datastore +libextractor
 BIN_fs:=auto-share directory download download-manager.scm fs publish unindex search
@@ -227,13 +230,34 @@ PLUGIN_datastore:=datastore_heap
 LIBEXEC_datastore:=daemon-latency-logger service-datastore
 CONF_datastore:=datastore
 
+DEPENDS_flat:=+gnunet-gns
+PLUGIN_flat:=namecache_flat namestore_flat
+
 DEPENDS_mysql:=+gnunet-gns +gnunet-datastore +libmysqlclient
 LIB_mysql:=mysql
 PLUGIN_mysql:=datastore_mysql
 
 DEPENDS_pgsql:=+gnunet-gns +gnunet-datastore +libpq
-LIB_pgsql:=postgres
+LIB_pgsql:=postgres pq
 PLUGIN_pgsql:=datacache_postgres datastore_postgres namecache_postgres namestore_postgres
+
+DEPENDS_rest:=+gnunet-gns +jansson
+LIB_rest:=rest
+PLUGIN_rest:=rest_gns rest_identity rest_namestore
+LIBEXEC_rest:=rest-server
+CONF_rest:=rest
+
+BIN_rps:=rps
+LIB_rps:=rps
+LIBEXEC_rps:=service-rps
+CONF_rps:=rps
+
+DEPENDS_social:=+gnunet-sqlite
+BIN_social:=multicast
+LIB_social:=consensus multicast psyc psycstore psycutil secretsharing social
+PLUGIN_social:=psycstore_sqlite
+LIBEXEC_social:=service-consensus service-evil-consensus service-multicast service-psyc service-psycstore service-secretsharing service-social
+CONF_social:=consensus multicast psyc psycstore secretsharing social
 
 DEPENDS_sqlite:=+gnunet-gns +gnunet-datastore +libsqlite3
 PLUGIN_sqlite:=datacache_sqlite datastore_sqlite namecache_sqlite namestore_sqlite peerstore_sqlite
@@ -253,16 +277,21 @@ CONF_vpn:=exit pt vpn
 
 $(eval $(call BuildPackage,gnunet))
 $(eval $(call BuildComponent,conversation,conversation component,))
+$(eval $(call BuildComponent,datastore,data storage components,))
+$(eval $(call BuildComponent,dv,distance-vector routing component,))
 $(eval $(call BuildComponent,experiments,experimental components,))
+$(eval $(call BuildComponent,flat,flat storage backends,))
 $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))
-$(eval $(call BuildComponent,datastore,storage components,))
+$(eval $(call BuildComponent,mysql,mySQL datastore backend,))
+$(eval $(call BuildComponent,pgsql,PostgreSQL storage backends,))
+$(eval $(call BuildComponent,rest,REST interface,))
+$(eval $(call BuildComponent,rps,RPS routing component,))
+$(eval $(call BuildComponent,social,social components,))
+$(eval $(call BuildComponent,sqlite,libsqlite3 storage backends,y))
 $(eval $(call BuildComponent,transport-bluetooth,bluetooth transport,))
 $(eval $(call BuildComponent,transport-http_client,HTTP/HTTPS client transport,y))
 $(eval $(call BuildComponent,transport-http_server,HTTP/HTTPS server transport,))
 $(eval $(call BuildComponent,transport-wlan,WLAN transport,))
 $(eval $(call BuildComponent,utils,administration utililties,))
 $(eval $(call BuildComponent,vpn,vpn components,y))
-$(eval $(call BuildComponent,mysql,mySQL datastore backend,))
-$(eval $(call BuildComponent,pgsql,PostgreSQL backends,))
-$(eval $(call BuildComponent,sqlite,libsqlite3 backends,y))

@@ -1,0 +1,10 @@
+--- a/acinclude.m4	2016-02-19 15:21:01.000000000 +0300
++++ b/acinclude.m4	2016-02-19 17:18:50.480874343 +0300
+@@ -211,7 +211,6 @@
+ LONG_LONG_INT_FORMAT=''
+ 
+ case $pgac_cv_snprintf_long_long_int_format in
+-  cross) AC_MSG_RESULT([cannot test (not on host machine)]);;
+   ?*)    AC_MSG_RESULT([$pgac_cv_snprintf_long_long_int_format])
+          LONG_LONG_INT_FORMAT=$pgac_cv_snprintf_long_long_int_format;;
+   *)     AC_MSG_RESULT(none);;

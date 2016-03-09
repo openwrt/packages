@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -589,6 +589,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
+@@ -663,6 +663,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
  have_termios_h="no"
  AC_CHECK_HEADERS(termios.h, [have_termios_h="yes"])
  
@@ -10,7 +10,7 @@
  # For the turbostat plugin
  have_asm_msrindex_h="no"
  AC_CHECK_HEADERS(asm/msr-index.h, [have_asm_msrindex_h="yes"])
-@@ -5171,6 +5174,7 @@ plugin_interface="no"
+@@ -5241,6 +5244,7 @@ plugin_interface="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
@@ -18,7 +18,7 @@
  plugin_load="no"
  plugin_log_logstash="no"
  plugin_memory="no"
-@@ -5562,6 +5566,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
+@@ -5638,6 +5642,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
  AC_PLUGIN([iptables],    [$with_libiptc],      [IPTables rule counters])
  AC_PLUGIN([ipvs],        [$plugin_ipvs],       [IPVS connection statistics])
  AC_PLUGIN([irq],         [$plugin_irq],        [IRQ statistics])
@@ -26,7 +26,7 @@
  AC_PLUGIN([java],        [$with_java],         [Embed the Java Virtual Machine])
  AC_PLUGIN([load],        [$plugin_load],       [System load])
  AC_PLUGIN([logfile],     [yes],                [File logging plugin])
-@@ -5891,6 +5896,7 @@ Configuration:
+@@ -5967,6 +5972,7 @@ Configuration:
      oracle  . . . . . . . $with_oracle
      protobuf-c  . . . . . $have_protoc_c
      python  . . . . . . . $with_python
@@ -34,7 +34,7 @@
  
    Features:
      daemon mode . . . . . $enable_daemon
-@@ -5940,6 +5946,7 @@ Configuration:
+@@ -6016,6 +6022,7 @@ Configuration:
      iptables  . . . . . . $enable_iptables
      ipvs  . . . . . . . . $enable_ipvs
      irq . . . . . . . . . $enable_irq
@@ -45,7 +45,7 @@
 --- a/src/collectd.conf.in
 +++ b/src/collectd.conf.in
 @@ -128,6 +128,7 @@
- #@BUILD_PLUGIN_IPMI_TRUE@LoadPlugin ipmi
+ #@BUILD_PLUGIN_IPTABLES_TRUE@LoadPlugin iptables
  #@BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
  #@BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
 +#@BUILD_PLUGIN_IWINFO_TRUE@LoadPlugin iwinfo
@@ -67,7 +67,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -2572,6 +2572,27 @@ and all other interrupts are collected.
+@@ -2608,6 +2608,27 @@ and all other interrupts are collected.
  
  =back
  
@@ -250,13 +250,13 @@
 +}
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -459,6 +459,13 @@ irq_la_SOURCES = irq.c \
+@@ -454,6 +454,13 @@ irq_la_SOURCES = irq.c
  irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  endif
  
 +if BUILD_PLUGIN_IWINFO
 +pkglib_LTLIBRARIES += iwinfo.la
-+iwinfo_la_SOURCES = iwinfo.c utils_ignorelist.c utils_ignorelist.h
++iwinfo_la_SOURCES = iwinfo.c
 +iwinfo_la_LDFLAGS = -module -avoid-version
 +iwinfo_la_LIBADD = -liwinfo
 +endif
@@ -266,7 +266,7 @@
  java_la_SOURCES = java.c
 --- a/src/types.db
 +++ b/src/types.db
-@@ -227,6 +227,7 @@ voltage			value:GAUGE:U:U
+@@ -228,6 +228,7 @@ voltage			value:GAUGE:U:U
  vs_memory		value:GAUGE:0:9223372036854775807
  vs_processes		value:GAUGE:0:65535
  vs_threads		value:GAUGE:0:65535

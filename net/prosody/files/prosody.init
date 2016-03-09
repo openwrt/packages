@@ -1,10 +1,9 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2010-2011 OpenWrt.org
+# Copyright (C) 2011-2016 OpenWrt.org
 
 START=99
 
-EXTRA_COMMANDS="status"
-EXTRA_HELP="	status	Print the status of the service"
+USE_PROCD=1
 
 BIN=/usr/bin/prosodyctl
 LOG_D=/var/log/prosody
@@ -13,7 +12,7 @@ PID_F=$RUN_D/prosody.pid
 RUN_USER=prosody
 RUN_GROUP=prosody
 
-start() {
+start_service() {
 	[ -d /var/run/prosody ] || {
 		mkdir -m 0755 -p /var/run/prosody
 		chown prosody:prosody /var/run/prosody
@@ -36,18 +35,12 @@ start() {
 		}
 	}
 
-	
-	$BIN start
+	procd_open_instance
+	procd_set_param command "$BIN" start
+	procd_set_param file /etc/prosody/prosody.cfg.lua
+	procd_close_instance
 }
 
-stop() {
-	$BIN stop
-}
-
-reload() {
-	[ -f $PID_F ] && kill -HUP $(cat $PID_F)
-}
-
-status() {
-	$BIN status
+stop_service() {
+	${BIN} stop
 }

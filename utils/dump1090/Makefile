@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2015 OpenWrt.org
+# Copyright (C) 2013-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dump1090
-PKG_VERSION:=2015-11-22
+PKG_VERSION:=2016-02-25
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/mutability/dump1090.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=497f88fe1c597652aca23c1035ddb55a9f6c274d
+PKG_SOURCE_VERSION:=214bc0e587fa70b7206c094e10e62c88bf387322
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
@@ -53,7 +53,8 @@ define Package/view1090/description
 endef
 
 MAKE_FLAGS += \
-	CFLAGS="$(TARGET_CFLAGS)"
+	CFLAGS="$(TARGET_CFLAGS)" \
+	UNAME=Linux
 
 define Package/dump1090/install
 	$(INSTALL_DIR) $(1)/etc/init.d

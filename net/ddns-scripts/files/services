@@ -108,7 +108,7 @@
 # Variomedia AG
 "variomedia.de" 	"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
- #DtDNS
+# DtDNS
 "dtdns.com"	"http://www.dtdns.com/api/autodns.cfm?id=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
 
 # dy.fi Dynamic DNS for finnish users (IP autodetected by provider)
@@ -119,3 +119,18 @@
 
 # zzzz.io Free Dynamic DNS
 "zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&ip=[IP]"	"Updated|No change"
+
+# dynu.com
+"dynu.com"  "http://api.dynu.com/nic/update?hostname=[DOMAIN]&myip=[IP]&username=[USERNAME]&password=[PASSWORD]"
+
+# nubem.com
+"nubem.com"	"http://[USERNAME]:[PASSWORD]@nubem.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+# nettica.com
+"nettica.com"	"http://www.nettica.com/Domain/Update.aspx?U=[USERNAME]&PC=[PASSWORD]&FQDN=[DOMAIN]&N=[IP]"
+
+# zerigo.com
+"zerigo.com"	"http://update.zerigo.com/dynamic?host=[DOMAIN]&ip=[IP]&user=[USERNAME]&password=[PASSWORD]"
+
+# regfish.de
+"regfish.de"	"http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv4=[IP]"	"success|100|101"

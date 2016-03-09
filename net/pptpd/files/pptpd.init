@@ -7,6 +7,7 @@ USE_PROCD=1
 BIN=/usr/sbin/pptpd
 CONFIG=/var/etc/pptpd.conf
 CHAP_SECRETS=/var/etc/chap-secrets
+OPTIONS_PPTP=/var/etc/options.pptpd
 
 validate_login_section() {
 	uci_validate_section pptpd login "${1}" \
@@ -18,7 +19,9 @@ validate_pptpd_section() {
 	uci_validate_section pptpd service "${1}" \
 		'enabled:uinteger' \
 		'localip:string' \
-		'remoteip:string'
+		'remoteip:string' \
+		'mppe:list(string):required no40 no56 stateless' \
+		'logwtmp:uinteger'
 }
 
 setup_login() {
@@ -34,6 +37,8 @@ setup_login() {
 }
 
 setup_config() {
+	local enabled localip remoteip mppe
+
 	validate_pptpd_section "${1}" || {
 		echo "validation failed"
 		return 1
@@ -43,9 +48,13 @@ setup_config() {
 
 	mkdir -p /var/etc
 	cp /etc/pptpd.conf $CONFIG
+	cp /etc/ppp/options.pptpd $OPTIONS_PPTP
 
 	[ -n "$localip" ] && echo "localip  $localip" >> $CONFIG
 	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG
+	[ "$logwtmp" -eq 1 ] && echo "logwtmp" >> $CONFIG
+
+	echo "mppe $(echo $mppe | sed -e 's/\s/,/g')" >> $OPTIONS_PPTP
 
 	return 0
 }
@@ -58,6 +67,6 @@ start_service() {
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
 
 	procd_open_instance
-	procd_set_param command $BIN -c $CONFIG
+	procd_set_param command $BIN -c $CONFIG -o $OPTIONS_PPTP
 	procd_close_instance
 }

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
 PKG_VERSION:=1.4.20
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.franken.de/pub/crypt/mirror/ftp.gnupg.org/gcrypt/gnupg \
@@ -39,7 +39,7 @@ endef
 
 define Package/gnupg-utils
   $(call Package/gnupg/Default)
-  DEPENDS:=gnupg
+  DEPENDS:=gnupg +libcurl
   TITLE:=Key management utilities for GnuPG
 endef
 
@@ -67,9 +67,7 @@ CONFIGURE_ARGS += \
 	--disable-bzip2 \
 	--disable-ldap \
 	--disable-finger \
-	--disable-ftp \
 	--disable-dns-srv \
-	--enable-fake-curl \
 	--disable-regex \
 
 MAKE_FLAGS += \
