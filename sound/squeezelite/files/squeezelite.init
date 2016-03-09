@@ -52,10 +52,10 @@ make_cmdline() {
 	cmdline="$cmdline -M $model_name"
 
 	config_get interface options interface ""
-	[ -n $interface ] && cmdline="$cmdline -I $interface"
+	[ -n "$interface" ] && cmdline="$cmdline -I $interface"
 
 	config_get device options device ""
-	[ -n $device ] && cmdline="$cmdline -o $device"
+	[ -n "$device" ] && cmdline="$cmdline -o $device"
 
 	config_get alsa_buffer options alsa_buffer 200
 	[ $alsa_buffer -eq 0 ] && alsa_buffer="200"
