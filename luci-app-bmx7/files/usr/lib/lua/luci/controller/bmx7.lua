@@ -47,4 +47,20 @@ function index()
 	-- getting position of menu
 	local uci_position = uci:get("luci-bmx7","luci","position")
 
+
+	---------------------------
+	-- Placing the pages in the menu
+	---------------------------
+
+	-- Status (default)
+	entry(place,call("action_status_j"),place[#place],tonumber(uci_position))
+
+	table.insert(place,"Status")
+	entry(place,call("action_status_j"),"Status",0)
+	table.remove(place)
+
+end
+
+function action_status_j()
+	luci.template.render("bmx7/status_j", {})
 end
