@@ -59,8 +59,19 @@ function index()
 	entry(place,call("action_status_j"),"Status",0)
 	table.remove(place)
 
+	-- Nodes list
+	table.insert(place,"Nodes")
+	entry(place,call("action_nodes_j"),"Nodes",1)
+	table.remove(place)
 end
+
 
 function action_status_j()
 	luci.template.render("bmx7/status_j", {})
+end
+
+function action_nodes_j()
+	local http = require "luci.http"
+	local link_non_js = "/cgi-bin/luci" .. http.getenv("PATH_INFO") .. '/nodes_nojs'
+	luci.template.render("bmx7/nodes_j", {link_non_js=link_non_js})
 end
