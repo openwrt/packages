@@ -42,6 +42,7 @@ define Package/luci-app-bmx7/description
 endef
 
 define Package/luci-app-bmx7/conffiles
+	/etc/config/luci-bmx7
 endef
 
 define Build/Prepare
@@ -54,6 +55,8 @@ define Build/Compile
 endef
 
 define Package/luci-app-bmx7/install
+	$(CP) ./files/* $(1)/
+	chmod 755 $(1)/www/cgi-bin/bmx7-info
 endef
 
 $(eval $(call BuildPackage,luci-app-bmx7))
