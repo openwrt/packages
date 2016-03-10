@@ -51,7 +51,8 @@ index 6ebda07..b0e10ee 100644
 @@ -358,10 +377,20 @@ ovs_thread_create(const char *name, void *(*start)(void *), void *arg)
      aux->arg = arg;
      ovs_strlcpy(aux->name, name, sizeof aux->name);
- 
+
+-    error = pthread_create(&thread, NULL, ovsthread_wrapper, aux);
 +    /* Some small systems use a default stack size as small as 80 kB, but OVS
 +     * requires approximately 384 kB according to the following analysis:
 +     * http://openvswitch.org/pipermail/dev/2016-January/065049.html
@@ -61,7 +62,7 @@ index 6ebda07..b0e10ee 100644
 +    pthread_attr_init(&attr);
 +    set_min_stack_size(&attr, 512 * 1024);
 +
-     error = pthread_create(&thread, NULL, ovsthread_wrapper, aux);
++    error = pthread_create(&thread, &attr, ovsthread_wrapper, aux);
      if (error) {
          ovs_abort(error, "pthread_create failed");
      }
