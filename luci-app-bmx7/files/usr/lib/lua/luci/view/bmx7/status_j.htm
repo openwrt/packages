@@ -1,0 +1,182 @@
+<%+header%>
+<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript" src="<%=resource%>/bmx7/js/polling.js"></script>
+
+<style>
+	div.hideme{
+		display: none;
+	}
+
+	div.info{
+		background: #FFF;
+		border: solid 1px;
+		height: 80px;
+		display: block;
+		overflow: auto;
+	}
+
+	div.inforow{
+		text-align:left;
+		display:inline-block;
+		width:20%;
+		margin:5px;
+		vertical-align:top;
+	}
+
+	#extra-info ul { list-style: none outside none; margin-left: 0em; }
+</style>
+
+<div class="cbi-map">
+	<center>
+		<img src="<%=resource%>/bmx7/bmx7logo.png" />
+		<br />
+		<br />
+		A mesh routing protocol for Linux devices.<br />
+		Visit <a href="http://bmx6.net">bmx6.net</a> for more information.<br />
+		<br />
+	</center>
+
+<div class="cbi-map-descr"></div>
+
+<fieldset class="cbi-section">
+	<legend><%:Node configuration%></legend>
+	<table class="cbi-section-table" id="config_table">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell"><%:Short ID%></th>
+			<th class="cbi-section-table-cell"><%:Node name%></th>
+			<th class="cbi-section-table-cell"><%:Primary IPv6 address%></th>
+			<th class="cbi-section-table-cell"><%:Node key%></th>
+			<th class="cbi-section-table-cell"><%:BMX7 revision%></th>
+		</tr>
+		<tr class="cbi-section-table-row">
+			<td colspan="5"><em><br /><%:Collecting data...%></em></td>
+		</tr>
+	</table>
+</fieldset>
+
+<fieldset class="cbi-section">
+	<legend><%:Node status%></legend>
+	<table class="cbi-section-table" id="status_table">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell"><%:Nodes seen%></th>
+			<th class="cbi-section-table-cell"><%:Neighbours%></th>
+			<th class="cbi-section-table-cell"><%:Tunnelled IPv6 address%></th>
+			<th class="cbi-section-table-cell"><%:Tunnelled IPv4 address%></th>
+			<th class="cbi-section-table-cell"><%:Uptime%></th>
+			<th class="cbi-section-table-cell"><%:CPU usage%></th>
+			<th class="cbi-section-table-cell"><%:Memory usage%></th>
+			<th class="cbi-section-table-cell"><%:Tx queue%></th>
+
+		</tr>
+		<tr class="cbi-section-table-row">
+			<td colspan="8"><em><br /><%:Collecting data...%></em></td>
+		</tr>
+	</table>
+</fieldset>
+
+<fieldset class="cbi-section">
+	<legend><%:Interfaces%></legend>
+	<table class="cbi-section-table" id="ifaces_table">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell"><%:Interface%></th>
+			<th class="cbi-section-table-cell"><%:State%></th>
+			<th class="cbi-section-table-cell"><%:Type%></th>
+			<th class="cbi-section-table-cell"><%:Max. rate%></th>
+			<th class="cbi-section-table-cell"><%:Link-local IPv6 address%></th>
+			<th class="cbi-section-table-cell"><%:Rx BpP%></th>
+			<th class="cbi-section-table-cell"><%:Tx BpP%></th>
+
+		</tr>
+		<tr class="cbi-section-table-row">
+			<td colspan="7"><em><br /><%:Collecting data...%></em></td>
+		</tr>
+	</table>
+</fieldset>
+
+<fieldset class="cbi-section">
+	<legend><%:Links%></legend>
+	<table class="cbi-section-table" id="links_table">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell"><%:Short ID%></th>
+			<th class="cbi-section-table-cell"><%:Name%></th>
+			<th class="cbi-section-table-cell"><%:Link key%></th>
+			<th class="cbi-section-table-cell"><%:Remote link-local IPv6 address%></th>
+			<th class="cbi-section-table-cell"><%:Device%></th>
+			<th class="cbi-section-table-cell"><%:Rx rate%></th>
+			<th class="cbi-section-table-cell"><%:Tx rate%></th>
+			<th class="cbi-section-table-cell"><%:Routes%></th>
+
+		</tr>
+		<tr class="cbi-section-table-row">
+			<td colspan="8"><em><br /><%:Collecting data...%></em></td>
+		</tr>
+	</table>
+</fieldset>
+
+
+</div>
+
+<script type="text/javascript">//<![CDATA[
+	new TablePooler(1,"/cgi-bin/bmx7-info", {'$info':''}, "config_table", function(st){
+		var res = Array();
+		var sta = st.info[0].status;
+		var ifaces = st.info[1].interfaces;
+
+		res.push([sta.shortId, sta.name, sta.primaryIp, sta.nodeKey, sta.revision]);
+		res.push(['','','','',''])
+		res.push(['','','','',''])
+
+		return res;
+	});
+
+
+	new TablePooler(1,"/cgi-bin/bmx7-info", {'$info':''}, "status_table", function(st){
+		var res = Array();
+		var sta = st.info[0].status;
+		var mem = st.info[3].memory;
+
+		var txQ = sta.txQ.split('/');
+		console.log(txQ)
+
+		var ptxQ = '<p style="color:rgb('+parseInt(255*txQ[0]/txQ[1])+','+parseInt(128*(txQ[1]-txQ[0])/txQ[1])+',0)")>'+sta.txQ+'</p>';
+		console.log(ptxQ)
+
+		res.push([sta.nodes, sta.nbs, sta.tun6Address, sta.tun4Address, sta.uptime, sta.cpu, mem.bmx7, ptxQ]);
+
+		res.push(['','','','','','','',''])
+		res.push(['','','','','','','',''])
+
+		return res;
+	});
+
+		new TablePooler(1,"/cgi-bin/bmx7-info", {'$info':''}, "ifaces_table", function(st){
+		var res = Array();
+		var sta = st.info[0].status;
+		var ifaces = st.info[1].interfaces;
+
+		ifaces.forEach(function(iface){
+			res.push([iface.dev, iface.state, iface.type, iface.rateMax, iface.localIp, iface.rxBpP, iface.txBpP]);
+		});
+		res.push(['','','','','','',''])
+		if (ifaces.length % 2 == 0)
+			res.push('')
+		res.push(['','','','','','',''])
+		return res;
+	});
+
+		new TablePooler(1,"/cgi-bin/bmx7-info", {'links':''}, "links_table", function(st){
+		var res = Array();
+		links = st.links;
+
+		links.forEach(function(link){
+			res.push([link.shortId, link.name, link.linkKey, link.nbLocalIp, link.dev, link.rxRate, link.txRate, link.routes]);
+		});
+		res.push(['','','','','','','',''])
+		if (links.length % 2 == 0)
+			res.push([])
+		res.push(['','','','','','','',''])
+		return res;
+	});
+//]]></script>
+
+<%+footer%>
