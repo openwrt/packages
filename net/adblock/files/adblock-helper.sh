@@ -11,12 +11,12 @@ f_envload()
 
     # get version string from default adblock configuration file
     #
-    cfg_version="$(/sbin/uci -q get adblock.global.adb_cfgver 2>/dev/null)"
-    cfg_enabled="$(/sbin/uci -q get adblock.global.adb_enabled 2>/dev/null)"
+    cfg_version="$(/sbin/uci -q get adblock.global.adb_cfgver)"
+    cfg_enabled="$(/sbin/uci -q get adblock.global.adb_enabled)"
     rc=$?
     if [ $((rc)) -ne 0 ] || [ "${cfg_version}" != "${adb_scriptver%.*}" ]
     then
-        cp -pf "/etc/adblock/adblock.conf.default" "/etc/config/adblock" >/dev/null 2>&1
+        cp -pf "/etc/adblock/adblock.conf.default" "/etc/config/adblock"
         rc=$?
         if [ $((rc)) -eq 0 ]
         then
@@ -36,7 +36,7 @@ f_envload()
     #
     if [ -r "/lib/functions.sh" ]
     then
-        . "/lib/functions.sh" 2>/dev/null
+        . "/lib/functions.sh"
     else
         rc=110
         f_log "openwrt function library not found" "${rc}"
@@ -47,7 +47,7 @@ f_envload()
     #
     if [ -r "/lib/functions/network.sh" ]
     then
-        . "/lib/functions/network.sh" 2>/dev/null
+        . "/lib/functions/network.sh"
     else
         rc=115
         f_log "openwrt network library not found" "${rc}"
@@ -62,7 +62,7 @@ f_envload()
         f_log "adblock installation finished, 'opkg' currently locked by package installer"
         f_exit
     fi
-    pkg_list="$(opkg list-installed 2>/dev/null)"
+    pkg_list="$(opkg list-installed)"
     if [ -z "${pkg_list}" ]
     then
         rc=120
@@ -154,8 +154,8 @@ f_envparse()
     #
     adb_count=0
     adb_minspace=12000
-    adb_tmpfile="$(mktemp -tu 2>/dev/null)"
-    adb_tmpdir="$(mktemp -p /tmp -d 2>/dev/null)"
+    adb_tmpfile="$(mktemp -tu)"
+    adb_tmpdir="$(mktemp -p /tmp -d)"
     adb_dnsdir="/tmp/dnsmasq.d"
     adb_dnsprefix="adb_list"
     adb_prechain_ipv4="prerouting_rule"
@@ -169,29 +169,29 @@ f_envparse()
 
     # set adblock source ruleset definitions
     #
-    rset_start="sed -r 's/[[:space:]]|[\[!#/:;_].*|[0-9\.]*localhost.*//g; s/[\^#/:;_\.\t ]*$//g'"
-    rset_end="tr -cd '[0-9a-z\.\-]\n' | sed -r 's/^[ \.\-].*$|^[a-z0-9]*[ \.\-]*$//g; /^[#/:;_\s]*$/d'"
-    rset_adaway="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-1]\{1,1\}//g' | ${rset_end}"
-    rset_blacklist="${rset_start} | ${rset_end}"
-    rset_disconnect="${rset_start} | ${rset_end}"
-    rset_dshield="${rset_start} | ${rset_end}"
-    rset_feodo="${rset_start} | ${rset_end}"
-    rset_malware="${rset_start} | ${rset_end}"
-    rset_malwarelist="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-1]\{1,1\}//g' | ${rset_end}"
-    rset_openphish="sed -e 's|^[^/]*//||' -e 's|/.*$||'"
-    rset_palevo="${rset_start} | ${rset_end}"
-    rset_ruadlist="sed -e '/^\|\|/! s/.*//; /\^$/! s/.*//; s/\^$//g; /[\.]/! s/.*//; s/^[\|]\{1,2\}//g' | ${rset_end}"
-    rset_shalla="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-9]\{1,3\}$//g' | ${rset_end}"
-    rset_spam404="${rset_start} | sed 's/^\|\|//g' | ${rset_end}"
-    rset_whocares="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-1]\{1,1\}//g' | ${rset_end}"
-    rset_winhelp="${rset_start} | sed 's/\([0-9]\{1,3\}\.\)\{3\}[0-1]\{1,1\}//g' | ${rset_end}"
-    rset_yoyo="${rset_start} | sed 's/,/\n/g' | ${rset_end}"
-    rset_zeus="${rset_start} | ${rset_end}"
+    rset_core="([A-Za-z0-9_-]+\.){1,}[A-Za-z]+"
+    rset_adaway="awk '\$0 ~/^127\.0\.0\.1[ \t]+${rset_core}/{print tolower(\$2)}'"
+    rset_blacklist="awk '\$1 ~/^${rset_core}/{print tolower(\$1)}'"
+    rset_disconnect="awk '\$1 ~/^${rset_core}/{print tolower(\$1)}'"
+    rset_dshield="awk '\$1 ~/^${rset_core}/{print tolower(\$1)}'"
+    rset_feodo="awk '\$1 ~/^${rset_core}/{print tolower(\$1)}'"
+    rset_malware="awk '\$1 ~/^${rset_core}/{print tolower(\$1)}'"
+    rset_malwarelist="awk '\$0 ~/^127\.0\.0\.1[ \t]+${rset_core}/{print tolower(\$2)}'"
+    rset_openphish="awk -F '/' '\$3 ~/^${rset_core}/{print tolower(\$3)}'"
+    rset_palevo="awk '\$1 ~/^${rset_core}/{print tolower(\$1)}'"
+    rset_ruadlist="awk -F '[|^]' '\$0 ~/^\|\|${rset_core}\^$/{print tolower(\$3)}'"
+    rset_shalla="awk -F '/' '\$1 ~/^${rset_core}/{print tolower(\$1)}'"
+    rset_spam404="awk '\$1 ~/^${rset_core}/{print tolower(\$1)}'"
+    rset_sysctl="awk '\$0 ~/^127\.0\.0\.1[ \t]+${rset_core}/{print tolower(\$2)}'"
+    rset_whocares="awk '\$0 ~/^127\.0\.0\.1[ \t]+${rset_core}/{print tolower(\$2)}'"
+    rset_winhelp="awk '\$0 ~/^0\.0\.0\.0[ \t]+${rset_core}/{print tolower(\$2)}'"
+    rset_yoyo="awk '\$1 ~/^${rset_core}/{print tolower(\$1)}'"
+    rset_zeus="awk '\$1 ~/^${rset_core}/{print tolower(\$1)}'"
 
     # get logical wan update interfaces (with default route) and their device names
     #
-    network_find_wan adb_wanif4 2>/dev/null
-    network_find_wan6 adb_wanif6 2>/dev/null
+    network_find_wan adb_wanif4
+    network_find_wan6 adb_wanif6
     if [ -z "${adb_wanif4}" ] && [ -z "${adb_wanif6}" ]
     then
         rc=125
@@ -203,15 +203,15 @@ f_envparse()
         f_log "LAN only (${adb_lanif}) network, no valid IPv4/IPv6 wan update interface found" "${rc}"
         f_exit
     else
-        network_get_device adb_wandev4 "${adb_wanif4}" 2>/dev/null
-        network_get_device adb_wandev6 "${adb_wanif6}" 2>/dev/null
+        network_get_device adb_wandev4 "${adb_wanif4}"
+        network_get_device adb_wandev6 "${adb_wanif6}"
         break
     fi
 
     # get lan ip addresses
     #
-    network_get_ipaddr adb_ipv4 "${adb_lanif}" 2>/dev/null
-    network_get_ipaddr6 adb_ipv6 "${adb_lanif}" 2>/dev/null
+    network_get_ipaddr adb_ipv4 "${adb_lanif}"
+    network_get_ipaddr6 adb_ipv6 "${adb_lanif}"
     if [ -z "${adb_ipv4}" ] && [ -z "${adb_ipv6}" ]
     then
         rc=130
@@ -238,13 +238,13 @@ f_envcheck()
     #
     if [ -n "${adb_wanif6}" ]
     then
-        check="$(printf "${pkg_list}" | grep "^ip6tables -" 2>/dev/null)"
+        check="$(printf "${pkg_list}" | grep "^ip6tables -")"
         if [ -z "${check}" ]
         then
             f_log "package 'ip6tables' not found, IPv6 support will be disabled"
             unset adb_wanif6
         else
-            check="$(printf "${pkg_list}" | grep "^kmod-ipt-nat6 -" 2>/dev/null)"
+            check="$(printf "${pkg_list}" | grep "^kmod-ipt-nat6 -")"
             if [ -z "${check}" ]
             then
                 f_log "package 'kmod-ipt-nat6' not found, IPv6 support will be disabled"
@@ -256,7 +256,7 @@ f_envcheck()
     # check ca-certificates package and set wget parms accordingly
     #
     wget_parm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=5 --connect-timeout=5 --read-timeout=5"
-    check="$(printf "${pkg_list}" | grep "^ca-certificates -" 2>/dev/null)"
+    check="$(printf "${pkg_list}" | grep "^ca-certificates -")"
     if [ -z "${check}" ]
     then
         wget_parm="${wget_parm} --no-check-certificate"
@@ -297,9 +297,9 @@ f_envcheck()
 
     # memory check
     #
-    mem_total="$(awk '$1 ~ /^MemTotal/ {printf $2}' "/proc/meminfo" 2>/dev/null)"
-    mem_free="$(awk '$1 ~ /^MemFree/ {printf $2}' "/proc/meminfo" 2>/dev/null)"
-    mem_swap="$(awk '$1 ~ /^SwapTotal/ {printf $2}' "/proc/meminfo" 2>/dev/null)"
+    mem_total="$(awk '$1 ~ /^MemTotal/ {printf $2}' "/proc/meminfo")"
+    mem_free="$(awk '$1 ~ /^MemFree/ {printf $2}' "/proc/meminfo")"
+    mem_swap="$(awk '$1 ~ /^SwapTotal/ {printf $2}' "/proc/meminfo")"
     if [ $((mem_total)) -le 64000 ] && [ $((mem_swap)) -eq 0 ]
     then
         mem_ok="false"
@@ -364,20 +364,20 @@ f_envcheck()
 
     # check volatile adblock uhttpd instance configuration
     #
-    rc="$(ps | grep "[u]httpd.*\-h /www/adblock" >/dev/null 2>&1; printf ${?})"
+    rc="$(ps | grep -q "[u]httpd.*\-h /www/adblock"; printf ${?})"
     if [ $((rc)) -ne 0 ]
     then
         if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
         then
-            uhttpd -h "/www/adblock" -k 5 -N 200 -t 0 -T 1 -D -S -E "/index.html" -p "${adb_ipv4}:${adb_port}" -p "[${adb_ipv6}]:${adb_port}">/dev/null 2>&1
+            uhttpd -h "/www/adblock" -k 5 -N 200 -t 0 -T 1 -D -S -E "/index.html" -p "${adb_ipv4}:${adb_port}" -p "[${adb_ipv6}]:${adb_port}"
             rc=${?}
         elif [ -n "${adb_wanif4}" ]
         then
-            uhttpd -h "/www/adblock" -k 5 -N 200 -t 0 -T 1 -D -S -E "/index.html" -p "${adb_ipv4}:${adb_port}" >/dev/null 2>&1
+            uhttpd -h "/www/adblock" -k 5 -N 200 -t 0 -T 1 -D -S -E "/index.html" -p "${adb_ipv4}:${adb_port}"
             rc=${?}
         elif [ -n "${adb_wanif6}" ]
         then
-            uhttpd -h "/www/adblock" -k 5 -N 200 -t 0 -T 1 -D -S -E "/index.html" -p "[${adb_ipv6}]:${adb_port}" >/dev/null 2>&1
+            uhttpd -h "/www/adblock" -k 5 -N 200 -t 0 -T 1 -D -S -E "/index.html" -p "[${adb_ipv6}]:${adb_port}"
             rc=${?}
         fi
         if [ $((rc)) -eq 0 ]
@@ -415,7 +415,7 @@ f_depend()
     local check
     local package="${1}"
 
-    check="$(printf "${pkg_list}" | grep "^${package} -" 2>/dev/null)"
+    check="$(printf "${pkg_list}" | grep "^${package} -")"
     if [ -z "${check}" ]
     then
         rc=140
@@ -450,10 +450,10 @@ f_firewall()
 
     # check whether iptables rule already applied and proceed accordingly
     #
-    rc="$("${ipt}" -w -t "${table}" -C "${chain}" -m comment --comment "${notes}" ${rules}  >/dev/null 2>&1; printf ${?})"
+    rc="$("${ipt}" -w -t "${table}" -C "${chain}" -m comment --comment "${notes}" ${rules}; printf ${?})"
     if [ $((rc)) -ne 0 ]
     then
-        "${ipt}" -w -t "${table}" -"${ctype}" "${chain}" -m comment --comment "${notes}" ${rules} >/dev/null 2>&1
+        "${ipt}" -w -t "${table}" -"${ctype}" "${chain}" -m comment --comment "${notes}" ${rules}
         rc=${?}
         if [ $((rc)) -eq 0 ]
         then
@@ -492,7 +492,7 @@ f_log()
             log_rc=", rc: ${log_rc}"
             log_msg="${log_msg}${log_rc}"
         fi
-        /usr/bin/logger ${log_parm} -t "adblock[${adb_pid}] ${class}" "${log_msg}"
+        /usr/bin/logger ${log_parm} -t "adblock[${adb_pid}] ${class}" "${log_msg}" 2>&1
     fi
 }
 
@@ -507,7 +507,7 @@ f_space()
     #
     if [ -d "${mp}" ]
     then
-        av_space="$(df "${mp}" 2>/dev/null | tail -n1 2>/dev/null | awk '{printf $4}')"
+        av_space="$(df "${mp}" | tail -n1 | awk '{printf $4}')"
         if [ $((av_space)) -lt $((adb_minspace)) ]
         then
             space_ok="false"
@@ -527,7 +527,7 @@ f_restore()
     #
     if [ -n "${adb_revsrclist}" ]
     then
-        rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f \( ${adb_revsrclist} \) -print -exec rm -f "{}" \; 2>/dev/null)"
+        rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f \( ${adb_revsrclist} \) -print -exec rm -f "{}" \;)"
         rc=${?}
         if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
         then
@@ -543,7 +543,7 @@ f_restore()
     #
     if [ "${backup_ok}" = "true" ] && [ "$(printf "${adb_backupdir}/${adb_dnsprefix}."*)" != "${adb_backupdir}/${adb_dnsprefix}.*" ]
     then
-        restore_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" -print -exec cp -pf "{}" "${adb_dnsdir}" \; 2>/dev/null)"
+        restore_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" -print -exec cp -pf "{}" "${adb_dnsdir}" \;)"
         rc=${?}
         if [ $((rc)) -eq 0 ] && [ -n "${restore_done}" ]
         then
@@ -561,13 +561,13 @@ f_restore()
     #
     if [ -n "${restore_done}" ] || [ -n "${rm_done}" ]
     then
-        /etc/init.d/dnsmasq restart >/dev/null 2>&1
+        /etc/init.d/dnsmasq restart
         sleep 1
-        dns_status="$(ps 2>/dev/null | grep "[d]nsmasq" 2>/dev/null)"
-        if [ -n "${dns_status}" ]
+        rc="$(ps | grep -q "[d]nsmasq"; printf ${?})"
+        if [ $((rc)) -eq 0 ]
         then
             rc=0
-            adb_count="$(head -qn -3 "${adb_dnsdir}/${adb_dnsprefix}."* 2>/dev/null | wc -l)"
+            adb_count="$(head -qn -3 "${adb_dnsdir}/${adb_dnsprefix}."* | wc -l)"
             if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
             then
                 adb_count="$((adb_count / 2))"
@@ -600,11 +600,11 @@ f_exit()
     #
     if [ -f "${adb_tmpfile}" ]
     then
-       rm -f "${adb_tmpfile}" >/dev/null 2>&1
+       rm -f "${adb_tmpfile}"
     fi
     if [ -d "${adb_tmpdir}" ]
     then
-       rm -rf "${adb_tmpdir}" >/dev/null 2>&1
+       rm -rf "${adb_tmpdir}"
     fi
 
     # final log message and iptables statistics
@@ -634,6 +634,6 @@ f_exit()
     else
         rc=0
     fi
-    rm -f "${adb_pidfile}" >/dev/null 2>&1
+    rm -f "${adb_pidfile}"
     exit ${rc}
 }
