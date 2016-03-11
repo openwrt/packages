@@ -73,22 +73,22 @@ endef
 
 define Package/node-cylon/install
 	mkdir -p $(1)/usr/lib/node/cylon
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/node_modules/cylon/* $(1)/usr/lib/node/cylon/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/node_modules/cylon/* $(1)/usr/lib/node/cylon/
 endef
 
 define Package/node-cylon-i2c/install
 	mkdir -p $(1)/usr/lib/node/cylon-i2c
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/node_modules/cylon-i2c/* $(1)/usr/lib/node/cylon-i2c/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/node_modules/cylon-i2c/* $(1)/usr/lib/node/cylon-i2c/
 endef
 
 define Package/node-cylon-gpio/install
 	mkdir -p $(1)/usr/lib/node/cylon-gpio
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/node_modules/cylon-gpio/* $(1)/usr/lib/node/cylon-gpio/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/node_modules/cylon-gpio/* $(1)/usr/lib/node/cylon-gpio/
 endef
 
 define Package/node-cylon-firmata/install
 	mkdir -p $(1)/usr/lib/node/cylon-firmata
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/{index.js,lib,LICENSE,package.json,README.md,RELEASES.md,spec} $(1)/usr/lib/node/cylon-firmata/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/{index.js,lib,LICENSE,package.json,README.md,RELEASES.md,spec} $(1)/usr/lib/node/cylon-firmata/
 endef
 
 $(eval $(call BuildPackage,node-cylon))

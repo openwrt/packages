@@ -60,7 +60,7 @@ define Package/node-arduino-firmata/install
 	mkdir -p $(1)/usr/lib/node
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/* $(1)/usr/lib/node
 	rm -rf $(1)/usr/lib/node/arduino-firmata/node_modules/serialport/ 
-	$(CP) -r ./files/* $(1)/
+	$(CP) ./files/* $(1)/
 endef
 
 $(eval $(call BuildPackage,node-arduino-firmata))

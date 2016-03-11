@@ -54,7 +54,7 @@ endif
 ifneq ($(CONFIG_PACKAGE_UPMPDCLI_SC_WEB_INTERFACE),y)
 	$(RM) -rf $(PKG_INSTALL_DIR)/usr/share/upmpdcli/web
 endif
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/share/upmpdcli $(1)/usr/share/
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/upmpdcli $(1)/usr/share/
 	$(INSTALL_DATA) ./files/upmpdcli.png $(1)/usr/share/upmpdcli/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/upmpdcli.init $(1)/etc/init.d/upmpdcli

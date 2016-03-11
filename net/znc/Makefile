@@ -81,7 +81,7 @@ define module
 	# include webadmin page templates if existing
 	if [ -d $$(PKG_BUILD_DIR)/modules/data/$(subst -,_,$(strip $(1))) ]; then \
 		$(INSTALL_DIR) $$(1)/usr/share/znc/modules ;\
-		$(CP) -r $$(PKG_BUILD_DIR)/modules/data/$(subst -,_,$(strip $(1))) $$(1)/usr/share/znc/modules ;\
+		$(CP) $$(PKG_BUILD_DIR)/modules/data/$(subst -,_,$(strip $(1))) $$(1)/usr/share/znc/modules ;\
 	fi
   endef
 
@@ -104,9 +104,9 @@ define webadmin
 	$(INSTALL_DIR) $$(1)/usr/lib/znc/
 	$(INSTALL_BIN) $$(PKG_BUILD_DIR)/modules/webadmin.so $$(1)/usr/lib/znc/
 	$(INSTALL_DIR) $$(1)/usr/share/znc/modules
-	$(CP) -r $$(PKG_BUILD_DIR)/modules/data/webadmin $$(1)/usr/share/znc/modules
+	$(CP) $$(PKG_BUILD_DIR)/modules/data/webadmin $$(1)/usr/share/znc/modules
 	$(INSTALL_DIR) $$(1)/usr/share/znc/webskins/
-	$(CP) -r $$(PKG_BUILD_DIR)/webskins/_default_ $$(1)/usr/share/znc/webskins/
+	$(CP) $$(PKG_BUILD_DIR)/webskins/_default_ $$(1)/usr/share/znc/webskins/
   endef
 
   ZNC_MODULES += znc-mod-webadmin
@@ -126,7 +126,7 @@ define webskin
 
   define Package/znc-webskin-$(strip $(1))/install
 	$(INSTALL_DIR) $$(1)/usr/share/znc/webskins/
-	$(CP) -r $$(PKG_BUILD_DIR)/webskins/$(strip $(1)) $$(1)/usr/share/znc/webskins/
+	$(CP) $$(PKG_BUILD_DIR)/webskins/$(strip $(1)) $$(1)/usr/share/znc/webskins/
   endef
   ZNC_MODULES += znc-webskin-$(strip $(1))
 endef
