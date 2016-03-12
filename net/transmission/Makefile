@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
-PKG_VERSION:=2.84
-PKG_RELEASE:=4
+PKG_VERSION:=2.92
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://download-origin.transmissionbt.com/files/ http://mirrors.m0k.org/transmission/files
-PKG_MD5SUM:=411aec1c418c14f6765710d89743ae42
+PKG_MD5SUM:=3fce404a436e3cd7fde80fb6ed61c264
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -88,6 +88,8 @@ CONFIGURE_ARGS += \
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS) -D_GNU_SOURCE"
+
+TARGET_CFLAGS += -std=gnu99
 
 define Package/transmission-daemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
