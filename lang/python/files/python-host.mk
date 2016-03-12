@@ -44,7 +44,7 @@ define Build/Compile/HostPyMod
 		LDSHARED="$(HOSTCC) -shared" \
 		CFLAGS="$(HOST_CFLAGS)" \
 		CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON_INC_DIR)" \
-		LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON_VERSION)" \
+		LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR)/host/lib" \
 		_PYTHON_HOST_PLATFORM=linux2 \
 		$(3) \
 		, \
