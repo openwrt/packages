@@ -127,6 +127,7 @@ $(call Package/sane-backends/Default)
   CATEGORY:=Utilities
   DEPENDS:=+libsane
   TITLE+= (network daemon)
+  USERID=saned:saned
 endef
 
 define Package/sane-daemon/description
@@ -194,15 +195,19 @@ endef
 
 define Package/sane-daemon/install
 	$(INSTALL_DIR) $(1)/etc/sane.d
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/sane.d/saned.conf $(1)/etc/sane.d/
+	ln -sf /var/etc/saned.conf $(1)/etc/sane.d/saned.conf
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/xinetd.d
 	$(CP) ./files/xinet.d_sane-port $(1)/etc/xinetd.d/sane-port
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config
+	$(INSTALL_BIN) ./files/saned.init $(1)/etc/init.d/saned
+	$(INSTALL_CONF) ./files/saned.config $(1)/etc/config/saned
 endef
 
 define Package/sane-daemon/conffiles
 /etc/sane.d/saned.conf
+/etc/config/saned
 endef
 
 define Package/sane-frontends/install
