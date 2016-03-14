@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.15
-PKG_RELEASE:=2
-PKG_MAINTAINER:=Dirk Brenken <dirk@brenken.org>
+PKG_VERSION:=4.8.16
+PKG_RELEASE:=1
+PKG_MAINTAINER:=Dirk Brenken <openwrt@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_MD5SUM:=7c1935433866fdf59a3c2d9b7dae81ad
+PKG_SHA256SUM:=bbbcbe3097d3160f865d24aa38ff122f1c59752b5ef153ca4ade5ac0f82b7020
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 
