@@ -82,7 +82,11 @@ $(eval $(call DefineProgrammer,SERPROG,$(FLASHROM_SERIAL)))
 $(eval $(call DefineProgrammer,PONY_SPI,$(FLASHROM_SERIAL)))
 $(eval $(call DefineProgrammer,BUSPIRATE_SPI,$(FLASHROM_SERIAL)))
 
-# USB
-$(eval $(call DefineConfig,USB,$(FLASHROM_USB)))
+# USB0
+$(eval $(call DefineConfig,USB0,$(FLASHROM_USB)))
 $(eval $(call DefineProgrammer,PICKIT2_SPI,$(FLASHROM_USB)))
-#$(eval $(call DefineProgrammer,DEDIPROG,$(FLASHROM_USB)))
+
+# USB1
+$(eval $(call DefineConfig,USB1,$(FLASHROM_USB)))
+$(eval $(call DefineProgrammer,CH341A_SPI,$(FLASHROM_USB)))
+$(eval $(call DefineProgrammer,DEDIPROG,$(FLASHROM_USB)))
