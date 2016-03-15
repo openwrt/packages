@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radsecproxy
-PKG_VERSION:=1.6.6
+PKG_VERSION:=1.6.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://software.uninett.no/radsecproxy/
-PKG_MD5SUM:=8270b2a9d7cb1dcf30ddd677f3e7ac5f
+PKG_MD5SUM:=d76cf4fc68515667b8c67387f5045150
 
 PKG_INSTALL:=1
 
