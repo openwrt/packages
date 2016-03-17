@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2014 OpenWrt.org
+# Copyright (C) 2008-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
 PKG_VERSION:=0.2.7.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.torproject.org/dist \
@@ -18,7 +18,6 @@ PKG_MD5SUM:=cc19107b57136a68e8c563bf2d35b072
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de>
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=libminiupnpc libnatpmp
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -49,17 +48,6 @@ $(call Package/tor/Default/description)
  This package contains the tor daemon.
 endef
 
-define Package/tor-fw-helper
-$(call Package/tor/Default)
-  TITLE:=Firewall helper for tor
-  DEPENDS:=+tor +libminiupnpc +libnatpmp
-endef
-
-define Package/tor-fw-helper/description
-$(call Package/tor/Default/description)
- This package contains a helper for automatically configuring port forwarding.
-endef
-
 define Package/tor-geoip
 $(call Package/tor/Default)
   TITLE:=GeoIP db for tor
@@ -78,10 +66,6 @@ endef
 CONFIGURE_ARGS += \
 	--with-libevent-dir="$(STAGING_DIR)/usr" \
 	--with-ssl-dir="$(STAGING_DIR)/usr" \
-	--enable-upnp \
-	--with-libminiupnpc-dir="$(STAGING_DIR)/usr" \
-	--enable-nat-pmp \
-	--with-libnatpmp-dir="$(STAGING_DIR)/usr" \
 	--disable-asciidoc \
 	--disable-seccomp
 
@@ -92,7 +76,7 @@ ifneq ($(CONFIG_SSP_SUPPORT),y)
 		CFLAGS="$(TARGET_CFLAGS) -std=gnu99"
 else
 	MAKE_FLAGS += \
-		CFLAGS="$(TARGET_CFLAGS) -fPIC -std=gnu99"	
+		CFLAGS="$(TARGET_CFLAGS) -fPIC -std=gnu99"
 endif
 
 CONFIGURE_VARS += \
@@ -107,16 +91,10 @@ define Package/tor/install
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/tor/torrc.sample $(1)/etc/tor/torrc
 endef
 
-define Package/tor-fw-helper/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/tor-fw-helper $(1)/usr/bin/
-endef
-
 define Package/tor-geoip/install
 	$(INSTALL_DIR) $(1)/usr/share/tor
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/tor/geoip $(1)/usr/share/tor/
 endef
 
 $(eval $(call BuildPackage,tor))
-$(eval $(call BuildPackage,tor-fw-helper))
 $(eval $(call BuildPackage,tor-geoip))
