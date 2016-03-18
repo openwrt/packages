@@ -1,6 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2005-2014 NowRush Studio
-# Author: hackpascal <hackpascal@gmail.com>
+# Copyright (C) 2005-2016 Weijie Gao <hackpascal@gmail.com>
 
 . $IPKG_INSTROOT/lib/functions.sh
 
@@ -87,9 +86,6 @@ vusers_iterate()
 
 	config_get owner "vuser" username
 
-	echo $name >> $VUSER_LIST
-	echo $password >> $VUSER_LIST
-
 	rm -f $VUSER_CONF_DIR/$name
 	touch $VUSER_CONF_DIR/$name
 
@@ -120,16 +116,12 @@ vusers_iterate()
 
 VAR=/var/run/vsftpd
 CONF=$VAR/vsftpd.conf
-VUSER_LIST=$VAR/vusers.txt
 VUSER_DB=$VAR/vusers
-VUSER_PAM=$VAR/vsftpd.vu
-VUSER_PAM_SYMLINK=/etc/pam.d/vsftpd
 VUSER_CONF_DIR=$VAR/users
 CHROOT_DIR=$VAR/empty
 
-rm -f $CONF $VUSER_LIST ${VUSER_DB}.db $VUSER_PAM
+rm -f $CONF
 rm -rf $VUSER_CONF_DIR $CHROOT_DIR
-touch $CONF $VUSER_LIST $VUSER_PAM
 
 mkdir -m 0755 -p $VAR
 mkdir -p $VUSER_CONF_DIR
@@ -190,7 +182,7 @@ if [ -z $max_login_fails ] || [ $max_login_fails -lt 1 ]; then max_login_fails=3
 output_const "max_login_fails" $max_login_fails
 
 # anonymous
-ftp_username=`get_value anonymous username`
+ftp_username=`get_value anonymous ftp_username`
 if [ -z $ftp_username ]; then ftp_username="ftp"; fi
 output_const "ftp_username" $ftp_username
 
@@ -232,33 +224,17 @@ if [ x`get_value vuser enabled` = x1 ]; then
 	output_const "guest_enable" YES
 	output_field vuser username "guest_username" ftp
 
-	output_const "pam_service_name" vsftpd
+	output_const "uci_config_name" vsftpd
 	output_const "user_config_dir" "/var/run/vsftpd/users"
 
 	config_foreach vusers_iterate user
-
-	db_load -T -t hash -f $VUSER_LIST ${VUSER_DB}.db
-	rm -f $VUSER_LIST
-
-	echo "auth sufficient /lib/security/pam_userdb.so db=${VUSER_DB}" >> $VUSER_PAM
-	echo "account sufficient /lib/security/pam_userdb.so db=${VUSER_DB}" >> $VUSER_PAM
-
-	if ! [ -f $VUSER_PAM_SYMLINK ]; then
-		ln -s $VUSER_PAM $VUSER_PAM_SYMLINK
-	else
-		symlink=`readlink $VUSER_PAM_SYMLINK`
-		if [ x$symlink != x$VUSER_PAM_SYMLINK ]; then
-			rm -f $VUSER_PAM_SYMLINK
-			ln -s $VUSER_PAM $VUSER_PAM_SYMLINK
-		fi
-	fi
 fi
 
 # local user
 output_const "allow_writeable_chroot" YES
 output_const "secure_chroot_dir" $CHROOT_DIR
 
-local_root=`get_value 'local' root`
+local_root=$(get_value 'local' root)
 if ! [ -z $local_root ]; then
 	output_const "local_root" $local_root
 fi
@@ -266,8 +242,6 @@ fi
 local_enable=`get_value 'local' enabled`
 if [ x$local_enable = x1 ]; then
 	output_const "local_enable" YES
-	echo "auth    required /lib/security/pam_unix.so shadow nullok  " >> $VUSER_PAM                      
-	echo "account required /lib/security/pam_unix.so" >> $VUSER_PAM
 else
 	if [ $vuser_enabled = 1 ]; then
 		output_const "local_enable" YES

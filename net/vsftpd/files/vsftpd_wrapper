@@ -1,6 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2005-2014 NowRush Studio
-# Author: hackpascal <hackpascal@gmail.com>
+# Copyright (C) 2005-2016 Weijie Gao <hackpascal@gmail.com>
 
 . $IPKG_INSTROOT/lib/functions.sh
 

@@ -27,6 +27,7 @@ define Package/vsftpd/Default
   TITLE:=A fast and secure FTP server
   URL:=http://vsftpd.beasts.org/
   MAINTAINER:=Cezary Jackiewicz <cezary@eko.one.pl>
+  DEPENDS:=+libuci
 endef
 
 
@@ -43,11 +44,11 @@ $(call Package/vsftpd/Default)
   DEPENDS+=+libopenssl
 endef
 
-define Package/vsftpd-pam
-$(call Package/vsftpd/Default)
-  VARIANT:=pam
-  TITLE+= (PAM)
-  DEPENDS+=+libopenssl +libpam-db +db47-util
+define Package/vsftpd/config
+config VSFTPD_USE_UCI_SCRIPTS
+	bool "Uses UCI scripts"
+	depends on PACKAGE_vsftpd || PACKAGE_vsftpd-tls
+	default n
 endef
 
 define Package/vsftpd/conffiles
@@ -56,10 +57,15 @@ endef
 
 Package/vsftpd-tls/conffiles=$(Package/vsftpd/conffiles)
 
+ifneq ($(CONFIG_USE_MUSL),)
+  NLSSTRING:=-lcrypt
+else
+  NLSSTRING:=-lcrypt -lnsl
+endif
 
 ifeq ($(BUILD_VARIANT),notls)
  define Build/Compile
-	$(SED) 's/#define VSF_BUILD_PAM/#undef VSF_BUILD_PAM/' $(PKG_BUILD_DIR)/builddefs.h
+	$(SED) 's/-lcrypt -lnsl/$(NLSSTRING)/' $(PKG_BUILD_DIR)/Makefile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
@@ -71,9 +77,8 @@ endif
 ifeq ($(BUILD_VARIANT),tls)
  define Build/Compile
 	$(SED) 's/#undef VSF_BUILD_SSL/#define VSF_BUILD_SSL/' $(PKG_BUILD_DIR)/builddefs.h
-	$(SED) 's/#define VSF_BUILD_PAM/#undef VSF_BUILD_PAM/' $(PKG_BUILD_DIR)/builddefs.h
-	$(if $(CONFIG_USE_GLIBC),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile)
-	$(if $(CONFIG_USE_MUSL),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile)
+	$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto/' $(PKG_BUILD_DIR)/Makefile
+	$(SED) 's/-lcrypt -lnsl/$(NLSSTRING)/' $(PKG_BUILD_DIR)/Makefile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
@@ -82,44 +87,31 @@ ifeq ($(BUILD_VARIANT),tls)
  endef
 endif
 
-ifeq ($(BUILD_VARIANT),pam)
- define Build/Compile
-	$(SED) 's/#undef VSF_BUILD_SSL/#define VSF_BUILD_SSL/' $(PKG_BUILD_DIR)/builddefs.h
-	$(if $(CONFIG_USE_GLIBC),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile)
-	$(if $(CONFIG_USE_MUSL),$(SED) 's/-lcrypt -lnsl/-lcrypt -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile,$(SED) 's/-lcrypt -lnsl/-lcrypt -lnsl -lssl -lcrypto -lpam/' $(PKG_BUILD_DIR)/Makefile)
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS)" \
-		LDFLAGS="$(TARGET_LDFLAGS)" \
-		vsftpd
- endef
-endif
-
-define Package/vsftpd/install
+define Package/vsftpd/install/default
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME) $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/$(PKG_NAME).conf $(1)/etc/$(PKG_NAME).conf
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
 endef
 
-define Package/vsftpd-pam/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME) $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc/pam.d
-	$(INSTALL_DIR) $(1)/etc/init.d
+ifeq ($(CONFIG_VSFTPD_USE_UCI_SCRIPTS),y)
+define Package/vsftpd/install
+$(call Package/vsftpd/install/default, $(1))
+	$(INSTALL_BIN) ./files/$(PKG_NAME)-uci.init $(1)/etc/init.d/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DIR) $(1)/CONTROL
-	$(INSTALL_BIN) ./files/$(PKG_NAME)-pam.init $(1)/etc/init.d/$(PKG_NAME)
+	$(INSTALL_BIN) ./files/vsftpd.uci $(1)/etc/config/vsftpd
 	$(INSTALL_BIN) ./files/vsftpd_wrapper $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/vsftpd_prepare $(1)/usr/sbin
-	$(INSTALL_BIN) ./files/vsftpd.uci $(1)/etc/config/vsftpd
-	$(INSTALL_BIN) ./ipkg/postinst $(1)/CONTROL/postinst
 endef
+else
+define Package/vsftpd/install
+$(call Package/vsftpd/install/default, $(1))
+	$(INSTALL_CONF) ./files/$(PKG_NAME).conf $(1)/etc/$(PKG_NAME).conf
+	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
+endef
+endif
 
 Package/vsftpd-tls/install=$(Package/vsftpd/install)
 
 $(eval $(call BuildPackage,vsftpd))
 $(eval $(call BuildPackage,vsftpd-tls))
-$(eval $(call BuildPackage,vsftpd-pam))
