@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_VERSION:=2.5.0
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=Apache-2.0
@@ -32,7 +32,8 @@ PKG_INSTALL:=1
 # Upstream package supports kernels between 2.6.32 and 4.3 
 # see https://github.com/openvswitch/ovs/blob/master/FAQ.md
 # This list is pruned to only those kernels used in OpenWRT
-SUPPORTED_KERNELS:=LINUX_3_18||LINUX_4_1||LINUX_4_3
+# Support for kernel 4.4 is backported
+SUPPORTED_KERNELS:=LINUX_3_18||LINUX_4_1||LINUX_4_3||LINUX_4_4
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
