@@ -1,0 +1,649 @@
+diff --git a/clients.c b/clients.c
+index a8609d2..cd1d06a 100644
+--- a/clients.c
++++ b/clients.c
+@@ -65,9 +65,10 @@ struct client_type_s client_types[] =
+ 
+ 	/* User-Agent: DLNADOC/1.50 SEC_HHP_[TV]UE40D7000/1.0 */
+ 	/* User-Agent: DLNADOC/1.50 SEC_HHP_ Family TV/1.0 */
++	/* USER-AGENT: DLNADOC/1.50 SEC_HHP_[TV] UE65JU7000/1.0 UPnP/1.0 */
+ 	{ ESamsungSeriesCDE,
+-	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE | FLAG_SAMSUNG_DCM10,
+-	  "Samsung Series [CDEF]",
++	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE | FLAG_SAMSUNG_DCM10 | FLAG_CAPTION_RES,
++	  "Samsung Series [CDEFJ]",
+ 	  "SEC_HHP_",
+ 	  EUserAgent
+ 	},
+@@ -134,6 +135,14 @@ struct client_type_s client_types[] =
+ 	  EXAVClientInfo
+ 	},
+ 
++	/* USER-AGENT: Linux/2.6.35 UPnP/1.0 DLNADOC/1.50 INTEL_NMPR/2.0 LGE_DLNA_SDK/1.6.0 */
++	{ ELGNetCastDevice,
++	  FLAG_DLNA | FLAG_CAPTION_RES,
++	  "LG",
++	  "LGE_DLNA_SDK/1.6.0",
++	  EUserAgent
++	},
++
+ 	/* User-Agent: Linux/2.6.31-1.0 UPnP/1.0 DLNADOC/1.50 INTEL_NMPR/2.0 LGE_DLNA_SDK/1.5.0 */
+ 	{ ELGDevice,
+ 	  FLAG_DLNA | FLAG_CAPTION_RES,
+diff --git a/clients.h b/clients.h
+index 190d569..35d819a 100644
+--- a/clients.h
++++ b/clients.h
+@@ -57,6 +57,7 @@ enum client_types {
+ 	EDirecTV,
+ 	EFreeBox,
+ 	ELGDevice,
++	ELGNetCastDevice,
+ 	ELifeTab,
+ 	EMarantzDMP,
+ 	EMediaRoom,
+diff --git a/inotify.c b/inotify.c
+index 745436c..88ca83a 100644
+--- a/inotify.c
++++ b/inotify.c
+@@ -25,6 +25,7 @@
+ #include <unistd.h>
+ #include <dirent.h>
+ #include <libgen.h>
++#include <signal.h>
+ #include <errno.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+@@ -349,9 +350,8 @@ inotify_insert_file(char * name, const char * path)
+ 			if( !is_image(path) )
+ 				return -1;
+ 			break;
+-                default:
++		default:
+ 			return -1;
+-			break;
+ 	}
+ 	
+ 	/* If it's already in the database and hasn't been modified, skip it. */
+@@ -641,7 +641,7 @@ inotify_remove_directory(int fd, const char * path)
+ }
+ 
+ void *
+-start_inotify()
++start_inotify(void)
+ {
+ 	struct pollfd pollfds[1];
+ 	int timeout = 1000;
+@@ -650,6 +650,10 @@ start_inotify()
+ 	int length, i = 0;
+ 	char * esc_name = NULL;
+ 	struct stat st;
++	sigset_t set;
++
++	sigfillset(&set);
++	pthread_sigmask(SIG_BLOCK, &set, NULL);
+         
+ 	pollfds[0].fd = inotify_init();
+ 	pollfds[0].events = POLLIN;
+diff --git a/metadata.c b/metadata.c
+index c08ca3f..2bfa8b9 100644
+--- a/metadata.c
++++ b/metadata.c
+@@ -149,7 +149,7 @@ check_for_captions(const char *path, int64_t detailID)
+ 
+ 	if (ret == 0)
+ 	{
+-		sql_exec(db, "INSERT into CAPTIONS"
++		sql_exec(db, "INSERT OR REPLACE into CAPTIONS"
+ 		             " (ID, PATH) "
+ 		             "VALUES"
+ 		             " (%lld, %Q)", detailID, file);
+diff --git a/minidlna.c b/minidlna.c
+index 7933f54..b0c88c4 100644
+--- a/minidlna.c
++++ b/minidlna.c
+@@ -468,9 +468,21 @@ static int strtobool(const char *str)
+ static void init_nls(void)
+ {
+ #ifdef ENABLE_NLS
+-	setlocale(LC_MESSAGES, "");
+-	setlocale(LC_CTYPE, "en_US.utf8");
+-	DPRINTF(E_DEBUG, L_GENERAL, "Using locale dir %s\n", bindtextdomain("minidlna", getenv("TEXTDOMAINDIR")));
++	const char *messages, *ctype, *locale_dir;
++
++	ctype = setlocale(LC_CTYPE, "");
++	if (!ctype || !strcmp(ctype, "C"))
++		ctype = setlocale(LC_CTYPE, "en_US.utf8");
++	if (!ctype)
++		DPRINTF(E_WARN, L_GENERAL, "Unset locale\n");
++	else if (!strstr(ctype, "utf8") && !strstr(ctype, "UTF8") &&
++		 !strstr(ctype, "utf-8") && !strstr(ctype, "UTF-8"))
++		DPRINTF(E_WARN, L_GENERAL, "Using unsupported non-utf8 locale '%s'\n", ctype);
++	messages = setlocale(LC_MESSAGES, "");
++	if (!messages)
++		messages = "unset";
++	locale_dir = bindtextdomain("minidlna", getenv("TEXTDOMAINDIR"));
++	DPRINTF(E_DEBUG, L_GENERAL, "Using locale dir '%s' and locale langauge %s/%s\n", locale_dir, messages, ctype);
+ 	textdomain("minidlna");
+ #endif
+ }
+@@ -738,6 +750,10 @@ init(int argc, char **argv)
+ 			if (strtobool(ary_options[i].value))
+ 				SETFLAG(MERGE_MEDIA_DIRS_MASK);
+ 			break;
++		case WIDE_LINKS:
++			if (strtobool(ary_options[i].value))
++				SETFLAG(WIDE_LINKS_MASK);
++			break;
+ 		default:
+ 			DPRINTF(E_ERROR, L_GENERAL, "Unknown option in file %s\n",
+ 				optionsfile);
+@@ -1021,11 +1037,11 @@ main(int argc, char **argv)
+ 
+ 	for (i = 0; i < L_MAX; i++)
+ 		log_level[i] = E_WARN;
+-	init_nls();
+ 
+ 	ret = init(argc, argv);
+ 	if (ret != 0)
+ 		return 1;
++	init_nls();
+ 
+ 	DPRINTF(E_WARN, L_GENERAL, "Starting " SERVER_NAME " version " MINIDLNA_VERSION ".\n");
+ 	if (sqlite3_libversion_number() < 3005001)
+@@ -1299,10 +1315,6 @@ shutdown:
+ 	if (scanning && scanner_pid)
+ 		kill(scanner_pid, SIGKILL);
+ 
+-	/* kill other child processes */
+-	process_reap_children();
+-	free(children);
+-
+ 	/* close out open sockets */
+ 	while (upnphttphead.lh_first != NULL)
+ 	{
+@@ -1330,6 +1342,10 @@ shutdown:
+ 	if (inotify_thread)
+ 		pthread_join(inotify_thread, NULL);
+ 
++	/* kill other child processes */
++	process_reap_children();
++	free(children);
++
+ 	sql_exec(db, "UPDATE SETTINGS set VALUE = '%u' where KEY = 'UPDATE_ID'", updateID);
+ 	sqlite3_close(db);
+ 
+diff --git a/minidlna.conf b/minidlna.conf
+index 7e00e89..446ed3e 100644
+--- a/minidlna.conf
++++ b/minidlna.conf
+@@ -81,3 +81,6 @@ model_number=1
+ # maximum number of simultaneous connections
+ # note: many clients open several simultaneous connections while streaming
+ #max_connections=50
++
++# set this to yes to allow symlinks that point outside user-defined media_dirs.
++#wide_links=no
+diff --git a/minidlna.conf.5 b/minidlna.conf.5
+index ce4b3fd..f5ecb97 100644
+--- a/minidlna.conf.5
++++ b/minidlna.conf.5
+@@ -163,6 +163,10 @@ force_sort_criteria=+upnp:class,+upnp:originalTrackNumber,+dc:title
+ 
+ .fi
+ 
++.IP "\fBwide_links\fP"
++Set to 'yes' to allow symlinks that point outside user-defined media_dirs.
++By default, wide symlinks are not followed.
++
+ 
+ 
+ .SH VERSION
+diff --git a/options.c b/options.c
+index 2fa8c06..15e05ee 100644
+--- a/options.c
++++ b/options.c
+@@ -64,7 +64,8 @@ static const struct {
+ 	{ USER_ACCOUNT, "user" },
+ 	{ FORCE_SORT_CRITERIA, "force_sort_criteria" },
+ 	{ MAX_CONNECTIONS, "max_connections" },
+-	{ MERGE_MEDIA_DIRS, "merge_media_dirs" }
++	{ MERGE_MEDIA_DIRS, "merge_media_dirs" },
++	{ WIDE_LINKS, "wide_links" }
+ };
+ 
+ int
+diff --git a/options.h b/options.h
+index 159255f..e9ef921 100644
+--- a/options.h
++++ b/options.h
+@@ -57,7 +57,8 @@ enum upnpconfigoptions {
+ 	USER_ACCOUNT,			/* user account to run as */
+ 	FORCE_SORT_CRITERIA,		/* force sorting by a given sort criteria */
+ 	MAX_CONNECTIONS,		/* maximum number of simultaneous connections */
+-	MERGE_MEDIA_DIRS		/* don't add an extra directory level when there are multiple media dirs */
++	MERGE_MEDIA_DIRS,		/* don't add an extra directory level when there are multiple media dirs */
++	WIDE_LINKS			/* allow following symlinks outside the defined media_dirs */
+ };
+ 
+ /* readoptionsfile()
+diff --git a/po/da.po b/po/da.po
+index f071e07..7d06bd2 100644
+--- a/po/da.po
++++ b/po/da.po
+@@ -68,6 +68,10 @@ msgstr "Mapper"
+ msgid "Playlists"
+ msgstr "Afspilningslister"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "Nylig tilføjet"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Film"
+diff --git a/po/de.po b/po/de.po
+index 79fe3f3..3eeb814 100644
+--- a/po/de.po
++++ b/po/de.po
+@@ -83,6 +83,10 @@ msgstr "Ordner"
+ msgid "Playlists"
+ msgstr "Wiedergabelisten"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "Kürzlich hinzugefügt"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Video"
+diff --git a/po/es.po b/po/es.po
+index 0e0b150..5ac881f 100644
+--- a/po/es.po
++++ b/po/es.po
+@@ -68,6 +68,10 @@ msgstr "Carpetas"
+ msgid "Playlists"
+ msgstr "Listas"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "Recientemente añadido"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Vídeo"
+diff --git a/po/fr.po b/po/fr.po
+index 62cfb1f..9769902 100644
+--- a/po/fr.po
++++ b/po/fr.po
+@@ -68,6 +68,10 @@ msgstr "Dossiers"
+ msgid "Playlists"
+ msgstr "Liste de lecture"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "Ajouts récents"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Vidéo"
+diff --git a/po/it.po b/po/it.po
+index ee7e043..c8541bf 100644
+--- a/po/it.po
++++ b/po/it.po
+@@ -70,6 +70,10 @@ msgstr "Cartelle"
+ msgid "Playlists"
+ msgstr "Scalette"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "Aggiunto recentemente"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Video"
+diff --git a/po/ja.po b/po/ja.po
+index caca0d5..c6605b1 100644
+--- a/po/ja.po
++++ b/po/ja.po
+@@ -68,6 +68,10 @@ msgstr "フォルダ"
+ msgid "Playlists"
+ msgstr "プレイリスト"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "最近追加された"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "ビデオ"
+diff --git a/po/ko.po b/po/ko.po
+index 20b1ed4..ff8198d 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -68,6 +68,10 @@ msgstr "폴더"
+ msgid "Playlists"
+ msgstr "재생 목록"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "최근에 추가"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "비디오"
+diff --git a/po/minidlna.pot b/po/minidlna.pot
+index 67e53a3..bb16145 100644
+--- a/po/minidlna.pot
++++ b/po/minidlna.pot
+@@ -84,6 +84,10 @@ msgstr ""
+ msgid "Playlists"
+ msgstr ""
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr ""
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr ""
+diff --git a/po/nb.po b/po/nb.po
+index c63332a..8d9b8fa 100644
+--- a/po/nb.po
++++ b/po/nb.po
+@@ -68,6 +68,10 @@ msgstr "Mapper"
+ msgid "Playlists"
+ msgstr "Spillelister"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "Nylig lagt til"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Video"
+diff --git a/po/nl.po b/po/nl.po
+index afe3486..0e0c1b6 100644
+--- a/po/nl.po
++++ b/po/nl.po
+@@ -68,6 +68,10 @@ msgstr "Mappen"
+ msgid "Playlists"
+ msgstr "Afspeellijst"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "Nyligen tillagd"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Video"
+diff --git a/po/pl.po b/po/pl.po
+index 777c6d4..2d3cd8b 100644
+--- a/po/pl.po
++++ b/po/pl.po
+@@ -83,6 +83,10 @@ msgstr "Folder"
+ msgid "Playlists"
+ msgstr "Lista Utworow"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "Niedawno dodane"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Filmy"
+diff --git a/po/ru.po b/po/ru.po
+index fda545d..e07502b 100644
+--- a/po/ru.po
++++ b/po/ru.po
+@@ -85,6 +85,10 @@ msgstr "Папки"
+ msgid "Playlists"
+ msgstr "Списки Воспроизведения"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr ""
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Видео"
+diff --git a/po/sl.po b/po/sl.po
+index cb28c84..ceb31d8 100644
+--- a/po/sl.po
++++ b/po/sl.po
+@@ -83,6 +83,10 @@ msgstr "Mape"
+ msgid "Playlists"
+ msgstr "Seznami predvajanj"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "nedavno dodano"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Video"
+diff --git a/po/sv.po b/po/sv.po
+index 5880d4b..1005813 100644
+--- a/po/sv.po
++++ b/po/sv.po
+@@ -68,6 +68,10 @@ msgstr "Mappar"
+ msgid "Playlists"
+ msgstr "Spelningslistor"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr "nyligen tillagda"
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Film"
+diff --git a/process.c b/process.c
+index 96ec1c3..ecb4922 100644
+--- a/process.c
++++ b/process.c
+@@ -96,10 +96,10 @@ process_fork(struct client_cache_s *client)
+ 	pid_t pid = fork();
+ 	if (pid > 0)
+ 	{
+-		number_of_children++;
+ 		if (client)
+ 			client->connections++;
+ 		add_process_info(pid, client);
++		number_of_children++;
+ 	}
+ 
+ 	return pid;
+diff --git a/scanner.c b/scanner.c
+index 33b961a..52ac256 100644
+--- a/scanner.c
++++ b/scanner.c
+@@ -594,7 +594,8 @@ CreateDatabase(void)
+ 			ret = sql_exec(db, "INSERT into OBJECTS (OBJECT_ID, PARENT_ID, DETAIL_ID, CLASS, NAME)"
+ 			                   " values "
+ 					   "('%s', '%s', %lld, 'container.storageFolder', '%q')",
+-					   magic->objectid_match, parent, GetFolderMetadata(magic->name, NULL, NULL, NULL, 0), magic->name);
++					   magic->objectid_match, parent,
++					   GetFolderMetadata(_(magic->name), NULL, NULL, NULL, 0), _(magic->name));
+ 			free(parent);
+ 			if( ret != SQLITE_OK )
+ 				goto sql_failed;
+diff --git a/upnpglobalvars.h b/upnpglobalvars.h
+index c729a1e..c4b9158 100644
+--- a/upnpglobalvars.h
++++ b/upnpglobalvars.h
+@@ -191,6 +191,7 @@ extern uint32_t runtime_flags;
+ #define NO_PLAYLIST_MASK      0x0008
+ #define SYSTEMD_MASK          0x0010
+ #define MERGE_MEDIA_DIRS_MASK 0x0020
++#define WIDE_LINKS_MASK       0x0040
+ 
+ #define SETFLAG(mask)	runtime_flags |= mask
+ #define GETFLAG(mask)	(runtime_flags & mask)
+diff --git a/upnphttp.c b/upnphttp.c
+index 418cde4..4184bb2 100644
+--- a/upnphttp.c
++++ b/upnphttp.c
+@@ -477,6 +477,21 @@ Send400(struct upnphttp * h)
+ 	CloseSocket_upnphttp(h);
+ }
+ 
++/* very minimalistic 403 error message */
++static void
++Send403(struct upnphttp * h)
++{
++	static const char body403[] =
++		"<HTML><HEAD><TITLE>403 Forbidden</TITLE></HEAD>"
++		"<BODY><H1>Forbidden</H1>You don't have permission to access this resource."
++		"</BODY></HTML>\r\n";
++	h->respflags = FLAG_HTML;
++	BuildResp2_upnphttp(h, 403, "Forbidden",
++	                    body403, sizeof(body403) - 1);
++	SendResp_upnphttp(h);
++	CloseSocket_upnphttp(h);
++}
++
+ /* very minimalistic 404 error message */
+ static void
+ Send404(struct upnphttp * h)
+@@ -1328,6 +1343,46 @@ start_dlna_header(struct string_s *str, int respcode, const char *tmode, const c
+ 	             respcode, date, tmode, mime);
+ }
+ 
++static int
++_open_file(const char *orig_path)
++{
++	struct media_dir_s *media_path;
++	char buf[PATH_MAX];
++	const char *path;
++	int fd;
++
++	if (!GETFLAG(WIDE_LINKS_MASK))
++	{
++		path = realpath(orig_path, buf);
++		if (!path)
++		{
++			DPRINTF(E_ERROR, L_HTTP, "Error resolving path %s: %s\n",
++						orig_path, strerror(errno));
++			return -1;
++		}
++
++		for (media_path = media_dirs; media_path; media_path = media_path->next)
++		{
++			if (strncmp(path, media_path->path, strlen(media_path->path)) == 0)
++				break;
++		}
++               if (!media_path && strncmp(path, db_path, strlen(db_path)))
++		{
++			DPRINTF(E_ERROR, L_HTTP, "Rejecting wide link %s -> %s\n",
++						orig_path, path);
++			return -403;
++		}
++	}
++	else
++		path = orig_path;
++
++	fd = open(path, O_RDONLY);
++	if (fd < 0)
++		DPRINTF(E_ERROR, L_HTTP, "Error opening %s\n", path);
++
++	return fd;
++}
++
+ static void
+ SendResp_icon(struct upnphttp * h, char * icon)
+ {
+@@ -1413,11 +1468,13 @@ SendResp_albumArt(struct upnphttp * h, char * object)
+ 	}
+ 	DPRINTF(E_INFO, L_HTTP, "Serving album art ID: %lld [%s]\n", id, path);
+ 
+-	fd = open(path, O_RDONLY);
++	fd = _open_file(path);
+ 	if( fd < 0 ) {
+-		DPRINTF(E_ERROR, L_HTTP, "Error opening %s\n", path);
+ 		sqlite3_free(path);
+-		Send404(h);
++		if (fd == -403)
++			Send403(h);
++		else
++			Send404(h);
+ 		return;
+ 	}
+ 	sqlite3_free(path);
+@@ -1461,11 +1518,13 @@ SendResp_caption(struct upnphttp * h, char * object)
+ 	}
+ 	DPRINTF(E_INFO, L_HTTP, "Serving caption ID: %lld [%s]\n", id, path);
+ 
+-	fd = open(path, O_RDONLY);
++	fd = _open_file(path);
+ 	if( fd < 0 ) {
+-		DPRINTF(E_ERROR, L_HTTP, "Error opening %s\n", path);
+ 		sqlite3_free(path);
+-		Send404(h);
++		if (fd == -403)
++			Send403(h);
++		else
++			Send404(h);
+ 		return;
+ 	}
+ 	sqlite3_free(path);
+@@ -1914,10 +1973,12 @@ SendResp_dlnafile(struct upnphttp *h, char *object)
+ 	}
+ 
+ 	offset = h->req_RangeStart;
+-	sendfh = open(last_file.path, O_RDONLY);
++	sendfh = _open_file(last_file.path);
+ 	if( sendfh < 0 ) {
+-		DPRINTF(E_ERROR, L_HTTP, "Error opening %s\n", last_file.path);
+-		Send404(h);
++		if (sendfh == -403)
++			Send403(h);
++		else
++			Send404(h);
+ 		goto error;
+ 	}
+ 	size = lseek(sendfh, 0, SEEK_END);
+diff --git a/upnpsoap.c b/upnpsoap.c
+index 8066318..0c2b9af 100644
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -1055,6 +1055,7 @@ callback(void *args, int argc, char **argv, char **azColName)
+ 					break;
+ 				case ESamsungSeriesCDE:
+ 				case ELGDevice:
++				case ELGNetCastDevice:
+ 				case EAsusOPlay:
+ 				default:
+ 					if( passed_args->flags & FLAG_HAS_CAPTIONS )
+@@ -1064,7 +1065,7 @@ callback(void *args, int argc, char **argv, char **azColName)
+ 									     "http://%s:%d/Captions/%s.srt"
+ 									   "&lt;/res&gt;",
+ 									   lan_addr[passed_args->iface].str, runtime_vars.port, detailID);
+-						else if( passed_args->filter & FILTER_SEC_CAPTION_INFO_EX )
++						if( passed_args->filter & FILTER_SEC_CAPTION_INFO_EX )
+ 							ret = strcatf(str, "&lt;sec:CaptionInfoEx sec:type=\"srt\"&gt;"
+ 							                     "http://%s:%d/Captions/%s.srt"
+ 							                   "&lt;/sec:CaptionInfoEx&gt;",
+@@ -1924,14 +1925,21 @@ SamsungSetBookmark(struct upnphttp * h, const char * action)
+ 	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data, 0);
+ 	ObjectID = GetValueFromNameValueList(&data, "ObjectID");
+ 	PosSecond = GetValueFromNameValueList(&data, "PosSecond");
++
++	if ( atoi(PosSecond) < 30 )
++		PosSecond = "0";
++
+ 	if( ObjectID && PosSecond )
+ 	{
+ 		int ret;
++		const char *rid = ObjectID;
++
++		in_magic_container(ObjectID, 0, &rid);
+ 		ret = sql_exec(db, "INSERT OR REPLACE into BOOKMARKS"
+ 		                   " VALUES "
+-		                   "((select DETAIL_ID from OBJECTS where OBJECT_ID = '%q'), %q)", ObjectID, PosSecond);
++		                   "((select DETAIL_ID from OBJECTS where OBJECT_ID = '%q'), %q)", rid, PosSecond);
+ 		if( ret != SQLITE_OK )
+-			DPRINTF(E_WARN, L_METADATA, "Error setting bookmark %s on ObjectID='%s'\n", PosSecond, ObjectID);
++			DPRINTF(E_WARN, L_METADATA, "Error setting bookmark %s on ObjectID='%s'\n", PosSecond, rid);
+ 		BuildSendAndCloseSoapResp(h, resp, sizeof(resp)-1);
+ 	}
+ 	else
