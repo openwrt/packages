@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=36918
+PKG_SOURCE_VERSION:=36953
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 # ToDo:
 #  - break-out {peer,name,data}store for each backend
@@ -133,13 +133,13 @@ define Package/gnunet/install
 	$(INSTALL_DIR) $(1)/usr/share/gnunet/config.d $(1)/usr/share/gnunet/hellos
 
 	( for bin in arm ats cadet core config ecc identity nat nat-server nse \
-	    peerinfo peerstore revocation scalarproduct statistics transport uri; do \
+	    peerinfo revocation scalarproduct statistics transport uri; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ ; \
 	done )
 
 	( for lib in arm ats block cadet core datacache dht \
 	    dns dnsparser dnsstub fragmentation friends hello identity nat nse \
-	    peerinfo peerstore regexblock regex revocation scalarproduct set \
+	    peerinfo regexblock regex revocation scalarproduct set \
 	    statistics transport util; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
 	done )
@@ -152,7 +152,7 @@ define Package/gnunet/install
 	( for lex in daemon-hostlist daemon-topology helper-nat-client \
 	    helper-nat-server service-arm service-ats service-cadet \
 	    service-core service-dht service-identity service-nse \
-	    service-peerinfo service-peerstore service-regex \
+	    service-peerinfo service-regex \
 	    service-revocation service-scalarproduct-alice \
 	    service-scalarproduct-bob service-scalarproduct-ecc-alice \
 	    service-scalarproduct-ecc-bob service-set service-statistics \
@@ -161,7 +161,7 @@ define Package/gnunet/install
 	done )
 
 	( for conf in arm ats cadet core datacache dht hostlist identity \
-	    nat nse peerinfo peerstore regex revocation scalarproduct \
+	    nat nse peerinfo regex revocation scalarproduct \
 	    set statistics topology transport util; do \
 		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/$$$$conf.conf $(1)/usr/share/gnunet/config.d ; \
 	done )
@@ -208,7 +208,7 @@ PLUGIN_dv:=transport_dv
 LIBEXEC_dv:=service-dv
 CONF_dv:=dv
 
-DEPENDS_fs:=+gnunet-datastore +libextractor
+DEPENDS_fs:=+gnunet-datastore +gnunet-peerstore +libextractor
 BIN_fs:=auto-share directory download download-manager.scm fs publish unindex search
 LIB_fs:=fs
 PLUGIN_fs:=block_fs
@@ -230,6 +230,11 @@ PLUGIN_datastore:=datastore_heap
 LIBEXEC_datastore:=daemon-latency-logger service-datastore
 CONF_datastore:=datastore
 
+BIN_peerstore:=peerstore
+LIB_peerstore:=peerstore
+LIBEXEC_peerstore:=service-peerstore
+CONF_peerstore:=peerstore
+
 DEPENDS_flat:=+gnunet-gns
 PLUGIN_flat:=namecache_flat namestore_flat
 
@@ -241,9 +246,9 @@ DEPENDS_pgsql:=+gnunet-gns +gnunet-datastore +libpq
 LIB_pgsql:=postgres pq
 PLUGIN_pgsql:=datacache_postgres datastore_postgres namecache_postgres namestore_postgres
 
-DEPENDS_rest:=+gnunet-gns +jansson
+DEPENDS_rest:=+gnunet-gns +gnunet-social +jansson
 LIB_rest:=rest
-PLUGIN_rest:=rest_gns rest_identity rest_namestore
+PLUGIN_rest:=rest_gns rest_identity rest_identity_provider rest_namestore
 LIBEXEC_rest:=rest-server
 CONF_rest:=rest
 
@@ -252,14 +257,14 @@ LIB_rps:=rps
 LIBEXEC_rps:=service-rps
 CONF_rps:=rps
 
-DEPENDS_social:=+gnunet-sqlite
-BIN_social:=multicast
-LIB_social:=consensus multicast psyc psycstore psycutil secretsharing social
+DEPENDS_social:=+gnunet-sqlite +jansson
+BIN_social:=identity-token multicast
+LIB_social:=consensus identityprovider multicast psyc psycstore psycutil secretsharing social
 PLUGIN_social:=psycstore_sqlite
-LIBEXEC_social:=service-consensus service-evil-consensus service-multicast service-psyc service-psycstore service-secretsharing service-social
+LIBEXEC_social:=service-consensus service-evil-consensus service-identity-provider service-multicast service-psyc service-psycstore service-secretsharing service-social
 CONF_social:=consensus multicast psyc psycstore secretsharing social
 
-DEPENDS_sqlite:=+gnunet-gns +gnunet-datastore +libsqlite3
+DEPENDS_sqlite:=+gnunet-gns +gnunet-datastore +gnunet-peerstore +libsqlite3
 PLUGIN_sqlite:=datacache_sqlite datastore_sqlite namecache_sqlite namestore_sqlite peerstore_sqlite
 
 DEPENDS_transport-bluetooth:=+bluez-libs
@@ -285,6 +290,7 @@ $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))
 $(eval $(call BuildComponent,mysql,mySQL datastore backend,))
 $(eval $(call BuildComponent,pgsql,PostgreSQL storage backends,))
+$(eval $(call BuildComponent,peerstore,peerstore local persistency component,))
 $(eval $(call BuildComponent,rest,REST interface,))
 $(eval $(call BuildComponent,rps,RPS routing component,))
 $(eval $(call BuildComponent,social,social components,))
