@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cryptography
-PKG_VERSION:=1.2.3
+PKG_VERSION:=1.3.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/c/cryptography
-PKG_MD5SUM:=5474d2b3e8c7555a60852e48d2743f85
+PKG_MD5SUM:=bc8148d2ff2d80fef8ef2d2e856b3a7f
 
 PKG_BUILD_DEPENDS:=python-cffi/host
 
