@@ -7,7 +7,33 @@ NAME=zabbix_server
 PROG=/usr/sbin/$NAME
 CONFIG=/etc/$NAME.conf
 SERVICE_PID_FILE=/var/run/$NAME.pid
-. /lib/zabbix/functions.sh
+
+ucivars="
+server:Server
+listenport:ListenPort
+debuglevel:DebugLevel
+logfile:LogFile
+dbhost:DBHost
+dbname:DBName
+dbuser:DBUser
+dbpassword:DBPassword
+dbsocket:DBSocket
+"
+
+uci2config() {
+	local enabled ucic zbxc module var
+	config_load "${NAME}"
+	config_get_bool enabled config enable
+	[ -z "$enabled" ] && exit
+	logger -s -t ${NAME} -p daemon.info "Generating conf from UCI"
+	for var in $ucivars; do
+		ucic=$(echo $var|cut -d ':' -f 1)
+		zbxc=$(echo $var|cut -d ':' -f 2)
+		config_get val config ${ucic}
+		[ -n "${val}" ] && echo "${zbxc}=${val}"
+		[ "$ucic" = "allowroot" ] && allowroot=$val
+	done >/var/run/${NAME}.conf.d/uci
+}
 
 start() {
 
@@ -16,26 +42,12 @@ start() {
 
 	[ -f ${CONFIG} ] || return 1
 
-	user_exists zabbix 53 || user_add zabbix 53
-	group_exists zabbix 53 || group_add zabbix 53
-	touch ${SERVICE_PID_FILE}
-	chown zabbix:zabbix ${SERVICE_PID_FILE}
-
-	config_load "${NAME}"
-	config_get sql_schema_uri config sql_schema_uri
-	config_get sql_images_uri config sql_images_uri
-	config_get sql_data_uri config sql_data_uri
-	config_get sql_local_uri config sql_local_uri
-	config_get dbname config dbname
-	config_get_bool sql_clean config sql_clean
-
-	[ "$sql_clean" -eq 1 ]    && rm -f "$dbname"
-	[ -n "$sql_schema_uri" ]  && sqlite_sql "$sql_schema_uri" "$dbname"
-	[ -n "$sql_data_uri" ] 	  && sqlite_sql "$sql_data_uri" "$dbname"
-	[ -n "$sql_images_uri" ]  && sqlite_sql "$sql_images_uri" "$dbname"
-	[ -n "$sql_local_uri" ]   && sqlite_sql "$sql_local_uri" "$dbname"
-	
-	chown zabbix:zabbix $dbname
+	grep -q "^AllowRoot=1" ${CONFIG} || {
+		user_exists zabbix 53 || user_add zabbix 53
+		group_exists zabbix 53 || group_add zabbix 53
+		touch ${SERVICE_PID_FILE}
+		chown zabbix:zabbix ${SERVICE_PID_FILE}
+	}
 
 	service_start ${PROG} -c ${CONFIG}
 }

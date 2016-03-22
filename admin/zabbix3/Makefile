@@ -8,12 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix3
-PKG_VERSION:=3.0.0beta1
+<<<<<<< HEAD
+PKG_VERSION:=3.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=zabbix-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/zabbix
+PKG_MD5SUM:=890d9eec69304ad552959fabe0a5d122
+=======
+PKG_VERSION:=3.0.0beta1
+PKG_RELEASE:=2
+
+PKG_SOURCE:=zabbix-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/zabbix
 PKG_MD5SUM:=979370195fbb967c0e80889f62c25fc7
+>>>>>>> e44986d9a6454e5f58bff640a0185eb6a2ca5e26
 PKG_BUILD_DIR:=$(BUILD_DIR)/zabbix3-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0
@@ -26,28 +35,6 @@ PKG_FIXUP:=autoreconf
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-CONFIGURE_ARGS+= \
-	--enable-agent \
-	--enable-server \
-	--enable-proxy \
-	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
-	--disable-java
-
-ifneq ($(CONFIG_ZABBIX3_SSL),)
-	CONFIGURE_ARGS+= --with-openssl="$(STAGING_DIR)/usr"
-	PKG_DEPS += +libopenssl
-endif
-
-ifneq ($(CONFIG_ZABBIX3_LUA),)
-	WIFI_DEPS += +libiwinfo-lua +libuci-lua +lua
-	NETWORK_DEPS += +libuci-lua +lua
-endif
-
-ifneq ($(CONFIG_PACKAGE_zabbix3-server)$(CONFIG_PACKAGE_zabbix3-proxy),)
-	CONFIGURE_ARGS += --with-sqlite3="$(STAGING_DIR)/usr"
-endif
-
-
 define Package/zabbix3/Default
   SECTION:=admin
   CATEGORY:=Administration
@@ -55,19 +42,22 @@ define Package/zabbix3/Default
   URL:=http://www.zabbix.com/
   SUBMENU:=zabbix3
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
-  USERID:=zabbix=53:zabbix=53
-endef
-
-define Package/zabbix3-core
-  $(call Package/zabbix3/Default)
-  TITLE+= Zabbix 3 core package
-  DEPENDS+= $(PKG_DEPS)
 endef
 
 define Package/zabbix3-agentd
   $(call Package/zabbix3/Default)
   TITLE+= agentd
-  DEPENDS+= +zabbix3-core +jshn
+<<<<<<< HEAD
+  DEPENDS+= +libopenssl
+=======
+  DEPENDS+= +libopenssl +libiconv-full
+>>>>>>> e44986d9a6454e5f58bff640a0185eb6a2ca5e26
+endef
+
+define Package/zabbix3-extra-owrt
+  $(call Package/zabbix3/Default)
+  TITLE+= discovery/userparameters for OpenWrt
+  DEPENDS += +zabbix3-agentd
 endef
 
 define Package/zabbix3-extra-mac80211
@@ -79,37 +69,42 @@ endef
 define Package/zabbix3-extra-network
   $(call Package/zabbix3/Default)
   TITLE+= discovery/userparameters for network
-  DEPENDS += +zabbix3-agentd $(NETWORK_DEPS)
+  DEPENDS += +zabbix3-agentd +libuci-lua +lua
 endef
 
 define Package/zabbix3-extra-wifi
   $(call Package/zabbix3/Default)
   TITLE+= discovery/userparameters for wifi
-  DEPENDS += +zabbix3-agentd $(WIFI_DEPS)
+  DEPENDS += +zabbix3-agentd +libiwinfo-lua +libuci-lua +lua +libubus-lua
 endef
 
 define Package/zabbix3-sender
   $(call Package/zabbix3/Default)
   TITLE+= sender
-  DEPENDS += +zabbix3-core
+  DEPENDS += +libopenssl
 endef
 
 define Package/zabbix3-get
   $(call Package/zabbix3/Default)
   TITLE+= get
-  DEPENDS += +zabbix3-core
+  DEPENDS += +libopenssl
 endef
 
 define Package/zabbix3-server
   $(call Package/zabbix3/Default)
   TITLE+= server
-  DEPENDS += +libsqlite3 +zabbix3-core
+  DEPENDS += +libsqlite3 +libopenssl
 endef
 
 define Package/zabbix3-proxy
   $(call Package/zabbix3/Default)
   TITLE+= proxy
-  DEPENDS += +libsqlite3 +zabbix3-core
+  DEPENDS += +libsqlite3 +libopenssl
+endef
+
+define Package/zabbix3-extra-owrt/description
+An extra package for zabbix-agentd that monitors OpenWrt specific things
+See http://wiki.openwrt.org/doc/howto/zabbix for ready to use zabbix templates.
 endef
 
 define Package/zabbix3-extra-mac80211/description
@@ -130,9 +125,13 @@ As it uses libiwinfo, it works with all wifi devices supported by openwrt.
 See http://wiki.openwrt.org/doc/howto/zabbix for ready to use zabbix templates.
 endef
 
-define Package/zabbix3-core/config
-        source "$(SOURCE)/Config.in"
-endef
+CONFIGURE_ARGS+= \
+	--enable-agent \
+	--enable-server \
+	--enable-proxy \
+	--disable-java \
+	--with-openssl="$(STAGING_DIR)/usr" \
+	--with-sqlite3="$(STAGING_DIR)/usr"
 
 MAKE_FLAGS += ARCH="linux"
 
@@ -165,12 +164,13 @@ define Package/zabbix3/install/etc
 		$(PKG_INSTALL_DIR)/etc/zabbix_$(2).conf \
 		$(1)/etc/
 
-	[ -f  ./files/zabbix_$(2).conf ] && $(INSTALL_CONF) \
-		./files/zabbix_$(2).conf \
-		$(1)/etc/
+	@echo Include=/etc/zabbix_$(2).conf.d/ >$(1)/etc/zabbix_$(2).conf
+	@echo Include=/var/run/zabbix_$(2).conf.d/ >>$(1)/etc/zabbix_$(2).conf
+	@echo PidFile=/var/run/zabbix_$(2).pid >>$(1)/etc/zabbix_$(2).conf
+	@if [ "$(2)" = "proxy" ] || [ "$(2)" = "server" ]; then echo FpingLocation=/usr/bin/fping; echo Fping6Location=/usr/bin/fping6; fi >>$(1)/etc/zabbix_$(2).conf
 
 	$(INSTALL_CONF) \
-		./files/zabbix_$(2).uci \
+		./files/zabbix_$(2).config \
 		$(1)/etc/config/zabbix_$(2)
 
 endef
@@ -230,15 +230,10 @@ define Build/Compile
 	$(call Build/Compile/zabbix3-extra-mac80211)
 endef
 
-define Package/zabbix3-core/install
-	$(INSTALL_DIR) $(1)/lib/zabbix/
-	$(INSTALL_BIN) ./files/zlock.sh $(1)/lib/zabbix/
-	$(INSTALL_CONF) ./files/functions.sh $(1)/lib/zabbix/
-endef
-
 define Package/zabbix3-agentd/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/lib/zabbix/agentd
+	$(INSTALL_BIN) ./files/zlock.sh $(1)/lib/zabbix/
 	$(call Package/zabbix3/install/sbin,$(1),agentd)
 	$(call Package/zabbix3/install/etc,$(1),agentd)
 	$(call Package/zabbix3/install/init.d,$(1),agentd)
@@ -247,7 +242,11 @@ endef
 define Package/zabbix3-extra/install
 	$(INSTALL_DIR) $(1)/lib/zabbix/$(2)
 	$(CP) ./files/$(2).lib.sh $(1)/lib/zabbix/$(2)/functions.sh
-	$(INSTALL_CONF) ./files/$(2).uci $(1)/lib/zabbix/$(2)/config_uci
+	$(INSTALL_CONF) ./files/$(2).config $(1)/lib/zabbix/$(2)/config_uci
+endef
+
+define Package/zabbix3-extra-owrt/install
+	$(call Package/zabbix3-extra/install,$(1),owrt)
 endef
 
 define Package/zabbix3-extra-mac80211/install
@@ -286,8 +285,8 @@ define Package/zabbix3-proxy/install
 	$(call Package/zabbix3/install/init.d,$(1),proxy)
 endef
 
-$(eval $(call BuildPackage,zabbix3-core))
 $(eval $(call BuildPackage,zabbix3-agentd))
+$(eval $(call BuildPackage,zabbix3-extra-owrt))
 $(eval $(call BuildPackage,zabbix3-extra-mac80211))
 $(eval $(call BuildPackage,zabbix3-extra-network))
 $(eval $(call BuildPackage,zabbix3-extra-wifi))
