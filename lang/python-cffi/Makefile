@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cffi
-PKG_VERSION:=1.5.0
+PKG_VERSION:=1.5.2
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/c/cffi
-PKG_MD5SUM:=dec8441e67880494ee881305059af656
+PKG_MD5SUM:=fa766133f7299464c8bf857e0c966a82
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 HOST_BUILD_DEPENDS:=libffi/host python/host python-setuptools/host python-pycparser/host
