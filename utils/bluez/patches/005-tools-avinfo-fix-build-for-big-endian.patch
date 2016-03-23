@@ -1,0 +1,14 @@
+--- a/profiles/audio/a2dp-codecs.h
++++ b/profiles/audio/a2dp-codecs.h
+@@ -234,6 +234,11 @@ typedef struct {
+ 	uint8_t channel_mode:4;
+ } __attribute__ ((packed)) a2dp_aptx_t;
+ 
++typedef struct {
++	a2dp_vendor_codec_t info;
++	uint8_t unknown[2];
++} __attribute__ ((packed)) a2dp_ldac_t;
++
+ #else
+ #error "Unknown byte order"
+ #endif
