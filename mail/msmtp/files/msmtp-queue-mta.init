@@ -1,0 +1,11 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2016 Daniel Dickinson <openwrt@daniel.thecshore.com>
+
+START=99
+
+start() {
+	mkdir -p /var/spool/msmtp
+	chmod 0733 /var/spool/msmtp
+	mkdir -p /var/log/msmtp
+	chmod 0733 /var/log/msmtp
+}
