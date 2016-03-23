@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS+= -std=gnu99
 
-CONFIGURE_ARGS += --disable-libwacom
+CONFIGURE_ARGS += --disable-libwacom --disable-tests --disable-documentation
 
 define Package/libinput
   SECTION:=libs
