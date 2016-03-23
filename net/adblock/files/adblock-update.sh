@@ -36,7 +36,7 @@ fi
 # get current directory, script- and openwrt version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="1.0.0"
+adb_scriptver="1.0.1"
 openwrt_version="$(cat /etc/openwrt_version)"
 
 # source in adblock function library
@@ -276,51 +276,36 @@ if [ -n "${adb_srclist}" ]
 then
     rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \;)"
     rc=${?}
-    if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
-    then
-        f_log "disabled adblock lists removed"
-        if [ "${backup_ok}" = "true" ]
-        then
-            rm_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \;)"
-            rc=${?}
-            if  [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
-            then
-                f_log "disabled adblock list backups removed"
-            elif [ $((rc)) -ne 0 ]
-            then
-                f_log "error during removal of disabled adblock list backups" "${rc}"
-                f_exit
-            fi
-        fi
-    elif [ $((rc)) -ne 0 ]
-    then
-        f_log "error during removal of disabled adblock lists" "${rc}"
-        f_exit
-    fi
 else
     rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" -print -exec rm -f "{}" \;)"
     rc=${?}
-    if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
+fi
+if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
+then
+    f_log "disabled adblock lists removed"
+    if [ "${backup_ok}" = "true" ]
     then
-        f_log "all adblock lists removed"
-        if [ "${backup_ok}" = "true" ]
+        if [ -n "${adb_srclist}" ]
         then
+            rm_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" \( ${adb_srclist} \) -print -exec rm -f "{}" \;)"
+            rc=${?}
+        else
             rm_done="$(find "${adb_backupdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}.*" -print -exec rm -f "{}" \;)"
             rc=${?}
-            if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
-            then
-                f_log "all adblock list backups removed"
-            elif [ $((rc)) -ne 0 ]
-            then
-                f_log "error during removal of all adblock list backups" "${rc}"
-                f_exit
-            fi
         fi
-    elif [ $((rc)) -ne 0 ]
-    then
-        f_log "error during removal of all adblock lists" "${rc}"
-        f_exit
+        if  [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
+        then
+            f_log "disabled adblock list backups removed"
+        elif [ $((rc)) -ne 0 ]
+        then
+            f_log "error during removal of disabled adblock list backups" "${rc}"
+            f_exit
+        fi
     fi
+elif [ $((rc)) -ne 0 ]
+then
+    f_log "error during removal of disabled adblock lists" "${rc}"
+    f_exit
 fi
 
 # partial restore of adblock lists in case of download errors
@@ -341,38 +326,35 @@ fi
 
 # make separate adblock lists entries unique
 #
-if [ "${mem_ok}" != "false" ]
+if [ "${mem_ok}" = "true" ] && [ -n "${adb_revsrclist}" ]
 then
-    if [ -n "${adb_revsrclist}" ]
-    then
-        f_log "remove duplicates in separate adblock lists"
+    f_log "remove duplicates in separate adblock lists"
 
-        # generate a temporary unique overall list
+    # generate a unique overall block list
+    #
+    head -qn -3 "${adb_dnsdir}/${adb_dnsprefix}."* | sort -u > "${adb_tmpdir}/blocklist.overall"
+
+    # loop through all separate lists, ordered by size (ascending)
+    #
+    for list in $(ls -Sr "${adb_dnsdir}/${adb_dnsprefix}."*)
+    do
+        # check overall block list vs. separate block list,
+        # write only duplicate entries to a temporary separate list
         #
-        head -qn -3 "${adb_dnsdir}/${adb_dnsprefix}."* | sort -u > "${adb_dnsdir}/tmp.overall"
+        list="${list/*./}"
+        sort "${adb_tmpdir}/blocklist.overall" "${adb_dnsdir}/${adb_dnsprefix}.${list}" | uniq -d > "${adb_tmpdir}/tmp.${list}"
 
-        # loop through all separate lists, ordered by size (ascending)
+        # write only unique entries back to overall block list
         #
-        for list in $(ls -Sr "${adb_dnsdir}/${adb_dnsprefix}."*)
-        do
-            # check original separate list vs. temporary overall list,
-            # rewrite only duplicate entries back to temporary separate list
-            #
-            list="${list/*./}"
-            sort "${adb_dnsdir}/tmp.overall" "${adb_dnsdir}/${adb_dnsprefix}.${list}" | uniq -d > "${adb_dnsdir}/tmp.${list}"
+        sort "${adb_tmpdir}/blocklist.overall" "${adb_tmpdir}/tmp.${list}" | uniq -u > "${adb_tmpdir}/tmp.overall"
+        mv -f "${adb_tmpdir}/tmp.overall" "${adb_tmpdir}/blocklist.overall"
 
-            # rewrite only unique entries back to temporary overall list
-            #
-            tmp_unique="$(sort "${adb_dnsdir}/tmp.overall" "${adb_dnsdir}/tmp.${list}" | uniq -u)"
-            printf "%s\n" "${tmp_unique}" > "${adb_dnsdir}/tmp.overall"
-
-            # write unique result back to original separate list (with list footer)
-            #
-            tail -qn 3 "${adb_dnsdir}/$adb_dnsprefix.${list}" >> "${adb_dnsdir}/tmp.${list}"
-            mv -f "${adb_dnsdir}/tmp.${list}" "${adb_dnsdir}/${adb_dnsprefix}.${list}"
-        done
-        rm -f "${adb_dnsdir}/tmp.overall"
-    fi
+        # write unique result back to original separate list
+        #
+        tail -qn 3 "${adb_dnsdir}/${adb_dnsprefix}.${list}" >> "${adb_tmpdir}/tmp.${list}"
+        mv -f "${adb_tmpdir}/tmp.${list}" "${adb_dnsdir}/${adb_dnsprefix}.${list}"
+    done
+    rm -f "${adb_tmpdir}/blocklist.overall"
 fi
 
 # set separate list count & get overall count
