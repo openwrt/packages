@@ -506,7 +506,7 @@ CONFIGURE_ARGS += \
 	--without-freeipmi \
 	--$(if $(CONFIG_NUT_SSL),with,without)-ssl $(if $(CONFIG_NUT_SSL),--with-openssl) \
 	--without-libltdl \
-	--with-statepath=/var/run \
+	--with-statepath=/var/run/nut \
 	--with-drvpath=/lib/nut \
 	--with-user=root \
 	--with-group=root

@@ -143,9 +143,6 @@ nut_upsmon_add() {
 }
 
 start_service() {
-	[ -d $RUN_D ] || mkdir -p $RUN_D
-        mkdir -p /var/etc/nut
-        chmod 640 /var/etc/nut
 	rm -f $UPSMON_C
 
 	config_load nut_monitor
@@ -158,6 +155,11 @@ start_service() {
 
 	chmod 640 $UPSMON_C
 	chmod 640 /var/etc/nut/nut.conf
+
+	[ -d /var/run/nut ] || {
+		mkdir -m 0750 -p /var/run/nut
+		chown ${runas:-root}:$(id -gn ${runas:-root}) /var/run/nut
+	}
 
 	chown ${runas:-root}:$(id -gn ${runas:-root}) $UPSMON_C
 	$DEBUG /usr/sbin/upsmon $UPSMON_OPTIONS
