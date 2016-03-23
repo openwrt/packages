@@ -304,6 +304,8 @@ f_envcheck()
     then
         mem_ok="false"
         f_log "not enough free memory, overall sort processing will be disabled (total: ${mem_total}, free: ${mem_free}, swap: ${mem_swap})"
+    else
+        mem_ok="true"
     fi
 
     # check backup configuration
