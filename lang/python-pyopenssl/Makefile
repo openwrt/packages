@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyOpenSSL
-PKG_VERSION:=0.15.1
+PKG_VERSION:=16.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/p/pyOpenSSL
-PKG_MD5SUM:=f447644afcbd5f0a1f47350fec63a4c6
+PKG_MD5SUM:=9587d813dcf656e9f2760e41a3682dc3
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 
