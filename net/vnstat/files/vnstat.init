@@ -8,6 +8,11 @@ vnstat_option() {
 		/etc/vnstat.conf
 }
 
+vnstat_set_option() {
+	sed -i -e "s,^[[:space:]]*$1[[:space:]]*['\"][^'\"]*['\"]\(.*\)$,$1 \"$2\"\1," \
+		/etc/vnstat.conf
+}
+
 start() {
 	local lib="$(vnstat_option DatabaseDir)"
 	local pid="$(vnstat_option PidFile)"
@@ -22,11 +27,21 @@ start() {
 		exit 1
 	}
 
-	mkdir -p "$lib"
 
 	init_ifaces() {
 		local cfg="$1"
-		local url lnk
+		local url lnk datadir
+
+		config_get datadir "$cfg" datadir
+
+		if [ -n "$datadir" ]; then
+			if [ "$lib" != "$datadir" ]; then
+				vnstat_set_option DatabaseDir $datadir
+				lib=$datadir
+			fi
+		fi
+
+		mkdir -p "$lib"
 
 		init_iface() {
 			local ifn="$1"
