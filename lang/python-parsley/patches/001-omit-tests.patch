@@ -1,0 +1,12 @@
+diff -Nur a/setup.py b/setup.py
+--- a/setup.py	2015-09-09 10:45:25.000000000 +0800
++++ b/setup.py	2015-12-01 17:31:03.143409843 +0800
+@@ -14,7 +14,6 @@
+     author_email="washort42@gmail.com",
+     license="MIT License",
+     long_description=open("README").read(),
+-    packages=["ometa", "terml", "ometa._generated", "terml._generated",
+-              "ometa.test", "terml.test"],
++    packages=["ometa", "terml", "ometa._generated", "terml._generated"],
+     py_modules=["parsley"]
+ )

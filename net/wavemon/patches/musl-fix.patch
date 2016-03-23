@@ -1,0 +1,21 @@
+diff --git a/wavemon.h b/wavemon.h
+index e7584f7..8c76d11 100644
+--- a/wavemon.h
++++ b/wavemon.h
+@@ -19,6 +19,7 @@
+  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+  */
+ #include <stdio.h>
++#include <stdint.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+ #include <signal.h>
+@@ -33,7 +34,7 @@
+ #include <ctype.h>
+ #include <math.h>
+ #include <stdbool.h>
+-#include <ncurses.h>
++#include <curses.h>
+ 
+ #include "llist.h"
+ 
