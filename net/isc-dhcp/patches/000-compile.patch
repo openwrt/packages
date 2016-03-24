@@ -1,0 +1,30 @@
+diff --git a/bind/Makefile.in b/bind/Makefile.in
+index bd784c6..5950d19 100644
+--- a/bind/Makefile.in
++++ b/bind/Makefile.in
+@@ -85,13 +85,13 @@ bind2:
+ 		echo Bind export libraries already installed ;               \
+ 	else                                                                 \
+ 		echo Building BIND Export libraries - this takes some time. ;\
+-		(cd ${bindsrcdir}/lib/export ;                               \
+-		  echo building in `pwd` ;                                   \
+-		  MAKE=${GMAKE} ${GMAKE} >> ${binddir}/build.log) ;          \
++		(cd ${bindsrcdir}/lib/export/dns ;			     \
++		  echo building gen using ${BUILD_CC} in `pwd` ;             \
++		  $(MAKE) CC=${BUILD_CC} CFLAGS="-O2" LIBS="" gen) ;         \
+                                                                              \
+ 		echo Installing BIND Export libraries to ${binddir}. ;       \
+ 		(cd ${bindsrcdir}/lib/export ;                               \
+-		  MAKE=${GMAKE} ${GMAKE} install > ${binddir}/install.log) ; \
++		  $(MAKE) DESTDIR="" install > ${binddir}/build.log) ;       \
+ 	fi
+ 
+ clean:
+@@ -100,6 +100,7 @@ clean:
+ 
+ # Include the following so that this Makefile is happy when the parent
+ # tries to use them.
++install-exec:
+ 
+ distdir:
+ 
