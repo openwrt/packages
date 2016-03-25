@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 #
-# The latest alfred git hash in PKG_REV can be obtained from http://git.open-mesh.org/alfred.git
+# The latest alfred git hash in PKG_REV can be obtained from https://git.open-mesh.org/alfred.git
 #
 PKG_NAME:=alfred
-PKG_VERSION:=2015.2
+PKG_VERSION:=2016.0
 PKG_RELEASE:=0
-PKG_MD5SUM:=e50bd17753f824fa24d3914259ab0395
+PKG_MD5SUM:=d5cc848f57f430a977e2f266d35d99c7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 init-y := alfred
 
 define Package/alfred
-  URL:=http://www.open-mesh.org/
+  URL:=https://www.open-mesh.org/
   SECTION:=net
   CATEGORY:=Network
   TITLE:=A.L.F.R.E.D. - Almighty Lightweight Fact Remote Exchange Daemon
