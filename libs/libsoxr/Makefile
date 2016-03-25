@@ -18,6 +18,9 @@ PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
+		Mike Brady <mikebrady@eircom.net>
+
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=LICENCE
 
@@ -25,6 +28,7 @@ PKG_FIXUP:=libtool
 PKG_REMOVE_FILES:=autogen.sh
 
 PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -34,7 +38,6 @@ define Package/libsoxr
   CATEGORY:=Libraries
   TITLE:=The SoX Resampler library
   URL:=http://sourceforge.net/projects/soxr/
-  MAINTAINER:=Mike Brady <mikebrady@eircom.net>
   DEPENDS:= +libpthread
 endef
 
@@ -56,8 +59,7 @@ endef
 
 define Package/libsoxr/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/src/libsoxr.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsoxr.so* $(1)/usr/lib/
 endef
-
 
 $(eval $(call BuildPackage,libsoxr))
