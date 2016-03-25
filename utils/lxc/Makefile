@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
 PKG_VERSION:=1.1.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause GPL-2.0
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
@@ -39,7 +39,8 @@ LXC_SCRIPTS += \
 
 DEPENDS_APPLETS = +libpthread +libcap +liblxc
 
-DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates
+DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock
+
 DEPENDS_ls = +lxc-config
 DEPENDS_top = +lxc-lua +luafilesystem @BROKEN
 
@@ -54,6 +55,23 @@ endef
 define Package/lxc
   $(call Package/lxc/Default)
   MENU:=1
+endef
+
+define Package/lxc-auto
+  $(call Package/lxc/Default)
+  TITLE:= (initscript)
+  DEPENDS:=+lxc-start +lxc-stop
+endef
+
+define Package/lxc-auto/description
+ LXC is the userspace control package for Linux Containers, a lightweight
+ virtual system mechanism sometimes described as "chroot on steroids".
+ This package adds and initscript for starting and stopping the containers
+ on boot and shutdown.
+endef
+
+define Package/lxc-auto/conffiles
+/etc/config/lxc-auto
 endef
 
 define Package/lxc/config
@@ -147,6 +165,12 @@ endef
 
 define Package/lxc/install
 	true
+endef
+
+define Package/lxc-auto/install
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_CONF) ./files/lxc-auto.config $(1)/etc/config/lxc-auto
+	$(INSTALL_BIN) ./files/lxc-auto.init $(1)/etc/init.d/lxc-auto
 endef
 
 define Package/lxc-common/conffiles
@@ -250,6 +274,7 @@ $(eval $(call BuildPackage,lxc-templates))
 $(eval $(call BuildPackage,liblxc))
 $(eval $(call BuildPackage,lxc-lua))
 $(eval $(call BuildPackage,lxc-init))
+$(eval $(call BuildPackage,lxc-auto))
 $(foreach u,$(LXC_APPLETS_BIN),$(eval $(call GenPlugin,$(u),$(DEPENDS_APPLETS),"/usr/bin")))
 $(foreach u,$(LXC_APPLETS_LIB),$(eval $(call GenPlugin,$(u),$(DEPENDS_APPLETS),"/usr/lib/lxc")))
 $(foreach u,$(LXC_SCRIPTS),$(eval $(call GenPlugin,$(u),,"/usr/bin")))

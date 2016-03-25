@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=2.4.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/zabbix
@@ -33,6 +33,7 @@ define Package/zabbix/Default
   SUBMENU:=zabbix
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
   USERID:=zabbix=53:zabbix=53
+  DEPENDS += $(ICONV_DEPENDS)
 endef
 
 define Package/zabbix-agent
@@ -48,19 +49,19 @@ endef
 define Package/zabbix-extra-mac80211
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for mac80211
-  DEPENDS += +zabbix-agentd @PACKAGE_MAC80211_DEBUGFS @KERNEL_DEBUG_FS
+  DEPENDS = +zabbix-agentd @PACKAGE_MAC80211_DEBUGFS @KERNEL_DEBUG_FS
 endef
 
 define Package/zabbix-extra-network
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for network
-  DEPENDS += +zabbix-agentd +libuci-lua +lua
+  DEPENDS = +zabbix-agentd +libuci-lua +lua
 endef
 
 define Package/zabbix-extra-wifi
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for wifi
-  DEPENDS += +zabbix-agentd +libiwinfo-lua +libuci-lua +lua
+  DEPENDS = +zabbix-agentd +libiwinfo-lua +libuci-lua +lua
 endef
 
 define Package/zabbix-sender
