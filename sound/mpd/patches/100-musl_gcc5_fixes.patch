@@ -26,25 +26,3 @@ Volatile in the type is necessary. without that, LTO can break the code.
  	constexpr
  #endif
  	notify():pending(false) {}
---- a/src/thread/PosixCond.hxx
-+++ b/src/thread/PosixCond.hxx
-@@ -41,7 +41,7 @@ class PosixCond {
- 	pthread_cond_t cond;
- 
- public:
--#if defined(__NetBSD__) || defined(__BIONIC__)
-+#if !defined(__GLIBC__)
- 	/* NetBSD's PTHREAD_COND_INITIALIZER is not compatible with
- 	   "constexpr" */
- 	PosixCond() {
---- a/src/thread/PosixMutex.hxx
-+++ b/src/thread/PosixMutex.hxx
-@@ -41,7 +41,7 @@ class PosixMutex {
- 	pthread_mutex_t mutex;
- 
- public:
--#if defined(__NetBSD__) || defined(__BIONIC__)
-+#if !defined(__GLIBC__)
- 	/* NetBSD's PTHREAD_MUTEX_INITIALIZER is not compatible with
- 	   "constexpr" */
- 	PosixMutex() {
