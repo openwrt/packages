@@ -65,7 +65,8 @@ NOSTDINC_FLAGS = \
 	-I$(STAGING_DIR)/usr/include/mac80211-backport \
 	-I$(STAGING_DIR)/usr/include/mac80211/uapi \
 	-I$(STAGING_DIR)/usr/include/mac80211 \
-	-include backport/backport.h
+	-include backport/backport.h \
+	-include $(PKG_BUILD_DIR)/compat-hacks.h
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C "$(LINUX_DIR)" \
@@ -80,6 +81,7 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
+	$(CP) ./files/compat-hacks.h $(PKG_BUILD_DIR)/
 	$(SED) '/#define _NET_BATMAN_ADV_MAIN_H_/a\#undef CONFIG_MODULE_STRIPPED' \
 		$(PKG_BUILD_DIR)/net/batman-adv/main.h
 endef
