@@ -1,0 +1,37 @@
+Author: Florian Will <florian.will@gmail.com>
+Forwarded: http://sourceforge.net/p/minidlna/bugs/246/
+Bug-Debian: https://bugs.debian.org/734383
+Last-Update: 2015-03-09
+Subject: [PATCH] Ignore artist when looking up existing container
+
+This prevents creation of multiple album containers for compilation
+albums (i.e. one separate album for each artist) when adding files via
+inotify, which causes the scanner cache to be invalidated all the time.
+
+OTOH, different albums with identical names ("Greatest Hits", "Love
+Songs") are now listed as just a single album in the "Album" container.
+This might be solved using some heuristic based on music file location
+(same directory / different directories).
+
+The new behaviour is usually the same as encountered when doing a full
+rescan, because there's a scanner cache that is used during full rescans
+and that cache ignores artist names as well.
+---
+ scanner.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+Index: minidlna/scanner.c
+===================================================================
+--- minidlna.orig/scanner.c	2015-03-09 13:16:34.510503405 +0300
++++ minidlna/scanner.c	2015-03-09 13:16:34.506503413 +0300
+@@ -97,9 +97,8 @@
+ 	                                "left join DETAILS d on (o.DETAIL_ID = d.ID)"
+ 	                                " where o.PARENT_ID = '%s'"
+ 			                " and o.NAME like '%q'"
+-			                " and d.ARTIST %s %Q"
+ 	                                " and o.CLASS = 'container.%s' limit 1",
+-	                                rootParent, item, artist?"like":"is", artist, class);
++	                                rootParent, item, class);
+ 	if( result )
+ 	{
+ 		base = strrchr(result, '$');
