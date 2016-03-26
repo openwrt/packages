@@ -45,7 +45,7 @@ endef
 CONFIGURE_VARS += \
 	ac_cv_lib_cap_cap_get_flag=no
 
-TARGET_CFLAGS += -pthread -I/usr/include/libnl3
+TARGET_CFLAGS += -pthread -I$(STAGING_DIR)/usr/include/libnl3
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS) -L$(STAGING_DIR)/usr/lib -I$(STAGING_DIR)/usr/include"
