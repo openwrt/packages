@@ -36,7 +36,7 @@ fi
 # get current directory, script- and openwrt version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="1.0.1"
+adb_scriptver="1.0.2"
 openwrt_version="$(cat /etc/openwrt_version)"
 
 # source in adblock function library
@@ -124,9 +124,12 @@ then
                 f_log "   source archive (pre-)processing finished"
             else
                 rc=0
+                adb_srclist="! -name ${adb_dnsprefix}.${src_name}"
+                adb_errsrclist="-name ${adb_dnsprefix}.${src_name}"
             fi
         else
             rc=0
+            adb_srclist="! -name ${adb_dnsprefix}.${src_name}"
             adb_errsrclist="-name ${adb_dnsprefix}.${src_name}"
             f_log "   source archive download failed"
         fi
