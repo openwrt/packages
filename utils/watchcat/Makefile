@@ -23,7 +23,7 @@ define Package/watchcat
 endef
 
 define Package/watchcat/description
-Allows to configure a periodically reboot, or after loosing internet connectivity. Configured trough UCI /etc/config/system.
+Allows to configure a periodically reboot, or after losing internet connectivity. Configured trough UCI /etc/config/system.
 endef
 
 define Package/watchcat/conffiles
