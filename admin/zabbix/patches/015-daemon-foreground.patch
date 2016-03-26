@@ -39,7 +39,7 @@
 + * Parameters: allow_root     - allow root permission for application         *
 + *             user           - user on the system to which to drop the       *
 + *                              privileges                                    *
-+ *             run_foreground - should it close its controling tty            *
++ *             run_foreground - should it close its controlling tty           *
   *                                                                            *
   * Author: Alexei Vladishev                                                   *
   *                                                                            *
