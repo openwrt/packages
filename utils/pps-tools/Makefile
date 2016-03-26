@@ -29,7 +29,7 @@ define Package/pps-tools
 endef
 
 define Package/pps-tools/description
-  Userland tools for GPS and DCF-77 Clock syncronization. PPS support in Kernel must be enabled.
+  Userland tools for GPS and DCF-77 Clock synchronization. PPS support in Kernel must be enabled.
 endef
 
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include

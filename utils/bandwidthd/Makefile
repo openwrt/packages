@@ -54,11 +54,11 @@ With the ability to store in a postgresql database.
 endef
 
 define Package/bandwidthd/daemon
- This package contains bandwidthd a bandwith tracking utility.
+ This package contains bandwidthd a bandwidth tracking utility.
 endef
 
 define Package/bandwidthd-pgsql/daemon
- This package contains bandwidthd a bandwith tracking utility.
+ This package contains bandwidthd a bandwidth tracking utility.
 endef
 
 ifeq ($(BUILD_VARIANT),no-pgsql)
