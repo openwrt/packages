@@ -64,7 +64,7 @@ loglevel.default = "2"
 
 logexceptionhits = s:taboption("tab_general", ListValue, "logexceptionhits", translate("Log Exception Hits"))
 logexceptionhits:value("0",  translate("never"))
-logexceptionhits:value("1",  translate("log, but dont mark as exceptions"))
+logexceptionhits:value("1",  translate("log, but don't mark as exceptions"))
 logexceptionhits:value("2",  translate("log and mark"))
 logexceptionhits.default = "2"
 
@@ -153,7 +153,7 @@ phrasefiltermode.default = "2"
 
 preservecase = s:taboption("tab_general", ListValue, "perservecase", translate("Lower caseing options"))
 preservecase:value("0",  translate("force lower case"))
-preservecase:value("1",  translate("dont change"))
+preservecase:value("1",  translate("don't change"))
 preservecase:value("2",  translate("scan fist in lower, then in original"))
 preservecase.default = "0"
 
