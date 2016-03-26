@@ -99,7 +99,8 @@ CONFIGURE_ARGS += \
 	--disable-udev \
 	--without-fftw \
 	--disable-avahi \
-	--disable-dbus
+	--disable-dbus \
+	--without-soxr
 
 CONFIGURE_VARS += \
 	PKG_CONFIG_LIBDIR="$(STAGING_DIR)/usr/lib/pkgconfig"
@@ -144,7 +145,7 @@ define Package/pulseaudio-daemon/install
 		./files/pulseaudio.init \
 		$(1)/etc/init.d/pulseaudio
 
-	$(INSTALL_CONF) \
+	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/etc/pulse/* \
 		$(1)/etc/pulse
 
@@ -164,7 +165,6 @@ define Package/pulseaudio-daemon/install
 		$(PKG_INSTALL_DIR)/usr/lib/pulse-$(PKG_VERSION)/modules/module*.so \
 		$(1)/usr/lib/pulse-$(PKG_VERSION)/modules/
 
-	chmod -R 0644 $(1)/etc/pulse/*
 endef
 
 define Package/pulseaudio-tools/install
@@ -181,11 +181,11 @@ define Package/pulseaudio-profiles/install
 		$(1)/usr/share/pulseaudio/alsa-mixer/paths \
 		$(1)/usr/share/pulseaudio/alsa-mixer/profile-sets
 
-	$(INSTALL_CONF) \
+	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/pulseaudio/alsa-mixer/paths/* \
 		$(1)/usr/share/pulseaudio/alsa-mixer/paths
 
-	$(INSTALL_CONF) \
+	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/pulseaudio/alsa-mixer/profile-sets/* \
 		$(1)/usr/share/pulseaudio/alsa-mixer/profile-sets
 endef
