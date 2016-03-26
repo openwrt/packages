@@ -113,7 +113,7 @@ stop() {
 	          echo ""
 	          dots=0
 	        fi
-	        echo "Timeout occured, killing $NAME hardly."
+	        echo "Timeout occurred, killing $NAME hardly."
 	        kill -9 `ps $PSOPT | grep $NAME | grep -v grep | awk '{print $1}'` >/dev/null 2>&1
 	        [ -f $PIDFILE ] && rm $PIDFILE
 	        seconds=0

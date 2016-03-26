@@ -36,7 +36,7 @@ define Package/crelay/description
  crelay is used to control different relay cards in a unified manner. It provides
  several interfaces for controlling the relays locally or remotely by a web browser
  or a smartphone.  The card which is detected first will be used. A WebUI control is
- availble on port 8000 (default)
+ available on port 8000 (default)
  .
  Currently supported relay cards:
       - Conrad USB 4-channel relay card
