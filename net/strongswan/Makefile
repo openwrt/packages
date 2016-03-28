@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.3.5
-PKG_RELEASE:=3
+PKG_VERSION:=5.4.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
-PKG_MD5SUM:=a2f9ea185f27e7f8413d4cd2ee61efe4
+PKG_MD5SUM:=9d7c77b0da9b69f859624897e5e9ebbf
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 
@@ -399,7 +399,7 @@ define Package/strongswan/install
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/ipsec.conf $(1)/etc/
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/strongswan.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/{libstrongswan.so.*,libhydra.so.*} $(1)/usr/lib/ipsec/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libstrongswan.so.* $(1)/usr/lib/ipsec/
 	$(INSTALL_CONF) ./files/ipsec.secrets $(1)/etc/
 	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -562,7 +562,7 @@ $(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charo
 $(eval $(call BuildPlugin,sql,SQL database interface,))
 $(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-sqlite:libsqlite3))
 $(eval $(call BuildPlugin,sshkey,SSH key decoding,))
-$(eval $(call BuildPlugin,stroke,Stroke,+strongswan-utils))
+$(eval $(call BuildPlugin,stroke,Stroke,+strongswan-charon +strongswan-utils))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci))
 $(eval $(call BuildPlugin,unity,Cisco Unity extension,))
