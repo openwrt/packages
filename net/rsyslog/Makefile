@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsyslog
-PKG_VERSION:=8.16.0
+PKG_VERSION:=8.17.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.rsyslog.com/files/download/rsyslog/
-PKG_MD5SUM:=52916045c07ebbd3ee77c39e8465bc4d
+PKG_MD5SUM:=fadc26576a783afdf11f64beca278bc9
 
 PKG_MAINTAINER:=Dov Murik <dmurik@us.ibm.com>
 PKG_LICENSE:=GPL-3.0
@@ -29,7 +29,7 @@ define Package/rsyslog
   CATEGORY:=Network
   TITLE:=Enhanced system logging and kernel message trapping daemons
   URL:=http://www.rsyslog.com/
-  DEPENDS:=+libestr +libjson-c +libuuid +zlib
+  DEPENDS:=+libestr +libfastjson +libuuid +zlib
 endef
 
 define Package/rsyslog/conffiles
