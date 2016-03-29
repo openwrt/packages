@@ -1,0 +1,1408 @@
+Submitted By: Ken Moffat <ken at linuxfromscratch dot org>
+Date: 2016-03-16
+Initial Package Version: 8.38
+Upstream Status: Applied
+Origin: Upstream, backported to 8.38 by Petr Písař at redhat
+Description: Various fixes, including for CVE-2016-1263 and many other
+bugs which have been fixed upstream.  Many of these bugs were found by
+fuzzing, upstream is trying to persuade its users to move to pcre2 and
+giving low priority to further pcre1 maintenance releases.
+
+From 3c80e02cd464ea049e117b423fd48fab294c51a9 Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Thu, 26 Nov 2015 20:29:13 +0000
+Subject: [PATCH] Fix auto-callout (?# comment bug.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1611 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Pisar: Ported to 8.38.
+
+diff --git a/pcre_compile.c b/pcre_compile.c
+index 4d3b313..3360a8b 100644
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -4699,6 +4699,23 @@ for (;; ptr++)
+       }
+     }
+ 
++  /* Skip over (?# comments. We need to do this here because we want to know if
++  the next thing is a quantifier, and these comments may come between an item
++  and its quantifier. */
++
++  if (c == CHAR_LEFT_PARENTHESIS && ptr[1] == CHAR_QUESTION_MARK &&
++      ptr[2] == CHAR_NUMBER_SIGN)
++    {
++    ptr += 3;
++    while (*ptr != CHAR_NULL && *ptr != CHAR_RIGHT_PARENTHESIS) ptr++;
++    if (*ptr == CHAR_NULL)
++      {
++      *errorcodeptr = ERR18;
++      goto FAILED;
++      }
++    continue;
++    }
++
+   /* See if the next thing is a quantifier. */
+ 
+   is_quantifier =
+@@ -6529,21 +6546,6 @@ for (;; ptr++)
+     case CHAR_LEFT_PARENTHESIS:
+     ptr++;
+ 
+-    /* First deal with comments. Putting this code right at the start ensures
+-    that comments have no bad side effects. */
+-
+-    if (ptr[0] == CHAR_QUESTION_MARK && ptr[1] == CHAR_NUMBER_SIGN)
+-      {
+-      ptr += 2;
+-      while (*ptr != CHAR_NULL && *ptr != CHAR_RIGHT_PARENTHESIS) ptr++;
+-      if (*ptr == CHAR_NULL)
+-        {
+-        *errorcodeptr = ERR18;
+-        goto FAILED;
+-        }
+-      continue;
+-      }
+-
+     /* Now deal with various "verbs" that can be introduced by '*'. */
+ 
+     if (ptr[0] == CHAR_ASTERISK && (ptr[1] == ':'
+diff --git a/testdata/testinput2 b/testdata/testinput2
+index e2e520f..92e3359 100644
+--- a/testdata/testinput2
++++ b/testdata/testinput2
+@@ -4217,4 +4217,12 @@ backtracking verbs. --/
+ 
+ /a[[:punct:]b]/BZ
+ 
++/L(?#(|++<!(2)?/BZ
++
++/L(?#(|++<!(2)?/BOZ
++
++/L(?#(|++<!(2)?/BCZ
++
++/L(?#(|++<!(2)?/BCOZ
++
+ /-- End of testinput2 --/
+diff --git a/testdata/testinput7 b/testdata/testinput7
+index e411a4b..00b9738 100644
+--- a/testdata/testinput7
++++ b/testdata/testinput7
+@@ -853,4 +853,8 @@ of case for anything other than the ASCII letters. --/
+ 
+ /a[b[:punct:]]/8WBZ
+ 
++/L(?#(|++<!(2)?/B8COZ
++
++/L(?#(|++<!(2)?/B8WCZ
++
+ /-- End of testinput7 --/
+diff --git a/testdata/testoutput2 b/testdata/testoutput2
+index 85c565d..2cf7a90 100644
+--- a/testdata/testoutput2
++++ b/testdata/testoutput2
+@@ -14574,4 +14574,40 @@ No match
+         End
+ ------------------------------------------------------------------
+ 
++/L(?#(|++<!(2)?/BZ
++------------------------------------------------------------------
++        Bra
++        L?+
++        Ket
++        End
++------------------------------------------------------------------
++
++/L(?#(|++<!(2)?/BOZ
++------------------------------------------------------------------
++        Bra
++        L?
++        Ket
++        End
++------------------------------------------------------------------
++
++/L(?#(|++<!(2)?/BCZ
++------------------------------------------------------------------
++        Bra
++        Callout 255 0 14
++        L?+
++        Callout 255 14 0
++        Ket
++        End
++------------------------------------------------------------------
++
++/L(?#(|++<!(2)?/BCOZ
++------------------------------------------------------------------
++        Bra
++        Callout 255 0 14
++        L?
++        Callout 255 14 0
++        Ket
++        End
++------------------------------------------------------------------
++
+ /-- End of testinput2 --/
+diff --git a/testdata/testoutput7 b/testdata/testoutput7
+index cc9ebdd..fdfff64 100644
+--- a/testdata/testoutput7
++++ b/testdata/testoutput7
+@@ -2348,4 +2348,24 @@ No match
+         End
+ ------------------------------------------------------------------
+ 
++/L(?#(|++<!(2)?/B8COZ
++------------------------------------------------------------------
++        Bra
++        Callout 255 0 14
++        L?
++        Callout 255 14 0
++        Ket
++        End
++------------------------------------------------------------------
++
++/L(?#(|++<!(2)?/B8WCZ
++------------------------------------------------------------------
++        Bra
++        Callout 255 0 14
++        L?+
++        Callout 255 14 0
++        Ket
++        End
++------------------------------------------------------------------
++
+ /-- End of testinput7 --/
+-- 
+2.4.3
+
+From ef6b10fcde41a2687f38d4a9ff2886b037948a1b Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Fri, 27 Nov 2015 17:13:13 +0000
+Subject: [PATCH 1/5] Fix negated POSIX class within negated overall class UCP
+ bug.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1612 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+diff --git a/pcre_compile.c b/pcre_compile.c
+index 3360a8b..3670f1e 100644
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -5063,20 +5063,22 @@ for (;; ptr++)
+             ptr = tempptr + 1;
+             continue;
+ 
+-            /* For the other POSIX classes (ascii, xdigit) we are going to fall
+-            through to the non-UCP case and build a bit map for characters with
+-            code points less than 256. If we are in a negated POSIX class
+-            within a non-negated overall class, characters with code points
+-            greater than 255 must all match. In the special case where we have
+-            not yet generated any xclass data, and this is the final item in
+-            the overall class, we need do nothing: later on, the opcode
++            /* For the other POSIX classes (ascii, cntrl, xdigit) we are going
++            to fall through to the non-UCP case and build a bit map for
++            characters with code points less than 256. If we are in a negated
++            POSIX class, characters with code points greater than 255 must
++            either all match or all not match. In the special case where we
++            have not yet generated any xclass data, and this is the final item
++            in the overall class, we need do nothing: later on, the opcode
+             OP_NCLASS will be used to indicate that characters greater than 255
+             are acceptable. If we have already seen an xclass item or one may
+             follow (we have to assume that it might if this is not the end of
+-            the class), explicitly match all wide codepoints. */
++            the class), explicitly list all wide codepoints, which will then
++            either not match or match, depending on whether the class is or is
++            not negated. */
+ 
+             default:
+-            if (!negate_class && local_negate &&
++            if (local_negate &&
+                 (xclass || tempptr[2] != CHAR_RIGHT_SQUARE_BRACKET))
+               {
+               *class_uchardata++ = XCL_RANGE;
+diff --git a/testdata/testinput6 b/testdata/testinput6
+index aeb62a0..a178d3d 100644
+--- a/testdata/testinput6
++++ b/testdata/testinput6
+@@ -1553,4 +1553,13 @@
+     \x{200}
+     \x{37e}
+ 
++/[^[:^ascii:]\d]/8W
++    a
++    ~
++    0
++    \a
++    \x{7f}
++    \x{389}
++    \x{20ac}
++
+ /-- End of testinput6 --/
+diff --git a/testdata/testoutput6 b/testdata/testoutput6
+index beb85aa..b64dc0d 100644
+--- a/testdata/testoutput6
++++ b/testdata/testoutput6
+@@ -2557,4 +2557,20 @@ No match
+     \x{37e}
+  0: \x{37e}
+ 
++/[^[:^ascii:]\d]/8W
++    a
++ 0: a
++    ~
++ 0: ~
++    0
++No match
++    \a
++ 0: \x{07}
++    \x{7f}
++ 0: \x{7f}
++    \x{389}
++No match
++    \x{20ac}
++No match
++
+ /-- End of testinput6 --/
+-- 
+2.4.3
+
+From bfc1dfa660c24dc7a75108d934290e50d7db2719 Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Fri, 27 Nov 2015 17:41:04 +0000
+Subject: [PATCH 2/5] Fix bug for isolated \E between an item and its qualifier
+ when auto callout is set.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1613 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcre_compile.c b/pcre_compile.c
+index 3670f1e..5786cd3 100644
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -4645,9 +4645,10 @@ for (;; ptr++)
+     goto FAILED;
+     }
+ 
+-  /* If in \Q...\E, check for the end; if not, we have a literal */
++  /* If in \Q...\E, check for the end; if not, we have a literal. Otherwise an
++  isolated \E is ignored. */
+ 
+-  if (inescq && c != CHAR_NULL)
++  if (c != CHAR_NULL)
+     {
+     if (c == CHAR_BACKSLASH && ptr[1] == CHAR_E)
+       {
+@@ -4655,7 +4656,7 @@ for (;; ptr++)
+       ptr++;
+       continue;
+       }
+-    else
++    else if (inescq)
+       {
+       if (previous_callout != NULL)
+         {
+@@ -4670,7 +4671,6 @@ for (;; ptr++)
+         }
+       goto NORMAL_CHAR;
+       }
+-    /* Control does not reach here. */
+     }
+ 
+   /* In extended mode, skip white space and comments. We need a loop in order
+diff --git a/testdata/testinput2 b/testdata/testinput2
+index 92e3359..e8ca4fe 100644
+--- a/testdata/testinput2
++++ b/testdata/testinput2
+@@ -4225,4 +4225,6 @@ backtracking verbs. --/
+ 
+ /L(?#(|++<!(2)?/BCOZ
+ 
++/(A*)\E+/CBZ
++
+ /-- End of testinput2 --/
+diff --git a/testdata/testoutput2 b/testdata/testoutput2
+index 2cf7a90..09756b8 100644
+--- a/testdata/testoutput2
++++ b/testdata/testoutput2
+@@ -14610,4 +14610,18 @@ No match
+         End
+ ------------------------------------------------------------------
+ 
++/(A*)\E+/CBZ
++------------------------------------------------------------------
++        Bra
++        Callout 255 0 7
++        SCBra 1
++        Callout 255 1 2
++        A*
++        Callout 255 3 0
++        KetRmax
++        Callout 255 7 0
++        Ket
++        End
++------------------------------------------------------------------
++
+ /-- End of testinput2 --/
+-- 
+2.4.3
+
+From 108377b836fc29a84f5286287629d96549b1c777 Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Sun, 29 Nov 2015 17:38:25 +0000
+Subject: [PATCH 3/5] Give error for regexec with pmatch=NULL and REG_STARTEND
+ set.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1614 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcreposix.c b/pcreposix.c
+index f024423..dcc13ef 100644
+--- a/pcreposix.c
++++ b/pcreposix.c
+@@ -364,6 +364,7 @@ start location rather than being passed as a PCRE "starting offset". */
+ 
+ if ((eflags & REG_STARTEND) != 0)
+   {
++  if (pmatch == NULL) return REG_INVARG; 
+   so = pmatch[0].rm_so;
+   eo = pmatch[0].rm_eo;
+   }
+-- 
+2.4.3
+
+From e347b40d5bb12f7ef1e632aa649571a107be7d8a Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Sun, 29 Nov 2015 17:46:23 +0000
+Subject: [PATCH 4/5] Allow for up to 32-bit numbers in the ordin() function in
+ pcregrep.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1615 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcregrep.c b/pcregrep.c
+index 64986b0..cd53c64 100644
+--- a/pcregrep.c
++++ b/pcregrep.c
+@@ -2437,7 +2437,7 @@ return options;
+ static char *
+ ordin(int n)
+ {
+-static char buffer[8];
++static char buffer[14];
+ char *p = buffer;
+ sprintf(p, "%d", n);
+ while (*p != 0) p++;
+-- 
+2.4.3
+
+From e78ad4264b16988b826bd2939a1781c1165a92d9 Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Mon, 30 Nov 2015 17:44:45 +0000
+Subject: [PATCH 5/5] Fix \Q\E before qualifier bug when auto callouts are
+ enabled.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1616 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcre_compile.c b/pcre_compile.c
+index 5786cd3..beed46b 100644
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -4671,17 +4671,27 @@ for (;; ptr++)
+         }
+       goto NORMAL_CHAR;
+       }
++      
++    /* Check for the start of a \Q...\E sequence. We must do this here rather
++    than later in case it is immediately followed by \E, which turns it into a
++    "do nothing" sequence. */                                            
++                                                                          
++    if (c == CHAR_BACKSLASH && ptr[1] == CHAR_Q)
++      {                                                                   
++      inescq = TRUE;                                                      
++      ptr++;                                                  
++      continue;
++      }           
+     }
+ 
+-  /* In extended mode, skip white space and comments. We need a loop in order
+-  to check for more white space and more comments after a comment. */
++  /* In extended mode, skip white space and comments. */
+ 
+   if ((options & PCRE_EXTENDED) != 0)
+     {
+-    for (;;)
++    const pcre_uchar *wscptr = ptr;
++    while (MAX_255(c) && (cd->ctypes[c] & ctype_space) != 0) c = *(++ptr);
++    if (c == CHAR_NUMBER_SIGN)
+       {
+-      while (MAX_255(c) && (cd->ctypes[c] & ctype_space) != 0) c = *(++ptr);
+-      if (c != CHAR_NUMBER_SIGN) break;
+       ptr++;
+       while (*ptr != CHAR_NULL)
+         {
+@@ -4695,7 +4705,15 @@ for (;; ptr++)
+         if (utf) FORWARDCHAR(ptr);
+ #endif
+         }
+-      c = *ptr;     /* Either NULL or the char after a newline */
++      }
++
++    /* If we skipped any characters, restart the loop. Otherwise, we didn't see
++    a comment. */
++
++    if (ptr > wscptr)
++      {
++      ptr--;
++      continue;
+       }
+     }
+ 
+@@ -7900,16 +7918,6 @@ for (;; ptr++)
+       c = ec;
+     else
+       {
+-      if (escape == ESC_Q)            /* Handle start of quoted string */
+-        {
+-        if (ptr[1] == CHAR_BACKSLASH && ptr[2] == CHAR_E)
+-          ptr += 2;               /* avoid empty string */
+-            else inescq = TRUE;
+-        continue;
+-        }
+-
+-      if (escape == ESC_E) continue;  /* Perl ignores an orphan \E */
+-
+       /* For metasequences that actually match a character, we disable the
+       setting of a first character if it hasn't already been set. */
+ 
+diff --git a/testdata/testinput2 b/testdata/testinput2
+index e8ca4fe..3a1134f 100644
+--- a/testdata/testinput2
++++ b/testdata/testinput2
+@@ -4227,4 +4227,6 @@ backtracking verbs. --/
+ 
+ /(A*)\E+/CBZ
+ 
++/()\Q\E*]/BCZ
++
+ /-- End of testinput2 --/
+diff --git a/testdata/testoutput2 b/testdata/testoutput2
+index 09756b8..ac33cc4 100644
+--- a/testdata/testoutput2
++++ b/testdata/testoutput2
+@@ -14624,4 +14624,19 @@ No match
+         End
+ ------------------------------------------------------------------
+ 
++/()\Q\E*]/BCZ
++------------------------------------------------------------------
++        Bra
++        Callout 255 0 7
++        Brazero
++        SCBra 1
++        Callout 255 1 0
++        KetRmax
++        Callout 255 7 1
++        ]
++        Callout 255 8 0
++        Ket
++        End
++------------------------------------------------------------------
++
+ /-- End of testinput2 --/
+-- 
+2.4.3
+
+From 46ed1a703b067e5b679eacf6500a54dae35f8130 Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Thu, 3 Dec 2015 17:05:40 +0000
+Subject: [PATCH] Fix /x bug when pattern starts with white space and (?-x)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1617 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcre_compile.c b/pcre_compile.c
+index beed46b..57719b9 100644
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -7607,39 +7607,15 @@ for (;; ptr++)
+         newoptions = (options | set) & (~unset);
+ 
+         /* If the options ended with ')' this is not the start of a nested
+-        group with option changes, so the options change at this level. If this
+-        item is right at the start of the pattern, the options can be
+-        abstracted and made external in the pre-compile phase, and ignored in
+-        the compile phase. This can be helpful when matching -- for instance in
+-        caseless checking of required bytes.
+-
+-        If the code pointer is not (cd->start_code + 1 + LINK_SIZE), we are
+-        definitely *not* at the start of the pattern because something has been
+-        compiled. In the pre-compile phase, however, the code pointer can have
+-        that value after the start, because it gets reset as code is discarded
+-        during the pre-compile. However, this can happen only at top level - if
+-        we are within parentheses, the starting BRA will still be present. At
+-        any parenthesis level, the length value can be used to test if anything
+-        has been compiled at that level. Thus, a test for both these conditions
+-        is necessary to ensure we correctly detect the start of the pattern in
+-        both phases.
+-
++        group with option changes, so the options change at this level. 
+         If we are not at the pattern start, reset the greedy defaults and the
+         case value for firstchar and reqchar. */
+ 
+         if (*ptr == CHAR_RIGHT_PARENTHESIS)
+           {
+-          if (code == cd->start_code + 1 + LINK_SIZE &&
+-               (lengthptr == NULL || *lengthptr == 2 + 2*LINK_SIZE))
+-            {
+-            cd->external_options = newoptions;
+-            }
+-          else
+-            {
+-            greedy_default = ((newoptions & PCRE_UNGREEDY) != 0);
+-            greedy_non_default = greedy_default ^ 1;
+-            req_caseopt = ((newoptions & PCRE_CASELESS) != 0)? REQ_CASELESS:0;
+-            }
++          greedy_default = ((newoptions & PCRE_UNGREEDY) != 0);
++          greedy_non_default = greedy_default ^ 1;
++          req_caseopt = ((newoptions & PCRE_CASELESS) != 0)? REQ_CASELESS:0;
+ 
+           /* Change options at this level, and pass them back for use
+           in subsequent branches. */
+diff --git a/testdata/testoutput2 b/testdata/testoutput2
+index ac33cc4..6c42897 100644
+--- a/testdata/testoutput2
++++ b/testdata/testoutput2
+@@ -419,7 +419,7 @@ Need char = '>'
+ 
+ /(?U)<.*>/I
+ Capturing subpattern count = 0
+-Options: ungreedy
++No options
+ First char = '<'
+ Need char = '>'
+     abc<def>ghi<klm>nop
+@@ -443,7 +443,7 @@ Need char = '='
+ 
+ /(?U)={3,}?/I
+ Capturing subpattern count = 0
+-Options: ungreedy
++No options
+ First char = '='
+ Need char = '='
+     abc========def
+@@ -477,7 +477,7 @@ Failed: lookbehind assertion is not fixed length at offset 12
+ 
+ /(?i)abc/I
+ Capturing subpattern count = 0
+-Options: caseless
++No options
+ First char = 'a' (caseless)
+ Need char = 'c' (caseless)
+ 
+@@ -489,7 +489,7 @@ No need char
+ 
+ /(?i)^1234/I
+ Capturing subpattern count = 0
+-Options: anchored caseless
++Options: anchored
+ No first char
+ No need char
+ 
+@@ -502,7 +502,7 @@ No need char
+ /(?s).*/I
+ Capturing subpattern count = 0
+ May match empty string
+-Options: anchored dotall
++Options: anchored
+ No first char
+ No need char
+ 
+@@ -516,7 +516,7 @@ Starting chars: a b c d
+ 
+ /(?i)[abcd]/IS
+ Capturing subpattern count = 0
+-Options: caseless
++No options
+ No first char
+ No need char
+ Subject length lower bound = 1
+@@ -524,7 +524,7 @@ Starting chars: A B C D a b c d
+ 
+ /(?m)[xy]|(b|c)/IS
+ Capturing subpattern count = 1
+-Options: multiline
++No options
+ No first char
+ No need char
+ Subject length lower bound = 1
+@@ -538,7 +538,7 @@ No need char
+ 
+ /(?i)(^a|^b)/Im
+ Capturing subpattern count = 1
+-Options: caseless multiline
++Options: multiline
+ First char at start or follows newline
+ No need char
+ 
+@@ -1179,7 +1179,7 @@ No need char
+         End
+ ------------------------------------------------------------------
+ Capturing subpattern count = 1
+-Options: anchored dotall
++Options: anchored
+ No first char
+ No need char
+ 
+@@ -2735,7 +2735,7 @@ No match
+         End
+ ------------------------------------------------------------------
+ Capturing subpattern count = 0
+-Options: caseless extended
++Options: extended
+ First char = 'a' (caseless)
+ Need char = 'c' (caseless)
+ 
+@@ -2748,7 +2748,7 @@ Need char = 'c' (caseless)
+         End
+ ------------------------------------------------------------------
+ Capturing subpattern count = 0
+-Options: caseless extended
++Options: extended
+ First char = 'a' (caseless)
+ Need char = 'c' (caseless)
+ 
+@@ -3095,7 +3095,7 @@ Need char = 'b'
+         End
+ ------------------------------------------------------------------
+ Capturing subpattern count = 0
+-Options: ungreedy
++No options
+ First char = 'x'
+ Need char = 'b'
+     xaaaab
+@@ -3497,7 +3497,7 @@ Need char = 'c'
+ 
+ /(?i)[ab]/IS
+ Capturing subpattern count = 0
+-Options: caseless
++No options
+ No first char
+ No need char
+ Subject length lower bound = 1
+@@ -6299,7 +6299,7 @@ Capturing subpattern count = 3
+ Named capturing subpatterns:
+   A   2
+   A   3
+-Options: anchored dupnames
++Options: anchored
+ Duplicate name status changes
+ No first char
+ No need char
+-- 
+2.4.3
+
+From db1fb68feddc9afe6f8822d099fa9ff25e3ea8e7 Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Sat, 5 Dec 2015 16:30:14 +0000
+Subject: [PATCH] Fix copy named substring bug.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1618 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+diff --git a/pcre_get.c b/pcre_get.c
+index 8094b34..41eda9c 100644
+--- a/pcre_get.c
++++ b/pcre_get.c
+@@ -250,6 +250,7 @@ Arguments:
+   code         the compiled regex
+   stringname   the name of the capturing substring
+   ovector      the vector of matched substrings
++  stringcount  number of captured substrings 
+ 
+ Returns:       the number of the first that is set,
+                or the number of the last one if none are set,
+@@ -258,13 +259,16 @@ Returns:       the number of the first that is set,
+ 
+ #if defined COMPILE_PCRE8
+ static int
+-get_first_set(const pcre *code, const char *stringname, int *ovector)
++get_first_set(const pcre *code, const char *stringname, int *ovector,
++  int stringcount)
+ #elif defined COMPILE_PCRE16
+ static int
+-get_first_set(const pcre16 *code, PCRE_SPTR16 stringname, int *ovector)
++get_first_set(const pcre16 *code, PCRE_SPTR16 stringname, int *ovector,
++  int stringcount)
+ #elif defined COMPILE_PCRE32
+ static int
+-get_first_set(const pcre32 *code, PCRE_SPTR32 stringname, int *ovector)
++get_first_set(const pcre32 *code, PCRE_SPTR32 stringname, int *ovector,
++  int stringcount)
+ #endif
+ {
+ const REAL_PCRE *re = (const REAL_PCRE *)code;
+@@ -295,7 +299,7 @@ if (entrysize <= 0) return entrysize;
+ for (entry = (pcre_uchar *)first; entry <= (pcre_uchar *)last; entry += entrysize)
+   {
+   int n = GET2(entry, 0);
+-  if (ovector[n*2] >= 0) return n;
++  if (n < stringcount && ovector[n*2] >= 0) return n;
+   }
+ return GET2(entry, 0);
+ }
+@@ -402,7 +406,7 @@ pcre32_copy_named_substring(const pcre32 *code, PCRE_SPTR32 subject,
+   PCRE_UCHAR32 *buffer, int size)
+ #endif
+ {
+-int n = get_first_set(code, stringname, ovector);
++int n = get_first_set(code, stringname, ovector, stringcount);
+ if (n <= 0) return n;
+ #if defined COMPILE_PCRE8
+ return pcre_copy_substring(subject, ovector, stringcount, n, buffer, size);
+@@ -619,7 +623,7 @@ pcre32_get_named_substring(const pcre32 *code, PCRE_SPTR32 subject,
+   PCRE_SPTR32 *stringptr)
+ #endif
+ {
+-int n = get_first_set(code, stringname, ovector);
++int n = get_first_set(code, stringname, ovector, stringcount);
+ if (n <= 0) return n;
+ #if defined COMPILE_PCRE8
+ return pcre_get_substring(subject, ovector, stringcount, n, stringptr);
+diff --git a/testdata/testinput2 b/testdata/testinput2
+index 3a1134f..00ffe32 100644
+--- a/testdata/testinput2
++++ b/testdata/testinput2
+@@ -4229,4 +4229,7 @@ backtracking verbs. --/
+ 
+ /()\Q\E*]/BCZ
+ 
++/(?<A>)(?J:(?<B>)(?<B>))(?<C>)/
++    \O\CC
++
+ /-- End of testinput2 --/
+diff --git a/testdata/testoutput2 b/testdata/testoutput2
+index 6c42897..ffb4466 100644
+--- a/testdata/testoutput2
++++ b/testdata/testoutput2
+@@ -14639,4 +14639,9 @@ No match
+         End
+ ------------------------------------------------------------------
+ 
++/(?<A>)(?J:(?<B>)(?<B>))(?<C>)/
++    \O\CC
++Matched, but too many substrings
++copy substring C failed -7
++
+ /-- End of testinput2 --/
+-- 
+2.4.3
+
+From 40363ebc19baeab160abaaa55dc84322a89ac35a Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Sat, 5 Dec 2015 16:58:46 +0000
+Subject: [PATCH] Fix (by hacking) another length computation issue.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1619 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcre_compile.c b/pcre_compile.c
+index 57719b9..087bf2a 100644
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -7280,7 +7280,7 @@ for (;; ptr++)
+           issue is fixed "properly" in PCRE2. As PCRE1 is now in maintenance
+           only mode, we finesse the bug by allowing more memory always. */
+ 
+-          *lengthptr += 2 + 2*LINK_SIZE;
++          *lengthptr += 4 + 4*LINK_SIZE;
+ 
+           /* It is even worse than that. The current reference may be to an
+           existing named group with a different number (so apparently not
+diff --git a/testdata/testoutput11-16 b/testdata/testoutput11-16
+index 9a0a12d..280692e 100644
+--- a/testdata/testoutput11-16
++++ b/testdata/testoutput11-16
+@@ -231,7 +231,7 @@ Memory allocation (code space): 73
+ ------------------------------------------------------------------
+ 
+ /(?P<a>a)...(?P=a)bbb(?P>a)d/BM
+-Memory allocation (code space): 77
++Memory allocation (code space): 93
+ ------------------------------------------------------------------
+   0  24 Bra
+   2   5 CBra 1
+diff --git a/testdata/testoutput11-32 b/testdata/testoutput11-32
+index 57e5da0..cdbda74 100644
+--- a/testdata/testoutput11-32
++++ b/testdata/testoutput11-32
+@@ -231,7 +231,7 @@ Memory allocation (code space): 155
+ ------------------------------------------------------------------
+ 
+ /(?P<a>a)...(?P=a)bbb(?P>a)d/BM
+-Memory allocation (code space): 157
++Memory allocation (code space): 189
+ ------------------------------------------------------------------
+   0  24 Bra
+   2   5 CBra 1
+diff --git a/testdata/testoutput11-8 b/testdata/testoutput11-8
+index 748548a..cb37896 100644
+--- a/testdata/testoutput11-8
++++ b/testdata/testoutput11-8
+@@ -231,7 +231,7 @@ Memory allocation (code space): 45
+ ------------------------------------------------------------------
+ 
+ /(?P<a>a)...(?P=a)bbb(?P>a)d/BM
+-Memory allocation (code space): 50
++Memory allocation (code space): 62
+ ------------------------------------------------------------------
+   0  30 Bra
+   3   7 CBra 1
+-- 
+2.4.3
+
+From 4f47274a2eb10131d88145ad7fd0eed4027a0c51 Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Tue, 8 Dec 2015 11:06:40 +0000
+Subject: [PATCH] Fix get_substring_list() bug when \K is used in an assertion.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1620 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: ported to 8.38.
+
+diff --git a/pcre_get.c b/pcre_get.c
+index 41eda9c..cdd2abc 100644
+--- a/pcre_get.c
++++ b/pcre_get.c
+@@ -461,7 +461,10 @@ pcre_uchar **stringlist;
+ pcre_uchar *p;
+ 
+ for (i = 0; i < double_count; i += 2)
+-  size += sizeof(pcre_uchar *) + IN_UCHARS(ovector[i+1] - ovector[i] + 1);
++  {
++  size += sizeof(pcre_uchar *) + IN_UCHARS(1);
++  if (ovector[i+1] > ovector[i]) size += IN_UCHARS(ovector[i+1] - ovector[i]);
++  } 
+ 
+ stringlist = (pcre_uchar **)(PUBL(malloc))(size);
+ if (stringlist == NULL) return PCRE_ERROR_NOMEMORY;
+@@ -477,7 +480,7 @@ p = (pcre_uchar *)(stringlist + stringcount + 1);
+ 
+ for (i = 0; i < double_count; i += 2)
+   {
+-  int len = ovector[i+1] - ovector[i];
++  int len = (ovector[i+1] > ovector[i])? (ovector[i+1] - ovector[i]) : 0;
+   memcpy(p, subject + ovector[i], IN_UCHARS(len));
+   *stringlist++ = p;
+   p += len;
+diff --git a/testdata/testinput2 b/testdata/testinput2
+index 00ffe32..967a241 100644
+--- a/testdata/testinput2
++++ b/testdata/testinput2
+@@ -4232,4 +4232,7 @@ backtracking verbs. --/
+ /(?<A>)(?J:(?<B>)(?<B>))(?<C>)/
+     \O\CC
+ 
++/(?=a\K)/ 
++    ring bpattingbobnd $ 1,oern cou \rb\L
++
+ /-- End of testinput2 --/
+diff --git a/testdata/testoutput2 b/testdata/testoutput2
+index ffb4466..5fb28d5 100644
+--- a/testdata/testoutput2
++++ b/testdata/testoutput2
+@@ -14644,4 +14644,10 @@ No match
+ Matched, but too many substrings
+ copy substring C failed -7
+ 
++/(?=a\K)/ 
++    ring bpattingbobnd $ 1,oern cou \rb\L
++Start of matched string is beyond its end - displaying from end to start.
++ 0: a
++ 0L 
++
+ /-- End of testinput2 --/
+-- 
+2.5.0
+
+From 3da5528b47b88c32224cf9d14d8a4e80cd7a0815 Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Sat, 6 Feb 2016 16:54:14 +0000
+Subject: [PATCH] Fix pcretest bad behaviour for callout in lookbehind.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1625 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcretest.c b/pcretest.c
+index 488e419..63869fd 100644
+--- a/pcretest.c
++++ b/pcretest.c
+@@ -2250,7 +2250,7 @@ data is not zero. */
+ static int callout(pcre_callout_block *cb)
+ {
+ FILE *f = (first_callout | callout_extra)? outfile : NULL;
+-int i, pre_start, post_start, subject_length;
++int i, current_position, pre_start, post_start, subject_length;
+ 
+ if (callout_extra)
+   {
+@@ -2280,14 +2280,19 @@ printed lengths of the substrings. */
+ 
+ if (f != NULL) fprintf(f, "--->");
+ 
++/* If a lookbehind is involved, the current position may be earlier than the
++match start. If so, use the match start instead. */
++
++current_position = (cb->current_position >= cb->start_match)?
++  cb->current_position : cb->start_match;
++
+ PCHARS(pre_start, cb->subject, 0, cb->start_match, f);
+ PCHARS(post_start, cb->subject, cb->start_match,
+-  cb->current_position - cb->start_match, f);
++  current_position - cb->start_match, f);
+ 
+ PCHARS(subject_length, cb->subject, 0, cb->subject_length, NULL);
+ 
+-PCHARSV(cb->subject, cb->current_position,
+-  cb->subject_length - cb->current_position, f);
++PCHARSV(cb->subject, current_position, cb->subject_length - current_position, f);
+ 
+ if (f != NULL) fprintf(f, "\n");
+ 
+@@ -5740,3 +5745,4 @@ return yield;
+ }
+ 
+ /* End of pcretest.c */
++
+diff --git a/testdata/testinput2 b/testdata/testinput2
+index 967a241..086e0f4 100644
+--- a/testdata/testinput2
++++ b/testdata/testinput2
+@@ -4235,4 +4235,8 @@ backtracking verbs. --/
+ /(?=a\K)/ 
+     ring bpattingbobnd $ 1,oern cou \rb\L
+ 
++/(?<=((?C)0))/
++    9010
++    abcd
++     
+ /-- End of testinput2 --/
+diff --git a/testdata/testoutput2 b/testdata/testoutput2
+index 5fb28d5..d414a72 100644
+--- a/testdata/testoutput2
++++ b/testdata/testoutput2
+@@ -14650,4 +14650,19 @@ Start of matched string is beyond its end - displaying from end to start.
+  0: a
+  0L 
+ 
++/(?<=((?C)0))/
++    9010
++--->9010
++  0  ^       0
++  0   ^      0
++ 0: 
++ 1: 0
++    abcd
++--->abcd
++  0  ^       0
++  0   ^      0
++  0    ^     0
++  0     ^    0
++No match
++     
+ /-- End of testinput2 --/
+-- 
+2.5.0
+
+From 943a5105b9fe2842851003f692c7077a6cdbeefe Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Wed, 10 Feb 2016 19:13:17 +0000
+Subject: [PATCH] Fix workspace overflow for (*ACCEPT) with deeply nested
+ parentheses.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1631 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcre_compile.c b/pcre_compile.c
+index b9a239e..5019854 100644
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -6,7 +6,7 @@
+ and semantics are as close as possible to those of the Perl 5 language.
+ 
+                        Written by Philip Hazel
+-           Copyright (c) 1997-2014 University of Cambridge
++           Copyright (c) 1997-2016 University of Cambridge
+ 
+ -----------------------------------------------------------------------------
+ Redistribution and use in source and binary forms, with or without
+@@ -560,6 +560,7 @@ static const char error_texts[] =
+   /* 85 */
+   "parentheses are too deeply nested (stack check)\0"
+   "digits missing in \\x{} or \\o{}\0"
++  "regular expression is too complicated\0"
+   ;
+ 
+ /* Table to identify digits and hex digits. This is used when compiling
+@@ -4591,7 +4592,8 @@ for (;; ptr++)
+     if (code > cd->start_workspace + cd->workspace_size -
+         WORK_SIZE_SAFETY_MARGIN)                       /* Check for overrun */
+       {
+-      *errorcodeptr = ERR52;
++      *errorcodeptr = (code >= cd->start_workspace + cd->workspace_size)?
++        ERR52 : ERR87;
+       goto FAILED;
+       }
+ 
+@@ -6626,8 +6628,21 @@ for (;; ptr++)
+             cd->had_accept = TRUE;
+             for (oc = cd->open_caps; oc != NULL; oc = oc->next)
+               {
+-              *code++ = OP_CLOSE;
+-              PUT2INC(code, 0, oc->number);
++              if (lengthptr != NULL)
++                {
++#ifdef COMPILE_PCRE8
++                *lengthptr += 1 + IMM2_SIZE;
++#elif defined COMPILE_PCRE16
++                *lengthptr += 2 + IMM2_SIZE;
++#elif defined COMPILE_PCRE32
++                *lengthptr += 4 + IMM2_SIZE;
++#endif
++                }
++              else
++                {
++                *code++ = OP_CLOSE;
++                PUT2INC(code, 0, oc->number);
++                }
+               }
+             setverb = *code++ =
+               (cd->assert_depth > 0)? OP_ASSERT_ACCEPT : OP_ACCEPT;
+diff --git a/pcre_internal.h b/pcre_internal.h
+index f7a5ee7..dbfe80e 100644
+--- a/pcre_internal.h
++++ b/pcre_internal.h
+@@ -7,7 +7,7 @@
+ and semantics are as close as possible to those of the Perl 5 language.
+ 
+                        Written by Philip Hazel
+-           Copyright (c) 1997-2014 University of Cambridge
++           Copyright (c) 1997-2016 University of Cambridge
+ 
+ -----------------------------------------------------------------------------
+ Redistribution and use in source and binary forms, with or without
+@@ -2289,7 +2289,7 @@ enum { ERR0,  ERR1,  ERR2,  ERR3,  ERR4,  ERR5,  ERR6,  ERR7,  ERR8,  ERR9,
+        ERR50, ERR51, ERR52, ERR53, ERR54, ERR55, ERR56, ERR57, ERR58, ERR59,
+        ERR60, ERR61, ERR62, ERR63, ERR64, ERR65, ERR66, ERR67, ERR68, ERR69,
+        ERR70, ERR71, ERR72, ERR73, ERR74, ERR75, ERR76, ERR77, ERR78, ERR79,
+-       ERR80, ERR81, ERR82, ERR83, ERR84, ERR85, ERR86, ERRCOUNT };
++       ERR80, ERR81, ERR82, ERR83, ERR84, ERR85, ERR86, ERR87, ERRCOUNT };
+ 
+ /* JIT compiling modes. The function list is indexed by them. */
+ 
+diff --git a/pcreposix.c b/pcreposix.c
+index dcc13ef..55b6ddc 100644
+--- a/pcreposix.c
++++ b/pcreposix.c
+@@ -6,7 +6,7 @@
+ and semantics are as close as possible to those of the Perl 5 language.
+ 
+                        Written by Philip Hazel
+-           Copyright (c) 1997-2014 University of Cambridge
++           Copyright (c) 1997-2016 University of Cambridge
+ 
+ -----------------------------------------------------------------------------
+ Redistribution and use in source and binary forms, with or without
+@@ -173,7 +173,8 @@ static const int eint[] = {
+   REG_BADPAT,  /* group name must start with a non-digit */
+   /* 85 */
+   REG_BADPAT,  /* parentheses too deeply nested (stack check) */
+-  REG_BADPAT   /* missing digits in \x{} or \o{} */
++  REG_BADPAT,  /* missing digits in \x{} or \o{} */
++  REG_BADPAT   /* pattern too complicated */
+ };
+ 
+ /* Table of texts corresponding to POSIX error codes */
+diff --git a/testdata/testinput11 b/testdata/testinput11
+index ac9d228..6f0989a 100644
+--- a/testdata/testinput11
++++ b/testdata/testinput11
+@@ -138,4 +138,6 @@ is required for these tests. --/
+ 
+ /.((?2)(?R)\1)()/B
+ 
++/([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00](*ACCEPT)/
++
+ /-- End of testinput11 --/
+diff --git a/testdata/testoutput11-16 b/testdata/testoutput11-16
+index 280692e..3c485da 100644
+--- a/testdata/testoutput11-16
++++ b/testdata/testoutput11-16
+@@ -765,4 +765,7 @@ Memory allocation (code space): 14
+  25     End
+ ------------------------------------------------------------------
+ 
++/([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00](*ACCEPT)/
++Failed: regular expression is too complicated at offset 490
++
+ /-- End of testinput11 --/
+diff --git a/testdata/testoutput11-32 b/testdata/testoutput11-32
+index cdbda74..e19518d 100644
+--- a/testdata/testoutput11-32
++++ b/testdata/testoutput11-32
+@@ -765,4 +765,7 @@ Memory allocation (code space): 28
+  25     End
+ ------------------------------------------------------------------
+ 
++/([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00](*ACCEPT)/
++Failed: missing ) at offset 509
++
+ /-- End of testinput11 --/
+diff --git a/testdata/testoutput11-8 b/testdata/testoutput11-8
+index cb37896..5a4fbb2 100644
+--- a/testdata/testoutput11-8
++++ b/testdata/testoutput11-8
+@@ -765,4 +765,7 @@ Memory allocation (code space): 10
+  38     End
+ ------------------------------------------------------------------
+ 
++/([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00]([00](*ACCEPT)/
++Failed: missing ) at offset 509
++
+ /-- End of testinput11 --/
+-- 
+2.5.0
+
+From b7537308b7c758f33c347cb0bec62754c43c271f Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Sat, 27 Feb 2016 17:38:11 +0000
+Subject: [PATCH] Yet another duplicate name bugfix by overestimating the
+ memory needed (i.e. another hack - PCRE2 has this "properly" fixed).
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1636 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcre_compile.c b/pcre_compile.c
+index 5019854..4ffea0c 100644
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -7311,7 +7311,12 @@ for (;; ptr++)
+           so far in order to get the number. If the name is not found, leave
+           the value of recno as 0 for a forward reference. */
+ 
+-          else
++          /* This patch (removing "else") fixes a problem when a reference is
++          to multiple identically named nested groups from within the nest.
++          Once again, it is not the "proper" fix, and it results in an
++          over-allocation of memory. */
++
++          /* else */
+             {
+             ng = cd->named_groups;
+             for (i = 0; i < cd->names_found; i++, ng++)
+diff --git a/testdata/testinput2 b/testdata/testinput2
+index 086e0f4..c805f5f 100644
+--- a/testdata/testinput2
++++ b/testdata/testinput2
+@@ -4239,4 +4239,6 @@ backtracking verbs. --/
+     9010
+     abcd
+      
++/((?J)(?'R'(?'R'(?'R'(?'R'(?'R'(?|(\k'R'))))))))/
++
+ /-- End of testinput2 --/
+diff --git a/testdata/testoutput2 b/testdata/testoutput2
+index d414a72..800a72f 100644
+--- a/testdata/testoutput2
++++ b/testdata/testoutput2
+@@ -14665,4 +14665,6 @@ Start of matched string is beyond its end - displaying from end to start.
+   0     ^    0
+ No match
+      
++/((?J)(?'R'(?'R'(?'R'(?'R'(?'R'(?|(\k'R'))))))))/
++
+ /-- End of testinput2 --/
+-- 
+2.5.0
+
+From 0fc2edb79b3815c6511fd75c36a57893e4acaee6 Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Sat, 27 Feb 2016 17:55:24 +0000
+Subject: [PATCH] Fix pcretest loop for global matching with an ovector size
+ less than 2.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1637 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcretest.c b/pcretest.c
+index 63869fd..78ef517 100644
+--- a/pcretest.c
++++ b/pcretest.c
+@@ -5617,6 +5617,12 @@ while (!done)
+         break;
+         }
+ 
++      if (use_size_offsets < 2)
++        {
++        fprintf(outfile, "Cannot do global matching with an ovector size < 2\n");
++        break;
++        }
++
+       /* If we have matched an empty string, first check to see if we are at
+       the end of the subject. If so, the /g loop is over. Otherwise, mimic what
+       Perl's /g options does. This turns out to be rather cunning. First we set
+-- 
+2.5.0
+
+From b3db1b7de5cfaa026ec2bc4a393129461a0f5c57 Mon Sep 17 00:00:00 2001
+From: ph10 <ph10@2f5784b3-3f2a-0410-8824-cb99058d5e15>
+Date: Sat, 27 Feb 2016 18:44:41 +0000
+Subject: [PATCH] Fix non-diagnosis of missing assertion after (?(?C).
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+git-svn-id: svn://vcs.exim.org/pcre/code/trunk@1638 2f5784b3-3f2a-0410-8824-cb99058d5e15
+
+Petr Písař: Ported to 8.38.
+
+diff --git a/pcre_compile.c b/pcre_compile.c
+index 4ffea0c..254c629 100644
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -485,7 +485,7 @@ static const char error_texts[] =
+   "lookbehind assertion is not fixed length\0"
+   "malformed number or name after (?(\0"
+   "conditional group contains more than two branches\0"
+-  "assertion expected after (?(\0"
++  "assertion expected after (?( or (?(?C)\0"
+   "(?R or (?[+-]digits must be followed by )\0"
+   /* 30 */
+   "unknown POSIX class name\0"
+@@ -6771,6 +6771,15 @@ for (;; ptr++)
+           for (i = 3;; i++) if (!IS_DIGIT(ptr[i])) break;
+           if (ptr[i] == CHAR_RIGHT_PARENTHESIS)
+             tempptr += i + 1;
++
++          /* tempptr should now be pointing to the opening parenthesis of the
++          assertion condition. */
++
++          if (*tempptr != CHAR_LEFT_PARENTHESIS)
++            {
++            *errorcodeptr = ERR28;
++            goto FAILED;
++            }
+           }
+ 
+         /* For conditions that are assertions, check the syntax, and then exit
+diff --git a/testdata/testinput2 b/testdata/testinput2
+index c805f5f..75e402e 100644
+--- a/testdata/testinput2
++++ b/testdata/testinput2
+@@ -4241,4 +4241,6 @@ backtracking verbs. --/
+      
+ /((?J)(?'R'(?'R'(?'R'(?'R'(?'R'(?|(\k'R'))))))))/
+ 
++/\N(?(?C)0?!.)*/
++
+ /-- End of testinput2 --/
+diff --git a/testdata/testoutput2 b/testdata/testoutput2
+index 800a72f..5e88d1a 100644
+--- a/testdata/testoutput2
++++ b/testdata/testoutput2
+@@ -555,13 +555,13 @@ Failed: malformed number or name after (?( at offset 4
+ Failed: malformed number or name after (?( at offset 4
+ 
+ /(?(?i))/
+-Failed: assertion expected after (?( at offset 3
++Failed: assertion expected after (?( or (?(?C) at offset 3
+ 
+ /(?(abc))/
+ Failed: reference to non-existent subpattern at offset 7
+ 
+ /(?(?<ab))/
+-Failed: assertion expected after (?( at offset 3
++Failed: assertion expected after (?( or (?(?C) at offset 3
+ 
+ /((?s)blah)\s+\1/I
+ Capturing subpattern count = 1
+@@ -7870,7 +7870,7 @@ No match
+ Failed: malformed number or name after (?( at offset 6
+ 
+ /(?(''))/
+-Failed: assertion expected after (?( at offset 4
++Failed: assertion expected after (?( or (?(?C) at offset 4
+ 
+ /(?('R')stuff)/
+ Failed: reference to non-existent subpattern at offset 7
+@@ -14346,7 +14346,7 @@ No match
+ "((?2)+)((?1))"
+ 
+ "(?(?<E>.*!.*)?)"
+-Failed: assertion expected after (?( at offset 3
++Failed: assertion expected after (?( or (?(?C) at offset 3
+ 
+ "X((?2)()*+){2}+"BZ
+ ------------------------------------------------------------------
+@@ -14667,4 +14667,7 @@ No match
+      
+ /((?J)(?'R'(?'R'(?'R'(?'R'(?'R'(?|(\k'R'))))))))/
+ 
++/\N(?(?C)0?!.)*/
++Failed: assertion expected after (?( or (?(?C) at offset 4
++
+ /-- End of testinput2 --/
+-- 
+2.5.0
+
