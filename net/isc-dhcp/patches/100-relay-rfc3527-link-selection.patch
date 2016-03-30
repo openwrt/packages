@@ -1,0 +1,100 @@
+--- a/relay/dhcrelay.c
++++ b/relay/dhcrelay.c
+@@ -60,6 +60,7 @@
+ int client_packet_errors = 0;	/* Errors sending packets to clients. */
+ 
+ int add_agent_options = 0;	/* If nonzero, add relay agent options. */
++int add_rfc3527_suboption = 0;	/* If nonzero, add RFC3527 link selection sub-option. */
+ 
+ int agent_option_errors = 0;    /* Number of packets forwarded without
+ 				   agent options because there was no room. */
+@@ -99,6 +100,8 @@
+ 	struct sockaddr_in to;
+ } *servers;
+ 
++struct interface_info *uplink;
++
+ #ifdef DHCPv6
+ struct stream_list {
+ 	struct stream_list *next;
+@@ -147,6 +150,7 @@
+ "                     [-pf <pid-file>] [--no-pid]\n"\
+ "                     [-m append|replace|forward|discard]\n" \
+ "                     [-i interface0 [ ... -i interfaceN]\n" \
++"                     [-l interface]\n" \
+ "                     server0 [ ... serverN]\n\n" \
+ "       dhcrelay -6   [-d] [-q] [-I] [-c <hops>] [-p <port>]\n" \
+ "                     [-pf <pid-file>] [--no-pid]\n" \
+@@ -161,6 +165,7 @@
+ "                [-pf <pid-file>] [--no-pid]\n" \
+ "                [-m append|replace|forward|discard]\n" \
+ "                [-i interface0 [ ... -i interfaceN]\n" \
++"                [-l interface]\n" \
+ "                server0 [ ... serverN]\n\n"
+ #endif
+ 
+@@ -325,6 +330,20 @@
+ 				agent_relay_mode = discard;
+ 			} else
+ 				usage();
++		} else if (!strcmp (argv [i], "-l")) {
++			add_agent_options = 1;
++			add_rfc3527_suboption = 1;
++			if (++i == argc)
++				usage();
++
++			status = interface_allocate(&uplink, MDL);
++			if (status != ISC_R_SUCCESS)
++				log_fatal("%s: interface_allocate: %s",
++					  argv[i],
++					  isc_result_totext(status));
++			strcpy(uplink->name, argv[i]);
++			interface_snorf(uplink, INTERFACE_REQUESTED);
++			//interface_dereference(&uplink, MDL);
+ 		} else if (!strcmp(argv[i], "-D")) {
+ #ifdef DHCPv6
+ 			if (local_family_set && (local_family == AF_INET6)) {
+@@ -711,12 +730,17 @@
+ 					       ip->addresses[0])))
+ 		return;
+ 
++	/* RFC3527: Replace giaddr address by uplink address. The original
++	 * giaddr will be used in the link selection sub-option */
++	if (add_rfc3527_suboption)
++		packet->giaddr = uplink->addresses[0];
++
+ 	/* If giaddr is not already set, Set it so the server can
+ 	   figure out what net it's from and so that we can later
+ 	   forward the response to the correct net.    If it's already
+ 	   set, the response will be sent directly to the relay agent
+ 	   that set giaddr, so we won't see it. */
+-	if (!packet->giaddr.s_addr)
++	else if (!packet->giaddr.s_addr)
+ 		packet->giaddr = ip->addresses[0];
+ 	if (packet->hops < max_hop_count)
+ 		packet->hops = packet->hops + 1;
+@@ -1090,6 +1114,9 @@
+ 		optlen += ip->remote_id_len + 2;    /* RAI_REMOTE_ID + len */
+ 	}
+ 
++	if (add_rfc3527_suboption)
++		optlen += 6;
++
+ 	/* We do not support relay option fragmenting(multiple options to
+ 	 * support an option data exceeding 255 bytes).
+ 	 */
+@@ -1121,6 +1148,14 @@
+ 			memcpy(sp, ip->remote_id, ip->remote_id_len);
+ 			sp += ip->remote_id_len;
+ 		}
++
++		if (add_rfc3527_suboption) {
++			*sp++ = RAI_LINK_SELECT;
++			*sp++ = 4u;
++			memcpy(sp, &giaddr.s_addr, 4);
++			sp += 4;
++			log_debug ("RFC3527 link selection sub-option added: %s", inet_ntoa(giaddr));
++		}
+ 	} else {
+ 		++agent_option_errors;
+ 		log_error("No room in packet (used %d of %d) "

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
 PKG_VERSION:=3.4.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
@@ -29,7 +29,7 @@ define Package/pciutils
   CATEGORY:=Utilities
   TITLE:=Linux PCI Utilities
   URL:=http://mj.ucw.cz/pciutils.shtml
-  DEPENDS:=+eudev +libkmod +zlib
+  DEPENDS:=+libkmod +zlib
 endef
 
 define Package/pciutils/description
@@ -48,6 +48,7 @@ MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include" \
 	PREFIX="/usr" \
 	HOST="$(GNU_TARGET_NAME)" \
+	HWDB="no" \
 	ZLIB="yes"
 
 ifneq ($(CONFIG_USE_GLIBC),)

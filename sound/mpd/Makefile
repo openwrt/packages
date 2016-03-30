@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.19.11
+PKG_VERSION:=0.19.14
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.19/
-PKG_MD5SUM:=78935f6c464b67e19b4dc65bdb80319e
+PKG_MD5SUM:=9f99340ec6b77bea4ba3729e3b76fd7c
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
@@ -137,6 +137,7 @@ CONFIGURE_ARGS += \
 	--disable-wildmidi \
 	--disable-zzip \
 	--with-zeroconf=no \
+	--disable-soxr \
 	\
 	--enable-curl \
 	--enable-flac \

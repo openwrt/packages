@@ -19,6 +19,7 @@ ifeq ($(BUILD_VARIANT),full)
   FLASHROM_BASIC := yes
   FLASHROM_FTDI := yes
   FLASHROM_PCI := yes
+  FLASHROM_RAW := yes
   FLASHROM_SERIAL := yes
   FLASHROM_USB := yes
 endif
@@ -27,6 +28,7 @@ ifeq ($(BUILD_VARIANT),pci)
   FLASHROM_BASIC := yes
   FLASHROM_FTDI := no
   FLASHROM_PCI := yes
+  FLASHROM_RAW := yes
   FLASHROM_SERIAL := no
   FLASHROM_USB := no
 endif
@@ -35,6 +37,7 @@ ifeq ($(BUILD_VARIANT),spi)
   FLASHROM_BASIC := yes
   FLASHROM_FTDI := no
   FLASHROM_PCI := no
+  FLASHROM_RAW := no
   FLASHROM_SERIAL := no
   FLASHROM_USB := no
 endif
@@ -43,6 +46,7 @@ ifeq ($(BUILD_VARIANT),usb)
   FLASHROM_BASIC := yes
   FLASHROM_FTDI := yes
   FLASHROM_PCI := no
+  FLASHROM_RAW := no
   FLASHROM_SERIAL := yes
   FLASHROM_USB := yes
 endif
@@ -57,10 +61,13 @@ $(eval $(call DefineConfig,FTDI,$(FLASHROM_FTDI)))
 $(eval $(call DefineProgrammer,FT2232_SPI,$(FLASHROM_FTDI)))
 $(eval $(call DefineProgrammer,USBBLASTER_SPI,$(FLASHROM_FTDI)))
 
+# RAW
+$(eval $(call DefineConfig,RAW_ACCESS,$(FLASHROM_RAW)))
+$(eval $(call DefineProgrammer,RAYER_SPI,$(FLASHROM_RAW)))
+
 # PCI
 $(eval $(call DefineConfig,PCI,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,INTERNAL,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,RAYER_SPI,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,NIC3COM,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,GFXNVIDIA,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,SATASII,$(FLASHROM_PCI)))
