@@ -15,7 +15,7 @@ PKG_SOURCE:=setuptools-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/s/setuptools/
 PKG_MD5SUM:=bf37191cb4c1472fb61e6f933d2006b1
 
-HOST_BUILD_DEPENDS:=python/host
+HOST_BUILD_DEPENDS:=python python/host
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/setuptools-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/setuptools-$(PKG_VERSION)
