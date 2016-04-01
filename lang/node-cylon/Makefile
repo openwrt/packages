@@ -67,6 +67,7 @@ define Build/Compile
 	$(MAKE_FLAGS) \
 	npm_config_arch=$(CONFIG_ARCH) \
 	npm_config_nodedir=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/ \
+	npm_config_cache=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/npm-cache \
 	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
 	$(STAGING_DIR)/host/bin/npm install -g $(PKG_BUILD_DIR)
 endef
