@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=htop
-PKG_VERSION:=1.0.3
+PKG_VERSION:=2.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://hisham.hm/htop/releases/$(PKG_VERSION)/
-PKG_MD5SUM:=e768b9b55c033d9c1dffda72db3a6ac7
+PKG_MD5SUM:=f75fe92b4defaa80d99109830f34b5e2
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -39,15 +39,12 @@ define Package/htop/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-native-affinity \
 	--disable-unicode \
-	--enable-hwloc
+	--disable-hwloc
 
 CONFIGURE_VARS += \
 	ac_cv_file__proc_stat=yes \
-	ac_cv_file__proc_meminfo=yes \
-	ac_cv_func_malloc_0_nonnull=yes \
-	ac_cv_func_realloc_0_nonnull=yes
+	ac_cv_file__proc_meminfo=yes
 
 define Package/htop/install
 	$(INSTALL_DIR) $(1)/usr/bin
