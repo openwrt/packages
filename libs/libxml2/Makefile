@@ -130,5 +130,10 @@ define Package/libxml2/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxml2.so* $(1)/usr/lib/
 endef
 
+define Host/Install
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(HOST_BUILD_DIR)/xml2-config
+	$(call Host/Install/Default)
+endef
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,libxml2))
