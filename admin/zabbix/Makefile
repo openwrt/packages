@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=2.4.6
-PKG_RELEASE:=3
+PKG_VERSION:=3.0.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/zabbix
-PKG_MD5SUM:=06ad8d5808a0eddf2b9f0a256b6a5fde
+PKG_MD5SUM:=890d9eec69304ad552959fabe0a5d122
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -34,11 +34,6 @@ define Package/zabbix/Default
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
   USERID:=zabbix=53:zabbix=53
   DEPENDS += $(ICONV_DEPENDS)
-endef
-
-define Package/zabbix-agent
-  $(call Package/zabbix/Default)
-  TITLE+= agent
 endef
 
 define Package/zabbix-agentd
@@ -159,9 +154,6 @@ define Package/zabbix/install/zabbix.conf.d
 		$(1)/etc/zabbix_agentd.conf.d/$(2)
 endef
 
-define Package/zabbix-agent/conffiles
-/etc/zabbix_agent.conf
-endef
 define Package/zabbix-agentd/conffiles
 /etc/zabbix_agentd.conf
 endef
@@ -191,11 +183,6 @@ endef
 define Build/Compile
 	$(call Build/Compile/Default)
 	$(call Build/Compile/zabbix-extra-mac80211)
-endef
-
-define Package/zabbix-agent/install
-	$(call Package/zabbix/install/sbin,$(1),agent)
-	$(call Package/zabbix/install/etc,$(1),agent)
 endef
 
 define Package/zabbix-agentd/install
@@ -238,7 +225,6 @@ define Package/zabbix-proxy/install
 	$(call Package/zabbix/install/etc,$(1),proxy)
 endef
 
-$(eval $(call BuildPackage,zabbix-agent))
 $(eval $(call BuildPackage,zabbix-agentd))
 $(eval $(call BuildPackage,zabbix-extra-mac80211))
 $(eval $(call BuildPackage,zabbix-extra-network))
