@@ -51,7 +51,7 @@
 +#include <poll.h>
  #include <sys/types.h>
  #include <errno.h>
- #include <linux/types.h>
+ #if defined(__linux__)
 --- a/src/control/control.c
 +++ b/src/control/control.c
 @@ -48,7 +48,7 @@ and IEC958 structure.
