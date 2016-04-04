@@ -127,12 +127,35 @@ $(call Package/sane-backends/Default)
   CATEGORY:=Utilities
   DEPENDS:=+libsane
   TITLE+= (network daemon)
+  USERID=saned:saned
+endef
+
+define Package/sane-daemon-avahi-dbus-service
+$(call Package/sane-backends/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS+=sane-daemon +avahi-dbus-daemon
+  TITLE+= (network daemon avahi service files)
+endef
+
+define Package/sane-daemon-avahi-nodbus-service
+$(call Package/sane-backends/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS+=sane-daemon +avahi-nodbus-daemon
+  TITLE+= (network daemon avahi service files)
 endef
 
 define Package/sane-daemon/description
 $(call Package/sane-backends/Default/description)
 This package contains the SANE daemon.
 endef
+
+define Package/sane-daemon-avahi-dbus-service/conffiles
+/etc/avahi/services/saned.service
+endef
+
+Package/sane-daemon-avahi-nobus-service/conffiles=$(Package/sane-daemon-avahi-dbus-service/conffiles)
 
 define Package/libsane
   $(call Package/sane-backends/Default)
@@ -194,21 +217,32 @@ endef
 
 define Package/sane-daemon/install
 	$(INSTALL_DIR) $(1)/etc/sane.d
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/sane.d/saned.conf $(1)/etc/sane.d/
+	ln -sf /var/etc/saned.conf $(1)/etc/sane.d/saned.conf
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/xinetd.d
 	$(CP) ./files/xinet.d_sane-port $(1)/etc/xinetd.d/sane-port
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config
+	$(INSTALL_BIN) ./files/saned.init $(1)/etc/init.d/saned
+	$(INSTALL_CONF) ./files/saned.config $(1)/etc/config/saned
 endef
 
 define Package/sane-daemon/conffiles
 /etc/sane.d/saned.conf
+/etc/config/saned
 endef
 
 define Package/sane-frontends/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 endef
+
+define Package/sane-daemon-avahi-dbus-service/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_BIN) ./files/saned.service $(1)/etc/avahi/services
+endef
+
+Package/sane-daemon-avahi-nodbus-service/install=$(call Package/sane-daemon-avahi-dbus-service/install,$(1),$(2))
 
 define Package/sane-backends-all/install
 	/bin/true
@@ -262,6 +296,8 @@ endef
 
 $(eval $(call BuildPackage,libsane))
 $(eval $(call BuildPackage,sane-daemon))
+$(eval $(call BuildPackage,sane-daemon-avahi-dbus-service))
+$(eval $(call BuildPackage,sane-daemon-avahi-nodbus-service))
 $(eval $(call SaneBackend,abaton,Abaton flatbed scanners))
 $(eval $(call SaneBackend,agfafocus,AGFA Focus flatbed scanners))
 $(eval $(call SaneBackend,apple,Apple flatbed scanners))

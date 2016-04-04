@@ -1,0 +1,69 @@
+Index: sane-backends-1.0.24/frontend/saned.c
+===================================================================
+--- sane-backends-1.0.24.orig/frontend/saned.c
++++ sane-backends-1.0.24/frontend/saned.c
+@@ -294,6 +294,7 @@ static int process_request (Wire * w);
+ #define SANED_RUN_INETD  0
+ #define SANED_RUN_DEBUG  1
+ #define SANED_RUN_ALONE  2
++#define SANED_RUN_FOREGROUND  3
+ 
+ 
+ #define DBG_ERR  1
+@@ -2942,7 +2943,7 @@ run_standalone (int argc, char **argv)
+ 
+   do_bindings (&nfds, &fds);
+ 
+-  if (run_mode != SANED_RUN_DEBUG)
++  if (run_mode != SANED_RUN_DEBUG) 
+     {
+       if (argc > 2)
+ 	{
+@@ -3009,6 +3010,10 @@ run_standalone (int argc, char **argv)
+ 	    }
+           endgrent();
+ 	}
++    }
++
++  if ((run_mode != SANED_RUN_DEBUG) && (run_mode != SANED_RUN_FOREGROUND))
++    {
+ 
+       DBG (DBG_MSG, "run_standalone: daemonizing now\n");
+ 
+@@ -3051,7 +3056,9 @@ run_standalone (int argc, char **argv)
+       close (fd);
+ 
+       setsid ();
++   }
+ 
++   if (run_mode != SANED_RUN_DEBUG) {
+       /* Drop privileges if requested */
+       if (runas_uid > 0)
+ 	{
+@@ -3278,6 +3285,8 @@ main (int argc, char *argv[])
+     {
+       if (strncmp (argv[1], "-a", 2) == 0)
+ 	run_mode = SANED_RUN_ALONE;
++      else if (strncmp (argv[1], "-f", 2) == 0)
++	run_mode = SANED_RUN_FOREGROUND;
+       else if (strncmp (argv[1], "-d", 2) == 0)
+ 	{
+ 	  run_mode = SANED_RUN_DEBUG;
+@@ -3287,7 +3296,7 @@ main (int argc, char *argv[])
+ 	run_mode = SANED_RUN_DEBUG;
+       else
+         {
+-          printf ("Usage: saned [ -a [ username ] | -d [ n ] | -s [ n ] ] | -h\n");
++          printf ("Usage: saned [ -a [ username ] | -f [ username ] | -d [ n ] | -s [ n ] ] | -h\n");
+           if ((strncmp (argv[1], "-h", 2) == 0) ||
+                (strncmp (argv[1], "--help", 6) == 0))
+             exit (EXIT_SUCCESS);
+@@ -3340,7 +3349,7 @@ main (int argc, char *argv[])
+       DBG (DBG_WARN, "saned from %s ready\n", PACKAGE_STRING);
+     }
+ 
+-  if ((run_mode == SANED_RUN_ALONE) || (run_mode == SANED_RUN_DEBUG))
++  if ((run_mode == SANED_RUN_ALONE) || (run_mode == SANED_RUN_DEBUG) || (run_mode == SANED_RUN_FOREGROUND))
+     {
+       run_standalone(argc, argv);
+     }
