@@ -1,0 +1,16 @@
+menu "Transmission configuration"
+	depends on PACKAGE_transmission-daemon || PACKAGE_transmission-cli || PACKAGE_transmission-remote
+
+choice
+	prompt "SSL library"
+	default TRANSMISSION_OPENSSL
+
+config TRANSMISSION_OPENSSL
+	bool "OpenSSL"
+
+config TRANSMISSION_POLARSSL
+	bool "PolarSSL"
+
+endchoice
+
+endmenu

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=2.92
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://download-origin.transmissionbt.com/files/ http://mirrors.m0k.org/transmission/files
@@ -18,6 +18,8 @@ PKG_MD5SUM:=3fce404a436e3cd7fde80fb6ed61c264
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,23 +30,20 @@ define Package/transmission/template
   TITLE:=A free, lightweight BitTorrent client
   URL:=http://www.transmissionbt.com
   MAINTAINER:=Cezary Jackiewicz <cezary@eko.one.pl>
+  DEPENDS:=+libcurl +libpthread +libevent2 +librt +TRANSMISSION_OPENSSL:libopenssl +TRANSMISSION_POLARSSL:libpolarssl +TRANSMISSION_POLARSSL:zlib
 endef
 
 define Package/transmission-daemon
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libopenssl +libpthread +libevent2 +librt
-  MENU:=1
   USERID:=transmission=224:transmission=224
 endef
 
 define Package/transmission-cli
   $(call Package/transmission/template)
-  DEPENDS:=transmission-daemon
 endef
 
 define Package/transmission-remote
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libopenssl +libpthread +libevent2 +librt
 endef
 
 define Package/transmission-web
@@ -80,6 +79,8 @@ CONFIGURE_VARS += \
 	LIBEVENT_LIBS="$(STAGING_DIR)/usr/lib/libevent-2.0.so.5"
 
 CONFIGURE_ARGS += \
+	$(if $(CONFIG_TRANSMISSION_OPENSSL),--with-crypto=openssl,) \
+	$(if $(CONFIG_TRANSMISSION_POLARSSL),--with-crypto=polarssl,) \
 	--enable-daemon \
 	--enable-cli \
 	--without-gtk \
@@ -90,6 +91,10 @@ MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS) -D_GNU_SOURCE"
 
 TARGET_CFLAGS += -std=gnu99
+
+define Package/transmission-daemon/config
+  source "$(SOURCE)/Config.in"
+endef
 
 define Package/transmission-daemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
