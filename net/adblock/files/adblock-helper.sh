@@ -205,7 +205,6 @@ f_envparse()
     else
         network_get_device adb_wandev4 "${adb_wanif4}"
         network_get_device adb_wandev6 "${adb_wanif6}"
-        break
     fi
 
     # get lan ip addresses
@@ -505,8 +504,6 @@ f_space()
 {
     local mp="${1}"
 
-    # check relevant mount points in a subshell
-    #
     if [ -d "${mp}" ]
     then
         av_space="$(df "${mp}" | tail -n1 | awk '{printf $4}')"
