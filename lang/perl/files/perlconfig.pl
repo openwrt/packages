@@ -62,7 +62,7 @@ flexibility.
 
 A symbol name has to consist entirely of alphanumeric characters as well as
 the underscore(_) character. In addition, symbol names may be prefixed with an
-all-lowercase string, seperated by a colon(:):
+all-lowercase string, separated by a colon(:):
 
   my:name=value
 
@@ -76,7 +76,7 @@ to the final configuration file.
 
 =head3 Symbol definitions
 
-A symbol definition is in the form of a simple name/value pair, seperated by
+A symbol definition is in the form of a simple name/value pair, separated by
 an equals sign(=):
 
   name=value
