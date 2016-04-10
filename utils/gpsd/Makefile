@@ -83,6 +83,9 @@ define Package/libgps/description
   This package contains the libgps library.
 endef
 
+SCONS_VARS += \
+	LINKFLAGS="$(TARGET_LDFLAGS)"
+
 SCONS_OPTIONS += \
 	dbus_export=no \
 	tsip=no \
