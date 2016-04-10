@@ -1,0 +1,16 @@
+--- a/clish/shell/shell_execute.c
++++ b/clish/shell/shell_execute.c
+@@ -19,13 +19,6 @@
+ #include <signal.h>
+ #include <fcntl.h>
+ 
+-/* Empty signal handler to ignore signal but don't use SIG_IGN. */
+-static void sigignore(int signo)
+-{
+-	signo = signo; /* Happy compiler */
+-	return;
+-}
+-
+ /*-------------------------------------------------------- */
+ static int clish_shell_lock(const char *lock_path)
+ {
