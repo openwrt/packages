@@ -28,7 +28,7 @@ _uci2conf() {
 				# detect list options (LENGTH) and ignore
 				echo $__OPT | grep -i "_LENGTH" >/dev/null 2>&1 && return
 				# detect list options (ITEM) and ignore
-				echo $__OPT | grep -i "_ITEM" >/dev/null 2>&1 && __OPT=$(echo $__OPT | sed -e "s#_ITEM.##g")
+				echo $__OPT | grep -i "_ITEM" >/dev/null 2>&1 && __OPT=$(echo $__OPT | sed -e "s#_ITEM.*##g")
 				# uci only accept "_" but we need "-"
 				local __OPT=$(echo $__OPT | sed -e "s#_#-#g")
 				# write to config
@@ -49,6 +49,17 @@ _uci2conf() {
 	echo '### DO NOT EDIT'			   >> $CFGTEMP
 	echo '### SEE /etc/config/privoxy INSTEAD' >> $CFGTEMP
 	echo ''					   >> $CFGTEMP
+
+	# logdir and logfile
+	# privoxy needs read/write access
+	_LOGDIR=$(uci -q get privoxy.privoxy.logdir)   || _LOGDIR="/var/log"
+	_LOGFILE=$(uci -q get privoxy.privoxy.logfile) || _LOGFILE="privoxy.log"
+	mkdir -m0755 -p $_LOGDIR
+	touch $_LOGDIR/$_LOGFILE
+	chmod 664 $_LOGDIR/$_LOGFILE
+	chown privoxy:privoxy $_LOGDIR/$_LOGFILE
+	echo -e "logdir\t$_LOGDIR" >> $CFGTEMP
+	echo -e "logfile\t$_LOGFILE" >> $CFGTEMP
 
 	# confdir
 	# privoxy needs read access (possibly write access)
@@ -72,17 +83,6 @@ _uci2conf() {
 		echo -e "templdir\t$_TEMPLDIR" >> $CFGTEMP
 	fi
 
-	# logdir and logfile
-	# privoxy needs read/write access
-	_LOGDIR=$(uci -q get privoxy.privoxy.logdir)   || _LOGDIR="/var/log"
-	_LOGFILE=$(uci -q get privoxy.privoxy.logfile) || _LOGFILE="privoxy.log"
-	mkdir -m0755 -p $_LOGDIR
-	touch $_LOGDIR/$_LOGFILE
-	chmod 664 $_LOGDIR/$_LOGFILE
-	chown privoxy:privoxy $_LOGDIR/$_LOGFILE
-	echo -e "logdir\t$_LOGDIR" >> $CFGTEMP
-	echo -e "logfile\t$_LOGFILE" >> $CFGTEMP
-
 	# temporary-directory
 	# privoxy needs read/write access
 	_TMP_DIR=$(uci -q get privoxy.privoxy.temporary_directory)	# no default needed
@@ -100,7 +100,25 @@ _uci2conf() {
 }
 
 boot() {
-	return 0	# will be started by "iface" hotplug events
+	# wait a given time (default 10 seconds) before startup
+	# to wait for interfaces to come up / not using hotplug events during boot
+	_start() {
+		[ $1 -gt 0 ] && {
+			logger -p daemon.info -t "privoxy[]" "Scheduled startup in $1 seconds"
+			sleep $1
+		}
+		start
+	}
+
+	local _DELAY
+	_DELAY=$(uci_get "privoxy" "system" "boot_delay" "10")
+	_start $_DELAY &
+	return 0
+}
+
+shutdown() {
+	rm -f /tmp/privoxy.hotplug
+	stop
 }
 
 start() {
@@ -110,6 +128,7 @@ start() {
 
 	_uci2conf
 	/usr/sbin/privoxy --pidfile $PIDFILE --user privoxy.privoxy $CFGFILE
+	touch /tmp/privoxy.hotplug
 
 	# verify startup
 	_PID=$(cat $PIDFILE 2>/dev/null)
@@ -117,7 +136,7 @@ start() {
 	local _ERR=$?
 	[ $_ERR -eq 0 ] \
 		&& logger -p daemon.notice -t "privoxy[$_PID]" "Started successfully"\
-		|| logger -p daemon.warn -t "privoxy[-----]" "Failed to start"
+		|| logger -p daemon.warn -t "privoxy[]" "Failed to start"
 	return $_ERR
 }
 
@@ -144,7 +163,7 @@ stop() {
 		logger -p daemon.notice -t "privoxy[$_PID]" "Shutdown successfully"
 	else
 		kill -9 $_tmp	# Normally never come here
-		logger -p daemon.warn -t "privoxy[-----]" "Shutdown forced by KILL"
+		logger -p daemon.warn -t "privoxy[$_tmp]" "Shutdown forced by KILL"
 	fi
 	return 0
 }
