@@ -55,7 +55,7 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/include/Poco $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/Poco $(1)/usr/include/
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco{Foundation,XML,JSON,Net,Util}.so* $(1)/usr/lib/
