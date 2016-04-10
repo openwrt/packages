@@ -83,6 +83,9 @@ start_service() {
     config_get val pa ip4prefix
     [ -n "$val" ] && procd_append_param command --ip4prefix $val
 
+    config_get val pa ip4mode
+    [ -n "$val" ] && procd_append_param command --ip4mode $val
+
     config_get val pa ulaprefix
     [ -n "$val" ] && procd_append_param command --ulaprefix $val
 
