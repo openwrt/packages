@@ -225,7 +225,7 @@ package_dependencies2=package_dependencies.dup
 package_dependencies.each do
 	|(pkg,deps)|
 
-	# Ignore dependencies that are aready required by another dependency
+	# Ignore dependencies that are already required by another dependency
 	deps_clean = deps.reject {|dep_suspect| deps.detect {|dep_provider|
 			if package_dependencies[dep_provider].include?(dep_suspect)
 				puts "#{pkg}: #{dep_suspect} is already required by #{dep_provider}"

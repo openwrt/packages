@@ -10,7 +10,7 @@
    sys/vmmeter.h strings.h vm/vm_param.h \
    sys/time.h kstat.h sys/syscall.h sys/sysmacros.h \
 @@ -63,6 +63,11 @@ AC_CHECK_HEADERS(stdio.h stdlib.h string
-   sys/timeb.h Winber.h lber.h ws2tcpip.h inttypes.h sys/file.h grp.h \
+   Winber.h lber.h ws2tcpip.h inttypes.h sys/file.h grp.h \
    execinfo.h libperfstat.h sys/systemcfg.h sys/mnttab.h mntent.h sys/times.h \
    dlfcn.h sys/utsname.h)
 +AC_CHECK_HEADERS(sys/sysinfo.h, [], [], [
