@@ -207,13 +207,12 @@ define Package/pgsql-server/install
 
 	$(INSTALL_BIN) ./files/postgresql.init $(1)/etc/init.d/postgresql
 
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/share/postgresql/* \
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/postgresql/* \
 		$(1)/usr/share/postgresql
 
 	$(INSTALL_DATA) ./files/postgresql.config $(1)/etc/config/postgresql
 
-	$(CP) -r \
-		$(PKG_INSTALL_DIR)/usr/lib/postgresql \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/postgresql \
 		$(1)/usr/lib
 endef
 
