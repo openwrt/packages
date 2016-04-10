@@ -15,7 +15,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Zoltan HERPAI <wigyori@uid0.hu>
 
 PKG_SOURCE:=$(PKG_NAME)-fuse-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/fuse
+PKG_SOURCE_URL:=https://github.com/libfuse/sshfs/releases/download/sshfs_2_5
 PKG_MD5SUM:=17494910db8383a366b1301e5f5148a9
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-fuse-$(PKG_VERSION)
