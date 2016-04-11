@@ -140,7 +140,7 @@ convert_uci() {
 
 start_service_real() {
 	local cfg="$1"
-	local use_uci
+	local use_uci write_pid
 	config_get use_uci "$cfg" use_uci
 	if [ "$use_uci" -eq 1 ]; then
 		CONF=$TCONF
@@ -148,12 +148,14 @@ start_service_real() {
 	else
 		CONF=/etc/mosquitto/mosquitto.conf
         fi
+	config_get write_pid "$cfg" write_pid 0
 
 	procd_open_instance
 	procd_set_param command mosquitto
 	procd_append_param command -c $CONF
 	# Makes /etc/init.d/mosquitto reload work if you edit the final file.
 	procd_set_param file $CONF
+	[ "$write_pid" -eq 1 ] && procd_set_param pidfile /var/run/mosquitto.pid
 	procd_close_instance
 }
 
