@@ -43,7 +43,7 @@ define Package/libexslt
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libxslt
-  TITLE:=Gnome XSLT library Extention
+  TITLE:=Gnome XSLT library Extension
   URL:=http://xmlsoft.org/XSLT/EXSLT/
 endef
 
