@@ -124,7 +124,7 @@ define Package/$(PKG_NAME)/preinst
 	# stop service if PKG_UPGRADE
 	[ "$${PKG_UPGRADE}" = "1" ] && /etc/init.d/privoxy stop >/dev/null 2>&1
 		
-	exit 0	# supress errors from stop command
+	exit 0	# suppress errors from stop command
 endef
 
 define Package/$(PKG_NAME)/install
