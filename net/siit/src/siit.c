@@ -690,7 +690,7 @@ static int ip6_ip4(char *src, int len, char *dst, int include_flag)
 				}
 				else if (next_hdr == NEXTHDR_ESP || next_hdr == NEXTHDR_AUTH)
 				{
-					PDEBUG("ip6_ip4(): cannot translate AUTH or ESP extention header, packet dropped\n");
+					PDEBUG("ip6_ip4(): cannot translate AUTH or ESP extension header, packet dropped\n");
 					return -1;
 				}
 				else if (next_hdr == NEXTHDR_IPV6)
@@ -707,12 +707,12 @@ static int ip6_ip4(char *src, int len, char *dst, int include_flag)
 					   value within the original packet
 					   */
 					/* NOT IMPLEMENTED */
-					PDEBUG("ip6_ip4(): NEXTHDR in extention header = 0, packet dropped\n");
+					PDEBUG("ip6_ip4(): NEXTHDR in extension header = 0, packet dropped\n");
 					return -1;
 				}
 				else
 				{
-					PDEBUG("ip6_ip4(): cannot translate extention header = %d, packet dropped\n", next_hdr);
+					PDEBUG("ip6_ip4(): cannot translate extension header = %d, packet dropped\n", next_hdr);
 					return -1;
 				}
 			}
