@@ -35,7 +35,7 @@ endef
 define Package/libtorrent/description
  LibTorrent is a BitTorrent library written in C++ for *nix, with a focus on
  high performance and good code. The library differentiates itself from other
- implementations by transfering directly from file pages to the network stack.
+ implementations by transferring directly from file pages to the network stack.
  On high-bandwidth connections it is able to seed at 3 times the speed of the
  official client.
 endef
