@@ -1,11 +1,11 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
+# Copyright (C) 2016-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 
-HOST_PYTHON_DIR:=$(STAGING_DIR)/host
+HOST_PYTHON_DIR:=$(STAGING_DIR_HOST)
 HOST_PYTHON_INC_DIR:=$(HOST_PYTHON_DIR)/include/python$(PYTHON_VERSION)
 HOST_PYTHON_LIB_DIR:=$(HOST_PYTHON_DIR)/lib/python$(PYTHON_VERSION)
 
@@ -13,7 +13,7 @@ HOST_PYTHON_PKG_DIR:=/lib/python$(PYTHON_VERSION)/site-packages
 
 HOST_PYTHON_BIN:=$(HOST_PYTHON_DIR)/bin/python$(PYTHON_VERSION)
 
-HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(STAGING_DIR)/host/$(HOST_PYTHON_PKG_DIR)
+HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(STAGING_DIR_HOST)/$(HOST_PYTHON_PKG_DIR)
 
 define HostPython
 	if [ "$(strip $(3))" == "HOST" ]; then \
@@ -44,7 +44,7 @@ define Build/Compile/HostPyMod
 		LDSHARED="$(HOSTCC) -shared" \
 		CFLAGS="$(HOST_CFLAGS)" \
 		CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON_INC_DIR)" \
-		LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR)/host/lib" \
+		LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOST)/lib" \
 		_PYTHON_HOST_PLATFORM=linux2 \
 		$(3) \
 		, \
