@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,7 +7,7 @@
 
 PYTHON3_VERSION_MAJOR:=3
 PYTHON3_VERSION_MINOR:=5
-PYTHON3_VERSION_MICRO:=0
+PYTHON3_VERSION_MICRO:=1
 
 PYTHON3_VERSION:=$(PYTHON3_VERSION_MAJOR).$(PYTHON3_VERSION_MINOR)
 
@@ -20,8 +20,8 @@ PYTHON3_PKG_DIR:=/usr/lib/python$(PYTHON3_VERSION)/site-packages
 
 PYTHON3:=python$(PYTHON3_VERSION)
 
-HOST_PYTHON3_LIB_DIR:=$(STAGING_DIR)/host/lib/python$(PYTHON3_VERSION)
-HOST_PYTHON3_BIN:=$(STAGING_DIR)/host/bin/python3
+HOST_PYTHON3_LIB_DIR:=$(STAGING_DIR_HOST)/lib/python$(PYTHON3_VERSION)
+HOST_PYTHON3_BIN:=$(STAGING_DIR_HOST)/bin/python3
 
 PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 define HostPython3
