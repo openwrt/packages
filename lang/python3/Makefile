@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -14,12 +14,12 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=d149d2812f10cbe04c042232e7964171
+PKG_MD5SUM:=e9ea6f2623fffcdd871b7b19113fde80
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -32,6 +32,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=libbz2/host expat/host python3/host
+HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -216,8 +217,8 @@ HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
-	--prefix=$(STAGING_DIR)/host \
-	--with-system-expat=$(STAGING_DIR)/host \
+	--prefix=$(STAGING_DIR_HOST) \
+	--with-system-expat=$(STAGING_DIR_HOST) \
 	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
@@ -228,10 +229,10 @@ define Host/Compile
 endef
 
 define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR)/host/bin/
+	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
 	$(MAKE) -C $(HOST_BUILD_DIR) install
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR)/host/bin/pgen3
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Programs/_freeze_importlib $(STAGING_DIR)/host/bin/_freeze_importlib
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR_HOST)/bin/pgen3
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Programs/_freeze_importlib $(STAGING_DIR_HOST)/bin/_freeze_importlib
 endef
 
 $(eval $(call HostBuild))
