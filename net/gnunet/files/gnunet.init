@@ -8,15 +8,15 @@ USE_PROCD=1
 PROG=/usr/lib/gnunet/libexec/gnunet-service-arm
 
 GNUNET_HOME=/var/run/gnunet
-LOGFILE=$GNUNET_HOME/gnunet.log
+# LOGFILE=$GNUNET_HOME/gnunet.log
 CONFIGFILE=$GNUNET_HOME/gnunet.conf
 SUID_ROOT_HELPERS="exit nat-server nat-client transport-bluetooth transport-wlan vpn"
 
 chmodown_execbin() {
 	execname=/usr/lib/gnunet/libexec/gnunet-$1
 	if [ -x $execname ]; then
-		chmod $2 $execname
 		[ "$3" ] && chown $3 $execname
+		chmod $2 $execname
 	fi
 }
 
@@ -26,7 +26,7 @@ fix_libexec_permissions() {
 		chmodown_execbin helper-$helper u+s
 	done
 	chmodown_execbin helper-dns 4750 root:gnunetdns
-	chmodown_execbin service-dns 2750 root:gnunetdns
+	chmodown_execbin service-dns 2750 gnunet:gnunetdns
 
 	touch /usr/share/gnunet/.permfix
 }
@@ -38,7 +38,7 @@ prepare_config() {
 		chmod 0750 $GNUNET_HOME
 	fi
 	touch $CONFIGFILE
-	chown root:gnunet $CONFIGFILE
+	chown gnunet:gnunet $CONFIGFILE
 	chmod 0640 $CONFIGFILE
 	gnunet-config -c $CONFIGFILE -s PATHS -o GNUNET_HOME -V $GNUNET_HOME
 
@@ -65,6 +65,10 @@ prepare_config() {
 			transport_plugins="$transport_plugins $transplug"
 	done
 	gnunet-config -c $CONFIGFILE -s transport -o PLUGINS -V "$transport_plugins"
+
+	# do not touch sysctl, iptables and routing
+	gnunet-config -c $CONFIGFILE -s dns -o SKIP_ROUTING_SETUP -V YES
+	gnunet-config -c $CONFIGFILE -s exit -o EXIT_IFNAME -V ''
 
 	# apply config from UCI
 	_gnunet_section=""
@@ -95,7 +99,8 @@ start_service() {
 
 	procd_open_instance
 	procd_set_param user gnunet
-	procd_set_param command $PROG -c $CONFIGFILE -l $LOGFILE
+	procd_set_param command $PROG -c $CONFIGFILE
+	[ "$LOGFILE" ] && procd_append_param command -l $LOGFILE
 	procd_set_param respawn
 	procd_close_instance
 }
