@@ -14,7 +14,7 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -147,7 +147,7 @@ define Build/InstallDev
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
 	$(CP) \
-		$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION) \
+		$(STAGING_DIR)/host/lib/python$(PYTHON_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
 	$(CP) \
@@ -217,8 +217,13 @@ HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
-	--prefix=$(STAGING_DIR_HOST) \
-	--with-system-expat=$(STAGING_DIR_HOST) \
+	--prefix=$(STAGING_DIR)/host \
+	--exec-prefix=$(STAGING_DIR)/host \
+	--sysconfdir=$(STAGING_DIR_HOST)/host/etc \
+	--localstatedir=$(STAGING_DIR)/host/var \
+	--sbindir=$(STAGING_DIR)/host/bin \
+	--with-system-expat=$(STAGING_DIR)/host \
+	--with-system-ffi=$(STAGING_DIR)/host \
 	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
@@ -229,10 +234,10 @@ define Host/Compile
 endef
 
 define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
+	$(INSTALL_DIR) $(STAGING_DIR)/host/bin/
 	$(MAKE) -C $(HOST_BUILD_DIR) install
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR_HOST)/bin/pgen3
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Programs/_freeze_importlib $(STAGING_DIR_HOST)/bin/_freeze_importlib
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR)/host/bin/pgen3
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Programs/_freeze_importlib $(STAGING_DIR)/host/bin/_freeze_importlib
 endef
 
 $(eval $(call HostBuild))
