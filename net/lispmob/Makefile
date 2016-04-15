@@ -38,7 +38,7 @@ define Package/lispd
 endef
 
 define Package/lispd/description
-  This packet provides support for the Locator-ID Seperation Protocol.
+  This packet provides support for the Locator-ID Separation Protocol.
 endef
 
 MAKE_FLAGS += \

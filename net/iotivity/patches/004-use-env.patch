@@ -16,22 +16,22 @@ Subject: [PATCH 3/4] 004-use-env.patch
 +env['ENV'] = os.environ
 +if 'CC' in os.environ:
 +	env['CC'] = Split(os.environ['CC'])
-+	print "using CC from enviroment: %s" % env['CC']
++	print "using CC from environment: %s" % env['CC']
 +if 'CXX' in os.environ:
 +	env['CXX'] = Split(os.environ['CXX'])
-+	print "using CXX from enviroment: %s" % env['CXX']
++	print "using CXX from environment: %s" % env['CXX']
 +if 'CFLAGS' in os.environ:
 +	env['CFLAGS'] = Split(os.environ['CFLAGS'])
-+	print "using CFLAGS from enviroment: %s" % env['CFLAGS']
++	print "using CFLAGS from environment: %s" % env['CFLAGS']
 +if 'CXXFLAGS' in os.environ:
 +	env['CXXFLAGS'] = Split(os.environ['CXXFLAGS'])
-+	print "using CXXFLAGS from enviroment: %s" % env['CXXFLAGS']
++	print "using CXXFLAGS from environment: %s" % env['CXXFLAGS']
 +if 'CPPFLAGS' in os.environ:
 +	env['CPPFLAGS'] = Split(os.environ['CPPFLAGS'])
-+	print "using CPPFLAGS from enviroment: %s" % env['CPPFLAGS']
++	print "using CPPFLAGS from environment: %s" % env['CPPFLAGS']
 +if 'LDFLAGS' in os.environ:
 +	env['LINKFLAGS'] = Split(os.environ['LDFLAGS'])
-+	print "using LDFLAGS/LINKFLAGS from enviroment: %s" % env['LINKFLAGS']
++	print "using LDFLAGS/LINKFLAGS from environment: %s" % env['LINKFLAGS']
 +
  if env.get('VERBOSE') == False:
  	env['CCCOMSTR'] = "Compiling $TARGET"

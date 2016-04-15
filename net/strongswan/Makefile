@@ -211,7 +211,7 @@ define Package/strongswan-full/description
 $(call Package/strongswan/description/Default)
  This meta-package contains dependencies for all of the strongswan plugins
  except kernel-libipsec,
- socket-dynamic and which are ommitted in favor of the kernel-netlink and
+ socket-dynamic and which are omitted in favor of the kernel-netlink and
  socket-default plugins.
 endef
 

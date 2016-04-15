@@ -81,7 +81,7 @@ endef
 define Build/InstallDev
 	mkdir -p $(1)/usr/include
 	mkdir -p $(1)/usr/lib/pkgconfig
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/{include,lib} $(1)/usr/
+	$(CP) $(PKG_INSTALL_DIR)/usr/{include,lib} $(1)/usr/
 endef
 
 $(eval $(call BuildPackage,acl))
