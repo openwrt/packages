@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2012 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gzip
-PKG_VERSION:=1.4
-PKG_RELEASE:=3
+PKG_VERSION:=1.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gzip
-PKG_MD5SUM:=e381b8506210c794278f5527cba0e765
+PKG_MD5SUM:=c4abae2ddd5c6f39c6f8169693cc7ac0
+PKG_LICENSE:=GPL-3.0+
 
 PKG_INSTALL:=1
 
@@ -23,7 +24,8 @@ define Package/gzip
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=gzip (GNU zip) is a compression utility.
-  URL:=http://www.gzip.org/
+  URL:=https://www.gnu.org/software/gzip/
+  MAINTAINER:=Christian Beier <dontmind@freeshell.org>
 endef
 
 define Package/gzip/description
