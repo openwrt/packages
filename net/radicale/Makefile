@@ -91,7 +91,7 @@ define Package/$(PKG_NAME)-py2/preinst
 	# stop service if PKG_UPGRADE
 	[ "$${PKG_UPGRADE}" = "1" ] && /etc/init.d/$(PKG_NAME) stop >/dev/null 2>&1
 
-	exit 0	# supress errors from stop command
+	exit 0	# suppress errors from stop command
 endef
 define Package/$(PKG_NAME)-py3/preinst
 $(call Package/$(PKG_NAME)-py2/preinst)

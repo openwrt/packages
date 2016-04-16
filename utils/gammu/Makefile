@@ -48,7 +48,7 @@ endif
 
 define Build/InstallDev
 	mkdir -p $(1)/usr/include
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/include/gammu $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/gammu $(1)/usr/include/
 	mkdir -p $(1)/usr/lib
 	$(CP)    $(PKG_INSTALL_DIR)/usr/lib$(LIB_SUFFIX)/lib{Gammu*,gsmsd*} $(1)/usr/lib/
 endef

@@ -148,7 +148,7 @@ define Package/boost/config
       			    - Not available if Shared libs are to be built.
       			 -> Use both runtimes.
       			    - Not available if Shared libs are to be built.
-      			    - Two seperate versions of Boost are built, linking each to a different runtime. 
+      			    - Two separate versions of Boost are built, linking each to a different runtime. 
       			    - This option requires "Use tagged names" option to be active.
 
 		    config boost-runtime-shared

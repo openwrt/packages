@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.4.4
+PKG_VERSION:=9.5.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 PKG_LICENSE:=PostgreSQL
@@ -18,7 +18,7 @@ PKG_SOURCE_URL:=\
 	http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v$(PKG_VERSION) \
 	http://ftp.be.postgresql.org/postgresql/source/v$(PKG_VERSION) \
 	ftp://ftp-archives.postgresql.org/pub/source/v$(PKG_VERSION)
-PKG_MD5SUM:=1fe952c44ed26d7e6a335cf991a9c1c6
+PKG_MD5SUM:=11e037afaa4bd0c90bb3c3d955e2b401
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libpq
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+zlib +libreadline +libpthread +libncurses +shadow-utils +shadow-su
+  DEPENDS:=+zlib +libreadline +libpthread +libncurses
   TITLE:=PostgreSQL client library
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -42,7 +42,7 @@ endef
 define Package/pgsql-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +USE_UCLIBC:librt
+  DEPENDS:=+libpq +USE_UCLIBC:librt +shadow-utils +shadow-su
   TITLE:=Command Line Interface (CLI) to PostgreSQL databases
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -116,7 +116,7 @@ define Build/Configure
 			--enable-depend \
 			--with-system-timezone=/tmp \
 	);
-	$(MAKE) -C $(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)" CFLAGS+="-I../../libpq"
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)"
 	mv $(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg \
 		$(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg.host
 	$(MAKE) -C $(PKG_BUILD_DIR)/src/timezone CC="$(HOSTCC)"
@@ -207,13 +207,12 @@ define Package/pgsql-server/install
 
 	$(INSTALL_BIN) ./files/postgresql.init $(1)/etc/init.d/postgresql
 
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/share/postgresql/* \
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/postgresql/* \
 		$(1)/usr/share/postgresql
 
 	$(INSTALL_DATA) ./files/postgresql.config $(1)/etc/config/postgresql
 
-	$(CP) -r \
-		$(PKG_INSTALL_DIR)/usr/lib/postgresql \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/postgresql \
 		$(1)/usr/lib
 endef
 

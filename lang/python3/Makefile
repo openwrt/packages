@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -19,7 +19,7 @@ PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=d149d2812f10cbe04c042232e7964171
+PKG_MD5SUM:=e9ea6f2623fffcdd871b7b19113fde80
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -32,6 +32,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=libbz2/host expat/host python3/host
+HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -217,7 +218,12 @@ HOST_CONFIGURE_ARGS+= \
 	--without-pymalloc \
 	--with-threads \
 	--prefix=$(STAGING_DIR)/host \
+	--exec-prefix=$(STAGING_DIR)/host \
+	--sysconfdir=$(STAGING_DIR_HOST)/host/etc \
+	--localstatedir=$(STAGING_DIR)/host/var \
+	--sbindir=$(STAGING_DIR)/host/bin \
 	--with-system-expat=$(STAGING_DIR)/host \
+	--with-system-ffi=$(STAGING_DIR)/host \
 	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
