@@ -69,7 +69,7 @@ setup_user_authentication() {
 
   config_get val "$cfg" username
   if [ -n "$val" ] ; then
-    echo "UsernameAuthentication" >> $CONFIGFILE
+    echo "UsernameAuthentication 1" >> $CONFIGFILE
     echo "Username $val" >> $CONFIGFILE
   fi
 
