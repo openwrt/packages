@@ -75,7 +75,7 @@ setup_user_authentication() {
 
   config_get val "$cfg" password
   if [ -n "$val" ] ; then
-    echo "PasswordAuthentication" >> $CONFIGFILE
+    echo "PasswordAuthentication 1" >> $CONFIGFILE
     echo "Password $val" >> $CONFIGFILE
   fi
 }
