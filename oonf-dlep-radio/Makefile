@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oonf-dlep-radio
-PKG_VERSION:=0.11.2
-PKG_REV:=a9a789405a6e5ef321a801f5a96c0440f20c16ae
+PKG_VERSION:=0.11.3
+PKG_REV:=b4d7a2ae62895efda3f25efb66318f9316d4b6b8
 PKG_RELEASE:=$(PKG_REV)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://olsr.org/git/oonf.git
+PKG_SOURCE_URL:=https://github.com/OLSR/OONF.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
@@ -38,7 +38,7 @@ define Package/oonf-git/template
 endef
 
 define Package/oonf-dlep-radio
-	$(call Package/oonf-git/template) 
+	$(call Package/oonf-git/template)
 	TITLE:= Build DLEP Radio Agent
 	DEPENDS:=+librt +libnl-tiny +libuci +oonf-init-scripts
 	VERSION:=$(PKG_VERSION)
