@@ -4,33 +4,33 @@
 
 touch /etc/config/gnunet
 
-uci set gnunet.datastore=gnunet-config
-uci set gnunet.datastore.DATABASE=heap
-uci set gnunet.datastore.QUOTA="4 MB"
+uci batch <<EOF
+set gnunet.datastore=gnunet-config
+set gnunet.datastore.DATABASE=heap
+set gnunet.datastore.QUOTA="4 MB"
 
-uci set gnunet.fs=gnunet-config
-uci set gnunet.fs.CONTENT_PUSHING=NO
-uci set gnunet.fs.CONTENT_CACHING=NO
+set gnunet.fs=gnunet-config
+set gnunet.fs.CONTENT_PUSHING=NO
+set gnunet.fs.CONTENT_CACHING=NO
 
-# limit dhtcache memory usage to 4 MB
-uci set gnunet.dhtcache=gnunet-config
-uci set gnunet.dhtcache.QUOTA="4 MB"
+set gnunet.dhtcache=gnunet-config
+set gnunet.dhtcache.QUOTA="4 MB"
 
-# enable dns2gns
-uci set gnunet.dns2gns=gnunet-config
-uci set gnunet.dns2gns.AUTOSTART=YES
-uci set gnunet.dns2gns.FORCESTART=YES
+set gnunet.dns2gns=gnunet-config
+set gnunet.dns2gns.AUTOSTART=YES
+set gnunet.dns2gns.FORCESTART=YES
 
-# enable v4/v6 protocol translation for EXIT/VPN
-uci set gnunet.pt=gnunet-config
-uci set gnunet.pt.FORCESTART=YES
+set gnunet.pt=gnunet-config
+set gnunet.pt.FORCESTART=YES
 
-uci set gnunet.exit=gnunet-config
-uci set gnunet.exit.AUTOSTART=YES
-uci set gnunet.exit.FORCESTART=YES
+set gnunet.exit=gnunet-config
+set gnunet.exit.AUTOSTART=YES
+set gnunet.exit.FORCESTART=YES
 
-# increase WORKDELAY to something more sane on small CPUs
-uci set gnunet.nse=gnunet-config
-uci set gnunet.nse.WORKDELAY='500 ms'
+set gnunet.nse=gnunet-config
+set gnunet.nse.WORKDELAY='500 ms'
 
-uci commit gnunet
+commit gnunet
+
+EOF
+
