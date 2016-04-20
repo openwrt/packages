@@ -75,7 +75,7 @@
 +
 +		if (m_user == 0) {
 +			sMessage
-+					= "Error: Cannot run as root, check your config file | Useage: LoadModule = Droproot <uid> <gid>";
++					= "Error: Cannot run as root, check your config file | Usage: LoadModule = Droproot <uid> <gid>";
 +			return false;
 +		}
 +
@@ -83,7 +83,7 @@
 +
 +		if (m_group == 0) {
 +			sMessage
-+					= "Error: Cannot run as root, check your config file | Useage: LoadModule = Droproot <uid> <gid>";
++					= "Error: Cannot run as root, check your config file | Usage: LoadModule = Droproot <uid> <gid>";
 +			return false;
 +		}
 +

@@ -1,7 +1,9 @@
 # /bin/sh
 
 setled() {
-        if [ -e /sys/class/leds/${led_sysfs}/brightness ]
+        if [ -z "${led_sysfs}" ]; then
+            return
+        elif [ -e /sys/class/leds/${led_sysfs}/brightness ]
 	then
                 [ $led_default -eq 1 ] && echo 1 >/sys/class/leds/${led_sysfs}/brightness
                 [ $led_default -eq 1 ] || echo 0 >/sys/class/leds/${led_sysfs}/brightness

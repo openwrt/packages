@@ -13,6 +13,9 @@ USE_PROCD=1
 start_service() {
 	procd_open_instance
 
+	# restart if it croaks
+	procd_set_param respawn
+
 	procd_set_param command "$PROG"
 	# daemon mode (not daemonized) - starts HTTP server
 	procd_append_param command -d

@@ -12,7 +12,7 @@ include ./files/python-package.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=6
+PKG_RELEASE:=8
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
@@ -221,8 +221,13 @@ HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
+	--prefix=$(STAGING_DIR)/host \
+	--exec-prefix=$(STAGING_DIR)/host \
+	--sysconfdir=$(STAGING_DIR_HOST)/host/etc \
+	--localstatedir=$(STAGING_DIR)/host/var \
+	--sbindir=$(STAGING_DIR)/host/bin \
 	--with-system-expat=$(STAGING_DIR)/host \
-	--with-system-ffi="$(STAGING_DIR)/host" \
+	--with-system-ffi=$(STAGING_DIR)/host \
 	--with-ensurepip=upgrade \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
