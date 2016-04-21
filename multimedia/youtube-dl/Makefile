@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2016.04.06
+PKG_VERSION:=2016.04.19
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://youtube-dl.org/downloads/$(PKG_VERSION)/
-PKG_MD5SUM:=6457b915a6df78deb6e730cc425f9695
+PKG_MD5SUM:=7e5c7abc22a58ed55412fe7b263ae644
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 PKG_LICENSE:=Unlicense
@@ -27,7 +27,7 @@ define Package/youtube-dl
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=utility to download videos from YouTube.com
-  DEPENDS:=+python-openssl
+  DEPENDS:=+python-openssl +python-email +python-xml +python-codecs +python-ctypes
   URL:=https://youtube-dl.org
 endef
 

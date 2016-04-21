@@ -1,6 +1,6 @@
 --- a/src/Makefile
 +++ b/src/Makefile
-@@ -61,7 +61,7 @@ all:	$(BIN)
+@@ -64,7 +64,7 @@ all:	$(BIN)
  
  $(BIN):	$(OBJ)
  	@echo "[Link $(BIN)] with libs $(LIBS)"
