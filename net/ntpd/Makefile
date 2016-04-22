@@ -18,6 +18,8 @@ PKG_MD5SUM:=46dfba933c3e4bc924d8e55068797578
 PKG_LICENSE:=Unique
 PKG_LICENSE_FILES:=COPYRIGHT html/copyright.html
 
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+
 PKG_FIXUP:=autoreconf
 PKG_LIBTOOL_PATHS:=. sntp
 PKG_CHECK_FORMAT_SECURITY:=0
@@ -31,7 +33,7 @@ define Package/ntpd/Default
   TITLE:=ISC ntp
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.ntp.org/
-  DEPENDS:=+libopenssl +libpthread +libcap
+  DEPENDS:=+libpthread +libcap
 endef
 
 define Package/ntpd/Default/description
@@ -43,6 +45,7 @@ endef
 define Package/ntpd
 $(call Package/ntpd/Default)
   TITLE+= server
+  VARIANT:=nossl
   USERID:=ntp=123:ntp=123
 endef
 
@@ -52,9 +55,24 @@ $(call Package/ntpd/Default/description)
  This package contains the ntpd server.
 endef
 
+define Package/ntpd-ssl
+$(call Package/ntpd/Default)
+  TITLE+= server (with OpenSSL support)
+  VARIANT:=ssl
+  DEPENDS+= +libopenssl
+  USERID:=ntp=123:ntp=123
+endef
+
+define Package/ntpd-ssl/description
+$(call Package/ntpd/Default/description)
+ .
+ This package contains the ntpd server with OpenSSL support.
+endef
+
 define Package/ntpdate
 $(call Package/ntpd/Default)
   TITLE+=date
+  VARIANT:=nossl
 endef
 
 define Package/ntpdate/description
@@ -66,6 +84,7 @@ endef
 define Package/ntp-utils
 $(call Package/ntpd/Default)
   TITLE+= utilities
+  VARIANT:=nossl
 endef
 
 define Package/ntp-utils/description
@@ -77,13 +96,26 @@ endef
 define Package/ntp-keygen
 $(call Package/ntpd/Default)
   TITLE+=keygen
-  DEPENDS+= +libevent2-core
+  VARIANT:=nossl
 endef
 
 define Package/ntp-keygen/description
 $(call Package/ntpd/Default/description)
  .
  This package contains the ntp-keygen.
+endef
+
+define Package/ntp-keygen-ssl
+$(call Package/ntpd/Default)
+  TITLE+=keygen (with OpenSSL support)
+  VARIANT:=ssl
+  DEPENDS+= +libopenssl
+endef
+
+define Package/ntp-keygen-ssl/description
+$(call Package/ntpd/Default/description)
+ .
+ This package contains the ntp-keygen with OpenSSL support.
 endef
 
 define Package/ntpd/conffiles
@@ -108,9 +140,16 @@ CONFIGURE_ARGS += \
 	--enable-ATOM \
 	--enable-linuxcaps \
 	--with-yielding-select=yes \
+
+ifeq ($(BUILD_VARIANT),ssl)
+  CONFIGURE_ARGS += \
 	--with-crypto \
 	--with-openssl-incdir="$(STAGING_DIR)/usr/include" \
 	--with-openssl-libdir="$(STAGING_DIR)/usr/lib"
+else
+  CONFIGURE_ARGS += \
+	--without-crypto
+endif
 
 define Package/ntpd/install
 	$(INSTALL_DIR) $(1)/sbin
@@ -135,6 +174,9 @@ define Package/ntpd/postrm
 exit 0
 endef
 
+Package/ntpd-ssl/conffiles = $(Package/ntpd/conffiles)
+Package/ntpd-ssl/install = $(Package/ntpd/install)
+
 define Package/ntpdate/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpdate/ntpdate $(1)/usr/sbin/
@@ -154,7 +196,11 @@ define Package/ntp-keygen/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/util/ntp-keygen $(1)/usr/sbin/
 endef
 
+Package/ntp-keygen-ssl/install = $(Package/ntp-keygen/install)
+
 $(eval $(call BuildPackage,ntpd))
+$(eval $(call BuildPackage,ntpd-ssl))
 $(eval $(call BuildPackage,ntpdate))
 $(eval $(call BuildPackage,ntp-utils))
 $(eval $(call BuildPackage,ntp-keygen))
+$(eval $(call BuildPackage,ntp-keygen-ssl))
