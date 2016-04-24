@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 
 START=99
 USE_PROCD=1
@@ -59,15 +59,7 @@ start_instance() {
 		append_num "$cfg" "$conf_file" log_verbosity "log_verbosity"
 		append_str "$cfg" "$conf_file" ignore_volume_control "ignore_volume_control"
 		append_num "$cfg" "$conf_file" volume_range_db "volume_range_db"
-		echo -e "};\n" >> $conf_file
-
-		# Latencies
-		echo -e "latencies =" >> $conf_file
-		echo -e "{" >> $conf_file
-		append_num "$cfg" "$conf_file" latencies_default "default"
-		append_num "$cfg" "$conf_file" latencies_itunes "itunes"
-		append_num "$cfg" "$conf_file" latencies_airplay "airplay"
-		append_num "$cfg" "$conf_file" latencies_forked_daapd "forkedDaapd"
+		append_str "$cfg" "$conf_file" regtype "regtype"
 		echo -e "};\n" >> $conf_file
 
 		# Metadata
@@ -96,6 +88,9 @@ start_instance() {
 		append_str "$cfg" "$conf_file" alsa_mixer_device "mixer_device"
 		append_num "$cfg" "$conf_file" alsa_latency_offset "audio_backend_latency_offset"
 		append_num "$cfg" "$conf_file" alsa_buffer_length "audio_backend_buffer_desired_length"
+		append_str "$cfg" "$conf_file" alsa_disable_synchronization "disable_synchronization"
+		append_num "$cfg" "$conf_file" alsa_period_size "period_size"
+		append_num "$cfg" "$conf_file" alsa_buffer_size "buffer_size"
 		echo -e "};\n" >> $conf_file
 
 		# Pipe audio back end
@@ -111,6 +106,13 @@ start_instance() {
 		echo -e "{" >> $conf_file
 		append_num "$cfg" "$conf_file" stdout_latency_offset "audio_backend_latency_offset"
 		append_num "$cfg" "$conf_file" stdout_buffer_length "audio_backend_buffer_desired_length"
+		echo -e "};\n" >> $conf_file
+
+		# AO audio back end
+		echo -e "ao =" >> $conf_file
+		echo -e "{" >> $conf_file
+		append_num "$cfg" "$conf_file" ao_latency_offset "audio_backend_latency_offset"
+		append_num "$cfg" "$conf_file" ao_buffer_length "audio_backend_buffer_desired_length"
 		echo -e "};\n" >> $conf_file
 	fi
 
