@@ -6,14 +6,18 @@ init_proto "$@"
 
 proto_batadv_init_config() {
 	proto_config_add_string "mesh"
+	proto_config_add_string "routing_algo"
 }
 
 proto_batadv_setup() {
 	local config="$1"
 	local iface="$2"
 
-	local mesh
-	json_get_vars mesh
+	local mesh routing_algo
+	json_get_vars mesh routing_algo
+
+	[ -n "$routing_algo" ] || routing_algo="BATMAN_IV"
+	echo "$routing_algo" > "/sys/module/batman_adv/parameters/routing_algo"
 
 	echo "$mesh" > "/sys/class/net/$iface/batman_adv/mesh_iface"
 	proto_init_update "$iface" 1
