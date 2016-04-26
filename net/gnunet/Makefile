@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnunet
 PKG_SOURCE_VERSION:=37051
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # ToDo:
 #  - break-out {peer,name,data}store for each backend
@@ -173,6 +173,13 @@ define Package/gnunet/install
 	$(INSTALL_DATA) ./files/gnunet.upgrade $(1)/lib/upgrade/keep.d/gnunet
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/gnunet.defaults $(1)/etc/uci-defaults/gnunet
+	$(INSTALL_BIN) ./files/gnunet-dns.fw $(1)/usr/lib/gnunet/libexec/gnunet-dns.fw
+	$(INSTALL_DIR) $(1)/lib/netifd/proto
+	$(INSTALL_BIN) ./files/gnunet-proto.sh $(1)/lib/netifd/proto
+endef
+
+define Package/gnunet/conffiles
+/etc/config/gnunet
 endef
 
 define Build/InstallDev
@@ -215,7 +222,7 @@ PLUGIN_fs:=block_fs
 LIBEXEC_fs:=helper-fs-publish service-fs
 CONF_fs:=fs
 
-DEPENDS_gns:=+gnunet-vpn
+DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
 USERID_gns:=gnunet=400:gnunetdns=401
 BIN_gns:=gns gns-import.sh namecache namestore resolver
 LIB_gns:=gns gnsrecord namecache namestore
@@ -280,7 +287,130 @@ LIB_vpn:=tun vpn
 LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit helper-vpn service-vpn
 CONF_vpn:=exit pt vpn
 
+define PostInstFixSUIDPerms
+  define Package/$(1)/postinst
+  #!/bin/sh
+  [ -e /usr/share/gnunet/.permfix ] && rm /usr/share/gnunet/.permfix
+  endef
+endef
+
+define Package/gnunet-gns/postinst
+#!/bin/sh
+
+[ -e /usr/share/gnunet/.permfix ] && rm /usr/share/gnunet/.permfix
+
+uci -q batch <<EOF
+del network.gnunetdns
+set network.gnunetdns=interface
+set network.gnunetdns.ifname='gnunet-dns'
+set network.gnunetdns.proto='gnunet'
+
+del network.gndnsrtt
+set network.gndnsrtt=route
+set network.gndnsrtt.interface='gnunetdns'
+set network.gndnsrtt.table='53'
+set network.gndnsrtt.target='0.0.0.0/0'
+
+del network.gndnsrl
+set network.gndnsrl=rule
+set network.gndnsrl.mark='0x8260035'
+set network.gndnsrl.lookup='53'
+
+commit network
+
+del firewall.gnunetdns
+set firewall.gnunetdns=zone
+set firewall.gnunetdns.name='gnunetdns'
+set firewall.gnunetdns.network='gnunetdns'
+set firewall.gnunetdns.input='ACCEPT'
+set firewall.gnunetdns.output='ACCEPT'
+set firewall.gnunetdns.forward='ACCEPT'
+
+del firewall.gndnsinc
+set firewall.gndnsinc=include
+set firewall.gndnsinc.path='/usr/lib/gnunet/libexec/gnunet-dns.fw'
+
+commit firewall
+EOF
+
+endef
+
+define Package/gnunet-gns/prerm
+#!/bin/sh
+
+uci -q batch <<EOF
+del network.gnunetdns
+del network.gndnsrtt
+del network.gndnsrl
+commit network
+
+del firewall.gnunetdns
+del firewall.gndnsinc
+commit firewall
+EOF
+
+endef
+
+
+define Package/gnunet-vpn/postinst
+#!/bin/sh
+
+[ -e /usr/share/gnunet/.permfix ] && rm /usr/share/gnunet/.permfix
+
+uci -q batch <<EOF
+del network.gnunetvpn
+set network.gnunetvpn=interface
+set network.gnunetvpn.ifname='vpn-gnunet'
+set network.gnunetvpn.proto='gnunet'
+
+del network.gnunetexit
+set network.gnunetexit=interface
+set network.gnunetexit.ifname='exit-gnunet'
+set network.gnunetexit.proto='gnunet'
+
+commit network
+
+del firewall.gnunetvpn
+set firewall.gnunetvpn=zone
+set firewall.gnunetvpn.name='gnunetvpn'
+set firewall.gnunetvpn.network='gnunetvpn'
+set firewall.gnunetvpn.input='ACCEPT'
+set firewall.gnunetvpn.output='ACCEPT'
+set firewall.gnunetvpn.forward='REJECT'
+
+del firewall.gnunetexit
+set firewall.gnunetexit=zone
+set firewall.gnunetexit.name='gnunetexit'
+set firewall.gnunetexit.network='gnunetexit'
+set firewall.gnunetexit.input='ACCEPT'
+set firewall.gnunetexit.output='ACCEPT'
+set firewall.gnunetexit.forward='REJECT'
+
+del firewall.gnexitfwd
+set firewall.gnexitfwd=forwarding
+set firewall.gnexitfwd.src='gnunetexit'
+set firewall.gnexitfwd.dest='wan'
+
+commit firewall
+EOF
+
+endef
+
+define Package/gnunet-vpn/prerm
+#!/bin/sh
+
+uci -q batch <<EOF
+del network.gnunetvpn
+del network.gnunetexit
+del firewall.gnunetvpn
+del firewall.gnunetexit
+del firewall.gnexitfwd
+EOF
+
+endef
+
 $(eval $(call BuildPackage,gnunet))
+$(eval $(call PostInstFixSUIDPerms,gnunet))
 $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,datastore,data storage components,))
 $(eval $(call BuildComponent,dv,distance-vector routing component,))
@@ -296,8 +426,10 @@ $(eval $(call BuildComponent,rps,RPS routing component,))
 $(eval $(call BuildComponent,social,social components,))
 $(eval $(call BuildComponent,sqlite,libsqlite3 storage backends,y))
 $(eval $(call BuildComponent,transport-bluetooth,bluetooth transport,))
+$(eval $(call PostInstFixSUIDPerms,gnunet-transport-bluetooth))
 $(eval $(call BuildComponent,transport-http_client,HTTP/HTTPS client transport,y))
 $(eval $(call BuildComponent,transport-http_server,HTTP/HTTPS server transport,))
 $(eval $(call BuildComponent,transport-wlan,WLAN transport,))
+$(eval $(call PostInstFixSUIDPerms,gnunet-transport-wlan))
 $(eval $(call BuildComponent,utils,administration utililties,))
 $(eval $(call BuildComponent,vpn,vpn components,y))
