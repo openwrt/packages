@@ -27,7 +27,7 @@ define Package/youtube-dl
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=utility to download videos from YouTube.com
-  DEPENDS:=+python-openssl +python-email +python-xml +python-codecs +python-ctypes
+  DEPENDS:=+python-openssl +python-email +python-xml +python-codecs +python-ctypes +ca-certificates
   URL:=https://youtube-dl.org
 endef
 
