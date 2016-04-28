@@ -1,0 +1,16 @@
+#!/bin/sh
+
+uci -q get gnunet.namestore || uci set gnunet.namestore=gnunet-config
+uci -q get gnunet.namecache || uci set gnunet.namecache=gnunet-config
+
+uci -q batch <<EOF
+	del gnunet.namestore_sqlite
+	set gnunet.namestore_sqlite=gnunet-config
+	set gnunet.namestore_sqlite.FILENAME=/etc/gnunet/namestore.sqlite
+	set gnunet.namestore.DATABASE=sqlite
+	set gnunet.namecache.DATABASE=sqlite
+	del gnunet.peerstore_sqlite
+	set gnunet.peerstore_sqlite=gnunet-config
+	set gnunet.peerstore_sqlite.FILENAME=/etc/gnunet/peerstore.sqlite
+	commit gnunet
+EOF

@@ -1,7 +1,0 @@
-#!/bin/sh
-
-ip link show gnunet-dns 1>/dev/null 2>/dev/null || exit 0
-
-iptables -t mangle -I OUTPUT 1 -p udp -m owner --gid-owner gnunetdns --dport 53 -j ACCEPT
-iptables -t mangle -I OUTPUT 2 -p udp --dport 53 -j MARK --set-mark 136708149
-
