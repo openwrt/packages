@@ -174,6 +174,7 @@ define Package/gnunet/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/gnunet.defaults $(1)/etc/uci-defaults/gnunet
 	$(INSTALL_BIN) ./files/gnunet-dns.fw $(1)/usr/lib/gnunet/libexec/gnunet-dns.fw
+	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/gnunet-proto.sh $(1)/lib/netifd/proto
 endef
 

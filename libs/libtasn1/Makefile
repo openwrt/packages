@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtasn1
-PKG_VERSION:=4.7
+PKG_VERSION:=4.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.gnu.org/gnu/libtasn1
-PKG_MD5SUM:=12d10ca4ae0a3b95f7aa06a076da39ec
+PKG_MD5SUM:=9a6767705725544f2b86670dcfb34107
 
 #PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
