@@ -57,6 +57,9 @@
 # IPv6 @ Dyn.com
 "dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
+# duckdns.org
+"duckdns.org"	"http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"OK"
+
 # IPv6 @ zzzz.io Free Dynamic DNS
 "zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"	"Updated|No change"
 
