@@ -48,13 +48,12 @@ prepare_config() {
 		chown gnunet:gnunet /etc/gnunet
 	}
 
-	# defaults paths
+	# defaults paths for persistent files
 	gnunet-config -c $CONFIGFILE -s PATHS -o GNUNET_CONFIG_HOME -V /etc/gnunet
 	gnunet-config -c $CONFIGFILE -s PEER -o PRIVATE_KEY -V /etc/gnunet/private_key.ecc
 	gnunet-config -c $CONFIGFILE -s identity -o EGODIR -V /etc/gnunet/identity/egos
 	gnunet-config -c $CONFIGFILE -s revocation -o DATABASE -V /etc/gnunet/revocation.dat
 	gnunet-config -c $CONFIGFILE -s nse -o PROOFFILE -V /etc/gnunet/proof.dat
-	gnunet-config -c $CONFIGFILE -s namestore-sqlite -o FILENAME -V /etc/gnunet/namestore.sqlite
 
 	# enable all installed transport plugins
 	transport_plugins=$(gnunet-config -c $CONFIGFILE -s transport -o PLUGINS)
