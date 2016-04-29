@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libvpx
-PKG_VERSION:=1.4.0
+PKG_VERSION:=1.5.0
 PKG_RELEASE:=1
 
 PKG_REV:=v$(PKG_VERSION)
@@ -33,6 +33,7 @@ define Package/libvpx
   TITLE:=libvpx
   URL:=http://www.webmproject.org/
   DEPENDS:=+libpthread
+  ABI_VERSION:=$(PKG_VERSION)
 endef
 
 define Package/libvpx/description

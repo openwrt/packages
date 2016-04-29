@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flac
 PKG_VERSION:=1.3.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/flac/
@@ -43,8 +43,8 @@ CONFIGURE_ARGS += \
 	--disable-xmms-plugin \
 	--disable-ogg \
 	--disable-oggtest \
-	--disable-debug \
-	--enable-static \
+	$(if $(CONFIG_DEBUG),--enable-debug) \
+	--enable-static
 
 TARGET_CFLAGS += $(FPIC)
 
