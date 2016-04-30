@@ -53,6 +53,10 @@ stop()
     rc=${?}
     if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
     then
+        . "/usr/bin/adblock-helper.sh"
+        uci_remove "adblock" "global" "adb_overall_count"
+        f_rmconfig "${rm_done}"
+        uci_commit "adblock"
         /etc/init.d/dnsmasq restart
         /etc/init.d/firewall restart
     fi
