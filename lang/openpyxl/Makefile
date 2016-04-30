@@ -7,42 +7,42 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=simplejson
-PKG_VERSION:=3.8.2
+PKG_NAME:=openpyxl
+PKG_VERSION:=2.4.0-a1
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/s/simplejson/
-PKG_MD5SUM:=53b1371bbf883b129a12d594a97e9a18
+PKG_SOURCE_URL:=http://pypi.python.org/packages/source/o/openpyxl/
+PKG_MD5SUM:=e5ca6d23ceccb15115d45cdf26e736fc
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 
-define Package/simplejson
+define Package/openpyxl
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-  TITLE:=Simple, fast, extensible JSON encoder/decoder for Python
-  URL:=http://simplejson.readthedocs.org/
-  DEPENDS:=+python
+  TITLE:=A Python library to read/write Excel 2010 xlsx/xlsm files
+  URL:=https://openpyxl.readthedocs.org/
+  DEPENDS:=+python +django
 endef
 
-define Package/simplejson/description
-  Simple, fast, extensible JSON encoder/decoder for Python
+define Package/openpyxl/description
+  A Python library to read/write Excel 2010 xlsx/xlsm files
 endef
 
 define Build/Compile
 	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
 endef
 
-define Package/simplejson/install
+define Package/openpyxl/install
 	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
 	$(CP) \
 	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
 	    $(1)$(PYTHON_PKG_DIR)
 endef
 
-$(eval $(call BuildPackage,simplejson))
+$(eval $(call BuildPackage,openpyxl))

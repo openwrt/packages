@@ -7,42 +7,42 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=simplejson
-PKG_VERSION:=3.8.2
+PKG_NAME:=django-constance
+PKG_VERSION:=1.1.2
 PKG_RELEASE:=1
-PKG_LICENSE:=MIT
+PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/s/simplejson/
-PKG_MD5SUM:=53b1371bbf883b129a12d594a97e9a18
+PKG_SOURCE_URL:=http://pypi.python.org/packages/source/d/django-constance/
+PKG_MD5SUM:=00d58c8d6c8cd7e352d14854aba8d5aa
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 
-define Package/simplejson
+define Package/django-constance
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-  TITLE:=Simple, fast, extensible JSON encoder/decoder for Python
-  URL:=http://simplejson.readthedocs.org/
-  DEPENDS:=+python
+  TITLE:=Django live settings with pluggable backends, including Redis.
+  URL:=https://github.com/jazzband/django-constance
+  DEPENDS:=+python +django
 endef
 
-define Package/simplejson/description
-  Simple, fast, extensible JSON encoder/decoder for Python
+define Package/django-constance/description
+  Django live settings with pluggable backends, including Redis.
 endef
 
 define Build/Compile
 	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
 endef
 
-define Package/simplejson/install
+define Package/django-constance/install
 	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
 	$(CP) \
 	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
 	    $(1)$(PYTHON_PKG_DIR)
 endef
 
-$(eval $(call BuildPackage,simplejson))
+$(eval $(call BuildPackage,django-constance))
