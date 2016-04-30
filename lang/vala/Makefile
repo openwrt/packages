@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,20 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vala
-PKG_VERSION:=0.29.3
+PKG_VERSION:=0.32.0
 PKG_RELEASE:=1
 PKG_LICENSE:=LGPL-2.1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/vala/0.29/
-PKG_MD5SUM:=939a2a9c20974db9badbc3f910fcae63
+PKG_SOURCE_URL:=@GNOME/vala/0.32/
+PKG_MD5SUM:=d3ff298424bb80476f7d189e6b614c35
 
 PKG_BUILD_DEPENDS:=glib2 glib2/host vala/host
 HOST_BUILD_DEPENDS:=glib2/host
 
-include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 TARGET_LDFLAGS+=\
         -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
@@ -32,6 +32,7 @@ define Package/vala
   TITLE:=C-sharp like language for the GObject system
   URL:=https://wiki.gnome.org/Projects/Vala
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
+  DEPENDS:=+glib2 +libpthread
 endef
 
 define Package/vala/description
@@ -47,21 +48,40 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
-		$(1)/usr/share/vala-0.30/vapi \
+		$(1)/usr/share/vala-0.32/vapi \
+		$(1)/usr/lib \
+		$(1)/usr/share/pkgconfig
+
+	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/share/vala-0.32/vapi/* \
+		$(1)/usr/share/vala-0.32/vapi
+
+	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/lib/libvala-0.32.{so*,la} \
+		$(1)/usr/lib
+
+	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/share/pkgconfig/*.pc \
+		$(1)/usr/share/pkgconfig
+endef
+
+define Package/vala/install
+	$(INSTALL_DIR) \
+		$(1)/usr/share/vala-0.32/vapi \
 		$(1)/usr/lib \
 		$(1)/usr/share/pkgconfig \
 		$(1)/usr/bin
 
 	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/share/vala-0.30/vapi/* \
-		$(1)/usr/share/vala-0.30/vapi
+		$(PKG_INSTALL_DIR)/usr/share/vala-0.32/vapi/* \
+		$(1)/usr/share/vala-0.32/vapi
 
 	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/lib/libvala-0.30.{so*,la} \
+		$(PKG_INSTALL_DIR)/usr/lib/libvala-0.32.{so*,la} \
 		$(1)/usr/lib
 
 	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/{vala,vala-0.30,valac,valac-0.30,vapicheck,vapicheck-0.30,vapigen,vapigen-0.30,vala-gen-introspect,vala-gen-introspect-0.30} \
+		$(PKG_INSTALL_DIR)/usr/bin/{vala,vala-0.32,valac,valac-0.32,vapicheck,vapicheck-0.32,vapigen,vapigen-0.32,vala-gen-introspect,vala-gen-introspect-0.32} \
 		$(1)/usr/bin
 
 	$(INSTALL_DATA) \
