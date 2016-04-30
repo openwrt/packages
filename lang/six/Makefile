@@ -7,42 +7,42 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=simplejson
-PKG_VERSION:=3.8.2
+PKG_NAME:=six
+PKG_VERSION:=1.10.0
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/s/simplejson/
-PKG_MD5SUM:=53b1371bbf883b129a12d594a97e9a18
+PKG_SOURCE_URL:=http://pypi.python.org/packages/source/s/six/
+PKG_MD5SUM:=34eed507548117b2ab523ab14b2f8b55
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 
-define Package/simplejson
+define Package/six
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-  TITLE:=Simple, fast, extensible JSON encoder/decoder for Python
-  URL:=http://simplejson.readthedocs.org/
+  TITLE:=Python 2 and 3 compatibility utilities
+  URL:=http://pypi.python.org/pypi/six/
   DEPENDS:=+python
 endef
 
-define Package/simplejson/description
-  Simple, fast, extensible JSON encoder/decoder for Python
+define Package/six/description
+  Python 2 and 3 compatibility utilities
 endef
 
 define Build/Compile
 	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
 endef
 
-define Package/simplejson/install
+define Package/six/install
 	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
 	$(CP) \
 	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
 	    $(1)$(PYTHON_PKG_DIR)
 endef
 
-$(eval $(call BuildPackage,simplejson))
+$(eval $(call BuildPackage,six))
