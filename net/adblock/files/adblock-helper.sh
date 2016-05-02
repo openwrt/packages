@@ -110,7 +110,7 @@ f_envload()
     if [ -z "${adb_enabled}" ] || [ -z "${adb_cfgversion}" ] || [ "${adb_cfgversion}" != "${adb_scriptver%.*}" ]
     then
         rc=125
-        f_log "no valid adblock configuration found, please merge latest changes from '/etc/config/adblock.opkg' manually" "${rc}"
+        f_log "outdated adblock configuration found, please use latest version from '/etc/adblock/adblock.conf.default'" "${rc}"
         f_exit
     fi
     if [ $((adb_enabled)) -ne 1 ]
@@ -128,6 +128,7 @@ f_envload()
     adb_dnsdir="/tmp/dnsmasq.d"
     adb_dnsprefix="adb_list"
     adb_fetch="/usr/bin/wget"
+    adb_uci="/sbin/uci"
     unset adb_srclist adb_revsrclist adb_errsrclist
 
     # get lan ip addresses
@@ -476,10 +477,10 @@ f_cntconfig()
         then
             count=$((count / 2))
         fi
-        uci_set "adblock" "${src_name}" "adb_src_count" "${count}"
+        ${adb_uci} -q set "adblock.${src_name}.adb_src_count=${count}"
         count_sum=$((count_sum + count))
     done
-    uci_set "adblock" "global" "adb_overall_count" "${count_sum}"
+    ${adb_uci} -q set "adblock.global.adb_overall_count=${count_sum}"
 }
 
 # f_rmconfig: remove counters & timestamps in given config sections
@@ -493,10 +494,10 @@ f_rmconfig()
         src_name="${list/*./}"
         if [ -n "${restore_done}" ]
         then
-            uci_set "adblock" "${src_name}" "adb_src_timestamp" "list restored"
+            ${adb_uci} -q set "adblock.${src_name}.adb_src_timestamp=list restored"
         else
-            uci_remove "adblock" "${src_name}" "adb_src_count"
-            uci_remove "adblock" "${src_name}" "adb_src_timestamp"
+            ${adb_uci} -q delete "adblock.${src_name}.adb_src_count"
+            ${adb_uci} -q delete "adblock.${src_name}.adb_src_timestamp"
         fi
     done
     unset restore_done
@@ -598,14 +599,18 @@ f_exit()
             ipv6_adblock="$(${iptv6} -t nat -vnL | awk '$10 ~ /^adb-nat$/ {sum += $1} END {printf sum}')"
             ipv6_adblock="$((${ipv6_adblock} + $(${iptv6} -vnL | awk '$10 ~ /^adb-(fwd|out)$/ {sum += $1} END {printf sum}')))"
         fi
-        if [ -n "$(uci changes adblock)" ]
+        if [ -n "$(${adb_uci} -q changes adblock)" ]
         then
-            uci_commit "adblock"
+            ${adb_uci} -q commit "adblock"
         fi
         f_log "firewall statistics (IPv4/IPv6): ${ipv4_adblock}/${ipv6_adblock} ad related packets blocked"
         f_log "domain adblock processing finished successfully (${adb_scriptver}, ${openwrt_version}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
     elif [ $((rc)) -gt 0 ]
     then
+        if [ -n "$(${adb_uci} -q changes adblock)" ]
+        then
+            ${adb_uci} -q revert "adblock"
+        fi
         f_log "domain adblock processing failed (${adb_scriptver}, ${openwrt_version}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
     else
         rc=0
