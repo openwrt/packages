@@ -36,7 +36,7 @@ fi
 # get current directory, script- and openwrt version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="1.1.0"
+adb_scriptver="1.1.1"
 openwrt_version="$(cat /etc/openwrt_version)"
 
 # source in adblock function library
@@ -75,14 +75,14 @@ do
     eval "url=\"\${adb_src_${src_name}}\""
     eval "src_rset=\"\${adb_src_rset_${src_name}}\""
     adb_dnsfile="${adb_dnsdir}/${adb_dnsprefix}.${src_name}"
-    list_time="$(uci_get "adblock" "${src_name}" "adb_src_timestamp")"
+    list_time="$(${adb_uci} -q get "adblock.${src_name}.adb_src_timestamp")"
     f_log "=> processing adblock source '${src_name}'"
 
     # check 'url' and 'src_rset' values
     #
     if [ -z "${url}" ] || [ -z "${src_rset}" ]
     then
-        uci_set "adblock" "${src_name}" "adb_src_timestamp" "broken config"
+        ${adb_uci} -q set "adblock.${src_name}.adb_src_timestamp=broken config"
         f_log "   broken source configuration, check 'adb_src' and 'adb_src_rset' in config"
         continue
     fi
@@ -162,7 +162,7 @@ do
         unset tmp_domains
     elif [ $((rc)) -eq 0 ] && [ -z "${tmp_domains}" ]
     then
-        uci_set "adblock" "${src_name}" "adb_src_timestamp" "empty download"
+        ${adb_uci} -q set "adblock.${src_name}.adb_src_timestamp=empty download"
         f_log "   empty source download finished"
         continue
     else
@@ -173,7 +173,7 @@ do
         else
             adb_errsrclist="${adb_errsrclist} -o -name ${adb_dnsprefix}.${src_name}"
         fi
-        uci_set "adblock" "${src_name}" "adb_src_timestamp" "download failed"
+        ${adb_uci} -q set "adblock.${src_name}.adb_src_timestamp=download failed"
         f_log "   source download failed"
         continue
     fi
@@ -205,14 +205,14 @@ do
         #
         if [ $((rc)) -eq 0 ]
         then
-            uci_set "adblock" "${src_name}" "adb_src_timestamp" "${url_time}"
+            ${adb_uci} -q set "adblock.${src_name}.adb_src_timestamp=${url_time}"
             f_log "   domain merging finished"
         else
             f_log "   domain merging failed" "${rc}"
             f_restore
         fi
     else
-        uci_set "adblock" "${src_name}" "adb_src_timestamp" "empty domain input"
+        ${adb_uci} -q set "adblock.${src_name}.adb_src_timestamp=empty domain input"
         f_log "   empty domain input received"
         continue
     fi
@@ -239,7 +239,7 @@ fi
 if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
 then
     f_rmconfig "${rm_done}"
-    f_log "disabled adblock lists removed"
+    f_log "remove disabled adblock lists"
 elif [ $((rc)) -ne 0 ] && [ -n "${rm_done}" ]
 then
     f_log "error during removal of disabled adblock lists" "${rc}"
@@ -295,7 +295,7 @@ fi
 # restart & check dnsmasq with newly generated set of adblock lists
 #
 f_cntconfig
-adb_count="$(uci_get "adblock" "global" "adb_overall_count")"
+adb_count="$(${adb_uci} -q get "adblock.global.adb_overall_count")"
 if [ -n "${adb_revsrclist}" ] || [ -n "${rm_done}" ] || [ -n "${restore_done}" ]
 then
     /etc/init.d/dnsmasq restart
