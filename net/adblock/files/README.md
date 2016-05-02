@@ -147,21 +147,33 @@ This rule removes _all_ domains from the blocklists with this string in it, i.e.
   photos.daily-deals.analoganalytics.com  
   adblockanalytics.com  
   
-**example to add [rolist+easylist](https://easylist-downloads.adblockplus.org/rolist+easylist.txt) as a new source:**
+**example to add a new blocklist sources:**
 <pre><code>
-add a new source section in adblock config, take an existing easylist source as a template and change only the source name, the url and the description
-
-config source 'ruadlist'
-        option enabled '0'
-        option adb_src 'https://easylist-downloads.adblockplus.org/ruadlist+easylist.txt'
-        option adb_src_rset '{FS=\"[|^]\"} \$0 ~/^\|\|([A-Za-z0-9_-]+\.){1,}[A-Za-z]+\^$/{print tolower(\$3)}'
-        option adb_src_desc 'focus on russian ad related domains plus generic easylist additions, weekly updates, approx. 2.000 entries'
+1. the easy way ...
+example: https://easylist-downloads.adblockplus.org/rolist+easylist.txt
+adblock already supports an easylist source, called 'ruadlist'. To add the additional local easylist
+as a new source, copy the existing config source 'ruadlist' section and change only 
+the source name, the url and the description - that's all!
 
 config source 'rolist'
-        option enabled '0'
-        option adb_src 'https://easylist-downloads.adblockplus.org/rolist+easylist.txt'
-        option adb_src_rset '{FS=\"[|^]\"} \$0 ~/^\|\|([A-Za-z0-9_-]+\.){1,}[A-Za-z]+\^$/{print tolower(\$3)}'
-        option adb_src_desc 'focus on romanian ad related domains plus generic easylist additions, weekly updates, approx. 600 entries'
+  option enabled '0'
+  option adb_src 'https://easylist-downloads.adblockplus.org/rolist+easylist.txt'
+  option adb_src_rset '{FS=\"[|^]\"} \$0 ~/^\|\|([A-Za-z0-9_-]+\.){1,}[A-Za-z]+\^$/{print tolower(\$3)}'
+  option adb_src_desc 'focus on romanian ad related domains plus generic easylist additions, weekly updates, approx. 600 entries'
+
+2. a bit harder ...
+to add a really new source with different domain/host format you have to write a suitable
+awk one-liner on your own, so basic awk skills are needed. As a starting point check the already
+existing awk strings (adb_src_rset) in adblock config, maybe you need only small changes for your individual list.
+Download the desired list and test your new awk string locally with:
+  cat new.list | awk 'fs__individual search__search core__result'
+  'fs' => field separator (optional)
+  'individual search' => individual search part to filter out needless list information
+  'search core' => always '([A-Za-z0-9_-]+\.){1,}[A-Za-z]+', this is part of all list sources and should be unchanged
+  'result' => always '{print tolower(\$n)}', only the output column 'n' may vary
+the output result should be a sequential list with one domain/host per line - nothing more.
+
+If your awk one-liner works quite well, add a new source section in adblock config and test your new source
 </code></pre>
   
 ## Background
