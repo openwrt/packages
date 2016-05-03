@@ -16,6 +16,7 @@ del network.gndnsrl
 set network.gndnsrl=rule
 set network.gndnsrl.mark='0x8260035'
 set network.gndnsrl.lookup='53'
+set network.gndnsrk.priority='0'
 
 commit network
 
