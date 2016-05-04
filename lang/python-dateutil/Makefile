@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dateutil
 PKG_VERSION:=2.5.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD-2-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -27,7 +27,7 @@ define Package/python-dateutil
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=Extensions to the standard Python datetime module
   URL:=https://dateutil.readthedocs.org/
-  DEPENDS:=+python +six
+  DEPENDS:=+python +python-six
 endef
 
 define Package/python-dateutil/description
