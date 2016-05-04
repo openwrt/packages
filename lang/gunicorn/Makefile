@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gunicorn
 PKG_VERSION:=19.4.5
-PKG_RELEASE=1
+PKG_RELEASE=2
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -27,7 +27,7 @@ define Package/gunicorn
     TITLE:=WSGI HTTP Server for UNIX
     MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
     URL:=http://gunicorn.org/
-    DEPENDS:=+python
+    DEPENDS:=+python +python-setuptools
 endef
 
 define Package/gunicorn/description
