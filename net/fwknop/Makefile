@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2012 OpenWrt.org
+# Copyright (C) 2011-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwknop
 PKG_VERSION:=2.6.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.cipherdyne.org/fwknop/download
@@ -53,6 +53,7 @@ endef
 define Package/fwknopd/conffiles
 /etc/fwknop/access.conf
 /etc/fwknop/fwknopd.conf
+/etc/config/fwknopd
 endef
 
 define Package/fwknopd/config
@@ -111,10 +112,6 @@ define Package/fwknopd/install
 	$(INSTALL_BIN) ./files/fwknopd.init $(1)/etc/init.d/fwknopd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fwknopd $(1)/usr/sbin/
-endef
-
-define Package/fwknopd/conffiles
-	/etc/config/fwknopd
 endef
 
 define Package/fwknop/install

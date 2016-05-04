@@ -8,6 +8,7 @@ adb_pid="${$}"
 adb_script="/usr/bin/adblock-update.sh"
 adb_pidfile="/var/run/adblock.pid"
 adb_logger="/usr/bin/logger"
+adb_uci="/sbin/uci"
 
 if [ -t 1 ]
 then
@@ -23,6 +24,15 @@ then
     "${adb_logger}" ${log_parm} -t "adblock[${adb_pid}] error" "adblock service already running ($(cat ${adb_pidfile})" 2>&1
     exit 255
 fi
+
+remove_config()
+{
+    local value opt section="${1}" options="adb_src_timestamp adb_src_count"
+    for opt in ${options}
+    do
+        ${adb_uci} -q delete "adblock.${section}.${opt}"
+    done
+}
 
 boot()
 {
@@ -53,6 +63,11 @@ stop()
     rc=${?}
     if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
     then
+        . "/lib/functions.sh"
+        config_load adblock
+        config_foreach remove_config source
+        ${adb_uci} -q delete "adblock.global.adb_overall_count"
+        ${adb_uci} -q commit "adblock"
         /etc/init.d/dnsmasq restart
         /etc/init.d/firewall restart
     fi

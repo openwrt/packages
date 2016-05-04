@@ -57,6 +57,9 @@
 # IPv6 @ Dyn.com
 "dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
+# duckdns.org
+"duckdns.org"	"http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"OK"
+
 # IPv6 @ zzzz.io Free Dynamic DNS
 "zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"	"Updated|No change"
 
@@ -66,3 +69,5 @@
 # IPv6 @ regfish.de
 "regfish.de"	"http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv6=[IP]"	"success|100|101"
 
+# Mythic Beasts (https://www.mythic-beasts.com) Dynamic DNS
+"mythic-beasts.com"	"http://dnsapi6.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20AAAA%20DYNAMIC_IP&origin=."

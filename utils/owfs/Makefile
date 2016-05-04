@@ -44,7 +44,7 @@ endef
 
 define Package/$(PKG_NAME)/Default/description
   OWFS is a suite of programs that designed to make the 1-wire bus and its
-  devices easily accessible. The underlying priciple is to create a virtual
+  devices easily accessible. The underlying principle is to create a virtual
   filesystem, with the unique ID being the directory, and the individual
   properties of the device are represented as simple files that can be read
   and written.

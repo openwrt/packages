@@ -10,14 +10,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=2.3.0
+PKG_VERSION:=2.3.1
 PKG_RELEASE:=1
 
 PKG_LIBVER:=2.3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_LIBVER)/
-PKG_MD5SUM:=f0d9f9bbdc87372ca98988a571875819
+PKG_MD5SUM:=c194281f63d7fcd816747fe78474be5e
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -173,6 +173,7 @@ $(call Package/ruby/Default)
   CATEGORY:=Libraries
   TITLE+= (shared library)
   DEPENDS+= +libpthread +librt +libgmp
+  ABI_VERSION:=$(PKG_LIBVER)
 endef
 define Package/libruby/install
 	$(INSTALL_DIR) $(1)/usr/lib
