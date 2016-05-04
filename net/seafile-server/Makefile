@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=5.1.1
-PKG_RELEASE=$(PKG_SOURCE_VERSION)-2
+PKG_RELEASE=$(PKG_SOURCE_VERSION)-3
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
@@ -95,6 +95,7 @@ endef
 
 define Package/seafile-server/postinst
 #!/bin/sh
+[ ! -f /etc/init.d/seafile ] && exit 0
 
 if [ ! -d /usr/share/seafile/seafile-data ]
 then
