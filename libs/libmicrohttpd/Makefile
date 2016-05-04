@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/libmicrohttpd
 PKG_MD5SUM:=3209aa2ac6199b874a6325342b86edbc
 
-PKG_MAINTAINER:=Martijn Zilverschoon <martijn@friedzombie.com>
+PKG_MAINTAINER:=Alexander Couzens <lynxis@fe80.eu>
 
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING
