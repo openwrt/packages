@@ -45,7 +45,7 @@ endef
 define Package/bind-libs
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libopenssl
+  DEPENDS:=+libopenssl +libjson-c
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 endef
@@ -94,13 +94,12 @@ define Package/bind-dig
   TITLE+= DNS excavation tool
 endef
 
-export BUILD_CC="$(TARGET_CC)"
+#export BUILD_CC="$(TARGET_CC)"
 
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--with-randomdev="/dev/urandom" \
-	--disable-threads \
 	--disable-linux-caps \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--with-libtool \
@@ -109,7 +108,8 @@ CONFIGURE_ARGS += \
 	--with-gost=no \
 	--with-gssapi=no \
 	--with-ecdsa=$(if $(CONFIG_OPENSSL_WITH_EC),yes,no) \
-	--with-readline=no
+	--with-readline=no \
+	--with-libjson="$(STAGING_DIR)/usr"
 
 ifdef CONFIG_BIND_ENABLE_FILTER_AAAA
 	CONFIGURE_ARGS += \
