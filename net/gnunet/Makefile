@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnunet
 PKG_SOURCE_VERSION:=37051
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 # ToDo:
 #  - break-out {peer,name,data}store for each backend

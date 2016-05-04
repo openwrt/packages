@@ -15,8 +15,7 @@ SUID_ROOT_HELPERS="exit nat-server nat-client transport-bluetooth transport-wlan
 chmodown_execbin() {
 	execname=/usr/lib/gnunet/libexec/gnunet-$1
 	if [ -x $execname ]; then
-		[ "$3" ] && chown $3 $execname
-		chmod $2 $execname
+		[ "$3" ] && chown $3 $execname 2>/dev/null && chmod $2 $execname
 	fi
 }
 
