@@ -16,12 +16,21 @@ CMAKE_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+SPACE:=
+SPACE+=
+CMAKE_OPTIONAL_PLUGINS:= $(subst $(SPACE),;,$(strip \
+        $(if $(filter y,$(CONFIG_OONF_NHDP_AUTOLL4)),auto_ll4,) \
+        $(if $(filter y,$(CONFIG_OONF_OLSRV2_LAN_IMPORT)),lan_import,) \
+        $(if $(filter y,$(CONFIG_OONF_OLSRV2_ROUTE_MODIFIER)),route_modifier,) \
+        $(if $(filter y,$(CONFIG_OONF_GENERIC_DLEP_ROUTER)),dlep_router,) \
+    ))
+
 CMAKE_OPTIONS=-D OONF_NO_WERROR:Bool=true \
               -D OONF_LOGGING_LEVEL:String=debug \
               -D OONF_NO_TESTING:Bool=true \
               -D UCI:Bool=true \
               -D OONF_APP_DEFAULT_CFG_HANDLER:String=uci \
-              -D OONF_STATIC_PLUGINS:String="class;clock;duplicate_set;interface;layer2;packet_socket;rfc5444;socket;stream_socket;telnet;timer;viewer;os_clock;os_fd;os_interface;os_routing;os_system;nhdp;olsrv2;ff_dat_metric;neighbor_probing;nl80211_listener;link_config;layer2info;systeminfo;cfg_uciloader;cfg_compact;nhdpinfo;olsrv2info;netjsoninfo" \
+              -D OONF_STATIC_PLUGINS:String="class;clock;duplicate_set;interface;layer2;packet_socket;rfc5444;socket;stream_socket;telnet;timer;viewer;os_clock;os_fd;os_interface;os_routing;os_system;nhdp;olsrv2;ff_dat_metric;neighbor_probing;nl80211_listener;link_config;layer2info;systeminfo;cfg_uciloader;cfg_compact;nhdpinfo;olsrv2info;netjsoninfo;${CMAKE_OPTIONAL_PLUGINS}" \
               -D OONF_LIB_GIT:String=v$(PKG_VERSION)-archive \
               -D OONF_VERSION:String=$(PKG_VERSION) \
               -D INSTALL_LIB_DIR:Path=lib/oonf \
@@ -35,6 +44,7 @@ define Package/oonf-git/template
 	MAINTAINER:=Henning Rogge <hrogge@gmail.com>
 	SUBMENU:=OLSR.org network framework
 	URL:=http://www.olsr.org/
+	MENU:=1
 endef
 
 define Package/oonf-olsrd2
@@ -42,6 +52,10 @@ define Package/oonf-olsrd2
 	TITLE:= Build Olsrd V2 Routing Agent
 	DEPENDS:=+librt +libnl-tiny +libuci +oonf-init-scripts
 	VERSION:=$(PKG_VERSION)
+endef
+
+define Package/oonf-olsrd2/config
+	source "$(SOURCE)/Config.in"
 endef
 
 Build/Compile=$(call Build/Compile/Default,olsrd2_static)
