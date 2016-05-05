@@ -26,4 +26,10 @@
 			The dlep_router plugin can receive linklayer metadata over the DLEP protocol. 
 		default n
 
+	config OONF_GENERIC_REMOTECONTROL
+		bool "remotecontrol plugin enabled"
+		help
+			The remotecontrol plugin allows you to control configuration and logging over the telnet plugin. Be careful not to open this functionality over the network without securing it.
+		default n
+
 	endmenu

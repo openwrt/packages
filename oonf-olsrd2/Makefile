@@ -23,6 +23,7 @@ CMAKE_OPTIONAL_PLUGINS:= $(subst $(SPACE),;,$(strip \
         $(if $(filter y,$(CONFIG_OONF_OLSRV2_LAN_IMPORT)),lan_import,) \
         $(if $(filter y,$(CONFIG_OONF_OLSRV2_ROUTE_MODIFIER)),route_modifier,) \
         $(if $(filter y,$(CONFIG_OONF_GENERIC_DLEP_ROUTER)),dlep_router,) \
+        $(if $(filter y,$(CONFIG_OONF_GENERIC_REMOTECONTROL)),remotecontrol,) \
     ))
 
 CMAKE_OPTIONS=-D OONF_NO_WERROR:Bool=true \
