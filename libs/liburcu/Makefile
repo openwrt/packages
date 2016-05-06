@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2015 OpenWrt.org
-# Copyright (C) 2014 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
+# Copyright (C) 2014-2016 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,13 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liburcu
-PKG_VERSION:=0.8.7
+PKG_VERSION:=0.9.2
 PKG_RELEASE:=1
 
+PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
+PKG_LICENSE:=LGPL-2.1 GPL-2.0 GPL-3.0 MIT
+
 PKG_SOURCE:=userspace-rcu-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_SUBDIR:=userspace-rcu-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://lttng.org/files/urcu/
-PKG_MD5SUM:=7a6ee17871d31226db3f618e28351d22
+PKG_MD5SUM:=49f86e68c1e2f41d303381a271b791d1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/userspace-rcu-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
@@ -29,7 +31,6 @@ define Package/liburcu
 	CATEGORY:=Libraries
 	TITLE:=User-space Read-Copy-Update library
 	URL:=https://lttng.org/
-	MAINTAINER:=daniel.salzman@nic.cz
 	DEPENDS:=+libpthread
 endef
 
