@@ -33,7 +33,7 @@ set firewall.gndnsrl=rule
 set firewall.gndnsrl.name='Mark-local-DNS-for-GNUnet'
 set firewall.gndnsrl.proto='udp'
 set firewall.gndnsrl.dest_port='53'
-set firewall.gndnsrl.extra='-m owner ! --gid-owner gnunetdns'
+set firewall.gndnsrl.extra='-m owner ! --gid-owner 452-453'
 set firewall.gndnsrl.target='MARK'
 set firewall.gndnsrl.set_mark='136708149'
 
