@@ -1,0 +1,81 @@
+From 650d41de4be2fe9e9d1842c1abdd357dedbaa7ba Mon Sep 17 00:00:00 2001
+From: Sven Eckelmann <sven@narfation.org>
+Date: Fri, 6 May 2016 11:43:39 +0200
+Subject: [PATCH 4/6] batman-adv: Fix refcnt leak in batadv_v_neigh_*
+
+The functions batadv_neigh_ifinfo_get increase the reference counter of the
+batadv_neigh_ifinfo. These have to be reduced again when the reference is
+not used anymore to correctly free the objects.
+
+Fixes: b05bbab5e1fc ("batman-adv: B.A.T.M.A.N. V - implement neighbor comparison API calls")
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ net/batman-adv/bat_v.c | 32 +++++++++++++++++++++++++-------
+ 1 file changed, 25 insertions(+), 7 deletions(-)
+
+diff --git a/net/batman-adv/bat_v.c b/net/batman-adv/bat_v.c
+index 7e1467a..2bcb29b 100644
+--- a/net/batman-adv/bat_v.c
++++ b/net/batman-adv/bat_v.c
+@@ -274,14 +274,23 @@ static int batadv_v_neigh_cmp(struct batadv_neigh_node *neigh1,
+ 			      struct batadv_hard_iface *if_outgoing2)
+ {
+ 	struct batadv_neigh_ifinfo *ifinfo1, *ifinfo2;
++	int ret = 0;
+ 
+ 	ifinfo1 = batadv_neigh_ifinfo_get(neigh1, if_outgoing1);
++	if (WARN_ON(!ifinfo1))
++		goto err_ifinfo1;
++
+ 	ifinfo2 = batadv_neigh_ifinfo_get(neigh2, if_outgoing2);
++	if (WARN_ON(!ifinfo2))
++		goto err_ifinfo2;
+ 
+-	if (WARN_ON(!ifinfo1 || !ifinfo2))
+-		return 0;
++	ret = ifinfo1->bat_v.throughput - ifinfo2->bat_v.throughput;
+ 
+-	return ifinfo1->bat_v.throughput - ifinfo2->bat_v.throughput;
++	batadv_neigh_ifinfo_put(ifinfo2);
++err_ifinfo2:
++	batadv_neigh_ifinfo_put(ifinfo1);
++err_ifinfo1:
++	return ret;
+ }
+ 
+ static bool batadv_v_neigh_is_sob(struct batadv_neigh_node *neigh1,
+@@ -291,17 +300,26 @@ static bool batadv_v_neigh_is_sob(struct batadv_neigh_node *neigh1,
+ {
+ 	struct batadv_neigh_ifinfo *ifinfo1, *ifinfo2;
+ 	u32 threshold;
++	bool ret = false;
+ 
+ 	ifinfo1 = batadv_neigh_ifinfo_get(neigh1, if_outgoing1);
+-	ifinfo2 = batadv_neigh_ifinfo_get(neigh2, if_outgoing2);
++	if (WARN_ON(!ifinfo1))
++		goto err_ifinfo1;
+ 
+-	if (WARN_ON(!ifinfo1 || !ifinfo2))
+-		return false;
++	ifinfo2 = batadv_neigh_ifinfo_get(neigh2, if_outgoing2);
++	if (WARN_ON(!ifinfo2))
++		goto err_ifinfo2;
+ 
+ 	threshold = ifinfo1->bat_v.throughput / 4;
+ 	threshold = ifinfo1->bat_v.throughput - threshold;
+ 
+-	return ifinfo2->bat_v.throughput > threshold;
++	ret = ifinfo2->bat_v.throughput > threshold;
++
++	batadv_neigh_ifinfo_put(ifinfo2);
++err_ifinfo2:
++	batadv_neigh_ifinfo_put(ifinfo1);
++err_ifinfo1:
++	return ret;
+ }
+ 
+ static struct batadv_algo_ops batadv_batman_v __read_mostly = {
+-- 
+2.8.0.rc3
+

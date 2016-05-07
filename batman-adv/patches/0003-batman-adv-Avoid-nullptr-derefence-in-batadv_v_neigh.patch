@@ -1,0 +1,38 @@
+From 036aa7b7181ee96ae6971eb31dd97b6ace7c0a80 Mon Sep 17 00:00:00 2001
+From: Sven Eckelmann <sven@narfation.org>
+Date: Fri, 6 May 2016 11:43:38 +0200
+Subject: [PATCH 3/6] batman-adv: Avoid nullptr derefence in
+ batadv_v_neigh_is_sob
+
+batadv_neigh_ifinfo_get can return NULL when it cannot find (even when only
+temporarily) anymore the neigh_ifinfo in the list neigh->ifinfo_list. This
+has to be checked to avoid kernel Oopses when the ifinfo is dereferenced.
+
+This a situation which isn't expected but is already handled by functions
+like batadv_v_neigh_cmp. The same kind of warning is therefore used before
+the function returns without dereferencing the pointers.
+
+Fixes: b05bbab5e1fc ("batman-adv: B.A.T.M.A.N. V - implement neighbor comparison API calls")
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ net/batman-adv/bat_v.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/net/batman-adv/bat_v.c b/net/batman-adv/bat_v.c
+index 4547fce..7e1467a 100644
+--- a/net/batman-adv/bat_v.c
++++ b/net/batman-adv/bat_v.c
+@@ -295,6 +295,9 @@ static bool batadv_v_neigh_is_sob(struct batadv_neigh_node *neigh1,
+ 	ifinfo1 = batadv_neigh_ifinfo_get(neigh1, if_outgoing1);
+ 	ifinfo2 = batadv_neigh_ifinfo_get(neigh2, if_outgoing2);
+ 
++	if (WARN_ON(!ifinfo1 || !ifinfo2))
++		return false;
++
+ 	threshold = ifinfo1->bat_v.throughput / 4;
+ 	threshold = ifinfo1->bat_v.throughput - threshold;
+ 
+-- 
+2.8.0.rc3
+

@@ -1,0 +1,40 @@
+From fc3e79d9ef2a1006f94e441d9613749cbbe7176a Mon Sep 17 00:00:00 2001
+From: Sven Eckelmann <sven@narfation.org>
+Date: Fri, 6 May 2016 22:27:09 +0200
+Subject: [PATCH 5/6] batman-adv: Fix double neigh_node_put in
+ batadv_v_ogm_route_update
+
+The router is put down twice when it was non-NULL and either orig_ifinfo is
+NULL afterwards or batman-adv receives a packet with the same sequence
+number. This will end up in a use-after-free when the batadv_neigh_node is
+removed because the reference counter ended up too early at 0.
+
+Fixes: 667996ebeab4 ("batman-adv: OGMv2 - implement originators logic")
+Reported-by: Gui Iribarren <gui@altermundi.net>
+Tested-by: Antonio Quartulli <a@unstable.cc>
+Tested-by: Marek Lindner <mareklindner@neomailbox.ch>
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ net/batman-adv/bat_v_ogm.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/net/batman-adv/bat_v_ogm.c b/net/batman-adv/bat_v_ogm.c
+index d9bcbe6..91df28a 100644
+--- a/net/batman-adv/bat_v_ogm.c
++++ b/net/batman-adv/bat_v_ogm.c
+@@ -529,8 +529,10 @@ static void batadv_v_ogm_route_update(struct batadv_priv *bat_priv,
+ 		goto out;
+ 	}
+ 
+-	if (router)
++	if (router) {
+ 		batadv_neigh_node_put(router);
++		router = NULL;
++	}
+ 
+ 	/* Update routes, and check if the OGM is from the best next hop */
+ 	batadv_v_ogm_orig_update(bat_priv, orig_node, neigh_node, ogm2,
+-- 
+2.8.0.rc3
+

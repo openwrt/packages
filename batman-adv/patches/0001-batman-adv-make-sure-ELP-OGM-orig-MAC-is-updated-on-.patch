@@ -1,0 +1,64 @@
+From a636bf0b69010222ea58337d425ca9ff8ce52639 Mon Sep 17 00:00:00 2001
+From: Antonio Quartulli <a@unstable.cc>
+Date: Mon, 2 May 2016 18:27:38 +0800
+Subject: [PATCH 1/6] batman-adv: make sure ELP/OGM orig MAC is updated on
+ address change
+
+When the MAC address of the primary interface is changed,
+update the originator address in the ELP and OGM skb buffers as
+well in order to reflect the change.
+
+Fixes: a4b88af77e28 ("batman-adv: ELP - adding basic infrastructure")
+Reported-by: Marek Lindner <marek@neomailbox.ch>
+Signed-off-by: Antonio Quartulli <a@unstable.cc>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+---
+ net/batman-adv/bat_v.c | 26 ++++++++++++++++++++++----
+ 1 file changed, 22 insertions(+), 4 deletions(-)
+
+diff --git a/net/batman-adv/bat_v.c b/net/batman-adv/bat_v.c
+index 4026f19..4547fce 100644
+--- a/net/batman-adv/bat_v.c
++++ b/net/batman-adv/bat_v.c
+@@ -72,16 +72,34 @@ static void batadv_v_iface_disable(struct batadv_hard_iface *hard_iface)
+ 	batadv_v_elp_iface_disable(hard_iface);
+ }
+ 
+-static void batadv_v_iface_update_mac(struct batadv_hard_iface *hard_iface)
+-{
+-}
+-
+ static void batadv_v_primary_iface_set(struct batadv_hard_iface *hard_iface)
+ {
+ 	batadv_v_elp_primary_iface_set(hard_iface);
+ 	batadv_v_ogm_primary_iface_set(hard_iface);
+ }
+ 
++/**
++ * batadv_v_iface_update_mac - react to hard-interface MAC address change
++ * @hard_iface: the modified interface
++ *
++ * If the modified interface is the primary one, update the originator
++ * address in the ELP and OGM messages to reflect the new MAC address.
++ */
++static void batadv_v_iface_update_mac(struct batadv_hard_iface *hard_iface)
++{
++	struct batadv_priv *bat_priv = netdev_priv(hard_iface->soft_iface);
++	struct batadv_hard_iface *primary_if;
++
++	primary_if = batadv_primary_if_get_selected(bat_priv);
++	if (primary_if != hard_iface)
++		goto out;
++
++	batadv_v_primary_iface_set(hard_iface);
++out:
++	if (primary_if)
++		batadv_hardif_put(primary_if);
++}
++
+ static void
+ batadv_v_hardif_neigh_init(struct batadv_hardif_neigh_node *hardif_neigh)
+ {
+-- 
+2.8.0.rc3
+
