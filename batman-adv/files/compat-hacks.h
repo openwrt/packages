@@ -33,6 +33,17 @@
 
 #endif /* < KERNEL_VERSION(4, 5, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
+
+struct sk_buff *skb_checksum_trimmed(struct sk_buff *skb,
+				     unsigned int transport_len,
+				     __sum16(*skb_chkf)(struct sk_buff *skb));
+
+int ip_mc_check_igmp(struct sk_buff *skb, struct sk_buff **skb_trimmed);
+
+int ipv6_mc_check_mld(struct sk_buff *skb, struct sk_buff **skb_trimmed);
+
+#endif /* < KERNEL_VERSION(4, 2, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 3, 0)
 

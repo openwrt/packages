@@ -1,0 +1,29 @@
+From: Sven Eckelmann <sven.eckelmann@open-mesh.com>
+Date: Thu, 29 Sep 2016 17:22:58 +0200
+Subject: [PATCH] batman-adv: Modify neigh_list only with rcu-list functions
+
+The batadv_hard_iface::neigh_list is accessed via rcu based primitives.
+Thus all operations done on it have to fulfill the requirements by RCU. So
+using non-RCU mechanisms like hlist_add_head is not allowed because it
+misses the barriers required to protect concurrent readers when accessing
+the data behind the pointer.
+
+Fixes: fed2826b490c ("batman-adv: add list of unique single hop neighbors per hard-interface")
+Signed-off-by: Sven Eckelmann <sven.eckelmann@open-mesh.com>
+---
+ net/batman-adv/originator.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/batman-adv/originator.c b/net/batman-adv/originator.c
+index 3940b5d..3e9667e 100644
+--- a/net/batman-adv/originator.c
++++ b/net/batman-adv/originator.c
+@@ -537,7 +537,7 @@ batadv_hardif_neigh_create(struct batadv_hard_iface *hard_iface,
+ 	if (bat_priv->algo_ops->neigh.hardif_init)
+ 		bat_priv->algo_ops->neigh.hardif_init(hardif_neigh);
+ 
+-	hlist_add_head(&hardif_neigh->list, &hard_iface->neigh_list);
++	hlist_add_head_rcu(&hardif_neigh->list, &hard_iface->neigh_list);
+ 
+ out:
+ 	spin_unlock_bh(&hard_iface->neigh_list_lock);
