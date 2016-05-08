@@ -1,0 +1,14 @@
+--- a/configure.ac	2015-12-27 16:57:20.002869669 +0800
++++ b/configure.ac	2015-12-27 16:56:47.048661004 +0800
+@@ -115,6 +115,11 @@
+ AC_CHECK_DECLS([_isnan], [], [], [[#include <float.h>]])
+ AC_CHECK_DECLS([_finite], [], [], [[#include <float.h>]])
+ 
++if test "$ac_cv_have_decl_isnan" = "yes" ; then
++   AC_TRY_LINK([#include <math.h>], [float f = 0.0; return isnan(f)], [], [LIBS="$LIBS -lm"])
++fi
++
++
+ # Checks for typedefs, structures, and compiler characteristics.
+ AC_C_CONST
+ AC_TYPE_UID_T
