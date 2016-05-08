@@ -971,6 +971,28 @@ get_registered_ip() {
 
 		__RUNPROG="$__PROG $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BIND host"
+	elif [ -n "$(which khost)" ]; then
+		__PROG="$(which khost)"
+		[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -t A"  || __PROG="$__PROG -t AAAA"
+		if [ $force_ipversion -eq 1 ]; then			# force IP version
+			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4"  || __PROG="$__PROG -6"
+		fi
+		[ $force_dnstcp -eq 1 ] && __PROG="$__PROG -T"	# force TCP
+
+		__RUNPROG="$__PROG $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
+		__PROG="Knot host"
+	elif [ -n "$(which drill)" ]; then
+		__PROG="$(which drill) -V0"			# drill options name @server type
+		if [ $force_ipversion -eq 1 ]; then			# force IP version
+			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4"  || __PROG="$__PROG -6"
+		fi
+		[ $force_dnstcp -eq 1 ] && __PROG="$__PROG -t" || __PROG="$__PROG -u"	# force TCP
+		__PROG="$__PROG $lookup_host"
+		[ -n "$dns_server" ] && __PROG="$__PROG @$dns_server"
+		[ $use_ipv6 -eq 0 ] && __PROG="$__PROG A"  || __PROG="$__PROG AAAA"
+
+		__RUNPROG="$__PROG >$DATFILE 2>$ERRFILE"
+		__PROG="drill"
 	elif [ -n "$(which hostip)" ]; then	# hostip package installed
 		__PROG="$(which hostip)"
 		[ $force_dnstcp -ne 0 ] && \
@@ -1017,6 +1039,10 @@ get_registered_ip() {
 		else
 			if [ "$__PROG" = "BIND host" ]; then
 				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
+			elif [ "$__PROG" = "Knot host" ]; then
+				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
+			elif [ "$__PROG" = "drill" ]; then
+				__DATA=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5; exit}' )
 			elif [ "$__PROG" = "hostip" ]; then
 				__DATA=$(cat $DATFILE | grep -m 1 -o "$__REGEX")
 			else
