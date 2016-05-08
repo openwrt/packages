@@ -1,5 +1,5 @@
 #!/bin/sh
-# ad/abuse domain blocking script for dnsmasq/openwrt
+# dns based ad/abuse domain blocking script
 # written by Dirk Brenken (openwrt@brenken.org)
 
 # This is free software, licensed under the GNU General Public License v3.
@@ -33,11 +33,10 @@ else
     printf "${adb_pid}" > "${adb_pidfile}"
 fi
 
-# get current directory, script- and openwrt version
+# get current directory and script version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="1.1.1"
-openwrt_version="$(cat /etc/openwrt_version)"
+adb_scriptver="1.1.2"
 
 # source in adblock function library
 #
@@ -61,7 +60,7 @@ f_envload
 
 # start logging
 #
-f_log "domain adblock processing started (${adb_scriptver}, ${openwrt_version}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
+f_log "domain adblock processing started (${adb_scriptver}, ${adb_sysver}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
 
 # check environment
 #

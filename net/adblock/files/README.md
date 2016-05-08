@@ -147,7 +147,7 @@ This rule removes _all_ domains from the blocklists with this string in it, i.e.
   photos.daily-deals.analoganalytics.com  
   adblockanalytics.com  
   
-**example to add a new blocklist sources:**
+**example to add a new blocklist source:**
 <pre><code>
 1. the easy way ...
 example: https://easylist-downloads.adblockplus.org/rolist+easylist.txt
