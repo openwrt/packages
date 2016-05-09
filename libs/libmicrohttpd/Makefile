@@ -45,7 +45,6 @@ $(call Package/libmicrohttpd/Default)
    TITLE+=(no-ssl)
    DEPENDS:=+libpthread
    VARIANT:=no-ssl
-   PROVIDES:=libmicrohttpd
    CONFLICTS:=libmicrohttpd
 endef
 
