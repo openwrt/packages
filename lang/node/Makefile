@@ -8,16 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v0.12.13
+PKG_VERSION:=v4.4.4
 PKG_RELEASE:=1
 
-PKG_SOURCE:=node-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
+PKG_MD5SUM:=1ad7915688df85f62a57f43860dc54c6
 
 HOST_BUILD_DEPENDS:=python/host
 PKG_BUILD_DEPENDS:=python/host
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
+
+HOST_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=1
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=
@@ -31,7 +35,7 @@ define Package/node
   SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
   URL:=http://nodejs.org/
-  DEPENDS:=+libpthread +librt +libstdcpp +libopenssl +libuv
+  DEPENDS:=+libpthread +librt +libstdcpp +libopenssl +libuv +zlib
 endef
 
 define Package/node/description

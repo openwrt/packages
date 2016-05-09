@@ -1,0 +1,64 @@
+diff --git a/deps/v8/src/heap/incremental-marking.cc b/deps/v8/src/heap/incremental-marking.cc
+index 58eb0aa..b2b796f 100644
+--- a/deps/v8/src/heap/incremental-marking.cc
++++ b/deps/v8/src/heap/incremental-marking.cc
+@@ -364,7 +364,7 @@ void IncrementalMarking::DeactivateIncrementalWriteBarrier() {
+   DeactivateIncrementalWriteBarrierForSpace(heap_->new_space());
+ 
+   LargePage* lop = heap_->lo_space()->first_page();
+-  while (lop->is_valid()) {
++  while (LargePage::IsValid(lop)) {
+     SetOldSpacePageFlags(lop, false, false);
+     lop = lop->next_page();
+   }
+@@ -396,7 +396,7 @@ void IncrementalMarking::ActivateIncrementalWriteBarrier() {
+   ActivateIncrementalWriteBarrier(heap_->new_space());
+ 
+   LargePage* lop = heap_->lo_space()->first_page();
+-  while (lop->is_valid()) {
++  while (LargePage::IsValid(lop)) {
+     SetOldSpacePageFlags(lop, true, is_compacting_);
+     lop = lop->next_page();
+   }
+diff --git a/deps/v8/src/heap/spaces-inl.h b/deps/v8/src/heap/spaces-inl.h
+index c2c4d12..d63ee63 100644
+--- a/deps/v8/src/heap/spaces-inl.h
++++ b/deps/v8/src/heap/spaces-inl.h
+@@ -155,7 +155,7 @@ Page* Page::Initialize(Heap* heap, MemoryChunk* chunk, Executability executable,
+ 
+ bool PagedSpace::Contains(Address addr) {
+   Page* p = Page::FromAddress(addr);
+-  if (!p->is_valid()) return false;
++  if (!Page::IsValid(p)) return false;
+   return p->owner() == this;
+ }
+ 
+diff --git a/deps/v8/src/heap/spaces.cc b/deps/v8/src/heap/spaces.cc
+index 0806b25..c0e109b 100644
+--- a/deps/v8/src/heap/spaces.cc
++++ b/deps/v8/src/heap/spaces.cc
+@@ -2953,7 +2953,7 @@ LargePage* LargeObjectSpace::FindPage(Address a) {
+   if (e != NULL) {
+     DCHECK(e->value != NULL);
+     LargePage* page = reinterpret_cast<LargePage*>(e->value);
+-    DCHECK(page->is_valid());
++    DCHECK(LargePage::IsValid(page));
+     if (page->Contains(a)) {
+       return page;
+     }
+diff --git a/deps/v8/src/heap/spaces.h b/deps/v8/src/heap/spaces.h
+index 3461de3..e35c057 100644
+--- a/deps/v8/src/heap/spaces.h
++++ b/deps/v8/src/heap/spaces.h
+@@ -278,9 +278,9 @@ class MemoryChunk {
+   // Only works for addresses in pointer spaces, not data or code spaces.
+   static inline MemoryChunk* FromAnyPointerAddress(Heap* heap, Address addr);
+ 
+-  Address address() { return reinterpret_cast<Address>(this); }
++  static bool IsValid(MemoryChunk* chunk) { return chunk != nullptr; }
+ 
+-  bool is_valid() { return address() != NULL; }
++  Address address() { return reinterpret_cast<Address>(this); }
+ 
+   MemoryChunk* next_chunk() const {
+     return reinterpret_cast<MemoryChunk*>(base::Acquire_Load(&next_chunk_));
