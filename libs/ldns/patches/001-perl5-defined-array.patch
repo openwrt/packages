@@ -1,0 +1,12 @@
+diff -Naupr orig_ldns-1.6.17/doc/doxyparse.pl ldns-1.6.17/doc/doxyparse.pl
+--- orig_ldns-1.6.17/doc/doxyparse.pl	2014-01-11 04:04:41.000000000 +0700
++++ ldns-1.6.17/doc/doxyparse.pl	2016-05-08 21:50:32.901299340 +0600
+@@ -273,7 +273,7 @@ foreach (keys %manpages) {
+ 
+ 	print MAN $MAN_MIDDLE;
+ 
+-	if (defined(@$also)) {
++	if (@$also) {
+ 		print MAN "\n.SH SEE ALSO\n\\fI";
+ 		print MAN join "\\fR, \\fI", @$also;
+ 		print MAN "\\fR.\nAnd ";
