@@ -177,7 +177,7 @@ config NGINX_NAXSI
 	prompt "Enable NAXSI module"
 	default y
 
-config NGINX_MODULE_LUA
+config NGINX_LUA
 	bool
 	prompt "Enable Lua module"
 	default n
