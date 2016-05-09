@@ -56,7 +56,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_CACHE \
 	CONFIG_NGINX_PCRE \
 	CONFIG_NGINX_NAXSI \
-	CONFIG_NGINX_LUA
+	CONFIG_NGINX_MODULE_LUA
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -66,7 +66,7 @@ define Package/nginx
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx web server
   URL:=http://nginx.org/
-  DEPENDS:=+NGINX_PCRE:libpcre +(NGINX_SSL||NGINX_HTTP_CACHE||NGINX_HTTP_AUTH_BASIC):libopenssl +NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +libpthread
+  DEPENDS:=+NGINX_PCRE:libpcre +(NGINX_SSL||NGINX_HTTP_CACHE||NGINX_HTTP_AUTH_BASIC):libopenssl +NGINX_HTTP_GZIP:zlib +NGINX_MODULE_LUA:liblua +libpthread
   MENU:=1
 endef
 
@@ -192,6 +192,12 @@ endif
 ifneq ($(CONFIG_NGINX_HTTP_UPSTREAM_KEEPALIVE),y)
   ADDITIONAL_MODULES += --without-http_upstream_keepalive_module
 endif
+ifeq ($(CONFIG_NGINX_MODULE_LUA),y)
+  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/lua-nginx
+endif
+
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -DNGX_LUA_NO_BY_LUA_BLOCK
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 TARGET_CFLAGS += -fvisibility=hidden -ffunction-sections -fdata-sections -DNGX_LUA_NO_BY_LUA_BLOCK
 TARGET_LDFLAGS += -Wl,--gc-sections
@@ -241,7 +247,7 @@ define Build/Prepare
 endef
 
 define Download/nginx-naxsi
-	VERSION:=6358c3d2e68a0c9e3ad11661c2a1f63fadc9b4f2
+	VERSION:=5ab2309f0dc93d33e1443a15db519f8bfed8b455
 	SUBDIR:=nginx-naxsi
 	FILE:=nginx-naxsi-module-$(PKG_VERSION)-$$(VERSION).tar.gz
 	URL:=https://github.com/nbs-system/naxsi.git
@@ -258,6 +264,26 @@ define Download/lua-nginx
 	SUBDIR:=lua-nginx
 	FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
 	URL:=https://github.com/openresty/lua-nginx-module.git
+	PROTO:=git
+endef
+
+define  Prepare/lua-nginx
+	$(eval $(call Download,lua-nginx))
+	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	$(call PatchDir,$(PKG_BUILD_DIR),./patches-lua-nginx)
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(if $(CONFIG_NGINX_NAXSI),$(call Prepare/nginx-naxsi))
+	$(if $(CONFIG_NGINX_MODULE_LUA),$(call Prepare/lua-nginx))
+endef
+
+define Download/lua-nginx
+	VERSION:=1967998b0eedab1ff51bff8fafa5fc3db47976aa
+	SUBDIR:=lua-nginx
+	FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+	URL:=git://github.com/openresty/lua-nginx-module.git
 	PROTO:=git
 endef
 
