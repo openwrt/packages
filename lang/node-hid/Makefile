@@ -9,17 +9,17 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=hid
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=0.4.0
-PKG_RELEASE:=2
+PKG_VERSION:=0.5.1
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/node-hid/node-hid.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=c56c8aa5d113c6f2574d1f7e64d41745702965bb
+PKG_SOURCE_VERSION:=35d830b7810c87d32484d0a346621568c4849441
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_BUILD_DEPENDS:=node/host
-PKG_NODE_VERSION:=0.12.13
+PKG_NODE_VERSION:=4.4.4
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=Custom
@@ -41,6 +41,8 @@ define Package/node-hid/description
  Node.js package to access HID devices
 endef
 
+CPU:=$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))
+
 EXTRA_LDFLAGS+="-lhidapi-libusb"
 EXTRA_CFLAGS+="-I$(STAGING_DIR)/usr/include/hidapi/"
 
@@ -51,12 +53,12 @@ define Build/Compile
 	npm_config_nodedir=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/ \
 	npm_config_cache=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/npm-cache \
 	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
-	$(STAGING_DIR)/host/bin/npm install -g $(PKG_BUILD_DIR)
+	$(STAGING_DIR)/host/bin/npm install --build-from-source --target_arch=$(CPU) -g $(PKG_BUILD_DIR)
 endef
 
 define Package/node-hid/install
 	mkdir -p $(1)/usr/lib/node/node-hid/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/node-hid/{index.js,package.json,build,node_modules} $(1)/usr/lib/node/node-hid/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/* $(1)/usr/lib/node/
 endef
 
 $(eval $(call BuildPackage,node-hid))
