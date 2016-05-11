@@ -63,6 +63,7 @@ define Build/InstallDev
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* \
 		$(1)/usr/lib/pkgconfig/
+	sed -i -e 's,includedir=.*,includedir=$$$${prefix}/include,' $(1)/usr/lib/pkgconfig/libffi.pc
 
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
