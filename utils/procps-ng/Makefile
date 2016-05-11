@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
 PKG_VERSION:=3.3.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
 
@@ -25,6 +25,7 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_ARGS += --enable-skill
+TARGET_LDFLAGS += -ltinfo
 
 PROCPS_APPLETS := \
     free kill pgrep pkill pmap ps pwdx skill slabtop \
@@ -33,7 +34,7 @@ PROCPS_APPLETS := \
 define Package/procps-ng/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libncurses
+  DEPENDS:=+libncurses +terminfo
   TITLE:=procps-ng utilities
   URL:=https://gitlab.com/procps-ng/procps
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
