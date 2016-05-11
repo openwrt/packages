@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -13,7 +13,7 @@ PKG_VERSION:=1.0.3-$(PKG_REV)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.xiph.org/tremor.git
+PKG_SOURCE_URL:=https://git.xiph.org/tremor.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=b56ffce0c0773ec5ca04c466bc00b1bbcaf65aef
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
