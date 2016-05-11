@@ -34,7 +34,7 @@ PROCPS_APPLETS := \
 define Package/procps-ng/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libncurses +terminfo
+  DEPENDS:=+libncurses
   TITLE:=procps-ng utilities
   URL:=https://gitlab.com/procps-ng/procps
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
