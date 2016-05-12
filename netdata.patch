@@ -1,0 +1,142 @@
+Subject: [PATCH] netdata: import new package
+
+Netdata (https://github.com/firehol/netdata) is a real-time performance monitoring tool. This submission uses the current Git prerelease, as the latest stable (1.1.0)doesn't build cleanly.
+
+The default configuration makes a few changes for OpenWrt:
+ - access log is disabled by default; too verbose for the circular
+     syslog buffer, and logging to /tmp is risky memory-wise.
+     Some sort of external device would be ideal for this.
+
+ - error and debug logs are sent to OpenWrt's syslog
+
+ - history and frequency times are halved to reduce memory usage,
+     as recommended in the netdata wiki
+
+ - external plugins are disabled to eliminate the dependency on bash
+     and node.js. Those could be installed from OpenWrt packages if
+     you wish to enable that functionality.
+
+     All of those files are still present in the package. The installed
+     size could be reduced by eliminating those files first.
+
+Signed-off-by: Claudio Leite <leitec@staticky.com>
+Signed-off-by: Sebastian Careba <nitroshift@yahoo.com>
+
+---
+ admin/netdata/Makefile           | 61 ++++++++++++++++++++++++++++++++++++++++
+ admin/netdata/files/netdata.conf | 16 +++++++++++
+ admin/netdata/files/netdata.init | 11 ++++++++
+ 3 files changed, 88 insertions(+)
+ create mode 100644 admin/netdata/Makefile
+ create mode 100644 admin/netdata/files/netdata.conf
+ create mode 100644 admin/netdata/files/netdata.init
+
+diff --git a/admin/netdata/Makefile b/admin/netdata/Makefile
+new file mode 100644
+index 0000000..d08b317
+--- /dev/null
++++ b/admin/netdata/Makefile
+@@ -0,0 +1,61 @@
++#
++# Copyright (C) 2008-2016 OpenWrt.org
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++
++include $(TOPDIR)/rules.mk
++
++PKG_NAME:=netdata
++PKG_VERSION:=devel-20160508
++PKG_RELEASE:=1
++PKG_MAINTAINER:=Sebastian Careba <nitroshift@yahoo.com>
++PKG_LICENSE:=GPL-3.0
++PKG_LICENSE_FILES:=COPYING
++
++PKG_SOURCE_PROTO:=git
++PKG_SOURCE_URL=https://github.com/firehol/netdata
++PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
++PKG_SOURCE_VERSION:=0ec2db444011f5b6ebf41dab45502c27cd544af2
++PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
++
++PKG_INSTALL:=1
++PKG_FIXUP:=autoreconf
++
++include $(INCLUDE_DIR)/package.mk
++
++define Package/netdata
++  SECTION:=package/network/utils
++  CATEGORY:=package/network/utils
++  DEPENDS:=+zlib
++  TITLE:=Real-time performance monitoring tool
++  URL:=http://netdata.firehol.org/
++endef
++
++define Package/netdata/description
++  netdata is a highly optimized Linux daemon providing real-time performance
++  monitoring for Linux systems, applications and SNMP devices over the web.
++endef
++
++define Package/netdata/conffiles
++/etc/netdata/
++endef
++
++define Package/netdata/install
++	$(INSTALL_DIR) $(1)/etc/netdata
++	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/netdata/apps_groups.conf $(1)/etc/netdata
++	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/netdata/charts.d.conf $(1)/etc/netdata
++	$(INSTALL_CONF) ./files/netdata.conf $(1)/etc/netdata
++	$(INSTALL_DIR) $(1)/etc/init.d
++	$(INSTALL_BIN) ./files/netdata.init $(1)/etc/init.d/netdata
++	$(INSTALL_DIR) $(1)/usr/sbin
++	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netdata $(1)/usr/sbin/
++	$(INSTALL_DIR) $(1)/usr/share/netdata
++	$(INSTALL_DIR) $(1)/usr/lib/netdata
++	$(CP) $(PKG_INSTALL_DIR)/usr/share/netdata $(1)/usr/share
++	$(CP) $(PKG_INSTALL_DIR)/usr/lib/netdata $(1)/usr/lib
++	chmod 4755 $(1)/usr/lib/netdata/plugins.d/apps.plugin
++endef
++
++$(eval $(call BuildPackage,netdata))
+diff --git a/admin/netdata/files/netdata.conf b/admin/netdata/files/netdata.conf
+new file mode 100644
+index 0000000..e1f0964
+--- /dev/null
++++ b/admin/netdata/files/netdata.conf
+@@ -0,0 +1,16 @@
++[global]
++	run as user = nobody
++	web files owner = root
++	web files group = root
++	update every = 2
++	history = 1800
++	access log = none
++	debug log = syslog
++	error log = syslog
++	memory mode = ram
++
++[plugins]
++	charts.d = no
++	apps = no
++	node.d = no
++	tc = no
+diff --git a/admin/netdata/files/netdata.init b/admin/netdata/files/netdata.init
+new file mode 100644
+index 0000000..448e56d
+--- /dev/null
++++ b/admin/netdata/files/netdata.init
+@@ -0,0 +1,11 @@
++#!/bin/sh /etc/rc.common
++
++START=99
++
++start() {
++	service_start /usr/sbin/netdata
++}
++
++stop() {
++	service_stop /usr/sbin/netdata
++}
+-- 
+2.1.4
+
