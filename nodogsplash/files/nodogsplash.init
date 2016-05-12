@@ -156,7 +156,7 @@ generate_uci_config() {
       nolog error "Configuration file '$file' doesn't exist"
       return 0
     fi
-    cat "$val" >> CONFIGFILE
+    cat "$val" >> $CONFIGFILE
   fi
 
   config_get val "$cfg" network
