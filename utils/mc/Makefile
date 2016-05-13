@@ -9,8 +9,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
 PKG_VERSION:=4.8.17
-PKG_RELEASE:=1
-PKG_MAINTAINER:=Dirk Brenken <openwrt@brenken.org>
+PKG_RELEASE:=2
+PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -46,17 +46,17 @@ define Package/$(PKG_NAME)/config
 endef
 
 define Package/$(PKG_NAME)/description
-GNU Midnight Commander is a visual file manager,
-licensed under GNU General Public License and therefore qualifies as Free Software.
+GNU Midnight Commander is a visual file manager.
 It's a feature rich full-screen text mode application that allows you to copy,
-move and delete files and whole directory trees, search for files
-and run commands in the subshell. Internal viewer and editor are included.
+move and delete files and whole directory trees, search for files and run commands in the subshell.
+Internal viewer and editor are included as well.
 
 endef
 
 CONFIGURE_ARGS += \
 	--disable-doxygen-doc \
 	--with-homedir=/etc/mc \
+	--with-included-gettext \
 	--with-screen=ncurses \
 	--without-gpm-mouse \
 	--without-x \
