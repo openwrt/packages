@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sumo
-PKG_VERSION:=0.25.0
+PKG_VERSION:=0.26.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/sumo
-PKG_MD5SUM:=6bfc4e1ff37fe4ba5d481ddc40323529
+PKG_MD5SUM:=a3a9c5c5260bad87d1736cc7cda1cbca
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-3.0
@@ -30,6 +30,8 @@ CONFIGURE_ARGS += \
 	--disable-debug \
 	--disable-dependency-tracking \
 	--disable-silent-rules
+
+TARGET_CXXFLAGS+=-fpermissive
 
 define Package/sumo
   SECTION:=utils

@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=37051
+PKG_SOURCE_VERSION:=37164
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=4
+PKG_RELEASE:=1
 
 # ToDo:
 #  - break-out {peer,name,data}store for each backend
@@ -25,7 +25,7 @@ PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
-PKG_BUILD_PARALLEL:=1
+# PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=gettext-version
 PKG_INSTALL:=1
 
@@ -59,10 +59,9 @@ endef
 define Package/gnunet
 $(call Package/gnunet/Default)
   TITLE+= - a peer-to-peer framework focusing on security
-  DEPENDS:=+ca-certificates +libgcrypt +libgpg-error +libgnurl \
-        +libgnutls +libidn +libltdl +libunistring +librt \
-        $(ICONV_DEPENDS) $(INTL_DEPENDS)
-  USERID:=gnunet=400:gnunet=400
+  DEPENDS:=+libgcrypt +libgpg-error +libidn +libltdl +libunistring +librt +zlib \
+           $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  USERID:=gnunet=958:gnunet=958
   MENU:=1
 endef
 
@@ -201,11 +200,11 @@ PLUGIN_conversation:=gnsrecord_conversation
 LIBEXEC_conversation:=helper-audio-playback helper-audio-record service-conversation
 CONF_conversation:=conversation
 
-DEPENDS_hostlist:=+libmicrohttpd
+DEPENDS_hostlist:=+libmicrohttpd +libgnurl +ca-certificates
 LIBEXEC_hostlist:=daemon-hostlist
 CONF_hostlist:=hostlist
 
-DEPENDS_transport-http_client:=+libgnurl
+DEPENDS_transport-http_client:=+libgnurl +ca-certificates
 PLUGIN_transport-http_client:=transport_http_client transport_https_client
 
 DEPENDS_transport-http_server:=+libmicrohttpd
@@ -232,7 +231,7 @@ LIBEXEC_fs:=helper-fs-publish service-fs
 CONF_fs:=fs
 
 DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
-USERID_gns:=gnunet=400:gnunetdns=401
+USERID_gns:=gnunet=958:gnunetdns=452
 BIN_gns:=gns gns-import.sh namecache namestore resolver
 LIB_gns:=gns gnsrecord namecache namestore
 PLUGIN_gns:=block_dns block_gns gnsrecord_dns gnsrecord_gns
@@ -242,7 +241,7 @@ CONF_gns:=dns gns namecache namestore resolver
 DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd
 LIBEXEC_namestore-fcfsd:=namestore-fcfsd
 
-DEPENDS_gns-proxy:=+gnunet-gns +libmicrohttpd
+DEPENDS_gns-proxy:=+gnunet-gns +libgnurl +libmicrohttpd
 LIBEXEC_gns-proxy:=gns-proxy
 
 DEPENDS_datastore:=+gnunet-gns +libsqlite3
@@ -269,7 +268,7 @@ LIB_pgsql:=postgres pq
 PLUGIN_pgsql:=datacache_postgres datastore_postgres namecache_postgres namestore_postgres
 
 DEPENDS_rest:=+gnunet-gns +gnunet-social +libmicrohttpd +jansson
-LIB_rest:=rest
+LIB_rest:=rest json jsonapi jsonapiutils
 PLUGIN_rest:=rest_gns rest_identity rest_identity_provider rest_namestore
 LIBEXEC_rest:=rest-server
 CONF_rest:=rest
@@ -280,7 +279,7 @@ LIBEXEC_rps:=service-rps
 CONF_rps:=rps
 
 DEPENDS_social:=+gnunet-sqlite +libmicrohttpd +jansson
-BIN_social:=identity-token multicast
+BIN_social:=identity-token multicast social
 LIB_social:=consensus identityprovider multicast psyc psycstore psycutil secretsharing social
 PLUGIN_social:=psycstore_sqlite
 LIBEXEC_social:=service-consensus service-evil-consensus service-identity-provider service-multicast service-psyc service-psycstore service-secretsharing service-social
@@ -313,7 +312,8 @@ del network.gndnsrl
 commit network
 
 del firewall.gnunetdns
-del firewall.gndnsinc
+del firewall.gndnsrl
+del firewall.gndnsrl2
 commit firewall
 EOF
 endef
@@ -354,8 +354,9 @@ $(eval $(call BuildComponent,flat,flat storage backends,))
 $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))
 $(eval $(call BuildComponent,gns-proxy,gns-proxy component,))
+$(eval $(call BuildComponent,hostlist,HTTP bootstrap hostlist client and server,))
 $(eval $(call BuildComponent,mysql,mySQL datastore backend,))
-$(eval $(call BuildComponent,namestore-fcfsd,fist-come-first-serve registration server,))
+$(eval $(call BuildComponent,namestore-fcfsd,first-come-first-serve registration server,))
 $(eval $(call BuildComponent,pgsql,PostgreSQL storage backends,))
 $(eval $(call BuildComponent,peerstore,peerstore local persistency component,))
 $(eval $(call BuildComponent,rest,REST interface,))

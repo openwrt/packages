@@ -83,7 +83,7 @@ index 0000000..0c035a7
 +const char * PICO_VOICE_NAME                = "PicoVoice";
 +
 +/* supported voices
-+   Pico does not seperately specify the voice and locale.   */
++   Pico does not separately specify the voice and locale.   */
 +const char * picoSupportedLangIso3[]        = { "eng",              "eng",              "deu",              "spa",              "fra",              "ita" };
 +const char * picoSupportedCountryIso3[]     = { "USA",              "GBR",              "DEU",              "ESP",              "FRA",              "ITA" };
 +const char * picoSupportedLang[]            = { "en-US",            "en-GB",            "de-DE",            "es-ES",            "fr-FR",            "it-IT" };

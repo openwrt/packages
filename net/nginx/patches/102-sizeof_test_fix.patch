@@ -1,6 +1,6 @@
 --- a/auto/types/sizeof
 +++ b/auto/types/sizeof
-@@ -25,8 +25,13 @@ $NGX_INCLUDE_UNISTD_H
+@@ -25,8 +25,14 @@ $NGX_INCLUDE_UNISTD_H
  $NGX_INCLUDE_INTTYPES_H
  $NGX_INCLUDE_AUTO_CONFIG_H
  
@@ -12,6 +12,7 @@
 +
  int main() {
 -    printf("%d", (int) sizeof($ngx_type));
++    printf("dummy use of object_code_block to avoid gc-section: %c", object_code_block[0]);
      return 0;
  }
  

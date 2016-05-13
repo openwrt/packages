@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.16
-PKG_RELEASE:=1
-PKG_MAINTAINER:=Dirk Brenken <openwrt@brenken.org>
+PKG_VERSION:=4.8.17
+PKG_RELEASE:=2
+PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_SHA256SUM:=bbbcbe3097d3160f865d24aa38ff122f1c59752b5ef153ca4ade5ac0f82b7020
+PKG_SHA256SUM:=0447bdddc0baa81866e66f50f9a545d29d6eebb68b0ab46c98d8fddd2bf4e44d
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 
@@ -46,11 +46,10 @@ define Package/$(PKG_NAME)/config
 endef
 
 define Package/$(PKG_NAME)/description
-GNU Midnight Commander is a visual file manager,
-licensed under GNU General Public License and therefore qualifies as Free Software.
+GNU Midnight Commander is a visual file manager.
 It's a feature rich full-screen text mode application that allows you to copy,
-move and delete files and whole directory trees, search for files
-and run commands in the subshell. Internal viewer and editor are included.
+move and delete files and whole directory trees, search for files and run commands in the subshell.
+Internal viewer and editor are included as well.
 
 endef
 
@@ -105,8 +104,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mc $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/mc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.charsets $(1)/etc/mc
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.keymap $(1)/etc/mc	
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.ext $(1)/etc/mc	
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.default.keymap $(1)/etc/mc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.ext $(1)/etc/mc
 ifeq ($(CONFIG_MC_DIFFVIEWER),y)
 	ln -sf mc $(1)/usr/bin/mcdiff
 endif

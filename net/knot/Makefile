@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=2.1.1
+PKG_VERSION:=2.2.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_MD5SUM:=ee6a54ec8a7898579b768c66e2eaeb54
+PKG_MD5SUM:=ac00a189038fd692c53b2e8c1837c5cb
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=GPL-3.0 LGPL-2.0 0BSD MIT OLDAP-2.8
@@ -62,7 +61,7 @@ endef
 define Package/knot
 	$(call Package/knot/Default)
 	TITLE+= server
-	DEPENDS=+liburcu +knot-libdnssec +knot-libknot +knot-libzscanner
+	DEPENDS=+liburcu +libedit +knot-libdnssec +knot-libknot +knot-libzscanner
 endef
 
 define Package/knot-dig
@@ -161,9 +160,9 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)
 	$(MAKE) -C $(PKG_BUILD_DIR)/libtap check
-	$(MAKE) -C $(PKG_BUILD_DIR)/src/dnssec/tests check-compile-only
-	$(MAKE) -C $(PKG_BUILD_DIR)/tests check-compile-only
-	$(MAKE) -C $(PKG_BUILD_DIR)/src/zscanner check-compile-only
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/dnssec/tests check-compile
+	$(MAKE) -C $(PKG_BUILD_DIR)/tests check-compile
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/zscanner check-compile
 endef
 
 define Build/InstallDev
