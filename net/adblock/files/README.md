@@ -1,4 +1,4 @@
-# adblock script for openwrt
+# dns based ad/abuse domain blocking
 
 ## Description
 A lot of people already use adblocker plugins within their desktop browsers, but what if you are using your (smart) phone, tablet, watch or any other wlan gadget...getting rid of annoying ads, trackers and other abuse sites (like facebook ;-) is simple: block them with your router. When the dns server on your router receives dns requests, you will sort out queries that ask for the resource records of ad servers and return the local ip address of your router and the internal web server delivers a transparent pixel instead.  
@@ -46,7 +46,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * [zeus tracker](https://zeustracker.abuse.ch)
     * => daily updates, approx. 440 entries
 * zero-conf like automatic installation & setup, usually no manual changes needed (i.e. ip address, network devices etc.)
-* supports a wide range of router modes, as long as the firewall and the DNS server are enabled
+* supports a wide range of router modes (incl. AP mode), as long as the firewall and the DNS server are enabled
 * full IPv4 and IPv6 support
 * each blocklist source will be updated and processed separately
 * timestamp check to download and process only updated adblock list sources
@@ -61,18 +61,19 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * use dynamic iptables rulesets for adblock related redirects/rejects
 * openwrt init system support (start/stop/restart/reload)
 * hotplug support, the adblock start will be triggered by wan 'ifup' event
-* optional: adblock list backup/restore (disabled by default)
+* optional: automatic adblock list backup/restore, backups will be (de-)compressed on the fly (disabled by default)
 * optional: add new adblock sources via uci config (see example below)
 
 ## Prerequisites
 * [openwrt](https://openwrt.org), tested with latest stable release (Chaos Calmer) and with current trunk (Designated Driver)
-* usual openwrt setup with enabled 'iptables', 'dnsmasq' and 'uhttpd' - dump AP modes are _not_ supported!
+* [LEDE project](https://www.lede-project.org), tested with trunk > r98
+* usual openwrt setup with enabled 'iptables', 'dnsmasq' and 'uhttpd' - dump AP modes without these basics are _not_ supported!
 * additional required software packages:
     * wget
     * optional: 'kmod-ipt-nat6' for IPv6 support
 * the above dependencies and requirements will be checked during package installation & script runtime
 
-## Designated Driver Installation & Usage
+## OpenWrt / LEDE trunk Installation & Usage
 * install 'adblock' (_opkg install adblock_)
 * adblock starts automatically during boot/wan-ifup event, check _logread -e "adblock"_ for adblock related information
 * optional: start/restart/stop the adblock service manually with _/etc/init.d/adblock_
@@ -94,12 +95,13 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * install the packages with _opkg install <...>_ as described above
 
 ## Tweaks
-* to process & store all blocklist sources at once it might helpful to enlarge your temp directory with a swap partition => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
-* add domain white- or blacklist entries to always-allow or -deny certain (sub) domains, by default both lists are located in _/etc/adblock_. Please add one domain per line - ip addresses, wildcards & regex are _not_ allowed (see example below)
-* enable the backup/restore feature, to restore automatically the latest stable backup of your adblock lists in case of any (partial) processing error (i.e. a single blocklist source is down). Please use an (external) solid partition and _not_ your volatile router temp directory for this
-* for a scheduled call of the adblock service via _/etc/init.d/adblock start_ add an appropriate crontab entry (see example below)
-* in case of any script runtime errors, you should enable script debugging: for this please change the 'DEBUG' variable in the header of _/usr/bin/adblock-update.sh_ from '0' to '1' and start this script afterwards (without any parameter)
-* you could add new blocklist sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
+* **storage:** to process & store all blocklist sources at once it might helpful to enlarge your temp directory with a swap partition => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
+* **white-/blacklist:** add domain white- or blacklist entries to always-allow or -deny certain (sub) domains, by default both lists are located in _/etc/adblock_. Please add one domain per line - ip addresses, wildcards & regex are _not_ allowed (see example below)
+* **backup/restore:** enable the backup/restore feature, to restore automatically the latest compressed backup of your adblock lists in case of any processing error (i.e. a single blocklist source is down). Please use an (external) solid partition and _not_ your volatile router temp directory for this
+* **list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
+* **new list sources:** you could add new blocklist sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
+* **AP mode:** in AP mode adblock uses automatically the local router ip as nullip address. To make sure that your LuCI interface will be still accessible, please change the local uhttpd instance to ports <> 80/443 (see example below)
+* **debugging:** for script debugging please change the 'DEBUG' variable in the header of _/usr/bin/adblock-update.sh_ from '0' to '1' and start this script directly (without any parameters)
 
 ## Further adblock config options
 * usually the adblock autodetection works quite well and no manual config overrides are needed, all options apply to the 'global' config section:
@@ -107,13 +109,13 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_cfgversion => config version string (do not change!) - adblock will check this entry during startup
     * adb\_lanif => name of the logical lan interface (default: 'lan')
     * adb\_nullport => port of the adblock uhttpd instance (default: '65535')
-    * adb\_nullipv4 => IPv4 blackhole ip address (default: '192.0.2.1')
-    * adb\_nullipv6 => IPv6 blackhole ip address (default: '::ffff:c000:0201')
+    * adb\_nullipv4 => IPv4 blackhole ip address (default: '192.0.2.1', in AP mode: local router ip)
+    * adb\_nullipv6 => IPv6 blackhole ip address (default: '::ffff:c000:0201', in AP mode: local router ip)
     * adb\_forcedns => redirect all DNS queries to local dnsmasq resolver (default: '1', enabled)
 
 ## Examples
 
-**example cronjob for a regular update of the block lists:**
+**example cronjob for a regular block list update:**
 <pre><code>
 # configuration found in /etc/crontabs/root
 # start adblock script once a day at 6 a.m.
@@ -147,6 +149,16 @@ This rule removes _all_ domains from the blocklists with this string in it, i.e.
   photos.daily-deals.analoganalytics.com  
   adblockanalytics.com  
   
+**example uhttpd configuration in AP mode:**
+<pre><code>
+# configuration found in /etc/config/uhttpd
+# change default http/https ports <> 80/443
+#
+config uhttpd 'main'
+    list listen_http '0.0.0.0:88'
+    list listen_https '0.0.0.0:445'
+</code></pre>
+  
 **example to add a new blocklist source:**
 <pre><code>
 1. the easy way ...
@@ -177,14 +189,15 @@ If your awk one-liner works quite well, add a new source section in adblock conf
 </code></pre>
   
 ## Background
-This adblock package is a dns/dnsmasq based adblock solution for openwrt.  
+This adblock package is a dns/dnsmasq based adblock solution.  
 Queries to ad/abuse domains are never forwarded and always replied with a local IP address which may be IPv4 or IPv6.  
-For that purpose adblock uses an ip address from the private 'TEST-NET-1' subnet (192.0.2.1 / ::ffff:c000:0201) by default.  
+For that purpose adblock uses an ip address from the private 'TEST-NET-1' subnet (192.0.2.1 / ::ffff:c000:0201) by default (in AP mode the local router ip address will be used).  
 Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to internal adblock pixel server (in PREROUTING chain) or rejected (in FORWARD or OUTPUT chain).  
 All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other openwrt related config files. There is _no_ adblock background daemon running, the (scheduled) start of the adblock service keeps only the adblock lists up-to-date.  
+--ifup event
 
 ## Support
-Please join the adblock discussion in this [openwrt forum thread](https://forum.openwrt.org/viewtopic.php?id=59803) or contact me by mail <openwrt@brenken.org>  
+Please join the adblock discussion in this [openwrt forum thread](https://forum.openwrt.org/viewtopic.php?id=59803) or contact me by mail <dev@brenken.org>  
 
 ## Removal
 * stop all adblock related services with _/etc/init.d/adblock stop_
