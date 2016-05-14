@@ -19,7 +19,9 @@ PKG_SOURCE_URL:=http://www.kyne.com.au/~mark/software/download/
 PKG_MD5SUM:=24f270663e9f6ca8ba2a02cef19f7963
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+HOST_BUILD_DEPENDS:=lua/host
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -39,6 +41,9 @@ endef
 CMAKE_OPTIONS += \
 	-DUSE_LUA=ON
 
+CMAKE_HOST_OPTIONS += \
+	-DLUA_MATH_LIBRARY=m
+
 define Package/lua-cjson/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cjson.so $(1)/usr/lib/lua/
@@ -47,4 +52,5 @@ define Package/lua-cjson/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lua/cjson/util.lua $(1)/usr/lib/lua/cjson
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,lua-cjson))
