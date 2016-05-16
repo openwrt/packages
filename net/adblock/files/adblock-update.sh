@@ -34,10 +34,11 @@ else
     printf "${adb_pid}" > "${adb_pidfile}"
 fi
 
-# get current directory and script version
+# get current directory and set script/config version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="1.1.10"
+adb_scriptver="1.1.11"
+adb_mincfgver="1.2"
 
 # source in adblock function library
 #
