@@ -120,7 +120,7 @@ f_envload()
 
     # check 'enabled' & 'version' config options
     #
-    if [ -z "${adb_enabled}" ] || [ -z "${adb_cfgversion}" ] || [ "${adb_cfgversion}" != "${adb_scriptver%.*}" ]
+    if [ -z "${adb_enabled}" ] || [ -z "${adb_cfgver}" ] || [ "${adb_cfgver}" != "${adb_mincfgver}" ]
     then
         rc=-1
         f_log "outdated adblock configuration found, please copy latest version from '/etc/adblock/adblock.conf.default' to '/etc/config/adblock'"
@@ -499,7 +499,7 @@ f_cntconfig()
     for src_name in $(ls -ASr "${adb_dnsdir}/${adb_dnsprefix}"*)
     do
         count="$(wc -l < "${src_name}")"
-        src_name="${src_name#*.}"
+        src_name="${src_name##*.}"
         if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
         then
             count=$((count / 2))
