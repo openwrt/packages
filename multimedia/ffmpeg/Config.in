@@ -116,6 +116,13 @@ config FFMPEG_CUSTOM_SELECT_libopus
 config FFMPEG_CUSTOM_SELECT_speex
 	bool "Speex"
 
+config FFMPEG_CUSTOM_SELECT_x264
+	bool "x264"
+
+config FFMPEG_CUSTOM_SELECT_mp3lame
+	bool "mp3 lame"
+
+
 comment "Encoders ---"
 
 config FFMPEG_CUSTOM_ENCODER_ac3
