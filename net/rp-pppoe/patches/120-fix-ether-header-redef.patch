@@ -1,0 +1,16 @@
+Index: rp-pppoe-3.11/src/pppoe.h
+===================================================================
+--- rp-pppoe-3.11.orig/src/pppoe.h
++++ rp-pppoe-3.11/src/pppoe.h
+@@ -127,9 +127,11 @@ typedef unsigned long UINT32_t;
+ #error Could not find a 32-bit integer type
+ #endif
+ 
++#ifndef HAVE_NETINET_IF_ETHER_H
+ #ifdef HAVE_LINUX_IF_ETHER_H
+ #include <linux/if_ether.h>
+ #endif
++#endif
+ 
+ #include <netinet/in.h>
+ 
