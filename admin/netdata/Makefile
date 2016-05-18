@@ -26,8 +26,8 @@ PKG_FIXUP:=autoreconf
 include $(INCLUDE_DIR)/package.mk
 
 define Package/netdata
-  SECTION:=package/network/utils
-  CATEGORY:=package/network/utils
+  SECTION:=admin
+  CATEGORY:=Administration
   DEPENDS:=+zlib
   TITLE:=Real-time performance monitoring tool
   URL:=http://netdata.firehol.org/
