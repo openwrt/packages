@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openconnect
 PKG_VERSION:=7.06
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -50,7 +50,8 @@ CONFIGURE_ARGS += \
 	--disable-shared \
 	--with-vpnc-script=/lib/netifd/vpnc-script \
 	--without-libpcsclite \
-	--without-stoken
+	--without-stoken \
+	--without-lz4
 
 ifeq ($(CONFIG_OPENCONNECT_OPENSSL),y)
 CONFIGURE_ARGS += \
