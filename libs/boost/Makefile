@@ -16,14 +16,14 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/target.mk 
 
 PKG_NAME:=boost
-PKG_VERSION:=1_60_0
-PKG_RELEASE:=2
+PKG_VERSION:=1_61_0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_VERSION)
-PKG_MD5SUM:=28f58b9a33469388302110562bdf6188
+PKG_MD5SUM:=874805ba2e2ee415b1877ef3297bf8ad
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
@@ -48,9 +48,9 @@ define Package/boost/description/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.59 libraries.
+This package provides the Boost v1.61 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
-This package provides the following libraries:
+This package provides the following run-time libraries:
  - atomic
  - chrono
  - container
@@ -63,7 +63,7 @@ This package provides the following libraries:
  - graph
  - - graph-parallel
  - iostreams
- - locale
+ - locale (requires kernel being compiled with full language support)
  - log
  - math
  - program_options
@@ -77,6 +77,8 @@ This package provides the following libraries:
  - thread
  - timer
  - wave
+ There are many more header-only libraries supported by Boost.
+ See more at http://www.boost.org/doc/libs/1_61_0/
 endef
 
 BOOST_LIBS =

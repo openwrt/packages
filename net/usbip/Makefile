@@ -33,6 +33,7 @@ Hooks/Prepare/Pre += prepare_source_directory
 PKG_BUILD_DEPENDS:=eudev
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_FLAGS:=nonshared
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
