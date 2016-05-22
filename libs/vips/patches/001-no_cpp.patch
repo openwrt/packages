@@ -98,7 +98,7 @@ diff -u --recursive --new-file vips-7.42.1-vanilla/libvips/Makefile.am vips-7.42
 -nodist_EXTRA_libvips_la_SOURCES = resample/dummy2.cc
 -endif
 -
- # DLLs need dependent libs there too ... put @VIPS_LIBS@ at the end
+ # DLLs need dependant libs there too ... put @VIPS_LIBS@ at the end
  libvips_la_LIBADD = \
  	resample/libresample.la \
 diff -u --recursive --new-file vips-7.42.1-vanilla/libvips/resample/Makefile.am vips-7.42.1/libvips/resample/Makefile.am
