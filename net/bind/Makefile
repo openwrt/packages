@@ -21,7 +21,7 @@ PKG_SOURCE_URL:= \
 	ftp://ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION)
 PKG_MD5SUM:=f2167f42e6f1baad42c637d8771c9675
-
+PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
 
@@ -100,6 +100,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--with-randomdev="/dev/urandom" \
+	--enable-threads \
 	--disable-linux-caps \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--with-libtool \
