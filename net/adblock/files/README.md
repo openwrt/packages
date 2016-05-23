@@ -67,7 +67,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 ## Prerequisites
 * [openwrt](https://openwrt.org), tested with latest stable release (Chaos Calmer) and with current trunk (Designated Driver)
 * [LEDE project](https://www.lede-project.org), tested with trunk > r98
-* usual openwrt setup with enabled 'iptables', 'dnsmasq' and 'uhttpd' - dump AP modes without these basics are _not_ supported!
+* usual setup with enabled 'iptables', 'dnsmasq' and 'uhttpd' - dump AP modes without these basics are _not_ supported!
 * additional required software packages:
     * wget
     * optional: 'kmod-ipt-nat6' for IPv6 support
@@ -75,7 +75,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 
 ## OpenWrt / LEDE trunk Installation & Usage
 * install 'adblock' (_opkg install adblock_)
-* adblock starts automatically during boot/wan-ifup event, check _logread -e "adblock"_ for adblock related information
+* adblock starts automatically during boot, triggered by wan-ifup event, check _logread -e "adblock"_ for adblock related information
 * optional: start/restart/stop the adblock service manually with _/etc/init.d/adblock_
 * optional: enable/disable your required adblock list sources in _/etc/config/adblock_ - 'adaway', 'disconnect' and 'yoyo' are enabled by default
 * optional: maintain the adblock service in luci under 'System => Startup'
@@ -106,7 +106,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 ## Further adblock config options
 * usually the adblock autodetection works quite well and no manual config overrides are needed, all options apply to the 'global' config section:
     * adb\_enabled => main switch to enable/disable adblock service (default: '1', enabled)
-    * adb\_cfgversion => config version string (do not change!) - adblock will check this entry during startup
+    * adb\_cfgver => config version string (do not change!) - adblock will check this entry during startup
     * adb\_lanif => name of the logical lan interface (default: 'lan')
     * adb\_nullport => port of the adblock uhttpd instance (default: '65535')
     * adb\_nullipv4 => IPv4 blackhole ip address (default: '192.0.2.1', in AP mode: local router ip)
@@ -194,7 +194,6 @@ Queries to ad/abuse domains are never forwarded and always replied with a local 
 For that purpose adblock uses an ip address from the private 'TEST-NET-1' subnet (192.0.2.1 / ::ffff:c000:0201) by default (in AP mode the local router ip address will be used).  
 Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to internal adblock pixel server (in PREROUTING chain) or rejected (in FORWARD or OUTPUT chain).  
 All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other openwrt related config files. There is _no_ adblock background daemon running, the (scheduled) start of the adblock service keeps only the adblock lists up-to-date.  
---ifup event
 
 ## Support
 Please join the adblock discussion in this [openwrt forum thread](https://forum.openwrt.org/viewtopic.php?id=59803) or contact me by mail <dev@brenken.org>  
