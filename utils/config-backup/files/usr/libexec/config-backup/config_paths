@@ -1,0 +1,23 @@
+#!/bin/sh
+
+filelist="$1"
+databackup="$2"
+
+sysupgrade_backup_files="$(mktemp)"
+
+# opkg stderr sent to /dev/null due to spurious warnings about
+# opkg lock
+
+( find $(sed -ne '/^[[:space:]]*$/d; /^#/d; p' \
+      /etc/sysupgrade.conf /lib/upgrade/keep.d/* 2>/dev/null) \
+      -type f 2>/dev/null;
+  opkg list-changed-conffiles 2>/dev/null ) | sort -u >>"$sysupgrade_backup_files"
+
+cat $sysupgrade_backup_files >>"$filelist"
+
+if [ "$databackup" = "true" ]; then
+	cp $sysupgrade_backup_files /tmp/sysupgrade_backup_files
+	echo /tmp/sysupgrade_backup_files >>"$filelist"
+fi
+
+rm -f "$sysupgrade_backup_files"
