@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
 PKG_VERSION:=1.1.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause GPL-2.0
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
@@ -199,7 +199,7 @@ define Package/lxc-common/install
 		./files/lxc.conf \
 		$(1)/etc/lxc/lxc.conf
 
-	$(INSTALL_DIR) $(1)/lxc/
+	$(INSTALL_DIR) $(1)/srv/lxc/
 endef
 
 define Package/lxc-hooks/install
