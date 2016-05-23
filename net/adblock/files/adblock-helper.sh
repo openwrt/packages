@@ -115,7 +115,7 @@ f_envload()
     adb_uci="$(which uci)"
     adb_iptv4="$(which iptables)"
     adb_iptv6="$(which ip6tables)"
-    adb_fetch="$(which wget-ssl)"
+    adb_fetch="$(which wget)"
     unset adb_srclist adb_revsrclist adb_errsrclist
 
     # check 'enabled' & 'version' config options
