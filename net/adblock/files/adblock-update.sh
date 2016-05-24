@@ -37,8 +37,8 @@ fi
 # get current directory and set script/config version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="1.1.11"
-adb_mincfgver="1.2"
+adb_scriptver="1.1.12"
+adb_mincfgver="1.3"
 
 # source in adblock function library
 #
