@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 PKG_MD5SUM:=dfae4ff5583649ed24d8f368f1d0543b
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://ftp.gnu.org/gnu/libunistring
+PKG_SOURCE_URL:=@GNU/libunistring
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
