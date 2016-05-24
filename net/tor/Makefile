@@ -12,7 +12,7 @@ PKG_VERSION:=0.2.7.6
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.torproject.org/dist \
+PKG_SOURCE_URL:=https://dist.torproject.org/ \
 	https://archive.torproject.org/tor-package-archive
 PKG_MD5SUM:=cc19107b57136a68e8c563bf2d35b072
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de>
