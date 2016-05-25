@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oonf-dlep-proxy
-PKG_VERSION:=0.11.4
-PKG_REV:=a7087466958d3af477fecf4ad8e412ccca33d4c7
+PKG_VERSION:=0.11.7
+PKG_REV:=ef7a89aadbfbe6318b2ad1dc2c32423bd1970918
 PKG_RELEASE:=$(PKG_REV)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
