@@ -1,0 +1,37 @@
+From 1da75e1395d621480b651100999c5772a723b4d6 Mon Sep 17 00:00:00 2001
+From: Mak Krnic <mak.krnic@sartura.hr>
+Date: Wed, 25 May 2016 17:42:48 +0200
+Subject: [PATCH] remove cmocka dependency
+
+Signed-off-by: Mak Krnic <mak.krnic@sartura.hr>
+---
+ CMakeLists.txt | 13 -------------
+ 1 file changed, 13 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index dcb5d5a..2b04ec1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -133,19 +133,6 @@ if(BUILD_EXAMPLES)
+     add_subdirectory(examples)
+ endif()
+ 
+-# Testing
+-SET(ENABLE_TESTS 1 CACHE BOOL "Enable unit tests.")
+-if(ENABLE_TESTS)
+-    find_package(CMOCKA)
+-    if(CMOCKA_FOUND)
+-        MESSAGE(STATUS "CMocka found, tests are enabled.")
+-        enable_testing()
+-        add_subdirectory(tests)
+-    else(CMOCKA_FOUND)
+-        MESSAGE(WARNING "CMocka not found, tests are disabled.")
+-    endif(CMOCKA_FOUND)
+-endif(ENABLE_TESTS)
+-
+ # Documentation
+ find_package(Doxygen)
+ if(DOXYGEN_FOUND)
+-- 
+2.7.3
+

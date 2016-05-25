@@ -1,0 +1,25 @@
+From dfcab45ba7b922897d3e8d8000994c4995566f3b Mon Sep 17 00:00:00 2001
+From: Mislav Novakovic <mislav.novakovic@sartura.hr>
+Date: Wed, 25 May 2016 12:50:46 +0200
+Subject: [PATCH] remvoe find swig library
+
+Signed-off-by: Mislav Novakovic <mislav.novakovic@sartura.hr>
+---
+ CMakeLists.txt | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2c7d2ed..dcb5d5a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -160,7 +160,6 @@ endif(DOXYGEN_FOUND)
+ set(PYTHON_SWIG_BINDING sysrepoPy)
+ set(LUA_SWIG_BINDING sysrepoLua)
+ 
+-FIND_PACKAGE(SWIG)
+ if (SWIG_FOUND)
+     INCLUDE(${SWIG_USE_FILE})
+     FIND_PACKAGE(PythonLibs 2)
+-- 
+2.8.2
+
