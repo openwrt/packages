@@ -10,7 +10,7 @@
  
 --- /dev/null
 +++ b/src/libstrongswan/musl.h
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,48 @@
 +#include <sys/types.h>
 +
 +#define crypt x_crypt
@@ -32,6 +32,15 @@
 +#define timer_t x_timer_t
 +#define blkcnt_t x_blkcnt_t
 +#define __kernel_nlink_t void
++
++/*
++ * Support for brcm47xx/atheros ar9331
++ * In arch/mips/include/asm/posix_types.h __kernel_nlink_t will be defined as typedef unsigned long/int
++ * that is not compatible with void defined above
++ */
++#if ( (_MIPS_SZLONG == 32) || (_MIPS_SZLONG == 64) )
++#undef __kernel_nlink_t
++#endif
 +
 +#include <linux/types.h>
 +
