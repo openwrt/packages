@@ -2,13 +2,18 @@
 #
 
 START=99
+EXTRA_COMMANDS="toggle"
+EXTRA_HELP="        toggle  Toggle adblocking 'on' or 'off'"
 
 exec 2>/dev/null
 adb_pid="${$}"
 adb_script="/usr/bin/adblock-update.sh"
+adb_dnsdir="/tmp/dnsmasq.d"
+adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
+adb_dnsprefix="adb_list"
 adb_pidfile="/var/run/adblock.pid"
-adb_logger="/usr/bin/logger"
-adb_uci="/sbin/uci"
+adb_logger="$(which logger)"
+adb_uci="$(which uci)"
 
 if [ -t 1 ]
 then
@@ -30,7 +35,7 @@ remove_config()
     local value opt section="${1}" options="adb_src_timestamp adb_src_count"
     for opt in ${options}
     do
-        ${adb_uci} -q delete "adblock.${section}.${opt}"
+        "${adb_uci}" -q delete "adblock.${section}.${opt}"
     done
 }
 
@@ -57,17 +62,47 @@ reload()
     start
 }
 
+toggle()
+{
+if [ -d "${adb_dnshidedir}" ]
+then
+    list_dns="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print)"
+    list_dnshide="$(find "${adb_dnshidedir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print)"
+    if [ -n "${list_dns}" ]
+    then
+        mv -f "${adb_dnsdir}/${adb_dnsprefix}"* "${adb_dnshidedir}"
+        "${adb_uci}" -q set "adblock.global.adb_dnstoggle=off"
+        "${adb_uci}" -q commit "adblock"
+        /etc/init.d/dnsmasq restart
+        "${adb_logger}" ${log_parm} -t "adblock[${adb_pid}] info " "toggle for adblocking switched 'off'" 2>&1
+    elif [ -n "${list_dnshide}" ]
+    then
+        mv -f "${adb_dnshidedir}/${adb_dnsprefix}"* "${adb_dnsdir}"
+        "${adb_uci}" -q set "adblock.global.adb_dnstoggle=on"
+        "${adb_uci}" -q commit "adblock"
+        /etc/init.d/dnsmasq restart
+        "${adb_logger}" ${log_parm} -t "adblock[${adb_pid}] info " "toggle for adblocking switched 'on'" 2>&1
+    fi
+fi
+}
+
 stop()
 {
-    rm_done="$(find "/tmp/dnsmasq.d" -maxdepth 1 -type f -name "adb_list.*" -print -exec rm -f "{}" \;)"
+    if [ -d "${adb_dnshidedir}" ]
+    then
+        find "${adb_dnshidedir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -exec mv -f "{}" "${adb_dnsdir}" \;
+    fi
+    rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print -exec rm -f "{}" \;)"
     rc=${?}
     if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
     then
         . "/lib/functions.sh"
         config_load adblock
         config_foreach remove_config source
-        ${adb_uci} -q delete "adblock.global.adb_overall_count"
-        ${adb_uci} -q commit "adblock"
+        "${adb_uci}" -q set "adblock.global.adb_dnstoggle=on"
+        "${adb_uci}" -q delete "adblock.global.adb_overall_count"
+        "${adb_uci}" -q commit "adblock"
+        rm -rf "${adb_dnshidedir}"
         /etc/init.d/dnsmasq restart
         /etc/init.d/firewall restart
     fi
