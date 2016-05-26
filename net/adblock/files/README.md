@@ -59,8 +59,9 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * status & error logging to stdout and syslog
 * use a dynamic uhttpd instance as an adblock pixel server
 * use dynamic iptables rulesets for adblock related redirects/rejects
-* openwrt init system support (start/stop/restart/reload)
+* init system support (start/stop/restart/reload/toggle)
 * hotplug support, the adblock start will be triggered by wan 'ifup' event
+* adblock toggle to quickly (temporary) switch adblocking 'on' or 'off'
 * optional: automatic adblock list backup/restore, backups will be (de-)compressed on the fly (disabled by default)
 * optional: add new adblock sources via uci config (see example below)
 
@@ -101,6 +102,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
 * **new list sources:** you could add new blocklist sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
 * **AP mode:** in AP mode adblock uses automatically the local router ip as nullip address. To make sure that your LuCI interface will be still accessible, please change the local uhttpd instance to ports <> 80/443 (see example below)
+* **adblock toggle:** to quickly switch adblocking 'on' or 'off', simply use _/etc/init.d/adblock toggle_
+* **outdated configuration:** if adblock detects an outdated config file, please copy the current version from '/etc/adblock/adblock.conf.default' to '/etc/config/adblock', make your individual changes and finally restart the adblock service
 * **debugging:** for script debugging please change the 'DEBUG' variable in the header of _/usr/bin/adblock-update.sh_ from '0' to '1' and start this script directly (without any parameters)
 * **disable active dns probing in windows:** to prevent a possible yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
 
@@ -113,6 +116,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_nullipv4 => IPv4 blackhole ip address (default: '192.0.2.1', in AP mode: local router ip)
     * adb\_nullipv6 => IPv6 blackhole ip address (default: '::ffff:c000:0201', in AP mode: local router ip)
     * adb\_forcedns => redirect all DNS queries to local dnsmasq resolver (default: '1', enabled)
+    * adb\_fetchttl => set the timeout for list downloads (default: '5' seconds)
 
 ## Examples
 
