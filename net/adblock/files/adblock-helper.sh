@@ -38,6 +38,7 @@ f_envload()
     adb_whitelist="/etc/adblock/adblock.whitelist"
     adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\$1)}"
     adb_forcedns=1
+    adb_fetchttl=5
 
     # function to parse global section by callback
     #
@@ -111,6 +112,7 @@ f_envload()
     adb_tmpfile="$(mktemp -tu)"
     adb_tmpdir="$(mktemp -p /tmp -d)"
     adb_dnsdir="/tmp/dnsmasq.d"
+    adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
     adb_dnsprefix="adb_list"
     adb_uci="$(which uci)"
     adb_iptv4="$(which iptables)"
@@ -120,11 +122,14 @@ f_envload()
 
     # check 'enabled' & 'version' config options
     #
-    if [ -z "${adb_enabled}" ] || [ -z "${adb_cfgver}" ] || [ "${adb_cfgver}" != "${adb_mincfgver}" ]
+    if [ -z "${adb_enabled}" ] || [ -z "${adb_cfgver}" ] || [ "${adb_cfgver%%.*}" != "${adb_mincfgver%%.*}" ]
     then
         rc=-1
-        f_log "outdated adblock configuration found, please copy latest version from '/etc/adblock/adblock.conf.default' to '/etc/config/adblock'"
+        f_log "outdated adblock config (${adb_mincfgver} vs. ${adb_cfgver}), please use latest version from '/etc/adblock/adblock.conf.default'"
         f_exit
+    elif [ "${adb_cfgver#*.}" != "${adb_mincfgver#*.}" ]
+    then
+        outdate_ok="true"
     fi
     if [ $((adb_enabled)) -ne 1 ]
     then
@@ -202,6 +207,11 @@ f_envcheck()
 {
     local check
 
+    if [ "${outdate_ok}" = "true" ]
+    then
+        f_log "partially outdated adblock config (${adb_mincfgver} vs. ${adb_cfgver}), please use latest version from '/etc/adblock/adblock.conf.default'"
+    fi
+
     if [ "${apmode_ok}" = "true" ]
     then
         f_log "AP mode enabled"
@@ -235,9 +245,18 @@ f_envcheck()
         fi
     fi
 
+    # check dns hideout directory
+    #
+    if [ -d "${adb_dnshidedir}" ]
+    then
+        mv_done="$(find "${adb_dnshidedir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print -exec mv -f "{}" "${adb_dnsdir}" \;)"
+    else
+        mkdir -p -m 660 "${adb_dnshidedir}"
+    fi
+
     # check ca-certificates package and set fetch parms accordingly
     #
-    fetch_parm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=5 --connect-timeout=5 --read-timeout=5"
+    fetch_parm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=${adb_fetchttl} --connect-timeout=${adb_fetchttl} --read-timeout=${adb_fetchttl}"
     check="$(printf "${pkg_list}" | grep "^ca-certificates -")"
     if [ -z "${check}" ]
     then
