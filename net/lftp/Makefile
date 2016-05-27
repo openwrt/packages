@@ -61,6 +61,7 @@ CONFIGURE_ARGS += \
 	--without-libidn \
 	--without-libresolv \
 	--with-openssl="$(STAGING_DIR)/usr" \
+	--with-readline="$(STAGING_DIR)/usr" \
 	--with-zlib="$(STAGING_DIR)/usr" \
 	--disable-static
 
