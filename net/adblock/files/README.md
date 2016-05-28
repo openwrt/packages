@@ -39,7 +39,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => weekly updates, approx. 12.000 entries
     * [winhelp](http://winhelp2002.mvps.org)
     * => infrequent updates, approx. 15.000 entries
-    * [winspy](https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/hostsBlockWindowsSpy.txt)
+    * [winspy](https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/hosts/windows10_spy.txt)
     * => infrequent updates, approx. 120 entries
     * [yoyo](http://pgl.yoyo.org/adservers)
     * => weekly updates, approx. 2.500 entries (enabled by default)
@@ -59,8 +59,9 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * status & error logging to stdout and syslog
 * use a dynamic uhttpd instance as an adblock pixel server
 * use dynamic iptables rulesets for adblock related redirects/rejects
-* openwrt init system support (start/stop/restart/reload)
+* init system support (start/stop/restart/reload/toggle)
 * hotplug support, the adblock start will be triggered by wan 'ifup' event
+* adblock toggle to quickly (temporary) switch adblocking 'on' or 'off'
 * optional: automatic adblock list backup/restore, backups will be (de-)compressed on the fly (disabled by default)
 * optional: add new adblock sources via uci config (see example below)
 
@@ -101,7 +102,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
 * **new list sources:** you could add new blocklist sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
 * **AP mode:** in AP mode adblock uses automatically the local router ip as nullip address. To make sure that your LuCI interface will be still accessible, please change the local uhttpd instance to ports <> 80/443 (see example below)
+* **adblock toggle:** to quickly switch adblocking 'on' or 'off', simply use _/etc/init.d/adblock toggle_
+* **outdated configuration:** if adblock detects an outdated config file, please copy the current version from '/etc/adblock/adblock.conf.default' to '/etc/config/adblock', make your individual changes and finally restart the adblock service
 * **debugging:** for script debugging please change the 'DEBUG' variable in the header of _/usr/bin/adblock-update.sh_ from '0' to '1' and start this script directly (without any parameters)
+* **disable active dns probing in windows:** to prevent a possible yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
 
 ## Further adblock config options
 * usually the adblock autodetection works quite well and no manual config overrides are needed, all options apply to the 'global' config section:
@@ -112,6 +116,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_nullipv4 => IPv4 blackhole ip address (default: '192.0.2.1', in AP mode: local router ip)
     * adb\_nullipv6 => IPv6 blackhole ip address (default: '::ffff:c000:0201', in AP mode: local router ip)
     * adb\_forcedns => redirect all DNS queries to local dnsmasq resolver (default: '1', enabled)
+    * adb\_fetchttl => set the timeout for list downloads (default: '5' seconds)
 
 ## Examples
 
@@ -126,28 +131,28 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 **example blacklist entry (/etc/adblock/adblock.blacklist):**
 <pre><code>
 ads.example.com
+
+This rule blocks:
+  http://ads.example.com/foo.gif
+  http://server1.ads.example.com/foo.gif
+  https://ads.example.com:8000/
+
+This rule doesn't block:
+  http://ads.example.com.ua/foo.gif
+  http://example.com/
 </code></pre>
-  
-This rule blocks:  
-http://ads.example.com/foo.gif  
-http://server1.ads.example.com/foo.gif  
-https://ads.example.com:8000/  
-  
-This rule doesn't block:  
-http://ads.example.com.ua/foo.gif  
-http://example.com/  
   
 **example whitelist entry (/etc/adblock/adblock.whitelist):**
 <pre><code>
 analytics.com
+
+This rule removes _all_ domains from the blocklists with this string in it, i.e.:
+  google-analytics.com
+  ssl.google-analytics.com
+  api.gameanalytics.com
+  photos.daily-deals.analoganalytics.com
+  adblockanalytics.com
 </code></pre>
-  
-This rule removes _all_ domains from the blocklists with this string in it, i.e.:  
-  google-analytics.com  
-  ssl.google-analytics.com  
-  api.gameanalytics.com  
-  photos.daily-deals.analoganalytics.com  
-  adblockanalytics.com  
   
 **example uhttpd configuration in AP mode:**
 <pre><code>
@@ -159,12 +164,37 @@ config uhttpd 'main'
     list listen_https '0.0.0.0:445'
 </code></pre>
   
+**example grep for blocked (sub-)domains in adblock source files:**
+<pre><code>
+grep "google-analytics.com" "/tmp/dnsmasq.d/adb_list"*
+
+This will output all matches with corresponding source files:
+  /tmp/dnsmasq.d/adb_list.winhelp:address=/ssl.google-analytics.com/192.0.2.1
+  /tmp/dnsmasq.d/adb_list.winhelp:address=/www.google-analytics.com/192.0.2.1
+  /tmp/dnsmasq.d/adb_list.yoyo:address=/google-analytics.com/192.0.2.1
+</code></pre>
+  
+**example to find blocked domains on certain sites for whitelisting:**
+<pre><code>
+1. the easy way ...
+enable the network analysis builtins in chrome or firefox to identify domains
+which are redirected to the adblock null-ip (default 192.0.2.1), add these domains to your whitelist
+
+2. a bit harder ...
+enable 'Log queries' in the dnsmasq configuration (via LuCI Network => DHCP/DNS),
+ssh to your router and start tracing with 'logread -f -e "dnsmasq" -e "192.0.2.1"'
+switch to your client, access the relevant site and check all domains
+that are blocked/listed in logread, add these domains to your whitelist
+
+=> finally restart the adblock service (/etc/init.d/adblock restart) in both variants
+</code></pre>
+  
 **example to add a new blocklist source:**
 <pre><code>
 1. the easy way ...
 example: https://easylist-downloads.adblockplus.org/rolist+easylist.txt
 adblock already supports an easylist source, called 'ruadlist'. To add the additional local easylist
-as a new source, copy the existing config source 'ruadlist' section and change only 
+as a new source, copy the existing config source 'ruadlist' section and change only
 the source name, the url and the description - that's all!
 
 config source 'rolist'

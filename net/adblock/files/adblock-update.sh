@@ -37,8 +37,8 @@ fi
 # get current directory and set script/config version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="1.1.11"
-adb_mincfgver="1.2"
+adb_scriptver="1.1.15"
+adb_mincfgver="2.0"
 
 # source in adblock function library
 #
@@ -298,8 +298,9 @@ fi
 #
 f_cntconfig
 adb_count="$(${adb_uci} -q get "adblock.global.adb_overall_count")"
-if [ -n "${adb_revsrclist}" ] || [ -n "${rm_done}" ] || [ -n "${restore_done}" ]
+if [ -n "${adb_revsrclist}" ] || [ -n "${rm_done}" ] || [ -n "${restore_done}" ] || [ -n "${mv_done}" ]
 then
+    "${adb_uci}" -q set "adblock.global.adb_dnstoggle=on"
     /etc/init.d/dnsmasq restart
     sleep 1
     rc="$(ps | grep -q "[d]nsmasq"; printf ${?})"
