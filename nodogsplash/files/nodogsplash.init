@@ -257,7 +257,7 @@ start_service() {
   mkdir -p /tmp/etc/
   config_load nodogsplash
 
-  config_foreach create_instance instance
+  config_foreach create_instance nodogsplash
 }
 
 stop_service() {
