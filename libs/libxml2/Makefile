@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxml2
-PKG_VERSION:=2.9.3
+PKG_VERSION:=2.9.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://gd.tuwien.ac.at/languages/libxml/ \
 	http://xmlsoft.org/sources/ \
 	ftp://fr.rpmfind.net/pub/libxml/
-PKG_MD5SUM:=daece17e045f1c107610e137ab50c179
+PKG_MD5SUM:=ae249165c173b1ff386ee8ad676815f5
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
