@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=5.1.1
-PKG_RELEASE=$(PKG_SOURCE_VERSION)-4
+PKG_RELEASE=$(PKG_SOURCE_VERSION)-5
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
@@ -33,21 +33,45 @@ define Package/seafile-server
     DEPENDS:=+libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub +sqlite3-cli +python-mysql \
 		+jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 +libmysqlclient \
 		+libpthread +libuuid +bash +procps-ng +procps-ng-pkill $(ICONV_DEPENDS)
+ifeq ($(CONFIG_SEAFILE_FUSE_SUPPORT),y)
+    DEPENDS += +libfuse
+endif
     EXTRA_DEPENDS:=seafile-ccnet (=5.1.1-6d94fdc4296d542a5552039dc13a67c3448e8b13-1), seafile-seahub (=5.1.1-95f762f396c81f840fe658ab983df53784083bb1-1)
+    MENU:=1
+endef
+
+define Package/seafile-server/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/seafile-server/description
    Open source cloud storage with advanced features on privacy protection and teamwork.
 endef
 
-CONFIGURE_ARGS += --disable-riak \
-		    --disable-client \
-		    --disable-fuse \
+CONFIGURE_ARGS += --disable-client \
 		    --enable-server \
 		    --enable-python \
 		    --disable-static-build \
-		    --disable-server-pkg \
-		    --disable-console
+		    --disable-server-pkg
+
+ifeq ($(CONFIG_SEAFILE_FUSE_SUPPORT),y)
+	CONFIGURE_ARGS += --enable-fuse
+	TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/fuse
+else
+	CONFIGURE_ARGS += --disable-fuse
+endif
+
+ifeq ($(CONFIG_SEAFILE_CONSOLE_SUPPORT),y)
+	CONFIGURE_ARGS += --enable-console
+else
+	CONFIGURE_ARGS += --disable-console
+endif
+
+ifeq ($(CONFIG_SEAFILE_RIAK_SUPPORT),y)
+	CONFIGURE_ARGS += --enable-riak
+else
+	CONFIGURE_ARGS += --disable-riak
+endif
 
 PKG_BUILD_DEPENDS:=vala/host libevhtp
 
@@ -71,6 +95,9 @@ define Package/seafile-server/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libseafile.so* $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/scripts/seaf-gc.sh $(1)/usr/share/seafile/seafile-server/
 	$(CP) $(PKG_BUILD_DIR)/scripts/seaf-fsck.sh $(1)/usr/share/seafile/seafile-server/
+ifeq ($(CONFIG_SEAFILE_FUSE_SUPPORT),y)
+	$(CP) $(PKG_BUILD_DIR)/scripts/seaf-fuse.sh $(1)/usr/share/seafile/seafile-server/
+endif
 	$(CP) $(PKG_BUILD_DIR)/scripts/setup-seafile-mysql.py $(1)/usr/share/seafile/seafile-server/
 	$(CP) $(PKG_BUILD_DIR)/scripts/setup-seafile-mysql.sh $(1)/usr/share/seafile/seafile-server/
 	$(CP) $(PKG_BUILD_DIR)/scripts/sqlite2mysql.py $(1)/usr/share/seafile/seafile-server/
@@ -111,8 +138,9 @@ then
    fi
 else
    echo "*** seafile-data directory already exists."
+   echo
    echo "*** In case you are upgrading seafile, please run the appropriate upgrade script"
-   echo "*** manually before using the new version of Seafile."
+   echo "*** manually before using the new version."
    echo "*** Upgrade scripts are located at \"/usr/share/seafile/seafile-server/upgrade\""
    echo
    echo "*** For more information, please read http://manual.seafile.com/deploy/upgrade.html"
