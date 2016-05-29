@@ -3,8 +3,8 @@ menu "Configuration"
 
 config SEAFILE_FUSE_SUPPORT
 	bool "Enable FUSE support"
-	default n
 	select PACKAGE_libfuse
+	default n
 
 config SEAFILE_CONSOLE_SUPPORT
 	bool "Enable seafile server console"
