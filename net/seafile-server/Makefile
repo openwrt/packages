@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=5.1.1
-PKG_RELEASE=$(PKG_SOURCE_VERSION)-5
+PKG_RELEASE=$(PKG_SOURCE_VERSION)-6
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
@@ -32,10 +32,7 @@ define Package/seafile-server
     URL:=http://seafile.com/
     DEPENDS:=+libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub +sqlite3-cli +python-mysql \
 		+jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 +libmysqlclient \
-		+libpthread +libuuid +bash +procps-ng +procps-ng-pkill $(ICONV_DEPENDS)
-ifeq ($(CONFIG_SEAFILE_FUSE_SUPPORT),y)
-    DEPENDS += +libfuse
-endif
+		+libpthread +libuuid +bash +procps-ng +procps-ng-pkill +SEAFILE_FUSE_SUPPORT:libfuse $(ICONV_DEPENDS)
     EXTRA_DEPENDS:=seafile-ccnet (=5.1.1-6d94fdc4296d542a5552039dc13a67c3448e8b13-1), seafile-seahub (=5.1.1-95f762f396c81f840fe658ab983df53784083bb1-1)
     MENU:=1
 endef
