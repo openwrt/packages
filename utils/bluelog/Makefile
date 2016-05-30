@@ -9,11 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluelog
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.digifail.com/software/bluelog
 PKG_MD5SUM:=614d0fe65bae68acff1d33d9f86e4805
+
+OUI_SOURCE:=oui-2016-05-30.txt.gz
+OUI_URL:=http://sources.lede-project.org/
+OUI_MD5SUM:=38048729fdb5a7a7e0c5db6a51dc2dd1
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -58,10 +62,22 @@ define Package/bluelog-live/description
   Bluelog which creates a real-time webpage of discovered Bluetooth devices.
 endef
 
+define Download/oui.txt
+  FILE:=$(OUI_SOURCE)
+  URL:=$(OUI_URL)
+  MD5SUM:=$(OUI_MD5SUM)
+endef
+
 TARGET_CFLAGS += -DOPENWRT
 
 MAKE_FLAGS += \
 	 LIBS="$(TARGET_LDFLAGS) -lbluetooth -lm"
+
+define Build/Prepare
+	$(eval $(call Download,oui.txt))
+	$(Build/Prepare/Default)
+	zcat $(DL_DIR)/$(OUI_SOURCE) > $(PKG_BUILD_DIR)/oui.tmp
+endef
 
 define Package/bluelog/install
 	$(INSTALL_DIR) $(1)/usr/bin
