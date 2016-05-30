@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi1
 PKG_VERSION:=1.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
@@ -21,6 +21,8 @@ PKG_LICENSE_FILES:=COPYING.LIB
 
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
+
+CMAKE_OPTIONS:=-DBUILD_TESTS=OFF
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
