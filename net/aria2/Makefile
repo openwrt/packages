@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aria2
 PKG_VERSION:=1.18.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/aria2
@@ -59,6 +59,7 @@ CONFIGURE_ARGS += \
 	--without-libgcrypt \
 	--without-libexpat \
 	--without-libcares \
+	--without-libuv \
 	--without-sqlite3 \
 	--with-libz
 
