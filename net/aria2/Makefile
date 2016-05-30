@@ -24,7 +24,9 @@ PKG_CONFIG_DEPENDS := \
   ARIA2_OPENSSL \
   ARIA2_GNUTLS \
   ARIA2_BITTORRENT \
-  ARIA2_METALINK
+  ARIA2_METALINK \
+  ARIA2_EXPAT \
+  ARIA2_LIBXML2
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -38,7 +40,7 @@ define Package/aria2
   SUBMENU:=File Transfer
   TITLE:=lightweight download utility
   URL:=http://aria2.sourceforge.net/
-  DEPENDS:=+zlib +ARIA2_METALINK:libxml2 +libstdcpp +ARIA2_OPENSSL:libopenssl +ARIA2_GNUTLS:libgnutls
+  DEPENDS:=+zlib +ARIA2_LIBXML2:libxml2 +ARIA2_EXPAT:libexpat +libstdcpp +ARIA2_OPENSSL:libopenssl +ARIA2_GNUTLS:libgnutls
 endef
 
 define Package/aria2/description
@@ -53,11 +55,11 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_ARIA2_GNUTLS),--with,--without)-gnutls \
 	$(if $(CONFIG_ARIA2_BITTORRENT),--enable,--disable)-bittorrent \
 	$(if $(CONFIG_ARIA2_METALINK),--enable,--disable)-metalink \
-	$(if $(CONFIG_ARIA2_METALINK),--with,--without)-libxml2 \
+	$(if $(CONFIG_ARIA2_LIBXML2),--with,--without)-libxml2 \
+	$(if $(CONFIG_ARIA2_EXPAT),--with,--without)-libexpat \
 	--without-libnettle \
 	--without-libgmp \
 	--without-libgcrypt \
-	--without-libexpat \
 	--without-libcares \
 	--without-sqlite3 \
 	--with-libz
