@@ -67,6 +67,12 @@ CONFIGURE_ARGS += \
 define Package/aria2/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/aria2c $(1)/usr/bin
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/aria2.init $(1)/etc/init.d/aria2
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/aria2.conf $(1)/etc/config/aria2
 endef
 
 $(eval $(call BuildPackage,aria2))
