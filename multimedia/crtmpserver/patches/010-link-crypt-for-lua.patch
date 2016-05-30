@@ -1,6 +1,6 @@
 --- a/builders/make/compile.mk
 +++ b/builders/make/compile.mk
-@@ -67,7 +67,7 @@ TINYXML_OBJS = $(TINYXML_SRCS:.cpp=.tiny
+@@ -72,7 +72,7 @@ TINYXML_OBJS = $(TINYXML_SRCS:.cpp=.tiny
  
  #common
  COMMON_INCLUDE=$(LUA_INCLUDE) $(TINYXML_INCLUDE) $(SSL_INCLUDE) -I$(PROJECT_BASE_PATH)/sources/common/include
