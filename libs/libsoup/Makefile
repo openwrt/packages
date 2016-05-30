@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup
 PKG_VERSION:=2.53.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.53
@@ -19,6 +19,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
+PKG_REMOVE_FILES:=m4/intltool.m4
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -43,6 +44,7 @@ define Build/Configure
 		--without-apache-httpd \
 		--without-gnome \
 		--enable-vala=no \
+		--disable-more-warnings \
 	)
 endef
 
