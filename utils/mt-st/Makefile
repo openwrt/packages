@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_SOURCE_URL:=http://ftp.ibiblio.org/pub/Linux/system/backup/
+PKG_SOURCE_URL:=ftp://ftp.ibiblio.org/pub/Linux/system/backup/
 PKG_MD5SUM:=fdd5f5ec673c9f630a102ceff7612774
 
 PKG_LICENSE:=GPL-2.0
