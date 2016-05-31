@@ -1,0 +1,22 @@
+#
+# Copyright (C) 2010-2016 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+menu "Configuration"
+        depends on PACKAGE_znc
+
+config ZNC_ICU
+  bool
+  prompt "Enable ICU character encoding support."
+  help
+    ZNC has supported character encodings in core since 1.6.0. If you want to
+    look at the earlier "charset" module, it's located at Charset/old. ZNC uses
+    UTF-8 internally. You can configure charset used between clients and ZNC,
+    and charset used between ZNC and the IRC server. Likely values are UTF-8
+    and ISO-8859-1, but you might need other common character encodings.
+  default n
+
+endmenu

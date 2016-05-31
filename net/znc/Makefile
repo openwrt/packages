@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
-PKG_VERSION:=1.6.2
+PKG_VERSION:=1.6.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
 		http://znc.in/releases/archive
-PKG_MD5SUM:=89f6696ed366661f7432ece343fd19d0
+PKG_MD5SUM:=0dad0307e2faea26b9e304e308f7ec63
 
 PKG_MAINTAINER:=Jonas Gorski <jogo@openwrt.org>
 PKG_LICENSE:=Apache-2.0
@@ -23,6 +23,8 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 
+PKG_CONFIG_DEPENDS := \
+	CONFIG_ZNC_ICU
 
 define Package/znc/default
   SUBMENU:=Instant Messaging
@@ -34,7 +36,7 @@ endef
 
 define Package/znc
   $(Package/znc/default)
-  DEPENDS:=+libopenssl +libpthread +libstdcpp
+  DEPENDS:=+libopenssl +libpthread +libstdcpp +ZNC_ICU:icu
   MENU:=1
 endef
 
@@ -42,6 +44,10 @@ define Package/znc/description
 	ZNC is an IRC bouncer with many advanced features like detaching,
 	multiple users, per channel playback buffer, SSL, IPv6, transparent DCC
 	bouncing, and c++ module support to name a few.
+endef
+
+define Package/znc/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/znc/conffiles
@@ -277,7 +283,6 @@ CONFIGURE_VARS += \
 	LIBS="-lstdc++ -lm -lssl -lcrypto $(LIBGCC_S) -lc"
 
 CONFIGURE_ARGS += \
-	--disable-charset \
 	--disable-cyrus \
 	--disable-debug \
 	--enable-largefile \
@@ -289,6 +294,12 @@ CONFIGURE_ARGS += \
 	--disable-tcl \
 	--enable-tdns \
 	--enable-zlib
+
+ifeq ($(CONFIG_ZNC_ICU),y)
+	CONFIGURE_ARGS += --enable-charset
+else
+	CONFIGURE_ARGS += --disable-charset
+endif
 
 define Build/Configure
 	$(call Build/Configure/Default,)
