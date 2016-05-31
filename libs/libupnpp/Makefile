@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupnpp
-PKG_VERSION:=0.11.0
+PKG_VERSION:=0.14.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.lesbonscomptes.com/upmpdcli/downloads
-PKG_MD5SUM:=faefaef9e7dbfe57d9224cf49aab6e2e
+PKG_MD5SUM:=1b10905a365fc6277e1d8ced77278666
 PKG_MAINTAINER:=Petko Bordjukov <bordjukov@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
