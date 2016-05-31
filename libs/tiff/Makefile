@@ -31,7 +31,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tiff/Default
   TITLE:=TIFF
   URL:=http://www.remotesensing.org/libtiff/
-  MAINTAINER:=Jiri Slachta <slachta@cesnet.cz>
+  MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 endef
 
 define Package/libtiff

@@ -28,7 +28,7 @@ define Package/libssh2
   TITLE:=SSH2 library
   URL:=http://www.libssh2.org/
   DEPENDS:=+libopenssl +zlib
-  MAINTAINER:=Jiri Slachta <slachta@cesnet.cz>
+  MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 endef
 
 define Package/libssh2/description
