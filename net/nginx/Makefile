@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.10.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
@@ -241,7 +241,7 @@ define Build/Prepare
 endef
 
 define Download/nginx-naxsi
-	VERSION:=5ab2309f0dc93d33e1443a15db519f8bfed8b455
+	VERSION:=7a6ff365f6be736c826b2d69b967a250ac07197d
 	SUBDIR:=nginx-naxsi
 	FILE:=nginx-naxsi-module-$(PKG_VERSION)-$$(VERSION).tar.gz
 	URL:=https://github.com/nbs-system/naxsi.git
