@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tar
 PKG_VERSION:=1.28
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -21,14 +21,42 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 
+BUILD_DEPENDS:=xz
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/tar
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+bzip2 +libacl +libattr
+  DEPENDS:=+PACKAGE_TAR_POSIX_ACL:libacl +PACKAGE_TAR_XATTR:libattr +PACKAGE_TAR_BZIP2:bzip2
+  EXTRA_DEPENDS:=$(if $(CONFIG_PACKAGE_TAR_XZ),xz)
   TITLE:=GNU tar
   URL:=http://www.gnu.org/software/tar/
+  MENU:=1
+endef
+
+define Package/tar/config
+	config PACKAGE_TAR_POSIX_ACL
+	bool "tar: Enable POSIX ACL support" if PACKAGE_tar
+	default n
+
+	config PACKAGE_TAR_XATTR
+	bool "tar: Enable extended attribute (xattr) support" if PACKAGE_tar
+	default n
+
+	config PACKAGE_TAR_GZIP
+	bool "tar: Enable seamless gzip support" if PACKAGE_tar
+	default y
+
+	config PACKAGE_TAR_BZIP2
+	bool "tar: Enable seamless bzip2 support" if PACKAGE_tar
+	default y
+
+	config PACKAGE_TAR_XZ
+	bool "tar: Enable seamless xz support" if PACKAGE_tar
+	select PACKAGE_xz-utils
+	select PACKAGE_xz
+	default y
 endef
 
 define Package/tar/description
@@ -51,6 +79,18 @@ ln -s busybox $${IPKG_INSTROOT}/bin/tar
 $${IPKG_INSTROOT}/bin/tar 2>&1 | grep 'applet not found' > /dev/null 2>&1 && rm $${IPKG_INSTROOT}/bin/tar
 exit 0
 endef
+
+CONFIGURE_ARGS += \
+	$(if $(CONFIG_PACKAGE_TAR_POSIX_ACL),--with,--without)-posix-acls \
+	$(if $(CONFIG_PACKAGE_TAR_XATTR),--with,--without)-xattrs \
+	$(if $(CONFIG_PACKAGE_TAR_GZIP),--with-gzip=gzip,--without-gzip) \
+	$(if $(CONFIG_PACKAGE_TAR_BZIP2),--with-bzip2=bzip2,--without-bzip2) \
+	$(if $(CONFIG_PACKAGE_TAR_XZ),--with-xz=xz,--without-xz) \
+	--without-compress \
+	--without-lzip \
+	--without-lzma \
+	--without-lzop \
+	--without-selinux
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
