@@ -36,6 +36,7 @@ define Package/nfs-kernel-server
   $(call Package/nfs-kernel-server/Default)
   TITLE:=Kernel NFS server support
   DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +portmap
+  USERID:=nfsnobody=32767:nfsnobody=32767
 endef
 
 define Package/nfs-kernel-server/description
