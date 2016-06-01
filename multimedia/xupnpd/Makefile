@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2015 OpenWrt.org
+# Copyright (C) 2013-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,24 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xupnpd
-PKG_REV:=404
-PKG_VERSION:=$(PKG_REV)
+PKG_REV:=fdeeb919264c1dde4a2ead5045eefbe54011b2dc
+PKG_VERSION:=2016-05-11
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=svn
+PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE_SUBDIR:=xupnpd-$(PKG_VERSION)
-PKG_SOURCE_URL:=http://tsdemuxer.googlecode.com/svn/trunk/xupnpd/src/
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/clark15b/xupnpd.git
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
+
+PKG_LICENSE:=GPLv2
+PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 
 LUA_FLAGS:=-llua
-
-define Build/Compile
-	(cd $(PKG_BUILD_DIR); $(TARGET_CC) -v $(LUA_FLAGS) $(TARGET_CFLAGS) -fno-exceptions -fno-rtti -DWITH_URANDOM $(TARGET_CPPFLAGS) $(TARGET_LDFLAGS) -lm -ldl -lcrypt -o xupnpd *.c *.cpp)
-endef
 
 define Package/xupnpd
   SECTION:=multimedia
@@ -46,6 +45,16 @@ xupnpd - eXtensible UPnP agent
 This program is a light DLNA Media Server which provides ContentDirectory:1 service for sharing IPTV unicast streams over local area network (with udpxy for multicast to HTTP unicast conversion).
 The program shares UTF8-encoded M3U playlists with links over local area network as content of the directory.
 You can watch HDTV broadcasts (multicast or unicast) and listen Internet Radio in IP network without transcoding and PC.
+endef
+
+define Build/Prepare
+	$(PKG_UNPACK)
+	mv -f $(PKG_BUILD_DIR)/src/* $(PKG_BUILD_DIR)/
+	$(Build/Patch)
+endef
+
+define Build/Compile
+        (cd $(PKG_BUILD_DIR); $(TARGET_CC) -v $(LUA_FLAGS) $(TARGET_CFLAGS) -fno-exceptions -fno-rtti -DWITH_URANDOM $(TARGET_CPPFLAGS) $(TARGET_LDFLAGS) -lm -ldl -lcrypt -o xupnpd *.c *.cpp)
 endef
 
 define Package/xupnpd/install
