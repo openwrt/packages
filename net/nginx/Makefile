@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.10.0
+PKG_VERSION:=1.10.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
-PKG_MD5SUM:=c184c873d2798c5ba92be95ed1209c02
+PKG_MD5SUM:=088292d9caf6059ef328aa7dda332e44
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=2-clause BSD-like license
 
