@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v4.4.4
+PKG_VERSION:=v4.4.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
-PKG_MD5SUM:=1ad7915688df85f62a57f43860dc54c6
+PKG_MD5SUM:=376140907bbe362f36065a30af04f020
 
 HOST_BUILD_DEPENDS:=python/host
 PKG_BUILD_DEPENDS:=python/host
@@ -35,7 +35,7 @@ define Package/node
   SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
   URL:=http://nodejs.org/
-  DEPENDS:=+libpthread +librt +libstdcpp +libopenssl +libuv +zlib
+  DEPENDS:=+libpthread +librt +libstdcpp +libopenssl +zlib
 endef
 
 define Package/node/description
@@ -44,7 +44,7 @@ define Package/node/description
    package ecosystem, npm, is the largest ecosystem of open source libraries in the world.
 endef
 
-CPU:=$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))
+CPU:=$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH))))
 
 MAKE_VARS += \
 	DESTCPU=$(CPU)
