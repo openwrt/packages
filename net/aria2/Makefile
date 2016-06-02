@@ -15,7 +15,7 @@ PKG_SOURCE_URL:=https://github.com/aria2/aria2/releases/download/release-$(PKG_V
 PKG_MD5SUM:=bc41d919e7d89835ee01c1175300eddc
 PKG_INSTALL:=1
 
-PKG_MAINTAINER:=Imre Kaloz <kaloz@openwrt.org>
+PKG_MAINTAINER:=Imre Kaloz <kaloz@openwrt.org>, Hsing-Wang Liao <kuoruan@gmail.com>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
 
