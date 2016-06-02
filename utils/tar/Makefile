@@ -36,27 +36,29 @@ define Package/tar
 endef
 
 define Package/tar/config
-	config PACKAGE_TAR_POSIX_ACL
-	bool "tar: Enable POSIX ACL support" if PACKAGE_tar
-	default n
+	if PACKAGE_tar
+		config PACKAGE_TAR_POSIX_ACL
+			bool "tar: Enable POSIX ACL support"
+			default n
 
-	config PACKAGE_TAR_XATTR
-	bool "tar: Enable extended attribute (xattr) support" if PACKAGE_tar
-	default n
+		config PACKAGE_TAR_XATTR
+			bool "tar: Enable extended attribute (xattr) support"
+			default n
 
-	config PACKAGE_TAR_GZIP
-	bool "tar: Enable seamless gzip support" if PACKAGE_tar
-	default y
+		config PACKAGE_TAR_GZIP
+			bool "tar: Enable seamless gzip support"
+			default y
 
-	config PACKAGE_TAR_BZIP2
-	bool "tar: Enable seamless bzip2 support" if PACKAGE_tar
-	default y
+		config PACKAGE_TAR_BZIP2
+			bool "tar: Enable seamless bzip2 support"
+			default y
 
-	config PACKAGE_TAR_XZ
-	bool "tar: Enable seamless xz support" if PACKAGE_tar
-	select PACKAGE_xz-utils
-	select PACKAGE_xz
-	default y
+		config PACKAGE_TAR_XZ
+			bool "tar: Enable seamless xz support"
+			select PACKAGE_xz-utils
+			select PACKAGE_xz
+			default y
+	endif
 endef
 
 define Package/tar/description
