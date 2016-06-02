@@ -110,6 +110,7 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # force_dnstcp		force communication with DNS server via TCP instead of default UDP
 # proxy			using a proxy for communication !!! ALSO used to detect local IP via web => return proxy's IP !!!
 # use_logfile		self-explanatory "/var/log/ddns/$SECTION_ID.log"
+# is_glue			the record that should be updated is a glue record
 #
 # some functionality needs
 # - GNU Wget or cURL installed for sending updates to DDNS service
