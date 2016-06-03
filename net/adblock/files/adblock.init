@@ -6,6 +6,8 @@ EXTRA_COMMANDS="toggle cfgup"
 EXTRA_HELP="	toggle	Toggle adblocking 'on' or 'off'
 	cfgup	Update the adblock configuration file"
 
+PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+
 adb_debug=0
 if [ $((adb_debug)) -eq 0 ]
 then
