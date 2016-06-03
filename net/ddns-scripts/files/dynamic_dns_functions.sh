@@ -956,6 +956,7 @@ get_registered_ip() {
 	# 1	no IP detected
 
 	[ $# -lt 1 -o $# -gt 2 ] && write_log 12 "Error calling 'get_registered_ip()' - wrong number of parameters"
+	[ $is_glue -eq 1 ] && [ -z "$(which host)" ] && write_log 12 "Update of glue records is only supported using BIND host"
 	write_log 7 "Detect registered/public IP"
 
 	# set correct regular expression
@@ -968,6 +969,7 @@ get_registered_ip() {
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4"  || __PROG="$__PROG -6"
 		fi
 		[ $force_dnstcp -eq 1 ] && __PROG="$__PROG -T"	# force TCP
+		[ $is_glue -eq 1 ] && __PROG="$__PROG -v" # use verbose output to get additional section
 
 		__RUNPROG="$__PROG $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BIND host"
@@ -1039,6 +1041,12 @@ get_registered_ip() {
 		else
 			if [ "$__PROG" = "BIND host" ]; then
 				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
+
+				if [ $is_glue -eq 1 ]; then
+					__DATA=$(cat $DATFILE | grep "^$lookup_host" | grep -m 1 -o "$__REGEX" )
+				else
+					__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
+				fi
 			elif [ "$__PROG" = "Knot host" ]; then
 				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
 			elif [ "$__PROG" = "drill" ]; then
