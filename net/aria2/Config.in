@@ -23,7 +23,11 @@ config ARIA2_BITTORRENT
 
 config ARIA2_METALINK
 	bool "Enable metalink support"
-	default N
+	default n
+
+config ARIA2_SFTP
+        bool "Enable sftp support"
+        default n
 
 choice
 	prompt "XML library"
