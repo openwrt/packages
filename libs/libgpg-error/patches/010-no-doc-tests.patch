@@ -1,0 +1,22 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -39,7 +39,7 @@ else
+ doc =
+ endif
+ 
+-SUBDIRS = m4 src $(doc) tests po $(lang_subdirs)
++SUBDIRS = m4 src po $(lang_subdirs)
+ 
+ 
+ dist-hook: gen-ChangeLog
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -186,7 +186,7 @@ am__define_uniq_tagged_files = \
+ ETAGS = etags
+ CTAGS = ctags
+ CSCOPE = cscope
+-DIST_SUBDIRS = m4 src doc tests po lang
++DIST_SUBDIRS = m4 src po lang
+ DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+ distdir = $(PACKAGE)-$(VERSION)
+ top_distdir = $(distdir)
