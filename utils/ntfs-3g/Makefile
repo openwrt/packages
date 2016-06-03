@@ -10,10 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ntfs-3g
 PKG_RELEASE:=1
 
-PKG_VERSION:=2015.3.14
+PKG_VERSION:=2016.2.22
 PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://www.tuxera.com/opensource/
-PKG_MD5SUM:=8cd57768310e3b2be39b3191d808e241
+PKG_MD5SUM:=ccbe8672d0f757bd0c975b50aa4c512e
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
@@ -128,7 +128,9 @@ endef
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--with-uuid
+	--with-uuid \
+	--disable-ldconfig \
+	--enable-posix-acls
 
 # configure/make according selection
 ifdef CONFIG_PACKAGE_NTFS-3G_USE_LIBFUSE
