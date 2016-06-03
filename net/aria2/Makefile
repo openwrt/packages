@@ -63,6 +63,7 @@ CONFIGURE_ARGS += \
 	--without-libgmp \
 	--without-libgcrypt \
 	--without-libcares \
+	--without-libuv \
 	--without-sqlite3 \
 	--with-libz
 
