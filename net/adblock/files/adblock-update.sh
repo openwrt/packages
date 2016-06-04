@@ -10,13 +10,6 @@
 #
 LC_ALL=C
 
-# quiet output if 'adb_debug' not set
-#
-if [ -z "${adb_debug}" ]
-then
-    exec 2>/dev/null
-fi
-
 # set pid & logger
 #
 adb_pid="${$}"
@@ -35,8 +28,8 @@ fi
 # get current directory and set script/config version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="1.1.16"
-adb_mincfgver="2.0"
+adb_scriptver="1.1.17"
+adb_mincfgver="2.1"
 
 # source in adblock function library
 #
@@ -301,7 +294,7 @@ then
     "${adb_uci}" -q set "adblock.global.adb_dnstoggle=on"
     /etc/init.d/dnsmasq restart
     sleep 1
-    check="$(ps | pgrep -f "dnsmasq")"
+    check="$(pgrep -f "dnsmasq")"
     if [ -n "${check}" ]
     then
         f_log "adblock lists with overall ${adb_count} domains loaded"
