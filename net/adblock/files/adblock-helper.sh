@@ -12,8 +12,8 @@ f_envload()
     then
         . "/lib/functions.sh"
     else
-        rc=110
-        f_log "system function library not found" "${rc}"
+        rc=-1
+        f_log "system function library not found, please check your installation"
         f_exit
     fi
 
@@ -23,8 +23,8 @@ f_envload()
     then
         . "/lib/functions/network.sh"
     else
-        rc=115
-        f_log "system network library not found" "${rc}"
+        rc=-1
+        f_log "system network library not found, please check your installation"
         f_exit
     fi
 
@@ -39,6 +39,7 @@ f_envload()
     adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\$1)}"
     adb_forcedns=1
     adb_fetchttl=5
+    adb_restricted=0
 
     # function to parse global section by callback
     #
@@ -95,8 +96,8 @@ f_envload()
     pkg_list="$(opkg list-installed)"
     if [ -z "${pkg_list}" ]
     then
-        rc=120
-        f_log "empty package list" "${rc}"
+        rc=-1
+        f_log "empty package list, please check your installation"
         f_exit
     fi
 
@@ -114,10 +115,11 @@ f_envload()
     adb_dnsdir="/tmp/dnsmasq.d"
     adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
     adb_dnsprefix="adb_list"
-    adb_uci="$(which uci)"
     adb_iptv4="$(which iptables)"
     adb_iptv6="$(which ip6tables)"
     adb_fetch="$(which wget)"
+    adb_uci="$(which uci)"
+    adb_date="$(which date)"
     unset adb_srclist adb_revsrclist adb_errsrclist
 
     # check 'enabled' & 'version' config options
@@ -125,7 +127,7 @@ f_envload()
     if [ -z "${adb_enabled}" ] || [ -z "${adb_cfgver}" ] || [ "${adb_cfgver%%.*}" != "${adb_mincfgver%%.*}" ]
     then
         rc=-1
-        f_log "outdated adblock config (${adb_mincfgver} vs. ${adb_cfgver}), please use latest version from '/etc/adblock/adblock.conf.default'"
+        f_log "outdated adblock config (${adb_mincfgver} vs. ${adb_cfgver}), please run '/etc/init.d/adblock cfgup' to update your configuration"
         f_exit
     elif [ "${adb_cfgver#*.}" != "${adb_mincfgver#*.}" ]
     then
@@ -140,8 +142,8 @@ f_envload()
 
     # check running dnsmasq instance
     #
-    rc="$(ps | grep -q "[d]nsmasq"; printf ${?})"
-    if [ $((rc)) -ne 0 ]
+    check="$(pgrep -f "dnsmasq")"
+    if [ -z "${check}" ]
     then
         rc=-1
         f_log "please enable the local dnsmasq instance to use adblock"
@@ -167,6 +169,9 @@ f_envload()
         rc=-1
         f_log "no valid IPv4/IPv6 configuration found (${adb_lanif}), please set 'adb_lanif' manually"
         f_exit
+    else
+        network_get_device adb_landev4 "${adb_lanif}"
+        network_get_device adb_landev6 "${adb_lanif}"
     fi
 
     # check logical update interfaces (with default route)
@@ -184,8 +189,8 @@ f_envload()
     then
         adb_nullipv4="${adb_ipv4}"
         adb_nullipv6="${adb_ipv6}"
-        if [ "$(uci get uhttpd.main.listen_http | grep -Fo "80")" = "80" ] ||
-           [ "$(uci get uhttpd.main.listen_https | grep -Fo "443")" = "443" ]
+        if [ "$(${adb_uci} get uhttpd.main.listen_http | grep -Fo "80")" = "80" ] ||
+           [ "$(${adb_uci} get uhttpd.main.listen_https | grep -Fo "443")" = "443" ]
         then
             rc=-1
             f_log "AP mode detected, set local LuCI instance to ports <> 80/443"
@@ -207,14 +212,26 @@ f_envcheck()
 {
     local check
 
+    # log partially outdated config
+    #
     if [ "${outdate_ok}" = "true" ]
     then
-        f_log "partially outdated adblock config (${adb_mincfgver} vs. ${adb_cfgver}), please use latest version from '/etc/adblock/adblock.conf.default'"
+        f_log "partially outdated adblock config (${adb_mincfgver} vs. ${adb_cfgver}), please run '/etc/init.d/adblock cfgup' to update your configuration"
     fi
 
+    # log ap mode
+    #
     if [ "${apmode_ok}" = "true" ]
     then
         f_log "AP mode enabled"
+    fi
+
+    # set & log restricted mode
+    #
+    if [ $((adb_restricted)) -eq 1 ]
+    then
+        adb_uci="$(which true)"
+        f_log "Restricted mode enabled"
     fi
 
     # check general package dependencies
@@ -272,7 +289,7 @@ f_envcheck()
         then
             if [ $((av_space)) -le 2000 ]
             then
-                rc=125
+                rc=105
                 f_log "not enough free space in '${adb_tmpdir}' (avail. ${av_space} kb)" "${rc}"
                 f_exit
             else
@@ -280,7 +297,7 @@ f_envcheck()
             fi
         fi
     else
-        rc=130
+        rc=110
         f_log "temp directory not found" "${rc}"
         f_exit
     fi
@@ -337,10 +354,10 @@ f_envcheck()
         f_firewall "IPv4" "filter" "A" "forwarding_rule" "adb-fwd" "-d ${adb_nullipv4} -j REJECT --reject-with icmp-host-unreachable"
         f_firewall "IPv4" "filter" "A" "output_rule" "adb-out" "-p tcp -d ${adb_nullipv4} -j REJECT --reject-with tcp-reset"
         f_firewall "IPv4" "filter" "A" "output_rule" "adb-out" "-d ${adb_nullipv4} -j REJECT --reject-with icmp-host-unreachable"
-        if [ $((adb_forcedns)) -eq 1 ]
+        if [ $((adb_forcedns)) -eq 1 ] && [ -n "${adb_landev4}" ]
         then
-            f_firewall "IPv4" "nat" "A" "prerouting_rule" "adb-dns" "-p udp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
-            f_firewall "IPv4" "nat" "A" "prerouting_rule" "adb-dns" "-p tcp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
+            f_firewall "IPv4" "nat" "A" "prerouting_rule" "adb-dns" "-i ${adb_landev4} -p udp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
+            f_firewall "IPv4" "nat" "A" "prerouting_rule" "adb-dns" "-i ${adb_landev4} -p tcp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
         fi
         if [ "${fw_done}" = "true" ]
         then
@@ -358,10 +375,10 @@ f_envcheck()
         f_firewall "IPv6" "filter" "A" "forwarding_rule" "adb-fwd" "-d ${adb_nullipv6} -j REJECT --reject-with icmp6-addr-unreachable"
         f_firewall "IPv6" "filter" "A" "output_rule" "adb-out" "-p tcp -d ${adb_nullipv6} -j REJECT --reject-with tcp-reset"
         f_firewall "IPv6" "filter" "A" "output_rule" "adb-out" "-d ${adb_nullipv6} -j REJECT --reject-with icmp6-addr-unreachable"
-        if [ $((adb_forcedns)) -eq 1 ]
+        if [ $((adb_forcedns)) -eq 1 ] && [ -n "${adb_landev6}" ]
         then
-            f_firewall "IPv6" "nat" "A" "PREROUTING" "adb-dns" "-p udp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
-            f_firewall "IPv6" "nat" "A" "PREROUTING" "adb-dns" "-p tcp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
+            f_firewall "IPv6" "nat" "A" "PREROUTING" "adb-dns" "-i ${adb_landev6} -p udp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
+            f_firewall "IPv6" "nat" "A" "PREROUTING" "adb-dns" "-i ${adb_landev6} -p tcp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
         fi
         if [ "${fw_done}" = "true" ]
         then
@@ -372,8 +389,8 @@ f_envcheck()
 
     # check volatile adblock uhttpd instance configuration
     #
-    rc="$(ps | grep -q "[u]httpd.*\-h /www/adblock"; printf ${?})"
-    if [ $((rc)) -ne 0 ]
+    check="$(pgrep -f "uhttpd -h /www/adblock")"
+    if [ -z "${check}" ]
     then
         if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
         then
@@ -418,7 +435,7 @@ f_depend()
     check="$(printf "${pkg_list}" | grep "^${package} -")"
     if [ -z "${check}" ]
     then
-        rc=135
+        rc=115
         f_log "package '${package}' not found" "${rc}"
         f_exit
     fi
@@ -600,14 +617,14 @@ f_restore()
     then
         /etc/init.d/dnsmasq restart
         sleep 1
-        rc="$(ps | grep -q "[d]nsmasq"; printf ${?})"
-        if [ $((rc)) -eq 0 ]
+        check="$(pgrep -f "dnsmasq")"
+        if [ -n "${check}" ]
         then
             rc=0
             f_cntconfig
             f_log "adblock lists with overall ${adb_count} domains loaded"
         else
-            rc=140
+            rc=120
             f_log "dnsmasq restart failed, please check 'logread' output" "${rc}"
         fi
     fi
@@ -620,6 +637,7 @@ f_exit()
 {
     local ipv4_adblock=0
     local ipv6_adblock=0
+    local lastrun="$(${adb_date} "+%d.%m.%Y %H:%M:%S")"
 
     # delete temporary files & directories
     #
@@ -651,14 +669,14 @@ f_exit()
             "${adb_uci}" -q commit "adblock"
         fi
         f_log "firewall statistics (IPv4/IPv6): ${ipv4_adblock}/${ipv6_adblock} ad related packets blocked"
-        f_log "domain adblock processing finished successfully (${adb_scriptver}, ${adb_sysver}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
+        f_log "domain adblock processing finished successfully (${adb_scriptver}, ${adb_sysver}, ${lastrun})"
     elif [ $((rc)) -gt 0 ]
     then
         if [ -n "$(${adb_uci} -q changes adblock)" ]
         then
             "${adb_uci}" -q revert "adblock"
         fi
-        f_log "domain adblock processing failed (${adb_scriptver}, ${adb_sysver}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
+        f_log "domain adblock processing failed (${adb_scriptver}, ${adb_sysver}, ${lastrun})"
     else
         rc=0
     fi
