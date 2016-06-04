@@ -17,7 +17,8 @@ PKG_MD5SUM:=5d12b39bf3e75e80fdce54e44b255615
 
 PKG_LICENSE:=PSF
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/setuptools-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/python3-setuptools-$(PKG_VERSION)
+PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python3-package.mk)
