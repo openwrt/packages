@@ -142,7 +142,7 @@ f_envload()
 
     # check running dnsmasq instance
     #
-    check="$(ps | pgrep -f "dnsmasq")"
+    check="$(pgrep -f "dnsmasq")"
     if [ -z "${check}" ]
     then
         rc=-1
@@ -389,7 +389,7 @@ f_envcheck()
 
     # check volatile adblock uhttpd instance configuration
     #
-    check="$(ps | pgrep -f "uhttpd -h /www/adblock")"
+    check="$(pgrep -f "uhttpd -h /www/adblock")"
     if [ -z "${check}" ]
     then
         if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
@@ -617,7 +617,7 @@ f_restore()
     then
         /etc/init.d/dnsmasq restart
         sleep 1
-        check="$(ps | pgrep -f "dnsmasq")"
+        check="$(pgrep -f "dnsmasq")"
         if [ -n "${check}" ]
         then
             rc=0
