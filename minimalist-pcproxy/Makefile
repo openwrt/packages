@@ -27,7 +27,7 @@ define Package/minimalist-pcproxy
   CATEGORY:=Network
   TITLE:=Lightweight PCP proxy
   URL:=https://github.com/fingon/minimalist-pcproxy
-  DEPENDS:=+libubox +@IPV6
+  DEPENDS:=+libubox @IPV6
 endef
 
 define Package/minimalist-pcproxy/description
