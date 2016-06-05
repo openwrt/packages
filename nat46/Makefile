@@ -37,7 +37,7 @@ define Package/464xlat
 endef
 
 define KernelPackage/nat46
-  DEPENDS:=+kmod-ipv6
+  DEPENDS:=@IPV6
   TITLE:=Stateless NAT46 translation kernel module
   SECTION:=kernel
   SUBMENU:=Network Support

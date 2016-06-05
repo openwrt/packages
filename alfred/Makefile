@@ -28,7 +28,7 @@ define Package/alfred
   SECTION:=net
   CATEGORY:=Network
   TITLE:=A.L.F.R.E.D. - Almighty Lightweight Fact Remote Exchange Daemon
-  DEPENDS:= +libc +kmod-ipv6 +librt \
+  DEPENDS:= +libc @IPV6 +librt \
 	  +ALFRED_NEEDS_lua:lua \
 	  +ALFRED_NEEDS_libgps:libgps
 endef
