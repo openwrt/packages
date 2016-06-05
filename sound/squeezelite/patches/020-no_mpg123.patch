@@ -20,7 +20,7 @@
  LINKALL_IR       = -llirc_client
 --- a/decode.c
 +++ b/decode.c
-@@ -146,8 +146,8 @@ void decode_init(log_level level, const
+@@ -147,8 +147,8 @@ void decode_init(log_level level, const
  	// try mad then mpg for mp3 unless command line option passed
  	if (!(strstr(exclude_codecs, "mp3") || strstr(exclude_codecs, "mad")) &&
  		(!include_codecs || strstr(include_codecs, "mp3") || strstr(include_codecs, "mad")))	codecs[i] = register_mad();
@@ -33,7 +33,7 @@
  
 --- a/main.c
 +++ b/main.c
-@@ -35,7 +35,8 @@
+@@ -39,7 +39,8 @@
  #else
  #define CODECS_DSD  ""
  #endif
@@ -45,7 +45,7 @@
  
 --- a/squeezelite.h
 +++ b/squeezelite.h
-@@ -140,7 +140,7 @@
+@@ -155,7 +155,7 @@
  #if LINUX
  #define LIBFLAC "libFLAC.so.8"
  #define LIBMAD  "libmad.so.0"
@@ -54,7 +54,7 @@
  #define LIBVORBIS "libvorbisfile.so.3"
  #define LIBTREMOR "libvorbisidec.so.1"
  #define LIBFAAD "libfaad.so.2"
-@@ -154,7 +154,7 @@
+@@ -169,7 +169,7 @@
  #if OSX
  #define LIBFLAC "libFLAC.8.dylib"
  #define LIBMAD  "libmad.0.dylib"
@@ -63,7 +63,7 @@
  #define LIBVORBIS "libvorbisfile.3.dylib"
  #define LIBTREMOR "libvorbisidec.1.dylib"
  #define LIBFAAD "libfaad.2.dylib"
-@@ -167,7 +167,7 @@
+@@ -182,7 +182,7 @@
  #if WIN
  #define LIBFLAC "libFLAC.dll"
  #define LIBMAD  "libmad-0.dll"
@@ -72,7 +72,7 @@
  #define LIBVORBIS "libvorbisfile.dll"
  #define LIBTREMOR "libvorbisidec.dll"
  #define LIBFAAD "libfaad2.dll"
-@@ -180,7 +180,7 @@
+@@ -195,7 +195,7 @@
  #if FREEBSD
  #define LIBFLAC "libFLAC.so.11"
  #define LIBMAD  "libmad.so.2"

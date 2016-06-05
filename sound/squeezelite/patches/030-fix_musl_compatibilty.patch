@@ -1,6 +1,6 @@
 --- a/output_alsa.c
 +++ b/output_alsa.c
-@@ -862,8 +862,11 @@ void output_init_alsa(log_level level, c
+@@ -911,8 +911,11 @@ void output_init_alsa(log_level level, c
  		LOG_INFO("memory locked");
  	}
  
