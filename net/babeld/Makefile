@@ -25,7 +25,7 @@ define Package/babeld
   TITLE:=A loop-free distance-vector routing protocol
   URL:=http://www.pps.univ-paris-diderot.fr/~jch/software/babel/
   MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>
-  DEPENDS:=+@IPV6
+  DEPENDS:=@IPV6
 endef
 
 define Package/babeld/description
