@@ -26,7 +26,7 @@ define Package/$(PKG_NAME)/default
   CATEGORY:=Network
   TITLE:=mosquitto - an MQTT message broker
   URL:=http://www.mosquitto.org/
-  MAINTAINER:=Karl Palsson <karlp@remake.is>
+  MAINTAINER:=Karl Palsson <karlp@etactica.com>
   DEPENDS:= +librt +libuuid
   USERID:=mosquitto=200:mosquitto=200
 endef
