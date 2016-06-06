@@ -18,7 +18,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cjdns
 PKG_VERSION:=0.17
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=https://github.com/hyperboria/cjdns.git
 PKG_SOURCE_PROTO:=git
@@ -77,6 +77,7 @@ PKG_DO_VARS+= UCLIBC=1
 endif
 
 define Build/Compile
+	$(INSTALL_DIR) $(PKG_BUILD_DIR)/tmp
 	CROSS="true" \
 	CC="$(TARGET_CC)" \
 	AR="$(TARGET_AR)" \
@@ -87,6 +88,7 @@ define Build/Compile
 	TARGET_ARCH="$(CONFIG_ARCH)" \
 	SSP_SUPPORT="$(CONFIG_SSP_SUPPORT)" \
 	GYP_ADDITIONAL_ARGS="-f make-linux" \
+	CJDNS_BUILD_TMPDIR="$(PKG_BUILD_DIR)/tmp" \
 	$(PKG_DO_VARS) \
 	$(PKG_BUILD_DIR)/do
 endef
