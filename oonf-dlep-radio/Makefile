@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oonf-dlep-radio
-PKG_VERSION:=0.12.0
-PKG_REV:=37d620fbb33c449e39438f2fb1ce25deeb78ff84
+PKG_VERSION:=0.12.1
+PKG_REV:=e4cb9a3ab52352ecee0da09ab4ccae32461f5f44
 PKG_RELEASE:=$(PKG_REV)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
