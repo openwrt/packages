@@ -1,7 +1,7 @@
 /*
  * cgi-io - LuCI non-RPC helper
  *
- *   Copyright (C) 2013 Jo-Philipp Wich <jow@openwrt.org>
+ *   Copyright (C) 2013 Jo-Philipp Wich <jo@mein.io>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

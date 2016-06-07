@@ -11,7 +11,7 @@ PKG_NAME:=wshaper
 PKG_VERSION:=1.1a
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
