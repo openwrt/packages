@@ -59,8 +59,7 @@ endef
 define Package/$(PKG_NAME)-full
 	$(call Package/$(PKG_NAME)/Default)
 	TITLE += (OpenSSL + extras)
-	DEPENDS += +libopenssl \
-			   +PACKAGE_$(PKG_NAME)-full_libuv:libuv
+	DEPENDS += +libopenssl +PACKAGE_$(PKG_NAME)-full_libuv:libuv
 	PROVIDES:=$(PKG_NAME)-openssl
 	VARIANT:=full
 endef
