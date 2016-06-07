@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=gd-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/libgd/libgd/archive
 PKG_MD5SUM:=e91a1a99903e460e7ba00a794e72cc1e
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=MIT
 
 PKG_FIXUP:=autoreconf

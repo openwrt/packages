@@ -15,7 +15,7 @@ PKG_SOURCE_VERSION:=37d83cbc9c07266d6c957d27bf75285b305eceab
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_LICENSE:=GPL-2.0+
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 include $(INCLUDE_DIR)/package.mk
 

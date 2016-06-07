@@ -14,7 +14,7 @@ PKG_RELEASE:=2
 PKG_SOURCE:=lm_sensors-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://dl.lm-sensors.org/lm-sensors/releases
 PKG_MD5SUM:=da506dedceb41822e64865f6ba34828a
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0+ LGPL-2.1+
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/lm_sensors-$(PKG_VERSION)
