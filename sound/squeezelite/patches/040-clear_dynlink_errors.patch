@@ -1,6 +1,6 @@
 --- a/faad.c
 +++ b/faad.c
-@@ -593,6 +593,8 @@ static bool load_faad() {
+@@ -594,6 +594,8 @@ static bool load_faad() {
  		return false;
  	}
  
@@ -11,7 +11,7 @@
  	a->NeAACDecOpen = dlsym(handle, "NeAACDecOpen");
 --- a/ffmpeg.c
 +++ b/ffmpeg.c
-@@ -590,6 +590,8 @@ static bool load_ff() {
+@@ -620,6 +620,8 @@ static bool load_ff() {
  		return false;
  	}
  
@@ -33,7 +33,7 @@
  	f->FLAC__stream_decoder_new = dlsym(handle, "FLAC__stream_decoder_new");
 --- a/ir.c
 +++ b/ir.c
-@@ -167,10 +167,10 @@ static void *ir_thread() {
+@@ -168,10 +168,10 @@ static void *ir_thread() {
  			UNLOCK_I;
  			wake_controller();
  		}
@@ -46,7 +46,7 @@
  	return 0;
  }
  
-@@ -184,6 +184,8 @@ static bool load_lirc() {
+@@ -185,6 +185,8 @@ static bool load_lirc() {
  		return false;
  	}
  
@@ -57,7 +57,7 @@
  	i->lirc_readconfig = dlsym(handle, "lirc_readconfig");
 --- a/mad.c
 +++ b/mad.c
-@@ -364,7 +364,9 @@ static bool load_mad() {
+@@ -365,7 +365,9 @@ static bool load_mad() {
  		LOG_INFO("dlerror: %s", dlerror());
  		return false;
  	}
@@ -70,7 +70,7 @@
  	m->mad_synth_init = dlsym(handle, "mad_synth_init");
 --- a/mpg.c
 +++ b/mpg.c
-@@ -221,7 +221,9 @@ static bool load_mpg() {
+@@ -222,7 +222,9 @@ static bool load_mpg() {
  		LOG_INFO("dlerror: %s", dlerror());
  		return false;
  	}
@@ -83,7 +83,7 @@
  	m->mpg123_rates = dlsym(handle, "mpg123_rates");
 --- a/resample.c
 +++ b/resample.c
-@@ -250,6 +250,8 @@ static bool load_soxr(void) {
+@@ -251,6 +251,8 @@ static bool load_soxr(void) {
  		return false;
  	}
  
@@ -94,7 +94,7 @@
  	r->soxr_create = dlsym(handle, "soxr_create");
 --- a/vorbis.c
 +++ b/vorbis.c
-@@ -286,6 +286,8 @@ static bool load_vorbis() {
+@@ -287,6 +287,8 @@ static bool load_vorbis() {
  		}
  	}
  

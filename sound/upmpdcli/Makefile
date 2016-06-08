@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upmpdcli
 PKG_VERSION:=1.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.lesbonscomptes.com/upmpdcli/downloads
@@ -55,7 +55,7 @@ ifneq ($(CONFIG_PACKAGE_UPMPDCLI_SC_WEB_INTERFACE),y)
 	$(RM) -rf $(PKG_INSTALL_DIR)/usr/share/upmpdcli/web
 endif
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/upmpdcli $(1)/usr/share/
-	$(INSTALL_DATA) ./files/upmpdcli.png $(1)/usr/share/upmpdcli/
+	$(INSTALL_DATA) ./files/upmpdcli.png $(1)/usr/share/upmpdcli/icon.png
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/upmpdcli.init $(1)/etc/init.d/upmpdcli
 endef

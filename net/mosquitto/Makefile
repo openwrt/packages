@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=1.4.8
+PKG_VERSION:=1.4.9
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://mosquitto.org/files/source/
-PKG_MD5SUM:=d859cd474ffa61a6197bdabe007b9027
+PKG_MD5SUM:=67943e2c5afebf7329628616eb2c41c5
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -26,7 +26,7 @@ define Package/$(PKG_NAME)/default
   CATEGORY:=Network
   TITLE:=mosquitto - an MQTT message broker
   URL:=http://www.mosquitto.org/
-  MAINTAINER:=Karl Palsson <karlp@remake.is>
+  MAINTAINER:=Karl Palsson <karlp@etactica.com>
   DEPENDS:= +librt +libuuid
   USERID:=mosquitto=200:mosquitto=200
 endef

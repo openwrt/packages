@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=liboping
 PKG_VERSION:=1.6.2
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2

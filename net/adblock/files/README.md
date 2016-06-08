@@ -39,7 +39,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => weekly updates, approx. 12.000 entries
     * [winhelp](http://winhelp2002.mvps.org)
     * => infrequent updates, approx. 15.000 entries
-    * [winspy](https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/hosts/windows10_spy.txt)
+    * [winspy](https://github.com/crazy-max/WindowsSpyBlocker)
     * => infrequent updates, approx. 120 entries
     * [yoyo](http://pgl.yoyo.org/adservers)
     * => weekly updates, approx. 2.500 entries (enabled by default)
@@ -102,9 +102,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
 * **new list sources:** you could add new blocklist sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
 * **AP mode:** in AP mode adblock uses automatically the local router ip as nullip address. To make sure that your LuCI interface will be still accessible, please change the local uhttpd instance to ports <> 80/443 (see example below)
+* **Restricted mode:** to disable flash writes with adblock status information to the adblock config file (used by LuCI frontend), please set 'adb\_restricted' to '1'
 * **adblock toggle:** to quickly switch adblocking 'on' or 'off', simply use _/etc/init.d/adblock toggle_
-* **outdated configuration:** if adblock detects an outdated config file, please copy the current version from '/etc/adblock/adblock.conf.default' to '/etc/config/adblock', make your individual changes and finally restart the adblock service
-* **debugging:** for script debugging please change the 'DEBUG' variable in the header of _/usr/bin/adblock-update.sh_ from '0' to '1' and start this script directly (without any parameters)
+* **configuration update:** to update an outdated adblock config file with the current default version, please run _/etc/init.d/adblock cfgup_, make your individual changes and start the adblock service again
+* **debugging:** for script debugging please set the 'adb\_debug' variable in the header of _/etc/init.d/adblock_ to '1'
 * **disable active dns probing in windows:** to prevent a possible yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
 
 ## Further adblock config options
@@ -115,8 +116,9 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_nullport => port of the adblock uhttpd instance (default: '65535')
     * adb\_nullipv4 => IPv4 blackhole ip address (default: '192.0.2.1', in AP mode: local router ip)
     * adb\_nullipv6 => IPv6 blackhole ip address (default: '::ffff:c000:0201', in AP mode: local router ip)
-    * adb\_forcedns => redirect all DNS queries to local dnsmasq resolver (default: '1', enabled)
+    * adb\_forcedns => redirect all local DNS queries to the local dnsmasq resolver (default: '1', enabled)
     * adb\_fetchttl => set the timeout for list downloads (default: '5' seconds)
+    * adb\_restricted => disable updates of the adblock config file (no flash writes) during runtime (default: '0', disabled)
 
 ## Examples
 
