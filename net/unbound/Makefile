@@ -113,6 +113,7 @@ CONFIGURE_ARGS += \
 	--enable-allsymbols \
 	--with-libexpat="$(STAGING_DIR)/usr" \
 	--with-ssl="$(STAGING_DIR)/usr" \
+	--with-pidfile=/var/run/unbound.pid \
 	--without-pthreads
 
 define Package/unbound/conffiles
@@ -137,7 +138,6 @@ define Package/unbound/install
 		$(PKG_INSTALL_DIR)/etc/unbound/unbound.conf \
 		$(1)/etc/unbound/
 	$(INSTALL_CONF) ./files/root.key $(1)/etc/unbound/
-	$(INSTALL_CONF) ./files/named.cache $(1)/etc/unbound/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/unbound.init $(1)/etc/init.d/unbound
 endef
