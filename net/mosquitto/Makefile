@@ -34,7 +34,7 @@ endef
 define Package/$(PKG_NAME)
     $(call Package/mosquitto/default)
     TITLE+= (with SSL support)
-    DEPENDS+= +libopenssl +MOSQUITTO_LWS:libwebsockets-openssl
+    DEPENDS+= +libopenssl +@OPENSSL_WITH_DEPRECATED +@OPENSSL_WITH_PSK +MOSQUITTO_LWS:libwebsockets-openssl
     VARIANT:=ssl
 endef
 
@@ -110,7 +110,7 @@ endef
 define Package/libmosquitto
     $(call Package/libmosquitto/default)
     TITLE+= (With SSL Support)
-    DEPENDS+= +libopenssl
+    DEPENDS+= +libopenssl +@OPENSSL_WITH_DEPRECATED +@OPENSSL_WITH_PSK
     VARIANT=ssl
 endef
 define Package/libmosquitto-nossl
