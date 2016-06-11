@@ -1,5 +1,5 @@
 # 
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -17,7 +17,7 @@ PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=LICENCE.txt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= http://download.zeromq.org
+PKG_SOURCE_URL:= https://github.com/zeromq/zeromq4-1/releases/download/v$(PKG_VERSION)/
 PKG_MD5SUM:=a611ecc93fffeb6d058c0e6edf4ad4fb
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
