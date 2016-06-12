@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
 PKG_VERSION:=3.3.11
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
 
@@ -58,6 +58,19 @@ define Package/procps-ng/description
   Conflicting applets should be removed from the build to avoid file conflicts.
 endef
 
+define Package/procps-ng-busybox
+  $(call Package/procps-ng/Default)
+  TITLE:=Prefer full versions of procps-ng commands vs busybox
+  DEPENDS:=procps-ng +procps-ng-free +procps-ng-kill +procps-ng-pgrep +procps-ng-ps +procps-ng-top
+endef
+
+define Package/procps-ng-busybox/description
+This package depends on the full versions of commands available
+from the procps-ng package for which the busybox replacements are
+normally use.  This is useful when you want to prefer or replace
+with full versions vs. busybox versions.
+endef
+
 define GenPlugin
  define Package/$(1)
    $(call Package/procps-ng/Default)
@@ -84,6 +97,10 @@ define Package/procps-ng/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libprocps.so* $(1)/usr/lib/
 endef
 
+define Package/procps-ng-busybox/install
+	true
+endef
+
 define BuildPlugin
   define Package/$(1)/install
 	$(INSTALL_DIR) $$(1)/usr/bin
@@ -95,3 +112,4 @@ endef
 
 $(foreach a,$(PROCPS_APPLETS),$(eval $(call BuildPlugin,procps-ng-$(a),$(a))))
 $(eval $(call BuildPackage,procps-ng))
+$(eval $(call BuildPackage,procps-ng-busybox))
