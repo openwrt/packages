@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bcp38
-PKG_VERSION:=4
+PKG_VERSION:=5
 PKG_RELEASE:=1
 PKG_LICENCE:=GPL-3.0+
 
