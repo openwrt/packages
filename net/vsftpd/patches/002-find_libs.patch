@@ -6,7 +6,7 @@
  
 -LIBS	=	`./vsf_findlibs.sh`
 -LINK	=	-Wl,-s
-+LIBS	=	-lcrypt -lnsl
++LIBS	=	-lcrypt -lnsl -luci
 +LINK	=
  LDFLAGS	=	-fPIE -pie -Wl,-z,relro -Wl,-z,now
  

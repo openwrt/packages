@@ -108,6 +108,9 @@
 # Variomedia AG
 "variomedia.de" 	"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
+# Oray.com
+"Oray.com"	"http://[USERNAME]:[PASSWORD]@ddns.oray.com/ph/update?hostname=[DOMAIN]&myip=[IP]"
+
 # DtDNS
 "dtdns.com"	"http://www.dtdns.com/api/autodns.cfm?id=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
 

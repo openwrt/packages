@@ -32,7 +32,7 @@ nameTooLong = 0
 policyCheck()
 
 
-m5 = Map("mwan3", translate("MWAN Policy Configuration - " .. arg[1]),
+m5 = Map("mwan3", translate("MWAN Policy Configuration - ") .. arg[1],
 	translate(policyWarn()))
 	m5.redirect = dsp.build_url("admin", "network", "mwan", "configuration", "policy")
 
