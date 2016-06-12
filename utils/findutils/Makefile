@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=findutils
 PKG_VERSION:=4.6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -30,6 +30,21 @@ Replace busybox versions of findutils with full GNU versions.
 This is normally not needed as busybox is smaller and provides
 sufficient functionality, but some users may want or need
 the full functionality of the GNU tools.
+endef
+
+define Package/findutils-busybox
+	$(call Package/findutils/Default)
+	TITLE+= (replace busybox versions)
+	DEPENDS:= +findutils-find +findutils-xargs
+endef
+
+define Package/findutils-busybox/description
+$(call Package/findutils/description/Default)
+
+This package selects the findutils for which
+busybox versions are normally included, as
+convenience for those who want to replace
+busybox version with full versions.
 endef
 
 define Package/findutils-find
@@ -62,6 +77,10 @@ $(call Package/findutils/description/Default)
 This package contains the locate and related updatedb utility
 endef
 
+define Package/findutils-busybox/install
+	true
+endef
+
 define Package/findutils-find/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/find $(1)/usr/bin/	
@@ -78,6 +97,7 @@ define Package/findutils-locate/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/updatedb $(1)/usr/bin/	
 endef
 
+$(eval $(call BuildPackage,findutils-busybox)
 $(eval $(call BuildPackage,findutils-find))
 $(eval $(call BuildPackage,findutils-xargs))
 $(eval $(call BuildPackage,findutils-locate))
