@@ -2,11 +2,10 @@
 #
 
 START=99
+PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 EXTRA_COMMANDS="toggle cfgup"
 EXTRA_HELP="	toggle	Toggle adblocking 'on' or 'off'
 	cfgup	Update the adblock configuration file"
-
-PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
 adb_debug=0
 if [ $((adb_debug)) -eq 0 ]
@@ -59,45 +58,62 @@ start()
 
 restart()
 {
+    restart="true"
     stop
     start
 }
 
 reload()
 {
+    restart="true"
     stop
     start
 }
 
 stop()
 {
-    if [ -n "$(${adb_uci} -q get "adblock.global.adb_overall_count")" ]
+    cfg_check="$(${adb_uci} -q get "adblock.global.adb_overall_count")"
+    if [ -n "${cfg_check}" ]  && [ -z "${restart}" ]
     then
         . "/lib/functions.sh"
         config_load adblock
         config_foreach rm_config source
         "${adb_uci}" -q delete "adblock.global.adb_dnstoggle"
         "${adb_uci}" -q delete "adblock.global.adb_overall_count"
+        "${adb_uci}" -q delete "adblock.global.adb_percentage"
+        "${adb_uci}" -q delete "adblock.global.adb_lastrun"
         "${adb_uci}" -q commit "adblock"
+    fi
+    fw_check="$(iptables -w -vnL | grep -Fo "adb-")"
+    if [ -n "${fw_check}" ] && [ -z "${restart}" ]
+    then
+        iptables-save -t nat | grep -Fv -- "adb-" | iptables-restore
+        iptables-save -t filter | grep -Fv -- "adb-" | iptables-restore
+        if [ -n "$(lsmod | grep -F "ip6table_nat")" ]
+        then
+            ip6tables-save -t nat | grep -Fv -- "adb-" | ip6tables-restore
+            ip6tables-save -t filter | grep -Fv -- "adb-" | ip6tables-restore
+        fi
     fi
     if [ -d "${adb_dnshidedir}" ]
     then
         find "${adb_dnshidedir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -exec mv -f "{}" "${adb_dnsdir}" \;
     fi
-    rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print -exec rm -f "{}" \;)"
-    rc=${?}
-    if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
+    dns_check="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print -exec rm -f "{}" \;)"
+    if [ -n "${dns_check}" ]
     then
         rm -rf "${adb_dnshidedir}"
         /etc/init.d/dnsmasq restart
-        /etc/init.d/firewall restart
     fi
-    uhttpd_pid="$(pgrep -f "uhttpd -h /www/adblock")"
-    if [ -n "${uhttpd_pid}" ]
+    www_check="$(pgrep -f "uhttpd -h /www/adblock")"
+    if [ -n "${www_check}" ]
     then
-        kill -9 "${uhttpd_pid}"
+        for pid in ${www_check}
+        do
+            kill -9 "${pid}"
+        done
     fi
-    if [ -n "${rm_done}" ] || [ -n "${uhttpd_pid}" ]
+    if [ -n "${cfg_check}" ] || [ -n "${fw_check}" ] || [ -n "${dns_check}" ] || [ -n "${www_check}" ]
     then
         "${adb_log}" ${log_parm} -t "adblock[${adb_pid}] info " "all adblock related services stopped" 2>&1
     fi

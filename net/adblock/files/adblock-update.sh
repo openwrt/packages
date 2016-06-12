@@ -28,8 +28,8 @@ fi
 # get current directory and set script/config version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="1.1.17"
-adb_mincfgver="2.1"
+adb_scriptver="1.2.1"
+adb_mincfgver="2.2"
 
 # source in adblock function library
 #
@@ -88,7 +88,7 @@ do
         adb_srclist="${adb_srclist} -a ! -name ${adb_dnsprefix}.${src_name}*"
     fi
 
-    # only download adblock list with newer/updated timestamp
+    # download only block list with newer/updated timestamp
     #
     if [ "${src_name}" = "blacklist" ]
     then
@@ -99,7 +99,7 @@ do
     if [ -z "${url_time}" ]
     then
         url_time="$(date)"
-        f_log "   no online timestamp received, current date will be used"
+        f_log "   no online timestamp received"
     fi
     if [ -z "${list_time}" ] || [ "${list_time}" != "${url_time}" ] || [ ! -r "${adb_dnsfile}" ] ||\
       ([ "${backup_ok}" = "true" ] && [ ! -r "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz" ])
@@ -107,7 +107,6 @@ do
         if [ "${src_name}" = "blacklist" ]
         then
             tmp_domains="$(cat "${url}")"
-            rc=${?}
         elif [ "${src_name}" = "shalla" ]
         then
             shalla_archive="${adb_tmpdir}/shallalist.tar.gz"
@@ -127,30 +126,31 @@ do
                         break
                     fi
                 done
-                rm -f "${shalla_archive}"
-                rm -rf "${adb_tmpdir}/BL"
                 tmp_domains="$(cat "${shalla_file}")"
-                rc=${?}
+                rm -rf "${adb_tmpdir}/BL"
+                rm -f "${shalla_archive}"
+                rm -f "${shalla_file}"
             fi
         else
             tmp_domains="$(${adb_fetch} ${fetch_parm} --output-document=- "${url}")"
-            rc=${?}
         fi
+        rc=${?}
     else
         f_log "   source doesn't change, no update required"
         continue
     fi
 
-    # check download result and prepare domain output by regex patterns
+    # check download result and prepare domain output, backup/restore if needed
     #
     if [ $((rc)) -eq 0 ] && [ -n "${tmp_domains}" ]
     then
         count="$(printf "%s\n" "${tmp_domains}" | awk "${src_rset}" | tee "${adb_tmpfile}" | wc -l)"
-        f_log "   source download finished (${count} entries)"
-        if [ "${src_name}" = "shalla" ]
+        "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=${url_time}"
+        if [ "${backup_ok}" = "true" ]
         then
-            rm -f "${shalla_file}"
+            gzip -cf "${adb_tmpfile}" > "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz"
         fi
+        f_log "   source download finished (${count} entries)"
         unset tmp_domains
     elif [ $((rc)) -eq 0 ] && [ -z "${tmp_domains}" ]
     then
@@ -159,53 +159,61 @@ do
         continue
     else
         rc=0
-        if [ -z "${adb_errsrclist}" ]
+        if [ "${backup_ok}" = "true" ] && [ -r "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz" ]
         then
-            adb_errsrclist="-name ${adb_dnsprefix}.${src_name}.gz"
+            gunzip -cf "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz" > "${adb_tmpfile}"
+            count="$(wc -l < "${adb_tmpfile}")"
+            "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=list restored"
+            f_log "   source download failed, list restored (${count} entries)"
         else
-            adb_errsrclist="${adb_errsrclist} -o -name ${adb_dnsprefix}.${src_name}.gz"
+            "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=download failed"
+            f_log "   source download failed"
+            continue
         fi
-        "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=download failed"
-        f_log "   source download failed"
-        continue
     fi
 
     # remove whitelist domains, sort domains and make them unique,
-    # finally rewrite ad/abuse domain information to separate dnsmasq files
+    # rewrite ad/abuse domain information to separate dnsmasq files
     #
     if [ $((count)) -gt 0 ] && [ -n "${adb_tmpfile}" ]
     then
         if [ -s "${adb_tmpdir}/tmp.whitelist" ]
         then
             grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpfile}" | sort -u | eval "${adb_dnsformat}" > "${adb_dnsfile}"
-            rc=${?}
         else
             sort -u "${adb_tmpfile}" | eval "${adb_dnsformat}" > "${adb_dnsfile}"
-            rc=${?}
         fi
+        rc=${?}
 
-        # prepare find statement with revised adblock list sources
-        #
-        if [ -z "${adb_revsrclist}" ]
-        then
-            adb_revsrclist="-name ${adb_dnsprefix}.${src_name}"
-        else
-            adb_revsrclist="${adb_revsrclist} -o -name ${adb_dnsprefix}.${src_name}"
-        fi
-
-        # store source timestamp in config
+        # finish domain processing, prepare find statement with revised adblock list source
         #
         if [ $((rc)) -eq 0 ]
         then
-            "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=${url_time}"
+            if [ -z "${adb_revsrclist}" ]
+            then
+                adb_revsrclist="-name ${adb_dnsprefix}.${src_name}"
+            else
+                adb_revsrclist="${adb_revsrclist} -o -name ${adb_dnsprefix}.${src_name}"
+            fi
             f_log "   domain merging finished"
         else
-            f_log "   domain merging failed" "${rc}"
-            f_restore
+            rc=0
+            rm -f "${adb_dnsfile}"
+            if [ "${backup_ok}" = "true" ] && [ -r "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz" ]
+            then
+                rm -f "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz"
+            fi
+            f_log "   domain merging failed, list removed"
+            continue
         fi
     else
+        rm -f "${adb_dnsfile}"
+        if [ "${backup_ok}" = "true" ] && [ -r "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz" ]
+        then
+            rm -f "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz"
+        fi
         "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=empty domain input"
-        f_log "   empty domain input received"
+        f_log "   empty domain input received, list removed"
         continue
     fi
 done
@@ -215,45 +223,21 @@ done
 if [ -n "${adb_srclist}" ]
 then
     rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f \( ${adb_srclist} \) -print -exec rm -f "{}" \;)"
-    rc=${?}
     if [ "${backup_ok}" = "true" ] && [ -n "${rm_done}" ]
     then
         find "${adb_dir_backup}" -maxdepth 1 -type f \( ${adb_srclist} \) -exec rm -f "{}" \;
     fi
 else
     rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print -exec rm -f "{}" \;)"
-    rc=${?}
     if [ "${backup_ok}" = "true" ]
     then
         find "${adb_dir_backup}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -exec rm -f "{}" \;
     fi
 fi
-if [ $((rc)) -eq 0 ] && [ -n "${rm_done}" ]
+if [ -n "${rm_done}" ]
 then
     f_rmconfig "${rm_done}"
-    f_log "remove disabled adblock lists"
-elif [ $((rc)) -ne 0 ] && [ -n "${rm_done}" ]
-then
-    f_log "error during removal of disabled adblock lists" "${rc}"
-    f_exit
-fi
-
-# partial restore of adblock lists in case of download errors
-#
-if [ "${backup_ok}" = "true" ] && [ -n "${adb_errsrclist}" ]
-then
-    restore_done="$(find "${adb_dir_backup}" -maxdepth 1 -type f \( ${adb_errsrclist} \) -print -exec cp -pf "{}" "${adb_dnsdir}" \;)"
-    rc=${?}
-    if [ $((rc)) -eq 0 ] && [ -n "${restore_done}" ]
-    then
-        find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*.gz" -exec gunzip -f "{}" \;
-        f_rmconfig "${restore_done}" "true"
-        f_log "partial restore done"
-    elif [ $((rc)) -ne 0 ]
-    then
-        f_log "error during partial restore" "${rc}"
-        f_exit
-    fi
+    f_log "disabled adblock lists removed"
 fi
 
 # make separate adblock lists entries unique
@@ -289,7 +273,7 @@ fi
 #
 f_cntconfig
 adb_count="$(${adb_uci} -q get "adblock.global.adb_overall_count")"
-if [ -n "${adb_revsrclist}" ] || [ -n "${rm_done}" ] || [ -n "${restore_done}" ] || [ -n "${mv_done}" ]
+if [ -n "${adb_revsrclist}" ] || [ -n "${rm_done}" ]
 then
     "${adb_uci}" -q set "adblock.global.adb_dnstoggle=on"
     /etc/init.d/dnsmasq restart
@@ -299,29 +283,28 @@ then
     then
         f_log "adblock lists with overall ${adb_count} domains loaded"
     else
-        rc=100
-        f_log "dnsmasq restart failed, please check 'logread' output" "${rc}"
-        f_restore
+        f_log "dnsmasq restart failed, retry without newly generated block lists"
+        rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f \( ${adb_revsrclist} \) -print -exec rm -f "{}" \;)"
+        if [ -n "${rm_done}" ]
+        then
+            f_log "bogus adblock lists removed"
+            f_rmconfig "${rm_done}"
+            /etc/init.d/dnsmasq restart
+            sleep 1
+            check="$(pgrep -f "dnsmasq")"
+            if [ -n "${check}" ]
+            then
+                f_cntconfig
+                f_log "adblock lists with overall ${adb_count} domains loaded"
+            else
+                rc=100
+                f_log "dnsmasq restart failed, please check 'logread' output" "${rc}"
+                f_exit
+            fi
+        fi
     fi
 else
     f_log "adblock lists with overall ${adb_count} domains are still valid, no update required"
-fi
-
-# create adblock list backups
-#
-if [ "${backup_ok}" = "true" ] && [ -n "${adb_revsrclist}" ]
-then
-    backup_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f \( ${adb_revsrclist} \) -print -exec cp -pf "{}" "${adb_dir_backup}" \;)"
-    rc=${?}
-    if [ $((rc)) -eq 0 ] && [ -n "${backup_done}" ]
-    then
-        find "${adb_dir_backup}" -maxdepth 1 -type f \( -name "${adb_dnsprefix}*" -a ! -name "${adb_dnsprefix}*.gz" \) -exec gzip -f "{}" \;
-        f_log "new adblock list backups generated"
-    elif [ $((rc)) -ne 0 ] && [ -n "${backup_done}" ]
-    then
-        f_log "error during backup of adblock lists" "${rc}"
-        f_exit
-    fi
 fi
 
 # remove temporary files and exit
