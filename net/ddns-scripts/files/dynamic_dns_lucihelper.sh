@@ -33,6 +33,7 @@ case "$1" in
 		force_ipversion=${4:-"0"}	# Force IP Version - default 0 - No
 		force_dnstcp=${5:-"0"}		# Force TCP on DNS - default 0 - No
 		dns_server=${6:-""}		# DNS server - default No DNS
+		is_glue=${7:-"0"}		# Is glue record - default 0 - No
 		write_log 7 "-----> get_registered_ip IP"
 		get_registered_ip IP
 		__RET=$?
