@@ -1,0 +1,20 @@
+--- a/support/export/hostname.c
++++ b/support/export/hostname.c
+@@ -350,7 +350,9 @@ host_numeric_addrinfo(const struct socka
+ 
+ 	/*
+ 	 * getaddrinfo(AI_NUMERICHOST) never fills in ai_canonname
++	 * ...well, it does on uclibc.
+ 	 */
++#ifndef __UCLIBC__
+ 	if (ai != NULL) {
+ 		free(ai->ai_canonname);		/* just in case */
+ 		ai->ai_canonname = strdup(buf);
+@@ -359,6 +361,7 @@ host_numeric_addrinfo(const struct socka
+ 			ai = NULL;
+ 		}
+ 	}
++#endif
+ 
+ 	return ai;
+ }
