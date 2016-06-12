@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
 PKG_VERSION:=8.23
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
@@ -62,6 +62,65 @@ define Package/coreutils/description
  smaller.
 endef
 
+define Package/coreutils-busybox
+  $(call Package/coreutils/Default)
+  TITLE:=Select full GNU core utilities normally from busybox
+  DEPENDS:= \
++coreutils-basename \
++coreutils-cat \
++coreutils-chgrp \
++coreutils-chmod \
++coreutils-chown \
++coreutils-chroot \
++coreutils-cp \
++coreutils-cut \
++coreutils-date \
++coreutils-dd \
++coreutils-dirname \
++coreutils-du \
++coreutils-echo \
++coreutils-expr \
++coreutils-false \
++coreutils-head \
++coreutils-id \
++coreutils-ln \
++coreutils-ls \
++coreutils-md5sum \
++coreutils-mkdir \
++coreutils-mkfifo \
++coreutils-mknod \
++coreutils-mktemp \
++coreutils-mv \
++coreutils-nice \
++coreutils-printf \
++coreutils-pwd \
++coreutils-readlink \
++coreutils-rm \
++coreutils-rmdir \
++coreutils-seq \
++coreutils-sleep \
++coreutils-sort \
++coreutils-sync \
++coreutils-tail \
++coreutils-tee \
++coreutils-test \
++coreutils-touch \
++coreutils-tr \
++coreutils-true \
++coreutils-uname \
++coreutils-uniq \
++coreutils-uptime \
++coreutils-wc \
++coreutils-yes
+endef
+
+define Package/coreutils-busybox/description
+This package selects the full versions of the GNU core utilities
+for which the busybox replacments are normally used.  This may
+be useful if you want a system more compatible with a typical
+GNU/Linux system than a busybox-based system.
+endef
+
 define GenPlugin
  define Package/$(1)
    $(call Package/coreutils/Default)
@@ -112,5 +171,6 @@ define BuildPlugin
 endef
 
 $(eval $(call BuildPackage,coreutils))
+$(eval $(call BuildPackage,coreutils-busybox))
 
 $(foreach a,$(COREUTILS_APPLETS),$(eval $(call BuildPlugin,coreutils-$(a),$(a))))
