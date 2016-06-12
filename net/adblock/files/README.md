@@ -46,7 +46,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * [zeus tracker](https://zeustracker.abuse.ch)
     * => daily updates, approx. 440 entries
 * zero-conf like automatic installation & setup, usually no manual changes needed (i.e. ip address, network devices etc.)
-* supports a wide range of router modes (incl. AP mode), as long as the firewall and the DNS server are enabled
+* supports a wide range of router modes (incl. AP mode), as long as the firewall and the DNS server are enabled & in use
 * full IPv4 and IPv6 support
 * each blocklist source will be updated and processed separately
 * timestamp check to download and process only updated adblock list sources
@@ -54,14 +54,13 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * adblock source list parsing by fast & flexible regex rulesets
 * additional whitelist for manual overrides, located by default in /etc/adblock/adblock.whitelist
 * quality checks during & after update of adblock lists to ensure a reliable dnsmasq service
-* basic adblock statistics via iptables packet counters
-* list states, (overall) list counts & last update time will be stored in uci config
+* adblock statistics, last runtime and list states/counts/update times will be stored in uci config for LuCI frontend
 * status & error logging to stdout and syslog
-* use a dynamic uhttpd instance as an adblock pixel server
-* use dynamic iptables rulesets for adblock related redirects/rejects
+* use two dynamic uhttpd instances as adblock pixel server, separated for ads delivered on port 80 and on port 443
+* use dynamic iptables chains/rulesets for adblock related redirects/rejects
 * init system support (start/stop/restart/reload/toggle)
 * hotplug support, the adblock start will be triggered by wan 'ifup' event
-* adblock toggle to quickly (temporary) switch adblocking 'on' or 'off'
+* adblock toggle to quickly switch adblocking 'on' or 'off'
 * optional: automatic adblock list backup/restore, backups will be (de-)compressed on the fly (disabled by default)
 * optional: add new adblock sources via uci config (see example below)
 
@@ -79,7 +78,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * adblock starts automatically during boot, triggered by wan-ifup event, check _logread -e "adblock"_ for adblock related information
 * optional: start/restart/stop the adblock service manually with _/etc/init.d/adblock_
 * optional: enable/disable your required adblock list sources in _/etc/config/adblock_ - 'adaway', 'disconnect' and 'yoyo' are enabled by default
-* optional: maintain the adblock service in luci under 'System => Startup'
+* optional: maintain the adblock service in LuCI under 'System => Startup'
 
 ## LuCI adblock companion package
 * for easy management of the various blocklist sources and adblock options there is also a nice & efficient LuCI frontend available
@@ -102,7 +101,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
 * **new list sources:** you could add new blocklist sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
 * **AP mode:** in AP mode adblock uses automatically the local router ip as nullip address. To make sure that your LuCI interface will be still accessible, please change the local uhttpd instance to ports <> 80/443 (see example below)
-* **Restricted mode:** to disable flash writes with adblock status information to the adblock config file (used by LuCI frontend), please set 'adb\_restricted' to '1'
+* **restricted mode:** to disable flash writes with adblock status information to the adblock config file (used by LuCI frontend), please set 'adb\_restricted' to '1'
 * **adblock toggle:** to quickly switch adblocking 'on' or 'off', simply use _/etc/init.d/adblock toggle_
 * **configuration update:** to update an outdated adblock config file with the current default version, please run _/etc/init.d/adblock cfgup_, make your individual changes and start the adblock service again
 * **debugging:** for script debugging please set the 'adb\_debug' variable in the header of _/etc/init.d/adblock_ to '1'
@@ -113,9 +112,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_enabled => main switch to enable/disable adblock service (default: '1', enabled)
     * adb\_cfgver => config version string (do not change!) - adblock will check this entry during startup
     * adb\_lanif => name of the logical lan interface (default: 'lan')
-    * adb\_nullport => port of the adblock uhttpd instance (default: '65535')
-    * adb\_nullipv4 => IPv4 blackhole ip address (default: '192.0.2.1', in AP mode: local router ip)
-    * adb\_nullipv6 => IPv6 blackhole ip address (default: '::ffff:c000:0201', in AP mode: local router ip)
+    * adb\_nullport => port of the adblock uhttpd instance used for ads delivered on port 80 (default: '65534')
+    * adb\_nullportssl => port of the adblock uhttpd instance used for ads delivered on port 443 (default: '65535')
+    * adb\_nullipv4 => IPv4 blackhole ip address (default: '198.18.0.1', in AP mode: local router ip)
+    * adb\_nullipv6 => IPv6 blackhole ip address (default: '::ffff:c612:0001', in AP mode: local router ip)
     * adb\_forcedns => redirect all local DNS queries to the local dnsmasq resolver (default: '1', enabled)
     * adb\_fetchttl => set the timeout for list downloads (default: '5' seconds)
     * adb\_restricted => disable updates of the adblock config file (no flash writes) during runtime (default: '0', disabled)
@@ -134,26 +134,27 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 <pre><code>
 ads.example.com
 
-This rule blocks:
+This entry blocks the following (sub)domains:
   http://ads.example.com/foo.gif
   http://server1.ads.example.com/foo.gif
   https://ads.example.com:8000/
 
-This rule doesn't block:
+This entry does not block:
   http://ads.example.com.ua/foo.gif
   http://example.com/
 </code></pre>
   
 **example whitelist entry (/etc/adblock/adblock.whitelist):**
 <pre><code>
-analytics.com
+here.com
 
-This rule removes _all_ domains from the blocklists with this string in it, i.e.:
-  google-analytics.com
-  ssl.google-analytics.com
-  api.gameanalytics.com
-  photos.daily-deals.analoganalytics.com
-  adblockanalytics.com
+This entry removes the following (sub)domains from the blocklists:
+  maps.here.com
+  here.com
+
+This entry does not remove:
+  where.com
+  www.adwhere.com
 </code></pre>
   
 **example uhttpd configuration in AP mode:**
@@ -171,20 +172,20 @@ config uhttpd 'main'
 grep "google-analytics.com" "/tmp/dnsmasq.d/adb_list"*
 
 This will output all matches with corresponding source files:
-  /tmp/dnsmasq.d/adb_list.winhelp:address=/ssl.google-analytics.com/192.0.2.1
-  /tmp/dnsmasq.d/adb_list.winhelp:address=/www.google-analytics.com/192.0.2.1
-  /tmp/dnsmasq.d/adb_list.yoyo:address=/google-analytics.com/192.0.2.1
+  /tmp/dnsmasq.d/adb_list.winhelp:address=/ssl.google-analytics.com/198.18.0.1
+  /tmp/dnsmasq.d/adb_list.winhelp:address=/www.google-analytics.com/198.18.0.1
+  /tmp/dnsmasq.d/adb_list.yoyo:address=/google-analytics.com/198.18.0.1
 </code></pre>
   
 **example to find blocked domains on certain sites for whitelisting:**
 <pre><code>
 1. the easy way ...
 enable the network analysis builtins in chrome or firefox to identify domains
-which are redirected to the adblock null-ip (default 192.0.2.1), add these domains to your whitelist
+which are redirected to the adblock null-ip (default 198.18.0.1), add these domains to your whitelist
 
 2. a bit harder ...
 enable 'Log queries' in the dnsmasq configuration (via LuCI Network => DHCP/DNS),
-ssh to your router and start tracing with 'logread -f -e "dnsmasq" -e "192.0.2.1"'
+ssh to your router and start tracing with 'logread -f -e "dnsmasq" -e "198.18.0.1"'
 switch to your client, access the relevant site and check all domains
 that are blocked/listed in logread, add these domains to your whitelist
 
@@ -222,10 +223,9 @@ If your awk one-liner works quite well, add a new source section in adblock conf
   
 ## Background
 This adblock package is a dns/dnsmasq based adblock solution.  
-Queries to ad/abuse domains are never forwarded and always replied with a local IP address which may be IPv4 or IPv6.  
-For that purpose adblock uses an ip address from the private 'TEST-NET-1' subnet (192.0.2.1 / ::ffff:c000:0201) by default (in AP mode the local router ip address will be used).  
-Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to internal adblock pixel server (in PREROUTING chain) or rejected (in FORWARD or OUTPUT chain).  
-All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other openwrt related config files. There is _no_ adblock background daemon running, the (scheduled) start of the adblock service keeps only the adblock lists up-to-date.  
+Queries to ad/abuse domains are never forwarded and always replied with a local IP address which may be IPv4 or IPv6. For that purpose adblock uses an ip address from the private 'Benchmark Test' subnet (198.18.0.1 / ::ffff:c612:0001) by default (in AP mode the local router ip address will be used). Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to two uhttpd instances, separated for ads delivered on port 80 and on port 443 (in PREROUTING chain) or rejected (in FORWARD or OUTPUT chain).  
+  
+All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other system related config files. There is _no_ adblock background daemon running, the (scheduled) start of the adblock service keeps only the adblock lists up-to-date.  
 
 ## Support
 Please join the adblock discussion in this [openwrt forum thread](https://forum.openwrt.org/viewtopic.php?id=59803) or contact me by mail <dev@brenken.org>  
