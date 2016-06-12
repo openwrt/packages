@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=less
 PKG_VERSION:=481
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.greenwoodsoftware.com/less
@@ -38,12 +38,25 @@ endef
 
 define Package/less
   $(call Package/less/Default)
-  DEPENDS:=+libncurses
-  VARIANT:=narrow
+  DEPENDS:=+less-bin
 endef
 
 define Package/less/description
   $(call Package/less/Default/description)
+  This is a metapackage that depends on either full version of less.
+endef
+
+
+define Package/less-narrow
+  $(call Package/less/Default)
+  DEPENDS:=+libncurses
+  VARIANT:=narrow
+  PROVIDES:=less-bin
+endef
+
+define Package/less-narrow/description
+  $(call Package/less/Default/description)
+  This installs the non-Unicode version of less.
 endef
 
 define Package/less-wide
@@ -51,6 +64,7 @@ define Package/less-wide
   TITLE+= (Unicode)
   DEPENDS:=+libncursesw
   VARIANT:=wide
+  PROVIDES:=less-bin
 endef
 
 define Package/less-wide/description
@@ -69,25 +83,16 @@ ifeq ($(BUILD_VARIANT),wide)
 endif
 
 define Package/less/install
-	$(INSTALL_DIR) $(1)/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/less $(1)/bin/less
+	true
 endef
 
-define Package/less/postinst
-#!/bin/sh
-[ -L "$${IPKG_INSTROOT}/usr/bin/less" ] && rm -f "$${IPKG_INSTROOT}/usr/bin/less"
-exit 0
+define Package/less-narrow/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/less $(1)/usr/bin/
 endef
 
-define Package/less/postrm
-#!/bin/sh
-/bin/busybox less -h 2>&1 | grep -q BusyBox && ln -sf ../../bin/busybox /usr/bin/less
-exit 0
-endef
-
-Package/less-wide/install = $(Package/less/install)
-Package/less-wide/postinst = $(Package/less/postinst)
-Package/less-wide/postrm = $(Package/less/postrm)
+Package/less-wide/install = $(Package/less-narrow/install)
 
 $(eval $(call BuildPackage,less))
+$(eval $(call BuildPackage,less-narrow))
 $(eval $(call BuildPackage,less-wide))
