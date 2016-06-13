@@ -172,6 +172,12 @@ define Build/InstallDev
 	$(INSTALL_DIR)						$(1)/usr/include/libknot
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libknot/*		$(1)/usr/include/libknot/
 
+	$(INSTALL_DIR)						$(1)/usr/include/dnssec
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/dnssec/*		$(1)/usr/include/dnssec/
+
+	$(INSTALL_DIR)						$(1)/usr/include/zscanner
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/zscanner/*		$(1)/usr/include/zscanner/
+
 	$(INSTALL_DIR)							$(1)/usr/lib/pkgconfig
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc	$(1)/usr/lib/pkgconfig/
 endef
