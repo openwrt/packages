@@ -118,6 +118,7 @@ f_envload()
     adb_dnsprefix="adb_list"
     adb_iptv4="$(which iptables)"
     adb_iptv6="$(which ip6tables)"
+    adb_uhttpd="$(which uhttpd)"
     adb_fetch="$(which wget)"
     adb_uci="$(which uci)"
     adb_date="$(which date)"
@@ -181,7 +182,7 @@ f_envload()
             rc=-1
             f_log "please enable the local dnsmasq instance to use adblock"
             f_exit
-        elif [ -z "$(${adb_iptv4} -vnL | grep -Fo "DROP")" ]
+        elif [ -z "$(${adb_iptv4} -w -vnL | grep -Fo "DROP")" ]
         then
             rc=-1
             f_log "please enable the local firewall to use adblock"
@@ -197,7 +198,7 @@ f_envload()
             if [ -n "${check}" ]
             then
                 rc=-1
-                f_log "please whitelist '${adb_nullipv4}' in your bcp38 configuration to use default adblock null-ip"
+                f_log "please whitelist '${adb_nullipv4}' in your bcp38 configuration to use your adblock null-ip"
                 f_exit
             fi
         fi
@@ -348,74 +349,71 @@ f_envcheck()
         adb_dnsformat="awk -v ipv6="${adb_nullipv6}" '{print \"address=/\"\$0\"/\"ipv6}'"
     fi
 
-    # check ipv4/iptables configuration
+    # check volatile iptables configuration
     #
     if [ -n "${adb_wanif4}" ]
     then
-        if [ $((adb_forcedns)) -eq 1 ] && [ -n "${adb_landev4}" ]
+        check="$(${adb_iptv4} -w -vnL | grep -Fo "adb-")"
+        if [ -z "${check}" ]
         then
-            f_firewall "IPv4" "nat" "prerouting_rule" "prerouting_rule" "0" "dns" "-i ${adb_landev4} -p udp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
-            f_firewall "IPv4" "nat" "prerouting_rule" "prerouting_rule" "0" "dns" "-i ${adb_landev4} -p tcp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
-        fi
-        f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "1" "nat" "-d ${adb_nullipv4} -p tcp --dport 80 -j DNAT --to-destination ${adb_ipv4}:${adb_nullport}"
-        f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "2" "nat" "-d ${adb_nullipv4} -p tcp --dport 443 -j DNAT --to-destination ${adb_ipv4}:${adb_nullportssl}"
-        f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-d ${adb_nullipv4} -p tcp -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-d ${adb_nullipv4} -j REJECT --reject-with icmp-host-unreachable"
-        f_firewall "IPv4" "filter" "output_rule" "adb-out" "1" "out" "-d ${adb_nullipv4} -p tcp -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv4" "filter" "output_rule" "adb-out" "2" "out" "-d ${adb_nullipv4} -j REJECT --reject-with icmp-host-unreachable"
-        if [ "${fw_done}" = "true" ]
-        then
-            f_log "created volatile IPv4 firewall ruleset"
-            fw_done="false"
+            if [ $((adb_forcedns)) -eq 1 ] && [ -n "${adb_landev4}" ]
+            then
+                f_firewall "IPv4" "nat" "prerouting_rule" "prerouting_rule" "0" "dns" "-i ${adb_landev4} -p udp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
+                f_firewall "IPv4" "nat" "prerouting_rule" "prerouting_rule" "0" "dns" "-i ${adb_landev4} -p tcp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
+            fi
+            f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination ${adb_ipv4}:${adb_nullport}"
+            f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination ${adb_ipv4}:${adb_nullportssl}"
+            f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-j REJECT --reject-with icmp-host-unreachable"
+            f_firewall "IPv4" "filter" "output_rule" "adb-out" "1" "out" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv4" "filter" "output_rule" "adb-out" "2" "out" "-j REJECT --reject-with icmp-host-unreachable"
         fi
     fi
-
-    # check ipv6/ip6tables configuration
-    #
     if [ -n "${adb_wanif6}" ]
     then
-        if [ $((adb_forcedns)) -eq 1 ] && [ -n "${adb_landev6}" ]
+        check="$(${adb_iptv6} -w -vnL | grep -Fo "adb-")"
+        if [ -z "${check}" ]
         then
-            f_firewall "IPv6" "nat" "PREROUTING" "PREROUTING" "0" "dns" "-i ${adb_landev6} -p udp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
-            f_firewall "IPv6" "nat" "PREROUTING" "PREROUTING" "0" "dns" "-i ${adb_landev6} -p tcp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
-        fi
-        f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "1" "nat" "-d ${adb_nullipv6} -p tcp --dport 80 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullport}"
-        f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "2" "nat" "-d ${adb_nullipv6} -p tcp --dport 443 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullportssl}"
-        f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-d ${adb_nullipv6} -p tcp -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-d ${adb_nullipv6} -j REJECT --reject-with icmp6-addr-unreachable"
-        f_firewall "IPv6" "filter" "output_rule" "adb-out" "1" "out" "-d ${adb_nullipv6} -p tcp -j REJECT --reject-with tcp-reset"
-        f_firewall "IPv6" "filter" "output_rule" "adb-out" "2" "out" "-d ${adb_nullipv6} -j REJECT --reject-with icmp6-addr-unreachable"
-        if [ "${fw_done}" = "true" ]
-        then
-            f_log "created volatile IPv6 firewall ruleset"
-            fw_done="false"
+            if [ $((adb_forcedns)) -eq 1 ] && [ -n "${adb_landev6}" ]
+            then
+                f_firewall "IPv6" "nat" "PREROUTING" "PREROUTING" "0" "dns" "-i ${adb_landev6} -p udp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
+                f_firewall "IPv6" "nat" "PREROUTING" "PREROUTING" "0" "dns" "-i ${adb_landev6} -p tcp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
+            fi
+            f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullport}"
+            f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullportssl}"
+            f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-j REJECT --reject-with icmp6-addr-unreachable"
+            f_firewall "IPv6" "filter" "output_rule" "adb-out" "1" "out" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv6" "filter" "output_rule" "adb-out" "2" "out" "-j REJECT --reject-with icmp6-addr-unreachable"
         fi
     fi
+    if [ "${fw_done}" = "true" ]
+    then
+        f_log "created volatile firewall rulesets"
+        fw_done="false"
+    fi
 
-    # check volatile adblock uhttpd instance configuration
+    # check volatile uhttpd instance configuration
     #
     check="$(pgrep -f "uhttpd -h /www/adblock")"
     if [ -z "${check}" ]
     then
         if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
         then
-            uhttpd -h "/www/adblock" -N 25 -T 1 -k 0 -t 0 -R -D -S -E "/index.html" -p "${adb_ipv4}:${adb_nullport}" -p "[${adb_ipv6}]:${adb_nullport}"
-            uhttpd -h "/www/adblock" -N 25 -T 0 -k 0 -t 0 -R -D -S -E "/index.html" -p "${adb_ipv4}:${adb_nullportssl}" -p "[${adb_ipv6}]:${adb_nullportssl}"
+            f_uhttpd "adbIPv4+6_80" "1" "-p ${adb_ipv4}:${adb_nullport} -p [${adb_ipv6}]:${adb_nullport}"
+            f_uhttpd "adbIPv4+6_443" "0" "-p ${adb_ipv4}:${adb_nullportssl} -p [${adb_ipv6}]:${adb_nullportssl}"
         elif [ -n "${adb_wanif4}" ]
         then
-            uhttpd -h "/www/adblock" -N 25 -T 1 -k 0 -t 0 -R -D -S -E "/index.html" -p "${adb_ipv4}:${adb_nullport}"
-            uhttpd -h "/www/adblock" -N 25 -T 0 -k 0 -t 0 -R -D -S -E "/index.html" -p "${adb_ipv4}:${adb_nullportssl}"
+            f_uhttpd "adbIPv4_80" "1" "-p ${adb_ipv4}:${adb_nullport}"
+            f_uhttpd "adbIPv4_443" "0" "-p ${adb_ipv4}:${adb_nullportssl}"
         else
-            uhttpd -h "/www/adblock" -N 25 -T 1 -k 0 -t 0 -R -D -S -E "/index.html" -p "[${adb_ipv6}]:${adb_nullport}"
-            uhttpd -h "/www/adblock" -N 25 -T 0 -k 0 -t 0 -R -D -S -E "/index.html" -p "[${adb_ipv6}]:${adb_nullportssl}"
+            f_uhttpd "adbIPv6_80" "1" "-p [${adb_ipv6}]:${adb_nullport}"
+            f_uhttpd "adbIPv6_443" "0" "-p [${adb_ipv6}]:${adb_nullportssl}"
         fi
-        rc=${?}
-        if [ $((rc)) -eq 0 ]
+        if [ "${uhttpd_done}" = "true" ]
         then
             f_log "created volatile uhttpd instances"
-        else
-            f_log "failed to initialize volatile uhttpd instances" "${rc}"
-            f_exit
+            uhttpd_done="false"
         fi
     fi
 
@@ -501,6 +499,24 @@ f_firewall()
     fi
 }
 
+# f_uhttpd: start uhttpd instances
+#
+f_uhttpd()
+{
+    local realm="${1}"
+    local timeout="${2}"
+    local ports="${3}"
+    "${adb_uhttpd}" -h "/www/adblock" -N 25 -T "${timeout}" -r "${realm}" -k 0 -t 0 -R -D -S -E "/index.html" ${ports}
+    rc=${?}
+    if [ $((rc)) -eq 0 ]
+    then
+        uhttpd_done="true"
+    else
+        f_log "failed to initialize volatile uhttpd instance (${realm})" "${rc}"
+        f_exit
+    fi
+}
+
 # f_log: log messages to stdout and syslog
 #
 f_log()
@@ -576,7 +592,7 @@ f_rmconfig()
 {
     local src_name
     local rm_done="${1}"
- 
+
     for src_name in ${rm_done}
     do
         src_name="${src_name#*.}"
@@ -633,10 +649,7 @@ f_exit()
         f_log "domain adblock processing finished successfully (${adb_scriptver}, ${adb_sysver}, ${lastrun})"
     elif [ $((rc)) -gt 0 ]
     then
-        if [ -n "$(${adb_uci} -q changes adblock)" ]
-        then
-            "${adb_uci}" -q revert "adblock"
-        fi
+        "${adb_uci}" -q revert "adblock"
         f_log "domain adblock processing failed (${adb_scriptver}, ${adb_sysver}, ${lastrun})"
     else
         rc=0
