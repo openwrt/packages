@@ -1,9 +1,9 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -129,7 +129,7 @@ CLEANFILES = $(VC6_LIBDSP) $(VC6_SRCDSP)
+@@ -150,7 +150,7 @@ CLEANFILES = $(VC6_LIBDSP) $(VC6_SRCDSP)
  bin_SCRIPTS = gnurl-config
  
- SUBDIRS = lib src include
+ SUBDIRS = lib src include scripts
 -DIST_SUBDIRS = $(SUBDIRS) tests packages docs
 +DIST_SUBDIRS = $(SUBDIRS) packages
  
@@ -11,10 +11,10 @@
  pkgconfig_DATA = libgnurl.pc
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -577,7 +577,7 @@ CLEANFILES = $(VC6_LIBDSP) $(VC6_SRCDSP)
+@@ -599,7 +599,7 @@ CLEANFILES = $(VC6_LIBDSP) $(VC6_SRCDSP)
  
  bin_SCRIPTS = gnurl-config
- SUBDIRS = lib src include
+ SUBDIRS = lib src include scripts
 -DIST_SUBDIRS = $(SUBDIRS) tests packages docs
 +DIST_SUBDIRS = $(SUBDIRS) packages
  pkgconfigdir = $(libdir)/pkgconfig
