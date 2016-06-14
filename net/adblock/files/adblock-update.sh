@@ -28,7 +28,7 @@ fi
 # get current directory and set script/config version
 #
 adb_scriptdir="${0%/*}"
-adb_scriptver="1.2.0"
+adb_scriptver="1.2.1"
 adb_mincfgver="2.2"
 
 # source in adblock function library
@@ -99,7 +99,7 @@ do
     if [ -z "${url_time}" ]
     then
         url_time="$(date)"
-        f_log "   online timestamp not received, current date will be used"
+        f_log "   no online timestamp received"
     fi
     if [ -z "${list_time}" ] || [ "${list_time}" != "${url_time}" ] || [ ! -r "${adb_dnsfile}" ] ||\
       ([ "${backup_ok}" = "true" ] && [ ! -r "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz" ])
