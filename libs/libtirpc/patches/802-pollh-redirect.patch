@@ -1,0 +1,22 @@
+--- a/src/svc_run.c
++++ b/src/svc_run.c
+@@ -37,7 +37,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <unistd.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ 
+ 
+ #include <rpc/rpc.h>
+--- a/src/rtime.c
++++ b/src/rtime.c
+@@ -46,7 +46,7 @@
+ #include <unistd.h>
+ #include <errno.h>
+ #include <sys/types.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <sys/socket.h>
+ #include <sys/time.h>
+ #include <netinet/in.h>

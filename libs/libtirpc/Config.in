@@ -1,0 +1,24 @@
+menu "Configuration"
+	depends on PACKAGE_libtirpc
+
+	config LIBTIRPC_GSSAPI
+		bool
+		prompt "Enable GSSAPI support"
+		help
+			Enable this switch if you have a GSSAPI installed and you wish to use it.
+		default n
+
+		menu "GSSAPI selector"
+			depends on PACKAGE_libtirpc
+
+			config LIBTIRPC_KRB5
+				depends on LIBTIRPC_GSSAPI
+				bool
+				prompt "Enable KRB5's GSSAPI support"
+				help
+					Enable this switch if you have KRB5 installed and you wish to use it.
+				default y
+
+		endmenu
+
+endmenu
