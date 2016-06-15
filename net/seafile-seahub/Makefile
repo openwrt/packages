@@ -27,7 +27,7 @@ define Package/seafile-seahub
     TITLE:=Seafile server - seahub component
     MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
     URL:=http://seafile.com/
-    DEPENDS:=+python +simplejson +python-imglib +python-setuptools
+    DEPENDS:=+python +simplejson +pillow +python-setuptools
 endef
 
 define Package/seafile-seahub/description
