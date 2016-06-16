@@ -93,10 +93,22 @@ function lxc_action(lxc_action, lxc_name)
 	luci.http.write_json(ec and {} or data)
 end
 
+function lxc_get_config_path()
+	local f = io.open("/etc/lxc/lxc.conf", "r")
+	local content = f:read("*all")
+	f:close()
+	local ret = content:match('^%s*lxc.lxcpath%s*=%s*([^%s]*)')
+	if ret then
+		return ret .. "/"
+	else
+		return "/srv/lxc/"
+	end
+end
+
 function lxc_configuration_get(lxc_name)
 	luci.http.prepare_content("text/plain")
 
-	local f = io.open("/lxc/" .. lxc_name .. "/config", "r")
+	local f = io.open(lxc_get_config_path() .. lxc_name .. "/config", "r")
 	local content = f:read("*all")
 	f:close()
 
@@ -112,7 +124,7 @@ function lxc_configuration_set(lxc_name)
 		return luci.http.write("1")
 	end
 
-	local f, err = io.open("/lxc/" .. lxc_name .. "/config","w+")
+	local f, err = io.open(lxc_get_config_path() .. lxc_name .. "/config","w+")
 	if not f then
 		return luci.http.write("2")
 	end
