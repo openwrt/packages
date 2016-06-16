@@ -17,7 +17,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/ocserv/
 PKG_MD5SUM:=ffe3d79662e939bb55dfe7c9e490b4f2
 
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPLv2+
 PKG_LICENSE_FILES:=COPYING
 PKG_FIXUP:=autoreconf
 
