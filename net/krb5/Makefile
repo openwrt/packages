@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
 PKG_VERSION:=1.14.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -39,7 +39,7 @@ define Package/krb5-libs
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Kerberos
-	DEPENDS:=+libncurses
+	DEPENDS:=+libncurses +e2fsprogs
 	TITLE:=Kerberos 5 Shared Libraries
 	URL:=http://web.mit.edu/kerberos/
 endef
@@ -60,6 +60,8 @@ define Package/krb5/description
 	Kerberos
 endef
 
+TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/et
+
 CONFIGURE_PATH = ./src
 
 CONFIGURE_VARS += \
@@ -74,6 +76,7 @@ CONFIGURE_ARGS += \
 	--without-system-verto \
 	--without-tcl \
 	--without-libedit \
+	--with-system-et \
 	--localstatedir=/etc
 
 define Build/InstallDev
@@ -83,7 +86,6 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib \
 		$(1)/usr
-	rm -f $(1)/usr/lib/libcom_err*
 endef
 
 define Package/krb5-libs/install
