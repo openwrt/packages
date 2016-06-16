@@ -80,7 +80,10 @@ function lxc_create(lxc_name, lxc_template)
 
 	local target = _G.DISTRIB_TARGET:match('([^/]+)')
 
-	local data = conn:call("lxc", "create", { name = lxc_name, template = "download", args = { "--server", url,  "--no-validate", "--dist", lxc_template, "--release", "bb", "--arch", target } } )
+	local lxc_dist = lxc_template:gsub("(.*):(.*)", '%1')
+	local lxc_release = lxc_template:gsub("(.*):(.*)", '%2')
+
+	local data = conn:call("lxc", "create", { name = lxc_name, template = "download", args = { "--server", url,  "--no-validate", "--dist", lxc_dist, "--release", lxc_release, "--arch", target } } )
 
 	luci.http.write(data)
 end
