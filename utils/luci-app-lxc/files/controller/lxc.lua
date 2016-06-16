@@ -78,7 +78,10 @@ function lxc_create(lxc_name, lxc_template)
 		return luci.http.write("1")
 	end
 
-	local target = _G.DISTRIB_TARGET:match('([^/]+)')
+	local f = io.popen('uname -m', 'r')
+	local target = f:read('*a')
+	f:close()
+	target = target:gsub("^%s*(.-)%s*$", "%1")
 
 	local lxc_dist = lxc_template:gsub("(.*):(.*)", '%1')
 	local lxc_release = lxc_template:gsub("(.*):(.*)", '%2')
