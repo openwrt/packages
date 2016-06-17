@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=make
-PKG_VERSION:=4.2
+PKG_VERSION:=4.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=@GNU/make
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=1141ca815c806a5bfedbbaa1551410f3
+PKG_MD5SUM:=7d0dcb6c474b258aab4d54098f2cf5a7
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
 PKG_LICENSE:=GPL-3.0+
 

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libinput
-PKG_VERSION:=1.2.3
+PKG_VERSION:=1.3.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.freedesktop.org/software/libinput/
-PKG_MD5SUM:=9f3d603942fefac8860e0fc828a3df99
+PKG_MD5SUM:=458fc483f7227d3c4c330f4abd6dfa77
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -33,7 +33,7 @@ define Package/libinput
   CATEGORY:=Libraries
   TITLE:=a library to handle input devices
   URL:=http://freedesktop.org/wiki/Software/libinput/
-  DEPENDS:=+libevdev +mtdev +eudev
+  DEPENDS:=+libevdev +mtdev +libudev
 endef
 
 define Package/libinput/description

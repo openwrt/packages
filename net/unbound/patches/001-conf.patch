@@ -89,27 +89,6 @@ index ff90e3b..5c20fdf 100644
  
  	# if given, a chroot(2) is done to the given directory.
  	# i.e. you can chroot to the working directory, for example,
-@@ -218,6 +233,7 @@ server:
- 	# and the given username is assumed. Default is user "unbound".
- 	# If you give "" no privileges are dropped.
- 	# username: "@UNBOUND_USERNAME@"
-+	username: ""
- 
- 	# the working directory. The relative files in this config are
- 	# relative to this directory. If you give "" the working directory
-@@ -240,10 +256,12 @@ server:
- 
- 	# the pid file. Can be an absolute path outside of chroot/work dir.
- 	# pidfile: "@UNBOUND_PIDFILE@"
-+	pidfile: "/var/run/unbound.pid"
- 
- 	# file to read root hints from.
- 	# get one from https://www.internic.net/domain/named.cache
- 	# root-hints: ""
-+	root-hints: "/etc/unbound/named.cache"
- 
- 	# enable to not answer id.server and hostname.bind queries.
- 	# hide-identity: no
 @@ -266,12 +284,15 @@ server:
  	#	positive value: fetch that many targets opportunistically.
  	# Enclose the list of numbers between quotes ("").
