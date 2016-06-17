@@ -6,171 +6,171 @@
 #
 
 menu "Configuration"
-        depends on PACKAGE_nginx
+        depends on PACKAGE_nginx-ssl
 
-config NGINX_nossl_DAV
+config NGINX_ssl_DAV
 	bool
 	prompt "Enable WebDAV module"
 	help
 		Enable the HTTP and WebDAV methods PUT, DELETE, MKCOL, COPY and MOVE.
 	default n
 
-config NGINX_nossl_FLV
+config NGINX_ssl_FLV
 	bool
 	prompt "Enable FLV module"
 	help
 		Provides the ability to seek within FLV (Flash) files using time-based offsets.
 	default n
 
-config NGINX_nossl_STUB_STATUS
+config NGINX_ssl_STUB_STATUS
 	bool
 	prompt "Enable stub status module"
 	help
 		Enable the stub status module which gives some status from the server.
 	default n
 
-config NGINX_nossl_HTTP_CHARSET
+config NGINX_ssl_HTTP_CHARSET
 	bool
 	prompt "Enable HTTP charset module"
 	default y
 
-config NGINX_nossl_HTTP_GZIP
+config NGINX_ssl_HTTP_GZIP
 	bool
 	prompt "Enable HTTP gzip module"
 	default y
 
-config NGINX_nossl_HTTP_SSI
+config NGINX_ssl_HTTP_SSI
 	bool
 	prompt "Enable HTTP ssi module"
 	default y
 
-config NGINX_nossl_HTTP_USERID
+config NGINX_ssl_HTTP_USERID
 	bool
 	prompt "Enable HTTP userid module"
 	default y
 
-config NGINX_nossl_HTTP_ACCESS
+config NGINX_ssl_HTTP_ACCESS
 	bool
 	prompt "Enable HTTP access module"
 	default y
 
-config NGINX_nossl_HTTP_AUTH_BASIC
+config NGINX_ssl_HTTP_AUTH_BASIC
 	bool
 	prompt "Enable HTTP auth basic"
 	default y
 
-config NGINX_nossl_HTTP_AUTOINDEX
+config NGINX_ssl_HTTP_AUTOINDEX
 	bool
 	prompt "Enable HTTP autoindex module"
 	default y
 
-config NGINX_nossl_HTTP_GEO
+config NGINX_ssl_HTTP_GEO
 	bool
 	prompt "Enable HTTP geo module"
 	default y
 
-config NGINX_nossl_HTTP_MAP
+config NGINX_ssl_HTTP_MAP
 	bool
 	prompt "Enable HTTP map module"
 	default y
 
-config NGINX_nossl_HTTP_SPLIT_CLIENTS
+config NGINX_ssl_HTTP_SPLIT_CLIENTS
 	bool
 	prompt "Enable HTTP split clients"
 	default y
 
-config NGINX_nossl_HTTP_REFERER
+config NGINX_ssl_HTTP_REFERER
 	bool
 	prompt "Enable HTTP referer module"
 	default y
 
-config NGINX_nossl_HTTP_REWRITE
+config NGINX_ssl_HTTP_REWRITE
 	bool
 	prompt "Enable HTTP rewrite module"
-	select NGINX_nossl_PCRE
+	select NGINX_ssl_PCRE
 	default y
 
-config NGINX_nossl_HTTP_PROXY
+config NGINX_ssl_HTTP_PROXY
 	bool
 	prompt "Enable HTTP proxy module"
 	default y
 
-config NGINX_nossl_HTTP_FASTCGI
+config NGINX_ssl_HTTP_FASTCGI
 	bool
 	prompt "Enable HTTP fastcgi module"
 	default y
 
-config NGINX_nossl_HTTP_UWSGI
+config NGINX_ssl_HTTP_UWSGI
 	bool
 	prompt "Enable HTTP uwsgi module"
 	default y
 
-config NGINX_nossl_HTTP_SCGI
+config NGINX_ssl_HTTP_SCGI
 	bool
 	prompt "Enable HTTP scgi module"
 	default y
 
-config NGINX_nossl_HTTP_MEMCACHED
+config NGINX_ssl_HTTP_MEMCACHED
 	bool
 	prompt "Enable HTTP memcached module"
 	default y
 
-config NGINX_nossl_HTTP_LIMIT_CONN
+config NGINX_ssl_HTTP_LIMIT_CONN
 	bool
 	prompt "Enable HTTP limit conn"
 	default y
 
-config NGINX_nossl_HTTP_LIMIT_REQ
+config NGINX_ssl_HTTP_LIMIT_REQ
 	bool
 	prompt "Enable HTTP limit req"
 	default y
 
-config NGINX_nossl_HTTP_EMPTY_GIF
+config NGINX_ssl_HTTP_EMPTY_GIF
 	bool
 	prompt "Enable HTTP empty gif"
 	default y
 
-config NGINX_nossl_HTTP_BROWSER
+config NGINX_ssl_HTTP_BROWSER
 	bool
 	prompt "Enable HTTP browser module"
 	default y
 
-config NGINX_nossl_HTTP_UPSTREAM_HASH
+config NGINX_ssl_HTTP_UPSTREAM_HASH
 	bool
 	prompt "Enable HTTP hash module"
 	default y
 
-config NGINX_nossl_HTTP_UPSTREAM_IP_HASH
+config NGINX_ssl_HTTP_UPSTREAM_IP_HASH
 	bool
 	prompt "Enable HTTP IP hash module"
 	default y
 
-config NGINX_nossl_HTTP_UPSTREAM_LEAST_CONN
+config NGINX_ssl_HTTP_UPSTREAM_LEAST_CONN
 	bool
 	prompt "Enable HTTP least conn module"
 	default y
 
-config NGINX_nossl_HTTP_UPSTREAM_KEEPALIVE
+config NGINX_ssl_HTTP_UPSTREAM_KEEPALIVE
 	bool
 	prompt "Enable HTTP keepalive module"
 	default y
 
-config NGINX_nossl_HTTP_CACHE
+config NGINX_ssl_HTTP_CACHE
 	bool
 	prompt "Enable HTTP cache"
 	default y
 
-config NGINX_nossl_PCRE
+config NGINX_ssl_PCRE
 	bool
 	prompt "Enable PCRE library usage"
 	default y
 
-config NGINX_nossl_NAXSI
+config NGINX_ssl_NAXSI
 	bool
 	prompt "Enable NAXSI module"
 	default y
 
-config NGINX_nossl_LUA
+config NGINX_ssl_LUA
 	bool
 	prompt "Enable Lua module"
 	default n
