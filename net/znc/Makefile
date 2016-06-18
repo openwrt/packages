@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
 PKG_VERSION:=1.6.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
@@ -23,6 +23,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 
+PKG_CONFIG_DEPENDS := CONFIG_ZNC_ICU
 
 define Package/znc/default
   SUBMENU:=Instant Messaging
@@ -34,7 +35,7 @@ endef
 
 define Package/znc
   $(Package/znc/default)
-  DEPENDS:=+libopenssl +libpthread +libstdcpp
+  DEPENDS:=+libopenssl +libpthread +libstdcpp +ZNC_ICU:icu
   MENU:=1
 endef
 
@@ -42,6 +43,10 @@ define Package/znc/description
 	ZNC is an IRC bouncer with many advanced features like detaching,
 	multiple users, per channel playback buffer, SSL, IPv6, transparent DCC
 	bouncing, and c++ module support to name a few.
+endef
+
+define Package/znc/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/znc/conffiles
@@ -266,7 +271,7 @@ $(eval $(call webskin,dark-clouds))
 $(eval $(call webskin,forest))
 $(eval $(call webskin,ice))
 
-PKG_CONFIG_DEPENDS := $(patsubst %,CONFIG_PACKAGE_%,$(ZNC_MODULES))
+PKG_CONFIG_DEPENDS += $(patsubst %,CONFIG_PACKAGE_%,$(ZNC_MODULES))
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -277,7 +282,7 @@ CONFIGURE_VARS += \
 	LIBS="-lstdc++ -lm -lssl -lcrypto $(LIBGCC_S) -lc"
 
 CONFIGURE_ARGS += \
-	--disable-charset \
+	$(if $(CONFIG_ZNC_ICU), --enable-charset, --disable-charset) \
 	--disable-cyrus \
 	--disable-debug \
 	--enable-largefile \
