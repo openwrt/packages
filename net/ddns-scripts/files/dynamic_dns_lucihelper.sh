@@ -32,8 +32,8 @@ case "$1" in
 		use_ipv6=${3:-"0"}		# Use IPv6 - default IPv4
 		force_ipversion=${4:-"0"}	# Force IP Version - default 0 - No
 		force_dnstcp=${5:-"0"}		# Force TCP on DNS - default 0 - No
-		dns_server=${6:-""}		# DNS server - default No DNS
-		is_glue=${7:-"0"}		# Is glue record - default 0 - No
+		is_glue=${6:-"0"}		# Is glue record - default 0 - No
+		dns_server=${7:-""}		# DNS server - default No DNS
 		write_log 7 "-----> get_registered_ip IP"
 		get_registered_ip IP
 		__RET=$?
