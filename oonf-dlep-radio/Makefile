@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oonf-dlep-radio
-PKG_VERSION:=0.11.7
-PKG_REV:=ef7a89aadbfbe6318b2ad1dc2c32423bd1970918
+PKG_VERSION:=0.12.1
+PKG_REV:=e4cb9a3ab52352ecee0da09ab4ccae32461f5f44
 PKG_RELEASE:=$(PKG_REV)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -21,7 +21,7 @@ CMAKE_OPTIONS=-D OONF_NO_WERROR:Bool=true \
               -D OONF_NO_TESTING:Bool=true \
               -D UCI:Bool=true \
               -D OONF_APP_DEFAULT_CFG_HANDLER:String=uci \
-              -D OONF_STATIC_PLUGINS:String="class;clock;interface;layer2;packet_socket;socket;stream_socket;telnet;timer;viewer;os_clock;os_fd;os_interface;os_system;nl80211_listener;layer2info;systeminfo;cfg_uciloader;cfg_compact;dlep_radio" \
+              -D OONF_STATIC_PLUGINS:String="class;clock;layer2;packet_socket;socket;stream_socket;telnet;timer;viewer;os_clock;os_fd;os_interface;os_system;nl80211_listener;layer2info;systeminfo;cfg_uciloader;cfg_compact;dlep_radio" \
               -D OONF_LIB_GIT:String=v$(PKG_VERSION)-archive \
               -D OONF_VERSION:String=$(PKG_VERSION) \
               -D INSTALL_LIB_DIR:Path=lib/oonf \
