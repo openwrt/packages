@@ -14,11 +14,11 @@ PKG_MAINTAINER:=Harald Geyer <harald@ccbib.org>
 PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=doc/COPYING
-PKG_VERSION:=0.8.16
+PKG_VERSION:=0.8.17
 PKG_RELEASE:=1
 
 # Use this for official releasees
-PKG_MD5SUM:=ef0c138b4a4fda017aa8bb6f812671ce
+PKG_MD5SUM:=e53efdb9a5e0852c58b21280b1e6c07d
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://ftp.libelektra.org/ftp/elektra/releases
 
@@ -97,9 +97,9 @@ define Package/libelektra-plugins
 endef
 
 define CONTENT_ELEKTRA_PLUGINS_TEXT
-ccode conditionals csvstorage curlget enum filecheck glob hexcode hidden
-hosts iconv keytometa line lineendings list mathcheck network null path
-profile shell syslog uname validation
+cachefilter ccode conditionals csvstorage curlget enum filecheck glob
+hexcode hidden hosts iconv keytometa line lineendings list mathcheck
+network null path profile shell syslog uname validation
 endef
 
 CONTENT_ELEKTRA_PLUGINS = $(strip $(CONTENT_ELEKTRA_PLUGINS_TEXT))
@@ -252,7 +252,6 @@ CMAKE_OPTIONS = \
 	-DBUILD_TESTING=OFF \
 	-DKDB_DEFAULT_RESOLVER=resolver_fm_pb_b \
 	-DKDB_DEFAULT_STORAGE=ini \
-	-DCMAKE_CXX_FLAGS="-DELEKTRA_SHARED" \
 	-DPLUGINS="ALL"
 
 CMAKE_HOST_OPTIONS = \
