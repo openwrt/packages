@@ -1,0 +1,11 @@
+Index: domoticz/appversion.default
+===================================================================
+--- domoticz.orig/appversion.default	2016-04-13 20:15:27.000000000 +0200
++++ domoticz/appversion.default	2016-04-13 20:27:48.058904107 +0200
+@@ -1,3 +1,3 @@
+-#define APPVERSION 4834
+-#define APPHASH "2bd98a1"
+-#define APPDATE 1456904172
++#define APPVERSION 5070
++#define APPHASH "86f58c9"
++#define APPDATE 1460538613

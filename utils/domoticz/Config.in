@@ -1,0 +1,11 @@
+config DOMOTICZ_OZW_SUPPORT
+	bool "OpenZWave support"
+	default n
+
+config DOMOTICZ_WIREPI_SUPPORT
+	bool "WiringPi Rasberry PI GPIO support"
+	default n
+
+config DOMOTICZ_RPITOOLS_SUPPORT
+	bool "Rasberry PI userland tools support"
+	default n

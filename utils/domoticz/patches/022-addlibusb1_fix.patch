@@ -1,0 +1,12 @@
+Index: domoticz/CMakeLists.txt
+===================================================================
+--- domoticz.orig/CMakeLists.txt	2015-11-21 23:09:15.763735022 +0100
++++ domoticz/CMakeLists.txt	2015-11-21 23:11:43.683741154 +0100
+@@ -350,6 +350,7 @@
+   MESSAGE(STATUS "LIBUSB found at: ${LIBUSB_LIBRARIES}")
+   add_definitions(-DWITH_LIBUSB)
+   target_link_libraries(domoticz ${LIBUSB_LIBRARIES})
++  target_link_libraries(domoticz usb-1.0) #is required for openwrt due to libusb-compat
+ else()
+   MESSAGE(STATUS "==== LibUSB not found, support for TE923/Voltcraft disabled!")
+ ENDIF(LIBUSB_FOUND)
