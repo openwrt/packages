@@ -10,7 +10,7 @@
 #
 adb_pid="${$}"
 adb_pidfile="/var/run/adblock.pid"
-adb_scriptver="1.2.5"
+adb_scriptver="1.2.6"
 adb_mincfgver="2.2"
 adb_scriptdir="${0%/*}"
 if [ -r "${adb_pidfile}" ]
@@ -161,6 +161,11 @@ do
             "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=list restored"
             f_log "   source download failed, restored (${count} entries)"
         else
+            if [ -r "${adb_dnsdir}/${adb_dnsprefix}.${src_name}" ]
+            then
+                rm -f "${adb_dnsdir}/${adb_dnsprefix}.${src_name}"
+                rm_done="true"
+            fi
             "${adb_uci}" -q delete "adblock.${src_name}.adb_src_count"
             "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=download failed"
             f_log "   source download failed, skipped"
