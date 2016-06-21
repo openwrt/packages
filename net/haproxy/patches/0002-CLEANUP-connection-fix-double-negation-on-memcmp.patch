@@ -1,0 +1,39 @@
+From fab41521192c6f62f0284faf53d6ad40955ef3db Mon Sep 17 00:00:00 2001
+From: David CARLIER <devnexen@gmail.com>
+Date: Thu, 24 Mar 2016 09:22:36 +0000
+Subject: [PATCH 2/4] CLEANUP: connection: fix double negation on memcmp()
+
+Nothing harmful in here, just clarify that it applies to the whole
+expression.
+
+(cherry picked from commit 42ff05e2d3d10e8a1e070e66e8883c5eabe196d7)
+(cherry picked from commit c4809151b4c9ccc312cb451e99fd556e867242fc)
+---
+ src/connection.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/connection.c b/src/connection.c
+index 09fd04e..af18878 100644
+--- a/src/connection.c
++++ b/src/connection.c
+@@ -289,7 +289,7 @@ int conn_recv_proxy(struct connection *conn, int flag)
+ 	if (trash.len < 9) /* shortest possible line */
+ 		goto missing;
+ 
+-	if (!memcmp(line, "TCP4 ", 5) != 0) {
++	if (memcmp(line, "TCP4 ", 5) == 0) {
+ 		u32 src3, dst3, sport, dport;
+ 
+ 		line += 5;
+@@ -330,7 +330,7 @@ int conn_recv_proxy(struct connection *conn, int flag)
+ 		((struct sockaddr_in *)&conn->addr.to)->sin_port          = htons(dport);
+ 		conn->flags |= CO_FL_ADDR_FROM_SET | CO_FL_ADDR_TO_SET;
+ 	}
+-	else if (!memcmp(line, "TCP6 ", 5) != 0) {
++	else if (memcmp(line, "TCP6 ", 5) == 0) {
+ 		u32 sport, dport;
+ 		char *src_s;
+ 		char *dst_s, *sport_s, *dport_s;
+-- 
+2.7.3
+

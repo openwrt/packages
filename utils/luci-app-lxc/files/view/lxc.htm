@@ -47,7 +47,6 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 				</td>
 				<td>
 					<select id="s_template" class="cbi-input-select cbi-button">
-						<option value="openwrt">OpenWrt</option>
 					</select>
 				</td>
 				<td>
@@ -438,4 +437,22 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 	}
 
 	lxc_list_update()
+
+	new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_get_downloadable', null,
+	function(x, data)
+	{
+		if (!x) return;
+
+		var lxc_count = Object.keys(data).length
+		if (!data || !lxc_count) return;
+		var select = document.getElementById("s_template");
+		for(var key in data)
+		{
+			var option = document.createElement('option');
+			option.value = data[key];
+			option.text = data[key].replace(/[_:]/, ' ');
+			select.add(option, -1);
+		}
+	})
+
 //]]></script>

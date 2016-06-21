@@ -956,7 +956,7 @@ get_registered_ip() {
 	# 1	no IP detected
 
 	[ $# -lt 1 -o $# -gt 2 ] && write_log 12 "Error calling 'get_registered_ip()' - wrong number of parameters"
-	[ $is_glue -eq 1 -a -z "$(which host)" ] && write_log 12 "Update of glue records is only supported using BIND host"
+	[ $is_glue -eq 1 -a -z "$(which host)" ] && write_log 14 "Lookup of glue records is only supported using BIND host"
 	write_log 7 "Detect registered/public IP"
 
 	# set correct regular expression
