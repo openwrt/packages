@@ -19,6 +19,7 @@ PKG_LICENSE_FILES:=COPYING LICENCE.miniupnpd
 
 PKG_MAINTAINER:=Knyazkov Dmitry <medavedik@gmail.com>
 
+PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=0
 PKG_BUILD_DEPENDS:=util-linux
 

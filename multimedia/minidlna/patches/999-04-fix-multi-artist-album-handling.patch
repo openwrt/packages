@@ -20,11 +20,9 @@ and that cache ignores artist names as well.
  scanner.c | 3 +--
  1 file changed, 1 insertion(+), 2 deletions(-)
 
-Index: minidlna/scanner.c
-===================================================================
---- minidlna.orig/scanner.c	2015-03-09 13:16:34.510503405 +0300
-+++ minidlna/scanner.c	2015-03-09 13:16:34.506503413 +0300
-@@ -97,9 +97,8 @@
+--- a/scanner.c
++++ b/scanner.c
+@@ -97,9 +97,8 @@ insert_container(const char *item, const
  	                                "left join DETAILS d on (o.DETAIL_ID = d.ID)"
  	                                " where o.PARENT_ID = '%s'"
  			                " and o.NAME like '%q'"

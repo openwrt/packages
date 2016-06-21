@@ -1,8 +1,40 @@
-diff --git a/clients.c b/clients.c
-index a8609d2..cd1d06a 100644
+--- a/NEWS
++++ b/NEWS
+@@ -1,3 +1,14 @@
++1.1.6 - Released 16-June-2016
++--------------------------------
++- Add AllShare and Windows client detection.
++- Update support for LG2012 TV.
++- Fix Samsung bookmarking on magic containers.
++- Fix SQL error when moving captions.
++- Add wide_links config option.
++- Fix external subtitles on Samsung Series J.
++- Add string localization support for magic containers.
++- Rework NLS init to work with non-en_US locales.
++
+ 1.1.5 - Released 10-Sep-2015
+ --------------------------------
+ - Re-enable Samsung DCM10, which adds video bookmarks and "BasicView" support.
 --- a/clients.c
 +++ b/clients.c
-@@ -65,9 +65,10 @@ struct client_type_s client_types[] =
+@@ -53,6 +53,16 @@ struct client_type_s client_types[] =
+ 	  EXAVClientInfo
+ 	},
+ 
++	/* User-Agent: DLNADOC/1.50 SEC_HHP_[PC]LPC001/1.0  MS-DeviceCaps/1024 */
++	/* This is AllShare running on a PC.  We don't want to respond with Samsung
++	 * capabilities, or Windows (and AllShare) might get grumpy. */
++	{ 0,
++	  FLAG_DLNA,
++	  "AllShare",
++	  "SEC_HHP_[PC]",
++	  EUserAgent
++	},
++
+ 	/* Samsung Series [CDE] BDPs and TVs must be separated, or some of our
+ 	 * advertised extra features trigger a folder browsing bug on BDPs. */
+ 	/* User-Agent: DLNADOC/1.50 SEC_HHP_BD-D5100/1.0 */
+@@ -65,9 +75,10 @@ struct client_type_s client_types[] =
  
  	/* User-Agent: DLNADOC/1.50 SEC_HHP_[TV]UE40D7000/1.0 */
  	/* User-Agent: DLNADOC/1.50 SEC_HHP_ Family TV/1.0 */
@@ -15,7 +47,7 @@ index a8609d2..cd1d06a 100644
  	  "SEC_HHP_",
  	  EUserAgent
  	},
-@@ -134,6 +135,14 @@ struct client_type_s client_types[] =
+@@ -134,6 +145,14 @@ struct client_type_s client_types[] =
  	  EXAVClientInfo
  	},
  
@@ -30,8 +62,20 @@ index a8609d2..cd1d06a 100644
  	/* User-Agent: Linux/2.6.31-1.0 UPnP/1.0 DLNADOC/1.50 INTEL_NMPR/2.0 LGE_DLNA_SDK/1.5.0 */
  	{ ELGDevice,
  	  FLAG_DLNA | FLAG_CAPTION_RES,
-diff --git a/clients.h b/clients.h
-index 190d569..35d819a 100644
+@@ -221,6 +240,13 @@ struct client_type_s client_types[] =
+ 	  EUserAgent
+ 	},
+ 
++	{ 0,
++	  FLAG_DLNA | FLAG_MIME_AVI_AVI,
++	  "Windows",
++	  "FDSSDP",
++	  EUserAgent
++	},
++
+ 	{ EStandardDLNA150,
+ 	  FLAG_DLNA | FLAG_MIME_AVI_AVI,
+ 	  "Generic DLNA 1.5",
 --- a/clients.h
 +++ b/clients.h
 @@ -57,6 +57,7 @@ enum client_types {
@@ -42,8 +86,16 @@ index 190d569..35d819a 100644
  	ELifeTab,
  	EMarantzDMP,
  	EMediaRoom,
-diff --git a/inotify.c b/inotify.c
-index 745436c..88ca83a 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -575,7 +575,6 @@ AC_ARG_ENABLE(readynas,
+ 		AC_DEFINE([NETGEAR],[1],[Define to 1 if you want to enable generic NETGEAR device support])
+ 		AC_DEFINE([READYNAS],[1],[Define to 1 if you want to enable NETGEAR ReadyNAS support])
+ 		AC_DEFINE([TIVO_SUPPORT], 1, [Define to 1 if you want to enable TiVo support])
+-		AC_DEFINE([PNPX],[5],[Define to 5 if you want to enable NETGEAR ReadyNAS PnP-X support])
+ 		AC_DEFINE_UNQUOTED([OS_URL],"http://www.readynas.com/")
+ 		AC_DEFINE_UNQUOTED([ROOTDEV_MANUFACTURERURL],"http://www.netgear.com/")
+ 		AC_DEFINE_UNQUOTED([ROOTDEV_MANUFACTURER],"NETGEAR")
 --- a/inotify.c
 +++ b/inotify.c
 @@ -25,6 +25,7 @@
@@ -54,7 +106,7 @@ index 745436c..88ca83a 100644
  #include <errno.h>
  #include <sys/types.h>
  #include <sys/stat.h>
-@@ -349,9 +350,8 @@ inotify_insert_file(char * name, const char * path)
+@@ -349,9 +350,8 @@ inotify_insert_file(char * name, const c
  			if( !is_image(path) )
  				return -1;
  			break;
@@ -65,7 +117,7 @@ index 745436c..88ca83a 100644
  	}
  	
  	/* If it's already in the database and hasn't been modified, skip it. */
-@@ -641,7 +641,7 @@ inotify_remove_directory(int fd, const char * path)
+@@ -641,7 +641,7 @@ inotify_remove_directory(int fd, const c
  }
  
  void *
@@ -85,11 +137,9 @@ index 745436c..88ca83a 100644
          
  	pollfds[0].fd = inotify_init();
  	pollfds[0].events = POLLIN;
-diff --git a/metadata.c b/metadata.c
-index c08ca3f..2bfa8b9 100644
 --- a/metadata.c
 +++ b/metadata.c
-@@ -149,7 +149,7 @@ check_for_captions(const char *path, int64_t detailID)
+@@ -149,7 +149,7 @@ check_for_captions(const char *path, int
  
  	if (ret == 0)
  	{
@@ -98,11 +148,40 @@ index c08ca3f..2bfa8b9 100644
  		             " (ID, PATH) "
  		             "VALUES"
  		             " (%lld, %Q)", detailID, file);
-diff --git a/minidlna.c b/minidlna.c
-index 7933f54..b0c88c4 100644
 --- a/minidlna.c
 +++ b/minidlna.c
-@@ -468,9 +468,21 @@ static int strtobool(const char *str)
+@@ -238,30 +238,6 @@ getfriendlyname(char *buf, int len)
+ 		}
+ 	}
+ 	fclose(info);
+-#if PNPX
+-	memcpy(pnpx_hwid+4, "01F2", 4);
+-	if (strcmp(modelnumber, "NVX") == 0)
+-		memcpy(pnpx_hwid+17, "0101", 4);
+-	else if (strcmp(modelnumber, "Pro") == 0 ||
+-	         strcmp(modelnumber, "Pro 6") == 0 ||
+-	         strncmp(modelnumber, "Ultra 6", 7) == 0)
+-		memcpy(pnpx_hwid+17, "0102", 4);
+-	else if (strcmp(modelnumber, "Pro 2") == 0 ||
+-	         strncmp(modelnumber, "Ultra 2", 7) == 0)
+-		memcpy(pnpx_hwid+17, "0103", 4);
+-	else if (strcmp(modelnumber, "Pro 4") == 0 ||
+-	         strncmp(modelnumber, "Ultra 4", 7) == 0)
+-		memcpy(pnpx_hwid+17, "0104", 4);
+-	else if (strcmp(modelnumber+1, "100") == 0)
+-		memcpy(pnpx_hwid+17, "0105", 4);
+-	else if (strcmp(modelnumber+1, "200") == 0)
+-		memcpy(pnpx_hwid+17, "0106", 4);
+-	/* 0107 = Stora */
+-	else if (strcmp(modelnumber, "Duo v2") == 0)
+-		memcpy(pnpx_hwid+17, "0108", 4);
+-	else if (strcmp(modelnumber, "NV+ v2") == 0)
+-		memcpy(pnpx_hwid+17, "0109", 4);
+-#endif
+ #else
+ 	char * logname;
+ 	logname = getenv("LOGNAME");
+@@ -468,9 +444,21 @@ static int strtobool(const char *str)
  static void init_nls(void)
  {
  #ifdef ENABLE_NLS
@@ -127,7 +206,7 @@ index 7933f54..b0c88c4 100644
  	textdomain("minidlna");
  #endif
  }
-@@ -738,6 +750,10 @@ init(int argc, char **argv)
+@@ -738,6 +726,10 @@ init(int argc, char **argv)
  			if (strtobool(ary_options[i].value))
  				SETFLAG(MERGE_MEDIA_DIRS_MASK);
  			break;
@@ -138,7 +217,7 @@ index 7933f54..b0c88c4 100644
  		default:
  			DPRINTF(E_ERROR, L_GENERAL, "Unknown option in file %s\n",
  				optionsfile);
-@@ -1021,11 +1037,11 @@ main(int argc, char **argv)
+@@ -1021,11 +1013,11 @@ main(int argc, char **argv)
  
  	for (i = 0; i < L_MAX; i++)
  		log_level[i] = E_WARN;
@@ -151,7 +230,7 @@ index 7933f54..b0c88c4 100644
  
  	DPRINTF(E_WARN, L_GENERAL, "Starting " SERVER_NAME " version " MINIDLNA_VERSION ".\n");
  	if (sqlite3_libversion_number() < 3005001)
-@@ -1299,10 +1315,6 @@ shutdown:
+@@ -1299,10 +1291,6 @@ shutdown:
  	if (scanning && scanner_pid)
  		kill(scanner_pid, SIGKILL);
  
@@ -162,7 +241,7 @@ index 7933f54..b0c88c4 100644
  	/* close out open sockets */
  	while (upnphttphead.lh_first != NULL)
  	{
-@@ -1330,6 +1342,10 @@ shutdown:
+@@ -1330,6 +1318,10 @@ shutdown:
  	if (inotify_thread)
  		pthread_join(inotify_thread, NULL);
  
@@ -173,8 +252,6 @@ index 7933f54..b0c88c4 100644
  	sql_exec(db, "UPDATE SETTINGS set VALUE = '%u' where KEY = 'UPDATE_ID'", updateID);
  	sqlite3_close(db);
  
-diff --git a/minidlna.conf b/minidlna.conf
-index 7e00e89..446ed3e 100644
 --- a/minidlna.conf
 +++ b/minidlna.conf
 @@ -81,3 +81,6 @@ model_number=1
@@ -184,11 +261,9 @@ index 7e00e89..446ed3e 100644
 +
 +# set this to yes to allow symlinks that point outside user-defined media_dirs.
 +#wide_links=no
-diff --git a/minidlna.conf.5 b/minidlna.conf.5
-index ce4b3fd..f5ecb97 100644
 --- a/minidlna.conf.5
 +++ b/minidlna.conf.5
-@@ -163,6 +163,10 @@ force_sort_criteria=+upnp:class,+upnp:originalTrackNumber,+dc:title
+@@ -163,6 +163,10 @@ force_sort_criteria=+upnp:class,+upnp:or
  
  .fi
  
@@ -199,8 +274,6 @@ index ce4b3fd..f5ecb97 100644
  
  
  .SH VERSION
-diff --git a/options.c b/options.c
-index 2fa8c06..15e05ee 100644
 --- a/options.c
 +++ b/options.c
 @@ -64,7 +64,8 @@ static const struct {
@@ -213,8 +286,6 @@ index 2fa8c06..15e05ee 100644
  };
  
  int
-diff --git a/options.h b/options.h
-index 159255f..e9ef921 100644
 --- a/options.h
 +++ b/options.h
 @@ -57,7 +57,8 @@ enum upnpconfigoptions {
@@ -227,8 +298,6 @@ index 159255f..e9ef921 100644
  };
  
  /* readoptionsfile()
-diff --git a/po/da.po b/po/da.po
-index f071e07..7d06bd2 100644
 --- a/po/da.po
 +++ b/po/da.po
 @@ -68,6 +68,10 @@ msgstr "Mapper"
@@ -242,8 +311,6 @@ index f071e07..7d06bd2 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Film"
-diff --git a/po/de.po b/po/de.po
-index 79fe3f3..3eeb814 100644
 --- a/po/de.po
 +++ b/po/de.po
 @@ -83,6 +83,10 @@ msgstr "Ordner"
@@ -257,8 +324,6 @@ index 79fe3f3..3eeb814 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Video"
-diff --git a/po/es.po b/po/es.po
-index 0e0b150..5ac881f 100644
 --- a/po/es.po
 +++ b/po/es.po
 @@ -68,6 +68,10 @@ msgstr "Carpetas"
@@ -272,8 +337,6 @@ index 0e0b150..5ac881f 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Vídeo"
-diff --git a/po/fr.po b/po/fr.po
-index 62cfb1f..9769902 100644
 --- a/po/fr.po
 +++ b/po/fr.po
 @@ -68,6 +68,10 @@ msgstr "Dossiers"
@@ -287,8 +350,6 @@ index 62cfb1f..9769902 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Vidéo"
-diff --git a/po/it.po b/po/it.po
-index ee7e043..c8541bf 100644
 --- a/po/it.po
 +++ b/po/it.po
 @@ -70,6 +70,10 @@ msgstr "Cartelle"
@@ -302,8 +363,6 @@ index ee7e043..c8541bf 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Video"
-diff --git a/po/ja.po b/po/ja.po
-index caca0d5..c6605b1 100644
 --- a/po/ja.po
 +++ b/po/ja.po
 @@ -68,6 +68,10 @@ msgstr "フォルダ"
@@ -317,8 +376,6 @@ index caca0d5..c6605b1 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "ビデオ"
-diff --git a/po/ko.po b/po/ko.po
-index 20b1ed4..ff8198d 100644
 --- a/po/ko.po
 +++ b/po/ko.po
 @@ -68,6 +68,10 @@ msgstr "폴더"
@@ -332,8 +389,6 @@ index 20b1ed4..ff8198d 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "비디오"
-diff --git a/po/minidlna.pot b/po/minidlna.pot
-index 67e53a3..bb16145 100644
 --- a/po/minidlna.pot
 +++ b/po/minidlna.pot
 @@ -84,6 +84,10 @@ msgstr ""
@@ -347,8 +402,6 @@ index 67e53a3..bb16145 100644
  #: scanner.c:536
  msgid "Video"
  msgstr ""
-diff --git a/po/nb.po b/po/nb.po
-index c63332a..8d9b8fa 100644
 --- a/po/nb.po
 +++ b/po/nb.po
 @@ -68,6 +68,10 @@ msgstr "Mapper"
@@ -362,8 +415,6 @@ index c63332a..8d9b8fa 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Video"
-diff --git a/po/nl.po b/po/nl.po
-index afe3486..0e0c1b6 100644
 --- a/po/nl.po
 +++ b/po/nl.po
 @@ -68,6 +68,10 @@ msgstr "Mappen"
@@ -377,8 +428,6 @@ index afe3486..0e0c1b6 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Video"
-diff --git a/po/pl.po b/po/pl.po
-index 777c6d4..2d3cd8b 100644
 --- a/po/pl.po
 +++ b/po/pl.po
 @@ -83,6 +83,10 @@ msgstr "Folder"
@@ -392,8 +441,6 @@ index 777c6d4..2d3cd8b 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Filmy"
-diff --git a/po/ru.po b/po/ru.po
-index fda545d..e07502b 100644
 --- a/po/ru.po
 +++ b/po/ru.po
 @@ -85,6 +85,10 @@ msgstr "Папки"
@@ -407,8 +454,6 @@ index fda545d..e07502b 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Видео"
-diff --git a/po/sl.po b/po/sl.po
-index cb28c84..ceb31d8 100644
 --- a/po/sl.po
 +++ b/po/sl.po
 @@ -83,6 +83,10 @@ msgstr "Mape"
@@ -422,8 +467,6 @@ index cb28c84..ceb31d8 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Video"
-diff --git a/po/sv.po b/po/sv.po
-index 5880d4b..1005813 100644
 --- a/po/sv.po
 +++ b/po/sv.po
 @@ -68,6 +68,10 @@ msgstr "Mappar"
@@ -437,11 +480,9 @@ index 5880d4b..1005813 100644
  #: scanner.c:536
  msgid "Video"
  msgstr "Film"
-diff --git a/process.c b/process.c
-index 96ec1c3..ecb4922 100644
 --- a/process.c
 +++ b/process.c
-@@ -96,10 +96,10 @@ process_fork(struct client_cache_s *client)
+@@ -96,10 +96,10 @@ process_fork(struct client_cache_s *clie
  	pid_t pid = fork();
  	if (pid > 0)
  	{
@@ -453,8 +494,6 @@ index 96ec1c3..ecb4922 100644
  	}
  
  	return pid;
-diff --git a/scanner.c b/scanner.c
-index 33b961a..52ac256 100644
 --- a/scanner.c
 +++ b/scanner.c
 @@ -594,7 +594,8 @@ CreateDatabase(void)
@@ -467,11 +506,134 @@ index 33b961a..52ac256 100644
  			free(parent);
  			if( ret != SQLITE_OK )
  				goto sql_failed;
-diff --git a/upnpglobalvars.h b/upnpglobalvars.h
-index c729a1e..c4b9158 100644
+--- a/testupnpdescgen.c
++++ b/testupnpdescgen.c
+@@ -40,9 +40,6 @@ char modelname[] = "MiniDLNA";
+ char modelnumber[] = "1";
+ char presentationurl[] = "http://192.168.0.1:8080/";
+ unsigned int updateID = 0;
+-#if PNPX
+-char pnpx_hwid[] = "VEN_01F2&amp;DEV_0101&amp;REV_01 VEN_0033&amp;DEV_0001&amp;REV_01";
+-#endif
+ 
+ int getifaddr(const char * ifname, char * buf, int len)
+ {
+--- a/upnpdescgen.c
++++ b/upnpdescgen.c
+@@ -115,29 +115,17 @@ static const char xmlver[] =
+ static const char root_service[] =
+ 	"scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"";
+ static const char root_device[] = 
+-	"root xmlns=\"urn:schemas-upnp-org:device-1-0\""
+-#if PNPX
+-	" xmlns:pnpx=\"http://schemas.microsoft.com/windows/pnpx/2005/11\""
+-	" xmlns:df=\"http://schemas.microsoft.com/windows/2008/09/devicefoundation\""
+-#endif
+-	;
++	"root xmlns=\"urn:schemas-upnp-org:device-1-0\"";
+ 
+ /* root Description of the UPnP Device */
+ static const struct XMLElt rootDesc[] =
+ {
+ 	{root_device, INITHELPER(1,2)},
+ 	{"specVersion", INITHELPER(3,2)},
+-	{"device", INITHELPER(5,(14+PNPX))},
++	{"device", INITHELPER(5,(14))},
+ 	{"/major", "1"},
+ 	{"/minor", "0"},
+ 	{"/deviceType", "urn:schemas-upnp-org:device:MediaServer:1"},
+-#if PNPX == 5
+-	{"/pnpx:X_hardwareId", pnpx_hwid},
+-	{"/pnpx:X_compatibleId", "MS_DigitalMediaDeviceClass_DMS_V001"},
+-	{"/pnpx:X_deviceCategory", "MediaDevices"},
+-	{"/df:X_deviceCategory", "Multimedia.DMS"},
+-	{"/microsoft:magicPacketWakeSupported xmlns:microsoft=\"urn:schemas-microsoft-com:WMPNSS-1-0\"", "0"},
+-#endif
+ 	{"/friendlyName", friendly_name},	/* required */
+ 	{"/manufacturer", ROOTDEV_MANUFACTURER},		/* required */
+ 	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},	/* optional */
+@@ -149,12 +137,12 @@ static const struct XMLElt rootDesc[] =
+ 	{"/UDN", uuidvalue},	/* required */
+ 	{"/dlna:X_DLNADOC xmlns:dlna=\"urn:schemas-dlna-org:device-1-0\"", "DMS-1.50"},
+ 	{"/presentationURL", presentationurl},	/* recommended */
+-	{"iconList", INITHELPER((19+PNPX),4)},
+-	{"serviceList", INITHELPER((43+PNPX),3)},
+-	{"icon", INITHELPER((23+PNPX),5)},
+-	{"icon", INITHELPER((28+PNPX),5)},
+-	{"icon", INITHELPER((33+PNPX),5)},
+-	{"icon", INITHELPER((38+PNPX),5)},
++	{"iconList", INITHELPER((19),4)},
++	{"serviceList", INITHELPER((43),3)},
++	{"icon", INITHELPER((23),5)},
++	{"icon", INITHELPER((28),5)},
++	{"icon", INITHELPER((33),5)},
++	{"icon", INITHELPER((38),5)},
+ 	{"/mimetype", "image/png"},
+ 	{"/width", "48"},
+ 	{"/height", "48"},
+@@ -175,9 +163,9 @@ static const struct XMLElt rootDesc[] =
+ 	{"/height", "120"},
+ 	{"/depth", "24"},
+ 	{"/url", "/icons/lrg.jpg"},
+-	{"service", INITHELPER((46+PNPX),5)},
+-	{"service", INITHELPER((51+PNPX),5)},
+-	{"service", INITHELPER((56+PNPX),5)},
++	{"service", INITHELPER((46),5)},
++	{"service", INITHELPER((51),5)},
++	{"service", INITHELPER((56),5)},
+ 	{"/serviceType", "urn:schemas-upnp-org:service:ContentDirectory:1"},
+ 	{"/serviceId", "urn:upnp-org:serviceId:ContentDirectory"},
+ 	{"/controlURL", CONTENTDIRECTORY_CONTROLURL},
+@@ -584,10 +572,10 @@ genRootDescSamsung(int * len)
+ 	memcpy(str, xmlver, *len + 1);
+ 	/* Replace the optional modelURL and manufacturerURL fields with Samsung foo */
+ 	memcpy(&samsungRootDesc, &rootDesc, sizeof(rootDesc));
+-	samsungRootDesc[8+PNPX].eltname = "/sec:ProductCap";
+-	samsungRootDesc[8+PNPX].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
+-	samsungRootDesc[12+PNPX].eltname = "/sec:X_ProductCap";
+-	samsungRootDesc[12+PNPX].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
++	samsungRootDesc[8].eltname = "/sec:ProductCap";
++	samsungRootDesc[8].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
++	samsungRootDesc[12].eltname = "/sec:X_ProductCap";
++	samsungRootDesc[12].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
+ 	str = genXML(str, len, &tmplen, samsungRootDesc);
+ 	str[*len] = '\0';
+ 	return str;
+--- a/upnpglobalvars.c
++++ b/upnpglobalvars.c
+@@ -66,9 +66,6 @@ char uuidvalue[] = "uuid:00000000-0000-0
+ char modelname[MODELNAME_MAX_LEN] = ROOTDEV_MODELNAME;
+ char modelnumber[MODELNUMBER_MAX_LEN] = MINIDLNA_VERSION;
+ char serialnumber[SERIALNUMBER_MAX_LEN] = "00000000";
+-#if PNPX
+-char pnpx_hwid[] = "VEN_0000&amp;DEV_0000&amp;REV_01 VEN_0033&amp;DEV_0001&amp;REV_01";
+-#endif
+ 
+ /* presentation url :
+  * http://nnn.nnn.nnn.nnn:ppppp/  => max 30 bytes including terminating 0 */
 --- a/upnpglobalvars.h
 +++ b/upnpglobalvars.h
-@@ -191,6 +191,7 @@ extern uint32_t runtime_flags;
+@@ -57,7 +57,7 @@
+ 
+ #include <sqlite3.h>
+ 
+-#define MINIDLNA_VERSION "1.1.5"
++#define MINIDLNA_VERSION "1.1.6"
+ 
+ #ifdef NETGEAR
+ # define SERVER_NAME "ReadyDLNA"
+@@ -75,10 +75,6 @@
+ #endif
+ #define THISORNUL(s) (s ? s : "")
+ 
+-#ifndef PNPX
+-#define PNPX 0
+-#endif
+-
+ #define RESOURCE_PROTOCOL_INFO_VALUES \
+ 	"http-get:*:image/jpeg:DLNA.ORG_PN=JPEG_TN," \
+ 	"http-get:*:image/jpeg:DLNA.ORG_PN=JPEG_SM," \
+@@ -191,6 +187,7 @@ extern uint32_t runtime_flags;
  #define NO_PLAYLIST_MASK      0x0008
  #define SYSTEMD_MASK          0x0010
  #define MERGE_MEDIA_DIRS_MASK 0x0020
@@ -479,8 +641,17 @@ index c729a1e..c4b9158 100644
  
  #define SETFLAG(mask)	runtime_flags |= mask
  #define GETFLAG(mask)	(runtime_flags & mask)
-diff --git a/upnphttp.c b/upnphttp.c
-index 418cde4..4184bb2 100644
+@@ -212,10 +209,6 @@ extern char serialnumber[];
+ #define PRESENTATIONURL_MAX_LEN 64
+ extern char presentationurl[];
+ 
+-#if PNPX
+-extern char pnpx_hwid[];
+-#endif
+-
+ /* lan addresses */
+ extern int n_lan_addr;
+ extern struct lan_addr_s lan_addr[];
 --- a/upnphttp.c
 +++ b/upnphttp.c
 @@ -477,6 +477,21 @@ Send400(struct upnphttp * h)
@@ -505,7 +676,7 @@ index 418cde4..4184bb2 100644
  /* very minimalistic 404 error message */
  static void
  Send404(struct upnphttp * h)
-@@ -1328,6 +1343,46 @@ start_dlna_header(struct string_s *str, int respcode, const char *tmode, const c
+@@ -1328,6 +1343,46 @@ start_dlna_header(struct string_s *str,
  	             respcode, date, tmode, mime);
  }
  
@@ -552,7 +723,7 @@ index 418cde4..4184bb2 100644
  static void
  SendResp_icon(struct upnphttp * h, char * icon)
  {
-@@ -1413,11 +1468,13 @@ SendResp_albumArt(struct upnphttp * h, char * object)
+@@ -1413,11 +1468,13 @@ SendResp_albumArt(struct upnphttp * h, c
  	}
  	DPRINTF(E_INFO, L_HTTP, "Serving album art ID: %lld [%s]\n", id, path);
  
@@ -569,7 +740,7 @@ index 418cde4..4184bb2 100644
  		return;
  	}
  	sqlite3_free(path);
-@@ -1461,11 +1518,13 @@ SendResp_caption(struct upnphttp * h, char * object)
+@@ -1461,11 +1518,13 @@ SendResp_caption(struct upnphttp * h, ch
  	}
  	DPRINTF(E_INFO, L_HTTP, "Serving caption ID: %lld [%s]\n", id, path);
  
@@ -586,7 +757,7 @@ index 418cde4..4184bb2 100644
  		return;
  	}
  	sqlite3_free(path);
-@@ -1914,10 +1973,12 @@ SendResp_dlnafile(struct upnphttp *h, char *object)
+@@ -1914,10 +1973,12 @@ SendResp_dlnafile(struct upnphttp *h, ch
  	}
  
  	offset = h->req_RangeStart;
@@ -602,11 +773,9 @@ index 418cde4..4184bb2 100644
  		goto error;
  	}
  	size = lseek(sendfh, 0, SEEK_END);
-diff --git a/upnpsoap.c b/upnpsoap.c
-index 8066318..0c2b9af 100644
 --- a/upnpsoap.c
 +++ b/upnpsoap.c
-@@ -1055,6 +1055,7 @@ callback(void *args, int argc, char **argv, char **azColName)
+@@ -1055,6 +1055,7 @@ callback(void *args, int argc, char **ar
  					break;
  				case ESamsungSeriesCDE:
  				case ELGDevice:
@@ -614,7 +783,7 @@ index 8066318..0c2b9af 100644
  				case EAsusOPlay:
  				default:
  					if( passed_args->flags & FLAG_HAS_CAPTIONS )
-@@ -1064,7 +1065,7 @@ callback(void *args, int argc, char **argv, char **azColName)
+@@ -1064,7 +1065,7 @@ callback(void *args, int argc, char **ar
  									     "http://%s:%d/Captions/%s.srt"
  									   "&lt;/res&gt;",
  									   lan_addr[passed_args->iface].str, runtime_vars.port, detailID);
@@ -623,7 +792,7 @@ index 8066318..0c2b9af 100644
  							ret = strcatf(str, "&lt;sec:CaptionInfoEx sec:type=\"srt\"&gt;"
  							                     "http://%s:%d/Captions/%s.srt"
  							                   "&lt;/sec:CaptionInfoEx&gt;",
-@@ -1924,14 +1925,21 @@ SamsungSetBookmark(struct upnphttp * h, const char * action)
+@@ -1924,14 +1925,21 @@ SamsungSetBookmark(struct upnphttp * h,
  	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data, 0);
  	ObjectID = GetValueFromNameValueList(&data, "ObjectID");
  	PosSecond = GetValueFromNameValueList(&data, "PosSecond");

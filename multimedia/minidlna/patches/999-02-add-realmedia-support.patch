@@ -13,7 +13,7 @@
  
 --- a/upnpglobalvars.h
 +++ b/upnpglobalvars.h
-@@ -169,7 +169,8 @@
+@@ -165,7 +165,8 @@
  	"http-get:*:audio/mp4:*," \
  	"http-get:*:audio/x-wav:*," \
  	"http-get:*:audio/x-flac:*," \
