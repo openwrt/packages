@@ -33,10 +33,7 @@ f_envload()
     #
     if [ -r "/lib/functions.sh" ]
     then
-        if [ -z "$(type -f config_load)" ]
-        then
-            . "/lib/functions.sh"
-        fi
+        . "/lib/functions.sh"
     else
         rc=-10
         f_log "system function library not found, please check your installation"
@@ -47,10 +44,7 @@ f_envload()
     #
     if [ -r "/lib/functions/network.sh" ]
     then
-        if [ -z "$(type -f network_get_device)" ]
-        then
-            . "/lib/functions/network.sh"
-        fi
+        . "/lib/functions/network.sh"
     else
         rc=-10
         f_log "system network library not found, please check your installation"
@@ -108,6 +102,21 @@ f_envload()
     config_load adblock
     config_foreach parse_config service
     config_foreach parse_config source
+
+    # get ip addresses & logical wan devices
+    #
+    network_get_ipaddr adb_ipv4 "${adb_lanif}"
+    network_get_ipaddr6 adb_ipv6 "${adb_lanif}"
+    network_find_wan adb_wanif4
+    network_find_wan6 adb_wanif6
+
+    # set restricted mode
+    #
+    if [ "${adb_restricted}" = "1" ]
+    then
+        adb_uci="$(which true)"
+        restricted_ok="true"
+    fi
 }
 
 # f_envcheck: check/set environment prerequisites
@@ -115,14 +124,6 @@ f_envload()
 f_envcheck()
 {
     local check
-
-    # check restricted mode
-    #
-    if [ "${adb_restricted}" = "1" ]
-    then
-        adb_uci="$(which true)"
-        restricted_ok="true"
-    fi
 
     # check 'enabled' & 'version' config options
     #
@@ -156,8 +157,6 @@ f_envcheck()
 
     # get lan ip addresses
     #
-    network_get_ipaddr adb_ipv4 "${adb_lanif}"
-    network_get_ipaddr6 adb_ipv6 "${adb_lanif}"
     if [ -z "${adb_ipv4}" ] && [ -z "${adb_ipv6}" ]
     then
         rc=-1
@@ -170,8 +169,6 @@ f_envcheck()
 
     # check logical update interfaces (with default route)
     #
-    network_find_wan adb_wanif4
-    network_find_wan6 adb_wanif6
     if [ -z "${adb_wanif4}" ] && [ -z "${adb_wanif6}" ]
     then
         adb_wanif4="${adb_lanif}"
@@ -675,12 +672,38 @@ f_log()
     fi
 }
 
+# f_statistics: adblock runtime statistics
+f_statistics()
+{
+    local ipv4_blk=0 ipv4_all=0 ipv4_pct=0
+    local ipv6_blk=0 ipv6_all=0 ipv6_pct=0
+
+    if [ -n "${adb_wanif4}" ]
+    then
+        ipv4_blk="$(iptables -t nat -vnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
+        ipv4_all="$(iptables -t nat -vnL PREROUTING | awk '$3 ~ /^prerouting_rule$/ {sum += $1} END {printf sum}')"
+        if [ $((ipv4_all)) -gt 0 ] && [ $((ipv4_blk)) -gt 0 ] && [ $((ipv4_all)) -gt $((ipv4_blk)) ]
+        then
+            ipv4_pct="$(printf "${ipv4_blk}" | awk -v all="${ipv4_all}" '{printf( "%5.2f\n",$1/all*100)}')"
+        fi
+    fi
+    if [ -n "${adb_wanif6}" ]
+    then
+        ipv6_blk="$(ip6tables -t nat -vnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
+        ipv6_all="$(ip6tables -t nat -vnL PREROUTING | awk '$3 ~ /^(adb-nat|DNAT)$/ {sum += $1} END {printf sum}')"
+        if [ $((ipv6_all)) -gt 0 ] && [ $((ipv6_blk)) -gt 0 ] && [ $((ipv6_all)) -gt $((ipv6_blk)) ]
+        then
+            ipv6_pct="$(printf "${ipv6_blk}" | awk -v all="${ipv6_all}" '{printf( "%5.2f\n",$1/all*100)}')"
+        fi
+    fi
+    "${adb_uci}" -q set "adblock.global.adb_percentage=${ipv4_pct}%/${ipv6_pct}%"
+    f_log "firewall statistics (IPv4/IPv6): ${ipv4_pct}%/${ipv6_pct}% of all packets in prerouting chain are ad related & blocked"
+}
+
 # f_exit: delete temporary files, generate statistics and exit
 #
 f_exit()
 {
-    local ipv4_blk=0 ipv4_all=0 ipv4_pct=0
-    local ipv6_blk=0 ipv6_all=0 ipv6_pct=0
     local lastrun="$(date "+%d.%m.%Y %H:%M:%S")"
 
     rm -f "${adb_tmpfile}"
@@ -690,28 +713,9 @@ f_exit()
     #
     if [ $((rc)) -eq 0 ]
     then
-        if [ -n "${adb_wanif4}" ]
-        then
-            ipv4_blk="$(iptables -t nat -vnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
-            ipv4_all="$(iptables -t nat -vnL PREROUTING | awk '$3 ~ /^prerouting_rule$/ {sum += $1} END {printf sum}')"
-            if [ $((ipv4_all)) -gt 0 ] && [ $((ipv4_blk)) -gt 0 ] && [ $((ipv4_all)) -gt $((ipv4_blk)) ]
-            then
-                ipv4_pct="$(printf "${ipv4_blk}" | awk -v all="${ipv4_all}" '{printf( "%5.2f\n",$1/all*100)}')"
-            fi
-        fi
-        if [ -n "${adb_wanif6}" ]
-        then
-            ipv6_blk="$(ip6tables -t nat -vnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
-            ipv6_all="$(ip6tables -t nat -vnL PREROUTING | awk '$3 ~ /^(adb-nat|DNAT)$/ {sum += $1} END {printf sum}')"
-            if [ $((ipv6_all)) -gt 0 ] && [ $((ipv6_blk)) -gt 0 ] && [ $((ipv6_all)) -gt $((ipv6_blk)) ]
-            then
-                ipv6_pct="$(printf "${ipv6_blk}" | awk -v all="${ipv6_all}" '{printf( "%5.2f\n",$1/all*100)}')"
-            fi
-        fi
-        "${adb_uci}" -q set "adblock.global.adb_percentage=${ipv4_pct}%/${ipv6_pct}%"
+        f_statistics
         "${adb_uci}" -q set "adblock.global.adb_lastrun=${lastrun}"
         "${adb_uci}" -q commit "adblock"
-        f_log "firewall statistics (IPv4/IPv6): ${ipv4_pct}%/${ipv6_pct}% of all packets in prerouting chain are ad related & blocked"
         f_log "domain adblock processing finished successfully (${adb_scriptver}, ${adb_sysver}, ${lastrun})"
     elif [ $((rc)) -gt 0 ]
     then

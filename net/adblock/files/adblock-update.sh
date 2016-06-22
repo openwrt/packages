@@ -10,7 +10,7 @@
 #
 adb_pid="${$}"
 adb_pidfile="/var/run/adblock.pid"
-adb_scriptver="1.2.6"
+adb_scriptver="1.2.7"
 adb_mincfgver="2.2"
 adb_scriptdir="${0%/*}"
 if [ -r "${adb_pidfile}" ]
@@ -22,11 +22,8 @@ else
     printf "${adb_pid}" > "${adb_pidfile}"
     if [ -r "${adb_scriptdir}/adblock-helper.sh" ]
     then
-        if [ -z "$(type -f f_envload)" ]
-        then
-            . "${adb_scriptdir}/adblock-helper.sh"
-            f_envload
-        fi
+        . "${adb_scriptdir}/adblock-helper.sh"
+        f_envload
     else
         rc=254
         logger -s -t "adblock[${adb_pid}] error" "adblock function library not found"
