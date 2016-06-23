@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ssmtp
 PKG_VERSION:=2.64
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-2.0+
 
@@ -25,6 +25,7 @@ define Package/$(PKG_NAME)
 	SECTION:=mail
 	CATEGORY:=Mail
 	DEPENDS:=+libopenssl
+	PROVIDES:=sendmail-command
 	TITLE:=A minimal and secure mail sender with ssl support
 	URL:=http://packages.debian.org/ssmtp
 endef
@@ -53,11 +54,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/revaliases $(1)/etc/ssmtp/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ssmtp $(1)/usr/sbin/
-endef
-
-define Package/$(PKG_NAME)/postinst
-#!/bin/sh
-ln -sf ssmtp $${IPKG_INSTROOT}/usr/sbin/sendmail
+	ln -s /usr/sbin/ssmtp $(1)/usr/sbin/sendmail
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
