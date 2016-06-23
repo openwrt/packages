@@ -21,6 +21,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -39,9 +40,9 @@ define Package/procps-ng/Default
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
 endef
 
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); echo "$(PKG_VERSION)" > "$(PKG_BUILD_DIR)/.tarball-version"; ./autogen.sh );
-	$(call Build/Configure/Default)
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	echo "$(PKG_VERSION)" > "$(PKG_BUILD_DIR)/.tarball-version"
 endef
 
 define Package/procps-ng
