@@ -103,10 +103,11 @@ f_envload()
     config_foreach parse_config service
     config_foreach parse_config source
 
-    # get ip addresses & logical wan devices
+    # get network basics
     #
     network_get_ipaddr adb_ipv4 "${adb_lanif}"
     network_get_ipaddr6 adb_ipv6 "${adb_lanif}"
+    network_get_device adb_landev "${adb_lanif}"
     network_find_wan adb_wanif4
     network_find_wan6 adb_wanif6
 
@@ -162,9 +163,6 @@ f_envcheck()
         rc=-1
         f_log "no valid IPv4/IPv6 configuration found (${adb_lanif}), please set 'adb_lanif' manually"
         f_exit
-    else
-        network_get_device adb_landev4 "${adb_lanif}"
-        network_get_device adb_landev6 "${adb_lanif}"
     fi
 
     # check logical update interfaces (with default route)
@@ -191,7 +189,7 @@ f_envcheck()
             rc=-1
             f_log "please enable the local dnsmasq instance to use adblock"
             f_exit
-        elif [ -z "$(iptables -w -vnL | grep -Fo "DROP")" ]
+        elif [ ! -f "/var/run/fw3.state" ]
         then
             rc=-1
             f_log "please enable the local firewall to use adblock"
@@ -356,45 +354,37 @@ f_envcheck()
     #
     if [ -n "${adb_wanif4}" ]
     then
-        check="$(iptables -w -t nat -vnL | grep -Fo "adb-")"
-        if [ -z "${check}" ]
+        if [ "${apmode_ok}" = "false" ]
         then
-            if [ "${adb_forcedns}" = "1" ] && [ -n "${adb_landev4}" ]
+            if [ "${adb_forcedns}" = "1" ] && [ -n "${adb_landev}" ]
             then
-                f_firewall "IPv4" "nat" "prerouting_rule" "prerouting_rule" "0" "dns" "-i ${adb_landev4} -p udp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
-                f_firewall "IPv4" "nat" "prerouting_rule" "prerouting_rule" "0" "dns" "-i ${adb_landev4} -p tcp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
+                f_firewall "IPv4" "nat" "prerouting_rule" "adb-dns" "1" "dns" "-p udp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
+                f_firewall "IPv4" "nat" "prerouting_rule" "adb-dns" "2" "dns" "-p tcp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
             fi
-            f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination ${adb_ipv4}:${adb_nullport}"
-            f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination ${adb_ipv4}:${adb_nullportssl}"
-            if [ "${apmode_ok}" = "false" ]
-            then
-                f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-p tcp -j REJECT --reject-with tcp-reset"
-                f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-j REJECT --reject-with icmp-host-unreachable"
-                f_firewall "IPv4" "filter" "output_rule" "adb-out" "1" "out" "-p tcp -j REJECT --reject-with tcp-reset"
-                f_firewall "IPv4" "filter" "output_rule" "adb-out" "2" "out" "-j REJECT --reject-with icmp-host-unreachable"
-            fi
+            f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-j REJECT --reject-with icmp-host-unreachable"
+            f_firewall "IPv4" "filter" "output_rule" "adb-out" "1" "out" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv4" "filter" "output_rule" "adb-out" "2" "out" "-j REJECT --reject-with icmp-host-unreachable"
         fi
+        f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination ${adb_ipv4}:${adb_nullport}"
+        f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination ${adb_ipv4}:${adb_nullportssl}"
     fi
     if [ -n "${adb_wanif6}" ]
     then
-        check="$(ip6tables -w -t nat -vnL | grep -Fo "adb-")"
-        if [ -z "${check}" ]
+        if [ "${apmode_ok}" = "false" ]
         then
-            if [ "${adb_forcedns}" = "1" ] && [ -n "${adb_landev6}" ]
+            if [ "${adb_forcedns}" = "1" ] && [ -n "${adb_landev}" ]
             then
-                f_firewall "IPv6" "nat" "PREROUTING" "PREROUTING" "0" "dns" "-i ${adb_landev6} -p udp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
-                f_firewall "IPv6" "nat" "PREROUTING" "PREROUTING" "0" "dns" "-i ${adb_landev6} -p tcp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
+                f_firewall "IPv6" "nat" "PREROUTING" "adb-dns" "1" "dns" "-p udp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
+                f_firewall "IPv6" "nat" "PREROUTING" "adb-dns" "2" "dns" "-p tcp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
             fi
-            f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullport}"
-            f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullportssl}"
-            if [ "${apmode_ok}" = "false" ]
-            then
-                f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-p tcp -j REJECT --reject-with tcp-reset"
-                f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-j REJECT --reject-with icmp6-addr-unreachable"
-                f_firewall "IPv6" "filter" "output_rule" "adb-out" "1" "out" "-p tcp -j REJECT --reject-with tcp-reset"
-                f_firewall "IPv6" "filter" "output_rule" "adb-out" "2" "out" "-j REJECT --reject-with icmp6-addr-unreachable"
-            fi
+            f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-j REJECT --reject-with icmp6-addr-unreachable"
+            f_firewall "IPv6" "filter" "output_rule" "adb-out" "1" "out" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv6" "filter" "output_rule" "adb-out" "2" "out" "-j REJECT --reject-with icmp6-addr-unreachable"
         fi
+        f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullport}"
+        f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullportssl}"
     fi
     if [ "${fw_done}" = "true" ]
     then
@@ -483,7 +473,18 @@ f_firewall()
     then
         "${ipt}" -w -t "${table}" -N "${chain}"
         "${ipt}" -w -t "${table}" -A "${chain}" -m comment --comment "${notes}" -j RETURN
-        "${ipt}" -w -t "${table}" -A "${chsrc}" -d "${nullip}" -m comment --comment "${notes}" -j "${chain}"
+        if [ "${chain}" = "adb-dns" ]
+        then
+            "${ipt}" -w -t "${table}" -A "${chsrc}" -i "${adb_landev}+" -m comment --comment "${notes}" -j "${chain}"
+        else
+            "${ipt}" -w -t "${table}" -A "${chsrc}" -d "${nullip}" -m comment --comment "${notes}" -j "${chain}"
+        fi
+        rc=${?}
+        if [ $((rc)) -ne 0 ]
+        then
+            f_log "failed to initialize volatile ${proto} firewall chain '${chain}'"
+            f_exit
+        fi
     fi
 
     # check whether iptables rule already exist
@@ -491,12 +492,7 @@ f_firewall()
     rc="$("${ipt}" -w -t "${table}" -C "${chain}" -m comment --comment "${notes}" ${rules} >/dev/null 2>&1; printf ${?})"
     if [ $((rc)) -ne 0 ]
     then
-        if [ $((chpos)) -eq 0 ]
-        then
-            "${ipt}" -w -t "${table}" -A "${chain}" -m comment --comment "${notes}" ${rules}
-        else
-            "${ipt}" -w -t "${table}" -I "${chain}" "${chpos}" -m comment --comment "${notes}" ${rules}
-        fi
+        "${ipt}" -w -t "${table}" -I "${chain}" "${chpos}" -m comment --comment "${notes}" ${rules}
         rc=${?}
         if [ $((rc)) -eq 0 ]
         then
