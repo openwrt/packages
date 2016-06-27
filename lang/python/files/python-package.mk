@@ -45,7 +45,7 @@ define PyPackage
   $(call shexport,PyPackage/$(1)/filespec)
 
   define Package/$(1)/install
-	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
+	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
 	@echo "$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" | ( \
 		IFS='|'; \
 		while read fop fspec fperm; do \
@@ -103,7 +103,7 @@ define Build/Compile/PyMod
 		, \
 		./setup.py $(2) \
 	)
-	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
+	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
 endef
 
 define PyMod/Default
