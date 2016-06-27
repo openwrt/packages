@@ -24,7 +24,7 @@ define Package/pimbd
   CATEGORY:=Network
   TITLE:=PIM BIDIR daemon
   URL:=https://github.com/Oryon/pimbd.git
-  DEPENDS+=+@IPV6
+  DEPENDS+=@IPV6
   DEPENDS+=netifd
 endef
 

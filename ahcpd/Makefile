@@ -25,7 +25,7 @@ define Package/ahcpd
   TITLE:=Ad-Hoc Configuration Protocol daemon
   URL:=http://www.pps.univ-paris-diderot.fr/~jch/software/ahcp/
   MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>
-  DEPENDS:=+@IPV6 +ip +librt
+  DEPENDS:=@IPV6 +ip +librt
 endef
 
 define Package/ahcpd/description
