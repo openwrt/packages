@@ -21,7 +21,6 @@ adb_minspace=12000
 adb_forcedns=1
 adb_fetchttl=5
 adb_restricted=0
-adb_fetch="$(which wget)"
 adb_uci="$(which uci)"
 unset adb_revsrclist
 
@@ -135,7 +134,7 @@ f_envcheck()
         f_exit
     elif [ "${adb_cfgver#*.}" != "${adb_mincfgver#*.}" ]
     then
-        outdate_ok="true"
+        outdated_ok="true"
     fi
     if [ "${adb_enabled}" != "1" ]
     then
@@ -212,13 +211,76 @@ f_envcheck()
         fi
     fi
 
+    # check general package dependencies
+    #
+    f_depend "busybox"
+    f_depend "uci"
+    f_depend "uhttpd"
+    f_depend "iptables"
+    f_depend "kmod-ipt-nat"
+
+    # check ipv6 related package dependencies
+    #
+    if [ -n "${adb_wanif6}" ]
+    then
+        f_depend "ip6tables" "true"
+        if [ "${package_ok}" = "false" ]
+        then
+            f_log "package 'ip6tables' not found, IPv6 support will be disabled"
+            unset adb_wanif6
+        else
+            f_depend "kmod-ipt-nat6" "true"
+            if [ "${package_ok}" = "false" ]
+            then
+                f_log "package 'kmod-ipt-nat6' not found, IPv6 support will be disabled"
+                unset adb_wanif6
+            fi
+        fi
+    fi
+
+    # check uclient-fetch/wget dependencies
+    #
+    f_depend "uclient-fetch" "true"
+    if [ "${package_ok}" = "true" ]
+    then
+        f_depend "libustream-polarssl" "true"
+        if [ "${package_ok}" = "false" ]
+        then
+            adb_fetch="$(which uclient-fetch)"
+            fetch_parm="-q --timeout=${adb_fetchttl}"
+            response_parm="--spider"
+        fi
+    fi
+    if [ -z "${adb_fetch}" ]
+    then
+        f_depend "wget" "true"
+        if [ "${package_ok}" = "true" ]
+        then
+            adb_fetch="$(which wget)"
+            fetch_parm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=${adb_fetchttl} --connect-timeout=${adb_fetchttl} --read-timeout=${adb_fetchttl}"
+            response_parm="--spider --server-response"
+        else
+            rc=-1
+            f_log "please install 'uclient-fetch' or 'wget' with ssl support to use adblock"
+            f_exit
+        fi
+    fi
+
+    # check ca-certificate package and set fetch parm accordingly
+    #
+    f_depend "ca-certificates" "true"
+    if [ "${package_ok}" = "false" ]
+    then
+        fetch_parm="${fetch_parm} --no-check-certificate"
+    fi
+
     # start normal processing/logging
     #
     f_log "domain adblock processing started (${adb_scriptver}, ${adb_sysver}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
 
     # log partially outdated config
     #
-    if [ "${outdate_ok}" = "true" ]
+    if [ "${outdated_ok}" = "true" ]
     then
         f_log "partially outdated adblock config (${adb_mincfgver} vs. ${adb_cfgver}), please run '/etc/init.d/adblock cfgup' to update your configuration"
     fi
@@ -237,34 +299,6 @@ f_envcheck()
         f_log "Restricted mode enabled"
     fi
 
-    # check general package dependencies
-    #
-    f_depend "busybox"
-    f_depend "uci"
-    f_depend "uhttpd"
-    f_depend "wget"
-    f_depend "iptables"
-    f_depend "kmod-ipt-nat"
-
-    # check ipv6 related package dependencies
-    #
-    if [ -n "${adb_wanif6}" ]
-    then
-        check="$(printf "${pkg_list}" | grep "^ip6tables -")"
-        if [ -z "${check}" ]
-        then
-            f_log "package 'ip6tables' not found, IPv6 support will be disabled"
-            unset adb_wanif6
-        else
-            check="$(printf "${pkg_list}" | grep "^kmod-ipt-nat6 -")"
-            if [ -z "${check}" ]
-            then
-                f_log "package 'kmod-ipt-nat6' not found, IPv6 support will be disabled"
-                unset adb_wanif6
-            fi
-        fi
-    fi
-
     # check dns hideout directory
     #
     if [ -d "${adb_dnshidedir}" ]
@@ -272,15 +306,6 @@ f_envcheck()
         mv_done="$(find "${adb_dnshidedir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print -exec mv -f "{}" "${adb_dnsdir}" \;)"
     else
         mkdir -p -m 660 "${adb_dnshidedir}"
-    fi
-
-    # check ca-certificates package and set fetch parms accordingly
-    #
-    fetch_parm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=${adb_fetchttl} --connect-timeout=${adb_fetchttl} --read-timeout=${adb_fetchttl}"
-    check="$(printf "${pkg_list}" | grep "^ca-certificates -")"
-    if [ -z "${check}" ]
-    then
-        fetch_parm="${fetch_parm} --no-check-certificate"
     fi
 
     # check adblock temp directory
@@ -386,10 +411,9 @@ f_envcheck()
         f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullport}"
         f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullportssl}"
     fi
-    if [ "${fw_done}" = "true" ]
+    if [ "${firewall_ok}" = "true" ]
     then
         f_log "created volatile firewall rulesets"
-        fw_done="false"
     fi
 
     # check volatile uhttpd instance configuration
@@ -409,10 +433,9 @@ f_envcheck()
             f_uhttpd "adbIPv6_80" "1" "-p [${adb_ipv6}]:${adb_nullport}"
             f_uhttpd "adbIPv6_443" "0" "-p [${adb_ipv6}]:${adb_nullportssl}"
         fi
-        if [ "${uhttpd_done}" = "true" ]
+        if [ "${uhttpd_ok}" = "true" ]
         then
             f_log "created volatile uhttpd instances"
-            uhttpd_done="false"
         fi
     fi
 
@@ -434,11 +457,17 @@ f_depend()
 {
     local check
     local package="${1}"
+    local check_only="${2}"
+    package_ok="true"
 
     check="$(printf "${pkg_list}" | grep "^${package} -")"
-    if [ -z "${check}" ]
+    if [ "${check_only}" = "true" ] && [ -z "${check}" ]
     then
-        rc=115
+        package_ok="false"
+    elif [ -z "${check}" ]
+    then
+        rc=-1
+        package_ok="false"
         f_log "package '${package}' not found"
         f_exit
     fi
@@ -457,6 +486,7 @@ f_firewall()
     local chpos="${5}"
     local notes="adb-${6}"
     local rules="${7}"
+    firewall_ok="true"
 
     # select appropriate iptables executable for IPv6
     #
@@ -494,10 +524,9 @@ f_firewall()
     then
         "${ipt}" -w -t "${table}" -I "${chain}" "${chpos}" -m comment --comment "${notes}" ${rules}
         rc=${?}
-        if [ $((rc)) -eq 0 ]
+        if [ $((rc)) -ne 0 ]
         then
-            fw_done="true"
-        else
+            firewall_ok="false"
             f_log "failed to initialize volatile ${proto} firewall rule '${notes}'"
             f_exit
         fi
@@ -511,12 +540,13 @@ f_uhttpd()
     local realm="${1}"
     local timeout="${2}"
     local ports="${3}"
+    uhttpd_ok="true"
+
     uhttpd -h "/www/adblock" -N 25 -T "${timeout}" -r "${realm}" -k 0 -t 0 -R -D -S -E "/index.html" ${ports}
     rc=${?}
-    if [ $((rc)) -eq 0 ]
+    if [ $((rc)) -ne 0 ]
     then
-        uhttpd_done="true"
-    else
+        uhttpd_ok="false"
         f_log "failed to initialize volatile uhttpd instance (${realm})"
         f_exit
     fi
@@ -527,6 +557,7 @@ f_uhttpd()
 f_space()
 {
     local mp="${1}"
+    space_ok="true"
 
     if [ -d "${mp}" ]
     then
@@ -535,6 +566,8 @@ f_space()
         then
             space_ok="false"
         fi
+    else
+        space_ok="false"
     fi
 }
 

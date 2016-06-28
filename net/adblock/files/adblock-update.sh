@@ -10,7 +10,7 @@
 #
 adb_pid="${$}"
 adb_pidfile="/var/run/adblock.pid"
-adb_scriptver="1.2.8"
+adb_scriptver="1.3.0"
 adb_mincfgver="2.2"
 adb_scriptdir="${0%/*}"
 if [ -r "${adb_pidfile}" ]
@@ -85,7 +85,7 @@ do
     then
         url_time="$(date -r "${url}")"
     else
-        url_time="$(${adb_fetch} ${fetch_parm} --server-response --spider "${url}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}')"
+        url_time="$(${adb_fetch} ${fetch_parm} ${response_parm} "${url}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}')"
     fi
     if [ -z "${url_time}" ]
     then
@@ -102,7 +102,7 @@ do
         then
             shalla_archive="${adb_tmpdir}/shallalist.tar.gz"
             shalla_file="${adb_tmpdir}/shallalist.txt"
-            "${adb_fetch}" ${fetch_parm} --output-document="${shalla_archive}" "${url}"
+            "${adb_fetch}" ${fetch_parm} -O "${shalla_archive}" "${url}"
             rc=${?}
             if [ $((rc)) -eq 0 ]
             then
@@ -123,7 +123,7 @@ do
                 rm -f "${shalla_file}"
             fi
         else
-            tmp_domains="$(${adb_fetch} ${fetch_parm} --output-document=- "${url}")"
+            tmp_domains="$(${adb_fetch} ${fetch_parm} -O- "${url}")"
         fi
         rc=${?}
     else
