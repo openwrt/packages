@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/miniupnpd
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+iptables +libip4tc +IPV6:libip6tc +IPV6:ip6tables
+  DEPENDS:=+iptables +libip4tc +IPV6:libip6tc +IPV6:ip6tables +libuuid
   TITLE:=Lightweight UPnP IGD, NAT-PMP & PCP daemon
   SUBMENU:=Firewall
   URL:=http://miniupnp.free.fr/
@@ -50,9 +50,10 @@ define Build/Prepare
 endef
 
 MAKE_FLAGS += \
-	TEST=0 \
+	TARGET_OPENWRT=1 TEST=0 \
 	LIBS="" \
-	CC="$(TARGET_CC) -DIPTABLES_143 -lip4tc $(if $(CONFIG_IPV6),-lip6tc)" \
+	CC="$(TARGET_CC) -DIPTABLES_143 \
+		-lip4tc $(if $(CONFIG_IPV6),-lip6tc) -luuid" \
 	CONFIG_OPTIONS="$(if $(CONFIG_IPV6),--ipv6) --leasefile" \
 	-f Makefile.linux \
 	miniupnpd
