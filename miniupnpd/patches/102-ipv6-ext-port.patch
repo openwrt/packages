@@ -1,6 +1,6 @@
 --- a/pcpserver.c
 +++ b/pcpserver.c
-@@ -1004,6 +1004,7 @@ static int CreatePCPMap_NAT(pcp_info_t *
+@@ -982,6 +982,7 @@ static int CreatePCPMap_NAT(pcp_info_t *
  				   timestamp);
  	if (r < 0)
  		return PCP_ERR_NO_RESOURCES;

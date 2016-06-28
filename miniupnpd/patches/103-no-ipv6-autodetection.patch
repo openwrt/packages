@@ -17,7 +17,7 @@ As the OpenWRT buildsystem already passes the right compile flags, we can skip t
  #        testiptpinhole
 --- a/Makefile.linux
 +++ b/Makefile.linux
-@@ -70,7 +70,6 @@ CPPFLAGS += -DIPTABLES_143
+@@ -73,7 +73,6 @@ CPPFLAGS += -DIPTABLES_143
  endif
  
  CFLAGS  += $(shell $(PKG_CONFIG) --cflags libiptc)
