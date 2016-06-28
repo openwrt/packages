@@ -1,28 +1,66 @@
-From fa68debd94d40299dd2a69abd0a820ccfaadcbe8 Mon Sep 17 00:00:00 2001
+From 467bc7b7224a9e078b28fe15ded3f5368efb2fcc Mon Sep 17 00:00:00 2001
 From: Michael Heimpold <michael.heimpold@i2se.com>
 Date: Wed, 22 Apr 2015 13:35:43 +0200
-Subject: [PATCH] Add support for triggering LEDs during serial traffic
+Subject: [PATCH v3] Add support for triggering LEDs during serial traffic
+
+This adds the possibility to flash an LED when serial traffic is
+detected. This is based on Linux's kernel led transient trigger.
+The idea is to provide some kind of traffic indicator
+like the flashing LEDs on e.g. network card.
+
+It is possible to define different LEDs for both tx and rx directions,
+and for one/multiple ports.
+
+This changeset is targetting embedded devices with dedicated LEDs
+running ser2net, however, you can also use the numlock/caps lock leds
+of you keyboard to test.
 
 Signed-off-by: Michael Heimpold <michael.heimpold@i2se.com>
+Cc: Corey Minyard <minyard@acm.org>
+
 ---
 
-Patch sent upstream:
-    http://sourceforge.net/p/ser2net/mailman/message/34064847/
+Hi,
 
- Makefile.am  |    4 +--
- dataxfer.c   |   20 ++++++++++++
- readconfig.c |  100 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- ser2net.conf |   13 ++++++++
- sysfs-led.c  |   43 +++++++++++++++++++++++++
- sysfs-led.h  |   11 +++++++
- utils.c      |   30 ++++++++++++++++++
- utils.h      |    9 ++++++
- 8 files changed, 228 insertions(+), 2 deletions(-)
- create mode 100644 sysfs-led.c
- create mode 100644 sysfs-led.h
+once upon the time, I sent the last version of this patch and then got busy with
+family stuff :-) Anyway, this is now v3, including improvements based on your
+feedback, see below.
 
-diff --git a/Makefile.am b/Makefile.am
-index d56179f..866eb89 100644
+A question was, whether I tested it with config reload: yes it works(tm) :-),
+but only after an actual connection is closed and then when re-opend the new
+settings apply.
+
+
+v3:
+- rebased to current git head
+- build time switch added to enabled this feature (disabled by default
+  to stay backwards compatible)
+- examples are commented out (feature might be not available)
+- check for trigger availability
+- busy waiting for trigger configuration files to appear
+
+v2:
+- rebased to current git head
+- extended commit message
+
+v1:
+- initial submission to mailing list
+
+
+ Makefile.am  |   4 +-
+ configure.ac |   7 ++++
+ dataxfer.c   |  30 +++++++++++++++
+ readconfig.c | 112 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ ser2net.8    |  16 ++++++++
+ ser2net.conf |  15 +++++++-
+ sysfs_led.c  | 118 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ sysfs_led.h  |  11 ++++++
+ utils.c      |   3 ++
+ utils.h      |   3 ++
+ 10 files changed, 316 insertions(+), 3 deletions(-)
+ create mode 100644 sysfs_led.c
+ create mode 100644 sysfs_led.h
+
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -2,9 +2,9 @@ sbin_PROGRAMS = ser2net
@@ -30,95 +68,118 @@ index d56179f..866eb89 100644
  AM_CFLAGS=-Wall
  ser2net_SOURCES = controller.c dataxfer.c devcfg.c readconfig.c selector.c \
 -	ser2net.c utils.c telnet.c buffer.c
-+	ser2net.c utils.c telnet.c buffer.c sysfs-led.c
++	ser2net.c utils.c telnet.c buffer.c sysfs_led.c
  noinst_HEADERS = controller.h dataxfer.h devio.h readconfig.h selector.h \
 -	utils.h telnet.h buffer.h ser2net.h
-+	utils.h telnet.h buffer.h sysfs-led.h ser2net.h
++	utils.h telnet.h buffer.h sysfs_led.h ser2net.h
  man_MANS = ser2net.8
  EXTRA_DIST = $(man_MANS) ser2net.conf ser2net.spec ser2net.init
  
-diff --git a/dataxfer.c b/dataxfer.c
-index 646a71b..b99cabf 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -18,6 +18,13 @@ then
+   AC_HAVE_HEADERS(tcpd.h)
+   AC_CHECK_LIB(wrap,main)
+ fi
++AC_ARG_WITH(led-support,
++ [  --with-led-support      Enable LED support (Linux only)],
++ led_support_flag="$withval",
++ led_support_flag=no)
++if test "$led_support_flag" != no; then
++  AC_DEFINE(USE_LED_FEATURE)
++fi
+ 
+ # enable silent build
+ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 --- a/dataxfer.c
 +++ b/dataxfer.c
-@@ -42,6 +42,7 @@
+@@ -43,6 +43,7 @@
  #include "telnet.h"
  #include "devio.h"
  #include "buffer.h"
-+#include "sysfs-led.h"
++#include "sysfs_led.h"
  
  #define SERIAL "term"
  #define NET    "tcp "
-@@ -230,6 +231,12 @@ typedef struct port_info
+@@ -248,6 +249,14 @@ typedef struct port_info
  #ifdef USE_RS485_FEATURE
      struct serial_rs485 *rs485conf;
  #endif
 +
++#ifdef USE_LED_FEATURE
 +    /*
 +     * LED names to flash for serial traffic
 +     */
 +    char *led_tx;
 +    char *led_rx;
++#endif
  } port_info_t;
  
  port_info_t *ports = NULL; /* Linked list of ports. */
-@@ -311,6 +318,8 @@ init_port_data(port_info_t *port)
+@@ -329,6 +338,10 @@ init_port_data(port_info_t *port)
  #ifdef USE_RS485_FEATURE
      port->rs485conf = NULL;
  #endif
++#ifdef USE_LED_FEATURE
 +    port->led_tx = NULL;
 +    port->led_rx = NULL;
++#endif
  }
  
  static void
-@@ -530,6 +539,9 @@ handle_dev_fd_read(struct devio *io)
+@@ -566,6 +579,11 @@ handle_dev_fd_read(struct devio *io)
  	/* Do both tracing, ignore errors. */
  	do_trace(port, port->tb, port->dev_to_tcp.buf, count, SERIAL);
  
++#if USE_LED_FEATURE
 +    if (port->led_rx)
 +	led_blink_kick(port->led_rx);
++#endif
 +
      port->dev_bytes_received += count;
  
      if (port->enabled == PORT_TELNET) {
-@@ -759,6 +771,8 @@ handle_tcp_fd_read(int fd, void *data)
+@@ -798,6 +816,10 @@ handle_tcp_fd_read(int fd, void *data)
  	    return;
  	}
      } else {
++#if USE_LED_FEATURE
 +	if (port->led_tx)
 +	    led_blink_kick(port->led_tx);
++#endif
  	port->dev_bytes_sent += count;
  	port->tcp_to_dev.cursize -= count;
  	if (port->tcp_to_dev.cursize != 0) {
-@@ -1854,6 +1868,12 @@ myconfig(void *data, struct absout *eout, const char *pos)
+@@ -1939,6 +1961,14 @@ myconfig(void *data, struct absout *eout
      } else if (strncmp(pos, "tb=", 3) == 0) {
  	/* trace both directions. */
  	port->trace_both.filename = find_tracefile(pos + 3);
++#if USE_LED_FEATURE
 +    } else if (strncmp(pos, "led-rx=", 7) == 0) {
 +	/* LED for UART RX traffic */
 +	port->led_rx = find_led(pos + 7);
 +    } else if (strncmp(pos, "led-tx=", 7) == 0) {
 +	/* LED for UART TX traffic */
 +	port->led_tx = find_led(pos + 7);
++#endif
  #ifdef USE_RS485_FEATURE
      } else if (strncmp(pos, "rs485=", 6) == 0) {
  	/* get RS485 configuration. */
-diff --git a/readconfig.c b/readconfig.c
-index d4ca0d4..62cff5c 100644
 --- a/readconfig.c
 +++ b/readconfig.c
-@@ -31,6 +31,7 @@
+@@ -32,6 +32,7 @@
  #include "readconfig.h"
  #include "utils.h"
  #include "telnet.h"
-+#include "sysfs-led.h"
++#include "sysfs_led.h"
  
  #define MAX_LINE_SIZE 256	/* Maximum line length in the config file. */
  
-@@ -361,6 +362,89 @@ free_rs485confs(void)
+@@ -482,6 +483,97 @@ free_rs485confs(void)
  }
  #endif
  
++#ifdef USE_LED_FEATURE
 +struct led_s
 +{
 +    char *name;
@@ -138,19 +199,19 @@ index d4ca0d4..62cff5c 100644
 +
 +    new_led = malloc(sizeof(*new_led));
 +    if (!new_led) {
-+	syslog(LOG_ERR, "Out of memory handling LED on %d", lineno);
++	syslog(LOG_ERR, "Out of memory handling led on %d", lineno);
 +	return;
 +    }
 +
 +    new_led->name = strdup(name);
 +    if (!new_led->name) {
-+	syslog(LOG_ERR, "Out of memory handling LED on %d", lineno);
++	syslog(LOG_ERR, "Out of memory handling led on %d", lineno);
 +	free(new_led);
 +	return;
 +    }
 +
 +    if (sscanf(cfg, "%256s %u", devicename, &new_led->duration) != 2) {
-+	syslog(LOG_ERR, "Couldn't parse LED config on %d", lineno);
++	syslog(LOG_ERR, "Couldn't parse led config on %d", lineno);
 +	free(new_led->name);
 +	free(new_led);
 +	return;
@@ -158,14 +219,20 @@ index d4ca0d4..62cff5c 100644
 +
 +    new_led->device = strdup(devicename);
 +    if (!new_led->device) {
-+	syslog(LOG_ERR, "Out of memory handling LED on %d", lineno);
++	syslog(LOG_ERR, "Out of memory handling led on %d", lineno);
 +	free(new_led->name);
 +	free(new_led);
 +	return;
 +    }
 +
 +    /* setup the led */
-+    led_blink_prepare(new_led->device, new_led->duration);
++    if (led_blink_prepare(new_led->device, new_led->duration) != 0) {
++	syslog(LOG_ERR, "Could not prepare transient trigger for led '%s'",
++	       new_led->device);
++	free(new_led->name);
++	free(new_led);
++	return;
++    }
 +
 +    new_led->next = leds;
 +    leds = new_led;
@@ -181,7 +248,7 @@ index d4ca0d4..62cff5c 100644
 +	    return strdup(led->device);
 +	led = led->next;
 +    }
-+    syslog(LOG_ERR, "LED %s not found, it will be ignored", name);
++    syslog(LOG_ERR, "Led '%s' not found, it will be ignored", name);
 +    return NULL;
 +}
 +
@@ -201,14 +268,16 @@ index d4ca0d4..62cff5c 100644
 +	free(led);
 +    }
 +}
++#endif /* USE_LED_FEATURE */
 +
  static int
  startswith(char *str, const char *test, char **strtok_data)
  {
-@@ -503,6 +587,21 @@ handle_config_line(char *inbuf)
+@@ -635,6 +727,23 @@ handle_config_line(char *inbuf)
  	return;
      }
  
++#ifdef USE_LED_FEATURE
 +    if (startswith(inbuf, "LED", &strtok_data)) {
 +	char *name = strtok_r(NULL, ":", &strtok_data);
 +	char *str = strtok_r(NULL, "\n", &strtok_data);
@@ -223,37 +292,79 @@ index d4ca0d4..62cff5c 100644
 +	handle_led(name, str);
 +	return;
 +    }
++#endif
 +
      comma = strchr(inbuf, ',');
      if (comma) {
  	if (!strtok_r(comma, ":", &strtok_data)) {
-@@ -568,6 +667,7 @@ readconfig(char *filename)
+@@ -700,6 +809,9 @@ readconfig(char *filename)
  #ifdef USE_RS485_FEATURE
      free_rs485confs();
  #endif
++#ifdef USE_LED_FEATURE
 +    free_leds();
++#endif
  
      config_num++;
  
-diff --git a/ser2net.conf b/ser2net.conf
-index 870926c..dc2ba19 100644
+--- a/ser2net.8
++++ b/ser2net.8
+@@ -204,6 +204,10 @@ or
+ .IP
+ CONTROLPORT:<port spec>
+ .PP
++or
++.IP
++LED:<led-name>:<sysfs-led-filename> <delay>
++.PP
+ 
+ .SS FIELDS
+ .TP
+@@ -324,6 +328,12 @@ May be combined with [-]timestamp.  Orde
+ causes a telnet sync operation to send a break.  By default data is
+ flushed until the data mark, but no break is sent.
+ 
++.I led-tx=<led-name>
++use the previously defined led to indicate serial tx traffic on this port
++
++.I led-rx=<led-name>
++use the previously defined led to indicate serial rx traffic on this port
++
+ .TP
+ .I "banner name"
+ A name for the banner; this may be used in the options of a port.
+@@ -350,6 +360,12 @@ The control port specification as define
+ command line.  This lets the control port be specified in the configuration
+ file.  The command line will override this, and only the first port
+ specified is used.
++.TP
++.I "led"
++Define an led with given name. This uses a Linux's led class device
++(/sys/class/leds/<led-sysfs-filename>) and configures it for transient led
++trigger with the given delay time. Individual TCP ports can refer to
++this led and thus trigger flashing of this led when tx/rx traffic is seen.
+ 
+ .PP
+ Blank lines and lines starting with `#' are ignored.
 --- a/ser2net.conf
 +++ b/ser2net.conf
-@@ -53,6 +53,8 @@
- #            specified in TRACEFILE that will take all traced data.
- #            tw is data written to the device, tr is data read from
+@@ -60,7 +60,9 @@
  #            the device, and tb is both.
+ #            The telnet_brk_on_sync option causes a telnet sync
+ #            operation to send a break.  By default data is flushed
+-#	     until the data mark, but no break is sent.
++#            until the data mark, but no break is sent.
 +#            The "led-tx" and "led-rx" options allow to specify
-+#            a LED defined above to trigger for traffic.
++#            an LED defined above to trigger for traffic.
  #
  # or...
  
-@@ -79,6 +81,12 @@
+@@ -87,6 +89,12 @@
  #    This specifies a filename to trace output into, as tw=/tmp/trace1.
  #    This takes the same escape sequences as banners.
  #
 +#  LED:<name>:sysfs-filename duration
-+#    This specifies a LED which will be configured to use linux's transient trigger.
++#    This specifies an LED which will be configured to use linux's transient trigger.
 +#    The LED is always kicked when traffic is detected on serial side. The duration
 +#    is given in milliseconds. See Linux's documentation for transient trigger for
 +#    details.
@@ -261,76 +372,145 @@ index 870926c..dc2ba19 100644
  #  OPENSTR:<name>:str
  #    This specifies a string to be transmitted to the device when the
  #    port is opened.  This takes the same escape sequences as banners.
-@@ -108,6 +116,9 @@ SIGNATURE:signature1:ser2net port ttyS2
+@@ -123,6 +131,9 @@ SIGNATURE:signature1:ser2net port ttyS2
  
  RS485CONF:rs485port1:0:0:0:0
  
-+LED:rx:duckbill:green:rs485 10
-+LED:tx:duckbill:red:rs485 10
++#LED:rx:duckbill:green:rs485 10
++#LED:tx:duckbill:red:rs485 10
 +
  TRACEFILE:tw1:/tmp/tw-\p-\Y-\M-\D-\H:\i:\s.\U
  TRACEFILE:tr1:/tmp/tr-\p-\Y-\M-\D-\H:\i:\s.\U
  
-@@ -138,3 +149,5 @@ CLOSESTR:close1:close str\r\n
+@@ -156,3 +167,5 @@ CLOSEON:closehtml:</html>
  
- 3020:telnet:0:/dev/ttyUSB0:9600 banner1 remctl asdfasd
- 3021:telnet:0:/dev/ttyUSB1:9600 banner2 open1 close1 remctl
+ 3020:telnet:0:/dev/ttyUSB0:9600 banner1 remctl telnet_brk_on_sync
+ 3021:telnet:0:/dev/ttyUSB1:9600 banner2 open1 close1 remctl closehtml
 +
-+5000:telnet:0:/dev/ttyAPP0:9600 NONE 1STOPBIT 8DATABITS -XONXOFF LOCAL -RTSCTS led-tx=tx led-rx=rx
-diff --git a/sysfs-led.c b/sysfs-led.c
-new file mode 100644
-index 0000000..efe0b29
++#5000:telnet:0:/dev/ttyAPP0:9600 NONE 1STOPBIT 8DATABITS -XONXOFF LOCAL -RTSCTS led-tx=tx led-rx=rx
 --- /dev/null
-+++ b/sysfs-led.c
-@@ -0,0 +1,43 @@
++++ b/sysfs_led.c
+@@ -0,0 +1,118 @@
 +/*
 + * Copyright (C) 2015 I2SE GmbH
++ * Copyright (C) 2016 Michael Heimpold <mhei@heimpold.de>
 + */
 +#include <stdio.h>
++#include <stdlib.h>
 +#include <string.h>
-+
-+#include "utils.h"
-+#include "sysfs-led.h"
++#include <unistd.h>
++#include <fcntl.h>
++#include <sys/types.h>
 +
 +#define SYSFS_LED_BASE "/sys/class/leds"
 +
-+static int led_write(char *led, char *property, char *buf)
-+{
-+    char fn[255];
++#ifdef USE_LED_FEATURE
 +
-+    snprintf(fn, sizeof(fn), "%s/%s/%s", SYSFS_LED_BASE, led, property);
-+    
-+    return file_store(fn, buf, strlen(buf));
++#define BUFSIZE 4096
++
++static int led_is_trigger_missing(const char *led)
++{
++    char *buffer, *trigger;
++    int fd, c;
++
++    buffer = malloc(BUFSIZE);
++    if (!buffer)
++	return -1;
++
++    snprintf(buffer, BUFSIZE, "%s/%s/trigger", SYSFS_LED_BASE, led);
++
++    if ((fd = open(buffer, O_RDONLY)) == -1) {
++	free(buffer);
++	return -1;
++    }
++
++    if ((c = read(fd, buffer, BUFSIZE)) <= 0) {
++	free(buffer);
++	close(fd);
++	return -1;
++    }
++
++    if (close(fd) < 0) {
++	free(buffer);
++	return -1;
++    }
++
++    buffer[c] = '\0';
++    trigger = strstr(buffer, "transient");
++    free(buffer);
++    return trigger == NULL;
 +}
 +
-+int led_off(char *led)
++static int led_write(const char *led, const char *property, const char *buf)
 +{
-+    led_write(led, "trigger", "none");
-+    led_write(led, "brightness", "0");
-+    return 0;
++    char filename[255];
++    int fd;
++
++    snprintf(filename, sizeof(filename), "%s/%s/%s", SYSFS_LED_BASE, led, property);
++
++    if ((fd = open(filename, O_WRONLY | O_TRUNC)) == -1)
++	return -1;
++
++    if (write(fd, buf, strlen(buf)) != strlen(buf)) {
++	close(fd);
++	return -1;
++    }
++
++    return close(fd);
 +}
 +
-+int led_blink_prepare(char *led, unsigned int duration)
++int led_off(const char *led)
 +{
-+    char buffer[10];
++    int rv = 0;
 +
++    rv |= led_write(led, "trigger", "none");
++    rv |= led_write(led, "brightness", "0");
++
++    return rv;
++}
++
++int led_blink_prepare(const char *led, unsigned int duration)
++{
++    char buffer[255];
++    int fd, rv = 0;
++
++    /* check whether we can enable the transient trigger for this led */
++    rv = led_is_trigger_missing(led);
++    if (rv != 0)
++	return rv;
++
++    /*
++     * switch to transient trigger, this will kick creation of additional
++     * property file in sysfs
++     */
++    rv = led_write(led, "trigger", "transient");
++    if (rv)
++	return rv;
++
++    /* wait until kernel managed to create the property files */
++    snprintf(buffer, sizeof(buffer), "%s/%s/state", SYSFS_LED_BASE, led);
++    while ((fd = open(buffer, O_RDONLY)) == -1);
++    close(fd);
++
++    snprintf(buffer, sizeof(buffer), "%s/%s/duration", SYSFS_LED_BASE, led);
++    while ((fd = open(buffer, O_RDONLY)) == -1);
++    close(fd);
++
++    /* pre-configure the trigger for our needs */
 +    snprintf(buffer, sizeof(buffer), "%u", duration);
-+    led_write(led, "trigger", "transient");
-+    msleep(10);
-+    led_write(led, "state", "1");
-+    led_write(led, "duration", buffer);
-+    return 0;
++    rv |= led_write(led, "state", "1");
++    rv |= led_write(led, "duration", buffer);
++    return rv;
 +}
 +
-+int led_blink_kick(char *led)
++int led_blink_kick(const char *led)
 +{
 +    return led_write(led, "activate", "1");
 +}
-diff --git a/sysfs-led.h b/sysfs-led.h
-new file mode 100644
-index 0000000..00b21b6
++
++#endif /* USE_LED_FEATURE */
 --- /dev/null
-+++ b/sysfs-led.h
++++ b/sysfs_led.h
 @@ -0,0 +1,11 @@
 +/*
 + * Copyright (C) 2015 I2SE GmbH
@@ -338,13 +518,11 @@ index 0000000..00b21b6
 +#ifndef SYSFS_LED_H
 +#define SYSFS_LED_H
 +
-+int led_off(char *led);
-+int led_blink_prepare(char *led, unsigned int duration);
-+int led_blink_kick(char *led);
++int led_off(const char *led);
++int led_blink_prepare(const char *led, unsigned int duration);
++int led_blink_kick(const char *led);
 +
 +#endif /* SYSFS_LED_H */
-diff --git a/utils.c b/utils.c
-index c194c4c..c96cedb 100644
 --- a/utils.c
 +++ b/utils.c
 @@ -25,6 +25,9 @@
@@ -357,39 +535,6 @@ index c194c4c..c96cedb 100644
  
  #include "ser2net.h"
  #include "utils.h"
-@@ -205,3 +208,30 @@ write_ignore_fail(int fd, const char *data, size_t count)
- 	count -= written;
-     }
- }
-+
-+int
-+msleep(int msec)
-+{
-+    struct timespec req;
-+
-+    req.tv_sec = 0;
-+    req.tv_nsec = msec * 1000000;
-+
-+    return nanosleep(&req, NULL);
-+}
-+
-+int
-+file_store(const char *filename, const char *buf, size_t count)
-+{
-+    int fd;
-+
-+    if ((fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)) == -1)
-+            return -1;
-+
-+    if (write(fd, buf, count) != count) {
-+            close(fd);
-+            return -1;
-+    }
-+
-+    return close(fd);
-+}
-diff --git a/utils.h b/utils.h
-index 582ea88..8af65ec 100644
 --- a/utils.h
 +++ b/utils.h
 @@ -64,6 +64,9 @@ char *find_tracefile(const char *name);
@@ -402,17 +547,3 @@ index 582ea88..8af65ec 100644
  void check_ipv6_only(int family, struct sockaddr *addr, int fd);
  
  /* Make sure the full contents get written, return an error if it occurs. */
-@@ -72,4 +75,10 @@ int write_full(int fd, char *data, size_t count);
- /* Write the data completely out, return without comment on error. */
- void write_ignore_fail(int fd, const char *data, size_t count);
- 
-+/* Helper to sleep a given amount of milli-seconds */
-+int msleep(int msec);
-+
-+/* Store the given data to a file */
-+int file_store(const char *filename, const char *buf, size_t count);
-+
- #endif /* UTILS */
--- 
-1.7.10.4
-
