@@ -1,0 +1,16 @@
+Maintainer: me / @<github-user> / name <email>
+Compile tested: (put here arch, model, OpenWRT/LEDE version)
+Run tested: (put here arch, model, OpenWRT/LEDE version, tests done)
+
+Description:
+
+-------------------------------
+Please double check that your commits:
+- all start with "<package name>: "
+- all contain signed-off-by
+- are linked to your github account (you see your logo in front of them) 
+
+Please also read https://github.com/openwrt/packages/blob/master/CONTRIBUTING.md
+
+Thanks for your contribution
+To finish, please remove this text (from ---)
