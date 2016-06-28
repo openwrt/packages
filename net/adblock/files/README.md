@@ -69,7 +69,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * [LEDE project](https://www.lede-project.org), tested with trunk > r98
 * usual setup with enabled 'iptables', 'dnsmasq' and 'uhttpd' - dump AP modes without these basics are _not_ supported!
 * additional required software packages:
-    * wget
+    * a download utility: 'uclient-fetch' and 'wget' (full versions with ssl support) are supported. Normally you should use 'wget', it's quite stable and supports the online timestamp checks. If you need a smaller memory footprint try 'uclient-fetch' without openssl dependency. The default ustream ssl backend 'libustream-polarssl' has issues with certain https sites and is currently not supported. To change the ssl backend see example below.
     * optional: 'kmod-ipt-nat6' for IPv6 support
 * the above dependencies and requirements will be checked during package installation & script runtime
 
@@ -123,6 +123,13 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 
 ## Examples
 
+**example to change the ssl backend for 'uclient-fetch':**
+<pre><code>
+opkg update
+opkg remove --force-depends libustream-polarssl
+opkg install libustream-mbedtls
+</code></pre>
+  
 **example cronjob for a regular block list update:**
 <pre><code>
 # configuration found in /etc/crontabs/root
