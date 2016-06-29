@@ -8,16 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iotivity
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE=1
 
 PKG_SOURCE:=${PKG_NAME}-${PKG_VERSION}.tar.gz
-PKG_SOURCE_URL:=https://downloads.iotivity.org/${PKG_VERSION}/ \
-	http://mirrors.kernel.org/${PKG_NAME}/${PKG_VERSION}/
-PKG_MD5SUM:=4bcbabffc1734c664bbdf8fedfa60543
+PKG_SOURCE_URL:=http://mirrors.kernel.org/${PKG_NAME}/${PKG_VERSION}/
+PKG_MD5SUM:=98f8d5b0304c357520c4343d983491e2
 PKG_USE_MIPS16:=0
 
-PKG_MAINTAINER:=Hauke Mehrtens <hauke.mehrtens@lantiq.com>
+PKG_MAINTAINER:=Hauke Mehrtens <hauke.mehrtens@intel.com>
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.md
@@ -174,7 +173,7 @@ SCONS_OPTIONS += \
 	$(if $(CONFIG_PACKAGE_iotivity),liboctbstack) \
 	$(if $(CONFIG_PACKAGE_iotivity-cpp),liboc) \
 	$(if $(CONFIG_PACKAGE_iotivity-things-manager-lib),libTGMSDK) \
-	$(if $(CONFIG_PACKAGE_iotivity-oic-middle),samples) \
+	$(if $(CONFIG_PACKAGE_iotivity-oic-middle),examples) \
 	$(if $(CONFIG_PACKAGE_iotivity-things-manager),ConServerApp ConClientApp BootstrapServerApp) \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-lib),libResContainer) \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-sample),containersample) \
