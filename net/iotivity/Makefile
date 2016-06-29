@@ -33,7 +33,8 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_iotivity-resource-container-sample \
 	CONFIG_PACKAGE_iotivity-resource-container-hue \
 	CONFIG_PACKAGE_iotivity-example-garage \
-	CONFIG_PACKAGE_iotivity_DEBUG
+	CONFIG_PACKAGE_iotivity_DEBUG \
+	CONFIG_PACKAGE_iotivity_SECURE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/scons.mk
@@ -59,6 +60,12 @@ define Package/iotivity/config
 		bool "IoTivity with debug support"
 		help
 		  Build IoTivity with debuging support.
+
+	config PACKAGE_iotivity_SECURE
+		bool "IoTivity with security support"
+		default y
+		help
+		  Activate security support.
 
   endif
 endef
@@ -194,7 +201,6 @@ SCONS_OPTIONS += \
 	TARGET_ARCH=$(ARCH) \
 	STAGING_DIR=$(STAGING_DIR) \
 	LOGGING=true \
-	SECURED=1 \
 	$(if $(CONFIG_PACKAGE_iotivity),liboctbstack) \
 	$(if $(CONFIG_PACKAGE_iotivity-cpp),liboc) \
 	$(if $(CONFIG_PACKAGE_iotivity-things-manager-lib),libTGMSDK) \
@@ -211,6 +217,12 @@ ifeq ($(CONFIG_PACKAGE_iotivity_DEBUG),y)
 else
   SCONS_OPTIONS += RELEASE=true
   APP_OPTIM:=release
+endif
+
+ifeq ($(CONFIG_PACKAGE_iotivity_SECURE),y)
+  SCONS_OPTIONS += SECURED=1
+else
+  SCONS_OPTIONS += SECURED=0
 endif
 
 ifneq ($(findstring c,$(OPENWRT_VERBOSE)),)
@@ -238,6 +250,10 @@ endef
 define Package/iotivity/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/liboctbstack.so $(1)/usr/lib/
+ifeq ($(CONFIG_PACKAGE_iotivity_SECURE),y)
+	$(INSTALL_DIR) $(1)/etc/iotivity/
+	$(INSTALL_DATA) ./files/etc/iotivity/oic_svr_db.cbor $(1)/etc/iotivity/
+endif
 endef
 
 define Package/iotivity-cpp/install
