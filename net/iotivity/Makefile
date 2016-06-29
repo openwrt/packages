@@ -32,7 +32,8 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_iotivity-resource-container-lib \
 	CONFIG_PACKAGE_iotivity-resource-container-sample \
 	CONFIG_PACKAGE_iotivity-resource-container-hue \
-	CONFIG_PACKAGE_iotivity-example-garage
+	CONFIG_PACKAGE_iotivity-example-garage \
+	CONFIG_PACKAGE_iotivity_DEBUG
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/scons.mk
@@ -44,11 +45,22 @@ define Package/iotivity
   DEPENDS:=@!USE_UCLIBC +libpthread +librt +libuuid
   TITLE:=IoTivity C Library
   URL:=https://www.iotivity.org
+  MENU:=1
 endef
 
 define Package/iotivity/description
     IoTivity is a framework for the Internet of Things based on the
     Open Interconnect Consortium Specification.
+endef
+
+define Package/iotivity/config
+  if PACKAGE_iotivity
+	config PACKAGE_iotivity_DEBUG
+		bool "IoTivity with debug support"
+		help
+		  Build IoTivity with debuging support.
+
+  endif
 endef
 
 
@@ -193,6 +205,13 @@ SCONS_OPTIONS += \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-hue),libHueBundle) \
 	$(if $(CONFIG_PACKAGE_iotivity-example-garage),examples) \
 
+ifeq ($(CONFIG_PACKAGE_iotivity_DEBUG),y)
+  SCONS_OPTIONS += RELEASE=false
+  APP_OPTIM:=debug
+else
+  SCONS_OPTIONS += RELEASE=true
+  APP_OPTIM:=release
+endif
 
 ifneq ($(findstring c,$(OPENWRT_VERBOSE)),)
   SCONS_OPTIONS += VERBOSE=true
@@ -218,54 +237,54 @@ endef
 
 define Package/iotivity/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/liboctbstack.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/liboctbstack.so $(1)/usr/lib/
 endef
 
 define Package/iotivity-cpp/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/liboc.so $(1)/usr/lib/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/liboc_logger.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/liboc.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/liboc_logger.so $(1)/usr/lib/
 endef
 
 define Package/iotivity-things-manager-lib/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/libTGMSDKLibrary.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/libTGMSDKLibrary.so $(1)/usr/lib/
 endef
 
 define Package/iotivity-oic-middle/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/examples/OICMiddle/OICMiddle $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/examples/OICMiddle/OICMiddle $(1)/usr/bin/
 endef
 
 define Package/iotivity-things-manager/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/service/things-manager/sampleapp/linux/configuration/bootstrapserver $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/service/things-manager/sampleapp/linux/configuration/con-server $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/service/things-manager/sampleapp/linux/configuration/con-client $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/service/things-manager/sampleapp/linux/configuration/bootstrapserver $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/service/things-manager/sampleapp/linux/configuration/con-server $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/service/things-manager/sampleapp/linux/configuration/con-client $(1)/usr/bin/
 endef
 
 define Package/iotivity-resource-container-lib/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_common.so $(1)/usr/lib/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_client.so $(1)/usr/lib/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_server.so $(1)/usr/lib/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/librcs_container.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/librcs_common.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/librcs_client.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/librcs_server.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/librcs_container.so $(1)/usr/lib/
 endef
 
 define Package/iotivity-resource-container-sample/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/service/resource-container/ContainerSample  $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/service/resource-container/ContainerSample  $(1)/usr/bin/
 endef
 
 define Package/iotivity-resource-container-hue/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/libHueBundle.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/libHueBundle.so $(1)/usr/lib/
 endef
 
 define Package/iotivity-example-garage/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/resource/examples/garageclient $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/release/resource/examples/garageserver $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/resource/examples/garageclient $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/resource/examples/garageserver $(1)/usr/bin/
 endef
 
 
