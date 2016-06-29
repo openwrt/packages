@@ -16,10 +16,23 @@ PKG_SOURCE_URL:=http://mirrors.kernel.org/${PKG_NAME}/${PKG_VERSION}/
 PKG_MD5SUM:=98f8d5b0304c357520c4343d983491e2
 PKG_USE_MIPS16:=0
 
+PKG_BUILD_DEPENDS:=boost
+
 PKG_MAINTAINER:=Hauke Mehrtens <hauke.mehrtens@intel.com>
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.md
+
+PKG_CONFIG_DEPENDS := \
+	CONFIG_PACKAGE_iotivity \
+	CONFIG_PACKAGE_iotivity-cpp \
+	CONFIG_PACKAGE_iotivity-things-manager-lib \
+	CONFIG_PACKAGE_iotivity-oic-middle \
+	CONFIG_PACKAGE_iotivity-things-manager \
+	CONFIG_PACKAGE_iotivity-resource-container-lib \
+	CONFIG_PACKAGE_iotivity-resource-container-sample \
+	CONFIG_PACKAGE_iotivity-resource-container-hue \
+	CONFIG_PACKAGE_iotivity-example-garage
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/scons.mk
@@ -42,7 +55,7 @@ endef
 define Package/iotivity-cpp
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=iotivity +libpthread +libstdcpp
+  DEPENDS:=+iotivity +libpthread +libstdcpp
   TITLE:=IoTivity C++ Library
   URL:=https://www.iotivity.org
 endef
@@ -56,7 +69,7 @@ endef
 define Package/iotivity-things-manager-lib
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=iotivity +iotivity-cpp +libstdcpp
+  DEPENDS:=+iotivity +iotivity-cpp +libstdcpp
   TITLE:=IoTivity things manager lib
   URL:=https://www.iotivity.org
 endef
@@ -69,7 +82,7 @@ endef
 define Package/iotivity-oic-middle
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=iotivity +iotivity-cpp
+  DEPENDS:=+iotivity +iotivity-cpp
   TITLE:=IoTivity OIC Middle
   URL:=https://www.iotivity.org
 endef
@@ -82,7 +95,7 @@ endef
 define Package/iotivity-things-manager
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=iotivity +iotivity-cpp +iotivity-things-manager-lib
+  DEPENDS:=+iotivity +iotivity-cpp +iotivity-things-manager-lib
   TITLE:=IoTivity things manager
   URL:=https://www.iotivity.org
 endef
@@ -94,7 +107,7 @@ endef
 define Package/iotivity-resource-container-lib
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=iotivity +iotivity-cpp +boost-system +boost-thread +boost-date_time
+  DEPENDS:=+iotivity +iotivity-cpp +boost +boost-system +boost-thread +boost-date_time
   TITLE:=IoTivity Resource Container library
   URL:=https://www.iotivity.org
 endef
@@ -102,7 +115,7 @@ endef
 define Package/iotivity-resource-container-sample
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=iotivity +iotivity-resource-container-lib
+  DEPENDS:=+iotivity +iotivity-resource-container-lib
   TITLE:=IoTivity Resource Container sample Application
   URL:=https://www.iotivity.org
 endef
@@ -110,7 +123,7 @@ endef
 define Package/iotivity-resource-container-hue
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=iotivity +iotivity-resource-container-lib +libcurl
+  DEPENDS:=+iotivity +iotivity-resource-container-lib +libcurl
   TITLE:=IoTivity Resource Container Hue Bundle
   URL:=https://www.iotivity.org
 endef
@@ -118,7 +131,7 @@ endef
 define Package/iotivity-example-garage
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=iotivity +iotivity-cpp
+  DEPENDS:=+iotivity +iotivity-cpp
   TITLE:=IoTivity Garage example
   URL:=https://www.iotivity.org
 endef
