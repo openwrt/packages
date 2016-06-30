@@ -52,7 +52,7 @@ f_envload()
 
     # check opkg availability
     #
-    if [ -r "/var/lock/opkg.lock" ]
+    if [ -f "/var/lock/opkg.lock" ]
     then
         rc=-10
         f_log "adblock installation finished successfully, 'opkg' currently locked by package installer"
@@ -246,9 +246,13 @@ f_envcheck()
         f_depend "libustream-polarssl" "true"
         if [ "${package_ok}" = "false" ]
         then
-            adb_fetch="$(which uclient-fetch)"
-            fetch_parm="-q --timeout=${adb_fetchttl}"
-            response_parm="--spider"
+            f_depend "libustream-\(mbedtls\|openssl\|cyassl\)" "true"
+            if [ "${package_ok}" = "true" ]
+            then
+                adb_fetch="$(which uclient-fetch)"
+                fetch_parm="-q --timeout=${adb_fetchttl}"
+                response_parm="--spider"
+            fi
         fi
     fi
     if [ -z "${adb_fetch}" ]
