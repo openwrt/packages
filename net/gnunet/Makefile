@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=37051
+PKG_SOURCE_VERSION:=37179
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 # ToDo:
 #  - break-out {peer,name,data}store for each backend
@@ -25,7 +25,7 @@ PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
-PKG_BUILD_PARALLEL:=1
+# PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=gettext-version
 PKG_INSTALL:=1
 
@@ -59,9 +59,9 @@ endef
 define Package/gnunet
 $(call Package/gnunet/Default)
   TITLE+= - a peer-to-peer framework focusing on security
-  DEPENDS:=+ca-certificates +libgnurl +libgnutls +libidn +libltdl \
-           +libmicrohttpd +libunistring +librt $(ICONV_DEPENDS) $(INTL_DEPENDS)
-  USERID:=gnunet=400:gnunet=400
+  DEPENDS:=+libgcrypt +libgpg-error +libidn +libltdl +libunistring +librt +zlib \
+           $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  USERID:=gnunet=958:gnunet=958
   MENU:=1
 endef
 
@@ -123,6 +123,11 @@ define BuildComponent
 		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/$$$$$$$$conf.conf $$(1)/usr/share/gnunet/config.d ; \
 		done \
 	fi )
+
+	( if [ -e ./files/gnunet-$(1).defaults ]; then \
+		$(INSTALL_DIR) $$(1)/etc/uci-defaults ; \
+		$(INSTALL_BIN) ./files/gnunet-$(1).defaults $$(1)/etc/uci-defaults/gnunet-$(1) ; \
+	fi )
   endef
 
   $$(eval $$(call BuildPackage,gnunet-$(1)))
@@ -149,7 +154,7 @@ define Package/gnunet/install
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$plug*.so $(1)/usr/lib/gnunet ; \
 	done )
 
-	( for lex in daemon-hostlist daemon-topology helper-nat-client \
+	( for lex in daemon-topology helper-nat-client \
 	    helper-nat-server service-arm service-ats service-cadet \
 	    service-core service-dht service-identity service-nse \
 	    service-peerinfo service-regex \
@@ -160,7 +165,7 @@ define Package/gnunet/install
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/gnunet-$$$$lex $(1)/usr/lib/gnunet/libexec ; \
 	done )
 
-	( for conf in arm ats cadet core datacache dht hostlist identity \
+	( for conf in arm ats cadet core datacache dht identity \
 	    nat nse peerinfo regex revocation scalarproduct \
 	    set statistics topology transport util; do \
 		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/$$$$conf.conf $(1)/usr/share/gnunet/config.d ; \
@@ -173,9 +178,8 @@ define Package/gnunet/install
 	$(INSTALL_DATA) ./files/gnunet.upgrade $(1)/lib/upgrade/keep.d/gnunet
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/gnunet.defaults $(1)/etc/uci-defaults/gnunet
-	$(INSTALL_BIN) ./files/gnunet-dns.fw $(1)/usr/lib/gnunet/libexec/gnunet-dns.fw
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
-	$(INSTALL_BIN) ./files/gnunet-proto.sh $(1)/lib/netifd/proto
+	$(INSTALL_BIN) ./files/gnunet-proto.sh $(1)/lib/netifd/proto/gnunet.sh
 endef
 
 define Package/gnunet/conffiles
@@ -196,7 +200,11 @@ PLUGIN_conversation:=gnsrecord_conversation
 LIBEXEC_conversation:=helper-audio-playback helper-audio-record service-conversation
 CONF_conversation:=conversation
 
-DEPENDS_transport-http_client:=+libgnurl
+DEPENDS_hostlist:=+libmicrohttpd +libgnurl +ca-certificates
+LIBEXEC_hostlist:=daemon-hostlist
+CONF_hostlist:=hostlist
+
+DEPENDS_transport-http_client:=+libgnurl +ca-certificates
 PLUGIN_transport-http_client:=transport_http_client transport_https_client
 
 DEPENDS_transport-http_server:=+libmicrohttpd
@@ -223,12 +231,18 @@ LIBEXEC_fs:=helper-fs-publish service-fs
 CONF_fs:=fs
 
 DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
-USERID_gns:=gnunet=400:gnunetdns=401
+USERID_gns:=gnunet=958:gnunetdns=452
 BIN_gns:=gns gns-import.sh namecache namestore resolver
 LIB_gns:=gns gnsrecord namecache namestore
 PLUGIN_gns:=block_dns block_gns gnsrecord_dns gnsrecord_gns
-LIBEXEC_gns:=dns2gns gns-proxy helper-dns namestore-fcfsd service-dns service-gns service-namecache service-namestore service-resolver
+LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver
 CONF_gns:=dns gns namecache namestore resolver
+
+DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd
+LIBEXEC_namestore-fcfsd:=namestore-fcfsd
+
+DEPENDS_gns-proxy:=+gnunet-gns +libgnurl +libmicrohttpd
+LIBEXEC_gns-proxy:=gns-proxy
 
 DEPENDS_datastore:=+gnunet-gns +libsqlite3
 BIN_datastore:=datastore
@@ -253,8 +267,8 @@ DEPENDS_pgsql:=+gnunet-gns +gnunet-datastore +libpq
 LIB_pgsql:=postgres pq
 PLUGIN_pgsql:=datacache_postgres datastore_postgres namecache_postgres namestore_postgres
 
-DEPENDS_rest:=+gnunet-gns +gnunet-social +jansson
-LIB_rest:=rest
+DEPENDS_rest:=+gnunet-gns +gnunet-social +libmicrohttpd +jansson
+LIB_rest:=rest json jsonapi jsonapiutils
 PLUGIN_rest:=rest_gns rest_identity rest_identity_provider rest_namestore
 LIBEXEC_rest:=rest-server
 CONF_rest:=rest
@@ -264,8 +278,8 @@ LIB_rps:=rps
 LIBEXEC_rps:=service-rps
 CONF_rps:=rps
 
-DEPENDS_social:=+gnunet-sqlite +jansson
-BIN_social:=identity-token multicast
+DEPENDS_social:=+gnunet-sqlite +libmicrohttpd +jansson
+BIN_social:=identity-token multicast social
 LIB_social:=consensus identityprovider multicast psyc psycstore psycutil secretsharing social
 PLUGIN_social:=psycstore_sqlite
 LIBEXEC_social:=service-consensus service-evil-consensus service-identity-provider service-multicast service-psyc service-psycstore service-secretsharing service-social
@@ -281,59 +295,12 @@ LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
 DEPENDS_utils:=+certtool +openssl-util
 BIN_utils:=gns-proxy-setup-ca transport-certificate-creation scrypt
 
-DEPENDS_vpn:=+kmod-tun +iptables
+DEPENDS_vpn:=+kmod-tun +iptables +firewall
 BIN_vpn:=vpn
 LIB_vpn:=tun vpn
 LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit helper-vpn service-vpn
 CONF_vpn:=exit pt vpn
 
-define PostInstFixSUIDPerms
-  define Package/$(1)/postinst
-  #!/bin/sh
-  [ -e /usr/share/gnunet/.permfix ] && rm /usr/share/gnunet/.permfix
-  endef
-endef
-
-define Package/gnunet-gns/postinst
-#!/bin/sh
-
-[ -e /usr/share/gnunet/.permfix ] && rm /usr/share/gnunet/.permfix
-
-uci -q batch <<EOF
-del network.gnunetdns
-set network.gnunetdns=interface
-set network.gnunetdns.ifname='gnunet-dns'
-set network.gnunetdns.proto='gnunet'
-
-del network.gndnsrtt
-set network.gndnsrtt=route
-set network.gndnsrtt.interface='gnunetdns'
-set network.gndnsrtt.table='53'
-set network.gndnsrtt.target='0.0.0.0/0'
-
-del network.gndnsrl
-set network.gndnsrl=rule
-set network.gndnsrl.mark='0x8260035'
-set network.gndnsrl.lookup='53'
-
-commit network
-
-del firewall.gnunetdns
-set firewall.gnunetdns=zone
-set firewall.gnunetdns.name='gnunetdns'
-set firewall.gnunetdns.network='gnunetdns'
-set firewall.gnunetdns.input='ACCEPT'
-set firewall.gnunetdns.output='ACCEPT'
-set firewall.gnunetdns.forward='ACCEPT'
-
-del firewall.gndnsinc
-set firewall.gndnsinc=include
-set firewall.gndnsinc.path='/usr/lib/gnunet/libexec/gnunet-dns.fw'
-
-commit firewall
-EOF
-
-endef
 
 define Package/gnunet-gns/prerm
 #!/bin/sh
@@ -345,55 +312,10 @@ del network.gndnsrl
 commit network
 
 del firewall.gnunetdns
-del firewall.gndnsinc
+del firewall.gndnsrl
+del firewall.gndnsrl2
 commit firewall
 EOF
-
-endef
-
-
-define Package/gnunet-vpn/postinst
-#!/bin/sh
-
-[ -e /usr/share/gnunet/.permfix ] && rm /usr/share/gnunet/.permfix
-
-uci -q batch <<EOF
-del network.gnunetvpn
-set network.gnunetvpn=interface
-set network.gnunetvpn.ifname='vpn-gnunet'
-set network.gnunetvpn.proto='gnunet'
-
-del network.gnunetexit
-set network.gnunetexit=interface
-set network.gnunetexit.ifname='exit-gnunet'
-set network.gnunetexit.proto='gnunet'
-
-commit network
-
-del firewall.gnunetvpn
-set firewall.gnunetvpn=zone
-set firewall.gnunetvpn.name='gnunetvpn'
-set firewall.gnunetvpn.network='gnunetvpn'
-set firewall.gnunetvpn.input='ACCEPT'
-set firewall.gnunetvpn.output='ACCEPT'
-set firewall.gnunetvpn.forward='REJECT'
-
-del firewall.gnunetexit
-set firewall.gnunetexit=zone
-set firewall.gnunetexit.name='gnunetexit'
-set firewall.gnunetexit.network='gnunetexit'
-set firewall.gnunetexit.input='ACCEPT'
-set firewall.gnunetexit.output='ACCEPT'
-set firewall.gnunetexit.forward='REJECT'
-
-del firewall.gnexitfwd
-set firewall.gnexitfwd=forwarding
-set firewall.gnexitfwd.src='gnunetexit'
-set firewall.gnexitfwd.dest='wan'
-
-commit firewall
-EOF
-
 endef
 
 define Package/gnunet-vpn/prerm
@@ -402,15 +324,28 @@ define Package/gnunet-vpn/prerm
 uci -q batch <<EOF
 del network.gnunetvpn
 del network.gnunetexit
+commit network
 del firewall.gnunetvpn
 del firewall.gnunetexit
 del firewall.gnexitfwd
+commit firewall
 EOF
-
 endef
 
-$(eval $(call BuildPackage,gnunet))
+define PostInstFixSUIDPerms
+  define Package/$(1)/postinst
+#!/bin/sh
+[ -e /usr/share/gnunet/.permfix ] && rm /usr/share/gnunet/.permfix
+  endef
+endef
+
 $(eval $(call PostInstFixSUIDPerms,gnunet))
+$(eval $(call PostInstFixSUIDPerms,gnunet-gns))
+$(eval $(call PostInstFixSUIDPerms,gnunet-transport-bluetooth))
+$(eval $(call PostInstFixSUIDPerms,gnunet-transport-wlan))
+$(eval $(call PostInstFixSUIDPerms,gnunet-vpn))
+
+$(eval $(call BuildPackage,gnunet))
 $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,datastore,data storage components,))
 $(eval $(call BuildComponent,dv,distance-vector routing component,))
@@ -418,7 +353,10 @@ $(eval $(call BuildComponent,experiments,experimental components,))
 $(eval $(call BuildComponent,flat,flat storage backends,))
 $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))
+$(eval $(call BuildComponent,gns-proxy,gns-proxy component,))
+$(eval $(call BuildComponent,hostlist,HTTP bootstrap hostlist client and server,))
 $(eval $(call BuildComponent,mysql,mySQL datastore backend,))
+$(eval $(call BuildComponent,namestore-fcfsd,first-come-first-serve registration server,))
 $(eval $(call BuildComponent,pgsql,PostgreSQL storage backends,))
 $(eval $(call BuildComponent,peerstore,peerstore local persistency component,))
 $(eval $(call BuildComponent,rest,REST interface,))
@@ -426,10 +364,8 @@ $(eval $(call BuildComponent,rps,RPS routing component,))
 $(eval $(call BuildComponent,social,social components,))
 $(eval $(call BuildComponent,sqlite,libsqlite3 storage backends,y))
 $(eval $(call BuildComponent,transport-bluetooth,bluetooth transport,))
-$(eval $(call PostInstFixSUIDPerms,gnunet-transport-bluetooth))
 $(eval $(call BuildComponent,transport-http_client,HTTP/HTTPS client transport,y))
 $(eval $(call BuildComponent,transport-http_server,HTTP/HTTPS server transport,))
 $(eval $(call BuildComponent,transport-wlan,WLAN transport,))
-$(eval $(call PostInstFixSUIDPerms,gnunet-transport-wlan))
 $(eval $(call BuildComponent,utils,administration utililties,))
 $(eval $(call BuildComponent,vpn,vpn components,y))

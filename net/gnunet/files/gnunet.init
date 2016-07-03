@@ -15,8 +15,11 @@ SUID_ROOT_HELPERS="exit nat-server nat-client transport-bluetooth transport-wlan
 chmodown_execbin() {
 	execname=/usr/lib/gnunet/libexec/gnunet-$1
 	if [ -x $execname ]; then
-		[ "$3" ] && chown $3 $execname
-		chmod $2 $execname
+		if [ "$3" ]; then
+			chown $3 $execname 2>/dev/null && chmod $2 $execname
+		else
+			chmod $2 $execname
+		fi
 	fi
 }
 
@@ -40,7 +43,7 @@ prepare_config() {
 	touch $CONFIGFILE
 	chown gnunet:gnunet $CONFIGFILE
 	chmod 0640 $CONFIGFILE
-	gnunet-config -c $CONFIGFILE -s PATHS -o GNUNET_HOME -V $GNUNET_HOME
+	gnunet-config -c $CONFIGFILE -w -s PATHS -o GNUNET_HOME -V $GNUNET_HOME
 
 	# minimal persistency in /etc/gnunet
 	[ ! -d /etc/gnunet ] && {
@@ -48,13 +51,12 @@ prepare_config() {
 		chown gnunet:gnunet /etc/gnunet
 	}
 
-	# defaults paths
-	gnunet-config -c $CONFIGFILE -s PATHS -o GNUNET_CONFIG_HOME -V /etc/gnunet
-	gnunet-config -c $CONFIGFILE -s PEER -o PRIVATE_KEY -V /etc/gnunet/private_key.ecc
-	gnunet-config -c $CONFIGFILE -s identity -o EGODIR -V /etc/gnunet/identity/egos
-	gnunet-config -c $CONFIGFILE -s revocation -o DATABASE -V /etc/gnunet/revocation.dat
-	gnunet-config -c $CONFIGFILE -s nse -o PROOFFILE -V /etc/gnunet/proof.dat
-	gnunet-config -c $CONFIGFILE -s namestore-sqlite -o FILENAME -V /etc/gnunet/namestore.sqlite
+	# defaults paths for persistent files
+	gnunet-config -c $CONFIGFILE -w -s PATHS -o GNUNET_CONFIG_HOME -V /etc/gnunet
+	gnunet-config -c $CONFIGFILE -w -s PEER -o PRIVATE_KEY -V /etc/gnunet/private_key.ecc
+	gnunet-config -c $CONFIGFILE -w -s identity -o EGODIR -V /etc/gnunet/identity/egos
+	gnunet-config -c $CONFIGFILE -w -s revocation -o DATABASE -V /etc/gnunet/revocation.dat
+	gnunet-config -c $CONFIGFILE -w -s nse -o PROOFFILE -V /etc/gnunet/proof.dat
 
 	# enable all installed transport plugins
 	transport_plugins=$(gnunet-config -c $CONFIGFILE -s transport -o PLUGINS)
@@ -64,11 +66,11 @@ prepare_config() {
 		[ -n "$( echo $transport_plugins | grep $transplug )" ] ||
 			transport_plugins="$transport_plugins $transplug"
 	done
-	gnunet-config -c $CONFIGFILE -s transport -o PLUGINS -V "$transport_plugins"
+	gnunet-config -c $CONFIGFILE -w -s transport -o PLUGINS -V "$transport_plugins"
 
 	# do not touch sysctl, iptables and routing
-	gnunet-config -c $CONFIGFILE -s dns -o SKIP_ROUTING_SETUP -V YES
-	gnunet-config -c $CONFIGFILE -s exit -o EXIT_IFNAME -V ''
+	gnunet-config -c $CONFIGFILE -w -s dns -o SKIP_ROUTING_SETUP -V YES
+	gnunet-config -c $CONFIGFILE -w -s exit -o EXIT_IFNAME -V ''
 
 	# apply config from UCI
 	_gnunet_section=""
@@ -86,7 +88,7 @@ prepare_config() {
 		# $2    value
 		local __OPT="$1"
 		local __VAL="$2"
-		gnunet-config -c $CONFIGFILE -s ${_gnunet_section} -o ${__OPT} -V "${__VAL}"
+		gnunet-config -c $CONFIGFILE -w -s ${_gnunet_section} -o ${__OPT} -V "${__VAL}"
 	}
 	config_load gnunet
 

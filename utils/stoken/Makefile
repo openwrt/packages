@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=stoken
 PKG_VERSION:=0.8
 PKG_REV:=c4d79ffbf5053e44be4b64da22b1b7fb6a51daf2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/cernekee/stoken.git
@@ -65,7 +65,7 @@ endef
 
 define Package/stoken/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/stoken $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/stoken $(1)/usr/bin/
 endef
 
 define Package/libstoken/install

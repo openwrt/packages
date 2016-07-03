@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=2.92
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://download-origin.transmissionbt.com/files/ http://mirrors.m0k.org/transmission/files
@@ -36,7 +36,6 @@ define Package/transmission-daemon/Default
   $(call Package/transmission/template)
   DEPENDS:=+libcurl +libpthread +libevent2 +librt
   USERID:=transmission=224:transmission=224
-  PROVIDES:=transmission-daemon
 endef
 
 define Package/transmission-daemon-openssl
@@ -94,7 +93,7 @@ endef
 define Package/transmission-web
   $(call Package/transmission/template)
   TITLE+= (webinterface)
-  DEPENDS:=transmission-daemon
+  DEPENDS:=@(PACKAGE_transmission-daemon-openssl||PACKAGE_transmission-daemon-polarssl)
 endef
 
 

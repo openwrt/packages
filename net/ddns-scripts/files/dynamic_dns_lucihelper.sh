@@ -27,13 +27,14 @@ use_logfile=0		# by default no logfile, can be changed here
 __RET=0
 case "$1" in
 	get_registered_ip)
-		local IP
 		lookup_host=$2			# FQDN of host registered at DDNS
 		use_ipv6=${3:-"0"}		# Use IPv6 - default IPv4
 		force_ipversion=${4:-"0"}	# Force IP Version - default 0 - No
 		force_dnstcp=${5:-"0"}		# Force TCP on DNS - default 0 - No
-		dns_server=${6:-""}		# DNS server - default No DNS
+		is_glue=${6:-"0"}		# Is glue record - default 0 - No
+		dns_server=${7:-""}		# DNS server - default No DNS
 		write_log 7 "-----> get_registered_ip IP"
+		IP=""
 		get_registered_ip IP
 		__RET=$?
 		[ $__RET -ne 0 ] && IP=""
@@ -57,7 +58,6 @@ case "$1" in
 		__RET=$?
 		;;
 	get_local_ip)
-		local IP
 		use_ipv6="$2"			# Use IPv6
 		ip_source="$3"			# IP source
 		ip_network="$4"			# set if source = "network" otherwise "-"
@@ -75,6 +75,7 @@ case "$1" in
 			export https_proxy="http://$proxy"
 		}
 		# don't need IP only the return code
+		IP=""
 		[ "$ip_source" = "web" -o  "$ip_source" = "script" ] && {
 			# we wait only 3 seconds for an
 			# answer from "web" or "script"

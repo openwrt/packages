@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -559,16 +559,7 @@ EXTRA_PROGRAMS =
+@@ -574,16 +574,7 @@ EXTRA_PROGRAMS =
  # ... and all the rest that could be moved out of bindir to gitexecdir
  PROGRAMS += $(EXTRA_PROGRAMS)
  
@@ -17,7 +17,7 @@
  
  # Binary suffix, set to .exe for Windows builds
  X =
-@@ -929,6 +920,11 @@ BUILTIN_OBJS += builtin/verify-pack.o
+@@ -945,6 +936,11 @@ BUILTIN_OBJS += builtin/verify-pack.o
  BUILTIN_OBJS += builtin/verify-tag.o
  BUILTIN_OBJS += builtin/worktree.o
  BUILTIN_OBJS += builtin/write-tree.o
@@ -29,7 +29,7 @@
  
  GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
  EXTLIBS =
-@@ -1112,7 +1108,7 @@ endif
+@@ -1128,7 +1124,7 @@ endif
  EXTLIBS += -lz
  
  ifndef NO_OPENSSL
@@ -38,7 +38,7 @@
  	ifdef OPENSSLDIR
  		BASIC_CFLAGS += -I$(OPENSSLDIR)/include
  		OPENSSL_LINK = -L$(OPENSSLDIR)/$(lib) $(CC_LD_DYNPATH)$(OPENSSLDIR)/$(lib)
-@@ -1989,10 +1985,6 @@ endif
+@@ -2006,10 +2002,6 @@ endif
  git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
  	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
  
@@ -49,7 +49,7 @@
  git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
  	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
  		$(CURL_LIBCURL) $(LIBS)
-@@ -2312,10 +2304,11 @@ endif
+@@ -2332,10 +2324,11 @@ endif
  	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
  	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
  	{ test "$$bindir/" = "$$execdir/" || \
@@ -127,7 +127,7 @@
  
 --- a/git.c
 +++ b/git.c
-@@ -307,11 +307,11 @@ static int handle_alias(int *argcp, cons
+@@ -313,11 +313,11 @@ static int handle_alias(int *argcp, cons
  
  struct cmd_struct {
  	const char *cmd;
@@ -141,7 +141,7 @@
  {
  	int status, help;
  	struct stat st;
-@@ -392,6 +392,7 @@ static struct cmd_struct commands[] = {
+@@ -398,6 +398,7 @@ static struct cmd_struct commands[] = {
  	{ "config", cmd_config, RUN_SETUP_GENTLY },
  	{ "count-objects", cmd_count_objects, RUN_SETUP },
  	{ "credential", cmd_credential, RUN_SETUP_GENTLY },
@@ -149,15 +149,15 @@
  	{ "describe", cmd_describe, RUN_SETUP },
  	{ "diff", cmd_diff },
  	{ "diff-files", cmd_diff_files, RUN_SETUP | NEED_WORK_TREE },
-@@ -410,6 +411,7 @@ static struct cmd_struct commands[] = {
+@@ -416,6 +417,7 @@ static struct cmd_struct commands[] = {
  	{ "grep", cmd_grep, RUN_SETUP_GENTLY },
  	{ "hash-object", cmd_hash_object },
  	{ "help", cmd_help },
 +	{ "imap-send", cmd_imap_send },
  	{ "index-pack", cmd_index_pack, RUN_SETUP_GENTLY },
- 	{ "init", cmd_init_db, NO_SETUP },
- 	{ "init-db", cmd_init_db, NO_SETUP },
-@@ -459,6 +461,7 @@ static struct cmd_struct commands[] = {
+ 	{ "init", cmd_init_db },
+ 	{ "init-db", cmd_init_db },
+@@ -465,6 +467,7 @@ static struct cmd_struct commands[] = {
  	{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
  	{ "rm", cmd_rm, RUN_SETUP },
  	{ "send-pack", cmd_send_pack, RUN_SETUP },
@@ -165,7 +165,7 @@
  	{ "shortlog", cmd_shortlog, RUN_SETUP_GENTLY | USE_PAGER },
  	{ "show", cmd_show, RUN_SETUP },
  	{ "show-branch", cmd_show_branch, RUN_SETUP },
-@@ -476,6 +479,7 @@ static struct cmd_struct commands[] = {
+@@ -482,6 +485,7 @@ static struct cmd_struct commands[] = {
  	{ "update-server-info", cmd_update_server_info, RUN_SETUP },
  	{ "upload-archive", cmd_upload_archive },
  	{ "upload-archive--writer", cmd_upload_archive_writer },
@@ -197,7 +197,7 @@
  	const char **user_argv;
 --- a/upload-pack.c
 +++ b/upload-pack.c
-@@ -820,7 +820,7 @@ static int upload_pack_config(const char
+@@ -817,7 +817,7 @@ static int upload_pack_config(const char
  	return parse_hide_refs_config(var, value, "uploadpack");
  }
  

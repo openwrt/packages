@@ -2,7 +2,7 @@ diff --git a/configure.ac b/configure.ac
 index a5f9de5..4c77e97 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -33,9 +33,6 @@ AC_FUNC_ALLOCA
+@@ -34,9 +34,6 @@ AC_FUNC_ALLOCA
  AM_PROG_AR
  LT_INIT
  
@@ -12,7 +12,7 @@ index a5f9de5..4c77e97 100644
  AC_ARG_ENABLE([debug],
  	[AS_HELP_STRING([--enable-debug], [Enable extra debugging])])
  AS_IF([test "x$enable_debug" = "xyes"],
-@@ -54,6 +51,5 @@ AC_CONFIG_COMMANDS([include/attr],
+@@ -55,6 +52,5 @@ AC_CONFIG_COMMANDS([include/attr],
  AC_CONFIG_FILES([
  	libattr.pc
  	Makefile

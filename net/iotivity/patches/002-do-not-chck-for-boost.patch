@@ -12,7 +12,7 @@ Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
 
 --- a/service/third_party_libs.scons
 +++ b/service/third_party_libs.scons
-@@ -49,14 +49,6 @@ if target_os in ['linux', 'tizen']:
+@@ -49,14 +49,6 @@ if target_os in ['linux']:
  
  		conf = Configure(lib_env)
  

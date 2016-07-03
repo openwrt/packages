@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.5.1
-PKG_RELEASE:=4
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://collectd.org/files/
@@ -17,7 +17,7 @@ PKG_MD5SUM:=fd24b947cef9351ce3e2d6d2a0762e18
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -193,7 +193,8 @@ CONFIGURE_ARGS+= \
 	--disable-debug \
 	--enable-daemon \
 	--with-nan-emulation \
-	--without-perl-bindings
+	--without-perl-bindings \
+	--without-libudev
 
 ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
 CONFIGURE_ARGS+= \

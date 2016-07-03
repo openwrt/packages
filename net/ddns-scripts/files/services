@@ -33,7 +33,7 @@
 #
 # 44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
 
-"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 "changeip.com"		"http://[USERNAME]:[PASSWORD]@nic.changeip.com/nic/update?u=[USERNAME]&p=[PASSWORD]&cmd=update&hostname=[DOMAIN]&ip=[IP]"
 "zoneedit.com"		"http://[USERNAME]:[PASSWORD]@dynamic.zoneedit.com/auth/dynamic.html?host=[DOMAIN]&dnsto=[IP]"
 "free.editdns.net"	"http://dyndns-free.editdns.net/api/dynLinux.php?p=[PASSWORD]&r=[DOMAIN]"
@@ -49,7 +49,7 @@
 "he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # DNSdynamic.org
-"dnsdynamic.org"	"http://[USERNAME]:[PASSWORD]@www.dnsdynamic.org/api/?hostname=[DOMAIN]&myip=[IP]"
+"dnsdynamic.org"	"http://[USERNAME]:[PASSWORD]@www.dnsdynamic.org/api/?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # dnsExit.com free dynamic DNS update url
 "dnsexit.com"	"http://www.dnsexit.com/RemoteUpdate.sv?login=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&myip=[IP]"
@@ -73,7 +73,7 @@
 "ddns.com.br"	"http://[DOMAIN]:[PASSWORD]@members.ddns.com.br/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
 # Mythic Beasts (https://www.mythic-beasts.com) Dynamic DNS
-"mythic-beasts.com"	"http://dnsapi4.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20A%20DYNAMIC_IP"
+"mythic-beasts.com"	"http://dnsapi4.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20A%20DYNAMIC_IP&origin=."
 
 # Securepoint Dynamic-DNS-Service	(http://www.spdns.de)
 "spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
@@ -134,3 +134,22 @@
 
 # regfish.de
 "regfish.de"	"http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv4=[IP]"	"success|100|101"
+
+# nsupdate.info - a free service - supports https
+"nsupdate.info"	"http://[USERNAME]:[PASSWORD]@ipv4.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+# dyndnss.net
+"dyndnss.net"	"http://www.dyndnss.net/?user=[USERNAME]&pass=[PASSWORD]&domain=[DOMAIN]&updater=other"
+
+# goip.de
+"https://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip6=[IP]"
+
+# myonlineportal.net
+"myonlineportal.net"	"http://[USERNAME]:[PASSWORD]@myonlineportal.net/updateddns?hostname=[DOMAIN]&ip=[IP]"	"good|nochg"
+
+# dyns.net
+"dyns.net"	"http://www.dyns.net/postscript011.php?username=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"200"
+
+# dnshome.de
+"dnshome.de"	""https://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip=[IP]"
+

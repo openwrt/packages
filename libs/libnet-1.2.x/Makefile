@@ -38,7 +38,7 @@ CONFIGURE_ARGS += \
 
 CONFIGURE_VARS += \
 	ac_cv_libnet_endianess=$(ENDIANESS) \
-	ac_libnet_have_pf_packet=yes \
+	libnet_cv_have_packet_socket=yes \
 	LL_INT_TYPE=libnet_link_linux
 
 define Build/Configure

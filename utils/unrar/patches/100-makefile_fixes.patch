@@ -4,9 +4,9 @@
  # Makefile for UNIX - unrar
  
  # Linux using GCC
--CXX=g++
+-CXX=c++
 -CXXFLAGS=-O2
-+#CXX=g++
++#CXX=c++
 +#CXXFLAGS=-O2
  LIBFLAGS=-fPIC
  DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRAR_SMP

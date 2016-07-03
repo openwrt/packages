@@ -1,0 +1,52 @@
+From 294c8d2f81847e0e2d26aa0700564ac2f6aaffa6 Mon Sep 17 00:00:00 2001
+From: Thierry Fournier <thierry.fournier@ozon.io>
+Date: Mon, 6 Jun 2016 18:28:05 +0200
+Subject: [PATCH 3/4] BUG/MEDIUM: sticktables: segfault in some configuration
+ error cases
+
+When a stick table is tracked, and another one is used later on the
+configuration, a segfault occurs.
+
+The function "smp_create_src_stkctr" can return a NULL value, and
+its value is not tested, so one other function try to dereference
+a NULL pointer. This patch just add a verification of the NULL
+pointer.
+
+The problem is reproduced with this configuration:
+
+   listen www
+       mode http
+       bind :12345
+       tcp-request content track-sc0 src table IPv4
+       http-request allow if { sc0_inc_gpc0(IPv6) gt 0 }
+       server dummy 127.0.0.1:80
+   backend IPv4
+       stick-table type ip size 10 expire 60s store gpc0
+   backend IPv6
+       stick-table type ipv6 size 10 expire 60s store gpc0
+
+Thank to kabefuna@gmail.com for the bug report.
+
+This patch must be backported in the 1.6 and 1.5 version.
+(cherry picked from commit 6fc340ff07171bb85d11d835fa4158bbdef240a0)
+(cherry picked from commit 4693e2302271252044038c9be38487fb16218e5b)
+---
+ src/session.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/session.c b/src/session.c
+index 4e84803..fbd5094 100644
+--- a/src/session.c
++++ b/src/session.c
+@@ -2908,7 +2908,7 @@ smp_fetch_sc_inc_gpc0(struct proxy *px, struct session *l4, void *l7, unsigned i
+ 	smp->flags = SMP_F_VOL_TEST;
+ 	smp->type = SMP_T_UINT;
+ 	smp->data.uint = 0;
+-	if (stkctr_entry(stkctr) != NULL) {
++	if (stkctr && stkctr_entry(stkctr)) {
+ 		void *ptr;
+ 
+ 		/* First, update gpc0_rate if it's tracked. Second, update its
+-- 
+2.7.3
+

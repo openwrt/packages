@@ -55,7 +55,10 @@
 "variomedia.de"		"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # IPv6 @ Dyn.com
-"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+# duckdns.org
+"duckdns.org"	"http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"OK"
 
 # IPv6 @ zzzz.io Free Dynamic DNS
 "zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"	"Updated|No change"
@@ -65,4 +68,19 @@
 
 # IPv6 @ regfish.de
 "regfish.de"	"http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv6=[IP]"	"success|100|101"
+
+# Mythic Beasts (https://www.mythic-beasts.com) Dynamic DNS
+"mythic-beasts.com"	"http://dnsapi6.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20AAAA%20DYNAMIC_IP&origin=."
+
+# nsupdate.info - a free service - supports https
+"nsupdate.info"	"http://[USERNAME]:[PASSWORD]@ipv6.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+# goip.de
+"https://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip6=[IP]"
+
+# myonlineportal.net
+"myonlineportal.net"	"http://[USERNAME]:[PASSWORD]@myonlineportal.net/updateddns?hostname=[DOMAIN]&ip6=[IP]"	"good|nochg"
+
+# dnshome.de
+"dnshome.de"	""https://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip6=[IP]"
 

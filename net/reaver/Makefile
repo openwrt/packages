@@ -8,16 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=reaver
-PKG_REV:=113
-PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=2
+PKG_VERSION:=1.4
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://reaver-wps.googlecode.com/svn/trunk
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE_PROTO:=svn
+PKG_SOURCE_URL:=https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/reaver-wps
+PKG_MD5SUM:=05441dda7bacfcbe1e831c85d1ea3bc9
 PKG_LICENSE:=GPL-2.0
 
 PKG_USE_MIPS16:=0

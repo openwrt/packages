@@ -2,7 +2,7 @@ diff --git a/configure.ac b/configure.ac
 index cd3c680..3d3771b 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -31,9 +31,6 @@ AC_FUNC_GCC_VISIBILITY
+@@ -32,9 +32,6 @@ AC_FUNC_GCC_VISIBILITY
  AM_PROG_AR
  LT_INIT
  
@@ -12,7 +12,7 @@ index cd3c680..3d3771b 100644
  AC_ARG_ENABLE([debug],
  	[AS_HELP_STRING([--enable-debug], [Enable extra debugging])])
  AS_IF([test "x$enable_debug" = "xyes"],
-@@ -60,6 +57,5 @@ AC_CONFIG_COMMANDS([include/sys],
+@@ -61,6 +58,5 @@ AC_CONFIG_COMMANDS([include/sys],
  AC_CONFIG_FILES([
  	libacl.pc
  	Makefile

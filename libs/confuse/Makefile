@@ -12,7 +12,7 @@ PKG_VERSION:=2.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://savannah.nongnu.org/download/confuse/
+PKG_SOURCE_URL:=@SAVANNAH/confuse
 PKG_MD5SUM:=45932fdeeccbb9ef4228f1c1a25e9c8f
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=ISC

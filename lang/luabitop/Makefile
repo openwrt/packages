@@ -28,7 +28,7 @@ define Package/luabitop
   CATEGORY:=Languages
   TITLE:=luabitop
   URL:=http://bitop.luajit.org/
-  DEPENDS:=+lua
+  DEPENDS:=+liblua
 endef
 
 define Package/luabitop/description

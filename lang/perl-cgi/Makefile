@@ -41,7 +41,7 @@ define Build/Compile
 endef
 
 define Package/perl-cgi/install
-        $(call perlmod/Install,$(1),CGI auto/CGI)
+        $(call perlmod/Install,$(1),CGI CGI.pm auto/CGI)
 endef
 
 
