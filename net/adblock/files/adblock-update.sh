@@ -10,7 +10,7 @@
 #
 adb_pid="${$}"
 adb_pidfile="/var/run/adblock.pid"
-adb_scriptver="1.3.1"
+adb_scriptver="1.3.2"
 adb_mincfgver="2.2"
 adb_scriptdir="${0%/*}"
 if [ -r "${adb_pidfile}" ]
