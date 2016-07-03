@@ -1,0 +1,29 @@
+Index: bluelog-1.1.2/gen_oui.sh
+===================================================================
+--- bluelog-1.1.2.orig/gen_oui.sh
++++ bluelog-1.1.2/gen_oui.sh
+@@ -3,7 +3,7 @@
+ VER="1.2"
+ 
+ # Location of tmp file
+-TMPFILE="/tmp/oui.tmp"
++TMPFILE="./oui.tmp"
+ 
+ # File to write
+ OUIFILE="oui.txt"
+@@ -22,10 +22,11 @@ exit 1
+ 
+ get_oui ()
+ {
+-echo -n "Downloading OUI file from IEEE..."
+-wget --quiet -O $TMPFILE http://standards.ieee.org/develop/regauth/oui/oui.txt || \
+-	ErrorMsg ERR "Unable to contact IEEE server!"
+-
++echo -n "Downloading OUI file from LEDE project..."
++wget --quiet -O $TMPFILE.gz http://sources.lede-project.org/oui-2016-05-30.txt.gz || \
++	ErrorMsg ERR "Unable to contact LEDE project!"
++gunzip $TMPFILE.gz || \
++	ErrorMsg ERR "Unable to gunzip $TMPFILE.gz!"
+ echo "OK"
+ }
+ 
