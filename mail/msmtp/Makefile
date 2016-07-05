@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
 PKG_VERSION:=1.6.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/msmtp
@@ -47,6 +47,7 @@ $(call Package/msmtp/Default)
   DEPENDS+= +libopenssl
   TITLE+= (with SSL support)
   VARIANT:=ssl
+  PROVIDES:=sendmail-command
 endef
 
 define Package/msmtp/conffiles
@@ -62,6 +63,7 @@ define Package/msmtp-nossl
 $(call Package/msmtp/Default)
   TITLE+= (without SSL support)
   VARIANT:=nossl
+  PROVIDES:=sendmail-command
 endef
 
 define Package/msmtp-nossl/description
@@ -110,19 +112,7 @@ define Package/msmtp/install
 		$(1)/etc/msmtprc
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/msmtp $(1)/usr/bin/
-endef
-
-define Package/msmtp/postinst
-	[ -e $${IPKG_INSTROOT}/usr/sbin/sendmail ] || {
-		mkdir -p $${IPKG_INSTROOT}/usr/sbin
-		ln -sf ../bin/msmtp $${IPKG_INSTROOT}/usr/sbin/sendmail
-	}
-endef
-
-define Package/msmtp/prerm
-	[ "../bin/msmtp" = "$(readlink -qs $${IPKG_INSTROOT}/usr/sbin/sendmail)" ] && {
-		rm -f $${IPKG_INSTROOT}/usr/sbin/sendmail
-	}
+	ln -s ../bin/msmtp $(1)/usr/sbin/sendmail
 endef
 
 Package/msmtp-nossl/conffiles = $(Package/msmtp/conffiles)
