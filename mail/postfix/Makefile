@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE_URL:=ftp://ftp.porcupine.org/mirrors/postfix-release/official/
 PKG_VERSION:=3.1.0
 PKG_MD5SUM:=b4a506fa74c69c6fb1875c0971268344
@@ -190,7 +190,7 @@ define Build/Compile
 endef
 
 define Package/postfix/install
-	cd $(PKG_BUILD_DIR); $(MAKE) install_root=$(1) command_directory=$(command_directory) daemon_directory=$(daemon_directory) data_directory=$(data_directory) html_directory=$(html_directory) mail_owner=postfix mailq_path=$(mailq_path)$(ln_suffix) manpage_directory=$(manpage_directory) newaliases_path=$(newaliases_path)$(ln_suffix) queue_directory=$(queue_directory) readme_directory=$(readme_directory) sendmail_path=$(sendmail_path)$(ln_suffix) setgid_group=postdrop sample_directory=$(sample_directory) config_directory=$(config_directory) shlib_directory=$(shlib_directory) meta_directory=$(meta_directory) mail_version=$(PKG_VERSION) non-interactive-package
+	cd $(PKG_BUILD_DIR); $(MAKE) install_root=$(1) command_directory=$(command_directory) daemon_directory=$(daemon_directory) data_directory=$(data_directory) html_directory=$(html_directory) mail_owner=postfix mailq_path=$(mailq_path) manpage_directory=$(manpage_directory) newaliases_path=$(newaliases_path) queue_directory=$(queue_directory) readme_directory=$(readme_directory) sendmail_path=$(sendmail_path) setgid_group=postdrop sample_directory=$(sample_directory) config_directory=$(config_directory) shlib_directory=$(shlib_directory) meta_directory=$(meta_directory) mail_version=$(PKG_VERSION) non-interactive-package
 	$(INSTALL_DIR) $(1)$(mail_spool_directory)
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/postfix.init $(1)/etc/init.d/postfix
@@ -198,31 +198,6 @@ endef
 
 define Package/postfix/postinst
 #!/bin/sh
-
- if [ -f "$${IPKG_INSTROOT}$(sendmail_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(sendmail_path)")" != "$(sendmail_path)$(ln_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(sendmail_path)" "$${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
-  echo "Warning: $${IPKG_INSTROOT}$(sendmail_path) saved as $${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
- fi
- if [ ! -f "$${IPKG_INSTROOT}$(sendmail_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(sendmail_path)$(ln_suffix)" "$(sendmail_path)"
- fi
-
- if [ -f "$${IPKG_INSTROOT}$(newaliases_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(newaliases_path)")" != "$(newaliases_path)$(ln_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(newaliases_path)" "$${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
-  echo "Warning: $${IPKG_INSTROOT}$(newaliases_path) saved as $${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
- fi
- if [ ! -f "$${IPKG_INSTROOT}$(newaliases_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(newaliases_path)$(ln_suffix)" "$(newaliases_path)"
- fi
-
- if [ -f "$${IPKG_INSTROOT}$(mailq_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(mailq_path)")" != "$(mailq_path)$(ln_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(mailq_path)" "$${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
-  echo "Warning: $${IPKG_INSTROOT}$(mailq_path) saved as $${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
- fi
- if [ ! -f "$(mailq_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(mailq_path)$(ln_suffix)" "$(mailq_path)"
- fi
-
  grep -qc main\.cf "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/main.cf" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
  grep -qc master\.cf "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/master.cf" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
  grep -qc aliases "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/aliases" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
@@ -247,21 +222,6 @@ define Package/postfix/postrm
  rm -f $${IPKG_INSTROOT}$(config_directory)/aliases.cdb $${IPKG_INSTROOT}$(config_directory)/aliases.db $${IPKG_INSTROOT}$(data_directory)/master.lock
 
  rm -f $${IPKG_INSTROOT}$(config_directory)/virtual.cdb $${IPKG_INSTROOT}$(config_directory)/virtual.db
-
- rm -f "$${IPKG_INSTROOT}$(sendmail_path)" "$${IPKG_INSTROOT}$(newaliases_path)" "$${IPKG_INSTROOT}$(mailq_path)"
-
- if [ -f "$${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)" "$${IPKG_INSTROOT}$(sendmail_path)"
-  echo "Warning: $${IPKG_INSTROOT}$(sendmail_path) restored from $${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
- fi
- if [ -f "$${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)" "$${IPKG_INSTROOT}$(newaliases_path)"
-  echo "Warning: $${IPKG_INSTROOT}$(newaliases_path) restored from $${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
- fi
- if [ -f "$${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)" "$${IPKG_INSTROOT}$(mailq_path)"
-  echo "Warning: $${IPKG_INSTROOT}$(mailq_path) restored from $${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
- fi
 endef
 
 $(eval $(call BuildPackage,postfix))
