@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tar
 PKG_VERSION:=1.29
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -39,10 +39,12 @@ define Package/tar/config
 	if PACKAGE_tar
 		config PACKAGE_TAR_POSIX_ACL
 			bool "tar: Enable POSIX ACL support"
+			default y if USE_FS_ACL_ATTR
 			default n
 
 		config PACKAGE_TAR_XATTR
 			bool "tar: Enable extended attribute (xattr) support"
+			default y if USE_FS_ACL_ATTR
 			default n
 
 		config PACKAGE_TAR_GZIP
