@@ -1,0 +1,45 @@
+From: Sven Eckelmann <sven@narfation.org>
+Date: Thu, 30 Jun 2016 21:41:13 +0200
+Subject: [PATCH] batman-adv: Free last_bonding_candidate on release of orig_node
+
+The orig_ifinfo reference counter for last_bonding_candidate in
+batadv_orig_node has to be reduced when an originator node is released.
+Otherwise the orig_ifinfo is leaked and the reference counter the netdevice
+is not reduced correctly.
+
+Fixes: 797edd9e87ac ("batman-adv: add bonding again")
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+
+Origin: upstream, https://git.open-mesh.org/batman-adv.git/commit/20df5c53865a90095099f0af80536b8abfea303b
+---
+ net/batman-adv/originator.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/net/batman-adv/originator.c b/net/batman-adv/originator.c
+index fe2fcda..ab8c4f9 100644
+--- a/net/batman-adv/originator.c
++++ b/net/batman-adv/originator.c
+@@ -766,6 +766,7 @@ static void batadv_orig_node_release(struct kref *ref)
+ 	struct batadv_orig_node *orig_node;
+ 	struct batadv_orig_ifinfo *orig_ifinfo;
+ 	struct batadv_orig_node_vlan *vlan;
++	struct batadv_orig_ifinfo *last_candidate;
+ 
+ 	orig_node = container_of(ref, struct batadv_orig_node, refcount);
+ 
+@@ -783,8 +784,14 @@ static void batadv_orig_node_release(struct kref *ref)
+ 		hlist_del_rcu(&orig_ifinfo->list);
+ 		batadv_orig_ifinfo_put(orig_ifinfo);
+ 	}
++
++	last_candidate = orig_node->last_bonding_candidate;
++	orig_node->last_bonding_candidate = NULL;
+ 	spin_unlock_bh(&orig_node->neigh_list_lock);
+ 
++	if (last_candidate)
++		batadv_orig_ifinfo_put(last_candidate);
++
+ 	spin_lock_bh(&orig_node->vlan_list_lock);
+ 	hlist_for_each_entry_safe(vlan, node_tmp, &orig_node->vlan_list, list) {
+ 		hlist_del_rcu(&vlan->list);
