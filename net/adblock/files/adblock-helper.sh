@@ -52,7 +52,7 @@ f_envload()
 
     # check opkg availability
     #
-    if [ -r "/var/lock/opkg.lock" ]
+    if [ -f "/var/lock/opkg.lock" ]
     then
         rc=-10
         f_log "adblock installation finished successfully, 'opkg' currently locked by package installer"
@@ -246,9 +246,13 @@ f_envcheck()
         f_depend "libustream-polarssl" "true"
         if [ "${package_ok}" = "false" ]
         then
-            adb_fetch="$(which uclient-fetch)"
-            fetch_parm="-q --timeout=${adb_fetchttl}"
-            response_parm="--spider"
+            f_depend "libustream-\(mbedtls\|openssl\|cyassl\)" "true"
+            if [ "${package_ok}" = "true" ]
+            then
+                adb_fetch="$(which uclient-fetch)"
+                fetch_parm="-q --timeout=${adb_fetchttl}"
+                response_parm="--spider"
+            fi
         fi
     fi
     if [ -z "${adb_fetch}" ]
@@ -418,25 +422,21 @@ f_envcheck()
 
     # check volatile uhttpd instance configuration
     #
-    check="$(pgrep -f "uhttpd -h /www/adblock")"
-    if [ -z "${check}" ]
+    if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
     then
-        if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
-        then
-            f_uhttpd "adbIPv4+6_80" "1" "-p ${adb_ipv4}:${adb_nullport} -p [${adb_ipv6}]:${adb_nullport}"
-            f_uhttpd "adbIPv4+6_443" "0" "-p ${adb_ipv4}:${adb_nullportssl} -p [${adb_ipv6}]:${adb_nullportssl}"
-        elif [ -n "${adb_wanif4}" ]
-        then
-            f_uhttpd "adbIPv4_80" "1" "-p ${adb_ipv4}:${adb_nullport}"
-            f_uhttpd "adbIPv4_443" "0" "-p ${adb_ipv4}:${adb_nullportssl}"
-        else
-            f_uhttpd "adbIPv6_80" "1" "-p [${adb_ipv6}]:${adb_nullport}"
-            f_uhttpd "adbIPv6_443" "0" "-p [${adb_ipv6}]:${adb_nullportssl}"
-        fi
-        if [ "${uhttpd_ok}" = "true" ]
-        then
-            f_log "created volatile uhttpd instances"
-        fi
+        f_uhttpd "adbIPv4+6_80" "1" "-p ${adb_ipv4}:${adb_nullport} -p [${adb_ipv6}]:${adb_nullport}"
+        f_uhttpd "adbIPv4+6_443" "0" "-p ${adb_ipv4}:${adb_nullportssl} -p [${adb_ipv6}]:${adb_nullportssl}"
+    elif [ -n "${adb_wanif4}" ]
+    then
+        f_uhttpd "adbIPv4_80" "1" "-p ${adb_ipv4}:${adb_nullport}"
+        f_uhttpd "adbIPv4_443" "0" "-p ${adb_ipv4}:${adb_nullportssl}"
+    else
+        f_uhttpd "adbIPv6_80" "1" "-p [${adb_ipv6}]:${adb_nullport}"
+        f_uhttpd "adbIPv6_443" "0" "-p [${adb_ipv6}]:${adb_nullportssl}"
+    fi
+    if [ "${uhttpd_ok}" = "true" ]
+    then
+        f_log "created volatile uhttpd instances"
     fi
 
     # check whitelist entries
@@ -467,7 +467,6 @@ f_depend()
     elif [ -z "${check}" ]
     then
         rc=-1
-        package_ok="false"
         f_log "package '${package}' not found"
         f_exit
     fi
@@ -486,7 +485,6 @@ f_firewall()
     local chpos="${5}"
     local notes="adb-${6}"
     local rules="${7}"
-    firewall_ok="true"
 
     # select appropriate iptables executable for IPv6
     #
@@ -524,9 +522,10 @@ f_firewall()
     then
         "${ipt}" -w -t "${table}" -I "${chain}" "${chpos}" -m comment --comment "${notes}" ${rules}
         rc=${?}
-        if [ $((rc)) -ne 0 ]
+        if [ $((rc)) -eq 0 ]
         then
-            firewall_ok="false"
+            firewall_ok="true"
+        else
             f_log "failed to initialize volatile ${proto} firewall rule '${notes}'"
             f_exit
         fi
@@ -537,18 +536,23 @@ f_firewall()
 #
 f_uhttpd()
 {
+    local check
     local realm="${1}"
     local timeout="${2}"
     local ports="${3}"
-    uhttpd_ok="true"
 
-    uhttpd -h "/www/adblock" -N 25 -T "${timeout}" -r "${realm}" -k 0 -t 0 -R -D -S -E "/index.html" ${ports}
-    rc=${?}
-    if [ $((rc)) -ne 0 ]
+    check="$(pgrep -f "uhttpd -h /www/adblock -N 25 -T ${timeout} -r ${realm}")"
+    if [ -z "${check}" ]
     then
-        uhttpd_ok="false"
-        f_log "failed to initialize volatile uhttpd instance (${realm})"
-        f_exit
+        uhttpd -h "/www/adblock" -N 25 -T "${timeout}" -r "${realm}" -k 0 -t 0 -R -D -S -E "/index.html" ${ports}
+        rc=${?}
+        if [ $((rc)) -eq 0 ]
+        then
+            uhttpd_ok="true"
+        else
+            f_log "failed to initialize volatile uhttpd instance (${realm})"
+            f_exit
+        fi
     fi
 }
 
@@ -566,8 +570,6 @@ f_space()
         then
             space_ok="false"
         fi
-    else
-        space_ok="false"
     fi
 }
 

@@ -10,7 +10,7 @@
 #
 adb_pid="${$}"
 adb_pidfile="/var/run/adblock.pid"
-adb_scriptver="1.3.0"
+adb_scriptver="1.3.2"
 adb_mincfgver="2.2"
 adb_scriptdir="${0%/*}"
 if [ -r "${adb_pidfile}" ]
@@ -227,7 +227,7 @@ then
 
     # generate a unique overall block list
     #
-    sort -u "${adb_dnsdir}/${adb_dnsprefix}."* > "${adb_tmpdir}/blocklist.overall"
+    sort -u "${adb_dnsdir}/${adb_dnsprefix}"* > "${adb_tmpdir}/blocklist.overall"
 
     # loop through all separate lists, ordered by size (ascending)
     #
@@ -250,7 +250,7 @@ fi
 
 # restart & check dnsmasq with newly generated set of block lists
 #
-if [ -n "${adb_revsrclist}" ] || [ "${rm_done}" = "true" ]
+if [ -n "${adb_revsrclist}" ] || [ -n "${mv_done}" ] || [ "${rm_done}" = "true" ]
 then
     "${adb_uci}" -q delete "adblock.global.adb_dnstoggle"
     /etc/init.d/dnsmasq restart

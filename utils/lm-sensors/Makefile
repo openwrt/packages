@@ -9,11 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lm-sensors
 PKG_VERSION:=3.3.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
-PKG_SOURCE:=lm_sensors-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://dl.lm-sensors.org/lm-sensors/releases
-PKG_MD5SUM:=da506dedceb41822e64865f6ba34828a
+PKG_SOURCE_PROTO=git
+PKG_SOURCE_URL:=https://github.com/groeck/lm-sensors.git
+PKG_SOURCE_VERSION=f8cdcc35bff0785aecf49d9a8484a71ce3ebee4f
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0+ LGPL-2.1+
 
