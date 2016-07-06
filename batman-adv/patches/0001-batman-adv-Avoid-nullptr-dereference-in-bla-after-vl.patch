@@ -1,0 +1,35 @@
+From: Sven Eckelmann <sven@narfation.org>
+Date: Sat, 2 Jul 2016 09:52:13 +0200
+Subject: [PATCH] batman-adv: Avoid nullptr dereference in bla after vlan_insert_tag
+
+vlan_insert_tag can return NULL on errors. The bridge loop avoidance code
+therefore has to check the return value of vlan_insert_tag for NULL before
+it can safely operate on this pointer.
+
+Fixes: a9ce0dc43e2c ("batman-adv: add basic bridge loop avoidance code")
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+Signed-off-by: Marek Lindner <mareklindner@neomailbox.ch>
+
+Origin: upstream, https://git.open-mesh.org/batman-adv.git/commit/e4cffba4d3353ea15287abbfbdd65208aa62c156
+---
+ net/batman-adv/bridge_loop_avoidance.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/net/batman-adv/bridge_loop_avoidance.c b/net/batman-adv/bridge_loop_avoidance.c
+index 748a9ea..7129780 100644
+--- a/net/batman-adv/bridge_loop_avoidance.c
++++ b/net/batman-adv/bridge_loop_avoidance.c
+@@ -418,9 +418,12 @@ static void batadv_bla_send_claim(struct batadv_priv *bat_priv, u8 *mac,
+ 		break;
+ 	}
+ 
+-	if (vid & BATADV_VLAN_HAS_TAG)
++	if (vid & BATADV_VLAN_HAS_TAG) {
+ 		skb = vlan_insert_tag(skb, htons(ETH_P_8021Q),
+ 				      vid & VLAN_VID_MASK);
++		if (!skb)
++			goto out;
++	}
+ 
+ 	skb_reset_mac_header(skb);
+ 	skb->protocol = eth_type_trans(skb, soft_iface);
