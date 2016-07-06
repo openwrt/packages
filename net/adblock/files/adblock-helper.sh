@@ -21,7 +21,6 @@ adb_minspace=12000
 adb_forcedns=1
 adb_fetchttl=5
 adb_restricted=0
-adb_fetch="$(which wget)"
 adb_uci="$(which uci)"
 unset adb_revsrclist
 
@@ -33,10 +32,7 @@ f_envload()
     #
     if [ -r "/lib/functions.sh" ]
     then
-        if [ -z "$(type -f config_load)" ]
-        then
-            . "/lib/functions.sh"
-        fi
+        . "/lib/functions.sh"
     else
         rc=-10
         f_log "system function library not found, please check your installation"
@@ -47,10 +43,7 @@ f_envload()
     #
     if [ -r "/lib/functions/network.sh" ]
     then
-        if [ -z "$(type -f network_get_device)" ]
-        then
-            . "/lib/functions/network.sh"
-        fi
+        . "/lib/functions/network.sh"
     else
         rc=-10
         f_log "system network library not found, please check your installation"
@@ -59,7 +52,7 @@ f_envload()
 
     # check opkg availability
     #
-    if [ -r "/var/lock/opkg.lock" ]
+    if [ -f "/var/lock/opkg.lock" ]
     then
         rc=-10
         f_log "adblock installation finished successfully, 'opkg' currently locked by package installer"
@@ -108,6 +101,22 @@ f_envload()
     config_load adblock
     config_foreach parse_config service
     config_foreach parse_config source
+
+    # get network basics
+    #
+    network_get_ipaddr adb_ipv4 "${adb_lanif}"
+    network_get_ipaddr6 adb_ipv6 "${adb_lanif}"
+    network_get_device adb_landev "${adb_lanif}"
+    network_find_wan adb_wanif4
+    network_find_wan6 adb_wanif6
+
+    # set restricted mode
+    #
+    if [ "${adb_restricted}" = "1" ]
+    then
+        adb_uci="$(which true)"
+        restricted_ok="true"
+    fi
 }
 
 # f_envcheck: check/set environment prerequisites
@@ -115,14 +124,6 @@ f_envload()
 f_envcheck()
 {
     local check
-
-    # check restricted mode
-    #
-    if [ "${adb_restricted}" = "1" ]
-    then
-        adb_uci="$(which true)"
-        restricted_ok="true"
-    fi
 
     # check 'enabled' & 'version' config options
     #
@@ -133,7 +134,7 @@ f_envcheck()
         f_exit
     elif [ "${adb_cfgver#*.}" != "${adb_mincfgver#*.}" ]
     then
-        outdate_ok="true"
+        outdated_ok="true"
     fi
     if [ "${adb_enabled}" != "1" ]
     then
@@ -156,22 +157,15 @@ f_envcheck()
 
     # get lan ip addresses
     #
-    network_get_ipaddr adb_ipv4 "${adb_lanif}"
-    network_get_ipaddr6 adb_ipv6 "${adb_lanif}"
     if [ -z "${adb_ipv4}" ] && [ -z "${adb_ipv6}" ]
     then
         rc=-1
         f_log "no valid IPv4/IPv6 configuration found (${adb_lanif}), please set 'adb_lanif' manually"
         f_exit
-    else
-        network_get_device adb_landev4 "${adb_lanif}"
-        network_get_device adb_landev6 "${adb_lanif}"
     fi
 
     # check logical update interfaces (with default route)
     #
-    network_find_wan adb_wanif4
-    network_find_wan6 adb_wanif6
     if [ -z "${adb_wanif4}" ] && [ -z "${adb_wanif6}" ]
     then
         adb_wanif4="${adb_lanif}"
@@ -194,7 +188,7 @@ f_envcheck()
             rc=-1
             f_log "please enable the local dnsmasq instance to use adblock"
             f_exit
-        elif [ -z "$(iptables -w -vnL | grep -Fo "DROP")" ]
+        elif [ ! -f "/var/run/fw3.state" ]
         then
             rc=-1
             f_log "please enable the local firewall to use adblock"
@@ -217,13 +211,80 @@ f_envcheck()
         fi
     fi
 
+    # check general package dependencies
+    #
+    f_depend "busybox"
+    f_depend "uci"
+    f_depend "uhttpd"
+    f_depend "iptables"
+    f_depend "kmod-ipt-nat"
+
+    # check ipv6 related package dependencies
+    #
+    if [ -n "${adb_wanif6}" ]
+    then
+        f_depend "ip6tables" "true"
+        if [ "${package_ok}" = "false" ]
+        then
+            f_log "package 'ip6tables' not found, IPv6 support will be disabled"
+            unset adb_wanif6
+        else
+            f_depend "kmod-ipt-nat6" "true"
+            if [ "${package_ok}" = "false" ]
+            then
+                f_log "package 'kmod-ipt-nat6' not found, IPv6 support will be disabled"
+                unset adb_wanif6
+            fi
+        fi
+    fi
+
+    # check uclient-fetch/wget dependencies
+    #
+    f_depend "uclient-fetch" "true"
+    if [ "${package_ok}" = "true" ]
+    then
+        f_depend "libustream-polarssl" "true"
+        if [ "${package_ok}" = "false" ]
+        then
+            f_depend "libustream-\(mbedtls\|openssl\|cyassl\)" "true"
+            if [ "${package_ok}" = "true" ]
+            then
+                adb_fetch="$(which uclient-fetch)"
+                fetch_parm="-q --timeout=${adb_fetchttl}"
+                response_parm="--spider"
+            fi
+        fi
+    fi
+    if [ -z "${adb_fetch}" ]
+    then
+        f_depend "wget" "true"
+        if [ "${package_ok}" = "true" ]
+        then
+            adb_fetch="$(which wget)"
+            fetch_parm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=${adb_fetchttl} --connect-timeout=${adb_fetchttl} --read-timeout=${adb_fetchttl}"
+            response_parm="--spider --server-response"
+        else
+            rc=-1
+            f_log "please install 'uclient-fetch' or 'wget' with ssl support to use adblock"
+            f_exit
+        fi
+    fi
+
+    # check ca-certificate package and set fetch parm accordingly
+    #
+    f_depend "ca-certificates" "true"
+    if [ "${package_ok}" = "false" ]
+    then
+        fetch_parm="${fetch_parm} --no-check-certificate"
+    fi
+
     # start normal processing/logging
     #
     f_log "domain adblock processing started (${adb_scriptver}, ${adb_sysver}, $(/bin/date "+%d.%m.%Y %H:%M:%S"))"
 
     # log partially outdated config
     #
-    if [ "${outdate_ok}" = "true" ]
+    if [ "${outdated_ok}" = "true" ]
     then
         f_log "partially outdated adblock config (${adb_mincfgver} vs. ${adb_cfgver}), please run '/etc/init.d/adblock cfgup' to update your configuration"
     fi
@@ -242,34 +303,6 @@ f_envcheck()
         f_log "Restricted mode enabled"
     fi
 
-    # check general package dependencies
-    #
-    f_depend "busybox"
-    f_depend "uci"
-    f_depend "uhttpd"
-    f_depend "wget"
-    f_depend "iptables"
-    f_depend "kmod-ipt-nat"
-
-    # check ipv6 related package dependencies
-    #
-    if [ -n "${adb_wanif6}" ]
-    then
-        check="$(printf "${pkg_list}" | grep "^ip6tables -")"
-        if [ -z "${check}" ]
-        then
-            f_log "package 'ip6tables' not found, IPv6 support will be disabled"
-            unset adb_wanif6
-        else
-            check="$(printf "${pkg_list}" | grep "^kmod-ipt-nat6 -")"
-            if [ -z "${check}" ]
-            then
-                f_log "package 'kmod-ipt-nat6' not found, IPv6 support will be disabled"
-                unset adb_wanif6
-            fi
-        fi
-    fi
-
     # check dns hideout directory
     #
     if [ -d "${adb_dnshidedir}" ]
@@ -277,15 +310,6 @@ f_envcheck()
         mv_done="$(find "${adb_dnshidedir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print -exec mv -f "{}" "${adb_dnsdir}" \;)"
     else
         mkdir -p -m 660 "${adb_dnshidedir}"
-    fi
-
-    # check ca-certificates package and set fetch parms accordingly
-    #
-    fetch_parm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=${adb_fetchttl} --connect-timeout=${adb_fetchttl} --read-timeout=${adb_fetchttl}"
-    check="$(printf "${pkg_list}" | grep "^ca-certificates -")"
-    if [ -z "${check}" ]
-    then
-        fetch_parm="${fetch_parm} --no-check-certificate"
     fi
 
     # check adblock temp directory
@@ -359,74 +383,60 @@ f_envcheck()
     #
     if [ -n "${adb_wanif4}" ]
     then
-        check="$(iptables -w -t nat -vnL | grep -Fo "adb-")"
-        if [ -z "${check}" ]
+        if [ "${apmode_ok}" = "false" ]
         then
-            if [ "${adb_forcedns}" = "1" ] && [ -n "${adb_landev4}" ]
+            if [ "${adb_forcedns}" = "1" ] && [ -n "${adb_landev}" ]
             then
-                f_firewall "IPv4" "nat" "prerouting_rule" "prerouting_rule" "0" "dns" "-i ${adb_landev4} -p udp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
-                f_firewall "IPv4" "nat" "prerouting_rule" "prerouting_rule" "0" "dns" "-i ${adb_landev4} -p tcp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
+                f_firewall "IPv4" "nat" "prerouting_rule" "adb-dns" "1" "dns" "-p udp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
+                f_firewall "IPv4" "nat" "prerouting_rule" "adb-dns" "2" "dns" "-p tcp --dport 53 -j DNAT --to-destination ${adb_ipv4}:53"
             fi
-            f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination ${adb_ipv4}:${adb_nullport}"
-            f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination ${adb_ipv4}:${adb_nullportssl}"
-            if [ "${apmode_ok}" = "false" ]
-            then
-                f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-p tcp -j REJECT --reject-with tcp-reset"
-                f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-j REJECT --reject-with icmp-host-unreachable"
-                f_firewall "IPv4" "filter" "output_rule" "adb-out" "1" "out" "-p tcp -j REJECT --reject-with tcp-reset"
-                f_firewall "IPv4" "filter" "output_rule" "adb-out" "2" "out" "-j REJECT --reject-with icmp-host-unreachable"
-            fi
+            f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv4" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-j REJECT --reject-with icmp-host-unreachable"
+            f_firewall "IPv4" "filter" "output_rule" "adb-out" "1" "out" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv4" "filter" "output_rule" "adb-out" "2" "out" "-j REJECT --reject-with icmp-host-unreachable"
         fi
+        f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination ${adb_ipv4}:${adb_nullport}"
+        f_firewall "IPv4" "nat" "prerouting_rule" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination ${adb_ipv4}:${adb_nullportssl}"
     fi
     if [ -n "${adb_wanif6}" ]
     then
-        check="$(ip6tables -w -t nat -vnL | grep -Fo "adb-")"
-        if [ -z "${check}" ]
+        if [ "${apmode_ok}" = "false" ]
         then
-            if [ "${adb_forcedns}" = "1" ] && [ -n "${adb_landev6}" ]
+            if [ "${adb_forcedns}" = "1" ] && [ -n "${adb_landev}" ]
             then
-                f_firewall "IPv6" "nat" "PREROUTING" "PREROUTING" "0" "dns" "-i ${adb_landev6} -p udp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
-                f_firewall "IPv6" "nat" "PREROUTING" "PREROUTING" "0" "dns" "-i ${adb_landev6} -p tcp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
+                f_firewall "IPv6" "nat" "PREROUTING" "adb-dns" "1" "dns" "-p udp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
+                f_firewall "IPv6" "nat" "PREROUTING" "adb-dns" "2" "dns" "-p tcp --dport 53 -j DNAT --to-destination [${adb_ipv6}]:53"
             fi
-            f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullport}"
-            f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullportssl}"
-            if [ "${apmode_ok}" = "false" ]
-            then
-                f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-p tcp -j REJECT --reject-with tcp-reset"
-                f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-j REJECT --reject-with icmp6-addr-unreachable"
-                f_firewall "IPv6" "filter" "output_rule" "adb-out" "1" "out" "-p tcp -j REJECT --reject-with tcp-reset"
-                f_firewall "IPv6" "filter" "output_rule" "adb-out" "2" "out" "-j REJECT --reject-with icmp6-addr-unreachable"
-            fi
+            f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "1" "fwd" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv6" "filter" "forwarding_rule" "adb-fwd" "2" "fwd" "-j REJECT --reject-with icmp6-addr-unreachable"
+            f_firewall "IPv6" "filter" "output_rule" "adb-out" "1" "out" "-p tcp -j REJECT --reject-with tcp-reset"
+            f_firewall "IPv6" "filter" "output_rule" "adb-out" "2" "out" "-j REJECT --reject-with icmp6-addr-unreachable"
         fi
+        f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "1" "nat" "-p tcp --dport 80 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullport}"
+        f_firewall "IPv6" "nat" "PREROUTING" "adb-nat" "2" "nat" "-p tcp --dport 443 -j DNAT --to-destination [${adb_ipv6}]:${adb_nullportssl}"
     fi
-    if [ "${fw_done}" = "true" ]
+    if [ "${firewall_ok}" = "true" ]
     then
         f_log "created volatile firewall rulesets"
-        fw_done="false"
     fi
 
     # check volatile uhttpd instance configuration
     #
-    check="$(pgrep -f "uhttpd -h /www/adblock")"
-    if [ -z "${check}" ]
+    if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
     then
-        if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
-        then
-            f_uhttpd "adbIPv4+6_80" "1" "-p ${adb_ipv4}:${adb_nullport} -p [${adb_ipv6}]:${adb_nullport}"
-            f_uhttpd "adbIPv4+6_443" "0" "-p ${adb_ipv4}:${adb_nullportssl} -p [${adb_ipv6}]:${adb_nullportssl}"
-        elif [ -n "${adb_wanif4}" ]
-        then
-            f_uhttpd "adbIPv4_80" "1" "-p ${adb_ipv4}:${adb_nullport}"
-            f_uhttpd "adbIPv4_443" "0" "-p ${adb_ipv4}:${adb_nullportssl}"
-        else
-            f_uhttpd "adbIPv6_80" "1" "-p [${adb_ipv6}]:${adb_nullport}"
-            f_uhttpd "adbIPv6_443" "0" "-p [${adb_ipv6}]:${adb_nullportssl}"
-        fi
-        if [ "${uhttpd_done}" = "true" ]
-        then
-            f_log "created volatile uhttpd instances"
-            uhttpd_done="false"
-        fi
+        f_uhttpd "adbIPv4+6_80" "1" "-p ${adb_ipv4}:${adb_nullport} -p [${adb_ipv6}]:${adb_nullport}"
+        f_uhttpd "adbIPv4+6_443" "0" "-p ${adb_ipv4}:${adb_nullportssl} -p [${adb_ipv6}]:${adb_nullportssl}"
+    elif [ -n "${adb_wanif4}" ]
+    then
+        f_uhttpd "adbIPv4_80" "1" "-p ${adb_ipv4}:${adb_nullport}"
+        f_uhttpd "adbIPv4_443" "0" "-p ${adb_ipv4}:${adb_nullportssl}"
+    else
+        f_uhttpd "adbIPv6_80" "1" "-p [${adb_ipv6}]:${adb_nullport}"
+        f_uhttpd "adbIPv6_443" "0" "-p [${adb_ipv6}]:${adb_nullportssl}"
+    fi
+    if [ "${uhttpd_ok}" = "true" ]
+    then
+        f_log "created volatile uhttpd instances"
     fi
 
     # check whitelist entries
@@ -447,11 +457,16 @@ f_depend()
 {
     local check
     local package="${1}"
+    local check_only="${2}"
+    package_ok="true"
 
     check="$(printf "${pkg_list}" | grep "^${package} -")"
-    if [ -z "${check}" ]
+    if [ "${check_only}" = "true" ] && [ -z "${check}" ]
     then
-        rc=115
+        package_ok="false"
+    elif [ -z "${check}" ]
+    then
+        rc=-1
         f_log "package '${package}' not found"
         f_exit
     fi
@@ -486,7 +501,18 @@ f_firewall()
     then
         "${ipt}" -w -t "${table}" -N "${chain}"
         "${ipt}" -w -t "${table}" -A "${chain}" -m comment --comment "${notes}" -j RETURN
-        "${ipt}" -w -t "${table}" -A "${chsrc}" -d "${nullip}" -m comment --comment "${notes}" -j "${chain}"
+        if [ "${chain}" = "adb-dns" ]
+        then
+            "${ipt}" -w -t "${table}" -A "${chsrc}" -i "${adb_landev}+" -m comment --comment "${notes}" -j "${chain}"
+        else
+            "${ipt}" -w -t "${table}" -A "${chsrc}" -d "${nullip}" -m comment --comment "${notes}" -j "${chain}"
+        fi
+        rc=${?}
+        if [ $((rc)) -ne 0 ]
+        then
+            f_log "failed to initialize volatile ${proto} firewall chain '${chain}'"
+            f_exit
+        fi
     fi
 
     # check whether iptables rule already exist
@@ -494,16 +520,11 @@ f_firewall()
     rc="$("${ipt}" -w -t "${table}" -C "${chain}" -m comment --comment "${notes}" ${rules} >/dev/null 2>&1; printf ${?})"
     if [ $((rc)) -ne 0 ]
     then
-        if [ $((chpos)) -eq 0 ]
-        then
-            "${ipt}" -w -t "${table}" -A "${chain}" -m comment --comment "${notes}" ${rules}
-        else
-            "${ipt}" -w -t "${table}" -I "${chain}" "${chpos}" -m comment --comment "${notes}" ${rules}
-        fi
+        "${ipt}" -w -t "${table}" -I "${chain}" "${chpos}" -m comment --comment "${notes}" ${rules}
         rc=${?}
         if [ $((rc)) -eq 0 ]
         then
-            fw_done="true"
+            firewall_ok="true"
         else
             f_log "failed to initialize volatile ${proto} firewall rule '${notes}'"
             f_exit
@@ -515,17 +536,23 @@ f_firewall()
 #
 f_uhttpd()
 {
+    local check
     local realm="${1}"
     local timeout="${2}"
     local ports="${3}"
-    uhttpd -h "/www/adblock" -N 25 -T "${timeout}" -r "${realm}" -k 0 -t 0 -R -D -S -E "/index.html" ${ports}
-    rc=${?}
-    if [ $((rc)) -eq 0 ]
+
+    check="$(pgrep -f "uhttpd -h /www/adblock -N 25 -T ${timeout} -r ${realm}")"
+    if [ -z "${check}" ]
     then
-        uhttpd_done="true"
-    else
-        f_log "failed to initialize volatile uhttpd instance (${realm})"
-        f_exit
+        uhttpd -h "/www/adblock" -N 25 -T "${timeout}" -r "${realm}" -k 0 -t 0 -R -D -S -E "/index.html" ${ports}
+        rc=${?}
+        if [ $((rc)) -eq 0 ]
+        then
+            uhttpd_ok="true"
+        else
+            f_log "failed to initialize volatile uhttpd instance (${realm})"
+            f_exit
+        fi
     fi
 }
 
@@ -534,6 +561,7 @@ f_uhttpd()
 f_space()
 {
     local mp="${1}"
+    space_ok="true"
 
     if [ -d "${mp}" ]
     then
@@ -675,12 +703,38 @@ f_log()
     fi
 }
 
+# f_statistics: adblock runtime statistics
+f_statistics()
+{
+    local ipv4_blk=0 ipv4_all=0 ipv4_pct=0
+    local ipv6_blk=0 ipv6_all=0 ipv6_pct=0
+
+    if [ -n "${adb_wanif4}" ]
+    then
+        ipv4_blk="$(iptables -t nat -vnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
+        ipv4_all="$(iptables -t nat -vnL PREROUTING | awk '$3 ~ /^prerouting_rule$/ {sum += $1} END {printf sum}')"
+        if [ $((ipv4_all)) -gt 0 ] && [ $((ipv4_blk)) -gt 0 ] && [ $((ipv4_all)) -gt $((ipv4_blk)) ]
+        then
+            ipv4_pct="$(printf "${ipv4_blk}" | awk -v all="${ipv4_all}" '{printf( "%5.2f\n",$1/all*100)}')"
+        fi
+    fi
+    if [ -n "${adb_wanif6}" ]
+    then
+        ipv6_blk="$(ip6tables -t nat -vnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
+        ipv6_all="$(ip6tables -t nat -vnL PREROUTING | awk '$3 ~ /^(adb-nat|DNAT)$/ {sum += $1} END {printf sum}')"
+        if [ $((ipv6_all)) -gt 0 ] && [ $((ipv6_blk)) -gt 0 ] && [ $((ipv6_all)) -gt $((ipv6_blk)) ]
+        then
+            ipv6_pct="$(printf "${ipv6_blk}" | awk -v all="${ipv6_all}" '{printf( "%5.2f\n",$1/all*100)}')"
+        fi
+    fi
+    "${adb_uci}" -q set "adblock.global.adb_percentage=${ipv4_pct}%/${ipv6_pct}%"
+    f_log "firewall statistics (IPv4/IPv6): ${ipv4_pct}%/${ipv6_pct}% of all packets in prerouting chain are ad related & blocked"
+}
+
 # f_exit: delete temporary files, generate statistics and exit
 #
 f_exit()
 {
-    local ipv4_blk=0 ipv4_all=0 ipv4_pct=0
-    local ipv6_blk=0 ipv6_all=0 ipv6_pct=0
     local lastrun="$(date "+%d.%m.%Y %H:%M:%S")"
 
     rm -f "${adb_tmpfile}"
@@ -690,28 +744,9 @@ f_exit()
     #
     if [ $((rc)) -eq 0 ]
     then
-        if [ -n "${adb_wanif4}" ]
-        then
-            ipv4_blk="$(iptables -t nat -vnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
-            ipv4_all="$(iptables -t nat -vnL PREROUTING | awk '$3 ~ /^prerouting_rule$/ {sum += $1} END {printf sum}')"
-            if [ $((ipv4_all)) -gt 0 ] && [ $((ipv4_blk)) -gt 0 ] && [ $((ipv4_all)) -gt $((ipv4_blk)) ]
-            then
-                ipv4_pct="$(printf "${ipv4_blk}" | awk -v all="${ipv4_all}" '{printf( "%5.2f\n",$1/all*100)}')"
-            fi
-        fi
-        if [ -n "${adb_wanif6}" ]
-        then
-            ipv6_blk="$(ip6tables -t nat -vnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
-            ipv6_all="$(ip6tables -t nat -vnL PREROUTING | awk '$3 ~ /^(adb-nat|DNAT)$/ {sum += $1} END {printf sum}')"
-            if [ $((ipv6_all)) -gt 0 ] && [ $((ipv6_blk)) -gt 0 ] && [ $((ipv6_all)) -gt $((ipv6_blk)) ]
-            then
-                ipv6_pct="$(printf "${ipv6_blk}" | awk -v all="${ipv6_all}" '{printf( "%5.2f\n",$1/all*100)}')"
-            fi
-        fi
-        "${adb_uci}" -q set "adblock.global.adb_percentage=${ipv4_pct}%/${ipv6_pct}%"
+        f_statistics
         "${adb_uci}" -q set "adblock.global.adb_lastrun=${lastrun}"
         "${adb_uci}" -q commit "adblock"
-        f_log "firewall statistics (IPv4/IPv6): ${ipv4_pct}%/${ipv6_pct}% of all packets in prerouting chain are ad related & blocked"
         f_log "domain adblock processing finished successfully (${adb_scriptver}, ${adb_sysver}, ${lastrun})"
     elif [ $((rc)) -gt 0 ]
     then

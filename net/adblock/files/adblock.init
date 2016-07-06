@@ -2,9 +2,10 @@
 #
 
 START=99
-EXTRA_COMMANDS="toggle cfgup"
-EXTRA_HELP="	toggle	Toggle adblocking 'on' or 'off'
-	cfgup	Update the adblock configuration file"
+EXTRA_COMMANDS="toggle stats cfgup"
+EXTRA_HELP="	toggle	Toggle adblock 'on' or 'off'
+	stats	Update adblock statistics
+	cfgup	Update adblock configuration file"
 
 adb_debug=0
 adb_pid="${$}"
@@ -12,24 +13,24 @@ adb_script="/usr/bin/adblock-update.sh"
 adb_helper="/usr/bin/adblock-helper.sh"
 adb_pidfile="/var/run/adblock.pid"
 bg_parm="&"
-unset log_parm
+if [ -t 1 ]
+then
+    unset bg_parm
+fi
 
 if [ $((adb_debug)) -eq 0 ]
 then
     exec 2>/dev/null
 fi
 
-if [ -t 1 ]
-then
-    log_parm="-s"
-    unset bg_parm
-fi
-
 if [ -r "${adb_pidfile}" ]
 then
-    logger ${log_parm} -t "adblock[${adb_pid}] error" "adblock service already running ($(cat ${adb_pidfile}))" 2>&1
+    logger -s -t "adblock[${adb_pid}] error" "adblock service already running ($(cat ${adb_pidfile}))" 2>&1
     exit 255
 fi
+
+. "${adb_helper}"
+f_envload
 
 boot()
 {
@@ -57,10 +58,9 @@ reload()
 
 stop()
 {
-    . "${adb_helper}"
-    f_envload
     f_rmdns
     f_rmuhttpd
+    adb_uci="$(which uci)"
     config_foreach f_rmconfig source
     if [ -n "$(${adb_uci} -q changes adblock)" ]
     then
@@ -72,14 +72,13 @@ stop()
     fi
     if [ -n "${rm_dns}" ] || [ -n "${rm_uhttpd}" ] || [ -n "${rm_fw}" ] || [ -n "${rm_cfg}" ]
     then
-        logger ${log_parm} -t "adblock[${adb_pid}] info " "all adblock related services stopped" 2>&1
+        f_log "all adblock related services stopped"
     fi
     return 0
 }
 
 toggle()
 {
-    . "${adb_helper}"
     if [ -d "${adb_dnshidedir}" ]
     then
         list_dns="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print)"
@@ -97,17 +96,20 @@ toggle()
         fi
         if [ -n "${list_dns}" ] || [ -n "${list_dnshide}" ]
         then
-            if [ "$(${adb_uci} -q get adblock.global.adb_restricted)" = "1" ]
-            then
-                adb_uci="$(which true)"
-            fi
             mv -f "${source}"* "${target}"
             "${adb_uci}" -q set "adblock.global.adb_dnstoggle=${pos}"
             "${adb_uci}" -q commit "adblock"
             /etc/init.d/dnsmasq restart
-            logger ${log_parm} -t "adblock[${adb_pid}] info " "toggle for adblock switched '${pos}'" 2>&1
+            f_log "adblock toggle switched '${pos}'"
         fi
     fi
+    return 0
+}
+
+stats()
+{
+    f_statistics
+    "${adb_uci}" -q commit "adblock"
     return 0
 }
 
@@ -118,9 +120,9 @@ cfgup()
     rc=$?
     if [ $((rc)) -eq 0 ]
     then
-        logger ${log_parm} -t "adblock[${adb_pid}] info " "default adblock configuration applied, please check the settings in '/etc/config/adblock'" 2>&1
+        f_log "default adblock configuration applied, please check the settings in '/etc/config/adblock'"
     else
-        logger ${log_parm} -t "adblock[${adb_pid}] info " "default adblock configuration not found, please re-install the package via 'opkg install adblock --force-maintainer'" 2>&1
+        f_log "default adblock configuration not found, please re-install the package via 'opkg install adblock --force-maintainer'"
     fi
     return 0
 }

@@ -9,7 +9,7 @@ Subject: [PATCH 3/4] 004-use-env.patch
 
 --- a/build_common/SConscript
 +++ b/build_common/SConscript
-@@ -137,6 +137,26 @@ tc_set_msg = '''
+@@ -151,6 +151,26 @@ tc_set_msg = '''
  * cause inexplicable errors.                                                  *
  *******************************************************************************
  '''

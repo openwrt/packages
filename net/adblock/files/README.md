@@ -69,7 +69,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * [LEDE project](https://www.lede-project.org), tested with trunk > r98
 * usual setup with enabled 'iptables', 'dnsmasq' and 'uhttpd' - dump AP modes without these basics are _not_ supported!
 * additional required software packages:
-    * wget
+    * a download utility: 'uclient-fetch' and 'wget' (full versions with ssl support) are supported. Normally you should use 'wget', it's quite stable and supports the online timestamp checks. If you need a smaller memory footprint try 'uclient-fetch' without openssl dependency. The default ustream ssl backend 'libustream-polarssl' has issues with certain https sites and is currently not supported. To change the ssl backend see example below.
     * optional: 'kmod-ipt-nat6' for IPv6 support
 * the above dependencies and requirements will be checked during package installation & script runtime
 
@@ -89,8 +89,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 ## Chaos Calmer installation notes
 * 'adblock' and 'luci-app-adblock' are _not_ available as .ipk packages in the Chaos Calmer download repository
 * download both packages from a development snapshot package directory:
-    * for 'adblock' look [here](https://downloads.openwrt.org/snapshots/trunk/ar71xx/generic/packages/packages/)
-    * for 'luci-app-adblock' look [here](https://downloads.openwrt.org/snapshots/trunk/ar71xx/generic/packages/luci/)
+    * for 'adblock' look [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages/)
+    * for 'luci-app-adblock' look [here](https://downloads.lede-project.org/snapshots/packages/x86_64/luci/)
 * manually transfer the packages to your routers temp directory (with tools like _sshfs_ or _winscp_)
 * install the packages with _opkg install <...>_ as described above
 
@@ -100,9 +100,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **backup/restore:** enable the backup/restore feature, to restore automatically the latest compressed backup of your adblock lists in case of any processing error (i.e. a single blocklist source is down). Please use an (external) solid partition and _not_ your volatile router temp directory for this
 * **list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
 * **new list sources:** you could add new blocklist sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
-* **AP mode:** in AP mode adblock uses automatically the local router ip as nullip address. To make sure that your LuCI interface will be still accessible, please change the local uhttpd instance to ports <> 80/443 (see example below)
+* **AP mode:** in 'AP mode' adblock uses automatically the local router ip as nullip address. To make sure that your LuCI interface will be still accessible, you have to change the local uhttpd instance to ports <> 80/443 (see example below)
 * **restricted mode:** to disable flash writes with adblock status information to the adblock config file (used by LuCI frontend), please set 'adb\_restricted' to '1'
 * **adblock toggle:** to quickly switch adblocking 'on' or 'off', simply use _/etc/init.d/adblock toggle_
+* **adblock statistics:** to update only the adblock statistics (without updating the block lists as well), please run _/etc/init.d/adblock stats_
 * **configuration update:** to update an outdated adblock config file with the current default version, please run _/etc/init.d/adblock cfgup_, make your individual changes and start the adblock service again
 * **debugging:** for script debugging please set the 'adb\_debug' variable in the header of _/etc/init.d/adblock_ to '1'
 * **disable active dns probing in windows:** to prevent a possible yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
@@ -116,12 +117,19 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_nullportssl => port of the adblock uhttpd instance used for ads delivered on port 443 (default: '65535')
     * adb\_nullipv4 => IPv4 blackhole ip address (default: '198.18.0.1', in AP mode: local router ip)
     * adb\_nullipv6 => IPv6 blackhole ip address (default: '::ffff:c612:0001', in AP mode: local router ip)
-    * adb\_forcedns => redirect all local DNS queries to the local dnsmasq resolver (default: '1', enabled)
+    * adb\_forcedns => redirect all local DNS queries to the local dnsmasq resolver (default: '1', enabled / always disabled in 'AP mode')
     * adb\_fetchttl => set the timeout for list downloads (default: '5' seconds)
     * adb\_restricted => disable updates of the adblock config file (no flash writes) during runtime (default: '0', disabled)
 
 ## Examples
 
+**example to change the ssl backend for 'uclient-fetch':**
+<pre><code>
+opkg update
+opkg remove --force-depends libustream-polarssl
+opkg install libustream-mbedtls
+</code></pre>
+  
 **example cronjob for a regular block list update:**
 <pre><code>
 # configuration found in /etc/crontabs/root
@@ -223,7 +231,7 @@ If your awk one-liner works quite well, add a new source section in adblock conf
   
 ## Background
 This adblock package is a dns/dnsmasq based adblock solution.  
-Queries to ad/abuse domains are never forwarded and always replied with a local IP address which may be IPv4 or IPv6. For that purpose adblock uses an ip address from the private 'Benchmark Test' subnet (198.18.0.1 / ::ffff:c612:0001) by default (in AP mode the local router ip address will be used). Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to two uhttpd instances, separated for ads delivered on port 80 and on port 443 (in PREROUTING chain) or rejected (in FORWARD or OUTPUT chain).  
+Queries to ad/abuse domains are never forwarded and always replied with a local IP address which may be IPv4 or IPv6. For that purpose adblock uses an ip address from the private 'Benchmark Test' subnet (198.18.0.1 / ::ffff:c612:0001) by default (in AP mode the local router ip address will be used). Furthermore all ad/abuse queries will be filtered by ip(6)tables and redirected to two uhttpd instances, separated for ads delivered on port 80 and on port 443 (in PREROUTING chain) or rejected (in FORWARD or OUTPUT chain). In 'AP mode' only the uhttpd related rules in PREROUTING chain are enabled.  
   
 All iptables and uhttpd related adblock additions are non-destructive, no hard-coded changes in 'firewall.user', 'uhttpd' config or any other system related config files. There is _no_ adblock background daemon running, the (scheduled) start of the adblock service keeps only the adblock lists up-to-date.  
 

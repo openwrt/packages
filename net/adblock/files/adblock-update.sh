@@ -10,7 +10,7 @@
 #
 adb_pid="${$}"
 adb_pidfile="/var/run/adblock.pid"
-adb_scriptver="1.2.5"
+adb_scriptver="1.3.2"
 adb_mincfgver="2.2"
 adb_scriptdir="${0%/*}"
 if [ -r "${adb_pidfile}" ]
@@ -22,11 +22,8 @@ else
     printf "${adb_pid}" > "${adb_pidfile}"
     if [ -r "${adb_scriptdir}/adblock-helper.sh" ]
     then
-        if [ -z "$(type -f f_envload)" ]
-        then
-            . "${adb_scriptdir}/adblock-helper.sh"
-            f_envload
-        fi
+        . "${adb_scriptdir}/adblock-helper.sh"
+        f_envload
     else
         rc=254
         logger -s -t "adblock[${adb_pid}] error" "adblock function library not found"
@@ -88,7 +85,7 @@ do
     then
         url_time="$(date -r "${url}")"
     else
-        url_time="$(${adb_fetch} ${fetch_parm} --server-response --spider "${url}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}')"
+        url_time="$(${adb_fetch} ${fetch_parm} ${response_parm} "${url}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}')"
     fi
     if [ -z "${url_time}" ]
     then
@@ -105,7 +102,7 @@ do
         then
             shalla_archive="${adb_tmpdir}/shallalist.tar.gz"
             shalla_file="${adb_tmpdir}/shallalist.txt"
-            "${adb_fetch}" ${fetch_parm} --output-document="${shalla_archive}" "${url}"
+            "${adb_fetch}" ${fetch_parm} -O "${shalla_archive}" "${url}"
             rc=${?}
             if [ $((rc)) -eq 0 ]
             then
@@ -126,7 +123,7 @@ do
                 rm -f "${shalla_file}"
             fi
         else
-            tmp_domains="$(${adb_fetch} ${fetch_parm} --output-document=- "${url}")"
+            tmp_domains="$(${adb_fetch} ${fetch_parm} -O- "${url}")"
         fi
         rc=${?}
     else
@@ -161,6 +158,11 @@ do
             "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=list restored"
             f_log "   source download failed, restored (${count} entries)"
         else
+            if [ -r "${adb_dnsdir}/${adb_dnsprefix}.${src_name}" ]
+            then
+                rm -f "${adb_dnsdir}/${adb_dnsprefix}.${src_name}"
+                rm_done="true"
+            fi
             "${adb_uci}" -q delete "adblock.${src_name}.adb_src_count"
             "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=download failed"
             f_log "   source download failed, skipped"
@@ -225,7 +227,7 @@ then
 
     # generate a unique overall block list
     #
-    sort -u "${adb_dnsdir}/${adb_dnsprefix}."* > "${adb_tmpdir}/blocklist.overall"
+    sort -u "${adb_dnsdir}/${adb_dnsprefix}"* > "${adb_tmpdir}/blocklist.overall"
 
     # loop through all separate lists, ordered by size (ascending)
     #
@@ -248,7 +250,7 @@ fi
 
 # restart & check dnsmasq with newly generated set of block lists
 #
-if [ -n "${adb_revsrclist}" ] || [ "${rm_done}" = "true" ]
+if [ -n "${adb_revsrclist}" ] || [ -n "${mv_done}" ] || [ "${rm_done}" = "true" ]
 then
     "${adb_uci}" -q delete "adblock.global.adb_dnstoggle"
     /etc/init.d/dnsmasq restart

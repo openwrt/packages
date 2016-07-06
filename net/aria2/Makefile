@@ -12,7 +12,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/aria2/aria2/releases/download/release-$(PKG_VERSION)/
-PKG_MD5SUM:=56c10ae766c7344393f7b0d9f5dadc5b
+PKG_MD5SUM:=d8d75cd0ee01c3e50e57214ff552a961
 PKG_INSTALL:=1
 
 PKG_MAINTAINER:=Imre Kaloz <kaloz@openwrt.org>, Hsing-Wang Liao <kuoruan@gmail.com>

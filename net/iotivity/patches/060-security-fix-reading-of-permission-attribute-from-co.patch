@@ -1,0 +1,39 @@
+From b1c29c35cba3eb39af18fb8db0ec676e3d658b1d Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke.mehrtens@intel.com>
+Date: Fri, 17 Jun 2016 17:38:35 +0200
+Subject: [PATCH] security: fix reading of permission attribute from
+ configuration
+
+Casting the pointer to the permission attribute from uint16_t to uint64_t
+causes problems on MIPS Big Endian systems and probably othrs as well.
+When the calling method interprets it as uint64_t not the value is
+converted but the pointer is interpreted as it would point to a 64 bit
+integer, but it is only a 16 bit wide integer. On MIPS BE permission was
+always 0 independent of which value between 0 and 32 the permission
+attribute had, this was probably written to some padding area or into
+some other member of the struct.
+
+This patch fixes the memory corruption and makes the code work for me with
+a MIPS BE CPU.
+
+Change-Id: Ifa843e69980ad4309b1e3076b8e2c98c03324352
+Signed-off-by: Hauke Mehrtens <hauke.mehrtens@intel.com>
+---
+ resource/csdk/security/src/aclresource.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+--- a/resource/csdk/security/src/aclresource.c
++++ b/resource/csdk/security/src/aclresource.c
+@@ -602,8 +602,11 @@ OicSecAcl_t* CBORPayloadToAcl(const uint
+                                         // Permissions -- Mandatory
+                                         if (strcmp(name, OIC_JSON_PERMISSION_NAME) == 0)
+                                         {
+-                                            cborFindResult = cbor_value_get_uint64(&aclMap, (uint64_t *) &acl->permission);
++                                            uint64_t tmp64;
++
++                                            cborFindResult = cbor_value_get_uint64(&aclMap, &tmp64);
+                                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a PERM Value.");
++                                            acl->permission = tmp64;
+                                         }
+ 
+                                         // Period -- Not mandatory
