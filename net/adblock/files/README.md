@@ -58,7 +58,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * status & error logging to stdout and syslog
 * use two dynamic uhttpd instances as adblock pixel server, separated for ads delivered on port 80 and on port 443
 * use dynamic iptables chains/rulesets for adblock related redirects/rejects
-* init system support (start/stop/restart/reload/toggle)
+* init system support (start/stop/restart/reload/toggle/stats/cfgup)
 * hotplug support, the adblock start will be triggered by wan 'ifup' event
 * adblock toggle to quickly switch adblocking 'on' or 'off'
 * optional: automatic adblock list backup/restore, backups will be (de-)compressed on the fly (disabled by default)
