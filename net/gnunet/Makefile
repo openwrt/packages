@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=37179
+PKG_SOURCE_VERSION:=37511
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
 # ToDo:
 #  - break-out {peer,name,data}store for each backend
@@ -25,7 +25,7 @@ PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
-# PKG_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=gettext-version
 PKG_INSTALL:=1
 
@@ -260,7 +260,7 @@ DEPENDS_flat:=+gnunet-gns
 PLUGIN_flat:=namecache_flat namestore_flat
 
 DEPENDS_mysql:=+gnunet-gns +gnunet-datastore +libmysqlclient
-LIB_mysql:=mysql
+LIB_mysql:=mysql my
 PLUGIN_mysql:=datastore_mysql
 
 DEPENDS_pgsql:=+gnunet-gns +gnunet-datastore +libpq
