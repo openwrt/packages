@@ -10,7 +10,7 @@
 #
 adb_pid="${$}"
 adb_pidfile="/var/run/adblock.pid"
-adb_scriptver="1.3.2"
+adb_scriptver="1.3.3"
 adb_mincfgver="2.2"
 adb_scriptdir="${0%/*}"
 if [ -r "${adb_pidfile}" ]
@@ -145,10 +145,23 @@ do
         unset tmp_domains
     elif [ $((rc)) -eq 0 ] && [ -z "${tmp_domains}" ]
     then
-        "${adb_uci}" -q delete "adblock.${src_name}.adb_src_count"
-        "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=empty download"
-        f_log "   empty source download, skipped"
-        continue
+        if [ "${backup_ok}" = "true" ] && [ -r "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz" ]
+        then
+            gunzip -cf "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz" > "${adb_tmpfile}"
+            count="$(wc -l < "${adb_tmpfile}")"
+            "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=list restored"
+            f_log "   empty source download, restored (${count} entries)"
+        else
+            if [ -r "${adb_dnsdir}/${adb_dnsprefix}.${src_name}" ]
+            then
+                rm -f "${adb_dnsdir}/${adb_dnsprefix}.${src_name}"
+                rm_done="true"
+            fi
+            "${adb_uci}" -q delete "adblock.${src_name}.adb_src_count"
+            "${adb_uci}" -q set "adblock.${src_name}.adb_src_timestamp=empty download"
+            f_log "   empty source download, skipped"
+            continue
+        fi
     else
         rc=0
         if [ "${backup_ok}" = "true" ] && [ -r "${adb_dir_backup}/${adb_dnsprefix}.${src_name}.gz" ]
