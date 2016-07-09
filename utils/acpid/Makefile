@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/acpid2 
 PKG_MD5SUM:=e41bdf628e122edb4342fca432ea7db9
-PKG_MAINTAINER:=Thomas Heil<heil@terminal-consulting.de>
+PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 

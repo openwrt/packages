@@ -28,7 +28,7 @@ define Package/emailrelay/Default
   DEPENDS:=$(CXX_DEPENDS)
   TITLE:=A simple SMTP proxy and MTA
   URL:=http://emailrelay.sourceforge.net/
-  MAINTAINER := Federico Di Marco <fededim@gmail.com>
+  MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 endef
 
 

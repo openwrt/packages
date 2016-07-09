@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
-PKG_REV:=dd2b750
+PKG_REV:=dd2b75080bc5406ba0b438953b36b72204ba114b
 PKG_VERSION:=0.85+newdns-$(PKG_REV)
 PKG_RELEASE:=2
 
