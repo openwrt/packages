@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=wireguard
 
-PKG_VERSION:=0.0.20160630
+PKG_VERSION:=0.0.20160708.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WireGuard-experimental-$(PKG_VERSION).tar.xz
