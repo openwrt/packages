@@ -1,0 +1,34 @@
+--- a/mib.c
++++ b/mib.c
+@@ -290,6 +290,7 @@ static int mib_build_entry(const oid_t *
+ 			value->data.max_length = sizeof (int) + 2;
+ 			value->data.encoded_length = 0;
+ 			value->data.buffer = malloc(value->data.max_length);
++			memset(value->data.buffer, 0, value->data.max_length);
+ 			if (encode_snmp_element_integer(value, (int)default_value) == -1) {
+ 				return -1;
+ 			}
+@@ -298,6 +299,7 @@ static int mib_build_entry(const oid_t *
+ 			value->data.max_length = strlen((const char *)default_value) + 4;
+ 			value->data.encoded_length = 0;
+ 			value->data.buffer = malloc(value->data.max_length);
++			memset(value->data.buffer, 0, value->data.max_length);
+ 			if (encode_snmp_element_string(value, (const char *)default_value) == -1) {
+ 				return -1;
+ 			}
+@@ -306,6 +308,7 @@ static int mib_build_entry(const oid_t *
+ 			value->data.max_length = MAX_NR_SUBIDS * 5 + 4;
+ 			value->data.encoded_length = 0;
+ 			value->data.buffer = malloc(value->data.max_length);
++			memset(value->data.buffer, 0, value->data.max_length);
+ 			if (encode_snmp_element_oid(value, oid_aton((const char *)default_value)) == -1) {
+ 				return -1;
+ 			}
+@@ -316,6 +319,7 @@ static int mib_build_entry(const oid_t *
+ 			value->data.max_length = sizeof (unsigned int) + 2;
+ 			value->data.encoded_length = 0;
+ 			value->data.buffer = malloc(value->data.max_length);
++			memset(value->data.buffer, 0, value->data.max_length);
+ 			if (encode_snmp_element_unsigned(value, type, (unsigned int)default_value) == -1) {
+ 				return -1;
+ 			}
