@@ -1,0 +1,19 @@
+backend/libusb1.py is patched to work around a problem arising from sstrip:
+
+Function find_library defined in Python-3.4.5/Lib/ctypes/util.py invokes
+        objdump -p -j .dynamic 2>/dev/null FILENAME
+to determine the value SONAME. This value is removed by sstrip.
+
+Signed-off-by: Heinrich Schuchardt <xypron.glpk@gmx.de>
+---
+--- a/usb/backend/libusb1.py	2016-07-19 21:44:10.748324186 +0000
++++ b/usb/backend/libusb1.py	2016-07-19 21:47:23.814292294 +0000
+@@ -940,7 +940,7 @@
+     global _lib
+     try:
+         if _lib is None:
+-            _lib = _load_library(find_library=find_library)
++            _lib = usb.libloader.load_library('libusb-1.0.so')
+             _setup_prototypes(_lib)
+         return _LibUSB(_lib)
+     except usb.libloader.LibaryException:
