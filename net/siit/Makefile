@@ -21,7 +21,7 @@ define KernelPackage/siit
   DEPENDS:= @(!(TARGET_ps3||TARGET_pxcab))
   FILES:=$(PKG_BUILD_DIR)/siit.ko
   AUTOLOAD:=$(call AutoLoad,50,siit)
-  MAINTAINER=Vladimir Ulrich <admin@evl.su>
+  MAINTAINER:=Vladimir Ulrich <admin@evl.su>
 endef
 
 include $(INCLUDE_DIR)/kernel-defaults.mk

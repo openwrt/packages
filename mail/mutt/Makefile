@@ -17,7 +17,7 @@ PKG_MD5SUM:=7f25d27f3c7c82285ac07aac35f5f0f2
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=GPL
-PKG_MAINTAINER=Phil Eichinger <phil@zankapfel.net>
+PKG_MAINTAINER:=Phil Eichinger <phil@zankapfel.net>
 
 
 PKG_INSTALL:=1
