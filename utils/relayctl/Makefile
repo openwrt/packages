@@ -11,10 +11,11 @@ PKG_VERSION:=0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://download.sourceforge.net/project/relayctl/relayctl-$(PKG_VERSION)
+PKG_SOURCE_URL:=@SF/relayctl/relayctl-$(PKG_VERSION)
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
 PKG_MD5SUM:=24c848e0d705421dcd6accfffa31f704
-PKG_LICENSE:=BSD
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 
