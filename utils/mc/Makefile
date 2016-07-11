@@ -15,7 +15,7 @@ PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_SHA256SUM:=0447bdddc0baa81866e66f50f9a545d29d6eebb68b0ab46c98d8fddd2bf4e44d
+PKG_MD5SUM:=0447bdddc0baa81866e66f50f9a545d29d6eebb68b0ab46c98d8fddd2bf4e44d
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf gettext-version
 
