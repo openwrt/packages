@@ -50,15 +50,6 @@ CONFIGURE_ARGS+= \
 #     --disable-debug \
 #	--disable-demo - Upstream Github Issue #4 Fixed 20160707
 
-# We make sure that only openwrt buildroot does the stripping as per user request via make menuconfig
-CONFIGURE_VARS+= LD="$(TARGET_CC)" \
-	STRIP="/bin/true" \
-	CFLAGS="$(TARGET_CFLAGS)"
-MAKE_FLAGS+= STRIP="/bin/true" 
-
-# FYI upstream suggested stripping options
-#	STRIP="strip -S --strip-unneeded --remove-section=.note.gnu.gold-version --remove-section=.comment --remove-section=.note --remove-section=.note.gnu.build-id --remove-section=.note.ABI-tag mini_snmpd" 
-
 define Package/mini_snmpd/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/mini_snmpd $(1)/usr/bin/
