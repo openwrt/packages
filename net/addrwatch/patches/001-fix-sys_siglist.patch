@@ -1,0 +1,32 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -56,9 +56,6 @@ AC_CHECK_HEADERS([arpa/inet.h netinet/in
+ # Checks for typedefs, structures, and compiler characteristics.
+ AC_C_INLINE
+ AC_TYPE_PID_T
+-AC_CHECK_DECLS([sys_siglist], [], [
+-	AC_MSG_ERROR([Unable to find sys_siglist declaration.])
+-], [[#include <signal.h>]])
+ AC_TYPE_UINT32_T
+ AC_TYPE_UINT16_T
+ AC_TYPE_UINT8_T
+--- a/src/addrwatch.c
++++ b/src/addrwatch.c
+@@ -339,7 +339,7 @@ void reload_cb(evutil_socket_t fd, short
+ void reload_cb(int fd, short events, void *arg)
+ #endif
+ {
+-	log_msg(LOG_DEBUG, "Received signal (%d), %s", fd, sys_siglist[fd]);
++	log_msg(LOG_DEBUG, "Received signal (%d), %s", fd, strsignal(fd));
+ 	log_msg(LOG_DEBUG, "Reopening output files");
+ 
+ 	output_flatfile_reload();
+@@ -353,7 +353,7 @@ void stop_cb(evutil_socket_t fd, short e
+ void stop_cb(int fd, short events, void *arg)
+ #endif
+ {
+-	log_msg(LOG_DEBUG, "Received signal (%d), %s", fd, sys_siglist[fd]);
++	log_msg(LOG_DEBUG, "Received signal (%d), %s", fd, strsignal(fd));
+ #if HAVE_LIBEVENT2
+ 	event_base_loopbreak(cfg.eb);
+ #else
