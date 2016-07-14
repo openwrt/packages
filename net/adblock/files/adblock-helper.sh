@@ -22,7 +22,6 @@ adb_forcedns=1
 adb_fetchttl=5
 adb_restricted=0
 adb_uci="$(which uci)"
-unset adb_revsrclist
 
 # f_envload: load adblock environment
 #
