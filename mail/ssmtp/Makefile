@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ssmtp
 PKG_VERSION:=2.64
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-2.0+
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.bz2
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/s/ssmtp
-PKG_SHA256SUM:=22c37dc90c871e8e052b2cab0ad219d010fa938608cd66b21c8f3c759046fa36
+PKG_MD5SUM:=22c37dc90c871e8e052b2cab0ad219d010fa938608cd66b21c8f3c759046fa36
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -53,11 +53,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/revaliases $(1)/etc/ssmtp/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ssmtp $(1)/usr/sbin/
-endef
-
-define Package/$(PKG_NAME)/postinst
-#!/bin/sh
-ln -sf ssmtp $${IPKG_INSTROOT}/usr/sbin/sendmail
+	ln -s /usr/sbin/ssmtp $(1)/usr/sbin/sendmail
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

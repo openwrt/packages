@@ -60,7 +60,7 @@ config sainfo 'welcome'
 	option	defdomain	'myhome.local'
 
 config sainfo 'client'
-	p2_proposal		'std_p2'
+	option  p2_proposal	'std_p2'
 
 config tunnel 'Office'
 	option	enabled		1

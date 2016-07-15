@@ -10,7 +10,7 @@
 #
 adb_pid="${$}"
 adb_pidfile="/var/run/adblock.pid"
-adb_scriptver="1.3.3"
+adb_scriptver="1.4.0"
 adb_mincfgver="2.2"
 adb_scriptdir="${0%/*}"
 if [ -r "${adb_pidfile}" ]
@@ -195,17 +195,9 @@ do
             sort -u "${adb_tmpfile}" | eval "${adb_dnsformat}" > "${adb_dnsfile}"
         fi
         rc=${?}
-
-        # finish domain processing, prepare find statement with revised block list source
-        #
         if [ $((rc)) -eq 0 ]
         then
-            if [ -z "${adb_revsrclist}" ]
-            then
-                adb_revsrclist="-name ${adb_dnsprefix}.${src_name}"
-            else
-                adb_revsrclist="${adb_revsrclist} -o -name ${adb_dnsprefix}.${src_name}"
-            fi
+            rev_done="true"
             f_log "   domain merging finished"
         else
             rc=0
@@ -232,38 +224,26 @@ do
     fi
 done
 
-# make separate block lists entries unique
+# overall sort, make block list entries unique
 #
-if [ "${mem_ok}" = "true" ] && [ -n "${adb_revsrclist}" ]
+if [ "${rev_done}" = "true" ] && [ "${mem_ok}" = "true" ]
 then
     f_log "remove duplicates in separate block lists"
-
-    # generate a unique overall block list
-    #
-    sort -u "${adb_dnsdir}/${adb_dnsprefix}"* > "${adb_tmpdir}/blocklist.overall"
-
-    # loop through all separate lists, ordered by size (ascending)
-    #
     for list in $(ls -ASr "${adb_dnsdir}/${adb_dnsprefix}"*)
     do
-        # check overall block list vs. separate block list,
-        # write all duplicate entries to separate list
-        #
         list="${list/*./}"
-        sort "${adb_tmpdir}/blocklist.overall" "${adb_dnsdir}/${adb_dnsprefix}.${list}" | uniq -d > "${adb_tmpdir}/tmp.${list}"
-        mv -f "${adb_tmpdir}/tmp.${list}" "${adb_dnsdir}/${adb_dnsprefix}.${list}"
-
-        # write all unique entries back to overall block list
-        #
-        sort "${adb_tmpdir}/blocklist.overall" "${adb_dnsdir}/${adb_dnsprefix}.${list}" | uniq -u > "${adb_tmpdir}/tmp.overall"
-        mv -f "${adb_tmpdir}/tmp.overall" "${adb_tmpdir}/blocklist.overall"
+        if [ -s "${adb_tmpdir}/blocklist.overall" ]
+        then
+            sort "${adb_tmpdir}/blocklist.overall" "${adb_tmpdir}/blocklist.overall" "${adb_dnsdir}/${adb_dnsprefix}.${list}" | uniq -u > "${adb_tmpdir}/tmp.blocklist"
+            cat "${adb_tmpdir}/tmp.blocklist" > "${adb_dnsdir}/${adb_dnsprefix}.${list}"
+        fi
+        cat "${adb_dnsdir}/${adb_dnsprefix}.${list}" >> "${adb_tmpdir}/blocklist.overall"
     done
-    rm -f "${adb_tmpdir}/blocklist.overall"
 fi
 
-# restart & check dnsmasq with newly generated set of block lists
+# restart & check dnsmasq with generated set of block lists
 #
-if [ -n "${adb_revsrclist}" ] || [ -n "${mv_done}" ] || [ "${rm_done}" = "true" ]
+if [ "${rev_done}" = "true" ] || [ "${rm_done}" = "true" ] || [ -n "${mv_done}" ]
 then
     "${adb_uci}" -q delete "adblock.global.adb_dnstoggle"
     /etc/init.d/dnsmasq restart
@@ -271,28 +251,19 @@ then
     check="$(pgrep -f "dnsmasq")"
     if [ -n "${check}" ]
     then
-        dns_ok="true"
-    else
-        f_log "dnsmasq restart failed, retry without newly generated block lists"
-        rm_done="$(find "${adb_dnsdir}" -maxdepth 1 -type f \( ${adb_revsrclist} \) -print -exec rm -f "{}" \;)"
-        if [ -n "${rm_done}" ]
-        then
-            /etc/init.d/dnsmasq restart
-            sleep 1
-            check="$(pgrep -f "dnsmasq")"
-            if [ -n "${check}" ]
-            then
-                dns_ok="true"
-            fi
-        fi
-    fi
-    if [ "${dns_ok}" = "true" ]
-    then
         f_cntconfig
         f_log "block lists with overall ${adb_count} domains loaded"
     else
+        f_rmdns
+        sleep 1
+        check="$(pgrep -f "dnsmasq")"
+        if [ -n "${check}" ]
+        then
+            f_log "dnsmasq restart without block lists succeeded, please check your configuration"
+        else
+            f_log "dnsmasq restart without block lists failed, please check your configuration"
+        fi
         rc=100
-        f_log "dnsmasq restart finally failed, please check 'logread' output"
         f_exit
     fi
 else

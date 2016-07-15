@@ -13,7 +13,7 @@ PKG_VERSION:=9.10.4-P1
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
-PKG_MAINTAINER := Noah Meyerhans <frodo@morgul.net>
+PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
 PKG_LICENSE := BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz

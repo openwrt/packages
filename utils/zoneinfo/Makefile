@@ -37,7 +37,7 @@ define Package/zoneinfo/Default
   TITLE:=Zone Information
   SECTION:=utils
   CATEGORY:=Utilities
-  MAINTAINER=Vladimir Ulrich <admin@evl.su>
+  MAINTAINER:=Vladimir Ulrich <admin@evl.su>
 endef
 
 define Package/zoneinfo-core

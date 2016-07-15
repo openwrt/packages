@@ -6,7 +6,7 @@ PKG_RELEASE=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL=https://github.com/aarond10/https_dns_proxy/
+PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy/
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=d50f78c7c2e9d7016ad5297e4cb0ab9e7d223a0d
 PKG_MAINTAINER:=Aaron Drew <aarond10@gmail.com>
