@@ -69,10 +69,25 @@ append_extrasettings() {
 }
 
 start() {
-	config_load 'aria2'
-	config_foreach start_instance 'aria2'
+		logger -t ARIA2C 'Starting aria2c service'
+		config_load 'aria2'
+		config_foreach start_instance 'aria2'
+	sleep 5
+		return 0
 }
 
 stop() {
-	service_stop /usr/bin/aria2c
+	if [ -n "`pidof aria2c`" ]; then
+		logger -t ARIA2C 'Shutting down aria2c service'
+		service_stop /usr/bin/aria2c
+		sleep 5
+	fi
+	return 0
+}
+
+restart() {
+	logger -t ARIA2C 'Restarting aria2s service'
+	stop
+	sleep 2
+	start
 }
