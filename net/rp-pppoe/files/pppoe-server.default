@@ -1,1 +1,1 @@
-OPTIONS="-C MyRouter -I eth2"
+OPTIONS="-C Openwrt -I wan"
