@@ -58,9 +58,9 @@
  
 +#include <musl.h>
 +
+ #define _GNU_SOURCE
  #include <sys/types.h>
  #include <sys/socket.h>
- #include <stdint.h>
 --- a/src/libcharon/plugins/kernel_netlink/kernel_netlink_net.c
 +++ b/src/libcharon/plugins/kernel_netlink/kernel_netlink_net.c
 @@ -37,6 +37,8 @@
