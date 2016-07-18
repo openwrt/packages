@@ -1,0 +1,66 @@
+From dbf03eb09bf1a41bcd140c4edba351121ac24729 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Wed, 13 Jul 2016 00:36:46 +0200
+Subject: [PATCH 07/16] Replace ZEND_REGISTER_RESOURCE with
+ zend_register_resource
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ dio.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/dio.c b/dio.c
+index 6b687ac..6f2d58c 100644
+--- a/dio.c
++++ b/dio.c
+@@ -72,9 +72,9 @@ static int new_php_fd(php_fd_t **f, int fd)
+ 	return 1;
+ }
+ 
+-static void _dio_close_fd(zend_rsrc_list_entry *rsrc TSRMLS_DC)
++static void _dio_close_fd(zend_resource *res)
+ {
+-	php_fd_t *f = (php_fd_t *) rsrc->ptr;
++	php_fd_t *f = (php_fd_t *)zend_fetch_resource(res, NULL, le_fd);
+ 	if (f) {
+ 		close(f->fd);
+ 		free(f);
+@@ -115,7 +115,7 @@ PHP_FUNCTION(dio_open)
+ 		RETURN_FALSE;
+ 	}
+ 
+-	ZEND_REGISTER_RESOURCE(return_value, f, le_fd);
++	RETVAL_RES(zend_register_resource(f, le_fd));
+ }
+ /* }}} */
+ 
+@@ -144,7 +144,7 @@ PHP_FUNCTION(dio_fdopen)
+ 		RETURN_FALSE;
+ 	}
+ 
+-	ZEND_REGISTER_RESOURCE(return_value, f, le_fd);
++	RETVAL_RES(zend_register_resource(f, le_fd));
+ }
+ /* }}} */
+ 
+@@ -175,7 +175,7 @@ PHP_FUNCTION(dio_dup)
+ 		RETURN_FALSE;
+ 	}
+ 
+-	ZEND_REGISTER_RESOURCE(return_value, df, le_fd);
++	RETVAL_RES(zend_register_resource(f, le_fd));
+ }
+ /* }}} */
+ #endif
+@@ -434,7 +434,7 @@ PHP_FUNCTION(dio_fcntl)
+ 			if (!new_php_fd(&new_f, fcntl(f->fd, cmd, Z_LVAL_P(arg)))) {
+ 				RETURN_FALSE;
+ 			}
+-			ZEND_REGISTER_RESOURCE(return_value, new_f, le_fd);
++			RETVAL_RES(zend_register_resource(new_f, le_fd));
+ 			break;
+ 		}
+ 		default:
+-- 
+2.5.0
+

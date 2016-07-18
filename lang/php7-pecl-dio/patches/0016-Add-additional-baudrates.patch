@@ -1,0 +1,44 @@
+From 0f8df09a8008eed8a7ac0c6400bce523014ff770 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Mon, 18 Jul 2016 22:45:04 +0200
+Subject: [PATCH 16/16] Add additional baudrates
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ dio.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/dio.c b/dio.c
+index 1a130a2..a4e8e7d 100644
+--- a/dio.c
++++ b/dio.c
+@@ -522,6 +522,26 @@ PHP_FUNCTION(dio_tcsetattr)
+ 
+ 	/* assign to correct values... */
+ 	switch (Baud_Rate)  {
++#ifdef B460800
++		case 460800:
++			BAUD = B460800;
++			break;
++#endif
++#ifdef B230400
++		case 230400:
++			BAUD = B230400;
++			break;
++#endif
++#ifdef B115200
++		case 115200:
++			BAUD = B115200;
++			break;
++#endif
++#ifdef B57600
++		case 57600:
++			BAUD = B57600;
++			break;
++#endif
+ 		case 38400:
+ 			BAUD = B38400;
+ 			break;
+-- 
+2.5.0
+

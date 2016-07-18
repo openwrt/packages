@@ -1,0 +1,54 @@
+From ff469d3a11409e9b043dc10ddfc44792c5359ff1 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Thu, 14 Jul 2016 01:47:05 +0200
+Subject: [PATCH 14/16] Add missing changes from changed stream API interface
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ dio_posix.c           | 2 +-
+ dio_stream_wrappers.c | 2 +-
+ php_dio_common.h      | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/dio_posix.c b/dio_posix.c
+index 843e234..b2aa228 100644
+--- a/dio_posix.c
++++ b/dio_posix.c
+@@ -632,7 +632,7 @@ int dio_serial_purge(php_dio_stream_data *data) {
+ /* {{{ dio_serial_open_stream
+  * Opens the underlying stream.
+  */
+-int dio_serial_open_stream(char *filename, char *mode, php_dio_stream_data *data) {
++int dio_serial_open_stream(const char *filename, const char *mode, php_dio_stream_data *data) {
+ 	php_dio_posix_stream_data *pdata = (php_dio_posix_stream_data*)data;
+ 
+ #ifdef O_NOCTTY
+diff --git a/dio_stream_wrappers.c b/dio_stream_wrappers.c
+index eb23752..0a00daa 100644
+--- a/dio_stream_wrappers.c
++++ b/dio_stream_wrappers.c
+@@ -292,7 +292,7 @@ static php_stream *dio_serial_fopen_wrapper(php_stream_wrapper *wrapper,
+ {
+ 	php_dio_stream_data *data;
+ 	php_stream *stream;
+-	char *filename;
++	const char *filename;
+ 
+ 	/* Check it was actually for us (not a corrupted function pointer
+ 	   somewhere!). */
+diff --git a/php_dio_common.h b/php_dio_common.h
+index 6af202f..7068ea7 100644
+--- a/php_dio_common.h
++++ b/php_dio_common.h
+@@ -61,7 +61,7 @@ int dio_serial_uninit(php_dio_stream_data *data);
+ 
+ int dio_serial_purge(php_dio_stream_data *data);
+ 
+-int dio_serial_open_stream(char *filename, char *mode, php_dio_stream_data *data);
++int dio_serial_open_stream(const char *filename, const char *mode, php_dio_stream_data *data);
+ 
+ #endif /* PHP_DIO_COMMON_H_ */
+ 
+-- 
+2.5.0
+
