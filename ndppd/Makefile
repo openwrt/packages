@@ -11,11 +11,11 @@ PKG_NAME:=ndppd
 PKG_VERSION:=0.2.3
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_VERSION).tar.gz
 
 # Latest release
-PKG_SOURCE_URL:=http://www.priv.nu/projects/ndppd/files/
-PKG_MD5SUM:=d6f3243bb7fc04c8085371c9acddc50e
+PKG_SOURCE_URL:=https://github.com/DanielAdolfsson/ndppd/archive
+PKG_MD5SUM:=1391c063db64b47541e58da12e5ae60d
 PKG_LICENSE:=GPL-3.0+
 
 # Development snapshot
