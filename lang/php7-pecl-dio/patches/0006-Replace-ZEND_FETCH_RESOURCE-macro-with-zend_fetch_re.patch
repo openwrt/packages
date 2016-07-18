@@ -1,0 +1,117 @@
+From b69e1067f70ef293587b72979193e68b01d90902 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Wed, 13 Jul 2016 00:23:29 +0200
+Subject: [PATCH 06/16] Replace ZEND_FETCH_RESOURCE macro with
+ zend_fetch_resource
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ dio.c | 36 +++++++++++++++++++++++++++---------
+ 1 file changed, 27 insertions(+), 9 deletions(-)
+
+diff --git a/dio.c b/dio.c
+index 408a171..6b687ac 100644
+--- a/dio.c
++++ b/dio.c
+@@ -161,7 +161,9 @@ PHP_FUNCTION(dio_dup)
+ 		return;
+ 	}
+ 
+-	ZEND_FETCH_RESOURCE(f, php_fd_t *, &r_fd, -1, le_fd_name, le_fd);
++	if ((f = (php_fd_t *)zend_fetch_resource(Z_RES_P(r_fd), le_fd_name, le_fd)) == NULL) {
++		RETURN_FALSE;
++	}
+ 
+ 	dfd = dup(f->fd);
+ 	if (dfd == -1) {
+@@ -192,7 +194,9 @@ PHP_FUNCTION(dio_read)
+ 		return;
+ 	}
+ 
+-	ZEND_FETCH_RESOURCE(f, php_fd_t *, &r_fd, -1, le_fd_name, le_fd);
++	if ((f = (php_fd_t *)zend_fetch_resource(Z_RES_P(r_fd), le_fd_name, le_fd)) == NULL) {
++		RETURN_FALSE;
++	}
+ 
+ 	if (bytes <= 0) {
+ 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Length parameter must be greater than 0.");
+@@ -233,7 +237,9 @@ PHP_FUNCTION(dio_write)
+ 		RETURN_FALSE;
+ 	}
+ 
+-	ZEND_FETCH_RESOURCE(f, php_fd_t *, &r_fd, -1, le_fd_name, le_fd);
++	if ((f = (php_fd_t *)zend_fetch_resource(Z_RES_P(r_fd), le_fd_name, le_fd)) == NULL) {
++		RETURN_FALSE;
++	}
+ 
+ 	res = write(f->fd, data, trunc_len ? trunc_len : data_len);
+ 	if (res == -1) {
+@@ -258,7 +264,9 @@ PHP_FUNCTION(dio_truncate)
+ 		return;
+ 	}
+ 
+-	ZEND_FETCH_RESOURCE(f, php_fd_t *, &r_fd, -1, le_fd_name, le_fd);
++	if ((f = (php_fd_t *)zend_fetch_resource(Z_RES_P(r_fd), le_fd_name, le_fd)) == NULL) {
++		RETURN_FALSE;
++	}
+ 
+ 	if (ftruncate(f->fd, offset) == -1) {
+ 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "couldn't truncate %d to %ld bytes: %s", f->fd, offset, strerror(errno));
+@@ -284,7 +292,9 @@ PHP_FUNCTION(dio_stat)
+ 		return;
+ 	}
+ 
+-	ZEND_FETCH_RESOURCE(f, php_fd_t *, &r_fd, -1, le_fd_name, le_fd);
++	if ((f = (php_fd_t *)zend_fetch_resource(Z_RES_P(r_fd), le_fd_name, le_fd)) == NULL) {
++		RETURN_FALSE;
++	}
+ 
+ 	if (fstat(f->fd, &s) == -1) {
+ 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "cannot stat %d: %s", f->fd, strerror(errno));
+@@ -323,7 +333,9 @@ PHP_FUNCTION(dio_seek)
+ 		return;
+ 	}
+ 
+-	ZEND_FETCH_RESOURCE(f, php_fd_t *, &r_fd, -1, le_fd_name, le_fd);
++	if ((f = (php_fd_t *)zend_fetch_resource(Z_RES_P(r_fd), le_fd_name, le_fd)) == NULL) {
++		RETURN_FALSE;
++	}
+ 
+ 	RETURN_LONG(lseek(f->fd, offset, whence));
+ }
+@@ -344,7 +356,9 @@ PHP_FUNCTION(dio_fcntl)
+ 		return;
+ 	}
+ 
+-	ZEND_FETCH_RESOURCE(f, php_fd_t *, &r_fd, -1, le_fd_name, le_fd);
++	if ((f = (php_fd_t *)zend_fetch_resource(Z_RES_P(r_fd), le_fd_name, le_fd)) == NULL) {
++		RETURN_FALSE;
++	}
+ 
+ 	switch (cmd) {
+ 		case F_SETLK:
+@@ -454,7 +468,9 @@ PHP_FUNCTION(dio_tcsetattr)
+ 		return;
+ 	}
+ 
+-	ZEND_FETCH_RESOURCE(f, php_fd_t *, &r_fd, -1, le_fd_name, le_fd);
++	if ((f = (php_fd_t *)zend_fetch_resource(Z_RES_P(r_fd), le_fd_name, le_fd)) == NULL) {
++		RETURN_FALSE;
++	}
+ 
+ 	if (Z_TYPE_P(arg) != IS_ARRAY) {
+ 		php_error_docref(NULL TSRMLS_CC, E_WARNING,"tcsetattr, third argument should be an associative array");
+@@ -639,7 +655,9 @@ PHP_FUNCTION(dio_close)
+ 		return;
+ 	}
+ 
+-	ZEND_FETCH_RESOURCE(f, php_fd_t *, &r_fd, -1, le_fd_name, le_fd);
++	if ((f = (php_fd_t *)zend_fetch_resource(Z_RES_P(r_fd), le_fd_name, le_fd)) == NULL) {
++		RETURN_FALSE;
++	}
+ 
+ 	zend_list_delete(Z_LVAL_P(r_fd));
+ }
+-- 
+2.5.0
+

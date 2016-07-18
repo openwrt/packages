@@ -1,0 +1,125 @@
+From 7533f64b19006262fae7c6a4769392c67078166b Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Wed, 13 Jul 2016 01:07:22 +0200
+Subject: [PATCH 09/16] Replace zend_hash_find with zend_hash_str_find
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ dio.c | 44 ++++++++++++++++++++++----------------------
+ 1 file changed, 22 insertions(+), 22 deletions(-)
+
+diff --git a/dio.c b/dio.c
+index e8660f8..b489747 100644
+--- a/dio.c
++++ b/dio.c
+@@ -364,7 +364,7 @@ PHP_FUNCTION(dio_fcntl)
+ 	switch (cmd) {
+ 		case F_SETLK:
+ 		case F_SETLKW: {
+-			zval          **element;
++			zval           *element;
+ 			struct flock    lk = {0};
+ 			HashTable      *fh;
+ 
+@@ -374,28 +374,28 @@ PHP_FUNCTION(dio_fcntl)
+ 			}
+ 			if (Z_TYPE_P(arg) == IS_ARRAY) {
+ 				fh = HASH_OF(arg);
+-				if (zend_hash_find(fh, "start", sizeof("start"), (void **) &element) == FAILURE) {
++				if ((element = zend_hash_str_find(fh, "start", sizeof("start"))) == NULL) {
+ 					lk.l_start = 0;
+ 				} else {
+-					lk.l_start = Z_LVAL_PP(element);
++					lk.l_start = Z_LVAL_P(element);
+ 				}
+ 
+-				if (zend_hash_find(fh, "length", sizeof("length"), (void **) &element) == FAILURE) {
++				if ((element = zend_hash_str_find(fh, "length", sizeof("length"))) == NULL) {
+ 					lk.l_len = 0;
+ 				} else {
+-					lk.l_len = Z_LVAL_PP(element);
++					lk.l_len = Z_LVAL_P(element);
+ 				}
+ 
+-				if (zend_hash_find(fh, "whence", sizeof("whence"), (void **) &element) == FAILURE) {
++				if ((element = zend_hash_str_find(fh, "whence", sizeof("whence"))) == NULL) {
+ 					lk.l_whence = 0;
+ 				} else {
+-					lk.l_whence = Z_LVAL_PP(element);
++					lk.l_whence = Z_LVAL_P(element);
+ 				}
+ 
+-				if (zend_hash_find(fh, "type", sizeof("type"), (void **) &element) == FAILURE) {
++				if ((element = zend_hash_str_find(fh, "type", sizeof("type"))) == NULL) {
+ 					lk.l_type = 0;
+ 				} else {
+-					lk.l_type = Z_LVAL_PP(element);
++					lk.l_type = Z_LVAL_P(element);
+ 				}
+ 			} else if (Z_TYPE_P(arg) == IS_LONG) {
+ 				lk.l_start  = 0;
+@@ -463,7 +463,7 @@ PHP_FUNCTION(dio_tcsetattr)
+ 	int Baud_Rate, Data_Bits=8, Stop_Bits=1, Parity=0, Flow_Control=1, Is_Canonical=1;
+ 	long BAUD,DATABITS,STOPBITS,PARITYON,PARITY;
+ 	HashTable      *fh;
+-	zval          **element;
++	zval           *element;
+ 
+ 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rz", &r_fd, &arg) == FAILURE) {
+ 		return;
+@@ -480,40 +480,40 @@ PHP_FUNCTION(dio_tcsetattr)
+ 
+ 	fh = HASH_OF(arg);
+ 
+-	if (zend_hash_find(fh, "baud", sizeof("baud"), (void **) &element) == FAILURE) {
++	if ((element = zend_hash_str_find(fh, "baud", sizeof("baud"))) == NULL) {
+ 		Baud_Rate = 9600;
+ 	} else {
+-		Baud_Rate = Z_LVAL_PP(element);
++		Baud_Rate = Z_LVAL_P(element);
+ 	}
+ 
+-	if (zend_hash_find(fh, "bits", sizeof("bits"), (void **) &element) == FAILURE) {
++	if ((element = zend_hash_str_find(fh, "bits", sizeof("bits"))) == NULL) {
+ 		Data_Bits = 8;
+ 	} else {
+-		Data_Bits = Z_LVAL_PP(element);
++		Data_Bits = Z_LVAL_P(element);
+ 	}
+ 
+-	if (zend_hash_find(fh, "stop", sizeof("stop"), (void **) &element) == FAILURE) {
++	if ((element = zend_hash_str_find(fh, "stop", sizeof("stop"))) == NULL) {
+ 		Stop_Bits = 1;
+ 	} else {
+-		Stop_Bits = Z_LVAL_PP(element);
++		Stop_Bits = Z_LVAL_P(element);
+ 	}
+ 
+-	if (zend_hash_find(fh, "parity", sizeof("parity"), (void **) &element) == FAILURE) {
++	if ((element = zend_hash_str_find(fh, "parity", sizeof("parity"))) == NULL) {
+ 		Parity = 0;
+ 	} else {
+-		Parity = Z_LVAL_PP(element);
++		Parity = Z_LVAL_P(element);
+ 	}
+ 
+-	if (zend_hash_find(fh, "flow_control", sizeof("flow_control"), (void **) &element) == FAILURE) {
++	if ((element = zend_hash_str_find(fh, "flow_control", sizeof("flow_control"))) == NULL) {
+ 		Flow_Control = 1;
+ 	} else {
+-		Flow_Control = Z_LVAL_PP(element);
++		Flow_Control = Z_LVAL_P(element);
+ 	}
+ 
+-	if (zend_hash_find(fh, "is_canonical", sizeof("is_canonical"), (void **) &element) == FAILURE) {
++	if ((element = zend_hash_str_find(fh, "is_canonical", sizeof("is_canonical"))) == NULL) {
+ 		Is_Canonical = 0;
+ 	} else {
+-		Is_Canonical = Z_LVAL_PP(element);
++		Is_Canonical = Z_LVAL_P(element);
+ 	}
+ 
+ 	/* assign to correct values... */
+-- 
+2.5.0
+
