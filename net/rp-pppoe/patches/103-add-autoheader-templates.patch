@@ -1,0 +1,53 @@
+rp-pppoe: add autoheader template definitions
+
+Signed-Off-By: Luke McKee <hojuruku@gmail.com
+
+--- a/src/configure.in	2016-07-20 00:45:52.002349478 +0700
++++ b/src/configure.in	2016-07-20 01:07:17.134286914 +0700
+@@ -44,7 +44,8 @@
+ ac_cv_struct_sockaddr_ll=yes,
+ ac_cv_struct_sockaddr_ll=no)
+ AC_MSG_RESULT($ac_cv_struct_sockaddr_ll)
+-
++AH_TEMPLATE([HAVE_STRUCT_SOCKADDR_LL],
++	     [ Have linux link-level physical-layer address structure ])
+ if test "$ac_cv_struct_sockaddr_ll" = yes ; then
+ AC_DEFINE(HAVE_STRUCT_SOCKADDR_LL)
+ fi
+@@ -58,6 +59,8 @@
+ 	ac_cv_n_hdlc=yes,
+ 	ac_cv_n_hdlc=no)
+ AC_MSG_RESULT($ac_cv_n_hdlc)
++AH_TEMPLATE([HAVE_N_HDLC],
++	     [ Have generic HDLC line discipline headers in linux kernel ])
+ if test "$ac_cv_n_hdlc" = yes ; then
+ AC_DEFINE(HAVE_N_HDLC)
+ fi
+@@ -104,6 +107,8 @@
+ dnl Determine whether or not to build Linux pppd plugin
+ LINUX_KERNELMODE_PLUGIN=""
+ PPPD_INCDIR=""
++AH_TEMPLATE([HAVE_LINUX_KERNEL_PPPOE],
++	     [ Have Linux pppox socket interface ])
+ if test "$ac_cv_header_linux_if_pppox_h" = yes ; then
+ 	if test "$ac_cv_pluginpath" != no ; then
+ 		LINUX_KERNELMODE_PLUGIN=rp-pppoe.so
+@@ -116,7 +121,8 @@
+ if test "$PPPD_INCDIR" = "" ; then
+    PPPD_INCDIR=/usr/include
+ fi
+-
++AH_TEMPLATE([DEBUGGING_ENABLED],
++	     [ Enable dumping raw packets to log ])
+ if test "$ac_cv_debugging" = "yes" ; then
+    AC_DEFINE(DEBUGGING_ENABLED)
+ fi
+@@ -262,6 +268,8 @@
+ rpppoe_cv_pack_bitfields="$ac_cv_pack_bitfields")
+ fi
+ 
++AH_TEMPLATE([PACK_BITFIELDS_REVERSED],
++	     [ Reverse packing order of structures ])
+ if test "$rpppoe_cv_pack_bitfields" = "rev" ; then
+ 	AC_MSG_RESULT(reversed)
+ 	AC_DEFINE(PACK_BITFIELDS_REVERSED)
