@@ -1,6 +1,6 @@
 --- a/src/decoder/plugins/FfmpegDecoderPlugin.cxx
 +++ b/src/decoder/plugins/FfmpegDecoderPlugin.cxx
-@@ -467,6 +467,13 @@ ffmpeg_probe(Decoder *decoder, InputStre
+@@ -465,6 +465,13 @@ ffmpeg_probe(Decoder *decoder, InputStre
  
  	unsigned char buffer[BUFFER_SIZE];
  	size_t nbytes = decoder_read(decoder, is, buffer, BUFFER_SIZE);
