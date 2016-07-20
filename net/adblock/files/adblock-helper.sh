@@ -710,20 +710,26 @@ f_statistics()
 
     if [ -n "${adb_wanif4}" ]
     then
-        ipv4_blk="$(iptables -t nat -vnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
-        ipv4_all="$(iptables -t nat -vnL PREROUTING | awk '$3 ~ /^prerouting_rule$/ {sum += $1} END {printf sum}')"
+        ipv4_blk="$(iptables -t nat -vxnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
+        ipv4_all="$(iptables -t nat -vxnL PREROUTING | awk '$3 ~ /^prerouting_rule$/ {sum += $1} END {printf sum}')"
         if [ $((ipv4_all)) -gt 0 ] && [ $((ipv4_blk)) -gt 0 ] && [ $((ipv4_all)) -gt $((ipv4_blk)) ]
         then
             ipv4_pct="$(printf "${ipv4_blk}" | awk -v all="${ipv4_all}" '{printf( "%5.2f\n",$1/all*100)}')"
+        elif [ $((ipv4_all)) -lt $((ipv4_blk)) ]
+        then
+            iptables -t nat -Z adb-nat
         fi
     fi
     if [ -n "${adb_wanif6}" ]
     then
-        ipv6_blk="$(ip6tables -t nat -vnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
-        ipv6_all="$(ip6tables -t nat -vnL PREROUTING | awk '$3 ~ /^(adb-nat|DNAT)$/ {sum += $1} END {printf sum}')"
+        ipv6_blk="$(ip6tables -t nat -vxnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
+        ipv6_all="$(ip6tables -t nat -vxnL PREROUTING | awk '$3 ~ /^(adb-nat|DNAT)$/ {sum += $1} END {printf sum}')"
         if [ $((ipv6_all)) -gt 0 ] && [ $((ipv6_blk)) -gt 0 ] && [ $((ipv6_all)) -gt $((ipv6_blk)) ]
         then
             ipv6_pct="$(printf "${ipv6_blk}" | awk -v all="${ipv6_all}" '{printf( "%5.2f\n",$1/all*100)}')"
+        elif [ $((ipv6_all)) -lt $((ipv6_blk)) ]
+        then
+            ip6tables -t nat -Z adb-nat
         fi
     fi
     "${adb_uci}" -q set "adblock.global.adb_percentage=${ipv4_pct}%/${ipv6_pct}%"
