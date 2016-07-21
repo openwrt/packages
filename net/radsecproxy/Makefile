@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2012 OpenWrt.org
+# Copyright (C) 2008-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -14,6 +14,9 @@ PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://software.uninett.no/radsecproxy/
 PKG_MD5SUM:=d76cf4fc68515667b8c67387f5045150
+
+PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_INSTALL:=1
 
