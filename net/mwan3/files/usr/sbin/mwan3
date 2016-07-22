@@ -19,13 +19,13 @@ Available commands:
 	start           Load iptables rules, ip rules and ip routes
 	stop            Unload iptables rules, ip rules and ip routes
 	restart         Reload iptables rules, ip rules and ip routes
-        ifup <iface>    Load rules and routes for specific interface
-        ifdown <iface>  Unload rules and routes for specific interface
-        interfaces      Show interfaces status
-        policies        Show currently active policy
-	connected	Show directly connected networks
-        rules           Show active rules
-        status          Show all status
+	ifup <iface>    Load rules and routes for specific interface
+	ifdown <iface>  Unload rules and routes for specific interface
+	interfaces      Show interfaces status
+	policies        Show currently active policy
+	connected       Show directly connected networks
+	rules           Show active rules
+	status          Show all status
 
 EOF
 }
