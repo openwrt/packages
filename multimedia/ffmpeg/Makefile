@@ -408,7 +408,7 @@ ifeq (,$(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)))
 endif
 
 # Enable thumb for mvebu Mamba
-ifneq (,$(CONFIG_TARGET_mvebu_Mamba))
+ifneq (,$(CONFIG_TARGET_mvebu_DEVICE_linksys-wrt1900ac))
 	FFMPEG_CONFIGURE += --enable-thumb
 endif
 
