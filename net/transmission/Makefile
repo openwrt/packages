@@ -34,7 +34,7 @@ endef
 
 define Package/transmission-daemon/Default
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libpthread +libevent2 +librt
+  DEPENDS:=+libcurl +libpthread +libevent2 +librt +zlib
   USERID:=transmission=224:transmission=224
 endef
 
@@ -48,13 +48,13 @@ endef
 define Package/transmission-daemon-polarssl
   $(call Package/transmission-daemon/Default)
   TITLE+= (with PolarSSL)
-  DEPENDS+=+libpolarssl +zlib
+  DEPENDS+=+libpolarssl
   VARIANT:=polarssl
 endef
 
 define Package/transmission-cli/Default
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libpthread +libevent2 +librt
+  DEPENDS:=+libcurl +libpthread +libevent2 +librt +zlib
 endef
 
 define Package/transmission-cli-openssl
@@ -67,13 +67,13 @@ endef
 define Package/transmission-cli-polarssl
   $(call Package/transmission-cli/Default)
   TITLE+= (with PolarSSL)
-  DEPENDS+=+libpolarssl +zlib
+  DEPENDS+=+libpolarssl
   VARIANT:=polarssl
 endef
 
 define Package/transmission-remote/Default
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libpthread +libevent2 +librt
+  DEPENDS:=+libcurl +libpthread +libevent2 +librt +zlib
 endef
 
 define Package/transmission-remote-openssl
@@ -86,7 +86,7 @@ endef
 define Package/transmission-remote-polarssl
   $(call Package/transmission-remote/Default)
   TITLE+= (with PolarSSL)
-  DEPENDS+=+libpolarssl +zlib
+  DEPENDS+=+libpolarssl
   VARIANT:=polarssl
 endef
 
