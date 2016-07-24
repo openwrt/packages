@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/stunnel
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libopenssl
+  DEPENDS:=+libopenssl +zlib
   TITLE:=SSL TCP Wrapper
   URL:=http://www.stunnel.org/
 endef
