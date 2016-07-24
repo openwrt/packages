@@ -29,7 +29,7 @@ define Package/chaosvpn
 		CATEGORY:=Network
 		URL:=https://wiki.hamburg.ccc.de/index.php/ChaosVPN::DebianHowto
 		SUBMENU:=VPN
-		DEPENDS:=+tinc +ip +kmod-tun +libopenssl
+		DEPENDS:=+tinc +ip +kmod-tun +libopenssl +zlib
 endef
 
 define Package/chaosvpn/description
