@@ -24,7 +24,7 @@ define Package/libneon
   CATEGORY:=Libraries
   TITLE:=HTTP and WebDAV client library
   URL:=http://www.webdav.org/neon/
-  DEPENDS:=+libopenssl +libexpat
+  DEPENDS:=+libopenssl +libexpat +zlib
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 endef
 
