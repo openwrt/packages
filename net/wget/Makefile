@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/wget/Default
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpcre
+  DEPENDS:=+libpcre +zlib
   SUBMENU:=File Transfer
   TITLE:=Non-interactive network downloader
   URL:=http://www.gnu.org/software/wget/index.html
@@ -55,7 +55,6 @@ endef
 define Package/wget-nossl
 $(call Package/wget/Default)
   TITLE+= (without SSL support)
-  DEPENDS+= +zlib
   VARIANT:=nossl
 endef
 
