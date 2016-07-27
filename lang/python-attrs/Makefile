@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=attrs
-PKG_VERSION:=15.2.0
+PKG_VERSION:=16.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/a/attrs
-PKG_MD5SUM:=b3c460eb6482f6e557c0e4025475c007
+PKG_SOURCE_URL:=https://pypi.python.org/packages/89/15/80d388d696c8c8ba14874635207aa698eb30ef1242dbb54d9eccf0e927ff
+PKG_MD5SUM:=5bcdd418f6e83e580434c63067c08a73
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 
