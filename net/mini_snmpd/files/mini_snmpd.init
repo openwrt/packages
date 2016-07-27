@@ -71,7 +71,7 @@ append_interface() {
 	local name="$1" netdev netdev_count
 	[ -z $netdev_count ] && netdev_count=0
 	# for the purposes of snmp monitoring it doesn't need to be up, it just needs to exist in /proc/net/dev
-	netdev=$(ubus -S call network.interface dump|jsonfilter -e "@.interface[@.interface=\"$name\"].device")  
+	netdev=$(ubus -S call network.interface dump|jsonfilter -e "@.interface[@.interface=\"$name\"].l3_device")  
 	if [ -n "$netdev" ] && grep -qF "$netdev" /proc/net/dev ]; then 
 		[ $netdev_count -ge 4 ] && {
 			_err "$cfg: too many network interfaces configured, ignoring $name"
