@@ -151,5 +151,7 @@
 "dyns.net"	"http://www.dyns.net/postscript011.php?username=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"200"
 
 # dnshome.de
-"dnshome.de"	""https://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip=[IP]"
+"dnshome.de"	"https://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip=[IP]"
 
+# core-networks.de
+"core-networks.de"	"https://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv6=1"	"good"
