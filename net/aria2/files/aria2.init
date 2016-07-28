@@ -37,6 +37,7 @@ start_instance() {
 	section_enabled "$s" || return 1
 
 	config_get config_dir "$s" 'config_dir' '/var/etc/aria2'
+	config_get dir "$s" 'dir'
 	config_get user "$s" 'user'
 
 	config_file="$config_dir/aria2.conf"
@@ -47,25 +48,35 @@ start_instance() {
 	[ -d "$config_dir" ] || {
 		mkdir -m 0755 -p "$config_dir"
 		touch "$config_file"
-		[ -z "$user" ] || chown -R $user $config_dir
 	}
 
-	touch "$session_file"
+	[ -d "$dir" ] || {
+		mkdir -m 0755 -p "$dir"	# create download dir
+		touch "$dir"
+	}
+
+	touch "$session_file" # create session file
 
 	echo -e "enable-rpc=true\nrpc-allow-origin-all=true\nrpc-listen-all=true\nquiet=true" > $config_file
 	echo -e "continue=true\ninput-file=$session_file\nsave-session=$session_file" >> $config_file
 
 	option_disabled "$s" 'enable_dht' || echo "dht-file-path=$dht_file" >> $config_file
 	option_disabled "$s" 'enable_log' || {
-                touch "$log_file"
+		[ -f "$log_file" ] && echo > $log_file # if log file exist, clear it
                 echo -e "log=$log_file" >> $config_file
         }
+
+	# if user is set, change dir owner
+	[ -z "$user" ] || {
+		chown -R $user:$user $config_dir
+		chown -R $user:$user $dir
+	}
 
 	append_params "$s" \
 		file_allocation bt_enable_lpd enable_dht rpc_user rpc_passwd rpc_listen_port dir bt_tracker disk_cache \
 		max_overall_download_limit max_overall_upload_limit max_download_limit max_upload_limit max_concurrent_downloads \
 		max_connection_per_server min_split_size split save_session_interval follow_torrent listen_port bt_max_peers \
-		peer_id_prefix user_agent rpc_secret
+		peer_id_prefix user_agent rpc_secret log_level
 	
 	config_list_foreach "$s" extra_settings append_extrasettings
 	

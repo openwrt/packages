@@ -63,7 +63,7 @@ endef
 define Package/freeradius2-common
   $(call Package/freeradius2/Default)
   TITLE:=common files
-  DEPENDS:=+libpthread +FREERADIUS_OPENSSL:libopenssl
+  DEPENDS:=+libpthread +FREERADIUS_OPENSSL:libopenssl +zlib
 endef
 
 define Package/freeradius2-mod-chap
