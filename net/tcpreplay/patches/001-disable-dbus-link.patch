@@ -1,0 +1,12 @@
+diff --git a/configure.ac b/configure.ac
+index 6c61381..7f72871 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -773,7 +773,6 @@ if ! test $using_pcap_config = yes; then
+     AC_CHECK_LIB(nl, nl_cache_alloc, [nl_found=yes])
+     AC_CHECK_LIB(nl-genl-3, genl_connect, [nl_genl_3_found=yes])
+     AC_CHECK_LIB(nl-3, nl_cache_alloc, [nl_3_found=yes])
+-    AC_CHECK_LIB(dbus-1, dbus_malloc, [dbus_1_found=yes])
+     if test "$nl_found" = "yes"; then
+         LPCAPLIB="$LPCAPLIB -lnl"
+     fi
