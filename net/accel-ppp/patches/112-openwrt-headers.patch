@@ -1,0 +1,18 @@
+
+accel-ppp: Fix includes - Openwrt installs it's includes in different places
+
+accel-pppd Cmakelists.txt doesn't search for this header, location hardcoded to be same as most desktop distros.
+
+Signed-off-by: Luke McKee <hojuruku@gmail.com> 
+
+--- a/accel-pppd/logs/log_pgsql.c
++++ b/accel-pppd/logs/log_pgsql.c
+@@ -2,7 +2,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include <postgresql/libpq-fe.h>
++#include <libpq-fe.h>
+ 
+ #include "triton.h"
+ #include "spinlock.h"

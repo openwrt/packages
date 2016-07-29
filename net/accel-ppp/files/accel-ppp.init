@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+# Copyright 2016 Openwrt 
+# Distributed under the terms of the GNU General Public License v2
+# $Id$
+
+START=90
+APP=accel-ppp
+PID_FILE=/var/run/$APP.pid
+
+start() {
+        start-stop-daemon -S -x $APP -p $PID_FILE -m -b -- -d -c /etc/accel-ppp.conf
+	}
+
+stop() {
+        start-stop-daemon -K -n $APP -p $PID_FILE -s TERM
+        rm -rf $PID_FILE
+}

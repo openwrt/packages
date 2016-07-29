@@ -1,0 +1,99 @@
+accel-pppd: Fix MUSL 1.1 compatibility
+
+Musl is more strict about POSIX compliancy than glibc and is less forgiving with includes.
+
+Signed-off-by: Luke McKee <hojuruku@gmail.com>
+
+--- a/accel-pppd/include/ap_session.h
++++ b/accel-pppd/include/ap_session.h
+@@ -2,6 +2,7 @@
+ #define __AP_SESSION_H__
+ 
+ #include "ap_net.h"
++#include <pthread.h>
+ 
+ //#define AP_SESSIONID_LEN 16
+ #define AP_IFNAME_LEN 16
+--- a/accel-pppd/ifcfg.c
++++ b/accel-pppd/ifcfg.c
+@@ -9,6 +9,7 @@
+ #include <arpa/inet.h>
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
++#include <linux/sockios.h>
+ #include <linux/route.h>
+ #include "linux_ppp.h"
+ 
+--- a/accel-pppd/ppp/ppp.c	
++++ b/accel-pppd/ppp/ppp.c
+@@ -10,6 +10,7 @@
+ #include <signal.h>
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
++#include <linux/sockios.h>
+ #include "linux_ppp.h"
+ 
+ #include "crypto.h"
+--- a/accel-pppd/ctrl/pppoe/pppoe.c
++++ b/accel-pppd/ctrl/pppoe/pppoe.c
+@@ -11,7 +11,6 @@
+ #include <net/ethernet.h>
+ #include <netpacket/packet.h>
+ #include <arpa/inet.h>
+-#include <printf.h>
+ 
+ #include "crypto.h"
+ 
+--- a/accel-pppd/ctrl/ipoe/ipoe.c
++++ b/accel-pppd/ctrl/ipoe/ipoe.c
+@@ -13,6 +13,7 @@
+ #include <netinet/ip.h>
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
++#include <linux/sockios.h>
+ #include <linux/if.h>
+ #include <linux/route.h>
+ 
+--- a/accel-pppd/ctrl/pppoe/pppoe.c
++++ b/accel-pppd/ctrl/pppoe/pppoe.c
+@@ -8,6 +8,7 @@
+ #include <fcntl.h>
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
++#include <linux/sockios.h>
+ #include <net/ethernet.h>
+ #include <netpacket/packet.h>
+ #include <arpa/inet.h>
+--- a/accel-pppd/ctrl/l2tp/l2tp.c
++++ b/accel-pppd/ctrl/l2tp/l2tp.c
+@@ -843,7 +843,7 @@
+ 	void *sessions = conn->sessions;
+ 
+ 	conn->sessions = NULL;
+-	tdestroy(sessions, (__free_fn_t)l2tp_session_free);
++	tdestroy(sessions, (void (*)(void *))l2tp_session_free);
+ 	/* Let l2tp_session_free() handle the session counter and
+ 	 * the reference held by the tunnel.
+ 	 */
+--- a/accel-pppd/ctrl/ipoe/arp.c
++++ b/accel-pppd/ctrl/ipoe/arp.c
+@@ -13,8 +13,8 @@
+ #include <netinet/ip.h>
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
+-#include <linux/if_arp.h>
+-#include <linux/if_packet.h>
++#include <net/if_arp.h>
++#include <netpacket/packet.h>
+ 
+ #include "list.h"
+ #include "triton.h"
+--- a/accel-pppd/include/ap_net.h
++++ b/accel-pppd/include/ap_net.h
+@@ -1,5 +1,6 @@
+ #ifndef __AP_NET_H
+ #define __AP_NET_H
++#include <sys/socket.h>
+ 
+ struct ap_net {
+ 	const char *name;

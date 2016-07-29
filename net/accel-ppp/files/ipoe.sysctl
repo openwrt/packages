@@ -1,0 +1,5 @@
+# The sysctl (it is 100% applicable to the IPoE, a problem due to the overflow of the ARP table, not sure whether it is necessary for PPPoE)
+# Fix crash in 1200 sessions 
+net.ipv4.neigh.default.gc_thresh1 = 4096 
+net.ipv4.neigh.default.gc_thresh2 = 8192 
+net.ipv4.neigh.default.gc_thresh3 = 12288
