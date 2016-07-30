@@ -12,7 +12,7 @@ PKG_VERSION:=1.7.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.pps.univ-paris-diderot.fr/~jch/software/files/
+PKG_SOURCE_URL:=https://www.irif.univ-paris-diderot.fr/~jch/software/files/
 PKG_MD5SUM:=2f71794d4e67f8a5352164ce33611549
 PKG_LICENSE:=MIT
 
