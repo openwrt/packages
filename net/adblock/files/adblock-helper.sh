@@ -108,14 +108,6 @@ f_envload()
     network_get_device adb_landev "${adb_lanif}"
     network_find_wan adb_wanif4
     network_find_wan6 adb_wanif6
-
-    # set restricted mode
-    #
-    if [ "${adb_restricted}" = "1" ]
-    then
-        adb_uci="$(which true)"
-        restricted_ok="true"
-    fi
 }
 
 # f_envcheck: check/set environment prerequisites
@@ -137,7 +129,7 @@ f_envcheck()
     fi
     if [ "${adb_enabled}" != "1" ]
     then
-        rc=-1
+        rc=-10
         f_log "adblock is currently disabled, please set adblock.global.adb_enabled=1' to use this service"
         f_exit
     fi
@@ -176,8 +168,8 @@ f_envcheck()
     then
         adb_nullipv4="${adb_ipv4}"
         adb_nullipv6="${adb_ipv6}"
-        if [ "$(${adb_uci} -q get uhttpd.main.listen_http | grep -Fo "80")" = "80" ] ||
-           [ "$(${adb_uci} -q get uhttpd.main.listen_https | grep -Fo "443")" = "443" ]
+        if [ -n "$(${adb_uci} -q get uhttpd.main.listen_http | grep -Fo "80")" ] ||
+           [ -n "$(${adb_uci} -q get uhttpd.main.listen_https | grep -Fo "443")" ]
         then
             rc=-1
             f_log "AP mode detected, please set local LuCI instance to ports <> 80/443"
@@ -200,8 +192,7 @@ f_envcheck()
         check="$(${adb_uci} -q get bcp38.@bcp38[0].enabled)"
         if [ "${check}" = "1" ]
         then
-            check="$(${adb_uci} -q get bcp38.@bcp38[0].match | grep -Fo "${adb_nullipv4%.*}")"
-            if [ -n "${check}" ]
+            if [ -n "$(${adb_uci} -q get bcp38.@bcp38[0].match | grep -Fo "${adb_nullipv4%.*}")" ]
             then
                 rc=-1
                 f_log "please whitelist '${adb_nullipv4}' in your bcp38 configuration to use adblock"
@@ -295,10 +286,11 @@ f_envcheck()
         f_log "AP mode enabled"
     fi
 
-    # log restricted mode
+    # set/log restricted mode
     #
-    if [ "${restricted_ok}" = "true" ]
+    if [ "${adb_restricted}" = "1" ]
     then
+        adb_uci="$(which true)"
         f_log "Restricted mode enabled"
     fi
 
@@ -601,18 +593,14 @@ f_rmconfig()
     local options="adb_src_timestamp adb_src_count"
     local section="${1}"
 
-    rm_cfg="${adb_lastrun}"
-    if [ -n "${rm_cfg}" ]
-    then
-        "${adb_uci}" -q delete "adblock.global.adb_overall_count"
-        "${adb_uci}" -q delete "adblock.global.adb_dnstoggle"
-        "${adb_uci}" -q delete "adblock.global.adb_percentage"
-        "${adb_uci}" -q delete "adblock.global.adb_lastrun"
-        for opt in ${options}
-        do
-            "${adb_uci}" -q delete "adblock.${section}.${opt}"
-        done
-    fi
+    "${adb_uci}" -q delete "adblock.global.adb_overall_count"
+    "${adb_uci}" -q delete "adblock.global.adb_dnstoggle"
+    "${adb_uci}" -q delete "adblock.global.adb_percentage"
+    "${adb_uci}" -q delete "adblock.global.adb_lastrun"
+    for opt in ${options}
+    do
+        "${adb_uci}" -q delete "adblock.${section}.${opt}"
+    done
 }
 
 # f_rmdns: remove dns block lists and backups
@@ -669,7 +657,6 @@ f_log()
     local log_parm
     local log_msg="${1}"
     local class="info "
-    local lastrun="$(date "+%d.%m.%Y %H:%M:%S")"
 
     # check for terminal session
     #
@@ -687,18 +674,6 @@ f_log()
             class="error"
         fi
         logger ${log_parm} -t "adblock[${adb_pid}] ${class}" "${log_msg}" 2>&1
-
-        # clean exit on error
-        #
-        if [ $((rc)) -eq -1 ] || [ $((rc)) -gt 0 ]
-        then
-            f_rmdns
-            f_rmuhttpd
-            f_rmfirewall
-            config_foreach f_rmconfig source
-            "${adb_uci}" -q set "adblock.global.adb_lastrun=${lastrun} => runtime error, please check the log!"
-            "${adb_uci}" -q commit "adblock"
-        fi
     fi
 }
 
@@ -742,8 +717,29 @@ f_exit()
 {
     local lastrun="$(date "+%d.%m.%Y %H:%M:%S")"
 
+    if [ "${adb_restricted}" = "1" ]
+    then
+        adb_uci="$(which true)"
+    fi
+
+    # delete temp files & directories
+    #
     rm -f "${adb_tmpfile}"
     rm -rf "${adb_tmpdir}"
+
+    # tidy up on error
+    #
+    if [ $((rc)) -lt 0 ] || [ $((rc)) -gt 0 ]
+    then
+        f_rmdns
+        f_rmuhttpd
+        f_rmfirewall
+        config_foreach f_rmconfig source
+        if [ $((rc)) -eq -1 ]
+        then
+            "${adb_uci}" -q set "adblock.global.adb_lastrun=${lastrun} => runtime error, please check the log!"
+        fi
+    fi
 
     # final log message and iptables statistics
     #
@@ -751,7 +747,6 @@ f_exit()
     then
         f_statistics
         "${adb_uci}" -q set "adblock.global.adb_lastrun=${lastrun}"
-        "${adb_uci}" -q commit "adblock"
         f_log "domain adblock processing finished successfully (${adb_scriptver}, ${adb_sysver}, ${lastrun})"
     elif [ $((rc)) -gt 0 ]
     then
@@ -759,6 +754,7 @@ f_exit()
     else
         rc=0
     fi
+    "${adb_uci}" -q commit "adblock"
     rm -f "${adb_pidfile}"
     exit ${rc}
 }
