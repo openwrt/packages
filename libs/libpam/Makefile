@@ -12,7 +12,7 @@ PKG_VERSION:=1.2.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.linux-pam.org/library/
+PKG_SOURCE_URL:=http://pkgs.fedoraproject.org/repo/pkgs/pam/Linux-PAM-1.2.0.tar.bz2/ee4a480d77b341c99e8b1375f8f180c0/
 PKG_MD5SUM:=ee4a480d77b341c99e8b1375f8f180c0
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
