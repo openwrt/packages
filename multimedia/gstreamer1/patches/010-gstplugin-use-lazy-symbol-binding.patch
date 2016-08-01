@@ -1,7 +1,6 @@
-diff -u --recursive gstreamer-1.6.2-vanilla/gst/gstplugin.c gstreamer-1.6.2/gst/gstplugin.c
---- gstreamer-1.6.2-vanilla/gst/gstplugin.c	2016-01-01 12:37:38.178990140 -0500
-+++ gstreamer-1.6.2/gst/gstplugin.c	2016-01-01 12:38:30.431328737 -0500
-@@ -732,15 +732,8 @@
+--- a/gst/gstplugin.c
++++ b/gst/gstplugin.c
+@@ -732,15 +732,8 @@ _priv_gst_plugin_load_file_for_registry
      goto return_error;
    }
  
