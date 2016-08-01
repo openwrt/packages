@@ -1,0 +1,13 @@
+diff --git a/setup.py b/setup.py
+index 2353a29..9d2a9a9 100644
+--- a/setup.py
++++ b/setup.py
+@@ -21,7 +21,7 @@ setup(
+     version=versioneer.get_version(),
+     cmdclass=versioneer.get_cmdclass(),
+ 
+-    packages = find_packages(),
++    packages = find_packages(exclude=['*.test', '*.test.*']),
+     entry_points = {
+         'console_scripts': [
+             'obfsproxy = obfsproxy.pyobfsproxy:run'
