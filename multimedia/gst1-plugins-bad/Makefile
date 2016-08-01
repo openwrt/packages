@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2015 OpenWrt.org
+# Copyright (C) 2011-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.6.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -147,7 +147,6 @@ CONFIGURE_ARGS += \
 	--disable-schro \
 	--disable-zbar \
 	--disable-srtp \
-	--disable-hls \
 	\
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
@@ -198,8 +197,10 @@ define GstBuildLibrary
   $$(eval $$(call BuildPackage,libgst1$(1)))
 endef
 
+$(eval $(call GstBuildLibrary,adaptivedemux,adaptivedemux,app uridownloader,))
 $(eval $(call GstBuildLibrary,photography,photography,,))
 $(eval $(call GstBuildLibrary,basecamerabinsrc,basecamerabinsrc,app,))
+$(eval $(call GstBuildLibrary,uridownloader,uridownloader,,))
 
 # 1: short name
 # 2: description
@@ -248,6 +249,7 @@ $(eval $(call GstBuildPlugin,debugutilsbad,debugutils support,video,,))
 $(eval $(call GstBuildPlugin,dvdspu,dvdspu support,video,,))
 $(eval $(call GstBuildPlugin,fbdevsink,fbdev support,video,,))
 $(eval $(call GstBuildPlugin,festival,festival support,audio,,))
+$(eval $(call GstBuildPlugin,fragmented,HLS support,video pbutils adaptivedemux,multifile,+libnettle))
 $(eval $(call GstBuildPlugin,frei0r,frei0r support,controller video,,))
 $(eval $(call GstBuildPlugin,id3tag,id3tag support,tag,,))
 $(eval $(call GstBuildPlugin,jpegformat,jpegformat support,tag,,))
