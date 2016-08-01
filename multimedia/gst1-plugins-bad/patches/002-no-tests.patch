@@ -1,7 +1,6 @@
-diff -u --recursive gst-plugins-bad-1.6.2-vanilla/configure.ac gst-plugins-bad-1.6.2/configure.ac
---- gst-plugins-bad-1.6.2-vanilla/configure.ac	2016-01-01 11:58:54.503551141 -0500
-+++ gst-plugins-bad-1.6.2/configure.ac	2016-01-01 11:50:38.388185503 -0500
-@@ -3355,37 +3355,6 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -3617,38 +3617,6 @@ sys/wasapi/Makefile
  sys/wininet/Makefile
  sys/winks/Makefile
  sys/winscreencap/Makefile
@@ -35,14 +34,14 @@ diff -u --recursive gst-plugins-bad-1.6.2-vanilla/configure.ac gst-plugins-bad-1
 -tests/examples/mxf/Makefile
 -tests/examples/opencv/Makefile
 -tests/examples/uvch264/Makefile
+-tests/examples/waylandsink/Makefile
 -tests/icles/Makefile
  ext/voamrwbenc/Makefile
  ext/voaacenc/Makefile
  ext/assrender/Makefile
-diff -u --recursive gst-plugins-bad-1.6.2-vanilla/Makefile.am gst-plugins-bad-1.6.2/Makefile.am
---- gst-plugins-bad-1.6.2-vanilla/Makefile.am	2016-01-01 11:58:54.504551169 -0500
-+++ gst-plugins-bad-1.6.2/Makefile.am	2016-01-01 11:50:06.848314203 -0500
-@@ -2,11 +2,11 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,11 +2,11 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-d
  
  SUBDIRS = \
  	gst-libs gst sys ext pkgconfig \

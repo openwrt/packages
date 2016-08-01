@@ -1,18 +1,17 @@
-diff -u --recursive gst-plugins-ugly-1.6.2-vanilla/configure.ac gst-plugins-ugly-1.6.2/configure.ac
---- gst-plugins-ugly-1.6.2-vanilla/configure.ac	2016-01-01 12:01:01.547065731 -0500
-+++ gst-plugins-ugly-1.6.2/configure.ac	2016-01-01 12:04:18.111545715 -0500
-@@ -467,8 +467,6 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -478,9 +478,6 @@ ext/x264/Makefile
  docs/Makefile
  docs/plugins/Makefile
  docs/version.entities
 -tests/Makefile
 -tests/check/Makefile
+-tests/files/Makefile
  m4/Makefile
  pkgconfig/Makefile
  pkgconfig/gstreamer-plugins-ugly-uninstalled.pc
-diff -u --recursive gst-plugins-ugly-1.6.2-vanilla/Makefile.am gst-plugins-ugly-1.6.2/Makefile.am
---- gst-plugins-ugly-1.6.2-vanilla/Makefile.am	2016-01-01 12:01:01.547065731 -0500
-+++ gst-plugins-ugly-1.6.2/Makefile.am	2016-01-01 12:04:12.087377153 -0500
+--- a/Makefile.am
++++ b/Makefile.am
 @@ -1,7 +1,7 @@
  DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
  

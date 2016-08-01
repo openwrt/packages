@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2015 OpenWrt.org
+# Copyright (C) 2008-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,10 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
-PKG_VERSION:=1.6.2
+PKG_VERSION:=1.8.2
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
+		Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPLv2
 PKG_LICENSE_FILES:=COPYING
@@ -19,7 +20,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gstreamer-$(PKG_VERSION)
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gstreamer/
-PKG_MD5SUM:=5e610b5a94c209487310739b39b6c464
+PKG_MD5SUM:=9dbebe079c2ab2004ef7f2649fa317cabea1feb4fb5605c24d40744b90918341
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4
