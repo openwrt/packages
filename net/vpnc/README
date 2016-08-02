@@ -37,3 +37,5 @@ deinitialize it using ifdown. You may also use the luci web interface
 Note that you need to configure the firewall to allow communication between
 the MYVPN interface and lan.
 
+If you install this package via opkg, there are reports that you must reboot
+before it can be used.
