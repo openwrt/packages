@@ -20,7 +20,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=LGPL-2.1
-PKG_MAINTAINER:=Sebastian Wendel <packages@sourceindex.de>
+PKG_MAINTAINER:=
 
 include $(INCLUDE_DIR)/package.mk
 
