@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=2.7.6
+PKG_VERSION:=2.8.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=578c88242872e58cf0db5f23faa4b2af
+PKG_MD5SUM:=7e5b1c98eedfc3a364fa8c4095deeae5
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -291,7 +291,8 @@ endef
 define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (custom)
- DEPENDS+= @DEVEL @!ALL +libopus +libspeex
+ DEPENDS+= @DEVEL @!ALL +FFMPEG_CUSTOM_SELECT_libopus:libopus +FFMPEG_CUSTOM_SELECT_speex:libspeex \
+			+FFMPEG_CUSTOM_SELECT_x264:libx264 +FFMPEG_CUSTOM_SELECT_mp3lame:lame-lib
  VARIANT:=custom
  MENU:=1
 endef
@@ -324,7 +325,7 @@ endef
 define Package/libffmpeg-full
 $(call Package/libffmpeg/Default)
  TITLE+= (full)
- DEPENDS+= @BUILD_PATENTED +alsa-lib
+ DEPENDS+= @BUILD_PATENTED +alsa-lib +libx264 +lame-lib
  VARIANT:=full
 endef
 
@@ -387,9 +388,6 @@ FFMPEG_CONFIGURE:= \
 	--disable-fma3 \
 	--disable-fma4 \
 	--disable-avx2 \
-	--disable-vfp \
-	--disable-neon \
-	--disable-inline-asm \
 	--disable-yasm \
 	--disable-mips32r2 \
 	--disable-mipsdspr1 \
@@ -401,7 +399,33 @@ FFMPEG_CONFIGURE:= \
 	--disable-vaapi \
 	--disable-vda \
 	--disable-vdpau \
-	--disable-outdevs
+	--disable-outdevs 
+
+
+#selectibly disable optimizations according to arch/cpu type
+ifeq ($(CONFIG_ARCH),"arm")
+	ifneq ($(findstring vfp,$(CONFIG_CPU_TYPE))$(CONFIG_SOFT_FLOAT),vfp)
+		FFMPEG_CONFIGURE+= \
+			--disable-vfp 
+	endif
+	ifneq ($(findstring neon,$(CONFIG_CPU_TYPE))$(CONFIG_SOFT_FLOAT),neon)
+		FFMPEG_CONFIGURE+= \
+			--disable-neon 
+	endif
+
+else
+	FFMPEG_CONFIGURE+= \
+		--disable-inline-asm \
+		--disable-vfp \
+		--disable-neon 
+
+endif
+
+ifeq ($(BUILD_VARIANT),full)
+	FFMPEG_CONFIGURE+= \
+		--enable-libx264 \
+		--enable-libmp3lame
+endif
 
 ifeq ($(BUILD_VARIANT),custom)
 
@@ -441,6 +465,18 @@ endif
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_speex),y)
   FFMPEG_CONFIGURE+= \
 	--enable-libspeex --enable-decoder=libspeex \
+
+endif
+
+ifeq ($(FFMPEG_CUSTOM_SELECT_x264),y)
+  FFMPEG_CONFIGURE+= \
+  	--enable-libx264 
+
+endif
+
+ifeq ($(FFMPEG_CUSTOM_SELECT_mp3lame),y)
+  FFMPEG_CONFIGURE+= \
+	--enable-libmp3lame
 
 endif
 
