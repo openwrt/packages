@@ -26,7 +26,7 @@ define Package/kismet/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Kismet
-  MAINTAINER:=Sebastian Wendel <packages@sourceindex.de>
+  MAINTAINER:=
   DEPENDS:= $(CXX_DEPENDS) +libnl
   URL:=http://www.kismetwireless.net/
   SUBMENU:=wireless
