@@ -277,13 +277,12 @@ $(call Package/ffmpeg/Default/description)
  This package contains the FFmpeg streaming server.
 endef
 
-
 define Package/libffmpeg/Default
 $(call Package/ffmpeg/Default)
  SECTION:=libs
  CATEGORY:=Libraries
  TITLE+= libraries
- DEPENDS+= +libpthread +zlib +libbz2
+ DEPENDS+= @BUILD_PATENTED +libpthread +zlib +libbz2
  PROVIDES:= libffmpeg
 endef
 
@@ -291,7 +290,8 @@ endef
 define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (custom)
- DEPENDS+= @DEVEL @!ALL +libopus +libspeex
+ DEPENDS+= +FFMPEG_CUSTOM_SELECT_libopus:libopus +FFMPEG_CUSTOM_SELECT_speex:libspeex \
+           +FFMPEG_CUSTOM_SELECT_x264:libx264 +FFMPEG_CUSTOM_SELECT_mp3lame:lame-lib
  VARIANT:=custom
  MENU:=1
 endef
@@ -310,7 +310,7 @@ endef
 define Package/libffmpeg-audio-dec
 $(call Package/libffmpeg/Default)
  TITLE+= (audio)
- DEPENDS+= @BUILD_PATENTED +libspeex
+ DEPENDS+= +libspeex +libopus
  VARIANT:=audio-dec
 endef
 
@@ -324,7 +324,7 @@ endef
 define Package/libffmpeg-full
 $(call Package/libffmpeg/Default)
  TITLE+= (full)
- DEPENDS+= @BUILD_PATENTED +alsa-lib
+ DEPENDS+= +alsa-lib +libx264 +lame-lib +libopus +libspeex
  VARIANT:=full
 endef
 
@@ -338,7 +338,6 @@ endef
 define Package/libffmpeg-mini
 $(call Package/libffmpeg/Default)
  TITLE+= (mini)
- DEPENDS+= @BUILD_PATENTED
  VARIANT:=mini
 endef
 
@@ -384,8 +383,8 @@ FFMPEG_CONFIGURE:= \
 	--disable-fma3 \
 	--disable-fma4 \
 	--disable-avx2 \
-	--disable-inline-asm \
 	--disable-yasm \
+	--disable-inline-asm \
 	--disable-mips32r2 \
 	--disable-mipsdsp \
 	--disable-mipsdspr2 \
@@ -398,18 +397,31 @@ FFMPEG_CONFIGURE:= \
 	--disable-vdpau \
 	--disable-outdevs
 
-# Detect Optimizations
-ifeq (,$(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)))
-	FFMPEG_CONFIGURE += --disable-vfp
+
+#selectibly disable optimizations according to arch/cpu type
+ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+	ifeq (,$(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)))
+		FFMPEG_CONFIGURE+= \
+			--disable-vfp
+	endif
+	ifeq (,$(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)))
+		FFMPEG_CONFIGURE+= \
+			--disable-neon
+	endif
+
+else ifneq ($(ARCH),aarch64)
+	FFMPEG_CONFIGURE+= \
+		--disable-vfp \
+		--disable-neon
+
 endif
 
-ifeq (,$(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)))
-	FFMPEG_CONFIGURE += --disable-neon
-endif
-
-# Enable thumb for mvebu Mamba
-ifneq (,$(CONFIG_TARGET_mvebu_DEVICE_linksys-wrt1900ac))
-	FFMPEG_CONFIGURE += --enable-thumb
+ifeq ($(BUILD_VARIANT),full)
+	FFMPEG_CONFIGURE+= \
+		--enable-libopus --enable-decoder=libopus \
+		--enable-libspeex --enable-decoder=libspeex \
+		--enable-libx264 \
+		--enable-libmp3lame
 endif
 
 ifeq ($(BUILD_VARIANT),custom)
@@ -443,14 +455,22 @@ endif
 
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libopus),y)
   FFMPEG_CONFIGURE+= \
-	--enable-libopus --enable-decoder=libopus \
-
+	--enable-libopus --enable-decoder=libopus
 endif
 
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_speex),y)
   FFMPEG_CONFIGURE+= \
-	--enable-libspeex --enable-decoder=libspeex \
+	--enable-libspeex --enable-decoder=libspeex
+endif
 
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_x264),y)
+  FFMPEG_CONFIGURE+= \
+	--enable-libx264 --enable-decoder=libx264
+endif
+
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_mp3lame),y)
+  FFMPEG_CONFIGURE+= \
+	--enable-libmp3lame --enable-encoder=mp3
 endif
 
 endif
@@ -614,7 +634,9 @@ Package/libffmpeg-audio-dec/install = $(Package/libffmpeg-custom/install)
 $(eval $(call BuildPackage,ffmpeg))
 $(eval $(call BuildPackage,ffprobe))
 $(eval $(call BuildPackage,ffserver))
-$(eval $(call BuildPackage,libffmpeg-custom))
+$(eval $(call BuildPackage,libffmpeg-audio-dec))
 $(eval $(call BuildPackage,libffmpeg-full))
 $(eval $(call BuildPackage,libffmpeg-mini))
-$(eval $(call BuildPackage,libffmpeg-audio-dec))
+ifneq ($(CONFIG_ALL),y)
+   $(eval $(call BuildPackage,libffmpeg-custom))
+endif

@@ -1,0 +1,51 @@
+diff --git a/obfsproxy/common/log.py b/obfsproxy/common/log.py
+index bb30296..79193d2 100644
+--- a/obfsproxy/common/log.py
++++ b/obfsproxy/common/log.py
+@@ -1,5 +1,6 @@
+ """obfsproxy logging code"""
+ import logging
++import logging.handlers
+ import sys
+ 
+ from twisted.python import log
+@@ -50,6 +51,18 @@ class ObfsLogger(object):
+ 
+         self.obfslogger.addHandler(log_handler)
+ 
++    def set_syslog(self, progname):
++        """Set up our logger so that it starts logging to syslog instead."""
++
++        # remove the default handler, and add the SysLogHandler:
++        self.obfslogger.removeHandler(self.default_handler)
++
++        log_handler = logging.handlers.SysLogHandler(address='/dev/log')
++        formatter = logging.Formatter(progname + "[%(process)d]: %(message)s")
++        log_handler.setFormatter(formatter)
++
++        self.obfslogger.addHandler(log_handler)
++
+ 
+     def set_log_severity(self, sev_string):
+         """Update our minimum logging severity to 'sev_string'."""
+diff --git a/obfsproxy/pyobfsproxy.py b/obfsproxy/pyobfsproxy.py
+index 4a2faf6..eaf8a44 100755
+--- a/obfsproxy/pyobfsproxy.py
++++ b/obfsproxy/pyobfsproxy.py
+@@ -42,6 +42,7 @@ def set_up_cli_parsing():
+ 
+     parser.add_argument('-v', '--version', action='version', version=__version__)
+     parser.add_argument('--log-file', help='set logfile')
++    parser.add_argument('--syslog', metavar='PROGNAME', help='use syslog')
+     parser.add_argument('--log-min-severity',
+                         choices=['error', 'warning', 'info', 'debug'],
+                         help='set minimum logging severity (default: %(default)s)')
+@@ -110,6 +111,8 @@ def consider_cli_args(args):
+ 
+     if args.log_file:
+         log.set_log_file(args.log_file)
++    elif args.syslog:
++        log.set_syslog(args.syslog)
+     if args.log_min_severity:
+         log.set_log_severity(args.log_min_severity)
+     if args.no_log:

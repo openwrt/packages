@@ -1,11 +1,10 @@
-menu "Configuration"
-	depends on PACKAGE_libffmpeg-custom
+if PACKAGE_libffmpeg-custom
 
 config FFMPEG_CUSTOM_PATENTED
 	bool "Include patented codecs and technologies"
 	default BUILD_PATENTED
 
-comment "Profiles ---"
+comment "Profiles"
 
 config FFMPEG_CUSTOM_FFSERVER_SUPPORT
 	bool "Include support for ffserver (FFmpeg streaming server)"
@@ -68,6 +67,7 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_DECODER_pcm_s16be
 	select FFMPEG_CUSTOM_DECODER_pcm_s16le
 	select FFMPEG_CUSTOM_SELECT_speex
+	select FFMPEG_CUSTOM_SELECT_libopus
 	select FFMPEG_CUSTOM_DECODER_vorbis
 	select FFMPEG_CUSTOM_DECODER_wavpack
 	select FFMPEG_CUSTOM_DECODER_wmav1
@@ -108,7 +108,14 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_PROTOCOL_tcp
 	select FFMPEG_CUSTOM_PROTOCOL_udp
 
-comment "External Libraries ---"
+comment "External Libraries"
+
+config FFMPEG_CUSTOM_SELECT_mp3lame
+	bool "MP3 LAME"
+	depends on FFMPEG_CUSTOM_PATENTED
+	select FFMPEG_CUSTOM_DECODER_mp3
+	select FFMPEG_CUSTOM_MUXER_mp3
+	select FFMPEG_CUSTOM_DEMUXER_mp3
 
 config FFMPEG_CUSTOM_SELECT_libopus
 	bool "Opus"
@@ -116,7 +123,15 @@ config FFMPEG_CUSTOM_SELECT_libopus
 config FFMPEG_CUSTOM_SELECT_speex
 	bool "Speex"
 
-comment "Encoders ---"
+config FFMPEG_CUSTOM_SELECT_x264
+	depends on FFMPEG_CUSTOM_PATENTED
+	bool "x264"
+	select FFMPEG_CUSTOM_DECODER_h264
+	select FFMPEG_CUSTOM_MUXER_h264
+	select FFMPEG_CUSTOM_DEMUXER_h264
+	select FFMPEG_CUSTOM_PARSER_h264
+
+comment "Encoders"
 
 config FFMPEG_CUSTOM_ENCODER_ac3
 	bool "AC3"
@@ -153,7 +168,7 @@ config FFMPEG_CUSTOM_ENCODER_vorbis
 config FFMPEG_CUSTOM_ENCODER_zlib
 	bool "Zlib"
 
-comment "Decoders ---"
+comment "Decoders"
 
 config FFMPEG_CUSTOM_DECODER_aac
 	bool "AAC (Advanced Audio Coding)"
@@ -261,7 +276,7 @@ config FFMPEG_CUSTOM_DECODER_wmav2
 config FFMPEG_CUSTOM_DECODER_zlib
 	bool "Zlib"
 
-comment "Muxers ---"
+comment "Muxers"
 
 config FFMPEG_CUSTOM_MUXER_ac3
 	bool "AC3"
@@ -295,7 +310,7 @@ config FFMPEG_CUSTOM_MUXER_ogg
 config FFMPEG_CUSTOM_MUXER_rtp
 	bool "RTP"
 
-comment "Demuxers ---"
+comment "Demuxers"
 
 config FFMPEG_CUSTOM_DEMUXER_aac
 	bool "AAC"
@@ -376,7 +391,7 @@ config FFMPEG_CUSTOM_DEMUXER_wav
 config FFMPEG_CUSTOM_DEMUXER_wv
 	bool "WV"
 
-comment "Parsers ---"
+comment "Parsers"
 
 config FFMPEG_CUSTOM_PARSER_aac
 	bool "AAC (Advanced Audio Coding)"
@@ -405,7 +420,7 @@ config FFMPEG_CUSTOM_PARSER_mpeg4video
 config FFMPEG_CUSTOM_PARSER_opus
 	bool "Opus"
 
-comment "Protocols ---"
+comment "Protocols"
 
 config FFMPEG_CUSTOM_PROTOCOL_file
 	bool "file:"
@@ -430,5 +445,5 @@ config FFMPEG_CUSTOM_PROTOCOL_tcp
 config FFMPEG_CUSTOM_PROTOCOL_udp
 	bool "udp:"
 
-endmenu
 
+endif

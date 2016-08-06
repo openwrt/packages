@@ -13,10 +13,6 @@ adb_script="/usr/bin/adblock-update.sh"
 adb_helper="/usr/bin/adblock-helper.sh"
 adb_pidfile="/var/run/adblock.pid"
 bg_parm="&"
-if [ -t 1 ]
-then
-    unset bg_parm
-fi
 
 if [ $((adb_debug)) -eq 0 ]
 then
@@ -32,6 +28,11 @@ fi
 . "${adb_helper}"
 f_envload
 
+if [ "${adb_restricted}" = "1" ]
+then
+    adb_uci="$(which true)"
+fi
+
 boot()
 {
     return 0
@@ -39,6 +40,10 @@ boot()
 
 start()
 {
+    if [ -t 1 ]
+    then
+        unset bg_parm
+    fi
     eval "${adb_script}" ${bg_parm}
     return 0
 }
@@ -60,18 +65,14 @@ stop()
 {
     f_rmdns
     f_rmuhttpd
-    adb_uci="$(which uci)"
     config_foreach f_rmconfig source
-    if [ -n "$(${adb_uci} -q changes adblock)" ]
-    then
-        "${adb_uci}" -q commit adblock
-    fi
     if [ -z "${reload}" ]
     then
         f_rmfirewall
     fi
-    if [ -n "${rm_dns}" ] || [ -n "${rm_uhttpd}" ] || [ -n "${rm_fw}" ] || [ -n "${rm_cfg}" ]
+    if [ -n "${rm_dns}" ] || [ -n "${rm_uhttpd}" ] || [ -n "${rm_fw}" ] || [ -n "$(${adb_uci} -q changes adblock)" ]
     then
+        "${adb_uci}" -q commit adblock
         f_log "all adblock related services stopped"
     fi
     return 0
@@ -97,9 +98,9 @@ toggle()
         if [ -n "${list_dns}" ] || [ -n "${list_dnshide}" ]
         then
             mv -f "${source}"* "${target}"
+            /etc/init.d/dnsmasq restart
             "${adb_uci}" -q set "adblock.global.adb_dnstoggle=${pos}"
             "${adb_uci}" -q commit "adblock"
-            /etc/init.d/dnsmasq restart
             f_log "adblock toggle switched '${pos}'"
         fi
     fi

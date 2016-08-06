@@ -15,6 +15,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 4.500 entries
     * [feodotracker](https://feodotracker.abuse.ch)
     * => daily updates, approx. 0-10 entries
+    * [hphosts](https://hosts-file.net)
+    * => monthly updates, approx. 390.000 entries
     * [malwaredomains](http://malwaredomains.com)
     * => daily updates, approx. 16.000 entries
     * [malwaredomainlist](http://www.malwaredomainlist.com)
