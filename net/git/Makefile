@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2015 OpenWrt.org
+# Copyright (C) 2009-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/scm/git/
@@ -26,14 +26,12 @@ define Package/git/Default
   CATEGORY:=Network
   SUBMENU:=Version Control Systems
   DEPENDS:=+libopenssl +libpthread +librt +zlib
-  TITLE:=The fast version control system
   URL:=http://git-scm.com
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/git
 $(call Package/git/Default)
-  DEPENDS:=+libopenssl +libpthread +librt
   TITLE:=The fast version control system
 endef
 
@@ -45,7 +43,7 @@ endef
 
 define Package/git-http
 $(call Package/git/Default)
-  DEPENDS:=git +libcurl +ca-certificates
+  DEPENDS+=git +libcurl +ca-certificates
   TITLE:=Git HTTP commands
 endef
 
