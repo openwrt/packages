@@ -87,19 +87,24 @@ end
 
 local function receive_bat_hosts()
 -- read raw chunks from alfred, convert them to a nested table and call write_bat_hosts
-  local fd = io.popen("alfred -r " .. type_id)
-    --[[ this command returns something like
-    { "54:e6:fc:b9:cb:37", "00:11:22:33:44:55 ham_wlan0\x0a00:22:33:22:33:22 ham_eth0\x0a" },
-    { "90:f6:52:bb:ec:57", "00:22:33:22:33:23 spam\x0a" },
-    ]]--
+-- "alfred -r" can fail in slave nodes (returns empty stdout), so:
+-- check output is not null before writing /tmp/bat-hosts, and retry 3 times before giving up.
+  for n = 1, 3 do
+    local fd = io.popen("alfred -r " .. type_id)
+      --[[ this command returns something like
+      { "54:e6:fc:b9:cb:37", "00:11:22:33:44:55 ham_wlan0\x0a00:22:33:22:33:22 ham_eth0\x0a" },
+      { "90:f6:52:bb:ec:57", "00:22:33:22:33:23 spam\x0a" },
+      ]]--
 
-  if fd then
-    local output = fd:read("*a")
-    if output then
-      assert(loadstring("rows = {" .. output .. "}"))()
-      write_bat_hosts(rows)
+    if fd then
+      local output = fd:read("*a")
+      fd:close()
+      if output and output ~= "" then
+        assert(loadstring("rows = {" .. output .. "}"))()
+        write_bat_hosts(rows)
+        break
+      end
     end
-    fd:close()
   end
 end
 
