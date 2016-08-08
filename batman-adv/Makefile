@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=batman-adv
 
 PKG_VERSION:=2016.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MD5SUM:=dd1ab664475902fc3dbf34998bbe5a90
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -83,8 +83,6 @@ endef
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(CP) ./files/compat-hacks.h $(PKG_BUILD_DIR)/
-	$(SED) '/#define _NET_BATMAN_ADV_MAIN_H_/a\#undef CONFIG_MODULE_STRIPPED' \
-		$(PKG_BUILD_DIR)/net/batman-adv/main.h
 endef
 
 define Build/Clean
