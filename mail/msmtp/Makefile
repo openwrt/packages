@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2009 David Cooper <dave@kupesoft.com>
-# Copyright (C) 2009-2015 OpenWrt.org
+# Copyright (C) 2009-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
 PKG_VERSION:=1.6.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/msmtp
@@ -26,10 +26,12 @@ PKG_INSTALL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/msmtp/Default
   SECTION:=mail
   CATEGORY:=Mail
+  DEPENDS:=$(INTL_DEPENDS)
   TITLE:=Simple sendmail SMTP forwarding
   URL:=http://msmtp.sourceforge.net/
 endef
