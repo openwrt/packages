@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=twisted
-PKG_VERSION:=16.0.0
+PKG_VERSION:=16.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=Twisted-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/T/Twisted \
-		http://twistedmatrix.com/Releases/Twisted/16.0
-PKG_MD5SUM:=c6aa35e9a1e40fce6797247f39647d2a
+PKG_SOURCE_URL:=https://pypi.python.org/packages/c0/7c/c1e5b61e30b7ffc96576d2a922615c8068e6996a622be813fc626cef07aa \
+		http://twistedmatrix.com/Releases/Twisted/16.3
+PKG_MD5SUM:=e044af844623e9fbcbe29f578db6053a
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/Twisted-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python python-setuptools USE_MUSL:librpc
@@ -43,15 +43,9 @@ endef
 
 define PyPackage/twisted/filespec
 +|/usr/bin
--|/usr/bin/manhole
--|/usr/bin/tap2deb
--|/usr/bin/tap2rpm
 -|/usr/bin/tkconch
 +|$(PYTHON_PKG_DIR)
 -|$(PYTHON_PKG_DIR)/twisted/conch/scripts/tkconch.py
--|$(PYTHON_PKG_DIR)/twisted/scripts/manhole.py
--|$(PYTHON_PKG_DIR)/twisted/scripts/tap2deb.py
--|$(PYTHON_PKG_DIR)/twisted/scripts/tap2rpm.py
 endef
 
 define Build/Compile
