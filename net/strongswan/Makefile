@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
@@ -116,7 +116,8 @@ endef
 
 define Package/strongswan
 $(call Package/strongswan/Default)
-  DEPENDS:= +libpthread +ip \
+  DEPENDS:= +libpthread \
+	+PACKAGE_ip-full:ip-full +!PACKAGE_ip-full:ip \
 	+kmod-crypto-authenc \
 	+kmod-ipsec +kmod-ipsec4 +IPV6:kmod-ipsec6 \
 	+kmod-ipt-ipsec +iptables-mod-ipsec
