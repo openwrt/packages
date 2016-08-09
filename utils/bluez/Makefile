@@ -47,7 +47,7 @@ $(call Package/bluez/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= library
-  DEPENDS:=+libpthread +kmod-bluetooth
+  DEPENDS:=+libpthread +kmod-bluetooth +libncursesw
 endef
 
 define Package/bluez-utils
