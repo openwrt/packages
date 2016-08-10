@@ -9,10 +9,12 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=wireguard
 
-PKG_VERSION:=0.0.20160630
+PKG_VERSION:=0.0.20160808
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WireGuard-experimental-$(PKG_VERSION).tar.xz
+# This is actually SHA256, but OpenWRT/LEDE will figure it out based on the length
+PKG_MD5SUM:=1cf6eb537432c8282b97da1c53bab015acaea07054c513a79575fe86624f3a7d
 PKG_SOURCE_URL:=https://git.zx2c4.com/WireGuard/snapshot/
 PKG_BUILD_DIR:=$(BUILD_DIR)/WireGuard-experimental-$(PKG_VERSION)
 
