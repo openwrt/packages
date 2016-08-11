@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xl2tpd
-PKG_VERSION:=devel-20151125
+PKG_VERSION:=devel-20160811
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=GPL-2.0
