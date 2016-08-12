@@ -21,6 +21,7 @@ proto_l2tp_init_config() {
 	available=1
 	no_device=1
 	no_proto_task=1
+	teardown_on_l3_link_down=1
 }
 
 proto_l2tp_setup() {
