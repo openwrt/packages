@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
 PKG_VERSION:=7.4
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 VIMVER:=74
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -32,13 +32,21 @@ define Package/vim/Default
 endef
 
 define Package/vim
+  $(call Pacakge/vim/Default)
+  TITLE:=Vim metapackage to select either version
+  DEPENDS:=+vim-bin
+endef
+
+define Package/vim-tiny
   $(call Package/vim/Default)
   TITLE+= (Tiny)
+  PROVIDES:=vim-bin
 endef
 
 define Package/vim-full
   $(call Package/vim/Default)
   TITLE+= (Normal)
+  PROVIDES:=vim-bin
 endef
 
 define Package/vim-runtime
@@ -69,6 +77,15 @@ define Package/vim/conffiles
 endef
 
 define Package/vim/description
+ Vim is an almost compatible version of the UNIX editor Vi.
+
+ This metapackage allows the new infrastructure for
+ completely replacing busybox versions of commands
+ with full versions to select either version of
+ vim.
+endef
+
+define Package/vim-tiny/description
  Vim is an almost compatible version of the UNIX editor Vi.
  (Tiny build)
 endef
@@ -114,8 +131,8 @@ CONFIGURE_VARS += \
 	vim_cv_tty_group=root \
 	vim_cv_tty_mode=0620
 
-ifneq ($(CONFIG_PACKAGE_vim),)
-define Build/Compile/vim
+ifneq ($(CONFIG_PACKAGE_vim-tiny),)
+define Build/Compile/vim-tiny
 	$(call Build/Configure/Default, \
 		--with-features=tiny \
 		--disable-multibyte \
@@ -153,17 +170,22 @@ define Build/Compile/vim-runtime
 endef
 
 define Build/Compile
-$(call Build/Compile/vim)
+$(call Build/Compile/vim-tiny)
 $(call Build/Compile/vim-full)
 $(call Build/Compile/vim-runtime)
 $(call Build/Compile/xxd)
 endef
 
 define Package/vim/install
+	true
+endef
+
+define Package/vim-tiny/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_tiny $(1)/usr/bin/vim
 	$(INSTALL_DIR) $(1)/usr/share/vim
 	$(INSTALL_CONF) ./files/vimrc $(1)/usr/share/vim/
+	ln -sf vim $(1)/usr/bin/vi
 endef
 
 define Package/vim-full/install
@@ -171,6 +193,7 @@ define Package/vim-full/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_normal $(1)/usr/bin/vim
 	$(INSTALL_DIR) $(1)/usr/share/vim
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
+	ln -sf vim $(1)/usr/bin/vi
 endef
 
 define Package/vim-runtime/install
@@ -188,6 +211,7 @@ define Package/xxd/install
 endef
 
 $(eval $(call BuildPackage,vim))
+$(eval $(call BuildPackage,vim-tiny))
 $(eval $(call BuildPackage,vim-full))
 $(eval $(call BuildPackage,vim-runtime))
 $(eval $(call BuildPackage,vim-help))
