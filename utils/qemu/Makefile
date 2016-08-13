@@ -45,7 +45,7 @@ CONFIGURE_ARGS:=$(filter-out	\
 # Building qemu-ga alone does not require zlib
 CONFIGURE_ARGS+=			\
 	--cross-prefix=$(TARGET_CROSS)	\
-	--host-cc=$(HOSTCC)		\
+	--host-cc="$(HOSTCC)"		\
 	--target-list=''		\
 	--disable-zlib-test		\
 	--enable-guest-agent
