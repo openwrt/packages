@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=20160508-devel
+PKG_VERSION:=1.2.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Sebastian Careba <nitroshift@yahoo.com>
 PKG_LICENSE:=GPL-3.0
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/firehol/netdata
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=0ec2db444011f5b6ebf41dab45502c27cd544af2
+PKG_SOURCE_VERSION:=bb4aa949f5ac825253d8adc6070661299abc1c3b
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_INSTALL:=1
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/netdata
   SECTION:=admin
   CATEGORY:=Administration
-  DEPENDS:=+zlib
+  DEPENDS:=+zlib +libuuid
   TITLE:=Real-time performance monitoring tool
   URL:=http://netdata.firehol.org/
 endef

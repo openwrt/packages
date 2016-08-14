@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=37547
+PKG_SOURCE_VERSION:=37681
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
@@ -224,7 +224,7 @@ LIBEXEC_dv:=service-dv
 CONF_dv:=dv
 
 DEPENDS_fs:=+gnunet-datastore +gnunet-peerstore +libextractor
-BIN_fs:=auto-share directory download download-manager.scm fs publish unindex search
+BIN_fs:=auto-share directory download fs publish unindex search
 LIB_fs:=fs
 PLUGIN_fs:=block_fs
 LIBEXEC_fs:=helper-fs-publish service-fs
@@ -335,7 +335,8 @@ endef
 define PostInstFixSUIDPerms
   define Package/$(1)/postinst
 #!/bin/sh
-[ -e /usr/share/gnunet/.permfix ] && rm /usr/share/gnunet/.permfix
+[ -z "$IPKG_INSTROOT" ] || exit 0
+[ -e /usr/share/gnunet/.permfix ] && rm /usr/share/gnunet/.permfix || exit 0
   endef
 endef
 
