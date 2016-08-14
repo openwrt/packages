@@ -686,7 +686,7 @@ f_statistics()
     if [ -n "${adb_wanif4}" ]
     then
         ipv4_blk="$(iptables -t nat -vxnL adb-nat | awk '$3 ~ /^DNAT$/ {sum += $1} END {printf sum}')"
-        ipv4_all="$(iptables -t nat -vxnL PREROUTING | awk '$3 ~ /^prerouting_rule$/ {sum += $1} END {printf sum}')"
+        ipv4_all="$(iptables -t nat -vxnL PREROUTING | awk '$3 ~ /^(delegate_prerouting|prerouting_rule)$/ {sum += $1} END {printf sum}')"
         if [ $((ipv4_all)) -gt 0 ] && [ $((ipv4_blk)) -gt 0 ] && [ $((ipv4_all)) -gt $((ipv4_blk)) ]
         then
             ipv4_pct="$(printf "${ipv4_blk}" | awk -v all="${ipv4_all}" '{printf( "%5.2f\n",$1/all*100)}')"
