@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -663,6 +663,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
+@@ -704,6 +704,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
  have_termios_h="no"
  AC_CHECK_HEADERS(termios.h, [have_termios_h="yes"])
  
@@ -10,7 +10,7 @@
  # For the turbostat plugin
  have_asm_msrindex_h="no"
  AC_CHECK_HEADERS(asm/msr-index.h, [have_asm_msrindex_h="yes"])
-@@ -5241,6 +5244,7 @@ plugin_interface="no"
+@@ -5310,6 +5313,7 @@ plugin_interface="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
@@ -18,7 +18,7 @@
  plugin_load="no"
  plugin_log_logstash="no"
  plugin_memory="no"
-@@ -5638,6 +5642,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
+@@ -5713,6 +5717,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
  AC_PLUGIN([iptables],    [$with_libiptc],      [IPTables rule counters])
  AC_PLUGIN([ipvs],        [$plugin_ipvs],       [IPVS connection statistics])
  AC_PLUGIN([irq],         [$plugin_irq],        [IRQ statistics])
@@ -26,7 +26,7 @@
  AC_PLUGIN([java],        [$with_java],         [Embed the Java Virtual Machine])
  AC_PLUGIN([load],        [$plugin_load],       [System load])
  AC_PLUGIN([logfile],     [yes],                [File logging plugin])
-@@ -5967,6 +5972,7 @@ Configuration:
+@@ -6042,6 +6047,7 @@ Configuration:
      oracle  . . . . . . . $with_oracle
      protobuf-c  . . . . . $have_protoc_c
      python  . . . . . . . $with_python
@@ -34,7 +34,7 @@
  
    Features:
      daemon mode . . . . . $enable_daemon
-@@ -6016,6 +6022,7 @@ Configuration:
+@@ -6091,6 +6097,7 @@ Configuration:
      iptables  . . . . . . $enable_iptables
      ipvs  . . . . . . . . $enable_ipvs
      irq . . . . . . . . . $enable_irq
@@ -67,7 +67,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -2608,6 +2608,27 @@ and all other interrupts are collected.
+@@ -2606,6 +2606,27 @@ and all other interrupts are collected.
  
  =back
  
@@ -250,7 +250,7 @@
 +}
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -454,6 +454,13 @@ irq_la_SOURCES = irq.c
+@@ -457,6 +457,13 @@ irq_la_SOURCES = irq.c
  irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  endif
  
