@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE_URL:=ftp://ftp.porcupine.org/mirrors/postfix-release/official/
 PKG_VERSION:=3.1.0
 PKG_MD5SUM:=b4a506fa74c69c6fb1875c0971268344
@@ -72,6 +72,13 @@ define Package/postfix/config
 	endmenu
 endef
 
+define Package/postfix/postinst
+if [ -d $${IPKG_INSTROOT)/usr/var/mail ] && [ ! -e $${IPKG_INSTROOT}/srv/mail ]; then
+	mkdir -p /srv
+	ln -s /usr/var/mail /srv/mail
+fi
+endef
+
 CCARGS=-DNO_NIS
 AUXLIBS=-L$(STAGING_DIR)/usr/lib
 default_database_type=cdb
@@ -121,9 +128,9 @@ config_directory=/etc/postfix# also add this to postfix init file
 sample_directory=/etc/postfix
 command_directory=/usr/sbin
 daemon_directory=/usr/libexec/postfix
-data_directory=/usr/var/lib/postfix
-queue_directory=/usr/var/spool/postfix
-mail_spool_directory=/usr/var/mail
+data_directory=/srv/var/lib/postfix
+queue_directory=/srv/var/spool/postfix
+mail_spool_directory=/srv/var/mail
 html_directory=no
 manpage_directory=no
 readme_directory=no
