@@ -1,0 +1,71 @@
+From d81a18d87d15bbf54ddbd675bfa829cf7dfdce9e Mon Sep 17 00:00:00 2001
+From: Edoardo Spadolini <kerio00@gmail.com>
+Date: Mon, 8 Feb 2016 14:01:51 +0100
+Subject: [PATCH] Add some #ifdef feature checks to fix compilation with
+ BoringSSL
+
+---
+ Csocket.cc | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+--- a/src/Csocket.cpp
++++ b/src/Csocket.cpp
+@@ -45,9 +45,12 @@
+ 
+ #ifdef HAVE_LIBSSL
+ #include <stdio.h>
++#include <openssl/ssl.h>
+ #include <openssl/conf.h>
+ #include <openssl/engine.h>
++#ifndef OPENSSL_NO_COMP
+ #include <openssl/comp.h>
++#endif
+ #endif /* HAVE_LIBSSL */
+ 
+ #ifdef HAVE_ICU
+@@ -531,8 +534,12 @@ void ShutdownCsocket()
+ {
+ #ifdef HAVE_LIBSSL
+ 	ERR_remove_state( 0 );
++#ifndef OPENSSL_NO_ENGINE
+ 	ENGINE_cleanup();
++#endif
++#ifndef OPENSSL_IS_BORINGSSL
+ 	CONF_modules_unload( 1 );
++#endif
+ 	ERR_free_strings();
+ 	EVP_cleanup();
+ 	CRYPTO_cleanup_all_ex_data();
+@@ -573,6 +580,7 @@ bool InitSSL( ECompType eCompressionType
+ 	}
+ #endif /* _WIN32 */
+ 
++#ifndef OPENSSL_NO_COMP
+ 	COMP_METHOD *cm = NULL;
+ 
+ 	if( CT_ZLIB & eCompressionType )
+@@ -588,6 +596,7 @@ bool InitSSL( ECompType eCompressionType
+ 		if( cm )
+ 			SSL_COMP_add_compression_method( CT_RLE, cm );
+ 	}
++#endif
+ 
+ 	// setting this up once in the begining
+ 	s_iCsockSSLIdx = SSL_get_ex_new_index( 0, NULL, NULL, NULL, NULL );
+@@ -1724,6 +1733,8 @@ SSL_CTX * Csock::SetupServerCTX()
+ #ifndef OPENSSL_NO_ECDH
+ 	// Errors for the following block are non-fatal (ECDHE is nice to have
+ 	// but not a requirement)
++#ifndef OPENSSL_IS_BORINGSSL
++	// BoringSSL does this thing automatically
+ #if defined( SSL_CTX_set_ecdh_auto )
+ 	// Auto-select sensible curve
+ 	if( !SSL_CTX_set_ecdh_auto( pCTX , 1 ) )
+@@ -1742,6 +1753,7 @@ SSL_CTX * Csock::SetupServerCTX()
+ 		ERR_clear_error();
+ 	}
+ #endif /* SSL_CTX_set_tmp_ecdh */
++#endif /* !OPENSSL_IS_BORINGSSL */
+ #endif /* OPENSSL_NO_ECDH */
+ 
+ 	if( !ConfigureCTXOptions( pCTX ) )
