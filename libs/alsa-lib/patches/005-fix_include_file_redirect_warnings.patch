@@ -54,15 +54,159 @@
  #if defined(__linux__)
 --- a/src/control/control.c
 +++ b/src/control/control.c
-@@ -48,7 +48,7 @@ and IEC958 structure.
+@@ -90,7 +90,7 @@ I/O operations.
  #include <string.h>
  #include <fcntl.h>
  #include <signal.h>
 -#include <sys/poll.h>
 +#include <poll.h>
+ #include <stdbool.h>
  #include "control_local.h"
  
+@@ -174,7 +174,7 @@ int snd_ctl_new(snd_ctl_t **ctlp, snd_ct
+ 	*ctlp = ctl;
+ 	return 0;
+ }
+-	
++
+ 
  /**
+  * \brief set async mode
+@@ -1182,7 +1182,7 @@ int snd_ctl_wait(snd_ctl_t *ctl, int tim
+  * \param private_data Callback private data
+  * \return 0 otherwise a negative error code on failure
+  */
+-int snd_async_add_ctl_handler(snd_async_handler_t **handler, snd_ctl_t *ctl, 
++int snd_async_add_ctl_handler(snd_async_handler_t **handler, snd_ctl_t *ctl,
+ 			      snd_async_callback_t callback, void *private_data)
+ {
+ 	int err;
+@@ -1495,7 +1495,7 @@ int snd_ctl_elem_list_alloc_space(snd_ct
+ 	}
+ 	obj->space = entries;
+ 	return 0;
+-}  
++}
+ 
+ /**
+  * \brief free previously allocated space for CTL element identifiers list
+@@ -2933,7 +2933,7 @@ void snd_ctl_elem_value_set_index(snd_ct
+  * \param obj Data of an element.
+  * \param idx Index of member in the element.
+  * \return Value for the member.
+- */ 
++ */
+ int snd_ctl_elem_value_get_boolean(const snd_ctl_elem_value_t *obj, unsigned int idx)
+ {
+ 	assert(obj);
+@@ -2947,7 +2947,7 @@ int snd_ctl_elem_value_get_boolean(const
+  * \param obj Data of an element.
+  * \param idx Index of member in the element.
+  * \return Value for the member.
+- */ 
++ */
+ long snd_ctl_elem_value_get_integer(const snd_ctl_elem_value_t *obj, unsigned int idx)
+ {
+ 	assert(obj);
+@@ -2961,7 +2961,7 @@ long snd_ctl_elem_value_get_integer(cons
+  * \param obj Data of an element.
+  * \param idx Index of member in the element.
+  * \return Value for the member.
+- */ 
++ */
+ long long snd_ctl_elem_value_get_integer64(const snd_ctl_elem_value_t *obj, unsigned int idx)
+ {
+ 	assert(obj);
+@@ -2975,7 +2975,7 @@ long long snd_ctl_elem_value_get_integer
+  * \param obj Data of an element.
+  * \param idx Index of member in the element.
+  * \return Value for the member. This is an index of name set in the element.
+- */ 
++ */
+ unsigned int snd_ctl_elem_value_get_enumerated(const snd_ctl_elem_value_t *obj, unsigned int idx)
+ {
+ 	assert(obj);
+@@ -2989,7 +2989,7 @@ unsigned int snd_ctl_elem_value_get_enum
+  * \param obj Data of an element.
+  * \param idx Index of member in the element.
+  * \return Value for the member.
+- */ 
++ */
+ unsigned char snd_ctl_elem_value_get_byte(const snd_ctl_elem_value_t *obj, unsigned int idx)
+ {
+ 	assert(obj);
+@@ -3003,7 +3003,7 @@ unsigned char snd_ctl_elem_value_get_byt
+  * \param obj Data of an element.
+  * \param idx Index of member in the element.
+  * \param val Value for the member.
+- */ 
++ */
+ void snd_ctl_elem_value_set_boolean(snd_ctl_elem_value_t *obj, unsigned int idx, long val)
+ {
+ 	assert(obj);
+@@ -3017,7 +3017,7 @@ void snd_ctl_elem_value_set_boolean(snd_
+  * \param obj Data of an element.
+  * \param idx Index of member in the element.
+  * \param val Value for the member.
+- */ 
++ */
+ void snd_ctl_elem_value_set_integer(snd_ctl_elem_value_t *obj, unsigned int idx, long val)
+ {
+ 	assert(obj);
+@@ -3031,7 +3031,7 @@ void snd_ctl_elem_value_set_integer(snd_
+  * \param obj Data of an element.
+  * \param idx Index of member in the element.
+  * \param val Value for the member.
+- */ 
++ */
+ void snd_ctl_elem_value_set_integer64(snd_ctl_elem_value_t *obj, unsigned int idx, long long val)
+ {
+ 	assert(obj);
+@@ -3045,7 +3045,7 @@ void snd_ctl_elem_value_set_integer64(sn
+  * \param obj Data of an element.
+  * \param idx Index of member in the element.
+  * \param val Value for the member.
+- */ 
++ */
+ void snd_ctl_elem_value_set_enumerated(snd_ctl_elem_value_t *obj, unsigned int idx, unsigned int val)
+ {
+ 	assert(obj);
+@@ -3059,7 +3059,7 @@ void snd_ctl_elem_value_set_enumerated(s
+  * \param obj Data of an element.
+  * \param idx Index of member in the element.
+  * \param val Value for the member.
+- */ 
++ */
+ void snd_ctl_elem_value_set_byte(snd_ctl_elem_value_t *obj, unsigned int idx, unsigned char val)
+ {
+ 	assert(obj);
+@@ -3084,7 +3084,7 @@ void snd_ctl_elem_set_bytes(snd_ctl_elem
+  * \brief Get memory block from given data as an element of bytes type.
+  * \param obj Data of an element.
+  * \return Pointer for byte array.
+- */ 
++ */
+ const void * snd_ctl_elem_value_get_bytes(const snd_ctl_elem_value_t *obj)
+ {
+ 	assert(obj);
+@@ -3096,7 +3096,7 @@ const void * snd_ctl_elem_value_get_byte
+  *	  type.
+  * \param obj Data of an element.
+  * \param ptr Pointer to IEC958 data.
+- */ 
++ */
+ void snd_ctl_elem_value_get_iec958(const snd_ctl_elem_value_t *obj, snd_aes_iec958_t *ptr)
+ {
+ 	assert(obj && ptr);
+@@ -3108,7 +3108,7 @@ void snd_ctl_elem_value_get_iec958(const
+  *	  type.
+  * \param obj Data of an element.
+  * \param ptr Pointer to IEC958 data.
+- */ 
++ */
+ void snd_ctl_elem_value_set_iec958(snd_ctl_elem_value_t *obj, const snd_aes_iec958_t *ptr)
+ {
+ 	assert(obj && ptr);
 --- a/src/control/control_shm.c
 +++ b/src/control/control_shm.c
 @@ -27,7 +27,7 @@
@@ -76,7 +220,7 @@
  #include <sys/mman.h>
 --- a/src/pcm/pcm.c
 +++ b/src/pcm/pcm.c
-@@ -634,7 +634,7 @@ playback devices.
+@@ -650,7 +650,7 @@ playback devices.
  #include <stdarg.h>
  #include <signal.h>
  #include <ctype.h>
