@@ -10,7 +10,7 @@
 #
 adb_pid="${$}"
 adb_pidfile="/var/run/adblock.pid"
-adb_scriptver="1.4.3"
+adb_scriptver="1.4.4"
 adb_mincfgver="2.3"
 adb_scriptdir="${0%/*}"
 if [ -r "${adb_pidfile}" ]
@@ -97,7 +97,7 @@ do
     then
         if [ "${src_name}" = "blacklist" ]
         then
-            tmp_domains="$(cat "${url}")"
+            tmp_domains="$(cat "${url}" | strings -n 1)"
         elif [ "${src_name}" = "shalla" ]
         then
             shalla_archive="${adb_tmpdir}/shallalist.tar.gz"
@@ -117,13 +117,13 @@ do
                         break
                     fi
                 done
-                tmp_domains="$(cat "${shalla_file}")"
+                tmp_domains="$(cat "${shalla_file}" | strings -n 1)"
                 rm -rf "${adb_tmpdir}/BL"
                 rm -f "${shalla_archive}"
                 rm -f "${shalla_file}"
             fi
         else
-            tmp_domains="$(${adb_fetch} ${fetch_parm} -O- "${url}")"
+            tmp_domains="$(${adb_fetch} ${fetch_parm} -O- "${url}" | strings -n 1)"
         fi
         rc=${?}
     else
