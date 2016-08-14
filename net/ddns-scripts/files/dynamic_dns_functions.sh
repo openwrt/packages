@@ -625,50 +625,122 @@ verify_proxy() {
 	return 0
 }
 
+get_wget_path() {
+	local wgetpath
+
+	# lets prefer GNU Wget because it does all for us - IPv4/IPv6/HTTPS/PROXY/force IP version
+	if [ -x /usr/bin/wget-ssl ]; then
+		wgetpath=/usr/bin/wget-ssl
+	elif [ -x /usr/bin/wget-ssl ]; then
+		wgetpath=/usr/bin/wget-nossl
+	elif [ -x /bin/uclient-fetch ]; then
+		wgetpath=/bin/uclient-fetch
+	elif [ -x /bin/wget ]; then
+		wgetpath=/bin/wget
+	fi
+	echo "$wgetpath"
+}
+
+get_wget_capabilities() {
+        local fullpath="$1"
+	
+	case "$fullpath" in
+	/usr/bin/wget-ssl)
+		__LOGPROG="GNU Wget SSL"
+		echo "ssl bindip wgetproxy forceipv ipv6 extras cadir"
+		;;
+	/usr/bin/wget)
+		__LOGPROG="GNU Wget No-SSL"
+		echo "bindip wgetproxy forceipv ipv6 extras"
+		;;
+	/bin/uclient-fetch)
+		if [ -r "/lib/libustream-ssl.so" ]; then
+			__LOGPROG="uclient-fetch-ssl"
+			echo "ssl forceipv ipv6"
+		else
+			__LOGPROG="uclient-fetch"
+			echo "forceipv ipv6"
+		fi
+		;;
+	*)
+		if "$fullpath" -V 2>/dev/null | grep -iqF 'busybox'; then
+			__LOGPROG="BusyBox Wget"
+			echo "plain"
+		else
+			__LOGPROG="Unknown Wget"
+			echo "unknown"
+		fi
+		;;
+	esac
+}
+
 do_transfer() {
 	# $1	# URL to use
 	local __URL="$1"
 	local __ERR=0
 	local __CNT=0	# error counter
-	local __PROG  __RUNPROG
+	local __PROG  __RUNPROG __LOGPROG
 
 	[ $# -ne 1 ] && write_log 12 "Error in 'do_transfer()' - wrong number of parameters"
 
 	# lets prefer GNU Wget because it does all for us - IPv4/IPv6/HTTPS/PROXY/force IP version
-	if [ -n "$(which wget-ssl)" -a $USE_CURL -eq 0 ]; then 			# except global option use_curl is set to "1"
-		__PROG="$(which wget-ssl) -nv -t 1 -O $DATFILE -o $ERRFILE"	# non_verbose no_retry outfile errfile
-		# force network/ip to use for communication
-		if [ -n "$bind_network" ]; then
-			local __BINDIP
-			# set correct program to detect IP
-			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" || __RUNPROG="network_get_ipaddr6"
-			eval "$__RUNPROG __BINDIP $bind_network" || \
-				write_log 13 "Can not detect local IP using '$__RUNPROG $bind_network' - Error: '$?'"
-			write_log 7 "Force communication via IP '$__BINDIP'"
-			__PROG="$__PROG --bind-address=$__BINDIP"
+	local wgetpath="$(get_wget_path)"
+
+	if [ -n "$wgetpath" ] && [ $USE_CURL -eq 0 ]; then
+		local wget_cap="$(get_wget_capabilities "$wgetpath")"
+		__PROG="$wgetpath -O $DATFILE"
+		if echo "$wget_cap" | grep -q 'extras'; then
+			__PROG="$__PROG -nv -t 1 -o $ERRFILE"
+		else
+			__PROG="$__PROG -q"
 		fi
-		# force ip version to use
-		if [ $force_ipversion -eq 1 ]; then
-			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"	# force IPv4/IPv6
+		if echo "$wget_cap" | grep -q 'bindip.*ipv6'; then
+			if [ -n "$bind_network" ]; then
+				local __BINDIP
+				[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" || __RUNPROG="network_get_ipaddr6"
+				eval "$__RUNPROG __BINDIP $bind_network" || \
+					write_log 13 "Can not detect local IP using '$__RUNPROG $bind_network' - Error: '$?'"
+				write_log 7 "Force communication via IP '$__BINDIP'"
+				__PROG="$__PROG --bind-address=$__BINDIP"
+			fi
+		else
+			[ -n "$bind_network" ] && \
+				write_log 14 "$__LOGPROG: FORCE binding to specific address not supported"
 		fi
-		# set certificate parameters
-		if [ $use_https -eq 1 ]; then
-			if [ "$cacert" = "IGNORE" ]; then	# idea from Ticket #15327 to ignore server cert
-				__PROG="$__PROG --no-check-certificate"
-			elif [ -f "$cacert" ]; then
-				__PROG="$__PROG --ca-certificate=${cacert}"
-			elif [ -d "$cacert" ]; then
-				__PROG="$__PROG --ca-directory=${cacert}"
-			elif [ -n "$cacert" ]; then		# it's not a file and not a directory but given
-				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
+		if echo "$wget_cap" | grep -q 'forceipv.*ipv6'; then
+			if [ $force_ipversion -eq 1 ]; then
+				[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"
+			fi
+		else
+			[ $force_ipversion -eq 1 ] && \
+				write_log 14 "$__LOGPROG: Force connecting to IPv4 or IPv6 addresses not supported"
+		fi
+		if echo "$wget_cap" | grep -q 'wgetproxy'; then
+			[ -z "$proxy" ] && __PROG="$__PROG --no-proxy"
+		else
+			[ -z "$proxy" ] && __PROG="$__PROG -Y off" || __PROG="$__PROG -Y on"
+		fi
+		if echo "$wget_cap" | grep -q 'ssl'; then
+			if [ $use_https -eq 1 ]; then
+				if [ "$cacert" = "IGNORE" ]; then
+					__PROG="$__PROG --no-check-certificate"
+				elif [ -f "$cacert" ]; then
+					__PROG="$__PROG --ca-certificate=${cacert}"
+				elif [ -d "$cacert" ] && echo "$wget_cap" | grep -q 'cadir'; then
+					__PROG="$__PROG --ca-directory=${cacert}"
+				elif [ -n "$cacert" ]; then
+					write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
+				fi
+			fi
+			__RUNPROG="$__PROG '$__URL'"
+			__PROG="$__LOGPROG"
+		else
+			if [ "$__LOGPROG" = "uclient-fetch" ]; then
+				write_log 14 "$__LOGPROG: No HTTPS support.  Install a libustream-*ssl package"
+			else
+				write_log 14 "$__LOGPROG: No HTTPS support."
 			fi
 		fi
-		# disable proxy if no set (there might be .wgetrc or .curlrc or wrong environment set)
-		[ -z "$proxy" ] && __PROG="$__PROG --no-proxy"
-
-		__RUNPROG="$__PROG '$__URL'"	# build final command
-		__PROG="GNU Wget"		# reuse for error logging
-
 	# 2nd choice is cURL IPv4/IPv6/HTTPS
 	# libcurl might be compiled without Proxy or HTTPS Support
 	elif [ -n "$(which curl)" ]; then
@@ -714,52 +786,6 @@ do_transfer() {
 
 		__RUNPROG="$__PROG '$__URL'"	# build final command
 		__PROG="cURL"			# reuse for error logging
-
-	# uclient-fetch possibly with ssl support if /lib/libustream-ssl.so installed
-	elif [ -n "$(which uclient-fetch)" ]; then
-		__PROG="$(which uclient-fetch) -q -O $DATFILE"
-		# force network/ip not supported
-		[ -n "$__BINDIP" ] && \
-			write_log 14 "uclient-fetch: FORCE binding to specific address not supported"
-		# force ip version to use
-		if [ $force_ipversion -eq 1 ]; then
-			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"       # force IPv4/IPv6
-		fi
-		# https possibly not supported
-		[ $use_https -eq 1 -a ! -f /lib/libustream-ssl.so ] && \
-			write_log 14 "uclient-fetch: no HTTPS support! Additional install one of ustream-ssl packages"
-		# proxy support
-		[ -z "$proxy" ] && __PROG="$__PROG -Y off" || __PROG="$__PROG -Y on"
-		# https & certificates
-		if [ $use_https -eq 1 ]; then
-			if [ "$cacert" = "IGNORE" ]; then
-				__PROG="$__PROG --no-check-certificate"
-			elif [ -f "$cacert" ]; then
-				__PROG="$__PROG --ca-certificate=$cacert"
-			elif [ -n "$cacert" ]; then		# it's not a file; nothing else supported
-				write_log 14 "No valid certificate file '$cacert' for HTTPS communication"
-			fi
-		fi
-		__RUNPROG="$__PROG '$__URL' 2>$ERRFILE"		# build final command
-		__PROG="uclient-fetch"				# reuse for error logging
-
-	# Busybox Wget or any other wget in search $PATH (did not support neither IPv6 nor HTTPS)
-	elif [ -n "$(which wget)" ]; then
-		__PROG="$(which wget) -q -O $DATFILE"
-		# force network/ip not supported
-		[ -n "$__BINDIP" ] && \
-			write_log 14 "BusyBox Wget: FORCE binding to specific address not supported"
-		# force ip version not supported
-		[ $force_ipversion -eq 1 ] && \
-			write_log 14 "BusyBox Wget: Force connecting to IPv4 or IPv6 addresses not supported"
-		# https not supported
-		[ $use_https -eq 1 ] && \
-			write_log 14 "BusyBox Wget: no HTTPS support"
-		# disable proxy if no set (there might be .wgetrc or .curlrc or wrong environment set)
-		[ -z "$proxy" ] && __PROG="$__PROG -Y off"
-
-		__RUNPROG="$__PROG '$__URL' 2>$ERRFILE"		# build final command
-		__PROG="Busybox Wget"				# reuse for error logging
 
 	else
 		write_log 13 "Neither 'Wget' nor 'cURL' nor 'uclient-fetch' installed or executable"
