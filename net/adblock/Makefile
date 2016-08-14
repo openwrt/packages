@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=1.2.1
+PKG_VERSION:=1.4.4
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -18,13 +18,12 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Powerful adblock script to block ad/abuse domains
-	DEPENDS:=+wget
 	PKGARCH:=all
 endef
 
 define Package/$(PKG_NAME)/description
 Powerful adblock script to block ad/abuse domains.
-Currently the script supports 19 domain blacklist sites plus manual black- and whitelist overrides.
+Currently the script supports 20 domain blacklist sites plus manual black- and whitelist overrides.
 Please see https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md for further information.
 
 endef
