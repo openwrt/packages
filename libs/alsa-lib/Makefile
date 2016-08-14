@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-lib
-PKG_VERSION:=1.1.1
+PKG_VERSION:=1.1.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/lib/ \
 		http://alsa.cybermirror.org/lib/
-PKG_MD5SUM:=881060d2c568f7f49db82c58df2f9ddc
+PKG_MD5SUM:=1946e6438b8262a7b8fdadacd0e06ba7
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Peter Wagner <tripolar@gmx.at>
 
