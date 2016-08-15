@@ -1,0 +1,31 @@
+--- a/src/common/fakepoll.h
++++ b/src/common/fakepoll.h
+@@ -40,11 +40,11 @@
+ #define POLL_NO_WARN 
+ #define SYS_POLL_NO_WARN
+ 
+-#ifdef HAVE_SYS_POLL_H
+-#include <sys/poll.h>
+-#define  __FAKEPOLL_H
+-#elif HAVE_POLL_H
++#ifdef HAVE_POLL_H
+ #include <poll.h>
++#define  __FAKEPOLL_H
++#elif HAVE_SYS_POLL_H
++#include <sys/poll.h>
+ #define __FAKEPOLL_H
+ #endif
+ 
+--- a/src/common/sendpacket.c
++++ b/src/common/sendpacket.c
+@@ -148,10 +148,6 @@
+ #include "txring.h"
+ #endif
+ 
+-#ifndef __GLIBC__
+-typedef int socklen_t;
+-#endif
+-
+ static sendpacket_t *sendpacket_open_pf(const char *, char *);
+ static struct tcpr_ether_addr *sendpacket_get_hwaddr_pf(sendpacket_t *);
+ static int get_iface_index(int fd, const char *device, char *);
