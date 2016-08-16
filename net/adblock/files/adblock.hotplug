@@ -15,6 +15,9 @@ f_envload
 
 if [ "${INTERFACE}" = "${adb_wanif4}" ] || [ "${INTERFACE}" = "${adb_wanif6}" ]
 then
-    /etc/init.d/adblock start
-    f_log "adblock service started due to '${ACTION}' of '${INTERFACE}' interface"
+    if [ -z "${adb_hotplugif}" ] || [ "${INTERFACE}" = "${adb_hotplugif}" ]
+    then
+        /etc/init.d/adblock start
+        f_log "adblock service started due to '${ACTION}' of '${INTERFACE}' interface"
+    fi
 fi
