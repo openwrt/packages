@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=x264
-PKG_VERSION:=snapshot-20160416-2245-stable
+PKG_VERSION:=snapshot-20160815-2245-stable
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.videolan.org/x264/snapshots/
 PKG_MAINTAINER:=Adrian Panella <ianchi74@outlook.com>
-PKG_MD5SUM:=70953574692cb80232d2879b80a140e0
+PKG_MD5SUM:=93fa596ea1b5513fec73e9de27589dd4
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
