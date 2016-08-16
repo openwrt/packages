@@ -1,0 +1,217 @@
+From 84849be189c49ef9556bd84d5e5103317372e8a7 Mon Sep 17 00:00:00 2001
+From: Karel Slany <karel.slany@nic.cz>
+Date: Thu, 11 Aug 2016 11:39:39 +0200
+Subject: [PATCH] Added conversion to wire format when writing FNV64 hash
+ values.
+
+Test on big-endian machines have been failing.
+---
+ src/libknot/cookies/alg-fnv64.c     |  6 +++---
+ tests/libknot/test_cookies-client.c | 20 ++++++++++----------
+ tests/libknot/test_cookies-server.c | 20 ++++++++++----------
+ 3 files changed, 23 insertions(+), 23 deletions(-)
+
+diff --git a/src/libknot/cookies/alg-fnv64.c b/src/libknot/cookies/alg-fnv64.c
+index 9989a4f..5e263c1 100644
+--- a/src/libknot/cookies/alg-fnv64.c
++++ b/src/libknot/cookies/alg-fnv64.c
+@@ -17,10 +17,10 @@
+ #include <assert.h>
+ #include <stdint.h>
+ #include <stdlib.h>
+-#include <string.h>
+ 
+ #include "contrib/fnv/fnv.h"
+ #include "contrib/sockaddr.h"
++#include "contrib/wire.h"
+ #include "libknot/attribute.h"
+ #include "libknot/cookies/alg-fnv64.h"
+ #include "libknot/rrtype/opt-cookie.h"
+@@ -80,7 +80,7 @@ static uint16_t cc_gen_fnv64(const struct knot_cc_input *input,
+ 	assert(KNOT_OPT_COOKIE_CLNT == sizeof(hash_val));
+ 
+ 	cc_len = sizeof(hash_val);
+-	memcpy(cc_out, &hash_val, cc_len);
++	wire_write_u64(cc_out, hash_val);
+ 
+ 	return cc_len;
+ }
+@@ -127,7 +127,7 @@ static uint16_t sc_gen_fnv64(const struct knot_sc_input *input,
+ 	assert(SRVR_FNV64_HASH_SIZE == sizeof(hash_val));
+ 
+ 	hash_len = sizeof(hash_val);
+-	memcpy(hash_out, &hash_val, hash_len);
++	wire_write_u64(hash_out, hash_val);
+ 
+ 	return hash_len;
+ }
+diff --git a/tests/libknot/test_cookies-client.c b/tests/libknot/test_cookies-client.c
+index 44be903..712dbba 100644
+--- a/tests/libknot/test_cookies-client.c
++++ b/tests/libknot/test_cookies-client.c
+@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_cc_alg_fnv64.gen_func(&cc_in, hash, hash_len);
+ 	ok(hash_len != 0 && hash_len == knot_cc_alg_fnv64.cc_size, "cookies: FNV64 client cookie output");
+ 	{
+-		uint8_t expected[] = { 0x74, 0x31, 0xf9, 0xa8, 0x03, 0xef, 0x15, 0xb1 };
++		uint8_t expected[] = { 0xb1, 0x15, 0xef, 0x03, 0xa8, 0xf9, 0x31, 0x74 };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 client cookie content");
+ 	}
+ 
+@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_cc_alg_fnv64.gen_func(&cc_in, hash, hash_len);
+ 	ok(hash_len != 0 && hash_len == knot_cc_alg_fnv64.cc_size, "cookies: FNV64 client cookie output");
+ 	{
+-		uint8_t expected[] = { 0x7c, 0x62, 0x25, 0xd2, 0x43, 0xdd, 0x09, 0xe7 };
++		uint8_t expected[] = { 0xe7, 0x09, 0xdd, 0x43, 0xd2, 0x25, 0x62, 0x7c };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 client cookie content");
+ 	}
+ 
+@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_cc_alg_fnv64.gen_func(&cc_in, hash, hash_len);
+ 	ok(hash_len != 0 && hash_len == knot_cc_alg_fnv64.cc_size, "cookies: FNV64 client cookie output");
+ 	{
+-		uint8_t expected[] = { 0x7c, 0x62, 0x25, 0xd2, 0x43, 0xdd, 0x09, 0xe7 };
++		uint8_t expected[] = { 0xe7, 0x09, 0xdd, 0x43, 0xd2, 0x25, 0x62, 0x7c };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 client cookie content");
+ 	}
+ 
+@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_cc_alg_fnv64.gen_func(&cc_in, hash, hash_len);
+ 	ok(hash_len != 0 && hash_len == knot_cc_alg_fnv64.cc_size, "cookies: FNV64 client cookie output");
+ 	{
+-		uint8_t expected[] = { 0x05, 0xa9, 0xd1, 0x08, 0x1b, 0x98, 0xe0, 0xaa };
++		uint8_t expected[] = { 0xaa, 0xe0, 0x98, 0x1b, 0x08, 0xd1, 0xa9, 0x05 };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 client cookie content");
+ 	}
+ 
+@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_cc_alg_fnv64.gen_func(&cc_in, hash, hash_len);
+ 	ok(hash_len != 0 && hash_len == knot_cc_alg_fnv64.cc_size, "cookies: FNV64 client cookie output");
+ 	{
+-		uint8_t expected[] = { 0x05, 0xa9, 0xd1, 0x08, 0x1b, 0x98, 0xe0, 0xaa };
++		uint8_t expected[] = { 0xaa, 0xe0, 0x98, 0x1b, 0x08, 0xd1, 0xa9, 0x05 };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 client cookie content");
+ 	}
+ 
+@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
+ 	}
+ 
+ 	{
+-		uint8_t cookie[] = { 0x33, 0x0c, 0xa6, 0x80, 0x94, 0x17, 0xe5, 0xaf };
++		uint8_t cookie[] = { 0xaf, 0xe5, 0x17, 0x94, 0x80, 0xa6, 0x0c, 0x33 };
+ 		ret = knot_cc_check(cookie, sizeof(cookie), NULL, &knot_cc_alg_fnv64);
+ 		ok(ret == KNOT_EINVAL, "cookies: FNV64 client cookie check no input");
+ 	}
+@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
+ 	cc_in.secret_data = secret;
+ 	cc_in.secret_len = sizeof(secret);
+ 	{
+-		uint8_t cookie[] = { 0x33, 0x0c, 0xa6, 0x80, 0x94, 0x17, 0xe5, 0xaf };
++		uint8_t cookie[] = { 0xaf, 0xe5, 0x17, 0x94, 0x80, 0xa6, 0x0c, 0x33 };
+ 		ret = knot_cc_check(cookie, sizeof(cookie), &cc_in, NULL);
+ 		ok(ret == KNOT_EINVAL, "cookies: FNV64 client cookie check no algorithm");
+ 	}
+@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
+ 	cc_in.secret_data = secret;
+ 	cc_in.secret_len = sizeof(secret);
+ 	{
+-		uint8_t cookie[] = { 0x33, 0x0c, 0xa6, 0x80, 0x94, 0x17, 0xe5, 0xaf };
++		uint8_t cookie[] = { 0xaf, 0xe5, 0x17, 0x94, 0x80, 0xa6, 0x0c, 0x33 };
+ 		ret = knot_cc_check(cookie, sizeof(cookie), &cc_in, &knot_cc_alg_fnv64);
+ 		ok(ret == KNOT_EOK, "cookies: FNV64 client good cookie check");
+ 	}
+@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
+ 	cc_in.secret_data = secret;
+ 	cc_in.secret_len = sizeof(secret);
+ 	{
+-		uint8_t cookie[] = { 0x33, 0x0c, 0xa6, 0x80, 0x94, 0x17, 0xe5, 0xaf };
++		uint8_t cookie[] = { 0xaf, 0xe5, 0x17, 0x94, 0x80, 0xa6, 0x0c, 0x33 };
+ 		ret = knot_cc_check(cookie, sizeof(cookie) - 1, &cc_in, &knot_cc_alg_fnv64);
+ 		ok(ret == KNOT_EINVAL, "cookies: FNV64 client cookie check invalid length");
+ 	}
+@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
+ 	cc_in.secret_data = secret;
+ 	cc_in.secret_len = sizeof(secret);
+ 	{
+-		uint8_t cookie[] = { 0x33, 0x0c, 0xa6, 0x80, 0x94, 0x17, 0xe5, 0xae };
++		uint8_t cookie[] = { 0xaf, 0xe5, 0x17, 0x94, 0x80, 0xa6, 0x0c, 0x32 };
+ 		ret = knot_cc_check(cookie, sizeof(cookie), &cc_in, &knot_cc_alg_fnv64);
+ 		ok(ret == KNOT_EINVAL, "cookies: FNV64 client cookie check invalid cookie");
+ 	}
+diff --git a/tests/libknot/test_cookies-server.c b/tests/libknot/test_cookies-server.c
+index 32001c1..66a54ba 100644
+--- a/tests/libknot/test_cookies-server.c
++++ b/tests/libknot/test_cookies-server.c
+@@ -28,10 +28,10 @@
+ #include "libknot/rrtype/opt-cookie.h"
+ 
+ const char *cookie_opts[] = {
+-	"\x00\x0a" "\x00\x10" "\x00\x01\x02\x03\x04\x05\x06\x07" "\xe0\xd9\x95\x4e\xbc\xc3\x99\x18", /* 8 octets long wrong server cookie. */
+-	"\x00\x0a" "\x00\x10" "\x00\x01\x02\x03\x04\x05\x06\x07" "\xe0\xd9\x95\x4e\xbc\xc3\x99\x19", /* 8 octets long OK server cookie. */
+-	"\x00\x0a" "\x00\x18" "\x00\x01\x02\x03\x04\x05\x06\x07" "\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\xc0\xbd\xdb\xec\x19\x78\x88\x38", /* 8B nonce 8B hash long wrong server cookie. */
+-	"\x00\x0a" "\x00\x18" "\x00\x01\x02\x03\x04\x05\x06\x07" "\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\xc0\xbd\xdb\xec\x19\x78\x88\x39" /* 8B nonce 8B hash long OK server cookie. */
++	"\x00\x0a" "\x00\x10" "\x00\x01\x02\x03\x04\x05\x06\x07" "\x19\x99\xc3\xbc\x4e\x95\xd9\xdf", /* 8 octets long wrong server cookie. */
++	"\x00\x0a" "\x00\x10" "\x00\x01\x02\x03\x04\x05\x06\x07" "\x19\x99\xc3\xbc\x4e\x95\xd9\xe0", /* 8 octets long OK server cookie. */
++	"\x00\x0a" "\x00\x18" "\x00\x01\x02\x03\x04\x05\x06\x07" "\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x39\x88\x78\x19\xec\xdb\xbd\xbf", /* 8B nonce 8B hash long wrong server cookie. */
++	"\x00\x0a" "\x00\x18" "\x00\x01\x02\x03\x04\x05\x06\x07" "\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x39\x88\x78\x19\xec\xdb\xbd\xc0"/* 8B nonce 8B hash long OK server cookie. */
+ };
+ 
+ #define ROPT(i) ((const uint8_t *)cookie_opts[(i)])
+@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_sc_alg_fnv64.hash_func(&sc_in, hash, hash_len);
+ 	ok(hash_len != 0, "cookies: FNV64 server cookie output");
+ 	{
+-		uint8_t expected[] = { 0x75, 0x45, 0x7c, 0x9a, 0xe0, 0x13, 0xa8, 0xea };
++		uint8_t expected[] = { 0xea, 0xa8, 0x13, 0xe0, 0x9a, 0x7c, 0x45, 0x75 };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 server cookie content");
+ 	}
+ 
+@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_sc_alg_fnv64.hash_func(&sc_in, hash, hash_len);
+ 	ok(hash_len != 0, "cookies: FNV64 server cookie output");
+ 	{
+-		uint8_t expected[] = { 0xc0, 0xbd, 0xdb, 0xec, 0x19, 0x78, 0x88, 0x39 };
++		uint8_t expected[] = { 0x39, 0x88, 0x78, 0x19, 0xec, 0xdb, 0xbd, 0xc0 };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 server cookie content");
+ 	}
+ 
+@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_sc_alg_fnv64.hash_func(&sc_in, hash, hash_len);
+ 	ok(hash_len != 0, "cookies: FNV64 server cookie output");
+ 	{
+-		uint8_t expected[] = { 0xe0, 0xd9, 0x95, 0x4e, 0xbc, 0xc3, 0x99, 0x19 };
++		uint8_t expected[] = { 0x19, 0x99, 0xc3, 0xbc, 0x4e, 0x95, 0xd9, 0xe0 };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 server cookie content");
+ 	}
+ 
+@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_sc_alg_fnv64.hash_func(&sc_in, hash, hash_len);
+ 	ok(hash_len != 0, "cookies: FNV64 server cookie output");
+ 	{
+-		uint8_t expected[] = { 0x4d, 0xde, 0xfa, 0x22, 0xb9, 0x0a, 0xcc, 0xd8 };
++		uint8_t expected[] = { 0xd8, 0xcc, 0x0a, 0xb9, 0x22, 0xfa, 0xde, 0x4d };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 server cookie content");
+ 	}
+ 
+@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_sc_alg_fnv64.hash_func(&sc_in, hash, hash_len);
+ 	ok(hash_len != 0, "cookies: FNV64 server cookie output");
+ 	{
+-		uint8_t expected[] = { 0xa0, 0x35, 0xe3, 0xe0, 0x78, 0x7a, 0x91, 0xaf };
++		uint8_t expected[] = { 0xaf, 0x91, 0x7a, 0x78, 0xe0, 0xe3, 0x35, 0xa0 };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 server cookie content");
+ 	}
+ 
+@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
+ 	hash_len = knot_sc_alg_fnv64.hash_func(&sc_in, hash, hash_len);
+ 	ok(hash_len != 0, "cookies: FNV64 server cookie output");
+ 	{
+-		uint8_t expected[] = { 0x8e, 0xa3, 0xf8, 0x97, 0x84, 0x0a, 0x3d, 0x8b };
++		uint8_t expected[] = { 0x8b, 0x3d, 0x0a, 0x84, 0x97, 0xf8, 0xa3, 0x8e };
+ 		ok(sizeof(expected) == hash_len && 0 == memcmp(expected, hash, hash_len), "cookies: FNV64 server cookie content");
+ 	}
+ 
+-- 
+2.7.4
+
