@@ -16,7 +16,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * [feodotracker](https://feodotracker.abuse.ch)
     * => daily updates, approx. 0-10 entries
     * [hphosts](https://hosts-file.net)
-    * => monthly updates, approx. 390.000 entries
+    * => monthly updates, approx. 50.000 entries
     * [malwaredomains](http://malwaredomains.com)
     * => daily updates, approx. 16.000 entries
     * [malwaredomainlist](http://www.malwaredomainlist.com)
@@ -61,7 +61,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * use two dynamic uhttpd instances as adblock pixel server, separated for ads delivered on port 80 and on port 443
 * use dynamic iptables chains/rulesets for adblock related redirects/rejects
 * init system support (start/stop/restart/reload/toggle/stats/cfgup)
-* hotplug support, the adblock start will be triggered by wan 'ifup' event
+* hotplug support, the adblock start will be triggered by wan 'ifup' event, this can be restricted to a certain wan interface or disabled at all (see config options below)
 * toggle to quickly switch adblock 'on' or 'off'
 * optional: automatic adblock list backup/restore, backups will be (de-)compressed on the fly (disabled by default)
 * optional: add new adblock sources via uci config (see example below)
@@ -101,6 +101,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **white-/blacklist:** add domain white- or blacklist entries to always-allow or -deny certain (sub) domains, by default both lists are located in _/etc/adblock_. Please add one domain per line - ip addresses, wildcards & regex are _not_ allowed (see example below)
 * **backup/restore:** enable the backup/restore feature, to restore automatically the latest compressed backup of your adblock lists in case of any processing error (i.e. a single blocklist source is down). Please use an (external) solid partition and _not_ your volatile router temp directory for this
 * **list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
+* **hotplug fine tuning:** to restrict hotplug support to a certain wan interface or to disable it at all, you can set 'adb\_hotplugif' to an existing interface like 'wan' or to a non-existing 'dummy' interface
 * **new list sources:** you could add new blocklist sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
 * **AP mode:** in 'AP mode' adblock uses automatically the local router ip as nullip address. To make sure that your LuCI interface will be still accessible, you have to change the local uhttpd instance to ports <> 80/443 (see example below)
 * **restricted mode:** to disable flash writes with adblock status information to the adblock config file (used by LuCI frontend), please set 'adb\_restricted' to '1'
@@ -122,6 +123,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_forcedns => redirect all local DNS queries to the local dnsmasq resolver (default: '1', enabled / always disabled in 'AP mode')
     * adb\_fetchttl => set the timeout for list downloads (default: '5' seconds)
     * adb\_restricted => disable updates of the adblock config file (no flash writes) during runtime (default: '0', disabled)
+    * adb\_hotplugif => restrict hotplug support to a certain wan interface or disable it at all (default: '', disabled)
 
 ## Examples
 

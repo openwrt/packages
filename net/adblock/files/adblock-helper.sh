@@ -6,6 +6,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+adb_hotplugif=""
 adb_lanif="lan"
 adb_nullport="65534"
 adb_nullportssl="65535"
