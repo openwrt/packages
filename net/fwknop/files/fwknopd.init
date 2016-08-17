@@ -53,6 +53,8 @@ gen_confs()
 				if [ "$option" = "uci_enabled" ] && [ "$value" -eq 1 ] ; then
 					> /etc/fwknop/fwknopd.conf
 					> /etc/fwknop/access.conf
+                                        chmod 600 /etc/fwknop/fwknopd.conf
+                                        chmod 600 /etc/fwknop/access.conf
 					UCI_ENABLED=1
 				fi
 			}

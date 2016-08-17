@@ -1,0 +1,18 @@
+--- nano-2.6.3/src/winio.c	2016-08-10 04:22:23.000000000 -0500
++++ nano-2.6.3.new/src/winio.c	2016-08-17 00:58:35.663135848 -0500
+@@ -502,7 +502,6 @@
+ 	return sc_seq_or(do_prev_block, 0);
+     else if (retval == controldown)
+ 	return sc_seq_or(do_next_block, 0);
+-#endif
+ 
+     /* When not running under X, check for the bare arrow keys whether
+      * the Ctrl key is being held together with them. */
+@@ -521,6 +520,7 @@
+ 		return sc_seq_or(do_next_word_void, 0);
+ 	}
+     }
++#endif
+ 
+     switch (retval) {
+ #ifdef KEY_SLEFT
