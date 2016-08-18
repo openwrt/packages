@@ -51,7 +51,6 @@ CONFIGURE_ARGS +=			\
 	--host-cc="$(HOSTCC)"		\
 	--target-list=''		\
 	--disable-zlib-test		\
-	--enable-guest-agent		\
 	--disable-tools			\
 	--without-pixman
 
