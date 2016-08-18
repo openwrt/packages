@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=enum34
-PKG_VERSION:=1.1.2
+PKG_VERSION:=1.1.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/e/enum34
-PKG_MD5SUM:=025bb71b3f9d2fad15d0ee53e48dc873
+PKG_SOURCE_URL:=https://pypi.python.org/packages/bf/3e/31d502c25302814a7c2f1d3959d2a3b3f78e509002ba91aea64993936876
+PKG_MD5SUM:=5f13a0841a61f7fc295c514490d120d0
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=enum/LICENSE
@@ -38,7 +38,7 @@ endef
 
 define PyPackage/python-enum34/filespec
 +|$(PYTHON_PKG_DIR)
--|$(PYTHON_PKG_DIR)/enum/test_enum.py
+-|$(PYTHON_PKG_DIR)/enum/test.py
 endef
 
 define Build/Compile

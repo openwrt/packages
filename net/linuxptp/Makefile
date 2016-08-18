@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linuxptp
 PKG_VERSION:=20151118
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_REV:=999c86f4a9da4bf4508b3a69289f58166ed18a55
 
 PKG_MAINTAINER:=Wojciech Dubowik <Wojciech.Dubowik@neratec.com>
@@ -40,6 +40,9 @@ define Package/linuxptp/description
  PTP was developed to provide very precise time coordination of LAN connected
  computers.
 endef
+
+MAKE_VARS += \
+	EXTRA_CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)"
 
 define Package/linuxptp/install
 	$(INSTALL_DIR) $(1)/usr/sbin
