@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpreplay
 PKG_VERSION:=4.1.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/appneta/tcpreplay/releases/download/v$(PKG_VERSION)
@@ -32,7 +32,7 @@ define Package/tcpreplay/default
   CATEGORY:=Network
   URL:=http://tcpreplay.appneta.com/
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-  DEPENDS:=+librt +libpcap
+  DEPENDS:=+librt +libpcap +libnl
 endef
 
 define Package/tcpbridge
