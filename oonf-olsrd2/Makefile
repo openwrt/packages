@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oonf-olsrd2
-PKG_VERSION:=0.12.2
-PKG_REV:=ea3e6e51f94b9b0642f84b44de35b6cab5f30b65
+PKG_VERSION:=0.12.3
+PKG_REV:=87baaf3b6ce9ef117956b37a4bfb01f379cd6aaf
 PKG_RELEASE:=$(PKG_REV)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
