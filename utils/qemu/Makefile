@@ -42,13 +42,28 @@ CONFIGURE_ARGS:=$(filter-out	\
 	--disable-nls		\
 	, $(CONFIGURE_ARGS))
 
-# Building qemu-ga alone does not require zlib
-CONFIGURE_ARGS+=			\
+# Building qemu-ga alone does not require zlib, pixman
+#
+# --disable-tools to disable building pixman which will fail at the moment on
+#  octeon mips64 target.
+CONFIGURE_ARGS +=			\
 	--cross-prefix=$(TARGET_CROSS)	\
 	--host-cc="$(HOSTCC)"		\
 	--target-list=''		\
 	--disable-zlib-test		\
-	--enable-guest-agent
+	--enable-guest-agent		\
+	--disable-tools			\
+	--without-pixman
+
+ifneq ($(CONFIG_PACKAGE_qemu-ga),)
+CONFIGURE_ARGS += --enable-guest-agent
+endif
+
+MAKE_VARS += V=s
+
+define Build/Compile
+	$(if $(CONFIG_PACKAGE_qemu-ga),$(call Build/Compile/Default,qemu-ga))
+endef
 
 define Package/qemu-ga/install
 	$(INSTALL_DIR) $(1)/usr/bin
