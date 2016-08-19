@@ -1,6 +1,6 @@
 --- a/local/mib2c
 +++ b/local/mib2c
-@@ -60,8 +60,9 @@ $currentlevel = -1;
+@@ -61,8 +61,9 @@ $currentlevel = -1;
  if($ENV{MIB2C_DIR}) {
     push @def_search_dirs, split(/:/, $ENV{MIB2C_DIR});
  }
