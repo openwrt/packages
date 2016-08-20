@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
 PKG_VERSION:=1.6.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
@@ -35,7 +35,7 @@ endef
 
 define Package/znc
   $(Package/znc/default)
-  DEPENDS:=+libopenssl +libpthread +libstdcpp +ZNC_ICU:icu
+  DEPENDS:=+libopenssl +libpthread +libstdcpp +ZNC_ICU:icu +zlib
   MENU:=1
 endef
 

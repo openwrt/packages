@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=x264
-PKG_VERSION:=snapshot-20160416-2245-stable
+PKG_VERSION:=snapshot-20160815-2245-stable
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.videolan.org/x264/snapshots/
 PKG_MAINTAINER:=Adrian Panella <ianchi74@outlook.com>
-PKG_MD5SUM:=70953574692cb80232d2879b80a140e0
+PKG_MD5SUM:=93fa596ea1b5513fec73e9de27589dd4
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -24,8 +24,13 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-TARGET_CFLAGS:=-Wno-maybe-uninitialized -Wshadow -Wall -std=gnu99 -fPIC -O3 -ffast-math -I. 
+TARGET_CFLAGS+=-std=gnu99 -fPIC -O3 -ffast-math -I.
 MAKE_FLAGS+= LD="$(TARGET_CC) -o" 
+
+ifneq ($(CONFIG_TARGET_x86),)
+  CONFIGURE_VARS+= AS=yasm
+  MAKE_FLAGS+= AS=yasm
+endif
 
 CONFIGURE_ARGS += \
 		--enable-shared \
@@ -40,7 +45,7 @@ define Package/libx264
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=H264/AVC free codec library.
-  DEPENDS:=@BUILD_PATENTED
+  DEPENDS:=@BUILD_PATENTED @!TARGET_x86||YASM
   URL:=http://www.videolan.org/developers/x264.html
 endef
 

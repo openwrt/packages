@@ -9,13 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpreplay
 PKG_VERSION:=4.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/appneta/tcpreplay/releases/download/v$(PKG_VERSION)
 PKG_MD5SUM:=80394c33fe697b53b69eac9bb0968ae9
 
 PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILES:=docs/LICENSE
 
 PKG_FIXUP:=libtool
 PKG_INSTALL:=1
@@ -123,6 +124,12 @@ define Package/tcpreplay-all/description
   Version 4.0.0 introduces features and performance enhancements
   to support switches, routers, and IP Flow/NetFlow appliances. 
 endef
+
+CONFIGURE_VARS += \
+	ac_cv_lib_nl_nl_cache_alloc=no \
+	ac_cv_lib_nl_genl_3_genl_connect=no \
+	ac_cv_lib_nl_3_nl_cache_alloc=no \
+	ac_cv_lib_dbus_1_dbus_malloc=no
 
 CONFIGURE_ARGS += \
 	--enable-force-pf \
