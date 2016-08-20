@@ -43,9 +43,6 @@ TARGET_LDFLAGS += -llua
 
 LUA_MODULE_PATH:=/usr/lib/lua
 
-define Build/Configure
-endef
-
 define Build/Compile
 	$(TARGET_CROSS)gcc $(TARGET_CFLAGS) $(TARGET_LDFLAGS) -I $(PKG_BUILD_DIR)/c-api/ -o $(PKG_BUILD_DIR)/bit32.so $(PKG_BUILD_DIR)/lbitlib.c
 endef

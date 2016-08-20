@@ -37,9 +37,6 @@ define Package/jsonrpc4lua/description
 	JSONRPC for Lua
 endef
 
-define Build/Configure
-endef
-
 define Build/Compile
 endef
 

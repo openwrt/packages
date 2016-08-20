@@ -36,9 +36,6 @@ define Package/cgilua/description
 	CGILua is a tool for creating dynamic HTML pages and manipulating input data from Web forms.
 endef
 
-define Build/Configure
-endef
-
 define Build/Compile
 endef
 

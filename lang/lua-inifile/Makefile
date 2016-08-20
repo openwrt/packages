@@ -37,9 +37,6 @@ define Package/lua-inifile/description
 	Inifile is a lua library for parsing and writing ini files.
 endef
 
-define Build/Configure
-endef
-
 define Build/Compile
 endef
 

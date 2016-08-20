@@ -35,9 +35,6 @@ define Package/lua-alt-getopt/description
 	Process application arguments the same way as getopt_long
 endef
 
-define Build/Configure
-endef
-
 define Build/Compile
 endef
 
