@@ -175,7 +175,7 @@ f_envcheck()
             rc=-1
             f_log "AP mode detected, please set local LuCI instance to ports <> 80/443"
             f_exit
-        elif [ -z "$(pgrep -f "dnsmasq")" ]
+        elif [ ! -f "/etc/init.d/dnsmasq" ]
         then
             rc=-1
             f_log "please enable the local dnsmasq instance to use adblock"
