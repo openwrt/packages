@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,27 +9,26 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luai2c
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=2
-PKG_MAINTAINER:=Frank Edelhaeuser <fedel@users.sourceforge.net>
+PKG_RELEASE:=3
+PKG_MAINTAINER:=Frank Edelhaeuser <mrpace2@gmail.com>
+PKG_LICENSE:=MIT
 
-PKG_SOURCE_NAME:=i2c-lua
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
-
-PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/$(PKG_SOURCE_NAME)
-PKG_MD5SUM:=7098577f101410b201cd43a7467e408d
-
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/mrpace2/i2c-lua.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/luai2c
-  SUBMENU:=Lua
-  SECTION:=lang
-  CATEGORY:=Languages
-  TITLE:=Lua I2C binding
-  URL:=http://sourceforge.net/projects/i2c-lua/
-  DEPENDS:=+liblua +kmod-i2c-core
-  MAINTAINER:=Frank Edelhaeuser <fedel@users.sourceforge.net>
+	SUBMENU:=Lua
+	SECTION:=lang
+	CATEGORY:=Languages
+	TITLE:=Lua I2C binding
+	URL:=https://github.com/mrpace2/i2c-lua/
+	DEPENDS:=+liblua +kmod-i2c-core
+	MAINTAINER:=Frank Edelhaeuser <mrpace2@gmail.com>
 endef
 
 define Package/luai2c/description
