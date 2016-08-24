@@ -1,5 +1,7 @@
 /* Please avoid adding hacks here - instead add it to mac80211/backports.git */
 
+#undef CONFIG_MODULE_STRIPPED
+
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
 #include <linux/types.h>
 
