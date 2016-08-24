@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=5.1.1
-PKG_RELEASE=$(PKG_SOURCE_VERSION)-6
+PKG_RELEASE=$(PKG_SOURCE_VERSION)-7
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
@@ -72,7 +72,9 @@ endif
 
 PKG_BUILD_DEPENDS:=vala/host libevhtp
 
-TARGET_CFLAGS += -minterlink-mips16
+ifdef CONFIG_USE_MIPS16
+	TARGET_CFLAGS += -minterlink-mips16
+endif
 TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -liconv \
 		    -L$(STAGING_DIR)/usr/lib/mysql -lmysqlclient -lz -levent_openssl -levent
 
