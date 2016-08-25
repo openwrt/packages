@@ -48,7 +48,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * [zeus tracker](https://zeustracker.abuse.ch)
     * => daily updates, approx. 440 entries
 * zero-conf like automatic installation & setup, usually no manual changes needed (i.e. ip address, network devices etc.)
-* supports a wide range of router modes (incl. AP mode), as long as the firewall and the DNS server are enabled & in use
+* supports a wide range of router modes (incl. AP mode), as long as firewall and dnsmasq are installed and in use
 * full IPv4 and IPv6 support
 * each blocklist source will be updated and processed separately
 * timestamp check to download and process only updated adblock list sources
@@ -103,10 +103,11 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
 * **hotplug fine tuning:** to restrict hotplug support to a certain wan interface or to disable it at all, you can set 'adb\_hotplugif' to an existing interface like 'wan' or to a non-existing 'dummy' interface
 * **new list sources:** you could add new blocklist sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
-* **AP mode:** in 'AP mode' adblock uses automatically the local router ip as nullip address. To make sure that your LuCI interface will be still accessible, you have to change the local uhttpd instance to ports <> 80/443 (see example below)
+* **AP mode:** in 'AP mode' adblock uses automatically the local router ip as nullip address. To make sure that your LuCI interface will be still accessible, you have to change the local uhttpd instance to ports <> 80/443 (see example below), also make sure that firewall and dnsmasq are installed and running
 * **restricted mode:** to disable flash writes with adblock status information to the adblock config file (used by LuCI frontend), please set 'adb\_restricted' to '1'
 * **adblock toggle:** to quickly switch adblocking 'on' or 'off', simply use _/etc/init.d/adblock toggle_
 * **adblock statistics:** to update only the adblock statistics (without updating the block lists as well), please run _/etc/init.d/adblock stats_
+* **adblock query <DOMAIN>:** to query the active blocklists for a specific domain, please run _/etc/init.d/adblock query <DOMAIN>_
 * **configuration update:** to update an outdated adblock config file with the current default version, please run _/etc/init.d/adblock cfgup_, make your individual changes and start the adblock service again
 * **debugging:** for script debugging please set the 'adb\_debug' variable in the header of _/etc/init.d/adblock_ to '1'
 * **disable active dns probing in windows:** to prevent a possible yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
@@ -177,16 +178,6 @@ This entry does not remove:
 config uhttpd 'main'
     list listen_http '0.0.0.0:88'
     list listen_https '0.0.0.0:445'
-</code></pre>
-  
-**example grep for blocked (sub-)domains in adblock source files:**
-<pre><code>
-grep "google-analytics.com" "/tmp/dnsmasq.d/adb_list"*
-
-This will output all matches with corresponding source files:
-  /tmp/dnsmasq.d/adb_list.winhelp:address=/ssl.google-analytics.com/198.18.0.1
-  /tmp/dnsmasq.d/adb_list.winhelp:address=/www.google-analytics.com/198.18.0.1
-  /tmp/dnsmasq.d/adb_list.yoyo:address=/google-analytics.com/198.18.0.1
 </code></pre>
   
 **example to find blocked domains on certain sites for whitelisting:**
