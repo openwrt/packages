@@ -72,6 +72,7 @@ endif
 
 PKG_BUILD_DEPENDS:=vala/host libevhtp
 
+# This is required as python-package.mk overrides the default setting of having interlinking enabled
 ifdef CONFIG_USE_MIPS16
 	TARGET_CFLAGS += -minterlink-mips16
 endif
