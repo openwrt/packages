@@ -456,7 +456,6 @@ define Package/strongswan/install
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/strongswan.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libstrongswan.so.* $(1)/usr/lib/ipsec/
-	$(INSTALL_CONF) ./files/ipsec.secrets $(1)/etc/
 	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/ipsec.init $(1)/etc/init.d/ipsec
@@ -493,15 +492,13 @@ define Package/strongswan-charon-cmd/install
 endef
 
 define Package/strongswan-ipsec/conffiles
+/etc/config/ipsec
 /etc/ipsec.d/
-/etc/ipsec.conf
-/etc/ipsec.secrets
 /etc/ipsec.user
 endef
 
 define Package/strongswan-ipsec/install
 	$(INSTALL_DIR) $(1)/etc/ $(1)/usr/sbin
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/ipsec.conf $(1)/etc/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ipsec $(1)/usr/sbin/
 endef
 
