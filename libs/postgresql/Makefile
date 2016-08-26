@@ -116,13 +116,16 @@ define Build/Configure
 			--enable-depend \
 			--with-system-timezone=/tmp \
 	);
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc clean
 	$(MAKE) -C $(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)"
 	mv $(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg \
 		$(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg.host
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/timezone clean
 	$(MAKE) -C $(PKG_BUILD_DIR)/src/timezone CC="$(HOSTCC)"
 	mv $(PKG_BUILD_DIR)/src/timezone/zic $(PKG_BUILD_DIR)/host-zic
 	$(INSTALL_DIR) $(STAGING_DIR)/host/bin/
 	$(CP) $(PKG_BUILD_DIR)/host-zic $(STAGING_DIR)/host/bin/zic
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/bin/pg_config clean
 	$(MAKE) -C $(PKG_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)"
 	mv $(PKG_BUILD_DIR)/src/bin/pg_config/pg_config \
 		$(PKG_BUILD_DIR)/src/bin/pg_config/pg_config.host
