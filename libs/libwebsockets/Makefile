@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
-PKG_VERSION:=1.7.5
+PKG_VERSION:=2.0.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -43,7 +43,7 @@ define Package/$(PKG_NAME)/Default
 	TITLE:=libwebsockets
 	DEPENDS:=+zlib
 	URL:=https://libwebsockets.org
-	MAINTAINER:=Karl Palsson <karlp@remake.is>
+	MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
 
 define Package/libwebsockets-openssl

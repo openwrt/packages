@@ -291,7 +291,8 @@ define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (custom)
  DEPENDS+= +FFMPEG_CUSTOM_SELECT_libopus:libopus +FFMPEG_CUSTOM_SELECT_speex:libspeex \
-           +FFMPEG_CUSTOM_SELECT_x264:libx264 +FFMPEG_CUSTOM_SELECT_mp3lame:lame-lib
+           +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib
+
  VARIANT:=custom
  MENU:=1
 endef
@@ -324,7 +325,7 @@ endef
 define Package/libffmpeg-full
 $(call Package/libffmpeg/Default)
  TITLE+= (full)
- DEPENDS+= +alsa-lib +libx264 +lame-lib +libopus +libspeex
+ DEPENDS+= +alsa-lib +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib +libopus +libspeex
  VARIANT:=full
 endef
 
@@ -420,8 +421,8 @@ ifeq ($(BUILD_VARIANT),full)
 	FFMPEG_CONFIGURE+= \
 		--enable-libopus --enable-decoder=libopus \
 		--enable-libspeex --enable-decoder=libspeex \
-		--enable-libx264 \
-		--enable-libmp3lame
+		$(if $(CONFIG_PACKAGE_libx264),--enable-libx264) \
+		$(if $(CONFIG_PACKAGE_lame-lib),--enable-libmp3lame)
 endif
 
 ifeq ($(BUILD_VARIANT),custom)
@@ -465,12 +466,12 @@ endif
 
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_x264),y)
   FFMPEG_CONFIGURE+= \
-	--enable-libx264 --enable-decoder=libx264
+	--enable-libx264
 endif
 
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_mp3lame),y)
   FFMPEG_CONFIGURE+= \
-	--enable-libmp3lame --enable-encoder=mp3
+	--enable-libmp3lame
 endif
 
 endif
