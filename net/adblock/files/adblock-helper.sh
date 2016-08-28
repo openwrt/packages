@@ -6,6 +6,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+adb_hotplugif=""
 adb_lanif="lan"
 adb_nullport="65534"
 adb_nullportssl="65535"
@@ -168,21 +169,11 @@ f_envcheck()
     then
         adb_nullipv4="${adb_ipv4}"
         adb_nullipv6="${adb_ipv6}"
-        if [ -n "$(${adb_uci} -q get uhttpd.main.listen_http | grep -Fo "80")" ] ||
-           [ -n "$(${adb_uci} -q get uhttpd.main.listen_https | grep -Fo "443")" ]
+        if [ -n "$(${adb_uci} -q get uhttpd.main.listen_http | grep -o ":80$")" ] ||
+           [ -n "$(${adb_uci} -q get uhttpd.main.listen_https | grep -o ":443$")" ]
         then
             rc=-1
             f_log "AP mode detected, please set local LuCI instance to ports <> 80/443"
-            f_exit
-        elif [ -z "$(pgrep -f "dnsmasq")" ]
-        then
-            rc=-1
-            f_log "please enable the local dnsmasq instance to use adblock"
-            f_exit
-        elif [ ! -f "/var/run/fw3.state" ]
-        then
-            rc=-1
-            f_log "please enable the local firewall to use adblock"
             f_exit
         else
             apmode_ok="true"
@@ -203,23 +194,25 @@ f_envcheck()
 
     # check general package dependencies
     #
-    f_depend "busybox"
-    f_depend "uci"
-    f_depend "uhttpd"
-    f_depend "iptables"
-    f_depend "kmod-ipt-nat"
+    f_depend "busybox -"
+    f_depend "uci -"
+    f_depend "uhttpd -"
+    f_depend "iptables -"
+    f_depend "kmod-ipt-nat -"
+    f_depend "firewall -"
+    f_depend "dnsmasq*"
 
     # check ipv6 related package dependencies
     #
     if [ -n "${adb_wanif6}" ]
     then
-        f_depend "ip6tables" "true"
+        f_depend "ip6tables -" "true"
         if [ "${package_ok}" = "false" ]
         then
             f_log "package 'ip6tables' not found, IPv6 support will be disabled"
             unset adb_wanif6
         else
-            f_depend "kmod-ipt-nat6" "true"
+            f_depend "kmod-ipt-nat6 -" "true"
             if [ "${package_ok}" = "false" ]
             then
                 f_log "package 'kmod-ipt-nat6' not found, IPv6 support will be disabled"
@@ -230,13 +223,13 @@ f_envcheck()
 
     # check uclient-fetch/wget dependencies
     #
-    f_depend "uclient-fetch" "true"
+    f_depend "uclient-fetch -" "true"
     if [ "${package_ok}" = "true" ]
     then
-        f_depend "libustream-polarssl" "true"
+        f_depend "libustream-polarssl -" "true"
         if [ "${package_ok}" = "false" ]
         then
-            f_depend "libustream-\(mbedtls\|openssl\|cyassl\)" "true"
+            f_depend "libustream-\(mbedtls\|openssl\|cyassl\) -" "true"
             if [ "${package_ok}" = "true" ]
             then
                 adb_fetch="$(which uclient-fetch)"
@@ -247,7 +240,7 @@ f_envcheck()
     fi
     if [ -z "${adb_fetch}" ]
     then
-        f_depend "wget" "true"
+        f_depend "wget -" "true"
         if [ "${package_ok}" = "true" ]
         then
             adb_fetch="$(which wget)"
@@ -262,7 +255,7 @@ f_envcheck()
 
     # check ca-certificate package and set fetch parm accordingly
     #
-    f_depend "ca-certificates" "true"
+    f_depend "ca-certificates -" "true"
     if [ "${package_ok}" = "false" ]
     then
         fetch_parm="${fetch_parm} --no-check-certificate"
@@ -451,7 +444,7 @@ f_depend()
     local check_only="${2}"
     package_ok="true"
 
-    check="$(printf "${pkg_list}" | grep "^${package} -")"
+    check="$(printf "${pkg_list}" | grep "^${package}")"
     if [ "${check_only}" = "true" ] && [ -z "${check}" ]
     then
         package_ok="false"
