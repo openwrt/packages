@@ -1,0 +1,11 @@
+--- ipmitool-1.8.17/configure.ac.orig	2016-05-06 17:51:58.000000000 +0300
++++ ipmitool-1.8.17/configure.ac	2016-07-22 18:55:35.879260820 +0300
+@@ -64,7 +64,7 @@ xenable_intf_lipmi=yes
+ #xenable_intf_serial=yes
+ xenable_intf_dummy=no
+ xenable_all_options=yes
+-xenable_ipmishell=yes
++xenable_ipmishell=no
+ 
+ dnl set some things so we build with GNU tools on Solaris
+ case "$host_os" in
