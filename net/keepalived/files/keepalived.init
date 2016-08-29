@@ -279,7 +279,7 @@ vrrp_instance() {
 		[ -z "$optval" ] && continue
 		printf "$INDENT_1$opt {\n" >> $KEEPALIVED_CONF
 		for t in $optval; do
-			config_foreach print_track_elem_indent $opt $t $INDENT_2
+			printf "$INDENT_2$optval\n" >> $KEEPALIVED_CONF
 		done
 		printf "$INDENT_1}\n" >> $KEEPALIVED_CONF
 	done
@@ -356,9 +356,9 @@ process_config() {
 	config_foreach_wrapper static_routes
 	config_section_close
 
+	config_foreach_wrapper vrrp_script
 	config_foreach_wrapper vrrp_sync_group
 	config_foreach_wrapper vrrp_instance
-	config_foreach_wrapper vrrp_script
 	return 0
 }
 
