@@ -1,31 +1,34 @@
 #!/bin/sh /etc/rc.common
 
 START=50
+USE_PROCD=1
+PROG=/usr/sbin/dnscrypt-proxy
 
-start_instance () {
-	local section="$1"
-	config_get address         "$section" 'address'
-	config_get port            "$section" 'port'
-	config_get resolver        "$section" 'resolver'
-	config_get resolvers_list  "$section" 'resolvers_list'
-	config_get client_key      "$section" 'client_key'
-	config_get_bool ephemeral_keys "$section" 'ephemeral_keys'
+dnscrypt_instance() {
+	local address port resolver resolvers_list ephemeral_keys client_key
 
-	service_start /usr/sbin/dnscrypt-proxy -d \
-		-a ${address}:${port} \
-		-u nobody \
-		-L ${resolvers_list:-'/usr/share/dnscrypt-proxy/dnscrypt-resolvers.csv'} \
-		-R ${resolver:-'cisco'} \
-		${ephemeral_keys:+'-E'} \
-		${client_key:+'--client-key='$client_key}
+	config_get      address        $1 'address'
+	config_get      port           $1 'port'
+	config_get      resolver       $1 'resolver' ''
+	config_get      resolvers_list $1 'resolvers_list' '/usr/share/dnscrypt-proxy/dnscrypt-resolvers.csv'
+	config_get_bool ephemeral_keys $1 'ephemeral_keys' '0'
+	config_get      client_key     $1 'client_key' ''
+
+	procd_open_instance
+	procd_set_param    command $PROG -u nobody -S
+	procd_append_param command -a "$address:$port"
+	procd_append_param command -L $resolvers_list
+	[ -n "$resolver" ] && procd_append_param command -R $resolver
+	[ $ephemeral_keys -eq 1 ] && procd_append_param command -E
+	[ -n "$client_key" ] && procd_append_param command -K $client_key
+	procd_close_instance
 }
 
-start() {
-	config_load 'dnscrypt-proxy'
-	config_foreach start_instance 'dnscrypt-proxy'
+start_service() {
+	config_load dnscrypt-proxy
+	config_foreach dnscrypt_instance dnscrypt-proxy
 }
 
-stop() {
-	service_stop /usr/sbin/dnscrypt-proxy
+service_triggers() {
+	procd_add_reload_trigger 'dnscrypt-proxy'
 }
-
