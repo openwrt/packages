@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-postoffice
-PKG_VERSION:=2.0.7
+PKG_VERSION:=2.0.8
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=django-post_office-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/d/django-post_office/
+PKG_SOURCE_URL:=https://pypi.python.org/packages/52/25/cc0cfe923f183d7c19b162cac3bf8430ddaed7bad28202b8f93a97d248a4/
 PKG_BUILD_DIR:=$(BUILD_DIR)/django-post_office-$(PKG_VERSION)/
-PKG_MD5SUM:=9c2dfea47834c98193f7bc442500ec40
+PKG_MD5SUM:=437bf62cef06381d346ae2bc087c0e3c
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
