@@ -366,9 +366,20 @@ service_running() {
 	pgrep -x /usr/sbin/keepalived &> /dev/null
 }
 
+conf_md5() {
+	echo "$(md5sum $KEEPALIVED_CONF | awk '{print $1}')"
+}
+
 reload_service() {
+	local cur_md5="$(conf_md5)"
 	running && {
 		process_config
+
+		# Return without performing the reload if config
+		# file md5sum has not changed
+		local new_md5="$(conf_md5)"
+		[ "$new_md5" == "$cur_md5" ] && return 0;
+
 		# SIGHUP is used by keepalived to do init.d reload
 		# Get the oldest process (assumption is that it's the parent process)
 		PID=$(pgrep -o /usr/sbin/keepalived)
