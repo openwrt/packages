@@ -76,7 +76,10 @@ convert_persistence() {
 	append_if "$cfg" file persistence_file
 	config_get loc "$cfg" location
 	if [ -n "$loc" ]; then
-		[ -d "$loc" ] || mkdir -p "$loc";
+		[ -d "$loc" ] || {
+			mkdir -p "$loc";
+			chown mosquitto "$loc";
+		}
 		echo "persistence_location $loc" >> $TCONF
 	fi
 }
