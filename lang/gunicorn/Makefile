@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gunicorn
-PKG_VERSION:=19.4.5
-PKG_RELEASE=2
+PKG_VERSION:=19.6.0
+PKG_RELEASE=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/g/gunicorn/
-PKG_MD5SUM:=ce45c2dccba58784694dd77f23d9a677
+PKG_SOURCE_URL:=https://pypi.python.org/packages/84/ce/7ea5396efad1cef682bbc4068e72a0276341d9d9d0f501da609fab9fcb80/
+PKG_MD5SUM:=338e5e8a83ea0f0625f768dba4597530
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
