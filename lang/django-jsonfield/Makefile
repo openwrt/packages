@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-jsonfield
-PKG_VERSION:=0.9.19
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/d/django-jsonfield/
-PKG_MD5SUM:=6ccf381732f67272a9b8b29b44079df7
+PKG_SOURCE_URL:=https://pypi.python.org/packages/e4/b2/a079f0a2218e0eb7892edbf404e0bbfbb281a6bbf06966b775f5142ed159/
+PKG_MD5SUM:=2e5e737a3f93f3b5d7ae6026b1340167
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
