@@ -13,11 +13,9 @@ on standard C libraries without O_DIRECT_SUPPORT.
  lib/device/dev-io.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/lib/device/dev-io.c b/lib/device/dev-io.c
-index a9a2374..4d71967 100644
 --- a/lib/device/dev-io.c
 +++ b/lib/device/dev-io.c
-@@ -529,7 +529,7 @@ int dev_open_flags(struct device *dev, int flags, int direct, int quiet)
+@@ -529,7 +529,7 @@ int dev_open_flags(struct device *dev, i
  		return 0;
  	}
  
@@ -26,6 +24,3 @@ index a9a2374..4d71967 100644
        opened:
  	if (direct)
  		dev->flags |= DEV_O_DIRECT_TESTED;
--- 
-2.8.2
-
