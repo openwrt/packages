@@ -1,0 +1,13 @@
+--- a/src/php_http_api.h	2016-03-09 11:04:06.000000000 +0100
++++ b/src/php_http_api.h	2016-08-31 22:20:07.978505983 +0200
+@@ -23,8 +23,8 @@
+ #include <php.h>
+ #include <SAPI.h>
+ 
+-#include <ext/raphf/php_raphf_api.h>
+-#include <ext/propro/php_propro_api.h>
++#include <php_raphf_api.h>
++#include <php_propro_api.h>
+ #include <ext/standard/php_string.h>
+ #include <ext/spl/spl_iterators.h>
+ #include <ext/date/php_date.h>

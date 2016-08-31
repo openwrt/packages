@@ -1,0 +1,31 @@
+--- a/config9.m4	2016-03-09 11:04:06.000000000 +0100
++++ b/config9.m4	2016-08-31 21:55:40.297712442 +0200
+@@ -12,6 +12,10 @@
+ [  --with-http-libevent-dir[=DIR] HTTP: where to find libevent], $PHP_HTTP_LIBCURL_DIR, "")
+ PHP_ARG_WITH([http-libidn-dir], [],
+ [  --with-http-libidn-dir[=DIR]   HTTP: where to find libidn], $PHP_HTTP_LIBCURL_DIR, "")
++PHP_ARG_WITH([http-pecl-propro-dir], [],
++[  --with-http-pecl-propro-dir[=DIR]   HTTP: where to find pecl propro], $PHP_HTTP_PECL_PROPRO_DIR, "")
++PHP_ARG_WITH([http-pecl-raphf-dir], [],
++[  --with-http-pecl-raphf-dir[=DIR]   HTTP: where to find pecl raphf], $PHP_HTTP_PECL_RAPHF_DIR, "")
+ 
+ if test "$PHP_HTTP" != "no"; then
+ 
+@@ -486,7 +490,7 @@
+ 	HTTP_HAVE_PHP_EXT([raphf], [
+ 		AC_MSG_CHECKING([for php_raphf.h])
+ 		HTTP_EXT_RAPHF_INCDIR=
+-		for i in `echo $INCLUDES | $SED -e's/-I//g'` $abs_srcdir ../raphf; do
++		for i in "$PHP_HTTP_PECL_RAPHF_DIR" `echo $INCLUDES | $SED -e's/-I//g'` $abs_srcdir ../raphf; do
+ 			if test -d $i; then
+ 				if test -f $i/php_raphf.h; then
+ 					HTTP_EXT_RAPHF_INCDIR=$i
+@@ -514,7 +518,7 @@
+ 	HTTP_HAVE_PHP_EXT([propro], [
+ 		AC_MSG_CHECKING([for php_propro.h])
+ 		HTTP_EXT_PROPRO_INCDIR=
+-		for i in `echo $INCLUDES | $SED -e's/-I//g'` $abs_srcdir ../propro; do
++		for i in "$PHP_HTTP_PECL_PROPRO_DIR" `echo $INCLUDES | $SED -e's/-I//g'` $abs_srcdir ../propro; do
+ 			if test -d $i; then
+ 				if test -f $i/php_propro.h; then
+ 					HTTP_EXT_PROPRO_INCDIR=$i
