@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2016 OpenWrt.org
 
 NAME=crelay
 START=93
@@ -17,7 +17,7 @@ start_service() {
 	procd_set_param respawn
 
 	procd_set_param command "$PROG"
-	# daemon mode (not daemonized) - starts HTTP server
+	# daemon mode in foreground - starts HTTP server
 	procd_append_param command -d
 
 	procd_close_instance
