@@ -12,14 +12,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpproxy
-PKG_VERSION:=1.1
+PKG_VERSION:=1.2
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.spreadspace.org/tcpproxy/releases/
-PKG_MD5SUM:=55126473bcde635f9ee019c6caf19bb7
-
+PKG_MD5SUM:=14f734a61350c52556909e2ed5bff361
+PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
+PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 
 
@@ -29,7 +30,6 @@ define Package/tcpproxy
   SUBMENU:=Routing and Redirection
   TITLE:=IPv4/IPv6 tcp connection proxy
   URL:=http://www.spreadspace.org/tcpproxy/
-  MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 endef
 
 define Package/tcpproxy/conffiles
@@ -56,6 +56,7 @@ define Build/Configure
     echo '#define TARGET "linux"' >> config.h; \
     echo '#define PREFIX "/usr"' >> config.h; \
     echo '#define BINDIR "/usr/bin"' >> config.h; \
+    echo '#define SYSTEMDDIR "/tmp"' >> config.h; \
     echo '#define ETCDIR "/etc"' >> config.h; \
     echo '#define CONFFILE "/etc/tcpproxy.conf"' >> config.h; \
     echo '' >> config.h; \

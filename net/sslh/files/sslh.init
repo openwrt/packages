@@ -18,7 +18,7 @@ start_instance() {
 	local val
 	# A) listen parameter
 	config_get vals "${section}" listen
-	[ -n "${vals}" ] && for val in $vals; do append args "-p ${val}"; done
+	[ -n "${vals}" ] && for val in $vals; do append args "-p${val}"; done
 	# B) ssh parameter
 	config_get val "${section}" ssh
 	[ -n "${val}" ] && append args "--ssh ${val}"

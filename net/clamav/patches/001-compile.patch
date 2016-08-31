@@ -1,0 +1,10 @@
+--- a/clamdscan/proto.c
++++ b/clamdscan/proto.c
+@@ -55,6 +55,7 @@
+ #include "shared/misc.h"
+ #include "shared/clamdcom.h"
+ 
++#include <sys/un.h>
+ #include "proto.h"
+ #include "client.h"
+ 

@@ -1,0 +1,11 @@
+--- a/gtk-doc.make
++++ b/gtk-doc.make
+@@ -271,7 +271,7 @@ uninstall-local:
+ #
+ # Require gtk-doc when making dist
+ #
+-if HAVE_GTK_DOC
++if ENABLE_GTK_DOC
+ dist-check-gtkdoc: docs
+ else
+ dist-check-gtkdoc:

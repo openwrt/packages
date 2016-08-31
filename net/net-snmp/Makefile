@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.4.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
 PKG_MD5SUM:=95aa054f3c99a1ce242807d7eaf98619
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=MIT BSD-3-Clause-Clear
 
 PKG_FIXUP = patch-libtool
@@ -122,6 +122,7 @@ SNMP_MIB_MODULES_INCLUDED = \
 	ucd-snmp/loadave \
 	ucd-snmp/memory \
 	ucd-snmp/pass \
+	ucd-snmp/pass_persist \
 	ucd-snmp/proc \
 	ucd-snmp/vmstat \
 	util_funcs \
@@ -216,7 +217,6 @@ define Package/libnetsnmp/install
 endef
 
 define Package/snmpd/conffiles
-/etc/default/snmpd
 /etc/config/snmpd
 endef
 
@@ -225,8 +225,6 @@ define Package/snmpd/install
 	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
 	$(INSTALL_DIR) $(1)/etc/snmp
 	ln -sf /var/run/snmpd.conf $(1)/etc/snmp/
-	$(INSTALL_DIR) $(1)/etc/default
-	$(INSTALL_DATA) ./files/snmpd.default $(1)/etc/default/snmpd
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -234,7 +232,6 @@ define Package/snmpd/install
 endef
 
 define Package/snmpd-static/conffiles
-/etc/default/snmpd
 /etc/config/snmpd
 endef
 
@@ -243,8 +240,6 @@ define Package/snmpd-static/install
 	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
 	$(INSTALL_DIR) $(1)/etc/snmp
 	ln -sf /var/run/snmpd.conf $(1)/etc/snmp/
-	$(INSTALL_DIR) $(1)/etc/default
-	$(INSTALL_DATA) ./files/snmpd.default $(1)/etc/default/snmpd
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin

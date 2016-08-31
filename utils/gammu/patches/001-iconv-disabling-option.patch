@@ -1,0 +1,51 @@
+--- a/cmake/FindIconv.cmake
++++ b/cmake/FindIconv.cmake
+@@ -34,9 +34,9 @@ string(REGEX REPLACE "(.*)/include/?" "\
+ 
+ FIND_LIBRARY(ICONV_LIBRARIES NAMES iconv libiconv c HINTS "${ICONV_INCLUDE_BASE_DIR}/lib" PATHS /opt/local/lib)
+  
+-IF(ICONV_INCLUDE_DIR AND ICONV_LIBRARIES) 
++IF(NOT DISABLE_ICONV AND ICONV_INCLUDE_DIR AND ICONV_LIBRARIES) 
+    SET(ICONV_FOUND TRUE) 
+-ENDIF(ICONV_INCLUDE_DIR AND ICONV_LIBRARIES) 
++ENDIF(NOT DISABLE_ICONV AND ICONV_INCLUDE_DIR AND ICONV_LIBRARIES) 
+ 
+ set(CMAKE_REQUIRED_INCLUDES ${ICONV_INCLUDE_DIR})
+ set(CMAKE_REQUIRED_LIBRARIES ${ICONV_LIBRARIES})
+--- a/configure
++++ b/configure
+@@ -31,6 +31,7 @@ Usage: ./configure [options]
+ --enable-backup     enable backup support
+ --enable-win32      enable mingw crosscomilation
+ --enable-protection enable compile time protections
++--disable-iconv     disable iconv support
+ --with-python=<path> path to Python interpreter
+ --without-gnapplet  disable installation of gnapplet
+ --without-completion disable installation of bash completion script
+@@ -57,6 +58,7 @@ CMAKE_PROTECTION=
+ CMAKE_PYTHON=
+ CMAKE_GNAP=
+ CMAKE_COMPLETE=
++CMAKE_ICONV=
+ 
+ # process command line
+ while [ "$#" -gt 0 ] ; do
+@@ -94,6 +96,12 @@ while [ "$#" -gt 0 ] ; do
+         --disable-protection)
+             CMAKE_PROTECTION="-DENABLE_PROTECTION=OFF"
+             ;;
++        --enable-iconv)
++            CMAKE_ICONV="-DDISABLE_ICONV=OFF"
++            ;;
++        --disable-iconv)
++            CMAKE_ICONV="-DDISABLE_ICONV=ON"
++            ;;
+         --enable-debug)
+             CMAKE_DEBUG="-DCMAKE_BUILD_TYPE=Debug"
+             ;;
+@@ -142,4 +150,4 @@ fi
+ cd "$BUILD_DIR"
+ 
+ # invoke cmake to do configuration
+-cmake $SOURCE_DIR $CMAKE_PREFIX $CMAKE_SHARED $CMAKE_DEBUG $CMAKE_BACKUP $CMAKE_CROSS $CMAKE_PROTECTION $CMAKE_PYTHON $CMAKE_GNAP $CMAKE_COMPLETE
++cmake $SOURCE_DIR $CMAKE_PREFIX $CMAKE_SHARED $CMAKE_DEBUG $CMAKE_BACKUP $CMAKE_CROSS $CMAKE_PROTECTION $CMAKE_PYTHON $CMAKE_GNAP $CMAKE_COMPLETE $CMAKE_ICONV

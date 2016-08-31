@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -22,12 +22,6 @@ clean:
+@@ -33,12 +33,6 @@ debug:
  install:
  	@echo "Installing vnStat..."
  

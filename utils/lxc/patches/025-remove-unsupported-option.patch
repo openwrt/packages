@@ -1,0 +1,19 @@
+--- a/templates/lxc-download.in
++++ b/templates/lxc-download.in
+@@ -494,15 +494,7 @@ fi
+ # Unpack the rootfs
+ echo "Unpacking the rootfs"
+ 
+-EXCLUDES=""
+-excludelist=$(relevant_file excludes)
+-if [ -f "${excludelist}" ]; then
+-    while read line; do
+-        EXCLUDES="$EXCLUDES --exclude=$line"
+-    done < $excludelist
+-fi
+-
+-tar  --anchored ${EXCLUDES} --numeric-owner -xpJf \
++tar --numeric-owner -xpJf \
+     ${LXC_CACHE_PATH}/rootfs.tar.xz -C ${LXC_ROOTFS}
+ 
+ mkdir -p ${LXC_ROOTFS}/dev/pts/

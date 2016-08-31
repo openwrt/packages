@@ -1,0 +1,94 @@
+--- a/ssmtp.c
++++ b/ssmtp.c
+@@ -138,71 +138,7 @@ int smtp_read_all(int fd, char *response
+ int smtp_okay(int fd, char *response);
+ 
+ /*
+-dead_letter() -- Save stdin to ~/dead.letter if possible
+-*/
+-void dead_letter(void)
+-{
+-	char *path;
+-	char buf[(BUF_SZ + 1)];
+-	struct passwd *pw;
+-	uid_t uid;
+-	FILE *fp;
+-
+-	uid = getuid();
+-	pw = getpwuid(uid);
+-
+-	if(isatty(fileno(stdin))) {
+-		if(log_level > 0) {
+-			log_event(LOG_ERR,
+-				"stdin is a TTY - not saving to %s/dead.letter", pw->pw_dir);
+-		}
+-		return;
+-	}
+-
+-	if(pw == (struct passwd *)NULL) {
+-		/* Far to early to save things */
+-		if(log_level > 0) {
+-			log_event(LOG_ERR, "No sender failing horribly!");
+-		}
+-		return;
+-	}
+-
+-#define DEAD_LETTER "/dead.letter"
+-	path = malloc (strlen (pw->pw_dir) + sizeof (DEAD_LETTER));
+-	if (!path) {
+-		/* Can't use die() here since dead_letter() is called from die() */
+-		exit(1);
+-	}
+-	memcpy (path, pw->pw_dir, strlen (pw->pw_dir));
+-	memcpy (path + strlen (pw->pw_dir), DEAD_LETTER, sizeof (DEAD_LETTER));
+-	
+-	if((fp = fopen(path, "a")) == (FILE *)NULL) {
+-		/* Perhaps the person doesn't have a homedir... */
+-		if(log_level > 0) {
+-			log_event(LOG_ERR, "Can't open %s failing horribly!", path);
+-		}
+-		free(path);
+-		return;
+-	}
+-
+-	/* We start on a new line with a blank line separating messages */
+-	(void)fprintf(fp, "\n\n");
+-
+-	while(fgets(buf, sizeof(buf), stdin)) {
+-		(void)fputs(buf, fp);
+-	}
+-
+-	if(fclose(fp) == -1) {
+-		if(log_level > 0) {
+-			log_event(LOG_ERR,
+-				"Can't close %s/dead.letter, possibly truncated", pw->pw_dir);
+-		}
+-	}
+-	free(path);
+-}
+-
+-/*
+-die() -- Write error message, dead.letter and exit
++die() -- Write error message and exit
+ */
+ void die(char *format, ...)
+ {
+@@ -216,9 +152,6 @@ void die(char *format, ...)
+ 	(void)fprintf(stderr, "%s: %s\n", prog, buf);
+ 	log_event(LOG_ERR, "%s", buf);
+ 
+-	/* Send message to dead.letter */
+-	(void)dead_letter();
+-
+ 	exit(1);
+ }
+ 
+@@ -1640,7 +1573,7 @@ int ssmtp(char *argv[])
+ 			sleep(1);
+ 			/* don't hang forever when reading from stdin */
+ 			if (++timeout >= MEDWAIT) {
+-				log_event(LOG_ERR, "killed: timeout on stdin while reading body -- message saved to dead.letter.");
++				log_event(LOG_ERR, "killed: timeout on stdin while reading body.");
+ 				die("Timeout on stdin while reading body");
+ 			}
+ 			continue;

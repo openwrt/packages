@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2014 OpenWrt.org
+# Copyright (C) 2013-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,54 +8,69 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dump1090
-PKG_VERSION:=2014-08-22
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=2016-06-16
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/MalcolmRobb/dump1090.git
+PKG_SOURCE_URL:=git://github.com/mutability/dump1090.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=a82df07c0c0a750d58610bf3c3ece77482f3a58c
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_VERSION:=dfe3d7af12d0d739a1164c71086d4b37f57886d9
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
-PKG_LICENSE:=BSD-3c
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYING LICENSE
+
+PKG_BUILD_DEPENDS:=librtlsdr
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/dump1090
+define Package/dump1090/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Mode S decoder for the Realtek RTL2832U
-  URL:=https://github.com/MalcolmRobb/dump1090
-  DEPENDS:=+libpthread +librtlsdr
+  URL:=https://github.com/mutability/dump1090
+  DEPENDS:=+libpthread
 endef
 
-define Package/dump1090/config
-	source "$(SOURCE)/Config.in"
+define Package/dump1090
+  $(call Package/dump1090/Default)
+  TITLE+= (dump1090)
+  DEPENDS+= +librtlsdr
+endef
+
+define Package/view1090
+  $(call Package/dump1090/Default)
+  TITLE+= (view1090)
 endef
 
 define Package/dump1090/description
  Dump1090 is a Mode S decoder specifically designed for RTLSDR devices.
- Embedded HTTP server that displays the currently detected aircrafts on
- Google Maps. Network output in Basestation and AVR formats.
+endef
+
+define Package/view1090/description
+ View1090 is a Mode S messages viewer for dump1090 devices.
 endef
 
 MAKE_FLAGS += \
-	CFLAGS="$(TARGET_CFLAGS)"
+	CFLAGS="$(TARGET_CFLAGS)" \
+	UNAME=Linux
 
 define Package/dump1090/install
-	$(INSTALL_DIR) $(1)/usr/bin
-
-ifneq ($(CONFIG_DUMP1090_DUMP),)
-	$(CP) $(PKG_BUILD_DIR)/dump1090 $(1)/usr/bin
-ifneq ($(CONFIG_DUMP1090_WWW),)
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) files/dump1090.init $(1)/etc/init.d/dump1090
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) files/dump1090.config $(1)/etc/config/dump1090
 	$(INSTALL_DIR) $(1)/usr/share/dump1090
 	$(CP) $(PKG_BUILD_DIR)/public_html/* $(1)/usr/share/dump1090
-endif
-endif
-ifneq ($(CONFIG_DUMP1090_VIEW),)
-	$(CP) $(PKG_BUILD_DIR)/view1090 $(1)/usr/bin
-endif
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/dump1090 $(1)/usr/bin
+endef
+
+define Package/view1090/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/view1090 $(1)/usr/bin
 endef
 
 $(eval $(call BuildPackage,dump1090))
+$(eval $(call BuildPackage,view1090))

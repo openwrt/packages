@@ -1,0 +1,20 @@
+menu "Configuration"
+	depends on PACKAGE_perl
+
+config PERL_THREADS
+    bool "Enable threading support"
+    default y if (mips || mipsel || i386 || i686 || x86_64 || armeb || arm)
+    default n
+
+config PERL_TESTS
+	bool "Include perl tests"
+	default n
+	help
+		Include test suites for all perl packages.
+		
+		This will increase the size of perl and related packages
+		considerably.
+		Test support is still in development. Some tests will fail,
+		others are just missing completely.
+
+endmenu

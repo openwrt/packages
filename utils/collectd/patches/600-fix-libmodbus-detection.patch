@@ -1,0 +1,40 @@
+Patch reverts upstream commit:
+https://github.com/collectd/collectd/commit/6124da7a48f28f54fc09ebeb942d1037516fe6ab
+
+The commit changed the detection path due to FreeBSD issues,
+but apparently affects also Openwrt buildroot negatively.
+
+Original explanation:
+  From 6124da7a48f28f54fc09ebeb942d1037516fe6ab Mon Sep 17 00:00:00 2001
+  Subject: [PATCH] Fix libmodbus detection on FreeBSD
+
+  We look for modbus/modbus.h in /usr/local/include/modbus
+  but we should look for modbus.h
+
+  This is only an issue on FreeBSD since /usr/local/include is not
+  in the default search path.
+
+Reversed patch to be applied:
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -2626,7 +2626,7 @@ then
+ 	SAVE_CPPFLAGS="$CPPFLAGS"
+ 	CPPFLAGS="$CPPFLAGS $with_libmodbus_cflags"
+ 
+-	AC_CHECK_HEADERS(modbus.h, [], [with_libmodbus="no (modbus.h not found)"])
++	AC_CHECK_HEADERS(modbus/modbus.h, [], [with_libmodbus="no (modbus/modbus.h not found)"])
+ 
+ 	CPPFLAGS="$SAVE_CPPFLAGS"
+ fi
+--- a/src/modbus.c
++++ b/src/modbus.c
+@@ -27,7 +27,7 @@
+ 
+ #include <netdb.h>
+ 
+-#include <modbus.h>
++#include <modbus/modbus.h>
+ 
+ #ifndef LIBMODBUS_VERSION_CHECK
+ /* Assume version 2.0.3 */

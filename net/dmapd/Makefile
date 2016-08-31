@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dmapd
-PKG_VERSION:=0.0.70
+PKG_VERSION:=0.0.73
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=GPLv2
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.flyn.org/projects/dmapd
-PKG_MD5SUM:=f503bf95f79b5c1f9418cccf26203952
+PKG_MD5SUM:=458adf9d0c0e434fb92ebc8bd9739f68
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=2
@@ -32,6 +32,7 @@ define Package/dmapd
   DEPENDS:=+libdmapsharing +libdb47 +vips
   TITLE:= dmapd
   URL:=http://www.flyn.org/projects/dmapd/
+  USERID:=dmapd=56:dmapd=56
 endef
 
 define Package/dmapd/decription

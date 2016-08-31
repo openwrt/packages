@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2012 OpenWrt.org
 
-START=98
+START=13
 
 HAVEGED_THRESHOLD=1024
 HAVEGED_DCACHE=32

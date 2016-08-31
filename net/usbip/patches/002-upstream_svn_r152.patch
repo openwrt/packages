@@ -1,0 +1,229 @@
+--- a/drivers/head/stub_dev.c
++++ b/drivers/head/stub_dev.c
+@@ -398,7 +398,11 @@ static int stub_probe(struct usb_interfa
+ {
+ 	struct usb_device *udev = interface_to_usbdev(interface);
+ 	struct stub_device *sdev = NULL;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+ 	char *udev_busid = interface->dev.parent->bus_id;
++#else
++	char *udev_busid = dev_name(interface->dev.parent);
++#endif
+ 	int err = 0;
+ 
+ 	udbg("Enter\n");
+--- a/drivers/head/stub_main.c
++++ b/drivers/head/stub_main.c
+@@ -252,18 +252,17 @@ static int __init usb_stub_init(void)
+ 		return -ENOMEM;
+ 	}
+ 
++	info(DRIVER_DESC "" DRIVER_VERSION);
++
++	memset(busid_table, 0, sizeof(busid_table));
++	spin_lock_init(&busid_table_lock);
++
+ 	ret = usb_register(&stub_driver);
+ 	if (ret) {
+ 		uerr("usb_register failed %d\n", ret);
+ 		return ret;
+ 	}
+ 
+-
+-	info(DRIVER_DESC "" DRIVER_VERSION);
+-
+-	memset(busid_table, 0, sizeof(busid_table));
+-	spin_lock_init(&busid_table_lock);
+-
+ 	ret = driver_create_file(&stub_driver.drvwrap.driver, &driver_attr_match_busid);
+ 
+ 	if (ret) {
+--- a/drivers/head/stub_rx.c
++++ b/drivers/head/stub_rx.c
+@@ -159,7 +159,11 @@ static int tweak_set_configuration_cmd(s
+ 	 * A user may need to set a special configuration value before
+ 	 * exporting the device.
+ 	 */
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+ 	uinfo("set_configuration (%d) to %s\n", config, urb->dev->dev.bus_id);
++#else
++	uinfo("set_configuration (%d) to %s\n", config, dev_name(&urb->dev->dev));
++#endif
+ 	uinfo("but, skip!\n");
+ 
+ 	return 0;
+@@ -177,7 +181,11 @@ static int tweak_reset_device_cmd(struct
+ 	value = le16_to_cpu(req->wValue);
+ 	index = le16_to_cpu(req->wIndex);
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+ 	uinfo("reset_device (port %d) to %s\n", index, urb->dev->dev.bus_id);
++#else
++	uinfo("reset_device (port %d) to %s\n", index, dev_name(&urb->dev->dev));
++#endif
+ 
+ 	/* all interfaces should be owned by usbip driver, so just reset it. */
+ 	ret = usb_lock_device_for_reset(urb->dev, NULL);
+@@ -187,7 +195,11 @@ static int tweak_reset_device_cmd(struct
+ 	}
+ 
+ 	/* try to reset the device */
+-	ret = usb_reset_composite_device(urb->dev, NULL);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,27)
++    ret = usb_reset_composite_device(urb->dev, NULL);
++#else
++	ret = usb_reset_device(urb->dev);
++#endif
+ 	if (ret < 0)
+ 		uerr("device reset\n");
+ 
+--- a/drivers/head/usbip_common.c
++++ b/drivers/head/usbip_common.c
+@@ -55,10 +55,7 @@ static ssize_t show_flag(struct device *
+ static ssize_t store_flag(struct device *dev, struct device_attribute *attr,
+ 		const char *buf, size_t count)
+ {
+-	unsigned long flag;
+-
+-	sscanf(buf, "%lx", &flag);
+-	usbip_debug_flag = flag;
++	sscanf(buf, "%lx", &usbip_debug_flag);
+ 
+ 	return count;
+ }
+@@ -390,7 +387,7 @@ int usbip_thread(void *param)
+ 	unlock_kernel();
+ 
+ 	/* srv.rb must wait for rx_thread starting */
+-	complete(&ut->thread_done);
++	complete(&ut->thread_started);
+ 
+ 	/* start of while loop */
+ 	ut->loop_ops(ut);
+@@ -403,15 +400,21 @@ int usbip_thread(void *param)
+ 
+ void usbip_start_threads(struct usbip_device *ud)
+ {
++
+ 	/*
+ 	 * threads are invoked per one device (per one connection).
+ 	 */
++    INIT_COMPLETION(ud->tcp_rx.thread_started);
++    INIT_COMPLETION(ud->tcp_tx.thread_started);
++    INIT_COMPLETION(ud->tcp_rx.thread_done);
++    INIT_COMPLETION(ud->tcp_tx.thread_done);
++
+ 	kernel_thread((int(*)(void *))usbip_thread, (void *)&ud->tcp_rx, 0);
+ 	kernel_thread((int(*)(void *))usbip_thread, (void *)&ud->tcp_tx, 0);
+ 
+ 	/* confirm threads are starting */
+-	wait_for_completion(&ud->tcp_rx.thread_done);
+-	wait_for_completion(&ud->tcp_tx.thread_done);
++	wait_for_completion(&ud->tcp_rx.thread_started);
++	wait_for_completion(&ud->tcp_tx.thread_started);
+ }
+ EXPORT_SYMBOL(usbip_start_threads);
+ 
+@@ -436,6 +439,7 @@ void usbip_task_init(struct usbip_task *
+ 		void (*loop_ops)(struct usbip_task *))
+ {
+ 	ut->thread = NULL;
++	init_completion(&ut->thread_started);
+ 	init_completion(&ut->thread_done);
+ 	ut->name = name;
+ 	ut->loop_ops = loop_ops;
+--- a/drivers/head/usbip_event.c
++++ b/drivers/head/usbip_event.c
+@@ -38,7 +38,7 @@ void usbip_start_eh(struct usbip_device
+ 
+ 	kernel_thread((int(*)(void *)) usbip_thread, (void *) eh, 0);
+ 
+-	wait_for_completion(&eh->thread_done);
++	wait_for_completion(&eh->thread_started);
+ }
+ EXPORT_SYMBOL(usbip_start_eh);
+ 
+--- a/drivers/head/vhci_hcd.c
++++ b/drivers/head/vhci_hcd.c
+@@ -58,7 +58,7 @@ static void vhci_stop(struct usb_hcd *hc
+ static int vhci_get_frame_number(struct usb_hcd *hcd);
+ 
+ static const char driver_name[] = "vhci_hcd";
+-static const char driver_desc[] = "USB/IP Virtual Host Contoroller";
++static const char driver_desc[] = "USB/IP Virtual Host Controller";
+ 
+ 
+ 
+@@ -416,14 +416,6 @@ static int vhci_hub_control(struct usb_h
+ 				case USB_PORT_FEAT_SUSPEND:
+ 					dbg_vhci_rh(" SetPortFeature: USB_PORT_FEAT_SUSPEND\n");
+ 					uerr(" not yet\n");
+-#if 0
+-					dum->port_status[rhport] |= (1 << USB_PORT_FEAT_SUSPEND);
+-					if (dum->driver->suspend) {
+-						spin_unlock (&dum->lock);
+-						dum->driver->suspend (&dum->gadget);
+-						spin_lock (&dum->lock);
+-					}
+-#endif
+ 					break;
+ 				case USB_PORT_FEAT_RESET:
+ 					dbg_vhci_rh(" SetPortFeature: USB_PORT_FEAT_RESET\n");
+@@ -432,12 +424,6 @@ static int vhci_hub_control(struct usb_h
+ 						dum->port_status[rhport] &= ~(USB_PORT_STAT_ENABLE
+ 								| USB_PORT_STAT_LOW_SPEED
+ 								| USB_PORT_STAT_HIGH_SPEED);
+-#if 0
+-						if (dum->driver) {
+-							dev_dbg (hardware, "disconnect\n");
+-							stop_activity (dum, dum->driver);
+-						}
+-#endif
+ 
+ 						/* FIXME test that code path! */
+ 					}
+@@ -1060,7 +1046,7 @@ static int vhci_hcd_probe(struct platfor
+ 	struct usb_hcd		*hcd;
+ 	int			ret;
+ 
+-	uinfo("proving...\n");
++	uinfo("probing...\n");
+ 
+ 	dbg_vhci_hc("name %s id %d\n", pdev->name, pdev->id);
+ 
+@@ -1076,7 +1062,11 @@ static int vhci_hcd_probe(struct platfor
+ 	 * Allocate and initialize hcd.
+ 	 * Our private data is also allocated automatically.
+ 	 */
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+ 	hcd = usb_create_hcd(&vhci_hc_driver, &pdev->dev, pdev->dev.bus_id);
++#else
++	hcd = usb_create_hcd(&vhci_hc_driver, &pdev->dev, dev_name(&pdev->dev));
++#endif
+ 	if (!hcd) {
+ 		uerr("create hcd failed\n");
+ 		return -ENOMEM;
+--- a/drivers/head/vhci_sysfs.c
++++ b/drivers/head/vhci_sysfs.c
+@@ -123,7 +123,11 @@ static ssize_t show_status(struct device
+ 			out += sprintf(out, "%03u %08x ",
+ 					vdev->speed, vdev->devid);
+ 			out += sprintf(out, "%16p ", vdev->ud.tcp_socket);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+ 			out += sprintf(out, "%s", vdev->udev->dev.bus_id);
++#else
++			out += sprintf(out, "%s", dev_name(&vdev->udev->dev));
++#endif
+ 
+ 		} else
+ 			out += sprintf(out, "000 000 000 0000000000000000 0-0");
+--- a/drivers/head/usbip_common.h
++++ b/drivers/head/usbip_common.h
+@@ -300,6 +300,7 @@ struct usbip_device;
+ 
+ struct usbip_task {
+ 	struct task_struct *thread;
++	struct completion thread_started;
+ 	struct completion thread_done;
+ 	char *name;
+ 	void (*loop_ops)(struct usbip_task *);

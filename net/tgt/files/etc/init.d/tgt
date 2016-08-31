@@ -14,7 +14,7 @@ logger="logger -p daemon.err -s -t $NAME"
 
 validate_lun_section() {
 	uci_validate_section tgt lun $1 \
-		'device:file' \
+		'device:or(file, device)' \
 		'type:or("disk", "cd", "pt"):disk' \
 		'bstype:or("rdwr", "aio", "sg"):rdwr' \
 		'sync:bool:0' \
@@ -225,6 +225,11 @@ stop_service() {
 		| awk '$1 == "Target" {sub(/:/,"",$2); print $2}' \
 		| xargs -r -n1 $tgtadm --mode target --op delete --force --tid
 	$tgtadm --mode sys --op delete
+}
+
+reload_service() {
+	stop_service
+	start_service
 }
 
 show() {

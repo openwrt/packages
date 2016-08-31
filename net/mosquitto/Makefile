@@ -9,33 +9,32 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=1.3.4
+PKG_VERSION:=1.4.10
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILE:=LICENSE.txt
+PKG_LICENSE_FILES:=LICENSE.txt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://mosquitto.org/files/source/
-PKG_MD5SUM:=9d729849efd74c6e3eee17a4a002e1e9
+PKG_MD5SUM:=61839b47b58c5799aab76584f13ed66f
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-
-MAKE_FLAGS+=WITH_MEMORY_TRACKING=no
 
 define Package/$(PKG_NAME)/default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=mosquitto - an MQTT message broker
   URL:=http://www.mosquitto.org/
-  MAINTAINER:=Karl Palsson <karlp@remake.is>
-  DEPENDS:= +librt
+  MAINTAINER:=Karl Palsson <karlp@etactica.com>
+  DEPENDS:= +librt +libuuid
+  USERID:=mosquitto=200:mosquitto=200
 endef
 
 define Package/$(PKG_NAME)
     $(call Package/mosquitto/default)
     TITLE+= (with SSL support)
-    DEPENDS+= +libopenssl
+    DEPENDS+= +libopenssl +MOSQUITTO_LWS:libwebsockets-openssl
     VARIANT:=ssl
 endef
 
@@ -43,6 +42,10 @@ define Package/$(PKG_NAME)-nossl
     $(call Package/$(PKG_NAME)/default)
     TITLE+= (without SSL support)
     VARIANT:=nossl
+endef
+
+define Package/$(PKG_NAME)/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/$(PKG_NAME)/default/description
@@ -134,6 +137,16 @@ define Package/libmosquitto-nossl/description
     This package is built without SSL support
 endef
 
+define Package/libmosquittopp
+    SECTION:=libs
+    CATEGORY:=Libraries
+    DEPENDS:=+libmosquitto +libstdcpp
+    TITLE:= mosquitto - client c++ library
+endef
+
+define Package/libmosquittopp/description
+ C++ Library wrapper for libmosquitto.
+endef
 
 define Package/$(PKG_NAME)/conffiles
 /etc/mosquitto/mosquitto.conf
@@ -142,18 +155,25 @@ endef
 
 Package/$(PKG_NAME)-nossl/conffiles = $(Package/$(PKG_NAME)/conffiles)
 
-define Package/$(PKG_NAME)/install
+define Package/mosquitto/install/default
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto $(1)/usr/sbin/mosquitto
 	$(INSTALL_DIR) $(1)/etc/mosquitto
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/mosquitto.conf $(1)/etc/mosquitto/mosquitto.conf
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/mosquitto.init $(1)/etc/init.d/mosquitto
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) ./files/mosquitto.uci.convert $(1)/usr/bin
+	$(CP) ./files/* $(1)/
 endef
-Package/$(PKG_NAME)-nossl/install = $(Package/$(PKG_NAME)/install)
 
+define Package/mosquitto-nossl/install
+	$(call Package/mosquitto/install/default,$(1))
+endef
+
+define Package/mosquitto/install
+	$(call Package/mosquitto/install/default,$(1))
+ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto_passwd $(1)/usr/bin
+endif
+endef
 
 define Package/mosquitto-client/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -166,9 +186,12 @@ Package/mosquitto-client-nossl/install = $(Package/mosquitto-client/install)
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/lib/mosquitto.h $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/lib/cpp/mosquittopp.h $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/lib/cpp/libmosquittopp.so.1 $(1)/usr/lib/
 	$(LN) libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
+	$(LN) libmosquittopp.so.1 $(1)/usr/lib/libmosquittopp.so
 endef
 
 # This installs files on the target.  Compare with Build/InstallDev
@@ -179,14 +202,24 @@ define Package/libmosquitto/install
 endef
 Package/libmosquitto-nossl/install = $(Package/libmosquitto/install)
 
+define Package/libmosquittopp/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/cpp/libmosquittopp.so.1 $(1)/usr/lib/
+	$(LN) libmosquittopp.so.1 $(1)/usr/lib/libmosquittopp.so
+endef
+
 # Applies to all...
+MAKE_FLAGS += WITH_DOCS=no
 ifeq ($(BUILD_VARIANT),nossl)
-        MAKE_FLAGS += WITH_TLS=no
+	MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
+else
+	MAKE_FLAGS += WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
 endif
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
 $(eval $(call BuildPackage,$(PKG_NAME)-nossl))
 $(eval $(call BuildPackage,libmosquitto))
 $(eval $(call BuildPackage,libmosquitto-nossl))
+$(eval $(call BuildPackage,libmosquittopp))
 $(eval $(call BuildPackage,mosquitto-client))
 $(eval $(call BuildPackage,mosquitto-client-nossl))

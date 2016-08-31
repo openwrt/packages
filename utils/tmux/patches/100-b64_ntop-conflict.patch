@@ -1,0 +1,41 @@
+diff --git a/compat.h b/compat.h
+index 8666a1d..2a44a2b 100644
+--- a/compat.h
++++ b/compat.h
+@@ -223,7 +223,9 @@ int	 	 daemon(int, int);
+ #ifndef HAVE_B64_NTOP
+ /* b64_ntop.c */
+ #undef b64_ntop /* for Cygwin */
+-int		 b64_ntop(const char *, size_t, char *, size_t);
++int		 local_b64_ntop(const char *, size_t, char *, size_t);
++#else
++#define local_b64_ntop b64_ntop
+ #endif
+ 
+ #ifndef HAVE_FORKPTY
+diff --git a/compat/b64_ntop.c b/compat/b64_ntop.c
+index 2b4dc2d..a1314ca 100644
+--- a/compat/b64_ntop.c
++++ b/compat/b64_ntop.c
+@@ -122,7 +122,7 @@ static const char Pad64 = '=';
+    */
+ 
+ int
+-b64_ntop(uint8_t const *src, size_t srclength, char *target, size_t targsize) {
++local_b64_ntop(uint8_t const *src, size_t srclength, char *target, size_t targsize) {
+ 	size_t datalength = 0;
+ 	uint8_t input[3];
+ 	uint8_t output[4];
+diff --git a/tty.c b/tty.c
+index 7be952c..06dedab 100644
+--- a/tty.c
++++ b/tty.c
+@@ -1134,7 +1134,7 @@ tty_cmd_setselection(struct tty *tty, const struct tty_ctx *ctx)
+ 	off = 4 * ((ctx->num + 2) / 3) + 1; /* storage for base64 */
+ 	buf = xmalloc(off);
+ 
+-	b64_ntop(ctx->ptr, ctx->num, buf, off);
++	local_b64_ntop(ctx->ptr, ctx->num, buf, off);
+ 	tty_putcode_ptr2(tty, TTYC_MS, "", buf);
+ 
+ 	free(buf);

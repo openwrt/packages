@@ -1,0 +1,79 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2011 OpenWrt.org
+
+START=50
+
+append_bool() {
+	local section="$1"
+	local option="$2"
+	local value="$3"
+	local _val
+	config_get_bool _val "$section" "$option" '0'
+	[ "$_val" -gt 0 ] && append args "$3"
+}
+
+append_string() {
+	local section="$1"
+	local option="$2"
+	local value="$3"
+	local _val
+	config_get _val "$section" "$option"
+	[ -n "$_val" ] && append args "$3 $_val"
+}
+
+compute_seconds() {
+	local interval="$1"
+	local unit="$2"
+
+	if [ -z "$interval" ]
+	then
+		interval=10
+	fi
+
+	if [ -z "$unit" ]
+	then
+		unit="minutes"
+	fi
+
+	# compute interval in seconds
+	case "$unit" in
+		"days" )
+			interval_seconds=$(($interval*60*60*24))
+			;;
+		"hours" )
+			interval_seconds=$(($interval*60*60))
+			;;
+		"minutes" )
+			interval_seconds=$(($interval*60))
+			;;
+		"seconds" )
+			interval_seconds=$interval
+			;;
+		* )
+			# default is minutes
+			interval_seconds=$(($interval*60))
+			;;
+	esac
+
+	echo $interval_seconds
+}
+
+start_service() {
+	local section="$1"
+	args=""
+	config_get "interval" "$section" "idle_time_interval"
+	config_get "unit" "$section" "idle_time_unit"
+	append_string "$section" "disk" "-a"
+	config_get_bool "enabled" "$section" "enabled" '1'
+	[ "$enabled" -gt 0 ] || return 1
+	service_start /usr/bin/hd-idle $args -i "$(compute_seconds $interval $unit)"
+}
+
+start() {
+	config_load "hd-idle"
+	config_foreach start_service "hd-idle"
+}
+
+stop() {
+	service_stop /usr/bin/hd-idle
+}

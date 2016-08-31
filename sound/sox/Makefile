@@ -10,14 +10,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sox
 PKG_VERSION:=14.4.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/sox
 PKG_MD5SUM:=ff9ca6aca972549de0e80e8e30ed379c
 
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-2.1 GPL-2.0
 PKG_LICENSE_FILES:=COPYING LICENSE.LGPL LICENSE.GPL
+
 
 PKG_INSTALL:=1
 
@@ -34,7 +36,6 @@ define Package/sox
 		+libmagic +libpng +libffmpeg
   TITLE:=Sox is a general purpose sound converter/player/recorder
   URL:=http://sox.sourceforge.net/
-  MAINTAINER:=Hamish Guthrie <hcg@openwrt.org>
 endef
 
 define Package/sox/description

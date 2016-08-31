@@ -11,7 +11,7 @@ PKG_NAME:=wshaper
 PKG_VERSION:=1.1a
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
@@ -44,9 +44,10 @@ define Build/Compile
 endef
 
 define Package/wshaper/install
-	$(INSTALL_DIR) $(1)/usr/sbin/ $(1)/etc/init.d $(1)/etc/config
+	$(INSTALL_DIR) $(1)/usr/sbin/ $(1)/etc/init.d $(1)/etc/config $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./files/wshaper.htb $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/wshaper.init $(1)/etc/init.d/wshaper
+	$(INSTALL_BIN) ./files/wshaper.iface $(1)/etc/hotplug.d/iface/10-wshaper
 	$(INSTALL_DATA) ./files/wshaper.config $(1)/etc/config/wshaper
 endef
 

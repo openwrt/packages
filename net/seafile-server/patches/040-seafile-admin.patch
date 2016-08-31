@@ -1,0 +1,61 @@
+diff -rupN seafile-server-5.1.1.orig/tools/seafile-admin seafile-server-5.1.1/tools/seafile-admin
+--- seafile-server-5.1.1.orig/tools/seafile-admin	2016-04-19 15:44:33.000000000 +0200
++++ seafile-server-5.1.1/tools/seafile-admin	2016-04-26 10:55:11.826798430 +0200
+@@ -449,9 +449,12 @@ workers = 3
+ 
+ # Logging
+ runtime_dir = os.path.dirname(__file__)
+-pidfile = os.path.join(runtime_dir, 'seahub.pid')
++pidfile = '/var/run/seafile/seahub.pid'
+ errorlog = os.path.join(runtime_dir, 'error.log')
+ accesslog = os.path.join(runtime_dir, 'access.log')
++
++# for file upload, we need a longer timeout value (default is only 30s, too short)
++timeout = 1200
+ '''
+ 
+     try:
+@@ -526,6 +529,7 @@ def check_django_version():
+ 
+ 
+ def check_python_module(import_name, package_name=None, silent=False):
++    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "seahub.settings")
+     package_name = package_name or import_name
+     if not silent:
+         info('checking %s' % package_name)
+@@ -785,7 +789,7 @@ def check_layout(args):
+     conf[CONF_SEAFILE_DIR] = seafile_data_dir
+     conf[CONF_SEAHUB_DIR] = seahub_dir
+     conf[CONF_SEAHUB_CONF] = seahub_conf
+-    conf[CONF_SEAHUB_PIDFILE] = os.path.join(runtime_dir, 'seahub.pid')
++    conf[CONF_SEAHUB_PIDFILE] = '/var/run/seafile/seahub.pid'
+     conf[CONF_SEAHUB_OUTLOG] = os.path.join(runtime_dir, 'access.log')
+     conf[CONF_SEAHUB_ERRLOG] = os.path.join(runtime_dir, 'error.log')
+ 
+@@ -836,10 +840,13 @@ def setup_seafile(args):
+     print '-----------------------------------------------------------------'
+     print '-----------------------------------------------------------------'
+     print
+-    print 'To start/stop seafile server:'
++    print 'To start, stop or restart seafile:'
++    print
++    print highlight('         # /etc/init.d/seafile { start | stop | restart }')
+     print
+-    print highlight('         $ cd %s' % cwd)
+-    print highlight('         $ %s { start | stop }' % SCRIPT_NAME)
++    print 'To start, stop or restart seahub:'
++    print
++    print highlight('         # /etc/init.d/seahub { start | stop | restart }')
+     print
+     print 'If you have any problem, refer to\n'
+     print
+@@ -903,8 +910,7 @@ def start_seafile(args):
+ def stop_seafile(dummy):
+     info('Stopping seafile server')
+     pkill('seafile-controller')
+-    runtime_dir = os.path.join(cwd, 'seafile-server', 'runtime')
+-    pidfile = os.path.join(runtime_dir, 'seahub.pid')
++    pidfile = '/var/run/seafile/seahub.pid'
+     try:
+         with open(pidfile, 'r') as fp:
+             pid = fp.read().strip('\n ')

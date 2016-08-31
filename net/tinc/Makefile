@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2013 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tinc
-PKG_VERSION:=1.0.24
+PKG_VERSION:=1.0.28
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.tinc-vpn.org/packages
-PKG_MD5SUM:=14a91eb2e85bdc0451a815612521b708
+PKG_MD5SUM:=9ca14c9902fb4011b5df6a09ffd40ea9
 
 PKG_INSTALL:=1
 
@@ -22,10 +22,10 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tinc
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+liblzo +libopenssl +kmod-tun
+  DEPENDS:=+liblzo +libopenssl +kmod-tun +zlib
   TITLE:=VPN tunneling daemon
   URL:=http://www.tinc-vpn.org/
-  MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
+  MAINTAINER:=Saverio Proto <zioproto@gmail.com>
   SUBMENU:=VPN
 endef
 

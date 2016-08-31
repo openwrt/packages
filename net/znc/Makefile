@@ -8,20 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
-PKG_VERSION:=1.4
-PKG_RELEASE:=1
+PKG_VERSION:=1.6.3
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
 		http://znc.in/releases/archive
-PKG_MD5SUM:=630cb74db34d2d5451ba30b47869f6bb
+PKG_MD5SUM:=0dad0307e2faea26b9e304e308f7ec63
 
 PKG_MAINTAINER:=Jonas Gorski <jogo@openwrt.org>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 
+PKG_CONFIG_DEPENDS := CONFIG_ZNC_ICU
 
 define Package/znc/default
   SUBMENU:=Instant Messaging
@@ -33,7 +35,7 @@ endef
 
 define Package/znc
   $(Package/znc/default)
-  DEPENDS:=+libopenssl +libpthread $(CXX_DEPENDS)
+  DEPENDS:=+libopenssl +libpthread +libstdcpp +ZNC_ICU:icu +zlib
   MENU:=1
 endef
 
@@ -41,6 +43,10 @@ define Package/znc/description
 	ZNC is an IRC bouncer with many advanced features like detaching,
 	multiple users, per channel playback buffer, SSL, IPv6, transparent DCC
 	bouncing, and c++ module support to name a few.
+endef
+
+define Package/znc/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/znc/conffiles
@@ -80,7 +86,7 @@ define module
 	# include webadmin page templates if existing
 	if [ -d $$(PKG_BUILD_DIR)/modules/data/$(subst -,_,$(strip $(1))) ]; then \
 		$(INSTALL_DIR) $$(1)/usr/share/znc/modules ;\
-		$(CP) -r $$(PKG_BUILD_DIR)/modules/data/$(subst -,_,$(strip $(1))) $$(1)/usr/share/znc/modules ;\
+		$(CP) $$(PKG_BUILD_DIR)/modules/data/$(subst -,_,$(strip $(1))) $$(1)/usr/share/znc/modules ;\
 	fi
   endef
 
@@ -103,9 +109,9 @@ define webadmin
 	$(INSTALL_DIR) $$(1)/usr/lib/znc/
 	$(INSTALL_BIN) $$(PKG_BUILD_DIR)/modules/webadmin.so $$(1)/usr/lib/znc/
 	$(INSTALL_DIR) $$(1)/usr/share/znc/modules
-	$(CP) -r $$(PKG_BUILD_DIR)/modules/data/webadmin $$(1)/usr/share/znc/modules
+	$(CP) $$(PKG_BUILD_DIR)/modules/data/webadmin $$(1)/usr/share/znc/modules
 	$(INSTALL_DIR) $$(1)/usr/share/znc/webskins/
-	$(CP) -r $$(PKG_BUILD_DIR)/webskins/_default_ $$(1)/usr/share/znc/webskins/
+	$(CP) $$(PKG_BUILD_DIR)/webskins/_default_ $$(1)/usr/share/znc/webskins/
   endef
 
   ZNC_MODULES += znc-mod-webadmin
@@ -125,7 +131,7 @@ define webskin
 
   define Package/znc-webskin-$(strip $(1))/install
 	$(INSTALL_DIR) $$(1)/usr/share/znc/webskins/
-	$(CP) -r $$(PKG_BUILD_DIR)/webskins/$(strip $(1)) $$(1)/usr/share/znc/webskins/
+	$(CP) $$(PKG_BUILD_DIR)/webskins/$(strip $(1)) $$(1)/usr/share/znc/webskins/
   endef
   ZNC_MODULES += znc-webskin-$(strip $(1))
 endef
@@ -134,6 +140,8 @@ endef
 
 $(eval $(call module,adminlog,Log user connects and disconnects and failed \
 	logins to file or syslog.))
+
+$(eval $(call module,alias,Provides bouncer-side command alias support.))
 
 $(eval $(call module,autoattach,Reattaches you to channels on activity.))
 
@@ -197,6 +205,8 @@ $(eval $(call module,flooddetach,This module detaches you from channels which \
 $(eval $(call module,identfile,Places the ident of a user to a file when they \
 	 are trying to connect.))
 
+$(eval $(call module,imapauth,Allow users to authenticate via IMAP.))
+
 $(eval $(call module,keepnick,Tries to get you your primary nick.))
 
 $(eval $(call module,kickrejoin,Implements auto-rejoin-on-kick.))
@@ -207,6 +217,8 @@ $(eval $(call module,listsockets,This module displays a list of all open \
 	sockets in ZNC.))
 
 $(eval $(call module,log,Log conversations to file.))
+
+$(eval $(call module,missingmotd,Sends 422 to clients when they login.))
 
 $(eval $(call module,modules_online,This module fakes the online status of \
 	ZNC-*users.))
@@ -259,20 +271,29 @@ $(eval $(call webskin,dark-clouds))
 $(eval $(call webskin,forest))
 $(eval $(call webskin,ice))
 
-PKG_CONFIG_DEPENDS := $(patsubst %,CONFIG_PACKAGE_%,$(ZNC_MODULES))
+PKG_CONFIG_DEPENDS += $(patsubst %,CONFIG_PACKAGE_%,$(ZNC_MODULES))
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_VARS += \
-	CXXFLAGS="$(TARGET_CFLAGS) -fno-builtin -fno-rtti -nostdinc++" \
+	CXXFLAGS="$(TARGET_CFLAGS) -fno-builtin -fno-rtti" \
 	CPPFLAGS="-I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/include" \
 	LDFLAGS="-nodefaultlibs -lc -L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib" \
-	LIBS="-luClibc++ -lm -lssl -lcrypto $(LIBGCC_S) -lc"
+	LIBS="-lstdc++ -lm -lssl -lcrypto $(LIBGCC_S) -lc"
 
 CONFIGURE_ARGS += \
-	--disable-c-ares \
-	--disable-perl
+	$(if $(CONFIG_ZNC_ICU), --enable-charset, --disable-charset) \
+	--disable-cyrus \
+	--disable-debug \
+	--enable-largefile \
+	--disable-perl \
+	--enable-poll \
+	--disable-python \
+	--enable-ssl \
+	--disable-swig \
+	--disable-tcl \
+	--enable-tdns \
+	--enable-zlib
 
 define Build/Configure
 	$(call Build/Configure/Default,)

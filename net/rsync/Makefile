@@ -8,16 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
-PKG_VERSION:=3.1.1
+PKG_VERSION:=3.1.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://rsync.samba.org/ftp/rsync/src
-PKG_MD5SUM:=43bd6676f0b404326eee2d63be3cdcfe
-PKG_LICENSE:=GPL-3.0
-PKG_LICENSE_FILES:=COPYING
+PKG_MD5SUM:=0f758d7e000c0f7f7d3792610fad70cb
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -29,7 +28,7 @@ define Package/rsync
   CATEGORY:=Network
   SUBMENU:=File Transfer
   TITLE:=Fast remote file copy program (like rcp)
-  DEPENDS:=+libpopt +zlib +RSYNC_xattr:libattr +RSYNC_acl:libacl
+  DEPENDS:=+libpopt +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_zlib:zlib
   URL:=http://rsync.samba.org/
   MENU:=1
 endef
@@ -37,6 +36,11 @@ endef
 define Package/rsync/config
 	source "$(SOURCE)/Config.in"
 endef
+
+CONFIGURE_ARGS += \
+	--with-included-popt=no \
+	--disable-debug \
+	--disable-locale \
 
 ifeq ($(CONFIG_RSYNC_xattr),y)
 	CONFIGURE_ARGS+= --enable-xattr-support
@@ -48,6 +52,12 @@ ifeq ($(CONFIG_RSYNC_acl),y)
 	CONFIGURE_ARGS+= --enable-acl-support
 else
 	CONFIGURE_ARGS+= --disable-acl-support
+endif
+
+ifeq ($(CONFIG_RSYNC_zlib),y)
+	CONFIGURE_ARGS+= --with-included-zlib=no
+else
+	CONFIGURE_ARGS+= --with-included-zlib=yes
 endif
 
 define Package/rsyncd
@@ -68,12 +78,6 @@ define Package/rsync/description
  The rsync remote-update protocol allows rsync to transfer just the differences
  between two sets of files across the network link.
 endef
-
-CONFIGURE_ARGS += \
-	--with-included-popt=no \
-	--with-included-zlib=no \
-	--disable-debug \
-	--disable-locale \
 
 define Package/rsync/install
 	$(INSTALL_DIR) $(1)/usr/bin

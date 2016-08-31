@@ -6,6 +6,6 @@
  echo_n "Looking for access methods..."
 -LIBRESOLV=-lresolv
 +LIBRESOLV=
+ LIBEXT=so
  
  case $sys in
- 	linux*)

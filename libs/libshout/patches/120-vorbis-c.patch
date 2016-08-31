@@ -1,0 +1,11 @@
+--- a/src/vorbis.c
++++ b/src/vorbis.c
+@@ -28,7 +28,7 @@
+ #endif
+ #include <stdlib.h>
+ 
+-#include <vorbis/codec.h>
++#include <tremor/ivorbiscodec.h>
+ 
+ #include "shout_private.h"
+ #include "shout_ogg.h"

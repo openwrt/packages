@@ -1,45 +1,39 @@
 #!/bin/sh /etc/rc.common
-START=70
+#
+# Copyright (C) 2014-2016 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
+#
+# This is free software, licensed under the GNU General Public License v2.
 
-knot_bin="/usr/sbin/knotd"
-knot_ctl="/usr/sbin/knotc"
-config_file="/etc/knot/knot.conf"
-pid_file="/var/run/knot.pid"
+START=50
+USE_PROCD=1
 
-start() {
-  echo "Starting Knot DNS"
+PROG="/usr/sbin/knotd"
+CONFFILE="/etc/knot/knot.conf"
 
-  if [ -e $pid_file ]; then
-     echo "  Already running with PID `cat $pid_file`"
-     return 1
-  fi
+USER="knot"
+USERID="5353"
+RUNDIR="/var/run/knot"
+STORAGE="/var/lib/knot"
 
-  $knot_bin -c $config_file -d
+fix_perms() {
+	user_exists $USER $USERID || user_add $USER $USERID
+	group_exists $USER $USERID || group_add $USER $USERID
 
-  if [ $? -ne 0 ]; then
-    echo "  Failed to start"
-  fi
+	for dir in $RUNDIR $STORAGE; do
+		test -e $dir || {
+			mkdir -p $dir
+			chgrp $USER $dir
+			chmod g+w $dir
+		}
+		chgrp $USER $CONFFILE
+		chmod g+r $CONFFILE
+	done
 }
 
-stop() {
-  echo "Stopping Knot DNS"
-
-  if [ -e $pid_file ]; then
-    kill `cat $pid_file`
-    rm -f $pid_file
-  else
-    echo "  No PID file $pid_file"
-    return 1
-  fi
-}
-
-restart() {
-  stop
-  start
-}
-
-reload() {
-  echo "Reloading Knot DNS"
-
-  $knot_ctl -c $config_file reload
+start_service() {
+	fix_perms
+	procd_open_instance
+	procd_set_param command $PROG -c $CONFFILE
+	procd_set_param respawn
+	procd_close_instance
 }

@@ -1,0 +1,31 @@
+diff --git a/Modules/_ctypes/libffi/configure b/Modules/_ctypes/libffi/configure
+index 75f62a7..4d6c9f2 100755
+--- a/Modules/_ctypes/libffi/configure
++++ b/Modules/_ctypes/libffi/configure
+@@ -17257,20 +17257,12 @@ case "$host" in
+ 	fi
+ 	;;
+ 
+-  i?86-*-* | x86_64-*-*)
+-	TARGETDIR=x86
+-	if test $ac_cv_sizeof_size_t = 4; then
+-	  case "$host" in
+-	    *-gnux32)
+-	      TARGET=X86_64
+-	      ;;
+-	    *)
+-	      TARGET=X86
+-	      ;;
+-          esac
+-	else
+-	  TARGET=X86_64;
+-	fi
++  i?86-*-*)
++	TARGET=X86; TARGETDIR=x86
++	;;
++
++  x86_64-*-*)
++	TARGET=X86_64; TARGETDIR=x86
+ 	;;
+ 
+   ia64*-*-*)

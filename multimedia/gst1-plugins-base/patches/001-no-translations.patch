@@ -1,0 +1,28 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -929,7 +929,6 @@ docs/design/Makefile
+ docs/libs/Makefile
+ docs/plugins/Makefile
+ docs/version.entities
+-po/Makefile.in
+ common/Makefile
+ common/m4/Makefile
+ m4/Makefile
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -13,7 +13,6 @@ SUBDIRS = 			\
+ 	tools 			\
+ 	tests 			\
+ 	docs			\
+-	po 			\
+ 	common 			\
+ 	m4
+ 
+@@ -24,7 +23,6 @@ DIST_SUBDIRS = 			\
+ 	gst sys ext		\
+ 	tools 			\
+ 	tests 			\
+-	po 			\
+ 	common 			\
+ 	m4
+ 

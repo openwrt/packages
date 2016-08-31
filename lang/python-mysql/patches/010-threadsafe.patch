@@ -1,0 +1,11 @@
+--- MySQL-python-1.2.2/site_orig.cfg	2007-08-15 12:58:40.000000000 +0200
++++ MySQL-python-1.2.2/site.cfg	2007-08-15 12:58:49.000000000 +0200
+@@ -4,7 +4,7 @@
+ # static: link against a static library (probably required for embedded)
+ 
+ embedded = False
+-threadsafe = True
++threadsafe = False
+ static = False
+ 
+ # The path to mysql_config.

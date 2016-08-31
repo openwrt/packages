@@ -1,0 +1,19 @@
+--- lua-md5-1.2/config	2014-06-04 16:55:50.000000000 +0800
++++ lua-md5-1.2_new/config	2014-06-04 16:57:54.223539416 +0800
+@@ -1,13 +1,13 @@
+ # Installation directories
+ 
+ # Default prefix
+-PREFIX = /usr/local
++PREFIX = /usr
+ 
+ # System's libraries directory (where binary libraries are installed)
+-LUA_LIBDIR= $(PREFIX)/lib/lua/5.1
++LUA_LIBDIR= $(PREFIX)/lib/lua
+ 
+ # System's lua directory (where Lua libraries are installed)
+-LUA_DIR= $(PREFIX)/share/lua/5.1
++LUA_DIR= $(PREFIX)/lib/lua
+ 
+ # Lua includes directory
+ LUA_INC= $(PREFIX)/include

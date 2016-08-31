@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.0.17
+PKG_VERSION:=9.5.1
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=PostgreSQL
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -18,17 +18,18 @@ PKG_SOURCE_URL:=\
 	http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v$(PKG_VERSION) \
 	http://ftp.be.postgresql.org/postgresql/source/v$(PKG_VERSION) \
 	ftp://ftp-archives.postgresql.org/pub/source/v$(PKG_VERSION)
-PKG_MD5SUM:=46bf3ef3761c091fb0d2e25012c1709e
+PKG_MD5SUM:=11e037afaa4bd0c90bb3c3d955e2b401
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
+PKG_MACRO_PATHS:=config
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libpq
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+zlib +libreadline +libpthread +libncurses +shadow-su
+  DEPENDS:=+zlib +libreadline +libpthread +libncurses
   TITLE:=PostgreSQL client library
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -41,7 +42,7 @@ endef
 define Package/pgsql-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq
+  DEPENDS:=+libpq +USE_UCLIBC:librt +shadow-utils +shadow-su
   TITLE:=Command Line Interface (CLI) to PostgreSQL databases
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -54,19 +55,36 @@ endef
 define Package/pgsql-server
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq
+  DEPENDS:=+libpq +USE_UCLIBC:librt
   TITLE:=PostgreSQL databases Server
   URL:=http://www.postgresql.org/
   SUBMENU:=database
+  USERID:=postgres=5432:postgres=5432
 endef
 
 define Package/pgsql-server/description
 PostgreSQL databases Server.
 endef
 
+PGSQL_CONFIG_VARS:= \
+	pgac_cv_snprintf_long_long_int_format="%lld" \
+	pgac_cv_snprintf_size_t_support=yes
+
+ifeq ($(CONFIG_USE_UCLIBC),y)
+# PostgreSQL does not build against uClibc with locales
+# enabled, due to an uClibc bug, see
+# http://lists.uclibc.org/pipermail/uclibc/2014-April/048326.html
+# so overwrite automatic detection and disable locale support
+PGSQL_CONFIG_VARS+= \
+		pgac_cv_type_locale_t=no
+endif
+
+TARGET_CONFIGURE_OPTS+=$(PGSQL_CONFIG_VARS)
+
 # Need a native ecpg ,pg_config, and zic for build
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -f config.cache; \
+		$(PGSQL_CONFIG_VARS) \
 		./configure \
 			--prefix=/usr \
 			--exec-prefix=/usr \
@@ -85,28 +103,29 @@ define Build/Configure
 			--enable-static \
 			--disable-integer-datetimes \
 			--disable-rpath \
-			--without-java \
-			--without-krb4 \
-			--without-krb5 \
+			--without-bonjour \
+			--without-gssapi \
+			--without-ldap \
 			--without-openssl \
 			--without-pam \
 			--without-perl \
 			--without-python \
 			--without-readline \
-			--without-rendezvous \
 			--without-tcl \
-			--without-tk \
 			--with-zlib="yes" \
 			--enable-depend \
 			--with-system-timezone=/tmp \
 	);
-	$(MAKE) -C $(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)" CFLAGS+="-I../../libpq"
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc clean
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)"
 	mv $(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg \
 		$(PKG_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg.host
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/timezone clean
 	$(MAKE) -C $(PKG_BUILD_DIR)/src/timezone CC="$(HOSTCC)"
 	mv $(PKG_BUILD_DIR)/src/timezone/zic $(PKG_BUILD_DIR)/host-zic
 	$(INSTALL_DIR) $(STAGING_DIR)/host/bin/
 	$(CP) $(PKG_BUILD_DIR)/host-zic $(STAGING_DIR)/host/bin/zic
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/bin/pg_config clean
 	$(MAKE) -C $(PKG_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)"
 	mv $(PKG_BUILD_DIR)/src/bin/pg_config/pg_config \
 		$(PKG_BUILD_DIR)/src/bin/pg_config/pg_config.host
@@ -141,16 +160,14 @@ define Build/Configure
 			--enable-static \
 			--disable-integer-datetimes \
 			--disable-rpath \
-			--without-java \
-			--without-krb4 \
-			--without-krb5 \
+			--without-bonjour \
+			--without-gssapi \
+			--without-ldap \
 			--without-openssl \
 			--without-pam \
 			--without-perl \
 			--without-python \
-			--without-rendezvous \
 			--without-tcl \
-			--without-tk \
 			--with-zlib="yes" \
 			--enable-depend \
 			$(if $(CONFIG_TARGET_avr32),--disable-spinlocks) \
@@ -193,44 +210,17 @@ define Package/pgsql-server/install
 
 	$(INSTALL_BIN) ./files/postgresql.init $(1)/etc/init.d/postgresql
 
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/share/postgresql/* \
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/postgresql/* \
 		$(1)/usr/share/postgresql
 
 	$(INSTALL_DATA) ./files/postgresql.config $(1)/etc/config/postgresql
 
-	$(CP) -r \
-		$(PKG_INSTALL_DIR)/usr/lib/postgresql \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/postgresql \
 		$(1)/usr/lib
 endef
 
 define Package/pgsql-server/conffiles
 /etc/config/postgresql
-endef
-
-define Package/pgsql-server/postinst
-#!/bin/sh
-grep -q '^postgres:' /etc/passwd && exit 0
-group=$$(grep '^postgres:' /etc/group | cut -f3 -d:)
-if [ -z "$${group}" ] ; then
-	group=1000
-	tst=$$(cat /etc/group | grep ":$${group}:")
-	while [ -n "$${tst}" ] ; do
-		group=$$(($${group}+1))
-		tst=$$(cat /etc/group | grep ":$${group}:")
-	done
-	echo "postgres:x:$${group}:" >>/etc/group
-fi
-
-user=$$(cat /etc/passwd | grep "^postgres:")
-if [ -z "$${user}" ] ; then
-	num="$${group}"
-	tst=$$(cat /etc/passwd | grep ":.*:$${num}:")
-	while [ -n "$${tst}" ] ; do
-		num=$$(($${num}+1))
-		tst=$$(cat /etc/passwd | grep ":.*:$${num}:")
-	done
-	echo "postgres:*:$${num}:$${group}:PostgreSQL administrator:/tmp:/bin/ash" >>/etc/passwd
-fi
 endef
 
 define Build/InstallDev
@@ -242,6 +232,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config_manual.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/postgres_ext.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config_ext.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/postgresql $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpq.{a,so*} $(1)/usr/lib/

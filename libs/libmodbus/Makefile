@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmodbus
-PKG_VERSION:=3.0.6
+PKG_VERSION:=3.1.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://libmodbus.org/releases
-PKG_MD5SUM:=c80f88b6ca19cabc4ceffc195ca07771
+PKG_MD5SUM:=b1a8fd3a40d2db4de51fb0cbcb201806
+
+PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
+
+PKG_LICENSE:=GPL-3.0+ LGPL-2.1+
+PKG_LICENSE_FILES:=COPYING COPYING.LESSER
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -25,13 +30,13 @@ define Package/libmodbus
   CATEGORY:=Libraries
   URL:=http://www.libmodbus.org
   TITLE:=libmodbus
-  MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 endef
 
 define Package/libmodbus/description
-A Modbus library for Linux, Mac OS X, FreeBSD, QNX and Win32
+  A Modbus library for Linux, Mac OS X, FreeBSD, QNX and Win32.
 endef
 
+CONFIGURE_ARGS += --without-documentation --disable-tests
 TARGET_CFLAGS += $(FPIC)
 
 define Build/InstallDev

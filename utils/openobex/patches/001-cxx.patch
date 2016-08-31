@@ -1,0 +1,10 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,6 +1,6 @@
+ cmake_minimum_required ( VERSION 2.8.5 FATAL_ERROR )
+ 
+-project ( openobex C )
++project ( openobex C CXX )
+ 
+ #
+ # The project version

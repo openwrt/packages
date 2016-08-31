@@ -18,9 +18,10 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.anytun.org/download/
 PKG_MD5SUM:=ce47ad45003ff1d84eaf5276941b9ddf
-
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-
+PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
+PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 
 
@@ -31,7 +32,6 @@ define Package/uanytun/template
   DEPENDS:=+kmod-tun
   TITLE:=micro anycast tunneling daemon
   URL:=http://www.anytun.org/
-  MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 endef
 
 
@@ -53,7 +53,7 @@ uAnytun is a tiny implementation of SATP the secure anycast tunneling protocol.
   IPSec in Tunnel mode and allows tunneling of every ETHER TYPE protocol (e.g.
   ethernet, ip, arp ...). SATP directly includes cryptography and message
   authentication based on the methods used by SRTP.  It is intended to deliver
-  a generic, scaleable and secure solution for tunneling and relaying of packets
+  a generic, scalable and secure solution for tunneling and relaying of packets
   of any protocol.
   Unlike Anytun which is a full featured implementation uAnytun has no support
   for multiple connections or synchronisation. It is a small single threaded

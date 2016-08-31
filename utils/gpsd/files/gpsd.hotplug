@@ -1,0 +1,16 @@
+case "$ACTION" in
+    add)
+        # start process
+        # only pl2303 devices are handled
+        if [ "$PRODUCT" = "67b/2303/300" ] && [ "$TYPE" = "0/0/0" ] && [ "$INTERFACE" = "255/0/0" ]; then
+            sleep 3 && /etc/init.d/gpsd start
+        fi
+        ;;
+    remove)
+        # stop process
+        # only pl2303 devices are handled
+        if [ "$PRODUCT" = "67b/2303/300" ] && [ "$TYPE" = "0/0/0" ] && [ "$INTERFACE" = "255/0/0" ]; then
+            /etc/init.d/gpsd stop
+        fi
+        ;;
+esac

@@ -1,8 +1,8 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -34,6 +34,8 @@ SUBDIRS = include m4 src build obj
+@@ -33,6 +33,8 @@ ACLOCAL_AMFLAGS = -I m4
  
- DISTCLEANFILES = libtool-disable-static
+ SUBDIRS = include m4 src build objs
  
 +ACLOCAL_AMFLAGS = -I m4
 +

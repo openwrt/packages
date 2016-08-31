@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ibrdtnd
-PKG_VERSION:=0.12.1
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
-PKG_MD5SUM:=8dad5ebbcfaa4c16ba151c9c289066c3
-PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+PKG_MD5SUM:=933d37bf777700a6e1709d0f7a129613
+PKG_MAINTAINER:=Johannes Morgenroth <jm@m-network.de>
 PKG_LICENSE:=Apache-2.0
 
 PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,7 +25,7 @@ define Package/ibrdtnd
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+dtndht +ibrdtn +libsqlite3
-  TITLE:=DTN Deamon
+  TITLE:=DTN Daemon
 endef
 
 define Package/ibrdtnd/conffiles
@@ -40,6 +39,7 @@ endef
 CONFIGURE_ARGS += \
 	--with-tls \
 	--with-sqlite \
+	--with-dht \
 	--without-wifip2p \
 	--without-vmime \
 	--disable-libdaemon

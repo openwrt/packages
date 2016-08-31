@@ -1,0 +1,37 @@
+<!-- This configuration file specifies the required security policies
+     for Bluetooth core daemon to work. -->
+
+<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+
+  <!-- ../system.conf have denied everything, so we just punch some holes -->
+
+  <policy user="root">
+    <allow own="org.bluez"/>
+  </policy>
+
+  <policy at_console="true">
+    <allow send_path="/"/>
+    <allow send_path="/org/bluez"/>
+
+    <allow send_destination="org.bluez.Manager"/>
+    <allow receive_sender="org.bluez.Manager"/>
+
+    <allow send_destination="org.bluez.Adapter"/>
+    <allow receive_sender="org.bluez.Adapter"/>
+
+    <allow send_destination="org.bluez.Device"/>
+    <allow receive_sender="org.bluez.Device"/>
+
+    <allow send_destination="org.bluez.Service"/>
+    <allow receive_sender="org.bluez.Service"/>
+
+    <allow send_destination="org.bluez.Database"/>
+    <allow receive_sender="org.bluez.Database"/>
+
+    <allow send_destination="org.bluez.Security"/>
+    <allow receive_sender="org.bluez.Security"/>
+  </policy>
+
+</busconfig>

@@ -1,0 +1,40 @@
+From 0102d423b79de7af982c8d4619d816f95a9b9278 Mon Sep 17 00:00:00 2001
+From: Mathieu Parent <math.parent@gmail.com>
+Date: Thu, 29 Oct 2009 23:55:19 +0100
+Subject: [PATCH 6/7] Set picolangdir
+
+---
+ pico/Makefile.am     |    2 +-
+ pico/bin/pico2wave.c |    4 ++++
+ 2 files changed, 5 insertions(+), 1 deletions(-)
+
+diff --git a/pico/Makefile.am b/pico/Makefile.am
+index 8898050..a19c42a 100644
+--- a/pico/Makefile.am
++++ b/pico/Makefile.am
+@@ -84,5 +84,5 @@ pico2wave_SOURCES = \
+ 	bin/pico2wave.c
+ pico2wave_LDADD = \
+ 	libttspico.la -lm -lpopt
+-pico2wave_CFLAGS = -Wall -I lib
++pico2wave_CFLAGS = -Wall -Dpicolangdir=\"$(picolangdir)\" -I lib
+ 
+diff --git a/pico/bin/pico2wave.c b/pico/bin/pico2wave.c
+index 0c035a7..ec7ab79 100644
+--- a/pico/bin/pico2wave.c
++++ b/pico/bin/pico2wave.c
+@@ -35,7 +35,11 @@
+ 
+ /* string constants */
+ #define MAX_OUTBUF_SIZE     128
++#ifdef picolangdir
++const char * PICO_LINGWARE_PATH             = picolangdir "/";
++#else
+ const char * PICO_LINGWARE_PATH             = "./lang/";
++#endif
+ const char * PICO_VOICE_NAME                = "PicoVoice";
+ 
+ /* supported voices
+-- 
+1.7.1
+

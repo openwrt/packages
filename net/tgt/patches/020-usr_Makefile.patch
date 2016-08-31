@@ -1,37 +1,32 @@
---- tgt-1.0.48.orig/usr/Makefile	2014-06-04 15:03:53.000000000 +0300
-+++ tgt-1.0.48/usr/Makefile	2014-06-04 15:17:56.373670618 +0300
-@@ -1,13 +1,13 @@
+diff --git a/usr/Makefile b/usr/Makefile
+index d4e3eaf..ec1c9a3 100644
+--- a/usr/Makefile
++++ b/usr/Makefile
+@@ -1,11 +1,11 @@
  sbindir ?= $(PREFIX)/sbin
  libdir ?= $(PREFIX)/lib/tgt
  
 -ifneq ($(shell test -e /usr/include/linux/signalfd.h && echo 1),)
-+#ifneq ($(shell test -e /usr/include/linux/signalfd.h && echo 1),)
++ifneq ($(shell test -n $(shell find $(STAGING_DIR)/usr/include -name "signalfd.h" | head -n1) && echo 1),)
  CFLAGS += -DUSE_SIGNALFD
--endif
-+#endif
+ endif
  
--ifneq ($(shell test -e /usr/include/sys/timerfd.h && echo 1),)
-+#ifneq ($(shell test -e /usr/include/sys/timerfd.h && echo 1),)
+-ifneq ($(shell test -n $(shell find /usr/include -name "timerfd.h" | head -n1) && echo 1),)
++ifneq ($(shell test -n $(shell find $(STAGING_DIR)/usr/include -name "timerfd.h" | head -n1) && echo 1),)
  CFLAGS += -DUSE_TIMERFD
--endif
-+#endif
+ endif
  
- TGTD_OBJS += $(addprefix iscsi/, conn.o param.o session.o \
- 		iscsid.o target.o chap.o sha1.o md5.o transport.o iscsi_tcp.o \
-@@ -25,8 +25,9 @@
+@@ -25,7 +25,7 @@ ifneq ($(SD_NOTIFY),)
  CFLAGS += -DUSE_SYSTEMD
  endif
  
 -ifneq ($(shell test -e /usr/include/sys/eventfd.h && test -e /usr/include/libaio.h && echo 1),)
--CFLAGS += -DUSE_EVENTFD
-+#ifneq ($(shell test -e /usr/include/sys/eventfd.h && test -e $(STAGING_DIR)/usr/include/libaio.h && echo 1),)
-+ifneq ((test -e $(STAGING_DIR)/usr/include/libaio.h && echo 1),)
-+CFLAGS += -DUSE_EVENTFD -I$(STAGING_DIR)/usr/include/
++ifneq ($(shell test -n $(shell find $(STAGING_DIR)/usr/include -name "eventfd.h" | head -n1) && test -n $(shell find $(STAGING_DIR)/usr/include -name "libaio.h" | head -n1) && echo 1),)
+ CFLAGS += -DUSE_EVENTFD
  TGTD_OBJS += bs_aio.o
  LIBS += -laio
- endif
-@@ -55,7 +56,7 @@
- LIBS += -lsystemd-daemon
+@@ -55,7 +55,7 @@ ifneq ($(SD_NOTIFY),)
+ LIBS += -lsystemd
  endif
  
 -PROGRAMS += tgtd tgtadm tgtimg
@@ -39,13 +34,13 @@
  TGTD_OBJS += tgtd.o mgmt.o target.o scsi.o log.o driver.o util.o work.o \
  		concat_buf.o parser.o spc.o sbc.o mmc.o osd.o scc.o smc.o \
  		ssc.o libssc.o bs_rdwr.o bs_ssc.o \
-@@ -82,14 +83,8 @@
+@@ -82,14 +82,6 @@ tgtadm: $(TGTADM_OBJS)
  
  -include $(TGTADM_DEP)
  
 -TGTIMG_OBJS = tgtimg.o libssc.o libcrc32c.o
- TGTIMG_DEP = $(TGTIMG_OBJS:.o=.d)
- 
+-TGTIMG_DEP = $(TGTIMG_OBJS:.o=.d)
+-
 -tgtimg: $(TGTIMG_OBJS)
 -	$(CC) $^ -o $@
 -

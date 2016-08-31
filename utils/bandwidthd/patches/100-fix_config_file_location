@@ -1,0 +1,31 @@
+--- bandwidthd-2.0.1/bandwidthd.c.orig	2008-05-09 10:06:37.000000000 -0500
++++ bandwidthd-2.0.1/bandwidthd.c	2008-05-09 10:32:54.000000000 -0500
+@@ -255,22 +255,22 @@
+ 
+ 	openlog("bandwidthd", LOG_CONS, LOG_DAEMON);
+ 
+-	if (stat("./etc/bandwidthd.conf", &StatBuf))
++	if (stat("/etc/bandwidthd.conf", &StatBuf))
+ 		{
+ 		chdir(INSTALL_DIR);
+-		if (stat("./etc/bandwidthd.conf", &StatBuf))
++		if (stat("/etc/bandwidthd.conf", &StatBuf))
+ 			{
+-			printf("Cannot find ./etc/bandwidthd.conf or %s/etc/bandwidthd.conf\n", INSTALL_DIR);
+-			syslog(LOG_ERR, "Cannot find ./etc/bandwidthd.conf or %s/etc/bandwidthd.conf", INSTALL_DIR);
++			printf("Cannot find /etc/bandwidthd.conf or %s/etc/bandwidthd.conf\n", INSTALL_DIR);
++			syslog(LOG_ERR, "Cannot find /etc/bandwidthd.conf or %s/etc/bandwidthd.conf", INSTALL_DIR);
+ 			exit(1);
+ 			}
+ 		}
+ 
+-	bdconfig_in = fopen("./etc/bandwidthd.conf", "rt");
++	bdconfig_in = fopen("/etc/bandwidthd.conf", "rt");
+ 	if (!bdconfig_in)
+ 		{
+ 		syslog(LOG_ERR, "Cannot open bandwidthd.conf");
+-		printf("Cannot open ./etc/bandwidthd.conf\n");
++		printf("Cannot open /etc/bandwidthd.conf\n");
+ 		exit(1);
+ 		}
+ 	bdconfig_parse();

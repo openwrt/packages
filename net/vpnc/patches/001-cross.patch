@@ -1,0 +1,42 @@
+--- a/Makefile
++++ b/Makefile
+@@ -20,7 +20,7 @@
+ # $Id: Makefile 539 2013-12-04 13:41:04Z Antonio Borneo $
+ 
+ DESTDIR=
+-PREFIX=/usr/local
++PREFIX=/usr
+ ETCDIR=/etc/vpnc
+ BINDIR=$(PREFIX)/bin
+ SBINDIR=$(PREFIX)/sbin
+@@ -57,18 +57,15 @@ OBJS = $(addsuffix .o,$(basename $(SRCS)
+ CRYPTO_OBJS = $(addsuffix .o,$(basename $(CRYPTO_SRCS)))
+ BINOBJS = $(addsuffix .o,$(BINS))
+ BINSRCS = $(addsuffix .c,$(BINS))
+-VERSION := $(shell sh mk-version)
+ RELEASE_VERSION := $(shell cat VERSION)
+ 
+ CC ?= gcc
+-CFLAGS ?= -O3 -g
+ CFLAGS += -W -Wall -Wmissing-declarations -Wwrite-strings
+-CFLAGS +=  $(shell libgcrypt-config --cflags) $(CRYPTO_CFLAGS)
++CFLAGS += -O3 -I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/include $(OFLAGS) $(CRYPTO_CFLAGS)
+ CPPFLAGS += -DVERSION=\"$(VERSION)\"
+-LDFLAGS ?= -g
+-LIBS += $(shell libgcrypt-config --libs) $(CRYPTO_LDADD)
++LIBS += -L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib -lgcrypt -lgpg-error $(CRYPTO_LDADD)
+ 
+-ifeq ($(shell uname -s), SunOS)
++ifeq ($(OS), SunOS)
+ LIBS += -lnsl -lresolv -lsocket
+ endif
+ ifneq (,$(findstring Apple,$(shell $(CC) --version)))
+@@ -82,7 +79,7 @@ vpnc : $(OBJS) vpnc.o
+ 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+ 
+ vpnc.8 : vpnc.8.template makeman.pl vpnc
+-	./makeman.pl
++	touch vpnc.8
+ 
+ cisco-decrypt : cisco-decrypt.o decrypt-utils.o
+ 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)

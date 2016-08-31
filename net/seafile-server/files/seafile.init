@@ -1,0 +1,157 @@
+#!/bin/bash /etc/rc.common
+
+START=98
+APP=seafile
+EXTRA_HELP="	setup	Runs the setup script
+	create_admin	Creates the administrative login
+	reset_admin	Alias to create_admin"
+EXTRA_COMMANDS="setup create_admin reset_admin"
+
+TOPDIR=/usr/share/seafile
+default_ccnet_conf_dir=${TOPDIR}/ccnet
+central_config_dir=${TOPDIR}/conf
+seaf_controller=/usr/bin/seafile-controller
+
+function validate_ccnet_conf_dir () {
+	if [[ ! -d ${default_ccnet_conf_dir} ]]; then
+		echo "Error: there is no ccnet config directory."
+		echo "Have you run \"/etc/init.d/seafile setup\"?"
+		echo ""
+		exit 1
+	fi
+}
+
+function validate_central_conf_dir () {
+	if [[ ! -d ${central_config_dir} ]]; then
+		echo "Error: there is no conf/ directory."
+		echo "Have you run \"/etc/init.d/seafile setup\"?"
+		echo ""
+		exit 1
+	fi
+}
+
+function read_seafile_data_dir () {
+	seafile_ini=${default_ccnet_conf_dir}/seafile.ini
+	if [[ ! -f ${seafile_ini} ]]; then
+		echo "Error: ${seafile_ini} not found."
+		exit 1
+	fi
+	seafile_data_dir=$(cat "${seafile_ini}")
+	if [[ ! -d ${seafile_data_dir} ]]; then
+		echo "Your seafile server data directory \"${seafile_data_dir}\" is invalid or doesn't exits."
+		echo "Please check it first, or create this directory yourself."
+		echo ""
+		exit 1
+	fi
+}
+
+function test_config() {
+	if ! ${seaf_controller} --test \
+		-c "${default_ccnet_conf_dir}" \
+		-d "${seafile_data_dir}" \
+		-F "${central_config_dir}" ; then
+		exit 1
+	fi
+}
+
+function check_component_running() {
+	name=$1
+	cmd=$2
+	if pid=$(pgrep -f "$cmd" 2>/dev/null); then
+		return 1
+	fi
+}
+
+function validate_already_running () {
+	check_component_running "seafile-controller" "seafile-controller -F ${central_config_dir}" || return 1
+	check_component_running "ccnet-server" "ccnet-server -F ${central_config_dir}" || return 1
+	check_component_running "seaf-server" "seaf-server -F ${central_config_dir}" || return 1
+	check_component_running "fileserver" "fileserver -F ${central_config_dir}" || return 1
+	check_component_running "seafdav" "wsgidav.server.run_server" || return 1
+}
+
+function start_seafile_server () {
+	if ! validate_already_running; then
+		if [[ "$name" == "seafile-controller" ]]; then
+			echo "Seafile already running."
+		else
+			echo "Error: component [$name] is already running. Please try stopping it manually by running \"kill $pid\"."
+			echo "To force killing the process, use \"kill -9 $pid\"."
+		fi
+		exit 1
+	fi
+	validate_central_conf_dir
+	validate_ccnet_conf_dir
+	read_seafile_data_dir
+	test_config
+
+	echo "Starting seafile server, please wait ..."
+
+	${seaf_controller} \
+		-F "${central_config_dir}" \
+		-c "${default_ccnet_conf_dir}" \
+		-d "${seafile_data_dir}"
+
+	sleep 3
+
+	# check if seafile server started successfully
+	if ! pgrep -f "seafile-controller -F ${central_config_dir}" 2>/dev/null 1>&2; then
+		echo "Failed to start seafile server"
+		exit 1
+	fi
+
+	echo "Seafile server started"
+	echo
+}
+
+function stop_seafile_server () {
+	if ! pgrep -f "seafile-controller -F ${central_config_dir}" 2>/dev/null 1>&2; then
+		echo "Seafile server not running"
+	else
+		echo "Stopping seafile server ..."
+		pkill -SIGTERM -f "seafile-controller -F ${central_config_dir}"
+		pkill -f "ccnet-server -F ${central_config_dir}"
+		pkill -f "seaf-server -F ${central_config_dir}"
+		pkill -f "fileserver -F ${central_config_dir}"
+		pkill -f "soffice.*--invisible --nocrashreport"
+		pkill -f  "wsgidav.server.run_server"
+		retry=1
+		while ! validate_already_running && [ $retry -lt 60 ]; do sleep 1; ((retry++)); done
+		if ! validate_already_running; then
+			echo "Error: [$name] component is still running. Please try stopping it manually by running \"kill $pid\"."
+			echo "To force killing the process, use \"kill -9 $pid\"."
+		fi
+
+	fi
+}
+
+function restart_seafile_server () {
+	stop_seafile_server
+	start_seafile_server
+}
+
+function start() {
+	start_seafile_server
+}
+
+function stop() {
+	stop_seafile_server
+}
+
+function restart() {
+	restart_seafile_server
+}
+
+function setup() {
+	cd "$TOPDIR" && \
+		/usr/bin/seafile-admin setup
+}
+
+function create_admin() {
+	cd "$TOPDIR" && \
+		/usr/bin/seafile-admin create-admin
+}
+
+function reset_admin() {
+	create_admin
+}

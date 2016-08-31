@@ -1,0 +1,50 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-029
+
+Bug-Reported-by:	Michal Zalewski <lcamtuf@coredump.cx>
+Bug-Reference-ID:
+Bug-Reference-URL:
+
+Bug-Description:
+
+When bash is parsing a function definition that contains a here-document
+delimited by end-of-file (or end-of-string), it leaves the closing delimiter
+uninitialized.  This can result in an invalid memory access when the parsed
+function is later copied.
+
+Patch (apply with `patch -p0'):
+
+--- a/make_cmd.c
++++ b/make_cmd.c
+@@ -692,6 +692,7 @@ make_redirection (source, instruction, d
+   /* First do the common cases. */
+   temp->redirector = source;
+   temp->redirectee = dest_and_filename;
++  temp->here_doc_eof = 0;
+   temp->instruction = instruction;
+   temp->flags = 0;
+   temp->rflags = flags;
+--- a/copy_cmd.c
++++ b/copy_cmd.c
+@@ -126,7 +126,7 @@ copy_redirect (redirect)
+     {
+     case r_reading_until:
+     case r_deblank_reading_until:
+-      new_redirect->here_doc_eof = savestring (redirect->here_doc_eof);
++      new_redirect->here_doc_eof = redirect->here_doc_eof ? savestring (redirect->here_doc_eof) : 0;
+       /*FALLTHROUGH*/
+     case r_reading_string:
+     case r_appending_to:
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 28
++#define PATCHLEVEL 29
+ 
+ #endif /* _PATCHLEVEL_H_ */

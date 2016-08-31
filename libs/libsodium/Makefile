@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsodium
-PKG_VERSION:=0.7.0
-PKG_RELEASE:=1
+PKG_VERSION:=1.0.11
+PKG_RELEASE:=2
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libsodium.org/libsodium/releases
-PKG_MD5SUM:=b9029bf810c4b5a8acc3afec1286a36a
-PKG_CAT:=zcat
+PKG_MD5SUM:=b58928d035064b2a46fb564937b83540
 
 PKG_FIXUP:=libtool autoreconf
 PKG_USE_MIPS16:=0
@@ -29,7 +27,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libsodium
   SECTION:=libs
   CATEGORY:=Libraries
-  DEFAULT:=y
   TITLE:=P(ortable|ackageable) NaCl-based crypto library
   URL:=https://github.com/jedisct1/libsodium
   MAINTAINER:=Damiano Renfer <damiano.renfer@gmail.com>
@@ -44,9 +41,18 @@ define Package/libsodium/description
   And despite the emphasis on higher security, primitives are faster across-the-board than most implementations of the NIST standards.
 endef
 
-define Build/Configure
-  $(call Build/Configure/Default, --disable-ssp)
+define Package/libsodium/config
+menu "Configuration"
+	depends on PACKAGE_libsodium
+	config LIBSODIUM_MINIMAL
+		bool "Compile only what is required for the high-level API (no aes128ctr), should be fine in most cases."
+		default y
+endmenu
 endef
+
+CONFIGURE_ARGS+= \
+	--disable-ssp \
+	$(if $(CONFIG_LIBSODIUM_MINIMAL),--enable-minimal=yes,--enable-minimal=no)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/sodium
@@ -54,6 +60,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/sodium/*.h $(1)/usr/include/sodium
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsodium.{a,so*} $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libsodium.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libsodium/install

@@ -1,0 +1,38 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-037
+
+Bug-Reported-by:	Greg Wooledge <wooledg@eeg.ccf.org>
+Bug-Reference-ID:	<20150204144240.GN13956@eeg.ccf.org>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2015-02/msg00007.html
+
+Bug-Description:
+
+If an associative array uses `@' or `*' as a subscript, `declare -p' produces
+output that cannot be reused as input.
+
+Patch (apply with `patch -p0'):
+
+--- a/assoc.c
++++ b/assoc.c
+@@ -436,6 +436,8 @@ assoc_to_assign (hash, quoted)
+ #if 1
+ 	if (sh_contains_shell_metas (tlist->key))
+ 	  istr = sh_double_quote (tlist->key);
++	else if (ALL_ELEMENT_SUB (tlist->key[0]) && tlist->key[1] == '\0')
++	  istr = sh_double_quote (tlist->key);	
+ 	else
+ 	  istr = tlist->key;	
+ #else
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 36
++#define PATCHLEVEL 37
+ 
+ #endif /* _PATCHLEVEL_H_ */

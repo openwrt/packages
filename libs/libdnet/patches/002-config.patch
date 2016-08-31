@@ -1,0 +1,23 @@
+--- a/dnet-config.in
++++ b/dnet-config.in
+@@ -45,10 +45,18 @@ while test $# -gt 0; do
+ done
+ 
+ if test "$echo_cflags" = "yes"; then
+-      echo -I@includedir@
++      includes=
++      if test "@includedir@" != "/usr/include" ; then
++             includes=-I@includedir@
++      fi
++      echo $includes
+ fi
+ 
+ if test "$echo_libs" = "yes"; then
+-      echo -L@libdir@ -ldnet @LIBS@
++      libs=
++      if test "@libdir@" != "/usr/lib" ; then
++             libs=-I@libdir@
++      fi
++      echo $libs -ldnet @LIBS@
+ fi      
+ 

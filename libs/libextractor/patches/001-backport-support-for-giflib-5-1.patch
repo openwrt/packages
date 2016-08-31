@@ -1,0 +1,26 @@
+--- a/src/plugins/gif_extractor.c
++++ b/src/plugins/gif_extractor.c
+@@ -78,7 +78,11 @@ EXTRACTOR_gif_extract_method (struct EXT
+   if (gif_file == NULL || gif_error != 0)
+   {
+     if (gif_file != NULL)
++#if GIFLIB_MAJOR < 5 || GIFLIB_MINOR < 1
+       EGifCloseFile (gif_file);
++#else
++      EGifCloseFile (gif_file, NULL);
++#endif
+     return; /* not a GIF */
+   }
+ #endif
+@@ -133,7 +137,11 @@ EXTRACTOR_gif_extract_method (struct EXT
+ 	       DGifGetExtensionNext(gif_file, &ext)) &&
+ 	      (NULL != ext) ) ; /* keep going */
+     }
++#if defined (GIF_LIB_VERSION) || GIFLIB_MAJOR < 5 || GIFLIB_MINOR < 1
+   DGifCloseFile (gif_file);
++#else
++  DGifCloseFile (gif_file, NULL);
++#endif
+ }
+ 
+ /* end of gif_extractor.c */

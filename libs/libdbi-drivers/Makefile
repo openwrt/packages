@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=@SF/libdbi-drivers
 PKG_MD5SUM:=9f47b960e225eede2cdeaabf7d22f59f
 
 PKG_LICENSE:=LGPL-2.1
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_FIXUP:=autoreconf

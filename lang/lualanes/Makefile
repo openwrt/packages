@@ -21,7 +21,6 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_DEPENDS:=lua/host luac/host
 
 include $(INCLUDE_DIR)/package.mk
@@ -43,8 +42,8 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) all \
         CC="$(TARGET_CC)" \
-        LUA="$(STAGING_DIR_HOST)/bin/lua" \
-        LUAC="$(STAGING_DIR_HOST)/bin/luac" \
+        LUA="$(STAGING_DIR)/host/bin/lua" \
+        LUAC="$(STAGING_DIR)/host/bin/luac" \
         OPT_FLAGS="$(TARGET_CFLAGS) --std=c99 -Dpthread_yield=sched_yield"
 endef
 

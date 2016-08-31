@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nano
-PKG_VERSION:=2.3.6
+PKG_VERSION:=2.6.3
 PKG_RELEASE:=1
+PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.nano-editor.org/dist/v2.3
-PKG_MD5SUM:=df3d201aecb3155a80633990cc467831
+PKG_SOURCE_URL:=https://www.nano-editor.org/dist/v2.6/
+PKG_MD5SUM:=1213c7f17916e65afefc95054c1f90f9
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -31,7 +33,7 @@ define Package/nano
 endef
 
 define Package/nano/description
-  GNU nano (Nano's ANOther editor, or Not ANOther editor) is an enhanced clone
+  Nano (Nano's ANOther editor, or Not ANOther editor) is an enhanced clone
   of the Pico text editor.
 endef
 

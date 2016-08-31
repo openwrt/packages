@@ -1,0 +1,63 @@
+Description: Fix mips/mipsel syscall wrappers to return correct error values.
+Author: Jurica Stanojkovic <Jurica.Stanojkovic@rt-rk.com>
+Forwarded: no
+Last-Update: 2012-09-24
+
+
+diff -upNr a/src/syscall-mips.h b/src/syscall-mips.h
+--- a/src/syscall-mips.h	2012-09-13 11:46:35.652286733 +0200
++++ b/src/syscall-mips.h	2012-09-13 16:09:17.964407909 +0200
+@@ -76,7 +76,7 @@ type fname(atype a) \
+ 	\
+ 	if (__a3 == 0) \
+ 		return (type) __v0; \
+-	return (type) -1; \
++	return (type) 0 - __v0; \
+ }
+ 
+ #define io_syscall2(type,fname,sname,atype,a,btype,b) \
+@@ -100,7 +100,7 @@ type fname(atype a, btype b) \
+ 	\
+ 	if (__a3 == 0) \
+ 		return (type) __v0; \
+-	return (type) -1; \
++	return (type) 0 - __v0; \
+ }
+ 
+ #define io_syscall3(type,fname,sname,atype,a,btype,b,ctype,c) \
+@@ -125,7 +125,7 @@ type fname(atype a, btype b, ctype c) \
+ 	\
+ 	if (__a3 == 0) \
+ 		return (type) __v0; \
+-	return (type) -1; \
++	return (type) 0 - __v0; \
+ }
+ 
+ #define io_syscall4(type,fname,sname,atype,a,btype,b,ctype,c,dtype,d) \
+@@ -150,7 +150,7 @@ type fname(atype a, btype b, ctype c, dt
+ 	\
+ 	if (__a3 == 0) \
+ 		return (type) __v0; \
+-	return (type) -1; \
++	return (type) 0 - __v0; \
+ }
+ 
+ #if (_MIPS_SIM == _MIPS_SIM_ABI32)
+@@ -186,7 +186,7 @@ type fname(atype a, btype b, ctype c, dt
+ 	\
+ 	if (__a3 == 0) \
+ 		return (type) __v0; \
+-	return (type) -1; \
++	return (type) 0 - __v0; \
+ }
+ 
+ #endif /* (_MIPS_SIM == _MIPS_SIM_ABI32) */
+@@ -216,7 +216,7 @@ type fname (atype a,btype b,ctype c,dtyp
+ 	\
+ 	if (__a3 == 0) \
+ 		return (type) __v0; \
+-	return (type) -1; \
++	return (type) 0 - __v0; \
+ }
+ 
+ #endif /* (_MIPS_SIM == _MIPS_SIM_NABI32) || (_MIPS_SIM == _MIPS_SIM_ABI64) */

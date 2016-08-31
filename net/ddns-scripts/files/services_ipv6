@@ -1,0 +1,88 @@
+# 66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+#
+# This file contains the update urls for various dynamic dns services.
+# Column one contains the service name, column two contains the update url.
+# within the update url there are 4 variables you can use: [USERNAME],
+# [PASSWORD], [DOMAIN] and [IP].  These are substituted for the username,
+# password, and domain name specified in the /etc/config/ddns file when an
+# update is performed.  The IP is substituted for the current ip address of the
+# router.  These variables are case sensitive, while urls generally are not, so
+# if you need to enter the same text in the url (which seems very unlikely) put
+# that text in lowercase, while the variables should remain in uppercase
+#
+# There are TONS of dynamic dns services out there. There's a huge list of them at:
+# http://www.dmoz.org/Computers/Software/Internet/Servers/Address_Management/Dynamic_DNS_Services/
+# If anyone has time they could update this file to be compatible with a bunch of them
+#
+# !!! Since ddns-scripts Version 2.x the update of IPv6 addresses is also supported
+# !!! This file is used for update of IPv6 adresses only. For IPv4 use services
+#
+# !!! Since ddns-scripts Version 2.x the update via provider specific update scripts is supported.
+# !!! This scripts must be located at /usr/lib/ddns directory if defined inside this file.
+# !!! Use only the script name (without path). Sample:
+# !!! "example.com"	"update_sample.sh"
+#
+# !!! Since ddns-scripts Version 2.5.x additional parameters are supported
+# !!! and a given answer on success is checked (ignored by earlier versions)
+# !!! Additional parameters: [PARAMOPT] and [PARAMENC]; [PARAMENC] is send urlencoded
+#
+# Line syntax: "service" [TAB] "update_url" [TAB] "answer"
+# "service"	name used as "option service_name" inside /etc/config/ddns
+# "update_url"	update url as given by the provider; custom urls should not saved here
+# "answer"	words inside providers answer string; use "|" to combine "or"
+#
+# 66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+
+# IPv6 @ Securepoint Dynamic-DNS-Service
+"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+# IPv6 @ Hurricane Electric Dynamic DNS
+"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+# IPv6 @ MyDNS.JP
+"mydns.jp"	"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV6ADDR=[IP]"
+
+# IPv6 @ no-ip.pl nothing to do with no-ip.com (domain registered to www.domeny.tv) (IP autodetected by provider)
+"no-ip.pl"	"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
+
+# IPv6 @ freedns.afraid.org
+"freedns.afraid.org"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+
+# IPv6 @ LoopiaDNS
+"loopia.se"	"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
+
+# Variomedia AG
+"variomedia.de"		"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+# IPv6 @ Dyn.com
+"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+# duckdns.org
+"duckdns.org"	"http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"OK"
+
+# IPv6 @ zzzz.io Free Dynamic DNS
+"zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"	"Updated|No change"
+
+# IPv6 @ zerigo.com
+"zerigo.com"	"http://update.zerigo.com/dynamic?host=[DOMAIN]&ip=[IP]&user=[USERNAME]&password=[PASSWORD]"
+
+# IPv6 @ regfish.de
+"regfish.de"	"http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv6=[IP]"	"success|100|101"
+
+# Mythic Beasts (https://www.mythic-beasts.com) Dynamic DNS
+"mythic-beasts.com"	"http://dnsapi6.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20AAAA%20DYNAMIC_IP&origin=."
+
+# nsupdate.info - a free service - supports https
+"nsupdate.info"	"http://[USERNAME]:[PASSWORD]@ipv6.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+# goip.de
+"https://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip6=[IP]"
+
+# myonlineportal.net
+"myonlineportal.net"	"http://[USERNAME]:[PASSWORD]@myonlineportal.net/updateddns?hostname=[DOMAIN]&ip6=[IP]"	"good|nochg"
+
+# dnshome.de
+"dnshome.de"	"https://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip6=[IP]"
+
+# core-networks.de
+"core-networks.de"	"https://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv4=1"	"good"

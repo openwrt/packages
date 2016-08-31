@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2012 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,18 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.41.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.46.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
-PKG_SOURCE_URL:=@GNOME/glib/2.41
-PKG_MD5SUM:=bae557c87323e8df7ac30fb484b5cba9
+PKG_SOURCE_URL:=@GNOME/glib/2.46
+PKG_MD5SUM:=7f815d6e46df68e070cb421ed7f1139e
 
+PKG_BUILD_PARALLEL:=1
+HOST_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=glib2/host libpthread zlib libintl libffi
-HOST_BUILD_DEPENDS:=libintl/host libiconv/host libffi/host
+HOST_BUILD_DEPENDS:=gettext-full/host libiconv/host libffi/host
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
+
+PKG_FIXUP:=autoreconf
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/glib-$(PKG_VERSION)
 
@@ -41,7 +45,8 @@ define Package/glib2/description
 endef
 
 HOST_CONFIGURE_ARGS += \
-	--disable-selinux
+	--disable-selinux \
+	--with-libiconv=gnu
 
 CONFIGURE_ARGS += \
 	--enable-shared \
@@ -49,12 +54,12 @@ CONFIGURE_ARGS += \
 	--enable-debug=no \
 	--disable-selinux \
 	--disable-fam \
-	$(if $(ICONV_FULL),--with-libiconv=gnu)
+	--with-libiconv=gnu
 
 CONFIGURE_VARS += \
 	glib_cv_stack_grows=no \
 	glib_cv_uscore=no \
-	ac_cv_path_GLIB_GENMARSHAL=$(STAGING_DIR_HOST)/bin/glib-genmarshal \
+	ac_cv_path_GLIB_GENMARSHAL=$(STAGING_DIR)/host/bin/glib-genmarshal \
 	ac_cv_func_mmap_fixed_mapped=yes \
 	ac_cv_func_posix_getpwuid_r=yes \
 	ac_cv_func_posix_getgrgid_r=yes

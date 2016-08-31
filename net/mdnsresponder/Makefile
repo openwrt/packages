@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mDNSResponder
-PKG_VERSION:=544
-PKG_RELEASE:=4
+PKG_VERSION:=576.30.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=mDNSResponder-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://opensource.apple.com/tarballs/mDNSResponder/
-PKG_MD5SUM:=39142ab70bd82a096801ce346f86cbab
+PKG_MD5SUM:=940057ac8b513b00e8e9ca12ef796762
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_LICENSE:=Apache-2.0
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/mDNSResponder-$(PKG_VERSION)
 
@@ -84,6 +85,7 @@ endef
 # I have no idea why -lc is required, but without it, C library symbols are
 # not found:
 MAKE_FLAGS += \
+	LD="$(TARGET_CC)"  \
 	CFLAGS_DEBUG="$(TARGET_CFLAGS)" \
 	LINKOPTS=-lc \
 	LDCONFIG= \
@@ -122,10 +124,6 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/mDNSShared/dns_sd.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/mDNSPosix/build/prod/*.so* $(1)/usr/lib/
-endef
-
-define Package/mdns-utils/conffile
-  /etc/init.d/mDNSResponder
 endef
 
 define Package/mdns-utils/install

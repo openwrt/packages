@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
-PKG_VERSION:=3.2.1
+PKG_VERSION:=3.5.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
-PKG_MD5SUM:=425b1acad6854cc2bbb06ac8e48e76fc
+PKG_MD5SUM:=979e4b1c17e9be83c00113f0f99a8a7b
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
+PKG_USE_MIPS16:=0
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -28,7 +29,7 @@ define Package/pciutils
   CATEGORY:=Utilities
   TITLE:=Linux PCI Utilities
   URL:=http://mj.ucw.cz/pciutils.shtml
-  DEPENDS:=+zlib
+  DEPENDS:=+libkmod +zlib
 endef
 
 define Package/pciutils/description
@@ -47,9 +48,10 @@ MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include" \
 	PREFIX="/usr" \
 	HOST="$(GNU_TARGET_NAME)" \
-	ZLIB="yes" \
+	HWDB="no" \
+	ZLIB="yes"
 
-ifneq ($(CONFIG_USE_EGLIBC),)
+ifneq ($(CONFIG_USE_GLIBC),)
 TARGET_LDFLAGS += -lresolv
 endif
 

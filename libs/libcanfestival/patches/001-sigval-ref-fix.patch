@@ -1,0 +1,11 @@
+--- a/drivers/timers_unix/timers_unix.c
++++ b/drivers/timers_unix/timers_unix.c
+@@ -33,7 +33,7 @@
+ 	}
+ }
+ 
+-void timer_notify(sigval_t val)
++void timer_notify(void)
+ {
+ 	if(gettimeofday(&last_sig,NULL)) {
+ 		perror("gettimeofday()");

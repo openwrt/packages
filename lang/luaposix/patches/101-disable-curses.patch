@@ -1,0 +1,32 @@
+diff --git a/configure.ac b/configure.ac
+index dfd4199..19924d0 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -153,15 +153,6 @@ AC_CHECK_LIB([rt], [clock_gettime])
+ AC_SUBST([LIBRT], [$LIBS])
+ LIBS=$save_LIBS
+ 
+-## Curses
+-AX_WITH_CURSES
+-AC_ARG_VAR(CURSES_LIB, [linker flags for curses library])
+-
+-save_LIBS=$LIBS
+-LIBS="$CURSES_LIB $LIBS"
+-AC_CHECK_FUNCS([resizeterm])
+-LIBS=$save_LIBS
+-
+ ## Use system implementation, or bundled replacement?
+ AC_CHECK_FUNCS([strlcpy])
+ 
+diff --git a/ext/posix/posix.c b/ext/posix/posix.c
+index 6019df0..2d75487 100644
+--- a/ext/posix/posix.c
++++ b/ext/posix/posix.c
+@@ -12,7 +12,6 @@
+ 
+ #include "bit32.c"
+ #include "ctype.c"
+-#include "curses.c"
+ #include "dirent.c"
+ #include "errno.c"
+ #include "fcntl.c"

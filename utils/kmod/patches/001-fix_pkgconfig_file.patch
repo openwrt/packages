@@ -1,0 +1,22 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -35,9 +35,6 @@ SED_PROCESS = \
+ 	-e 's,@zlib_LIBS\@,${zlib_LIBS},g' \
+ 	< $< > $@ || rm $@
+ 
+-%.pc: %.pc.in Makefile
+-	$(SED_PROCESS)
+-
+ LIBKMOD_CURRENT=4
+ LIBKMOD_REVISION=9
+ LIBKMOD_AGE=2
+--- a/configure.ac
++++ b/configure.ac
+@@ -221,6 +221,7 @@ AC_CONFIG_HEADERS(config.h)
+ AC_CONFIG_FILES([
+ 	Makefile
+ 	man/Makefile
++	libkmod/libkmod.pc
+ 	libkmod/docs/Makefile
+ 	libkmod/docs/version.xml
+ ])

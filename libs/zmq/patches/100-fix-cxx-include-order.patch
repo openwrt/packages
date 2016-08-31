@@ -1,0 +1,84 @@
+--- a/src/mtrie.cpp
++++ b/src/mtrie.cpp
+@@ -27,11 +27,11 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+-#include <stdlib.h>
+-
+ #include <new>
+ #include <algorithm>
+ 
++#include <stdlib.h>
++
+ #include "platform.hpp"
+ #if defined ZMQ_HAVE_WINDOWS
+ #include "windows.hpp"
+--- a/src/raw_encoder.cpp
++++ b/src/raw_encoder.cpp
+@@ -27,6 +27,11 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
++#include <basic_definitions>
++#include <exception>
++#include <cstddef>
++#include <algorithm>
++
+ #include "encoder.hpp"
+ #include "raw_encoder.hpp"
+ #include "likely.hpp"
+--- a/src/trie.cpp
++++ b/src/trie.cpp
+@@ -27,11 +27,11 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+-#include <stdlib.h>
+-
+ #include <new>
+ #include <algorithm>
+ 
++#include <stdlib.h>
++
+ #include "platform.hpp"
+ #if defined ZMQ_HAVE_WINDOWS
+ #include "windows.hpp"
+--- a/src/encoder.hpp
++++ b/src/encoder.hpp
+@@ -39,7 +39,6 @@
+ #include <stddef.h>
+ #include <string.h>
+ #include <stdlib.h>
+-#include <algorithm>
+ 
+ #include "err.hpp"
+ #include "msg.hpp"
+--- a/src/v1_encoder.cpp
++++ b/src/v1_encoder.cpp
+@@ -27,6 +27,11 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
++#include <basic_definitions>
++#include <exception>
++#include <cstddef>
++#include <algorithm>
++
+ #include "encoder.hpp"
+ #include "v1_encoder.hpp"
+ #include "likely.hpp"
+--- a/src/v2_encoder.cpp
++++ b/src/v2_encoder.cpp
+@@ -27,6 +27,11 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
++#include <basic_definitions>
++#include <exception>
++#include <cstddef>
++#include <algorithm>
++
+ #include "v2_protocol.hpp"
+ #include "v2_encoder.hpp"
+ #include "likely.hpp"

@@ -1,6 +1,6 @@
 NAME=ntpd
 CONFIG=/etc/ntp.conf
-COMMAND=/usr/sbin/$NAME
+COMMAND=/sbin/$NAME
 
 [ "$ACTION" = "ifup" -a "$INTERFACE" = "wan" ] && {
         [ -x $COMMAND ] && [ -r $CONFIG ] && {

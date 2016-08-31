@@ -1,0 +1,14 @@
+diff -Naur postfix-2.11.3/src/util/dict_db.c postfix-2.11.3_patched/src/util/dict_db.c
+--- postfix-2.11.3/src/util/dict_db.c	2012-01-25 04:41:08.000000000 +0400
++++ postfix-2.11.3_patched/src/util/dict_db.c	2014-11-01 12:36:44.287641712 +0300
+@@ -687,8 +687,8 @@
+ 	msg_panic("db_create null result");
+     if ((errno = db->set_cachesize(db, 0, dict_db_cache_size, 0)) != 0)
+ 	msg_fatal("set DB cache size %d: %m", dict_db_cache_size);
+-    if (type == DB_HASH && db->set_h_nelem(db, DICT_DB_NELM) != 0)
+-	msg_fatal("set DB hash element count %d: %m", DICT_DB_NELM);
++//    if (type == DB_HASH && db->set_h_nelem(db, DICT_DB_NELM) != 0)
++//	msg_fatal("set DB hash element count %d: %m", DICT_DB_NELM);
+ #if DB_VERSION_MAJOR == 6 || DB_VERSION_MAJOR == 5 || \
+ 	(DB_VERSION_MAJOR == 4 && DB_VERSION_MINOR > 0)
+     if ((errno = db->open(db, 0, db_path, 0, type, db_flags, 0644)) != 0)

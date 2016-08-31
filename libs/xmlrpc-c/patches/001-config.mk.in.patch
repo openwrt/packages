@@ -1,0 +1,11 @@
+--- a/config.mk.in
++++ b/config.mk.in
+@@ -175,7 +175,7 @@ ifeq ($(patsubst linux-gnu%,linux-gnu,$(
+   shlibfn = $(1:%=%.$(SHLIB_SUFFIX).$(MAJ).$(MIN))
+   shliblefn = $(1:%=%.$(SHLIB_SUFFIX))
+ #  SHLIB_CLIB = -lc
+-  LDFLAGS_SHLIB = -shared -Wl,-soname,$(SONAME) $(SHLIB_CLIB)
++  LDFLAGS_SHLIB = -shared -Wl,-soname,$(SONAME) $(SHLIB_CLIB) $(LDFLAGS)
+   CFLAGS_SHLIB=-fPIC
+ endif
+ 

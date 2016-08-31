@@ -1,0 +1,54 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-026
+
+Bug-Reported-by:	Tavis Ormandy <taviso@cmpxchg8b.com>
+Bug-Reference-ID:
+Bug-Reference-URL:	http://twitter.com/taviso/statuses/514887394294652929
+
+Bug-Description:
+
+Under certain circumstances, bash can incorrectly save a lookahead character and
+return it on a subsequent call, even when reading a new line.
+
+Patch (apply with `patch -p0'):
+
+--- a/parse.y
++++ b/parse.y
+@@ -2953,6 +2953,8 @@ reset_parser ()
+   FREE (word_desc_to_read);
+   word_desc_to_read = (WORD_DESC *)NULL;
+ 
++  eol_ungetc_lookahead = 0;
++
+   current_token = '\n';		/* XXX */
+   last_read_token = '\n';
+   token_to_read = '\n';
+--- a/y.tab.c
++++ b/y.tab.c
+@@ -5265,6 +5265,8 @@ reset_parser ()
+   FREE (word_desc_to_read);
+   word_desc_to_read = (WORD_DESC *)NULL;
+ 
++  eol_ungetc_lookahead = 0;
++
+   current_token = '\n';		/* XXX */
+   last_read_token = '\n';
+   token_to_read = '\n';
+@@ -8539,4 +8541,3 @@ set_line_mbstate ()
+     }
+ }
+ #endif /* HANDLE_MULTIBYTE */
+-
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 25
++#define PATCHLEVEL 26
+ 
+ #endif /* _PATCHLEVEL_H_ */

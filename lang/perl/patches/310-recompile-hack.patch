@@ -1,0 +1,16 @@
+perl: Work around recompile failures
+
+Apparently, recompiling/relinking fails under some circumstances. This
+patch has been reported to work around that issue.
+
+--- a/Makefile.SH
++++ b/Makefile.SH
+@@ -818,7 +818,7 @@ $(LIBPERL): $& $(obj) $(DYNALOADER) $(LI
+ 	true)
+ 		$spitshell >>$Makefile <<'!NO!SUBS!'
+ 	rm -f $@
+-	$(LD) -o $@ $(SHRPLDFLAGS) $(obj) $(DYNALOADER) $(libs)
++	$(CC) -o $@ $(SHRPLDFLAGS) $(obj) $(DYNALOADER) $(libs)
+ !NO!SUBS!
+ 		case "$osname" in
+ 		aix)

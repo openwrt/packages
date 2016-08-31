@@ -1,0 +1,22 @@
+--- a/src/libinput-util.c
++++ b/src/libinput-util.c
+@@ -216,18 +216,10 @@ parse_mouse_wheel_click_angle_property(c
+ double
+ parse_trackpoint_accel_property(const char *prop)
+ {
+-	locale_t c_locale;
+ 	double accel;
+ 	char *endp;
+ 
+-	/* Create a "C" locale to force strtod to use '.' as separator */
+-	c_locale = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
+-	if (c_locale == (locale_t)0)
+-		return 0.0;
+-
+-	accel = strtod_l(prop, &endp, c_locale);
+-
+-	freelocale(c_locale);
++	accel = strtod(prop, &endp);
+ 
+ 	if (*endp != '\0')
+ 		return 0.0;

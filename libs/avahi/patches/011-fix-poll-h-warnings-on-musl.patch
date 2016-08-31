@@ -1,0 +1,65 @@
+diff --git a/avahi-common/simple-watch.c b/avahi-common/simple-watch.c
+index 8df18dd..08d8090 100644
+--- a/avahi-common/simple-watch.c
++++ b/avahi-common/simple-watch.c
+@@ -21,7 +21,7 @@
+ #include <config.h>
+ #endif
+ 
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <assert.h>
+ #include <string.h>
+ #include <errno.h>
+diff --git a/avahi-common/simple-watch.h b/avahi-common/simple-watch.h
+index 72c1905..db87122 100644
+--- a/avahi-common/simple-watch.h
++++ b/avahi-common/simple-watch.h
+@@ -22,7 +22,7 @@
+ 
+ /** \file simple-watch.h Simple poll() based main loop implementation */
+ 
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <avahi-common/cdecl.h>
+ #include <avahi-common/watch.h>
+ 
+diff --git a/avahi-common/thread-watch.c b/avahi-common/thread-watch.c
+index c0cadeb..ecb202b 100644
+--- a/avahi-common/thread-watch.c
++++ b/avahi-common/thread-watch.c
+@@ -21,7 +21,7 @@
+ #include <config.h>
+ #endif
+ 
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <assert.h>
+ #include <string.h>
+ #include <errno.h>
+diff --git a/avahi-common/thread-watch.h b/avahi-common/thread-watch.h
+index dec0cf3..1b44ccb 100644
+--- a/avahi-common/thread-watch.h
++++ b/avahi-common/thread-watch.h
+@@ -22,7 +22,7 @@
+ 
+ /** \file thread-watch.h Threaded poll() based main loop implementation */
+ 
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <avahi-common/cdecl.h>
+ #include <avahi-common/watch.h>
+ 
+diff --git a/avahi-common/watch.h b/avahi-common/watch.h
+index 86e63d3..eea12ec 100644
+--- a/avahi-common/watch.h
++++ b/avahi-common/watch.h
+@@ -22,7 +22,7 @@
+ 
+ /** \file watch.h Simplistic main loop abstraction */
+ 
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <sys/time.h>
+ 
+ #include <avahi-common/cdecl.h>

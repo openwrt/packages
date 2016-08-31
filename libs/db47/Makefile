@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -12,7 +12,7 @@ BASE_VERSION:=4.7.25
 
 PKG_NAME:=db47
 PKG_VERSION:=$(BASE_VERSION).4.NC
-PKG_RELEASE:=1
+PKG_RELEASE:=5
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/db-$(BASE_VERSION).NC
 PKG_SOURCE:=db-$(BASE_VERSION).NC.tar.gz
@@ -35,6 +35,7 @@ define Package/libdb47
   DEPENDS:=+libxml2
   TITLE:=Berkeley DB library (4.7)
   URL:=http://www.oracle.com/us/products/database/berkeley-db
+  PROVIDES:=libdb47-full
 endef
 
 define Package/libdb47/description
@@ -47,6 +48,7 @@ define Package/libdb47xx
   DEPENDS:=+libdb47 $(CXX_DEPENDS)
   TITLE:=Berkeley DB library (4.7) for C++
   URL:=http://www.oracle.com/us/products/database/berkeley-db
+  PROVIDES:=libdb47xx-full
 endef
 
 define Package/libdb47xx/description
@@ -60,13 +62,11 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-java \
-	--with-mutex=UNIX/fcntl \
+	--with-mutex=POSIX/pthreads/library \
 	--disable-tcl \
 	--disable-rpc \
 	--enable-compat185 \
-	--enable-smallbuild \
 	--disable-debug \
-	--enable-cryptography \
 	$(if $(CONFIG_PACKAGE_libdb47xx),--enable-cxx,--disable-cxx)
 
 TARGET_CFLAGS += $(FPIC)

@@ -1,0 +1,25 @@
+menu "Configuration"
+        depends on PACKAGE_f2fs-tools
+
+config F2FS_UTILS_f2fstat
+	bool "Install f2fstat utility"
+	default y
+
+config F2FS_UTILS_fibmap_f2fs
+	bool "Install fibmap.f2fs utility"
+	default y
+
+config F2FS_UTILS_fsck_f2fs
+	bool "Install fsck.f2fs utility"
+	default y
+
+config F2FS_UTILS_dump_f2fs
+	bool "Install dump.f2fs utility"
+	select F2FS_UTILS_fsck_f2fs
+	default y
+
+config F2FS_UTILS_mkfs_f2fs
+	bool "Install mkfs.f2fs utility"
+	default y
+
+endmenu

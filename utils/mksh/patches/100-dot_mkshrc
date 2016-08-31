@@ -1,0 +1,46 @@
+Refreshed for mksh-r52c, based on tg's patch
+
+From 23712cea8e2a623fd952eb781df0011c501703d0 Mon Sep 17 00:00:00 2001
+From: Thorsten Glaser <tg@mirbsd.org>
+Date: Thu, 25 Jul 2013 22:07:33 +0200
+Subject: [PATCH] Make default mkshrc file suitable for OpenWrt environment:
+
+* Part of the FreeWRT patches:
+  - no hostname(1)
+  - ls(1) has no -o option
+* OpenWrt and FreeWRT-1.0 fix:
+  - since this is not ~/.mkshrc make sure subshells find it
+---
+Signed-off-by: Alif M. A. <alive4ever at live.com>
+--- a/dot.mkshrc
++++ b/dot.mkshrc
+@@ -28,8 +28,9 @@
+ *) return 0 ;;
+ esac
+ 
+-PS1='#'; (( USER_ID )) && PS1='$'; \: "${TERM:=vt100}${HOSTNAME:=$(\ulimit -c \
+-    0; hostname 2>/dev/null)}${EDITOR:=/bin/ed}${USER:=$(\ulimit -c 0; id -un \
++PS1='#'; (( USER_ID )) && PS1='$'; \: "${HOSTNAME:=$(</proc/sys/kernel/hostname\
++    )} = *([     ]|localhost) && HOSTNAME=$(\ulimit -c \
++    0; hostname 2>/dev/null)}${EDITOR:=/bin/vi}${USER:=$(\ulimit -c 0; id -un \
+     2>/dev/null || \echo \?)}${MKSH:=$(\builtin whence -p mksh)}"
+ HOSTNAME=${HOSTNAME%%*([	 ]).*}; HOSTNAME=${HOSTNAME##*([	 ])}
+ [[ $HOSTNAME = ?(ip6-)localhost?(6) ]] && HOSTNAME=
+@@ -52,7 +53,7 @@
+ \alias l='ls -F'
+ \alias la='l -a'
+ \alias ll='l -l'
+-\alias lo='l -alo'
++\alias lo='l -al'
+ \alias doch='sudo mksh -c "$(\builtin fc -ln -1)"'
+ \command -v rot13 >/dev/null || \alias rot13='tr \
+     abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ \
+@@ -601,4 +602,8 @@
+ 
+ \unset p
+ 
++# we need this in OpenWrt for subshells that are not login shells
++\: ${ENV=/etc/mkshrc}
++[[ -z $ENV ]] || export ENV
++
+ \: place customisations above this line

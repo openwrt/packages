@@ -1,0 +1,29 @@
+--- a/configure
++++ b/configure
+@@ -827,7 +827,7 @@ sysconfdir='${prefix}/etc'
+ sharedstatedir='${prefix}/com'
+ localstatedir='${prefix}/var'
+ includedir='${prefix}/include'
+-oldincludedir='/usr/include'
++oldincludedir='${prefix}/usr/include'
+ docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+ infodir='${datarootdir}/info'
+ htmldir='${docdir}'
+@@ -5265,7 +5265,7 @@ $as_echo_n "checking for zlib... " >&6;
+ # Check whether --with-zlib was given.
+ if test "${with_zlib+set}" = set; then :
+   withval=$with_zlib;  # check for header & func (in library) in given prefix
+-	CPPFLAGS="${CPPFLAGS} -I${withval}/include"
++	CPPFLAGS="${CPPFLAGS}"
+ 	if test "x$staticzlib" = "xtrue"; then
+ 		LIBS="-Bstatic -L${withval} -lz -Bdynamic ${LIBS}"
+ 	else
+@@ -7095,7 +7095,7 @@ $as_echo "#define ENABLE_NTLM /**/" >>co
+ if test "${with_libiconv+set}" = set; then :
+   withval=$with_libiconv;  # check for header & func (in library) in given prefix
+ 			if test "x$withval" != "x"; then
+-				CPPFLAGS="${CPPFLAGS} -I${withval}/include"
++				CPPFLAGS="${CPPFLAGS}"
+ 				LIBS="-L${withval}/lib -liconv ${LIBS}"
+ 			else
+ 				LIBS="-liconv ${LIBS}"

@@ -1,0 +1,26 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -3717,7 +3717,6 @@ ext/x265/Makefile
+ ext/xvid/Makefile
+ ext/zbar/Makefile
+ ext/dtls/Makefile
+-po/Makefile.in
+ docs/Makefile
+ docs/plugins/Makefile
+ docs/libs/Makefile
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,11 +2,11 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-d
+ 
+ SUBDIRS = \
+ 	gst-libs gst sys ext pkgconfig \
+-	m4 common docs tests po tools
++	m4 common docs tests tools
+ 
+ DIST_SUBDIRS = \
+ 	gst gst-libs sys ext pkgconfig \
+-	m4 common docs tests po tools
++	m4 common docs tests tools
+ 
+ # include before EXTRA_DIST for win32 assignment
+ include $(top_srcdir)/common/win32.mak

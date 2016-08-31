@@ -1,0 +1,153 @@
+--- a/resource/SConscript
++++ b/resource/SConscript
+@@ -75,7 +75,7 @@ if target_os == 'linux':
+ 	SConscript('csdk/stack/samples/linux/secure/SConscript')
+ 
+ 	# Build C/C++ unit tests
+-	SConscript('unit_tests.scons')
++	# SConscript('unit_tests.scons')
+ 
+ elif target_os == 'darwin':
+ 	env.Command('../../out/darwin/iotivity-csdk.framework',None,src_dir + '/tools/darwin/mkfwk_osx.sh')
+--- a/resource/csdk/security/provisioning/ck_manager/SConscript
++++ b/resource/csdk/security/provisioning/ck_manager/SConscript
+@@ -47,4 +47,4 @@ x509_env.AppendUnique(LIBS = ['Base64'])
+ x509_env.AppendUnique(LIBS = ['Json'])
+ 
+ SConscript('sample/SConscript')
+-SConscript('unittest/SConscript')
++# SConscript('unittest/SConscript')
+--- a/service/resource-encapsulation/SConscript
++++ b/service/resource-encapsulation/SConscript
+@@ -113,10 +113,10 @@ SConscript('examples/SConscript')
+ # Build UnitTests Resource Client , resourceCache and resourceBroker and 
+ # DiscoveryManager
+ ################################################ ######################
+-if target_os == 'linux':
+-    SConscript('unittests/SConscript')
+-    SConscript('src/resourceCache/unittests/SConscript')
+-    SConscript('src/resourceBroker/unittest/SConscript')
++# if target_os == 'linux':
++#     SConscript('unittests/SConscript')
++#     SConscript('src/resourceCache/unittests/SConscript')
++#     SConscript('src/resourceBroker/unittest/SConscript')
+ 
+ if target_os == 'android':
+     SConscript('android/SConscript')
+\ No newline at end of file
+--- a/service/things-manager/SConscript
++++ b/service/things-manager/SConscript
+@@ -75,6 +75,6 @@ SConscript('sampleapp/SConscript')
+ ######################################################################
+ # Build UnitTests Things Manager
+ ################################################ ######################
+-if target_os == 'linux':
+-    SConscript('unittests/SConscript')
++# if target_os == 'linux':
++#     SConscript('unittests/SConscript')
+ 
+--- a/service/resource-hosting/SConscript
++++ b/service/resource-hosting/SConscript
+@@ -94,8 +94,8 @@ resourcehosting_env.UserInstallTargetHea
+ 	'service/resource-hosting', 'Hosting.h')
+ 
+ # Go to build Unit test
+-if target_os == 'linux':
+-	SConscript('unittest/SConscript')
++# if target_os == 'linux':
++# 	SConscript('unittest/SConscript')
+ 
+ # Go to build sample apps
+ SConscript('SampleApp/SConscript')
+--- a/service/easy-setup/mediator/csdk/SConscript
++++ b/service/easy-setup/mediator/csdk/SConscript
+@@ -124,8 +124,8 @@ if target_os == 'linux':
+ ######################################################################
+ #Build UnitTestcases for Mediator[CSDK]
+ ################################################ ######################
+-if target_os == 'linux':
+-    SConscript('unittests/SConscript')
++# if target_os == 'linux':
++#     SConscript('unittests/SConscript')
+ 
+ 
+ 
+--- a/service/easy-setup/mediator/richsdk/SConscript
++++ b/service/easy-setup/mediator/richsdk/SConscript
+@@ -138,6 +138,6 @@ if target_os == 'linux':
+ ######################################################################
+ #Build UnitTestcases for Mediator[RichSDK]
+ ################################################ ######################
+-if target_os == 'linux':
+-    SConscript('unittests/SConscript')
++# if target_os == 'linux':
++#     SConscript('unittests/SConscript')
+ 
+--- a/service/resource-container/SConscript
++++ b/service/resource-container/SConscript
+@@ -209,8 +209,8 @@ lib_env = conf2.Finish()
+ ######################################################################
+ # build resource container unit tests
+ ######################################################################
+-if target_os == 'linux':
+-    SConscript('unittests/SConscript')
++# if target_os == 'linux':
++#     SConscript('unittests/SConscript')
+ 
+ ######################################################################
+ # Build Container Sample
+--- a/plugins/SConscript
++++ b/plugins/SConscript
+@@ -35,7 +35,7 @@ if target_os not in ['android', 'arduino
+ 
+     SConscript(os.path.join('src', 'SConscript'))
+ 
+-    SConscript(os.path.join('unittests', 'SConscript'))
++#    SConscript(os.path.join('unittests', 'SConscript'))
+ 
+     if build_sample == 'ON':
+ 	    if target_os in ['linux']:
+--- a/service/scene-manager/SConscript
++++ b/service/scene-manager/SConscript
+@@ -101,8 +101,8 @@ scenemanager_env.UserInstallTargetHeader
+ scenemanager_env.UserInstallTargetHeader('include/RemoteSceneAction.h', 'service/scene-manager', 'RemoteSceneAction.h')
+ 
+ # Go to build Unit test
+-if target_os == 'linux':
+-    SConscript('unittests/SConscript')
++# if target_os == 'linux':
++#     SConscript('unittests/SConscript')
+ 
+ # Go to build sample apps
+-SConscript('sampleapp/SConscript')
++# SConscript('sampleapp/SConscript')
+--- a/service/resource-encapsulation/src/common/SConscript
++++ b/service/resource-encapsulation/src/common/SConscript
+@@ -122,9 +122,9 @@ if target_os == 'linux':
+ 		'expiryTimer/unittests/ExpiryTimerTest.cpp'
+ 		]
+ 
+-	rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
+-	Alias("rcs_common_test", rcs_common_test)
+-	env.AppendTarget('rcs_common_test')
++#	rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
++#	Alias("rcs_common_test", rcs_common_test)
++#	env.AppendTarget('rcs_common_test')
+ 
+ 	if env.get('TEST') == '1':
+ 		from tools.scons.RunTest import *
+--- a/service/resource-encapsulation/src/serverBuilder/SConscript
++++ b/service/resource-encapsulation/src/serverBuilder/SConscript
+@@ -110,9 +110,9 @@ if target_os == 'linux':
+ 
+ 	server_builder_test_src = env.Glob('unittests/*.cpp')
+ 
+-	server_builder_test = server_builder_test_env.Program('rcs_server_test', server_builder_test_src)
+-	Alias("rcs_server_test", server_builder_test)
+-	env.AppendTarget('rcs_server_test')
++#	server_builder_test = server_builder_test_env.Program('rcs_server_test', server_builder_test_src)
++#	Alias("rcs_server_test", server_builder_test)
++#	env.AppendTarget('rcs_server_test')
+ 
+ 	if env.get('TEST') == '1':
+ 		from tools.scons.RunTest import *

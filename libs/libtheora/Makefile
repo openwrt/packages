@@ -13,8 +13,11 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/theora/
 PKG_MD5SUM:=292ab65cedd5021d6b7ddd117e07cd8e
-PKG_FIXUP:=autoreconf
 
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING LICENSE
+
+PKG_FIXUP:=autoreconf
 PKG_BUILD_DEPENDS:=libvorbis
 
 include $(INCLUDE_DIR)/package.mk

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.18.11
-PKG_RELEASE:=2
+PKG_VERSION:=0.19.17
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.18/
-PKG_MD5SUM:=be23120f342250e8352f6499cb960fd2
+PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.19/
+PKG_MD5SUM:=47e13f3f160bf94e7a897c5a48990f3d
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
@@ -35,8 +35,9 @@ define Package/mpd/Default
   CATEGORY:=Sound
   TITLE:=Music Player Daemon
   URL:=http://www.musicpd.org/
-  DEPENDS:= +glib2 +libcurl +libpthread +libmpdclient $(ICONV_DEPENDS) +libstdcpp \
-	    +libflac +BUILD_PATENTED:libmad +libvorbisidec +AUDIO_SUPPORT:alsa-lib
+  DEPENDS:= +glib2 +libcurl +libpthread +libmpdclient +libstdcpp $(ICONV_DEPENDS) \
+	    +libflac +BUILD_PATENTED:libmad +libvorbisidec +AUDIO_SUPPORT:alsa-lib \
+            +boost +boost-container +libexpat
 endef
 
 define Package/mpd/Default/description
@@ -51,7 +52,7 @@ $(call Package/mpd/Default)
   TITLE+= (full)
   DEPENDS+= \
 	+libaudiofile +BUILD_PATENTED:libfaad2 +libffmpeg +libid3tag \
-	+libmms +libogg +libsndfile +libvorbis
+	+libmms +libogg +libsndfile +libvorbis +libupnp
   PROVIDES:=mpd
   VARIANT:=full
 endef
@@ -63,7 +64,6 @@ $(call Package/mpd/Default/description)
 endef
 
 define Package/mpd-full/conffiles
-/etc/avahi/services/mpd.service
 /etc/mpd.conf
 endef
 
@@ -85,21 +85,36 @@ define Package/mpd-mini/conffiles
 /etc/mpd.conf
 endef
 
+define Package/mpd-avahi-service
+$(call Package/mpd/Default)
+  TITLE+= (Avahi service)
+  DEPENDS+=+avahi-daemon
+endef
+
+define Package/mpd-avahi-service/description
+$(call Package/mpd/Default/description)
+ .
+ This package contains the service definition for announcing the
+ Music Player Daemon service via mDNS/DNS-SD.
+endef
+
+define Package/mpd-avahi-service/conffiles
+/etc/avahi/services/mpd.service
+endef
+
 CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-debug \
 	--disable-documentation \
-	--disable-gprof \
 	--disable-test \
 	--disable-werror \
 	\
 	--disable-ao \
 	--disable-bzip2 \
-	--enable-cue \
-	--disable-ffado \
 	--disable-fluidsynth \
 	--disable-gme \
 	--enable-inotify \
+	--disable-icu \
 	--disable-eventfd \
 	--disable-iso9660 \
 	--disable-jack \
@@ -110,13 +125,11 @@ CONFIGURE_ARGS += \
 	--disable-modplug \
 	--disable-mpc \
 	--disable-mpg123 \
-	--disable-mvp \
 	--disable-openal \
 	--disable-opus \
 	--disable-pulse \
 	--disable-sidplay \
 	--disable-solaris-output \
-	--disable-soup \
 	--disable-sqlite \
 	--disable-twolame-encoder \
 	--enable-wave-encoder \
@@ -124,6 +137,7 @@ CONFIGURE_ARGS += \
 	--disable-wildmidi \
 	--disable-zzip \
 	--with-zeroconf=no \
+	--disable-soxr \
 	\
 	--enable-curl \
 	--enable-flac \
@@ -144,8 +158,8 @@ TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-lic
 ifeq ($(BUILD_VARIANT),full)
 
   CONFIGURE_ARGS += \
+	--enable-upnp \
 	$(call autoconf_bool,CONFIG_BUILD_PATENTED,aac) \
-	$(call autoconf_bool,CONFIG_AUDIO_SUPPORT,alsa) \
 	--enable-audiofile \
 	--enable-fifo \
 	--enable-ffmpeg \
@@ -168,15 +182,13 @@ ifeq ($(BUILD_VARIANT),mini)
 
   # oggflac is not compatible with tremor
   CONFIGURE_ARGS += \
+	--disable-upnp \
 	--disable-aac \
-	--disable-alsa \
 	--disable-audiofile \
 	--disable-fifo \
 	--disable-ffmpeg \
 	--disable-id3 \
-	--disable-lastfm \
 	--disable-mms \
-	--disable-oggflac \
 	--disable-pipe-output \
 	--disable-recorder-output \
 	--disable-shout \
@@ -189,22 +201,26 @@ endif
 
 define Package/mpd/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/mpd $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mpd $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc
-	$(CP) $(PKG_BUILD_DIR)/doc/mpdconf.example $(1)/etc/mpd.conf
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/doc/mpdconf.example $(1)/etc/mpd.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mpd.init $(1)/etc/init.d/mpd
 endef
 
 define Package/mpd-full/install
 $(call Package/mpd/install,$1)
-	$(INSTALL_DIR) $(1)/etc/avahi/services
-	$(INSTALL_DATA) ./files/mpd.service $(1)/etc/avahi/services/
 endef
 
 define Package/mpd-mini/install
 $(call Package/mpd/install,$1)
 endef
 
+define Package/mpd-avahi-service/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_DATA) ./files/mpd.service $(1)/etc/avahi/services/
+endef
+
 $(eval $(call BuildPackage,mpd-full))
 $(eval $(call BuildPackage,mpd-mini))
+$(eval $(call BuildPackage,mpd-avahi-service))

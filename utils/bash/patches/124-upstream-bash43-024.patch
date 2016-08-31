@@ -1,0 +1,45 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-024
+
+Bug-Reported-by:	Corentin Peuvrel <cpeuvrel@pom-monitoring.com>
+Bug-Reference-ID:	<53CE9E5D.6050203@pom-monitoring.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-07/msg00021.html
+
+Bug-Description:
+
+Indirect variable references do not work correctly if the reference
+variable expands to an array reference using a subscript other than 0
+(e.g., foo='bar[1]' ; echo ${!foo}).
+
+Patch (apply with `patch -p0'):
+
+--- a/subst.c
++++ b/subst.c
+@@ -7374,7 +7374,13 @@ parameter_brace_expand (string, indexp,
+     }
+ 
+   if (want_indir)
+-    tdesc = parameter_brace_expand_indir (name + 1, var_is_special, quoted, quoted_dollar_atp, contains_dollar_at);
++    {
++      tdesc = parameter_brace_expand_indir (name + 1, var_is_special, quoted, quoted_dollar_atp, contains_dollar_at);
++      /* Turn off the W_ARRAYIND flag because there is no way for this function
++	 to return the index we're supposed to be using. */
++      if (tdesc && tdesc->flags)
++	tdesc->flags &= ~W_ARRAYIND;
++    }
+   else
+     tdesc = parameter_brace_expand_word (name, var_is_special, quoted, PF_IGNUNBOUND|(pflags&(PF_NOSPLIT2|PF_ASSIGNRHS)), &ind);
+ 
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 23
++#define PATCHLEVEL 24
+ 
+ #endif /* _PATCHLEVEL_H_ */

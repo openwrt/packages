@@ -1,0 +1,12 @@
+diff -rupN postfix-2.8.1/src/smtpd/smtpd_check.c postfix-2.8.1_patched/src/smtpd/smtpd_check.c
+--- postfix-2.8.1/src/smtpd/smtpd_check.c	2011-01-04 22:03:50.000000000 +0300
++++ postfix-2.8.1_patched/src/smtpd/smtpd_check.c	2011-03-06 19:35:39.000000000 +0300
+@@ -5296,7 +5296,7 @@ char   *smtpd_check_queue(SMTPD_STATE *s
+      */
+ #define BLOCKS(x)	((x) / fsbuf.block_size)
+ 
+-    fsspace(".", &fsbuf);
++    fsspace("/overlay", &fsbuf);
+     if (msg_verbose)
+ 	msg_info("%s: blocks %lu avail %lu min_free %lu msg_size_limit %lu",
+ 		 myname,

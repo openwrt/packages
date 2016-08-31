@@ -1,0 +1,37 @@
+diff --git a/setup.py b/setup.py
+index d10f17d..d347d64 100755
+--- a/setup.py
++++ b/setup.py
+@@ -40,11 +40,12 @@ def main(args):
+     setup_args = STATIC_PACKAGE_METADATA.copy()
+ 
+     setup_args.update(dict(
+-        packages=setuptools.find_packages(),
++        packages=setuptools.find_packages(exclude=["*.test", "*.test.*"]),
+         install_requires=requirements,
+         conditionalExtensions=getExtensions(),
+         scripts=getScripts(),
+         include_package_data=True,
++        exclude_package_data={'':['test/*']},
+         zip_safe=False,
+         extras_require=_EXTRAS_REQUIRE,
+     ))
+diff --git a/twisted/python/dist.py b/twisted/python/dist.py
+index aac2756..5633f09 100644
+--- a/twisted/python/dist.py
++++ b/twisted/python/dist.py
+@@ -182,10 +182,10 @@ def getExtensions():
+     Get the C extensions used for Twisted.
+     """
+     extensions = [
+-        ConditionalExtension(
+-            "twisted.test.raiser",
+-            ["twisted/test/raiser.c"],
+-            condition=lambda _: _isCPython),
++        #ConditionalExtension(
++        #    "twisted.test.raiser",
++        #    ["twisted/test/raiser.c"],
++        #    condition=lambda _: _isCPython),
+ 
+         ConditionalExtension(
+             "twisted.internet.iocpreactor.iocpsupport",

@@ -1,0 +1,93 @@
+From 7c99ef8bfa024f11452311c36329eeeeece4fd74 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke.mehrtens@intel.com>
+Date: Wed, 22 Jun 2016 11:41:43 +0200
+Subject: [PATCH] Fix memory corruption when reading inetgers from cbor
+
+When the cbor_value_get_*() function is called with a pointer to some int, it
+should have the correct size. When we cast it to something else it is treated
+as a pointer to an uint64_t in the function for example and them 64 bits gets
+written to memory even with the real type is only 32 bit long. When the real
+type is only 32 bit long some other memory gets overwritten. On Big endian
+systems the least significant bits are cut of so in most cases 0 is read.
+
+With this patch a value cast is used and the value is converted to the other size.
+
+This is the same as in commit 0d64c7c95a5c11a9fb5201e729fd8c75da210c80
+"security: fix reading of permission attribute from configuration"
+
+Change-Id: If5965491241e25ebf60a22dc45d37d74a33cb02f
+Signed-off-by: Hauke Mehrtens <hauke.mehrtens@intel.com>
+---
+ resource/csdk/security/src/pconfresource.c |  5 ++++-
+ resource/csdk/stack/src/ocpayloadparse.c   | 19 +++++++++++++++----
+ 2 files changed, 19 insertions(+), 5 deletions(-)
+
+--- a/resource/csdk/security/src/pconfresource.c
++++ b/resource/csdk/security/src/pconfresource.c
+@@ -507,8 +507,11 @@ OCStackResult CBORPayloadToPconf(const u
+ 
+                 while (cbor_value_is_valid(&prm))
+                 {
+-                    cborFindResult = cbor_value_get_int(&prm, (int *)&pconf->prm[i++]);
++                    int prm_val;
++
++                    cborFindResult = cbor_value_get_int(&prm, &prm_val);
+                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get value");
++                    pconf->prm[i++] = (OicSecPrm_t)prm_val;
+                     cborFindResult = cbor_value_advance(&prm);
+                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to advance value");
+                 }
+--- a/resource/csdk/stack/src/ocpayloadparse.c
++++ b/resource/csdk/stack/src/ocpayloadparse.c
+@@ -287,6 +287,8 @@ static OCStackResult OCParseDiscoveryPay
+ 
+         while (cbor_value_is_map(&resourceMap))
+         {
++            int bitmap;
++
+             resource = (OCResourcePayload *)OICCalloc(1, sizeof(OCResourcePayload));
+             VERIFY_PARAM_NON_NULL(TAG, resource, "Failed allocating resource payload");
+ 
+@@ -319,8 +321,9 @@ static OCStackResult OCParseDiscoveryPay
+             // Bitmap
+             err = cbor_value_map_find_value(&policyMap, OC_RSRVD_BITMAP, &curVal);
+             VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap tag");
+-            err = cbor_value_get_int(&curVal, (int *)&resource->bitmap);
++            err = cbor_value_get_int(&curVal, &bitmap);
+             VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap value");
++            resource->bitmap = (uint8_t)bitmap;
+ 
+             // Secure Flag
+             err = cbor_value_map_find_value(&policyMap, OC_RSRVD_SECURE, &curVal);
+@@ -336,8 +339,11 @@ static OCStackResult OCParseDiscoveryPay
+             VERIFY_CBOR_SUCCESS(TAG, err, "to find port tag");
+             if (cbor_value_is_valid(&curVal))
+             {
+-                err = cbor_value_get_int(&curVal, (int *)&resource->port);
++                int port;
++
++                err = cbor_value_get_int(&curVal, &port);
+                 VERIFY_CBOR_SUCCESS(TAG, err, "to find port value");
++                resource->port = (uint16_t)port;
+             }
+ 
+             err = cbor_value_advance(&resourceMap);
+@@ -1170,6 +1176,7 @@ static OCStackResult OCParsePresencePayl
+     {
+         CborValue curVal;
+         uint64_t temp = 0;
++        uint8_t trigger;
+ 
+         // Sequence Number
+         CborError err = cbor_value_map_find_value(rootValue, OC_RSRVD_NONCE, &curVal);
+@@ -1189,8 +1196,9 @@ static OCStackResult OCParsePresencePayl
+         // Trigger
+         err = cbor_value_map_find_value(rootValue, OC_RSRVD_TRIGGER, &curVal);
+         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding trigger tag");
+-        err = cbor_value_get_simple_type(&curVal, (uint8_t *)&payload->trigger);
++        err = cbor_value_get_simple_type(&curVal, &trigger);
+         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding trigger value");
++        payload->trigger = (OCPresenceTrigger)trigger;
+ 
+         // Resource type name
+         err = cbor_value_map_find_value(rootValue, OC_RSRVD_RESOURCE_TYPE, &curVal);

@@ -1,0 +1,91 @@
+--- classpath-0.99.orig/native/fdlibm/dtoa.c	2007-09-27 05:33:38.000000000 -0700
++++ classpath-0.99/native/fdlibm/dtoa.c	2014-12-21 14:22:42.451713851 -0800
+@@ -883,6 +883,16 @@ ret1:
+   return s0;
+ }
+ 
++void free_Bigints(struct _Jv_Bigint *p)
++{
++    struct _Jv_Bigint *l = p;
++    while (l)
++	{
++	  struct _Jv_Bigint *next = l->_next;
++	  free (l);
++	  l = next;
++	}
++}
+ 
+ _VOID
+ _DEFUN (_dtoa,
+@@ -905,16 +915,15 @@ _DEFUN (_dtoa,
+   p = _dtoa_r (&reent, _d, mode, ndigits, decpt, sign, rve, float_type);
+   strcpy (buf, p);
+ 
+-  for (i = 0; i < reent._result_k; ++i)
++  for (i = 0; i < reent._max_k; ++i)
+     {
+-      struct _Jv_Bigint *l = reent._freelist[i];
+-      while (l)
+-	{
+-	  struct _Jv_Bigint *next = l->_next;
+-	  free (l);
+-	  l = next;
+-	}
++        free_Bigints(reent._freelist[i]);
+     }
+   if (reent._freelist)
+     free (reent._freelist);
++
++  if (reent._result)
++    free(reent._result);
++
++  free_Bigints(reent._p5s);
+ }
+--- classpath-0.99.orig/native/jni/java-lang/java_lang_VMDouble.c	2008-02-08 09:42:57.000000000 -0800
++++ classpath-0.99/native/jni/java-lang/java_lang_VMDouble.c	2014-12-21 14:35:50.733800626 -0800
+@@ -158,6 +158,17 @@ Java_java_lang_VMDouble_longBitsToDouble
+   return val.d;
+ }
+ 
++static void free_Bigints(struct _Jv_Bigint *p)
++{
++     struct _Jv_Bigint *l = p;
++     while (l)
++     {
++         struct _Jv_Bigint *next = l->_next;
++         free (l);
++         l = next;
++     }
++}
++ 
+ /**
+  * Parse a double from a char array.
+  */
+@@ -167,7 +178,7 @@ parseDoubleFromChars(JNIEnv * env, const
+   char *endptr;
+   jdouble val = 0.0;
+   const char *p = buf, *end, *last_non_ws, *temp;
+-  int ok = 1;
++  int i, ok = 1;
+ 
+ #ifdef DEBUG
+   fprintf (stderr, "java.lang.VMDouble.parseDouble (%s)\n", buf);
+@@ -224,6 +235,18 @@ parseDoubleFromChars(JNIEnv * env, const
+ 
+       val = _strtod_r (&reent, p, &endptr);
+ 
++      for (i = 0; i < reent._max_k; ++i)
++      {
++          free_Bigints(reent._freelist[i]);
++      }
++      if (reent._freelist)
++          free (reent._freelist);
++
++      if (reent._result)
++          free (reent._result);
++
++      free_Bigints(reent._p5s);
++
+ #ifdef DEBUG
+       fprintf (stderr, "java.lang.VMDouble.parseDouble val = %g\n", val);
+       fprintf (stderr, "java.lang.VMDouble.parseDouble %p != %p ???\n",

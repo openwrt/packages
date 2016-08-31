@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=emailrelay
 PKG_VERSION:=1.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=@SF/emailrelay/$(PKG_VERSION)
 PKG_MD5SUM:=0892fbf993407c6b5a16f96e23299b62
-PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_CAT :=zcat
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+
 
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
@@ -28,7 +28,7 @@ define Package/emailrelay/Default
   DEPENDS:=$(CXX_DEPENDS)
   TITLE:=A simple SMTP proxy and MTA
   URL:=http://emailrelay.sourceforge.net/
-  MAINTAINER := Federico Di Marco <fededim@gmail.com>
+  MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 endef
 
 
@@ -80,6 +80,9 @@ define Package/emailrelay-nossl/conffiles
 /etc/emailrelay.auth
 endef
 
+CONFIGURE_ARGS += \
+	--with-pam=no
+
 CONFIGURE_VARS += \
 	CXXFLAGS="$$$$CXXFLAGS -fno-rtti"	
 
@@ -93,12 +96,7 @@ ifeq ($(BUILD_VARIANT),nossl)
 		--with-openssl=no
 endif
 
-
-#define Build/Configure
-#  $(call Build/Configure/Default,--with-openssl)
-#  endef
-	
-define Package/emailrelay/install	
+define Package/emailrelay/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-filter-copy $(1)/usr/bin/

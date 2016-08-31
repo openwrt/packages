@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr
-PKG_VERSION:=1.5.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.5.2
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://mirrors.ibiblio.org/apache/apr/
-PKG_MD5SUM:=5486180ec5a23efb5cae6d4292b300ab
+PKG_SOURCE_URL:=@APACHE/apr/
+PKG_MD5SUM:=4e9769f3349fe11fc0a5e1b224c236aa
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=Apache License
 
@@ -38,7 +38,7 @@ TARGET_CPPFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 CONFIGURE_ARGS += \
 	--with-devrandom=/dev/urandom \
 	--disable-dso \
-	--enable-ipv6
+	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
 # XXX: ac_cv_sizeof_struct_iovec=1 is just to trick configure
 CONFIGURE_VARS += \

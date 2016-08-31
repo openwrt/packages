@@ -1,0 +1,105 @@
+--- a/faad.c
++++ b/faad.c
+@@ -594,6 +594,8 @@ static bool load_faad() {
+ 		return false;
+ 	}
+ 
++	err = dlerror();	// Reset previous dynamic linking error string (if there was)
++
+ 	a->NeAACDecGetCurrentConfiguration = dlsym(handle, "NeAACDecGetCurrentConfiguration");
+ 	a->NeAACDecSetConfiguration = dlsym(handle, "NeAACDecSetConfiguration");
+ 	a->NeAACDecOpen = dlsym(handle, "NeAACDecOpen");
+--- a/ffmpeg.c
++++ b/ffmpeg.c
+@@ -620,6 +620,8 @@ static bool load_ff() {
+ 		return false;
+ 	}
+ 
++	err = dlerror();	// Reset previous dynamic linking error string (if there was)
++
+ 	sprintf(name, LIBAVFORMAT, LIBAVFORMAT_VERSION_MAJOR);
+ 	handle_format = dlopen(name, RTLD_NOW);
+ 	if (!handle_format) {
+--- a/flac.c
++++ b/flac.c
+@@ -241,6 +241,8 @@ static bool load_flac() {
+ 		return false;
+ 	}
+ 
++	err = dlerror();	// Reset previous dynamic linking error string (if there was)
++
+ 	f->FLAC__StreamDecoderErrorStatusString = dlsym(handle, "FLAC__StreamDecoderErrorStatusString");
+ 	f->FLAC__StreamDecoderStateString = dlsym(handle, "FLAC__StreamDecoderStateString");
+ 	f->FLAC__stream_decoder_new = dlsym(handle, "FLAC__stream_decoder_new");
+--- a/ir.c
++++ b/ir.c
+@@ -168,10 +168,10 @@ static void *ir_thread() {
+ 			UNLOCK_I;
+ 			wake_controller();
+ 		}
+-		
++
+ 		free(code);
+ 	}
+-	
++
+ 	return 0;
+ }
+ 
+@@ -185,6 +185,8 @@ static bool load_lirc() {
+ 		return false;
+ 	}
+ 
++	err = dlerror();	// Reset previous dynamic linking error string (if there was)
++
+ 	i->lirc_init = dlsym(handle, "lirc_init");
+ 	i->lirc_deinit = dlsym(handle, "lirc_deinit");
+ 	i->lirc_readconfig = dlsym(handle, "lirc_readconfig");
+--- a/mad.c
++++ b/mad.c
+@@ -365,7 +365,9 @@ static bool load_mad() {
+ 		LOG_INFO("dlerror: %s", dlerror());
+ 		return false;
+ 	}
+-	
++
++	err = dlerror();	// Reset previous dynamic linking error string (if there was)
++
+ 	m->mad_stream_init = dlsym(handle, "mad_stream_init");
+ 	m->mad_frame_init = dlsym(handle, "mad_frame_init");
+ 	m->mad_synth_init = dlsym(handle, "mad_synth_init");
+--- a/mpg.c
++++ b/mpg.c
+@@ -222,7 +222,9 @@ static bool load_mpg() {
+ 		LOG_INFO("dlerror: %s", dlerror());
+ 		return false;
+ 	}
+-	
++
++	err = dlerror();	// Reset previous dynamic linking error string (if there was)
++
+ 	m->mpg123_init = dlsym(handle, "mpg123_init");
+ 	m->mpg123_feature = dlsym(handle, "mpg123_feature");
+ 	m->mpg123_rates = dlsym(handle, "mpg123_rates");
+--- a/resample.c
++++ b/resample.c
+@@ -251,6 +251,8 @@ static bool load_soxr(void) {
+ 		return false;
+ 	}
+ 
++	err = dlerror();	// Reset previous dynamic linking error string (if there was)
++
+ 	r->soxr_io_spec = dlsym(handle, "soxr_io_spec");
+ 	r->soxr_quality_spec = dlsym(handle, "soxr_quality_spec");
+ 	r->soxr_create = dlsym(handle, "soxr_create");
+--- a/vorbis.c
++++ b/vorbis.c
+@@ -287,6 +287,8 @@ static bool load_vorbis() {
+ 		}
+ 	}
+ 
++	err = dlerror();	// Reset previous dynamic linking error string (if there was)
++
+ 	v->ov_read = tremor ? NULL : dlsym(handle, "ov_read");
+ 	v->ov_read_tremor = tremor ? dlsym(handle, "ov_read") : NULL;
+ 	v->ov_info = dlsym(handle, "ov_info");

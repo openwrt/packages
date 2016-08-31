@@ -1,0 +1,12 @@
+diff -rupN mailman-2.1.14-1/Mailman/Defaults.py.in mailman-2.1.14-1_patched/Mailman/Defaults.py.in
+--- mailman-2.1.14-1/Mailman/Defaults.py.in	2011-03-01 23:35:57.000000000 +0300
++++ mailman-2.1.14-1_patched/Mailman/Defaults.py.in	2011-03-09 12:26:10.000000000 +0300
+@@ -461,7 +461,7 @@ DELIVERY_MODULE = 'SMTPDirect'
+ # standard out (or send an email to the site list owner) for manual twiddling
+ # of an /etc/aliases style file.  Use 'Postfix' if you are using the Postfix
+ # MTA -- but then also see POSTFIX_STYLE_VIRTUAL_DOMAINS.
+-MTA = 'Manual'
++MTA = 'Postfix'
+ 
+ # If you set MTA='Postfix', then you also want to set the following variable,
+ # depending on whether you're using virtual domains in Postfix, and which

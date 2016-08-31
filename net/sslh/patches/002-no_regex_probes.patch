@@ -1,0 +1,90 @@
+From 3aefaf300478cd6fbc4892d5baaf70521ed323af Mon Sep 17 00:00:00 2001
+From: Yves Rutschle <git1@rutschle.net>
+Date: Thu, 9 Jul 2015 15:31:42 +0200
+Subject: [PATCH] Added Makefile option to build without libpcre
+
+---
+--- a/Makefile
++++ b/Makefile
+@@ -2,6 +2,7 @@
+ 
+ VERSION=$(shell ./genver.sh -r)
+ USELIBCONFIG=1	# Use libconfig? (necessary to use configuration files)
++USELIBPCRE=1	# Use libpcre? (necessary to use regex probe)
+ USELIBWRAP?=	# Use libwrap?
+ USELIBCAP=	# Use libcap?
+ COV_TEST= 	# Perform test coverage?
+@@ -27,6 +28,10 @@ ifneq ($(strip $(USELIBWRAP)),)
+ 	CPPFLAGS+=-DLIBWRAP
+ endif
+ 
++ifneq ($(strip $(USELIBPCRE)),)
++	CPPFLAGS+=-DLIBPCRE
++endif
++
+ ifneq ($(strip $(USELIBCONFIG)),)
+ 	LIBS:=$(LIBS) -lconfig
+ 	CPPFLAGS+=-DLIBCONFIG
+--- a/probe.c
++++ b/probe.c
+@@ -21,7 +21,9 @@
+ 
+ #define _GNU_SOURCE
+ #include <stdio.h>
++#ifdef LIBPCRE
+ #include <regex.h>
++#endif
+ #include <ctype.h>
+ #include "probe.h"
+ 
+@@ -226,6 +228,7 @@ static int is_tls_protocol(const char *p
+ 
+ static int regex_probe(const char *p, int len, struct proto *proto)
+ {
++#ifdef LIBPCRE
+     regex_t **probe = proto->data;
+     regmatch_t pos = { 0, len };
+ 
+@@ -233,6 +236,11 @@ static int regex_probe(const char *p, in
+         /* try them all */;
+ 
+     return (*probe != NULL);
++#else
++    /* Should never happen as we check when loading config file */
++    fprintf(stderr, "FATAL: regex probe called but not built in\n");
++    exit(5);
++#endif
+ }
+ 
+ /* 
+--- a/sslh-main.c
++++ b/sslh-main.c
+@@ -25,7 +25,9 @@
+ #ifdef LIBCONFIG
+ #include <libconfig.h>
+ #endif
++#ifdef LIBPCRE
+ #include <regex.h>
++#endif
+ 
+ #include "common.h"
+ #include "probe.h"
+@@ -174,6 +176,7 @@ static int config_listen(config_t *confi
+ #ifdef LIBCONFIG
+ static void setup_regex_probe(struct proto *p, config_setting_t* probes)
+ {
++#ifdef LIBPCRE
+     int num_probes, errsize, i, res;
+     char *err;
+     const char * expr;
+@@ -201,6 +204,10 @@ static void setup_regex_probe(struct pro
+             exit(1);
+         }
+     }
++#else
++    fprintf(stderr, "line %d: regex probe specified but not compiled in\n", config_setting_source_line(probes));
++    exit(5);
++#endif
+ }
+ #endif
+ 

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaemon
 PKG_VERSION:=0.14
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://0pointer.de/lennart/projects/libdaemon/
@@ -46,6 +46,7 @@ define Build/Configure
 		--enable-shared \
 		--enable-static \
 		--disable-lynx \
+		--disable-examples \
 		, \
 		ac_cv_func_setpgrp_void=yes \
 	)

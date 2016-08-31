@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #               2014 Noah Meyerhans <frodo@morgul.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -11,8 +11,8 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ipsec-tools
 PKG_VERSION:=0.8.2
-PKG_RELEASE:=1
-PKG_MAINTAINER := "Noah Meyerhans <frodo@morgul.net>"
+PKG_RELEASE:=5
+PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
 PKG_LICENSE := BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -70,17 +70,21 @@ define Build/Configure
 		configure \
 	);
 	$(call Build/Configure/Default)
+ifndef CONFIG_SHADOW_PASSWORDS
 	echo "#undef HAVE_SHADOW_H" >> $(PKG_BUILD_DIR)/config.h
+endif
 endef
 
 define Package/ipsec-tools/install
-	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/src/racoon/samples/racoon.conf $(1)/etc/
-	$(SED) 's|@sysconfdir_x@|/etc|g' $(1)/etc/racoon.conf
 	$(INSTALL_DIR) $(1)/etc/racoon
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/src/racoon/samples/psk.txt $(1)/etc/racoon/
+	$(INSTALL_CONF) ./files/functions.sh $(1)/etc/racoon/
+	$(INSTALL_BIN) ./files/p1client-up $(1)/etc/racoon/
+	$(INSTALL_BIN) ./files/p1client-down $(1)/etc/racoon/
+	$(INSTALL_BIN) ./files/vpnctl $(1)/etc/racoon/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/racoon.init $(1)/etc/init.d/racoon
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/racoon $(1)/etc/config/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libipsec.so.* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libracoon.so.* $(1)/usr/lib/
@@ -92,8 +96,7 @@ define Package/ipsec-tools/install
 endef
 
 define Package/ipsec-tools/conffiles
-/etc/racoon.conf
-/etc/racoon/psk.txt
+/etc/config/racoon
 endef
 
 $(eval $(call BuildPackage,ipsec-tools))

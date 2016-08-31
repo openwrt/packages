@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2014 OpenWrt.org
+# Copyright (C) 2011-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,20 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.2.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.8.2
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
+		Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPLv2 GPLv2
-PKG_LICENSE_FILE:=COPYING.LIB COPYING
+PKG_LICENSE_FILES:=COPYING.LIB COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_MD5SUM:=cfd6f303c8df2740b27cc63b945decef
+PKG_MD5SUM:=d7995317530c8773ec088f94d9320909d41da61996b801ebacce9a56af493f97
 
-PKG_BUILD_DEPENDS:= gstreamer1 gst1-plugins-base liboil
+PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -29,32 +30,70 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/gstreamer1/Default
+GST_BAD_LIBS:=
+GST_BAD_MODULES:=
+
+define Package/gstreamer1-bad/Default
   CATEGORY:=Multimedia
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
-  DEPENDS:= $(ICONV_DEPENDS)
+  DEPENDS:= +libgstreamer1 $(ICONV_DEPENDS)
 endef
 
-define Package/gstreamer1/description/Default
+define Package/gstreamer1-bad/description/Default
  GStreamer open source multimedia framework
 endef
 
 
 define Package/gst1-plugins-bad
-$(call Package/gstreamer1/Default)
+$(call Package/gstreamer1-bad/Default)
   TITLE+= plugins collection (bad)
   DEPENDS+= $(GST_DEPENDS)
+  HIDDEN:=1
 endef
 
 define Package/gts1-plugins-bad/description
-$(call Package/gstreamer1/description/Default)
+$(call Package/gstreamer1-bad/description/Default)
  .
  This meta package contains only dependencies to the other plugins from
  the bad plugins collection.
 endef
 
+define Package/gstreamer1-plugins-bad
+  $(call Package/gstreamer1-bad/Default)
+  TITLE+= plugins collection (bad)
+  DEPENDS:=+ALL:gst1-plugins-bad +gstreamer1-plugins-base
+endef
+
+define Package/gstreamer1-plugins-bad/config
+    menu "Select GStreamer bad modules and libraries"
+      depends on PACKAGE_gstreamer1-plugins-bad
+
+
+    config gst1-plugins-bad-all
+      bool "Include all GStreamer bad plugins"
+      select PACKAGE_gst1-plugins-bad
+
+    comment "Modules"
+
+   $(foreach mod,$(GST_BAD_MODULES), \
+    config PACKAGE_gst1-mod-$(mod)
+      prompt "GStreamer $(mod) module"
+
+   )
+
+    comment "Libraries"
+
+   $(foreach lib,$(GST_BAD_LIBS), \
+    config PACKAGE_libgst1$(lib)
+      prompt "GStreamer $(lib) library"
+
+   )
+
+  endmenu
+
+endef
 
 GST_VERSION:=1.0
 
@@ -68,28 +107,17 @@ CONFIGURE_ARGS += \
 	--disable-osx_video \
 	--disable-quicktime \
 	--disable-vcd \
-	--disable-alsa \
 	--disable-assrender \
-	--disable-amrwb \
 	--disable-apexsink \
 	--disable-bz2 \
-	--disable-cdaudio \
-	--disable-celt \
-	--disable-cog \
 	--disable-dc1394 \
 	--disable-directfb \
-	--disable-dirac \
 	--disable-dts \
-	--disable-divx \
 	--disable-resindvd \
-	--disable-metadata \
 	--disable-faac \
 	--disable-faad \
-	--disable-fbdev \
 	--disable-flite \
 	--disable-gsm \
-	--disable-jack \
-	--disable-jp2k \
 	--disable-kate \
 	--disable-ladspa \
 	--disable-lv2 \
@@ -99,7 +127,6 @@ CONFIGURE_ARGS += \
 	--disable-mpeg2enc \
 	--disable-mplex \
 	--disable-musepack \
-	--disable-musicbrainz \
 	--disable-mythtv \
 	--disable-nas \
 	--disable-neon \
@@ -113,8 +140,6 @@ CONFIGURE_ARGS += \
 	--disable-soundtouch \
 	--disable-spc \
 	--disable-gme \
-	--disable-swfdec \
-	--disable-theoradec \
 	--disable-xvid \
 	--disable-dvb \
 	--disable-wininet \
@@ -122,10 +147,11 @@ CONFIGURE_ARGS += \
 	--disable-vdpau \
 	--disable-schro \
 	--disable-zbar \
-	--disable-vp8 \
+	--disable-srtp \
 	\
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
+	--with-libgcrypt-prefix="$(STAGING_DIR)/usr" \
 	--without-x \
 
 TARGET_CFLAGS+= -std=gnu99
@@ -135,7 +161,7 @@ EXTRA_LDFLAGS+= \
 	$(if $(ICONV_FULL),-liconv) \
 
 
-define Package/gst1-plugins-ugly/install
+define Package/gst1-plugins-bad/install
 	/bin/true
 endef
 
@@ -147,14 +173,16 @@ define GstBuildLibrary
 
   GST_DEPENDS += +libgst1$(1)
 
+  GST_BAD_LIBS+= $(1)
   define Package/libgst1$(1)
-    $(call Package/gstreamer1/Default)
+    $(call Package/gstreamer1-bad/Default)
     TITLE+= $(2) library (base)
-    DEPENDS+= +libgstreamer1 $$(foreach p,$(3),+libgst1$$(p)) $(4)
+    DEPENDS+= $$(foreach p,$(3),+libgst1$$(p)) $(4)
+    HIDDEN:=1
   endef
 
   define Package/libgst1$(1)/description
-   $(call Package/gstreamer1/description/Default)
+   $(call Package/gstreamer1-bad/description/Default)
    .
    This package contains the GStreamer $(2) library.
   endef
@@ -170,8 +198,11 @@ define GstBuildLibrary
   $$(eval $$(call BuildPackage,libgst1$(1)))
 endef
 
+$(eval $(call GstBuildLibrary,adaptivedemux,adaptivedemux,app uridownloader,))
 $(eval $(call GstBuildLibrary,photography,photography,,))
 $(eval $(call GstBuildLibrary,basecamerabinsrc,basecamerabinsrc,app,))
+$(eval $(call GstBuildLibrary,uridownloader,uridownloader,,))
+$(eval $(call GstBuildLibrary,badbase,badbase,,))
 
 # 1: short name
 # 2: description
@@ -182,14 +213,17 @@ define GstBuildPlugin
 
   GST_DEPENDS += +gst1-mod-$(1)
 
+  GST_BAD_MODULES+= $(1)
+
   define Package/gst1-mod-$(1)
-    $(call Package/gstreamer1/Default)
+    $(call Package/gstreamer1-bad/Default)
     TITLE+= $(2) plugin (bad)
-    DEPENDS+= +libgstreamer1 $$(foreach p,$(3),+libgst1$$(p)) $$(foreach p,$(4),+gst1-mod-$$(p)) $(5)
+    DEPENDS+= $$(foreach p,$(3),+libgst1$$(p)) $$(foreach p,$(4),+gst1-mod-$$(p)) $(5)
+    HIDDEN:=1
   endef
 
   define Package/gst1-mod-$(1)/description
-   $(call Package/gstreamer1/description/Default)
+   $(call Package/gstreamer1-bad/description/Default)
    .
    This package contains the GStreamer $(2) plugin.
   endef
@@ -211,28 +245,33 @@ $(eval $(call GstBuildPlugin,aiff,aiff support,audio tag,,))
 $(eval $(call GstBuildPlugin,asfmux,asf muxing support,rtp,,))
 $(eval $(call GstBuildPlugin,autoconvert,autoconvert support,,,))
 $(eval $(call GstBuildPlugin,bayer,bayer support,video,,))
-$(eval $(call GstBuildPlugin,camerabin2,camerabin support,basecamerabinsrc photography tag pbutils app,,))
+$(eval $(call GstBuildPlugin,camerabin2,camerabin support,basecamerabinsrc photography pbutils app,,))
 $(eval $(call GstBuildPlugin,dataurisrc,dataurisrc support,,,))
 $(eval $(call GstBuildPlugin,debugutilsbad,debugutils support,video,,))
 $(eval $(call GstBuildPlugin,dvdspu,dvdspu support,video,,))
+$(eval $(call GstBuildPlugin,fbdevsink,fbdev support,video,,))
 $(eval $(call GstBuildPlugin,festival,festival support,audio,,))
+$(eval $(call GstBuildPlugin,hls,HLS support,pbutils adaptivedemux,multifile,+libnettle))
 $(eval $(call GstBuildPlugin,frei0r,frei0r support,controller video,,))
 $(eval $(call GstBuildPlugin,id3tag,id3tag support,tag,,))
 $(eval $(call GstBuildPlugin,jpegformat,jpegformat support,tag,,))
-$(eval $(call GstBuildPlugin,liveadder,liveadder support,audio,,))
-$(eval $(call GstBuildPlugin,mpegpsdemux,mpegpsdemux support,pbutils tag,,))
+$(eval $(call GstBuildPlugin,mpegpsdemux,mpegpsdemux support,pbutils,,))
 $(eval $(call GstBuildPlugin,mpegpsmux,mpegpsmux support,,,))
-#$(eval $(call GstBuildPlugin,mpegtsdemux,mpegtsdemux support,mpegts pbutils tag,,))
+#$(eval $(call GstBuildPlugin,mpegtsdemux,mpegtsdemux support,mpegts pbutils,,))
 #$(eval $(call GstBuildPlugin,mpegtsmux,mpegtsmux support,video,,))
-$(eval $(call GstBuildPlugin,mxf,mxf support,audio video,,))
+$(eval $(call GstBuildPlugin,mxf,mxf support,badbase audio video,,))
+$(eval $(call GstBuildPlugin,opusparse,OPUS streams library,pbutils,,+libopus))
 $(eval $(call GstBuildPlugin,pcapparse,pcapparse support,,,))
 $(eval $(call GstBuildPlugin,pnm,pnm support,video,,))
 $(eval $(call GstBuildPlugin,rawparse,rawparse support,audio video,,))
 $(eval $(call GstBuildPlugin,rfbsrc,librfb support,video,,))
 $(eval $(call GstBuildPlugin,sdpelem,sdp support,rtp sdp,,))
 $(eval $(call GstBuildPlugin,segmentclip,segmentclip support,audio,,))
+$(eval $(call GstBuildPlugin,shm,POSIX shared memory source and sink,,,+librt))
 $(eval $(call GstBuildPlugin,siren,siren support,audio rtp,,))
 $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
+#$(eval $(call GstBuildPlugin,srtp,srtp support,rtp,,+libsrtp))
 
+$(eval $(call BuildPackage,gstreamer1-plugins-bad))
 $(eval $(call BuildPackage,gst1-plugins-bad))

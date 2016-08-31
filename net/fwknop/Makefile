@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2012 OpenWrt.org
+# Copyright (C) 2011-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwknop
-PKG_VERSION:=2.6.3
-PKG_RELEASE:=1
+PKG_VERSION:=2.6.9
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.cipherdyne.org/fwknop/download
-PKG_MD5SUM:=79e8a2feff54b429503bc7cade3bc32e
+PKG_MD5SUM:=e2c49e9674888a028bd443a55c3aaa22
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
+PKG_LICENSE:=GPLv2
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -41,7 +42,7 @@ define Package/fwknopd
   CATEGORY:=Network
   SUBMENU:=Firewall
   TITLE+= Daemon
-  DEPENDS:=+iptables +libfko +libpcap
+  DEPENDS:=+iptables +libfko +libpcap +FWKNOP_GPG:gnupg
 endef
 
 define Package/fwknopd/description
@@ -52,6 +53,11 @@ endef
 define Package/fwknopd/conffiles
 /etc/fwknop/access.conf
 /etc/fwknop/fwknopd.conf
+/etc/config/fwknopd
+endef
+
+define Package/fwknopd/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/fwknop
@@ -81,8 +87,12 @@ define Package/libfko/description
   This package contains the libfko shared library.
 endef
 
+
+ifneq ($(CONFIG_FWKNOPD_GPG),y)
+	CONFIGURE_ARGS += --without-gpgme 
+endif
+
 CONFIGURE_ARGS += \
-	--without-gpgme \
 	--with-iptables=/usr/sbin/iptables
 
 define Build/InstallDev
@@ -93,12 +103,13 @@ define Build/InstallDev
 endef
 
 define Package/fwknopd/install
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/fwknopd $(1)/etc/config/fwknopd
 	$(INSTALL_DIR) $(1)/etc/fwknop
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/fwknop/{access,fwknopd}.conf \
 		$(1)/etc/fwknop/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/extras/fwknop.init.openwrt \
-		$(1)/etc/init.d/fwknopd
+	$(INSTALL_BIN) ./files/fwknopd.init $(1)/etc/init.d/fwknopd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fwknopd $(1)/usr/sbin/
 endef

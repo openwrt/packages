@@ -4,8 +4,6 @@
 START=60
 
 start() {
-	user_exists dmapd 56 || user_add dmapd 56
-	group_exists dmapd 56 || group_add dmapd 56
 	[ -d /var/run/dmapd ] || {
 		mkdir -m 0755 -p /var/run/dmapd
 		chown dmapd:dmapd /var/run/dmapd

@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -537,8 +537,6 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMP
+         #    MACRO_TUNE_LINKER("-pie")
+         # These do not work on Windows right now
+         if (NOT WIN32)
+-            # Stack protector
+-            MACRO_TUNE_COMPILER("-fstack-protector")
+             # Mark code read only
+             MACRO_TUNE_LINKER("-Wl,-zrelro")
+         endif (NOT WIN32)

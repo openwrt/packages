@@ -1,8 +1,6 @@
-diff --git a/src/Makefile.in b/src/Makefile.in
-index e21fc0d..c8f3ea0 100644
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -419,7 +419,7 @@ clean-libLTLIBRARIES:
+@@ -418,7 +418,7 @@ clean-libLTLIBRARIES:
  	  rm -f $${locs}; \
  	}
  libasound.la: $(libasound_la_OBJECTS) $(libasound_la_DEPENDENCIES) $(EXTRA_libasound_la_DEPENDENCIES) 
@@ -11,8 +9,6 @@ index e21fc0d..c8f3ea0 100644
  
  mostlyclean-compile:
  	-rm -f *.$(OBJEXT)
-diff --git a/src/pcm/scopes/Makefile.in b/src/pcm/scopes/Makefile.in
-index 469dbb5..391f3d4 100644
 --- a/src/pcm/scopes/Makefile.in
 +++ b/src/pcm/scopes/Makefile.in
 @@ -348,7 +348,7 @@ clean-pkglibLTLIBRARIES:

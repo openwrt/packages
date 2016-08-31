@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ulogd
-PKG_VERSION:=2.0.4
+PKG_VERSION:=2.0.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -16,10 +16,10 @@ PKG_SOURCE_URL:=ftp://ftp.netfilter.org/pub/ulogd/ \
 	ftp://ftp.be.netfilter.org/pub/netfilter/ulogd/ \
 	ftp://ftp.de.netfilter.org/pub/netfilter/ulogd/ \
 	ftp://ftp.no.netfilter.org/pub/netfilter/ulogd/
-PKG_MD5SUM:=7c71ec460dfea5287eba27472c521ebc
+PKG_MD5SUM:=f0f8fe1371fa28b5e06cb16aaa0111dd
 
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_FIXUP:=autoreconf
@@ -48,6 +48,12 @@ define Package/ulogd-mod-dbi
   $(call Package/ulogd/Default)
   DEPENDS:=ulogd +libdbi
   TITLE:=Output plugin for logging to a database using libdbi
+endef
+
+define Package/ulogd-mod-json
+  $(call Package/ulogd/Default)
+  DEPENDS:=ulogd +jansson
+  TITLE:=JSON output plugin
 endef
 
 define Package/ulogd-mod-mysql
@@ -117,6 +123,9 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_ulogd-mod-mysql \
 	CONFIG_PACKAGE_ulogd-mod-pgsql \
 	CONFIG_PACKAGE_ulogd-mod-sqlite \
+
+TARGET_CFLAGS += \
+	-D_GNU_SOURCE \
 
 CONFIGURE_ARGS += \
 	--enable-nfacct \
@@ -188,6 +197,7 @@ ULOGD_EXTRA_PLUGINS:= \
 
 $(eval $(call BuildPackage,ulogd))
 $(eval $(call BuildPlugin,dbi,output_DBI))
+$(eval $(call BuildPlugin,json,output_JSON))
 $(eval $(call BuildPlugin,mysql,output_MYSQL))
 $(eval $(call BuildPlugin,nfacct,inpflow_NFACCT))
 $(eval $(call BuildPlugin,nfct,inpflow_NFCT))

@@ -1,0 +1,68 @@
+diff -Naur mailman-2.1.18-1/configure mailman-2.1.18-1_patched/configure
+--- mailman-2.1.18-1/configure	2014-10-26 12:00:38.090360119 +0300
++++ mailman-2.1.18-1_patched/configure	2014-10-26 12:00:21.323016430 +0300
+@@ -2236,35 +2236,35 @@
+ { $as_echo "$as_me:${as_lineno-$LINENO}: result: $version" >&5
+ $as_echo "$version" >&6; }
+ 
+-# See if dnspython is installed.
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking dnspython" >&5
+-$as_echo_n "checking dnspython... " >&6; }
+-
+-cat > conftest.py <<EOF
+-try:
+-    import dns.resolver
+-    res = 'ok'
+-except ImportError:
+-    res = 'no'
+-fp = open("conftest.out", "w")
+-fp.write("%s\n" % res)
+-fp.close()
+-EOF
+-
+-$PYTHON conftest.py
+-havednspython=`cat conftest.out`
+-rm -f conftest.out conftest.py
+-if test "$havednspython" = "no"
+-then
+-    as_fn_error $? "
+-
+-***** dnspython not found. It is required for the new
+-***** dmarc_moderation_action featurer. Get it from
+-***** <http://www.dnspython.org/> or
+-***** <https://pypi.python.org/pypi/dnspython/>" "$LINENO" 5
+-fi
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $havednspython" >&5
+-$as_echo "$havednspython" >&6; }
++## See if dnspython is installed.
++#{ $as_echo "$as_me:${as_lineno-$LINENO}: checking dnspython" >&5
++#$as_echo_n "checking dnspython... " >&6; }
++#
++#cat > conftest.py <<EOF
++#try:
++#    import dns.resolver
++#    res = 'ok'
++#except ImportError:
++#    res = 'no'
++#fp = open("conftest.out", "w")
++#fp.write("%s\n" % res)
++#fp.close()
++#EOF
++#
++#$PYTHON conftest.py
++#havednspython=`cat conftest.out`
++#rm -f conftest.out conftest.py
++#if test "$havednspython" = "no"
++#then
++#    as_fn_error $? "
++#
++#***** dnspython not found. It is required for the new
++#***** dmarc_moderation_action featurer. Get it from
++#***** <http://www.dnspython.org/> or
++#***** <https://pypi.python.org/pypi/dnspython/>" "$LINENO" 5
++#fi
++#{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $havednspython" >&5
++#$as_echo "$havednspython" >&6; }
+ 
+ # Check the email package version.
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking Python's email package" >&5

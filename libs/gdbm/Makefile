@@ -19,9 +19,11 @@ PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
-PKG_FIXUP:=autoreconf
+PKG_FIXUP:=autoreconf gettext-version
 PKG_REMOVE_FILES:=Makefile compat/Makefile doc/Makefile export/Makefile src/Makefile tests/Makefile
 PKG_BUILD_PARALLEL:=0
+
+PKG_BUILD_DEPENDS:=gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk
 

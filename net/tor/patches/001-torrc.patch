@@ -1,0 +1,21 @@
+--- a/src/config/torrc.sample.in
++++ b/src/config/torrc.sample.in
+@@ -45,11 +45,11 @@
+ ## Uncomment this to start the process in the background... or use
+ ## --runasdaemon 1 on the command line. This is ignored on Windows;
+ ## see the FAQ entry if you want Tor to run as an NT service.
+-#RunAsDaemon 1
++RunAsDaemon 1
+ 
+ ## The directory for keeping all the keys/etc. By default, we store
+ ## things in $HOME/.tor on Unix, and in Application Data\tor on Windows.
+-#DataDirectory @LOCALSTATEDIR@/lib/tor
++DataDirectory @LOCALSTATEDIR@/lib/tor
+ 
+ ## The port on which Tor will listen for local connections from Tor
+ ## controller applications, as documented in control-spec.txt.
+@@ -190,3 +190,4 @@
+ ## address manually to your friends, uncomment this line:
+ #PublishServerDescriptor 0
+ 
++User tor

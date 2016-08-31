@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=screen
-PKG_VERSION:=4.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=4.3.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/screen
-PKG_MD5SUM:=419a0594e2b25039239af8b90eda7d92
+PKG_MD5SUM:=5bb3b0ff2674e29378c31ad3411170ad
 
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=

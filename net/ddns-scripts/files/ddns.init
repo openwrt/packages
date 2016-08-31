@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+START=95
+STOP=10
+
+boot() {
+	return 0
+}
+
+reload() {
+	killall -1 dynamic_dns_updater.sh 2>/dev/null	# send SIGHUP
+	return 0
+}
+
+restart() {
+	stop
+	sleep 1	# give time to shutdown
+	start
+}
+
+start() {
+	. /usr/lib/ddns/dynamic_dns_functions.sh
+	start_daemon_for_all_ddns_sections
+}
+
+stop() {
+	killall dynamic_dns_updater.sh 2>/dev/null
+	return 0 # if killall fails, ignore
+}

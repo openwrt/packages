@@ -1,21 +1,21 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014-2015 OpenWrt.org
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mac-telnet
-PKG_VERSION:=2014-09-03
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=2015-09-02
+PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/jow-/MAC-Telnet.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=9a8bf5c242c6b0336c2f257aa67d2240454ba4b0
+PKG_SOURCE_VERSION:=37d83cbc9c07266d6c957d27bf75285b305eceab
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_LICENSE:=GPL-2.0+
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -61,7 +61,7 @@ define Package/mac-telnet-server/install-extra
 	$(INSTALL_DIR) $$(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mactelnet.init $$(1)/etc/init.d/mactelnet
 	$(INSTALL_DIR) $$(1)/etc/config
-	$(INSTALL_DATE) ./files/mactelnet.config $$(1)/etc/config/mactelnet
+	$(INSTALL_DATA) ./files/mactelnet.config $$(1)/etc/config/mactelnet
 endef
 
 

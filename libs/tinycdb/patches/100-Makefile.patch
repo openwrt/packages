@@ -1,0 +1,25 @@
+diff -Naur tinycdb-0.78/Makefile tinycdb-0.78.patched/Makefile
+--- tinycdb-0.78/Makefile	2012-05-11 18:17:47.000000000 +0400
++++ tinycdb-0.78.patched/Makefile	2014-09-29 00:10:00.610836323 +0400
+@@ -86,17 +86,17 @@
+ $(SHAREDLIB): $(LIB_OBJS_PIC) $(LIBMAP)
+ 	-rm -f $(SOLIB)
+ 	ln -s $@ $(SOLIB)
+-	$(LD) $(LDFLAGS) $(LDFLAGS_SHARED) -o $@ \
++	$(CC) $(LDFLAGS) $(LDFLAGS_SHARED) -o $@ \
+ 	 $(LDFLAGS_SONAME)$(SHAREDLIB) $(LDFLAGS_VSCRIPT)$(LIBMAP) \
+ 	 $(LIB_OBJS_PIC)
+ 
+ cdb: cdb.o $(CDB_USELIB)
+-	$(LD) $(LDFLAGS) -o $@ cdb.o $(CDB_USELIB)
++	$(CC) $(LDFLAGS) -o $@ cdb.o $(CDB_USELIB)
+ cdb-shared: cdb.o $(SHAREDLIB)
+-	$(LD) $(LDFLAGS) -o $@ cdb.o $(SHAREDLIB)
++	$(CC) $(LDFLAGS) -o $@ cdb.o $(SHAREDLIB)
+ 
+ $(NSS_CDB): $(NSS_OBJS) $(NSS_USELIB) $(NSSMAP)
+-	$(LD) $(LDFLAGS) $(LDFLAGS_SHARED) -o $@ \
++	$(CC) $(LDFLAGS) $(LDFLAGS_SHARED) -o $@ \
+ 	 $(LDFLAGS_SONAME)$@ $(LDFLAGS_VSCRIPT)$(NSSMAP) \
+ 	 $(NSS_OBJS) $(NSS_USELIB)
+ 

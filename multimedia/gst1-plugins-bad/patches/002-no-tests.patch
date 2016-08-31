@@ -1,0 +1,57 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -3617,38 +3617,6 @@ sys/wasapi/Makefile
+ sys/wininet/Makefile
+ sys/winks/Makefile
+ sys/winscreencap/Makefile
+-tests/Makefile
+-tests/check/Makefile
+-tests/files/Makefile
+-tests/examples/Makefile
+-tests/examples/avsamplesink/Makefile
+-tests/examples/camerabin2/Makefile
+-tests/examples/codecparsers/Makefile
+-tests/examples/directfb/Makefile
+-tests/examples/gl/Makefile
+-tests/examples/gl/cocoa/Makefile
+-tests/examples/gl/clutter/Makefile
+-tests/examples/gl/generic/Makefile
+-tests/examples/gl/generic/cube/Makefile
+-tests/examples/gl/generic/cubeyuv/Makefile
+-tests/examples/gl/generic/doublecube/Makefile
+-tests/examples/gl/generic/recordgraphic/Makefile
+-tests/examples/gl/gtk/Makefile
+-tests/examples/gl/gtk/gtkvideooverlay/Makefile
+-tests/examples/gl/gtk/3dvideo/Makefile
+-tests/examples/gl/gtk/filternovideooverlay/Makefile
+-tests/examples/gl/gtk/filtervideooverlay/Makefile
+-tests/examples/gl/gtk/fxtest/Makefile
+-tests/examples/gl/gtk/switchvideooverlay/Makefile
+-tests/examples/gl/qt/Makefile
+-tests/examples/gl/sdl/Makefile
+-tests/examples/gtk/Makefile
+-tests/examples/mpegts/Makefile
+-tests/examples/mxf/Makefile
+-tests/examples/opencv/Makefile
+-tests/examples/uvch264/Makefile
+-tests/examples/waylandsink/Makefile
+-tests/icles/Makefile
+ ext/voamrwbenc/Makefile
+ ext/voaacenc/Makefile
+ ext/assrender/Makefile
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,11 +2,11 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-d
+ 
+ SUBDIRS = \
+ 	gst-libs gst sys ext pkgconfig \
+-	m4 common docs tests tools
++	m4 common docs tools
+ 
+ DIST_SUBDIRS = \
+ 	gst gst-libs sys ext pkgconfig \
+-	m4 common docs tests tools
++	m4 common docs tools
+ 
+ # include before EXTRA_DIST for win32 assignment
+ include $(top_srcdir)/common/win32.mak

@@ -1,0 +1,12 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -732,7 +732,8 @@ case $host in
+ 			],
+ 			[AC_MSG_RESULT(yes)
+ 			 AC_DEFINE([HAVE_POLICY_FWD], [], [Have forward policy])],
+-			[AC_MSG_RESULT(no)])
++			[AC_MSG_RESULT(forced)
++			 AC_DEFINE([HAVE_POLICY_FWD], [], [Have forward policy])])
+ 		;;
+ 	*)
+ 		AC_MSG_RESULT(no)

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,28 +8,39 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
-PKG_VERSION:=1.4.18
-PKG_RELEASE:=1
+PKG_VERSION:=1.4.20
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.franken.de/pub/crypt/mirror/ftp.gnupg.org/gcrypt/gnupg \
 	ftp://ftp.gnupg.org/gcrypt/gnupg
-PKG_MD5SUM:=54db1be9588b11afbbdd8b82d4ea883a
+PKG_MD5SUM:=b7af897a041c03c8ad1c7c466b54d10d
 
 PKG_LICENSE:=GPL-3.0
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/gnupg
+define Package/gnupg/Default
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+zlib +libncurses +libreadline
   TITLE:=GNU privacy guard - a free PGP replacement
   URL:=http://www.gnupg.org/
+endef
+
+define Package/gnupg
+  $(call Package/gnupg/Default)
+  MENU:=1
+endef
+
+define Package/gnupg-utils
+  $(call Package/gnupg/Default)
+  DEPENDS:=gnupg +libcurl
+  TITLE:=Key management utilities for GnuPG
 endef
 
 define Package/gnupg/description
@@ -42,6 +53,11 @@ define Package/gnupg/description
  with PGP2 because it uses IDEA (which is patented worldwide).
 endef
 
+define Package/gnupg-utils/description
+ Key management utilies for GnuPG.
+ This package is needed to import keys from a keyserver.
+endef
+
 CONFIGURE_ARGS += \
 	--disable-rpath \
 	--disable-asm \
@@ -49,13 +65,9 @@ CONFIGURE_ARGS += \
 	--disable-card-support \
 	--disable-agent-support \
 	--disable-bzip2 \
-	--disable-exec \
 	--disable-ldap \
-	--disable-hkp \
 	--disable-finger \
-	--disable-ftp \
 	--disable-dns-srv \
-	--enable-fake-curl \
 	--disable-regex \
 
 MAKE_FLAGS += \
@@ -66,4 +78,13 @@ define Package/gnupg/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gpg $(1)/usr/bin/
 endef
 
+define Package/gnupg-utils/install
+	$(INSTALL_DIR) $(1)/usr/lib/gnupg
+	for file in gpgkeys_curl gpgkeys_hkp; do \
+		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnupg/$$$$file \
+		  $(1)/usr/lib/gnupg/; \
+	done
+endef
+
 $(eval $(call BuildPackage,gnupg))
+$(eval $(call BuildPackage,gnupg-utils))

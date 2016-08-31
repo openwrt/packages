@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-lib
-PKG_VERSION:=1.0.27.2
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/lib/ \
 		http://alsa.cybermirror.org/lib/
-PKG_MD5SUM:=69129a7c37697f81ac092335e9fa452b
+PKG_MD5SUM:=69515ca73c3c4a212ef45160dea846c1
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
+		Peter Wagner <tripolar@gmx.at>
 
 PKG_LICENSE:=LGPLv2.1 GPLv2
-PKG_LICENSE_FILE:=COPYING aserver/COPYING
+PKG_LICENSE_FILES:=COPYING aserver/COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -31,7 +33,6 @@ define Package/alsa-lib
   CATEGORY:=Libraries
   TITLE:=ALSA (Advanced Linux Sound Architecture) library
   URL:=http://www.alsa-project.org/
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   DEPENDS:=@AUDIO_SUPPORT +kmod-sound-core +libpthread +librt
 endef
 
@@ -42,15 +43,12 @@ endef
 
 TARGET_CFLAGS += $(FPIC)
 
-define Build/Configure
-	$(call Build/Configure/Default, \
+CONFIGURE_ARGS+= \
 		--disable-python \
 		--disable-debug \
 		--without-debug \
 		$(SOFT_FLOAT_CONFIG_OPTION) \
-		--with-versioned=no \
-	)
-endef
+		--with-versioned=no
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/

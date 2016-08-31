@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acl
-PKG_REV:=f2a5f57a20ffa007abc1fa24df1f76e18b74a425
-PKG_VERSION:=20140610
+PKG_REV:=ea3c6bb711e76d91759f8bf5475e1900362a3142
+PKG_VERSION:=20160519
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -17,10 +17,13 @@ PKG_SOURCE_URL:=git://git.sv.gnu.org/acl.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
-PKG_INSTALL:=1
+
 PKG_LICENSE:=LGPL-2.1 GPL-2.0
+PKG_LICENSE_FILES:=doc/COPYING doc/COPYING.LGPL
+
+PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -65,11 +68,6 @@ endef
 
 CONFIGURE_ARGS += --enable-static --enable-shared
 
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	(cd $(PKG_BUILD_DIR); ./autogen.sh;);
-endef
-
 define Package/acl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
@@ -83,7 +81,7 @@ endef
 define Build/InstallDev
 	mkdir -p $(1)/usr/include
 	mkdir -p $(1)/usr/lib/pkgconfig
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/{include,lib} $(1)/usr/
+	$(CP) $(PKG_INSTALL_DIR)/usr/{include,lib} $(1)/usr/
 endef
 
 $(eval $(call BuildPackage,acl))

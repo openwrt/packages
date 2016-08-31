@@ -1,0 +1,12 @@
+diff -Naur postfix-2.11.1/conf/post-install postfix-2.11.1.patched/conf/post-install
+--- postfix-2.11.1/conf/post-install	2014-10-05 20:43:58.597876946 +0400
++++ postfix-2.11.1.patched/conf/post-install	2014-10-11 16:28:01.258874097 +0400
+@@ -321,7 +321,7 @@
+ case `uname -s` in
+ HP-UX*) FMT=cat;;
+ SunOS*) FMT=fake_fmt;;
+-     *) FMT=fmt;;
++     *) FMT=cat;;
+ esac
+ 
+ # If a parameter is not set via the command line or environment,

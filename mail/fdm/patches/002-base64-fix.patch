@@ -1,0 +1,20 @@
+--- a/imap-common.c	2011-12-20 00:19:03.000000000 +0400
++++ b/imap-common.c	2014-11-13 12:56:06.930418446 +0300
+@@ -206,7 +206,7 @@
+ 
+ 	size = (strlen(in) * 2) + 1;
+ 	out = xcalloc(1, size);
+-	if (b64_ntop(in, strlen(in), out, size) < 0) {
++	if (local_b64_ntop(in, strlen(in), out, size) < 0) {
+ 		xfree(out);
+ 		return (NULL);
+ 	}
+@@ -222,7 +222,7 @@
+ 
+ 	size = (strlen(in) * 4) + 1;
+ 	out = xcalloc(1, size);
+-	if (b64_pton(in, out, size) < 0) {
++	if (local_b64_pton(in, out, size) < 0) {
+ 		xfree(out);
+ 		return (NULL);
+ 	}

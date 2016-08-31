@@ -1,0 +1,77 @@
+diff -rupN seafile-server-5.1.1.orig/scripts/seaf-fsck.sh seafile-server-5.1.1/scripts/seaf-fsck.sh
+--- seafile-server-5.1.1.orig/scripts/seaf-fsck.sh	2016-04-21 11:05:26.000000000 +0200
++++ seafile-server-5.1.1/scripts/seaf-fsck.sh	2016-04-22 09:10:13.075581325 +0200
+@@ -7,7 +7,7 @@ INSTALLPATH=$(dirname "${SCRIPT}")
+ TOPDIR=$(dirname "${INSTALLPATH}")
+ default_ccnet_conf_dir=${TOPDIR}/ccnet
+ default_conf_dir=${TOPDIR}/conf
+-seaf_fsck=${INSTALLPATH}/seafile/bin/seaf-fsck
++seaf_fsck=/usr/bin/seaf-fsck
+ 
+ export PATH=${INSTALLPATH}/seafile/bin:$PATH
+ export SEAFILE_LD_LIBRARY_PATH=${INSTALLPATH}/seafile/lib/:${INSTALLPATH}/seafile/lib64:${LD_LIBRARY_PATH}
+diff -rupN seafile-server-5.1.1.orig/scripts/seaf-gc.sh seafile-server-5.1.1/scripts/seaf-gc.sh
+--- seafile-server-5.1.1.orig/scripts/seaf-gc.sh	2016-04-21 11:05:26.000000000 +0200
++++ seafile-server-5.1.1/scripts/seaf-gc.sh	2016-04-22 09:10:27.211581999 +0200
+@@ -7,7 +7,7 @@ INSTALLPATH=$(dirname "${SCRIPT}")
+ TOPDIR=$(dirname "${INSTALLPATH}")
+ default_ccnet_conf_dir=${TOPDIR}/ccnet
+ default_conf_dir=${TOPDIR}/conf
+-seaf_gc=${INSTALLPATH}/seafile/bin/seafserv-gc
++seaf_gc=/usr/bin/seafserv-gc
+ seaf_gc_opts=""
+ 
+ export PATH=${INSTALLPATH}/seafile/bin:$PATH
+diff -rupN seafile-server-5.1.1.orig/scripts/setup-seafile-mysql.sh seafile-server-5.1.1/scripts/setup-seafile-mysql.sh
+--- seafile-server-5.1.1.orig/scripts/setup-seafile-mysql.sh	2016-04-21 11:05:26.000000000 +0200
++++ seafile-server-5.1.1/scripts/setup-seafile-mysql.sh	2016-04-22 09:11:50.083585953 +0200
+@@ -40,15 +40,10 @@ function check_python_executable() {
+ function check_python_module () {
+     module=$1
+     name=$2
+-    hint=$3
+     printf "  Checking python module: ${name} ... "
+     if ! $PYTHON -c "import ${module}" 2>/dev/null 1>&2; then
+         echo
+         printf "\033[33m ${name} \033[m is not installed, Please install it first.\n"
+-        if [[ "${hint}" != "" ]]; then
+-            printf "${hint}"
+-            echo
+-        fi
+         err_and_quit;
+     fi
+     echo -e "Done."
+@@ -70,14 +65,10 @@ function check_python () {
+         if [[ $PYTHON == "python2.6" ]]; then
+             py26="2.6"
+         fi
+-        hint="\nOn Debian/Ubntu: apt-get install python-setuptools\nOn CentOS/RHEL: yum install python${py26}-distribute"
+-        check_python_module pkg_resources setuptools "${hint}"
+-
+-        hint="\nOn Debian/Ubntu: apt-get install python-imaging\nOn CentOS/RHEL: yum install python${py26}-imaging"
+-        check_python_module PIL python-imaging "${hint}"
+ 
+-        hint='\nOn Debian/Ubuntu:\n\nsudo apt-get install python-mysqldb\n\nOn CentOS/RHEL:\n\nsudo yum install MySQL-python'
+-        check_python_module MySQLdb python-mysqldb "${hint}"
++        check_python_module pkg_resources setuptools
++        check_python_module PIL python-imaging
++        check_python_module MySQLdb python-mysqldb
+     fi
+     echo
+ }
+@@ -85,5 +76,6 @@ function check_python () {
+ check_python;
+ 
+ export PYTHON=$PYTHON
++export PYTHONPATH="/usr/share/seafile/seafile-server/seahub/thirdpart:$PYTHONPATH"
+ 
+ exec $PYTHON "$python_script"
+diff -rupN seafile-server-5.1.1.orig/scripts/sqlite2mysql.sh seafile-server-5.1.1/scripts/sqlite2mysql.sh
+--- seafile-server-5.1.1.orig/scripts/sqlite2mysql.sh	2016-04-21 11:05:26.000000000 +0200
++++ seafile-server-5.1.1/scripts/sqlite2mysql.sh	2016-04-22 09:02:22.047558854 +0200
+@@ -1,4 +1,4 @@
+-#!/bin/sh
++#!/bin/bash
+ #
+ # This shell script and corresponding sqlite2mysql.py are used to
+ # migrate Seafile data from SQLite to MySQL.

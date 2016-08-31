@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tracertools
-PKG_VERSION:=0.1
+PKG_VERSION:=20160308
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://gitorious.org/tracertools/tracertools.git
+PKG_SOURCE_URL:=https://github.com/dangowrt/tracertools.git
+PKG_SOURCE_VERSION:=28d0bb9a10a0b56b4964e3256135cfd152075a59
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=701691a5e206dca361f5b5e5bd2f508dd5b160cd
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_INSTALL:=1
 
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tracertools
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Tracer probing/fuzzing
+  TITLE:=Tracer MPPT monitoring and control tools
 endef
 
 define Package/tracertools/description
@@ -36,9 +36,7 @@ endef
 
 define Package/tracertools/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/reqdata $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/parsereply $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/fuzzreply $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tracerstat $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,tracertools))

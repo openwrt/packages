@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2014 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,15 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wavemon
-PKG_VERSION:=0.7.6
+PKG_VERSION:=0.8.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://eden-feed.erg.abdn.ac.uk/wavemon/stable-releases
-PKG_MD5SUM:=c60e25feb8b1785cf14371556f0613f4
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/uoaerg/wavemon.git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
+PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -24,11 +29,10 @@ include $(INCLUDE_DIR)/package.mk
 define Package/wavemon
   SECTION:=net
   CATEGORY:=Network
-  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
   TITLE:=N-curses based wireless network devices monitor
-  DEPENDS:=+libncurses +libpthread
+  DEPENDS:=+libncurses +libpthread +libnl-genl
   SUBMENU:=wireless
-  URL:=http://eden-feed.erg.abdn.ac.uk/wavemon/
+  URL:=https://github.com/uoaerg/wavemon/releases
 endef
 
 define Package/wavemon/description
@@ -41,14 +45,14 @@ endef
 CONFIGURE_VARS += \
 	ac_cv_lib_cap_cap_get_flag=no
 
-TARGET_CFLAGS += -pthread
+TARGET_CFLAGS += -pthread -I$(STAGING_DIR)/usr/include/libnl3
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS) -L$(STAGING_DIR)/usr/lib -I$(STAGING_DIR)/usr/include"
 
 define Package/wavemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/wavemon $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wavemon $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,wavemon))

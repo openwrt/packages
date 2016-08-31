@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnscrypt-proxy
-PKG_VERSION:=1.4.0
-PKG_RELEASE:=1
+PKG_VERSION:=1.6.1
+PKG_RELEASE:=2
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.dnscrypt.org/dnscrypt-proxy
-PKG_MD5SUM:=c31d14d8de2123e9f2ddf26216577841
-PKG_CAT:=zcat
+PKG_MD5SUM:=6fc2a8c57007d582dee3313979a4d1b5
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -109,7 +107,7 @@ exit 0
 endef
 
 define Package/dnscrypt-proxy/conffiles
-  /etc/config/dnscrypt-proxy
+/etc/config/dnscrypt-proxy
 endef
 
 define Package/hostip/install

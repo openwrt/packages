@@ -1,13 +1,12 @@
-diff -uprN a/unrar/makefile b/unrar/makefile
---- a/makefile	2014-06-12 13:36:14.723816266 +0200
-+++ b/makefile	2014-06-12 13:36:36.174531961 +0200
+--- a/makefile
++++ b/makefile
 @@ -2,12 +2,12 @@
  # Makefile for UNIX - unrar
  
  # Linux using GCC
--CXX=g++
+-CXX=c++
 -CXXFLAGS=-O2
-+#CXX=g++
++#CXX=c++
 +#CXXFLAGS=-O2
  LIBFLAGS=-fPIC
  DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRAR_SMP
@@ -17,3 +16,12 @@ diff -uprN a/unrar/makefile b/unrar/makefile
  DESTDIR=/usr
  
  # Linux using LCC
+@@ -142,7 +142,7 @@ uninstall-unrar:
+ 			rm -f $(DESTDIR)/bin/unrar
+ 
+ install-lib:
+-		install libunrar.so $(DESTDIR)/lib
++		install -D libunrar.so $(DESTDIR)/lib/libunrar.so
+ 
+ uninstall-lib:
+ 		rm -f $(DESTDIR)/lib/libunrar.so

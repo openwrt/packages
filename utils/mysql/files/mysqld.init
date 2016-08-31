@@ -13,7 +13,7 @@ error() {
 }
 
 start() {
-	local datadir=$(sed -n -e "s/^[[:space:]]*datadir[[:space:]]*=[[:space:]]*[\"']\?\([^\"']*\)[\"']\?/\1/p" /etc/my.cnf)
+	local datadir=$(sed -n -e "s/^[[:space:]]*datadir[[:space:]]*=[[:space:]\"']*\([^[:space:]\"']*\)[[:space:]\"']*/\1/p" /etc/my.cnf)
 	if [ ! -d "$datadir" ]; then
 		error "Error: datadir '$datadir' in /etc/my.cnf doesn't exist"
 		return 1

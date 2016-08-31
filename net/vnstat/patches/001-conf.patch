@@ -1,7 +1,7 @@
 --- a/cfg/vnstat.conf
 +++ b/cfg/vnstat.conf
-@@ -72,13 +72,13 @@ TrafficlessDays 1
- ##
+@@ -78,13 +78,13 @@ DaemonUser ""
+ DaemonGroup ""
  
  # how often (in seconds) interface data is updated
 -UpdateInterval 30

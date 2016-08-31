@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2014 OpenWrt.org
+# Copyright (C) 2012-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuecc
-PKG_VERSION:=4
+PKG_VERSION:=7
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://projects.universe-factory.net/attachments/download/71
-PKG_MD5SUM:=7f44df5dc69cb8686947562e2a11eea9
+PKG_SOURCE_URL:=https://projects.universe-factory.net/attachments/download/85
+PKG_MD5SUM:=5cd543cb8e7bce83a22c07a0579c95a1
 
 PKG_LICENSE:=BSD-2-Clause
-PKG_LICENSE_FILE:=COPYRIGHT
+PKG_LICENSE_FILES:=COPYRIGHT
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

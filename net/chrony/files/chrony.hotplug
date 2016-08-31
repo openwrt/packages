@@ -1,0 +1,44 @@
+#!/bin/sh
+# Set chronyd online/offline status, allow NTP access and add servers from DHCP
+
+[ "$ACTION" = ifup -o "$ACTION" = ifdown ] || exit 0
+
+run_command() {
+	/usr/bin/chronyc -n "$*" > /dev/null 2>&1
+}
+
+run_command tracking || exit 0
+
+. /lib/functions/network.sh
+
+network_find_wan iface4
+network_find_wan6 iface6
+run_command $([ -n "$iface4" ] && echo online || echo offline) 0.0.0.0/0.0.0.0
+run_command $([ -n "$iface6" ] && echo online || echo offline) ::/0
+
+[ "$ACTION" = ifup ] || exit 0
+
+. /lib/functions.sh
+. /etc/init.d/chronyd
+
+config_load chrony
+
+config_foreach handle_allow allow | while read command; do
+	run_command "$command"
+done
+
+# Add servers from DHCP only if the config has a dhcp_ntp_server section
+[ -z "$(config_foreach echo dhcp_ntp_server)" ] && exit 0
+
+. /usr/share/libubox/jshn.sh
+
+for iface in $iface4 $iface6; do
+	json_load "$(ifstatus $iface)"
+	json_select data
+	json_get_var dhcp_ntp_servers ntpserver
+
+	for server in $dhcp_ntp_servers; do
+		run_command add $(NTP_SOURCE_HOSTNAME=$server config_foreach \
+				handle_source dhcp_ntp_server server)
+	done
+done

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2013 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtorrent
-PKG_VERSION:=0.9.4-git
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)-1
+PKG_VERSION:=0.9.6-git-1
+PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rakshasa/rtorrent.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=6a3234eaa79f15857260df31f98711ef24266191
+PKG_SOURCE_VERSION:=62cb5a4605c0664bc522e0e0da9c72f09cf643a9
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -69,18 +72,14 @@ TARGET_LDFLAGS += -lz -lpthread -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
 CONFIGURE_ARGS+= \
 	--enable-shared \
 	--disable-static \
-	--disable-debug
+	--disable-debug \
+	--disable-ipv6
 
 ifeq ($(BUILD_VARIANT),rpc)
 	CONFIGURE_ARGS += \
 		--with-xmlrpc-c
 endif
 
-
-define Build/Configure
-	( cd $(PKG_BUILD_DIR); ./autogen.sh );
-	$(call Build/Configure/Default)
-endef
 
 define Package/rtorrent/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -90,4 +89,4 @@ endef
 Package/rtorrent-rpc/install = $(Package/rtorrent/install)
 
 $(eval $(call BuildPackage,rtorrent))
-#$(eval $(call BuildPackage,rtorrent-rpc))
+$(eval $(call BuildPackage,rtorrent-rpc))

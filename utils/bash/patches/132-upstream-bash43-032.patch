@@ -1,0 +1,42 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release:	4.3
+Patch-ID:	bash43-032
+
+Bug-Reported-by:	crispusfairbairn@gmail.com
+Bug-Reference-ID:	<b5e499f7-3b98-408d-9f94-c0387580e73a@googlegroups.com>
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-bash/2014-09/msg00013.html
+
+Bug-Description:
+
+When bash is running in Posix mode, it allows signals -- including SIGCHLD --
+to interrupt the `wait' builtin, as Posix requires.  However, the interrupt
+causes bash to not run a SIGCHLD trap for all exited children.  This patch
+fixes the issue and restores the documented behavior in Posix mode.
+
+Patch (apply with `patch -p0'):
+
+--- a/jobs.c
++++ b/jobs.c
+@@ -3339,7 +3339,9 @@ itrace("waitchld: waitpid returns %d blo
+       if (posixly_correct && this_shell_builtin && this_shell_builtin == wait_builtin)
+ 	{
+ 	  interrupt_immediately = 0;
+-	  trap_handler (SIGCHLD);	/* set pending_traps[SIGCHLD] */
++	  /* This was trap_handler (SIGCHLD) but that can lose traps if
++	     children_exited > 1 */
++	  queue_sigchld_trap (children_exited);
+ 	  wait_signal_received = SIGCHLD;
+ 	  /* If we're in a signal handler, let CHECK_WAIT_INTR pick it up;
+ 	     run_pending_traps will call run_sigchld_trap later  */
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 31
++#define PATCHLEVEL 32
+ 
+ #endif /* _PATCHLEVEL_H_ */

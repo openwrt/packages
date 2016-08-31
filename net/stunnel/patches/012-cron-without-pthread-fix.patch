@@ -1,0 +1,14 @@
+Index: stunnel-5.20/src/cron.c
+===================================================================
+--- stunnel-5.20.orig/src/cron.c
++++ stunnel-5.20/src/cron.c
+@@ -46,6 +46,9 @@ NOEXPORT void cron_thread(void *arg);
+ #endif
+ #if defined(USE_PTHREAD) || defined(USE_WIN32)
+ NOEXPORT void cron_worker(void);
++#endif
++
++#ifndef OPENSSL_NO_DH
+ NOEXPORT void cron_dh_param(void);
+ #endif
+ 

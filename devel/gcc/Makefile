@@ -11,9 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gcc
 PKG_VERSION:=4.8.3
 PKG_RELEASE:=1
-PKG_SOURCE_URL:=ftp://ftp.fu-berlin.de/unix/languages/gcc/releases/gcc-$(PKG_VERSION) \
-     http://mirrors.rcn.net/pub/sourceware/gcc/releases/gcc-$(PKG_VERSION) \
-    ftp://ftp.gnu.org/gnu/gcc/releases/gcc-$(PKG_VERSION)
+PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_MD5SUM:=7c60f24fab389f77af203d2516ee110f
@@ -54,6 +52,10 @@ define Build/Prepare
 # 	we have to download additional stuff before patching
 	(cd $(PKG_BUILD_DIR) && ./contrib/download_prerequisites)
 	$(Build/Patch)
+#	poor man's fix for `none-openwrt-linux' not recognized when building with musl
+	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/mpfr/
+	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/gmp/
+	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/mpc/
 endef
 
 
@@ -110,6 +112,7 @@ define Package/gcc/install
 	cp -ar $(TOOLCHAIN_DIR)/include $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
 	cp -a $(TOOLCHAIN_DIR)/lib/*.{o,so*} $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
 	cp -a $(TOOLCHAIN_DIR)/lib/*nonshared*.a  $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	grep "GROUP.*-lgcc" $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)/libgcc_s.so && cp -a $(PKG_INSTALL_DIR)/usr/lib/gcc/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)/libgcc.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)/ ; true
 endef
 
 $(eval $(call BuildPackage,gcc))

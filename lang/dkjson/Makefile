@@ -9,13 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dkjson
 PKG_VERSION:=2.5
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://dkolf.de/src/dkjson-lua.fsl/tarball/
-# TODO: md5sum doesn't seem be taken into account
-PKG_MD5SUM:=dbe706722dd64308172cf8e37395e762
+PKG_SOURCE_URL:=https://github.com/LuaDist/dkjson.git
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=e72ba0c9f5d8b8746fc306f6189a819dbb5cd0be
 PKG_LICENSE:=MIT
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.bz2
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -41,7 +43,7 @@ endef
 
 define Package/dkjson/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(INSTALL_BIN) $(BUILD_DIR)/dkjson/dkjson.lua $(1)/usr/lib/lua/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/dkjson.lua $(1)/usr/lib/lua/
 endef
 
 $(eval $(call BuildPackage,dkjson))

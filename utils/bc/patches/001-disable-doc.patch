@@ -1,0 +1,21 @@
+--- bc-1.06.95/Makefile.in	2010-07-03 10:48:13.422725147 +0000
++++ bc-1.06.95/Makefile.in	2010-07-03 10:50:09.714725197 +0000
+@@ -149,7 +149,7 @@
+ sharedstatedir = @sharedstatedir@
+ sysconfdir = @sysconfdir@
+ target_alias = @target_alias@
+-SUBDIRS = lib bc dc doc
++SUBDIRS = lib bc dc
+ MAINTAINERCLEANFILES = aclocal.m4 config.h.in configure Makefile.in \
+ 			stamp-h $(distdir).tar.gz h/number.h depcomp missing
+ 
+--- bc-1.06.95/Makefile.am	2010-07-03 10:48:32.522725037 +0000
++++ bc-1.06.95/Makefile.am	2010-07-03 10:48:38.114725024 +0000
+@@ -1,6 +1,6 @@
+ ## Process this file with automake to produce Makefile.in
+ 
+-SUBDIRS = lib bc dc doc
++SUBDIRS = lib bc dc
+ 
+ MAINTAINERCLEANFILES =  aclocal.m4 config.h.in configure Makefile.in \
+ 			stamp-h $(distdir).tar.gz h/number.h depcomp missing

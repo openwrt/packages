@@ -1,0 +1,12 @@
+--- a/plugins/uptime
++++ b/plugins/uptime
+@@ -4,8 +4,7 @@ config_uptime() {
+   echo "graph_vlabel uptime in days"
+   echo "uptime.label uptime"
+   echo "uptime.draw AREA"
+-  echo "uptime.cdef uptime,86400,/"
+ }
+ fetch_uptime() {
+-  echo "uptime.value" $(cut -d\  -f1 /proc/uptime)
++  awk '{printf "uptime.value %.2f",$1/86400; print ""}' /proc/uptime
+ }

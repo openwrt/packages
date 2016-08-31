@@ -15,4 +15,7 @@ config OPENCONNECT_OPENSSL
 
 endchoice
 
+config OPENCONNECT_STOKEN
+	bool "stoken support"
+
 endmenu

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2011 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 # Copyright (C) 2009 Jakob Pfeiffer
 # Copyright (C) 2014 Artem Makhutov
 #
@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opennhrp
 PKG_VERSION:=0.14.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Artem Makhutov <artem@makhutov.org>
 PKG_LICENSE:=MIT License
 

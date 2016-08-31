@@ -1,0 +1,11 @@
+--- a/src/daemon/configfile.c
++++ b/src/daemon/configfile.c
+@@ -111,7 +111,7 @@ static cf_global_option_t cf_global_opti
+ 	{"BaseDir",     NULL, PKGLOCALSTATEDIR},
+ 	{"PIDFile",     NULL, PIDFILE},
+ 	{"Hostname",    NULL, NULL},
+-	{"FQDNLookup",  NULL, "true"},
++	{"FQDNLookup",  NULL, "false"},
+ 	{"Interval",    NULL, NULL},
+ 	{"ReadThreads", NULL, "5"},
+ 	{"WriteThreads", NULL, "5"},

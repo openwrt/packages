@@ -12,8 +12,6 @@ PKG_MD5SUM:=7a7b24165ce008df772f398d86fa280e
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_CAT:=bzcat
-PKG_BUILD_DIR:=$(BUILD_DIR)/tayga-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
@@ -21,7 +19,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tayga
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+ip +kmod-ipv6 +kmod-tun
+  DEPENDS:=+ip @IPV6 +kmod-tun
   TITLE:=Out-of-kernel stateless NAT64 implementation for Linux
   URL:=http://www.litech.org/tayga/
   MAINTAINER:=Ondrej Caletka <ondrej@caletka.cz>

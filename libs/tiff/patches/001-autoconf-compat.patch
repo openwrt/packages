@@ -1,5 +1,6 @@
---- a/Makefile.am
-+++ b/Makefile.am
+diff -rupN tiff-4.0.6/Makefile.am tiff-new/Makefile.am
+--- tiff-4.0.6/Makefile.am	2015-09-06 21:30:46.179705536 +0200
++++ tiff-new/Makefile.am	2016-04-05 14:26:09.539194844 +0200
 @@ -25,7 +25,7 @@
  
  docdir = $(LIBTIFF_DOCDIR)
@@ -9,17 +10,18 @@
  ACLOCAL_AMFLAGS = -I m4
  
  docfiles = \
-@@ -48,7 +48,7 @@ EXTRA_DIST = \
- 
- dist_doc_DATA = $(docfiles)
+@@ -61,7 +61,7 @@ distcheck-hook:
+ 	rm -rf $(distdir)/_build/cmake
+ 	rm -rf $(distdir)/_inst/cmake
  
 -SUBDIRS = port libtiff tools build contrib test man html
 +SUBDIRS = port libtiff tools build contrib
  
  release:
  	(rm -f $(top_srcdir)/RELEASE-DATE && echo $(LIBTIFF_RELEASE_DATE) > $(top_srcdir)/RELEASE-DATE)
---- a/test/Makefile.am
-+++ b/test/Makefile.am
+diff -rupN tiff-4.0.6/test/Makefile.am tiff-new/test/Makefile.am
+--- tiff-4.0.6/test/Makefile.am	2015-09-01 04:41:07.598381354 +0200
++++ tiff-new/test/Makefile.am	2016-04-05 14:26:39.763453075 +0200
 @@ -23,7 +23,7 @@
  
  # Process this file with automake to produce Makefile.in.

@@ -1,0 +1,11 @@
+--- a/src/upmpdcli.conf-dist
++++ b/src/upmpdcli.conf-dist
+@@ -24,7 +24,7 @@
+ 
+ # You can set a path to an icon here. The icon will be displayed by a control
+ # point. The icon will only be read once, when upmpdcli starts up.
+-# iconpath = /usr/share/upmpdcli/icon.png
++iconpath = /usr/share/upmpdcli/icon.png
+ 
+ # You can set a path to an html file here, to replace the default
+ # presentation page. The page will only be read once, when upmpdcli starts

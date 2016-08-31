@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,19 +7,9 @@
 
 include $(TOPDIR)/rules.mk
 
-ifeq ($(BUILD_VARIANT),dbus)
-PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)/dbus/$(PKG_NAME)-$(PKG_VERSION)
-PKG_ALT_DIR=$(BUILD_DIR)/$(PKG_NAME)/nodbus/$(PKG_NAME)-$(PKG_VERSION)
-else
-PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)/nodbus/$(PKG_NAME)-$(PKG_VERSION)
-PKG_ALT_DIR=$(BUILD_DIR)/$(PKG_NAME)/dbus/$(PKG_NAME)-$(PKG_VERSION)
-endif
-
-
 PKG_NAME:=avahi
 PKG_VERSION:=0.6.31
-PKG_RELEASE:=6
-
+PKG_RELEASE:=12
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://avahi.org/download/
@@ -34,7 +24,11 @@ PKG_REMOVE_FILES:=autogen.sh
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-
+ifeq ($(BUILD_VARIANT),dbus)
+PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)/dbus/$(PKG_NAME)-$(PKG_VERSION)
+else
+PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)/nodbus/$(PKG_NAME)-$(PKG_VERSION)
+endif
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -57,12 +51,12 @@ define Package/avahi/Default/description
  and is very convenient.
 endef
 
-define Package/libavahi
+define Package/libavahi/Default
   $(call Package/avahi/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libpthread +SSP_SUPPORT:libssp
-  TITLE+= (library)
+  PROVIDES:=libavahi
+  DEPENDS:=+libpthread
 endef
 
 define Package/libavahi/description
@@ -71,10 +65,6 @@ $(call Package/avahi/Default/description)
  The libavahi package contains the mDNS/DNS-SD shared libraries,
  used by other programs. Specifically, it provides
  libavahi-core and libavahi-common libraries.
- By default, it is built without D-Bus support,
- i.e. the --disable-dbus configuration flag is set.
- To enable D-Bus support, select the package
- libavahi-dbus-support.
 endef
 
 define Package/avahi-autoipd
@@ -94,15 +84,23 @@ $(call Package/avahi/Default/description)
  DHCP server.
 endef
 
-define Package/avahi-daemon
+define Package/avahi-dbus-daemon
   $(call Package/avahi/Default)
+  PROVIDES:=avahi-daemon
+  VARIANT:=dbus
   SUBMENU:=IP Addresses and Names
-  ifeq ($(BUILD_VARIANT),dbus)
-  DEPENDS:=+libavahi +libexpat +librt +libdaemon +libdbus
-  else
-  DEPENDS:=+libavahi +libexpat +librt +libdaemon
-  endif
+  DEPENDS:=+libavahi-dbus-support +libexpat +librt +libdaemon
   TITLE+= (daemon)
+endef
+
+define Package/avahi-nodbus-daemon
+  $(call Package/avahi/Default)
+  PROVIDES:=avahi-daemon
+  VARIANT:=nodbus
+  SUBMENU:=IP Addresses and Names
+  DEPENDS:=+libavahi-nodbus-support +libexpat +librt +libdaemon
+  TITLE+= (daemon)
+  USERID:=avahi=105:avahi=105
 endef
 
 define Package/avahi-daemon/description
@@ -111,17 +109,55 @@ $(call Package/avahi/Default/description)
  This package contains an mDNS/DNS-SD daemon.
 endef
 
+Package/avahi-dbus-daemon/description=$(Package/avahi-daemon/description)
+Package/avahi-nodbus-daemon/description=$(Package/avahi-daemon/description)
+
 define Package/avahi-daemon/conffiles
 /etc/avahi/avahi-daemon.conf
+endef
+
+Package/avahi-dbus-daemon/conffiles=$(Package/avahi-daemon/conffiles)
+Package/avahi-nodbus-daemon/conffiles=$(Package/avahi-daemon/conffiles)
+
+define Package/avahi-daemon-service-http
+  $(call Package/avahi/Default)
+  SUBMENU:=IP Addresses and Names
+  DEPENDS:=+avahi-daemon
+  TITLE:=Announce HTTP service
+endef
+
+define Package/avahi-daemon-service-http/description
+$(call Package/avahi/Default/description)
+ .
+ This package contains the service definition for announcing HTTP service.
+endef
+
+define Package/avahi-daemon-service-http/conffiles
 /etc/avahi/services/http.service
+endef
+
+define Package/avahi-daemon-service-ssh
+  $(call Package/avahi/Default)
+  SUBMENU:=IP Addresses and Names
+  DEPENDS:=+avahi-daemon
+  TITLE:=Announce SSH service
+endef
+
+define Package/avahi-daemon-service-ssh/description
+$(call Package/avahi/Default/description)
+ .
+ This package contains the service definition for announcing SSH service.
+endef
+
+define Package/avahi-daemon-service-ssh/conffiles
 /etc/avahi/services/ssh.service
 endef
 
 define Package/avahi-dnsconfd
   $(call Package/avahi/Default)
   SUBMENU:=IP Addresses and Names
-  DEPENDS:=+libavahi +libdaemon
-  TITLE:=A Unicast DNS server from mDNS/DNS-SD configuration daemon
+  DEPENDS:=+libavahi +libdaemon +libpthread
+  TITLE:=A Unicast DNS server using avahi-daemon
 endef
 
 define Package/avahi-dnsconfd/description
@@ -133,12 +169,16 @@ $(call Package/avahi/Default/description)
 endef
 
 define Package/libavahi-dbus-support
-  $(call Package/avahi/Default)
-  SECTION:=libs
-  CATEGORY:=Libraries
+  $(call Package/libavahi/Default)
   VARIANT:=dbus
-  DEPENDS:=+dbus +libavahi
+  DEPENDS:=+dbus
   TITLE+= (D-Bus support)
+endef
+
+define Package/libavahi-nodbus-support
+  $(call Package/libavahi/Default)
+  VARIANT:=nodbus
+  TITLE+= (No D-Bus)
 endef
 
 define Package/libavahi-dbus-support/description
@@ -147,6 +187,7 @@ $(call Package/libavahi/description)
  The libavahi-dbus-support package enables
  D-Bus support in avahi, needed to support
  the libavahi-client library and avahi-utils.
+ .
  Selecting this package modifies the build configuration
  so that avahi packages are built with support for D-BUS enabled;
  it does not generate a separate binary of its own.
@@ -155,11 +196,20 @@ $(call Package/libavahi/description)
  libavahi-client or avahi-utils.
 endef
 
+define Package/libavahi-nodbus-support/description
+$(call Package/libavahi/description)
+ .
+ Selecting this package modifies the build configuration
+ so that avahi packages are built without support for D-BUS enabled;
+ it does not generate a separate binary of its own.
+endef
+
 define Package/libavahi-client
   $(call Package/avahi/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libavahi-dbus-support +avahi-daemon
+  VARIANT:=dbus
+  DEPENDS:=+avahi-dbus-daemon
   TITLE+= (libavahi-client library)
 endef
 
@@ -168,14 +218,32 @@ $(call Package/avahi/Default/description)
  .
  This packages adds the libavahi-client library.
  It also automatically adds the required
- libavahi-dbus-support and the avahi-daemon packages.
+ libavahi-dbus-support and the avahi-dbus-daemon packages.
+ For more information please see the avahi documentation.
+endef
+
+define Package/libavahi-compat-libdnssd
+  $(call Package/avahi/Default)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  VARIANT:=dbus
+  DEPENDS:=+libavahi-client
+  TITLE+= (libdnssd)
+endef
+
+define Package/libavahi-compat-libdnssd/description
+$(call Package/avahi/Default/description)
+ .
+ This packages adds the libavahi-compat-libdnssd library.
+ It also automatically adds the required libavahi-client package.
  For more information please see the avahi documentation.
 endef
 
 define Package/avahi-utils
   $(call Package/avahi/Default)
   SUBMENU:=IP Addresses and Names
-  DEPENDS:=+libavahi-client +libgdbm
+  VARIANT:=dbus
+  DEPENDS:=libavahi-client +libgdbm
   TITLE+= (utilities)
 endef
 
@@ -203,6 +271,8 @@ CONFIGURE_ARGS+= \
 	--disable-dbm \
 	--enable-gdbm \
 	--enable-libdaemon \
+	$(and $(CONFIG_PACKAGE_libavahi-compat-libdnssd),ifeq ($(BUILD_VARIANT),dbus),\
+		--enable-compat-libdns_sd) \
 	--disable-python \
 	--disable-pygtk \
 	--disable-python-dbus \
@@ -247,40 +317,44 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-* $(1)/usr/lib/
+ifeq ($(CONFIG_PACKAGE_libavahi-compat-libdnssd)-$(BUILD_VARIANT),y-dbus)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd* $(1)/usr/lib/
+endif
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
 endef
 
-define Package/libavahi-dbus-support/install
-	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
-	$(CP) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/* $(1)/etc/dbus-1/system.d
-endef
-
 define Package/libavahi/install
-	# The next line removes the ".build" file from the "other" build.
-	# The effect is that, if the other build is re-selected in the future,
-	# the build system will be forced to replace all the code in the
-	# installer packages, removing anything from the current build.
-	# "Other" means this: if the current build is "dbus", the other is "nodebus",
-	# and if the current build is "nodbus", the other is "dbus".
-	$(RM) -f $(PKG_ALT_DIR)/.built
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-{common,core}.so.* $(1)/usr/lib/
 endef
+
+define Package/libavahi-dbus-support/install
+	$(call Package/libavahi/install,$(1))
+	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/* $(1)/etc/dbus-1/system.d
+endef
+
+Package/libavahi-nodbus-support/install=$(Package/libavahi/install)
 
 define Package/libavahi-client/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-client.so.* $(1)/usr/lib/
 endef
 
+define Package/libavahi-compat-libdnssd/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so.* $(1)/usr/lib/
+endef
+
 define Package/avahi-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 endef
 
 define Package/avahi-autoipd/install
 	$(INSTALL_DIR) $(1)/etc/avahi
-	$(CP) $(PKG_INSTALL_DIR)/etc/avahi/avahi-autoipd.action $(1)/etc/avahi/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/etc/avahi/avahi-autoipd.action $(1)/etc/avahi/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/avahi-autoipd $(1)/usr/sbin/
 endef
@@ -290,24 +364,41 @@ define Package/avahi-daemon/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/avahi-daemon $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/avahi
 	$(INSTALL_DATA) ./files/avahi-daemon.conf $(1)/etc/avahi/
+	# install empty service directory so that user knows where
+	# to place custom service files
 	$(INSTALL_DIR) $(1)/etc/avahi/services
-	$(INSTALL_DATA) ./files/service-http $(1)/etc/avahi/services/http.service
-	$(INSTALL_DATA) ./files/service-ssh $(1)/etc/avahi/services/ssh.service
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/avahi-daemon.init $(1)/etc/init.d/avahi-daemon
 endef
 
+Package/avahi-dbus-daemon/install=$(Package/avahi-daemon/install)
+Package/avahi-nodbus-daemon/install=$(Package/avahi-daemon/install)
+
+define Package/avahi-daemon-service-http/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_DATA) ./files/service-http $(1)/etc/avahi/services/http.service
+endef
+
+define Package/avahi-daemon-service-ssh/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_DATA) ./files/service-ssh $(1)/etc/avahi/services/ssh.service
+endef
+
 define Package/avahi-dnsconfd/install
 	$(INSTALL_DIR) $(1)/etc/avahi
-	$(CP) $(PKG_INSTALL_DIR)/etc/avahi/avahi-dnsconfd.action $(1)/etc/avahi/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/etc/avahi/avahi-dnsconfd.action $(1)/etc/avahi/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/avahi-dnsconfd $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,libavahi-client))
+$(eval $(call BuildPackage,libavahi-compat-libdnssd))
 $(eval $(call BuildPackage,avahi-utils))
 $(eval $(call BuildPackage,libavahi-dbus-support))
-$(eval $(call BuildPackage,libavahi))
+$(eval $(call BuildPackage,libavahi-nodbus-support))
 $(eval $(call BuildPackage,avahi-autoipd))
-$(eval $(call BuildPackage,avahi-daemon))
+$(eval $(call BuildPackage,avahi-dbus-daemon))
+$(eval $(call BuildPackage,avahi-nodbus-daemon))
+$(eval $(call BuildPackage,avahi-daemon-service-http))
+$(eval $(call BuildPackage,avahi-daemon-service-ssh))
 $(eval $(call BuildPackage,avahi-dnsconfd))

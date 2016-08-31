@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2014 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius2
-PKG_VERSION:=2.2.5
+PKG_VERSION:=2.2.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=freeradius-server-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.freeradius.org/pub/freeradius/
-PKG_MD5SUM:=40535bace507d7a3134c3d858f3cbc5a
+PKG_SOURCE_URL:=\
+	ftp://ftp.freeradius.org/pub/freeradius/ \
+	ftp://ftp.freeradius.org/pub/freeradius/old/
+PKG_MD5SUM:=d1398327ba4e23c75da06d8a0e01096b
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYRIGHT LICENSE
@@ -26,6 +28,7 @@ PKG_CONFIG_DEPENDS := \
   FREERADIUS_OPENSSL \
   FREERADIUS_NOSSL
 
+PKG_CHECK_FORMAT_SECURITY:=0
 include $(INCLUDE_DIR)/package.mk
 
 define Package/freeradius2/config
@@ -60,7 +63,7 @@ endef
 define Package/freeradius2-common
   $(call Package/freeradius2/Default)
   TITLE:=common files
-  DEPENDS:=+libpthread +FREERADIUS_OPENSSL:libopenssl
+  DEPENDS:=+libpthread +FREERADIUS_OPENSSL:libopenssl +zlib
 endef
 
 define Package/freeradius2-mod-chap
@@ -347,6 +350,7 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_FREERADIUS_OPENSSL),--with,--without)-openssl \
 	$(if $(CONFIG_FREERADIUS_OPENSSL),--with-openssl-includes="$(STAGING_DIR)/usr/include",) \
 	$(if $(CONFIG_FREERADIUS_OPENSSL),--with-openssl-libraries="$(STAGING_DIR)/usr/lib",) \
+	$(if $(CONFIG_FREERADIUS_OPENSSL),--disable-openssl-version-check,) \
 	--with-system-libtool \
 	--with-system-libltdl \
 	--enable-strict-dependencies \

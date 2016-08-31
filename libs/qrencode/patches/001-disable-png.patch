@@ -1,0 +1,306 @@
+--- a/qrenc.c
++++ b/qrenc.c
+@@ -25,7 +25,6 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include <png.h>
+ #include <getopt.h>
+ 
+ #include "qrencode.h"
+@@ -49,7 +48,6 @@
+ static int verbose = 0;
+ 
+ enum imageType {
+-	PNG_TYPE,
+ 	EPS_TYPE,
+ 	SVG_TYPE,
+ 	ANSI_TYPE,
+@@ -60,7 +58,7 @@
+ 	ANSIUTF8_TYPE
+ };
+ 
+-static enum imageType image_type = PNG_TYPE;
++static enum imageType image_type = SVG_TYPE;
+ 
+ static const struct option options[] = {
+ 	{"help"         , no_argument      , NULL, 'h'},
+@@ -96,13 +94,13 @@
+ 		if(longopt) {
+ 			fprintf(stderr,
+ "Usage: qrencode [OPTION]... [STRING]\n"
+-"Encode input data in a QR Code and save as a PNG or EPS image.\n\n"
++"Encode input data in a QR Code and save as a SVG or EPS image.\n\n"
+ "  -h, --help   display the help message. -h displays only the help of short\n"
+ "               options.\n\n"
+ "  -o FILENAME, --output=FILENAME\n"
+ "               write image to FILENAME. If '-' is specified, the result\n"
+ "               will be output to standard output. If -S is given, structured\n"
+-"               symbols are written to FILENAME-01.png, FILENAME-02.png, ...\n"
++"               symbols are written to FILENAME-01.svg, FILENAME-02.svg, ...\n"
+ "               (suffix is removed from FILENAME, if specified)\n"
+ "  -s NUMBER, --size=NUMBER\n"
+ "               specify module size in dots (pixels). (default=3)\n\n"
+@@ -116,9 +114,9 @@
+ "               specify the width of the margins. (default=4 (2 for Micro QR)))\n\n"
+ "  -d NUMBER, --dpi=NUMBER\n"
+ "               specify the DPI of the generated PNG. (default=72)\n\n"
+-"  -t {PNG,EPS,SVG,ANSI,ANSI256,ASCII,ASCIIi,UTF8,ANSIUTF8}, --type={PNG,EPS,\n"
++"  -t {EPS,SVG,ANSI,ANSI256,ASCII,ASCIIi,UTF8,ANSIUTF8}, --type={EPS,\n"
+ "               SVG,ANSI,ANSI256,ASCII,ASCIIi,UTF8,ANSIUTF8}\n"
+-"               specify the type of the generated image. (default=PNG)\n\n"
++"               specify the type of the generated image. (default=SVG)\n\n"
+ "  -S, --structured\n"
+ "               make structured symbols. Version must be specified.\n\n"
+ "  -k, --kanji  assume that the input text contains kanji (shift-jis).\n\n"
+@@ -133,7 +131,7 @@
+ "      --background=RRGGBB[AA]\n"
+ "               specify foreground/background color in hexadecimal notation.\n"
+ "               6-digit (RGB) or 8-digit (RGBA) form are supported.\n"
+-"               Color output support available only in PNG and SVG.\n"
++"               Color output support available only in SVG.\n"
+ "  -V, --version\n"
+ "               display the version number and copyrights of the qrencode.\n\n"
+ "      --verbose\n"
+@@ -153,12 +151,12 @@
+ 		} else {
+ 			fprintf(stderr,
+ "Usage: qrencode [OPTION]... [STRING]\n"
+-"Encode input data in a QR Code and save as a PNG or EPS image.\n\n"
++"Encode input data in a QR Code and save as a SVG or EPS image.\n\n"
+ "  -h           display this message.\n"
+ "  --help       display the usage of long options.\n"
+ "  -o FILENAME  write image to FILENAME. If '-' is specified, the result\n"
+ "               will be output to standard output. If -S is given, structured\n"
+-"               symbols are written to FILENAME-01.png, FILENAME-02.png, ...\n"
++"               symbols are written to FILENAME-01.svg, FILENAME-02.svg, ...\n"
+ "               (suffix is removed from FILENAME, if specified)\n"
+ "  -s NUMBER    specify module size in dots (pixels). (default=3)\n"
+ "  -l {LMQH}    specify error correction level from L (lowest) to H (highest).\n"
+@@ -166,8 +164,8 @@
+ "  -v NUMBER    specify the version of the symbol. (default=auto)\n"
+ "  -m NUMBER    specify the width of the margins. (default=4 (2 for Micro))\n"
+ "  -d NUMBER    specify the DPI of the generated PNG. (default=72)\n"
+-"  -t {PNG,EPS,SVG,ANSI,ANSI256,ASCII,ASCIIi,UTF8,ANSIUTF8}\n"
+-"               specify the type of the generated image. (default=PNG)\n"
++"  -t {EPS,SVG,ANSI,ANSI256,ASCII,ASCIIi,UTF8,ANSIUTF8}\n"
++"               specify the type of the generated image. (default=SVG)\n"
+ "  -S           make structured symbols. Version must be specified.\n"
+ "  -k           assume that the input text contains kanji (shift-jis).\n"
+ "  -c           encode lower-case alphabet characters in 8-bit mode. (default)\n"
+@@ -178,7 +176,7 @@
+ "  --background=RRGGBB[AA]\n"
+ "               specify foreground/background color in hexadecimal notation.\n"
+ "               6-digit (RGB) or 8-digit (RGBA) form are supported.\n"
+-"               Color output support available only in PNG and SVG.\n"
++"               Color output support available only in SVG.\n"
+ "  -V           display the version number and copyrights of the qrencode.\n"
+ "  [STRING]     input data. If it is not specified, data will be taken from\n"
+ "               standard input.\n"
+@@ -253,128 +251,6 @@
+ 	return fp;
+ }
+ 
+-static int writePNG(QRcode *qrcode, const char *outfile)
+-{
+-	static FILE *fp; // avoid clobbering by setjmp.
+-	png_structp png_ptr;
+-	png_infop info_ptr;
+-	png_colorp palette;
+-	png_byte alpha_values[2];
+-	unsigned char *row, *p, *q;
+-	int x, y, xx, yy, bit;
+-	int realwidth;
+-
+-	realwidth = (qrcode->width + margin * 2) * size;
+-	row = (unsigned char *)malloc((realwidth + 7) / 8);
+-	if(row == NULL) {
+-		fprintf(stderr, "Failed to allocate memory.\n");
+-		exit(EXIT_FAILURE);
+-	}
+-
+-	if(outfile[0] == '-' && outfile[1] == '\0') {
+-		fp = stdout;
+-	} else {
+-		fp = fopen(outfile, "wb");
+-		if(fp == NULL) {
+-			fprintf(stderr, "Failed to create file: %s\n", outfile);
+-			perror(NULL);
+-			exit(EXIT_FAILURE);
+-		}
+-	}
+-
+-	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+-	if(png_ptr == NULL) {
+-		fprintf(stderr, "Failed to initialize PNG writer.\n");
+-		exit(EXIT_FAILURE);
+-	}
+-
+-	info_ptr = png_create_info_struct(png_ptr);
+-	if(info_ptr == NULL) {
+-		fprintf(stderr, "Failed to initialize PNG write.\n");
+-		exit(EXIT_FAILURE);
+-	}
+-
+-	if(setjmp(png_jmpbuf(png_ptr))) {
+-		png_destroy_write_struct(&png_ptr, &info_ptr);
+-		fprintf(stderr, "Failed to write PNG image.\n");
+-		exit(EXIT_FAILURE);
+-	}
+-
+-	palette = (png_colorp) malloc(sizeof(png_color) * 2);
+-	if(palette == NULL) {
+-		fprintf(stderr, "Failed to allocate memory.\n");
+-		exit(EXIT_FAILURE);
+-	}
+-	palette[0].red   = fg_color[0];
+-	palette[0].green = fg_color[1];
+-	palette[0].blue  = fg_color[2];
+-	palette[1].red   = bg_color[0];
+-	palette[1].green = bg_color[1];
+-	palette[1].blue  = bg_color[2];
+-	alpha_values[0] = fg_color[3];
+-	alpha_values[1] = bg_color[3];
+-	png_set_PLTE(png_ptr, info_ptr, palette, 2);
+-	png_set_tRNS(png_ptr, info_ptr, alpha_values, 2, NULL);
+-
+-	png_init_io(png_ptr, fp);
+-	png_set_IHDR(png_ptr, info_ptr,
+-			realwidth, realwidth,
+-			1,
+-			PNG_COLOR_TYPE_PALETTE,
+-			PNG_INTERLACE_NONE,
+-			PNG_COMPRESSION_TYPE_DEFAULT,
+-			PNG_FILTER_TYPE_DEFAULT);
+-	png_set_pHYs(png_ptr, info_ptr,
+-			dpi * INCHES_PER_METER,
+-			dpi * INCHES_PER_METER,
+-			PNG_RESOLUTION_METER);
+-	png_write_info(png_ptr, info_ptr);
+-
+-	/* top margin */
+-	memset(row, 0xff, (realwidth + 7) / 8);
+-	for(y=0; y<margin * size; y++) {
+-		png_write_row(png_ptr, row);
+-	}
+-
+-	/* data */
+-	p = qrcode->data;
+-	for(y=0; y<qrcode->width; y++) {
+-		bit = 7;
+-		memset(row, 0xff, (realwidth + 7) / 8);
+-		q = row;
+-		q += margin * size / 8;
+-		bit = 7 - (margin * size % 8);
+-		for(x=0; x<qrcode->width; x++) {
+-			for(xx=0; xx<size; xx++) {
+-				*q ^= (*p & 1) << bit;
+-				bit--;
+-				if(bit < 0) {
+-					q++;
+-					bit = 7;
+-				}
+-			}
+-			p++;
+-		}
+-		for(yy=0; yy<size; yy++) {
+-			png_write_row(png_ptr, row);
+-		}
+-	}
+-	/* bottom margin */
+-	memset(row, 0xff, (realwidth + 7) / 8);
+-	for(y=0; y<margin * size; y++) {
+-		png_write_row(png_ptr, row);
+-	}
+-
+-	png_write_end(png_ptr, info_ptr);
+-	png_destroy_write_struct(&png_ptr, &info_ptr);
+-
+-	fclose(fp);
+-	free(row);
+-	free(palette);
+-
+-	return 0;
+-}
+-
+ static int writeEPS(QRcode *qrcode, const char *outfile)
+ {
+ 	FILE *fp;
+@@ -831,9 +707,6 @@
+ 	}
+ 
+ 	switch(image_type) {
+-		case PNG_TYPE:
+-			writePNG(qrcode, outfile);
+-			break;
+ 		case EPS_TYPE:
+ 			writeEPS(qrcode, outfile);
+ 			break;
+@@ -887,9 +760,6 @@
+ 	size_t suffix_size;
+ 
+ 	switch(image_type) {
+-		case PNG_TYPE:
+-			type_suffix = ".png";
+-			break;
+ 		case EPS_TYPE:
+ 			type_suffix = ".eps";
+ 			break;
+@@ -948,9 +818,6 @@
+ 		}
+ 
+ 		switch(image_type) {
+-			case PNG_TYPE: 
+-				writePNG(p->code, filename);
+-				break;
+ 			case EPS_TYPE: 
+ 				writeEPS(p->code, filename);
+ 				break;
+@@ -1062,9 +929,7 @@
+ 				}
+ 				break;
+ 			case 't':
+-				if(strcasecmp(optarg, "png") == 0) {
+-					image_type = PNG_TYPE;
+-				} else if(strcasecmp(optarg, "eps") == 0) {
++				if(strcasecmp(optarg, "eps") == 0) {
+ 					image_type = EPS_TYPE;
+ 				} else if(strcasecmp(optarg, "svg") == 0) {
+ 					image_type = SVG_TYPE;
+@@ -1133,11 +998,6 @@
+ 		exit(EXIT_SUCCESS);
+ 	}
+ 
+-	if(outfile == NULL && image_type == PNG_TYPE) {
+-		fprintf(stderr, "No output filename is given.\n");
+-		exit(EXIT_FAILURE);
+-	}
+-
+ 	if(optind < argc) {
+ 		intext = (unsigned char *)argv[optind];
+ 		length = strlen((char *)intext);
+--- a/configure.ac
++++ b/configure.ac
+@@ -58,9 +58,6 @@
+  [build_tools=$withval], [build_tools=yes])
+ 
+ AM_CONDITIONAL(BUILD_TOOLS, [test "x$build_tools" = "xyes" ])
+-if test x$build_tools = xyes ; then
+-	PKG_CHECK_MODULES(png, "libpng")
+-fi
+ 
+ dnl --with-tests
+ AC_ARG_WITH([tests], [AS_HELP_STRING([--with-tests], [build tests [default=no]])],
+@@ -80,12 +77,6 @@
+ echo "/* #undef WITH_TESTS */" >>confdefs.h
+ fi
+ 
+-if test x$build_tests = xyes ; then
+-	SDL_REQUIRED_VERSION=1.2.0
+-	AM_PATH_SDL($SDL_REQUIRED_VERSION,,AC_MSG_WARN([*** SDL $SDL_REQUIRED_VERSION or better is required.]))
+-	AC_MSG_NOTICE([SDL check done.])
+-	AM_ICONV_LINK
+-fi
+ AM_CONDITIONAL(HAVE_SDL, [test "x$SDL_CFLAGS" != "x" ])
+ 
+ 

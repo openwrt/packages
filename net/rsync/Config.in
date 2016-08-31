@@ -9,4 +9,17 @@ if PACKAGE_rsync
 		bool
 		prompt "Enable ACL support"
 		default n
+
+	config RSYNC_zlib
+		bool
+		prompt "Enable system zlib"
+		help 
+			Use the system's zlib library instead of rsync's internal copy. Enabling
+			this may create compatibility errors when using compression  with older
+			clients, or those using the current default of the bundled zlib.
+
+			rsync's upstream default is to use their bundled zlib. OpenWrt uses the
+			system zlib for space reasons. The system zlib will eventually become 
+			default for upstream as well.
+		default y
 endif
