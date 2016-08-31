@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-compressor
-PKG_VERSION:=2.0
+PKG_VERSION:=2.1
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=django_compressor-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/d/django_compressor/
+PKG_SOURCE_URL:=https://pypi.python.org/packages/23/46/2c7d582255969ad5259937f5f9e14aec1f3349d0fc0651129330918d1c6d/
 PKG_BUILD_DIR:=$(BUILD_DIR)/django_compressor-$(PKG_VERSION)/
-PKG_MD5SUM:=98254da44f1676d7b871ffeb14115175
+PKG_MD5SUM:=21ecfe4e8615eae64f7068a5599df9af
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk

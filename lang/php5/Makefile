@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=5.6.23
+PKG_VERSION:=5.6.25
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>, Michael Heimpold <mhei@heimpold.de>
@@ -18,7 +18,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_MD5SUM:=c2d2155e50bcbaa0ee7a63845862c894
+PKG_MD5SUM:=81cb8c0de0d0b714587edbd27a2a75bb
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
