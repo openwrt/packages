@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2015 OpenWrt.org
+# Copyright (C) 2009-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libidn
-PKG_VERSION:=1.32
+PKG_VERSION:=1.33
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/libidn
-PKG_MD5SUM:=4dd8356ba577287ea7076bfa1554b534
+PKG_MD5SUM:=a9aa7e003665de9c82bd3f9fc6ccf308
 
 PKG_LICENSE:=GPL-2.0+ GPL-3.0+ LGPL-2.1+ LGPL-3.0+ Apache-2.0
 PKG_LICENSE_FILES:=COPYING COPYINGv2 COPYINGv3 COPYING.LESSERv2 COPYING.LESSERv3 java/LICENSE-2.0.txt
@@ -88,7 +88,7 @@ endef
 
 define Package/libidn/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libidn.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libidn.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,idn))
