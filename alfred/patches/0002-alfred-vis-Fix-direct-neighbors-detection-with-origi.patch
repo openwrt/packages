@@ -1,0 +1,50 @@
+From: Sven Eckelmann <sven@narfation.org>
+Date: Fri, 23 Sep 2016 15:45:12 +0200
+Subject: [PATCH] alfred: vis: Fix direct neighbors detection with originator netlink query
+
+Only entries in the originator table with the destination address equal to
+the originator address should be handled by alfred as actual neighbors.
+
+Fixes: bca55a86fecd ("alfred: vis: Add support for netlink")
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+---
+ vis/vis.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/vis/vis.c b/vis/vis.c
+index 94e583e..f4d13c7 100644
+--- a/vis/vis.c
++++ b/vis/vis.c
+@@ -453,6 +453,7 @@ err:
+ 
+ static const int parse_orig_list_mandatory[] = {
+ 	BATADV_ATTR_ORIG_ADDRESS,
++	BATADV_ATTR_NEIGH_ADDRESS,
+ 	BATADV_ATTR_TQ,
+ 	BATADV_ATTR_HARD_IFINDEX,
+ };
+@@ -466,6 +467,7 @@ static int parse_orig_list_netlink_cb(struct nl_msg *msg, void *arg)
+ 	struct genlmsghdr *ghdr;
+ 	struct vis_list_entry *v_entry;
+ 	uint8_t *orig;
++	uint8_t *neigh;
+ 	uint8_t tq;
+ 	uint32_t hardif;
+ 
+@@ -493,12 +495,16 @@ static int parse_orig_list_netlink_cb(struct nl_msg *msg, void *arg)
+ 		return NL_OK;
+ 
+ 	orig = nla_data(attrs[BATADV_ATTR_ORIG_ADDRESS]);
++	neigh = nla_data(attrs[BATADV_ATTR_NEIGH_ADDRESS]);
+ 	tq = nla_get_u8(attrs[BATADV_ATTR_TQ]);
+ 	hardif = nla_get_u32(attrs[BATADV_ATTR_HARD_IFINDEX]);
+ 
+ 	if (tq < 1)
+ 		return NL_OK;
+ 
++	if (memcmp(orig, neigh, ETH_ALEN) != 0)
++		return NL_OK;
++
+ 	v_entry = malloc(sizeof(*v_entry));
+ 	if (!v_entry)
+ 		return NL_OK;
