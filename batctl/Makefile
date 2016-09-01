@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batctl
 
-PKG_VERSION:=2016.2
+PKG_VERSION:=2016.3
 PKG_RELEASE:=0
-PKG_MD5SUM:=50f42d06611afae58ccfcde502f94c1a
+PKG_MD5SUM:=533cbbe981bd0e9fc9ec73ed59379960
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -55,7 +55,8 @@ MAKE_BATCTL_ENV += \
         CPPFLAGS="$(TARGET_CPPFLAGS)" \
         CFLAGS="$(TARGET_CFLAGS)" \
         LDFLAGS="$(TARGET_LDFLAGS)" \
-        LIBNL_NAME="libnl-tiny"
+        LIBNL_NAME="libnl-tiny" \
+        LIBNL_GENL_NAME="libnl-tiny"
 
 MAKE_BATCTL_ARGS += \
         REVISION="$(PKG_BATCTL_SHORTREV)" \

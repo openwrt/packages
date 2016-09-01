@@ -1,0 +1,77 @@
+From: Sven Eckelmann <sven@narfation.org>
+Date: Sun, 4 Sep 2016 20:20:40 +0200
+Subject: [PATCH] batctl: Work around uclibc collision for __unused
+
+uclibc on 64 bit systems uses struct members called __unused. These
+conflict with the definition of __unused in batctl. Such a conflict results
+in a build error because the struct member will be replaced with the
+__attribute__((unused)).
+
+This can be avoided by renaming it to the Linux kernel name
+"__maybe_unused".
+
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+---
+ genl.c     | 4 ++--
+ main.h     | 2 +-
+ tp_meter.c | 5 +++--
+ 3 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/genl.c b/genl.c
+index b6f66fd..36fc27e 100644
+--- a/genl.c
++++ b/genl.c
+@@ -34,7 +34,7 @@
+ 
+ #include "batman_adv.h"
+ 
+-static int mcast_error_handler(struct sockaddr_nl *nla __unused,
++static int mcast_error_handler(struct sockaddr_nl *nla __maybe_unused,
+ 			       struct nlmsgerr *err, void *arg)
+ {
+ 	int *ret = arg;
+@@ -42,7 +42,7 @@ static int mcast_error_handler(struct sockaddr_nl *nla __unused,
+ 	return NL_STOP;
+ }
+ 
+-static int mcast_ack_handler(struct nl_msg *msg __unused, void *arg)
++static int mcast_ack_handler(struct nl_msg *msg __maybe_unused, void *arg)
+ {
+ 	int *ret = arg;
+ 	*ret = 0;
+diff --git a/main.h b/main.h
+index 01f70e8..12c33b7 100644
+--- a/main.h
++++ b/main.h
+@@ -47,7 +47,7 @@
+ #endif
+ 
+ #define __packed __attribute((packed))   /* linux kernel compat */
+-#define __unused __attribute__((unused))
++#define __maybe_unused __attribute__((unused))
+ #define BIT(nr)                 (1UL << (nr)) /* linux kernel compat */
+ 
+ typedef uint8_t u8; /* linux kernel compat */
+diff --git a/tp_meter.c b/tp_meter.c
+index 43c19da..a402e45 100644
+--- a/tp_meter.c
++++ b/tp_meter.c
+@@ -66,7 +66,7 @@ struct tp_cookie {
+ 	uint32_t cookie;
+ };
+ 
+-static int tpmeter_nl_print_error(struct sockaddr_nl *nla __unused,
++static int tpmeter_nl_print_error(struct sockaddr_nl *nla __maybe_unused,
+ 				  struct nlmsgerr *nlerr,
+ 				  void *arg)
+ {
+@@ -236,7 +236,8 @@ out:
+ 	return err;
+ }
+ 
+-static int no_seq_check(struct nl_msg *msg __unused, void *arg __unused)
++static int no_seq_check(struct nl_msg *msg __maybe_unused,
++			void *arg __maybe_unused)
+ {
+ 	return NL_OK;
+ }
