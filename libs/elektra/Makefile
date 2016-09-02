@@ -15,7 +15,7 @@ PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=doc/COPYING
 PKG_VERSION:=0.8.17
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # Use this for official releasees
 PKG_MD5SUM:=e53efdb9a5e0852c58b21280b1e6c07d
@@ -97,7 +97,7 @@ define Package/libelektra-plugins
 endef
 
 define CONTENT_ELEKTRA_PLUGINS_TEXT
-cachefilter ccode conditionals csvstorage curlget enum filecheck glob
+cachefilter ccode conditionals csvstorage enum filecheck glob
 hexcode hidden hosts iconv keytometa line lineendings list mathcheck
 network null path profile shell syslog uname validation
 endef
@@ -152,6 +152,18 @@ define Package/libelektra-crypto/description
 $(call Package/libelektra/Default-description)
 
 This package contains support for encrypting values before storage.
+endef
+
+define Package/libelektra-curlget
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra curlget plugin
+  DEPENDS:=+libelektra-core +libcurl
+endef
+
+define Package/libelektra-curlget/description
+$(call Package/libelektra/Default-description)
+
+This plugin can get configuration data from remote URLs before access.
 endef
 
 define Package/libelektra-dbus
@@ -302,7 +314,7 @@ endef
 
 define Package/libelektra-plugins/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(foreach plugin,$(CONTENT_ELEKTRA_PLUGINS),$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-$(plugin).so $(1)/usr/lib/;)
+	$(CP) $(foreach plugin,$(CONTENT_ELEKTRA_PLUGINS),$(PKG_INSTALL_DIR)/usr/lib/libelektra-$(plugin).so) $(1)/usr/lib/
 endef
 
 define Package/libelektra-boost/install
@@ -318,6 +330,11 @@ endef
 define Package/libelektra-crypto/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-crypto_openssl.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-curlget/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-curlget.so $(1)/usr/lib/
 endef
 
 define Package/libelektra-dbus/install
@@ -370,6 +387,7 @@ $(eval $(call BuildPackage,libelektra-resolvers))
 $(eval $(call BuildPackage,libelektra-plugins))
 $(eval $(call BuildPackage,libelektra-boost))
 $(eval $(call BuildPackage,libelektra-cpp))
+$(eval $(call BuildPackage,libelektra-curlget))
 $(eval $(call BuildPackage,libelektra-crypto))
 $(eval $(call BuildPackage,libelektra-dbus))
 $(eval $(call BuildPackage,libelektra-xml))
