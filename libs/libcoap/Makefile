@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcoap
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/obgm/libcoap
@@ -18,7 +18,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.bz2
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=GPL-2.0+ BSD-2-Clause
-PKG_LICENSE_FILE:=COPYING LICENSE.GPL LICENSE.BSD
+PKG_LICENSE_FILES:=COPYING LICENSE.GPL LICENSE.BSD
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

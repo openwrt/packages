@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcanfestival
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=hg
 PKG_SOURCE_URL:=http://dev.automforge.net/CanFestival-3
@@ -18,7 +18,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.bz2
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=LGPL-2.1+
-PKG_LICENSE_FILE:=LICENCE
+PKG_LICENSE_FILES:=LICENCE
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
