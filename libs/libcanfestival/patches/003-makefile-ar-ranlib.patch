@@ -1,0 +1,31 @@
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -38,6 +38,9 @@ TARGET = SUB_TARGET
+ CAN_DRIVER = SUB_CAN_DRIVER
+ TIMERS_DRIVER = SUB_TIMERS_DRIVER
+ ENABLE_LSS = SUB_ENABLE_LSS
++AR ?= $(BINUTILS_PREFIX)ar
++RANLIB ?= $(BINUTILS_PREFIX)ranlib
++LD ?= $(BINUTILS_PREFIX)ld
+ 
+ INCLUDES = -I../include -I../include/$(TARGET) -I../include/$(TIMERS_DRIVER) -I../drivers/$(TARGET)
+ 
+@@ -114,15 +117,15 @@ libcanfestival.a: $(OBJS)
+ 	@echo "*********************************************"
+ 	@echo "**Building [libcanfestival.a]"
+ 	@echo "*********************************************"
+-	$(BINUTILS_PREFIX)ar rc $@ $(OBJS)
+-	$(BINUTILS_PREFIX)ranlib $@
++	$(AR) rc $@ $(OBJS)
++	$(RANLIB) $@
+ 
+ libcanfestival.o: $(OBJS)
+ 	@echo " "
+ 	@echo "*********************************************"
+ 	@echo "**Prelink [libcanfestival.o]"
+ 	@echo "*********************************************"
+-	$(BINUTILS_PREFIX)ld -r $(OBJS) -o $@
++	$(LD) -r $(OBJS) -o $@
+ 
+ $(TARGET)_%.o: %.c
+ 	@echo " "
