@@ -79,7 +79,7 @@
 "spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # duiadns.net - free dynamic DNS
-"duiadns.net"	"http://ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
+"duiadns.net"   "http://[USERNAME]:[PASSWORD]@ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&ip4=[IP]" "200"
 
 # Two-DNS - Simply. Connected. Everywhere.
 "twodns.de"	"http://[USERNAME]:[PASSWORD]@update.twodns.de/update?hostname=[DOMAIN]&ip=[IP]"

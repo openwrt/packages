@@ -86,3 +86,6 @@
 
 # core-networks.de
 "core-networks.de"	"https://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv4=1"	"good"
+
+# duiadns.net - free dynamic DNS
+"duiadns.net"   "http://[USERNAME]:[PASSWORD]@ipv6.duia.ro/dynamic.duia?host=[DOMAIN]&ip6=[IP]" "200"
