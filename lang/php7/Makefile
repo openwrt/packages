@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.0.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -491,7 +491,7 @@ define Build/Prepare
 endef
 
 define Build/InstallDev
-#	mkdir -p $(PKG_BUILD_DIR)/staging/usr/bin
+	rm -rf $(PKG_BUILD_DIR)/staging
 	make -C $(PKG_BUILD_DIR) install INSTALL_ROOT=$(PKG_BUILD_DIR)/staging
 	rm -rf $(PKG_BUILD_DIR)/staging/usr/{share,man,sbin}
 	rm -f $(PKG_BUILD_DIR)/staging/usr/bin/{php,php-cgi,php-cli}
@@ -562,12 +562,12 @@ $(eval $(call BuildModule,json,JSON))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php7-mod-ldap:libopenldap +PACKAGE_php7-mod-ldap:libsasl2))
 $(eval $(call BuildModule,mbstring,MBString))
 $(eval $(call BuildModule,mcrypt,Mcrypt,+PACKAGE_php7-mod-mcrypt:libmcrypt +PACKAGE_php7-mod-mcrypt:libltdl))
-$(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php7-mod-mysqli:libmysqlclient))
+$(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php7-mod-mysqli:libmysqlclient-r))
 $(eval $(call BuildModule,opcache,OPcache,,zend))
 $(eval $(call BuildModule,openssl,OpenSSL,+PACKAGE_php7-mod-openssl:libopenssl))
 $(eval $(call BuildModule,pcntl,PCNTL))
 $(eval $(call BuildModule,pdo,PHP Data Objects))
-$(eval $(call BuildModule,pdo-mysql,PDO driver for MySQL,+php7-mod-pdo +PACKAGE_php7-mod-pdo-mysql:libmysqlclient))
+$(eval $(call BuildModule,pdo-mysql,PDO driver for MySQL,+php7-mod-pdo +PACKAGE_php7-mod-pdo-mysql:libmysqlclient-r))
 $(eval $(call BuildModule,pdo-pgsql,PDO driver for PostgreSQL,+php7-mod-pdo +PACKAGE_php7-mod-pdo-pgsql:libpq))
 $(eval $(call BuildModule,pdo-sqlite,PDO driver for SQLite 3.x,+php7-mod-pdo +PACKAGE_php7-mod-pdo-sqlite:libsqlite3 +PACKAGE_php7-mod-pdo-sqlite:librt))
 $(eval $(call BuildModule,pgsql,PostgreSQL,+PACKAGE_php7-mod-pgsql:libpq))
