@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=privoxy
-PKG_VERSION:=3.0.24
+PKG_VERSION:=3.0.26
 PKG_RELEASE:=1
 
 PKG_SOURCE:=privoxy-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa
-PKG_MD5SUM:=44a47d1a5000db8cccd61ace0e25e7f7
+PKG_MD5SUM:=8a1c842112ccea68c19b7ceb4a0e999f
 PKG_BUILD_DIR:=$(BUILD_DIR)/privoxy-$(PKG_VERSION)-stable
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
