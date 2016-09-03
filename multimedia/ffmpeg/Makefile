@@ -282,7 +282,7 @@ $(call Package/ffmpeg/Default)
  SECTION:=libs
  CATEGORY:=Libraries
  TITLE+= libraries
- DEPENDS+= @BUILD_PATENTED @!TARGET_x86||YASM +libpthread +zlib +libbz2
+ DEPENDS+= @BUILD_PATENTED +libpthread +zlib +libbz2
  PROVIDES:= libffmpeg
 endef
 
@@ -395,7 +395,6 @@ FFMPEG_CONFIGURE += \
 	--disable-fma3 \
 	--disable-fma4 \
 	--disable-avx2 \
-	--disable-yasm \
 	--disable-inline-asm \
 	--disable-mips32r2 \
 	--disable-mipsdspr1 \
@@ -406,6 +405,12 @@ FFMPEG_CONFIGURE += \
 else ifneq ($(findstring arm,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE += \
 	--disable-runtime-cpudetect
+
+endif
+
+ifneq ($(CONFIG_YASM),y)
+FFMPEG_CONFIGURE += \
+	--disable-yasm
 
 endif
 
