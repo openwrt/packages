@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcanfestival
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=hg
 PKG_SOURCE_URL:=http://dev.automforge.net/CanFestival-3
@@ -44,6 +44,7 @@ CONFIGURE_ARGS := \
 	--cxx=$(TARGET_CXX) \
 	--ld=$(TARGET_CC) \
 	--arch=$(ARCH) \
+	--binutils=$(TARGET_CROSS) \
 	--os=Linux \
 	--kerneldir=$(LINUX_DIR) \
 	--prefix=/usr \
