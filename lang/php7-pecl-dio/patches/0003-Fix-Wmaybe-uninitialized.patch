@@ -1,0 +1,39 @@
+From 6cbc1651b6b6f865f9aae1e9adff73743298666f Mon Sep 17 00:00:00 2001
+From: remi <remi@c90b9560-bf6c-de11-be94-00142212c4b1>
+Date: Wed, 9 Oct 2013 12:18:34 +0000
+Subject: [PATCH 03/16] Fix [-Wmaybe-uninitialized]
+
+git-svn-id: http://svn.php.net/repository/pecl/dio/trunk@331750 c90b9560-bf6c-de11-be94-00142212c4b1
+---
+ dio_stream_wrappers.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/dio_stream_wrappers.c b/dio_stream_wrappers.c
+index 844b006..811bc07 100644
+--- a/dio_stream_wrappers.c
++++ b/dio_stream_wrappers.c
+@@ -228,9 +228,8 @@ PHP_FUNCTION(dio_raw) {
+ 			efree(data);
+ 			RETURN_FALSE;
+ 		}
++		php_stream_to_zval(stream, return_value);
+ 	}
+-
+-	php_stream_to_zval(stream, return_value);
+ }
+ /* }}} */
+ 
+@@ -390,9 +389,8 @@ PHP_FUNCTION(dio_serial) {
+ 			efree(data);
+ 			RETURN_FALSE;
+ 		}
++		php_stream_to_zval(stream, return_value);
+ 	}
+-
+-	php_stream_to_zval(stream, return_value);
+ }
+ /* }}} */
+ 
+-- 
+2.5.0
+

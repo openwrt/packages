@@ -1,0 +1,69 @@
+From 942b77d84417298fb9e99c216029f22fbd1e2d98 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Thu, 14 Jul 2016 01:47:05 +0200
+Subject: [PATCH 13/16] Fix tests for legacy interface
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ dio.c | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/dio.c b/dio.c
+index 7bad575..1a130a2 100644
+--- a/dio.c
++++ b/dio.c
+@@ -73,9 +73,9 @@ static int new_php_fd(php_fd_t **f, int fd)
+ 	return 1;
+ }
+ 
+-static void _dio_close_fd(zend_resource *res)
++static void _dio_close_fd(zend_resource *rsrc)
+ {
+-	php_fd_t *f = (php_fd_t *)zend_fetch_resource(res, NULL, le_fd);
++	php_fd_t *f = (php_fd_t *)rsrc->ptr;
+ 	if (f) {
+ 		close(f->fd);
+ 		free(f);
+@@ -87,8 +87,8 @@ static void _dio_close_fd(zend_resource *res)
+ PHP_FUNCTION(dio_open)
+ {
+ 	php_fd_t *f;
+-	char     *file_name;
+-	int       file_name_length;
++	char     *file_name = NULL;
++	size_t    file_name_length = 0;
+ 	long      flags;
+ 	long      mode = 0;
+ 	int       fd;
+@@ -97,6 +97,10 @@ PHP_FUNCTION(dio_open)
+ 		return;
+ 	}
+ 
++	if (!file_name || file_name[0] == '\0') {
++		RETURN_FALSE;
++	}
++
+ 	if (php_check_open_basedir(file_name) || DIO_SAFE_MODE_CHECK(file_name, "wb+")) {
+ 		RETURN_FALSE;
+ 	}
+@@ -176,7 +180,7 @@ PHP_FUNCTION(dio_dup)
+ 		RETURN_FALSE;
+ 	}
+ 
+-	RETVAL_RES(zend_register_resource(f, le_fd));
++	RETVAL_RES(zend_register_resource(df, le_fd));
+ }
+ /* }}} */
+ #endif
+@@ -660,7 +664,7 @@ PHP_FUNCTION(dio_close)
+ 		RETURN_FALSE;
+ 	}
+ 
+-	zend_list_delete(Z_LVAL_P(r_fd));
++	zend_list_delete(Z_RES_P(r_fd));
+ }
+ /* }}} */
+ 
+-- 
+2.5.0
+

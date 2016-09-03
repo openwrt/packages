@@ -1,0 +1,48 @@
+From def92a2db269d4ea6d2e8b7f8fe9dd473886a6b1 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Sun, 17 Jul 2016 01:08:47 +0200
+Subject: [PATCH 15/16] Add .gitignore
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ .gitignore | 28 ++++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+ create mode 100644 .gitignore
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..dae52e8
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,28 @@
++.deps
++.libs
++Makefile
++Makefile.fragments
++Makefile.global
++Makefile.objects
++acinclude.m4
++aclocal.m4
++autom4te.cache
++build
++config.guess
++config.h
++config.h.in
++config.log
++config.nice
++config.status
++config.sub
++configure
++configure.in
++*.la
++*.lo
++install-sh
++libtool
++ltmain.sh
++missing
++mkinstalldirs
++modules
++run-tests.php
+-- 
+2.5.0
+
