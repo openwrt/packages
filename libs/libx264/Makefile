@@ -28,8 +28,14 @@ TARGET_CFLAGS+=-std=gnu99 -fPIC -O3 -ffast-math -I.
 MAKE_FLAGS+= LD="$(TARGET_CC) -o" 
 
 ifneq ($(CONFIG_TARGET_x86),)
+ifeq ($(CONFIG_YASM),y)
   CONFIGURE_VARS+= AS=yasm
   MAKE_FLAGS+= AS=yasm
+else
+  CONFIGURE_VARS+= AS= 
+  MAKE_FLAGS+= AS= 
+  CONFIGURE_ARGS += --disable-asm
+endif
 endif
 
 CONFIGURE_ARGS += \
@@ -45,7 +51,7 @@ define Package/libx264
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=H264/AVC free codec library.
-  DEPENDS:=@BUILD_PATENTED @!TARGET_x86||YASM
+  DEPENDS:=@BUILD_PATENTED
   URL:=http://www.videolan.org/developers/x264.html
 endef
 
