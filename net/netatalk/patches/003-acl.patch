@@ -1,0 +1,10 @@
+--- a/include/atalk/acl.h
++++ b/include/atalk/acl.h
+@@ -62,6 +62,7 @@ extern int remove_acl_vfs(const char *na
+ 
+ #define O_NETATALK_ACL 0
+ #define chmod_acl chmod
++#define O_IGNORE 0
+ 
+ #endif /* HAVE_ACLS */
+ 
