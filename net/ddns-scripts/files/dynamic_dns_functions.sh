@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.6.4-1"
+VERSION="2.7.4"
 SECTION_ID=""		# hold config's section name
 VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
 
@@ -55,6 +55,38 @@ ERR_UPDATE=0		# error counter on different local and registered ip
 
 PID_SLEEP=0		# ProcessID of current background "sleep"
 
+# regular expression to detect IPv4 / IPv6
+# IPv4       0-9   1-3x "." 0-9  1-3x "." 0-9  1-3x "." 0-9  1-3x
+IPV4_REGEX="[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"
+# IPv6       ( ( 0-9a-f  1-4char ":") min 1x) ( ( 0-9a-f  1-4char   )optional) ( (":" 0-9a-f 1-4char  ) min 1x)
+IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(\(:[0-9A-Fa-f]\{1,4\}\)\{1,\}\)"
+
+# detect if called by dynamic_dns_lucihelper.sh script, disable retrys (empty variable == false)
+[ "$(basename $0)" = "dynamic_dns_lucihelper.sh" ] && LUCI_HELPER="TRUE" || LUCI_HELPER=""
+
+# Name Server Lookup Programs
+BIND_HOST=$(which host)
+KNOT_HOST=$(which khost)
+DRILL=$(which drill)
+HOSTIP=$(which hostip)
+NSLOOKUP=$(which nslookup)
+NSLOOKUP_MUSL=$($(which nslookup) localhost 2>&1 | grep -F "(null)")	# not empty busybox compiled with musl
+
+# Transfer Programs
+WGET=$(which wget)
+WGET_SSL=$(which wget-ssl)
+
+CURL=$(which curl)
+# CURL_SSL not empty then SSL support available
+CURL_SSL=$($(which curl) -V 2>/dev/null | grep "Protocols:" | grep -F "https")
+# CURL_PROXY not empty then Proxy support available
+CURL_PROXY=$(find /lib /usr/lib -name libcurl.so* -exec grep -i "all_proxy" {} 2>/dev/null \;)
+
+UCLIENT_FETCH=$(which uclient-fetch)
+# UCLIENT_FETCH_SSL not empty then SSL support available
+UCLIENT_FETCH_SSL=$(find /lib /usr/lib -name libustream-ssl.so* 2>/dev/null)
+
+# Global configuration settings
 # allow NON-public IP's
 ALLOW_LOCAL_IP=$(uci -q get ddns.global.allow_local_ip) || ALLOW_LOCAL_IP=0
 
@@ -74,19 +106,10 @@ LOGLINES=$((LOGLINES + 1))	# correct sed handling
 DATE_FORMAT=$(uci -q get ddns.global.date_format) || DATE_FORMAT="%F %R"
 DATE_PROG="date +'$DATE_FORMAT'"
 
-# regular expression to detect IPv4 / IPv6
-# IPv4       0-9   1-3x "." 0-9  1-3x "." 0-9  1-3x "." 0-9  1-3x
-IPV4_REGEX="[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"
-# IPv6       ( ( 0-9a-f  1-4char ":") min 1x) ( ( 0-9a-f  1-4char   )optional) ( (":" 0-9a-f 1-4char  ) min 1x)
-IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(\(:[0-9A-Fa-f]\{1,4\}\)\{1,\}\)"
-
-# detect if called by dynamic_dns_lucihelper.sh script, disable retrys (empty variable == false)
-[ "$(basename $0)" = "dynamic_dns_lucihelper.sh" ] && LUCI_HELPER="TRUE" || LUCI_HELPER=""
-
 # USE_CURL if GNU Wget and cURL installed normally Wget is used by do_transfer()
 # to change this use global option use_curl '1'
 USE_CURL=$(uci -q get ddns.global.use_curl) || USE_CURL=0	# read config
-[ -x /usr/bin/curl ] || USE_CURL=0				# check for cURL
+[ -n "$CURL" ] || USE_CURL=0					# check for cURL
 
 # loads all options for a given package and section
 # also, sets all_option_variables to a list of the variable names
@@ -144,7 +167,7 @@ load_all_service_sections() {
 # starts updater script for all given sections or only for the one given
 # $1 = interface (Optional: when given only scripts are started
 # configured for that interface)
-# used by /etc/hotplug.d/iface/25-ddns on IFUP
+# used by /etc/hotplug.d/iface/95-ddns on IFUP
 # and by /etc/init.d/ddns start
 start_daemon_for_all_ddns_sections()
 {
@@ -177,7 +200,7 @@ stop_section_processes() {
 
 # stop updater script for all defines sections or only for one given
 # $1 = interface (optional)
-# used by /etc/hotplug.d/iface/25-ddns on 'ifdown'
+# used by /etc/hotplug.d/iface/95-ddns on 'ifdown'
 # and by /etc/init.d/ddns stop
 # needed because we also need to kill "sleep" child processes
 stop_daemon_for_all_ddns_sections() {
@@ -445,6 +468,8 @@ timeout() {
 verify_host_port() {
 	local __HOST=$1
 	local __PORT=$2
+	local __NC=$(which nc)
+	local __NCEXT=$($(which nc) --help 2>&1 | grep "\-w" 2>/dev/null)	# busybox nc compiled with extensions
 	local __IP __IPV4 __IPV6 __RUNPROG __PROG __ERR
 	# return codes
 	# 1	system specific error
@@ -459,12 +484,23 @@ verify_host_port() {
 	__IPV6=$(echo $__HOST | grep -m 1 -o "$IPV6_REGEX")
 	# if FQDN given get IP address
 	[ -z "$__IPV4" -a -z "$__IPV6" ] && {
-		if [ -n "$(which host)" ]; then	# use BIND host if installed
+		if [ -n "$BIND_HOST" ]; then	# use BIND host if installed
 			__PROG="BIND host"
-			__RUNPROG="$(which host) -t ANY $__HOST >$DATFILE 2>$ERRFILE"
+			__RUNPROG="$BIND_HOST $__HOST >$DATFILE 2>$ERRFILE"
+		elif [ -n "$KNOT_HOST" ]; then	# use Knot host if installed
+			__PROG="Knot host"
+			__RUNPROG="$KNOT_HOST $__HOST >$DATFILE 2>$ERRFILE"
+		elif [ -n "$DRILL" ]; then	# use drill if installed
+			__PROG="drill"
+			__RUNPROG="$DRILL -V0 $__HOST A >$DATFILE 2>$ERRFILE"			# IPv4
+			__RUNPROG="$__RUNPROG; $DRILL -V0 $__HOST AAAA >>$DATFILE 2>>$ERRFILE"	# IPv6
+		elif [ -n "$HOSTIP" ]; then	# use hostip if installed
+			__PROG="hostip"
+			__RUNPROG="$HOSTIP $__HOST >$DATFILE 2>$ERRFILE"			# IPv4
+			__RUNPROG="$__RUNPROG; $HOSTIP -6 $__HOST >>$DATFILE 2>>$ERRFILE"	# IPv6
 		else	# use BusyBox nslookup
 			__PROG="BusyBox nslookup"
-			__RUNPROG="$(which nslookup) $__HOST >$DATFILE 2>$ERRFILE"
+			__RUNPROG="$NSLOOKUP $__HOST >$DATFILE 2>$ERRFILE"
 		fi
 		write_log 7 "#> $__RUNPROG"
 		eval $__RUNPROG
@@ -476,9 +512,15 @@ verify_host_port() {
 			return 2
 		}
 		# extract IP address
-		if [ -x /usr/bin/host ]; then	# use BIND host if installed
+		if [ -n "$BIND_HOST" -o -n "$KNOT_HOST" ]; then	# use BIND host or Knot host if installed
 			__IPV4=$(cat $DATFILE | awk -F "address " '/has address/ {print $2; exit}' )
 			__IPV6=$(cat $DATFILE | awk -F "address " '/has IPv6/ {print $2; exit}' )
+		elif [ -n "$DRILL" ]; then	# use drill if installed
+			__IPV4=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5}' | grep -m 1 -o "$IPV4_REGEX")
+			__IPV6=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5}' | grep -m 1 -o "$IPV6_REGEX")
+		elif [ -n "$HOSTIP" ]; then	# use hostip if installed
+			__IPV4=$(cat $DATFILE | grep -m 1 -o "$IPV4_REGEX")
+			__IPV6=$(cat $DATFILE | grep -m 1 -o "$IPV6_REGEX")
 		else	# use BusyBox nslookup
 			__IPV4=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV4_REGEX\).*$/\\1/p }")
 			__IPV6=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV6_REGEX\).*$/\\1/p }")
@@ -498,10 +540,10 @@ verify_host_port() {
 
 	# verify nc command
 	# busybox nc compiled without -l option "NO OPT l!" -> critical error
-	/usr/bin/nc --help 2>&1 | grep -i "NO OPT l!" >/dev/null 2>&1 && \
+	$__NC --help 2>&1 | grep -i "NO OPT l!" >/dev/null 2>&1 && \
 		write_log 12 "Busybox nc (netcat) compiled without '-l' option, error 'NO OPT l!'"
 	# busybox nc compiled with extensions
-	/usr/bin/nc --help 2>&1 | grep "\-w" >/dev/null 2>&1 && __NCEXT="TRUE"
+	$__NC --help 2>&1 | grep "\-w" >/dev/null 2>&1 && __NCEXT="TRUE"
 
 	# connectivity test
 	# run busybox nc to HOST PORT
@@ -512,7 +554,7 @@ verify_host_port() {
 	[ $force_ipversion -ne 0 -a $use_ipv6 -ne 0 -o -z "$__IPV4" ] && __IP=$__IPV6 || __IP=$__IPV4
 
 	if [ -n "$__NCEXT" ]; then	# BusyBox nc compiled with extensions (timeout support)
-		__RUNPROG="/usr/bin/nc -w 1 $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
+		__RUNPROG="$__NC -w 1 $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
 		write_log 7 "#> $__RUNPROG"
 		eval $__RUNPROG
 		__ERR=$?
@@ -521,7 +563,7 @@ verify_host_port() {
 		write_log 7 "$(cat $ERRFILE)"
 		return 3
 	else		# nc compiled without extensions (no timeout support)
-		__RUNPROG="timeout 2 -- /usr/bin/nc $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
+		__RUNPROG="timeout 2 -- $__NC $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
 		write_log 7 "#> $__RUNPROG"
 		eval $__RUNPROG
 		__ERR=$?
@@ -635,8 +677,8 @@ do_transfer() {
 	[ $# -ne 1 ] && write_log 12 "Error in 'do_transfer()' - wrong number of parameters"
 
 	# lets prefer GNU Wget because it does all for us - IPv4/IPv6/HTTPS/PROXY/force IP version
-	if [ -n "$(which wget-ssl)" -a $USE_CURL -eq 0 ]; then 			# except global option use_curl is set to "1"
-		__PROG="$(which wget-ssl) -nv -t 1 -O $DATFILE -o $ERRFILE"	# non_verbose no_retry outfile errfile
+	if [ -n "$WGET_SSL" -a $USE_CURL -eq 0 ]; then 			# except global option use_curl is set to "1"
+		__PROG="$WGET_SSL -nv -t 1 -O $DATFILE -o $ERRFILE"	# non_verbose no_retry outfile errfile
 		# force network/ip to use for communication
 		if [ -n "$bind_network" ]; then
 			local __BINDIP
@@ -671,11 +713,10 @@ do_transfer() {
 
 	# 2nd choice is cURL IPv4/IPv6/HTTPS
 	# libcurl might be compiled without Proxy or HTTPS Support
-	elif [ -n "$(which curl)" ]; then
-		__PROG="$(which curl) -RsS -o $DATFILE --stderr $ERRFILE"
+	elif [ -n "$CURL" ]; then
+		__PROG="$CURL -RsS -o $DATFILE --stderr $ERRFILE"
 		# check HTTPS support
-		/usr/bin/curl -V | grep "Protocols:" | grep -F "https" >/dev/null 2>&1
-		[ $? -eq 1 -a $use_https -eq 1 ] && \
+		[ -z "$CURL_SSL" -a $use_https -eq 1 ] && \
 			write_log 13 "cURL: libcurl compiled without https support"
 		# force network/interface-device to use for communication
 		if [ -n "$bind_network" ]; then
@@ -705,19 +746,17 @@ do_transfer() {
 		# or check if libcurl compiled with proxy support
 		if [ -z "$proxy" ]; then
 			__PROG="$__PROG --noproxy '*'"
-		else
+		elif [ -z "$CURL_PROXY" ]; then
 			# if libcurl has no proxy support and proxy should be used then force ERROR
-			# libcurl currently no proxy support by default
-			grep -i "all_proxy" /usr/lib/libcurl.so* >/dev/null 2>&1 || \
-				write_log 13 "cURL: libcurl compiled without Proxy support"
+			write_log 13 "cURL: libcurl compiled without Proxy support"
 		fi
 
 		__RUNPROG="$__PROG '$__URL'"	# build final command
 		__PROG="cURL"			# reuse for error logging
 
 	# uclient-fetch possibly with ssl support if /lib/libustream-ssl.so installed
-	elif [ -n "$(which uclient-fetch)" ]; then
-		__PROG="$(which uclient-fetch) -q -O $DATFILE"
+	elif [ -n "$UCLIENT_FETCH" ]; then
+		__PROG="$UCLIENT_FETCH -q -O $DATFILE"
 		# force network/ip not supported
 		[ -n "$__BINDIP" ] && \
 			write_log 14 "uclient-fetch: FORCE binding to specific address not supported"
@@ -726,7 +765,7 @@ do_transfer() {
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"       # force IPv4/IPv6
 		fi
 		# https possibly not supported
-		[ $use_https -eq 1 -a ! -f /lib/libustream-ssl.so ] && \
+		[ $use_https -eq 1 -a -z "$UCLIENT_FETCH_SSL" ] && \
 			write_log 14 "uclient-fetch: no HTTPS support! Additional install one of ustream-ssl packages"
 		# proxy support
 		[ -z "$proxy" ] && __PROG="$__PROG -Y off" || __PROG="$__PROG -Y on"
@@ -744,8 +783,8 @@ do_transfer() {
 		__PROG="uclient-fetch"				# reuse for error logging
 
 	# Busybox Wget or any other wget in search $PATH (did not support neither IPv6 nor HTTPS)
-	elif [ -n "$(which wget)" ]; then
-		__PROG="$(which wget) -q -O $DATFILE"
+	elif [ -n "$WGET" ]; then
+		__PROG="$WGET -q -O $DATFILE"
 		# force network/ip not supported
 		[ -n "$__BINDIP" ] && \
 			write_log 14 "BusyBox Wget: FORCE binding to specific address not supported"
@@ -806,10 +845,14 @@ send_update() {
 		# verify given IP / no private IPv4's / no IPv6 addr starting with fxxx of with ":"
 		[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^100\.6[4-9]\.|^100\.[7-9][0-9]\.|^100\.1[0-1][0-9]\.|^100\.12[0-7]\.|^127|^169\.254|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168)")
 		[ $use_ipv6 -eq 1 ] && __IP=$(echo $1 | grep "^[0-9a-eA-E]")
-		[ -z "$__IP" ] && write_log 14 "Private or invalid or no IP '$1' given! Please check your configuration"
 	else
-		__IP="$1"
+		__IP=$(echo $1 | grep -m 1 -o "$IPV4_REGEX")		# valid IPv4 or
+		[ -z "$__IP" ] && __IP=$(echo $1 | grep -m 1 -o "$IPV6_REGEX")	# IPv6
 	fi
+	[ -z "$__IP" ] && {
+		write_log 3 "No or private or invalid IP '$1' given! Please check your configuration"
+		return 127
+	}
 
 	if [ -n "$update_script" ]; then
 		write_log 7 "parsing script '$update_script'"
@@ -951,19 +994,18 @@ get_registered_ip() {
 	local __CNT=0	# error counter
 	local __ERR=255
 	local __REGEX  __PROG  __RUNPROG  __DATA  __IP
-	local __MUSL=$(nslookup localhost 2>&1 | grep -qF "(null)"; echo $?) # 0 == busybox compiled with musl "(null)" found
 	# return codes
 	# 1	no IP detected
 
 	[ $# -lt 1 -o $# -gt 2 ] && write_log 12 "Error calling 'get_registered_ip()' - wrong number of parameters"
-	[ $is_glue -eq 1 -a -z "$(which host)" ] && write_log 14 "Lookup of glue records is only supported using BIND host"
+	[ $is_glue -eq 1 -a -z "$BIND_HOST" ] && write_log 14 "Lookup of glue records is only supported using BIND host"
 	write_log 7 "Detect registered/public IP"
 
 	# set correct regular expression
 	[ $use_ipv6 -eq 0 ] && __REGEX="$IPV4_REGEX" || __REGEX="$IPV6_REGEX"
 
-	if [ -n "$(which host)" ]; then
-		__PROG="$(which host)"
+	if [ -n "$BIND_HOST" ]; then
+		__PROG="$BIND_HOST"
 		[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -t A"  || __PROG="$__PROG -t AAAA"
 		if [ $force_ipversion -eq 1 ]; then			# force IP version
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4"  || __PROG="$__PROG -6"
@@ -973,8 +1015,8 @@ get_registered_ip() {
 
 		__RUNPROG="$__PROG $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BIND host"
-	elif [ -n "$(which khost)" ]; then
-		__PROG="$(which khost)"
+	elif [ -n "$KNOT_HOST" ]; then
+		__PROG="$KNOT_HOST"
 		[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -t A"  || __PROG="$__PROG -t AAAA"
 		if [ $force_ipversion -eq 1 ]; then			# force IP version
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4"  || __PROG="$__PROG -6"
@@ -983,8 +1025,8 @@ get_registered_ip() {
 
 		__RUNPROG="$__PROG $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="Knot host"
-	elif [ -n "$(which drill)" ]; then
-		__PROG="$(which drill) -V0"			# drill options name @server type
+	elif [ -n "$DRILL" ]; then
+		__PROG="$DRILL -V0"			# drill options name @server type
 		if [ $force_ipversion -eq 1 ]; then			# force IP version
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4"  || __PROG="$__PROG -6"
 		fi
@@ -995,8 +1037,8 @@ get_registered_ip() {
 
 		__RUNPROG="$__PROG >$DATFILE 2>$ERRFILE"
 		__PROG="drill"
-	elif [ -n "$(which hostip)" ]; then	# hostip package installed
-		__PROG="$(which hostip)"
+	elif [ -n "$HOSTIP" ]; then	# hostip package installed
+		__PROG="$HOSTIP"
 		[ $force_dnstcp -ne 0 ] && \
 			write_log 14 "hostip - no support for 'DNS over TCP'"
 
@@ -1006,7 +1048,7 @@ get_registered_ip() {
 
 		# we got NO ip for dns_server, so build command
 		[ -z "$__IP" -a -n "$dns_server" ] && {
-			__IP="\`/usr/bin/hostip"
+			__IP="\`$HOSTIP"
 			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] && __IP="$__IP -6"
 			__IP="$__IP $dns_server | grep -m 1 -o"
 			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] \
@@ -1019,13 +1061,13 @@ get_registered_ip() {
 		[ -n "$dns_server" ] && __PROG="$__PROG -r $__IP"
 		__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
 		__PROG="hostip"
-	elif [ -n "$(which nslookup)" ]; then	# last use BusyBox nslookup
+	elif [ -n "$NSLOOKUP" ]; then	# last use BusyBox nslookup
 		[ $force_ipversion -ne 0 -o $force_dnstcp -ne 0 ] && \
 			write_log 14 "Busybox nslookup - no support to 'force IP Version' or 'DNS over TCP'"
-		[ $__MUSL -eq 0 -a -n "$dns_server" ] && \
-			write_log 14 "Busybox compiled with musl - nslookup - no support to set/use DNS Server"
+		[ -n "$NSLOOKUP_MUSL" -a -n "$dns_server" ] && \
+			write_log 14 "Busybox compiled with musl - nslookup don't support the use of DNS Server"
 
-		__RUNPROG="$(which nslookup) $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
+		__RUNPROG="$NSLOOKUP $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BusyBox nslookup"
 	else	# there must be an error
 		write_log 12 "Error in 'get_registered_ip()' - no supported Name Server lookup software accessible"
@@ -1039,19 +1081,19 @@ get_registered_ip() {
 			write_log 3 "$__PROG error: '$__ERR'"
 			write_log 7 "$(cat $ERRFILE)"
 		else
-			if [ "$__PROG" = "BIND host" ]; then
+			if [ -n "$BIND_HOST" ]; then
 				if [ $is_glue -eq 1 ]; then
 					__DATA=$(cat $DATFILE | grep "^$lookup_host" | grep -m 1 -o "$__REGEX" )
 				else
 					__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
 				fi
-			elif [ "$__PROG" = "Knot host" ]; then
+			elif [ -n "$KNOT_HOST" ]; then
 				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
-			elif [ "$__PROG" = "drill" ]; then
+			elif [ -n "$DRILL" ]; then
 				__DATA=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5; exit}' )
-			elif [ "$__PROG" = "hostip" ]; then
+			elif [ -n "$HOSTIP" ]; then
 				__DATA=$(cat $DATFILE | grep -m 1 -o "$__REGEX")
-			else
+			elif [ -n "$NSLOOKUP" ]; then
 				__DATA=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
 			fi
 			[ -n "$__DATA" ] && {
@@ -1211,14 +1253,14 @@ split_FQDN() {
 
 expand_ipv6() {
 	# Original written for bash by
-	# Author:  Florian Streibelt <florian@f-streibelt.de>
+	#.Author:  Florian Streibelt <florian@f-streibelt.de>
 	# Date:    08.04.2012
 	# License: Public Domain, but please be fair and
 	#          attribute the original author(s) and provide
 	#          a link to the original source for corrections:
 	#.         https://github.com/mutax/IPv6-Address-checks
 
-	# $1	IPv6 t0 expand
+	# $1	IPv6 to expand
 	# $2	name of variable to store expanded IPv6
 	[ $# -ne 2 ] && write_log 12 "Error calling 'expand_ipv6()' - wrong number of parameters"
 
