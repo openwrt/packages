@@ -29,7 +29,7 @@ define Package/lftp
   SUBMENU:=File Transfer
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libncurses +libopenssl +libreadline $(CXX_DEPENDS) +libexpat
+  DEPENDS:=+libncurses +libopenssl +libreadline $(CXX_DEPENDS) +libexpat +zlib
   TITLE:=a sophisticated file transfer program with command line interface.
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
   URL:=http://lftp.yar.ru/
