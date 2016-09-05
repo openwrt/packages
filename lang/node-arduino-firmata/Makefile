@@ -23,7 +23,7 @@ PKG_NODE_VERSION:=4.5.0
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILE:=LICENSE.txt
+PKG_LICENSE_FILES:=LICENSE.txt
 
 include $(INCLUDE_DIR)/package.mk
 

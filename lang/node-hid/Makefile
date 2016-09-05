@@ -23,7 +23,7 @@ PKG_NODE_VERSION:=4.5.0
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=Custom
-PKG_LICENSE_FILE:=
+PKG_LICENSE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
 
