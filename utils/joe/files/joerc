@@ -52,6 +52,7 @@ mode,"asis",rtn	% % Meta chars as-is
 mode,"language",rtn	V Language
 mode,"picture",rtn	P picture %Zpicture%
 mode,"type",rtn		F File type [%Ztype%]
+mode,"title",rtn	C Context %Ztitle%
 menu,"more-options",rtn	  % % More options...
 
 :defmenu more-options menu,"root",rtn
@@ -366,6 +367,8 @@ defm2drag	M2DRAG
 defm3down	M3DOWN
 defm3up		M3UP
 defm3drag	M3DRAG
+defmiddleup	MIDDLEUP
+defmiddledown	MIDDLEDOWN
 
 xtmouse		^[ [ M
 extmouse	^[ [ <
