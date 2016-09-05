@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dump1090
-PKG_VERSION:=2016-06-16
+PKG_VERSION:=2016-08-29
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/mutability/dump1090.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=dfe3d7af12d0d739a1164c71086d4b37f57886d9
+PKG_SOURCE_VERSION:=08fba4e3b03ec5f7c0abcc339cba249cabfa16cd
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
@@ -36,7 +36,7 @@ endef
 define Package/dump1090
   $(call Package/dump1090/Default)
   TITLE+= (dump1090)
-  DEPENDS+= +librtlsdr
+  DEPENDS+= +librtlsdr +uhttpd
 endef
 
 define Package/view1090
@@ -54,15 +54,18 @@ endef
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
-	UNAME=Linux
+	UNAME="Linux"
 
 define Package/dump1090/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/dump1090.init $(1)/etc/init.d/dump1090
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) files/dump1090.config $(1)/etc/config/dump1090
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) files/dump1090.default $(1)/etc/uci-defaults/00_uhttpd_dump1090
 	$(INSTALL_DIR) $(1)/usr/share/dump1090
 	$(CP) $(PKG_BUILD_DIR)/public_html/* $(1)/usr/share/dump1090
+	$(LN) /var/run/dump1090 $(1)/usr/share/dump1090/data
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/dump1090 $(1)/usr/bin
 endef
