@@ -1,0 +1,47 @@
+From 897bf65f758b688888bce71f75c1e70a8ea5e34c Mon Sep 17 00:00:00 2001
+From: Karl Palsson <karlp@etactica.com>
+Date: Mon, 5 Sep 2016 11:27:08 +0000
+Subject: [PATCH] websockets: fix compatibility with older lws versions
+
+In 1.3, 1.4 and 1.5, the function was "libwebsockets_get_protocol" not
+"libwebsocket_get_protocol"  While the #define name doesn't matter on
+newer libwebsockets, where it redirects to lws_get_protocol, the naming
+is critical for older versions.
+
+Fixes: 477cd3e39911 (Fix missing context->listener for websocket client)
+
+Signed-off-by: Karl Palsson <karlp@etactica.com>
+---
+ src/mosquitto_broker.h | 2 +-
+ src/websockets.c       | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/mosquitto_broker.h b/src/mosquitto_broker.h
+index 7d29e92..bd6a0ef 100644
+--- a/src/mosquitto_broker.h
++++ b/src/mosquitto_broker.h
+@@ -31,7 +31,7 @@ Contributors:
+ #    define libwebsocket_write(A, B, C, D) lws_write((A), (B), (C), (D))
+ #    define libwebsocket_get_socket_fd(A) lws_get_socket_fd((A))
+ #    define libwebsockets_return_http_status(A, B, C, D) lws_return_http_status((B), (C), (D))
+-#    define libwebsocket_get_protocol(A) lws_get_protocol((A))
++#    define libwebsockets_get_protocol(A) lws_get_protocol((A))
+ 
+ #    define libwebsocket_context lws_context
+ #    define libwebsocket_protocols lws_protocols
+diff --git a/src/websockets.c b/src/websockets.c
+index c16bde7..231cb72 100644
+--- a/src/websockets.c
++++ b/src/websockets.c
+@@ -182,7 +182,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
+ 		case LWS_CALLBACK_ESTABLISHED:
+ 			mosq = mqtt3_context_init(db, WEBSOCKET_CLIENT);
+ 			if(mosq){
+-				p = libwebsocket_get_protocol(wsi);
++				p = libwebsockets_get_protocol(wsi);
+ 				for (i=0; i<db->config->listener_count; i++){
+ 					if (db->config->listeners[i].protocol == mp_websockets) {
+ 						for (j=0; db->config->listeners[i].ws_protocol[j].name; j++){
+-- 
+2.4.11
+
