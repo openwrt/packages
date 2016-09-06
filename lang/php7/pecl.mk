@@ -34,10 +34,10 @@ define PECLPackage
 	$(INSTALL_DIR) $$(1)/usr/lib/php
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/modules/$(subst -,_,$(1)).so $$(1)/usr/lib/php/
 	$(INSTALL_DIR) $$(1)/etc/php7
-    ifeq ($(4),zend)
-	echo "zend_extension=/usr/lib/php/$(subst -,_,$(1)).so" > $$(1)/etc/php7/$(subst -,_,$(1)).ini
+    ifeq ($(5),zend)
+	echo "zend_extension=/usr/lib/php/$(subst -,_,$(1)).so" > $$(1)/etc/php7/$(if $(4),$(4),20)_$(subst -,_,$(1)).ini
     else
-	echo "extension=$(subst -,_,$(1)).so" > $$(1)/etc/php7/$(subst -,_,$(1)).ini
+	echo "extension=$(subst -,_,$(1)).so" > $$(1)/etc/php7/$(if $(4),$(4),20)_$(subst -,_,$(1)).ini
     endif
   endef
 

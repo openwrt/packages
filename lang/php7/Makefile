@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.0.10
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -527,10 +527,10 @@ define BuildModule
 	$(INSTALL_DIR) $$(1)/usr/lib/php
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/modules/$(subst -,_,$(1)).so $$(1)/usr/lib/php/
 	$(INSTALL_DIR) $$(1)/etc/php7
-      ifeq ($(4),zend)
-	echo "zend_extension=/usr/lib/php/$(subst -,_,$(1)).so" > $$(1)/etc/php7/$(subst -,_,$(1)).ini
+      ifeq ($(5),zend)
+	echo "zend_extension=/usr/lib/php/$(subst -,_,$(1)).so" > $$(1)/etc/php7/$(if $(4),$(4),20)_$(subst -,_,$(1)).ini
       else
-	echo "extension=$(subst -,_,$(1)).so" > $$(1)/etc/php7/$(subst -,_,$(1)).ini
+	echo "extension=$(subst -,_,$(1)).so" > $$(1)/etc/php7/$(if $(4),$(4),20)_$(subst -,_,$(1)).ini
     endif
   endef
 
@@ -563,7 +563,7 @@ $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php7-mod-ldap:libopenldap +PACKAGE_
 $(eval $(call BuildModule,mbstring,MBString))
 $(eval $(call BuildModule,mcrypt,Mcrypt,+PACKAGE_php7-mod-mcrypt:libmcrypt +PACKAGE_php7-mod-mcrypt:libltdl))
 $(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php7-mod-mysqli:libmysqlclient))
-$(eval $(call BuildModule,opcache,OPcache,,zend))
+$(eval $(call BuildModule,opcache,OPcache,,,zend))
 $(eval $(call BuildModule,openssl,OpenSSL,+PACKAGE_php7-mod-openssl:libopenssl))
 $(eval $(call BuildModule,pcntl,PCNTL))
 $(eval $(call BuildModule,pdo,PHP Data Objects))

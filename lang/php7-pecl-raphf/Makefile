@@ -9,7 +9,7 @@ PECL_NAME:=raphf
 PECL_LONGNAME:=Resource and persistent handles factory
 
 PKG_VERSION:=2.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MD5SUM:=bc465eb5caa9d0f09cced121a8ac2e8e
 
 PKG_NAME:=php7-pecl-raphf
