@@ -21,7 +21,7 @@ PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PECL_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php7/$(PECL_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 
 PKG_FIXUP:=autoreconf
@@ -32,6 +32,12 @@ include ../php7/pecl.mk
 
 CONFIGURE_ARGS+= \
 	--enable-propro
+
+define Build/InstallDev
+	mkdir -p $(STAGING_DIR)/usr/include/php7/ext/$(PECL_NAME)
+	$(CP) $(PKG_BUILD_DIR)/php_propro.h $(STAGING_DIR)/usr/include/php7/ext/$(PECL_NAME)/
+	$(CP) $(PKG_BUILD_DIR)/php_propro_api.h $(STAGING_DIR)/usr/include/php7/ext/$(PECL_NAME)/
+endef
 
 $(eval $(call PECLPackage,$(PECL_NAME),$(PECL_LONGNAME)))
 $(eval $(call BuildPackage,$(PKG_NAME)))
