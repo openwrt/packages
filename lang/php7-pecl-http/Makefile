@@ -22,7 +22,7 @@ PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=php7 php7-pecl-propro php7-pecl-raphf
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PECL_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php7/$(PECL_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 
 PKG_FIXUP:=autoreconf
@@ -40,10 +40,7 @@ CONFIGURE_ARGS+= \
 	--without-http-shared-deps \
 	--with-http-libcurl-dir="$(STAGING_DIR)/usr" \
 	--with-http-libevent-dir="$(STAGING_DIR)/usr" \
-	--with-http-libidn-dir="$(STAGING_DIR)/usr" \
-	--with-http-pecl-propro-dir="$(shell echo $(BUILD_DIR)/propro-*)" \
-	--with-http-pecl-raphf-dir="$(shell echo $(BUILD_DIR)/raphf-*)" \
-
+	--with-http-libidn-dir="$(STAGING_DIR)/usr"
 
 $(eval $(call PECLPackage,http,$(PECL_LONGNAME),+libcurl +librt +libevent2 +libidn +php7-mod-iconv +php7-mod-session +php7-pecl-raphf +php7-pecl-propro,30))
 $(eval $(call BuildPackage,$(PKG_NAME)))
