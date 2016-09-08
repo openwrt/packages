@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
 PKG_VERSION:=1.6.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
@@ -31,6 +31,7 @@ define Package/znc/default
   CATEGORY:=Network
   TITLE:=ZNC
   URL:=http://en.znc.in/
+  USERID:=znc=65532:znc=65532
 endef
 
 define Package/znc
@@ -62,12 +63,11 @@ define Package/znc/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/znc.conf $(1)/etc/config/znc
 	$(INSTALL_DIR) $(1)/usr/lib/znc/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/modules/droproot.so $(1)/usr/lib/znc/
 endef
 
 
 ZNC_MODULES :=
-ZNC_MODULE_TARGETS := droproot.so
+ZNC_MODULE_TARGETS :=
 
 define module
   define Package/znc-mod-$(strip $(1))
