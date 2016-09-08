@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2012 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=logrotate
-PKG_VERSION:=3.8.1
+PKG_VERSION:=3.10.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
-PKG_SOURCE_URL:= \
-	http://ftp.debian.org/debian/pool/main/l/logrotate \
-	http://ftp.de.debian.org/debian/pool/main/l/logrotate \
-	http://ftp.fr.debian.org/debian/pool/main/l/logrotate \
-	http://ftp.us.debian.org/debian/pool/main/l/logrotate
-PKG_MD5SUM:=bd2e20d8dc644291b08f9215397d28a5
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:= https://github.com/logrotate/logrotate/releases/download/$(PKG_VERSION)
+PKG_MD5SUM:=888f58caf07082c76f5dd39e5d30ec12
+PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,7 +23,8 @@ define Package/logrotate
   CATEGORY:=Utilities
   DEPENDS:=+libpopt
   TITLE:=rotates, compresses, and mails system logs
-  URL:=http://packages.debian.org/unstable/admin/logrotate
+  URL:=https://github.com/logrotate/logrotate
+  MAINTAINER:=Christian Beier <cb@shoutrlabs.com>
 endef
 
 define Package/logrotate/description
