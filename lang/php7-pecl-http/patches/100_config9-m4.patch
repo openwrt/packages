@@ -1,0 +1,22 @@
+--- a/config9.m4	2016-09-08 21:39:18.000000000 +0200
++++ b/config9.m4	2016-09-08 21:42:35.066903251 +0200
+@@ -71,18 +71,7 @@
+ 		extname=$1
+ 		haveext=$[PHP_]translit($1,a-z_-,A-Z__)
+ 		AC_MSG_CHECKING([for ext/$extname support])
+-		if test -x "$PHP_EXECUTABLE"; then
+-			grepext=`$PHP_EXECUTABLE -m | $EGREP ^$extname\$`
+-			if test "$grepext" = "$extname"; then
+-				[PHP_HTTP_HAVE_EXT_]translit($1,a-z_-,A-Z__)=1
+-				AC_MSG_RESULT([yes])
+-				$2
+-			else
+-				[PHP_HTTP_HAVE_EXT_]translit($1,a-z_-,A-Z__)=
+-				AC_MSG_RESULT([no])
+-				$3
+-			fi
+-		elif test "$haveext" != "no" && test "x$haveext" != "x"; then
++		if test "$haveext" != "no" && test "x$haveext" != "x"; then
+ 			[PHP_HTTP_HAVE_EXT_]translit($1,a-z_-,A-Z__)=1
+ 			AC_MSG_RESULT([yes])
+ 			$2

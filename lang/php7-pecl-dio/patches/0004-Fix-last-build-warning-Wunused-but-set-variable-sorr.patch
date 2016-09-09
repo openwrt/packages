@@ -1,0 +1,42 @@
+From 1e6f98d9fb65b9c052e6d555eab573d7e5073dae Mon Sep 17 00:00:00 2001
+From: remi <remi@c90b9560-bf6c-de11-be94-00142212c4b1>
+Date: Wed, 9 Oct 2013 12:24:28 +0000
+Subject: [PATCH 04/16] Fix last build warning [-Wunused-but-set-variable]
+ (sorry for legibility...)
+
+git-svn-id: http://svn.php.net/repository/pecl/dio/trunk@331751 c90b9560-bf6c-de11-be94-00142212c4b1
+---
+ dio_posix.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/dio_posix.c b/dio_posix.c
+index 01e1109..6ed8630 100644
+--- a/dio_posix.c
++++ b/dio_posix.c
+@@ -28,7 +28,10 @@
+  * Convert an fopen() mode string to open() flags
+  */
+ static int dio_stream_mode_to_flags(const char *mode) {
+-	int  flags = 0, ch = 0, bin = 1;
++	int  flags = 0, ch = 0;
++#if defined(_O_TEXT) && defined(O_BINARY)
++	int  bin = 1;
++#endif
+ 
+ 	switch(mode[ch++]) {
+ 		case 'r':
+@@ -45,9 +48,11 @@ static int dio_stream_mode_to_flags(const char *mode) {
+ 			break;
+ 	}
+ 
++#if defined(_O_TEXT) && defined(O_BINARY)
+ 	if (mode[ch] != '+') {
+ 		bin = (mode[ch++] == 'b');
+ 	}
++#endif
+ 
+ 	if (mode[ch] == '+') {
+ 		flags |= O_RDWR;
+-- 
+2.5.0
+

@@ -72,14 +72,15 @@
 # Winco DDNS
 "ddns.com.br"	"http://[DOMAIN]:[PASSWORD]@members.ddns.com.br/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
-# Mythic Beasts (https://www.mythic-beasts.com) Dynamic DNS
+# Mythic Beasts Dynamic DNS
 "mythic-beasts.com"	"http://dnsapi4.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20A%20DYNAMIC_IP&origin=."
 
 # Securepoint Dynamic-DNS-Service	(http://www.spdns.de)
-"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdyn.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"spdyn.de"	"http://[USERNAME]:[PASSWORD]@update.spdyn.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # duiadns.net - free dynamic DNS
-"duiadns.net"	"http://ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
+"duiadns.net"	"http://[USERNAME]:[PASSWORD]@ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&ip4=[IP]"
 
 # Two-DNS - Simply. Connected. Everywhere.
 "twodns.de"	"http://[USERNAME]:[PASSWORD]@update.twodns.de/update?hostname=[DOMAIN]&ip=[IP]"
@@ -118,7 +119,7 @@
 "duckdns.org"	"http://www.duckdns.org/update?domains=[USERNAME]&token=[PASSWORD]&ip=[IP]"	"OK"
 
 # zzzz.io Free Dynamic DNS
-"zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&ip=[IP]"	"Updated|No change"
+"zzzz.io"	"http://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&ip=[IP]"	"Updated|No change"
 
 # dynu.com
 "dynu.com"  "http://api.dynu.com/nic/update?hostname=[DOMAIN]&myip=[IP]&username=[USERNAME]&password=[PASSWORD]"
@@ -142,7 +143,7 @@
 "dyndnss.net"	"http://www.dyndnss.net/?user=[USERNAME]&pass=[PASSWORD]&domain=[DOMAIN]&updater=other"
 
 # goip.de
-"https://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip6=[IP]"
+"goip.de"	"http://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip4=[IP]"
 
 # myonlineportal.net
 "myonlineportal.net"	"http://[USERNAME]:[PASSWORD]@myonlineportal.net/updateddns?hostname=[DOMAIN]&ip=[IP]"	"good|nochg"
@@ -151,7 +152,8 @@
 "dyns.net"	"http://www.dyns.net/postscript011.php?username=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"200"
 
 # dnshome.de
-"dnshome.de"	"https://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip=[IP]"
+"dnshome.de"	"http://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip=[IP]"
 
 # core-networks.de
-"core-networks.de"	"https://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv6=1"	"good"
+"core-networks.de"	"http://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv6=1"	"good"
+

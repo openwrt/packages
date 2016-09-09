@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2015 OpenWrt.org
+# Copyright (C) 2014-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opus
-PKG_VERSION:=1.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/opus/
-PKG_MD5SUM:=c5a8cf7c0b066759542bc4ca46817ac6
+PKG_MD5SUM:=32bbb6b557fe1b6066adc0ae1f08b629
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libopus
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=OPUS Codec
+  TITLE:=OPUS Audio Codec
   URL:=http://opus-codec.org/
 endef
 
@@ -39,6 +39,11 @@ endef
 CONFIGURE_ARGS+= \
 	--disable-doc \
 	--disable-extra-programs
+
+ifeq ($(CONFIG_SOFT_FLOAT),y)
+	CONFIGURE_ARGS+= \
+		--enable-fixed-point
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

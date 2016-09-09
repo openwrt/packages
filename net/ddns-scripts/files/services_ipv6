@@ -34,7 +34,8 @@
 # 66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
 
 # IPv6 @ Securepoint Dynamic-DNS-Service
-"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdyn.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"spdyn.de"	"http://[USERNAME]:[PASSWORD]@update.spdyn.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # IPv6 @ Hurricane Electric Dynamic DNS
 "he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
@@ -61,7 +62,7 @@
 "duckdns.org"	"http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"OK"
 
 # IPv6 @ zzzz.io Free Dynamic DNS
-"zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"	"Updated|No change"
+"zzzz.io"	"http://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"	"Updated|No change"
 
 # IPv6 @ zerigo.com
 "zerigo.com"	"http://update.zerigo.com/dynamic?host=[DOMAIN]&ip=[IP]&user=[USERNAME]&password=[PASSWORD]"
@@ -76,13 +77,17 @@
 "nsupdate.info"	"http://[USERNAME]:[PASSWORD]@ipv6.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 # goip.de
-"https://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip6=[IP]"
+"goip.de"	"http://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip6=[IP]"
 
 # myonlineportal.net
 "myonlineportal.net"	"http://[USERNAME]:[PASSWORD]@myonlineportal.net/updateddns?hostname=[DOMAIN]&ip6=[IP]"	"good|nochg"
 
 # dnshome.de
-"dnshome.de"	"https://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip6=[IP]"
+"dnshome.de"	"http://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip6=[IP]"
 
 # core-networks.de
-"core-networks.de"	"https://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv4=1"	"good"
+"core-networks.de"	"http://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv4=1"	"good"
+
+# duiadns.net - free dynamic DNS
+"duiadns.net"	"http://[USERNAME]:[PASSWORD]@ipv6.duia.ro/dynamic.duia?host=[DOMAIN]&ip6=[IP]"
+

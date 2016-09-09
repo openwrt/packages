@@ -314,6 +314,8 @@ while : ; do
 			[ "$LOCAL_IP" != "$REGISTERED_IP" ] \
 				&& write_log 6 "Update successful - IP '$LOCAL_IP' send" \
 				|| write_log 6 "Forced update successful - IP: '$LOCAL_IP' send"
+		elif [ $ERR_LAST -eq 127 ]; then
+			write_log 3 "No update send to DDNS Provider"
 		else
 			write_log 3 "IP update not accepted by DDNS Provider"
 		fi

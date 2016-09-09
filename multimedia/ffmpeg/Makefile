@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=3.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
@@ -360,7 +360,6 @@ FFMPEG_CONFIGURE:= \
 	--enable-small \
 	--enable-pthreads \
 	--enable-zlib \
-	--disable-runtime-cpudetect \
 	--disable-doc \
 	--disable-debug \
 	--disable-bzlib \
@@ -368,6 +367,15 @@ FFMPEG_CONFIGURE:= \
 	--enable-gpl \
 	--enable-version3 \
 	\
+	--disable-dxva2 \
+	--disable-lzma \
+	--disable-vaapi \
+	--disable-vda \
+	--disable-vdpau \
+	--disable-outdevs
+
+ifeq ($(CONFIG_SOFT_FLOAT),y)
+FFMPEG_CONFIGURE += \
 	--disable-altivec \
 	--disable-amd3dnow \
 	--disable-amd3dnowext \
@@ -384,20 +392,24 @@ FFMPEG_CONFIGURE:= \
 	--disable-fma3 \
 	--disable-fma4 \
 	--disable-avx2 \
-	--disable-yasm \
 	--disable-inline-asm \
 	--disable-mips32r2 \
 	--disable-mipsdsp \
 	--disable-mipsdspr2 \
 	--disable-mipsfpu \
-	\
-	--disable-dxva2 \
-	--disable-lzma \
-	--disable-vaapi \
-	--disable-vda \
-	--disable-vdpau \
-	--disable-outdevs
+	--disable-runtime-cpudetect
 
+else ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+FFMPEG_CONFIGURE += \
+	--disable-runtime-cpudetect
+
+endif
+
+ifneq ($(CONFIG_YASM),y)
+FFMPEG_CONFIGURE += \
+	--disable-yasm
+
+endif
 
 #selectibly disable optimizations according to arch/cpu type
 ifneq ($(findstring arm,$(CONFIG_ARCH)),)
@@ -409,11 +421,6 @@ ifneq ($(findstring arm,$(CONFIG_ARCH)),)
 		FFMPEG_CONFIGURE+= \
 			--disable-neon
 	endif
-
-else ifneq ($(ARCH),aarch64)
-	FFMPEG_CONFIGURE+= \
-		--disable-vfp \
-		--disable-neon
 
 endif
 
