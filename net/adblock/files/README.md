@@ -185,21 +185,23 @@ config uhttpd 'main'
   
 **example to query active blocklists for a certain (sub-)domain, i.e. for whitelisting:**
 <pre><code>
-/etc/init.d/adblock query "www.example.ad.where.com"
-=> results for (sub-)domain 'www.example.ad.where.com'
+/etc/init.d/adblock query "example.www.doubleclick.net"
+=> distinct results for domain 'example.www.doubleclick.net' (overall 0)
    no matches in active blocklists
-=> results for (sub-)domain 'example.ad.where.com'
-   no matches in active blocklists
-=> results for (sub-)domain 'ad.where.com'
-   /tmp/dnsmasq.d/adb_list.adaway:15:address=/ad.where.com/192.168.254.250
-=> results for (sub-)domain 'where.com'
-   /tmp/dnsmasq.d/adb_list.adaway:15:address=/ad.where.com/192.168.254.250
-   /tmp/dnsmasq.d/adb_list.hphosts:30264:address=/upstream.where.com/192.168.254.250
-   /tmp/dnsmasq.d/adb_list.securemecca:4503:address=/paypal.adtag.where.com/192.168.254.250
+=> distinct results for domain 'www.doubleclick.net' (overall 1)
+   adb_list.winhelp     : www.doubleclick.net
+=> distinct results for domain 'doubleclick.net' (overall 252)
+   adb_list.adaway      : ad-g.doubleclick.net
+   adb_list.hphosts     : 1016557.fls.doubleclick.net
+   adb_list.rolist      : feedads.g.doubleclick.net
+   adb_list.securemecca : 1168945.fls.doubleclick.net
+   adb_list.sysctl      : ad.co.doubleclick.net
+   adb_list.whocares    : 3ad.doubleclick.net
+   adb_list.winhelp     : 1435575.fls.doubleclick.net
 
-The query function checks against the submitted (sub-)domain and recurse automatically to the (upper) top level domain.
-In the example above you have to whitelist "ad.where.com" to free the submitted (sub-)domain.
-For all matches (max. 3 per list) the query function returns the blocklist name, the line no. and the relevant (sub-)domain/host.
+The query function checks against the submitted (sub-)domain and recurses automatically to the upper top level domain(s).
+For every domain it returns the overall count plus a distinct list of active blocklists with the first relevant result.
+In the example above you have to whitelist "www.doubleclick.net" to free the submitted domain.
 </code></pre>
   
 **example to identify blocked domains during web browsing, i.e. for whitelisting:**

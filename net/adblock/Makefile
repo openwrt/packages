@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=1.4.8
+PKG_VERSION:=1.4.9
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
