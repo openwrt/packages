@@ -131,18 +131,22 @@ cfgup()
 
 query()
 {
-    local search
-    local domain="${1}"
-    local tld="${domain#*.}"
-    if [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
+    domain="${1}"
+    tld="${domain#*.}"
+    list_dns="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print)"
+    if [ -z "${list_dns}" ]
+    then
+        f_log "no active blocklists found, please start adblock first"
+    elif [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
     then
         f_log "invalid domain query input, please submit a specific (sub-)domain, i.e. 'www.abc.xyz'"
     else
         while [ "${domain}" != "${tld}" ]
         do
             search="${domain//./\.}"
-            result="$(grep -Hnm 3 "[/\.]${search}/" "/tmp/dnsmasq.d/adb_list"* | sed -e 's/^/   /')"
-            printf "%s\n" "=> results for (sub-)domain '${domain}'"
+            result="$(grep -Hm 1 "[/\.]${search}/" "${adb_dnsdir}/adb_list"* | awk -F ':|/' '{print "   "$4"\t: "$6}')"
+            count="$(grep -hc "[/\.]${search}/" "${adb_dnsdir}/adb_list"* | awk '{sum += $1} END {printf sum}')"
+            printf "%s\n" "=> distinct results for domain '${domain}' (overall ${count})"
             if [ -z "${result}" ]
             then
                 printf "%s\n" "   no matches in active blocklists"
