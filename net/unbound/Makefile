@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
 PKG_VERSION:=1.5.9
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -103,6 +103,7 @@ define Package/libunbound
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= (library)
+  DEPENDS+= +libpthread
 endef
 
 define Package/libunbound/description
@@ -110,13 +111,13 @@ define Package/libunbound/description
 endef
 
 CONFIGURE_ARGS += \
+	--disable-dsa \
 	--disable-gost \
 	--enable-allsymbols \
 	--with-libexpat="$(STAGING_DIR)/usr" \
 	--with-ssl="$(STAGING_DIR)/usr" \
 	--with-pidfile=/var/run/unbound.pid \
-	--with-user=unbound \
-	--without-pthreads
+	--with-user=unbound
 
 define Package/unbound/conffiles
 /etc/unbound/unbound.conf
