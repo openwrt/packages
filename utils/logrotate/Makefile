@@ -38,7 +38,7 @@ define Package/logrotate/conffiles
 /etc/logrotate.conf
 endef
 
-EXTRA_CFLAGS += $(TARGET_CPPFLAGS)
+EXTRA_CFLAGS += $(TARGET_CPPFLAGS) -Wno-nonnull-compare
 EXTRA_LDFLAGS += $(TARGET_LDFLAGS)
 
 define Build/Compile
