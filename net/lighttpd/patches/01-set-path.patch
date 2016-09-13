@@ -1,0 +1,14 @@
+--- a/src/mod_cgi.c.orig
++++ b/src/mod_cgi.c
+@@ -958,6 +958,11 @@ static int cgi_create_env(server *srv, c
+ 		force_assert(s);
+ 		cgi_env_add(&env, CONST_STR_LEN("REQUEST_METHOD"), s, strlen(s));
+ 
++		s = getenv("PATH");
++		if (s != NULL) {
++			cgi_env_add(&env, CONST_STR_LEN("PATH"), s, strlen(s));
++		}
++
+ 		if (!buffer_string_is_empty(con->request.pathinfo)) {
+ 			cgi_env_add(&env, CONST_STR_LEN("PATH_INFO"), CONST_BUF_LEN(con->request.pathinfo));
+ 		}
