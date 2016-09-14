@@ -157,3 +157,5 @@
 # core-networks.de
 "core-networks.de"	"http://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv6=1"	"good"
 
+# do.de
+"do.de"	"http://ddns.do.de/?myip=[IP]&hostname=[DOMAIN]&username=[USERNAME]&password=[PASSWORD]"
