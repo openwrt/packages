@@ -21,7 +21,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=joe
 PKG_VERSION:=4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@SF/joe-editor
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
