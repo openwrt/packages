@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v4.4.5
+PKG_VERSION:=v4.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
-PKG_MD5SUM:=376140907bbe362f36065a30af04f020
+PKG_MD5SUM:=ac8e38c83f29e83d496d4bc4283487b0
 
 HOST_BUILD_DEPENDS:=python/host
 PKG_BUILD_DEPENDS:=python/host
@@ -56,6 +56,16 @@ CONFIGURE_ARGS= \
 	--shared-zlib \
 	--shared-openssl \
 	--prefix=/usr
+
+ifneq ($(findstring arm,$(ARCH)),)
+CONFIGURE_ARGS+= \
+	$(if $(CONFIG_SOFT_FLOAT),--with-arm-float-abi=soft,--with-arm-float-abi=hard)
+endif
+
+ifneq ($(findstring mips,$(ARCH)),)
+CONFIGURE_ARGS+= \
+	$(if $(CONFIG_SOFT_FLOAT),--with-mips-float-abi=soft,--with-mips-float-abi=hard)
+endif
 
 HOST_CONFIGURE_VARS:=
 HOST_CONFIGURE_ARGS:= \
