@@ -50,7 +50,7 @@ load_watchcat() {
 			pingperiod="$seconds"
 			if [ "$pingperiod" -ge 0 ]
 			then
-				[ "$pingperiod" -le "$period" ] \
+				[ "$pingperiod" -lt "$period" ] \
 					|| append_string "error" "pingperiod must be less than period" "; "
 			else
 				append_string "error" 'pingperiod is not a valid time value (ex: "30"; "4m"; "6h"; "2d")' "; "
@@ -59,8 +59,6 @@ load_watchcat() {
 			pingperiod="$((period/20))"
 		fi
 	}
-	[ "$pingperiod" -lt "$period" -o "$mode" = "always" ] \
-		|| append_string "error" "pingperiod is not recognized" "; "
 	[ "$forcedelay" -ge 0 ] \
 		|| append_string "error" "forcedelay must be a integer greater or equal than 0, where 0 means disabled" "; "
 
