@@ -92,4 +92,4 @@
 "duiadns.net"	"http://[USERNAME]:[PASSWORD]@ipv6.duia.ro/dynamic.duia?host=[DOMAIN]&ip6=[IP]"
 
 # do.de
-"do.de" "http://ddns.do.de/?myip=[IP]&hostname=[DOMAIN]&username=[USERNAME]&password=[PASSWORD]"
+"do.de" "http://ddns.do.de/?myip=[IP]&hostname=[DOMAIN]&username=[USERNAME]&password=[PASSWORD]" "good|nochg"
