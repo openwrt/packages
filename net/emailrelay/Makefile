@@ -81,8 +81,9 @@ define Package/emailrelay-nossl/conffiles
 endef
 
 CONFIGURE_ARGS += \
-	--with-pam=no
-
+	--with-pam=no \
+	--enable-debug=yes
+	
 CONFIGURE_VARS += \
 	CXXFLAGS="$$$$CXXFLAGS -fno-rtti"	
 
