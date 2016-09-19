@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
 PKG_VERSION:=3.5.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -35,6 +35,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_GNUTLS_PKCS11 \
 	CONFIG_GNUTLS_PSK \
 	CONFIG_GNUTLS_SRP \
+	CONFIG_GNUTLS_TPM \
 	CONFIG_LIBNETTLE_MINI \
 
 include $(INCLUDE_DIR)/package.mk
@@ -161,6 +162,10 @@ ifneq ($(CONFIG_GNUTLS_OCSP),y)
 CONFIGURE_ARGS += --disable-ocsp
 endif
 
+ifneq ($(CONFIG_GNUTLS_TPM),y)
+CONFIGURE_ARGS += --without-tpm
+endif
+
 ifeq ($(CONFIG_GNUTLS_CRYPTODEV),y)
 CONFIGURE_ARGS += --enable-cryptodev
 endif
@@ -218,6 +223,11 @@ endif
 ifeq ($(CONFIG_GNUTLS_PKCS11),y)
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/bin/p11tool \
+		$(1)/usr/bin/
+endif
+ifeq ($(CONFIG_GNUTLS_TPM),y)
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/bin/tpmtool \
 		$(1)/usr/bin/
 endif
 endef
