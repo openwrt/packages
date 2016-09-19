@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openpyxl
-PKG_VERSION:=2.4.0-b1
+PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/25/69/7976ba24d2b532e96157623daa8de4bbcad23e0761b3062d5e38775577d5/
-PKG_MD5SUM:=f56975d698cbfa619a8c99ddce41b142
+PKG_SOURCE_URL:=https://pypi.python.org/packages/7e/75/9bb309f80e4f75d139ecc55e9edf65c5844336b5a84966a609267255f961/
+PKG_MD5SUM:=e3376d1fce0681fd0b4047ab89218af4
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
