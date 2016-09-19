@@ -8,25 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=engine_pkcs11
-PKG_VERSION:=20150429
+PKG_VERSION:=0.2.2
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPL-2.1+
 
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/OpenSC/engine_pkcs11.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=0cc9d88eb291f5c545e5bc91d56866a2e0e95d48
+PKG_SOURCE_URL:=https://github.com/OpenSC/engine_pkcs11/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_FIXUP:=libtool
 
 PKG_CONFIG_DEPENDS:=CONFIG_OPENSSL_ENGINE
 
+include $(INCLUDE_DIR)/package.mk
+
+PKG_FIXUP:=libtool
 PKG_INSTALL:=1
 
-include $(INCLUDE_DIR)/package.mk
+CONFIGURE_ARGS += --with-enginesdir=/usr/lib/engines
 
 define Package/engine_pkcs11
   SECTION:=libs
@@ -42,7 +39,7 @@ endef
 
 define Package/engine_pkcs11/install
 	$(INSTALL_DIR) $(1)/usr/lib/engines
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/engines/engine_pkcs11.so $(1)/usr/lib/engines/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/engines/libpkcs11.so $(1)/usr/lib/engines/
 endef
 
 $(eval $(call BuildPackage,engine_pkcs11))
