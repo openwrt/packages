@@ -31,6 +31,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => weekly updates, approx. 600 entries
     * [ruadlist/easylist](https://code.google.com/p/ruadlist)
     * => weekly updates, approx. 2.000 entries
+    * [securemecca](http://www.securemecca.com)
+    * => infrequent updates, approx. 25.000 entries
     * [shallalist](http://www.shallalist.de) (categories "adv" "costtraps" "spyware" "tracker" "warez" enabled by default)
     * => daily updates, approx. 32.000 entries (a short description of all shallalist categories can be found [online](http://www.shallalist.de/categories.html))
     * [spam404](http://www.spam404.com)
@@ -63,6 +65,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * init system support (start/stop/restart/reload/toggle/stats/cfgup)
 * hotplug support, the adblock start will be triggered by wan 'ifup' event, this can be restricted to a certain wan interface or disabled at all (see config options below)
 * toggle to quickly switch adblock 'on' or 'off'
+* query function to quickly identify blocked (sub-)domains, i.e. for whitelisting
 * optional: automatic adblock list backup/restore, backups will be (de-)compressed on the fly (disabled by default)
 * optional: add new adblock sources via uci config (see example below)
 
@@ -107,7 +110,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **restricted mode:** to disable flash writes with adblock status information to the adblock config file (used by LuCI frontend), please set 'adb\_restricted' to '1'
 * **adblock toggle:** to quickly switch adblocking 'on' or 'off', simply use _/etc/init.d/adblock toggle_
 * **adblock statistics:** to update only the adblock statistics (without updating the block lists as well), please run _/etc/init.d/adblock stats_
-* **adblock query <DOMAIN>:** to query the active blocklists for a specific domain, please run _/etc/init.d/adblock query <DOMAIN>_
+* **adblock query `<DOMAIN>`:** to query the active blocklists for a specific domain, please run _/etc/init.d/adblock query `<DOMAIN>`_ (see example below)
 * **configuration update:** to update an outdated adblock config file with the current default version, please run _/etc/init.d/adblock cfgup_, make your individual changes and start the adblock service again
 * **debugging:** for script debugging please set the 'adb\_debug' variable in the header of _/etc/init.d/adblock_ to '1'
 * **disable active dns probing in windows:** to prevent a possible yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
@@ -180,7 +183,28 @@ config uhttpd 'main'
     list listen_https '0.0.0.0:445'
 </code></pre>
   
-**example to find blocked domains on certain sites for whitelisting:**
+**example to query active blocklists for a certain (sub-)domain, i.e. for whitelisting:**
+<pre><code>
+/etc/init.d/adblock query "example.www.doubleclick.net"
+=> distinct results for domain 'example.www.doubleclick.net' (overall 0)
+   no matches in active blocklists
+=> distinct results for domain 'www.doubleclick.net' (overall 1)
+   adb_list.winhelp     : www.doubleclick.net
+=> distinct results for domain 'doubleclick.net' (overall 252)
+   adb_list.adaway      : ad-g.doubleclick.net
+   adb_list.hphosts     : 1016557.fls.doubleclick.net
+   adb_list.rolist      : feedads.g.doubleclick.net
+   adb_list.securemecca : 1168945.fls.doubleclick.net
+   adb_list.sysctl      : ad.co.doubleclick.net
+   adb_list.whocares    : 3ad.doubleclick.net
+   adb_list.winhelp     : 1435575.fls.doubleclick.net
+
+The query function checks against the submitted (sub-)domain and recurses automatically to the upper top level domain(s).
+For every domain it returns the overall count plus a distinct list of active blocklists with the first relevant result.
+In the example above you have to whitelist "www.doubleclick.net" to free the submitted domain.
+</code></pre>
+  
+**example to identify blocked domains during web browsing, i.e. for whitelisting:**
 <pre><code>
 1. the easy way ...
 enable the network analysis builtins in chrome or firefox to identify domains
