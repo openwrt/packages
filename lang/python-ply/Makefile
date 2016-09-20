@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ply
-PKG_VERSION:=3.8
-PKG_RELEASE:=3
+PKG_VERSION:=3.9
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.dabeaz.com/ply
-PKG_MD5SUM:=94726411496c52c87c2b9429b12d5c50
+PKG_MD5SUM:=c5c5767376eff902617fd9874f0c76b7
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 HOST_BUILD_DEPENDS:=python/host python-setuptools/host
