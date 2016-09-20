@@ -12,7 +12,7 @@ PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=gku100.tar.gz
-PKG_SOURCE_URL:=ftp://kermit.columbia.edu/kermit/archives/gku100.tar.gz
+PKG_SOURCE_URL:=ftp://kermit.columbia.edu/kermit/archives
 PKG_MD5SUM:=aea4fa728b9981fce41c9f2c635f2e05
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
