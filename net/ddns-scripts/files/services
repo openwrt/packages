@@ -58,7 +58,7 @@
 "ovh.com"	"http://[USERNAME]:[PASSWORD]@www.ovh.com/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
 
 # dns-o-matic is a free service by opendns.com for updating multiple hosts
-"dnsomatic.com"	"http://[USERNAME]:[PASSWORD]@updates.dnsomatic.com/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"dnsomatic.com"	"http://[USERNAME]:[PASSWORD]@updates.dnsomatic.com/nic/update?hostname=all.dnsomatic.com&myip=[IP]"	"good|nochg"
 
 # 3322.org
 "3322.org"	"http://[USERNAME]:[PASSWORD]@members.3322.org/dyndns/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
