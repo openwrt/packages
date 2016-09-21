@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=check
-PKG_VERSION:=0.9.14
-PKG_RELEASE:=2
+PKG_VERSION:=0.11.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/check
-PKG_MD5SUM:=38263d115d784c17aa3b959ce94be8b8
+PKG_SOURCE_URL:=https://github.com/libcheck/check/releases/download/$(PKG_VERSION)
+PKG_MD5SUM:=9b90522b31f5628c2e0f55dda348e558
 
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING.LESSER
@@ -27,7 +27,7 @@ define Package/check
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Unit testing framework for C
-  URL:=http://check.sourceforge.net/
+  URL:=https://libcheck.github.io/check/
   DEPENDS:= +libpthread +librt
 endef
 
