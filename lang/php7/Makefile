@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.0.10
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -35,7 +35,7 @@ PHP7_MODULES = \
 	ldap \
 	mbstring mcrypt mysqli \
 	opcache openssl \
-	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql \
+	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql phar \
 	session shmop simplexml soap sockets sqlite3 sysvmsg sysvsem sysvshm \
 	tokenizer \
 	xml xmlreader xmlwriter zip \
@@ -157,8 +157,7 @@ CONFIGURE_ARGS+= \
 	--disable-short-tags \
 	\
 	--with-zlib="$(STAGING_DIR)/usr" \
-	  --with-zlib-dir="$(STAGING_DIR)/usr" \
-	--disable-phar
+	  --with-zlib-dir="$(STAGING_DIR)/usr"
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-calendar),)
   CONFIGURE_ARGS+= --enable-calendar=shared
@@ -324,6 +323,12 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pgsql),)
   CONFIGURE_ARGS+= --with-pgsql=shared,"$(STAGING_DIR)/usr"
 else
   CONFIGURE_ARGS+= --without-pgsql
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-phar),)
+  CONFIGURE_ARGS+= --enable-phar=shared
+else
+  CONFIGURE_ARGS+= --disable-phar
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-session),)
@@ -571,6 +576,7 @@ $(eval $(call BuildModule,pdo-mysql,PDO driver for MySQL,+php7-mod-pdo +PACKAGE_
 $(eval $(call BuildModule,pdo-pgsql,PDO driver for PostgreSQL,+php7-mod-pdo +PACKAGE_php7-mod-pdo-pgsql:libpq))
 $(eval $(call BuildModule,pdo-sqlite,PDO driver for SQLite 3.x,+php7-mod-pdo +PACKAGE_php7-mod-pdo-sqlite:libsqlite3 +PACKAGE_php7-mod-pdo-sqlite:librt))
 $(eval $(call BuildModule,pgsql,PostgreSQL,+PACKAGE_php7-mod-pgsql:libpq))
+$(eval $(call BuildModule,phar,Phar Archives,+php7-mod-hash))
 $(eval $(call BuildModule,session,Session))
 $(eval $(call BuildModule,shmop,Shared Memory))
 $(eval $(call BuildModule,simplexml,SimpleXML,+@PHP7_LIBXML +PACKAGE_php7-mod-simplexml:libxml2))
