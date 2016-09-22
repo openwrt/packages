@@ -3,9 +3,9 @@
 
 START=98
 
-RNGD_INTERVAL=30
 RNGD_AMOUNT=4000
 RNGD_DEVICE="/dev/urandom"
+# Use /dev/urandom as source, as hardware sources like /dev/hwrng are usually not present
 
 start() {
 	service_start /sbin/rngd -r $RNGD_DEVICE -W $RNGD_AMOUNT
