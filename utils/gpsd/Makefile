@@ -103,7 +103,8 @@ SCONS_OPTIONS += \
 	nostrip=yes \
 	python=no \
 	implicit_link=no \
-	chrpath=no
+	chrpath=no \
+	target="$(TARGET_CROSS:-=)"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
