@@ -38,14 +38,16 @@ else
 endif
 endif
 
+ifneq ($(CONFIG_SOFT_FLOAT),)
+CONFIGURE_VARS+= AS= 
+MAKE_FLAGS+= AS= 
+CONFIGURE_ARGS += --disable-asm
+endif
+
 CONFIGURE_ARGS += \
 		--enable-shared \
 		--enable-pic \
 		--disable-cli 
-
-ifeq ($(CONFIG_SOFT_FLOAT),y)
-CONFIGURE_ARGS += --disable-asm
-endif
 
 define Package/libx264
   SECTION:=libs
