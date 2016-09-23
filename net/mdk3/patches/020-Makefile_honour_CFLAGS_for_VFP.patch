@@ -1,0 +1,8 @@
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,4 @@
+-CFLAGS		= -g -O3 -Wall -Wextra
++CFLAGS		+= -g -O3 -Wall -Wextra
+ LINKFLAGS	= -lpthread
+ 
+ DESTDIR		=
