@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.4
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
@@ -138,6 +138,13 @@ define Package/$(PKG_NAME)/postinst
 	uci -q get ddns.global.log_lines > /dev/null || uci -q set ddns.global.log_lines='250'
 	uci -q get ddns.global.allow_local_ip > /dev/null || uci -q set ddns.global.allow_local_ip='0'
 	uci -q commit ddns
+
+	# fix some service_name entries to new once
+	/bin/sed -i '/service_name/s/freedns.afraid.org/afraid.org/g' /etc/config/ddns
+	/bin/sed -i '/service_name/s/free.editdns.net/editdns.net/g' /etc/config/ddns
+	/bin/sed -i '/service_name/s/domains.google.com/google.com/g' /etc/config/ddns
+	/bin/sed -i '/service_name/s/spdns.de/spdyn.de/g' /etc/config/ddns
+	/bin/sed -i '/service_name/s/strato.de/strato.com/g' /etc/config/ddns
 
 	# clear LuCI indexcache
 	rm -f /tmp/luci-indexcache >/dev/null 2>&1
