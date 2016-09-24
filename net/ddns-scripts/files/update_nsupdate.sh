@@ -15,8 +15,7 @@
 #
 # variable __IP already defined with the ip-address to use for update
 #
-local __TTL=600		#.preset DNS TTL (in seconds)
-local __RRTYPE __PW __TCP
+__TTL=600		#.preset DNS TTL (in seconds)
 
 [ -x /usr/bin/nsupdate ] || write_log 14 "'nsupdate' not installed or not executable !"
 

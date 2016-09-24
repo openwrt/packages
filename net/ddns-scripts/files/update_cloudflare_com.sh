@@ -19,8 +19,6 @@
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
 
-local __RECID __URL __KEY __KEYS __FOUND __SUBDOM __DOMAIN __TLD
-
 # split given Host/Domain into TLD, registrable domain, and subdomain
 split_FQDN $domain __TLD __DOMAIN __SUBDOM
 [ $? -ne 0 -o -z "$__DOMAIN" ] && \

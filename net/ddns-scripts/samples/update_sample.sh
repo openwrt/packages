@@ -17,7 +17,7 @@
 # the code here is the copy of the default used inside send_update()
 #
 # tested with spdns.de
-local __URL="http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
+__URL="http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"
 # inside url we need domain, username and password
 [ -z "$domain" ]   && write_log 14 "Service section not configured correctly! Missing 'domain'"
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
