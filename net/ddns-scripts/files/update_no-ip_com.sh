@@ -9,8 +9,7 @@
 # provider did not reactivate records, if no IP change was recognized
 # so we send a dummy (localhost) and a seconds later we send the correct IP addr
 #
-local __DUMMY
-local __UPDURL="http://[USERNAME]:[PASSWORD]@dynupdate.no-ip.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+__UPDURL="http://[USERNAME]:[PASSWORD]@dynupdate.no-ip.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
 # inside url we need username and password
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
