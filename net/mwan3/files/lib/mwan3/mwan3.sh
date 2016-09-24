@@ -1,7 +1,5 @@
 #!/bin/sh
 
-local IP4 IP6 IPS IPT4 IPT6 LOG
-
 IP4="/usr/bin/ip -4"
 IP6="/usr/bin/ip -6"
 IPS="/usr/sbin/ipset"
