@@ -9,11 +9,9 @@ https://bugzilla.gnome.org/761550
  glib/gdate.c | 3 +++
  1 file changed, 3 insertions(+)
 
-diff --git a/glib/gdate.c b/glib/gdate.c
-index 4aece02..cdc735c 100644
 --- a/glib/gdate.c
 +++ b/glib/gdate.c
-@@ -2494,7 +2494,10 @@ g_date_strftime (gchar       *s,
+@@ -2497,7 +2497,10 @@ g_date_strftime (gchar       *s,
         * recognize whether strftime actually failed or just returned "".
         */
        tmpbuf[0] = '\1';
@@ -24,6 +22,3 @@ index 4aece02..cdc735c 100644
  
        if (tmplen == 0 && tmpbuf[0] != '\0')
          {
--- 
-cgit v0.12
-

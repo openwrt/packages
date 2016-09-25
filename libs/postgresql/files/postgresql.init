@@ -26,48 +26,47 @@ cleanup() {
 }
 
 start_service() {
+	. /lib/functions/postgresql.sh
+
 	config_load "postgresql"
 	config_get pgdata config PGDATA
-	config_get pguser config PGUSER
-	config_get pgctl config PG_CTL
 	config_get pgopts config PGOPTS
 
 	user_exists postgres 5432 || user_add postgres 5432
 	group_exists postgres 5432 || group_add postgres 5432
 
-	if [ ! -d "${pgdata}" ]; then
-		echo "Create the data directory (${pgdata}) and try again"
-		return 1
-	fi
-
 	fix_perms
 	fix_hosts
 
-	procd_open_instance
+	if [ ! -d "${pgdata}" ]; then
+		pg_init_data ${pgdata}
+		[ $? -gt 0 ] && return 1
+	fi
 
-	procd_set_param user ${pguser}
+	cleanup "${pgdata}"
+
+	procd_open_instance
+	procd_set_param user postgres
 	procd_set_param command $PROG
 	procd_append_param command -D "${pgdata}"
 	[ -n "${pgopts}" ] && procd_append_param command -o "${pgopts}"
-
 	procd_set_param respawn retry=60
+	procd_close_instance
+
+	procd_open_instance
+	procd_set_param user postgres
+	procd_set_param command /lib/functions/postgresql.sh init "${pgdata}"
 	procd_close_instance
 }
 
 reload_service() {
 	config_load "postgresql"
 	config_get pgdata config PGDATA
-	config_get pguser config PGUSER
-	config_get pgctl config PG_CTL
-	${pgctl} reload -U ${pguser} -D '${pgdata}' -s
+	/usr/bin/pg_ctl reload -U postgres -D "${pgdata}" -s
 }
 
 status() {
 	config_load "postgresql"
 	config_get pgdata config PGDATA
-	config_get pguser config PGUSER
-	config_get pgctl config PG_CTL
-	echo "status postgres..."
-	${pgctl} status -U ${pguser} -D '${pgdata}'
-	echo "ok"
+	/usr/bin/pg_ctl status -U postgres -D "${pgdata}"
 }

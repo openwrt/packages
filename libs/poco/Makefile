@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=poco
-PKG_VERSION:=1.7.3
+PKG_VERSION:=1.7.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pocoproject.org/releases/poco-1.7.3
-PKG_MD5SUM:=a27c40529b6c32352ec890f6fe18bc0d
+PKG_SOURCE_URL:=http://pocoproject.org/releases/poco-1.7.5
+PKG_MD5SUM:=baafda4833c4dd95993398d9f237c96c
 
 PKG_LICENSE:=BSL-1.0
 PKG_LICENSE_FILES:=LICENSE

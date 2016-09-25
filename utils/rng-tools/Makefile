@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rng-tools
 PKG_VERSION:=5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/gkernel/rng-tools/$(PKG_VERSION)/
@@ -28,6 +28,12 @@ define Package/rng-tools
   CATEGORY:=Utilities
   TITLE:=Daemon for adding entropy to kernel entropy pool
   URL:=http://sourceforge.net/projects/gkernel/
+endef
+
+define Package/rng-tools/description
+Daemon for adding entropy to kernel entropy pool. By default it uses
+/dev/urandom as the source but the init script can be modified
+to use a hardware source like /dev/hwrng if present
 endef
 
 ifdef CONFIG_USE_UCLIBC

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ipaddress
-PKG_VERSION:=1.0.16
+PKG_VERSION:=1.0.17
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/i/ipaddress
-PKG_MD5SUM:=1e27b62aa20f5b6fc200b2bdbf0d0847
+PKG_SOURCE_URL:=https://pypi.python.org/packages/bb/26/3b64955ff73f9e3155079b9ed31812afdfa5333b5c76387454d651ef593a
+PKG_MD5SUM:=8bbf0326719fafb1f453921ef96729fe
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 

@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=debootstrap
-PKG_VERSION:=1.0.81
+PKG_VERSION:=1.0.83
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_SOURCE:=$(PKG_NAME)-udeb_$(PKG_VERSION)_all.udeb
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/d/debootstrap
-PKG_MD5SUM:=06d2fc8005113da0c74aa4c8ff82d659
+PKG_MD5SUM:=877fe5281a0e424bd6c71d121cbb725b8f56694e66558cd47c20c3aa87ceff72
 PKG_LICENSE:=Unique
 PKG_LICENSE_FILES:=debian/copyright
 
@@ -49,9 +49,8 @@ define Package/debootstrap/install
 	$(INSTALL_DIR) $(1)/usr/share/debootstrap
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usr/share/debootstrap/pkgdetails $(1)/usr/share/debootstrap
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/usr/share/debootstrap/functions $(1)/usr/share/debootstrap
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/usr/share/debootstrap/devices.tar.gz $(1)/usr/share/debootstrap
 	$(INSTALL_DIR) $(1)/usr/share/debootstrap/scripts
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/usr/share/debootstrap/scripts/* $(1)/usr/share/debootstrap/scripts
+	$(CP) $(PKG_BUILD_DIR)/usr/share/debootstrap/scripts/* $(1)/usr/share/debootstrap/scripts
 endef
 
 $(eval $(call BuildPackage,debootstrap))
