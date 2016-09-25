@@ -15,9 +15,9 @@
 #
 # variable __IP already defined with the ip-address to use for update
 #
-__TTL=600		#.preset DNS TTL (in seconds)
-__RRTYPE __PW __TCP
-__PROG=$(which nsupdate)			# BIND nsupdate ?
+local __TTL=600		#.preset DNS TTL (in seconds)
+local __RRTYPE __PW __TCP
+local __PROG=$(which nsupdate)			# BIND nsupdate ?
 [ -z "$__PROG" ] && __PROG=$(which knsupdate)	# Knot nsupdate ?
 
 [ -z "$__PROG" ]     && write_log 14 "'nsupdate' or 'knsupdate' not installed !"
