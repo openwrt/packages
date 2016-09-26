@@ -8,6 +8,9 @@ uci -q batch <<EOF
 	set gnunet.namestore_flat=gnunet-config
 	set gnunet.namestore_flat.FILENAME=/etc/gnunet/namestore.flat
 	set gnunet.namestore.DATABASE=flat
+	del gnunet.namecache_flat
+	set gnunet.namecache_flat=gnunet-config
+	set gnunet.namecache_flat.FILENAME=/var/run/gnunet/namecache.flat
 	set gnunet.namecache.DATABASE=flat
 	commit gnunet
 EOF
