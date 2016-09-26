@@ -5,28 +5,6 @@
 touch /etc/config/gnunet
 
 uci batch <<EOF
-set gnunet.datastore=gnunet-config
-set gnunet.datastore.DATABASE=heap
-set gnunet.datastore.QUOTA="4 MB"
-
-set gnunet.fs=gnunet-config
-set gnunet.fs.CONTENT_PUSHING=NO
-set gnunet.fs.CONTENT_CACHING=NO
-
-set gnunet.dhtcache=gnunet-config
-set gnunet.dhtcache.QUOTA="4 MB"
-
-set gnunet.dns2gns=gnunet-config
-set gnunet.dns2gns.AUTOSTART=YES
-set gnunet.dns2gns.FORCESTART=YES
-
-set gnunet.pt=gnunet-config
-set gnunet.pt.FORCESTART=YES
-
-set gnunet.exit=gnunet-config
-set gnunet.exit.AUTOSTART=YES
-set gnunet.exit.FORCESTART=YES
-
 set gnunet.nse=gnunet-config
 set gnunet.nse.WORKDELAY='500 ms'
 
