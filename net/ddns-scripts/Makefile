@@ -116,6 +116,8 @@ endef
 
 ##### **********************************
 define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.hotplug $(1)/etc/hotplug.d/iface/95-ddns
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -132,19 +134,8 @@ define Package/$(PKG_NAME)/postinst
 	# if run within buildroot exit
 	[ -n "$${IPKG_INSTROOT}" ] && exit 0
 
-	# add new section "ddns" "global" if not exists
-	uci -q get ddns.global > /dev/null || uci -q set ddns.global='ddns'
-	uci -q get ddns.global.date_format > /dev/null || uci -q set ddns.global.date_format='%F %R'
-	uci -q get ddns.global.log_lines > /dev/null || uci -q set ddns.global.log_lines='250'
-	uci -q get ddns.global.allow_local_ip > /dev/null || uci -q set ddns.global.allow_local_ip='0'
-	uci -q commit ddns
-
-	# fix some service_name entries to new once
-	/bin/sed -i '/service_name/s/freedns.afraid.org/afraid.org/g' /etc/config/ddns
-	/bin/sed -i '/service_name/s/free.editdns.net/editdns.net/g' /etc/config/ddns
-	/bin/sed -i '/service_name/s/domains.google.com/google.com/g' /etc/config/ddns
-	/bin/sed -i '/service_name/s/spdns.de/spdyn.de/g' /etc/config/ddns
-	/bin/sed -i '/service_name/s/strato.de/strato.com/g' /etc/config/ddns
+	# apply changes introduced during release changes
+	/etc/uci-defaults/ddns
 
 	# clear LuCI indexcache
 	rm -f /tmp/luci-indexcache >/dev/null 2>&1
