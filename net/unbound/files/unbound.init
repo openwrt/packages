@@ -1,20 +1,718 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2016 Michael Hanselmann
+#
+##############################################################################
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#   Copyright (C) 2016 Eric Luehrsen
+#
+##############################################################################
 
-START=61
+. /lib/functions/network.sh
 
+##############################################################################
+
+START=60
 USE_PROCD=1
+PROG="/usr/sbin/unbound"
 
-start_service() {
-	find /etc/unbound \! \( -user unbound -group unbound \) \
-		-exec chown unbound:unbound {} \;
+##############################################################################
 
-	find /etc/unbound \( -perm +027 -o \! -perm -600 \) \
-		-exec chmod u=rwX,g=rX,o= {} \;
+UNBOUND_B_CONTROL=0
+UNBOUND_B_DNSMASQ=0
+UNBOUND_B_DNSSEC=0
+UNBOUND_B_GATE_NAME=0
+UNBOUND_B_LOCL_BLCK=0
+UNBOUND_B_LOCL_NAME=0
+UNBOUND_B_LOCL_SERV=1
+UNBOUND_B_OBSCURE=0
+UNBOUND_B_PRIV_BLCK=1
 
-	procd_open_instance
-	procd_set_param command /usr/sbin/unbound
-	procd_append_param command -d # don't daemonize
-	procd_set_param respawn
-	procd_close_instance
+UNBOUND_D_RESOURCE=small
+UNBOUND_D_RECURSION=passive
+
+UNBOUND_TXT_FWD_ZONE=""
+UNBOUND_TTL_MIN=120
+
+UNBOUND_N_EDNS_SIZE=1280
+UNBOUND_N_FWD_PORTS=""
+UNBOUND_N_REC_PORT=53
+UNBOUND_N_ROOT_AGE=90
+
+UNBOUND_PID="/var/run/unbound.pid"
+UNBOUND_CONF="/var/etc/unbound.conf"
+UNBOUND_HEADER_CONF="/etc/unbound/header.conf"
+
+##############################################################################
+
+domain_ptr_ip6() {
+  # Get the nibble rounded /CDIR ip6.arpa.
+  echo "$1" | awk -F: \
+  'BEGIN { OFS = "" ; }
+  { cdir = $0 ; 
+  sub(/.*\//,"",cdir) ; 
+  cdir = (cdir / 4) ;
+  sub(/\/[0-9]+/,"",$0) ; 
+  ct_stop = 9 - NF ;
+  for(i=1; i<=NF; i++) {
+    if(length($i) == 0) { 
+      for(j=1; j<=ct_stop; j++) { $i = ($i "0000") ; } } 
+    else { $i = substr(("0000" $i), length($i)+5-4) ; } } ;
+  y = $0 ;
+  ct_start = length(y) - 32 + cdir ; 
+  for(i=ct_start; i>0; i--) { x = (x substr(y,i,1)) ; } ; 
+  gsub(/./,"&\.",x) ; 
+  x = (x "ip6.arpa") ; 
+  print x }'
 }
+
+##############################################################################
+
+host_ptr_ip6() {
+  # Get host ip6.arpa.
+  echo "$1" | awk -F: \
+  'BEGIN { OFS = "" ; }
+  { sub(/\/[0-9]+/,"",$0) ; 
+  ct_stop = 9 - NF ; 
+  for(i=1; i<=NF; i++) {
+    if(length($i) == 0) { 
+      for(j=1; j<=ct_stop; j++) { $i = ($i "0000") ; } } 
+    else { $i = substr(("0000" $i), length($i)+5-4) ; } } ; 
+  y = $0 ;
+  ct_start = length(y); 
+  for(i=ct_start; i>0; i--) { x = (x substr(y,i,1)) ; } ; 
+  sub(/[0-9]+\//,"",x) ;
+  gsub(/./,"&\.",x) ; 
+  x = (x "ip6.arpa") ; 
+  print x }'
+}
+
+##############################################################################
+
+domain_ptr_ip4() { 
+  # Get the byte rounded /CDIR in-addr.arpa.
+  echo "$1" | awk \
+  '{ cdir = $0 ; 
+  sub(/.*\//,"",cdir) ; 
+  cdir = (cdir / 8) ;
+  dtxt = $0 ; 
+  sub(/\/.*/,"",dtxt) ; 
+  split(dtxt, dtxt, ".") ;
+  for(i=1; i<=cdir; i++) { x = (dtxt[i] "." x) ; }
+  x = (x "in-addr.arpa") ;
+  print x }'
+} 
+
+##############################################################################
+
+host_ptr_ip4() {
+  # Get host in-addr.arpa.
+  echo "$1" | awk -F. \
+  '{ x = ( $4"."$3"."$2"."$1".in-addr.arpa" ) ;
+  sub(/\/[0-9]+/,"",x) ;
+  print x }'
+}
+
+##############################################################################
+
+valid_subnet6() {                                                  
+  case $1 in                                                          
+    # GA                                                          
+    [1-9][0-9a-f][0-9a-f][0-9a-f]":"*) echo "ok" ;;                    
+    # ULA                                                             
+    f[cd][0-9a-f][0-9a-f]":"*) echo "ok" ;;                            
+    # fe80::, ::1, and such                                            
+    *) echo "not" ;;                                      
+  esac                                                                
+}  
+
+##############################################################################
+
+valid_subnet4() {
+  case $1 in
+    # Link, Local, and Such
+    169"."254"."*) echo "not" ;;
+    127"."*) echo "not" ;;
+    0"."*) echo "not" ;;
+    255"."*) echo "not" ;;
+    # Other Normal
+    25[0-4]"."[0-9]*) echo "ok" ;;
+    2[0-4][0-9]"."[0-9]*) echo "ok" ;;
+    1[0-9][0-9]"."[0-9]*) echo "ok" ;;
+    [0-9][0-9]"."[0-9]*) echo "ok" ;;
+    [0-9]"."[0-9]*) echo "ok" ;;
+    # Not Right
+    *) echo "not";;
+  esac
+}
+
+##############################################################################
+
+private_subnet() {
+  case $1 in
+    10"."*) echo "ok" ;;
+    172"."1[6-9]"."*) echo "ok" ;;
+    172"."2[0-9]"."*) echo "ok" ;;
+    172"."3[0-1]"."*) echo "ok" ;;
+    192"."168"."*) echo "ok" ;;
+    f[cd][0-9a-f][0-9a-f]":"*) echo "ok" ;;
+    *) echo "not" ;;
+  esac
+}
+
+##############################################################################
+
+create_domain_insecure() {
+  echo "  domain-insecure: \"$1\"" >> $UNBOUND_CONF
+}
+
+##############################################################################
+
+create_local_zone() {
+  local cfg="$1"
+  
+  config_get fwd_domain "$cfg" domain 
+  config_get fwd_port   "$cfg" port
+    
+    
+  if [ -n "$fwd_domain" -a -n "$fwd_port" -a ! "$fwd_port" -eq 53 ] ; then
+    # dnsmasq localhost listening ports (possible multiple instances)
+    UNBOUND_N_FWD_PORTS="$UNBOUND_N_FWD_PORTS $fwd_port"
+    UNBOUND_TXT_FWD_ZONE="$UNBOUND_TXT_FWD_ZONE $fwd_domain"
+    
+    # This creates DOMAIN local privledges
+    echo "  private-domain: \"$fwd_domain\"" >> $UNBOUND_CONF
+    echo "  local-zone: \"$fwd_domain.\" transparent" >> $UNBOUND_CONF
+    echo "  domain-insecure: \"$fwd_domain\"" >> $UNBOUND_CONF
+    echo >> $UNBOUND_CONF
+  fi
+}
+
+##############################################################################
+
+create_local_arpa() {
+  local cfg="$1"
+  
+  config_get logint "$cfg" interface
+  config_get dhcpv4 "$cfg" dhcpv4
+  config_get dhcpv6 "$cfg" dhcpv6
+  config_get_bool ignore "$cfg" ignore 0
+  
+  # Find the list of addresses assigned to a logical interface
+  # Its typical to have a logical gateway split NAME and NAME6 
+  network_get_subnets  subnets4 "$logint"
+  network_get_subnets6 subnets6 "$logint"
+  subnets="$subnets4 $subnets6"
+  
+  network_get_subnets  subnets4 "${logint}6"
+  network_get_subnets6 subnets6 "${logint}6"
+  subnets="$subnets $subnets4 $subnets6"
+  
+  
+  if [ -z "$subnets" ] ; then
+    forward=""
+    
+  elif [ -z "$UNBOUND_N_FWD_PORTS" ] ; then
+    forward=""
+    
+  elif [ "$ignore" -gt 0 ] ; then
+    if [ "$UNBOUND_B_GATE_NAME" -gt 0 ] ; then
+      # Only forward the one gateway host.
+      forward="host" 
+      
+    else
+      forward=""
+    fi
+    
+  else
+    # Forward the entire private subnet.
+    forward="domain"
+  fi
+  
+  
+  if [ -n "$forward" ] ; then
+    for subnet in $subnets ; do
+      validip4=$( valid_subnet4 $subnet )
+      validip6=$( valid_subnet6 $subnet )
+      privateip=$( private_subnet $subnet )
+      
+      
+      if [ "$validip4" = "ok" -a "$dhcpv4" != "disable" ] ; then
+        if [ "$forward" = "domain" ] ; then         
+          arpa=$( domain_ptr_ip4 "$subnet" )
+        else
+          arpa=$( host_ptr_ip4 "$subnet" )
+        fi
+        
+      elif [ "$validip6" = "ok" -a "$dhcpv6" != "disable" ] ; then
+        if [ "$forward" = "domain" ] ; then         
+          arpa=$( domain_ptr_ip6 "$subnet" )          
+        else
+          arpa=$( host_ptr_ip6 "$subnet" )
+        fi
+        
+      else
+        arpa=""
+      fi
+      
+      
+      if [ -n "$arpa" ] ; then
+        if [ "$privateip" = "ok" ] ; then
+          # This creates ARPA local zone privledges
+          echo "  local-zone: \"$arpa.\" transparent" >> $UNBOUND_CONF
+          echo "  domain-insecure: \"$arpa\"" >> $UNBOUND_CONF
+          echo >> $UNBOUND_CONF
+        fi
+      
+      
+        UNBOUND_TXT_FWD_ZONE="$UNBOUND_TXT_FWD_ZONE $arpa"
+      fi
+    done
+  fi
+}
+
+##############################################################################
+
+forward_local_zone() {  
+  # This is derived of create_local_domain
+  # but forward: clauses need to be seperate
+  if [ -n "$UNBOUND_N_FWD_PORTS" -a -n "$UNBOUND_TXT_FWD_ZONE" ] ; then
+    for fwd_domain in $UNBOUND_TXT_FWD_ZONE ; do
+      echo "forward-zone:" >> $UNBOUND_CONF
+      echo "  name: \"$fwd_domain.\"" >> $UNBOUND_CONF
+        
+      for port in $UNBOUND_N_FWD_PORTS ; do
+        echo "  forward-addr: 127.0.0.1@$port" >> $UNBOUND_CONF
+      done
+      
+      echo >> $UNBOUND_CONF
+    done
+  fi
+}
+
+##############################################################################
+
+access_control() {
+  local cfg="$1"
+  
+  # Allow access to addresses for which
+  # this device has an interface only.
+  network_get_subnets  subnets4 "$cfg"
+  network_get_subnets6 subnets6 "$cfg"
+  subnets="$subnets4 $subnets6"
+  
+  
+  if [ -n "$subnets" ] ; then
+    for subnet in $subnets ; do
+      validip4=$( valid_subnet4 $subnet )
+      validip6=$( valid_subnet6 $subnet )
+      
+      
+      if [ "$validip4" = "ok" -o "$validip6" = "ok" ] ; then 
+        echo "  access-control: $subnet allow" >> $UNBOUND_CONF
+      fi
+    done
+  fi
+}
+
+##############################################################################
+
+build_config_file() {
+  local cfg=$1
+  
+  ####################
+  # UCI @ unbound    #
+  ####################
+  
+  config_get_bool UNBOUND_B_LOCL_NAME "$cfg" add_local_name 0
+  config_get_bool UNBOUND_B_GATE_NAME "$cfg" add_gate_name 0
+  config_get_bool UNBOUND_B_CONTROL   "$cfg" control 0
+  config_get_bool UNBOUND_B_DNSMASQ   "$cfg" dnsmasq 0
+  config_get_bool UNBOUND_B_DNSSEC    "$cfg" dnssec  0
+  config_get_bool UNBOUND_B_LOCL_SERV "$cfg" localservice 1
+  config_get_bool UNBOUND_B_OBSCURE   "$cfg" obscure 0
+  config_get_bool UNBOUND_B_PRIV_BLCK "$cfg" rebind_protection 1
+  config_get_bool UNBOUND_B_LOCL_BLCK "$cfg" rebind_localhost 0
+  
+  config_get UNBOUND_N_EDNS_SIZE "$cfg" edns_size 1280
+  config_get UNBOUND_N_REC_PORT  "$cfg" port      53
+  config_get UNBOUND_D_RESOURCE  "$cfg" resource  small
+  config_get UNBOUND_D_RECURSION "$cfg" recursion passive
+  config_get UNBOUND_N_ROOT_AGE  "$cfg" root_age  90
+  config_get UNBOUND_TTL_MIN     "$cfg" ttl_min   120
+  
+  
+  if [ "$UNBOUND_N_ROOT_AGE" -lt 6 -o 360 -lt "$UNBOUND_N_ROOT_AGE" ] ; then
+    UNBOUND_N_ROOT_AGE=90
+  fi
+  
+  
+  if [ "$UNBOUND_B_DNSMASQ" -gt 0 ] ; then
+    dnsmasqpath=$( which dnsmasq )  
+    
+    
+    if [ ! -x "$dnsmasqpath" ] ; then
+      logger -t unbound -s "cannot forward to dnsmasq"
+      UNBOUND_B_DNSMASQ=0
+    fi
+  fi
+  
+  
+  ####################
+  # make unbound.conf#
+  ####################
+  
+  echo "# $UNBOUND_CONF auto-generated from /etc/config/unbound" >> $UNBOUND_CONF
+  echo "server:" >> $UNBOUND_CONF
+  echo "  username: \"unbound\"" >> $UNBOUND_CONF
+  echo "  num-threads: 1" >> $UNBOUND_CONF
+  echo "  msg-cache-slabs: 1" >> $UNBOUND_CONF
+  echo "  rrset-cache-slabs: 1" >> $UNBOUND_CONF
+  echo "  infra-cache-slabs: 1" >> $UNBOUND_CONF
+  echo "  key-cache-slabs: 1" >> $UNBOUND_CONF
+  echo >> $UNBOUND_CONF  
+  # Logging
+  echo "  verbosity: 1" >> $UNBOUND_CONF
+  echo "  statistics-interval: 0" >> $UNBOUND_CONF
+  echo "  statistics-cumulative: no" >> $UNBOUND_CONF
+  echo "  extended-statistics: no" >> $UNBOUND_CONF
+  echo >> $UNBOUND_CONF
+  # Interfaces (UCI for refuse subnets)
+  echo "  interface: 0.0.0.0" >> $UNBOUND_CONF
+  echo "  interface: ::0" >> $UNBOUND_CONF
+  echo "  outgoing-interface: 0.0.0.0" >> $UNBOUND_CONF
+  echo "  outgoing-interface: ::0" >> $UNBOUND_CONF
+  echo >> $UNBOUND_CONF
+  # Files
+  # Do NOT auto-trust-anchor-file: because unbound-anchor can
+  # burn out your flash. There is a helper tool here instead.
+  echo "  use-syslog: yes" >> $UNBOUND_CONF
+  echo "  directory: \"/etc/unbound\"" >> $UNBOUND_CONF
+  echo "  pidfile: \"/var/run/unbound.pid\"" >> $UNBOUND_CONF
+  echo "  root-hints: \"/etc/unbound/root.hints\"" >> $UNBOUND_CONF
+  echo "  trust-anchor-file: \"/etc/unbound/root.key\"" >> $UNBOUND_CONF
+  echo >> $UNBOUND_CONF
+  # Other
+  echo "  harden-short-bufsize: yes" >> $UNBOUND_CONF
+  echo "  harden-large-queries: yes" >> $UNBOUND_CONF
+  echo "  harden-glue: yes" >> $UNBOUND_CONF
+  echo "  harden-below-nxdomain: no" >> $UNBOUND_CONF
+  echo "  harden-referral-path: no" >> $UNBOUND_CONF
+  echo "  use-caps-for-id: no" >> $UNBOUND_CONF
+  echo >> $UNBOUND_CONF
+
+  
+  case "$UNBOUND_D_RESOURCE" in
+    # Tiny - Unbound's recommended cheap hardware config
+    tiny)   rt_mem=1  ; rt_conn=1 ;;
+    # Small - Half RRCACHE and open ports like dnsmasq defaults
+    small)  rt_mem=8  ; rt_conn=5 ;;
+    # Medium - Default RRCACHE and optimized scale for others
+    medium) rt_mem=16 ; rt_conn=10 ;;
+    # Large - Double medium
+    large)  rt_mem=32 ; rt_conn=10 ;;
+    # Whatever unbound does
+    *) rt_mem=0 ; rt_conn=0 ;;
+  esac
+
+
+  if [ "$rt_mem" -gt 0 ] ; then
+    echo "  outgoing-range: $(($rt_conn*64))" >> $UNBOUND_CONF
+    echo "  num-queries-per-thread: $(($rt_conn*32))" >> $UNBOUND_CONF
+    echo "  outgoing-num-tcp: $(($rt_conn))" >> $UNBOUND_CONF
+    echo "  incoming-num-tcp: $(($rt_conn))" >> $UNBOUND_CONF
+    echo "  rrset-cache-size: $(($rt_mem*256))k" >> $UNBOUND_CONF
+    echo "  msg-cache-size: $(($rt_mem*128))k" >> $UNBOUND_CONF
+    echo "  key-cache-size: $(($rt_mem*128))k" >> $UNBOUND_CONF
+    echo "  neg-cache-size: $(($rt_mem*64))k" >> $UNBOUND_CONF
+    echo "  infra-cache-numhosts: $(($rt_mem*256))" >> $UNBOUND_CONF
+    echo >> $UNBOUND_CONF 
+  fi
+  
+  
+  if [ 512 -lt "$UNBOUND_N_EDNS_SIZE" \
+    -a "$UNBOUND_N_EDNS_SIZE" -lt 4096 ] ; then
+    echo "  edns-buffer-size: $UNBOUND_N_EDNS_SIZE" >> $UNBOUND_CONF
+    echo "  msg-buffer-size: 8192" >> $UNBOUND_CONF
+      
+  else
+    echo "  edns-buffer-size: 1280" >> $UNBOUND_CONF
+    echo "  msg-buffer-size: 8192" >> $UNBOUND_CONF 
+  fi
+  
+  
+  if [ 1024 -lt "$UNBOUND_N_REC_PORT" \
+    -a "$UNBOUND_N_REC_PORT" -lt 10240 ] ; then
+    echo "  port: $UNBOUND_N_REC_PORT" >> $UNBOUND_CONF 
+      
+  else
+    echo "  port: 53" >> $UNBOUND_CONF 
+  fi
+  
+  
+  echo "  outgoing-port-permit: 10240-65535" >> $UNBOUND_CONF
+  echo >> $UNBOUND_CONF 
+  
+       
+  if [ "$UNBOUND_B_DNSSEC" -gt 0 ] ; then 
+    echo "  module-config: \"validator iterator\"" >> $UNBOUND_CONF
+    echo "  harden-dnssec-stripped: yes" >> $UNBOUND_CONF
+    echo "  val-clean-additional: yes" >> $UNBOUND_CONF
+    echo "  ignore-cd-flag: yes" >> $UNBOUND_CONF
+    echo >> $UNBOUND_CONF
+    
+  else
+    echo "  module-config: \"iterator\"" >> $UNBOUND_CONF
+    echo >> $UNBOUND_CONF
+  fi
+  
+  
+  #if [ "$UNBOUND_B_OBSCURE" -gt 0 ] ; then 
+    #supported in later version
+    #echo "  qname-minimisation: yes" >> $UNBOUND_CONF
+    
+  #else
+    #echo "  qname-minimisation: no" >> $UNBOUND_CONF
+  #fi
+  
+  
+  case "$UNBOUND_D_RECURSION" in
+    passive)
+      echo "  prefetch: no" >> $UNBOUND_CONF
+      echo "  prefetch-key: no" >> $UNBOUND_CONF
+      echo "  target-fetch-policy: \"0 0 0 0 0\"" >> $UNBOUND_CONF
+      echo >> $UNBOUND_CONF
+      ;;
+      
+    aggressive)
+      echo "  prefetch: yes" >> $UNBOUND_CONF
+      echo "  prefetch-key: yes" >> $UNBOUND_CONF
+      echo "  target-fetch-policy: \"3 2 1 0 0\"" >> $UNBOUND_CONF
+      echo >> $UNBOUND_CONF
+      ;;
+      
+    *)
+      echo "  # Default Recursion" >> $UNBOUND_CONF
+      echo >> $UNBOUND_CONF
+      ;;
+  esac
+  
+  
+  if [ "$UNBOUND_TTL_MIN" -lt 60 ] ; then
+    # Snoop-vertising and poor mans load balance tricks
+    # Recursion CPU load of 0-TTL on a home router...
+    echo "  cache-min-ttl: 60" >> $UNBOUND_CONF
+    
+  elif [ "$UNBOUND_TTL_MIN" -gt 1800 ] ; then
+    # Blind Cache in excess of an half hour is a bad idea
+    echo "  cache-min-ttl: 1800" >> $UNBOUND_CONF
+     
+  else
+    # Reduce recursion load by forcing a longer stay time
+    # 5 minutes (300s) or 10 minutes (600s) would be fair
+    echo "  cache-min-ttl: $UNBOUND_TTL_MIN" >> $UNBOUND_CONF
+  fi
+  
+  
+  # Reload records more than 10 hours old
+  # DNSSEC 5 minute bogus cool down before retry
+  # Adaptive infrastructure info kept for 15 minutes
+  echo "  cache-max-ttl: 36000" >> $UNBOUND_CONF
+  echo "  val-bogus-ttl: 300" >> $UNBOUND_CONF
+  echo "  infra-host-ttl: 900" >> $UNBOUND_CONF
+  echo >> $UNBOUND_CONF
+  
+  
+  if [ "$UNBOUND_B_PRIV_BLCK" -gt 0 ] ; then
+    # Remove DNS reponses from upstream with private IP
+    echo "  private-address: 10.0.0.0/8" >> $UNBOUND_CONF
+    echo "  private-address: 169.254.0.0/16" >> $UNBOUND_CONF
+    echo "  private-address: 172.16.0.0/12" >> $UNBOUND_CONF
+    echo "  private-address: 192.168.0.0/16" >> $UNBOUND_CONF
+    echo "  private-address: fc00::/8" >> $UNBOUND_CONF
+    echo "  private-address: fd00::/8" >> $UNBOUND_CONF
+    echo "  private-address: fe80::/10" >> $UNBOUND_CONF
+  fi
+  
+  
+  if [ "$UNBOUND_B_LOCL_BLCK" -gt 0 ] ; then
+    # Remove DNS reponses from upstream with loopback IP
+    # Black hole DNS method for ad blocking, so consider...
+    echo "  private-address: 127.0.0.0/8" >> $UNBOUND_CONF
+    echo "  private-address: ::1/128" >> $UNBOUND_CONF
+    echo >> $UNBOUND_CONF
+  else
+    echo >> $UNBOUND_CONF
+  fi
+  
+  
+  # Domain Exceptions - NTP vs DNSSEC chicken-n-egg - "ntp.pool.org"
+  config_list_foreach "$cfg" "insecure_zone" create_domain_insecure
+  echo >> $UNBOUND_CONF 
+  
+  
+  ####################
+  # UCI @ network    #
+  ####################
+  
+  
+  if [ "$UNBOUND_B_LOCL_SERV" -gt 0 ] ; then
+    config_load network
+    config_foreach access_control interface    
+    echo "  access-control: 127.0.0.0/8 allow" >> $UNBOUND_CONF
+    echo "  access-control: ::1/128 allow" >> $UNBOUND_CONF
+    echo "  access-control: fe80::/10 allow" >> $UNBOUND_CONF
+    echo >> $UNBOUND_CONF
+    
+  else 
+    echo "  access-control: 0.0.0.0 allow" >> $UNBOUND_CONF
+    echo "  access-control: ::0 allow" >> $UNBOUND_CONF
+    echo >> $UNBOUND_CONF
+  fi
+    
+
+  ####################
+  # UCI @ dnsmasq    #
+  ####################
+  
+    
+  if [ "$UNBOUND_B_DNSMASQ" -gt 0 ] ; then
+    # Forward to dnsmasq on same host for DHCP lease hosts
+    echo "  do-not-query-localhost: no" >> $UNBOUND_CONF
+    # Look at dnsmasq settings
+    config_load dhcp
+    # Zone for DHCP / SLAAC-PING DOMAIN
+    config_foreach create_local_zone dnsmasq 
+    # Zone for DHCP / SLAAC-PING ARPA
+    config_foreach create_local_arpa dhcp
+  fi
+    
+  
+  # Now create ALL seperate forward: clauses
+  forward_local_zone
+  
+  
+  if [ "$UNBOUND_B_CONTROL" -gt 0 ] ; then
+    # Enable remote control only with security
+    # Unbound could be rather fragile without it
+    echo "remote-control:" >> $UNBOUND_CONF
+    echo "  control-enable: yes" >> $UNBOUND_CONF
+    echo "  control-use-cert: no" >> $UNBOUND_CONF
+    echo "  control-interface: 127.0.0.1" >> $UNBOUND_CONF
+    echo "  control-interface: ::1" >> $UNBOUND_CONF
+    
+  else  
+    echo "remote-control:" >> $UNBOUND_CONF
+    echo "  control-enable: no" >> $UNBOUND_CONF
+  fi
+}  
+
+
+##############################################################################
+
+update_root_files() {
+  drillpath=$( which drill )
+  digpath=$( which dig )
+  anchorpath=$( which unbound-anchor )
+  
+  if [ -x "$drillpath" ] ; then 
+    drillpath="$drillpath -D"
+    
+  elif [ -x "$digpath" ] ; then
+    drillpath="$digpath +dnssec"
+    
+  else 
+    logger -t unbound -s "need drill, dig, or something"
+    return 0
+  fi
+
+  
+  # Built in unbound-update is way too busy; burn out flash ROM.
+  # Only does DNSKEY but root servers rotate more ... what?
+  if [ -f /etc/unbound/root.hints ] ; then
+    root_date=$( date -r /etc/unbound/root.hints +%s )
+    now_date=$( date +%s )
+    delta_days=$(( (now_date - root_date) / 86440 ))
+    logger -t unbound -s "root domain is $delta_days days old"
+    
+  else
+    logger -t unbound -s "no root hints file to start with"
+    return 0
+  fi
+  
+
+  if [ "$delta_days" -gt "$UNBOUND_N_ROOT_AGE" ] ; then
+    # We need to bootstrap unbound, it aint runn'n yet.
+    rootservers=$( awk '{ if ($4 == "A") { print $5 } }' /etc/unbound/root.hints )
+    
+    for rootserver in $rootservers ; do
+      $drillpath NS . @$rootserver > /tmp/root.hints.new
+      filestuff=$( awk '{ if ($4 == "A") { print $5 } }' /tmp/root.hints.new )
+      
+      
+      case "$filestuff" in
+        [1-9]*"."[0-9]*"."[0-9]*"."[1-9]*)
+          logger -t unbound -s "root.hints updated @$rootserver"
+          cp /tmp/root.hints.new /etc/unbound/root.hints
+          rm /tmp/root.hints.new
+          break
+          ;;
+
+        *)
+          logger -t unbound -s "root.hints not found @$rootserver" 
+          ;;
+      esac
+    done
+    
+    
+    if [ -x "$anchorpath" ] ; then
+      # Use unbound-anchor optional helper
+      $anchorpath -a /etc/unbound/root.key -r /etc/unbound/root.hints
+    
+    else
+      # Like unbound-anchor default fast method, but use drill
+      $drillpath DNSKEY . @$rootserver > /tmp/root.key.new
+      filestuff=$( cat /tmp/root.key.new )
+      
+      
+      case "$filestuff" in
+        *NOERROR*)
+          logger -t unbound -s "root.key updated @$rootserver"
+          cp /tmp/root.key.new /etc/unbound/root.key
+          rm /tmp/root.key.new 
+          ;;
+
+        *) 
+          logger -t unbound -s "root.key failed update @$rootserver" 
+          ;;
+      esac
+    fi
+  fi
+}
+
+##############################################################################
+
+start_service () {
+  mkdir -p $( dirname $UNBOUND_CONF )
+  echo > $UNBOUND_CONF
+    
+  procd_open_instance
+  procd_set_param command $PROG -d -c $UNBOUND_CONF
+  procd_set_param respawn
+  procd_close_instance
+  
+  config_load unbound
+  config_foreach build_config_file unbound
+  update_root_files
+}
+
+##############################################################################
+
+service_triggers() {
+  procd_add_reload_trigger "unbound"
+  procd_add_reload_trigger "dhcp"
+}
+
+##############################################################################
+
