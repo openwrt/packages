@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
 PKG_VERSION:=9.5.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 
@@ -67,6 +67,36 @@ endef
 define Package/pgsql-server/description
 PostgreSQL databases Server.
 endef
+
+PGSQL_SERVER_BIN := \
+	clusterdb		\
+	createdb		\
+	createlang		\
+	createuser		\
+	dropdb			\
+	droplang		\
+	dropuser		\
+	initdb			\
+	pg_archivecleanup	\
+	pg_basebackup		\
+	pgbench			\
+	pg_controldata		\
+	pg_ctl			\
+	pg_dump			\
+	pg_dumpall		\
+	pg_isready		\
+	pg_receivexlog		\
+	pg_recvlogical		\
+	pg_resetxlog		\
+	pg_restore		\
+	pg_rewind		\
+	pg_test_fsync		\
+	pg_test_timing		\
+	pg_upgrade		\
+	pg_xlogdump		\
+	postgres		\
+	reindexdb		\
+	vacuumdb
 
 PGSQL_CONFIG_VARS:= \
 	pgac_cv_snprintf_long_long_int_format="%lld" \
@@ -158,7 +188,7 @@ endef
 
 define Package/pgsql-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
+	$(INSTALL_BIN) $(foreach bin,$(PGSQL_SERVER_BIN),$(PKG_INSTALL_DIR)/usr/bin/$(bin)) $(1)/usr/bin
 	ln -sf postgres $(1)/usr/bin/postmaster
 
 	$(INSTALL_DIR) $(1)/usr/share/postgresql
@@ -177,10 +207,6 @@ define Package/pgsql-server/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/postgresql.init $(1)/etc/init.d/postgresql
-endef
-
-define Package/pgsql-server/conffiles
-/etc/config/postgresql
 endef
 
 define Build/InstallDev
