@@ -1062,10 +1062,12 @@ get_registered_ip() {
 		__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
 		__PROG="hostip"
 	elif [ -n "$NSLOOKUP" ]; then	# last use BusyBox nslookup
-		[ $force_ipversion -ne 0 -o $force_dnstcp -ne 0 ] && \
-			write_log 14 "Busybox nslookup - no support to 'force IP Version' or 'DNS over TCP'"
+		[ $force_dnstcp -ne 0 ] && \
+			write_log 14 "Busybox nslookup - no support for 'DNS over TCP'"
 		[ -n "$NSLOOKUP_MUSL" -a -n "$dns_server" ] && \
 			write_log 14 "Busybox compiled with musl - nslookup don't support the use of DNS Server"
+		[ $force_ipversion -ne 0 ] && \
+			write_log 5 "Busybox nslookup - no support to 'force IP Version' (ignored)"
 
 		__RUNPROG="$NSLOOKUP $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BusyBox nslookup"
