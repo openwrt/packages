@@ -129,19 +129,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/services* $(1)/usr/lib/ddns
 	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/dynamic_*.sh $(1)/usr/lib/ddns
 endef
-define Package/$(PKG_NAME)/postinst
-	#!/bin/sh
-	# if run within buildroot exit
-	[ -n "$${IPKG_INSTROOT}" ] && exit 0
-
-	# apply changes introduced during release changes
-	/etc/uci-defaults/ddns
-
-	# clear LuCI indexcache
-	rm -f /tmp/luci-indexcache >/dev/null 2>&1
-
-	exit 0
-endef
 define Package/$(PKG_NAME)/prerm
 	#!/bin/sh
 	# if run within buildroot exit
