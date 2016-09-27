@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libstrophe
-PKG_VERSION:=0.8.8
+PKG_VERSION:=0.9.1
 PKG_RELEASE=1
 
 PKG_LICENSE:=GPL-3.0
@@ -17,6 +17,7 @@ PKG_MAINTAINER:=Chih-Wei Chen <changeway@gmail.com>
 
 PKG_SOURCE_URL:=https://github.com/strophe/libstrophe/archive/
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=2db62ab21187785ec5f870adc33b74e5
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
