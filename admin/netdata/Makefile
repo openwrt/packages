@@ -22,6 +22,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
+TARGET_CFLAGS+= -DNETDATA_NO_ATOMIC_INSTRUCTIONS=1
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/netdata
