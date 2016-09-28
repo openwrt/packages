@@ -357,6 +357,8 @@ define Package/avahi-autoipd/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/etc/avahi/avahi-autoipd.action $(1)/etc/avahi/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/avahi-autoipd $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/lib/netifd/proto
+	$(INSTALL_BIN) ./files/lib/netifd/proto/autoip.sh $(1)/lib/netifd/proto
 endef
 
 define Package/avahi-daemon/install
