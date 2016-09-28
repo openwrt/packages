@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.4"
+VERSION="2.7.5"
 SECTION_ID=""		# hold config's section name
 VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
 
