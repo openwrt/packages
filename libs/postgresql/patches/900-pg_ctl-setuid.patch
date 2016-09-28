@@ -15,7 +15,7 @@ Index: postgresql-9.5.4/src/bin/pg_ctl/pg_ctl.c
  	printf(_("  -s, --silent           only print errors, no informational messages\n"));
  	printf(_("  -t, --timeout=SECS     seconds to wait when using -w option\n"));
 +#if !defined(WIN32) && !defined(__CYGWIN__)
-+	printf(_("  -U USERNAME            user name of account PostgreSQL server is running as\n"));
++	printf(_("  -U, --username=NAME    user name of account PostgreSQL server is running as\n"));
 +#endif
  	printf(_("  -V, --version          output version information, then exit\n"));
  	printf(_("  -w                     wait until operation completes\n"));

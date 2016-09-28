@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
 PKG_VERSION:=9.5.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 
@@ -54,10 +54,23 @@ define Package/pgsql-cli/description
 Command Line Interface (CLI) to PostgreSQL databases.
 endef
 
-define Package/pgsql-server
+define Package/pgsql-cli-extra
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libpq +librt
+  TITLE:=Command Line extras for PostgreSQL databases
+  URL:=http://www.postgresql.org/
+  SUBMENU:=database
+endef
+
+define Package/pgsql-cli-extra/description
+Command Line extras for PostgreSQL databases.
+endef
+
+define Package/pgsql-server
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=+libpq +librt +pgsql-cli
   TITLE:=PostgreSQL databases Server
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -68,34 +81,16 @@ define Package/pgsql-server/description
 PostgreSQL databases Server.
 endef
 
-PGSQL_SERVER_BIN := \
-	clusterdb		\
-	createdb		\
-	createlang		\
-	createuser		\
-	dropdb			\
-	droplang		\
-	dropuser		\
-	initdb			\
-	pg_archivecleanup	\
-	pg_basebackup		\
-	pgbench			\
-	pg_controldata		\
-	pg_ctl			\
-	pg_dump			\
-	pg_dumpall		\
-	pg_isready		\
-	pg_receivexlog		\
-	pg_recvlogical		\
-	pg_resetxlog		\
-	pg_restore		\
-	pg_rewind		\
-	pg_test_fsync		\
-	pg_test_timing		\
-	pg_upgrade		\
-	pg_xlogdump		\
-	postgres		\
-	reindexdb		\
+PGSQL_CLI_EXTRA_BIN := \
+	clusterdb	\
+	createdb	\
+	createlang	\
+	createuser	\
+	dropdb		\
+	droplang	\
+	dropuser	\
+	pgbench		\
+	reindexdb	\
 	vacuumdb
 
 PGSQL_CONFIG_VARS:= \
@@ -186,9 +181,15 @@ define Package/pgsql-cli/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/psql $(1)/usr/bin/
 endef
 
+define Package/pgsql-cli-extra/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(foreach bin,$(PGSQL_CLI_EXTRA_BIN),$(PKG_INSTALL_DIR)/usr/bin/$(bin)) $(1)/usr/bin/
+endef
+
 define Package/pgsql-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(foreach bin,$(PGSQL_SERVER_BIN),$(PKG_INSTALL_DIR)/usr/bin/$(bin)) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/pg_* $(PKG_INSTALL_DIR)/usr/bin/postgres \
+			$(PKG_INSTALL_DIR)/usr/bin/initdb $(1)/usr/bin/
 	ln -sf postgres $(1)/usr/bin/postmaster
 
 	$(INSTALL_DIR) $(1)/usr/share/postgresql
@@ -197,7 +198,7 @@ define Package/pgsql-server/install
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/postgresql \
-		$(1)/usr/lib
+		$(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/lib/functions
 	$(INSTALL_BIN) ./files/postgresql.sh $(1)/lib/functions/
@@ -226,4 +227,5 @@ endef
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,libpq))
 $(eval $(call BuildPackage,pgsql-cli))
+$(eval $(call BuildPackage,pgsql-cli-extra))
 $(eval $(call BuildPackage,pgsql-server))
