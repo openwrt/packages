@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/target.mk
 
 PKG_NAME:=boost
 PKG_VERSION:=1_61_0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/boost
@@ -41,10 +41,6 @@ define Package/boost/Default
   TITLE:=Boost C++ source library
   URL:=http://www.boost.org
   DEPENDS:=+libstdcpp +libpthread +librt
-endef
-
-define Package/boost/description/Default
-  true
 endef
 
 define Package/boost/description
@@ -91,8 +87,6 @@ $(call Package/boost/Default)
 endef
 
 define Package/boost-libs/description
-$(call Package/boost/description/Default)
- .
  This meta package contains only dependencies to the other libraries from
  the boost libraries collection.
 endef
@@ -218,7 +212,8 @@ define Package/boost/config
 
 		config boost-libs-all
 		bool "Include all Boost libraries."
-	    	select PACKAGE_boost-libs	    	
+		select PACKAGE_boost-libs
+		select PACKAGE_boost-locale
 
 		config boost-test-pkg
 		bool "Boost test package."
@@ -234,6 +229,11 @@ define Package/boost/config
 		bool "Boost parallel graph support."
 		select PACKAGE_boost-graph
 		default n
+
+		config PACKAGE_boost-locale
+		prompt "Boost locale library."
+		depends on @BUILD_NLS
+		default m if ALL
 
 		$(foreach lib,$(BOOST_LIBS), \
 		  config PACKAGE_boost-$(lib)
@@ -255,6 +255,17 @@ endef
 define Build/Configure
 endef
 
+define Package/boost-locale
+    $(call Package/boost/Default)
+    TITLE+= (locale)
+    DEPENDS+= @BUILD_NLS $(ICONV_DEPENDS) +boost-system
+    HIDDEN:=1
+endef
+
+define Package/boost-locale/description
+  This package contains the Boost locale library.
+endef
+
 # 1: short name
 # 2: dependencies on other boost libraries (short name)
 # 3: dependencies on other packages
@@ -273,8 +284,6 @@ define DefineBoostLibrary
   endef
 
   define Package/boost-$(1)/description
-   $(call Package/boost/description/Default)
-   .
    This package contains the Boost $(1) library.
   endef
 endef
@@ -290,7 +299,6 @@ $(eval $(call DefineBoostLibrary,date_time,,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
 $(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
-$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS) @BUILD_NLS))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
@@ -374,8 +382,9 @@ define Build/Compile
 				  $(if $(or $(CONFIG_PACKAGE_boost-python),$(CONFIG_PACKAGE_boost-python3)),,--without-python), \
 				  $(if $(CONFIG_PACKAGE_boost-$(lib)),,--without-$(lib))) \
 			) \
-			$(if $(CONFIG_PACKAGE_boost-locale),boost.locale.iconv=on -sICONV_PATH=$(ICONV_PREFIX) boost.locale.posix=$(if $(USE_MUSL),on,off), \
-				boost.locale.iconv=off) \
+			$(if $(CONFIG_PACKAGE_boost-locale), \
+				boost.locale.iconv=on -sICONV_PATH=$(ICONV_PREFIX) boost.locale.posix=$(if $(USE_MUSL),on,off), \
+				--without-locale boost.locale.iconv=off) \
 			\
 			$(if $(CONFIG_PACKAGE_boost-iostreams),-sNO_BZIP2=1 -sZLIB_INCLUDE=$(STAGING_DIR)/usr/include \
 				-sZLIB_LIBPATH=$(STAGING_DIR)/usr/lib) \
@@ -436,6 +445,7 @@ endef
 $(eval $(call HostBuild))
 
 $(foreach lib,$(BOOST_LIBS),$(eval $(call BuildBoostLibrary,$(lib))))
+$(eval $(call BuildBoostLibrary,locale))
 $(eval $(call BuildPackage,boost-test))
 $(eval $(call BuildPackage,boost-libs))
 $(eval $(call BuildPackage,boost))
