@@ -22,8 +22,6 @@ fi
 [ -x /usr/sbin/ip6tables ] || exit 7
 [ -x /usr/bin/logger ] || exit 8
 
-local family gateway
-
 config_get family $INTERFACE family ipv4
 
 if [ "$family" == "ipv4" ]; then
