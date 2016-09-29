@@ -14,7 +14,7 @@ Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
 
 --- a/build_common/linux/SConscript
 +++ b/build_common/linux/SConscript
-@@ -24,20 +24,3 @@ env.AppendUnique(LINKFLAGS = ['-ldl', '-
+@@ -24,20 +24,3 @@ env.AppendUnique(LIBS = ['dl', 'pthread'
  
  # Set arch flags that match best TARGET_ARCH variable
  target_arch = env.get('TARGET_ARCH')
@@ -37,7 +37,7 @@ Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
 -	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
 --- a/resource/csdk/connectivity/build/linux/SConscript
 +++ b/resource/csdk/connectivity/build/linux/SConscript
-@@ -22,20 +22,3 @@ env.AppendUnique(LINKFLAGS = ['-ldl', '-
+@@ -23,20 +23,3 @@ env.AppendUnique(LIBS = ['dl', 'pthread'
  
  # Set arch flags
  target_arch = env.get('TARGET_ARCH')

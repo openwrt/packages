@@ -1,0 +1,103 @@
+From 7fb5b6a19b06dc5b0a7f32261551b206b1e6a563 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sun, 8 Jan 2017 19:24:26 +0100
+Subject: [PATCH 3/3] src: move OCClientResponse from stack to heap
+
+OCClientResponse is about 50KByte and should not be stored on the
+stack. On LEDE with MIPS, musl libc this causes a segmentation fault.
+Moving this structure to the heap is the simple solution for this
+problem, but this structure should be shrinked.
+
+Change-Id: I7887f93450f45b8031fcdfffb9ee2214fc3d5dd2
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ resource/src/InProcServerWrapper.cpp | 44 +++++++++++++++++++++---------------
+ 1 file changed, 26 insertions(+), 18 deletions(-)
+
+--- a/resource/src/InProcServerWrapper.cpp
++++ b/resource/src/InProcServerWrapper.cpp
+@@ -568,51 +568,58 @@ namespace OC
+         }
+         else
+         {
+-            OCEntityHandlerResponse response;
++            OCEntityHandlerResponse *response = NULL;
++
++            response = (OCEntityHandlerResponse *)OICCalloc(1, sizeof(*response));
++            if (!response) {
++                result = OC_STACK_MALFORMED_RESPONSE;
++                throw OCException(OC::Exception::STR_NULL_RESPONSE, OC_STACK_MALFORMED_RESPONSE);
++            }
++
+ //            OCRepPayload* payLoad = pResponse->getPayload();
+             HeaderOptions serverHeaderOptions = pResponse->getHeaderOptions();
+ 
+-            response.requestHandle = pResponse->getRequestHandle();
+-            response.resourceHandle = pResponse->getResourceHandle();
+-            response.ehResult = pResponse->getResponseResult();
++            response->requestHandle = pResponse->getRequestHandle();
++            response->resourceHandle = pResponse->getResourceHandle();
++            response->ehResult = pResponse->getResponseResult();
+ 
+-            response.payload = reinterpret_cast<OCPayload*>(pResponse->getPayload());
++            response->payload = reinterpret_cast<OCPayload*>(pResponse->getPayload());
+ 
+-            response.persistentBufferFlag = 0;
++            response->persistentBufferFlag = 0;
+ 
+-            response.numSendVendorSpecificHeaderOptions = serverHeaderOptions.size();
++            response->numSendVendorSpecificHeaderOptions = serverHeaderOptions.size();
+             int i = 0;
+             for (auto it=serverHeaderOptions.begin(); it != serverHeaderOptions.end(); ++it)
+             {
+-                response.sendVendorSpecificHeaderOptions[i].protocolID = OC_COAP_ID;
+-                response.sendVendorSpecificHeaderOptions[i].optionID =
++                response->sendVendorSpecificHeaderOptions[i].protocolID = OC_COAP_ID;
++                response->sendVendorSpecificHeaderOptions[i].optionID =
+                     static_cast<uint16_t>(it->getOptionID());
+-                response.sendVendorSpecificHeaderOptions[i].optionLength =
++                response->sendVendorSpecificHeaderOptions[i].optionLength =
+                     (it->getOptionData()).length() + 1;
+                 std::string optionData = it->getOptionData();
+                 std::copy(optionData.begin(),
+                          optionData.end(),
+-                         response.sendVendorSpecificHeaderOptions[i].optionData);
+-                response.sendVendorSpecificHeaderOptions[i].optionData[it->getOptionData().length()]
++                         response->sendVendorSpecificHeaderOptions[i].optionData);
++                response->sendVendorSpecificHeaderOptions[i].optionData[it->getOptionData().length()]
+                     = '\0';
+                 i++;
+             }
+ 
+-            if(OC_EH_RESOURCE_CREATED == response.ehResult)
++            if(OC_EH_RESOURCE_CREATED == response->ehResult)
+             {
+-                pResponse->getNewResourceUri().copy(response.resourceUri,
+-                        sizeof (response.resourceUri) - 1);
+-                response.resourceUri[pResponse->getNewResourceUri().length()] = '\0';
++                pResponse->getNewResourceUri().copy(response->resourceUri,
++                        sizeof (response->resourceUri) - 1);
++                response->resourceUri[pResponse->getNewResourceUri().length()] = '\0';
+             }
+ 
+             if(cLock)
+             {
+                 std::lock_guard<std::recursive_mutex> lock(*cLock);
+-                result = OCDoResponse(&response);
++                result = OCDoResponse(response);
+             }
+             else
+             {
+-                OICFree(response.payload);
++                OICFree(response->payload);
+                 result = OC_STACK_ERROR;
+             }
+ 
+@@ -620,6 +627,7 @@ namespace OC
+             {
+                 oclog() << "Error sending response\n";
+             }
++            OICFree(response);
+             return result;
+         }
+     }
