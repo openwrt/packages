@@ -38,6 +38,11 @@ define Package/gnupg
   MENU:=1
 endef
 
+define Package/gpgv
+  $(call Package/gnupg/Default)
+  TITLE:=GnuPG signature verification only
+endef
+
 define Package/gnupg-utils
   $(call Package/gnupg/Default)
   DEPENDS:=gnupg +libcurl
@@ -49,6 +54,13 @@ define Package/gnupg/description
  It can be used to encrypt data and to create digital signatures.
  It includes an advanced key management facility and is compliant
  with the proposed OpenPGP Internet standard as described in RFC2440.
+ .
+ GnuPG does not use any patented algorithms so it cannot be compatible
+ with PGP2 because it uses IDEA (which is patented worldwide).
+endef
+
+define Package/gpgv/description
+ GPGv is a stripped down version of GnuPG that only checks signatures.
  .
  GnuPG does not use any patented algorithms so it cannot be compatible
  with PGP2 because it uses IDEA (which is patented worldwide).
@@ -79,6 +91,11 @@ define Package/gnupg/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gpg $(1)/usr/bin/
 endef
 
+define Package/gpgv/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gpgv $(1)/usr/bin/
+endef
+
 define Package/gnupg-utils/install
 	$(INSTALL_DIR) $(1)/usr/lib/gnupg
 	for file in gpgkeys_curl gpgkeys_hkp; do \
@@ -88,4 +105,5 @@ define Package/gnupg-utils/install
 endef
 
 $(eval $(call BuildPackage,gnupg))
+$(eval $(call BuildPackage,gpgv))
 $(eval $(call BuildPackage,gnupg-utils))
