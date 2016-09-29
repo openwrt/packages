@@ -13,13 +13,13 @@ Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
 
 --- a/build_common/SConscript
 +++ b/build_common/SConscript
-@@ -14,7 +14,7 @@ host_target_map = {
+@@ -18,7 +18,7 @@ host_target_map = {
  
  # Map of os and allowed archs (os: allowed archs)
  os_arch_map = {
--		'linux': ['x86', 'x86_64', 'arm', 'arm64'],
-+		'linux': ['x86', 'x86_64', 'arm', 'arm64', 'mips', 'mipsel', 'mips64', 'mips64el', 'i386', 'powerpc', 'sparc', 'aarch64'],
- 		'tizen': ['x86', 'x86_64', 'arm', 'arm64', 'armeabi-v7a'],
+-		'linux': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
++		'linux': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64', 'mips', 'mipsel', 'mips64', 'mips64el', 'i386', 'powerpc', 'sparc', 'aarch64'],
+ 		'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
  		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
  		'windows': ['x86', 'amd64', 'arm'],
 --- a/resource/csdk/connectivity/build/SConscript

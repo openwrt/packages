@@ -8,83 +8,47 @@
                         {
                             "href": "/oic/res",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.wk.res"],
+                            "if": ["oic.if.ll"]
                         },
                         {
                             "href": "/oic/d",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.wk.d"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
                         },
                         {
                             "href": "/oic/p",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/res/d",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/res/types/d",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/ad",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.wk.p"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
                         },
                         {
                             "href": "/oic/sec/acl",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/sec/amacl",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/sec/doxm",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/sec/pstat",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.acl"],
+                            "if": ["oic.if.baseline"]
                         }
                     ],
                     "permission": 2
                 },
                 {
-                    "subjectuuid": "32323232-3232-3232-3232-323232323232",
+                    "subjectuuid": "*",
                     "resources": [
                         {
-                            "href": "/oic/sec/acl",
+                            "href": "/oic/sec/doxm",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        } ,
+                            "rt": ["oic.r.doxm"],
+                            "if": ["oic.if.baseline"]
+                        },
                         {
-                            "href": "/oic/sec/cred",
+                            "href": "/oic/sec/pstat",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.pstat"],
+                            "if": ["oic.if.baseline"]
                         }
                     ],
-                    "permission": 31
+                    "permission": 2
                 },
                 {
                     "subjectuuid": "*",
@@ -92,11 +56,11 @@
                         {
                             "href": "*",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.core"],
+                            "if": ["oic.if.baseline"]
                         }
                     ],
-                    "permission": 6
+                    "permission": 7
                 }
             ]
         },
@@ -108,8 +72,8 @@
         "rowneruuid": "31313131-3131-3131-3131-313131313131",
         "cm": 0,
         "tm": 0,
-        "om": 3,
-        "sm": 3
+        "om": 4,
+        "sm": 4
         },
     "doxm": {
         "oxms": [0],
@@ -118,8 +82,7 @@
         "owned": true,
         "deviceuuid": "31313131-3131-3131-3131-313131313131",
         "devowneruuid": "32323232-3232-3232-3232-323232323232",
-        "rowneruuid": "31313131-3131-3131-3131-313131313131",
-        "dpc": false
+        "rowneruuid": "31313131-3131-3131-3131-313131313131"
     },
     "cred": {
         "creds": [
@@ -133,6 +96,6 @@
                 }
             }
         ],
-        "rowneruuid": "32323232-3232-3232-3232-323232323232"
+        "rowneruuid": "31313131-3131-3131-3131-313131313131"
     }
 }
