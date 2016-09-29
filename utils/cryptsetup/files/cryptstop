@@ -1,0 +1,77 @@
+#!/bin/sh
+
+SPECIFICDISK="$1"
+
+. /lib/functions.sh
+
+cryptdisk_close() {
+	local cfg="$1"
+	local device
+	local cryptdev
+
+	config_get device "$cfg" device 
+	cryptdev="$(echo "$(basename "$device")"|tr '\- :,' '_')_crypt"
+
+	if [ -n "$device" ]; then
+		echo "Closing device $device"
+		/usr/sbin/cryptsetup close "${cryptdev}" || return
+	else
+		return
+	fi
+}
+
+stop_command() {
+	local cfg="$1"
+	local command
+	local options
+	local do_stop
+	config_get command "$cfg" command
+	config_get_bool do_stop "$cfg" do_stop 1
+	config_get stop_options "$cfg" stop_options
+	if [ -n "$command" ] && [ -x "$command" ] && [ "$do_stop" = "1" ]; then
+		eval "$command $stop_options"
+	fi
+}
+
+initscript_action() {
+	local cfg="$1"
+	local action="$2"
+	local name restart
+	config_get name "$cfg" name
+	config_get_bool restart "$cfg" restart 1
+	if [ -n "$name" ] && [ -x "/etc/init.d/$name" ]; then
+		if [ "$restart" = "1" ] && ( [ "$action" = "stop" ] || [ "$action" = "start" ] ); then
+			/etc/init.d/$name "$action"
+		fi
+	fi
+}
+
+unmount_command() {
+	local cfg="$1"
+	local command
+
+	config_get command "$cfg" command
+	eval "$command"
+}
+
+post_unmount_command() {
+	local cfg="$1"
+	local command
+	
+	config_get command "$cfg" command
+	eval "$command"
+}
+
+config_load crypttab
+config_foreach initscript_action initscript stop
+config_foreach stop_command command
+sleep 20
+config_foreach unmount_command unmount
+sleep 5
+config_foreach post_unmount_command post_unmount
+if [ -z "$SPECIFICDISK" ]; then
+	config_foreach cryptdisk_close cryptdisk
+else
+	cryptdisk_close "$SPECIFICDISK"
+fi
+config_foreach initscript_action initscript start

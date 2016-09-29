@@ -1,0 +1,93 @@
+#!/bin/sh
+
+SPECIFICDISK="$1"
+PASSPHRASESTDIN="$2"
+SKIPFSTAB="$3"
+
+NOFSTAB=0
+FOUNDDISK=0
+
+if [ ! -e /etc/config/fstab ] || [ ! -s /etc/config/fstab ]; then
+	if [ -z "$SKIPFSTAB" ]; then
+		NOFSTAB=1
+	fi
+fi
+
+cryptdisk_open() {
+	local cfg="$1"
+	local cryptdev devtype device pre_mount_command mount_command
+
+	config_get device "$cfg" device 
+	config_get devtype "$cfg" devtype luks
+	cryptdev="$(echo "$(basename "$device")"|tr '\- :,' '_')_crypt"
+
+	if [ -n "$device" ] && [ -e "$device" ]; then
+		echo "Opening device $device"
+		/usr/sbin/cryptsetup open ${PASSPHRASESTDIN:+--key-file -} --type "${devtype}" "${device}" "$cryptdev" || return
+		sleep 5
+		FOUNDDISK=1
+	else
+		return
+	fi
+
+	config_get pre_mount_command "$cfg" pre_mount_command "[ -x /etc/init.d/lvm2 ] && /etc/init.d/lvm2 start; sleep 5"
+	eval "$pre_mount_command"
+
+	# For the case fstab doesn't exist we presume the user would like to have their
+	# disk mounted and do so (unless user disabled this when calling cryptstart)
+	if [ "$NOFSTAB" = "1" ]; then
+		block detect |sed 's/ enabled 0/ enabled 1/' >/etc/config/fstab	
+	fi
+
+	config_get mount_command "$cfg" mount_command 'block mount'
+	eval "$mount_command"
+
+	sleep 5
+}
+
+run_command() {
+	local cfg="$1"
+	local command
+	local options
+	config_get command "$cfg" command
+	config_get_bool do_start "$cfg" do_start 1
+	config_get start_options "$cfg" start_options
+	if [ -n "$command" ] && [ -x "$command" ] && [ "$do_start" = "1" ]; then
+		eval "$command" "$start_options"
+	fi
+}
+
+initscript_action() {
+	local cfg="$1"
+	local action="$2"
+	local name do_stop
+	config_get name "$cfg" name
+	config_get_bool restart "$cfg" restart 1
+	
+	if [ -n "$name" ] && [ -x "/etc/init.d/$name" ]; then
+		if [ "$restart" = "1" ] && ( [ "$action" = "stop" ] || ( [ "$action" = "start" ] && [ "$FOUNDDISK" = "1" ] ) ); then
+			/etc/init.d/$name "$action"
+		fi
+	fi
+}
+
+. /lib/functions.sh
+
+config_load crypttab
+config_foreach initscript_action initscript stop
+sleep 20
+
+if [ -z "$SPECIFICDISK" ]; then
+	config_foreach cryptdisk_open cryptdisk
+else
+	cryptdisk_open "$SPECIFICDISK"
+fi
+
+if [ "$FOUNDDISK" = "0" ]; then
+	config_foreach initscript_action initscript start
+	exit 1
+fi
+
+config_foreach run_command command
+config_foreach initscript_action initscript start
+

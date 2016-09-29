@@ -1,0 +1,47 @@
+#!/bin/sh
+
+ACTION="$1"
+
+. /lib/functions.sh
+
+initscript_action() {
+	local val="$1"
+	local action="$2"
+	
+	if [ -n "$val" ] && [ -x "/etc/init.d/$val" ]; then
+		/etc/init.d/"$val" "$action"
+	fi
+}
+
+set_datadir() {
+	local cfg="$1"
+	config_get src "$cfg" src
+	config_get dest "$cfg" dest
+	if [ -n "$dest" ] && [ -n "$src" ] && [ -e "$dest" ] && [ -e "$src" ]; then
+		case "$ACTION" in 
+	        stop)
+			config_list_foreach "$cfg" initscript initscript_action stop
+			/bin/umount "${src}" 2>/dev/null || true
+			sleep 10
+			config_list_foreach "$cfg" initscript initscript_action start
+			;;
+		start)
+			config_list_foreach "$cfg" initscript initscript_action stop
+			rm -rf "$dest""${src}".old
+			mkdir -p "$dest""${src}"
+			mkdir -p "$dest""${src}".old
+			mv "${src}"/* "$dest""${src}".old/
+			/bin/umount "${src}" 2>/dev/null || true
+			sleep 10
+			mount --bind "$dest""${src}" "${src}"
+			sleep 10
+			config_list_foreach "$cfg" initscript initscript_action start
+			mkdir -p "$dest""${src}"/precrypt
+			mv "$dest""${src}".old "$dest""${src}"/precrypt/"$(date -Iminutes|tr -d ':')"
+			;;
+		esac
+	fi
+}
+
+config_load crypttab
+config_foreach set_datadir datadir

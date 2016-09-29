@@ -1,0 +1,27 @@
+#!/bin/sh /etc/rc.common
+
+START=00
+STOP=90
+
+disable_initscript() {
+	local cfg="$1"
+	local name disable
+	config_get name "$cfg" name
+	config_get_bool disable "$cfg" disable 0
+	if [ -n "$name" ] && [ -x "/etc/init.d/$name" ] && [ "$disable" -gt 0 ] && /etc/init.d/$name enabled; then
+		/etc/init.d/$name stop || true
+		/etc/init.d/$name disable
+	fi
+}
+
+start() {
+	if [ -x /usr/sbin/cryptstart ] && [ -r /etc/config/crypttab ]; then
+		config_load crypttab
+		config_foreach disable_initscript initscript
+	fi
+}
+
+stop() {
+	/usr/sbin/cryptstop
+}
+
