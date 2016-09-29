@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -12,18 +12,17 @@
 
 
 include $(TOPDIR)/rules.mk
-include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/target.mk 
 
 PKG_NAME:=boost
-PKG_VERSION:=1_61_0
+PKG_VERSION:=1.62.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)_1_62_0.tar.gz
 PKG_SOURCE_URL:=@SF/boost
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_VERSION)
-PKG_MD5SUM:=874805ba2e2ee415b1877ef3297bf8ad
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_1_62_0
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_1_62_0
+PKG_SHA256SUM:=440a59f8bc4023dbe6285c9998b0f7fa288468b889746b1ef00e8b36c559dce1
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
@@ -48,22 +47,35 @@ define Package/boost/description/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.61 libraries.
+This package provides the Boost v1.62 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
+
+-----------------------------------------------------------------------------
+|                                Warning                                    |
+| In order to build all of the Boost Libraries, it is necessary             |
+| to use at least GCC version 5 (c++14 support) and, it is necessary to     |
+| compile the kernel with Full Language Support.                            |
+| Without these requirerements, the following libs will not be available:   |
+|   Boost.Locale                                                            |
+|   Boost.Coroutine2                                                        |
+|   Boost.Fiber                                                             |
+-----------------------------------------------------------------------------
+
 This package provides the following run-time libraries:
  - atomic
  - chrono
  - container
  - context
- - coroutine
- - - coroutine2 (requires GCC v5 and up)
+ - coroutine (Deprecated - use Coroutine2)
+ - - coroutine2 (Requires GCC v5 and up)
  - date_time
  - exception
  - filesystem
+ - fiber (Requires GCC v5 and up)
  - graph
  - - graph-parallel
  - iostreams
- - locale (requires kernel being compiled with full language support)
+ - locale (Requires kernel being compiled with full language support)
  - log
  - math
  - program_options
@@ -77,8 +89,9 @@ This package provides the following run-time libraries:
  - thread
  - timer
  - wave
- There are many more header-only libraries supported by Boost.
- See more at http://www.boost.org/doc/libs/1_61_0/
+
+There are many more header-only libraries supported by Boost.
+See more at http://www.boost.org/doc/libs/1_62_0/
 endef
 
 BOOST_LIBS =
@@ -210,22 +223,24 @@ define Package/boost/config
 	    	help 
 	    		Builds both release and debug libs. It will take much longer to compile.
 	    	default n	    	
-    endmenu
+	endmenu
 
-    menu "Select Boost libraries"
-      depends on PACKAGE_boost
+	menu "Select Boost libraries"
+		depends on PACKAGE_boost
 		comment "Libraries"
 
 		config boost-libs-all
+		depends on @GCC_VERSION_5 || @GCC_USE_VERSION_6
+		depends on @BUILD_NLS		
 		bool "Include all Boost libraries."
-	    	select PACKAGE_boost-libs	    	
+		select PACKAGE_boost-libs	    	
 
 		config boost-test-pkg
 		bool "Boost test package."
-	    	select PACKAGE_boost-test
-	    
+		select PACKAGE_boost-test
+		
 		config boost-coroutine2
-		depends on @GCC_VERSION_5
+		depends on @GCC_VERSION_5 || @GCC_USE_VERSION_6
 		bool "Boost couroutine2 support."
 		select PACKAGE_boost-coroutine
 		default n
@@ -236,13 +251,15 @@ define Package/boost/config
 		default n
 
 		$(foreach lib,$(BOOST_LIBS), \
-		  config PACKAGE_boost-$(lib)
-		  prompt "Boost $(lib) library."
+			config PACKAGE_boost-$(lib)
+			prompt "Boost $(lib) library."
+			$(if $(findstring locale,$(lib)),depends on @BUILD_NLS,)
+			$(if $(findstring fiber,$(lib)),depends on @GCC_VERSION_5 || @GCC_USE_VERSION_6,)
 		)
-  	endmenu
+	endmenu
 
 endef
-
+ 
 PKG_CONFIG_DEPENDS:= CONFIG_PACKAGE_boost-test
 
 define Package/boost-test
@@ -288,12 +305,13 @@ $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,))
 $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
+$(eval $(call DefineBoostLibrary,fiber,context,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
 $(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
-$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS) @BUILD_NLS))
+$(eval $(call DefineBoostLibrary,locale,system, $(ICONV_DEPENDS)))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
-#$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
+#$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does not exist in OpenWRT at this time.
 $(eval $(call DefineBoostLibrary,program_options,,))
 $(eval $(call DefineBoostLibrary,python,,+PACKAGE_boost-python:python))
 $(eval $(call DefineBoostLibrary,python3,,+PACKAGE_boost-python3:python3))
@@ -320,6 +338,10 @@ TARGET_CFLAGS += \
 	$(if $(CONFIG_PACKAGE_boost-python3), -I$(STAGING_DIR)/usr/include/python3.5/) \
 	$(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC
 
+TARGET_CXXFLAGS += \
+	$(if $(or $(CONFIG_GCC_USE_VERSION_5), $(CONFIG_GCC_USE_VERSION_6)), -std=c++14, -std=c++11)
+
+
 ifneq ($(findstring mips,$(ARCH)),)
     BOOST_ABI = o32
     ifneq ($(findstring 64,$(ARCH)),)
@@ -338,7 +360,7 @@ comma := ,
 define Build/Compile
 	$(info Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu $(CPU_TYPE) $(CPU_SUBTYPE))
 	( cd $(PKG_BUILD_DIR) ; \
-		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS) $(if $(CONFIG_boost-coroutine2),-std=c++14,)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
+		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
 		$(if $(CONFIG_PACKAGE_boost-python3), \
 			echo "using python : 3.5 : $(STAGING_DIR_ROOT)/usr/bin/python3 : $(STAGING_DIR)/usr/include/python3.5/ ;" >> \
 				tools/build/src/user-config.jam; \
