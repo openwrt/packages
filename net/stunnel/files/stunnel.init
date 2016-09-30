@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006-2008 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 
 START=90
 USE_PROCD=1

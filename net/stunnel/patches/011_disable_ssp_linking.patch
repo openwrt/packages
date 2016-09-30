@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -5646,66 +5646,66 @@ done
+@@ -5781,66 +5781,66 @@ done
  
  
  
@@ -125,16 +125,16 @@
 +#
 +#done
  
- 
- 
+             ;;
+     esac
 --- a/configure.ac
 +++ b/configure.ac
-@@ -71,7 +71,7 @@ AX_APPEND_COMPILE_FLAGS([-Wformat=2])
- AX_APPEND_COMPILE_FLAGS([-Wconversion])
- AX_APPEND_COMPILE_FLAGS([-Wno-long-long])
- AX_APPEND_COMPILE_FLAGS([-Wno-deprecated-declarations])
--AX_APPEND_COMPILE_FLAGS([-fstack-protector])
-+#AX_APPEND_COMPILE_FLAGS([-fstack-protector])
- AX_APPEND_COMPILE_FLAGS([-fPIE])
- AX_APPEND_COMPILE_FLAGS([-D_FORTIFY_SOURCE=2])
- AX_APPEND_LINK_FLAGS([-fPIE -pie])
+@@ -91,7 +91,7 @@ if test "$GCC" = yes; then
+         avr-*.* | powerpc-*-aix* | rl78-*.* | visium-*.*)
+             ;;
+         *)
+-            AX_APPEND_COMPILE_FLAGS([-fstack-protector])
++            #AX_APPEND_COMPILE_FLAGS([-fstack-protector])
+             ;;
+     esac
+     AX_APPEND_LINK_FLAGS([-fPIE -pie])

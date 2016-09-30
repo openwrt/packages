@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stunnel
-PKG_VERSION:=5.20
+PKG_VERSION:=5.31
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Michael Haas <haas@computerlinguist.org>
 PKG_LICENSE_FILES:=COPYING COPYRIGHT.GPL
 
-PKG_SOURCE_URL:=http://stunnel.cybermirror.org/archive/5.x/
+PKG_SOURCE_URL:=\
+	ftp://ftp.stunnel.org/stunnel/archive/5.x/ \
+	http://www.usenix.org.uk/mirrors/stunnel/archive/5.x/ \
+	ftp://ftp.nluug.nl/pub/networking/stunnel/archive/5.x/ \
+	http://stunnel.cybermirror.org/archive/5.x/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=3264375026c2b496b5d258e243222de8
+PKG_MD5SUM:=a39b89624984cefc6d229a54f34b33ec
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
