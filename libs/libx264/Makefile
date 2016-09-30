@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=x264
 PKG_VERSION:=snapshot-20160815-2245-stable
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.videolan.org/x264/snapshots/
@@ -53,7 +53,7 @@ define Package/libx264
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=H264/AVC free codec library.
-  DEPENDS:=@BUILD_PATENTED @!powerpc||BROKEN
+  DEPENDS:=@BUILD_PATENTED
   URL:=http://www.videolan.org/developers/x264.html
 endef
 
