@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006-2012 OpenWrt.org
-#               2014 Noah Meyerhans <frodo@morgul.net>
+#               2014-2016 Noah Meyerhans <frodo@morgul.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -26,6 +26,7 @@ PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
 
 PKG_INSTALL:=1
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
