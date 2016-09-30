@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.4.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -89,6 +89,7 @@ endef
 
 
 SNMP_MIB_MODULES_INCLUDED = \
+	agentx \
 	host/hr_device \
 	host/hr_disk \
 	host/hr_filesys \
@@ -110,6 +111,7 @@ SNMP_MIB_MODULES_INCLUDED = \
 	mibII/udp \
 	mibII/vacm_context \
 	mibII/vacm_vars \
+	notification \
 	snmpv3/snmpEngine \
 	snmpv3/snmpMPDStats \
 	snmpv3/usmConf \
@@ -130,14 +132,12 @@ SNMP_MIB_MODULES_INCLUDED = \
 
 SNMP_MIB_MODULES_EXCLUDED = \
 	agent_mibs \
-	agentx \
 	disman/event \
 	disman/schedule \
 	hardware \
 	host \
 	if-mib \
 	mibII \
-	notification \
 	notification-log-mib \
 	snmpv3mibs \
 	target \
