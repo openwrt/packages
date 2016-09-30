@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=38014
+PKG_SOURCE_VERSION:=38096
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
@@ -143,7 +143,7 @@ define Package/gnunet/install
 	done )
 
 	( for lib in arm ats block cadet core datacache dht \
-	    dns dnsparser dnsstub fragmentation friends hello identity nat nse \
+	    dns dnsparser fragmentation friends hello identity nat nse \
 	    peerinfo regexblock regex revocation scalarproduct set \
 	    statistics transport util; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
@@ -300,6 +300,10 @@ DEPENDS_gns-pgsql:=+gnunet-pgsql +gnunet-gns
 PLUGIN_gns-pgsql:=namecache_postgres namestore_postgres
 CONFLICTS_gns-pgsql:=gnunet-gns-sqlite gnunet-gns-flat
 
+DEPENDS_social-pgsql:=+gnunet-pgsql +gnunet-social
+PLUGIN_social-pgsql:=psycstore_postgres
+CONFLICTS_social-pgsql:=gnunet-social-sqlite gnunet-social-mysql
+
 DEPENDS_sqlite:=+libsqlite3
 
 DEPENDS_gns-sqlite:=+gnunet-sqlite +gnunet-gns
@@ -326,7 +330,7 @@ BIN_utils:=gns-proxy-setup-ca transport-certificate-creation scrypt
 
 DEPENDS_vpn:=+kmod-tun +iptables +firewall
 BIN_vpn:=vpn
-LIB_vpn:=tun vpn
+LIB_vpn:=dnsstub tun vpn
 LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit helper-vpn service-vpn
 CONF_vpn:=exit pt vpn
 
@@ -378,19 +382,19 @@ $(eval $(call PostInstFixSUIDPerms,gnunet-vpn))
 $(eval $(call BuildPackage,gnunet))
 $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,datastore,data storage components,))
-$(eval $(call BuildComponent,dv,distance-vector routing component,))
+$(eval $(call BuildComponent,dv,distance-vector routing component,y))
 $(eval $(call BuildComponent,experiments,experimental components,))
 $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))
 $(eval $(call BuildComponent,gns-proxy,gns-proxy component,))
-$(eval $(call BuildComponent,hostlist,HTTP bootstrap hostlist client and server,))
+$(eval $(call BuildComponent,hostlist,HTTP bootstrap hostlist client and server,y))
 $(eval $(call BuildComponent,peerstore,peerstore local persistency component,))
 $(eval $(call BuildComponent,rest,REST interface,))
-$(eval $(call BuildComponent,rps,RPS routing component,))
+$(eval $(call BuildComponent,rps,RPS routing component,y))
 $(eval $(call BuildComponent,social,social components,))
 $(eval $(call BuildComponent,namestore-fcfsd,first-come-first-serve registration server,))
 $(eval $(call BuildComponent,fs-heap,heap-based filesharing plugins,))
-$(eval $(call BuildComponent,gns-flat,flat storage GNS plugins,))
+$(eval $(call BuildComponent,gns-flat,flat storage GNS plugins,y))
 $(eval $(call BuildComponent,peerstore-flat,flat storage peerstore plugin,))
 $(eval $(call BuildComponent,mysql,mySQL datastore backend,))
 $(eval $(call BuildComponent,fs-mysql,mySQL filesharing plugins,))
@@ -398,6 +402,7 @@ $(eval $(call BuildComponent,social-mysql,mySQL social plugins,))
 $(eval $(call BuildComponent,pgsql,PostgreSQL storage backends,))
 $(eval $(call BuildComponent,fs-pgsql,PostgreSQL filesharing plugins,))
 $(eval $(call BuildComponent,gns-pgsql,PostgreSQL GNS plugins,))
+$(eval $(call BuildComponent,social-pgsql,PostgreSQL social plugins,))
 $(eval $(call BuildComponent,sqlite,libsqlite3 storage backends,))
 $(eval $(call BuildComponent,fs-sqlite,libsqlite3 filesharing plugins,))
 $(eval $(call BuildComponent,gns-sqlite,libsqlite3 gns plugins,))
@@ -406,6 +411,6 @@ $(eval $(call BuildComponent,social-sqlite,libsqlite3 social plugins,))
 $(eval $(call BuildComponent,transport-bluetooth,bluetooth transport,))
 $(eval $(call BuildComponent,transport-http_client,HTTP/HTTPS client transport,y))
 $(eval $(call BuildComponent,transport-http_server,HTTP/HTTPS server transport,))
-$(eval $(call BuildComponent,transport-wlan,WLAN transport,))
+$(eval $(call BuildComponent,transport-wlan,WLAN transport,y))
 $(eval $(call BuildComponent,utils,administration utililties,))
 $(eval $(call BuildComponent,vpn,vpn components,y))

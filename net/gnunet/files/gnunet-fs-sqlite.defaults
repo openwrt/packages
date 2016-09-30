@@ -1,7 +1,7 @@
 #!/bin/sh
 
 uci -q get gnunet.datastore || uci set gnunet.datastore=gnunet-config
-uci -q get gnunet.datacache || uci set gnunet.datacache=gnunet-config
+uci -q get gnunet.dhtcache || uci set gnunet.dhtcache=gnunet-config
 
 uci -q batch <<EOF
 	del gnunet.datastore_sqlite
@@ -11,6 +11,6 @@ uci -q batch <<EOF
 	del gnunet.datacache_sqlite
 	set gnunet.datacache_sqlite=gnunet-config
 	set gnunet.datacache_sqlite.FILENAME=/var/run/gnunet/datacache.sqlite
-	set gnunet.datacache.DATABASE=sqlite
+	set gnunet.dhtcache.DATABASE=sqlite
 	commit gnunet
 EOF
