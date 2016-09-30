@@ -39,17 +39,11 @@ define Package/bash/description
   incorporates useful features from the Korn and C shells (ksh and csh).
 endef
 
-CONFIGURE_VARS += \
+CONFIGURE_ARGS += \
 	bash_cv_job_control_missing=present \
-	bash_cv_sys_named_pipes=present
-
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--without-bash-malloc \
-		--bindir=/bin \
-	)
-endef
-
+	bash_cv_sys_named_pipes=present \
+	--without-bash-malloc \
+	--bindir=/bin
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/builtins LDFLAGS_FOR_BUILD= mkbuiltins
