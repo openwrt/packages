@@ -33,6 +33,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_iotivity-resource-container-sample \
 	CONFIG_PACKAGE_iotivity-resource-container-hue \
 	CONFIG_PACKAGE_iotivity-example-garage \
+	CONFIG_PACKAGE_iotivity-example-simple \
 	CONFIG_PACKAGE_iotivity_DEBUG \
 	CONFIG_PACKAGE_iotivity_SECURE
 
@@ -159,6 +160,18 @@ define Package/iotivity-example-garage/description
     An IoTivity example application
 endef
 
+define Package/iotivity-example-simple
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+iotivity +iotivity-cpp
+  TITLE:=IoTivity simple client + server
+  URL:=https://www.iotivity.org
+endef
+
+define Package/iotivity-example-simple/description
+    The IoTivity simple client and simple server exmaple
+endef
+
 
 PKG_TINYCBOR_NAME:=tinycbor
 PKG_TINYCBOR_VERSION:=43e3ac9490cf19459ec7b7bd13df3b66810fb62a
@@ -210,6 +223,7 @@ SCONS_OPTIONS += \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-sample),containersample) \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-hue),libHueBundle) \
 	$(if $(CONFIG_PACKAGE_iotivity-example-garage),examples) \
+	$(if $(CONFIG_PACKAGE_iotivity-example-simple),examples) \
 
 ifeq ($(CONFIG_PACKAGE_iotivity_DEBUG),y)
   SCONS_OPTIONS += RELEASE=false
@@ -303,6 +317,12 @@ define Package/iotivity-example-garage/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/resource/examples/garageserver $(1)/usr/bin/
 endef
 
+define Package/iotivity-example-simple/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/resource/examples/simpleclient $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/resource/examples/simpleserver $(1)/usr/bin/
+endef
+
 
 $(eval $(call BuildPackage,iotivity))
 $(eval $(call BuildPackage,iotivity-cpp))
@@ -313,3 +333,4 @@ $(eval $(call BuildPackage,iotivity-resource-container-lib))
 $(eval $(call BuildPackage,iotivity-resource-container-sample))
 $(eval $(call BuildPackage,iotivity-resource-container-hue))
 $(eval $(call BuildPackage,iotivity-example-garage))
+$(eval $(call BuildPackage,iotivity-example-simple))
