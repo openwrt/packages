@@ -29,7 +29,7 @@ define Package/ttyd
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Command-line tool for sharing terminal over the web
-	DEPENDS:=+openssl +libjson-c +libpthread +libwebsockets-openssl
+	DEPENDS:=+libopenssl +libjson-c +libpthread +libwebsockets-openssl
 	URL:=https://github.com/tsl0922/ttyd
 	SUBMENU:=Terminal
 	MAINTAINER:=Shuanglei Tao <tsl0922@gmail.com>
@@ -42,9 +42,6 @@ endef
 define Package/ttyd/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ttyd $(1)/usr/bin/
-
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/ttyd.init $(1)/etc/init.d/ttyd
 endef
 
 $(eval $(call BuildPackage,ttyd))
