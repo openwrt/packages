@@ -1,0 +1,99 @@
+Index: lxc-1.1.5/templates/lxc-download.in
+===================================================================
+--- lxc-1.1.5.orig/templates/lxc-download.in
++++ lxc-1.1.5/templates/lxc-download.in
+@@ -47,6 +47,7 @@ DOWNLOAD_URL=
+ DOWNLOAD_USE_CACHE="false"
+ DOWNLOAD_VALIDATE="true"
+ DOWNLOAD_VARIANT="default"
++DOWNLOAD_KEYRING=
+ 
+ LXC_MAPPED_GID=
+ LXC_MAPPED_UID=
+@@ -121,6 +122,15 @@ gpg_setup() {
+         return
+     fi
+ 
++    if [ -n "$DOWNLOAD_KEYRING" ]; then
++         return
++     fi
++ 
++    if ! type gpg >/dev/null 2>&1; then
++        echo "ERROR: No GPG; can't download keys" 1>&2
++        exit 1
++    fi
++
+     echo "Setting up the GPG keyring"
+ 
+     mkdir -p "$DOWNLOAD_TEMP/gpg"
+@@ -137,7 +147,7 @@ gpg_setup() {
+     done
+ 
+     if [ -z "$success" ]; then
+-        echo "ERROR: Unable to fetch GPG key from keyserver."
++        echo "ERROR: Unable to fetch GPG key from keyserver." 1>&2
+         exit 1
+     fi
+ 
+@@ -153,10 +163,17 @@ gpg_validate() {
+         return 0
+     fi
+ 
+-    if ! gpg --verify $1 >/dev/zero 2>&1; then
+-        echo "ERROR: Invalid signature for $1" 1>&2
+-        exit 1
+-    fi
++    if type gpg >/dev/null 2>&1; then
++        if ! gpg --verify ${DOWNLOAD_KEYRING:+--keyring ${DOWNLOAD_KEYRING}} $1 >/dev/zero 2>&1; then
++            echo "ERROR: Invalid signature for $1" 1>&2
++            exit 1
++        fi
++    elif type gpgv >/dev/null 2>&1; then
++        if ! gpgv  ${DOWNLOAD_KEYRING:+--keyring ${DOWNLOAD_KEYRING}} $1 >/dev/zero 2>&1; then
++            echo "ERROR: Invalid signature for $1" 1>&2
++            exit 1
++        fi
++   fi
+ }
+ 
+ in_userns() {
+@@ -205,6 +222,7 @@ Optional arguments:
+ [ --no-validate ]: Disable GPG validation (not recommended)
+ [ --flush-cache ]: Flush the local copy (if present)
+ [ --force-cache ]: Force the use of the local copy even if expired
++[ --keyring <keyring> ]: Specify a keyring instead of downloading keys.
+ 
+ LXC internal arguments (do not pass manually!):
+ [ --name <name> ]: The container name
+@@ -217,8 +235,8 @@ EOF
+ }
+ 
+ options=$(getopt -o d:r:a:hl -l dist:,release:,arch:,help,list,variant:,\
+-server:,keyid:,keyserver:,no-validate,flush-cache,force-cache,name:,path:,\
+-rootfs:,mapped-uid:,mapped-gid: -- "$@")
++server:,keyid:,keyserver:,keyring:,no-validate,\
++flush-cache,force-cache,name:,path:,rootfs:,mapped-uid:,mapped-gid: -- "$@")
+ 
+ if [ $? -ne 0 ]; then
+     usage
+@@ -260,9 +278,17 @@ done
+ # Check for GPG
+ if [ "$DOWNLOAD_VALIDATE" = "true" ]; then
+     if ! type gpg >/dev/null 2>&1; then
+-        echo "ERROR: Missing recommended tool: gpg" 1>&2
+-        echo "You can workaround this by using --no-validate." 1>&2
+-        exit 1
++	if [ -z "$DOWNLOAD_KEYRING" ]; then
++	        echo "ERROR: Missing recommended tool: gpg" 1>&2
++        	echo "You can workaround this by using --no-validate." 1>&2
++        	exit 1
++	else
++            if ! type gpgv >/dev/null 2>&1; then
++                echo "ERROR: Missing recommeneded tools: gpg or gpgv" 1>&2
++                echo "You can work around this by using --no-validate." 1>&2
++                exit 1
++            fi
++	fi
+     fi
+ fi
+ 
