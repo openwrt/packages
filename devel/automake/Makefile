@@ -9,11 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=automake
 PKG_VERSION:=1.15
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=@GNU/automake
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=716946a105ca228ab545fc37a70df3a3
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_MD5SUM:=9a1ddb0e053474d9d1105cfe39b0c48d
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
 PKG_LICENSE:=GPL-3.0+
 
