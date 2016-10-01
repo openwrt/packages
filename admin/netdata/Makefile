@@ -9,15 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Sebastian Careba <nitroshift@yahoo.com>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://firehol.org/download/netdata/releases/v$(PKG_VERSION)
 PKG_SOURCE_VERSION:=f8ed1eac764386b839fbd2db0f41e664
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.zz
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
