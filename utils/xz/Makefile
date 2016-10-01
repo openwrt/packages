@@ -11,10 +11,10 @@ PKG_NAME:=xz
 PKG_VERSION:=5.2.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://tukaani.org/xz \
-		http://fossies.org/linux/misc
-PKG_MD5SUM:=f90c9a0c8b259aee2234c4e0d7fd70af
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@SF/lzmautils \
+		http://tukaani.org/xz
+PKG_MD5SUM:=e26772b69940085c0632589ab1d52e64
 
 PKG_LICENSE:=Public-Domain LGPL-2.1+ GPL-2.0+ GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
