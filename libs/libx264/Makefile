@@ -27,6 +27,9 @@ include $(INCLUDE_DIR)/package.mk
 TARGET_CFLAGS+=-std=gnu99 -fPIC -O3 -ffast-math -I.
 MAKE_FLAGS+= LD="$(TARGET_CC) -o" 
 
+# ARM ASM depends on ARM1156 or later, blacklist earlier or incompatible cores
+CPU_ASM_BLACKLIST:=arm920t arm926ej-s arm1136j-s arm1176jzf-s fa526 mpcore xscale
+
 ifneq ($(CONFIG_TARGET_x86),)
 ifeq ($(CONFIG_YASM),y)
   CONFIGURE_VARS+= AS=yasm
@@ -38,7 +41,7 @@ else
 endif
 endif
 
-ifneq ($(CONFIG_SOFT_FLOAT),)
+ifneq ($(CONFIG_SOFT_FLOAT)$(findstring $(CONFIG_CPU_TYPE),$(CPU_ASM_BLACKLIST)),)
 CONFIGURE_VARS+= AS= 
 MAKE_FLAGS+= AS= 
 CONFIGURE_ARGS += --disable-asm
@@ -53,7 +56,7 @@ define Package/libx264
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=H264/AVC free codec library.
-  DEPENDS:=@BUILD_PATENTED
+  DEPENDS:=+libpthread @BUILD_PATENTED
   URL:=http://www.videolan.org/developers/x264.html
 endef
 
