@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 
 PKG_LICENSE:=GPL-3.0
@@ -22,31 +22,32 @@ PKG_MD5SUM:=a29dd538377ea24cec83237a636122ae
 PKG_BUILD_DIR:=$(BUILD_DIR)/Radicale-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
+$(call include_mk, python-package.mk)
+$(call include_mk, python3-package.mk)
 
 # no default dependencies
-PKG_DEFAULT_DEPENDS=
+PKG_DEFAULT_DEPENDS:=
 
 define Package/$(PKG_NAME)/Default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   URL:=http://radicale.org/
+  TITLE:=Radicale CalDAV/CardDAV server
   PKGARCH:=all
   USERID:=radicale=5232:radicale=5232
 endef
 define Package/$(PKG_NAME)-py2
   $(call Package/$(PKG_NAME)/Default)
-  PYTHON_VERSION:=2.7
-  TITLE:=Radicale CalDAV/CardDAV server (Python 2)
-  VARIANT:=python2
+  TITLE+= (Python 2)
+  VARIANT:=2
   DEPENDS:=+python-logging +python-openssl +python-xml +python-codecs
 endef
 define Package/$(PKG_NAME)-py3
   $(call Package/$(PKG_NAME)/Default)
-  PYTHON_VERSION:=3.4
-  TITLE:=Radicale CalDAV/CardDAV server (Python 3)
-  VARIANT:=python3
-  DEPENDS:=+python3-logging +python3-openssl +python3-xml +python3-codecs +python3-email @BROKEN
+  TITLE+= (Python 3)
+  VARIANT:=3
+  DEPENDS:=+python3-logging +python3-openssl +python3-xml +python3-codecs +python3-email
 endef
 
 # shown in LuCI package description
@@ -63,12 +64,10 @@ define Package/$(PKG_NAME)-py2/config
 	The Radicale Project is a CalDAV (calendar) and CardDAV (contact) server.
 	It aims to be a light solution, easy to use, easy to install, easy to configure.
 	As a consequence, it requires few software dependances and is pre-configured to work out-of-the-box.
-	!!! Will install and use Python $(PYTHON_VERSION) !!!
+	!!! Will install and use Python $(VARIANT) !!!
 	.
 	Version : $(PKG_VERSION)
 	Homepage: http://radicale.org/
-	.
-	$(PKG_MAINTAINER)
 endef
 Package/$(PKG_NAME)-py3/config = $(Package/$(PKG_NAME)-py2/config)
 
@@ -80,8 +79,10 @@ endef
 Package/$(PKG_NAME)-py3/conffiles = $(Package/$(PKG_NAME)-py2/conffiles)
 
 define Build/Configure
+	# nothing to configure
 endef
 define Build/Compile
+	# nothing to compile
 endef
 
 define Package/$(PKG_NAME)-py2/preinst
@@ -89,7 +90,7 @@ define Package/$(PKG_NAME)-py2/preinst
 	[ -n "$${IPKG_INSTROOT}" ] && exit 0	# if run within buildroot exit
 
 	# stop service if PKG_UPGRADE
-	[ "$${PKG_UPGRADE}" = "1" ] && /etc/init.d/$(PKG_NAME) stop >/dev/null 2>&1
+	[ "$${PKG_UPGRADE}" = "1" ] && /etc/init.d/radicale stop >/dev/null 2>&1
 
 	exit 0	# suppress errors from stop command
 endef
@@ -97,7 +98,7 @@ define Package/$(PKG_NAME)-py3/preinst
 $(call Package/$(PKG_NAME)-py2/preinst)
 endef
 
-define Package/$(PKG_NAME)-py2/install
+define Package/$(PKG_NAME)/inst_all
 	$(INSTALL_DIR)	$(1)/etc/init.d
 	$(INSTALL_BIN)  ./files/radicale.init    $(1)/etc/init.d/radicale
 
@@ -116,16 +117,18 @@ define Package/$(PKG_NAME)-py2/install
 	$(INSTALL_DATA) ./files/radicale.users   $(1)/etc/radicale/users
 	$(INSTALL_DATA) ./files/radicale.rights  $(1)/etc/radicale/rights
 
-	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/site-packages/radicale
-	$(CP) \
-		$(PKG_BUILD_DIR)/radicale/* \
-		$(1)/usr/lib/python$(PYTHON_VERSION)/site-packages/radicale
-
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/radicale $(1)/usr/bin/
 endef
+define Package/$(PKG_NAME)-py2/install
+	$(call Package/$(PKG_NAME)/inst_all, $(1))
+	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)/radicale
+	$(CP) $(PKG_BUILD_DIR)/radicale/* $(1)$(PYTHON_PKG_DIR)/radicale
+endef
 define Package/$(PKG_NAME)-py3/install
-	$(call Package/$(PKG_NAME)-py2/install, $(1))
+	$(call Package/$(PKG_NAME)/inst_all, $(1))
+	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)/radicale
+	$(CP) $(PKG_BUILD_DIR)/radicale/* $(1)$(PYTHON3_PKG_DIR)/radicale
 endef
 
 define Package/$(PKG_NAME)-py2/postinst
