@@ -22,6 +22,7 @@ if not conn then
     error("Failed to connect to ubus")
 end
 
+local fs = require("nixio.fs")
 
 function fork_exec(command)
 	local pid = nixio.fork()
@@ -87,10 +88,19 @@ function lxc_get_downloadable()
 	local f = io.popen('lxc-create -n just_want_to_list_available_lxc_templates -t download -- --server=' .. url .. ' --list', 'r')
 
 	for line in f:lines() do
-		local dist,version = line:match("^(%S+)%s+(%S+)%s+" .. target .. "%s+default%s+%S+$")
-		if dist~=nil and version~=nil then templates[#templates + 1] = dist .. ":" .. version end
+		local dist,version,arch,build = line:match("^(%S+)%s+(%S+)%s(%S+)%s+default%s+(%S+)$")
+		if dist ~= nil and version ~= nil and arch ~= nil and build ~= nil then
+			if ((target == arch) or ((dist ~= "openwrt" and dist ~= "lede")) and
+				(target == "x86_64" and arch == "amd64") or
+				(target == "i686" and arch == "i386") or
+				(target == "i586" and arch == "i386") or
+				(target == "i486" and arch == "i386") or
+				(target == "arm6vl" and arch == "armhf")
+			) then
+				templates[#templates + 1] = dist .. ":" .. version .. ":" .. arch .. ":" .. build.replace(":","-")
+			end
+		end
 	end
-
 	f:close()
 	luci.http.write_json(templates)
 end
@@ -102,21 +112,64 @@ function lxc_create(lxc_name, lxc_template)
 
 	local url = uci:get("lxc", "lxc", "url")
 
+	local data = "Failed to set create arguments"
+	local validate = uci:get("lxc", "lxc", "check_signature", 0)
+
 	if not pcall(dofile, "/etc/openwrt_release") then
 		return luci.http.write("1")
 	end
 
-	local f = io.popen('uname -m', 'r')
-	local target = f:read('*a')
-	f:close()
-	target = target:gsub("^%s*(.-)%s*$", "%1")
+	local err = false
 
-	local lxc_dist = lxc_template:gsub("(.*):(.*)", '%1')
-	local lxc_release = lxc_template:gsub("(.*):(.*)", '%2')
+	createargs = { }
 
-	local data = conn:call("lxc", "create", { name = lxc_name, template = "download", args = { "--server", url,  "--no-validate", "--dist", lxc_dist, "--release", lxc_release, "--arch", target } } )
+	if not validate then
+		createargs[#createargs + 1] = "--no-validate"
+	end
 
-	luci.http.write(data)
+	if lxc_template == nil or lxc_template == "" then
+		data = "Missing image selection"
+		err = true
+	end
+
+	if not err then
+		if lxc_template == nil or lxc_template == "" then
+			data = "Missing image to use"
+			createargs = { }
+		else
+			local lxc_dist = lxc_template:gsub("(.*):(.*):(.*):.*", '%1')
+			local lxc_release = lxc_template:gsub("(.*):(.*):(.*):.*", '%2')
+			local lxc_arch = lxc_template:gsub("(.*):(.*):(.*):.*", '%3')
+			if lxc_dist == nil or lxc_dist == "" or lxc_release == nil or lxc_release == "" or
+				lxc_arch == nil or lxc_arch == ""
+			then
+				data = "Bad dist release or arch from " .. lxc_template
+				err = true
+			else
+				createargs[#createargs + 1] = "--server"
+				createargs[#createargs + 1] = url
+				createargs[#createargs + 1] = "--dist"
+				createargs[#createargs + 1] = lxc_dist
+				createargs[#createargs + 1] = "--release"
+				createargs[#createargs + 1] = lxc_release
+				createargs[#createargs + 1] = "--arch"
+				createargs[#createargs + 1] = lxc_arch
+			end
+		end
+	end
+
+	if not err then
+		data = conn:call("lxc", "create", { name = lxc_name, template = "download", args = createargs } )
+	end
+
+	if not data or data == "" then
+		data = "lxc-create -n " .. lxc_name .. "-t download -- "
+		for k, v in ipairs(createargs) do
+			data = data .. v .. " "
+		end
+	end
+
+	luci.http.write(luci.util.pcdata(data))
 end
 
 function lxc_action(lxc_action, lxc_name)
