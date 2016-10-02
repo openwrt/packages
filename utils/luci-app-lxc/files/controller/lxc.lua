@@ -85,7 +85,13 @@ function lxc_get_downloadable()
 
 	local templates = {}
 
-	local f = io.popen('lxc-create -n just_want_to_list_available_lxc_templates -t download -- --server=' .. url .. ' --list', 'r')
+	local f
+
+	if url and url ~= "" then
+		f = io.popen('lxc-create -n just_want_to_list_available_lxc_templates -t download -- --server=' .. url .. ' --list', 'r')
+	else
+		f = io.popen('lxc-create -n just_want_to_list_available_lxc_templates -t download -- --list', 'r')
+	end
 
 	for line in f:lines() do
 		local dist,version,arch,build = line:match("^(%S+)%s+(%S+)%s(%S+)%s+default%s+(%S+)$")
@@ -146,8 +152,10 @@ function lxc_create(lxc_name, lxc_template)
 				data = "Bad dist release or arch from " .. lxc_template
 				err = true
 			else
-				createargs[#createargs + 1] = "--server"
-				createargs[#createargs + 1] = url
+				if url and url ~= "" then
+					createargs[#createargs + 1] = "--server"
+					createargs[#createargs + 1] = url
+				end
 				createargs[#createargs + 1] = "--dist"
 				createargs[#createargs + 1] = lxc_dist
 				createargs[#createargs + 1] = "--release"
