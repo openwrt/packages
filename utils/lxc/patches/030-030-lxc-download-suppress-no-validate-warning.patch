@@ -1,0 +1,29 @@
+Index: lxc-1.1.5/templates/lxc-download.in
+===================================================================
+--- lxc-1.1.5.orig/templates/lxc-download.in
++++ lxc-1.1.5/templates/lxc-download.in
+@@ -222,6 +222,7 @@ Optional arguments:
+ [ --keyid <keyid> ]: GPG keyid (default: 0x...)
+ [ --keyserver <keyserver> ]: GPG keyserver to use
+ [ --no-validate ]: Disable GPG validation (not recommended)
++[ --no-validate-warning ]: Disable warning about no validation.
+ [ --flush-cache ]: Flush the local copy (if present)
+ [ --force-cache ]: Force the use of the local copy even if expired
+ [ --keyring <keyring> ]: Specify a keyring instead of downloading keys.
+@@ -237,7 +238,7 @@ EOF
+ }
+ 
+ options=$(getopt -o d:r:a:hl -l dist:,release:,arch:,help,list,variant:,\
+-server:,keyid:,keyserver:,keyring:,no-validate,\
++server:,keyid:,keyserver:,keyring:,no-validate,no-validate-warning,\
+ flush-cache,force-cache,name:,path:,rootfs:,mapped-uid:,mapped-gid: -- "$@")
+ 
+ if [ $? -ne 0 ]; then
+@@ -258,6 +259,7 @@ while :; do
+         --keyid)            DOWNLOAD_KEYID=$2; shift 2;;
+         --keyserver)        DOWNLOAD_KEYSERVER=$2; shift 2;;
+         --no-validate)      DOWNLOAD_VALIDATE="false"; shift 1;;
++	--no-validate-warning) DOWNLOAD_SHOW_GPG_WARNING="false"; shift 1;;
+         --flush-cache)      DOWNLOAD_FLUSH_CACHE="true"; shift 1;;
+         --force-cache)      DOWNLOAD_FORCE_CACHE="true"; shift 1;;
+         --name)             LXC_NAME=$2; shift 2;;
