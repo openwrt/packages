@@ -1,0 +1,24 @@
+Index: lxc-1.1.5/templates/lxc-download.in
+===================================================================
+--- lxc-1.1.5.orig/templates/lxc-download.in
++++ lxc-1.1.5/templates/lxc-download.in
+@@ -99,8 +99,8 @@ download_file() {
+ }
+ 
+ download_sig() {
+-    if ! download_file $1 $2 noexit; then
+-        if [ "$DOWNLOAD_VALIDATE" = "true" ]; then
++    if [ "$DOWNLOAD_VALIDATE" = "true" ]; then
++        if ! download_file $1 $2 noexit; then
+             if [ "$3" = "normal" ]; then
+                 echo "ERROR: Failed to download http://${DOWNLOAD_SERVER}/$1" 1>&2
+                 exit 1
+@@ -110,6 +110,8 @@ download_sig() {
+         else
+             return 0
+         fi
++    else
++        return 0
+     fi
+ }
+ 
