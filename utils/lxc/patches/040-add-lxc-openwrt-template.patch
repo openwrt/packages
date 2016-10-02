@@ -1,0 +1,777 @@
+Index: lxc-1.1.5/templates/Makefile.am
+===================================================================
+--- lxc-1.1.5.orig/templates/Makefile.am
++++ lxc-1.1.5/templates/Makefile.am
+@@ -13,6 +13,7 @@ templates_SCRIPTS = \
+ 	lxc-gentoo \
+ 	lxc-openmandriva \
+ 	lxc-opensuse \
++	lxc-openwrt \
+ 	lxc-oracle \
+ 	lxc-plamo \
+ 	lxc-sshd \
+Index: lxc-1.1.5/templates/lxc-openwrt.in
+===================================================================
+--- /dev/null
++++ lxc-1.1.5/templates/lxc-openwrt.in
+@@ -0,0 +1,741 @@
++#!/bin/sh
++
++# Client script for creating LXC containers based on LEDE/OpenWrt
++#
++# Copyright © 2014 Stéphane Graber <stgraber@ubuntu.com>
++# Copyright © 2016 Daniel Dickinson <lede@cshore.thecshore.com>
++#
++#  This library is free software; you can redistribute it and/or
++#  modify it under the terms of the GNU Lesser General Public
++#  License as published by the Free Software Foundation; either
++#  version 2.1 of the License, or (at your option) any later version.
++
++#  This library is distributed in the hope that it will be useful,
++#  but WITHOUT ANY WARRANTY; without even the implied warranty of
++#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++#  Lesser General Public License for more details.
++
++#  You should have received a copy of the GNU Lesser General Public
++#  License along with this library; if not, write to the Free Software
++#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
++#  USA
++
++set -eu
++
++LOCALSTATEDIR="@LOCALSTATEDIR@"
++LXC_HOOK_DIR="@LXCHOOKDIR@"
++LXC_TEMPLATE_CONFIG="@LXCTEMPLATECONFIG@"
++
++# Defaults
++OPENWRT_ARCH=
++OPENWRT_BUILD=
++OPENWRT_COMPAT_LEVEL=2
++OPENWRT_DIST=
++OPENWRT_FLUSH_CACHE="false"
++OPENWRT_FORCE_CACHE="false"
++OPENWRT_KEYID="0xF93525A88B699029"
++OPENWRT_KEYSERVER="hkp://pool.sks-keyservers.net"
++OPENWRT_MODE="system"
++OPENWRT_READY_GPG="false"
++OPENWRT_RELEASE=
++OPENWRT_SHOW_GPG_WARNING="true"
++OPENWRT_SHOW_HTTP_WARNING="true"
++OPENWRT_TARGET="system"
++OPENWRT_URL=
++OPENWRT_USE_CACHE="false"
++OPENWRT_VALIDATE="true"
++OPENWRT_VARIANT="generic"
++OPENWRT_KEYRING=
++OPENWRT_TARBALL=false
++OPENWRT_INDEX_FILE=sha256sums
++OPENWRT_ROOTFS_FILE=root.squashfs
++OPENWRT_ROOTFS_TYPE=squashfs
++OPENWRT_ROOTFS_FULL=
++OPENWRT_HASH=
++OPENWRT_SERVER=
++
++LXC_MAPPED_GID=
++LXC_MAPPED_UID=
++LXC_NAME=
++LXC_PATH=
++LXC_ROOTFS=
++
++# Detect use under userns (unsupported)
++for arg in "$@"; do
++    [ "$arg" = "--" ] && break
++    if [ "$arg" = "--mapped-uid" -o "$arg" = "--mapped-gid" ]; then
++        echo "This template can't be used for unprivileged containers." 1>&2
++        exit 1
++    fi
++done
++
++export GREP_OPTIONS=""
++
++configure_openwrt()
++{
++    local rootfspath=$1
++    local hostname=$2
++
++    chroot $rootfspath /bin/sh -c "mkdir -p /etc/uci-defaults; echo '/sbin/uci set system.@system[-1].hostnam=\"$hostname\" && /sbin/uci commit system' >>/etc/uci-defaults/set-hostname"
++
++    for tty in $(seq 0 4); do
++        if [ ! -e $rootfspath/dev/tty$tty ]; then
++	    mkdir -p $rootfspath/dev
++            mknod -m 666 $rootfspath/dev/tty$tty c 4 $tty
++        fi
++    done
++    mknod -m 666 $rootfspath/dev/console c 5 1
++    mknod -m 666 $rootfspath/dev/null c 1 3
++    mknod -m 666 $rootfspath/dev/zero c 1 5
++    mknod -m 644 $rootfspath/dev/random c 1 8
++    mknod -m 644 $rootfspath/dev/urandom c 1 9
++    mknod -m 666 $rootfspath/dev/full c 1 7
++
++    # configure the inittab
++    if grep -q login.sh $rootfspath/etc/inittab; then
++    	cat <<EOF > $rootfspath/etc/inittab
++::sysinit:/etc/init.d/rcS S boot
++::shutdown:/etc/init.d/rcS K shutdown
++tty1::askfirst:/usr/libexec/login.sh
++tty2::askfirst:/usr/libexec/login.sh
++tty3::askfirst:/usr/libexec/login.sh
++tty4::askfirst:/usr/libexec/login.sh
++EOF
++    else
++    	cat <<EOF > $rootfspath/etc/inittab
++::sysinit:/etc/init.d/rcS S boot
++::shutdown:/etc/init.d/rcS K shutdown
++tty1::askfirst:/bin/ash --login
++tty2::askfirst:/bin/ash --login
++tty3::askfirst:/bin/ash --login
++tty4::askfirst:/bin/ash --login
++EOF
++    fi
++
++    # remove pointless services in a container
++    chroot $rootfspath /etc/init.d/sysntpd disable
++    chroot $rootfspath /etc/init.d/sysfixtime disable
++
++    # fix boot script for container
++    sed -i -e 's,\[ -f /proc/mounts \] || /sbin/mount_root,,' $rootfspath/etc/init.d/boot
++    sed -i -e 's,\[ -f /proc/jffs2_bbc \] && echo "S" > /proc/jffs2_bbc,,' $rootfspath/etc/init.d/boot
++    sed -i -e 's,\[ -f /proc/net/vlan/config \] && vconfig set_name_type DEV_PLUS_VID_NO_PAD,,' $rootfspath/etc/init.d/boot
++    sed -i -e 's,grep -q debugfs /proc/filesystems && /bin/mount -o noatime -t debugfs debugfs /sys/kernel/debug,,' $rootfspath/etc/init.d/boot
++    sed -i -e 's,/sbin/kmodloader,,' $rootfspath/etc/init.d/boot
++    sed -i -e 's,/sbin/wifi detect > /tmp/wireless.tmp,,' $rootfspath/etc/init.d/boot
++    sed -i -e 's,\[ -e /dev/root -o -h /dev/root \] || {,/bin/true || {,' $rootfspath/etc/init.d/boot
++
++    # disable making /var a symlink to /tmp
++    rm -f $rootfspath/var
++    mkdir -p $rootfspath/var
++    mkdir -p $rootfspath/var/log $rootfspath/var/cache $rootfspath/var/state $rootfspath/var/etc $rootfspath/ar/lock $rootfspath/var/run
++
++    # deal with persistent /tmp
++    cat >$rootfspath/etc/init.d/cleartmp <<EOF
++#!/bin/sh /etc/rc.common
++START=00
++
++boot() {
++       find /tmp -mindepth 1 -print0 |xargs -0 rm -rf
++}
++EOF
++
++    chmod 755 $rootfspath/etc/init.d/cleartmp
++    chroot $rootfspath /etc/init.d/cleartmp enable || true
++
++    return 0
++}
++
++copy_configuration()
++{
++    local path="$1"
++    local rootfspath="$2"
++    local hostname="$3"
++
++    # Generate the configuration file
++    # if there is exactly one veth network entry, make sure it has an
++    # associated hwaddr.
++    nics=`grep -e '^lxc\.network\.type[ \t]*=[ \t]*veth' $path/config | wc -l`
++    if [ $nics -eq 1 ]; then
++        grep -q "^lxc.network.hwaddr" $path/config || sed -i -e "/^lxc\.network\.type[ \t]*=[ \t]*veth/a lxc.network.hwaddr = 00:16:3e:$(dd if=/dev/urandom bs=1 count=3 2>/dev/null|hexdump -e '3/1 "%02x"'|sed 's/\(..\)/\1:/g; s/.$//')" $path/config
++    fi
++
++    ## Add all the includes
++    echo "" >> $path/config
++    echo "# Common configuration" >> $path/config
++    if [ -e "${LXC_TEMPLATE_CONFIG}/openwrt.common.conf" ]; then
++        echo "lxc.include = ${LXC_TEMPLATE_CONFIG}/openwrt.common.conf" >> $path/config
++    fi
++
++    ## Add the container-specific config
++    echo "" >> $path/config
++    echo "# Container specific configuration" >> $path/config
++    grep -q "^lxc.rootfs" $path/config 2> /dev/null || echo "lxc.rootfs = $rootfspath" >> $path/config
++
++    cat <<EOF >> $path/config
++lxc.utsname = $hostname
++EOF
++
++    if [ $? -ne 0 ]; then
++        echo "Failed to add configuration"
++        return 1
++    fi
++
++    return 0
++}
++
++# Deal with GPG over http proxy
++if [ -n "${http_proxy:-}" ]; then
++    OPENWRT_KEYSERVER="hkp://p80.pool.sks-keyservers.net:80"
++fi
++
++# Make sure the usual locations are in PATH
++export PATH=$PATH:/usr/sbin:/usr/bin:/sbin:/bin
++
++# Some useful functions
++cleanup() {
++    if [ -d "$OPENWRT_TEMP" ]; then
++        rm -Rf $OPENWRT_TEMP
++    fi
++}
++
++wget_wrapper() {
++    for i in $(seq 3); do
++        if wget $@; then
++            return 0
++        fi
++    done
++
++    return 1
++}
++
++download_file() {
++    if [ "$OPENWRT_TARBALL" = "true" ]; then
++	if echo "$1" | grep -q '^file://'; then
++	    if ! cp "$(echo "$1"|cut -f3- -d/)" "$2" >/dev/null 2>&1; then
++		if [ "$3" = "noexit" ]; then
++		    return 1
++		else
++		    echo "ERROR: Failed to download ${1}" 1>&2
++		    exit 1
++		fi
++	    fi
++	else
++	    WAS_HTTPS=false
++	    if echo "$1" | grep -q '^https://'; then
++		if wget_wrapper -T 30 -q ${1} -O $2 >/dev/null 2>&1; then
++		    WAS_HTTPS=true
++		fi
++	    fi
++	    if [ "$WAS_HTTPS" != "true" ] && \
++		   ! wget_wrapper -T 30 -q http://"$(echo "${1}"|cut -f3- -d/)" -O $2 \
++		     >/dev/null 2>&1; then
++		if [ "$3" = "noexit" ]; then
++		    return 1
++		else
++		    echo "ERROR: Failed to download ${1}" 1>&2
++		    exit 1
++		fi
++	    fi
++             
++	    if [ "$WAS_HTTPS" = "false" ] &&  [ "$OPENWRT_SHOW_HTTP_WARNING" = "true" ]; then
++		OPENWRT_SHOW_HTTP_WARNING="false"
++		echo "WARNING: Failed to openwrt the file over HTTPs." 1>&2
++		echo -n "         The file was instead openwrt over HTTP. " 1>&2
++		echo "A server replay attack may be possible!" 1>&2
++	    fi
++	fi
++    elif ! wget_wrapper -T 30 -q https://${OPENWRT_SERVER}/$1 -O $2 >/dev/null 2>&1; then
++        if ! wget_wrapper -T 30 -q http://${OPENWRT_SERVER}/$1 -O $2 >/dev/null 2>&1; then
++            if [ "$3" = "noexit" ]; then
++                return 1
++            else
++                echo "ERROR: Failed to download http://${OPENWRT_SERVER}/$1" 1>&2
++                exit 1
++            fi
++        elif [ "$OPENWRT_SHOW_HTTP_WARNING" = "true" ]; then
++            OPENWRT_SHOW_HTTP_WARNING="false"
++            echo "WARNING: Failed to openwrt the file over HTTPs." 1>&2
++            echo -n "         The file was instead openwrt over HTTP. " 1>&2
++            echo "A server replay attack may be possible!" 1>&2
++        fi
++    fi
++}
++
++download_sig() {
++    if [ "$OPENWRT_VALIDATE" = "true" ]; then
++        if ! download_file $1 $2 noexit; then
++            if [ "$3" = "normal" ]; then
++                echo "ERROR: Failed to download http://${OPENWRT_SERVER}/$1" 1>&2
++                exit 1
++            else
++                return 1
++            fi
++        else
++            return 0
++        fi
++    else
++        return 0
++    fi
++}
++
++gpg_setup() {
++    if [ "$OPENWRT_VALIDATE" = "false" ]; then
++        return
++    fi
++
++    if [ "$OPENWRT_READY_GPG" = "true" ]; then
++        return
++    fi
++
++    if [ -n "$OPENWRT_KEYRING" ]; then
++         return
++    fi
++ 
++    if ! type gpg >/dev/null 2>&1; then
++        echo "ERROR: No GPG; can't openwrt keys" 1>&2
++        exit 1
++    fi
++
++    echo "Setting up the GPG keyring"
++
++    mkdir -p "$OPENWRT_TEMP/gpg"
++    chmod 700 "$OPENWRT_TEMP/gpg"
++    export GNUPGHOME="$OPENWRT_TEMP/gpg"
++
++    success=
++    for i in $(seq 3); do
++        if gpg --keyserver $OPENWRT_KEYSERVER \
++            --recv-keys ${OPENWRT_KEYID} >/dev/null 2>&1; then
++            success=1
++            break
++        fi
++    done
++
++    if [ -z "$success" ]; then
++        echo "ERROR: Unable to fetch GPG key from keyserver." 1>&2
++        exit 1
++    fi
++
++    OPENWRT_READY_GPG="true"
++}
++
++gpg_validate() {
++    if [ "$OPENWRT_VALIDATE" = "false" ]; then
++        if [ "$OPENWRT_SHOW_GPG_WARNING" = "true" ]; then
++            echo "WARNING: Running without gpg validation!" 1>&2
++        fi
++        OPENWRT_SHOW_GPG_WARNING="false"
++        return 0
++    fi
++
++    if type gpg >/dev/null 2>&1; then
++        if ! gpg --verify ${OPENWRT_KEYRING:+--keyring ${OPENWRT_KEYRING}} $1 >/dev/zero 2>&1; then
++            echo "ERROR: Invalid signature for $1" 1>&2
++            exit 1
++        fi
++    elif type gpgv >/dev/null 2>&1; then
++        if ! gpgv  ${OPENWRT_KEYRING:+--keyring ${OPENWRT_KEYRING}} $1 >/dev/zero 2>&1; then
++            echo "ERROR: Invalid signature for $1" 1>&2
++            exit 1
++        fi
++   fi
++}
++
++hash_validate() {
++	case "$OPENWRT_INDEX_FILE" in
++	md5sums)
++		if [ "$(md5sum "$1"|awk '{ print $1 }')" != "$2" ]; then
++			echo "ERROR: Image doesn't match hash" 2>&1
++			exit 1
++		fi
++		;;
++	sha256sums)
++		if [ "$(sha256sum "$1"|awk '{ print $1 }')" != "$2" ]; then
++			echo "ERROR: Image doesn't match hash" 2>&1
++			exit 1
++		fi
++		;;
++	*)
++		echo "ERROR: Unknown hash type" 2>&1
++		exit 1
++	esac
++}
++
++relevant_file() {
++    FILE_PATH="${LXC_CACHE_PATH}/$1"
++    if [ -e "${FILE_PATH}-${OPENWRT_MODE}" ]; then
++        FILE_PATH="${FILE_PATH}-${OPENWRT_MODE}"
++    fi
++    if [ -e "$FILE_PATH.${OPENWRT_COMPAT_LEVEL}" ]; then
++        FILE_PATH="${FILE_PATH}.${OPENWRT_COMPAT_LEVEL}"
++    fi
++
++    echo $FILE_PATH
++}
++
++extract_rootfs() {    
++    echo "Unpacking the rootfs"
++
++    if [ "$OPENWRT_ROOTFS_TYPE" = "targz" ]; then
++        tar --numeric-owner -xpzf "$1" -C "$2"
++    else
++	mkdir -p ${LXC_CACHE_PATH}/mnt
++	mount -o loop -t ${OPENWRT_ROOTFS_TYPE} "$1" ${LXC_CACHE_PATH}/mnt || {
++	    echo "ERROR: Unable to mount rootfs image" 1>&2
++	    exit 1
++	}
++	cp -a ${LXC_CACHE_PATH}/mnt/* "$2/"
++	umount ${LXC_CACHE_PATH}/mnt
++    fi
++}
++
++usage() {
++    cat <<EOF
++LXC lede/openwrt containers 
++
++Special arguments:
++[ -h | --help ]: Print this help message and exit.
++
++Required arguments:
++[ -d | --dist <distribution> ]: The name of the distribution
++[ -r | --release <release> ]: Release name/version
++[ -a | --arch <architecture> ]: Architecture of the container
++[ -i | --variant <variant> ]: Variant of the architecture (default: "generic")
++OR
++[ -u | --url <url> ]: Full URL of tarball of rootfs
++
++Optional arguments:
++[ --server <server> ]: Image server (dist-dependant)
++[ --keyid <keyid> ]: GPG keyid (default: 0x...)
++[ --keyserver <keyserver> ]: GPG keyserver to use
++[ --no-validate ]: Disable GPG validation (not recommended)
++[ --no-validate-warning ]: Disable warning about no validation.
++[ --flush-cache ]: Flush the local copy (if present)
++[ --force-cache ]: Force the use of the local copy even if expired
++[ --keyring <keyring> ]: Specify a keyring instead of openwrting keys.
++
++LXC internal arguments (do not pass manually!):
++[ --name <name> ]: The container name
++[ --path <path> ]: The path to the container
++[ --rootfs <rootfs> ]: The path to the container's rootfs
++[ --mapped-uid <map> ]: A uid map (user namespaces)
++[ --mapped-gid <map> ]: A gid map (user namespaces)
++EOF
++    return 0
++}
++
++if [ "$(id -u)" != "0" ]; then
++    echo "This hook should be run as 'root'"
++    exit 1
++fi
++
++options=$(getopt -o d:r:a:i:u:h -l dist:,release:,arch:,help,variant:,\
++server:,keyid:,keyserver:,keyring:,no-validate,no-validate-warning,url,\
++flush-cache,force-cache,name:,path:,rootfs:,mapped-uid:,mapped-gid: -- "$@")
++
++if [ $? -ne 0 ]; then
++    usage
++    exit 1
++fi
++
++eval set -- "$options"
++
++while :; do
++    case "$1" in
++        -h|--help)          usage && exit 1;;
++        -d|--dist)          OPENWRT_DIST=$2; shift 2;;
++        -r|--release)       OPENWRT_RELEASE=$2; shift 2;;
++        -a|--arch)          OPENWRT_ARCH=$2; shift 2;;
++        -i|--variant)       OPENWRT_VARIANT=$2; shift 2;;
++	-u|--url)           OPENWRT_URL=$2; OPENWRT_TARBALL=true; shift 2;;
++        --server)           OPENWRT_SERVER=$2; shift 2;;
++        --keyid)            OPENWRT_KEYID=$2; shift 2;;
++        --keyserver)        OPENWRT_KEYSERVER=$2; shift 2;;
++        --no-validate)      OPENWRT_VALIDATE="false"; shift 1;;
++	--no-validate-warning) OPENWRT_SHOW_GPG_WARNING="false"; shift 1;;
++        --flush-cache)      OPENWRT_FLUSH_CACHE="true"; shift 1;;
++        --force-cache)      OPENWRT_FORCE_CACHE="true"; shift 1;;
++        --name)             LXC_NAME=$2; shift 2;;
++        --path)             LXC_PATH=$2; shift 2;;
++        --rootfs)           LXC_ROOTFS=$2; shift 2;;
++        --mapped-uid)       LXC_MAPPED_UID=$2; shift 2;;
++        --mapped-gid)       LXC_MAPPED_GID=$2; shift 2;;
++        *)                  break;;
++    esac
++done
++
++# Check for required binaries
++case "$OPENWRT_RELEASE" in
++    snapshots)
++	:
++	;;
++    attitude_adjustment)
++	OPENWRT_INDEX_FILE=md5sums
++	;;
++    barrier_breaker)
++	OPENWRT_INDEX_FILE=md5sums
++	;;
++    chaos_calmer)
++	OPENWRT_INDEX_FILE=md5sums
++	;;
++esac
++
++case "$OPENWRT_ARCH" in
++    ar7)
++	OPENRWT_ROOTFS_FILE=squashfs.bin	
++	;;
++    archs38)
++	OPENWRT_ROOTFS_FILE=root.ext4
++	OPENWRT_ROOTFS_TYPE=ext4
++	;;
++    ath25)
++	OPENWRT_ROOTFS_FILE=squashfs-rootfs.bin
++	;;
++    au1500)
++	OPENWRT_ROOTFS_FILE=squashfs.fs
++	;;
++    imx6)
++	OPENWRT_ROOTFS_FILE=rootfs.tar.gz
++	OPENWRT_ROOTFS_TYPE=targz
++	;;
++    ipq806x)
++	OPENWRT_ROOTFS_FILE=squashfs-root.img
++	;;
++    kirkwood)
++	OPENWRT_ROOTFS_FILE=rootfs.tar.gz
++	OPENWRT_ROOTFS_TYPE=targz
++	;;
++    mxs)
++	OPENWRT_ROOTFS_FILE=root.ext4
++	OPENWRT_ROOTFS_TYPE=ext4
++	;;
++    omap)
++	OPENWRT_ROOTFS_FILE=rootfs.tar.gz
++	OPENWRT_ROOTFS_TYPE=targz
++	;;
++    rb532)
++	OPENWRT_ROOTFS_FILE=rootfs.tar.gz
++	OPENWRT_ROOTFS_TYPE=targz
++	;;
++    realview)
++	OPENWRT_ROOTFS_FILE=root.ext4
++	OPENWRT_ROOTFS_TYPE=ext4
++	;;
++    sunxi)
++	OPENWRT_ROOTFS_FILE=root.ext4
++	OPENWRT_ROOTFS_TYPE=ext4
++	;;
++    x86)
++	OPENWRT_ROOTFS_FILE=generic-rootfs.tar.gz
++	OPENWRT_ROOTFS_TYPE=targz
++	;;
++    xburst)
++	OPENWRT_ROOTFS_FILE=rootfs.tar.gz
++	OPENWRT_ROOTFS_TYPE=targz
++	;;
++    "")
++	OPENWRT_ROOTFS_TYPE=targz
++	;;
++esac
++
++if [ -z "$OPENWRT_SERVER" ]; then
++    case "$OPENWRT_DIST" in
++	openwrt)
++	    OPENWRT_SERVER=download.openwrt.org
++	    ;;
++	lede)
++	    OPENWRT_SERVER=downloads.lede-project.org
++	    ;;
++    esac
++fi
++
++if [ "$OPENWRT_ROOTFS_TYPE" != "targz" ]; then
++    if ! lsmod|grep -q loop; then
++	echo "ERROR: Need loopback device to extract rootfs for this arch." 1>&2
++	exit 1
++    fi
++fi
++
++for bin in wget; do
++    if ! type $bin >/dev/null 2>&1; then
++        echo "ERROR: Missing required tool: $bin" 1>&2
++        exit 1
++    fi
++done
++
++if [ "$OPENWRT_TARBALL" = "true" ] || [ "$OPENWRT_ROOTFS_TYPE" = "targz" ]; then
++    for bin in tar gzip; do
++	if ! type $bin >/dev/null 2>&1; then
++	    echo "ERROR: Missing required tool: $bin" 2>&2
++	    exit 1
++	fi
++    done
++fi
++
++# Check for GPG
++if [ "$OPENWRT_VALIDATE" = "true" ]; then
++    if ! type gpg >/dev/null 2>&1; then
++	if [ -z "$OPENWRT_KEYRING" ]; then
++	        echo "ERROR: Missing recommended tool: gpg" 1>&2
++        	echo "You can workaround this by using --no-validate." 1>&2
++        	exit 1
++	else
++            if ! type gpgv >/dev/null 2>&1; then
++                echo "ERROR: Missing recommeneded tools: gpg or gpgv" 1>&2
++                echo "You can work around this by using --no-validate." 1>&2
++                exit 1
++            fi
++	fi
++    fi
++fi
++
++# Check that we have all variables we need
++if [ -z "$LXC_NAME" ] || [ -z "$LXC_PATH" ] || [ -z "$LXC_ROOTFS" ]; then
++    if [ "$OPENWRT_LIST_IMAGES" != "true" ]; then
++        echo "ERROR: Not running through LXC." 1>&2
++        exit 1
++    fi
++fi
++
++# Trap all exit signals
++trap cleanup EXIT HUP INT TERM
++
++if ! type mktemp >/dev/null 2>&1; then
++    OPENWRT_TEMP=/tmp/lxc-openwrt.$$
++    mkdir -p $OPENWRT_TEMP
++else
++    OPENWRT_TEMP=$(mktemp -d)
++fi
++
++# Setup the cache
++if [ "$OPENWRT_TARGET" = "system" ]; then
++    LXC_CACHE_BASE="$LOCALSTATEDIR/cache/lxc/"
++else
++    LXC_CACHE_BASE="$HOME/.cache/lxc/"
++fi
++
++LXC_CACHE_PATH="$LXC_CACHE_BASE/openwrt/$OPENWRT_DIST"
++LXC_CACHE_PATH="$LXC_CACHE_PATH/$OPENWRT_RELEASE/$OPENWRT_ARCH/"
++LXC_CACHE_PATH="$LXC_CACHE_PATH/$OPENWRT_VARIANT"
++
++if [ -d "$LXC_CACHE_PATH" ]; then
++    if [ "$OPENWRT_FLUSH_CACHE" = "true" ]; then
++        echo "Flushing the cache..."
++        rm -Rf $LXC_CACHE_PATH
++    elif [ "$OPENWRT_FORCE_CACHE" = "true" ]; then
++        OPENWRT_USE_CACHE="true"
++    else
++        OPENWRT_USE_CACHE="true"
++        if [ -e "$(relevant_file expiry)" ]; then
++            if [ "$(cat $(relevant_file expiry))" -lt $(date +%s) ]; then
++                echo "The cached copy has expired, re-openwrting..."
++                OPENWRT_USE_CACHE="false"
++            fi
++        fi
++    fi
++fi
++
++# Download what's needed
++if [ "$OPENWRT_USE_CACHE" = "false" ]; then
++    # Initialize GPG
++    gpg_setup
++    
++    if [ -z "${OPENWRT_URL}" ]; then
++	# Grab the index
++	OPENWRT_INDEX_PATH=${OPENWRT_RELEASE}/targets/${OPENWRT_ARCH}/${OPENWRT_VARIANT}/${OPENWRT_INDEX_FILE}
++
++	echo "Downloading the image index"
++	if ! download_file ${OPENWRT_INDEX_PATH} \
++             ${OPENWRT_TEMP}/${OPENWRT_INDEX_FILE} noexit ||
++		! download_sig ${OPENWRT_INDEX_PATH}.gpg \
++		  ${OPENWRT_TEMP}/${OPENWRT_INDEX_FILE}.gpg noexit; then
++            download_file ${OPENWRT_INDEX_PATH} ${OPENWRT_TEMP}/${OPENWRT_INDEX_FILE} normal
++            download_sig  ${OPENWRT_INDEX_PATH}.gpg \
++			  ${OPENWRT_TEMP}/${OPENWRT_INDEX_FILE}.gpg normal
++	fi
++
++	gpg_validate ${OPENWRT_TEMP}/${OPENWRT_INDEX_FILE}.gpg
++	
++	OPENWRT_ROOTFS_FILE_FULL="$(grep "${OPENWRT_DIST}-.*${OPENWRT_ARCH}-${OPENWRT_VARIANT}-${OPENWRT_ROOTFS_FILE}" "${OPENWRT_TEMP}/${OPENWRT_INDEX_FILE}"|awk 'BEGIN { FS = "*" } ; { print $2 }')"
++	OPENWRT_HASH="$(grep "${OPENWRT_DIST}-.*${OPENWRT_ARCH}-${OPENWRT_VARIANT}-${OPENWRT_ROOTFS_FILE}" "${OPENWRT_TEMP}/${OPENWRT_INDEX_FILE}"|awk '{ print $1 }')"
++	
++	if [ -d "$LXC_CACHE_PATH" ] && [ -f "$LXC_CACHE_PATH/${OPENWRT_ROOTFS_FILE_FULL}" ]; then
++            echo "The cache is already up to date."
++            echo "Using image from local cache"
++	else
++            # Download the actual file
++            echo "Downloading the rootfs"
++            download_file ${OPENWRT_RELEASE}/targets/${OPENWRT_ARCH}/${OPENWRT_VARIANT}/${OPENWRT_ROOTFS_FILE_FULL} \
++		      ${OPENWRT_TEMP}/${OPENWRT_ROOTFS_FILE_FULL} normal
++
++	fi    
++
++	hash_validate "${OPENWRT_TEMP}/${OPENWRT_ROOTFS_FILE_FULL}" "${OPENWRT_HASH}"
++    else
++	OPENWRT_ROOTFS_FILE_FULL="$(basename "$(echo "$OPENWRT_URL"|cut -f3-2 -d/)")"
++	if [ -d "$LXC_CACHE_PATH" ] && [ -f "$LXC_CACHE_PATH/${OPENWRT_ROOTFS_FILE_FULL}" ]; then
++            echo "The cache is already up to date."
++            echo "Using image from local cache"
++	    download_file ${OPENWRT_URL} ${OPENWRT_TEMP}/${OPENWRT_ROOTFS_FILE_FULL} normal
++	    download_sig ${OPENWRT_URL}.gpg ${OPENWRT_TEMP}/${OPENWRT_ROOTFS_FILE_FULL}.gpg normal
++
++            gpg_validate ${OPENWRT_TEMP}/${OPENWRT_ROOTFS_FILE_FULL}.gpg
++	fi
++    fi
++    
++    if [ -d $LXC_CACHE_PATH ]; then
++        rm -Rf $LXC_CACHE_PATH
++    fi
++
++    mkdir -p $LXC_CACHE_PATH
++
++    mv ${OPENWRT_TEMP}/${OPENWRT_ROOTFS_FILE_FULL} $LXC_CACHE_PATH
++    mv ${OPENWRT_TEMP}/${OPENWRT_INDEX_FILE} $LXC_CACHE_PATH
++
++    echo "The image cache is now ready"
++else
++    echo "Using image from local cache"
++    OPENWRT_ROOTFS_FILE_FULL="$(grep "${OPENWRT_DIST}-.*${OPENWRT_ARCH}-${OPENWRT_VARIANT}-${OPENWRT_ROOTFS_FILE}" "${LXC_CACHE_PATH}/${OPENWRT_INDEX_FILE}"|awk 'BEGIN { FS = "*" } ; { print $2 }')"
++fi
++
++if [ -z "$LXC_PATH" ]; then
++        hook_usage
++	echo "ERROR: Missing LXC path" 1>&2
++        exit 1
++fi
++
++# detect rootfs
++config="$LXC_PATH/config"
++if [ -z "$LXC_ROOTFS" ]; then
++    if grep -q '^lxc.rootfs' $config 2> /dev/null ; then
++        rootfspath=$(awk -F= '/^lxc.rootfs =/{ print $2 }' $config)
++    else
++        rootfspath=$LXC_PATH/rootfs
++    fi
++else
++    rootfspath=$LXC_ROOTFS
++fi
++
++if [ -z "rootfspath" ]; then
++        hook_usage
++	echo "ERROR: Missing rootfs" 1>&2
++        exit 1
++fi
++
++if [ -z "$LXC_NAME" ]; then
++        hook_usage
++	echo "ERROR: Missing container name" 1>&2
++	exit 1
++fi
++
++# Unpack the rootfs
++mkdir -p "$rootfspath"
++extract_rootfs ${LXC_CACHE_PATH}/${OPENWRT_ROOTFS_FILE_FULL} $rootfspath
++
++configure_openwrt "$rootfspath" "$LXC_NAME"
++if [ $? -ne 0 ]; then
++    echo "failed to configure openwrt/lede for a container"
++    exit 1
++fi
++
++copy_configuration "$LXC_PATH" "$rootfspath" "$LXC_NAME"
++if [ $? -ne 0 ]; then
++    echo "failed to write configuration file"
++    exit 1
++fi
++
++exit 0
+Index: lxc-1.1.5/configure.ac
+===================================================================
+--- lxc-1.1.5.orig/configure.ac
++++ lxc-1.1.5/configure.ac
+@@ -742,6 +742,7 @@ AC_CONFIG_FILES([
+ 	templates/lxc-gentoo
+ 	templates/lxc-openmandriva
+ 	templates/lxc-opensuse
++	templates/lxc-openwrt
+ 	templates/lxc-oracle
+ 	templates/lxc-plamo
+ 	templates/lxc-sshd
