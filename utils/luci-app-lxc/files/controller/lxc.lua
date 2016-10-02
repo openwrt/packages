@@ -73,6 +73,10 @@ end
 function lxc_get_downloadable()
 	luci.http.prepare_content("application/json")
 
+	local uci = require("uci").cursor()
+
+	local url = uci:get("lxc", "lxc", "url")
+
 	local f = io.popen('uname -m', 'r')
 	local target = f:read('*a')
 	f:close()
@@ -80,7 +84,7 @@ function lxc_get_downloadable()
 
 	local templates = {}
 
-	local f = io.popen('lxc-create -n just_want_to_list_available_lxc_templates -t download -- --list', 'r')
+	local f = io.popen('lxc-create -n just_want_to_list_available_lxc_templates -t download -- --server=' .. url .. ' --list', 'r')
 
 	for line in f:lines() do
 		local dist,version = line:match("^(%S+)%s+(%S+)%s+" .. target .. "%s+default%s+%S+$")
