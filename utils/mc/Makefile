@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.17
-PKG_RELEASE:=3
+PKG_VERSION:=4.8.18
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_MD5SUM:=0447bdddc0baa81866e66f50f9a545d29d6eebb68b0ab46c98d8fddd2bf4e44d
+PKG_MD5SUM:=f7636815c987c1719c4f5de2dcd156a0e7d097b1d10e4466d2bdead343d5bece
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf gettext-version
 
@@ -37,7 +37,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Utilities
 	DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
 	TITLE:=Midnight Commander - a powerful visual file manager
-	URL:=http://www.midnight-commander.org/
+	URL:=https://www.midnight-commander.org/
 	MENU:=1
 endef
 
@@ -56,7 +56,6 @@ endef
 CONFIGURE_ARGS += \
 	--disable-doxygen-doc \
 	--with-homedir=/etc/mc \
-	--with-included-gettext \
 	--with-screen=ncurses \
 	--without-gpm-mouse \
 	--without-x \
@@ -106,6 +105,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.charsets $(1)/etc/mc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.default.keymap $(1)/etc/mc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.ext $(1)/etc/mc
+	$(INSTALL_DIR) $(1)/usr/share/mc/help
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/doc/hlp/mc.hlp $(1)/usr/share/mc/help
 ifeq ($(CONFIG_MC_DIFFVIEWER),y)
 	ln -sf mc $(1)/usr/bin/mcdiff
 endif
