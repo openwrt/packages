@@ -111,7 +111,7 @@ function lxc_get_downloadable()
 	luci.http.write_json(templates)
 end
 
-function lxc_create(lxc_name, lxc_template)
+function lxc_create(lxc_name, lxc_template, lxc_parameters)
 	luci.http.prepare_content("text/plain")
 
 	local uci = require("uci").cursor()
@@ -139,45 +139,55 @@ function lxc_create(lxc_name, lxc_template)
 		end
 	end
 
-	if lxc_template == nil or lxc_template == "" then
-		data = "Missing image selection"
+	if lxc_template or lxc_template == "" then
+		data = "Missing template specification"
+		err = true
+	end
+
+	if lxc_template == "download" then
+		if lxc_parameters == nil or lxc_parameters == "" then
+			data = "Missing image selection"
+			err = true
+		end
+
+		if not err then
+			if lxc_parameters == nil or lxc_parameters == "" then
+				data = "Missing rootfs to use"
+				createargs = { }
+			else
+				local lxc_dist = lxc_parameters:gsub("(.*):(.*):(.*):.*", '%1')
+				local lxc_release = lxc_parameters:gsub("(.*):(.*):(.*):.*", '%2')
+				local lxc_arch = lxc_parameters:gsub("(.*):(.*):(.*):.*", '%3')
+				if lxc_dist == nil or lxc_dist == "" or lxc_release == nil or lxc_release == "" or
+					lxc_arch == nil or lxc_arch == ""
+				then
+					data = "Bad dist release or arch from " .. lxc_parameters
+					err = true
+				else
+					if url and url ~= "" then
+						createargs[#createargs + 1] = "--server"
+						createargs[#createargs + 1] = url
+					end
+					createargs[#createargs + 1] = "--dist"
+					createargs[#createargs + 1] = lxc_dist
+					createargs[#createargs + 1] = "--release"
+					createargs[#createargs + 1] = lxc_release
+					createargs[#createargs + 1] = "--arch"
+					createargs[#createargs + 1] = lxc_arch
+				end
+			end
+		end
+	else
+		data = "Don't know how to handle this type of template"
 		err = true
 	end
 
 	if not err then
-		if lxc_template == nil or lxc_template == "" then
-			data = "Missing image to use"
-			createargs = { }
-		else
-			local lxc_dist = lxc_template:gsub("(.*):(.*):(.*):.*", '%1')
-			local lxc_release = lxc_template:gsub("(.*):(.*):(.*):.*", '%2')
-			local lxc_arch = lxc_template:gsub("(.*):(.*):(.*):.*", '%3')
-			if lxc_dist == nil or lxc_dist == "" or lxc_release == nil or lxc_release == "" or
-				lxc_arch == nil or lxc_arch == ""
-			then
-				data = "Bad dist release or arch from " .. lxc_template
-				err = true
-			else
-				if url and url ~= "" then
-					createargs[#createargs + 1] = "--server"
-					createargs[#createargs + 1] = url
-				end
-				createargs[#createargs + 1] = "--dist"
-				createargs[#createargs + 1] = lxc_dist
-				createargs[#createargs + 1] = "--release"
-				createargs[#createargs + 1] = lxc_release
-				createargs[#createargs + 1] = "--arch"
-				createargs[#createargs + 1] = lxc_arch
-			end
-		end
+		data = conn:call("lxc", "create", { name = lxc_name, template = lxc_template, args = createargs } )
 	end
 
-	if not err then
-		data = conn:call("lxc", "create", { name = lxc_name, template = "download", args = createargs } )
-	end
-
-	if not data or data == "" then
-		data = "lxc-create -n " .. lxc_name .. "-t download -- "
+	if not err and (not data or data == "") then
+		data = "lxc-create -n " .. lxc_name .. "-t " .. lxc_template .. " -- "
 		for k, v in ipairs(createargs) do
 			data = data .. v .. " "
 		end

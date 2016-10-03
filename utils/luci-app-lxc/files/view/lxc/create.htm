@@ -28,7 +28,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 					<input type="text" id="tx_name" placeholder="<%:Enter new name%>" value='' />
 				</td>
 				<td>
-					<select id="s_template" class="cbi-input-select cbi-button">
+					<select id="s_rootfs" class="cbi-input-select cbi-button">
 					</select>
 				</td>
 				<td>
@@ -57,7 +57,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 	function lxc_create(tr)
 	{
 		var lxc_name = tr.querySelector("#tx_name").value.trim()
-		var lxc_template = tr.querySelector("#s_template").value
+		var lxc_rootfs = tr.querySelector("#s_rootfs").value
 		var bt_create = tr.querySelector("#bt_create")
 
 		if (t_lxc_list.querySelector("[data-id='" + lxc_name + "']") != null)
@@ -74,7 +74,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 
 		loading(loader_add)
 
-		new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_create/' + '%h/%h'.format(lxc_name, lxc_template) , null,
+		new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_create/' + '%h/%h/%h'.format(lxc_name, "download", lxc_rootfs) , null,
 		function(x)
 		{
 			bt_create.disabled = false
@@ -110,7 +110,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 
 		var lxc_count = Object.keys(data).length
 		if (!data || !lxc_count) return;
-		var select = document.getElementById("s_template");
+		var select = document.getElementById("s_rootfs");
 		for(var key in data)
 		{
 			var option = document.createElement('option');
