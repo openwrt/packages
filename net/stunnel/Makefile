@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stunnel
-PKG_VERSION:=5.20
+PKG_VERSION:=5.36
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0+
-PKG_MAINTAINER:=Michael Haas <haas@computerlinguist.org>
+PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
 PKG_LICENSE_FILES:=COPYING COPYRIGHT.GPL
 
-PKG_SOURCE_URL:=http://stunnel.cybermirror.org/archive/5.x/
+PKG_SOURCE_URL:= \
+	http://ftp.nluug.nl/pub/networking/stunnel/ \
+	http://www.usenix.org.uk/mirrors/stunnel/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=3264375026c2b496b5d258e243222de8
+PKG_MD5SUM:=b3c002c312e757d9a40caf95363800b3
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -27,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/stunnel
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libopenssl +zlib
+  DEPENDS:=+libopenssl +zlib +libpthread
   TITLE:=SSL TCP Wrapper
   URL:=http://www.stunnel.org/
 endef
@@ -47,7 +49,7 @@ endef
 
 CONFIGURE_ARGS+= \
 	--with-random=/dev/urandom \
-	--with-threads=fork \
+	--with-threads=pthread \
 	--with-ssl=$(STAGING_DIR)/usr \
 	--disable-libwrap \
 	--disable-systemd
