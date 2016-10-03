@@ -14,6 +14,14 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 
 -%>
 
+<%-
+   util = require "luci.util"
+   local host_target = util.execi('eval "$(cat /etc/os-release)"; if [ -z "$LEDE_BOARD" ]; then eval "$(cat /etc/openwrt_release)"; echo "$DISTRIB_TARGET"; else echo "$LEDE_BOARD"; fi')()
+   local host_distro = util.execi('eval "$(cat /etc/os-release)"; if [ -z "$ID" ]; then echo "openwrt"; else echo "$ID"; fi')()
+   local host_arch = util.execi('uname -m')()
+   host_arch = host_arch:gsub("^%s*(.-)%s*$", "%1")
+%>
+
 <fieldset class="cbi-section">
 	<legend><%:Create New Container%></legend>
 	<div class="cbi-section-node">
@@ -21,6 +29,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 			<tr class="cbi-section-table-titles">
 				<th class="cbi-section-table-cell"><%:Name%></th>
 				<th class="cbi-section-table-cell"><%:Template%></th>
+				<th class="cbi-section-table-cell"><%:Parameters%></th>
 				<th class="cbi-section-table-cell"><%:Actions%></th>
 			</tr>
 			<tr id="tr_holder">
@@ -28,8 +37,10 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 					<input type="text" id="tx_name" placeholder="<%:Enter new name%>" value='' />
 				</td>
 				<td>
-					<select id="s_rootfs" class="cbi-input-select cbi-button">
+					<select id="s_template" onchange="rootfs_list(tr_holder)" class="cbi-input-select cbi-button">
 					</select>
+				</td>
+				<td id="s_parameters">
 				</td>
 				<td>
 					<input type="button" id="bt_create" value="<%:Create%>" onclick="lxc_create(tr_holder)" class="cbi-button cbi-button-add" />
@@ -57,8 +68,9 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 	function lxc_create(tr)
 	{
 		var lxc_name = tr.querySelector("#tx_name").value.trim()
-		var lxc_rootfs = tr.querySelector("#s_rootfs").value
+		var lxc_template = tr.querySelector("#s_template").value
 		var bt_create = tr.querySelector("#bt_create")
+		var template = lxc_template.match(/^[^:]*/);
 
 		if (t_lxc_list.querySelector("[data-id='" + lxc_name + "']") != null)
 			return info_message(output_add, "Container with that name already exists!", 4000)
@@ -74,15 +86,78 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 
 		loading(loader_add)
 
-		new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_create/' + '%h/%h/%h'.format(lxc_name, "download", lxc_rootfs) , null,
-		function(x)
-		{
-			bt_create.disabled = false
-			loading(loader_add, 0)
+		var lxc_parameters = ""
 
-			if (!x)
-				info_message(output_add, "Container creation failed!")
-		})
+		if (template && (template == "download")) {
+			lxc_parameters = tr.querySelector("#s_rootfs").value
+		} else if (template) {
+			var lxc_variant = ""
+			var lxc_dist = template
+
+			if (template == "gentoo") {
+				lxc_variant = document.getElementById("s_variant").value
+			}
+			if (template == "openwrt") {
+				lxc_dist = document.getElementById("s_dist").value
+			}
+
+			var lxc_release_element = document.getElementById("s_release")
+			var lxc_release
+
+			if (!lxc_release_element) {
+				lxc_release = ""
+			} else {
+				lxc_release = lxc_release_element.value
+			}
+
+			var lxc_parameters
+			var template_arch = ""
+			var host_arch = "<%=host_arch%>"
+			var host_target = "<%=host_target%>"
+
+			/* TODO: Should start using hashes for the various maps */
+
+			if ((template == "openwrt") && !lxc_dist) {
+				info_message(output_add, "Missing distro!")
+			} else if (((template != "busybox") && (template != "sshd")) && !lxc_release) {
+				info_message(output_add, "Missing release!")
+			}
+			if (template == "openwrt") {
+				template_arch = host_target.match(/^[^/]*/)
+				lxc_variant = host_target.match(/[^/]*$/)
+			} else if ((template == "debian") || (template == "cirros" ) || (template == "ubuntu") || (template == "ubuntu-cloud")) {
+				if (host_arch == "x86_64") {
+					template_arch = "amd64"
+				} else if ((host_arch == "i686") ||
+					(host_arch == "i586") ||
+					(host_arch == "i386")) {
+					template_arch = "i386"
+				} else {
+					if (host_arch == "arm6vl") {
+						template_arch = "armhf"
+					}
+				}
+			} else if (	
+				(template != "busybox") && 
+				(template != "sshd") && 
+				(template != "openssuse")
+				) 
+			{
+				template_arch = host_arch
+			}
+			lxc_parameters = lxc_dist + ":" + lxc_release + ":" + template_arch + ":" + lxc_variant
+		}
+		if (lxc_parameters != "") {
+			new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_create/' + '%h/%h/%h'.format(lxc_name, lxc_template, lxc_parameters) , null,
+			function(x)
+			{
+				bt_create.disabled = false
+				loading(loader_add, 0)
+
+				if (!x)
+					info_message(output_add, "Container creation failed!")
+			})
+		}
 	}
 
 	function loading(elem, state)
@@ -103,21 +178,67 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 		timeout_msg = setTimeout(function(){ output.innerHTML=""}, timeout);
 	}
 
-	new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_get_downloadable', null,
+	function rootfs_list(tr)
+	{
+		var lxc_template_element = tr.querySelector("#s_template")
+		if (!lxc_template_element || !(lxc_template_element.value)) return;
+
+		var lxc_template = lxc_template_element.value
+		var template = lxc_template.match(/^[^:]*/);
+		var arch = lxc_template.replace(/^.*:/, "");
+		var parameters = document.getElementById("s_parameters");
+
+		if (template == "download" ) {
+			parameters.innerHTML = '<select id="s_rootfs" class="cbi-input-select cbi-button"></select>'
+			new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_get_downloadable', null,
+			function(x, data)
+			{
+				if (!x || !data) return;
+
+				var lxc_count = Object.keys(data).length
+				if (!data || !lxc_count) return;
+				var select = document.getElementById("s_rootfs");
+				for(var key in data)
+				{
+					var option = document.createElement('option');
+					option.value = data[key];
+					option.text = data[key].replace(/[_:]/g, ' ');
+					select.add(option, -1);
+				}
+			})
+		} else {
+			if (template == "openwrt") {
+				parameters.innerHTML = '<label for="s_dist">Distro</label>&nbsp;'
+				parameters.innerHTML += '<input id="s_dist" type="text" size="10" value="<%=host_distro%>" />'
+			} else {
+				parameters.innerHTML = ''
+			}
+			if ((template != "busybox") && (template != "sshd")) {
+				parameters.innerHTML += '<label for="s_release">Release</label>&nbsp;'
+				parameters.innerHTML += '<input id="s_release" type="text" size="10" />'
+			}
+			if (template == "gentoo") {
+				parameters.innerHTML += '<label for="s_variant">Variant</label>&nbsp;'
+				parameters.innerHTML += '<input id="s_variant" type="text" size="10" />'
+			}
+		}
+	}
+
+	new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_get_templates', null,
 	function(x, data)
 	{
-		if (!x) return;
-
+		if (!x || !data) return;
 		var lxc_count = Object.keys(data).length
-		if (!data || !lxc_count) return;
-		var select = document.getElementById("s_rootfs");
+
+		if (!lxc_count) return;
+		var select = document.getElementById("s_template");
+
 		for(var key in data)
 		{
 			var option = document.createElement('option');
 			option.value = data[key];
-			option.text = data[key].replace(/[_:]/g, ' ');
+			option.text = data[key].replace(/[:]/g, ' ');
 			select.add(option, -1);
 		}
 	})
-
 //]]></script>

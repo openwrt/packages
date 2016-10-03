@@ -295,7 +295,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 		XHR.poll(4, '<%=luci.dispatcher.build_url("admin", "services")%>/lxc_action/list', null,
 		function(x, data)
 		{
-			if (!x) return;
+			if (!x || !data) return;
 
 			var lxc_count = Object.keys(data).length
 			if (!data || !lxc_count)

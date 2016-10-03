@@ -14,6 +14,8 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 
 ]]--
 
+-- TODO: Should start using hashes for the various property maps
+
 module("luci.controller.lxc", package.seeall)
 
 require "ubus"
@@ -60,6 +62,9 @@ function index()
 	page = entry({"admin", "services", "lxc_action"}, call("lxc_action"), nil)
 	page.leaf = true
 
+	page = entry({"admin", "services", "lxc_get_templates"}, call("lxc_get_templates"), nil)
+	page.leaf = true
+
 	page = entry({"admin", "services", "lxc_get_downloadable"}, call("lxc_get_downloadable"), nil)
 	page.leaf = true
 
@@ -71,12 +76,8 @@ function index()
 
 end
 
-function lxc_get_downloadable()
+function lxc_get_templates()
 	luci.http.prepare_content("application/json")
-
-	local uci = require("uci").cursor()
-
-	local url = uci:get("lxc", "lxc", "url")
 
 	local f = io.popen('uname -m', 'r')
 	local target = f:read('*a')
@@ -85,13 +86,60 @@ function lxc_get_downloadable()
 
 	local templates = {}
 
-	local f
+	local f = fs.dir("/usr/share/lxc/templates")
+
+	for template in f do
+		local arch = target
+		template = template:gsub("^.*lxc%-", "")
+
+		if (template == "debian") or (template == "ubuntu") or (template == "ubuntu-cloud") then
+			if target == "x86_64" then
+				arch = "amd64"
+			elseif (target == "i686") or (target == "i586") or
+				(target == "i486") or (target == "i386") then
+				arch = "i386"
+			elseif target == "arm6vl" then
+				arch = "armhf"
+			end
+		end
+		templates[#templates + 1] = template .. ":" .. arch
+	end
+
+	luci.http.write_json(templates)
+end
+
+function lxc_get_downloadable()
+	luci.http.prepare_content("application/json")
+
+	local uci = require("uci").cursor()
+
+	local url = uci:get("lxc", "lxc", "url")
+	local validate = uci:get("lxc", "lxc", "check_signature", 0)
+	local keyring = uci:get("lxc", "lxc", "keyring")
+
+	local f = io.popen('uname -m', 'r')
+	local target = f:read('*a')
+	f:close()
+	target = target:gsub("^%s*(.-)%s*$", "%1")
+
+	local templates = {}
+	local listargs = ""
+	
+	if validate and validate == "1" then
+		if keyring and keyring ~= "" then
+			listargs = "--keyring " .. keyring
+		end
+	else
+		listargs = "--no-validate"
+	end
 
 	if url and url ~= "" then
-		f = io.popen('lxc-create -n just_want_to_list_available_lxc_templates -t download -- --server=' .. url .. ' --list', 'r')
-	else
-		f = io.popen('lxc-create -n just_want_to_list_available_lxc_templates -t download -- --list', 'r')
+		listargs = listargs .. " --server=" .. url
 	end
+
+	local f
+
+	f = io.popen('lxc-create -n just_want_to_list_available_lxc_templates -t download -- ' .. listargs)
 
 	for line in f:lines() do
 		local dist,version,arch,build = line:match("^(%S+)%s+(%S+)%s(%S+)%s+default%s+(%S+)$")
@@ -103,7 +151,7 @@ function lxc_get_downloadable()
 				(target == "i486" and arch == "i386") or
 				(target == "arm6vl" and arch == "armhf")
 			) then
-				templates[#templates + 1] = dist .. ":" .. version .. ":" .. arch .. ":" .. build.replace(":","-")
+				templates[#templates + 1] = dist .. ":" .. version .. ":" .. arch .. ":" .. build:gsub(":","-")
 			end
 		end
 	end
@@ -115,8 +163,6 @@ function lxc_create(lxc_name, lxc_template, lxc_parameters)
 	luci.http.prepare_content("text/plain")
 
 	local uci = require("uci").cursor()
-
-	local url = uci:get("lxc", "lxc", "url")
 
 	local data = "Failed to set create arguments"
 	local validate = uci:get("lxc", "lxc", "check_signature", 0)
@@ -130,64 +176,89 @@ function lxc_create(lxc_name, lxc_template, lxc_parameters)
 
 	createargs = { }
 
-	if not validate then
-		createargs[#createargs + 1] = "--no-validate"
-        else
-		if keyring and keyring ~= "" then
-			createargs[#createargs + 1] = "--keyring"
-			createargs[#createargs + 1] = keyring
-		end
-	end
+	local lxc_template_name
 
-	if lxc_template or lxc_template == "" then
+	if not lxc_template or lxc_template == "" then
 		data = "Missing template specification"
 		err = true
-	end
-
-	if lxc_template == "download" then
-		if lxc_parameters == nil or lxc_parameters == "" then
-			data = "Missing image selection"
-			err = true
-		end
-
-		if not err then
-			if lxc_parameters == nil or lxc_parameters == "" then
-				data = "Missing rootfs to use"
-				createargs = { }
-			else
-				local lxc_dist = lxc_parameters:gsub("(.*):(.*):(.*):.*", '%1')
-				local lxc_release = lxc_parameters:gsub("(.*):(.*):(.*):.*", '%2')
-				local lxc_arch = lxc_parameters:gsub("(.*):(.*):(.*):.*", '%3')
-				if lxc_dist == nil or lxc_dist == "" or lxc_release == nil or lxc_release == "" or
-					lxc_arch == nil or lxc_arch == ""
-				then
-					data = "Bad dist release or arch from " .. lxc_parameters
-					err = true
-				else
-					if url and url ~= "" then
-						createargs[#createargs + 1] = "--server"
-						createargs[#createargs + 1] = url
-					end
-					createargs[#createargs + 1] = "--dist"
-					createargs[#createargs + 1] = lxc_dist
-					createargs[#createargs + 1] = "--release"
-					createargs[#createargs + 1] = lxc_release
-					createargs[#createargs + 1] = "--arch"
-					createargs[#createargs + 1] = lxc_arch
-				end
-			end
-		end
 	else
-		data = "Don't know how to handle this type of template"
-		err = true
+		lxc_template_name = lxc_template:gsub("(.*):(.*)", '%1')
 	end
 
 	if not err then
-		data = conn:call("lxc", "create", { name = lxc_name, template = lxc_template, args = createargs } )
+		if not validate then
+			if lxc_template_name == "download" or lxc_template_name == "openwrt" then
+				createargs[#createargs + 1] = "--no-validate"
+			end
+        	else
+			if keyring and keyring ~= "" then
+				if lxc_template_name == "download" or lxc_template_name == "openwrt" then
+					createargs[#createargs + 1] = "--keyring"
+					createargs[#createargs + 1] = keyring
+				elseif lxc_template_name == "ubuntu" or 
+					lxc_template_name == "debian" or
+					lxc_template_name == "cirros"	
+				then
+					createargs[#createargs + 1] = "--auth-key"
+					createargs[#createargs + 1] = keyring
+				end
+			end
+		end
+	end
+
+	if not err then
+		if lxc_parameters == nil or lxc_parameters == "" then
+			data = "Missing rootfs to use"
+			err = true
+		else
+			local lxc_dist = lxc_parameters:gsub("(.*):(.*):(.*):.*", '%1')
+			local lxc_release = lxc_parameters:gsub("(.*):(.*):(.*):.*", '%2')
+			local lxc_arch = lxc_parameters:gsub("(.*):(.*):(.*):.*", '%3')
+			local lxc_variant = lxc_parameters:gsub("(.*):(.*):(.*):(.*)", '%4')
+			if lxc_dist == nil or lxc_release == nil or lxc_arch == nil then
+				data = "Bad dist release or arch from " .. lxc_parameters
+				err = true
+			else
+				if lxc_dist ~= "" then
+					createargs[#createargs + 1] = "--dist"
+					createargs[#createargs + 1] = lxc_dist
+				end
+				if lxc_release ~= "" then
+					createargs[#createargs + 1] = "--release"
+					createargs[#createargs + 1] = lxc_release
+				end
+				if lxc_arch ~= "" then
+					createargs[#createargs + 1] = "--arch"
+					createargs[#createargs + 1] = lxc_arch
+				end
+				if lxc_variant and lxc_variant ~= "" then
+					createargs[#createargs + 1] = "--variant"
+					createargs[#createargs + 1] = lxc_variant
+				end
+			end
+		end
+	end
+
+	local url = uci:get("lxc", "lxc", "url")
+
+	if not err and lxc_template_name and (lxc_template_name == "download" or lxc_template_name == "openwrt") then
+		if url and url ~= "" then
+			createargs[#createargs + 1] = "--server"
+			createargs[#createargs + 1] = url
+		end
+	elseif not err then
+		if url and url ~= "" then
+			createargs[#createargs + 1] = "--mirror"
+			createargs[#createargs + 1] = url
+		end
+	end
+
+	if not err then
+		data = conn:call("lxc", "create", { name = lxc_name, template = lxc_template_name, args = createargs } )
 	end
 
 	if not err and (not data or data == "") then
-		data = "lxc-create -n " .. lxc_name .. "-t " .. lxc_template .. " -- "
+		data = "lxc-create -n " .. lxc_name .. " -t " .. lxc_template_name .. " -- "
 		for k, v in ipairs(createargs) do
 			data = data .. v .. " "
 		end

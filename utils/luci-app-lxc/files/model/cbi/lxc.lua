@@ -25,7 +25,7 @@ if fs.access("/etc/config/lxc") then
 	s.anonymous = true
 	s.addremove = false
 
-	s:option(Value, "url", translate("Containers URL"))
+	s:option(Value, "url", translate("Containers Server"))
 
 	if fs.access("/usr/bin/gpgv") or fs.access("/usr/bin/gpg") then
 		local validate = s:option(Flag, "check_signature", translate("Verify image signatures"))
