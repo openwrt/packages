@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Sebastian Careba <nitroshift@yahoo.com>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -21,6 +21,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+
+TARGET_CFLAGS+= -DNETDATA_NO_ATOMIC_INSTRUCTIONS=1
 
 include $(INCLUDE_DIR)/package.mk
 
