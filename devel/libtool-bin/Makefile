@@ -22,6 +22,8 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+CONFIGURE_VARS += GREP=grep SED=sed
+
 define Package/libtool-bin
   SECTION:=devel
   CATEGORY:=Development
@@ -39,7 +41,6 @@ endef
 define Package/libtool-bin/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/libtoolize $(1)/usr/bin/
-	$(SED) 's|$(STAGING_DIR_HOST)||g' $(1)/usr/bin/libtoolize
 	$(INSTALL_DIR) $(1)/usr/share/aclocal/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/aclocal/*.m4 \
 	  $(1)/usr/share/aclocal/
