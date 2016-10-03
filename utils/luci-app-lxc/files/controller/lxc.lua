@@ -120,6 +120,7 @@ function lxc_create(lxc_name, lxc_template)
 
 	local data = "Failed to set create arguments"
 	local validate = uci:get("lxc", "lxc", "check_signature", 0)
+	local keyring = uci:get("lxc", "lxc", "keyring")
 
 	if not pcall(dofile, "/etc/openwrt_release") then
 		return luci.http.write("1")
@@ -131,6 +132,11 @@ function lxc_create(lxc_name, lxc_template)
 
 	if not validate then
 		createargs[#createargs + 1] = "--no-validate"
+        else
+		if keyring and keyring ~= "" then
+			createargs[#createargs + 1] = "--keyring"
+			createargs[#createargs + 1] = keyring
+		end
 	end
 
 	if lxc_template == nil or lxc_template == "" then
