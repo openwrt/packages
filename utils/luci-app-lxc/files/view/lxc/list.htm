@@ -31,39 +31,6 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 	<div id="lxc-list-output"></div>
 </fieldset>
 
-<hr/>
-<fieldset class="cbi-section">
-	<legend><%:Create New Container%></legend>
-	<div class="cbi-section-node">
-		<table id="t_lxc_create" class="cbi-section-table">
-			<tr class="cbi-section-table-titles">
-				<th class="cbi-section-table-cell"><%:Name%></th>
-				<th class="cbi-section-table-cell"><%:Template%></th>
-				<th class="cbi-section-table-cell"><%:Actions%></th>
-			</tr>
-			<tr id="tr_holder">
-				<td>
-					<input type="text" id="tx_name" placeholder="<%:Enter new name%>" value='' />
-				</td>
-				<td>
-					<select id="s_template" class="cbi-input-select cbi-button">
-					</select>
-				</td>
-				<td>
-					<input type="button" id="bt_create" value="<%:Create%>" onclick="lxc_create(tr_holder)" class="cbi-button cbi-button-add" />
-					<span id="lxc-add-loader" style="display:inline-block; width:16px; height:16px; margin:0 5px"></span>
-				</td>
-			</tr>
-		</table>
-	</div>
-</fieldset>
-
-<fieldset class="cbi-section">
-	<div id="lxc-add-output"></div>
-</fieldset>
-
-<hr/>
-
 <script type="text/javascript" src="<%=resource%>/cbi.js"></script>
 <script type="text/javascript">//<![CDATA[
 
@@ -74,39 +41,6 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 	var loader_html = '<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" width="16" height="16" style="vertical-align:middle" /> ';
 	var timeout_msg = 0
 	var output_list = document.getElementById("lxc-list-output")
-	var output_add = document.getElementById("lxc-add-output")
-	var loader_add = document.getElementById("lxc-add-loader")
-
-	function lxc_create(tr)
-	{
-		var lxc_name = tr.querySelector("#tx_name").value.trim()
-		var lxc_template = tr.querySelector("#s_template").value
-		var bt_create = tr.querySelector("#bt_create")
-
-		if (t_lxc_list.querySelector("[data-id='" + lxc_name + "']") != null)
-			return info_message(output_add, "Container with that name already exists!", 4000)
-
-		bt_create.disabled = true
-		output_add.innerHTML = ''
-
-		if (!lxc_name || !lxc_name.length)
-		{
-			bt_create.disabled = false
-			return info_message(output_add, "Name cannot be empty!", 4000)
-		}
-
-		loading(loader_add)
-
-		new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_create/' + '%h/%h'.format(lxc_name, lxc_template) , null,
-		function(x)
-		{
-			bt_create.disabled = false
-			loading(loader_add, 0)
-
-			if (!x)
-				info_message(output_add, "Container creation failed!")
-		})
-	}
 
 	function lxc_create_template(lxc_name, lxc_state)
 	{
@@ -437,22 +371,4 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 	}
 
 	lxc_list_update()
-
-	new XHR().get('<%=luci.dispatcher.build_url("admin", "services")%>/lxc_get_downloadable', null,
-	function(x, data)
-	{
-		if (!x) return;
-
-		var lxc_count = Object.keys(data).length
-		if (!data || !lxc_count) return;
-		var select = document.getElementById("s_template");
-		for(var key in data)
-		{
-			var option = document.createElement('option');
-			option.value = data[key];
-			option.text = data[key].replace(/[_:]/g, ' ');
-			select.add(option, -1);
-		}
-	})
-
 //]]></script>

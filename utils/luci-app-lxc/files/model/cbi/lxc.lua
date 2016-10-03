@@ -19,7 +19,7 @@ local fs = require "nixio.fs"
 m = Map("lxc", translate("LXC Containers"))
 
 if fs.access("/etc/config/lxc") then
-	m:section(SimpleSection).template = "lxc"
+	m:section(SimpleSection).template = "lxc/list"
 
 	s = m:section(TypedSection, "lxc", translate("Options"))
 	s.anonymous = true
@@ -50,6 +50,9 @@ if fs.access("/etc/config/lxc") then
 			validate:depends("keyring")
 		end
 	end
+
+	m:section(SimpleSection).template = "lxc/create"
+
 end
 
 return m
