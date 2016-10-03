@@ -21,6 +21,8 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+CONFIGURE_VARS += M4=m4
+
 define Package/autoconf
   SECTION:=devel
   CATEGORY:=Development
@@ -42,7 +44,6 @@ endef
 
 define Package/autoconf/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(SED) 's|$(STAGING_DIR_HOST)|/usr|g' $(PKG_INSTALL_DIR)/usr/bin/autom4te
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/share/autoconf
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/autoconf/INSTALL \
