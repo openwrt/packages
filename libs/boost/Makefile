@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -16,13 +16,14 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/target.mk 
 
 PKG_NAME:=boost
-PKG_VERSION:=1_61_0
-PKG_RELEASE:=1
+PKG_VERSION:=1.61.0
+PKG_SOURCE_VERSION=1_61_0
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/boost
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/boost/$(PKG_NAME)/$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
 PKG_MD5SUM:=874805ba2e2ee415b1877ef3297bf8ad
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
@@ -41,10 +42,6 @@ define Package/boost/Default
   TITLE:=Boost C++ source library
   URL:=http://www.boost.org
   DEPENDS:=+libstdcpp +libpthread +librt
-endef
-
-define Package/boost/description/Default
-  true
 endef
 
 define Package/boost/description
@@ -91,8 +88,6 @@ $(call Package/boost/Default)
 endef
 
 define Package/boost-libs/description
-$(call Package/boost/description/Default)
- .
  This meta package contains only dependencies to the other libraries from
  the boost libraries collection.
 endef
@@ -225,7 +220,7 @@ define Package/boost/config
 	    	select PACKAGE_boost-test
 	    
 		config boost-coroutine2
-		depends on @GCC_VERSION_5
+		depends on @(GCC_VERSION_5 || GCC_VERSION_6)
 		bool "Boost couroutine2 support."
 		select PACKAGE_boost-coroutine
 		default n
@@ -238,6 +233,7 @@ define Package/boost/config
 		$(foreach lib,$(BOOST_LIBS), \
 		  config PACKAGE_boost-$(lib)
 		  prompt "Boost $(lib) library."
+		  $(if $(findstring locale,$(lib)),depends on @BUILD_NLS,)
 		)
   	endmenu
 
@@ -273,8 +269,6 @@ define DefineBoostLibrary
   endef
 
   define Package/boost-$(1)/description
-   $(call Package/boost/description/Default)
-   .
    This package contains the Boost $(1) library.
   endef
 endef
@@ -290,7 +284,7 @@ $(eval $(call DefineBoostLibrary,date_time,,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
 $(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
-$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS) @BUILD_NLS))
+$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS)))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
