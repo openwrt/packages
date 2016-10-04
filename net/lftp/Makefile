@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lftp
-PKG_VERSION:=4.7.1
+PKG_VERSION:=4.7.3
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://lftp.yar.ru/ftp \
 		http://lftp.yar.ru/ftp/old \
 		http://lftp.cybermirror.org \
 		http://lftp.cybermirror.org/old
-PKG_MD5SUM:=7dfb03c6544efeef633bc28ba7df8b77
+PKG_MD5SUM:=23deda16014412c802f095fbaa0bebee
 
 
 
