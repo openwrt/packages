@@ -12,17 +12,21 @@
 
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/target.mk 
 
 PKG_NAME:=boost
 PKG_VERSION:=1_62_0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/boost
+#https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.bz2
+
+PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.bz2
+#PKG_SOURCE_URL:=@SF/boost/files/boost/1.62.0/
+PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/1.62.0/
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_VERSION)
-PKG_MD5SUM:=440a59f8bc4023dbe6285c9998b0f7fa288468b889746b1ef00e8b36c559dce1
+PKG_MD5SUM:=36c96b0f6155c98404091d8ceb48319a28279ca0333fba1ad8611eb90afb2ca0
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
@@ -53,12 +57,12 @@ Boost is a set of free, peer-reviewed, portable C++ source libraries.
 -----------------------------------------------------------------------------
 |                                Warning                                    |
 | In order to build all of the Boost Libraries, it is necessary             |
-| to use at least GCC version 5 (c++14 support) and, it is necessary to     |
+| to use, at least, GCC version 5 (C++14 support) and, it is necessary to   |
 | compile the kernel with Full Language Support.                            |
 | Without these requirerements, the following libs will not be available:   |
-|   Boost.Locale                                                            |
-|   Boost.Coroutine2                                                        |
-|   Boost.Fiber                                                             |
+| - Boost.Locale                                                            |
+| - Boost.Coroutine2                                                        |
+| - Boost.Fiber                                                             |
 -----------------------------------------------------------------------------
 
 This package provides the following run-time libraries:
@@ -96,8 +100,6 @@ endef
 
 BOOST_LIBS =
 
-
-
 define Package/boost-libs
 $(call Package/boost/Default)
     TITLE+= (all libs)
@@ -125,7 +127,7 @@ endef
 define Package/boost
     $(call Package/boost/Default)
     TITLE+= packages
-    DEPENDS:=+ALL:boost-libs +ALL:boost-test
+    #DEPENDS:=+ALL:boost-libs +ALL:boost-test +ALL:boost-coroutine2 +ALL:boost-graph-parallel
 endef
 
 
@@ -233,15 +235,22 @@ define Package/boost/config
         comment "Libraries"
 
         config boost-libs-all
-            bool "Include all Boost libraries $(cc-version)."
+            depends on @BUILD_NLS
+            depends on !GCC_VERSION_4_8
+            bool "Include all Boost libraries."
             select PACKAGE_boost-libs
+            select boost-test-pkg
+            select boost-coroutine2
+            select boost-graph-parallel
+            default n
 
         config boost-test-pkg
-            bool "Boost test package."
+            bool "Boost test units support."
             select PACKAGE_boost-test
+            default n
         
         config boost-coroutine2
-            depends on @!GCC_VERSION_4_8
+            depends on !GCC_VERSION_4_8
             bool "Boost couroutine2 support."
             select PACKAGE_boost-coroutine
             default n
@@ -254,12 +263,14 @@ define Package/boost/config
         $(foreach lib,$(BOOST_LIBS), \
             config PACKAGE_boost-$(lib)
             prompt "Boost $(lib) library."
+            default n
             $(if $(findstring locale,$(lib)), depends on @BUILD_NLS,)
-            $(if $(findstring fiber,$(lib)), depends on @!GCC_VERSION_4_8,)
+            $(if $(findstring fiber,$(lib)), depends on !GCC_VERSION_4_8,)
         )
     endmenu
 endef
  
+
 PKG_CONFIG_DEPENDS:= CONFIG_PACKAGE_boost-test
 
 define Package/boost-test
