@@ -1,0 +1,27 @@
+Makefile.in was hardcoded to load pppd plugins from /etc/ppp/plugins in breach of LFS
+now the define is done by PPPD_VERSION being passed to the make's command line
+
+Signed-off-by: Luke McKee <hojuruku@gmail.com>
+
+diff -Naur a/src/Makefile.in b/src/Makefile.in
+--- a/src/Makefile.in	2016-07-17 01:53:20.245726551 +0700
++++ b/src/Makefile.in	2016-07-17 01:59:47.561120448 +0700
+@@ -48,7 +48,7 @@
+ @LIC_MAKEFILE_INCLUDE@
+ 
+ # Kernel-mode plugin gets installed here.
+-PLUGIN_DIR=/etc/ppp/plugins
++PLUGIN_DIR=/usr/lib/pppd/$(PPPD_VERSION)
+ PLUGIN_PATH=$(PLUGIN_DIR)/rp-pppoe.so
+ 
+ # Configuration file paths
+--- a/src/configure.in	2016-07-17 01:53:20.246726549 +0700
++++ b/src/configure.in	2016-07-17 02:06:07.342547569 +0700
+@@ -110,6 +110,7 @@
+ 		AC_DEFINE(HAVE_LINUX_KERNEL_PPPOE)
+ 		PPPD_INCDIR=$ac_cv_pluginpath
+ 	fi
++	AC_DEFINE(HAVE_LINUX_KERNEL_PPPOE)
+ fi
+ 
+ if test "$PPPD_INCDIR" = "" ; then

@@ -1,0 +1,73 @@
+patch to fix Musl 1.1 compatibility
+Inspired by Pull Request #1387
+https://github.com/openwrt/packages/pull/1387/commits/e76f394fdc34ecd734f976dd7b6660f6ae32d53e
+
+Signed-Off-By: Luke McKee <hojuruku@gmail.com>
+
+diff -Naur a/src/configure.in b/src/configure.in
+--- a/src/configure.in	2015-11-11 22:10:03.000000000 +0700
++++ b/src/configure.in	2016-07-16 21:53:43.572332358 +0700
+@@ -19,13 +19,14 @@
+ AC_HEADER_STDC
+ AC_HEADER_SYS_WAIT
+ AC_CHECK_HEADERS(fcntl.h sys/dlpi.h sys/ioctl.h sys/time.h syslog.h unistd.h net/if_arp.h netinet/if_ether.h getopt.h sys/uio.h sys/param.h fcntl.h net/bpf.h netpacket/packet.h net/ethernet.h asm/types.h linux/if_packet.h linux/if_ether.h sys/socket.h sys/cdefs.h net/if.h net/if_dl.h net/if_ether.h net/if_types.h netinet/if_ether.h net/if_types.h net/if_dl.h)
+-AC_CHECK_HEADERS(linux/if.h, [], [], [#include<sys/socket.h>])
++AC_CHECK_HEADERS(linux/if.h, [], [], [#include <sys/socket.h>])
+ AC_CHECK_HEADERS(linux/if_pppox.h, [], [],
+ [
+-#include<sys/socket.h>
+-#include<net/ethernet.h>
+-#include<linux/if.h>
+-#include<linux/in.h>
++#include <sys/socket.h>
++#include <net/ethernet.h>
++#include <linux/if.h>
++#include <linux/in.h>
++#include <linux/in6.h>
+ ])
+ 
+ dnl Checks for typedefs, structures, and compiler characteristics.
+@@ -38,7 +39,7 @@
+ AC_MSG_CHECKING(for struct sockaddr_ll)
+ AC_TRY_COMPILE([#include <asm/types.h>
+ #include <linux/if_packet.h>
+-#include <linux/if_ether.h>
++#include <netinet/if_ether.h>
+ ], [struct sockaddr_ll sa;],
+ ac_cv_struct_sockaddr_ll=yes,
+ ac_cv_struct_sockaddr_ll=no)
+@@ -257,7 +258,7 @@
+ 	return 2;
+     }
+ }], rpppoe_cv_pack_bitfields=normal, rpppoe_cv_pack_bitfields=rev,
+-$ECHO "no defaults for cross-compiling"; exit 0)
++rpppoe_cv_pack_bitfields="$ac_cv_pack_bitfields")
+ fi
+ 
+ if test "$rpppoe_cv_pack_bitfields" = "rev" ; then
+diff -Naur a/src/pppoe.h b/src/pppoe.h
+--- a/src/pppoe.h	2015-11-11 22:10:04.000000000 +0700
++++ b/src/pppoe.h	2016-07-16 12:21:45.875322217 +0700
+@@ -127,22 +127,13 @@
+ #error Could not find a 32-bit integer type
+ #endif
+ 
+-#ifdef HAVE_LINUX_IF_ETHER_H
+-#include <linux/if_ether.h>
+-#endif
+-
+ #include <netinet/in.h>
+-
+-#ifdef HAVE_NETINET_IF_ETHER_H
+ #include <sys/types.h>
+ 
+ #ifdef HAVE_SYS_SOCKET_H
+ #include <sys/socket.h>
+ #endif
+-#ifndef HAVE_SYS_DLPI_H
+ #include <netinet/if_ether.h>
+-#endif
+-#endif
+ 
+ 
+ 
