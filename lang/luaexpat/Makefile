@@ -22,7 +22,7 @@ define Package/luaexpat
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=LuaExpat 
-  URL:=http://www.keplerproject.org/luaexpat/
+  URL:=http://matthewwild.co.uk/projects/luaexpat/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
   DEPENDS:=+lua +libexpat
 endef
