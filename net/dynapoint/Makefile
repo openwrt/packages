@@ -1,13 +1,15 @@
 #
-# Copyright (C) 2016 LEDE project (Tobias Ilte)
+# Copyright (C) 2016 Tobias Ilte <tobias.ilte@campus.tu-berlin.de>
 #
-# This is free software, licensed under the GNU General Public License v3.
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dynapoint
-PKG_VERSION:=1.0
 PKG_RELEASE:=1
+
 PKG_MAINTAINER:=Tobias Ilte <tobias.ilte@campus.tu-berlin.de>
 PKG_LICENSE:=GPL-3.0+
 
@@ -18,13 +20,12 @@ define Package/$(PKG_NAME)
     CATEGORY:=Network
     SUBMENU:=wireless
     DEPENDS:=+lua +libubus-lua +libuci-lua +libubox-lua +luci-lib-nixio
-    MAINTAINER:=Tobias Ilte <tobias.ilte@campus.tu-berlin.de>
     TITLE:=Dynamic access point manager
 endef
 
 define Package/$(PKG_NAME)/description
-Dynapoint uses LUA scripts to allow dynamic access point creation
-and deletion depending on changes of certain network conditions.
+  Dynapoint uses LUA scripts to allow dynamic access point creation
+  and deletion depending on changes of certain network conditions.
 endef
 
 define Package/$(PKG_NAME)/conffiles
@@ -32,7 +33,6 @@ define Package/$(PKG_NAME)/conffiles
 endef
 
 define Build/Compile
-	true
 endef
 
 define Package/$(PKG_NAME)/install
