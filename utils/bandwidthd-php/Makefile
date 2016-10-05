@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bandwidthd-php
 PKG_VERSION:=2.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Jean-Michel Lacroix <lacroix@lepine-lacroix.info>
 
@@ -20,7 +20,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bandwidthd-php
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpcre +libxml2 +php5 +php5-cgi +php5-mod-pgsql +php5-mod-gd
+  DEPENDS:=+libpcre +libxml2 +php7 +php7-cgi +php7-mod-pgsql +php7-mod-gd
   TITLE:=PHP files to graph bandwidthd data in a postgresql database
   URL:=http://bandwidthd.sourceforge.net/
 endef
