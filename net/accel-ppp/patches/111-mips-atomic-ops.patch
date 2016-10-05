@@ -1,0 +1,65 @@
+accel-pppd: fix atomic ops on MIPS and other platforms 
+
+https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56296
+__sync_add_and_fetch_8 not supported on mips
+Upstream: consider using ifdef __mips__ if any concerns
+https://sourceforge.net/p/predef/wiki/Architectures/
+
+Other openwrt packages just pulled the functionality rather than trying to fix the problem
+https://github.com/rakshasa/rtorrent/issues/156
+
+Signed-off-by: Luke McKee <hojuruku@gmail.com>
+
+--- a/accel-pppd/include/ap_session.h
++++ b/accel-pppd/include/ap_session.h
+@@ -117,9 +117,9 @@
+ 
+ struct ap_session_stat
+ {
+-	unsigned int active;
+-	unsigned int starting;
+-	unsigned int finishing;
++	uint32_t active;
++	uint32_t starting;
++	uint32_t finishing;
+ };
+ 
+ 
+--- a/accel-pppd/session.c
++++ b/accel-pppd/session.c
+@@ -107,7 +107,7 @@
+ 		ses->state = AP_STATE_STARTING;
+ 	}
+ 
+-	__sync_add_and_fetch(&ap_session_stat.starting, 1);
++	__sync_add_and_fetch_4(&ap_session_stat.starting, 1);
+ 
+ 	pthread_rwlock_wrlock(&ses_lock);
+ 	list_add_tail(&ses->entry, &ses_list);
+@@ -151,7 +151,7 @@
+ 
+ 	ses->state = AP_STATE_ACTIVE;
+ 	__sync_sub_and_fetch(&ap_session_stat.starting, 1);
+-	__sync_add_and_fetch(&ap_session_stat.active, 1);
++	__sync_add_and_fetch_4(&ap_session_stat.active, 1);
+ 
+ 	if (ses->idle_timeout) {
+ 		ses->timer.expire = ap_session_timer;
+@@ -276,7 +276,7 @@
+ 	else
+ 		__sync_sub_and_fetch(&ap_session_stat.starting, 1);
+ 
+-	__sync_add_and_fetch(&ap_session_stat.finishing, 1);
++	__sync_add_and_fetch_4(&ap_session_stat.finishing, 1);
+ 	ses->terminating = 1;
+ 	ses->state = AP_STATE_FINISHING;
+ 
+@@ -334,7 +334,7 @@
+ 		sid = ++seq;
+ 		spin_unlock(&seq_lock);
+ #else
+-		sid = __sync_add_and_fetch(&seq, 1);
++		sid = __sync_add_and_fetch_4(&seq, 1);
+ #endif
+ 
+ 		clock_gettime(CLOCK_MONOTONIC, &ts);

@@ -1,0 +1,44 @@
+accel-pppd: Remove some debian CPACK cruft modifying host filesystem and disable -FPIC
+
+Signed-off-By: Luke McKee <hojuruku@gmail.com>
+
+--- a/accel-pppd/CMakeLists.txt
++++ b/accel-pppd/CMakeLists.txt
+@@ -111,10 +111,3 @@
+ 
+ INSTALL(FILES accel-ppp.conf.5 DESTINATION share/man/man5)
+ 
+-IF (NOT DEFINED CPACK_TYPE)
+-	INSTALL(FILES accel-ppp.conf DESTINATION ${CMAKE_FIND_ROOT_PATH}/etc RENAME accel-ppp.conf.dist)
+-
+-	INSTALL(CODE "EXECUTE_PROCESS(COMMAND mkdir -p ${CMAKE_FIND_ROOT_PATH}/var/log/accel-ppp)")
+-	INSTALL(CODE "EXECUTE_PROCESS(COMMAND mkdir -p ${CMAKE_FIND_ROOT_PATH}/var/lib/accel-ppp)")
+-ENDIF (NOT DEFINED CPACK_TYPE)
+-
+--- a/drivers/ipoe/CMakeLists.txt
++++ b/drivers/ipoe/CMakeLists.txt
+@@ -14,6 +14,3 @@
+ 	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/driver/ipoe.ko
+ )
+ 
+-IF (NOT DEFINED CPACK_TYPE)
+-	INSTALL(CODE "EXECUTE_PROCESS(COMMAND make -C ${KDIR} M=${CMAKE_CURRENT_BINARY_DIR}/drivers/ipoe modules_install)")
+-ENDIF()
+--- a/drivers/vlan_mon/CMakeLists.txt
++++ b/drivers/vlan_mon/CMakeLists.txt
+@@ -14,4 +14,3 @@
+ 	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/driver/vlan_mon.ko
+ )
+ 
+-INSTALL(CODE "EXECUTE_PROCESS(COMMAND make -C ${KDIR} M=${CMAKE_CURRENT_BINARY_DIR}/drivers/vlan_mon modules_install)")
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -10,7 +10,7 @@
+ 
+ include(cmake/cpack.cmake)
+ 
+-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -fno-strict-aliasing -D_GNU_SOURCE -fPIC -rdynamic")
++SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -fno-strict-aliasing -D_GNU_SOURCE -rdynamic")
+ 
+ IF (NOT DEFINED LIB_SUFFIX)
+ 	EXECUTE_PROCESS(
