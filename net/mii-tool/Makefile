@@ -10,14 +10,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mii-tool
 PKG_VERSION=2016-07-10-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=2
-PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=Stijn Segers <borromini.reg@protonmail.com>
+PKG_RELEASE:=3
+
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://git.code.sf.net/p/net-tools/code
-PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=115f1af2494ded1fcd21c8419d5e289bc4df380f
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYING
+
+PKG_MAINTAINER:=Stijn Segers <borromini.reg@protonmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -39,10 +43,6 @@ define Build/Configure
 	# Failed configure.sh leaves stub config.h around.
 	rm -f $(PKG_BUILD_DIR)/config.h
 	(cd $(PKG_BUILD_DIR) && yes $$$$'\n' | ./configure.sh config.in )
-endef
-
-define Build/Compile
-	$(call Build/Compile/Default,mii-tool)
 endef
 
 define Package/mii-tool/install
