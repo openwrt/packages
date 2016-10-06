@@ -9,8 +9,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mii-tool
-PKG_VERSION=2016-07-10-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=4
+PKG_VERSION=2016-10-06-$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://git.code.sf.net/p/net-tools/code
