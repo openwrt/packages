@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mii-tool
 PKG_VERSION=2016-07-10-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://git.code.sf.net/p/net-tools/code
@@ -42,7 +42,7 @@ endef
 define Build/Configure
 	# Failed configure.sh leaves stub config.h around.
 	rm -f $(PKG_BUILD_DIR)/config.h
-	(cd $(PKG_BUILD_DIR) && yes $$$$'\n' | ./configure.sh config.in )
+	( cd $(PKG_BUILD_DIR); yes $$$$'\n' | ./configure.sh config.in )
 endef
 
 define Package/mii-tool/install
