@@ -29,7 +29,7 @@ PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
 PKG_BUILD_DEPENDS += boost/host 
-PKG_BUILD_PARALLEL:=0
+#PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -348,7 +348,7 @@ TARGET_CFLAGS += \
 	$(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC
 
 TARGET_CXXFLAGS += \
-	$(if $(CONFIG_GCC_VERSION_4_8), -std=c++11, -std=c++14)
+	$(if $(CONFIG_GCC_VERSION_4_8),-std=c++11,-std=c++14)
 
 
 ifneq ($(findstring mips,$(ARCH)),)
@@ -369,7 +369,7 @@ comma := ,
 define Build/Compile
 	$(info Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu $(CPU_TYPE) $(CPU_SUBTYPE))
 	( cd $(PKG_BUILD_DIR) ; \
-		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
+		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-g++ : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
 		$(if $(CONFIG_PACKAGE_boost-python3), \
 			echo "using python : 3.5 : $(STAGING_DIR_ROOT)/usr/bin/python3 : $(STAGING_DIR)/usr/include/python3.5/ ;" >> \
 				tools/build/src/user-config.jam; \
@@ -380,9 +380,9 @@ define Build/Compile
 		) \
 		b2 \
 			$(CONFIGURE_ARGS) \
+			$(PKG_JOBS) \
 			--ignore-site-config \
 			--toolset=gcc-$(ARCH) abi=$(BOOST_ABI) \
-			--disable-long-double \
 			$(if $(CONFIG_boost-variant-release), variant=release,) \
 			$(if $(CONFIG_boost-variant-debug), variant=debug,) \
 			$(if $(CONFIG_boost-variant-profile), variant=profile,) \
