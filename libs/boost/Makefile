@@ -29,7 +29,6 @@ PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
 PKG_BUILD_DEPENDS += boost/host 
-#PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -41,7 +40,7 @@ define Package/boost/Default
     CATEGORY:=Libraries
     TITLE:=Boost C++ source library
     URL:=http://www.boost.org
-    DEPENDS:=+libstdcpp +libpthread +librt
+    DEPENDS:=+libstdcpp +librt +libpthread
 endef
 
 define Package/boost/description/Default
@@ -336,11 +335,10 @@ $(eval $(call DefineBoostLibrary,wave,date_time thread filesystem,))
 
 define Host/Compile
 	# b2 does not provide a configure-script nor a Makefile
-	( cd $(HOST_BUILD_DIR)/tools/build/src/engine ; ./build.sh gcc )
+	#( cd $(HOST_BUILD_DIR)/tools/build/src/engine ; ./build.sh gcc )
 endef
 
 CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
-TARGET_LDFLAGS += -pthread -lrt
 
 TARGET_CFLAGS += \
 	$(if $(CONFIG_PACKAGE_boost-python), -I$(STAGING_DIR)/usr/include/python2.7/) \
@@ -369,7 +367,7 @@ comma := ,
 define Build/Compile
 	$(info Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu $(CPU_TYPE) $(CPU_SUBTYPE))
 	( cd $(PKG_BUILD_DIR) ; \
-		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-g++ : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
+		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
 		$(if $(CONFIG_PACKAGE_boost-python3), \
 			echo "using python : 3.5 : $(STAGING_DIR_ROOT)/usr/bin/python3 : $(STAGING_DIR)/usr/include/python3.5/ ;" >> \
 				tools/build/src/user-config.jam; \
