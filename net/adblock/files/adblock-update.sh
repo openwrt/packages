@@ -10,9 +10,8 @@
 #
 adb_pid="${$}"
 adb_pidfile="/var/run/adblock.pid"
-adb_scriptver="1.4.10"
-adb_mincfgver="2.5"
 adb_scriptdir="${0%/*}"
+
 if [ -r "${adb_pidfile}" ]
 then
     rc=255
