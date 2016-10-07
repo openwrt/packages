@@ -2,10 +2,11 @@
 #
 
 START=90
-EXTRA_COMMANDS="toggle stats cfgup query"
+EXTRA_COMMANDS="toggle stats cfgup envchk query"
 EXTRA_HELP="	toggle	Toggle adblock 'on' or 'off'
 	stats	Update adblock statistics
 	cfgup	Update adblock configuration file
+	envchk	Check/Set adblock environment
 	query	<DOMAIN> Query active blocklists for specific domain"
 
 adb_debug=0
@@ -157,5 +158,16 @@ query()
             tld="${domain#*.}"
         done
     fi
+    return 0
+}
+
+envchk()
+{
+    adb_loglevel=0
+    f_envcheck
+    rm -f "${adb_tmpfile}"
+    rm -rf "${adb_tmpdir}"
+    adb_loglevel=1
+    f_log "adblock environment check finished successfully"
     return 0
 }
