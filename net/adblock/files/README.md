@@ -62,9 +62,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * status & error logging to stdout and syslog
 * use two dynamic uhttpd instances as adblock pixel server, separated for ads delivered on port 80 and on port 443
 * use dynamic iptables chains/rulesets for adblock related redirects/rejects
-* init system support (start/stop/restart/reload/toggle/stats/cfgup)
+* init system support (start/stop/restart/reload/toggle/stats/cfgup/envchk/query)
 * hotplug support, the adblock start will be triggered by wan 'ifup' event, this can be restricted to a certain wan interface or disabled at all (see config options below)
 * toggle to quickly switch adblock 'on' or 'off'
+* envchk function to check the volatile adblock environment only (without list updates)
 * query function to quickly identify blocked (sub-)domains, i.e. for whitelisting
 * optional: automatic adblock list backup/restore, backups will be (de-)compressed on the fly (disabled by default)
 * optional: add new adblock sources via uci config (see example below)
@@ -113,6 +114,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **adblock query `<DOMAIN>`:** to query the active blocklists for a specific domain, please run _/etc/init.d/adblock query `<DOMAIN>`_ (see example below)
 * **configuration update:** to update an outdated adblock config file with the current default version, please run _/etc/init.d/adblock cfgup_, make your individual changes and start the adblock service again
 * **debugging:** for script debugging please set the 'adb\_debug' variable in the header of _/etc/init.d/adblock_ to '1'
+* **mute output** to mute the normal adblock output and print only warn/error messages, please set 'adb\_loglevel to '0'
 * **disable active dns probing in windows:** to prevent a possible yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
 
 ## Further adblock config options
@@ -128,6 +130,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_fetchttl => set the timeout for list downloads (default: '5' seconds)
     * adb\_restricted => disable updates of the adblock config file (no flash writes) during runtime (default: '0', disabled)
     * adb\_hotplugif => restrict hotplug support to a certain wan interface or disable it at all (default: '', disabled)
+    * adb\_loglevel => set it to '0' to mute normal adblock output and print only error messages (default: '1', normal output)
 
 ## Examples
 
