@@ -40,7 +40,7 @@ define Package/boost/Default
     CATEGORY:=Libraries
     TITLE:=Boost C++ source library
     URL:=http://www.boost.org
-    DEPENDS:=+libstdcpp +libpthread +librt
+    #DEPENDS:=+libstdcpp +libpthread +librt
 endef
 
 define Package/boost/description/Default
@@ -234,7 +234,7 @@ define Package/boost/config
         config boost-libs-all
             depends on @BUILD_NLS
             depends on !GCC_VERSION_4_8
-            bool "Include all Boost libraries."
+            bool "Include all Boost libraries. $(PYTHON3_VERSION)"
             select PACKAGE_boost-libs
             select boost-test-pkg
             select boost-coroutine2
@@ -305,17 +305,20 @@ define DefineBoostLibrary
 endef
 
 
-$(eval $(call DefineBoostLibrary,atomic,system,))
+
+
+
+$(eval $(call DefineBoostLibrary,atomic,,))
 $(eval $(call DefineBoostLibrary,chrono,system,))
 $(eval $(call DefineBoostLibrary,container,,))
-$(eval $(call DefineBoostLibrary,context,chrono system thread,))
+$(eval $(call DefineBoostLibrary,context,system thread chrono,))
 $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,))
 $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,fiber,context,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
-$(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
+$(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib +PACKAGE_boost-iostreams:libbz2))
 $(eval $(call DefineBoostLibrary,locale,system, $(ICONV_DEPENDS)))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
@@ -328,7 +331,7 @@ $(eval $(call DefineBoostLibrary,regex,,))
 $(eval $(call DefineBoostLibrary,serialization,,))
 $(eval $(call DefineBoostLibrary,signals,,))
 $(eval $(call DefineBoostLibrary,system,,))
-$(eval $(call DefineBoostLibrary,thread,system chrono atomic,))
+$(eval $(call DefineBoostLibrary,thread, chrono atomic date_time,))
 $(eval $(call DefineBoostLibrary,timer,chrono))
 $(eval $(call DefineBoostLibrary,wave,date_time thread filesystem,))
 
@@ -381,6 +384,7 @@ define Build/Compile
 			$(PKG_JOBS) \
 			--ignore-site-config \
 			--toolset=gcc-$(ARCH) abi=$(BOOST_ABI) \
+			$(if $(CONFIG_PACKAGE_boost-contex), valgrind=on,) \
 			$(if $(CONFIG_boost-variant-release), variant=release,) \
 			$(if $(CONFIG_boost-variant-debug), variant=debug,) \
 			$(if $(CONFIG_boost-variant-profile), variant=profile,) \
