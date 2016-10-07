@@ -40,7 +40,7 @@ define Package/boost/Default
     CATEGORY:=Libraries
     TITLE:=Boost C++ source library
     URL:=http://www.boost.org
-    DEPENDS:=+libstdcpp +librt +libpthread
+    DEPENDS:=+libstdcpp +libpthread +librt
 endef
 
 define Package/boost/description/Default
@@ -335,7 +335,7 @@ $(eval $(call DefineBoostLibrary,wave,date_time thread filesystem,))
 
 define Host/Compile
 	# b2 does not provide a configure-script nor a Makefile
-	#( cd $(HOST_BUILD_DIR)/tools/build/src/engine ; ./build.sh gcc )
+	( cd $(HOST_BUILD_DIR)/tools/build/src/engine ; ./build.sh gcc )
 endef
 
 CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
