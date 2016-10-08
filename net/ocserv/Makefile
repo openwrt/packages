@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ocserv
 PKG_VERSION:=0.11.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_USE_MIPS16:=0
 
 PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
@@ -62,6 +62,8 @@ CONFIGURE_ARGS+= \
 	--without-libnl \
 	--without-gssapi \
 	--with-libcrypt-prefix="$(STAGING_DIR)/" \
+	--without-lz4 \
+	--with-local-talloc \
 
 ifneq ($(CONFIG_OCSERV_PAM),y)
 CONFIGURE_ARGS += --without-pam
