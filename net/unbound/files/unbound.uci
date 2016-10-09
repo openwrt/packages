@@ -1,0 +1,18 @@
+config unbound
+	option add_gate_name '0'
+	option add_local_name '0'
+	option control '0'
+	option dnsmasq '0'
+	option dnssec '0'
+	option edns_size '1280'
+	option localservice '1'
+	option obscure '0'
+	option port '53'
+	option recursion 'passive'
+	option rebind_localhost '0'
+	option rebind_protection '1'
+	option resource 'small'
+	option root_age '90'
+	option ttl_min '120'
+	list insecure_zone 'pool.ntp.org'
+	

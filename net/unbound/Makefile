@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
 PKG_VERSION:=1.5.9
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -43,7 +43,8 @@ define Package/unbound
 endef
 
 define Package/unbound/description
-  This package contains the Unbound daemon.
+  This package contains the Unbound daemon. 
+  Please see https://github.com/openwrt/packages/blob/master/net/unbound/files/README.md
 endef
 
 define Package/unbound-anchor
@@ -137,12 +138,15 @@ define Package/unbound/install
 		$(PKG_INSTALL_DIR)/usr/sbin/unbound-checkconf \
 		$(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/unbound
-	$(INSTALL_CONF) \
-		$(PKG_INSTALL_DIR)/etc/unbound/unbound.conf \
-		$(1)/etc/unbound/
+	$(INSTALL_CONF) ./files/unbound.conf $(1)/etc/unbound/
 	$(INSTALL_CONF) ./files/root.key $(1)/etc/unbound/
+	$(INSTALL_CONF) ./files/root.hints $(1)/etc/unbound/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/unbound.uci $(1)/etc/config/unbound
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/unbound.init $(1)/etc/init.d/unbound
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN) ./files/unbound.hotplug $(1)/etc/hotplug.d/iface/25-unbound
 endef
 
 define Package/unbound-anchor/install
