@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dosfstools
-PKG_VERSION:=3.0.28
+PKG_VERSION:=4.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0+
@@ -16,13 +16,20 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_MAINTAINER:=David Bonnes <david.bonnes@gmail.com>
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/dosfstools/dosfstools/releases/download/v$(PKG_VERSION)/ \
 		http://fossies.org/linux/misc
-PKG_MD5SUM:=64e3b3a59b51d2a97d7ac38b23a124bb
+PKG_MD5SUM:=9037738953559d1efe04fc5408b6846216cc0138f7f9d32de80b6ec3c35e7daf
+
+PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+
+CONFIGURE_ARGS += \
+	--enable-compat-symlinks \
+	--without-udev
 
 define Package/dosfstools/Default
   SECTION:=utils
@@ -62,46 +69,26 @@ define Package/mkdosfs/description
 	(mkfs.vfat and mkfs.fat for creating FAT volumes)
 endef
 
-LDFLAGS+=$(ICONV_LDFLAGS)
-LDLIBS+=-liconv
-
-define Build/Configure
-endef
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		$(TARGET_CONFIGURE_OPTS) \
-		OPTFLAGS="$(TARGET_CFLAGS) -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE" \
-		PREFIX="/usr" \
-		SBINDIR="/usr/sbin" \
-		LDFLAGS="$(LDFLAGS)" \
-		LDLIBS="$(LDLIBS)" \
-		all
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		$(TARGET_CONFIGURE_OPTS) \
-		OPTFLAGS="$(TARGET_CFLAGS) -D_FILE_OFFSET_BITS=64" \
-		PREFIX="$(PKG_INSTALL_DIR)/usr" \
-		SBINDIR="$(PKG_INSTALL_DIR)/usr/sbin" \
-		install-bin
-endef
-
 define Package/dosfsck/install
-	$(INSTALL_DIR) $(1)/lib/functions/fsck
-	$(INSTALL_DATA) ./files/dosfsck.sh $(1)/lib/functions/fsck/
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dosfsck $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fsck.fat $(1)/usr/sbin/
-	(cd $(1)/usr/sbin; ln -sf fsck.fat fsck.msdos; ln -sf fsck.fat fsck.vfat; ln -sf fsck.fat dosfsck)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fsck.msdos $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fsck.vfat $(1)/usr/sbin/
 endef
 
 define Package/dosfslabel/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dosfslabel $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fatlabel $(1)/usr/sbin/
 endef
 
 define Package/mkdosfs/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mkdosfs $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mkfs.fat $(1)/usr/sbin/
-	(cd $(1)/usr/sbin; ln -sf mkfs.fat mkfs.msdos; ln -sf mkfs.fat mkfs.vfat)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mkfs.msdos $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mkfs.vfat $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,dosfsck))
