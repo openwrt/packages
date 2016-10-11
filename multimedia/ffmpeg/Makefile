@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=2.8.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
@@ -407,7 +407,9 @@ FFMPEG_CONFIGURE += \
 else ifneq ($(findstring arm,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE += \
 	--disable-runtime-cpudetect
-
+else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
+FFMPEG_CONFIGURE += \
+	--disable-altivec
 endif
 
 ifneq ($(CONFIG_YASM),y)
