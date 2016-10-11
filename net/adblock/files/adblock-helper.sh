@@ -6,7 +6,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_scriptver="1.5.0"
+adb_scriptver="1.5.1"
 adb_mincfgver="2.5"
 adb_hotplugif=""
 adb_lanif="lan"
@@ -411,8 +411,8 @@ f_envcheck()
     #
     if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
     then
-        f_uhttpd "adbIPv4+6_80" "1" "-p ${adb_ipv4}:${adb_nullport} -p [${adb_ipv6}]:${adb_nullport}"
-        f_uhttpd "adbIPv4+6_443" "0" "-p ${adb_ipv4}:${adb_nullportssl} -p [${adb_ipv6}]:${adb_nullportssl}"
+        f_uhttpd "adbIPv46_80" "1" "-p ${adb_ipv4}:${adb_nullport} -p [${adb_ipv6}]:${adb_nullport}"
+        f_uhttpd "adbIPv46_443" "0" "-p ${adb_ipv4}:${adb_nullportssl} -p [${adb_ipv6}]:${adb_nullportssl}"
     elif [ -n "${adb_wanif4}" ]
     then
         f_uhttpd "adbIPv4_80" "1" "-p ${adb_ipv4}:${adb_nullport}"
