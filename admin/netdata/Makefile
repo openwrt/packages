@@ -8,20 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.4.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Sebastian Careba <nitroshift@yahoo.com>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/firehol/netdata
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=bb4aa949f5ac825253d8adc6070661299abc1c3b
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=http://firehol.org/download/netdata/releases/v$(PKG_VERSION)
+PKG_SOURCE_VERSION:=3028b87ee19e8550df6b9decc49733d595e0bd6e
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+
+TARGET_CFLAGS+= -DNETDATA_NO_ATOMIC_INSTRUCTIONS=1
 
 include $(INCLUDE_DIR)/package.mk
 

@@ -57,11 +57,22 @@ CONFIGURE_ARGS= \
 	--shared-openssl \
 	--prefix=/usr
 
+ifneq ($(findstring arm,$(ARCH)),)
+CONFIGURE_ARGS+= \
+	$(if $(CONFIG_SOFT_FLOAT),--with-arm-float-abi=soft,--with-arm-float-abi=hard)
+endif
+
+ifneq ($(findstring mips,$(ARCH)),)
+CONFIGURE_ARGS+= \
+	$(if $(CONFIG_SOFT_FLOAT),--with-mips-float-abi=soft,--with-mips-float-abi=hard)
+endif
+
 HOST_CONFIGURE_VARS:=
+
 HOST_CONFIGURE_ARGS:= \
 	--dest-os=linux \
 	--without-snapshot \
-	--prefix=$(STAGING_DIR)/host/
+	--prefix=$(HOST_BUILD_PREFIX)
 
 HOST_CONFIGURE_CMD:=python ./configure
 

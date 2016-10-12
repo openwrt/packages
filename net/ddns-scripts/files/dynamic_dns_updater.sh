@@ -13,27 +13,33 @@
 # variables in big chars beginning with "__" are local defined inside functions only
 # set -vx  	#script debugger
 
-. /usr/lib/ddns/dynamic_dns_functions.sh	# global vars are also defined here
+. $(dirname $0)/dynamic_dns_functions.sh	# global vars are also defined here
 
 [ $# -lt 1 -o -n "${2//[0-3]/}" -o ${#2} -gt 1 ] && {
-	echo -e "\n  ddns-scripts Version: $VERSION"
-	echo -e "\n  USAGE:"
-	echo    "  $0 [OPTION]"
-	echo    "  [OPTION]	  '-V' or '--version' display version and exit"
-	echo -e "\n  $0 [SECTION] [VERBOSE_MODE]\n"
-	echo    "  [SECTION]      - service section as defined in /etc/config/ddns"
-	echo    "  [VERBOSE_MODE] - '0' NO output to console"
-	echo    "                   '1' output to console"
-	echo    "                   '2' output to console AND logfile"
-	echo    "                       + run once WITHOUT retry on error"
-	echo    "                   '3' output to console AND logfile"
-	echo    "                       + run once WITHOUT retry on error"
-	echo -e "                       + NOT sending update to DDNS service\n"
+	local __ME=$(basename $0)
+	cat << EOF
+ddns-scripts Version: $VERSION
+
+Usage:
+  $__ME -V         display version and exit
+  $__ME --version  display version and exit
+
+  $__ME <SECTION> <VERBOSE_MODE>
+  <SECTION>        service section as defined in /etc/config/ddns
+  <VERBOSE_MODE>   '0' NO output to console
+                   '1' output to console
+                   '2' output to console AND logfile
+                       + run once WITHOUT retry on error
+                   '3' output to console AND logfile
+                       + run once WITHOUT retry on error
+                       + NOT sending update to DDNS service
+
+EOF
 	exit 1
 }
 
 [ "$1" = "-V" -o "$1" = "--version" ] && {
-	echo -e "ddns-scripts $VERSION\n"
+	printf %s\\n "ddns-scripts $VERSION"
 	exit 0
 }
 

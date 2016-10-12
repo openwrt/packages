@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# add new section "ddns" "global" if not exists
+/sbin/uci -q get ddns.global > /dev/null		|| /sbin/uci -q set ddns.global='ddns'
+/sbin/uci -q get ddns.global.date_format > /dev/null	|| /sbin/uci -q set ddns.global.date_format='%F %R'
+/sbin/uci -q get ddns.global.log_lines > /dev/null	|| /sbin/uci -q set ddns.global.log_lines='250'
+/sbin/uci -q get ddns.global.allow_local_ip > /dev/null	|| /sbin/uci -q set ddns.global.allow_local_ip='0'
+/sbin/uci -q commit ddns
+
+# fix some service_name entries to new once
+/bin/sed -i \
+	-e '/service_name/s/CloudFlare/cloudflare\.com/g' \
+	-e '/service_name/s/NoIP\.com/no-ip\.com/g' \
+	-e '/service_name/s/No-IP\.com/no-ip\.com/g' \
+	-e '/service_name/s/freedns.afraid.org/afraid.org/g' \
+	-e '/service_name/s/free.editdns.net/editdns.net/g' \
+	-e '/service_name/s/domains.google.com/google.com/g' \
+	-e '/service_name/s/spdns.de/spdyn.de/g' \
+	-e '/service_name/s/strato.de/strato.com/g' \
+	/etc/config/ddns
+
+# clear LuCI indexcache
+rm -f /tmp/luci-indexcache >/dev/null 2>&1
+
+exit 0

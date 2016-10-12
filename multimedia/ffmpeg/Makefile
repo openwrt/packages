@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=3.1.3
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=72769316a4b2b8809c7f6d5a8b6766f4
+PKG_MD5SUM:=b54d3e3d2d14d64305b840bb3d287445
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -42,6 +42,7 @@ FFMPEG_CUSTOM_DECODERS:= \
 	flac \
 	gif \
 	h264 \
+	hevc \
 	jpegls \
 	mp2 \
 	mp3 \
@@ -54,6 +55,7 @@ FFMPEG_CUSTOM_DECODERS:= \
 	pcm_s16be \
 	pcm_s16le \
 	png \
+	vc1 \
 	vorbis \
 	wavpack \
 	wmav1 \
@@ -64,6 +66,7 @@ FFMPEG_CUSTOM_MUXERS:= \
 	ac3 \
 	ffm \
 	h264 \
+	hevc \
 	mp3 \
 	mp4 \
 	mpeg1video \
@@ -81,6 +84,7 @@ FFMPEG_CUSTOM_DEMUXERS:= \
 	flac \
 	ffm \
 	h264 \
+	hevc \
 	matroska \
 	mov \
 	mp3 \
@@ -95,6 +99,7 @@ FFMPEG_CUSTOM_DEMUXERS:= \
 	rtp \
 	sdp \
 	v4l2 \
+	vc1 \
 	wav \
 	wv \
 
@@ -103,9 +108,11 @@ FFMPEG_CUSTOM_PARSERS:= \
 	flac \
 	ac3 \
 	h264 \
+	hevc \
 	mpegaudio \
 	mpeg4video \
 	mpegvideo \
+	vc1 \
 
 FFMPEG_CUSTOM_PROTOCOLS:= \
 	file http icecast pipe rtp tcp udp
@@ -115,34 +122,29 @@ FFMPEG_MINI_DECODERS:= \
 	ac3 \
 	flac \
 	h264 \
+	hevc \
 	jpegls \
 	mp3 \
 	mpeg1video \
 	mpeg2video \
 	mpeg4 \
 	mpegvideo \
+	opus \
 	png \
+	vc1 \
+	vorbis \
 	wmav1 \
 	wmav2 \
 
 FFMPEG_MINI_DEMUXERS:= \
-	aac \
-	ac3 \
 	avi \
 	flac \
-	h264 \
 	matroska \
 	mov \
 	mp3 \
 	mpegts \
 	mpegvideo \
-
-FFMPEG_MINI_PARSERS:= \
-	ac3 \
-	flac \
-	h264 \
-	mpeg4video \
-	mpegaudio \
+	ogg \
 
 FFMPEG_MINI_PROTOCOLS:= \
 	file \
@@ -311,7 +313,7 @@ endef
 define Package/libffmpeg-audio-dec
 $(call Package/libffmpeg/Default)
  TITLE+= (audio)
- DEPENDS+= +libspeex +libopus
+ DEPENDS+= +libspeex
  VARIANT:=audio-dec
 endef
 
@@ -402,7 +404,9 @@ FFMPEG_CONFIGURE += \
 else ifneq ($(findstring arm,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE += \
 	--disable-runtime-cpudetect
-
+else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
+FFMPEG_CONFIGURE += \
+	--disable-altivec
 endif
 
 ifneq ($(CONFIG_YASM),y)
@@ -523,7 +527,6 @@ ifeq ($(BUILD_VARIANT),mini)
 	--disable-everything \
 	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_MINI_DECODERS)) \
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_MINI_DEMUXERS)) \
-	$(call FFMPEG_ENABLE,parser,$(FFMPEG_MINI_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_MINI_PROTOCOLS)) \
 
 endif

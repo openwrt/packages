@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006-2012 OpenWrt.org
-#               2014 Noah Meyerhans <frodo@morgul.net>
+#               2014-2016 Noah Meyerhans <frodo@morgul.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -21,11 +21,11 @@ PKG_SOURCE_URL:= \
 	ftp://ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION)
 PKG_MD5SUM:=361ecc597f25bdbadf2ea44dec1690ce
-PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
 
 PKG_INSTALL:=1
+PKG_USE_MIPS16:=0
 
 PKG_CONFIG_DEPENDS := \
 	CONFIG_OPENSSL_WITH_EC \

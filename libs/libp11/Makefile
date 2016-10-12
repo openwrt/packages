@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libp11
 PKG_VERSION:=0.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MD5SUM:=70489f6dbe0b7fd72aab010c25016fa047723f67ea50ce9ae73bc8d38181b673
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -30,12 +30,15 @@ define Package/libp11
   TITLE:=PKCS#11 wrapper library
   URL:=https://www.opensc-project.org/opensc/wiki/libp11
   DEPENDS:=+libopenssl
+  CONFLICTS:=engine_pkcs11
 endef
 
 define Package/libp11/description
   Libp11 is a library implementing a small layer on top of PKCS#11 API
   to make using PKCS#11 implementations easier.
 endef
+
+CONFIGURE_ARGS += --with-enginesdir=/usr/lib/engines
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
@@ -48,8 +51,11 @@ define Build/InstallDev
 endef
 
 define Package/libp11/install
-	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libp11.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/engines
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/engines/*.so* $(1)/usr/lib/engines
+	$(LN) pkcs11.so $(1)/usr/lib/engines/libpkcs11.so
 endef
 
 $(eval $(call BuildPackage,libp11))

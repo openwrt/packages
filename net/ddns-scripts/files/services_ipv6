@@ -32,64 +32,65 @@
 # "answer"	words inside providers answer string; use "|" to combine "or"
 #
 # 66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+#
+# cloudflare.com	!!! Please install additional package "ddns-scripts_cloudflare"
+# no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
 
-# IPv6 @ Securepoint Dynamic-DNS-Service
-"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdyn.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
-"spdyn.de"	"http://[USERNAME]:[PASSWORD]@update.spdyn.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"afraid.org"		"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
 
-# IPv6 @ Hurricane Electric Dynamic DNS
-"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
 
-# IPv6 @ MyDNS.JP
-"mydns.jp"	"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV6ADDR=[IP]"
-
-# IPv6 @ no-ip.pl nothing to do with no-ip.com (domain registered to www.domeny.tv) (IP autodetected by provider)
-"no-ip.pl"	"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
-
-# IPv6 @ freedns.afraid.org
-"freedns.afraid.org"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
-
-# IPv6 @ LoopiaDNS
-"loopia.se"	"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
-
-# Variomedia AG
-"variomedia.de"		"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
-
-# IPv6 @ Dyn.com
-"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
-
-# duckdns.org
-"duckdns.org"	"http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"OK"
-
-# IPv6 @ zzzz.io Free Dynamic DNS
-"zzzz.io"	"http://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"	"Updated|No change"
-
-# IPv6 @ zerigo.com
-"zerigo.com"	"http://update.zerigo.com/dynamic?host=[DOMAIN]&ip=[IP]&user=[USERNAME]&password=[PASSWORD]"
-
-# IPv6 @ regfish.de
-"regfish.de"	"http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv6=[IP]"	"success|100|101"
-
-# Mythic Beasts (https://www.mythic-beasts.com) Dynamic DNS
-"mythic-beasts.com"	"http://dnsapi6.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20AAAA%20DYNAMIC_IP&origin=."
-
-# nsupdate.info - a free service - supports https
-"nsupdate.info"	"http://[USERNAME]:[PASSWORD]@ipv6.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
-
-# goip.de
-"goip.de"	"http://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip6=[IP]"
-
-# myonlineportal.net
-"myonlineportal.net"	"http://[USERNAME]:[PASSWORD]@myonlineportal.net/updateddns?hostname=[DOMAIN]&ip6=[IP]"	"good|nochg"
-
-# dnshome.de
-"dnshome.de"	"http://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip6=[IP]"
-
-# core-networks.de
 "core-networks.de"	"http://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv4=1"	"good"
 
-# duiadns.net - free dynamic DNS
-"duiadns.net"	"http://[USERNAME]:[PASSWORD]@ipv6.duia.ro/dynamic.duia?host=[DOMAIN]&ip6=[IP]"
+# "ddnss.de"		"http://[USERNAME]:[PASSWORD]@ip6.ddnss.de/upd.php?host=[DOMAIN]&ip6=[IP]"	"good|nochg"
+"ddnss.de"		"http://ip6.ddnss.de/upd.php?user=[USERNAME]&pwd=[PASSWORD]&host=[DOMAIN]&ip6=[IP]"	"good|nochg"
 
-# do.de
-"do.de" "http://ddns.do.de/?myip=[IP]&hostname=[DOMAIN]&username=[USERNAME]&password=[PASSWORD]" "good|nochg"
+"desec.io"		"http://[USERNAME]:[PASSWORD]@update.dedyn.io/?hostname=[DOMAIN]&myipv6=[IP]"	"good|nochg"
+
+"dhis.org"		"http://[USERNAME]:[PASSWORD]@is.dhis.org/"
+
+"dnshome.de"		"http://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip6=[IP]"
+
+"do.de"			"http://ddns.do.de/?myip=[IP]&hostname=[DOMAIN]&username=[USERNAME]&password=[PASSWORD]"	"good|nochg"
+
+"duckdns.org"		"http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"OK"
+
+"duiadns.net"		"http://[USERNAME]:[PASSWORD]@ipv6.duia.ro/dynamic.duia?host=[DOMAIN]&ip6=[IP]"
+
+"dyn.com"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"dynv6.com"		"http://dynv6.com/api/update?hostname=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"updated"
+
+"goip.de"		"http://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip6=[IP]"
+
+"google.com"		"http://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"he.net"		"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"loopia.com"		"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"loopia.se"		"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"mydns.jp"		"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV6ADDR=[IP]"
+
+"myonlineportal.net"	"http://[USERNAME]:[PASSWORD]@myonlineportal.net/updateddns?hostname=[DOMAIN]&ip6=[IP]"	"good|nochg"
+
+"mythic-beasts.com"	"http://dnsapi6.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20AAAA%20DYNAMIC_IP&origin=."
+
+"no-ip.pl"		"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
+
+"nsupdate.info"		"http://[USERNAME]:[PASSWORD]@ipv6.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"regfish.de"		"http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv6=[IP]"	"success|100|101"
+
+"spdyn.de"		"http://[USERNAME]:[PASSWORD]@update.spdyn.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"udmedia.de"		"http://[USERNAME]:[PASSWORD]@www.udmedia.de/nic/update?myip=[IP]"
+
+"variomedia.de"		"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"zerigo.com"		"http://update.zerigo.com/dynamic?user=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"ok"
+
+"zzzz.io"		"http://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"	"Updated|No change"
+

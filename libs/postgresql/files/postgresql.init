@@ -65,6 +65,12 @@ reload_service() {
 	/usr/bin/pg_ctl reload -U postgres -D "${pgdata}" -s
 }
 
+stop_service() {
+	config_load "postgresql"
+	config_get pgdata config PGDATA
+	/usr/bin/pg_ctl stop -U postgres -D "${pgdata}" -s
+}
+
 status() {
 	config_load "postgresql"
 	config_get pgdata config PGDATA
