@@ -6,7 +6,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_scriptver="1.5.1"
+adb_scriptver="1.5.2"
 adb_mincfgver="2.5"
 adb_hotplugif=""
 adb_lanif="lan"
@@ -50,15 +50,6 @@ f_envload()
     else
         rc=-10
         f_log "system network library not found, please check your installation"
-        f_exit
-    fi
-
-    # check opkg availability
-    #
-    if [ -f "/var/lock/opkg.lock" ]
-    then
-        rc=-10
-        f_log "adblock installation finished successfully, 'opkg' currently locked by package installer"
         f_exit
     fi
 
@@ -138,16 +129,21 @@ f_envcheck()
         f_exit
     fi
 
-    # get list with all installed packages
+    # check opkg availability
     #
-    pkg_list="$(opkg list-installed)"
-    if [ -z "${pkg_list}" ]
+    adb_pkglist="$(opkg list-installed)"
+    if [ $(($?)) -eq 255 ]
+    then
+        rc=-10
+        f_log "adblock installation finished successfully, 'opkg' currently locked by package installer"
+        f_exit
+    elif [ -z "${adb_pkglist}" ]
     then
         rc=-1
         f_log "empty 'opkg' package list, please check your installation"
         f_exit
     fi
-    adb_sysver="$(printf "${pkg_list}" | grep "^base-files -")"
+    adb_sysver="$(printf "${adb_pkglist}" | grep "^base-files -")"
     adb_sysver="${adb_sysver##*-}"
 
     # get lan ip addresses
@@ -435,7 +431,7 @@ f_envcheck()
 
     # remove temporary package list
     #
-    unset pkg_list
+    unset adb_pkglist
 }
 
 # f_depend: check package dependencies
@@ -447,7 +443,7 @@ f_depend()
     local check_only="${2}"
     package_ok="true"
 
-    check="$(printf "${pkg_list}" | grep "^${package}")"
+    check="$(printf "${adb_pkglist}" | grep "^${package}")"
     if [ "${check_only}" = "true" ] && [ -z "${check}" ]
     then
         package_ok="false"
