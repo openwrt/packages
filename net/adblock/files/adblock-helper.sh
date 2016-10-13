@@ -6,6 +6,8 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+adb_scriptver="1.5.1"
+adb_mincfgver="2.5"
 adb_hotplugif=""
 adb_lanif="lan"
 adb_nullport="65534"
@@ -22,6 +24,7 @@ adb_minspace=12000
 adb_forcedns=1
 adb_fetchttl=5
 adb_restricted=0
+adb_loglevel=1
 adb_uci="$(which uci)"
 
 # f_envload: load adblock environment
@@ -122,7 +125,7 @@ f_envcheck()
     if [ -z "${adb_enabled}" ] || [ -z "${adb_cfgver}" ] || [ "${adb_cfgver%%.*}" != "${adb_mincfgver%%.*}" ]
     then
         rc=-1
-        f_log "outdated adblock config (${adb_mincfgver} vs. ${adb_cfgver}), please run '/etc/init.d/adblock cfgup' to update your configuration"
+        f_log "outdated adblock config (${adb_cfgver} vs. ${adb_mincfgver}), please run '/etc/init.d/adblock cfgup' to update your configuration"
         f_exit
     elif [ "${adb_cfgver#*.}" != "${adb_mincfgver#*.}" ]
     then
@@ -131,7 +134,7 @@ f_envcheck()
     if [ "${adb_enabled}" != "1" ]
     then
         rc=-10
-        f_log "adblock is currently disabled, please set adblock.global.adb_enabled=1' to use this service"
+        f_log "adblock is currently disabled, please set adb_enabled to '1' to use this service"
         f_exit
     fi
 
@@ -408,8 +411,8 @@ f_envcheck()
     #
     if [ -n "${adb_wanif4}" ] && [ -n "${adb_wanif6}" ]
     then
-        f_uhttpd "adbIPv4+6_80" "1" "-p ${adb_ipv4}:${adb_nullport} -p [${adb_ipv6}]:${adb_nullport}"
-        f_uhttpd "adbIPv4+6_443" "0" "-p ${adb_ipv4}:${adb_nullportssl} -p [${adb_ipv6}]:${adb_nullportssl}"
+        f_uhttpd "adbIPv46_80" "1" "-p ${adb_ipv4}:${adb_nullport} -p [${adb_ipv6}]:${adb_nullport}"
+        f_uhttpd "adbIPv46_443" "0" "-p ${adb_ipv4}:${adb_nullportssl} -p [${adb_ipv6}]:${adb_nullportssl}"
     elif [ -n "${adb_wanif4}" ]
     then
         f_uhttpd "adbIPv4_80" "1" "-p ${adb_ipv4}:${adb_nullport}"
@@ -633,12 +636,10 @@ f_rmfirewall()
     rm_fw="$(iptables -w -t nat -vnL | grep -Fo "adb-")"
     if [ -n "${rm_fw}" ]
     then
-        iptables-save -t nat | grep -Fv -- "adb-" | iptables-restore
-        iptables-save -t filter | grep -Fv -- "adb-" | iptables-restore
+        iptables-save | grep -Fv -- "adb-" | iptables-restore
         if [ -n "$(lsmod | grep -Fo "ip6table_nat")" ]
         then
-            ip6tables-save -t nat | grep -Fv -- "adb-" | ip6tables-restore
-            ip6tables-save -t filter | grep -Fv -- "adb-" | ip6tables-restore
+            ip6tables-save | grep -Fv -- "adb-" | ip6tables-restore
         fi
     fi
 }
@@ -651,21 +652,19 @@ f_log()
     local log_msg="${1}"
     local class="info "
 
-    # check for terminal session
-    #
+    if [ $((rc)) -gt 0 ]
+    then
+        class="error"
+    elif [ $((rc)) -lt 0 ]
+    then
+        class="warn "
+    fi
     if [ -t 1 ]
     then
         log_parm="-s"
     fi
-
-    # log to different output devices and set log class accordingly
-    #
-    if [ -n "${log_msg}" ]
+    if [ -n "${log_msg}" ] && ([ $((adb_loglevel)) -gt 0 ] || [ "${class}" != "info " ])
     then
-        if [ $((rc)) -gt 0 ]
-        then
-            class="error"
-        fi
         logger ${log_parm} -t "adblock[${adb_pid}] ${class}" "${log_msg}" 2>&1
     fi
 }
@@ -747,7 +746,10 @@ f_exit()
     else
         rc=0
     fi
-    "${adb_uci}" -q commit "adblock"
+    if [ -n "$("${adb_uci}" -q changes adblock)" ]
+    then
+        "${adb_uci}" -q commit "adblock"
+    fi
     rm -f "${adb_pidfile}"
     exit ${rc}
 }
