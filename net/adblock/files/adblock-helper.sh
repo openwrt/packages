@@ -53,15 +53,6 @@ f_envload()
         f_exit
     fi
 
-    # check opkg availability
-    #
-    if [ -f "/var/lock/opkg.lock" ]
-    then
-        rc=-10
-        f_log "adblock installation finished successfully, 'opkg' currently locked by package installer"
-        f_exit
-    fi
-
     # uci function to parse global section by callback
     #
     config_cb()
@@ -141,6 +132,12 @@ f_envcheck()
     # get list with all installed packages
     #
     pkg_list="$(opkg list-installed)"
+    if [ $? == 255 ]
+    then
+        rc=-10
+        f_log "adblock installation finished successfully, 'opkg' currently locked by package installer"
+        f_exit
+    fi
     if [ -z "${pkg_list}" ]
     then
         rc=-1
