@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2015 OpenWrt.org
+# Copyright (C) 2011-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,17 +7,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcsh
-PKG_VERSION:=6.19.00
-PKG_RELEASE:=4
+PKG_VERSION:=6.19.01
+PKG_RELEASE:=$(PKG_SOURCE_VERSION)
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= \
-	http://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/ \
-	http://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/old/ \
-	ftp://ftp.astron.com/pub/tcsh/ \
-	ftp://ftp.astron.com/pub/tcsh/old
-PKG_MD5SUM:=f5f854833578647795bc906dd4bcb5d5
-PKG_LICENSE:=BSD-4-Clause-UC
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=git://github.com/tcsh-org/tcsh
+PKG_SOURCE_VERSION:=26ef8ea3dd79fbe5311d80a69d490c0d46151543
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=Copyright
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
