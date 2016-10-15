@@ -71,7 +71,7 @@ append_interface() {
 	local name="$1" netdev netdev_count
 	[ -z $netdev_count ] && netdev_count=0
 	# for the purposes of snmp monitoring it doesn't need to be up, it just needs to exist in /proc/net/dev
-	netdev=$(ubus -S call network.interface dump|jsonfilter -e "@.interface[@.interface=\"$name\"].l3_device")  
+	network_get_device netdev "$name"
 	if [ -n "$netdev" ] && grep -qF "$netdev" /proc/net/dev ]; then 
 		[ $netdev_count -ge 4 ] && {
 			_err "$cfg: too many network interfaces configured, ignoring $name"
@@ -84,7 +84,7 @@ append_interface() {
 			append interfaces_arg "$netdev"
 		fi
 	else
-		 _err "$cfg: physical interface for network $name not found in uci or kernel so not monitoring"
+		 _log "$cfg: physical interface for network $name not found in uci or kernel so not monitoring"
 	fi
 }
 
@@ -100,10 +100,12 @@ watch_interfaces() {
 	config_get_bool enabled "$cfg" "enabled" '1'
 	[ "$enabled" -gt 0 ] || return 0
 	config_get listen_interface "$cfg" listen_interface
-	# listen_interface_up=$(ubus -S call network.interface dump | jsonfilter -e "@.interface[@.interface=\"$listen_interface\"].up")
 	# If the interface is up & instance is running we'll watch at the instance level and only restart that instance if it's bound interface changes
 	# Regardless of ubus knowing about an interface (in the case it's not yet configured)
 	[ -n "$listen_interface" ] && trigger_interfaces="${listen_interface} ${trigger_interfaces} "
+	# Restart daemon if one of monitored interfaces changes
+	config_get reload_interfaces "$cfg" interfaces
+
 }
 
 validate_mini_snmpd_section() {
@@ -126,6 +128,11 @@ service_triggers() {
 			procd_add_interface_trigger "interface.*" $n /etc/init.d/mini_snmpd start
                 done
         }
+	[ -n "$reload_interfaces" ] && {
+		for n in $reload_interfaces; do
+			procd_add_reload_interface_trigger $n
+		done
+	}
         procd_close_trigger
 	procd_add_validation validate_mini_snmpd_section
 }
@@ -146,35 +153,19 @@ start_instance() {
 		 return 1
 	}
 	
-	local listen_interface_json listen_interface_ip listen_interface_device listen_interface_up ubus_exit ubus_err
+	local listen_interface_json listen_interface_ip listen_interface_device listen_interface_up
 	[ -n "$listen_interface" ] && {
-		listen_interface_json=$(ubus -S call network.interface.$listen_interface status)
-		ubus_exit=$?
-		[ $ubus_exit = 4 ] && {
-			_err "$cfg: listen_interface $listen_interface not properly configured in ubus network.interface.* not starting this instance "
-			return 1
-		}
-		[ $ubus_exit = 255 -a -z "$listen_interface_json" ] && { 
-			_log "$cfg: ubusd not yet up, will try to start mini_snmpd shorlty when procd detects $listen_interface comes up"
-			return 1
-		}
-		[ -z "$listen_interface_json" ] && { 
-			ubus_err=`ubus call network.interface.$listen_interface status 2>&1 >/dev/null`
-			_err "$cfg: unknown ubus error. exit: $ubus_exit errormsg: $ubus_err "
-			return 1
-		}
-		listen_interface_up=$(jsonfilter -s "$listen_interface_json" -e '@.up')
 		if [ "$ipv6" = 1 ]; then
-			listen_interface_ip=$(jsonfilter -s "$listen_interface_json" -e "@['ipv6-address'][0].address")
+			network_get_ipaddrs6 listen_interface_ip "$listen_interface"
 		else
-			listen_interface_ip=$(jsonfilter -s "$listen_interface_json" -e "@['ipv4-address'][0].address")
+			network_get_ipaddrs listen_interface_ip "$listen_interface"
 		fi
-		[ -n "$listen_interface_ip" -a "$listen_interface_up" = 'true' ] || {
+		network_is_up "$listen_interface" && [ -n "$listen_interface_ip" ] || {
 			_log "$cfg:listen interface $listen_interface not up yet / not configured properly"
 			_log "$cfg:procd will try again when interface state changes"
 			return 1
 		}
-		listen_interface_device=$(jsonfilter -s "$listen_interface_json" -e '@.l3_device')
+		network_get_physdev listen_interface_device "$listen_interface"
 	}
 
 	[ $validation_failed ] && {  
@@ -223,17 +214,23 @@ start_instance() {
 	# uci_validate_section() aka /sbin/validate_data can only cast default values not defined in /etc/config/* to string 
 	# e.g. ="1" however it sets bools defined in /etc/config/* to =1 / =0
 	[ "$auth" = 1 -o "$auth" = "1" ] && procd_append_param command "-a"
-	[ -n "$disks_arg" ] && procd_append_param command "-d $disks_arg" 
-	[ -n "$interfaces_arg" ] && procd_append_param command "-i $interfaces_arg"
+	[ -n "$disks_arg" ] && procd_append_param command "-d" "$disks_arg"
+	[ -n "$interfaces_arg" ] && {
+		procd_append_param netdev ${interfaces_arg//,/ }
+		procd_append_param command "-i" "$interfaces_arg"
+	}
 	[ -n "$listen_interface_device" ] && {
 		 procd_append_param command "-I" "$listen_interface_device"
 		 # and this monitors the hardware device for changes outside of ubus - just a guess
-		 procd_set_param netdev $listen_interface_device
+		 procd_append_param netdev $listen_interface_device
 	}
 	procd_close_instance
 }
 
 start_service() {
+	. /lib/functions.sh
+	. /lib/functions/network.sh
+
 	config_load 'mini_snmpd'
 	config_foreach start_instance 'mini_snmpd'
 }
