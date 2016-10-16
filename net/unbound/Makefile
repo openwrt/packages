@@ -13,7 +13,7 @@ PKG_RELEASE:=4
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Michael Hanselmann <public@hansmi.ch>
+PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@hotmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unbound.net/downloads
