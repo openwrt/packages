@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=38096
+PKG_SOURCE_VERSION:=38151
 PKG_VERSION:=0.10.1-svn$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
@@ -268,6 +268,9 @@ LIB_social:=consensus identityprovider multicast psyc psycstore psycutil secrets
 LIBEXEC_social:=service-consensus service-evil-consensus service-identity-provider service-multicast service-psyc service-psycstore service-secretsharing service-social
 CONF_social:=consensus multicast psyc psycstore secretsharing social
 
+PLUGIN_dhtcache-heap:=datacache_heap
+CONFLICTS_dhtcache-heap:=gnunet-dhtcache-pgsql gnunet-dhtcache-sqlite
+
 DEPENDS_gns-flat:=+gnunet-gns
 PLUGIN_gns-flat:=namecache_flat namestore_flat
 
@@ -275,7 +278,7 @@ DEPENDS_peerstore-flat:=+gnunet-peerstore
 PLUGIN_peerstore-flat:=peerstore_flat
 
 DEPENDS_fs-heap:=+gnunet-datastore
-PLUGIN_fs-heap:=datacache_heap datastore_heap
+PLUGIN_fs-heap:=datastore_heap
 CONFLICTS_fs-heap:=gnunet-fs-mysql gnunet-fs-pgsql gnunet-fs-sqlite
 
 DEPENDS_mysql:=+libmysqlclient
@@ -292,8 +295,12 @@ CONFLICTS_fs-mysql:=gnunet-fs-pgsql gnunet-fs-sqlite
 DEPENDS_pgsql:=+libpq
 LIB_pgsql:=postgres pq
 
+DEPENDS_dhtcache-pgsql:=+gnunet-pgsql
+PLUGIN_dhtcache-pgsql:=datacache_postgres
+CONFLICTS_dhtcache-pgsql:=gnunet-dhtcache-sqlite
+
 DEPENDS_fs-pgsql:=+gnunet-pgsql +gnunet-datastore
-PLUGIN_fs-pgsql:=datacache_postgres datastore_postgres
+PLUGIN_fs-pgsql:=datastore_postgres
 CONFLICTS_fs-pgsql:=gnunet-fs-sqlite
 
 DEPENDS_gns-pgsql:=+gnunet-pgsql +gnunet-gns
@@ -314,8 +321,11 @@ DEPENDS_peerstore-sqlite:=+gnunet-sqlite +gnunet-peerstore
 PLUGIN_peerstore-sqlite:=peerstore_sqlite
 CONFLICTS_peerstore-sqlite:=gnunet-peerstore-flat
 
+DEPENDS_dhtcache-sqlite:=+gnunet-sqlite
+PLUGIN_dhtcache-sqlite:=datacache_sqlite
+
 DEPENDS_fs-sqlite:=+gnunet-sqlite +gnunet-datastore
-PLUGIN_fs-sqlite:=datacache_sqlite datastore_sqlite
+PLUGIN_fs-sqlite:=datastore_sqlite
 LIBEXEC_fs-sqlite:=daemon-latency-logger
 
 DEPENDS_social-sqlite:=+gnunet-sqlite +gnunet-social
@@ -393,18 +403,21 @@ $(eval $(call BuildComponent,rest,REST interface,))
 $(eval $(call BuildComponent,rps,RPS routing component,y))
 $(eval $(call BuildComponent,social,social components,))
 $(eval $(call BuildComponent,namestore-fcfsd,first-come-first-serve registration server,))
-$(eval $(call BuildComponent,fs-heap,heap-based filesharing plugins,))
+$(eval $(call BuildComponent,dhtcache-heap,heap-based dhtcache plugin,y))
+$(eval $(call BuildComponent,fs-heap,heap-based filesharing plugin,))
 $(eval $(call BuildComponent,gns-flat,flat storage GNS plugins,y))
 $(eval $(call BuildComponent,peerstore-flat,flat storage peerstore plugin,))
 $(eval $(call BuildComponent,mysql,mySQL datastore backend,))
 $(eval $(call BuildComponent,fs-mysql,mySQL filesharing plugins,))
 $(eval $(call BuildComponent,social-mysql,mySQL social plugins,))
 $(eval $(call BuildComponent,pgsql,PostgreSQL storage backends,))
-$(eval $(call BuildComponent,fs-pgsql,PostgreSQL filesharing plugins,))
+$(eval $(call BuildComponent,dhtcache-pgsql,PostgreSQL dhtcache plugin,))
+$(eval $(call BuildComponent,fs-pgsql,PostgreSQL filesharing plugin,))
 $(eval $(call BuildComponent,gns-pgsql,PostgreSQL GNS plugins,))
-$(eval $(call BuildComponent,social-pgsql,PostgreSQL social plugins,))
+$(eval $(call BuildComponent,social-pgsql,PostgreSQL social plugin,))
 $(eval $(call BuildComponent,sqlite,libsqlite3 storage backends,))
-$(eval $(call BuildComponent,fs-sqlite,libsqlite3 filesharing plugins,))
+$(eval $(call BuildComponent,dhtcache-sqlite,libsqlite3 dhtcache plugin,))
+$(eval $(call BuildComponent,fs-sqlite,libsqlite3 filesharing plugin,))
 $(eval $(call BuildComponent,gns-sqlite,libsqlite3 gns plugins,))
 $(eval $(call BuildComponent,peerstore-sqlite,libsqlite3 peerstore plugin,))
 $(eval $(call BuildComponent,social-sqlite,libsqlite3 social plugins,))
