@@ -19,6 +19,7 @@ start_service() {
 	fi
 
 	procd_open_instance
+	procd_add_mdns "mpd" "tcp" "6600"
 	procd_set_param command "$PROG" --no-daemon "$CONFIGFILE"
 	# Give MPD some real-time priority
 	procd_set_param nice "$NICEPRIO"
