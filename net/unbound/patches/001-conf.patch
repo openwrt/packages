@@ -1,133 +1,94 @@
+diff --git a/doc/example.conf.in b/doc/example.conf.in
+index c520c88..af92a87 100644
 --- a/doc/example.conf.in
 +++ b/doc/example.conf.in
-@@ -38,6 +38,8 @@ server:
- 	# interface: 192.0.2.154
- 	# interface: 192.0.2.154@5003
- 	# interface: 2001:DB8::5
+@@ -1,20 +1,81 @@
+-#
+-# Example configuration file.
+-#
+-# See unbound.conf(5) man page, version 1.5.10.
+-#
+-# this is a comment.
++##############################################################################
++# MEMORY CONTROL EXAMPLE
++# In the example config settings below memory usage is reduced. Some ser-
++# vice levels are lower, notable very large data and a high TCP load are
++# no longer supported ... are exceptional for the DNS.
++# (http://unbound.net/documentation/unbound.conf.html)
++##############################################################################
+ 
+ #Use this to include other text into the file.
+ #include: "otherfile.conf"
+ 
+ # The server clause sets the main parameters.
+ server:
+-	# whitespace is not necessary, but looks cleaner.
+ 
+-	# verbosity number, 0 is least verbose. 1 is default.
++	# verbosity 1 is default
+ 	verbosity: 1
+ 
++	# prevent any upstream core surprises (OpenWrt assumptions)
++	username: "unbound"
++	pidfile: "/var/run/unbound.pid"
++	directory: "/etc/unbound"
++	chroot: ""
++
++	# no threads and no memory slabs for threads
++	num-threads: 1
++	msg-cache-slabs: 1
++	rrset-cache-slabs: 1
++	infra-cache-slabs: 1
++	key-cache-slabs: 1
++
++	# don't be picky about interfaces but consider your firewall
 +	interface: 0.0.0.0
 +	interface: ::0
- 
- 	# enable this feature to copy the source address of queries to reply.
- 	# Socket options are not supported on all platforms. experimental.
-@@ -66,6 +68,7 @@ server:
- 	# port range that can be open simultaneously.  About double the
- 	# num-queries-per-thread, or, use as many as the OS will allow you.
- 	# outgoing-range: 4096
-+	outgoing-range: 60
- 
- 	# permit unbound to use this port number or port range for
- 	# making outgoing queries, using an outgoing interface.
-@@ -82,9 +85,11 @@ server:
- 
- 	# number of outgoing simultaneous tcp buffers to hold per thread.
- 	# outgoing-num-tcp: 10
-+	outgoing-num-tcp: 1
- 
- 	# number of incoming simultaneous tcp buffers to hold per thread.
- 	# incoming-num-tcp: 10
-+	incoming-num-tcp: 1
- 
- 	# buffer size for UDP port 53 incoming (SO_RCVBUF socket option).
- 	# 0 is system default.  Use 4m to catch query spikes for busy servers.
-@@ -118,18 +123,22 @@ server:
- 	# buffer size for handling DNS data. No messages larger than this
- 	# size can be sent or received, by UDP or TCP. In bytes.
- 	# msg-buffer-size: 65552
-+	msg-buffer-size: 8192
- 
- 	# the amount of memory to use for the message cache.
- 	# plain value in bytes or you can append k, m or G. default is "4Mb".
- 	# msg-cache-size: 4m
-+	msg-cache-size: 100k
- 
- 	# the number of slabs to use for the message cache.
- 	# the number of slabs must be a power of 2.
- 	# more slabs reduce lock contention, but fragment memory usage.
- 	# msg-cache-slabs: 4
-+	msg-cache-slabs: 1
- 
- 	# the number of queries that a thread gets to service.
- 	# num-queries-per-thread: 1024
-+	num-queries-per-thread: 30
- 
- 	# if very busy, 50% queries run to completion, 50% get timeout in msec
- 	# jostle-timeout: 200
-@@ -140,11 +149,13 @@ server:
- 	# the amount of memory to use for the RRset cache.
- 	# plain value in bytes or you can append k, m or G. default is "4Mb".
- 	# rrset-cache-size: 4m
-+	rrset-cache-size: 100k
- 
- 	# the number of slabs to use for the RRset cache.
- 	# the number of slabs must be a power of 2.
- 	# more slabs reduce lock contention, but fragment memory usage.
- 	# rrset-cache-slabs: 4
-+	rrset-cache-slabs: 1
- 
- 	# the time to live (TTL) value lower bound, in seconds. Default 0.
- 	# If more than an hour could easily give trouble due to stale data.
-@@ -168,9 +179,11 @@ server:
- 	# the number of slabs must be a power of 2.
- 	# more slabs reduce lock contention, but fragment memory usage.
- 	# infra-cache-slabs: 4
-+	infra-cache-slabs: 1
- 
- 	# the maximum number of hosts that are cached (roundtrip, EDNS, lame).
- 	# infra-cache-numhosts: 10000
-+	infra-cache-numhosts: 200
- 	
- 	# define a number of tags here, use with local-zone, access-control.
- 	# repeat the define-tag statement to add additional tags.
-@@ -215,6 +228,8 @@ server:
- 	# access-control: ::0/0 refuse
- 	# access-control: ::1 allow
- 	# access-control: ::ffff:127.0.0.1 allow
 +	access-control: 0.0.0.0/0 allow
 +	access-control: ::0/0 allow
- 
- 	# tag access-control with list of tags (in "" with spaces between)
- 	# Clients using this access control element use localzones that
-@@ -309,12 +324,15 @@ server:
- 	#	positive value: fetch that many targets opportunistically.
- 	# Enclose the list of numbers between quotes ("").
- 	# target-fetch-policy: "3 2 1 0 0"
-+	target-fetch-policy: "2 1 0 0 0 0"
- 
- 	# Harden against very small EDNS buffer sizes.
- 	# harden-short-bufsize: no
-+	harden-short-bufsize: yes
- 
- 	# Harden against unseemly large queries.
- 	# harden-large-queries: no
-+	harden-large-queries: yes
- 
- 	# Harden against out of zone rrsets, to avoid spoofing attempts.
- 	# harden-glue: yes
-@@ -414,7 +432,7 @@ server:
- 	# you start unbound (i.e. in the system boot scripts).  And enable:
- 	# Please note usage of unbound-anchor root anchor is at your own risk
- 	# and under the terms of our LICENSE (see that file in the source).
--	# auto-trust-anchor-file: "@UNBOUND_ROOTKEY_FILE@"
-+	auto-trust-anchor-file: "@UNBOUND_ROOTKEY_FILE@"
- 
- 	# File with DLV trusted keys. Same format as trust-anchor-file.
- 	# There can be only one DLV configured, it is trusted from root down.
-@@ -504,15 +522,18 @@ server:
- 	# the amount of memory to use for the key cache.
- 	# plain value in bytes or you can append k, m or G. default is "4Mb".
- 	# key-cache-size: 4m
++
++	# this limits TCP service but uses less buffers
++	outgoing-num-tcp: 1 
++	incoming-num-tcp: 1
++
++	# use somewhat higher port numbers versus possible NAT issue
++	outgoing-port-permit: "10240-65335"
++
++	# uses less memory, but less performance
++	outgoing-range: 60
++	num-queries-per-thread: 30
++
++	# exclude large responses
++	msg-buffer-size: 8192
++
++	# tiny memory cache
++	infra-cache-numhosts: 200
++	msg-cache-size: 100k
++	rrset-cache-size: 100k
 +	key-cache-size: 100k
- 
- 	# the number of slabs to use for the key cache.
- 	# the number of slabs must be a power of 2.
- 	# more slabs reduce lock contention, but fragment memory usage.
- 	# key-cache-slabs: 4
-+	key-cache-slabs: 1
- 
- 	# the amount of memory to use for the negative cache (used for DLV).
- 	# plain value in bytes or you can append k, m or G. default is "1Mb".
- 	# neg-cache-size: 1m
 +	neg-cache-size: 10k
- 
- 	# By default, for a number of zones a small default 'nothing here'
- 	# reply is built-in.  Query traffic is thus blocked.  If you
++
++	# gentle on recursion
++	target-fetch-policy: "2 1 0 0 0 0"
++	harden-large-queries: yes
++	harden-short-bufsize: yes
++
++	# Enable a trust anchor and modules "validator iterator." However, Unbound
++	# RFC5011 "auto-trust-anchor-" activity can be busy and harmful to flash ROM.
++	# "/etc/unbound" (directory & files) needs chown for write access. Else, use 
++	# plain "trust-anchor-" to treat the key file as static.
++	#module-config: "validator iterator"
++	#auto-trust-anchor-file: "@UNBOUND_ROOTKEY_FILE@"
++	#trust-anchor-file: "@UNBOUND_ROOTKEY_FILE@"
++
++	# DNSSEC needs real time to validate signatures. If your device does not
++	# have power off clock (reboot), then you may need this work around.
++	#domain-insecure: "pool.ntp.org"
++
++##############################################################################
++# Resume Stock example.conf.in
++##############################################################################
++
+ 	# print statistics to the log (for every thread) every N seconds.
+ 	# Set to "" or 0 to disable. Default is disabled.
+ 	# statistics-interval: 0
