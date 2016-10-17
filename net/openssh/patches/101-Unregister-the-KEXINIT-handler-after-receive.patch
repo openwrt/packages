@@ -1,0 +1,18 @@
+diff --git a/kex.c b/kex.c
+index 50c7a0f..d09c27b 100644
+--- a/kex.c
++++ b/kex.c
+@@ -1,4 +1,4 @@
+-/* $OpenBSD: kex.c,v 1.118 2016/05/02 10:26:04 djm Exp $ */
++/* $OpenBSD: kex.c,v 1.127 2016/10/10 19:28:48 markus Exp $ */
+ /*
+  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
+  *
+@@ -472,6 +472,7 @@ kex_input_kexinit(int type, u_int32_t seq, void *ctxt)
+ 	if (kex == NULL)
+ 		return SSH_ERR_INVALID_ARGUMENT;
+ 
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXINIT, NULL);
+ 	ptr = sshpkt_ptr(ssh, &dlen);
+ 	if ((r = sshbuf_put(kex->peer, ptr, dlen)) != 0)
+ 		return r;
