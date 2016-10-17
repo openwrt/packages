@@ -24,7 +24,7 @@ define Package/gdisk
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=disc
-  DEPENDS:=+libstdcpp +popt +libuuid
+  DEPENDS:=+libstdcpp +libpopt +libuuid
   TITLE:=Partition utility that supports GPT
   URL:=http://www.rodsbooks.com/gdisk
   MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
