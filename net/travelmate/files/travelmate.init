@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+
+START=85
+USE_PROCD=1
+
+exec 2>/dev/null
+trm_script="/usr/bin/travelmate.sh"
+
+start_service()
+{
+    ubus -t 30 wait_for network.wireless
+    if [ $(($?)) -eq 0 ]
+    then
+        procd_open_instance
+        procd_set_param command "${trm_script}"
+        procd_close_instance
+    else
+        logger -s "travelmate [procd]:" "no wlan devices found, travelmate startup canceled"
+    fi
+}
+
+service_triggers()
+{
+    procd_add_reload_trigger "travelmate"
+}
