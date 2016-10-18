@@ -393,6 +393,7 @@ define Package/strongswan/conffiles
 /etc/ipsec.secrets
 /etc/ipsec.user
 /etc/strongswan.conf
+/etc/strongswan.d/
 endef
 
 define Package/strongswan/install
