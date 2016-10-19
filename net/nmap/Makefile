@@ -90,7 +90,9 @@ CONFIGURE_ARGS += \
 	--without-liblua \
 	--without-zenmap
 
-CONFIGURE_VARS += CXXFLAGS="$$$$CXXFLAGS -fno-builtin"
+CONFIGURE_VARS += \
+	ac_cv_dnet_bsd_bpf=no \
+	CXXFLAGS="$$$$CXXFLAGS -fno-builtin"
 
 ifeq ($(BUILD_VARIANT),ssl)
 	CONFIGURE_ARGS += --with-openssl="$(STAGING_DIR)/usr"
