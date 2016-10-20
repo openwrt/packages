@@ -1,8 +1,8 @@
 diff --git a/doc/example.conf.in b/doc/example.conf.in
-index c520c88..af92a87 100644
+index c520c88..98a148a 100644
 --- a/doc/example.conf.in
 +++ b/doc/example.conf.in
-@@ -1,20 +1,81 @@
+@@ -1,20 +1,82 @@
 -#
 -# Example configuration file.
 -#
@@ -28,11 +28,14 @@ index c520c88..af92a87 100644
 +	# verbosity 1 is default
  	verbosity: 1
  
-+	# prevent any upstream core surprises (OpenWrt assumptions)
++	# Self jail Unbound with user "unbound" to /var/lib/unbound
++	# The script /etc/init.d/unbound will setup the location
 +	username: "unbound"
++	directory: "/var/lib/unbound"
++	chroot: "/var/lib/unbound"
++
++	# The pid file is created before privleges drop so no concern
 +	pidfile: "/var/run/unbound.pid"
-+	directory: "/etc/unbound"
-+	chroot: ""
 +
 +	# no threads and no memory slabs for threads
 +	num-threads: 1
@@ -54,7 +57,7 @@ index c520c88..af92a87 100644
 +	# use somewhat higher port numbers versus possible NAT issue
 +	outgoing-port-permit: "10240-65335"
 +
-+	# uses less memory, but less performance
++	# uses less memory but less performance
 +	outgoing-range: 60
 +	num-queries-per-thread: 30
 +
@@ -73,13 +76,11 @@ index c520c88..af92a87 100644
 +	harden-large-queries: yes
 +	harden-short-bufsize: yes
 +
-+	# Enable a trust anchor and modules "validator iterator." However, Unbound
-+	# RFC5011 "auto-trust-anchor-" activity can be busy and harmful to flash ROM.
-+	# "/etc/unbound" (directory & files) needs chown for write access. Else, use 
-+	# plain "trust-anchor-" to treat the key file as static.
++	# DNSSEC enable by removing comments on "module-config:" and "auto-trust-
++	# -anchor-file:" The init script will copy root key to /var/lib/unbound.
++	# See package documentation for crontab entry to copy RFC5011 results back.
 +	#module-config: "validator iterator"
-+	#auto-trust-anchor-file: "@UNBOUND_ROOTKEY_FILE@"
-+	#trust-anchor-file: "@UNBOUND_ROOTKEY_FILE@"
++	#auto-trust-anchor-file: "/var/lib/unbound/root.key"
 +
 +	# DNSSEC needs real time to validate signatures. If your device does not
 +	# have power off clock (reboot), then you may need this work around.
