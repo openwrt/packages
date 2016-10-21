@@ -31,12 +31,12 @@ define HostPython
 	$(HOST_PYTHON_BIN) $(2);
 endef
 
-# $(1) => build subdir
-# $(2) => additional arguments to setup.py
+# $(1) => commands to execute before running pythons script
+# $(2) => python script and its arguments
 # $(3) => additional variables
-define Build/Compile/HostPyMod
+define Build/Compile/HostPyRunHost
 	$(call HostPython, \
-		cd $(HOST_BUILD_DIR)/$(strip $(1)); \
+		$(if $(1),$(1);) \
 		CC="$(HOSTCC)" \
 		CCSHARED="$(HOSTCC) $(HOST_FPIC)" \
 		CXX="$(HOSTCXX)" \
@@ -48,9 +48,20 @@ define Build/Compile/HostPyMod
 		_PYTHON_HOST_PLATFORM=linux2 \
 		$(3) \
 		, \
-		./setup.py $(2) \
+		$(2) \
 		, \
 		HOST \
 	)
+endef
+
+
+# $(1) => build subdir
+# $(2) => additional arguments to setup.py
+# $(3) => additional variables
+define Build/Compile/HostPyMod
+	$(call Build/Compile/HostPyRunHost, \
+		cd $(HOST_BUILD_DIR)/$(strip $(1)), \
+		./setup.py $(2), \
+		$(3))
 endef
 
