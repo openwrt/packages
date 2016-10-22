@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -171,6 +171,7 @@ define Package/ntfs-3g/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libntfs-3g.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/sbin
 	$(CP) $(PKG_INSTALL_DIR)/sbin/mount.ntfs-3g $(1)/sbin/
+	$(CP) $(PKG_INSTALL_DIR)/sbin/mount.ntfs-3g $(1)/sbin/mount.ntfs
 endef
 
 define Package/ntfs-3g/postinst

@@ -34,6 +34,8 @@ define Package/automake/description
   with the GNU Coding Standards.
 endef
 
+FIX_PATHS = $(SED) '1c \#!/usr/bin/perl' -e 's| /[^ ]*/bin/perl| /usr/bin/perl|g'
+
 define Package/automake/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/automake-$(PKG_VERSION) \
@@ -42,10 +44,8 @@ define Package/automake/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/aclocal-$(PKG_VERSION) \
 	  $(1)/usr/bin/aclocal-$(PKG_VERSION)
 	$(LN) aclocal-$(PKG_VERSION) $(1)/usr/bin/aclocal
-	$(SED) 's|$(STAGING_DIR_HOST)|/usr|g' \
-	  $(1)/usr/bin/automake-$(PKG_VERSION)
-	$(SED) 's|$(STAGING_DIR_HOST)|/usr|g' \
-	  $(1)/usr/bin/aclocal-$(PKG_VERSION)
+	$(FIX_PATHS) $(1)/usr/bin/automake-$(PKG_VERSION)
+	$(FIX_PATHS) $(1)/usr/bin/aclocal-$(PKG_VERSION)
 	$(INSTALL_DIR) $(1)/usr/share/automake-$(PKG_VERSION)
 
 	for dir in \
