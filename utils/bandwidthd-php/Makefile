@@ -18,8 +18,8 @@ PKG_LICENSE:=GPL-2.0
 include $(INCLUDE_DIR)/package.mk
 
 define Package/bandwidthd-php
-  SECTION:=utils
-  CATEGORY:=Utilities
+  SECTION:=net
+  CATEGORY:=Network
   DEPENDS:=+libpcre +libxml2 +php7 +php7-cgi +php7-mod-pgsql +php7-mod-gd
   TITLE:=PHP files to graph bandwidthd data in a postgresql database
   URL:=http://bandwidthd.sourceforge.net/
