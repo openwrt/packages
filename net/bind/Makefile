@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.10.4-P1
+PKG_VERSION:=9.11.0
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
@@ -20,7 +20,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	ftp://ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_MD5SUM:=361ecc597f25bdbadf2ea44dec1690ce
+PKG_MD5SUM:=b12f386e35f3193e6255ed8c03230539
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
 
@@ -45,7 +45,7 @@ endef
 define Package/bind-libs
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libopenssl +libjson-c
+  DEPENDS:=+libopenssl +zlib +libjson-c
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 endef
@@ -104,6 +104,7 @@ CONFIGURE_ARGS += \
 	--disable-linux-caps \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--with-libtool \
+	--with-lmdb=no \
 	--with-libxml2=no \
 	--enable-epoll=yes \
 	--with-gost=no \

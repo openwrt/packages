@@ -1,6 +1,6 @@
 --- a/configure.in
 +++ b/configure.in
-@@ -167,26 +167,11 @@ esac
+@@ -152,26 +152,11 @@ esac
  #
  AC_CONFIG_FILES([make/rules make/includes])
  
