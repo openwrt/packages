@@ -38,6 +38,7 @@ define Package/stoken
   $(call Package/stoken/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Encryption
   DEPENDS:=+libstoken
   MENU:=1
 endef
