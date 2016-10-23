@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.5.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://collectd.org/files/
@@ -31,7 +31,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	battery \
 	ceph \
 	cgroups \
-	cpufreq \
 	curl_json \
 	curl_xml \
 	dbi \
@@ -101,6 +100,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	conntrack \
 	contextswitch \
 	cpu \
+	cpufreq \
 	csv \
 	curl \
 	df \
@@ -312,6 +312,7 @@ $(eval $(call BuildPlugin,bind,BIND server/zone input,bind,+PACKAGE_collectd-mod
 $(eval $(call BuildPlugin,conntrack,connection tracking table size input,conntrack,))
 $(eval $(call BuildPlugin,contextswitch,context switch input,contextswitch,))
 $(eval $(call BuildPlugin,cpu,CPU input,cpu,))
+$(eval $(call BuildPlugin,cpufreq,CPU Freq input,cpufreq,@(TARGET_x86||TARGET_x86_64||TARGET_mvebu))) # Only enable on x86 and mvebu
 $(eval $(call BuildPlugin,csv,CSV output,csv,))
 $(eval $(call BuildPlugin,curl,cURL input,curl,+PACKAGE_collectd-mod-curl:libcurl))
 #$(eval $(call BuildPlugin,dbi,relational database input,dbi,+PACKAGE_collectd-mod-dbi:libdbi))
