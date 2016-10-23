@@ -24,6 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dvtm
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Terminal
   DEPENDS:=+libncursesw
   TITLE:=dynamic virtual terminal manager
   URL:=http://www.brain-dump.org/projects/dvtm/
