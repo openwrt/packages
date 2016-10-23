@@ -21,27 +21,27 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 include $(INCLUDE_DIR)/package.mk
 
 define Package/alsa-utils
-  SECTION:=utils
-  CATEGORY:=Utilities
+  SECTION:=sound
+  CATEGORY:=Sound
   DEPENDS:=+alsa-lib +libncursesw +libpthread
   TITLE:=ALSA (Advanced Linux Sound Architecture) utilities
   URL:=http://www.alsa-project.org/
 endef
 
 define Package/alsa-utils-seq
-  SECTION:=utils
-  CATEGORY:=Utilities
+  SECTION:=sound
+  CATEGORY:=Sound
   DEPENDS:=+alsa-lib +libpthread
   TITLE:=ALSA sequencer utilities
   URL:=http://www.alsa-project.org/
 endef
 
 define Package/alsa-utils-tests
-  $(call Package/alsa-utils/Default)
-  SECTION:=utils
-  CATEGORY:=Utilities
+  SECTION:=sound
+  CATEGORY:=Sound
   TITLE:=ALSA utilities test data (adds ~1.3M to image)
   DEPENDS:=+alsa-lib +libpthread
+  URL:=http://www.alsa-project.org/
 endef
 
 CONFIGURE_ARGS+= \
