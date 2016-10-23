@@ -26,6 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tcsh
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Shells
   TITLE:=Enhanced Berkeley UNIX C shell
   DEPENDS:=+libncurses
   URL:=http://www.tcsh.org/
