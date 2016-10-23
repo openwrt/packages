@@ -61,6 +61,7 @@ define Package/rrdcgi1
 $(call Package/rrdtool1/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=database
   DEPENDS:=+librrd1
   TITLE+= CGI graphing tool
 endef
@@ -75,6 +76,7 @@ define Package/rrdtool1
 $(call Package/rrdtool1/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=database
   DEPENDS:=+librrd1
   TITLE+= management tools
 endef
