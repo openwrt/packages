@@ -53,6 +53,21 @@ $(call Package/git/description)
  This package allows git push/fetch over http(s) and ftp(s)
 endef
 
+define Package/git-gitweb
+$(call Package/git/Default)
+  TITLE:=Git repository web interface
+  DEPENDS:=git +perlbase-essential +perlbase-file +perlbase-fcntl +perlbase-encode +perlbase-digest +perlbase-time +perl-cgi
+endef
+
+define Package/git-gitweb/description
+$(call Package/git/description)
+ This package builds the gitweb web interface for git repositories
+endef
+
+define Package/git-gitweb/conffiles
+/etc/gitweb.conf
+endef
+
 MAKE_FLAGS := \
 	CC="$(TARGET_CC)" \
 	CFLAGS="$(TARGET_CFLAGS)" \
@@ -68,6 +83,11 @@ MAKE_FLAGS := \
 	NO_PYTHON="YesPlease" \
 	NO_TCLTK="YesPlease" \
 	NO_INSTALL_HARDLINKS="yes" \
+	gitwebdir="/www/cgi-bin" \
+	GITWEB_JS="/gitweb/gitweb.js" \
+	GITWEB_CSS="/gitweb/gitweb.css" \
+	GITWEB_LOGO="/gitweb/gitweb-logo.png" \
+	GITWEB_FAVICON="/gitweb/gitweb-favicon.png"
 
 CONFIGURE_ARGS += \
 	--without-iconv \
@@ -77,6 +97,11 @@ define Build/Configure
 		configure
 
 	$(call Build/Configure/Default,)
+endef
+
+define Build/Compile
+	mkdir -p $(PKG_INSTALL_DIR)/www/cgi-bin $(PKG_INSTALL_DIR)/www/gitweb
+	$(call Build/Compile/Default,DESTDIR=$(PKG_INSTALL_DIR) all install gitweb install-gitweb)
 endef
 
 define Package/git/install
@@ -109,5 +134,12 @@ define Package/git-http/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/git-core/git-remote-https $(1)/usr/lib/git-core
 endef
 
+define Package/git-gitweb/install
+	$(INSTALL_DIR) $(1)/www/cgi-bin $(1)/www/gitweb
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/www/cgi-bin/gitweb.cgi $(1)/www/cgi-bin/
+	$(CP) $(PKG_INSTALL_DIR)/www/cgi-bin/static/* $(1)/www/gitweb/
+endef
+
 $(eval $(call BuildPackage,git))
 $(eval $(call BuildPackage,git-http))
+$(eval $(call BuildPackage,git-gitweb))
