@@ -23,6 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/alsa-utils
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Sound
   DEPENDS:=+alsa-lib +libncursesw +libpthread
   TITLE:=ALSA (Advanced Linux Sound Architecture) utilities
   URL:=http://www.alsa-project.org/
@@ -31,6 +32,7 @@ endef
 define Package/alsa-utils-seq
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Sound
   DEPENDS:=+alsa-lib +libpthread
   TITLE:=ALSA sequencer utilities
   URL:=http://www.alsa-project.org/
