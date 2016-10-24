@@ -24,6 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ccrypt
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Encryption
   TITLE:=ccrypt is a utility for encrypting and decrypting files and streams
   URL:=http://ccrypt.sourceforge.net/
 endef
