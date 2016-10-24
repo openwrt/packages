@@ -16,15 +16,15 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/target.mk 
 
 PKG_NAME:=boost
-PKG_VERSION:=1.61.0
-PKG_SOURCE_VERSION=1_61_0
-PKG_RELEASE:=2
+PKG_VERSION:=1.62.0
+PKG_SOURCE_VERSION:=1_62_0
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/boost/$(PKG_NAME)/$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
-PKG_MD5SUM:=874805ba2e2ee415b1877ef3297bf8ad
+PKG_MD5SUM:=36c96b0f6155c98404091d8ceb48319a28279ca0333fba1ad8611eb90afb2ca0
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
@@ -45,22 +45,35 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.61 libraries.
+This package provides the Boost v1.62 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
+
+-----------------------------------------------------------------------------
+|                                Warning                                    |
+| In order to build all of the Boost Libraries, it is necessary             |
+| to use, at least, GCC version 5 (C++14 support) and, it is necessary to   |
+| compile the kernel with Full Language Support.                            |
+| Without these requirerements, the following libs will not be available:   |
+| - Boost.Locale                                                            |
+| - Boost.Coroutine2                                                        |
+| - Boost.Fiber                                                             |
+-----------------------------------------------------------------------------
+
 This package provides the following run-time libraries:
  - atomic
  - chrono
  - container
  - context
- - coroutine
- - - coroutine2 (requires GCC v5 and up)
+ - coroutine (Deprecated - use Coroutine2)
+ - - coroutine2 (Requires GCC v5 and up)
  - date_time
  - exception
  - filesystem
+ - fiber (Requires GCC v5 and up) - BROKEN
  - graph
  - - graph-parallel
  - iostreams
- - locale (requires kernel being compiled with full language support)
+ - locale (Requires kernel being compiled with full language support)
  - log
  - math
  - program_options
@@ -74,8 +87,9 @@ This package provides the following run-time libraries:
  - thread
  - timer
  - wave
- There are many more header-only libraries supported by Boost.
- See more at http://www.boost.org/doc/libs/1_61_0/
+
+There are many more header-only libraries supported by Boost.
+See more at http://www.boost.org/doc/libs/1_62_0/
 endef
 
 BOOST_LIBS =
@@ -109,143 +123,147 @@ define Package/boost
 endef
 
 define Package/boost/config
-    menu "Select Boost Options"
-      depends on PACKAGE_boost
-      	comment "Boost compilation options."
+	menu "Select Boost Options"
+		depends on PACKAGE_boost
+		comment "Boost compilation options."
 
-      	choice
-      		prompt "Compile Boost libraries."
-      			default boost-static-and-shared-libs
-      			help
-      				Choose which version to compile.
-      				 -> Shared:
-      				    - Only Shared libs will be compiled.
-      				 -> Static:
-      				    - Only Static libs will be compiled.
-      				 -> Both:
-      				    - Both Static and Shared libs will be compiled.		    
+		choice
+			prompt "Compile Boost libraries."
+				default boost-static-and-shared-libs
+				help
+					Choose which version to compile.
+					-> Shared:
+						- Only Shared libs will be compiled.
+					-> Static:
+						- Only Static libs will be compiled.
+					-> Both:
+						- Both Static and Shared libs will be compiled.
 
-		    config boost-shared-libs
-		    	bool "Shared"
+			config boost-shared-libs
+				bool "Shared"
 			
 			config boost-static-libs
-		    	bool "Static"		    	
+				bool "Static"
 			
 			config boost-static-and-shared-libs
-		    	bool "Both"		    	
-	    endchoice
+				bool "Both"
+		endchoice
 
-      	choice
-      		prompt "Selects Boost Runtime linkage."
-      		default boost-runtime-shared
-      		help
-      			Choose which C and C++ runtimes to use:
-      			 -> Use Shared runtimes.
-      			 -> Use Static runtimes.
-      			    - Not available if Shared libs are to be built.
-      			 -> Use both runtimes.
-      			    - Not available if Shared libs are to be built.
-      			    - Two separate versions of Boost are built, linking each to a different runtime. 
-      			    - This option requires "Use tagged names" option to be active.
+		choice
+			prompt "Selects Boost Runtime linkage."
+			default boost-runtime-shared
+			help
+				Choose which C and C++ runtimes to use:
+				-> Use Shared runtimes.
+				-> Use Static runtimes.
+					- Not available if Shared libs are to be built.
+				-> Use both runtimes.
+					- Not available if Shared libs are to be built.
+					- Two separate versions of Boost are built, linking each to a different runtime. 
+					- This option requires "Use tagged names" option to be active.
 
-		    config boost-runtime-shared
-		    	bool "Shared"
+			config boost-runtime-shared
+				bool "Shared"
 
-		    config boost-runtime-static
-		    	depends on @(!boost-shared-libs&&!boost-static-and-shared-libs)
-		    	bool "Static"		    	
-		    
-		    config boost-runtime-static-and-shared
-		    	depends on @(boost-use-name-tags&&!boost-shared-libs&&!boost-static-and-shared-libs)
-		    	bool "Both"
-	    endchoice
+			config boost-runtime-static
+				depends on @(!boost-shared-libs&&!boost-static-and-shared-libs)
+				bool "Static"		    	
 
-      	choice
-      		prompt "Select a Variant."
-      		default boost-variant-release
-      		help
-      			Chooses which boost variant should be selected:
-      			-> Release: Optimizes Boost for release.
-      			   - Optimization: Speed;  Debug Symbols: Off; Inlining: Full; Runtime Debugging: Off.
-      			-> Debug: 
-      			   - Optimization: Off; Debug Symbols: On; Inlining: Off; Runtime Debugging: On.
-      			-> Profile:
-      			   - Profiling: On;  Debug Symbols: On.
+			config boost-runtime-static-and-shared
+				depends on @(boost-use-name-tags&&!boost-shared-libs&&!boost-static-and-shared-libs)
+				bool "Both"
+		endchoice
 
-      		config boost-variant-release
-      			bool "Release"
+		choice
+			prompt "Select a Variant."
+			default boost-variant-release
+			help
+				Chooses which boost variant should be selected:
+				-> Release: Optimizes Boost for release.
+					- Optimization: Speed;  Debug Symbols: Off; Inlining: Full; Runtime Debugging: Off.
+				-> Debug: 
+					- Optimization: Off; Debug Symbols: On; Inlining: Off; Runtime Debugging: On.
+				-> Profile:
+					- Profiling: On;  Debug Symbols: On.
 
-      		config boost-variant-debug
-      			bool "Debug"
-      				
-      		config boost-variant-profile
-      			bool "Profile"
-      	endchoice	    	
+			config boost-variant-release
+				bool "Release"
 
-	    config boost-use-name-tags
-	    	bool "Use tagged names."
-	    	help 
-	    		Add name tags the lib files, to diferentiate each library version:
-	    		  "-mt" for multi-threading.
-	    		  "-d" for debugging.
-	    		  "-s" for runtime static link".
-	    		Might break compatibility with libraries that expect boost libs with default names.
-	    	default n	    	
+			config boost-variant-debug
+				bool "Debug"
 
-	    config boost-single-thread
-	    	depends on @boost-use-name-tags
-	    	bool "Single thread Support."
-	    	help 
-	    		Compile Boost libraries in single-thread mode.
-	    	default n
+			config boost-variant-profile
+				bool "Profile"
+		endchoice
+
+		config boost-use-name-tags
+			bool "Use tagged names."
+			help 
+				Add name tags the lib files, to diferentiate each library version:
+				  "-mt" for multi-threading.
+				  "-d" for debugging.
+				  "-s" for runtime static link".
+				Might break compatibility with libraries that expect boost libs with default names.
+			default n
+
+		config boost-single-thread
+			depends on @boost-use-name-tags
+			bool "Single thread Support."
+			help 
+				Compile Boost libraries in single-thread mode.
+			default n
 			    
-	    config boost-build-type-complete
-	    	depends on @boost-use-name-tags
-	    	bool "Complete Boost Build."
-	    	help 
-	    		Builds both release and debug libs. It will take much longer to compile.
-	    	default n	    	
-    endmenu
+		config boost-build-type-complete
+			depends on @boost-use-name-tags
+			bool "Complete Boost Build."
+			help 
+				Builds both release and debug libs. It will take much longer to compile.
+			default n
+	endmenu
 
-    menu "Select Boost libraries"
-      depends on PACKAGE_boost
+	menu "Select Boost libraries"
+		depends on PACKAGE_boost
 		comment "Libraries"
 
 		config boost-libs-all
-		bool "Include all Boost libraries."
-	    	select PACKAGE_boost-libs	    	
+			bool "Include all Boost libraries."
+			select PACKAGE_boost-libs
+			select boost-test-pkg
+			select boost-coroutine2
+			select boost-graph-parallel
 
 		config boost-test-pkg
-		bool "Boost test package."
-	    	select PACKAGE_boost-test
-	    
+			bool "Boost test package."
+			select PACKAGE_boost-test
+
 		config boost-coroutine2
-		depends on @(GCC_VERSION_5 || GCC_VERSION_6)
-		bool "Boost couroutine2 support."
-		select PACKAGE_boost-coroutine
-		default n
+			depends on !@GCC_VERSION_4_8
+			bool "Boost couroutine2 support."
+			select PACKAGE_boost-coroutine
+			default n
 
 		config boost-graph-parallel
-		bool "Boost parallel graph support."
-		select PACKAGE_boost-graph
-		default n
+			bool "Boost parallel graph support."
+			select PACKAGE_boost-graph
+			default n
 
 		$(foreach lib,$(BOOST_LIBS), \
-		  config PACKAGE_boost-$(lib)
-		  prompt "Boost $(lib) library."
-		  $(if $(findstring locale,$(lib)),depends on @BUILD_NLS,)
+			config PACKAGE_boost-$(lib)
+			prompt "Boost $(lib) library."
+			$(if $(findstring locale,$(lib)),depends on @BUILD_NLS,)
+			$(if $(findstring fiber,$(lib)),depends on BROKEN,)
 		)
-  	endmenu
+	endmenu
 
 endef
 
 PKG_CONFIG_DEPENDS:= CONFIG_PACKAGE_boost-test
 
 define Package/boost-test
-  $(call Package/boost/Default)
-  TITLE+= (test)
-  HIDDEN:=1  
-  DEPENDS+=+boost-system +boost-timer
+	$(call Package/boost/Default)
+	TITLE+= (test)
+	HIDDEN:=1
+	DEPENDS+=+boost-system +boost-timer
 endef
 
 define Build/Configure
@@ -281,6 +299,7 @@ $(eval $(call DefineBoostLibrary,context,chrono system thread,))
 $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,))
 $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
+$(eval $(call DefineBoostLibrary,fiber,coroutine,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
 $(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
@@ -365,8 +384,8 @@ define Build/Compile
 			$(if $(CONFIG_PACKAGE_boost-test),,--without-test) \
 			$(foreach lib,$(BOOST_LIBS), \
 				$(if $(findstring python,$(lib)), \
-				  $(if $(or $(CONFIG_PACKAGE_boost-python),$(CONFIG_PACKAGE_boost-python3)),,--without-python), \
-				  $(if $(CONFIG_PACKAGE_boost-$(lib)),,--without-$(lib))) \
+					$(if $(or $(CONFIG_PACKAGE_boost-python),$(CONFIG_PACKAGE_boost-python3)),,--without-python), \
+					$(if $(CONFIG_PACKAGE_boost-$(lib)),,--without-$(lib))) \
 			) \
 			$(if $(CONFIG_PACKAGE_boost-locale),boost.locale.iconv=on -sICONV_PATH=$(ICONV_PREFIX) boost.locale.posix=$(if $(USE_MUSL),on,off), \
 				boost.locale.iconv=off) \
@@ -408,7 +427,7 @@ define Package/boost/Default/install
 		$(PKG_INSTALL_DIR)/lib/ -name 'libboost_$(2)*.so*' -exec $(CP) {} $(1)/usr/lib/ \;
 endef
 
-define Package/boost-test/install	
+define Package/boost-test/install
 		$(INSTALL_DIR) \
 			$(1)/usr/lib
 
@@ -421,7 +440,7 @@ endef
 
 define BuildBoostLibrary
   define Package/boost-$(1)/install
-	$(call Package/boost/Default/install,$$(1),$(1))
+    $(call Package/boost/Default/install,$$(1),$(1))
   endef
 
   $$(eval $$(call BuildPackage,boost-$(1)))
