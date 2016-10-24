@@ -27,6 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tmux
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Terminal
   TITLE:=Terminal multiplexer
   DEPENDS:=+libncurses +libevent2 +libpthread +librt
   URL:=http://tmux.sourceforge.net/
