@@ -23,21 +23,18 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/haveged/template
+define Package/haveged
   SECTION:=utils
   CATEGORY:=Utilities
+  DEPENDS:=+libhavege
   TITLE:=Feeds the kernel entropy pool by timing CPU loops.
   URL:=http://www.issihosts.com/haveged/
 endef
 
-define Package/haveged
-  $(call Package/haveged/template)
-  DEPENDS:=+libhavege
-endef
-
 define Package/libhavege
-  $(call Package/haveged/template)
+  CATEGORY:=Libraries
   TITLE:=Library for haveged
+  URL:=http://www.issihosts.com/haveged/
 endef
 
 CONFIGURE_ARGS+= \
