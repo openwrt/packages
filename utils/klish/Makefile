@@ -26,6 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/klish/default
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Shells
   TITLE:=Kommand Line Interface SHell ($(1))
   URL:=http://libcode.org/projects/klish/
 endef
