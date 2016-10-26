@@ -8,13 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
-PKG_VERSION:=2.0.2
+PKG_VERSION:=2.0.3
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_PROTO:=git
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/warmcat/libwebsockets.git
+PKG_SOURCE_URL:=https://codeload.github.com/warmcat/libwebsockets/tar.gz/v$(PKG_VERSION)?
+PKG_MD5SUM:=a025156d606d90579e65d53ccd062a94
+
+
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
@@ -60,6 +62,13 @@ define Package/libwebsockets-cyassl
 	VARIANT:=cyassl
 endef
 
+define Package/libwebsockets-full
+	$(call Package/$(PKG_NAME)/Default)
+	TITLE += (Full - OpenSSL, libuv, plugins, CGI)
+	DEPENDS += +libopenssl +libuv
+	VARIANT:=full
+endef
+
 ifeq ($(BUILD_VARIANT),openssl)
     CMAKE_OPTIONS += -DLWS_OPENSSL_CLIENT_CERTS=/etc/ssl/certs
     CMAKE_OPTIONS += -DLWS_OPENSSL_SUPPORT=ON
@@ -77,6 +86,17 @@ ifeq ($(BUILD_VARIANT),cyassl)
     CMAKE_OPTIONS += -DLWS_CYASSL_INCLUDE_DIRS=$(STAGING_DIR)/usr/include
 endif
 
+ifeq ($(BUILD_VARIANT),full)
+    CMAKE_OPTIONS += -DLWS_OPENSSL_CLIENT_CERTS=/etc/ssl/certs
+    CMAKE_OPTIONS += -DLWS_OPENSSL_SUPPORT=ON
+    CMAKE_OPTIONS += -DLWS_WITH_SSL=ON
+    CMAKE_OPTIONS += -DLWS_WITH_LIBUV=ON
+    CMAKE_OPTIONS += -DLWS_WITH_PLUGINS=ON
+    CMAKE_OPTIONS += -DLWS_WITH_SERVER_STATUS=ON
+    CMAKE_OPTIONS += -DLWS_WITH_ACCESS_LOG=ON
+    CMAKE_OPTIONS += -DLWS_WITH_CGI=ON
+endif
+
 define Package/libwebsockets/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebsockets.so* $(1)/usr/lib/
@@ -84,6 +104,8 @@ endef
 
 Package/$(PKG_NAME)-cyassl/install = $(Package/$(PKG_NAME)/install)
 Package/$(PKG_NAME)-openssl/install = $(Package/$(PKG_NAME)/install)
+Package/$(PKG_NAME)-full/install = $(Package/$(PKG_NAME)/install)
 
 $(eval $(call BuildPackage,libwebsockets-openssl))
 $(eval $(call BuildPackage,libwebsockets-cyassl))
+$(eval $(call BuildPackage,libwebsockets-full))
