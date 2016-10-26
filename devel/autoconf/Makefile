@@ -21,7 +21,7 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-CONFIGURE_VARS += M4=m4
+CONFIGURE_VARS += M4=m4 EMACS=no
 
 define Package/autoconf
   SECTION:=devel
