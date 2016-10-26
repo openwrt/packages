@@ -63,6 +63,7 @@ define Package/certtool
 $(call Package/gnutls/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Encryption
   TITLE+= (certool utility)
   DEPENDS+= +libgnutls
 endef
@@ -77,6 +78,7 @@ define Package/gnutls-utils
 $(call Package/gnutls/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Encryption
   TITLE+= (utilities)
   DEPENDS+= +libgnutls
 endef
