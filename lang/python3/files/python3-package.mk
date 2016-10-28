@@ -5,6 +5,9 @@
 # See /LICENSE for more information.
 #
 
+# For HOST_BUILD_PREFIX
+include $(INCLUDE_DIR)/host-build.mk
+
 PYTHON3_VERSION_MAJOR:=3
 PYTHON3_VERSION_MINOR:=5
 PYTHON3_VERSION_MICRO:=2
