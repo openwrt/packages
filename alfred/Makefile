@@ -11,9 +11,9 @@ include $(TOPDIR)/rules.mk
 # The latest alfred git hash in PKG_REV can be obtained from https://git.open-mesh.org/alfred.git
 #
 PKG_NAME:=alfred
-PKG_VERSION:=2016.3
+PKG_VERSION:=2016.4
 PKG_RELEASE:=0
-PKG_MD5SUM:=8a33199b8926a960889d1cf08535ef63
+PKG_MD5SUM:=172501ca734ac584fa13f10dcfa708da
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -66,7 +66,6 @@ MAKE_ALFRED_FLAGS=\
 
 TARGET_CFLAGS  += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections -fuse-linker-plugin
-TARGET_CPPFLAGS += -D_GNU_SOURCE
 
 define Build/Compile
 	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS)" \
