@@ -5,6 +5,9 @@
 # See /LICENSE for more information.
 #
 
+# For HOST_BUILD_PREFIX
+include $(INCLUDE_DIR)/host-build.mk
+
 HOST_PYTHON_DIR:=$(HOST_BUILD_PREFIX)
 HOST_PYTHON_INC_DIR:=$(HOST_PYTHON_DIR)/include/python$(PYTHON_VERSION)
 HOST_PYTHON_LIB_DIR:=$(HOST_PYTHON_DIR)/lib/python$(PYTHON_VERSION)
