@@ -12,7 +12,7 @@ LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 trm_debug="0"
 trm_pid="${$}"
-trm_ver="0.2.2"
+trm_ver="0.2.3"
 trm_loop=30
 trm_maxretry=3
 trm_device=""
@@ -23,15 +23,15 @@ trm_iw="$(which iw)"
 trm_prepare()
 {
     local config="${1}"
-    local device="$(uci -q get wireless."${config}".device)"
     local mode="$(uci -q get wireless."${config}".mode)"
+    local device="$(uci -q get wireless."${config}".device)"
     local network="$(uci -q get wireless."${config}".network)"
+    local ifname="$(uci -q get wireless."${config}".ifname)"
     local disabled="$(uci -q get wireless."${config}".disabled)"
 
     if [ "${mode}" = "ap" ] &&
         ([ -z "${trm_device}" ] || [ "${trm_device}" = "${device}" ])
     then
-        ifname="$(uci -q get wireless."${config}".ifname)"
         trm_aplist="${trm_aplist} ${ifname}"
         if [ -z "${disabled}" ] || [ "${disabled}" = "1" ]
         then
@@ -47,7 +47,7 @@ trm_prepare()
     fi
 }
 
-# function to set different wlan interface states
+# function to set different wlan interface status
 #
 trm_set()
 {
@@ -91,7 +91,7 @@ trm_set()
     fi
 }
 
-# function to check interface state on "up" event
+# function to check interface status on "up" event
 #
 trm_check()
 {
@@ -103,10 +103,10 @@ trm_check()
         while [ $((cnt)) -lt 15 ]
         do
             json_load "$(ubus -S call network.interface."${interface}" status)"
-            json_get_var trm_state up
-            if [ "${trm_state}" = "1" ] || [ -n "${trm_uplink}" ]
+            json_get_var trm_status up
+            if [ "${trm_status}" = "1" ] || [ -n "${trm_uplink}" ]
             then
-                trm_log "debug" "check::: interface: ${interface}, status: ${trm_state}, uplink: ${trm_uplink}, count: ${cnt}"
+                trm_log "debug" "check::: interface: ${interface}, status: ${trm_status}, uplink: ${trm_uplink}, ssid: ${trm_ssid} count: ${cnt}"
                 json_cleanup
                 break
             fi
@@ -114,11 +114,12 @@ trm_check()
             sleep 1
         done
     done
-    if [ -n "${trm_uplink}" ] && [ "${trm_state}" = "0" ]
+    if [ -n "${trm_uplink}" ] && [ "${trm_status}" = "0" ]
     then
         ubus call network reload
+        eval "trm_count_${trm_uplink}=\$((trm_count_${trm_uplink}+1))"
         trm_checklist=""
-        trm_log "info" "uplink ${ssid} get lost"
+        trm_log "info" "uplink ${trm_ssid} get lost"
     elif [ -z "${trm_uplink}" ] && [ -n "${trm_checklist}" ]
     then
         trm_checklist=""
@@ -158,7 +159,9 @@ option_cb()
     local value="${2}"
     eval "${option}=\"${value}\""
 }
+
 config_load travelmate
+
 if [ "${trm_enabled}" != "1" ]
 then
     trm_log "info" "travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
@@ -172,7 +175,7 @@ then
     trm_iwinfo="$(which iwinfo)"
     if [ ! -f "${trm_iwinfo}" ]
     then
-        trm_log "error" "no wireless tool for scanning found, please install 'iw' or 'iwinfo'"
+        trm_log "error" "no wireless tool for wlan scanning found, please install 'iw' or 'iwinfo'"
         exit 255
     fi
 fi
@@ -181,7 +184,7 @@ fi
 #
 while true
 do
-    if [ -z "${trm_uplink}" ] || [ "${trm_state}" = "0" ]
+    if [ -z "${trm_uplink}" ] || [ "${trm_status}" = "0" ]
     then
         trm_uplink=""
         trm_aplist=""
@@ -203,34 +206,35 @@ do
             then
                 for sta in ${trm_stalist}
                 do
-                    config="${sta%%_*}"
-                    network="${sta##*_}"
-                    ssid="\"$(uci -q get wireless."${config}".ssid)\""
-                    if [ $((trm_count_${network})) -lt $((trm_maxretry)) ]
+                    trm_config="${sta%%_*}"
+                    trm_network="${sta##*_}"
+                    trm_ifname="$(uci -q get wireless."${trm_config}".ifname)"
+                    trm_ssid="\"$(uci -q get wireless."${trm_config}".ssid)\""
+                    if [ $((trm_count_${trm_config}_${trm_network})) -lt $((trm_maxretry)) ]
                     then
-                        if [ -n "$(printf "${trm_ssidlist}" | grep -Fo "${ssid}")" ]
+                        if [ -n "$(printf "${trm_ssidlist}" | grep -Fo "${trm_ssid}")" ]
                         then
-                            trm_set "partial" "${config}" "${network}" "up"
-                            if [ "${trm_state}" = "1" ]
+                            trm_set "partial" "${trm_config}" "${trm_network}" "up"
+                            if [ "${trm_status}" = "1" ]
                             then
-                                trm_uplink="${network}"
-                                trm_checklist="${trm_uplink}"
+                                trm_checklist="${trm_network}"
+                                trm_uplink="${trm_config}_${trm_network}"
                                 trm_set "defer"
-                                trm_log "info" "wlan interface \"${network}\" connected to uplink ${ssid}" 
+                                trm_log "info" "wwan interface \"${trm_ifname}\" connected to uplink ${trm_ssid}" 
                                 break 2
                             else
                                 trm_set "revert"
-                                eval "trm_count_${network}=\$((trm_count_${network}+1))"
+                                eval "trm_count_${trm_config}_${trm_network}=\$((trm_count_${trm_config}_${trm_network}+1))"
                             fi
                         fi
-                    elif [ $((trm_count_${network})) -eq $((trm_maxretry)) ]
+                elif [ $((trm_count_${trm_config}_${trm_network})) -eq $((trm_maxretry)) ]
                     then
-                        eval "trm_count_${network}=\$((trm_count_${network}+1))"
-                        trm_log "info" "uplink ${ssid} disabled due to permanent connection failures"
+                        eval "trm_count_${trm_config}_${trm_network}=\$((trm_count_${trm_config}_${trm_network}+1))"
+                        trm_log "info" "uplink ${trm_ssid} disabled due to permanent connection failures"
                     fi
                 done
             fi
-            sleep 1
+            sleep 5
         done
         sleep 5
     else
