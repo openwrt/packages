@@ -6,7 +6,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_scriptver="1.5.2"
+adb_scriptver="1.5.4"
 adb_mincfgver="2.5"
 adb_hotplugif=""
 adb_lanif="lan"
@@ -232,8 +232,8 @@ f_envcheck()
             if [ "${package_ok}" = "true" ]
             then
                 adb_fetch="$(which uclient-fetch)"
-                fetch_parm="-q --timeout=${adb_fetchttl}"
-                response_parm="--spider"
+                fetch_parm="-q"
+                response_parm=
             fi
         fi
     fi
@@ -242,10 +242,12 @@ f_envcheck()
         f_depend "wget -" "true"
         if [ "${package_ok}" = "true" ]
         then
-            adb_fetch="$(which wget)"
+            adb_fetch="$(which /usr/bin/wget* | head -1)"
             fetch_parm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --dns-timeout=${adb_fetchttl} --connect-timeout=${adb_fetchttl} --read-timeout=${adb_fetchttl}"
             response_parm="--spider --server-response"
-        else
+        fi
+        if [ -z "${adb_fetch}" ]
+        then
             rc=-1
             f_log "please install 'uclient-fetch' or 'wget' with ssl support to use adblock"
             f_exit
