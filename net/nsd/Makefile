@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nsd
-PKG_VERSION:=4.1.9
+PKG_VERSION:=4.1.13
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.nlnetlabs.nl/downloads/nsd
-PKG_MD5SUM:=9ac1d5ba51351d3d98b7de765439af57
+PKG_MD5SUM:=a3f2a9885bc8664ba4a25c938d26a587
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
