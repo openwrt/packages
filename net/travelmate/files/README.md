@@ -33,11 +33,11 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * mandatory config options:
     * trm\_enabled => main switch to enable/disable the travelmate service (default: '0', disabled)
     * trm\_loop => loop timeout in seconds for wlan monitoring (default: '30')
-    * trm\_maxretry => how many times should travelmate try to connect to a certain uplink (default: '3')
+    * trm\_maxretry => how many times should travelmate try to connect to a certain uplink, to disable this check at all set it to '0' (default: '3')
 * optional config options:
     * trm\_debug => enable/disable debug logging (default: '0', disabled)
-    * trm\_device => limit travelmate to a dedicated radio, i.e 'radio0' (default: '', use all radios)
-    * trm\_iw => force travelmate to use iwinfo (even if iw is installed) set this option to 'none' (default: '', use iw if found)
+    * trm\_device => limit travelmate to a dedicated radio, i.e 'radio0' (default: use all radios)
+    * trm\_iw => set this option to '0' to use iwinfo for wlan scanning (default: '1', use iw)
 
 ## Setup
 **1. configure a wwan interface in /etc/config/network:**
