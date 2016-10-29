@@ -10,13 +10,13 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_debug="0"
 trm_pid="${$}"
-trm_ver="0.2.3"
+trm_ver="0.2.4"
+trm_debug=0
 trm_loop=30
 trm_maxretry=3
+trm_iw=1
 trm_device=""
-trm_iw="$(which iw)"
 
 # function to prepare all relevant AP and STA interfaces
 #
@@ -106,7 +106,7 @@ trm_check()
             json_get_var trm_status up
             if [ "${trm_status}" = "1" ] || [ -n "${trm_uplink}" ]
             then
-                trm_log "debug" "check::: interface: ${interface}, status: ${trm_status}, uplink: ${trm_uplink}, ssid: ${trm_ssid} count: ${cnt}"
+                trm_log "debug" "check::: interface: ${interface}, status: ${trm_status}, uplink-sta: ${trm_uplink}, uplink-ssid: ${trm_ssid} count: ${cnt}"
                 json_cleanup
                 break
             fi
@@ -133,7 +133,7 @@ trm_log()
     local class="${1}"
     local log_msg="${2}"
 
-    if [ -n "${log_msg}" ] && ([ "${class}" != "debug" ] || ([ "${class}" = "debug" ] && [ "${trm_debug}" = "1" ]))
+    if [ -n "${log_msg}" ] && ([ "${class}" != "debug" ] || ([ "${class}" = "debug" ] && [ $((trm_debug)) -eq 1 ]))
     then
         logger -t "travelmate-${trm_ver}[${trm_pid}] ${class}" "${log_msg}" 2>&1
     fi
@@ -170,14 +170,17 @@ fi
 
 # check for preferred wireless tool
 #
-if [ ! -f "${trm_iw}" ]
+if [ $((trm_iw)) -eq 1 ]
 then
-    trm_iwinfo="$(which iwinfo)"
-    if [ ! -f "${trm_iwinfo}" ]
-    then
-        trm_log "error" "no wireless tool for wlan scanning found, please install 'iw' or 'iwinfo'"
-        exit 255
-    fi
+    trm_scanner="$(which iw)"
+else
+    trm_scanner="$(which iwinfo)"
+fi
+
+if [ -z "${trm_scanner}" ]
+then
+    trm_log "error" "no wireless tool for wlan scanning found, please install 'iw' or 'iwinfo'"
+    exit 255
 fi
 
 # infinitive loop to establish and track STA uplink connections
@@ -195,13 +198,13 @@ do
         for ap in ${trm_aplist}
         do
             ubus -t 10 wait_for hostapd."${ap}"
-            if [ -f "${trm_iw}" ]
+            if [ $((trm_iw)) -eq 1 ]
             then
-                trm_ssidlist="$(${trm_iw} dev "${ap}" scan 2>/dev/null | awk '/SSID: /{if(!seen[$0]++){printf "\"";for(i=2; i<=NF; i++)if(i==2)printf $i;else printf " "$i;printf "\" "}}')"
+                trm_ssidlist="$(${trm_scanner} dev "${ap}" scan 2>/dev/null | awk '/SSID: /{if(!seen[$0]++){printf "\"";for(i=2; i<=NF; i++)if(i==2)printf $i;else printf " "$i;printf "\" "}}')"
             else
-                trm_ssidlist="$(${trm_iwinfo} "${ap}" scan | awk '/ESSID: ".*"/{ORS=" ";if (!seen[$0]++) for(i=2; i<=NF; i++) print $i}')"
+                trm_ssidlist="$(${trm_scanner} "${ap}" scan | awk '/ESSID: ".*"/{ORS=" ";if (!seen[$0]++) for(i=2; i<=NF; i++) print $i}')"
             fi
-            trm_log "debug" "main ::: iw: ${trm_iw}, iwinfo: ${trm_iwinfo}, ssidlist: ${trm_ssidlist}"
+            trm_log "debug" "main ::: scan-tool: ${trm_scanner}, ssidlist: ${trm_ssidlist}"
             if [ -n "${trm_ssidlist}" ]
             then
                 for sta in ${trm_stalist}
@@ -210,7 +213,7 @@ do
                     trm_network="${sta##*_}"
                     trm_ifname="$(uci -q get wireless."${trm_config}".ifname)"
                     trm_ssid="\"$(uci -q get wireless."${trm_config}".ssid)\""
-                    if [ $((trm_count_${trm_config}_${trm_network})) -lt $((trm_maxretry)) ]
+                    if [ $((trm_count_${trm_config}_${trm_network})) -lt $((trm_maxretry)) ] || [ $((trm_maxretry)) -eq 0 ]
                     then
                         if [ -n "$(printf "${trm_ssidlist}" | grep -Fo "${trm_ssid}")" ]
                         then
@@ -227,7 +230,7 @@ do
                                 eval "trm_count_${trm_config}_${trm_network}=\$((trm_count_${trm_config}_${trm_network}+1))"
                             fi
                         fi
-                elif [ $((trm_count_${trm_config}_${trm_network})) -eq $((trm_maxretry)) ]
+                    elif [ $((trm_count_${trm_config}_${trm_network})) -eq $((trm_maxretry)) ] && [ $((trm_maxretry)) -ne 0 ]
                     then
                         eval "trm_count_${trm_config}_${trm_network}=\$((trm_count_${trm_config}_${trm_network}+1))"
                         trm_log "info" "uplink ${trm_ssid} disabled due to permanent connection failures"
