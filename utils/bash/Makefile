@@ -28,6 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bash
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Shells
   TITLE:=The GNU Bourne Again SHell
   DEPENDS:=+libncurses
   URL:=http://www.gnu.org/software/bash/
