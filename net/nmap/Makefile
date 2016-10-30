@@ -13,13 +13,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
-PKG_VERSION:=7.30
+PKG_VERSION:=7.31
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://nmap.org/dist/
-PKG_MD5SUM:=8d86797d5c9e56de571f9630c0e6b5f8
+PKG_MD5SUM:=f2f6660142a777862342a58cc54258ea
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
@@ -90,7 +90,9 @@ CONFIGURE_ARGS += \
 	--without-liblua \
 	--without-zenmap
 
-CONFIGURE_VARS += CXXFLAGS="$$$$CXXFLAGS -fno-builtin"
+CONFIGURE_VARS += \
+	ac_cv_dnet_bsd_bpf=no \
+	CXXFLAGS="$$$$CXXFLAGS -fno-builtin"
 
 ifeq ($(BUILD_VARIANT),ssl)
 	CONFIGURE_ARGS += --with-openssl="$(STAGING_DIR)/usr"

@@ -1,4 +1,4 @@
-# travelmate, a connection manager for travel router
+# travelmate, a wlan connection manager for travel router
 
 ## Description
 If you’re planning an upcoming vacation or a business trip, taking your laptop, tablet or smartphone give you the ability to connect with friends or complete work on the go. But many hotels don’t have a secure wireless network setup or you’re limited on using a single device at once. Investing in a portable, mini travel router is a great way to connect all of your devices at once while having total control over your own personalized wireless network.  
@@ -20,12 +20,12 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 ## OpenWrt / LEDE trunk Installation & Usage
 * install 'travelmate' (_opkg install travelmate_)
 * configure your network to support (multiple) wlan uplinks and set travelmate config options (details see below)
+* set 'trm\_enabled' option in travelmate config to '1'
 * travelmate starts automatically during boot, triggered by procd as soon as the wireless subsystem is up & running
 
 ## Chaos Calmer installation notes
 * 'travelmate' is _not_ available as an ipk package in the Chaos Calmer download repository
-* download the package from a development snapshot package directory:
-    * for 'travelmate' look [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages/)
+* download the package from a development snapshot package directory, i.e. look [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages/)
 * manually transfer the package to your routers temp directory (with tools like _sshfs_ or _winscp_)
 * install the package as described above
 
@@ -33,26 +33,22 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * mandatory config options:
     * trm\_enabled => main switch to enable/disable the travelmate service (default: '0', disabled)
     * trm\_loop => loop timeout in seconds for wlan monitoring (default: '30')
-    * trm\_maxretry => how many times should travelmate try to connect to uplink xyz (default: '3')
+    * trm\_maxretry => how many times should travelmate try to connect to a certain uplink, to disable this check at all set it to '0' (default: '3')
 * optional config options:
     * trm\_debug => enable/disable debug logging (default: '0', disabled)
-    * trm\_device => limit travelmate to a dedicated radio, i.e 'radio0' (default: '', use all radios)
-    * trm\_iw => force travelmate to use iwinfo (even if iw is installed) set this option to 'none' (default: '', use iw if found)
+    * trm\_device => limit travelmate to a dedicated radio, i.e 'radio0' (default: use all radios)
+    * trm\_iw => set this option to '0' to use iwinfo for wlan scanning (default: '1', use iw)
 
 ## Setup
-**1. configure (multiple) wwan interfaces in /etc/config/network:**
+**1. configure a wwan interface in /etc/config/network:**
 <pre><code>
 [...]
-config interface 'wwan01'
-        option proto 'dhcp'
-config interface 'wwan02'
-        option proto 'dhcp'
-config interface 'wwan03'
+config interface 'wwan'
         option proto 'dhcp'
 [...]
 </code></pre>
 
-**2. add these interfaces to your firewall configuration in /etc/config/firewall:**
+**2. add this interface to your firewall configuration in /etc/config/firewall:**
 <pre><code>
 [...]
 config zone
@@ -62,49 +58,49 @@ config zone
         option forward 'REJECT'
         option masq '1'
         option mtu_fix '1'
-        option network 'wan wan6 wwan01 wwan02 wwan03 [...]'
+        option network 'wan wan6 wwan'
 [...]
 </code></pre>
 
-**3. add required station interfaces to your wireless configuration in etc/config/wireless:**
+**3. add required wwan stations to your wireless configuration in etc/config/wireless:**
 <pre><code>
 [...]
 config wifi-iface
         option device 'radio0'
-        option network 'wwan01'
+        option network 'wwan'
         option mode 'sta'
         option ssid 'example_01'
-        option ifname 'wlan1'
+        option ifname 'wwan01'
         option encryption 'psk2+ccmp'
         option key 'abc'
         option disabled '1'
 config wifi-iface
         option device 'radio0'
-        option network 'wwan02'
+        option network 'wwan'
         option mode 'sta'
         option ssid 'example_02'
-        option ifname 'wlan2'
+        option ifname 'wwan02'
         option encryption 'psk2+ccmp'
         option key 'xyz'
         option disabled '1'
 config wifi-iface
         option device 'radio0'
-        option network 'wwan03'
+        option network 'wwan'
         option mode 'sta'
-        option ssid 'Telekom_ICE'
-        option ifname 'wlan3'
+        option ssid 'example_03'
+        option ifname 'wwan03'
         option encryption 'none'
         option disabled '1'
 [...]
 </code></pre>
 
-**4. configure & start travelmate:**
+**4. reload network configuration & start travelmate:**
 <pre><code>
 /etc/init.d/network reload
 /etc/init.d/travelmate start
 </code></pre>
 
-**Common runtime outputs**
+**Common runtime outputs (visible via logread)**
 
 **Success:** Sun Oct  9 17:02:21 2016 user.notice root: travelmate-0.2.1[712] info : wlan interface "wwan06" connected to uplink "blackhole.nl"
 

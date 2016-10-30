@@ -23,6 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/gzip
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Compression
   TITLE:=gzip (GNU zip) is a compression utility.
   URL:=https://www.gnu.org/software/gzip/
   MAINTAINER:=Christian Beier <dontmind@freeshell.org>
