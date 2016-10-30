@@ -10,9 +10,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2016.2
-PKG_RELEASE:=2
-PKG_MD5SUM:=dd1ab664475902fc3dbf34998bbe5a90
+PKG_VERSION:=2016.4
+PKG_RELEASE:=0
+PKG_MD5SUM:=1ed28d02ad86050d1518023e354737b6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -50,6 +50,7 @@ endef
 PKG_EXTRA_KCONFIG:= \
 	CONFIG_BATMAN_ADV=m \
 	CONFIG_BATMAN_ADV_DEBUG=$(if $(CONFIG_KMOD_BATMAN_ADV_DEBUG_LOG),y,n) \
+	CONFIG_BATMAN_ADV_DEBUGFS=$(if $(CONFIG_KMOD_BATMAN_ADV_DEBUGFS),y,n) \
 	CONFIG_BATMAN_ADV_BLA=$(if $(CONFIG_KMOD_BATMAN_ADV_BLA),y,n) \
 	CONFIG_BATMAN_ADV_DAT=$(if $(CONFIG_KMOD_BATMAN_ADV_DAT),y,n) \
 	CONFIG_BATMAN_ADV_MCAST=$(if $(CONFIG_KMOD_BATMAN_ADV_MCAST),y,n) \
@@ -66,11 +67,18 @@ NOSTDINC_FLAGS = \
 	-I$(STAGING_DIR)/usr/include/mac80211-backport/uapi \
 	-I$(STAGING_DIR)/usr/include/mac80211 \
 	-I$(STAGING_DIR)/usr/include/mac80211/uapi \
+	-I$(PKG_BUILD_DIR)/include/ \
 	-include backport/backport.h \
 	-include $(PKG_BUILD_DIR)/compat-hacks.h
 
+COMPAT_SOURCES = \
+	$(if $(CONFIG_KMOD_BATMAN_ADV_MCAST),../../compat-sources/net/core/skbuff.o,) \
+	$(if $(CONFIG_KMOD_BATMAN_ADV_MCAST),../../compat-sources/net/ipv4/igmp.o,) \
+	$(if $(CONFIG_KMOD_BATMAN_ADV_MCAST),../../compat-sources/net/ipv6/mcast_snoop.o,) \
+
 define Build/Compile
-	+$(MAKE) $(PKG_JOBS) -C "$(LINUX_DIR)" \
+	+env "batman-adv-y=$(COMPAT_SOURCES)" \
+	$(MAKE) $(PKG_JOBS) -C "$(LINUX_DIR)" \
 		ARCH="$(LINUX_KARCH)" \
 		CROSS_COMPILE="$(TARGET_CROSS)" \
 		SUBDIRS="$(PKG_BUILD_DIR)/net/batman-adv" \
