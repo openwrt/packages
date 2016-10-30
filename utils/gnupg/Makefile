@@ -27,6 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/gnupg/Default
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Encryption
   DEPENDS:=+zlib +libncurses +libreadline
   TITLE:=GNU privacy guard - a free PGP replacement
   URL:=http://www.gnupg.org/
