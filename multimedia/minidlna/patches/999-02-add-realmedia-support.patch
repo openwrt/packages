@@ -1,6 +1,6 @@
 --- a/metadata.c
 +++ b/metadata.c
-@@ -846,6 +846,10 @@ GetVideoMetadata(const char *path, char
+@@ -845,6 +845,10 @@ GetVideoMetadata(const char *path, char
  			xasprintf(&m.mime, "video/x-matroska");
  		else if( strcmp(ctx->iformat->name, "flv") == 0 )
  			xasprintf(&m.mime, "video/x-flv");

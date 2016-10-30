@@ -1,15 +1,15 @@
 --- a/libav.h
 +++ b/libav.h
-@@ -167,7 +167,7 @@ lav_get_interlaced(AVCodecContext *vc, A
+@@ -209,7 +209,7 @@ lav_codec_extradata(AVStream *s)
  static inline int
  lav_is_thumbnail_stream(AVStream *s, uint8_t **data, int *size)
  {
 -#if LIBAVFORMAT_VERSION_INT >= ((54<<16)+(6<<8))
 +/*if LIBAVFORMAT_VERSION_INT >= ((54<<16)+(6<<8))
  	if (s->disposition & AV_DISPOSITION_ATTACHED_PIC &&
- 	    s->codec->codec_id == AV_CODEC_ID_MJPEG)
+ 	    lav_codec_id(s) == AV_CODEC_ID_MJPEG)
  	{
-@@ -177,6 +177,6 @@ lav_is_thumbnail_stream(AVStream *s, uin
+@@ -219,6 +219,6 @@ lav_is_thumbnail_stream(AVStream *s, uin
  			*size = s->attached_pic.size;
  		return 1;
  	}
