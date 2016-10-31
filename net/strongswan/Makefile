@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
 PKG_MD5SUM:=4eba9474f7dc6c8c8d7037261358e68d
 PKG_LICENSE:=GPL-2.0+
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 
 PKG_MOD_AVAILABLE:= \
 	addrblock \
