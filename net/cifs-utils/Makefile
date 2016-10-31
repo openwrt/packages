@@ -24,6 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/cifsmount
   SECTION:=net
   CATEGORY:=Network
+  DEPENDS:=+kmod-fs-cifs
   TITLE:=CIFS mount utilities
   URL:=http://wiki.samba.org/index.php/LinuxCIFS_utils
 endef
