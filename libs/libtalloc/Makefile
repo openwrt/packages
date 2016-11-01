@@ -28,7 +28,7 @@ define Package/libtalloc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Core memory allocator used in Samba
-  DEPENDS:=+USE_GLIBC:libbsd $(ICONV_DEPENDS)
+  DEPENDS:=+USE_GLIBC:libbsd $(ICONV_DEPENDS) libattr
   URL:=https://talloc.samba.org/talloc/doc/html/index.html
 endef
 
