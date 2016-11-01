@@ -1,6 +1,6 @@
 --- a/lib/command.c
 +++ b/lib/command.c
-@@ -2527,6 +2527,13 @@ DEFUN (config_write_file,
+@@ -3198,6 +3198,13 @@ DEFUN (config_write_file,
  		 VTY_NEWLINE);
          goto finished;
        }
@@ -14,7 +14,7 @@
    if (link (config_file, config_file_sav) != 0)
      {
        vty_out (vty, "Can't backup old configuration file %s.%s", config_file_sav,
-@@ -2540,7 +2547,23 @@ DEFUN (config_write_file,
+@@ -3211,7 +3218,23 @@ DEFUN (config_write_file,
  	        VTY_NEWLINE);
        goto finished;
      }

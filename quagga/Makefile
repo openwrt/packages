@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2013 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quagga
-PKG_VERSION:=0.99.22.4
-PKG_RELEASE:=2
-PKG_MD5SUM:=03ef24a448be47beba80efa2152f8a28
+PKG_VERSION:=1.1.0
+PKG_RELEASE:=1
+PKG_MD5SUM:=daa303871e07ea5856aae6fd79e89722
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/quagga/
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_IPV6 \
@@ -25,7 +25,6 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_quagga-ospf6d \
 	CONFIG_PACKAGE_quagga-ripd \
 	CONFIG_PACKAGE_quagga-ripngd \
-	CONFIG_PACKAGE_quagga-babeld \
 	CONFIG_PACKAGE_quagga-vtysh
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -41,7 +40,7 @@ define Package/quagga/Default
   DEPENDS:=quagga
   TITLE:=The Quagga Software Routing Suite
   URL:=http://www.quagga.net
-  MAINTAINER:=Vasilis Tsiligiannis <b_tsiligiannis@silverton.gr>
+  MAINTAINER:=Vasilis Tsiligiannis <acinonyx@openwrt.gr>
 endef
 
 define Package/quagga
@@ -77,6 +76,7 @@ endef
 
 define Package/quagga-libospf
   $(call Package/quagga/Default)
+  DEPENDS+=+quagga-libzebra
   TITLE:=OSPF library
 endef
 
@@ -94,13 +94,13 @@ endef
 
 define Package/quagga-ospfd
   $(call Package/quagga/Default)
-  DEPENDS+=+quagga-libospf +quagga-libzebra
+  DEPENDS+=+quagga-libospf
   TITLE:=OSPFv2 routing engine
 endef
 
 define Package/quagga-ospf6d
   $(call Package/quagga/Default)
-  DEPENDS+=+quagga-libospf +quagga-libzebra @IPV6
+  DEPENDS+=+quagga-libospf @IPV6
   TITLE:=OSPFv3 routing engine
 endef
 
@@ -114,12 +114,6 @@ define Package/quagga-ripngd
   $(call Package/quagga/Default)
   DEPENDS+=+quagga-libzebra @IPV6
   TITLE:=RIPNG routing engine
-endef
-
-define Package/quagga-babeld
-  $(call Package/quagga/Default)
-  DEPENDS+=+quagga-libzebra @IPV6
-  TITLE:=Babel routing engine
 endef
 
 define Package/quagga-vtysh
@@ -156,10 +150,6 @@ define Package/quagga-ripngd/conffiles
 /etc/quagga/ripngd.conf
 endef
 
-define Package/quagga-babeld/conffiles
-/etc/quagga/babeld.conf
-endef
-
 ifneq ($(SDK),)
 CONFIG_PACKAGE_quagga-libzebra:=m
 CONFIG_PACKAGE_quagga-libospf:=m
@@ -170,7 +160,6 @@ CONFIG_PACKAGE_quagga-isisd:=m
 CONFIG_PACKAGE_quagga-ospf6d:=m
 CONFIG_PACKAGE_quagga-ripd:=m
 CONFIG_PACKAGE_quagga-ripngd:=m
-CONFIG_PACKAGE_quagga-babeld:=m
 CONFIG_PACKAGE_quagga-vtysh:=m
 endif
 
@@ -181,7 +170,6 @@ CONFIGURE_ARGS+= \
 	--disable-static \
 	--enable-user=network \
 	--enable-group=network \
-	--enable-pie=no \
 	--enable-multipath=8 \
 	--disable-ospfclient \
 	--disable-capabilities \
@@ -193,7 +181,6 @@ CONFIGURE_ARGS+= \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ospf6d,ospf6d) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ripd,ripd) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-ripngd,ripngd) \
-	$(call autoconf_bool,CONFIG_PACKAGE_quagga-babeld,babeld) \
 	$(call autoconf_bool,CONFIG_PACKAGE_quagga-vtysh,vtysh) \
 
 MAKE_FLAGS += \
@@ -267,14 +254,6 @@ define Package/quagga-ripngd/install
 	$(INSTALL_CONF) ./files/quagga.conf $(1)/etc/quagga/ripngd.conf
 endef
 
-define Package/quagga-babeld/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/babeld $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc/quagga
-	chmod 0750 $(1)/etc/quagga
-	$(INSTALL_CONF) ./files/quagga.conf $(1)/etc/quagga/babeld.conf
-endef
-
 define Package/quagga-vtysh/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vtysh $(1)/usr/bin/
@@ -301,5 +280,4 @@ $(eval $(call BuildPackage,quagga-ospfd))
 $(eval $(call BuildPackage,quagga-ospf6d))
 $(eval $(call BuildPackage,quagga-ripd))
 $(eval $(call BuildPackage,quagga-ripngd))
-$(eval $(call BuildPackage,quagga-babeld))
 $(eval $(call BuildPackage,quagga-vtysh))
