@@ -5,8 +5,11 @@
 # See /LICENSE for more information.
 #
 
-# For HOST_BUILD_PREFIX
-include $(INCLUDE_DIR)/host-build.mk
+# Compatibility fallback for older OpenWrt and LEDE versions
+ifeq ($(STAGING_DIR_HOSTPKG),)
+  $(warning STAGING_DIR_HOSTPKG is unset - falling back to $$(STAGING_DIR)/host)
+  STAGING_DIR_HOSTPKG := $(STAGING_DIR)/host
+endif
 
 PYTHON3_VERSION_MAJOR:=3
 PYTHON3_VERSION_MINOR:=5
@@ -23,8 +26,8 @@ PYTHON3_PKG_DIR:=/usr/lib/python$(PYTHON3_VERSION)/site-packages
 
 PYTHON3:=python$(PYTHON3_VERSION)
 
-HOST_PYTHON3_LIB_DIR:=$(HOST_BUILD_PREFIX)/lib/python$(PYTHON3_VERSION)
-HOST_PYTHON3_BIN:=$(HOST_BUILD_PREFIX)/bin/python3
+HOST_PYTHON3_LIB_DIR:=$(STAGING_DIR_HOSTPKG)/lib/python$(PYTHON3_VERSION)
+HOST_PYTHON3_BIN:=$(STAGING_DIR_HOSTPKG)/bin/python3
 
 PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 define HostPython3
