@@ -27,6 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dfu-programmer
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Microcontroller programming
   TITLE:=USB programmer for Atmel microcontrollers
   URL:=http://dfu-programmer.github.io/
   DEPENDS:=+libusb-1.0
