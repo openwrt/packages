@@ -25,7 +25,7 @@ TARGET_CFLAGS+=-D_GNU_SOURCE
 define Package/hdparm
   SECTION:=utils
   CATEGORY:=Utilities
-  SUBMENU:=disc
+  SUBMENU:=Disc
   TITLE:=Hard disk drive configuration utilitity
   URL:=http://sourceforge.net/projects/hdparm/
 endef
