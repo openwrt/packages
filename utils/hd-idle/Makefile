@@ -27,7 +27,7 @@ define Package/hd-idle
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Another idle-daemon for attached hard drives
-  SUBMENU:=disc
+  SUBMENU:=Disc
   URL:=http://hd-idle.sourceforge.net/
 endef
 
