@@ -51,7 +51,7 @@ endef
 define Package/dnscrypt-proxy-resolvers
   $(call Package/dnscrypt-proxy/Default)
   TITLE:=Package with current list of dnscrypt-proxy resolvers
-  VERSION:=$(PKG_VERSION)+git-20160829-65a9553-$(PKG_RELEASE)
+  VERSION:=$(PKG_VERSION)+git-20161129-f17bace-$(PKG_RELEASE)
 endef
 
 define Package/dnscrypt-proxy-resolvers/description
