@@ -21,7 +21,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/gptfdisk/default
   SECTION:=utils
   CATEGORY:=Utilities
-  SUBMENU:=disc
+  SUBMENU:=Disc
   URL:=http://www.rodsbooks.com/gdisk
   MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
 endef
