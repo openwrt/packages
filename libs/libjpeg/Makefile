@@ -41,6 +41,7 @@ define Package/jpeg-tools
   $(call Package/jpeg/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Image Manipulation
   DEPENDS:=+libjpeg
   TITLE+= manipulation tools
 endef
