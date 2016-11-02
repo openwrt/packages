@@ -33,7 +33,7 @@ endef
 $(eval $(call Download,tzcode))
 
 define Package/zoneinfo/Default
-  SUBMENU:=zoneinfo
+  SUBMENU:=Zoneinfo
   TITLE:=Zone Information
   SECTION:=utils
   CATEGORY:=Utilities
