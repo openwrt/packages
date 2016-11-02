@@ -54,6 +54,7 @@ define Package/tiff-utils
 $(call Package/tiff/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Image Manipulation
   TITLE+= utilities
   DEPENDS:=+libtiff
 endef
