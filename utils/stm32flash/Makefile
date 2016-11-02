@@ -23,6 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/stm32flash
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Microcontroller programming
   URL:=http://code.google.com/p/stm32flash/
   TITLE:=Firmware flash tool for STM32's serial bootloader
 endef
