@@ -14,8 +14,8 @@ PKG_RELEASE:=1
 PKG_LICENSE:=BSD-2-Clause
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
-PKG_SOURCE:=$(PKG_NAME)-src-${PKG_VERSION}.tar.gz
-PKG_SOURCE_URL:=http://www.fossil-scm.org/download/
+PKG_SOURCE:=$(PKG_NAME)-src-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://www.fossil-scm.org/index.html/uv/download
 PKG_MD5SUM:=3d5a7da5c506a47784942236a788b29b
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-src-$(PKG_VERSION)
