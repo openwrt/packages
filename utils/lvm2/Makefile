@@ -37,7 +37,7 @@ endef
 define Package/lvm2
   SECTION:=utils
   CATEGORY:=Utilities
-  SUBMENU:=disc
+  SUBMENU:=Disc
   TITLE:=The Linux Logical Volume Manager
   URL:=http://sourceware.org/lvm2/
   DEPENDS:=+libdevmapper +libblkid +libreadline +libncurses
