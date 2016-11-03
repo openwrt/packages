@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.62.0
 PKG_SOURCE_VERSION:=1_62_0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/$(PKG_VERSION)
@@ -250,7 +250,7 @@ define Package/boost/config
 		$(foreach lib,$(BOOST_LIBS), \
 			config PACKAGE_boost-$(lib)
 			prompt "Boost $(lib) library."
-			$(if $(findstring locale,$(lib)),depends on @BUILD_NLS,)
+			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)
 			$(if $(findstring fiber,$(lib)),depends on BROKEN,)
 		)
 	endmenu
@@ -299,11 +299,11 @@ $(eval $(call DefineBoostLibrary,context,chrono system thread,))
 $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,))
 $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
-$(eval $(call DefineBoostLibrary,fiber,coroutine,))
+$(eval $(call DefineBoostLibrary,fiber,coroutine,@BROKEN))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
 $(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
-$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS)))
+$(eval $(call DefineBoostLibrary,locale,system,@BUILD_NLS $(ICONV_DEPENDS)))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
