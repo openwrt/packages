@@ -14,11 +14,11 @@ PKG_MAINTAINER:=Harald Geyer <harald@ccbib.org>
 PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=doc/COPYING
-PKG_VERSION:=0.8.17
-PKG_RELEASE:=2
+PKG_VERSION:=0.8.18
+PKG_RELEASE:=1
 
 # Use this for official releasees
-PKG_MD5SUM:=e53efdb9a5e0852c58b21280b1e6c07d
+PKG_MD5SUM:=62fe0fbf9ee57ffaa58a982f602f596a
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://ftp.libelektra.org/ftp/elektra/releases
 
@@ -97,7 +97,7 @@ define Package/libelektra-plugins
 endef
 
 define CONTENT_ELEKTRA_PLUGINS_TEXT
-cachefilter ccode conditionals csvstorage enum filecheck glob
+boolean cachefilter ccode conditionals csvstorage enum filecheck glob
 hexcode hidden hosts iconv keytometa line lineendings list mathcheck
 network null path profile shell syslog uname validation
 endef
@@ -245,14 +245,20 @@ define Package/libelektra-extra
   DEPENDS:=+libelektra-core
 endef
 
-CONTENT_ELEKTRA_EXTRA:=constants counter dpkg error fstab logchange rename timeofday tracer
+define CONTENT_EXTRA_PLUGINS_TEXT
+blockresolver constants counter desktop dpkg error fstab logchange
+mozprefs passwd rename timeofday tracer
+endef
+
+CONTENT_ELEKTRA_EXTRA:=$(strip $(CONTENT_EXTRA_PLUGINS_TEXT))
 
 define Package/libelektra-extra/description
 $(call Package/libelektra/Default-description)
 
 This package contains extra plugins that are only useful for debugging
-or as an example of what can be done. Currently this includes:
-$(CONTENT_ELEKTRA_EXTRA)
+or as an example of what can be done. Also most experimental plugins are
+included in this package. Currently this includes:
+$(CONTENT_EXTRA_PLUGINS_TEXT)
 endef
 
 CMAKE_OPTIONS = \
@@ -264,6 +270,7 @@ CMAKE_OPTIONS = \
 	-DBUILD_TESTING=OFF \
 	-DKDB_DEFAULT_RESOLVER=resolver_fm_pb_b \
 	-DKDB_DEFAULT_STORAGE=ini \
+	-DENABLE_OPTIMIZATIONS=OFF \
 	-DPLUGINS="ALL"
 
 CMAKE_HOST_OPTIONS = \
