@@ -12,7 +12,6 @@ CHECK_CRON=$1
 ACME=/usr/lib/acme/acme.sh
 export SSL_CERT_DIR=/etc/ssl/certs
 
-UHTTPD_REDIRECT_HTTPS=
 UHTTPD_LISTEN_HTTP=
 STATE_DIR='/etc/acme'
 ACCOUNT_EMAIL=
@@ -32,15 +31,17 @@ pre_checks()
     echo "Running pre checks."
     check_cron
 
-    UHTTPD_REDIRECT_HTTPS=$(uci get uhttpd.main.redirect_https)
-    UHTTPD_LISTEN_HTTP=$(uci get uhttpd.main.listen_http)
+    if [ -e /etc/init.d/uhttpd ]; then
 
-    uci set uhttpd.main.redirect_https=1
-    uci set uhttpd.main.listen_http='0.0.0.0:80'
-    uci commit uhttpd
-    /etc/init.d/uhttpd reload || return 1
+       UHTTPD_LISTEN_HTTP=$(uci get uhttpd.main.listen_http)
+
+       uci set uhttpd.main.listen_http=''
+       uci commit uhttpd
+       /etc/init.d/uhttpd reload || return 1
+    fi
 
     iptables -I input_rule -p tcp --dport 80 -j ACCEPT || return 1
+    ip6tables -I input_rule -p tcp --dport 80 -j ACCEPT || return 1
     return 0
 }
 
@@ -48,11 +49,13 @@ post_checks()
 {
     echo "Running post checks (cleanup)."
     iptables -D input_rule -p tcp --dport 80 -j ACCEPT
+    ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT
 
-    uci set uhttpd.main.redirect_https="$UHTTPD_REDIRECT_HTTPS"
-    uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
-    uci commit uhttpd
-    /etc/init.d/uhttpd reload
+    if [ -e /etc/init.d/uhttpd ]; then
+        uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
+        uci commit uhttpd
+        /etc/init.d/uhttpd reload
+    fi
 }
 
 err_out()
@@ -64,8 +67,8 @@ err_out()
 int_out()
 {
     post_checks
-    trap - SIGINT
-    kill -SIGINT $$
+    trap - INT
+    kill -INT $$
 }
 
 issue_cert()
@@ -99,7 +102,7 @@ issue_cert()
 
 
     acme_args="$acme_args $(for d in $domains; do echo -n "-d $d "; done)"
-    acme_args="$acme_args --webroot $(uci get uhttpd.main.home)"
+    acme_args="$acme_args --standalone"
     acme_args="$acme_args --keylength $keylength"
     [ -n "$ACCOUNT_EMAIL" ] && acme_args="$acme_args --accountemail $ACCOUNT_EMAIL"
     [ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
@@ -135,8 +138,8 @@ config_load acme
 config_foreach load_vars acme
 
 pre_checks || exit 1
-trap err_out SIGHUP SIGTERM
-trap int_out SIGINT
+trap err_out HUP TERM
+trap int_out INT
 
 config_foreach issue_cert cert
 post_checks
