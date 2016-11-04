@@ -5,6 +5,6 @@
  #include <iostream>
  #include <sstream>
 +#include "lstate.h"
+ using namespace std;
  
  // Help out windows:
- #if defined( _DEBUG ) && !defined( DEBUG )

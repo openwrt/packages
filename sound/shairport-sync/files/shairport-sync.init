@@ -60,6 +60,7 @@ start_instance() {
 		append_str "$cfg" "$conf_file" ignore_volume_control "ignore_volume_control"
 		append_num "$cfg" "$conf_file" volume_range_db "volume_range_db"
 		append_str "$cfg" "$conf_file" regtype "regtype"
+		append_str "$cfg" "$conf_file" playback_mode "playback_mode"
 		echo -e "};\n" >> $conf_file
 
 		# Metadata
@@ -68,6 +69,10 @@ start_instance() {
 		append_str "$cfg" "$conf_file" metadata_enabled "enabled"
 		append_str "$cfg" "$conf_file" metadata_cover_art "include_cover_art"
 		append_str "$cfg" "$conf_file" metadata_pipe_name "pipe_name"
+		append_num "$cfg" "$conf_file" metadata_pipe_timeout "pipe_timeout"
+		append_str "$cfg" "$conf_file" metadata_socket_address "socket_address"
+		append_num "$cfg" "$conf_file" metadata_socket_port "socket_port"
+		append_num "$cfg" "$conf_file" metadata_socket_msglength "socket_msglength"
 		echo -e "};\n" >> $conf_file
 
 		# Session control

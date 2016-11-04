@@ -12,6 +12,7 @@ DISABLED=
 
 RUNAS_USER=
 RUNAS_GROUP=
+RUNAS_SHELL=
 
 add_param() {
 	echo "$1 = $2" >> $ZNC_CONFIG
@@ -60,6 +61,7 @@ znc_global() {
 
 	config_get RUNAS_USER "$znc" runas_user
 	config_get RUNAS_GROUP "$znc" runas_group
+	config_get RUNAS_SHELL "$znc" runas_shell
 
 	if [ "${znc_config_path}" ]
 	then
@@ -168,7 +170,7 @@ start() {
 		config_foreach add_listener listener
 		config_foreach add_user user
 
-		chown -hR ${RUNAS_USER:-nobody}:${RUNAS_GROUP:-nogroup} /tmp/etc/znc
+		chown -hR ${RUNAS_USER:-nobody}:${RUNAS_GROUP:-nogroup} ${ZNC_CONFIG_PATH}
 	fi
 
 	if [ "$EXTERNAL_CONFIG" -eq 1 -a "$RUNAS_USER"  ]
@@ -176,7 +178,8 @@ start() {
 		local SU=$(which su)
 		if [ "$SU" ]
 		then
-			$SU -c "/usr/bin/znc -d$ZNC_CONFIG_PATH >/dev/null &" $RUNAS_USER
+			chown -hR ${RUNAS_USER:-nobody}:${RUNAS_GROUP:-nogroup} ${ZNC_CONFIG_PATH}
+			$SU ${RUNAS_SHELL:+s $RUNAS_SHELL} -c "/usr/bin/znc -d$ZNC_CONFIG_PATH >/dev/null &" $RUNAS_USER
 		else
 			logger -s -t ZNC -p daemon.err "Could not run ZNC as user $RUNAS_USER: su not found."
 			exit 1

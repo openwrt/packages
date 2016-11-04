@@ -110,6 +110,7 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # force_dnstcp		force communication with DNS server via TCP instead of default UDP
 # proxy			using a proxy for communication !!! ALSO used to detect local IP via web => return proxy's IP !!!
 # use_logfile		self-explanatory "/var/log/ddns/$SECTION_ID.log"
+# is_glue			the record that should be updated is a glue record
 #
 # some functionality needs
 # - GNU Wget or cURL installed for sending updates to DDNS service
@@ -130,6 +131,7 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 [ -z "$force_ipversion" ] && force_ipversion=0	# default let system decide
 [ -z "$force_dnstcp" ]	  && force_dnstcp=0	# default UDP
 [ -z "$ip_source" ]	  && ip_source="network"
+[ -z "$is_glue" ]	  && is_glue=0		# default the ddns record is not a glue record
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 0 ] && ip_network="wan"  # IPv4: default wan
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 1 ] && ip_network="wan6" # IPv6: default wan6
 [ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 0 ] && ip_url="http://checkip.dyndns.com"

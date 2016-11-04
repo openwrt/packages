@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/moc
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+libcurl +BUILD_PATENTED:libmad +libvorbis $(ICONV_DEPENDS) +alsa-lib +libid3tag +libflac +libsamplerate +PACKAGE_libncursesw:libncursesw +!PACKAGE_libncursesw:libncurses +libffmpeg +libltdl +libmagic +faad2 +libdb47
+  DEPENDS:=+libcurl +BUILD_PATENTED:libmad +libvorbis $(ICONV_DEPENDS) +alsa-lib +libid3tag +libflac +libsamplerate +libncursesw +libffmpeg +libltdl +libmagic +faad2 +libdb47
   TITLE:=Music On Console
   URL:=http://moc.daper.net/
 endef

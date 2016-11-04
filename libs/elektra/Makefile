@@ -14,11 +14,11 @@ PKG_MAINTAINER:=Harald Geyer <harald@ccbib.org>
 PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=doc/COPYING
-PKG_VERSION:=0.8.15
+PKG_VERSION:=0.8.17
 PKG_RELEASE:=1
 
 # Use this for official releasees
-PKG_MD5SUM:=33ec1e5982fb7fbd8893bf7b579b80f0
+PKG_MD5SUM:=e53efdb9a5e0852c58b21280b1e6c07d
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://ftp.libelektra.org/ftp/elektra/releases
 
@@ -97,9 +97,9 @@ define Package/libelektra-plugins
 endef
 
 define CONTENT_ELEKTRA_PLUGINS_TEXT
-ccode conditionals csvstorage enum filecheck glob hexcode hidden hosts
-iconv keytometa line lineendings list mathcheck network null path
-simpleini syslog uname validation
+cachefilter ccode conditionals csvstorage curlget enum filecheck glob
+hexcode hidden hosts iconv keytometa line lineendings list mathcheck
+network null path profile shell syslog uname validation
 endef
 
 CONTENT_ELEKTRA_PLUGINS = $(strip $(CONTENT_ELEKTRA_PLUGINS_TEXT))
@@ -233,7 +233,7 @@ define Package/libelektra-extra
   DEPENDS:=+libelektra-core
 endef
 
-CONTENT_ELEKTRA_EXTRA:=constants counter error fstab logchange rename timeofday tracer
+CONTENT_ELEKTRA_EXTRA:=constants counter dpkg error fstab logchange rename timeofday tracer
 
 define Package/libelektra-extra/description
 $(call Package/libelektra/Default-description)
@@ -252,7 +252,7 @@ CMAKE_OPTIONS = \
 	-DBUILD_TESTING=OFF \
 	-DKDB_DEFAULT_RESOLVER=resolver_fm_pb_b \
 	-DKDB_DEFAULT_STORAGE=ini \
-	-DPLUGINS="ALL;-crypto_gcrypt"
+	-DPLUGINS="ALL"
 
 CMAKE_HOST_OPTIONS = \
 	-DCMAKE_SKIP_RPATH=FALSE \
@@ -280,6 +280,8 @@ define Package/libelektra-core/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-ni.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-ini.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-sync.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-storage.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-resolver.so $(1)/usr/lib/
 endef
 
 define Package/elektra-kdb/install
@@ -315,7 +317,7 @@ endef
 
 define Package/libelektra-crypto/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-crypto* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-crypto_openssl.so $(1)/usr/lib/
 endef
 
 define Package/libelektra-dbus/install

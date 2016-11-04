@@ -29,17 +29,12 @@ proto_openconnect_setup() {
 	ifname="vpn-$config"
 
 	logger -t openconnect "initializing..."
-#	serv_addr=
-#	for ip in $(resolveip -t 10 "$server"); do
-#		( proto_add_host_dependency "$interface" "$ip" "$ifname" )
-#		serv_addr=1
-#	done
-#	[ -n "$serv_addr" ] || {
-#		logger -t openconnect "Could not resolve server address: '$server'"
-#		sleep 5
-#		proto_setup_failed "$config"
-#		exit 1
-#	}
+
+	logger -t "openconnect" "adding host dependency for $server at $config"
+	for ip in $(resolveip -t 10 "$server"); do
+		logger -t "openconnect" "adding host dependency for $ip at $config"
+		proto_add_host_dependency "$config" "$ip"
+	done
 
 	[ -n "$port" ] && port=":$port"
 

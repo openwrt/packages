@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crtmpserver
-PKG_REV:=811
-PKG_VERSION:=r$(PKG_REV)
+PKG_REV:=b6fdcdb
+PKG_VERSION:=2012-07-18+git-$(PKG_REV)
 PKG_RELEASE:=1
 PKG_BUILD_PARALLEL:=2
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
@@ -17,10 +17,10 @@ PKG_LICENSE:=GPL-3.0
 
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=--username=anonymous --password= https://svn.rtmpd.com/crtmpserver/branches/1.0
+PKG_SOURCE_URL:=https://github.com/j0sh/crtmpserver.git
 PKG_SOURCE_SUBDIR:=crtmpserver-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE_PROTO:=svn
+PKG_SOURCE_PROTO:=git
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -66,6 +66,9 @@ define Build/Configure
 			-e 's,^OPTIMIZATIONS[[:space:]]*=.*,OPTIMIZATIONS=-O2,' \
 			-e 's,^SSL_BASE[[:space:]]*=.*,SSL_BASE=$(STAGING_DIR)/usr,' \
 			linux-openwrt-uclibc.mk)
+	(cd $(PKG_BUILD_DIR)/sources/common/include/; \
+		echo '#define CRTMPSERVER_VERSION_RELEASE_NUMBER "$(PKG_VERSION)\n"' > version.h; \
+		echo '#define CRTMPSERVER_VERSION_CODE_NAME "Git\n"'                >> version.h)
 endef
 
 define Build/Compile

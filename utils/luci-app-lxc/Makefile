@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-lxc
-PKG_RELEASE:=20141012
+PKG_RELEASE:=20160616
 
 PKG_LICENSE:=Apache-2.0
 

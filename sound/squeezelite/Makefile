@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squeezelite
-PKG_VERSION:=1.8
-PKG_RELEASE=2
+PKG_VERSION:=1.8.4-743
+PKG_RELEASE=1
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:= Ted Hess <thess@kitschensync.net>
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://code.google.com/p/squeezelite/
+PKG_SOURCE_URL:=https://github.com/ralph-irving/squeezelite.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=8b8dfe6918ebe45ade5f3d9b68d453d7b8128d99
+PKG_SOURCE_VERSION:=e37ed17fed9e11a7346cbe9f1e1deeccc051f42e
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -32,7 +32,7 @@ define Package/squeezelite/default
     CATEGORY:=Sound
     TITLE:=Headless squeezebox emulator
     PROVIDES:=squeezelite
-    URL:=https://code.google.com/p/squeezelite/
+    URL:=https://github.com/ralph-irving/squeezelite
     DEPENDS:= +alsa-lib +SQUEEZELITE_RESAMPLE:libsoxr
     MENU:=1
 endef

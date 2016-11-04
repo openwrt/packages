@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://code.google.com/p/sha2/
+PKG_SOURCE_URL:=https://github.com/lgierth/lua-sha2.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=02bd4bfdc806
 PKG_LICENSE:=MIT

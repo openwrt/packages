@@ -1,0 +1,32 @@
+From cba3bd6e5ce9b0be83c701c3c7a103d01d5b516d Mon Sep 17 00:00:00 2001
+From: Thierry Fournier <thierry.fournier@ozon.io>
+Date: Wed, 1 Jun 2016 13:36:20 +0200
+Subject: [PATCH 4/4] BUG/MINOR: http: add-header: header name copied twice
+
+The header name is copied two time in the buffer. The first copy is a printf-like
+function writing the name and the http separators in the buffer, and the second
+form is a memcopy. This seems to be inherited from some changes. This patch
+removes the printf like, format.
+
+This patch must be backported in 1.6 and 1.5 versions
+(cherry picked from commit 53c1a9b7cb8f3fe79b5492218363b6c0ff608fc1)
+(cherry picked from commit d281d68d3aa010f7e1a635c92ab486f7f2c666b9)
+---
+ src/proto_http.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 0b13c5e..8801592 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -3399,7 +3399,6 @@ http_req_get_intercept_rule(struct proxy *px, struct list *rules, struct session
+ 
+ 		case HTTP_REQ_ACT_SET_HDR:
+ 		case HTTP_REQ_ACT_ADD_HDR:
+-			chunk_printf(&trash, "%s: ", rule->arg.hdr_add.name);
+ 			memcpy(trash.str, rule->arg.hdr_add.name, rule->arg.hdr_add.name_len);
+ 			trash.len = rule->arg.hdr_add.name_len;
+ 			trash.str[trash.len++] = ':';
+-- 
+2.7.3
+

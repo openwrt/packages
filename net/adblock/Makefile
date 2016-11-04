@@ -7,10 +7,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=1.1.1
+PKG_VERSION:=1.3.3
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
-PKG_MAINTAINER:=Dirk Brenken <openwrt@brenken.org>
+PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -18,7 +18,6 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Powerful adblock script to block ad/abuse domains
-	DEPENDS:=+wget
 	PKGARCH:=all
 endef
 
