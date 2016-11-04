@@ -7,6 +7,9 @@
 
 include $(TOPDIR)/rules.mk
 
+# This file provides the necsessary host build variables
+include ./files/python-host.mk
+
 # The file included below defines PYTHON_VERSION
 include ./files/python-package.mk
 

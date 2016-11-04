@@ -5,6 +5,9 @@
 # See /LICENSE for more information.
 #
 
+ifneq ($(__python_host_mk_inc),1)
+__python_host_mk_inc=1
+
 # Compatibility fallback for older OpenWrt and LEDE versions
 ifeq ($(STAGING_DIR_HOSTPKG),)
   $(warning STAGING_DIR_HOSTPKG is unset - falling back to $$(STAGING_DIR)/host)
@@ -71,3 +74,4 @@ define Build/Compile/HostPyMod
 		$(3))
 endef
 
+endif # __python_host_mk_inc
