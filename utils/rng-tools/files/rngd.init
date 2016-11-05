@@ -3,12 +3,20 @@
 
 START=98
 
-RNGD_AMOUNT=4000
-RNGD_DEVICE="/dev/urandom"
-# Use /dev/urandom as source, as hardware sources like /dev/hwrng are usually not present
+RNGD_FILLWATER=$(uci -q get system.@rngd[0].fill_watermark)
+RNGD_DEVICE=$(uci -q get system.@rngd[0].device)
+RNGD_ENABLED=$(uci -q get system.@rngd[0].enabled)
+RNGD_PRECMD=$(uci -q get system.@rngd[0].precmd)
+
+: ${RNGD_FILLWATER:=4000}
+
+echo PRECMD=\'$RNGD_PRECMD\'
 
 start() {
-	service_start /sbin/rngd -r $RNGD_DEVICE -W $RNGD_AMOUNT
+    [ 1 -eq "$RNGD_ENABLED" ] && {
+      [ -z "${RNGD_PRECMD}" ] || ${RNGD_PRECMD} ${RNGD_DEVICE}
+      service_start /sbin/rngd -r ${RNGD_DEVICE} -W ${RNGD_FILLWATER}
+    }
 }
 
 stop() {

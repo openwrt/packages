@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=simplejson
-PKG_VERSION:=3.8.2
+PKG_VERSION:=3.10.0
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/s/simplejson/
-PKG_MD5SUM:=53b1371bbf883b129a12d594a97e9a18
+PKG_SOURCE_URL:=https://pypi.python.org/packages/40/ad/52c1f3a562df3b210e8f165e1aa243a178c454ead65476a39fa3ce1847b6/
+PKG_MD5SUM:=426a9631d22851a7a970b1a677368b15
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk

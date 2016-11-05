@@ -450,7 +450,7 @@ Author: Petar Koretic <petar.koretic@sartura.hr>
 		{
 			var option = document.createElement('option');
 			option.value = data[key];
-			option.text = data[key].replace(/[_:]/, ' ');
+			option.text = data[key].replace(/[_:]/g, ' ');
 			select.add(option, -1);
 		}
 	})

@@ -25,6 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/squashfs-tools/Default
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Filesystem
   TITLE:=squashfs-tools
   URL:=https://github.com/plougher/squashfs-tools
   DEPENDS += +libpthread +zlib \

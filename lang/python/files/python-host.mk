@@ -5,7 +5,13 @@
 # See /LICENSE for more information.
 #
 
-HOST_PYTHON_DIR:=$(HOST_BUILD_PREFIX)
+# Compatibility fallback for older OpenWrt and LEDE versions
+ifeq ($(STAGING_DIR_HOSTPKG),)
+  $(warning STAGING_DIR_HOSTPKG is unset - falling back to $$(STAGING_DIR)/host)
+  STAGING_DIR_HOSTPKG := $(STAGING_DIR)/host
+endif
+
+HOST_PYTHON_DIR:=$(STAGING_DIR_HOSTPKG)
 HOST_PYTHON_INC_DIR:=$(HOST_PYTHON_DIR)/include/python$(PYTHON_VERSION)
 HOST_PYTHON_LIB_DIR:=$(HOST_PYTHON_DIR)/lib/python$(PYTHON_VERSION)
 
@@ -13,7 +19,7 @@ HOST_PYTHON_PKG_DIR:=/lib/python$(PYTHON_VERSION)/site-packages
 
 HOST_PYTHON_BIN:=$(HOST_PYTHON_DIR)/bin/python$(PYTHON_VERSION)
 
-HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(HOST_BUILD_PREFIX)/$(HOST_PYTHON_PKG_DIR)
+HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(STAGING_DIR_HOSTPKG)/$(HOST_PYTHON_PKG_DIR)
 
 define HostPython
 	if [ "$(strip $(3))" == "HOST" ]; then \
@@ -44,7 +50,7 @@ define Build/Compile/HostPyRunHost
 		LDSHARED="$(HOSTCC) -shared" \
 		CFLAGS="$(HOST_CFLAGS)" \
 		CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON_INC_DIR)" \
-		LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON_VERSION) -Wl$(comma)-rpath=$(HOST_BUILD_PREFIX)/lib" \
+		LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib" \
 		_PYTHON_HOST_PLATFORM=linux2 \
 		$(3) \
 		, \
