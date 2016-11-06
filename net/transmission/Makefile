@@ -12,7 +12,7 @@ PKG_VERSION:=2.92
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://download-origin.transmissionbt.com/files/ http://mirrors.m0k.org/transmission/files
+PKG_SOURCE_URL:=https://github.com/transmission/transmission-releases/raw/master
 PKG_MD5SUM:=3fce404a436e3cd7fde80fb6ed61c264
 
 PKG_FIXUP:=autoreconf
