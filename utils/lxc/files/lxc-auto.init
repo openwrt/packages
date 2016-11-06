@@ -23,22 +23,42 @@ start_container() {
 
 max_timeout=0
 
-stop_container() {
+check_running() {
 	local cfg="$1"
-	local name timeout
+	local name timeout ret
 
 	config_get name "$cfg" name
 	config_get timeout "$cfg" timeout 300
 
-	if [ "$max_timeout" -lt "$timeout" ]; then
-		max_timeout=$timeout
-	fi
+	ret=0
 
 	if [ -n "$name" ]; then
-		if [ "$timeout" = "0" ]; then
-			/usr/bin/lxc-stop -n "$name" &
+		/usr/bin/lxc-stop -n "$name" -W --nolock
+		ret=$?
+	fi
+
+	if [ "$max_timeout" -lt "$timeout" ]; then
+		if [ "$ret" = "0" ]; then
+			max_timeout=$timeout
+		fi
+	fi
+
+	return $ret
+}
+
+stop_container() {
+	local cfg="$1"
+
+	local name timeout ret
+
+	config_get name "$cfg" name
+	config_get timeout "$cfg" timeout 300
+
+	if [ -n "$name" ]; then
+		if [ "$timeout" -lt 1 ]; then
+			/usr/bin/lxc-stop -n "$name" -k
 		else
-			/usr/bin/lxc-stop -n "$name" -t $timeout &
+			/usr/bin/lxc-stop -n "$name" -t "$timeout" &
 		fi
 	fi
 }
@@ -54,7 +74,13 @@ stop() {
 	# ensure e.g. shutdown doesn't occur before maximum timeout on
 	# containers that are shutting down
 	if [ $max_timeout -gt 0 ]; then
-		sleep $max_timeout
+		local curtime=0
+		while [ $curtime -lt $max_timeout ]; do
+			if check_running >/dev/null 2>&1; then
+				sleep 5
+			fi
+			curtime=$((curtime + 1))
+		done
 	fi
 }
 
