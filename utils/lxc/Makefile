@@ -60,14 +60,16 @@ endef
 define Package/lxc-auto
   $(call Package/lxc/Default)
   TITLE:= (initscript)
-  DEPENDS:=+lxc-start +lxc-stop
+  DEPENDS:=lxc +lxc-start +lxc-stop
 endef
 
 define Package/lxc-auto/description
  LXC is the userspace control package for Linux Containers, a lightweight
  virtual system mechanism sometimes described as "chroot on steroids".
- This package adds and initscript for starting and stopping the containers
- on boot and shutdown.
+
+ This package adds an initscript for starting and stopping the containers
+ on boot and shutdown (since lxc-autostart currently doesn't work on
+ LEDE/OpenWrt).
 endef
 
 define Package/lxc-auto/conffiles
