@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-urllib3
-PKG_VERSION:=1.18.1
+PKG_VERSION:=1.19
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=urllib3-$(PKG_VERSION).tar.gz
 PKG_BUILD_DIR:=$(BUILD_DIR)/urllib3-$(PKG_VERSION)/
-PKG_SOURCE_URL:=https://pypi.python.org/packages/d8/1f/7e5e7e7d36fa82c179085ef06c32abe2a1f8a25067e1724921f7e871da1a/
-PKG_MD5SUM:=30b6f366a691b7b5d2eb67d20932b77f
+PKG_SOURCE_URL:=https://pypi.python.org/packages/08/37/48b443a36af9eda6274f673b70a9140c13e2409edb2ef20b2d8a620efef5/
+PKG_MD5SUM:=4aa7c6c310cd938683e9b1831e110bac
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
