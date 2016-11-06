@@ -57,6 +57,25 @@ define Package/lxc
   MENU:=1
 endef
 
+# For the convenient default we assume virtual network is desired and basic
+# a minimum set of admin commands to use lxc from command line as well
+# lxc-create (and configs and templates normally expected by lxc-create).
+define Package/lxc-default
+  $(call Package/lxc/Default)
+  DEPENDS:=lxc +lxc-auto +lxc-console +lxc-configs +lxc-templates +lxc-create +lxc-destroy +kmod-veth
+endef
+
+define Package/lxc-default/description
+  LXC is the userspace control package for Linux Containers, a lightweight
+  virtual system mechanism sometimes described as "chroot on steroids".
+
+  This metapackage depends on a useful set of packages for using LXC on OpenWrt
+  If a stripped down lxc is desired simply manually select the specific
+  packages you want instead of this package.  For example if you plan on manually
+  creating the config files and rootfs then you would omit lxc-create, lxc-templates,
+  and lxc-configs.
+endef
+
 define Package/lxc-auto
   $(call Package/lxc/Default)
   TITLE:= (initscript)
@@ -167,6 +186,11 @@ define Package/lxc/install
 	true
 endef
 
+define Package/lxc-default/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/lxc-default-veth.default $(1)/etc/uci-defaults/lxc-default-veth
+endef
+
 define Package/lxc-auto/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_CONF) ./files/lxc-auto.config $(1)/etc/config/lxc-auto
@@ -267,6 +291,7 @@ endef
 
 
 $(eval $(call BuildPackage,lxc))
+$(eval $(call BuildPackage,lxc-default))
 $(eval $(call BuildPackage,lxc-common))
 $(eval $(call BuildPackage,lxc-hooks))
 $(eval $(call BuildPackage,lxc-configs))

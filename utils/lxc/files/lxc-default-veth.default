@@ -1,0 +1,4 @@
+#!/bin
+
+sed -i -e 's/lxc\.network\.type = empty/lxc.network.type = veth/' /etc/lxc/default.conf || true
+
