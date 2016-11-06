@@ -89,6 +89,32 @@ define Package/lxc-common
   DEPENDS:= lxc
 endef
 
+define Package/lxc-create-ubuntu
+  $(call Package/lxc/Default)
+  TITLE:=LXC Dependencies for lxc-create -t ubuntu
+  DEPENDS:=lxc +debootstrap +bash +lxc-unshare +lxc-create
+  MENU:=1
+endef
+
+define Package/lxc-create-ubuntu/description
+  Package that pulls in dependencies for creating Ubuntu containers
+  .
+  NB: You will need lxc-create ... -- --mirror=http://archive.ubuntu.com/ubuntu or
+  --mirror=http://ports.ubuntu.com/ubuntu/ (depending on your architecture),
+  because LEDE/OpenWrt's debootstrap is from Debian.
+endef
+
+define Package/lxc-create-debian
+  $(call Package/lxc/Default)
+  TITLE:=LXC Dependencies for lxc-create -t debian
+  DEPENDS:=lxc +debootstrap +bash +lxc-unshare +lxc-create
+  MENU:=1
+endef
+
+define Package/lxc-create-debian/description
+  Package that pulls in dependencies for creating Debian containers
+endef
+
 define Package/lxc-hooks
   $(call Package/lxc/Default)
   TITLE:=LXC virtual machine hooks
@@ -202,6 +228,10 @@ define Package/lxc-common/install
 	$(INSTALL_DIR) $(1)/srv/lxc/
 endef
 
+define Package/lxc-create-ubuntu/install
+	true
+endef
+
 define Package/lxc-hooks/install
 	$(INSTALL_DIR) $(1)/usr/share/lxc/hooks
 	$(CP) \
@@ -268,6 +298,7 @@ endef
 
 $(eval $(call BuildPackage,lxc))
 $(eval $(call BuildPackage,lxc-common))
+$(eval $(call BuildPackage,lxc-create-ubuntu))
 $(eval $(call BuildPackage,lxc-hooks))
 $(eval $(call BuildPackage,lxc-configs))
 $(eval $(call BuildPackage,lxc-templates))
