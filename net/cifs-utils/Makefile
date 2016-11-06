@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cifs-utils
 PKG_VERSION:=6.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://ftp.samba.org/pub/linux-cifs/cifs-utils
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -24,6 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/cifsmount
   SECTION:=net
   CATEGORY:=Network
+  DEPENDS:=+kmod-fs-cifs
   TITLE:=CIFS mount utilities
   URL:=http://wiki.samba.org/index.php/LinuxCIFS_utils
 endef
