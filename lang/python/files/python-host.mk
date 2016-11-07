@@ -8,6 +8,9 @@
 ifneq ($(__python_host_mk_inc),1)
 __python_host_mk_inc=1
 
+# For PYTHON_VERSION
+$(call include_mk, python-version.mk)
+
 # Compatibility fallback for older OpenWrt and LEDE versions
 ifeq ($(STAGING_DIR_HOSTPKG),)
   $(warning STAGING_DIR_HOSTPKG is unset - falling back to $$(STAGING_DIR)/host)
