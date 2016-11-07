@@ -220,10 +220,6 @@ define PyPackage/python/filespec
 -|$(PYTHON_PKG_DIR)
 endef
 
-HOST_CFLAGS+= \
-	-I/usr/include/ncursesw \
-	-I/usr/include/ncurses
-
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
