@@ -7,7 +7,13 @@
 
 include $(TOPDIR)/rules.mk
 
-# The file included below defines PYTHON_VERSION
+# For PYTHON_VERSION
+include ./files/python-version.mk
+
+# This file provides the necsessary host build variables
+include ./files/python-host.mk
+
+# For PyPackage
 include ./files/python-package.mk
 
 PKG_NAME:=python
@@ -139,18 +145,19 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		./files/python-package.mk \
 		./files/python-host.mk \
+		./files/python-version.mk \
 		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
 	$(CP) \
-		$(HOST_BUILD_PREFIX)/lib/python$(PYTHON_VERSION) \
+		$(HOST_PYTHON_LIB_DIR) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
 	$(CP) \
-		$(HOST_BUILD_PREFIX)/lib/pkgconfig/python.pc \
-		$(HOST_BUILD_PREFIX)/lib/pkgconfig/python2.pc \
-		$(HOST_BUILD_PREFIX)/lib/pkgconfig/python-$(PYTHON_VERSION).pc \
+		$(HOST_PYTHON_DIR)/lib/pkgconfig/python.pc \
+		$(HOST_PYTHON_DIR)/lib/pkgconfig/python2.pc \
+		$(HOST_PYTHON_DIR)/lib/pkgconfig/python-$(PYTHON_VERSION).pc \
 		$(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
@@ -213,28 +220,21 @@ define PyPackage/python/filespec
 -|$(PYTHON_PKG_DIR)
 endef
 
-HOST_CFLAGS+= \
-	-I/usr/include/ncursesw \
-	-I/usr/include/ncurses
-
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
-	--prefix=$(HOST_BUILD_PREFIX) \
-	--exec-prefix=$(HOST_BUILD_PREFIX) \
-	--sysconfdir=$(HOST_BUILD_PREFIX)/etc \
-	--localstatedir=$(HOST_BUILD_PREFIX)/var \
-	--sbindir=$(HOST_BUILD_PREFIX)/bin \
-	--with-system-expat=$(HOST_BUILD_PREFIX) \
-	--with-system-ffi=$(HOST_BUILD_PREFIX) \
+	--prefix=$(HOST_PYTHON_DIR) \
+	--exec-prefix=$(HOST_PYTHON_DIR) \
+	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
+	--with-system-ffi=$(STAGING_DIR_HOSTPKG) \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
 
 define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) install
-	$(INSTALL_DIR) $(HOST_BUILD_PREFIX)/bin/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_BUILD_PREFIX)/bin/pgen2
+	$(INSTALL_DIR) $(HOST_PYTHON_DIR)/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON_DIR)/bin/pgen2
 endef
 
 $(eval $(call HostBuild))
