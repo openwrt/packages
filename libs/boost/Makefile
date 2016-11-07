@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.62.0
 PKG_SOURCE_VERSION:=1_62_0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/$(PKG_VERSION)
@@ -28,7 +28,6 @@ PKG_MD5SUM:=36c96b0f6155c98404091d8ceb48319a28279ca0333fba1ad8611eb90afb2ca0
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
-PKG_BUILD_DEPENDS += boost/host 
 PKG_BUILD_PARALLEL:=0
 PKG_USE_MIPS16:=0
 
@@ -92,6 +91,9 @@ There are many more header-only libraries supported by Boost.
 See more at http://www.boost.org/doc/libs/1_62_0/
 endef
 
+PKG_BUILD_DEPENDS:=boost/host
+HOST_BUILD_DEPENDS:=PACKAGE_python:python/host PACKAGE_python3:python3/host
+
 BOOST_LIBS =
 
 define Package/boost-libs
@@ -114,7 +116,6 @@ endef
 define Package/boost/install
   true
 endef
-
 
 define Package/boost
   $(call Package/boost/Default)
@@ -250,8 +251,11 @@ define Package/boost/config
 		$(foreach lib,$(BOOST_LIBS), \
 			config PACKAGE_boost-$(lib)
 			prompt "Boost $(lib) library."
-			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)
-			$(if $(findstring fiber,$(lib)),depends on BROKEN,)
+			default m if ALL
+			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)\
+			$(if $(findstring fiber,$(lib)),depends on BROKEN,)\
+			$(if $(findstring python,$(lib)),depends on PACKAGE_$(lib),)
+
 		)
 	endmenu
 
@@ -272,17 +276,18 @@ endef
 # 1: short name
 # 2: dependencies on other boost libraries (short name)
 # 3: dependencies on other packages
+# 4: conditional/inward dependencies
 define DefineBoostLibrary
 
-  BOOST_DEPENDS+= +boost-$(1) 
-  BOOST_LIBS+= $(1)
-
+  BOOST_DEPENDS+= +$(if $(4),$(4):boost-$(1),boost-$(1))
   PKG_CONFIG_DEPENDS+= CONFIG_PACKAGE_boost-$(1)
+
+  BOOST_LIBS+= $(1)
 
   define Package/boost-$(1)
     $(call Package/boost/Default)
     TITLE+= ($(1))
-    DEPENDS+= $$(foreach lib,$(2),+boost-$$(lib)) $(3)
+    DEPENDS+= $$(foreach lib,$(2),+boost-$$(lib)) $(3) $(if $(4),@$(4),)
     HIDDEN:=1
   endef
 
@@ -291,7 +296,6 @@ define DefineBoostLibrary
   endef
 endef
 
-
 $(eval $(call DefineBoostLibrary,atomic,system,))
 $(eval $(call DefineBoostLibrary,chrono,system,))
 $(eval $(call DefineBoostLibrary,container,,))
@@ -299,17 +303,17 @@ $(eval $(call DefineBoostLibrary,context,chrono system thread,))
 $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,))
 $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
-$(eval $(call DefineBoostLibrary,fiber,coroutine,@BROKEN))
+$(eval $(call DefineBoostLibrary,fiber,coroutine,,BROKEN))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
-$(eval $(call DefineBoostLibrary,iostreams,,+PACKAGE_boost-iostreams:zlib))
-$(eval $(call DefineBoostLibrary,locale,system,@BUILD_NLS $(ICONV_DEPENDS)))
+$(eval $(call DefineBoostLibrary,iostreams,,+zlib))
+$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS),BUILD_NLS))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
 $(eval $(call DefineBoostLibrary,program_options,,))
-$(eval $(call DefineBoostLibrary,python,,+PACKAGE_boost-python:python))
-$(eval $(call DefineBoostLibrary,python3,,+PACKAGE_boost-python3:python3))
+$(eval $(call DefineBoostLibrary,python,,,PACKAGE_python))
+$(eval $(call DefineBoostLibrary,python3,,,PACKAGE_python3))
 $(eval $(call DefineBoostLibrary,random,system,))
 $(eval $(call DefineBoostLibrary,regex,,))
 $(eval $(call DefineBoostLibrary,serialization,,))
