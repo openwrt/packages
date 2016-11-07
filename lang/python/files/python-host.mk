@@ -5,6 +5,12 @@
 # See /LICENSE for more information.
 #
 
+ifneq ($(__python_host_mk_inc),1)
+__python_host_mk_inc=1
+
+# For PYTHON_VERSION
+$(call include_mk, python-version.mk)
+
 # Compatibility fallback for older OpenWrt and LEDE versions
 ifeq ($(STAGING_DIR_HOSTPKG),)
   $(warning STAGING_DIR_HOSTPKG is unset - falling back to $$(STAGING_DIR)/host)
@@ -15,11 +21,11 @@ HOST_PYTHON_DIR:=$(STAGING_DIR_HOSTPKG)
 HOST_PYTHON_INC_DIR:=$(HOST_PYTHON_DIR)/include/python$(PYTHON_VERSION)
 HOST_PYTHON_LIB_DIR:=$(HOST_PYTHON_DIR)/lib/python$(PYTHON_VERSION)
 
-HOST_PYTHON_PKG_DIR:=/lib/python$(PYTHON_VERSION)/site-packages
+HOST_PYTHON_PKG_DIR:=$(HOST_PYTHON_DIR)/lib/python$(PYTHON_VERSION)/site-packages
 
 HOST_PYTHON_BIN:=$(HOST_PYTHON_DIR)/bin/python$(PYTHON_VERSION)
 
-HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(STAGING_DIR_HOSTPKG)/$(HOST_PYTHON_PKG_DIR)
+HOST_PYTHONPATH:=$(HOST_PYTHON_LIB_DIR):$(HOST_PYTHON_PKG_DIR)
 
 define HostPython
 	if [ "$(strip $(3))" == "HOST" ]; then \
@@ -71,3 +77,4 @@ define Build/Compile/HostPyMod
 		$(3))
 endef
 
+endif # __python_host_mk_inc
