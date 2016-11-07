@@ -7,10 +7,13 @@
 
 include $(TOPDIR)/rules.mk
 
+# For PYTHON_VERSION
+include ./files/python-version.mk
+
 # This file provides the necsessary host build variables
 include ./files/python-host.mk
 
-# The file included below defines PYTHON_VERSION
+# For PyPackage
 include ./files/python-package.mk
 
 PKG_NAME:=python
@@ -142,6 +145,7 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		./files/python-package.mk \
 		./files/python-host.mk \
+		./files/python-version.mk \
 		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
