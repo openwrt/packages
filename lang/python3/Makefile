@@ -127,7 +127,7 @@ CONFIGURE_ARGS+= \
 	--with-threads \
 	--with-system-ffi="$(STAGING_DIR)/usr" \
 	--without-pymalloc \
-	--without-ensurepip \
+	--with-ensurepip=no \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
 	OPT="$(TARGET_CFLAGS)"
@@ -223,7 +223,7 @@ HOST_CONFIGURE_ARGS+= \
 	--sbindir=$(HOST_BUILD_PREFIX)/bin \
 	--with-system-expat=$(HOST_BUILD_PREFIX) \
 	--with-system-ffi=$(HOST_BUILD_PREFIX) \
-	--with-ensurepip=upgrade \
+	--with-ensurepip=no \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
 
