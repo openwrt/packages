@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
 PKG_VERSION:=1.6.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/msmtp
@@ -71,9 +71,21 @@ $(call Package/msmtp/Default/description)
  This package is built without SSL support.
 endef
 
+define Package/msmtp-mta
+$(call Package/msmtp/Default)
+  TITLE+= (as MTA)
+  DEPENDS+=@(PACKAGE_msmtp||PACAKGE_msmtp-nossl)
+endef
+
+define Package/msmtp-mta/description
+$(call Package/msmtp/Default/description)
+ This package add a link from sendmail to msmtp
+ and is built with SSL support.
+endef
+
 define Package/msmtp-queue
 $(call Package/msmtp/Default)
-  DEPENDS+= +bash
+  DEPENDS+= +bash @(PACKAGE_msmtp||PACKAGE_msmtp-nossl)
   TITLE+= (queue scripts)
 endef
 
@@ -114,23 +126,14 @@ define Package/msmtp/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/msmtp $(1)/usr/bin/
 endef
 
-define Package/msmtp/postinst
-	[ -e $${IPKG_INSTROOT}/usr/sbin/sendmail ] || {
-		mkdir -p $${IPKG_INSTROOT}/usr/sbin
-		ln -sf ../bin/msmtp $${IPKG_INSTROOT}/usr/sbin/sendmail
-	}
-endef
-
-define Package/msmtp/prerm
-	[ "../bin/msmtp" = "$(readlink -qs $${IPKG_INSTROOT}/usr/sbin/sendmail)" ] && {
-		rm -f $${IPKG_INSTROOT}/usr/sbin/sendmail
-	}
+define Package/msmtp-mta/install
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/lib
+	ln -sf ../bin/msmtp $(1)/usr/sbin/sendmail
+	ln -sf ../bin/msmtp $(1)/usr/lib/sendmail
 endef
 
 Package/msmtp-nossl/conffiles = $(Package/msmtp/conffiles)
 Package/msmtp-nossl/install = $(Package/msmtp/install)
-Package/msmtp-nossl/postinst = $(Package/msmtp/postinst)
-Package/msmtp-nossl/prerm = $(Package/msmtp/prerm)
 
 define Package/msmtp-queue/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -141,3 +144,4 @@ endef
 $(eval $(call BuildPackage,msmtp))
 $(eval $(call BuildPackage,msmtp-nossl))
 $(eval $(call BuildPackage,msmtp-queue))
+$(eval $(call BuildPackage,msmtp-mta))

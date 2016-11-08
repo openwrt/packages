@@ -24,7 +24,6 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/liblo/Default
-  SUBMENU:=Sound
   TITLE:=Lightweight Open Sound Control (OSC)
   URL:=http://liblo.sourceforge.net/
 endef
@@ -33,14 +32,14 @@ define Package/liblo
 $(call Package/liblo/Default)
   SECTION:=libs
   CATEGORY:=Libraries
+  SUBMENU:=Sound
   TITLE+= library
   DEPENDS:= +libpthread
 endef
 
 define Package/liblo-utils
 $(call Package/liblo/Default)
-  SECTION:=utils
-  CATEGORY:=Utilities
+  CATEGORY:=Sound
   TITLE+= utilities
   DEPENDS:= +liblo
 endef

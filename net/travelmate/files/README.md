@@ -18,16 +18,23 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * iw (default) or iwinfo for wlan scanning
 
 ## OpenWrt / LEDE trunk Installation & Usage
+* download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages)
 * install 'travelmate' (_opkg install travelmate_)
 * configure your network to support (multiple) wlan uplinks and set travelmate config options (details see below)
 * set 'trm\_enabled' option in travelmate config to '1'
 * travelmate starts automatically during boot, triggered by procd as soon as the wireless subsystem is up & running
 
+## LuCI travelmate companion package
+* download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/luci)
+* install 'luci-app-travelmate' (_opkg install luci-app-travelmate_)
+* the application is located in LuCI under 'Services' menu
+* _Thanks to Hannu Nyman for this great LuCI frontend!_
+
 ## Chaos Calmer installation notes
-* 'travelmate' is _not_ available as an ipk package in the Chaos Calmer download repository
-* download the package from a development snapshot package directory, i.e. look [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages/)
-* manually transfer the package to your routers temp directory (with tools like _sshfs_ or _winscp_)
-* install the package as described above
+* 'travelmate' and 'luci-app-travelmate' are _not_ available as ipk packages in the Chaos Calmer download repository
+* download the packages from a development snapshot directory (see download links above)
+* manually transfer the packages to your routers temp directory (with tools like _sshfs_ or _winscp_)
+* install the packages as described above
 
 ## Travelmate config options
 * mandatory config options:
