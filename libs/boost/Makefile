@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.62.0
 PKG_SOURCE_VERSION:=1_62_0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/$(PKG_VERSION)
@@ -91,8 +91,7 @@ There are many more header-only libraries supported by Boost.
 See more at http://www.boost.org/doc/libs/1_62_0/
 endef
 
-PKG_BUILD_DEPENDS:=boost/host
-HOST_BUILD_DEPENDS:=PACKAGE_python:python/host PACKAGE_python3:python3/host
+PKG_BUILD_DEPENDS:=boost/host PACKAGE_python:python PACKAGE_python3:python3
 
 BOOST_LIBS =
 
@@ -120,7 +119,6 @@ endef
 define Package/boost
   $(call Package/boost/Default)
   TITLE+= packages
-  DEPENDS:=+ALL:boost-libs +ALL:boost-test
 endef
 
 define Package/boost/config
@@ -228,6 +226,7 @@ define Package/boost/config
 
 		config boost-libs-all
 			bool "Include all Boost libraries."
+			default m if ALL
 			select PACKAGE_boost-libs
 			select boost-test-pkg
 			select boost-coroutine2
@@ -235,6 +234,7 @@ define Package/boost/config
 
 		config boost-test-pkg
 			bool "Boost test package."
+			default m if ALL
 			select PACKAGE_boost-test
 
 		config boost-coroutine2
@@ -428,7 +428,9 @@ define Package/boost/Default/install
 		$(1)/usr/lib
 
 	$(FIND) \
-		$(PKG_INSTALL_DIR)/lib/ -name 'libboost_$(2)*.so*' -exec $(CP) {} $(1)/usr/lib/ \;
+		$(PKG_INSTALL_DIR)/lib/ -name 'libboost_$(2).so*' -exec $(CP) {} $(1)/usr/lib/ \;
+	$(FIND) \
+		$(PKG_INSTALL_DIR)/lib/ -name 'libboost_$(2)_*.so*' -exec $(CP) {} $(1)/usr/lib/ \;
 endef
 
 define Package/boost-test/install
