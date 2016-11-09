@@ -29,7 +29,7 @@ define Package/ser2net
   CATEGORY:=Network
   TITLE:=Serial to Network Proxy
   URL:=http://sourceforge.net/projects/ser2net/
-  DEPENDS:=+USE_UCLIBC:libpthread
+  DEPENDS:=+USE_UCLIBC:libpthread +USE_UCLIBC:librt
 endef
 
 define Package/ser2net/description
