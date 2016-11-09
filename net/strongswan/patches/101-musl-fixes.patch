@@ -10,7 +10,7 @@
  
 --- /dev/null
 +++ b/src/libstrongswan/musl.h
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,38 @@
 +#include <sys/types.h>
 +
 +#define crypt x_crypt
@@ -31,7 +31,6 @@
 +#define nlink_t x_nlink_t
 +#define timer_t x_timer_t
 +#define blkcnt_t x_blkcnt_t
-+#define __kernel_nlink_t void
 +
 +#include <linux/types.h>
 +
