@@ -1,0 +1,31 @@
+From 3810ab9e71a19e7f04a9e18580abc77c276d0ff1 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Fri, 21 Oct 2016 17:17:18 +0200
+Subject: [PATCH 09/26] BUG/MINOR: vars: smp_fetch_var() doesn't depend on HTTP
+ but on the session
+
+Thus the SMP_USE_HTTP_ANY dependency is incorrect, we have to depend on
+SMP_USE_L5_CLI (the session). It's particularly important for session-wide
+variables which are kept across HTTP requests. For now there is no impact
+but it will make a difference with tcp-request session rules.
+(cherry picked from commit 87846e42a478fe2aa0fbc1e162ba5fb227be49b7)
+---
+ src/vars.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/vars.c b/src/vars.c
+index 4a0c4ed..a3dd85c 100644
+--- a/src/vars.c
++++ b/src/vars.c
+@@ -654,7 +654,7 @@ static int vars_max_size_reqres(char **args, int section_type, struct proxy *cur
+ 
+ static struct sample_fetch_kw_list sample_fetch_keywords = {ILH, {
+ 
+-	{ "var", smp_fetch_var, ARG1(1,STR), smp_check_var, SMP_T_STR, SMP_USE_HTTP_ANY },
++	{ "var", smp_fetch_var, ARG1(1,STR), smp_check_var, SMP_T_STR, SMP_USE_L5CLI },
+ 	{ /* END */ },
+ }};
+ 
+-- 
+2.7.3
+
