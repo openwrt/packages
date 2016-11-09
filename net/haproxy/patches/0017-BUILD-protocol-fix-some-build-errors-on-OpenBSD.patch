@@ -1,0 +1,32 @@
+From 4fc2ce4a4bb83862679e40c09c684dbf266099f2 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 10 Aug 2016 18:24:48 +0200
+Subject: [PATCH 17/26] BUILD: protocol: fix some build errors on OpenBSD
+
+Building 1.6 and above on OpenBSD 5.2 fails due to protocol.c not
+including sys/types.h before sys/socket.h :
+
+  In file included from src/protocol.c:14:
+  /usr/include/sys/socket.h:162: error: expected specifier-qualifier-list before 'u_int8_t'
+
+This fix needs to be backported to 1.6.
+(cherry picked from commit a6e3be7ae977ba907ec6ed028c5ab50a6a51886a)
+---
+ src/protocol.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/protocol.c b/src/protocol.c
+index 3caccb6..7884ef7 100644
+--- a/src/protocol.c
++++ b/src/protocol.c
+@@ -10,6 +10,7 @@
+  *
+  */
+ 
++#include <sys/types.h>
+ #include <sys/socket.h>
+ 
+ #include <common/config.h>
+-- 
+2.7.3
+

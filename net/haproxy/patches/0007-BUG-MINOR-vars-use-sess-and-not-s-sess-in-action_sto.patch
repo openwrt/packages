@@ -1,0 +1,29 @@
+From 21877a43afd6300518140c415ccec2dba0a0591f Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Fri, 21 Oct 2016 17:13:24 +0200
+Subject: [PATCH 07/26] BUG/MINOR: vars: use sess and not s->sess in
+ action_store()
+
+This causes the stream to be dereferenced when not needed. It will
+cause trouble when variables are used outside of a stream.
+(cherry picked from commit 108a8fd8be0c78a4bf147a2028fd9bda3343c93c)
+---
+ src/vars.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/vars.c b/src/vars.c
+index 56fade5..b22c3bf 100644
+--- a/src/vars.c
++++ b/src/vars.c
+@@ -507,7 +507,7 @@ static enum act_return action_store(struct act_rule *rule, struct proxy *px,
+ 
+ 	/* Process the expression. */
+ 	memset(&smp, 0, sizeof(smp));
+-	if (!sample_process(px, s->sess, s, dir|SMP_OPT_FINAL,
++	if (!sample_process(px, sess, s, dir|SMP_OPT_FINAL,
+ 	                    rule->arg.vars.expr, &smp))
+ 		return ACT_RET_CONT;
+ 
+-- 
+2.7.3
+
