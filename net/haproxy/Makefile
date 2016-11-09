@@ -70,7 +70,7 @@ define Package/haproxy-nossl
   TITLE+= (without SSL support)
   VARIANT:=nossl
   DEPENDS+= +libpcre +libltdl +zlib +libpthread
-  TITLE+= (with SSL support)
+  TITLE+= (without SSL support)
 $(call Package/haproxy/Default)
 endef
 
@@ -97,7 +97,6 @@ ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=LUA_LIB="$(STAGING_DIR)/lua-5.3.3/lib"
 	ADDON+=ADDLIB="-lcrypto -lm"
 else
-	ADDON:=USE_OPENSSL=0
 	ADDON+=ADDLIB="-lm"
 endif
 
@@ -112,10 +111,10 @@ define Build/Compile
 		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		$(LUA)
+		$(ADDON)
 		PCREDIR="$(STAGING_DIR)/usr/include" \
 		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
-		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 USE_OPENSSL=1 \
+		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 \
 		USE_ZLIB=yes USE_PCRE=1 \
 		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
 		IGNOREGIT=1
