@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dns
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=1.15.0
 PKG_SOURCE_URL:=http://www.dnspython.org/kits/$(PKG_VERSION)
 PKG_MD5SUM:=63a679089822fb86127867c315286dc5
@@ -17,6 +17,8 @@ PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DIR:=$(BUILD_DIR)/dnspython-$(PKG_VERSION)
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
