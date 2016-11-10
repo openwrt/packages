@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2010-2016 OpenWrt.org
-# Copyright (C) 2009-2016 Thomas Heil <heil@terminal-consulting.de>
+# Copyright (C) 2010-2013 OpenWrt.org
+# Copyright (C) 2009-2014 Thomas Heil <heil@terminal-consulting.de>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,16 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=1.6.9
-PKG_RELEASE:=26
-
+PKG_VERSION:=1.5.18
+PKG_RELEASE:=04
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.6/src/
-PKG_MD5SUM:=c52eee40eb66f290d6f089c339b9d2b3
-
+PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.5/src/
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MD5SUM:=21d35f114583ef731bc96af05b46c75a
+PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=GPL-2.0
-MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,18 +26,6 @@ define Package/haproxy/Default
   CATEGORY:=Network
   TITLE:=The Reliable, High Performance TCP/HTTP Load Balancer
   URL:=http://haproxy.1wt.eu/
-endef
-
-define Download/lua533
-	FILE:=lua-5.3.3.tar.gz
-	URL:=http://www.lua.org/ftp/
-	MD5SUM:=703f75caa4fdf4a911c1a72e67a27498
-endef
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	tar -zxvf $(DL_DIR)/lua-5.3.3.tar.gz -C $(PKG_BUILD_DIR)
-	ln -s $(PKG_BUILD_DIR)/lua-5.3.3 $(PKG_BUILD_DIR)/lua
 endef
 
 define Package/haproxy/Default/conffiles
@@ -63,14 +49,14 @@ endef
 
 define Package/haproxy/description
 $(call Package/haproxy/Default/description)
- This package is built with SSL and LUA support.
+ This package is built with SSL support.
 endef
 
 define Package/haproxy-nossl
   TITLE+= (without SSL support)
   VARIANT:=nossl
   DEPENDS+= +libpcre +libltdl +zlib +libpthread
-  TITLE+= (without SSL support)
+  TITLE+= (with SSL support)
 $(call Package/haproxy/Default)
 endef
 
@@ -90,47 +76,28 @@ else
 endif
 
 ifeq ($(BUILD_VARIANT),ssl)
-	ADDON+=USE_OPENSSL=1
-	ADDON+=USE_LUA=1
-	ADDON+=LUA_LIB_NAME="lua533"
-	ADDON+=LUA_INC="$(STAGING_DIR)/lua-5.3.3/include"
-	ADDON+=LUA_LIB="$(STAGING_DIR)/lua-5.3.3/lib"
-	ADDON+=ADDLIB="-lcrypto -lm"
+	USE_OPENSSL=USE_OPENSSL=1
 else
-	ADDON+=ADDLIB="-lm"
+	USE_OPENSSL=
 endif
 
 define Build/Compile
-	make TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR)/lua INSTALL_TOP="$(STAGING_DIR)/lua-5.3.3/" linux install
-
-	mv $(STAGING_DIR)/lua-5.3.3/lib/liblua.a $(STAGING_DIR)/lua-5.3.3/lib/liblua533.a
-
 	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		$(ADDON)
-		PCREDIR="$(STAGING_DIR)/usr/include" \
+		PCREDIR="$(STAGING_DIR)/usr" \
 		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
-		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 \
+		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 $(USE_OPENSSL) \
 		USE_ZLIB=yes USE_PCRE=1 \
 		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
-		IGNOREGIT=1
-
-	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
 		install
 
 	$(MAKE) -C $(PKG_BUILD_DIR)/contrib/halog \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
-		LD="$(TARGET_CC)" \
-		LDFLAGS="$(TARGET_LDFLAGS)" \
-		ADDLIB="-lcrypto" \
-		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
+		CC="$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
+		OPTIMIZE="" \
 		halog
 endef
 
@@ -147,10 +114,9 @@ endef
 
 Package/haproxy-nossl/install = $(Package/haproxy/install)
 
-
 define Package/halog
 	MENU:=1
-	$(call Package/haproxy)
+	$(call Package/haproxy/Default)
 	TITLE+= halog
 	DEPENDS:=haproxy
 endef
@@ -164,8 +130,6 @@ define Package/halog/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/halog/halog $(1)/usr/bin/
 endef
 
-$(eval $(call Download,lua533))
+$(eval $(call BuildPackage,haproxy-nossl))
 $(eval $(call BuildPackage,haproxy))
 $(eval $(call BuildPackage,halog))
-$(eval $(call BuildPackage,haproxy-nossl))
-
