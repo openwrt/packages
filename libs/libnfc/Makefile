@@ -15,7 +15,7 @@ PKG_FIXUP:=autoreconf
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://code.google.com/p/libnfc/
+PKG_SOURCE_URL:=https://github.com/nfc-tools/libnfc
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
 
