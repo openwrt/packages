@@ -29,7 +29,7 @@ define Package/rsyslog
   CATEGORY:=Network
   TITLE:=Enhanced system logging and kernel message trapping daemons
   URL:=http://www.rsyslog.com/
-  DEPENDS:=+libestr +libfastjson +libuuid +zlib
+  DEPENDS:=+libestr +libfastjson +libuuid +zlib +USE_UCLIBC:libpthread +USE_UCLIBC:librt
 endef
 
 define Package/rsyslog/conffiles
