@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-libav
 PKG_VERSION:=1.8.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
@@ -146,7 +146,8 @@ LIBAV_CONFIGURE_PROTOCOLS:=$(call FILTER_CONFIG,PROTOCOL,protocol,$(LIBAV_PROTOC
 
 CONFIGURE_ARGS += \
 	--without-system-libav \
-	--with-libav-extra-configure="--target-os=linux --cpu=$(CONFIG_CPU_TYPE) \
+	--with-libav-extra-configure="--target-os=linux \
+	$(if $(findstring " ",$(CONFIG_CPU_TYPE)),,--cpu=$(CONFIG_CPU_TYPE)) \
 	--disable-bsfs \
 	--disable-programs \
 	--disable-devices \
