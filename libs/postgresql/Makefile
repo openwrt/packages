@@ -15,9 +15,9 @@ PKG_LICENSE:=PostgreSQL
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=\
-	http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v$(PKG_VERSION) \
-	http://ftp.be.postgresql.org/postgresql/source/v$(PKG_VERSION) \
-	ftp://ftp-archives.postgresql.org/pub/source/v$(PKG_VERSION)
+	https://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
+	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
+	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 PKG_MD5SUM:=cf5e571164ad66028ecd7dd8819e3765470d45bcd440d258b686be7e69c76ed0
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
