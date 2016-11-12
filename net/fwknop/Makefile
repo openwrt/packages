@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwknop
 PKG_VERSION:=2.6.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.cipherdyne.org/fwknop/download
+PKG_SOURCE_URL:=https://www.cipherdyne.org/fwknop/download
 PKG_MD5SUM:=e2c49e9674888a028bd443a55c3aaa22
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=GPLv2
@@ -42,7 +42,8 @@ define Package/fwknopd
   CATEGORY:=Network
   SUBMENU:=Firewall
   TITLE+= Daemon
-  DEPENDS:=+iptables +libfko +libpcap +FWKNOP_GPG:gnupg
+  DEPENDS:=+iptables +libfko +!FWKNOPD_NFQ_CAPTURE:libpcap +FWKNOPD_NFQ_CAPTURE:iptables-mod-nfqueue +FWKNOPD_GPG:gnupg \
+           +FWKNOPD_NFQ_CAPTURE:libnetfilter-queue +FWKNOPD_NFQ_CAPTURE:libnfnetlink
 endef
 
 define Package/fwknopd/description
@@ -90,6 +91,10 @@ endef
 
 ifneq ($(CONFIG_FWKNOPD_GPG),y)
 	CONFIGURE_ARGS += --without-gpgme 
+endif
+
+ifeq ($(CONFIG_FWKNOPD_NFQ_CAPTURE),y)
+	CONFIGURE_ARGS += --enable-nfq-capture
 endif
 
 CONFIGURE_ARGS += \
