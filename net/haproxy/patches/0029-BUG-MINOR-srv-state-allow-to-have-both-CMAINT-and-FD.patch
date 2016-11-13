@@ -1,0 +1,33 @@
+From d6649c499b8ca4fb0bf93153c2a149c78e8a76f8 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 3 Nov 2016 18:33:25 +0100
+Subject: [PATCH 29/31] BUG/MINOR: srv-state: allow to have both CMAINT and
+ FDRAIN flags
+
+CMAINT indicates that the server was *initially* disabled in the
+configuration via the "disabled" keyword. FDRAIN indicates that the
+server was switched to the DRAIN state from the CLI or the agent.
+This it's perfectly valid to have both of them in the state file,
+so the parser must not reject this combination.
+
+This fix must be backported to 1.6.
+(cherry picked from commit e1bde1492a30f5036ca58248e50c27a9e116d9cc)
+---
+ src/server.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/server.c b/src/server.c
+index b9e72b7..b0c7bbe 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -1961,6 +1961,7 @@ static void srv_update_state(struct server *srv, int version, char **params)
+ 			     srv_admin_state != SRV_ADMF_IMAINT &&
+ 			     srv_admin_state != SRV_ADMF_CMAINT &&
+ 			     srv_admin_state != (SRV_ADMF_CMAINT | SRV_ADMF_FMAINT) &&
++			     srv_admin_state != (SRV_ADMF_CMAINT | SRV_ADMF_FDRAIN) &&
+ 			     srv_admin_state != SRV_ADMF_FDRAIN &&
+ 			     srv_admin_state != SRV_ADMF_IDRAIN)) {
+ 				chunk_appendf(msg, ", invalid srv_admin_state value '%s'", params[2]);
+-- 
+2.7.3
+
