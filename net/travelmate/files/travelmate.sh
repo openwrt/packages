@@ -11,7 +11,7 @@
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 trm_pid="${$}"
-trm_ver="0.2.5"
+trm_ver="0.2.6"
 trm_debug=0
 trm_loop=30
 trm_maxretry=3
@@ -29,7 +29,7 @@ trm_prepare()
     local ifname="$(uci -q get wireless."${config}".ifname)"
     local disabled="$(uci -q get wireless."${config}".disabled)"
 
-    if [ "${mode}" = "ap" ] &&
+    if [ "${mode}" = "ap" ] && [ -n "${network}" ] && [ -n "${ifname}" ] &&
         ([ -z "${trm_device}" ] || [ "${trm_device}" = "${device}" ])
     then
         trm_aplist="${trm_aplist} ${ifname}"
@@ -37,7 +37,7 @@ trm_prepare()
         then
             trm_set "none" "${config}" "${network}" "up"
         fi
-    elif [ "${mode}" = "sta" ]
+    elif [ "${mode}" = "sta" ] && [ -n "${network}" ]
     then
         trm_stalist="${trm_stalist} ${config}_${network}"
         if [ -z "${disabled}" ] || [ "${disabled}" = "0" ]
@@ -181,7 +181,7 @@ fi
 if [ -z "${trm_scanner}" ]
 then
     trm_log "error" "no wireless tool for wlan scanning found, please install 'iw' or 'iwinfo'"
-    exit 255
+    exit 1
 fi
 
 # infinitive loop to establish and track STA uplink connections
@@ -195,6 +195,11 @@ do
         config_load wireless
         config_foreach trm_prepare wifi-iface
         trm_set "commit"
+        if [ -z "${trm_aplist}" ]
+        then
+            trm_log "error" "no usable AP configuration found, please add an 'ifname' entry in '/etc/config/wireless'"
+            exit 1
+        fi
         for ap in ${trm_aplist}
         do
             ubus -t 10 wait_for hostapd."${ap}"
@@ -204,15 +209,24 @@ do
             else
                 trm_ssidlist="$(${trm_scanner} "${ap}" scan | awk '/ESSID: ".*"/{ORS=" ";if (!seen[$0]++) for(i=2; i<=NF; i++) print $i}')"
             fi
-            trm_log "debug" "main ::: scan-tool: ${trm_scanner}, ssidlist: ${trm_ssidlist}"
+            trm_log "debug" "main ::: scan-tool: ${trm_scanner}, aplist: ${trm_aplist}, ssidlist: ${trm_ssidlist}"
             if [ -n "${trm_ssidlist}" ]
             then
+                if [ -z "${trm_stalist}" ]
+                then
+                    trm_log "error" "no usable STA configuration found, please add a 'network' entry in '/etc/config/wireless'"
+                    exit 1
+                fi
                 for sta in ${trm_stalist}
                 do
                     trm_config="${sta%%_*}"
                     trm_network="${sta##*_}"
                     trm_ifname="$(uci -q get wireless."${trm_config}".ifname)"
                     trm_ssid="\"$(uci -q get wireless."${trm_config}".ssid)\""
+                    if [ -z "${trm_ifname}" ]
+                    then
+                        trm_ifname="${trm_network}"
+                    fi
                     if [ $((trm_count_${trm_config})) -lt $((trm_maxretry)) ] || [ $((trm_maxretry)) -eq 0 ]
                     then
                         if [ -n "$(printf "${trm_ssidlist}" | grep -Fo "${trm_ssid}")" ]
