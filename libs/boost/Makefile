@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.62.0
 PKG_SOURCE_VERSION:=1_62_0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/$(PKG_VERSION)
@@ -253,7 +253,6 @@ define Package/boost/config
 			prompt "Boost $(lib) library."
 			default m if ALL
 			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)\
-			$(if $(findstring fiber,$(lib)),depends on BROKEN,)\
 			$(if $(findstring python,$(lib)),depends on PACKAGE_$(lib),)
 
 		)
@@ -303,7 +302,7 @@ $(eval $(call DefineBoostLibrary,context,chrono system thread,))
 $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,))
 $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
-$(eval $(call DefineBoostLibrary,fiber,coroutine,,BROKEN))
+$(eval $(call DefineBoostLibrary,fiber,coroutine,,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
 $(eval $(call DefineBoostLibrary,iostreams,,+zlib))
