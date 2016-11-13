@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=wireguard
 
 PKG_VERSION:=0.0.20161105
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=WireGuard-experimental-$(PKG_VERSION).tar.xz
 # This is actually SHA256, but OpenWRT/LEDE will figure it out based on the length
@@ -82,6 +82,7 @@ endef
 define Package/wireguard-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/wg $(1)/usr/bin/
+	$(INSTALL_BIN) ./files/wireguard.sh $(1)/lib/netifd/proto/
 endef
 
 define KernelPackage/wireguard
