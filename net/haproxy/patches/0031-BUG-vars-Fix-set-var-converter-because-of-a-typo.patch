@@ -1,0 +1,37 @@
+From 9c017e541bb3cee2e2884cdc53a4cb4627be5dad Mon Sep 17 00:00:00 2001
+From: Christopher Faulet <cfaulet@haproxy.com>
+Date: Wed, 9 Nov 2016 16:15:32 +0100
+Subject: [PATCH 31/31] BUG: vars: Fix 'set-var' converter because of a typo
+
+The 'set-var' converter uses function smp_conv_store (vars.c). In this function,
+we should use the first argument (index 0) to retrieve the variable name and its
+scope. But because of a typo, we get the scope of the second argument (index
+1). In this case, there is no second argument. So the scope used was always 0
+(SCOPE_SESS), always setting the variable in the session scope.
+
+So, due to this bug, this rules
+
+  tcp-request content accept if { src,set-var(txn.foo) -m found }
+
+always set the variable 'sess.foo' instead of 'txn.foo'.
+(cherry picked from commit 0099a8ca9d58cb4cff943bf6374b55b42a23fbfb)
+---
+ src/vars.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/vars.c b/src/vars.c
+index a3dd85c..8645905 100644
+--- a/src/vars.c
++++ b/src/vars.c
+@@ -379,7 +379,7 @@ static inline int sample_store_stream(const char *name, enum vars_scope scope, s
+ /* Returns 0 if fails, else returns 1. */
+ static int smp_conv_store(const struct arg *args, struct sample *smp, void *private)
+ {
+-	return sample_store_stream(args[0].data.var.name, args[1].data.var.scope, smp);
++	return sample_store_stream(args[0].data.var.name, args[0].data.var.scope, smp);
+ }
+ 
+ /* This fucntions check an argument entry and fill it with a variable
+-- 
+2.7.3
+
