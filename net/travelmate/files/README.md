@@ -69,8 +69,18 @@ config zone
 [...]
 </code></pre>
 
-**3. add required wwan stations to your wireless configuration in etc/config/wireless:**
+**3. add required ap and wwan stations to your wireless configuration in etc/config/wireless:**
 <pre><code>
+[...]
+config wifi-iface
+        option device 'radio0'
+        option network 'lan'
+        option ifname 'wlan0'
+        option mode 'ap'
+        option ssid 'example_ap'
+        option encryption 'psk2+ccmp'
+        option key 'abc'
+        option disabled '0'
 [...]
 config wifi-iface
         option device 'radio0'
