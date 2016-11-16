@@ -61,7 +61,15 @@ dpd = |DPD|
 # be much higher to prevent such clients being awaken too 
 # often by the DPD messages, and save battery.
 # (clients that send the X-AnyConnect-Identifier-DeviceType)
-#mobile-dpd = 1800
+mobile-dpd = 1800
+
+# If using DTLS, and no UDP traffic is received for this
+# many seconds, attempt to send future traffic over the TCP
+# connection instead, in an attempt to wake up the client
+# in the case that there is a NAT and the UDP translation
+# was deleted. If this is unset, do not attempt to use this
+# recovery mechanism.
+switch-to-tcp-timeout = 25
 
 # MTU discovery (DPD must be enabled)
 try-mtu-discovery = false
