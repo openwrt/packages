@@ -79,6 +79,8 @@ define Package/gnunet/description
 endef
 
 define BuildComponent
+  PKG_CONFIG_DEPENDS+=CONFIG_PACKAGE_$(PKG_NAME)-$(1)
+
   define Package/gnunet-$(1)
     $$(call Package/gnunet/Default)
     TITLE+= $(2)
