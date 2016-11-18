@@ -1,0 +1,39 @@
+From 6026323cd0c235d6ab7ec039e5d735e7ea2e28bf Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Mon, 31 Oct 2016 17:32:20 +0100
+Subject: [PATCH 25/26] BUG/MEDIUM: peers: on shutdown, wake up the appctx, not
+ the stream
+
+This part was missed when peers were ported to the new applet
+infrastructure in 1.6, the main stream is woken up instead of the
+appctx. This creates a race condition by which it is possible to
+wake the stream at the wrong moment and miss an event. This bug
+might be at least partially responsible for some of the CLOSE_WAIT
+that were reported on peers session upon reload in version 1.6.
+
+This fix must be backported to 1.6.
+(cherry picked from commit 78c0c50705a5e9d48607b9377adf030bb9d97b34)
+---
+ src/peers.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/src/peers.c b/src/peers.c
+index 7e1523f..db1f608 100644
+--- a/src/peers.c
++++ b/src/peers.c
+@@ -1637,11 +1637,9 @@ static void peer_session_forceshutdown(struct stream * stream)
+ 	if (ps)
+ 		ps->reconnect = tick_add(now_ms, MS_TO_TICKS(50 + random() % 2000));
+ 
+-	/* call release to reinit resync states if needed */
+-	peer_session_release(appctx);
+ 	appctx->st0 = PEER_SESS_ST_END;
+ 	appctx->ctx.peers.ptr = NULL;
+-	task_wakeup(stream->task, TASK_WOKEN_MSG);
++	appctx_wakeup(appctx);
+ }
+ 
+ /* Pre-configures a peers frontend to accept incoming connections */
+-- 
+2.7.3
+

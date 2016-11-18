@@ -1,0 +1,64 @@
+From ab45181e36b6c4f7d31c5284035937c2d0be37eb Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Mon, 31 Oct 2016 17:46:57 +0100
+Subject: [PATCH 26/26] BUG/MEDIUM: peers: fix use after free in
+ peer_session_create()
+
+In case of resource allocation error, peer_session_create() frees
+everything allocated and returns a pointer to the stream/session that
+was put back into the free pool. This stream/session is then assigned
+to ps->{stream,session} with no error control. This means that it is
+perfectly possible to have a new stream or session being both used for
+a regular communication and for a peer at the same time.
+
+In fact it is the only way (for now) to explain a CLOSE_WAIT on peers
+connections that was caught in this dump with the stream interface in
+SI_ST_CON state while the error field proves the state ought to have
+been SI_ST_DIS, very likely indicating two concurrent accesses on the
+same area :
+
+  0x7dbd50: [31/Oct/2016:17:53:41.267510] id=0 proto=tcpv4
+    flags=0x23006, conn_retries=0, srv_conn=(nil), pend_pos=(nil)
+    frontend=myhost2 (id=4294967295 mode=tcp), listener=? (id=0)
+    backend=<NONE> (id=-1 mode=-) addr=127.0.0.1:41432
+    server=<NONE> (id=-1) addr=127.0.0.1:8521
+    task=0x7dbcd8 (state=0x08 nice=0 calls=2 exp=<NEVER> age=1m5s)
+    si[0]=0x7dbf48 (state=CLO flags=0x4040 endp0=APPCTX:0x7d99c8 exp=<NEVER>, et=0x000)
+    si[1]=0x7dbf68 (state=CON flags=0x50 endp1=CONN:0x7dc0b8 exp=<NEVER>, et=0x020)
+    app0=0x7d99c8 st0=11 st1=0 st2=0 applet=<PEER>
+    co1=0x7dc0b8 ctrl=tcpv4 xprt=RAW data=STRM target=PROXY:0x7fe62028a010
+        flags=0x0020b310 fd=7 fd.state=22 fd.cache=0 updt=0
+    req=0x7dbd60 (f=0x80a020 an=0x0 pipe=0 tofwd=0 total=0)
+        an_exp=<NEVER> rex=<NEVER> wex=<NEVER>
+        buf=0x78a3c0 data=0x78a3d4 o=0 p=0 req.next=0 i=0 size=0
+    res=0x7dbda0 (f=0x80402020 an=0x0 pipe=0 tofwd=0 total=0)
+        an_exp=<NEVER> rex=<NEVER> wex=<NEVER>
+        buf=0x78a3c0 data=0x78a3d4 o=0 p=0 rsp.next=0 i=0 size=0
+
+Special thanks to Arnaud Gavara who provided lots of valuable input and
+ran some validation testing on this patch.
+
+This fix must be backported to 1.6 and 1.5. Note that in 1.5 the
+session is not assigned from within the function so some extra checks
+may be needed in the callers.
+(cherry picked from commit b21d08e2492bfbf9d2341ce9f148cb9845927862)
+---
+ src/peers.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/peers.c b/src/peers.c
+index db1f608..c8be59a 100644
+--- a/src/peers.c
++++ b/src/peers.c
+@@ -1747,7 +1747,7 @@ static struct stream *peer_session_create(struct peers *peers, struct peer *peer
+  out_free_appctx:
+ 	appctx_free(appctx);
+  out_close:
+-	return s;
++	return NULL;
+ }
+ 
+ /*
+-- 
+2.7.3
+

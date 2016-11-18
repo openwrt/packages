@@ -1,0 +1,70 @@
+From 0a2117dc29147ed990732d1b2fc9779835820f3e Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 3 Nov 2016 20:31:40 +0100
+Subject: [PATCH 27/31] BUG/MEDIUM: systemd-wrapper: return correct exit codes
+
+Gabriele Cerami reported the the exit codes of the systemd-wrapper are
+wrong. In short, it directly returns the output of the wait syscall's
+status, which is a composite value made of error code an signal numbers.
+In general it contains the signal number on the lower bits and the error
+code on the higher bits, but exit() truncates it to the lowest 8 bits,
+causing config validations to incorrectly report a success. Example :
+
+  $ ./haproxy-systemd-wrapper -c -f /dev/null
+  <7>haproxy-systemd-wrapper: executing /tmp/haproxy -c -f /dev/null -Ds
+  Configuration file has no error but will not start (no listener) => exit(2).
+  <5>haproxy-systemd-wrapper: exit, haproxy RC=512
+  $ echo $?
+  0
+
+If the process is killed however, the signal number is directly reported
+in the exit code.
+
+Let's fix all this to ensure that the exit code matches what the shell does,
+which means that codes 0..127 are for exit codes, codes 128..254 for signals,
+and code 255 for unknown exit code. Now the return code is correct :
+
+  $ ./haproxy-systemd-wrapper -c -f /dev/null
+  <7>haproxy-systemd-wrapper: executing /tmp/haproxy -c -f /dev/null -Ds
+  Configuration file has no error but will not start (no listener) => exit(2).
+  <5>haproxy-systemd-wrapper: exit, haproxy RC=2
+  $ echo $?
+  2
+
+  $ ./haproxy-systemd-wrapper -f /tmp/cfg.conf
+  <7>haproxy-systemd-wrapper: executing /tmp/haproxy -f /dev/null -Ds
+  ^C
+  <5>haproxy-systemd-wrapper: exit, haproxy RC=130
+  $ echo $?
+  130
+
+This fix must be backported to 1.6 and 1.5.
+(cherry picked from commit f7659cb10cb0420c7ca06fad1067207021d2a078)
+---
+ src/haproxy-systemd-wrapper.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/src/haproxy-systemd-wrapper.c b/src/haproxy-systemd-wrapper.c
+index b426f96..f6a9c85 100644
+--- a/src/haproxy-systemd-wrapper.c
++++ b/src/haproxy-systemd-wrapper.c
+@@ -295,6 +295,16 @@ int main(int argc, char **argv)
+ 		}
+ 	}
+ 
++	/* return either exit code or signal+128 */
++	if (WIFEXITED(status))
++		status = WEXITSTATUS(status);
++	else if (WIFSIGNALED(status))
++		status = 128 + WTERMSIG(status);
++	else if (WIFSTOPPED(status))
++		status = 128 + WSTOPSIG(status);
++	else
++		status = 255;
++
+ 	fprintf(stderr, SD_NOTICE "haproxy-systemd-wrapper: exit, haproxy RC=%d\n",
+ 			status);
+ 	return status;
+-- 
+2.7.3
+

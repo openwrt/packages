@@ -1,0 +1,53 @@
+From 42ccea00f69abdd1bb748494f7e17d8369ccae31 Mon Sep 17 00:00:00 2001
+From: Dinko Korunic <dinko.korunic@gmail.com>
+Date: Fri, 9 Sep 2016 09:41:15 +0200
+Subject: [PATCH 01/26] BUG/MINOR: Fix OSX compilation errors
+
+SOL_IPV6 is not defined on OSX, breaking the compile. Also libcrypt is
+not available for installation neither in Macports nor as a Brew recipe,
+so we're disabling implicit dependancy.
+
+Signed-off-by: Dinko Korunic <dinko.korunic@gmail.com>
+(cherry picked from commit 7276f3aa3d687fca64bb9becc66c8e0dbb8b378a)
+---
+ Makefile        | 1 -
+ src/proto_tcp.c | 4 ++--
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 1bf778d..1d0f2bc 100644
+--- a/Makefile
++++ b/Makefile
+@@ -301,7 +301,6 @@ ifeq ($(TARGET),osx)
+   USE_POLL       = implicit
+   USE_KQUEUE     = implicit
+   USE_TPROXY     = implicit
+-  USE_LIBCRYPT   = implicit
+ else
+ ifeq ($(TARGET),openbsd)
+   # This is for OpenBSD >= 3.0
+diff --git a/src/proto_tcp.c b/src/proto_tcp.c
+index 2c81fb4..4f5d88d 100644
+--- a/src/proto_tcp.c
++++ b/src/proto_tcp.c
+@@ -206,7 +206,7 @@ int tcp_bind_socket(int fd, int flags, struct sockaddr_storage *local, struct so
+ 	case AF_INET6:
+ 		if (flags && ip6_transp_working) {
+ 			if (0
+-#if defined(IPV6_TRANSPARENT)
++#if defined(IPV6_TRANSPARENT) && defined(SOL_IPV6)
+ 			    || (setsockopt(fd, SOL_IPV6, IPV6_TRANSPARENT, &one, sizeof(one)) == 0)
+ #endif
+ #if defined(IP_FREEBIND)
+@@ -854,7 +854,7 @@ int tcp_bind_listener(struct listener *listener, char *errmsg, int errlen)
+ 		break;
+ 		case AF_INET6:
+ 			if (1
+-#if defined(IPV6_TRANSPARENT)
++#if defined(IPV6_TRANSPARENT) && defined(SOL_IPV6)
+ 			    && (setsockopt(fd, SOL_IPV6, IPV6_TRANSPARENT, &one, sizeof(one)) == -1)
+ #endif
+ #if defined(IP_FREEBIND)
+-- 
+2.7.3
+

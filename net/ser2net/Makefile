@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ser2net
-PKG_VERSION:=3.1
+PKG_VERSION:=3.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/ser2net
-PKG_MD5SUM:=3aa17f5b28a13e4ac16c569a3b9a7e2a
+PKG_MD5SUM:=85adca01e963ec80ec96f1dfd23aeaec
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
@@ -29,7 +29,7 @@ define Package/ser2net
   CATEGORY:=Network
   TITLE:=Serial to Network Proxy
   URL:=http://sourceforge.net/projects/ser2net/
-  DEPENDS:=+USE_UCLIBC:libpthread
+  DEPENDS:=+USE_UCLIBC:libpthread +USE_UCLIBC:librt
 endef
 
 define Package/ser2net/description

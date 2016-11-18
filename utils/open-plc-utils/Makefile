@@ -91,6 +91,7 @@ define Build/Compile
 endef
 
 define Package/open-plc-utils/install
+	true
 endef
 
 define BuildPlugin

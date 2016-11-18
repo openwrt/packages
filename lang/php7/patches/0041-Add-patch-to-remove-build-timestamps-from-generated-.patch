@@ -117,10 +117,10 @@ diff --git a/sapi/phpdbg/phpdbg.c b/sapi/phpdbg/phpdbg.c
 index 68a164c..82565d8 100644
 --- a/sapi/phpdbg/phpdbg.c
 +++ b/sapi/phpdbg/phpdbg.c
-@@ -1520,10 +1520,8 @@ phpdbg_main:
- 				sapi_startup(phpdbg);
- 				phpdbg->startup(phpdbg);
- 				printf(
+@@ -1657,10 +1657,8 @@
+ 				phpdbg_do_help(NULL);
+ 			} else if (show_version) {
+ 				phpdbg_out(
 -					"phpdbg %s (built: %s %s)\nPHP %s, Copyright (c) 1997-2016 The PHP Group\n%s",
 +					"phpdbg %s\nPHP %s, Copyright (c) 1997-2016 The PHP Group\n%s",
  					PHPDBG_VERSION,

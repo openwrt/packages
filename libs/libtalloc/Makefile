@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=talloc
 PKG_VERSION:=2.1.7
 MAJOR_VERSION:=2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc/
@@ -28,7 +28,7 @@ define Package/libtalloc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Core memory allocator used in Samba
-  DEPENDS:=+USE_GLIBC:libbsd $(ICONV_DEPENDS)
+  DEPENDS:=+USE_GLIBC:libbsd $(ICONV_DEPENDS) +libattr
   URL:=https://talloc.samba.org/talloc/doc/html/index.html
 endef
 

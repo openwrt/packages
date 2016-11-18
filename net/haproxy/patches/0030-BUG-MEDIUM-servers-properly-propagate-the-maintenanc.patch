@@ -1,0 +1,172 @@
+From c449c9835e7d9e02cf0aeafc482364d5090db543 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 3 Nov 2016 19:22:19 +0100
+Subject: [PATCH 30/31] BUG/MEDIUM: servers: properly propagate the maintenance
+ states during startup
+
+Right now there is an issue with the way the maintenance flags are
+propagated upon startup. They are not propagate, just copied from the
+tracked server. This implies that depending on the server's order, some
+tracking servers may not be marked down. For example this configuration
+does not work as expected :
+
+        server s1 1.1.1.1:8000 track s2
+        server s2 1.1.1.1:8000 track s3
+        server s3 1.1.1.1:8000 track s4
+        server s4 wtap:8000 check inter 1s disabled
+
+It results in s1/s2 being up, and s3/s4 being down, while all of them
+should be down.
+
+The only clean way to process this is to run through all "root" servers
+(those not tracking any other server), and to propagate their state down
+to all their trackers. This is the same algorithm used to propagate the
+state changes. It has to be done both to compute the IDRAIN flag and the
+IMAINT flag. However, doing so requires that tracking servers are not
+marked as inherited maintenance anymore while parsing the configuration
+(and given that it is wrong, better drop it).
+
+This fix also addresses another side effect of the bug above which is
+that the IDRAIN/IMAINT flags are stored in the state files, and if
+restored while the tracked server doesn't have the equivalent flag,
+the servers may end up in a situation where it's impossible to remove
+these flags. For example in the configuration above, after removing
+"disabled" on server s4, the other servers would have remained down,
+and not anymore with this fix. Similarly, the combination of IMAINT
+or IDRAIN with their respective forced modes was not accepted on
+reload, which is wrong as well.
+
+This bug has been present at least since 1.5, maybe even 1.4 (it came
+with tracking support). The fix needs to be backported there, though
+the srv-state parts are irrelevant.
+
+This commit relies on previous patch to silence warnings on startup.
+(cherry picked from commit 757478e900ebc1e67c1fe060b9b561d276cab3e1)
+---
+ include/proto/server.h |  1 +
+ src/cfgparse.c         |  7 -------
+ src/haproxy.c          |  4 ++++
+ src/server.c           | 42 +++++++++++++++++++++++++++++++++++++++---
+ 4 files changed, 44 insertions(+), 10 deletions(-)
+
+diff --git a/include/proto/server.h b/include/proto/server.h
+index d75cc9f..b6572ba 100644
+--- a/include/proto/server.h
++++ b/include/proto/server.h
+@@ -44,6 +44,7 @@ struct server *server_find_by_id(struct proxy *bk, int id);
+ struct server *server_find_by_name(struct proxy *bk, const char *name);
+ struct server *server_find_best_match(struct proxy *bk, char *name, int id, int *diff);
+ void apply_server_state(void);
++void srv_compute_all_admin_states(struct proxy *px);
+ 
+ /* functions related to server name resolution */
+ int snr_update_srv_status(struct server *s);
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index b8289a2..365b283 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -8275,13 +8275,6 @@ out_uri_auth_compat:
+ 					goto next_srv;
+ 				}
+ 
+-				/* if the other server is forced disabled, we have to do the same here */
+-				if (srv->admin & SRV_ADMF_MAINT) {
+-					newsrv->admin |= SRV_ADMF_IMAINT;
+-					newsrv->state = SRV_ST_STOPPED;
+-					newsrv->check.health = 0;
+-				}
+-
+ 				newsrv->track = srv;
+ 				newsrv->tracknext = srv->trackers;
+ 				srv->trackers = newsrv;
+diff --git a/src/haproxy.c b/src/haproxy.c
+index 2d476f2..1699132 100644
+--- a/src/haproxy.c
++++ b/src/haproxy.c
+@@ -566,6 +566,7 @@ void init(int argc, char **argv)
+ 	struct wordlist *wl;
+ 	char *progname;
+ 	char *change_dir = NULL;
++	struct proxy *px;
+ 
+ 	chunk_init(&trash, malloc(global.tune.bufsize), global.tune.bufsize);
+ 	alloc_trash_buffers(global.tune.bufsize);
+@@ -852,6 +853,9 @@ void init(int argc, char **argv)
+ 	/* Apply server states */
+ 	apply_server_state();
+ 
++	for (px = proxy; px; px = px->next)
++		srv_compute_all_admin_states(px);
++
+ 	global_listener_queue_task = task_new();
+ 	if (!global_listener_queue_task) {
+ 		Alert("Out of memory when initializing global task\n");
+diff --git a/src/server.c b/src/server.c
+index b0c7bbe..f2923ae 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -705,6 +705,40 @@ void srv_clr_admin_flag(struct server *s, enum srv_admin mode)
+ 		srv_clr_admin_flag(srv, mode);
+ }
+ 
++/* principle: propagate maint and drain to tracking servers. This is useful
++ * upon startup so that inherited states are correct.
++ */
++static void srv_propagate_admin_state(struct server *srv)
++{
++	struct server *srv2;
++
++	if (!srv->trackers)
++		return;
++
++	for (srv2 = srv->trackers; srv2; srv2 = srv2->tracknext) {
++		if (srv->admin & (SRV_ADMF_MAINT | SRV_ADMF_CMAINT))
++			srv_set_admin_flag(srv2, SRV_ADMF_IMAINT);
++
++		if (srv->admin & SRV_ADMF_DRAIN)
++			srv_set_admin_flag(srv2, SRV_ADMF_IDRAIN);
++	}
++}
++
++/* Compute and propagate the admin states for all servers in proxy <px>.
++ * Only servers *not* tracking another one are considered, because other
++ * ones will be handled when the server they track is visited.
++ */
++void srv_compute_all_admin_states(struct proxy *px)
++{
++	struct server *srv;
++
++	for (srv = px->srv; srv; srv = srv->next) {
++		if (srv->track)
++			continue;
++		srv_propagate_admin_state(srv);
++	}
++}
++
+ /* Note: must not be declared <const> as its list will be overwritten.
+  * Please take care of keeping this list alphabetically sorted, doing so helps
+  * all code contributors.
+@@ -1955,15 +1989,17 @@ static void srv_update_state(struct server *srv, int version, char **params)
+ 			p = NULL;
+ 			errno = 0;
+ 			srv_admin_state = strtol(params[2], &p, 10);
++
++			/* inherited statuses will be recomputed later */
++			srv_admin_state &= ~SRV_ADMF_IDRAIN & ~SRV_ADMF_IMAINT;
++
+ 			if ((p == params[2]) || errno == EINVAL || errno == ERANGE ||
+ 			    (srv_admin_state != 0 &&
+ 			     srv_admin_state != SRV_ADMF_FMAINT &&
+-			     srv_admin_state != SRV_ADMF_IMAINT &&
+ 			     srv_admin_state != SRV_ADMF_CMAINT &&
+ 			     srv_admin_state != (SRV_ADMF_CMAINT | SRV_ADMF_FMAINT) &&
+ 			     srv_admin_state != (SRV_ADMF_CMAINT | SRV_ADMF_FDRAIN) &&
+-			     srv_admin_state != SRV_ADMF_FDRAIN &&
+-			     srv_admin_state != SRV_ADMF_IDRAIN)) {
++			     srv_admin_state != SRV_ADMF_FDRAIN)) {
+ 				chunk_appendf(msg, ", invalid srv_admin_state value '%s'", params[2]);
+ 			}
+ 
+-- 
+2.7.3
+

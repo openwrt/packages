@@ -1,0 +1,32 @@
+From f95dc972e2e9e3c245862e45336ff4f014ad5666 Mon Sep 17 00:00:00 2001
+From: Jorrit Schippers <jorrit@ncode.nl>
+Date: Sat, 9 Apr 2016 20:30:38 +0200
+Subject: [PATCH 24/26] DOC: Fix typo in description of `-st` parameter in man
+ page
+
+extra "wait".
+(cherry picked from commit 1458fdbe974562158fc40fd72d745d5fd644c939)
+---
+ doc/haproxy.1 | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/doc/haproxy.1 b/doc/haproxy.1
+index a836d5d..20c9343 100644
+--- a/doc/haproxy.1
++++ b/doc/haproxy.1
+@@ -149,9 +149,9 @@ PIDs. Technically speaking, \fBSIGTTOU\fP and \fBSIGUSR1\fP are sent.
+ .TP
+ \fB\-st <pidlist>\fP
+ Send TERMINATE signal to the pids in pidlist after startup. The processes
+-which receive this signal will wait immediately terminate, closing all
+-active sessions. This option must be specified last, followed by any number
+-of PIDs. Technically speaking, \fBSIGTTOU\fP and \fBSIGTERM\fP are sent.
++which receive this signal will terminate immediately, closing all active
++sessions. This option must be specified last, followed by any number of
++PIDs. Technically speaking, \fBSIGTTOU\fP and \fBSIGTERM\fP are sent.
+ 
+ .SH LOGGING
+ Since HAProxy can run inside a chroot, it cannot reliably access /dev/log.
+-- 
+2.7.3
+
