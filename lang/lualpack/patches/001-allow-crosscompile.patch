@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -7,7 +7,7 @@ LUALIB= $(LUA)/src
+ LUABIN= $(LUA)/src
+ 
+ # probably no need to change anything below here
+-CFLAGS= $(INCS) $(WARN) -O2 $G
++CFLAGS ?= $(INCS) $(WARN) -O2 $G
+ WARN= -ansi -pedantic -Wall
+ INCS= -I$(LUAINC)
+ 
