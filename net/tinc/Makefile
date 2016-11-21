@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tinc
-PKG_VERSION:=1.0.29
+PKG_VERSION:=1.0.30
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.tinc-vpn.org/packages
-PKG_MD5SUM:=bb7d2a672dd6958372da23fd764ba067
+PKG_MD5SUM:=f3ca1fc1154ed1f2cac408ea06a1c1ca
 
 PKG_INSTALL:=1
 
