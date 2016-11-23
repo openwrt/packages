@@ -1,0 +1,19 @@
+--- a/src/luaconf.h	2012-11-08 10:10:00.000000000 +0000
++++ b/src/luaconf.h	2012-12-19 15:07:33.374187658 +0000
+@@ -35,13 +35,13 @@
+ #ifndef LUA_LMULTILIB
+ #define LUA_LMULTILIB	"lib"
+ #endif
+-#define LUA_LROOT	"/usr/local"
+-#define LUA_LUADIR	"/lua/5.1/"
++#define LUA_LROOT	"/usr"
++#define LUA_LUADIR	"/lua/"
+ #define LUA_LJDIR	"/luajit-2.1.0-beta2/"
+ 
+ #ifdef LUA_ROOT
+ #define LUA_JROOT	LUA_ROOT
+-#define LUA_RLDIR	LUA_ROOT "/share" LUA_LUADIR
++#define LUA_RLDIR	LUA_ROOT "/lib" LUA_LUADIR
+ #define LUA_RCDIR	LUA_ROOT "/" LUA_MULTILIB LUA_LUADIR
+ #define LUA_RLPATH	";" LUA_RLDIR "?.lua;" LUA_RLDIR "?/init.lua"
+ #define LUA_RCPATH	";" LUA_RCDIR "?.so"
