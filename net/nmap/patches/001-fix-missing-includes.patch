@@ -1,0 +1,14 @@
+diff --git a/ncat/ncat_ssl.c b/ncat/ncat_ssl.c
+index ee8ca97..9ff495c 100644
+--- a/ncat/ncat_ssl.c
++++ b/ncat/ncat_ssl.c
+@@ -128,7 +128,9 @@
+ 
+ #include <stdio.h>
+ #include <openssl/ssl.h>
++#include <openssl/bn.h>
+ #include <openssl/err.h>
++#include <openssl/rsa.h>
+ #include <openssl/rand.h>
+ #include <openssl/x509.h>
+ #include <openssl/x509v3.h>
