@@ -26,14 +26,14 @@ start() {
 
 	init_ifaces() {
 		local cfg="$1"
-		local url lnk
+		local url lnk tries
 
 		init_iface() {
 			local ifn="$1"
 
 			if [ -n "$url" ]; then
 				local try=0
-				local max=3
+				local max=$tries
 				local hostname="$(cat /proc/sys/kernel/hostname)"
 
 				while [ $((++try)) -le $max ]; do
@@ -63,6 +63,7 @@ start() {
 
 		config_get url "$cfg" remote
 		config_get lnk "$cfg" symlink
+		config_get tries "$cfg" remote_tries 3
 		config_get backup_dir "$cfg" backup_dir
 		config_list_foreach "$cfg" interface init_iface
 
