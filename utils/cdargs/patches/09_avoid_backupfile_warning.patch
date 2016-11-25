@@ -1,0 +1,24 @@
+Description: Check for existence of ~/.cdargs before making a backup copy
+Forwarded: no
+Author: Mike Miller <mtmiller@ieee.org>
+Bug-Debian: http://bugs.debian.org/713007
+Last-Update: 2013-10-30
+
+--- a/src/cdargs.cc
++++ b/src/cdargs.cc
+@@ -728,9 +728,12 @@ void list_to_file(void) {
+     if(opt_user.size() > 0) {
+         return;
+     }
+-    string backup_file = mylistfile + "~";
+-    if(rename(mylistfile.c_str(),backup_file.c_str()) == -1) {
+-        fprintf(stderr,"warning: could not create backupfile\n");
++    struct stat buf;
++    if(stat(mylistfile.c_str(),&buf) == 0) {
++        string backup_file = mylistfile + "~";
++        if(rename(mylistfile.c_str(),backup_file.c_str()) == -1) {
++            fprintf(stderr,"warning: could not create backupfile\n");
++        }
+     }
+     ofstream listfile(mylistfile.c_str());
+     if (!listfile) {

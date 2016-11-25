@@ -1,0 +1,33 @@
+Description: Fix FTBFS when PATH_MAX is not defined, e.g. on GNU Hurd
+Forwarded: no
+Author: Mike Miller <mtmiller@ieee.org>
+Last-Update: 2013-10-30
+
+--- a/src/cdargs.cc
++++ b/src/cdargs.cc
+@@ -930,8 +930,12 @@ string get_resultfile(void) {
+ }
+ 
+ char* get_cwd_as_charp(void) {
+-    char buf[PATH_MAX];
+-    char* result = getcwd(buf, sizeof(buf));
++    char *buf;
++    char *result = NULL;
++
++    size_t size = (size_t)pathconf(".", _PC_PATH_MAX);
++    if ((buf = (char *)malloc(size)) != NULL)
++        result = getcwd(buf, size);
+ 
+     if(result == NULL) {
+         message("cannot determine current working directory.exit.");
+@@ -940,7 +944,9 @@ char* get_cwd_as_charp(void) {
+     }
+     /* this can be a memleak if not freed again */
+     /* but then ... how long does cdargs usually run? */
+-    return strdup(buf);
++    result = strdup(buf);
++    free(buf);
++    return result;
+ }
+ 
+ string get_cwd_as_string(void) {

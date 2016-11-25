@@ -1,0 +1,22 @@
+Description: Add support for ZSH
+Forwarded: not needed
+Origin: http://www.skamphausen.de/cgi-bin/ska/cdargs-zsh-completion.patch
+Last-Update: 2009-03-29
+
+--- a/contrib/cdargs-bash.sh
++++ b/contrib/cdargs-bash.sh
+@@ -254,4 +254,14 @@ _cdargs_complete() {
+   complete $nospace -S / -X '*/' -F _cdargs_aliases cv cb cdb
+ }
+ 
++# Support ZSH via its BASH completion emulation
++if [ -n "$ZSH_VERSION" ]; then
++       autoload bashcompinit
++       bashcompinit
++elif [ -z "${BASH_VERSION}" ]; then
++    # we do not support anything besides bash completion
++    # (however patches to support other shells are very welcome)
++    return 100
++fi
++
+ _cdargs_complete

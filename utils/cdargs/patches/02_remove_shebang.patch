@@ -1,0 +1,21 @@
+Description: Remove shebang lines in sample shell scripts
+Forwarded: no
+Author: Francois Marier <francois@debian.org>
+Last-Update: 2011-10-12
+
+--- a/contrib/cdargs-bash.sh
++++ b/contrib/cdargs-bash.sh
+@@ -1,5 +1,3 @@
+-#!/bin/sh
+-
+ # (C) 2002-2003 Dan Allen and Stefan Kamphausen
+ 
+ # Written by Dan Allen <dan@mojavelinux.com>
+--- a/contrib/cdargs-tcsh.csh
++++ b/contrib/cdargs-tcsh.csh
+@@ -1,5 +1,3 @@
+-#!/bin/csh
+-
+ # (C) 2002-2005 Stefan Kamphausen
+ 
+ # (T)CShell extensions written by

@@ -1,0 +1,25 @@
+Description: Fix typos in program messages
+Forwarded: yes
+Author: Francois Marier <francois@debian.org>
+Last-Update: 2010-11-28
+
+--- a/src/cdargs.cc
++++ b/src/cdargs.cc
+@@ -1006,7 +1006,7 @@ void version(void) {
+ 
+ void usage(void) {
+     printf("expanding the shell built-in cd with bookmarks and browser\n\n");
+-    printf("  Usually you don't call this programm directly.\n");
++    printf("  Usually you don't call this program directly.\n");
+     printf("  Copy it somewhere into your path and create\n");
+     printf("  a shell alias (which takes arguments) as described\n");
+     printf("  in the file INSTALL which came with this program.\n");
+@@ -1308,7 +1308,7 @@ void fatal_exit(char* msg) {
+ void terminate(int sig) {
+     endwin();
+     if(sig == 11) {
+-        fprintf(stderr,"programm received signal %d\n",sig);
++        fprintf(stderr,"program received signal %d\n",sig);
+         fprintf(stderr,"This should never happen.\n");
+         fprintf(stderr,"Maybe you want to send an email to the author and report a bug?\n");
+         fprintf(stderr,"Author: Stefan Kamphausen <http://www.skamphausen.de>\n"); 

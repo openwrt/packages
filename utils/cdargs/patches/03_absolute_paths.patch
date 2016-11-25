@@ -1,0 +1,71 @@
+Description: Add absolute paths to the shell utilities
+Forwarded: no
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=337548
+Author: Petra Malik <petra@debian.org>
+Last-Update: 2006-04-17
+
+--- a/contrib/cdargs-bash.sh
++++ b/contrib/cdargs-bash.sh
+@@ -30,15 +30,15 @@ function _cdargs_get_dir ()
+     # if there is one exact match (possibly with extra path info after it),
+     # then just use that match without calling cdargs
+     if [ -e "$HOME/.cdargs" ]; then
+-        dir=`grep "^$1 " "$HOME/.cdargs"`
++        dir=`/bin/grep "^$1 " "$HOME/.cdargs"`
+         if [ -z "$dir" ]; then
+             bookmark="${1/\/*/}"
+             if [ "$bookmark" != "$1" ]; then
+-                dir=`grep "^$bookmark " "$HOME/.cdargs"`
+-                extrapath=`echo "$1" | sed 's#^[^/]*/#/#'`
++                dir=`/bin/grep "^$bookmark " "$HOME/.cdargs"`
++                extrapath=`echo "$1" | /bin/sed 's#^[^/]*/#/#'`
+             fi
+         fi
+-        [ -n "$dir" ] && dir=`echo "$dir" | sed 's/^[^ ]* //'`
++        [ -n "$dir" ] && dir=`echo "$dir" | /bin/sed 's/^[^ ]* //'`
+     fi
+     if [ -z "$dir" -o "$dir" != "${dir/
+ /}" ]; then
+@@ -47,7 +47,7 @@ function _cdargs_get_dir ()
+         dir=
+         if cdargs --noresolve "${1/\/*/}"; then
+             dir=`cat "$HOME/.cdargsresult"`
+-            rm -f "$HOME/.cdargsresult";
++            /bin/rm -f "$HOME/.cdargsresult";
+         fi
+     fi
+     if [ -z "$dir" ]; then
+@@ -164,10 +164,10 @@ function mark ()
+     local tmpfile
+ 
+     # first clear any bookmarks with this same alias, if file exists
+-    if [[ "$CDARGS_NODUPS" && -e "$HOME/.cdargs" ]]; then
+-        tmpfile=`echo ${TEMP:-${TMPDIR:-/tmp}} | sed -e "s/\\/$//"`
++    if [ "$CDARGS_NODUPS" -a -e "$HOME/.cdargs" ]; then
++        tmpfile=`echo ${TEMP:-${TMPDIR:-/tmp}} | /bin/sed -e "s/\\/$//"`
+         tmpfile=$tmpfile/cdargs.$USER.$$.$RANDOM
+-        grep -v "^$1 " "$HOME/.cdargs" > $tmpfile && 'mv' -f $tmpfile "$HOME/.cdargs";
++        /bin/grep -v "^$1 " "$HOME/.cdargs" > $tmpfile && 'mv' -f $tmpfile "$HOME/.cdargs";
+     fi
+     # add the alias to the list of bookmarks
+     cdargs --add=":$1:`pwd`"; 
+@@ -216,7 +216,7 @@ function _cdargs_aliases ()
+         cur=${COMP_WORDS[COMP_CWORD]}
+         if [ "$cur" != "${cur/\//}" ]; then # if at least one /
+             bookmark="${cur/\/*/}"
+-            dir=`grep "^$bookmark " "$HOME/.cdargs" | sed 's#^[^ ]* ##'`
++            dir=`/bin/grep "^$bookmark " "$HOME/.cdargs" | /bin/sed 's#^[^ ]* ##'`
+             if [ -n "$dir" -a "$dir" = "${dir/
+ /}" -a -d "$dir" ]; then
+                 strip="${dir//?/.}"
+@@ -224,8 +224,8 @@ function _cdargs_aliases ()
+                 IFS='
+ '
+                 COMPREPLY=( $(
+-                    compgen -d "$dir`echo "$cur" | sed 's#^[^/]*##'`" \
+-                        | sed -e "s/^$strip/$bookmark/" -e "s/\([^\/a-zA-Z0-9#%_+\\\\,.-]\)/\\\\\\1/g" ) )
++                    compgen -d "$dir`echo "$cur" | /bin/sed 's#^[^/]*##'`" \
++                        | /bin/sed -e "s/^$strip/$bookmark/" -e "s/\([^\/a-zA-Z0-9#%_+\\\\,.-]\)/\\\\\\1/g" ) )
+                 IFS="$oldIFS"
+             fi
+         else

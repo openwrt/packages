@@ -1,0 +1,16 @@
+Description: Fix for FTBFS with -Werror=format-security from dpkg-buildflags
+Forwarded: no
+Author: Mike Miller <mtmiller@ieee.org>
+Last-Update: 2012-06-06
+
+--- a/src/cdargs.cc
++++ b/src/cdargs.cc
+@@ -1301,7 +1301,7 @@ void helpscreen(void) {
+ 
+ void fatal_exit(char* msg) {
+     endwin();
+-    fprintf(stderr, msg);
++    fprintf(stderr, "%s", msg);
+     exit(1);
+ }
+ 
