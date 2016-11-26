@@ -43,6 +43,7 @@ CONFIGURE_ARGS += \
 	--disable-utf8 \
         --without-slang \
         --disable-color \
+	LIBS="-lncurses -ltinfo" \
 
 CONFIGURE_VARS += \
 	ac_cv_header_regex_h=no \
