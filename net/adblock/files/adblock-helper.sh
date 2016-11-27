@@ -6,7 +6,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_scriptver="1.5.3"
+adb_scriptver="1.5.4"
 adb_mincfgver="2.5"
 adb_hotplugif=""
 adb_lanif="lan"
@@ -232,8 +232,8 @@ f_envcheck()
             if [ "${package_ok}" = "true" ]
             then
                 adb_fetch="$(which uclient-fetch)"
-                fetch_parm="-q --timeout=${adb_fetchttl}"
-                response_parm="--spider"
+                fetch_parm="-q"
+                response_parm=
             fi
         fi
     fi

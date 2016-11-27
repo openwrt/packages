@@ -85,7 +85,8 @@ do
     if [ "${src_name}" = "blacklist" ]
     then
         url_time="$(date -r "${url}")"
-    else
+    elif [ -n "${response_parm}" ]
+    then
         url_time="$(${adb_fetch} ${fetch_parm} ${response_parm} "${url}" 2>&1 | awk '$0 ~ /Last-Modified/ {printf substr($0,18)}')"
     fi
     if [ -z "${url_time}" ]
