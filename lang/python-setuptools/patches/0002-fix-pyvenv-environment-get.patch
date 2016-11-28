@@ -1,13 +1,13 @@
 diff --git a/setuptools/command/easy_install.py b/setuptools/command/easy_install.py
-index df1655b..24c34e5 100755
+index e8b90c7..8598c44 100755
 --- a/setuptools/command/easy_install.py
 +++ b/setuptools/command/easy_install.py
-@@ -1885,7 +1885,7 @@ class CommandSpec(list):
+@@ -1946,6 +1946,8 @@ class CommandSpec(list):
+         Construct a CommandSpec from a parameter to build_scripts, which may
+         be None.
+         """
++        if os.environ.get('__PYVENV_LAUNCHER__'):
++            return cls.from_environment()
+         if isinstance(param, cls):
              return param
          if isinstance(param, list):
-             return cls(param)
--        if param is None:
-+        if param is None or os.environ.get('__PYVENV_LAUNCHER__'):
-             return cls.from_environment()
-         # otherwise, assume it's a string.
-         return cls.from_string(param)
