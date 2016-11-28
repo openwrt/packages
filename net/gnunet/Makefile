@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=d8e2905c74e63975af5ffe79d7fb1247328def94
-PKG_VERSION:=0.10.2-git-20161108-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=948983f991c6fa623cf008826b62a6142dafa189
+PKG_VERSION:=0.10.2-git-20161127-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 # ToDo:
@@ -145,7 +145,7 @@ define Package/gnunet/install
 	done )
 
 	( for lib in arm ats block cadet core datacache dht \
-	    dns dnsparser fragmentation friends hello identity nat nse \
+	    dns dnsparser fragmentation friends hello identity nat natnew nse \
 	    peerinfo regexblock regex revocation scalarproduct set \
 	    statistics transport util; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
