@@ -1,0 +1,13 @@
+--- a/src/Makefile.in	2016-11-28 02:25:11.118290934 -0800
++++ b/src/Makefile.in	2016-11-28 02:29:32.834905546 -0800
+@@ -207,8 +207,8 @@
+ installlocales:
+ 	-cd ../po; $(MAKE) DESTDIR=$(DESTDIR) LOCALEDIR=$(LOCALEDIR) install 
+ installbin:
+-	$(INSTALL) -m 755 -s $(OBJDIR)/slrn $(DEST_BINDIR)
+-	-$(INSTALL) -m 755 -s $(OBJDIR)/slrnpull $(DEST_BINDIR)
++	$(INSTALL) -m 755 $(OBJDIR)/slrn $(DEST_BINDIR)
++	-$(INSTALL) -m 755 $(OBJDIR)/slrnpull $(DEST_BINDIR)
+ install: all installdirs installbin installdocs installslang installlocales
+ 
+ # The symlinks target is for my own private use.  It simply creates the object

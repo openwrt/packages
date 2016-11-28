@@ -1,0 +1,11 @@
+--- a/src/Makefile.in	2016-10-23 15:34:16.000000000 -0700
++++ b/src/Makefile.in	2016-11-28 01:49:01.537039090 -0800
+@@ -114,7 +114,7 @@
+ COMPILE_CMD = $(CC) -c $(ALL_CFLAGS)
+ #
+ all: $(EXEC) $(OTHER_EXECS)
+-$(EXEC): $(OBJDIR) $(CONFIG_H) slangversion $(OBJDIR)/$(EXEC)
++$(EXEC): $(OBJDIR) $(CONFIG_H) $(OBJDIR)/$(EXEC)
+ 	@echo $(EXEC) created in $(OBJDIR)
+ $(OBJDIR)/$(EXEC): $(OBJS)
+ 	cd $(OBJDIR); $(CC) $(OFILES) -o $(EXEC) $(LDFLAGS) $(RPATH) $(EXECLIBS)
