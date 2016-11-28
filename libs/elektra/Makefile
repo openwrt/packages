@@ -14,11 +14,11 @@ PKG_MAINTAINER:=Harald Geyer <harald@ccbib.org>
 PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=doc/COPYING
-PKG_VERSION:=0.8.18
+PKG_VERSION:=0.8.19
 PKG_RELEASE:=1
 
 # Use this for official releasees
-PKG_MD5SUM:=62fe0fbf9ee57ffaa58a982f602f596a
+PKG_MD5SUM:=6669e765c834e259fb7570f126b85d7e
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://ftp.libelektra.org/ftp/elektra/releases
 
@@ -97,9 +97,10 @@ define Package/libelektra-plugins
 endef
 
 define CONTENT_ELEKTRA_PLUGINS_TEXT
-boolean cachefilter ccode conditionals csvstorage enum filecheck glob
-hexcode hidden hosts iconv keytometa line lineendings list mathcheck
-network null path profile shell syslog uname validation
+base64 boolean cachefilter ccode conditionals csvstorage
+enum filecheck glob hexcode hidden hosts iconv keytometa
+line lineendings list mathcheck network null path profile
+shell syslog uname validation
 endef
 
 CONTENT_ELEKTRA_PLUGINS = $(strip $(CONTENT_ELEKTRA_PLUGINS_TEXT))
@@ -242,12 +243,13 @@ endef
 define Package/libelektra-extra
   $(call Package/libelektra/Default)
   TITLE:=Additional elektra plugins
-  DEPENDS:=+libelektra-core
+  DEPENDS:=+libelektra-core +libstdcpp
 endef
 
 define CONTENT_EXTRA_PLUGINS_TEXT
-blockresolver constants counter desktop dpkg error fstab logchange
-mozprefs passwd rename timeofday tracer
+blockresolver c constants counter desktop dpkg error
+fcrypt fstab logchange mozprefs passwd rename required
+simplespeclang timeofday tracer
 endef
 
 CONTENT_ELEKTRA_EXTRA:=$(strip $(CONTENT_EXTRA_PLUGINS_TEXT))
@@ -256,8 +258,8 @@ define Package/libelektra-extra/description
 $(call Package/libelektra/Default-description)
 
 This package contains extra plugins that are only useful for debugging
-or as an example of what can be done. Also most experimental plugins are
-included in this package. Currently this includes:
+or as an example of what can be done. Also most experimental plugins
+are included in this package. Currently this includes:
 $(CONTENT_EXTRA_PLUGINS_TEXT)
 endef
 
@@ -295,6 +297,8 @@ define Package/libelektra-core/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-meta.so* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-plugin.so* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-proposal.so* $(1)/usr/lib/
+	#The next is only supported with glibc, so skip it.
+	#$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektraintercept-* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-resolver_fm_pb_b.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-ni.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-ini.so $(1)/usr/lib/
