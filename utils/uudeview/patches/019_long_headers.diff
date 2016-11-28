@@ -1,0 +1,20 @@
+Description: Fix problem with long headers causing
+ duplicate output in text files.
+ See 0.5.20-1.
+Author: Matthew Mueller <donut AT dakotacom.net>
+Origin: http://nget.sf.net/patches/uulib-0.5.19-uuinfofile-long-headers.patch
+
+--- a/uulib/uulib.c
++++ b/uulib/uulib.c
+@@ -1114,9 +1114,9 @@ UUInfoFile (uulist *thefile, void *opaqu
+ 
+   while (!feof (inpfile) && 
+ 	 (uu_fast_scanning || ftell(inpfile) < maxpos)) {
+-    if (_FP_fgets (uugen_inbuffer, 511, inpfile) == NULL)
++    if (_FP_fgets (uugen_inbuffer, 1023, inpfile) == NULL)
+       break;
+-    uugen_inbuffer[511] = '\0';
++    uugen_inbuffer[1023] = '\0';
+ 
+     if (ferror (inpfile))
+       break;

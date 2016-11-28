@@ -1,0 +1,42 @@
+Description: CAN-2004-2265
+ Fix possible (but highly unlikely) race in temporary file generation
+ (CAN-2004-2265), by passing the "x" (O_EXCL) flag to fopen when opening
+ such files. (Closes: #320541)
+ 0.5.20-2.1
+Author: Steinar H. Gunderson <sesse@debian.org>
+Bug-Debian: http://bugs.debian.org/320541
+
+--- a/unix/uudeview.c
++++ b/unix/uudeview.c
+@@ -454,7 +454,7 @@ proc_stdin (void)
+     return 0;
+   }
+ 
+-  if ((target = fopen (stdfile, "wb")) == NULL) {
++  if ((target = fopen (stdfile, "wbx")) == NULL) {
+     fprintf (stderr, "proc_stdin: cannot open temp file %s for writing: %s\n",
+ 	     stdfile, strerror (errno));
+     _FP_free (stdfile);
+--- a/uulib/uunconc.c
++++ b/uulib/uunconc.c
+@@ -1325,9 +1325,9 @@ UUDecode (uulist *data)
+     return UURET_NODATA;
+ 
+   if (data->uudet == PT_ENCODED)
+-    mode = "wt";	/* open text files in text mode */
++    mode = "wtx";	/* open text files in text mode */
+   else
+-    mode = "wb";	/* otherwise in binary          */
++    mode = "wbx";	/* otherwise in binary          */
+ 
+   if ((data->binfile = tempnam (NULL, "uu")) == NULL) {
+     UUMessage (uunconc_id, __LINE__, UUMSG_ERROR,
+@@ -1502,7 +1502,7 @@ UUDecode (uulist *data)
+       progress.action = 0;
+       return UURET_NOMEM;
+     }
+-    if ((datain = fopen (data->binfile, "rb")) == NULL) {
++    if ((datain = fopen (data->binfile, "rbx")) == NULL) {
+       UUMessage (uunconc_id, __LINE__, UUMSG_ERROR,
+ 		 uustring (S_NOT_OPEN_FILE),
+ 		 data->binfile, strerror (uu_errno = errno));

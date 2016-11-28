@@ -1,0 +1,36 @@
+Description: suspicious-file patch from 0.5.20-3
+ Add file open information so that if S_DATA_SUSPICIOUS message.occurs,
+ the name of the bad file is printed. There is probablly a better method
+ but I did not see how to obtain the filename from within the function.
+Author: Peter Muir <iyhi@yahoo.com>
+Bug-Debian: http://bugs.debian.org/166077
+ 
+--- a/uulib/uunconc.c
++++ b/uulib/uunconc.c
+@@ -1437,6 +1437,9 @@ UUDecode (uulist *data)
+ 	res = UURET_IOERR;
+ 	break;
+       }
++      UUMessage (uunconc_id, __LINE__, UUMSG_MESSAGE,
++		uustring (S_OPEN_FILE),
++		iter->data->sfname);
+       _FP_strncpy (uugen_fnbuffer, iter->data->sfname, 1024);
+     }
+ 
+--- a/uulib/uustring.c
++++ b/uulib/uustring.c
+@@ -107,6 +107,7 @@ static stringmap messages[] = {
+   { S_MIME_B_NOT_FOUND, "Boundary expected on Multipart message but found EOF" },
+   { S_MIME_MULTI_DEPTH, "Multipart message nested too deep" },
+   { S_MIME_PART_MULTI,  "Handling partial multipart message as plain text" },
++  { S_OPEN_FILE,        "Opened file %s" },
+ 
+   { 0, "" }
+ };
+--- a/uulib/uustring.h
++++ b/uulib/uustring.h
+@@ -36,3 +36,4 @@
+ #define S_MIME_B_NOT_FOUND    35
+ #define S_MIME_MULTI_DEPTH    36
+ #define S_MIME_PART_MULTI     37
++#define S_OPEN_FILE           38

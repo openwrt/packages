@@ -1,0 +1,208 @@
+Description: Multiple typo fixes, found by lintian.
+Author: Andreas Metzler <ametzler@debian.org>
+Origin: vendor
+Forwarded: no
+Last-Update: 2016-07-12
+
+--- a/acconfig.h
++++ b/acconfig.h
+@@ -78,7 +78,7 @@
+ 
+ /* 
+  * your mailing program. full path and the necessary parameters.
+- * the recepient address is added to the command line (with a leading
++ * the recipient address is added to the command line (with a leading
+  * space) without any further options
+  */
+ #undef PROG_MAILER
+--- a/doc/library.ltx
++++ b/doc/library.ltx
+@@ -2142,7 +2142,7 @@ text is \emph{required} by certain decod
+ \end{quote}
+ BinHex is another three-in-four encoding, and not surprisingly,
+ another different character table is used (table \ref{tab-bh}).
+-The documentation does not explicitely mention what is supposed to
++The documentation does not explicitly mention what is supposed to
+ happen if the original input data does not have a multiple of three
+ octets. But from reading between the lines, it looks like
+ ``unnecessary'' characters (those that would result in equal
+--- a/inews/nntp.h
++++ b/inews/nntp.h
+@@ -11,7 +11,7 @@
+  *	4xx	Command was correct, but couldn't be performed
+  *		for some specified reason.
+  *	5xx	Command unimplemented, incorrect, or a
+- *		program error has occured.
++ *		program error has occurred.
+  *
+  * Second digit:
+  *
+--- a/man/uudeview.1
++++ b/man/uudeview.1
+@@ -341,7 +341,7 @@ No encoded data found.
+ File looks Ok
+ .TP
+ .B 32
+-An error occured during decoding of the file.
++An error occurred during decoding of the file.
+ .TP
+ .B 64
+ File was successfully decoded.
+--- a/man/xdeview.1
++++ b/man/xdeview.1
+@@ -199,7 +199,7 @@ number from the subject line. The algori
+ in braces () higher priority than numbers in brackets []. If both
+ kinds of brackets are present, and their use is conflicting
+ (for example if both the part number and a series number are given),
+-then you may have to explicitely select the bracket policy. If this
++then you may have to explicitly select the bracket policy. If this
+ option is false (default), then the "part number" is taken from the
+ braces (), otherwise from the brackets [].
+ .TP
+@@ -509,7 +509,7 @@ No encoded data found.
+ File looks Ok
+ .TP
+ .B 32
+-An error occured during decoding of the file.
++An error occurred during decoding of the file.
+ .TP
+ .B 64
+ File was successfully decoded.
+--- a/tcl/xdeview
++++ b/tcl/xdeview
+@@ -1174,7 +1174,7 @@ proc Encode {} {
+ 		    $EncodeFileName $EncodeSubject "" $EncodeMaxLines \
+ 		    $EncodeEncoding $EncodeFrom $EncodeReplyTo } message ] } {
+ 		tk_dialog ._Dialog { Error while Encoding } "The following\
+-			error occured while encoding into a file: $message" \
++			error occurred while encoding into a file: $message" \
+ 			error 0 OK
+ 	    }
+ 	}
+@@ -1185,7 +1185,7 @@ proc Encode {} {
+ 		    $EncodeFileName $EncodeSubject "" $EncodeMaxLines \
+ 		    $EncodeEncoding $EncodeFrom $EncodeReplyTo } message ] } {
+ 		tk_dialog ._Dialog { Error while Encoding } "The following\
+-			error occured while sending the file via mail:\
++			error occurred while sending the file via mail:\
+ 			$message" \
+ 			error 0 OK
+ 	    }
+@@ -1197,7 +1197,7 @@ proc Encode {} {
+ 		    $EncodeFileName $EncodeSubject "" $EncodeMaxLines \
+ 		    $EncodeEncoding $EncodeFrom $EncodeReplyTo } message ] } {
+ 		tk_dialog ._Dialog { Error while Encoding } "The following\
+-			error occured while sending the file via news:\
++			error occurred while sending the file via news:\
+ 			$message" \
+ 			error 0 OK
+ 	    }
+@@ -1270,7 +1270,7 @@ proc DecodeProc { DecodeList } {
+ 
+ 	if { $result } {
+ 	    tk_dialog ._Dialog "Error while Decoding" "The following\
+-		    problem occured while decoding: $errorMsg" \
++		    problem occurred while decoding: $errorMsg" \
+ 		    error 0 OK
+ 	    continue
+ 	}
+@@ -1362,7 +1362,7 @@ proc InfoFile { TheInfoFile } {
+     .info.top.text configure -state normal
+ 
+     if { [ catch { uu_InfoFile $FileNumber .info.top.text } errorMsg ] } {
+-	tk_dialog ._Dialog "No Info" "The following problem occured\
++	tk_dialog ._Dialog "No Info" "The following problem occurred\
+ 		while trying to get Info: $errorMsg" error 0 OK
+     }
+ 
+@@ -1419,7 +1419,7 @@ proc List {} {
+     .list.top.text configure -state normal
+ 
+     if { [ catch { uu_ListFile $ListFile .list.top.text } errorMsg ] } {
+-	tk_dialog ._Dialog "Oops" "The following problem occured\
++	tk_dialog ._Dialog "Oops" "The following problem occurred\
+ 		while trying to list the file: $errorMsg" error 0 OK
+     }
+ 
+@@ -1551,7 +1551,7 @@ proc Execute {} {
+ 
+     if { [ catch { uu_GetTempFile $FileNumb } tempFile ] } {
+ 	tk_dialog ._Dialog "Error while decoding" "The following problem\
+-		occured while decoding: $tempFile" \
++		occurred while decoding: $tempFile" \
+ 		error 0 OK
+     } else {
+ 	#
+@@ -1632,7 +1632,7 @@ proc Execute {} {
+ 
+ 	    if { [ catch { eval exec $RunString } errorMsg ] } {
+ 		tk_dialog ._Dialog "Execution failed" "The following problem\
+-			occured while executing your command: $errorMsg" \
++			occurred while executing your command: $errorMsg" \
+ 			error 0 OK
+ 	    }
+ 	}
+--- a/unix/uuenview.c
++++ b/unix/uuenview.c
+@@ -163,7 +163,7 @@ usage (char *argv0)
+ \tinfile      the local file, where to read data from. If no infile\n\
+ \t            is given, or infile is a single hyphen, the standard\n\
+ \t            input is used instead.\n\
+-\tremotefile  the name as which the recepient will receive the file\n\
++\tremotefile  the name as which the recipient will receive the file\n\
+ \n\
+   For much more powerful encoding facilities, try calling this program\n\
+   as 'uuenview'.\n\
+@@ -1285,7 +1285,7 @@ main (int argc, char *argv[])
+       }
+ 
+       /*
+-       * mail it separately to each recepient
++       * mail it separately to each recipient
+        */
+ 
+       if (outflags[UUE_MAILTO] > 0) {
+--- a/uulib/acconfig.h
++++ b/uulib/acconfig.h
+@@ -43,7 +43,7 @@
+ 
+ /* 
+  * your mailing program. full path and the necessary parameters.
+- * the recepient address is added to the command line (with a leading
++ * the recipient address is added to the command line (with a leading
+  * space) without any further options
+  */
+ #undef PROG_MAILER
+--- a/uulib/uuscan.c
++++ b/uulib/uuscan.c
+@@ -2344,7 +2344,7 @@ ScanPart (FILE *datei, char *fname, int
+ 	}
+       }
+       /* produce result if uu_handletext is set */
+-      /* or if the file is explicitely named */
++      /* or if the file is explicitly named */
+       if (result->uudet == B64ENCODED || lcount) {
+ 	if (localenv.fname) {
+ 	  _FP_free (result->filename);
+--- a/inews/inews.c
++++ b/inews/inews.c
+@@ -81,7 +81,7 @@ char	*argv[];
+ 			"Can't get the name of the news server from %s.\n",
+ 			SERVER_FILE);
+ 		fprintf(stderr,
+-	       "Either fix this file, or put NNTPSERVER in your enviroment.\n");
++	       "Either fix this file, or put NNTPSERVER in your environment.\n");
+ 		exit(1);
+ 	}
+ 
+--- a/man/uuenview.1
++++ b/man/uuenview.1
+@@ -93,7 +93,7 @@ comma-separated list. The
+ .BR inews (1)
+ program is invoked for posting. You may have to set the
+ .I NNTPSERVER
+-enviroment variable to your news server.
++environment variable to your news server.
+ .TP
+ .B -a
+ Attaches files. This feature is expected to be used from shell scripts

@@ -1,0 +1,22 @@
+Description: Don't ignore special chars when parsing MIME.
+ 0.5.20-3
+Author: Chris Hanson
+Bug-Debian: https://bugs.debian.org/341440
+
+--- a/uulib/uuscan.c
++++ b/uulib/uuscan.c
+@@ -387,10 +387,10 @@ ParseValue (char *attribute)
+ 	   *attribute != '(' && *attribute != ')' &&
+ 	   *attribute != '<' && *attribute != '>' &&
+ 	   *attribute != '@' && *attribute != ',' &&
+-	   /* *attribute != ';' && */ *attribute != ':' &&
+-	   *attribute != '\\' &&*attribute != '"' &&
+-	   *attribute != '/' && /* *attribute != '[' &&
+-	   *attribute != ']' && */ *attribute != '?' &&
++	   *attribute != ';' && *attribute != ':' &&
++	   *attribute != '\\' && *attribute != '"' &&
++	   *attribute != '/' && *attribute != '[' &&
++	   *attribute != ']' && *attribute != '?' &&
+ 	   *attribute != '=' && length < 255) {
+       *ptr++ = *attribute++;
+       length++;

@@ -1,0 +1,245 @@
+Description: Build shlib, use AC_PROG_INSTALL
+Author: Marco d'Itri <md@linux.it>
+
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -37,12 +37,12 @@ bindir	=	@bindir@
+ mandir	=	@mandir@
+ BINDIR	=	$(bindir)
+ MANDIR	=	$(mandir)
++DESTDIR =
+ #
+-# install program. use our own, as AC_PROG_INSTALL doesn't work reliably
+-#
+-INSTALL	=		@srcdir@/install-sh
+-INSTALL_PROGRAM =	${INSTALL} -c
+-INSTALL_DATA =		${INSTALL} -c -m 644
++INSTALL = @INSTALL@
++INSTALL_PROGRAM = @INSTALL_PROGRAM@
++INSTALL_DATA = @INSTALL_DATA@
++INSTALL_SCRIPT = @INSTALL_SCRIPT@
+ #
+ # If you don't have the GNU C compiler installed, set CC=cc here
+ #
+@@ -183,23 +183,17 @@ doc:
+ 
+ install: 		$(DOINST)
+ 	-for d in $(MPAGES) ; do \
+-		$(INSTALL_DATA) $(srcdir)/man/$$d $(MANDIR)/man1/$$d ; \
++		$(INSTALL_DATA) $(srcdir)/man/$$d $(DESTDIR)$(MANDIR)/man1/$$d ; \
+ 	done
+ 
+ install-uudeview:	uudeview
+-	for d in uudeview uuenview ; do \
+-		$(INSTALL_PROGRAM) unix/$$d $(BINDIR)/$$d ; \
+-	done
++	(cd unix && $(MAKE) install)
+ 
+ install-tcl:		xdeview
+-	for d in xdeview uuwish ; do \
+-		$(INSTALL_PROGRAM) tcl/$$d $(BINDIR)/$$d ; \
+-	done
++	(cd tcl && $(MAKE) install)
+ 
+ install-minews:		minews
+-	for d in minews ; do \
+-		$(INSTALL_PROGRAM) inews/$$d $(BINDIR)/$$d ; \
+-	done
++	(cd inews && $(MAKE) install)
+ 
+ links:		tcl/config.h unix/config.h uulib/config.h
+ 
+--- a/configure.in
++++ b/configure.in
+@@ -75,7 +75,7 @@ AC_PROG_CC
+ AC_PROG_CPP
+ wi_PROTOTYPES
+ AC_PROG_MAKE_SET
+-dnl AC_PROG_INSTALL
++AC_PROG_INSTALL
+ AC_PROG_RANLIB
+ AC_PROG_LN_S
+ 
+--- a/tcl/Makefile.in
++++ b/tcl/Makefile.in
+@@ -23,12 +23,12 @@ VPATH =		@srcdir@
+ #
+ BINDIR	=	@bindir@
+ MANDIR	=	@mandir@
++DESTDIR =
+ #
+-# install program. use our own, as AC_PROG_INSTALL doesn't work reliably
+-#
+-INSTALL	=		@srcdir@/install-sh
+-INSTALL_PROGRAM =	${INSTALL} -c
+-INSTALL_DATA =		${INSTALL} -c -m 644
++INSTALL = @INSTALL@
++INSTALL_PROGRAM = @INSTALL_PROGRAM@
++INSTALL_DATA = @INSTALL_DATA@
++INSTALL_SCRIPT = @INSTALL_SCRIPT@
+ #
+ # If you don't have the GNU C compiler installed, set CC=cc here
+ #
+@@ -36,7 +36,7 @@ CC	=	@CC@
+ #
+ # C Compiler Options
+ #
+-CFLAGS	=	@CFLAGS@ -I@srcdir@ @CPPFLAGS@ @TCL_CPPFLAGS@ @DEFS@
++CFLAGS	=	@CFLAGS@ -I@srcdir@ -I../uulib @CPPFLAGS@ @DEFS@ @TCL_CPPFLAGS@
+ #
+ # Libraries to link and their paths
+ #
+@@ -61,6 +61,7 @@ SHLIB_VERSION =	@SHLIB_VERSION@
+ @SET_MAKE@
+ #
+ 
++PROGS	=	uuwish xdeview
+ SOURCE	=	uuwish.c uutcl.c
+ OBJ	=	${SOURCE:.c=.o}
+ 
+@@ -85,24 +86,21 @@ realclean:	distclean
+ 
+ install: 	all
+ 	for d in $(PROGS) ; do \
+-		$(INSTALL_PROGRAM) $(srcdir)/$$d $(BINDIR)/$$d ; \
+-	done
+-	-for d in $(MPAGES) ; do \
+-		$(INSTALL_DATA) $(srcdir)/$$d $(MANDIR)/man1/$$d ; \
++		$(INSTALL_PROGRAM) $(srcdir)/$$d $(DESTDIR)$(BINDIR)/$$d ; \
+ 	done
+ 
+ new:		clean
+ 	rm -f uuwish
+ 	make all
+ 
+-uuwish:		$(OBJ) ../uulib/libuu.a
++uuwish:		$(OBJ)
+ 	$(CC) -o $@ $(OBJ) -L../uulib -luu $(LIBS)
+ 
+ xdeview:
+ 	chmod 755 $@
+ 
+ .c.o:
+-	$(CC) -c $(CFLAGS) -I../uulib $(VDEF) $<
++	$(CC) -c $(CFLAGS) $(VDEF) $<
+ 
+ uuwish.o:	uuwish.c config.h
+ uutcl.o:	uutcl.c config.h
+--- a/unix/Makefile.in
++++ b/unix/Makefile.in
+@@ -34,12 +34,12 @@ VPATH =		@srcdir@
+ #
+ BINDIR	=	@bindir@
+ MANDIR	=	@mandir@
++DESTDIR =
+ #
+-# install program. use our own, as AC_PROG_INSTALL doesn't work reliably
+-#
+-INSTALL	=		@srcdir@/install-sh
+-INSTALL_PROGRAM =	${INSTALL} -c
+-INSTALL_DATA =		${INSTALL} -c -m 644
++INSTALL = @INSTALL@
++INSTALL_PROGRAM = @INSTALL_PROGRAM@
++INSTALL_DATA = @INSTALL_DATA@
++INSTALL_SCRIPT = @INSTALL_SCRIPT@
+ #
+ # If you don't have the GNU C compiler installed, set CC=cc here
+ #
+@@ -47,11 +47,11 @@ CC	=	@CC@
+ #
+ # C Compiler Options
+ #
+-CFLAGS	=	@CFLAGS@ -I@srcdir@ @CPPFLAGS@ @DEFS@
++CFLAGS	=	@CFLAGS@ -I@srcdir@ -I../uulib @CPPFLAGS@ @DEFS@
+ #
+ # Libraries to link and their paths
+ #
+-LIBS	=	@LDFLAGS@ @LIBS@
++LIBS	=	@LDFLAGS@
+ #
+ # the ranlib program
+ #
+@@ -78,6 +78,7 @@ VDEF	=	-DVERSION=\"$(VERSION)\" -DPATCH=
+ @SET_MAKE@
+ #
+ 
++PROGS		=	uudeview uuenview
+ UUDEVIEW_SOURCE	=	uudeview.c uufnflt.c
+ UUENVIEW_SOURCE =	uuenview.c uufnflt.c
+ UUDEVIEW_OBJ	=	${UUDEVIEW_SOURCE:.c=.o}
+@@ -104,24 +105,21 @@ realclean:	distclean
+ 
+ install: 	all
+ 	for d in $(PROGS) ; do \
+-		$(INSTALL_PROGRAM) $(srcdir)/$$d $(BINDIR)/$$d ; \
+-	done
+-	-for d in $(MPAGES) ; do \
+-		$(INSTALL_DATA) $(srcdir)/$$d $(MANDIR)/man1/$$d ; \
++		$(INSTALL_PROGRAM) $(srcdir)/$$d $(DESTDIR)$(BINDIR)/$$d ; \
+ 	done
+ 
+ new:		clean
+ 	rm -f uudeview uuenview
+ 	make all
+ 
+-uudeview:	$(UUDEVIEW_OBJ) ../uulib/libuu.a
++uudeview:	$(UUDEVIEW_OBJ)
+ 	$(CC) -o $@ $(UUDEVIEW_OBJ) -L../uulib -luu $(LIBS)
+ 
+-uuenview:	$(UUENVIEW_OBJ) ../uulib/libuu.a
++uuenview:	$(UUENVIEW_OBJ)
+ 	$(CC) -o $@ $(UUENVIEW_OBJ) -L../uulib -luu $(LIBS)
+ 
+ .c.o:
+-	$(CC) -c $(CFLAGS) -I../uulib $(VDEF) $<
++	$(CC) -c $(CFLAGS) $(VDEF) $<
+ 
+ uudeview.o:	uudeview.c config.h
+ uuenview.o:	uuenview.c config.h
+--- a/uulib/Makefile.in
++++ b/uulib/Makefile.in
+@@ -21,9 +21,17 @@ SHELL	=	/bin/sh
+ #
+ CC	=	@CC@
+ #
++# Library options
++SOMAJOR =	0
++SOMINOR =	$(PATCH)
++SHLIB =		libuu.so.$(SOMAJOR).$(SOMINOR)
++SHLIBSOMAJ =	libuu.so.$(SOMAJOR)
++SHLIBSO =	libuu.so
++#
+ # C Compiler Options
+ #
+-CFLAGS	=	@CFLAGS@ -I. @CPPFLAGS@ @DEFS@
++CFLAGS	=	@CFLAGS@ -I. @CPPFLAGS@ @DEFS@ -fpic -shared
++LDFLAGS = $(subst -pie,, $(subst -fPIE,,@LDFLAGS@))
+ #
+ # the ranlib program
+ #
+@@ -51,11 +59,11 @@ UULIB_OBJ	=	${UULIB_SOURCE:.c=.o}
+ .SUFFIXES:
+ .SUFFIXES: .c .o
+ 
+-all:		libuu.a
++all:		$(SHLIB)
+ 
+ clean:
+ 	rm -f [Xx]deview gif2gfp
+-	rm -f *.o *.a *.so core *~ TAGS
++	rm -f *.o *.a *.so $(SHLIBSOMAJ) $(SHLIB) core *~ TAGS
+ 
+ distclean:	clean
+ 	rm -f config.status config.cache config.log Makefile config.h
+@@ -67,6 +75,11 @@ new:		clean
+ 	rm -f libuu.a
+ 	$(MAKE) all
+ 
++$(SHLIB): $(UULIB_OBJ)
++	$(CC) -o $@ -fpic -shared -Wl,-soname,$(SHLIBSOMAJ) $(LDFLAGS) $^
++	ln -sf $(SHLIB) $(SHLIBSOMAJ)
++	ln -sf $(SHLIBSOMAJ) $(SHLIBSO)
++
+ libuu.a:	$(UULIB_OBJ)
+ 	rm -f $@
+ 	ar r $@ $(UULIB_OBJ)

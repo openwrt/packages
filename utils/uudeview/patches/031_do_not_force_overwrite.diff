@@ -1,0 +1,38 @@
+Description: Don't force overwrite mode if auto-rename enabled.
+ 0.5.20-3
+Author: Chris Hanson
+Bug-Debian: https://bugs.debian.org/378076
+
+--- a/unix/uudeview.c
++++ b/unix/uudeview.c
+@@ -657,9 +657,6 @@ work_comline (int argc, char *argv[])
+     else switch (*(argv[number] + 1)) {
+     case '\0':
+       interact = 0;
+-      if (overwrite == 0) {
+-	overwrite = 1;
+-      }
+       proc_stdin ();
+       break;
+     case 'a':
+@@ -699,10 +696,7 @@ work_comline (int argc, char *argv[])
+ 	fprintf (stderr, "WARNING: cannot interact when reading from stdin\n");
+       }
+       else {
+-	interact  = (*argv[number] == '+') ? 1 : 0;
+-	if (overwrite == 0 && *argv[number] == '-') {
+-	  overwrite = 1;
+-	}
++	interact = (*argv[number] == '+') ? 1 : 0;
+       }
+       break;
+     case 'm':
+@@ -773,6 +767,8 @@ work_comline (int argc, char *argv[])
+       break;
+     }
+   }
++  if (overwrite == 0 && interact == 0 && autoren == 0)
++    overwrite = 1;
+ 
+   return 1;
+ }
