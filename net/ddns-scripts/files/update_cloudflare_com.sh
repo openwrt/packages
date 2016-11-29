@@ -78,10 +78,10 @@ do_request() {
 
   if [ -n "$WGET_SSL" -a $USE_CURL -eq 0 ]; then
     [ -n "$data" ] && set -- --body-data="$data" "$@"
-    wget -O "$DATFILE" --method="$method" "$@"
+    "$WGET_SSL" -O "$DATFILE" --method="$method" "$@"
   elif [ -n "$CURL_SSL" ]; then
     [ -n "$data" ] && set -- --data="$data" "$@"
-    curl -o "$DATFILE" -X "$method" "$@"
+    "$CURL_SSL" -o "$DATFILE" -X "$method" "$@"
   else
     write_log 14 "CloudFlare only supports updates via HTTPS. 'wget-ssl' or 'curl-ssl' has to be installed!"
   fi
