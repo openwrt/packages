@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2016 OpenWrt.org
+# Copyright (C) 2016 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
 PKG_VERSION:=2.6.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://wiki.qemu-project.org/download/
 PKG_SOURCE_MD5SUM:=bdf1f3d0c177ebeb35a079a4bc3fc74e
@@ -23,12 +24,25 @@ PKG_USE_MIPS16:=0
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
+
+define Package/virtio-console-helper
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=Helper script for vportNpn virtio-console devices
+endef
+
+define Package/virtio-console-helper/install
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/virtio-ports
+	$(INSTALL_BIN) ./files/00-virtio-ports.hotplug $(1)/etc/hotplug.d/virtio-ports/00-virtio-ports
+endef
+
+
 define Package/qemu-ga
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=QEMU Guest Agent
   URL:=http://www.qemu.org
-  DEPENDS:= +glib2 $(CXX_DEPENDS)
+  DEPENDS:= +glib2 +virtio-console-helper $(CXX_DEPENDS)
 endef
 
 define Package/qemu-ga/description
@@ -41,8 +55,9 @@ define Package/qemu-ga/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/qemu-ga.init $(1)/etc/init.d/qemu-ga
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/virtio-ports
-	$(INSTALL_BIN) ./files/virtio-ports.hotplug $(1)/etc/hotplug.d/virtio-ports/qemu-ga
+	$(INSTALL_BIN) ./files/10-qemu-ga.hotplug $(1)/etc/hotplug.d/virtio-ports/10-qemu-ga
 endef
+
 
 define Package/qemu-blobs
   SECTION:=utils
@@ -229,6 +244,7 @@ define Build/Compile
 	$(if $(strip $(QEMU_MAKE_TARGETS)),$(call Build/Compile/Default,$(QEMU_MAKE_TARGETS)))
 endef
 
+$(eval $(call BuildPackage,virtio-console-helper))
 $(eval $(call BuildPackage,qemu-ga))
 $(eval $(call BuildPackage,qemu-bridge-helper))
 $(eval $(call BuildPackage,qemu-blobs))
