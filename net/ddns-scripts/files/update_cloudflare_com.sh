@@ -12,13 +12,13 @@
 # option username - your cloudflare e-mail
 # option password - cloudflare api key, you can get it from cloudflare.com/my-account/
 # option domain   - your full hostname to update, in cloudflare its subdomain.domain
-#   i.e. myhost.example.com where myhost is the subdomain and example.com is your domain
+#                   i.e. myhost.example.com where myhost is the subdomain and example.com is your domain
 #
 # variable __IP already defined with the ip-address to use for update
 #
 [ "$use_https" -eq 0 ] && write_log 14 "CloudFlare only supports updates via HTTPS. Please correct configuration!"
-[ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
-[ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
+[ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'."
+[ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'."
 
 local __ZONEID __RECID __OLDIP __TYPE __SUBDOM __DOMAIN __TLD
 
