@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.42
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://download.lighttpd.net/lighttpd/releases-1.4.x
@@ -155,6 +155,7 @@ $(eval $(call BuildPlugin,redirect,URL redirection,+PACKAGE_lighttpd-mod-redirec
 
 # Next, permit authentication.
 $(eval $(call BuildPlugin,auth,Authentication,,20))
+$(eval $(call BuildPlugin,authn_file,File-based authentication,,20))
 
 # Finally, everything else.
 $(eval $(call BuildPlugin,access,Access restrictions,,30))

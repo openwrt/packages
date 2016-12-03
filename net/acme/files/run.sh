@@ -11,6 +11,7 @@
 CHECK_CRON=$1
 ACME=/usr/lib/acme/acme.sh
 export SSL_CERT_DIR=/etc/ssl/certs
+export NO_TIMESTAMP=1
 
 UHTTPD_LISTEN_HTTP=
 STATE_DIR='/etc/acme'
@@ -26,10 +27,17 @@ check_cron()
     /etc/init.d/cron start
 }
 
+debug()
+{
+    [ "$DEBUG" -eq "1" ] && echo "$@" >&2
+}
+
 pre_checks()
 {
     echo "Running pre checks."
     check_cron
+
+    [ -d "$STATE_DIR" ] || mkdir -p "$STATE_DIR"
 
     if [ -e /etc/init.d/uhttpd ]; then
 
@@ -42,6 +50,9 @@ pre_checks()
 
     iptables -I input_rule -p tcp --dport 80 -j ACCEPT || return 1
     ip6tables -I input_rule -p tcp --dport 80 -j ACCEPT || return 1
+    debug "v4 input_rule: $(iptables -nvL input_rule)"
+    debug "v6 input_rule: $(ip6tables -nvL input_rule)"
+    debug "port80 listens: $(netstat -ntpl | grep :80)"
     return 0
 }
 
@@ -71,6 +82,14 @@ int_out()
     kill -INT $$
 }
 
+is_staging()
+{
+    local main_domain="$1"
+
+    grep -q "acme-staging" "$STATE_DIR/$main_domain/${main_domain}.conf"
+    return $?
+}
+
 issue_cert()
 {
     local section="$1"
@@ -81,6 +100,8 @@ issue_cert()
     local keylength
     local domains
     local main_domain
+    local moved_staging=0
+    local failed_dir
 
     config_get_bool enabled "$section" enabled 0
     config_get_bool use_staging "$section" use_staging
@@ -96,8 +117,15 @@ issue_cert()
     main_domain=$1
 
     if [ -e "$STATE_DIR/$main_domain" ]; then
-        $ACME --home "$STATE_DIR" --renew -d "$main_domain" $acme_args || return 1
-        return 0
+        if [ "$use_staging" -eq "0" ] && is_staging "$main_domain"; then
+            echo "Found previous cert issued using staging server. Moving it out of the way."
+            mv "$STATE_DIR/$main_domain" "$STATE_DIR/$main_domain.staging"
+            moved_staging=1
+        else
+            echo "Found previous cert config. Issuing renew."
+            $ACME --home "$STATE_DIR" --renew -d "$main_domain" $acme_args || return 1
+            return 0
+        fi
     fi
 
 
@@ -108,7 +136,13 @@ issue_cert()
     [ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
 
     if ! $ACME --home "$STATE_DIR" --issue $acme_args; then
-        echo "Issuing cert for $main_domain failed. It may be necessary to remove $STATE_DIR/$main_domain to recover." >&2
+        failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"
+        echo "Issuing cert for $main_domain failed. Moving state to $failed_dir" >&2
+        [ -d "$STATE_DIR/$main_domain" ] && mv "$STATE_DIR/$main_domain" "$failed_dir"
+        if [ "$moved_staging" -eq "1" ]; then
+            echo "Restoring staging certificate" >&2
+            mv "$STATE_DIR/${main_domain}.staging" "$STATE_DIR/${main_domain}"
+        fi
         return 1
     fi
 

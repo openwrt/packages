@@ -60,6 +60,7 @@ CONFIGURE_ARGS+= \
 	--enable-local-libopts \
 	--with-libreadline-prefix="$(STAGING_DIR)/" \
 	--without-libnl \
+	--without-lz4 \
 	--without-gssapi \
 	--with-libcrypt-prefix="$(STAGING_DIR)/" \
 	--without-lz4 \
