@@ -1,7 +1,5 @@
-Index: znc-1.6.3/modules/playback.cpp
-===================================================================
 --- /dev/null
-+++ znc-1.6.3/modules/playback.cpp
++++ b/modules/playback.cpp
 @@ -0,0 +1,288 @@
 +/*
 + * Copyright (C) 2015 J-P Nurmi
