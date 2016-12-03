@@ -236,6 +236,9 @@ $(eval $(call module,partyline,Allows ZNC users to join internal channels and \
 
 $(eval $(call module,perform,Performs commands on connect.))
 
+$(eval $(call module,playback,Avoid repetitive playback buffers on re-connect \
+	with supported clients (e.g. mutter, colluquy)))
+
 $(eval $(call module,q,Auths you with Q (and a little more).))
 
 $(eval $(call module,raw,View all of the raw traffic.))
