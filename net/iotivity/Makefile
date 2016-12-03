@@ -26,9 +26,7 @@ PKG_LICENSE_FILES:=LICENSE.md
 PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_iotivity \
 	CONFIG_PACKAGE_iotivity-cpp \
-	CONFIG_PACKAGE_iotivity-things-manager-lib \
 	CONFIG_PACKAGE_iotivity-oic-middle \
-	CONFIG_PACKAGE_iotivity-things-manager \
 	CONFIG_PACKAGE_iotivity-resource-container-lib \
 	CONFIG_PACKAGE_iotivity-resource-container-sample \
 	CONFIG_PACKAGE_iotivity-resource-container-hue \
@@ -86,19 +84,6 @@ define Package/iotivity-cpp/description
 endef
 
 
-define Package/iotivity-things-manager-lib
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=+iotivity +iotivity-cpp +libstdcpp
-  TITLE:=IoTivity things manager lib
-  URL:=https://www.iotivity.org
-endef
-
-define Package/iotivity-things-manager-lib/description
-    IoTivity things-manager lib
-endef
-
-
 define Package/iotivity-oic-middle
   SECTION:=net
   CATEGORY:=Network
@@ -109,19 +94,6 @@ endef
 
 define Package/iotivity-oic-middle/description
     IoTivity OIC Middle
-endef
-
-
-define Package/iotivity-things-manager
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=+iotivity +iotivity-cpp +iotivity-things-manager-lib
-  TITLE:=IoTivity things manager
-  URL:=https://www.iotivity.org
-endef
-
-define Package/iotivity-things-manager/description
-    IoTivity things manager
 endef
 
 define Package/iotivity-resource-container-lib
@@ -216,9 +188,7 @@ SCONS_OPTIONS += \
 	LOGGING=true \
 	$(if $(CONFIG_PACKAGE_iotivity),liboctbstack) \
 	$(if $(CONFIG_PACKAGE_iotivity-cpp),liboc) \
-	$(if $(CONFIG_PACKAGE_iotivity-things-manager-lib),libTGMSDK) \
 	$(if $(CONFIG_PACKAGE_iotivity-oic-middle),examples) \
-	$(if $(CONFIG_PACKAGE_iotivity-things-manager),ConServerApp ConClientApp BootstrapServerApp) \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-lib),libResContainer) \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-sample),containersample) \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-hue),libHueBundle) \
@@ -276,21 +246,9 @@ define Package/iotivity-cpp/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/liboc_logger.so $(1)/usr/lib/
 endef
 
-define Package/iotivity-things-manager-lib/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/libTGMSDKLibrary.so $(1)/usr/lib/
-endef
-
 define Package/iotivity-oic-middle/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/examples/OICMiddle/OICMiddle $(1)/usr/bin/
-endef
-
-define Package/iotivity-things-manager/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/service/things-manager/sampleapp/linux/configuration/bootstrapserver $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/service/things-manager/sampleapp/linux/configuration/con-server $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/service/things-manager/sampleapp/linux/configuration/con-client $(1)/usr/bin/
 endef
 
 define Package/iotivity-resource-container-lib/install
@@ -326,9 +284,7 @@ endef
 
 $(eval $(call BuildPackage,iotivity))
 $(eval $(call BuildPackage,iotivity-cpp))
-$(eval $(call BuildPackage,iotivity-things-manager-lib))
 $(eval $(call BuildPackage,iotivity-oic-middle))
-$(eval $(call BuildPackage,iotivity-things-manager))
 $(eval $(call BuildPackage,iotivity-resource-container-lib))
 $(eval $(call BuildPackage,iotivity-resource-container-sample))
 $(eval $(call BuildPackage,iotivity-resource-container-hue))
