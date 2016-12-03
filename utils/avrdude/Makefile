@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avrdude
-PKG_VERSION:=6.1
-PKG_RELEASE:=3
+PKG_VERSION:=6.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/avrdude
-PKG_MD5SUM:=9db8c25b935d34234b9b1ba16ad55fd5
+PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
+PKG_MD5SUM:=58bb42049122cf80fe4f4d0ce36d92ee
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0
