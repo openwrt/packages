@@ -65,6 +65,7 @@ CONFIGURE_ARGS += \
 	--without-lzo2 \
 	--without-nettle \
 	--without-xml2 \
+	--without-lz4 \
 
 ifeq ($(BUILD_VARIANT),noopenssl)
 	CONFIGURE_ARGS += --without-openssl
