@@ -21,16 +21,17 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.5"
+VERSION="2.7.6"
 SECTION_ID=""		# hold config's section name
-VERBOSE_MODE=1		# default mode is log to console, but easily changed with parameter
+VERBOSE=1		# default mode is log to console, but easily changed with parameter
+MYPROG=$(basename $0)	# my program call name
 
 LOGFILE=""		# logfile - all files are set in dynamic_dns_updater.sh
 PIDFILE=""		# pid file
 UPDFILE=""		# store UPTIME of last update
 DATFILE=""		# save stdout data of WGet and other external programs called
 ERRFILE=""		# save stderr output of WGet and other external programs called
-TLDFILE=/usr/lib/ddns/tld_names.dat.gz	# TLD file used by split_FQDN
+TLDFILE=/usr/share/public_suffix_list.dat.gz	# TLD file used by split_FQDN
 
 CHECK_SECONDS=0		# calculated seconds out of given
 FORCE_SECONDS=0		# interval and unit
@@ -48,7 +49,7 @@ URL_USER=""		# url encoded $username from config file
 URL_PASS=""		# url encoded $password from config file
 URL_PENC=""		# url encoded $param_enc from config file
 
-SRV_ANSWER=""		# Answer given by service on success
+UPD_ANSWER=""		# Answer given by service on success
 
 ERR_LAST=0		# used to save $? return code of program and function calls
 ERR_UPDATE=0		# error counter on different local and registered ip
@@ -61,8 +62,8 @@ IPV4_REGEX="[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"
 # IPv6       ( ( 0-9a-f  1-4char ":") min 1x) ( ( 0-9a-f  1-4char   )optional) ( (":" 0-9a-f 1-4char  ) min 1x)
 IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(\(:[0-9A-Fa-f]\{1,4\}\)\{1,\}\)"
 
-# detect if called by dynamic_dns_lucihelper.sh script, disable retrys (empty variable == false)
-[ "$(basename $0)" = "dynamic_dns_lucihelper.sh" ] && LUCI_HELPER="TRUE" || LUCI_HELPER=""
+# detect if called by ddns-lucihelper.sh script, disable retrys (empty variable == false)
+[ "$MYPROG" = "ddns-lucihelper.sh" ] && LUCI_HELPER="TRUE" || LUCI_HELPER=""
 
 # Name Server Lookup Programs
 BIND_HOST=$(which host)
@@ -88,23 +89,23 @@ UCLIENT_FETCH_SSL=$(find /lib /usr/lib -name libustream-ssl.so* 2>/dev/null)
 
 # Global configuration settings
 # allow NON-public IP's
-ALLOW_LOCAL_IP=$(uci -q get ddns.global.allow_local_ip) || ALLOW_LOCAL_IP=0
+upd_privateip=$(uci -q get ddns.global.allow_local_ip) || upd_privateip=0
 
 # directory to store run information to.
-RUNDIR=$(uci -q get ddns.global.run_dir) || RUNDIR="/var/run/ddns"
-[ -d $RUNDIR ] || mkdir -p -m755 $RUNDIR
+ddns_rundir=$(uci -q get ddns.global.run_dir) || ddns_rundir="/var/run/ddns"
+[ -d $ddns_rundir ] || mkdir -p -m755 $ddns_rundir
 
 # directory to store log files
-LOGDIR=$(uci -q get ddns.global.log_dir) || LOGDIR="/var/log/ddns"
-[ -d $LOGDIR ] || mkdir -p -m755 $LOGDIR
+ddns_logdir=$(uci -q get ddns.global.log_dir) || ddns_logdir="/var/log/ddns"
+[ -d $ddns_logdir ] || mkdir -p -m755 $ddns_logdir
 
 # number of lines to before rotate logfile
-LOGLINES=$(uci -q get ddns.global.log_lines) || LOGLINES=250
-LOGLINES=$((LOGLINES + 1))	# correct sed handling
+ddns_loglines=$(uci -q get ddns.global.log_lines) || ddns_loglines=250
+ddns_loglines=$((ddns_loglines + 1))	# correct sed handling
 
 # format to show date information in log and luci-app-ddns default ISO 8601 format
-DATE_FORMAT=$(uci -q get ddns.global.date_format) || DATE_FORMAT="%F %R"
-DATE_PROG="date +'$DATE_FORMAT'"
+ddns_dateformat=$(uci -q get ddns.global.date_format) || ddns_dateformat="%F %R"
+DATE_PROG="date +'$ddns_dateformat'"
 
 # USE_CURL if GNU Wget and cURL installed normally Wget is used by do_transfer()
 # to change this use global option use_curl '1'
@@ -180,7 +181,7 @@ start_daemon_for_all_ddns_sections()
 	for __SECTIONID in $__SECTIONS; do
 		config_get __IFACE "$__SECTIONID" interface "wan"
 		[ -z "$__EVENTIF" -o "$__IFACE" = "$__EVENTIF" ] || continue
-		/usr/lib/ddns/dynamic_dns_updater.sh $__SECTIONID 0 >/dev/null 2>&1 &
+		/usr/lib/ddns/dynamic_dns_updater.sh -v "0" -S "$__SECTIONID" -- start
 	done
 }
 
@@ -188,7 +189,7 @@ start_daemon_for_all_ddns_sections()
 # $1 = section
 stop_section_processes() {
 	local __PID=0
-	local __PIDFILE="$RUNDIR/$1.pid"
+	local __PIDFILE="$ddns_rundir/$1.pid"
 	[ $# -ne 1 ] && write_log 12 "Error calling 'stop_section_processes()' - wrong number of parameters"
 
 	[ -e "$__PIDFILE" ] && {
@@ -253,14 +254,14 @@ write_log() {
 	esac
 
 	# verbose echo
-	[ $VERBOSE_MODE -gt 0 -o $__EXIT -gt 0 ] && echo -e "$__MSG"
+	[ $VERBOSE -gt 0 -o $__EXIT -gt 0 ] && echo -e "$__MSG"
 	# write to logfile
-	if [ ${use_logfile:-1} -eq 1 -o $VERBOSE_MODE -gt 1 ]; then
+	if [ ${use_logfile:-1} -eq 1 -o $VERBOSE -gt 1 ]; then
 		echo -e "$__MSG" >> $LOGFILE
-		# VERBOSE_MODE > 1 then NO loop so NO truncate log to $LOGLINES lines
-		[ $VERBOSE_MODE -gt 1 ] || sed -i -e :a -e '$q;N;'$LOGLINES',$D;ba' $LOGFILE
+		# VERBOSE > 1 then NO loop so NO truncate log to $ddns_loglines lines
+		[ $VERBOSE -gt 1 ] || sed -i -e :a -e '$q;N;'$ddns_loglines',$D;ba' $LOGFILE
 	fi
-	[ $LUCI_HELPER ]   && return	# nothing else todo when running LuCI helper script
+	[ -n "$LUCI_HELPER" ] && return	# nothing else todo when running LuCI helper script
 	[ $__LEVEL -eq 7 ] && return	# no syslog for debug messages
 	__CMD=$(echo -e "$__CMD" | tr -d '\n' | tr '\t' '     ')        # remove \n \t chars
 	[ $__EXIT  -eq 1 ] && {
@@ -269,6 +270,7 @@ write_log() {
 	}
 	[ $use_syslog -eq 0 ] && return
 	[ $((use_syslog + __LEVEL)) -le 7 ] && $__CMD
+
 	return
 }
 
@@ -314,22 +316,22 @@ urlencode() {
 }
 
 # extract url or script for given DDNS Provider from
-# file /usr/lib/ddns/services for IPv4 or from
-# file /usr/lib/ddns/services_ipv6 for IPv6
+# file /etc/ddns/services for IPv4 or from
+# file /etc/ddns/services_ipv6 for IPv6
 # $1	Name of Variable to store url to
 # $2	Name of Variable to store script to
 # $3	Name of Variable to store service answer to
 get_service_data() {
 	[ $# -ne 3 ] && write_log 12 "Error calling 'get_service_data()' - wrong number of parameters"
 
-	__FILE="/usr/lib/ddns/services"					# IPv4
-	[ $use_ipv6 -ne 0 ] && __FILE="/usr/lib/ddns/services_ipv6"	# IPv6
+	__FILE="/etc/ddns/services"				# IPv4
+	[ $use_ipv6 -ne 0 ] && __FILE="/etc/ddns/services_ipv6"	# IPv6
 
 	# workaround with variables; pipe create subshell with no give back of variable content
 	mkfifo pipe_$$
 	# only grep without # or whitespace at linestart | remove "
 #	grep -v -E "(^#|^[[:space:]]*$)" $__FILE | sed -e s/\"//g > pipe_$$ &
-	sed '/^#/d/^[ \t]*$/ds/\"//g' $__FILE  > pipe_$$ &
+	sed '/^#/d; /^[ \t]*$/d; s/\"//g' $__FILE  > pipe_$$ &
 
 	while read __SERVICE __DATA __ANSWER; do
 		if [ "$__SERVICE" = "$service_name" ]; then
@@ -533,7 +535,7 @@ verify_host_port() {
 		[ $use_ipv6 -eq 0 -a -z "$__IPV4" ] && __ERR=4
 		[ $use_ipv6 -eq 1 -a -z "$__IPV6" ] && __ERR=6
 		[ $__ERR -gt 0 ] && {
-			[ $LUCI_HELPER ] && return 4
+			[ -n "$LUCI_HELPER" ] && return 4
 			write_log 14 "Verify host Error '4' - Forced IP Version IPv$__ERR don't match"
 		}
 	fi
@@ -586,10 +588,10 @@ verify_dns() {
 		# DNS uses port 53
 		verify_host_port "$1" "53"
 		__ERR=$?
-		if [ $LUCI_HELPER ]; then	# no retry if called by LuCI helper script
+		if [ -n "$LUCI_HELPER" ]; then	# no retry if called by LuCI helper script
 			return $__ERR
-		elif [ $__ERR -ne 0 -a $VERBOSE_MODE -gt 1 ]; then	# VERBOSE_MODE > 1 then NO retry
-			write_log 4 "Verify DNS server '$1' failed - Verbose Mode: $VERBOSE_MODE - NO retry on error"
+		elif [ $__ERR -ne 0 -a $VERBOSE -gt 1 ]; then	# VERBOSE > 1 then NO retry
+			write_log 4 "Verify DNS server '$1' failed - Verbose Mode: $VERBOSE - NO retry on error"
 			return $__ERR
 		elif [ $__ERR -ne 0 ]; then
 			__CNT=$(( $__CNT + 1 ))	# increment error counter
@@ -639,17 +641,17 @@ verify_proxy() {
 	fi
 	# No Port detected - EXITING
 	[ -z "$__PORT" ] && {
-		[ $LUCI_HELPER ] && return 5
+		[ -n "$LUCI_HELPER" ] && return 5
 		write_log 14 "Invalid Proxy server Error '5' - proxy port missing"
 	}
 
 	while [ $__ERR -gt 0 ]; do
 		verify_host_port "$__HOST" "$__PORT"
 		__ERR=$?
-		if [ $LUCI_HELPER ]; then	# no retry if called by LuCI helper script
+		if [ -n "$LUCI_HELPER" ]; then	# no retry if called by LuCI helper script
 			return $__ERR
-		elif [ $__ERR -gt 0 -a $VERBOSE_MODE -gt 1 ]; then	# VERBOSE_MODE > 1 then NO retry
-			write_log 4 "Verify Proxy server '$1' failed - Verbose Mode: $VERBOSE_MODE - NO retry on error"
+		elif [ $__ERR -gt 0 -a $VERBOSE -gt 1 ]; then	# VERBOSE > 1 then NO retry
+			write_log 4 "Verify Proxy server '$1' failed - Verbose Mode: $VERBOSE - NO retry on error"
 			return $__ERR
 		elif [ $__ERR -gt 0 ]; then
 			__CNT=$(( $__CNT + 1 ))	# increment error counter
@@ -809,14 +811,14 @@ do_transfer() {
 		eval $__RUNPROG			# DO transfer
 		__ERR=$?			# save error code
 		[ $__ERR -eq 0 ] && return 0	# no error leave
-		[ $LUCI_HELPER ] && return 1	# no retry if called by LuCI helper script
+		[ -n "$LUCI_HELPER" ] && return 1	# no retry if called by LuCI helper script
 
 		write_log 3 "$__PROG Error: '$__ERR'"
 		write_log 7 "$(cat $ERRFILE)"		# report error
 
-		[ $VERBOSE_MODE -gt 1 ] && {
-			# VERBOSE_MODE > 1 then NO retry
-			write_log 4 "Transfer failed - Verbose Mode: $VERBOSE_MODE - NO retry on error"
+		[ $VERBOSE -gt 1 ] && {
+			# VERBOSE > 1 then NO retry
+			write_log 4 "Transfer failed - Verbose Mode: $VERBOSE - NO retry on error"
 			return 1
 		}
 
@@ -841,7 +843,7 @@ send_update() {
 
 	[ $# -ne 1 ] && write_log 12 "Error calling 'send_update()' - wrong number of parameters"
 
-	if [ $ALLOW_LOCAL_IP -eq 0 ]; then
+	if [ $upd_privateip -eq 0 ]; then
 		# verify given IP / no private IPv4's / no IPv6 addr starting with fxxx of with ":"
 		[ $use_ipv6 -eq 0 ] && __IP=$(echo $1 | grep -v -E "(^0|^10\.|^100\.6[4-9]\.|^100\.[7-9][0-9]\.|^100\.1[0-1][0-9]\.|^100\.12[0-7]\.|^127|^169\.254|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168)")
 		[ $use_ipv6 -eq 1 ] && __IP=$(echo $1 | grep "^[0-9a-eA-E]")
@@ -870,9 +872,9 @@ send_update() {
 
 		write_log 7 "DDNS Provider answered:\n$(cat $DATFILE)"
 
-		[ -z "$SRV_ANSWER" ] && return 0	# not set then ignore
+		[ -z "$UPD_ANSWER" ] && return 0	# not set then ignore
 
-		grep -i -E "$SRV_ANSWER" $DATFILE >/dev/null 2>&1
+		grep -i -E "$UPD_ANSWER" $DATFILE >/dev/null 2>&1
 		return $?	# "0" if found
 	fi
 }
@@ -886,91 +888,123 @@ get_local_ip () {
 	write_log 7 "Detect local IP on '$ip_source'"
 
 	while : ; do
-		case $ip_source in
-			network)
-				# set correct program
-				[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
-						    || __RUNPROG="network_get_ipaddr6"
-				eval "$__RUNPROG __DATA $ip_network" || \
-					write_log 13 "Can not detect local IP using $__RUNPROG '$ip_network' - Error: '$?'"
-				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on network '$ip_network'"
-				;;
-			interface)
+		if [ -n "$ip_network" ]; then
+			# set correct program
+			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
+					    || __RUNPROG="network_get_ipaddr6"
+			eval "$__RUNPROG __DATA $ip_network" || \
+				write_log 13 "Can not detect local IP using $__RUNPROG '$ip_network' - Error: '$?'"
+			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on network '$ip_network'"
+		elif [ -n "$ip_interface" ]; then
+			local __DATA4=""; local __DATA6=""
+			if [ -n "$(which ip)" ]; then		# ip program installed
+				write_log 7 "#> ip -o addr show dev $ip_interface scope global >$DATFILE 2>$ERRFILE"
+				ip -o addr show dev $ip_interface scope global >$DATFILE 2>$ERRFILE
+				__ERR=$?
+				if [ $__ERR -eq 0 ]; then
+					# DATFILE (sample)
+					# 5: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP qlen 1000\    link/ether 08:00:27:d0:10:32 brd ff:ff:ff:ff:ff:ff
+					# 5: eth1    inet 172.27.10.128/24 brd 172.27.10.255 scope global eth1\       valid_lft forever preferred_lft forever
+					# 5: eth1    inet 172.55.55.155/24 brd 172.27.10.255 scope global eth1\       valid_lft 12345sec preferred_lft 12345sec
+					# 5: eth1    inet6 2002:b0c7:f326::806b:c629:b8b9:433/128 scope global dynamic \       valid_lft 8026sec preferred_lft 8026sec
+					# 5: eth1    inet6 fd43:5368:6f6d:6500:806b:c629:b8b9:433/128 scope global dynamic \       valid_lft 8026sec preferred_lft 8026sec
+					# 5: eth1    inet6 fd43:5368:6f6d:6500:a00:27ff:fed0:1032/64 scope global dynamic \       valid_lft 14352sec preferred_lft 14352sec
+					# 5: eth1    inet6 2002:b0c7:f326::a00:27ff:fed0:1032/64 scope global dynamic \       valid_lft 14352sec preferred_lft 14352sec
+
+					#        remove         remove     remove      replace          remove                  remove
+					#	BROADCAST     inet6 fxxx    sec      forever=>-1    between / and pref..      linestart to inet
+					sed -i "/BROADCAST/d; /inet6 f/d; s/sec//g; s/forever/-1/g; s/\/.*preferred_lft//g; s/^.*$ip_interface *//g" $DATFILE
+
+					local __TIME4=0;  local __TIME6=0
+					local __TYP __ADR __TIME
+					while read __TYP __ADR __TIME; do
+						__TIME=${__TIME:-0}	# supress shell errors on last (empty) line of DATFILE
+						#    IPversion       no "-1" record stored - now "-1" record or new time > oldtime
+						[ "$__TYP" = "inet6" -a $__TIME6 -ge 0 -a \( $__TIME -lt 0 -o $__TIME -gt $__TIME6 \) ] && {
+							__DATA6="$__ADR"
+							__TIME6="$__TIME"
+						}
+						[ "$__TYP" = "inet" -a $__TIME4 -ge 0 -a \( $__TIME -lt 0 -o $__TIME -gt $__TIME4 \) ] && {
+							__DATA4="$__ADR"
+							__TIME4="$__TIME"
+						}
+					done < $DATFILE
+				else
+					write_log 3 "ip Error: '$__ERR'"
+					write_log 7 "$(cat $ERRFILE)"		# report error
+				fi
+			else					# use deprecated ifconfig
 				write_log 7 "#> ifconfig $ip_interface >$DATFILE 2>$ERRFILE"
 				ifconfig $ip_interface >$DATFILE 2>$ERRFILE
 				__ERR=$?
 				if [ $__ERR -eq 0 ]; then
-					if [ $use_ipv6 -eq 0 ]; then
-						__DATA=$(awk '
-							/inet addr:/ {	# Filter IPv4
-							#   inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0
-							$1="";		# remove inet
-							$3="";		# remove Bcast: ...
-							$4="";		# remove Mask: ...
-							FS=":";		# separator ":"
-							$0=$0;		# reread to activate separator
-							$1="";		# remove addr
-							FS=" ";		# set back separator to default " "
-							$0=$0;		# reread to activate separator (remove whitespaces)
-							print $1;	# print IPv4 addr
-							}' $DATFILE
-						)
-					else
-						__DATA=$(awk '
-							/inet6/ && /: [0-9a-eA-E]/ {	# Filter IPv6 exclude fxxx
-							#   inet6 addr: 2001:db8::xxxx:xxxx/32 Scope:Global
-							FS="/";		# separator "/"
-							$0=$0;		# reread to activate separator
-							$2="";		# remove everything behind "/"
-							FS=" ";		# set back separator to default " "
-							$0=$0;		# reread to activate separator
-							print $3;	# print IPv6 addr
-							}' $DATFILE
-						)
-					fi
-					[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on interface '$ip_interface'"
+					__DATA4=$(awk '
+						/inet addr:/ {	# Filter IPv4
+						#   inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0
+						$1="";		# remove inet
+						$3="";		# remove Bcast: ...
+						$4="";		# remove Mask: ...
+						FS=":";		# separator ":"
+						$0=$0;		# reread to activate separator
+						$1="";		# remove addr
+						FS=" ";		# set back separator to default " "
+						$0=$0;		# reread to activate separator (remove whitespaces)
+						print $1;	# print IPv4 addr
+						}' $DATFILE
+					)
+					__DATA6=$(awk '
+						/inet6/ && /: [0-9a-eA-E]/ {	# Filter IPv6 exclude fxxx
+						#   inet6 addr: 2001:db8::xxxx:xxxx/32 Scope:Global
+						FS="/";		# separator "/"
+						$0=$0;		# reread to activate separator
+						$2="";		# remove everything behind "/"
+						FS=" ";		# set back separator to default " "
+						$0=$0;		# reread to activate separator
+						print $3;	# print IPv6 addr
+						}' $DATFILE
+					)
 				else
 					write_log 3 "ifconfig Error: '$__ERR'"
 					write_log 7 "$(cat $ERRFILE)"		# report error
 				fi
-				;;
-			script)
-				write_log 7 "#> $ip_script >$DATFILE 2>$ERRFILE"
-				eval $ip_script >$DATFILE 2>$ERRFILE
-				__ERR=$?
-				if [ $__ERR -eq 0 ]; then
-					__DATA=$(cat $DATFILE)
-					[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected via script '$ip_script'"
-				else
-					write_log 3 "$ip_script Error: '$__ERR'"
-					write_log 7 "$(cat $ERRFILE)"		# report error
-				fi
-				;;
-			web)
-				do_transfer "$ip_url"
-				# use correct regular expression
-				[ $use_ipv6 -eq 0 ] \
-					&& __DATA=$(grep -m 1 -o "$IPV4_REGEX" $DATFILE) \
-					|| __DATA=$(grep -m 1 -o "$IPV6_REGEX" $DATFILE)
-				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on web at '$ip_url'"
-				;;
-			*)
-				write_log 12 "Error in 'get_local_ip()' - unhandled ip_source '$ip_source'"
-				;;
-		esac
+			fi
+			[ $use_ipv6 -eq 0 ] && __DATA="$__DATA4" || __DATA="$__DATA6"
+			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on interface '$ip_interface'"
+		elif [ -n "$ip_script" ]; then
+			write_log 7 "#> $ip_script >$DATFILE 2>$ERRFILE"
+			eval $ip_script >$DATFILE 2>$ERRFILE
+			__ERR=$?
+			if [ $__ERR -eq 0 ]; then
+				__DATA=$(cat $DATFILE)
+				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected via script '$ip_script'"
+			else
+				write_log 3 "$ip_script Error: '$__ERR'"
+				write_log 7 "$(cat $ERRFILE)"		# report error
+			fi
+		elif [ -n "$ip_url" ]; then
+			do_transfer "$ip_url"
+			# use correct regular expression
+			[ $use_ipv6 -eq 0 ] \
+				&& __DATA=$(grep -m 1 -o "$IPV4_REGEX" $DATFILE) \
+				|| __DATA=$(grep -m 1 -o "$IPV6_REGEX" $DATFILE)
+			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on web at '$ip_url'"
+		else
+			write_log 12 "Error in 'get_local_ip()' - unhandled ip_source '$ip_source'"
+		fi
 		# valid data found return here
 		[ -n "$__DATA" ] && {
 			eval "$1=\"$__DATA\""
 			return 0
 		}
 
-		[ $LUCI_HELPER ] && return 1	# no retry if called by LuCI helper script
+		[ -n "$LUCI_HELPER" ] && return 1	# no retry if called by LuCI helper script
 
-		write_log 7 "Data detected:\n$(cat $DATFILE)"
+		write_log 7 "Data detected:"
+		write_log 7 "$(cat $DATFILE)"
 
-		[ $VERBOSE_MODE -gt 1 ] && {
-			# VERBOSE_MODE > 1 then NO retry
-			write_log 4 "Get local IP via '$ip_source' failed - Verbose Mode: $VERBOSE_MODE - NO retry on error"
+		[ $VERBOSE -gt 1 ] && {
+			# VERBOSE > 1 then NO retry
+			write_log 4 "Get local IP via '$ip_source' failed - Verbose Mode: $VERBOSE - NO retry on error"
 			return 1
 		}
 
@@ -1107,11 +1141,11 @@ get_registered_ip() {
 			__ERR=127
 		fi
 
-		[ $LUCI_HELPER ] && return $__ERR	# no retry if called by LuCI helper script
+		[ -n "$LUCI_HELPER" ] && return $__ERR	# no retry if called by LuCI helper script
 		[ -n "$2" ] && return $__ERR		# $2 is given -> no retry
-		[ $VERBOSE_MODE -gt 1 ] && {
-			# VERBOSE_MODE > 1 then NO retry
-			write_log 4 "Get registered/public IP for '$lookup_host' failed - Verbose Mode: $VERBOSE_MODE - NO retry on error"
+		[ $VERBOSE -gt 1 ] && {
+			# VERBOSE > 1 then NO retry
+			write_log 4 "Get registered/public IP for '$lookup_host' failed - Verbose Mode: $VERBOSE - NO retry on error"
 			return $__ERR
 		}
 
@@ -1156,7 +1190,7 @@ trap_handler() {
 			fi ;;
 		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
 			# reload config via starting the script again
-			eval "/usr/lib/ddns/dynamic_dns_updater.sh $SECTION_ID $VERBOSE_MODE &"
+			/usr/lib/ddns/dynamic_dns_updater.sh -v "0" -S "$__SECTIONID" -- start || true
 			exit 0 ;;	# and leave this one
 		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)\n";;
 		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)\n";;
