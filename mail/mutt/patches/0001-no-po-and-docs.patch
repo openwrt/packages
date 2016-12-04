@@ -13,7 +13,7 @@ diff --git a/Makefile.in b/Makefile.in
 index 1909835..cfa7ca0 100644
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -458,7 +458,7 @@ get_cs_cmdline = $(call get_cs_compile,$(1)) $(call get_cs_all_flags,$(1),check_
+@@ -470,7 +470,7 @@ get_cs_cmdline = $(call get_cs_compile,$
  AUTOMAKE_OPTIONS = 1.6 foreign
  @BUILD_IMAP_TRUE@IMAP_SUBDIR = imap
  @BUILD_IMAP_TRUE@IMAP_INCLUDES = -I$(top_srcdir)/imap
