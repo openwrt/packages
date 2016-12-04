@@ -35,7 +35,7 @@ __DOMAIN="$__DOMAIN.$__TLD"
 
 # function copied from /usr/share/libubox/jshn.sh
 # from BB14.09 for backward compatibility to AA12.09
-grep -i "json_get_keys" /usr/share/libubox/jshn.sh >/dev/null 2>&1 || json_get_keys() {
+type "json_get_keys" >/dev/null 2>&1 || json_get_keys() {
 	local __dest="$1"
 	local _tbl_cur
 

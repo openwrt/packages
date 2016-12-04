@@ -33,18 +33,21 @@
 #
 # 44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
 #
-# cloudflare.com	!!! Please install additional package "ddns-scripts_cloudflare"
-# no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
+#.cloudflare.com-v1	!!! Please install additional package "ddns-scripts_cloudflare"
+#.cloudflare.com-v4	!!! Please install additional package "ddns-scripts_cloudflare.com-v4"
+#.godaddy.com-v1	!!! Please install additional package "ddns-scripts_godaddy.com-v1"
+#.no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
 
 "3322.org"		"http://[USERNAME]:[PASSWORD]@members.3322.org/dyndns/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
 
 "able.or.kr"		"http://able.or.kr/ddns/src/update.php?hostname=[DOMAIN]&myip=[IP]&ddnsuser=[USERNAME]&pwd=[PASSWORD]"
 
-"afraid.org"		"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+"afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]
+"afraid.org-keyauth"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
 
 "all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
 
-"changeip.com"		"http://[USERNAME]:[PASSWORD]@nic.changeip.com/nic/update?u=[USERNAME]&p=[PASSWORD]&cmd=update&hostname=[DOMAIN]&ip=[IP]"	"Successful"
+"changeip.com"		"http://[USERNAME]:[PASSWORD]@nic.changeip.com/nic/update?u=[USERNAME]&p=[PASSWORD]&cmd=update&hostname=[DOMAIN]&ip=[IP]"	"good|NOCHG"
 
 "core-networks.de"	"http://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv6=1"	"good"
 
@@ -112,8 +115,6 @@
 
 "joker.com"		"http://svc.joker.com/nic/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=[DOMAIN]"	"good|nochg"
 
-"loopia.com"		"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
-
 "loopia.se"		"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 "mydns.jp"		"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV4ADDR=[IP]"
@@ -127,6 +128,8 @@
 "nettica.com"		"http://www.nettica.com/Domain/Update.aspx?U=[USERNAME]&PC=[PASSWORD]&FQDN=[DOMAIN]&N=[IP]"
 
 "no-ip.pl"		"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
+
+"now-dns.com"		"http://[USERNAME]:[PASSWORD]@now-dns.com/update?hostname=[DOMAIN]"
 
 "nsupdate.info"		"http://[USERNAME]:[PASSWORD]@ipv4.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
