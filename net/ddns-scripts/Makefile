@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ddns-scripts
 # Version == major.minor.patch
 # increase on new functionality (minor) or patches (patch)
-PKG_VERSION:=2.7.5
+PKG_VERSION:=2.7.6
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
@@ -43,26 +43,44 @@ define Package/$(PKG_NAME)/config
 	help
 		A highly configurable set of scripts for doing dynamic dns updates.
 		  - IPv6 support
-		  - force communication to IPv4 or IPv6 only
 		  - DNS server support
-		  - using BIND host if installed
+		  - Glue Record support (require BIND host or KNOT host)
 		  - DNS requests via TCP
 		  - Proxy server support
 		  - log file support
 		  - support to run once
 		Version: $(PKG_VERSION)-$(PKG_RELEASE)
 		Info   : http://wiki.openwrt.org/doc/howto/ddns.client
-		$(PKG_MAINTAINER)
 endef
 
 ##### **********************************
 define Package/$(PKG_NAME)_cloudflare
     $(call Package/$(PKG_NAME)/Default)
-    TITLE:=DDNS extension for CloudFlare.com
+    TITLE:=CloudFlare.com API v1 (deprecated)
     DEPENDS:=$(PKG_NAME)
 endef
 define Package/$(PKG_NAME)_cloudflare/description
-    Dynamic DNS Client scripts extension for CloudFlare.com
+    Dynamic DNS Client scripts extension for CloudFlare.com API-v1 (deprecated)
+endef
+
+##### **********************************
+define Package/$(PKG_NAME)_cloudflare.com-v4
+    $(call Package/$(PKG_NAME)/Default)
+    TITLE:=CloudFlare.com API v4 (require cURL)
+    DEPENDS:=$(PKG_NAME) +curl
+endef
+define Package/$(PKG_NAME)_cloudflare.com-v4/description
+    Dynamic DNS Client scripts extension for CloudFlare.com API-v4 (require/install cURL)
+endef
+
+##### **********************************
+define Package/$(PKG_NAME)_godaddy.com-v1
+    $(call Package/$(PKG_NAME)/Default)
+    TITLE:=GoDaddy.com (require cURL)
+    DEPENDS:=$(PKG_NAME) +curl
+endef
+define Package/$(PKG_NAME)_godaddy.com-v1/description
+    Dynamic DNS Client scripts extension for GoDaddy.com (require/install cURL)
 endef
 
 ##### **********************************
@@ -107,7 +125,13 @@ define Build/Compile
 		-e '/^\/\/\s/d'	\
 		-e '/^\s*$$$$/d'	$$$$FILE; \
 	done
-	gzip -f9 $(PKG_BUILD_DIR)/files/tld_names.dat
+	# ensure that VERSION inside dynamic_dns_functions.sh reflect PKG_VERSION of Makefile
+	$(SED) '/^VERSION=*/s/.*/VERSION="$(PKG_VERSION)"/' $(PKG_BUILD_DIR)/files/dynamic_dns_functions.sh
+	$(CP) ./tools $(PKG_BUILD_DIR)
+	chmod 755 $(PKG_BUILD_DIR)/tools/*
+	$(PKG_BUILD_DIR)/tools/public_suffix_list.sh
+	mv -f $(PKG_BUILD_DIR)/tools/public_suffix_list.dat.gz \
+		$(PKG_BUILD_DIR)/files/public_suffix_list.dat.gz
 endef
 
 define Package/$(PKG_NAME)/conffiles
@@ -116,18 +140,20 @@ endef
 
 ##### **********************************
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.hotplug $(1)/etc/hotplug.d/iface/95-ddns
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.init $(1)/etc/init.d/ddns
-	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DIR)  $(1)/etc/uci-defaults
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns
+	$(INSTALL_DIR)  $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.hotplug $(1)/etc/hotplug.d/iface/95-ddns
+	$(INSTALL_DIR)  $(1)/etc/init.d
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.init $(1)/etc/init.d/ddns
+	$(INSTALL_DIR)  $(1)/etc/config
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/ddns.config $(1)/etc/config/ddns
 
-	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/services* $(1)/usr/lib/ddns
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/dynamic_*.sh $(1)/usr/lib/ddns
+	$(INSTALL_DIR)  $(1)/etc/ddns
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/services* $(1)/etc/ddns
+
+	$(INSTALL_DIR)  $(1)/usr/lib/ddns
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/dynamic_dns_*.sh $(1)/usr/lib/ddns
 endef
 define Package/$(PKG_NAME)/prerm
 	#!/bin/sh
@@ -146,20 +172,58 @@ endef
 
 ##### **********************************
 define Package/$(PKG_NAME)_cloudflare/install
+	$(INSTALL_DIR)  $(1)/etc/uci-defaults
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_cloudflare
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/update_cloudflare_com.sh $(1)/usr/lib/ddns
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/tld_names.dat.gz $(1)/usr/lib/ddns
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/update_cloudflare_com_v1.sh $(1)/usr/lib/ddns
+	$(INSTALL_DIR)  $(1)/usr/share
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/public_suffix_list.dat.gz $(1)/usr/share
 endef
 define Package/$(PKG_NAME)_cloudflare/postinst
 	#!/bin/sh
-	echo -e '"cloudflare.com"\t"update_cloudflare_com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
-	echo -e '"cloudflare.com"\t"update_cloudflare_com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services_ipv6
-	/bin/sed -i '/service_name/s/CloudFlare/cloudflare\.com/g' $${IPKG_INSTROOT}/etc/config/ddns
+	printf "%s\\t%s\\n" '"cloudflare.com-v1"' '"update_cloudflare_com_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
+	printf "%s\\t%s\\n" '"cloudflare.com-v1"' '"update_cloudflare_com_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 endef
 define Package/$(PKG_NAME)_cloudflare/prerm
 	#!/bin/sh
-	/bin/sed -i '/update_cloudflare_com\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services
-	/bin/sed -i '/update_cloudflare_com\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services_ipv6
+	/bin/sed -i '/cloudflare\.com-v1/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
+	/bin/sed -i '/cloudflare\.com-v1/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
+endef
+
+##### **********************************
+define Package/$(PKG_NAME)_cloudflare.com-v4/install
+	$(INSTALL_DIR)  $(1)/etc/uci-defaults
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_cloudflare.com-v4
+	$(INSTALL_DIR)  $(1)/usr/lib/ddns
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/update_cloudflare_com_v4.sh $(1)/usr/lib/ddns
+endef
+define Package/$(PKG_NAME)_cloudflare.com-v4/postinst
+	#!/bin/sh
+	printf "%s\\t%s\\n" '"cloudflare.com-v4"' '"update_cloudflare_com_v4.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
+	printf "%s\\t%s\\n" '"cloudflare.com-v4"' '"update_cloudflare_com_v4.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
+endef
+define Package/$(PKG_NAME)_cloudflare.com-v4/prerm
+	#!/bin/sh
+	/bin/sed -i '/cloudflare\.com-v4/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
+	/bin/sed -i '/cloudflare\.com-v4/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
+endef
+
+##### **********************************
+define Package/$(PKG_NAME)_godaddy.com-v1/install
+	$(INSTALL_DIR)  $(1)/etc/uci-defaults
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_godaddy.com-v1
+	$(INSTALL_DIR)  $(1)/usr/lib/ddns
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/update_godaddy_com_v1.sh $(1)/usr/lib/ddns
+endef
+define Package/$(PKG_NAME)_godaddy.com-v1/postinst
+	#!/bin/sh
+	printf "%s\\t%s\\n" '"godaddy.com-v1"' '"update_godaddy_com_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
+	printf "%s\\t%s\\n" '"godaddy.com-v1"' '"update_godaddy_com_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
+endef
+define Package/$(PKG_NAME)_godaddy.com-v1/prerm
+	#!/bin/sh
+	/bin/sed -i '/godaddy\.com-v1/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
+	/bin/sed -i '/godaddy\.com-v1/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
 endef
 
 ##### **********************************
@@ -169,13 +233,11 @@ define Package/$(PKG_NAME)_no-ip_com/install
 endef
 define Package/$(PKG_NAME)_no-ip_com/postinst
 	#!/bin/sh
-	echo -e '"no-ip.com"\t"update_no-ip_com.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
-	/bin/sed -i '/service_name/s/NoIP\.com/no-ip\.com/g'  $${IPKG_INSTROOT}/etc/config/ddns
-	/bin/sed -i '/service_name/s/No-IP\.com/no-ip\.com/g' $${IPKG_INSTROOT}/etc/config/ddns
+	printf "%s\\t%s\\n" '"no-ip.com"' '"update_no-ip_com.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
 endef
 define Package/$(PKG_NAME)_no-ip_com/prerm
 	#!/bin/sh
-	/bin/sed -i '/update_no-ip_com\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services
+	/bin/sed -i '/no-ip\.com/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
 endef
 
 ##### **********************************
@@ -185,18 +247,19 @@ define Package/$(PKG_NAME)_nsupdate/install
 endef
 define Package/$(PKG_NAME)_nsupdate/postinst
 	#!/bin/sh
-	echo -e '"bind-nsupdate"\t"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services
-	echo -e '"bind-nsupdate"\t"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/usr/lib/ddns/services_ipv6
-	/bin/sed -i '/service_name/s/Bind-nsupdate/bind-nsupdate/g' $${IPKG_INSTROOT}/etc/config/ddns
+	printf "%s\\t%s\\n" '"bind-nsupdate"' '"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
+	printf "%s\\t%s\\n" '"bind-nsupdate"' '"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 endef
 define Package/$(PKG_NAME)_nsupdate/prerm
 	#!/bin/sh
-	/bin/sed -i '/update_nsupdate\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services
-	/bin/sed -i '/update_nsupdate\.sh/ d' $${IPKG_INSTROOT}/usr/lib/ddns/services_ipv6
+	/bin/sed -i '/bind-nsupdate/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
+	/bin/sed -i '/bind-nsupdate/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
 endef
 
 ##### **********************************
 $(eval $(call BuildPackage,$(PKG_NAME)))
 $(eval $(call BuildPackage,$(PKG_NAME)_cloudflare))
+$(eval $(call BuildPackage,$(PKG_NAME)_cloudflare.com-v4))
+$(eval $(call BuildPackage,$(PKG_NAME)_godaddy.com-v1))
 $(eval $(call BuildPackage,$(PKG_NAME)_no-ip_com))
 $(eval $(call BuildPackage,$(PKG_NAME)_nsupdate))

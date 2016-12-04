@@ -1,25 +1,99 @@
 #!/bin/sh
 
-# add new section "ddns" "global" if not exists
-/sbin/uci -q get ddns.global > /dev/null		|| /sbin/uci -q set ddns.global='ddns'
-/sbin/uci -q get ddns.global.date_format > /dev/null	|| /sbin/uci -q set ddns.global.date_format='%F %R'
-/sbin/uci -q get ddns.global.log_lines > /dev/null	|| /sbin/uci -q set ddns.global.log_lines='250'
-/sbin/uci -q get ddns.global.allow_local_ip > /dev/null	|| /sbin/uci -q set ddns.global.allow_local_ip='0'
-/sbin/uci -q commit ddns
+# using function to not confuse function calls with existing ones inside /lib/functions.sh
+update_ddns_config() {
+	udc_uci="$(which uci) -q"	# ignore errors
+	udc_pkg="ddns"
+	udc_cfg=""
+	udc_name=""
+	udc_var=""
+	udc_val=""
+	package() { return 0; }
+	config () {
+		udc_cfg="$1"
+		udc_name="$2"
 
-# fix some service_name entries to new once
-/bin/sed -i \
-	-e '/service_name/s/CloudFlare/cloudflare\.com/g' \
-	-e '/service_name/s/NoIP\.com/no-ip\.com/g' \
-	-e '/service_name/s/No-IP\.com/no-ip\.com/g' \
-	-e '/service_name/s/freedns.afraid.org/afraid.org/g' \
-	-e '/service_name/s/free.editdns.net/editdns.net/g' \
-	-e '/service_name/s/domains.google.com/google.com/g' \
-	-e '/service_name/s/spdns.de/spdyn.de/g' \
-	-e '/service_name/s/strato.de/strato.com/g' \
-	/etc/config/ddns
+		# Type = ddns	Name = global
+		if [ "$udc_cfg" = "$udc_pkg" -a "$udc_name" = "global" ]; then
+			option() { return 0; }
+			# rename options
+			$udc_uci rename $udc_pkg.$udc_name.allow_local_ip="upd_privateip"
+			$udc_uci rename $udc_pkg.$udc_name.date_format="ddns_dateformat"
+			$udc_uci rename $udc_pkg.$udc_name.log_dir="ddns_logdir"
+			$udc_uci rename $udc_pkg.$udc_name.log_lines="ddns_loglines"
+			$udc_uci rename $udc_pkg.$udc_name.run_dir="ddns_rundir"
 
-# clear LuCI indexcache
+		# Type = service	Name = ???
+		elif [ "$udc_cfg" = "service" ]; then
+			option() {
+				udc_var="$1"; shift
+				udc_val="$*"
+				# fix some option service_name values
+				case "$udc_var" in
+					service_name)
+						case "$udc_val" in
+							freedns\.afraid\.org|afraid\.org)
+								$udc_uci set $udc_pkg.$udc_name.$udc_var="afraid.org-keyauth";;
+							Bind-nsupdate)
+								$udc_uci set $udc_pkg.$udc_name.$udc_var="bind-nsupdate";;
+							CloudFlare|cloudflare\.com)
+								$udc_uci set $udc_pkg.$udc_name.$udc_var="cloudflare.com-v1";;
+							dyndns\.org|dyndns\.com)
+								$udc_uci set $udc_pkg.$udc_name.$udc_var="dyn.com";;
+							free\.editdns\.net)
+								$udc_uci set $udc_pkg.$udc_name.$udc_var="editdns.net";;
+							domains\.google\.com)
+								$udc_uci set $udc_pkg.$udc_name.$udc_var="google.com";;
+							loopia\.com)
+								$udc_uci set $udc_pkg.$udc_name.$udc_var="loopia.se";;
+							NoIP\.com|No-IP\.com)
+								$udc_uci set $udc_pkg.$udc_name.$udc_var="no-ip.com";;
+							spdns\.de)
+								$udc_uci set $udc_pkg.$udc_name.$udc_var="spdyn.de";;
+							strato\.de)
+								$udc_uci set $udc_pkg.$udc_name.$udc_var="strato.com";;
+							*)
+								# all others leave unchanged
+								;;
+						esac
+						# rename option service_name to option upd_provider
+#						$udc_uci rename $udc_pkg.$udc_name.$udc_var="upd_provider"
+						;;
+					*)
+						# leave all other options currently unchanged
+						;;
+				esac
+				return 0
+			}
+			return 0
+
+		# ignore unknown
+		else
+			return 0
+		fi
+	}
+
+	# read package config file
+	udc_data=$($udc_uci -S -n export "$udc_pkg")
+	udc_ret="$?"
+	# No error and udc_data then execute (eval)
+	# this will call functions defined above
+	[ "$udc_ret" -eq 0 -a -n "$udc_data" ] && eval "$udc_data"
+
+	# add config ddns "global" (ignore error if exists)
+	$udc_uci set ddns.global="$udc_pkg"
+
+	# write changes to config file
+	$udc_uci commit "$udc_pkg"
+
+	unset udc_uci udc_pkg udc_cfg udc_name udc_var udc_val udc_ret udc_data
+	return 0
+}
+
+# do existing config update
+update_ddns_config
+
+# clear Ludc_uci indexcache
 rm -f /tmp/luci-indexcache >/dev/null 2>&1
 
-exit 0
+return 0
