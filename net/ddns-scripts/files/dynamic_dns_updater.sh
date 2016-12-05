@@ -72,23 +72,25 @@ case "$1" in
 	start)
 		if [ -n "$NETWORK" ]; then
 			start_daemon_for_all_ddns_sections "$NETWORK"
-			exit $?
+			exit 0
 		fi
 		if [ -z "$SECTION_ID" ]; then
 			start_daemon_for_all_ddns_sections
-			exit $?
+			exit 0
 		fi
 		;;
 	stop)
 		if [ -n "$INTERFACE" ]; then
 			stop_daemon_for_all_ddns_sections "$NETWORK"
+			exit 0
 		else
-			killall ddns-updater.sh 2>/dev/null
+			stop_daemon_for_all_ddns_sections
+			exit 0
 		fi
-		exit $?
+		exit 1
 		;;
 	reload)
-		killall -1 ddns-updater.sh 2>/dev/null
+		killall -1 dynamic_dns_updater.sh 2>/dev/null
 		exit $?
 		;;
 	*)	usage_err "unknown command - $1";;
