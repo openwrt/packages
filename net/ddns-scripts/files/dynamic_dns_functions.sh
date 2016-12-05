@@ -63,7 +63,7 @@ IPV4_REGEX="[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"
 IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(\(:[0-9A-Fa-f]\{1,4\}\)\{1,\}\)"
 
 # detect if called by ddns-lucihelper.sh script, disable retrys (empty variable == false)
-[ "$MYPROG" = "ddns-lucihelper.sh" ] && LUCI_HELPER="TRUE" || LUCI_HELPER=""
+LUCI_HELPER=$(printf %s "$MYPROG" | grep -i "luci")
 
 # Name Server Lookup Programs
 BIND_HOST=$(which host)
@@ -181,7 +181,11 @@ start_daemon_for_all_ddns_sections()
 	for __SECTIONID in $__SECTIONS; do
 		config_get __IFACE "$__SECTIONID" interface "wan"
 		[ -z "$__EVENTIF" -o "$__IFACE" = "$__EVENTIF" ] || continue
-		/usr/lib/ddns/dynamic_dns_updater.sh -v "0" -S "$__SECTIONID" -- start
+		if [ $VERBOSE -eq 0 ]; then	# start in background
+			/usr/lib/ddns/dynamic_dns_updater.sh -v 0 -S "$__SECTIONID" -- start &
+		else
+			/usr/lib/ddns/dynamic_dns_updater.sh -v "$VERBOSE" -S "$__SECTIONID" -- start
+		fi
 	done
 }
 
