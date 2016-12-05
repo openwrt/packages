@@ -17,7 +17,7 @@
 +#include <sys/types.h>
  
  #include "avrdude.h"
- #include "avr.h"
+ #include "libavrdude.h"
 --- a/ser_avrdoper.c
 +++ b/ser_avrdoper.c
 @@ -248,6 +248,7 @@ static int usbGetReport(union filedescri
@@ -30,7 +30,7 @@
  #  include <lusb0_usb.h>
 --- a/usbtiny.c
 +++ b/usbtiny.c
-@@ -41,6 +41,7 @@
+@@ -40,6 +40,7 @@
  
  #if defined(HAVE_LIBUSB)      // we use LIBUSB to talk to the board
  #if defined(HAVE_USB_H)
