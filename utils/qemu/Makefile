@@ -8,15 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=2.5.0
+PKG_VERSION:=2.6.2
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://wiki.qemu-project.org/download/
-PKG_SOURCE_MD5SUM:=f469f2330bbe76e3e39db10e9ac4f8db
+PKG_SOURCE_MD5SUM:=bdf1f3d0c177ebeb35a079a4bc3fc74e
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
+PKG_INSTALL:=1
+
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/qemu-ga
@@ -24,12 +27,14 @@ define Package/qemu-ga
   CATEGORY:=Utilities
   TITLE:=QEMU Guest Agent
   URL:=http://www.qemu.org
-  DEPENDS:=+glib2 +libpthread +libstdcpp +librt
+  DEPENDS:=+glib2 +libpthread $(CXX_DEPENDS) +librt
 endef
 
 define Package/qemu-ga/description
 This package contains the QEMU Guest Agent daemon
 endef
+
+PKG_CONFIG_DEPENDS += CONFIG_PACKAGE_qemu-ga
 
 # QEMU configure script does not recognize these options
 CONFIGURE_ARGS:=$(filter-out	\
@@ -50,9 +55,10 @@ CONFIGURE_ARGS +=			\
 	--cross-prefix=$(TARGET_CROSS)	\
 	--host-cc="$(HOSTCC)"		\
 	--target-list=''		\
+	--disable-docs			\
 	--disable-zlib-test		\
 	--disable-tools			\
-	--without-pixman
+	--without-pixman		\
 
 ifneq ($(CONFIG_PACKAGE_qemu-ga),)
 CONFIGURE_ARGS += --enable-guest-agent
@@ -66,7 +72,7 @@ endef
 
 define Package/qemu-ga/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qemu-ga $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/qemu-ga $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/qemu-ga.init $(1)/etc/init.d/qemu-ga
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/virtio-ports
