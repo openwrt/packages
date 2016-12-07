@@ -41,8 +41,8 @@ endef
 
 define Package/gpsd
   $(call Package/gpsd/Default)
-  SECTION:=net
-  CATEGORY:=Network
+  SECTION:=utils
+  CATEGORY:=Utilities
   TITLE:=An interface daemon for GPS receivers
 endef
 
@@ -57,8 +57,8 @@ endef
 
 define Package/gpsd-clients
   $(call Package/gpsd/Default)
-  SECTION:=net
-  CATEGORY:=Network
+  SECTION:=utils
+  CATEGORY:=Utilities
   DEPENDS+= +libncurses
   TITLE:=GPS tools and clients
 endef
