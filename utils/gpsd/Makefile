@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpsd
-PKG_VERSION:=3.15
-PKG_RELEASE:=2
+PKG_VERSION:=3.16
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://download-mirror.savannah.gnu.org/releases/gpsd/
-PKG_MD5SUM:=afd79b87337fadf38ee2a7c4314dac79
+PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
+PKG_MD5SUM:=68691b5de4c94f82ec4062b042b5eb63
 
 PKG_MAINTAINER:=Pushpal Sidhu <psidhu.devel@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
