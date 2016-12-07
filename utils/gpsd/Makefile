@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/scons.mk
 
 define Package/gpsd/Default
-  DEPENDS:=+librt +libncurses
+  DEPENDS+= +libusb-1.0
   URL:=http://catb.org/gpsd/
 endef
 
@@ -43,7 +43,6 @@ define Package/gpsd
   $(call Package/gpsd/Default)
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS+= +libgps +libusb-1.0
   TITLE:=An interface daemon for GPS receivers
 endef
 
@@ -60,7 +59,7 @@ define Package/gpsd-clients
   $(call Package/gpsd/Default)
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS+= +libgps +libncurses +libusb-1.0
+  DEPENDS+= +libncurses
   TITLE:=GPS tools and clients
 endef
 
@@ -74,7 +73,6 @@ define Package/libgps
   $(call Package/gpsd/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS+= +libcap
   TITLE:=C service library for communicating with the GPS daemon
 endef
 
