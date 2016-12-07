@@ -122,8 +122,6 @@ define Package/gpsd/install
 	$(INSTALL_CONF) ./files/gpsd.config $(1)/etc/config/gpsd
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/gpsd.init $(1)/etc/init.d/gpsd
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
-	$(INSTALL_DATA) ./files/gpsd.hotplug $(1)/etc/hotplug.d/usb/20-gpsd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/gpsd $(1)/usr/sbin/
 endef
