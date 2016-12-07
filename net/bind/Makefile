@@ -104,6 +104,7 @@ CONFIGURE_ARGS += \
 	--disable-threads \
 	--disable-linux-caps \
 	--with-openssl="$(STAGING_DIR)/usr" \
+	--with-libjson=no \
 	--with-libtool \
 	--with-libxml2=no \
 	--enable-epoll=yes \
