@@ -104,6 +104,7 @@ create_domain_insecure() {
 
 unbound_mkdir() {
   mkdir -p $UNBOUND_VARDIR
+  touch $UNBOUND_CONFFILE
 
 
   if [ -f /etc/unbound/root.hints ] ; then
@@ -478,13 +479,6 @@ unbound_uci() {
 
 
   if [ "$UNBOUND_B_MAN_CONF" -gt 0 ] ; then
-    if [ -f /etc/unbound/unbound.conf ] ; then
-      # You don't want UCI and use your own manual configuration
-      # or with no base file whatever Unbound defaults are.
-      cp -p /etc/unbound/unbound.conf $UNBOUND_CONFFILE
-    fi
-
-
     # Don't want this being triggered. Maybe we could, but then the
     # base conf you provide would need to be just right.
     UNBOUND_B_DNSMASQ=0
@@ -505,13 +499,13 @@ unbound_own () {
   } > $UNBOUND_CHECKFILE
 
 
-  if [ ! -f "$UNBOUND_CONFFILE" ] ; then
-    # if somehow this happened
-    touch $UNBOUND_CONFFILE
+  if [ "$UNBOUND_B_MAN_CONF" -gt 0 ] ; then
+    # You are doing your own thing, so just copy /etc/ to /var/
+    cp -p /etc/unbound/* $UNBOUND_VARDIR/
   fi
 
 
-  # Ensure Access
+  # Ensure access and prepare to jail
   chown -R unbound:unbound $UNBOUND_VARDIR
   chmod 775 $UNBOUND_VARDIR
   chmod 664 $UNBOUND_VARDIR/*
