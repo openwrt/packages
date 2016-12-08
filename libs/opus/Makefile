@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opus
 PKG_VERSION:=1.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/opus/
@@ -43,6 +43,12 @@ CONFIGURE_ARGS+= \
 ifeq ($(CONFIG_SOFT_FLOAT),y)
 	CONFIGURE_ARGS+= \
 		--enable-fixed-point
+endif
+
+CPU_ASM_BLACKLIST:=xscale arm926ej-s
+
+ifneq ($(findstring $(call qstrip,$(CONFIG_CPU_TYPE)),$(CPU_ASM_BLACKLIST)),)
+	CONFIGURE_ARGS+= --disable-asm
 endif
 
 define Build/InstallDev
