@@ -20,7 +20,18 @@ Some UCI options will help Unbound and dnsmasq work together in **parallel**. Th
 
 Alternatives are mentioned here for completeness. DHCP event scripts which write host records are difficult to formulate for Unbound, NSD, or Bind. These programs sometimes need to be forcefully reloaded with host configuration, and reloads can bust cache. **Serial** configuration between dnsmasq and Unbound can be made on 127.0.0.1 with an off-port like #1053. This may double cache storage and incur unnecessary transfer delay.
 
-## UCI Options
+## Back to Manual Configuration
+You don't want UCI, but don't worry. We have UCI for that. However, OpenWrt or LEDE are targeted at embedded machines with flash ROM. The initialization scripts do a few things to protect flash ROM. 
+
+All of `/etc/unbound` (persistent, ROM) is copied to `/var/lib/unbound` (tmpfs, RAM). Edit your manual `/etc/unbound/unbound.conf` to reference this `/var/lib/unbound` location for included files. Note in preparation for a jail, `/var/lib/unbound` is `chown unbound`. Configure for security in`/etc/unbound/unbound.conf` with options `username:unbound` and `chroot:/var/lib/unbound`. 
+
+Finally, `root.key` maintenance for DNSKEY RFC5011 would be hard on flash. Unbound natively updates frequently. It also creates and destroys working files in the process. In `/var/lib/unbound` this is no problem, but it would be gone at the next reboot. If you have DNSSEC (validator) active, then you should consider this UCI option. Choose how many days to copy from `/var/lib/unbound/root.key` (tmpfs) to `/etc/unbound/root.key` (flash). Keep the DNSKEY updated with your choice of flash activity.
+
+	config unbound
+		option manual_conf '1'
+		option root_age '30'
+
+## Complete List of UCI Options
 **/etc/config/unbound**:
 
 	config unbound
