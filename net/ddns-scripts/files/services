@@ -47,7 +47,7 @@
 
 "all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
 
-"changeip.com"		"http://[USERNAME]:[PASSWORD]@nic.changeip.com/nic/update?u=[USERNAME]&p=[PASSWORD]&cmd=update&hostname=[DOMAIN]&ip=[IP]"	"good|NOCHG"
+"changeip.com"		"http://[USERNAME]:[PASSWORD]@nic.changeip.com/nic/update?u=[USERNAME]&p=[PASSWORD]&cmd=update&hostname=[DOMAIN]&ip=[IP]"	"Successful"
 
 "core-networks.de"	"http://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv6=1"	"good"
 
