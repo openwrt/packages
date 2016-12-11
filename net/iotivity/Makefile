@@ -179,6 +179,7 @@ SCONS_OPTIONS += \
 	TARGET_ARCH=$(ARCH) \
 	STAGING_DIR=$(STAGING_DIR) \
 	LOGGING=true \
+	WITH_ENV=true \
 	$(if $(CONFIG_PACKAGE_iotivity),octbstack) \
 	$(if $(CONFIG_PACKAGE_iotivity-cpp),oc) \
 	$(if $(CONFIG_PACKAGE_iotivity-oic-middle),examples) \
