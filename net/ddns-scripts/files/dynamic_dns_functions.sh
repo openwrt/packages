@@ -23,7 +23,7 @@
 # GLOBAL VARIABLES #
 VERSION="2.7.6"
 SECTION_ID=""		# hold config's section name
-VERBOSE=1		# default mode is log to console, but easily changed with parameter
+VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
 
 LOGFILE=""		# logfile - all files are set in dynamic_dns_updater.sh
