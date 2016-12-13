@@ -1,4 +1,6 @@
 config unbound
+	option dns64 '0'
+	option dns64_prefix '64:ff9b::/96'
 	option dnsmsaq_gate_name '0'
 	option dnsmasq_link_dns '0'
 	option dnsmasq_only_local '0'
