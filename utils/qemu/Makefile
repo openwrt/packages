@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
 PKG_VERSION:=2.6.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://wiki.qemu-project.org/download/
 PKG_SOURCE_MD5SUM:=bdf1f3d0c177ebeb35a079a4bc3fc74e
@@ -25,10 +25,15 @@ include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 
+QEMU_DEPS_IN_GUEST := @(TARGET_x86_64||TARGET_armvirt||TARGET_arm64||TARGET_malta)
+QEMU_DEPS_IN_HOST := @(TARGET_x86_64||TARGET_sunxi)
+
 define Package/virtio-console-helper
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Virtualization
   TITLE:=Helper script for vportNpn virtio-console devices
+  DEPENDS:=$(QEMU_DEPS_IN_GUEST)
 endef
 
 define Package/virtio-console-helper/install
@@ -40,9 +45,10 @@ endef
 define Package/qemu-ga
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Virtualization
   TITLE:=QEMU Guest Agent
   URL:=http://www.qemu.org
-  DEPENDS:= +glib2 +virtio-console-helper $(CXX_DEPENDS)
+  DEPENDS:= +glib2 +virtio-console-helper $(CXX_DEPENDS) $(QEMU_DEPS_IN_GUEST)
 endef
 
 define Package/qemu-ga/description
@@ -62,9 +68,10 @@ endef
 define Package/qemu-blobs
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Virtualization
   TITLE:=QEMU blobs of BIOS, VGA BIOS and keymaps
   URL:=http://www.qemu.org
-  DEPENDS:=
+  DEPENDS:=$(QEMU_DEPS_IN_HOST)
 endef
 
 define Package/qemu-blobs/install
@@ -75,9 +82,10 @@ endef
 define Package/qemu-bridge-helper
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Virtualization
   TITLE:=QEMU bridge helper
   URL:=http://www.qemu.org
-  DEPENDS:=+glib2 $(CXX_DEPENDS)
+  DEPENDS:=+glib2 $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST)
 endef
 
 define Package/qemu-bridge-helper/install
@@ -111,11 +119,11 @@ define qemu-target
   define Package/qemu-$(1)
     SECTION:=utils
     CATEGORY:=Utilities
+    SUBMENU:=Virtualization
     TITLE:=QEMU target $(1)
     URL:=http://www.qemu.org
-    DEPENDS:= +glib2 +libpthread +zlib $(CXX_DEPENDS) \
-	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +qemu-blobs) \
-	@(TARGET_x86_64||TARGET_sunxi)
+    DEPENDS:= +glib2 +libpthread +zlib $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST) \
+	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +qemu-blobs)
   endef
 
   define Package/qemu-$(1)/description
