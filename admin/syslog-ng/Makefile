@@ -72,6 +72,7 @@ define Package/syslog-ng/install
 	$(INSTALL_DATA) ./files/syslog-ng.conf $(1)/etc
 	$(INSTALL_DIR) $(1)/etc/syslog-ng.d/
 	$(call libtool_remove_files,$(1))
+	touch $(1)/etc/syslog-ng.d/.keep
 endef
 
 define Package/syslog-ng/prerm
