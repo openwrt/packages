@@ -16,7 +16,7 @@ PKG_RELEASE:=1
 PKG_LICENSE:=BSD-2-Clause
 PKG_MAINTAINER:=Darik Horn <dajhorn@vanadac.com>
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/Cyan4973/lz4.git
