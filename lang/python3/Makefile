@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 # The file included below defines PYTHON_VERSION
-include ./files/python3-package.mk
+include ./files/python3-version.mk
 
 PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
@@ -23,6 +23,8 @@ PKG_MD5SUM:=8906efbacfcdc7c3c9198aeefafd159e
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
+
+include ./files/python3-package.mk
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -141,7 +143,10 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
 	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
-	$(INSTALL_DATA) ./files/python3-package.mk $(STAGING_DIR)/mk/
+	$(INSTALL_DATA) \
+		./files/python3-package.mk \
+		./files/python3-version.mk \
+		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
