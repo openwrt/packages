@@ -10,12 +10,6 @@ include $(TOPDIR)/rules.mk
 # For PYTHON_VERSION
 include ./files/python-version.mk
 
-# This file provides the necsessary host build variables
-include ./files/python-host.mk
-
-# For PyPackage
-include ./files/python-package.mk
-
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 PKG_RELEASE:=2
@@ -26,6 +20,12 @@ PKG_MD5SUM:=57dffcee9cee8bb2ab5f82af1d8e9a69
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
+
+# This file provides the necsessary host build variables
+include ./files/python-host.mk
+
+# For PyPackage
+include ./files/python-package.mk
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
