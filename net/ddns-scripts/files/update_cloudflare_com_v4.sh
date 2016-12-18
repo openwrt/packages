@@ -118,7 +118,7 @@ __PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
 # __PRGBASE="$__PRGBASE --header 'Accept: application/json' "
 
 # read zone id for registered domain.TLD
-__RUNPROG="$__PRGBASE --request GET $__URLBASE/zones?name=$__DOMAIN"
+__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
 cloudflare_transfer || return 1
 # extract zone id
 __ZONEID=$(grep -o '"id":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
@@ -128,7 +128,7 @@ __ZONEID=$(grep -o '"id":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 }
 
 # read record id for A or AAAA record of host.domain.TLD
-__RUNPROG="$__PRGBASE --request GET $__URLBASE/zones/$__ZONEID/dns_records?name=$__HOST&type=$__TYPE"
+__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records?name=$__HOST&type=$__TYPE'"
 cloudflare_transfer || return 1
 # extract record id
 __RECID=$(grep -o '"id":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
@@ -171,7 +171,7 @@ cat > $DATFILE << EOF
 EOF
 
 # let's complete transfer command
-__RUNPROG="$__PRGBASE --request PUT --data @$DATFILE $__URLBASE/zones/$__ZONEID/dns_records/$__RECID"
+__RUNPROG="$__PRGBASE --request PUT --data @$DATFILE '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
 cloudflare_transfer || return 1
 
 return 0
