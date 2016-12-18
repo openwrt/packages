@@ -1,0 +1,14 @@
+--- a/configure.orig	2016-11-22 17:35:12.069598617 +0800
++++ b/configure	2016-11-22 18:24:01.042515353 +0800
+@@ -1789,7 +1789,10 @@ static void foo(void) __attribute__((ifu
+ int main(void) { foo(); return 0; }
+ EOF
+ if compile_prog "-mavx2" "" ; then
+-    if readelf --syms $TMPE |grep "IFUNC.*foo" >/dev/null 2>&1; then
++    if readelf --program-headers $TMPE | grep -iq 'Requesting program interpreter: .*ld-musl'; then
++        # ifunc support is not available with dynamic linker of musl
++        avx2_opt="no"
++    elif readelf --syms $TMPE |grep "IFUNC.*foo" >/dev/null 2>&1; then
+         avx2_opt="yes"
+     fi
+ fi

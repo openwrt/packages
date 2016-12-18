@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=emailrelay
 PKG_VERSION:=1.9
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=@SF/emailrelay/$(PKG_VERSION)
@@ -20,13 +20,13 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_CONFIG_DEPENDS:=CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG CONFIG_EMAILRELAY_SSL 
 
 
-include $(INCLUDE_DIR)/uclibc++.mk
+#include $(INCLUDE_DIR)/uclibc++.mk   # $(CXX_DEPENDS)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/emailrelay
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=$(CXX_DEPENDS) +EMAILRELAY_SSL:libopenssl
+  DEPENDS:=+EMAILRELAY_SSL:libopenssl +libstdcpp 
   TITLE:=A simple SMTP proxy and MTA
   URL:=http://emailrelay.sourceforge.net/
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
@@ -104,6 +104,8 @@ define Package/emailrelay/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-passwd $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-poke $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-submit $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/tmp/spool
+	$(INSTALL_DIR) $(1)/tmp/spool/emailrelay
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) files/$(PKG_NAME).auth $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d

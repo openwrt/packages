@@ -7,22 +7,21 @@ boot() {
 }
 
 reload() {
-	killall -1 dynamic_dns_updater.sh 2>/dev/null	# send SIGHUP
+	/usr/lib/ddns/dynamic_dns_updater.sh -- reload
 	return 0
 }
 
 restart() {
-	stop
+	/usr/lib/ddns/dynamic_dns_updater.sh -- stop
 	sleep 1	# give time to shutdown
-	start
+	/usr/lib/ddns/dynamic_dns_updater.sh -- start
 }
 
 start() {
-	. /usr/lib/ddns/dynamic_dns_functions.sh
-	start_daemon_for_all_ddns_sections
+	/usr/lib/ddns/dynamic_dns_updater.sh -- start
 }
 
 stop() {
-	killall dynamic_dns_updater.sh 2>/dev/null
-	return 0 # if killall fails, ignore
+	/usr/lib/ddns/dynamic_dns_updater.sh -- stop
+	return 0
 }

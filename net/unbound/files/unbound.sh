@@ -23,6 +23,7 @@
 UNBOUND_B_CONTROL=0
 UNBOUND_B_DNSMASQ=0
 UNBOUND_B_DNSSEC=0
+UNBOUND_B_DNS64=0
 UNBOUND_B_GATE_NAME=0
 UNBOUND_B_LOCL_BLCK=0
 UNBOUND_B_LOCL_NAME=0
@@ -31,6 +32,8 @@ UNBOUND_B_MAN_CONF=0
 UNBOUND_B_NTP_BOOT=1
 UNBOUND_B_PRIV_BLCK=1
 UNBOUND_B_QUERY_MIN=0
+
+UNBOUND_IP_DNS64="64:ff9b::/96"
 
 UNBOUND_D_RESOURCE=small
 UNBOUND_D_RECURSION=passive
@@ -104,6 +107,7 @@ create_domain_insecure() {
 
 unbound_mkdir() {
   mkdir -p $UNBOUND_VARDIR
+  touch $UNBOUND_CONFFILE
 
 
   if [ -f /etc/unbound/root.hints ] ; then
@@ -139,7 +143,7 @@ unbound_mkdir() {
 
 unbound_conf() {
   local cfg=$1
-  local rt_mem rt_conn
+  local rt_mem rt_conn modulestring
 
   {
     # Make fresh conf file
@@ -284,6 +288,9 @@ unbound_conf() {
     logger -t unbound -s "default memory resource consumption"
   fi
 
+  # Assembly of module-config: options is tricky; order matters
+  modulestring="iterator"
+
 
   if [ "$UNBOUND_B_DNSSEC" -gt 0 ] ; then
     if [ ! -f "$UNBOUND_TIMEFILE" -a "$UNBOUND_B_NTP_BOOT" -gt 0 ] ; then
@@ -293,21 +300,28 @@ unbound_conf() {
 
 
     {
-      # Validation of DNSSEC
-      echo "  module-config: \"validator iterator\""
       echo "  harden-dnssec-stripped: yes"
       echo "  val-clean-additional: yes"
       echo "  ignore-cd-flag: yes"
-      echo
     } >> $UNBOUND_CONFFILE
 
-  else
-    {
-      # Just iteration without DNSSEC
-      echo "  module-config: \"iterator\""
-      echo
-    } >> $UNBOUND_CONFFILE
+
+    modulestring="validator $modulestring"
   fi
+
+
+  if [ "$UNBOUND_B_DNS64" -gt 0 ] ; then
+    echo "  dns64-prefix: $UNBOUND_IP_DNS64" >> $UNBOUND_CONFFILE
+
+    modulestring="dns64 $modulestring"
+  fi
+
+
+  {
+    # Print final module string
+    echo "  module-config: \"$modulestring\""
+    echo
+  }  >> $UNBOUND_CONFFILE
 
 
   if [ "$UNBOUND_B_QUERY_MIN" -gt 0 ] ; then
@@ -425,7 +439,8 @@ unbound_uci() {
   ####################
   # UCI @ unbound    #
   ####################
-
+  
+  config_get_bool UNBOUND_B_DNS64     "$cfg" dns64 0
   config_get_bool UNBOUND_B_GATE_NAME "$cfg" dnsmsaq_gate_name 0
   config_get_bool UNBOUND_B_DNSMASQ   "$cfg" dnsmasq_link_dns 0
   config_get_bool UNBOUND_B_LOCL_NAME "$cfg" dnsmasq_only_local 0
@@ -438,6 +453,7 @@ unbound_uci() {
   config_get_bool UNBOUND_B_DNSSEC    "$cfg" validator  0
   config_get_bool UNBOUND_B_NTP_BOOT  "$cfg" validator_ntp 1
 
+  config_get UNBOUND_IP_DNS64    "$cfg" dns64_prefix "64:ff9b::/96"
   config_get UNBOUND_N_EDNS_SIZE "$cfg" edns_size 1280
   config_get UNBOUND_N_RX_PORT   "$cfg" listen_port 53
   config_get UNBOUND_D_RECURSION "$cfg" recursion passive
@@ -478,13 +494,6 @@ unbound_uci() {
 
 
   if [ "$UNBOUND_B_MAN_CONF" -gt 0 ] ; then
-    if [ -f /etc/unbound/unbound.conf ] ; then
-      # You don't want UCI and use your own manual configuration
-      # or with no base file whatever Unbound defaults are.
-      cp -p /etc/unbound/unbound.conf $UNBOUND_CONFFILE
-    fi
-
-
     # Don't want this being triggered. Maybe we could, but then the
     # base conf you provide would need to be just right.
     UNBOUND_B_DNSMASQ=0
@@ -505,13 +514,13 @@ unbound_own () {
   } > $UNBOUND_CHECKFILE
 
 
-  if [ ! -f "$UNBOUND_CONFFILE" ] ; then
-    # if somehow this happened
-    touch $UNBOUND_CONFFILE
+  if [ "$UNBOUND_B_MAN_CONF" -gt 0 ] ; then
+    # You are doing your own thing, so just copy /etc/ to /var/
+    cp -p /etc/unbound/* $UNBOUND_VARDIR/
   fi
 
 
-  # Ensure Access
+  # Ensure access and prepare to jail
   chown -R unbound:unbound $UNBOUND_VARDIR
   chmod 775 $UNBOUND_VARDIR
   chmod 664 $UNBOUND_VARDIR/*

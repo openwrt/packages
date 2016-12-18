@@ -1,5 +1,6 @@
 #!/bin/sh
 # Copyright (C) 2016 OpenWrt.org
+# Copyright (C) 2016 Yousong Zhou <yszhou4tech@gmail.com>
 
 [ "$SUBSYSTEM" = "virtio-ports" ] || exit 0
 
@@ -11,7 +12,6 @@ case "$ACTION" in
 	"add")
 		mkdir -p /dev/virtio-ports
 		ln -s "/dev/$DEVNAME" "/dev/virtio-ports/$name"
-		/etc/init.d/qemu-ga start
 		;;
 	"del")
 		rm -f "/dev/virtio-ports/$name"
