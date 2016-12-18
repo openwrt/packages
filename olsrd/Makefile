@@ -18,7 +18,7 @@ PKG_SOURCE_VERSION:=v0.9.5
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MIRROR_MD5SUM:=
 
-PKG_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=0
 PKG_LICENSE:=BSD-3-Clause
 
 include $(INCLUDE_DIR)/package.mk
@@ -120,7 +120,7 @@ endef
 
 define Package/olsrd-mod-pud
   $(call Package/olsrd/template)
-  DEPENDS:=olsrd +ncurses +libgps
+  DEPENDS:=olsrd +libgps +ncurses
   TITLE:=Position Update Distribution plugin
 endef
 
