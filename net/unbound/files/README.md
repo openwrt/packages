@@ -9,14 +9,25 @@ Unbound may be useful on consumer grade embedded hardware. It is *intended* to b
 This package builds on Unbounds capabilities with OpenWrt UCI. Not every Unbound option is in UCI, but rather, UCI simplifies the combination of related options. Unbounds native options are bundled and balanced within a smaller set of choices. Options include resources, DNSSEC, access control, and some TTL tweaking. The UCI also provides an escape option and work at the raw "unbound.conf" level.
 
 ## Work with dnsmasq
-Some UCI options will help Unbound and dnsmasq work together in **parallel**. The default DHCP and DNS stub resolver in OpenWrt is dnsmasq, and it will continue to serve this purpose. The following actions will make Unbound the primary DNS server, and make dnsmasq only provide DNS to local DHCP.
+Some UCI options will help Unbound and dnsmasq work together in **parallel**. The default DHCP and DNS stub resolver in OpenWrt is dnsmasq, and it will continue to serve this purpose. The following partial examples will make Unbound the primary DNS server, and make dnsmasq only provide DNS to local DHCP.
 
-- Set `unbound` UCI `option dnsmasq_link_dns` to true.
-- Set other `unbound` UCI options how you wish.
-- Set `dnsmasq` UCI `option noresolv` to true.
-- Set `dnsmasq` UCI `option resolvfile` to blank single-quotes.
-- Set `dnsmasq` UCI `option port` to 1053 or 5353.
-- Add to each `dhcp` UCI `list dhcp_option option:dns-server,0.0.0.0`
+**/etc/config/unbound**:
+
+	config unbound
+		option dnsmasq_link_dns '1'
+		...
+
+**/etc/config/dhcp**:
+
+	config dnsmasq
+		option option noresolv '1'
+		option resolvfile '<empty>'
+		option port '1053'
+		...
+
+	config dhcp '<name>'
+		list dhcp_option 'option:dns-server,0.0.0.0'
+		...
 
 Alternatives are mentioned here for completeness. DHCP event scripts which write host records are difficult to formulate for Unbound, NSD, or Bind. These programs sometimes need to be forcefully reloaded with host configuration, and reloads can bust cache. **Serial** configuration between dnsmasq and Unbound can be made on 127.0.0.1 with an off-port like #1053. This may double cache storage and incur unnecessary transfer delay.
 
@@ -27,6 +38,8 @@ All of `/etc/unbound` (persistent, ROM) is copied to `/var/lib/unbound` (tmpfs, 
 
 Finally, `root.key` maintenance for DNSKEY RFC5011 would be hard on flash. Unbound natively updates frequently. It also creates and destroys working files in the process. In `/var/lib/unbound` this is no problem, but it would be gone at the next reboot. If you have DNSSEC (validator) active, then you should consider this UCI option. Choose how many days to copy from `/var/lib/unbound/root.key` (tmpfs) to `/etc/unbound/root.key` (flash). Keep the DNSKEY updated with your choice of flash activity.
 
+**/etc/config/unbound**:
+
 	config unbound
 		option manual_conf '1'
 		option root_age '30'
@@ -36,6 +49,15 @@ Finally, `root.key` maintenance for DNSKEY RFC5011 would be hard on flash. Unbou
 
 	config unbound
 		Currently only one instance is supported.
+
+	option dns64 '0'
+		Boolean. Enable DNS64 through Unbound in order to bridge networks
+		that are IPV6 only and IPV4 only (see RFC6052).
+
+	option dns64_prefix '64:ff9b::/96'
+		IPV6 Prefix. The IPV6 prefix wrapped on the IPV4 address for DNS64.
+		You should use RFC6052 "well known" address, unless you also 
+		redirect to a proxy or gateway for your NAT64.
 
 	option dnsmasq_gate_name '0'
 		Boolean. Forward PTR records for interfaces not	serving DHCP.

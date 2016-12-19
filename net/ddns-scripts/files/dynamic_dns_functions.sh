@@ -23,7 +23,7 @@
 # GLOBAL VARIABLES #
 VERSION="2.7.6"
 SECTION_ID=""		# hold config's section name
-VERBOSE=1		# default mode is log to console, but easily changed with parameter
+VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
 
 LOGFILE=""		# logfile - all files are set in dynamic_dns_updater.sh
@@ -1123,7 +1123,7 @@ get_registered_ip() {
 		else
 			if [ -n "$BIND_HOST" ]; then
 				if [ $is_glue -eq 1 ]; then
-					__DATA=$(cat $DATFILE | grep "^$lookup_host" | grep -m 1 -o "$__REGEX" )
+					__DATA=$(cat $DATFILE | grep "^$lookup_host" | grep -om1 "$__REGEX" )
 				else
 					__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
 				fi
@@ -1132,9 +1132,9 @@ get_registered_ip() {
 			elif [ -n "$DRILL" ]; then
 				__DATA=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5; exit}' )
 			elif [ -n "$HOSTIP" ]; then
-				__DATA=$(cat $DATFILE | grep -m 1 -o "$__REGEX")
+				__DATA=$(cat $DATFILE | grep -om1 "$__REGEX")
 			elif [ -n "$NSLOOKUP" ]; then
-				__DATA=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
+				__DATA=$(cat $DATFILE | sed -e '1,/Name:/d' | grep -om1 "$__REGEX" )
 			fi
 			[ -n "$__DATA" ] && {
 				write_log 7 "Registered IP '$__DATA' detected"
