@@ -441,7 +441,7 @@ unbound_uci() {
   ####################
   
   config_get_bool UNBOUND_B_DNS64     "$cfg" dns64 0
-  config_get_bool UNBOUND_B_GATE_NAME "$cfg" dnsmsaq_gate_name 0
+  config_get_bool UNBOUND_B_GATE_NAME "$cfg" dnsmasq_gate_name 0
   config_get_bool UNBOUND_B_DNSMASQ   "$cfg" dnsmasq_link_dns 0
   config_get_bool UNBOUND_B_LOCL_NAME "$cfg" dnsmasq_only_local 0
   config_get_bool UNBOUND_B_LOCL_SERV "$cfg" localservice 1
