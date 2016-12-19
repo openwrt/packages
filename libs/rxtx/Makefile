@@ -1,4 +1,5 @@
 #
+# Copyright (C) 2016 Dana H. Myers <k6jq@comcast.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
