@@ -79,8 +79,12 @@ Finally, `root.key` maintenance for DNSKEY RFC5011 would be hard on flash. Unbou
 		"drill -x 192.168.10.201 ~ NODATA" (insted of james-laptop.lan)
 
 	option edns_size '1280'
-		Extended DNS is necessary for DNSSEC. However, it can run into MTU
-		issues. Use this size in bytes to manage drop outs.
+		Bytes. Extended DNS is necessary for DNSSEC. However, it can run 
+		into MTU issues. Use this size in bytes to manage drop outs.
+
+	option hide_binddata '1'
+		Boolean. If enabled version.server, version.bind, id.server, and 
+		hostname.bind queries are refused.
 
 	option listen_port '53'
 		Port. Incoming. Where Unbound will listen for queries.
@@ -93,9 +97,21 @@ Finally, `root.key` maintenance for DNSKEY RFC5011 would be hard on flash. Unbou
 		Boolean. Skip all this UCI nonsense. Manually edit the
 		configuration. Make changes to /etc/unbound/unbound.conf.
 
+	option protocol 'mixed'
+		Unbound can limit its protocol: "ip4_only" for ISP behind the time,
+		"ip6_only" for testing, "ip6_prefer" for ISP with good IP6 support,
+		or default-all "mixed." This affects the protocol	used to 
+		communicate. The DNS responses always include hosts respective IP4
+		and IP6 data.
+
 	option query_minimize '0'
-		Boolean. Enable a minor privacy option. Query only one name piece
-		at a time. Don't let each server know the next recursion.
+		Boolean. Enable a minor privacy option. Don't let each server know
+		the next recursion. Query one piece at a time.
+
+	option query_min_strict '0'
+		Boolean. Query minimize is best effort and will fall back to normal
+		when it must. This option prevents the fall back, but less than
+		standard name servers will fail to resolve their domains.
 
 	option rebind_localhost '0'
 		Boolean. Prevent loopback "127.0.0.0/8" or "::1/128" responses.
