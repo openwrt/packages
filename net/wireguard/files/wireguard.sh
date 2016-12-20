@@ -83,27 +83,6 @@ proto_wireguard_setup_peer() {
       esac
     done
   fi
-
-  #### FEATURE DISABLED
-  # proto_add_host_dependency() has failed with IPv6 addresses during tests.
-  # Endpoint dependency feature is disabled until the issue is fixed.
-  ####
-  #  # endpoint dependency
-  #  if [ "${endpoint_host}" ]; then
-  #    endpoint_dependency=0
-  #    for ip in $(resolveip -t 10 "${endpoint_host}"); do
-  #      echo "adding host depedency for ${ip} at ${config}"
-  #      proto_add_host_dependency "${config}" "${ip}"
-  #      endpoint_dependency=1
-  #    done
-  #    if [ ${endpoint_dependency} -eq 0 ]; then
-  #      echo "error resolving ${endpoint_host}!"
-  #      sleep 5
-  #      proto_setup_failed "${config}"
-  #      exit 1
-  #    fi
-  #  fi
-  ####
 }
 
 
@@ -160,6 +139,13 @@ proto_wireguard_setup() {
     proto_setup_failed "${config}"
     exit 1
   fi
+
+  # endpoint dependency
+  wg show "${config}" endpoints | while IFS=$'\t:' read -r key ip port; do
+    [ -n "${port}" ] || continue
+    echo "adding host depedency for ${ip} at ${config}"
+    proto_add_host_dependency "${config}" "${ip}"
+  done
 
   proto_send_update "${config}"
 }
