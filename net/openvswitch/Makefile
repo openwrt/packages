@@ -35,6 +35,21 @@ PKG_INSTALL:=1
 # Support for kernel 4.4 is backported
 SUPPORTED_KERNELS:=LINUX_3_18||LINUX_4_1||LINUX_4_3||LINUX_4_4
 
+# If only kmod-openvswitch is enabled, then override default make path to only
+# build and install the datapath/linux subdirectory which cuts down compilation
+# time dramatically.
+ifeq ($(CONFIG_PACKAGE_openvswitch-base),)
+ ifneq ($(CONFIG_PACKAGE_kmod-openvswitch),)
+  MAKE_PATH := datapath/linux
+ endif
+endif
+
+# Additionally register PKG_CONFIG_DEPENDS to trigger a rebuild of the code
+# base if the package selection changes.
+PKG_CONFIG_DEPENDS := \
+	CONFIG_PACKAGE_openvswitch-base \
+	CONFIG_PACKAGE_kmod-openvswitch
+
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 
@@ -71,7 +86,7 @@ endef
 define Package/openvswitch-python
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Python Support
-  DEPENDS:=+openvswitch +python
+  DEPENDS:=+openvswitch +PACKAGE_openvswitch-python:python
 endef
 
 define Package/openvswitch-python/description
