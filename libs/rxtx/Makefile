@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rxtx
 PKG_VERSION:=2.2pre2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=LGPL-2.1
 PKG_MAINTAINER:=Dana H. Myers <k6jq@comcast.net>
 
@@ -21,17 +21,19 @@ PKG_FIXUP:=patch-libtool
 PKG_CHECK_FORMAT_SECURITY:=0
 
 include $(INCLUDE_DIR)/package.mk
+$(eval $(call RequireCommand,java,Please install a host Java virtual machine))
+$(eval $(call RequireCommand,javac,Please install a host Java compiler))
 
 define Package/rxtx
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=RX/TX Support for Java serial communications
   URL:=http://rxtx.qbang.org/wiki/index.php/Main_Page
-  DEPENDS:=+libpthread
+  DEPENDS:=+jvm +libpthread
 endef
 
 define Package/rxtx/description
-	RX/TX Support for Java serial communications
+  RX/TX Support for Java serial communications
 endef
 
 CONFIGURE_ARGS += \
