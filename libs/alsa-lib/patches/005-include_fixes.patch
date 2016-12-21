@@ -1,0 +1,32 @@
+--- a/include/asoundlib.h
++++ b/include/asoundlib.h
+@@ -35,7 +35,7 @@
+ #include <string.h>
+ #include <fcntl.h>
+ #include <assert.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <errno.h>
+ #include <stdarg.h>
+ #include <endian.h>
+--- a/include/local.h
++++ b/include/local.h
+@@ -47,7 +47,7 @@
+ #error Header defining endianness not defined
+ #endif
+ #include <stdarg.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <sys/types.h>
+ #include <errno.h>
+ #include <linux/types.h>
+--- a/include/asoundlib-head.h
++++ b/include/asoundlib-head.h
+@@ -35,6 +35,6 @@
+ #include <string.h>
+ #include <fcntl.h>
+ #include <assert.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <errno.h>
+ #include <stdarg.h>
