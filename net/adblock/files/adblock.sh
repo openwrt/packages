@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.0.0"
+adb_ver="2.0.1"
 adb_enabled=1
 adb_debug=0
 adb_whitelist="/etc/adblock/adblock.whitelist"
@@ -88,6 +88,11 @@ f_envcheck()
     #
     if [ "${adb_enabled}" != "1" ]
     then
+        if [ "$(ls -dA "${adb_dnsdir}/${adb_dnsprefix}"* >/dev/null 2>&1)" ]
+        then
+            f_rmdns
+            f_dnsrestart
+        fi
         f_log "info " "status ::: adblock is currently disabled, please set adb_enabled to '1' to use this service"
         exit 0
     fi
@@ -153,18 +158,21 @@ f_dnsrestart()
     dns_running="false"
 
     sync
-    "/etc/init.d/${adb_dns}" restart
+    killall -q -TERM "${adb_dns}"
     while [ ${cnt} -le 10 ]
     do
         dns_running="$(ubus -S call service list '{"name":"dnsmasq"}' | jsonfilter -e '@.dnsmasq.instances.*.running')"
         if [ "${dns_running}" = "true" ]
         then
-            sleep 1
             break
         fi
         cnt=$((cnt+1))
         sleep 1
     done
+    if [ "${dns_running}" = "false" ]
+    then
+        /etc/init.d/"${adb_dns}" restart
+    fi
 }
 
 # f_list: backup/restore/remove block lists
@@ -369,29 +377,22 @@ f_main()
         f_log "debug" "loop   ::: name: ${src_name}, list-rc: ${rc}"
     done
 
-    # overall sort, make block list entries unique
+    # make overall sort, restart & check dns server
     #
-    for list in $(ls -ASr "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null)
+    for src_name in $(ls -dASr "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null)
     do
-        list="${list/*./}"
         if [ -s "${adb_tmpdir}/blocklist.overall" ]
         then
-            sort "${adb_tmpdir}/blocklist.overall" "${adb_tmpdir}/blocklist.overall" "${adb_dnsdir}/${adb_dnsprefix}.${list}" | uniq -u > "${adb_tmpdir}/tmp.blocklist"
-            cat "${adb_tmpdir}/tmp.blocklist" > "${adb_dnsdir}/${adb_dnsprefix}.${list}"
+            sort "${adb_tmpdir}/blocklist.overall" "${adb_tmpdir}/blocklist.overall" "${src_name}" | uniq -u > "${adb_tmpdir}/tmp.blocklist"
+            cat "${adb_tmpdir}/tmp.blocklist" > "${src_name}"
         fi
-        cat "${adb_dnsdir}/${adb_dnsprefix}.${list}" >> "${adb_tmpdir}/blocklist.overall"
+        cat "${src_name}" >> "${adb_tmpdir}/blocklist.overall"
+        cnt="$(wc -l < "${src_name}")"
+        sum_cnt=$((sum_cnt + cnt))
     done
-
-    # restart & check dns server
-    #
     f_dnsrestart
     if [ "${dns_running}" = "true" ]
     then
-        for src_name in $(ls -ASr "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null)
-        do
-            cnt="$(wc -l < "${src_name}")"
-            sum_cnt=$((sum_cnt + cnt))
-        done
         f_debug
         f_rmtemp
         f_log "info " "status ::: block lists with overall ${sum_cnt} domains loaded (${adb_sysver})"

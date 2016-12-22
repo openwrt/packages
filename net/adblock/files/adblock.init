@@ -8,6 +8,7 @@ EXTRA_COMMANDS="suspend resume"
 EXTRA_HELP="	suspend	Suspend adblock processing
 	resume	Resume adblock processing"
 
+exec 2>/dev/null
 adb_script="/usr/bin/adblock.sh"
 adb_iface="$(uci -q get adblock.global.adb_iface)"
 
@@ -69,7 +70,6 @@ service_triggers()
     local iface
 
     procd_add_config_trigger "config.change" "adblock" /etc/init.d/adblock start
-
     if [ -z "${adb_iface}" ]
     then
         procd_add_raw_trigger "interface.*.up" 1000 /etc/init.d/adblock start
