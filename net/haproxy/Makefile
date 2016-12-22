@@ -13,7 +13,7 @@ PKG_VERSION:=1.7.1
 PKG_RELEASE:=00
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.6/src/
+PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.7/src/
 PKG_MD5SUM:=d0acaae02e444039e11892ea31dde478
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
