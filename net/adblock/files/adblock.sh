@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.0.1"
+adb_ver="2.0.2"
 adb_enabled=1
 adb_debug=0
 adb_whitelist="/etc/adblock/adblock.whitelist"
@@ -161,18 +161,16 @@ f_dnsrestart()
     killall -q -TERM "${adb_dns}"
     while [ ${cnt} -le 10 ]
     do
-        dns_running="$(ubus -S call service list '{"name":"dnsmasq"}' | jsonfilter -e '@.dnsmasq.instances.*.running')"
+        dns_running="$(ubus -S call service list '{"name":"dnsmasq"}' | jsonfilter -l 1 -e '@.dnsmasq.instances.*.running')"
         if [ "${dns_running}" = "true" ]
         then
-            break
+            return 0
         fi
         cnt=$((cnt+1))
         sleep 1
     done
-    if [ "${dns_running}" = "false" ]
-    then
-        /etc/init.d/"${adb_dns}" restart
-    fi
+    /etc/init.d/"${adb_dns}" restart
+    sleep 1
 }
 
 # f_list: backup/restore/remove block lists
@@ -235,6 +233,40 @@ f_switch()
     fi
 }
 
+# f_query: query block lists for certain (sub-)domains
+#
+f_query()
+{
+    local search result cnt
+    local domain="${1}"
+    local tld="${domain#*.}"
+    local dns_active="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print)"
+
+    if [ -z "${dns_active}" ]
+    then
+         printf "%s\n" ":: no active block lists found, please start adblock first"
+    elif [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
+    then
+        printf "%s\n" ":: invalid domain input, please submit a specific (sub-)domain, i.e. 'www.abc.xyz'"
+    else
+        while [ "${domain}" != "${tld}" ]
+        do
+            search="${domain//./\.}"
+            result="$(grep -Hm 1 "[/\.]${search}/" "${adb_dnsdir}/${adb_dnsprefix}"* | awk -F ':|/' '{print "   "$4"\t: "$6}')"
+            cnt="$(grep -hc "[/\.]${search}/" "${adb_dnsdir}/${adb_dnsprefix}"* | awk '{sum += $1} END {printf sum}')"
+            printf "%s\n" ":: distinct results for domain '${domain}' (overall ${cnt})"
+            if [ -z "${result}" ]
+            then
+                printf "%s\n" "   no matches in active block lists"
+            else
+                printf "%s\n" "${result}"
+            fi
+            domain="${tld}"
+            tld="${domain#*.}"
+        done
+    fi
+}
+
 # f_log: write to syslog, exit on error
 #
 f_log()
@@ -284,9 +316,8 @@ f_debug()
 #
 f_main()
 {
-    local rc cnt sum_cnt=0
-    local enabled url src_name src_rset
-    local shalla_file shalla_archive list
+    local enabled url rc cnt sum_cnt=0
+    local src_name src_rset shalla_file shalla_archive
 
     f_debug
     f_log "debug" "main   ::: tool: ${adb_fetch}, parm: ${adb_fetchparm}"
@@ -418,6 +449,9 @@ then
             ;;
         resume)
             f_switch resume
+            ;;
+        query)
+            f_query "${2}"
             ;;
         *)
             f_envcheck
