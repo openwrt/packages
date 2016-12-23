@@ -63,6 +63,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * procd based hotplug support, the adblock start will be triggered by interface triggers
 * suspend & resume adblock actions temporarily without block list reloading
 * runtime statistics via ubus service call
+* query function to quickly identify blocked (sub-)domains, i.e. for whitelisting
 * automatic block list backup & restore, backups will be (de-)compressed and restored on the fly
 * add new adblock sources on your own via uci config
 
@@ -100,6 +101,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **scheduled list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
 * **restrict/disable procd interface trigger:** to restrict the procd interface trigger to a (list of) certain wan interface(s) or to disable it at all, set 'adb\_iface' to an existing interface like 'wan' or to a non-existing like 'false'
 * **suspend & resume adblocking:** to quickly switch the adblock service 'on' or 'off', simply use _/etc/init.d/adblock [suspend|resume]_
+* **domain query:** to query the active block lists for a specific domain, please run _/etc/init.d/adblock query `<DOMAIN>`_ (see example below)
 * **divert dns requests:** to force dns requests to your local dns resolver add an appropriate firewall rule (see example below)
 * **add new list sources:** you could add new block list sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
 * **disable active dns probing in windows 10:** to prevent a yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
@@ -176,6 +178,22 @@ This entry removes the following (sub)domains from the block lists:
 This entry does not remove:
   where.com
   www.adwhere.com
+</code></pre>
+  
+**example to query active block lists for a certain (sub-)domain, i.e. for whitelisting:**
+<pre><code>
+/etc/init.d/adblock query "example.www.doubleclick.net"
+:: distinct results for domain 'example.www.doubleclick.net' (overall 0)
+   no matches in active block lists
+:: distinct results for domain 'www.doubleclick.net' (overall 1)
+   adb_list.securemecca : www.doubleclick.net
+:: distinct results for domain 'doubleclick.net' (overall 127)
+   adb_list.adaway      : ad-g.doubleclick.net
+   adb_list.securemecca : 1168945.fls.doubleclick.net
+
+The query function checks against the submitted (sub-)domain and recurses automatically to the upper top level domain(s).
+For every domain it returns the overall count plus a distinct list of active block lists with the first relevant result.
+In the example above whitelist "www.doubleclick.net" to free the submitted domain.
 </code></pre>
   
 **example to divert dns requests to local dns resolver (/etc/config/firewall):**

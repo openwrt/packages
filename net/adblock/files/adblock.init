@@ -4,9 +4,10 @@
 START=90
 USE_PROCD=1
 
-EXTRA_COMMANDS="suspend resume"
+EXTRA_COMMANDS="suspend resume query"
 EXTRA_HELP="	suspend	Suspend adblock processing
-	resume	Resume adblock processing"
+	resume	Resume adblock processing
+	query	<DOMAIN> Query active blocklists for specific domain"
 
 exec 2>/dev/null
 adb_script="/usr/bin/adblock.sh"
@@ -63,6 +64,12 @@ suspend()
 resume()
 {
     rc_procd start_service resume
+}
+
+query()
+{
+    export adb_procd="true"
+    rc_procd "${adb_script}" query "${1}"
 }
 
 service_triggers()
