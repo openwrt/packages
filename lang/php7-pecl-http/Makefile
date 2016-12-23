@@ -32,8 +32,8 @@ include $(INCLUDE_DIR)/nls.mk
 include ../php7/pecl.mk
 
 CONFIGURE_VARS+= \
-	PHP_PROPRO=yes \
-	PHP_RAPHF=yes \
+	PECL_cv_HAVE_EXT_propro=yes \
+	PECL_cv_HAVE_EXT_raphf=yes \
 	PECL_cv_HAVE_LIBCURL_ARES=no \
 	PECL_cv_HAVE_LIBCURL_OpenSSL=$(if $(CONFIG_LIBCURL_OPENSSL),yes,no) \
 	PECL_cv_HAVE_LIBCURL_GnuTLS=$(if $(CONFIG_LIBCURL_GNUTLS),yes,no) \
