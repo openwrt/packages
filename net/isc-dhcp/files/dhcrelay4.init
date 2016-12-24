@@ -30,7 +30,7 @@ start() {
 	local link_selection
 	config_get link_selection ipv4 link_selection
 	if network_get_device ifname "$link_selection"; then
-		append args "-l $ifname"
+		append args "-U $ifname"
 	fi
 
 	# relay mode

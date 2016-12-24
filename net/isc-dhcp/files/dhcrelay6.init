@@ -28,7 +28,7 @@ start() {
     if [ -n "$relay_lowers" ]; then
         local relay_lower
         for relay_lower in $relay_lowers; do
-            append relay_lower_args "-l $relay_lower"
+            append relay_lower_args "-U $relay_lower"
         done
     fi
 

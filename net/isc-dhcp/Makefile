@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
-PKG_VERSION:=4.3.3
+PKG_VERSION:=4.3.5
 PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
@@ -17,8 +17,11 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Antony Antony <antony@phenome.org>
 
 PKG_SOURCE:=$(UPSTREAM_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.isc.org/isc/dhcp/$(PKG_VERSION)
-PKG_MD5SUM:=c5577b09c9017cdd319a11ff6364268e
+PKG_SOURCE_URL:=ftp://ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
+		http://ftp.funet.fi/pub/mirrors/ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
+		http://ftp.iij.ad.jp/pub/network/isc/dhcp/$(PKG_VERSION)
+PKG_MD5SUM:=2b5e5b2fa31c2e27e487039d86f83d3f
+PKG_HASH:=eb95936bf15d2393c55dd505bc527d1d4408289cec5a9fa8abb99f7577e7f954
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -171,13 +174,20 @@ endif
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)			\
+		BUILD_CC="$(HOSTCC_NOCACHE)"		\
+		CROSS_CC="$(TARGET_CC)"			\
+		host_alias="$(GNU_TARGET_NAME)"		\
+		target_alias="$(GNU_TARGET_NAME)"	\
+		build_alias="$(GNU_HOST_NAME)"		\
+		all
+	$(MAKE) -C $(PKG_BUILD_DIR)			\
 		DESTDIR="$(PKG_INSTALL_DIR)"		\
 		BUILD_CC="$(HOSTCC_NOCACHE)"		\
 		CROSS_CC="$(TARGET_CC)"			\
 		host_alias="$(GNU_TARGET_NAME)"		\
 		target_alias="$(GNU_TARGET_NAME)"	\
 		build_alias="$(GNU_HOST_NAME)"		\
-		all install-exec
+		install-exec
 endef
 
 define Package/isc-dhcp-relay-$(BUILD_VARIANT)/install
