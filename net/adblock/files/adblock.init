@@ -2,172 +2,88 @@
 #
 
 START=90
-EXTRA_COMMANDS="toggle stats cfgup envchk query"
-EXTRA_HELP="	toggle	Toggle adblock 'on' or 'off'
-	stats	Update adblock statistics
-	cfgup	Update adblock configuration file
-	envchk	Check/Set adblock environment
+USE_PROCD=1
+
+EXTRA_COMMANDS="suspend resume query"
+EXTRA_HELP="	suspend	Suspend adblock processing
+	resume	Resume adblock processing
 	query	<DOMAIN> Query active blocklists for specific domain"
 
-adb_debug=0
-adb_pid="${$}"
-adb_script="/usr/bin/adblock-update.sh"
-adb_helper="/usr/bin/adblock-helper.sh"
-adb_pidfile="/var/run/adblock.pid"
-bg_parm="&"
-
-if [ $((adb_debug)) -eq 0 ]
-then
-    exec 2>/dev/null
-fi
-
-if [ -r "${adb_pidfile}" ]
-then
-    logger -s -t "adblock[${adb_pid}] error" "adblock service already running ($(cat ${adb_pidfile}))" 2>&1
-    exit 255
-fi
-
-. "${adb_helper}"
-f_envload
-
-if [ "${adb_restricted}" = "1" ]
-then
-    adb_uci="$(which true)"
-fi
+exec 2>/dev/null
+adb_script="/usr/bin/adblock.sh"
+adb_iface="$(uci -q get adblock.global.adb_iface)"
 
 boot()
 {
-    return 0
-}
+    local wanif4 wanif6
 
-start()
-{
-    if [ -t 1 ]
+    ubus -t 30 wait_for network.interface
+    if [ ${?} -eq 0 ]
     then
-        unset bg_parm
-    fi
-    eval "${adb_script}" ${bg_parm}
-    return 0
-}
-
-restart()
-{
-    stop
-    start
-}
-
-reload()
-{
-    reload="true"
-    stop
-    start
-}
-
-stop()
-{
-    f_rmdns
-    f_rmuhttpd
-    config_foreach f_rmconfig source
-    if [ -z "${reload}" ]
-    then
-        f_rmfirewall
-    fi
-    if [ -n "${rm_dns}" ] || [ -n "${rm_uhttpd}" ] || [ -n "${rm_fw}" ] || [ -n "$(${adb_uci} -q changes adblock)" ]
-    then
-        "${adb_uci}" -q commit adblock
-        f_log "all adblock related services stopped"
-    fi
-    return 0
-}
-
-toggle()
-{
-    if [ -d "${adb_dnshidedir}" ]
-    then
-        list_dns="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print)"
-        list_dnshide="$(find "${adb_dnshidedir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print)"
-        if [ -n "${list_dns}" ]
+        . "/lib/functions/network.sh"
+        network_find_wan wanif4
+        network_find_wan6 wanif6
+        if [ -n "${wanif4}" ] || [ -n "${wanif6}" ]
         then
-            source="${adb_dnsdir}/${adb_dnsprefix}"
-            target="${adb_dnshidedir}"
-            pos="off"
-        elif [ -n "${list_dnshide}" ]
-        then
-            source="${adb_dnshidedir}/${adb_dnsprefix}"
-            target="${adb_dnsdir}"
-            pos="on"
-        fi
-        if [ -n "${list_dns}" ] || [ -n "${list_dnshide}" ]
-        then
-            mv -f "${source}"* "${target}"
-            /etc/init.d/dnsmasq restart
-            "${adb_uci}" -q set "adblock.global.adb_dnstoggle=${pos}"
-            "${adb_uci}" -q commit "adblock"
-            f_log "adblock toggle switched '${pos}'"
+            rc_procd start_service
+        else
+            rc_procd service_triggers
         fi
     fi
-    return 0
 }
 
-stats()
+start_service()
 {
-    f_statistics
-    "${adb_uci}" -q commit "adblock"
-    return 0
-}
-
-cfgup()
-{
-    stop
-    cp -pf "/etc/adblock/adblock.conf.default" "/etc/config/adblock"
-    rc=$?
-    if [ $((rc)) -eq 0 ]
+    if [ $(/etc/init.d/adblock enabled; printf ${?}) -eq 0 ]
     then
-        f_log "default adblock configuration applied, please check the settings in '/etc/config/adblock'"
-    else
-        f_log "default adblock configuration not found, please re-install the package via 'opkg install adblock --force-maintainer'"
+        procd_open_instance "adblock"
+        procd_set_param env adb_procd="true"
+        procd_set_param command "${adb_script}" "${@}"
+        procd_set_param stdout 1
+        procd_set_param stderr 1
+        procd_close_instance
     fi
-    return 0
+}
+
+reload_service()
+{
+    rc_procd start_service reload
+}
+
+stop_service()
+{
+    export adb_procd="true"
+    rc_procd "${adb_script}" stop
+}
+
+suspend()
+{
+    rc_procd start_service suspend
+}
+
+resume()
+{
+    rc_procd start_service resume
 }
 
 query()
 {
-    domain="${1}"
-    tld="${domain#*.}"
-    list_dns="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print)"
-    if [ -z "${list_dns}" ]
-    then
-        f_log "no active blocklists found, please start adblock first"
-    elif [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
-    then
-        f_log "invalid domain query input, please submit a specific (sub-)domain, i.e. 'www.abc.xyz'"
-    else
-        while [ "${domain}" != "${tld}" ]
-        do
-            search="${domain//./\.}"
-            result="$(grep -Hm 1 "[/\.]${search}/" "${adb_dnsdir}/adb_list"* | awk -F ':|/' '{print "   "$4"\t: "$6}')"
-            count="$(grep -hc "[/\.]${search}/" "${adb_dnsdir}/adb_list"* | awk '{sum += $1} END {printf sum}')"
-            printf "%s\n" "=> distinct results for domain '${domain}' (overall ${count})"
-            if [ -z "${result}" ]
-            then
-                printf "%s\n" "   no matches in active blocklists"
-            else
-                printf "%s\n" "${result}"
-            fi
-            domain="${tld}"
-            tld="${domain#*.}"
-        done
-    fi
-    return 0
+    export adb_procd="true"
+    rc_procd "${adb_script}" query "${1}"
 }
 
-envchk()
+service_triggers()
 {
-    adb_loglevel=0
-    f_envcheck
-    rm -f "${adb_tmpfile}"
-    rm -rf "${adb_tmpdir}"
-    adb_loglevel=1
-    f_log "adblock environment check finished successfully"
-    return 0
+    local iface
+
+    procd_add_config_trigger "config.change" "adblock" /etc/init.d/adblock start
+    if [ -z "${adb_iface}" ]
+    then
+        procd_add_raw_trigger "interface.*.up" 1000 /etc/init.d/adblock start
+    else
+        for iface in ${adb_iface}
+        do
+            procd_add_interface_trigger "interface.*.up" "${iface}" /etc/init.d/adblock start
+        done
+    fi
 }

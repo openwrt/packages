@@ -7,24 +7,26 @@ STOP=10
 SERVICE_DAEMONIZE=1
 SERVICE_WRITE_PID=1
 SERVICE_STOP_TIME=9
-
-error() {
-	echo "${initscript}:" "$@" 1>&2
-}
+PROG='/usr/bin/mysqld'
 
 start() {
-	local datadir=$(sed -n -e "s/^[[:space:]]*datadir[[:space:]]*=[[:space:]\"']*\([^[:space:]\"']*\)[[:space:]\"']*/\1/p" /etc/my.cnf)
-	if [ ! -d "$datadir" ]; then
-		error "Error: datadir '$datadir' in /etc/my.cnf doesn't exist"
+	local conf='/etc/my.cnf'
+	local datadir="$( sed -nE "s/^\s*datadir\s*=\s*('([^']*)'|\x22([^\x22]*)\x22|(.*\S))\s*$/\2\3\4/p" "$conf" )"
+
+	[ -d "$datadir" ] || {
+		logger -s "[ERROR] datadir '$datadir' in '$conf' does not exist"
 		return 1
-	fi
-	if [ ! -f "$datadir/mysql/tables_priv.MYD" ]; then
-		error "Error: I didn't detect a privileges table, you might need to run mysql_install_db --force to initialize the system tables"
+	}
+
+	[ -f "$datadir/mysql/tables_priv.MYD" ] || {
+		logger -s "[ERROR] can not detect privileges table, you might need to"
+		logger -s "run 'mysql_install_db --force' to initialize the system tables"
 		return 1
-	fi
-	service_start /usr/bin/mysqld
+	}
+
+	service_start "$PROG"
 }
 
 stop() {
-	service_stop /usr/bin/mysqld
+	service_stop "$PROG"
 }

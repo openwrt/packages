@@ -118,23 +118,23 @@ __PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
 # __PRGBASE="$__PRGBASE --header 'Accept: application/json' "
 
 # read zone id for registered domain.TLD
-__RUNPROG="$__PRGBASE --request GET $__URLBASE/zones?name=$__DOMAIN"
+__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
 cloudflare_transfer || return 1
 # extract zone id
 __ZONEID=$(grep -o '"id":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 [ -z "$__ZONEID" ] && {
 	write_log 4 "Could not detect 'zone id' for domain.tld: '$__DOMAIN'"
-	return 1
+	return 127
 }
 
 # read record id for A or AAAA record of host.domain.TLD
-__RUNPROG="$__PRGBASE --request GET $__URLBASE/zones/$__ZONEID/dns_records?name=$__HOST&type=$__TYPE"
+__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records?name=$__HOST&type=$__TYPE'"
 cloudflare_transfer || return 1
 # extract record id
 __RECID=$(grep -o '"id":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 [ -z "$__RECID" ] && {
 	write_log 4 "Could not detect 'record id' for host.domain.tld: '$__HOST'"
-	return 1
+	return 127
 }
 
 # extract current stored IP
@@ -153,12 +153,12 @@ __DATA=$(grep -o '"content":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 		expand_ipv6 $__DATA __DATA
 		[ "$__DATA" = "$__IPV6" ] && {		# IPv6 no update needed
 			write_log 7 "IPv6 at CloudFlare.com already up to date"
-			return 127
+			return 0
 		}
 	else
 		[ "$__DATA" = "$__IP" ] && {		# IPv4 no update needed
 			write_log 7 "IPv4 at CloudFlare.com already up to date"
-			return 127
+			return 0
 		}
 	fi
 }
@@ -171,7 +171,7 @@ cat > $DATFILE << EOF
 EOF
 
 # let's complete transfer command
-__RUNPROG="$__PRGBASE --request PUT --data @$DATFILE $__URLBASE/zones/$__ZONEID/dns_records/$__RECID"
+__RUNPROG="$__PRGBASE --request PUT --data @$DATFILE '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
 cloudflare_transfer || return 1
 
 return 0

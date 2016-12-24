@@ -18,7 +18,7 @@
 ##############################################################################
 
 if [ "$ACTION" = stratum -a ! -f "$UNBOUND_TIMEFILE" ] \
-  && /etc/init.d/dnsmasq enabled ; then
+  && /etc/init.d/unbound enabled ; then
   #
   echo "ntpd: $( date )" > $UNBOUND_TIMEFILE
   /etc/init.d/unbound restart

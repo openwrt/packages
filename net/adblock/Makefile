@@ -1,13 +1,12 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
-#
+# Copyright (c) 2015-2016 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=1.5.4
+PKG_VERSION:=2.0.2
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -45,11 +44,7 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) ./files/adblock-update.sh $(1)/usr/bin/
-	$(INSTALL_DATA) ./files/adblock-helper.sh $(1)/usr/bin/
-
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN) ./files/adblock.hotplug $(1)/etc/hotplug.d/iface/90-adblock
+	$(INSTALL_BIN) ./files/adblock.sh $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/adblock.init $(1)/etc/init.d/adblock
@@ -58,12 +53,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_CONF) ./files/adblock.conf $(1)/etc/config/adblock
 
 	$(INSTALL_DIR) $(1)/etc/adblock
-	$(INSTALL_CONF) ./files/adblock.conf $(1)/etc/adblock/adblock.conf.default
 	$(INSTALL_CONF) ./files/adblock.blacklist $(1)/etc/adblock/
 	$(INSTALL_CONF) ./files/adblock.whitelist $(1)/etc/adblock/
-
-	$(INSTALL_DIR) $(1)/www/adblock
-	$(INSTALL_DATA) ./files/www/adblock/* $(1)/www/adblock/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

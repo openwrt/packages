@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.10.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.10.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
-PKG_MD5SUM:=088292d9caf6059ef328aa7dda332e44
+PKG_MD5SUM:=e8f5f4beed041e63eb97f9f4f55f3085
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=2-clause BSD-like license
 
@@ -241,7 +241,7 @@ define Build/Prepare
 endef
 
 define Download/nginx-naxsi
-	VERSION:=7a6ff365f6be736c826b2d69b967a250ac07197d
+	VERSION:=cf73f9c8664127252c2a4958d2e169516d3845a1
 	SUBDIR:=nginx-naxsi
 	FILE:=nginx-naxsi-module-$(PKG_VERSION)-$$(VERSION).tar.gz
 	URL:=https://github.com/nbs-system/naxsi.git

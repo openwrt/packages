@@ -25,6 +25,7 @@ UNBOUND_B_DNSMASQ=0
 UNBOUND_B_DNSSEC=0
 UNBOUND_B_DNS64=0
 UNBOUND_B_GATE_NAME=0
+UNBOUND_B_HIDE_BIND=1
 UNBOUND_B_LOCL_BLCK=0
 UNBOUND_B_LOCL_NAME=0
 UNBOUND_B_LOCL_SERV=1
@@ -32,11 +33,13 @@ UNBOUND_B_MAN_CONF=0
 UNBOUND_B_NTP_BOOT=1
 UNBOUND_B_PRIV_BLCK=1
 UNBOUND_B_QUERY_MIN=0
+UNBOUND_B_QRY_MINST=0
 
 UNBOUND_IP_DNS64="64:ff9b::/96"
 
 UNBOUND_D_RESOURCE=small
 UNBOUND_D_RECURSION=passive
+UNBOUND_D_PROTOCOL=mixed
 
 UNBOUND_TXT_FWD_ZONE=""
 UNBOUND_TTL_MIN=120
@@ -207,6 +210,38 @@ unbound_conf() {
   } >> $UNBOUND_CONFFILE
 
 
+  case "$UNBOUND_D_PROTOCOL" in
+    ip4_only)
+      {
+        echo "  do-ip4: yes"
+        echo "  do-ip6: no"
+      } >> $UNBOUND_CONFFILE
+      ;;
+
+    ip6_only)
+      {
+        echo "  do-ip4: no"
+        echo "  do-ip6: yes"
+      } >> $UNBOUND_CONFFILE
+      ;;
+
+    ip6_prefer)
+      {
+        echo "  do-ip4: yes"
+        echo "  do-ip6: yes"
+        echo "  prefer-ip6: yes"
+      } >> $UNBOUND_CONFFILE
+      ;;
+
+    *)
+      {
+        echo "  do-ip4: yes"
+        echo "  do-ip6: yes"
+      } >> $UNBOUND_CONFFILE
+      ;;
+  esac
+
+
   {
     # protocol level tuning
     echo "  edns-buffer-size: $UNBOUND_N_EDNS_SIZE"
@@ -324,7 +359,14 @@ unbound_conf() {
   }  >> $UNBOUND_CONFFILE
 
 
-  if [ "$UNBOUND_B_QUERY_MIN" -gt 0 ] ; then
+  if [ "$UNBOUND_B_QRY_MINST" -gt 0 -a "$UNBOUND_B_QUERY_MIN" -gt 0 ] ; then
+    {
+      # Some query privacy but "strict" will break some name servers
+      echo "  qname-minimisation: yes"
+      echo "  qname-minimisation-strict: yes"
+    } >> $UNBOUND_CONFFILE
+
+  elif [ "$UNBOUND_B_QUERY_MIN" -gt 0 ] ; then
     # Minor improvement on query privacy
     echo "  qname-minimisation: yes" >> $UNBOUND_CONFFILE
 
@@ -370,10 +412,23 @@ unbound_conf() {
   } >> $UNBOUND_CONFFILE
 
 
+  if [ "$UNBOUND_B_HIDE_BIND" -gt 0 ] ; then
+    {
+      # Block server id and version DNS TXT records
+      echo "  hide-identity: yes"
+      echo "  hide-version: yes"
+      echo
+    } >> $UNBOUND_CONFFILE
+  fi
+
+
   if [ "$UNBOUND_B_PRIV_BLCK" -gt 0 ] ; then
     {
-      # Remove DNS reponses from upstream with private IP
+      # Remove _upstream_ or global reponses with private addresses.
+      # Unbounds own "local zone" and "forward zone" may still use these.
+      # RFC1918, RFC3927, RFC4291, RFC6598, RFC6890
       echo "  private-address: 10.0.0.0/8"
+      echo "  private-address: 100.64.0.0/10"
       echo "  private-address: 169.254.0.0/16"
       echo "  private-address: 172.16.0.0/12"
       echo "  private-address: 192.168.0.0/16"
@@ -439,14 +494,16 @@ unbound_uci() {
   ####################
   # UCI @ unbound    #
   ####################
-  
+
   config_get_bool UNBOUND_B_DNS64     "$cfg" dns64 0
-  config_get_bool UNBOUND_B_GATE_NAME "$cfg" dnsmsaq_gate_name 0
+  config_get_bool UNBOUND_B_GATE_NAME "$cfg" dnsmasq_gate_name 0
   config_get_bool UNBOUND_B_DNSMASQ   "$cfg" dnsmasq_link_dns 0
+  config_get_bool UNBOUND_B_HIDE_BIND "$cfg" hide_binddata 1
   config_get_bool UNBOUND_B_LOCL_NAME "$cfg" dnsmasq_only_local 0
   config_get_bool UNBOUND_B_LOCL_SERV "$cfg" localservice 1
   config_get_bool UNBOUND_B_MAN_CONF  "$cfg" manual_conf 0
   config_get_bool UNBOUND_B_QUERY_MIN "$cfg" query_minimize 0
+  config_get_bool UNBOUND_B_QRY_MINST "$cfg" query_min_strict 0
   config_get_bool UNBOUND_B_PRIV_BLCK "$cfg" rebind_protection 1
   config_get_bool UNBOUND_B_LOCL_BLCK "$cfg" rebind_localhost 0
   config_get_bool UNBOUND_B_CONTROL   "$cfg" unbound_control 0
@@ -454,11 +511,15 @@ unbound_uci() {
   config_get_bool UNBOUND_B_NTP_BOOT  "$cfg" validator_ntp 1
 
   config_get UNBOUND_IP_DNS64    "$cfg" dns64_prefix "64:ff9b::/96"
+
   config_get UNBOUND_N_EDNS_SIZE "$cfg" edns_size 1280
   config_get UNBOUND_N_RX_PORT   "$cfg" listen_port 53
+  config_get UNBOUND_N_ROOT_AGE  "$cfg" root_age 7
+
+  config_get UNBOUND_D_PROTOCOL  "$cfg" protocol mixed
   config_get UNBOUND_D_RECURSION "$cfg" recursion passive
   config_get UNBOUND_D_RESOURCE  "$cfg" resource small
-  config_get UNBOUND_N_ROOT_AGE  "$cfg" root_age 7
+
   config_get UNBOUND_TTL_MIN     "$cfg" ttl_min 120
 
 

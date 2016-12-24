@@ -136,12 +136,12 @@ __DATA=$(sed -r 's/.+data":"(.+)","t.+/\1/g' $DATFILE)
 		expand_ipv6 $__DATA __DATA
 		[ "$__DATA" = "$__IPV6" ] && {		# IPv6 no update needed
 			write_log 7 "IPv6 at GoDaddy.com already up to date"
-			return 127
+			return 0
 		}
 	else
 		[ "$__DATA" = "$__IP" ] && {		# IPv4 no update needed
 			write_log 7 "IPv4 at GoDaddy.com already up to date"
-			return 127
+			return 0
 		}
 	fi
 }
