@@ -51,8 +51,6 @@ function index()
 		form("mwan/advanced_mwanconfig"))
 	entry({"admin", "network", "mwan", "advanced", "networkconfig"},
 		form("mwan/advanced_networkconfig"))
-	entry({"admin", "network", "mwan", "advanced", "wirelessconfig"},
-		form("mwan/advanced_wirelessconfig"))
 	entry({"admin", "network", "mwan", "advanced", "diagnostics"},
 		template("mwan/advanced_diagnostics"))
 	entry({"admin", "network", "mwan", "advanced", "diagnostics_display"},
@@ -272,13 +270,6 @@ function troubleshootingData()
 		end
 	mArray.netconfig = { networkConfig }
 
-	-- wireless config
-	local wirelessConfig = ut.trim(sys.exec("cat /etc/config/wireless | sed -e 's/.*username.*/	USERNAME HIDDEN/' -e 's/.*password.*/	PASSWORD HIDDEN/' -e 's/.*key.*/	KEY HIDDEN/'"))
-		if wirelessConfig == "" then
-			wirelessConfig = "No data found"
-		end
-	mArray.wificonfig = { wirelessConfig }
-	
 	-- ifconfig
 	local ifconfig = ut.trim(sys.exec("ifconfig"))
 		if ifconfig == "" then
