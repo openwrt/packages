@@ -1,6 +1,6 @@
 #!/bin/sh
 
-URL="http://publicsuffix.org/list/public_suffix_list.dat"
+URL="https://publicsuffix.org/list/public_suffix_list.dat"
 TMPFILE=$(dirname $0)/public_suffix_list.tmp
 DATFILE=$(dirname $0)/public_suffix_list.dat
 
