@@ -1,0 +1,66 @@
+From 5fbcf1a914507b4c73d83387fdc5e8f612d83558 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 22 Dec 2016 21:58:38 +0100
+Subject: [PATCH 16/19] BUG/MEDIUM: ssl: for a handshake when server-side SNI
+ changes
+
+Calling SSL_set_tlsext_host_name() on the current SSL ctx has no effect
+if the session is being resumed because the hostname is already stored
+in the session and is not advertised again in subsequent connections.
+It's visible when enabling SNI and health checks at the same time because
+checks do not send an SNI and regular traffic reuses the same connection,
+resulting in no SNI being sent.
+
+The only short-term solution is to reset the reused session when the
+SNI changes compared to the previous one. It can make the server-side
+performance suffer when SNIs are interleaved but it will work. A better
+long-term solution would be to keep a small cache of a few contexts for
+a few SNIs.
+
+Now with SSL_set_session(ctx, NULL) it works. This needs to be double-
+checked though. The man says that SSL_set_session() frees any previously
+existing context. Some people report a bit of breakage when calling
+SSL_set_session(NULL) on openssl 1.1.0a (freed session not reusable at
+all though it's not an issue for now).
+
+This needs to be backported to 1.7 and 1.6.
+(cherry picked from commit 119a4084bf88418bce74d8af686576e371700c20)
+---
+ src/ssl_sock.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 55eaa28..77fb4b3 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -4143,12 +4143,27 @@ char *ssl_sock_get_version(struct connection *conn)
+ 	return (char *)SSL_get_version(conn->xprt_ctx);
+ }
+ 
++/* Sets advertised SNI for outgoing connections. Please set <hostname> to NULL
++ * to disable SNI.
++ */
+ void ssl_sock_set_servername(struct connection *conn, const char *hostname)
+ {
+ #ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
++	char *prev_name;
++
+ 	if (!ssl_sock_is_ssl(conn))
+ 		return;
+ 
++	/* if the SNI changes, we must destroy the reusable context so that a
++	 * new connection will present a new SNI. As an optimization we could
++	 * later imagine having a small cache of ssl_ctx to hold a few SNI per
++	 * server.
++	 */
++	prev_name = (char *)SSL_get_servername(conn->xprt_ctx, TLSEXT_NAMETYPE_host_name);
++	if ((!prev_name && hostname) ||
++	    (prev_name && (!hostname || strcmp(hostname, prev_name) != 0)))
++		SSL_set_session(conn->xprt_ctx, NULL);
++
+ 	SSL_set_tlsext_host_name(conn->xprt_ctx, hostname);
+ #endif
+ }
+-- 
+2.10.2
+

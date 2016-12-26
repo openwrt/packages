@@ -1,0 +1,33 @@
+From 22e0a2295a96c30c9cd11e3aa5997e9de9083b93 Mon Sep 17 00:00:00 2001
+From: William Lallemand <wlallemand@haproxy.com>
+Date: Fri, 23 Dec 2016 15:44:15 +0100
+Subject: [PATCH 17/19] BUG/MINOR: systemd: potential zombie processes
+
+In systemd mode (-Ds), the master haproxy process is waiting for each
+child to exit in a specific order. If a process die when it's not his
+turn, it will become a zombie process until every processes exit.
+
+The master is now waiting for any process to exit in any order.
+
+This patch should be backported to 1.7, 1.6 and 1.5.
+(cherry picked from commit 1e4fc43630eb194f8e8dd98197cf47c7e9912371)
+---
+ src/haproxy.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/haproxy.c b/src/haproxy.c
+index c31ccb0..b30a351 100644
+--- a/src/haproxy.c
++++ b/src/haproxy.c
+@@ -2038,7 +2038,7 @@ int main(int argc, char **argv)
+ 				/* it's OK because "-Ds -f x" is the shortest form going here */
+ 				memcpy(argv[0] + strlen(argv[0]), "-master", 8);
+ 				for (proc = 0; proc < global.nbproc; proc++)
+-					while (waitpid(children[proc], NULL, 0) == -1 && errno == EINTR);
++					while (waitpid(-1, NULL, 0) == -1 && errno == EINTR);
+ 			}
+ 			exit(0); /* parent must leave */
+ 		}
+-- 
+2.10.2
+

@@ -1,0 +1,38 @@
+From 4d0ca6937f682998d16b94da74f463b18056cdea Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 22 Dec 2016 21:54:21 +0100
+Subject: [PATCH 12/19] BUG/MEDIUM: ssl: properly reset the reused_sess during
+ a forced handshake
+
+We have a bug when SSL reuse is disabled on the server side : we reset
+the context but do not set it to NULL, causing a multiple free of the
+same entry. It seems like this bug cannot appear as-is with the current
+code (or the conditions to get it are not obvious) but it did definitely
+strike when trying to fix another bug with the SNI which forced a new
+handshake.
+
+This fix should be backported to 1.7, 1.6 and 1.5.
+(cherry picked from commit 30fd4bd8446dd7104b7d1cae9e762c7d1405171a)
+---
+ src/ssl_sock.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 0a06adb..322488e 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -3654,8 +3654,10 @@ reneg_ok:
+ 				global.ssl_be_keys_max = global.ssl_be_keys_per_sec.curr_ctr;
+ 
+ 			/* check if session was reused, if not store current session on server for reuse */
+-			if (objt_server(conn->target)->ssl_ctx.reused_sess)
++			if (objt_server(conn->target)->ssl_ctx.reused_sess) {
+ 				SSL_SESSION_free(objt_server(conn->target)->ssl_ctx.reused_sess);
++				objt_server(conn->target)->ssl_ctx.reused_sess = NULL;
++			}
+ 
+ 			if (!(objt_server(conn->target)->ssl_ctx.options & SRV_SSL_O_NO_REUSE))
+ 				objt_server(conn->target)->ssl_ctx.reused_sess = SSL_get1_session(conn->xprt_ctx);
+-- 
+2.10.2
+

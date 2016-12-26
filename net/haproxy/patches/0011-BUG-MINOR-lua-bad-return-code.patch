@@ -1,0 +1,31 @@
+From 59a34946f1b0076c1f72c8d024b991c7aca41589 Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <thierry.fournier@ozon.io>
+Date: Sat, 17 Dec 2016 12:05:56 +0100
+Subject: [PATCH 11/19] BUG/MINOR: lua: bad return code
+
+If the lua/cli fails during initialization, it returns an ok
+status, an the execution continue. This will probably occur a
+segfault.
+
+Thiw patch should be backported in 1.7
+(cherry picked from commit 33558c4a3f2521bb33fa71ebb312babbf1361c13)
+---
+ src/hlua.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/hlua.c b/src/hlua.c
+index cdef8ed..45e3164 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -6453,7 +6453,7 @@ static int hlua_cli_parse_fct(char **args, struct appctx *appctx, void *private)
+ 	appctx->ctx.hlua_cli.task = task_new();
+ 	if (!appctx->ctx.hlua_cli.task) {
+ 		SEND_ERR(NULL, "Lua cli '%s': out of memory.\n", fcn->name);
+-		return 0;
++		return 1;
+ 	}
+ 	appctx->ctx.hlua_cli.task->nice = 0;
+ 	appctx->ctx.hlua_cli.task->context = appctx;
+-- 
+2.10.2
+

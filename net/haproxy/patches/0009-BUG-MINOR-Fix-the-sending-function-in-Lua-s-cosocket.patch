@@ -1,0 +1,58 @@
+From 8d570235f18eb7a6c920d674d1a057f35c6740e8 Mon Sep 17 00:00:00 2001
+From: Christopher Faulet <cfaulet@haproxy.com>
+Date: Mon, 19 Dec 2016 09:29:06 +0100
+Subject: [PATCH 09/19] BUG/MINOR: Fix the sending function in Lua's cosocket
+
+This is a regression from the commit a73e59b6901a164d19b1145e8511602d9814f28f.
+
+When data are sent from a cosocket, the action is done in the context of the
+applet running a lua stack and not in the context of the applet owning the
+cosocket. So we must take care, explicitly, that this last applet have a buffer
+(the req buffer of the cosocket).
+
+This patch must be backported in 1.7
+(cherry picked from commit 33834b15dce4658ee98fa85668162d78abf32e18)
+---
+ src/hlua.c | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/src/hlua.c b/src/hlua.c
+index cee2c1b..e82656b 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -1884,14 +1884,19 @@ static int hlua_socket_write_yield(struct lua_State *L,int status, lua_KContext
+ 	 * the request buffer if its not required.
+ 	 */
+ 	if (socket->s->req.buf->size == 0) {
+-		si_applet_cant_put(&socket->s->si[0]);
+-		goto hlua_socket_write_yield_return;
++		appctx = hlua->task->context;
++		if (!channel_alloc_buffer(&socket->s->req, &appctx->buffer_wait))
++			goto hlua_socket_write_yield_return;
+ 	}
+ 
+ 	/* Check for avalaible space. */
+ 	len = buffer_total_space(socket->s->req.buf);
+-	if (len <= 0)
++	if (len <= 0) {
++		appctx = objt_appctx(socket->s->si[0].end);
++		if (!hlua_com_new(hlua, &appctx->ctx.hlua.wake_on_write))
++			WILL_LJMP(luaL_error(L, "out of memory"));
+ 		goto hlua_socket_write_yield_return;
++	}
+ 
+ 	/* send data */
+ 	if (len < send_len)
+@@ -1929,9 +1934,6 @@ static int hlua_socket_write_yield(struct lua_State *L,int status, lua_KContext
+ 		return 1;
+ 
+ hlua_socket_write_yield_return:
+-	appctx = objt_appctx(socket->s->si[0].end);
+-	if (!hlua_com_new(hlua, &appctx->ctx.hlua.wake_on_write))
+-		WILL_LJMP(luaL_error(L, "out of memory"));
+ 	WILL_LJMP(hlua_yieldk(L, 0, 0, hlua_socket_write_yield, TICK_ETERNITY, 0));
+ 	return 0;
+ }
+-- 
+2.10.2
+

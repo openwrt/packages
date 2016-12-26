@@ -1,0 +1,44 @@
+From 4135292707ef737f8fea8b255f31648bc01e3063 Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <thierry.fournier@ozon.io>
+Date: Sat, 17 Dec 2016 11:46:06 +0100
+Subject: [PATCH 10/19] BUG/MINOR: lua: memory leak executing tasks
+
+The struct hlua isn't freed when the task is complete.
+
+This patch should be backported in 1.6 and 1.7
+(cherry picked from commit 4e7c708612730d79f4cc2ec7617fce01665ff807)
+---
+ src/hlua.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/hlua.c b/src/hlua.c
+index e82656b..cdef8ed 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -5133,6 +5133,7 @@ static struct task *hlua_process_task(struct task *task)
+ 	/* finished or yield */
+ 	case HLUA_E_OK:
+ 		hlua_ctx_destroy(hlua);
++		free(hlua);
+ 		task_delete(task);
+ 		task_free(task);
+ 		break;
+@@ -5146,6 +5147,7 @@ static struct task *hlua_process_task(struct task *task)
+ 	case HLUA_E_ERRMSG:
+ 		SEND_ERR(NULL, "Lua task: %s.\n", lua_tostring(hlua->T, -1));
+ 		hlua_ctx_destroy(hlua);
++		free(hlua);
+ 		task_delete(task);
+ 		task_free(task);
+ 		break;
+@@ -5154,6 +5156,7 @@ static struct task *hlua_process_task(struct task *task)
+ 	default:
+ 		SEND_ERR(NULL, "Lua task: unknown error.\n");
+ 		hlua_ctx_destroy(hlua);
++		free(hlua);
+ 		task_delete(task);
+ 		task_free(task);
+ 		break;
+-- 
+2.10.2
+
