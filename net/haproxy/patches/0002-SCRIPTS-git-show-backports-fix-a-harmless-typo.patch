@@ -1,0 +1,28 @@
+From b0b4eff10d998ff6bb00d5a36478f2b3d6ee2ee0 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 14 Dec 2016 16:43:23 +0100
+Subject: [PATCH 02/19] SCRIPTS: git-show-backports: fix a harmless typo
+
+There was a double output redirection in this script while dumping the
+current branch's refs which could cause either an error or an empty file.
+(cherry picked from commit b684cd4642186fd64c9335c316aeca16cc87d9de)
+---
+ scripts/git-show-backports | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/git-show-backports b/scripts/git-show-backports
+index 6567b2f..ca7ad4f 100755
+--- a/scripts/git-show-backports
++++ b/scripts/git-show-backports
+@@ -183,7 +183,7 @@ mkdir -p .git/.show-backports #|| die "Can't create .git/.show-backports"
+ WORK=.git/.show-backports
+ 
+ rm -f "$WORK/${REF//\//_}"
+-git log --reverse ${LOGEXPR:+--grep $LOGEXPR} --pretty="%H %s" "$BASE".."$REF" | grep "${SUBJECT}" > "$WORK/${branch//\//_}" > "$WORK/${REF//\//_}"
++git log --reverse ${LOGEXPR:+--grep $LOGEXPR} --pretty="%H %s" "$BASE".."$REF" | grep "${SUBJECT}" > "$WORK/${REF//\//_}"
+ 
+ # for each branch, enumerate all commits and their ancestry
+ 
+-- 
+2.10.2
+

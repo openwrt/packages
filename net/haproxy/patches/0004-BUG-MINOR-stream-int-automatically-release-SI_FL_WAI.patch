@@ -1,0 +1,46 @@
+From ae03ce5039283b63124e069bccd2c742cd71c5fb Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Tue, 13 Dec 2016 15:21:25 +0100
+Subject: [PATCH 04/19] BUG/MINOR: stream-int: automatically release
+ SI_FL_WAIT_DATA on SHUTW_NOW
+
+While developing an experimental applet performing only one read per full
+line, it appeared that it would be woken up for the client's close, not
+read all data (missing LF), then wait for a subsequent call, and would only
+be woken up on client timeout to finish the read. The reason is that we
+preset SI_FL_WAIT_DATA in the stream-interface's flags to avoid a fast loop,
+but there's nothing which can remove this flag until there's a read operation.
+
+We must definitely remove it in stream_int_notify() each time we're called
+with CF_SHUTW_NOW because we know there will be no more subsequent read
+and we don't want an applet which keeps the WANT_GET flag to block on this.
+
+This fix should be backported to 1.7 and 1.6 though it's uncertain whether
+cli, peers, lua or spoe really are affected there.
+(cherry picked from commit 8cf9c8e663fa468fa2380eddecd671172ff63868)
+---
+ src/stream_interface.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/stream_interface.c b/src/stream_interface.c
+index faeceb9..758aec7 100644
+--- a/src/stream_interface.c
++++ b/src/stream_interface.c
+@@ -455,9 +455,13 @@ void stream_int_notify(struct stream_interface *si)
+ 		oc->wex = TICK_ETERNITY;
+ 	}
+ 
+-	/* indicate that we may be waiting for data from the output channel */
++	/* indicate that we may be waiting for data from the output channel or
++	 * we're about to close and can't expect more data if SHUTW_NOW is there.
++	 */
+ 	if ((oc->flags & (CF_SHUTW|CF_SHUTW_NOW)) == 0 && channel_may_recv(oc))
+ 		si->flags |= SI_FL_WAIT_DATA;
++	else if ((oc->flags & (CF_SHUTW|CF_SHUTW_NOW)) == CF_SHUTW_NOW)
++		si->flags &= ~SI_FL_WAIT_DATA;
+ 
+ 	/* update OC timeouts and wake the other side up if it's waiting for room */
+ 	if (oc->flags & CF_WRITE_ACTIVITY) {
+-- 
+2.10.2
+
