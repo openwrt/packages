@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=zip
 PKG_REV:=30
 PKG_VERSION:=3.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)$(PKG_REV).tar.gz
 PKG_SOURCE_URL:=@SF/infozip
