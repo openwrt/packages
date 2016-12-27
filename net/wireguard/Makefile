@@ -10,12 +10,12 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=wireguard
 
-PKG_VERSION:=0.0.20161218
+PKG_VERSION:=0.0.20161223
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WireGuard-$(PKG_VERSION).tar.xz
 # This is actually SHA256, but OpenWRT/LEDE will figure it out based on the length
-PKG_MD5SUM:=d805035d3e99768e69d8cdeb8fb5250a59b994ce127fceb71a078582c30f5597
+PKG_MD5SUM:=bbd98ff6667e76ac283685db9ee7a6777529f5d311a0bf1fe9a15932aed2b972
 PKG_SOURCE_URL:=https://git.zx2c4.com/WireGuard/snapshot/
 PKG_BUILD_DIR:=$(BUILD_DIR)/WireGuard-$(PKG_VERSION)
 
@@ -34,7 +34,8 @@ define Package/wireguard/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=https://www.wireguard.io
-  MAINTAINER:=Baptiste Jonglez <openwrt@bitsofnetworks.org>
+  MAINTAINER:=Baptiste Jonglez <openwrt@bitsofnetworks.org>, \
+              Dan Luedtke <mail@danrl.com>
 endef
 
 define Package/wireguard/Default/description
@@ -71,7 +72,7 @@ endef
 define Package/wireguard-tools
   $(call Package/wireguard/Default)
   TITLE:=Wireguard userspace control program (wg)
-  DEPENDS:=+libmnl +resolveip
+  DEPENDS:=+libmnl
 endef
 
 define Package/wireguard-tools/description

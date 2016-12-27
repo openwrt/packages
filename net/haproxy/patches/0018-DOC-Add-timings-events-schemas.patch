@@ -1,0 +1,45 @@
+From 4a87848534d3950b415619554ef4938396f45f58 Mon Sep 17 00:00:00 2001
+From: Guillaume de Lafond <gdelafond@aquaray.com>
+Date: Fri, 23 Dec 2016 17:32:43 +0100
+Subject: [PATCH 18/19] DOC: Add timings events schemas
+
+[wt: this could be backported to 1.7]
+(cherry picked from commit f27cddcf7d42cad6e1972b5075da348192ee4105)
+---
+ doc/configuration.txt | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index 6596578..e5e6282 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -15491,6 +15491,26 @@ frontend, 3 control points are reported under the form "Tw/Tc/Tt", and in HTTP
+ mode, 5 control points are reported under the form "TR/Tw/Tc/Tr/Ta". In
+ addition, three other measures are provided, "Th", "Ti", and "Tq".
+ 
++Timings events in HTTP mode:
++
++                 first request               2nd request
++      |<-------------------------------->|<-------------- ...
++      t         tr                       t    tr ...
++   ---|----|----|----|----|----|----|----|----|--
++      : Th   Ti   TR   Tw   Tc   Tr   Td : Ti   ...
++      :<---- Tq ---->:                   :
++      :<-------------- Tt -------------->:
++                :<--------- Ta --------->:
++
++Timings events in TCP mode:
++
++           TCP session
++      |<----------------->|
++      t                   t
++   ---|----|----|----|----|---
++      | Th   Tw   Tc   Td |
++      |<------ Tt ------->|
++
+   - Th: total time to accept tcp connection and execute handshakes for low level
+     protocols. Currently, these protocoles are proxy-protocol and SSL. This may
+     only happen once during the whole connection's lifetime. A large time here
+-- 
+2.10.2
+

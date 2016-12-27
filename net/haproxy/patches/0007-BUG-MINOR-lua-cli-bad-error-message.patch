@@ -1,0 +1,29 @@
+From bd2fff07e8858d5154debd48dfabcddaf5d133e4 Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <thierry.fournier@ozon.io>
+Date: Fri, 16 Dec 2016 11:14:06 +0100
+Subject: [PATCH 07/19] BUG/MINOR: lua/cli: bad error message
+
+Error message inherited from lua_appelet_tcp copy/paste.
+
+Should be backported in 1.7
+(cherry picked from commit ffbf569edba2a10a3d2316cb6d7435944f591cce)
+---
+ src/hlua.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/hlua.c b/src/hlua.c
+index b91414b..cee2c1b 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -6447,7 +6447,7 @@ static int hlua_cli_parse_fct(char **args, struct appctx *appctx, void *private)
+ 	 */
+ 	appctx->ctx.hlua_cli.task = task_new();
+ 	if (!appctx->ctx.hlua_cli.task) {
+-		SEND_ERR(NULL, "Lua applet tcp '%s': out of memory.\n", fcn->name);
++		SEND_ERR(NULL, "Lua cli '%s': out of memory.\n", fcn->name);
+ 		return 0;
+ 	}
+ 	appctx->ctx.hlua_cli.task->nice = 0;
+-- 
+2.10.2
+

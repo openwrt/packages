@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.6
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=7
+PKG_RELEASE:=9
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
@@ -117,21 +117,19 @@ define Build/Configure
 endef
 define Build/Compile
 	$(CP) ./files $(PKG_BUILD_DIR)
-	for FILE in `find $(PKG_BUILD_DIR)/files -type f`; do \
-		$(SED) 's/^\s*#/#/' \
-		-e '/^#\s\|^#$$$$/d' \
-		-e 's/\s#\s.*$$$$//' \
-		-e 's/\s*$$$$//' \
-		-e '/^\/\/\s/d'	\
-		-e '/^\s*$$$$/d'	$$$$FILE; \
-	done
 	# ensure that VERSION inside dynamic_dns_functions.sh reflect PKG_VERSION of Makefile
 	$(SED) '/^VERSION=*/s/.*/VERSION="$(PKG_VERSION)-$(PKG_RELEASE)"/' $(PKG_BUILD_DIR)/files/dynamic_dns_functions.sh
-	$(CP) ./tools $(PKG_BUILD_DIR)
-	chmod 755 $(PKG_BUILD_DIR)/tools/*
-	$(PKG_BUILD_DIR)/tools/public_suffix_list.sh
-	mv -f $(PKG_BUILD_DIR)/tools/public_suffix_list.dat.gz \
-		$(PKG_BUILD_DIR)/files/public_suffix_list.dat.gz
+	# remove comments, white spaces and empty lines
+	for FILE in `find $(PKG_BUILD_DIR)/files -type f`; do \
+		$(SED) 's/^[[:space:]]*//' \
+		-e '/^#[[:space:]]\|^#$$$$/d' \
+		-e 's/[[:space:]]#[[:space:]].*$$$$//' \
+		-e 's/[[:space:]]*$$$$//' \
+		-e '/^\/\/[[:space:]]/d'	\
+		-e '/^[[:space:]]*$$$$/d'	$$$$FILE; \
+	done
+	# compress public_suffix_list.dat
+	gzip -f9 $(PKG_BUILD_DIR)/files/public_suffix_list.dat
 endef
 
 define Package/$(PKG_NAME)/conffiles
