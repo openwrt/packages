@@ -1,6 +1,6 @@
 --- a/src/ping.c
 +++ b/src/ping.c
-@@ -658,7 +658,7 @@ static int ping_read (void) /* {{{ */
+@@ -655,7 +655,7 @@ static int ping_read (void) /* {{{ */
            / ((double) (pkg_recv * (pkg_recv - 1))));
  
      /* Calculate drop rate. */

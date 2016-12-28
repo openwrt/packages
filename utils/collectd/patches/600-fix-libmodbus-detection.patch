@@ -18,7 +18,7 @@ Reversed patch to be applied:
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2626,7 +2626,7 @@ then
+@@ -2627,7 +2627,7 @@ then
  	SAVE_CPPFLAGS="$CPPFLAGS"
  	CPPFLAGS="$CPPFLAGS $with_libmodbus_cflags"
  
@@ -29,12 +29,12 @@ Reversed patch to be applied:
  fi
 --- a/src/modbus.c
 +++ b/src/modbus.c
-@@ -27,7 +27,7 @@
- 
- #include <netdb.h>
+@@ -26,7 +26,7 @@
+ #include "configfile.h"
+ #include "plugin.h"
  
 -#include <modbus.h>
 +#include <modbus/modbus.h>
+ #include <netdb.h>
+ #include <sys/socket.h>
  
- #ifndef LIBMODBUS_VERSION_CHECK
- /* Assume version 2.0.3 */
