@@ -5,7 +5,7 @@
 
 function list_staging_files {
 	cd "$1"; find \
-		\( \( -name "root-x86" -or -name "packages" -or -name "stamp" -or -name "pkginfo" \) -prune \) -or -true \
+		\( \( -name "root-*" -or -name "packages" -or -name "stamp" -or -name "pkginfo" -or -name "host" \) -prune \) -or -true \
 		\( -path "*ruby*" -or -name "erb" -or -name "gem" -or -name "irb" -or -name "rake" -or -name "rdoc" -or -name "ri" -or -name "testrb" \) \
 		-not -path "*/usr/include/*" -not -path "*/usr/lib/pkgconfig/*" -not -path "*/usr/lib/lib*.a" \
 		-not -path "*/usr/lib/ruby/gems/*/cache/*" \
