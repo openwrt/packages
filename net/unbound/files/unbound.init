@@ -20,8 +20,10 @@ PROG=/usr/sbin/unbound
 ##############################################################################
 
 start_service() {
-  unbound_prepare
+  # complex UCI work
+  unbound_start
 
+  # standard procd clause
   procd_open_instance
   procd_set_param command $PROG -d -c $UNBOUND_CONFFILE
   procd_set_param respawn
@@ -31,15 +33,13 @@ start_service() {
 ##############################################################################
 
 stop_service() {
-  rootzone_update
+  unbound_stop
 }
 
 ##############################################################################
 
 service_triggers() {
-  procd_add_reload_trigger "dhcp"
-  procd_add_reload_trigger "network"
-  procd_add_reload_trigger "unbound"
+  procd_add_reload_trigger "dhcp" "network" "unbound"
 }
 
 ##############################################################################
