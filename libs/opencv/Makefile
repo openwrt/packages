@@ -9,18 +9,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opencv
-PKG_VERSION:=3.1.0
-PKG_RELEASE:=1
+PKG_VERSION:=3.2.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/$(PKG_VERSION)/
-PKG_MD5SUM:=6082ee2124d4066581a7386972bfd52a
-
+PKG_MD5SUM:=bfc6a261eb069b709bcfe7e363ef5899
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+
 
 define Package/opencv/Default/description
  OpenCV (Open Source Computer Vision Library) is an open source computer
@@ -39,6 +39,7 @@ define Package/opencv
   MAINTAINER:=WRTnode Team <pub@wrtnode.com>
   DEPENDS:=+libpthread +librt +libstdcpp +zlib +libjpeg
 endef
+
 
 PKG_INSTALL:=1
 
