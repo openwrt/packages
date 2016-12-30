@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.0.2"
+adb_ver="2.0.3"
 adb_enabled=1
 adb_debug=0
 adb_whitelist="/etc/adblock/adblock.whitelist"
@@ -147,7 +147,7 @@ f_rmdns()
     rm -f "${adb_dnsdir}/${adb_dnsprefix}"*
     rm -f "${adb_dir_backup}/${adb_dnsprefix}"*.gz
     rm -rf "${adb_dnshidedir}"
-    ubus call service delete "{\"name\":\"adblock_stats\",\"instances\":\"stats\"}"
+    ubus call service delete "{\"name\":\"adblock_stats\",\"instances\":\"stats\"}" 2>/dev/null
 }
 
 # f_dnsrestart: restart the dns server
@@ -420,6 +420,13 @@ f_main()
         cat "${src_name}" >> "${adb_tmpdir}/blocklist.overall"
         cnt="$(wc -l < "${src_name}")"
         sum_cnt=$((sum_cnt + cnt))
+        list="${src_name/*./}"
+        if [ -z "${sum_list}" ]
+        then
+            sum_list="\"${list}\":\"${cnt}\""
+        else
+            sum_list="${sum_list},\"${list}\":\"${cnt}\""
+        fi
     done
     f_dnsrestart
     if [ "${dns_running}" = "true" ]
@@ -427,7 +434,11 @@ f_main()
         f_debug
         f_rmtemp
         f_log "info " "status ::: block lists with overall ${sum_cnt} domains loaded (${adb_sysver})"
-        ubus call service set "{\"name\":\"adblock_stats\",\"instances\":{\"stats\":{\"env\":{\"blocked_domains\":\"${sum_cnt}\",\"last_rundate\":\"$(/bin/date "+%d.%m.%Y %H:%M:%S")\"}}}}"
+        ubus call service add "{\"name\":\"adblock_stats\",
+                                \"instances\":{\"stats\":{\"command\":[\"\"],
+                                \"data\":{\"blocked_domains\":\"${sum_cnt}\",
+                                \"last_rundate\":\"$(/bin/date "+%d.%m.%Y %H:%M:%S")\",
+                                \"active_lists\":[{${sum_list}}]}}}}"
         exit 0
     fi
     f_log "error" "status ::: dns server restart with active block lists failed"
