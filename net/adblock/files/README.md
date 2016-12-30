@@ -144,8 +144,31 @@ config for curl (download errors with default ssl backend!):
   
 **example to receive adblock statistics via ubus:**
 <pre><code>
-ubus call service list '{"name":"adblock_stats"}' | jsonfilter -e '@.*.instances.stats.env'
-This will output the overall domain count and the last runtime as JSON, i.e. { "blocked_domains": "136159", "last_rundate": "18.12.2016 20:49:03" }
+ubus call service list '{"name":"adblock_stats"}'
+This will output the active block lists, the overall domain count and the last runtime as JSON, i.e.:
+{
+    "adblock_stats": {
+        "instances": {
+            "stats": {
+                "running": false,
+                "command": [
+                    ""
+                ],
+                "data": {
+                    "active_lists": [
+                        {
+                            "adaway": "409",
+                            "yoyo": "2368",
+                            "disconnect": "3198"
+                        }
+                    ],
+                    "blocked_domains": "5975",
+                    "last_rundate": "30.12.2016 21:03:45"
+                }
+            }
+        }
+    }
+}
 </code></pre>
   
 **example cronjob for a regular block list update (/etc/crontabs/root):**
