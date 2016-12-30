@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Copyright 2013-2016 Daniel Dickinson <lede@daniel.thecshore.com>
+#
+# MIT License
+#
+
+if [ "$(basename "${0}")" = "config+data-backup" ]; then
+	databackup=true
+else
+	databackup=false
+fi
+
+filelist="$(mktemp)"
+
+cd /
+
+for file in /usr/libexec/config-backup/*; do
+	nice -n 5 $file $filelist $databackup
+done
+
+cat $filelist | sed -e 's,^/,,' | sort -u >"${filelist}.tmp"
+rm -f $filelist
+
+nice -n 5 tar -T "${filelist}.tmp" -C / -czf -
+
+rm -f "${filelist}.tmp"
+

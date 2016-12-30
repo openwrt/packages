@@ -1,0 +1,16 @@
+#!/bin/sh
+
+filelist="$1"
+databackup="$2"
+
+# /rootdata is intended to store data that is
+# kept on the rootfs rather external storage
+# (for example in a typical squashfs+jffs2
+# setup).
+
+if [ "$databackup" = "true" ]; then
+	if [ -d /rootdata ]; then
+		echo "/rootdata" >>"$filelist"
+	fi
+fi
+

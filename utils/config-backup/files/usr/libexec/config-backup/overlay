@@ -1,0 +1,9 @@
+#!/bin/sh
+
+filelist="$1"
+databackup="$2"
+
+if [ "$databackup" = "true" ]; then
+	echo "/overlay" >>"$filelist"
+fi
+
