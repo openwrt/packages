@@ -1,0 +1,221 @@
+Index: PIL-1.1.7/setup.py
+===================================================================
+--- PIL-1.1.7.orig/setup.py
++++ PIL-1.1.7/setup.py
+@@ -33,12 +33,22 @@ def libinclude(root):
+ #
+ # TIFF_ROOT = libinclude("/opt/tiff")
+ 
+-TCL_ROOT = None
+-JPEG_ROOT = None
+-ZLIB_ROOT = None
+-TIFF_ROOT = None
+-FREETYPE_ROOT = None
+-LCMS_ROOT = None
++JPEG_ROOT = os.environ.get('JPEG_ROOT')
++ZLIB_ROOT = os.environ.get('ZLIB_ROOT')
++TIFF_ROOT = os.environ.get('TIFF_ROOT')
++FREETYPE_ROOT = os.environ.get('FREETYPE_ROOT')
++
++if JPEG_ROOT is not None:
++    JPEG_ROOT = libinclude(JPEG_ROOT)
++
++if ZLIB_ROOT is not None:
++    ZLIB_ROOT = libinclude(ZLIB_ROOT)
++
++if TIFF_ROOT is not None:
++    TIFF_ROOT = libinclude(TIFF_ROOT)
++
++if FREETYPE_ROOT is not None:
++    FREETYPE_ROOT = libinclude(FREETYPE_ROOT)
+ 
+ # FIXME: add mechanism to explicitly *disable* the use of a library
+ 
+@@ -86,11 +96,6 @@ from distutils import sysconfig
+ from distutils.core import Extension, setup
+ from distutils.command.build_ext import build_ext
+ 
+-try:
+-    import _tkinter
+-except ImportError:
+-    _tkinter = None
+-
+ def add_directory(path, dir, where=None):
+     if dir and os.path.isdir(dir) and dir not in path:
+         if where is None:
+@@ -120,8 +125,6 @@ class pil_build_ext(build_ext):
+ 
+     def build_extensions(self):
+ 
+-        global TCL_ROOT
+-
+         library_dirs = []
+         include_dirs = []
+ 
+@@ -155,42 +158,8 @@ class pil_build_ext(build_ext):
+             add_directory(library_dirs, os.path.join(prefix, "lib"))
+             add_directory(include_dirs, os.path.join(prefix, "include"))
+ 
+-        #
+-        # locate tkinter libraries
+-
+-        if _tkinter:
+-            TCL_VERSION = _tkinter.TCL_VERSION[:3]
+-
+-        if _tkinter and not TCL_ROOT:
+-            # we have Tkinter but the TCL_ROOT variable was not set;
+-            # try to locate appropriate Tcl/Tk libraries
+-            PYVERSION = sys.version[0] + sys.version[2]
+-            TCLVERSION = TCL_VERSION[0] + TCL_VERSION[2]
+-            roots = [
+-                # common installation directories, mostly for Windows
+-                # (for Unix-style platforms, we'll check in well-known
+-                # locations later)
+-                os.path.join("/py" + PYVERSION, "Tcl"),
+-                os.path.join("/python" + PYVERSION, "Tcl"),
+-                "/Tcl", "/Tcl" + TCLVERSION, "/Tcl" + TCL_VERSION,
+-                os.path.join(os.environ.get("ProgramFiles", ""), "Tcl"),
+-                ]
+-            for TCL_ROOT in roots:
+-                TCL_ROOT = os.path.abspath(TCL_ROOT)
+-                if os.path.isfile(os.path.join(TCL_ROOT, "include", "tk.h")):
+-                    # FIXME: use distutils logging (?)
+-                    print "--- using Tcl/Tk libraries at", TCL_ROOT
+-                    print "--- using Tcl/Tk version", TCL_VERSION
+-                    TCL_ROOT = libinclude(TCL_ROOT)
+-                    break
+-            else:
+-                TCL_ROOT = None
+-
+-        #
+-        # add configured kits
+-
+-        for root in (TCL_ROOT, JPEG_ROOT, TCL_ROOT, TIFF_ROOT, ZLIB_ROOT,
+-                     FREETYPE_ROOT, LCMS_ROOT):
++        for root in (JPEG_ROOT, TIFF_ROOT, ZLIB_ROOT,
++                     FREETYPE_ROOT):
+             if isinstance(root, type(())):
+                 lib_root, include_root = root
+             else:
+@@ -201,18 +170,12 @@ class pil_build_ext(build_ext):
+         #
+         # add standard directories
+ 
+-        # look for tcl specific subdirectory (e.g debian)
+-        if _tkinter:
+-            tcl_dir = "/usr/include/tcl" + TCL_VERSION
+-            if os.path.isfile(os.path.join(tcl_dir, "tk.h")):
+-                add_directory(include_dirs, tcl_dir)
+-
+         # standard locations
+-        add_directory(library_dirs, "/usr/local/lib")
+-        add_directory(include_dirs, "/usr/local/include")
++        #add_directory(library_dirs, "/usr/local/lib")
++        #add_directory(include_dirs, "/usr/local/include")
+ 
+-        add_directory(library_dirs, "/usr/lib")
+-        add_directory(include_dirs, "/usr/include")
++        #add_directory(library_dirs, "/usr/lib")
++        #add_directory(include_dirs, "/usr/include")
+ 
+         #
+         # insert new dirs *before* default libs, to avoid conflicts
+@@ -225,7 +188,7 @@ class pil_build_ext(build_ext):
+         # look for available libraries
+ 
+         class feature:
+-            zlib = jpeg = tiff = freetype = tcl = tk = lcms = None
++            zlib = jpeg = tiff = freetype = None
+         feature = feature()
+ 
+         if find_include_file(self, "zlib.h"):
+@@ -264,22 +227,6 @@ class pil_build_ext(build_ext):
+                 if dir:
+                     add_directory(self.compiler.include_dirs, dir, 0)
+ 
+-        if find_include_file(self, "lcms.h"):
+-            if find_library_file(self, "lcms"):
+-                feature.lcms = "lcms"
+-
+-        if _tkinter and find_include_file(self, "tk.h"):
+-            # the library names may vary somewhat (e.g. tcl84 or tcl8.4)
+-            version = TCL_VERSION[0] + TCL_VERSION[2]
+-            if find_library_file(self, "tcl" + version):
+-                feature.tcl = "tcl" + version
+-            elif find_library_file(self, "tcl" + TCL_VERSION):
+-                feature.tcl = "tcl" + TCL_VERSION
+-            if find_library_file(self, "tk" + version):
+-                feature.tk = "tk" + version
+-            elif find_library_file(self, "tk" + TCL_VERSION):
+-                feature.tk = "tk" + TCL_VERSION
+-
+         #
+         # core library
+ 
+@@ -323,43 +270,6 @@ class pil_build_ext(build_ext):
+                 "_imagingtiff", ["_imagingtiff.c"], libraries=["tiff"]
+                 ))
+ 
+-        if os.path.isfile("_imagingcms.c") and feature.lcms:
+-            extra = []
+-            if sys.platform == "win32":
+-                extra.extend(["user32", "gdi32"])
+-            exts.append(Extension(
+-                "_imagingcms", ["_imagingcms.c"], libraries=["lcms"] + extra
+-                ))
+-
+-        if sys.platform == "darwin":
+-            # locate Tcl/Tk frameworks
+-            frameworks = []
+-            framework_roots = [
+-                "/Library/Frameworks",
+-                "/System/Library/Frameworks"
+-                ]
+-            for root in framework_roots:
+-                if (os.path.exists(os.path.join(root, "Tcl.framework")) and
+-                    os.path.exists(os.path.join(root, "Tk.framework"))):
+-                    print "--- using frameworks at", root
+-                    frameworks = ["-framework", "Tcl", "-framework", "Tk"]
+-                    dir = os.path.join(root, "Tcl.framework", "Headers")
+-                    add_directory(self.compiler.include_dirs, dir, 0)
+-                    dir = os.path.join(root, "Tk.framework", "Headers")
+-                    add_directory(self.compiler.include_dirs, dir, 1)
+-                    break
+-            if frameworks:
+-                exts.append(Extension(
+-                    "_imagingtk", ["_imagingtk.c", "Tk/tkImaging.c"],
+-                    extra_compile_args=frameworks, extra_link_args=frameworks
+-                    ))
+-                feature.tcl = feature.tk = 1 # mark as present
+-        elif feature.tcl and feature.tk:
+-            exts.append(Extension(
+-                "_imagingtk", ["_imagingtk.c", "Tk/tkImaging.c"],
+-                libraries=[feature.tcl, feature.tk]
+-                ))
+-
+         if os.path.isfile("_imagingmath.c"):
+             exts.append(Extension("_imagingmath", ["_imagingmath.c"]))
+ 
+@@ -390,12 +300,10 @@ class pil_build_ext(build_ext):
+         print "-" * 68
+ 
+         options = [
+-            (feature.tcl and feature.tk, "TKINTER"),
+             (feature.jpeg, "JPEG"),
+             (feature.zlib, "ZLIB (PNG/ZIP)"),
+             # (feature.tiff, "experimental TIFF G3/G4 read"),
+             (feature.freetype, "FREETYPE2"),
+-            (feature.lcms, "LITTLECMS"),
+             ]
+ 
+         all = 1
+@@ -404,9 +312,6 @@ class pil_build_ext(build_ext):
+                 print "---", option[1], "support available"
+             else:
+                 print "***", option[1], "support not available",
+-                if option[1] == "TKINTER" and _tkinter:
+-                    version = _tkinter.TCL_VERSION
+-                    print "(Tcl/Tk %s libraries needed)" % version,
+                 print
+                 all = 0
+ 
