@@ -1,0 +1,125 @@
+From 030bc262a17e798d5eebd6601fd2330d32d5bda5 Mon Sep 17 00:00:00 2001
+Message-Id: <030bc262a17e798d5eebd6601fd2330d32d5bda5.1389188742.git.jlec@gentoo.org>
+In-Reply-To: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+References: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+From: Justin Lecher <jlec@gentoo.org>
+Date: Wed, 8 Jan 2014 14:43:57 +0100
+Subject: [PATCH 6/9] 06_nullenvsender.diff
+
+Signed-off-by: Justin Lecher <jlec@gentoo.org>
+---
+ lib/address.cc | 14 +++++++++++++-
+ src/inject.cc  | 12 +++++++++---
+ src/queue.cc   |  4 ++--
+ 3 files changed, 24 insertions(+), 6 deletions(-)
+
+diff --git a/lib/address.cc b/lib/address.cc
+index 606e1cf..16fea1c 100644
+--- a/lib/address.cc
++++ b/lib/address.cc
+@@ -523,6 +523,17 @@ RULE(route_addr)
+   RETURN(node, "<" + r2.str + ">" + comment, "", r2.addr);
+ }
+ 
++RULE(null_addr)
++{
++  ENTER("LABRACKET RABRACKET");
++  mystring comment;
++  node = skipcomment(node, comment);
++  MATCHTOKEN(LABRACKET);
++  node = skipcomment(node, comment);
++  MATCHTOKEN(RABRACKET);
++  RETURN(node, "<>" + comment, "", "");
++}
++
+ RULE(phrase)
+ {
+   ENTER("word *(word / PERIOD / CFWS)");
+@@ -660,7 +671,8 @@ bool parse_addresses(mystring& line, mystring& list)
+   anode* tokenlist = tokenize(line.c_str());
+   if(!tokenlist)
+     return false;
+-  result r = match_addresses(tokenlist);
++  result r = match_null_addr(tokenlist);
++  if (!r) r = match_addresses(tokenlist);
+   del_tokens(tokenlist);
+   if(r) {
+     line = r.str;
+diff --git a/src/inject.cc b/src/inject.cc
+index fba7361..2f0cf93 100644
+--- a/src/inject.cc
++++ b/src/inject.cc
+@@ -110,6 +110,7 @@ void read_config()
+ ///////////////////////////////////////////////////////////////////////////////
+ static slist recipients;
+ static mystring sender;
++static bool use_header_sender = true;
+ static bool use_header_recips = true;
+ 
+ void parse_recips(const mystring& list)
+@@ -136,6 +137,9 @@ bool parse_recip_arg(mystring str)
+ bool parse_sender(const mystring& list)
+ {
+   int end = list.find_first('\n');
++  if(end == -1) {
++    return true;	// null sender
++  }
+   if(end > 0 && list.find_first('\n', end+1) < 0) {
+     sender = list.sub(0, end);
+     return true;
+@@ -175,7 +179,6 @@ struct header_field
+ 	return true;
+       if(is_resent) {
+ 	if(!header_is_resent) {
+-	  sender = "";
+ 	  if(use_header_recips)
+ 	    recipients.empty();
+ 	}
+@@ -197,8 +200,10 @@ struct header_field
+ 	      parse_recips(list);
+ 	  }
+ 	  else if(is_sender) {
+-	    if(is_resent == header_is_resent && !sender)
++	    if(use_header_sender) {	// There is no Resent-Return-Path
+ 	      parse_sender(list);
++	      use_header_sender = 0;
++	    }
+ 	  }
+ 	}
+       }
+@@ -296,7 +301,7 @@ void setup_from()
+   if(!shost) shost = host;
+   canonicalize(shost);
+   
+-  if(!sender)
++  if(use_header_sender && !sender)
+     sender = suser + "@" + shost;
+ }
+ 
+@@ -555,6 +560,7 @@ bool parse_args(int argc, char* argv[])
+       ferr << "nullmailer-inject: Invalid sender address: " << o_from << endl;
+       return false;
+     }
++    use_header_sender = false;
+   }
+   use_header_recips = (use_recips != use_args);
+   if(use_recips == use_header)
+diff --git a/src/queue.cc b/src/queue.cc
+index 8db9c22..c5596b1 100644
+--- a/src/queue.cc
++++ b/src/queue.cc
+@@ -93,9 +93,9 @@ bool validate_addr(mystring& addr, bool doremap)
+ bool copyenv(fdobuf& out)
+ {
+   mystring str;
+-  if(!fin.getline(str) || !str)
++  if(!fin.getline(str))
+     fail("Could not read envelope sender.");
+-  if(!validate_addr(str, false))
++  if(!validate_addr(str, false) && str != "")
+     fail("Envelope sender address is invalid.");
+   if(!(out << str << endl))
+     fail("Could not write envelope sender.");
+-- 
+1.8.5.2
+

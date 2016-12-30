@@ -1,0 +1,45 @@
+From 1c2257e6e3a747839aabc99b1b734fadf6e96d0d Mon Sep 17 00:00:00 2001
+Message-Id: <1c2257e6e3a747839aabc99b1b734fadf6e96d0d.1389188742.git.jlec@gentoo.org>
+In-Reply-To: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+References: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+From: Justin Lecher <jlec@gentoo.org>
+Date: Wed, 8 Jan 2014 14:44:28 +0100
+Subject: [PATCH 7/9] 07_sendquit.diff
+
+Signed-off-by: Justin Lecher <jlec@gentoo.org>
+---
+ protocols/smtp.cc | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/protocols/smtp.cc b/protocols/smtp.cc
+index 827bcf4..9d3eac9 100644
+--- a/protocols/smtp.cc
++++ b/protocols/smtp.cc
+@@ -53,6 +53,7 @@ public:
+   void auth_plain(void);
+   void send_data(fdibuf& msg);
+   void send_envelope(fdibuf& msg);
++  void send_quit();
+   void send(fdibuf& msg);
+ };
+ 
+@@ -204,10 +205,16 @@ void smtp::send_data(fdibuf& msg)
+   protocol_succ(tmp.c_str());
+ }
+ 
++void smtp::send_quit()
++{
++  docmd("QUIT", 200);
++}
++
+ void smtp::send(fdibuf& msg)
+ {
+   send_envelope(msg);
+   send_data(msg);
++  send_quit();
+ }
+ 
+ void protocol_prep(fdibuf&)
+-- 
+1.8.5.2
+

@@ -1,0 +1,69 @@
+From 641d1db0652e9612042412bffc9a8094b2ac22a8 Mon Sep 17 00:00:00 2001
+Message-Id: <641d1db0652e9612042412bffc9a8094b2ac22a8.1389188742.git.jlec@gentoo.org>
+In-Reply-To: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+References: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+From: Justin Lecher <jlec@gentoo.org>
+Date: Wed, 8 Jan 2014 14:43:23 +0100
+Subject: [PATCH 5/9] 05_errors_on_stderr.diff
+
+Signed-off-by: Justin Lecher <jlec@gentoo.org>
+---
+ src/inject.cc | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/src/inject.cc b/src/inject.cc
+index 6bd5c80..fba7361 100644
+--- a/src/inject.cc
++++ b/src/inject.cc
+@@ -71,9 +71,9 @@ cli_option cli_options[] = {
+   {0, 0, cli_option::flag, 0, 0, 0, 0}
+ };
+ 
+-#define fail(MSG) do{ fout << "nullmailer-inject: " << MSG << endl; return false; }while(0)
+-#define fail_sys(MSG) do{ fout << "nullmailer-inject: " << MSG << ": " << strerror(errno) << endl; return false; }while(0)
+-#define bad_hdr(LINE,MSG) do{ header_has_errors = true; fout << "nullmailer-inject: Invalid header line:\n  " << LINE << "\n  " MSG << endl; }while(0)
++#define fail(MSG) do{ ferr << "nullmailer-inject: " << MSG << endl; return false; }while(0)
++#define fail_sys(MSG) do{ ferr << "nullmailer-inject: " << MSG << ": " << strerror(errno) << endl; return false; }while(0)
++#define bad_hdr(LINE,MSG) do{ header_has_errors = true; ferr << "nullmailer-inject: Invalid header line:\n  " << LINE << "\n  " MSG << endl; }while(0)
+ 
+ typedef list<mystring> slist;
+ // static bool do_debug = false;
+@@ -431,7 +431,7 @@ static pid_t pid = 0;
+ void exec_queue()
+ {
+   execl(nqueue.c_str(), nqueue.c_str(), NULL);
+-  fout << "nullmailer-inject: Could not exec " << nqueue << ": "
++  ferr << "nullmailer-inject: Could not exec " << nqueue << ": "
+        << strerror(errno) << endl;
+   exit(1);
+ }
+@@ -552,7 +552,7 @@ bool parse_args(int argc, char* argv[])
+     mystring tmp(o_from);
+     if(!parse_addresses(tmp, list) ||
+        !parse_sender(list)) {
+-      fout << "nullmailer-inject: Invalid sender address: " << o_from << endl;
++      ferr << "nullmailer-inject: Invalid sender address: " << o_from << endl;
+       return false;
+     }
+   }
+@@ -564,7 +564,7 @@ bool parse_args(int argc, char* argv[])
+   bool result = true;
+   for(int i = 0; i < argc; i++) {
+     if(!parse_recip_arg(argv[i])) {
+-      fout << "Invalid recipient: " << argv[i] << endl;
++      ferr << "Invalid recipient: " << argv[i] << endl;
+       result = false;
+     }
+   }
+@@ -579,7 +579,7 @@ int cli_main(int argc, char* argv[])
+      !fix_header())
+     return 1;
+   if(recipients.count() == 0) {
+-    fout << "No recipients were listed." << endl;
++    ferr << "No recipients were listed." << endl;
+     return 1;
+   }
+   if(!send_message())
+-- 
+1.8.5.2
+

@@ -1,0 +1,128 @@
+Index: nullmailer-1.13/src/send.cc
+===================================================================
+--- nullmailer-1.13.orig/src/send.cc
++++ nullmailer-1.13/src/send.cc
+@@ -42,6 +42,9 @@
+ #include "selfpipe.h"
+ #include "setenv.h"
+ #include "cli++/cli++.h"
++#include <pwd.h>
++#include <grp.h>
++
+ 
+ selfpipe selfpipe;
+ 
+@@ -49,6 +52,7 @@ typedef list<mystring> slist;
+ 
+ static int use_syslog = 0;
+ static int daemonize  = 0;
++static char *user = NULL;
+ 
+ const char* cli_program     = "nullmailer-send";
+ const char* cli_help_prefix = "nullmailer daemon\n";
+@@ -59,6 +63,7 @@ const int cli_args_max = 0;
+ cli_option cli_options[] = {
+   { 'd', "daemon", cli_option::flag, 1, &daemonize,  "daemonize , implies --syslog", 0 },
+   { 's', "syslog", cli_option::flag, 1, &use_syslog, "use syslog", 0 },
++  { 'u', "user", cli_option::string, 1, &user, "run as user", 0 },
+   { 0, 0, cli_option::flag, 0, 0, 0, 0 }
+ };
+ 
+@@ -393,6 +398,97 @@ int cli_main(int, char*[])
+ {
+   pid_t pid;
+ 
++  /* Dropping privileges taken and merged from sane-backends */
++  uid_t runas_uid = 0;
++  gid_t runas_gid = 0;
++  struct passwd *pwent;
++  gid_t *grplist = NULL;
++  struct group *grp;
++  int ngroups = 0;
++  int ret = 0;
++  
++  if (user) {
++    pwent = getpwnam(user);
++
++    if (pwent == NULL) {
++      ferr << "FATAL ERROR: user " << user << "not found on system" << endl;
++      return 1;
++    }
++
++    runas_uid = pwent->pw_uid;
++    runas_gid = pwent->pw_gid;
++
++    grplist = (gid_t *)malloc(sizeof(gid_t));
++
++    if (grplist == NULL) {
++      ferr << "FATAL ERROR: cannot allocate memory for group list" << endl;
++      return 1;
++    }
++
++    ngroups = 1;
++    grplist[0] = runas_gid;
++
++    setgrent();
++
++    /* Get group list for runas_uid */
++    while ((grp = getgrent()) != NULL)
++    {
++    	int i = 0;
++	
++	/* Already added current group */
++        if (grp->gr_gid == runas_gid)
++        	continue;
++
++        while (grp->gr_mem[i])
++        {
++        	int need_to_add = 1, j;
++
++                /* Make sure its not already in list */
++                for (j = 0; j < ngroups; j++)
++                {
++                	if (grp->gr_gid == grplist[i])
++                            need_to_add = 0;
++		}
++                if (need_to_add)
++                {
++                	grplist = (gid_t *)realloc(grplist, 
++                        	sizeof(gid_t)*ngroups+1);
++                        if (grplist == NULL)
++			{
++				ferr << "FATAL ERROR: cannot reallocate memory for group list" << endl;
++			        exit (1);
++			}
++                        grplist[ngroups++] = grp->gr_gid;
++		}
++       	        i++;
++       }
++    }
++    endgrent();
++  }
++
++  /* Drop privileges if requested */
++  if (runas_uid > 0) {
++    ret = setgroups(ngroups, grplist);
++    if (ret < 0) {
++      ferr << "FATAL ERROR: could not set group list: " << strerror(errno) << endl;
++      return 1;
++    }
++
++    free(grplist);
++
++    ret = setegid (runas_gid);
++    if (ret < 0) {
++      ferr << "FATAL ERROR: setegid to gid " << runas_gid << " failed: " << strerror (errno) << endl;
++      return 1;
++    }
++
++    ret = seteuid (runas_uid);
++    if (ret < 0) {
++      ferr << "FATAL ERROR: seteuid to uid " << runas_uid << " failed: " << strerror (errno) << endl;
++      return 1;
++    }    
++  }
++
+   if (daemonize)
+     use_syslog = 1;
+   if (use_syslog)

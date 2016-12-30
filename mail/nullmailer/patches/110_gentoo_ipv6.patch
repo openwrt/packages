@@ -1,0 +1,119 @@
+From 4abcd3a69367983104dcdf99b7e497378b653556 Mon Sep 17 00:00:00 2001
+Message-Id: <4abcd3a69367983104dcdf99b7e497378b653556.1389188742.git.jlec@gentoo.org>
+In-Reply-To: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+References: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+From: Justin Lecher <jlec@gentoo.org>
+Date: Wed, 8 Jan 2014 14:41:45 +0100
+Subject: [PATCH 2/9] 02_ipv6.diff
+
+Signed-off-by: Justin Lecher <jlec@gentoo.org>
+---
+ configure.in      | 19 +++++++++++++++++++
+ lib/tcpconnect.cc | 40 ++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 59 insertions(+)
+
+diff --git a/configure.in b/configure.in
+index d439d5e..d824e0e 100644
+--- a/configure.in
++++ b/configure.in
+@@ -48,6 +48,25 @@ dnl Checks for library functions.
+ dnl AC_CHECK_FUNCS(gettimeofday mkdir putenv rmdir socket)
+ AC_CHECK_FUNCS(setenv srandom)
+ 
++AC_MSG_CHECKING(for getaddrinfo)
++AC_TRY_COMPILE([#include <sys/types.h>
++#include <sys/socket.h>
++#include <netdb.h>
++#include <stddef.h>], [getaddrinfo(NULL, NULL, NULL, NULL)], has_getaddrinfo=yes, has_getaddrinfo=no)
++if test "$has_getaddrinfo" = yes; then
++  AC_MSG_RESULT(yes)
++else
++  AC_MSG_RESULT(no)
++fi
++
++if test x-$has_getaddrinfo = "x-no" ; then
++  AC_MSG_RESULT(disabled: getaddrinfo missing)
++else
++  AC_DEFINE(HAVE_GETADDRINFO,,[getaddrinfo code enabled])
++fi
++
++AC_SUBST(HAVE_GETADDRINFO)
++
+ AC_DEFINE(BUFSIZE, 4096, [Generic buffer size])
+ AM_CONDITIONAL(FDBUF_NO_MYSTRING, false)
+ 
+diff --git a/lib/tcpconnect.cc b/lib/tcpconnect.cc
+index a140256..9bd3cc0 100644
+--- a/lib/tcpconnect.cc
++++ b/lib/tcpconnect.cc
+@@ -28,7 +28,11 @@
+ #include <netinet/in.h>
+ #include "errcodes.h"
+ #include "connect.h"
++#ifdef HAVE_GETADDRINFO
++#include "lib/itoa.h"
++#endif
+ 
++#ifndef HAVE_GETADDRINFO
+ static int sethostbyname(const mystring& hostname, struct sockaddr_in& sa)
+ {
+   struct hostent *he = gethostbyname(hostname.c_str());
+@@ -44,13 +48,48 @@ static int sethostbyname(const mystring& hostname, struct sockaddr_in& sa)
+   memcpy(&sa.sin_addr, he->h_addr, he->h_length);
+   return 0;
+ }
++#endif
+ 
+ int tcpconnect(const mystring& hostname, int port)
+ {
++#ifdef HAVE_GETADDRINFO
++  struct addrinfo req, *res, *orig_res;
++  const char *service = itoa(port, 6);
++
++  memset(&req, 0, sizeof(req));
++  req.ai_flags = AI_NUMERICSERV;
++  req.ai_socktype = SOCK_STREAM;
++  int e = getaddrinfo(hostname.c_str(), service, &req, &res);
++#else
+   struct sockaddr_in sa;
+   memset(&sa, 0, sizeof(sa));
+   int e = sethostbyname(hostname, sa);
++#endif
+   if(e) return e;
++#ifdef HAVE_GETADDRINFO
++  int s = -1;
++  orig_res = res;
++
++  for (; res; res = res->ai_next ) {
++    s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
++
++    if(s < 0)
++	continue;
++
++    if(connect(s, res->ai_addr, res->ai_addrlen) != 0) {
++    	s = -1;
++	continue;
++    }
++
++    /* sucessful connection */
++    break;
++  }
++
++  freeaddrinfo(orig_res);
++
++  if(s < 0)
++    return -ERR_CONN_FAILED;
++#else
+   sa.sin_family = AF_INET;
+   sa.sin_port = htons(port);
+   int s = socket(PF_INET, SOCK_STREAM, 0);
+@@ -64,5 +103,6 @@ int tcpconnect(const mystring& hostname, int port)
+     default: return -ERR_CONN_FAILED;
+     }
+   }
++#endif
+   return s;
+ }
+-- 
+1.8.5.2
+

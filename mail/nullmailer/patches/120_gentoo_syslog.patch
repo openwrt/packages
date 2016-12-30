@@ -1,0 +1,301 @@
+From 464dbd87ca2e1e09e59f44871a3caa50bdbd95f0 Mon Sep 17 00:00:00 2001
+Message-Id: <464dbd87ca2e1e09e59f44871a3caa50bdbd95f0.1389188742.git.jlec@gentoo.org>
+In-Reply-To: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+References: <eac41de59cf178ed346308cc54139fe9dcb9e0d7.1389188742.git.jlec@gentoo.org>
+From: Justin Lecher <jlec@gentoo.org>
+Date: Wed, 8 Jan 2014 14:42:43 +0100
+Subject: [PATCH 3/9] 03_syslog.diff
+
+Signed-off-by: Justin Lecher <jlec@gentoo.org>
+---
+ protocols/protocol.cc |  20 +++++++++-
+ src/Makefile.in       |   6 +--
+ src/send.cc           | 101 +++++++++++++++++++++++++++++++++++++++++++-------
+ 3 files changed, 108 insertions(+), 19 deletions(-)
+
+diff --git a/protocols/protocol.cc b/protocols/protocol.cc
+index 9b0b834..603d891 100644
+--- a/protocols/protocol.cc
++++ b/protocols/protocol.cc
+@@ -22,11 +22,15 @@
+ #include <config.h>
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <sys/syslog.h>
+ #include "connect.h"
+ #include "errcodes.h"
+ #include "protocol.h"
+ #include "cli++.h"
+ 
++static int use_syslog = 0;
++static int daemonize  = 0;
++
+ const char* user = 0;
+ const char* pass = 0;
+ int port = 0;
+@@ -44,6 +48,8 @@ cli_option cli_options[] = {
+     "Set the user name for authentication", 0 },
+   { 0, "pass", cli_option::string, 0, &pass,
+     "Set the password for authentication", 0 },
++  { 'd', "daemon", cli_option::flag, 1, &daemonize,  "use syslog exclusively ", 0 },
++  { 's', "syslog", cli_option::flag, 1, &use_syslog, "use syslog additionally", 0 },
+   { 0, "auth-login", cli_option::flag, AUTH_LOGIN, &auth_method,
+     "Use AUTH LOGIN instead of auto-detecting in SMTP", 0 },
+ #ifdef HAVE_TLS
+@@ -67,13 +73,19 @@ cli_option cli_options[] = {
+ 
+ void protocol_fail(int e, const char* msg)
+ {
+-  ferr << cli_program << ": Failed: " << msg << endl;
++  if (use_syslog)
++    syslog(LOG_ERR, "%s: Failed: %s", cli_program, msg);
++  if (!daemonize)
++    ferr << cli_program << ": Failed: " << msg << endl;
+   exit(e);
+ }
+ 
+ void protocol_succ(const char* msg)
+ {
+-  ferr << cli_program << ": Succeeded: " << msg << endl;
++  if (use_syslog)
++    syslog(LOG_INFO, "%s: Succeeded: %s", cli_program, msg);
++  if (!daemonize)
++    ferr << cli_program << ": Succeeded: " << msg << endl;
+   exit(0);
+ }
+ 
+@@ -93,6 +105,10 @@ static void plain_send(fdibuf& in, int fd)
+ 
+ int cli_main(int, char* argv[])
+ {
++  if (daemonize)
++    use_syslog = 1;
++  if (use_syslog)
++    openlog("nullmailer", LOG_CONS | LOG_PID, LOG_MAIL);
+   const char* remote = argv[0];
+   if (port == 0)
+     port = use_ssl ? default_ssl_port : default_port;
+diff --git a/src/Makefile.in b/src/Makefile.in
+index 45448ce..f2b879c 100644
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -61,7 +61,7 @@ nullmailer_queue_OBJECTS = $(am_nullmailer_queue_OBJECTS)
+ nullmailer_queue_DEPENDENCIES = ../lib/libnullmailer.a
+ am_nullmailer_send_OBJECTS = send.$(OBJEXT)
+ nullmailer_send_OBJECTS = $(am_nullmailer_send_OBJECTS)
+-nullmailer_send_DEPENDENCIES = ../lib/libnullmailer.a
++nullmailer_send_DEPENDENCIES = ../lib/cli++/libcli++.a ../lib/libnullmailer.a
+ am_nullmailer_smtpd_OBJECTS = smtpd.$(OBJEXT)
+ nullmailer_smtpd_OBJECTS = $(am_nullmailer_smtpd_OBJECTS)
+ nullmailer_smtpd_DEPENDENCIES = ../lib/libnullmailer.a
+@@ -182,13 +182,13 @@ top_srcdir = @top_srcdir@
+ #noinst_PROGRAMS = address
+ INCLUDES = -I../lib -I../lib/cli++
+ mailq_SOURCES = mailq.cc
+-mailq_LDADD = ../lib/libnullmailer.a
++mailq_LDADD = ../lib/cli++/libcli++.a ../lib/libnullmailer.a
+ nullmailer_inject_SOURCES = inject.cc
+ nullmailer_inject_LDADD = ../lib/cli++/libcli++.a ../lib/libnullmailer.a
+ nullmailer_queue_SOURCES = queue.cc
+ nullmailer_queue_LDADD = ../lib/libnullmailer.a
+ nullmailer_send_SOURCES = send.cc
+-nullmailer_send_LDADD = ../lib/libnullmailer.a
++nullmailer_send_LDADD = ../lib/cli++/libcli++.a ../lib/libnullmailer.a
+ nullmailer_smtpd_SOURCES = smtpd.cc
+ nullmailer_smtpd_LDADD = ../lib/libnullmailer.a
+ sendmail_SOURCES = sendmail.cc
+diff --git a/src/send.cc b/src/send.cc
+index 1b854fc..71e0029 100644
+--- a/src/send.cc
++++ b/src/send.cc
+@@ -27,6 +27,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/stat.h>
++#include <sys/syslog.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
+ #include <unistd.h>
+@@ -40,14 +41,30 @@
+ #include "list.h"
+ #include "selfpipe.h"
+ #include "setenv.h"
++#include "cli++/cli++.h"
+ 
+ selfpipe selfpipe;
+ 
+ typedef list<mystring> slist;
+ 
+-#define fail(MSG) do { fout << MSG << endl; return false; } while(0)
+-#define fail2(MSG1,MSG2) do{ fout << MSG1 << MSG2 << endl; return false; }while(0)
+-#define fail_sys(MSG) do{ fout << MSG << strerror(errno) << endl; return false; }while(0)
++static int use_syslog = 0;
++static int daemonize  = 0;
++
++const char* cli_program     = "nullmailer-send";
++const char* cli_help_prefix = "nullmailer daemon\n";
++const char* cli_help_suffix = "";
++const char* cli_args_usage  = "";
++const int cli_args_min = 0;
++const int cli_args_max = 0;
++cli_option cli_options[] = {
++  { 'd', "daemon", cli_option::flag, 1, &daemonize,  "daemonize , implies --syslog", 0 },
++  { 's', "syslog", cli_option::flag, 1, &use_syslog, "use syslog", 0 },
++  { 0, 0, cli_option::flag, 0, 0, 0, 0 }
++};
++
++#define fail(MSG) do { if (use_syslog) syslog(LOG_ERR, "%s", MSG); if (!daemonize) ferr << MSG << endl; return false; } while (0)
++#define fail2(MSG1,MSG2) do { if (use_syslog) syslog(LOG_ERR, "%s %s", MSG1, MSG2); if (!daemonize) fout << MSG1 << MSG2 << endl; return false; } while (0)
++#define fail_sys(MSG) do { if (use_syslog) syslog(LOG_ERR, "%s %s", MSG, strerror(errno)); if (!daemonize) ferr << MSG << strerror(errno) << endl; return false; } while (0)
+ 
+ struct remote
+ {
+@@ -162,7 +179,10 @@ void catch_alrm(int)
+ bool load_files()
+ {
+   reload_files = false;
+-  fout << "Rescanning queue." << endl;
++  if (use_syslog)
++    syslog(LOG_INFO, "Rescanning queue.");
++  if (!daemonize)
++    fout << "Rescanning queue." << endl;
+   DIR* dir = opendir(".");
+   if(!dir)
+     fail_sys("Cannot open queue directory: ");
+@@ -180,12 +200,19 @@ bool load_files()
+ 
+ void exec_protocol(int fd, remote& remote)
+ {
+-  if(close(0) == -1 || dup2(fd, 0) == -1 || close(fd) == -1)
++  if (!daemonize && close(STDIN_FILENO) < 0)
+     return;
++  if (fd != STDIN_FILENO)
++    if (dup2(fd, STDIN_FILENO) < 0 || close(fd) < 0)
++      return;
+   mystring program = PROTOCOL_DIR + remote.proto;
+-  const char* args[3+remote.options.count()];
++  const char* args[5+remote.options.count()];
+   unsigned i = 0;
+   args[i++] = program.c_str();
++  if (daemonize)
++    args[i++] = "-d";
++  if (use_syslog)
++    args[i++] = "-s";
+   for(slist::const_iter opt(remote.options); opt; opt++)
+     args[i++] = strdup((*opt).c_str());
+   args[i++] = remote.host.c_str();
+@@ -222,7 +249,10 @@ bool catchsender(pid_t pid)
+       if(status)
+ 	fail2("Sending failed: ", errorstr(status));
+       else {
+-	fout << "Sent file." << endl;
++        if (use_syslog)
++          syslog(LOG_INFO, "Sent file.");
++        if (!daemonize)
++             fout << "Sent file." << endl;
+ 	return true;
+       }
+     }
+@@ -235,10 +265,20 @@ bool send_one(mystring filename, remote& remote)
+ {
+   int fd = open(filename.c_str(), O_RDONLY);
+   if(fd == -1) {
+-    fout << "Can't open file '" << filename << "'" << endl;
++    if (use_syslog)
++      syslog(LOG_ERR, "Can't open file '%s'", filename.c_str());
++    if (!daemonize)
++      fout << "Can't open file '" << filename << "'" << endl;
+     return false;
+   }
+-  fout << "Starting delivery: protocol: " << remote.proto
++  if (use_syslog)
++    syslog(LOG_INFO, "Starting delivery: protocol: %s host: %s file: %s",
++      remote.proto.c_str(), remote.host.c_str(), filename.c_str());
++  if (!daemonize)
++  if (use_syslog)
++    syslog(LOG_INFO, "Starting delivery, %d message(s) in queue.", files.count());
++  if (!daemonize)
++    fout << "Starting delivery: protocol: " << remote.proto
+        << " host: " << remote.host
+        << " file: " << filename << endl;
+   pid_t pid = fork();
+@@ -277,7 +317,10 @@ bool send_all()
+ 	file++;
+     }
+   }
+-  fout << "Delivery complete, "
++  if (use_syslog)
++    syslog(LOG_INFO, "Delivery complete, %d message(s) remain.", files.count());
++  if (!daemonize)
++    fout << "Delivery complete, "
+        << itoa(files.count()) << " message(s) remain." << endl;
+   return true;
+ }
+@@ -329,7 +372,10 @@ bool do_select()
+ 
+   int s = select(trigger+1, &readfds, 0, 0, &timeout);
+   if(s == 1) {
+-    fout << "Trigger pulled." << endl;
++    if (use_syslog)
++      syslog(LOG_INFO, "Trigger pulled.");
++    if (!daemonize)
++      fout << "Trigger pulled." << endl;
+     read_trigger();
+     reload_files = true;
+     pausetime = minpause;
+@@ -343,8 +389,14 @@ bool do_select()
+   return true;
+ }
+ 
+-int main(int, char*[])
++int cli_main(int, char*[])
+ {
++  pid_t pid;
++
++  if (daemonize)
++    use_syslog = 1;
++  if (use_syslog)
++    openlog("nullmailer", LOG_CONS | LOG_PID, LOG_MAIL);
+   read_hostnames();
+ 
+   if(!selfpipe) {
+@@ -353,13 +405,34 @@ int main(int, char*[])
+   }
+   selfpipe.catchsig(SIGCHLD);
+   
+-  if(!open_trigger())
++  if(!open_trigger()) {
++    if (use_syslog)
++      syslog(LOG_CRIT, "Could not open trigger.");
++    if (!daemonize)
++      ferr << "Could not open trigger." << endl;
+     return 1;
++  }
+   if(chdir(QUEUE_MSG_DIR) == -1) {
+     fout << "Could not chdir to queue message directory." << endl;
++    if (use_syslog)
++      syslog(LOG_CRIT, "Could not chdir to queue message directory.");
++    if (!daemonize)
++      ferr << "Could not chdir to queue message directory." << endl;
+     return 1;
+   }
+-  
++
++  if (daemonize) {
++    if ((pid = fork()) < 0) {
++      syslog(LOG_CRIT, "Could not fork.");
++      return 1;
++    }
++    if (pid)
++      return 0;
++    close(STDIN_FILENO);
++    close(STDOUT_FILENO);
++    close(STDERR_FILENO);
++  }
++
+   signal(SIGALRM, catch_alrm);
+   signal(SIGHUP, SIG_IGN);
+   load_config();
+-- 
+1.8.5.2
+
