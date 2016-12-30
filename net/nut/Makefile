@@ -330,7 +330,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_NUT_SSL),with,without)-ssl $(if $(CONFIG_NUT_SSL),--with-openssl) \
 	--without-libltdl \
 	--$(if $(CONFIG_PACKAGE_nut-web-cgi),with,without)-cgi \
-	--with-statepath=/var/run \
+	--with-statepath=/var/run/nut \
 	--with-drvpath=/lib/nut \
 	--with-cgipath=/usr/share/www/cgi-bin/nut \
 	--with-htmlpath=/usr/share/www/nut \

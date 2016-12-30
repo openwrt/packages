@@ -9,6 +9,10 @@ restart() {
 }
 
 start_service() {
+	mkdir -p /var/run/nut
+	chown root:root /var/run/nut
+	chmod 0700 /var/run/nut
+
 	upsdrvctl start
 	upsd
 }

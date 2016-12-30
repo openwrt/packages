@@ -9,6 +9,10 @@ restart() {
 }
 
 start_service() {
+	mkdir -p /var/run/nut
+	chown root:root /var/run/nut
+	chmod 700 /var/run/nut
+
 	upsmon -p
 }
 
