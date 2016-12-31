@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=1.2.16
-PKG_RELEASE:=3
+PKG_VERSION:=1.2.19
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.keepalived.org/software
-PKG_MD5SUM:=f834ab2cfc2e7300edf1bafaf4a5d83e
+PKG_MD5SUM:=5c98b06639dd50a6bff76901b53febb6
+PKG_HASH:=32fbae732c1cd854cacd7a930d4a26f5bad6372cdecb5e3139f0c17e87493853
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_INSTALL:=1
 
@@ -29,7 +30,7 @@ define Package/keepalived
   CATEGORY:=Network
   TITLE:=Failover and monitoring daemon for LVS clusters
   URL:=http://www.keepalived.org/
-  DEPENDS:=+libnl-genl +libopenssl
+  DEPENDS:=+PACKAGE_libnl-genl:libnl-genl +libopenssl
 endef
 
 define Package/keepalived/description
@@ -63,6 +64,8 @@ define Package/keepalived/install
 	$(CP) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf $(1)/etc/keepalived/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/keepalived.init $(1)/etc/init.d/keepalived
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/keepalived.config $(1)/etc/config/keepalived
 endef
 
 $(eval $(call BuildPackage,keepalived))
