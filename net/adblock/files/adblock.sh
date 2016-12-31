@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.0.3"
+adb_ver="2.0.4"
 adb_enabled=1
 adb_debug=0
 adb_whitelist="/etc/adblock/adblock.whitelist"
@@ -86,7 +86,7 @@ f_envcheck()
 {
     # check 'enabled' option
     #
-    if [ "${adb_enabled}" != "1" ]
+    if [ ${adb_enabled} -ne 1 ]
     then
         if [ "$(ls -dA "${adb_dnsdir}/${adb_dnsprefix}"* >/dev/null 2>&1)" ]
         then
@@ -125,10 +125,6 @@ f_envcheck()
     then
         awk "${adb_whitelist_rset}" "${adb_whitelist}" > "${adb_tmpdir}/tmp.whitelist"
     fi
-
-    # get system information
-    #
-    adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 }
 
 # f_rmtemp: remove temporary files & directories
@@ -279,7 +275,6 @@ f_log()
         logger -t "adblock-[${adb_ver}] ${class}" "${log_msg}"
         if [ "${class}" = "error" ]
         then
-            f_debug
             f_rmtemp
             f_rmdns
             f_dnsrestart
@@ -317,7 +312,8 @@ f_debug()
 f_main()
 {
     local enabled url rc cnt sum_cnt=0
-    local src_name src_rset shalla_file shalla_archive
+    local src_name src_rset shalla_file shalla_archive list active_lists
+    local sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 
     f_debug
     f_log "debug" "main   ::: tool: ${adb_fetch}, parm: ${adb_fetchparm}"
@@ -421,11 +417,11 @@ f_main()
         cnt="$(wc -l < "${src_name}")"
         sum_cnt=$((sum_cnt + cnt))
         list="${src_name/*./}"
-        if [ -z "${sum_list}" ]
+        if [ -z "${active_lists}" ]
         then
-            sum_list="\"${list}\":\"${cnt}\""
+            active_lists="\"${list}\":\"${cnt}\""
         else
-            sum_list="${sum_list},\"${list}\":\"${cnt}\""
+            active_lists="${active_lists},\"${list}\":\"${cnt}\""
         fi
     done
     f_dnsrestart
@@ -433,15 +429,17 @@ f_main()
     then
         f_debug
         f_rmtemp
-        f_log "info " "status ::: block lists with overall ${sum_cnt} domains loaded (${adb_sysver})"
+        f_log "info " "status ::: block lists with overall ${sum_cnt} domains loaded (${sysver})"
         ubus call service add "{\"name\":\"adblock_stats\",
-                                \"instances\":{\"stats\":{\"command\":[\"\"],
-                                \"data\":{\"blocked_domains\":\"${sum_cnt}\",
-                                \"last_rundate\":\"$(/bin/date "+%d.%m.%Y %H:%M:%S")\",
-                                \"active_lists\":[{${sum_list}}]}}}}"
-        exit 0
+            \"instances\":{\"stats\":{\"command\":[\"\"],
+            \"data\":{\"blocked_domains\":\"${sum_cnt}\",
+            \"last_rundate\":\"$(/bin/date "+%d.%m.%Y %H:%M:%S")\",
+            \"active_lists\":[{${active_lists}}],
+            \"system\":\"${sysver}\"}}}}"
+        return 0
     fi
-    f_log "error" "status ::: dns server restart with active block lists failed"
+    f_debug
+    f_log "error" "status ::: dns server restart with active block lists failed (${sysver})"
 }
 
 # handle different adblock actions
