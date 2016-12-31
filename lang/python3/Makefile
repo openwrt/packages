@@ -19,7 +19,8 @@ PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=8906efbacfcdc7c3c9198aeefafd159e
+PKG_MD5SUM:=82b143ebbf4514d7e05876bed7a6b1f5
+PKG_HASH:=b0c5f904f685e32d9232f7bdcbece9819a892929063b6e385414ad2dd6a23622
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -122,14 +123,22 @@ ifeq ($(CONFIG_IPV6),y)
 	ENABLE_IPV6 += --enable-ipv6
 endif
 
+PYTHON_FOR_BUILD:= \
+	_PYTHON_PROJECT_BASE=$(PKG_BUILD_DIR) \
+	_PYTHON_HOST_PLATFORM=linux2 \
+	PYTHONPATH="$(PKG_BUILD_DIR)/Lib:$(PKG_BUILD_DIR)/build/lib.linux2-$(PYTHON_VERSION)" \
+	_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata \
+	$(HOST_PYTHON3_BIN)
+
 CONFIGURE_ARGS+= \
 	--sysconfdir=/etc \
 	--enable-shared \
 	--without-cxx-main \
 	--with-threads \
-	--with-system-ffi="$(STAGING_DIR)/usr" \
+	--with-system-ffi \
 	--without-pymalloc \
 	--with-ensurepip=no \
+	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
 	OPT="$(TARGET_CFLAGS)"
@@ -220,7 +229,7 @@ HOST_CONFIGURE_ARGS+= \
 	--prefix=$(HOST_PYTHON3_DIR) \
 	--exec-prefix=$(HOST_PYTHON3_DIR) \
 	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
-	--with-system-ffi=$(STAGING_DIR_HOSTPKG) \
+	--with-system-ffi \
 	--with-ensurepip=no \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
