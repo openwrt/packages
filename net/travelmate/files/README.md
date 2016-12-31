@@ -3,15 +3,15 @@
 ## Description
 If you’re planning an upcoming vacation or a business trip, taking your laptop, tablet or smartphone give you the ability to connect with friends or complete work on the go. But many hotels don’t have a secure wireless network setup or you’re limited on using a single device at once. Investing in a portable, mini travel router is a great way to connect all of your devices at once while having total control over your own personalized wireless network.  
 A logical combination of AP+STA mode on one physical radio allows most of OpenWrt/LEDE supported router devices to connect to a wireless hotspot/station (STA) and provide a wireless access point (AP) from that hotspot at the same time. Downside of this solution: whenever the STA interface looses the connection it will go into an active scan cycle which renders the radio unusable for AP mode operation, therefore the AP is taken down if the STA looses its association.  
-To avoid these kind of deadlocks, travelmate set all station interfaces in an "always off" mode, connects automatically to available hotspots and monitor & change these uplink connections automatically if required.  
+To avoid these kind of deadlocks, travelmate set all station interfaces in an "always off" mode and connects automatically to available/configured hotspots.  
 
 ## Main Features
 * STA interfaces operating in an "always off" mode, to make sure that the AP is always accessible
+* zero-conf like automatic installation & setup, usually no manual changes needed
 * fast uplink connections
-* reliable connection tracking
-* easy setup within normal OpenWrt/LEDE environment
-* status & debug logging to syslog
 * procd init system support
+* procd based hotplug support, the travelmate start will be triggered by interface triggers
+* status & debug logging to syslog
 
 ## Prerequisites
 * [OpenWrt](https://openwrt.org) or [LEDE](https://www.lede-project.org) trunk
@@ -22,7 +22,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * install 'travelmate' (_opkg install travelmate_)
 * configure your network to support (multiple) wlan uplinks and set travelmate config options (details see below)
 * set 'trm\_enabled' option in travelmate config to '1'
-* travelmate starts automatically during boot, triggered by procd as soon as the wireless subsystem is up & running
+* travelmate starts automatically during boot and will be triggered by procd interface triggers
 
 ## LuCI travelmate companion package
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/luci)
@@ -37,14 +37,13 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * install the packages as described above
 
 ## Travelmate config options
-* mandatory config options:
+* travelmate config options:
     * trm\_enabled => main switch to enable/disable the travelmate service (default: '0', disabled)
-    * trm\_loop => loop timeout in seconds for wlan monitoring (default: '30')
-    * trm\_maxretry => how many times should travelmate try to connect to a certain uplink, to disable this check at all set it to '0' (default: '3')
-* optional config options:
     * trm\_debug => enable/disable debug logging (default: '0', disabled)
-    * trm\_device => limit travelmate to a dedicated radio, i.e 'radio0' (default: use all radios)
+    * trm\_maxwait => how long (in seconds) should travelmate wait for wlan interface reload action (default: '20')
+    * trm\_maxretry => how many times should travelmate try to find an uplink after a trigger event (default: '3')
     * trm\_iw => set this option to '0' to use iwinfo for wlan scanning (default: '1', use iw)
+    * trm\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: not set, disabled)
 
 ## Setup
 **1. configure a wwan interface in /etc/config/network:**
@@ -116,16 +115,6 @@ config wifi-iface
 /etc/init.d/network reload
 /etc/init.d/travelmate start
 </code></pre>
-
-**Common runtime outputs (visible via logread)**
-
-**Success:** Sun Oct  9 17:02:21 2016 user.notice root: travelmate-0.2.1[712] info : wlan interface "wwan06" connected to uplink "blackhole.nl"
-
-**Disabled service:** Sun Oct  9 18:06:32 2016 user.notice root: travelmate-0.2.1[2379] info : travelmate is currently disabled, please set 'trm_enabled' to use this service
-
-**Misconfigured/broken uplink:** Sun Oct  9 18:56:42 2016 user.notice root: travelmate-0.2.1[2435] info : uplink "blackhole.nl" disabled due to permanent connection failures
-
-**Uplink disappeared:** Sun Oct  9 19:00:28 2016 user.notice root: travelmate-0.2.1[3876] info : uplink "Neffos C5L" get lost
 
 ## Support
 Please join the travelmate discussion in this [forum thread](https://forum.openwrt.org/viewtopic.php?id=67697) or contact me by [mail](mailto:dev@brenken.org)  
