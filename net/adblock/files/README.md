@@ -157,13 +157,31 @@ This will output the active block lists, the overall domain count and the last r
                 "data": {
                     "active_lists": [
                         {
-                            "adaway": "409",
-                            "yoyo": "2368",
-                            "disconnect": "3198"
+                            "palevo": "14",
+                            "blacklist": "143",
+                            "winspy": "164",
+                            "zeus": "446",
+                            "rolist": "644",
+                            "malwarelist": "1218",
+                            "openphish": "1515",
+                            "ransomware": "1463",
+                            "ruadlist": "1773",
+                            "yoyo": "2320",
+                            "dshield": "123",
+                            "disconnect": "3181",
+                            "spam404": "6155",
+                            "malware": "9882",
+                            "whocares": "11825",
+                            "winhelp": "10917",
+                            "sysctl": "8529",
+                            "securemecca": "9919",
+                            "shalla": "25779",
+                            "hphosts": "37111"
                         }
                     ],
-                    "blocked_domains": "5975",
-                    "last_rundate": "30.12.2016 21:03:45"
+                    "blocked_domains": "133121",
+                    "last_rundate": "31.12.2016 07:19:25",
+                    "system": "LEDE Reboot SNAPSHOT r2709-b7677f05d6"
                 }
             }
         }
