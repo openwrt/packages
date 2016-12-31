@@ -17,7 +17,7 @@ PKG_MD5SUM:=f834ab2cfc2e7300edf1bafaf4a5d83e
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_INSTALL:=1
 
