@@ -1,7 +1,12 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2008-2015 OpenWrt.org
+# Copyright (C) 2008-2017 OpenWrt.org
 
 START=99
+
+USE_PROCD=1
+
+CONFIGNAME="bandwidthd"
+CONFIGFILE="/tmp/etc/bandwidthd.conf"
 
 config_cb() {
 	local cfg_type="$1"
@@ -50,18 +55,17 @@ export_string() {
 	fi
 }
 
-start() {
+set_conf_file() {
 	local subnet conffile
 
 	[ -d /tmp/bandwidthd ] || mkdir -p /tmp/bandwidthd && cp /www/legend.gif /www/logo.gif /tmp/bandwidthd/
 	[ -e /htdocs ] || ln -s /tmp/bandwidthd /htdocs
 	[ -e /www/bandwidthd ] || ln -s /tmp/bandwidthd /www/bandwidthd
-	rm -f /tmp/bandwidthd.conf
-	touch /tmp/bandwidthd.conf
-	[ -e /etc/bandwidthd.conf ] || ln -s /tmp/bandwidthd.conf /etc/bandwidthd.conf
+	rm -f $CONFIGFILE
+	touch $CONFIGFILE
+	[ -e /etc/bandwidthd.conf ] || ln -s $CONFIGFILE /etc/bandwidthd.conf
 	
-	
-	config_load bandwidthd
+	config_load $CONFIGNAME
 	for cfg in $cfgs; do
 		config_get subnets $cfg subnets
 			for subnet in $subnets; do
@@ -76,13 +80,27 @@ start() {
 		export_string filter $cfg
 		export_bool graph $cfg
 		export_number meta_refresh $cfg
-		[ -n "$conffile" ] && echo -e "$conffile" >>/tmp/bandwidthd.conf
+		export_string pgsql_connect_string $cfg
+		export_string sqlite_filename $cfg
+		export_string sensor_id $cfg
+		[ -n "$conffile" ] && echo -e "$conffile" >>$CONFIGFILE
 		unset conffile
 	done
 	cd /
-	service_start /usr/sbin/bandwidthd
 }
 
-stop() {
+service_triggers()
+{
+	procd_add_reload_trigger $CONFIGNAME
+}
+
+start_service() {
+	set_conf_file
+	procd_open_instance
+	procd_set_param command /usr/sbin/bandwidthd
+	procd_close_instance	
+}
+
+stop_service() {
 	service_stop /usr/sbin/bandwidthd
 }
