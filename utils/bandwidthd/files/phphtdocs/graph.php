@@ -13,7 +13,7 @@ function AverageAndAccumulate()
 	{
 	global $Count, $total, $icmp, $udp, $tcp, $ftp, $http, $p2p, $YMax;
 	global $a_total, $a_icmp, $a_udp, $a_tcp, $a_ftp, $a_http, $a_p2p;
-	
+
 	foreach ($Count as $key => $number)
     	{
 	    $total[$key] /= $number;
@@ -25,7 +25,7 @@ function AverageAndAccumulate()
     	$p2p[$key] /= $number;
     	}
 
-	foreach ($Count as $key => $number) 
+	foreach ($Count as $key => $number)
 		{
 		$a_total[$key] += $total[$key];
 		$a_icmp[$key] += $icmp[$key];
@@ -38,7 +38,7 @@ function AverageAndAccumulate()
 		if ($a_total[$key] > $YMax)
 			$YMax = $a_total[$key];
 		}
-	
+
 	unset($GLOBALS['total'], $GLOBALS['icmp'], $GLOBALS['udp'], $GLOBALS['tcp'], $GLOBALS['ftp'], $GLOBALS['http'], $GLOBALS['p2p'], $GLOBALS['Count']);
 
 	$total = array();
@@ -50,7 +50,6 @@ function AverageAndAccumulate()
 	$p2p = array();
 	$Count = array();
 	}
- 
 
 $db = ConnectDb();
 
@@ -133,7 +132,7 @@ while ($row = pg_fetch_array($result))
 
 	//echo "xint: ".$xint."<br>";
 	$Count[$xint]++;
-                                                                                                                             
+
 	if ($row['total']/$row['sample_duration'] > $SentPeak)
 		$SentPeak = $row['total']/$row['sample_duration'];
 	$TotalSent += $row['total'];
@@ -143,7 +142,7 @@ while ($row = pg_fetch_array($result))
 	$tcp[$xint] += $row['tcp']/$row['sample_duration'];
 	$ftp[$xint] += $row['ftp']/$row['sample_duration'];
 	$http[$xint] += $row['http']/$row['sample_duration'];
-	$p2p[$xint] += $row['p2p']/$row['sample_duration'];                                                                                                                             
+	$p2p[$xint] += $row['p2p']/$row['sample_duration'];
 	}
 
 // One more time for the last IP
@@ -170,7 +169,6 @@ header("Content-type: image/png");
 
 $im = imagecreate($width, $height);
 $white = imagecolorallocate($im, 255, 255, 255);
-$yellow = ImageColorAllocate($im, 255, 255, 0);
 $purple = ImageColorAllocate($im, 255, 0, 255);
 $green  = ImageColorAllocate($im, 0, 255, 0);
 $blue   = ImageColorAllocate($im, 0, 0, 255);
@@ -207,7 +205,6 @@ for($Counter=XOFFSET+1; $Counter < $width; $Counter++)
 
 		// Plot them!
 		//echo "$Counter:".$Counter." (h-y)-t:".($height-YOFFSET) - $total[$Counter]." h-YO-1:".$height-YOFFSET-1;
-        ImageLine($im, $Counter, ($height-YOFFSET) - $total[$Counter], $Counter, $height-YOFFSET-1, $yellow);
         ImageLine($im, $Counter, ($height-YOFFSET) - $icmp[$Counter], $Counter, $height-YOFFSET-1, $red);
         ImageLine($im, $Counter, ($height-YOFFSET) - $udp[$Counter], $Counter, ($height-YOFFSET) - $icmp[$Counter] - 1, $brown);
         ImageLine($im, $Counter, ($height-YOFFSET) - $tcp[$Counter], $Counter, ($height-YOFFSET) - $udp[$Counter] - 1, $green);
@@ -217,23 +214,23 @@ for($Counter=XOFFSET+1; $Counter < $width; $Counter++)
 		}
 //	else
 //		echo $Counter." not set<br>";
-	}                                                                                                                             
+	}
 
 // Margin Text
 if ($SentPeak < 1024/8)
 	$txtPeakSendRate = sprintf("Peak Send Rate: %.1f KBits/sec", $SentPeak*8);
 else if ($SentPeak < (1024*1024)/8)
     $txtPeakSendRate = sprintf("Peak Send Rate: %.1f MBits/sec", ($SentPeak*8.0)/1024.0);
-else 
+else
 	$txtPeakSendRate = sprintf("Peak Send Rate: %.1f GBits/sec", ($SentPeak*8.0)/(1024.0*1024.0));
-                                                                                                                             
+
 if ($TotalSent < 1024)
 	$txtTotalSent = sprintf("Sent %.1f KBytes", $TotalSent);
 else if ($TotalSent < 1024*1024)
 	$txtTotalSent = sprintf("Sent %.1f MBytes", $TotalSent/1024.0);
-else 
+else
 	$txtTotalSent = sprintf("Sent %.1f GBytes", $TotalSent/(1024.0*1024.0));
-                                                                                                                             
+
 ImageString($im, 2, XOFFSET+5,  $height-20, $txtTotalSent, $black);
 ImageString($im, 2, $width/2+XOFFSET/2,  $height-20, $txtPeakSendRate, $black);
 
@@ -247,23 +244,23 @@ if ((24*60*60*($width-XOFFSET))/$interval > ($width-XOFFSET)/10)
 	{
 	$ts = getdate($timestamp);
 	$MarkTime = mktime(0, 0, 0, $ts['mon'], $ts['mday'], $ts['year']);
-	
+
     $x = ts2x($MarkTime);
     while ($x < XOFFSET)
     	{
         $MarkTime += (24*60*60);
 	    $x = ts2x($MarkTime);
         }
-                                                                                                                             
+
     while ($x < ($width-10))
     	{
         // Day Lines
         ImageLine($im, $x, 0, $x, $height-YOFFSET, $black);
         ImageLine($im, $x+1, 0, $x+1, $height-YOFFSET, $black);
-                                                                                                                             
+
         $txtDate = strftime("%a, %b %d", $MarkTime);
         ImageString($im, 2, $x-30,  $height-YOFFSET+10, $txtDate, $black);
-                                                                                                                             
+
         // Calculate Next x
         $MarkTime += (24*60*60);
 	    $x = ts2x($MarkTime);
@@ -275,7 +272,7 @@ else if ((24*60*60*30*($width-XOFFSET))/$interval > ($width-XOFFSET)/10)
 	$ts = getdate($timestamp);
 	$month = $ts['mon'];
 	$MarkTime = mktime(0, 0, 0, $month, 1, $ts['year']);
-	
+
     $x = ts2x($MarkTime);
     while ($x < XOFFSET)
     	{
@@ -283,16 +280,16 @@ else if ((24*60*60*30*($width-XOFFSET))/$interval > ($width-XOFFSET)/10)
         $MarkTime = mktime(0, 0, 0, $month, 1, $ts['year']);
 	    $x = ts2x($MarkTime);
         }
-                                                                                                                             
+
     while ($x < ($width-10))
     	{
         // Day Lines
         ImageLine($im, $x, 0, $x, $height-YOFFSET, $black);
         ImageLine($im, $x+1, 0, $x+1, $height-YOFFSET, $black);
-                                                                                                                             
+
         $txtDate = strftime("%b, %Y", $MarkTime);
         ImageString($im, 2, $x-25,  $height-YOFFSET+10, $txtDate, $black);
-                                                                                                                             
+
         // Calculate Next x
 		$month++;
         $MarkTime = mktime(0, 0, 0, $month, 1, $ts['year']);
@@ -305,7 +302,7 @@ else
     $ts = getdate($timestamp);
     $year = $ts['year'];
     $MarkTime = mktime(0, 0, 0, 1, 1, $year);
-                                                                                                                             
+
     $x = ts2x($MarkTime);
     while ($x < XOFFSET)
         {
@@ -313,21 +310,21 @@ else
         $MarkTime = mktime(0, 0, 0, 1, 1, $year);
         $x = ts2x($MarkTime);
         }
-                                                                                                                             
+
     while ($x < ($width-10))
         {
         // Day Lines
         ImageLine($im, $x, 0, $x, $height-YOFFSET, $black);
         ImageLine($im, $x+1, 0, $x+1, $height-YOFFSET, $black);
-                                                                                                                             
+
         $txtDate = strftime("%b, %Y", $MarkTime);
         ImageString($im, 2, $x-25,  $height-YOFFSET+10, $txtDate, $black);
-                                                                                                                             
+
         // Calculate Next x
         $year++;
         $MarkTime = mktime(0, 0, 0, 1, 1, $year);
         $x = ts2x($MarkTime);
-        }	
+        }
 	}
 
 // Draw Major Tick Marks
@@ -343,7 +340,7 @@ else if ((24*60*60*30*($width-XOFFSET))/$interval > 10)
     $ts = getdate($timestamp);
     $month = $ts['mon'];
     $MarkTime = mktime(0, 0, 0, $month, 1, $ts['year']);
-                                                                                                                             
+
     $x = ts2x($MarkTime);
     while ($x < XOFFSET)
         {
@@ -351,18 +348,18 @@ else if ((24*60*60*30*($width-XOFFSET))/$interval > 10)
         $MarkTime = mktime(0, 0, 0, $month, 1, $ts['year']);
         $x = ts2x($MarkTime);
         }
-                                                                                                                             
+
     while ($x < ($width-10))
         {
         // Day Lines
 		$date = getdate($MarkTime);
 		if ($date['mon'] != 1)
 			{
-	        ImageLine($im, $x, $height-YOFFSET-5, $x, $height-YOFFSET+5, $black);                                                                                                                      
+	        ImageLine($im, $x, $height-YOFFSET-5, $x, $height-YOFFSET+5, $black);
     	    $txtDate = strftime("%b", $MarkTime);
         	ImageString($im, 2, $x-5,  $height-YOFFSET+10, $txtDate, $black);
           	}
-                                                                                                                   
+
         // Calculate Next x
         $month++;
         $MarkTime = mktime(0, 0, 0, $month, 1, $ts['year']);
@@ -380,13 +377,13 @@ if ($MarkTimeStep)
 
 	while ($x < ($width-10))
 		{
-    	if ($x > XOFFSET) 
+    	if ($x > XOFFSET)
 			{
     	    ImageLine($im, $x, $height-YOFFSET-5, $x, $height-YOFFSET+5, $black);
 	        }
 		$MarkTime += $MarkTimeStep;
 	    $x = ts2x($MarkTime);
-		}
+	}
 	}
 
 // Draw Minor Tick marks
@@ -407,7 +404,7 @@ if ($MarkTimeStep)
 
 	while ($x < ($width-10))
 		{
-    	if ($x > XOFFSET) 
+    	if ($x > XOFFSET)
 			{
     	    ImageLine($im, $x, $height-YOFFSET, $x, $height-YOFFSET+5, $black);
 	        }
@@ -438,12 +435,12 @@ if ($YMax*8 > 1024*1024*1024*2)
     $Divisor = 1024*1024*1024; // Display in t
     $YLegend = 't';
     }
-                                                                                                                             
+
 $YStep = $YMax/10;
 if ($YStep < 1)
 	$YStep=1;
 $YTic=$YStep;
-                                                                                                                             
+
 while ($YTic <= ($YMax - $YMax/10))
 	{
     $y = ($height-YOFFSET)-(($YTic*($height-YOFFSET))/$YMax);
@@ -453,5 +450,5 @@ while ($YTic <= ($YMax - $YMax/10))
 	$YTic += $YStep;
 	}
 
-imagepng($im); 
+imagepng($im);
 imagedestroy($im);
