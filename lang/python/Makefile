@@ -122,6 +122,13 @@ ifeq ($(CONFIG_IPV6),y)
 	ENABLE_IPV6 += --enable-ipv6
 endif
 
+PYTHON_FOR_BUILD:= \
+	_PYTHON_PROJECT_BASE=$(PKG_BUILD_DIR) \
+	_PYTHON_HOST_PLATFORM=linux2 \
+	PYTHONPATH="$(PKG_BUILD_DIR)/Lib:$(PKG_BUILD_DIR)/build/lib.linux2-$(PYTHON_VERSION)" \
+	_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata \
+	$(HOST_PYTHON_BIN)
+
 CONFIGURE_ARGS+= \
 	--sysconfdir=/etc \
 	--enable-shared \
@@ -129,6 +136,7 @@ CONFIGURE_ARGS+= \
 	--with-threads \
 	--with-system-ffi \
 	--without-pymalloc \
+	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
 	OPT="$(TARGET_CFLAGS)"
