@@ -127,7 +127,7 @@ CONFIGURE_ARGS+= \
 	--enable-shared \
 	--without-cxx-main \
 	--with-threads \
-	--with-system-ffi="$(STAGING_DIR)/usr" \
+	--with-system-ffi \
 	--without-pymalloc \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
@@ -227,7 +227,7 @@ HOST_CONFIGURE_ARGS+= \
 	--prefix=$(HOST_PYTHON_DIR) \
 	--exec-prefix=$(HOST_PYTHON_DIR) \
 	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
-	--with-system-ffi=$(STAGING_DIR_HOSTPKG) \
+	--with-system-ffi \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
 
