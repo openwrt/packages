@@ -25,6 +25,10 @@ PKG_HASH:=b0c5f904f685e32d9232f7bdcbece9819a892929063b6e385414ad2dd6a23622
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
 
+# This file provides the necsessary host build variables
+include ./files/python3-host.mk
+
+# For Py3Package
 include ./files/python3-package.mk
 
 PKG_INSTALL:=1
@@ -34,7 +38,7 @@ HOST_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=libbz2/host expat/host python3/host
+PKG_BUILD_DEPENDS:=python3/host
 HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -84,8 +88,12 @@ endef
 PYTHON3_LIB_FILES_DEL:=
 PYTHON3_PACKAGES:=
 PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR).so
+PYTHON3_PACKAGES_DEPENDS:=
 define Py3BasePackage
   PYTHON3_PACKAGES+=$(1)
+  ifeq ($(3),)
+    PYTHON3_PACKAGES_DEPENDS+=$(1)
+  endif
   PYTHON3_LIB_FILES_DEL+=$(2)
   define Py3Package/$(1)/filespec
     $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
@@ -96,7 +104,7 @@ include ./files/python3-package-*.mk
 
 define Package/python3
 $(call Package/python3/Default)
-  DEPENDS:=+python3-light $(foreach package,$(filter-out python3-dev python3-lib2to3,$(PYTHON3_PACKAGES)),+$(package))
+  DEPENDS:=+python3-light $(foreach package,$(PYTHON3_PACKAGES_DEPENDS),+$(package))
 endef
 
 define Package/python3/description
@@ -154,6 +162,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
 	$(INSTALL_DATA) \
 		./files/python3-package.mk \
+		./files/python3-host.mk \
 		./files/python3-version.mk \
 		$(STAGING_DIR)/mk/
 	$(CP) \
