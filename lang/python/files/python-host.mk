@@ -77,4 +77,20 @@ define Build/Compile/HostPyMod
 		$(3))
 endef
 
+define HostPy/Compile/Default
+	$(call Build/Compile/HostPyMod,,\
+		install --root="$(HOST_BUILD_PREFIX)" --prefix="" \
+		--single-version-externally-managed \
+	)
+endef
+
+ifeq ($(BUILD_VARIANT),python)
+define Host/Compile
+	$(call HostPy/Compile/Default)
+endef
+
+define Host/Install
+endef
+endif # python
+
 endif # __python_host_mk_inc
