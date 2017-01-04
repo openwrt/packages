@@ -8,7 +8,7 @@
 define Package/python-dev
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) development files
-  DEPENDS:=+python
+  DEPENDS:=+python +python-lib2to3
 endef
 
 define PyPackage/python-dev/install
