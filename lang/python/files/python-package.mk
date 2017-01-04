@@ -41,6 +41,15 @@ define PyPackage
     endef
   endif
 
+  ifndef PyPackage/$(1)/install
+    define PyPackage/$(1)/install
+		if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then \
+			$(INSTALL_DIR) $$(1)/usr/bin \
+			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/
+		fi
+    endef
+  endif
+
   $(call shexport,PyPackage/$(1)/filespec)
 
   define Package/$(1)/install
@@ -115,21 +124,15 @@ define Build/Compile/PyMod
 	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
 endef
 
-define PyMod/Default
-  define Build/Compile
-	$$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
-  endef
-
-  define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $$(1)$(PYTHON_PKG_DIR) $$(1)/usr/bin
-	if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then find $(PKG_INSTALL_DIR)/usr/bin -mindepth 1 -maxdepth 1 -type f -exec $(CP) \{\} $$(1)/usr/bin/ \; ; fi
-	find $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR) -mindepth 1 -maxdepth 1 \( -type f -o -type d \) -exec $(CP) \{\} $$(1)$(PYTHON_PKG_DIR)/ \;
-  endef
-
-  define Build/InstallDev
-	$(INSTALL_DIR) $$(1)/usr/bin $$(1)$(PYTHON_PKG_DIR)
-	if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then find $(PKG_INSTALL_DIR)/usr/bin -mindepth 1 -maxdepth 1 -type f -exec $(CP) \{\} $$(1)/usr/bin/ \; ; fi
-	find $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR) -mindepth 1 -maxdepth 1 \( -type f -o -type d \) -exec $(CP) \{\} $$(1)$(PYTHON_PKG_DIR)/ \;
-  endef
+define PyBuild/Compile/Default
+	$(call Build/Compile/PyMod,, \
+		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
+		--single-version-externally-managed \
+	)
 endef
 
+ifeq ($(BUILD_VARIANT),python)
+define Build/Compile
+	$(call PyBuild/Compile/Default)
+endef
+endif # python
