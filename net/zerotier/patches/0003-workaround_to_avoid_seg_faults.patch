@@ -1,0 +1,27 @@
+From 21f4958bd48cae59b478b1b3445e00fa4fb18991 Mon Sep 17 00:00:00 2001
+From: muebau <muebau@gmail.com>
+Date: Fri, 5 Aug 2016 19:22:45 +0200
+Subject: [PATCH] OpenWRT workaround to avoid seg faults
+
+---
+ service/OneService.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/service/OneService.cpp b/service/OneService.cpp
+index 13820f5..9ba3238 100644
+--- a/service/OneService.cpp
++++ b/service/OneService.cpp
+@@ -862,8 +862,8 @@ public:
+ 			}
+ 
+ 			// Start two background threads to handle expensive ops out of line
+-			Thread::start(_node);
+-			Thread::start(_node);
++			//Thread::start(_node);
++			//Thread::start(_node);
+ 
+ 			_nextBackgroundTaskDeadline = 0;
+ 			uint64_t clockShouldBe = OSUtils::now();
+-- 
+2.7.4
+
