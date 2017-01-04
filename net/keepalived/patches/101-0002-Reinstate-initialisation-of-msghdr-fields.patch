@@ -1,0 +1,41 @@
+From eaabcc1b09cccff2f8815d03da4d5778ab6bbd17 Mon Sep 17 00:00:00 2001
+From: Quentin Armitage <quentin@armitage.org.uk>
+Date: Mon, 16 May 2016 23:09:13 +0100
+Subject: [PATCH] Reinstate initialisation of msghdr fields
+
+Commit dbb2cac removed initialisation of the struct msghdr msg_control,
+msg_controllen and msg_flags fields. This commit reinstates initialisation
+of those fields.
+
+Signed-off-by: Quentin Armitage <quentin@armitage.org.uk>
+---
+ keepalived/vrrp/vrrp_netlink.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/keepalived/vrrp/vrrp_netlink.c b/keepalived/vrrp/vrrp_netlink.c
+index 2c2fd59..62c37d6 100644
+--- a/keepalived/vrrp/vrrp_netlink.c
++++ b/keepalived/vrrp/vrrp_netlink.c
+@@ -421,6 +421,9 @@ netlink_parse_info(int (*filter) (struct sockaddr_nl *, struct nlmsghdr *),
+ 			.msg_namelen = sizeof(snl),
+ 			.msg_iov = &iov,
+ 			.msg_iovlen = 1,
++			.msg_control = NULL,
++			.msg_controllen = 0,
++			.msg_flags = 0
+ 		};
+ 		struct nlmsghdr *h;
+ 
+@@ -547,6 +550,9 @@ netlink_talk(nl_handle_t *nl, struct nlmsghdr *n)
+ 		.msg_namelen = sizeof(snl),
+ 		.msg_iov = &iov,
+ 		.msg_iovlen = 1,
++		.msg_control = NULL,
++		.msg_controllen = 0,
++		.msg_flags = 0
+ 	};
+ 
+ 	memset(&snl, 0, sizeof snl);
+-- 
+2.10.2
+
