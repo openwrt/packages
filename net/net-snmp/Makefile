@@ -8,16 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
-PKG_VERSION:=5.4.4
-PKG_RELEASE:=3
+PKG_VERSION:=5.7.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
-PKG_MD5SUM:=95aa054f3c99a1ce242807d7eaf98619
+PKG_MD5SUM:=d4a3459e1577d0efa8d96ca70a885e53
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=MIT BSD-3-Clause-Clear
-
-PKG_FIXUP = patch-libtool
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -40,6 +38,7 @@ define Package/libnetsnmp
 $(call Package/net-snmp/Default)
   SECTION:=libs
   CATEGORY:=Libraries
+  DEPENDS:=+PACKAGE_libnl:libnl
   TITLE:=Open source SNMP implementation (libraries)
 endef
 
