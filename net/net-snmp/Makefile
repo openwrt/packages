@@ -38,7 +38,7 @@ define Package/libnetsnmp
 $(call Package/net-snmp/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+PACKAGE_libnl:libnl
+  DEPENDS:=+PACKAGE_libnl-core:libnl-core
   TITLE:=Open source SNMP implementation (libraries)
 endef
 
