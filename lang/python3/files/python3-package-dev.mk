@@ -8,7 +8,7 @@
 define Package/python3-dev
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON3_VERSION) development files
-  DEPENDS:=+python3
+  DEPENDS:=+python3 +python3-lib2to3
 endef
 
 define Py3Package/python3-dev/install
@@ -22,4 +22,6 @@ $(eval $(call Py3BasePackage,python3-dev, \
     /usr/lib/python$(PYTHON_VERSION)/config-$(PYTHON_VERSION) \
     /usr/include/python$(PYTHON_VERSION) \
     /usr/lib/pkgconfig \
+	, \
+	DO_NOT_ADD_TO_PACKAGE_DEPENDS \
 ))
