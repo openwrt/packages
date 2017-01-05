@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libshout
-PKG_VERSION:=2.3.1
-PKG_RELEASE:=3
+PKG_VERSION:=2.4.1
+PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.us.xiph.org/releases/libshout/
-PKG_MD5SUM:=11765b2592e7ea623ccd93d3f8df172c
+PKG_SOURCE_URL:=http://downloads.xiph.org/releases/libshout/ \
+		http://distcache.eu.freebsd.org/local-distfiles/sunpoet/
+PKG_MD5SUM:=f3acb8dec26f2dbf6df778888e0e429a4ce9378a9d461b02a7ccbf2991bbf24d
 
 PKG_LICENSE:=LGPL-2.0+
 PKG_LICENSE_FILES:=COPYING
@@ -35,14 +36,14 @@ endef
 
 define Package/libshout
   $(call Package/libshout/default)
-  TITLE+= (no speex & theora)
-  VARIANT:=nospeex
+  TITLE+= (no theora)
+  VARIANT:=notheora
 endef
 
 define Package/libshout-full
   $(call Package/libshout/default)
   TITLE+= (all codecs)
-  DEPENDS+= +libspeex +libtheora
+  DEPENDS+= +libtheora
   VARIANT:=full
 endef
 
@@ -58,10 +59,12 @@ Package/libshout-full/description=Package/libshout/description
 
 CONFIGURE_ARGS += \
 	--enable-shared \
-	--enable-static
+	--enable-static \
+	--disable-speex \
+	--without-openssl
 
-ifeq ($(BUILD_VARIANT),nospeex)
-  CONFIGURE_ARGS += --disable-theora --disable-speex
+ifeq ($(BUILD_VARIANT),notheora)
+  CONFIGURE_ARGS += --disable-theora
 endif
 
 CONFIGURE_VARS += \
