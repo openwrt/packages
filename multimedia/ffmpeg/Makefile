@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=2.8.8
-PKG_RELEASE:=2
+PKG_VERSION:=3.2.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=5fae1ba5a5d37a2d0de750479b7270d4
+PKG_SOURCE_URL:=https://ffmpeg.org/releases/
+PKG_MD5SUM:=e34d1b92c5d844f2a3611c741a6dba18
+PKG_HASH:=3f01bd1fe1a17a277f8c84869e5d9192b4b978cb660872aa2b54c3cc8a2fedfc
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -292,7 +293,7 @@ endef
 define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (custom)
- DEPENDS+= +FFMPEG_CUSTOM_SELECT_libopus:libopus +FFMPEG_CUSTOM_SELECT_speex:libspeex \
+ DEPENDS+= +FFMPEG_CUSTOM_SELECT_libopus:libopus \
            +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib
 
  VARIANT:=custom
@@ -313,7 +314,6 @@ endef
 define Package/libffmpeg-audio-dec
 $(call Package/libffmpeg/Default)
  TITLE+= (audio)
- DEPENDS+= +libspeex
  VARIANT:=audio-dec
 endef
 
@@ -327,7 +327,7 @@ endef
 define Package/libffmpeg-full
 $(call Package/libffmpeg/Default)
  TITLE+= (full)
- DEPENDS+= +alsa-lib +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib +libopus +libspeex
+ DEPENDS+= +alsa-lib +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib +libopus
  VARIANT:=full
 endef
 
@@ -382,6 +382,8 @@ FFMPEG_CONFIGURE:= \
 ifeq ($(CONFIG_SOFT_FLOAT),y)
 FFMPEG_CONFIGURE += \
 	--disable-altivec \
+	--disable-vsx \
+	--disable-power8 \
 	--disable-amd3dnow \
 	--disable-amd3dnowext \
 	--disable-mmx \
@@ -397,11 +399,17 @@ FFMPEG_CONFIGURE += \
 	--disable-fma3 \
 	--disable-fma4 \
 	--disable-avx2 \
+	--disable-aesni \
+	--disable-armv5te \
+	--disable-armv6 \
+	--disable-armv6t2 \
 	--disable-inline-asm \
-	--disable-mips32r2 \
-	--disable-mipsdspr1 \
+	--disable-mipsdsp \
 	--disable-mipsdspr2 \
 	--disable-mipsfpu \
+	--disable-msa \
+	--disable-mmi \
+	--disable-fast-unaligned \
 	--disable-runtime-cpudetect
 
 else ifneq ($(findstring arm,$(CONFIG_ARCH)),)
@@ -434,7 +442,6 @@ endif
 ifeq ($(BUILD_VARIANT),full)
 	FFMPEG_CONFIGURE+= \
 		--enable-libopus --enable-decoder=libopus \
-		--enable-libspeex --enable-decoder=libspeex \
 		$(if $(CONFIG_PACKAGE_libx264),--enable-libx264) \
 		$(if $(CONFIG_PACKAGE_lame-lib),--enable-libmp3lame)
 endif
@@ -473,11 +480,6 @@ ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libopus),y)
 	--enable-libopus --enable-decoder=libopus
 endif
 
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_speex),y)
-  FFMPEG_CONFIGURE+= \
-	--enable-libspeex --enable-decoder=libspeex
-endif
-
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_x264),y)
   FFMPEG_CONFIGURE+= \
 	--enable-libx264
@@ -508,7 +510,6 @@ ifeq ($(BUILD_VARIANT),audio-dec)
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_AUDIO_DEMUXERS)) \
 	$(call FFMPEG_ENABLE,parser,$(FFMPEG_AUDIO_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_AUDIO_PROTOCOLS)) \
-	--enable-libspeex --enable-decoder=libspeex \
 	--disable-decoder=pcm_bluray,pcm_dvd \
 
 endif
