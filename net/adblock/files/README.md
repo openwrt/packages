@@ -51,6 +51,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 440 entries
 * zero-conf like automatic installation & setup, usually no manual changes needed
 * simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
+* supports dnsmasq (default) or unbound as dns backend
 * supports a wide range of router modes, even AP modes are supported
 * full IPv4 and IPv6 support
 * each block list source will be updated and processed separately
@@ -71,7 +72,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * [openwrt](https://openwrt.org), tested with latest stable release (Chaos Calmer) and with current trunk (Designated Driver)
 * [LEDE project](https://www.lede-project.org), tested with trunk > r98
 * a usual setup with an enabled dns server at minimum - dump AP modes without a working dns server are _not_ supported
-* a download utility: 'wget', 'aria2c', 'uclient-fetch' or 'curl' are supported (only full versions with ssl support). Normally you should use the pre-configured default 'wget'. If you need a smaller memory footprint try 'uclient-fetch' without openssl dependency. The default ustream ssl backend 'libustream-polarssl' has issues with certain https sites and is currently not supported. To change the ssl backend see example below.
+* a download utility: 'wget', 'aria2c', 'uclient-fetch' or 'curl' are supported (only full versions with ssl support). Normally you should use the pre-configured default 'wget'. If you need a smaller memory footprint try 'uclient-fetch' without openssl dependency.
 
 ## OpenWrt / LEDE trunk Installation & Usage
 * install 'adblock' (_opkg install adblock_) and that's it - the adblock start will be automatically triggered by procd interface triggers
@@ -111,41 +112,50 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_enabled => main switch to enable/disable adblock service (default: '1', enabled)
     * adb\_debug => enable/disable adblock debug output (default: '0', disabled)
     * adb\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: not set, disabled)
-    * adb\_fetch => reference an alternate download utility, see example below (default: not set, use wget)
-    * adb\_fetchparm => set options for the download utility, see example below (default: not set, use wget options)
+    * adb\_fetch => full path to a different download utility, see example below (default: not set, use wget)
+    * adb\_fetchparm => options for the download utility, see example below (default: not set, use wget options)
+    * adb\_dns => use 'unbound' as dns backend, see example below (default: not set, use dnsmasq)
 
 ## Examples
 
-**example to change the ssl backend for 'uclient-fetch' or 'curl':**
+**change default dns backend to 'unbound':**
 <pre><code>
-opkg update
-opkg remove --force-depends libustream-polarssl
-opkg install libustream-mbedtls
+set 'unbound' as dns backend in /etc/config/adblock:
+  [...]
+  option adb_dns 'unbound'
+
+switch to 'manual' unbound config in /etc/config/unbound:
+  [...]
+  option manual_conf '1'
+
+include adblock lists in /etc/unbound/unbound.conf:
+  [...]
+  include: "/tmp/lib/unbound/adb_list.*"
 </code></pre>
   
-**example configuration for different download utilities:**
+**configuration for different download utilities:**
 <pre><code>
-config for wget (default):
+wget (default):
   option adb_fetch="/usr/bin/wget"
   option adb_fetchparm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --timeout=5 --no-check-certificate -O"
 
-config for aria2c:
+aria2c:
   option adb_fetch '/usr/bin/aria2c'
   option adb_fetchparm '-q --max-tries=1 --timeout=5 --allow-overwrite=true --auto-file-renaming=false --check-certificate=false -o'
 
-config for uclient-fetch (download errors with default ssl backend!):
+uclient-fetch:
   option adb_fetch '/bin/uclient-fetch'
   option adb_fetchparm '-q --timeout=5 --no-check-certificate -O'
 
-config for curl (download errors with default ssl backend!):
+curl:
   option adb_fetch '/usr/bin/curl'
   option adb_fetchparm '-s --retry 1 --connect-timeout 5 --insecure -o'
 </code></pre>
   
-**example to receive adblock statistics via ubus:**
+**receive adblock statistics via ubus:**
 <pre><code>
 ubus call service list '{"name":"adblock_stats"}'
-This will output the active block lists, the overall domain count and the last runtime as JSON, i.e.:
+This will output the active block lists and other runtime information as JSON, i.e.:
 {
     "adblock_stats": {
         "instances": {
@@ -157,31 +167,16 @@ This will output the active block lists, the overall domain count and the last r
                 "data": {
                     "active_lists": [
                         {
-                            "palevo": "14",
-                            "blacklist": "143",
-                            "winspy": "164",
-                            "zeus": "446",
-                            "rolist": "644",
-                            "malwarelist": "1218",
-                            "openphish": "1515",
-                            "ransomware": "1463",
-                            "ruadlist": "1773",
-                            "yoyo": "2320",
-                            "dshield": "123",
-                            "disconnect": "3181",
-                            "spam404": "6155",
-                            "malware": "9882",
-                            "whocares": "11825",
-                            "winhelp": "10917",
-                            "sysctl": "8529",
-                            "securemecca": "9919",
-                            "shalla": "25779",
-                            "hphosts": "37111"
+                            "blacklist": "142",
+                            "adaway": "408",
+                            "yoyo": "2368"
                         }
                     ],
-                    "blocked_domains": "133121",
-                    "last_rundate": "31.12.2016 07:19:25",
-                    "system": "LEDE Reboot SNAPSHOT r2709-b7677f05d6"
+                    "adblock_version": "2.1.0",
+                    "blocked_domains": "2918",
+                    "dns_backend": "unbound",
+                    "last_rundate": "05.01.2017 09:38:55",
+                    "system": "LEDE Reboot SNAPSHOT r2762-ed69e93262"
                 }
             }
         }
@@ -189,12 +184,12 @@ This will output the active block lists, the overall domain count and the last r
 }
 </code></pre>
   
-**example cronjob for a regular block list update (/etc/crontabs/root):**
+**cronjob for a regular block list update (/etc/crontabs/root):**
 <pre><code>
 0 06 * * *    /etc/init.d/adblock start
 </code></pre>
   
-**example blacklist entry (/etc/adblock/adblock.blacklist):**
+**blacklist entry (/etc/adblock/adblock.blacklist):**
 <pre><code>
 ads.example.com
 
@@ -208,7 +203,7 @@ This entry does not block:
   http://example.com/
 </code></pre>
   
-**example whitelist entry (/etc/adblock/adblock.whitelist):**
+**whitelist entry (/etc/adblock/adblock.whitelist):**
 <pre><code>
 here.com
 
@@ -221,7 +216,7 @@ This entry does not remove:
   www.adwhere.com
 </code></pre>
   
-**example to query active block lists for a certain (sub-)domain, i.e. for whitelisting:**
+**query active block lists for a certain (sub-)domain, i.e. for whitelisting:**
 <pre><code>
 /etc/init.d/adblock query "example.www.doubleclick.net"
 :: distinct results for domain 'example.www.doubleclick.net' (overall 0)
@@ -237,7 +232,7 @@ For every domain it returns the overall count plus a distinct list of active blo
 In the example above whitelist "www.doubleclick.net" to free the submitted domain.
 </code></pre>
   
-**example to divert dns requests to local dns resolver (/etc/config/firewall):**
+**divert dns requests to local dns resolver in /etc/config/firewall:**
 <pre><code>
 config redirect
     option name 'Divert DNS'
@@ -248,7 +243,7 @@ config redirect
     option target 'DNAT'
 </code></pre>
   
-**example to add a new block list source:**
+**add a new block list source:**
 <pre><code>
 1. the easy way ...
 example: https://easylist-downloads.adblockplus.org/rolist+easylist.txt
