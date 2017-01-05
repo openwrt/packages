@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=2.8.8
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=5fae1ba5a5d37a2d0de750479b7270d4
+PKG_MD5SUM:=a09f7730ceeb665c6f7da0b884dd00f9
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -382,6 +382,8 @@ FFMPEG_CONFIGURE:= \
 ifeq ($(CONFIG_SOFT_FLOAT),y)
 FFMPEG_CONFIGURE += \
 	--disable-altivec \
+	--disable-vsx \
+	--disable-power8 \
 	--disable-amd3dnow \
 	--disable-amd3dnowext \
 	--disable-mmx \
@@ -397,11 +399,17 @@ FFMPEG_CONFIGURE += \
 	--disable-fma3 \
 	--disable-fma4 \
 	--disable-avx2 \
+	--disable-aesni \
+	--disable-armv5te \
+	--disable-armv6 \
+	--disable-armv6t2 \
 	--disable-inline-asm \
-	--disable-mips32r2 \
-	--disable-mipsdspr1 \
+	--disable-mipsdsp \
 	--disable-mipsdspr2 \
+	--disable-msa \
 	--disable-mipsfpu \
+	--disable-mmi \
+	--disable-fast-unaligned \
 	--disable-runtime-cpudetect
 
 else ifneq ($(findstring arm,$(CONFIG_ARCH)),)
