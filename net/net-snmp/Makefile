@@ -90,6 +90,7 @@ endef
 define Package/snmpd-static
 $(call Package/net-snmp/Default)
   TITLE:=Open source SNMP implementation (daemon)
+  DEPENDS:=+PACKAGE_libnl-core:libnl-core
 endef
 
 define Package/snmpd-static/description
