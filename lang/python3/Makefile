@@ -14,7 +14,7 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -116,10 +116,6 @@ MAKE_FLAGS+=\
 	CROSS_COMPILE=yes \
 	LD="$(TARGET_CC)" \
 	PGEN=pgen3
-
-ifeq ($(ARCH),i386)
-MAKE_FLAGS+=PYTHON_DECIMAL_WITH_MACHINE=ansi32
-endif
 
 EXTRA_CFLAGS+= \
 	-DNDEBUG -fno-inline
@@ -231,6 +227,9 @@ define Py3Package/python3/filespec
 -|$(PYTHON3_PKG_DIR)
 endef
 
+HOST_LDFLAGS += \
+	$$$$(pkg-config --static --libs libcrypto libssl)
+
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
@@ -238,14 +237,13 @@ HOST_CONFIGURE_ARGS+= \
 	--prefix=$(HOST_PYTHON3_DIR) \
 	--exec-prefix=$(HOST_PYTHON3_DIR) \
 	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
-	--with-system-ffi \
+	--with-system-ffi=no \
 	--with-ensurepip=no \
-	CONFIG_SITE= \
-	CFLAGS="$(HOST_CFLAGS)"
+	CONFIG_SITE=
 
 define Host/Compile
-	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) python Parser/pgen
-	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) sharedmods
+	+$(HOST_MAKE_VARS) $(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) python Parser/pgen
+	+$(HOST_MAKE_VARS) $(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) sharedmods
 endef
 
 define Host/Install
