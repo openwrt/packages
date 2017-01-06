@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.1.0"
+adb_ver="2.1.1"
 adb_enabled=1
 adb_debug=0
 adb_whitelist="/etc/adblock/adblock.whitelist"
@@ -251,20 +251,20 @@ f_query()
 
     if [ -z "${dns_active}" ]
     then
-         printf "%s\n" ":: no active block lists found, please start adblock first"
+         printf "%s\n" "::: no active block lists found, please start adblock first"
     elif [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
     then
-        printf "%s\n" ":: invalid domain input, please submit a specific (sub-)domain, i.e. 'www.abc.xyz'"
+        printf "%s\n" "::: invalid domain input, please submit a specific (sub-)domain, i.e. 'www.abc.xyz'"
     else
+        cd "${adb_dnsdir}"
         while [ "${domain}" != "${tld}" ]
         do
             search="${domain//./\.}"
-            result="$(grep -Hm 1 "[/\.]${search}/" "${adb_dnsdir}/${adb_dnsprefix}"* | awk -F ':|/' '{print "   "$4"\t: "$6}')"
-            cnt="$(grep -hc "[/\.]${search}/" "${adb_dnsdir}/${adb_dnsprefix}"* | awk '{sum += $1} END {printf sum}')"
-            printf "%s\n" ":: distinct results for domain '${domain}' (overall ${cnt})"
+            result="$(grep -Hm1 "[/\"\.]${search}[/\"]" "${adb_dnsprefix}"* | awk -F ':|=|/|\"' '{printf(" %-20s : %s\n",$1,$4)}')"
+            printf "%s\n" "::: distinct results for domain '${domain}'"
             if [ -z "${result}" ]
             then
-                printf "%s\n" "   no matches in active block lists"
+                printf "%s\n" " no match"
             else
                 printf "%s\n" "${result}"
             fi
