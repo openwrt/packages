@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.4.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -47,6 +47,18 @@ define Package/libnetsnmp/description
 $(call Package/net-snmp/Default/description)
  .
  This package contains shared libraries, needed by other programs.
+endef
+
+
+define Package/snmp-mibs
+$(call Package/net-snmp/Default)
+  TITLE:=Open source SNMP implementation (MIB-files)
+endef
+
+define Package/snmp-mibs/description
+$(call Package/net-snmp/Default/description)
+ .
+ This package contains SNMP MIB-Files.
 endef
 
 
@@ -164,7 +176,6 @@ CONFIGURE_ARGS += \
 	--enable-applications \
 	--disable-debugging \
 	--disable-manuals \
-	--disable-mibs \
 	--disable-scripts \
 	--with-out-mib-modules="$(SNMP_MIB_MODULES_EXCLUDED)" \
 	--with-mib-modules="$(SNMP_MIB_MODULES_INCLUDED)" \
@@ -215,6 +226,16 @@ define Package/libnetsnmp/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetsnmp{,agent,helpers,mibs}.so.* $(1)/usr/lib/
 endef
 
+define Package/snmp-mibs/install
+	$(INSTALL_DIR) $(1)/usr/share/snmp/mibs
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/snmp/mibs/* $(1)/usr/share/snmp/mibs/
+endef
+
+define Package/snmp-utils/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/snmp{get,set,status,test,trap,walk} $(1)/usr/bin/
+endef
+
 define Package/snmpd/conffiles
 /etc/config/snmpd
 endef
@@ -245,12 +266,8 @@ define Package/snmpd-static/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/agent/snmpd-static $(1)/usr/sbin/snmpd
 endef
 
-define Package/snmp-utils/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/snmp{get,set,status,test,trap,walk} $(1)/usr/bin/
-endef
-
 $(eval $(call BuildPackage,libnetsnmp))
+$(eval $(call BuildPackage,snmp-mibs))
 $(eval $(call BuildPackage,snmp-utils))
 $(eval $(call BuildPackage,snmpd))
 $(eval $(call BuildPackage,snmpd-static))
