@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-mosquitto
 PKG_VERSION:=0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
@@ -21,17 +21,39 @@ PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
+define Package/$(PKG_NAME)/default
+	SUBMENU:=Lua
+	SECTION:=lang
+	CATEGORY:=Languages
+	TITLE:=lua-mosquitto
+	DEPENDS:=+lua
+	MAINTAINER:=Karl Palsson <karlp@remake.is>
+endef
+
 define Package/$(PKG_NAME)
-    SUBMENU:=Lua
-    SECTION:=lang
-    CATEGORY:=Languages
-    TITLE:=Lua-mosquitto
-    DEPENDS:=+libmosquitto +lua
-    MAINTAINER:=Karl Palsson <karlp@remake.is>
+	$(call Package/$(PKG_NAME)/default)
+	TITLE+= (with SSL support)
+	DEPENDS+= +libmosquitto
+endef
+
+define Package/$(PKG_NAME)-nossl
+	$(call Package/$(PKG_NAME)/default)
+	TITLE+= (without SSL support)
+	DEPENDS+= +libmosquitto-nossl
+endef
+
+define Package/$(PKG_NAME)/default/description
+	Lua bindings to libmosquitto
 endef
 
 define Package/$(PKG_NAME)/description
-	Lua bindings to libmosquitto
+	$(call Package/$(PKG_NAME)/default/description)
+	This package is built with SSL support
+endef
+
+define Package/$(PKG_NAME)-nossl/description
+	$(call Package/$(PKG_NAME)/default/description)
+	This package is built WITHOUT SSL support.
 endef
 
 define Package/$(PKG_NAME)/install
@@ -39,4 +61,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mosquitto.so $(1)/usr/lib/lua
 endef
 
+Package/$(PKG_NAME)-nossl/install = $(Package/$(PKG_NAME)/install)
+
 $(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,$(PKG_NAME)-nossl))
