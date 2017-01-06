@@ -1,14 +1,15 @@
 include  $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
-PKG_VERSION:=3.8.1
-PKG_RELEASE:=3
+PKG_VERSION:=3.9.1
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/balabit/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_MD5SUM:=acf14563cf5ce435db8db35486ce66af
+PKG_MD5SUM:=1b48da9ef620cf06e55e481b5abb677a
+PKG_HASH:=5678856a550ae790618fabde9d1447f932ce7a9080d55dca8fc5df1202c70a17
 
 PKG_INSTALL:=1
 
@@ -41,7 +42,7 @@ endef
 CONFIGURE_ARGS += \
   $(call autoconf_bool,CONFIG_IPV6,ipv6) \
          --disable-dependency-tracking \
-         --disable-ampq \
+         --disable-amqp \
          --disable-tcp-wrapper \
          --disable-glibtest \
          --disable-mongodb \
