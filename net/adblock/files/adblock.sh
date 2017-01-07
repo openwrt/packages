@@ -10,16 +10,11 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.0.2"
+adb_ver="2.1.1"
 adb_enabled=1
 adb_debug=0
 adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\"^\"\$1\"\\\|[.]\"\$1)}"
-adb_dns="dnsmasq"
-adb_dnsdir="/tmp/dnsmasq.d"
-adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
-adb_dnsprefix="adb_list"
-adb_dnsformat="awk '{print \"local=/\"\$0\"/\"}'"
 adb_fetch="/usr/bin/wget"
 adb_fetchparm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --timeout=5 --no-check-certificate -O"
 
@@ -35,6 +30,21 @@ f_envload()
     else
         f_log "error" "status ::: system library not found"
     fi
+
+    # set dns server environment
+    #
+    adb_dns="$(uci -q get adblock.global.adb_dns)"
+    if [ "${adb_dns}" = "unbound" ]
+    then
+        adb_dnsdir="/tmp/lib/unbound"
+        adb_dnsformat="awk '{print \"local-zone: \042\"\$0\"\042 static\"}'"
+    else
+        adb_dns="dnsmasq"
+        adb_dnsdir="/tmp/dnsmasq.d"
+        adb_dnsformat="awk '{print \"local=/\"\$0\"/\"}'"
+    fi
+    adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
+    adb_dnsprefix="adb_list"
 
     # parse global section by callback
     #
@@ -86,7 +96,7 @@ f_envcheck()
 {
     # check 'enabled' option
     #
-    if [ "${adb_enabled}" != "1" ]
+    if [ ${adb_enabled} -ne 1 ]
     then
         if [ "$(ls -dA "${adb_dnsdir}/${adb_dnsprefix}"* >/dev/null 2>&1)" ]
         then
@@ -109,6 +119,7 @@ f_envcheck()
     if [ ! -d "${adb_dnshidedir}" ]
     then
         mkdir -p -m 660 "${adb_dnshidedir}"
+        chown -R "${adb_dns}":"${adb_dns}" "${adb_dnshidedir}"
     else
         rm -f "${adb_dnshidedir}/${adb_dnsprefix}"*
     fi
@@ -125,10 +136,6 @@ f_envcheck()
     then
         awk "${adb_whitelist_rset}" "${adb_whitelist}" > "${adb_tmpdir}/tmp.whitelist"
     fi
-
-    # get system information
-    #
-    adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 }
 
 # f_rmtemp: remove temporary files & directories
@@ -147,7 +154,7 @@ f_rmdns()
     rm -f "${adb_dnsdir}/${adb_dnsprefix}"*
     rm -f "${adb_dir_backup}/${adb_dnsprefix}"*.gz
     rm -rf "${adb_dnshidedir}"
-    ubus call service delete "{\"name\":\"adblock_stats\",\"instances\":\"stats\"}"
+    ubus call service delete "{\"name\":\"adblock_stats\",\"instances\":\"stats\"}" 2>/dev/null
 }
 
 # f_dnsrestart: restart the dns server
@@ -161,7 +168,7 @@ f_dnsrestart()
     killall -q -TERM "${adb_dns}"
     while [ ${cnt} -le 10 ]
     do
-        dns_running="$(ubus -S call service list '{"name":"dnsmasq"}' | jsonfilter -l 1 -e '@.dnsmasq.instances.*.running')"
+        dns_running="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" | jsonfilter -l 1 -e "@.${adb_dns}.instances.*.running")"
         if [ "${dns_running}" = "true" ]
         then
             return 0
@@ -244,20 +251,20 @@ f_query()
 
     if [ -z "${dns_active}" ]
     then
-         printf "%s\n" ":: no active block lists found, please start adblock first"
+         printf "%s\n" "::: no active block lists found, please start adblock first"
     elif [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
     then
-        printf "%s\n" ":: invalid domain input, please submit a specific (sub-)domain, i.e. 'www.abc.xyz'"
+        printf "%s\n" "::: invalid domain input, please submit a specific (sub-)domain, i.e. 'www.abc.xyz'"
     else
+        cd "${adb_dnsdir}"
         while [ "${domain}" != "${tld}" ]
         do
             search="${domain//./\.}"
-            result="$(grep -Hm 1 "[/\.]${search}/" "${adb_dnsdir}/${adb_dnsprefix}"* | awk -F ':|/' '{print "   "$4"\t: "$6}')"
-            cnt="$(grep -hc "[/\.]${search}/" "${adb_dnsdir}/${adb_dnsprefix}"* | awk '{sum += $1} END {printf sum}')"
-            printf "%s\n" ":: distinct results for domain '${domain}' (overall ${cnt})"
+            result="$(grep -Hm1 "[/\"\.]${search}[/\"]" "${adb_dnsprefix}"* | awk -F ':|=|/|\"' '{printf(" %-20s : %s\n",$1,$4)}')"
+            printf "%s\n" "::: distinct results for domain '${domain}'"
             if [ -z "${result}" ]
             then
-                printf "%s\n" "   no matches in active block lists"
+                printf "%s\n" " no match"
             else
                 printf "%s\n" "${result}"
             fi
@@ -279,7 +286,6 @@ f_log()
         logger -t "adblock-[${adb_ver}] ${class}" "${log_msg}"
         if [ "${class}" = "error" ]
         then
-            f_debug
             f_rmtemp
             f_rmdns
             f_dnsrestart
@@ -317,10 +323,11 @@ f_debug()
 f_main()
 {
     local enabled url rc cnt sum_cnt=0
-    local src_name src_rset shalla_file shalla_archive
+    local src_name src_rset shalla_file shalla_archive list active_lists
+    local sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 
     f_debug
-    f_log "debug" "main   ::: tool: ${adb_fetch}, parm: ${adb_fetchparm}"
+    f_log "debug" "main   ::: dns-backend: ${adb_dns}, fetch-tool: ${adb_fetch}, parm: ${adb_fetchparm}"
     for src_name in ${adb_sources}
     do
         eval "enabled=\"\${enabled_${src_name}}\""
@@ -408,7 +415,7 @@ f_main()
         f_log "debug" "loop   ::: name: ${src_name}, list-rc: ${rc}"
     done
 
-    # make overall sort, restart & check dns server
+    # sort block lists
     #
     for src_name in $(ls -dASr "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null)
     do
@@ -420,17 +427,36 @@ f_main()
         cat "${src_name}" >> "${adb_tmpdir}/blocklist.overall"
         cnt="$(wc -l < "${src_name}")"
         sum_cnt=$((sum_cnt + cnt))
+        list="${src_name/*./}"
+        if [ -z "${active_lists}" ]
+        then
+            active_lists="\"${list}\":\"${cnt}\""
+        else
+            active_lists="${active_lists},\"${list}\":\"${cnt}\""
+        fi
     done
+
+    # restart dns server and write statistics
+    #
+    chown "${adb_dns}":"${adb_dns}" "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null
     f_dnsrestart
     if [ "${dns_running}" = "true" ]
     then
         f_debug
         f_rmtemp
-        f_log "info " "status ::: block lists with overall ${sum_cnt} domains loaded (${adb_sysver})"
-        ubus call service set "{\"name\":\"adblock_stats\",\"instances\":{\"stats\":{\"env\":{\"blocked_domains\":\"${sum_cnt}\",\"last_rundate\":\"$(/bin/date "+%d.%m.%Y %H:%M:%S")\"}}}}"
-        exit 0
+        f_log "info " "status ::: block lists with overall ${sum_cnt} domains loaded (${sysver})"
+        ubus call service add "{\"name\":\"adblock_stats\",
+            \"instances\":{\"stats\":{\"command\":[\"\"],
+            \"data\":{\"active_lists\":[{${active_lists}}],
+            \"adblock_version\":\"${adb_ver}\",
+            \"blocked_domains\":\"${sum_cnt}\",
+            \"dns_backend\":\"${adb_dns}\",
+            \"last_rundate\":\"$(/bin/date "+%d.%m.%Y %H:%M:%S")\",
+            \"system\":\"${sysver}\"}}}}"
+        return 0
     fi
-    f_log "error" "status ::: dns server restart with active block lists failed"
+    f_debug
+    f_log "error" "status ::: dns server restart with active block lists failed (${sysver})"
 }
 
 # handle different adblock actions

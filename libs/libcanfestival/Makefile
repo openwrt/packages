@@ -20,6 +20,8 @@ PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=LICENCE
 
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
+
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 

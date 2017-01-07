@@ -2,7 +2,7 @@
 +++ b/version-gen.sh
 @@ -2,7 +2,7 @@
  
- DEFAULT_VERSION="5.5.2.git"
+ DEFAULT_VERSION="5.5.3.git"
  
 -VERSION="`git describe 2> /dev/null | grep collectd | sed -e 's/^collectd-//'`"
 +#VERSION="`git describe 2> /dev/null | grep collectd | sed -e 's/^collectd-//'`"

@@ -10,14 +10,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=2.3.3
+PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 
-PKG_LIBVER:=2.3
+PKG_LIBVER:=2.4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_LIBVER)/
-PKG_MD5SUM:=882e6146ed26c6e78c02342835f5d46b86de95f0dc4e16543294bc656594cc5b
+PKG_MD5SUM:=440bbbdc49d08d3650f340dccb35986d9399177ad69a204def56e5d3954600cf
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -36,7 +36,7 @@ HOST_CONFIGURE_ARGS += \
 	--disable-install-rdoc \
 	--disable-install-capi \
 	--without-gmp \
-	--with-out-ext=tk,tk/tkutil,win32,win32ole,dbm,gdbm,readline \
+	--with-out-ext=-test-/array/resize,-test-/bignum,-test-/bug-3571,-test-/bug-5832,-test-/bug_reporter,-test-/class,-test-/debug,-test-/dln/empty,-test-/exception,-test-/fatal,-test-/file,-test-/float,-test-/funcall,-test-/gvl/call_without_gvl,-test-/hash,-test-/integer,-test-/iseq_load,-test-/iter,-test-/load/dot.dot,-test-/marshal/compat,-test-/marshal/internal_ivar,-test-/marshal/usr,-test-/memory_status,-test-/method,-test-/notimplement,-test-/num2int,-test-/path_to_class,-test-/popen_deadlock,-test-/postponed_job,-test-/printf,-test-/proc,-test-/rational,-test-/recursion,-test-/st/foreach,-test-/st/numhash,-test-/st/update,-test-/string,-test-/struct,-test-/symbol,-test-/time,-test-/tracepoint,-test-/typeddata,-test-/vm,-test-/wait_for_single_fd,-test-/win32/console,-test-/win32/dln,-test-/win32/fd_setsize,bigdecimal,cgi/escape,continuation,coverage,dbm,etc,fcntl,fiber,fiddle,gdbm,io/console,io/nonblock,io/wait,json,json/generator,json/parser,mathn/complex,mathn/rational,nkf,objspace,openssl,pathname,pty,racc/cparse,rbconfig/sizeof,readline,ripper,rubyvm,sdbm,socket,syslog,win32,win32ole,win32/resolv,zlib
 
 # Does not compile with this. Workaround is --without-gmp
 # https://bugs.ruby-lang.org/issues/11940
@@ -57,7 +57,7 @@ CONFIGURE_ARGS += \
 	--disable-install-capi \
 	--with-ruby-version=minor \
 	--with-iconv-dir=$(ICONV_PREFIX) \
-	--with-out-ext=tk,tk/tkutil,win32,win32ole
+	--with-out-ext=win32,win32ole
 
 ifndef CONFIG_RUBY_DIGEST_USE_OPENSSL
 CONFIGURE_ARGS += \
@@ -73,7 +73,7 @@ TARGET_LDFLAGS += -L$(PKG_BUILD_DIR)
 # Ruby uses DLDFLAGS and not LDFLAGS for libraries. LDFLAGS is only for execs.
 # However, DLDFLAGS from configure is not passed to Makefile when target is linux.
 # XLDFLAGS is used by both libraries and execs. This is somehow brute force but
-# if will fix when some LD_FLAGS is needef for libraries. As side effect, it will
+# it will fix when some LD_FLAGS is needef for libraries. As side effect, it will
 # duplicate ld args for binaries.
 CONFIGURE_VARS += XLDFLAGS="$(TARGET_LDFLAGS)"
 
@@ -429,7 +429,6 @@ define Package/ruby-multithread/files
 /usr/lib/ruby/$(PKG_LIBVER)/thwait.rb
 /usr/lib/ruby/$(PKG_LIBVER)/mutex_m.rb
 /usr/lib/ruby/$(PKG_LIBVER)/sync.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/thread.so
 /usr/lib/ruby/$(PKG_LIBVER)/*/io/wait.so
 /usr/lib/ruby/$(PKG_LIBVER)/*/io/nonblock.so
 endef
@@ -457,6 +456,7 @@ define Package/ruby-openssl/files
 /usr/lib/ruby/$(PKG_LIBVER)/openssl
 /usr/lib/ruby/$(PKG_LIBVER)/openssl.rb
 /usr/lib/ruby/$(PKG_LIBVER)/*/openssl.so
+/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/openssl-*.gemspec
 endef
 
 define Package/ruby-optparse/files
@@ -469,6 +469,7 @@ define Package/ruby-patterns/files
 /usr/lib/ruby/$(PKG_LIBVER)/observer.rb
 /usr/lib/ruby/$(PKG_LIBVER)/singleton.rb
 /usr/lib/ruby/$(PKG_LIBVER)/forwardable.rb
+/usr/lib/ruby/$(PKG_LIBVER)/forwardable
 endef
 
 define Package/ruby-powerassert/files
@@ -491,7 +492,6 @@ endef
 define Package/ruby-psych/files
 /usr/lib/ruby/$(PKG_LIBVER)/psych
 /usr/lib/ruby/$(PKG_LIBVER)/psych.rb
-/usr/lib/ruby/$(PKG_LIBVER)/psych_jars.rb
 /usr/lib/ruby/$(PKG_LIBVER)/*/psych.so
 /usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/psych-*.gemspec
 endef
@@ -507,10 +507,7 @@ define Package/ruby-rake/files
 endef
 define Package/ruby-rake/files-excluded
 /usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/doc
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/test
 /usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/*.rdoc
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/*.txt
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-10.4.2/lib/rake/runtest.rb
 endef
 define Package/ruby-rake/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -609,8 +606,12 @@ define Package/ruby-webrick/files
 endef
 
 define Package/ruby-xmlrpc/files
-/usr/lib/ruby/$(PKG_LIBVER)/xmlrpc
-/usr/lib/ruby/$(PKG_LIBVER)/xmlrpc.rb
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/xmlrpc-*
+/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/xmlrpc-*.gemspec
+endef
+define Package/ruby-xmlrpc/files-excluded
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/xmlrpc-0.2.1/*.md
+/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/xmlrpc-0.2.1/*.txt
 endef
 
 define Package/ruby-yaml/files
@@ -690,14 +691,14 @@ $(patsubst /%,
   $$(eval $$(call BuildPackage,ruby-$(1)))
 endef
 
-$(eval $(call BuildPackage,ruby))
 $(eval $(call BuildPackage,libruby))
+$(eval $(call BuildPackage,ruby))
 $(eval $(call RubyBuildPackage,bigdecimal,Arbitrary-precision decimal floating-point library,))
 $(eval $(call RubyBuildPackage,cgi,CGI support toolkit,+ruby-filelib +ruby-pstore))
-$(eval $(call RubyBuildPackage,csv,CSV library,+ruby-patterns +ruby-datetime +ruby-enc))
+$(eval $(call RubyBuildPackage,csv,CSV library,+ruby-patterns +ruby-datetime +ruby-enc +ruby-misc))
 $(eval $(call RubyBuildPackage,datetime,date library))
 $(eval $(call RubyBuildPackage,dbm,support for dbm,+libdb47))
-$(eval $(call RubyBuildPackage,debuglib,debug library,+ruby-multithread +ruby-prettyprint))
+$(eval $(call RubyBuildPackage,debuglib,debug library,+ruby-prettyprint))
 $(eval $(call RubyBuildPackage,did-you-mean,did you mean? experience,+ruby-misc))
 $(eval $(call RubyBuildPackage,digest,Digest Library,+RUBY_DIGEST_USE_OPENSSL:libopenssl))
 $(eval $(call RubyBuildPackage,drb,distributed object system,+ruby-filelib +ruby-patterns +ruby-socket))
@@ -712,7 +713,7 @@ $(eval $(call RubyBuildPackage,io-console,Console interface,))
 $(eval $(call RubyBuildPackage,irb,(interactive shell),+ruby-debuglib +ruby-filelib +ruby-math))
 $(eval $(call RubyBuildPackage,json,support for JSON,+ruby-datetime +ruby-misc))
 $(eval $(call RubyBuildPackage,logger,logger and syslog library,+ruby-multithread))
-$(eval $(call RubyBuildPackage,math,math library,+ruby-patterns))
+$(eval $(call RubyBuildPackage,math,math library,+ruby-patterns +ruby-misc))
 $(eval $(call RubyBuildPackage,minitest,Gem minitest,+ruby-gems))
 $(eval $(call RubyBuildPackage,misc,standard libraries subset (miscellaneous files),))
 $(eval $(call RubyBuildPackage,mkmf,makefile library,+ruby-filelib +ruby-optparse +ruby-rbconfig))
@@ -722,24 +723,24 @@ $(eval $(call RubyBuildPackage,net-telnet,telnet client,+ruby-net))
 $(eval $(call RubyBuildPackage,nkf,Network Kanji Filter,+ruby-enc))
 $(eval $(call RubyBuildPackage,openssl,support for openssl,+ruby-enc +ruby-multithread +libopenssl))
 $(eval $(call RubyBuildPackage,optparse,command-line option analysis,+ruby-misc))
-$(eval $(call RubyBuildPackage,patterns,design patterns implementation,+ruby-multithread))
-$(eval $(call RubyBuildPackage,powerassert,Gem power_assert,+ruby-ripper))
+$(eval $(call RubyBuildPackage,patterns,design patterns implementation,))
+$(eval $(call RubyBuildPackage,powerassert,Gem power_assert,+ruby-ripper +ruby-debuglib))
 $(eval $(call RubyBuildPackage,prettyprint,PrettyPrint library,+ruby-misc))
 $(eval $(call RubyBuildPackage,pstore,file based persistence,+ruby-digest +ruby-enc))
 $(eval $(call RubyBuildPackage,psych,YAML parser and emitter,+ruby-bigdecimal +ruby-datetime +ruby-misc +ruby-enc +libyaml))
 $(eval $(call RubyBuildPackage,racc,LALR parser generator,))
-$(eval $(call RubyBuildPackage,rake,Rake (make replacement),+ruby-datetime +ruby-filelib +ruby-optparse +ruby-patterns +ruby-rbconfig))
+$(eval $(call RubyBuildPackage,rake,Rake (make replacement),+ruby-filelib +ruby-optparse +ruby-patterns +ruby-rbconfig +ruby-multithread))
 $(eval $(call RubyBuildPackage,rbconfig,RbConfig,))
 $(eval $(call RubyBuildPackage,rdoc,documentation generator,+ruby-erb +ruby-irb +ruby-json +ruby-racc +ruby-rake +ruby-yaml +ruby-zlib))
 $(eval $(call RubyBuildPackage,readline,support for readline,+libncurses +libreadline))
-$(eval $(call RubyBuildPackage,rexml,XML toolkit,+ruby-patterns +ruby-enc))
+$(eval $(call RubyBuildPackage,rexml,XML toolkit,+ruby-patterns +ruby-enc +ruby-misc))
 $(eval $(call RubyBuildPackage,rinda,Linda paradigm implementation,+ruby-drb))
 $(eval $(call RubyBuildPackage,ripper,script parser,))
 $(eval $(call RubyBuildPackage,rss,RSS toolkit,+ruby-net +ruby-nkf +ruby-rexml))
 $(eval $(call RubyBuildPackage,sdbm,simple file-based key-value dbm implementation,))
-$(eval $(call RubyBuildPackage,shell,idiomatic Ruby interface,+ruby-patterns))
+$(eval $(call RubyBuildPackage,shell,idiomatic Ruby interface,+ruby-patterns +ruby-multithread))
 $(eval $(call RubyBuildPackage,socket,socket support,+ruby-multithread))
-$(eval $(call RubyBuildPackage,testunit,Gem test-unit,+ruby-csv +ruby-erb +ruby-optparse +ruby-powerassert +ruby-prettyprint +ruby-rexml +ruby-yaml))
+$(eval $(call RubyBuildPackage,testunit,Gem test-unit,+ruby-csv +ruby-erb +ruby-optparse +ruby-powerassert +ruby-rexml +ruby-yaml))
 $(eval $(call RubyBuildPackage,unicodenormalize,String additions for Unicode normalization,+ruby-enc +ruby-enc-extra))
 $(eval $(call RubyBuildPackage,uri,library to handle URI,+ruby-socket +ruby-enc))
 $(eval $(call RubyBuildPackage,webrick,Web server toolkit,+ruby-erb +ruby-net +ruby-patterns +ruby-rbconfig))

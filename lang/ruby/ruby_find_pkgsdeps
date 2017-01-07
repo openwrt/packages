@@ -25,7 +25,7 @@ require_regex_ignore=/^require ([a-zA-Z\$]|["']$|.*\/$)/
 require_ignore=%w{drb/invokemethod16 foo rubygems/defaults/operating_system win32console java Win32API
                   builder/xchar json/pure simplecov win32/sspi rdoc/markdown/literals_1_8 enumerator win32/resolv rbtree
                   nqxml/streamingparser nqxml/treeparser xmlscan/parser xmlscan/scanner xmltreebuilder xml/parser xmlparser xml/encoding-ja xmlencoding-ja
-                  iconv uconv win32ole gettext/po_parser gettext/mo libxml psych.jar jar-dependencies}
+                  iconv uconv win32ole gettext/po_parser gettext/mo libxml psych.jar psych_jars jar-dependencies thread minitest/proveit}
 
 builtin_enc=[
 	Encoding.find("ASCII-8BIT"),
@@ -164,7 +164,7 @@ package_requires_files.each do
 		else
 			found = package_files.detect {|(pkg,files)| files.detect {|file| $:.detect {|path| "#{path}/#{require}" == file.gsub(/\.(so|rb)$/,"") } } }
 			if not found
-				$stderr.puts "#{pkg}: Nothing provides #{require}"
+				$stderr.puts "#{pkg}: Nothing provides #{require} for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
 				failed = true
 				next
 			end

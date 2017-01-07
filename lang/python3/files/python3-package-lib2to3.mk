@@ -13,4 +13,6 @@ endef
 
 $(eval $(call Py3BasePackage,python3-lib2to3, \
 	/usr/lib/python$(PYTHON3_VERSION)/lib2to3 \
+	, \
+	DO_NOT_ADD_TO_PACKAGE_DEPENDS \
 ))
