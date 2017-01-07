@@ -1,0 +1,24 @@
+--- a/cpp/src/platform/unix/SerialControllerImpl.cpp
++++ b/cpp/src/platform/unix/SerialControllerImpl.cpp
+@@ -34,10 +34,6 @@
+ #include "SerialControllerImpl.h"
+ #include "platform/Log.h"
+ 
+-#ifdef __linux__
+-#include <libudev.h>
+-#endif
+-
+ using namespace OpenZWave;
+ 
+ //-----------------------------------------------------------------------------
+--- a/cpp/build/Makefile
++++ b/cpp/build/Makefile
+@@ -59,7 +59,7 @@ endif
+ 
+ else
+ LDFLAGS += -shared -Wl,-soname,libopenzwave.so.$(VERSION)
+-LIBS 	+= -ludev
++LIBS 	+=
+ endif
+ CFLAGS  += $(CPPFLAGS)
+ 
