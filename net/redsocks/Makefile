@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redsocks
-PKG_VERSION:=0.4-20150907
+PKG_VERSION:=0.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/darkk/redsocks.git
-PKG_SOURCE_VERSION:=2118c616b4970a0436eceaa57a6e3451ec98ad2b
+PKG_SOURCE_VERSION:=27b17889a43e32b0c1162514d00967e6967d41bb
 
 PKG_MAINTAINER:=Johannes Morgenroth <jm@m-network.de>
 PKG_LICENSE:=Apache-2.0
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/redsocks
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libevent2
+  DEPENDS:=+libevent2-core
   TITLE:=Redirect any TCP connection to a SOCKS or HTTPS proxy server
 endef
 
