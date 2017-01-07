@@ -1,0 +1,28 @@
+From eab45f0959ccb1deb662c6f8c036651088e2e8d6 Mon Sep 17 00:00:00 2001
+From: Stijn Tintel <stijn@linux-ipv6.be>
+Date: Fri, 17 Feb 2017 05:42:25 +0100
+Subject: [PATCH] unix: fix compilation against musl libc (#1127)
+
+POSIX.1-2001 requires sys/select.h for select() and friends.
+Compile-tested on glibc and musl, runtime tested on musl.
+
+Signed-off-by: Stijn Tintel <stijn@linux-ipv6.be>
+---
+ cpp/src/platform/unix/SerialControllerImpl.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/cpp/src/platform/unix/SerialControllerImpl.cpp b/cpp/src/platform/unix/SerialControllerImpl.cpp
+index d95f848..b52b74f 100644
+--- a/cpp/src/platform/unix/SerialControllerImpl.cpp
++++ b/cpp/src/platform/unix/SerialControllerImpl.cpp
+@@ -25,6 +25,7 @@
+ //	along with OpenZWave.  If not, see <http://www.gnu.org/licenses/>.
+ //
+ //-----------------------------------------------------------------------------
++#include <sys/select.h>
+ #include <unistd.h>
+ #include <pthread.h>
+ #include "Defs.h"
+-- 
+2.10.2
+
