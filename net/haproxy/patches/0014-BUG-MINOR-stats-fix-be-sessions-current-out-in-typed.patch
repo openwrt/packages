@@ -1,0 +1,30 @@
+From 81c04b246e081f33a6aefa45e91a8a4306fb8211 Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <thierry.fournier@ozon.io>
+Date: Mon, 19 Dec 2016 16:50:42 +0100
+Subject: [PATCH 14/19] BUG/MINOR: stats: fix be/sessions/current out in typed
+ stats
+
+"scur" was typed as "limit" (FO_CONFIG) and "config value" (FN_LIMIT).
+The real types of "scur" are "metric" (FO_METRIC) and "gauge"
+(FN_GAUGE). FO_METRIC and FN_GAUGE are the value 0.
+(cherry picked from commit 0ff98a4758a511f573e50175992984dc5a3db050)
+---
+ src/stats.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/stats.c b/src/stats.c
+index 8ad983d..8eef3e8 100644
+--- a/src/stats.c
++++ b/src/stats.c
+@@ -1501,7 +1501,7 @@ int stats_fill_be_stats(struct proxy *px, int flags, struct field *stats, int le
+ 	stats[ST_F_MODE]     = mkf_str(FO_CONFIG|FS_SERVICE, proxy_mode_str(px->mode));
+ 	stats[ST_F_QCUR]     = mkf_u32(0, px->nbpend);
+ 	stats[ST_F_QMAX]     = mkf_u32(FN_MAX, px->be_counters.nbpend_max);
+-	stats[ST_F_SCUR]     = mkf_u32(FO_CONFIG|FN_LIMIT, px->beconn);
++	stats[ST_F_SCUR]     = mkf_u32(0, px->beconn);
+ 	stats[ST_F_SMAX]     = mkf_u32(FN_MAX, px->be_counters.conn_max);
+ 	stats[ST_F_SLIM]     = mkf_u32(FO_CONFIG|FN_LIMIT, px->fullconn);
+ 	stats[ST_F_STOT]     = mkf_u64(FN_COUNTER, px->be_counters.cum_conn);
+-- 
+2.10.2
+

@@ -17,10 +17,16 @@ PKG_MD5SUM:=87083c0b9867963b29f7aba3613e8f4a
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/python-pip-$(PKG_VERSION)
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/python-pip-$(PKG_VERSION)
+HOST_UNPACK=$(HOST_TAR) -C $(HOST_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 PKG_USE_MIPS16:=0
 
+HOST_BUILD_DEPENDS:=python python/host python-setuptools/host
+
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
+$(call include_mk, python-host.mk)
 
 define Package/python-pip
   SUBMENU:=Python
@@ -54,6 +60,17 @@ define PyPackage/python-pip/install
 	$(INSTALL_CONF) ./files/pip.conf $(1)/etc/
 endef
 
+define Host/Compile
+	$(call Build/Compile/HostPyMod,,\
+		install --root="$(STAGING_DIR)/host" --prefix="" \
+		--single-version-externally-managed \
+	)
+endef
+
+define Host/Install
+endef
+
+$(eval $(call HostBuild))
+
 $(eval $(call PyPackage,python-pip))
 $(eval $(call BuildPackage,python-pip))
-

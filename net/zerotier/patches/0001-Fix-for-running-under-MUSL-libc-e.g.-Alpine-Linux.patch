@@ -1,0 +1,44 @@
+From 830250759cd4c14ca2ae5ddf24f0a0427f258622 Mon Sep 17 00:00:00 2001
+From: Adam Ierymenko <adam.ierymenko@gmail.com>
+Date: Tue, 26 Jul 2016 16:36:20 -0700
+Subject: [PATCH 1/2] Fix for running under MUSL libc (e.g. Alpine Linux)
+
+---
+ osdep/Thread.hpp | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/osdep/Thread.hpp b/osdep/Thread.hpp
+index 7fb38d8..4f90dc0 100644
+--- a/osdep/Thread.hpp
++++ b/osdep/Thread.hpp
+@@ -125,6 +125,10 @@ public:
+ 		throw()
+ 	{
+ 		memset(&_tid,0,sizeof(_tid));
++		pthread_attr_init(&_tattr);
++#ifdef __LINUX__
++		pthread_attr_setstacksize(&_tattr,8388608); // for MUSL libc and others, has no effect in normal glibc environments
++#endif
+ 		_started = false;
+ 	}
+ 
+@@ -157,7 +161,7 @@ public:
+ 	{
+ 		Thread t;
+ 		t._started = true;
+-		if (pthread_create(&t._tid,(const pthread_attr_t *)0,&___zt_threadMain<C>,instance))
++		if (pthread_create(&t._tid,&t._tattr,&___zt_threadMain<C>,instance))
+ 			throw std::runtime_error("pthread_create() failed, unable to create thread");
+ 		return t;
+ 	}
+@@ -184,6 +188,7 @@ public:
+ 
+ private:
+ 	pthread_t _tid;
++	pthread_attr_t _tattr;
+ 	volatile bool _started;
+ };
+ 
+-- 
+2.9.0
+

@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download-mirror.savannah.gnu.org/releases/gpsd/
 PKG_MD5SUM:=afd79b87337fadf38ee2a7c4314dac79
 
-PKG_MAINTAINER:=Pushpal Sidhu <psidhu@gateworks.com>
+PKG_MAINTAINER:=Pushpal Sidhu <psidhu.devel@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
@@ -103,7 +103,8 @@ SCONS_OPTIONS += \
 	nostrip=yes \
 	python=no \
 	implicit_link=no \
-	chrpath=no
+	chrpath=no \
+	target="$(TARGET_CROSS:-=)"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

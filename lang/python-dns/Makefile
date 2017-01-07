@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dns
-PKG_RELEASE:=1
-PKG_VERSION:=1.12.0
+PKG_RELEASE:=2
+PKG_VERSION:=1.15.0
 PKG_SOURCE_URL:=http://www.dnspython.org/kits/$(PKG_VERSION)
-PKG_MD5SUM:=3f2601ef3c8b77fc6d21a9c77a81efeb
+PKG_MD5SUM:=63a679089822fb86127867c315286dc5
 PKG_SOURCE:=dnspython-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DIR:=$(BUILD_DIR)/dnspython-$(PKG_VERSION)
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
@@ -36,7 +38,7 @@ endef
 
 define Build/Compile
 	$(call Build/Compile/PyMod,,\
-		install --prefix="$(PKG_INSTALL_DIR)/usr" \
+		install --prefix=/usr --root="$(PKG_INSTALL_DIR)" \
 	)
 endef
 

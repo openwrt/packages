@@ -7,7 +7,7 @@ config_cb() {
     chilli_inst=$2
     if [ "$chilli_inst" != "" ]
     then
-       rm -f /var/run/chilli_${chilli_inst}*
+       rm -f /var/run/chilli_${chilli_inst}.*
        chilli_conf=/var/run/chilli_${chilli_inst}.conf
        eval "start_chilli_$chilli_inst=1"
     fi

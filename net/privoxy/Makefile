@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=privoxy
-PKG_VERSION:=3.0.24
-PKG_RELEASE:=1
+PKG_VERSION:=3.0.26
+PKG_RELEASE:=2
 
 PKG_SOURCE:=privoxy-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa
-PKG_MD5SUM:=44a47d1a5000db8cccd61ace0e25e7f7
+PKG_MD5SUM:=8a1c842112ccea68c19b7ceb4a0e999f
 PKG_BUILD_DIR:=$(BUILD_DIR)/privoxy-$(PKG_VERSION)-stable
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -151,7 +151,7 @@ define Package/$(PKG_NAME)/install
 		$(1)/etc/config
 	$(INSTALL_DATA) ./files/privoxy.upgrade $(1)/lib/upgrade/keep.d/privoxy
 	$(INSTALL_BIN)  ./files/privoxy.init $(1)/etc/init.d/privoxy
-	$(INSTALL_BIN)  ./files/privoxy.hotplug $(1)/etc/hotplug.d/iface/80-privoxy
+	$(INSTALL_BIN)  ./files/privoxy.hotplug $(1)/etc/hotplug.d/iface/95-privoxy
 	$(INSTALL_CONF) ./files/privoxy.config $(1)/etc/config/privoxy
 endef
 

@@ -1,0 +1,12 @@
+Sent already upstream, no response yet.
+
+--- a/mmc.h	2016-09-11 18:01:53.000000000 +0200
++++ b/mmc.h	2016-09-23 23:41:02.462632858 +0200
+@@ -17,7 +17,6 @@
+  * those modifications are Copyright (c) 2016 SanDisk Corp.
+  */
+ 
+-#include <asm-generic/int-ll64.h>
+ #include <linux/mmc/ioctl.h>
+ #include <stdio.h>
+ 

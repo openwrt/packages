@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
-PKG_VERSION:=1.14.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.14.2
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -18,7 +18,7 @@ PKG_LICENSE_FILES:=NOTICE
 
 PKG_SOURCE:=krb5-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.14/
-PKG_MD5SUM:=400de0cabbfbe85c2c36f60347bf7dc6
+PKG_MD5SUM:=2e35f0af0344d68aba99cef616d3a64f
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -79,11 +79,10 @@ CONFIGURE_ARGS += \
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include \
-		$(1)/usr/include/krb5
+		$(1)/usr
 	$(INSTALL_DIR) $(1)/usr
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib \
 		$(1)/usr
-	rm -f $(1)/usr/lib/libcom_err*
 endef
 
 define Package/krb5-libs/install

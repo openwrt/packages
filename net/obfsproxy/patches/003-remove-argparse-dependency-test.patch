@@ -1,0 +1,12 @@
+diff --git a/setup.py b/setup.py
+index 2353a29..e04c5f5 100644
+--- a/setup.py
++++ b/setup.py
+@@ -32,7 +32,6 @@ setup(
+         'setuptools',
+         'PyCrypto',
+         'Twisted',
+-        'argparse',
+         'pyptlib >= 0.0.6',
+         'pyyaml'
+         ],

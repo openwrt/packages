@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_VERSION:=7.2p2
+PKG_VERSION:=7.4p1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
-		http://ftp.belnet.be/pub/OpenBSD/OpenSSH/portable/
-PKG_MD5SUM:=13009a9156510d8f27e752659075cced
+PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/
+PKG_MD5SUM:=b2db2a83caf66a208bb78d6d287cdaa3
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE

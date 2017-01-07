@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
 PKG_VERSION:=1.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/wget/Default
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpcre
+  DEPENDS:=+libpcre +zlib
   SUBMENU:=File Transfer
   TITLE:=Non-interactive network downloader
   URL:=http://www.gnu.org/software/wget/index.html
@@ -55,7 +55,6 @@ endef
 define Package/wget-nossl
 $(call Package/wget/Default)
   TITLE+= (without SSL support)
-  DEPENDS+= +zlib
   VARIANT:=nossl
 endef
 
@@ -87,47 +86,13 @@ endif
 define Package/wget/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wget $(1)/usr/bin/wget-ssl
+	ln -sf wget-ssl $(1)/usr/bin/wget
 endef
 
 define Package/wget-nossl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wget $(1)/usr/bin/wget-nossl
-endef
-
-define Package/wget/postinst
-#!/bin/sh
-if [ -e $${IPKG_INSTROOT}/usr/bin/wget ]; then
-  rm -rf $${IPKG_INSTROOT}/usr/bin/wget;
-fi
-ln -sf ./wget-ssl $${IPKG_INSTROOT}/usr/bin/wget
-endef
-
-define Package/wget/postrm
-#!/bin/sh
-rm $${IPKG_INSTROOT}/usr/bin/wget
-[ -x $${IPKG_INSTROOT}/usr/bin/wget-nossl ] && ln -s ./wget-nossl $${IPKG_INSTROOT}/usr/bin/wget || {
-  ln -s ../../bin/busybox $${IPKG_INSTROOT}/usr/bin/wget
-  $${IPKG_INSTROOT}/usr/bin/wget 2>&1 | grep 'applet not found' > /dev/null 2>&1 && rm $${IPKG_INSTROOT}/usr/bin/wget
-}
-exit 0
-endef
-
-define Package/wget-nossl/postinst
-#!/bin/sh
-if [ -e $${IPKG_INSTROOT}/usr/bin/wget ]; then
-  rm -rf $${IPKG_INSTROOT}/usr/bin/wget;
-fi
-ln -s ./wget-nossl $${IPKG_INSTROOT}/usr/bin/wget
-endef
-
-define Package/wget-nossl/postrm
-#!/bin/sh
-rm $${IPKG_INSTROOT}/usr/bin/wget
-[ -x $${IPKG_INSTROOT}/usr/bin/wget-ssl ] && ln -s ./wget-ssl $${IPKG_INSTROOT}/usr/bin/wget || {
-  ln -s ../../bin/busybox $${IPKG_INSTROOT}/usr/bin/wget
-  $${IPKG_INSTROOT}/usr/bin/wget 2>&1 | grep 'applet not found' > /dev/null 2>&1 && rm $${IPKG_INSTROOT}/usr/bin/wget
-}
-exit 0
+	ln -sf wget-nossl $(1)/usr/bin/wget
 endef
 
 $(eval $(call BuildPackage,wget))

@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2008 David Cooper <dave@kupesoft.com>
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sox
-PKG_VERSION:=14.4.1
-PKG_RELEASE:=3
+PKG_VERSION:=14.4.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/sox
-PKG_MD5SUM:=ff9ca6aca972549de0e80e8e30ed379c
+PKG_MD5SUM:=81a6956d4330e75b5827316e44ae381e6f1e8928003c6aa45896da9041ea149c
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-2.1 GPL-2.0
@@ -33,7 +33,7 @@ define Package/sox
   CATEGORY:=Sound
   DEPENDS:=+BUILD_PATENTED:lame-lib +BUILD_PATENTED:libmad +BUILD_PATENTED:libid3tag \
 		+libvorbis +libvorbisidec +alsa-lib +libsndfile +libflac \
-		+libmagic +libpng +libffmpeg
+		+libmagic +libpng
   TITLE:=Sox is a general purpose sound converter/player/recorder
   URL:=http://sox.sourceforge.net/
 endef
@@ -54,7 +54,6 @@ define Build/Configure
 		--without-libltdl \
 		--with-ogg \
 		--with-flac \
-		--with-ffmpeg \
 		--without-amr-wb \
 		--without-amr-nb \
 		--without-samplerate \

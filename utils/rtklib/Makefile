@@ -1,5 +1,5 @@
 # 
-# Copyright (C) 2014-2015 OpenWrt.org
+# Copyright (C) 2014-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtklib
-PKG_VERSION:=2.4.2_p11
+PKG_VERSION:=2.4.3_b24
 PKG_RELEASE:=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/nunojpg/RTKLIB.git
-PKG_SOURCE_VERSION:=df578f4d6708ae0b648c254d168882285d0053cc
+PKG_SOURCE_URL:=git://github.com/tomojitakasu/RTKLIB.git
+PKG_SOURCE_VERSION:=1cec90a9ffa424908ad1a4ca3d52f33f9b94d1f7
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_LICENSE:=BSD-2-Clause

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-cgi
-PKG_VERSION:=4.28
+PKG_VERSION:=4.35
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/L/LE/LEEJO
 PKG_SOURCE:=CGI-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=28efb391377f6e98c19c23292d5fcc8c
+PKG_MD5SUM:=15e63942c02354426b25f056f2a4467c
 
 PKG_LICENSE:=GPL Artistic-2.0
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

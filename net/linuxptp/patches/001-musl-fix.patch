@@ -1,7 +1,5 @@
-Index: linuxptp-20151118/raw.c
-===================================================================
---- linuxptp-20151118.orig/raw.c	2016-01-08 13:39:56.000000000 +0100
-+++ linuxptp-20151118/raw.c	2016-01-13 09:16:51.951784148 +0100
+--- a/raw.c
++++ b/raw.c
 @@ -20,7 +20,6 @@
  #include <fcntl.h>
  #include <linux/filter.h>
@@ -10,3 +8,14 @@ Index: linuxptp-20151118/raw.c
  #include <net/if.h>
  #include <netinet/in.h>
  #include <netpacket/packet.h>
+--- a/util.h
++++ b/util.h
+@@ -20,6 +20,8 @@
+ #ifndef HAVE_UTIL_H
+ #define HAVE_UTIL_H
+ 
++#include <time.h>
++
+ #include "ddt.h"
+ #include "ether.h"
+ 

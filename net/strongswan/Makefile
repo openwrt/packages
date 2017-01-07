@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.3.5
+PKG_VERSION:=5.5.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
-PKG_MD5SUM:=a2f9ea185f27e7f8413d4cd2ee61efe4
+PKG_MD5SUM:=4eba9474f7dc6c8c8d7037261358e68d
 PKG_LICENSE:=GPL-2.0+
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 
 PKG_MOD_AVAILABLE:= \
 	addrblock \
@@ -43,6 +43,7 @@ PKG_MOD_AVAILABLE:= \
 	eap-tls \
 	farp \
 	fips-prf \
+	forecast \
 	gcm \
 	gcrypt \
 	gmp \
@@ -160,6 +161,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-eap-tls \
 	+strongswan-mod-farp \
 	+strongswan-mod-fips-prf \
+	+strongswan-mod-forecast \
 	+strongswan-mod-gcm \
 	+strongswan-mod-gcrypt \
 	+strongswan-mod-gmp \
@@ -380,7 +382,8 @@ CONFIGURE_ARGS+= \
 	--with-routing-table-prio="$(call qstrip,$(CONFIG_STRONGSWAN_ROUTING_TABLE_PRIO))" \
 	$(foreach m,$(PKG_MOD_AVAILABLE), \
 	  $(if $(CONFIG_PACKAGE_strongswan-mod-$(m)),--enable-$(m),--disable-$(m)) \
-	)
+	) \
+	ac_cv_search___atomic_load=no
 
 EXTRA_LDFLAGS+= -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
 
@@ -390,6 +393,7 @@ define Package/strongswan/conffiles
 /etc/ipsec.secrets
 /etc/ipsec.user
 /etc/strongswan.conf
+/etc/strongswan.d/
 endef
 
 define Package/strongswan/install
@@ -397,7 +401,7 @@ define Package/strongswan/install
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/ipsec.conf $(1)/etc/
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/strongswan.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/{libstrongswan.so.*,libhydra.so.*} $(1)/usr/lib/ipsec/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libstrongswan.so.* $(1)/usr/lib/ipsec/
 	$(INSTALL_CONF) ./files/ipsec.secrets $(1)/etc/
 	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -523,6 +527,7 @@ $(eval $(call BuildPlugin,eap-radius,EAP RADIUS auth,))
 $(eval $(call BuildPlugin,eap-tls,EAP TLS auth,+strongswan-libtls))
 $(eval $(call BuildPlugin,farp,fake arp respsonses,))
 $(eval $(call BuildPlugin,fips-prf,FIPS PRF crypto,+strongswan-mod-sha1))
+$(eval $(call BuildPlugin,forecast,forward multi/broadcast traffic,+kmod-ipt-conntrack-extra))
 $(eval $(call BuildPlugin,gcm,GCM AEAD wrapper crypto,))
 $(eval $(call BuildPlugin,gcrypt,libgcrypt,+PACKAGE_strongswan-mod-gcrypt:libgcrypt))
 $(eval $(call BuildPlugin,gmp,libgmp,+PACKAGE_strongswan-mod-gmp:libgmp))
@@ -559,7 +564,7 @@ $(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charo
 $(eval $(call BuildPlugin,sql,SQL database interface,))
 $(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-sqlite:libsqlite3))
 $(eval $(call BuildPlugin,sshkey,SSH key decoding,))
-$(eval $(call BuildPlugin,stroke,Stroke,+strongswan-utils))
+$(eval $(call BuildPlugin,stroke,Stroke,+strongswan-charon +strongswan-utils))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci))
 $(eval $(call BuildPlugin,unity,Cisco Unity extension,))

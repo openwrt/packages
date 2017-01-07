@@ -1,0 +1,13 @@
+diff --git a/core/Makefile b/core/Makefile
+index 2f81417..aa62201 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -23,7 +23,7 @@ ifndef SYSTEM_QUASSELC
+     QUASSELC_FLAGS:=-Ilib
+ else
+     QUASSELC_FLAGS:=$(shell pkg-config --cflags quasselc)
+-    LDFLAGS += -lquasselc
++    LDFLAGS += $(shell pkg-config --libs quasselc)
+ endif
+ 
+ CFLAGS+=-std=gnu11 -Wall -Wextra -Werror -g -O2 $(IRSSI_CFLAGS) $(QUASSELC_FLAGS) -Wmissing-prototypes -Wmissing-declarations

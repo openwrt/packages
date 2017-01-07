@@ -1,0 +1,20 @@
+#!/bin/sh
+##############################################################################
+#
+# Copyright (C) 2016 Eric Luehrsen
+#
+##############################################################################
+#
+# "Restart" Unbound on hotplug interface up:
+# - Clean rebind of unbound to new interfaces
+# - Some of Unbound conf options to not reload run time
+# - Unbound can grow a bit so this will shrink it back
+#
+##############################################################################
+
+if [ "$ACTION" = ifup ] && /etc/init.d/unbound enabled ; then
+  /etc/init.d/unbound restart
+fi
+
+##############################################################################
+

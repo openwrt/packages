@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fastd
 PKG_VERSION:=18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -43,7 +43,7 @@ PKG_CONFIG_DEPENDS:=\
 	CONFIG_FASTD_WITH_STATUS_SOCKET
 
 
-PKG_BUILD_DEPENDS:=nacl libuecc
+PKG_BUILD_DEPENDS:=nacl
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -51,7 +51,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/fastd
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+kmod-tun +librt +libpthread +FASTD_WITH_STATUS_SOCKET:libjson-c +FASTD_WITH_CAPABILITIES:libcap
+  DEPENDS:=+kmod-tun +librt +libpthread +libuecc +FASTD_WITH_STATUS_SOCKET:libjson-c +FASTD_WITH_CAPABILITIES:libcap
   TITLE:=Fast and Secure Tunneling Daemon
   URL:=https://projects.universe-factory.net/projects/fastd
   SUBMENU:=VPN

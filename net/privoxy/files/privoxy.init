@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 
-START=80
-STOP=20
+START=95
+STOP=10
 
 PIDFILE=/var/run/privoxy.pid
 CFGFILE=/var/etc/privoxy.conf
@@ -9,32 +9,38 @@ CFGTEMP=/var/etc/privoxy.conf.tmp
 
 _uci2conf() {
 	# redefined callback for options when calling config_load
-	option_cb()
-	{
-		# $1	name of variable
-		# $2	value
-		local __OPT="$1"
-		local __VAL="$2"
-		case $__OPT in
-			confdir|templdir|temporary_directory|logdir|logfile)
-				# needs to be handled separately because we need to set permissions
-				# AND needs to be defined first because of a BUG inside privoxy
-				# require directories to be defined first inside config 
-				;;
-			debug_*)
-				[ $__VAL -eq 0 ] && return	# not set ignore
-				echo -e "debug\t$(echo $__OPT | sed -e 's#debug_##g')" >> $CFGTEMP ;;
-			*)
-				# detect list options (LENGTH) and ignore
-				echo $__OPT | grep -i "_LENGTH" >/dev/null 2>&1 && return
-				# detect list options (ITEM) and ignore
-				echo $__OPT | grep -i "_ITEM" >/dev/null 2>&1 && __OPT=$(echo $__OPT | sed -e "s#_ITEM.*##g")
-				# uci only accept "_" but we need "-"
-				local __OPT=$(echo $__OPT | sed -e "s#_#-#g")
-				# write to config
-				echo -e "$__OPT\t$__VAL" >> $CFGTEMP
-				;;
-		esac
+	config_cb() {
+		if [ ."$2" != ."privoxy" ]; then
+			option_cb() { return 0; }
+		else
+			option_cb()
+			{
+				# $1	name of variable
+				# $2	value
+				local __OPT="$1"
+				local __VAL="$2"
+				case $__OPT in
+					confdir|templdir|temporary_directory|logdir|logfile)
+						# needs to be handled separately because we need to set permissions
+						# AND needs to be defined first because of a BUG inside privoxy
+						# require directories to be defined first inside config 
+						;;
+					debug_*)
+						[ $__VAL -eq 0 ] && return	# not set ignore
+						echo -e "debug\t$(echo $__OPT | sed -e 's#debug_##g')" >> $CFGTEMP ;;
+					*)
+						# detect list options (LENGTH) and ignore
+						echo $__OPT | grep -i "_LENGTH" >/dev/null 2>&1 && return
+						# detect list options (ITEM) and ignore
+						echo $__OPT | grep -i "_ITEM" >/dev/null 2>&1 && __OPT=$(echo $__OPT | sed -e "s#_ITEM.*##g")
+						# uci only accept "_" but we need "-"
+						local __OPT=$(echo $__OPT | sed -e "s#_#-#g")
+						# write to config
+						echo -e "$__OPT\t$__VAL" >> $CFGTEMP
+						;;
+				esac
+			}
+		fi
 	}
 
 	# temporary config file
@@ -92,7 +98,7 @@ _uci2conf() {
 		echo -e "temporary-directory\t$_TMP_DIR" >> $CFGTEMP
 	fi
 
-	config_load privoxy	# calling above option_cb() and write the rest into $CFGTEMP
+	config_load "privoxy"	# calling above option_cb() and write the rest into $CFGTEMP
 
 	# move temp to final privoxy readable configuration
 	mv -f $CFGTEMP $CFGFILE

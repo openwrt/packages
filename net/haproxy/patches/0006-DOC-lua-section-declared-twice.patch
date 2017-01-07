@@ -1,0 +1,31 @@
+From 3e94c95f577cfbd3921545bacc92dd638739859c Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <thierry.fournier@ozon.io>
+Date: Wed, 14 Dec 2016 19:43:08 +0100
+Subject: [PATCH 06/19] DOC: lua: section declared twice
+
+This patch remove the second section.
+
+This patch should be backported in versions 1.6 and 1.7
+(cherry picked from commit d7f2eb6f7eb7218b9f85fb59e24d1d414d6b9fae)
+---
+ doc/lua-api/index.rst | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/doc/lua-api/index.rst b/doc/lua-api/index.rst
+index 3cb2b4b..8d3bdf0 100644
+--- a/doc/lua-api/index.rst
++++ b/doc/lua-api/index.rst
+@@ -2065,10 +2065,6 @@ AppletHTTP class
+   AppletHTTP.headers["accept"][2] = "*/*, q=0.1"
+ ..
+ 
+-.. js:attribute:: AppletHTTP.headers
+-
+-  Contains an array containing all the request headers.
+-
+ .. js:function:: AppletHTTP.set_status(applet, code)
+ 
+   This function sets the HTTP status code for the response. The allowed code are
+-- 
+2.10.2
+

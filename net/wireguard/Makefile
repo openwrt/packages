@@ -1,4 +1,5 @@
 #
+# Copyright (C) 2016 Jason A. Donenfeld <Jason@zx2c4.com>
 # Copyright (C) 2016 Baptiste Jonglez <openwrt@bitsofnetworks.org>
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -9,12 +10,14 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=wireguard
 
-PKG_VERSION:=0.0.20160630
+PKG_VERSION:=0.0.20161230
 PKG_RELEASE:=1
 
-PKG_SOURCE:=WireGuard-experimental-$(PKG_VERSION).tar.xz
+PKG_SOURCE:=WireGuard-$(PKG_VERSION).tar.xz
+# This is actually SHA256, but OpenWRT/LEDE will figure it out based on the length
+PKG_MD5SUM:=69c9770daf9c8ff6632d614afc117b60774760f1224c9322c84f8da92b9ae396
 PKG_SOURCE_URL:=https://git.zx2c4.com/WireGuard/snapshot/
-PKG_BUILD_DIR:=$(BUILD_DIR)/WireGuard-experimental-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/WireGuard-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -31,7 +34,8 @@ define Package/wireguard/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=https://www.wireguard.io
-  MAINTAINER:=Baptiste Jonglez <openwrt@bitsofnetworks.org>
+  MAINTAINER:=Baptiste Jonglez <openwrt@bitsofnetworks.org>, \
+              Dan Luedtke <mail@danrl.com>
 endef
 
 define Package/wireguard/Default/description
@@ -57,7 +61,7 @@ include $(INCLUDE_DIR)/package-defaults.mk
 MAKE_PATH:=src/tools
 
 define Build/Compile
-	$(MAKE) $(KERNEL_MAKEOPTS) SUBDIRS="$(PKG_BUILD_DIR)/src" modules
+	$(MAKE) $(KERNEL_MAKEOPTS) M="$(PKG_BUILD_DIR)/src" modules
 	$(call Build/Compile/Default)
 endef
 
@@ -74,12 +78,15 @@ endef
 define Package/wireguard-tools/description
   $(call Package/wireguard/Default/description)
 
-  This package provides the userspace control program for wireguard: `wg`.
+  This package provides the userspace control program for wireguard, `wg`,
+  and a netifd protocol helper.
 endef
 
 define Package/wireguard-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/tools/wg $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/lib/netifd/proto/
+	$(INSTALL_BIN) ./files/wireguard.sh $(1)/lib/netifd/proto/
 endef
 
 define KernelPackage/wireguard
@@ -87,7 +94,7 @@ define KernelPackage/wireguard
   CATEGORY:=Kernel modules
   SUBMENU:=Network Support
   TITLE:=Wireguard kernel module
-  DEPENDS:=@IPV6 +kmod-udptunnel4 +kmod-udptunnel6 +kmod-ipt-hashlimit
+  DEPENDS:=+IPV6:kmod-udptunnel6 +kmod-udptunnel4 +kmod-ipt-hashlimit
   FILES:= $(PKG_BUILD_DIR)/src/wireguard.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,33,wireguard)
 endef

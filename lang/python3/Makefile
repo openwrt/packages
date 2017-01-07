@@ -8,21 +8,28 @@
 include $(TOPDIR)/rules.mk
 
 # The file included below defines PYTHON_VERSION
-include ./files/python3-package.mk
+include ./files/python3-version.mk
 
 PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=4
+PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=e9ea6f2623fffcdd871b7b19113fde80
+PKG_MD5SUM:=82b143ebbf4514d7e05876bed7a6b1f5
+PKG_HASH:=b0c5f904f685e32d9232f7bdcbece9819a892929063b6e385414ad2dd6a23622
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
+
+# This file provides the necsessary host build variables
+include ./files/python3-host.mk
+
+# For Py3Package
+include ./files/python3-package.mk
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -31,7 +38,7 @@ HOST_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=libbz2/host expat/host python3/host
+PKG_BUILD_DEPENDS:=python3/host
 HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -81,8 +88,12 @@ endef
 PYTHON3_LIB_FILES_DEL:=
 PYTHON3_PACKAGES:=
 PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR).so
+PYTHON3_PACKAGES_DEPENDS:=
 define Py3BasePackage
   PYTHON3_PACKAGES+=$(1)
+  ifeq ($(3),)
+    PYTHON3_PACKAGES_DEPENDS+=$(1)
+  endif
   PYTHON3_LIB_FILES_DEL+=$(2)
   define Py3Package/$(1)/filespec
     $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
@@ -93,7 +104,7 @@ include ./files/python3-package-*.mk
 
 define Package/python3
 $(call Package/python3/Default)
-  DEPENDS:=+python3-light $(foreach package,$(filter-out python3-dev python3-lib2to3,$(PYTHON3_PACKAGES)),+$(package))
+  DEPENDS:=+python3-light $(foreach package,$(PYTHON3_PACKAGES_DEPENDS),+$(package))
 endef
 
 define Package/python3/description
@@ -104,7 +115,6 @@ endef
 MAKE_FLAGS+=\
 	CROSS_COMPILE=yes \
 	LD="$(TARGET_CC)" \
-	FREEZE_IMPORTLIB=_freeze_importlib \
 	PGEN=pgen3
 
 ifeq ($(ARCH),i386)
@@ -121,14 +131,22 @@ ifeq ($(CONFIG_IPV6),y)
 	ENABLE_IPV6 += --enable-ipv6
 endif
 
+PYTHON_FOR_BUILD:= \
+	_PYTHON_PROJECT_BASE=$(PKG_BUILD_DIR) \
+	_PYTHON_HOST_PLATFORM=linux2 \
+	PYTHONPATH="$(PKG_BUILD_DIR)/Lib:$(PKG_BUILD_DIR)/build/lib.linux2-$(PYTHON_VERSION)" \
+	_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata \
+	$(HOST_PYTHON3_BIN)
+
 CONFIGURE_ARGS+= \
 	--sysconfdir=/etc \
 	--enable-shared \
 	--without-cxx-main \
 	--with-threads \
-	--with-system-ffi="$(STAGING_DIR)/usr" \
+	--with-system-ffi \
 	--without-pymalloc \
-	--without-ensurepip \
+	--with-ensurepip=no \
+	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
 	OPT="$(TARGET_CFLAGS)"
@@ -142,12 +160,16 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
 	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
-	$(INSTALL_DATA) ./files/python3-package.mk $(STAGING_DIR)/mk/
+	$(INSTALL_DATA) \
+		./files/python3-package.mk \
+		./files/python3-host.mk \
+		./files/python3-version.mk \
+		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
 	$(CP) \
-		$(STAGING_DIR)/host/lib/python$(PYTHON_VERSION) \
+		$(HOST_PYTHON3_LIB_DIR) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
 	$(CP) \
@@ -209,22 +231,15 @@ define Py3Package/python3/filespec
 -|$(PYTHON3_PKG_DIR)
 endef
 
-HOST_CFLAGS+= \
-	-I/usr/include/ncursesw \
-	-I/usr/include/ncurses
-
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
-	--prefix=$(STAGING_DIR)/host \
-	--exec-prefix=$(STAGING_DIR)/host \
-	--sysconfdir=$(STAGING_DIR_HOST)/host/etc \
-	--localstatedir=$(STAGING_DIR)/host/var \
-	--sbindir=$(STAGING_DIR)/host/bin \
-	--with-system-expat=$(STAGING_DIR)/host \
-	--with-system-ffi=$(STAGING_DIR)/host \
-	--with-ensurepip=upgrade \
+	--prefix=$(HOST_PYTHON3_DIR) \
+	--exec-prefix=$(HOST_PYTHON3_DIR) \
+	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
+	--with-system-ffi \
+	--with-ensurepip=no \
 	CONFIG_SITE= \
 	CFLAGS="$(HOST_CFLAGS)"
 
@@ -234,10 +249,11 @@ define Host/Compile
 endef
 
 define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR)/host/bin/
 	$(MAKE) -C $(HOST_BUILD_DIR) install
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR)/host/bin/pgen3
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Programs/_freeze_importlib $(STAGING_DIR)/host/bin/_freeze_importlib
+
+	$(INSTALL_DIR) $(HOST_PYTHON3_DIR)/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON3_DIR)/bin/pgen3
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Programs/_freeze_importlib $(HOST_PYTHON3_DIR)/bin/_freeze_importlib
 endef
 
 $(eval $(call HostBuild))

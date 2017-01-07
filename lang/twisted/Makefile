@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2006-2011, 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=twisted
-PKG_VERSION:=16.0.0
+PKG_VERSION:=16.4.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=Twisted-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/T/Twisted \
-		http://twistedmatrix.com/Releases/Twisted/16.0
-PKG_MD5SUM:=c6aa35e9a1e40fce6797247f39647d2a
+PKG_SOURCE_URL:=https://pypi.python.org/packages/6b/23/8dbe86fc83215015e221fbd861a545c6ec5c9e9cd7514af114d1f64084ab \
+		http://twistedmatrix.com/Releases/Twisted/16.4
+PKG_MD5SUM:=c6d09bdd681f538369659111f079c29d
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/Twisted-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python python-setuptools USE_MUSL:librpc
@@ -43,15 +43,9 @@ endef
 
 define PyPackage/twisted/filespec
 +|/usr/bin
--|/usr/bin/manhole
--|/usr/bin/tap2deb
--|/usr/bin/tap2rpm
 -|/usr/bin/tkconch
 +|$(PYTHON_PKG_DIR)
 -|$(PYTHON_PKG_DIR)/twisted/conch/scripts/tkconch.py
--|$(PYTHON_PKG_DIR)/twisted/scripts/manhole.py
--|$(PYTHON_PKG_DIR)/twisted/scripts/tap2deb.py
--|$(PYTHON_PKG_DIR)/twisted/scripts/tap2rpm.py
 endef
 
 define Build/Compile

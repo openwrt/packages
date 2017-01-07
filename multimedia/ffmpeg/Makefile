@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=2.7.6
-PKG_RELEASE:=1
+PKG_VERSION:=2.8.8
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ffmpeg.org/releases/
-PKG_MD5SUM:=578c88242872e58cf0db5f23faa4b2af
+PKG_MD5SUM:=5fae1ba5a5d37a2d0de750479b7270d4
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPL-2.1+ GPL-2+ LGPL-3
@@ -42,6 +42,7 @@ FFMPEG_CUSTOM_DECODERS:= \
 	flac \
 	gif \
 	h264 \
+	hevc \
 	jpegls \
 	mp2 \
 	mp3 \
@@ -54,6 +55,7 @@ FFMPEG_CUSTOM_DECODERS:= \
 	pcm_s16be \
 	pcm_s16le \
 	png \
+	vc1 \
 	vorbis \
 	wavpack \
 	wmav1 \
@@ -64,6 +66,7 @@ FFMPEG_CUSTOM_MUXERS:= \
 	ac3 \
 	ffm \
 	h264 \
+	hevc \
 	mp3 \
 	mp4 \
 	mpeg1video \
@@ -81,6 +84,7 @@ FFMPEG_CUSTOM_DEMUXERS:= \
 	flac \
 	ffm \
 	h264 \
+	hevc \
 	matroska \
 	mov \
 	mp3 \
@@ -95,6 +99,7 @@ FFMPEG_CUSTOM_DEMUXERS:= \
 	rtp \
 	sdp \
 	v4l2 \
+	vc1 \
 	wav \
 	wv \
 
@@ -103,9 +108,11 @@ FFMPEG_CUSTOM_PARSERS:= \
 	flac \
 	ac3 \
 	h264 \
+	hevc \
 	mpegaudio \
 	mpeg4video \
 	mpegvideo \
+	vc1 \
 
 FFMPEG_CUSTOM_PROTOCOLS:= \
 	file http icecast pipe rtp tcp udp
@@ -115,34 +122,29 @@ FFMPEG_MINI_DECODERS:= \
 	ac3 \
 	flac \
 	h264 \
+	hevc \
 	jpegls \
 	mp3 \
 	mpeg1video \
 	mpeg2video \
 	mpeg4 \
 	mpegvideo \
+	opus \
 	png \
+	vc1 \
+	vorbis \
 	wmav1 \
 	wmav2 \
 
 FFMPEG_MINI_DEMUXERS:= \
-	aac \
-	ac3 \
 	avi \
 	flac \
-	h264 \
 	matroska \
 	mov \
 	mp3 \
 	mpegts \
 	mpegvideo \
-
-FFMPEG_MINI_PARSERS:= \
-	ac3 \
-	flac \
-	h264 \
-	mpeg4video \
-	mpegaudio \
+	ogg \
 
 FFMPEG_MINI_PROTOCOLS:= \
 	file \
@@ -277,13 +279,12 @@ $(call Package/ffmpeg/Default/description)
  This package contains the FFmpeg streaming server.
 endef
 
-
 define Package/libffmpeg/Default
 $(call Package/ffmpeg/Default)
  SECTION:=libs
  CATEGORY:=Libraries
  TITLE+= libraries
- DEPENDS+= +libpthread +zlib +libbz2
+ DEPENDS+= @BUILD_PATENTED +libpthread +zlib +libbz2
  PROVIDES:= libffmpeg
 endef
 
@@ -291,7 +292,9 @@ endef
 define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (custom)
- DEPENDS+= @DEVEL @!ALL +libopus +libspeex
+ DEPENDS+= +FFMPEG_CUSTOM_SELECT_libopus:libopus +FFMPEG_CUSTOM_SELECT_speex:libspeex \
+           +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib
+
  VARIANT:=custom
  MENU:=1
 endef
@@ -310,7 +313,7 @@ endef
 define Package/libffmpeg-audio-dec
 $(call Package/libffmpeg/Default)
  TITLE+= (audio)
- DEPENDS+= @BUILD_PATENTED +libspeex
+ DEPENDS+= +libspeex
  VARIANT:=audio-dec
 endef
 
@@ -324,7 +327,7 @@ endef
 define Package/libffmpeg-full
 $(call Package/libffmpeg/Default)
  TITLE+= (full)
- DEPENDS+= @BUILD_PATENTED +alsa-lib
+ DEPENDS+= +alsa-lib +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib +libopus +libspeex
  VARIANT:=full
 endef
 
@@ -338,7 +341,6 @@ endef
 define Package/libffmpeg-mini
 $(call Package/libffmpeg/Default)
  TITLE+= (mini)
- DEPENDS+= @BUILD_PATENTED
  VARIANT:=mini
 endef
 
@@ -364,13 +366,21 @@ FFMPEG_CONFIGURE:= \
 	--enable-small \
 	--enable-pthreads \
 	--enable-zlib \
-	--disable-runtime-cpudetect \
 	--disable-doc \
 	--disable-debug \
 	\
 	--enable-gpl \
 	--enable-version3 \
 	\
+	--disable-dxva2 \
+	--disable-lzma \
+	--disable-vaapi \
+	--disable-vda \
+	--disable-vdpau \
+	--disable-outdevs
+
+ifeq ($(CONFIG_SOFT_FLOAT),y)
+FFMPEG_CONFIGURE += \
 	--disable-altivec \
 	--disable-amd3dnow \
 	--disable-amd3dnowext \
@@ -387,21 +397,47 @@ FFMPEG_CONFIGURE:= \
 	--disable-fma3 \
 	--disable-fma4 \
 	--disable-avx2 \
-	--disable-vfp \
-	--disable-neon \
 	--disable-inline-asm \
-	--disable-yasm \
 	--disable-mips32r2 \
 	--disable-mipsdspr1 \
 	--disable-mipsdspr2 \
 	--disable-mipsfpu \
-	\
-	--disable-dxva2 \
-	--disable-lzma \
-	--disable-vaapi \
-	--disable-vda \
-	--disable-vdpau \
-	--disable-outdevs
+	--disable-runtime-cpudetect
+
+else ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+FFMPEG_CONFIGURE += \
+	--disable-runtime-cpudetect
+else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
+FFMPEG_CONFIGURE += \
+	--disable-altivec
+endif
+
+ifneq ($(CONFIG_YASM),y)
+FFMPEG_CONFIGURE += \
+	--disable-yasm
+
+endif
+
+#selectibly disable optimizations according to arch/cpu type
+ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+	ifeq (,$(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)))
+		FFMPEG_CONFIGURE+= \
+			--disable-vfp
+	endif
+	ifeq (,$(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)))
+		FFMPEG_CONFIGURE+= \
+			--disable-neon
+	endif
+
+endif
+
+ifeq ($(BUILD_VARIANT),full)
+	FFMPEG_CONFIGURE+= \
+		--enable-libopus --enable-decoder=libopus \
+		--enable-libspeex --enable-decoder=libspeex \
+		$(if $(CONFIG_PACKAGE_libx264),--enable-libx264) \
+		$(if $(CONFIG_PACKAGE_lame-lib),--enable-libmp3lame)
+endif
 
 ifeq ($(BUILD_VARIANT),custom)
 
@@ -434,14 +470,22 @@ endif
 
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libopus),y)
   FFMPEG_CONFIGURE+= \
-	--enable-libopus --enable-decoder=libopus \
-
+	--enable-libopus --enable-decoder=libopus
 endif
 
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_speex),y)
   FFMPEG_CONFIGURE+= \
-	--enable-libspeex --enable-decoder=libspeex \
+	--enable-libspeex --enable-decoder=libspeex
+endif
 
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_x264),y)
+  FFMPEG_CONFIGURE+= \
+	--enable-libx264
+endif
+
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_mp3lame),y)
+  FFMPEG_CONFIGURE+= \
+	--enable-libmp3lame
 endif
 
 endif
@@ -486,7 +530,6 @@ ifeq ($(BUILD_VARIANT),mini)
 	--disable-everything \
 	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_MINI_DECODERS)) \
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_MINI_DEMUXERS)) \
-	$(call FFMPEG_ENABLE,parser,$(FFMPEG_MINI_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_MINI_PROTOCOLS)) \
 
 endif
@@ -593,7 +636,9 @@ Package/libffmpeg-audio-dec/install = $(Package/libffmpeg-custom/install)
 $(eval $(call BuildPackage,ffmpeg))
 $(eval $(call BuildPackage,ffprobe))
 $(eval $(call BuildPackage,ffserver))
-$(eval $(call BuildPackage,libffmpeg-custom))
+$(eval $(call BuildPackage,libffmpeg-audio-dec))
 $(eval $(call BuildPackage,libffmpeg-full))
 $(eval $(call BuildPackage,libffmpeg-mini))
-$(eval $(call BuildPackage,libffmpeg-audio-dec))
+ifneq ($(CONFIG_ALL),y)
+   $(eval $(call BuildPackage,libffmpeg-custom))
+endif

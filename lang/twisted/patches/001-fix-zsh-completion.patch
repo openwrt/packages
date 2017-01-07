@@ -1,8 +1,9 @@
-diff -Nur a/twisted/python/twisted-completion.zsh b/twisted/python/twisted-completion.zsh
---- a/twisted/python/twisted-completion.zsh	2015-11-29 11:30:47.000000000 +0800
-+++ b/twisted/python/twisted-completion.zsh	2015-11-30 20:05:59.755695237 +0800
+diff --git a/twisted/python/twisted-completion.zsh b/twisted/python/twisted-completion.zsh
+index 4d97aa5..9a8d4d8 100644
+--- a/twisted/python/twisted-completion.zsh
++++ b/twisted/python/twisted-completion.zsh
 @@ -1,4 +1,4 @@
--#compdef twistd trial conch cftp ckeygen pyhtmlizer tap2deb tkconch manhole tap2rpm
+-#compdef twistd trial conch cftp ckeygen pyhtmlizer tkconch
 +#compdef twistd trial conch cftp ckeygen pyhtmlizer
  #
  # This is the ZSH completion file for Twisted commands. It calls the current

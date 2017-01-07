@@ -24,6 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/zsh
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Shells
   TITLE:=The Z shell
   DEPENDS:=+libncurses +libncursesw +libpcre +librt
   URL:=http://www.zsh.org/
