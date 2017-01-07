@@ -164,7 +164,7 @@ dnsmasq_link() {
   ####################
 
 
-  if [ "$UNBOUND_B_DNSMASQ" -gt 0 ] ; then
+  if [ "$UNBOUND_D_DHCP_LINK" = "dnsmasq" ] ; then
     # Forward to dnsmasq on same host for DHCP lease hosts
     echo "  do-not-query-localhost: no" >> $UNBOUND_CONFFILE
     # Look at dnsmasq settings
