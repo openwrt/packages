@@ -52,18 +52,6 @@ define Package/umurmur-openssl/description
   Uses OpenSSL library for SSL and crypto.
 endef
 
-define Package/umurmur-polarssl
-  $(call Package/umurmur/Default)
-  TITLE+= (with PolarSSL support)
-  DEPENDS+= +libpolarssl
-  VARIANT:=polarssl
-endef
-
-define Package/umurmur-polarssl/description
-  $(call Package/umurmur/Default/description)
-  Uses the PolarSSL library for SSL and crypto.
-endef
-
 define Build/Compile
 	CC="$(TARGET_CC)" \
 	CFLAGS="$(TARGET_CFLAGS)" \
@@ -75,8 +63,6 @@ define Package/umurmur-openssl/conffiles
 /etc/umurmur.conf
 endef
 
-Package/umurmur-polarssl/conffiles = $(Package/umurmur-openssl/conffiles)
-
 define Package/umurmur-openssl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/umurmurd $(1)/usr/bin/
@@ -87,17 +73,9 @@ define Package/umurmur-openssl/install
 	$(INSTALL_DIR) $(1)/etc/umurmur
 endef
 
-Package/umurmur-polarssl/install = $(Package/umurmur-openssl/install)
-
 ifeq ($(BUILD_VARIANT),openssl)
   CONFIGURE_ARGS += \
 	--with-ssl=openssl
 endif
 
-ifeq ($(BUILD_VARIANT),polarssl)
-  CONFIGURE_ARGS += \
-	--with-ssl=polarssl
-endif
-
 $(eval $(call BuildPackage,umurmur-openssl))
-$(eval $(call BuildPackage,umurmur-polarssl))
