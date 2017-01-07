@@ -2,24 +2,39 @@ Index: ZeroTierOne-1.1.14/make-linux.mk
 ===================================================================
 --- ZeroTierOne-1.1.14.orig/make-linux.mk
 +++ ZeroTierOne-1.1.14/make-linux.mk
-@@ -64,7 +64,7 @@ ifeq ($(ZT_USE_MINIUPNPC),1)
+@@ -64,22 +64,22 @@ ifeq ($(ZT_USE_MINIUPNPC),1)
  	DEFS+=-DZT_USE_MINIUPNPC
  
  	# Auto-detect libminiupnpc at least v2.0
 -	MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' /usr/include/miniupnpc/miniupnpc.h && echo 1)
-+	MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
- 	ifeq ($(MINIUPNPC_IS_NEW_ENOUGH),1)
+-	ifeq ($(MINIUPNPC_IS_NEW_ENOUGH),1)
++#	MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
++#	ifeq ($(MINIUPNPC_IS_NEW_ENOUGH),1)
  		DEFS+=-DZT_USE_SYSTEM_MINIUPNPC
  		LDLIBS+=-lminiupnpc
-@@ -74,7 +74,7 @@ ifeq ($(ZT_USE_MINIUPNPC),1)
- 	endif
+-	else
+-		DEFS+=-DMINIUPNP_STATICLIB -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -DOS_STRING=\"Linux\" -DMINIUPNPC_VERSION_STRING=\"2.0\" -DUPNP_VERSION_STRING=\"UPnP/1.1\" -DENABLE_STRNATPMPERR
+-		OBJS+=ext/miniupnpc/connecthostport.o ext/miniupnpc/igd_desc_parse.o ext/miniupnpc/minisoap.o ext/miniupnpc/minissdpc.o ext/miniupnpc/miniupnpc.o ext/miniupnpc/miniwget.o ext/miniupnpc/minixml.o ext/miniupnpc/portlistingparse.o ext/miniupnpc/receivedata.o ext/miniupnpc/upnpcommands.o ext/miniupnpc/upnpdev.o ext/miniupnpc/upnperrors.o ext/miniupnpc/upnpreplyparse.o
+-	endif
++#	else
++#		DEFS+=-DMINIUPNP_STATICLIB -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -DOS_STRING=\"Linux\" -DMINIUPNPC_VERSION_STRING=\"2.0\" -DUPNP_VERSION_STRING=\"UPnP/1.1\" -DENABLE_STRNATPMPERR
++#		OBJS+=ext/miniupnpc/connecthostport.o ext/miniupnpc/igd_desc_parse.o ext/miniupnpc/minisoap.o ext/miniupnpc/minissdpc.o ext/miniupnpc/miniupnpc.o ext/miniupnpc/miniwget.o ext/miniupnpc/minixml.o ext/miniupnpc/portlistingparse.o ext/miniupnpc/receivedata.o ext/miniupnpc/upnpcommands.o ext/miniupnpc/upnpdev.o ext/miniupnpc/upnperrors.o ext/miniupnpc/upnpreplyparse.o
++#	endif
  
  	# Auto-detect libnatpmp
 -	ifeq ($(wildcard /usr/include/natpmp.h),)
-+	ifeq ($(wildcard $(STAGING_DIR)/usr/include/natpmp.h),)
- 		OBJS+=ext/libnatpmp/natpmp.o ext/libnatpmp/getgateway.o
- 	else
+-		OBJS+=ext/libnatpmp/natpmp.o ext/libnatpmp/getgateway.o
+-	else
++#	ifeq ($(wildcard $(STAGING_DIR)/usr/include/natpmp.h),)
++#		OBJS+=ext/libnatpmp/natpmp.o ext/libnatpmp/getgateway.o
++#	else
  		LDLIBS+=-lnatpmp
+ 		DEFS+=-DZT_USE_SYSTEM_NATPMP
+-	endif
++#	endif
+ endif
+ 
+ ifeq ($(ZT_ENABLE_NETWORK_CONTROLLER),1)
 Index: ZeroTierOne-1.1.14/osdep/PortMapper.cpp
 ===================================================================
 --- ZeroTierOne-1.1.14.orig/osdep/PortMapper.cpp
