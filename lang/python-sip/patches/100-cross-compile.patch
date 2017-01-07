@@ -1,0 +1,208 @@
+Index: sip-4.12.1/configure.py
+===================================================================
+--- sip-4.12.1.orig/configure.py	2011-01-22 14:47:21.000000000 +0100
++++ sip-4.12.1/configure.py	2011-03-13 16:47:19.085716739 +0100
+@@ -19,7 +19,6 @@ import sys
+ import os
+ import glob
+ import optparse
+-from distutils import sysconfig
+ 
+ import siputils
+ 
+@@ -197,21 +196,45 @@ def set_platform_directories():
+     global plat_py_site_dir, plat_py_inc_dir, plat_py_conf_inc_dir
+     global plat_bin_dir, plat_py_lib_dir, plat_sip_dir
+ 
+-    # We trust distutils for some stuff.
+-    plat_py_site_dir = sysconfig.get_python_lib(plat_specific=1)
+-    plat_py_inc_dir = sysconfig.get_python_inc()
+-    plat_py_conf_inc_dir = os.path.dirname(sysconfig.get_config_h_filename())
+-
+-    if sys.platform == "win32":
+-        plat_py_lib_dir = sys.prefix + "\\libs"
+-        plat_bin_dir = sys.exec_prefix
+-        plat_sip_dir = sys.prefix + "\\sip"
+-    else:
+-        lib_dir = sysconfig.get_python_lib(plat_specific=1, standard_lib=1)
++    if not opts.crosscompile:
++        # We trust distutils for some stuff.
++        from distutils import sysconfig
++        plat_py_site_dir = sysconfig.get_python_lib(plat_specific=1)
++        plat_py_inc_dir = sysconfig.get_python_inc()
++        plat_py_conf_inc_dir = os.path.dirname(sysconfig.get_config_h_filename())
++
++        if sys.platform == "win32":
++            plat_py_lib_dir = sys.prefix + "\\libs"
++            plat_bin_dir = sys.exec_prefix
++            plat_sip_dir = sys.prefix + "\\sip"
++        else:
++            lib_dir = sysconfig.get_python_lib(plat_specific=1, standard_lib=1)
+ 
+-        plat_py_lib_dir = lib_dir + "/config"
+-        plat_bin_dir = sys.exec_prefix + "/bin"
+-        plat_sip_dir = sys.prefix + "/share/sip"
++            plat_py_lib_dir = lib_dir + "/config"
++            plat_bin_dir = sys.exec_prefix + "/bin"
++            plat_sip_dir = sys.prefix + "/share/sip"
++
++    count = 0
++    if opts.py_site_dir:
++        plat_py_site_dir = opts.py_site_dir
++        count += 1
++    if opts.py_inc_dir:
++        plat_py_inc_dir = opts.py_inc_dir
++        count += 1
++    if opts.py_conf_inc_dir:
++        plat_py_conf_inc_dir = opts.py_conf_inc_dir
++        count += 1
++    if opts.py_lib_dir:
++        plat_py_lib_dir = opts.py_lib_dir
++        count += 1
++    if opts.py_bin_dir:
++        plat_py_bin_dir = opts.py_bin_dir
++        count += 1
++    if opts.py_sip_dir:
++        plat_sip_dir = opts.py_sip_dir
++        count += 1
++    if count != 6 and opts.crosscompile:
++        siputils.error("Need to specify all --py-... options for crosscompile.")
+ 
+ 
+ def patch_files():
+@@ -337,6 +360,11 @@ def create_optparser():
+     def store_abspath(option, opt_str, value, parser):
+         setattr(parser.values, option.dest, os.path.abspath(value))
+ 
++    def store_abspath_file(option, opt_str, value, parser):
++        if not os.path.isfile(value):
++            raise optparse.OptionValueError("'%s' is not a file" % value)
++        setattr(parser.values, option.dest, os.path.abspath(value))
++
+     p = optparse.OptionParser(usage="python %prog [opts] [macro=value] "
+             "[macro+=value]", version=sip_version_str)
+ 
+@@ -411,9 +439,62 @@ def create_optparser():
+             "are normally installed [default: %s]" % default_sipsipdir)
+     p.add_option_group(g)
+ 
++    # Crosscompilation
++    g = optparse.OptionGroup(p, title="Crosscompilation")
++    g.add_option("--crosscompile", action="store_true",
++                 default=False, dest="crosscompile",
++                 help="Set, if cross-compiling")
++    g.add_option("--sipconfig-macros", action="callback", metavar="FILE",
++                 default=None, dest="sipconfig_macros", type="string",
++                 callback=store_abspath_file,
++                 help="Path to a file containing sipconfig macros")
++    g.add_option("--py-site-dir", action="callback",
++                 default=None, dest="py_site_dir", type="string",
++		 callback=store_abspath,
++		 help="Python site directory")
++    g.add_option("--py-inc-dir", action="callback",
++                 default=None, dest="py_inc_dir", type="string",
++		 callback=store_abspath,
++		 help="Python include directory")
++    g.add_option("--py-conf-inc-dir", action="callback",
++                 default=None, dest="py_conf_inc_dir", type="string",
++		 callback=store_abspath,
++		 help="Python config include directory")
++    g.add_option("--py-lib-dir", action="callback",
++                 default=None, dest="py_lib_dir", type="string",
++		 callback=store_abspath,
++		 help="Python library directory")
++    g.add_option("--py-bin-dir", action="callback",
++                 default=None, dest="py_bin_dir", type="string",
++		 callback=store_abspath,
++		 help="Python binary directory")
++    g.add_option("--py-sip-dir", action="callback",
++                 default=None, dest="py_sip_dir", type="string",
++		 callback=store_abspath,
++		 help="Python SIP directory")
++    p.add_option_group(g)
++
+     return p
+ 
+ 
++def load_sipconfig_macros(filename):
++    macros = {}
++    fd = file(filename, "r")
++    for line in fd.readlines():
++        line = line.split()
++        try:
++            key = line[0]
++        except IndexError:
++            sipconfig.error("Invalid sipconfig macros file format")
++        value = ""
++        try:
++            value = " ".join(line[1:])
++        except IndexError:
++            pass
++        macros[key] = value
++    return macros
++
++
+ def main(argv):
+     """Create the configuration module module.
+ 
+@@ -424,9 +505,6 @@ def main(argv):
+     if py_version < 0x020300:
+         siputils.error("This version of SIP requires Python v2.3 or later.")
+ 
+-    # Basic initialisation.
+-    set_platform_directories()
+-
+     # Build up the list of valid specs.
+     for s in os.listdir(os.path.join(src_dir, "specs")):
+         platform_specs.append(s)
+@@ -438,6 +516,9 @@ def main(argv):
+     p = create_optparser()
+     opts, args = p.parse_args()
+ 
++    # Basic initialisation.
++    set_platform_directories()
++
+     # Make sure MacOS specific options get initialised.
+     if sys.platform != 'darwin':
+         opts.universal = ''
+@@ -477,14 +558,16 @@ def main(argv):
+     else:
+         opts.universal = ''
+ 
+-    # Get the platform specific macros for building.
+-    macros = siputils.parse_build_macros(
+-            os.path.join(src_dir, "specs", opts.platform), build_macro_names,
+-            args)
+-
+-    if macros is None:
+-        siputils.error("Unsupported macro name specified. Use the --show-build-macros flag to see a list of supported macros.")
+-        sys.exit(2)
++    if opts.sipconfig_macros:
++        macros = load_sipconfig_macros(opts.sipconfig_macros)
++    else:
++        # Get the platform specific macros for building.
++        macros = siputils.parse_build_macros(
++                os.path.join(src_dir, "specs", opts.platform), build_macro_names,
++                args)
++        if macros is None:
++            siputils.error("Unsupported macro name specified. Use the --show-build-macros flag to see a list of supported macros.")
++            sys.exit(2)
+ 
+     # Fix the name of the sip module.
+     global sip_module_base
+Index: sip-4.12.1/siputils.py
+===================================================================
+--- sip-4.12.1.orig/siputils.py	2011-01-22 14:45:38.000000000 +0100
++++ sip-4.12.1/siputils.py	2011-03-13 16:47:19.087716533 +0100
+@@ -1044,9 +1044,11 @@ class Makefile:
+ 
+         for f in self.optional_list("DEFINES"):
+             cppflags.append("-D" + f)
++            print "CPPFLAGS: Adding -D", f
+ 
+         for f in self.optional_list("INCDIR"):
+             cppflags.append("-I" + _quote(f))
++            print "CPPFLAGS: Adding -I", _quote(f)
+ 
+         libs = []
+ 
