@@ -7,6 +7,7 @@ STOP=10
 USE_PROCD=1
 PROG=/usr/sbin/squid
 CONFIGFILE="/tmp/squid/squid.conf"
+MIMETABLE="/tmp/squid/mime.conf"
 
 validate_squid_section() {
 	uci_validate_section squid squid "${1}" \
@@ -17,7 +18,8 @@ validate_squid_section() {
 		'ssldb_options:string' \
 		'coredump_dir:string' \
 		'visible_hostname:string:OpenWrt' \
-		'pinger_enable:string:off'
+		'pinger_enable:string:off' \
+		'mime_table:string:/etc/squid/mime.conf'
 }
 
 start_service() {
@@ -38,6 +40,8 @@ start_service() {
 	echo coredump_dir $coredump_dir >> $CONFIGFILE
 	echo visible_hostname $visible_hostname >> $CONFIGFILE
 	echo pinger_enable $pinger_enable >> $CONFIGFILE
+	cat $mime_table > $MIMETABLE
+	echo mime_table $MIMETABLE >> $CONFIGFILE
 	[ "$ssldb" ] && echo sslcrtd_program /usr/lib/squid/ssl_crtd -s $ssldb $ssldb_options >> $CONFIGFILE
 	$PROG -s -f $CONFIGFILE -N -z 2>/dev/null
 
