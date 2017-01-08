@@ -25,14 +25,21 @@ define Package/sstp-client
   CATEGORY:=Network
   SUBMENU:=VPN
   DEPENDS=+libevent2 +libopenssl +ppp
-  TITLE:=SSTP is Microsofts Remote Access Solution for PPP over SSL
+  TITLE:=SSTP-Client is a SSTP client for Linux.
   URL:=http://sstp-client.sourceforge.net/
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 endef
 
 define Package/sstp-client/description
- It can be used instead of PPTP or L2TP, and is only available with Windows Vista/7 connecting to a Windows 2008 Server. The advantage of SSTP  compared to PPTP and L2TP is that it cannot be easily blocked by firewalls since the traffic is transmitted over HTTPS on port 443.
- Windows Vista/7 uses SSTP whenever PPTP or L2TP cannot be established. For further information on SSTP check out wikipedia's article on Secure Socket Tunneling Protocol.
+The advantage of SSTP compared to other vpn protocols like PPTP and L2TP is that it cannot be easily blocked by firewalls since the traffic is transmitted over HTTPS on port 443.
+This software has a similar commandline and configuration to the standard linux pptp-client software.
+
+Features:
+- Connect to Microsoft RAS network using SSTP
+- Use HTTPS with strong encryption over port 443
+- Asynchronous HDLC frame support
+- Integration with pon/poff
+
 endef
 
 define Package/sstp-client/conffiles
