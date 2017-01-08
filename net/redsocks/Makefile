@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redsocks
 PKG_VERSION:=0.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
@@ -50,9 +50,12 @@ endef
 define Package/redsocks/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/redsocks $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_BIN) files/redsocks.init $(1)/etc/init.d/redsocks
-	$(INSTALL_CONF) files/redsocks.conf $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/redsocks.init $(1)/etc/init.d/redsocks
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/redsocks.config $(1)/etc/config/redsocks
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/redsocks.conf.example $(1)/etc/redsocks.conf
 endef
 
 $(eval $(call BuildPackage,redsocks))

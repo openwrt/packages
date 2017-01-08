@@ -1,36 +1,37 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2007 OpenWrt.org
+# Copyright (C) 2017 wongsyrone
+
+. /lib/functions.sh
 
 START=90
+USE_PROCD=1
+#PROCD_DEBUG=1
 
-# check if configuration exists
-[ -e "/etc/redsocks.conf" ] || exit 0
+CONF=/etc/redsocks.conf
+ENABLED=0
 
-start() {
-	if [ -e "/var/run/redsocks.pid" ]; then
-		echo "redsocks is already running"
-		exit 0
+config_load "redsocks"
+
+parse_redsocks() {
+        config_get ENABLED "$section" "enabled"
+}
+config_foreach parse_redsocks 'redsocks'
+
+start_service() {
+	if [ "1" = "$ENABLED" ] || [ "on" = "$ENABLED" ] || [ "true" = "$ENABLED" ]; then
+		procd_open_instance
+		procd_set_param command /usr/sbin/redsocks -c $CONF
+		procd_set_param file $CONF
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_close_instance
+	else
+		echo "redsocks is disabled!"
 	fi
-
-	/bin/echo -n "running redsocks ..."
-	
-	# startup the safety-wrapper for the daemon
-	/usr/sbin/redsocks -p /var/run/redsocks.pid
-	
-	/bin/echo " done"
 }
 
-stop() {
-	if [ ! -e "/var/run/redsocks.pid" ]; then
-		echo "redsocks is not running"
-		exit 0
-	fi
-
-	/bin/echo -n "stopping redsocks ..."
-	
-	# kill the process
-	/bin/kill $(cat /var/run/redsocks.pid)
-	rm /var/run/redsocks.pid
-	
-	echo " done"
+reload_service() {
+	stop
+	sleep 5s
+	start
 }
