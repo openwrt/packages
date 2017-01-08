@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lftp
-PKG_VERSION:=4.7.4
+PKG_VERSION:=4.7.5
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://lftp.tech/ftp/ \
 		ftp://ftp.st.ryukoku.ac.jp/pub/network/ftp/lftp/
-PKG_MD5SUM:=74965c798b1806d0a2659d8a606ea47f
+PKG_MD5SUM:=88c1505f8264429353ea7f249597eeb7
 
 
 
