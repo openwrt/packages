@@ -66,6 +66,12 @@ define Package/iotivity/config
 		help
 		  Activate security support.
 
+	config PACKAGE_iotivity_LOGGING
+		bool "IoTivity with logging support"
+		default y
+		help
+		  Activate logging support.
+		  This will make IoTivity write a lot of log messages to stdout.
   endif
 endef
 
@@ -178,7 +184,6 @@ SCONS_OPTIONS += \
 	TARGET_TRANSPORT=IP \
 	TARGET_ARCH=$(ARCH) \
 	STAGING_DIR=$(STAGING_DIR) \
-	LOGGING=true \
 	WITH_ENV=true \
 	octbstack oc \
 	$(if $(CONFIG_PACKAGE_iotivity-oic-middle),examples) \
@@ -201,6 +206,10 @@ ifeq ($(CONFIG_PACKAGE_iotivity_SECURE),y)
   SCONS_OPTIONS += SECURED=1
 else
   SCONS_OPTIONS += SECURED=0
+endif
+
+ifeq ($(CONFIG_PACKAGE_iotivity_LOGGING),y)
+  SCONS_OPTIONS += LOGGING=true
 endif
 
 ifneq ($(findstring c,$(OPENWRT_VERBOSE)),)
