@@ -180,14 +180,14 @@ SCONS_OPTIONS += \
 	STAGING_DIR=$(STAGING_DIR) \
 	LOGGING=true \
 	WITH_ENV=true \
-	$(if $(CONFIG_PACKAGE_iotivity),octbstack) \
-	$(if $(CONFIG_PACKAGE_iotivity-cpp),oc) \
+	octbstack oc \
 	$(if $(CONFIG_PACKAGE_iotivity-oic-middle),examples) \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-lib),libResContainer) \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-sample),containersample) \
 	$(if $(CONFIG_PACKAGE_iotivity-resource-container-hue),libHueBundle) \
 	$(if $(CONFIG_PACKAGE_iotivity-example-garage),examples) \
 	$(if $(CONFIG_PACKAGE_iotivity-example-simple),examples) \
+	install
 
 ifeq ($(CONFIG_PACKAGE_iotivity_DEBUG),y)
   SCONS_OPTIONS += RELEASE=false
@@ -278,6 +278,18 @@ define Package/iotivity-example-simple/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/resource/examples/simpleserver $(1)/usr/bin/
 endef
 
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/include $(1)/usr/include/iotivity
+
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/libconnectivity_abstraction.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/liboctbstack.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/liboc.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/liboc_logger.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/out/linux/$(ARCH)/$(APP_OPTIM)/libresource_directory.so $(1)/usr/lib/
+endef
+	
 
 $(eval $(call BuildPackage,iotivity))
 $(eval $(call BuildPackage,iotivity-cpp))
