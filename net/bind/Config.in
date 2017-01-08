@@ -2,7 +2,7 @@ if PACKAGE_bind-server
 
 config BIND_ENABLE_FILTER_AAAA
 	bool
-	default n
+	default y
 	prompt "Enable filtering of AAAA records returned to the client"
 	help
 		BIND 9 has an option to filter AAAA (IPv6 address) records
