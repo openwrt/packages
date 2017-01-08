@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sstp-client
-PKG_VERSION:=1.0.10
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/sstp-client/$(PKG_VERSION)
-PKG_MD5SUM:=5f290355187e5ce0423fb7e388e65b9d
+PKG_MD5SUM:=4ddbc2fe33eb27d5a4f38d2241005970
 PKG_LICENSE=GPLv2
 
 include $(INCLUDE_DIR)/package.mk
@@ -23,6 +23,7 @@ TARGET_CPPFLAGS += -I$(PKG_BUILD_DIR)/include
 define Package/sstp-client
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=VPN
   DEPENDS=+libevent2 +libopenssl +ppp
   TITLE:=SSTP is Microsofts Remote Access Solution for PPP over SSL
   URL:=http://sstp-client.sourceforge.net/
@@ -41,13 +42,13 @@ define Package/sstp-client/conffiles
 endef
 
 define Package/sstp-client/install
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/{bin,lib}
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/.libs/sstpc $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/src/libsstp-api/.libs/*.so* $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/src/pppd-plugin/.libs/*.so* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/etc/ppp
-	$(INSTALL_DIR) $(1)/etc/peers
+
+	$(INSTALL_DIR) $(1)/etc
+	$(CP) files/etc $(1) 
 endef
 
 $(eval $(call BuildPackage,sstp-client))
