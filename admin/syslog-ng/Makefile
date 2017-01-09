@@ -2,7 +2,7 @@ include  $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=3.8.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -51,6 +51,8 @@ CONFIGURE_ARGS += \
          --disable-spoof-source \
          --disable-sql \
          --disable-linux-caps \
+	 --disable-smtp \
+	 --disable-redis \
          --enable-prce \
 
 TARGET_CPPFLAGS += \
