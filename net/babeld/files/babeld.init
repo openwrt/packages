@@ -18,7 +18,7 @@ ignored_options="carrier_sense assume_wireless no_split_horizon random_router_id
 # Append a line to the configuration file
 cfg_append() {
         local value="$1"
-        echo "$value" >> $CONFIGFILE
+        echo "$value" >> "$CONFIGFILE"
 }
 
 cfg_append_option() {
@@ -215,13 +215,13 @@ babel_config_cb() {
 start_service() {
 	mkdir -p /var/lib
 	mkdir -p /var/etc
-	mkdir -p $OTHERCONFIGDIR
+	mkdir -p "$OTHERCONFIGDIR"
 
 	# Start by emptying the generated config file
 	>"$CONFIGFILE"
 	# Import dynamic config files
-	for f in $OTHERCONFIGDIR/*.conf; do
-		[ -f "$f" ] && cat $f >> $CONFIGFILE
+	for f in "$OTHERCONFIGDIR"/*.conf; do
+		[ -f "$f" ] && cat "$f" >> "$CONFIGFILE"
 	done
 	# First load the whole config file, without callbacks, so that we are
 	# aware of all "ignore" options in the second pass.
