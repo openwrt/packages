@@ -1,0 +1,39 @@
+From 792f68219b3ab4ff5238e3abc7aa1c68bfa4a22b Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sat, 10 Dec 2016 18:15:32 +0100
+Subject: [PATCH 21/23] build: do not set TARGET_ARCH to default
+
+This check is useless, scons already checks this and returns such an
+error message:
+Invalid value for option TARGET_ARCH: mips.  Valid values are: ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64']
+
+Change-Id: I3f7dd3b9fcae875ab20349203fb77537f24be763
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ build_common/SConscript                     | 3 ---
+ resource/csdk/connectivity/build/SConscript | 2 --
+ 2 files changed, 5 deletions(-)
+
+--- a/build_common/SConscript
++++ b/build_common/SConscript
+@@ -54,9 +54,6 @@ if target_os == 'android':
+ else:
+ 	default_arch = platform.machine()
+ 
+-if default_arch not in os_arch_map[target_os]:
+-	default_arch = os_arch_map[target_os][0].lower()
+-
+ target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
+ 
+ # True if binary needs to be installed on board. (Might need root permissions)
+--- a/resource/csdk/connectivity/build/SConscript
++++ b/resource/csdk/connectivity/build/SConscript
+@@ -40,8 +40,6 @@ if target_os not in host_target_map[host
+ 	Exit(1)
+ 
+ default_arch = platform.machine()
+-if default_arch not in os_arch_map[target_os]:
+-	default_arch = os_arch_map[target_os][0].lower()
+ 
+ target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
+ 
