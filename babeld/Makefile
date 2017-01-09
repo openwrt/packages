@@ -12,7 +12,7 @@ PKG_VERSION:=1.8.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.irif.univ-paris-diderot.fr/~jch/software/files/
+PKG_SOURCE_URL:=https://www.irif.fr/~jch/software/files/
 PKG_MD5SUM:=eb1c66c382e9181c418ebd84e52b5af2
 PKG_LICENSE:=MIT
 
@@ -23,7 +23,7 @@ define Package/babeld
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE:=A loop-free distance-vector routing protocol
-  URL:=http://www.pps.univ-paris-diderot.fr/~jch/software/babel/
+  URL:=https://www.irif.fr/~jch/software/babel/
   MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>
   DEPENDS:=@IPV6
 endef
