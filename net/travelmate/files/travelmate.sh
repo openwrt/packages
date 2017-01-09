@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.3.0"
+trm_ver="0.3.1"
 trm_enabled=1
 trm_debug=0
 trm_maxwait=20
@@ -80,10 +80,10 @@ f_prepare()
 
 f_check()
 {
-    local ifname cnt=0 mode="${1}"
+    local ifname cnt=1 mode="${1}"
     trm_ifstatus="false"
 
-    while [ ${cnt} -lt ${trm_maxwait} ]
+    while [ ${cnt} -le ${trm_maxwait} ]
     do
         ifname="$(ubus -S call network.wireless status | jsonfilter -l 1 -e "@.*.interfaces[@.config.mode=\"${mode}\"].ifname")"
         if [ "${mode}" = "sta" ]
@@ -121,7 +121,7 @@ f_log()
 
 f_main()
 {
-    local ap_list ssid_list config network ssid cnt=0
+    local ap_list ssid_list config network ssid cnt=1
 
     f_check "sta"
     if [ "${trm_ifstatus}" != "true" ]
@@ -142,7 +142,7 @@ f_main()
         fi
         for ap in ${ap_list}
         do
-            while [ ${cnt} -lt ${trm_maxretry} ]
+            while [ ${cnt} -le ${trm_maxretry} ]
             do
                 if [ ${trm_iw} -eq 1 ]
                 then
@@ -164,10 +164,18 @@ f_main()
                         then
                             uci -q set wireless."${config}".disabled=0
                             uci -q commit wireless
-                            ubus call network.interface."${network}" up
                             ubus call network reload
-                            f_log "info " "main    ::: wwan interface connected to uplink ${ssid}"
-                            return 0
+                            f_check "sta"
+                            if [ "${trm_ifstatus}" = "true" ]
+                            then
+                                f_log "info " "main    ::: wwan interface connected to uplink ${ssid} (${cnt}/${trm_maxretry})"
+                                return 0
+                            else
+                                uci -q set wireless."${config}".disabled=1
+                                uci -q commit wireless
+                                ubus call network reload
+                                f_log "info " "main    ::: wwan interface can't connect to uplink ${ssid} (${cnt}/${trm_maxretry})"
+                            fi
                         fi
                     done
                 fi
