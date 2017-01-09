@@ -1,0 +1,11 @@
+--- a/genconfig.sh
++++ b/genconfig.sh
+@@ -467,7 +467,7 @@ echo "/* Uncomment the following line to
+ if [ -n "$PORTINUSE" ]; then
+ 	echo "#define CHECK_PORTINUSE" >> ${CONFIGFILE}
+ else
+-	echo "/*#define CHECK_PORTINUSE*/" >> ${CONFIGFILE}
++	echo "#define CHECK_PORTINUSE" >> ${CONFIGFILE}
+ fi
+ echo "" >> ${CONFIGFILE}
+ 
