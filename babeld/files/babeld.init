@@ -240,7 +240,7 @@ start_service() {
 	procd_set_param command /usr/sbin/babeld -I "" -c "$OTHERCONFIGFILE" -c "$CONFIGFILE"
 	procd_set_param stdout 1
 	procd_set_param stderr 1
-	procd_set_param file "$OTHERCONFIGFILE" "$CONFIGFILE"
+	procd_set_param file "$OTHERCONFIGFILE" "$OTHERCONFIGDIR"/*.conf "$CONFIGFILE"
 	procd_set_param respawn
 	procd_close_instance
 }
