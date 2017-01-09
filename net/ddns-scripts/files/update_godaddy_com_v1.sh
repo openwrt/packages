@@ -4,7 +4,7 @@
 #
 # script for sending updates to godaddy.com
 #.based on GoDaddy.sh v1.0 by Nazar78 @ TeaNazaR.com
-#.2016 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 # GoDaddy Documentation at https://developer.godaddy.com/doc
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
@@ -27,9 +27,17 @@
 local __HOST __DOMAIN __TYPE __URL __PRGBASE __RUNPROG __DATA __IPV6
 
 # split __HOST __DOMAIN from $domain
+# given data:
+# @example.com for "domain record"
+# host.sub@example.com for a "host record"
 __HOST=$(printf %s "$domain" | cut -d@ -f1)
 __DOMAIN=$(printf %s "$domain" | cut -d@ -f2)
-[ -z "$__HOST" -o "$__HOST" = "$__DOMAIN" ] && __HOST="%40"	# no expizit host given so set to default "@" => urlencode "%40"
+
+# GoDaddy needs:
+# __DOMAIN = the base domain i.e. example.com
+# __HOST   = host.sub if updating a host record or
+# __HOST   = "@" urlencoded "%40" for a domain record
+[ -z "$__HOST" -o "$__HOST" = "$__DOMAIN" ] && __HOST="%40"
 
 # set record type
 [ $use_ipv6 -eq 0 ] && __TYPE="A" || __TYPE="AAAA"
