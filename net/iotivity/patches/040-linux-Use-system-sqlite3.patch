@@ -1,0 +1,27 @@
+From 08b403572985a70fe5d652378e1cfa2b72ac6a3d Mon Sep 17 00:00:00 2001
+From: Philippe Coval <philippe.coval@osg.samsung.com>
+Date: Fri, 9 Dec 2016 02:12:04 +0100
+Subject: [PATCH] linux: Use system sqlite3
+
+Problem was discovered on yocto
+
+Change-Id: I5274bed9e4b7ddcdc1b17a265a1886cd78cb631f
+Signed-off-by: Philippe Coval <philippe.coval@osg.samsung.com>
+Reviewed-on: https://gerrit.iotivity.org/gerrit/15305
+Tested-by: jenkins-iotivity <jenkins-iotivity@opendaylight.org>
+Reviewed-by: Ziran Sun <ziran.sun@samsung.com>
+---
+ resource/csdk/SConscript | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/resource/csdk/SConscript
++++ b/resource/csdk/SConscript
+@@ -191,7 +191,7 @@ if with_tcp == True:
+ 
+ if 'SERVER' in rd_mode:
+     liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')
+-    if target_os not in ['tizen']:
++    if target_os not in ['linux', 'tizen']:
+         liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
+ 
+ if target_os in ['linux']:
