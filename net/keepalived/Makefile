@@ -18,7 +18,7 @@ PKG_HASH:=32fbae732c1cd854cacd7a930d4a26f5bad6372cdecb5e3139f0c17e87493853
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Ben Kelly <ben@benjii.net>
 
 PKG_INSTALL:=1
 
