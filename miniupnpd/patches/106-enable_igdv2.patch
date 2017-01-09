@@ -1,0 +1,11 @@
+--- a/genconfig.sh
++++ b/genconfig.sh
+@@ -516,7 +516,7 @@ echo " * control points, so enable with
+ if [ -n "$IGD2" ]; then
+ 	echo "#define IGD_V2" >> ${CONFIGFILE}
+ else
+-	echo "/*#define IGD_V2*/" >> ${CONFIGFILE}
++	echo "#define IGD_V2" >> ${CONFIGFILE}
+ fi
+ echo "" >> ${CONFIGFILE}
+ 

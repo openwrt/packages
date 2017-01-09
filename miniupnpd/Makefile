@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
-PKG_VERSION:=2.0
-PKG_RELEASE:=3
+PKG_VERSION:=2.0.20161216
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://miniupnp.free.fr/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=1c07a215dd9b362e75a9efc05e2fb3b4
+PKG_MD5SUM:=9e73d50ac830b5e08b6eb1df4e4c917833a5ab54351809f615d15d0f30cdeef3
 
 PKG_MAINTAINER:=Markus Stenberg <fingon@iki.fi>
 PKG_LICENSE:=BSD-3-Clause
