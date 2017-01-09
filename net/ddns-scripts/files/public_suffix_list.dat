@@ -5928,142 +5928,13 @@ gov.rs
 in.rs
 org.rs
 
-// ru : http://www.cctld.ru/ru/docs/aktiv_8.php
-// Industry domains
+// ru : https://cctld.ru/en/domains/domens_ru/reserved/
 ru
 ac.ru
-com.ru
 edu.ru
-int.ru
-net.ru
-org.ru
-pp.ru
-// Geographical domains
-adygeya.ru
-altai.ru
-amur.ru
-arkhangelsk.ru
-astrakhan.ru
-bashkiria.ru
-belgorod.ru
-bir.ru
-bryansk.ru
-buryatia.ru
-cbg.ru
-chel.ru
-chelyabinsk.ru
-chita.ru
-chukotka.ru
-chuvashia.ru
-dagestan.ru
-dudinka.ru
-e-burg.ru
-grozny.ru
-irkutsk.ru
-ivanovo.ru
-izhevsk.ru
-jar.ru
-joshkar-ola.ru
-kalmykia.ru
-kaluga.ru
-kamchatka.ru
-karelia.ru
-kazan.ru
-kchr.ru
-kemerovo.ru
-khabarovsk.ru
-khakassia.ru
-khv.ru
-kirov.ru
-koenig.ru
-komi.ru
-kostroma.ru
-krasnoyarsk.ru
-kuban.ru
-kurgan.ru
-kursk.ru
-lipetsk.ru
-magadan.ru
-mari.ru
-mari-el.ru
-marine.ru
-mordovia.ru
-// mosreg.ru  Bug 1090800 - removed at request of Aleksey Konstantinov <konstantinovav@mosreg.ru>
-msk.ru
-murmansk.ru
-nalchik.ru
-nnov.ru
-nov.ru
-novosibirsk.ru
-nsk.ru
-omsk.ru
-orenburg.ru
-oryol.ru
-palana.ru
-penza.ru
-perm.ru
-ptz.ru
-rnd.ru
-ryazan.ru
-sakhalin.ru
-samara.ru
-saratov.ru
-simbirsk.ru
-smolensk.ru
-spb.ru
-stavropol.ru
-stv.ru
-surgut.ru
-tambov.ru
-tatarstan.ru
-tom.ru
-tomsk.ru
-tsaritsyn.ru
-tsk.ru
-tula.ru
-tuva.ru
-tver.ru
-tyumen.ru
-udm.ru
-udmurtia.ru
-ulan-ude.ru
-vladikavkaz.ru
-vladimir.ru
-vladivostok.ru
-vologda.ru
-voronezh.ru
-vrn.ru
-vyatka.ru
-yakutia.ru
-yamal.ru
-yaroslavl.ru
-yekaterinburg.ru
-yuzhno-sakhalinsk.ru
-// More geographical domains
-amursk.ru
-baikal.ru
-cmw.ru
-fareast.ru
-jamal.ru
-kms.ru
-k-uralsk.ru
-kustanai.ru
-kuzbass.ru
-mytis.ru
-nakhodka.ru
-nkz.ru
-norilsk.ru
-oskol.ru
-pyatigorsk.ru
-rubtsovsk.ru
-snz.ru
-syzran.ru
-vdonsk.ru
-zgrad.ru
-// State domains
 gov.ru
+int.ru
 mil.ru
-// Technical domains
 test.ru
 
 // rw : http://www.nic.rw/cgi-bin/policy.pl
@@ -11799,6 +11670,10 @@ gist.githubcloud.com
 // Submitted by Alex Hanselka <alex@gitlab.com>
 gitlab.io
 
+// UKHomeOffice : https://www.gov.uk/government/organisations/home-office
+// Submitted by Jon Shanks <jon.shanks@digital.homeoffice.gov.uk>
+homeoffice.gov.uk
+
 // GlobeHosting, Inc.
 // Submitted by Zoltan Egresi <egresi@globehosting.com>
 ro.im
@@ -12341,6 +12216,10 @@ lib.de.us
 // Submitted by Simon Kissel <hostmaster@viprinet.com>
 router.management
 
+// Western Digital Technologies, Inc : https://www.wdc.com
+// Submitted by Jung Jin <jungseok.jin@wdc.com>
+remotewd.com
+
 // Wikimedia Labs : https://wikitech.wikimedia.org
 // Submitted by Yuvi Panda <yuvipanda@wikimedia.org>
 wmflabs.org
@@ -12367,5 +12246,11 @@ za.org
 // Zeit, Inc. : https://zeit.domains/
 // Submitted by Olli Vanhoja <olli@zeit.co>
 now.sh
+
+// 1GB LLC : https://www.1gb.ua/
+// Submitted by 1GB LLC <noc@1gb.com.ua>
+cc.ua
+inf.ua
+ltd.ua
 
 // ===END PRIVATE DOMAINS===

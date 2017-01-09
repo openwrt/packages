@@ -6,7 +6,7 @@
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 # extended and partial rewritten
-#.2014-2016 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2014-2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # variables in small chars are read from /etc/config/ddns
 # variables in big chars are defined inside these scripts as global vars
@@ -299,7 +299,7 @@ get_uptime CURR_TIME
 if [ $LAST_TIME -eq 0 ]; then
 	write_log 7 "last update: never"
 else
-	EPOCH_TIME=$(( $(date +%s) - CURR_TIME + LAST_TIME ))
+	EPOCH_TIME=$(( $(date +%s) - $CURR_TIME + $LAST_TIME ))
 	EPOCH_TIME="date -d @$EPOCH_TIME +'$ddns_dateformat'"
 	write_log 7 "last update: $(eval $EPOCH_TIME)"
 fi
