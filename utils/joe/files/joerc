@@ -21,9 +21,6 @@
 -rmsg  %S Row %4r Col %3c 
 -smsg ** Line %r Col %c Offset %o(0x%O) %e %a(0x%A) Width %w ** 
 -zmsg ** Line %r Col %c Offset %o(0x%O) ** 
--xmsg \i Joe's Own Editor %v (%b) ** Type \bCtrl-K Q\b to exit or \bCtrl-K H\b for help **\i
--aborthint ^C
--helphint ^K H
 -highlight
 -istep 4
 
@@ -367,8 +364,6 @@ defm2drag	M2DRAG
 defm3down	M3DOWN
 defm3up		M3UP
 defm3drag	M3DRAG
-defmiddleup	MIDDLEUP
-defmiddledown	MIDDLEDOWN
 
 xtmouse		^[ [ M
 extmouse	^[ [ <
