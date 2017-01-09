@@ -2,7 +2,7 @@
 #.Distributed under the terms of the GNU General Public License (GPL) version 2.0
 #
 # script for sending updates to cloudflare.com
-#.2014-2015 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2014-2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 # many thanks to Paul for testing and feedback during development
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
@@ -19,15 +19,26 @@
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
 
-local __RECID __URL __KEY __KEYS __FOUND __SUBDOM __DOMAIN __TLD
+local __RECID __URL __KEY __KEYS __FOUND __SUBDOM __DOMAIN __FQDN
 
-# split given Host/Domain into TLD, registrable domain, and subdomain
-split_FQDN $domain __TLD __DOMAIN __SUBDOM
-[ $? -ne 0 -o -z "$__DOMAIN" ] && \
-	write_log 14 "Wrong Host/Domain configuration ($domain). Please correct configuration!"
+# split __SUBDOM __DOMAIN from $domain
+# given data:
+# @example.com for "domain record"
+# host.sub@example.com for a "host record"
+__SUBDOM=$(printf %s "$domain" | cut -d@ -f1)
+__DOMAIN=$(printf %s "$domain" | cut -d@ -f2)
 
-# put together what we need
-__DOMAIN="$__DOMAIN.$__TLD"
+# Cloudflare v1 needs:
+# __DOMAIN = the base domain i.e. example.com
+# __SUBDOM = the host.sub to change if a "host record" or blank if domain record
+# __FQDN   = the FQDN to detect record_id to change
+# i.e. example.com for the "domain record" or host.sub.example.com for "host record"
+if [ -z "$__SUBDOM" -o "$__SUBDOM" = "$__DOMAIN" ]; then
+	__SUBDOM=""
+	__FQDN="$__DOMAIN"
+else
+	__FQDN="${__SUBDOM}.${__DOMAIN}"
+fi
 
 # parse OpenWrt script with
 # functions for parsing and generating json
@@ -90,7 +101,7 @@ cleanup() {
 	#	json_get_var __DISPLAY "display_name"	# for debugging
 		json_get_var __NAME "name"
 		json_get_var __TYPE "type"
-		if [ "$__NAME" = "$domain" ]; then
+		if [ "$__NAME" = "$__FQDN" ]; then
 			# we must verify IPv4 and IPv6 because there might be both for the same host
 			[ \( $use_ipv6 -eq 0 -a "$__TYPE" = "A" \) -o \( $use_ipv6 -eq 1 -a "$__TYPE" = "AAAA" \) ] && {
 				__FOUND=1	# mark found
@@ -106,7 +117,7 @@ cleanup() {
 	}
 	json_get_var __RECID "rec_id"	# last thing to do get rec_id
 	json_cleanup			# cleanup
-	write_log 7 "rec_id '$__RECID' detected for host/domain '$domain'"
+	write_log 7 "rec_id '$__RECID' detected for host/domain '$__FQDN'"
 }
 
 # build url according to cloudflare client api at https://www.cloudflare.com/docs/client-api.html

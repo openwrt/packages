@@ -5,7 +5,7 @@
 # script for sending updates to cloudflare.com
 #.based on Ben Kulbertis cloudflare-update-record.sh found at http://gist.github.com/benkulbertis
 #.and on George Johnson's cf-ddns.sh found at https://github.com/gstuartj/cf-ddns.sh
-#.2016 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2016-2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 # CloudFlare API documentation at https://api.cloudflare.com/
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
@@ -29,11 +29,21 @@ local __HOST __DOMAIN __TYPE __URLBASE __PRGBASE __RUNPROG __DATA __IPV6 __ZONEI
 local __URLBASE="https://api.cloudflare.com/client/v4"
 
 # split __HOST __DOMAIN from $domain
+# given data:
+# @example.com for "domain record"
+# host.sub@example.com for a "host record"
 __HOST=$(printf %s "$domain" | cut -d@ -f1)
 __DOMAIN=$(printf %s "$domain" | cut -d@ -f2)
 
-# __HOST != __DOMAIN then host@domain.tld => host.domain.tld
-[ "$__HOST" = "$__DOMAIN" ] || __HOST=$(printf %s "$domain" | tr "@" ".")
+# Cloudflare v4 needs:
+# __DOMAIN = the base domain i.e. example.com
+# __HOST   = the FQDN of record to modify
+# i.e. example.com for the "domain record" or host.sub.example.com for "host record"
+
+# handling domain record then set __HOST = __DOMAIN
+[ -z "$__HOST" ] && __HOST=$__DOMAIN
+# handling host record then rebuild fqdn host@domain.tld => host.domain.tld
+[ "$__HOST" != "$__DOMAIN" ] && __HOST="${__HOST}.${__DOMAIN}"
 
 # set record type
 [ $use_ipv6 -eq 0 ] && __TYPE="A" || __TYPE="AAAA"

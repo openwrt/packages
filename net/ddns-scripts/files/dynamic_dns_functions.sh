@@ -6,7 +6,7 @@
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 # extended and partial rewritten
-#.2014-2016 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2014-2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # function timeout
 # copied from http://www.ict.griffith.edu.au/anthony/software/timeout.sh
@@ -89,22 +89,22 @@ UCLIENT_FETCH_SSL=$(find /lib /usr/lib -name libustream-ssl.so* 2>/dev/null)
 
 # Global configuration settings
 # allow NON-public IP's
-upd_privateip=$(uci -q get ddns.global.allow_local_ip) || upd_privateip=0
+upd_privateip=$(uci -q get ddns.global.upd_privateip) || upd_privateip=0
 
 # directory to store run information to.
-ddns_rundir=$(uci -q get ddns.global.run_dir) || ddns_rundir="/var/run/ddns"
+ddns_rundir=$(uci -q get ddns.global.ddns_rundir) || ddns_rundir="/var/run/ddns"
 [ -d $ddns_rundir ] || mkdir -p -m755 $ddns_rundir
 
 # directory to store log files
-ddns_logdir=$(uci -q get ddns.global.log_dir) || ddns_logdir="/var/log/ddns"
+ddns_logdir=$(uci -q get ddns.global.ddns_logdir) || ddns_logdir="/var/log/ddns"
 [ -d $ddns_logdir ] || mkdir -p -m755 $ddns_logdir
 
 # number of lines to before rotate logfile
-ddns_loglines=$(uci -q get ddns.global.log_lines) || ddns_loglines=250
+ddns_loglines=$(uci -q get ddns.global.ddns_loglines) || ddns_loglines=250
 ddns_loglines=$((ddns_loglines + 1))	# correct sed handling
 
 # format to show date information in log and luci-app-ddns default ISO 8601 format
-ddns_dateformat=$(uci -q get ddns.global.date_format) || ddns_dateformat="%F %R"
+ddns_dateformat=$(uci -q get ddns.global.ddns_dateformat) || ddns_dateformat="%F %R"
 DATE_PROG="date +'$ddns_dateformat'"
 
 # USE_CURL if GNU Wget and cURL installed normally Wget is used by do_transfer()
