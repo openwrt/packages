@@ -86,7 +86,8 @@ define Package/nut-common
 	DEPENDS:= nut \
 		+NUT_DRIVER_SNMP:libnetsnmp \
 		+NUT_DRIVER_USB:libusb-compat \
-		+NUT_SSL:libopenssl
+		+NUT_SSL:libopenssl \
+		+PACKAGE_libwrap:libwrap
 endef
 
 define Package/nut-common/description
@@ -501,6 +502,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_NUT_DRIVER_SERAL),with,without)-serial \
 	--without-neon \
 	--without-powerman \
+	--without-wrap \
 	--with-cgi \
 	--without-ipmi \
 	--without-freeipmi \
