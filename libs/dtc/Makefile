@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dtc
 PKG_VERSION:=1.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.kernel.org/pub/software/utils/dtc
 PKG_SOURCE_MD5SUM:=3d5814e31b2046ef51fca8fece998db0
@@ -55,6 +55,9 @@ define Package/libfdt/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/lib/libfdt*.so* $(1)/usr/lib
 endef
+
+TARGET_CFLAGS += \
+	$(FPIC)
 
 MAKE_FLAGS += \
 	PREFIX= \
