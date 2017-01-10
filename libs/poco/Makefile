@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2017 Daniel Engberg <daniel.engberg.lists@pyret.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -11,9 +12,9 @@ PKG_NAME:=poco
 PKG_VERSION:=1.7.7
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pocoproject.org/releases/poco-1.7.7
-PKG_MD5SUM:=deb1e25704a39aac9fcd2beb4db55316
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=http://pocoproject.org/releases/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MD5SUM:=17783e30f5ef9c852544ac0e9d1fd316c4804317026059a9d6aad798b61c77f8
 
 PKG_LICENSE:=BSL-1.0
 PKG_LICENSE_FILES:=LICENSE
