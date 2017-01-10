@@ -11,7 +11,7 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git://github.com/keplerproject/lua-compat-5.2.git
 PKG_SOURCE_VERSION:=bitlib-5.3.0
 
-PKG_MAINTAINER:=Alex R <alex@totalwebservices.net>
+PKG_MAINTAINER:=Alex R <alex@maximum.guru>
 PKG_LICENSE=MIT
 
 LUA_MODULE_PATH:=/usr/lib/lua

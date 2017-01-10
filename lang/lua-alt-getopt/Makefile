@@ -9,7 +9,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://luaforge.net/frs/download.php/4260/
 PKG_MD5SUM:=f504578b1287ea02759add231b972812
 
-PKG_MAINTAINER:=Alex R <alex@totalwebservices.net>
+PKG_MAINTAINER:=Alex R <alex@maximum.guru>
 PKG_LICENSE=MIT
 
 LUA_MODULE_PATH:=/usr/lib/lua

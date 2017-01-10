@@ -11,7 +11,7 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git://github.com/bartbes/love-misc-libs.git
 PKG_SOURCE_VERSION:=master
 
-PKG_MAINTAINER:=Alex R <alex@totalwebservices.net>
+PKG_MAINTAINER:=Alex R <alex@maximum.guru>
 PKG_LICENSE=BSD-2-Clause
 
 LUA_MODULE_PATH:=/usr/lib/lua

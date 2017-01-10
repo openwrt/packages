@@ -9,7 +9,7 @@ PKG_SOURCE:=v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/keplerproject/cgilua/archive/
 PKG_MD5SUM:=ed162ca341d0f1cd16868c80bed3da4c
 
-PKG_MAINTAINER:=Alex R <alex@totalwebservices.net>
+PKG_MAINTAINER:=Alex R <alex@maximum.guru>
 PKG_LICENSE=MIT
 
 LUA_MODULE_PATH:=/usr/lib/lua

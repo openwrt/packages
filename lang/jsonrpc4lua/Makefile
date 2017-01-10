@@ -11,7 +11,7 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/pdxmeshnet/jsonrpc4lua.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
-PKG_MAINTAINER:=Alex R <alex@totalwebservices.net>
+PKG_MAINTAINER:=Alex R <alex@maximum.guru>
 PKG_LICENSE=MIT
 
 LUA_MODULE_PATH:=/usr/lib/lua
