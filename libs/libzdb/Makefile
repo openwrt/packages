@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libzdb
 PKG_VERSION:=3.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -40,15 +40,16 @@ define Package/libzdb/description
    NOTE: This package does not include Oracle support.
 endef
 
-CONFIGURE_ARGS += --disable-profiling \
-		    --enable-optimized \
+CONFIGURE_ARGS += \
+		    $(if $(and $(CONFIG_DEBUG),$(CONFIG_LIBC_USE_GLIBC)),--enable-profiling,--disable-profiling) \
+		    $(if $(CONFIG_DEBUG),--disable-optimized,--enable-optimized) \
 		    --with-mysql \
 		    --with-postgresql \
 		    --with-sqlite \
 		    --enable-sqliteunlock \
 		    --enable-openssl
 
-TARGET_CPPFLAGS += -std=c99
+TARGET_CPPFLAGS += -std=c99 $(if $(CONFIG_LIBC_USE_GLIBC),-D__need_timespec)
 
 include $(INCLUDE_DIR)/host-build.mk
 
