@@ -1,19 +1,9 @@
-#
-# Copyright (C) 2016 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=71c1409cfbe726f7e8b4e33fed784c8896bc0fcd
-PKG_VERSION:=0.10.2-git-20170109-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=3a5cc5d58fae009f3f46acae0d0f3aa371a201b7
+PKG_VERSION:=0.10.2-git-20170110-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
-
-# ToDo:
-#  - package testing stuff
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -38,6 +28,9 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-mysql),--with-mysql="$(STAGING_DIR)/usr",--without-mysql) \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-pgsql),--with-postgresql="$(STAGING_DIR)/usr/bin/pg_config",--without-postgresql) \
 	$(if $(CONFIG_PACKAGE_libsqlite3),--with-sqlite="$(STAGING_DIR)/usr",--without-sqlite) \
+	--disable-testing \
+	--disable-testruns \
+	--disable-wachs \
 	--enable-experimental \
 	--with-extractor=$(STAGING_DIR)/usr \
 	--with-gnutls=$(STAGING_DIR)/usr \
@@ -326,7 +319,6 @@ PLUGIN_dhtcache-sqlite:=datacache_sqlite
 
 DEPENDS_fs-sqlite:=+libsqlite3 +gnunet-datastore
 PLUGIN_fs-sqlite:=datastore_sqlite
-LIBEXEC_fs-sqlite:=daemon-latency-logger
 
 DEPENDS_social-sqlite:=+libsqlite3 +gnunet-social
 PLUGIN_social-sqlite:=psycstore_sqlite
