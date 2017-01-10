@@ -3,32 +3,114 @@
 START=50
 USE_PROCD=1
 PROG=/usr/sbin/dnscrypt-proxy
+CONFIG_DIR=/var/etc
+USER=nobody
 
-dnscrypt_instance() {
-	local address port resolver resolvers_list ephemeral_keys client_key
+dnscrypt_instance() {   
+    local config_path="$CONFIG_DIR/dnscrypt-proxy-$1.conf"     
+    create_config_file $1 "$config_path"
 
-	config_get      address        $1 'address'
-	config_get      port           $1 'port'
-	config_get      resolver       $1 'resolver' ''
-	config_get      resolvers_list $1 'resolvers_list' '/usr/share/dnscrypt-proxy/dnscrypt-resolvers.csv'
-	config_get_bool ephemeral_keys $1 'ephemeral_keys' '0'
-	config_get      client_key     $1 'client_key' ''
+    procd_open_instance
+    procd_set_param command $PROG "$config_path"
+    procd_close_instance
+}
 
-	procd_open_instance
-	procd_set_param    command $PROG -u nobody -S
-	procd_append_param command -a "$address:$port"
-	procd_append_param command -L $resolvers_list
-	[ -n "$resolver" ] && procd_append_param command -R $resolver
-	[ $ephemeral_keys -eq 1 ] && procd_append_param command -E
-	[ -n "$client_key" ] && procd_append_param command -K $client_key
-	procd_close_instance
+create_config_file() {
+    local address port resolver resolvers_list ephemeral_keys client_key syslog syslog_prefix local_cache query_log_file block_ipv6
+    local config_path="$2"
+
+    [ ! -d "$CONFIG_DIR" ] && mkdir -p "$CONFIG_DIR"
+    [ -f "$config_path" ] && rm "$config_path"
+
+    config_get      address         $1 'address'        '127.0.0.1'
+    config_get      port            $1 'port'           '5353'
+    config_get      resolver        $1 'resolver'       ''
+    config_get      resolvers_list  $1 'resolvers_list' '/usr/share/dnscrypt-proxy/dnscrypt-resolvers.csv'
+    config_get      client_key      $1 'client_key'     ''
+    config_get      syslog_prefix   $1 'syslog_prefix'  'dnscrypt-proxy'
+    config_get      query_log_file  $1 'query_log_file' ''
+    config_get_bool syslog          $1 'syslog'         '1'
+    config_get_bool ephemeral_keys  $1 'ephemeral_keys' '0'
+    config_get_bool local_cache     $1 'local_cache'    '0'
+    config_get_bool block_ipv6      $1 'block_ipv6'     '0'
+	
+    append_param_not_empty  "ResolverName"  "$resolver"         $config_path
+    append_param            "ResolversList" "$resolvers_list"   $config_path
+    append_param            "User"          "$USER"             $config_path
+    append_param            "LocalAddress"  "$address:$port"    $config_path
+    append_param_not_empty  "ClientKey"     "$client_key"       $config_path
+    append_on_off           "EphemeralKeys" $ephemeral_keys     $config_path
+    append_on_off           "Syslog"        $syslog             $config_path
+    append_param            "SyslogPrefix"  "$syslog_prefix"    $config_path
+    append_on_off           "LocalCache"    $local_cache        $config_path
+    append_param_not_empty  "QueryLogFile"  "$query_log_file"   $config_path
+    append_yes_no           "BlockIPv6"     $block_ipv6         $config_path
+
+    config_list_foreach $1 'blacklist' append_blacklists $config_path	
+}
+
+append_on_off() {
+    local param_name=$1
+    local param_value=$2
+    local config_path=$3
+    local value
+
+    if [ $param_value -eq 1 ]
+    then
+        value="on"	
+    else
+        value="off"
+    fi
+
+    echo "$param_name $value" >> $config_path
+}
+
+append_yes_no() {
+    local param_name=$1
+    local param_value=$2
+    local config_path=$3
+    local value
+
+    if [ $param_value -eq 1 ]
+    then
+        value="yes"	
+    else
+        value="no"
+    fi
+
+    echo "$param_name $value" >> $config_path
+}
+
+append_param() {
+    local param_name=$1
+    local param_value=$2
+    local config_path=$3
+	
+    echo "$param_name $param_value" >> $config_path
+}
+
+append_param_not_empty() {
+    local param_name=$1
+    local param_value=$2
+    local config_path=$3
+
+    if [ ! -z "$param_value" -a "$param_value" != " " ]
+    then
+        append_param "$param_name" "$param_value" "$config_path"
+    fi
+}
+
+append_blacklists() {
+    local value="$1"
+    local config_path="$2"	
+    append_param_not_empty "BlackList" "$value" $config_path
 }
 
 start_service() {
-	config_load dnscrypt-proxy
-	config_foreach dnscrypt_instance dnscrypt-proxy
+    config_load dnscrypt-proxy
+    config_foreach dnscrypt_instance dnscrypt-proxy
 }
 
 service_triggers() {
-	procd_add_reload_trigger 'dnscrypt-proxy'
+    procd_add_reload_trigger 'dnscrypt-proxy'
 }
