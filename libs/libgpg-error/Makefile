@@ -51,7 +51,7 @@ define Build/InstallDev
 	$(SED) \
 		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
 		$(2)/bin/gpg-error-config
-	ln -sf $(STAGING_DIR)/host/bin/gpg-error-config $(1)/usr/bin/gpg-error-config
+	ln -sf $(STAGING_DIR_HOSTPKG)/bin/gpg-error-config $(1)/usr/bin/gpg-error-config
 
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DATA) \

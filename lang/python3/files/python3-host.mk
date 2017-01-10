@@ -73,7 +73,7 @@ endef
 
 define HostPy3/Compile/Default
 	$(call Build/Compile/HostPy3Mod,,\
-		install --root="$(HOST_BUILD_PREFIX)" --prefix="" \
+		install --root="$(STAGING_DIR_HOSTPKG)" --prefix="" \
 		--single-version-externally-managed \
 	)
 endef

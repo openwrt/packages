@@ -122,11 +122,11 @@ HOST_CONFIGURE_ARGS+= \
 	--disable-verbose-mode \
 	--disable-xml-docs \
 	--with-dbus-user=root \
-	--with-dbus-daemondir="$(STAGIND_DIR)/host/bin" \
-	--with-system-socket="$(STAGING_DIR)/host/var/run/dbus/system_bus_socket" \
-	--with-system-pid-file="$(STAGING_DIR)/host/var/run/dbus.pid" \
+	--with-dbus-daemondir="$(STAGING_DIR_HOSTPKG)/bin" \
+	--with-system-socket="$(STAGING_DIR_HOSTPKG)/var/run/dbus/system_bus_socket" \
+	--with-system-pid-file="$(STAGING_DIR_HOSTPKG)/var/run/dbus.pid" \
 	--without-x \
-	--libexecdir="$(STAGING_DIR)/host/lib/dbus-1"
+	--libexecdir="$(STAGING_DIR_HOSTPKG)/lib/dbus-1"
 
 HOST_CONFIGURE_VARS+= \
 	ac_cv_have_abstract_sockets="yes" \
