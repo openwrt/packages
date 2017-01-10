@@ -28,7 +28,7 @@ define Package/jsonrpc4lua
 endef
 
 define Package/jsonrpc4lua/description
-	JSONRPC for Lua
+	JSON-RPC over HTTP library (fork of json4lua with encoding/decoding replaced by lua-cjson) for use in RPC clients and servers.
 endef
 
 define Build/Compile
