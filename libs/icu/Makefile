@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icu4c
-PKG_VERSION:=55.1
+PKG_VERSION:=57.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-55_1-src.tgz
-PKG_SOURCE_URL:=http://download.icu-project.org/files/icu4c/55.1
-PKG_MD5SUM:=e2d523df79d6cb7855c2fbe284f4db29
+PKG_SOURCE:=$(PKG_NAME)-57_1-src.tgz
+PKG_SOURCE_URL:=http://download.icu-project.org/files/$(PKG_NAME)/$(PKG_VERSION)
+PKG_MD5SUM:=976734806026a4ef8bdd17937c8898b9
 
 PKG_LICENSE:=ICU-1.8.1+
-PKG_LICENSE_FILES:=license.html
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_MAINTAINER:=Mirko Vogt <mirko@openwrt.org>
 
@@ -41,23 +41,36 @@ define Package/icu
   DEPENDS:=+libstdcpp +libpthread
 endef
 
+CONFIGURE_ARGS_ICU := \
+	--disable-debug \
+	--enable-release \
+	--enable-shared \
+	--enable-static \
+	--enable-draft \
+	--enable-renaming \
+	--disable-tracing \
+	--disable-extras \
+	--enable-dyload \
+	--enable-layout \
+	--enable-layoutex
+				
+CONFIGURE_ARGS += $(CONFIGURE_ARGS_ICU) \
+	--disable-tools \
+	--disable-tests \
+	--disable-samples \
+	--with-cross-build="$(HOST_BUILD_DIR)"
+	
+HOST_CONFIGURE_ARGS += $(CONFIGURE_ARGS_ICU)
+
 define Build/Configure
-	$(call Build/Configure/Default, \
-		--disable-debug \
-		--enable-release \
-		--enable-shared \
-		--enable-static \
-		--enable-draft \
-		--enable-renaming \
-		--disable-tracing \
-		--disable-extras \
-		--enable-dyload \
-		--enable-layout \
-		--enable-layoutex \
-		--disable-tools \
-		--disable-tests \
-		--disable-samples \
-		--with-cross-build="$(HOST_BUILD_DIR)" \
+	(cd $(PKG_BUILD_DIR) ; \
+		./runConfigureICU Linux/gcc $(CONFIGURE_ARGS) \
+	)
+endef
+
+define Host/Configure
+	(cd $(HOST_BUILD_DIR) ; \
+		./runConfigureICU Linux/gcc $(HOST_CONFIGURE_ARGS) \
 	)
 endef
 
