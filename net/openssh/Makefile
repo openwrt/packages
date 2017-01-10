@@ -12,7 +12,9 @@ PKG_VERSION:=7.4p1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/
+PKG_SOURCE_URL:=https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/ \
+		https://anorien.csc.warwick.ac.uk/pub/OpenBSD/OpenSSH/portable/ \
+		https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/
 PKG_MD5SUM:=b2db2a83caf66a208bb78d6d287cdaa3
 
 PKG_LICENSE:=BSD ISC
