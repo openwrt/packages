@@ -84,13 +84,4 @@ define HostPy/Compile/Default
 	)
 endef
 
-ifeq ($(BUILD_VARIANT),python)
-define Host/Compile
-	$(call HostPy/Compile/Default)
-endef
-
-define Host/Install
-endef
-endif # python
-
 endif # __python_host_mk_inc
