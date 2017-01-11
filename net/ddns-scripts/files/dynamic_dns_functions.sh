@@ -1121,20 +1121,18 @@ get_registered_ip() {
 			write_log 3 "$__PROG error: '$__ERR'"
 			write_log 7 "$(cat $ERRFILE)"
 		else
-			if [ -n "$BIND_HOST" ]; then
+			if [ -n "$BIND_HOST" -o -n "$KNOT_HOST" ]; then
 				if [ $is_glue -eq 1 ]; then
 					__DATA=$(cat $DATFILE | grep "^$lookup_host" | grep -om1 "$__REGEX" )
 				else
 					__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
 				fi
-			elif [ -n "$KNOT_HOST" ]; then
-				__DATA=$(cat $DATFILE | awk -F "address " '/has/ {print $2; exit}' )
 			elif [ -n "$DRILL" ]; then
 				__DATA=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5; exit}' )
 			elif [ -n "$HOSTIP" ]; then
 				__DATA=$(cat $DATFILE | grep -om1 "$__REGEX")
 			elif [ -n "$NSLOOKUP" ]; then
-				__DATA=$(cat $DATFILE | sed -e '1,/Name:/d' | grep -om1 "$__REGEX" )
+				__DATA=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
 			fi
 			[ -n "$__DATA" ] && {
 				write_log 7 "Registered IP '$__DATA' detected"
