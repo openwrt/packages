@@ -54,7 +54,7 @@ CONFIGURE_ARGS += \
 	--without-iconv
 
 CONFIGURE_VARS += \
-	LIBPNG12_CONFIG="$(STAGING_DIR)/host/bin/libpng12-config" \
+	LIBPNG12_CONFIG="$(STAGING_DIR_HOSTPKG)/bin/libpng12-config" \
 	ac_cv_header_iconv_h=no
 
 define Build/InstallDev

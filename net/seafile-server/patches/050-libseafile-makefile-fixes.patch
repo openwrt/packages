@@ -12,7 +12,7 @@ diff -rupN seafile-server-5.1.1.orig/lib/Makefile.am seafile-server-5.1.1/lib/Ma
  seafile-object.h: ${seafile_object_define}
  	rm -f $@
 -	valac --pkg posix ${seafile_object_define} -C -H seafile-object.h
-+	"$(STAGING_DIR)/host/bin/valac" --pkg posix ${seafile_object_define} -C -H seafile-object.h
++	"$(STAGING_DIR_HOSTPKG)/bin/valac" --pkg posix ${seafile_object_define} -C -H seafile-object.h
  
  DISTCLEANFILES = ${searpc_gen}
  
@@ -30,7 +30,7 @@ diff -rupN seafile-server-5.1.1.orig/lib/Makefile.am seafile-server-5.1.1/lib/Ma
  	@rm -f vala.tmp
  	@touch vala.tmp
 -	valac -C --pkg posix $^
-+	"$(STAGING_DIR)/host/bin/valac" -C --pkg posix $^
++	"$(STAGING_DIR_HOSTPKG)/bin/valac" -C --pkg posix $^
  	@mv -f vala.tmp $@
  
  ${seafile_object_gen}: vala.stamp

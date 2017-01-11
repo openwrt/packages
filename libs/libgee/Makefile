@@ -57,10 +57,10 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
 		$(1)/usr/lib/pkgconfig/
-	$(INSTALL_DIR) $(STAGING_DIR)/host/share/vala-0.30/vapi/
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/share/vala-0.30/vapi/
 	$(INSTALL_DATA) \
                 $(PKG_INSTALL_DIR)/usr/share/vala/vapi/* \
-                $(STAGING_DIR)/host/share/vala-0.30/vapi
+                $(STAGING_DIR_HOSTPKG)/share/vala-0.30/vapi
 endef
 
 define Package/libgee/install

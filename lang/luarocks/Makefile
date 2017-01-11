@@ -41,7 +41,7 @@ endef
 CONFIGURE_ARGS = \
     --prefix=$(CONFIGURE_PREFIX) \
     --sysconfdir=/etc \
-    --with-lua=$(STAGING_DIR)/host
+    --with-lua=$(STAGING_DIR_HOSTPKG)
 
 CONFIGURE_VARS = \
 	LUAROCKS_UNAME_S="Linux" \

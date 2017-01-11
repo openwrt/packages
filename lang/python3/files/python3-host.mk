@@ -11,12 +11,6 @@ __python3_host_mk_inc=1
 # For PYTHON3_VERSION
 $(call include_mk, python3-version.mk)
 
-# Compatibility fallback for older OpenWrt and LEDE versions
-ifeq ($(STAGING_DIR_HOSTPKG),)
-  $(warning STAGING_DIR_HOSTPKG is unset - falling back to $$(STAGING_DIR)/host)
-  STAGING_DIR_HOSTPKG := $(STAGING_DIR)/host
-endif
-
 HOST_PYTHON3_DIR:=$(STAGING_DIR_HOSTPKG)
 HOST_PYTHON3_INC_DIR:=$(HOST_PYTHON3_DIR)/include/python$(PYTHON3_VERSION)
 HOST_PYTHON3_LIB_DIR:=$(HOST_PYTHON3_DIR)/lib/python$(PYTHON3_VERSION)
@@ -79,7 +73,7 @@ endef
 
 define HostPy3/Compile/Default
 	$(call Build/Compile/HostPy3Mod,,\
-		install --root="$(HOST_BUILD_PREFIX)" --prefix="" \
+		install --root="$(STAGING_DIR_HOSTPKG)" --prefix="" \
 		--single-version-externally-managed \
 	)
 endef

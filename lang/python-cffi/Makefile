@@ -45,7 +45,7 @@ define Build/Compile
 endef
 
 define Host/Compile
-	$(call Build/Compile/HostPyMod,,install --prefix="" --root="$(HOST_BUILD_PREFIX)")
+	$(call Build/Compile/HostPyMod,,install --prefix="" --root="$(STAGING_DIR_HOSTPKG)")
 endef
 
 define Host/Install
