@@ -6,12 +6,12 @@ Subject: [PATCH] Add compat fallback for batadv_getlink_net
  1 file changed, 4 insertions(+)
 
 diff --git a/net/batman-adv/hard-interface.c b/net/batman-adv/hard-interface.c
-index 08ce361..e6ea2f9 100644
+index 61a431a9..6969f580 100644
 --- a/net/batman-adv/hard-interface.c
 +++ b/net/batman-adv/hard-interface.c
 @@ -95,6 +95,9 @@ out:
- static const struct net *batadv_getlink_net(const struct net_device *netdev,
- 					    const struct net *fallback_net)
+ static struct net *batadv_getlink_net(const struct net_device *netdev,
+ 				      struct net *fallback_net)
  {
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
 +	return fallback_net;
@@ -19,7 +19,7 @@ index 08ce361..e6ea2f9 100644
  	if (!netdev->rtnl_link_ops)
  		return fallback_net;
  
-@@ -102,6 +105,7 @@ static const struct net *batadv_getlink_net(const struct net_device *netdev,
+@@ -102,6 +105,7 @@ static struct net *batadv_getlink_net(const struct net_device *netdev,
  		return fallback_net;
  
  	return netdev->rtnl_link_ops->get_link_net(netdev);

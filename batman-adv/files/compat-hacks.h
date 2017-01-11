@@ -49,6 +49,11 @@ int ipv6_mc_check_mld(struct sk_buff *skb, struct sk_buff **skb_trimmed);
 
 #define IFF_NO_QUEUE	0; dev->tx_queue_len = 0
 
+static inline bool hlist_fake(struct hlist_node *h)
+{
+	return h->pprev == &h->next;
+}
+
 #endif /* < KERNEL_VERSION(4, 3, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
@@ -187,3 +192,15 @@ static inline int batadv_nla_put_u64_64bit(struct sk_buff *skb, int attrtype,
 
 #endif /* < KERNEL_VERSION(4, 7, 0) */
 
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0)
+
+#include_next <linux/cache.h>
+
+/* hack for netlink.c which marked the family ops as ro */
+#ifdef __ro_after_init
+#undef __ro_after_init
+#endif
+#define __ro_after_init
+
+#endif /* < KERNEL_VERSION(4, 10, 0) */

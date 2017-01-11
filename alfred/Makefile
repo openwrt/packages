@@ -11,9 +11,9 @@ include $(TOPDIR)/rules.mk
 # The latest alfred git hash in PKG_REV can be obtained from https://git.open-mesh.org/alfred.git
 #
 PKG_NAME:=alfred
-PKG_VERSION:=2016.4
+PKG_VERSION:=2016.5
 PKG_RELEASE:=0
-PKG_MD5SUM:=172501ca734ac584fa13f10dcfa708da
+PKG_MD5SUM:=e03d422ed3b5a162b90e8af13389523f
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
