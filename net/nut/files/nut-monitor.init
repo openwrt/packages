@@ -2,18 +2,170 @@
 
 START=60
 USE_PROCD=1
+UPSMON_C=/var/etc/nut/upsmon.conf
 
-restart() {
-	stop_service
-	start_service
+nut_upsmon_conf() {
+	local cfg="$1"
+
+	echo "# Config file automatically generated from UCI config" > $UPSMON_C
+
+	config_get runas "$cfg" runas "nut"
+	[ -n "$runas" ] && echo "RUN_AS_USER $runas" >> $UPSMON_C
+
+	config_get val "$cfg" minsupplies 1
+	echo "MINSUPPLIES $val" >> $UPSMON_C
+
+	config_get val "$cfg" shutdowncmd "/sbin/halt"
+	echo "SHUTDOWNCMD \"$val\"" >> $UPSMON_C
+
+	config_get val "$cfg" notifycmd
+	[ -n "$val" ] && echo "NOTIFYCMD \"$val\"" >> $UPSMON_C
+
+	config_get val "$cfg" pollfreq 5
+	echo "POLLFREQ $val" >> $UPSMON_C
+
+	config_get val "$cfg" pollfreqalert 5
+	echo "POLLFREQALERT $val" >> $UPSMON_C
+
+	config_get val "$cfg" hostsync 15
+	echo "HOSTSYNC $val" >> $UPSMON_C
+
+	config_get val "$cfg" deadtime 15
+	echo "DEADTIME $val" >> $UPSMON_C
+
+	config_get val "$cfg" powerdownflag /var/run/killpower
+	echo "POWERDOWNFLAG $val" >> $UPSMON_C
+
+	config_get val "$cfg" onlinemsg
+	[ -n "$val" ] && echo "NOTIFYMSG ONLINE \"$val\"" >> $UPSMON_C
+	config_get val "$cfg" onbattmsg
+	[ -n "$val" ] && echo "NOTIFYMSG ONBATT \"$val\"" >> $UPSMON_C
+	config_get val "$cfg" lowbattmsg
+	[ -n "$val" ] && echo "NOTIFYMSG LOWBATT \"$val\"" >> $UPSMON_C
+	config_get val "$cfg" fsdmsg
+	[ -n "$val" ] && echo "NOTIFYMSG FSD \"$val\"" >> $UPSMON_C
+	config_get val "$cfg" commokmsg
+	[ -n "$val" ] && echo "NOTIFYMSG COMMOK \"$val\"" >> $UPSMON_C
+	config_get val "$cfg" commbadmsg
+	[ -n "$val" ] && echo "NOTIFYMSG COMMBAD \"$val\"" >> $UPSMON_C
+	config_get val "$cfg" shutdownmsg
+	[ -n "$val" ] && echo "NOTIFYMSG SHUTDOWN \"$val\"" >> $UPSMON_C
+	config_get val "$cfg" replbattmsg
+	[ -n "$val" ] && echo "NOTIFYMSG REPLBATT \"$val\"" >> $UPSMON_C
+	config_get val "$cfg" nocommmsg
+	[ -n "$val" ] && echo "NOTIFYMSG NOCOMM \"$val\"" >> $UPSMON_C
+	config_get val "$cfg" noparentmsg
+	[ -n "$val" ] && echo "NOTIFYMSG NOPARENT \"$val\"" >> $UPSMON_C
+
+	notifylist() {
+		local value="$1"
+		append optval "$value" "+"
+	}
+
+	setnotify() {
+		local cfg="$1"
+		local optname="$2"
+		local optval
+		config_list_foreach "$cfg" "$optname" notifylist
+		if [ -z "$optval" ]; then
+			# If no list fallback to trying option, fallback to default
+			config_get optval "$cfg" "$optname" "$default"
+			if [ -n "$optval" ]; then
+				echo "$optval"
+			else
+				# No default, so do the NUT default
+				echo "SYSLOG"
+			fi
+		else
+			echo "$optval"
+		fi
+        }
+
+	local default optval
+	val=""
+	config_list_foreach "$cfg" defaultnotify notifylist
+	default="$optval"
+	echo "NOTIFYFLAG ONLINE $(setnotify "$cfg" onlinenotify)" >> $UPSMON_C
+	echo "NOTIFYFLAG ONBATT $(setnotify "$cfg" onbattnotify)" >> $UPSMON_C
+	echo "NOTIFYFLAG LOWBATT $(setnotify "$cfg" lowbatnotify)" >> $UPSMON_C
+	echo "NOTIFYFLAG FSD $(setnotify "$cfg" fsdnotify)" >> $UPSMON_C
+	echo "NOTIFYFLAG COMMOK $(setnotify "$cfg" commoknotify)" >> $UPSMON_C
+	echo "NOTIFYFLAG COMMBAD $(setnotify "$cfg" commbadnotify)" >> $UPSMON_C
+	echo "NOTIFYFLAG SHUTDOWN $(setnotify "$cfg" shutdownnotify)" >> $UPSMON_C
+	echo "NOTIFYFLAG REPLBATT $(setnotify "$cfg" repolbattnotify)" >> $UPSMON_C
+	echo "NOTIFYFLAG NOCOMM $(setnotify "$cfg" nocommnotify)" >> $UPSMON_C
+	echo "NOTIFYFLAG NOPARENT $(setnotify "$cfg" noparentnotify)" >> $UPSMON_C
+
+	config_get val "$cfg" rbwarntime 43200
+	echo "RBWARNTIME $val" >> $UPSMON_C
+
+	config_get val "$cfg" nocommwarntime 300
+	echo "NOCOMMWARNTIME $val" >> $UPSMON_C
+
+	config_get val "$cfg" finaldelay 5
+	echo "FINALDELAY $val" >> $UPSMON_C
+
+	config_get val "$cfg" certpath
+	if [ -n "$val" ]; then echo "CERTPATH $val" >> $UPSMON_C; fi
+
+	config_get_bool val "$cfg" certverify 0
+	if [ -n "$val" ]; then echo "CERTVERIFY $val" >> $UPSMON_C; fi
+
+	config_get_bool val "$cfg" forcessl 0
+	if [ -n "$val" ]; then echo "FORCESSL $val" >> $UPSMON_C; fi
+}
+
+nut_upsmon_add() {
+	local cfg="$1"
+	local type="$2"
+	local upsname
+	local hostname
+	local port
+	local powervalue
+	local username
+	local password
+	local system
+
+	# If no core config, use defaults
+	[ -r $UPSMON_C ] || nut_upsmon_conf ""
+
+	config_get upsname "$cfg" upsname
+	config_get hostname "$cfg" hostname localhost
+	config_get port "$cfg" port
+	config_get powervalue "$cfg" powervalue 1
+	config_get username "$cfg" username
+	config_get password "$cfg" password
+	system="$upsname@$hostname"
+	if [ -n "$port" ]; then
+	    system="$system:$port";
+	fi
+	echo "MONITOR $system $powervalue $username $password $type" >> $UPSMON_C
 }
 
 start_service() {
-	upsmon -p
+	[ -d $RUN_D ] || mkdir -p $RUN_D
+        mkdir -p /var/etc/nut
+        chmod 640 /var/etc/nut
+	rm -f $UPSMON_C
+
+	config_load nut_monitor
+
+	config_foreach nut_upsmon_conf upsmon
+	config_foreach nut_upsmon_add master master
+	config_foreach nut_upsmon_add slave slave
+
+	[ -z "$(cat /var/etc/nut/nut.conf)" ] && echo "MODE=netclient" >>/var/etc/nut/nut.conf
+
+	chmod 640 $UPSMON_C
+	chmod 640 /var/etc/nut/nut.conf
+
+	chown ${runas:-root}:$(id -gn ${runas:-root}) $UPSMON_C
+	$DEBUG /usr/sbin/upsmon $UPSMON_OPTIONS
 }
 
 stop_service() {
-	upsmon -c stop
+	[ -r $PID_F ] && /usr/sbin/upsmon -c stop
+	rm -f $UPSMON_C
 }
 
 reload_service() {

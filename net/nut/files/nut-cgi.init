@@ -1,0 +1,44 @@
+#!/bin/sh /etc/rc.common
+# Copyright © 2012 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+START=51
+
+DEFAULT=/etc/default/nut
+UPSCGI_C=/var/etc/nut/hosts.conf
+
+nut_upscgi_add() {
+	local cfg="$1"
+	local upsname
+	local hostname
+	local port
+	local displayname
+
+	config_get upsname "$cfg" upsname
+	config_get hostname "$cfg" hostname localhost
+	config_get port "$cfg" port
+	config_get pass "$cfg" password
+	system="$upsname@$hostname"
+	if [ -n "$port" ]; then
+	    system="$system:$port";
+	fi
+	config_get displayname "$cfg" displayname
+	echo "MONITOR $system \"$displayname\"" >> $UPSCGI_C
+}
+
+start() {
+	rm -f $UPSCGI_C
+
+	config_load nut_cgi
+
+	config_foreach nut_upscgi_add host
+
+	chmod 640 /var/etc/nut/hosts.conf
+}
+
+stop() {
+	rm -f $UPSCGI_C
+}
+

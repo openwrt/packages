@@ -1,0 +1,6 @@
+#config host
+#	option upsname upsname
+#	option hostname localhost
+#	option port # optional port number
+#	option displayname "Display Name"
+
