@@ -1,57 +1,112 @@
 #!/bin/sh
 # /usr/lib/ddns/dynamic_dns_updater.sh
 #
-# Original written by Eric Paul Bishop, January 2008
 #.Distributed under the terms of the GNU General Public License (GPL) version 2.0
+# Original written by Eric Paul Bishop, January 2008
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
-#
-# extended and partial rewritten in August 2014 by
-#.Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
-# to support:
-# - IPv6 DDNS services
-# - DNS Server to retrieve registered IP including TCP transport (Ticket 7820)
-# - Proxy Server to send out updates
-# - force_interval=0 to run once (Luci Ticket 538)
-# - the usage of BIND's host command instead of BusyBox's nslookup if installed
-# - extended Verbose Mode and log file support for better error detection
-# - wait for interface to fully come up, before the first update is done
+# extended and partial rewritten
+#.2014-2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # variables in small chars are read from /etc/config/ddns
 # variables in big chars are defined inside these scripts as global vars
 # variables in big chars beginning with "__" are local defined inside functions only
 # set -vx  	#script debugger
 
-[ $# -lt 1 -o -n "${2//[0-3]/}" -o ${#2} -gt 1 ] && {
-	echo -e "\n  USAGE:"
-	echo -e "  $0 [SECTION] [VERBOSE_MODE]\n"
-	echo    "  [SECTION]      - service section as defined in /etc/config/ddns"
-	echo    "  [VERBOSE_MODE] - '0' NO output to console"
-	echo    "                   '1' output to console"
-	echo    "                   '2' output to console AND logfile"
-	echo    "                       + run once WITHOUT retry on error"
-	echo    "                   '3' output to console AND logfile"
-	echo    "                       + run once WITHOUT retry on error"
-	echo -e "                       + NOT sending update to DDNS service\n"
+. $(dirname $0)/dynamic_dns_functions.sh	# global vars are also defined here
+
+usage() {
+	cat << EOF
+
+Usage:
+ $MYPROG [options] -- command
+
+Commands:
+start                Start SECTION or NETWORK or all
+stop                 Stop NETWORK or all
+
+Parameters:
+ -n NETWORK          Start/Stop sections in background monitoring NETWORK, force VERBOSE=0
+ -S SECTION          SECTION to start
+                     use either -N NETWORK or -S SECTION
+
+ -h                  show this help and exit
+ -V                  show version and exit
+ -v LEVEL            VERBOSE=LEVEL (default 1)
+                        '0' NO output to console
+                        '1' output to console
+                        '2' output to console AND logfile
+                            + run once WITHOUT retry on error
+                        '3' output to console AND logfile
+                            + run once WITHOUT retry on error
+                            + NOT sending update to DDNS service
+
+EOF
+}
+
+usage_err() {
+	printf %s\\n "$MYPROG: $@" >&2
+	usage >&2
 	exit 1
 }
 
-. /usr/lib/ddns/dynamic_dns_functions.sh	# global vars are also defined here
+while getopts ":hv:n:S:V" OPT; do
+	case "$OPT" in
+		h)	usage; exit 0;;
+		v)	VERBOSE=$OPTARG;;
+		n)	NETWORK=$OPTARG;;
+		S)	SECTION_ID=$OPTARG;;
+		V)	printf %s\\n "ddns-scripts $VERSION"; exit 0;;
+		:)	usage_err "option -$OPTARG missing argument";;
+		\?)	usage_err "invalid option -$OPTARG";;
+		*)	usage_err "unhandled option -$OPT $OPTARG";;
+	esac
+done
+shift $((OPTIND - 1 ))	# OPTIND is 1 based
 
-SECTION_ID="$1"
-VERBOSE_MODE=${2:-1}	# default mode is log to console
+[ -n "$NETWORK" -a -n "$SECTION_ID" ] && usage_err "use either option '-N' or '-S' not both"
+[ $# -eq 0 ] && usage_err "missing command"
+[ $# -gt 1 ] && usage_err "to much commands"
+
+case "$1" in
+	start)
+		if [ -n "$NETWORK" ]; then
+			start_daemon_for_all_ddns_sections "$NETWORK"
+			exit 0
+		fi
+		if [ -z "$SECTION_ID" ]; then
+			start_daemon_for_all_ddns_sections
+			exit 0
+		fi
+		;;
+	stop)
+		if [ -n "$INTERFACE" ]; then
+			stop_daemon_for_all_ddns_sections "$NETWORK"
+			exit 0
+		else
+			stop_daemon_for_all_ddns_sections
+			exit 0
+		fi
+		exit 1
+		;;
+	reload)
+		killall -1 dynamic_dns_updater.sh 2>/dev/null
+		exit $?
+		;;
+	*)	usage_err "unknown command - $1";;
+esac
 
 # set file names
-PIDFILE="$RUNDIR/$SECTION_ID.pid"	# Process ID file
-UPDFILE="$RUNDIR/$SECTION_ID.update"	# last update successful send (system uptime)
-DATFILE="$RUNDIR/$SECTION_ID.dat"	# save stdout data of WGet and other extern programs called
-ERRFILE="$RUNDIR/$SECTION_ID.err"	# save stderr output of WGet and other extern programs called
-LOGFILE="$LOGDIR/$SECTION_ID.log"	# log file
+PIDFILE="$ddns_rundir/$SECTION_ID.pid"	# Process ID file
+UPDFILE="$ddns_rundir/$SECTION_ID.update"	# last update successful send (system uptime)
+DATFILE="$ddns_rundir/$SECTION_ID.dat"	# save stdout data of WGet and other extern programs called
+ERRFILE="$ddns_rundir/$SECTION_ID.err"	# save stderr output of WGet and other extern programs called
+LOGFILE="$ddns_logdir/$SECTION_ID.log"	# log file
 
-# VERBOSE_MODE > 1 delete logfile if exist to create an empty one
+# VERBOSE > 1 delete logfile if exist to create an empty one
 # only with this data of this run for easier diagnostic
 # new one created by write_log function
-[ $VERBOSE_MODE -gt 1 -a -f $LOGFILE ] && rm -f $LOGFILE
+[ $VERBOSE -gt 1 -a -f $LOGFILE ] && rm -f $LOGFILE
 
 # TRAP handler
 trap "trap_handler 0 \$?" 0	# handle script exit with exit status
@@ -70,16 +125,19 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 #
 # defined options (also used as variable):
 #
-# enable	self-explanatory
+# enabled	self-explanatory
 # interface 	network interface used by hotplug.d i.e. 'wan' or 'wan6'
 #
 # service_name	Which DDNS service do you use or "custom"
 # update_url	URL to use to update your "custom" DDNS service
 # update_script SCRIPT to use to update your "custom" DDNS service
 #
-# domain 	Your DNS name / replace [DOMAIN] in update_url
-# username 	Username of your DDNS service account / replace [USERNAME] in update_url
-# password 	Password of your DDNS service account / replace [PASSWORD] in update_url
+# lookup_host	FQDN of ONE of your at DDNS service defined host / required to validate if IP update happen/necessary
+# domain 	Nomally your DDNS hostname / replace [DOMAIN] in update_url
+# username 	Username of your DDNS service account / urlenceded and replace [USERNAME] in update_url
+# password 	Password of your DDNS service account / urlencoded and replace [PASSWORD] in update_url
+# param_enc	Optional parameter for (later) usage  / urlencoded and replace [PARAMENC] in update_url
+# param_opt	Optional parameter for (later) usage  / replace [PARAMOPT] in update_url
 #
 # use_https	use HTTPS to update DDNS service
 # cacert	file or directory where HTTPS can find certificates to verify server; 'IGNORE' ignore check of server certificate
@@ -108,6 +166,7 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # force_dnstcp		force communication with DNS server via TCP instead of default UDP
 # proxy			using a proxy for communication !!! ALSO used to detect local IP via web => return proxy's IP !!!
 # use_logfile		self-explanatory "/var/log/ddns/$SECTION_ID.log"
+# is_glue			the record that should be updated is a glue record
 #
 # some functionality needs
 # - GNU Wget or cURL installed for sending updates to DDNS service
@@ -128,6 +187,7 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 [ -z "$force_ipversion" ] && force_ipversion=0	# default let system decide
 [ -z "$force_dnstcp" ]	  && force_dnstcp=0	# default UDP
 [ -z "$ip_source" ]	  && ip_source="network"
+[ -z "$is_glue" ]	  && is_glue=0		# default the ddns record is not a glue record
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 0 ] && ip_network="wan"  # IPv4: default wan
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 1 ] && ip_network="wan6" # IPv6: default wan6
 [ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 0 ] && ip_url="http://checkip.dyndns.com"
@@ -136,24 +196,26 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 
 # SECTION_ID does not exists
 [ $ERR_LAST -ne 0 ] && {
-	[ $VERBOSE_MODE -le 1 ] && VERBOSE_MODE=2	# force console out and logfile output
-	[ -f $LOGFILE ] && rm -f $LOGFILE		# clear logfile before first entry
+	[ $VERBOSE -le 1 ] && VERBOSE=2		# force console out and logfile output
+	[ -f $LOGFILE ] && rm -f $LOGFILE	# clear logfile before first entry
 	write_log  7 "************ ************** ************** **************"
 	write_log  5 "PID '$$' started at $(eval $DATE_PROG)"
+	write_log  7 "ddns version  : $VERSION"
 	write_log  7 "uci configuration:\n$(uci -q show ddns | grep '=service' | sort)"
 	write_log 14 "Service section '$SECTION_ID' not defined"
 }
 
 write_log 7 "************ ************** ************** **************"
 write_log 5 "PID '$$' started at $(eval $DATE_PROG)"
+write_log 7 "ddns version  : $VERSION"
 write_log 7 "uci configuration:\n$(uci -q show ddns.$SECTION_ID | sort)"
-write_log 7 "ddns version  : $(opkg list-installed ddns-scripts | cut -d ' ' -f 3)"
-case $VERBOSE_MODE in
+# write_log 7 "ddns version  : $(opkg list-installed ddns-scripts | cut -d ' ' -f 3)"
+case $VERBOSE in
 	0) write_log  7 "verbose mode  : 0 - run normal, NO console output";;
 	1) write_log  7 "verbose mode  : 1 - run normal, console mode";;
 	2) write_log  7 "verbose mode  : 2 - run once, NO retry on error";;
 	3) write_log  7 "verbose mode  : 3 - run once, NO retry on error, NOT sending update";;
-	*) write_log 14 "error detecting VERBOSE_MODE '$VERBOSE_MODE'";;
+	*) write_log 14 "error detecting VERBOSE '$VERBOSE'";;
 esac
 
 # check enabled state otherwise we don't need to continue
@@ -162,24 +224,41 @@ esac
 # determine what update url we're using if a service_name is supplied
 # otherwise update_url is set inside configuration (custom update url)
 # or update_script is set inside configuration (custom update script)
-[ -n "$service_name" ] && get_service_data update_url update_script
+[ -n "$service_name" ] && get_service_data update_url update_script UPD_ANSWER
 [ -z "$update_url" -a -z "$update_script" ] && write_log 14 "No update_url found/defined or no update_script found/defined!"
 [ -n "$update_script" -a ! -f "$update_script" ] && write_log 14 "Custom update_script not found!"
 
-# without domain and possibly username and password we can do nothing for you
-[ -z "$domain" ] && write_log 14 "Service section not configured correctly! Missing 'domain'"
+# temporary needed to convert existing uci settings
+[ -z "$lookup_host" ] && {
+	uci -q set ddns.$SECTION_ID.lookup_host="$domain"
+	uci -q commit ddns
+	lookup_host="$domain"
+}
+# later versions only check if configured correctly
+
+# without lookup host and possibly other required options we can do nothing for you
+[ -z "$lookup_host" ] && write_log 14 "Service section not configured correctly! Missing 'lookup_host'"
+
 [ -n "$update_url" ] && {
 	# only check if update_url is given, update_scripts have to check themselves
+	[ -z "$domain" ] && $(echo "$update_url" | grep "\[DOMAIN\]" >/dev/null 2>&1) && \
+		write_log 14 "Service section not configured correctly! Missing 'domain'"
 	[ -z "$username" ] && $(echo "$update_url" | grep "\[USERNAME\]" >/dev/null 2>&1) && \
 		write_log 14 "Service section not configured correctly! Missing 'username'"
 	[ -z "$password" ] && $(echo "$update_url" | grep "\[PASSWORD\]" >/dev/null 2>&1) && \
 		write_log 14 "Service section not configured correctly! Missing 'password'"
+	[ -z "$param_enc" ] && $(echo "$update_url" | grep "\[PARAMENC\]" >/dev/null 2>&1) && \
+		write_log 14 "Service section not configured correctly! Missing 'param_enc'"
+	[ -z "$param_opt" ] && $(echo "$update_url" | grep "\[PARAMOPT\]" >/dev/null 2>&1) && \
+		write_log 14 "Service section not configured correctly! Missing 'param_opt'"
 }
 
 # url encode username (might be email or something like this)
 # and password (might have special chars for security reason)
+# and optional parameter "param_enc"
 [ -n "$username" ] && urlencode URL_USER "$username"
 [ -n "$password" ] && urlencode URL_PASS "$password"
+[ -n "$param_enc" ] && urlencode URL_PENC "$param_enc"
 
 # verify ip_source 'script' if script is configured and executable
 if [ "$ip_source" = "script" ]; then
@@ -220,8 +299,8 @@ get_uptime CURR_TIME
 if [ $LAST_TIME -eq 0 ]; then
 	write_log 7 "last update: never"
 else
-	EPOCH_TIME=$(( $(date +%s) - CURR_TIME + LAST_TIME ))
-	EPOCH_TIME="date -d @$EPOCH_TIME +'$DATE_FORMAT'"
+	EPOCH_TIME=$(( $(date +%s) - $CURR_TIME + $LAST_TIME ))
+	EPOCH_TIME="date -d @$EPOCH_TIME +'$ddns_dateformat'"
 	write_log 7 "last update: $(eval $EPOCH_TIME)"
 fi
 
@@ -244,12 +323,15 @@ get_registered_ip REGISTERED_IP "NO_RETRY"
 ERR_LAST=$?
 #     No error    or     No IP set	 otherwise retry
 [ $ERR_LAST -eq 0 -o $ERR_LAST -eq 127 ] || get_registered_ip REGISTERED_IP
+# on IPv6 we use expanded version to be shure when comparing
+[ $use_ipv6 -eq 1 ] && expand_ipv6 "$REGISTERED_IP" REGISTERED_IP
 
 # loop endlessly, checking ip every check_interval and forcing an updating once every force_interval
 write_log 6 "Starting main loop at $(eval $DATE_PROG)"
 while : ; do
 
 	get_local_ip LOCAL_IP		# read local IP
+	[ $use_ipv6 -eq 1 ] && expand_ipv6 "$LOCAL_IP" LOCAL_IP	# on IPv6 we use expanded version
 
 	# prepare update
 	# never updated or forced immediate then NEXT_TIME = 0
@@ -261,8 +343,8 @@ while : ; do
 
 	# send update when current time > next time or local ip different from registered ip
 	if [ $CURR_TIME -ge $NEXT_TIME -o "$LOCAL_IP" != "$REGISTERED_IP" ]; then
-		if [ $VERBOSE_MODE -gt 2 ]; then
-			write_log 7 "Verbose Mode: $VERBOSE_MODE - NO UPDATE send"
+		if [ $VERBOSE -gt 2 ]; then
+			write_log 7 "Verbose Mode: $VERBOSE - NO UPDATE send"
 		elif [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
 			write_log 7 "Update needed - L: '$LOCAL_IP' <> R: '$REGISTERED_IP'"
 		else
@@ -270,8 +352,8 @@ while : ; do
 		fi
 
 		ERR_LAST=0
-		[ $VERBOSE_MODE -lt 3 ] && {
-			# only send if VERBOSE_MODE < 3
+		[ $VERBOSE -lt 3 ] && {
+			# only send if VERBOSE < 3
 			send_update "$LOCAL_IP"
 			ERR_LAST=$?	# save return value
 		}
@@ -288,27 +370,30 @@ while : ; do
 			[ "$LOCAL_IP" != "$REGISTERED_IP" ] \
 				&& write_log 6 "Update successful - IP '$LOCAL_IP' send" \
 				|| write_log 6 "Forced update successful - IP: '$LOCAL_IP' send"
+		elif [ $ERR_LAST -eq 127 ]; then
+			write_log 3 "No update send to DDNS Provider"
 		else
-			write_log 3 "Can not update IP at DDNS Provider"
+			write_log 3 "IP update not accepted by DDNS Provider"
 		fi
 	fi
 
 	# now we wait for check interval before testing if update was recognized
-	# only sleep if VERBOSE_MODE <= 2 because otherwise nothing was send
-	[ $VERBOSE_MODE -le 2 ] && {
+	# only sleep if VERBOSE <= 2 because otherwise nothing was send
+	[ $VERBOSE -le 2 ] && {
 		write_log 7 "Waiting $CHECK_SECONDS seconds (Check Interval)"
 		sleep $CHECK_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
 		PID_SLEEP=0
-	} || write_log 7 "Verbose Mode: $VERBOSE_MODE - NO Check Interval waiting"
+	} || write_log 7 "Verbose Mode: $VERBOSE - NO Check Interval waiting"
 
 	REGISTERED_IP=""		# clear variable
 	get_registered_ip REGISTERED_IP	# get registered/public IP
+	[ $use_ipv6 -eq 1 ] && expand_ipv6 "$REGISTERED_IP" REGISTERED_IP	# on IPv6 we use expanded version
 
 	# IP's are still different
 	if [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
-		if [ $VERBOSE_MODE -le 1 ]; then	# VERBOSE_MODE <=1 then retry
+		if [ $VERBOSE -le 1 ]; then	# VERBOSE <=1 then retry
 			ERR_UPDATE=$(( $ERR_UPDATE + 1 ))
 			[ $retry_count -gt 0 -a $ERR_UPDATE -gt $retry_count ] && \
 				write_log 14 "Updating IP at DDNS provider failed after $retry_count retries"
@@ -316,17 +401,17 @@ while : ; do
 			continue # loop to beginning
 		else
 			write_log 4 "Updating IP at DDNS provider failed"
-			write_log 7 "Verbose Mode: $VERBOSE_MODE - NO retry"; exit 1
+			write_log 7 "Verbose Mode: $VERBOSE - NO retry"; exit 1
 		fi
 	else
 		# we checked successful the last update
 		ERR_UPDATE=0			# reset error counter
 	fi
 
-	# force_update=0 or VERBOSE_MODE > 1 - leave here
-	[ $VERBOSE_MODE -gt 1 ]  && write_log 7 "Verbose Mode: $VERBOSE_MODE - NO reloop"
+	# force_update=0 or VERBOSE > 1 - leave here
+	[ $VERBOSE -gt 1 ]  && write_log 7 "Verbose Mode: $VERBOSE - NO reloop"
 	[ $FORCE_SECONDS -eq 0 ] && write_log 6 "Configured to run once"
-	[ $VERBOSE_MODE -gt 1 -o $FORCE_SECONDS -eq 0 ] && exit 0
+	[ $VERBOSE -gt 1 -o $FORCE_SECONDS -eq 0 ] && exit 0
 
 	write_log 6 "Rerun IP check at $(eval $DATE_PROG)"
 done

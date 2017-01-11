@@ -29,31 +29,31 @@ config ddns "global"
 	# and LuCI web application.
 	# For codes see man pages of date command.
 	# default: "%F %R" (ISO 8601 format)
-#	option date_format "%F %R"
+#	option ddns_dateformat "%F %R"
 
 	###########
 	# set run directory to use for .pid and .update files
 	# there will be a separate file for every running service section
 	# default: "/var/run/ddns"
-#	option run_dir "/var/run/ddns"
+#	option ddns_rundir "/var/run/ddns"
 
 	###########
 	# set log directory to use for .log files
 	# there will be a separate file for every running service section
 	# default: "/var/log/ddns"
-#	option log_dir "/var/log/ddns"
+#	option ddns_logdir "/var/log/ddns"
 
 	###########
 	# set number of lines stored in .log file before auto truncated
 	# default: "250" lines
-#	option log_lines "250"
+#	option ddns_loglines "250"
 
 	###########
 	# Whether to allow to send Private/Special IP's to the DDNS provider
 	# IPv4: 0.x, 10.x, 127.x, 172.16.x-172.31.x, 192.168.x
 	# IPv6: ::, Fxxx:
 	# default: "0"	disabled
-#	option allow_local_ip "0"
+#	option upd_privateip "0"
 
 #####################################################################
 # DDNS service settings
@@ -115,9 +115,13 @@ config service "myddns"
 #	option update_script   ""
 
 	###########
-	# You must specify your domain/host name, your username and your password
-	# as you get from you DDNS provider. Keep an eye on providers help pages.
+	# Keep an eye on providers help pages.
 	#
+	# FQDN of ONE of your defined host at DDNS provider
+	# REQUIRED to verify what the current IP at DNS using nslookup/host command
+	# default: none
+	option lookup_host ""
+
 	# Your DNS name / replace [DOMAIN] in update_url
 	# default: none
 	option domain ""
@@ -126,9 +130,20 @@ config service "myddns"
 	# default: none
 	option username ""
 
-	# Password of your DDNS service account / replace [PASSWORD] in update_url
+	# Password of your DDNS service account / replace [PASSWORD] in update url
 	# default: none
 	option password ""
+
+	###########
+	# Optional parameters for use inside update_url
+	#
+	# parameter that will be urlencoded before replacement of [PARAMENC] inside update url
+	# default: none
+	option param_enc ""
+
+	# parameter that repace [PARAMOPT] inside update url
+	# default: none
+	option param_opt ""
 
 	###########
 	# use HTTPS for secure communication with you DDNS provider
