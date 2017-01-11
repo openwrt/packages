@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=3a5cc5d58fae009f3f46acae0d0f3aa371a201b7
-PKG_VERSION:=0.10.2-git-20170110-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=d7570f9f93da1c15658b0eff5897d301f7bbedd3
+PKG_VERSION:=0.10.2-git-20170111-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -328,7 +328,7 @@ PLUGIN_transport-bluetooth:=transport_bluetooth
 LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
 
 DEPENDS_utils:=+certtool +openssl-util
-BIN_utils:=gns-proxy-setup-ca transport-certificate-creation scrypt
+BIN_utils:=gns-proxy-setup-ca transport-certificate-creation
 
 DEPENDS_vpn:=+kmod-tun +iptables +firewall
 BIN_vpn:=vpn
