@@ -22,6 +22,11 @@ listen_address() {
     echo "LISTEN $address $port" >>$UPSD_C
 }
 
+upsd_statepath() {
+    local cfg="$1"
+    config_get statepath "$cfg" statepath
+}
+
 upsd_config() {
     local cfg="$1"
     local maxage maxconn certfile
@@ -116,6 +121,10 @@ start_service() {
 	chmod 0640 $UPS_C
 	chmod 0640 $UPSD_C
 	chmod 0640 /var/etc/nut/nut.conf
+	[ -d "${statepath:-/var/run/nut}" ] || {
+		mkdir -m 0750 -p "${statepath:-/var/run/nut}"
+		chown $runas:$(id -gn $runas) "${statepath:-/var/run/nut}"
+	}
 
 	if [ -n "$runas" ]; then
 		chown -R $runas:$(id -gn $runas) /var/etc/nut
@@ -134,12 +143,13 @@ nut_driver_stop() {
 
 	config_get driver "$cfg" driver
 
-	[ -r /var/run/$driver-$cfg ] && /usr/sbin/upsdrvctl stop $cfg
+	[ -r ${statepath:-/var/run/nut}/$driver-$cfg ] && /usr/sbin/upsdrvctl stop $cfg
 }
 
 stop_service() {
 	[ -r $PID_F ] && /usr/sbin/upsd -c stop
 	config_load ups
+	config_foreach upsd_statepath upsd
 	config_foreach nut_driver_stop driver
 }
 
