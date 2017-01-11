@@ -24,6 +24,7 @@ PKG_INSTALL:=1
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_NUT_DRIVER_SNMP \
 	CONFIG_NUT_DRIVER_USB \
+	CONFIG_NUT_DRIVER_SERIAL \
 	CONFIG_NUT_SSL
 
 include $(INCLUDE_DIR)/package.mk
@@ -323,6 +324,7 @@ define DriverPackage
 		DEPENDS:=nut +nut-common
 		$(if $(filter $(1),snmp),DEPENDS+= @NUT_DRIVER_SNMP)
 		$(if $(filter $(1),usb),DEPENDS+= @NUT_DRIVER_USB)
+		$(if $(filter $(1),serial),DEPENDS+= @NUT_DRIVER_SERIAL)
         endef
 	# Deliberately empty description in order to trigger a build failure.
 	# It should be overridden by the list below, and when updating to a
@@ -478,6 +480,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_NUT_DRIVER_USB),with,without)-usb \
 	--without-avahi \
 	--$(if $(CONFIG_NUT_DRIVER_SNMP),with,without)-snmp \
+	--$(if $(CONFIG_NUT_DRIVER_SERAL),with,without)-serial \
 	--without-neon \
 	--without-powerman \
 	--with-cgi \
