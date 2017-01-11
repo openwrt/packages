@@ -64,8 +64,8 @@ define Host/Compile
 endef
 
 define Host/Install
-	$(INSTALL_DIR) $(HOST_BUILD_PREFIX)/bin
-	$(CP) $(HOST_BUILD_DIR)/lib/util/mksig{list,name} $(HOST_BUILD_PREFIX)/bin/
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
+	$(CP) $(HOST_BUILD_DIR)/lib/util/mksig{list,name} $(STAGING_DIR_HOSTPKG)/bin/
 endef
 
 $(eval $(call HostBuild))

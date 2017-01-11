@@ -147,14 +147,14 @@ endef
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/bin/pg_config/pg_config $(STAGING_DIR)/usr/bin/
-	$(INSTALL_DIR) $(STAGING_DIR)/host/bin/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg $(STAGING_DIR)/host/bin/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/timezone/zic $(STAGING_DIR)/host/bin/
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg $(STAGING_DIR_HOSTPKG)/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/timezone/zic $(STAGING_DIR_HOSTPKG)/bin/
 endef
 
 define Build/Configure
 	$(Build/Configure/Default)
-	$(SED) 's@ECPG = ../../preproc/ecpg@ECPG = $(STAGING_DIR)/host/bin/ecpg@' $(PKG_BUILD_DIR)/src/interfaces/ecpg/test/Makefile.regress
+	$(SED) 's@ECPG = ../../preproc/ecpg@ECPG = $(STAGING_DIR_HOSTPKG)/bin/ecpg@' $(PKG_BUILD_DIR)/src/interfaces/ecpg/test/Makefile.regress
 endef
 
 TARGET_CFLAGS += $(FPIC) -lpthread

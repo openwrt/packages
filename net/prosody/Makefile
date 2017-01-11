@@ -50,7 +50,7 @@ define Build/Configure
 	# this is *NOT* GNU autoconf stuff
 	(cd $(PKG_BUILD_DIR); ./configure \
 		--prefix=/usr \
-		--with-lua="$(STAGING_DIR)/host/bin" \
+		--with-lua="$(STAGING_DIR_HOSTPKG)/bin" \
 		--with-lua-include="$(STAGING_DIR)/usr/include" \
 		--with-lua-lib="$(STAGING_DIR)/usr/lib" \
 		--cflags="$(TARGET_CFLAGS)" \

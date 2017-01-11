@@ -69,7 +69,7 @@ CONFIG_PACKAGE_python-packages-envs:=$(call qstrip,$(CONFIG_PACKAGE_python-packa
 CONFIG_PACKAGE_python-packages-extra-deps:=$(call qstrip,$(CONFIG_PACKAGE_python-packages-extra-deps))
 CONFIG_PACKAGE_python-packages-pip-opts:=$(call qstrip,$(CONFIG_PACKAGE_python-packages-pip-opts))
 
-HOST_PYTHON_PIP:=$(STAGING_DIR)/host/bin/pip$(PYTHON_VERSION)
+HOST_PYTHON_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON_VERSION)
 
 decr=$(word $(1),0 1 2 3 4 5 6 7 8 9 10)
 recur=$(if $(subst 0,,$(2)),$(call recur,$(1),$(call decr,$(2)),$(call $(1)$(2),$(3))),$(3))
@@ -92,7 +92,7 @@ HOST_PYTHON_PIP_INSTALL=$(HOST_PYTHON_PIP) install \
 	$(if $(CONFIG_PACKAGE_python-packages-index-url), --index-url $(CONFIG_PACKAGE_python-packages-index-url)) \
 	$(if $(CONFIG_PACKAGE_python-packages-pip-opts), $(CONFIG_PACKAGE_python-packages-pip-opts)) \
 
-HOST_PYTHON_PIP_INSTALL_HOST:=$(call HOST_PYTHON_PIP_INSTALL,$(STAGING_DIR)/host,"")
+HOST_PYTHON_PIP_INSTALL_HOST:=$(call HOST_PYTHON_PIP_INSTALL,$(STAGING_DIR_HOSTPKG),"")
 HOST_PYTHON_PIP_INSTALL_TARGET=$(call HOST_PYTHON_PIP_INSTALL,$(PKG_INSTALL_DIR)/$(call req2dir,$(pkg)),/usr)
 HOST_PYTHON_PIP_INSTALL_CLEANUP:=$(call HOST_PYTHON_PIP_INSTALL,$(PKG_INSTALL_DIR)/_cleanup,/usr)
 

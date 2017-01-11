@@ -90,7 +90,7 @@ endef
 define Host/Install
 	# When ruby version is updated, make install asks in some cases before replace
 	# an existing different file. Remove them before install and avoid the interaction
-	rm -f $(HOST_BUILD_PREFIX)/bin/rake
+	rm -f $(STAGING_DIR_HOSTPKG)/bin/rake
 	$(call Host/Install/Default)
 endef
 

@@ -11,12 +11,12 @@ diff -rupN seafile-ccnet-5.1.1.orig/lib/Makefile.am seafile-ccnet-5.1.1/lib/Make
  ccnet-object.h: ${ccnet_object_define}
  	rm -f $@
 -	valac --pkg posix ${ccnet_object_define} -C -H ccnet-object.h
-+	"$(STAGING_DIR)/host/bin/valac" --pkg posix ${ccnet_object_define} -C -H ccnet-object.h
++	"$(STAGING_DIR_HOSTPKG)/bin/valac" --pkg posix ${ccnet_object_define} -C -H ccnet-object.h
  
  ccnetobj.c: ${ccnet_object_define}
  	rm -f $@
 -	valac -C --pkg posix ${ccnet_object_define}
-+	"$(STAGING_DIR)/host/bin/valac" -C --pkg posix ${ccnet_object_define}
++	"$(STAGING_DIR_HOSTPKG)/bin/valac" -C --pkg posix ${ccnet_object_define}
  
  searpc_gen = searpc-signature.h searpc-marshal.h
  
