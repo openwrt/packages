@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.7.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
@@ -307,6 +307,7 @@ define Package/nut-web-cgi/install
 	$(INSTALL_CONF) ./files/add_nut_httpd_conf $(1)/etc/uci-defaults/add_nut_httpd_conf
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats.html.sample $(1)/etc/nut/upsstats.html
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats-single.html.sample $(1)/etc/nut/upsstats-single.html
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsset.conf.sample $(1)/etc/nut/upsset.conf
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_cgi $(1)/etc/config/nut_cgi
 	$(INSTALL_DIR) $(1)/etc/init.d
