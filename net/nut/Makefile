@@ -275,6 +275,7 @@ define Package/nut-web-cgi/conffiles
 /etc/nut/upsstats.html
 /etc/nut/upsstats-single.html
 /etc/config/nut_cgi
+/etc/httpd.conf
 endef
 
 define Package/nut-web-cgi/install
