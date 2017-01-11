@@ -129,9 +129,7 @@ define perlmod/Install/NoStrip
 endef
 
 
-define perlmod/Install
-	$(call perlmod/Install/NoStrip,$(1),$(2),$(3))
-
+define perlmod/_DoStrip
 	@echo "---> Stripping modules in: $(strip $(1))$(PERL_SITELIB)"
 	find $(strip $(1))$(PERL_SITELIB) -name \*.pm -or -name \*.pl | \
 	xargs -r sed -i \
@@ -139,6 +137,12 @@ define perlmod/Install
 		-e '/^=\(head\|pod\|item\|over\|back\|encoding\|begin\|end\|for\)/,$$$$d' \
 		-e '/^#$$$$/d' \
 		-e '/^#[^!"'"'"']/d'
+endef
+
+define perlmod/Install
+	$(call perlmod/Install/NoStrip,$(1),$(2),$(3))
+
+	$(if $(CONFIG_PERL_NOCOMMENT),$(if $(PKG_LEAVE_COMMENTS),,$(call perlmod/_DoStrip,$(1),$(2),$(3))))
 endef
 
 # You probably don't want to use this directly. Look at perlmod/InstallTests
