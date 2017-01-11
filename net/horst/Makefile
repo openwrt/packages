@@ -26,6 +26,7 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 MAKE_FLAGS += DEBUG=1 LIBNL=tiny
+TARGET_CFLAGS += -D_GNU_SOURCE
 
 define Package/horst
 	SECTION:=net
