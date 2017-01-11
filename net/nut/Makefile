@@ -152,6 +152,24 @@ define Package/nut-upsmon/install
 	ln -sf /var/etc/nut/upsmon.conf $(1)/etc/nut/upsmon.conf
 endef
 
+define Package/nut-upsmon-sendmail-notify
+	$(call Package/nut/Default)
+	TITLE+= (upsmon with notifications via sendmail)
+	DEPENDS:=nut +nut-upsmon
+	CONFLICTS:=nut-upssched
+endef
+
+define Package/nut-upsmon-sendmail-notify/description
+$(call Package/nut/description/Default)
+upsmon with default notification via sendmail
+endef
+
+define Package/nut-upsmon-sendmail-notify/install
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/nut-sendmail-notify $(1)/usr/bin/
+	$(INSTALL_DATA) ./files/nut-sendmail-notify.default $(1)/etc/uci-defaults/nut-sendmail-notify
+endef
+
 define Package/nut-upsc
 	$(call Package/nut/Default)
 	TITLE+= (upsc command)
@@ -504,6 +522,7 @@ $(eval $(call BuildPackage,nut))
 $(eval $(call BuildPackage,nut-common))
 $(eval $(call BuildPackage,nut-server))
 $(eval $(call BuildPackage,nut-upsmon))
+$(eval $(call BuildPackage,nut-upsmon-sendmail-notify))
 $(eval $(call BuildPackage,nut-upsc))
 $(eval $(call BuildPackage,nut-upscmd))
 $(eval $(call BuildPackage,nut-upslog))
