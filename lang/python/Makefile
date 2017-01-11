@@ -229,6 +229,9 @@ define PyPackage/python/filespec
 -|$(PYTHON_PKG_DIR)
 endef
 
+HOST_LDFLAGS += \
+	$$$$(pkg-config --static --libs libcrypto libssl)
+
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
