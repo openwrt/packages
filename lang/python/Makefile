@@ -237,8 +237,7 @@ HOST_CONFIGURE_ARGS+= \
 	--exec-prefix=$(HOST_PYTHON_DIR) \
 	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
 	--with-system-ffi \
-	CONFIG_SITE= \
-	CFLAGS="$(HOST_CFLAGS)"
+	CONFIG_SITE=
 
 define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) install
