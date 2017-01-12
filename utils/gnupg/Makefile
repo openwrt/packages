@@ -18,7 +18,7 @@ PKG_MD5SUM:=b7af897a041c03c8ad1c7c466b54d10d
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
+PKG_MAINTAINER:=Daniel Dickinson <lede@cshore.thecshore.com>
 
 PKG_INSTALL:=1
 
