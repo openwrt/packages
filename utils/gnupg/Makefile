@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
-PKG_VERSION:=1.4.20
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.21
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.franken.de/pub/crypt/mirror/ftp.gnupg.org/gcrypt/gnupg \
 	ftp://ftp.gnupg.org/gcrypt/gnupg
-PKG_MD5SUM:=b7af897a041c03c8ad1c7c466b54d10d
+PKG_MD5SUM:=9bdeabf3c0f87ff21cb3f9216efdd01d
+PKG_HASH:=6b47a3100c857dcab3c60e6152e56a997f2c7862c1b8b2b25adf3884a1ae2276
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
