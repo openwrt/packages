@@ -16,7 +16,7 @@ start_instance() {
 
 	procd_open_instance
 	procd_set_param command ${PROG} \
-		-l "$listen_addr" -p "$listen_port" \
+		-a "$listen_addr" -p "$listen_port" \
 		-u "$user" -g "$group"
 	procd_set_param respawn
 	procd_close_instance
