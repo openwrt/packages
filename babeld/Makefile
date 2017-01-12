@@ -24,7 +24,8 @@ define Package/babeld
   SUBMENU:=Routing and Redirection
   TITLE:=A loop-free distance-vector routing protocol
   URL:=https://www.irif.fr/~jch/software/babel/
-  MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>
+  MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>, \
+              Baptiste Jonglez <openwrt-pkg@bitsofnetworks.org>
   DEPENDS:=@IPV6
 endef
 
