@@ -17,9 +17,10 @@
 #
 local __TTL=600		#.preset DNS TTL (in seconds)
 local __RRTYPE __PW __TCP
+local __PROG=$(which nsupdate)			# BIND nsupdate ?
+[ -z "$__PROG" ] && __PROG=$(which knsupdate)	# Knot nsupdate ?
 
-[ -x /usr/bin/nsupdate ] || write_log 14 "'nsupdate' not installed or not executable !"
-
+[ -z "$__PROG" ]     && write_log 14 "'nsupdate' or 'knsupdate' not installed !"
 [ -z "$username" ]   && write_log 14 "Service section not configured correctly! Missing 'username'"
 [ -z "$password" ]   && write_log 14 "Service section not configured correctly! Missing 'password'"
 [ -z "$dns_server" ] && write_log 14 "Service section not configured correctly! Missing 'dns_server'"
@@ -35,12 +36,13 @@ update del $domain $__RRTYPE
 update add $domain $__TTL $__RRTYPE $__IP
 show
 send
+answer
 quit
 EOF
 
-/usr/bin/nsupdate -d $__TCP $DATFILE >$ERRFILE 2>&1
+$__PROG -d $__TCP $DATFILE >$ERRFILE 2>&1
 
 # nsupdate always return success
-write_log 7 "nsupdate reports:\n$(cat $ERRFILE)"
+write_log 7 "(k)nsupdate reports:\n$(cat $ERRFILE)"
 
 return 0
