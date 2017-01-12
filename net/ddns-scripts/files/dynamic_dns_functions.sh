@@ -1132,7 +1132,7 @@ get_registered_ip() {
 			elif [ -n "$HOSTIP" ]; then
 				__DATA=$(cat $DATFILE | grep -om1 "$__REGEX")
 			elif [ -n "$NSLOOKUP" ]; then
-				__DATA=$(cat $DATFILE | sed -e '1,/Name:/d' | grep -om1 "$__REGEX" )
+				__DATA=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
 			fi
 			[ -n "$__DATA" ] && {
 				write_log 7 "Registered IP '$__DATA' detected"
