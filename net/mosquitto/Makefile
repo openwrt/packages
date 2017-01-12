@@ -209,7 +209,7 @@ define Package/libmosquittopp/install
 endef
 
 # Applies to all...
-MAKE_FLAGS += WITH_DOCS=no
+MAKE_FLAGS += WITH_DOCS=no UNAME=Linux
 ifeq ($(BUILD_VARIANT),nossl)
 	MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
 else
