@@ -9,13 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.7.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
 PKG_MD5SUM:=d4a3459e1577d0efa8d96ca70a885e53
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=MIT BSD-3-Clause-Clear
+
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -38,7 +40,7 @@ define Package/libnetsnmp
 $(call Package/net-snmp/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+PACKAGE_libnl-core:libnl-core
+  DEPENDS:=+libnl-tiny
   TITLE:=Open source SNMP implementation (libraries)
 endef
 
@@ -163,6 +165,7 @@ SNMP_TRANSPORTS_INCLUDED = Callback UDP Unix
 SNMP_TRANSPORTS_EXCLUDED = TCP TCPIPv6
 
 TARGET_CFLAGS += $(FPIC)
+TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/libnl-tiny
 
 CONFIGURE_ARGS += \
 	--enable-mfd-rewrites \
@@ -186,7 +189,12 @@ CONFIGURE_ARGS += \
 	--without-libwrap \
 	--without-rpm \
 	--without-zlib \
+	--with-nl \
 	 $(call autoconf_bool,CONFIG_IPV6,ipv6) \
+
+CONFIGURE_VARS += \
+	ac_cv_header_netlink_netlink_h=yes \
+	netsnmp_cv_func_nl_connect_LIBS=-lnl-tiny \
 
 ifeq ($(CONFIG_IPV6),y)
 SNMP_TRANSPORTS_INCLUDED+= UDPIPv6
