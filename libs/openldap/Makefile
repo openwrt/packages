@@ -17,6 +17,8 @@ PKG_SOURCE_URL:=ftp://ftp.openldap.org/pub/OpenLDAP/openldap-release/ \
 	ftp://ftp.nl.uu.net/pub/unix/db/openldap/openldap-release/ \
 	ftp://ftp.plig.org/pub/OpenLDAP/openldap-release/
 PKG_HASH:=cdd6cffdebcd95161a73305ec13fc7a78e9707b46ca9f84fb897cd5626df3824
+PKG_LICENSE:=OLDAP-2.8
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_FIXUP:=autoreconf
 
