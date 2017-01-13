@@ -42,6 +42,7 @@ endef
 CONFIGURE_ARGS+= \
 	--with-ogg="$(STAGING_DIR)/usr/include" \
 	--with-vorbis="$(STAGING_DIR)/usr/include" \
+	LIBS="-logg"
 
 define Package/ices/install
 	$(INSTALL_DIR) $(1)/usr/bin
