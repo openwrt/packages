@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.49.7
+PKG_VERSION:=2.50.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
-PKG_SOURCE_URL:=@GNOME/glib/2.49
-PKG_MD5SUM:=397ead3fcf325cb921d54e2c9e7dfd7a
+PKG_SOURCE_URL:=@GNOME/glib/2.50
+PKG_MD5SUM:=5eeb2bfaf78a07be59585e8b6e80b1d6
 
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
@@ -54,6 +54,7 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--enable-debug=no \
 	--disable-selinux \
+	--enable-libmount=no \
 	--disable-fam \
 	--with-libiconv=gnu \
 	--with-pcre=internal
