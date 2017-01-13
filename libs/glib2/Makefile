@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
 PKG_VERSION:=2.50.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
@@ -47,7 +47,8 @@ endef
 HOST_CONFIGURE_ARGS += \
 	--disable-selinux \
 	--with-libiconv=gnu \
-	--with-pcre=internal
+	--with-pcre=internal \
+	--enable-libmount=no
 
 CONFIGURE_ARGS += \
 	--enable-shared \
