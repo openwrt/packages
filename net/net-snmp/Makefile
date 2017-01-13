@@ -91,15 +91,10 @@ endef
 
 define Package/snmpd-static
 $(call Package/net-snmp/Default)
+  DEPENDS:=+snmpd
   TITLE:=Open source SNMP implementation (daemon)
-  DEPENDS:=+PACKAGE_libnl-core:libnl-core
 endef
 
-define Package/snmpd-static/description
-$(call Package/net-snmp/Default/description)
- .
- This package contains the SNMP agent, statically linked.
-endef
 
 
 SNMP_MIB_MODULES_INCLUDED = \
@@ -202,21 +197,11 @@ endif
 
 TARGET_LDFLAGS += -L$(TOOLCHAIN_DIR)/usr/lib
 
-ifdef CONFIG_PACKAGE_snmpd-static
-  define Build/Compile/static
-	$(MAKE) -C $(PKG_BUILD_DIR)/agent \
-		LDFLAGS="$(TARGET_LDFLAGS) -lm -static" \
-		EXEEXT="-static" \
-		snmpd-static
-  endef
-endif
-
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lm -lc" \
 		all install
-	$(Build/Compile/static)
 endef
 
 define Build/InstallDev
@@ -258,21 +243,6 @@ define Package/snmpd/install
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmpd $(1)/usr/sbin/snmpd
-endef
-
-define Package/snmpd-static/conffiles
-/etc/config/snmpd
-endef
-
-define Package/snmpd-static/install
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
-	$(INSTALL_DIR) $(1)/etc/snmp
-	ln -sf /var/run/snmpd.conf $(1)/etc/snmp/
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/agent/snmpd-static $(1)/usr/sbin/snmpd
 endef
 
 $(eval $(call BuildPackage,libnetsnmp))
