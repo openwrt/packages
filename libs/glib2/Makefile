@@ -46,7 +46,7 @@ endef
 
 HOST_CONFIGURE_ARGS += \
 	--disable-selinux \
-	--with-libiconv=gnu \
+	$(if $(ICONV_FULL),--with-libiconv=gnu)
 	--with-pcre=internal
 
 CONFIGURE_ARGS += \
@@ -56,7 +56,7 @@ CONFIGURE_ARGS += \
 	--disable-selinux \
 	--enable-libmount=no \
 	--disable-fam \
-	--with-libiconv=gnu \
+	$(if $(ICONV_FULL),--with-libiconv=gnu)
 	--with-pcre=internal
 
 CONFIGURE_VARS += \
