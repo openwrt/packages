@@ -1,5 +1,14 @@
 --- a/src/config/torrc.sample.in
 +++ b/src/config/torrc.sample.in
+@@ -39,7 +39,7 @@
+ ## Send every possible message to @LOCALSTATEDIR@/log/tor/debug.log
+ #Log debug file @LOCALSTATEDIR@/log/tor/debug.log
+ ## Use the system log instead of Tor's logfiles
+-#Log notice syslog
++Log notice syslog
+ ## To send all messages to stderr:
+ #Log debug stderr
+ 
 @@ -50,7 +50,7 @@
  
  ## The directory for keeping all the keys/etc. By default, we store
