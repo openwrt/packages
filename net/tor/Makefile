@@ -102,6 +102,7 @@ endef
 define Package/tor-geoip/install
 	$(INSTALL_DIR) $(1)/usr/share/tor
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/tor/geoip $(1)/usr/share/tor/
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/tor/geoip6 $(1)/usr/share/tor/
 endef
 
 $(eval $(call BuildPackage,tor))
