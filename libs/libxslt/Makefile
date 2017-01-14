@@ -83,7 +83,7 @@ define Build/InstallDev/Xslt
 		$(PKG_INSTALL_DIR)/usr/bin/xslt-config \
 		$(2)/bin/
 
-	ln -sf $(STAGING_DIR_HOSTPKG)/bin/xslt-config $(1)/usr/bin/xslt-config
+	ln -sf $(STAGING_DIR)/host/bin/xslt-config $(1)/usr/bin/xslt-config
 
 	$(SED) \
 		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
