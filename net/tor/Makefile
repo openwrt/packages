@@ -61,6 +61,8 @@ endef
 
 define Package/tor/conffiles
 /etc/tor/torrc
+/var/lib/tor/fingerprint
+/var/lib/tor/keys/*
 endef
 
 CONFIGURE_ARGS += \
