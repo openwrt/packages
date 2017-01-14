@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
-PKG_VERSION:=0.2.8.11
+PKG_VERSION:=0.2.9.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dist.torproject.org/ \
 	https://archive.torproject.org/tor-package-archive
-PKG_MD5SUM:=7adea0bfa17edafd4e09453f4f58a0dca737660e5358f9dafd52d55d55dc6ab3
+PKG_MD5SUM:=fbdd33d3384574297b88744622382008d1e0f9ddd300d330746c464b7a7d746a
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de>
 PKG_LICENSE_FILES:=LICENSE
 
@@ -66,17 +66,23 @@ endef
 CONFIGURE_ARGS += \
 	--with-libevent-dir="$(STAGING_DIR)/usr" \
 	--with-ssl-dir="$(STAGING_DIR)/usr" \
+	--with-openssl-dir="$(STAGING_DIR)/usr" \
+	--with-zlib-dir="$(STAGING_DIR)/usr" \
 	--disable-asciidoc \
-	--disable-seccomp
+	--disable-seccomp \
+	--disable-libscrypt \
+	--disable-unittests \
+	--disable-largefile \
+	--with-tor-user=tor \
+	--with-tor-group=tor
+
+EXTRA_CFLAGS += -std=gnu99
 
 ifneq ($(CONFIG_SSP_SUPPORT),y)
 	CONFIGURE_ARGS += \
 		--disable-gcc-hardening
-	MAKE_FLAGS += \
-		CFLAGS="$(TARGET_CFLAGS) -std=gnu99"
 else
-	MAKE_FLAGS += \
-		CFLAGS="$(TARGET_CFLAGS) -fPIC -std=gnu99"
+	EXTRA_CFLAGS += -fPIC
 endif
 
 CONFIGURE_VARS += \
