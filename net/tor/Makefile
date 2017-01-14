@@ -48,6 +48,28 @@ $(call Package/tor/Default/description)
  This package contains the tor daemon.
 endef
 
+define Package/tor-gencert
+$(call Package/tor/Default)
+  TITLE:=Tor certificate generation
+  DEPENDS:=+tor
+endef
+
+define Package/tor-gencert/description
+$(call Package/tor/Default/description)
+ Generate certs and keys for Tor directory authorities
+endef
+
+define Package/tor-resolve
+$(call Package/tor/Default)
+  TITLE:=tor hostname resolve
+  DEPENDS:=+tor
+endef
+
+define Package/tor-resolve/description
+$(call Package/tor/Default/description)
+ Resolve a hostname to an IP address via tor 
+endef
+
 define Package/tor-geoip
 $(call Package/tor/Default)
   TITLE:=GeoIP db for tor
@@ -93,10 +115,21 @@ CONFIGURE_VARS += \
 define Package/tor/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/tor $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/torify $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/tor.init $(1)/etc/init.d/tor
 	$(INSTALL_DIR) $(1)/etc/tor
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/tor/torrc.sample $(1)/etc/tor/torrc
+endef
+
+define Package/tor-gencert/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/tor-gencert $(1)/usr/sbin/
+endef
+
+define Package/tor-resolve/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/tor-resolve $(1)/usr/sbin/
 endef
 
 define Package/tor-geoip/install
@@ -106,4 +139,6 @@ define Package/tor-geoip/install
 endef
 
 $(eval $(call BuildPackage,tor))
+$(eval $(call BuildPackage,tor-gencert))
+$(eval $(call BuildPackage,tor-resolve))
 $(eval $(call BuildPackage,tor-geoip))
