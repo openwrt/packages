@@ -11,12 +11,6 @@ __python_host_mk_inc=1
 # For PYTHON_VERSION
 $(call include_mk, python-version.mk)
 
-# Compatibility fallback for older OpenWrt and LEDE versions
-ifeq ($(STAGING_DIR_HOSTPKG),)
-  $(warning STAGING_DIR_HOSTPKG is unset - falling back to $$(STAGING_DIR)/host)
-  STAGING_DIR_HOSTPKG := $(STAGING_DIR)/host
-endif
-
 HOST_PYTHON_DIR:=$(STAGING_DIR_HOSTPKG)
 HOST_PYTHON_INC_DIR:=$(HOST_PYTHON_DIR)/include/python$(PYTHON_VERSION)
 HOST_PYTHON_LIB_DIR:=$(HOST_PYTHON_DIR)/lib/python$(PYTHON_VERSION)
@@ -79,18 +73,9 @@ endef
 
 define HostPy/Compile/Default
 	$(call Build/Compile/HostPyMod,,\
-		install --root="$(HOST_BUILD_PREFIX)" --prefix="" \
+		install --root="$(STAGING_DIR_HOSTPKG)" --prefix="" \
 		--single-version-externally-managed \
 	)
 endef
-
-ifeq ($(BUILD_VARIANT),python)
-define Host/Compile
-	$(call HostPy/Compile/Default)
-endef
-
-define Host/Install
-endef
-endif # python
 
 endif # __python_host_mk_inc

@@ -1,0 +1,44 @@
+From dabd6597013e1df72b08621b466d136b8d25d110 Mon Sep 17 00:00:00 2001
+From: Philippe Coval <philippe.coval@osg.samsung.com>
+Date: Thu, 29 Sep 2016 10:57:59 +0200
+Subject: [PATCH 20/23] linux: Add more architectures
+
+This does not scale and this check should be removed.
+
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+Author: Hauke Mehrtens <hauke@hauke-m.de>
+Change-Id: Ibb271701904745ee4f5dd689c197228239c37262
+Origin: https://github.com/openwrt/packages/blob/master/net/iotivity/patches/021-add-some-more-architectures.patch
+Signed-off-by: Philippe Coval <philippe.coval@osg.samsung.com>
+Reviewed-on: https://gerrit.iotivity.org/gerrit/14575
+Tested-by: jenkins-iotivity <jenkins-iotivity@opendaylight.org>
+Reviewed-by: Nivedita Singhvi <niveditasinghvi@gmail.com>
+Reviewed-by: Jaehong Jo <jaehong.jo@samsung.com>
+Reviewed-by: Hauke Mehrtens <hauke.mehrtens@intel.com>
+---
+ build_common/SConscript                     | 2 +-
+ resource/csdk/connectivity/build/SConscript | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/build_common/SConscript
++++ b/build_common/SConscript
+@@ -18,7 +18,7 @@ host_target_map = {
+ 
+ # Map of os and allowed archs (os: allowed archs)
+ os_arch_map = {
+-		'linux': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
++		'linux': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64', 'mips', 'mipsel', 'mips64', 'mips64el', 'i386', 'powerpc', 'sparc', 'aarch64'],
+ 		'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
+ 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
+ 		'windows': ['x86', 'amd64', 'arm'],
+--- a/resource/csdk/connectivity/build/SConscript
++++ b/resource/csdk/connectivity/build/SConscript
+@@ -14,7 +14,7 @@ host_target_map = {
+ 
+ # Map of os and allowed archs (os: allowed archs)
+ os_arch_map = {
+-		'linux': ['x86', 'x86_64', 'arm', 'arm64'],
++		'linux': ['x86', 'x86_64', 'arm', 'arm64', 'mips', 'mipsel', 'mips64', 'mips64el', 'i386', 'powerpc', 'sparc', 'aarch64'],
+ 		'tizen': ['x86', 'x86_64', 'arm', 'arm64'],
+ 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
+ 		'windows': ['x86', 'amd64', 'arm'],

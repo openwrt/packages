@@ -12,7 +12,7 @@ include ./files/python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
@@ -37,7 +37,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=python/host
-HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
+HOST_BUILD_DEPENDS:=bzip2/host expat/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -235,6 +235,9 @@ define PyPackage/python/filespec
 -|$(PYTHON_PKG_DIR)
 endef
 
+HOST_LDFLAGS += \
+	$$$$(pkg-config --static --libs libcrypto libssl)
+
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
@@ -242,9 +245,8 @@ HOST_CONFIGURE_ARGS+= \
 	--prefix=$(HOST_PYTHON_DIR) \
 	--exec-prefix=$(HOST_PYTHON_DIR) \
 	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
-	--with-system-ffi \
-	CONFIG_SITE= \
-	CFLAGS="$(HOST_CFLAGS)"
+	--with-system-ffi=no \
+	CONFIG_SITE=
 
 define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) install

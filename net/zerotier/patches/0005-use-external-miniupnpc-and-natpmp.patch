@@ -1,17 +1,16 @@
-Index: ZeroTierOne-1.1.14/make-linux.mk
-===================================================================
---- ZeroTierOne-1.1.14.orig/make-linux.mk
-+++ ZeroTierOne-1.1.14/make-linux.mk
-@@ -64,7 +64,7 @@ ifeq ($(ZT_USE_MINIUPNPC),1)
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -64,7 +64,8 @@ ifeq ($(ZT_USE_MINIUPNPC),1)
  	DEFS+=-DZT_USE_MINIUPNPC
  
  	# Auto-detect libminiupnpc at least v2.0
 -	MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' /usr/include/miniupnpc/miniupnpc.h && echo 1)
-+	MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
++	#MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
++	MINIUPNPC_IS_NEW_ENOUGH=1
  	ifeq ($(MINIUPNPC_IS_NEW_ENOUGH),1)
  		DEFS+=-DZT_USE_SYSTEM_MINIUPNPC
  		LDLIBS+=-lminiupnpc
-@@ -74,7 +74,7 @@ ifeq ($(ZT_USE_MINIUPNPC),1)
+@@ -74,7 +75,7 @@ ifeq ($(ZT_USE_MINIUPNPC),1)
  	endif
  
  	# Auto-detect libnatpmp
@@ -20,10 +19,8 @@ Index: ZeroTierOne-1.1.14/make-linux.mk
  		OBJS+=ext/libnatpmp/natpmp.o ext/libnatpmp/getgateway.o
  	else
  		LDLIBS+=-lnatpmp
-Index: ZeroTierOne-1.1.14/osdep/PortMapper.cpp
-===================================================================
---- ZeroTierOne-1.1.14.orig/osdep/PortMapper.cpp
-+++ ZeroTierOne-1.1.14/osdep/PortMapper.cpp
+--- a/osdep/PortMapper.cpp
++++ b/osdep/PortMapper.cpp
 @@ -180,7 +180,7 @@ public:
  				struct IGDdatas data;
  

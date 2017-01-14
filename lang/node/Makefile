@@ -72,7 +72,7 @@ HOST_CONFIGURE_VARS:=
 HOST_CONFIGURE_ARGS:= \
 	--dest-os=linux \
 	--without-snapshot \
-	--prefix=$(HOST_BUILD_PREFIX)
+	--prefix=$(STAGING_DIR_HOSTPKG)
 
 HOST_CONFIGURE_CMD:=python ./configure
 

@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.0.13
+PKG_VERSION:=7.1.0
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
@@ -16,7 +16,8 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_MD5SUM:=eb117bf1d1efc99c522f132b265a3402
+PKG_MD5SUM:=cf36039303c47f493100afea522a8f53
+PKG_HASH:=a810b3f29c21407c24caa88f50649320d20ba6892ae1923132598b8a0ca145b6
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -443,7 +444,7 @@ CONFIGURE_VARS+= \
 	ac_cv_c_bigendian_php=$(if $(CONFIG_BIG_ENDIAN),yes,no) \
 	php_cv_cc_rpath="no" \
 	iconv_impl_name="gnu_libiconv" \
-	ac_cv_php_xml2_config_path="$(STAGING_DIR)/host/bin/xml2-config" \
+	ac_cv_php_xml2_config_path="$(STAGING_DIR_HOSTPKG)/bin/xml2-config" \
 
 define Package/php7/conffiles
 /etc/php.ini

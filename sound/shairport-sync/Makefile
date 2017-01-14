@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 # updated to work with latest source from abrasive
@@ -10,13 +8,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shairport-sync
 PKG_VERSION:=2.8.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/mikebrady/shairport-sync.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Mike Brady <mikebrady@eircom.net>
 
@@ -46,18 +44,18 @@ define Package/shairport-sync-openssl
   VARIANT:=openssl
 endef
 
-define Package/shairport-sync-polarssl
+define Package/shairport-sync-mbedtls
   $(Package/shairport-sync/default)
-  TITLE+= (polarssl)
-  DEPENDS+= +libpolarssl +libavahi-client +libsoxr
-  VARIANT:=polarssl
+  TITLE+= (mbed TLS)
+  DEPENDS+= +libmbedtls +libavahi-client +libsoxr
+  VARIANT:=mbedtls
   DEFAULT_VARIANT:=1
 endef
 
 define Package/shairport-sync-mini
   $(Package/shairport-sync/default)
   TITLE+= (minimal)
-  DEPENDS+= +libpolarssl
+  DEPENDS+= +libmbedtls
   VARIANT:=mini
 endef
 
@@ -72,12 +70,12 @@ define Package/shairport-sync/default/description
   Also select kmod-usb-audio if you want to use USB-connected sound cards.
 endef
 Package/shairport-sync-openssl/description = $(Package/shairport-sync/default/description)
-Package/shairport-sync-polarssl/description = $(Package/shairport-sync/default/description)
+Package/shairport-sync-mbedtls/description = $(Package/shairport-sync/default/description)
 
 define Package/shairport-sync-mini/description
   $(Package/shairport-sync/default/description)
 
-  Minimal version uses PolarSSL and does not include libsoxr and avahi support.
+  Minimal version uses mbed TLS and does not include libsoxr and avahi support.
 endef
 
 CONFIGURE_ARGS+= \
@@ -88,12 +86,12 @@ ifeq ($(BUILD_VARIANT),openssl)
   CONFIGURE_ARGS+= --with-ssl=openssl
 endif
 
-ifeq ($(BUILD_VARIANT),polarssl)
-  CONFIGURE_ARGS+= --with-ssl=polarssl
+ifeq ($(BUILD_VARIANT),mbedtls)
+  CONFIGURE_ARGS+= --with-ssl=mbedtls
 endif
 
 ifeq ($(BUILD_VARIANT),mini)
-  CONFIGURE_ARGS+= --with-ssl=polarssl --with-tinysvcmdns
+  CONFIGURE_ARGS+= --with-ssl=mbedtls --with-tinysvcmdns
 else
   CONFIGURE_ARGS+= --with-avahi --with-soxr
 endif
@@ -103,7 +101,7 @@ define Package/shairport-sync/default/conffiles
 endef
 
 Package/shairport-sync-openssl/conffiles = $(Package/shairport-sync/default/conffiles)
-Package/shairport-sync-polarssl/conffiles = $(Package/shairport-sync/default/conffiles)
+Package/shairport-sync-mbedtls/conffiles = $(Package/shairport-sync/default/conffiles)
 Package/shairport-sync-mini/conffiles = $(Package/shairport-sync/default/conffiles)
 
 define Package/shairport-sync/default/install
@@ -118,9 +116,9 @@ define Package/shairport-sync/default/install
 endef
 
 Package/shairport-sync-openssl/install = $(Package/shairport-sync/default/install)
-Package/shairport-sync-polarssl/install = $(Package/shairport-sync/default/install)
+Package/shairport-sync-mbedtls/install = $(Package/shairport-sync/default/install)
 Package/shairport-sync-mini/install = $(Package/shairport-sync/default/install)
 
 $(eval $(call BuildPackage,shairport-sync-openssl))
-$(eval $(call BuildPackage,shairport-sync-polarssl))
+$(eval $(call BuildPackage,shairport-sync-mbedtls))
 $(eval $(call BuildPackage,shairport-sync-mini))

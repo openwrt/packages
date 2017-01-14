@@ -1,7 +1,7 @@
 --- a/libtransmission/bitfield.c
 +++ b/libtransmission/bitfield.c
-@@ -7,6 +7,8 @@
-  * $Id: bitfield.c 14646 2015-12-31 05:22:42Z mikedld $
+@@ -6,6 +6,8 @@
+  *
   */
  
 +#define __NEED_ssize_t
@@ -9,7 +9,7 @@
  #include <assert.h>
  #include <string.h> /* memset */
  
-@@ -14,6 +16,7 @@
+@@ -13,6 +15,7 @@
  #include "bitfield.h"
  #include "utils.h" /* tr_new0 () */
  
@@ -19,7 +19,7 @@
  /****
 --- a/libtransmission/fdlimit.h
 +++ b/libtransmission/fdlimit.h
-@@ -11,6 +11,8 @@
+@@ -10,6 +10,8 @@
   #error only libtransmission should #include this header.
  #endif
  

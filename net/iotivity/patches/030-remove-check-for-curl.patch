@@ -1,6 +1,6 @@
 --- a/service/resource-container/SConscript
 +++ b/service/resource-container/SConscript
-@@ -175,36 +175,22 @@ if target_os in ['linux', 'tizen', 'andr
+@@ -191,36 +191,22 @@ if target_os in ['linux', 'tizen', 'andr
  # build hue sample bundle
  ######################################################################
  
@@ -52,4 +52,4 @@
 +hue_resource_bundle_env.UserInstallTargetLib(HueBundle, 'libHueBundle')
  
  ######################################################################
- # build resource container unit tests
+ # Build Container Sample

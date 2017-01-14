@@ -7,7 +7,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 
 ## Main Features
 * STA interfaces operating in an "always off" mode, to make sure that the AP is always accessible
-* zero-conf like automatic installation & setup, usually no manual changes needed
+* easy setup within normal OpenWrt/LEDE environment
 * fast uplink connections
 * procd init system support
 * procd based hotplug support, the travelmate start will be triggered by interface triggers
