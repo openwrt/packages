@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-plc-utils
-PKG_VERSION:=2017-01-11
+PKG_VERSION:=2017-01-15
 PKG_RELEASE:=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/qca/open-plc-utils.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=6a07d621583cb86ddf2fddcacb41cc4cf28bf33a
+PKG_SOURCE_VERSION:=18b7e2a9a17f043fe8ac8b457680aafb1c249c55
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
 
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
