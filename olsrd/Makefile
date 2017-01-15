@@ -111,7 +111,6 @@ define Package/olsrd-mod-p2pd
   TITLE:=Peer to Peer Discovery plugin
 endef
 
-
 define Package/olsrd-mod-pgraph
   $(call Package/olsrd/template)
   DEPENDS:=olsrd
