@@ -1,3 +1,0 @@
-#!/bin/sh
-
-[ "$ACTION" = ifup ] && /etc/init.d/wshaper enabled && /etc/init.d/wshaper start || exit 0
