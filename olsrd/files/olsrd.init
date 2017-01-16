@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2008-2013 OpenWrt.org
+# Copyright (C) 2008-2017 OpenWrt.org
 
 START=65
 
@@ -15,8 +15,6 @@ OLSRD_INTERFACE_DEFAULTS_SCHEMA='AutoDetectChanges:bool'
 T='	'
 N='
 '
-#6and4: backward compatibility - it MUST be different from /etc/init.d/olsrd6 PID variable
-PID6=/var/run/olsrd6and4.pid
 
 log() {
 	logger -t olsrd -p daemon.info -s "${initscript}: $@"
@@ -396,19 +394,6 @@ olsrd_write_olsrd() {
 
 	[ "$OLSRD_COUNT" -gt 0 ] && return 0
 
-	config_get ipversion "$cfg" IpVersion
-	if [ "$UCI_CONF_NAME" = "olsrd6" ]; then
-	        OLSRD_OLSRD_SCHEMA="$OLSRD_OLSRD_SCHEMA IpVersion=6"
-	        if [ "$ipversion" = "6and4" ]; then
-		        error "IpVersion 6and4 not supported in olsrd6"
-			return 1
-		fi
-	else
-	        if [ "$ipversion" = "6and4" ]; then
-		        OLSRD_IPVERSION_6AND4=1
-			config_set "$cfg" IpVersion '6'
-		fi
-	fi
 	config_get smartgateway "$cfg" SmartGateway
 	config_get smartgatewayuplink "$cfg" SmartGatewayUplink
 
@@ -632,7 +617,6 @@ olsrd_update_schema() {
 }
 
 olsrd_write_config() {
-	OLSRD_IPVERSION_6AND4=0
 	OLSRD_COUNT=0
 	config_foreach olsrd_write_olsrd olsrd
 	IPCCONNECT_COUNT=0
@@ -800,53 +784,16 @@ start() {
 
 	[ -z "$OLSRD_CONFIG_FILE" ] && return 1
 
-	#6and4: backward compatibility
-	local bindv6only='0'
-	if [ "$OLSRD_IPVERSION_6AND4" -ne 0 ]; then
-	        warn "IpVersion 6and4 is deprecated and will be removed in future!"
-		warn "You must use /etc/config/olsrd and /etc/init.d/olsrd for IPv4"
-		warn " /etc/config/olsrd6 and /etc/init.d/olsrd6 for IPv6"
-
-		bindv6only="$(sysctl -n net.ipv6.bindv6only)"
-		sysctl -w net.ipv6.bindv6only=1 > /dev/null
-		sed -e '/[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' < "$OLSRD_CONFIG_FILE" > /var/etc/olsrd.conf.ipv6
-		sed -e 's/^IpVersion[ ][ ]*6$/IpVersion 4/' -e 's/^\t\t[A-Fa-f0-9.:]*[:][A-Fa-f0-9.:]*[ ][0-9]*$//' < "$OLSRD_CONFIG_FILE" > /var/etc/olsrd.conf.ipv4
-		rm $OLSRD_CONFIG_FILE
-
-		# some filenames should get the suffix .ipv6
-		for file in $latlon_file $hosts_file $services_file $resolv_file $macs_file $wd_file;do
-			f=$(echo $file|sed 's/\//\\\//g')
-			sed -i "s/$f/$f.ipv6/g" /var/etc/olsrd.conf.ipv6
-		done
-
-		SERVICE_PID_FILE="$PID6"
-		if service_check /usr/sbin/olsrd; then
-			error "there is already an IPv6 instance of olsrd running (pid: '$(cat $PID6)'), not starting."
-		else
-			service_start /usr/sbin/olsrd -f /var/etc/olsrd.conf.ipv6 -nofork
-		fi
-
-		SERVICE_PID_FILE="$PID"
-		if service_check /usr/sbin/olsrd; then
-			error "there is already an IPv4 instance of olsrd running (pid: '$(cat $PID)'), not starting."
-		else
-			service_start /usr/sbin/olsrd -f /var/etc/olsrd.conf.ipv4 -nofork
-		fi
-
-		sleep 3
-		sysctl -w net.ipv6.bindv6only="$bindv6only" > /dev/null
+	SERVICE_PID_FILE="$PID"
+	if service_check /usr/sbin/olsrd; then
+		error "there is already an instance of $UCI_CONF_NAME running (pid: '$(cat $PID)'), not starting."
+		return 1
 	else
-		SERVICE_PID_FILE="$PID"
-		if service_check /usr/sbin/olsrd; then
-			error "there is already an instance of $UCI_CONF_NAME running (pid: '$(cat $PID)'), not starting."
-			return 1
-		else
-			service_start /usr/sbin/olsrd -f "$OLSRD_CONFIG_FILE" -nofork
-			sleep 1
-			service_check /usr/sbin/olsrd || {
-				log "startup-error: check via: '/usr/sbin/olsrd -f \"$OLSRD_CONFIG_FILE\" -nofork'"
-			}
-		fi
+		service_start /usr/sbin/olsrd -f "$OLSRD_CONFIG_FILE" -nofork
+		sleep 1
+		service_check /usr/sbin/olsrd || {
+			log "startup-error: check via: '/usr/sbin/olsrd -f \"$OLSRD_CONFIG_FILE\" -nofork'"
+		}
 	fi
 
 	olsrd_setup_smartgw_rules
@@ -854,9 +801,5 @@ start() {
 
 stop() {
 	SERVICE_PID_FILE="$PID"
-	service_stop /usr/sbin/olsrd
-
-	#6and4: backward compatibility
-	SERVICE_PID_FILE="$PID6"
 	service_stop /usr/sbin/olsrd
 }
