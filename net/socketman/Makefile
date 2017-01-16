@@ -1,4 +1,4 @@
-# Copyright (C) 2016 Cucumber WiFi
+# Copyright (C) 2017 Cucumber WiFi
 #
 # This is free software, licensed under the GNU General Public License v2.
 
@@ -8,6 +8,7 @@ export CT_VERSION=8ec430d
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=SocketMan
+PKG_MAINTAINER:=Andrew Margarit <andrew@cucumberwifi.io>
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=8ec430da9fc1d2a02df4f29980780a893296d87d
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
