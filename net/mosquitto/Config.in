@@ -11,3 +11,11 @@ config MOSQUITTO_PASSWD
     default y
     help
         mosquitto_passwd is a tool for managing password files for mosquitto.
+
+config MOSQUITTO_SRV
+    bool "Include SRV lookup support"
+    depends on PACKAGE_libmosquitto || PACKAGE_libmosquitto-nossl || PACKAGE_mosquitto-client || PACKAGE_mosquitto-client-nossl
+    select PACKAGE_libcares
+    default y
+    help
+        Support DNS SRV lookups to determine which host to connect to.
