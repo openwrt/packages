@@ -1,10 +1,8 @@
 #!/bin/sh
 
-HOTPLUG_SCRIPT=/usr/sbin/ntpd-hotplug
-
 while true
 do
-	STATUS="$(ntpq -c 'rv 0 stratum'|awk -F '=' '{ print $2 }')"
+	STATUS="$(/usr/sbin/ntpq -c 'rv 0 stratum'|awk -F '=' '{ print $2 }')"
 
 	if [ -n "$STATUS" ] && [ "$STATUS" -lt "16" ]
 	then
