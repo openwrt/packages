@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luajit
-PKG_VERSION:=2016-06-05-8e5d7be
+PKG_VERSION:=2017-01-17-71ff7ef
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Morteza Milani <milani@pichak.co>
 PKG_LICENSE:=MIT
@@ -9,7 +9,7 @@ PKG_LICENSE_FILES:=COPYRIGHT
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/LuaJIT/LuaJIT.git
-PKG_SOURCE_VERSION:=8e5d7bec0d110aa4ccd7e8492f697ff2a88a55ed
+PKG_SOURCE_VERSION:=71ff7ef8a7e0592dedb3527d4aacc68bf04af0bd
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
@@ -29,7 +29,7 @@ define Package/luajit
 endef
 
 define Package/luajit/description
- LuaJIT is a Just-In-Time (JIT) compiler for the Lua programming language.
+ LuaJIT is a Just-In-Time (JIT) compiler for the Lua programming language. *** Requires GCC Multilib on host system to build! ***
 endef
 
 TARGET_CFLAGS += $(FPIC) -std=gnu99
