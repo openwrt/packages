@@ -1,0 +1,17 @@
+---
+ Makefile |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -18,8 +18,8 @@ osd:
+ $(LIBOSD):
+ 	$(MAKE) -C $(OSD)
+ 
+-mdk3: mdk3.c $(OSD)/libosdep.a
+-	$(CC) $(CFLAGS) $(LINKFLAGS) $^ -o $@ $(LIBS)
++mdk3: $(LIBOSD) mdk3.c
++	$(CC) $(CFLAGS) $(LINKFLAGS) mdk3.c $(OSD)/lib$(OSD).a -o $@ $(LIBS)
+ 
+ install: mdk3
+ 	$(MAKE) -C $(OSD) install
