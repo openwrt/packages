@@ -69,6 +69,9 @@ CONFIGURE_VARS += \
 	sc_cv_sys_tabdly_shift=11 \
 	sc_cv_sys_csize_shift=4
 
+TARGET_CFLAGS += \
+	-include stddef.h
+
 define Package/socat/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/socat $(1)/usr/bin/
