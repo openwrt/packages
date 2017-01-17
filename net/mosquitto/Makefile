@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
 PKG_VERSION:=1.4.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
@@ -36,12 +36,14 @@ define Package/$(PKG_NAME)
     TITLE+= (with SSL support)
     DEPENDS+= +libopenssl +MOSQUITTO_LWS:libwebsockets-openssl
     VARIANT:=ssl
+    PROVIDES:=mosquitto
 endef
 
 define Package/$(PKG_NAME)-nossl
     $(call Package/$(PKG_NAME)/default)
     TITLE+= (without SSL support)
     VARIANT:=nossl
+    PROVIDES:=mosquitto
 endef
 
 define Package/$(PKG_NAME)/config
@@ -105,6 +107,7 @@ define Package/libmosquitto/default
     CATEGORY:=Libraries
     DEPENDS:=+libpthread +librt +libcares
     TITLE:= mosquitto - client library
+    PROVIDES:=libmosquitto
 endef
 
 define Package/libmosquitto
