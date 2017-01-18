@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2016 OpenWrt.org
+# Copyright (C) 2008-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -11,12 +11,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
-PKG_VERSION=2016-10-08
+PKG_VERSION=2017-01-18
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/knxd/knxd.git
-PKG_SOURCE_VERSION:=43e90c6ee3028194c8ce6d7776e7dedbe1032dc1
+PKG_SOURCE_VERSION:=8255bf08b6e1a972c1489012b570bf0ff8679cb0
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
 
@@ -38,7 +38,7 @@ define Package/knxd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=EIB KNX daemon
-  DEPENDS:=+pthsem +libusb-1.0
+  DEPENDS:=+libusb-1.0 +libstdcpp +libev
 endef
 
 define Package/knxd/description
@@ -53,30 +53,24 @@ define Package/knxd-tools
   SECTION:=net
   CATEGORY:=Network
   TITLE:=EIB KNX Utils
+  DEPENDS:=+libstdcpp +libev
 endef
 
 define Package/knxd-tools/description
 EIB KNX Tools
 endef
 
-TARGET_CXXFLAGS+= -fno-rtti
+TARGET_CXXFLAGS+= -std=c++0x
 TARGET_CXX=$(TARGET_CC)
 
 CONFIGURE_ARGS+= \
-	--disable-ft12 \
 	--enable-eibnetip \
 	--enable-eibnetiptunnel \
 	--enable-eibnetipserver \
-	--enable-usb \
-	--enable-tpuarts \
-	--disable-pei16s \
-	--enable-groupcache \
-	--without-pth-test \
-	--disable-systemd \
-	--without-libstdc
+	--disable-systemd
 
 EXTRA_LDFLAGS+= \
-       -fno-builtin -largp
+	-largp -lstdc++
 
 define Package/knxd/install
 	$(INSTALL_DIR) $(1)/usr/bin
