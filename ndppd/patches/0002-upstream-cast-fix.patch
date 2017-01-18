@@ -1,0 +1,22 @@
+From f19fa4be6ac87032c01f2db57ccb484f83c62604 Mon Sep 17 00:00:00 2001
+From: Daniel Adolfsson <daniel@priv.nu>
+Date: Fri, 8 Apr 2016 13:32:22 +0200
+Subject: [PATCH] Fix a cast so it can be compiled with gcc-6
+
+---
+ src/iface.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/iface.cc b/src/iface.cc
+index 3ce893f..5f165eb 100644
+--- a/src/iface.cc
++++ b/src/iface.cc
+@@ -147,7 +147,7 @@ ptr<iface> iface::open_pfd(const std::string& name)
+         // Bail if it's* not* ND_NEIGHBOR_SOLICIT.
+         BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ND_NEIGHBOR_SOLICIT, 0, 1),
+         // Keep packet.
+-        BPF_STMT(BPF_RET | BPF_K, -1),
++        BPF_STMT(BPF_RET | BPF_K, (u_int32_t)-1),
+         // Drop packet.
+         BPF_STMT(BPF_RET | BPF_K, 0)
+     };
