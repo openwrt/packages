@@ -1,14 +1,5 @@
---- a/src/seq/seq.c
-+++ b/src/seq/seq.c
-@@ -777,7 +777,7 @@ void event_filter(snd_seq_t *seq, snd_se
- 
- */
- 
--#include <sys/poll.h>
-+#include <poll.h>
- #include "seq_local.h"
- 
- /****************************************************************************
+diff --git a/aserver/aserver.c b/aserver/aserver.c
+index ac20706..46f731a 100644
 --- a/aserver/aserver.c
 +++ b/aserver/aserver.c
 @@ -20,7 +20,7 @@
@@ -20,6 +11,8 @@
  #include <sys/un.h>
  #include <sys/uio.h>
  #include <stdio.h>
+diff --git a/include/asoundlib-head.h b/include/asoundlib-head.h
+index 1ec611e..21e32c6 100644
 --- a/include/asoundlib-head.h
 +++ b/include/asoundlib-head.h
 @@ -35,6 +35,6 @@
@@ -30,6 +23,8 @@
 +#include <poll.h>
  #include <errno.h>
  #include <stdarg.h>
+diff --git a/include/asoundlib.h b/include/asoundlib.h
+index 3c2766e..a546194 100644
 --- a/include/asoundlib.h
 +++ b/include/asoundlib.h
 @@ -35,7 +35,7 @@
@@ -41,6 +36,8 @@
  #include <errno.h>
  #include <stdarg.h>
  #include <endian.h>
+diff --git a/include/local.h b/include/local.h
+index 317f2e3..6a43a47 100644
 --- a/include/local.h
 +++ b/include/local.h
 @@ -47,7 +47,7 @@
@@ -52,9 +49,11 @@
  #include <sys/types.h>
  #include <errno.h>
  #if defined(__linux__)
+diff --git a/src/control/control.c b/src/control/control.c
+index 134ba4c..6439b29 100644
 --- a/src/control/control.c
 +++ b/src/control/control.c
-@@ -90,7 +90,7 @@ I/O operations.
+@@ -90,7 +90,7 @@ against the original design.
  #include <string.h>
  #include <fcntl.h>
  #include <signal.h>
@@ -63,150 +62,8 @@
  #include <stdbool.h>
  #include "control_local.h"
  
-@@ -174,7 +174,7 @@ int snd_ctl_new(snd_ctl_t **ctlp, snd_ct
- 	*ctlp = ctl;
- 	return 0;
- }
--	
-+
- 
- /**
-  * \brief set async mode
-@@ -1182,7 +1182,7 @@ int snd_ctl_wait(snd_ctl_t *ctl, int tim
-  * \param private_data Callback private data
-  * \return 0 otherwise a negative error code on failure
-  */
--int snd_async_add_ctl_handler(snd_async_handler_t **handler, snd_ctl_t *ctl, 
-+int snd_async_add_ctl_handler(snd_async_handler_t **handler, snd_ctl_t *ctl,
- 			      snd_async_callback_t callback, void *private_data)
- {
- 	int err;
-@@ -1495,7 +1495,7 @@ int snd_ctl_elem_list_alloc_space(snd_ct
- 	}
- 	obj->space = entries;
- 	return 0;
--}  
-+}
- 
- /**
-  * \brief free previously allocated space for CTL element identifiers list
-@@ -2933,7 +2933,7 @@ void snd_ctl_elem_value_set_index(snd_ct
-  * \param obj Data of an element.
-  * \param idx Index of member in the element.
-  * \return Value for the member.
-- */ 
-+ */
- int snd_ctl_elem_value_get_boolean(const snd_ctl_elem_value_t *obj, unsigned int idx)
- {
- 	assert(obj);
-@@ -2947,7 +2947,7 @@ int snd_ctl_elem_value_get_boolean(const
-  * \param obj Data of an element.
-  * \param idx Index of member in the element.
-  * \return Value for the member.
-- */ 
-+ */
- long snd_ctl_elem_value_get_integer(const snd_ctl_elem_value_t *obj, unsigned int idx)
- {
- 	assert(obj);
-@@ -2961,7 +2961,7 @@ long snd_ctl_elem_value_get_integer(cons
-  * \param obj Data of an element.
-  * \param idx Index of member in the element.
-  * \return Value for the member.
-- */ 
-+ */
- long long snd_ctl_elem_value_get_integer64(const snd_ctl_elem_value_t *obj, unsigned int idx)
- {
- 	assert(obj);
-@@ -2975,7 +2975,7 @@ long long snd_ctl_elem_value_get_integer
-  * \param obj Data of an element.
-  * \param idx Index of member in the element.
-  * \return Value for the member. This is an index of name set in the element.
-- */ 
-+ */
- unsigned int snd_ctl_elem_value_get_enumerated(const snd_ctl_elem_value_t *obj, unsigned int idx)
- {
- 	assert(obj);
-@@ -2989,7 +2989,7 @@ unsigned int snd_ctl_elem_value_get_enum
-  * \param obj Data of an element.
-  * \param idx Index of member in the element.
-  * \return Value for the member.
-- */ 
-+ */
- unsigned char snd_ctl_elem_value_get_byte(const snd_ctl_elem_value_t *obj, unsigned int idx)
- {
- 	assert(obj);
-@@ -3003,7 +3003,7 @@ unsigned char snd_ctl_elem_value_get_byt
-  * \param obj Data of an element.
-  * \param idx Index of member in the element.
-  * \param val Value for the member.
-- */ 
-+ */
- void snd_ctl_elem_value_set_boolean(snd_ctl_elem_value_t *obj, unsigned int idx, long val)
- {
- 	assert(obj);
-@@ -3017,7 +3017,7 @@ void snd_ctl_elem_value_set_boolean(snd_
-  * \param obj Data of an element.
-  * \param idx Index of member in the element.
-  * \param val Value for the member.
-- */ 
-+ */
- void snd_ctl_elem_value_set_integer(snd_ctl_elem_value_t *obj, unsigned int idx, long val)
- {
- 	assert(obj);
-@@ -3031,7 +3031,7 @@ void snd_ctl_elem_value_set_integer(snd_
-  * \param obj Data of an element.
-  * \param idx Index of member in the element.
-  * \param val Value for the member.
-- */ 
-+ */
- void snd_ctl_elem_value_set_integer64(snd_ctl_elem_value_t *obj, unsigned int idx, long long val)
- {
- 	assert(obj);
-@@ -3045,7 +3045,7 @@ void snd_ctl_elem_value_set_integer64(sn
-  * \param obj Data of an element.
-  * \param idx Index of member in the element.
-  * \param val Value for the member.
-- */ 
-+ */
- void snd_ctl_elem_value_set_enumerated(snd_ctl_elem_value_t *obj, unsigned int idx, unsigned int val)
- {
- 	assert(obj);
-@@ -3059,7 +3059,7 @@ void snd_ctl_elem_value_set_enumerated(s
-  * \param obj Data of an element.
-  * \param idx Index of member in the element.
-  * \param val Value for the member.
-- */ 
-+ */
- void snd_ctl_elem_value_set_byte(snd_ctl_elem_value_t *obj, unsigned int idx, unsigned char val)
- {
- 	assert(obj);
-@@ -3084,7 +3084,7 @@ void snd_ctl_elem_set_bytes(snd_ctl_elem
-  * \brief Get memory block from given data as an element of bytes type.
-  * \param obj Data of an element.
-  * \return Pointer for byte array.
-- */ 
-+ */
- const void * snd_ctl_elem_value_get_bytes(const snd_ctl_elem_value_t *obj)
- {
- 	assert(obj);
-@@ -3096,7 +3096,7 @@ const void * snd_ctl_elem_value_get_byte
-  *	  type.
-  * \param obj Data of an element.
-  * \param ptr Pointer to IEC958 data.
-- */ 
-+ */
- void snd_ctl_elem_value_get_iec958(const snd_ctl_elem_value_t *obj, snd_aes_iec958_t *ptr)
- {
- 	assert(obj && ptr);
-@@ -3108,7 +3108,7 @@ void snd_ctl_elem_value_get_iec958(const
-  *	  type.
-  * \param obj Data of an element.
-  * \param ptr Pointer to IEC958 data.
-- */ 
-+ */
- void snd_ctl_elem_value_set_iec958(snd_ctl_elem_value_t *obj, const snd_aes_iec958_t *ptr)
- {
- 	assert(obj && ptr);
+diff --git a/src/control/control_shm.c b/src/control/control_shm.c
+index bd07d4a..9a2e268 100644
 --- a/src/control/control_shm.c
 +++ b/src/control/control_shm.c
 @@ -27,7 +27,7 @@
@@ -218,9 +75,11 @@
  #include <sys/un.h>
  #include <sys/uio.h>
  #include <sys/mman.h>
+diff --git a/src/pcm/pcm.c b/src/pcm/pcm.c
+index 0cf740f..a28589d 100644
 --- a/src/pcm/pcm.c
 +++ b/src/pcm/pcm.c
-@@ -650,7 +650,7 @@ playback devices.
+@@ -651,7 +651,7 @@ playback devices.
  #include <stdarg.h>
  #include <signal.h>
  #include <ctype.h>
@@ -229,6 +88,8 @@
  #include <sys/mman.h>
  #include <limits.h>
  #include "pcm_local.h"
+diff --git a/src/pcm/pcm_direct.c b/src/pcm/pcm_direct.c
+index 6434983..b3c0b2d 100644
 --- a/src/pcm/pcm_direct.c
 +++ b/src/pcm/pcm_direct.c
 @@ -30,7 +30,7 @@
@@ -240,6 +101,8 @@
  #include <sys/shm.h>
  #include <sys/sem.h>
  #include <sys/wait.h>
+diff --git a/src/pcm/pcm_mmap.c b/src/pcm/pcm_mmap.c
+index 1948289..4cf220a 100644
 --- a/src/pcm/pcm_mmap.c
 +++ b/src/pcm/pcm_mmap.c
 @@ -22,7 +22,7 @@
@@ -251,6 +114,8 @@
  #include <sys/mman.h>
  #ifdef HAVE_SYS_SHM_H
  #include <sys/shm.h>
+diff --git a/src/pcm/pcm_share.c b/src/pcm/pcm_share.c
+index 5d8aaf2..21a57fc 100644
 --- a/src/pcm/pcm_share.c
 +++ b/src/pcm/pcm_share.c
 @@ -34,7 +34,7 @@
@@ -262,6 +127,8 @@
  #include <pthread.h>
  #include "pcm_local.h"
  
+diff --git a/src/pcm/pcm_shm.c b/src/pcm/pcm_shm.c
+index a815ac6..4ee958c 100644
 --- a/src/pcm/pcm_shm.c
 +++ b/src/pcm/pcm_shm.c
 @@ -36,7 +36,7 @@
@@ -273,6 +140,21 @@
  #include <sys/un.h>
  #include <sys/mman.h>
  #include <netinet/in.h>
+diff --git a/src/seq/seq.c b/src/seq/seq.c
+index 9279830..d2027cb 100644
+--- a/src/seq/seq.c
++++ b/src/seq/seq.c
+@@ -777,7 +777,7 @@ void event_filter(snd_seq_t *seq, snd_seq_event_t *ev)
+ 
+ */
+ 
+-#include <sys/poll.h>
++#include <poll.h>
+ #include "seq_local.h"
+ 
+ /****************************************************************************
+diff --git a/src/shmarea.c b/src/shmarea.c
+index 9843aa8..eaa71f0 100644
 --- a/src/shmarea.c
 +++ b/src/shmarea.c
 @@ -27,7 +27,7 @@

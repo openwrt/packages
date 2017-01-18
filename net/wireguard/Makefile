@@ -1,6 +1,7 @@
 #
 # Copyright (C) 2016 Jason A. Donenfeld <Jason@zx2c4.com>
 # Copyright (C) 2016 Baptiste Jonglez <openwrt@bitsofnetworks.org>
+# Copyright (C) 2016-2017 Dan Luedtke <mail@danrl.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,20 +11,19 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=wireguard
 
-PKG_VERSION:=0.0.20170105
+PKG_VERSION:=0.0.20170115
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WireGuard-$(PKG_VERSION).tar.xz
-# This is actually SHA256, but OpenWRT/LEDE will figure it out based on the length
-PKG_MD5SUM:=1bd990eeae6fbf599ccddde81caa92770f58623ad9705f875bcfab8254583896
 PKG_SOURCE_URL:=https://git.zx2c4.com/WireGuard/snapshot/
-PKG_BUILD_DIR:=$(BUILD_DIR)/WireGuard-$(PKG_VERSION)
+PKG_MD5SUM:=7e5f9f4699a2d4ace90d0df5d81bf0f67205ee08c45b95e0acc379bedef5ffe8
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_USE_MIPS16:=0
+PKG_BUILD_DIR:=$(BUILD_DIR)/WireGuard-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 # Wireguard's makefile needs this to know where to build the kernel module
 export KERNELDIR:=$(LINUX_DIR)
