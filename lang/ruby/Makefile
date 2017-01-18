@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 # To Do:
-#  - dirs not removed when uninstalling!
+#  - dirs not removed when uninstalling! opkg bug?
 #
 include $(TOPDIR)/rules.mk
 
@@ -13,10 +13,11 @@ PKG_NAME:=ruby
 PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 
-PKG_LIBVER:=2.4
+# First two numbes
+PKG_ABI_VERSION:=$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VERSION))))
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_LIBVER)/
+PKG_SOURCE_URL:=http://cache.ruby-lang.org/pub/ruby/$(PKG_ABI_VERSION)/
 PKG_MD5SUM:=440bbbdc49d08d3650f340dccb35986d9399177ad69a204def56e5d3954600cf
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
@@ -73,7 +74,7 @@ TARGET_LDFLAGS += -L$(PKG_BUILD_DIR)
 # Ruby uses DLDFLAGS and not LDFLAGS for libraries. LDFLAGS is only for execs.
 # However, DLDFLAGS from configure is not passed to Makefile when target is linux.
 # XLDFLAGS is used by both libraries and execs. This is somehow brute force but
-# it will fix when some LD_FLAGS is needef for libraries. As side effect, it will
+# it will fix when some LD_FLAGS is needed for libraries. As side effect, it will
 # duplicate ld args for binaries.
 CONFIGURE_VARS += XLDFLAGS="$(TARGET_LDFLAGS)"
 
@@ -155,15 +156,15 @@ endef
 
 define Package/ruby/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_LIBVER)
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/vendor_ruby/$(PKG_LIBVER)
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/site_ruby/$(PKG_LIBVER)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ruby $(1)/usr/lib/ruby/ruby$(PKG_LIBVER)-bin
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/$(PKG_ABI_VERSION)
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/vendor_ruby/$(PKG_ABI_VERSION)
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/site_ruby/$(PKG_ABI_VERSION)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ruby $(1)/usr/lib/ruby/ruby$(PKG_ABI_VERSION)-bin
 	$(INSTALL_BIN) ./files/ruby $(1)/usr/bin/ruby
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/vendor_ruby/$(PKG_LIBVER)/* $(1)/usr/lib/ruby/vendor_ruby/$(PKG_LIBVER)/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/site_ruby/$(PKG_LIBVER)/* $(1)/usr/lib/ruby/site_ruby/$(PKG_LIBVER)/
-	$(SED) "s%@RUBY_LIBPATH@%/usr/lib/ruby/$(PKG_LIBVER)%" $(1)/usr/bin/ruby
-	$(SED) "s%@RUBY_BINPATH@%/usr/lib/ruby/ruby$(PKG_LIBVER)-bin%" $(1)/usr/bin/ruby
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/vendor_ruby/$(PKG_ABI_VERSION)/* $(1)/usr/lib/ruby/vendor_ruby/$(PKG_ABI_VERSION)/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ruby/site_ruby/$(PKG_ABI_VERSION)/* $(1)/usr/lib/ruby/site_ruby/$(PKG_ABI_VERSION)/
+	$(SED) "s%@RUBY_LIBPATH@%/usr/lib/ruby/$(PKG_ABI_VERSION)%" $(1)/usr/bin/ruby
+	$(SED) "s%@RUBY_BINPATH@%/usr/lib/ruby/ruby$(PKG_ABI_VERSION)-bin%" $(1)/usr/bin/ruby
 endef
 
 define Package/libruby
@@ -173,7 +174,7 @@ $(call Package/ruby/Default)
   CATEGORY:=Libraries
   TITLE+= (shared library)
   DEPENDS+= +libpthread +librt +libgmp
-  ABI_VERSION:=$(PKG_LIBVER)
+  ABI_VERSION:=$(PKG_ABI_VERSION)
 endef
 define Package/libruby/install
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -200,25 +201,25 @@ define Package/ruby-stdlib/install
 endef
 
 define Package/ruby-bigdecimal/files
-/usr/lib/ruby/$(PKG_LIBVER)/*/bigdecimal.so
-/usr/lib/ruby/$(PKG_LIBVER)/bigdecimal/
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/bigdecimal-*.gemspec
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/bigdecimal.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/bigdecimal/
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/default/bigdecimal-*.gemspec
 endef
 
 define Package/ruby-cgi/files
-/usr/lib/ruby/$(PKG_LIBVER)/cgi
-/usr/lib/ruby/$(PKG_LIBVER)/cgi.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/cgi/escape.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/cgi
+/usr/lib/ruby/$(PKG_ABI_VERSION)/cgi.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/cgi/escape.so
 endef
 
 define Package/ruby-csv/files
-/usr/lib/ruby/$(PKG_LIBVER)/csv.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/csv.rb
 endef
 
 define Package/ruby-datetime/files
-/usr/lib/ruby/$(PKG_LIBVER)/time.rb
-/usr/lib/ruby/$(PKG_LIBVER)/date.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/date_core.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/time.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/date.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/date_core.so
 endef
 
 define Package/ruby-dbm/description
@@ -227,28 +228,28 @@ define Package/ruby-dbm/description
 
 endef
 define Package/ruby-dbm/files
-/usr/lib/ruby/$(PKG_LIBVER)/*/dbm.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/dbm.so
 endef
 
 define Package/ruby-debuglib/files
-/usr/lib/ruby/$(PKG_LIBVER)/profile.rb
-/usr/lib/ruby/$(PKG_LIBVER)/profiler.rb
-/usr/lib/ruby/$(PKG_LIBVER)/debug.rb
-/usr/lib/ruby/$(PKG_LIBVER)/tracer.rb
-/usr/lib/ruby/$(PKG_LIBVER)/benchmark.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/objspace.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/profile.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/profiler.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/debug.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/tracer.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/benchmark.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/objspace.so
 endef
 
 define Package/ruby-did-you-mean/files
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/did_you_mean-*.gemspec
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/did_you_mean-*.gemspec
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/did_you_mean-*/
 endef
 define Package/ruby-did-you-mean/files-excluded
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/benchmark
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/doc
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/evaluation
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/test
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/did_you_mean-*/*.md
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/did_you_mean-*/benchmark
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/did_you_mean-*/doc
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/did_you_mean-*/evaluation
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/did_you_mean-*/test
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/did_you_mean-*/*.md
 endef
 
 define Package/ruby-digest/description
@@ -270,26 +271,26 @@ define Package/ruby-digest/config
 
 endef
 define Package/ruby-digest/files
-/usr/lib/ruby/$(PKG_LIBVER)/digest
-/usr/lib/ruby/$(PKG_LIBVER)/digest.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/digest.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/digest/*
+/usr/lib/ruby/$(PKG_ABI_VERSION)/digest
+/usr/lib/ruby/$(PKG_ABI_VERSION)/digest.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/digest.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/digest/*
 endef
 
 define Package/ruby-drb/files
-/usr/lib/ruby/$(PKG_LIBVER)/drb.rb
-/usr/lib/ruby/$(PKG_LIBVER)/drb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/drb.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/drb
 endef
 
 define Package/ruby-enc/files
-/usr/lib/ruby/$(PKG_LIBVER)/*/enc/encdb.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/enc/iso_8859_1.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/enc/utf_*.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/enc/euc_jp.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/enc/encdb.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/enc/iso_8859_1.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/enc/utf_*.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/enc/euc_jp.so
 endef
 
 define Package/ruby-enc-extra/files
-/usr/lib/ruby/$(PKG_LIBVER)/*/enc
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/enc
 endef
 define Package/ruby-enc-extra/files-excluded
 $(call Package/ruby-enc/files)
@@ -297,59 +298,59 @@ endef
 
 define Package/ruby-erb/files
 /usr/bin/erb
-/usr/lib/ruby/$(PKG_LIBVER)/erb.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/erb.rb
 endef
 
 define Package/ruby-fiddle/files
-/usr/lib/ruby/$(PKG_LIBVER)/fiddle.rb
-/usr/lib/ruby/$(PKG_LIBVER)/fiddle/
-/usr/lib/ruby/$(PKG_LIBVER)/*/fiddle.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/fiddle.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/fiddle/
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/fiddle.so
 endef
 
 define Package/ruby-filelib/files
-/usr/lib/ruby/$(PKG_LIBVER)/tmpdir.rb
-/usr/lib/ruby/$(PKG_LIBVER)/tempfile.rb
-/usr/lib/ruby/$(PKG_LIBVER)/pathname.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/pathname.so
-/usr/lib/ruby/$(PKG_LIBVER)/find.rb
-/usr/lib/ruby/$(PKG_LIBVER)/fileutils.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/tmpdir.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/tempfile.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/pathname.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/pathname.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/find.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/fileutils.rb
 endef
 
 define Package/ruby-gdbm/files
-/usr/lib/ruby/$(PKG_LIBVER)/*/gdbm.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/gdbm.so
 endef
 
 define Package/ruby-gems/files
-/usr/lib/ruby/$(PKG_LIBVER)/ubygems.rb
-/usr/lib/ruby/$(PKG_LIBVER)/rubygems.rb
-/usr/lib/ruby/$(PKG_LIBVER)/rubygems
+/usr/lib/ruby/$(PKG_ABI_VERSION)/ubygems.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/rubygems.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/rubygems
 endef
 define Package/ruby-gems/files-excluded
-/usr/lib/ruby/$(PKG_LIBVER)/rubygems/test_case.rb
-/usr/lib/ruby/$(PKG_LIBVER)/rubygems/package/tar_test_case.rb
-/usr/lib/ruby/$(PKG_LIBVER)/rubygems/installer_test_case.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/rubygems/test_case.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/rubygems/package/tar_test_case.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/rubygems/installer_test_case.rb
 endef
 define Package/ruby-gems/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gem $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/gems
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/doc
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/cache
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/extensions
-	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_LIBVER)/build_info
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/default
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/doc
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/cache
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/extensions
+	$(INSTALL_DIR) $(1)/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/build_info
 	$(call RubyBuildPackage/install,gems,$(1))
 endef
 
 define Package/ruby-io-console/files
-/usr/lib/ruby/$(PKG_LIBVER)/*/io/console.so
-/usr/lib/ruby/$(PKG_LIBVER)/io/console/
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/io-console-*.gemspec
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/io/console.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/io/console/
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/default/io-console-*.gemspec
 endef
 
 define Package/ruby-irb/files
-/usr/lib/ruby/$(PKG_LIBVER)/irb
-/usr/lib/ruby/$(PKG_LIBVER)/irb.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/irb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/irb.rb
 endef
 define Package/ruby-irb/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -358,156 +359,156 @@ define Package/ruby-irb/install
 endef
 
 define Package/ruby-json/files
-/usr/lib/ruby/$(PKG_LIBVER)/json.rb
-/usr/lib/ruby/$(PKG_LIBVER)/json
-/usr/lib/ruby/$(PKG_LIBVER)/*/json
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/json-*.gemspec
+/usr/lib/ruby/$(PKG_ABI_VERSION)/json.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/json
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/json
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/default/json-*.gemspec
 endef
 define Package/ruby-json/files-excluded
 $(call Package/ruby-psych/files)
 endef
 
 define Package/ruby-logger/files
-/usr/lib/ruby/$(PKG_LIBVER)/logger.rb
-/usr/lib/ruby/$(PKG_LIBVER)/syslog/logger.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/syslog.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/logger.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/syslog/logger.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/syslog.so
 endef
 
 define Package/ruby-math/files
-/usr/lib/ruby/$(PKG_LIBVER)/prime.rb
-/usr/lib/ruby/$(PKG_LIBVER)/mathn.rb
-/usr/lib/ruby/$(PKG_LIBVER)/cmath.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/mathn
-/usr/lib/ruby/$(PKG_LIBVER)/matrix.rb
-/usr/lib/ruby/$(PKG_LIBVER)/matrix
+/usr/lib/ruby/$(PKG_ABI_VERSION)/prime.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/mathn.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/cmath.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/mathn
+/usr/lib/ruby/$(PKG_ABI_VERSION)/matrix.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/matrix
 endef
 
 define Package/ruby-minitest/files
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/minitest-*.gemspec
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/minitest-*
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/minitest-*.gemspec
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/minitest-*
 endef
 define Package/ruby-minitest/files-excluded
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/minitest-*/test
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/minitest-*/*.rdoc
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/minitest-*/*.txt
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/minitest-*/test
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/minitest-*/*.rdoc
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/minitest-*/*.txt
 endef
 
 define Package/ruby-misc/files
-/usr/lib/ruby/$(PKG_LIBVER)/English.rb
-/usr/lib/ruby/$(PKG_LIBVER)/abbrev.rb
-/usr/lib/ruby/$(PKG_LIBVER)/base64.rb
-/usr/lib/ruby/$(PKG_LIBVER)/delegate.rb
-/usr/lib/ruby/$(PKG_LIBVER)/e2mmap.rb
-/usr/lib/ruby/$(PKG_LIBVER)/expect.rb
-/usr/lib/ruby/$(PKG_LIBVER)/getoptlong.rb
-/usr/lib/ruby/$(PKG_LIBVER)/open3.rb
-/usr/lib/ruby/$(PKG_LIBVER)/ostruct.rb
-/usr/lib/ruby/$(PKG_LIBVER)/scanf.rb
-/usr/lib/ruby/$(PKG_LIBVER)/securerandom.rb
-/usr/lib/ruby/$(PKG_LIBVER)/set.rb
-/usr/lib/ruby/$(PKG_LIBVER)/shellwords.rb
-/usr/lib/ruby/$(PKG_LIBVER)/tsort.rb
-/usr/lib/ruby/$(PKG_LIBVER)/weakref.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/continuation.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/coverage.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/etc.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/fcntl.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/fiber.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/pty.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/stringio.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/strscan.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/English.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/abbrev.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/base64.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/delegate.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/e2mmap.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/expect.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/getoptlong.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/open3.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/ostruct.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/scanf.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/securerandom.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/set.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/shellwords.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/tsort.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/weakref.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/continuation.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/coverage.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/etc.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/fcntl.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/fiber.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/pty.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/stringio.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/strscan.so
 endef
 
 define Package/ruby-mkmf/files
-/usr/lib/ruby/$(PKG_LIBVER)/mkmf.rb
-/usr/lib/ruby/$(PKG_LIBVER)/un.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/mkmf.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/un.rb
 endef
 
 define Package/ruby-multithread/files
-/usr/lib/ruby/$(PKG_LIBVER)/monitor.rb
-/usr/lib/ruby/$(PKG_LIBVER)/timeout.rb
-/usr/lib/ruby/$(PKG_LIBVER)/thwait.rb
-/usr/lib/ruby/$(PKG_LIBVER)/mutex_m.rb
-/usr/lib/ruby/$(PKG_LIBVER)/sync.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/io/wait.so
-/usr/lib/ruby/$(PKG_LIBVER)/*/io/nonblock.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/monitor.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/timeout.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/thwait.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/mutex_m.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/sync.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/io/wait.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/io/nonblock.so
 endef
 
 define Package/ruby-net/files
-/usr/lib/ruby/$(PKG_LIBVER)/open-uri.rb
-/usr/lib/ruby/$(PKG_LIBVER)/net/*
+/usr/lib/ruby/$(PKG_ABI_VERSION)/open-uri.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/net/*
 endef
 
 define Package/ruby-net-telnet/files
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/net-telnet-*.gemspec
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/net-telnet-*/
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/net-telnet-*.gemspec
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/net-telnet-*/
 endef
 define Package/ruby-net-telnet/files-excluded
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/net-telnet-*/*.md
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/net-telnet-*/*.txt
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/net-telnet-*/*.md
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/net-telnet-*/*.txt
 endef
 
 define Package/ruby-nkf/files
-/usr/lib/ruby/$(PKG_LIBVER)/kconv.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/nkf.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/kconv.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/nkf.so
 endef
 
 define Package/ruby-openssl/files
-/usr/lib/ruby/$(PKG_LIBVER)/openssl
-/usr/lib/ruby/$(PKG_LIBVER)/openssl.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/openssl.so
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/openssl-*.gemspec
+/usr/lib/ruby/$(PKG_ABI_VERSION)/openssl
+/usr/lib/ruby/$(PKG_ABI_VERSION)/openssl.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/openssl.so
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/default/openssl-*.gemspec
 endef
 
 define Package/ruby-optparse/files
-/usr/lib/ruby/$(PKG_LIBVER)/optparse.rb
-/usr/lib/ruby/$(PKG_LIBVER)/optionparser.rb
-/usr/lib/ruby/$(PKG_LIBVER)/optparse
+/usr/lib/ruby/$(PKG_ABI_VERSION)/optparse.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/optionparser.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/optparse
 endef
 
 define Package/ruby-patterns/files
-/usr/lib/ruby/$(PKG_LIBVER)/observer.rb
-/usr/lib/ruby/$(PKG_LIBVER)/singleton.rb
-/usr/lib/ruby/$(PKG_LIBVER)/forwardable.rb
-/usr/lib/ruby/$(PKG_LIBVER)/forwardable
+/usr/lib/ruby/$(PKG_ABI_VERSION)/observer.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/singleton.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/forwardable.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/forwardable
 endef
 
 define Package/ruby-powerassert/files
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/power_assert-*.gemspec
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/power_assert-*
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/power_assert-*.gemspec
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/power_assert-*
 endef
 define Package/ruby-powerassert/files-excluded
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/power_assert-*/test
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/power_assert-*/test
 endef
 
 define Package/ruby-prettyprint/files
-/usr/lib/ruby/$(PKG_LIBVER)/pp.rb
-/usr/lib/ruby/$(PKG_LIBVER)/prettyprint.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/pp.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/prettyprint.rb
 endef
 
 define Package/ruby-pstore/files
-/usr/lib/ruby/$(PKG_LIBVER)/pstore.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/pstore.rb
 endef
 
 define Package/ruby-psych/files
-/usr/lib/ruby/$(PKG_LIBVER)/psych
-/usr/lib/ruby/$(PKG_LIBVER)/psych.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/psych.so
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/psych-*.gemspec
+/usr/lib/ruby/$(PKG_ABI_VERSION)/psych
+/usr/lib/ruby/$(PKG_ABI_VERSION)/psych.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/psych.so
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/default/psych-*.gemspec
 endef
 
 define Package/ruby-racc/files
-/usr/lib/ruby/$(PKG_LIBVER)/racc
-/usr/lib/ruby/$(PKG_LIBVER)/*/racc/*.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/racc
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/racc/*.so
 endef
 
 define Package/ruby-rake/files
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/rake-*.gemspec
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/rake-*.gemspec
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/rake-*/
 endef
 define Package/ruby-rake/files-excluded
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/doc
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rake-*/*.rdoc
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/rake-*/doc
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/rake-*/*.rdoc
 endef
 define Package/ruby-rake/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -516,21 +517,21 @@ define Package/ruby-rake/install
 endef
 
 define Package/ruby-rbconfig/files
-/usr/lib/ruby/$(PKG_LIBVER)/*/rbconfig.rb
-/usr/lib/ruby/$(PKG_LIBVER)/rbconfig/*
-/usr/lib/ruby/$(PKG_LIBVER)/*/rbconfig/*.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/rbconfig.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/rbconfig/*
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/rbconfig/*.so
 endef
 
 define Package/ruby-rdoc/files
-	/usr/lib/ruby/$(PKG_LIBVER)/rdoc.rb
-	/usr/lib/ruby/$(PKG_LIBVER)/rdoc
-	/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/rdoc-*
-	/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/default/rdoc-*.gemspec
+	/usr/lib/ruby/$(PKG_ABI_VERSION)/rdoc.rb
+	/usr/lib/ruby/$(PKG_ABI_VERSION)/rdoc
+	/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/rdoc-*
+	/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/default/rdoc-*.gemspec
 endef
 define Package/ruby-rdoc/files-excluded
-	/usr/lib/ruby/$(PKG_LIBVER)/rdoc/test_case.rb
-	/usr/lib/ruby/$(PKG_LIBVER)/rdoc/markup/formatter_test_case.rb
-	/usr/lib/ruby/$(PKG_LIBVER)/rdoc/markup/text_formatter_test_case.rb
+	/usr/lib/ruby/$(PKG_ABI_VERSION)/rdoc/test_case.rb
+	/usr/lib/ruby/$(PKG_ABI_VERSION)/rdoc/markup/formatter_test_case.rb
+	/usr/lib/ruby/$(PKG_ABI_VERSION)/rdoc/markup/text_formatter_test_case.rb
 endef
 define Package/ruby-rdoc/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -540,87 +541,87 @@ define Package/ruby-rdoc/install
 endef
 
 define Package/ruby-readline/files
-/usr/lib/ruby/$(PKG_LIBVER)/*/readline.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/readline.so
 endef
 
 define Package/ruby-rexml/files
-/usr/lib/ruby/$(PKG_LIBVER)/rexml
+/usr/lib/ruby/$(PKG_ABI_VERSION)/rexml
 endef
 
 define Package/ruby-rinda/files
-/usr/lib/ruby/$(PKG_LIBVER)/rinda
+/usr/lib/ruby/$(PKG_ABI_VERSION)/rinda
 endef
 
 define Package/ruby-ripper/files
-/usr/lib/ruby/$(PKG_LIBVER)/ripper.rb
-/usr/lib/ruby/$(PKG_LIBVER)/ripper
-/usr/lib/ruby/$(PKG_LIBVER)/*/ripper.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/ripper.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/ripper
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/ripper.so
 endef
 
 define Package/ruby-rss/files
-/usr/lib/ruby/$(PKG_LIBVER)/rss
-/usr/lib/ruby/$(PKG_LIBVER)/rss.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/rss
+/usr/lib/ruby/$(PKG_ABI_VERSION)/rss.rb
 endef
 
 define Package/ruby-sdbm/files
-/usr/lib/ruby/$(PKG_LIBVER)/*/sdbm.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/sdbm.so
 endef
 
 define Package/ruby-shell/files
-/usr/lib/ruby/$(PKG_LIBVER)/shell.rb
-/usr/lib/ruby/$(PKG_LIBVER)/shell
+/usr/lib/ruby/$(PKG_ABI_VERSION)/shell.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/shell
 endef
 
 define Package/ruby-socket/files
-/usr/lib/ruby/$(PKG_LIBVER)/ipaddr.rb
-/usr/lib/ruby/$(PKG_LIBVER)/resolv-replace.rb
-/usr/lib/ruby/$(PKG_LIBVER)/resolv.rb
-/usr/lib/ruby/$(PKG_LIBVER)/socket.rb
-/usr/lib/ruby/$(PKG_LIBVER)/*/socket.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/ipaddr.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/resolv-replace.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/resolv.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/socket.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/socket.so
 endef
 
 define Package/ruby-testunit/files
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/test-unit-*.gemspec
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/test-unit-*
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/test-unit-*.gemspec
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/test-unit-*
 endef
 define Package/ruby-testunit/files-excluded
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/test-unit-*/doc
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/test-unit-*/test
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/test-unit-*/sample
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/test-unit-*/*.md
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/test-unit-*/doc
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/test-unit-*/test
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/test-unit-*/sample
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/test-unit-*/*.md
 endef
 
 define Package/ruby-unicodenormalize/files
-/usr/lib/ruby/$(PKG_LIBVER)/unicode_normalize.rb
-/usr/lib/ruby/$(PKG_LIBVER)/unicode_normalize
+/usr/lib/ruby/$(PKG_ABI_VERSION)/unicode_normalize.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/unicode_normalize
 endef
 
 define Package/ruby-uri/files
-/usr/lib/ruby/$(PKG_LIBVER)/uri.rb
-/usr/lib/ruby/$(PKG_LIBVER)/uri
+/usr/lib/ruby/$(PKG_ABI_VERSION)/uri.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/uri
 endef
 
 define Package/ruby-webrick/files
-/usr/lib/ruby/$(PKG_LIBVER)/webrick
-/usr/lib/ruby/$(PKG_LIBVER)/webrick.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/webrick
+/usr/lib/ruby/$(PKG_ABI_VERSION)/webrick.rb
 endef
 
 define Package/ruby-xmlrpc/files
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/xmlrpc-*
-/usr/lib/ruby/gems/$(PKG_LIBVER)/specifications/xmlrpc-*.gemspec
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/xmlrpc-*
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/specifications/xmlrpc-*.gemspec
 endef
 define Package/ruby-xmlrpc/files-excluded
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/xmlrpc-0.2.1/*.md
-/usr/lib/ruby/gems/$(PKG_LIBVER)/gems/xmlrpc-0.2.1/*.txt
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/xmlrpc-0.2.1/*.md
+/usr/lib/ruby/gems/$(PKG_ABI_VERSION)/gems/xmlrpc-0.2.1/*.txt
 endef
 
 define Package/ruby-yaml/files
-/usr/lib/ruby/$(PKG_LIBVER)/yaml
-/usr/lib/ruby/$(PKG_LIBVER)/yaml.rb
+/usr/lib/ruby/$(PKG_ABI_VERSION)/yaml
+/usr/lib/ruby/$(PKG_ABI_VERSION)/yaml.rb
 endef
 
 define Package/ruby-zlib/files
-/usr/lib/ruby/$(PKG_LIBVER)/*/zlib.so
+/usr/lib/ruby/$(PKG_ABI_VERSION)/*/zlib.so
 endef
 
 RUBY_FILES = $(strip $(call Package/ruby-$(1)/files))
