@@ -25,7 +25,7 @@ PKG_KMOD_BUILD_DIR:=$(PKG_BUILD_DIR)/batman/linux/modules
 include $(INCLUDE_DIR)/package.mk
 
 define Package/batmand/Default
-  URL:=http://www.open-mesh.org/
+  URL:=https://www.open-mesh.org/
   MAINTAINER:=Corinna "Elektra" Aichele <onelektra@gmx.net>
 endef
 
