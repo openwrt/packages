@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=batmand
 PKG_REV:=1439
 PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_EXTRA_CFLAGS=-DDEBUG_MALLOC -DMEMORY_USAGE -DPROFILE_DATA -DREVISION_VERSION=\"\ rv$(PKG_REV)\" -D_GNU_SOURCE
 
 PKG_HASH:=3c72ce2aae889944acfc898434c6e9573b20815862db1938f3132cc50b669667
@@ -42,19 +42,6 @@ define Package/batmand/description
 B.A.T.M.A.N. layer 3 routing daemon
 endef
 
-define Package/vis
-$(call Package/batmand/Default)
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=Routing and Redirection
-  DEPENDS:=+libpthread
-  TITLE:=visualization server for B.A.T.M.A.N. layer 3
-endef
-        
-define Package/vis/description
-visualization server for B.A.T.M.A.N. layer 3
-endef
-
 define KernelPackage/batgat
 $(call Package/batmand/Default)
   SUBMENU:=Network Support
@@ -80,18 +67,6 @@ MAKE_BATMAND_ARGS += \
 	INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
 	STRIP="/bin/true" \
 	batmand install
-	
-MAKE_VIS_ARGS += \
-	EXTRA_CFLAGS='$(TARGET_CFLAGS) $(PKG_EXTRA_CFLAGS)' \
-	CCFLAGS="$(TARGET_CFLAGS)" \
-	OFLAGS="$(TARGET_CFLAGS)" \
-	REVISION="$(PKG_REV)" \
-	CC="$(TARGET_CC)" \
-	NODEBUG=1 \
-	UNAME="Linux" \
-	INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
-	STRIP="/bin/true" \
-	vis install
 
 MAKE_BATGAT_ARGS += \
 	CROSS_COMPILE="$(TARGET_CROSS)" \
@@ -108,10 +83,6 @@ endef
 ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_batmand),)
 	BUILD_BATMAND := $(MAKE) -C $(PKG_BUILD_DIR)/batman $(MAKE_BATMAND_ARGS)
 endif
-
-ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_vis),)
-	BUILD_VIS := $(MAKE) -C $(PKG_BUILD_DIR)/vis $(MAKE_VIS_ARGS)
-endif
 	
 ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_kmod-batgat),)
 	BUILD_BATGAT := $(MAKE) -C "$(LINUX_DIR)" $(MAKE_BATGAT_ARGS)
@@ -119,7 +90,6 @@ endif
 	        
 define Build/Compile
 	$(BUILD_BATMAND)
-	$(BUILD_VIS)
 	cp $(PKG_KMOD_BUILD_DIR)/Makefile.kbuild $(PKG_KMOD_BUILD_DIR)/Makefile
 	$(BUILD_BATGAT)
 endef
@@ -135,17 +105,5 @@ define Package/batmand/conffiles
 /etc/config/batmand
 endef
 
-define Package/vis/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/vis $(1)/usr/sbin/
-	$(INSTALL_BIN) ./files/etc/init.d/vis $(1)/etc/init.d
-	$(INSTALL_DATA) ./files/etc/config/vis $(1)/etc/config
-endef
-
-define Package/vis/conffiles
-/etc/config/vis
-endef
-
 $(eval $(call BuildPackage,batmand))
-$(eval $(call BuildPackage,vis))
 $(eval $(call KernelPackage,batgat))
