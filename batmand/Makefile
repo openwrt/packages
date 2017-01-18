@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/batmand/Default
   URL:=http://www.open-mesh.org/
-  MAINTAINER:=Marek Lindner <lindner_marek@yahoo.de>
+  MAINTAINER:=Corinna "Elektra" Aichele <onelektra@gmx.net>
 endef
 
 define Package/batmand
