@@ -12,7 +12,7 @@ include ./files/python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
@@ -92,7 +92,9 @@ define PyBasePackage
   endif
   PYTHON_LIB_FILES_DEL+=$(2)
   define PyPackage/$(1)/filespec
-    $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
+    ifneq ($(2),)
+      $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
+    endif
   endef
 endef
 
@@ -136,6 +138,7 @@ CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--with-threads \
 	--with-system-ffi \
+	--with-ensurepip=no \
 	--without-pymalloc \
 	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
 	$(ENABLE_IPV6) \
@@ -145,6 +148,31 @@ CONFIGURE_ARGS+= \
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(CP) ./files/config.site $(PKG_BUILD_DIR)/config.site
+endef
+
+ifdef CONFIG_PACKAGE_python-setuptools
+define Build/Compile/python-setuptools
+	$(STAGING_DIR_HOSTPKG)/bin/pip install \
+		--ignore-installed \
+		--root=$(PKG_BUILD_DIR)/install-setuptools --prefix=. \
+		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-*.whl
+endef
+endif # CONFIG_PACKAGE_python-setuptools
+
+ifdef CONFIG_PACKAGE_python-pip
+define Build/Compile/python-pip
+	$(STAGING_DIR_HOSTPKG)/bin/pip install \
+		--ignore-installed \
+		--root=$(PKG_BUILD_DIR)/install-pip --prefix=. \
+		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-*.whl
+endef
+endif # CONFIG_PACKAGE_python-pip
+
+define Build/Compile
+	$(call Build/Compile/Default)
+	# Use host pip to install python-setuptools
+	$(call Build/Compile/python-setuptools)
+	$(call Build/Compile/python-pip)
 endef
 
 define Build/InstallDev
