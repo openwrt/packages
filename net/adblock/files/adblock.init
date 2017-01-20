@@ -9,9 +9,7 @@ EXTRA_HELP="	suspend	Suspend adblock processing
 	resume	Resume adblock processing
 	query	<DOMAIN> Query active blocklists for specific domain"
 
-exec 2>/dev/null
 adb_script="/usr/bin/adblock.sh"
-adb_iface="$(uci -q get adblock.global.adb_iface)"
 
 boot()
 {
@@ -74,16 +72,17 @@ query()
 
 service_triggers()
 {
-    local iface
+    local iface="$(uci -q get adblock.global.adb_iface)"
 
-    procd_add_config_trigger "config.change" "adblock" /etc/init.d/adblock start
-    if [ -z "${adb_iface}" ]
+    if [ -z "${iface}" ]
     then
         procd_add_raw_trigger "interface.*.up" 1000 /etc/init.d/adblock start
     else
-        for iface in ${adb_iface}
+        for name in ${iface}
         do
-            procd_add_interface_trigger "interface.*.up" "${iface}" /etc/init.d/adblock start
+            procd_add_interface_trigger "interface.*.up" "${name}" /etc/init.d/adblock start
         done
     fi
+
+    procd_add_config_trigger "config.change" "adblock" /etc/init.d/adblock start
 }
