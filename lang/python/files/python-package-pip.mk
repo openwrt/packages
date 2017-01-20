@@ -8,7 +8,7 @@
 define Package/python-pip
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) pip module
-  DEPENDS:=+python +python-setuptools
+  DEPENDS:=+python +python-setuptools +python-pip-conf
 endef
 
 define PyPackage/python-pip/install
