@@ -285,7 +285,7 @@ $(call Package/ffmpeg/Default)
  SECTION:=libs
  CATEGORY:=Libraries
  TITLE+= libraries
- DEPENDS+= @BUILD_PATENTED +libpthread +zlib +libbz2
+ DEPENDS+= +libpthread +zlib +libbz2
  PROVIDES:= libffmpeg
 endef
 
@@ -294,7 +294,8 @@ define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (custom)
  DEPENDS+= +FFMPEG_CUSTOM_SELECT_libopus:libopus \
-           +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib
+           +FFMPEG_CUSTOM_SELECT_x264:libx264 \
+           +FFMPEG_CUSTOM_SELECT_mp3lame:lame-lib
 
  VARIANT:=custom
  MENU:=1
@@ -314,6 +315,7 @@ endef
 define Package/libffmpeg-audio-dec
 $(call Package/libffmpeg/Default)
  TITLE+= (audio)
+ DEPENDS+= @BUILD_PATENTED
  VARIANT:=audio-dec
 endef
 
@@ -327,7 +329,7 @@ endef
 define Package/libffmpeg-full
 $(call Package/libffmpeg/Default)
  TITLE+= (full)
- DEPENDS+= +alsa-lib +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib +libopus
+ DEPENDS+= @BUILD_PATENTED +alsa-lib +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib +libopus
  VARIANT:=full
 endef
 
@@ -341,6 +343,7 @@ endef
 define Package/libffmpeg-mini
 $(call Package/libffmpeg/Default)
  TITLE+= (mini)
+ DEPENDS+= @BUILD_PATENTED
  VARIANT:=mini
 endef
 

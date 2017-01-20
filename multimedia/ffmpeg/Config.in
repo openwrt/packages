@@ -1,4 +1,5 @@
-if PACKAGE_libffmpeg-custom
+menu "Libffmpeg-custom configuration"
+	depends on PACKAGE_libffmpeg-custom
 
 config FFMPEG_CUSTOM_PATENTED
 	bool "Include patented codecs and technologies"
@@ -108,7 +109,6 @@ comment "External Libraries"
 config FFMPEG_CUSTOM_SELECT_mp3lame
 	bool "MP3 LAME"
 	depends on FFMPEG_CUSTOM_PATENTED
-	depends on PACKAGE_lame-lib
 	select FFMPEG_CUSTOM_DECODER_mp3
 	select FFMPEG_CUSTOM_MUXER_mp3
 	select FFMPEG_CUSTOM_DEMUXER_mp3
@@ -119,7 +119,6 @@ config FFMPEG_CUSTOM_SELECT_libopus
 config FFMPEG_CUSTOM_SELECT_x264
 	bool "x264"
 	depends on FFMPEG_CUSTOM_PATENTED
-	depends on PACKAGE_libx264
 	select FFMPEG_CUSTOM_DECODER_h264
 	select FFMPEG_CUSTOM_MUXER_h264
 	select FFMPEG_CUSTOM_DEMUXER_h264
@@ -470,4 +469,4 @@ config FFMPEG_CUSTOM_PROTOCOL_udp
 	bool "udp:"
 
 
-endif
+endmenu
