@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.1.1"
+adb_ver="2.1.2"
 adb_enabled=1
 adb_debug=0
 adb_whitelist="/etc/adblock/adblock.whitelist"
@@ -295,6 +295,7 @@ f_log()
 }
 
 # f_debug: gather memory & space information
+#
 f_debug()
 {
         local mem_total=0 mem_free=0 mem_swap=0 tmp_space=0 backup_space=0
