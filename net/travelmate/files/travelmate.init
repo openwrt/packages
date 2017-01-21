@@ -4,7 +4,6 @@ START=85
 USE_PROCD=1
 
 trm_script="/usr/bin/travelmate.sh"
-trm_iface="$(uci -q get travelmate.global.trm_iface)"
 
 boot()
 {
@@ -24,16 +23,17 @@ start_service()
 
 service_triggers()
 {
-    local iface
+    local iface="$(uci -q get travelmate.global.trm_iface)"
 
-    procd_add_config_trigger "config.change" "travelmate" /etc/init.d/travelmate start
-    if [ -z "${trm_iface}" ]
+    if [ -z "${iface}" ]
     then
         procd_add_raw_trigger "interface.*.down" 1000 /etc/init.d/travelmate start
     else
-        for iface in ${trm_iface}
+        for name in ${iface}
         do
-            procd_add_interface_trigger "interface.*.down" "${iface}" /etc/init.d/travelmate start
+            procd_add_interface_trigger "interface.*.down" "${name}" /etc/init.d/travelmate start
         done
     fi
+
+    procd_add_config_trigger "config.change" "travelmate" /etc/init.d/travelmate start
 }
