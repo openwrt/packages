@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
-PKG_VERSION:=9.0
+PKG_VERSION:=10.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://freedesktop.org/software/pulseaudio/releases/
-PKG_MD5SUM:=da7162541b3a9bc20576dbd0d7d1489a
+PKG_HASH:=a3186824de9f0d2095ded5d0d0db0405dc73133983c2fbb37291547e37462f57
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=GPL LICENSE
 
@@ -41,7 +41,6 @@ endef
 
 define Package/pulseaudio-daemon
   $(call Package/pulseaudio/Default)
-  DEPENDS+= +libjson-c
 endef
 
 define Package/pulseaudio/Default/description
