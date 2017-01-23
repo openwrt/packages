@@ -23,12 +23,19 @@
 #
 ##############################################################################
 
-create_local_zone() {
+dnsmasq_local_zone() {
   local cfg="$1"
-  local fwd_port fwd_domain
+  local fwd_port fwd_domain wan_fqdn
 
+  # dnsmasq domain and interface assignment settings will control config
   config_get fwd_domain "$cfg" domain
-  config_get fwd_port   "$cfg" port
+  config_get fwd_port "$cfg" port
+  config_get wan_fqdn "$cfg" add_wan_fqdn
+
+
+  if [ -n "$wan_fqdn" ] ; then
+    UNBOUND_D_WAN_FQDN=$wan_fqdn
+  fi
 
 
   if [ -n "$fwd_domain" -a -n "$fwd_port" -a ! "$fwd_port" -eq 53 ] ; then
@@ -48,7 +55,7 @@ create_local_zone() {
 
 ##############################################################################
 
-create_local_arpa() {
+dnsmasq_local_arpa() {
   local cfg="$1"
   local logint dhcpv4 dhcpv6 ignore
   local subnets subnets4 subnets6
@@ -78,7 +85,7 @@ create_local_arpa() {
     forward=""
 
   elif [ "$ignore" -gt 0 ] ; then
-    if [ "$UNBOUND_B_GATE_NAME" -gt 0 ] ; then
+    if [ "$UNBOUND_D_WAN_FQDN" -gt 0 ] ; then
       # Only forward the one gateway host.
       forward="host"
 
@@ -137,11 +144,11 @@ create_local_arpa() {
 
 ##############################################################################
 
-forward_local_zone() {
+dnsmasq_forward_zone() {
   if [ -n "$UNBOUND_N_FWD_PORTS" -a -n "$UNBOUND_TXT_FWD_ZONE" ] ; then
     for fwd_domain in $UNBOUND_TXT_FWD_ZONE ; do
       {
-        # This is derived of create_local_zone/arpa
+        # This is derived of dnsmasq_local_zone/arpa
         # but forward: clauses need to be seperate
         echo "forward-zone:"
         echo "  name: \"$fwd_domain.\""
@@ -159,23 +166,16 @@ forward_local_zone() {
 ##############################################################################
 
 dnsmasq_link() {
-  ####################
-  # UCI @ dhcp       #
-  ####################
-
-
-  if [ "$UNBOUND_B_DNSMASQ" -gt 0 ] ; then
-    # Forward to dnsmasq on same host for DHCP lease hosts
-    echo "  do-not-query-localhost: no" >> $UNBOUND_CONFFILE
-    # Look at dnsmasq settings
-    config_load dhcp
-    # Zone for DHCP / SLAAC-PING DOMAIN
-    config_foreach create_local_zone dnsmasq
-    # Zone for DHCP / SLAAC-PING ARPA
-    config_foreach create_local_arpa dhcp
-    # Now create ALL seperate forward: clauses
-    forward_local_zone
-  fi
+  # Forward to dnsmasq on same host for DHCP lease hosts
+  echo "  do-not-query-localhost: no" >> $UNBOUND_CONFFILE
+  # Look at dnsmasq settings
+  config_load dhcp
+  # Zone for DHCP / SLAAC-PING DOMAIN
+  config_foreach dnsmasq_local_zone dnsmasq
+  # Zone for DHCP / SLAAC-PING ARPA
+  config_foreach dnsmasq_local_arpa dhcp
+  # Now create ALL seperate forward: clauses
+  dnsmasq_forward_zone
 }
 
 ##############################################################################
