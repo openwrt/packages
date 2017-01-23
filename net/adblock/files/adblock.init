@@ -24,10 +24,10 @@ boot()
         if [ -n "${wanif4}" ] || [ -n "${wanif6}" ]
         then
             rc_procd start_service
-        else
-            rc_procd service_triggers
+            return 0
         fi
     fi
+    rc_procd service_triggers
 }
 
 start_service()

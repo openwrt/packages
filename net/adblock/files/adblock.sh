@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.1.2"
+adb_ver="2.1.5"
 adb_enabled=1
 adb_debug=0
 adb_whitelist="/etc/adblock/adblock.whitelist"
@@ -31,7 +31,7 @@ f_envload()
         f_log "error" "status ::: system library not found"
     fi
 
-    # set dns server environment
+    # set dns backend environment
     #
     adb_dns="$(uci -q get adblock.global.adb_dns)"
     if [ "${adb_dns}" = "unbound" ]
@@ -109,9 +109,14 @@ f_envcheck()
 
     # check fetch utility
     #
-    if [ -z "${adb_fetch}" ] || [ ! -f "${adb_fetch}" ]
+    if [ -z "${adb_fetch}" ] || [ -z "${adb_fetchparm}" ] || [ ! -f "${adb_fetch}" ] || [ "$(readlink -fn "${adb_fetch}")" = "/bin/busybox" ]
     then
-        f_log "error" "status ::: no download utility with ssl support found/configured"
+        f_log "error" "status ::: required download utility with ssl support not found, e.g. install full 'wget' package"
+    fi
+    if [ "${adb_fetch}" = "/usr/bin/wget" ] && [ "$(readlink -fn "${adb_fetch}")" = "/bin/uclient-fetch" ]
+    then
+        adb_fetch="/bin/uclient-fetch"
+        adb_fetchparm="-q --timeout=5 --no-check-certificate -O"
     fi
 
     # create dns hideout directory
@@ -119,7 +124,7 @@ f_envcheck()
     if [ ! -d "${adb_dnshidedir}" ]
     then
         mkdir -p -m 660 "${adb_dnshidedir}"
-        chown -R "${adb_dns}":"${adb_dns}" "${adb_dnshidedir}"
+        chown -R "${adb_dns}":"${adb_dns}" "${adb_dnshidedir}" 2>/dev/null
     else
         rm -f "${adb_dnshidedir}/${adb_dnsprefix}"*
     fi
@@ -157,7 +162,7 @@ f_rmdns()
     ubus call service delete "{\"name\":\"adblock_stats\",\"instances\":\"stats\"}" 2>/dev/null
 }
 
-# f_dnsrestart: restart the dns server
+# f_dnsrestart: restart the dns backend
 #
 f_dnsrestart()
 {
@@ -254,7 +259,7 @@ f_query()
          printf "%s\n" "::: no active block lists found, please start adblock first"
     elif [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
     then
-        printf "%s\n" "::: invalid domain input, please submit a specific (sub-)domain, i.e. 'www.abc.xyz'"
+        printf "%s\n" "::: invalid domain input, please submit a specific (sub-)domain, e.g. 'www.abc.xyz'"
     else
         cd "${adb_dnsdir}"
         while [ "${domain}" != "${tld}" ]
@@ -286,6 +291,7 @@ f_log()
         logger -t "adblock-[${adb_ver}] ${class}" "${log_msg}"
         if [ "${class}" = "error" ]
         then
+            logger -t "adblock-[${adb_ver}] ${class}" "Please also check the online documentation 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md'"
             f_rmtemp
             f_rmdns
             f_dnsrestart
@@ -437,7 +443,7 @@ f_main()
         fi
     done
 
-    # restart dns server and write statistics
+    # restart the dns backend and write statistics to procd service instance
     #
     chown "${adb_dns}":"${adb_dns}" "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null
     f_dnsrestart
@@ -457,7 +463,7 @@ f_main()
         return 0
     fi
     f_debug
-    f_log "error" "status ::: dns server restart with active block lists failed (${sysver})"
+    f_log "error" "status ::: dns backend restart with active block lists failed (${sysver})"
 }
 
 # handle different adblock actions
