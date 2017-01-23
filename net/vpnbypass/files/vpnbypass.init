@@ -1,33 +1,40 @@
 #!/bin/sh /etc/rc.common
+PKG_NAME='vpnbypass'
+PKG_VERSION=
 
-START=92
+START=94
 USE_PROCD=1
 
-TID="200"; FW_MARK="0x010000"; IPSET="vpnbypass"; 
+TID="200"; FW_MARK="0x010000"; IPSET="vpnbypass";
 
 output() {
-	[ -z "$verbosity" ] && config_get verbosity  'config' 'verbosity' '2'
-	[ -n "$2" -a $((verbosity)) -ne $(($2)) ] && return 0;
+	[ -n "$2" ] && [ ! $(($verbosity & $2)) -gt 0 ] && return 0;
 	[ -t 1 ] && echo -e -n "$1"
-	[ $(echo -e -n "$1" | wc -l) -gt 0 ] && logger -t "vpnbypass[$$]" "$(echo -e -n ${logmsg}${1})" && logmsg='' || logmsg=${logmsg}${1}
+	[ $(echo -e -n "$1" | wc -l) -gt 0 ] && logger -t "${PKG_NAME:-service} [$$]" "$(echo -e -n ${logmsg}${1//$p_name /service })" && logmsg='' || logmsg=${logmsg}${1//p_name /service }
 }
 
 vpnbypass_enabled() {
-    config_get_bool enabled 'config' 'enabled' 0
-    [ $((enabled)) -gt 0 ] && return 0 || { output "VPNBypass is not enabled in the config file!\nTo enable, run 'uci set vpnbypass.config.enabled=1; uci commit vpnbypass'\n"; return 1; }
+	config_load vpnbypass
+	config_get_bool enabled 'config' 'enabled' 0
+	config_get verbosity    'config' 'verbosity' '2'
+	[ -n "$PKG_NAME" -a -n "$PKG_VERSION" ] && p_name="$PKG_NAME $PKG_VERSION" || p_name='vpnbypass'
+	[ "$enabled" -ne "0" ] && return 0
+	output "$p_name is not enabled in the config file!\n"
+	output "To enable, run 'uci set vpnbypass.config.enabled=1; uci commit vpnbypass'\n"
+	return 1
 }
 
-boot() { ubus -t 30 wait_for network.interface.wan && rc_procd start_service || output 'ERROR: Failed to settle network interface!\n'; }
+boot() { ubus -t 30 wait_for network.interface.wan && { rc_procd start_service; rc_procd service_triggers; } || output "ERROR: $p_name failed to settle network interface!\n"; }
 
 start_service() {
 	local ll c=1
-    config_load vpnbypass
-    vpnbypass_enabled || return 1
-    config_get lports   'config' 'localport'
-    config_get rports   'config' 'remoteport'
-    config_get routes   'config' 'remotesubnet'
-    config_get ranges   'config' 'localsubnet'
-    config_get domains  'config' 'domain'
+  config_load vpnbypass
+  vpnbypass_enabled || return 1
+  config_get lports   'config' 'localport'
+  config_get rports   'config' 'remoteport'
+  config_get routes   'config' 'remotesubnet'
+  config_get ranges   'config' 'localsubnet'
+  config_get domains  'config' 'domain'
 
 	procd_open_instance
 	procd_set_param stdout 1
@@ -35,8 +42,8 @@ start_service() {
 	procd_close_instance
 
 	source /lib/functions/network.sh
-	while : ; do network_get_ipaddr wanip wan; network_get_gateway gwip wan; [ $c -ge 5 ] && break || let "c+=1"; [ -n "$wanip" -a -n "$gwip" ] && break || sleep 5; done
-	[ -z "$wanip" -o -z "$gwip" ] && output 'ERROR: Could not get WAN interface IP: $wanip or Gateway: $gwip\n' && exit 0
+	while : ; do network_get_ipaddr wanip wan; network_get_gateway gwip wan; [ $c -ge 5 ] && break || let "c+=1"; [ -n "$wanip" -a -n "$gwip" ] && break || output "$p_name waiting for wan gateway...\n"; sleep 2; network_flush_cache; done
+	[ -z "$wanip" -o -z "$gwip" ] && output "ERROR: $p_name could not get wan interface IP: $wanip or gateway: $gwip!\n" && exit 0
 
 	for ll in ${routes}; do { [ "$ll" = "${ll#*\/*}" ] && ll="${ll}/32"; ip route del $ll; ip route add $ll via $gwip; } >/dev/null 2>&1; done
 	{ ip rule del fwmark $FW_MARK table $TID; iptables -t mangle -F; ipset -F $IPSET; ipset -X $IPSET; } >/dev/null 2>&1
@@ -49,28 +56,27 @@ start_service() {
 	for ll in ${ranges}; do [ "$ll" = "${ll#*\/*}" ] && ll="${ll}/32"; iptables -t mangle -I PREROUTING -s $ll -j MARK --set-mark $FW_MARK/$FW_MARK -m comment --comment "vpnbypass"; done
 	iptables -t mangle -A PREROUTING -m set --match-set $IPSET dst -j MARK --set-mark $FW_MARK/$FW_MARK -m comment --comment "vpnbypass"
 	ip rule add fwmark $FW_MARK table $TID
-	output "vpnbypass started with TID: $TID; FW_MARK: $FW_MARK\n"
+	output "$p_name started with TID: $TID; FW_MARK: $FW_MARK\n"
 }
 
 stop_service() {
 	local ll
-    config_load vpnbypass
-    vpnbypass_enabled || return 1
-    config_get routes   'config' 'remotesubnet'
+  vpnbypass_enabled || return 1
+  config_get routes   'config' 'remotesubnet'
 
 	for ll in ${routes}; do [ "$ll" = "${ll#*\/*}" ] && ll="${ll}/32"; ip route del $ll >/dev/null 2>&1; done
 #	iptables-save | grep -Fv -- "vpnbypass" | iptables-restore
 	{ ip rule del fwmark $FW_MARK table $TID; iptables -t mangle -F; ipset -F $IPSET; ipset -X $IPSET; } >/dev/null 2>&1
 	{ ip route flush table $TID; ip route flush cache; } >/dev/null 2>&1
-	output "vpnbypass stopped\n"
+	output "$p_name stopped\n"
 }
 
-reload_service()
-{
-	start_service
-}
+reload_service(){ start_service; }
 
 service_triggers() {
-    procd_add_reload_trigger 'vpnbypass'
-    procd_add_reload_interface_trigger 'wan'
+		procd_add_reload_trigger 'vpnbypass'
+		procd_open_trigger
+		procd_add_config_trigger "config.change" "vpnbypass" /etc/init.d/vpnbypass reload
+		procd_add_interface_trigger "interface.*" "wan" /etc/init.d/vpnbypass reload
+		procd_close_trigger
 }
