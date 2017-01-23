@@ -29,8 +29,8 @@ In this case, dnsmasq is not changed *much* with respect to the default OpenWRT/
 **/etc/config/dhcp**:
 
 	config dnsmasq
-		option noresolv '1'
-		option resolvfile ''
+		option noresolv '0'
+		option resolvfile '/tmp/resolv.conf.auto'
 		option port '53'
 		list server '127.0.0.1#1053'
 		list server '::1#1053'
@@ -51,7 +51,7 @@ In this case, Unbound serves your local network directly for all purposes. It wi
 	config dnsmasq
 		option domain 'yourdomain'
 		option noresolv '1'
-		option resolvfile ''
+		option resolvfile '/tmp/resolv.conf.auto'
 		option port '1053'
 		...
 
