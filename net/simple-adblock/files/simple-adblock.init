@@ -1,0 +1,222 @@
+#!/bin/sh /etc/rc.common
+
+START=94
+USE_PROCD=1
+#PROCD_DEBUG=1
+
+H_TMP='/tmp/hosts.bad.tmp'
+D_TMP='/tmp/domains.bad.tmp'
+W_TMP='/tmp/hosts.white.tmp'
+B_TMP='/tmp/adblock.hosts'
+logmsg=''
+
+[ -s /bin/uclient-fetch ] && CLIENT='/bin/uclient-fetch' || CLIENT='/usr/bin/wget'
+
+output () {
+    local level
+	[ -z "$verbosity" ] && verbosity=2
+    [ $# -eq 2 ] && level=$2 || level=0
+    if [ $level -eq 3 ]; then [ $verbosity -eq 2 ] && level=2 || level=1; fi
+	[ $level -ne 0 -a $verbosity -ne $level ] && return 0
+	[ -t 1 ] && echo -e -n "$1"
+	[ $(echo -e -n $1 | wc -l) -gt 0 ] && logger -t "simple-adblock[$$]" "$(echo -e -n ${logmsg}${1})" && logmsg='' || logmsg=${logmsg}${1}
+}
+
+adblock_enabled () {
+    local enabled
+    config_get_bool enabled 'config' 'enabled' 0
+    [ $((enabled)) -gt 0 ] && return 0
+    output "Simple AdBlock is not enabled in the config file!\n"
+    output "To enable, run 'uci set simple-adblock.config.enabled=1; uci commit simple-adblock'\n"
+    return 1
+}
+
+del_iptables () {
+    config_get verbosity            'config' 'verbosity' '0'
+    config_get force_dns            'config' 'force_dns' '0'
+	[ ! "$1" = "quiet" ] && output "Removing iptables rules for Simple AdBlock uhttpd instances.\n"
+	iptables-save | grep -Fv -- "simple_adblock" | iptables-restore
+	ip6tables-save | grep -Fv -- "simple_adblock" | ip6tables-restore
+	[ ! "$1" = "quiet" ] && [ $((force_dns)) -ne 0 ] && output 'No longer forcing local DNS server.\n'
+}
+
+create_files () {
+	[ ! -f /www_adblock/blank.gif ] && mkdir /www_adblock && echo -ne 'GIF89a1010\x8000\xff\xff\xff000!\xf9\x0400000,000010100\x02\x02D10;' | tr 01 '\000\001' > /www_adblock/blank.gif
+}
+
+set_iptables () {
+    config_get verbosity            'config' 'verbosity' '0'
+    config_get force_dns            'config' 'force_dns' '0'
+    config_get pixelserv_ip         'config' 'pixel_server_ip' '192.18.0.1'
+    config_get pixelserv_ipv6		'config' 'pixel_server_ipv6' '::ffff:c612:0001'
+	
+	local ip=$(uci -q -P/var/state get network.lan.ipaddr)
+	local ipv6=$(echo $(uci -q -P/var/state get network.globals.ula_prefix) | cut -d/ -f1) && [ -n "$ipv6" ] && ipv6=${ipv6}1
+	local label
+
+	output "Inserting iptables rules for Simple AdBlock uhttpd instances.\n"
+	if [ -n "$ip" ]; then
+		iptables -w -A forwarding_rule -d $pixelserv_ip -p tcp -j REJECT --reject-with tcp-reset -m comment --comment "simple_adblock"
+		iptables -w -A forwarding_rule -d $pixelserv_ip -j REJECT --reject-with icmp-host-unreachable -m comment --comment "simple_adblock"
+		iptables -w -A output_rule -d $pixelserv_ip -p tcp -j REJECT --reject-with tcp-reset -m comment --comment "simple_adblock"
+		iptables -w -A output_rule -d $pixelserv_ip -j REJECT --reject-with icmp-host-unreachable -m comment --comment "simple_adblock"
+		iptables -w -t nat -A prerouting_rule -p tcp -d $pixelserv_ip -m multiport --dports 80,443 -j DNAT --to-destination $ip:65535 -m comment --comment "simple_adblock"
+#		iptables -w -t nat -A prerouting_rule -p tcp -d $pixelserv_ip -m multiport --dports 80,443 -j REDIRECT --to-ports 65535 -m comment --comment "simple_adblock"
+#    	iptables -w -t nat -A prerouting_rule -p tcp -d $pixelserv_ip -j ACCEPT -m comment --comment "simple_adblock"
+#    	iptables -w -A forwarding_rule -d $pixelserv_ip -j REJECT -m comment --comment "simple_adblock"
+	fi
+	if [ -n "$ipv6" ]; then
+		ip6tables -w -A forwarding_rule -d $pixelserv_ipv6 -p tcp -j REJECT --reject-with tcp-reset -m comment --comment "simple_adblock"
+		ip6tables -w -A forwarding_rule -d $pixelserv_ipv6 -j REJECT --reject-with icmp6-addr-unreachable -m comment --comment "simple_adblock"
+		ip6tables -w -A output_rule -d $pixelserv_ipv6 -p tcp -j REJECT --reject-with tcp-reset -m comment --comment "simple_adblock"
+		ip6tables -w -A output_rule -d $pixelserv_ipv6 -j REJECT --reject-with icmp6-addr-unreachable -m comment --comment "simple_adblock"
+		ip6tables -w -t nat -A PREROUTING -p tcp -d $pixelserv_ipv6 -m multiport --dports 80,443 -j DNAT --to-destination [$ipv6]:65535 -m comment --comment "simple_adblock"
+	fi
+
+	if [ $((force_dns)) -ne 0 ]; then
+		[ -n "$ip" ] && iptables -t nat -A prerouting_rule -i br-lan -p tcp --dport 53 -j DNAT --to $ip -m comment --comment "simple_adblock"
+		[ -n "$ip" ] && iptables -t nat -A prerouting_rule -i br-lan -p udp --dport 53 -j DNAT --to $ip -m comment --comment "simple_adblock"
+		[ -n "$ipv6" ] && ip6tables -t nat -A PREROUTING -i br-lan -p tcp --dport 53 -j DNAT --to-destination [$ipv6] -m comment --comment "simple_adblock"
+		[ -n "$ipv6" ] && ip6tables -t nat -A PREROUTING -i br-lan -p udp --dport 53 -j DNAT --to-destination [$ipv6] -m comment --comment "simple_adblock"
+		[ -n "$ipv6" ] && label="$ip/$ipv6" || label="$ip"
+		[ -n "$label" ] && output "Forcing local DNS server: $label.\n" || output 'ERROR: Failed to obtain LAN IP address for DNS forcing!\n'
+	fi
+
+}
+
+stop_adblocking () {
+    config_get hosts_file           'config' 'hosts_file' '/tmp/hosts/hosts.bad'
+    config_get verbosity            'config' 'verbosity' '0'
+
+    [ -f /etc/banner.orig ] && cp /etc/banner.orig /etc/banner
+    [ -f $hosts_file ] && mv $hosts_file $B_TMP
+    /etc/init.d/dnsmasq restart >/dev/null  2>&1
+	[ $? -eq 0 ] && output "Simple AdBlock disabled.\n" || output "ERROR: Failed to restart DNSMASQ!\n"
+}
+
+start_adblocking () {
+    config_get verbosity            'config' 'verbosity' '0'
+    config_get hosts_file           'config' 'hosts_file' '/tmp/hosts/hosts.bad'
+    config_get pixelserv_ip         'config' 'pixel_server_ip' '192.18.0.1'
+    config_get pixelserv_ipv6		'config' 'pixel_server_ipv6' '::ffff:c612:0001'
+    config_get bad_hosts            'config' 'bad_host'
+    config_get bad_domains          'config' 'bad_domain'
+    config_get whitelist_domains    'config' 'whitelist_domain'
+    config_get blacklist_domains    'config' 'blacklist_domain'
+    config_get whitelist_urls       'config' 'whitelist_url'
+
+    local hf
+    local expr
+   	local label
+   	local i
+	local origin=${hosts_file%/*}
+
+	if [ -s $B_TMP -a ! "$1" = "reload" ]; then
+		output 'Found existing Simple AdBlock data file, reusing it... '
+		mv $B_TMP $hosts_file && output '[OK]\n' || output '[FAIL]\n'
+	else
+		[ -s $B_TMP ] && rm -f $B_TMP
+		[ -s $hosts_file ] && rm -f $hosts_file
+
+	    [ ! -d ${origin} ] && mkdir -p ${origin}
+		for i in $(uci -q get dhcp.@dnsmasq[0].addnhosts); do [ "$i" = "${origin}" ] && label=1; done
+		[ -z "$label" ] && uci add_list dhcp.@dnsmasq[0].addnhosts="${origin}" && uci commit dhcp
+	
+	    touch $H_TMP
+	    touch $D_TMP
+	    touch $W_TMP
+	    output 'Downloading bad hosts... ' 1
+	    for hf in ${bad_hosts}; do
+	    	label=$(echo $hf | awk -F/ '{print $3}')
+	        output "Bad hosts DL: $label... " 2 && $CLIENT --no-check-certificate -qO- "${hf}" >> $H_TMP && output '[OK]\n' 2 || output '[FAIL]\n' 2
+	    done
+	    output '[OK]\n' 1
+	    
+	    for hf in ${blacklist_domains}; do echo "$hf" >> $D_TMP; done
+	    output 'Downloading bad domains... ' 1
+	    for hf in ${bad_domains}; do
+	    	label=$(echo $hf | awk -F/ '{print $3}')
+	        output "Bad domains DL: $label... " 2 && $CLIENT --no-check-certificate -qO- "${hf}" >> $D_TMP && output '[OK]\n' 2 || output '[FAIL]\n' 2
+	    done
+	    sed '/^#/!s/^/127.0.0.1 /' $D_TMP >> $H_TMP
+	    output '[OK]\n' 1
+	
+	    output 'Downloading whitelisted domains... ' 1
+	    for hf in ${whitelist_urls}; do
+	    	label=$(echo $hf | awk -F/ '{print $3}')
+	        output "Whitelisted domains DL: $label... " 2 && $CLIENT --no-check-certificate -qO- "${hf}" >> $W_TMP && output '[OK]\n' 2 || output '[FAIL]\n' 2
+	    done
+	    output '[OK]\n' 1
+	
+	    output 'Optimizing hosts file... ' 1
+	    output 'Removing hosts file duplicates... ' 2 && sed -i '/localhost/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:cntrl:]]$//;s/[[:cntrl:]]$/ /;/^#/d;/^$/d;s/[[:space:]]*#.*$//;s/^ //;s/^  //;/^[[:blank:]]*$/d;s|^|'$pixelserv_ip' |' $H_TMP && output '[OK]\n' 2 || output '[FAIL]\n' 2
+	    output 'Sorting hosts file... ' 2 && sort $H_TMP | uniq > $hosts_file  && output '[OK]\n' 2 || output '[FAIL]\n' 2
+	    output '[OK]\n' 1
+	
+	    output 'Whitelisting domains... ' 3
+	    whitelist_domains="${whitelist_domains}"$'\n'"$(cat $W_TMP)"
+	    for hf in ${whitelist_domains}; do 
+	    	hf=$(echo $hf | sed 's/\./\\./g')
+	        expr="$expr/$hf/d;"
+	    done
+	    sed -i "$expr" $hosts_file && output '[OK]\n' 3 || output '[FAIL]\n' 3
+	
+	    output 'Removing temporary files... ' 3
+	    rm -f $H_TMP; rm -f $D_TMP; rm -f $W_TMP;
+	    output '[OK]\n' 3
+	fi
+		
+	if [ -s $hosts_file ]; then
+		/etc/init.d/dnsmasq restart >/dev/null  2>&1
+		if [ $? -eq 0 ]; then 
+			output "Simple AdBlock enabled: blocking $(wc -l < $hosts_file) domains.\n"
+			[ -f /etc/banner.orig ] && cp /etc/banner.orig /etc/banner && sed -i 's|\(([^)]*\)|\1 + AdBlock|' /etc/banner
+		else 
+			output 'ERROR: Failed to restart DNSMASQ!\n'
+			exit 1
+		fi
+	else
+		output 'ERROR: Failed to create Simple AdBlock data file!\n'
+		exit 1
+	fi    
+}
+
+boot() { ubus -t 30 wait_for network.interface && rc_procd start_service || output 'ERROR: Failed to settle network interface!\n'; }
+
+reload () {
+    config_load simple-adblock
+    adblock_enabled || return 1
+	start_adblocking 'reload'
+}
+
+reload_service () {
+    config_load simple-adblock
+    adblock_enabled || return 1
+	start_adblocking 'reload'
+}
+
+start_service () {
+    config_load simple-adblock
+    adblock_enabled || return 1
+    create_files
+	procd_open_instance
+	procd_set_param command /usr/sbin/uhttpd -f -h /www_adblock -r simple_adblock -t 0 -T 1 -k 0 -E /blank.gif -n 3 -N 25 -S -D -R -p 0.0.0.0:65535 -p [::]:65535 -I blank.gif
+	procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+	del_iptables quiet
+	set_iptables
+    start_adblocking $1
+}
+
+stop_service () {
+    config_load simple-adblock
+    adblock_enabled || return 1
+	del_iptables
+	stop_adblocking
+}
+
+service_triggers () {
+    procd_add_reload_trigger 'simple-adblock'
+}
