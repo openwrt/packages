@@ -28,7 +28,10 @@ Default install routes Plex Media Server traffic (port 32400) outside of the VPN
 Please head to [LEDE Project Forum](https://forum.lede-project.org/t/vpn-bypass-split-tunneling-service-luci-ui/1106) or [OpenWrt Forum]() for discussions of this service.
 
 ## What's New
-1.0.1:
+1.1.1
+- More reliable way of obtaining WAN gateway on boot (thanks @dibdot for the hint!).
+
+1.1.0:
 - Detects individual IP addresses in the config and converts them to subnet automatically.
 - Proper implementation of reload on vpnbypass config change.
 
