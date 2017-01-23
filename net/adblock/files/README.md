@@ -64,7 +64,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * procd based hotplug support, the adblock start will be triggered by interface triggers
 * suspend & resume adblock actions temporarily without block list reloading
 * runtime statistics via ubus service call
-* query function to quickly identify blocked (sub-)domains, i.e. for whitelisting
+* query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
 * automatic block list backup & restore, backups will be (de-)compressed and restored on the fly
 * add new adblock sources on your own via uci config
 
@@ -72,7 +72,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * [openwrt](https://openwrt.org), tested with latest stable release (Chaos Calmer) and with current trunk (Designated Driver)
 * [LEDE project](https://www.lede-project.org), tested with trunk > r98
 * a usual setup with an enabled dns server at minimum - dump AP modes without a working dns server are _not_ supported
-* a download utility: 'wget', 'aria2c', 'uclient-fetch' or 'curl' are supported (only full versions with ssl support). Normally you should use the pre-configured default 'wget'. If you need a smaller memory footprint try 'uclient-fetch' without openssl dependency.
+* a download utility: full versions (with ssl support) of 'wget', 'uclient-fetch', 'aria2c' or 'curl' are supported - the Chaos Calmer built-in busybox wget is not
+    * Chaos Calmer: download & install the external 'wget' package
+    * Designated Driver/Trunk: use built-in 'uclient-fetch' or download & install the external 'wget' package
+    * for more configuration options see examples below
 
 ## OpenWrt / LEDE trunk Installation & Usage
 * install 'adblock' (_opkg install adblock_) and that's it - the adblock start will be automatically triggered by procd interface triggers
@@ -98,7 +101,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **debug output:** for script debugging please set the config option 'adb\_debug' to '1' and check the runtime output with _logread -e "adblock"_
 * **storage expansion:** to process and store all block list sources at once it might helpful to enlarge your temp directory with a swap partition => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
 * **add white-/blacklist entries:** add domain white- or blacklist entries to always-allow or -deny certain (sub) domains, by default both lists are empty and located in _/etc/adblock_. Please add one domain per line - ip addresses, wildcards & regex are _not_ allowed (see example below)
-* **backup & restore block lists:** enable this feature, to restore automatically the latest compressed backup of your block lists in case of any processing error (i.e. a single block list source is not available during update). Please use an (external) solid partition and _not_ your volatile router temp directory for this
+* **backup & restore block lists:** enable this feature, to restore automatically the latest compressed backup of your block lists in case of any processing error (e.g. a single block list source is not available during update). Please use an (external) solid partition and _not_ your volatile router temp directory for this
 * **scheduled list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
 * **restrict/disable procd interface trigger:** to restrict the procd interface trigger to a (list of) certain wan interface(s) or to disable it at all, set 'adb\_iface' to an existing interface like 'wan' or to a non-existing like 'false'
 * **suspend & resume adblocking:** to quickly switch the adblock service 'on' or 'off', simply use _/etc/init.d/adblock [suspend|resume]_
@@ -143,7 +146,7 @@ aria2c:
   option adb_fetch '/usr/bin/aria2c'
   option adb_fetchparm '-q --max-tries=1 --timeout=5 --allow-overwrite=true --auto-file-renaming=false --check-certificate=false -o'
 
-uclient-fetch:
+uclient-fetch (not supported in Chaos Calmer):
   option adb_fetch '/bin/uclient-fetch'
   option adb_fetchparm '-q --timeout=5 --no-check-certificate -O'
 
@@ -155,7 +158,7 @@ curl:
 **receive adblock statistics via ubus:**
 <pre><code>
 ubus call service list '{"name":"adblock_stats"}'
-This will output the active block lists and other runtime information as JSON, i.e.:
+This will output the active block lists and other runtime information as JSON, e.g.:
 {
     "adblock_stats": {
         "instances": {
@@ -216,16 +219,18 @@ This entry does not remove:
   www.adwhere.com
 </code></pre>
   
-**query active block lists for a certain (sub-)domain, i.e. for whitelisting:**
+**query active block lists for a certain (sub-)domain, e.g. for whitelisting:**
 <pre><code>
-/etc/init.d/adblock query "example.www.doubleclick.net"
-:: distinct results for domain 'example.www.doubleclick.net' (overall 0)
-   no matches in active block lists
-:: distinct results for domain 'www.doubleclick.net' (overall 1)
-   adb_list.securemecca : www.doubleclick.net
-:: distinct results for domain 'doubleclick.net' (overall 127)
-   adb_list.adaway      : ad-g.doubleclick.net
-   adb_list.securemecca : 1168945.fls.doubleclick.net
+/etc/init.d/adblock query example.www.doubleclick.net
+::: distinct results for domain 'example.www.doubleclick.net'
+ no match
+::: distinct results for domain 'www.doubleclick.net'
+ adb_list.sysctl      : www.doubleclick.net
+::: distinct results for domain 'doubleclick.net'
+ adb_list.adaway      : ad-g.doubleclick.net
+ adb_list.securemecca : 1168945.fls.doubleclick.net
+ adb_list.sysctl      : 1435575.fls.doubleclick.net
+ adb_list.whocares    : 3ad.doubleclick.net
 
 The query function checks against the submitted (sub-)domain and recurses automatically to the upper top level domain(s).
 For every domain it returns the overall count plus a distinct list of active block lists with the first relevant result.
