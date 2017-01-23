@@ -1,9 +1,11 @@
---- a/SConstruct
-+++ b/SConstruct
-@@ -541,6 +541,10 @@ else:
-     if env['ncurses']:
-         if config.CheckPKG('ncurses'):
+Index: gpsd-3.16/SConstruct
+===================================================================
+--- gpsd-3.16.orig/SConstruct
++++ gpsd-3.16/SConstruct
+@@ -543,6 +543,10 @@ else:
              ncurseslibs = pkg_config('ncurses')
+ 	    if config.CheckPKG('tinfo'):
+ 		ncurseslibs += pkg_config('tinfo')
 +        elif WhereIs('ncurses6-config'):
 +            ncurseslibs = ['!ncurses6-config --libs --cflags']
 +        elif WhereIs('ncursesw6-config'):
