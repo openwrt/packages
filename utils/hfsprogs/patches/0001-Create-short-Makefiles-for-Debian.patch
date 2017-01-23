@@ -69,7 +69,7 @@ index 0000000..8c07196
 +OFILES = $(CFILES:.c=.o)
 +
 +libdfa.a: $(OFILES)
-+	ar rc $@ $?
++	$(AR) rc $@ $?
 +
 +clean:
 +	$(RM) $(OFILES) libdfa.a
