@@ -17,7 +17,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Powerful adblock script to block ad/abuse domains
-	DEPENDS=+ca-certificates
+	DEPENDS:=+ca-certificates
 	PKGARCH:=all
 endef
 
