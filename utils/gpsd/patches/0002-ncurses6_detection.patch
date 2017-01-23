@@ -1,0 +1,13 @@
+--- a/SConstruct
++++ b/SConstruct
+@@ -541,6 +541,10 @@ else:
+     if env['ncurses']:
+         if config.CheckPKG('ncurses'):
+             ncurseslibs = pkg_config('ncurses')
++        elif WhereIs('ncurses6-config'):
++            ncurseslibs = ['!ncurses6-config --libs --cflags']
++        elif WhereIs('ncursesw6-config'):
++            ncurseslibs = ['!ncursesw6-config --libs --cflags']
+         elif WhereIs('ncurses5-config'):
+             ncurseslibs = ['!ncurses5-config --libs --cflags']
+         elif WhereIs('ncursesw5-config'):
