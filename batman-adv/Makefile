@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 define KernelPackage/batman-adv
   URL:=https://www.open-mesh.org/
-  MAINTAINER:=Marek Lindner <mareklindner@neomailbox.ch>
+  MAINTAINER:=Simon Wunderlich <sw@simonwunderlich.de>
   SUBMENU:=Network Support
   DEPENDS:=+KMOD_BATMAN_ADV_BLA:kmod-lib-crc16 +kmod-crypto-crc32c +kmod-lib-crc32c +kmod-cfg80211
   TITLE:=B.A.T.M.A.N. Adv
