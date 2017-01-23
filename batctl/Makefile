@@ -27,7 +27,7 @@ define Package/batctl
   CATEGORY:=Network
   DEPENDS:=+kmod-batman-adv +libnl-tiny +libc +librt
   TITLE:=B.A.T.M.A.N. Advanced user space configuration tool batctl
-  MAINTAINER:=Marek Lindner <mareklindner@neomailbox.ch>
+  MAINTAINER:=Simon Wunderlich <sw@simonwunderlich.de>
 endef
 
 define Package/batctl/description
