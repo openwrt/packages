@@ -886,7 +886,7 @@ send_update() {
 get_local_ip () {
 	# $1	Name of Variable to store local IP (LOCAL_IP)
 	local __CNT=0	# error counter
-	local __RUNPROG __DATA __URL __ERR
+	local __RUNPROG __DATA __URL __ERR __TMP
 
 	[ $# -ne 1 ] && write_log 12 "Error calling 'get_local_ip()' - wrong number of parameters"
 	write_log 7 "Detect local IP on '$ip_source'"
@@ -907,6 +907,8 @@ get_local_ip () {
 				__ERR=$?
 				if [ $__ERR -eq 0 ]; then
 					# DATFILE (sample)
+					# 10: l2tp-inet: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1456 qdisc fq_codel state UNKNOWN qlen 3\    link/ppp
+					# 10: l2tp-inet    inet 95.30.176.51 peer 95.30.176.1/32 scope global l2tp-inet\       valid_lft forever preferred_lft forever
 					# 5: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP qlen 1000\    link/ether 08:00:27:d0:10:32 brd ff:ff:ff:ff:ff:ff
 					# 5: eth1    inet 172.27.10.128/24 brd 172.27.10.255 scope global eth1\       valid_lft forever preferred_lft forever
 					# 5: eth1    inet 172.55.55.155/24 brd 172.27.10.255 scope global eth1\       valid_lft 12345sec preferred_lft 12345sec
@@ -915,9 +917,11 @@ get_local_ip () {
 					# 5: eth1    inet6 fd43:5368:6f6d:6500:a00:27ff:fed0:1032/64 scope global dynamic \       valid_lft 14352sec preferred_lft 14352sec
 					# 5: eth1    inet6 2002:b0c7:f326::a00:27ff:fed0:1032/64 scope global dynamic \       valid_lft 14352sec preferred_lft 14352sec
 
-					#        remove         remove     remove      replace          remove                  remove
-					#	BROADCAST     inet6 fxxx    sec      forever=>-1    between / and pref..      linestart to inet
-					sed -i "/BROADCAST/d; /inet6 f/d; s/sec//g; s/forever/-1/g; s/\/.*preferred_lft//g; s/^.*$ip_interface *//g" $DATFILE
+					#    remove      remove     remove      replace     replace
+					#     link     inet6 fxxx    sec      forever=>-1   / => ' ' to separate subnet from ip
+					sed "/link/d; /inet6 f/d; s/sec//g; s/forever/-1/g; s/\// /g" $DATFILE | \
+						awk '{ print $3" "$4" "$NF }' > ${DATFILE}_tmp
+					# we only need    inet?   IP  prefered time
 
 					local __TIME4=0;  local __TIME6=0
 					local __TYP __ADR __TIME
@@ -932,7 +936,8 @@ get_local_ip () {
 							__DATA4="$__ADR"
 							__TIME4="$__TIME"
 						}
-					done < $DATFILE
+					done < ${DATFILE}_tmp
+					rm ${DATFILE}_tmp
 				else
 					write_log 3 "ip Error: '$__ERR'"
 					write_log 7 "$(cat $ERRFILE)"		# report error
