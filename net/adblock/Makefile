@@ -18,6 +18,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	TITLE:=Powerful adblock script to block ad/abuse domains
 	PKGARCH:=all
+	DEPENDS:=+wget
 endef
 
 define Package/$(PKG_NAME)/description
