@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=1.4.0
+PKG_VERSION:=1.5.0
 PKG_RELEASE:=3
 PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://firehol.org/download/netdata/releases/v$(PKG_VERSION)
-PKG_SOURCE_VERSION:=3028b87ee19e8550df6b9decc49733d595e0bd6e
+PKG_SOURCE_URL:=https://github.com/firehol/netdata/releases/download/v$(PKG_VERSION)/ 
+PKG_SOURCE_VERSION:=3bd41a09fccccbc6b095805556d3009b9ebf6213
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
