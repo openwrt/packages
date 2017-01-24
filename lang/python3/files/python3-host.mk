@@ -78,13 +78,4 @@ define HostPy3/Compile/Default
 	)
 endef
 
-ifeq ($(BUILD_VARIANT),python3)
-define Host/Compile
-	$(call HostPy3/Compile/Default)
-endef
-
-define Host/Install
-endef
-endif # python3
-
 endif # __python3_host_mk_inc
