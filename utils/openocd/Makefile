@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd
-PKG_VERSION:=v0.9.0
+PKG_VERSION:=v0.10.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -59,10 +59,7 @@ CONFIGURE_ARGS += \
 	--disable-werror \
 	MAKEINFO=true \
 	--enable-dummy \
-	--enable-sysfsgpio \
-	--enable-usb_blaster_libftdi \
-        --enable-openjtag_ftdi \
-        --enable-presto_libftdi
+	--enable-sysfsgpio
 
 define Build/Compile
         +$(MAKE_VARS) \
