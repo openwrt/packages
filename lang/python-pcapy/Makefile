@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 OpenWrt.org
+# Copyright (C) 2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pcapy
-PKG_VERSION:=0.10.10
+PKG_VERSION:=0.11.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Andrew McConachie <andrew@depht.com>
 PKG_LICENSE:=Apache-1.1
@@ -16,7 +16,7 @@ PKG_LICENSE:=Apache-1.1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/CoreSecurity/pcapy.git
-PKG_SOURCE_VERSION:=37179f5b6187ec58d3ba11ef7b24e3c341cbabbb
+PKG_SOURCE_VERSION:=b91a418374d1636408c435f11799ef725ef70097
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=python python-setuptools
