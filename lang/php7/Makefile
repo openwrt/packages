@@ -444,7 +444,7 @@ CONFIGURE_VARS+= \
 	ac_cv_c_bigendian_php=$(if $(CONFIG_BIG_ENDIAN),yes,no) \
 	php_cv_cc_rpath="no" \
 	iconv_impl_name="gnu_libiconv" \
-	ac_cv_php_xml2_config_path="$(STAGING_DIR_HOSTPKG)/bin/xml2-config" \
+	ac_cv_php_xml2_config_path="$(STAGING_DIR)/host/bin/xml2-config" \
 
 define Package/php7/conffiles
 /etc/php.ini
