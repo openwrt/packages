@@ -12,17 +12,18 @@ PKG_SOURCE_URL:=https://github.com/gabri94/poprouting.git
 PKG_SOURCE_VERSION:=v0.2
 PKG_SOURCE_SUBDIR:=prince-v0.2
 include $(INCLUDE_DIR)/package.mk
+
 define Package/prince
 	SECTION :=net
 	CATEGORY :=Network
 	SUBMENU :=Routing and Redirection
 	Mantainer :=Gabriele Gemmi <gabriel@autistici.org>
 	TITLE :=PopRouting daemon
-	MENU :=0
+	MENU :=1
 	DEPENDS := +libjson-c +libpthread
 endef
 
-define Package/poprouting/description
+define Package/prince/description
 Prince is an open source implementation of the PopRouting Algorithm.
 It has been developed as a Google Summer of Code Project in collaboration with Freifunk and the University of Trento.
 
