@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 
-PKG_RELEASE:=4
+PKG_RELEASE:=7
 PKG_VERSION:=2.5.0
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=Apache-2.0
@@ -22,7 +22,7 @@ PKG_USE_MIPS16:=0
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/openvswitch/ovs
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=98b94d1e7002063ce2ea3c3221fe9234cac4e124
+PKG_SOURCE_VERSION:=22d4614ddf83988a3771fb379ea029e663b4455a
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_BUILD_PARALLEL:=1
@@ -32,7 +32,23 @@ PKG_INSTALL:=1
 # Upstream package supports kernels between 2.6.32 and 4.3 
 # see https://github.com/openvswitch/ovs/blob/master/FAQ.md
 # This list is pruned to only those kernels used in OpenWRT
-SUPPORTED_KERNELS:=LINUX_3_18||LINUX_4_1||LINUX_4_3
+# Support for kernel 4.4 is backported
+SUPPORTED_KERNELS:=LINUX_3_18||LINUX_4_1||LINUX_4_3||LINUX_4_4
+
+# If only kmod-openvswitch is enabled, then override default make path to only
+# build and install the datapath/linux subdirectory which cuts down compilation
+# time dramatically.
+ifeq ($(CONFIG_PACKAGE_openvswitch-base),)
+ ifneq ($(CONFIG_PACKAGE_kmod-openvswitch),)
+  MAKE_PATH := datapath/linux
+ endif
+endif
+
+# Additionally register PKG_CONFIG_DEPENDS to trigger a rebuild of the code
+# base if the package selection changes.
+PKG_CONFIG_DEPENDS := \
+	CONFIG_PACKAGE_openvswitch-base \
+	CONFIG_PACKAGE_kmod-openvswitch
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
@@ -70,7 +86,7 @@ endef
 define Package/openvswitch-python
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Python Support
-  DEPENDS:=+openvswitch +python
+  DEPENDS:=+openvswitch +PACKAGE_openvswitch-python:python
 endef
 
 define Package/openvswitch-python/description

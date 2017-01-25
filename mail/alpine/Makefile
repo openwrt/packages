@@ -35,7 +35,7 @@ define Package/alpine/Default
 endef
 
 define Package/alpine/Default/description
- Alpine (Alternatively Licenced Program for Internet News and Email) is a
+ Alpine (Alternatively Licensed Program for Internet News and Email) is a
  free software email client developed at the University of Washington.
  It is suitable for both the inexperienced email user as well as for
  the most demanding power user.

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=davfs2
-PKG_VERSION:=1.5.2
-PKG_RELEASE:=3
+PKG_VERSION:=1.5.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/davfs2/
-PKG_MD5SUM:=376bc9346454135cba78afacbcb23f86
+PKG_MD5SUM:=c9f0b557275b7ec88fec751bf22f30cf
 
 PKG_FIXUP:=gettext-version autoreconf
 

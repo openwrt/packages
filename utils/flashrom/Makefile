@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2015 OpenWrt.org
+# Copyright (C) 2010-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flashrom
-PKG_VERSION:=0.9.8
-PKG_RELEASE:=6
+PKG_VERSION:=0.9.9
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.flashrom.org/releases
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_MD5SUM:=ac513076b63ab7eb411a7694bb8f6fda
+PKG_MD5SUM:=aab9c98925d9cfb5ffb28b67a6112530
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
@@ -44,10 +44,11 @@ define Package/flashrom
   $(Package/flashrom/default)
   TITLE+= (full)
   DEPENDS+= \
-    +(PACKAGE_flashrom&&(TARGET_x86||TARGET_x86_64)):dmidecode \
-    +PACKAGE_flashrom:libftdi \
-    +PACKAGE_flashrom:libusb-compat \
-    +PACKAGE_flashrom:pciutils
+    +(TARGET_x86||TARGET_x86_64):dmidecode \
+    +libftdi1 \
+    +libusb-1.0 \
+    +libusb-compat \
+    +pciutils
   VARIANT:=full
   DEFAULT_VARIANT:=1
 endef
@@ -56,8 +57,8 @@ define Package/flashrom-pci
   $(Package/flashrom/default)
   TITLE+= (pci)
   DEPENDS+= \
-    +(PACKAGE_flashrom-pci&&(TARGET_x86||TARGET_x86_64)):dmidecode \
-    +PACKAGE_flashrom-pci:pciutils
+    +(TARGET_x86||TARGET_x86_64):dmidecode \
+    +pciutils
   VARIANT:=pci
 endef
 
@@ -71,8 +72,9 @@ define Package/flashrom-usb
   $(Package/flashrom/default)
   TITLE+= (usb)
   DEPENDS+= \
-    +PACKAGE_flashrom-usb:libftdi \
-    +PACKAGE_flashrom-usb:libusb-compat
+    +libftdi1 \
+    +libusb-1.0 \
+    +libusb-compat
   VARIANT:=usb
 endef
 

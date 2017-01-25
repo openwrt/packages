@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v0.12.7
-PKG_RELEASE:=2
+PKG_VERSION:=v4.4.5
+PKG_RELEASE:=1
 
-PKG_SOURCE:=node-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
+PKG_MD5SUM:=376140907bbe362f36065a30af04f020
 
 HOST_BUILD_DEPENDS:=python/host
 PKG_BUILD_DEPENDS:=python/host
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
+
+HOST_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=1
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=
@@ -31,7 +35,7 @@ define Package/node
   SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
   URL:=http://nodejs.org/
-  DEPENDS:=+libpthread +librt +libstdcpp +libopenssl +libuv
+  DEPENDS:=+libpthread +librt +libstdcpp +libopenssl +zlib
 endef
 
 define Package/node/description
@@ -40,7 +44,7 @@ define Package/node/description
    package ecosystem, npm, is the largest ecosystem of open source libraries in the world.
 endef
 
-CPU:=$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))
+CPU:=$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH))))
 
 MAKE_VARS += \
 	DESTCPU=$(CPU)
@@ -53,11 +57,22 @@ CONFIGURE_ARGS= \
 	--shared-openssl \
 	--prefix=/usr
 
+ifneq ($(findstring arm,$(ARCH)),)
+CONFIGURE_ARGS+= \
+	$(if $(CONFIG_SOFT_FLOAT),--with-arm-float-abi=soft,--with-arm-float-abi=hard)
+endif
+
+ifneq ($(findstring mips,$(ARCH)),)
+CONFIGURE_ARGS+= \
+	$(if $(CONFIG_SOFT_FLOAT),--with-mips-float-abi=soft,--with-mips-float-abi=hard)
+endif
+
 HOST_CONFIGURE_VARS:=
+
 HOST_CONFIGURE_ARGS:= \
 	--dest-os=linux \
 	--without-snapshot \
-	--prefix=$(STAGING_DIR)/host/
+	--prefix=$(STAGING_DIR_HOSTPKG)
 
 HOST_CONFIGURE_CMD:=python ./configure
 

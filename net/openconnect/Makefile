@@ -9,12 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openconnect
 PKG_VERSION:=7.06
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/openconnect/
 PKG_MD5SUM:=80f397911e1fed43d897d99be3d5f1a1
+PKG_LICENSE:=LGPLv2.1+
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_OPENCONNECT_GNUTLS \
@@ -30,7 +31,7 @@ endef
 define Package/openconnect
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libxml2 +kmod-tun +resolveip +vpnc-scripts +OPENCONNECT_OPENSSL:libopenssl +OPENCONNECT_GNUTLS:libgnutls +OPENCONNECT_STOKEN:libstoken
+  DEPENDS:=+libxml2 +kmod-tun +resolveip +vpnc-scripts +OPENCONNECT_OPENSSL:libopenssl +OPENCONNECT_OPENSSL:p11-kit +OPENCONNECT_OPENSSL:libp11 +OPENCONNECT_GNUTLS:libgnutls +OPENCONNECT_STOKEN:libstoken
   TITLE:=OpenConnect VPN client (Cisco AnyConnect compatible)
   MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
   URL:=http://www.infradead.org/openconnect/
@@ -50,7 +51,8 @@ CONFIGURE_ARGS += \
 	--disable-shared \
 	--with-vpnc-script=/lib/netifd/vpnc-script \
 	--without-libpcsclite \
-	--without-stoken
+	--without-stoken \
+	--without-lz4
 
 ifeq ($(CONFIG_OPENCONNECT_OPENSSL),y)
 CONFIGURE_ARGS += \

@@ -1,0 +1,154 @@
+From ac6268e843c43286eebff2a1052182c2393cdb2e Mon Sep 17 00:00:00 2001
+From: Roy Li <rongqing.li@windriver.com>
+Date: Mon, 14 Sep 2015 12:31:42 +0800
+Subject: [PATCH] mksquashfs.c:  get inline functions work with both gnu11 and gnu89
+
+Upstream-Status: Pending
+
+After gcc upgraded to gcc5, and if the codes is compiled without optimization(-O0),
+and the below error will happen:
+
+| mksquashfs.o: In function `create_inode':
+| git/squashfs-tools/mksquashfs.c:897: undefined reference to `get_inode_no'
+| git/squashfs-tools/mksquashfs.c:960: undefined reference to `get_parent_no'
+| git/squashfs-tools/mksquashfs.c:983: undefined reference to `get_parent_no'
+| mksquashfs.o: In function `reader_read_process':
+| git/squashfs-tools/mksquashfs.c:2132: undefined reference to `is_fragment'
+| mksquashfs.o: In function `reader_read_file':
+| git/squashfs-tools/mksquashfs.c:2228: undefined reference to `is_fragment'
+| mksquashfs.o: In function `dir_scan':
+| git/squashfs-tools/mksquashfs.c:3101: undefined reference to `create_dir_entry'
+
+gcc5 defaults to -std=gnu11 instead of -std=gnu89, and it requires that exactly one C
+source file has the callable copy of the inline function. Consider the following
+program:
+
+  inline int
+  foo (void)
+  {
+    return 42;
+  }
+
+  int
+  main (void)
+  {
+    return foo ();
+  }
+
+The program above will not link with the C99 inline semantics, because no out-of-line
+function foo is generated. To fix this, either mark the function foo as static, or
+add the following declaration:
+  static inline int foo (void);
+
+more information refer to: https://gcc.gnu.org/gcc-5/porting_to.html;
+
+but the use of "extern inline" will lead to the compilation issue if gcc is not
+gcc5, as the commit in oe-core d0af30c92fde [alsa-lib: Change function type to
+"static __inline__"]
+    "extern __inline__ function()" is the inlined version that
+    can be used in this compilation unit, but there will be another
+    definition of this function somewhere, so compiler will not emit
+    any code for the function body. This causes problem in -O0,
+    where functions are never inlined, the function call is preserved,
+    but linker can't find the symbol, thus the error happens.
+
+so replace "inline" with "static inline" to make it work with both gnu11 and gnu89
+
+Signed-off-by: Roy Li <rongqing.li@windriver.com>
+---
+ squashfs-tools/mksquashfs.c | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/squashfs-tools/mksquashfs.c b/squashfs-tools/mksquashfs.c
+index d221c35..6bba1d2 100644
+--- a/squashfs-tools/mksquashfs.c
++++ b/squashfs-tools/mksquashfs.c
+@@ -828,13 +828,13 @@ char *subpathname(struct dir_ent *dir_ent)
+ }
+ 
+ 
+-inline unsigned int get_inode_no(struct inode_info *inode)
++static inline unsigned int get_inode_no(struct inode_info *inode)
+ {
+ 	return inode->inode_number;
+ }
+ 
+ 
+-inline unsigned int get_parent_no(struct dir_info *dir)
++static inline unsigned int get_parent_no(struct dir_info *dir)
+ {
+ 	return dir->depth ? get_inode_no(dir->dir_ent->inode) : inode_no;
+ }
+@@ -2027,7 +2027,7 @@ struct file_info *duplicate(long long file_size, long long bytes,
+ }
+ 
+ 
+-inline int is_fragment(struct inode_info *inode)
++static inline int is_fragment(struct inode_info *inode)
+ {
+ 	off_t file_size = inode->buf.st_size;
+ 
+@@ -2996,13 +2996,13 @@ struct inode_info *lookup_inode2(struct stat *buf, int pseudo, int id)
+ }
+ 
+ 
+-inline struct inode_info *lookup_inode(struct stat *buf)
++static inline struct inode_info *lookup_inode(struct stat *buf)
+ {
+ 	return lookup_inode2(buf, 0, 0);
+ }
+ 
+ 
+-inline void alloc_inode_no(struct inode_info *inode, unsigned int use_this)
++static inline void alloc_inode_no(struct inode_info *inode, unsigned int use_this)
+ {
+ 	if (inode->inode_number == 0) {
+ 		inode->inode_number = use_this ? : inode_no ++;
+@@ -3013,7 +3013,7 @@ inline void alloc_inode_no(struct inode_info *inode, unsigned int use_this)
+ }
+ 
+ 
+-inline struct dir_ent *create_dir_entry(char *name, char *source_name,
++static inline struct dir_ent *create_dir_entry(char *name, char *source_name,
+ 	char *nonstandard_pathname, struct dir_info *dir)
+ {
+ 	struct dir_ent *dir_ent = malloc(sizeof(struct dir_ent));
+@@ -3031,7 +3031,7 @@ inline struct dir_ent *create_dir_entry(char *name, char *source_name,
+ }
+ 
+ 
+-inline void add_dir_entry(struct dir_ent *dir_ent, struct dir_info *sub_dir,
++static inline void add_dir_entry(struct dir_ent *dir_ent, struct dir_info *sub_dir,
+ 	struct inode_info *inode_info)
+ {
+ 	struct dir_info *dir = dir_ent->our_dir;
+@@ -3047,7 +3047,7 @@ inline void add_dir_entry(struct dir_ent *dir_ent, struct dir_info *sub_dir,
+ }
+ 
+ 
+-inline void add_dir_entry2(char *name, char *source_name,
++static inline void add_dir_entry2(char *name, char *source_name,
+ 	char *nonstandard_pathname, struct dir_info *sub_dir,
+ 	struct inode_info *inode_info, struct dir_info *dir)
+ {
+@@ -3059,7 +3059,7 @@ inline void add_dir_entry2(char *name, char *source_name,
+ }
+ 
+ 
+-inline void free_dir_entry(struct dir_ent *dir_ent)
++static inline void free_dir_entry(struct dir_ent *dir_ent)
+ {
+ 	if(dir_ent->name)
+ 		free(dir_ent->name);
+@@ -3080,7 +3080,7 @@ inline void free_dir_entry(struct dir_ent *dir_ent)
+ }
+ 
+ 
+-inline void add_excluded(struct dir_info *dir)
++static inline void add_excluded(struct dir_info *dir)
+ {
+ 	dir->excluded ++;
+ }
+-- 
+1.9.1
+

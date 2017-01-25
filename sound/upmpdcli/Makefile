@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upmpdcli
-PKG_VERSION:=0.11.0
-PKG_RELEASE:=1
+PKG_VERSION:=1.1.3
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.lesbonscomptes.com/upmpdcli/downloads
-PKG_MD5SUM:=40eb2a1988ca367a690fb2506e0f73c1
+PKG_MD5SUM:=de9f232d6d5f746ec81ec239e11bdda4
 PKG_MAINTAINER:=Petko Bordjukov <bordjukov@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -54,8 +54,8 @@ endif
 ifneq ($(CONFIG_PACKAGE_UPMPDCLI_SC_WEB_INTERFACE),y)
 	$(RM) -rf $(PKG_INSTALL_DIR)/usr/share/upmpdcli/web
 endif
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/share/upmpdcli $(1)/usr/share/
-	$(INSTALL_DATA) ./files/upmpdcli.png $(1)/usr/share/upmpdcli/
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/upmpdcli $(1)/usr/share/
+	$(INSTALL_DATA) ./files/upmpdcli.png $(1)/usr/share/upmpdcli/icon.png
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/upmpdcli.init $(1)/etc/init.d/upmpdcli
 endef

@@ -1,0 +1,31 @@
+diff -rupN seafile-ccnet-5.1.1.orig/lib/Makefile.am seafile-ccnet-5.1.1/lib/Makefile.am
+--- seafile-ccnet-5.1.1.orig/lib/Makefile.am	2016-04-21 11:04:46.000000000 +0200
++++ seafile-ccnet-5.1.1/lib/Makefile.am	2016-04-22 10:02:52.583732050 +0200
+@@ -1,3 +1,4 @@
++include $(TOPDIR)/rules.mk
+ 
+ AM_CPPFLAGS = @GLIB2_CFLAGS@ -I$(top_srcdir)/include \
+ 	-I$(top_srcdir)/include/ccnet \
+@@ -72,11 +73,11 @@ ccnet-client.c: ccnet-object.h
+ 
+ ccnet-object.h: ${ccnet_object_define}
+ 	rm -f $@
+-	valac --pkg posix ${ccnet_object_define} -C -H ccnet-object.h
++	"$(STAGING_DIR_HOSTPKG)/bin/valac" --pkg posix ${ccnet_object_define} -C -H ccnet-object.h
+ 
+ ccnetobj.c: ${ccnet_object_define}
+ 	rm -f $@
+-	valac -C --pkg posix ${ccnet_object_define}
++	"$(STAGING_DIR_HOSTPKG)/bin/valac" -C --pkg posix ${ccnet_object_define}
+ 
+ searpc_gen = searpc-signature.h searpc-marshal.h
+ 
+@@ -86,7 +87,7 @@ rpc_table.stamp: ${top_srcdir}/lib/rpc_t
+ 	@rm -f rpc_table.tmp
+ 	@touch rpc_table.tmp
+ 	@echo "[libsearpc]: generating rpc header files"
+-	@PYTHON@ `which searpc-codegen.py` ${top_srcdir}/lib/rpc_table.py
++	@PYTHON@ "$(STAGING_DIR)/usr/bin/searpc-codegen.py" ${top_srcdir}/lib/rpc_table.py
+ 	@echo "[libsearpc]: done"
+ 	@mv -f rpc_table.tmp $@
+ 

@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
 PKG_MD5SUM:=b5c20998e8ffc6fa3974daef99c02402
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0
 
 PKG_FIXUP:=autoreconf
@@ -44,7 +44,7 @@ endef
 
 define Package/$(PKG_NAME)/Default/description
   OWFS is a suite of programs that designed to make the 1-wire bus and its
-  devices easily accessible. The underlying priciple is to create a virtual
+  devices easily accessible. The underlying principle is to create a virtual
   filesystem, with the unique ID being the directory, and the individual
   properties of the device are represented as simple files that can be read
   and written.

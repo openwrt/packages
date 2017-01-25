@@ -36,8 +36,8 @@ UPM_MODULES:= \
 	th02 tm1637 tsl2561 ttp223 ublox6 uln200xa waterlevel wheelencoder wt5001 yg1006 zfm20
 
 CMAKE_OPTIONS=-DBUILDARCH=$(CONFIG_ARCH) \
-	-DNODE_EXECUTABLE=$(STAGING_DIR)/host/bin/node \
-	-DSWIG_DIR=$(STAGING_DIR)/host/bin
+	-DNODE_EXECUTABLE=$(STAGING_DIR_HOSTPKG)/bin/node \
+	-DSWIG_DIR=$(STAGING_DIR_HOSTPKG)/bin
 
 define Package/libupm/Default
   SECTION:=libs

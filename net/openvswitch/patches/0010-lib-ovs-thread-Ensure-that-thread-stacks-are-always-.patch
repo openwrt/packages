@@ -1,0 +1,75 @@
+From 8147cec9ee8feea9440cf79365709ddc32ff57d5 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <ardeleanalex@gmail.com>
+Date: Thu, 4 Feb 2016 09:20:34 +0200
+Subject: [PATCH] lib/ovs-thread: Ensure that thread stacks are always at least
+ 512 kB.
+
+This makes a difference for libc implementations (such as musl libc) that
+have a really small default pthread stack size.
+
+Will reference this discussion:
+http://patchwork.ozlabs.org/patch/572340/
+
+Reported-by: Robert McKay <robert@mckay.com>
+Signed-off-by: Alexandru Ardelean <ardeleanalex@gmail.com>
+[blp@ovn.org made style changes]
+Signed-off-by: Ben Pfaff <blp@ovn.org>
+---
+ lib/ovs-thread.c | 29 +++++++++++++++++++++++++++++
+ 1 file changed, 29 insertions(+)
+
+diff --git a/lib/ovs-thread.c b/lib/ovs-thread.c
+index 6ebda07..b0e10ee 100644
+--- a/lib/ovs-thread.c
++++ b/lib/ovs-thread.c
+@@ -340,6 +340,25 @@ ovsthread_wrapper(void *aux_)
+     return aux.start(aux.arg);
+ }
+ 
++static void
++set_min_stack_size(pthread_attr_t *attr, size_t min_stacksize)
++{
++    size_t stacksize;
++    int error;
++
++    error = pthread_attr_getstacksize(attr, &stacksize);
++    if (error) {
++        ovs_abort(error, "pthread_attr_getstacksize failed");
++    }
++
++    if (stacksize < min_stacksize) {
++        error = pthread_attr_setstacksize(attr, min_stacksize);
++        if (error) {
++            ovs_abort(error, "pthread_attr_setstacksize failed");
++        }
++    }
++}
++
+ /* Starts a thread that calls 'start(arg)'.  Sets the thread's name to 'name'
+  * (suffixed by its ovsthread_id()).  Returns the new thread's pthread_t. */
+ pthread_t
+@@ -358,10 +377,20 @@ ovs_thread_create(const char *name, void *(*start)(void *), void *arg)
+     aux->arg = arg;
+     ovs_strlcpy(aux->name, name, sizeof aux->name);
+
+-    error = pthread_create(&thread, NULL, ovsthread_wrapper, aux);
++    /* Some small systems use a default stack size as small as 80 kB, but OVS
++     * requires approximately 384 kB according to the following analysis:
++     * http://openvswitch.org/pipermail/dev/2016-January/065049.html
++     *
++     * We use 512 kB to give us some margin of error. */
++    pthread_attr_t attr;
++    pthread_attr_init(&attr);
++    set_min_stack_size(&attr, 512 * 1024);
++
++    error = pthread_create(&thread, &attr, ovsthread_wrapper, aux);
+     if (error) {
+         ovs_abort(error, "pthread_create failed");
+     }
++    pthread_attr_destroy(&attr);
+     return thread;
+ }
+ 
+-- 
+2.1.4
+

@@ -51,8 +51,11 @@ make_cmdline() {
 	config_get model_name options model_name "SqueezeLite"
 	cmdline="$cmdline -M $model_name"
 
+	config_get interface options interface ""
+	[ -n "$interface" ] && cmdline="$cmdline -I $interface"
+
 	config_get device options device ""
-	[ -n $device ] && cmdline="$cmdline -o $device"
+	[ -n "$device" ] && cmdline="$cmdline -o $device"
 
 	config_get alsa_buffer options alsa_buffer 200
 	[ $alsa_buffer -eq 0 ] && alsa_buffer="200"
@@ -96,10 +99,15 @@ make_cmdline() {
 	# ***NOTE: codec lib names are in squeezelite.h (set decode_auto_conf to 0 to ignore)
 	#
 	local excl_codecs=""
+	local vorbis_lib="libvorbisidec.so.1"
+
 	excl_codecs=`checkcodec decode_flac "libFLAC.so.8" flac "$excl_codecs"`
 	excl_codecs=`checkcodec decode_mp3 "libmad.so.0" mp3 "$excl_codecs"`
 	excl_codecs=`checkcodec decode_aac "libfaad.so.2" aac "$excl_codecs"`
-	excl_codecs=`checkcodec decode_ogg "libvorbisfile.so.3" ogg "$excl_codecs"`
+
+	[ -e "/usr/lib/$vorbis_lib" ] || vorbis_lib="libvorbisfile.so.3"
+
+	excl_codecs=`checkcodec decode_ogg "$vorbis_lib" ogg "$excl_codecs"`
 	excl_codecs=`checkcodec decode_wma_alac "libavcodec.so.56" wma,alac "$excl_codecs"`
 	cmdline="$cmdline $excl_codecs"
 

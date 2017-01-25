@@ -1,7 +1,7 @@
 --- a/src/lxc/utils.h
 +++ b/src/lxc/utils.h
-@@ -44,11 +44,7 @@ extern char *get_rundir(void);
- extern const char *lxc_global_config_value(const char *option_name);
+@@ -41,11 +41,7 @@ extern int mkdir_p(const char *dir, mode
+ extern char *get_rundir(void);
  
  /* Define getline() if missing from the C library */
 -#ifndef HAVE_GETLINE

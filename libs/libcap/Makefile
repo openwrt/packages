@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcap
-PKG_VERSION:=2.24
+PKG_VERSION:=2.25
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/
-PKG_MD5SUM:=d43ab9f680435a7fff35b4ace8d45b80
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_SOURCE_URL:=@KERNEL/linux/libs/security/linux-privs/libcap2
+PKG_MD5SUM:=6666b839e5d46c2ad33fc8aa2ceb5f77
+PKG_MAINTAINER:=Paul Wassi <p.wassi@gmx.at>
 
 PKG_INSTALL:=1
 
@@ -37,7 +37,7 @@ MAKE_FLAGS += \
     LDFLAGS="$(TARGET_LDFLAGS) -shared" \
     INDENT="| true" \
     PAM_CAP="no" \
-    LIBATTR="no" \
+    RAISE_SETFCAP="no" \
     DYNAMIC="yes" \
     lib="lib"
 

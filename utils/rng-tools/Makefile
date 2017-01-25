@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rng-tools
 PKG_VERSION:=5
-PKG_RELEASE:=2
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/gkernel/rng-tools/$(PKG_VERSION)/
 PKG_MD5SUM:=6726cdc6fae1f5122463f24ae980dd68
 PKG_LICENSE:=GPLv2
-PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
+PKG_MAINTAINER:=Nathaniel Wesley Filardo <nwfilardo@gmail.com>
 
 PKG_FIXUP:=autoreconf
 
@@ -28,6 +28,12 @@ define Package/rng-tools
   CATEGORY:=Utilities
   TITLE:=Daemon for adding entropy to kernel entropy pool
   URL:=http://sourceforge.net/projects/gkernel/
+endef
+
+define Package/rng-tools/description
+Daemon for adding entropy to kernel entropy pool. By default it uses
+/dev/urandom as the source but the init script can be modified
+to use a hardware source like /dev/hwrng if present
 endef
 
 ifdef CONFIG_USE_UCLIBC
@@ -46,6 +52,8 @@ CONFIGURE_ARGS += \
 define Package/rng-tools/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/rngd.init $(1)/etc/init.d/rngd
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/rngd.uci_defaults $(1)/etc/uci-defaults/rngd
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rngtest $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/sbin

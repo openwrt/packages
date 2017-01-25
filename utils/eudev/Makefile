@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=eudev
-PKG_VERSION:=3.1.5
+PKG_VERSION:=3.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dev.gentoo.org/~blueness/eudev/
-PKG_MD5SUM:=c4dace42deecede102b6c01904042acc
+PKG_MD5SUM:=7e42d9b9ed8162021665139520676367
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -22,6 +22,14 @@ PKG_BUILD_DEPENDS:=gperf/host
 PKG_FIXUP:=autoreconf
 PKG_INSTALL=1
 
+define Package/libudev
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=Dynamic device management subsystem
+  URL:=https://wiki.gentoo.org/wiki/Project:Eudev
+  MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+endef
+
 define Package/eudev
   SECTION:=base
   CATEGORY:=Base system
@@ -29,7 +37,7 @@ define Package/eudev
   URL:=https://wiki.gentoo.org/wiki/Project:Eudev
   MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
   MENU:=1
-  DEPENDS:=+librt +EUDEV_EXTRA_blkid:libblkid +EUDEV_EXTRA_kmod:libkmod
+  DEPENDS:=+EUDEV_EXTRA_blkid:libblkid +EUDEV_EXTRA_kmod:libkmod +librt +libudev
   PROVIDES:=udev
   CONFLICTS:=udev
 endef
@@ -90,6 +98,11 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/lib/pkgconfig/libudev.pc $(1)/usr/lib/pkgconfig
 endef
 
+define Package/libudev/install
+	$(INSTALL_DIR) $(1)/lib
+	$(CP) $(PKG_INSTALL_DIR)/lib/libudev.so* $(1)/lib
+endef
+
 define Package/eudev/install
 	$(INSTALL_DIR) $(1)/etc/udev/rules.d
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/udev/udev.conf $(1)/etc/udev
@@ -119,22 +132,13 @@ define Package/eudev/install
 			80-net-name-slot.rules) \
 		$(1)/lib/udev/rules.d
 
-	$(INSTALL_DIR) $(1)/lib
-	$(CP) $(PKG_INSTALL_DIR)/lib/libudev.so* $(1)/lib
-
-	$(INSTALL_DIR) $(1)/lib/udev
 ifneq ($(eudev-extra-lib-bin-y),)
 		$(INSTALL_BIN) \
 			$(addprefix $(PKG_INSTALL_DIR)/lib/udev/, \
 				$(eudev-extra-lib-bin-y)) \
 			$(1)/lib/udev/
 endif
-ifneq ($(eudev-extra-lib-data-y),)
-		$(INSTALL_DATA) \
-			$(addprefix $(PKG_INSTALL_DIR)/lib/udev/, \
-				$(eudev-extra-lib-data-y)) \
-			$(1)/lib/udev/
-endif
 endef
 
 $(eval $(call BuildPackage,eudev))
+$(eval $(call BuildPackage,libudev))

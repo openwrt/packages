@@ -17,4 +17,15 @@ config PERL_TESTS
 		Test support is still in development. Some tests will fail,
 		others are just missing completely.
 
+config PERL_NOCOMMENT
+	bool "Strip comments and pod sections from modules"
+	default y
+	help
+		Remove comments and pod sections for all perl packages.
+
+		This will descrease the size of perl libraries moderately.
+
+		Stripping occasionally gets confused and mangles valid code,
+		so disable this option if you're not pressed for space.
+
 endmenu

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2015-2016 Ted Hess
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.19.11
-PKG_RELEASE:=1
+PKG_VERSION:=0.19.19
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.19/
-PKG_MD5SUM:=78935f6c464b67e19b4dc65bdb80319e
+PKG_MD5SUM:=6e4fca9a9c26dad08b61bac9a91802db
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
@@ -112,13 +112,14 @@ CONFIGURE_ARGS += \
 	--disable-ao \
 	--disable-bzip2 \
 	--disable-fluidsynth \
+	--disable-wildmidi \
 	--disable-gme \
 	--enable-inotify \
 	--disable-icu \
 	--disable-eventfd \
 	--disable-iso9660 \
 	--disable-jack \
-	--disable-lame-encoder \
+	--disable-roar \
 	--disable-libwrap \
 	--disable-lsr \
 	--disable-mikmod \
@@ -131,12 +132,15 @@ CONFIGURE_ARGS += \
 	--disable-sidplay \
 	--disable-solaris-output \
 	--disable-sqlite \
+	--disable-lame-encoder \
 	--disable-twolame-encoder \
+	--disable-shine-encoder \
 	--enable-wave-encoder \
 	--disable-wavpack \
 	--disable-wildmidi \
 	--disable-zzip \
 	--with-zeroconf=no \
+	--disable-soxr \
 	\
 	--enable-curl \
 	--enable-flac \

@@ -1,0 +1,19 @@
+--- a/bind/Makefile.in
++++ b/bind/Makefile.in
+@@ -63,8 +63,14 @@
+ 	else                                                            \
+ 		echo Configuring BIND Export libraries for DHCP. ;      \
+ 		rm -rf ${cleandirs} ${cleanfiles} ;                     \
+-		(cd ${bindsrcdir} &&                                    \
+-                 ./configure ${bindconfig} > ${binddir}/configure.log); \
++               (cd ${bindsrcdir} && export CC=${CROSS_CC} &&           \
++                ./configure  --disable-atomic --disable-kqueue         \
++                --disable-epoll --disable-devpoll --without-openssl    \
++                --without-libxml2 --enable-exportlib                   \
++                --enable-threads=no                                    \
++                --with-export-includedir=${binddir}/include            \
++                --with-export-libdir=${binddir}/lib --with-gssapi=no   \
++               --without-randomdev > ${binddir}/configure.log);       \
+ 	fi
+ 
+ atf:

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=irssi
-PKG_VERSION:=0.8.17
+PKG_VERSION:=0.8.21
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://irssi.org/files/
-PKG_MD5SUM:=ecf64be47978d89a742b435a81cb47db
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/irssi/irssi/releases/download/0.8.21/
+PKG_MD5SUM:=b820760c3b4f3b0c24abe4db82b6366a
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -64,7 +64,6 @@ CONFIGURE_ARGS += \
 	--with-perl=no \
 	--with-glib-prefix="$(STAGING_DIR)/usr" \
 	--with-textui \
-	--without-terminfo \
 	--without-bot \
 	--disable-proxy
 

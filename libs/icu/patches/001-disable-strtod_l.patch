@@ -1,0 +1,26 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -893,8 +893,8 @@
+ AC_CHECK_FUNC(strtod_l)
+ if test x$ac_cv_func_strtod_l = xyes
+ then
+-     CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=1"
+-     U_HAVE_STRTOD_L=1
++     CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=0"
++     U_HAVE_STRTOD_L=0
+ else
+      CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=0"
+      U_HAVE_STRTOD_L=0
+--- a/configure
++++ b/configure
+@@ -7053,8 +7053,8 @@
+ 
+ if test x$ac_cv_func_strtod_l = xyes
+ then
+-     CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=1"
+-     U_HAVE_STRTOD_L=1
++     CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=0"
++     U_HAVE_STRTOD_L=0
+ else
+      CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=0"
+      U_HAVE_STRTOD_L=0

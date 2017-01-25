@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2005-2015 OpenWrt.org
+# Copyright (C) 2005-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
-PKG_VERSION:=3.4.9
+PKG_VERSION:=3.5.8
 PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=ftp://ftp.gnutls.org/gcrypt/gnutls/v3.4
-PKG_MD5SUM:=1b3b6d55d0e2b6d01a54f53129f1da9b
+PKG_SOURCE_URL:=ftp://ftp.gnutls.org/gcrypt/gnutls/v3.5
+PKG_MD5SUM:=113e892e51acdb11b81804cd355adfee
 #PKG_FIXUP:=autoreconf gettext-version
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 PKG_LICENSE:=LGPLv2.1+
@@ -35,6 +35,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_GNUTLS_PKCS11 \
 	CONFIG_GNUTLS_PSK \
 	CONFIG_GNUTLS_SRP \
+	CONFIG_GNUTLS_TPM \
 	CONFIG_LIBNETTLE_MINI \
 
 include $(INCLUDE_DIR)/package.mk
@@ -62,6 +63,7 @@ define Package/certtool
 $(call Package/gnutls/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Encryption
   TITLE+= (certool utility)
   DEPENDS+= +libgnutls
 endef
@@ -76,6 +78,7 @@ define Package/gnutls-utils
 $(call Package/gnutls/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Encryption
   TITLE+= (utilities)
   DEPENDS+= +libgnutls
 endef
@@ -93,7 +96,7 @@ endef
 define Package/libgnutls
 $(call Package/gnutls/Default)
   TITLE+= (library)
-  DEPENDS+= +libnettle +!LIBNETTLE_MINI:libgmp +GNUTLS_EXT_LIBTASN1:libtasn1 +GNUTLS_PKCS11:p11-kit
+  DEPENDS+= +libnettle +!LIBNETTLE_MINI:libgmp +GNUTLS_EXT_LIBTASN1:libtasn1 +GNUTLS_PKCS11:p11-kit +GNUTLS_CRYPTODEV:kmod-cryptodev
 endef
 
 define Package/libgnutls/description
@@ -107,6 +110,7 @@ CONFIGURE_ARGS+= \
 	--enable-static \
 	--disable-rpath \
 	--disable-libdane \
+	--with-included-unistring \
 	--disable-guile \
 	--disable-nls \
 	--without-zlib \
@@ -159,6 +163,10 @@ endif
 
 ifneq ($(CONFIG_GNUTLS_OCSP),y)
 CONFIGURE_ARGS += --disable-ocsp
+endif
+
+ifneq ($(CONFIG_GNUTLS_TPM),y)
+CONFIGURE_ARGS += --without-tpm
 endif
 
 ifeq ($(CONFIG_GNUTLS_CRYPTODEV),y)
@@ -218,6 +226,11 @@ endif
 ifeq ($(CONFIG_GNUTLS_PKCS11),y)
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/bin/p11tool \
+		$(1)/usr/bin/
+endif
+ifeq ($(CONFIG_GNUTLS_TPM),y)
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/bin/tpmtool \
 		$(1)/usr/bin/
 endif
 endef

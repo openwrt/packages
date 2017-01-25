@@ -1,0 +1,69 @@
+Index: libp11-0.4.1/src/Makefile.am
+===================================================================
+--- libp11-0.4.1.orig/src/Makefile.am
++++ libp11-0.4.1/src/Makefile.am
+@@ -36,12 +36,6 @@ pkcs11_la_LIBADD = $(libp11_la_OBJECTS)
+ pkcs11_la_LDFLAGS = $(AM_LDFLAGS) -module -shared -shrext $(SHARED_EXT) \
+ 	-avoid-version -export-symbols "$(srcdir)/pkcs11.exports"
+ 
+-# OpenSSL older than 1.1.0 expected libpkcs11.so instead of pkcs11.so
+-check-local: $(LTLIBRARIES)
+-	cd .libs && $(LN_S) -f pkcs11$(SHARED_EXT) libpkcs11$(SHARED_EXT)
+-install-exec-hook:
+-	cd '$(DESTDIR)$(enginesdir)' && $(LN_S) -f pkcs11$(SHARED_EXT) libpkcs11$(SHARED_EXT)
+-
+ if WIN32
+ # def file required for MS users to build library
+ mylibdir=$(libdir)
+Index: libp11-0.4.1/src/Makefile.in
+===================================================================
+--- libp11-0.4.1.orig/src/Makefile.in
++++ libp11-0.4.1/src/Makefile.in
+@@ -839,7 +839,7 @@ distdir: $(DISTFILES)
+ 	  fi; \
+ 	done
+ check-am: all-am
+-	$(MAKE) $(AM_MAKEFLAGS) check-local
++	$(MAKE) $(AM_MAKEFLAGS)
+ check: check-am
+ all-am: Makefile $(LTLIBRARIES) $(DATA) $(HEADERS) config.h
+ installdirs:
+@@ -910,7 +910,7 @@ install-dvi-am:
+ 
+ install-exec-am: install-libLTLIBRARIES
+ 	@$(NORMAL_INSTALL)
+-	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
++	$(MAKE) $(AM_MAKEFLAGS)
+ install-html: install-html-am
+ 
+ install-html-am:
+@@ -955,7 +955,7 @@ uninstall-am: uninstall-enginesLTLIBRARI
+ 
+ .MAKE: all check-am install-am install-exec-am install-strip
+ 
+-.PHONY: CTAGS GTAGS TAGS all all-am check check-am check-local clean \
++.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
+ 	clean-enginesLTLIBRARIES clean-generic clean-libLTLIBRARIES \
+ 	clean-libtool cscopelist-am ctags ctags-am distclean \
+ 	distclean-compile distclean-generic distclean-hdr \
+@@ -963,7 +963,7 @@ uninstall-am: uninstall-enginesLTLIBRARI
+ 	html-am info info-am install install-am install-data \
+ 	install-data-am install-dvi install-dvi-am \
+ 	install-enginesLTLIBRARIES install-exec install-exec-am \
+-	install-exec-hook install-html install-html-am \
++	install-html install-html-am \
+ 	install-includeHEADERS install-info install-info-am \
+ 	install-libLTLIBRARIES install-man install-mylibDATA \
+ 	install-pdf install-pdf-am install-pkgconfigDATA install-ps \
+@@ -979,11 +979,6 @@ uninstall-am: uninstall-enginesLTLIBRARI
+ 
+ 	$(srcdir)/config.h.in $(srcdir)/config.h.in~
+ 
+-# OpenSSL older than 1.1.0 expected libpkcs11.so instead of pkcs11.so
+-check-local: $(LTLIBRARIES)
+-	cd .libs && $(LN_S) -f pkcs11$(SHARED_EXT) libpkcs11$(SHARED_EXT)
+-install-exec-hook:
+-	cd '$(DESTDIR)$(enginesdir)' && $(LN_S) -f pkcs11$(SHARED_EXT) libpkcs11$(SHARED_EXT)
+ @WIN32_TRUE@.libs/@WIN_LIBPREFIX@p11-@LIBP11_LT_OLDEST@.dll.def:	libp11.la
+ 
+ .rc.lo:

@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opentracker
-PKG_VERSION:=20150427
-PKG_RELEASE:=1
-PKG_REV:=27499d7a55bde404f3273a23026f2495e96adf87
+PKG_VERSION:=20151211
+PKG_RELEASE:=2
+PKG_REV:=ba25d2b2a84a31eac2956b71cb12b4b0748b35f5
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=Beerware
 
@@ -75,6 +75,14 @@ MAKE_FLAGS += PREFIX="$(STAGING_DIR)/usr"
 ifeq ($(BUILD_VARIANT),ipv6)
   MAKE_FLAGS += FEATURES="-DWANT_V6"
 endif
+
+define Package/opentracker/conffiles
+/etc/opentracker.conf
+endef
+
+define Package/opentracker6/conffiles
+/etc/opentracker6.conf
+endef
 
 define Package/opentracker/install
 	$(INSTALL_DIR) $(1)/usr/bin

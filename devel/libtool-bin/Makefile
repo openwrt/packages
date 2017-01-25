@@ -9,11 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtool
 PKG_VERSION:=2.4.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/libtool
-PKG_MD5SUM:=addf44b646ddb4e3919805aa88fa7c5e
+PKG_MD5SUM:=1bfb9b923f2c1339b4d2ce1807064aa5
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
 PKG_LICENSE:=GPL-2.0+
 PKG_BUILD_DIR = $(BUILD_DIR)/libtool-bin/$(PKG_NAME)-$(PKG_VERSION)
@@ -21,6 +21,8 @@ PKG_BUILD_DIR = $(BUILD_DIR)/libtool-bin/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+
+CONFIGURE_VARS += GREP=grep SED=sed
 
 define Package/libtool-bin
   SECTION:=devel
@@ -39,7 +41,6 @@ endef
 define Package/libtool-bin/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/libtoolize $(1)/usr/bin/
-	$(SED) 's|$(STAGING_DIR_HOST)||g' $(1)/usr/bin/libtoolize
 	$(INSTALL_DIR) $(1)/usr/share/aclocal/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/aclocal/*.m4 \
 	  $(1)/usr/share/aclocal/

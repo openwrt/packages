@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
-PKG_VERSION:=2.7.3
+PKG_VERSION:=2.7.4
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
-PKG_MD5SUM:=a1a7f747093663e1f39ab595b63b45e4
+PKG_MD5SUM:=3ba53656933d7471f95140b32a5b8d5c
 PKG_MAINTAINER:=Martin Rowe <martin.p.rowe@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE-GPL2
@@ -66,12 +66,12 @@ define Package/nut/config
 endef
 
 define Package/nut/conffiles
-	/etc/nut/nut.conf
-	$(if $(CONFIG_NUT_CLIENTS_UPSMON),/etc/nut/upsmon.conf)
-	$(if $(CONFIG_NUT_CLIENTS_UPSSCHED),/etc/nut/upssched.conf)
-	$(if $(CONFIG_NUT_SERVER),/etc/nut/ups.conf)
-	$(if $(CONFIG_NUT_SERVER),/etc/nut/upsd.conf)
-	$(if $(CONFIG_NUT_SERVER),/etc/nut/upsd.users)
+/etc/nut/nut.conf
+$(if $(CONFIG_NUT_CLIENTS_UPSMON),/etc/nut/upsmon.conf)
+$(if $(CONFIG_NUT_CLIENTS_UPSSCHED),/etc/nut/upssched.conf)
+$(if $(CONFIG_NUT_SERVER),/etc/nut/ups.conf)
+$(if $(CONFIG_NUT_SERVER),/etc/nut/upsd.conf)
+$(if $(CONFIG_NUT_SERVER),/etc/nut/upsd.users)
 endef
 
 define Package/nut/install
@@ -123,10 +123,10 @@ commands from any web browser. Javascript and cookies are not required.
 endef
 
 define Package/nut-web-cgi/conffiles
-	/etc/nut/hosts.conf
-	/etc/nut/upsset.conf
-	/etc/nut/upsstats.html
-	/etc/nut/upsstats-single.html
+/etc/nut/hosts.conf
+/etc/nut/upsset.conf
+/etc/nut/upsstats.html
+/etc/nut/upsstats-single.html
 endef
 
 define Package/nut-web-cgi/install
@@ -152,7 +152,7 @@ attached UPS via mDNS/DNS-SD.
 endef
 
 define Package/nut-avahi-service/conffiles
-	/etc/avahi/services/nut.service
+/etc/avahi/services/nut.service
 endef
 
 define Package/nut-avahi-service/install

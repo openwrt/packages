@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.5.1
+PKG_VERSION:=5.5.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://collectd.org/files/
-PKG_MD5SUM:=fd24b947cef9351ce3e2d6d2a0762e18
+PKG_MD5SUM:=6f10633d0f73f99ef61472a8e377d4a058de161e80f3353b4b17d394c68f2f44
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -31,7 +31,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	battery \
 	ceph \
 	cgroups \
-	cpufreq \
 	curl_json \
 	curl_xml \
 	dbi \
@@ -101,6 +100,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	conntrack \
 	contextswitch \
 	cpu \
+	cpufreq \
 	csv \
 	curl \
 	df \
@@ -140,6 +140,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	syslog \
 	table \
 	tail \
+	tail_csv \
 	tcpconns \
 	teamspeak2 \
 	ted \
@@ -176,6 +177,14 @@ define Package/collectd/description
  and provides mechanismns to store the values in a variety of ways.
 endef
 
+define Package/collectd/config
+	config PACKAGE_COLLECTD_ENCRYPTED_NETWORK
+	bool "Enable ability to use encrypted networking"
+	default n
+	depends on PACKAGE_collectd
+	select PACKAGE_collectd-mod-network
+endef
+
 ifneq ($(CONFIG_avr32),)
   TARGET_CFLAGS += -fsigned-char
 endif
@@ -186,7 +195,15 @@ CONFIGURE_ARGS+= \
 	--enable-daemon \
 	--with-nan-emulation \
 	--without-perl-bindings \
+	--without-libudev
+
+ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
+CONFIGURE_ARGS+= \
+	--with-libgcrypt=$(STAGING_DIR)/include
+else
+CONFIGURE_ARGS+= \
 	--without-libgcrypt
+endif
 
 CONFIGURE_VARS+= \
 	CFLAGS="$$$$CFLAGS $(FPIC)" \
@@ -295,6 +312,7 @@ $(eval $(call BuildPlugin,bind,BIND server/zone input,bind,+PACKAGE_collectd-mod
 $(eval $(call BuildPlugin,conntrack,connection tracking table size input,conntrack,))
 $(eval $(call BuildPlugin,contextswitch,context switch input,contextswitch,))
 $(eval $(call BuildPlugin,cpu,CPU input,cpu,))
+$(eval $(call BuildPlugin,cpufreq,CPU Freq input,cpufreq,@(TARGET_x86||TARGET_x86_64||TARGET_mvebu||TARGET_ipq806x))) # Only enable on x86 mvebu and ipq806x
 $(eval $(call BuildPlugin,csv,CSV output,csv,))
 $(eval $(call BuildPlugin,curl,cURL input,curl,+PACKAGE_collectd-mod-curl:libcurl))
 #$(eval $(call BuildPlugin,dbi,relational database input,dbi,+PACKAGE_collectd-mod-dbi:libdbi))
@@ -317,7 +335,7 @@ $(eval $(call BuildPlugin,madwifi,MadWifi status input,madwifi,))
 $(eval $(call BuildPlugin,memory,physical memory usage input,memory,))
 $(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAGE_collectd-mod-modbus:libmodbus))
 $(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-netlink:libmnl))
-$(eval $(call BuildPlugin,network,network input/output,network))
+$(eval $(call BuildPlugin,network,network input/output,network,+PACKAGE_COLLECTD_ENCRYPTED_NETWORK:libgcrypt))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
 $(eval $(call BuildPlugin,ntpd,NTP daemon status input,ntpd,))
 $(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut))
@@ -334,6 +352,7 @@ $(eval $(call BuildPlugin,sensors,lm_sensors input,sensors,+PACKAGE_collectd-mod
 $(eval $(call BuildPlugin,snmp,SNMP input,snmp,+PACKAGE_collectd-mod-snmp:libnetsnmp))
 $(eval $(call BuildPlugin,syslog,syslog output,syslog,))
 $(eval $(call BuildPlugin,tail,tail input,tail,))
+$(eval $(call BuildPlugin,tail-csv,tail CSV input,tail_csv,))
 $(eval $(call BuildPlugin,table,table-like structured file input,table,))
 $(eval $(call BuildPlugin,teamspeak2,TeamSpeak2 input,teamspeak2,))
 $(eval $(call BuildPlugin,ted,The Energy Detective input,ted,@((!TARGET_avr32)||BROKEN))) # fails on avr32 because of warnings treated as errors

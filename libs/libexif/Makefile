@@ -41,6 +41,7 @@ CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
 	--disable-rpath \
+	--disable-nls \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
 

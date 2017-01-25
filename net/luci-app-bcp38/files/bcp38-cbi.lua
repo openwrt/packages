@@ -19,7 +19,9 @@ local ifaces = net:get_interfaces()
 m = Map("bcp38", translate("BCP38"),
 	translate("This function blocks packets with private address destinations " ..
 		"from going out onto the internet as per " ..
-		"<a href=\"http://tools.ietf.org/html/bcp38\">BCP 38</a>."))
+		"<a href=\"http://tools.ietf.org/html/bcp38\">BCP 38</a>. " ..
+		"For IPv6, only source specific default routes are installed, so " ..
+		"no BCP38 firewall routes are needed."))
 
 s = m:section(TypedSection, "bcp38", translate("BCP38 config"))
 s.anonymous = true

@@ -20,3 +20,13 @@
  #include "ipc_remote.h"
  
  #ifndef SYS_CYGWIN
+--- a/ifcontrol.h
++++ b/ifcontrol.h
+@@ -39,7 +39,6 @@
+ #include <net/if_arp.h>
+ #include <sys/ioctl.h>
+ #include <netinet/in.h>
+-#include <netinet/if_ether.h>
+ #include <arpa/inet.h>
+ #endif
+ 

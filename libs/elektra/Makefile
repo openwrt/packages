@@ -1,0 +1,409 @@
+#
+# Copyright (C) 2006-2016 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+# No copyright by Harald Geyer as filling in a template doesn't constitute
+# an original work in the sense of copyright law.
+
+include $(TOPDIR)/rules.mk
+
+PKG_MAINTAINER:=Harald Geyer <harald@ccbib.org>
+
+PKG_NAME:=elektra
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=doc/COPYING
+PKG_VERSION:=0.8.19
+PKG_RELEASE:=1
+
+# Use this for official releasees
+PKG_MD5SUM:=6669e765c834e259fb7570f126b85d7e
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=http://ftp.libelektra.org/ftp/elektra/releases
+
+# Use this to test versions still under development
+#PKG_SOURCE_PROTO:=git
+#PKG_SOURCE_URL:=https://github.com/ElektraInitiative/libelektra.git
+#PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+#PKG_SOURCE_VERSION:=e97efb29a94f3a49cb952d06552fcf53708ea8c7
+#PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
+
+PKG_BUILD_DEPENDS:=elektra/host swig/host
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
+include $(INCLUDE_DIR)/cmake.mk
+
+define Package/libelektra/Default
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=Elektra
+  URL:=http://www.libelektra.org/
+  SUBMENU:=libelektra
+endef
+
+define Package/libelektra/Default-description
+Elektra provides an universal and secure framework to store
+configuration parameters in a global, hierarchical key database.
+endef
+
+define Package/libelektra-core
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra core library
+  DEPENDS:=+libpthread
+endef
+
+define Package/libelektra-core/description
+$(call Package/libelektra/Default-description)
+
+This package contains the core libraries, that all other parts of
+elektra and all programs using elektra depend on, and an almost
+minimal set of plugins to be actually useful.
+endef
+
+define Package/elektra-kdb
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=Elektra kdb tool
+  URL:=http://www.libelektra.org/
+  DEPENDS:=+libelektra-core +libstdcpp
+endef
+
+define Package/elektra-kdb/description
+$(call Package/libelektra/Default-description)
+
+This package contains the kdb tool, which allows to access and change
+the content of the key database from the shell.
+endef
+
+define Package/libelektra-resolvers
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra additional resolvers
+  DEPENDS:=+libelektra-core +libpthread
+endef
+
+define Package/libelektra-resolvers/description
+$(call Package/libelektra/Default-description)
+
+This package contains additional resolvers not included in the
+libelektra-core package. Usually there is no reason to install this.
+endef
+
+define Package/libelektra-plugins
+  $(call Package/libelektra/Default)
+  TITLE:=Useful elektra plugins
+  DEPENDS:=+libelektra-core
+endef
+
+define CONTENT_ELEKTRA_PLUGINS_TEXT
+base64 boolean cachefilter ccode conditionals csvstorage
+enum filecheck glob hexcode hidden hosts iconv keytometa
+line lineendings list mathcheck network null path profile
+shell syslog uname validation
+endef
+
+CONTENT_ELEKTRA_PLUGINS = $(strip $(CONTENT_ELEKTRA_PLUGINS_TEXT))
+
+define Package/libelektra-plugins/description
+$(call Package/libelektra/Default-description)
+
+This package contains plugins for various common configuration file
+format and optional features without heavy dependencies. Currently
+these plugins are included:
+$(CONTENT_ELEKTRA_PLUGINS_TEXT)
+endef
+
+define Package/libelektra-cpp
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra plugins depending on libstdcpp
+  DEPENDS:=+libelektra-core +libstdcpp
+endef
+
+CONTENT_ELEKTRA_CPP=dump regexstore struct type
+
+define Package/libelektra-cpp/description
+$(call Package/libelektra/Default-description)
+
+This package contains plugins written in C++.
+Currently these are:
+$(CONTENT_ELEKTRA_CPP)
+endef
+
+define Package/libelektra-boost
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra plugins depending on boost
+  DEPENDS:=+libelektra-core +libstdcpp +boost
+endef
+
+define Package/libelektra-boost/description
+$(call Package/libelektra/Default-description)
+
+This package contains plugins written in C++ with an dependency on
+boost. Currently this is a plugin for a tcl like format.
+endef
+
+define Package/libelektra-crypto
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra crypto plugin
+  DEPENDS:=+libelektra-core +libopenssl
+endef
+
+define Package/libelektra-crypto/description
+$(call Package/libelektra/Default-description)
+
+This package contains support for encrypting values before storage.
+endef
+
+define Package/libelektra-curlget
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra curlget plugin
+  DEPENDS:=+libelektra-core +libcurl
+endef
+
+define Package/libelektra-curlget/description
+$(call Package/libelektra/Default-description)
+
+This plugin can get configuration data from remote URLs before access.
+endef
+
+define Package/libelektra-dbus
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra dbus plugin
+  DEPENDS:=+libelektra-core +libdbus
+endef
+
+define Package/libelektra-dbus/description
+$(call Package/libelektra/Default-description)
+
+This package contains support for dbus notification on configuration
+changes.
+endef
+
+define Package/libelektra-xml
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra xmltool plugin
+  DEPENDS:=+libelektra-core +libxml2
+endef
+
+define Package/libelektra-xml/description
+$(call Package/libelektra/Default-description)
+
+This package contains a plugin for storing data with xml syntax.
+endef
+
+define Package/libelektra-yajl
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra yajl (json) plugin
+  DEPENDS:=+libelektra-core +yajl
+endef
+
+define Package/libelektra-yajl/description
+$(call Package/libelektra/Default-description)
+
+This package contains support for storing the key database as json files.
+endef
+
+define Package/libelektra-python2
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra python2 plugin
+  DEPENDS:=+libelektra-core +python-light +libstdcpp
+endef
+
+define Package/libelektra-python2/description
+$(call Package/libelektra/Default-description)
+
+This package adds python2 support to elektra.
+endef
+
+define Package/libelektra-python3
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra python3 plugin
+  DEPENDS:=+libelektra-core +python3-light +libstdcpp
+endef
+
+define Package/libelektra-python3/description
+$(call Package/libelektra/Default-description)
+
+This package adds python3 support to elektra.
+endef
+
+define Package/libelektra-lua
+  $(call Package/libelektra/Default)
+  TITLE:=Elektra lua plugin
+  DEPENDS:=+libelektra-core +lua +libstdcpp
+endef
+
+define Package/libelektra-lua/description
+$(call Package/libelektra/Default-description)
+
+This package adds lua support to elektra.
+endef
+
+define Package/libelektra-extra
+  $(call Package/libelektra/Default)
+  TITLE:=Additional elektra plugins
+  DEPENDS:=+libelektra-core +libstdcpp
+endef
+
+define CONTENT_EXTRA_PLUGINS_TEXT
+blockresolver c constants counter desktop dpkg error
+fcrypt fstab logchange mozprefs passwd rename required
+simplespeclang timeofday tracer
+endef
+
+CONTENT_ELEKTRA_EXTRA:=$(strip $(CONTENT_EXTRA_PLUGINS_TEXT))
+
+define Package/libelektra-extra/description
+$(call Package/libelektra/Default-description)
+
+This package contains extra plugins that are only useful for debugging
+or as an example of what can be done. Also most experimental plugins
+are included in this package. Currently this includes:
+$(CONTENT_EXTRA_PLUGINS_TEXT)
+endef
+
+CMAKE_OPTIONS = \
+	-DTARGET_PLUGIN_FOLDER="" \
+	-DBUILD_FULL=OFF \
+	-DBUILD_STATIC=OFF \
+	-DBUILD_DOCUMENTATION=OFF \
+	-DFORCE_IN_SOURCE_BUILD=ON \
+	-DBUILD_TESTING=OFF \
+	-DKDB_DEFAULT_RESOLVER=resolver_fm_pb_b \
+	-DKDB_DEFAULT_STORAGE=ini \
+	-DENABLE_OPTIMIZATIONS=OFF \
+	-DPLUGINS="ALL"
+
+CMAKE_HOST_OPTIONS = \
+	-DCMAKE_SKIP_RPATH=FALSE \
+	-DCMAKE_INSTALL_RPATH=$(STAGING_DIR_HOST)/lib/ \
+	-DINSTALL_BUILD_TOOLS=ON \
+	-DBUILD_STATIC=OFF \
+	-DBUILD_DOCUMENTATION=OFF \
+	-DINSTALL_SYSTEM_FILES=OFF \
+	-DFORCE_IN_SOURCE_BUILD=ON \
+	-DBUILD_TESTING=OFF \
+	-DPLUGINS="ALL;-python2;-python" \
+	-DTOOLS="gen;kdb"
+
+define Package/libelektra-core/install
+	$(INSTALL_DIR) $(1)/etc/kdb/
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-core.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-ease.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-kdb.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-meta.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-plugin.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-proposal.so* $(1)/usr/lib/
+	#The next is only supported with glibc, so skip it.
+	#$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektraintercept-* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-resolver_fm_pb_b.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-ni.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-ini.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-sync.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-storage.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-resolver.so $(1)/usr/lib/
+endef
+
+define Package/elektra-kdb/install
+	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/kdb $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/lib/elektra/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektratools* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/elektra/tool_exec/ $(1)/usr/lib/elektra/
+endef
+
+define Package/libelektra-resolvers/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-resolver_* $(1)/usr/lib/
+	rm -f $(1)/usr/lib/libelektra-resolver_fm_pb_b.so
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-wresolver.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-noresolver.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-plugins/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(foreach plugin,$(CONTENT_ELEKTRA_PLUGINS),$(PKG_INSTALL_DIR)/usr/lib/libelektra-$(plugin).so) $(1)/usr/lib/
+endef
+
+define Package/libelektra-boost/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-tcl.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-cpp/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(foreach plugin,$(CONTENT_ELEKTRA_CPP),$(PKG_INSTALL_DIR)/usr/lib/libelektra-$(plugin).so) $(1)/usr/lib/
+endef
+
+define Package/libelektra-crypto/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-crypto_openssl.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-curlget/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-curlget.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-dbus/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-dbus.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-xml/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-xmltool.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-yajl/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-yajl.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-python2/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-python2.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-python3/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-python.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-lua/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-lua.so $(1)/usr/lib/
+endef
+
+define Package/libelektra-extra/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(foreach plugin,$(CONTENT_ELEKTRA_EXTRA),$(PKG_INSTALL_DIR)/usr/lib/libelektra-$(plugin).so) $(1)/usr/lib/
+endef
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/elektra/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/elektra/* $(1)/usr/include/elektra/
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
+endef
+
+
+$(eval $(call HostBuild))
+$(eval $(call BuildPackage,libelektra-core))
+$(eval $(call BuildPackage,elektra-kdb))
+$(eval $(call BuildPackage,libelektra-resolvers))
+$(eval $(call BuildPackage,libelektra-plugins))
+$(eval $(call BuildPackage,libelektra-boost))
+$(eval $(call BuildPackage,libelektra-cpp))
+$(eval $(call BuildPackage,libelektra-curlget))
+$(eval $(call BuildPackage,libelektra-crypto))
+$(eval $(call BuildPackage,libelektra-dbus))
+$(eval $(call BuildPackage,libelektra-xml))
+$(eval $(call BuildPackage,libelektra-yajl))
+$(eval $(call BuildPackage,libelektra-python2))
+$(eval $(call BuildPackage,libelektra-python3))
+$(eval $(call BuildPackage,libelektra-lua))
+$(eval $(call BuildPackage,libelektra-extra))

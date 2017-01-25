@@ -32,90 +32,142 @@
 # "answer"	single words inside providers answer string; use "|" to combine "or"
 #
 # 44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+#
+#.cloudflare.com-v1	!!! Please install additional package "ddns-scripts_cloudflare"
+#.cloudflare.com-v4	!!! Please install additional package "ddns-scripts_cloudflare.com-v4"
+#.godaddy.com-v1	!!! Please install additional package "ddns-scripts_godaddy.com-v1"
+#.no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
 
-"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
-"changeip.com"		"http://[USERNAME]:[PASSWORD]@nic.changeip.com/nic/update?u=[USERNAME]&p=[PASSWORD]&cmd=update&hostname=[DOMAIN]&ip=[IP]"
-"zoneedit.com"		"http://[USERNAME]:[PASSWORD]@dynamic.zoneedit.com/auth/dynamic.html?host=[DOMAIN]&dnsto=[IP]"
-"free.editdns.net"	"http://dyndns-free.editdns.net/api/dynLinux.php?p=[PASSWORD]&r=[DOMAIN]"
+"3322.org"		"http://[USERNAME]:[PASSWORD]@members.3322.org/dyndns/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
 
-# freedns.afraid.org is weird, you just need an update code, for which we use the password variable
-"freedns.afraid.org"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+"able.or.kr"		"http://able.or.kr/ddns/src/update.php?hostname=[DOMAIN]&myip=[IP]&ddnsuser=[USERNAME]&pwd=[PASSWORD]"
 
-# DNS Max and resellers' update urls
-"dnsmax.com"	"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=1&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
-"thatip.com"	"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=2&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
+"afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]
+"afraid.org-keyauth"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
 
-# Hurricane Electric Dynamic DNS
-"he.net"	"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
 
-# DNSdynamic.org
-"dnsdynamic.org"	"http://[USERNAME]:[PASSWORD]@www.dnsdynamic.org/api/?hostname=[DOMAIN]&myip=[IP]"
+"changeip.com"		"http://[USERNAME]:[PASSWORD]@nic.changeip.com/nic/update?u=[USERNAME]&p=[PASSWORD]&cmd=update&hostname=[DOMAIN]&ip=[IP]"	"Successful"
 
-# dnsExit.com free dynamic DNS update url
-"dnsexit.com"	"http://www.dnsexit.com/RemoteUpdate.sv?login=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&myip=[IP]"
+"core-networks.de"	"http://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv6=1"	"good"
 
-# OVH
-"ovh.com"	"http://[USERNAME]:[PASSWORD]@www.ovh.com/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
+"ddns.com.br"		"http://[DOMAIN]:[PASSWORD]@members.ddns.com.br/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
-# dns-o-matic is a free service by opendns.com for updating multiple hosts
-"dnsomatic.com"	"http://[USERNAME]:[PASSWORD]@updates.dnsomatic.com/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+# "ddnss.de"		"http://[USERNAME]:[PASSWORD]@ip4.ddnss.de/upd.php?host=[DOMAIN]&ip=[IP]"	"good|nochg"
+"ddnss.de"		"http://ip4.ddnss.de/upd.php?user=[USERNAME]&pwd=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"good|nochg"
 
-# 3322.org
-"3322.org"	"http://[USERNAME]:[PASSWORD]@members.3322.org/dyndns/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
+"ddo.jp"		"http://free.ddo.jp/dnsupdate.php?dn=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
 
-# namecheap.com
-"namecheap.com"	"http://dynamicdns.park-your-domain.com/update?host=[USERNAME]&domain=[DOMAIN]&password=[PASSWORD]&ip=[IP]"
+"desec.io"		"http://[USERNAME]:[PASSWORD]@update.dedyn.io/?hostname=[DOMAIN]&myipv4=[IP]"	"good|nochg"
 
-# easydns.com dynamic DNS
-"easydns.com"	"http://[USERNAME]:[PASSWORD]@api.cp.easydns.com/dyn/tomato.php?hostname=[DOMAIN]&myip=[IP]"
+"dhis.org"		"http://[USERNAME]:[PASSWORD]@is.dhis.org/"
 
-# Winco DDNS
-"ddns.com.br"	"http://[DOMAIN]:[PASSWORD]@members.ddns.com.br/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"dnsdynamic.org"	"http://[USERNAME]:[PASSWORD]@www.dnsdynamic.org/api/?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
-# Mythic Beasts (https://www.mythic-beasts.com) Dynamic DNS
-"mythic-beasts.com"	"http://dnsapi4.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20A%20DYNAMIC_IP"
+"dnsexit.com"		"http://www.dnsexit.com/RemoteUpdate.sv?login=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&myip=[IP]"	"0=|1="
 
-# Securepoint Dynamic-DNS-Service	(http://www.spdns.de)
-"spdns.de"	"http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"dnshome.de"		"http://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip=[IP]"
 
-# duiadns.net - free dynamic DNS
-"duiadns.net"	"http://ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
+"dnsmadeeasy.com"	"http://www.dnsmadeeasy.com/servlet/updateip?username=[USERNAME]&password=[PASSWORD}&id=[DOMAIN]&ip=[IP]"	"success|ip-same"
 
-# Two-DNS - Simply. Connected. Everywhere.
-"twodns.de"	"http://[USERNAME]:[PASSWORD]@update.twodns.de/update?hostname=[DOMAIN]&ip=[IP]"
+"dnsmax.com"		"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=1&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
 
-# MyDNS.JP
-"mydns.jp"	"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV4ADDR=[IP]"
+"dnsomatic.com"		"http://[USERNAME]:[PASSWORD]@updates.dnsomatic.com/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
-# LoopiaDNS
-"loopia.se"	"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"
+"dnspark.com"		"http://[USERNAME]:[PASSWORD]@control.dnspark.com/api/dynamic/update.php?hostname=[DOMAIN]&ip=[IP]"	"ok|nochange"
 
-# SelfHost.de
-"selfhost.de"	"http://carol.selfhost.de/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=1"	"good|nochg"
+"do.de"			"http://ddns.do.de/?myip=[IP]&hostname=[DOMAIN]&username=[USERNAME]&password=[PASSWORD]"	"good|nochg"
 
-# no-ip.pl nothing to do with no-ip.com (domain registered to www.domeny.tv) (IP autodetected by provider)
-"no-ip.pl"	"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
+"domopoli.de"		"http://[USERNAME]:[PASSWORD]@http://dyndns.domopoli.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
-# domains.google.com	non free service - require HTTPS communication
-"domains.google.com"	"http://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"dtdns.com"		"http://www.dtdns.com/api/autodns.cfm?id=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
 
-# Schokokeks Hosting, schokokeks.org
+"duckdns.org"		"http://www.duckdns.org/update?domains=[USERNAME]&token=[PASSWORD]&ip=[IP]"	"OK"
+
+"duiadns.net"		"http://[USERNAME]:[PASSWORD]@ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&ip4=[IP]"
+
+"dy.fi"			"http://[USERNAME]:[PASSWORD]@www.dy.fi/nic/update?hostname=[DOMAIN]"	"good|nochg"
+
+"dyndns.it"		"http://[USERNAME]:[PASSWORD]@update.dyndns.it/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"dyn.com"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"dyndnss.net"		"http://www.dyndnss.net/?user=[USERNAME]&pass=[PASSWORD]&domain=[DOMAIN]&updater=other"
+
+"dynsip.org"		"http://[USERNAME]:[PASSWORD]@dynsip.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+"dyns.net"		"http://www.dyns.net/postscript011.php?username=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"200"
+
+"dynu.com"		"http://api.dynu.com/nic/update?hostname=[DOMAIN]&myip=[IP]&username=[USERNAME]&password=[PASSWORD]"
+
+"dynv6.com"		"http://dynv6.com/api/update?hostname=[DOMAIN]&token=[PASSWORD]&ipv4=[IP]"	"updated"
+
+"easydns.com"		"http://[USERNAME]:[PASSWORD]@api.cp.easydns.com/dyn/generic.php?hostname=[DOMAIN]&myip=[IP]"	"NOERROR"
+
+"editdns.net"		"http://dyndns-free.editdns.net/api/dynLinux.php?p=[PASSWORD]&r=[DOMAIN]"
+
+"goip.de"		"http://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip4=[IP]"
+
+"google.com"		"http://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"he.net"		"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"joker.com"		"http://svc.joker.com/nic/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=[DOMAIN]"	"good|nochg"
+
+"loopia.se"		"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"mydns.jp"		"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV4ADDR=[IP]"
+
+"myonlineportal.net"	"http://[USERNAME]:[PASSWORD]@myonlineportal.net/updateddns?hostname=[DOMAIN]&ip=[IP]"	"good|nochg"
+
+"mythic-beasts.com"	"http://dnsapi4.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20A%20DYNAMIC_IP&origin=."
+
+"namecheap.com"		"http://dynamicdns.park-your-domain.com/update?host=[USERNAME]&domain=[DOMAIN]&password=[PASSWORD]&ip=[IP]"
+
+"nettica.com"		"http://www.nettica.com/Domain/Update.aspx?U=[USERNAME]&PC=[PASSWORD]&FQDN=[DOMAIN]&N=[IP]"
+
+"no-ip.pl"		"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
+
+"now-dns.com"		"http://[USERNAME]:[PASSWORD]@now-dns.com/update?hostname=[DOMAIN]"
+
+"nsupdate.info"		"http://[USERNAME]:[PASSWORD]@ipv4.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"nubem.com"		"http://[USERNAME]:[PASSWORD]@nubem.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+
+"opendns.com"		"http://[USERNAME]:[PASSWORD]@updates.opendns.com/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"oray.com"		"http://[USERNAME]:[PASSWORD]@ddns.oray.com/ph/update?hostname=[DOMAIN]&myip=[IP]"
+
+"ovh.com"		"http://[USERNAME]:[PASSWORD]@www.ovh.com/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"regfish.de"		"http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv4=[IP]"	"success|100|101"
+
 "schokokeks.org"	"http://[USERNAME]:[PASSWORD]@dyndns.schokokeks.org/nic/update?myip=[IP]"	"good|nochg"
 
-# STRATO AG
-"strato.de"		"http://[USERNAME]:[PASSWORD]@dyndns.strato.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"selfhost.de"		"http://carol.selfhost.de/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=1"	"good|nochg|200|204"
 
-# Variomedia AG
+"sitelutions.com"	"http://www.sitelutions.com/dnsup?user=[USERNAME]&pass=[PASSWORD]&id=[DOMAIN]&ip=[IP]"	"success"
+
+"spdyn.de"		"http://[USERNAME]:[PASSWORD]@update.spdyn.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"strato.com"		"http://[USERNAME]:[PASSWORD]@dyndns.strato.com/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+
+"system-ns.com"		"http://system-ns.com/api?type=dynamic&command=set&domain=[DOMAIN]&token=[PASSWORD]&ip=[IP]"	"0"
+
+"thatip.com"		"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=2&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
+
+"twodns.de"		"http://[USERNAME]:[PASSWORD]@update.twodns.de/update?hostname=[DOMAIN]&ip=[IP]"
+
+"udmedia.de"		"http://[USERNAME]:[PASSWORD]@www.udmedia.de/nic/update?myip=[IP]"
+
 "variomedia.de" 	"http://[USERNAME]:[PASSWORD]@dyndns.variomedia.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
-# DtDNS
-"dtdns.com"	"http://www.dtdns.com/api/autodns.cfm?id=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
+"xlhost.de"		"http://[USERNAME]:[PASSWORD]@nsupdate.xlhost.de/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
-# dy.fi Dynamic DNS for finnish users (IP autodetected by provider)
-"dy.fi"		"http://[USERNAME]:[PASSWORD]@www.dy.fi/nic/update?hostname=[DOMAIN]"	"good|nochg"
+"zerigo.com"		"http://update.zerigo.com/dynamic?user=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"ok"
 
-# duckdns.org
-"duckdns.org"	"http://www.duckdns.org/update?domains=[USERNAME]&token=[PASSWORD]&ip=[IP]"	"OK"
+"zoneedit.com"		"http://[USERNAME]:[PASSWORD]@dynamic.zoneedit.com/auth/dynamic.html?host=[DOMAIN]&dnsto=[IP]"
 
-# zzzz.io Free Dynamic DNS
-"zzzz.io"	"https://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&ip=[IP]"	"Updated|No change"
+"zzzz.io"		"http://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&ip=[IP]"	"Updated|No change"
+

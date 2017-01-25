@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ipaddress
-PKG_VERSION:=1.0.15
+PKG_VERSION:=1.0.17
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/i/ipaddress
-PKG_MD5SUM:=12915e923b738107e47827478d553ba1
+PKG_SOURCE_URL:=https://pypi.python.org/packages/bb/26/3b64955ff73f9e3155079b9ed31812afdfa5333b5c76387454d651ef593a
+PKG_MD5SUM:=8bbf0326719fafb1f453921ef96729fe
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 

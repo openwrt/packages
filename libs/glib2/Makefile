@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.44.1
-PKG_RELEASE:=1
+PKG_VERSION:=2.50.2
+PKG_RELEASE:=2
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
-PKG_SOURCE_URL:=@GNOME/glib/2.44
-PKG_MD5SUM:=83efba4722a9674b97437d1d99af79db
+PKG_SOURCE_URL:=@GNOME/glib/2.50
+PKG_MD5SUM:=5eeb2bfaf78a07be59585e8b6e80b1d6
 
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
@@ -46,20 +46,24 @@ endef
 
 HOST_CONFIGURE_ARGS += \
 	--disable-selinux \
-	--with-libiconv=gnu
+	--with-libiconv=gnu \
+	--with-pcre=internal \
+	--enable-libmount=no
 
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--enable-debug=no \
 	--disable-selinux \
+	--enable-libmount=no \
 	--disable-fam \
-	--with-libiconv=gnu
+	--with-libiconv=gnu \
+	--with-pcre=internal
 
 CONFIGURE_VARS += \
 	glib_cv_stack_grows=no \
 	glib_cv_uscore=no \
-	ac_cv_path_GLIB_GENMARSHAL=$(STAGING_DIR)/host/bin/glib-genmarshal \
+	ac_cv_path_GLIB_GENMARSHAL=$(STAGING_DIR_HOSTPKG)/bin/glib-genmarshal \
 	ac_cv_func_mmap_fixed_mapped=yes \
 	ac_cv_func_posix_getpwuid_r=yes \
 	ac_cv_func_posix_getgrgid_r=yes

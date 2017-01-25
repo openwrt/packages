@@ -19,7 +19,7 @@ PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REV).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_LICENSE:=Apache-2.0
-PKG_MAINTAINER:Norbert Summer <git@o-g.at>
+PKG_MAINTAINER:=Norbert Summer <git@o-g.at>
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -29,7 +29,7 @@ define Package/chaosvpn
 		CATEGORY:=Network
 		URL:=https://wiki.hamburg.ccc.de/index.php/ChaosVPN::DebianHowto
 		SUBMENU:=VPN
-		DEPENDS:=+tinc +ip +kmod-tun +libopenssl
+		DEPENDS:=+tinc +ip +kmod-tun +libopenssl +zlib
 endef
 
 define Package/chaosvpn/description

@@ -1,15 +1,11 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 
-PYTHON3_VERSION_MAJOR:=3
-PYTHON3_VERSION_MINOR:=5
-PYTHON3_VERSION_MICRO:=0
-
-PYTHON3_VERSION:=$(PYTHON3_VERSION_MAJOR).$(PYTHON3_VERSION_MINOR)
+$(call include_mk, python3-version.mk)
 
 PYTHON3_DIR:=$(STAGING_DIR)/usr
 PYTHON3_BIN_DIR:=$(PYTHON3_DIR)/bin
@@ -20,21 +16,7 @@ PYTHON3_PKG_DIR:=/usr/lib/python$(PYTHON3_VERSION)/site-packages
 
 PYTHON3:=python$(PYTHON3_VERSION)
 
-HOST_PYTHON3_LIB_DIR:=$(STAGING_DIR)/host/lib/python$(PYTHON3_VERSION)
-HOST_PYTHON3_BIN:=$(STAGING_DIR)/host/bin/python3
-
 PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
-define HostPython3
-	(	export PYTHONPATH="$(PYTHON3PATH)"; \
-		export PYTHONOPTIMIZE=""; \
-		export PYTHONDONTWRITEBYTECODE=1; \
-		export _python_sysroot="$(STAGING_DIR)"; \
-		export _python_prefix="/usr"; \
-		export _python_exec_prefix="/usr"; \
-		$(1) \
-		$(HOST_PYTHON3_BIN) $(2); \
-	)
-endef
 
 # These configure args are needed in detection of path to Python header files
 # using autotools.
@@ -59,10 +41,19 @@ define Py3Package
     endef
   endif
 
+  ifndef Py3Package/$(1)/install
+    define Py3Package/$(1)/install
+		if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then \
+			$(INSTALL_DIR) $$(1)/usr/bin \
+			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/
+		fi
+    endef
+  endif
+
   $(call shexport,Py3Package/$(1)/filespec)
 
   define Package/$(1)/install
-	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
+	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
 	@echo "$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)" | ( \
 		IFS='|'; \
 		while read fop fspec fperm; do \
@@ -97,15 +88,17 @@ define Py3Package
   endef
 endef
 
-# $(1) => build subdir
-# $(2) => additional arguments to setup.py
+$(call include_mk, python3-host.mk)
+
+# $(1) => commands to execute before running pythons script
+# $(2) => python script and its arguments
 # $(3) => additional variables
-define Build/Compile/Py3Mod
-	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
+define Build/Compile/HostPy3RunTarget
 	$(call HostPython3, \
-		cd $(PKG_BUILD_DIR)/$(strip $(1)); \
+		$(if $(1),$(1);) \
 		CC="$(TARGET_CC)" \
 		CCSHARED="$(TARGET_CC) $(FPIC)" \
+		CXX="$(TARGET_CXX)" \
 		LD="$(TARGET_CC)" \
 		LDSHARED="$(TARGET_CC) -shared" \
 		CFLAGS="$(TARGET_CFLAGS)" \
@@ -115,8 +108,31 @@ define Build/Compile/Py3Mod
 		__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON3)" \
 		$(3) \
 		, \
-		./setup.py $(2) \
+		$(2) \
 	)
-	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
 endef
 
+# $(1) => build subdir
+# $(2) => additional arguments to setup.py
+# $(3) => additional variables
+define Build/Compile/Py3Mod
+	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
+	$(call Build/Compile/HostPy3RunTarget, \
+		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
+		./setup.py $(2), \
+		$(3))
+	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
+endef
+
+define Py3Build/Compile/Default
+	$(call Build/Compile/Py3Mod,, \
+		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
+		--single-version-externally-managed \
+	)
+endef
+
+ifeq ($(BUILD_VARIANT),python3)
+define Build/Compile
+	$(call Py3Build/Compile/Default)
+endef
+endif # python3

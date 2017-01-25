@@ -9,18 +9,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
 PKG_VERSION:=3.3.11
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.com/procps-ng/procps.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=de985eced583f18df273146b110491b0f7404aab
+PKG_SOURCE_VERSION:=8a198e3eafbde0b627e9992b41d26e6762e4f8c7
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
+PKG_BUILD_DEPENDS:=gettext libiconv
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -39,9 +41,9 @@ define Package/procps-ng/Default
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
 endef
 
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); echo "$(PKG_VERSION)" > "$(PKG_BUILD_DIR)/.tarball-version"; ./autogen.sh );
-	$(call Build/Configure/Default)
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	echo "$(PKG_VERSION)" > "$(PKG_BUILD_DIR)/.tarball-version"
 endef
 
 define Package/procps-ng

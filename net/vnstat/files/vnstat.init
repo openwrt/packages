@@ -31,7 +31,7 @@ start() {
 		init_iface() {
 			local ifn="$1"
 
-			[ -n "$url" ] && {
+			if [ -n "$url" ]; then
 				local try=0
 				local max=3
 				local hostname="$(cat /proc/sys/kernel/hostname)"
@@ -45,7 +45,13 @@ start() {
 						sleep 30
 					fi
 				done
-			}
+			elif [ -n "$backup_dir" ]; then
+				if cp -f "$backup_dir/$ifn" "$lib/" &>/dev/null; then
+					logger -t "vnstat" "Restored backup for database $ifn"
+				else
+					logger -t "vnstat" "Restore of backup for database $ifn failed"
+				fi
+			fi
 
 			/usr/bin/vnstat -u -i "$ifn" >/dev/null
 
@@ -57,6 +63,7 @@ start() {
 
 		config_get url "$cfg" remote
 		config_get lnk "$cfg" symlink
+		config_get backup_dir "$cfg" backup_dir
 		config_list_foreach "$cfg" interface init_iface
 
 		return 1

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2015 OpenWrt.org
+# Copyright (C) 2014-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi1
-PKG_VERSION:=1.2
-PKG_RELEASE:=3
+PKG_VERSION:=1.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
-PKG_MD5SUM:=89dff802d89c4c0d55d8b4665fd52d0b
+PKG_MD5SUM:=156cdf40cece9f8a3ce1582db59a502a
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=LGPL-2.0
@@ -21,6 +21,8 @@ PKG_LICENSE_FILES:=COPYING.LIB
 
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
+
+CMAKE_OPTIONS:=-DBUILD_TESTS=OFF
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

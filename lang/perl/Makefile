@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=5.22.1
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_SOURCE_URL:=ftp://ftp.cpan.org/pub/CPAN/src/5.0 \
 		http://www.cpan.org/src/5.0 \
@@ -24,7 +24,8 @@ PKG_MD5SUM:=19295bbb775a3c36123161b9bf4892f1
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_LICENSE_FILES:=Copying Artistic README
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>, \
+		Philip Prindeville <philipp@redfish-solutions.com>
 
 # Build settings
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/$(PKG_NAME)-$(PKG_VERSION)
@@ -35,7 +36,7 @@ PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
 
 # Variables used during configuration/build
-HOST_PERL_PREFIX:=$(STAGING_DIR)/host/usr
+HOST_PERL_PREFIX:=$(STAGING_DIR_HOSTPKG)/usr
 
 # Filter -g3, it will break Compress-Raw-Zlib
 TARGET_CFLAGS_PERL:=$(patsubst -g3,-g,$(TARGET_CFLAGS))

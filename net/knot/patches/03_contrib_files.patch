@@ -1,0 +1,15 @@
+diff --git a/src/contrib/files.c b/src/contrib/files.c
+index 8aee482..12f36ca 100644
+--- a/src/contrib/files.c
++++ b/src/contrib/files.c
+@@ -24,6 +24,10 @@
+ #include <sys/stat.h>
+ #include <unistd.h>
+ 
++#ifndef O_NOFOLLOW
++#define O_NOFOLLOW 0
++#endif
++
+ static bool special_name(const char *name)
+ {
+ 	return strcmp(name, ".") == 0 || strcmp(name, "..") == 0;

@@ -24,7 +24,7 @@ while true; do
 			let lost++
 		fi
 	done
-		
+
 	if [ $host_up_count -lt $3 ]; then
 		let score--
 

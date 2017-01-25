@@ -1,0 +1,182 @@
+diff -rupN pillow-3.3.1.orig/setup.py pillow-3.3.1/setup.py
+--- pillow-3.3.1.orig/setup.py	2016-08-22 17:45:05.000000000 +0200
++++ pillow-3.3.1/setup.py	2016-08-22 18:09:51.947745155 +0200
+@@ -111,12 +111,12 @@ except (ImportError, OSError):
+ 
+ NAME = 'Pillow'
+ PILLOW_VERSION = '3.3.1'
+-JPEG_ROOT = None
++JPEG_ROOT = _lib_include(os.environ['STAGING_DIR'] + "/usr")
+ JPEG2K_ROOT = None
+-ZLIB_ROOT = None
++ZLIB_ROOT = _lib_include(os.environ['STAGING_DIR'] + "/usr")
+ IMAGEQUANT_ROOT = None
+-TIFF_ROOT = None
+-FREETYPE_ROOT = None
++TIFF_ROOT = _lib_include(os.environ['STAGING_DIR'] + "/usr")
++FREETYPE_ROOT = _lib_include(os.environ['STAGING_DIR'] + "/usr")
+ LCMS_ROOT = None
+ 
+ 
+@@ -221,161 +221,6 @@ class pil_build_ext(build_ext):
+             _add_directory(include_dirs, os.path.join(prefix, "include"))
+ 
+         #
+-        # add platform directories
+-
+-        if self.disable_platform_guessing:
+-            pass
+-        
+-        elif sys.platform == "cygwin":
+-            # pythonX.Y.dll.a is in the /usr/lib/pythonX.Y/config directory
+-            _add_directory(library_dirs,
+-                           os.path.join("/usr/lib", "python%s" %
+-                                        sys.version[:3], "config"))
+-
+-        elif sys.platform == "darwin":
+-            # attempt to make sure we pick freetype2 over other versions
+-            _add_directory(include_dirs, "/sw/include/freetype2")
+-            _add_directory(include_dirs, "/sw/lib/freetype2/include")
+-            # fink installation directories
+-            _add_directory(library_dirs, "/sw/lib")
+-            _add_directory(include_dirs, "/sw/include")
+-            # darwin ports installation directories
+-            _add_directory(library_dirs, "/opt/local/lib")
+-            _add_directory(include_dirs, "/opt/local/include")
+-
+-            # if Homebrew is installed, use its lib and include directories
+-            try:
+-                prefix = subprocess.check_output(['brew', '--prefix']).strip(
+-                ).decode('latin1')
+-            except:
+-                # Homebrew not installed
+-                prefix = None
+-
+-            ft_prefix = None
+-
+-            if prefix:
+-                # add Homebrew's include and lib directories
+-                _add_directory(library_dirs, os.path.join(prefix, 'lib'))
+-                _add_directory(include_dirs, os.path.join(prefix, 'include'))
+-                ft_prefix = os.path.join(prefix, 'opt', 'freetype')
+-
+-            if ft_prefix and os.path.isdir(ft_prefix):
+-                # freetype might not be linked into Homebrew's prefix
+-                _add_directory(library_dirs, os.path.join(ft_prefix, 'lib'))
+-                _add_directory(include_dirs,
+-                               os.path.join(ft_prefix, 'include'))
+-            else:
+-                # fall back to freetype from XQuartz if
+-                # Homebrew's freetype is missing
+-                _add_directory(library_dirs, "/usr/X11/lib")
+-                _add_directory(include_dirs, "/usr/X11/include")
+-
+-        elif sys.platform.startswith("linux"):
+-            arch_tp = (plat.processor(), plat.architecture()[0])
+-            if arch_tp == ("x86_64", "32bit"):
+-                # 32-bit build on 64-bit machine.
+-                _add_directory(library_dirs, "/usr/lib/i386-linux-gnu")
+-            else:
+-                for platform_ in arch_tp:
+-
+-                    if not platform_:
+-                        continue
+-
+-                    if platform_ in ["x86_64", "64bit"]:
+-                        _add_directory(library_dirs, "/lib64")
+-                        _add_directory(library_dirs, "/usr/lib64")
+-                        _add_directory(library_dirs,
+-                                       "/usr/lib/x86_64-linux-gnu")
+-                        break
+-                    elif platform_ in ["i386", "i686", "32bit"]:
+-                        _add_directory(library_dirs, "/usr/lib/i386-linux-gnu")
+-                        break
+-                    elif platform_ in ["aarch64"]:
+-                        _add_directory(library_dirs, "/usr/lib64")
+-                        _add_directory(library_dirs,
+-                                       "/usr/lib/aarch64-linux-gnu")
+-                        break
+-                    elif platform_ in ["arm", "armv7l"]:
+-                        _add_directory(library_dirs,
+-                                       "/usr/lib/arm-linux-gnueabi")
+-                        break
+-                    elif platform_ in ["ppc64"]:
+-                        _add_directory(library_dirs, "/usr/lib64")
+-                        _add_directory(library_dirs,
+-                                       "/usr/lib/ppc64-linux-gnu")
+-                        _add_directory(library_dirs,
+-                                       "/usr/lib/powerpc64-linux-gnu")
+-                        break
+-                    elif platform_ in ["ppc"]:
+-                        _add_directory(library_dirs, "/usr/lib/ppc-linux-gnu")
+-                        _add_directory(library_dirs,
+-                                       "/usr/lib/powerpc-linux-gnu")
+-                        break
+-                    elif platform_ in ["s390x"]:
+-                        _add_directory(library_dirs, "/usr/lib64")
+-                        _add_directory(library_dirs,
+-                                       "/usr/lib/s390x-linux-gnu")
+-                        break
+-                    elif platform_ in ["s390"]:
+-                        _add_directory(library_dirs, "/usr/lib/s390-linux-gnu")
+-                        break
+-                else:
+-                    raise ValueError(
+-                        "Unable to identify Linux platform: `%s`" % platform_)
+-
+-                # XXX Kludge. Above /\ we brute force support multiarch. Here we
+-                # try Barry's more general approach. Afterward, something should
+-                # work ;-)
+-                self.add_multiarch_paths()
+-
+-        elif sys.platform.startswith("gnu"):
+-            self.add_multiarch_paths()
+-
+-        elif sys.platform.startswith("freebsd"):
+-            _add_directory(library_dirs, "/usr/local/lib")
+-            _add_directory(include_dirs, "/usr/local/include")
+-
+-        elif sys.platform.startswith("netbsd"):
+-            _add_directory(library_dirs, "/usr/pkg/lib")
+-            _add_directory(include_dirs, "/usr/pkg/include")
+-
+-        elif sys.platform.startswith("sunos5"):
+-            _add_directory(library_dirs, "/opt/local/lib")
+-            _add_directory(include_dirs, "/opt/local/include")
+-
+-        # FIXME: check /opt/stuff directories here?
+-
+-        # standard locations
+-        if not self.disable_platform_guessing:
+-            _add_directory(library_dirs, "/usr/local/lib")
+-            _add_directory(include_dirs, "/usr/local/include")
+-
+-            _add_directory(library_dirs, "/usr/lib")
+-            _add_directory(include_dirs, "/usr/include")
+-            # alpine, at least
+-            _add_directory(library_dirs, "/lib")
+-
+-        # on Windows, look for the OpenJPEG libraries in the location that
+-        # the official installer puts them
+-        if sys.platform == "win32":
+-            program_files = os.environ.get('ProgramFiles', '')
+-            best_version = (0, 0)
+-            best_path = None
+-            for name in os.listdir(program_files):
+-                if name.startswith('OpenJPEG '):
+-                    version = tuple([int(x) for x in name[9:].strip().split(
+-                        '.')])
+-                    if version > best_version:
+-                        best_version = version
+-                        best_path = os.path.join(program_files, name)
+-
+-            if best_path:
+-                _dbg('Adding %s to search list', best_path)
+-                _add_directory(library_dirs, os.path.join(best_path, 'lib'))
+-                _add_directory(include_dirs,
+-                               os.path.join(best_path, 'include'))
+-
+-        #
+         # insert new dirs *before* default libs, to avoid conflicts
+         # between Python PYD stub libs and real libraries
+ 

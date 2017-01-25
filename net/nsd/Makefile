@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2015 OpenWrt.org
+# Copyright (C) 2014-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nsd
-PKG_VERSION:=4.1.2
+PKG_VERSION:=4.1.13
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.nlnetlabs.nl/downloads/nsd
-PKG_MD5SUM:=73014bab5514b9babaf6c9007a6b36d8
+PKG_MD5SUM:=a3f2a9885bc8664ba4a25c938d26a587
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 

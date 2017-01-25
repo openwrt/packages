@@ -1,7 +1,7 @@
 diff -Naur postfix-2.11.1/postfix-install postfix-2.11.1.patched/postfix-install
 --- postfix-2.11.1/postfix-install	2014-10-05 20:43:58.598876904 +0400
 +++ postfix-2.11.1.patched/postfix-install	2014-10-05 20:47:36.076700082 +0400
-@@ -830,23 +830,23 @@
+@@ -852,23 +852,23 @@
      esac
  done
  

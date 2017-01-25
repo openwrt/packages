@@ -1,6 +1,8 @@
---- a/build/mkconfNW.awk
-+++ b/build/mkconfNW.awk
-@@ -24,7 +24,7 @@ BEGIN {
+Index: httpd-2.4.25/build/mkconfNW.awk
+===================================================================
+--- httpd-2.4.25.orig/build/mkconfNW.awk
++++ httpd-2.4.25/build/mkconfNW.awk
+@@ -23,7 +23,7 @@ BEGIN {
      A["sysconfdir"] = "conf"
      A["iconsdir"] = "icons"
      A["manualdir"] = "manual"
@@ -9,8 +11,10 @@
      A["errordir"] = "error"
      A["proxycachedir"] = "proxy"
  
---- a/config.layout
-+++ b/config.layout
+Index: httpd-2.4.25/config.layout
+===================================================================
+--- httpd-2.4.25.orig/config.layout
++++ httpd-2.4.25/config.layout
 @@ -28,8 +28,8 @@
      cgidir:        ${datadir}/cgi-bin
      includedir:    ${prefix}/include

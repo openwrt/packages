@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyserial
-PKG_VERSION:=2.7
+PKG_VERSION:=3.1.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Micke Prag <micke.prag@telldus.se>
 PKG_LICENSE:=Python-2.0
 
 PKG_SOURCE:=pyserial-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/p/pyserial/
-PKG_MD5SUM:=794506184df83ef2290de0d18803dd11
+PKG_SOURCE_URL:=http://pypi.python.org/packages/3c/d8/a9fa247ca60b02b3bebbd61766b4f321393b57b13c53b18f6f62cf172c08/
+PKG_MD5SUM:=2f72100de3e410b36d575e12e82e9d27
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/pyserial-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python
@@ -37,7 +37,7 @@ define Package/python-pyserial/description
 endef
 
 define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix="$(PKG_INSTALL_DIR)/usr")
+	$(call Build/Compile/PyMod,,install --prefix=/usr --root="$(PKG_INSTALL_DIR)")
 endef
 
 define Package/python-pyserial/install

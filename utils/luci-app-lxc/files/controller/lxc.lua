@@ -59,12 +59,36 @@ function index()
 	page = entry({"admin", "services", "lxc_action"}, call("lxc_action"), nil)
 	page.leaf = true
 
+	page = entry({"admin", "services", "lxc_get_downloadable"}, call("lxc_get_downloadable"), nil)
+	page.leaf = true
+
 	page = entry({"admin", "services", "lxc_configuration_get"}, call("lxc_configuration_get"), nil)
 	page.leaf = true
 
 	page = entry({"admin", "services", "lxc_configuration_set"}, call("lxc_configuration_set"), nil)
 	page.leaf = true
 
+end
+
+function lxc_get_downloadable()
+	luci.http.prepare_content("application/json")
+
+	local f = io.popen('uname -m', 'r')
+	local target = f:read('*a')
+	f:close()
+	target = target:gsub("^%s*(.-)%s*$", "%1")
+
+	local templates = {}
+
+	local f = io.popen('lxc-create -n just_want_to_list_available_lxc_templates -t download -- --list', 'r')
+
+	for line in f:lines() do
+		local dist,version = line:match("^(%S+)%s+(%S+)%s+" .. target .. "%s+default%s+%S+$")
+		if dist~=nil and version~=nil then templates[#templates + 1] = dist .. ":" .. version end
+	end
+
+	f:close()
+	luci.http.write_json(templates)
 end
 
 function lxc_create(lxc_name, lxc_template)
@@ -78,9 +102,15 @@ function lxc_create(lxc_name, lxc_template)
 		return luci.http.write("1")
 	end
 
-	local target = _G.DISTRIB_TARGET:match('([^/]+)')
+	local f = io.popen('uname -m', 'r')
+	local target = f:read('*a')
+	f:close()
+	target = target:gsub("^%s*(.-)%s*$", "%1")
 
-	local data = conn:call("lxc", "create", { name = lxc_name, template = "download", args = { "--server", url,  "--no-validate", "--dist", lxc_template, "--release", "bb", "--arch", target } } )
+	local lxc_dist = lxc_template:gsub("(.*):(.*)", '%1')
+	local lxc_release = lxc_template:gsub("(.*):(.*)", '%2')
+
+	local data = conn:call("lxc", "create", { name = lxc_name, template = "download", args = { "--server", url,  "--no-validate", "--dist", lxc_dist, "--release", lxc_release, "--arch", target } } )
 
 	luci.http.write(data)
 end
@@ -93,10 +123,22 @@ function lxc_action(lxc_action, lxc_name)
 	luci.http.write_json(ec and {} or data)
 end
 
+function lxc_get_config_path()
+	local f = io.open("/etc/lxc/lxc.conf", "r")
+	local content = f:read("*all")
+	f:close()
+	local ret = content:match('^%s*lxc.lxcpath%s*=%s*([^%s]*)')
+	if ret then
+		return ret .. "/"
+	else
+		return "/srv/lxc/"
+	end
+end
+
 function lxc_configuration_get(lxc_name)
 	luci.http.prepare_content("text/plain")
 
-	local f = io.open("/lxc/" .. lxc_name .. "/config", "r")
+	local f = io.open(lxc_get_config_path() .. lxc_name .. "/config", "r")
 	local content = f:read("*all")
 	f:close()
 
@@ -112,7 +154,7 @@ function lxc_configuration_set(lxc_name)
 		return luci.http.write("1")
 	end
 
-	local f, err = io.open("/lxc/" .. lxc_name .. "/config","w+")
+	local f, err = io.open(lxc_get_config_path() .. lxc_name .. "/config","w+")
 	if not f then
 		return luci.http.write("2")
 	end

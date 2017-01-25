@@ -1518,7 +1518,7 @@ $(eval $(call BuildPackage,perlbase-user))
 define Package/perlbase-utf8
 $(call Package/perlbase-template)
 TITLE:=utf8 perl module
-DEPENDS+=+perlbase-essential +perlbase-re
+DEPENDS+=+perlbase-essential +perlbase-re +perlbase-unicore
 endef
 
 define Package/perlbase-utf8/install

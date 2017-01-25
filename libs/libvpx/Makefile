@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2008-2015 OpenWrt.org
+# Copyright (C) 2016 Luiz Angelo Daros de Luca
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libvpx
-PKG_VERSION:=1.4.0
+PKG_VERSION:=1.6.0
 PKG_RELEASE:=1
 
 PKG_REV:=v$(PKG_VERSION)
@@ -33,6 +34,7 @@ define Package/libvpx
   TITLE:=libvpx
   URL:=http://www.webmproject.org/
   DEPENDS:=+libpthread
+  ABI_VERSION:=$(PKG_VERSION)
 endef
 
 define Package/libvpx/description

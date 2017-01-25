@@ -1,6 +1,6 @@
 --- a/deps/uv/src/unix/getaddrinfo.c
 +++ b/deps/uv/src/unix/getaddrinfo.c
-@@ -99,6 +99,7 @@
+@@ -99,6 +99,7 @@ static void uv__getaddrinfo_work(struct
    int err;
  
    req = container_of(w, uv_getaddrinfo_t, work_req);

@@ -20,7 +20,7 @@ PKG_SOURCE_URL:=\
 	http://mirror.switch.ch/ftp/mirror/mysql/Downloads/MySQL-5.1/
 
 PKG_MD5SUM:=887f869bcc757957067b9198f707f32f
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0
 
 PKG_BUILD_DEPENDS:=libncurses libreadline

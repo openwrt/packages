@@ -78,7 +78,7 @@ endef
 
 define Build/Configure
 	# This replacement were do according to many comments on the web because of gcc 3.4.5 version (.6 included).-
-	# wich doesn't recognices the -iquote parameter to AM_CFLAGS
+	# which doesn't recognices the -iquote parameter to AM_CFLAGS
 	($(SED) 's,-iquote $$$$(top_srcdir),-I$$$$(top_srcdir),g' $(PKG_BUILD_DIR)/libfaad/Makefile.am; \
 	$(SED) 's,-iquote $$$$(top_srcdir),-I$$$$(top_srcdir),g' $(PKG_BUILD_DIR)/libfaad/Makefile.in);
 	(cd $(PKG_BUILD_DIR); rm -rf config.{cache,status}; \

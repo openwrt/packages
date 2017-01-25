@@ -1,7 +1,6 @@
-diff -u --recursive gst-plugins-good-1.6.2-vanilla/configure.ac gst-plugins-good-1.6.2/configure.ac
---- gst-plugins-good-1.6.2-vanilla/configure.ac	2016-01-01 12:10:51.392608142 -0500
-+++ gst-plugins-good-1.6.2/configure.ac	2016-01-01 12:08:39.568889466 -0500
-@@ -1017,9 +1017,6 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -1052,9 +1052,6 @@ sys/ximage/Makefile
  common/Makefile
  common/m4/Makefile
  m4/Makefile
@@ -11,10 +10,9 @@ diff -u --recursive gst-plugins-good-1.6.2-vanilla/configure.ac gst-plugins-good
  pkgconfig/Makefile
  pkgconfig/gstreamer-plugins-good-uninstalled.pc
  gst-plugins-good.spec
-diff -u --recursive gst-plugins-good-1.6.2-vanilla/Makefile.am gst-plugins-good-1.6.2/Makefile.am
---- gst-plugins-good-1.6.2-vanilla/Makefile.am	2016-01-01 12:10:51.393608170 -0500
-+++ gst-plugins-good-1.6.2/Makefile.am	2016-01-01 12:08:35.442773216 -0500
-@@ -2,7 +2,6 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,7 +2,6 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-d
  
  ALWAYS_SUBDIRS =		\
  	gst sys ext 		\

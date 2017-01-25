@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
 PKG_VERSION:=17.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/ \
@@ -21,6 +21,7 @@ PKG_LICENSE_FILES:=EPLICENCE
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_BUILD_DEPENDS:=erlang/host openssl
+PKG_USE_MIPS16:=0
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/otp_src_$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/otp_src_$(PKG_VERSION)

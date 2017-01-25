@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcanfestival
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=hg
 PKG_SOURCE_URL:=http://dev.automforge.net/CanFestival-3
@@ -18,7 +18,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.bz2
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=LGPL-2.1+
-PKG_LICENSE_FILE:=LICENCE
+PKG_LICENSE_FILES:=LICENCE
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -44,6 +46,7 @@ CONFIGURE_ARGS := \
 	--cxx=$(TARGET_CXX) \
 	--ld=$(TARGET_CC) \
 	--arch=$(ARCH) \
+	--binutils=$(TARGET_CROSS) \
 	--os=Linux \
 	--kerneldir=$(LINUX_DIR) \
 	--prefix=/usr \

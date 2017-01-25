@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2015 OpenWrt.org
+# Copyright (C) 2012-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tgt
-PKG_VERSION:=1.0.61
-PKG_REV:=f13345e12f49e5bcae2cfd6c5c7d530b328753f0
+PKG_VERSION:=1.0.65
+PKG_REV:=c8f86393d2ea3f37b64963f66af240f17d88b43d
 PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 

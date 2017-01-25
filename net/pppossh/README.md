@@ -61,7 +61,7 @@ It's possible that pppd may output protocol negotiation incompatibilities issues
 
 	Sun Oct 25 09:45:14 2015 daemon.err pppd[22188]: Received bad configure-rej:  12 06 00 00 00 00
 
-To debug such problems, we can try adding `option pppd_optinos debug` to the interface config.  In the above case, it's a LCP CCP configure rej (the CCP options struct is exactly 6 octets in size as indicated in source code `pppd/ccp.h`) and since the internet fee is not charged on the bytes transfered, I will just use `noccp` to disable the negotiation altogether.
+To debug such problems, we can try adding `option pppd_optinos debug` to the interface config.  In the above case, it's a LCP CCP configure rej (the CCP options struct is exactly 6 octets in size as indicated in source code `pppd/ccp.h`) and since the internet fee is not charged on the bytes transferred, I will just use `noccp` to disable the negotiation altogether.
 
 Also to optimize bulk transfer performance, you can try tweaking the ciphers.  OpenSSH client does not support `none` cipher by default and you have to patch and install it for by yourself.  Another option is to try ciphers like `arcfour` and `blowfish-cbc`.  In my case, `arcfour` has the best throughput.
 

@@ -142,7 +142,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +mraa_mtk_linkit_mmap_unsetup()
 +{
 +    if (mmap_reg == NULL) {
-+        syslog(LOG_ERR, "linkit mmap: null register cant unsetup");
++        syslog(LOG_ERR, "linkit mmap: null register can't unsetup");
 +        return MRAA_ERROR_INVALID_RESOURCE;
 +    }
 +    munmap(mmap_reg, mmap_size);

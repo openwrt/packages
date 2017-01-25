@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2011, 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zope.interface
-PKG_VERSION:=4.1.3
+PKG_VERSION:=4.3.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/z/zope.interface
-PKG_MD5SUM:=9ae3d24c0c7415deb249dd1a132f0f79
+PKG_SOURCE_URL:=https://pypi.python.org/packages/38/1b/d55c39f2cf442bd9fb2c59760ed058c84b57d25c680819c25f3aff741e1f
+PKG_MD5SUM:=5f7e15a5bcdfa3c6c0e93ffe45caf87c
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 

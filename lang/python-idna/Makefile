@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=idna
-PKG_VERSION:=2.0
+PKG_VERSION:=2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/i/idna
-PKG_MD5SUM:=bd17a9d15e755375f48a62c13b25b801
+PKG_MD5SUM:=f6473caa9c5e0cc1ad3fd5d04c3c114b
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 

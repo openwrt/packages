@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo-plugins
-PKG_VERSION:=0.3.0
+PKG_VERSION:=0.3.2
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -18,7 +18,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/grilo-plugins/0.3/
-PKG_MD5SUM:=670f0302a4b91c043a7c9f9222545fbe
+PKG_MD5SUM:=eb25fbe4be83e77f2308d086177a8f4c
 
 PKG_BUILD_DEPENDS:=glib2 grilo
 
@@ -71,7 +71,6 @@ define BuildPlugin
 	$(INSTALL_DIR) $$(1)/usr/lib/grilo-0.3
 	for p in $(3); do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/grilo-0.3/libgrl$$$$$$$${p}.so $$(1)/usr/lib/grilo-0.3; \
-		$(CP) $(PKG_INSTALL_DIR)/usr/lib/grilo-0.3/grl-$$$$$$$${p}.xml $$(1)/usr/lib/grilo-0.3; \
 	done
   endef
 
@@ -84,9 +83,7 @@ $(eval $(call BuildPlugin,dleyna,DLNA sharing,dleyna,,30))
 $(eval $(call BuildPlugin,dmap,DAAP and DPAP sharing,daap dpap,libdmapsharing,30))
 $(eval $(call BuildPlugin,gravatar,Gravatar provider,gravatar,,30))
 $(eval $(call BuildPlugin,jamendo,Jamendo sharing,jamendo,,30))
-$(eval $(call BuildPlugin,lastfm-albumart,Last.FM album art provider,lastfm-albumart,,30))
 $(eval $(call BuildPlugin,magnatune,Magnatune sharing,magnatune,,30))
-$(eval $(call BuildPlugin,metadata-store,Extra metadata store,metadata-store,,30))
 $(eval $(call BuildPlugin,opensubtitles,Openi subtitles provider,opensubtitles,,30))
 $(eval $(call BuildPlugin,raitv,Rai.tv sharing,raitv,,30))
 $(eval $(call BuildPlugin,shoutcast,SHOUTcast sharing,shoutcast,,30))
