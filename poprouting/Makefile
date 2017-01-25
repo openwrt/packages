@@ -20,7 +20,7 @@ define Package/prince
 	Mantainer :=Gabriele Gemmi <gabriel@autistici.org>
 	TITLE :=PopRouting daemon
 	URL :=https://github.com/gabri94/poprouting
-	MENU :=1
+	MENU :=0
 	DEPENDS := +libjson-c +libpthread
 endef
 
@@ -31,6 +31,14 @@ It has been developed as a Google Summer of Code Project in collaboration with F
 It fetches topology data from a Link State routing deamon(OONF, OLSR, OSPF, etc),
 uses the betweenness centrality to optimize the timer's value and pushes back the optimized timer.
 Currently it only supports OLSRd2 (aka OONF).
+endef
+
+define Package/prince/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/graph-parser_c/build/lib/libgraphcparser.so $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/prince/build/prince_c $(1)/usr/sbin/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/prince/build/libprince_oonf.so $(1)/usr/lib/
 endef
 
 
