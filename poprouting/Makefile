@@ -19,6 +19,7 @@ define Package/prince
 	SUBMENU :=Routing and Redirection
 	Mantainer :=Gabriele Gemmi <gabriel@autistici.org>
 	TITLE :=PopRouting daemon
+	URL :=https://github.com/gabri94/poprouting
 	MENU :=1
 	DEPENDS := +libjson-c +libpthread
 endef
@@ -33,4 +34,4 @@ Currently it only supports OLSRd2 (aka OONF).
 endef
 
 
-$(eval $(call BuildPackage,poprouting))
+$(eval $(call BuildPackage,prince))
