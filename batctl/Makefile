@@ -12,6 +12,7 @@ PKG_NAME:=batctl
 PKG_VERSION:=2016.5
 PKG_RELEASE:=0
 PKG_MD5SUM:=7b33fb47c7fa5b317e9a152a286999fc
+PKG_HASH:=07edeb1d87a548285be8c499542790a158fc8d94ef7ebb295f27ebf710024ae9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
