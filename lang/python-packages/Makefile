@@ -29,10 +29,9 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_python-packages-index-url \
 	CONFIG_PACKAGE_python-packages-pip-opts \
 
-PKG_BUILD_DEPENDS:=python python-pip/host
+PKG_BUILD_DEPENDS:=python python/host
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-host.mk)
 $(call include_mk, python-package.mk)
 
 define Package/python-packages
