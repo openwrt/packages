@@ -28,8 +28,9 @@ define Package/prince/description
 Prince is an open source implementation of the PopRouting Algorithm.
 It has been developed as a Google Summer of Code Project in collaboration with Freifunk and the University of Trento.
 
-It fetches topology data from a Link State routing deamon(OONF, OLSR, OSPF, etc),
-uses the betweenness centrality to optimize the timer's value and pushes back the optimized timer.
+It work by fetching topology data from a Link State routing demon(OONF, OLSR, OSPF, etc),
+calculating the betweenness centrality using the topology, then using these data
+the timer's value are optimized. Finally the timers are pushed back to the routing demon.
 Currently it only supports OLSRd2 (aka OONF).
 endef
 
