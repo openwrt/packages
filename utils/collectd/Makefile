@@ -182,7 +182,7 @@ endef
 
 define Package/collectd
 $(call Package/collectd/Default)
-  DEPENDS:= +libpthread +zlib +libltdl +libip4tc
+  DEPENDS:= +libpthread +zlib +libltdl +libip4tc +PACKAGE_COLLECTD_ENCRYPTED_NETWORK:libgcrypt
   MENU:=1
 endef
 
@@ -214,7 +214,9 @@ CONFIGURE_ARGS+= \
 
 ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
 CONFIGURE_ARGS+= \
-	--with-libgcrypt=$(STAGING_DIR)/include
+	--with-libgcrypt=$(STAGING_DIR)/usr
+CONFIGURE_VARS+= \
+       LDFLAGS="$$$$LDFLAGS -lgcrypt"
 else
 CONFIGURE_ARGS+= \
 	--without-libgcrypt
