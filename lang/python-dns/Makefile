@@ -18,8 +18,6 @@ PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DIR:=$(BUILD_DIR)/dnspython-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=python-setuptools/host
-
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 
