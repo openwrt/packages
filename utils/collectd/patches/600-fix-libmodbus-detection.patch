@@ -18,7 +18,7 @@ Reversed patch to be applied:
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2627,7 +2627,7 @@ then
+@@ -3186,7 +3186,7 @@ then
  	SAVE_CPPFLAGS="$CPPFLAGS"
  	CPPFLAGS="$CPPFLAGS $with_libmodbus_cflags"
  

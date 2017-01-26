@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.5.3
-PKG_RELEASE:=2
+PKG_VERSION:=5.7.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://collectd.org/files/
-PKG_MD5SUM:=6f10633d0f73f99ef61472a8e377d4a058de161e80f3353b4b17d394c68f2f44
+PKG_SOURCE_URL:=https://collectd.org/files/ \
+	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
+PKG_HASH:=7edd3643c0842215553b2421d5456f4e9a8a58b07e216b40a7e8e91026d8e501
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
-PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>, Hannu Nyman <hannu.nyman@iki.fi>
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -31,20 +32,28 @@ COLLECTD_PLUGINS_DISABLED:= \
 	battery \
 	ceph \
 	cgroups \
+	chrony \
+	cpusleep \
 	curl_json \
 	curl_xml \
 	dbi \
+	dpdkstat \
 	drbd \
 	ethstat \
 	fhcount \
 	genericjmx \
 	gmond \
+	gps \
+	grpc \
 	hddtemp \
+	hugepages \
+	intel_rdt \
 	ipc \
 	ipmi \
 	ipvs \
 	java \
 	log_logstash \
+	lua \
 	lvm \
 	lpar \
 	mbmon \
@@ -53,11 +62,13 @@ COLLECTD_PLUGINS_DISABLED:= \
 	memcached \
 	mic \
 	monitorus \
+	mqtt \
 	multimeter \
 	netapp \
 	nfs \
 	notify_desktop \
 	notify_email \
+	notify_nagios \
 	numa \
 	openldap \
 	openvz \
@@ -84,12 +95,15 @@ COLLECTD_PLUGINS_DISABLED:= \
 	write_kafka \
 	write_log \
 	write_mongodb \
+	write_prometheus \
 	write_redis \
 	write_riemann \
 	write_sensu \
 	write_tsdb \
+	xencpu \
 	xmms \
 	zfs_arc \
+	zone \
 	zookeeper
 
 COLLECTD_PLUGINS_SELECTED:= \
@@ -163,7 +177,7 @@ define Package/collectd/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Lightweight system statistics collection daemon
-  URL:=http://verplant.org/collectd/
+  URL:=https://collectd.org/
 endef
 
 define Package/collectd
@@ -191,6 +205,7 @@ endif
 
 # common configure args
 CONFIGURE_ARGS+= \
+	--disable-werror \
 	--disable-debug \
 	--enable-daemon \
 	--with-nan-emulation \
