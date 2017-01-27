@@ -11,17 +11,15 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=batman-adv
 
 PKG_VERSION:=2016.5
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_MD5SUM:=6717a933a08dd2a01b00df30cb9f16a8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
 PKG_LICENSE:=GPL-2.0
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)-$(PKG_VERSION)
-
-include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
+include $(INCLUDE_DIR)/package.mk
 
 define KernelPackage/batman-adv
   URL:=https://www.open-mesh.org/
