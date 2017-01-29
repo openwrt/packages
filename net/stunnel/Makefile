@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stunnel
-PKG_VERSION:=5.38
+PKG_VERSION:=5.40
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0+
