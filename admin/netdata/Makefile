@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
