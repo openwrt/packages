@@ -109,14 +109,14 @@ f_envcheck()
 
     # check fetch utility
     #
-    if [ -z "${adb_fetch}" ] || [ -z "${adb_fetchparm}" ] || [ ! -f "${adb_fetch}" ] || [ "$(readlink -fn "${adb_fetch}")" = "/bin/busybox" ]
-    then
-        f_log "error" "status ::: required download utility with ssl support not found, e.g. install full 'wget' package"
-    fi
-    if [ "${adb_fetch}" = "/usr/bin/wget" ] && [ "$(readlink -fn "${adb_fetch}")" = "/bin/uclient-fetch" ]
+    if [ ! -f "${adb_fetch}" ] && [ "$(readlink -fn "/bin/wget")" = "/bin/uclient-fetch" ]
     then
         adb_fetch="/bin/uclient-fetch"
         adb_fetchparm="-q --timeout=5 --no-check-certificate -O"
+    fi
+    if [ -z "${adb_fetch}" ] || [ -z "${adb_fetchparm}" ] || [ ! -f "${adb_fetch}" ] || [ "$(readlink -fn "${adb_fetch}")" = "/bin/busybox" ]
+    then
+        f_log "error" "status ::: required download utility with ssl support not found, e.g. install full 'wget' package"
     fi
 
     # create dns hideout directory
