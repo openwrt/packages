@@ -112,14 +112,8 @@ f_envcheck()
     if [ ! -f "${adb_fetch}" ] && ([ -f /bin/uclient-fetch ] || [ -f /bin/wget ])
     then
 		f_log "info" "status ::: using stock download utilty. It is raccomanded to use the full package, e.g. install full 'wget' package"
-		if [ -f /bin/uclient-fetch ]
-		then
-        	adb_fetch="/bin/uclient-fetch" #LEDE utility
+        	adb_fetch="/bin/uclient-fetch"
         	adb_fetchparm="-q --timeout=5 --no-check-certificate -O"
-		else
-			adb_fetch="/bin/wget" #Openwrt utility
-        	adb_fetchparm="-q --timeout=5 --no-check-certificate -O"
-		fi
     else
 		if [ ! -f "${adb_fetch}" ] || [ -z "${adb_fetch}" ] || [ -z "${adb_fetchparm}" ] || [ "$(readlink -fn "${adb_fetch}")" = "/bin/busybox" ]
 		then
