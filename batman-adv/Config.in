@@ -32,4 +32,4 @@ config KMOD_BATMAN_ADV_NC
 config KMOD_BATMAN_ADV_BATMAN_V
 	bool "enable batman v routing algorithm"
 	depends on PACKAGE_kmod-batman-adv
-	default n
+	default y
