@@ -12,7 +12,7 @@ PKG_VERSION:=3.1.2
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://rsync.samba.org/ftp/rsync/src
+PKG_SOURCE_URL:=https://download.samba.org/pub/rsync/src
 PKG_MD5SUM:=0f758d7e000c0f7f7d3792610fad70cb
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-3.0
