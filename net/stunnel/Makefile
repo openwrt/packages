@@ -19,7 +19,7 @@ PKG_SOURCE_URL:= \
 	http://ftp.nluug.nl/pub/networking/stunnel/ \
 	http://www.usenix.org.uk/mirrors/stunnel/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=09ada29ba1683ab1fd1f31d7bed8305127a0876537e836a40cb83851da034fd5
+PKG_MD5SUM:=4125b7c7f0f8c46266b4fa245ee8cda6
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
