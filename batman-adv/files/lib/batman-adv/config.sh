@@ -13,7 +13,7 @@ bat_config()
 	local mesh="$1"
 	local aggregated_ogms ap_isolation bonding bridge_loop_avoidance distributed_arp_table fragmentation
 	local gw_bandwidth gw_mode gw_sel_class isolation_mark hop_penalty multicast_mode network_coding log_level
-	local orig_interval vis_mode
+	local orig_interval
 
 	config_get aggregated_ogms "$mesh" aggregated_ogms
 	config_get ap_isolation "$mesh" ap_isolation
@@ -30,7 +30,6 @@ bat_config()
 	config_get network_coding "$mesh" network_coding
 	config_get log_level "$mesh" log_level
 	config_get orig_interval "$mesh" orig_interval
-	config_get vis_mode "$mesh" vis_mode
 
 	[ ! -f "/sys/class/net/$mesh/mesh/orig_interval" ] && echo "batman-adv mesh $mesh does not exist - check your interface configuration" && return 1
 
@@ -49,5 +48,4 @@ bat_config()
 	[ -n "$network_coding" ] && echo $network_coding > /sys/class/net/$mesh/mesh/network_coding 2>&-
 	[ -n "$log_level" ] && echo $log_level > /sys/class/net/$mesh/mesh/log_level 2>&-
 	[ -n "$orig_interval" ] && echo $orig_interval > /sys/class/net/$mesh/mesh/orig_interval
-	[ -n "$vis_mode" ] && echo $vis_mode > /sys/class/net/$mesh/mesh/vis_mode
 }
