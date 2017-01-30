@@ -34,7 +34,7 @@ bat_config()
 
 	[ ! -f "/sys/class/net/$mesh/mesh/orig_interval" ] && echo "batman-adv mesh $mesh does not exist - check your interface configuration" && return 1
 
-	[ -n "$aggregate_ogms" ] && echo $aggregate_ogms > /sys/class/net/$mesh/mesh/aggregate_ogms
+	[ -n "$aggregated_ogms" ] && echo $aggregated_ogms > /sys/class/net/$mesh/mesh/aggregated_ogms
 	[ -n "$ap_isolation" ] && echo $ap_isolation > /sys/class/net/$mesh/mesh/ap_isolation
 	[ -n "$bonding" ] && echo $bonding > /sys/class/net/$mesh/mesh/bonding
 	[ -n "$bridge_loop_avoidance" ] && echo $bridge_loop_avoidance > /sys/class/net/$mesh/mesh/bridge_loop_avoidance 2>&-
