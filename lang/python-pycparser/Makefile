@@ -15,8 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/p/pycparser
 PKG_MD5SUM:=a2bc8d28c923b4fe2b2c3b4b51a4f935
 
-PKG_BUILD_DEPENDS:=python python-setuptools
-HOST_BUILD_DEPENDS:=python/host python-setuptools/host python-ply/host
+PKG_BUILD_DEPENDS:=python python/host
+HOST_BUILD_DEPENDS:=python/host python-ply/host
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
