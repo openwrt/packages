@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 Thomas Weißschuh
+# Copyright (C) 2015-2016 Thomas Weißschuh
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=esniper
-PKG_VERSION:=2.31.0
+PKG_VERSION:=2.32.0
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -19,7 +19,7 @@ VERSION_TRANSFORMED:=$(subst .,-,$(PKG_VERSION))
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(VERSION_TRANSFORMED)
 PKG_SOURCE:=$(PKG_NAME)-$(VERSION_TRANSFORMED).tgz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_MD5SUM:=4b411588c4a223acef7333ab684c7618
+PKG_MD5SUM:=5ee3e5237c6a12059ae9d38380505d38448c2c12787f9fcc603cdb0a1a519312
 
 PKG_BUILD_PARALLEL:=1
 

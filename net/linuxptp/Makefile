@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linuxptp
-PKG_VERSION:=20151118
+PKG_VERSION:=1.8
 PKG_RELEASE:=2
-PKG_REV:=999c86f4a9da4bf4508b3a69289f58166ed18a55
+PKG_REV:=891d56e4292653c5c19ac8345159a1f1f5b2df26
 
 PKG_MAINTAINER:=Wojciech Dubowik <Wojciech.Dubowik@neratec.com>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2

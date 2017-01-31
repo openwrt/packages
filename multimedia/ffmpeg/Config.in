@@ -63,7 +63,6 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_DECODER_opus
 	select FFMPEG_CUSTOM_DECODER_pcm_s16be
 	select FFMPEG_CUSTOM_DECODER_pcm_s16le
-	select FFMPEG_CUSTOM_SELECT_speex
 	select FFMPEG_CUSTOM_DECODER_vorbis
 	select FFMPEG_CUSTOM_DECODER_wavpack
 	select FFMPEG_CUSTOM_DECODER_wmav1
@@ -116,9 +115,6 @@ config FFMPEG_CUSTOM_SELECT_mp3lame
 
 config FFMPEG_CUSTOM_SELECT_libopus
 	bool "Opus"
-
-config FFMPEG_CUSTOM_SELECT_speex
-	bool "Speex"
 
 config FFMPEG_CUSTOM_SELECT_x264
 	bool "x264"

@@ -33,10 +33,13 @@
 #
 # 66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
 #
-# cloudflare.com	!!! Please install additional package "ddns-scripts_cloudflare"
-# no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
+#.cloudflare.com-v1	!!! Please install additional package "ddns-scripts_cloudflare"
+#.cloudflare.com-v4	!!! Please install additional package "ddns-scripts_cloudflare.com-v4"
+#.godaddy.com-v1	!!! Please install additional package "ddns-scripts_godaddy.com-v1"
+#.no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
 
-"afraid.org"		"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+"afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]
+"afraid.org-keyauth"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
 
 "all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
 
@@ -68,8 +71,6 @@
 
 "he.net"		"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
-"loopia.com"		"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
-
 "loopia.se"		"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 "mydns.jp"		"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV6ADDR=[IP]"
@@ -79,6 +80,8 @@
 "mythic-beasts.com"	"http://dnsapi6.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20AAAA%20DYNAMIC_IP&origin=."
 
 "no-ip.pl"		"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
+
+"now-dns.com"		"http://[USERNAME]:[PASSWORD]@now-dns.com/update?hostname=[DOMAIN]"
 
 "nsupdate.info"		"http://[USERNAME]:[PASSWORD]@ipv6.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 

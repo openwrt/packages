@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcsc-lite
-PKG_VERSION:=1.8.18
+PKG_VERSION:=1.8.20
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/4179
-PKG_MD5SUM:=b22d32b018f6a1016adba91abfcc63876cca999daa472dd86e953ddd41d00905
+PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/4203
+PKG_MD5SUM:=ec7d0114016c788c1c09859c84860f6cec6c4595436d23245105154b9c046bb2
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING

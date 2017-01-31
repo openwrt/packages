@@ -13,7 +13,7 @@ PKG_VERSION:=20160302
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=git://git.sv.gnu.org/attr.git
+PKG_SOURCE_URL:=http://git.savannah.gnu.org/r/attr.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)

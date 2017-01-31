@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.49.7
-PKG_RELEASE:=1
+PKG_VERSION:=2.50.2
+PKG_RELEASE:=2
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
-PKG_SOURCE_URL:=@GNOME/glib/2.49
-PKG_MD5SUM:=397ead3fcf325cb921d54e2c9e7dfd7a
+PKG_SOURCE_URL:=@GNOME/glib/2.50
+PKG_MD5SUM:=5eeb2bfaf78a07be59585e8b6e80b1d6
 
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
@@ -47,13 +47,15 @@ endef
 HOST_CONFIGURE_ARGS += \
 	--disable-selinux \
 	--with-libiconv=gnu \
-	--with-pcre=internal
+	--with-pcre=internal \
+	--enable-libmount=no
 
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--enable-debug=no \
 	--disable-selinux \
+	--enable-libmount=no \
 	--disable-fam \
 	--with-libiconv=gnu \
 	--with-pcre=internal
@@ -61,7 +63,7 @@ CONFIGURE_ARGS += \
 CONFIGURE_VARS += \
 	glib_cv_stack_grows=no \
 	glib_cv_uscore=no \
-	ac_cv_path_GLIB_GENMARSHAL=$(STAGING_DIR)/host/bin/glib-genmarshal \
+	ac_cv_path_GLIB_GENMARSHAL=$(STAGING_DIR_HOSTPKG)/bin/glib-genmarshal \
 	ac_cv_func_mmap_fixed_mapped=yes \
 	ac_cv_func_posix_getpwuid_r=yes \
 	ac_cv_func_posix_getgrgid_r=yes

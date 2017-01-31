@@ -15,6 +15,13 @@ snmpd_agent_add() {
 	echo "agentaddress $agentaddress" >> $CONFIGFILE
 }
 
+snmpd_agentx_add() {
+	local cfg="$1"
+	echo "master agentx" >> $CONFIGFILE
+	config_get agentxsocket "$cfg" agentxsocket
+	[ -n "$agentxsocket" ] && echo "agentXSocket $agentxsocket" >> $CONFIGFILE
+}
+
 snmpd_system_add() {
 	local cfg="$1"
 	config_get syslocation "$cfg" sysLocation
@@ -199,6 +206,7 @@ start_service() {
 	config_load snmpd
 
 	config_foreach snmpd_agent_add agent
+	config_foreach snmpd_agentx_add agentx
 	config_foreach snmpd_system_add system
 	config_foreach snmpd_com2sec_add com2sec
 	config_foreach snmpd_com2sec6_add com2sec6

@@ -55,6 +55,8 @@ else
   NLSSTRING:=-lcrypt -lnsl
 endif
 
+TARGET_CFLAGS += -D_GNU_SOURCE -include fcntl.h
+
 ifeq ($(BUILD_VARIANT),notls)
  define Build/Compile
 	$(SED) 's/-lcrypt -lnsl/$(NLSSTRING)/' $(PKG_BUILD_DIR)/Makefile

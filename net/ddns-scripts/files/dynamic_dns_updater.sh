@@ -6,7 +6,7 @@
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 # extended and partial rewritten
-#.2014-2016 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2014-2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # variables in small chars are read from /etc/config/ddns
 # variables in big chars are defined inside these scripts as global vars
@@ -15,48 +15,98 @@
 
 . $(dirname $0)/dynamic_dns_functions.sh	# global vars are also defined here
 
-[ $# -lt 1 -o -n "${2//[0-3]/}" -o ${#2} -gt 1 ] && {
-	local __ME=$(basename $0)
+usage() {
 	cat << EOF
-ddns-scripts Version: $VERSION
 
 Usage:
-  $__ME -V         display version and exit
-  $__ME --version  display version and exit
+ $MYPROG [options] -- command
 
-  $__ME <SECTION> <VERBOSE_MODE>
-  <SECTION>        service section as defined in /etc/config/ddns
-  <VERBOSE_MODE>   '0' NO output to console
-                   '1' output to console
-                   '2' output to console AND logfile
-                       + run once WITHOUT retry on error
-                   '3' output to console AND logfile
-                       + run once WITHOUT retry on error
-                       + NOT sending update to DDNS service
+Commands:
+start                Start SECTION or NETWORK or all
+stop                 Stop NETWORK or all
+
+Parameters:
+ -n NETWORK          Start/Stop sections in background monitoring NETWORK, force VERBOSE=0
+ -S SECTION          SECTION to start
+                     use either -N NETWORK or -S SECTION
+
+ -h                  show this help and exit
+ -V                  show version and exit
+ -v LEVEL            VERBOSE=LEVEL (default 1)
+                        '0' NO output to console
+                        '1' output to console
+                        '2' output to console AND logfile
+                            + run once WITHOUT retry on error
+                        '3' output to console AND logfile
+                            + run once WITHOUT retry on error
+                            + NOT sending update to DDNS service
 
 EOF
+}
+
+usage_err() {
+	printf %s\\n "$MYPROG: $@" >&2
+	usage >&2
 	exit 1
 }
 
-[ "$1" = "-V" -o "$1" = "--version" ] && {
-	printf %s\\n "ddns-scripts $VERSION"
-	exit 0
-}
+while getopts ":hv:n:S:V" OPT; do
+	case "$OPT" in
+		h)	usage; exit 0;;
+		v)	VERBOSE=$OPTARG;;
+		n)	NETWORK=$OPTARG;;
+		S)	SECTION_ID=$OPTARG;;
+		V)	printf %s\\n "ddns-scripts $VERSION"; exit 0;;
+		:)	usage_err "option -$OPTARG missing argument";;
+		\?)	usage_err "invalid option -$OPTARG";;
+		*)	usage_err "unhandled option -$OPT $OPTARG";;
+	esac
+done
+shift $((OPTIND - 1 ))	# OPTIND is 1 based
 
-SECTION_ID="$1"
-VERBOSE_MODE=${2:-1}	# default mode is log to console
+[ -n "$NETWORK" -a -n "$SECTION_ID" ] && usage_err "use either option '-N' or '-S' not both"
+[ $# -eq 0 ] && usage_err "missing command"
+[ $# -gt 1 ] && usage_err "to much commands"
+
+case "$1" in
+	start)
+		if [ -n "$NETWORK" ]; then
+			start_daemon_for_all_ddns_sections "$NETWORK"
+			exit 0
+		fi
+		if [ -z "$SECTION_ID" ]; then
+			start_daemon_for_all_ddns_sections
+			exit 0
+		fi
+		;;
+	stop)
+		if [ -n "$INTERFACE" ]; then
+			stop_daemon_for_all_ddns_sections "$NETWORK"
+			exit 0
+		else
+			stop_daemon_for_all_ddns_sections
+			exit 0
+		fi
+		exit 1
+		;;
+	reload)
+		killall -1 dynamic_dns_updater.sh 2>/dev/null
+		exit $?
+		;;
+	*)	usage_err "unknown command - $1";;
+esac
 
 # set file names
-PIDFILE="$RUNDIR/$SECTION_ID.pid"	# Process ID file
-UPDFILE="$RUNDIR/$SECTION_ID.update"	# last update successful send (system uptime)
-DATFILE="$RUNDIR/$SECTION_ID.dat"	# save stdout data of WGet and other extern programs called
-ERRFILE="$RUNDIR/$SECTION_ID.err"	# save stderr output of WGet and other extern programs called
-LOGFILE="$LOGDIR/$SECTION_ID.log"	# log file
+PIDFILE="$ddns_rundir/$SECTION_ID.pid"	# Process ID file
+UPDFILE="$ddns_rundir/$SECTION_ID.update"	# last update successful send (system uptime)
+DATFILE="$ddns_rundir/$SECTION_ID.dat"	# save stdout data of WGet and other extern programs called
+ERRFILE="$ddns_rundir/$SECTION_ID.err"	# save stderr output of WGet and other extern programs called
+LOGFILE="$ddns_logdir/$SECTION_ID.log"	# log file
 
-# VERBOSE_MODE > 1 delete logfile if exist to create an empty one
+# VERBOSE > 1 delete logfile if exist to create an empty one
 # only with this data of this run for easier diagnostic
 # new one created by write_log function
-[ $VERBOSE_MODE -gt 1 -a -f $LOGFILE ] && rm -f $LOGFILE
+[ $VERBOSE -gt 1 -a -f $LOGFILE ] && rm -f $LOGFILE
 
 # TRAP handler
 trap "trap_handler 0 \$?" 0	# handle script exit with exit status
@@ -75,7 +125,7 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 #
 # defined options (also used as variable):
 #
-# enable	self-explanatory
+# enabled	self-explanatory
 # interface 	network interface used by hotplug.d i.e. 'wan' or 'wan6'
 #
 # service_name	Which DDNS service do you use or "custom"
@@ -146,8 +196,8 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 
 # SECTION_ID does not exists
 [ $ERR_LAST -ne 0 ] && {
-	[ $VERBOSE_MODE -le 1 ] && VERBOSE_MODE=2	# force console out and logfile output
-	[ -f $LOGFILE ] && rm -f $LOGFILE		# clear logfile before first entry
+	[ $VERBOSE -le 1 ] && VERBOSE=2		# force console out and logfile output
+	[ -f $LOGFILE ] && rm -f $LOGFILE	# clear logfile before first entry
 	write_log  7 "************ ************** ************** **************"
 	write_log  5 "PID '$$' started at $(eval $DATE_PROG)"
 	write_log  7 "ddns version  : $VERSION"
@@ -160,12 +210,12 @@ write_log 5 "PID '$$' started at $(eval $DATE_PROG)"
 write_log 7 "ddns version  : $VERSION"
 write_log 7 "uci configuration:\n$(uci -q show ddns.$SECTION_ID | sort)"
 # write_log 7 "ddns version  : $(opkg list-installed ddns-scripts | cut -d ' ' -f 3)"
-case $VERBOSE_MODE in
+case $VERBOSE in
 	0) write_log  7 "verbose mode  : 0 - run normal, NO console output";;
 	1) write_log  7 "verbose mode  : 1 - run normal, console mode";;
 	2) write_log  7 "verbose mode  : 2 - run once, NO retry on error";;
 	3) write_log  7 "verbose mode  : 3 - run once, NO retry on error, NOT sending update";;
-	*) write_log 14 "error detecting VERBOSE_MODE '$VERBOSE_MODE'";;
+	*) write_log 14 "error detecting VERBOSE '$VERBOSE'";;
 esac
 
 # check enabled state otherwise we don't need to continue
@@ -174,7 +224,7 @@ esac
 # determine what update url we're using if a service_name is supplied
 # otherwise update_url is set inside configuration (custom update url)
 # or update_script is set inside configuration (custom update script)
-[ -n "$service_name" ] && get_service_data update_url update_script SRV_ANSWER
+[ -n "$service_name" ] && get_service_data update_url update_script UPD_ANSWER
 [ -z "$update_url" -a -z "$update_script" ] && write_log 14 "No update_url found/defined or no update_script found/defined!"
 [ -n "$update_script" -a ! -f "$update_script" ] && write_log 14 "Custom update_script not found!"
 
@@ -249,8 +299,8 @@ get_uptime CURR_TIME
 if [ $LAST_TIME -eq 0 ]; then
 	write_log 7 "last update: never"
 else
-	EPOCH_TIME=$(( $(date +%s) - CURR_TIME + LAST_TIME ))
-	EPOCH_TIME="date -d @$EPOCH_TIME +'$DATE_FORMAT'"
+	EPOCH_TIME=$(( $(date +%s) - $CURR_TIME + $LAST_TIME ))
+	EPOCH_TIME="date -d @$EPOCH_TIME +'$ddns_dateformat'"
 	write_log 7 "last update: $(eval $EPOCH_TIME)"
 fi
 
@@ -293,8 +343,8 @@ while : ; do
 
 	# send update when current time > next time or local ip different from registered ip
 	if [ $CURR_TIME -ge $NEXT_TIME -o "$LOCAL_IP" != "$REGISTERED_IP" ]; then
-		if [ $VERBOSE_MODE -gt 2 ]; then
-			write_log 7 "Verbose Mode: $VERBOSE_MODE - NO UPDATE send"
+		if [ $VERBOSE -gt 2 ]; then
+			write_log 7 "Verbose Mode: $VERBOSE - NO UPDATE send"
 		elif [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
 			write_log 7 "Update needed - L: '$LOCAL_IP' <> R: '$REGISTERED_IP'"
 		else
@@ -302,8 +352,8 @@ while : ; do
 		fi
 
 		ERR_LAST=0
-		[ $VERBOSE_MODE -lt 3 ] && {
-			# only send if VERBOSE_MODE < 3
+		[ $VERBOSE -lt 3 ] && {
+			# only send if VERBOSE < 3
 			send_update "$LOCAL_IP"
 			ERR_LAST=$?	# save return value
 		}
@@ -328,14 +378,14 @@ while : ; do
 	fi
 
 	# now we wait for check interval before testing if update was recognized
-	# only sleep if VERBOSE_MODE <= 2 because otherwise nothing was send
-	[ $VERBOSE_MODE -le 2 ] && {
+	# only sleep if VERBOSE <= 2 because otherwise nothing was send
+	[ $VERBOSE -le 2 ] && {
 		write_log 7 "Waiting $CHECK_SECONDS seconds (Check Interval)"
 		sleep $CHECK_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
 		PID_SLEEP=0
-	} || write_log 7 "Verbose Mode: $VERBOSE_MODE - NO Check Interval waiting"
+	} || write_log 7 "Verbose Mode: $VERBOSE - NO Check Interval waiting"
 
 	REGISTERED_IP=""		# clear variable
 	get_registered_ip REGISTERED_IP	# get registered/public IP
@@ -343,7 +393,7 @@ while : ; do
 
 	# IP's are still different
 	if [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
-		if [ $VERBOSE_MODE -le 1 ]; then	# VERBOSE_MODE <=1 then retry
+		if [ $VERBOSE -le 1 ]; then	# VERBOSE <=1 then retry
 			ERR_UPDATE=$(( $ERR_UPDATE + 1 ))
 			[ $retry_count -gt 0 -a $ERR_UPDATE -gt $retry_count ] && \
 				write_log 14 "Updating IP at DDNS provider failed after $retry_count retries"
@@ -351,17 +401,17 @@ while : ; do
 			continue # loop to beginning
 		else
 			write_log 4 "Updating IP at DDNS provider failed"
-			write_log 7 "Verbose Mode: $VERBOSE_MODE - NO retry"; exit 1
+			write_log 7 "Verbose Mode: $VERBOSE - NO retry"; exit 1
 		fi
 	else
 		# we checked successful the last update
 		ERR_UPDATE=0			# reset error counter
 	fi
 
-	# force_update=0 or VERBOSE_MODE > 1 - leave here
-	[ $VERBOSE_MODE -gt 1 ]  && write_log 7 "Verbose Mode: $VERBOSE_MODE - NO reloop"
+	# force_update=0 or VERBOSE > 1 - leave here
+	[ $VERBOSE -gt 1 ]  && write_log 7 "Verbose Mode: $VERBOSE - NO reloop"
 	[ $FORCE_SECONDS -eq 0 ] && write_log 6 "Configured to run once"
-	[ $VERBOSE_MODE -gt 1 -o $FORCE_SECONDS -eq 0 ] && exit 0
+	[ $VERBOSE -gt 1 -o $FORCE_SECONDS -eq 0 ] && exit 0
 
 	write_log 6 "Rerun IP check at $(eval $DATE_PROG)"
 done

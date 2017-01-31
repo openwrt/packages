@@ -11,9 +11,10 @@ PKG_NAME:=audiofile
 PKG_VERSION:=0.3.6
 PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://audiofile.68k.org/
-PKG_MD5SUM:=2731d79bec0acef3d30d2fc86b0b72fd
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/0.3
+PKG_MD5SUM:=ea2449ad3f201ec590d811db9da6d02ffc5e87a677d06b92ab15363d8cb59782
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_FIXUP:=autoreconf
@@ -39,7 +40,7 @@ CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
 	--disable-examples \
-	--with-build-cc="$(HOSTCC)" \
+	--with-build-cc="$(HOSTCC)"
 
 TARGET_CFLAGS+= $(FPIC)
 

@@ -1,0 +1,30 @@
+From 3684ac3720f91dc131c1c61689395a69ae1865f9 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sun, 8 Jan 2017 20:31:18 +0100
+Subject: [PATCH 7/7] ssl: call mbedtls_ssl_conf_renegotiation() only if
+ available
+
+The function mbedtls_ssl_conf_renegotiation() is only available if
+MBEDTLS_SSL_RENEGOTIATION is set in the mbedtls configuration. Check this
+before calling this function.
+
+This fixes a compile problem when MBEDTLS_SSL_RENEGOTIATION is not set.
+
+Change-Id: I69f15359d2dcaed1e4fe56fc7799737e38d6c2e7
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c
++++ b/resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c
+@@ -1273,7 +1273,9 @@ static int InitConfig(mbedtls_ssl_config
+     mbedtls_ssl_conf_rng(conf, mbedtls_ctr_drbg_random, &g_caSslContext->rnd);
+     mbedtls_ssl_conf_curves(conf, curve[ADAPTER_CURVE_SECP256R1]);
+     mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
++#ifdef MBEDTLS_SSL_RENEGOTIATION
+     mbedtls_ssl_conf_renegotiation(conf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
++#endif
+     mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+ 
+ #if !defined(NDEBUG) || defined(TB_LOG)

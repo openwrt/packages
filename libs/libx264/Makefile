@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=x264
 PKG_VERSION:=snapshot-20160815-2245-stable
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.videolan.org/x264/snapshots/
@@ -28,8 +28,14 @@ TARGET_CFLAGS+=-std=gnu99 -fPIC -O3 -ffast-math -I.
 MAKE_FLAGS+= LD="$(TARGET_CC) -o" 
 
 # ARM ASM depends on ARM1156 or later, blacklist earlier or incompatible cores
-CPU_ASM_BLACKLIST:=arm920t arm926ej-s arm1136j-s arm1176jzf-s fa526 mpcore xscale
+# AMD Geode LX and i486 do not have SSE
+CPU_ASM_BLACKLIST:=geode i486 arm920t arm926ej-s arm1136j-s arm1176jzf-s fa526 mpcore xscale
 
+ifneq ($(CONFIG_SOFT_FLOAT)$(findstring $(call qstrip,$(CONFIG_CPU_TYPE)),$(CPU_ASM_BLACKLIST)),)
+  CONFIGURE_VARS+= AS= 
+  MAKE_FLAGS+= AS= 
+  CONFIGURE_ARGS += --disable-asm
+else
 ifneq ($(CONFIG_TARGET_x86),)
 ifeq ($(CONFIG_YASM),y)
   CONFIGURE_VARS+= AS=yasm
@@ -40,11 +46,6 @@ else
   CONFIGURE_ARGS += --disable-asm
 endif
 endif
-
-ifneq ($(CONFIG_SOFT_FLOAT)$(findstring $(CONFIG_CPU_TYPE),$(CPU_ASM_BLACKLIST)),)
-CONFIGURE_VARS+= AS= 
-MAKE_FLAGS+= AS= 
-CONFIGURE_ARGS += --disable-asm
 endif
 
 CONFIGURE_ARGS += \

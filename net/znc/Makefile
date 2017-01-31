@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
 PKG_VERSION:=1.6.3
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
@@ -31,6 +31,7 @@ define Package/znc/default
   CATEGORY:=Network
   TITLE:=ZNC
   URL:=http://en.znc.in/
+  USERID:=znc:znc
 endef
 
 define Package/znc
@@ -62,12 +63,11 @@ define Package/znc/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/znc.conf $(1)/etc/config/znc
 	$(INSTALL_DIR) $(1)/usr/lib/znc/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/modules/droproot.so $(1)/usr/lib/znc/
 endef
 
 
 ZNC_MODULES :=
-ZNC_MODULE_TARGETS := droproot.so
+ZNC_MODULE_TARGETS :=
 
 define module
   define Package/znc-mod-$(strip $(1))
@@ -235,6 +235,9 @@ $(eval $(call module,partyline,Allows ZNC users to join internal channels and \
 	query other ZNC users on the same ZNC.))
 
 $(eval $(call module,perform,Performs commands on connect.))
+
+$(eval $(call module,playback,Avoid repetitive playback buffers on re-connect \
+	with supported clients (e.g. mutter, colluquy)))
 
 $(eval $(call module,q,Auths you with Q (and a little more).))
 

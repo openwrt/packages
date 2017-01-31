@@ -10,13 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnscrypt-proxy
-PKG_VERSION:=1.7.0
+PKG_VERSION:=1.9.4
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.dnscrypt.org/dnscrypt-proxy
-PKG_MD5SUM:=95df7262964dc22da62f7f6f0466c50e
-
+PKG_MD5SUM:=fdf4a708e7922e13b14555f315ca8d5361aec89b0595b06fdbbcaacfa4e6f11e
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -51,7 +50,7 @@ endef
 define Package/dnscrypt-proxy-resolvers
   $(call Package/dnscrypt-proxy/Default)
   TITLE:=Package with current list of dnscrypt-proxy resolvers
-  VERSION:=$(PKG_VERSION)+git-20160829-65a9553-$(PKG_RELEASE)
+  VERSION:=$(PKG_VERSION)+git-20161129-f17bace-$(PKG_RELEASE)
 endef
 
 define Package/dnscrypt-proxy-resolvers/description

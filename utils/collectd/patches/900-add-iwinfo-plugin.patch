@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -704,6 +704,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
+@@ -705,6 +705,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
  have_termios_h="no"
  AC_CHECK_HEADERS(termios.h, [have_termios_h="yes"])
  
@@ -67,7 +67,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -2606,6 +2606,27 @@ and all other interrupts are collected.
+@@ -2612,6 +2612,27 @@ and all other interrupts are collected.
  
  =back
  

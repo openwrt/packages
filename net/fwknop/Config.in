@@ -7,6 +7,10 @@ config FWKNOPD_GPG
 	select PACKAGE_gnupg
 	default n
 
+config FWKNOPD_NFQ_CAPTURE
+	bool "Enable netfilter_queue capture support (disables libpcap support)"
+	select PACKAGE_iptables-mod-nfqueue
+	default n
 
 
 endmenu

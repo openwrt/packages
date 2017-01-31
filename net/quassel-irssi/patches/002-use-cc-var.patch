@@ -1,0 +1,13 @@
+diff --git a/core/Makefile b/core/Makefile
+index 389855c..2f81417 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -44,7 +44,7 @@ irssi/network-openssl.o: CFLAGS:=$(IRSSI_CFLAGS)
+ quasselc-connector.o: CFLAGS:=$(CFLAGS)
+ 
+ $(TARGET): $(OBJECTS)
+-	gcc -shared $^ -o $@ -lz $(LDFLAGS)
++	$(CC) -shared $^ -o $@ -lz $(LDFLAGS)
+ 
+ install: $(TARGET)
+ 	$(INSTALL) -d $(IRSSI_LIB)/modules

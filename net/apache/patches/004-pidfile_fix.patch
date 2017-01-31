@@ -1,6 +1,8 @@
---- a/include/scoreboard.h
-+++ b/include/scoreboard.h
-@@ -42,7 +42,7 @@ extern "C" {
+Index: httpd-2.4.25/include/scoreboard.h
+===================================================================
+--- httpd-2.4.25.orig/include/scoreboard.h
++++ httpd-2.4.25/include/scoreboard.h
+@@ -40,7 +40,7 @@ extern "C" {
  
  /* Scoreboard file, if there is one */
  #ifndef DEFAULT_SCOREBOARD
@@ -8,4 +10,4 @@
 +#define DEFAULT_SCOREBOARD "log/apache_runtime_status"
  #endif
  
- /* Scoreboard info on a process is, for now, kept very brief --- 
+ /* Scoreboard info on a process is, for now, kept very brief ---

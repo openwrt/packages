@@ -1,0 +1,29 @@
+From 6cbb9f4c247c5361b8c165fbb40b4118d5d7c0e5 Mon Sep 17 00:00:00 2001
+From: Andreas Schwab <schwab@linux-m68k.org>
+Date: Mon, 25 Apr 2016 11:59:14 +0200
+Subject: [PATCH] Fix asm constraints in aarch64 multiply macro
+
+All operands must be register operands and the output operands are early
+clobbered.
+---
+ Zend/zend_multiply.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Zend/zend_multiply.h b/Zend/zend_multiply.h
+index dfd21f7..651dd43 100644
+--- a/Zend/zend_multiply.h
++++ b/Zend/zend_multiply.h
+@@ -53,8 +53,8 @@
+ 	__asm__("mul %0, %2, %3\n"										\
+ 		"smulh %1, %2, %3\n"										\
+ 		"sub %1, %1, %0, asr #63\n"									\
+-			: "=X"(__tmpvar), "=X"(usedval)							\
+-			: "X"(a), "X"(b));										\
++			: "=&r"(__tmpvar), "=&r"(usedval)						\
++			: "r"(a), "r"(b));										\
+ 	if (usedval) (dval) = (double) (a) * (double) (b);				\
+ 	else (lval) = __tmpvar;											\
+ } while (0)
+-- 
+2.8.0
+
