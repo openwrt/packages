@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 OpenWrt.org
+# Copyright (C) 2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -14,7 +14,7 @@ PKG_MAINTAINER:=Andrew McConachie <andrew@depht.com>
 PKG_LICENSE:=Apache-1.1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_PROTO:=git
+PKG_SOURCE_PROTO:=https
 PKG_SOURCE_URL:=https://github.com/CoreSecurity/pcapy.git
 PKG_SOURCE_VERSION:=b91a418374d1636408c435f11799ef725ef70097
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
