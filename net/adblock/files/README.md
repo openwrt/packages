@@ -117,7 +117,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: not set, disabled)
     * adb\_fetch => full path to a different download utility, see example below (default: not set, use wget)
     * adb\_fetchparm => options for the download utility, see example below (default: not set, use wget options)
-    * adb\_dns => use 'unbound' as dns backend, see example below (default: not set, use dnsmasq)
+    * adb\_dns => use 'unbound' with 'unbound-control' as dns backend, see example below (default: not set, use dnsmasq)
 
 ## Examples
 
@@ -126,16 +126,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 set 'unbound' as dns backend in /etc/config/adblock:
   [...]
   option adb_dns 'unbound'
-
-switch to 'manual' unbound config in /etc/config/unbound:
-  [...]
-  option manual_conf '1'
-
-include adblock lists in /etc/unbound/unbound.conf:
-  [...]
-  include: "/tmp/lib/unbound/adb_list.*"
 </code></pre>
-  
+
+Note: This requires 'unbound-control' because it is recommended practice by [NLnet Labs](https://unbound.net/) for large DNS loads. If 'dnsmasq' is disabled or uninstalled, 'unbound' is installed, 'unbound-control' is installed, and 'unbound' is enabled, then Unbound will be automatically selected as backend.
+
 **configuration for different download utilities:**
 <pre><code>
 wget (default):

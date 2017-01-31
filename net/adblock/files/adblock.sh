@@ -17,11 +17,21 @@ adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\"^\"\$1\"\\\|[.]\"\$1)}"
 adb_fetch="/usr/bin/wget"
 adb_fetchparm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --timeout=5 --no-check-certificate -O"
+adb_dns="dnsmasq"
+adb_dnsdir="/tmp/dnsmasq.d"
+adb_dnsformat="awk '{print \"local=/\"\$0\"/\"}'"
+adb_dnsdata=0
+
+# UCI configured Unbound
+#
+adb_unbound_ctl="unbound-control -c /var/lib/unbound/unbound.conf"
 
 # f_envload: load adblock environment
 #
 f_envload()
 {
+    local have_dnsmasq have_unbound
+
     # source in system library
     #
     if [ -r "/lib/functions.sh" ]
@@ -34,15 +44,49 @@ f_envload()
     # set dns backend environment
     #
     adb_dns="$(uci -q get adblock.global.adb_dns)"
-    if [ "${adb_dns}" = "unbound" ]
+
+    if [ -x /usr/sbin/dnsmasq -a -x /etc/init.d/dnsmasq ]
     then
-        adb_dnsdir="/tmp/lib/unbound"
-        adb_dnsformat="awk '{print \"local-zone: \042\"\$0\"\042 static\"}'"
+        /etc/init.d/dnsmasq enabled && have_dnsmasq=1
     else
+        have_dnsmasq=0
+    fi
+
+
+    if [ -x /usr/sbin/unbound \
+      -a -x /usr/sbin/unbound-control \
+      -a -x /etc/init.d/unbound ]
+    then
+        # Per NLNet recommendations, large DNS loads should use unbound-control
+        /etc/init.d/unbound enabled && have_unbound=1
+    else
+        have_unbound=0
+    fi
+
+
+    if [ "${adb_dns}" = "unbound" -a "${have_unbound}" -gt 0 ]
+    then
+        # LEDE/OpenWrt /var/=tmpfs by default, but /var/ may be extroot
+        adb_dnsdata=1
+        adb_dns="unbound"
+        adb_dnsdir="/var/lib/unbound"
+        adb_dnsformat="awk '{print \$0 \" always_nxdomain\"}'"
+    elif [ "${have_dnsmasq}" -eq 0 -a "${have_unbound}" -gt 0 ]
+    then
+        adb_dnsdata=1
+        adb_dns="unbound"
+        adb_dnsdir="/var/lib/unbound"
+        adb_dnsformat="awk '{print \$0 \" always_nxdomain\"}'"
+    elif [ "${have_dnsmasq}" -gt 0 ]
+    then
+        adb_dnsdata=0
         adb_dns="dnsmasq"
         adb_dnsdir="/tmp/dnsmasq.d"
         adb_dnsformat="awk '{print \"local=/\"\$0\"/\"}'"
+    else
+        f_log "error" "status ::: DNS backend and/or utilities not found"
     fi
+
     adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
     adb_dnsprefix="adb_list"
 
@@ -100,6 +144,7 @@ f_envcheck()
     then
         if [ "$(ls -dA "${adb_dnsdir}/${adb_dnsprefix}"* >/dev/null 2>&1)" ]
         then
+            # Complete purge and exit so unconditionally restart DNS (no data remove)
             f_rmdns
             f_dnsrestart
         fi
@@ -162,11 +207,59 @@ f_rmdns()
     ubus call service delete "{\"name\":\"adblock_stats\",\"instances\":\"stats\"}" 2>/dev/null
 }
 
+
+# f_dnsdata: add or remove dns data live with the backend
+#
+f_dnsdata()
+{
+    local cmd="$1"
+    local loc="$2"
+    local try=0
+    
+    # seed error
+    dns_running="false"
+    
+    # minor race condition when Unbound/Adblock restart for ifup
+    sleep 1
+    
+    if [ -z "${loc}" ]
+    then
+        loc="${adb_dnsdir}/${adb_dnsprefix}"
+    fi
+
+    case "${adb_dns}" in
+        unbound)        
+            while [ "${try}" -lt 3 ]
+            do
+              sleep 1
+              ${adb_unbound_ctl} status >/dev/null \
+                && try=99 || try=$(( ${try} + 1 ))
+            done
+            
+            case "${cmd}" in
+                add)
+                    cat "${loc}"* | ${adb_unbound_ctl} local_zones \
+                      && dns_running="true"
+                    ;;
+                *)
+                    cat "${loc}"* | ${adb_unbound_ctl} local_zones_remove \
+                      && dns_running="true"
+                    ;;
+            esac
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
+
 # f_dnsrestart: restart the dns backend
 #
 f_dnsrestart()
 {
     local cnt=0
+
+    # seed error
     dns_running="false"
 
     sync
@@ -236,10 +329,23 @@ f_switch()
             target="${adb_dnsdir}"
             status="resumed"
         fi
+
         if [ -n "${status}" ]
         then
             mv -f "${source}"* "${target}"
-            f_dnsrestart
+
+            if [ "${adb_dnsdata}" -gt 0 ]
+            then
+                if [ "${mode}" = "resume" ]
+                then
+                    f_dnsdata "add"
+                else
+                    f_dnsdata "remove" "${target}"
+                fi
+            else
+                f_dnsrestart
+            fi
+
             f_log "info " "status ::: adblock processing ${status}"
         fi
     fi
@@ -291,6 +397,7 @@ f_log()
         logger -t "adblock-[${adb_ver}] ${class}" "${log_msg}"
         if [ "${class}" = "error" ]
         then
+            # Error condition requires purge so unconditionally restart DNS (no data remove)
             logger -t "adblock-[${adb_ver}] ${class}" "Please also check the online documentation 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md'"
             f_rmtemp
             f_rmdns
@@ -335,6 +442,13 @@ f_main()
 
     f_debug
     f_log "debug" "main   ::: dns-backend: ${adb_dns}, fetch-tool: ${adb_fetch}, parm: ${adb_fetchparm}"
+
+    if [ "${adb_dnsdata}" -gt 0 ]
+    then
+        # For some DNS back ends you can pipe data straight in live; and not destroy cache
+        f_dnsdata "remove"
+    fi
+
     for src_name in ${adb_sources}
     do
         eval "enabled=\"\${enabled_${src_name}}\""
@@ -446,7 +560,15 @@ f_main()
     # restart the dns backend and write statistics to procd service instance
     #
     chown "${adb_dns}":"${adb_dns}" "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null
-    f_dnsrestart
+
+    if [ "${adb_dnsdata}" -gt 0 ]
+    then
+        # For some DNS back ends you can pipe data straight in live; and not destroy cache
+        f_dnsdata "add"
+    else
+        f_dnsrestart
+    fi
+
     if [ "${dns_running}" = "true" ]
     then
         f_debug
@@ -473,9 +595,16 @@ then
     f_envload
     case "${1}" in
         stop)
-            f_rmtemp
-            f_rmdns
-            f_dnsrestart
+            if [ "${adb_dnsdata}" -gt 0 ]
+            then
+                f_dnsdata "remove"
+                f_rmtemp
+                f_rmdns
+            else
+                f_rmtemp
+                f_rmdns
+                f_dnsrestart
+            fi
             ;;
         suspend)
             f_switch suspend
