@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chrony
-PKG_VERSION:=2.4.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.tuxfamily.org/chrony/
-PKG_MD5SUM:=d08dd5a7d79a89891d119adcccb4397d
+PKG_HASH:=9d9107dcdb7768a03dc129d33b2a7a25f1eea2f5620bc85eb00cfea07c1b6075
 
 PKG_MAINTAINER:=Miroslav Lichvar <mlichvar0@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -50,7 +50,7 @@ CONFIGURE_ARGS+= \
 	--host-system=Linux \
 	--sysconfdir=/etc/chrony \
 	--prefix=/usr \
-	--chronysockdir=/var/run/chrony \
+	--chronyrundir=/var/run/chrony \
 	--disable-readline \
 	--disable-rtc \
 	--with-user=chrony
