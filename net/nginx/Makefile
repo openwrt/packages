@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.10.2
+PKG_VERSION:=1.10.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
-PKG_MD5SUM:=e8f5f4beed041e63eb97f9f4f55f3085
+PKG_MD5SUM:=204a20cb4f0b0c9db746c630d89ff4ea
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=2-clause BSD-like license
 
@@ -33,6 +33,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_USERID \
 	CONFIG_NGINX_HTTP_ACCESS \
 	CONFIG_NGINX_HTTP_AUTH_BASIC \
+	CONFIG_NGINX_HTTP_AUTH_REQUEST \
 	CONFIG_NGINX_HTTP_AUTOINDEX \
 	CONFIG_NGINX_HTTP_GEO \
 	CONFIG_NGINX_HTTP_MAP \
@@ -54,9 +55,12 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_UPSTREAM_KEEPALIVE \
 	CONFIG_NGINX_HTTP_UPSTREAM_ZONE \
 	CONFIG_NGINX_HTTP_CACHE \
+	CONFIG_NGINX_HTTP_V2 \
 	CONFIG_NGINX_PCRE \
 	CONFIG_NGINX_NAXSI \
-	CONFIG_NGINX_LUA
+	CONFIG_NGINX_LUA \
+	CONFIG_NGINX_HTTP_REAL_IP \
+	CONFIG_NGINX_HTTP_SECURE_LINK
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -133,6 +137,9 @@ endif
 ifneq ($(CONFIG_NGINX_HTTP_AUTH_BASIC),y)
   ADDITIONAL_MODULES += --without-http_auth_basic_module
 endif
+ifeq ($(CONFIG_NGINX_HTTP_AUTH_REQUEST),y)
+  ADDITIONAL_MODULES += --with-http_auth_request_module
+endif
 ifneq ($(CONFIG_NGINX_HTTP_AUTOINDEX),y)
   ADDITIONAL_MODULES += --without-http_autoindex_module
 endif
@@ -191,6 +198,15 @@ ifneq ($(CONFIG_NGINX_HTTP_UPSTREAM_LEAST_CONN),y)
 endif
 ifneq ($(CONFIG_NGINX_HTTP_UPSTREAM_KEEPALIVE),y)
   ADDITIONAL_MODULES += --without-http_upstream_keepalive_module
+endif
+ifeq ($(CONFIG_NGINX_HTTP_V2),y)
+  ADDITIONAL_MODULES += --with-http_v2_module
+endif
+ifeq ($(CONFIG_NGINX_HTTP_REAL_IP),y)
+  ADDITIONAL_MODULES += --with-http_realip_module
+endif
+ifeq ($(CONFIG_NGINX_HTTP_SECURE_LINK),y)
+  ADDITIONAL_MODULES += --with-http_secure_link_module
 endif
 
 TARGET_CFLAGS += -fvisibility=hidden -ffunction-sections -fdata-sections -DNGX_LUA_NO_BY_LUA_BLOCK
