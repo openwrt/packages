@@ -66,6 +66,11 @@ config NGINX_HTTP_AUTH_BASIC
 	prompt "Enable HTTP auth basic"
 	default y
 
+config NGINX_HTTP_AUTH_REQUEST
+	bool
+	prompt "Enable HTTP auth request module"
+	default n
+
 config NGINX_HTTP_AUTOINDEX
 	bool
 	prompt "Enable HTTP autoindex module"
@@ -167,6 +172,11 @@ config NGINX_HTTP_CACHE
 	prompt "Enable HTTP cache"
 	default y
 
+config NGINX_HTTP_V2
+	bool
+	prompt "Enable HTTP_V2 module"
+	default n
+
 config NGINX_PCRE
 	bool
 	prompt "Enable PCRE library usage"
@@ -180,6 +190,16 @@ config NGINX_NAXSI
 config NGINX_LUA
 	bool
 	prompt "Enable Lua module"
+	default n
+
+config NGINX_HTTP_REAL_IP
+	bool
+	prompt "Enable HTTP real ip module"
+	default n
+
+config NGINX_HTTP_SECURE_LINK
+	bool
+	prompt "Enable HTTP secure link module"
 	default n
 
 endmenu
