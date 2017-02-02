@@ -41,6 +41,12 @@ define Package/vim-full
   TITLE+= (Normal)
 endef
 
+
+define Package/vim-fuller
+  $(call Package/vim/Default)
+  TITLE+= (Big)
+endef
+
 define Package/vim-runtime
   $(call Package/vim/Default)
   TITLE+= (runtime files)
@@ -76,6 +82,12 @@ endef
 define Package/vim-full/description
  Vim is an almost compatible version of the UNIX editor Vi.
  (Normal build)
+endef
+
+
+define Package/vim-fuller/description
+ Vim is an almost compatible version of the UNIX editor Vi.
+ (Big build)
 endef
 
 define Package/vim-runtime/description
@@ -138,6 +150,20 @@ define Build/Compile/vim-full
 endef
 endif
 
+ifneq ($(CONFIG_PACKAGE_vim-fuller),)
+define Build/Compile/vim-fuller
+	$(call Build/Configure/Default, \
+		--with-features=big \
+		--enable-multibyte \
+	)
+	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
+		DESTDIR="$(PKG_INSTALL_DIR)" all
+	$(CP) $(PKG_BUILD_DIR)/src/$(PKG_NAME) $(PKG_BUILD_DIR)/vim_big
+endef
+endif
+
+
+
 ifneq ($(CONFIG_PACKAGE_xxd),)
 define Build/Compile/xxd
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
@@ -155,6 +181,7 @@ endef
 define Build/Compile
 $(call Build/Compile/vim)
 $(call Build/Compile/vim-full)
+$(call Build/Compile/vim-fuller)
 $(call Build/Compile/vim-runtime)
 $(call Build/Compile/xxd)
 endef
@@ -173,6 +200,17 @@ define Package/vim-full/install
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
 endef
 
+
+define Package/vim-fuller/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_big $(1)/usr/bin/vim
+	$(INSTALL_DIR) $(1)/usr/share/vim
+	$(CP) -r $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER) $(1)/usr/share/vim
+	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
+endef
+
+
+
 define Package/vim-runtime/install
 	$(CP) $(PKG_INSTALL_DIR)/* $(1)
 	rm -rf $(1)/usr/share/vim/vim$(VIMVER)/doc
@@ -189,6 +227,7 @@ endef
 
 $(eval $(call BuildPackage,vim))
 $(eval $(call BuildPackage,vim-full))
+$(eval $(call BuildPackage,vim-fuller))
 $(eval $(call BuildPackage,vim-runtime))
 $(eval $(call BuildPackage,vim-help))
 $(eval $(call BuildPackage,xxd))
