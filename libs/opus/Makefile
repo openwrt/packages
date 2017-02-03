@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opus
-PKG_VERSION:=1.1.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/opus/
-PKG_MD5SUM:=32bbb6b557fe1b6066adc0ae1f08b629
+PKG_MD5SUM:=a2c09d995d0885665ff83b5df2505a5f
+PKG_HASH:=9122b6b380081dd2665189f97bfd777f04f92dc3ab6698eea1dbb27ad59d8692
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
+PKG_MAINTAINER:=Ted Hess <thess@kitchensync.net> Ian Leonard <antonlacon@gmail.com>
 
 PKG_INSTALL:=1
 
