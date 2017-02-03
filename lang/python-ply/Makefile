@@ -15,8 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.dabeaz.com/ply
 PKG_MD5SUM:=c5c5767376eff902617fd9874f0c76b7
 
-PKG_BUILD_DEPENDS:=python python-setuptools
-HOST_BUILD_DEPENDS:=python/host python-setuptools/host
+PKG_BUILD_DEPENDS:=python python/host
+HOST_BUILD_DEPENDS:=python/host
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=README.md
