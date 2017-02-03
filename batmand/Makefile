@@ -9,24 +9,29 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=batmand
-PKG_REV:=1439
-PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=3
-PKG_EXTRA_CFLAGS=-DDEBUG_MALLOC -DMEMORY_USAGE -DPROFILE_DATA -DREVISION_VERSION=\"\ rv$(PKG_REV)\" -D_GNU_SOURCE
 
-PKG_HASH:=3c72ce2aae889944acfc898434c6e9573b20815862db1938f3132cc50b669667
-PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://sources.lede-project.org https://downloads.openwrt.org/sources
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=git://git.open-mesh.org/batmand.git
+PKG_REV:=b67a7087b51d7a5e90d27ac39116d1f57257c86e
+PKG_VERSION:=1440
+PKG_RELEASE:=0
 PKG_LICENSE:=GPL-2.0
 
-PKG_KMOD_BUILD_DIR:=$(PKG_BUILD_DIR)/batman/linux/modules
+PKG_SOURCE_VERSION:=$(PKG_REV)
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
+PKG_MIRROR_HASH:=ceb8e0e399f79b1b663594fcf9642e1efc40e696a7604daf709c77da9b6ec52f
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+
+PKG_EXTRA_CFLAGS=-DDEBUG_MALLOC -DMEMORY_USAGE -DPROFILE_DATA -DREVISION_VERSION=\"\ rv$(PKG_REV)\" -D_GNU_SOURCE
+
+PKG_KMOD_BUILD_DIR:=$(PKG_BUILD_DIR)/linux/modules
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/batmand/Default
-  URL:=http://www.open-mesh.org/
-  MAINTAINER:=Marek Lindner <lindner_marek@yahoo.de>
+  URL:=https://www.open-mesh.org/
+  MAINTAINER:=Corinna "Elektra" Aichele <onelektra@gmx.net>
 endef
 
 define Package/batmand
@@ -40,19 +45,6 @@ endef
 
 define Package/batmand/description
 B.A.T.M.A.N. layer 3 routing daemon
-endef
-
-define Package/vis
-$(call Package/batmand/Default)
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=Routing and Redirection
-  DEPENDS:=+libpthread
-  TITLE:=visualization server for B.A.T.M.A.N. layer 3
-endef
-        
-define Package/vis/description
-visualization server for B.A.T.M.A.N. layer 3
 endef
 
 define KernelPackage/batgat
@@ -80,18 +72,6 @@ MAKE_BATMAND_ARGS += \
 	INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
 	STRIP="/bin/true" \
 	batmand install
-	
-MAKE_VIS_ARGS += \
-	EXTRA_CFLAGS='$(TARGET_CFLAGS) $(PKG_EXTRA_CFLAGS)' \
-	CCFLAGS="$(TARGET_CFLAGS)" \
-	OFLAGS="$(TARGET_CFLAGS)" \
-	REVISION="$(PKG_REV)" \
-	CC="$(TARGET_CC)" \
-	NODEBUG=1 \
-	UNAME="Linux" \
-	INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
-	STRIP="/bin/true" \
-	vis install
 
 MAKE_BATGAT_ARGS += \
 	CROSS_COMPILE="$(TARGET_CROSS)" \
@@ -106,11 +86,7 @@ define Build/Configure
 endef
 
 ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_batmand),)
-	BUILD_BATMAND := $(MAKE) -C $(PKG_BUILD_DIR)/batman $(MAKE_BATMAND_ARGS)
-endif
-
-ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_vis),)
-	BUILD_VIS := $(MAKE) -C $(PKG_BUILD_DIR)/vis $(MAKE_VIS_ARGS)
+	BUILD_BATMAND := $(MAKE) -C $(PKG_BUILD_DIR) $(MAKE_BATMAND_ARGS)
 endif
 	
 ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_kmod-batgat),)
@@ -119,7 +95,6 @@ endif
 	        
 define Build/Compile
 	$(BUILD_BATMAND)
-	$(BUILD_VIS)
 	cp $(PKG_KMOD_BUILD_DIR)/Makefile.kbuild $(PKG_KMOD_BUILD_DIR)/Makefile
 	$(BUILD_BATGAT)
 endef
@@ -135,17 +110,5 @@ define Package/batmand/conffiles
 /etc/config/batmand
 endef
 
-define Package/vis/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/vis $(1)/usr/sbin/
-	$(INSTALL_BIN) ./files/etc/init.d/vis $(1)/etc/init.d
-	$(INSTALL_DATA) ./files/etc/config/vis $(1)/etc/config
-endef
-
-define Package/vis/conffiles
-/etc/config/vis
-endef
-
 $(eval $(call BuildPackage,batmand))
-$(eval $(call BuildPackage,vis))
 $(eval $(call KernelPackage,batgat))

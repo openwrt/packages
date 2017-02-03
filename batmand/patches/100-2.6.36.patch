@@ -2,8 +2,8 @@
  batman/linux/modules/gateway.c |   19 +++++++++++++++++++
  1 file changed, 19 insertions(+)
 
---- batmand-r1439.orig/batman/linux/modules/gateway.c
-+++ batmand-r1439/batman/linux/modules/gateway.c
+--- batmand-r1439.orig/linux/modules/gateway.c
++++ batmand-r1439/linux/modules/gateway.c
 @@ -29,6 +29,7 @@ static struct class *batman_class;
  static int batgat_open(struct inode *inode, struct file *filp);
  static int batgat_release(struct inode *inode, struct file *file);
