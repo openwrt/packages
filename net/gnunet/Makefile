@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=a4295da3df82817ff2fe1fa547374a96a2e0280b
-PKG_VERSION:=0.10.2-git-20170111-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=65f138e9a6156983ac74f8f1a5b8051d8f9be86a
+PKG_VERSION:=0.10.2-git-20170305-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -30,7 +30,6 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_PACKAGE_libsqlite3),--with-sqlite="$(STAGING_DIR)/usr",--without-sqlite) \
 	--disable-testing \
 	--disable-testruns \
-	--disable-wachs \
 	--enable-experimental \
 	--with-extractor=$(STAGING_DIR)/usr \
 	--with-gnutls=$(STAGING_DIR)/usr \
@@ -137,7 +136,7 @@ define Package/gnunet/install
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ ; \
 	done )
 
-	( for lib in arm ats block cadet core datacache dht \
+	( for lib in arm ats block blockgroup cadetnew core datacache dht \
 	    dns dnsparser fragmentation friends hello identity natauto natnew nse \
 	    peerinfo regexblock regex revocation scalarproduct set \
 	    statistics transport util; do \
@@ -150,7 +149,7 @@ define Package/gnunet/install
 	done )
 
 	( for lex in daemon-topology helper-nat-client \
-	    helper-nat-server service-arm service-ats service-cadet \
+	    helper-nat-server service-arm service-ats service-cadet-new \
 	    service-core service-dht service-identity service-nat service-nat-auto \
 	    service-nse service-peerinfo service-regex \
 	    service-revocation service-scalarproduct-alice \
@@ -252,6 +251,7 @@ PLUGIN_rest:=rest_gns rest_identity rest_identity_provider rest_namestore
 LIBEXEC_rest:=rest-server
 CONF_rest:=rest
 
+DEPENDS_rps:=@BROKEN
 BIN_rps:=rps
 LIB_rps:=rps
 LIBEXEC_rps:=service-rps
