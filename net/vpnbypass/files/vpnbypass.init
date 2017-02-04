@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=90
+START=92
 USE_PROCD=1
 
 TID="200"; FW_MARK="0x010000"; IPSET="vpnbypass"; 
@@ -17,13 +17,12 @@ vpnbypass_enabled() {
     [ $((enabled)) -gt 0 ] && return 0 || { output "VPNBypass is not enabled in the config file!\nTo enable, run 'uci set vpnbypass.config.enabled=1; uci commit vpnbypass'\n"; return 1; }
 }
 
-boot() { ubus -t 30 wait_for network.interface && rc_procd start_service || output 'ERROR: Failed to settle network interface!\n'; }
+boot() { ubus -t 30 wait_for network.interface.wan && rc_procd start_service || output 'ERROR: Failed to settle network interface!\n'; }
 
 start_service() {
-	local ll
+	local ll c=1
     config_load vpnbypass
     vpnbypass_enabled || return 1
-	[ -d /etc/openvpn ] || return 1
     config_get lports   'config' 'localport'
     config_get rports   'config' 'remoteport'
     config_get routes   'config' 'remotesubnet'
@@ -35,21 +34,22 @@ start_service() {
 	procd_set_param stderr 1
 	procd_close_instance
 
-	. /lib/functions/network.sh; network_get_ipaddr wanip wan; network_get_gateway gwip wan; network_get_ipaddr lanip lan
-	[ ! "$wanip" ] && output 'ERROR: Could not get wan ip\n' && exit 0
-	[ ! "$gwip" ] && output 'ERROR: Could not get wan gateway\n' && exit 0
-	for ll in ${routes}; do (ip route del $ll; ip route add $ll via $gwip) >/dev/null 2>&1; done
-	(ip rule del fwmark $FW_MARK table $TID; iptables -t mangle -F; ipset -F $IPSET; ipset -X $IPSET) >/dev/null 2>&1
-	(ip route flush table $TID; ip route flush cache) >/dev/null 2>&1
-	(ip route add default via $gwip table $TID; ip route flush cache) >/dev/null 2>&1
-	(modprobe xt_set || modprobe ip_set; insmod ip_set_hash_ip) >/dev/null 2>&1
-	(ipset -N $IPSET iphash -q; ipset -F $IPSET) >/dev/null 2>&1
+	source /lib/functions/network.sh
+	while : ; do network_get_ipaddr wanip wan; network_get_gateway gwip wan; [ $c -ge 5 ] && break || let "c+=1"; [ -n "$wanip" -a -n "$gwip" ] && break || sleep 5; done
+	[ -z "$wanip" -o -z "$gwip" ] && output 'ERROR: Could not get WAN interface IP: $wanip or Gateway: $gwip\n' && exit 0
+
+	for ll in ${routes}; do { [ "$ll" = "${ll#*\/*}" ] && ll="${ll}/32"; ip route del $ll; ip route add $ll via $gwip; } >/dev/null 2>&1; done
+	{ ip rule del fwmark $FW_MARK table $TID; iptables -t mangle -F; ipset -F $IPSET; ipset -X $IPSET; } >/dev/null 2>&1
+	{ ip route flush table $TID; ip route flush cache; } >/dev/null 2>&1
+	{ ip route add default via $gwip table $TID; ip route flush cache; } >/dev/null 2>&1
+	{ modprobe xt_set || modprobe ip_set; insmod ip_set_hash_ip; } >/dev/null 2>&1
+	{ ipset -N $IPSET iphash -q; ipset -F $IPSET; } >/dev/null 2>&1
 	for ll in ${lports}; do iptables -t mangle -A PREROUTING -p tcp -m multiport --sport $ll -j MARK --set-mark $FW_MARK/$FW_MARK -m comment --comment "vpnbypass"; done
 	for ll in ${rports}; do iptables -t mangle -A PREROUTING -p tcp -m multiport --dport $ll -j MARK --set-mark $FW_MARK/$FW_MARK -m comment --comment "vpnbypass"; done
-	for ll in ${ranges}; do iptables -t mangle -I PREROUTING -s $ll -j MARK --set-mark $FW_MARK/$FW_MARK -m comment --comment "vpnbypass"; done
+	for ll in ${ranges}; do [ "$ll" = "${ll#*\/*}" ] && ll="${ll}/32"; iptables -t mangle -I PREROUTING -s $ll -j MARK --set-mark $FW_MARK/$FW_MARK -m comment --comment "vpnbypass"; done
 	iptables -t mangle -A PREROUTING -m set --match-set $IPSET dst -j MARK --set-mark $FW_MARK/$FW_MARK -m comment --comment "vpnbypass"
 	ip rule add fwmark $FW_MARK table $TID
-	output "vpnbypass started with TID: $TID FW_MARK: $FW_MARK\n"
+	output "vpnbypass started with TID: $TID; FW_MARK: $FW_MARK\n"
 }
 
 stop_service() {
@@ -58,16 +58,16 @@ stop_service() {
     vpnbypass_enabled || return 1
     config_get routes   'config' 'remotesubnet'
 
-	[ -d /etc/openvpn ] || return 1
-	rm -f /etc/hotplug.d/firewall/${START}-${IPSET}
-	. /lib/functions/network.sh; network_get_ipaddr wanip wan; network_get_gateway gwip wan; network_get_ipaddr lanip lan
-	[ ! "$wanip" ] && output 'ERROR: Could not get wan ip\n' && exit 0
-	[ ! "$gwip" ] && output 'ERROR: Could not get wan gateway\n' && exit 0
-	for ll in ${routes}; do ip route del $ll >/dev/null 2>&1; done
+	for ll in ${routes}; do [ "$ll" = "${ll#*\/*}" ] && ll="${ll}/32"; ip route del $ll >/dev/null 2>&1; done
 #	iptables-save | grep -Fv -- "vpnbypass" | iptables-restore
-	(ip rule del fwmark $FW_MARK table $TID; iptables -t mangle -F; ipset -F $IPSET; ipset -X $IPSET) >/dev/null 2>&1
-	(ip route flush table $TID; ip route flush cache) >/dev/null 2>&1
+	{ ip rule del fwmark $FW_MARK table $TID; iptables -t mangle -F; ipset -F $IPSET; ipset -X $IPSET; } >/dev/null 2>&1
+	{ ip route flush table $TID; ip route flush cache; } >/dev/null 2>&1
 	output "vpnbypass stopped\n"
+}
+
+reload_service()
+{
+	start_service
 }
 
 service_triggers() {
