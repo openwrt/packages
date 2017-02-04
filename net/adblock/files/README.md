@@ -7,6 +7,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * support of the following domain block list sources (free for private usage, for commercial use please check their individual licenses):
     * [adaway](https://adaway.org)
     * => infrequent updates, approx. 400 entries (enabled by default)
+    * [adguard](https://adguard.com)
+    * => numerous updates on the same day, approx. 12.000 entries
     * [blacklist]()
     * => static local blacklist, located by default in '/etc/adblock/adblock.blacklist'
     * [disconnect](https://disconnect.me)
@@ -51,27 +53,28 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 440 entries
 * zero-conf like automatic installation & setup, usually no manual changes needed
 * simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
-* supports dnsmasq (default) or unbound as dns backend
-* supports a wide range of router modes, even AP modes are supported
+* automatically selects dnsmasq or unbound as dns backend
+* automatically selects uclient-fetch or wget as download utility (other tools like curl or aria2c are supported as well)
+* automatically supports a wide range of router modes, even AP modes are supported
 * full IPv4 and IPv6 support
 * each block list source will be updated and processed separately
 * block list source parsing by fast & flexible regex rulesets
 * overall duplicate removal in separate block lists
 * additional whitelist for manual overrides, located by default in /etc/adblock/adblock.whitelist
-* quality checks during block list update to ensure a reliable dns server service
+* quality checks during block list update to ensure a reliable dns backend service
 * minimal status & error logging to syslog, enable debug logging to receive more output
 * procd based init system support (start/stop/restart/reload/suspend/resume)
 * procd based hotplug support, the adblock start will be triggered by interface triggers
 * suspend & resume adblock actions temporarily without block list reloading
 * runtime statistics via ubus service call
 * query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
-* automatic block list backup & restore, backups will be (de-)compressed and restored on the fly
-* add new adblock sources on your own via uci config
+* optional: automatic block list backup & restore, backups will be (de-)compressed and restored on the fly in case of any runtime error
+* optional: add new adblock sources on your own via uci config
 
 ## Prerequisites
 * [openwrt](https://openwrt.org), tested with latest stable release (Chaos Calmer) and with current trunk (Designated Driver)
 * [LEDE project](https://www.lede-project.org), tested with trunk > r98
-* a usual setup with an enabled dns server at minimum - dump AP modes without a working dns server are _not_ supported
+* a usual setup with an enabled dns backend at minimum - dump AP modes without a working dns backend are _not_ supported
 * a download utility: full versions (with ssl support) of 'wget', 'uclient-fetch', 'aria2c' or 'curl' are supported - the Chaos Calmer built-in busybox wget is not
     * Chaos Calmer: download & install the external 'wget' package
     * Designated Driver/Trunk: use built-in 'uclient-fetch' or download & install the external 'wget' package
@@ -98,7 +101,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 
 ## Tweaks
 * **status/runtime statistics:** the adblock status and runtime statistics are available via ubus service call (see example below)
-* **debug output:** for script debugging please set the config option 'adb\_debug' to '1' and check the runtime output with _logread -e "adblock"_
+* **debug logging:** for script debugging please set the config option 'adb\_debug' to '1' and check the runtime output with _logread -e "adblock"_
 * **storage expansion:** to process and store all block list sources at once it might helpful to enlarge your temp directory with a swap partition => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
 * **add white-/blacklist entries:** add domain white- or blacklist entries to always-allow or -deny certain (sub) domains, by default both lists are empty and located in _/etc/adblock_. Please add one domain per line - ip addresses, wildcards & regex are _not_ allowed (see example below)
 * **backup & restore block lists:** enable this feature, to restore automatically the latest compressed backup of your block lists in case of any processing error (e.g. a single block list source is not available during update). Please use an (external) solid partition and _not_ your volatile router temp directory for this
@@ -117,23 +120,18 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: not set, disabled)
     * adb\_fetch => full path to a different download utility, see example below (default: not set, use wget)
     * adb\_fetchparm => options for the download utility, see example below (default: not set, use wget options)
-    * adb\_dns => use 'unbound' as dns backend, see example below (default: not set, use dnsmasq)
 
 ## Examples
 
 **change default dns backend to 'unbound':**
 <pre><code>
-set 'unbound' as dns backend in /etc/config/adblock:
-  [...]
-  option adb_dns 'unbound'
-
 switch to 'manual' unbound config in /etc/config/unbound:
   [...]
   option manual_conf '1'
 
 include adblock lists in /etc/unbound/unbound.conf:
   [...]
-  include: "/tmp/lib/unbound/adb_list.*"
+  include: "/var/lib/unbound/adb_list.*"
 </code></pre>
   
 **configuration for different download utilities:**
@@ -146,7 +144,7 @@ aria2c:
   option adb_fetch '/usr/bin/aria2c'
   option adb_fetchparm '-q --max-tries=1 --timeout=5 --allow-overwrite=true --auto-file-renaming=false --check-certificate=false -o'
 
-uclient-fetch (not supported in Chaos Calmer):
+uclient-fetch:
   option adb_fetch '/bin/uclient-fetch'
   option adb_fetchparm '-q --timeout=5 --no-check-certificate -O'
 
@@ -162,7 +160,7 @@ This will output the active block lists and other runtime information as JSON, e
 {
     "adblock_stats": {
         "instances": {
-            "stats": {
+            "statistics": {
                 "running": false,
                 "command": [
                     ""
@@ -170,16 +168,35 @@ This will output the active block lists and other runtime information as JSON, e
                 "data": {
                     "active_lists": [
                         {
-                            "blacklist": "142",
+                            "palevo": "14",
+                            "blacklist": "144",
+                            "winspy": "168",
+                            "zeus": "422",
                             "adaway": "408",
-                            "yoyo": "2368"
+                            "rolist": "649",
+                            "malwarelist": "1219",
+                            "ransomware": "1495",
+                            "ruadlist": "1791",
+                            "yoyo": "2304",
+                            "openphish": "2139",
+                            "dshield": "154",
+                            "disconnect": "3176",
+                            "spam404": "6251",
+                            "adguard": "11081",
+                            "whocares": "11575",
+                            "winhelp": "10574",
+                            "malware": "13854",
+                            "sysctl": "8539",
+                            "securemecca": "9262",
+                            "shalla": "25358",
+                            "hphosts": "36256"
                         }
                     ],
-                    "adblock_version": "2.1.0",
-                    "blocked_domains": "2918",
-                    "dns_backend": "unbound",
-                    "last_rundate": "05.01.2017 09:38:55",
-                    "system": "LEDE Reboot SNAPSHOT r2762-ed69e93262"
+                    "adblock_version": "2.3.0",
+                    "blocked_domains": "146833",
+                    "dns_backend": "dnsmasq",
+                    "last_rundate": "04.02.2017 21:10:31",
+                    "system": "LEDE Reboot SNAPSHOT r3286-c980147527"
                 }
             }
         }
