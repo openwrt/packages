@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vpnbypass
-PKG_VERSION:=1.0.0
-PKG_RELEASE:=4
+PKG_VERSION:=1.0.1
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 
@@ -47,7 +47,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/vpnbypass.conf $(1)/etc/config/vpnbypass
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/firewall
-	$(INSTALL_DATA) ./files/vpnbypass.hotplug $(1)/etc/hotplug.d/firewall/90-vpnbypass
+	$(INSTALL_DATA) ./files/vpnbypass.hotplug $(1)/etc/hotplug.d/firewall/92-vpnbypass
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
