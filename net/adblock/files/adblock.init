@@ -13,21 +13,23 @@ adb_script="/usr/bin/adblock.sh"
 
 boot()
 {
-    local wanif4 wanif6
+    local wanif4 wanif6 cnt=0
 
-    ubus -t 30 wait_for network.interface
-    if [ ${?} -eq 0 ]
-    then
-        . "/lib/functions/network.sh"
+    . "/lib/functions/network.sh"
+    while [ ${cnt} -le 30 ]
+    do
         network_find_wan wanif4
         network_find_wan6 wanif6
-        if [ -n "${wanif4}" ] || [ -n "${wanif6}" ]
+        if [ -n "${wanif4}" ] || [ -n "${wanif6}" ] || [ ${cnt} -eq 30 ]
         then
             rc_procd start_service
             return 0
+        else
+            sleep 1
+            cnt=$((cnt+1))
+            network_flush_cache
         fi
-    fi
-    rc_procd service_triggers
+    done
 }
 
 start_service()
@@ -52,6 +54,11 @@ stop_service()
 {
     export adb_procd="true"
     rc_procd "${adb_script}" stop
+}
+
+restart()
+{
+    rc_procd start_service restart
 }
 
 suspend()
