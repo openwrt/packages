@@ -1,0 +1,23 @@
+#config driver 'upsname'
+#	option driver usbhid-ups
+#	option port auto
+#	option other other-value
+#	option runas root
+
+#config user
+#	option username upsuser
+#	option password upspassword
+#	option actions optional-action
+#	list instcmd optional-instant-command
+#	option upsmon slave|master
+
+#config listen_address
+#	option address ::1
+#	option port 3493
+
+#config upsd 'upsd'
+#	option maxage 15
+#	option statepath /var/run/nut
+#	option maxconn 1024
+# NB: certificates only apply to SSL-enabled version
+#       option certfile /usr/local/etc/upsd.pem
