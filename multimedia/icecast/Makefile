@@ -55,6 +55,12 @@ CONFIGURE_ARGS+= \
 	--with-xslt-config="$(STAGING_DIR)/usr/bin/xslt-config"
 
 
+# Manually edit configure in case both vorbis and tremor host packages are installed
+define Build/Configure
+	$(SED) 's,-lvorbis -lm,-lvorbisidec -logg ,g' $(PKG_BUILD_DIR)/configure
+	$(call Build/Configure/Default)
+endef
+
 define Package/icecast/install
 	$(INSTALL_DIR) $(1)/etc
 	$(CP) $(PKG_INSTALL_DIR)/etc/icecast.xml $(1)/etc/

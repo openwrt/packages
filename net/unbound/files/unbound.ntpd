@@ -17,11 +17,9 @@
 
 ##############################################################################
 
-if [ "$ACTION" = stratum -a ! -f "$UNBOUND_TIMEFILE" ] \
-  && /etc/init.d/unbound enabled ; then
-  #
+if [ "$ACTION" = stratum -a ! -f "$UNBOUND_TIMEFILE" ] ; then
   echo "ntpd: $( date )" > $UNBOUND_TIMEFILE
-  /etc/init.d/unbound restart
+  /etc/init.d/unbound enabled && /etc/init.d/unbound restart
 fi
 
 ##############################################################################

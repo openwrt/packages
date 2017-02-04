@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqm-scripts
-PKG_SOURCE_VERSION:=699f5d014b23790a3ac4e8280a14ac740cd5c3e4
-PKG_VERSION:=1.1.0
+PKG_SOURCE_VERSION:=c1d5dd07029ad7a25e82940dff7b8b1b778cb82a
+PKG_VERSION:=1.1.2
 PKG_RELEASE:=1
 PKG_LICENSE:=GPLv2
 
@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/sqm-scripts
   SECTION:=net
   CATEGORY:=Base system
-  DEPENDS:=+tc +kmod-sched +kmod-ifb +iptables \
+  DEPENDS:=+tc +kmod-sched-core +kmod-sched-cake +kmod-ifb +iptables \
 	+iptables-mod-ipopt +iptables-mod-conntrack-extra
   TITLE:=SQM Scripts (QoS)
   PKGARCH:=all
@@ -55,7 +55,7 @@ define Package/luci-app-sqm
 endef
 
 define Package/luci-app-sqm/description
-	Control the simple_qos SQM script
+	Luci interface for the SQM scripts queue management configuration package.
 endef
 
 define Package/luci-app-sqm/install

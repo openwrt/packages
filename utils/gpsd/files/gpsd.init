@@ -2,31 +2,43 @@
 # Copyright (C) 2009-2011 OpenWrt.org
 START=50
 
+USE_PROCD=1
+PROG=/usr/sbin/gpsd
 NAME=gpsd
-PIDF=/var/run/$NAME.pid
-PROG=/usr/sbin/$NAME
 
-start() {
-    config_load gpsd
-    config_get device core device
-    config_get port core port
-    config_get_bool listen_globally core listen_globally
-    config_get_bool enabled core enabled
-    [ "$enabled" != "1" ] && exit
-    logger -t "$NAME" "Starting..."
-    [ ! -c "$device" ] && {
-        logger -t "$NAME" "Unable to find device $device. Exiting."
-        exit 1
-    }
-    [ "$listen_globally" != "0" ] && append args "-G"
-    $PROG -n -P $PIDF -S $port $args $device
+validate_section_gpsd()
+{
+	uci_validate_section gpsd gpsd "${1}" \
+		'enable:bool:1' \
+		'device:string' \
+		'listen_globally:bool:0' \
+		'port:port:2947'
 }
 
-stop() {
-    logger -t "$NAME" "Stopping..."
-    [ -f "$PIDF" ] && {
-        read PID < "$PIDF"
-        kill -9 $PID
-        rm $PIDF
-    }
+gpsd_instance()
+{
+	local device enable listen_globally port
+
+	validate_section_gpsd "${1}" || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ "${enable}" = "0" ] && return 1
+
+	procd_open_instance
+	procd_set_param command "$PROG" -N -n
+
+	[ "${listen_globally}" -ne 0 ] && procd_append_param command -G
+	procd_append_param command -S "${port}"
+	procd_append_param command "${device}"
+	procd_set_param respawn
+
+	procd_close_instance
+}
+
+start_service()
+{
+	config_load "${NAME}"
+	config_foreach gpsd_instance gpsd
 }

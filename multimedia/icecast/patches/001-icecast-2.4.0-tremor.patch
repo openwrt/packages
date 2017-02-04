@@ -21,7 +21,7 @@
      return NULL;
  }
  
-+/* Some additional functions from vorbis missing from tremore */
++/* Some additional functions from vorbis missing from tremor */
 +
 +static void _v_writestring(oggpack_buffer *o,char *s, int bytes)
 +{

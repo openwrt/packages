@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gcc
 PKG_VERSION:=5.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
 PKG_MD5SUM:=4c626ac2a83ef30dfb9260e6f59c2b30
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -31,6 +31,11 @@ RSTRIP:= \
 	STRIP_KMOD="$(STRIP) --strip-debug" \
 	$(SCRIPT_DIR)/rstrip.sh
 
+ifneq ($(CONFIG_SOFT_FLOAT),y)
+	ifeq ($(CONFIG_arm),y)
+		ARM_FLOAT_OPTION:= --with-float=hard
+	endif
+endif
 
 define Package/gcc
   SECTION:=devel
@@ -120,6 +125,7 @@ define Build/Configure
 			--prefix=/usr \
 			--libexecdir=/usr/lib \
 			--with-local-prefix=/usr \
+			$(ARM_FLOAT_OPTION) \
 			$(SOFT_FLOAT_CONFIG_OPTION) \
 			$(call qstrip,$(CONFIG_EXTRA_GCC_CONFIG_OPTIONS)) \
 	);

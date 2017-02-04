@@ -11,7 +11,7 @@ PKG_NAME:=cifs-utils
 PKG_VERSION:=6.4
 PKG_RELEASE:=2
 
-PKG_SOURCE_URL:=http://ftp.samba.org/pub/linux-cifs/cifs-utils
+PKG_SOURCE_URL:=https://download.samba.org/pub/linux-cifs/cifs-utils/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_MD5SUM:=b7d75b67fd3987952896d27256c7293d
 

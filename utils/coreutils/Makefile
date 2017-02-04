@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
 PKG_VERSION:=8.23
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
@@ -37,11 +37,11 @@ DEPENDS_timeout = +librt
 DEPENDS_expr = +libgmp
 DEPENDS_factor = +libgmp
 DEPENDS_cp = +libacl
-DEPENDS_dir = +libacl
+DEPENDS_dir = +libacl +libcap
 DEPENDS_install = +libacl
-DEPENDS_ls = +libacl
+DEPENDS_ls = +libacl +libcap
 DEPENDS_mv = +libacl
-DEPENDS_vdir = +libacl
+DEPENDS_vdir = +libacl +libcap
 
 define Package/coreutils/Default
   SECTION:=utils

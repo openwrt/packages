@@ -14,7 +14,7 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -96,7 +96,9 @@ define Py3BasePackage
   endif
   PYTHON3_LIB_FILES_DEL+=$(2)
   define Py3Package/$(1)/filespec
-    $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
+    ifneq ($(2),)
+      $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
+    endif
   endef
 endef
 
@@ -116,10 +118,6 @@ MAKE_FLAGS+=\
 	CROSS_COMPILE=yes \
 	LD="$(TARGET_CC)" \
 	PGEN=pgen3
-
-ifeq ($(ARCH),i386)
-MAKE_FLAGS+=PYTHON_DECIMAL_WITH_MACHINE=ansi32
-endif
 
 EXTRA_CFLAGS+= \
 	-DNDEBUG -fno-inline
@@ -144,8 +142,8 @@ CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--with-threads \
 	--with-system-ffi \
-	--without-pymalloc \
 	--with-ensurepip=no \
+	--without-pymalloc \
 	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
@@ -154,6 +152,31 @@ CONFIGURE_ARGS+= \
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(CP) ./files/config.site $(PKG_BUILD_DIR)/config.site
+endef
+
+ifdef CONFIG_PACKAGE_python3-setuptools
+define Build/Compile/python3-setuptools
+	$(STAGING_DIR_HOSTPKG)/bin/pip3 install \
+		--ignore-installed \
+		--root=$(PKG_BUILD_DIR)/install-setuptools --prefix=. \
+		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-*.whl
+endef
+endif # CONFIG_PACKAGE_python3-setuptools
+
+ifdef CONFIG_PACKAGE_python3-pip
+define Build/Compile/python3-pip
+	$(STAGING_DIR_HOSTPKG)/bin/pip3 install \
+		--ignore-installed \
+		--root=$(PKG_BUILD_DIR)/install-pip --prefix=. \
+		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-*.whl
+endef
+endif # CONFIG_PACKAGE_python3-pip
+
+define Build/Compile
+	$(call Build/Compile/Default)
+	# Use host pip to install python-setuptools
+	$(call Build/Compile/python3-setuptools)
+	$(call Build/Compile/python3-pip)
 endef
 
 define Build/InstallDev
@@ -231,6 +254,9 @@ define Py3Package/python3/filespec
 -|$(PYTHON3_PKG_DIR)
 endef
 
+HOST_LDFLAGS += \
+	$$$$(pkg-config --static --libs libcrypto libssl)
+
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
@@ -238,14 +264,13 @@ HOST_CONFIGURE_ARGS+= \
 	--prefix=$(HOST_PYTHON3_DIR) \
 	--exec-prefix=$(HOST_PYTHON3_DIR) \
 	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
-	--with-system-ffi \
-	--with-ensurepip=no \
-	CONFIG_SITE= \
-	CFLAGS="$(HOST_CFLAGS)"
+	--with-system-ffi=no \
+	--with-ensurepip=install \
+	CONFIG_SITE=
 
 define Host/Compile
-	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) python Parser/pgen
-	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) sharedmods
+	+$(HOST_MAKE_VARS) $(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) python Parser/pgen
+	+$(HOST_MAKE_VARS) $(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) sharedmods
 endef
 
 define Host/Install
