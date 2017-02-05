@@ -15,8 +15,8 @@ adb_enabled=1
 adb_debug=0
 adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\"^\"\$1\"\\\|[.]\"\$1)}"
-adb_fetch="/usr/bin/wget"
-adb_fetchparm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --timeout=5 --no-check-certificate -O"
+adb_fetch="/bin/wget"
+adb_fetchparm="--quiet --timeout=5 --no-check-certificate -O"
 
 # f_envload: load adblock environment
 #
