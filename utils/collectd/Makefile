@@ -182,21 +182,13 @@ endef
 
 define Package/collectd
 $(call Package/collectd/Default)
-  DEPENDS:= +libpthread +zlib +libltdl +libip4tc +PACKAGE_COLLECTD_ENCRYPTED_NETWORK:libgcrypt
+  DEPENDS:= +libpthread +zlib +libltdl +libip4tc
   MENU:=1
 endef
 
 define Package/collectd/description
  collectd is a small daemon which collects system information periodically
  and provides mechanismns to store the values in a variety of ways.
-endef
-
-define Package/collectd/config
-	config PACKAGE_COLLECTD_ENCRYPTED_NETWORK
-	bool "Enable ability to use encrypted networking"
-	default n
-	depends on PACKAGE_collectd
-	select PACKAGE_collectd-mod-network
 endef
 
 ifneq ($(CONFIG_avr32),)
@@ -209,18 +201,9 @@ CONFIGURE_ARGS+= \
 	--disable-debug \
 	--enable-daemon \
 	--with-nan-emulation \
+	--without-libgcrypt \
 	--without-perl-bindings \
 	--without-libudev
-
-ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
-CONFIGURE_ARGS+= \
-	--with-libgcrypt=$(STAGING_DIR)/usr
-CONFIGURE_VARS+= \
-       LDFLAGS="$$$$LDFLAGS -lgcrypt"
-else
-CONFIGURE_ARGS+= \
-	--without-libgcrypt
-endif
 
 CONFIGURE_VARS+= \
 	CFLAGS="$$$$CFLAGS $(FPIC)" \
@@ -352,7 +335,7 @@ $(eval $(call BuildPlugin,madwifi,MadWifi status input,madwifi,))
 $(eval $(call BuildPlugin,memory,physical memory usage input,memory,))
 $(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAGE_collectd-mod-modbus:libmodbus))
 $(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-netlink:libmnl))
-$(eval $(call BuildPlugin,network,network input/output,network,+PACKAGE_COLLECTD_ENCRYPTED_NETWORK:libgcrypt))
+$(eval $(call BuildPlugin,network,network input/output,network,))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
 $(eval $(call BuildPlugin,ntpd,NTP daemon status input,ntpd,))
 $(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut-common))
