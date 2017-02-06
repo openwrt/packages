@@ -125,12 +125,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 
 **change default dns backend to 'unbound':**
 <pre><code>
-switch to 'manual' unbound config in /etc/config/unbound:
-  [...]
-  option manual_conf '1'
+Adblock detects the presence of an active unbound dns backend and the block lists will be automatically pulled in by unbound.
+The adblock script deposits the sorted and filtered block lists in '/var/lib/unbound' where unbound can find them in its jail.
+If you use manual configuration for unbound, then just include the following line in your 'server:' clause:
 
-include adblock lists in /etc/unbound/unbound.conf:
-  [...]
   include: "/var/lib/unbound/adb_list.*"
 </code></pre>
   
