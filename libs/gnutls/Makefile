@@ -113,6 +113,7 @@ CONFIGURE_ARGS+= \
 	--with-included-unistring \
 	--disable-guile \
 	--disable-nls \
+	--without-idn \
 	--without-zlib \
 	--enable-local-libopts \
 	--disable-doc \
