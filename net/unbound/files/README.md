@@ -8,6 +8,9 @@ Unbound may be useful on consumer grade embedded hardware. It is *intended* to b
 
 This package builds on Unbounds capabilities with OpenWrt UCI. Not every Unbound option is in UCI, but rather, UCI simplifies the combination of related options. Unbounds native options are bundled and balanced within a smaller set of choices. Options include resources, DNSSEC, access control, and some TTL tweaking. The UCI also provides an escape option and work at the raw "unbound.conf" level.
 
+## Adblocking
+The UCI scripts will work with OpenWrt/pacakages/net/adblock (2.3.0 and above) if it is installed and enabled. Its all detected and integrated automatically. In brief, the adblock scripts create distinct local-zone files that are simply included in the unbound conf file during UCI generation. If you don't want this, then disable adblock or reconfigure adblock to not send these files to Unbound.
+
 ## HOW TO Integrate with DHCP
 Some UCI options and scripts help Unbound to work with DHCP servers to load the local DNS. The examples provided here are serial dnsmasq-unbound, parallel dnsmasq-unbound, and unbound scripted with odhcpd.
 
@@ -29,7 +32,8 @@ In this case, dnsmasq is not changed *much* with respect to the default OpenWRT/
 **/etc/config/dhcp**:
 
 	config dnsmasq
-		option noresolv '0'
+		option domain 'yourdomain'
+		option noresolv '1'
 		option resolvfile '/tmp/resolv.conf.auto'
 		option port '53'
 		list server '127.0.0.1#1053'
@@ -56,13 +60,12 @@ In this case, Unbound serves your local network directly for all purposes. It wi
 		...
 
 	config dhcp 'lan'
+		# dnsmasq may not issue DNS option if not std. configuration 
 		list dhcp_option 'option:dns-server,0.0.0.0'
 		...
 
 ### Only odhcpd
-Why use dnsmasq you might ask? Well test, try, and review. You can have Unbound and odhcpd only. When odhcpd configures as DHCP lease, it will call a script. The script provided with Unbound will read the lease file and enter DHCP-DNS records as much as dnsmasq once did.
-
-*note: You must install unbound-control. The lease file loads are done without starting, stopping, or re-writing conf files.*
+Why use dnsmasq you might ask? Well test, try, and review. You can have Unbound and odhcpd only. When odhcpd configures each DHCP lease, it will call a script. The script provided with Unbound will read the lease file and enter DHCP-DNS records as much as dnsmasq once did. You **must install** `unbound-control`, because the lease records are added and removed without starting, stopping, flushing cache, or re-writing conf files.
 
 *note: if you run the default LEDE/OpenWrt setup with dnsmasq and odhcpd, then use the link to dnsmasq. Unbound will pole dnsmasq. dnsmasq merges its lease file and odhcpd lease file.*
 
