@@ -10,10 +10,11 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.3.0"
+adb_ver="2.3.0-2"
 adb_enabled=1
 adb_debug=0
 adb_backup=0
+adb_backupdir="/mnt"
 adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\"^\"\$1\"\\\|[.]\"\$1)}"
 adb_fetch="/usr/bin/wget"
@@ -170,26 +171,17 @@ f_rmtemp()
 {
     rm -f "${adb_tmpload}"
     rm -f "${adb_tmpfile}"
-    if [ -d "${adb_tmpdir}" ]
-    then
-        rm -rf "${adb_tmpdir}"
-    fi
+    rm -rf "${adb_tmpdir}"
 }
 
 # f_rmdns: remove dns related files & directories
 #
 f_rmdns()
 {
-    if [ -d "${adb_dnsdir}" ]
+    if [ -n "${adb_dns}" ]
     then
         rm -f "${adb_dnsdir}/${adb_dnsprefix}"*
-    fi
-    if [ -d "${adb_backupdir}" ]
-    then
         rm -f "${adb_backupdir}/${adb_dnsprefix}"*.gz
-    fi
-    if [ -d "${adb_dnshidedir}" ]
-    then
         rm -rf "${adb_dnshidedir}"
     fi
     ubus call service delete "{\"name\":\"adblock_stats\",\"instances\":\"statistics\"}" 2>/dev/null
@@ -386,7 +378,7 @@ f_main()
 
         # basic pre-checks
         #
-        if [ "${enabled}" = "0" ] || [ -z "${url}" ] || [ -z "${src_rset}" ]
+        if [ ! "${enabled}" = "1" ] || [ -z "${url}" ] || [ -z "${src_rset}" ]
         then
             f_list remove
             continue
@@ -444,7 +436,7 @@ f_main()
         fi
         f_log "debug" "loop_2  ::: name: ${src_name}, rc: ${rc}"
 
-        # remove whitelist domains, sort and make them unique, final list preparation
+        # remove whitelist domains, final list preparation
         #
         if [ ${rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
         then
@@ -465,7 +457,7 @@ f_main()
         f_log "debug" "loop_3  ::: name: ${src_name}, rc: ${rc}"
     done
 
-    # sort block lists
+    # sort/unique overall
     #
     for src_name in $(ls -dASr "${adb_tmpdir}/${adb_dnsprefix}"* 2>/dev/null)
     do
