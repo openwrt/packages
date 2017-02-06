@@ -136,10 +136,10 @@ create_interface_dns() {
     {
       for address in $addresses ; do
         case $address in
-        fe80:*|169.254.*) 
+        fe80:*|169.254.*)
           echo "  # note link address $address"
           ;;
-          
+
         [1-9a-f]*:*[0-9a-f])
           # GA and ULA IP6 for HOST IN AAA records (ip command is robust)
           for name in $names ; do
@@ -164,10 +164,10 @@ create_interface_dns() {
     {
       for address in $addresses ; do
         case $address in
-        fe80:*|169.254.*) 
+        fe80:*|169.254.*)
           echo "  # note link address $address"
           ;;
-          
+
         "${ulaprefix%%:/*}"*)
           # Only this networks ULA and only hostname
           echo "  local-data: \"$UNBOUND_TXT_HOSTNAME. 120 IN AAAA $address\""
@@ -308,7 +308,7 @@ unbound_control() {
 
 
   {
-    # Amend your own extended clauses here like forward zones or disable 
+    # Amend your own extended clauses here like forward zones or disable
     # above (local, no encryption) and amend your own remote encrypted control
     echo
     echo "include: $UNBOUND_EXT_CONF" >> $UNBOUND_CONFFILE
@@ -645,10 +645,33 @@ unbound_access() {
 
   {
     # Amend your own "server:" stuff here
-    echo
-    echo "include: $UNBOUND_SRV_CONF"
+    echo "  include: $UNBOUND_SRV_CONF"
     echo
   } >> $UNBOUND_CONFFILE
+}
+
+##############################################################################
+
+unbound_adblock() {
+  # TODO: Unbound 1.6.0 added "tags" and "views"; lets work with adblock team
+  local adb_enabled adb_file
+
+  if [ ! -x /usr/bin/adblock.sh -o ! -x /etc/init.d/adblock ] ; then
+    adb_enabled=0
+  else
+    /etc/init.d/adblock enabled && adb_enabled=1 || adb_enabled=0
+  fi
+
+
+  if [ "$adb_enabled" -gt 0 ] ; then
+    {
+      # Pull in your selected openwrt/pacakges/net/adblock generated lists
+      for adb_file in $UNBOUND_VARDIR/adb_list.* ; do
+        echo "  include: $adb_file"
+      done
+      echo
+    } >> $UNBOUND_CONFFILE
+  fi
 }
 
 ##############################################################################
@@ -799,6 +822,7 @@ unbound_start() {
   if [ "$UNBOUND_B_MAN_CONF" -eq 0 ] ; then
     unbound_conf
     unbound_access
+    unbound_adblock
 
     if [ "$UNBOUND_D_DHCP_LINK" = "dnsmasq" ] ; then
       dnsmasq_link
