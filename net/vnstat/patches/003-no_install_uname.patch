@@ -1,0 +1,15 @@
+--- a/Makefile
++++ b/Makefile
+@@ -33,12 +33,6 @@ debug:
+ install:
+ 	@echo "Installing vnStat..."
+ 
+-# check that system is really Linux
+-	@if [ `uname` != "Linux" ]; \
+-	then echo "This isn't a Linux system. Maybe 'make bsdinstall' is what you need?"; \
+-	false; \
+-	fi
+-
+ # check that there's something to install
+ 	@if [ ! -f "src/vnstat" ] || [ ! -f "src/vnstatd" ]; \
+ 	then echo "Nothing to install, run make first."; \

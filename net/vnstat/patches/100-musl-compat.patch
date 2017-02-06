@@ -1,0 +1,10 @@
+--- a/src/common.h
++++ b/src/common.h
+@@ -22,6 +22,7 @@
+ #include <pwd.h>
+ #include <grp.h>
+ #include <libgen.h>
++#include <fcntl.h>
+ 
+ #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__FreeBSD_kernel__)
+ #include <sys/param.h>

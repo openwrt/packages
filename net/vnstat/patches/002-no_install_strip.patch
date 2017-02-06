@@ -1,0 +1,35 @@
+--- a/Makefile
++++ b/Makefile
+@@ -66,11 +66,11 @@ install:
+ 
+ # install everything else
+ 	install -d -m 755 $(BIN) $(SBIN) $(MAN)/man1 $(MAN)/man5
+-	install -s -m 755 src/vnstat $(BIN)
+-	install -s -m 755 src/vnstatd $(SBIN)
++	install -m 755 src/vnstat $(BIN)
++	install -m 755 src/vnstatd $(SBIN)
+ 	@if [ -f "src/vnstati" ]; \
+-	then echo install -s -m 755 src/vnstati $(BIN); \
+-	install -s -m 755 src/vnstati $(BIN); \
++	then echo install -m 755 src/vnstati $(BIN); \
++	install -m 755 src/vnstati $(BIN); \
+ 	fi
+ 
+ # update man pages, gzip it if previous version was done so	
+@@ -139,12 +139,12 @@ bsdinstall:
+ 
+ # install binaries
+ 	install -d -m 755 $(DESTDIR)/var/db/vnstat
+-	install -s -m 755 src/vnstat $(BIN_BSD)
+-	install -s -m 755 src/vnstatd $(SBIN_BSD)
++	install -m 755 src/vnstat $(BIN_BSD)
++	install -m 755 src/vnstatd $(SBIN_BSD)
+ 
+ 	@if [ -f "src/vnstati" ]; \
+-	then echo install -s -m 755 src/vnstati $(BIN_BSD); \
+-	install -s -m 755 src/vnstati $(BIN_BSD); \
++	then echo install -m 755 src/vnstati $(BIN_BSD); \
++	install -m 755 src/vnstati $(BIN_BSD); \
+ 	fi
+ 
+ # install default config if such doesn't exist
