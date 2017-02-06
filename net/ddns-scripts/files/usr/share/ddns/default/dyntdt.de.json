@@ -1,0 +1,6 @@
+{
+	"name": "dyntdt.de",
+	"ipv4": {
+		"url": "https://[USERNAME]:[PASSWORD]@ddns.tdt.de/update.php?HOSTNAME=[DOMAIN]&IP=[IP]"
+	}
+}
