@@ -183,10 +183,12 @@ setup_sa() {
     echo -e "  split_network include $locnet;\n}" >> $conf
 
   elif [ -z "$client" ]; then
-    manage_sa add $locnet $remnet $remote
+    config_list_foreach "$1" remote_exclude manage_nonesa add remote "$locnet"
+    config_list_foreach "$1" local_exclude manage_nonesa add local "$remnet"
+    manage_sa add "$locnet" "$remnet" $remote
     test $? -gt 0 -o $errno -gt 0 && return $errno
 
-    manage_fw add $confIntZone $confExtZone $remnet
+    manage_fw add $confIntZone $confExtZone "$remnet"
   fi
 }
 
@@ -339,8 +341,10 @@ destroy_sa() {
     errno=4; return 4
   fi
 
-  manage_sa del $locnet $remnet $2
-  manage_fw del $confIntZone $confExtZone $remnet
+  config_list_foreach "$1" remote_exclude manage_nonesa del remote "$locnet"
+  config_list_foreach "$1" local_exclude manage_nonesa del local "$remnet"
+  manage_sa del "$locnet" "$remnet" $2
+  manage_fw del $confIntZone $confExtZone "$remnet"
 }
 
 destroy_tunnel() {
