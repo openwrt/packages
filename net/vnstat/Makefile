@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vnstat
-PKG_VERSION:=1.16
+PKG_VERSION:=1.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://humdi.net/vnstat
-PKG_HASH:=420fec6c89229a100697f3189e824a1b81f7148dd651558f2ff03cc298308e8b
+PKG_MD5SUM:=a154b2196771e06a8accd1c24374009c
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 PKG_INSTALL:=1
@@ -86,7 +86,7 @@ define Package/vnstat/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/vnstatd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/cfg/vnstat.conf $(1)/etc/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/vnstat.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/vnstat.config $(1)/etc/config/vnstat
 	$(INSTALL_DIR) $(1)/etc/init.d
