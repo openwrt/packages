@@ -124,11 +124,9 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 ## Examples
 
 **change default dns backend to 'unbound':**
-<pre><code>
-switch to 'manual' unbound config in /etc/config/unbound:
-  [...]
-  option manual_conf '1'
+The Unbound UCI package will automatically pull in the adblock domain list files. The adblock scripts deposit the sorted and filtered download lists in `/var/lib/unbound` where Unbound can find them in its jail. If you use manual configuration for Unbound, then just include the following line in your `server:` clause.
 
+<pre><code>
 include adblock lists in /etc/unbound/unbound.conf:
   [...]
   include: "/var/lib/unbound/adb_list.*"
