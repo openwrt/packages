@@ -19,7 +19,7 @@ PKG_SOURCE_URL:=http://initd.org/psycopg/tarballs/PSYCOPG-2-6/
 PKG_MD5SUM:=4a392949ba31a378a18ed3e775a4693f
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/psycopg2-$(PKG_VERSION)
-PKG_BUILD_DEPENDS:=python libpq python-setuptools
+PKG_BUILD_DEPENDS:=python libpq python/host
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
