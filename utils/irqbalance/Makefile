@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=irqbalance
 PKG_VERSION:=1.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
@@ -27,7 +27,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/irqbalance
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+glib2
   TITLE:=IRQ usage balancing for multi-core systems
   URL:=https://github.com/Irqbalance/irqbalance
 endef
@@ -42,7 +41,7 @@ CONFIGURE_ARGS+= \
 	--disable-numa \
 	--with-libcap_ng=no \
 	--with-systemd=no \
-	--with-glib2=yes
+	--without-glib2
 
 define Package/irqbalance/install
 	$(INSTALL_DIR) $(1)/usr/sbin
