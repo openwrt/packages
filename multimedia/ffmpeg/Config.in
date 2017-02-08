@@ -1,8 +1,36 @@
 if PACKAGE_libffmpeg-custom
 
+comment "Build Licensing"
+
+config FFMPEG_CUSTOM_GPL
+	bool "Allow use of GPL code"
+	help
+		By default, FFMpeg is licensed under the LGPL. This builds a GPL licensed version.
+		Some software requires this, such as libx264.
+	default y
+
+config FFMPEG_CUSTOM_GPLV3
+	bool "Use (L)GPL v3"
+	help
+		Uses the LPGL v3 if GPL isn't selected, or GPL v3 if it is.
+
+config FFMPEG_CUSTOM_NONFREE
+	bool "Use code with complex licensing requirements; see help"
+	help
+		This sets --enable-nonfree, which in almost all cases, will prohibit redistribution of the resulting package.
+		Use this with care.
+	default n
+
 config FFMPEG_CUSTOM_PATENTED
 	bool "Include patented codecs and technologies"
 	default BUILD_PATENTED
+
+comment "Build Properties"
+
+config FFMPEG_CUSTOM_LARGE
+	bool "Build libffmpeg for performance instead of minimizing size on disk"
+	default y if ( x86_64 )
+	default n
 
 comment "Profiles"
 
@@ -105,8 +133,14 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 
 comment "External Libraries"
 
-config FFMPEG_CUSTOM_SELECT_mp3lame
-	bool "MP3 LAME"
+config FFMPEG_CUSTOM_SELECT_libfdk-aac
+	bool "Fraunhofer FDK AAC encoding library (libfdk-aac)"
+	depends on FFMPEG_CUSTOM_NONFREE
+	depends on FFMPEG_CUSTOM_PATENTED
+	depends on PACKAGE_fdk-aac
+
+config FFMPEG_CUSTOM_SELECT_libmp3lame
+	bool "Libmp3lame"
 	depends on FFMPEG_CUSTOM_PATENTED
 	depends on PACKAGE_lame-lib
 	select FFMPEG_CUSTOM_DECODER_mp3
@@ -114,11 +148,15 @@ config FFMPEG_CUSTOM_SELECT_mp3lame
 	select FFMPEG_CUSTOM_DEMUXER_mp3
 
 config FFMPEG_CUSTOM_SELECT_libopus
-	bool "Opus"
+	bool "Libopus"
 
-config FFMPEG_CUSTOM_SELECT_x264
-	bool "x264"
+config FFMPEG_CUSTOM_SELECT_libshine
+	bool "Libshine"
+
+config FFMPEG_CUSTOM_SELECT_libx264
+	bool "Libx264"
 	depends on FFMPEG_CUSTOM_PATENTED
+	depends on FFMPEG_CUSTOM_GPL
 	depends on PACKAGE_libx264
 	select FFMPEG_CUSTOM_DECODER_h264
 	select FFMPEG_CUSTOM_MUXER_h264
