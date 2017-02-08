@@ -1,8 +1,29 @@
 if PACKAGE_libffmpeg-custom
 
+comment "Build Licensing"
+
+config FFMPEG_CUSTOM_GPL
+	bool "Allow use of GPL code"
+	help
+		By default, FFMpeg is licensed under the LGPL. This builds a GPL licensed version.
+		Some software requires this, such as libx264.
+	default y
+
+config FFMPEG_CUSTOM_GPLV3
+	bool "Use (L)GPL v3"
+	help
+		Uses the LPGL v3 if GPL isn't selected, or GPL v3 if it is.
+
 config FFMPEG_CUSTOM_PATENTED
 	bool "Include patented codecs and technologies"
 	default BUILD_PATENTED
+
+comment "Build Properties"
+
+config FFMPEG_CUSTOM_LARGE
+	bool "Build libffmpeg for performance instead of minimizing size on disk"
+	default y if ( x86_64 )
+	default n
 
 comment "Profiles"
 
@@ -105,6 +126,9 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 
 comment "External Libraries"
 
+config FFMPEG_CUSTOM_SELECT_libshine
+	bool "Libshine"
+
 config FFMPEG_CUSTOM_SELECT_mp3lame
 	bool "MP3 LAME"
 	depends on FFMPEG_CUSTOM_PATENTED
@@ -119,6 +143,7 @@ config FFMPEG_CUSTOM_SELECT_libopus
 config FFMPEG_CUSTOM_SELECT_x264
 	bool "x264"
 	depends on FFMPEG_CUSTOM_PATENTED
+	depends on FFMPEG_CUSTOM_GPL
 	depends on PACKAGE_libx264
 	select FFMPEG_CUSTOM_DECODER_h264
 	select FFMPEG_CUSTOM_MUXER_h264
