@@ -38,7 +38,7 @@
 #.godaddy.com-v1	!!! Please install additional package "ddns-scripts_godaddy.com-v1"
 #.no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
 
-"afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]
+"afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
 "afraid.org-keyauth"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
 
 "all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
@@ -58,7 +58,7 @@
 
 "duckdns.org"		"http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"OK"
 
-"duiadns.net"		"http://[USERNAME]:[PASSWORD]@ipv6.duia.ro/dynamic.duia?host=[DOMAIN]&ip6=[IP]"
+"duiadns.net"		"http://ip.duiadns.net/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip6=[IP]"
 
 "dyn.com"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 "dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
