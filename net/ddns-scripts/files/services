@@ -84,7 +84,7 @@
 
 "duckdns.org"		"http://www.duckdns.org/update?domains=[USERNAME]&token=[PASSWORD]&ip=[IP]"	"OK"
 
-"duiadns.net"		"http://[USERNAME]:[PASSWORD]@ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&ip4=[IP]"
+"duiadns.net"		"http://ip.duiadns.net/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
 
 "dy.fi"			"http://[USERNAME]:[PASSWORD]@www.dy.fi/nic/update?hostname=[DOMAIN]"	"good|nochg"
 
