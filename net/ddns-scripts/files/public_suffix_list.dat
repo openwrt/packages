@@ -5527,6 +5527,9 @@ net.om
 org.om
 pro.om
 
+// onion : https://tools.ietf.org/html/rfc7686
+onion
+
 // org : https://en.wikipedia.org/wiki/.org
 org
 
@@ -6108,38 +6111,6 @@ store.st
 
 // su : https://en.wikipedia.org/wiki/.su
 su
-adygeya.su
-arkhangelsk.su
-balashov.su
-bashkiria.su
-bryansk.su
-dagestan.su
-grozny.su
-ivanovo.su
-kalmykia.su
-kaluga.su
-karelia.su
-khakassia.su
-krasnodar.su
-kurgan.su
-lenug.su
-mordovia.su
-msk.su
-murmansk.su
-nalchik.su
-nov.su
-obninsk.su
-penza.su
-pokrovsk.su
-sochi.su
-spb.su
-togliatti.su
-troitsk.su
-tula.su
-tuva.su
-vladikavkaz.su
-vladimir.su
-vologda.su
 
 // sv : http://www.svnet.org.sv/niveldos.pdf
 sv
@@ -10957,7 +10928,7 @@ elasticbeanstalk.cn-north-1.amazonaws.com.cn
 
 // Amazon S3 : https://aws.amazon.com/s3/
 // Submitted by Luke Wells <psl-maintainers@amazon.com>
-*.s3.amazonaws.com
+s3.amazonaws.com
 s3-ap-northeast-1.amazonaws.com
 s3-ap-northeast-2.amazonaws.com
 s3-ap-south-1.amazonaws.com
@@ -10966,6 +10937,7 @@ s3-ap-southeast-2.amazonaws.com
 s3-ca-central-1.amazonaws.com
 s3-eu-central-1.amazonaws.com
 s3-eu-west-1.amazonaws.com
+s3-eu-west-2.amazonaws.com
 s3-external-1.amazonaws.com
 s3-fips-us-gov-west-1.amazonaws.com
 s3-sa-east-1.amazonaws.com
@@ -10978,6 +10950,7 @@ s3.ap-south-1.amazonaws.com
 s3.cn-north-1.amazonaws.com.cn
 s3.ca-central-1.amazonaws.com
 s3.eu-central-1.amazonaws.com
+s3.eu-west-2.amazonaws.com
 s3.us-east-2.amazonaws.com
 s3.dualstack.ap-northeast-1.amazonaws.com
 s3.dualstack.ap-northeast-2.amazonaws.com
@@ -10987,6 +10960,7 @@ s3.dualstack.ap-southeast-2.amazonaws.com
 s3.dualstack.ca-central-1.amazonaws.com
 s3.dualstack.eu-central-1.amazonaws.com
 s3.dualstack.eu-west-1.amazonaws.com
+s3.dualstack.eu-west-2.amazonaws.com
 s3.dualstack.sa-east-1.amazonaws.com
 s3.dualstack.us-east-1.amazonaws.com
 s3.dualstack.us-east-2.amazonaws.com
@@ -11002,6 +10976,7 @@ s3-website.ap-northeast-2.amazonaws.com
 s3-website.ap-south-1.amazonaws.com
 s3-website.ca-central-1.amazonaws.com
 s3-website.eu-central-1.amazonaws.com
+s3-website.eu-west-2.amazonaws.com
 s3-website.us-east-2.amazonaws.com
 
 // Amune : https://amune.org/
@@ -11611,13 +11586,92 @@ us-2.evennode.com
 // Submitted by Peter Ruibal <public-suffix@fb.com>
 apps.fbsbx.com
 
-// Fastly Inc. http://www.fastly.com/
-// Submitted by Vladimir Vuksan <vladimir@fastly.com>
+// FAITID : https://faitid.org/
+// Submitted by Maxim Alzoba <tech.contact@faitid.org>
+// https://www.flexireg.net/stat_info
+ru.net
+adygeya.ru
+bashkiria.ru
+bir.ru
+cbg.ru
+com.ru
+dagestan.ru
+grozny.ru
+kalmykia.ru
+kustanai.ru
+marine.ru
+mordovia.ru
+msk.ru
+mytis.ru
+nalchik.ru
+nov.ru
+pyatigorsk.ru
+spb.ru
+vladikavkaz.ru
+vladimir.ru
+abkhazia.su
+adygeya.su
+aktyubinsk.su
+arkhangelsk.su
+armenia.su
+ashgabad.su
+azerbaijan.su
+balashov.su
+bashkiria.su
+bryansk.su
+bukhara.su
+chimkent.su
+dagestan.su
+east-kazakhstan.su
+exnet.su
+georgia.su
+grozny.su
+ivanovo.su
+jambyl.su
+kalmykia.su
+kaluga.su
+karacol.su
+karaganda.su
+karelia.su
+khakassia.su
+krasnodar.su
+kurgan.su
+kustanai.su
+lenug.su
+mangyshlak.su
+mordovia.su
+msk.su
+murmansk.su
+nalchik.su
+navoi.su
+north-kazakhstan.su
+nov.su
+obninsk.su
+penza.su
+pokrovsk.su
+sochi.su
+spb.su
+tashkent.su
+termez.su
+togliatti.su
+troitsk.su
+tselinograd.su
+tula.su
+tuva.su
+vladikavkaz.su
+vladimir.su
+vologda.su
+
+// Fastly Inc. : http://www.fastly.com/
+// Submitted by Fastly Security <security@fastly.com>
+map.fastly.net
+a.prod.fastly.net
+global.prod.fastly.net
 a.ssl.fastly.net
 b.ssl.fastly.net
 global.ssl.fastly.net
-a.prod.fastly.net
-global.prod.fastly.net
+fastlylb.net
+map.fastlylb.net
 
 // Featherhead : https://featherhead.xyz/
 // Submitted by Simon Menke <simon@featherhead.xyz>

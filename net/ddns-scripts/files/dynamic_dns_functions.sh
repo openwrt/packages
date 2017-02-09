@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.6"
+VERSION="2.7.6-13"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -886,7 +886,7 @@ send_update() {
 get_local_ip () {
 	# $1	Name of Variable to store local IP (LOCAL_IP)
 	local __CNT=0	# error counter
-	local __RUNPROG __DATA __URL __ERR __TMP
+	local __RUNPROG __DATA __URL __ERR
 
 	[ $# -ne 1 ] && write_log 12 "Error calling 'get_local_ip()' - wrong number of parameters"
 	write_log 7 "Detect local IP on '$ip_source'"
@@ -920,7 +920,7 @@ get_local_ip () {
 					#    remove      remove     remove      replace     replace
 					#     link     inet6 fxxx    sec      forever=>-1   / => ' ' to separate subnet from ip
 					sed "/link/d; /inet6 f/d; s/sec//g; s/forever/-1/g; s/\// /g" $DATFILE | \
-						awk '{ print $3" "$4" "$NF }' > ${DATFILE}_tmp
+						awk '{ print $3" "$4" "$NF }' > $ERRFILE	# temp reuse ERRFILE
 					# we only need    inet?   IP  prefered time
 
 					local __TIME4=0;  local __TIME6=0
@@ -936,8 +936,7 @@ get_local_ip () {
 							__DATA4="$__ADR"
 							__TIME4="$__TIME"
 						}
-					done < ${DATFILE}_tmp
-					rm ${DATFILE}_tmp
+					done < $ERRFILE
 				else
 					write_log 3 "ip Error: '$__ERR'"
 					write_log 7 "$(cat $ERRFILE)"		# report error

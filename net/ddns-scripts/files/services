@@ -42,7 +42,7 @@
 
 "able.or.kr"		"http://able.or.kr/ddns/src/update.php?hostname=[DOMAIN]&myip=[IP]&ddnsuser=[USERNAME]&pwd=[PASSWORD]"
 
-"afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]
+"afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
 "afraid.org-keyauth"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
 
 "all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
@@ -84,7 +84,7 @@
 
 "duckdns.org"		"http://www.duckdns.org/update?domains=[USERNAME]&token=[PASSWORD]&ip=[IP]"	"OK"
 
-"duiadns.net"		"http://[USERNAME]:[PASSWORD]@ipv4.duia.ro/dynamic.duia?host=[DOMAIN]&ip4=[IP]"
+"duiadns.net"		"http://ip.duiadns.net/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
 
 "dy.fi"			"http://[USERNAME]:[PASSWORD]@www.dy.fi/nic/update?hostname=[DOMAIN]"	"good|nochg"
 
