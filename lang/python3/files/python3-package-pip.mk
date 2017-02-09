@@ -8,6 +8,7 @@
 define Package/python3-pip
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON3_VERSION) pip module
+  VERSION:=$(PYTHON3_PIP_VERSION)
   DEPENDS:=+python3 +python3-setuptools +python-pip-conf
 endef
 
