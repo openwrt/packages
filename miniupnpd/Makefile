@@ -29,6 +29,13 @@ define Package/miniupnpd
   URL:=http://miniupnp.free.fr/
 endef
 
+define Package/miniupnpd/config
+config MINIUPNPD_IGDv2
+	bool
+	default y
+	prompt "Enable IGDv2"
+endef
+
 define Package/miniupnpd/conffiles
 /etc/config/upnpd
 endef
@@ -54,9 +61,12 @@ MAKE_FLAGS += \
 	LIBS="" \
 	CC="$(TARGET_CC) -DIPTABLES_143 \
 		-lip4tc $(if $(CONFIG_IPV6),-lip6tc) -luuid" \
-	CONFIG_OPTIONS="$(if $(CONFIG_IPV6),--ipv6) --leasefile" \
+	CONFIG_OPTIONS="--portinuse --leasefile \
+		$(if $(CONFIG_IPV6),--ipv6) \
+		$(if $(CONFIG_MINIUPNPD_IGDv2),--igd2)" \
 	-f Makefile.linux \
 	miniupnpd
+
 
 define Package/miniupnpd/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/config $(1)/etc/uci-defaults $(1)/etc/hotplug.d/iface $(1)/usr/share/miniupnpd
