@@ -58,7 +58,7 @@
 
 "duckdns.org"		"http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"OK"
 
-"duiadns.net"		"http://[USERNAME]:[PASSWORD]@ipv6.duia.ro/dynamic.duia?host=[DOMAIN]&ip6=[IP]"
+"duiadns.net"		"http://ip.duiadns.net/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip6=[IP]"
 
 "dyn.com"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 "dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
