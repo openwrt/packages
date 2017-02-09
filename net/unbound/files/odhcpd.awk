@@ -74,7 +74,8 @@
 
 
         while ( ( cmd | getline adr ) > 0 ) {
-          if ( substr( adr, 1, 5 ) <= "fd00:" ) {
+          if (( substr( adr, 1, 5 ) <= "fd00:" ) \
+          && ( index( adr, "via" ) == 0 )) {
             # GA or ULA routed addresses only (not LL or MC)
             sub( /\/.*/, "", adr ) ;
             adr = ( adr slaac ) ;
