@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icu4c
 PKG_VERSION:=58.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-58_2-src.tgz
 PKG_SOURCE_URL:=http://download.icu-project.org/files/$(PKG_NAME)/$(PKG_VERSION)
@@ -56,7 +56,7 @@ CONFIGURE_ARGS:= \
 	--disable-tools \
 	--disable-tests \
 	--disable-samples \
-	--with-cross-build="$(HOST_BUILD_DIR)" \
+	--with-cross-build="$(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)" \
 	--prefix=/usr
 
 HOST_CONFIGURE_CMD:= ./runConfigureICU
@@ -90,7 +90,14 @@ define Build/InstallDev
 		$(1)/usr/lib/
 endef
 
-define Host/install
+define Host/Install
+	$(INSTALL_DIR)  $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/config
+	$(INSTALL_DIR)  $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/bin
+	$(INSTALL_DIR)  $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/lib
+	$(INSTALL_DATA) $(HOST_BUILD_DIR)/config/icucross.* $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/config/
+	$(INSTALL_BIN)  $(HOST_BUILD_DIR)/bin/icupkg $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/bin/
+	$(INSTALL_BIN)  $(HOST_BUILD_DIR)/bin/pkgdata $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/bin/
+	$(CP)           $(HOST_BUILD_DIR)/lib/*.so* $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/lib/
 endef
 
 define Package/icu/install
@@ -98,7 +105,7 @@ define Package/icu/install
 		$(1)/usr/lib
 
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/*.so.* \
+		$(PKG_INSTALL_DIR)/usr/lib/*.so* \
 		$(1)/usr/lib/
 endef
 
