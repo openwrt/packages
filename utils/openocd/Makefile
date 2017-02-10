@@ -61,6 +61,8 @@ CONFIGURE_ARGS += \
 	--enable-dummy \
 	--enable-sysfsgpio
 
+TARGET_LDFLAGS+= $(if $(ICONV_FULL),-liconv)
+
 define Build/Compile
         +$(MAKE_VARS) \
         $(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/$(MAKE_PATH)
