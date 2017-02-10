@@ -43,11 +43,6 @@ endef
 CONFIGURE_ARGS += \
 	--with-ssl=openssl
 
-define Build/Configure
-	( cd $(PKG_BUILD_DIR); ./autogen.sh )
-	$(call Build/Configure/Default)
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
 	$(CP) \
