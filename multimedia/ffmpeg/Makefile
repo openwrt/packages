@@ -287,7 +287,7 @@ $(call Package/ffmpeg/Default)
  SECTION:=libs
  CATEGORY:=Libraries
  TITLE+= libraries
- DEPENDS+= @BUILD_PATENTED +zlib +libbz2
+ DEPENDS+= +libpthread +zlib +libbz2
  PROVIDES:= libffmpeg
 endef
 
@@ -317,6 +317,7 @@ endef
 define Package/libffmpeg-audio-dec
 $(call Package/libffmpeg/Default)
  TITLE+= (audio)
+ DEPENDS+= @BUILD_PATENTED
  VARIANT:=audio-dec
 endef
 
@@ -330,9 +331,15 @@ endef
 define Package/libffmpeg-full
 $(call Package/libffmpeg/Default)
  TITLE+= (full)
- DEPENDS+= +alsa-lib +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib +PACKAGE_libopus:libopus +PACKAGE_shine:shine
+ DEPENDS+= @BUILD_PATENTED +alsa-lib +PACKAGE_libopus:libopus
+ ifeq ($(CONFIG_SOFT_FLOAT),y)
+	DEPENDS+= +PACKAGE_shine:shine
+ else
+	DEPENDS+= +PACKAGE_lame-lib:lame-lib +PACKAGE_libx264:libx264
+ endif
  VARIANT:=full
 endef
+
 
 define Package/libffmpeg-full/description
 $(call Package/ffmpeg/Default/description)
@@ -344,6 +351,7 @@ endef
 define Package/libffmpeg-mini
 $(call Package/libffmpeg/Default)
  TITLE+= (mini)
+ DEPENDS+= @BUILD_PATENTED
  VARIANT:=mini
 endef
 
@@ -441,13 +449,20 @@ endif
 
 ifeq ($(BUILD_VARIANT),full)
 	FFMPEG_CONFIGURE+= \
+		$(if $(CONFIG_PACKAGE_libopus),--enable-libopus)
+  ifeq ($(CONFIG_SOFT_FLOAT),y)
+	FFMPEG_CONFIGURE+= \
+		--enable-small \
+		\
+		$(if $(CONFIG_PACKAGE_shine),--enable-libshine)
+  else
+	FFMPEG_CONFIGURE+= \
 		--enable-small \
 		--enable-gpl \
 		\
-		$(if $(CONFIG_PACKAGE_libopus),--enable-libopus) \
-		$(if $(CONFIG_PACKAGE_libx264),--enable-libx264) \
 		$(if $(CONFIG_PACKAGE_lame-lib),--enable-libmp3lame) \
-		$(if $(CONFIG_PACKAGE_shine),--enable-libshine)
+		$(if $(CONFIG_PACKAGE_libx264),--enable-libx264)
+  endif
 endif
 
 ifeq ($(BUILD_VARIANT),custom)
@@ -473,6 +488,10 @@ ifeq ($(BUILD_VARIANT),custom)
 	FFMPEG_CONFIGURE+= --enable-version3
   endif
 
+  ifeq ($(CONFIG_FFMPEG_CUSTOM_NONFREE),y)
+	FFMPEG_CONFIGURE+= --enable-nonfree
+  endif
+
   FFMPEG_CONFIGURE+= \
 	--disable-programs \
 	--disable-avfilter \
@@ -494,9 +513,14 @@ ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_adpcm),y)
 	--enable-decoder=adpcm_ms
 endif
 
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libshine),y)
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libfdk-aac),y)
   FFMPEG_CONFIGURE+= \
-	--enable-libshine --enable-encoder=libshine
+	--enable-libfdk-aac --enable-encoder=libfdk_aac
+endif
+
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libmp3lame),y)
+  FFMPEG_CONFIGURE+= \
+	--enable-libmp3lame --enable-encoder=libmp3lame
 endif
 
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libopus),y)
@@ -504,14 +528,14 @@ ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libopus),y)
 	--enable-libopus --enable-decoder=libopus --enable-encoder=libopus
 endif
 
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_x264),y)
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libshine),y)
   FFMPEG_CONFIGURE+= \
-	--enable-libx264
+	--enable-libshine --enable-encoder=libshine
 endif
 
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_mp3lame),y)
+ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libx264),y)
   FFMPEG_CONFIGURE+= \
-	--enable-libmp3lame
+	--enable-libx264 --enable-encoder=libx264
 endif
 
 endif
@@ -550,7 +574,6 @@ ifeq ($(BUILD_VARIANT),mini)
 
   FFMPEG_CONFIGURE+= \
 	--enable-small \
-	--enable-gpl \
 	\
 	--disable-programs \
 	--disable-avdevice \
@@ -561,8 +584,7 @@ ifeq ($(BUILD_VARIANT),mini)
 	--disable-everything \
 	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_MINI_DECODERS)) \
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_MINI_DEMUXERS)) \
-	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_MINI_PROTOCOLS)) \
-
+	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_MINI_PROTOCOLS))
 endif
 
 ifneq ($(CONFIG_TARGET_x86),)
@@ -588,6 +610,17 @@ define Build/InstallDev/custom
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avformat,avutil}.pc $(1)/usr/lib/pkgconfig/
 endef
 
+# Soft float is LGPL (no libpostproc); Hard float is GPL (yes libpostproc)
+ifeq ($(CONFIG_SOFT_FLOAT),y)
+define Build/InstallDev/full
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale} $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.{a,so*} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.pc $(1)/usr/lib/pkgconfig/
+endef
+else
 define Build/InstallDev/full
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avdevice,avfilter,avformat,avutil,postproc,swresample,swscale} $(1)/usr/include/
@@ -596,6 +629,7 @@ define Build/InstallDev/full
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avfilter,avformat,avutil,postproc,swresample,swscale}.pc $(1)/usr/lib/pkgconfig/
 endef
+endif
 
 define Build/InstallDev/mini
 	$(INSTALL_DIR) $(1)/usr/include
@@ -652,10 +686,18 @@ define Package/libffmpeg-custom/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avformat,avutil}.so.* $(1)/usr/lib/
 endef
 
+# Soft float is LGPL (no libpostproc); Hard float is GPL (yes libpostproc)
+ifeq ($(CONFIG_SOFT_FLOAT),y)
+define Package/libffmpeg-full/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.so.* $(1)/usr/lib/
+endef
+else
 define Package/libffmpeg-full/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avutil,postproc,swresample,swscale}.so.* $(1)/usr/lib/
 endef
+endif
 
 define Package/libffmpeg-mini/install
 	$(INSTALL_DIR) $(1)/usr/lib
