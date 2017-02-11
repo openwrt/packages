@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2017 Shane Peelar
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,14 +7,14 @@
 
 include $(TOPDIR)/rules.mk
 
-BASE_VERSION:=2.4.0
+BASE_VERSION:=2.5.0
 
 PKG_NAME:=fish
 PKG_VERSION:=$(BASE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(BASE_VERSION).tar.gz
-PKG_SOURCE_URL:=https://fishshell.com/files/2.4.0/
+PKG_SOURCE_URL:=https://fishshell.com/files/$(BASE_VERSION)/
 PKG_SHA1SUM:=c5981245b45ea61b765008299b5ac477657089c3
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BASE_VERSION)
 
@@ -24,7 +24,6 @@ PKG_MAINTAINER:=Shane Peelar <lookatyouhacker@gmail.com>
 
 PKG_FIXUP:=autoreconf
 
-PKG_CHECK_FORMAT_SECURITY:=0
 include $(INCLUDE_DIR)/package.mk
 
 define Package/fish
@@ -42,18 +41,10 @@ define Package/fish/description
 endef
 
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--without-included-pcre2)
-endef
+CONFIG_ARGS+=--without-included-pcre2
 
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		SHELL="/bin/sh" \
-		all install
-endef
+TARGET_MAKE_FLAGS+='SHELL="/bin/sh"'
+PKG_INSTALL:=1
 
 define Package/fish/postinst
 #!/bin/sh
@@ -63,7 +54,7 @@ endef
 
 define Package/fish/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/fish{_indent,_key_reader} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/fish{,_indent,_key_reader} $(1)/usr/bin/
 	$(CP) -r $(PKG_INSTALL_DIR)/usr/share $(1)/usr
 endef
 
