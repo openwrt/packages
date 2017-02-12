@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=SocketMan
 PKG_SOURCE_PROTO:=git
 PKG_MAINTAINER:=Cucumber Bot <build_bot@cucumberwifi.io>
-PKG_LICENSE:=GPL-3
+PKG_LICENSE:=GPL-2
 PKG_SOURCE_VERSION:=02dabd47aa5297db19c9e1d1ef716d2e2a4b772b
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE_URL:=https://github.com/cucumber-tony/SocketMan.git
