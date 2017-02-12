@@ -176,6 +176,7 @@ olsrd_write_plparam() {
 		else
 			warning_invalid_value olsrd "$cfg" "NonOlsrIf"
 		fi
+
 		[ -z "$ifname" ] || value=$ifname
 	fi
 
@@ -184,14 +185,15 @@ olsrd_write_plparam() {
 
 config_update_schema() {
 	local schema_varname="$1"
-	validate_varname "$schema_varname" || return 1
 	local command="$2"
-	validate_varname "$command" || return 1
 	local option="$3"
-	validate_varname "$option" || return 1
 	local value="$4"
 	local schema
 	local cur_option
+
+	validate_varname "$schema_varname" || return 1
+	validate_varname "$command" || return 1
+	validate_varname "$option" || return 1
 
 	case "$varname" in
 		*_LENGTH) return 0;;
@@ -393,6 +395,8 @@ olsrd_write_olsrd() {
 
 	config_get smartgateway "$cfg" SmartGateway
 	config_get smartgatewayuplink "$cfg" SmartGatewayUplink
+	export smartgateway
+	export smartgatewayuplink
 
 	config_write_options "$OLSRD_OLSRD_SCHEMA" "$cfg" olsrd_write_option
 	echo
@@ -599,13 +603,13 @@ olsrd_write_interface_defaults() {
 
 olsrd_update_schema() {
 	local command="$1"
-	validate_varname "$command" || return 0
 	local varname="$2"
-	validate_varname "$varname" || return 0
 	local value="$3"
 	local cfg="$CONFIG_SECTION"
 	local cfgt
-	local cur_varname
+
+	validate_varname "$command" || return 0
+	validate_varname "$varname" || return 0
 
 	config_get cfgt "$cfg" TYPE
 	case "$cfgt" in
@@ -643,7 +647,7 @@ get_wan_ifnames()
 {
 	local wanifnames word catch_next
 
-	which ip >/dev/null || return 1
+	command -v ip >/dev/null || return 1
 
 	set -- $( ip route list exact 0.0.0.0/0 table all )
 	for word in $*; do
@@ -672,8 +676,10 @@ get_wan_ifnames()
 
 olsrd_setup_smartgw_rules() {
 	local funcname="olsrd_setup_smartgw_rules"
-	# Check if ipip is installed
-	[ -e /etc/modules.d/[0-9]*-ipip ] || {
+	local file=
+
+	for file in /etc/modules.d/[0-9]*-ipip; do :; done
+	[ -e "$file" ] || {
 		log "$funcname() Warning: kmod-ipip is missing. SmartGateway will not work until you install it."
 		return 1
 	}
@@ -686,8 +692,8 @@ olsrd_setup_smartgw_rules() {
 		nowan=0
 	fi
 
-	IP4T=$(which iptables)
-	IP6T=$(which ip6tables)
+	IP4T="$( command -v iptables )"
+	IP6T="$( command -v ip6tables )"
 
 	# Delete smartgw firewall rules first
 	if [ "$UCI_CONF_NAME" = "olsrd6" ]; then
@@ -709,8 +715,10 @@ olsrd_setup_smartgw_rules() {
 		while $IP4T -t nat -D postrouting_rule -o tnl_+ -j MASQUERADE 2> /dev/null; do :;done
 	fi
 
+	# var 'smartgateway' + 'smartgatewayuplink' build in olsrd_write_olsrd()
 	if [ "$smartgateway" = "yes" ]; then
 		log "$funcname() Notice: Inserting firewall rules for SmartGateway"
+
 		if [ ! "$smartgatewayuplink" = "none" ]; then
 			if [ "$smartgatewayuplink" = "ipv4" ]; then
 				# Allow everything to be forwarded to tnl_+ and use NAT for it
