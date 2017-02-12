@@ -64,6 +64,7 @@ UNBOUND_PIDFILE=/var/run/unbound.pid
 
 UNBOUND_SRV_CONF=$UNBOUND_VARDIR/unbound_srv.conf
 UNBOUND_EXT_CONF=$UNBOUND_VARDIR/unbound_ext.conf
+UNBOUND_DHCP_CONF=$UNBOUND_VARDIR/unbound_dhcp.conf
 UNBOUND_CONFFILE=$UNBOUND_VARDIR/unbound.conf
 
 UNBOUND_KEYFILE=$UNBOUND_VARDIR/root.key
@@ -708,6 +709,16 @@ unbound_hostname() {
     if [ "$UNBOUND_D_LAN_FQDN" -gt 0 -o "$UNBOUND_D_WAN_FQDN" -gt 0 ] ; then
       config_load dhcp
       config_foreach create_interface_dns dhcp
+    fi
+
+
+    if [ -f "$UNBOUND_DHCP_CONF" ] ; then
+      {
+        # Seed DHCP records because dhcp scripts trigger externally
+        # Incremental Unbound restarts may drop unbound-control add records
+        echo "  include: $UNBOUND_DHCP_CONF"
+        echo
+      } >> $UNBOUND_CONFFILE
     fi
   fi
 }
