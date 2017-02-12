@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.3.0-2"
+adb_ver="2.3.0-3"
 adb_enabled=1
 adb_debug=0
 adb_backup=0
@@ -18,8 +18,9 @@ adb_backupdir="/mnt"
 adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\"^\"\$1\"\\\|[.]\"\$1)}"
 adb_fetch="/usr/bin/wget"
-adb_fetchparm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --timeout=5 --no-check-certificate -O"
+adb_fetchparm="--no-config --quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
 adb_dnslist="dnsmasq unbound"
+adb_dnsprefix="adb_list"
 
 # f_envload: load adblock environment
 #
@@ -49,12 +50,14 @@ f_envload()
                     dnsmasq)
                         adb_dns="dnsmasq"
                         adb_dnsdir="/tmp/dnsmasq.d"
+                        adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
                         adb_dnsformat="awk '{print \"local=/\"\$0\"/\"}'"
                         break 2
                         ;;
                     unbound)
                         adb_dns="unbound"
                         adb_dnsdir="/var/lib/unbound"
+                        adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
                         adb_dnsformat="awk '{print \"local-zone: \042\"\$0\"\042 static\"}'"
                         break 2
                         ;;
@@ -64,11 +67,8 @@ f_envload()
         sleep 1
         cnt=$((cnt+1))
     done
-    if [ -n "${adb_dns}" ]
+    if [ -z "${adb_dns}" ]
     then
-        adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
-        adb_dnsprefix="adb_list"
-    else
         f_log "error" "status  ::: no active/supported DNS backend found"
     fi
 
@@ -134,7 +134,7 @@ f_envcheck()
     if [ ! -x "${adb_fetch}" ] && [ "$(readlink -fn "/bin/wget")" = "/bin/uclient-fetch" ]
     then
         adb_fetch="/bin/uclient-fetch"
-        adb_fetchparm="-q --timeout=5 --no-check-certificate -O"
+        adb_fetchparm="-q --timeout=10 --no-check-certificate -O"
     fi
     if [ -z "${adb_fetch}" ] || [ -z "${adb_fetchparm}" ] || [ ! -x "${adb_fetch}" ] || [ "$(readlink -fn "${adb_fetch}")" = "/bin/busybox" ]
     then
@@ -378,7 +378,7 @@ f_main()
 
         # basic pre-checks
         #
-        if [ ! "${enabled}" = "1" ] || [ -z "${url}" ] || [ -z "${src_rset}" ]
+        if [ "${enabled}" != "1" ] || [ -z "${url}" ] || [ -z "${src_rset}" ]
         then
             f_list remove
             continue
