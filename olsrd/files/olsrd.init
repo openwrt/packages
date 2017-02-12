@@ -475,32 +475,48 @@ olsrd_write_hna6() {
 	return 0
 }
 
-olsrd_write_loadplugin() {
-	local funcname="olsrd_write_loadplugin"
+find_most_recent_plugin_libary()
+{
+	local library="$1"
+	local file unixtime
+
+	for file in "/lib/$library"* "/usr/lib/$library"* "/usr/local/lib/$library"*; do {
+		[ -f "$file" ] && {
+			unixtime="$( date +%s -r "$file" )"
+			echo "$unixtime $file"
+		}
+	} done | sort -n | tail -n1 | cut -d' ' -f2
+}
+
+olsrd_write_loadplugin()
+{
+	local funcname='olsrd_write_loadplugin'
 	local cfg="$1"
+	local ignore name suffix lat lon latlon_infile
+
 	validate_varname "$cfg" || return 0
-	local ignore
-	local name
-	local suffix
-	local lat
-	local lon
-	local latlon_infile
 
 	config_get_bool ignore "$cfg" ignore 0
 	[ "$ignore" -ne 0 ] && return 0
 
+	# e.g. olsrd_txtinfo.so.1.1 or 'olsrd_txtinfo'
 	config_get library "$cfg" library
-	if ! validate_olsrd_option "$library"; then
-		warning_invalid_value olsrd "$cfg" "library"
-		return 0
-	fi
-	if ! [ -x "/lib/$library" -o -x "/usr/lib/$library" -o -x "/usr/local/lib/$library" ]; then
+
+	library="$( find_most_recent_plugin_libary "$library" )"
+	if [ -z "$library" ]; then
 		log "$funcname() Warning: Plugin library '$library' not found, skipped"
 		return 0
+	else
+		library="$( basename "$library" )"
 	fi
 
+	validate_olsrd_option "$library" || {
+		warning_invalid_value olsrd "$cfg" 'library'
+		return 0
+	}
+
 	case "$library" in
-		olsrd_nameservice.*)
+		'olsrd_nameservice.'*)
 			config_get name "$cfg" name
 			[ -z "$name" ] && config_set "$cfg" name $SYSTEM_HOSTNAME
 
@@ -527,7 +543,7 @@ olsrd_write_loadplugin() {
 
 			[ -z "$latlon_file" ] && config_set "$cfg" latlon_file '/var/run/latlon.js'
 		;;
-		olsrd_watchdog.*)
+		'olsrd_watchdog.'*)
 			config_get wd_file "$cfg" file
 		;;
 	esac
@@ -535,8 +551,6 @@ olsrd_write_loadplugin() {
 	echo -n "${N}LoadPlugin \"$library\"${N}{"
 	config_write_options "$OLSRD_LOADPLUGIN_SCHEMA" "$cfg" olsrd_write_plparam "${T}"
 	echo "${N}}"
-
-	return 0
 }
 
 olsrd_write_interface() {
