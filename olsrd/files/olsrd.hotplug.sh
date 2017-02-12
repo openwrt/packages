@@ -15,14 +15,14 @@ olsrd_list_configured_interfaces()
 			;;
 		esac
 
-		i=$(( $i + 1 ))
+		i=$(( i + 1 ))
 	} done
 }
 
 olsrd_interface_already_in_config()
 {
 	# e.g.: 'Interface "eth0.1" "eth0.2" "wlan0"'
-	if grep -s ^'Interface ' '/var/etc/$OLSRD.conf' | grep -q "\"$DEVICE\""; then
+	if grep -s ^'Interface ' "/var/etc/$OLSRD.conf" | grep -q "\"$DEVICE\""; then
 		logger -t olsrd_hotplug -p daemon.debug "[OK] already_active: '$INTERFACE' => '$DEVICE'"
 		return 0
 	else
