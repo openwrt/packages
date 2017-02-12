@@ -717,7 +717,7 @@ olsrd_setup_smartgw_rules() {
 				$IP4T -I forwarding_rule -o tnl_+ -j ACCEPT
 				$IP4T -t nat -I postrouting_rule -o tnl_+ -j MASQUERADE
 				# Allow forwarding from tunl0 to (all) wan-interfaces
-				if [ "$nowan"="0" ]; then
+				if [ "$nowan" = '0' ]; then
 					for IFACE in $wanifnames; do
 						$IP4T -A forwarding_rule -i tunl0 -o $IFACE -j ACCEPT
 					done
@@ -728,7 +728,7 @@ olsrd_setup_smartgw_rules() {
 				done
 			elif [ "$smartgatewayuplink" = "ipv6" ]; then
 				$IP6T -I forwarding_rule -o tnl_+ -j ACCEPT
-				if [ "$nowan"="0" ]; then
+				if [ "$nowan" = '0' ]; then
 					for IFACE in $wanifnames; do
 						$IP6T -A forwarding_rule -i tunl0 -o $IFACE -j ACCEPT
 					done
@@ -740,7 +740,7 @@ olsrd_setup_smartgw_rules() {
 				$IP4T -t nat -I postrouting_rule -o tnl_+ -j MASQUERADE
 				for IPT in $IP4T $IP6T; do
 					$IPT -I forwarding_rule -o tnl_+ -j ACCEPT
-					if [ "$nowan"="0" ]; then
+					if [ "$nowan" = '0' ]; then
 						for IFACE in $wanifnames; do
 							$IPT -A forwarding_rule -i tunl0 -o $IFACE -j ACCEPT
 						done
