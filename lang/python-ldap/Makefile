@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 OpenWrt.org
+# Copyright (C) 2016-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ldap
-PKG_VERSION:=2.4.25
+PKG_VERSION:=2.4.30
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dmitry Trefilov <the-alien@live.ru>
 PKG_LICENSE:=Python-style
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/p/$(PKG_NAME)
-PKG_MD5SUM:=21523bf21dbe566e0259030f66f7a487
+PKG_SOURCE_URL:=https://pypi.python.org/packages/84/61/36ca1a3474aee17ee975deaea51ae8725e49af29ca4c3e88743cd454d2bd
+PKG_MD5SUM:=948342ab28b9a4520ff421bf676b7a7b
 
 PKG_BUILD_DEPENDS:=python libopenldap
 
