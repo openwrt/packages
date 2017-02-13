@@ -66,8 +66,8 @@ CONFIGURE_ARGS:= \
 HOST_CONFIGURE_CMD:= ./runConfigureICU
 HOST_CONFIGURE_ARGS:= \
 	Linux/gcc \
-	CC="$(HOSTCC)" \
-	CXX="$(HOSTCXX)" \
+	CC="$(HOSTCC_NOCACHE)" \
+	CXX="$(HOSTCXX_NOCACHE)" \
 	--disable-debug \
 	--enable-release \
 	--enable-shared \
@@ -77,7 +77,7 @@ HOST_CONFIGURE_ARGS:= \
 	--disable-tracing \
 	--disable-extras \
 	--enable-dyload \
-	--prefix=$(HOST_BUILD_PREFIX)
+	--prefix=$(STAGING_DIR_HOSTPKG)
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
