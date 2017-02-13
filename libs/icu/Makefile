@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icu4c
 PKG_VERSION:=58.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-58_2-src.tgz
 PKG_SOURCE_URL:=http://download.icu-project.org/files/$(PKG_NAME)/$(PKG_VERSION)
@@ -41,9 +41,13 @@ define Package/icu
 endef
 
 CONFIGURE_CMD:= ./runConfigureICU
-CONFIGURE_VARS:=
 CONFIGURE_ARGS:= \
 	Linux/gcc \
+	CC="$(TARGET_CC)" \
+	CXX="$(TARGET_CXX)" \
+	--target=$(GNU_TARGET_NAME) \
+	--host=$(GNU_TARGET_NAME) \
+	--build=$(GNU_HOST_NAME) \
 	--disable-debug \
 	--enable-release \
 	--enable-shared \
@@ -60,9 +64,10 @@ CONFIGURE_ARGS:= \
 	--prefix=/usr
 
 HOST_CONFIGURE_CMD:= ./runConfigureICU
-HOST_CONFIGURE_VARS:=
 HOST_CONFIGURE_ARGS:= \
 	Linux/gcc \
+	CC="$(HOSTCC)" \
+	CXX="$(HOSTCXX)" \
 	--disable-debug \
 	--enable-release \
 	--enable-shared \
