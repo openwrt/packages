@@ -472,13 +472,18 @@ olsrd_write_hna6() {
 
 find_most_recent_plugin_libary()
 {
-	local library="$1"
+	local library="$1"	# e.g. 'olsrd_dyn_gw' or 'olsrd_txtinfo.so.1.1'
 	local file unixtime
 
 	for file in "/lib/$library"* "/usr/lib/$library"* "/usr/local/lib/$library"*; do {
 		[ -f "$file" ] && {
-			unixtime="$( date +%s -r "$file" )"
-			echo "$unixtime $file"
+			# make sure that we do not select
+			# 'olsrd_dyn_gw_plain.so.0.4' if user wants
+			# 'olsrd_dyn_gw.so.0.5' -> compare part before 1st dot
+			[ "${library%%.*}" = "${file%%.*}" ] && {
+				unixtime="$( date +%s -r "$file" )"
+				echo "$unixtime $file"
+			}
 		}
 	} done | sort -n | tail -n1 | cut -d' ' -f2
 }
