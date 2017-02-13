@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 Jason A. Donenfeld <Jason@zx2c4.com>
+# Copyright (C) 2016-2017 Jason A. Donenfeld <Jason@zx2c4.com>
 # Copyright (C) 2016 Baptiste Jonglez <openwrt@bitsofnetworks.org>
 # Copyright (C) 2016-2017 Dan Luedtke <mail@danrl.com>
 #
@@ -11,12 +11,12 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=wireguard
 
-PKG_VERSION:=0.0.20170115
+PKG_VERSION:=0.0.20170214
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WireGuard-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://git.zx2c4.com/WireGuard/snapshot/
-PKG_MD5SUM:=7e5f9f4699a2d4ace90d0df5d81bf0f67205ee08c45b95e0acc379bedef5ffe8
+PKG_HASH:=1e4ee213d2a5ac672c952c59e9c64d6d7d5dc3e21c003aee30d75208237e8bf5
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -35,7 +35,8 @@ define Package/wireguard/Default
   CATEGORY:=Network
   URL:=https://www.wireguard.io
   MAINTAINER:=Baptiste Jonglez <openwrt@bitsofnetworks.org>, \
-              Dan Luedtke <mail@danrl.com>
+              Dan Luedtke <mail@danrl.com>, \
+              Jason A. Donenfeld <Jason@zx2c4.com>
 endef
 
 define Package/wireguard/Default/description
