@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-statici18n
-PKG_VERSION:=1.2.1
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/72/76/6ee13019e1691bff6b759136068ee77fcc2982b700135caa134030937b28/
-PKG_MD5SUM:=67cac19909dd3272ae1fc73ad8d1dca3
+PKG_SOURCE_URL:=https://pypi.python.org/packages/86/6b/2c2e86a7e144ba7b064119eaafb2c8c67665c2a0e722f0819daa9657e551/
+PKG_MD5SUM:=61e22a6f2399f9f829308e4d91b36ee0
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk

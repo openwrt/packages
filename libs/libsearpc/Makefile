@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsearpc
-PKG_VERSION:=5.1.4
+PKG_VERSION:=6.0.7
 PKG_RELEASE=$(PKG_SOURCE_VERSION)-1
 PKG_LICENSE:=GPL-3.0
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-compressor
-PKG_VERSION:=2.1
+PKG_VERSION:=2.1.1
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=django_compressor-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/23/46/2c7d582255969ad5259937f5f9e14aec1f3349d0fc0651129330918d1c6d/
+PKG_SOURCE_URL:=https://pypi.python.org/packages/38/58/03098a826062b856956c7169a8f778ec2b8e2767ddc63da0629062df5621/
 PKG_BUILD_DIR:=$(BUILD_DIR)/django_compressor-$(PKG_VERSION)/
-PKG_MD5SUM:=21ecfe4e8615eae64f7068a5599df9af
+PKG_MD5SUM:=5e74141076b70272149ed07e6ce0ea56
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk

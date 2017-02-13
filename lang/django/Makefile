@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
-PKG_VERSION:=1.8.12
+PKG_VERSION:=1.8.17
 PKG_RELEASE=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/django/django.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=c168aeba175dbb92c615460a360cb1ea978de5d3
+PKG_SOURCE_VERSION:=d3d12fc11da56e4ea8af37a22a9a0aa6579ab2d5
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_BUILD_DEPENDS:=python python-setuptools
 
