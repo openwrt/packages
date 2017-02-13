@@ -17,7 +17,7 @@ PKG_MD5SUM:=9b90522b31f5628c2e0f55dda348e558
 
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING.LESSER
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
+PKG_MAINTAINER:=Eduardo Abinader <eduardoabinader@gmail.com>
 
 PKG_INSTALL:=1
 
