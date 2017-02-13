@@ -1,0 +1,44 @@
+diff --git a/configure b/configure
+index dda98b3..54be3c3 100755
+--- a/configure
++++ b/configure
+@@ -12,7 +12,7 @@ else
+   exit 1
+ fi
+ 
+-options="ipv6"
++options="ipv6 cross_compile"
+ 
+ for opt in $options; do
+   eval enable_$opt=
+@@ -26,6 +26,7 @@ enable() {
+   opt=`echo "$1" | sed 's/^--[^-]*-//'`
+   case "$opt" in
+     ipv6) ;;
++    cross_compile) ;;
+     *) echo "configure: unrecognized option \`$1'" >&2; exit 1;;
+   esac
+   eval enable_$opt=$2
+@@ -47,6 +48,7 @@ where options are:
+  --help - print this help and exit
+ Optional features (all enabled by default if system supports a feature):
+   ipv6 - enable/disable IP version 6 (IPv6) support
++  cross_compile - enable/disable cross compile support
+ EOF
+       exit 0
+       ;;
+diff --git a/configure.lib b/configure.lib
+index 541177a..5af49db 100644
+--- a/configure.lib
++++ b/configure.lib
+@@ -46,6 +46,10 @@ ac_ign() {
+ # ac_run command...
+ # captures output in conftest.out
+ ac_run() {
++  # cross compile does not running target
++  if [ n != "$enable_cross_compile" ]; then
++    return 0
++  fi
+   # apparently UnixWare (for one) /bin/sh optimizes the following "if"
+   # "away", by checking if there's such a command BEFORE redirecting
+   # output.  So error message (like "gcc: command not found") goes
