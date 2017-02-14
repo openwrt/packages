@@ -1,0 +1,22 @@
+--- a/edge.c	2015-03-25 00:35:32.375981597 +0000
++++ b/edge.c	2015-03-27 04:54:56.271981597 +0000
+@@ -2162,6 +2162,7 @@
+     char    ip_mode[N2N_IF_MODE_SIZE]="static";
+     char    ip_addr[N2N_NETMASK_STR_SIZE] = "";
+     char    netmask[N2N_NETMASK_STR_SIZE]="255.255.255.0";
++    char    pidfile[512];
+     int     mtu = DEFAULT_MTU;
+     int     got_s = 0;
+ 
+@@ -2436,6 +2436,11 @@
+     }
+ #endif /* #ifdef N2N_HAVE_DAEMON */
+ 
++    sprintf(pidfile, "/var/run/%s.pid", tuntap_dev_name);
++    FILE *fp = fopen(pidfile, "w");
++    fprintf(fp, "%d", getpid());
++    fclose(fp);
++    
+ 
+     traceEvent( TRACE_NORMAL, "Starting n2n edge %s %s", n2n_sw_version, n2n_sw_buildDate );
+ 

@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+
+START=90
+STOP=10
+
+run_supernode() {
+        local enable port
+        config_get_bool enable $1 enable
+        config_get port $1 port
+
+        [ "$enable" = 1 ] && {
+                /usr/sbin/supernode -l $port
+        }
+}
+
+start() {
+        config_load n2n
+        config_foreach run_supernode supernode
+}
+
+stop() {
+        killall -SIGTERM supernode >/dev/null 2>&1
+}
