@@ -477,6 +477,7 @@ find_most_recent_plugin_libary()
 
 	for file in "/lib/$library"* "/usr/lib/$library"* "/usr/local/lib/$library"*; do {
 		[ -f "$file" ] && {
+			file="$( basename "$file" )"
 			# make sure that we do not select
 			# 'olsrd_dyn_gw_plain.so.0.4' if user wants
 			# 'olsrd_dyn_gw.so.0.5' -> compare part before 1st dot
