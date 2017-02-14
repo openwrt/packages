@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-constance
-PKG_VERSION:=1.2
+PKG_VERSION:=1.3.4
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/0a/ff/1c1caae2b7be9c26f2aee0703236998e22cf5557fa56726347b5afa149d1/
-PKG_MD5SUM:=f9f8e527df50b0a1533149d9be0b814b
+PKG_SOURCE_URL:=https://pypi.python.org/packages/0c/19/74c6bbf29a7882bab377db7a4ca30b43e09173dc1e6cabe163dc8d6a3931/
+PKG_MD5SUM:=2e197701ed93082e5fa41df0f4742294
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
