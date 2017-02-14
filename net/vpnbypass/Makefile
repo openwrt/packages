@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vpnbypass
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 
@@ -32,8 +32,8 @@ define Package/$(PKG_NAME)/conffiles
 endef
 
 define Build/Prepare
-	sed -i "s|^\(PKG_NAME\).*|\1='$(PKG_NAME)'|" ./files/vpnbypass.init
-	sed -i "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" ./files/vpnbypass.init
+#	sed -i "s|^\(PKG_NAME\).*|\1='$(PKG_NAME)'|" ./files/vpnbypass.init
+#	sed -i "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" ./files/vpnbypass.init
 endef
 
 define Build/Configure
