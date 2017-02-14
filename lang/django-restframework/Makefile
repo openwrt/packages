@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-restframework
-PKG_VERSION:=3.3.3
+PKG_VERSION:=3.5.4
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=djangorestframework-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/d/djangorestframework/
+PKG_SOURCE_URL:=https://pypi.python.org/packages/e9/24/86dfe19fb82a40a3d7a4c50371a8bd85b9277d3506698bf332a6d41d08f6/
 PKG_BUILD_DIR:=$(BUILD_DIR)/djangorestframework-$(PKG_VERSION)
-PKG_MD5SUM:=6f5ee9646e7fa87dad4385d3c7e7678d
+PKG_MD5SUM:=979808c387dad8d0ebb6025c39dc7b94
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
