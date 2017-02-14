@@ -32,8 +32,6 @@ define Package/$(PKG_NAME)/conffiles
 endef
 
 define Build/Prepare
-#	sed -i "s|^\(PKG_NAME\).*|\1='$(PKG_NAME)'|" ./files/vpnbypass.init
-#	sed -i "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" ./files/vpnbypass.init
 endef
 
 define Build/Configure
