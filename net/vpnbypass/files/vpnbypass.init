@@ -42,7 +42,7 @@ start_service() {
 	procd_close_instance
 
 	source /lib/functions/network.sh
-	while : ; do network_get_ipaddr wanip wan; network_get_gateway gwip wan; [ $c -ge 5 ] && break || let "c+=1"; [ -n "$wanip" -a -n "$gwip" ] && break || output "$p_name waiting for wan gateway...\n"; sleep 2; network_flush_cache; done
+	while : ; do network_get_ipaddr wanip wan; network_get_gateway gwip wan; [ $c -ge 15 ] && break || let "c+=1"; [ -n "$wanip" -a -n "$gwip" ] && break || output "$p_name waiting for wan gateway...\n"; sleep 2; network_flush_cache; done
 	[ -z "$wanip" -o -z "$gwip" ] && output "ERROR: $p_name could not get wan interface IP: $wanip or gateway: $gwip!\n" && exit 0
 
 	for ll in ${routes}; do { [ "$ll" = "${ll#*\/*}" ] && ll="${ll}/32"; ip route del $ll; ip route add $ll via $gwip; } >/dev/null 2>&1; done
