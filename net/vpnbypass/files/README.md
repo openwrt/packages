@@ -11,7 +11,7 @@ A simple PROCD-based vpnbypass service for OpenWrt/LEDE Project. Useful if your 
 - Proudly made in Canada, using locally-sourced electrons.
 
 ## Screenshot (luci-app-vpnbypass)
-![screenshot](screenshot.png "screenshot")
+![screenshot](https://raw.githubusercontent.com/stangri/screenshots/master/vpnbypass/screenshot01.png "screenshot")
 
 ## Requirements
 This service requires following packages to be installed on your router: ```ip-full ipset iptables dnsmasq-full``` (```ip-full``` requires you uninstall ```ip``` first; ```dnsmasq-full``` requires you uninstall ```dnsmasq``` first). Run the following commands to satisfy the requirements:
