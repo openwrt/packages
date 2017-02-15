@@ -1,0 +1,165 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+START=65
+
+USE_PROCD=1
+PROG=/usr/bin/wifidog
+CONFIGFILE=/tmp/wifidog.conf
+
+EXTRA_COMMANDS="status"
+EXTRA_HELP="        status Print the status of the service"
+
+service_trigger() {
+	 procd_add_reload_trigger	"wifidog"	
+}
+
+prepare_wifidog_conf() {
+	local cfg=$1	
+	local enable
+	local gateway_id
+	local gateway_interface
+	local auth_server_hostname
+	local auth_server_http_port
+	local auth_server_path
+	local check_interval
+	local client_timeout
+	local httpd_max_conn
+	local trusted_domains
+	local js_filter
+	local trusted_maclist
+	local untrusted_maclist
+	local pool_mode
+	local thread_number
+	local queue_size
+	local wired_passed
+	local trusted_iplist
+	local trusted_pan_domains
+	local proxy_port
+	local no_auth
+
+	[ -f $CONFIGFILE ] && rm $CONFIGFILE	
+
+	config_get enable "$cfg" "enable" 1
+	[ $enable = "1" ] || return
+	
+	local default_gateway_id=`ifconfig br-lan|grep HWaddr|awk '{print $5}'|sed s/://g`
+	
+	local external_interface=`uci show network.wan.ifname|cut -d'=' -f 2|sed -e "s/'//g"`		
+
+	config_get gateway_id "$cfg" "gateway_id" $default_gateway_id
+	config_get gateway_interface "$cfg" "gateway_interface" "br-lan"
+	config_get auth_server_hostname "$cfg" "auth_server_hostname" 
+	config_get auth_server_port "$cfg" "auth_server_port" "80"
+	config_get auth_server_path "$cfg" 	"auth_server_path" "/wifidog/"	
+	config_get check_interval	"$cfg"	"check_interval"	"60"
+	config_get js_filter		"$cfg"	"js_filter"			1
+	config_get client_timeout	"$cfg"	"client_timeout"	"5"
+	config_get httpd_max_conn	"$cfg"	"httpd_max_conn"	"200"
+	config_get trusted_domains 	"$cfg"	"trusted_domains"	
+	config_get trusted_maclist		"$cfg"	"trusted_maclist"
+	config_get untrusted_maclist 	"$cfg"	"untrusted_maclist"	
+	config_get pool_mode		"$cfg"	"pool_mode"			0
+	config_get thread_number	"$cfg"	"thread_number"		20
+	config_get queue_size		"$cfg"	"queue_size"		200
+	config_get wired_passed		"$cfg"	"wired_passed"		1
+	config_get trusted_iplist	"$cfg"	"trusted_iplist"	
+	config_get trusted_pan_domains	"$cfg"	"trusted_pan_domains"
+	config_get proxy_port	"$cfg"	"proxy_port"	
+	config_get no_auth	"$cfg"	"no_auth"	
+
+	local set_trusted_maclist=`[  -n "$trusted_maclist" ] && echo "TrustedMACList $trusted_maclist"` 
+	local set_untrusted_maclist=`[  -n "$untrusted_maclist" ] && echo "UntrustedMACList $untrusted_maclist"` 
+	local set_trusted_domains=`[ -n "$trusted_domains" ] && echo "TrustedDomains	$trusted_domains"`
+	local set_trusted_iplist=`[ -n "$trusted_iplist" ] && echo "TrustedIpList	$trusted_iplist"`
+	local set_trusted_pan_domains=`[ -n "$trusted_pan_domains" ] && echo "TrustedPanDomains"	$trusted_pan_domains`
+	local set_proxy_port=`[ -n "$proxy_port" ] && echo "Proxyport"	$proxy_port`
+	local set_no_auth=`[ -n "$no_auth"  ] && echo "NoAuth"  $no_auth`	
+
+	cat > $CONFIGFILE <<EOF
+GatewayID $gateway_id
+GatewayInterface $gateway_interface
+Externalinterface $external_interface
+
+AuthServer {
+    Hostname $auth_server_hostname
+    HTTPPort $auth_server_port
+    Path $auth_server_path
+}
+
+CheckInterval $check_interval
+ClientTimeout $client_timeout
+JsFilter	$js_filter
+WiredPassed	$wired_passed
+
+HTTPDMaxConn $httpd_max_conn
+
+PoolMode	$pool_mode
+ThreadNumber	$thread_number
+QueueSize	$queue_size
+	
+$set_trusted_domains
+
+$set_untrusted_maclist
+
+$set_trusted_maclist
+
+$set_trusted_iplist
+
+$set_trusted_pan_domains
+
+$set_proxy_port
+
+$set_no_auth
+
+FirewallRuleSet validating-users {
+    FirewallRule allow to 0.0.0.0/0
+}
+
+FirewallRuleSet known-users {
+    FirewallRule allow to 0.0.0.0/0
+}
+
+FirewallRuleSet unknown-users {
+    FirewallRule allow udp port 53
+    FirewallRule allow tcp port 53
+    FirewallRule allow udp port 67
+    FirewallRule allow tcp port 67
+}
+
+FirewallRuleSet locked-users {
+    FirewallRule block to 0.0.0.0/0
+}
+EOF
+}
+
+init_config() {
+	config_load wifidog
+	config_foreach prepare_wifidog_conf wifidog
+	
+	[ ! -f $CONFIGFILE ] && {
+		echo "no wifidog.conf, exit....."
+		/usr/bin/wdctl stop
+		exit
+	}
+}
+
+start_service() {
+	init_config	
+	
+	procd_open_instance
+    # -s: log to syslog
+    # -f: run in foreground
+    procd_set_param command $PROG -c $CONFIGFILE -f -d 0
+    procd_set_param respawn # respawn automatically if something died
+	procd_set_param file	$CONFIGFILE
+    procd_close_instance
+}
+
+reload_service() {
+	rc_procd start_service "$@"
+	return 0
+}
+
+status() {
+    /usr/bin/wdctl status
+}
