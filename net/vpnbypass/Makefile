@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vpnbypass
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 
@@ -32,6 +32,9 @@ define Package/$(PKG_NAME)/conffiles
 endef
 
 define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)/files/
+	$(CP) ./files/vpnbypass.init $(PKG_BUILD_DIR)/files/vpnbypass.init
+	sed -i "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(PKG_BUILD_DIR)/files/vpnbypass.init
 endef
 
 define Build/Configure
@@ -42,7 +45,7 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/vpnbypass.init $(1)/etc/init.d/vpnbypass
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/vpnbypass.init $(1)/etc/init.d/vpnbypass
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/vpnbypass.conf $(1)/etc/config/vpnbypass
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/firewall
