@@ -13,14 +13,14 @@ adb_script="/usr/bin/adblock.sh"
 
 boot()
 {
-    local wanif4 wanif6 cnt=0
+    local wanif4 wanif6 cnt=0 max_cnt=30
 
     . "/lib/functions/network.sh"
-    while [ ${cnt} -le 30 ]
+    while [ ${cnt} -le ${max_cnt} ]
     do
         network_find_wan wanif4
         network_find_wan6 wanif6
-        if [ -n "${wanif4}" ] || [ -n "${wanif6}" ] || [ ${cnt} -eq 30 ]
+        if [ -n "${wanif4}" ] || [ -n "${wanif6}" ] || [ ${cnt} -eq ${max_cnt} ]
         then
             rc_procd start_service
             return 0
@@ -81,6 +81,8 @@ service_triggers()
 {
     local iface="$(uci -q get adblock.global.adb_iface)"
 
+    procd_open_trigger
+    procd_add_config_trigger "config.change" "adblock" /etc/init.d/adblock start
     if [ -z "${iface}" ]
     then
         procd_add_raw_trigger "interface.*.up" 1000 /etc/init.d/adblock start
@@ -90,6 +92,5 @@ service_triggers()
             procd_add_interface_trigger "interface.*.up" "${name}" /etc/init.d/adblock start
         done
     fi
-
-    procd_add_config_trigger "config.change" "adblock" /etc/init.d/adblock start
+    procd_close_trigger
 }
