@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icu4c
 PKG_VERSION:=58.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-58_2-src.tgz
 PKG_SOURCE_URL:=http://download.icu-project.org/files/$(PKG_NAME)/$(PKG_VERSION)
@@ -64,10 +64,9 @@ CONFIGURE_ARGS:= \
 	--prefix=/usr
 
 HOST_CONFIGURE_CMD:= ./runConfigureICU
+HOST_CONFIGURE_VARS:=
 HOST_CONFIGURE_ARGS:= \
 	Linux/gcc \
-	CC="$(HOSTCC_NOCACHE)" \
-	CXX="$(HOSTCXX_NOCACHE)" \
 	--disable-debug \
 	--enable-release \
 	--enable-shared \
