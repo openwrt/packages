@@ -1,0 +1,29 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+PIDFILE=/var/run/metrics.pid
+
+start() {
+	if [ -f ${PIDFILE} ]
+	then
+		echo "error: ${PIDFILE} exists. already started?"
+	else
+		/usr/sbin/metrics.lua &
+		echo $! > ${PIDFILE}
+	fi
+}
+
+stop() {
+	if [ -f ${PIDFILE} ]
+	then
+		kill $(cat ${PIDFILE})
+		rm ${PIDFILE}
+	else
+		echo "error: ${PIDFILE} not found!"
+	fi
+}
+
+boot() {
+	start
+}
