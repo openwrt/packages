@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=acme
 PKG_SOURCE_VERSION:=6d84da588b98733dd9c4f5b88440281ab1eb4989
 PKG_VERSION:=1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPLv3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE).tar.xz
@@ -18,7 +18,6 @@ PKG_SOURCE_URL:=git://github.com/Neilpang/acme.sh.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
-LUCI_DIR:=/usr/lib/lua/luci
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -56,42 +55,5 @@ define Package/acme/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/acme.sh $(1)/usr/lib/acme/acme.sh
 endef
 
-define Package/luci-app-acme
-  SECTION:=luci
-  CATEGORY:=LuCI
-  TITLE:=ACME package - LuCI interface
-  MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
-  PKGARCH:=all
-  DEPENDS:= lua luci-base +acme luci-app-uhttpd
-  SUBMENU:=3. Applications
-endef
-
-define Package/luci-app-acme/description
-	Control the ACME Letsencrypt certificate interface
-endef
-
-define Package/luci-app-acme/install
-	$(INSTALL_DIR) $(1)$(LUCI_DIR)/controller $(1)$(LUCI_DIR)/model/cbi
-	$(INSTALL_DATA) ./files/acme-controller.lua $(1)$(LUCI_DIR)/controller/acme.lua
-	$(INSTALL_DATA) ./files/acme-cbi.lua $(1)$(LUCI_DIR)/model/cbi/acme.lua
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/uci-defaults-acme $(1)/etc/uci-defaults/luci-acme
-endef
-
-define Package/luci-app-acme/postinst
-#!/bin/sh
-[ -x /etc/uci-defaults/luci-acme ] && /etc/uci-defaults/luci-acme || exit 0
-endef
-
-define Package/luci-app-acme/postrm
-#!/bin/sh
-which uci > /dev/null || exit 0
-uci -q get ucitrack.@acme[0] > /dev/null && {
-  uci delete ucitrack.@acme[0]
-  uci commit
-}
-endef
-
 
 $(eval $(call BuildPackage,acme))
-$(eval $(call BuildPackage,luci-app-acme))
