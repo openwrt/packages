@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=webui-aria2
-PKG_VERSION:=2016-10-11
+PKG_VERSION:=2017-02-12
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ziahamza/webui-aria2.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=6a29c1b1d0224e1daa88906e88bc2e177ca2ad76
+PKG_SOURCE_VERSION:=68c8ad4f86b87a8b713e13f70b4a3a3c7b86c83e
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=5ad1e6094f852aa2c3f9c3700f944688e5ccecfe7ad9a8df3ea754b599dc1090
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -46,7 +47,6 @@ define Package/webui-aria2/install
 	$(CP) $(PKG_BUILD_DIR)/fonts $(1)/www/webui-aria2
 	$(CP) $(PKG_BUILD_DIR)/flags $(1)/www/webui-aria2
 	$(CP) $(PKG_BUILD_DIR)/js $(1)/www/webui-aria2
-	$(CP) $(PKG_BUILD_DIR)/img $(1)/www/webui-aria2
 	$(CP) $(PKG_BUILD_DIR)/css $(1)/www/webui-aria2
 	$(CP) $(PKG_BUILD_DIR)/index.html $(1)/www/webui-aria2
 	$(CP) $(PKG_BUILD_DIR)/favicon.ico $(1)/www/webui-aria2
