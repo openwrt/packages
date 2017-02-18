@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=wireguard
 
 PKG_VERSION:=0.0.20170214
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=WireGuard-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://git.zx2c4.com/WireGuard/snapshot/
@@ -33,6 +33,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/wireguard/Default
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=VPN
   URL:=https://www.wireguard.io
   MAINTAINER:=Baptiste Jonglez <openwrt@bitsofnetworks.org>, \
               Dan Luedtke <mail@danrl.com>, \
