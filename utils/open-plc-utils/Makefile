@@ -41,7 +41,6 @@ endef
 define GenPlugin
   define Package/$(addprefix open-plc-utils-,$(1))
     $(call Package/open-plc-utils/Default)
-    DEPENDS:=open-plc-utils
     TITLE:=Utility $(2) from the Open PLC utilities
   endef
 
