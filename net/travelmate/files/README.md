@@ -9,6 +9,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * STA interfaces operating in an "always off" mode, to make sure that the AP is always accessible
 * easy setup within normal OpenWrt/LEDE environment
 * fast uplink connections
+* support multiple radios
 * procd init system support
 * procd based hotplug support, the travelmate start will be triggered by interface triggers
 * status & debug logging to syslog
@@ -20,7 +21,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 ## OpenWrt / LEDE trunk Installation & Usage
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages)
 * install 'travelmate' (_opkg install travelmate_)
-* configure your network to support (multiple) wlan uplinks and set travelmate config options (details see below)
+* configure your network to support (multiple) wlan uplinks and set travelmate config options (see below)
 * set 'trm\_enabled' option in travelmate config to '1'
 * travelmate starts automatically during boot and will be triggered by procd interface triggers
 
@@ -43,6 +44,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
     * trm\_maxwait => how long (in seconds) should travelmate wait for wlan interface reload action (default: '20')
     * trm\_maxretry => how many times should travelmate try to find an uplink after a trigger event (default: '3')
     * trm\_iw => set this option to '0' to use iwinfo for wlan scanning (default: '1', use iw)
+    * trm\_radio => limit travelmate to a dedicated radio, e.g. 'radio0' (default: not set, use all radios)
     * trm\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: not set, disabled)
 
 ## Setup
@@ -59,11 +61,6 @@ config interface 'wwan'
 [...]
 config zone
         option name 'wan'
-        option input 'REJECT'
-        option output 'ACCEPT'
-        option forward 'REJECT'
-        option masq '1'
-        option mtu_fix '1'
         option network 'wan wan6 wwan'
 [...]
 </code></pre>
@@ -74,7 +71,6 @@ config zone
 config wifi-iface
         option device 'radio0'
         option network 'lan'
-        option ifname 'wlan0'
         option mode 'ap'
         option ssid 'example_ap'
         option encryption 'psk2+ccmp'
@@ -86,7 +82,6 @@ config wifi-iface
         option network 'wwan'
         option mode 'sta'
         option ssid 'example_01'
-        option ifname 'wwan01'
         option encryption 'psk2+ccmp'
         option key 'abc'
         option disabled '1'
@@ -95,7 +90,6 @@ config wifi-iface
         option network 'wwan'
         option mode 'sta'
         option ssid 'example_02'
-        option ifname 'wwan02'
         option encryption 'psk2+ccmp'
         option key 'xyz'
         option disabled '1'
@@ -104,7 +98,6 @@ config wifi-iface
         option network 'wwan'
         option mode 'sta'
         option ssid 'example_03'
-        option ifname 'wwan03'
         option encryption 'none'
         option disabled '1'
 [...]
