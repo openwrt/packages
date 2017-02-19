@@ -22,6 +22,7 @@
 #   "domain" = text domain suffix
 #   "bslaac" = boolean, use DHCPv4 MAC to find GA and ULA IPV6 SLAAC
 #   "bisolt" = boolean, format <host>.<network>.<domain>. so you can isolate
+#   "bconf"  = boolean, write conf file format rather than pipe records
 #
 ##############################################################################
 
@@ -59,30 +60,53 @@
       # only for provided hostnames and full /32 assignments
       ptr = adr ; qpr = "" ; split( ptr, ptr, "." ) ;
       slaac = slaac_eui64( id ) ;
-      for( i=1; i<=4; i++ ) { qpr = ( ptr[i] "." qpr) ; }
-
-      # DHCP A and PTR records with FQDN
-      x = ( fqdn ". 120 IN A " adr ) ;
-      y = ( qpr "in-addr.arpa. 120 IN PTR " fqdn ) ;
-      print ( x "\n" y ) > hostfile ;
 
 
-      if ((bslaac == 1) && (slaac != 0)) {
+      if ( bconf == 1 ) {
+        x = ( "local-data: \"" fqdn ". 120 IN A " adr "\"" ) ;
+        y = ( "local-data-ptr: \"" adr " 120 " fqdn "\"" ) ;
+        print ( x "\n" y ) > hostfile ;
+      }
+
+      else {
+        for( i=1; i<=4; i++ ) { qpr = ( ptr[i] "." qpr) ; }
+        x = ( fqdn ". 120 IN A " adr ) ;
+        y = ( qpr "in-addr.arpa. 120 IN PTR " fqdn ) ;
+        print ( x "\n" y ) > hostfile ;
+      }
+
+
+      if (( bslaac == 1 ) && ( slaac != 0 )) {
         # UCI option to discover IPV6 routed SLAAC addresses
         # NOT TODO - ping probe take too long when added in awk-rule loop
         cmd = ( "ip -6 --oneline route show dev " net ) ;
 
 
         while ( ( cmd | getline adr ) > 0 ) {
-          if ( substr( adr, 1, 5 ) <= "fd00:" ) {
+          if (( substr( adr, 1, 5 ) <= "fd00:" ) \
+          && ( index( adr, "via" ) == 0 )) {
             # GA or ULA routed addresses only (not LL or MC)
             sub( /\/.*/, "", adr ) ;
             adr = ( adr slaac ) ;
-            if ( split( adr, tmp0, ":" ) >= 8 ) { sub( "::", ":", adr ) ; }
-            qpr = ipv6_ptr( adr ) ;
-            x = ( fqdn ". 120 IN AAAA " adr ) ;
-            y = ( qpr " 120 IN PTR " fqdn ) ;
-            print ( x "\n" y ) > hostfile ;
+            
+            
+            if ( split( adr, tmp0, ":" ) >= 8 ) { 
+              sub( "::", ":", adr ) ; 
+            }
+
+
+            if ( bconf == 1 ) {
+              x = ( "local-data: \"" fqdn ". 120 IN AAAA " adr "\"" ) ;
+              y = ( "local-data-ptr: \"" adr " 120 " fqdn "\"" ) ;
+              print ( x "\n" y ) > hostfile ;
+            }
+
+            else {
+              qpr = ipv6_ptr( adr ) ;
+              x = ( fqdn ". 120 IN AAAA " adr ) ;
+              y = ( qpr ". 120 IN PTR " fqdn ) ;
+              print ( x "\n" y ) > hostfile ;
+            }
           }
         }
 
@@ -94,11 +118,19 @@
 
   else {
     if (( cdr == 128 ) && ( hst != "-" )) {
-      # only for provided hostnames and full /128 assignments
-      qpr = ipv6_ptr( adr ) ;
-      x = ( fqdn ". 120 IN AAAA " adr ) ;
-      y = ( qpr " 120 IN PTR " fqdn ) ;
-      print ( x "\n" y ) > hostfile ;
+      if ( bconf == 1 ) {
+        x = ( "local-data: \"" fqdn ". 120 IN AAAA " adr "\"" ) ;
+        y = ( "local-data-ptr: \"" adr " 120 " fqdn "\"" ) ;
+        print ( x "\n" y ) > hostfile ;
+      }
+
+      else {
+        # only for provided hostnames and full /128 assignments
+        qpr = ipv6_ptr( adr ) ;
+        x = ( fqdn ". 120 IN AAAA " adr ) ;
+        y = ( qpr ". 120 IN PTR " fqdn ) ;
+        print ( x "\n" y ) > hostfile ;
+      }
     }
   }
 }
@@ -132,7 +164,7 @@ function ipv6_ptr( ipv6,    arpa, ary, end, i, j, new6, sz, start ) {
 
 ##############################################################################
 
-function slaac_eui64( mac,    ary, glbit, eui64 ) {  
+function slaac_eui64( mac,    ary, glbit, eui64 ) {
   if ( length(mac) >= 12 ) {
     # RFC2373 and use DHCPv4 registered MAC to find SLAAC addresses
     split( mac , ary , "" ) ;
@@ -143,12 +175,12 @@ function slaac_eui64( mac,    ary, glbit, eui64 ) {
     eui64 = ( ary[1] ary[2] ary[3] ary[4] ":" ary[5] ary[6] "ff:fe" ) ;
     eui64 = ( eui64 ary[7] ary[8] ":" ary[9] ary[10]  ary[11] ary[12] ) ;
   }
-  
+
   else {
     eui64 = 0 ;
   }
-  
-  
+
+
   return eui64 ;
 }
 

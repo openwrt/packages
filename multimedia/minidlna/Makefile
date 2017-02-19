@@ -8,18 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minidlna
-PKG_VERSION:=1.1.5
-PKG_RELEASE:=5
+PKG_VERSION:=1.1.6+git-8a996b
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/minidlna
-PKG_MD5SUM:=1970e553a1eb8a3e7e302e2ce292cbc4
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL=http://git.code.sf.net/p/minidlna/git
+PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=8a996b4b624ef45538a5de10730b8e94c55e7768
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_MIRROR_HASH:=fddbb7c96b40e335a251b919ff5c674519f266a59b8a43011761ba952c0df1b6
+
 PKG_LICENSE:=GPL-2.0 BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING LICENCE.miniupnpd
 
 PKG_MAINTAINER:=Knyazkov Dmitry <medavedik@gmail.com>
 
 PKG_FIXUP:=autoreconf
+
 PKG_BUILD_PARALLEL:=0
 PKG_BUILD_DEPENDS:=util-linux
 
@@ -46,7 +51,20 @@ define Package/minidlna/conffiles
 /etc/config/minidlna
 endef
 
-TARGET_CFLAGS+= -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
+TARGET_CPPFLAGS += \
+	-I$(ICONV_PREFIX)/include \
+	-I$(INTL_PREFIX)/include \
+	-D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 \
+
+TARGET_LDFLAGS += \
+	-L$(ICONV_PREFIX)/lib \
+	-L$(INTL_PREFIX)/lib \
+	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
+
+MAKE_FLAGS +=\
+	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
+	LDFLAGS="$(TARGET_LDFLAGS)" \
+	ICONV_LIBS="-liconv $(if $(INTL_FULL),-lintl)" \
 
 CONFIGURE_ARGS +=\
 	--disable-rpath \

@@ -42,13 +42,12 @@ define Package/micropython-lib/description
 endef
 
 MAKE_FLAGS:=\
-	-C $(PKG_BUILD_DIR) \
-	PREFIX=$(PKG_BUILD_DIR)/_install_tmp \
+	PREFIX=$(PKG_BUILD_DIR)/_install_tmp/dist \
 	install
 
 define Package/micropython-lib/install
 	$(INSTALL_DIR) $(1)/usr/lib/micropython
-	$(CP) $(PKG_BUILD_DIR)/_install_tmp/* $(1)/usr/lib/micropython
+	$(CP) $(PKG_BUILD_DIR)/_install_tmp/dist/* $(1)/usr/lib/micropython
 endef
 
 $(eval $(call BuildPackage,micropython-lib))

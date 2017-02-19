@@ -1,8 +1,8 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -705,6 +705,9 @@ AC_CHECK_HEADERS(net/pfvar.h,
- have_termios_h="no"
- AC_CHECK_HEADERS(termios.h, [have_termios_h="yes"])
+@@ -804,6 +804,9 @@ AC_CACHE_CHECK([whether clock_boottime a
+ 		       [c_cv_have_clock_boottime_monotonic="no"]))
+ 
  
 +# For the iwinfo plugin
 +AC_CHECK_LIB(iwinfo, iwinfo_backend, [with_iwinfo="yes"], [with_iwinfo="no (libiwinfo not found)"], [])
@@ -10,7 +10,7 @@
  # For the turbostat plugin
  have_asm_msrindex_h="no"
  AC_CHECK_HEADERS(asm/msr-index.h, [have_asm_msrindex_h="yes"])
-@@ -5310,6 +5313,7 @@ plugin_interface="no"
+@@ -5946,6 +5949,7 @@ plugin_interface="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
@@ -18,33 +18,33 @@
  plugin_load="no"
  plugin_log_logstash="no"
  plugin_memory="no"
-@@ -5713,6 +5717,7 @@ AC_PLUGIN([ipmi],        [$plugin_ipmi],
- AC_PLUGIN([iptables],    [$with_libiptc],      [IPTables rule counters])
- AC_PLUGIN([ipvs],        [$plugin_ipvs],       [IPVS connection statistics])
- AC_PLUGIN([irq],         [$plugin_irq],        [IRQ statistics])
-+AC_PLUGIN([iwinfo],      [$with_iwinfo],       [Common iwinfo wireless statistics])
- AC_PLUGIN([java],        [$with_java],         [Embed the Java Virtual Machine])
- AC_PLUGIN([load],        [$plugin_load],       [System load])
- AC_PLUGIN([logfile],     [yes],                [File logging plugin])
-@@ -6042,6 +6047,7 @@ Configuration:
-     oracle  . . . . . . . $with_oracle
-     protobuf-c  . . . . . $have_protoc_c
-     python  . . . . . . . $with_python
-+    iwinfo  . . . . . . . $with_iwinfo
- 
-   Features:
-     daemon mode . . . . . $enable_daemon
-@@ -6091,6 +6097,7 @@ Configuration:
-     iptables  . . . . . . $enable_iptables
-     ipvs  . . . . . . . . $enable_ipvs
-     irq . . . . . . . . . $enable_irq
-+    iwinfo  . . . . . . . $enable_iwinfo
-     java  . . . . . . . . $enable_java
-     load  . . . . . . . . $enable_load
-     logfile . . . . . . . $enable_logfile
+@@ -6416,6 +6420,7 @@ AC_PLUGIN([ipmi],                [$plugi
+ AC_PLUGIN([iptables],            [$with_libiptc],           [IPTables rule counters])
+ AC_PLUGIN([ipvs],                [$plugin_ipvs],            [IPVS connection statistics])
+ AC_PLUGIN([irq],                 [$plugin_irq],             [IRQ statistics])
++AC_PLUGIN([iwinfo],              [$with_iwinfo],            [Common iwinfo wireless statistics])
+ AC_PLUGIN([java],                [$with_java],              [Embed the Java Virtual Machine])
+ AC_PLUGIN([load],                [$plugin_load],            [System load])
+ AC_PLUGIN([log_logstash],        [$plugin_log_logstash],    [Logstash json_event compatible logging])
+@@ -6797,6 +6802,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
+ AC_MSG_RESULT([    oracle  . . . . . . . $with_oracle])
+ AC_MSG_RESULT([    protobuf-c  . . . . . $have_protoc_c])
+ AC_MSG_RESULT([    protoc 3  . . . . . . $have_protoc3])
++AC_MSG_RESULT([    iwinfo  . . . . . . . $with_iwinfo])
+ AC_MSG_RESULT()
+ AC_MSG_RESULT([  Features:])
+ AC_MSG_RESULT([    daemon mode . . . . . $enable_daemon])
+@@ -6853,6 +6859,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
+ AC_MSG_RESULT([    iptables  . . . . . . $enable_iptables])
+ AC_MSG_RESULT([    ipvs  . . . . . . . . $enable_ipvs])
+ AC_MSG_RESULT([    irq . . . . . . . . . $enable_irq])
++AC_MSG_RESULT([    iwinfo  . . . . . . . $enable_iwinfo])
+ AC_MSG_RESULT([    java  . . . . . . . . $enable_java])
+ AC_MSG_RESULT([    load  . . . . . . . . $enable_load])
+ AC_MSG_RESULT([    logfile . . . . . . . $enable_logfile])
 --- a/src/collectd.conf.in
 +++ b/src/collectd.conf.in
-@@ -128,6 +128,7 @@
+@@ -135,6 +135,7 @@
  #@BUILD_PLUGIN_IPTABLES_TRUE@LoadPlugin iptables
  #@BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
  #@BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
@@ -52,7 +52,7 @@
  #@BUILD_PLUGIN_JAVA_TRUE@LoadPlugin java
  @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
  #@BUILD_PLUGIN_LPAR_TRUE@LoadPlugin lpar
-@@ -582,6 +583,12 @@
+@@ -649,6 +650,12 @@
  #	IgnoreSelected true
  #</Plugin>
  
@@ -67,7 +67,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -2612,6 +2612,27 @@ and all other interrupts are collected.
+@@ -3127,6 +3127,27 @@ and all other interrupts are collected.
  
  =back
  
@@ -250,7 +250,7 @@
 +}
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -457,6 +457,13 @@ irq_la_SOURCES = irq.c
+@@ -568,6 +568,13 @@ irq_la_SOURCES = irq.c
  irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  endif
  
@@ -266,11 +266,11 @@
  java_la_SOURCES = java.c
 --- a/src/types.db
 +++ b/src/types.db
-@@ -228,6 +228,7 @@ voltage			value:GAUGE:U:U
- vs_memory		value:GAUGE:0:9223372036854775807
- vs_processes		value:GAUGE:0:65535
- vs_threads		value:GAUGE:0:65535
-+stations		value:GAUGE:0:256
+@@ -260,6 +260,7 @@ voltage_threshold       value:GAUGE:U:U,
+ vs_memory               value:GAUGE:0:9223372036854775807
+ vs_processes            value:GAUGE:0:65535
+ vs_threads              value:GAUGE:0:65535
++stations                value:GAUGE:0:256
  
  #
  # Legacy types
