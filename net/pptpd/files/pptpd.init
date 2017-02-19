@@ -17,11 +17,12 @@ validate_login_section() {
 
 validate_pptpd_section() {
 	uci_validate_section pptpd service "${1}" \
-		'enabled:uinteger' \
+		'enabled:uinteger:0' \
 		'localip:string' \
 		'remoteip:string' \
 		'mppe:list(string):required no40 no56 stateless' \
-		'logwtmp:uinteger'
+		'logwtmp:uinteger:0' \
+		'msdns:string'
 }
 
 setup_login() {
@@ -54,7 +55,8 @@ setup_config() {
 	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG
 	[ "$logwtmp" -eq 1 ] && echo "logwtmp" >> $CONFIG
 
-	echo "mppe $(echo $mppe | sed -e 's/\s/,/g')" >> $OPTIONS_PPTP
+	echo "mppe $(echo $mppe | sed -e 's/[[:blank:]]/,/g')" >> $OPTIONS_PPTP
+	[ -n "$msdns" ] && echo "ms-dns $msdns" >> $OPTIONS_PPTP
 
 	return 0
 }
@@ -67,6 +69,10 @@ start_service() {
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
 
 	procd_open_instance
-	procd_set_param command $BIN -c $CONFIG -o $OPTIONS_PPTP
+	procd_set_param command $BIN -f -c $CONFIG -o $OPTIONS_PPTP
 	procd_close_instance
+}
+
+stop_service() {
+	rm -rf $CHAP_SECRETS $CONFIG $OPTIONS_PPTP /etc/ppp/chap-secrets
 }
