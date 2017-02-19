@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ldap
-PKG_VERSION:=2.4.30
+PKG_VERSION:=2.4.32
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dmitry Trefilov <the-alien@live.ru>
 PKG_LICENSE:=Python-style
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/84/61/36ca1a3474aee17ee975deaea51ae8725e49af29ca4c3e88743cd454d2bd
-PKG_MD5SUM:=948342ab28b9a4520ff421bf676b7a7b
+PKG_SOURCE_URL:=https://pypi.python.org/packages/67/d9/fa0ea70d1792875745116ad62ac8d4bcb07550b15cded591bb57df6a6d9a
+PKG_MD5SUM:=7c46c8a04acc227a778c7900c87cdfc7
 
 PKG_BUILD_DEPENDS:=python libopenldap
 
