@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flac
-PKG_VERSION:=1.3.1
-PKG_RELEASE:=3
+PKG_VERSION:=1.3.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/flac/
-PKG_MD5SUM:=b9922c9a0378c88d3e901b234f852698
+PKG_MD5SUM:=454f1bfa3f93cc708098d7890d0499bd
+PKG_HASH:=91cfc3ed61dc40f47f050a109b08610667d73477af6ef36dcad31c31a4a8d53f
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_INSTALL:=1
