@@ -276,6 +276,7 @@ define Package/python-pip-conf/install
 endef
 
 HOST_LDFLAGS += \
+	-Wl,--no-as-needed -lrt \
 	$$$$(pkg-config --static --libs libcrypto libssl)
 
 HOST_CONFIGURE_ARGS+= \
