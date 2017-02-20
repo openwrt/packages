@@ -1,8 +1,8 @@
-menu "Aria2 configuration"
+menu "Aria2 Configuration"
 	depends on PACKAGE_aria2
 
 choice
-	prompt "SSL library"
+	prompt "SSL Library"
 	default ARIA2_OPENSSL
 
 config ARIA2_OPENSSL
@@ -12,33 +12,41 @@ config ARIA2_GNUTLS
 	bool "GNUTLS"
 
 config ARIA2_NOSSL
-	bool "No SSL support"
+	bool "No SSL Support"
 
 endchoice
 
 config ARIA2_BITTORRENT
-	bool "Enable bittorrent support"
+	bool "Enable Bittorrent Support"
 	depends on ARIA2_OPENSSL
 	default n
 
-config ARIA2_METALINK
-	bool "Enable metalink support"
-	default n
-
 config ARIA2_SFTP
-        bool "Enable sftp support"
+        bool "Enable SFTP Support"
         default n
 
+config ARIA2_ASYNC_DNS
+	bool "Enable Async DNS Support"
+	default n
+
+config ARIA2_COOKIE
+	bool "Enable Firefox3/Chromium Cookie Support"
+	default n
+
+config ARIA2_METALINK
+	bool "Enable Metalink Support"
+	default n
+
 choice
-	prompt "XML library"
-	default ARIA2_EXPAT
+	prompt "XML Library"
+	default ARIA2_LIBXML2
 	depends on ARIA2_METALINK
+
+config ARIA2_LIBXML2
+        bool "LIBXML2"
 
 config ARIA2_EXPAT
 	bool "EXPAT"
-
-config ARIA2_LIBXML2
-	bool "LIBXML2"
 
 endchoice
 
