@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2016.11.27
+PKG_VERSION:=2017.02.17
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://yt-dl.org/downloads/$(PKG_VERSION)/
-PKG_MD5SUM:=2bb2c4ebf5335d69e03e32a0309abfba
+PKG_MD5SUM:=d38dbe099af22eb9af35b0e8b274dc4e
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 PKG_LICENSE:=Unlicense
