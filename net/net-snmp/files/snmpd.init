@@ -198,6 +198,18 @@ snmpd_disk_add() {
         echo "$disk $partition $size" >> $CONFIGFILE
 }
 
+snmpd_engineid_add() {
+	local cfg="$1"
+
+	config_get engineid "$cfg" engineid
+	[ -n "$engineid" ] && echo "engineID $engineid" >> $CONFIGFILE
+	config_get engineidtype "$cfg" engineidtype
+	[ "$engineidtype" -ge 1 -a "$engineidtype" -le 3 ] && \
+		echo "engineIDType $engineidtype" >> $CONFIGFILE
+	config_get engineidnic "$cfg" engineidnic
+	[ -n "$engineidnic" ] && echo "engineIDNic $engineidnic" >> $CONFIGFILE
+}
+
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
 
@@ -221,6 +233,7 @@ start_service() {
 	config_foreach snmpd_pass_add pass
 	config_foreach snmpd_exec_add exec
 	config_foreach snmpd_disk_add disk
+	config_foreach snmpd_engineid_add engineid
 	
 	procd_set_param command $PROG -Lf /dev/null -f
 	procd_set_param file $CONFIGFILE

@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.5.3
-PKG_RELEASE:=1
+PKG_VERSION:=5.7.1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://collectd.org/files/
-PKG_MD5SUM:=6f10633d0f73f99ef61472a8e377d4a058de161e80f3353b4b17d394c68f2f44
+PKG_SOURCE_URL:=https://collectd.org/files/ \
+	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
+PKG_HASH:=7edd3643c0842215553b2421d5456f4e9a8a58b07e216b40a7e8e91026d8e501
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
-PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>, Hannu Nyman <hannu.nyman@iki.fi>
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -31,20 +32,28 @@ COLLECTD_PLUGINS_DISABLED:= \
 	battery \
 	ceph \
 	cgroups \
+	chrony \
+	cpusleep \
 	curl_json \
 	curl_xml \
 	dbi \
+	dpdkstat \
 	drbd \
 	ethstat \
 	fhcount \
 	genericjmx \
 	gmond \
+	gps \
+	grpc \
 	hddtemp \
+	hugepages \
+	intel_rdt \
 	ipc \
 	ipmi \
 	ipvs \
 	java \
 	log_logstash \
+	lua \
 	lvm \
 	lpar \
 	mbmon \
@@ -53,11 +62,13 @@ COLLECTD_PLUGINS_DISABLED:= \
 	memcached \
 	mic \
 	monitorus \
+	mqtt \
 	multimeter \
 	netapp \
 	nfs \
 	notify_desktop \
 	notify_email \
+	notify_nagios \
 	numa \
 	openldap \
 	openvz \
@@ -84,12 +95,15 @@ COLLECTD_PLUGINS_DISABLED:= \
 	write_kafka \
 	write_log \
 	write_mongodb \
+	write_prometheus \
 	write_redis \
 	write_riemann \
 	write_sensu \
 	write_tsdb \
+	xencpu \
 	xmms \
 	zfs_arc \
+	zone \
 	zookeeper
 
 COLLECTD_PLUGINS_SELECTED:= \
@@ -163,7 +177,7 @@ define Package/collectd/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Lightweight system statistics collection daemon
-  URL:=http://verplant.org/collectd/
+  URL:=https://collectd.org/
 endef
 
 define Package/collectd
@@ -177,33 +191,20 @@ define Package/collectd/description
  and provides mechanismns to store the values in a variety of ways.
 endef
 
-define Package/collectd/config
-	config PACKAGE_COLLECTD_ENCRYPTED_NETWORK
-	bool "Enable ability to use encrypted networking"
-	default n
-	depends on PACKAGE_collectd
-	select PACKAGE_collectd-mod-network
-endef
-
 ifneq ($(CONFIG_avr32),)
   TARGET_CFLAGS += -fsigned-char
 endif
 
 # common configure args
 CONFIGURE_ARGS+= \
+	--disable-werror \
 	--disable-debug \
 	--enable-daemon \
 	--with-nan-emulation \
+	--with-libyajl=no \
+	--without-libgcrypt \
 	--without-perl-bindings \
 	--without-libudev
-
-ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
-CONFIGURE_ARGS+= \
-	--with-libgcrypt=$(STAGING_DIR)/include
-else
-CONFIGURE_ARGS+= \
-	--without-libgcrypt
-endif
 
 CONFIGURE_VARS+= \
 	CFLAGS="$$$$CFLAGS $(FPIC)" \
@@ -335,10 +336,10 @@ $(eval $(call BuildPlugin,madwifi,MadWifi status input,madwifi,))
 $(eval $(call BuildPlugin,memory,physical memory usage input,memory,))
 $(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAGE_collectd-mod-modbus:libmodbus))
 $(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-netlink:libmnl))
-$(eval $(call BuildPlugin,network,network input/output,network,+PACKAGE_COLLECTD_ENCRYPTED_NETWORK:libgcrypt))
+$(eval $(call BuildPlugin,network,network input/output,network,))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
 $(eval $(call BuildPlugin,ntpd,NTP daemon status input,ntpd,))
-$(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut))
+$(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut-common))
 $(eval $(call BuildPlugin,olsrd,OLSRd status input,olsrd,))
 $(eval $(call BuildPlugin,onewire,onewire sensor input,onewire,+PACKAGE_collectd-mod-onewire:libow-capi @BROKEN))
 $(eval $(call BuildPlugin,openvpn,OpenVPN traffic/compression input,openvpn,))

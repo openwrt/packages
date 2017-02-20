@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
-PKG_VERSION:=5.1.4
-PKG_RELEASE=$(PKG_SOURCE_VERSION)-1
+PKG_VERSION:=6.0.7
+PKG_RELEASE=$(PKG_SOURCE_VERSION)-2
 PKG_LICENSE:=Apache-2.0
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/haiwen/seahub.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=1e1c02aa4f2a0256ffa29a28224aad2d678f43a0
+PKG_SOURCE_VERSION:=2cf75b17a372216a88842172f769d61f621416fd
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 include $(INCLUDE_DIR)/package.mk

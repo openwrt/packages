@@ -1,0 +1,27 @@
+--- pcmciautils-018/src/lex_config.l
++++ pcmciautils-018/src/lex_config.l
+@@ -1,8 +1,8 @@
+ /* Special state for handling include files */
+ %x src
+-%option noinput nounput
++%option noinput nounput noyywrap
+ 
+ %{
+ /*
+  * Startup tool for non statically mapped PCMCIA sockets
+  *
+@@ -75,14 +75,10 @@ module		/* skip */ ;
+ 
+ .		return yytext[0];
+ 
+ %%
+ 
+-#ifndef yywrap
+-int yywrap() { return 1; }
+-#endif
+-
+ /*======================================================================
+ 
+     Stuff to parse basic data types
+ 
+ ======================================================================*/
