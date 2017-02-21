@@ -44,10 +44,10 @@ define Package/luci-app-lxc/install
 		./files/controller/lxc.lua \
 		$(1)/usr/lib/lua/luci/controller/
 
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/lxc
 	$(INSTALL_DATA) \
-		./files/view/lxc.htm \
-		$(1)/usr/lib/lua/luci/view/
+		./files/view/lxc/* \
+		$(1)/usr/lib/lua/luci/view/lxc/
 
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi/
 	$(INSTALL_BIN) \

@@ -19,13 +19,40 @@ local fs = require "nixio.fs"
 m = Map("lxc", translate("LXC Containers"))
 
 if fs.access("/etc/config/lxc") then
-	m:section(SimpleSection).template = "lxc"
+	m:section(SimpleSection).template = "lxc/list"
 
 	s = m:section(TypedSection, "lxc", translate("Options"))
 	s.anonymous = true
 	s.addremove = false
 
-	s:option(Value, "url", translate("Containers URL"))
+	s:option(Value, "url", translate("Containers Server"))
+
+	if fs.access("/usr/bin/gpgv") or fs.access("/usr/bin/gpg") then
+		local validate = s:option(Flag, "check_signature", translate("Verify image signatures"))
+		s.default = false
+
+		keyring_file = s:option(FileUpload, "keyring", translate("Keyring"),
+			translate("GnuPG keyring for verifying signatures"))
+
+		o = s:option(Button, "remove_conf", translate("Remove configuration for keyring"),
+			translate("This permanently deletes the keyring and configuration to use same."))
+		o.inputstyle = "remove"
+
+		function o.write(self, section)
+			if keyring_file:cfgvalue(section) and fs.access(keyring_file:cfgvalue(section)) then
+				 fs.unlink(keyring_file:cfgvalue(section))
+			end
+			self.map:del(section, "keyring")
+			luci.http.redirect(luci.dispatcher.build_url("admin", "services", "lxc"))
+		end
+
+		if not fs.access("/usr/bin/gpg") then
+			validate:depends("keyring")
+		end
+	end
+
+	m:section(SimpleSection).template = "lxc/create"
+
 end
 
 return m
