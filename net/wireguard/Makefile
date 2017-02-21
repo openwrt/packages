@@ -67,6 +67,10 @@ define Build/Compile
 	$(call Build/Compile/Default)
 endef
 
+define Package/wireguard/install
+  true
+endef
+
 define Package/wireguard/description
   $(call Package/wireguard/Default/description)
 endef
