@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.63.0
 PKG_SOURCE_VERSION:=1_63_0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/$(PKG_VERSION)
@@ -253,6 +253,8 @@ define Package/boost/config
 			prompt "Boost $(lib) library."
 			default m if ALL
 			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)\
+			$(if $(findstring context,$(lib)),depends on @(!TARGET_avr32&&!TARGET_octeon&&!TARGET_netlogic),)\			
+			$(if $(findstring fiber,$(lib)),depends on @(!TARGET_ar7&&!TARGET_rb532&&!TARGET_brcm63xx_smp&&!TARGET_brcm63xx&&!TARGET_brcm47xx&&!TARGET_brcm47xx_legacy&&!TARGET_brcm2708&&!TARGET_au1000&&!TARGET_ath25&&!TARGET_adm8668&&!TARGET_adm5120),)\
 			$(if $(findstring python,$(lib)),depends on PACKAGE_$(lib),)
 
 		)
