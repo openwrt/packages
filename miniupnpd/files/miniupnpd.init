@@ -68,7 +68,11 @@ start() {
 	local extip port usesysuptime conffile serial_number model_number
 	local uuid notify_interval presentation_url enable_upnp
 	local upnp_lease_file clean_ruleset_threshold clean_ruleset_interval
-        local ipv6_listening_ip
+        local ipv6_listening_ip enabled
+
+	config_get_bool enabled config enabled 1
+
+	[ "$enabled" -gt 0 ] || return 1
 
 	config_get extiface config external_iface
 	config_get extzone config external_zone
