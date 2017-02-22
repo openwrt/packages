@@ -13,6 +13,9 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/dejavu
 PKG_HASH:=fa9ca4d13871dd122f61258a80d01751d603b4d3ee14095d65453b4e846e17d7
+PKG_LICENSE:=Bitstream-Vera-Fonts-Copyright Arev-Fonts-Copyright Public-Domain 
+PKG_LICENSE_FILES:=LICENSE
+PKG_MAINTAINER:=Mirko Vogt <mirko-dev@nanl.de>
 
 include $(INCLUDE_DIR)/package.mk
 
