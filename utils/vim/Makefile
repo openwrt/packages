@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
-PKG_VERSION:=7.4
-PKG_RELEASE:=3
-VIMVER:=74
+PKG_VERSION:=8.0.069
+PKG_RELEASE:=4
+VIMVER:=80
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.vim.org/pub/vim/unix/
-PKG_MD5SUM:=607e135c559be642f210094ad023dc65
+PKG_MD5SUM:=457543a7754b0d3c1c0aa4d4c3bb4070
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(VIMVER)
@@ -39,6 +39,12 @@ endef
 define Package/vim-full
   $(call Package/vim/Default)
   TITLE+= (Normal)
+endef
+
+
+define Package/vim-fuller
+  $(call Package/vim/Default)
+  TITLE+= (Big)
 endef
 
 define Package/vim-runtime
@@ -76,6 +82,12 @@ endef
 define Package/vim-full/description
  Vim is an almost compatible version of the UNIX editor Vi.
  (Normal build)
+endef
+
+
+define Package/vim-fuller/description
+ Vim is an almost compatible version of the UNIX editor Vi.
+ (Big build)
 endef
 
 define Package/vim-runtime/description
@@ -138,6 +150,20 @@ define Build/Compile/vim-full
 endef
 endif
 
+ifneq ($(CONFIG_PACKAGE_vim-fuller),)
+define Build/Compile/vim-fuller
+	$(call Build/Configure/Default, \
+		--with-features=big \
+		--enable-multibyte \
+	)
+	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
+		DESTDIR="$(PKG_INSTALL_DIR)" all
+	$(CP) $(PKG_BUILD_DIR)/src/$(PKG_NAME) $(PKG_BUILD_DIR)/vim_big
+endef
+endif
+
+
+
 ifneq ($(CONFIG_PACKAGE_xxd),)
 define Build/Compile/xxd
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
@@ -155,6 +181,7 @@ endef
 define Build/Compile
 $(call Build/Compile/vim)
 $(call Build/Compile/vim-full)
+$(call Build/Compile/vim-fuller)
 $(call Build/Compile/vim-runtime)
 $(call Build/Compile/xxd)
 endef
@@ -173,6 +200,17 @@ define Package/vim-full/install
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
 endef
 
+
+define Package/vim-fuller/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_big $(1)/usr/bin/vim
+	$(INSTALL_DIR) $(1)/usr/share/vim
+	$(CP) -r $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER) $(1)/usr/share/vim
+	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
+endef
+
+
+
 define Package/vim-runtime/install
 	$(CP) $(PKG_INSTALL_DIR)/* $(1)
 	rm -rf $(1)/usr/share/vim/vim$(VIMVER)/doc
@@ -189,6 +227,7 @@ endef
 
 $(eval $(call BuildPackage,vim))
 $(eval $(call BuildPackage,vim-full))
+$(eval $(call BuildPackage,vim-fuller))
 $(eval $(call BuildPackage,vim-runtime))
 $(eval $(call BuildPackage,vim-help))
 $(eval $(call BuildPackage,xxd))
