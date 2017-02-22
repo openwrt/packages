@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.63.0
 PKG_SOURCE_VERSION:=1_63_0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/$(PKG_VERSION)
@@ -56,6 +56,14 @@ Boost is a set of free, peer-reviewed, portable C++ source libraries.
 | - Boost.Locale                                                            |
 | - Boost.Coroutine2                                                        |
 | - Boost.Fiber                                                             |
+| Also, due to hardware contraints, the following libs and those that are   |
+|   dependent, are disabled for some Targets.                               |
+| - Boost.Context                                                           |
+|   - Disabled for -> avr32, octeon and netlogic.                           |
+| - Boost.Fiber                                                             |
+|   - Disabled for -> ar7, rb532, brcm63xx.smp, brcm63xx, brcm47xx,         |
+|                     brcm47xx.legacy, brcm2708_bcm2708, au1000, ath25,     |
+|                     adm8668 and adm5120.                                  |
 -----------------------------------------------------------------------------
 
 This package provides the following run-time libraries:
@@ -64,11 +72,11 @@ This package provides the following run-time libraries:
  - container
  - context
  - coroutine (Deprecated - use Coroutine2)
- - - coroutine2 (Requires GCC v5 and up)
+ - - coroutine2 (Requires GCC v5 or newer)
  - date_time
  - exception
  - filesystem
- - fiber (Requires GCC v5 and up)
+ - fiber (Requires GCC v5 or newer)
  - graph
  - - graph-parallel
  - iostreams
@@ -227,34 +235,69 @@ define Package/boost/config
 		config boost-libs-all
 			bool "Include all Boost libraries."
 			default m if ALL
-			select PACKAGE_boost-libs
-			select boost-test-pkg
-			select boost-coroutine2
-			select boost-graph-parallel
+			select PACKAGE_boost-container
+			select PACKAGE_boost-date_time
+			select PACKAGE_boost-iostreams
+			select PACKAGE_boost-math
+			select PACKAGE_boost-program_options
+			select PACKAGE_boost-serialization
+			select PACKAGE_boost-signals
+			select PACKAGE_boost-regex
+			select PACKAGE_boost-graph if PACKAGE_boost-regex
+			select PACKAGE_boost-system
+			select PACKAGE_boost-atomic if PACKAGE_boost-system
+			select PACKAGE_boost-chrono if PACKAGE_boost-system
+			select PACKAGE_boost-random if PACKAGE_boost-system
+			select PACKAGE_boost-filesystem if PACKAGE_boost-system
+			select PACKAGE_boost-locale if PACKAGE_boost-system
+			select PACKAGE_boost-timer if PACKAGE_boost-chrono
+			select PACKAGE_boost-thread if PACKAGE_boost-chrono&&PACKAGE_boost-atomic
+			select PACKAGE_boost-context if PACKAGE_boost-chrono&&PACKAGE_boost-thread
+			select PACKAGE_boost-coroutine if PACKAGE_boost-context
+			select PACKAGE_boost-fiber if boost-coroutine2
+			select PACKAGE_boost-log if PACKAGE_boost-chrono&&PACKAGE_boost-date_time&&PACKAGE_boost-thread&&PACKAGE_boost-filesystem&&PACKAGE_boost-regex
+			select PACKAGE_boost-wave if PACKAGE_boost-date_time&&PACKAGE_boost-thread&&PACKAGE_boost-filesystem
+			select PACKAGE_boost-python
+			select PACKAGE_boost-python3
+			select boost-test-pkg if PACKAGE_boost-system&&PACKAGE_boost-timer
+			select boost-coroutine2 if PACKAGE_boost-coroutine
+			select boost-graph-parallel if PACKAGE_boost-graph
+			
 
 		config boost-test-pkg
+			depends on PACKAGE_boost-system&&PACKAGE_boost-timer
 			bool "Boost test package."
 			default m if ALL
 			select PACKAGE_boost-test
 
 		config boost-coroutine2
-			depends on !@GCC_VERSION_4_8
+			depends on !@GCC_VERSION_4_8&&PACKAGE_boost-coroutine
 			bool "Boost couroutine2 support."
-			select PACKAGE_boost-coroutine
-			default n
+			default m if ALL
 
 		config boost-graph-parallel
+			depends on PACKAGE_boost-graph
 			bool "Boost parallel graph support."
-			select PACKAGE_boost-graph
-			default n
+			default m if ALL
 
 		$(foreach lib,$(BOOST_LIBS), \
 			config PACKAGE_boost-$(lib)
 			prompt "Boost $(lib) library."
 			default m if ALL
-			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)\
+			$(if $(findstring graph,$(lib)),depends on PACKAGE_boost-regex,)\
+			$(if $(findstring atomic,$(lib)),depends on PACKAGE_boost-system,)\
+			$(if $(findstring chrono,$(lib)),depends on PACKAGE_boost-system,)\
+			$(if $(findstring random,$(lib)),depends on PACKAGE_boost-system,)\
+			$(if $(findstring filesystem,$(lib)),depends on PACKAGE_boost-system,)\
+			$(if $(findstring locale,$(lib)),depends on PACKAGE_boost-system&&BUILD_NLS,)\
+			$(if $(findstring timer,$(lib)),depends on PACKAGE_boost-chrono,)\
+			$(if $(findstring thread,$(lib)),depends on PACKAGE_boost-chrono&&PACKAGE_boost-atomic,)\
+			$(if $(findstring context,$(lib)),depends on PACKAGE_boost-chrono&&PACKAGE_boost-thread&&@(!TARGET_avr32&&!TARGET_octeon&&!TARGET_netlogic),)\
+			$(if $(findstring coroutine,$(lib)),depends on PACKAGE_boost-context,)\
+			$(if $(findstring fiber,$(lib)),depends on @boost-coroutine2&&@(!TARGET_ar7&&!TARGET_rb532&&!TARGET_brcm63xx_smp&&!TARGET_brcm63xx&&!TARGET_brcm47xx&&!TARGET_brcm47xx_legacy&&!TARGET_brcm2708_bcm2708&&!TARGET_au1000&&!TARGET_ath25&&!TARGET_adm8668&&!TARGET_adm5120),)\
+			$(if $(findstring log,$(lib)),depends on PACKAGE_boost-chrono&&PACKAGE_boost-date_time&&PACKAGE_boost-thread&&PACKAGE_boost-filesystem&&PACKAGE_boost-regex,)\
+			$(if $(findstring wave,$(lib)),depends on PACKAGE_boost-date_time&&PACKAGE_boost-thread&&PACKAGE_boost-filesystem,)\
 			$(if $(findstring python,$(lib)),depends on PACKAGE_$(lib),)
-
 		)
 	endmenu
 
@@ -266,14 +309,13 @@ define Package/boost-test
 	$(call Package/boost/Default)
 	TITLE+= (test)
 	HIDDEN:=1
-	DEPENDS+=+boost-system +boost-timer
 endef
 
 define Build/Configure
 endef
 
 # 1: short name
-# 2: dependencies on other boost libraries (short name)
+# 2: dependencies on other boost libraries (short name) - Deprecated
 # 3: dependencies on other packages
 # 4: conditional/inward dependencies
 define DefineBoostLibrary
@@ -286,7 +328,7 @@ define DefineBoostLibrary
   define Package/boost-$(1)
     $(call Package/boost/Default)
     TITLE+= ($(1))
-    DEPENDS+= $$(foreach lib,$(2),+boost-$$(lib)) $(3) $(if $(4),@$(4),)
+    DEPENDS+= $(3) $(if $(4),@$(4),)
     HIDDEN:=1
   endef
 
@@ -295,32 +337,37 @@ define DefineBoostLibrary
   endef
 endef
 
-$(eval $(call DefineBoostLibrary,atomic,system,))
-$(eval $(call DefineBoostLibrary,chrono,system,))
-$(eval $(call DefineBoostLibrary,container,,))
-$(eval $(call DefineBoostLibrary,context,chrono system thread,))
-$(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,))
-$(eval $(call DefineBoostLibrary,date_time,,))
-#$(eval $(call DefineBoostLibrary,exception,,))
-$(eval $(call DefineBoostLibrary,fiber,coroutine,,))
-$(eval $(call DefineBoostLibrary,filesystem,system,))
-$(eval $(call DefineBoostLibrary,graph,regex,))
-$(eval $(call DefineBoostLibrary,iostreams,,+zlib))
-$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS),BUILD_NLS))
-$(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
-$(eval $(call DefineBoostLibrary,math,,))
-#$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
-$(eval $(call DefineBoostLibrary,program_options,,))
+
+## If you are thinking in making changes to the following list, for some reason, the order of what follows matters.
+$(eval $(call DefineBoostLibrary,container,,,))
+$(eval $(call DefineBoostLibrary,date_time,,,))
+$(eval $(call DefineBoostLibrary,iostreams,,+zlib,))
+$(eval $(call DefineBoostLibrary,math,,,))
+$(eval $(call DefineBoostLibrary,program_options,,,))
+$(eval $(call DefineBoostLibrary,serialization,,,))
+$(eval $(call DefineBoostLibrary,signals,,,))
+
+$(eval $(call DefineBoostLibrary,regex,,,))
+$(eval $(call DefineBoostLibrary,graph,,,))
+
+$(eval $(call DefineBoostLibrary,system,,,))
+$(eval $(call DefineBoostLibrary,atomic,,,))
+$(eval $(call DefineBoostLibrary,chrono,,,))
+$(eval $(call DefineBoostLibrary,random,,,))
+$(eval $(call DefineBoostLibrary,filesystem,,,))
+$(eval $(call DefineBoostLibrary,locale,,$(ICONV_DEPENDS),BUILD_NLS))
+$(eval $(call DefineBoostLibrary,timer,,,))
+$(eval $(call DefineBoostLibrary,thread,,,))
+$(eval $(call DefineBoostLibrary,context,,,))
+$(eval $(call DefineBoostLibrary,coroutine,,,))
+$(eval $(call DefineBoostLibrary,fiber,,,))
+$(eval $(call DefineBoostLibrary,log,,,))
+$(eval $(call DefineBoostLibrary,wave,,,))
 $(eval $(call DefineBoostLibrary,python,,,PACKAGE_python))
 $(eval $(call DefineBoostLibrary,python3,,,PACKAGE_python3))
-$(eval $(call DefineBoostLibrary,random,system,))
-$(eval $(call DefineBoostLibrary,regex,,))
-$(eval $(call DefineBoostLibrary,serialization,,))
-$(eval $(call DefineBoostLibrary,signals,,))
-$(eval $(call DefineBoostLibrary,system,,))
-$(eval $(call DefineBoostLibrary,thread,system chrono atomic,))
-$(eval $(call DefineBoostLibrary,timer,chrono))
-$(eval $(call DefineBoostLibrary,wave,date_time thread filesystem,))
+
+#$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
+#$(eval $(call DefineBoostLibrary,exception,,))
 
 
 define Host/Compile
@@ -332,8 +379,6 @@ CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
 TARGET_LDFLAGS += -pthread -lrt
 
 TARGET_CFLAGS += \
-	$(if $(CONFIG_PACKAGE_boost-python), -I$(STAGING_DIR)/usr/include/python2.7/) \
-	$(if $(CONFIG_PACKAGE_boost-python3), -I$(STAGING_DIR)/usr/include/python3.5/) \
 	$(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC
 
 EXTRA_CXXFLAGS += $(if $(CONFIG_GCC_VERSION_4_8),-std=gnu++11,-std=gnu++14)
@@ -353,16 +398,17 @@ endif
 
 comma := ,
 
+
 define Build/Compile
 	$(info Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu $(CPU_TYPE) $(CPU_SUBTYPE))
 	( cd $(PKG_BUILD_DIR) ; \
 		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
 		$(if $(CONFIG_PACKAGE_boost-python3), \
-			echo "using python : 3.5 : $(STAGING_DIR_ROOT)/usr/bin/python3 : $(STAGING_DIR)/usr/include/python3.5/ ;" >> \
+			echo "using python : 3.6 : : $(STAGING_DIR)/usr/include/python3.6/ ;" >> \
 				tools/build/src/user-config.jam; \
 		) \
 		$(if $(CONFIG_PACKAGE_boost-python), \
-			echo "using python : 2.7 : $(STAGING_DIR_ROOT)/usr/bin/python :	$(STAGING_DIR)/usr/include/python2.7/ ;" >> \
+			echo "using python : 2.7 : : $(STAGING_DIR)/usr/include/python2.7/ ;" >> \
 				tools/build/src/user-config.jam; \
 		) \
 		b2 \
@@ -392,6 +438,8 @@ define Build/Compile
 					$(if $(or $(CONFIG_PACKAGE_boost-python),$(CONFIG_PACKAGE_boost-python3)),,--without-python), \
 					$(if $(CONFIG_PACKAGE_boost-$(lib)),,--without-$(lib))) \
 			) \
+			$(if $(CONFIG_PACKAGE_boost-python),python=2.7,) \
+			$(if $(CONFIG_PACKAGE_boost-python3),python=3.6,) \
 			$(if $(CONFIG_PACKAGE_boost-locale),boost.locale.iconv=on -sICONV_PATH=$(ICONV_PREFIX) boost.locale.posix=$(if $(USE_MUSL),on,off), \
 				boost.locale.iconv=off) \
 			\
