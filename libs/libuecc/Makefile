@@ -32,7 +32,8 @@ endef
 TARGET_CFLAGS += -ffunction-sections -fdata-sections
 
 CMAKE_OPTIONS += \
-	-DCMAKE_BUILD_TYPE:String="MINSIZEREL"
+	-DCMAKE_BUILD_TYPE:String="MINSIZEREL"\
+	-DCMAKE_POSITION_INDEPENDENT_CODE:bool=true
 
 
 define Package/libuecc/install
