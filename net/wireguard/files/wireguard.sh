@@ -22,6 +22,7 @@ proto_wireguard_init_config() {
   proto_config_add_int    "listen_port"
   proto_config_add_int    "mtu"
   proto_config_add_string "preshared_key"
+  proto_config_add_string "fwmark"
   available=1
   no_proto_task=1
 }
@@ -103,6 +104,7 @@ proto_wireguard_setup() {
   config_get addresses     "${config}" "addresses"
   config_get mtu           "${config}" "mtu"
   config_get preshared_key "${config}" "preshared_key"
+  config_get fwmark        "${config}" "fwmark"
 
   # create interface
   ip link del dev "${config}" 2>/dev/null
@@ -124,6 +126,9 @@ proto_wireguard_setup() {
   fi
   if [ "${preshared_key}" ]; then
     echo "PresharedKey=${preshared_key}" >> "${wg_cfg}"
+  fi
+  if [ "${fwmark}" ]; then
+    echo "FwMark=${fwmark}" >> "${wg_cfg}"
   fi
   config_foreach proto_wireguard_setup_peer "wireguard_${config}"
 
