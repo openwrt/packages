@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icu4c
 PKG_VERSION:=58.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-58_2-src.tgz
 PKG_SOURCE_URL:=http://download.icu-project.org/files/$(PKG_NAME)/$(PKG_VERSION)
@@ -79,19 +79,15 @@ HOST_CONFIGURE_ARGS:= \
 	--prefix=$(STAGING_DIR_HOSTPKG)
 
 define Build/InstallDev
-	$(INSTALL_DIR) \
-		$(1)/usr/include
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/* \
-		$(1)/usr/include/
-
-	$(INSTALL_DIR) \
-		$(1)/usr/lib
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/* \
-		$(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/include
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(2)/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/icu-config $(1)/usr/bin/
+	$(SED) 's,^\(prefix\|execprefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/icu-config
+	$(LN) $(STAGING_DIR)/usr/bin/icu-config $(2)/bin/
 endef
 
 define Host/Install
@@ -105,12 +101,8 @@ define Host/Install
 endef
 
 define Package/icu/install
-	$(INSTALL_DIR) \
-		$(1)/usr/lib
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/*.so* \
-		$(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,icu))
