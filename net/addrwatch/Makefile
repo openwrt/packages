@@ -46,7 +46,7 @@ define Package/addrwatch/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/addrwatch $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/addrwatch.init $(1)/etc/init.d/addrwatch
-	$(INSTALL_CONF) ./files/addrwatch.config $(1)/etc/config/addrwatch$
+	$(INSTALL_CONF) ./files/addrwatch.config $(1)/etc/config/addrwatch
 endef
 
 $(eval $(call BuildPackage,addrwatch))
