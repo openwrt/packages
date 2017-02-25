@@ -107,6 +107,12 @@ create_interface_dns() {
   if_fqdn="$ifdashname.$host_fqdn"
 
 
+  if [ -z "${ulaprefix%%:/*}" ] ; then
+    # Nonsense so this option isn't globbed below
+    ulaprefix="fdno:such:addr::/48"
+  fi
+
+
   if [ "$ignore" -gt 0 ] ; then
     mode="$UNBOUND_D_WAN_FQDN"
 
