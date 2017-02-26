@@ -1,0 +1,54 @@
+From: Linus Lüssing <linus.luessing@c0d3.blue>
+Date: Mon, 13 Feb 2017 20:44:31 +0100
+Subject: [PATCH] batman-adv: Fix transmission of final, 16th fragment
+
+Trying to split and transmit a unicast packet in 16 parts will fail for
+the final fragment: After having sent the 15th one with a frag_packet.no
+index of 14, we will increase the the index to 15 - and return with an
+error code immediately, even though one more fragment is due for
+transmission and allowed.
+
+Fixing this issue by moving the check before incrementing the index.
+
+While at it, adding an unlikely(), because the check is actually more of
+an assertion.
+
+Fixes: db56e4ecf5c2 ("batman-adv: Fragment and send skbs larger than mtu")
+Signed-off-by: Linus Lüssing <linus.luessing@c0d3.blue>
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+
+Origin: upstream, https://git.open-mesh.org/batman-adv.git/commit/464eff3b1768ff190466a453a57ac140ea5cb756
+---
+ net/batman-adv/fragmentation.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/net/batman-adv/fragmentation.c b/net/batman-adv/fragmentation.c
+index 31e97e9a..11149e5b 100644
+--- a/net/batman-adv/fragmentation.c
++++ b/net/batman-adv/fragmentation.c
+@@ -501,6 +501,12 @@ int batadv_frag_send_packet(struct sk_buff *skb,
+ 
+ 	/* Eat and send fragments from the tail of skb */
+ 	while (skb->len > max_fragment_size) {
++		/* The initial check in this function should cover this case */
++		if (unlikely(frag_header.no == BATADV_FRAG_MAX_FRAGMENTS - 1)) {
++			ret = -EINVAL;
++			goto put_primary_if;
++		}
++
+ 		skb_fragment = batadv_frag_create(skb, &frag_header, mtu);
+ 		if (!skb_fragment) {
+ 			ret = -ENOMEM;
+@@ -517,12 +523,6 @@ int batadv_frag_send_packet(struct sk_buff *skb,
+ 		}
+ 
+ 		frag_header.no++;
+-
+-		/* The initial check in this function should cover this case */
+-		if (frag_header.no == BATADV_FRAG_MAX_FRAGMENTS - 1) {
+-			ret = -EINVAL;
+-			goto put_primary_if;
+-		}
+ 	}
+ 
+ 	/* Make room for the fragment header. */
