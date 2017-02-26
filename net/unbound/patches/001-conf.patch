@@ -1,12 +1,12 @@
 diff --git a/doc/example.conf.in b/doc/example.conf.in
-index 55bbc32..14452fa 100644
+index 83e7c5c..3ea2b28 100644
 --- a/doc/example.conf.in
 +++ b/doc/example.conf.in
-@@ -1,20 +1,82 @@
+@@ -1,9 +1,10 @@
 -#
 -# Example configuration file.
 -#
--# See unbound.conf(5) man page, version 1.6.0.
+-# See unbound.conf(5) man page, version 1.6.1.
 -#
 -# this is a comment.
 +##############################################################################
@@ -19,10 +19,9 @@ index 55bbc32..14452fa 100644
  
  #Use this to include other text into the file.
  #include: "otherfile.conf"
- 
- # The server clause sets the main parameters.
+@@ -12,9 +13,71 @@
  server:
--	# whitespace is not necessary, but looks cleaner.
+ 	# whitespace is not necessary, but looks cleaner.
  
 -	# verbosity number, 0 is least verbose. 1 is default.
 +	# verbosity 1 is default
@@ -51,7 +50,7 @@ index 55bbc32..14452fa 100644
 +	access-control: ::0/0 allow
 +
 +	# this limits TCP service but uses less buffers
-+	outgoing-num-tcp: 1 
++	outgoing-num-tcp: 1
 +	incoming-num-tcp: 1
 +
 +	# use somewhat higher port numbers versus possible NAT issue
