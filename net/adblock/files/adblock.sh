@@ -10,10 +10,11 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.3.2"
+adb_ver="2.4.0"
 adb_enabled=1
 adb_debug=0
 adb_backup=0
+adb_tldcomp=1
 adb_backupdir="/mnt"
 adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\"^\"\$1\"\\\|[.]\"\$1)}"
@@ -324,7 +325,11 @@ f_log()
         then
             logger -t "adblock-[${adb_ver}] ${class}" "Please check the online documentation 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md'"
             f_rmtemp
-            f_rmdns
+            if [ "$(ls -dA "${adb_dnsdir}/${adb_dnsprefix}"* >/dev/null 2>&1)" ]
+            then
+                f_rmdns
+                f_dnsrestart
+            fi
             exit 255
         fi
     fi
@@ -389,13 +394,20 @@ f_main()
             adb_rc=${?}
         fi
 
-        # check download result and prepare domain output (incl. list backup/restore)
+        # check download result and prepare domain output (incl. tld compression, list backup & restore)
         #
         if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpload}" ]
         then
             awk "${src_rset}" "${adb_tmpload}" > "${adb_tmpfile}"
             if [ -s "${adb_tmpfile}" ]
             then
+                if [ ${adb_tldcomp} -eq 1 ]
+                then
+                    awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${adb_tmpfile}" | sort -u > "${adb_tmpload}"
+                    awk '{if(NR==1){tld=$NF};while(getline){if($NF !~ tld"\\."){print tld;tld=$NF}}print tld}' "${adb_tmpload}" > "${adb_tmpfile}"
+                    awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${adb_tmpfile}" > "${adb_tmpload}"
+                    mv -f "${adb_tmpload}" "${adb_tmpfile}"
+                fi
                 f_list backup
             else
                 f_list restore
@@ -410,9 +422,9 @@ f_main()
         then
             if [ -s "${adb_tmpdir}/tmp.whitelist" ]
             then
-                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpfile}" | sort -u | eval "${adb_dnsformat}" > "${adb_dnsfile}"
+                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpfile}" | eval "${adb_dnsformat}" > "${adb_dnsfile}"
             else
-                sort -u "${adb_tmpfile}" | eval "${adb_dnsformat}" > "${adb_dnsfile}"
+                cat "${adb_tmpfile}" | eval "${adb_dnsformat}" > "${adb_dnsfile}"
             fi
             adb_rc=${?}
             if [ ${adb_rc} -ne 0 ]
@@ -472,34 +484,31 @@ f_main()
 
 # handle different adblock actions
 #
-if [ "${adb_procd}" = "true" ]
-then
-    f_envload
-    case "${1}" in
-        stop)
-            f_rmtemp
-            f_rmdns
-            f_dnsrestart
-            ;;
-        restart)
-            f_rmtemp
-            f_rmdns
-            f_envcheck
-            f_main
-            ;;
-        suspend)
-            f_switch suspend
-            ;;
-        resume)
-            f_switch resume
-            ;;
-        query)
-            f_query "${2}"
-            ;;
-        *)
-            f_envcheck
-            f_main
-            ;;
-    esac
-fi
+f_envload
+case "${1}" in
+    stop)
+        f_rmtemp
+        f_rmdns
+        f_dnsrestart
+        ;;
+    restart)
+        f_rmtemp
+        f_rmdns
+        f_envcheck
+        f_main
+        ;;
+    suspend)
+        f_switch suspend
+        ;;
+    resume)
+        f_switch resume
+        ;;
+    query)
+        f_query "${2}"
+        ;;
+    *)
+        f_envcheck
+        f_main
+        ;;
+esac
 exit 0
