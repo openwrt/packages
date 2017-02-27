@@ -7,7 +7,7 @@
 +project(mcproxy CXX)
 +set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 +set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11")
-+add_definitions(-Wall -Wextra -pedantic)
++add_definitions(-Wall -Wextra)
 +include_directories(${CMAKE_SOURCE_DIR}/mcproxy)
 +
 +
