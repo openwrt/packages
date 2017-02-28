@@ -1,0 +1,61 @@
+From: Sven Eckelmann <sven@narfation.org>
+Date: Sun, 12 Feb 2017 11:26:33 +0100
+Subject: [PATCH] batman-adv: Fix double free during fragment merge error
+
+The function batadv_frag_skb_buffer was supposed not to consume the skbuff
+on errors. This was followed in the helper function
+batadv_frag_insert_packet when the skb would potentially be inserted in the
+fragment queue. But it could happen that the next helper function
+batadv_frag_merge_packets would try to merge the fragments and fail. This
+results in a kfree_skb of all the enqueued fragments (including the just
+inserted one). batadv_recv_frag_packet would detect the error in
+batadv_frag_skb_buffer and try to free the skb again.
+
+The behavior of batadv_frag_skb_buffer (and its helper
+batadv_frag_insert_packet) must therefore be changed to always consume the
+skbuff to have a common behavior and avoid the double kfree_skb.
+
+Fixes: 9b3eab61754d ("batman-adv: Receive fragmented packets and merge")
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+
+Origin: upstream, https://git.open-mesh.org/batman-adv.git/commit/e3bab02816097f860545d9ce9ae0808c69d7c92f
+---
+ net/batman-adv/fragmentation.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/net/batman-adv/fragmentation.c b/net/batman-adv/fragmentation.c
+index 0854ebd8..31e97e9a 100644
+--- a/net/batman-adv/fragmentation.c
++++ b/net/batman-adv/fragmentation.c
+@@ -239,8 +239,10 @@ err_unlock:
+ 	spin_unlock_bh(&chain->lock);
+ 
+ err:
+-	if (!ret)
++	if (!ret) {
+ 		kfree(frag_entry_new);
++		kfree_skb(skb);
++	}
+ 
+ 	return ret;
+ }
+@@ -313,7 +315,7 @@ free:
+  *
+  * There are three possible outcomes: 1) Packet is merged: Return true and
+  * set *skb to merged packet; 2) Packet is buffered: Return true and set *skb
+- * to NULL; 3) Error: Return false and leave skb as is.
++ * to NULL; 3) Error: Return false and free skb.
+  *
+  * Return: true when packet is merged or buffered, false when skb is not not
+  * used.
+@@ -338,9 +340,9 @@ bool batadv_frag_skb_buffer(struct sk_buff **skb,
+ 		goto out_err;
+ 
+ out:
+-	*skb = skb_out;
+ 	ret = true;
+ out_err:
++	*skb = skb_out;
+ 	return ret;
+ }
+ 
