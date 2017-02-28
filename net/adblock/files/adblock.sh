@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.4.0"
+adb_ver="2.4.0-2"
 adb_enabled=1
 adb_debug=0
 adb_backup=0
@@ -406,8 +406,10 @@ f_main()
                     awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${adb_tmpfile}" | sort -u > "${adb_tmpload}"
                     awk '{if(NR==1){tld=$NF};while(getline){if($NF !~ tld"\\."){print tld;tld=$NF}}print tld}' "${adb_tmpload}" > "${adb_tmpfile}"
                     awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${adb_tmpfile}" > "${adb_tmpload}"
-                    mv -f "${adb_tmpload}" "${adb_tmpfile}"
+                else
+                    sort -u "${adb_tmpfile}" > "${adb_tmpload}"
                 fi
+                mv -f "${adb_tmpload}" "${adb_tmpfile}"
                 f_list backup
             else
                 f_list restore
