@@ -10,10 +10,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2016.5
-PKG_RELEASE:=4
-PKG_MD5SUM:=6717a933a08dd2a01b00df30cb9f16a8
-PKG_HASH:=d0a0fc90c4f410b57d043215e253bb0b855efa5edbe165d87c17bfdcfafd0db7
+PKG_VERSION:=2017.0
+PKG_RELEASE:=0
+PKG_MD5SUM:=1b3121f0baa8771ff6d8ad172c95904f
+PKG_HASH:=65df01222bc51ec788fb1b6dc63feaf69d393f2d0a96e347d55de83b1602c509
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)

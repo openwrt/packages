@@ -33,6 +33,15 @@
 
 #endif /* < KERNEL_VERSION(4, 5, 0) */
 
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+
+/* wild hack for batadv_getlink_net only */
+#define get_link_net get_xstats_size || 1 ? fallback_net : (struct net*)netdev->rtnl_link_ops->get_xstats_size
+
+#endif /* < KERNEL_VERSION(4, 0, 0) */
+
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
 
 struct sk_buff *skb_checksum_trimmed(struct sk_buff *skb,
