@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.7.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
@@ -32,7 +32,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	battery \
 	ceph \
 	cgroups \
-	chrony \
 	cpusleep \
 	curl_json \
 	curl_xml \
@@ -111,6 +110,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	apcups \
 	ascent \
 	bind \
+	chrony \
 	conntrack \
 	contextswitch \
 	cpu \
@@ -132,6 +132,11 @@ COLLECTD_PLUGINS_SELECTED:= \
 	load \
 	logfile \
 	madwifi \
+	match_empty_counter \
+	match_hashed \
+	match_regex \
+	match_timediff \
+	match_value \
 	memory \
 	modbus \
 	mysql \
@@ -310,6 +315,7 @@ $(eval $(call BuildPlugin,apache,apache status input,apache,+PACKAGE_collectd-mo
 $(eval $(call BuildPlugin,apcups,apcups status input,apcups,))
 $(eval $(call BuildPlugin,ascent,ascent status input,ascent,+PACKAGE_collectd-mod-ascent:libcurl +PACKAGE_collectd-mod-ascent:libxml2))
 $(eval $(call BuildPlugin,bind,BIND server/zone input,bind,+PACKAGE_collectd-mod-bind:libcurl +PACKAGE_collectd-mod-bind:libxml2))
+$(eval $(call BuildPlugin,chrony,chrony status input,chrony,))
 $(eval $(call BuildPlugin,conntrack,connection tracking table size input,conntrack,))
 $(eval $(call BuildPlugin,contextswitch,context switch input,contextswitch,))
 $(eval $(call BuildPlugin,cpu,CPU input,cpu,))
@@ -332,6 +338,11 @@ $(eval $(call BuildPlugin,iwinfo,libiwinfo wireless statistics,iwinfo,+PACKAGE_c
 $(eval $(call BuildPlugin,load,system load input,load,))
 $(eval $(call BuildPlugin,logfile,log files output,logfile,))
 $(eval $(call BuildPlugin,madwifi,MadWifi status input,madwifi,))
+$(eval $(call BuildPlugin,match-empty-counter,empty-counter match,match_empty_counter,))
+$(eval $(call BuildPlugin,match-hashed,hashed match,match_hashed,))
+$(eval $(call BuildPlugin,match-regex,regex match,match_regex,))
+$(eval $(call BuildPlugin,match-timediff,timediff match,match_timediff,))
+$(eval $(call BuildPlugin,match-value,value match,match_value,))
 #$(eval $(call BuildPlugin,mysql,MySQL status input,mysql,+PACKAGE_collectd-mod-mysql:libmysqlclient-r))
 $(eval $(call BuildPlugin,memory,physical memory usage input,memory,))
 $(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAGE_collectd-mod-modbus:libmodbus))
