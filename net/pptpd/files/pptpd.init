@@ -67,6 +67,6 @@ start_service() {
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
 
 	procd_open_instance
-	procd_set_param command $BIN -c $CONFIG -o $OPTIONS_PPTP
+	procd_set_param command $BIN -c $CONFIG --fg -o $OPTIONS_PPTP
 	procd_close_instance
 }
