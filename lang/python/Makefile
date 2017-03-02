@@ -193,6 +193,7 @@ define Build/InstallDev
 		./files/python-package.mk \
 		./files/python-host.mk \
 		./files/python-version.mk \
+		./files/python-package-install.sh \
 		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
