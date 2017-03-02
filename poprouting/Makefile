@@ -9,7 +9,7 @@ PKG_USE_MIPS16:=0
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=prince-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/gabri94/poprouting.git
-PKG_SOURCE_VERSION:=346e59afefe5c46ddd6377a814da40254f64d26d
+PKG_SOURCE_VERSION:=v0.3
 PKG_SOURCE_SUBDIR:=prince-v0.3
 include $(INCLUDE_DIR)/package.mk
 
