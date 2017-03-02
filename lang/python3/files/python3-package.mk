@@ -34,6 +34,17 @@ endif
 
 define Py3Package
 
+  define Package/$(1)-src
+    $(call Package/$(1))
+    TITLE+= (sources)
+    DEPENDS:=$$$$(foreach dep,$$$$(filter +python3-%,$$$$(DEPENDS)),$$$$(dep)-src)
+  endef
+
+  define Package/$(1)-src/description
+    $(call Package/$(1)/description).
+    (Contains the Python3 sources for this package).
+  endef
+
   # Add default PyPackage filespec none defined
   ifndef Py3Package/$(1)/filespec
     define Py3Package/$(1)/filespec
@@ -58,15 +69,21 @@ define Py3Package
 	if [ -e files/python3-package-install.sh ] ; then \
 		$(SHELL) files/python3-package-install.sh \
 			"$(PKG_INSTALL_DIR)" "$$(1)" \
+			"$(HOST_PYTHON3_BIN)" "$$(2)" \
 			"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)" ; \
 	elif [ -e $(STAGING_DIR)/mk/python3-package-install.sh ] ; then \
 		$(SHELL) $(STAGING_DIR)/mk/python3-package-install.sh \
 			"$(PKG_INSTALL_DIR)" "$$(1)" \
+			"$(HOST_PYTHON3_BIN)" "$$(2)" \
 			"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)" ; \
 	else \
 		echo "No 'python3-package-install.sh' script found" ; \
 		exit 1 ; \
 	fi
+  endef
+
+  define Package/$(1)-src/install
+	$$(call Package/$(1)/install,$$(1),sources)
   endef
 endef
 
