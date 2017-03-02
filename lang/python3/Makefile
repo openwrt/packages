@@ -187,6 +187,7 @@ define Build/InstallDev
 		./files/python3-package.mk \
 		./files/python3-host.mk \
 		./files/python3-version.mk \
+		./files/python3-package-install.sh \
 		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
