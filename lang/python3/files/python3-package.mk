@@ -53,6 +53,7 @@ define Py3Package
   $(call shexport,Py3Package/$(1)/filespec)
 
   define Package/$(1)/install
+	$(call Py3Package/$(1)/install,$$(1))
 	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
 	if [ -e files/python3-package-install.sh ] ; then \
 		$(SHELL) files/python3-package-install.sh \
@@ -66,7 +67,6 @@ define Py3Package
 		echo "No 'python3-package-install.sh' script found" ; \
 		exit 1 ; \
 	fi
-	$(call Py3Package/$(1)/install,$$(1))
   endef
 endef
 

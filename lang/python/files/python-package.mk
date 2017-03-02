@@ -53,6 +53,7 @@ define PyPackage
   $(call shexport,PyPackage/$(1)/filespec)
 
   define Package/$(1)/install
+	$(call PyPackage/$(1)/install,$$(1))
 	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
 	if [ -e files/python-package-install.sh ] ; then \
 		$(SHELL) files/python-package-install.sh \
@@ -66,7 +67,6 @@ define PyPackage
 		echo "No 'python-package-install.sh' script found" ; \
 		exit 1 ; \
 	fi
-	$(call PyPackage/$(1)/install,$$(1))
   endef
 endef
 
