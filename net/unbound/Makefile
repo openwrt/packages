@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
-PKG_VERSION:=1.6.0
-PKG_RELEASE:=3
+PKG_VERSION:=1.6.1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -17,7 +17,7 @@ PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@hotmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unbound.net/downloads
-PKG_MD5SUM:=78409eccf7260d260b6463f85e59c66b
+PKG_HASH:=42df63f743c0fe8424aeafcf003ad4b880b46c14149d696057313f5c1ef51400
 
 PKG_BUILD_DEPENDS:=libexpat
 PKG_BUILD_PARALLEL:=1
@@ -27,7 +27,7 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/unbound/Default
-  TITLE:=Unbound is a validating, recursive, and caching DNS resolver.
+  TITLE:=Validating Recursive DNS Server
   URL:=http://www.unbound.net/
   DEPENDS:=+libopenssl
 endef
@@ -51,7 +51,7 @@ define Package/unbound-anchor
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  TITLE+= (anchor utility)
+  TITLE+= (DSKEY utility)
   DEPENDS+= +unbound +libexpat
 endef
 
@@ -77,7 +77,7 @@ define Package/unbound-control-setup
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  TITLE+= (control setup utility)
+  TITLE+= (control setup)
   DEPENDS+= +unbound-control +openssl-util
 endef
 
@@ -90,7 +90,7 @@ define Package/unbound-host
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  TITLE+= (DNS lookup utility)
+  TITLE+= (lookup utility)
   DEPENDS+= +libunbound
 endef
 
