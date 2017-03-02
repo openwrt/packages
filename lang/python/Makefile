@@ -301,6 +301,7 @@ $(eval $(call HostBuild))
 $(foreach package, $(PYTHON_PACKAGES),  \
 	$(eval $(call PyPackage,$(package))) \
 	$(eval $(call BuildPackage,$(package))) \
+	$(eval $(call BuildPackage,$(package)-src)) \
 )
 
 $(eval $(call PyPackage,python-base))
@@ -312,3 +313,7 @@ $(eval $(call BuildPackage,python-pip-conf))
 $(eval $(call BuildPackage,python-base))
 $(eval $(call BuildPackage,python-light))
 $(eval $(call BuildPackage,python))
+
+$(eval $(call BuildPackage,python-base-src))
+$(eval $(call BuildPackage,python-light-src))
+$(eval $(call BuildPackage,python-src))
