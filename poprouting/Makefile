@@ -4,13 +4,13 @@ PKG_NAME:=prince
 PKG_VERSION:=v0.3
 PKG_RELEASE:=3
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/prince-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_USE_MIPS16:=0
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=prince-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/gabri94/poprouting.git
 PKG_SOURCE_VERSION:=v0.3
-PKG_SOURCE_SUBDIR:=prince-v0.3
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/prince
