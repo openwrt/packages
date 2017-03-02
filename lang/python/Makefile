@@ -259,6 +259,7 @@ $(subst $(space),$(newline),$(foreach lib_file,$(PYTHON_LIB_FILES_DEL),-|$(lib_f
 endef
 
 define PyPackage/python-base/install
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
