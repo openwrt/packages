@@ -54,7 +54,7 @@ define Py3Package
 
   define Package/$(1)/install
 	$(call Py3Package/$(1)/install,$$(1))
-	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
+	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 	if [ -e files/python3-package-install.sh ] ; then \
 		$(SHELL) files/python3-package-install.sh \
 			"$(PKG_INSTALL_DIR)" "$$(1)" \
@@ -103,7 +103,7 @@ define Build/Compile/Py3Mod
 		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
 		./setup.py $(2), \
 		$(3))
-	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
+	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 endef
 
 define Py3Build/Compile/Default
