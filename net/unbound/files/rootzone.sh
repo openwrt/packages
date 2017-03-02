@@ -26,7 +26,7 @@ rootzone_uci() {
   # This will likely be called outside of "start_service()" context
   config_get_bool UNBOUND_B_DNSSEC "$cfg" validator 0
   config_get_bool UNBOUND_B_NTP_BOOT "$cfg" validator_ntp 1
-  config_get UNBOUND_N_ROOT_AGE "$cfg" root_age 30
+  config_get UNBOUND_N_ROOT_AGE "$cfg" root_age 9
 }
 
 ##############################################################################

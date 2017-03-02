@@ -19,7 +19,7 @@ config unbound
 	option rebind_protection '1'
 	option recursion 'passive'
 	option resource 'small'
-	option root_age '28'
+	option root_age '9'
 	option ttl_min '120'
 	option unbound_control '0'
 	option validator '0'
