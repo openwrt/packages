@@ -117,7 +117,7 @@ Keep the DNSKEY updated with your choice of flash activity. `root.key` maintenan
 
 	config unbound
 		option manual_conf '1'
-		option root_age '30'
+		option root_age '9'
 
 ### Hybrid Manual/UCI
 You like the UCI. Yet, you need to add some difficult to standardize options, or just are not ready to make a UCI request yet. The files `/etc/unbound/unbound_srv.conf` and `/etc/unbound/unbound_ext.conf` will be copied to Unbounds chroot directory and included during auto generation. 
@@ -230,7 +230,7 @@ The former will be added to the end of the `server:` clause. The later will be a
 		defaults with a bit of balancing. Tiny is close to the published
 		memory restricted configuration. Small 1/2 medium, and large 2x.
 
-	option root_age '30'
+	option root_age '9'
 		Days. >90 Disables. Age limit for Unbound root data like root
 		DNSSEC key. Unbound uses RFC 5011 to manage root key. This could
 		harm flash ROM. This activity is mapped to "tmpfs," but every so
