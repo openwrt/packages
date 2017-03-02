@@ -34,6 +34,17 @@ endif
 
 define PyPackage
 
+  define Package/$(1)-src
+    $(call Package/$(1))
+    TITLE+= (sources)
+    DEPENDS:=$$$$(foreach dep,$$$$(filter +python-%,$$$$(DEPENDS)),$$$$(dep)-src)
+  endef
+
+  define Package/$(1)-src/description
+    $(call Package/$(1)/description).
+    (Contains the Python sources for this package).
+  endef
+
   # Add default PyPackage filespec none defined
   ifndef PyPackage/$(1)/filespec
     define PyPackage/$(1)/filespec
@@ -58,15 +69,21 @@ define PyPackage
 	if [ -e files/python-package-install.sh ] ; then \
 		$(SHELL) files/python-package-install.sh \
 			"$(PKG_INSTALL_DIR)" "$$(1)" \
+			"$(HOST_PYTHON_BIN)" "$$(2)" \
 			"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" ; \
 	elif [ -e $(STAGING_DIR)/mk/python-package-install.sh ] ; then \
 		$(SHELL) $(STAGING_DIR)/mk/python-package-install.sh \
 			"$(PKG_INSTALL_DIR)" "$$(1)" \
+			"$(HOST_PYTHON_BIN)" "$$(2)" \
 			"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" ; \
 	else \
 		echo "No 'python-package-install.sh' script found" ; \
 		exit 1 ; \
 	fi
+  endef
+
+  define Package/$(1)-src/install
+	$$(call Package/$(1)/install,$$(1),sources)
   endef
 endef
 
