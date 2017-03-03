@@ -282,7 +282,15 @@ define Package/freeradius3-mod-passwd/conffiles
 /etc/freeradius3/mods-enabled/passwd
 endef
 
-# LDAP support has not been ported
+define Package/freeradius3-mod-ldap
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3 +libopenldap @FREERADIUS3_OPENSSL
+  TITLE:=LDAP Authentication
+endef
+
+define Package/freeradius3-mod-ldap/conffiles
+/etc/freeradius3/mods-available/ldap
+endef
 
 define Package/freeradius3-mod-logintime
   $(call Package/freeradius3/Default)
@@ -404,7 +412,6 @@ CONFIGURE_ARGS+= \
 	--without-rlm_idn \
 	--without-rlm_ippool \
 	--without-rlm_krb5 \
-	--without-rlm_ldap \
 	--without-rlm_opendirectory \
 	--without-rlm_pam \
 	--without-rlm_perl \
@@ -479,6 +486,14 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-unix),)
   CONFIGURE_ARGS+= --with-rlm_unix
 else
   CONFIGURE_ARGS+= --without-rlm_unix
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-ldap),)
+  CONFIGURE_ARGS+= --with-rlm_ldap \
+		--with-rlm_ldap-include-dir="$(STAGING_DIR)/usr/include" \
+		--with-rlm_ldap-lib-dir="$(STAGING_DIR)/usr/lib"
+else
+  CONFIGURE_ARGS+= --without-rlm_ldap
 endif
 
 CONFIGURE_VARS+= \
@@ -595,6 +610,7 @@ $(eval $(call BuildPlugin,freeradius3-mod-exec,rlm_exec,))
 $(eval $(call BuildPlugin,freeradius3-mod-expiration,rlm_expiration,))
 $(eval $(call BuildPlugin,freeradius3-mod-expr,rlm_expr,))
 $(eval $(call BuildPlugin,freeradius3-mod-files,rlm_files,))
+$(eval $(call BuildPlugin,freeradius3-mod-ldap,rlm_ldap,))
 $(eval $(call BuildPlugin,freeradius3-mod-logintime,rlm_logintime,))
 $(eval $(call BuildPlugin,freeradius3-mod-mschap,rlm_mschap,))
 $(eval $(call BuildPlugin,freeradius3-mod-pap,rlm_pap,))
