@@ -10,12 +10,13 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.3.5"
+trm_ver="0.4.0"
 trm_enabled=1
 trm_debug=0
+trm_active=0
 trm_maxwait=20
 trm_maxretry=3
-trm_radio="*"
+trm_timeout=60
 trm_iw=1
 
 f_envload()
@@ -65,34 +66,46 @@ f_prepare()
 {
     local config="${1}"
     local mode="$(uci -q get wireless."${config}".mode)"
-    local network="$(uci -q get wireless."${config}".network)"
+    local radio="$(uci -q get wireless."${config}".device)"
     local disabled="$(uci -q get wireless."${config}".disabled)"
 
-    if [ "${mode}" = "sta" ] && [ -n "${network}" ]
+    if [ "${mode}" = "ap" ] && ([ -z "${disabled}" ] || [ "${disabled}" = "0" ]) && \
+        ([ -z "${trm_radio}" ] || [ "${trm_radio}" = "${radio}" ])
     then
-        trm_stalist="${trm_stalist} ${config}_${network}"
+        trm_radiolist="${trm_radiolist} ${radio}"
+    elif [ "${mode}" = "sta" ]
+    then
+        trm_stalist="${trm_stalist} ${config}_${radio}"
         if [ -z "${disabled}" ] || [ "${disabled}" = "0" ]
         then
             uci -q set wireless."${config}".disabled=1
-            f_log "debug" "config: ${config}, interface: ${network}"
         fi
     fi
+    f_log "debug" "mode: ${mode}, radio: ${radio}, config: ${config}, disabled: ${disabled}"
 }
 
 f_check()
 {
-    local ifname cnt=1 mode="${1}"
+    local ifname radio cnt=1 mode="${1}"
     trm_ifstatus="false"
 
     while [ ${cnt} -le ${trm_maxwait} ]
     do
         if [ "${mode}" = "ap" ]
         then
-            ifname="$(ubus -S call network.wireless status | jsonfilter -l1 -e "@.${trm_radio}.interfaces[@.config.mode=\"ap\"].ifname")"
-            if [ -n "${ifname}" ]
-            then
-                trm_ifstatus="$(ubus -S call network.wireless status | jsonfilter -l1 -e "@.${trm_radio}.up")"
-            fi
+            for radio in ${trm_radiolist}
+            do
+                trm_ifstatus="$(ubus -S call network.wireless status | jsonfilter -e "@.${radio}.up")"
+                if [ "${trm_ifstatus}" = "true" ]
+                then
+                    trm_aplist="${trm_aplist} $(ubus -S call network.wireless status | jsonfilter -e "@.${radio}.interfaces[@.config.mode=\"ap\"].ifname")_${radio}"
+                    ifname="${trm_aplist}"
+                else
+                    trm_aplist=""
+                    trm_ifstatus="false"
+                    break
+                fi
+            done
         else
             ifname="$(ubus -S call network.wireless status | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
             if [ -n "${ifname}" ]
@@ -107,7 +120,7 @@ f_check()
         cnt=$((cnt+1))
         sleep 1
     done
-    f_log "debug" "mode: ${mode}, radio: ${trm_radio}, name: ${ifname}, status: ${trm_ifstatus}, count: ${cnt}, max-wait: ${trm_maxwait}"
+    f_log "debug" "mode: ${mode}, name: ${ifname}, status: ${trm_ifstatus}, count: ${cnt}, max-wait: ${trm_maxwait}"
 }
 
 # function to write to syslog
@@ -130,7 +143,7 @@ f_log()
 
 f_main()
 {
-    local ap_list ssid_list config network ssid cnt=1
+    local ssid_list config ap_radio sta_radio ssid cnt=1
     local sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 
     f_log "info " "start travelmate scanning ..."
@@ -145,15 +158,20 @@ f_main()
             ubus call network reload
         fi
         f_check "ap"
-        ap_list="$(ubus -S call network.wireless status | jsonfilter -e "@.${trm_radio}.interfaces[@.config.mode=\"ap\"].ifname" | awk '{ORS=" "; print $0}')"
-        f_log "debug" "ap-list: ${ap_list}, sta-list: ${trm_stalist}"
-        if [ -z "${ap_list}" ] || [ -z "${trm_stalist}" ]
+        f_log "debug" "ap-list: ${trm_aplist}, sta-list: ${trm_stalist}"
+        if [ -z "${trm_aplist}" ] || [ -z "${trm_stalist}" ]
         then
             f_log "error" "no usable AP/STA configuration found"
         fi
-        for ap in ${ap_list}
+        for ap in ${trm_aplist}
         do
             cnt=1
+            ap_radio="${ap##*_}"
+            ap="${ap%%_*}"
+            if [ -z "$(printf "${trm_stalist}" | grep -Fo "_${ap_radio}")" ]
+            then
+                continue
+            fi
             while [ ${cnt} -le ${trm_maxretry} ]
             do
                 if [ ${trm_iw} -eq 1 ]
@@ -170,9 +188,9 @@ f_main()
                     for sta in ${trm_stalist}
                     do
                         config="${sta%%_*}"
-                        network="${sta##*_}"
+                        sta_radio="${sta##*_}"
                         ssid="\"$(uci -q get wireless."${config}".ssid)\""
-                        if [ -n "$(printf "${ssid_list}" | grep -Fo "${ssid}")" ]
+                        if [ -n "$(printf "${ssid_list}" | grep -Fo "${ssid}")" ] && [ "${ap_radio}" = "${sta_radio}" ]
                         then
                             uci -q set wireless."${config}".disabled=0
                             uci -q commit wireless
@@ -204,9 +222,13 @@ f_main()
     fi
 }
 
-if [ "${trm_procd}" = "true" ]
+f_envload
+f_main
+
+# keep travelmate in an active state
+#
+if [ ${trm_active} -eq 1 ]
 then
-    f_envload
-    f_main
+    (sleep ${trm_timeout}; /etc/init.d/travelmate start >/dev/null 2>&1) &
 fi
 exit 0
