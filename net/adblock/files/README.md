@@ -57,6 +57,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * automatically selects uclient-fetch or wget as download utility (other tools like curl or aria2c are supported as well)
 * automatically supports a wide range of router modes, even AP modes are supported
 * full IPv4 and IPv6 support
+* supports tld compression (top level domain compression), this feature removes thousands of needless host entries from the block lists and lowers the memory footprint for the dns backends
 * each block list source will be updated and processed separately
 * block list source parsing by fast & flexible regex rulesets
 * overall duplicate removal in separate block lists
@@ -120,6 +121,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: not set, disabled)
     * adb\_fetch => full path to a different download utility, see example below (default: not set, use wget)
     * adb\_fetchparm => options for the download utility, see example below (default: not set, use wget options)
+    * adb\_tldcomp => enable/disable tld compression (default: '1', enabled)
 
 ## Examples
 
@@ -136,19 +138,19 @@ If you use manual configuration for unbound, then just include the following lin
 <pre><code>
 wget (default):
   option adb_fetch="/usr/bin/wget"
-  option adb_fetchparm="--no-config --quiet --tries=1 --no-cache --no-cookies --max-redirect=0 --timeout=5 --no-check-certificate -O"
+  option adb_fetchparm="--no-config --quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
 
 aria2c:
   option adb_fetch '/usr/bin/aria2c'
-  option adb_fetchparm '-q --max-tries=1 --timeout=5 --allow-overwrite=true --auto-file-renaming=false --check-certificate=false -o'
+  option adb_fetchparm '-q --timeout=10 --allow-overwrite=true --auto-file-renaming=false --check-certificate=false -o'
 
 uclient-fetch:
   option adb_fetch '/bin/uclient-fetch'
-  option adb_fetchparm '-q --timeout=5 --no-check-certificate -O'
+  option adb_fetchparm '-q --timeout=10 --no-check-certificate -O'
 
 curl:
   option adb_fetch '/usr/bin/curl'
-  option adb_fetchparm '-s --retry 1 --connect-timeout 5 --insecure -o'
+  option adb_fetchparm '-s --connect-timeout 10 --insecure -o'
 </code></pre>
   
 **receive adblock statistics via ubus:**
