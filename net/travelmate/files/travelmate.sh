@@ -6,11 +6,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-# prepare environment
+# set initial defaults
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.4.0"
+trm_ver="0.4.1"
+trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=1
 trm_debug=0
 trm_active=0
@@ -19,6 +20,8 @@ trm_maxretry=3
 trm_timeout=60
 trm_iw=1
 
+# f_envload: load travelmate environment
+#
 f_envload()
 {
     # source required system libraries
@@ -60,7 +63,7 @@ f_envload()
     fi
 }
 
-# function to bring down all STA interfaces
+# f_prepare: gather radio information & bring down all STA interfaces
 #
 f_prepare()
 {
@@ -84,6 +87,8 @@ f_prepare()
     f_log "debug" "mode: ${mode}, radio: ${radio}, config: ${config}, disabled: ${disabled}"
 }
 
+# f_check: check interface status
+#
 f_check()
 {
     local ifname radio cnt=1 mode="${1}"
@@ -123,7 +128,17 @@ f_check()
     f_log "debug" "mode: ${mode}, name: ${ifname}, status: ${trm_ifstatus}, count: ${cnt}, max-wait: ${trm_maxwait}"
 }
 
-# function to write to syslog
+# f_active: keep travelmate in an active state
+#
+f_active()
+{
+    if [ ${trm_active} -eq 1 ]
+    then
+        (sleep ${trm_timeout}; /etc/init.d/travelmate start >/dev/null 2>&1) &
+    fi
+}
+
+# f_log: function to write to syslog
 #
 f_log()
 {
@@ -135,21 +150,23 @@ f_log()
         logger -t "travelmate-[${trm_ver}] ${class}" "${log_msg}"
         if [ "${class}" = "error" ]
         then
-            logger -t "travelmate-[${trm_ver}] ${class}" "Please check the online documentation 'https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md'"
+            logger -t "travelmate-[${trm_ver}] ${class}" "Please check the readme 'https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md' (${trm_sysver})"
+            f_active
             exit 255
         fi
     fi
 }
 
+# f_main: main function for connection handling
+#
 f_main()
 {
     local ssid_list config ap_radio sta_radio ssid cnt=1
-    local sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 
-    f_log "info " "start travelmate scanning ..."
     f_check "initial"
     if [ "${trm_ifstatus}" != "true" ]
     then
+        f_log "info " "start travelmate scanning ..."
         config_load wireless
         config_foreach f_prepare wifi-iface
         if [ -n "$(uci -q changes wireless)" ]
@@ -198,37 +215,29 @@ f_main()
                             f_check "sta"
                             if [ "${trm_ifstatus}" = "true" ]
                             then
-                                f_log "info " "wwan interface connected to uplink ${ssid} (${cnt}/${trm_maxretry}, ${sysver})"
+                                f_log "info " "wwan interface connected to uplink ${ssid} (${cnt}/${trm_maxretry}, ${trm_sysver})"
                                 sleep 5
                                 return 0
                             else
                                 uci -q set wireless."${config}".disabled=1
                                 uci -q commit wireless
                                 ubus call network reload
-                                f_log "info " "wwan interface can't connect to uplink ${ssid} (${cnt}/${trm_maxretry}, ${sysver})"
+                                f_log "info " "wwan interface can't connect to uplink ${ssid} (${cnt}/${trm_maxretry}, ${trm_sysver})"
                             fi
                         fi
                     done
                 else
-                    f_log "info " "empty uplink list (${cnt}/${trm_maxretry}, ${sysver})"
+                    f_log "info " "empty uplink list (${cnt}/${trm_maxretry}, ${trm_sysver})"
                 fi
                 cnt=$((cnt+1))
                 sleep 5
             done
         done
-        f_log "info " "no wwan uplink found (${sysver})"
-    else
-        f_log "info " "wwan uplink still connected (${sysver})"
+        f_log "info " "no wwan uplink found (${trm_sysver})"
     fi
 }
 
 f_envload
 f_main
-
-# keep travelmate in an active state
-#
-if [ ${trm_active} -eq 1 ]
-then
-    (sleep ${trm_timeout}; /etc/init.d/travelmate start >/dev/null 2>&1) &
-fi
+f_active
 exit 0
