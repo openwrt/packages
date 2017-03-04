@@ -9,7 +9,7 @@ NAME=gpsd
 validate_section_gpsd()
 {
 	uci_validate_section gpsd gpsd "${1}" \
-		'enable:bool:1' \
+		'enabled:bool:1' \
 		'device:string' \
 		'listen_globally:bool:0' \
 		'port:port:2947'
@@ -17,14 +17,14 @@ validate_section_gpsd()
 
 gpsd_instance()
 {
-	local device enable listen_globally port
+	local device enabled listen_globally port
 
 	validate_section_gpsd "${1}" || {
 		echo "validation failed"
 		return 1
 	}
 
-	[ "${enable}" = "0" ] && return 1
+	[ "${enabled}" = "0" ] && return 1
 
 	procd_open_instance
 	procd_set_param command "$PROG" -N -n
