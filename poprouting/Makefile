@@ -1,16 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prince
-PKG_VERSION:=v0.2
-PKG_RELEASE:=2
+PKG_VERSION:=v0.3.1
+PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/prince-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_USE_MIPS16:=0
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=prince-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/gabri94/poprouting.git
-PKG_SOURCE_VERSION:=v0.2
-PKG_SOURCE_SUBDIR:=prince-v0.2
+PKG_SOURCE_VERSION:=v0.3.1
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/prince
@@ -36,10 +36,9 @@ endef
 
 define Package/prince/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/graph-parser_c/build/lib/libgraphcparser.so $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/prince/build/prince_c $(1)/usr/sbin/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/prince/build/libprince_oonf.so $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/output/prince $(1)/usr/sbin/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/output/libprince_oonf_c.so $(1)/usr/lib/
 endef
 
 
