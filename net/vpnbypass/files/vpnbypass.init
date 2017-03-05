@@ -13,14 +13,25 @@ output() { local msg=$(echo -n "${1/$p_name /service }" | sed 's|\\033\[[0-9]\?;
 PKG_NAME="${PKG_NAME:-vpnbypass}"; p_name="${PKG_NAME} ${PKG_VERSION}"
 
 is_enabled() {
+	local c=1 enabled
 	config_load $PKG_NAME
+	config_get_bool enabled 'config' 'enabled' 1
 	config_get verbosity    'config' 'verbosity' '2'
 	config_get TID          'config' 'table_number' '200'
 	config_get IPSET        'config' 'ipset'  'vpnbypass'
 	config_get FW_MARK      'config' 'fw_mark' '0x010000'
 	config_get FW_MASK      'config' 'fw_mask' '0xff0000'
 	source /lib/functions/network.sh
-	return 0
+	[ "$enabled" -gt 0 ] || { output "$__error__: $p_name is not enabled.\n"; return 1; }
+	source 	/lib/functions/network.sh
+	while : ; do
+		network_find_wan wan_if4
+		[ -n "$wan_if4" ] && network_get_gateway wan_gw $wan_if4
+		[ "$c" -ge 25 -o -n "$wan_gw" ] && break
+		output "$p_name waiting for wan gateway...\n"
+		sleep 2; network_flush_cache; let "c+=1";
+	done
+	[ -n "$wan_gw" ] && return 0 || { output "$__error__: $p_name failed to discover WAN gateway.\n"; return 1; }
 }
 
 ipt() {
@@ -36,11 +47,8 @@ ipt() {
 		iptables $* >/dev/null 2>&1
 }
 
-#boot() { ubus -t 30 wait_for network.interface.wan && { rc_procd start_service; rc_procd service_triggers; } || output "ERROR: $p_name failed to settle network interface!\n"; }
-
 start_service() {
-	local ll c=1
-  config_load vpnbypass
+	local ll
   is_enabled || return 1
   config_get lports   'config' 'localport'
   config_get rports   'config' 'remoteport'
@@ -52,13 +60,6 @@ start_service() {
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_close_instance
-
-	while : ; do
-		network_find_wan wan_if4; [ -n "wan_if4" ] && network_get_gateway wan_gw $wan_if4;
-		[ $c -ge 25 -o -n "$wan_gw" ] && break
-		output "$p_name waiting for wan gateway...\n"; sleep 2; network_flush_cache; let "c+=1";
-	done
-	[ -z "$wan_gw" ] && output "$__error__: $p_name could not discover wan gateway IP!\n" && exit 1
 
 	ipt -t mangle -N VPNBYPASS; ipt -t mangle -A PREROUTING -m mark --mark 0x00/${FW_MASK} -g VPNBYPASS;
 	ipt -t mangle -A VPNBYPASS -m set --match-set $IPSET dst -j MARK --set-mark ${FW_MARK}/${FW_MASK}
@@ -76,7 +77,6 @@ start_service() {
 }
 
 stop_service() {
-	local ll
   is_enabled || return 1
 
 	ip rule del fwmark "$FW_MARK" table "$TID" >/dev/null 2>&1; ipset -q flush "$IPSET"; ipset -q destroy "$IPSET";
