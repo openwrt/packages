@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.4.1"
+trm_ver="0.4.1-2"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=1
 trm_debug=0
@@ -166,7 +166,6 @@ f_main()
     f_check "initial"
     if [ "${trm_ifstatus}" != "true" ]
     then
-        f_log "info " "start travelmate scanning ..."
         config_load wireless
         config_foreach f_prepare wifi-iface
         if [ -n "$(uci -q changes wireless)" ]
@@ -233,7 +232,6 @@ f_main()
                 sleep 5
             done
         done
-        f_log "info " "no wwan uplink found (${trm_sysver})"
     fi
 }
 
