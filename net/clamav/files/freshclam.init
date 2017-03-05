@@ -15,11 +15,13 @@ validate_freshclam_section() {
 		'DatabaseMirror:string' \
 		'NotifyClamd:string' \
 		'DatabaseOwner:string' \
-		'CompressLocalDatabase:string:'
+		'CompressLocalDatabase:string' \
+		'DatabaseDirectory:string:'
 }
 
 start_service() {
-	local freshclam_config_file UpdateLogFile DatabaseOwner NotifyClamd DatabaseMirror
+	local freshclam_config_file UpdateLogFile DatabaseOwner NotifyClamd DatabaseMirror \
+	DatabaseDirectory
 
 	validate_freshclam_section freshclam || {
 		echo "validation failed"
@@ -28,7 +30,7 @@ start_service() {
 
 	[ -f /tmp/freshclam.pid ] && echo "already running" && return 0
 
-	mkdir -p /usr/share/clamav
+	mkdir -p $DatabaseDirectory
 	mkdir -p /etc/clamav
 	touch /tmp/freshclam.log
 	touch /tmp/freshclam.pid
@@ -41,6 +43,7 @@ start_service() {
 	echo "NotifyClamd " $NotifyClamd >> $FRESHCLAM_CONFIGFILE
 	echo "DatabaseOwner " $DatabaseOwner >> $FRESHCLAM_CONFIGFILE
 	echo "CompressLocalDatabase " $CompressLocalDatabase >> $FRESHCLAM_CONFIGFILE
+	echo "DatabaseDirectory " $DatabaseDirectory >> $FRESHCLAM_CONFIGFILE
 
 	procd_open_instance
 	procd_set_param command $PROG -d --config-file=$FRESHCLAM_CONFIGFILE -p /tmp/freshclam.pid --no-warnings

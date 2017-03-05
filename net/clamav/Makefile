@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamav
-PKG_VERSION:=0.98.7
+PKG_VERSION:=0.99.2
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://sourceforge.net/projects/clamav/files/clamav/$(PKG_VERSION)/
-PKG_MD5SUM:=157c601161da1c2d5a0e48ea1b49e067
+PKG_SOURCE_URL:=https://www.clamav.net/downloads/production/
+PKG_MD5SUM:=61b51a04619aeafd965892a53f86d192
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/clamav/Default
   SECTION:=net
-  DEPENDS:=+libpthread +uclibcxx +zlib +libcurl +libopenssl
+  DEPENDS:=+libpthread +uclibcxx +zlib +libcurl +libopenssl +libltdl +libpcre +musl-fts
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=ClamAV
@@ -58,7 +58,7 @@ endef
 CONFIGURE_VARS += \
 	INCLUDES="" \
 	CXXFLAGS="$$$$CXXFLAGS -fno-rtti" \
-	LIBS="-lpthread" \
+	LIBS="-lpthread -lfts" \
 
 define Build/Configure
 	$(call Build/Configure/Default, \
@@ -67,7 +67,6 @@ define Build/Configure
 		--exec-prefix=/usr/ \
 		--disable-xml \
 		--disable-bzip2 \
-		--enable-ltdl-install \
 		--with-user nobody \
 		--with-group nogroup \
 	)
