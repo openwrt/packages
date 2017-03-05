@@ -11,7 +11,7 @@ A simple PROCD-based vpnbypass service for OpenWrt/LEDE Project. Useful if your 
 - Proudly made in Canada, using locally-sourced electrons.
 
 ## Screenshot (luci-app-vpnbypass)
-![screenshot](https://raw.githubusercontent.com/stangri/screenshots/master/vpnbypass/screenshot01.png "screenshot")
+![screenshot](https://raw.githubusercontent.com/stangri/screenshots/master/vpnbypass/screenshot02.png "screenshot")
 
 ## Requirements
 This service requires following packages to be installed on your router: ```ip-full ipset iptables dnsmasq-full``` (```ip-full``` requires you uninstall ```ip``` first; ```dnsmasq-full``` requires you uninstall ```dnsmasq``` first). Run the following commands to satisfy the requirements:
@@ -35,8 +35,19 @@ Please head to [LEDE Project Forum](https://forum.lede-project.org/t/vpn-bypass-
 Domain lists should be in following format/syntax: ```/domain1.com/domain2.com/vpnbypass```. Please don't forget the leading ```/``` and trailing ```/vpnbypass```. There's no validation if you enter something incorrectly -- it just won't work. Please see [Notes/Known Issues](#notesknown-issues) if you want to edit this setting manually, without Web UI.
 
 ## What's New
+1.3.0
+- No longer depends on hardcoded WAN interface name (```wan```) works with other interface names (like ```wwan```).
+- Table ID, IPSET name and FW_MARK as well as FW_MASK can be defined in config file.
+- Uses iptables, not ip rules for handling local IPs/ranges.
+- More reliable creation/destruction of VPNBYPASS iptables chain.
+- Updated Web UI enables/start and stops/disables service.
+- Beautified output.
+
+1.2.0
+- More elegant handling of iptables (thanks [@hnyman](https://github.com/hnyman) and [@tohojo](https://github.com/tohojo)!).
+
 1.1.1
-- More reliable way of obtaining WAN gateway on boot (thanks @dibdot for the hint!).
+- More reliable way of obtaining WAN gateway on boot (thanks [@dibdot](https://github.com/dibdot) for the hint!).
 
 1.1.0:
 - Detects individual IP addresses in the config and converts them to subnet automatically.
@@ -55,7 +66,7 @@ Domain lists should be in following format/syntax: ```/domain1.com/domain2.com/v
 - Initial release.
 
 ## Notes/Known Issues
-Domains to be accessed outside of VPN tunnel are not defined in ```/etc/config/vpnpass```, but rather in ```/etc/config/dhcp```. To add/delete/edit domains you can use VPN Bypass Web UI or you can edit ```/etc/config/dhcp``` manually or run following commands:
+Domains to be accessed outside of VPN tunnel are handled by dnsmasq and thus are not defined in ```/etc/config/vpnpass```, but rather in ```/etc/config/dhcp```. To add/delete/edit domains you can use VPN Bypass Web UI or you can edit ```/etc/config/dhcp``` manually or run following commands:
 ```sh
 uci add_list dhcp.@dnsmasq[-1].ipset='/github.com/plex.tv/google.com/vpnbypass'
 uci add_list dhcp.@dnsmasq[-1].ipset='/hulu.com/netflix.com/nhl.com/vpnbypass'
