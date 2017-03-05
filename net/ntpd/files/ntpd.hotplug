@@ -1,10 +1,10 @@
+#!/bin/sh
+
 NAME=ntpd
-CONFIG=/etc/ntp.conf
-COMMAND=/sbin/$NAME
+COMMAND=/etc/init.d/$NAME
 
 [ "$ACTION" = "ifup" -a "$INTERFACE" = "wan" ] && {
-        [ -x $COMMAND ] && [ -r $CONFIG ] && {
-		killall ntpd
-		/etc/init.d/ntpd start
-        } &
+	$COMMAND enabled && {
+		$COMMAND restart
+        }
 }
