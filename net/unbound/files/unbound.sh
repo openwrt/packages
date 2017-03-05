@@ -115,7 +115,6 @@ create_interface_dns() {
 
   if [ "$ignore" -gt 0 ] ; then
     mode="$UNBOUND_D_WAN_FQDN"
-
   else
     mode="$UNBOUND_D_LAN_FQDN"
   fi
@@ -128,8 +127,15 @@ create_interface_dns() {
     ;;
 
   4)
-    mode_ptr="$if_fqdn"
-    names="$if_fqdn  $host_fqdn  $UNBOUND_TXT_HOSTNAME"
+    if [ -z "$ifdashname" ] ; then
+      # race conditions at init can rarely cause a blank device return
+      # the record format is invalid and Unbound won't load the conf file
+      mode_ptr="$host_fqdn"
+      names="$host_fqdn  $UNBOUND_TXT_HOSTNAME"
+    else
+      mode_ptr="$if_fqdn"
+      names="$if_fqdn  $host_fqdn  $UNBOUND_TXT_HOSTNAME"
+    fi
     ;;
 
   *)
@@ -297,14 +303,14 @@ unbound_mkdir() {
     fi
   fi
 
-  
+
   if [ -f $UNBOUND_KEYFILE.keep ] ; then
     # root.key.keep is reused if newest
     cp -u $UNBOUND_KEYFILE.keep $UNBOUND_KEYFILE
     rm -f $UNBOUND_KEYFILE.keep
   fi
-  
-  
+
+
   # Ensure access and prepare to jail
   chown -R unbound:unbound $UNBOUND_VARDIR
   chmod 775 $UNBOUND_VARDIR
