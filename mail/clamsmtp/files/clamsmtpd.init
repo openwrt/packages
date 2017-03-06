@@ -1,0 +1,16 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2017 Lucian Cristian
+
+START=91
+USE_PROCD=1
+
+PROG=/usr/sbin/clamsmtpd
+
+start_service(){
+        procd_open_instance
+        procd_set_param command $PROG -p /var/run/clamsmtpd.pid
+        procd_close_instance
+}
+service_triggers(){
+        procd_add_reload_trigger "clamsmtpd"
+}
