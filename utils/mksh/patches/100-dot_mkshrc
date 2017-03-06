@@ -1,4 +1,4 @@
-Refreshed for mksh-r52c, based on tg's patch
+Refreshed for mksh-r54, based on tg's patch
 
 From 23712cea8e2a623fd952eb781df0011c501703d0 Mon Sep 17 00:00:00 2001
 From: Thorsten Glaser <tg@mirbsd.org>
@@ -35,7 +35,7 @@ Signed-off-by: Alif M. A. <alive4ever at live.com>
  \alias doch='sudo mksh -c "$(\builtin fc -ln -1)"'
  \command -v rot13 >/dev/null || \alias rot13='tr \
      abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ \
-@@ -601,4 +602,8 @@
+@@ -600,4 +601,8 @@
  
  \unset p
  

@@ -37,7 +37,6 @@ start_service()
     if [ $(/etc/init.d/adblock enabled; printf ${?}) -eq 0 ]
     then
         procd_open_instance "adblock"
-        procd_set_param env adb_procd="true"
         procd_set_param command "${adb_script}" "${@}"
         procd_set_param stdout 1
         procd_set_param stderr 1
@@ -52,7 +51,6 @@ reload_service()
 
 stop_service()
 {
-    export adb_procd="true"
     rc_procd "${adb_script}" stop
 }
 
@@ -73,7 +71,6 @@ resume()
 
 query()
 {
-    export adb_procd="true"
     rc_procd "${adb_script}" query "${1}"
 }
 
@@ -81,8 +78,6 @@ service_triggers()
 {
     local iface="$(uci -q get adblock.global.adb_iface)"
 
-    procd_open_trigger
-    procd_add_config_trigger "config.change" "adblock" /etc/init.d/adblock start
     if [ -z "${iface}" ]
     then
         procd_add_raw_trigger "interface.*.up" 1000 /etc/init.d/adblock start
@@ -92,5 +87,5 @@ service_triggers()
             procd_add_interface_trigger "interface.*.up" "${name}" /etc/init.d/adblock start
         done
     fi
-    procd_close_trigger
+    procd_add_config_trigger "config.change" "adblock" /etc/init.d/adblock start
 }
