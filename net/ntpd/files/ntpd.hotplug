@@ -5,7 +5,6 @@ COMMAND=/etc/init.d/$NAME
 
 [ "$ACTION" = "ifup" -a "$INTERFACE" = "wan" ] && {
 	$COMMAND enabled && {
-		killall ntpd
-		$COMMAND start
-        } &
+		$COMMAND restart
+        }
 }
