@@ -205,7 +205,6 @@ LIBEXEC_transport-wlan:=helper-transport-wlan
 
 DEPENDS_experiments:=+libglpk
 PLUGIN_experiments:=ats_mlp ats_ril
-LIBEXEC_experiments:=service-dht-whanau service-dht-xvine
 
 # BIN_dv:=dv
 LIB_dv:=dv
