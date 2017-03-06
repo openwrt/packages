@@ -1,0 +1,27 @@
+#!/bin/sh /etc/rc.common
+#
+#    (c) 2017 Lucian Cristian <lucian.cristian@gmail.com>
+#
+###########################################################################
+# CONFIGURATION
+
+# Most configuration options are found in the clamsmtpd.conf file.
+###########################################################################
+# SCRIPT
+
+START=91
+USE_PROCD=1
+
+PROG=/usr/sbin/clamsmtpd
+
+start_service(){
+        procd_open_instance
+        procd_set_param command $PROG -p /var/clamsmtpd.pid
+        procd_close_instance
+}
+stop_service(){
+        service_stop ${PROG}
+}
+service_triggers(){
+        procd_add_reload_trigger "clamsmtpd"
+}
