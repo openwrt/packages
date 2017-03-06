@@ -12,10 +12,11 @@ PKG_NAME:=musl-fts
 PKG_VERSION:=1.2.7
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/pullmoll/musl-fts.git
+PKG_SOURCE_URL:=https://github.com/pullmoll/musl-fts.git
 PKG_SOURCE_VERSION:=0bde52df588e8969879a2cae51c3a4774ec62472
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+
 PKG_MAINTAINER:= Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_LICENSE:=LGPL-2.1
@@ -32,7 +33,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=FTS implementation for musl libc
+  TITLE:=fts implementation for musl libc
   URL:=https://github.com/pullmoll/musl-fts
   DEPENDS:= +libpthread
 endef
