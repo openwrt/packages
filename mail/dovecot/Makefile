@@ -29,7 +29,7 @@ define Package/dovecot
   CATEGORY:=Mail
   DEPENDS:=+DOVECOT_LDAP:libopenldap +libopenssl +librt +zlib +libbz2 +libcap
   TITLE:=An IMAP and POP3 daemon
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+  MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
   URL:=http://www.dovecot.org/
   USERID:=dovecot=59:dovecot=59
 endef
