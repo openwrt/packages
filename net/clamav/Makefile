@@ -12,11 +12,12 @@ PKG_VERSION:=0.99.2
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
+PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr> \
+		Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.clamav.net/downloads/production/
-PKG_MD5SUM:=61b51a04619aeafd965892a53f86d192
+PKG_HASH:=167bd6a13e05ece326b968fdb539b05c2ffcfef6018a274a10aeda85c2c0027a
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -26,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/clamav/Default
   SECTION:=net
-  DEPENDS:=+libpthread +uclibcxx +zlib +libcurl +libopenssl +libltdl +libpcre +musl-fts
+  DEPENDS:=+libpthread +uclibcxx +zlib +libcurl +libopenssl +libltdl +libpcre +USE_MUSL:musl-fts
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=ClamAV
@@ -58,7 +59,7 @@ endef
 CONFIGURE_VARS += \
 	INCLUDES="" \
 	CXXFLAGS="$$$$CXXFLAGS -fno-rtti" \
-	LIBS="-lpthread -lfts" \
+	$(if $(CONFIG_USE_MUSL),LIBS="-lpthread -lfts",LIBS="-lpthread") \
 
 define Build/Configure
 	$(call Build/Configure/Default, \
