@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xinetd
 PKG_VERSION:=2.3.15
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.xinetd.org
@@ -39,6 +39,7 @@ endef
 
 define Package/xinetd/conffiles
 /etc/xinetd.conf
+/etc/xinetd.d/
 endef
 
 TARGET_CFLAGS += -DNO_RPC
