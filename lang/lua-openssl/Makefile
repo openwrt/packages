@@ -21,7 +21,7 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)
+define Package/lua-openssl
   SUBMENU:=Lua
   SECTION:=lang
   CATEGORY:=Languages
@@ -34,9 +34,9 @@ define Package/lua-openssl/description
     A free, MIT-licensed OpenSSL binding for Lua.
 endef
 
-define Package/$(PKG_NAME)/install
+define Package/lua-openssl/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openssl.so $(1)/usr/lib/lua/
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,lua-openssl))
