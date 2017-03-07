@@ -44,8 +44,8 @@ define Py3Package
   ifndef Py3Package/$(1)/install
     define Py3Package/$(1)/install
 		if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then \
-			$(INSTALL_DIR) $$(1)/usr/bin \
-			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/
+			$(INSTALL_DIR) $$(1)/usr/bin ; \
+			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/ ; \
 		fi
     endef
   endif
