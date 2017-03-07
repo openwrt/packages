@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dovecot
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+DOVECOT_LDAP:libopenldap +libopenssl +librt +zlib +libbz2 +libcap
+  DEPENDS:=+DOVECOT_LDAP:libopenldap DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap
   TITLE:=An IMAP and POP3 daemon
   MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
   URL:=http://www.dovecot.org/
@@ -46,6 +46,11 @@ define Package/dovecot/config
                         default n
                         help
                           Implements LDAP support in dovecot.
+                config DOVECOT_SQLITE
+                        bool "SQLite support"
+                        default n
+                        help
+                          Implements SQLite DB support in dovecot.
         endmenu
 endef
 
@@ -57,7 +62,8 @@ CONFIGURE_ARGS += \
 	--without-lzma \
 	--without-lz4 \
 	--with-icu=no \
-	$(if $(CONFIG_DOVECOT_LDAP),--with-ldap=yes,--with-ldap=no)
+	$(if $(CONFIG_DOVECOT_LDAP),--with-ldap=yes,--with-ldap=no) \
+	$(if $(CONFIG_DOVECOT_SQLITE),--with-sqlite=yes,--with-sqlite=no)
 
 CONFIGURE_VARS += \
 	RPCGEN= \
