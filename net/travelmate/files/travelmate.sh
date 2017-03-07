@@ -10,12 +10,12 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.4.1-2"
+trm_ver="0.4.2"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=1
 trm_debug=0
 trm_active=0
-trm_maxwait=20
+trm_maxwait=30
 trm_maxretry=3
 trm_timeout=60
 trm_iw=1
@@ -150,7 +150,7 @@ f_log()
         logger -t "travelmate-[${trm_ver}] ${class}" "${log_msg}"
         if [ "${class}" = "error" ]
         then
-            logger -t "travelmate-[${trm_ver}] ${class}" "Please check the readme 'https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md' (${trm_sysver})"
+            logger -t "travelmate-[${trm_ver}] ${class}" "Please check 'https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md' (${trm_sysver})"
             f_active
             exit 255
         fi
@@ -209,24 +209,21 @@ f_main()
                         if [ -n "$(printf "${ssid_list}" | grep -Fo "${ssid}")" ] && [ "${ap_radio}" = "${sta_radio}" ]
                         then
                             uci -q set wireless."${config}".disabled=0
-                            uci -q commit wireless
                             ubus call network reload
                             f_check "sta"
                             if [ "${trm_ifstatus}" = "true" ]
                             then
-                                f_log "info " "wwan interface connected to uplink ${ssid} (${cnt}/${trm_maxretry}, ${trm_sysver})"
+                                uci -q commit wireless
+                                f_log "info " "wwan interface connected to uplink ${ssid} (${trm_sysver})"
                                 sleep 5
                                 return 0
                             else
-                                uci -q set wireless."${config}".disabled=1
-                                uci -q commit wireless
+                                uci -q revert wireless
                                 ubus call network reload
-                                f_log "info " "wwan interface can't connect to uplink ${ssid} (${cnt}/${trm_maxretry}, ${trm_sysver})"
+                                f_log "info " "wwan interface can't connect to uplink ${ssid} (${trm_sysver})"
                             fi
                         fi
                     done
-                else
-                    f_log "info " "empty uplink list (${cnt}/${trm_maxretry}, ${trm_sysver})"
                 fi
                 cnt=$((cnt+1))
                 sleep 5
