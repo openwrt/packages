@@ -44,8 +44,8 @@ define PyPackage
   ifndef PyPackage/$(1)/install
     define PyPackage/$(1)/install
 		if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then \
-			$(INSTALL_DIR) $$(1)/usr/bin \
-			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/
+			$(INSTALL_DIR) $$(1)/usr/bin ; \
+			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/ ; \
 		fi
     endef
   endif
