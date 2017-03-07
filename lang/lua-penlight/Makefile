@@ -19,7 +19,7 @@ PKG_LICENSE_FILES:=LICENSE.md
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)
+define Package/lua-penlight
   SUBMENU:=Lua
   SECTION:=lang
   CATEGORY:=Languages
@@ -29,7 +29,7 @@ define Package/$(PKG_NAME)
   MAINTAINER:= Karl Palsson <karlp@remake.is>
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/lua-penlight/description
   It is often said of Lua that it does not include batteries.
   Penlight is the batteries.
 endef
@@ -38,9 +38,9 @@ define Build/Compile
 	echo "Nothing to compile, pure lua package"
 endef
 
-define Package/$(PKG_NAME)/install
+define Package/lua-penlight/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
 	$(CP) $(PKG_BUILD_DIR)/lua/pl $(1)/usr/lib/lua
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,lua-penlight))
