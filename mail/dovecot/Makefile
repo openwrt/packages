@@ -55,7 +55,8 @@ CONFIGURE_ARGS += \
 	--with-moduledir=/usr/lib/dovecot/modules \
 	--with-notify=dnotify \
 	--without-lzma \
-	--without-lz4
+	--without-lz4 \
+	--with-icu=no
 
 ifneq ($(strip $(CONFIG_DOVECOT_LDAP)),)
   CONFIGURE_ARGS+= \
