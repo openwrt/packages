@@ -56,15 +56,8 @@ CONFIGURE_ARGS += \
 	--with-notify=dnotify \
 	--without-lzma \
 	--without-lz4 \
-	--with-icu=no
-
-ifneq ($(strip $(CONFIG_DOVECOT_LDAP)),)
-  CONFIGURE_ARGS+= \
-	--with-ldap=yes
-else
-  CONFIGURE_ARGS+= \
-	--with-ldap=no
-endif
+	--with-icu=no \
+	$(if $(CONFIG_DOVECOT_LDAP),--with-ldap=yes,--with-ldap=no)
 
 CONFIGURE_VARS += \
 	RPCGEN= \
