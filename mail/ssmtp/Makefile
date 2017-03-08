@@ -21,7 +21,7 @@ include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS += $(TARGET_CPPFLAGS)
 
-define Package/$(PKG_NAME)
+define Package/ssmtp
 	SECTION:=mail
 	CATEGORY:=Mail
 	DEPENDS:=+libopenssl
@@ -29,14 +29,14 @@ define Package/$(PKG_NAME)
 	URL:=http://packages.debian.org/ssmtp
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/ssmtp/description
 A secure, effective and simple way of getting mail off a system to your mail hub.
 Mail is simply forwarded to the configured mailhost, no daemons running in the background.
 Extremely easy configuration.
 
 endef
 
-define Package/$(PKG_NAME)/conffiles
+define Package/ssmtp/conffiles
 /etc/ssmtp/ssmtp.conf
 /etc/ssmtp/revaliases
 endef
@@ -47,7 +47,7 @@ CONFIGURE_VARS += \
 CONFIGURE_ARGS += \
 	--enable-ssl
 
-define Package/$(PKG_NAME)/install
+define Package/ssmtp/install
 	$(INSTALL_DIR) $(1)/etc/ssmtp
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/ssmtp.conf $(1)/etc/ssmtp/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/revaliases $(1)/etc/ssmtp/
@@ -56,4 +56,4 @@ define Package/$(PKG_NAME)/install
 	ln -s /usr/sbin/ssmtp $(1)/usr/sbin/sendmail
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,ssmtp))
