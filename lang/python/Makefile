@@ -104,6 +104,8 @@ define PyBasePackage
   define PyPackage/$(1)/filespec
     ifneq ($(2),)
       $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
+      -|/usr/lib/python$(PYTHON_VERSION)/*/test
+      -|/usr/lib/python$(PYTHON_VERSION)/*/tests
     endif
   endef
 endef
