@@ -43,7 +43,6 @@ define Package/$(PKG_NAME)/Default
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=libwebsockets
-	DEPENDS:=+zlib
 	URL:=https://libwebsockets.org
 	MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
@@ -51,22 +50,28 @@ endef
 define Package/libwebsockets-openssl
 	$(call Package/$(PKG_NAME)/Default)
 	TITLE += (OpenSSL)
-	DEPENDS += +libopenssl
+	DEPENDS += +libopenssl +zlib
 	VARIANT:=openssl
 endef
 
 define Package/libwebsockets-cyassl
 	$(call Package/$(PKG_NAME)/Default)
 	TITLE += (CyaSSL)
-	DEPENDS += +libcyassl
+	DEPENDS += +libcyassl +zlib
 	VARIANT:=cyassl
 endef
 
 define Package/libwebsockets-full
 	$(call Package/$(PKG_NAME)/Default)
 	TITLE += (Full - OpenSSL, libuv, plugins, CGI)
-	DEPENDS += +libopenssl +libuv
+	DEPENDS += +libopenssl +libuv +zlib
 	VARIANT:=full
+endef
+
+define Package/libwebsockets-minimal-server
+	$(call Package/$(PKG_NAME)/Default)
+	TITLE += (Absolute minimum required for running websocket server, no ssl)
+	VARIANT:=minimal-server
 endef
 
 ifeq ($(BUILD_VARIANT),openssl)
@@ -97,6 +102,18 @@ ifeq ($(BUILD_VARIANT),full)
     CMAKE_OPTIONS += -DLWS_WITH_CGI=ON
 endif
 
+ifeq ($(BUILD_VARIANT),minimal-server)
+   CMAKE_OPTIONS += -DLWS_WITH_STATIC=OFF
+   CMAKE_OPTIONS += -DLWS_WITH_SHARED=ON
+   CMAKE_OPTIONS += -DLWS_WITH_SSL=OFF
+   CMAKE_OPTIONS += -DLWS_WITH_ZLIB=OFF
+   CMAKE_OPTIONS += -DLWS_WITHOUT_CLIENT=ON
+   CMAKE_OPTIONS += -DLWS_WITHOUT_EXTENSIONS=ON
+   CMAKE_OPTIONS += -DLWS_SSL_CLIENT_USE_OS_CA_CERTS=OFF
+   CMAKE_OPTIONS += -DLWS_WITHOUT_DAEMONIZE=ON
+   CMAKE_OPTIONS += -DLWS_MAX_SMP=1
+endif
+
 define Package/libwebsockets/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebsockets.so* $(1)/usr/lib/
@@ -105,7 +122,9 @@ endef
 Package/$(PKG_NAME)-cyassl/install = $(Package/$(PKG_NAME)/install)
 Package/$(PKG_NAME)-openssl/install = $(Package/$(PKG_NAME)/install)
 Package/$(PKG_NAME)-full/install = $(Package/$(PKG_NAME)/install)
+Package/$(PKG_NAME)-minimal-server/install = $(Package/$(PKG_NAME)/install)
 
 $(eval $(call BuildPackage,libwebsockets-openssl))
 $(eval $(call BuildPackage,libwebsockets-cyassl))
 $(eval $(call BuildPackage,libwebsockets-full))
+$(eval $(call BuildPackage,libwebsockets-minimal-server))
