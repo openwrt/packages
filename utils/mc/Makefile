@@ -32,7 +32,7 @@ PKG_CONFIG_DEPENDS := \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/$(PKG_NAME)
+define Package/mc
 	SECTION:=utils
 	CATEGORY:=Utilities
 	DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
@@ -41,11 +41,11 @@ define Package/$(PKG_NAME)
 	MENU:=1
 endef
 
-define Package/$(PKG_NAME)/config
+define Package/mc/config
 	source "$(SOURCE)/Config.in"
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/mc/description
 GNU Midnight Commander is a visual file manager.
 It's a feature rich full-screen text mode application that allows you to copy,
 move and delete files and whole directory trees, search for files and run commands in the subshell.
@@ -98,7 +98,7 @@ CONFIGURE_ARGS += \
 	--disable-vfs
 endif
 
-define Package/$(PKG_NAME)/install
+define Package/mc/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mc $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/mc
@@ -119,9 +119,9 @@ endif
 	$(INSTALL_DIR) $(1)/etc/mc/mcedit/Syntax
 endef
 
-define Package/$(PKG_NAME)/conffiles
+define Package/mc/conffiles
 /etc/mc/mc.menu
 /etc/mc/skins/default.ini
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,mc))

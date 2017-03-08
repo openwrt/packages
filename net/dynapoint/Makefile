@@ -15,7 +15,7 @@ PKG_LICENSE:=GPL-3.0+
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)
+define Package/dynapoint
     SECTION:=net
     CATEGORY:=Network
     SUBMENU:=wireless
@@ -23,19 +23,19 @@ define Package/$(PKG_NAME)
     TITLE:=Dynamic access point manager
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/dynapoint/description
   Dynapoint uses LUA scripts to allow dynamic access point creation
   and deletion depending on changes of certain network conditions.
 endef
 
-define Package/$(PKG_NAME)/conffiles
+define Package/dynapoint/conffiles
 /etc/config/dynapoint
 endef
 
 define Build/Compile
 endef
 
-define Package/$(PKG_NAME)/install
+define Package/dynapoint/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./src/dynapoint.lua $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -44,4 +44,4 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./src/dynapoint.config $(1)/etc/config/dynapoint
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,dynapoint))
