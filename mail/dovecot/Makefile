@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot
-PKG_VERSION:=2.2.26.0
+PKG_VERSION:=2.2.28
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.dovecot.org/releases/2.2
-PKG_MD5SUM:=85bc42328de41d1eb8d6d3f1db666db8
+PKG_HASH:=e0288f59e326ab87cb3881fdabadafe542f4dc7ab9996db13863a439ebbc1f25
 PKG_LICENSE:=LGPL-2.1 MIT BSD-3-Clause Unique
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL COPYING.MIT
 
@@ -27,9 +27,9 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dovecot
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+DOVECOT_LDAP:libopenldap +libopenssl +librt +zlib +libbz2 +libcap
+  DEPENDS:=+DOVECOT_LDAP:libopenldap DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap
   TITLE:=An IMAP and POP3 daemon
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+  MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
   URL:=http://www.dovecot.org/
   USERID:=dovecot=59:dovecot=59
 endef
@@ -46,6 +46,11 @@ define Package/dovecot/config
                         default n
                         help
                           Implements LDAP support in dovecot.
+                config DOVECOT_SQLITE
+                        bool "SQLite support"
+                        default n
+                        help
+                          Implements SQLite DB support in dovecot.
         endmenu
 endef
 
@@ -55,15 +60,10 @@ CONFIGURE_ARGS += \
 	--with-moduledir=/usr/lib/dovecot/modules \
 	--with-notify=dnotify \
 	--without-lzma \
-	--without-lz4
-
-ifneq ($(strip $(CONFIG_DOVECOT_LDAP)),)
-  CONFIGURE_ARGS+= \
-	--with-ldap=yes
-else
-  CONFIGURE_ARGS+= \
-	--with-ldap=no
-endif
+	--without-lz4 \
+	--with-icu=no \
+	$(if $(CONFIG_DOVECOT_LDAP),--with-ldap=yes,--with-ldap=no) \
+	$(if $(CONFIG_DOVECOT_SQLITE),--with-sqlite=yes,--with-sqlite=no)
 
 CONFIGURE_VARS += \
 	RPCGEN= \
