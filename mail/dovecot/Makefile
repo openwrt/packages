@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dovecot
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+DOVECOT_LDAP:libopenldap DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap
+  DEPENDS:=+DOVECOT_LDAP:libopenldap +DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap
   TITLE:=An IMAP and POP3 daemon
   MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
   URL:=http://www.dovecot.org/
