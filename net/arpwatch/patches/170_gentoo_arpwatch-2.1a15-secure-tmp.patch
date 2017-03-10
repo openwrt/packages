@@ -1,0 +1,28 @@
+Index: arpwatch-2.1a15/bihourly.sh
+===================================================================
+--- arpwatch-2.1a15.orig/bihourly.sh
++++ arpwatch-2.1a15/bihourly.sh
+@@ -10,8 +10,8 @@ cd /usr/operator/arpwatch
+ #
+ list="`cat list`"
+ cname="`cat cname`"
+-temp1=/tmp/bihourly.1.$$
+-temp2=/tmp/bihourly.2.$$
++temp1=`tempfile -p arpbh -s .tmp`
++temp2=`tempfile -p arpbh -s .tmp`
+ d=/tmp/errs
+ 
+ # imperfect hack
+Index: arpwatch-2.1a15/mkdep
+===================================================================
+--- arpwatch-2.1a15.orig/mkdep
++++ arpwatch-2.1a15/mkdep
+@@ -51,7 +51,7 @@ if [ ! -w $MAKE ]; then
+ 	exit 1
+ fi
+ 
+-TMP=/tmp/mkdep$$
++TMP=`tempfile -p mkdep -s .tmp`
+ 
+ trap 'rm -f $TMP ; exit 1' 1 2 3 13 15
+ 

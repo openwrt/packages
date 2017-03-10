@@ -1,0 +1,163 @@
+Index: arpwatch-2.1a15/arpwatch.c
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.c
++++ arpwatch-2.1a15/arpwatch.c
+@@ -237,6 +237,8 @@ main(int argc, char **argv)
+ 	struct bpf_program code;
+ 	char errbuf[PCAP_ERRBUF_SIZE];
+ 	char* username = NULL;
++	int restart = 0;
++	int restarting_loop = 0;
+ 	char options[] =
+ 		"d"
+ 		"f:"
+@@ -249,6 +251,7 @@ main(int argc, char **argv)
+ 		"p"
+ 		"a"
+ 		"u:"
++		"R:"
+ 		"Q"
+ 		"z:"
+ 	;
+@@ -325,6 +328,10 @@ main(int argc, char **argv)
+ 			username = optarg;
+ 			break;
+ 
++		case 'R':
++			restart = atoi(optarg);
++			break;
++
+ 		case 'Q':
+ 			++quiet;
+ 			break;
+@@ -343,6 +350,12 @@ main(int argc, char **argv)
+ 	if (optind != argc)
+ 		usage();
+ 
++	if ( username && restart ) {
++		syslog(LOG_ERR, "Please, specify either -u or -R");		
++		(void)fprintf(stderr,"Please, specify either -u or -R. See arpwatch.8\n");
++		exit(1);
++	}
++
+ 	if (rfilename != NULL) {
+ 		net = 0;
+ 		netmask = 0;
+@@ -392,6 +405,7 @@ main(int argc, char **argv)
+ 		syslog(LOG_ERR, "(using current working directory)");
+ 	}
+ 
++label_restart:
+ 	if (rfilename != NULL) {
+ 		pd = pcap_open_offline(rfilename, errbuf);
+ 		if (pd == NULL) {
+@@ -406,22 +420,30 @@ main(int argc, char **argv)
+ 		pd = pcap_open_live(interface, snaplen, !nopromisc, timeout, errbuf);
+ 		if (pd == NULL) {
+ 			syslog(LOG_ERR, "pcap open %s: %s", interface, errbuf);
+-			exit(1);
++			if (restart) {
++				syslog(LOG_ERR, "restart in %d secs", restart);
++			} else {
++				exit(1);
++			}
++			sleep(restart);
++			goto label_restart;
+ 		}
+ #ifdef WORDS_BIGENDIAN
+ 		swapped = 1;
+ #endif
+ 	}
+ 
+-	if ( username ) {
+-		dropprivileges( username );
+-	} else {
+-	/*
+-	 * Revert to non-privileged user after opening sockets
+-	 * (not needed on most systems).
+-	 */
+-		setgid(getgid());
+-		setuid(getuid());
++	if (!restarting_loop) {
++		if ( username && !restart ) {
++			dropprivileges( username );
++		} else {
++			/*
++			 * Revert to non-privileged user after opening sockets
++			 * (not needed on most systems).
++			 */
++			setgid(getgid());
++			setuid(getuid());
++		}
+ 	}
+ 
+ 	/* Must be ethernet or fddi */
+@@ -444,26 +466,30 @@ main(int argc, char **argv)
+ 	if (rfilename == NULL)
+ 		syslog(LOG_INFO, "listening on %s", interface);
+ 
+-	/* Read in database */
+-	initializing = 1;
+-	if (!readdata())
+-		exit(1);
+-	sorteinfo();
++	if (!restarting_loop) {
++		/* Read in database */
++		initializing = 1;
++		if (!readdata())
++			exit(1);
++		sorteinfo();
++	}
+ #ifdef DEBUG
+ 	if (debug > 2) {
+ 		debugdump();
+ 		exit(0);
+ 	}
+ #endif
+-	initializing = 0;
++	if (!restarting_loop) {
++		initializing = 0;
+ 
+-	(void)setsignal(SIGINT, die);
+-	(void)setsignal(SIGTERM, die);
+-	(void)setsignal(SIGHUP, die);
+-	if (rfilename == NULL) {
+-		(void)setsignal(SIGQUIT, checkpoint);
+-		(void)setsignal(SIGALRM, checkpoint);
+-		(void)alarm(CHECKPOINT);
++		(void)setsignal(SIGINT, die);
++		(void)setsignal(SIGTERM, die);
++		(void)setsignal(SIGHUP, die);
++		if (rfilename == NULL) {
++			(void)setsignal(SIGQUIT, checkpoint);
++			(void)setsignal(SIGALRM, checkpoint);
++			(void)alarm(CHECKPOINT);
++		}
+ 	}
+ 
+ 	switch (linktype) {
+@@ -482,7 +508,15 @@ main(int argc, char **argv)
+ 	}
+ 	if (status < 0) {
+ 		syslog(LOG_ERR, "pcap_loop: %s", pcap_geterr(pd));
+-		exit(1);
++		if (restart && rfilename == NULL) {
++			syslog(LOG_ERR, "restart in %d secs", restart);
++			++restarting_loop;
++			pcap_close(pd);
++		} else {
++			exit(1);
++		}
++		sleep(restart);
++		goto label_restart;
+ 	}
+ 	pcap_close(pd);
+ 	if (!dump())
+@@ -909,6 +943,7 @@ usage(void)
+ 		"[-p] "
+ 		"[-a] "
+ 		"[-u username] "
++		"[-R seconds ] "
+ 		"[-Q ] "
+ 		"[-z ignorenet/ignoremask] "
+ 		"\n"

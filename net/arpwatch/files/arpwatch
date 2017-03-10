@@ -1,0 +1,13 @@
+config arpwatch
+	option enable 1
+	option network lan
+	option emailaddress root
+	option disablepromiscuous 1
+	option bogonsalladdresses 1
+	option nobogons 0
+	option nonewstations 0
+	option restartinterfacegone 30
+	option noemails 0
+	option noreversedns 1
+	option runasuser arpwatch
+

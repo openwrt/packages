@@ -1,0 +1,99 @@
+Index: arpwatch-2.1a15/arpwatch.8
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.8
++++ arpwatch-2.1a15/arpwatch.8
+@@ -92,6 +92,12 @@ arpwatch - keep track of ethernet/ip add
+ [
+ .B -Q
+ ]
++.br
++.ti +8
++[
++.B -z
++.I ignorenet/ignoremask
++]
+ .ad
+ .SH DESCRIPTION
+ .B Arpwatch
+@@ -206,6 +212,11 @@ The
+ .B -Q
+ flags prevents arpwatch from sending reports by mail. (This feature comes from Debian).
+ .LP
++The
++.B -z
++flag is used to set a range of ip addresses to ignore (such as a DHCP
++range). Netmask is specified as 255.255.128.0. (This feature comes from Debian).
++.LP
+ Note that an empty
+ .I arp.dat
+ file must be created before the first time you run
+Index: arpwatch-2.1a15/arpwatch.c
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.c
++++ arpwatch-2.1a15/arpwatch.c
+@@ -125,6 +125,9 @@ static struct nets *nets;
+ static int nets_ind;
+ static int nets_size;
+ 
++static struct in_addr ignore_net;
++static struct in_addr ignore_netmask;
++
+ extern int optind;
+ extern int opterr;
+ extern char *optarg;
+@@ -247,7 +250,9 @@ main(int argc, char **argv)
+ 		"a"
+ 		"u:"
+ 		"Q"
++		"z:"
+ 	;
++	char *tmpptr;
+ 
+ 	if (argv[0] == NULL)
+ 		prog = "arpwatch";
+@@ -265,6 +270,9 @@ main(int argc, char **argv)
+ 	interface = NULL;
+ 	rfilename = NULL;
+ 	pd = NULL;
++	
++	inet_aton("0.0.0.0", &ignore_netmask);
++	inet_aton("255.255.255.255", &ignore_netmask);
+ 	while ((op = getopt(argc, argv, options)) != EOF)
+ 		switch (op) {
+ 
+@@ -321,6 +329,12 @@ main(int argc, char **argv)
+ 			++quiet;
+ 			break;
+ 
++		case 'z':
++			tmpptr = strtok(optarg, "/");
++			inet_aton(tmpptr, &ignore_net);
++			tmpptr = strtok(NULL, "/");
++			inet_aton(tmpptr, &ignore_netmask);
++			break;
+ 
+ 		default:
+ 			usage();
+@@ -523,6 +537,14 @@ process_ether(register u_char *u, regist
+ 		return;
+ 	}
+ 
++	/* Ignores the specified netmask/metwork */
++	if ((sia & ignore_netmask.s_addr) == ignore_net.s_addr) {
++		if (debug) {
++			dosyslog(LOG_INFO, "ignored", sia, sea, sha, interface);
++		}
++		return;
++	}
++
+ 	/* Got a live one */
+ 	t = h->ts.tv_sec;
+ 	can_checkpoint = 0;
+@@ -888,6 +910,7 @@ usage(void)
+ 		"[-a] "
+ 		"[-u username] "
+ 		"[-Q ] "
++		"[-z ignorenet/ignoremask] "
+ 		"\n"
+ 	;
+ 

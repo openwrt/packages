@@ -1,0 +1,32 @@
+diff -Naru arpwatch-2.1a15.orig/report.c arpwatch-2.1a15/report.c
+--- arpwatch-2.1a15.orig/report.c	2006-09-23 19:31:47.000000000 +0400
++++ arpwatch-2.1a15/report.c	2006-09-23 19:38:54.000000000 +0400
+@@ -217,7 +217,12 @@
+ 				continue;
+ 			/* ECHILD means no one left */
+ 			if (errno != ECHILD)
+-				syslog(LOG_ERR, "reaper: %m");
++				/* It is dangerous to call non reentrant */
++				/* functions from callback (POSIX) */
++				/* Next line effectively disables this as */
++				/* we never get here in debug */
++				if (debug)
++					syslog(LOG_ERR, "reaper: %m");
+ 			break;
+ 		}
+ 		/* Already got everyone who was done */
+@@ -225,8 +230,13 @@
+ 			break;
+ 		--cdepth;
+ 		if (WEXITSTATUS(status))
++			/* It is dangerous to call non-reentrant */
++			/* functions from callback (POSIX) */
++			/* Next line effectively disables this as */
++			/* we never get here in debug */
++			if (debug)
+ 			syslog(LOG_DEBUG, "reaper: pid %d, exit status %d",
+-			    pid, WEXITSTATUS(status));
++				    pid, WEXITSTATUS(status));
+ 	}
+ 	return RETSIGVAL;
+ }

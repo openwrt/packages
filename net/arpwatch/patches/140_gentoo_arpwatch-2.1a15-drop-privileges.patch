@@ -1,0 +1,207 @@
+Index: arpwatch-2.1a15/arpwatch.8
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.8
++++ arpwatch-2.1a15/arpwatch.8
+@@ -75,6 +75,18 @@ arpwatch - keep track of ethernet/ip add
+ [
+ .B -a
+ ]
++.br
++.ti +8
++[
++.B -u
++.I username
++]
++.br
++.ti +8
++[
++.B -R
++.I seconds
++]
+ .ad
+ .SH DESCRIPTION
+ .B Arpwatch
+@@ -159,6 +171,32 @@ address of the default interface (unless
+ .B -N
+ is given). (This feature comes from Debian).
+ .LP
++The
++.B -u
++flag instructs
++.B arpwatch
++to drop root privileges and change the UID to
++.I username
++and GID to the primary group of
++.IR username .
++This is recommended for security reasons, but
++.I username
++has to have write access to the default directory. (This feature comes from Debian).
++.LP
++The
++.B -R
++flag instructs
++.B arpwatch
++to restart in
++.I seconds
++seconds after the interface went down. By default, in such cases
++arpwatch would print an error message and exit. This option is
++ignored if either the
++.B -r
++or
++.B -u
++flags are used. (This feature comes from Debian).
++.LP
+ Note that an empty
+ .I arp.dat
+ file must be created before the first time you run
+Index: arpwatch-2.1a15/arpwatch.c
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.c
++++ arpwatch-2.1a15/arpwatch.c
+@@ -62,7 +62,8 @@ struct rtentry;
+ #include <string.h>
+ #include <syslog.h>
+ #include <unistd.h>
+-
++#include <pwd.h>
++#include <grp.h>
+ #include <pcap.h>
+ 
+ #include "gnuc.h"
+@@ -144,6 +145,82 @@ __dead	void usage(void) __attribute__((v
+ 
+ static char *interface;
+ 
++void dropprivileges(const char* user)
++{
++	struct passwd* pw;
++	gid_t *grplist = NULL;
++	struct group *grp;
++        gid_t runas_grp = 0;
++	int ngroups = 0;
++	pw = getpwnam( user );
++	if ( pw ) {
++		/* Using supplementary groups of user we drop to comes from SANE project GPL */
++        	/* Get group list for runas_uid */
++          	grplist = (gid_t *)malloc(sizeof(gid_t));
++
++		runas_grp = pw->pw_gid;
++
++	  	if (grplist == NULL)
++	    	{
++	      		syslog(LOG_ERR, "FATAL ERROR: cannot allocate memory for group list\n");
++			exit (1);
++		}
++
++		ngroups = 1;
++		grplist[0] = runas_grp;
++
++          	setgrent();
++          	while ((grp = getgrent()) != NULL)
++	    	{
++              		int i = 0;
++
++              		/* Already added current group */
++	              	if (grp->gr_gid == runas_grp)
++	                continue;
++
++        		while (grp->gr_mem[i])
++			{
++                      		int need_to_add = 1, j;
++
++                      		/* Make sure its not already in list */
++                      		for (j = 0; j < ngroups; j++)
++                        	{
++                          		if (grp->gr_gid == grplist[i])
++                            			need_to_add = 0;
++				}
++                      		if (need_to_add)
++                        	{
++                          		grplist = (gid_t *)realloc(grplist, 
++                                               	sizeof(gid_t)*ngroups+1);
++			                       if (grplist == NULL)
++					{
++						syslog(LOG_ERR, "FATAL ERROR: cannot reallocate memory for group list\n");
++
++						exit (1);
++		    			}
++                       			grplist[ngroups++] = grp->gr_gid;
++                       		}
++               			i++;
++               		}
++	    	}
++          	endgrent();	
++		if (setgroups(ngroups, grplist) != 0) {
++	      		syslog(LOG_ERR, "FATAL ERROR: cannot set group list: %s\n", strerror(errno));
++			exit (1);
++		}
++		if ( setgid(pw->pw_gid) != 0 ||
++			setuid(pw->pw_uid) != 0 ) {
++			syslog(LOG_ERR, "Couldn't change to '%.32s' uid=%d gid=%d", user,pw->pw_uid, pw->pw_gid);
++			exit(1);
++		}
++	}
++	else {
++		syslog(LOG_ERR, "Couldn't find user '%.32s' in /etc/passwd", user);
++		exit(1);
++	}
++	syslog(LOG_INFO, "Running as uid=%d gid=%d", getuid(), getgid());
++}
++
+ int
+ main(int argc, char **argv)
+ {
+@@ -156,6 +233,7 @@ main(int argc, char **argv)
+ 	register char *rfilename;
+ 	struct bpf_program code;
+ 	char errbuf[PCAP_ERRBUF_SIZE];
++	char* username = NULL;
+ 	char options[] =
+ 		"d"
+ 		"f:"
+@@ -167,6 +245,7 @@ main(int argc, char **argv)
+ 		"s:"
+ 		"p"
+ 		"a"
++		"u:"
+ 	;
+ 
+ 	if (argv[0] == NULL)
+@@ -233,6 +312,10 @@ main(int argc, char **argv)
+ 			++allsubnets;
+ 			break;
+ 
++		case 'u':
++			username = optarg;
++			break;
++
+ 		default:
+ 			usage();
+ 		}
+@@ -310,12 +393,16 @@ main(int argc, char **argv)
+ #endif
+ 	}
+ 
++	if ( username ) {
++		dropprivileges( username );
++	} else {
+ 	/*
+ 	 * Revert to non-privileged user after opening sockets
+ 	 * (not needed on most systems).
+ 	 */
+-	setgid(getgid());
+-	setuid(getuid());
++		setgid(getgid());
++		setuid(getuid());
++	}
+ 
+ 	/* Must be ethernet or fddi */
+ 	linktype = pcap_datalink(pd);
+@@ -793,6 +880,7 @@ usage(void)
+ 		"[-s sendmail_path] "
+ 		"[-p] "
+ 		"[-a] "
++		"[-u username] "
+ 		"\n"
+ 	;
+ 

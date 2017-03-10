@@ -1,0 +1,96 @@
+Origianl idea comes from Matthias Andree.
+
+Index: arpwatch-2.1a15/arpwatch.8
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.8
++++ arpwatch-2.1a15/arpwatch.8
+@@ -27,7 +27,12 @@ arpwatch - keep track of ethernet/ip add
+ .na
+ .B arpwatch
+ [
+-.B -dN
++.B -d
++]
++.br
++.ti +9
++[
++.B -F
+ ]
+ .br
+ .ti +8
+@@ -50,6 +55,11 @@ arpwatch - keep track of ethernet/ip add
+ .br
+ .ti +8
+ [
++.B -N
++]
++.br
++.ti +9
++[
+ .B -r
+ .I file
+ ]
+@@ -115,6 +125,14 @@ background and emailing the reports. Ins
+ .IR stderr .
+ .LP
+ The
++.B -F
++flag is used to prevent 
++.I arpwatch
++from forking. This is allows to run
++.I arpwatch
++from daemon tools.
++.LP
++The
+ .B -f
+ flag is used to set the ethernet/ip address database filename.
+ The default is
+Index: arpwatch-2.1a15/arpwatch.c
+===================================================================
+--- arpwatch-2.1a15.orig/arpwatch.c
++++ arpwatch-2.1a15/arpwatch.c
+@@ -237,10 +237,12 @@ main(int argc, char **argv)
+ 	struct bpf_program code;
+ 	char errbuf[PCAP_ERRBUF_SIZE];
+ 	char* username = NULL;
++	int nofork = 0;
+ 	int restart = 0;
+ 	int restarting_loop = 0;
+ 	char options[] =
+ 		"d"
++		"F"
+ 		"f:"
+ 		"i:"
+ 		"n:"
+@@ -287,6 +289,10 @@ main(int argc, char **argv)
+ #endif
+ 			break;
+ 
++		case 'F':
++			++nofork;
++			break;
++
+ 		case 'f':
+ 			arpfile = optarg;
+ 			break;
+@@ -377,12 +383,14 @@ main(int argc, char **argv)
+ 
+ 		/* Drop into the background if not debugging */
+ 		if (!debug) {
+-			pid = fork();
+-			if (pid < 0) {
+-				syslog(LOG_ERR, "main fork(): %m");
+-				exit(1);
+-			} else if (pid != 0)
+-				exit(0);
++			if (!nofork) {
++				pid = fork();
++				if (pid < 0) {
++					syslog(LOG_ERR, "main fork(): %m");
++					exit(1);
++				} else if (pid != 0)
++					exit(0);
++			}
+ 			(void)close(fileno(stdin));
+ 			(void)close(fileno(stdout));
+ 			(void)close(fileno(stderr));

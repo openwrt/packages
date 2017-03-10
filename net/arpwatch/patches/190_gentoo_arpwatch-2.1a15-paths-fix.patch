@@ -1,0 +1,35 @@
+diff -Naru arpwatch-2.1a15.orig/arpwatch.h arpwatch-2.1a15/arpwatch.h
+--- arpwatch-2.1a15.orig/arpwatch.h	2000-10-01 03:40:55.000000000 +0400
++++ arpwatch-2.1a15/arpwatch.h	2006-09-22 22:48:13.000000000 +0400
+@@ -1,7 +1,7 @@
+ /* @(#) $Id: arpwatch.h,v 1.29 2000/09/30 23:40:49 leres Exp $ (LBL) */
+ 
+ #define ARPFILE "arp.dat"
+-#define ETHERCODES "ethercodes.dat"
++/*#define ETHERCODES "ethercodes.dat" */
+ #define CHECKPOINT (15*60)		/* Checkpoint time in seconds */
+ 
+ #define MEMCMP(a, b, n) memcmp((char *)a, (char *)b, n)
+diff -Naru arpwatch-2.1a15.orig/Makefile.in arpwatch-2.1a15/Makefile.in
+--- arpwatch-2.1a15.orig/Makefile.in	2006-09-22 22:48:59.000000000 +0400
++++ arpwatch-2.1a15/Makefile.in	2006-09-22 22:49:23.000000000 +0400
+@@ -31,7 +31,8 @@
+ # Pathname of directory to install the man page
+ MANDEST = @mandir@
+ # Pathname of directory to install database file
+-ARPDIR = $(prefix)/arpwatch
++ARPDIR = /var/lib/arpwatch
++ETHERCODES = /usr/share/arpwatch/ethercodes.dat
+ 
+ # VPATH
+ srcdir = @srcdir@
+@@ -45,7 +46,8 @@
+ PROG = arpwatch
+ CCOPT = @V_CCOPT@
+ INCLS = -I. @V_INCLS@
+-DEFS = -DDEBUG @DEFS@ -DARPDIR=\"$(ARPDIR)\" -DPATH_SENDMAIL=\"$(SENDMAIL)\"
++DEFS = -DDEBUG @DEFS@ -DARPDIR=\"$(ARPDIR)\" -DPATH_SENDMAIL=\"$(SENDMAIL)\" \
++       -DETHERCODES=\"$(ETHERCODES)\"
+ 
+ # Standard CFLAGS
+ CFLAGS = $(CCOPT) $(DEFS) $(INCLS)

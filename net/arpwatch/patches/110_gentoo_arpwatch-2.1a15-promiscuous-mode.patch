@@ -1,0 +1,89 @@
+diff -Naru arpwatch-2.1a15.orig/arpwatch.8 arpwatch-2.1a15/arpwatch.8
+--- arpwatch-2.1a15.orig/arpwatch.8	2006-09-22 19:33:49.000000000 +0400
++++ arpwatch-2.1a15/arpwatch.8	2006-09-22 19:34:52.000000000 +0400
+@@ -59,6 +59,11 @@
+ .B -s
+ .I sendmail_path
+ ]
++.br
++.ti +8
++[
++.B -p
++]
+ .ad
+ .SH DESCRIPTION
+ .B Arpwatch
+@@ -116,6 +121,15 @@
+ useful for redirecting reports to log files instead of mail. (This feature
+ comes from Debian).
+ .LP
++The
++.B -p
++flag disables promiscuous operation. ARP broadcasts get through hubs without
++having the interface in promiscuous mode, while saving considerable resources
++that would be wasted on processing gigabytes of non-broadcast traffic. OTOH,
++setting promiscuous mode does not mean getting 100% traffic that would concern
++.B arpwatch.
++YMMV. (This feature comes from Debian).
++.LP
+ Note that an empty
+ .I arp.dat
+ file must be created before the first time you run
+diff -Naru arpwatch-2.1a15.orig/arpwatch.c arpwatch-2.1a15/arpwatch.c
+--- arpwatch-2.1a15.orig/arpwatch.c	2006-09-22 19:33:49.000000000 +0400
++++ arpwatch-2.1a15/arpwatch.c	2006-09-22 19:34:07.000000000 +0400
+@@ -162,6 +162,7 @@
+ 		"N"
+ 		"r:"
+ 		"s:"
++		"p"
+ 	;
+ 
+ 	if (argv[0] == NULL)
+@@ -216,6 +217,10 @@
+ 			path_sendmail = optarg;
+ 			break;
+ 
++		case 'p':
++			++nopromisc;
++			break;
++
+ 		default:
+ 			usage();
+ 		}
+@@ -283,7 +288,7 @@
+ 		snaplen = max(sizeof(struct ether_header),
+ 		    sizeof(struct fddi_header)) + sizeof(struct ether_arp);
+ 		timeout = 1000;
+-		pd = pcap_open_live(interface, snaplen, 1, timeout, errbuf);
++		pd = pcap_open_live(interface, snaplen, !nopromisc, timeout, errbuf);
+ 		if (pd == NULL) {
+ 			syslog(LOG_ERR, "pcap open %s: %s", interface, errbuf);
+ 			exit(1);
+@@ -769,6 +774,7 @@
+ 		"[-n net[/width]] "
+ 		"[-r file] "
+ 		"[-s sendmail_path] "
++		"[-p] "
+ 		"\n"
+ 	;
+ 
+diff -Naru arpwatch-2.1a15.orig/util.c arpwatch-2.1a15/util.c
+--- arpwatch-2.1a15.orig/util.c	2004-01-23 01:25:39.000000000 +0300
++++ arpwatch-2.1a15/util.c	2006-09-22 19:35:15.000000000 +0400
+@@ -61,6 +61,7 @@
+ 
+ int debug = 0;
+ int initializing = 1;			/* true if initializing */
++int nopromisc = 0;			/* don't activate promisc mode by default */
+ 
+ /* syslog() helper routine */
+ void
+diff -Naru arpwatch-2.1a15.orig/util.h arpwatch-2.1a15/util.h
+--- arpwatch-2.1a15.orig/util.h	1996-10-06 14:22:14.000000000 +0400
++++ arpwatch-2.1a15/util.h	2006-09-22 19:34:07.000000000 +0400
+@@ -17,3 +17,4 @@
+ 
+ extern int debug;
+ extern int initializing;
++extern int nopromisc;
