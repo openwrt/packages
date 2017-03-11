@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/clamav/Default
   SECTION:=net
-  DEPENDS:=+libpthread +uclibcxx +zlib +libcurl +libopenssl +libltdl +libpcre +USE_MUSL:musl-fts
+  DEPENDS:=+libpthread +uclibcxx +zlib +libcurl +libopenssl +libltdl +libpcre2 +USE_MUSL:musl-fts
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=ClamAV
@@ -70,6 +70,7 @@ define Build/Configure
 		--disable-bzip2 \
 		--with-user nobody \
 		--with-group nogroup \
+		--with-pcre="$(STAGING_DIR)/usr/" \
 	)
 endef
 
