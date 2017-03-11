@@ -7,12 +7,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aria2
-PKG_VERSION:=1.31.0
+PKG_VERSION:=1.31.0.git-2017-03-05
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/aria2/aria2/releases/download/release-$(PKG_VERSION)/
-PKG_HASH:=7b85619048b23406f241e38a5b1b8b0bc2cae9e80fd117810c2a71ecca813f8c
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/aria2/aria2
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
+PKG_SOURCE_VERSION:=7db393ec3dca29c905e9fe257a8756879be692f6
+PKG_MIRROR_HASH:=7e01119bdad2188dccb4a9d46f0763ba5e0897b551a338cde2c13226d420bf8a
+
 PKG_INSTALL:=1
 
 PKG_MAINTAINER:=Imre Kaloz <kaloz@openwrt.org>, Hsing-Wang Liao <kuoruan@gmail.com>
