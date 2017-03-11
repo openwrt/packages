@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 Dan Luedtke <mail@danrl.com>
+# Copyright (C) 2016-2017 Dan Luedtke <mail@danrl.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jool
-PKG_VERSION:=2016.12.17
+PKG_VERSION:=2017.03.09
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0
@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/NICMx/Jool.git
-PKG_SOURCE_VERSION:=66a791c90751d7941b08c142babe1deec73d0996
+PKG_SOURCE_VERSION:=997a81bb5f5e9d82aa122fd37b7c890e44a245dd
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.xz
 
