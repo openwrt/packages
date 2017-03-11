@@ -1,0 +1,18 @@
+choice
+	prompt "Default Miner"
+	default CGMINER_AVALON6
+	help
+		Build driver for specific miner. It only support one type of miner caused by different configurations.
+
+	config CGMINER_AVALON6
+		bool "AvalonMiner 6.0"
+
+	config CGMINER_AVALON_MINER
+		bool "AvalonMiner nano 2 or AvalonMiner 4 mini"
+
+	config CGMINER_ICARUS
+		bool "Icarus miner"
+
+	config CGMINER_BFL
+		bool "ButterflyLabs miner"
+endchoice
