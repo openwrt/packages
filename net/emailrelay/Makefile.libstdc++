@@ -1,0 +1,53 @@
+#
+# Copyright (C) 2006-2014 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=emailrelay
+PKG_VERSION:=1.9
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.gz
+PKG_SOURCE_URL:=@SF/emailrelay/$(PKG_VERSION)
+PKG_MD5SUM:=0892fbf993407c6b5a16f96e23299b62
+PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
+PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+#PKG_INSTALL:=1
+PKG_CAT :=zcat
+
+#include $(INCLUDE_DIR)/uclibc++.mk
+include $(INCLUDE_DIR)/package.mk
+
+define Package/emailrelay
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=$(CXX_DEPENDS) +libopenssl
+  SUBMENU:=Web Servers/Proxies
+  TITLE:=A simple SMTP proxy and store-and-forward message transfer agent (MTA).
+  URL:=http://emailrelay.sourceforge.net/
+  MAINTAINER:= Federico Di Marco <fededim@gmail.com>
+endef
+
+#define Package/srelay/conffiles
+#/etc/emailrelay.auth
+#endef
+
+define Build/Configure
+  $(call Build/Configure/Default,--with-openssl=$(STAGING_DIR))
+  endef
+	
+
+define Package/emailrelay/install	
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME) $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc
+#	$(INSTALL_DATA) files/$(PKG_NAME).conf $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/init.d
+#	$(INSTALL_BIN) files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
+endef
+
+$(eval $(call BuildPackage,emailrelay))
