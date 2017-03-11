@@ -1,0 +1,94 @@
+#!/bin/sh /etc/rc.common
+START=99
+
+APP=cgminer
+PID_FILE=/var/run/$APP.pid
+
+
+start() {
+	local _pool1url
+	local _pool1user
+	local _pool1pw
+
+	local _pool2url
+	local _pool2user
+	local _pool2pw
+
+	local _pool3url
+	local _pool3user
+	local _pool3pw
+
+	local _cf
+	local _fan
+
+	local _aa
+	local _pb
+	local _mo
+
+	local _ntp_enable
+
+	config_load cgminer
+
+	config_get _pool1url default pool1url
+	config_get _pool1user default pool1user
+	config_get _pool1pw default pool1pw
+	config_get _pool2url default pool2url
+	config_get _pool2user default pool2user
+	config_get _pool2pw default pool2pw
+	config_get _pool3url default pool3url
+	config_get _pool3user default pool3user
+	config_get _pool3pw default pool3pw
+
+	config_get _cf default chip_frequency
+	config_get _fan default fan
+
+	config_get _aa default api_allow
+	config_get _pb default pool_balance
+	config_get _mo default more_options
+
+	config_get _ntp_enable default ntp_enable
+
+	if [ "$_pool1url" != "" -a "$_pool1user" != "" -a "$_pool1pw" != "" ]; then
+	    POOL1="-o $_pool1url -O $_pool1user:$_pool1pw"
+	fi
+	if [ "$_pool2url" != "" -a "$_pool2user" != "" -a "$_pool2pw" != "" ]; then
+	    POOL2="-o $_pool2url -O $_pool2user:$_pool2pw"
+	fi
+	if [ "$_pool3url" != "" -a "$_pool3user" != "" -a "$_pool3pw" != "" ]; then
+	    POOL3="-o $_pool3url -O $_pool3user:$_pool3pw"
+	fi
+
+	AVA4_OPTIONS=" --avalon4-fan $_fan-100 --avalon4-freq $_cf "
+	PARAMS=" --lowmem $AVA4_OPTIONS $POOL1 $POOL2 $POOL3 --api-allow $_aa --api-listen $_mo --real-quiet"
+
+	NTP_POOL="-p 0.openwrt.pool.ntp.org -p 1.openwrt.pool.ntp.org  -p 3.openwrt.pool.ntp.org -p 4.openwrt.pool.ntp.org"
+	ASIA="-p 1.cn.pool.ntp.org -p 3.asia.pool.ntp.org -p 2.asia.pool.ntp.org"
+
+	# _ntp_enable: openwrt, asia, globle
+	if [ "$_ntp_enable" == "asia" ]; then
+	    NTP_POOL="${ASIA}"
+	fi
+
+	if [ ! -f /tmp/cgminer-ntpd-done -a "$_ntp_enable" != "disable" ]; then
+	    while [ "$NTPD_RET" != "0" ]; do
+		ntpd -d -n -q -N ${NTP_POOL}
+		NTPD_RET=$?
+	    done
+
+	    touch /tmp/cgminer-ntpd-done
+	fi
+
+        # Make sure udevd run before cgminer start
+        UDEVDCNT=`pidof udevd | wc -w`
+        if [ "$UDEVDCNT" == "0" ]; then
+                udevd --daemon
+        fi
+
+	sleep 2
+	start-stop-daemon -S -x $APP -p $PID_FILE -m -b -- $PARAMS
+}
+
+stop() {
+	start-stop-daemon -K -n $APP -p $PID_FILE -s TERM
+	sleep 2
+}
