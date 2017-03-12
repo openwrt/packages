@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=65f138e9a6156983ac74f8f1a5b8051d8f9be86a
-PKG_VERSION:=0.10.2-git-20170305-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=0fca1bd10380e74a2f427490c98027e6a251e9ff
+PKG_VERSION:=0.10.2-git-20170312-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -149,7 +149,7 @@ define Package/gnunet/install
 	done )
 
 	( for lex in daemon-topology helper-nat-client \
-	    helper-nat-server service-arm service-ats service-cadet-new \
+	    helper-nat-server service-arm service-ats service-cadet \
 	    service-core service-dht service-identity service-nat service-nat-auto \
 	    service-nse service-peerinfo service-regex \
 	    service-revocation service-scalarproduct-alice \
@@ -305,21 +305,24 @@ DEPENDS_social-pgsql:=+gnunet-pgsql +gnunet-social
 PLUGIN_social-pgsql:=psycstore_postgres
 CONFLICTS_social-pgsql:=gnunet-social-sqlite gnunet-social-mysql
 
-DEPENDS_gns-sqlite:=+libsqlite3 +gnunet-gns
+DEPENDS_sqlite:=+libsqlite3
+LIB_sqlite:=sq
+
+DEPENDS_gns-sqlite:=+gnunet-gns +gnunet-sqlite
 PLUGIN_gns-sqlite:=namecache_sqlite namestore_sqlite
 CONFLICTS_gns-sqlite:=gnunet-gns-flat
 
-DEPENDS_peerstore-sqlite:=+libsqlite3 +gnunet-peerstore
+DEPENDS_peerstore-sqlite:=+gnunet-peerstore +gnunet-sqlite
 PLUGIN_peerstore-sqlite:=peerstore_sqlite
 CONFLICTS_peerstore-sqlite:=gnunet-peerstore-flat
 
-DEPENDS_dhtcache-sqlite:=+libsqlite3
+DEPENDS_dhtcache-sqlite:=+gnunet-sqlite
 PLUGIN_dhtcache-sqlite:=datacache_sqlite
 
-DEPENDS_fs-sqlite:=+libsqlite3 +gnunet-datastore
+DEPENDS_fs-sqlite:=+gnunet-datastore +gnunet-sqlite
 PLUGIN_fs-sqlite:=datastore_sqlite
 
-DEPENDS_social-sqlite:=+libsqlite3 +gnunet-social
+DEPENDS_social-sqlite:=+gnunet-social  +gnunet-sqlite
 PLUGIN_social-sqlite:=psycstore_sqlite
 
 DEPENDS_transport-bluetooth:=+bluez-libs
@@ -398,14 +401,15 @@ $(eval $(call BuildComponent,dhtcache-heap,heap-based dhtcache plugin,y))
 $(eval $(call BuildComponent,fs-heap,heap-based filesharing plugin,))
 $(eval $(call BuildComponent,gns-flat,flat storage GNS plugins,y))
 $(eval $(call BuildComponent,peerstore-flat,flat storage peerstore plugin,))
-$(eval $(call BuildComponent,mysql,mySQL datastore backend,))
+$(eval $(call BuildComponent,mysql,mySQL backend,))
 $(eval $(call BuildComponent,fs-mysql,mySQL filesharing plugins,))
 $(eval $(call BuildComponent,social-mysql,mySQL social plugins,))
-$(eval $(call BuildComponent,pgsql,PostgreSQL storage backends,))
+$(eval $(call BuildComponent,pgsql,PostgreSQL backend,))
 $(eval $(call BuildComponent,dhtcache-pgsql,PostgreSQL dhtcache plugin,))
 $(eval $(call BuildComponent,fs-pgsql,PostgreSQL filesharing plugin,))
 $(eval $(call BuildComponent,gns-pgsql,PostgreSQL GNS plugins,))
 $(eval $(call BuildComponent,social-pgsql,PostgreSQL social plugin,))
+$(eval $(call BuildComponent,sqlite,libsqlite3 backend,))
 $(eval $(call BuildComponent,dhtcache-sqlite,libsqlite3 dhtcache plugin,))
 $(eval $(call BuildComponent,fs-sqlite,libsqlite3 filesharing plugin,))
 $(eval $(call BuildComponent,gns-sqlite,libsqlite3 gns plugins,))
