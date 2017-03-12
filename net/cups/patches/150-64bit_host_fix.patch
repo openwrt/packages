@@ -1,0 +1,64 @@
+--- a/cups-config.in
++++ b/cups-config.in
+@@ -54,7 +54,7 @@ else
+ 	CFLAGS="$CFLAGS -I$includedir"
+     fi
+ 
+-    if test $libdir != /usr/lib -a $libdir != /usr/lib32 -a $libdir != /usr/lib64; then
++    if test $libdir != /usr/lib -a $libdir != /usr/lib -a $libdir != /usr/lib; then
+ 	LDFLAGS="$LDFLAGS -L$libdir"
+     fi
+ fi
+--- a/config-scripts/cups-3264.m4
++++ b/config-scripts/cups-3264.m4
+@@ -108,7 +108,7 @@ case "$uname" in
+ 			LIB64CUPSIMAGE="64bit/libcupsimage.so.2"
+ 			LIB64DIR="$exec_prefix/lib"
+ 			if test -d /usr/lib64; then
+-				LIB64DIR="${LIB64DIR}64"
++				LIB64DIR="${LIB64DIR}"
+ 			fi
+ 			UNINSTALL64="uninstall64bit"
+ 		fi
+--- a/config-scripts/cups-directories.m4
++++ b/config-scripts/cups-directories.m4
+@@ -107,7 +107,7 @@ if test "$libdir" = "\${exec_prefix}/lib
+ 			;;
+ 		Linux*)
+ 			if test -d /usr/lib64; then
+-				libdir="$exec_prefix/lib64"
++				libdir="$exec_prefix/lib"
+ 			fi
+ 			;;
+ 		HP-UX*)
+--- a/configure
++++ b/configure
+@@ -10003,7 +10003,7 @@ if test "$libdir" = "\${exec_prefix}/lib
+ 			;;
+ 		Linux*)
+ 			if test -d /usr/lib64; then
+-				libdir="$exec_prefix/lib64"
++				libdir="$exec_prefix/lib"
+ 			fi
+ 			;;
+ 		HP-UX*)
+@@ -10626,9 +10626,6 @@ case "$uname" in
+ 			LIB32CUPS="32bit/libcups.so.2"
+ 			LIB32CUPSIMAGE="32bit/libcupsimage.so.2"
+ 			LIB32DIR="$exec_prefix/lib"
+-			if test -d /usr/lib32; then
+-				LIB32DIR="${LIB32DIR}32"
+-			fi
+ 			UNINSTALL32="uninstall32bit"
+ 		fi
+ 
+@@ -10638,9 +10635,6 @@ case "$uname" in
+ 			LIB64CUPS="64bit/libcups.so.2"
+ 			LIB64CUPSIMAGE="64bit/libcupsimage.so.2"
+ 			LIB64DIR="$exec_prefix/lib"
+-			if test -d /usr/lib64; then
+-				LIB64DIR="${LIB64DIR}64"
+-			fi
+ 			UNINSTALL64="uninstall64bit"
+ 		fi
+ 		;;
