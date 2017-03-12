@@ -1,0 +1,42 @@
+--- cups-1.5.4/configure	2012-10-09 09:22:45.000000000 +0200
++++ cups-1.5.4/configure	2012-10-09 09:24:30.000000000 +0200
+@@ -1619,6 +1619,7 @@
+   --with-operkey          set the default operator @AUTHKEY value
+   --with-components       set components to build:
+ 			    - "all" (default) builds everything
++			    - "embedded" builds everything except man and notifier
+ 			    - "core" builds libcups and ipptool
+   --with-privateinclude   set path for private include files, default=none
+   --with-rcdir            set path for rc scripts
+@@ -5861,6 +5862,10 @@
+ 		BUILDDIRS="filter backend berkeley cgi-bin driver monitor notifier ppdc scheduler systemv conf data desktop locale man doc examples templates"
+ 		;;
+
++	embedded)
++		BUILDDIRS="filter backend berkeley cgi-bin driver monitor ppdc scheduler systemv conf data locale doc examples templates"
++		;;
++
+ 	core)
+ 		BUILDDIRS="data locale"
+ 		;;
+--- cups-1.5.4/config-scripts/cups-common.m4.orig	2012-10-09 09:17:08.000000000 +0200
++++ cups-1.5.4/config-scripts/cups-common.m4	2012-10-09 09:24:42.000000000 +0200
+@@ -414,6 +414,7 @@
+
+ AC_ARG_WITH(components, [  --with-components       set components to build:
+ 			    - "all" (default) builds everything
++			    - "embedded" builds everything except locale, man and notifier
+ 			    - "core" builds libcups and ipptool],
+ 	COMPONENTS="$withval")
+
+@@ -422,6 +423,10 @@
+ 		BUILDDIRS="filter backend berkeley cgi-bin driver monitor notifier ppdc scheduler systemv conf data desktop locale man doc examples templates"
+ 		;;
+
++	embedded)
++		BUILDDIRS="filter backend berkeley cgi-bin driver monitor ppdc scheduler systemv conf data locale doc examples templates"
++		;;
++
+ 	core)
+ 		BUILDDIRS="data locale"
+ 		;;
