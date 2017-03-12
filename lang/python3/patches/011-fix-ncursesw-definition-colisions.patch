@@ -1,0 +1,24 @@
+diff --git a/Modules/_cursesmodule.c b/Modules/_cursesmodule.c
+index 3bf2ca7..c156964 100644
+--- a/Modules/_cursesmodule.c
++++ b/Modules/_cursesmodule.c
+@@ -116,7 +116,6 @@ char *PyCursesVersion = "2.2";
+     #defines many common symbols (such as "lines") which breaks the
+     curses module in other ways.  So the code will just specify
+     explicit prototypes here. */
+-extern int setupterm(char *,int,int *);
+ #ifdef __sgi
+ #include <term.h>
+ #endif
+diff --git a/setup.py b/setup.py
+index af9a414..ee19ecd 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1349,7 +1349,6 @@ class PyBuildExt(build_ext):
+         panel_library = 'panel'
+         if curses_library == 'ncursesw':
+             curses_defines.append(('HAVE_NCURSESW', '1'))
+-            curses_includes.append('/usr/include/ncursesw')
+             # Bug 1464056: If _curses.so links with ncursesw,
+             # _curses_panel.so must link with panelw.
+             panel_library = 'panelw'

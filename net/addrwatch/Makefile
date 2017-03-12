@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=addrwatch
 PKG_VERSION:=0.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-master.tar.gz
 PKG_SOURCE_URL:=https://github.com/fln/addrwatch/releases/download/$(PKG_VERSION)/
@@ -46,7 +46,7 @@ define Package/addrwatch/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/addrwatch $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/addrwatch.init $(1)/etc/init.d/addrwatch
-	$(INSTALL_CONF) ./files/addrwatch.config $(1)/etc/config/addrwatch$
+	$(INSTALL_CONF) ./files/addrwatch.config $(1)/etc/config/addrwatch
 endef
 
 $(eval $(call BuildPackage,addrwatch))

@@ -47,7 +47,7 @@ UNBOUND_IP_DNS64="64:ff9b::/96"
 UNBOUND_N_EDNS_SIZE=1280
 UNBOUND_N_FWD_PORTS=""
 UNBOUND_N_RX_PORT=53
-UNBOUND_N_ROOT_AGE=28
+UNBOUND_N_ROOT_AGE=9
 
 UNBOUND_TTL_MIN=120
 
@@ -64,6 +64,7 @@ UNBOUND_PIDFILE=/var/run/unbound.pid
 
 UNBOUND_SRV_CONF=$UNBOUND_VARDIR/unbound_srv.conf
 UNBOUND_EXT_CONF=$UNBOUND_VARDIR/unbound_ext.conf
+UNBOUND_DHCP_CONF=$UNBOUND_VARDIR/unbound_dhcp.conf
 UNBOUND_CONFFILE=$UNBOUND_VARDIR/unbound.conf
 
 UNBOUND_KEYFILE=$UNBOUND_VARDIR/root.key
@@ -104,6 +105,12 @@ create_interface_dns() {
   ulaprefix="$(uci_get network @globals[0] ula_prefix)"
   host_fqdn="$UNBOUND_TXT_HOSTNAME.$UNBOUND_TXT_DOMAIN"
   if_fqdn="$ifdashname.$host_fqdn"
+
+
+  if [ -z "${ulaprefix%%:/*}" ] ; then
+    # Nonsense so this option isn't globbed below
+    ulaprefix="fdno:such:addr::/48"
+  fi
 
 
   if [ "$ignore" -gt 0 ] ; then
@@ -251,6 +258,13 @@ unbound_mkdir() {
   fi
 
 
+  if [ -f $UNBOUND_KEYFILE ] ; then
+    # Lets not lose RFC 5011 tracking if we don't have to
+    cp -p $UNBOUND_KEYFILE $UNBOUND_KEYFILE.keep
+  fi
+
+
+  # Blind copy /etc/ to /var/lib/
   mkdir -p $UNBOUND_VARDIR
   rm -f $UNBOUND_VARDIR/dhcp_*
   touch $UNBOUND_CONFFILE
@@ -275,7 +289,7 @@ unbound_mkdir() {
       # Debian-like package dns-root-data
       cp -p /usr/share/dns/root.key $UNBOUND_KEYFILE
 
-    elif [ -x "$UNBOUND_ANCHOR" ] ; then
+    elif [ -x $UNBOUND_ANCHOR ] ; then
       $UNBOUND_ANCHOR -a $UNBOUND_KEYFILE
 
     else
@@ -283,7 +297,14 @@ unbound_mkdir() {
     fi
   fi
 
-
+  
+  if [ -f $UNBOUND_KEYFILE.keep ] ; then
+    # root.key.keep is reused if newest
+    cp -u $UNBOUND_KEYFILE.keep $UNBOUND_KEYFILE
+    rm -f $UNBOUND_KEYFILE.keep
+  fi
+  
+  
   # Ensure access and prepare to jail
   chown -R unbound:unbound $UNBOUND_VARDIR
   chmod 775 $UNBOUND_VARDIR
@@ -709,6 +730,16 @@ unbound_hostname() {
       config_load dhcp
       config_foreach create_interface_dns dhcp
     fi
+
+
+    if [ -f "$UNBOUND_DHCP_CONF" ] ; then
+      {
+        # Seed DHCP records because dhcp scripts trigger externally
+        # Incremental Unbound restarts may drop unbound-control add records
+        echo "  include: $UNBOUND_DHCP_CONF"
+        echo
+      } >> $UNBOUND_CONFFILE
+    fi
   fi
 }
 
@@ -738,7 +769,7 @@ unbound_uci() {
 
   config_get UNBOUND_N_EDNS_SIZE "$cfg" edns_size 1280
   config_get UNBOUND_N_RX_PORT   "$cfg" listen_port 53
-  config_get UNBOUND_N_ROOT_AGE  "$cfg" root_age 7
+  config_get UNBOUND_N_ROOT_AGE  "$cfg" root_age 9
 
   config_get UNBOUND_D_DOMAIN_TYPE "$cfg" domain_type static
   config_get UNBOUND_D_DHCP_LINK   "$cfg" dhcp_link none

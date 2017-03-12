@@ -175,7 +175,7 @@ CONFIGURE_ARGS += \
 	--without-pam
 endif
 
-ifeq ($(CONFIG_OPENSSL_ENGINE),y)
+ifeq ($(CONFIG_OPENSSL_ENGINE_CRYPTO),y)
 CONFIGURE_ARGS+= \
 	--with-ssl-engine
 endif

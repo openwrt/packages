@@ -8,6 +8,7 @@
 define Package/python-setuptools
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) setuptools module
+  VERSION:=$(PYTHON_SETUPTOOLS_VERSION)
   DEPENDS:=+python
 endef
 

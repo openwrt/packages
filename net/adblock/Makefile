@@ -6,28 +6,28 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=2.3.0
+PKG_VERSION:=2.4.0
 PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)
+define Package/adblock
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Powerful adblock script to block ad/abuse domains
 	PKGARCH:=all
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/adblock/description
 Powerful adblock script to block ad/abuse domains via dnsmasq or unbound dns backend.
 The script supports many domain blacklist sites plus manual black- and whitelist overrides.
 Please see https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md for further information.
 
 endef
 
-define Package/$(PKG_NAME)/conffiles
+define Package/adblock/conffiles
 /etc/config/adblock
 /etc/adblock/adblock.whitelist
 /etc/adblock/adblock.blacklist
@@ -42,7 +42,7 @@ endef
 define Build/Compile
 endef
 
-define Package/$(PKG_NAME)/install
+define Package/adblock/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/adblock.sh $(1)/usr/bin/
 
@@ -57,4 +57,4 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_CONF) ./files/adblock.whitelist $(1)/etc/adblock/
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,adblock))

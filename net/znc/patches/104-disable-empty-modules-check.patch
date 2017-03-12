@@ -1,6 +1,6 @@
 --- a/src/main.cpp
 +++ b/src/main.cpp
-@@ -296,10 +296,12 @@ int main(int argc, char** argv) {
+@@ -304,10 +304,12 @@ int main(int argc, char** argv) {
  			CUtils::PrintStatus(false, "");
  			CUtils::PrintError("No modules found. Perhaps you didn't install ZNC properly?");
  			CUtils::PrintError("Read http://wiki.znc.in/Installation for instructions.");

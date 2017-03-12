@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dateutil
-PKG_VERSION:=2.5.2
-PKG_RELEASE:=2
+PKG_VERSION:=2.6.0
+PKG_RELEASE:=1
 PKG_LICENSE:=BSD-2-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/p/python-dateutil/
-PKG_MD5SUM:=eafe168e8f404bf384514f5116eedbb6
+PKG_SOURCE_URL:=https://pypi.python.org/packages/51/fc/39a3fbde6864942e8bb24c93663734b74e281b984d1b8c4f95d64b0c21f6/
+PKG_MD5SUM:=6e38f91e8c94c15a79ce22768dfeca87
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk

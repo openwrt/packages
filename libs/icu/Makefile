@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icu4c
 PKG_VERSION:=58.2
-PKG_RELEASE:=1
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-58_2-src.tgz
 PKG_SOURCE_URL:=http://download.icu-project.org/files/$(PKG_NAME)/$(PKG_VERSION)
@@ -41,9 +41,13 @@ define Package/icu
 endef
 
 CONFIGURE_CMD:= ./runConfigureICU
-CONFIGURE_VARS:=
 CONFIGURE_ARGS:= \
 	Linux/gcc \
+	CC="$(TARGET_CC)" \
+	CXX="$(TARGET_CXX)" \
+	--target=$(GNU_TARGET_NAME) \
+	--host=$(GNU_TARGET_NAME) \
+	--build=$(GNU_HOST_NAME) \
 	--disable-debug \
 	--enable-release \
 	--enable-shared \
@@ -56,7 +60,7 @@ CONFIGURE_ARGS:= \
 	--disable-tools \
 	--disable-tests \
 	--disable-samples \
-	--with-cross-build="$(HOST_BUILD_DIR)" \
+	--with-cross-build="$(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)" \
 	--prefix=/usr
 
 HOST_CONFIGURE_CMD:= ./runConfigureICU
@@ -72,34 +76,33 @@ HOST_CONFIGURE_ARGS:= \
 	--disable-tracing \
 	--disable-extras \
 	--enable-dyload \
-	--prefix=$(HOST_BUILD_PREFIX)
+	--prefix=$(STAGING_DIR_HOSTPKG)
 
 define Build/InstallDev
-	$(INSTALL_DIR) \
-		$(1)/usr/include
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/* \
-		$(1)/usr/include/
-
-	$(INSTALL_DIR) \
-		$(1)/usr/lib
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/* \
-		$(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/include
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(2)/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/icu-config $(1)/usr/bin/
+	$(SED) 's,^\(prefix\|execprefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/icu-config
+	$(LN) $(STAGING_DIR)/usr/bin/icu-config $(2)/bin/
 endef
 
-define Host/install
+define Host/Install
+	$(INSTALL_DIR)  $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/config
+	$(INSTALL_DIR)  $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/bin
+	$(INSTALL_DIR)  $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/lib
+	$(INSTALL_DATA) $(HOST_BUILD_DIR)/config/icucross.* $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/config/
+	$(INSTALL_BIN)  $(HOST_BUILD_DIR)/bin/icupkg $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/bin/
+	$(INSTALL_BIN)  $(HOST_BUILD_DIR)/bin/pkgdata $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/bin/
+	$(CP)           $(HOST_BUILD_DIR)/lib/*.so* $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/lib/
 endef
 
 define Package/icu/install
-	$(INSTALL_DIR) \
-		$(1)/usr/lib
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/*.so.* \
-		$(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,icu))

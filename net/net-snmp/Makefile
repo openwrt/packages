@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.7.3
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -98,6 +98,7 @@ endef
 
 
 SNMP_MIB_MODULES_INCLUDED = \
+	agent/extend \
 	agentx \
 	host/hr_device \
 	host/hr_disk \

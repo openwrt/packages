@@ -34,7 +34,7 @@ include $(INCLUDE_DIR)/package.mk
 # templates
 #
 
-define Package/$(PKG_NAME)/Default
+define Package/owfs/Default
   TITLE:=OWFS (1-Wire File System)
   URL:=http://owfs.sourceforge.net/
   SECTION:=net
@@ -42,7 +42,7 @@ define Package/$(PKG_NAME)/Default
   SUBMENU:=Filesystem
 endef
 
-define Package/$(PKG_NAME)/Default/description
+define Package/owfs/Default/description
   OWFS is a suite of programs that designed to make the 1-wire bus and its
   devices easily accessible. The underlying principle is to create a virtual
   filesystem, with the unique ID being the directory, and the individual
@@ -94,7 +94,7 @@ define Package/libow/config
 endef
 
 define Package/libow/description
-  $(call Package/$(PKG_NAME)/Default/description)
+  $(call Package/owfs/Default/description)
 
   This package contains the OWFS library.
 endef
@@ -106,7 +106,7 @@ define Package/libow-capi
 endef
 
 define Package/libow-capi/description
-  $(call Package/$(PKG_NAME)/Default/description)
+  $(call Package/owfs/Default/description)
 
   This package contains the OWFS C-API library.
 endef
@@ -122,7 +122,7 @@ define Package/owshell
 endef
 
 define Package/owshell/description
-  $(call Package/$(PKG_NAME)/Default/description)
+  $(call Package/owfs/Default/description)
 
   This package contains the OWFS shell utilities.
 endef
@@ -135,7 +135,7 @@ define Package/owfs
 endef
 
 define Package/owfs/description
-  $(call Package/$(PKG_NAME)/Default/description)
+  $(call Package/owfs/Default/description)
 
   This package contains the OWFS fuse filesystem.
 endef
@@ -150,7 +150,7 @@ define Package/owhttpd
 endef
 
 define Package/owhttpd/description
-  $(call Package/$(PKG_NAME)/Default/description)
+  $(call Package/owfs/Default/description)
 
   This package contains the OWFS http server.
 endef
@@ -161,7 +161,7 @@ define Package/owftpd
 endef
 
 define Package/owftpd/description
-  $(call Package/$(PKG_NAME)/Default/description)
+  $(call Package/owfs/Default/description)
 
   This package contains the OWFS ftp server.
 endef
@@ -172,7 +172,7 @@ define Package/owserver
 endef
 
 define Package/owserver/description
-  $(call Package/$(PKG_NAME)/Default/description)
+  $(call Package/owfs/Default/description)
 
   This package contains the OWFS network server.
 endef

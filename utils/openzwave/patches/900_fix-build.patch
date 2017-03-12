@@ -1,0 +1,29 @@
+--- a/cpp/build/Makefile
++++ b/cpp/build/Makefile
+@@ -15,7 +15,7 @@
+ # what flags we will use for compiling in debug mode
+ DEBUG_CFLAGS    := -Wall -Wno-unknown-pragmas -Wno-inline -Wno-format -Werror -Wno-error=sequence-point -Wno-sequence-point -ggdb -DDEBUG -fPIC  -DSYSCONFDIR="\"$(PREFIX)/etc/openzwave/\""
+ # what flags we will use for compiling in release mode
+-RELEASE_CFLAGS  := -Wall -Wno-unknown-pragmas -Werror -Wno-format -Wno-error=sequence-point -Wno-sequence-point -O3 -DNDEBUG -fPIC  -DSYSCONFDIR="\"$(PREFIX)/etc/openzwave/\""
++RELEASE_CFLAGS  := -Wall -Wno-unknown-pragmas -Wno-error=sequence-point -Wno-sequence-point -DNDEBUG -fPIC  -DSYSCONFDIR="\"/etc/openzwave/\""
+ #what flags we will use for linking in debug mode
+ DEBUG_LDFLAGS	:= -g
+ 
+@@ -139,7 +139,7 @@ $(LIBDIR)/libopenzwave.a:	$(patsubst %.c
+ 			$(patsubst %.cpp,$(OBJDIR)/%.o,$(indep)) \
+ 			$(OBJDIR)/vers.o
+ 	@echo "Linking Static Library"
+-	@$(AR) $@ $+
++	@$(AR) q $@ $+
+ 	@$(RANLIB) $@
+ 
+ $(LIBDIR)/$(SHARED_LIB_NAME):	$(patsubst %.cpp,$(OBJDIR)/%.o,$(tinyxml)) \
+@@ -161,7 +161,7 @@ $(top_builddir)/libopenzwave.pc: $(top_s
+ 		-e 's|[@]exec_prefix@|$(PREFIX)/bin|g' \
+ 		-e 's|[@]libdir@|$(instlibdir)|g' \
+ 		-e 's|[@]includedir@|$(PREFIX)/include/openzwave/|g' \
+-                -e 's|[@]sysconfdir@|$(PREFIX)/etc/openzwave/|g' \
++                -e 's|[@]sysconfdir@|/etc/openzwave/|g' \
+                 -e 's|[@]gitversion@|$(GITVERSION)|g' \
+                 -e 's|[@]docdir@|$(docdir)/|g' \
+ 		-e 's|[@]VERSION@|$(VERSION)|g' \

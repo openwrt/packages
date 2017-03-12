@@ -6,17 +6,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-# prepare environment
+# set initial defaults
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.3.2"
+trm_ver="0.4.2"
+trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=1
 trm_debug=0
-trm_maxwait=20
+trm_active=0
+trm_maxwait=30
 trm_maxretry=3
+trm_timeout=60
 trm_iw=1
 
+# f_envload: load travelmate environment
+#
 f_envload()
 {
     # source required system libraries
@@ -25,7 +30,7 @@ f_envload()
     then
         . "/lib/functions.sh"
     else
-        f_log "error" "status  ::: required system library not found"
+        f_log "error" "required system library not found"
     fi
 
     # load uci config and check 'enabled' option
@@ -40,7 +45,7 @@ f_envload()
 
     if [ ${trm_enabled} -ne 1 ]
     then
-        f_log "info " "status  ::: travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
+        f_log "info " "travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
         exit 0
     fi
 
@@ -54,40 +59,58 @@ f_envload()
     fi
     if [ -z "${trm_scanner}" ]
     then
-        f_log "error" "status  ::: no wireless tool for wlan scanning found, please install 'iw' or 'iwinfo'"
+        f_log "error" "no wireless tool for wlan scanning found, please install 'iw' or 'iwinfo'"
     fi
 }
 
-# function to bring down all STA interfaces
+# f_prepare: gather radio information & bring down all STA interfaces
 #
 f_prepare()
 {
     local config="${1}"
     local mode="$(uci -q get wireless."${config}".mode)"
-    local network="$(uci -q get wireless."${config}".network)"
+    local radio="$(uci -q get wireless."${config}".device)"
     local disabled="$(uci -q get wireless."${config}".disabled)"
 
-    if [ "${mode}" = "sta" ] && [ -n "${network}" ]
+    if [ "${mode}" = "ap" ] && ([ -z "${disabled}" ] || [ "${disabled}" = "0" ]) && \
+        ([ -z "${trm_radio}" ] || [ "${trm_radio}" = "${radio}" ])
     then
-        trm_stalist="${trm_stalist} ${config}_${network}"
+        trm_radiolist="${trm_radiolist} ${radio}"
+    elif [ "${mode}" = "sta" ]
+    then
+        trm_stalist="${trm_stalist} ${config}_${radio}"
         if [ -z "${disabled}" ] || [ "${disabled}" = "0" ]
         then
             uci -q set wireless."${config}".disabled=1
-            f_log "debug" "prepare ::: config: ${config}, interface: ${network}"
         fi
     fi
+    f_log "debug" "mode: ${mode}, radio: ${radio}, config: ${config}, disabled: ${disabled}"
 }
 
+# f_check: check interface status
+#
 f_check()
 {
-    local ifname cnt=1 mode="${1}"
+    local ifname radio cnt=1 mode="${1}"
     trm_ifstatus="false"
 
     while [ ${cnt} -le ${trm_maxwait} ]
     do
         if [ "${mode}" = "ap" ]
         then
-            trm_ifstatus="$(ubus -S call network.wireless status | jsonfilter -l1 -e '@.*.up')"
+            for radio in ${trm_radiolist}
+            do
+                trm_ifstatus="$(ubus -S call network.wireless status | jsonfilter -e "@.${radio}.up")"
+                if [ "${trm_ifstatus}" = "true" ]
+                then
+                    trm_aplist="${trm_aplist} $(ubus -S call network.wireless status | jsonfilter -e "@.${radio}.interfaces[@.config.mode=\"ap\"].ifname")_${radio}"
+                    ifname="${trm_aplist}"
+                else
+                    trm_aplist=""
+                    trm_ifstatus="false"
+                    break
+                fi
+            done
         else
             ifname="$(ubus -S call network.wireless status | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
             if [ -n "${ifname}" ]
@@ -102,10 +125,20 @@ f_check()
         cnt=$((cnt+1))
         sleep 1
     done
-    f_log "debug" "check   ::: mode: ${mode}, name: ${ifname}, status: ${trm_ifstatus}, count: ${cnt}, max-wait: ${trm_maxwait}"
+    f_log "debug" "mode: ${mode}, name: ${ifname}, status: ${trm_ifstatus}, count: ${cnt}, max-wait: ${trm_maxwait}"
 }
 
-# function to write to syslog
+# f_active: keep travelmate in an active state
+#
+f_active()
+{
+    if [ ${trm_active} -eq 1 ]
+    then
+        (sleep ${trm_timeout}; /etc/init.d/travelmate start >/dev/null 2>&1) &
+    fi
+}
+
+# f_log: function to write to syslog
 #
 f_log()
 {
@@ -117,15 +150,18 @@ f_log()
         logger -t "travelmate-[${trm_ver}] ${class}" "${log_msg}"
         if [ "${class}" = "error" ]
         then
+            logger -t "travelmate-[${trm_ver}] ${class}" "Please check 'https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md' (${trm_sysver})"
+            f_active
             exit 255
         fi
     fi
 }
 
+# f_main: main function for connection handling
+#
 f_main()
 {
-    local ap_list ssid_list config network ssid cnt=1
-    local sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
+    local ssid_list config ap_radio sta_radio ssid cnt=1
 
     f_check "initial"
     if [ "${trm_ifstatus}" != "true" ]
@@ -138,14 +174,20 @@ f_main()
             ubus call network reload
         fi
         f_check "ap"
-        ap_list="$(ubus -S call network.wireless status | jsonfilter -e '@.*.interfaces[@.config.mode="ap"].ifname')"
-        f_log "debug" "main    ::: ap-list: ${ap_list}, sta-list: ${trm_stalist}"
-        if [ -z "${ap_list}" ] || [ -z "${trm_stalist}" ]
+        f_log "debug" "ap-list: ${trm_aplist}, sta-list: ${trm_stalist}"
+        if [ -z "${trm_aplist}" ] || [ -z "${trm_stalist}" ]
         then
-            f_log "error" "status  ::: no usable AP/STA configuration found"
+            f_log "error" "no usable AP/STA configuration found"
         fi
-        for ap in ${ap_list}
+        for ap in ${trm_aplist}
         do
+            cnt=1
+            ap_radio="${ap##*_}"
+            ap="${ap%%_*}"
+            if [ -z "$(printf "${trm_stalist}" | grep -Fo "_${ap_radio}")" ]
+            then
+                continue
+            fi
             while [ ${cnt} -le ${trm_maxretry} ]
             do
                 if [ ${trm_iw} -eq 1 ]
@@ -156,49 +198,41 @@ f_main()
                     ssid_list="$(${trm_scanner} "${ap}" scan | \
                         awk '/ESSID: ".*"/{ORS=" ";if (!seen[$0]++) for(i=2; i<=NF; i++) print $i}')"
                 fi
-                f_log "debug" "main    ::: scan-tool: ${trm_scanner}, ssidlist: ${ssid_list}"
+                f_log "debug" "scanner: ${trm_scanner}, ap: ${ap}, ssids: ${ssid_list}"
                 if [ -n "${ssid_list}" ]
                 then
                     for sta in ${trm_stalist}
                     do
                         config="${sta%%_*}"
-                        network="${sta##*_}"
+                        sta_radio="${sta##*_}"
                         ssid="\"$(uci -q get wireless."${config}".ssid)\""
-                        if [ -n "$(printf "${ssid_list}" | grep -Fo "${ssid}")" ]
+                        if [ -n "$(printf "${ssid_list}" | grep -Fo "${ssid}")" ] && [ "${ap_radio}" = "${sta_radio}" ]
                         then
                             uci -q set wireless."${config}".disabled=0
-                            uci -q commit wireless
                             ubus call network reload
                             f_check "sta"
                             if [ "${trm_ifstatus}" = "true" ]
                             then
-                                f_log "info " "status  ::: wwan interface connected to uplink ${ssid} (${cnt}/${trm_maxretry}, ${sysver})"
+                                uci -q commit wireless
+                                f_log "info " "wwan interface connected to uplink ${ssid} (${trm_sysver})"
                                 sleep 5
                                 return 0
                             else
-                                uci -q set wireless."${config}".disabled=1
-                                uci -q commit wireless
+                                uci -q revert wireless
                                 ubus call network reload
-                                f_log "info " "status  ::: wwan interface can't connect to uplink ${ssid} (${cnt}/${trm_maxretry}, ${sysver})"
+                                f_log "info " "wwan interface can't connect to uplink ${ssid} (${trm_sysver})"
                             fi
                         fi
                     done
-                else
-                    f_log "info " "status  ::: empty uplink list (${cnt}/${trm_maxretry}, ${sysver})"
                 fi
                 cnt=$((cnt+1))
                 sleep 5
             done
         done
-        f_log "info " "status  ::: no wwan uplink found (${sysver})"
-    else
-        f_log "info " "status  ::: wwan uplink still connected (${sysver})"
     fi
 }
 
-if [ "${trm_procd}" = "true" ]
-then
-    f_envload
-    f_main
-fi
+f_envload
+f_main
+f_active
 exit 0
