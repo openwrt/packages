@@ -33,6 +33,7 @@ odhcpd_settings() {
   local cfg="$1"
   config_get UNBOUND_D_DHCP_LINK  "$cfg" dhcp_link none
   config_get_bool UNBOUND_B_SLAAC6_MAC "$cfg" dhcp4_slaac6 0
+  config_get UNBOUND_TXT_DOMAIN "$cfg" domain lan
 }
 
 ##############################################################################
