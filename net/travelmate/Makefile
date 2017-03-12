@@ -6,27 +6,27 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=travelmate
-PKG_VERSION:=0.4.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.4.2
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)
+define Package/travelmate
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=A wlan connection manager for travel router
 	PKGARCH:=all
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/travelmate/description
 A wlan connection manager for travel router.
 Please see https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md for further information.
 
 endef
 
-define Package/$(PKG_NAME)/conffiles
+define Package/travelmate/conffiles
 /etc/config/travelmate
 endef
 
@@ -39,7 +39,7 @@ endef
 define Build/Compile
 endef
 
-define Package/$(PKG_NAME)/install
+define Package/travelmate/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/travelmate.sh $(1)/usr/bin/
 
@@ -50,4 +50,4 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_CONF) ./files/travelmate.conf $(1)/etc/config/travelmate
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,travelmate))

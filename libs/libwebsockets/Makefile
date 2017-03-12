@@ -39,7 +39,7 @@ CMAKE_OPTIONS += -DLWS_WITHOUT_TESTAPPS=ON
 # CMAKE_OPTIONS += -DLWS_WITHOUT_DEBUG=ON
 
 
-define Package/$(PKG_NAME)/Default
+define Package/libwebsockets/Default
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=libwebsockets
@@ -49,21 +49,21 @@ define Package/$(PKG_NAME)/Default
 endef
 
 define Package/libwebsockets-openssl
-	$(call Package/$(PKG_NAME)/Default)
+	$(call Package/libwebsockets/Default)
 	TITLE += (OpenSSL)
 	DEPENDS += +libopenssl
 	VARIANT:=openssl
 endef
 
 define Package/libwebsockets-cyassl
-	$(call Package/$(PKG_NAME)/Default)
+	$(call Package/libwebsockets/Default)
 	TITLE += (CyaSSL)
 	DEPENDS += +libcyassl
 	VARIANT:=cyassl
 endef
 
 define Package/libwebsockets-full
-	$(call Package/$(PKG_NAME)/Default)
+	$(call Package/libwebsockets/Default)
 	TITLE += (Full - OpenSSL, libuv, plugins, CGI)
 	DEPENDS += +libopenssl +libuv
 	VARIANT:=full
@@ -102,9 +102,9 @@ define Package/libwebsockets/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebsockets.so* $(1)/usr/lib/
 endef
 
-Package/$(PKG_NAME)-cyassl/install = $(Package/$(PKG_NAME)/install)
-Package/$(PKG_NAME)-openssl/install = $(Package/$(PKG_NAME)/install)
-Package/$(PKG_NAME)-full/install = $(Package/$(PKG_NAME)/install)
+Package/libwebsockets-cyassl/install = $(Package/libwesockets/install)
+Package/libwebsockets-openssl/install = $(Package/libwebsockets/install)
+Package/libwesockets-full/install = $(Package/libwebsockets/install)
 
 $(eval $(call BuildPackage,libwebsockets-openssl))
 $(eval $(call BuildPackage,libwebsockets-cyassl))

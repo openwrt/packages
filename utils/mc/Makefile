@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.18
+PKG_VERSION:=4.8.19
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_MD5SUM:=f7636815c987c1719c4f5de2dcd156a0e7d097b1d10e4466d2bdead343d5bece
+PKG_HASH:=eb9e56bbb5b2893601d100d0e0293983049b302c5ab61bfb544ad0ee2cc1f2df
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf gettext-version
 
@@ -32,7 +32,7 @@ PKG_CONFIG_DEPENDS := \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/$(PKG_NAME)
+define Package/mc
 	SECTION:=utils
 	CATEGORY:=Utilities
 	DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
@@ -41,11 +41,11 @@ define Package/$(PKG_NAME)
 	MENU:=1
 endef
 
-define Package/$(PKG_NAME)/config
+define Package/mc/config
 	source "$(SOURCE)/Config.in"
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/mc/description
 GNU Midnight Commander is a visual file manager.
 It's a feature rich full-screen text mode application that allows you to copy,
 move and delete files and whole directory trees, search for files and run commands in the subshell.
@@ -54,6 +54,8 @@ Internal viewer and editor are included as well.
 endef
 
 CONFIGURE_ARGS += \
+	--enable-silent-rules \
+	--disable-tests \
 	--disable-doxygen-doc \
 	--with-homedir=/etc/mc \
 	--with-screen=ncurses \
@@ -98,7 +100,7 @@ CONFIGURE_ARGS += \
 	--disable-vfs
 endif
 
-define Package/$(PKG_NAME)/install
+define Package/mc/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mc $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/mc
@@ -119,9 +121,9 @@ endif
 	$(INSTALL_DIR) $(1)/etc/mc/mcedit/Syntax
 endef
 
-define Package/$(PKG_NAME)/conffiles
+define Package/mc/conffiles
 /etc/mc/mc.menu
 /etc/mc/skins/default.ini
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,mc))

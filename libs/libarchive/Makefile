@@ -22,7 +22,7 @@ PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)/Default
+define Package/libarchive/Default
 	SECTION:=libs
 	CATEGORY:=Libraries
 	DEPENDS:=+zlib +liblzma +libbz2 +libexpat
@@ -30,13 +30,13 @@ define Package/$(PKG_NAME)/Default
 	URL:=http://www.libarchive.org/
 endef
 
-define Package/$(PKG_NAME)
-	$(call Package/$(PKG_NAME)/Default)
+define Package/libarchive
+	$(call Package/libarchive/Default)
 	DEPENDS += +libopenssl
 endef
 
-define Package/$(PKG_NAME)-noopenssl
-	$(call Package/$(PKG_NAME)/Default)
+define Package/libarchive-noopenssl
+	$(call Package/libarchive/Default)
 	TITLE += (without OpenSSL dependency)
 	VARIANT:=noopenssl
 endef
@@ -90,7 +90,7 @@ define Package/bsdtar/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bsdtar $(1)/usr/bin
 endef
 
-Package/$(PKG_NAME)-noopenssl/install = $(Package/$(PKG_NAME)/install)
+Package/libarchive-noopenssl/install = $(Package/libarchive/install)
 
 $(eval $(call BuildPackage,libarchive))
 $(eval $(call BuildPackage,libarchive-noopenssl))
