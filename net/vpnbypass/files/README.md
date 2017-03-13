@@ -26,7 +26,26 @@ opkg install ip-full ipset iptables dnsmasq-full
 opkg update
 opkg install vpnbypass luci-app-vpnbypass
 ```
-Default install routes Plex Media Server traffic (port 32400) outside of the VPN tunnel, routes LogmeIn Hamachi traffic (25.0.0.0/8) outside of the VPN tunnel and also routes internet traffic from local IPs 192.168.1.81-192.168.1.87 outside of the VPN tunnel. You can safely delete these example rules if they do not apply to you.
+
+Until the packages are in the official feed/repo for your version, you can install them with:
+- OpenWrt
+```sh
+opkg update; opkg install wget libopenssl
+wget --no-check-certificate https://github.com/stangri/Files/raw/master/vpnbypass.ipk -O /tmp/vpnbypass.ipk
+wget --no-check-certificate https://github.com/stangri/Files/raw/master/luci-app-vpnbypass.ipk -O /tmp/luci-app-vpnbypass.ipk
+opkg install /tmp/vpnbypass.ipk /tmp/luci-app-vpnbypass.ipk
+```
+
+- LEDE Project
+```sh
+opkg update; opkg install uclient-fetch libustream-mbedtls
+wget --no-check-certificate https://github.com/stangri/Files/raw/master/vpnbypass.ipk -O /tmp/vpnbypass.ipk
+wget --no-check-certificate https://github.com/stangri/Files/raw/master/luci-app-vpnbypass.ipk -O /tmp/luci-app-vpnbypass.ipk
+opkg install /tmp/vpnbypass.ipk /tmp/luci-app-vpnbypass.ipk
+```
+
+### Default Settings
+Default configuration has service disabled (use Web UI to enable/start service or run ```uci set vpnbypass.config.enabled=1```) and routes Plex Media Server traffic (port 32400) outside of the VPN tunnel, routes LogmeIn Hamachi traffic (25.0.0.0/8) outside of the VPN tunnel and also routes internet traffic from local IPs 192.168.1.81-192.168.1.87 outside of the VPN tunnel. You can safely delete these example rules if they do not apply to you.
 
 ## Documentation / Discussion
 Please head to [LEDE Project Forum](https://forum.lede-project.org/t/vpn-bypass-split-tunneling-service-luci-ui/1106) for discussions of this service.
@@ -40,7 +59,7 @@ Domain lists should be in following format/syntax: ```/domain1.com/domain2.com/v
 - Table ID, IPSET name and FW_MARK as well as FW_MASK can be defined in config file.
 - Uses iptables, not ip rules for handling local IPs/ranges.
 - More reliable creation/destruction of VPNBYPASS iptables chain.
-- Updated Web UI enables/start and stops/disables service.
+- Updated Web UI enables/start and stops service.
 - Beautified output.
 
 1.2.0
