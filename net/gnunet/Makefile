@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=0fca1bd10380e74a2f427490c98027e6a251e9ff
-PKG_VERSION:=0.10.2-git-20170312-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=f7ef810b99d2c47d5a07739ecb0be1667f32567f
+PKG_VERSION:=0.10.2-git-20170313-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -136,7 +136,7 @@ define Package/gnunet/install
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ ; \
 	done )
 
-	( for lib in arm ats block blockgroup cadetnew core datacache dht \
+	( for lib in arm ats block blockgroup cadet core datacache dht \
 	    dns dnsparser fragmentation friends hello identity natauto natnew nse \
 	    peerinfo regexblock regex revocation scalarproduct set \
 	    statistics transport util; do \
@@ -250,7 +250,6 @@ PLUGIN_rest:=rest_gns rest_identity rest_identity_provider rest_namestore
 LIBEXEC_rest:=rest-server
 CONF_rest:=rest
 
-DEPENDS_rps:=@BROKEN
 BIN_rps:=rps
 LIB_rps:=rps
 LIBEXEC_rps:=service-rps
