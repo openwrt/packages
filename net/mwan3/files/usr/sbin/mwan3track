@@ -1,5 +1,8 @@
 #!/bin/sh
 
+. /lib/network/config.sh
+. /usr/share/libubox/jshn.sh
+
 [ -z "$9" ] && echo "Error: should not be started manually" && exit 0
 
 if [ -e /var/run/mwan3track-$1.pid ] ; then
@@ -14,6 +17,7 @@ track_ips=$(echo $* | cut -d ' ' -f 9-99)
 host_up_count=0
 lost=0
 loop_count=0
+o_carrier=1
 
 while true; do
 	if [ $loop_count -eq $6 ]; then
@@ -55,6 +59,26 @@ while true; do
 		host_up_count=0
 		loop_count=0
 	fi
+
+	# check device carrier
+	ubus_call "network.device" status && {
+		json_select "${2}" && {
+			json_get_var n_carrier carrier
+			if [ "${o_carrier}" != "${n_carrier}" ]; then
+				if [ "${carrier}" = "1" ]; then
+					logger -t mwan3track -p notice "Interface $1 ($2) link is up"
+					env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
+					rm /var/run/mwan3track-$1.pid
+					exit 0
+				else
+					logger -t mwan3track -p notice "Interface $1 ($2) link is down"
+					env -i ACTION=ifdown INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
+					score=0
+				fi
+				o_carrier="${n_carrier}"
+			fi
+		}
+	}
 
 	let loop_count++
 	sleep 1
