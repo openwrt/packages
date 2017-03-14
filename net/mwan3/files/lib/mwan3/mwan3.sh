@@ -6,6 +6,7 @@ IPS="/usr/sbin/ipset"
 IPT4="/usr/sbin/iptables -t mangle -w"
 IPT6="/usr/sbin/ip6tables -t mangle -w"
 LOG="/usr/bin/logger -t mwan3 -p"
+CONNTRACK_FILE="/proc/net/nf_conntrack"
 
 mwan3_get_iface_id()
 {
@@ -802,5 +803,38 @@ mwan3_report_rules_v6()
 {
 	if [ -n "$($IPT6 -S mwan3_rules 2> /dev/null)" ]; then
 		$IPT6 -L mwan3_rules -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_/- /' | sed 's/mwan3_rule_/S /'
+	fi
+}
+
+mwan3_flush_conntrack()
+{
+	local flush_conntrack
+
+	config_get flush_conntrack $1 flush_conntrack never
+
+	if [ -e "$CONNTRACK_FILE" ]; then
+		case $flush_conntrack in
+			ifup)
+				[ "$3" = "ifup" ] && {
+					echo f > ${CONNTRACK_FILE}
+					$LOG info "connection tracking flushed on interface $1 ($2) $3"
+				}
+				;;
+			ifdown)
+				[ "$3" = "ifdown" ] && {
+					echo f > ${CONNTRACK_FILE}
+					$LOG info "connection tracking flushed on interface $1 ($2) $3"
+				}
+				;;
+			always)
+				echo f > ${CONNTRACK_FILE}
+				$LOG info "connection tracking flushed on interface $1 ($2) $3"
+				;;
+			never)
+				$LOG info "connection tracking not flushed on interface $1 ($2) $3"
+				;;
+		esac
+	else
+		$LOG warning "connection tracking not enabled"
 	fi
 }
