@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.1
+PKG_VERSION:=2.2
 PKG_RELEASE:=4
 PKG_MAINTAINER:=Jeroen Louwes <jeroen.louwes@gmail.com>, \
 		Florian Eckert <fe@dev.tdt.de>
@@ -35,6 +35,7 @@ endef
 
 define Package/mwan3/conffiles
 /etc/config/mwan3
+/etc/mwan3.user
 endef
 
 define Build/Compile
