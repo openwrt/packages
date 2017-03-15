@@ -361,7 +361,7 @@ mwan3_delete_iface_ipset_entries()
 
 mwan3_track()
 {
-	local track_ip track_ips reliability count timeout interval down up
+	local track_ip track_ips reliability count timeout interval down up size
 
 	mwan3_list_track_ips()
 	{
@@ -381,8 +381,9 @@ mwan3_track()
 		config_get interval $1 interval 10
 		config_get down $1 down 5
 		config_get up $1 up 5
+		config_get size $1 size 56
 
-		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $1 $2 $reliability $count $timeout $interval $down $up $track_ips &
+		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $1 $2 $reliability $count $timeout $interval $down $up $size $track_ips &
 	fi
 }
 
