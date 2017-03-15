@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=canutils
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/linux-can/can-utils
@@ -24,9 +24,6 @@ PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
-FILES:=canbusload can-calc-bit-timing candump \
-	cangen cangw canplayer cansniffer cansend
-
 define Package/canutils/Default
   SECTION:=utils
   CATEGORY:=Utilities
@@ -39,30 +36,30 @@ define Package/canutils
   MENU:=1
 endef
 
-define Package/canutils-log-conversion
-  $(call Package/canutils/Default)
-  TITLE:=canutils log conversion
-  DEPENDS:=canutils
+define GenPlugin
+  define Package/$(addprefix canutils-,$(1))
+    $(call Package/canutils/Default)
+    DEPENDS:=canutils
+    TITLE:=Utility $(1) from the CAN utilities
+  endef
+
+   define Package/$(addprefix canutils-,$(1))/description
+     Utility $(1) from the CAN utilities package.
+   endef
 endef
 
-define PartGen
-define Package/canutils-$(1)
-  $(call Package/canutils/Default)
-  TITLE:=$(1) tool from canutils
-  DEPENDS:=canutils
-endef
-endef
+FILES:=canbusload can-calc-bit-timing candump \
+	cangen cangw canplayer cansniffer cansend \
+	canfdtest asc2log log2asc log2long bcmserver \
+	canlogserver isotpdump isotpperf isotprecv \
+	isotpsend isotpserver isotpsniffer isotptun \
+	slcan_attach slcand slcanpty
 
-$(foreach file,$(FILES),$(eval $(call PartGen,$(file))))
+
+$(foreach a,$(FILES),$(eval $(call GenPlugin,$(a))))
 
 define Package/canutils/install
-endef
-
-define Package/canutils-log-conversion/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/asc2log $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/log2asc $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/log2long $(1)/usr/bin/
+	true
 endef
 
 define PartInstall
@@ -74,43 +71,7 @@ define Package/canutils-$(1)/install
 endef
 endef
 
-define Package/canutils-log-conversion/description
-asc2log - convert ASC logfile to compact CAN frame logfile.
-log2asc - convert compact CAN frame logfile to ASC logfile.
-log2long - convert compact CAN frame representation into user readable.
-endef
-
-define Package/canutils-canbusload/description
-canbusload - display the load percentage of can buses.
-endef
-
-define Package/canutils-can-calc-bit-timing/description
-can-calc-bit-timing - calculate hw bittiming for supported can chips.
-endef
-
-define Package/canutils-candump/description
-candump - dumps can frames to terminal, logfile or another can device,
-with optional filtering.
-endef
-
-define Package/canutils-cangen/description
-cangen - CAN frames generator for testing purposes.
-endef
-
-define Package/canutils-cangw/description
-cangw - manage PF_CAN netlink gateway.
-endef
-
-define Package/canutils-canplayer/description
-canplayer - replay a compact CAN frame logfile to CAN devices.
-endef
-
-define Package/canutils-cansend/description
-cansend - simple command line tool to send CAN-frames via CAN_RAW sockets.
-endef
-
 $(foreach file,$(FILES),$(eval $(call PartInstall,$(file))))
 
 $(eval $(call BuildPackage,canutils))
-$(eval $(call BuildPackage,canutils-log-conversion))
 $(foreach file,$(FILES),$(eval $(call BuildPackage,canutils-$(file))))
