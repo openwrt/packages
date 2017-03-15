@@ -31,6 +31,11 @@ manageable with loadbalancing/failover support for up to 250 physical or logical
 WAN interfaces, connection tracking and an easy to manage traffic ruleset
 endef
 
+define Package/luci-app-mwan3/conffiles
+/etc/hotplug.d/iface/16-mwancustombak
+/etc/hotplug.d/iface/16-mwancustom
+endef
+
 define Build/Compile
 endef
 
