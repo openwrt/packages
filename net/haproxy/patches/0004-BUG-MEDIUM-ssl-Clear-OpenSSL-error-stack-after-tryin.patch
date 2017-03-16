@@ -1,0 +1,44 @@
+From 821d3a9f513a63b06f1696352392996391807c16 Mon Sep 17 00:00:00 2001
+From: Janusz Dziemidowicz <rraptorr@nails.eu.org>
+Date: Wed, 8 Mar 2017 16:59:41 +0100
+Subject: [PATCH 4/7] BUG/MEDIUM: ssl: Clear OpenSSL error stack after trying
+ to parse OCSP file
+
+Invalid OCSP file (for example empty one that can be used to enable
+OCSP response to be set dynamically later) causes errors that are
+placed on OpenSSL error stack. Those errors are not cleared so
+anything that checks this stack later will fail.
+
+Following configuration:
+  bind :443 ssl crt crt1.pem crt crt2.pem
+
+With following files:
+  crt1.pem
+  crt1.pem.ocsp - empty one
+  crt2.pem.rsa
+  crt2.pem.ecdsa
+
+Will fail to load.
+
+This patch should be backported to 1.7.
+(cherry picked from commit 8d7104982e1c41f7dc4d75ae7f7d2bbb96052d40)
+---
+ src/ssl_sock.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index cc2dc12..daa584c 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -433,6 +433,8 @@ static int ssl_sock_load_ocsp_response(struct chunk *ocsp_response, struct certi
+ 
+ 	ret = 0;
+ out:
++	ERR_clear_error();
++
+ 	if (bs)
+ 		 OCSP_BASICRESP_free(bs);
+ 
+-- 
+2.10.2
+
