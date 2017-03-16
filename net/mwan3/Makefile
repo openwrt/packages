@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.0
+PKG_VERSION:=2.1
 PKG_RELEASE:=4
 PKG_MAINTAINER:=Jeroen Louwes <jeroen.louwes@gmail.com>, \
 		Florian Eckert <fe@dev.tdt.de>
