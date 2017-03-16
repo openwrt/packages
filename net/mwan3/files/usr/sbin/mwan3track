@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ -z "$9" ] && echo "Error: should not be started manually" && exit 0
+[ -z "$10" ] && echo "Error: should not be started manually" && exit 0
 
 if [ -e /var/run/mwan3track-$1.pid ] ; then
 	kill $(cat /var/run/mwan3track-$1.pid) &> /dev/null
@@ -17,7 +17,7 @@ lost=0
 while true; do
 
 	for track_ip in $track_ips; do
-		ping -I $2 -c $4 -W $5 -q $track_ip &> /dev/null
+		ping -I $2 -c $4 -W $5 -s $9 -q $track_ip &> /dev/null
 		if [ $? -eq 0 ]; then
 			let host_up_count++
 		else
