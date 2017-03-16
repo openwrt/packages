@@ -1,0 +1,58 @@
+From 8253b517585a664be53718f1522e24291f553d95 Mon Sep 17 00:00:00 2001
+From: Christopher Faulet <cfaulet@haproxy.com>
+Date: Thu, 23 Feb 2017 10:17:15 +0100
+Subject: [PATCH 2/7] BUG/MINOR: spoe: Fix soft stop handler using a specific
+ id for spoe filters
+
+During a soft stop, we need to wakeup all SPOE applets to stop them. So we loop
+on all proxies, and for each proxy, on all filters. But we must be sure to only
+handle SPOE filters here. To do so, we use a specific id.
+(cherry picked from commit 3b386a318f699def6f37b4d3199cd1d72c481a0f)
+---
+ src/flt_spoe.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/src/flt_spoe.c b/src/flt_spoe.c
+index aa6414a..2a96c65 100644
+--- a/src/flt_spoe.c
++++ b/src/flt_spoe.c
+@@ -235,6 +235,9 @@ struct spoe_context {
+ 	unsigned int        process_exp;  /* expiration date to process an event */
+ };
+ 
++/* SPOE filter id. Used to identify SPOE filters */
++const char *spoe_filter_id = "SPOE filter";
++
+ /* Set if the handle on SIGUSR1 is registered */
+ static int sighandler_registered = 0;
+ 
+@@ -2286,10 +2289,16 @@ sig_stop_spoe(struct sig_handler *sh)
+ 		struct flt_conf *fconf;
+ 
+ 		list_for_each_entry(fconf, &p->filter_configs, list) {
+-			struct spoe_config *conf  = fconf->conf;
+-			struct spoe_agent  *agent = conf->agent;
++			struct spoe_config *conf;
++			struct spoe_agent  *agent;
+ 			struct appctx      *appctx;
+ 
++			if (fconf->id != spoe_filter_id)
++				continue;
++
++			conf  = fconf->conf;
++			agent = conf->agent;
++
+ 			list_for_each_entry(appctx, &agent->cache, ctx.spoe.list) {
+ 				si_applet_want_get(appctx->owner);
+ 				si_applet_want_put(appctx->owner);
+@@ -3178,6 +3187,7 @@ parse_spoe_flt(char **args, int *cur_arg, struct proxy *px,
+ 	}
+ 
+ 	*cur_arg    = pos;
++	fconf->id   = spoe_filter_id;
+ 	fconf->ops  = &spoe_ops;
+ 	fconf->conf = conf;
+ 	return 0;
+-- 
+2.10.2
+

@@ -1,0 +1,32 @@
+From e1008f22fbb9c08080aad9f998a557170b96f3f9 Mon Sep 17 00:00:00 2001
+From: Nenad Merdanovic <nmerdan@haproxy.com>
+Date: Sun, 12 Mar 2017 22:01:36 +0100
+Subject: [PATCH 6/7] BUG/MINOR: Fix "get map <map> <value>" CLI command
+
+The said form of the CLI command didn't return anything since commit
+ad8be61c7.
+
+This fix needs to be backported to 1.7.
+
+Signed-off-by: Nenad Merdanovic <nmerdan@haproxy.com>
+(cherry picked from commit 96c15719434a4eb46e191fcf1dafcb051065a76e)
+---
+ src/map.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/map.c b/src/map.c
+index 90deb08..e8c6a2a 100644
+--- a/src/map.c
++++ b/src/map.c
+@@ -906,7 +906,7 @@ static struct cli_kw_list cli_kws = {{ },{
+ 	{ { "add",   "map", NULL }, "add map        : add map entry", cli_parse_add_map, NULL },
+ 	{ { "clear", "map", NULL }, "clear map <id> : clear the content of this map", cli_parse_clear_map, NULL },
+ 	{ { "del",   "map", NULL }, "del map        : delete map entry", cli_parse_del_map, NULL },
+-	{ { "get",   "map", NULL }, "get map        : report the keys and values matching a sample for a map", cli_parse_get_map, NULL },
++	{ { "get",   "map", NULL }, "get map        : report the keys and values matching a sample for a map", cli_parse_get_map, cli_io_handler_map_lookup, cli_release_mlook },
+ 	{ { "set",   "map", NULL }, "set map        : modify map entry", cli_parse_set_map, NULL },
+ 	{ { "show",  "map", NULL }, "show map [id]  : report available maps or dump a map's contents", cli_parse_show_map, NULL },
+ 	{ { NULL }, NULL, NULL, NULL }
+-- 
+2.10.2
+
