@@ -30,7 +30,9 @@ elif [ "$family" == "ipv6" ]; then
 	network_get_gateway6 gateway $INTERFACE
 fi
 
-[ -n "$gateway" ] || exit 9
+if [ "$ACTION" == "ifup" ]; then
+	[ -n "$gateway" ] || exit 9
+fi
 
 $LOG notice "$ACTION interface $INTERFACE (${DEVICE:-unknown})"
 
