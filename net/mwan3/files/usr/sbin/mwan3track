@@ -10,7 +10,7 @@ fi
 echo "$$" > /var/run/mwan3track-$1.pid
 
 score=$(($7+$8))
-track_ips=$(echo $* | cut -d ' ' -f 9-99)
+track_ips=$(echo $* | cut -d ' ' -f 10-99)
 host_up_count=0
 lost=0
 
