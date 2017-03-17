@@ -243,7 +243,7 @@ define Package/avahi-utils
   $(call Package/avahi/Default)
   SUBMENU:=IP Addresses and Names
   VARIANT:=dbus
-  DEPENDS:=libavahi-client +libgdbm
+  DEPENDS:=+avahi +dbus +libavahi-client +libgdbm
   TITLE+= (utilities)
 endef
 
