@@ -20,6 +20,9 @@ PROG=/usr/sbin/unbound
 ##############################################################################
 
 start_service() {
+  # WAIT! Unbound often takes its time writing closure stats to syslog
+  pidof $PROG && sleep 1
+
   # complex UCI work
   unbound_start
 
@@ -39,7 +42,8 @@ stop_service() {
 ##############################################################################
 
 service_triggers() {
-  procd_add_reload_trigger "dhcp" "network" "unbound"
+  procd_add_reload_trigger "unbound"
+  procd_add_raw_trigger "interface.*" 2000 /etc/init.d/unbound restart
 }
 
 ##############################################################################
