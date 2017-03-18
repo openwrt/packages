@@ -236,6 +236,7 @@ unbound_mkdir() {
   local resolvsym=0
   local dhcp_origin=$( uci get dhcp.@odhcpd[0].leasefile )
   local dhcp_dir=$( dirname "$dhcp_origin" )
+  local filestuff
 
 
   if [ ! -x /usr/sbin/dnsmasq -o ! -x /etc/init.d/dnsmasq ] ; then
@@ -265,8 +266,15 @@ unbound_mkdir() {
 
 
   if [ -f $UNBOUND_KEYFILE ] ; then
-    # Lets not lose RFC 5011 tracking if we don't have to
-    cp -p $UNBOUND_KEYFILE $UNBOUND_KEYFILE.keep
+    filestuff=$( cat $UNBOUND_KEYFILE )
+
+
+    case "$filestuff" in
+      *"state=2 [  VALID  ]"*)
+        # Lets not lose RFC 5011 tracking if we don't have to
+        cp -p $UNBOUND_KEYFILE $UNBOUND_KEYFILE.keep
+        ;;
+    esac
   fi
 
 
@@ -891,10 +899,6 @@ unbound_stop() {
     rm -f /tmp/resolv.conf
     ln -s /tmp/resolv.conf.auto /tmp/resolv.conf
   fi
-
-
-  # Unbound has a log dump which takes time; don't overlap a "restart"
-  sleep 1
 }
 
 ##############################################################################
