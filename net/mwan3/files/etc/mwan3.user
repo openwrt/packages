@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# This file is interpreted as shell script.
+# Put your custom mwan3 action here, they will
+# be executed with each netifd hotplug interface event
+# on interfaces for which mwan3 is enabled.
+#
+# Parameter values from hotplug.d
+# $1 = ACTION (ifup/ifdown)
+# $2 = INTERFACE (wan/lan/...)
+# $3 = DEVICE (eth0/wwan0/...)
