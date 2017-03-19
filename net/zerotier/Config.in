@@ -6,18 +6,18 @@ config ZEROTIER_ENABLE_DEBUG
 	depends on PACKAGE_zerotier
 	default n
 
-config ZEROTIER_USE_MINIUPNPC
-	bool "Build with MiniUPnPc"
+config ZEROTIER_ENABLE_PORTMAPPING
+	bool "Build with MiniUPnPc and NAT-PMP support"
 	depends on PACKAGE_zerotier
 	default n
 
-config ZEROTIER_ENABLE_NETWORK_CONTROLLER
-	bool "Build with network controller"
+config ZEROTIER_ENABLE_CLUSTER
+	bool "Build with cluster support"
 	depends on PACKAGE_zerotier
 	default n
 
 config ZEROTIER_ENABLE_SELFTEST
-	bool "Build a self test program"
+	bool "Build self test program"
 	depends on PACKAGE_zerotier
 	default n
 
