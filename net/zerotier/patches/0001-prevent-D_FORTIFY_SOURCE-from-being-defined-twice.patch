@@ -1,0 +1,28 @@
+From 4fd495fca8417a8fd4405951d1eee80f345eaf9b Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Sun, 19 Mar 2017 01:13:14 +0100
+Subject: [PATCH 1/2] prevent D_FORTIFY_SOURCE from being defined twice
+
+---
+ make-linux.mk | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/make-linux.mk b/make-linux.mk
+index 7c77f58f..508d8c42 100644
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -8,9 +8,10 @@ ifeq ($(origin CXX),default)
+ endif
+ 
+ INCLUDES?=
+-DEFS?=-D_FORTIFY_SOURCE=2
++DEFS?=
+ LDLIBS?=
+ DESTDIR?=
++ZT_ENABLE_PORTMAPPING?=0
+ 
+ include objects.mk
+ 
+-- 
+2.12.0
+
