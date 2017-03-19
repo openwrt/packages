@@ -16,7 +16,7 @@ dnscrypt_instance() {
 }
 
 create_config_file() {
-    local address port resolver resolvers_list ephemeral_keys client_key syslog syslog_prefix local_cache query_log_file block_ipv6
+    local address port resolver resolvers_list ephemeral_keys client_key syslog syslog_prefix local_cache query_log_file block_ipv6 provider_name provider_key resolver_address
     local config_path="$2"
 
     [ ! -d "$CONFIG_DIR" ] && mkdir -p "$CONFIG_DIR"
@@ -25,6 +25,9 @@ create_config_file() {
     config_get      address         $1 'address'        '127.0.0.1'
     config_get      port            $1 'port'           '5353'
     config_get      resolver        $1 'resolver'       ''
+    config_get      provider_name   $1 'providername'   ''
+    config_get      provider_key    $1 'providerkey'    ''
+    config_get      resolver_address $1 'resolveraddress'    ''
     config_get      resolvers_list  $1 'resolvers_list' '/usr/share/dnscrypt-proxy/dnscrypt-resolvers.csv'
     config_get      client_key      $1 'client_key'     ''
     config_get      syslog_prefix   $1 'syslog_prefix'  'dnscrypt-proxy'
@@ -36,6 +39,9 @@ create_config_file() {
 	
     append_param_not_empty  "ResolverName"  "$resolver"         $config_path
     append_param            "ResolversList" "$resolvers_list"   $config_path
+    append_param_not_empty  "ProviderName"  "$provider_name"    $config_path
+    append_param_not_empty  "ProviderKey"   "$provider_key"     $config_path
+    append_param_not_empty  "ResolverAddress" "$resolver_address" $config_path
     append_param            "User"          "$USER"             $config_path
     append_param            "LocalAddress"  "$address:$port"    $config_path
     append_param_not_empty  "ClientKey"     "$client_key"       $config_path
