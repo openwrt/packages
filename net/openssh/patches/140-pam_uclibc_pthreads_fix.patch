@@ -1,6 +1,6 @@
 --- a/auth-pam.c
 +++ b/auth-pam.c
-@@ -159,7 +159,7 @@ sshpam_sigchld_handler(int sig)
+@@ -168,7 +168,7 @@ sshpam_sigchld_handler(int sig)
  	}
  	if (WIFSIGNALED(sshpam_thread_status) &&
  	    WTERMSIG(sshpam_thread_status) == SIGTERM)
@@ -9,7 +9,7 @@
  	if (!WIFEXITED(sshpam_thread_status))
  		sigdie("PAM: authentication thread exited unexpectedly");
  	if (WEXITSTATUS(sshpam_thread_status) != 0)
-@@ -168,14 +168,14 @@ sshpam_sigchld_handler(int sig)
+@@ -177,14 +177,14 @@ sshpam_sigchld_handler(int sig)
  
  /* ARGSUSED */
  static void
@@ -26,7 +26,7 @@
      void *(*thread_start)(void *), void *arg)
  {
  	pid_t pid;
-@@ -201,7 +201,7 @@ pthread_create(sp_pthread_t *thread, con
+@@ -210,7 +210,7 @@ pthread_create(sp_pthread_t *thread, con
  }
  
  static int
@@ -35,7 +35,7 @@
  {
  	signal(SIGCHLD, sshpam_oldsig);
  	return (kill(thread, SIGTERM));
-@@ -209,7 +209,7 @@ pthread_cancel(sp_pthread_t thread)
+@@ -218,7 +218,7 @@ pthread_cancel(sp_pthread_t thread)
  
  /* ARGSUSED */
  static int
@@ -44,7 +44,7 @@
  {
  	int status;
  
-@@ -510,7 +510,7 @@ sshpam_thread(void *ctxtp)
+@@ -508,7 +508,7 @@ sshpam_thread(void *ctxtp)
  	/* XXX - can't do much about an error here */
  	ssh_msg_send(ctxt->pam_csock, sshpam_err, &buffer);
  	buffer_free(&buffer);
