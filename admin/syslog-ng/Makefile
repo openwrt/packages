@@ -19,7 +19,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/syslog-ng
   SECTION:=admin
   CATEGORY:=Administration
-  DEPENDS:=+libpcre +glib2 +libeventlog +libopenssl +libuuid +libcurl
+  DEPENDS:=+libpcre +glib2 +libeventlog +libopenssl +libuuid +libcurl +@OPENSSL_WITH_DEPRECATED
   TITLE:=A powerful syslog daemon
   URL:=http://www.balabit.com/network-security/syslog-ng/opensource-logging-system/
 endef
