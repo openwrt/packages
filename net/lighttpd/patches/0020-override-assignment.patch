@@ -1,0 +1,57 @@
+commit 621d02cf74f88f8698e632cb0ace8b4f4496fbd7
+Author: Philip Prindeville <philipp@redfish-solutions.com>
+Date:   Wed Mar 22 22:11:27 2017 -0600
+
+        [core] allow overriding previously set configuration values
+    
+        x-ref:
+          "allow overriding configuration values"
+          https://redmine.lighttpd.net/issues/2799
+
+diff --git a/src/configfile.c b/src/configfile.c
+index 179d964..8399081 100644
+--- a/src/configfile.c
++++ b/src/configfile.c
+@@ -967,6 +967,14 @@ static int config_tokenizer(server *srv, tokenizer_t *t, int *token_id, buffer *
+ 			}
+ 			break;
+ 
++		case ':':
++			if (t->input[t->offset+1] == '=') {
++				t->offset += 2;
++				tid = TK_FORCE_ASSIGN;
++				buffer_copy_string_len(token, CONST_STR_LEN(":="));
++			}
++			break;
++
+ 		case '{':
+ 			t->offset++;
+ 
+diff --git a/src/configparser.y b/src/configparser.y
+index 9def054..bbaa54e 100644
+--- a/src/configparser.y
++++ b/src/configparser.y
+@@ -206,6 +206,23 @@ varline ::= key(A) ASSIGN expression(B). {
+   A = NULL;
+ }
+ 
++varline ::= key(A) FORCE_ASSIGN expression(B). {
++  if (ctx->ok) {
++    if (strncmp(A->ptr, "env.", sizeof("env.") - 1) == 0) {
++      fprintf(stderr, "Setting env variable is not supported in conditional %d %s: %s\n",
++	ctx->current->context_ndx,
++	ctx->current->key->ptr, A->ptr);
++      ctx->ok = 0;
++    } else {
++      buffer_copy_buffer(B->key, A);
++      array_replace(ctx->current->value, B);
++      B = NULL;
++    }
++  }
++  buffer_free(A);
++  A = NULL;
++}
++
+ varline ::= key(A) APPEND expression(B). {
+   if (ctx->ok) {
+     array *vars = ctx->current->value;
