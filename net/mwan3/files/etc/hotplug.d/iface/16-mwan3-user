@@ -4,9 +4,10 @@
 	. /lib/functions.sh
 
 	config_load mwan3
-	config_get enabled $INTERFACE enabled 0
+	config_get enabled "$INTERFACE" enabled 0
 	[ "${enabled}" = "1" ] || exit 0
-	/bin/sh /etc/mwan3.user $ACTION $INTERFACE $DEVICE
+	env -i ACTION="$ACTION" INTERFACE="$INTERFACE" DEVICE="$DEVICE" \
+		/bin/sh /etc/mwan3.user
 }
 
 exit 0
