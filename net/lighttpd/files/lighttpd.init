@@ -18,3 +18,9 @@ stop() {
 	service_stop /usr/sbin/lighttpd
 }
 
+restart() {
+	/usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf || exit 1
+	stop
+	start
+}
+
