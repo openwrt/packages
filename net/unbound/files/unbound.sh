@@ -88,6 +88,29 @@ UNBOUND_CONTROL_CFG="$UNBOUND_CONTROL -c $UNBOUND_CONFFILE"
 
 ##############################################################################
 
+copy_dash_update() {
+  # TODO: remove this function and use builtins when this issues is resovled.
+  # Due to OpenWrt/LEDE divergence "cp -u" isn't yet universally available.
+  local filetime keeptime
+
+
+  if [ -f $UNBOUND_KEYFILE.keep ] ; then
+    # root.key.keep is reused if newest
+    filetime=$( date -r $UNBOUND_KEYFILE +%s )
+    keeptime=$( date -r $UNBOUND_KEYFILE.keep +%s )
+
+
+    if [ $keeptime -gt $filetime ] ; then
+      cp $UNBOUND_KEYFILE.keep $UNBOUND_KEYFILE
+    fi
+
+
+    rm -f $UNBOUND_KEYFILE.keep
+  fi
+}
+
+##############################################################################
+
 create_interface_dns() {
   local cfg="$1"
   local ipcommand logint ignore ifname ifdashname
@@ -312,11 +335,7 @@ unbound_mkdir() {
   fi
 
 
-  if [ -f $UNBOUND_KEYFILE.keep ] ; then
-    # root.key.keep is reused if newest
-    cp -u $UNBOUND_KEYFILE.keep $UNBOUND_KEYFILE
-    rm -f $UNBOUND_KEYFILE.keep
-  fi
+  copy_dash_update
 
 
   # Ensure access and prepare to jail
