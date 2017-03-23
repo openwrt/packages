@@ -210,6 +210,15 @@ snmpd_engineid_add() {
 	[ -n "$engineidnic" ] && echo "engineIDNic $engineidnic" >> $CONFIGFILE
 }
 
+v3user_add()
+{
+       local cfg="$1"
+       config_get rouser "$cfg" rouser
+       [ -n "$rouser" ] && echo "rouser $rouser" >> $CONFIGFILE
+       config_get rwuser "$cfg" rwuser
+       [ -n "$rwuser" ] && echo "rwuser $rwuser" >> $CONFIGFILE
+}
+
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
 

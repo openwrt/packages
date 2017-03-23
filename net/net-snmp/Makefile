@@ -40,7 +40,7 @@ define Package/libnetsnmp
 $(call Package/net-snmp/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libnl-tiny
+  DEPENDS:=+libnl-tiny +libopenssl
   TITLE:=Open source SNMP implementation (libraries)
 endef
 
@@ -138,10 +138,10 @@ SNMP_MIB_MODULES_INCLUDED = \
 	ucd-snmp/vmstat \
 	util_funcs \
 	utilities/execute \
+	disman/event \
 
 SNMP_MIB_MODULES_EXCLUDED = \
 	agent_mibs \
-	disman/event \
 	disman/schedule \
 	hardware \
 	host \
@@ -181,7 +181,6 @@ CONFIGURE_ARGS += \
 	--with-mib-modules="$(SNMP_MIB_MODULES_INCLUDED)" \
 	--with-out-transports="$(SNMP_TRANSPORTS_EXCLUDED)" \
 	--with-transports="$(SNMP_TRANSPORTS_INCLUDED)" \
-	--without-openssl \
 	--without-libwrap \
 	--without-rpm \
 	--without-zlib \
