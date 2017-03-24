@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ -z "$10" ] && echo "Error: should not be started manually" && exit 0
+[ -z "$12" ] && echo "Error: should not be started manually" && exit 0
 
 if [ -e /var/run/mwan3track-$1.pid ] ; then
 	kill $(cat /var/run/mwan3track-$1.pid) &> /dev/null
@@ -10,11 +10,14 @@ fi
 echo "$$" > /var/run/mwan3track-$1.pid
 
 score=$(($7+$8))
-track_ips=$(echo $* | cut -d ' ' -f 10-99)
+track_ips=$(echo $* | cut -d ' ' -f 12-99)
 host_up_count=0
 lost=0
+sleep_time=0
 
 while true; do
+
+	sleep_time=$6
 
 	for track_ip in $track_ips; do
 		ping -I $2 -c $4 -W $5 -s $9 -q $track_ip &> /dev/null
@@ -28,7 +31,12 @@ while true; do
 	if [ $host_up_count -lt $3 ]; then
 		let score--
 
-		if [ $score -lt $8 ]; then score=0 ; fi
+		if [ $score -lt $8 ]; then
+			score=0
+		else
+			sleep_time=$10
+		fi
+
 		if [ $score -eq $8 ]; then
 
 			logger -t mwan3track -p notice "Interface $1 ($2) is offline"
@@ -48,7 +56,12 @@ while true; do
 		let score++
 		lost=0
 
-		if [ $score -gt $8 ]; then score=$(($7+$8)); fi
+		if [ $score -gt $8 ]; then
+			score=$(($7+$8))
+		elif [ $score -le $8 ]; then
+			sleep_time=$11
+		fi
+
 		if [ $score -eq $8 ]; then
 
 			logger -t mwan3track -p notice "Interface $1 ($2) is online"
@@ -59,7 +72,7 @@ while true; do
 	fi
 
 	host_up_count=0
-	sleep $6
+	sleep $sleep_time
 done
 
 exit 1
