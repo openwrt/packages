@@ -41,7 +41,8 @@ define Package/loudmouth/description
 endef
 
 CONFIGURE_ARGS += \
-	--with-ssl=openssl
+	--with-ssl=openssl \
+	--with-idn=no
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
