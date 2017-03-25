@@ -64,8 +64,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * additional whitelist for manual overrides, located by default in /etc/adblock/adblock.whitelist
 * quality checks during block list update to ensure a reliable dns backend service
 * minimal status & error logging to syslog, enable debug logging to receive more output
-* procd based init system support (start/stop/restart/reload/suspend/resume)
-* procd based hotplug support, the adblock start will be triggered by interface triggers
+* procd based init system support (start/stop/restart/reload/suspend/resume/query)
+* procd based hotplug support, the adblock start will be solely triggered by network interface triggers
 * suspend & resume adblock actions temporarily without block list reloading
 * runtime statistics via ubus service call
 * query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
@@ -73,8 +73,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * optional: add new adblock sources on your own via uci config
 
 ## Prerequisites
-* [openwrt](https://openwrt.org), tested with latest stable release (Chaos Calmer) and with current trunk (Designated Driver)
-* [LEDE project](https://www.lede-project.org), tested with trunk > r98
+* [LEDE project](https://www.lede-project.org), tested with latest stable release (LEDE 17.01) and with current LEDE snapshot
 * a usual setup with an enabled dns backend at minimum - dump AP modes without a working dns backend are _not_ supported
 * a download utility: full versions (with ssl support) of 'wget', 'uclient-fetch', 'aria2c' or 'curl' are supported - the Chaos Calmer built-in busybox wget is not
     * Chaos Calmer: download & install the external 'wget' package
@@ -87,18 +86,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * enable/disable your favored block list sources in _/etc/config/adblock_ - 'adaway', 'disconnect' and 'yoyo' are enabled by default
 
 ## LuCI adblock companion package
-* for easy management of the various block list sources and options you can also use a nice & efficient LuCI frontend
+* for easy management of the various block list sources and all other adblock options you can also use a nice & efficient LuCI frontend
 * install 'luci-app-adblock' (_opkg install luci-app-adblock_)
 * the application is located in LuCI under 'Services' menu
 * _Thanks to Hannu Nyman for this great adblock LuCI frontend!_
-
-## Chaos Calmer installation notes
-* 'adblock' and 'luci-app-adblock' are _not_ available as .ipk packages in the Chaos Calmer download repository
-* download both packages from a development snapshot package directory:
-    * for 'adblock' look [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages/)
-    * for 'luci-app-adblock' look [here](https://downloads.lede-project.org/snapshots/packages/x86_64/luci/)
-* manually transfer the packages to your routers temp directory (with tools like _sshfs_ or _winscp_)
-* install the packages with _opkg install <...>_ as described above
 
 ## Tweaks
 * **status/runtime statistics:** the adblock status and runtime statistics are available via ubus service call (see example below)
@@ -118,10 +109,9 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * usually the pre-configured adblock setup works quite well and no manual config overrides are needed, all listed options apply to the 'global' config section:
     * adb\_enabled => main switch to enable/disable adblock service (default: '1', enabled)
     * adb\_debug => enable/disable adblock debug output (default: '0', disabled)
-    * adb\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: not set, disabled)
+    * adb\_iface => set the procd interface trigger to a (list of) lan/wan interface(s) (default: 'wan wwan lan')
     * adb\_fetch => full path to a different download utility, see example below (default: not set, use wget)
     * adb\_fetchparm => options for the download utility, see example below (default: not set, use wget options)
-    * adb\_tldcomp => enable/disable tld compression (default: '1', enabled)
 
 ## Examples
 
@@ -155,50 +145,42 @@ curl:
   
 **receive adblock statistics via ubus:**
 <pre><code>
-ubus call service list '{"name":"adblock_stats"}'
+ubus call service get_data '{"name":"adblock"}
 This will output the active block lists and other runtime information as JSON, e.g.:
 {
-    "adblock_stats": {
-        "instances": {
-            "statistics": {
-                "running": false,
-                "command": [
-                    ""
-                ],
-                "data": {
-                    "active_lists": [
-                        {
-                            "palevo": "14",
-                            "blacklist": "144",
-                            "winspy": "168",
-                            "zeus": "422",
-                            "adaway": "408",
-                            "rolist": "649",
-                            "malwarelist": "1219",
-                            "ransomware": "1495",
-                            "ruadlist": "1791",
-                            "yoyo": "2304",
-                            "openphish": "2139",
-                            "dshield": "154",
-                            "disconnect": "3176",
-                            "spam404": "6251",
-                            "adguard": "11081",
-                            "whocares": "11575",
-                            "winhelp": "10574",
-                            "malware": "13854",
-                            "sysctl": "8539",
-                            "securemecca": "9262",
-                            "shalla": "25358",
-                            "hphosts": "36256"
-                        }
-                    ],
-                    "adblock_version": "2.3.0",
-                    "blocked_domains": "146833",
-                    "dns_backend": "dnsmasq",
-                    "last_rundate": "04.02.2017 21:10:31",
-                    "system": "LEDE Reboot SNAPSHOT r3286-c980147527"
+    "adblock": {
+        "adblock": {
+            "active_lists": [
+                {
+                    "palevo": "14",
+                    "blacklist": "147",
+                    "winspy": "138",
+                    "adaway": "378",
+                    "zeus": "397",
+                    "rolist": "652",
+                    "malwarelist": "1157",
+                    "yoyo": "2272",
+                    "ruadlist": "1793",
+                    "ransomware": "1670",
+                    "dshield": "190",
+                    "openphish": "2672",
+                    "disconnect": "2910",
+                    "spam404": "5715",
+                    "whocares": "8900",
+                    "winhelp": "8528",
+                    "adguard": "10790",
+                    "securemecca": "5080",
+                    "sysctl": "7906",
+                    "malware": "14617",
+                    "hphosts": "12450",
+                    "shalla": "23926"
                 }
-            }
+            ],
+            "adblock_version": "2.5.0",
+            "blocked_domains": "112302",
+            "dns_backend": "dnsmasq",
+            "last_rundate": "25.03.2017 21:09:12",
+            "system": "LEDE Reboot SNAPSHOT r3867-313197d707"
         }
     }
 }
@@ -295,7 +277,7 @@ If your awk one-liner works quite well, add a new source section in adblock conf
 </code></pre>
   
 ## Support
-Please join the adblock discussion in this [forum thread](https://forum.openwrt.org/viewtopic.php?id=59803) or contact me by mail <dev@brenken.org>  
+Please join the adblock discussion in this [forum thread](https://forum.lede-project.org/t/adblock-2-x-support-thread/507) or contact me by mail <dev@brenken.org>  
 
 ## Removal
 * stop all adblock related services with _/etc/init.d/adblock stop_
