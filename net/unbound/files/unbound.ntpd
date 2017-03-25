@@ -20,6 +20,7 @@
 if [ "$ACTION" = stratum -a ! -f "$UNBOUND_TIMEFILE" ] ; then
   echo "ntpd: $( date )" > $UNBOUND_TIMEFILE
   /etc/init.d/unbound enabled && /etc/init.d/unbound restart
+  # Yes, hard RESTART. We need to be absolutely sure to enable DNSSEC.
 fi
 
 ##############################################################################
