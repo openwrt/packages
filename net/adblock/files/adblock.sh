@@ -10,11 +10,11 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.4.0-2"
+adb_ver="2.5.0"
+adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
 adb_backup=0
-adb_tldcomp=1
 adb_backupdir="/mnt"
 adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\"^\"\$1\"\\\|[.]\"\$1)}"
@@ -40,7 +40,7 @@ f_envload()
 
     # set dns backend environment
     #
-    while [ ${cnt} -le 10 ]
+    while [ ${cnt} -le 20 ]
     do
         for dns in ${adb_dnslist}
         do
@@ -188,7 +188,6 @@ f_rmdns()
         rm -f "${adb_backupdir}/${adb_dnsprefix}"*.gz
         rm -rf "${adb_dnshidedir}"
     fi
-    ubus call service delete "{\"name\":\"adblock_stats\",\"instances\":\"statistics\"}" 2>/dev/null
 }
 
 # f_dnsrestart: restart the dns backend
@@ -203,7 +202,7 @@ f_dnsrestart()
         adb_dnsup="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" | jsonfilter -l1 -e "@.${adb_dns}.instances.*.running")"
         if [ "${adb_dnsup}" = "true" ]
         then
-            return 0
+            break
         fi
         cnt=$((cnt+1))
         sleep 1
@@ -323,7 +322,7 @@ f_log()
         logger -t "adblock-[${adb_ver}] ${class}" "${log_msg}"
         if [ "${class}" = "error" ]
         then
-            logger -t "adblock-[${adb_ver}] ${class}" "Please check the online documentation 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md'"
+            logger -t "adblock-[${adb_ver}] ${class}" "Please check 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md' (${adb_sysver})"
             f_rmtemp
             if [ "$(ls -dA "${adb_dnsdir}/${adb_dnsprefix}"* >/dev/null 2>&1)" ]
             then
@@ -340,8 +339,7 @@ f_log()
 f_main()
 {
     local enabled url cnt sum_cnt=0 mem_total=0
-    local src_name src_rset shalla_archive list active_lists
-    local sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
+    local src_name src_rset shalla_archive list active_lists active_triggers
     mem_total="$(awk '$1 ~ /^MemTotal/ {printf $2}' "/proc/meminfo" 2>/dev/null)"
 
     f_log "info " "start adblock processing ..."
@@ -398,17 +396,12 @@ f_main()
         #
         if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpload}" ]
         then
-            awk "${src_rset}" "${adb_tmpload}" > "${adb_tmpfile}"
+            awk "${src_rset}" "${adb_tmpload}" 2>/dev/null > "${adb_tmpfile}"
             if [ -s "${adb_tmpfile}" ]
             then
-                if [ ${adb_tldcomp} -eq 1 ]
-                then
-                    awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${adb_tmpfile}" | sort -u > "${adb_tmpload}"
-                    awk '{if(NR==1){tld=$NF};while(getline){if($NF !~ tld"\\."){print tld;tld=$NF}}print tld}' "${adb_tmpload}" > "${adb_tmpfile}"
-                    awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${adb_tmpfile}" > "${adb_tmpload}"
-                else
-                    sort -u "${adb_tmpfile}" > "${adb_tmpload}"
-                fi
+                awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${adb_tmpfile}" 2>/dev/null | sort -u > "${adb_tmpload}"
+                awk '{if(NR==1){tld=$NF};while(getline){if($NF !~ tld"\\."){print tld;tld=$NF}}print tld}' "${adb_tmpload}" 2>/dev/null > "${adb_tmpfile}"
+                awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${adb_tmpfile}" 2>/dev/null > "${adb_tmpload}"
                 mv -f "${adb_tmpload}" "${adb_tmpfile}"
                 f_list backup
             else
@@ -424,9 +417,9 @@ f_main()
         then
             if [ -s "${adb_tmpdir}/tmp.whitelist" ]
             then
-                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpfile}" | eval "${adb_dnsformat}" > "${adb_dnsfile}"
+                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpfile}" 2>/dev/null | eval "${adb_dnsformat}" > "${adb_dnsfile}"
             else
-                cat "${adb_tmpfile}" | eval "${adb_dnsformat}" > "${adb_dnsfile}"
+                cat "${adb_tmpfile}" 2>/dev/null | eval "${adb_dnsformat}" > "${adb_dnsfile}"
             fi
             adb_rc=${?}
             if [ ${adb_rc} -ne 0 ]
@@ -470,18 +463,24 @@ f_main()
     f_dnsrestart
     if [ "${adb_dnsup}" = "true" ]
     then
-        f_log "info " "block lists with overall ${sum_cnt} domains loaded successfully (${sysver})"
-        ubus call service set "{\"name\":\"adblock_stats\",
-            \"instances\":{\"statistics\":{\"command\":[\"\"],
+        f_log "info " "block lists with overall ${sum_cnt} domains loaded successfully (${adb_sysver})"
+        for name in ${adb_iface}
+        do
+            active_triggers="${active_triggers}[\"interface.*.up\",[\"if\",[\"eq\",\"interface\",\"${name}\"],[\"run_script\",\"/etc/init.d/adblock\",\"start\"],1000]],"
+        done
+        active_triggers="${active_triggers}[\"config.change\",[\"if\",[\"eq\",\"package\",\"adblock\"],[\"run_script\",\"/etc/init.d/adblock\",\"start\"],1000]]"
+        ubus call service set "{\"name\":\"adblock\",
+            \"instances\":{\"adblock\":{\"command\":[\"/usr/bin/adblock.sh\"],
             \"data\":{\"active_lists\":[{${active_lists}}],
             \"adblock_version\":\"${adb_ver}\",
             \"blocked_domains\":\"${sum_cnt}\",
             \"dns_backend\":\"${adb_dns}\",
             \"last_rundate\":\"$(/bin/date "+%d.%m.%Y %H:%M:%S")\",
-            \"system\":\"${sysver}\"}}}}"
-        return 0
+            \"system\":\"${adb_sysver}\"}}},
+            \"triggers\":[${active_triggers}]}"
+    else
+        f_log "error" "dns backend restart with active block lists failed"
     fi
-    f_log "error" "dns backend restart with active block lists failed (${sysver})"
 }
 
 # handle different adblock actions
