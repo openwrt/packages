@@ -1,0 +1,35 @@
+--- a/lib/crypto.c	2016-12-21 07:57:44.000000000 -0700
++++ b/lib/crypto.c	2017-03-24 13:19:34.188259018 -0600
+@@ -51,11 +51,20 @@
+     }
+ }
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10000000
+ static unsigned long
+ ssl_thread_id(void)
+ {
+   return (unsigned long) get_thread_id();
+ }
++
++#else
++static void
++ssl_thread_id2(CRYPTO_THREADID *id)
++{
++  CRYPTO_THREADID_set_numeric(id, get_thread_id());
++}
++#endif
+ 
+ static void
+ crypto_init_threading(void)
+@@ -68,7 +76,11 @@
+     {
+       g_static_mutex_init(&ssl_locks[i]);
+     }
++#if OPENSSL_VERSION_NUMBER < 0x10000000
+   CRYPTO_set_id_callback(ssl_thread_id);
++#else
++  CRYPTO_THREADID_set_callback(ssl_thread_id2);
++#endif
+   CRYPTO_set_locking_callback(ssl_locking_callback);
+ }
+ 
