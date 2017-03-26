@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.4.2"
+trm_ver="0.5.0"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=1
 trm_debug=0
@@ -233,6 +233,9 @@ f_main()
 }
 
 f_envload
-f_main
-f_active
+if [ ${trm_active} -eq 0 ] || ([ ${trm_active} -eq 1 ] && [ $(pgrep -f "/usr/bin/travelmate.sh" | wc -l) -eq 3 ])
+then
+    f_main
+    f_active
+fi
 exit 0
