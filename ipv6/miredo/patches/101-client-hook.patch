@@ -1,0 +1,12 @@
+--- a/misc/client-hook.iproute
++++ b/misc/client-hook.iproute
+@@ -5,7 +5,7 @@
+ # Distributed under the terms of the GNU General Public License version 2.
+ 
+ # Linux iproute2 path:
+-IP="/sbin/ip"
++IP="/usr/sbin/ip"
+ 
+ # Linux default route default metric is 1024
+ # (we put 1029 so that Teredo is used as a last resort):
+
