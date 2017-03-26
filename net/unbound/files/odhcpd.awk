@@ -28,10 +28,13 @@
 
 /^#/ {
   # We need to pick out DHCP v4 or v6 records
-  net = $2 ; id = $3 ; cls = $4 ; hst = $5 ; adr = $9 ;
+  net = $2 ; id = $3 ; cls = $4 ; hst = $5 ; adr = $9 ; adr2 = $10
   cdr = adr ;
+  cdr2 = adr2 ;
   sub( /\/.*/, "", adr ) ;
   sub( /.*\//, "", cdr ) ;
+  sub( /\/.*/, "", adr2 ) ;
+  sub( /.*\//, "", cdr2 ) ;
 
 
   if ( bisolt == 1 ) {
@@ -129,6 +132,22 @@
         qpr = ipv6_ptr( adr ) ;
         x = ( fqdn ". 120 IN AAAA " adr ) ;
         y = ( qpr ". 120 IN PTR " fqdn ) ;
+        print ( x "\n" y ) > hostfile ;
+      }
+    }
+    
+    if (( cdr2 == 128 ) && ( hst != "-" )) {
+      if ( bconf == 1 ) {
+        x = ( "local-data: \"" fqdn ". 120 IN AAAA " adr2 "\"" ) ;
+        y = ( "local-data-ptr: \"" adr2 " 120 " fqdn "\"" ) ;
+        print ( x "\n" y ) > hostfile ;
+      }
+
+      else {
+        # odhcp puts GA and ULA on the same line (position 9 and 10)
+        qpr2 = ipv6_ptr( adr2 ) ;
+        x = ( fqdn ". 120 IN AAAA " adr2 ) ;
+        y = ( qpr2 ". 120 IN PTR " fqdn ) ;
         print ( x "\n" y ) > hostfile ;
       }
     }
