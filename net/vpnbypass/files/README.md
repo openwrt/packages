@@ -14,24 +14,67 @@ A simple PROCD-based vpnbypass service for OpenWrt/LEDE Project. Useful if your 
 ![screenshot](https://raw.githubusercontent.com/stangri/screenshots/master/vpnbypass/screenshot02.png "screenshot")
 
 ## Requirements
-This service requires following packages to be installed on your router: ```ip-full ipset iptables dnsmasq-full``` (```ip-full``` requires you uninstall ```ip``` first; ```dnsmasq-full``` requires you uninstall ```dnsmasq``` first). Run the following commands to satisfy the requirements:
+This service requires following packages to be installed on your router: ```ipset``` and ```iptables```. Additionally, if you want to use Domain Bypass feature, you need to install ```dnsmasq-full``` (```dnsmasq-full``` requires you uninstall ```dnsmasq``` first).
+
+To fully satisfy the requirements for both IP/Port VPN Bypass and Domain Bypass features connect to your router via ssh and run the following commands:
 ```sh
-opkg update
-opkg remove dnsmasq ip
-opkg install ip-full ipset iptables dnsmasq-full
+opkg update; opkg remove dnsmasq; opkg install ipset iptables dnsmasq-full
 ```
 
+To satisfy the requirements for just IP/Port VPN Bypass connect to your router via ssh and run the following commands:
+```sh
+opkg update; opkg install ipset iptables
+```
+
+#### Unmet dependencies
+If you are running a development (trunk/snapshot) build of OpenWrt/LEDE Project on your router and your build is outdated (meaning that packages of the same revision/commit hash are no longer available and when you try to satisfy the [requirements](#requirements) you get errors), please flash either current LEDE release image or current development/snapshot image.
+
 ## How to install
+<!---
+#### From Web UI/Luci
+Navigate to System->Software page on your router and then perform the following actions:
+1. Click "Update Lists"
+2. Wait for the update process to finish.
+3. In the "Download and install package:" field type ```vpnbypass luci-app-vpnbypass```
+4. Click "OK" to install ```vpnbypass``` and ```luci-app-vpnbypass```
+
+If you get an ```Unknown package 'vpnbypass'``` error, your router is not set up with the access to repository containing these packages and you need to add custom repository to your router first.
+
+#### From console/ssh
+--->
+Please make sure that the [requirements](#requirements) are satisfied and install ```vpnbypass``` and ```luci-app-vpnbypass``` from Web UI or connect to your router via ssh and run the following commands:
 ```sh
 opkg update
 opkg install vpnbypass luci-app-vpnbypass
 ```
-Default install routes Plex Media Server traffic (port 32400) outside of the VPN tunnel, routes LogmeIn Hamachi traffic (25.0.0.0/8) outside of the VPN tunnel and also routes internet traffic from local IPs 192.168.1.81-192.168.1.87 outside of the VPN tunnel. You can safely delete these example rules if they do not apply to you.
+If these packages are not found in the official feed/repo for your version of OpenWrt/LEDE Project, you will need to [add a custom repo to your router](#add-custom-repo-to-your-router) first.
+
+#### Add custom repo to your router
+If your router is not set up with the access to repository containing these packages you will need to add custom repository to your router by connecting to your router via ssh and running the following commands:
+
+###### OpenWrt CC 15.05.1
+```sh
+opkg update; opkg install wget libopenssl
+echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
+! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
+opkg update
+```
+
+###### LEDE Project and OpenWrt DD trunk
+```sh
+opkg update; opkg install uclient-fetch libustream-mbedtls
+echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
+! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
+opkg update
+```
+
+## Default Settings
+Default configuration has service disabled (use Web UI to enable/start service or run ```uci set vpnbypass.config.enabled=1```) and routes Plex Media Server traffic (port 32400) outside of the VPN tunnel, routes LogmeIn Hamachi traffic (25.0.0.0/8) outside of the VPN tunnel and also routes internet traffic from local IPs 192.168.1.81-192.168.1.87 outside of the VPN tunnel. You can safely delete these example rules if they do not apply to you.
 
 ## Documentation / Discussion
 Please head to [LEDE Project Forum](https://forum.lede-project.org/t/vpn-bypass-split-tunneling-service-luci-ui/1106) for discussions of this service.
 
-### Bypass Domains Format/Syntax
+#### Bypass Domains Format/Syntax
 Domain lists should be in following format/syntax: ```/domain1.com/domain2.com/vpnbypass```. Please don't forget the leading ```/``` and trailing ```/vpnbypass```. There's no validation if you enter something incorrectly -- it just won't work. Please see [Notes/Known Issues](#notesknown-issues) if you want to edit this setting manually, without Web UI.
 
 ## What's New
@@ -40,7 +83,7 @@ Domain lists should be in following format/syntax: ```/domain1.com/domain2.com/v
 - Table ID, IPSET name and FW_MARK as well as FW_MASK can be defined in config file.
 - Uses iptables, not ip rules for handling local IPs/ranges.
 - More reliable creation/destruction of VPNBYPASS iptables chain.
-- Updated Web UI enables/start and stops/disables service.
+- Updated Web UI enables/start and stops service.
 - Beautified output.
 
 1.2.0
@@ -66,10 +109,11 @@ Domain lists should be in following format/syntax: ```/domain1.com/domain2.com/v
 - Initial release.
 
 ## Notes/Known Issues
-Domains to be accessed outside of VPN tunnel are handled by dnsmasq and thus are not defined in ```/etc/config/vpnpass```, but rather in ```/etc/config/dhcp```. To add/delete/edit domains you can use VPN Bypass Web UI or you can edit ```/etc/config/dhcp``` manually or run following commands:
+1. Domains to be accessed outside of VPN tunnel are handled by dnsmasq and thus are not defined in ```/etc/config/vpnpass```, but rather in ```/etc/config/dhcp```. To add/delete/edit domains you can use VPN Bypass Web UI or you can edit ```/etc/config/dhcp``` manually or run following commands:
 ```sh
 uci add_list dhcp.@dnsmasq[-1].ipset='/github.com/plex.tv/google.com/vpnbypass'
 uci add_list dhcp.@dnsmasq[-1].ipset='/hulu.com/netflix.com/nhl.com/vpnbypass'
 uci commit dhcp
 /etc/init.d/dnsmasq restart
 ```
+This feature requires ```dnsmasq-full``` to work. See [Requirements](#requirements) paragraph for more details.

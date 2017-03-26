@@ -9,8 +9,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zoneinfo
-PKG_VERSION:=2017a
-PKG_VERSION_CODE:=2017a
+PKG_VERSION:=2017b
+PKG_VERSION_CODE:=2017b
 PKG_RELEASE:=1
 
 #As i couldn't find real license used "Public Domain"
@@ -20,14 +20,14 @@ PKG_LICENSE:=Public Domain
 PKG_SOURCE:=tzdata$(PKG_VERSION).tar.gz
 PKG_SOURCE_CODE:=tzcode$(PKG_VERSION_CODE).tar.gz
 PKG_SOURCE_URL:=http://www.iana.org/time-zones/repository/releases
-PKG_MD5SUM:=cb8274cd175f8a4d9d1b89895df876dc
+PKG_MD5SUM:=50dc0dc50c68644c1f70804f2e7a1625
 
 include $(INCLUDE_DIR)/package.mk
 
 define Download/tzcode
    FILE=$(PKG_SOURCE_CODE)
    URL=$(PKG_SOURCE_URL)
-   MD5SUM:=eef0bfac7a52dce6989a7d8b40d86fe0
+   MD5SUM:=afaf15deb13759e8b543d86350385b16
 endef
 
 $(eval $(call Download,tzcode))

@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=cryptodev-linux
 PKG_VERSION:=1.8.git-2017-02-09
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -19,6 +19,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MIRROR_HASH:=627ce96e3ba66ca9c8e14f5d80193061fbe9d45cd8d4b69a1bf4dd5a2d50eed8
 PKG_SOURCE_URL:=https://github.com/cryptodev-linux/cryptodev-linux.git
 PKG_SOURCE_VERSION:=6818263667ca488f9b1c86e36ea624c4ea1c309f
+
+PKG_MAINTAINER:=Ansuel Smith ansuelsmth@gmail.com
 
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -70,7 +72,7 @@ endef
 
 define KernelPackage/cryptodev/install
 	$(INSTALL_DIR) $(1)/etc/modules.d
-	$(INSTALL_DATA) ./files/cryptodev.modules $(1)/etc/modules.d/80-cryptodev
+	$(INSTALL_DATA) ./files/cryptodev.modules $(1)/etc/modules.d/50-cryptodev
 	$(INSTALL_DIR) $(1)/lib/modules/$(LINUX_VERSION)
 	$(INSTALL_DIR) $(1)/usr/sbin
 endef

@@ -22,15 +22,26 @@ fi
 [ -x /usr/sbin/ip6tables ] || exit 7
 [ -x /usr/bin/logger ] || exit 8
 
-config_get family $INTERFACE family ipv4
+if [ "$ACTION" == "ifup" ]; then
+	config_get family $INTERFACE family ipv4
+	if [ "$family" = "ipv4" ]; then
+		ubus call network.interface.${INTERFACE}_4 status &>/dev/null
+		if [ "$?" -eq "0" ]; then
+			network_get_gateway gateway ${INTERFACE}_4
+		else
+			network_get_gateway gateway $INTERFACE
+		fi
+	elif [ "$family" = "ipv6" ]; then
+		ubus call network.interface.${INTERFACE}_6 status &>/dev/null
+		if [ "$?" -eq "0" ]; then
+			network_get_gateway6 gateway ${INTERFACE}_6
+		else
+			network_get_gateway6 gateway ${INTERFACE}
+		fi
+	fi
 
-if [ "$family" == "ipv4" ]; then
-	network_get_gateway gateway $INTERFACE
-elif [ "$family" == "ipv6" ]; then
-	network_get_gateway6 gateway $INTERFACE
+	[ -n "$gateway" ] || exit 9
 fi
-
-[ -n "$gateway" ] || exit 9
 
 $LOG notice "$ACTION interface $INTERFACE (${DEVICE:-unknown})"
 
@@ -46,6 +57,7 @@ case "$ACTION" in
 		mwan3_track $INTERFACE $DEVICE
 		mwan3_set_policies_iptables
 		mwan3_set_user_rules
+		mwan3_flush_conntrack $INTERFACE $DEVICE "ifup"
 	;;
 	ifdown)
 		mwan3_delete_iface_rules $INTERFACE
@@ -54,6 +66,7 @@ case "$ACTION" in
 		mwan3_delete_iface_ipset_entries $INTERFACE
 		mwan3_set_policies_iptables
 		mwan3_set_user_rules
+		mwan3_flush_conntrack $INTERFACE $DEVICE "ifdown"
 	;;
 esac
 

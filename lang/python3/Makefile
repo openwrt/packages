@@ -14,7 +14,7 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -98,6 +98,8 @@ define Py3BasePackage
   define Py3Package/$(1)/filespec
     ifneq ($(2),)
       $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
+      -|/usr/lib/python$(PYTHON_VERSION)/*/test
+      -|/usr/lib/python$(PYTHON_VERSION)/*/tests
     endif
   endef
 endef
@@ -187,6 +189,7 @@ define Build/InstallDev
 		./files/python3-package.mk \
 		./files/python3-host.mk \
 		./files/python3-version.mk \
+		./files/python3-package-install.sh \
 		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
@@ -286,6 +289,7 @@ $(eval $(call HostBuild))
 $(foreach package, $(PYTHON3_PACKAGES),  \
 	$(eval $(call Py3Package,$(package))) \
 	$(eval $(call BuildPackage,$(package))) \
+	$(eval $(call BuildPackage,$(package)-src)) \
 )
 
 $(eval $(call Py3Package,python3-base))
@@ -295,3 +299,7 @@ $(eval $(call Py3Package,python3))
 $(eval $(call BuildPackage,python3-base))
 $(eval $(call BuildPackage,python3-light))
 $(eval $(call BuildPackage,python3))
+
+$(eval $(call BuildPackage,python3-base-src))
+$(eval $(call BuildPackage,python3-light-src))
+$(eval $(call BuildPackage,python3-src))
