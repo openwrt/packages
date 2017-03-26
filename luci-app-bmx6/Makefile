@@ -20,7 +20,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-bmx6
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 PKG_LICENSE:=GPL-2.0+
@@ -32,12 +32,38 @@ define Package/luci-app-bmx6
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:= bmx6 configuration, status and visualization module
-  DEPENDS:=+luci-lib-json +luci-mod-admin-full +luci-lib-httpclient +bmx6
+  DEPENDS:=+luci-lib-json +luci-mod-admin-full +luci-lib-httpclient +bmx6 +luci-lib-jquery-1-4 +luci-lib-dracula
   MAINTAINER:= Pau Escrich <p4u@dabax.net>
+endef
+
+define Package/luci-lib-jquery-1-4
+  SECTION:=luci
+  CATEGORY:=LuCI
+  TITLE:=LuCI - Lua Configuration Interface
+  MAINTAINER:=Gui Iribarren <gui@altermundi.net>
+  SUBMENU:=6. Libraries
+  TITLE:=jQuery 1.4 javascript library
+endef
+
+define Package/luci-lib-dracula
+  SECTION:=luci
+  CATEGORY:=LuCI
+  TITLE:=LuCI - Lua Configuration Interface
+  MAINTAINER:=Pau Escrich <p4u@dabax.net>
+  SUBMENU:=6. Libraries
+  TITLE:=dracula graph javascript library
 endef
 
 define Package/luci-app-bmx6/description
 	bmx6 web application (status and configuration) for LuCi web interface
+endef
+
+define Package/luci-lib-jquery-1-4/description
+	minified javascript jQuery 1.4 library
+endef
+
+define Package/luci-lib-dracula-graph/description
+	minified dracula javascript graph library
 endef
 
 define Package/luci-app-bmx6/conffiles
@@ -54,9 +80,20 @@ define Build/Compile
 endef
 
 define Package/luci-app-bmx6/install
-	$(CP) ./files/* $(1)/
+	$(CP) ./bmx6/* $(1)/
 	chmod 755 $(1)/www/cgi-bin/bmx6-info
 endef
 
-$(eval $(call BuildPackage,luci-app-bmx6))
+define Package/luci-lib-jquery-1-4/install
+	$(INSTALL_DIR) $(1)/www/luci-static/resources/jquery/
+	$(CP) ./jquery/* $(1)/www/luci-static/resources/jquery/
+endef
 
+define Package/luci-lib-dracula/install
+	$(INSTALL_DIR) $(1)/www/luci-static/resources/dracula
+	$(CP) ./dracula/* $(1)/www/luci-static/resources/dracula/
+endef
+
+$(eval $(call BuildPackage,luci-app-bmx6))
+$(eval $(call BuildPackage,luci-lib-jquery-1-4))
+$(eval $(call BuildPackage,luci-lib-dracula))
