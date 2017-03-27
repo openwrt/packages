@@ -29,7 +29,7 @@ define Package/lua-copas
   CATEGORY:=Languages
   TITLE:=Lua-Copas
   URL:=https://github.com/keplerproject/copas
-  DEPENDS:=+lua
+  DEPENDS:=+lua +lua-coxpcall
 endef
 
 define Package/lua-copas/description

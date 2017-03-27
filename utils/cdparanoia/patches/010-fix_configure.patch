@@ -1,0 +1,40 @@
+Index: cdparanoia-10.2/Makefile.in
+===================================================================
+--- cdparanoia-10.2.orig/Makefile.in	2008-11-06 15:17:28.000000000 +0100
++++ cdparanoia-10.2/Makefile.in	2008-11-06 15:19:12.000000000 +0100
+@@ -8,12 +8,12 @@
+ srcdir=@srcdir@
+ 
+ @SET_MAKE@
+-FLAGS=@TYPESIZES@ @CFLAGS@
+-OPT=@OPT@ $(FLAGS)
+-DEBUG=@DEBUG@ $(FLAGS)
++#FLAGS=@TYPESIZES@ @CFLAGS@
++#OPT=@OPT@ $(FLAGS)
++#DEBUG=@DEBUG@ $(FLAGS)
+ CC=@CC@
+ LD=@CC@
+-LDFLAGS=@LDFLAGS@ $(FLAGS)
++LDFLAGS=@LDFLAGS@
+ AR=@AR@
+ RANLIB=@RANLIB@
+ INSTALL=@INSTALL@
+@@ -43,7 +43,8 @@
+ all: 	
+ 	cd interface && $(MAKE) all
+ 	cd paranoia && $(MAKE) all
+-	$(MAKE) cdparanoia CFLAGS="$(OPT)" 
++	$(MAKE) cdparanoia 
++#CFLAGS="$(OPT)" 
+ 
+ debug:  
+ 	cd interface && $(MAKE) debug
+@@ -87,7 +88,7 @@
+ 		$(LIBDIR)/libcdda_paranoia.so
+ 
+ cdparanoia:	$(OFILES) $(LIBDEP)
+-		$(LD) $(CFLAGS) $(LDFLAGS) $(OFILES) \
++		$(CC) $(CFLAGS) $(LDFLAGS) $(OFILES) \
+ 		-L$(PWD)/paranoia -L$(PWD)/interface \
+ 		-o cdparanoia $(LIBS)
+ 
