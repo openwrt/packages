@@ -1,0 +1,30 @@
+--- a/Makefile
++++ b/Makefile
+@@ -7,7 +7,7 @@ LUALIB= $(LUA)/src
+ LUABIN= $(LUA)/src
+ 
+ # probably no need to change anything below here
+-CFLAGS= $(INCS) $(WARN) -O2 $G
++CFLAGS= $(INCS) $(WARN) -O2 $G -fPIC
+ WARN= -ansi -pedantic -Wall
+ INCS= -I$(LUAINC)
+ 
+@@ -20,7 +20,7 @@ TEST= test.lua
+ all:	test
+ 
+ test:	$T
+-	$(LUABIN)/lua $(TEST)
++#	$(LUABIN)/lua $(TEST)
+ 
+ o:	$(MYLIB).o
+ 
+@@ -29,6 +29,9 @@ so:	$T
+ $T:	$(OBJS)
+ 	$(CC) -o $@ -shared $(OBJS)
+ 
++install:
++	echo Install...
++
+ clean:
+ 	rm -f $(OBJS) $T core core.* a.out
+ 
