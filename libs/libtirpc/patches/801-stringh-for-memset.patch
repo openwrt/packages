@@ -1,0 +1,10 @@
+--- a/src/svc_raw.c
++++ b/src/svc_raw.c
+@@ -29,6 +29,7 @@
+ /*
+  * Copyright (c) 1986-1991 by Sun Microsystems Inc. 
+  */
++#include <string.h>
+ 
+ /*
+  * svc_raw.c,   This a toy for simple testing and timing.
