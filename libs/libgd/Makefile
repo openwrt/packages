@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgd
-PKG_VERSION:=2.1.1
+PKG_VERSION:=2.2.4
 PKG_RELEASE:=1
 
-PKG_SOURCE:=gd-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/libgd/libgd/archive
-PKG_MD5SUM:=e91a1a99903e460e7ba00a794e72cc1e
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/releases/download/gd-$(PKG_VERSION)/
+PKG_HASH:=137f13a7eb93ce72e32ccd7cebdab6874f8cf7ddf31d3a455a68e016ecd9e4e6
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=MIT
 
@@ -21,7 +21,6 @@ PKG_FIXUP:=autoreconf
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DIR:=$(BUILD_DIR)/libgd-gd-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -64,7 +63,7 @@ define Build/InstallDev
 		$(1)/usr/bin/gdlib-config
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/entities.h $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/gd{,_io,cache,fontg,fontl,fontmb,fonts,fontt,fx}.h \
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/gd{,_color_map,_errors,_io,cache,fontg,fontl,fontmb,fonts,fontt,fx,pp}.h \
 		$(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgd.{a,la,so*} $(1)/usr/lib/
