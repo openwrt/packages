@@ -102,9 +102,9 @@ define Package/libwebsockets/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebsockets.so* $(1)/usr/lib/
 endef
 
-Package/libwebsockets-cyassl/install = $(Package/libwesockets/install)
+Package/libwebsockets-cyassl/install = $(Package/libwebsockets/install)
 Package/libwebsockets-openssl/install = $(Package/libwebsockets/install)
-Package/libwesockets-full/install = $(Package/libwebsockets/install)
+Package/libwebsockets-full/install = $(Package/libwebsockets/install)
 
 $(eval $(call BuildPackage,libwebsockets-openssl))
 $(eval $(call BuildPackage,libwebsockets-cyassl))
