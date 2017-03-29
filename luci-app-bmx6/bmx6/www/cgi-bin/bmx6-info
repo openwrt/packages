@@ -18,6 +18,9 @@ else
   echo ""
 fi
 
+# workaround to support old format starting with '$'
+QUERY="$(echo "$QUERY" | sed s/'\$'//)"
+
 check_path() {
   [ -d "$1" ] && path=$(cd $1; pwd)
   [ -f "$1" ] && path=$(cd $1/..; pwd)
@@ -65,7 +68,7 @@ if [ "${QUERY##*/}" == "all" ]; then
   QALL=1
 fi
 
-if [ "$QUERY" == '$myself' ]; then
+if [ "$QUERY" == 'myself' ]; then
   hostname="$(cat /proc/sys/kernel/hostname)"
   ip6="$(bmx6 -c show=status | grep ^BMX | awk '{print $5}')"
   ip4="$(bmx6 -c show=status | grep ^BMX | awk '{print $6}')"
@@ -75,7 +78,7 @@ if [ "$QUERY" == '$myself' ]; then
   exit 0
 fi
     
-if [ "$QUERY" == '$info' ]; then
+if [ "$QUERY" == 'info' ]; then
   echo -n '{ "info": [ '
   print_query status
   echo -n ","
@@ -84,7 +87,7 @@ if [ "$QUERY" == '$info' ]; then
   exit 0
 fi
 
-if [ "$QUERY" == '$neighbours' ]; then
+if [ "$QUERY" == 'neighbours' ]; then
   QALL=1
   echo -n '{ "neighbours": [ '
   echo -n '{ "originators": '
@@ -96,17 +99,17 @@ if [ "$QUERY" == '$neighbours' ]; then
   exit 0
 fi
 
-if [ "$QUERY" == '$tunnels' ]; then
+if [ "$QUERY" == 'tunnels' ]; then
   bmx6 -c --jshow tunnels /r=0
   exit 0
 fi
 
 if [ "$QUERY" == "" ]; then
   echo -n '{ "queries": ['
-  echo -n '{ "name": "$myself", "info": "basic network information of self node" },'
-  echo -n '{ "name": "$info", "info": "full network and device information of self node" },'
-  echo -n '{ "name": "$tunnels", "info": "accnouncements (tunnels) published by the mesh network" },'
-  echo -n '{ "name": "$neighbours", "info": "list of all my neighbours and their information" },'
+  echo -n '{ "name": "myself", "info": "basic network information of self node" },'
+  echo -n '{ "name": "info", "info": "full network and device information of self node" },'
+  echo -n '{ "name": "tunnels", "info": "accnouncements (tunnels) published by the mesh network" },'
+  echo -n '{ "name": "neighbours", "info": "list of all my neighbours and their information" },'
   echo -n '{ "name": "/", "info": "raw bmx6 json API" }]}'
   exit 0
 fi
