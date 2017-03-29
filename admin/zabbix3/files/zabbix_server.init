@@ -1,0 +1,59 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2011 OpenWrt.org
+
+START=60
+
+NAME=zabbix_server
+PROG=/usr/sbin/$NAME
+CONFIG=/etc/$NAME.conf
+SERVICE_PID_FILE=/var/run/$NAME.pid
+
+ucivars="
+server:Server
+listenport:ListenPort
+debuglevel:DebugLevel
+logfile:LogFile
+dbhost:DBHost
+dbname:DBName
+dbuser:DBUser
+dbpassword:DBPassword
+dbsocket:DBSocket
+"
+
+uci2config() {
+	local enabled ucic zbxc module var
+	config_load "${NAME}"
+	config_get_bool enabled config enable
+	[ -z "$enabled" ] && exit
+	logger -s -t ${NAME} -p daemon.info "Generating conf from UCI"
+	for var in $ucivars; do
+		ucic=$(echo $var|cut -d ':' -f 1)
+		zbxc=$(echo $var|cut -d ':' -f 2)
+		config_get val config ${ucic}
+		[ -n "${val}" ] && echo "${zbxc}=${val}"
+		[ "$ucic" = "allowroot" ] && allowroot=$val
+	done >/var/run/${NAME}.conf.d/uci
+}
+
+start() {
+
+	mkdir -p /var/run/${NAME}.conf.d
+	uci2config $NAME
+
+	[ -f ${CONFIG} ] || return 1
+
+	grep -q "^AllowRoot=1" ${CONFIG} || {
+		user_exists zabbix 53 || user_add zabbix 53
+		group_exists zabbix 53 || group_add zabbix 53
+		touch ${SERVICE_PID_FILE}
+		chown zabbix:zabbix ${SERVICE_PID_FILE}
+	}
+
+	service_start ${PROG} -c ${CONFIG}
+}
+
+stop() {
+	service_stop ${PROG}
+}
+
+

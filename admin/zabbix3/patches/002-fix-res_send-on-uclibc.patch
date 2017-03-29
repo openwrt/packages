@@ -1,0 +1,35 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -152,6 +152,10 @@ if test "x$found_resolv" != "xyes"; then
+ 	AC_MSG_ERROR([Unable to do DNS lookups (libresolv check failed)])
+ fi
+ LIBS="${LIBS} ${RESOLV_LIBS}"
++AC_SEARCH_LIBS([res_mkquery], [], [AC_DEFINE([HAVE_RES_MKQUERY], 1, [Define if res_mkquery exists])])
++AC_SEARCH_LIBS([__res_mkquery], [], [AC_DEFINE([HAVE_RES_MKQUERY], 1, [Define if res_mkquery exists])])
++AC_SEARCH_LIBS([res_send], [], [AC_DEFINE([HAVE_RES_SEND], 1, [Define if res_send exists])])
++AC_SEARCH_LIBS([__res_send], [], [AC_DEFINE([HAVE_RES_SEND], 1, [Define if res_send exists])]) 
+ 
+ dnl *****************************************************************
+ dnl *                                                               *
+--- a/src/libs/zbxsysinfo/common/net.c
++++ b/src/libs/zbxsysinfo/common/net.c
+@@ -450,6 +450,7 @@ static int	dns_query(AGENT_REQUEST *requ
+ 		return SYSINFO_RET_FAIL;
+ 	}
+ 
++#if defined(HAVE_RES_MKQUERY) && defined(HAVE_RES_SEND) 
+ 	if (-1 == (res = res_mkquery(QUERY, zone, C_IN, type, NULL, 0, NULL, buf, sizeof(buf))))
+ 	{
+ 		SET_MSG_RESULT(result, zbx_dsprintf(NULL, "Cannot create DNS query: %s", zbx_strerror(errno)));
+@@ -480,6 +481,11 @@ static int	dns_query(AGENT_REQUEST *requ
+ 	_res.retry = retry;
+ 
+ 	res = res_send(buf, res, answer.buffer, sizeof(answer.buffer));
++#else /* defined(HAVE_RES_QUERY) && defined(HAVE_RES_SEND) */
++	/* retrand and retry are ignored */
++	if (-1 == (res = res_query(zone, C_IN, type, answer.buffer, sizeof(answer.buffer))))
++	return SYSINFO_RET_FAIL;
++#endif 
+ 
+ 	_res.retrans = saved_retrans;
+ 	_res.retry = saved_retry;

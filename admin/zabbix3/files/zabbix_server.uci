@@ -1,0 +1,24 @@
+package zabbix_server
+
+config zabbix_server config
+	option	enable			true
+	option dbname			'/tmp/zabbix_server.sqlite3'
+	option logtype			system
+
+	# Uncoment/edit this options to automaticaly create zabbix database on boot 
+	#option sql_clean		false		# If set to true, database is emptied at each start!
+	#option sql_schema_uri		http://mirror.opf.slu.cz/zabbix3/schema-sqlite.sql
+	#option sql_data_uri		http://mirror.opf.slu.cz/zabbix3/data-sqlite.sql
+	#option sql_images_uri		http://mirror.opf.slu.cz/zabbix3/images-sqlite.sql
+	#option sql_local_uri		/etc/myscript.sql
+
+
+
+
+	
+
+
+
+
+	
+
