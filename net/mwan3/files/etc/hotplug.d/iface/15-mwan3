@@ -9,6 +9,8 @@ config_load mwan3
 config_get enabled $INTERFACE enabled 0
 [ "$enabled" == "1" ] || exit 0
 
+[ -f "/var/run/mwan3track-${INTERFACE}-downed" ] && exit 0
+
 [ "$ACTION" == "ifup" -o "$ACTION" == "ifdown" ] || exit 1
 [ -n "$INTERFACE" ] || exit 2
 
