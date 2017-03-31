@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sslh
 PKG_VERSION:=v1.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://rutschle.net/tech/sslh/
@@ -24,12 +24,14 @@ define Package/sslh
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE:=SSL/SSH multiplexer
+  DEPENDS:=+libconfig +USE_UCLIBC:libpcre +USE_MUSL:libpcre
   URL:=http://rutschle.net/tech/sslh.shtml
   PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 
 define Package/sslh/conffiles
 /etc/config/sslh
+/etc/sslh.conf
 endef
 
 define Build/Compile
@@ -37,10 +39,11 @@ define Build/Compile
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		ENABLE_REGEX= \
-		USELIBCONFIG= \
+		ENABLE_REGEX=1 \
+		USELIBCONFIG=1 \
 		USELIBWRAP= \
 		USELIBPCRE= \
+		$(if $(CONFIG_USE_GLIBC),USELIBPCRE=,USELIBPCRE=1)\
 		all
 endef
 
@@ -51,6 +54,7 @@ define Package/sslh/install
 	$(INSTALL_BIN) files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) files/$(PKG_NAME).config $(1)/etc/config/$(PKG_NAME)
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/basic.cfg $(1)/etc/sslh.conf
 endef
 
 $(eval $(call BuildPackage,sslh))
