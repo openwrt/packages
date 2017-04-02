@@ -111,6 +111,7 @@ define Build/Compile
 	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR)/lua \
 		INSTALL_TOP="$(STAGING_DIR)/lua-5.3.3/" \
 		CC="$(TARGET_CC)" \
+		CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lncurses -lreadline" \
 		LD="$(TARGET_LD)" \
 		linux install
