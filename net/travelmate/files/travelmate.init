@@ -24,11 +24,6 @@ start_service()
     fi
 }
 
-stop_service()
-{
-    killall -q -TERM "travelmate.sh"
-}
-
 service_triggers()
 {
     local iface="$(uci -q get travelmate.global.trm_iface)"
