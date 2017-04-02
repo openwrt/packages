@@ -29,7 +29,8 @@ MAKE_FLAGS+= LD="$(TARGET_CC) -o"
 
 # ARM ASM depends on ARM1156 or later, blacklist earlier or incompatible cores
 # AMD Geode LX and i486 do not have SSE
-CPU_ASM_BLACKLIST:=geode i486 arm920t arm926ej-s arm1136j-s arm1176jzf-s fa526 mpcore xscale
+CPU_ASM_BLACKLIST:=geode i486 arm920t arm926ej-s arm1136j-s arm1176jzf-s fa526 mpcore xscale \
+		   mips32 24kc 34kc 74kc octeon mips64
 
 ifneq ($(CONFIG_SOFT_FLOAT)$(findstring $(call qstrip,$(CONFIG_CPU_TYPE)),$(CPU_ASM_BLACKLIST)),)
   CONFIGURE_VARS+= AS= 
