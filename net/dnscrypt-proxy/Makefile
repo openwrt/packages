@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnscrypt-proxy
 PKG_VERSION:=1.9.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://download.dnscrypt.org/dnscrypt-proxy
@@ -34,7 +34,7 @@ endef
 
 define Package/dnscrypt-proxy
   $(call Package/dnscrypt-proxy/Default)
-  DEPENDS:=+libsodium +dnscrypt-proxy-resolvers
+  DEPENDS:=+libsodium +PACKAGE_dnscrypt-proxy_plugins:libltdl +PACKAGE_dnscrypt-proxy_plugins:libldns +dnscrypt-proxy-resolvers
   TITLE:=A tool for securing communications between a client and a DNS resolver
 endef
 
@@ -45,6 +45,14 @@ define Package/dnscrypt-proxy/description
   The DNSCrypt protocol uses high-speed high-security elliptic-curve cryptography
   and is very similar to DNSCurve, but focuses on securing communications between
   a client and its first-level resolver.
+endef
+
+define Package/dnscrypt-proxy/config
+  if PACKAGE_dnscrypt-proxy
+  config PACKAGE_dnscrypt-proxy_plugins
+    bool "Build with plugins support."
+    default n
+  endif
 endef
 
 define Package/dnscrypt-proxy-resolvers
@@ -72,7 +80,7 @@ define Build/Configure
 	$(call Build/Configure/Default, \
 	--prefix=/usr \
 	--disable-ssp \
-	--disable-plugins \
+	$(if $(CONFIG_PACKAGE_dnscrypt-proxy_plugins),,--disable-plugins) \
 	)
 endef
 
@@ -95,6 +103,10 @@ define Package/dnscrypt-proxy/install
 	$(INSTALL_BIN) ./files/dnscrypt-proxy.init $(1)/etc/init.d/dnscrypt-proxy
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/dnscrypt-proxy.config $(1)/etc/config/dnscrypt-proxy
+ifeq ($(CONFIG_PACKAGE_dnscrypt-proxy),y)
+	$(INSTALL_DIR) $(1)/usr/lib/dnscrypt-proxy
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dnscrypt-proxy/*.so $(1)/usr/lib/dnscrypt-proxy/
+endif
 endef
 
 define Package/dnscrypt-proxy-resolvers/install
