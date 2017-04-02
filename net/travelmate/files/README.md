@@ -9,10 +9,10 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * STA interfaces operating in an "always off" mode, to make sure that the AP is always accessible
 * easy setup within normal OpenWrt/LEDE environment
 * fast uplink connections
-* "active mode" support, where travelmate will be restarted every n seconds (default 60) and checks the existing uplink connection regardless of ifdown event trigger
+* manual / automatic mode support, the latter one checks the existing uplink connection regardless of ifdown event trigger every n seconds
 * support of devices with multiple radios
-* procd init system support
-* procd based hotplug support, the travelmate start will be triggered by interface triggers
+* procd init and hotplug support
+* runtime information accessible via ubus service call
 * status & debug logging to syslog
 
 ## Prerequisites
@@ -32,23 +32,39 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * the application is located in LuCI under 'Services' menu
 * _Thanks to Hannu Nyman for this great LuCI frontend!_
 
-## Chaos Calmer installation notes
-* 'travelmate' and 'luci-app-travelmate' are _not_ available as ipk packages in the Chaos Calmer download repository
-* download the packages from a development snapshot directory (see download links above)
-* manually transfer the packages to your routers temp directory (with tools like _sshfs_ or _winscp_)
-* install the packages as described above
-
 ## Travelmate config options
 * travelmate config options:
     * trm\_enabled => main switch to enable/disable the travelmate service (default: '0', disabled)
     * trm\_debug => enable/disable debug logging (default: '0', disabled)
-    * trm\_active => keep travelmate in an active state (default: '0', disabled)
-    * trm\_maxwait => how long (in seconds) should travelmate wait for wlan interface reload action (default: '20')
+    * trm\_automatic => keep travelmate in an active state (default: '1', enabled)
+    * trm\_maxwait => how long (in seconds) should travelmate wait for a successful wlan interface reload action (default: '30')
     * trm\_maxretry => how many times should travelmate try to find an uplink after a trigger event (default: '3')
-    * trm\_timeout => timeout in seconds for "active mode" (default: '60')
+    * trm\_timeout => timeout in seconds for "automatic mode" (default: '60')
     * trm\_iw => set this option to '0' to use iwinfo for wlan scanning (default: '1', use iw)
     * trm\_radio => limit travelmate to a dedicated radio, e.g. 'radio0' (default: not set, use all radios)
-    * trm\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: not set, disabled)
+    * trm\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: wan wwan)
+
+
+## Runtime information
+
+**receive travelmate information via ubus:**
+<pre><code>
+ubus call service get_data '{"name":"travelmate"}'
+This will output the current connection status, e.g.:
+{
+    "travelmate": {
+        "travelmate": {
+            "last_rundate": "02.04.2017 07:22:03",
+            "online_status": "true",
+            "station_interface": "wwan",
+            "station_radio": "radio1",
+            "station_ssid": "blackhole",
+            "system": "LEDE Reboot SNAPSHOT r3888-8fb39f1682",
+            "travelmate_version": "0.6.0"
+        }
+    }
+}
+</code></pre>
 
 ## Setup
 **1. configure a wwan interface in /etc/config/network:**
