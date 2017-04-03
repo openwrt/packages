@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
 PKG_VERSION:=v4.4.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
@@ -42,6 +42,19 @@ define Package/node/description
   Node.js® is a JavaScript runtime built on Chrome's V8 JavaScript engine. Node.js uses
   an event-driven, non-blocking I/O model that makes it lightweight and efficient. Node.js'
    package ecosystem, npm, is the largest ecosystem of open source libraries in the world.
+endef
+
+define Package/node-npm
+  SECTION:=lang
+  CATEGORY:=Languages
+  SUBMENU:=Node.js
+  TITLE:=NPM stands for Node Package Manager
+  URL:=http://npmjs.com/
+  DEPENDS:=+node
+endef
+
+define Package/node-npm/description
+	NPM is the package manager for NodeJS
 endef
 
 CPU:=$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH))))
@@ -82,8 +95,13 @@ define Build/InstallDev
 endef
 
 define Package/node/install
+	mkdir -p $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/node $(1)/usr/bin/
+endef
+
+define Package/node-npm/install
 	mkdir -p $(1)/usr/bin $(1)/usr/lib/node_modules/npm/{bin,lib,node_modules}
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/{node,npm} $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/npm $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/{package.json,LICENSE,cli.js} $(1)/usr/lib/node_modules/npm
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/bin/npm-cli.js $(1)/usr/lib/node_modules/npm/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/lib/* $(1)/usr/lib/node_modules/npm/lib/
@@ -92,3 +110,4 @@ endef
 
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,node))
+$(eval $(call BuildPackage,node-npm))
