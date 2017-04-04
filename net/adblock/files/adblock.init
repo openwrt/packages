@@ -20,7 +20,7 @@ boot()
     do
         list="${list} network.interface.${name}"
     done
-    ubus -t 60 wait_for network.interface ${list}
+    ubus -t 60 wait_for network.interface ${list} 2>/dev/null
     rc_procd start_service
 }
 
