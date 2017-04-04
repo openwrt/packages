@@ -1,5 +1,7 @@
 #!/bin/sh
 
+LOG="/usr/bin/logger -t $(basename "$0")[$$] -p"
+
 main() {
 
 	[ -z "$12" ] && echo "Error: should not be started manually" && exit 0
@@ -40,13 +42,13 @@ main() {
 			fi
 
 			if [ $score -eq $8 ]; then
-				logger -t mwan3track -p notice "Interface $1 ($2) is offline"
+				$LOG notice "Interface $1 ($2) is offline"
 				env -i ACTION=ifdown INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
 				score=0
 			fi
 		else
 			if [ $score -lt $(($7+$8)) ] && [ $lost -gt 0 ]; then
-				logger -t mwan3track -p info "Lost $(($lost*$4)) ping(s) on interface $1 ($2)"
+				$LOG info "Lost $(($lost*$4)) ping(s) on interface $1 ($2)"
 			fi
 
 			let score++
@@ -59,7 +61,7 @@ main() {
 			fi
 
 			if [ $score -eq $8 ]; then
-				logger -t mwan3track -p notice "Interface $1 ($2) is online"
+				$LOG notice "Interface $1 ($2) is online"
 				env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
 				rm /var/run/mwan3track-$1.pid
 				exit 0
