@@ -1,17 +1,21 @@
 #!/bin/sh
 
 LOG="/usr/bin/logger -t $(basename "$0")[$$] -p"
+INTERFACE=""
+
+clean_up() {
+	$LOG notice "Stopping mwan3track for interface \"${INTERFACE}\""
+	rm "/var/run/mwan3track-${INTERFACE}.pid" &> /dev/null
+	exit 0
+}
 
 main() {
 
 	[ -z "$12" ] && echo "Error: should not be started manually" && exit 0
 
-	if [ -e /var/run/mwan3track-$1.pid ] ; then
-		kill $(cat /var/run/mwan3track-$1.pid) &> /dev/null
-		rm /var/run/mwan3track-$1.pid &> /dev/null
-	fi
-
+	INTERFACE=$1
 	echo "$$" > /var/run/mwan3track-$1.pid
+	trap clean_up SIGINT SIGTERM
 
 	local score=$(($7+$8))
 	local track_ips=$(echo $* | cut -d ' ' -f 12-99)
