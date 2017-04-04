@@ -393,7 +393,6 @@ mwan3_track()
 
 	if [ -e /var/run/mwan3track-$1.pid ] ; then
 		kill $(cat /var/run/mwan3track-$1.pid) &> /dev/null
-		rm /var/run/mwan3track-$1.pid &> /dev/null
 	fi
 
 	if [ -n "$track_ips" ]; then
