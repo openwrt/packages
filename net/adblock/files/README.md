@@ -29,10 +29,14 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 15 entries
     * [ransomware tracker](https://ransomwaretracker.abuse.ch)
     * => daily updates, approx. 150 entries
-    * [rolist/easylist](https://easylist-downloads.adblockplus.org/rolist+easylist.txt)
-    * => weekly updates, approx. 600 entries
-    * [ruadlist/easylist](https://code.google.com/p/ruadlist)
-    * => weekly updates, approx. 2.000 entries
+    * [reg_ch](https://easylist-downloads.adblockplus.org/easylistchina+easylist.txt)
+    * => regional blocklist for China, daily updates, approx. 1.600 entries
+    * [reg_pl](http://adblocklist.org)
+    * => regional blocklist for Poland, daily updates, approx. 50 entries
+    * [reg_ro](https://easylist-downloads.adblockplus.org/rolist+easylist.txt)
+    * => regional blocklist for Romania, weekly updates, approx. 600 entries
+    * [reg_ru](https://code.google.com/p/ruadlist)
+    * => regional blocklist for Russia, weekly updates, approx. 2.000 entries
     * [securemecca](http://www.securemecca.com)
     * => infrequent updates, approx. 25.000 entries
     * [shallalist](http://www.shallalist.de) (categories "adv" "costtraps" "spyware" "tracker" "warez" enabled by default)
@@ -67,7 +71,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * procd based init system support (start/stop/restart/reload/suspend/resume/query)
 * procd based hotplug support, the adblock start will be solely triggered by network interface triggers
 * suspend & resume adblock actions temporarily without block list reloading
-* runtime statistics via ubus service call
+* runtime information via ubus service call
 * query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
 * optional: automatic block list backup & restore, backups will be (de-)compressed and restored on the fly in case of any runtime error
 * optional: add new adblock sources on your own via uci config
@@ -75,9 +79,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 ## Prerequisites
 * [LEDE project](https://www.lede-project.org), tested with latest stable release (LEDE 17.01) and with current LEDE snapshot
 * a usual setup with an enabled dns backend at minimum - dump AP modes without a working dns backend are _not_ supported
-* a download utility: full versions (with ssl support) of 'wget', 'uclient-fetch', 'aria2c' or 'curl' are supported - the Chaos Calmer built-in busybox wget is not
-    * Chaos Calmer: download & install the external 'wget' package
-    * Designated Driver/Trunk: use built-in 'uclient-fetch' or download & install the external 'wget' package
+* a download utility: full versions (with ssl support) of 'wget', 'uclient-fetch', 'aria2c' or 'curl' are supported
+    * LEDE 17.01 or LEDE snapshot: use built-in 'uclient-fetch' or download & install the external 'wget' package
     * for more configuration options see examples below
 
 ## OpenWrt / LEDE trunk Installation & Usage
@@ -92,13 +95,13 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * _Thanks to Hannu Nyman for this great adblock LuCI frontend!_
 
 ## Tweaks
-* **status/runtime statistics:** the adblock status and runtime statistics are available via ubus service call (see example below)
+* **runtime information:** the adblock status is available via ubus service call (see example below)
 * **debug logging:** for script debugging please set the config option 'adb\_debug' to '1' and check the runtime output with _logread -e "adblock"_
 * **storage expansion:** to process and store all block list sources at once it might helpful to enlarge your temp directory with a swap partition => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
-* **add white-/blacklist entries:** add domain white- or blacklist entries to always-allow or -deny certain (sub) domains, by default both lists are empty and located in _/etc/adblock_. Please add one domain per line - ip addresses, wildcards & regex are _not_ allowed (see example below)
+* **add white- / blacklist entries:** add domain white- or blacklist entries to always-allow or -deny certain (sub) domains, by default both lists are empty and located in _/etc/adblock_. Please add one domain per line - ip addresses, wildcards & regex are _not_ allowed (see example below)
 * **backup & restore block lists:** enable this feature, to restore automatically the latest compressed backup of your block lists in case of any processing error (e.g. a single block list source is not available during update). Please use an (external) solid partition and _not_ your volatile router temp directory for this
 * **scheduled list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
-* **restrict/disable procd interface trigger:** to restrict the procd interface trigger to a (list of) certain wan interface(s) or to disable it at all, set 'adb\_iface' to an existing interface like 'wan' or to a non-existing like 'false'
+* **restrict procd interface trigger:** restrict the procd interface trigger to a (list of) certain interface(s) (default: wan). To disable it at all, remove all entries
 * **suspend & resume adblocking:** to quickly switch the adblock service 'on' or 'off', simply use _/etc/init.d/adblock [suspend|resume]_
 * **domain query:** to query the active block lists for a specific domain, please run _/etc/init.d/adblock query `<DOMAIN>`_ (see example below)
 * **divert dns requests:** to force dns requests to your local dns resolver add an appropriate firewall rule (see example below)
@@ -109,12 +112,11 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * usually the pre-configured adblock setup works quite well and no manual config overrides are needed, all listed options apply to the 'global' config section:
     * adb\_enabled => main switch to enable/disable adblock service (default: '1', enabled)
     * adb\_debug => enable/disable adblock debug output (default: '0', disabled)
-    * adb\_iface => set the procd interface trigger to a (list of) lan/wan interface(s) (default: 'wan wwan lan')
+    * adb\_iface => set the procd interface trigger to a (list of) lan / wan interface(s) (default: 'wan')
     * adb\_fetch => full path to a different download utility, see example below (default: not set, use wget)
     * adb\_fetchparm => options for the download utility, see example below (default: not set, use wget options)
 
 ## Examples
-
 **change default dns backend to 'unbound':**
 <pre><code>
 Adblock detects the presence of an active unbound dns backend and the block lists will be automatically pulled in by unbound.
@@ -143,7 +145,7 @@ curl:
   option adb_fetchparm '-s --connect-timeout 10 --insecure -o'
 </code></pre>
   
-**receive adblock statistics via ubus:**
+**receive adblock runtime information via ubus:**
 <pre><code>
 ubus call service get_data '{"name":"adblock"}
 This will output the active block lists and other runtime information as JSON, e.g.:
@@ -152,35 +154,25 @@ This will output the active block lists and other runtime information as JSON, e
         "adblock": {
             "active_lists": [
                 {
-                    "palevo": "14",
-                    "blacklist": "147",
+                    "reg_pl": "45",
+                    "blacklist": "144",
                     "winspy": "138",
-                    "adaway": "378",
-                    "zeus": "397",
-                    "rolist": "652",
-                    "malwarelist": "1157",
-                    "yoyo": "2272",
-                    "ruadlist": "1793",
-                    "ransomware": "1670",
-                    "dshield": "190",
-                    "openphish": "2672",
-                    "disconnect": "2910",
-                    "spam404": "5715",
-                    "whocares": "8900",
-                    "winhelp": "8528",
-                    "adguard": "10790",
-                    "securemecca": "5080",
-                    "sysctl": "7906",
-                    "malware": "14617",
-                    "hphosts": "12450",
-                    "shalla": "23926"
+                    "adaway": "379",
+                    "zeus": "399",
+                    "reg_ro": "656",
+                    "reg_ch": "1631",
+                    "yoyo": "2320",
+                    "reg_ru": "2397",
+                    "ransomware": "1681",
+                    "disconnect": "5157",
+                    "adguard": "12799"
                 }
             ],
-            "adblock_version": "2.5.0",
-            "blocked_domains": "112302",
+            "adblock_version": "2.5.1",
+            "blocked_domains": "27746",
             "dns_backend": "dnsmasq",
-            "last_rundate": "25.03.2017 21:09:12",
-            "system": "LEDE Reboot SNAPSHOT r3867-313197d707"
+            "last_rundate": "04.04.2017 11:02:40",
+            "system": "LEDE Reboot SNAPSHOT r3904-c3778f2647"
         }
     }
 }
