@@ -45,6 +45,7 @@ ifdown()
 	if [ -e /var/run/mwan3track-$1.pid ] ; then
 		kill $(cat /var/run/mwan3track-$1.pid)
 		rm /var/run/mwan3track-$1.pid
+		rm -rf /var/run/mwan3track/$1 &> /dev/null
 	fi
 }
 
@@ -130,6 +131,7 @@ stop()
 
 	killall mwan3track &> /dev/null
 	rm /var/run/mwan3track-* &> /dev/null
+	rm -rf /var/run/mwan3track &> /dev/null
 
 	for IP in "$IP4" "$IP6"; do
 
