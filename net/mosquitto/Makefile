@@ -73,8 +73,9 @@ define Package/mosquitto-client/default
     $(Package/mosquitto/default)
     TITLE:= mosquitto - client tools
     DEPENDS+=+libcares
+    PROVIDES:=mosquitto-client
 endef
-define Package/mosquitto-client
+define Package/mosquitto-client-ssl
     $(call Package/mosquitto-client/default)
     TITLE+= (With SSL support)
     DEPENDS+=+libmosquitto-ssl
@@ -92,7 +93,7 @@ define Package/mosquitto-client/default/description
 and subscribing to topics.
 endef
 
-define Package/mosquitto-client/description
+define Package/mosquitto-client-ssl/description
 $(call Package/mosquitto-client/default/description)
         This package is built with SSL support
 endef
@@ -178,7 +179,7 @@ ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
 endif
 endef
 
-define Package/mosquitto-client/install
+define Package/mosquitto-client-ssl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_pub $(1)/usr/bin/mosquitto_pub
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_sub $(1)/usr/bin/mosquitto_sub
@@ -224,5 +225,5 @@ $(eval $(call BuildPackage,mosquitto-nossl))
 $(eval $(call BuildPackage,libmosquitto-ssl))
 $(eval $(call BuildPackage,libmosquitto-nossl))
 $(eval $(call BuildPackage,libmosquittopp))
-$(eval $(call BuildPackage,mosquitto-client))
+$(eval $(call BuildPackage,mosquitto-client-ssl))
 $(eval $(call BuildPackage,mosquitto-client-nossl))
