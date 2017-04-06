@@ -115,7 +115,8 @@ main() {
 		echo "${turn}" > /var/run/mwan3track/$1/TURN
 
 		host_up_count=0
-		sleep $sleep_time
+		sleep "${sleep_time}" &
+		wait
 
 		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
 			score=0
