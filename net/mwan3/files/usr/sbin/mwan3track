@@ -4,6 +4,9 @@
 
 LOG="/usr/bin/logger -t $(basename "$0")[$$] -p"
 INTERFACE=""
+DEVICE=""
+
+IFDOWN_EVENT=0
 
 clean_up() {
 	$LOG notice "Stopping mwan3track for interface \"${INTERFACE}\""
@@ -15,6 +18,11 @@ clean_up() {
 	exit 0
 }
 
+if_down() {
+	$LOG info "Detect ifdown event on interface ${INTERFACE} (${DEVICE})"
+	IFDOWN_EVENT=1
+}
+
 main() {
 	local reliability count timeout interval failure_interval
 	local recovery_interval down up size
@@ -22,9 +30,11 @@ main() {
 	[ -z "$3" ] && echo "Error: should not be started manually" && exit 0
 
 	INTERFACE=$1
+	DEVICE=$2
 	echo "$$" > /var/run/mwan3track-$1.pid
 	mkdir -p /var/run/mwan3track/$1
 	trap clean_up SIGINT SIGTERM
+	trap if_down SIGUSR1
 
 	config_load mwan3
 	config_get reliability $1 reliability 1
@@ -106,6 +116,12 @@ main() {
 
 		host_up_count=0
 		sleep $sleep_time
+
+		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
+			score=0
+			echo "offline" > /var/run/mwan3track/$1/STATUS
+			IFDOWN_EVENT=0
+		fi
 	done
 }
 
