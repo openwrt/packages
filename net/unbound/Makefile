@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=2
+PKG_RELEASE:=6
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -148,8 +148,6 @@ define Package/unbound/install
 	$(INSTALL_DATA) ./files/unbound_srv.conf $(1)/etc/unbound/unbound_srv.conf
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/unbound.uci $(1)/etc/config/unbound
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN)  ./files/unbound.iface $(1)/etc/hotplug.d/iface/25-unbound
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/ntp
 	$(INSTALL_BIN)  ./files/unbound.ntpd $(1)/etc/hotplug.d/ntp/25-unbound
 	$(INSTALL_DIR) $(1)/etc/init.d
