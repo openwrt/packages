@@ -399,6 +399,23 @@ mwan3_track()
 	fi
 }
 
+mwan3_track_signal()
+{
+	local pid status
+
+	if [ -f "/var/run/mwan3track-${1}.pid" ]; then
+		pid="$(cat "/var/run/mwan3track-${1}.pid")"
+		status="$(pgrep -f mwan3track | grep "${pid}")"
+		if [ "${status}" != "" ]; then
+			kill -USR1 "${pid}"
+		else
+			$LOG warn "Unable to send signal USR1 to mwan3track on interface $1 with pid ${pid}"
+		fi
+	else
+		$LOG warn "Unable to find \"/var/run/mwan3track-${1}.pid\" file for mwan3track on interface $1"
+	fi
+}
+
 mwan3_set_policy()
 {
 	local iface_count id iface family metric probability weight
