@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
 PKG_SOURCE_VERSION:=7b40cbe8c1a52041351524bcde4b37665a7cdf79
-PKG_VERSION:=1.5
+PKG_VERSION:=1.6
 PKG_RELEASE:=1
 PKG_LICENSE:=GPLv3
 
@@ -47,6 +47,7 @@ define Build/Compile
 endef
 
 define Package/acme/install
+	$(INSTALL_DIR) $(1)/etc/acme
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/acme.config $(1)/etc/config/acme
 	$(INSTALL_DIR) $(1)/etc/init.d
