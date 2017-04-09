@@ -25,11 +25,12 @@ s.anonymous = true
 st = s:option(Value, "state_dir", translate("State directory"),
               translate("Where certs and other state files are kept."))
 st.rmempty = false
-st.datatype = "string"
+st.datatype = "directory"
 
 ae = s:option(Value, "account_email", translate("Account email"),
               translate("Email address to associate with account key."))
 ae.rmempty = false
+ae.datatype = "minlength(1)"
 
 d = s:option(Flag, "debug", translate("Enable debug logging"))
 d.rmempty = false
@@ -55,6 +56,12 @@ u = cs:option(Flag, "update_uhttpd", translate("Use for uhttpd"),
               translate("Update the uhttpd config with this certificate once issued " ..
                         "(only select this for one certificate)."))
 u.rmempty = false
+
+wr = cs:option(Value, "webroot", translate("Webroot directory"),
+               translate("Webserver root directory. Set this to the webserver " ..
+                         "document root to run Acme in webroot mode. The web " ..
+                         "server must be accessible from the internet on port 80."))
+wr.rmempty = false
 
 dom = cs:option(DynamicList, "domains", translate("Domain names"),
                 translate("Domain names to include in the certificate. " ..
