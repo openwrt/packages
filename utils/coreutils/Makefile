@@ -106,6 +106,11 @@ define BuildPlugin
   define Package/$(1)/install
 	$(INSTALL_DIR) $$(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $$(1)/usr/bin/
+
+    ifeq ($(2),stdbuf)
+	$(INSTALL_DIR) $$(1)/usr/lib/coreutils
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/coreutils/libstdbuf.so $$(1)/usr/lib/coreutils/
+    endif
   endef
 
   $$(eval $$(call BuildPackage,$(1)))
