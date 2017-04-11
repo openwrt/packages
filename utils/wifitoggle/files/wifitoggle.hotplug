@@ -38,7 +38,7 @@ setwifi() {
         setled
 
         config_load wireless
-        config_foreach save_wireless wifi-device
+        config_foreach save_wireless wifi-$wifi_type
 
         if ubus list network.wireless >/dev/null 2>/dev/null; then
                 ubus call network reload
@@ -148,6 +148,8 @@ load_wifitoggle() {
 	config_get led_disable_delayon $1 led_disable_delayon
 	config_get led_disable_delayoff $1 led_disable_delayoff
 
+	config_get wifi_type $1 wifi_type "device"
+
         [ "$ACTION" = "$action" -a "$BUTTON" = "$button" ] && {
 
 		[ -f /tmp/run/wirelesstoggle_${1}.pid ] && read PID < /tmp/run/wirelesstoggle_${1}.pid && kill $PID && rm /tmp/run/wirelesstoggle_${1}.pid
@@ -155,7 +157,7 @@ load_wifitoggle() {
 		if [ "$device" = "all" ]
 		then
 			config_load wireless
-        		config_foreach load_wireless wifi-device
+			config_foreach load_wireless wifi-$wifi_type
 		else
 			disabled="$(uci get wireless."$device".disabled)"
 		fi
