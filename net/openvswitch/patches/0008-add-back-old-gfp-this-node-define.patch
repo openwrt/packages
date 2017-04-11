@@ -1,0 +1,19 @@
+diff --git a/datapath/flow.c b/datapath/flow.c
+index a7a2063..8db8041 100644
+--- a/datapath/flow.c
++++ b/datapath/flow.c
+@@ -51,6 +51,14 @@
+ 
+ #include "vlan.h"
+ 
++#ifndef GFP_THISNODE
++#ifdef CONFIG_NUMA  
++#define GFP_THISNODE    (__GFP_THISNODE | __GFP_NOWARN | __GFP_NORETRY)
++#else                             
++#define GFP_THISNODE    ((__force gfp_t)0)
++#endif 
++#endif
++
+ u64 ovs_flow_used_time(unsigned long flow_jiffies)
+ {
+ 	struct timespec cur_ts;

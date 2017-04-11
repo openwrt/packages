@@ -1,0 +1,16 @@
+diff --git a/datapath/vport-lisp.c b/datapath/vport-lisp.c
+index 0024eb4..ce1c3a8 100644
+--- a/datapath/vport-lisp.c
++++ b/datapath/vport-lisp.c
+@@ -455,7 +455,11 @@ static int lisp_send(struct vport *vport, struct sk_buff *skb)
+ 	ovs_skb_set_inner_protocol(skb, skb->protocol);
+ 
+ 	df = tun_key->tun_flags & TUNNEL_DONT_FRAGMENT ? htons(IP_DF) : 0;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
++	sent_len = udp_tunnel_xmit_skb(rt, lisp_port->lisp_rcv_socket->sk, skb, saddr, tun_key->ipv4_dst,
++#else
+ 	sent_len = udp_tunnel_xmit_skb(rt, skb, saddr, tun_key->ipv4_dst,
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)  */
+ 				       tun_key->ipv4_tos, tun_key->ipv4_ttl,
+ 				       df, src_port, dst_port, false, true);
+ 

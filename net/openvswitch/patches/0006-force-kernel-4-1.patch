@@ -1,0 +1,17 @@
+diff --git a/acinclude.m4 b/acinclude.m4
+index 45cfaf6..42866de 100644
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -134,10 +134,10 @@ AC_DEFUN([OVS_CHECK_LINUX], [
+     AC_MSG_RESULT([$kversion])
+ 
+     if test "$version" -ge 4; then
+-       if test "$version" = 4 && test "$patchlevel" -le 0; then
++       if test "$version" = 4 && test "$patchlevel" -le 1; then
+           : # Linux 4.x
+        else
+-          AC_ERROR([Linux kernel in $KBUILD is version $kversion, but version newer than 4.0.x is not supported (please refer to the FAQ for advice)])
++          AC_ERROR([Linux kernel in $KBUILD is version $kversion, but version newer than 4.1.x is not supported (please refer to the FAQ for advice)])
+        fi
+     elif test "$version" = 3; then
+        : # Linux 3.x

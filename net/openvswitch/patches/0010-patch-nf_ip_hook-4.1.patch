@@ -1,0 +1,20 @@
+diff --git a/datapath/linux/compat/stt.c b/datapath/linux/compat/stt.c
+index b44f470..f95416e 100644
+--- a/datapath/linux/compat/stt.c
++++ b/datapath/linux/compat/stt.c
+@@ -1326,9 +1326,14 @@ static void clean_percpu(struct work_struct *work)
+ 
+ static unsigned int nf_ip_hook(FIRST_PARAM
+ 			       struct sk_buff *skb,
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
++			       const struct nf_hook_state *state
++#else
+ 			       const struct net_device *in,
+ 			       const struct net_device *out,
+-			       int (*okfn)(struct sk_buff *))
++			       int (*okfn)(struct sk_buff *)
++#endif
++			       )
+ {
+ 	struct stt_sock *stt_sock;
+ 	int ip_hdr_len;
