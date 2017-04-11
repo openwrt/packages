@@ -1,0 +1,51 @@
+--- a/dataxfer.c
++++ b/dataxfer.c
+@@ -3697,6 +3697,7 @@ showshortport(struct controller_info *cn
+     if (!netcon)
+ 	netcon = &(port->netcons[0]);
+ 
++	if(netcon->raddrlen > 0) {
+     err = getnameinfo(netcon->raddr, netcon->raddrlen,
+ 		      buffer, sizeof(buffer),
+ 		      portbuff, sizeof(portbuff),
+@@ -3709,7 +3710,11 @@ showshortport(struct controller_info *cn
+     bytes_sent = netcon->bytes_sent;
+ 
+     count = controller_outputf(cntlr, "%s,%s", buffer, portbuff);
+-    while (count < 23) {
++	}
++	else {
++		count = controller_outputf(cntlr, "%s", "unconnected");
++	}
++    while (count < 33) {
+ 	controller_outs(cntlr, " ");
+ 	count++;
+     }
+@@ -3753,6 +3758,7 @@ showport(struct controller_info *cntlr, 
+     controller_outputf(cntlr, "  timeout: %d\r\n", port->timeout);
+ 
+     for_each_connection(port, netcon) {
++	if(netcon->raddrlen > 0) {
+ 	err = getnameinfo(netcon->raddr, netcon->raddrlen,
+ 			  buffer, sizeof(buffer),
+ 			  portbuff, sizeof(portbuff),
+@@ -3767,6 +3773,10 @@ showport(struct controller_info *cntlr, 
+ 			   netcon->bytes_received);
+ 	controller_outputf(cntlr, "    bytes written to TCP: %d\r\n",
+ 			   netcon->bytes_sent);
++	}
++	else {
++		controller_outputf(cntlr, "  unconnected\r\n");
++	}
+     }
+ 
+     controller_outputf(cntlr, "  device: %s\r\n", port->io.devname);
+@@ -3871,7 +3881,7 @@ showshortports(struct controller_info *c
+     port_info_t *port;
+ 
+     controller_outputf(cntlr,
+-	    "%-22s %-6s %7s %-22s %-22s %-14s %-14s %9s %9s %9s %9s %s\r\n",
++	    "%-22s %-6s %7s %-32s %-22s %-14s %-14s %9s %9s %9s %9s %s\r\n",
+ 	    "Port name",
+ 	    "Type",
+ 	    "Timeout",
