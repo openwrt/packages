@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
-PKG_SOURCE_VERSION:=6d84da588b98733dd9c4f5b88440281ab1eb4989
-PKG_VERSION:=1.4
+PKG_SOURCE_VERSION:=7b40cbe8c1a52041351524bcde4b37665a7cdf79
+PKG_VERSION:=1.5
 PKG_RELEASE:=1
 PKG_LICENSE:=GPLv3
 
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/acme
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+curl +ca-certificates +openssl-util +netcat
+  DEPENDS:=+curl +ca-bundle +openssl-util +netcat
   TITLE:=ACME (Letsencrypt) client
   PKGARCH:=all
   MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
