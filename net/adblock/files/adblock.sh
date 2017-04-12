@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.5.1"
+adb_ver="2.6.0"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
@@ -22,6 +22,7 @@ adb_fetch="/usr/bin/wget"
 adb_fetchparm="--no-config --quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
 adb_dnslist="dnsmasq unbound"
 adb_dnsprefix="adb_list"
+adb_rtfile="/tmp/adb_runtime.json"
 
 # f_envload: load adblock environment
 #
@@ -31,11 +32,12 @@ f_envload()
 
     # source in system library
     #
-    if [ -r "/lib/functions.sh" ]
+    if [ -r "/lib/functions.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]
     then
         . "/lib/functions.sh"
+        . "/usr/share/libubox/jshn.sh"
     else
-        f_log "error" "system library not found"
+        f_log "error" "system libraries not found"
     fi
 
     # set dns backend environment
@@ -117,11 +119,13 @@ f_envload()
 #
 f_envcheck()
 {
+    local ssl_lib
+
     # check 'enabled' option
     #
     if [ ${adb_enabled} -ne 1 ]
     then
-        if [ "$(ls -dA "${adb_dnsdir}/${adb_dnsprefix}"* >/dev/null 2>&1)" ]
+        if [ -n "$(ls -dA "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null)" ]
         then
             f_rmdns
             f_dnsrestart
@@ -132,15 +136,36 @@ f_envcheck()
 
     # check fetch utility
     #
+    ssl_lib="-"
+    if [ -x "${adb_fetch}" ]
+    then
+        if [ "$(readlink -fn "${adb_fetch}")" = "/usr/bin/wget-nossl" ]
+        then
+            adb_fetchparm="--no-config --quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 -O"
+        elif [ "$(readlink -fn "/bin/wget")" = "/bin/busybox" ] || [ "$(readlink -fn "${adb_fetch}")" = "/bin/busybox" ]
+        then
+            adb_fetch="/bin/busybox"
+            adb_fetchparm="-q -O"
+        else
+            ssl_lib="built-in"
+        fi
+    fi
     if [ ! -x "${adb_fetch}" ] && [ "$(readlink -fn "/bin/wget")" = "/bin/uclient-fetch" ]
     then
         adb_fetch="/bin/uclient-fetch"
-        adb_fetchparm="-q --timeout=10 --no-check-certificate -O"
+        if [ -f "/lib/libustream-ssl.so" ]
+        then
+            adb_fetchparm="-q --timeout=10 --no-check-certificate -O"
+            ssl_lib="libustream-ssl"
+        else
+            adb_fetchparm="-q --timeout=10 -O"
+        fi
     fi
-    if [ -z "${adb_fetch}" ] || [ -z "${adb_fetchparm}" ] || [ ! -x "${adb_fetch}" ] || [ "$(readlink -fn "${adb_fetch}")" = "/bin/busybox" ]
+    if [ ! -x "${adb_fetch}" ] || [ -z "${adb_fetch}" ] || [ -z "${adb_fetchparm}" ]
     then
-        f_log "error" "required download utility with ssl support not found, e.g. install full 'wget' package"
+        f_log "error" "no download utility found, please install 'uclient-fetch' with 'libustream-mbedtls' or the full 'wget' package"
     fi
+    adb_fetchinfo="${adb_fetch##*/} (${ssl_lib})"
 
     # create dns hideout directory
     #
@@ -187,6 +212,7 @@ f_rmdns()
         rm -f "${adb_dnsdir}/${adb_dnsprefix}"*
         rm -f "${adb_backupdir}/${adb_dnsprefix}"*.gz
         rm -rf "${adb_dnshidedir}"
+        > "${adb_rtfile}"
     fi
 }
 
@@ -288,7 +314,7 @@ f_query()
 
     if [ -z "${dns_active}" ]
     then
-         printf "%s\n" "::: no active block lists found, please start adblock first"
+         printf "%s\n" "::: no active block lists found, please start / resume adblock first"
     elif [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
     then
         printf "%s\n" "::: invalid domain input, please submit a specific (sub-)domain, e.g. 'www.abc.xyz'"
@@ -299,14 +325,40 @@ f_query()
             search="${domain//./\.}"
             result="$(grep -Hm1 "[/\"\.]${search}[/\"]" "${adb_dnsprefix}"* | awk -F ':|=|/|\"' '{printf(" %-20s : %s\n",$1,$4)}')"
             printf "%s\n" "::: distinct results for domain '${domain}'"
-            if [ -z "${result}" ]
-            then
-                printf "%s\n" " no match"
-            else
-                printf "%s\n" "${result}"
-            fi
+            printf "%s\n" "${result:=" no match"}"
             domain="${tld}"
             tld="${domain#*.}"
+        done
+    fi
+}
+
+# f_status: output runtime information
+#
+f_status()
+{
+    local key keylist value
+
+    if [ -s "${adb_rtfile}" ]
+    then
+        local dns_active="$(find "${adb_dnsdir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print)"
+        local dns_passive="$(find "${adb_dnshidedir}" -maxdepth 1 -type f -name "${adb_dnsprefix}*" -print)"
+
+        if [ -n "${dns_active}" ]
+        then
+            value="active"
+        elif [ -n "${dns_passive}" ] || [ -z "${dns_active}" ]
+        then
+            value="no domains blocked"
+        fi
+        printf "%s\n" "::: adblock runtime information"
+        printf " %-15s : %s\n" "status" "${value}"
+        json_load "$(cat "${adb_rtfile}" 2>/dev/null)"
+        json_select data
+        json_get_keys keylist
+        for key in ${keylist}
+        do
+            json_get_var value ${key}
+            printf " %-15s : %s\n" "${key}" "${value}"
         done
     fi
 }
@@ -324,7 +376,7 @@ f_log()
         then
             logger -t "adblock-[${adb_ver}] ${class}" "Please check 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md' (${adb_sysver})"
             f_rmtemp
-            if [ "$(ls -dA "${adb_dnsdir}/${adb_dnsprefix}"* >/dev/null 2>&1)" ]
+            if [ -n "$(ls -dA "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null)" ]
             then
                 f_rmdns
                 f_dnsrestart
@@ -339,10 +391,11 @@ f_log()
 f_main()
 {
     local enabled url cnt sum_cnt=0 mem_total=0
-    local src_name src_rset shalla_archive list active_lists active_triggers
+    local src_name src_rset shalla_archive
     mem_total="$(awk '$1 ~ /^MemTotal/ {printf $2}' "/proc/meminfo" 2>/dev/null)"
 
     f_log "info " "start adblock processing ..."
+    > "${adb_rtfile}"
     for src_name in ${adb_sources}
     do
         eval "enabled=\"\${enabled_${src_name}}\""
@@ -363,7 +416,7 @@ f_main()
 
         # download block list
         #
-        f_log "debug" "name: ${src_name}, enabled: ${enabled}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetch}, memory: ${mem_total}"
+        f_log "debug" "name: ${src_name}, enabled: ${enabled}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, memory: ${mem_total}"
         if [ "${src_name}" = "blacklist" ]
         then
             cat "${url}" 2>/dev/null > "${adb_tmpload}"
@@ -446,16 +499,9 @@ f_main()
         fi
         cnt="$(wc -l < "${src_name}")"
         sum_cnt=$((sum_cnt + cnt))
-        list="${src_name/*./}"
-        if [ -z "${active_lists}" ]
-        then
-            active_lists="\"${list}\":\"${cnt}\""
-        else
-            active_lists="${active_lists},\"${list}\":\"${cnt}\""
-        fi
     done
 
-    # restart the dns backend and write statistics to procd service instance
+    # restart the dns backend and export runtime information
     #
     mv -f "${adb_tmpdir}/${adb_dnsprefix}"* "${adb_dnsdir}" 2>/dev/null
     chown "${adb_dns}":"${adb_dns}" "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null
@@ -463,21 +509,17 @@ f_main()
     f_dnsrestart
     if [ "${adb_dnsup}" = "true" ]
     then
+        json_init
+        json_add_object "data"
+        json_add_string "adblock_version" "${adb_ver}"
+        json_add_string "blocked_domains" "${sum_cnt}"
+        json_add_string "fetch_info" "${adb_fetchinfo}"
+        json_add_string "dns_backend" "${adb_dns}"
+        json_add_string "last_rundate" "$(/bin/date "+%d.%m.%Y %H:%M:%S")"
+        json_add_string "system" "${adb_sysver}"
+        json_close_object
+        json_dump > "${adb_rtfile}"
         f_log "info " "block lists with overall ${sum_cnt} domains loaded successfully (${adb_sysver})"
-        for name in ${adb_iface}
-        do
-            active_triggers="${active_triggers}[\"interface.*.up\",[\"if\",[\"eq\",\"interface\",\"${name}\"],[\"run_script\",\"/etc/init.d/adblock\",\"start\"],1000]],"
-        done
-        active_triggers="${active_triggers}[\"config.change\",[\"if\",[\"eq\",\"package\",\"adblock\"],[\"run_script\",\"/etc/init.d/adblock\",\"start\"],1000]]"
-        ubus call service set "{\"name\":\"adblock\",
-            \"instances\":{\"adblock\":{\"command\":[\"/usr/bin/adblock.sh\"],
-            \"data\":{\"active_lists\":[{${active_lists}}],
-            \"adblock_version\":\"${adb_ver}\",
-            \"blocked_domains\":\"${sum_cnt}\",
-            \"dns_backend\":\"${adb_dns}\",
-            \"last_rundate\":\"$(/bin/date "+%d.%m.%Y %H:%M:%S")\",
-            \"system\":\"${adb_sysver}\"}}},
-            \"triggers\":[${active_triggers}]}"
     else
         f_log "error" "dns backend restart with active block lists failed"
     fi
@@ -506,6 +548,9 @@ case "${1}" in
         ;;
     query)
         f_query "${2}"
+        ;;
+    status)
+        f_status
         ;;
     *)
         f_envcheck

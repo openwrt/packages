@@ -29,7 +29,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 15 entries
     * [ransomware tracker](https://ransomwaretracker.abuse.ch)
     * => daily updates, approx. 150 entries
-    * [reg_ch](https://easylist-downloads.adblockplus.org/easylistchina+easylist.txt)
+    * [reg_cn](https://easylist-downloads.adblockplus.org/easylistchina+easylist.txt)
     * => regional blocklist for China, daily updates, approx. 1.600 entries
     * [reg_pl](http://adblocklist.org)
     * => regional blocklist for Poland, daily updates, approx. 50 entries
@@ -68,10 +68,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * additional whitelist for manual overrides, located by default in /etc/adblock/adblock.whitelist
 * quality checks during block list update to ensure a reliable dns backend service
 * minimal status & error logging to syslog, enable debug logging to receive more output
-* procd based init system support (start/stop/restart/reload/suspend/resume/query)
+* procd based init system support (start/stop/restart/reload/suspend/resume/query/status)
 * procd based hotplug support, the adblock start will be solely triggered by network interface triggers
 * suspend & resume adblock actions temporarily without block list reloading
-* runtime information via ubus service call
+* runtime information available via LuCI & via 'status' init command
 * query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
 * optional: automatic block list backup & restore, backups will be (de-)compressed and restored on the fly in case of any runtime error
 * optional: add new adblock sources on your own via uci config
@@ -79,23 +79,23 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 ## Prerequisites
 * [LEDE project](https://www.lede-project.org), tested with latest stable release (LEDE 17.01) and with current LEDE snapshot
 * a usual setup with an enabled dns backend at minimum - dump AP modes without a working dns backend are _not_ supported
-* a download utility: full versions (with ssl support) of 'wget', 'uclient-fetch', 'aria2c' or 'curl' are supported
-    * LEDE 17.01 or LEDE snapshot: use built-in 'uclient-fetch' or download & install the external 'wget' package
+* a download utility:
+    * to support all blocklist sources a full version (with ssl support) of 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'aria2c' or 'curl' is required
+    * for limited devices with real memory constraints, adblock provides also a plain http option and supports wget-nossl and uclient-fetch (wihout libustream-ssl), too
     * for more configuration options see examples below
 
-## OpenWrt / LEDE trunk Installation & Usage
-* install 'adblock' (_opkg install adblock_) and that's it - the adblock start will be automatically triggered by procd interface triggers
-* start/stop/restart/reload/suspend/resume the adblock service manually with _/etc/init.d/adblock_
+## LEDE trunk Installation & Usage
+* install 'adblock' (_opkg install adblock_) and that's it - the adblock start will be automatically triggered by procd interface trigger
+* control the adblock service manually with _/etc/init.d/adblock_ start/stop/restart/reload/suspend/resume/status or use the LuCI frontend
 * enable/disable your favored block list sources in _/etc/config/adblock_ - 'adaway', 'disconnect' and 'yoyo' are enabled by default
 
 ## LuCI adblock companion package
 * for easy management of the various block list sources and all other adblock options you can also use a nice & efficient LuCI frontend
 * install 'luci-app-adblock' (_opkg install luci-app-adblock_)
 * the application is located in LuCI under 'Services' menu
-* _Thanks to Hannu Nyman for this great adblock LuCI frontend!_
 
 ## Tweaks
-* **runtime information:** the adblock status is available via ubus service call (see example below)
+* **runtime information:** the adblock status is available via _/etc/init.d/adblock status_ (see example below)
 * **debug logging:** for script debugging please set the config option 'adb\_debug' to '1' and check the runtime output with _logread -e "adblock"_
 * **storage expansion:** to process and store all block list sources at once it might helpful to enlarge your temp directory with a swap partition => see [openwrt wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
 * **add white- / blacklist entries:** add domain white- or blacklist entries to always-allow or -deny certain (sub) domains, by default both lists are empty and located in _/etc/adblock_. Please add one domain per line - ip addresses, wildcards & regex are _not_ allowed (see example below)
@@ -115,6 +115,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_iface => set the procd interface trigger to a (list of) lan / wan interface(s) (default: 'wan')
     * adb\_fetch => full path to a different download utility, see example below (default: not set, use wget)
     * adb\_fetchparm => options for the download utility, see example below (default: not set, use wget options)
+    * adb\_triggerdelay => additional trigger delay in seconds before adblock processing starts (default: '1')
 
 ## Examples
 **change default dns backend to 'unbound':**
@@ -145,37 +146,17 @@ curl:
   option adb_fetchparm '-s --connect-timeout 10 --insecure -o'
 </code></pre>
   
-**receive adblock runtime information via ubus:**
+**receive adblock runtime information:**
 <pre><code>
-ubus call service get_data '{"name":"adblock"}
-This will output the active block lists and other runtime information as JSON, e.g.:
-{
-    "adblock": {
-        "adblock": {
-            "active_lists": [
-                {
-                    "reg_pl": "45",
-                    "blacklist": "144",
-                    "winspy": "138",
-                    "adaway": "379",
-                    "zeus": "399",
-                    "reg_ro": "656",
-                    "reg_ch": "1631",
-                    "yoyo": "2320",
-                    "reg_ru": "2397",
-                    "ransomware": "1681",
-                    "disconnect": "5157",
-                    "adguard": "12799"
-                }
-            ],
-            "adblock_version": "2.5.1",
-            "blocked_domains": "27746",
-            "dns_backend": "dnsmasq",
-            "last_rundate": "04.04.2017 11:02:40",
-            "system": "LEDE Reboot SNAPSHOT r3904-c3778f2647"
-        }
-    }
-}
+root@blackhole:~# /etc/init.d/adblock status
+::: adblock runtime information
+ status          : active
+ adblock_version : 2.6.0
+ blocked_domains : 113711
+ fetch_info      : wget (built-in)
+ dns_backend     : dnsmasq
+ last_rundate    : 12.04.2017 13:08:26
+ system          : LEDE Reboot SNAPSHOT r3900-399d5cf532
 </code></pre>
   
 **cronjob for a regular block list update (/etc/crontabs/root):**
