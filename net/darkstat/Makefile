@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/darkstat
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpcap +zlib
+  DEPENDS:=+libpcap +zlib +USE_GLIBC:libbsd
   TITLE:=Network bandwidth monitor
   URL:=http://unix4lyfe.org/darkstat/
 endef
