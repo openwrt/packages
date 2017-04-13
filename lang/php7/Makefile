@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -66,6 +66,7 @@ define Package/php7/config
 	config PHP7_FILTER
 		bool "PHP7 Filter support"
 		depends on PACKAGE_php7-cli || PACKAGE_php7-cgi
+		default y
 
 	config PHP7_LIBXML
 		bool "PHP7 LIBXML support"
