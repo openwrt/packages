@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.1.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -143,6 +143,9 @@ define Package/php7-fpm/description
   This package contains the FastCGI Process Manager of the PHP7 interpreter.
 endef
 
+# not everything groks --disable-nls
+DISABLE_NLS:=
+
 CONFIGURE_ARGS+= \
 	--enable-cli \
 	--enable-cgi \
@@ -216,7 +219,6 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gd),)
 	--with-jpeg-dir="$(STAGING_DIR)/usr" \
 	--with-png-dir="$(STAGING_DIR)/usr" \
 	--without-xpm-dir \
-	--without-t1lib \
 	--enable-gd-native-ttf \
 	--disable-gd-jis-conv
 else
