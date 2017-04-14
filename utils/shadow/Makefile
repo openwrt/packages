@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pkg-shadow.alioth.debian.org/releases
@@ -25,8 +25,10 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 SHADOW_APPLETS := \
-	chage groupadd groupdel groupmod groups passwd su \
-	useradd userdel usermod
+	chage chpasswd chfn chsh expiry faillog gpasswd \
+	groupadd groupdel groupmems groupmod groups \
+	lastlog login newgrp nologin passwd su \
+	useradd userdel usermod vipw
 
 CONFIGURE_ARGS += \
 	--without-audit \
