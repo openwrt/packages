@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=cylon
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.22.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/hybridgroup/cylon-firmata.git
@@ -28,7 +28,7 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 
 define Package/node-cylon/default
-  DEPENDS:=+node $(2)
+  DEPENDS:=+node +node-npm $(2)
   SUBMENU:=Node.js
   SECTION:=lang
   CATEGORY:=Languages

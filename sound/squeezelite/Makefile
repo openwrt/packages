@@ -128,6 +128,7 @@ TARGET_LDFLAGS+= -lasound -lpthread -lm -lrt
 
 ifeq ($(BUILD_VARIANT),full)
     TARGET_CFLAGS+= -DLINKALL
+    TARGET_LDFLAGS+= -lvorbis -logg
 endif
 
 define Package/squeezelite/install

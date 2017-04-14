@@ -382,7 +382,7 @@ mwan3_delete_iface_ipset_entries()
 
 mwan3_track()
 {
-	local track_ip track_ips reliability count timeout interval down up size
+	local track_ip track_ips
 
 	mwan3_list_track_ips()
 	{
@@ -392,19 +392,27 @@ mwan3_track()
 
 	if [ -e /var/run/mwan3track-$1.pid ] ; then
 		kill $(cat /var/run/mwan3track-$1.pid) &> /dev/null
-		rm /var/run/mwan3track-$1.pid &> /dev/null
 	fi
 
 	if [ -n "$track_ips" ]; then
-		config_get reliability $1 reliability 1
-		config_get count $1 count 1
-		config_get timeout $1 timeout 4
-		config_get interval $1 interval 10
-		config_get down $1 down 5
-		config_get up $1 up 5
-		config_get size $1 size 56
+		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $1 $2 $track_ips &
+	fi
+}
 
-		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $1 $2 $reliability $count $timeout $interval $down $up $size $track_ips &
+mwan3_track_signal()
+{
+	local pid status
+
+	if [ -f "/var/run/mwan3track-${1}.pid" ]; then
+		pid="$(cat "/var/run/mwan3track-${1}.pid")"
+		status="$(pgrep -f mwan3track | grep "${pid}")"
+		if [ "${status}" != "" ]; then
+			kill -USR1 "${pid}"
+		else
+			$LOG warn "Unable to send signal USR1 to mwan3track on interface $1 with pid ${pid}"
+		fi
+	else
+		$LOG warn "Unable to find \"/var/run/mwan3track-${1}.pid\" file for mwan3track on interface $1"
 	fi
 }
 

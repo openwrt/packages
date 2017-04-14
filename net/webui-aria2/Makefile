@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=webui-aria2
+PKG_SOURCE_DATE:=2017-04-02
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/ziahamza/webui-aria2.git
-PKG_SOURCE_DATE:=2017-02-12
-PKG_SOURCE_VERSION:=68c8ad4f86b87a8b713e13f70b4a3a3c7b86c83e
+PKG_SOURCE_URL:=https://github.com/ziahamza/webui-aria2
+PKG_SOURCE_VERSION:=d2a662849a792bb8d7b83519bac1eeee0fcec4e9
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE

@@ -64,7 +64,18 @@ If ```simple-adblock``` and  ```luci-app-simple-adblock``` packages are not foun
 
 #### Add custom repo to your router
 If your router is not set up with the access to repository containing these packages you will need to add custom repository to your router by connecting to your router via ssh and running the following commands:
+
+###### OpenWrt CC 15.05.1
 ```sh
+opkg update; opkg install wget libopenssl
+echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
+! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
+opkg update
+```
+
+###### LEDE Project and OpenWrt DD trunk
+```sh
+opkg update; opkg install uclient-fetch libustream-mbedtls
 echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
 ! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
 opkg update
@@ -95,7 +106,7 @@ If you specify ```google.com``` as a domain to be whitelisted, you will have acc
 In general, whatever domain is specified to be whitelisted; it, along with with its subdomains will be whitelisted, but not any fake domains containing it.
 
 ## Documentation / Discussion
-Please head to [OpenWrt Forum](https://forum.openwrt.org/viewtopic.php?pid=307950) or [LEDE Project Forum](https://forum.lede-project.org/t/simple-adblock-fast-lightweight-and-fully-uci-luci-configurable-ad-blocking/) for discussion of this package.
+Please head to [OpenWrt Forum](https://forum.openwrt.org/viewtopic.php?pid=307950) or [LEDE Project Forum](https://forum.lede-project.org/t/simple-adblock-fast-lean-and-fully-uci-luci-configurable-adblocking/1327/) for discussion of this package.
 
 ## What's New
 1.5.6:

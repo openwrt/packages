@@ -1166,7 +1166,11 @@ static int siit_xmit(struct sk_buff *skb, struct net_device *dev)
 	siit_stats(dev)->rx_bytes += skb->len;
 	siit_stats(dev)->rx_packets++;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0)
+	netif_trans_update(dev);
+#else
 	dev->trans_start = jiffies;
+#endif
 
 	/* Upper layer (IP) protocol forms sk_buff for outgoing packet
 	 * and sets IP header + Ether header too. IP layer sets outgoing
