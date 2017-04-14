@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
 PKG_VERSION:=4.3.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Antony Antony <antony@phenome.org>
+PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 
 PKG_SOURCE:=$(UPSTREAM_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
