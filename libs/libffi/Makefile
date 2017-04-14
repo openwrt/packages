@@ -78,5 +78,12 @@ define Package/libffi/install
 		$(1)/usr/lib/
 endef
 
+define Host/Install
+	$(call Host/Install/Default)
+	$(CP) \
+		$(STAGING_DIR_HOST)/lib/libffi-$(PKG_VERSION)/include/*.h \
+		$(STAGING_DIR_HOST)/include/
+endef
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,libffi))
