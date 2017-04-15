@@ -1,0 +1,64 @@
+From 8614cf0ad4a017184285e814a704322f59a28869 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Wed, 12 Apr 2017 23:36:17 +0200
+Subject: [PATCH] dataxfer.c: fix possible buffer overruns caused by
+ gai_strerror
+
+This fixes a possible buffer overrun that could occur due to
+gai_strerror() returning a string which is longer than the portbuff
+array, i.e. longer than 32 byte.
+
+Reported-by: David Thornley <david.thornley@touchstargroup.com>
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+Signed-off-by: Corey Minyard <cminyard@mvista.com>
+
+diff --git a/dataxfer.c b/dataxfer.c
+index 3d1e713..988f4e4 100644
+--- a/dataxfer.c
++++ b/dataxfer.c
+@@ -3702,18 +3702,20 @@ showshortport(struct controller_info *cntlr, port_info_t *port)
+ 		      portbuff, sizeof(portbuff),
+ 		      NI_NUMERICHOST | NI_NUMERICSERV);
+     if (err) {
+-	strcpy(buffer, "*err*");
+-	sprintf(portbuff, "%s", gai_strerror(err));
++	snprintf(buffer, sizeof(buffer), "*err*,%s", gai_strerror(err));
++	count = controller_outputf(cntlr, "%s", buffer);
++    } else {
++	count = controller_outputf(cntlr, "%s,%s", buffer, portbuff);
+     }
+-    bytes_recv = netcon->bytes_received;
+-    bytes_sent = netcon->bytes_sent;
+ 
+-    count = controller_outputf(cntlr, "%s,%s", buffer, portbuff);
+     while (count < 23) {
+ 	controller_outs(cntlr, " ");
+ 	count++;
+     }
+ 
++    bytes_recv = netcon->bytes_received;
++    bytes_sent = netcon->bytes_sent;
++
+     controller_outputf(cntlr, "%-22s ", port->io.devname);
+     controller_outputf(cntlr, "%-14s ", state_str[port->net_to_dev_state]);
+     controller_outputf(cntlr, "%-14s ", state_str[port->dev_to_net_state]);
+@@ -3758,11 +3760,12 @@ showport(struct controller_info *cntlr, port_info_t *port)
+ 			  portbuff, sizeof(portbuff),
+ 			  NI_NUMERICHOST | NI_NUMERICSERV);
+ 	if (err) {
+-	    strcpy(buffer, "*err*");
+-	    sprintf(portbuff, "%s", gai_strerror(err));
++	    snprintf(buffer, sizeof(buffer), "*err*,%s", gai_strerror(err));
++	    controller_outputf(cntlr, "  connected to: %s\r\n", buffer);
++	} else {
++	    controller_outputf(cntlr, "  connected to: %s,%s\r\n",
++			       buffer, portbuff);
+ 	}
+-	controller_outputf(cntlr, "  connected to: %s,%s\r\n",
+-			   buffer, portbuff);
+ 	controller_outputf(cntlr, "    bytes read from TCP: %d\r\n",
+ 			   netcon->bytes_received);
+ 	controller_outputf(cntlr, "    bytes written to TCP: %d\r\n",
+-- 
+2.7.4
+
