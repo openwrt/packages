@@ -11,7 +11,7 @@ PKG_NAME:=lcdproc
 # PKG_VERSION:=0.5.8
 PKG_BASE_VERSION:=0.5.8
 PKG_VERSION:=$(PKG_BASE_VERSION)+git2070222
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/lcdproc/lcdproc.git
@@ -121,7 +121,7 @@ endef
 
 
 # not everything groks --disable-nls
-CONFIGURE_ARGS := $(filter-out --%-nls,$(CONFIGURE_ARGS))
+DISABLE_NLS:=
 
 CONFIGURE_ARGS += \
 	--disable-libX11 \
