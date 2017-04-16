@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+
+START=88
+USE_PROCD=1
+
+start_service() {
+	for path in /etc/mlvpn/*.conf; do
+		if [ -f "$path" ]; then
+			procd_open_instance
+			procd_set_param command /usr/sbin/mlvpn --config "$path" --user nobody
+			procd_set_param file "$path"
+			procd_set_param reload_signal SIGHUP
+			procd_set_param respawn
+			procd_close_instance
+		fi
+	done
+}

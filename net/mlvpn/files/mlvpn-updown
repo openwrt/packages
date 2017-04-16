@@ -1,0 +1,115 @@
+#!/bin/sh
+
+# up/down script for MLVPN.
+#
+# MLVPN calls this script with at least 2 arguments:
+# $1 : interface name
+# $2 : "command"
+# command can be:
+#    - "tuntap_up"
+#    - "tuntap_down"
+#    - "rtun_up" $3 : tunnel name
+#    - "rtun_down" $3 : tunnel name
+# tuntap_up is called when at least one tunnel is up
+# tuntap_down is called when at every tunnel is down
+# rtun_up is called when successfully connected
+# rtun_down is called when disconnected
+
+# Environment variables are set by mlvpn, reflecting
+# settings in mlvpn.conf
+# IP4=
+# IP6=
+# IP4_GATEWAY=
+# IP6_GATEWAY=
+# IP4_ROUTES=
+# IP6_ROUTES=
+# MTU=
+# DEVICE=
+
+DEVICE="$1"
+STATUS="$2"
+
+[ -z "$STATUS" ] || [ -z "$DEVICE" ] || [ -z "$MTU" ] && exit 1
+
+unamestr=$(uname)
+
+link_up()
+{
+    if [ "$unamestr" = "Linux" ]; then
+        ip link set dev "$DEVICE" mtu "$MTU" up
+        if [ -n "$IP4" ]; then
+            ip -4 addr add "$IP4" dev "$DEVICE"
+        fi
+        if [ -n "$IP6" ]; then
+            ip -6 addr add "$IP6" dev "$DEVICE"
+        fi
+    else
+        ifconfig "$DEVICE" mtu "$MTU" up
+        if [ -n "$IP4" ] && [ -n "$IP4_GATEWAY" ]; then
+            ifconfig "$DEVICE" inet "$IP4" "$IP4_GATEWAY" mtu "$MTU" up
+        fi
+        if [ -n "$IP6" ] && [ -n "$IP6_GATEWAY" ]; then
+            ifconfig "$DEVICE" inet "$IP6" "$IP6_GATEWAY" mtu "$MTU" up
+        fi
+    fi
+}
+link_down()
+{
+    if [ "$unamestr" = "Linux" ]; then
+        ip link set dev "$DEVICE" down
+    else
+        ifconfig "$DEVICE" down
+    fi
+}
+route_add()
+{
+    family=$1
+    route=$2
+    if [ "$unamestr" = "Linux" ]; then
+        via=""
+        if [ "$family" = "4" ]; then
+            [ -z "$IP4_GATEWAY" ] || via="via $IP4_GATEWAY"
+            ip -4 route add "$route" "$via" dev "$DEVICE"
+        elif [ "$family" = "6" ]; then
+            [ -z "$IP6_GATEWAY" ] || via="via $IP6_GATEWAY"
+            ip -6 route add "$route" "$via" dev "$DEVICE"
+        fi
+    else
+        if [ "$family" = "4" ]; then
+            route add -inet "$route" "$IP4_GATEWAY"
+        elif [ "$family" = "6" ]; then
+            route add -inet6 "$route" "$IP6_GATEWAY"
+        fi
+    fi
+}
+
+(
+ECHO="echo"
+[ "$MTU" -gt 1452 ] && (echo "MTU set too high."; exit 1)
+[ "$MTU" -lt 100 ] && (echo "MTU set too low."; exit 1)
+case "$STATUS" in
+    "tuntap_up")
+        $ECHO "$DEVICE up"
+        link_up
+        for r in $IP4_ROUTES; do
+            route_add 4 "$r"
+        done
+        for r in $IP6_ROUTES; do
+            route_add 6 "$r"
+        done
+    ;;
+    "tuntap_down")
+        $ECHO "$DEVICE down"
+        link_down
+    ;;
+    "rtun_up")
+        $ECHO "tunnel [$3] is up"
+        ;;
+    "rtun_down")
+        $ECHO "tunnel [$3] is down"
+        ;;
+esac
+
+) 2>&1 | logger -t mlvpn
+
+exit 0

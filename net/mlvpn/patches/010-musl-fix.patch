@@ -1,0 +1,11 @@
+--- a/src/privsep.c
++++ b/src/privsep.c
+@@ -778,7 +778,7 @@ sig_got_chld(int sig)
+     pid_t    pid;
+ 
+     do {
+-        pid = waitpid(WAIT_ANY, NULL, WNOHANG);
++        pid = waitpid(-1, NULL, WNOHANG);
+         if (pid == child_pid && cur_state < STATE_QUIT)
+             cur_state = STATE_QUIT;
+     } while (pid > 0 || (pid == -1 && errno == EINTR));
