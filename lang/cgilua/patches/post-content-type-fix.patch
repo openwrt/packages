@@ -1,0 +1,19 @@
+From: Alex R <alex@totalwebservices.net>
+Date: Thu, 30 Jul 2015 20:27:30 -0700
+Subject: [PATCH] Enabled accepting all unsupported POST content types as plain
+ text, fixed a small issue with the tinsert call
+
+--- a/src/cgilua/post.lua
++++ b/src/cgilua/post.lua
+@@ -285,9 +285,8 @@
+ 		urlcode.parsequery (read (inputsize), defs.args)
+ 	elseif strfind(contenttype, "multipart/form-data", 1, true) then
+ 		Main (inputsize, defs.args)
+-	elseif strfind (contenttype, "application/xml", 1, true) or strfind (contenttype, "text/xml", 1, true) or strfind (contenttype, "text/plain", 1, true) then
+-		tinsert (defs.args, read (inputsize))
+ 	else
+-		error("Unsupported Media Type: "..contenttype)
++		local input = read(inputsize)
++		tinsert (defs.args, input)
+ 	end
+ end
