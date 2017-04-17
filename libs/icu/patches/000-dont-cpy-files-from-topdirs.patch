@@ -2,7 +2,7 @@ diff --git a/Makefile.in b/Makefile.in
 index 9db6c52..6aa2273 100644
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -180,7 +180,6 @@ install-icu: $(INSTALLED_BUILT_FILES)
+@@ -184,7 +184,6 @@ install-icu: $(INSTALLED_BUILT_FILES)
  	$(INSTALL_SCRIPT) $(top_srcdir)/install-sh $(DESTDIR)$(pkgdatadir)/install-sh
  	@$(MKINSTALLDIRS) $(DESTDIR)$(libdir)/pkgconfig
  	$(INSTALL_DATA) $(ALL_PKGCONFIG_FILES) $(DESTDIR)$(libdir)/pkgconfig/
