@@ -34,11 +34,24 @@ CONFIGURE_ARGS += \
 	--without-audit \
 	--without-libpam \
 	--without-selinux \
-	--without-acl \
-	--without-attr \
 	--without-tcb \
 	--without-nscd \
 	--disable-subordinate-ids \
+
+ifeq ($(CONFIG_PACKAGE_SHADOW_ACL),)
+CONFIGURE_ARGS += \
+	--without-acl
+else
+CONFIGURE_ARGS += \
+	--with-acl
+endif
+ifeq ($(CONFIG_PACKAGE_SHADOW_ATTR),)
+CONFIGURE_ARGS += \
+	--without-attr
+else
+CONFIGURE_ARGS += \
+	--with-attr
+endif
 
 define Package/shadow/Default
   SECTION:=utils
@@ -58,6 +71,20 @@ define Package/shadow/description
   Full versions of standard shadow utilities. Normally, you would not
   use this package, since the functionality in BusyBox is more than
   sufficient and much smaller.
+endef
+
+define Package/shadow/config
+	config PACKAGE_SHADOW_ACL
+	bool "SHADOW: Enable POSIX ACL support"
+	depends on PACKAGE_shadow
+	default y if POSIX_ACLS
+	default n
+
+	config PACKAGE_SHADOW_ATTR
+	bool "SHADOW: Enable Linux Attr support"
+	depends on PACKAGE_shadow
+	default y if POSIX_ACLS
+	default n
 endef
 
 define Package/shadow/install
@@ -94,7 +121,7 @@ Package/shadow-utils/description = $(Package/shadow/description)
 define Package/shadow-common
   $(call Package/shadow/Default)
   TITLE:=Shared definitions for the PLD Linux shadow utilities
-  DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +PACKAGE_SHADOW_ACL:libacl +PACKAGE_SHADOW_ATTR:libattr
   HIDDEN:=1
 endef
 
