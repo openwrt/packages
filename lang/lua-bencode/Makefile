@@ -11,11 +11,10 @@ PKG_NAME:=lua-bencode
 PKG_VERSION:=2.1.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://bitbucket.org/wilhelmy/lua-bencode
-PKG_SOURCE_PROTO:=hg
-PKG_SOURCE_VERSION:=500243383cb6acbddd3cf12aee6e4667aab53324
+PKG_SOURCE_URL:=https://bitbucket.org/wilhelmy/lua-bencode/downloads/
+PKG_HASH:=4624f33ff026bc62990a323ee4953e42d68430c38a1a4726c9cfd77c085b1422
 PKG_LICENSE:=MIT
 
 include $(INCLUDE_DIR)/package.mk
