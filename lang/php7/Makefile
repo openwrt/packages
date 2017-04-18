@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.1.4
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -245,7 +245,7 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-intl),)
   CONFIGURE_ARGS+= --enable-intl=shared
-  TARGET_CPPFLAGS+= -std=c++0x
+  TARGET_CXXFLAGS+= -std=c++0x
 else
   CONFIGURE_ARGS+= --disable-intl
 endif
