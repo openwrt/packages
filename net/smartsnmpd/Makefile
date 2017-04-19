@@ -47,6 +47,7 @@ SCONS_OPTIONS += --transport=uloop
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); \
 		$(SCONS_VARS) \
+		CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 		scons \
 			prefix=/usr \
 			$(SCONS_OPTIONS) \
