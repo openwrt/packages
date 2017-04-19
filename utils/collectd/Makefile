@@ -199,7 +199,7 @@ CONFIGURE_ARGS+= \
 
 ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
 CONFIGURE_ARGS+= \
-	--with-libgcrypt=$(STAGING_DIR)/include
+	--with-libgcrypt=$(STAGING_DIR)/usr/include
 else
 CONFIGURE_ARGS+= \
 	--without-libgcrypt
