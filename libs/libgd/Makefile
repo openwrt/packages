@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgd
 PKG_VERSION:=2.2.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/releases/download/gd-$(PKG_VERSION)/
@@ -48,9 +48,10 @@ CONFIGURE_ARGS += \
 	--without-freetype \
 	--with-jpeg=$(STAGING_DIR)/usr \
 	--with-png=$(STAGING_DIR)/usr \
-	--with-vpx=no \
+	--without-tiff \
 	--without-xpm \
-	--without-iconv
+	--without-webp \
+	--without-liq
 
 CONFIGURE_VARS += \
 	ac_cv_header_iconv_h=no
