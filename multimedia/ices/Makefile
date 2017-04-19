@@ -41,7 +41,7 @@ CONFIGURE_ARGS+= \
 	--with-ogg="$(STAGING_DIR)/usr/include" \
 	--with-vorbis="$(STAGING_DIR)/usr/include"
 
-TARGET_LDFLAGS+= -logg
+TARGET_LDFLAGS+= -logg -lvorbisidec
 
 define Package/ices/install
 	$(INSTALL_DIR) $(1)/usr/bin
