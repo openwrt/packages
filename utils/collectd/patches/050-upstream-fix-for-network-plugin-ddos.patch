@@ -1,0 +1,50 @@
+From f6be4f9b49b949b379326c3d7002476e6ce4f211 Mon Sep 17 00:00:00 2001
+From: Pavel Rochnyack <pavel2000@ngs.ru>
+Date: Mon, 3 Apr 2017 11:57:09 +0600
+Subject: [PATCH] network plugin: Fix endless loop DOS in parse_packet()
+
+When correct 'Signature part' is received by Collectd, configured without
+AuthFile option, condition for endless loop occurs due to missing increase
+of pointer to next unprocessed part.
+
+Fixes: CVE-2017-7401
+
+Signed-off-by: Florian Forster <octo@collectd.org>
+
+
+--- a/src/network.c
++++ b/src/network.c
+@@ -1066,14 +1066,6 @@ static int parse_part_sign_sha256 (socke
+   buffer_len = *ret_buffer_len;
+   buffer_offset = 0;
+ 
+-  if (se->data.server.userdb == NULL)
+-  {
+-    c_complain (LOG_NOTICE, &complain_no_users,
+-        "network plugin: Received signed network packet but can't verify it "
+-        "because no user DB has been configured. Will accept it.");
+-    return (0);
+-  }
+-
+   /* Check if the buffer has enough data for this structure. */
+   if (buffer_len <= PART_SIGNATURE_SHA256_SIZE)
+     return (-ENOMEM);
+@@ -1091,6 +1083,18 @@ static int parse_part_sign_sha256 (socke
+     return (-1);
+   }
+ 
++  if (se->data.server.userdb == NULL) {
++    c_complain(
++        LOG_NOTICE, &complain_no_users,
++        "network plugin: Received signed network packet but can't verify it "
++        "because no user DB has been configured. Will accept it.");
++
++    *ret_buffer = buffer + pss_head_length;
++    *ret_buffer_len -= pss_head_length;
++
++    return (0);
++  }
++
+   /* Copy the hash. */
+   BUFFER_READ (pss.hash, sizeof (pss.hash));
+ 
