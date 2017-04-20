@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -833,10 +833,7 @@
+@@ -830,10 +830,7 @@ fi
  have_cpuid_h="no"
  AC_CHECK_HEADERS(cpuid.h, [have_cpuid_h="yes"])
  
