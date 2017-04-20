@@ -16,7 +16,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifischedule
 PKG_VERSION:=1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=PRPL
 
 PKG_MAINTAINER:=Nils Koenig <openwrt@newk.it> 
@@ -28,6 +28,7 @@ define Package/wifischedule
   TITLE:=Turns WiFi on and off according to a schedule
   SECTION:=net
   CATEGORY:=Network
+  PKGARCH:=all
 endef
 
 define Package/wifischedule/description
@@ -36,6 +37,12 @@ endef
 
 define Package/wifischedule/conffiles
 /etc/config/wifi_schedule
+endef
+
+define Build/Prepare
+endef
+
+define Build/Configure
 endef
 
 define Build/Compile
