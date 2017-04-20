@@ -1,6 +1,6 @@
 --- a/src/ipsec/_ipsec.in
 +++ b/src/ipsec/_ipsec.in
-@@ -259,7 +259,7 @@ stop)
+@@ -257,7 +257,7 @@ stop)
  			loop=110
  			while [ $loop -gt 0 ] ; do
  				kill -0 $spid 2>/dev/null || break
