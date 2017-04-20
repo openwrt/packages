@@ -11,7 +11,6 @@ trm_script="/usr/bin/travelmate.sh"
 
 boot()
 {
-    trm_boot=1
     ubus -t 30 wait_for network.interface 2>/dev/null
     rc_procd start_service
 }
@@ -20,10 +19,6 @@ start_service()
 {
     if [ $("${trm_init}" enabled; printf ${?}) -eq 0 ]
     then
-        if [ -n "${trm_boot}" ]
-        then
-            return 0
-        fi
         procd_open_instance "travelmate"
         procd_set_param command "${trm_script}" "${@}"
         procd_set_param stdout 1

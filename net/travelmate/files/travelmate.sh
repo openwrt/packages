@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.7.0"
+trm_ver="0.7.1"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0
@@ -267,6 +267,15 @@ f_main()
                 sleep 5
             done
         done
+    else
+        if [ ! -s "${trm_rtfile}" ]
+        then
+            config="$(ubus -S call network.wireless status | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].section')"
+            sta_radio="$(uci -q get wireless."${config}".device)"
+            sta_ssid="$(uci -q get wireless."${config}".ssid)"
+            sta_iface="$(uci -q get wireless."${config}".network)"
+            f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
+        fi
     fi
 }
 
