@@ -1,0 +1,17 @@
+--- http-parser-v2.7.1/Makefile	2017-04-23 16:00:55.668678180 +0200
++++ http-parser-v2.7.1/Makefile	2017-04-23 16:01:04.404617440 +0200
+@@ -64,9 +64,11 @@
+ LDFLAGS_LIB += -Wl,-soname=$(SONAME)
+ endif
+ 
+-test: test_g test_fast
+-	$(HELPER) ./test_g$(BINEXT)
+-	$(HELPER) ./test_fast$(BINEXT)
++# Running test fais when crosscompiling 
++# Tests pass on mips, TL-WR842N, Chaos Calmer, r49474
++#test: test_g test_fast
++#	$(HELPER) ./test_g$(BINEXT)
++#	$(HELPER) ./test_fast$(BINEXT)
+ 
+ test_g: http_parser_g.o test_g.o
+ 	$(CC) $(CFLAGS_DEBUG) $(LDFLAGS) http_parser_g.o test_g.o -o $@
