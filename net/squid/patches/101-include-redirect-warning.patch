@@ -1,0 +1,11 @@
+--- a/lib/rfcnb/rfcnb-io.c
++++ b/lib/rfcnb/rfcnb-io.c
+@@ -40,7 +40,7 @@
+ #include <string.h>
+ #endif
+ #include <sys/uio.h>
+-#include <sys/signal.h>
++#include <signal.h>
+ 
+ int RFCNB_Timeout = 0;          /* Timeout in seconds ... */
+ 
