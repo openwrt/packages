@@ -10,15 +10,13 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=cryptodev-linux
-PKG_VERSION:=1.8.git-2017-02-09
-PKG_RELEASE:=2
+PKG_VERSION:=1.9.git-2017-05-29
+PKG_RELEASE:=1
 
+PKG_SOURCE_URL:=https://github.com/cryptodev-linux/cryptodev-linux
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=627ce96e3ba66ca9c8e14f5d80193061fbe9d45cd8d4b69a1bf4dd5a2d50eed8
-PKG_SOURCE_URL:=https://github.com/cryptodev-linux/cryptodev-linux.git
-PKG_SOURCE_VERSION:=6818263667ca488f9b1c86e36ea624c4ea1c309f
+PKG_SOURCE_VERSION:=a705360197260d28535746ae98c461ba2cfb7a9e
+PKG_MIRROR_HASH:=553069ecf1f3d5d5652404aaf438610f555c94db4369c7c1db85210c4e3cdfee
 
 PKG_MAINTAINER:=Ansuel Smith ansuelsmth@gmail.com
 
