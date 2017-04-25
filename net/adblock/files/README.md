@@ -59,6 +59,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
 * automatically selects dnsmasq or unbound as dns backend
 * automatically selects uclient-fetch or wget as download utility (other tools like curl or aria2c are supported as well)
+* support http only mode (without installed ssl library) for all non-SSL blocklist sources
 * automatically supports a wide range of router modes, even AP modes are supported
 * full IPv4 and IPv6 support
 * supports tld compression (top level domain compression), this feature removes thousands of needless host entries from the block lists and lowers the memory footprint for the dns backends
@@ -73,6 +74,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * suspend & resume adblock actions temporarily without block list reloading
 * runtime information available via LuCI & via 'status' init command
 * query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
+* optional: force dns requests to local resolver
+* optional: force overall sort / duplicate removal for low memory devices (handle with care!)
 * optional: automatic block list backup & restore, backups will be (de-)compressed and restored on the fly in case of any runtime error
 * optional: add new adblock sources on your own via uci config
 
@@ -81,7 +84,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * a usual setup with an enabled dns backend at minimum - dump AP modes without a working dns backend are _not_ supported
 * a download utility:
     * to support all blocklist sources a full version (with ssl support) of 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'aria2c' or 'curl' is required
-    * for limited devices with real memory constraints, adblock provides also a plain http option and supports wget-nossl and uclient-fetch (wihout libustream-ssl), too
+    * for limited devices with real memory constraints, adblock provides also a plain http option and supports wget-nossl and uclient-fetch (without libustream-ssl), too
     * for more configuration options see examples below
 
 ## LEDE trunk Installation & Usage
@@ -104,7 +107,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **restrict procd interface trigger:** restrict the procd interface trigger to a (list of) certain interface(s) (default: wan). To disable it at all, remove all entries
 * **suspend & resume adblocking:** to quickly switch the adblock service 'on' or 'off', simply use _/etc/init.d/adblock [suspend|resume]_
 * **domain query:** to query the active block lists for a specific domain, please run _/etc/init.d/adblock query `<DOMAIN>`_ (see example below)
-* **divert dns requests:** to force dns requests to your local dns resolver add an appropriate firewall rule (see example below)
 * **add new list sources:** you could add new block list sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
 * **disable active dns probing in windows 10:** to prevent a yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
 
@@ -115,7 +117,9 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_iface => set the procd interface trigger to a (list of) lan / wan interface(s) (default: 'wan')
     * adb\_fetch => full path to a different download utility, see example below (default: not set, use wget)
     * adb\_fetchparm => options for the download utility, see example below (default: not set, use wget options)
-    * adb\_triggerdelay => additional trigger delay in seconds before adblock processing starts (default: '1')
+    * adb\_triggerdelay => additional trigger delay in seconds before adblock processing starts (default: '2')
+    * adb\_forcedns => force dns requests to local resolver (default: '0', disabled)
+    * adb\_forcesrt => force overall sort on low memory devices with less than 64 MB RAM (default: '0', disabled)
 
 ## Examples
 **change default dns backend to 'unbound':**
@@ -207,17 +211,6 @@ This entry does not remove:
 The query function checks against the submitted (sub-)domain and recurses automatically to the upper top level domain(s).
 For every domain it returns the overall count plus a distinct list of active block lists with the first relevant result.
 In the example above whitelist "www.doubleclick.net" to free the submitted domain.
-</code></pre>
-  
-**divert dns requests to local dns resolver in /etc/config/firewall:**
-<pre><code>
-config redirect
-    option name 'Divert DNS'
-    option src 'lan'
-    option proto 'tcp udp'
-    option src_dport '53'
-    option dest_port '53'
-    option target 'DNAT'
 </code></pre>
   
 **add a new block list source:**
