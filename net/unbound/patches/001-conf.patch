@@ -6,7 +6,7 @@ index 83e7c5c..3ea2b28 100644
 -#
 -# Example configuration file.
 -#
--# See unbound.conf(5) man page, version 1.6.1.
+-# See unbound.conf(5) man page, version 1.6.2.
 -#
 -# this is a comment.
 +##############################################################################
