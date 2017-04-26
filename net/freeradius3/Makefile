@@ -137,6 +137,8 @@ define Package/freeradius3-mod-eap/conffiles
 /etc/freeradius3/mods-available/eap
 /etc/freeradius3/mods-enabled/eap
 /etc/freeradius3/policy.d/eap
+/etc/freeradius3/sites-enabled/inner-tunnel
+/etc/freeradius3/sites-available/inner-tunnel
 endef
 
 define Package/freeradius3-mod-eap-gtc
@@ -169,11 +171,6 @@ define Package/freeradius3-mod-eap-peap
   TITLE:=EAP/PEAP module
 endef
 
-define Package/freeradius3-mod-eap-peap/conffiles
-/etc/freeradius3/sites-available/inner-tunnel
-/etc/freeradius3/sites-enabled/inner-tunnel
-endef
-
 define Package/freeradius3-mod-eap-tls
   $(call Package/freeradius3/Default)
   DEPENDS:=freeradius3-mod-eap @FREERADIUS3_OPENSSL
@@ -184,11 +181,6 @@ define Package/freeradius3-mod-eap-ttls
   $(call Package/freeradius3/Default)
   DEPENDS:=freeradius3-mod-eap-tls
   TITLE:=EAP/TTLS module
-endef
-
-define Package/freeradius3-mod-eap-ttls/conffiles
-/etc/freeradius3/sites-available/inner-tunnel
-/etc/freeradius3/sites-enabled/inner-tunnel
 endef
 
 define Package/freeradius3-mod-exec
