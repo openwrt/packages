@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openconnect
-PKG_VERSION:=7.06
-PKG_RELEASE:=5
+PKG_VERSION:=7.08
+PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/openconnect/
-PKG_MD5SUM:=80f397911e1fed43d897d99be3d5f1a1
+PKG_HASH:=1c44ec1f37a6a025d1ca726b9555649417f1d31a46f747922b84099ace628a03
 PKG_LICENSE:=LGPLv2.1+
 
 PKG_CONFIG_DEPENDS:= \
@@ -42,7 +42,7 @@ define Package/openconnect/description
 	A VPN client compatible with Cisco's AnyConnect SSL VPN and ocserv.
 
         OpenConnect is a client that follows the Cisco's AnyConnect SSL VPN protocol,
-        which is supported by IOS 12.4(9)T or later on Cisco SR500, 870, 880, 1800, 
+        which is supported by IOS 12.4(9)T or later on Cisco SR500, 870, 880, 1800,
         2800, 3800, 7200 Series and Cisco 7301 Routers, as well as the OpenConnect
         VPN server.
 endef
