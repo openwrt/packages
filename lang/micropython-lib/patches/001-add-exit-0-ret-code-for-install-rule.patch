@@ -1,0 +1,11 @@
+diff --git a/Makefile b/Makefile
+index 7ae0883..9286088 100644
+--- a/Makefile
++++ b/Makefile
+@@ -13,4 +13,5 @@ install:
+ 	        echo $$d; \
+ 	        (cd $$d; sh -c $(CMD)); \
+ 	    done \
+-	fi
++	fi ; \
++	exit 0
