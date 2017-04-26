@@ -1,0 +1,13 @@
+--- a/Makefile
++++ b/Makefile
+@@ -3,8 +3,8 @@ CC=gcc
+ PKG=noip-2.1.tgz
+ 
+ PREFIX=/usr/local
+-CONFDIR=${PREFIX}/etc
+-BINDIR=${PREFIX}/bin
++CONFDIR=${DESTDIR}/${PREFIX}/etc
++BINDIR=${DESTDIR}/${PREFIX}/bin
+ 
+ # these defines are for Linux
+ LIBS=

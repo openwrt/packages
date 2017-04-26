@@ -1,0 +1,62 @@
+--- a/noip2.c
++++ b/noip2.c
+@@ -217,9 +217,9 @@
+   #define UPDATE_SCRIPT		"ducupdate.php"
+ 
+ #ifdef DEBUG
+-  #define OPTCHARS		"CYU:Fc:dD:hp:u:x:SMi:K:I:z"
++  #define OPTCHARS		"kCYU:Fc:dD:hp:u:x:SMi:K:I:z"
+ #else
+-  #define OPTCHARS		"CYU:Fc:hp:u:x:SMi:K:I:z"
++  #define OPTCHARS		"kCYU:Fc:hp:u:x:SMi:K:I:z"
+ #endif
+ #define ARGC			1
+ #define ARGF			(1<<1)
+@@ -234,6 +234,7 @@
+ #define ARGM			(1<<10)
+ #define ARGK			(1<<11)
+ #define ARGi			(1<<12)
++#define ARGk			(1<<13)
+ 
+ #define NODNSGROUP		"@@NO_GROUP@@"
+ #define HOST			1
+@@ -550,6 +551,7 @@ void Usage()
+ 	fprintf(stderr, "         -S               show configuration data\n");
+ 	fprintf(stderr, "         -M               permit multiple instances\n");
+ 	fprintf(stderr, "         -K processID     terminate instance PID\n");
++	fprintf(stderr, "         -k               terminate instance\n");
+ 	fprintf(stderr, "         -z               activate shm dump code\n");
+ 	fprintf(stderr, "         -h               help (this text)\n");
+ }
+@@ -723,6 +725,10 @@ void process_options(int argc, char *arg
+                         kill_proc = atoi(optarg);
+ 			have_args |= ARGK;
+                         break;
++		case 'k':
++		        kill_proc = -1; 
++			have_args |= ARGk;
++			break;
+ 		case 'i':
+ 			strcpy(IPaddress, optarg);
+ 			strcat(saved_args, " -i ");
+@@ -764,8 +770,8 @@ void process_options(int argc, char *arg
+ 	    Msg("Error! -D option can't be used with any other options.");
+ 	    exit(1);
+ 	}
+-	if (kill_proc && (have_args != ARGK)){
+-	    Msg("Error! -K option can't be used with any other options.");
++	if (kill_proc && (have_args != ARGK) && (have_args != ARGk)){
++	    Msg("Error! -K (or -k) option can't be used with any other options.");
+ 	    exit(1);
+ 	}
+ 	if (show_config && (have_args != ARGS)){
+@@ -1357,6 +1363,9 @@ void display_current_config()
+ 		    is = &shared->instance[i];
+ 		    if (is->pid) {
+ 			in_use++;
++			if (kill_proc == -1) {
++			    kill_proc = is->pid;
++			}
+ 			if (is->pid == kill_proc) {
+ 			    if (kill(kill_proc, SIGTERM) != 0) {
+ 				if (errno == ESRCH) {	// no process
