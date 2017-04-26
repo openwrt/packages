@@ -20,7 +20,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-bmx6
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 PKG_LICENSE:=GPL-2.0+
@@ -32,7 +32,7 @@ define Package/luci-app-bmx6
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:= bmx6 configuration, status and visualization module
-  DEPENDS:=+luci-lib-json +luci-mod-admin-full +luci-lib-httpclient +bmx6 +luci-lib-jquery-1-4 +luci-lib-dracula
+  DEPENDS:=+luci-lib-json +luci-base +luci-lib-httpclient +bmx6 +luci-lib-jquery-1-4 +luci-lib-dracula
   MAINTAINER:= Pau Escrich <p4u@dabax.net>
 endef
 
