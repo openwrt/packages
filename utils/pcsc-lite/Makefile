@@ -24,7 +24,7 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/pcsc-lite/Default
-  TITLE:=Middleware to access a smart card using SCard API (PC/SC).
+  TITLE:=Access a smart card using SCard API (PC/SC)
   URL:=http://pcsclite.alioth.debian.org/
 endef
 
