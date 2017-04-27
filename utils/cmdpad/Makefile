@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/cmdpad
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=execute commands when a key is pressed, released or hold down
+  TITLE:=execute commands when key is pressed/released/held down
   URL:=http://cmdpad.sourceforge.net/index.php
 endef
 
