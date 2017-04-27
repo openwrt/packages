@@ -31,7 +31,7 @@ define Package/slide-switch
 	SECTION:=utils
 	CATEGORY:=Utilities
 	DEPENDS:=+jshn +jsonfilter
-	TITLE:=Translate switch position changes into normal button presses
+	TITLE:=Translate switch position change to button press
 	URL:=https://github.com/jefferyto/openwrt-slide-switch
 endef
 
