@@ -4,11 +4,6 @@
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
 
-config_load mwan3
-
-config_get enabled $INTERFACE enabled 0
-[ "$enabled" == "1" ] || exit 0
-
 [ "$ACTION" == "ifup" -o "$ACTION" == "ifdown" ] || exit 1
 [ -n "$INTERFACE" ] || exit 2
 
@@ -21,6 +16,12 @@ fi
 [ -x /usr/sbin/iptables ] || exit 6
 [ -x /usr/sbin/ip6tables ] || exit 7
 [ -x /usr/bin/logger ] || exit 8
+
+mwan3_set_connected_iptables
+
+config_load mwan3
+config_get enabled $INTERFACE enabled 0
+[ "$enabled" == "1" ] || exit 0
 
 config_get family $INTERFACE family ipv4
 
@@ -35,8 +36,6 @@ if [ "$ACTION" == "ifup" ]; then
 fi
 
 $LOG notice "$ACTION interface $INTERFACE (${DEVICE:-unknown})"
-
-mwan3_set_connected_iptables
 
 case "$ACTION" in
 	ifup)
