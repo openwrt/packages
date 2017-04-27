@@ -29,7 +29,7 @@ PKG_FIXUP:=autoreconf
 include $(INCLUDE_DIR)/package.mk
 
 define Package/stoken/Default
-  TITLE:=stoken is a tokencode generator compatible with RSA SecurID 128-bit (AES)
+  TITLE:=tokencode generator compatible with RSA SecurID 128-bit (AES)
   URL:=http://sourceforge.net/p/stoken/
   DEPENDS:= +libxml2 +libnettle
 endef
