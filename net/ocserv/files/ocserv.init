@@ -13,6 +13,7 @@ setup_config() {
 	config_get predictable_ips  $1 predictable_ips "1"
 	config_get compression  $1 compression "0"
 	config_get udp          $1 udp "1"
+	config_get udp_port     $1 udp_port ""
 	config_get auth         $1 auth "plain"
 	config_get cisco_compat $1 cisco_compat "1"
 	config_get ipaddr       $1 ipaddr ""
@@ -48,8 +49,7 @@ setup_config() {
 
 		ping_leases=1
 		local ifname
-		network_get_device ifname lan
-		if test -n "ifname";then
+		if network_get_device ifname lan; then
 			test -n "$ipaddr" && sysctl -w "net.ipv4.conf.$ifname.proxy_arp"=1 >/dev/null
 			test -n "$ip6addr" && sysctl -w "net.ipv6.conf.$ifname.proxy_ndp"=1 >/dev/null
 		fi
@@ -72,6 +72,7 @@ setup_config() {
 	test $split_dns = "1" && enable_split_dns=""
 	test $compression = "1" && enable_compression=""
 
+	test -z $udp_port && udp_port="$port"
 	test -z $default_domain && default_domain=$(uci get dhcp.@dnsmasq[0].domain)
 	test -n $default_domain && enable_default_domain=""
 	test -z $ip6addr && enable_ipv6="#"
@@ -84,6 +85,7 @@ setup_config() {
 
 	mkdir -p /var/etc
 	sed -e "s/|PORT|/$port/g" \
+	    -e "s/|UDP_PORT|/$udp_port/g" \
 	    -e "s/|MAX_CLIENTS|/$max_clients/g" \
 	    -e "s/|MAX_SAME|/$max_same/g" \
 	    -e "s/|DPD|/$dpd/g" \
