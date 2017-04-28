@@ -10,10 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ntfs-3g
 PKG_RELEASE:=1
 
-PKG_VERSION:=2016.2.22
+PKG_VERSION:=2017.3.23
 PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://www.tuxera.com/opensource/
-PKG_MD5SUM:=ccbe8672d0f757bd0c975b50aa4c512e
+PKG_SOURCE_URL:=https://www.tuxera.com/opensource/
+PKG_MD5SUM:=d97474ae1954f772c6d2fa386a6f462c
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
@@ -98,8 +98,8 @@ define Package/ntfs-3g-utils/description
   considerations.
 
   Currently:
-   - ntfs-3g.secaudit
-   - ntfs-3g.usermap
+   - ntfssecaudit
+   - ntfsusermap
 endef
 
 define Package/ntfsprogs_ntfs-3g/description
@@ -215,8 +215,8 @@ endef
 
 define Package/ntfs-3g-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ntfs-3g.secaudit $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ntfs-3g.usermap $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/man/man8/ntfssecaudit.8 $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/man/man8/ntfsusermap.8 $(1)/usr/bin
 endef
 
 define Package/ntfsprogs_ntfs-3g/install
