@@ -13,7 +13,7 @@ PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/ccrypt
-PKG_MD5SUM:=87d66da2170facabf6f2fc073586ae2c7320d4689980cfca415c74688e499ba0
+PKG_HASH:=87d66da2170facabf6f2fc073586ae2c7320d4689980cfca415c74688e499ba0
 PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
 PKG_LICENSE:=GPLv2+
 
@@ -25,7 +25,7 @@ define Package/ccrypt
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Encryption
-  TITLE:=ccrypt is a utility for encrypting and decrypting files and streams
+  TITLE:=utility for encrypting/decrypting files and streams
   URL:=http://ccrypt.sourceforge.net/
 endef
 

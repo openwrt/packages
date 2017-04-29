@@ -10,10 +10,12 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.6.0-2"
+adb_ver="2.6.1"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
+adb_forcesrt=0
+adb_forcedns=0
 adb_backup=0
 adb_backupdir="/mnt"
 adb_whitelist="/etc/adblock/adblock.whitelist"
@@ -113,6 +115,26 @@ f_envload()
     #
     config_load adblock
     config_foreach parse_config source
+
+    # force dns to local resolver
+    #
+    if [ ${adb_forcedns} -eq 1 ] && [ -z "$(uci -q get firewall.adblock_dns)" ]
+    then
+        uci -q set firewall.adblock_dns="redirect"
+        uci -q set firewall.adblock_dns.src="lan"
+        uci -q set firewall.adblock_dns.proto="tcp udp"
+        uci -q set firewall.adblock_dns.src_dport="53"
+        uci -q set firewall.adblock_dns.dest_port="53"
+        uci -q set firewall.adblock_dns.target="DNAT"
+    elif [ ${adb_forcedns} -eq 0 ] && [ -n "$(uci -q get firewall.adblock_dns)" ]
+    then
+        uci -q delete firewall.adblock_dns
+    fi
+    if [ -n "$(uci -q changes firewall)" ]
+    then
+        uci -q commit firewall
+        /etc/init.d/firewall reload >/dev/null 2>&1
+    fi
 }
 
 # f_envcheck: check/set environment prerequisites
@@ -416,7 +438,7 @@ f_main()
 
         # download block list
         #
-        f_log "debug" "name: ${src_name}, enabled: ${enabled}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, memory: ${mem_total}"
+        f_log "debug" "name: ${src_name}, enabled: ${enabled}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, memory: ${mem_total}, force srt/dns: ${adb_forcesrt}/${adb_forcedns}"
         if [ "${src_name}" = "blacklist" ]
         then
             cat "${url}" 2>/dev/null > "${adb_tmpload}"
@@ -488,7 +510,7 @@ f_main()
     #
     for src_name in $(ls -dASr "${adb_tmpdir}/${adb_dnsprefix}"* 2>/dev/null)
     do
-        if [ ${mem_total} -ge 64000 ]
+        if [ ${mem_total} -ge 64000 ] || [ ${adb_forcesrt} -eq 1 ]
         then
             if [ -s "${adb_tmpdir}/blocklist.overall" ]
             then

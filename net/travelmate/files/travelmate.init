@@ -1,20 +1,23 @@
 #!/bin/sh /etc/rc.common
 
-START=85
+START=35
 USE_PROCD=1
+
+EXTRA_COMMANDS="status"
+EXTRA_HELP="	status	Print runtime information"
 
 trm_init="/etc/init.d/travelmate"
 trm_script="/usr/bin/travelmate.sh"
 
 boot()
 {
-    ubus -t 30 wait_for network.interface
+    ubus -t 30 wait_for network.interface 2>/dev/null
     rc_procd start_service
 }
 
 start_service()
 {
-    if [ $(/etc/init.d/travelmate enabled; printf ${?}) -eq 0 ]
+    if [ $("${trm_init}" enabled; printf ${?}) -eq 0 ]
     then
         procd_open_instance "travelmate"
         procd_set_param command "${trm_script}" "${@}"
@@ -24,13 +27,21 @@ start_service()
     fi
 }
 
+status()
+{
+    rc_procd "${trm_script}" status
+}
+
 service_triggers()
 {
     local iface="$(uci -q get travelmate.global.trm_iface)"
+    local delay="$(uci -q get travelmate.global.trm_triggerdelay)"
 
+    PROCD_RELOAD_DELAY=$((${delay:=2} * 1000))
     for name in ${iface}
     do
         procd_add_interface_trigger "interface.*.down" "${name}" "${trm_init}" start
     done
+    PROCD_RELOAD_DELAY=1000
     procd_add_config_trigger "config.change" "travelmate" "${trm_init}" start
 }

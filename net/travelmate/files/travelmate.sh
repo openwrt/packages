@@ -10,23 +10,25 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.6.0"
+trm_ver="0.7.1"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0
-trm_automatic=0
-trm_maxwait=30
+trm_automatic=1
 trm_maxretry=3
+trm_maxwait=30
 trm_timeout=60
 trm_iw=1
+trm_rtfile="/tmp/trm_runtime.json"
 
 # source required system library
 #
-if [ -r "/lib/functions.sh" ]
+if [ -r "/lib/functions.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]
 then
     . "/lib/functions.sh"
+    . "/usr/share/libubox/jshn.sh"
 else
-    f_log "error" "required system library not found"
+    f_log "error" "system libraries not found"
 fi
 
 # f_envload: load travelmate environment
@@ -134,28 +136,43 @@ f_check()
     f_log "debug" "mode: ${mode}, name: ${ifname}, status: ${trm_ifstatus}, count: ${cnt}, max-wait: ${trm_maxwait}, automatic: ${trm_automatic}"
 }
 
-# f_ubus: update ubus service
+# f_jsnupdate: update runtime information
 #
-f_ubus()
+f_jsnupdate()
 {
-    local active_triggers iface="${1}" radio="${2}" ssid="${3}"
+    local iface="${1}" radio="${2}" ssid="${3}"
 
-    for name in ${trm_iface}
-    do
-        active_triggers="${active_triggers}[\"interface.*.down\",[\"if\",[\"eq\",\"interface\",\"${name}\"],[\"run_script\",\"/etc/init.d/travelmate\",\"start\"],1000]],"
-    done
-    active_triggers="${active_triggers}[\"config.change\",[\"if\",[\"eq\",\"package\",\"travelmate\"],[\"run_script\",\"/etc/init.d/travelmate\",\"start\"],1000]]"
+    json_init
+    json_add_object "data"
+    json_add_string "travelmate_version" "${trm_ver}"
+    json_add_string "station_connection" "${trm_ifstatus}"
+    json_add_string "station_ssid" "${ssid}"
+    json_add_string "station_interface" "${iface}"
+    json_add_string "station_radio" "${radio}"
+    json_add_string "last_rundate" "$(/bin/date "+%d.%m.%Y %H:%M:%S")"
+    json_add_string "system" "${trm_sysver}"
+    json_close_object
+    json_dump > "${trm_rtfile}"
+}
 
-    ubus call service add "{\"name\":\"travelmate\",
-        \"instances\":{\"travelmate\":{\"command\":[\"/usr/bin/travelmate.sh\"],
-        \"data\":{\"travelmate_version\":\"${trm_ver}\",
-        \"station_interface\":\"${iface}\",
-        \"station_radio\":\"${radio}\",
-        \"station_ssid\":\"${ssid}\",
-        \"last_rundate\":\"$(/bin/date "+%d.%m.%Y %H:%M:%S")\",
-        \"online_status\":\"${trm_ifstatus}\",
-        \"system\":\"${trm_sysver}\"}}},
-        \"triggers\":[${active_triggers}]}"
+# f_status: output runtime information
+#
+f_status()
+{
+    local key keylist value
+
+    if [ -s "${trm_rtfile}" ]
+    then
+        printf "%s\n" "::: travelmate runtime information"
+        json_load "$(cat "${trm_rtfile}" 2>/dev/null)"
+        json_select data
+        json_get_keys keylist
+        for key in ${keylist}
+        do
+            json_get_var value ${key}
+            printf " %-18s : %s\n" "${key}" "${value}"
+        done
+    fi
 }
 
 # f_log: write to syslog, exit on error
@@ -191,7 +208,6 @@ f_main()
         then
             uci -q commit wireless
             ubus call network reload
-            sleep 5
         fi
         f_check "ap"
         f_log "debug" "ap-list: ${trm_aplist}, sta-list: ${trm_stalist}"
@@ -236,14 +252,13 @@ f_main()
                             then
                                 uci -q commit wireless
                                 f_log "info " "interface '${sta_iface}' on '${sta_radio}' connected to uplink '${sta_ssid}' (${trm_sysver})"
-                                sleep 5
-                                f_ubus "${sta_iface}" "${sta_radio}" "${sta_ssid}"
+                                f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
                                 return 0
                             else
                                 uci -q revert wireless
                                 ubus call network reload
                                 f_log "info " "interface '${sta_iface}' on '${sta_radio}' can't connect to uplink '${sta_ssid}' (${trm_sysver})"
-                                f_ubus "${sta_iface}" "${sta_radio}" "${sta_ssid}"
+                                f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
                             fi
                         fi
                     done
@@ -252,15 +267,33 @@ f_main()
                 sleep 5
             done
         done
+    else
+        if [ ! -s "${trm_rtfile}" ]
+        then
+            config="$(ubus -S call network.wireless status | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].section')"
+            sta_radio="$(uci -q get wireless."${config}".device)"
+            sta_ssid="$(uci -q get wireless."${config}".ssid)"
+            sta_iface="$(uci -q get wireless."${config}".network)"
+            f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
+        fi
     fi
 }
 
+# handle different travelmate actions
+#
 f_envload
-f_main
-while [ ${trm_automatic} -eq 1 ]
-do
-    sleep ${trm_timeout}
-    f_envload
-    f_main
-done
+case "${1}" in
+    status)
+        f_status
+        ;;
+    *)
+        f_main
+        while [ ${trm_automatic} -eq 1 ]
+        do
+            sleep ${trm_timeout}
+            f_envload
+            f_main
+        done
+        ;;
+esac
 exit 0
