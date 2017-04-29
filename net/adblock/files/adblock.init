@@ -1,41 +1,33 @@
 #!/bin/sh /etc/rc.common
 #
 
-START=90
+START=50
 USE_PROCD=1
 
-EXTRA_COMMANDS="suspend resume query"
+EXTRA_COMMANDS="suspend resume query status"
 EXTRA_HELP="	suspend	Suspend adblock processing
 	resume	Resume adblock processing
-	query	<DOMAIN> Query active blocklists for specific domain"
+	query	<DOMAIN> Query active blocklists for specific domains
+	status	Print runtime information"
 
+adb_init="/etc/init.d/adblock"
 adb_script="/usr/bin/adblock.sh"
 
 boot()
 {
-    local wanif4 wanif6 cnt=0 max_cnt=30
-
-    . "/lib/functions/network.sh"
-    while [ ${cnt} -le ${max_cnt} ]
-    do
-        network_find_wan wanif4
-        network_find_wan6 wanif6
-        if [ -n "${wanif4}" ] || [ -n "${wanif6}" ] || [ ${cnt} -eq ${max_cnt} ]
-        then
-            rc_procd start_service
-            return 0
-        else
-            sleep 1
-            cnt=$((cnt+1))
-            network_flush_cache
-        fi
-    done
+    adb_boot=1
+    ubus -t 30 wait_for network.interface 2>/dev/null
+    rc_procd start_service
 }
 
 start_service()
 {
-    if [ $(/etc/init.d/adblock enabled; printf ${?}) -eq 0 ]
+    if [ $("${adb_init}" enabled; printf ${?}) -eq 0 ]
     then
+        if [ -n "${adb_boot}" ]
+        then
+            return 0
+        fi
         procd_open_instance "adblock"
         procd_set_param command "${adb_script}" "${@}"
         procd_set_param stdout 1
@@ -44,14 +36,10 @@ start_service()
     fi
 }
 
-reload_service()
-{
-    rc_procd start_service reload
-}
-
 stop_service()
 {
     rc_procd "${adb_script}" stop
+    rc_procd start_service
 }
 
 restart()
@@ -61,12 +49,12 @@ restart()
 
 suspend()
 {
-    rc_procd start_service suspend
+    rc_procd "${adb_script}" suspend
 }
 
 resume()
 {
-    rc_procd start_service resume
+    rc_procd "${adb_script}" resume
 }
 
 query()
@@ -74,18 +62,21 @@ query()
     rc_procd "${adb_script}" query "${1}"
 }
 
+status()
+{
+    rc_procd "${adb_script}" status
+}
+
 service_triggers()
 {
     local iface="$(uci -q get adblock.global.adb_iface)"
+    local delay="$(uci -q get adblock.global.adb_triggerdelay)"
 
-    if [ -z "${iface}" ]
-    then
-        procd_add_raw_trigger "interface.*.up" 1000 /etc/init.d/adblock start
-    else
-        for name in ${iface}
-        do
-            procd_add_interface_trigger "interface.*.up" "${name}" /etc/init.d/adblock start
-        done
-    fi
-    procd_add_config_trigger "config.change" "adblock" /etc/init.d/adblock start
+    PROCD_RELOAD_DELAY=$((${delay:=2} * 1000))
+    for name in ${iface}
+    do
+        procd_add_interface_trigger "interface.*.up" "${name}" "${adb_init}" start
+    done
+    PROCD_RELOAD_DELAY=1000
+    procd_add_config_trigger "config.change" "adblock" "${adb_init}" start
 }
