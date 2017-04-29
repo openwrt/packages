@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.6.1"
+adb_ver="2.6.2"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
@@ -121,6 +121,7 @@ f_envload()
     if [ ${adb_forcedns} -eq 1 ] && [ -z "$(uci -q get firewall.adblock_dns)" ]
     then
         uci -q set firewall.adblock_dns="redirect"
+        uci -q set firewall.adblock_dns.name="Adblock DNS"
         uci -q set firewall.adblock_dns.src="lan"
         uci -q set firewall.adblock_dns.proto="tcp udp"
         uci -q set firewall.adblock_dns.src_dport="53"
@@ -133,7 +134,10 @@ f_envload()
     if [ -n "$(uci -q changes firewall)" ]
     then
         uci -q commit firewall
-        /etc/init.d/firewall reload >/dev/null 2>&1
+        if [ $(/etc/init.d/firewall enabled; printf ${?}) -eq 0 ]
+        then
+            /etc/init.d/firewall reload >/dev/null 2>&1
+        fi
     fi
 }
 
