@@ -36,7 +36,9 @@ service_triggers()
 {
     local iface="$(uci -q get travelmate.global.trm_iface)"
     local delay="$(uci -q get travelmate.global.trm_triggerdelay)"
-
+    local trm_rtfile="/tmp/trm_runtime.json"
+ 
+    [ -f $trm_rtfile ] && rm -f $trm_rtfile
     PROCD_RELOAD_DELAY=$((${delay:=2} * 1000))
     for name in ${iface}
     do
