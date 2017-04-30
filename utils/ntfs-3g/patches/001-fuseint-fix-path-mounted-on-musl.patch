@@ -1,8 +1,6 @@
-Index: ntfs-3g-2014.2.15-1-fuseint/libfuse-lite/fusermount.c
-===================================================================
---- ntfs-3g-2014.2.15-1-fuseint.orig/libfuse-lite/fusermount.c
-+++ ntfs-3g-2014.2.15-1-fuseint/libfuse-lite/fusermount.c
-@@ -36,6 +36,10 @@
+--- a/libfuse-lite/fusermount.c
++++ b/libfuse-lite/fusermount.c
+@@ -37,6 +37,10 @@
  
  #define FUSE_DEV_NEW "/dev/fuse"
  
@@ -13,11 +11,9 @@ Index: ntfs-3g-2014.2.15-1-fuseint/libfuse-lite/fusermount.c
  #ifndef MS_DIRSYNC
  #define MS_DIRSYNC 128
  #endif
-Index: ntfs-3g-2014.2.15-1-fuseint/libfuse-lite/mount_util.c
-===================================================================
---- ntfs-3g-2014.2.15-1-fuseint.orig/libfuse-lite/mount_util.c
-+++ ntfs-3g-2014.2.15-1-fuseint/libfuse-lite/mount_util.c
-@@ -255,6 +255,10 @@ int fuse_mnt_check_fuseblk(void)
+--- a/libfuse-lite/mount_util.c
++++ b/libfuse-lite/mount_util.c
+@@ -264,6 +264,10 @@ int fuse_mnt_check_fuseblk(void)
  
  #else /* __SOLARIS__ */
  
