@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
 PKG_VERSION:=3.3.11
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
 
@@ -20,6 +20,8 @@ PKG_SOURCE_VERSION:=8a198e3eafbde0b627e9992b41d26e6762e4f8c7
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MIRROR_HASH:=60da7bd78e834112494e4019998c9de8d61f747eab244ef3c42cadc7fd0958cc
 
+PKG_MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
+
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
@@ -29,9 +31,18 @@ include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_ARGS += --enable-skill
 
+# most of these have alternatives provided by busybox applets
 PROCPS_APPLETS := \
     free kill pgrep pkill pmap ps pwdx skill slabtop \
     snice tload top uptime vmstat w watch
+
+# procps-ng will be configured with "--bindir=/usr/bin --sbindir=/usr/sbin" and
+# as such executables will be installed there by default, but some of them need
+# to reside in locations such as /bin and /sbin to be in accordance with
+# busybox alternatives which is also other distributions like debian and centos
+# are doing
+PROCPS_APPLETS_DIR_bin:=kill ps watch
+procps-applets-dir=$(if $(findstring $(1),$(PROCPS_APPLETS_DIR_bin)),/bin,/usr/bin)
 
 define Package/procps-ng/Default
   SECTION:=utils
@@ -39,7 +50,6 @@ define Package/procps-ng/Default
   DEPENDS:=+libncurses
   TITLE:=procps-ng utilities
   URL:=https://gitlab.com/procps-ng/procps
-  MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
 endef
 
 define Build/Prepare
@@ -67,6 +77,7 @@ define GenPlugin
    DEPENDS:=procps-ng
    TITLE:=Applet $(2) from the procps-ng package
    DEFAULT:=y
+   ALTERNATIVES:=200:$(3)/$(2):$(3)/$(1)
  endef
 
  define Package/$(1)/description
@@ -74,7 +85,7 @@ define GenPlugin
  endef
 endef
 
-$(foreach a,$(PROCPS_APPLETS),$(eval $(call GenPlugin,procps-ng-$(a),$(a))))
+$(foreach a,$(PROCPS_APPLETS),$(eval $(call GenPlugin,procps-ng-$(a),$(a),$(call procps-applets-dir,$(a)))))
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
@@ -82,19 +93,18 @@ MAKE_FLAGS += \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 
 define Package/procps-ng/install
-	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libprocps.so* $(1)/usr/lib/
 endef
 
 define BuildPlugin
   define Package/$(1)/install
-	$(INSTALL_DIR) $$(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $$(1)/usr/bin/
+	$(INSTALL_DIR) $$(1)$(3)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $$(1)$(3)/$(1)
   endef
 
   $$(eval $$(call BuildPackage,$(1)))
 endef
 
-$(foreach a,$(PROCPS_APPLETS),$(eval $(call BuildPlugin,procps-ng-$(a),$(a))))
+$(foreach a,$(PROCPS_APPLETS),$(eval $(call BuildPlugin,procps-ng-$(a),$(a),$(call procps-applets-dir,$(a)))))
 $(eval $(call BuildPackage,procps-ng))
