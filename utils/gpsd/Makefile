@@ -102,6 +102,7 @@ SCONS_OPTIONS += \
 	python=no \
 	implicit_link=no \
 	chrpath=no \
+	manbuild=no \
 	target="$(TARGET_CROSS:-=)"
 
 define Build/InstallDev
