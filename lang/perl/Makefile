@@ -80,6 +80,11 @@ define Host/Configure
 	( cd $(HOST_BUILD_DIR); ./Configure -der -Uusedl -Duserelocatableinc -Dprefix=$(HOST_PERL_PREFIX) $(if $(CONFIG_PERL_THREADS),-Dusethreads,))
 endef
 
+HOST_MAKE_FLAGS +=\
+	SHELL="/usr/bin/env SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) /bin/sh " \
+	SOURCE_DATE_EPOCH="$(SOURCE_DATE_EPOCH)" \
+	MAKE="$(MAKE) SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) "
+
 define Host/Install
 	( cd $(HOST_BUILD_DIR); ./miniperl installperl )
 	$(INSTALL_DIR) $(HOST_PERL_PREFIX)/bin/
