@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2009-2012 OpenWrt.org
+# Copyright (C) 2009-2017 OpenWrt.org
 
 START=95
 
@@ -26,12 +26,12 @@ start_instance() {
 	config_get val "${section}" ssl
 	[ -n "${val}" ] && append args "--ssl ${val}"
 	# D) openvpn parameter
-        config_get val "${section}" openvpn
-        [ -n "${val}" ] && append args "--openvpn ${val}"
+	config_get val "${section}" openvpn
+	 [ -n "${val}" ] && append args "--openvpn ${val}"
 	# E) tinc parameter
-        config_get val "${section}" tinc
-        [ -n "${val}" ] && append args "--tinc ${val}"
-	# F) xmpp parameter
+	config_get val "${section}" tinc
+	 [ -n "${val}" ] && append args "--tinc ${val}"
+	 # F) xmpp parameter
 	config_get val "${section}" xmpp
 	[ -n "${val}" ] && append args "--xmpp ${val}"
 	# G) timeout (before a connection is considered to be SSH)
@@ -41,6 +41,9 @@ start_instance() {
 	local verbosed
 	config_get_bool verbosed "${section}" verbose 0
 	[ "${verbosed}" -ne 0 ] && append args "-v"
+	 # I) sslh config file (cmd line args override file settings)
+	config_get val "${section}" configfile
+	[ -n "${val}" ] && append args "-F${val}"
 
 	# Defaults were removed for --user and --pidfile options
 	# in sslh 1.11; Define them here instead.

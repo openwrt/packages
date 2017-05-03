@@ -6,6 +6,7 @@ IPS="/usr/sbin/ipset"
 IPT4="/usr/sbin/iptables -t mangle -w"
 IPT6="/usr/sbin/ip6tables -t mangle -w"
 LOG="/usr/bin/logger -t mwan3 -p"
+CONNTRACK_FILE="/proc/net/nf_conntrack"
 
 mwan3_get_iface_id()
 {
@@ -129,7 +130,12 @@ mwan3_create_iface_iptables()
 
 	if [ "$family" == "ipv4" ]; then
 
-		network_get_ipaddr src_ip $1
+		ubus call network.interface.${1}_4 status &>/dev/null
+		if [ "$?" -eq "0" ]; then
+			network_get_ipaddr src_ip ${1}_4
+		else
+			network_get_ipaddr src_ip $1
+		fi
 
 		$IPS -! create mwan3_connected list:set
 
@@ -165,7 +171,12 @@ mwan3_create_iface_iptables()
 
 	if [ "$family" == "ipv6" ]; then
 
-		network_get_ipaddr6 src_ipv6 $1
+		ubus call network.interface.${1}_6 status &>/dev/null
+		if [ "$?" -eq "0" ]; then
+			network_get_ipaddr6 src_ipv6 ${1}_6
+		else
+			network_get_ipaddr6 src_ipv6 $1
+		fi
 
 		$IPS -! create mwan3_connected_v6 hash:net family inet6
 
@@ -237,8 +248,13 @@ mwan3_create_iface_route()
 	[ -n "$id" ] || return 0
 
 	if [ "$family" == "ipv4" ]; then
+		ubus call network.interface.${1}_4 status &>/dev/null
+		if [ "$?" -eq "0" ]; then
+			network_get_gateway route_args ${1}_4
+		else
+			network_get_gateway route_args $1
+		fi
 
-		network_get_gateway route_args $1
 		route_args="via $route_args dev $2"
 
 		$IP4 route flush table $id
@@ -247,7 +263,13 @@ mwan3_create_iface_route()
 
 	if [ "$family" == "ipv6" ]; then
 
-		network_get_gateway6 route_args $1
+		ubus call network.interface.${1}_6 status &>/dev/null
+		if [ "$?" -eq "0" ]; then
+			network_get_gateway6 route_args ${1}_6
+		else
+			network_get_gateway6 route_args $1
+		fi
+
 		route_args="via $route_args dev $2"
 
 		$IP6 route flush table $id
@@ -360,7 +382,7 @@ mwan3_delete_iface_ipset_entries()
 
 mwan3_track()
 {
-	local track_ip track_ips reliability count timeout interval down up
+	local track_ip track_ips
 
 	mwan3_list_track_ips()
 	{
@@ -370,18 +392,27 @@ mwan3_track()
 
 	if [ -e /var/run/mwan3track-$1.pid ] ; then
 		kill $(cat /var/run/mwan3track-$1.pid) &> /dev/null
-		rm /var/run/mwan3track-$1.pid &> /dev/null
 	fi
 
 	if [ -n "$track_ips" ]; then
-		config_get reliability $1 reliability 1
-		config_get count $1 count 1
-		config_get timeout $1 timeout 4
-		config_get interval $1 interval 10
-		config_get down $1 down 5
-		config_get up $1 up 5
+		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $1 $2 $track_ips &
+	fi
+}
 
-		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $1 $2 $reliability $count $timeout $interval $down $up $track_ips &
+mwan3_track_signal()
+{
+	local pid status
+
+	if [ -f "/var/run/mwan3track-${1}.pid" ]; then
+		pid="$(cat "/var/run/mwan3track-${1}.pid")"
+		status="$(pgrep -f mwan3track | grep "${pid}")"
+		if [ "${status}" != "" ]; then
+			kill -USR1 "${pid}"
+		else
+			$LOG warn "Unable to send signal USR1 to mwan3track on interface $1 with pid ${pid}"
+		fi
+	else
+		$LOG warn "Unable to find \"/var/run/mwan3track-${1}.pid\" file for mwan3track on interface $1"
 	fi
 }
 
@@ -802,5 +833,38 @@ mwan3_report_rules_v6()
 {
 	if [ -n "$($IPT6 -S mwan3_rules 2> /dev/null)" ]; then
 		$IPT6 -L mwan3_rules -n -v 2> /dev/null | tail -n+3 | sed 's/mark.*//' | sed 's/mwan3_policy_/- /' | sed 's/mwan3_rule_/S /'
+	fi
+}
+
+mwan3_flush_conntrack()
+{
+	local flush_conntrack
+
+	config_get flush_conntrack $1 flush_conntrack never
+
+	if [ -e "$CONNTRACK_FILE" ]; then
+		case $flush_conntrack in
+			ifup)
+				[ "$3" = "ifup" ] && {
+					echo f > ${CONNTRACK_FILE}
+					$LOG info "connection tracking flushed on interface $1 ($2) $3"
+				}
+				;;
+			ifdown)
+				[ "$3" = "ifdown" ] && {
+					echo f > ${CONNTRACK_FILE}
+					$LOG info "connection tracking flushed on interface $1 ($2) $3"
+				}
+				;;
+			always)
+				echo f > ${CONNTRACK_FILE}
+				$LOG info "connection tracking flushed on interface $1 ($2) $3"
+				;;
+			never)
+				$LOG info "connection tracking not flushed on interface $1 ($2) $3"
+				;;
+		esac
+	else
+		$LOG warning "connection tracking not enabled"
 	fi
 }

@@ -1,0 +1,201 @@
+#!/bin/sh /etc/rc.common
+PKG_VERSION=
+
+export START=94
+export USE_PROCD=1
+#PROCD_DEBUG=1
+
+readonly A_TMP='/var/hosts.allowed.tmp'
+readonly B_TMP='/var/hosts.blocked.tmp'
+readonly T_TMP='/var/simple-adblock.hosts'
+readonly dl='wget --no-check-certificate -qO-'
+readonly h_filter='/localhost/d;/^#/d;/*/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/^$/d;'
+readonly d_filter='/localhost/d;/^#/d;/*/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/^</d;/^$/d;'
+readonly f_filter='s|^|local=/|;s|$|/|'
+readonly _ok_='\033[0;32m\xe2\x9c\x93\033[0m'
+readonly _fail_='\033[0;31m\xe2\x9c\x97\033[0m'
+readonly __ok__='\033[0;32m[\xe2\x9c\x93]\033[0m'
+readonly __fail__='\033[0;31m[\xe2\x9c\x97]\033[0m'
+readonly _error_='\033[0;31mERROR\033[0m'
+
+export verbosity=2 force_dns=1 bgrun=0 hosts_file='/var/dnsmasq.d/simple-adblock' led wan_if wan_gw wanphysdev
+
+ok() { case $verbosity in 1) output "$_ok_";; 2) output "$__ok__\n";; esac; }
+okn() { case $verbosity in 1) output "$_ok_\n";; 2) output "$__ok__\n";; esac; }
+fail() { case $verbosity in 1) output "$_fail_";; 2) output "$__fail__\n";; esac; }
+failn() { case $verbosity in 1) output "$_fail_\n";; 2) output "$__fail__\n";; esac; }
+output() { [[ $# -ne 1 ]] && { [[ ! $((verbosity & $1)) -gt 0 ]] && return 0 || shift; }; local msg; msg=$(echo -n "${1/$p_name /service }" | sed 's|\\033\[[0-9]\?;\?[0-9]\?[0-9]\?m||g'); [[ -t 1 ]] && echo -e -n "$1"; [[ $(echo -e -n "$msg" | wc -l) -gt 0 ]] && logger -t "${PKG_NAME:-service} [$$]" "$(echo -e -n ${logmsg}${msg})" && logmsg='' || logmsg=${logmsg}${msg}; }
+PKG_NAME="${PKG_NAME:-simple-adblock}"; p_name="${PKG_NAME} ${PKG_VERSION}"
+
+led_on(){ [[ -n "$led" && -e "$led/trigger" ]] && echo "default-on" > "$led/trigger"; }
+led_off(){ [[ -n "$led" && -e "$led/trigger" ]] && echo "none" > "$led/trigger"; }
+
+is_enabled () {
+		local c=1 enabled
+		config_load $PKG_NAME
+		config_get_bool enabled   'config' 'enabled' 1
+		config_get_bool bgrun     'config' 'run_in_background' 0
+		config_get_bool force_dns 'config' 'force_dns' 1
+		config_get verbosity      'config' 'verbosity' '2'
+		config_get hosts_file  	  'config' 'hosts_file' '/var/dnsmasq.d/simple-adblock'
+		config_get led        	  'config' 'led'
+		led="${led:+/sys/class/leds/$led}"
+		[[ $enabled -gt 0 ]] || { output "$_error_: $p_name is not enabled.\n"; return 1; }
+		source 	/lib/functions/network.sh
+		while : ; do
+			network_find_wan wan_if;	[ -n "$wan_if" ] && network_get_gateway wan_gw $wan_if;
+			[[ $c -ge 25 || -n "$wan_gw" ]] && break
+			output "$p_name waiting for wan gateway...\n"; sleep 2; network_flush_cache; let "c+=1";
+		done
+		[ -n "$wan_gw" ] && return 0 || { output "$_error_: $p_name failed to discover WAN gateway.\n"; return 1; }
+}
+
+reset_iptables() {
+  [[ $force_dns -eq 0 ]] && return 0
+	[ -z "$PKG_NAME" ] && return 1
+	iptables-save | grep -Fv -- "$PKG_NAME" | iptables-restore
+	lsmod | grep -q ip6table_nat && ip6tables-save | grep -Fv -- "$PKG_NAME" | ip6tables-restore
+	[ ! "$1" == "quiet" ] && output 'No longer forcing local DNS server.\n'
+}
+
+set_iptables() {
+	local ip ipv6 label ipv6wan brname
+	network_get_ipaddr ip lan; network_get_ipaddr6 ipv6 lan; network_get_device brname lan; network_get_physdev wanphysdev wan;
+	ipv6wan=$(ifconfig $wanphysdev | grep inet6 | awk '{print $3}')
+
+	if [[ $force_dns -ne 0 ]]; then
+		[ -n "$ip" ] && iptables -t nat -A prerouting_rule -i $brname -p tcp --dport 53 -j DNAT --to $ip -m comment --comment "$PKG_NAME"
+		[ -n "$ip" ] && iptables -t nat -A prerouting_rule -i $brname -p udp --dport 53 -j DNAT --to $ip -m comment --comment "$PKG_NAME"
+		if [[ -n "$ipv6" && -n "$ipv6wan" ]] && lsmod | grep -q ip6table_nat; then
+			ip6tables -t nat -A PREROUTING -i $brname -p tcp --dport 53 -j DNAT --to-destination [$ipv6] -m comment --comment "$PKG_NAME"
+			ip6tables -t nat -A PREROUTING -i $brname -p udp --dport 53 -j DNAT --to-destination [$ipv6] -m comment --comment "$PKG_NAME"
+			label="$ip/$ipv6"
+		else
+			label="$ip"
+		fi
+		[ -n "$label" ] && output "Forcing local DNS server: $label.\n" || output "$_error_: $p_name failed to obtain LAN IP address for DNS forcing!\n"
+	fi
+}
+
+stop_adblocking () {
+    [ -f $hosts_file ] && mv $hosts_file $T_TMP
+    output 3 "Restarting dnsmasq "
+		led_off
+    /etc/init.d/dnsmasq restart >/dev/null  2>&1
+		[[ $? -eq 0 ]] && { okn; output "$p_name stopped.\n"; } || { failn; output "$_error_: $p_name failed to reload dnsmasq!\n"; }
+}
+
+process_url() {
+	local label type D_TMP R_TMP
+	[[ -n "$1" && -n "$2" && -n "$3" ]] || return 1
+	local url=$1
+	[ "$2" == "hosts" ] && label="Hosts: $(echo $1 | cut -d'/' -f3)" filter="$h_filter" || label="Domains: $(echo $1 | cut -d'/' -f3)" filter="$d_filter"
+	[ "$3" == "blocked" ] && { type='Blocked'; D_TMP="$B_TMP"; } || { type='Allowed'; D_TMP="$A_TMP"; }
+	R_TMP="/var/simple-adblock_$(head /dev/urandom | tr -dc 'A-Za-z0-9' | head -c10)"
+	while [ -e "$R_TMP" ]; do R_TMP="/var/simple-adblock_$(head /dev/urandom | tr -dc 'A-Za-z0-9' | head -c10)"; done
+	touch "$R_TMP"
+    output 2 "[DL] $type $label "
+    $dl "${url}" > "$R_TMP" && ok || fail
+	{ sed -i "$filter" "$R_TMP"; cat "$R_TMP" >> "$D_TMP"; rm -f "$R_TMP"; } &
+}
+
+start_adblocking () {
+		local whitelist_domains blacklist_domains whitelist_domains_urls blacklist_domains_urls blacklist_hosts_urls
+    config_get whitelist_domains          'config' 'whitelist_domain'
+    config_get blacklist_domains          'config' 'blacklist_domain'
+    config_get whitelist_domains_urls     'config' 'whitelist_domains_url'
+    config_get blacklist_domains_urls     'config' 'blacklist_domains_url'
+    config_get blacklist_hosts_urls       'config' 'blacklist_hosts_url'
+
+    local hf w_filter
+
+	[ ! -d ${hosts_file%/*} ] && mkdir -p ${hosts_file%/*}
+	if [[ -s $T_TMP && ! "$1" == "reload" ]]; then
+		output 3 'Found existing data file, reusing it '
+		mv $T_TMP $hosts_file && okn || failn
+	else
+		[ -f $A_TMP ] && rm -f $A_TMP; [ -f $B_TMP ] && rm -f $B_TMP; [ -f $T_TMP ] && rm -f $T_TMP; [ -f $hosts_file ] && rm -f $hosts_file
+	    touch $A_TMP; touch $B_TMP; touch $T_TMP;
+
+	    if [ -n "$blacklist_hosts_urls" ]; then
+		    output 1 '[DL] Blocked Hosts '
+		    for hf in ${blacklist_hosts_urls}; do process_url "$hf" 'hosts' 'blocked'; done
+				output 1 '\n'
+		fi
+
+	    if [ -n "$blacklist_domains_urls" ]; then
+		    output 1 '[DL] Blocked Domains '
+		    for hf in ${blacklist_domains_urls}; do process_url "$hf" 'domains' 'blocked'; done
+				output 1 '\n'
+		fi
+
+	    if [ -n "$whitelist_domains_urls" ]; then
+		    output 1 '[DL] Allowed Domains '
+		    for hf in ${whitelist_domains_urls}; do process_url "$hf" 'domains' 'allowed'; done
+				output 1 '\n'
+		fi
+		output 3 'Waiting for background processes '
+		wait && okn
+
+	    [ -n "$blacklist_domains" ] && for hf in ${blacklist_domains}; do echo "$hf" | sed "$d_filter" >> $B_TMP; done
+	    whitelist_domains="${whitelist_domains}"$'\n'"$(cat $A_TMP)"
+	    [ -n "$whitelist_domains" ] && for hf in ${whitelist_domains}; do hf=$(echo $hf | sed 's/\./\\./g'); w_filter="$w_filter/^${hf}$/d;/\\.${hf}$/d;"; done
+
+		if [ -s $B_TMP ]; then
+		    output 1 'Processing downloads '
+		    output 2 'Sorting merged file '; sort $B_TMP | uniq > $T_TMP && ok || fail
+		    output 2 'Whitelisting domains '; sed -i "$w_filter" $T_TMP && ok || fail
+		    output 2 'Formatting merged file '; sed "$f_filter" $T_TMP > $hosts_file && ok || fail
+		    output 1 '\n'
+
+		    output 3 'Removing temporary files '
+			[ -f $A_TMP ] && rm -f $A_TMP; [ -f $B_TMP ] && rm -f $B_TMP; [ -f $T_TMP ] && rm -f $T_TMP;
+ 		    okn
+		fi
+	fi
+
+	if [ -s $hosts_file ]; then
+		output 3 'Restarting dnsmasq '
+		/etc/init.d/dnsmasq restart >/dev/null  2>&1
+		if [[ $? -eq 0 ]]; then
+			led_on; okn;
+			output "$p_name blocking $(wc -l < $hosts_file) domains $_ok_\n"
+		else
+			failn; output "$_error_: $p_name failed to reload dnsmasq!\n";
+			exit 1
+		fi
+	else
+		output "$_error_: $p_name failed to create its data file!\n"
+		exit 1
+	fi
+}
+
+boot() { sleep 10; rc_procd start_service; rc_procd service_triggers; }
+
+reload_service () {
+  is_enabled || return 1
+	[[ -t 1 && $bgrun -eq 1 ]] && (start_adblocking 'reload' | cat &) || start_adblocking 'reload'
+}
+
+start_service () {
+  is_enabled || return 1
+
+	procd_open_instance
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+
+	reset_iptables quiet
+	set_iptables
+	[[ -t 1 && $bgrun -eq 1 ]] && (start_adblocking $1 | cat &) || start_adblocking $1
+}
+
+stop_service () {
+  is_enabled || return 1
+	reset_iptables
+	[[ -t 1 && $bgrun -eq 1 ]] && (stop_adblocking | cat &) || stop_adblocking
+}
+
+service_triggers () {
+    procd_add_reload_trigger 'simple-adblock'
+}

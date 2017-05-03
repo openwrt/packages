@@ -10,28 +10,36 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.4.2"
+trm_ver="0.7.1"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
-trm_enabled=1
+trm_enabled=0
 trm_debug=0
-trm_active=0
-trm_maxwait=30
+trm_automatic=1
 trm_maxretry=3
+trm_maxwait=30
 trm_timeout=60
 trm_iw=1
+trm_rtfile="/tmp/trm_runtime.json"
+
+# source required system library
+#
+if [ -r "/lib/functions.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]
+then
+    . "/lib/functions.sh"
+    . "/usr/share/libubox/jshn.sh"
+else
+    f_log "error" "system libraries not found"
+fi
 
 # f_envload: load travelmate environment
 #
 f_envload()
 {
-    # source required system libraries
+    # initialize lists
     #
-    if [ -r "/lib/functions.sh" ]
-    then
-        . "/lib/functions.sh"
-    else
-        f_log "error" "required system library not found"
-    fi
+    trm_aplist=""
+    trm_stalist=""
+    trm_radiolist=""
 
     # load uci config and check 'enabled' option
     #
@@ -125,20 +133,49 @@ f_check()
         cnt=$((cnt+1))
         sleep 1
     done
-    f_log "debug" "mode: ${mode}, name: ${ifname}, status: ${trm_ifstatus}, count: ${cnt}, max-wait: ${trm_maxwait}"
+    f_log "debug" "mode: ${mode}, name: ${ifname}, status: ${trm_ifstatus}, count: ${cnt}, max-wait: ${trm_maxwait}, automatic: ${trm_automatic}"
 }
 
-# f_active: keep travelmate in an active state
+# f_jsnupdate: update runtime information
 #
-f_active()
+f_jsnupdate()
 {
-    if [ ${trm_active} -eq 1 ]
+    local iface="${1}" radio="${2}" ssid="${3}"
+
+    json_init
+    json_add_object "data"
+    json_add_string "travelmate_version" "${trm_ver}"
+    json_add_string "station_connection" "${trm_ifstatus}"
+    json_add_string "station_ssid" "${ssid}"
+    json_add_string "station_interface" "${iface}"
+    json_add_string "station_radio" "${radio}"
+    json_add_string "last_rundate" "$(/bin/date "+%d.%m.%Y %H:%M:%S")"
+    json_add_string "system" "${trm_sysver}"
+    json_close_object
+    json_dump > "${trm_rtfile}"
+}
+
+# f_status: output runtime information
+#
+f_status()
+{
+    local key keylist value
+
+    if [ -s "${trm_rtfile}" ]
     then
-        (sleep ${trm_timeout}; /etc/init.d/travelmate start >/dev/null 2>&1) &
+        printf "%s\n" "::: travelmate runtime information"
+        json_load "$(cat "${trm_rtfile}" 2>/dev/null)"
+        json_select data
+        json_get_keys keylist
+        for key in ${keylist}
+        do
+            json_get_var value ${key}
+            printf " %-18s : %s\n" "${key}" "${value}"
+        done
     fi
 }
 
-# f_log: function to write to syslog
+# f_log: write to syslog, exit on error
 #
 f_log()
 {
@@ -151,7 +188,6 @@ f_log()
         if [ "${class}" = "error" ]
         then
             logger -t "travelmate-[${trm_ver}] ${class}" "Please check 'https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md' (${trm_sysver})"
-            f_active
             exit 255
         fi
     fi
@@ -161,7 +197,7 @@ f_log()
 #
 f_main()
 {
-    local ssid_list config ap_radio sta_radio ssid cnt=1
+    local config ssid_list ap ap_radio sta_ssid sta_radio sta_iface cnt=1
 
     f_check "initial"
     if [ "${trm_ifstatus}" != "true" ]
@@ -205,8 +241,9 @@ f_main()
                     do
                         config="${sta%%_*}"
                         sta_radio="${sta##*_}"
-                        ssid="\"$(uci -q get wireless."${config}".ssid)\""
-                        if [ -n "$(printf "${ssid_list}" | grep -Fo "${ssid}")" ] && [ "${ap_radio}" = "${sta_radio}" ]
+                        sta_ssid="$(uci -q get wireless."${config}".ssid)"
+                        sta_iface="$(uci -q get wireless."${config}".network)"
+                        if [ -n "$(printf "${ssid_list}" | grep -Fo "\"${sta_ssid}\"")" ] && [ "${ap_radio}" = "${sta_radio}" ]
                         then
                             uci -q set wireless."${config}".disabled=0
                             ubus call network reload
@@ -214,13 +251,14 @@ f_main()
                             if [ "${trm_ifstatus}" = "true" ]
                             then
                                 uci -q commit wireless
-                                f_log "info " "wwan interface connected to uplink ${ssid} (${trm_sysver})"
-                                sleep 5
+                                f_log "info " "interface '${sta_iface}' on '${sta_radio}' connected to uplink '${sta_ssid}' (${trm_sysver})"
+                                f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
                                 return 0
                             else
                                 uci -q revert wireless
                                 ubus call network reload
-                                f_log "info " "wwan interface can't connect to uplink ${ssid} (${trm_sysver})"
+                                f_log "info " "interface '${sta_iface}' on '${sta_radio}' can't connect to uplink '${sta_ssid}' (${trm_sysver})"
+                                f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
                             fi
                         fi
                     done
@@ -229,10 +267,33 @@ f_main()
                 sleep 5
             done
         done
+    else
+        if [ ! -s "${trm_rtfile}" ]
+        then
+            config="$(ubus -S call network.wireless status | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].section')"
+            sta_radio="$(uci -q get wireless."${config}".device)"
+            sta_ssid="$(uci -q get wireless."${config}".ssid)"
+            sta_iface="$(uci -q get wireless."${config}".network)"
+            f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
+        fi
     fi
 }
 
+# handle different travelmate actions
+#
 f_envload
-f_main
-f_active
+case "${1}" in
+    status)
+        f_status
+        ;;
+    *)
+        f_main
+        while [ ${trm_automatic} -eq 1 ]
+        do
+            sleep ${trm_timeout}
+            f_envload
+            f_main
+        done
+        ;;
+esac
 exit 0

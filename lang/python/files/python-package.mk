@@ -34,6 +34,17 @@ endif
 
 define PyPackage
 
+  define Package/$(1)-src
+    $(call Package/$(1))
+    TITLE+= (sources)
+    DEPENDS:=$$$$(foreach dep,$$$$(filter +python-%,$$$$(DEPENDS)),$$$$(dep)-src)
+  endef
+
+  define Package/$(1)-src/description
+    $(call Package/$(1)/description).
+    (Contains the Python sources for this package).
+  endef
+
   # Add default PyPackage filespec none defined
   ifndef PyPackage/$(1)/filespec
     define PyPackage/$(1)/filespec
@@ -44,8 +55,8 @@ define PyPackage
   ifndef PyPackage/$(1)/install
     define PyPackage/$(1)/install
 		if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then \
-			$(INSTALL_DIR) $$(1)/usr/bin \
-			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/
+			$(INSTALL_DIR) $$(1)/usr/bin ; \
+			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/ ; \
 		fi
     endef
   endif
@@ -53,38 +64,26 @@ define PyPackage
   $(call shexport,PyPackage/$(1)/filespec)
 
   define Package/$(1)/install
-	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
-	@echo "$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" | ( \
-		IFS='|'; \
-		while read fop fspec fperm; do \
-		  fop=`echo "$$$$$$$$fop" | tr -d ' \t\n'`; \
-		  if [ "$$$$$$$$fop" = "+" ]; then \
-			if [ ! -e "$(PKG_INSTALL_DIR)$$$$$$$$fspec" ]; then \
-			  echo "File not found '$(PKG_INSTALL_DIR)$$$$$$$$fspec'"; \
-			  exit 1; \
-			fi; \
-			dpath=`dirname "$$$$$$$$fspec"`; \
-			if [ -n "$$$$$$$$fperm" ]; then \
-			  dperm="-m$$$$$$$$fperm"; \
-			else \
-			  dperm=`stat -c "%a" $(PKG_INSTALL_DIR)$$$$$$$$dpath`; \
-			fi; \
-			mkdir -p $$$$$$$$$dperm $$(1)$$$$$$$$dpath; \
-			echo "copying: '$$$$$$$$fspec'"; \
-			cp -fpR $(PKG_INSTALL_DIR)$$$$$$$$fspec $$(1)$$$$$$$$dpath/; \
-			if [ -n "$$$$$$$$fperm" ]; then \
-			  chmod -R $$$$$$$$fperm $$(1)$$$$$$$$fspec; \
-			fi; \
-		  elif [ "$$$$$$$$fop" = "-" ]; then \
-			echo "removing: '$$$$$$$$fspec'"; \
-			rm -fR $$(1)$$$$$$$$fspec; \
-		  elif [ "$$$$$$$$fop" = "=" ]; then \
-			echo "setting permissions: '$$$$$$$$fperm' on '$$$$$$$$fspec'"; \
-			chmod -R $$$$$$$$fperm $$(1)$$$$$$$$fspec; \
-		  fi; \
-		done; \
-	)
 	$(call PyPackage/$(1)/install,$$(1))
+	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
+	if [ -e files/python-package-install.sh ] ; then \
+		$(SHELL) files/python-package-install.sh \
+			"$(PKG_INSTALL_DIR)" "$$(1)" \
+			"$(HOST_PYTHON_BIN)" "$$(2)" \
+			"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" ; \
+	elif [ -e $(STAGING_DIR)/mk/python-package-install.sh ] ; then \
+		$(SHELL) $(STAGING_DIR)/mk/python-package-install.sh \
+			"$(PKG_INSTALL_DIR)" "$$(1)" \
+			"$(HOST_PYTHON_BIN)" "$$(2)" \
+			"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" ; \
+	else \
+		echo "No 'python-package-install.sh' script found" ; \
+		exit 1 ; \
+	fi
+  endef
+
+  define Package/$(1)-src/install
+	$$(call Package/$(1)/install,$$(1),sources)
   endef
 endef
 
@@ -121,7 +120,7 @@ define Build/Compile/PyMod
 		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
 		./setup.py $(2), \
 		$(3))
-	find $(PKG_INSTALL_DIR) -name "*\.pyc" -o -name "*\.pyo" -o -name "*\.exe" | xargs rm -f
+	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 endef
 
 define PyBuild/Compile/Default

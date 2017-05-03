@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cshark
 PKG_VERSION=2015-11-24-$(PKG_SOURCE_VERSION)
-PKG_RELEASE=2
+PKG_RELEASE=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/cloudshark/cshark.git
@@ -29,15 +29,6 @@ define Package/cshark
   TITLE:=CloudShark capture tool
   URL:=http://www.cloudshark.org/
   DEPENDS:=+libjson-c +libpcap +libuci +libubox +libuclient +libustream-mbedtls
-  MAINTAINER:=Luka Perkov <luka@openwrt.org>
-endef
-
-define Package/luci-app-cshark
-  SECTION:=luci
-  CATEGORY:=LuCI
-  SUBMENU:=3. Applications
-  TITLE:=Cloudshark capture tool Web UI
-  DEPENDS:=+cshark +luci
   MAINTAINER:=Luka Perkov <luka@openwrt.org>
 endef
 
@@ -66,10 +57,5 @@ define Package/cshark/install
 		$(1)/etc/ssl/certs/
 endef
 
-define Package/luci-app-cshark/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
-	$(CP) -R $(PKG_BUILD_DIR)/openwrt/luci/luasrc/* $(1)/usr/lib/lua/luci/
-endef
 
 $(eval $(call BuildPackage,cshark))
-$(eval $(call BuildPackage,luci-app-cshark))

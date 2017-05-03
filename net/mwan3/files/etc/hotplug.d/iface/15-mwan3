@@ -4,11 +4,6 @@
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
 
-config_load mwan3
-
-config_get enabled $INTERFACE enabled 0
-[ "$enabled" == "1" ] || exit 0
-
 [ "$ACTION" == "ifup" -o "$ACTION" == "ifdown" ] || exit 1
 [ -n "$INTERFACE" ] || exit 2
 
@@ -22,19 +17,34 @@ fi
 [ -x /usr/sbin/ip6tables ] || exit 7
 [ -x /usr/bin/logger ] || exit 8
 
-config_get family $INTERFACE family ipv4
+mwan3_set_connected_iptables
 
-if [ "$family" == "ipv4" ]; then
-	network_get_gateway gateway $INTERFACE
-elif [ "$family" == "ipv6" ]; then
-	network_get_gateway6 gateway $INTERFACE
+config_load mwan3
+config_get enabled $INTERFACE enabled 0
+[ "$enabled" == "1" ] || exit 0
+
+if [ "$ACTION" == "ifup" ]; then
+	config_get family $INTERFACE family ipv4
+	if [ "$family" = "ipv4" ]; then
+		ubus call network.interface.${INTERFACE}_4 status &>/dev/null
+		if [ "$?" -eq "0" ]; then
+			network_get_gateway gateway ${INTERFACE}_4
+		else
+			network_get_gateway gateway $INTERFACE
+		fi
+	elif [ "$family" = "ipv6" ]; then
+		ubus call network.interface.${INTERFACE}_6 status &>/dev/null
+		if [ "$?" -eq "0" ]; then
+			network_get_gateway6 gateway ${INTERFACE}_6
+		else
+			network_get_gateway6 gateway ${INTERFACE}
+		fi
+	fi
+
+	[ -n "$gateway" ] || exit 9
 fi
 
-[ -n "$gateway" ] || exit 9
-
 $LOG notice "$ACTION interface $INTERFACE (${DEVICE:-unknown})"
-
-mwan3_set_connected_iptables
 
 case "$ACTION" in
 	ifup)
@@ -46,14 +56,17 @@ case "$ACTION" in
 		mwan3_track $INTERFACE $DEVICE
 		mwan3_set_policies_iptables
 		mwan3_set_user_rules
+		mwan3_flush_conntrack $INTERFACE $DEVICE "ifup"
 	;;
 	ifdown)
 		mwan3_delete_iface_rules $INTERFACE
 		mwan3_delete_iface_iptables $INTERFACE
 		mwan3_delete_iface_route $INTERFACE
 		mwan3_delete_iface_ipset_entries $INTERFACE
+		mwan3_track_signal $INTERFACE $DEVICE
 		mwan3_set_policies_iptables
 		mwan3_set_user_rules
+		mwan3_flush_conntrack $INTERFACE $DEVICE "ifdown"
 	;;
 esac
 

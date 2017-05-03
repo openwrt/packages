@@ -10,7 +10,7 @@
  # For the turbostat plugin
  have_asm_msrindex_h="no"
  AC_CHECK_HEADERS(asm/msr-index.h, [have_asm_msrindex_h="yes"])
-@@ -5946,6 +5949,7 @@ plugin_interface="no"
+@@ -5943,6 +5946,7 @@ plugin_interface="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
@@ -18,7 +18,7 @@
  plugin_load="no"
  plugin_log_logstash="no"
  plugin_memory="no"
-@@ -6416,6 +6420,7 @@ AC_PLUGIN([ipmi],                [$plugi
+@@ -6413,6 +6417,7 @@ AC_PLUGIN([ipmi],                [$plugi
  AC_PLUGIN([iptables],            [$with_libiptc],           [IPTables rule counters])
  AC_PLUGIN([ipvs],                [$plugin_ipvs],            [IPVS connection statistics])
  AC_PLUGIN([irq],                 [$plugin_irq],             [IRQ statistics])
@@ -26,7 +26,7 @@
  AC_PLUGIN([java],                [$with_java],              [Embed the Java Virtual Machine])
  AC_PLUGIN([load],                [$plugin_load],            [System load])
  AC_PLUGIN([log_logstash],        [$plugin_log_logstash],    [Logstash json_event compatible logging])
-@@ -6797,6 +6802,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
+@@ -6794,6 +6799,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
  AC_MSG_RESULT([    oracle  . . . . . . . $with_oracle])
  AC_MSG_RESULT([    protobuf-c  . . . . . $have_protoc_c])
  AC_MSG_RESULT([    protoc 3  . . . . . . $have_protoc3])
@@ -34,7 +34,7 @@
  AC_MSG_RESULT()
  AC_MSG_RESULT([  Features:])
  AC_MSG_RESULT([    daemon mode . . . . . $enable_daemon])
-@@ -6853,6 +6859,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
+@@ -6850,6 +6856,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
  AC_MSG_RESULT([    iptables  . . . . . . $enable_iptables])
  AC_MSG_RESULT([    ipvs  . . . . . . . . $enable_ipvs])
  AC_MSG_RESULT([    irq . . . . . . . . . $enable_irq])

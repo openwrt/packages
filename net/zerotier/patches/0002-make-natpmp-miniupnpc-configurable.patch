@@ -1,0 +1,56 @@
+From b8390696d81f66109560d12046bb63b9704e07f3 Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Sun, 19 Mar 2017 01:14:10 +0100
+Subject: [PATCH 2/2] make natpmp/miniupnpc configurable
+
+also include staging_dir variable in the search paths
+---
+ make-linux.mk | 32 ++++++++++++++++++--------------
+ 1 file changed, 18 insertions(+), 14 deletions(-)
+
+diff --git a/make-linux.mk b/make-linux.mk
+index 508d8c42..36060857 100644
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -22,20 +22,24 @@ OBJS+=ext/http-parser/http_parser.o
+ # Auto-detect miniupnpc and nat-pmp as well and use system libs if present,
+ # otherwise build into binary as done on Mac and Windows.
+ OBJS+=osdep/PortMapper.o
+-DEFS+=-DZT_USE_MINIUPNPC
+-MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' /usr/include/miniupnpc/miniupnpc.h && echo 1)
+-ifeq ($(MINIUPNPC_IS_NEW_ENOUGH),1)
+-	DEFS+=-DZT_USE_SYSTEM_MINIUPNPC
+-	LDLIBS+=-lminiupnpc
+-else
+-	DEFS+=-DMINIUPNP_STATICLIB -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -DOS_STRING=\"Linux\" -DMINIUPNPC_VERSION_STRING=\"2.0\" -DUPNP_VERSION_STRING=\"UPnP/1.1\" -DENABLE_STRNATPMPERR
+-	OBJS+=ext/miniupnpc/connecthostport.o ext/miniupnpc/igd_desc_parse.o ext/miniupnpc/minisoap.o ext/miniupnpc/minissdpc.o ext/miniupnpc/miniupnpc.o ext/miniupnpc/miniwget.o ext/miniupnpc/minixml.o ext/miniupnpc/portlistingparse.o ext/miniupnpc/receivedata.o ext/miniupnpc/upnpcommands.o ext/miniupnpc/upnpdev.o ext/miniupnpc/upnperrors.o ext/miniupnpc/upnpreplyparse.o
+-endif
+-ifeq ($(wildcard /usr/include/natpmp.h),)
+-	OBJS+=ext/libnatpmp/natpmp.o ext/libnatpmp/getgateway.o
+-else
+-	LDLIBS+=-lnatpmp
+-	DEFS+=-DZT_USE_SYSTEM_NATPMP
++
++ifeq ($(ZT_ENABLE_PORTMAPPING),1)
++	DEFS+=-DZT_USE_MINIUPNPC
++	MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
++	ifeq ($(MINIUPNPC_IS_NEW_ENOUGH),1)
++		DEFS+=-DZT_USE_SYSTEM_MINIUPNPC
++		LDLIBS+=-lminiupnpc
++	else
++		DEFS+=-DMINIUPNP_STATICLIB -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -DOS_STRING=\"Linux\" -DMINIUPNPC_VERSION_STRING=\"2.0\" -DUPNP_VERSION_STRING=\"UPnP/1.1\" -DENABLE_STRNATPMPERR
++		OBJS+=ext/miniupnpc/connecthostport.o ext/miniupnpc/igd_desc_parse.o ext/miniupnpc/minisoap.o ext/miniupnpc/minissdpc.o ext/miniupnpc/miniupnpc.o ext/miniupnpc/miniwget.o ext/miniupnpc/minixml.o ext/miniupnpc/portlistingparse.o ext/miniupnpc/receivedata.o ext/miniupnpc/upnpcommands.o ext/miniupnpc/upnpdev.o ext/miniupnpc/upnperrors.o ext/miniupnpc/upnpreplyparse.o
++	endif
++
++	ifeq ($(wildcard $(STAGING_DIR)/usr/include/natpmp.h),)
++		OBJS+=ext/libnatpmp/natpmp.o ext/libnatpmp/getgateway.o
++	else
++		LDLIBS+=-lnatpmp
++		DEFS+=-DZT_USE_SYSTEM_NATPMP
++	endif
+ endif
+ 
+ ifeq ($(ZT_ENABLE_CLUSTER),1)
+-- 
+2.12.0
+

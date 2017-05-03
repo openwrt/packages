@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.1.2
-PKG_RELEASE:=1
+PKG_VERSION:=7.1.4
+PKG_RELEASE:=5
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -16,8 +16,8 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_MD5SUM:=d79afea1870277c86fac903566fb6c5d
-PKG_HASH:=d815a0c39fd57bab1434a77ff0610fb507c22f790c66cd6f26e27030c4b3e971
+PKG_MD5SUM:=a74c13f8779349872b365e6732e8c98e
+PKG_HASH:=71514386adf3e963df087c2044a0b3747900b8b1fc8da3a99f0a0ae9180d300b
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -66,6 +66,7 @@ define Package/php7/config
 	config PHP7_FILTER
 		bool "PHP7 Filter support"
 		depends on PACKAGE_php7-cli || PACKAGE_php7-cgi
+		default y
 
 	config PHP7_LIBXML
 		bool "PHP7 LIBXML support"
@@ -142,6 +143,9 @@ define Package/php7-fpm/description
   This package contains the FastCGI Process Manager of the PHP7 interpreter.
 endef
 
+# not everything groks --disable-nls
+DISABLE_NLS:=
+
 CONFIGURE_ARGS+= \
 	--enable-cli \
 	--enable-cgi \
@@ -215,7 +219,6 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gd),)
 	--with-jpeg-dir="$(STAGING_DIR)/usr" \
 	--with-png-dir="$(STAGING_DIR)/usr" \
 	--without-xpm-dir \
-	--without-t1lib \
 	--enable-gd-native-ttf \
 	--disable-gd-jis-conv
 else
@@ -242,6 +245,7 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-intl),)
   CONFIGURE_ARGS+= --enable-intl=shared
+  TARGET_CXXFLAGS+= -std=c++0x
 else
   CONFIGURE_ARGS+= --disable-intl
 endif

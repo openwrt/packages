@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=1.7.2
+PKG_VERSION:=1.7.5
 PKG_RELEASE:=01
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.7/src/
-PKG_MD5SUM:=7330b36f3764ebe409e9305803dc30e2
+PKG_SOURCE_URL:=http://www.haproxy.org/download/1.7/src/
+PKG_MD5SUM:=ed84c80cb97852d2aa3161ed16c48a1c
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_LICENSE:=GPL-2.0
@@ -111,6 +111,7 @@ define Build/Compile
 	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR)/lua \
 		INSTALL_TOP="$(STAGING_DIR)/lua-5.3.3/" \
 		CC="$(TARGET_CC)" \
+		CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lncurses -lreadline" \
 		LD="$(TARGET_LD)" \
 		linux install
@@ -120,16 +121,16 @@ define Build/Compile
 	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
+		PCREDIR="$(STAGING_DIR)/usr/" \
+		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
+		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 \
+		USE_ZLIB=yes USE_PCRE=1 USE_PCRE_JIT=1\
+		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
 		$(ADDON)
 		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
 		LD="$(TARGET_LD)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lcurses -lreadline" \
-		PCREDIR="$(STAGING_DIR)/usr/include" \
-		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
-		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 \
-		USE_ZLIB=yes USE_PCRE=1 \
-		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
-		IGNOREGIT=1
+		GNOREGIT=1
 
 	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \

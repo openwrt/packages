@@ -3,6 +3,8 @@
 START=50
 USE_PROCD=1
 
+. $IPKG_INSTROOT/lib/functions/network.sh
+
 setup_config() {
 	config_get port         $1 port "4443"
 	config_get max_clients  $1 max_clients "8"
@@ -11,6 +13,7 @@ setup_config() {
 	config_get predictable_ips  $1 predictable_ips "1"
 	config_get compression  $1 compression "0"
 	config_get udp          $1 udp "1"
+	config_get udp_port     $1 udp_port ""
 	config_get auth         $1 auth "plain"
 	config_get cisco_compat $1 cisco_compat "1"
 	config_get ipaddr       $1 ipaddr ""
@@ -33,26 +36,26 @@ setup_config() {
 				uci set dhcp.lan.start=100
 				uci set dhcp.lan.limit=91
 			fi
-			ip=$(uci get network.lan.ipaddr)
+			network_get_ipaddr ip lan
 			ipaddr="$(echo $ip|cut -d . -f1,2,3).192"
 			netmask="255.255.255.192"
-			uci set ocserv.config.ipaddr="$ipaddr"
-			uci set ocserv.config.netmask="$netmask"
-			uci commit
 		fi
 
 		if test -z "$ip6addr";then
-			ip6addr=$(uci get network.lan.ip6addr 2>/dev/null)
-			test -n "$ip6addr" && uci set ocserv.config.ip6addr="$ip6addr"
-			uci commit
+			network_get_ipaddr6 ip6addr lan
+			# Append ipv6 prefix
+			test -n "$ip6addr" && ip6addr="$ip6addr/96"
 		fi
 
 		ping_leases=1
-		test -n "$ipaddr" && sysctl -w "net.ipv4.conf.$(uci get network.lan.ifname).proxy_arp"=1 >/dev/null
-		test -n "$ip6addr" && sysctl -w "net.ipv6.conf.$(uci get network.lan.ifname).proxy_ndp"=1 >/dev/null
+		local ifname
+		if network_get_device ifname lan; then
+			test -n "$ipaddr" && sysctl -w "net.ipv4.conf.$ifname.proxy_arp"=1 >/dev/null
+			test -n "$ip6addr" && sysctl -w "net.ipv6.conf.$ifname.proxy_ndp"=1 >/dev/null
+		fi
 	else
-		test "$ipaddr" = "" && ipaddr="192.168.100.0"
-		test "$netmask" = "" && ipaddr="255.255.255.0"
+		test -z "$ipaddr" && ipaddr="192.168.100.0"
+		test -z "$netmask" && netmask="255.255.255.0"
 	fi
 
 	enable_default_domain="#"
@@ -69,6 +72,7 @@ setup_config() {
 	test $split_dns = "1" && enable_split_dns=""
 	test $compression = "1" && enable_compression=""
 
+	test -z $udp_port && udp_port="$port"
 	test -z $default_domain && default_domain=$(uci get dhcp.@dnsmasq[0].domain)
 	test -n $default_domain && enable_default_domain=""
 	test -z $ip6addr && enable_ipv6="#"
@@ -81,6 +85,7 @@ setup_config() {
 
 	mkdir -p /var/etc
 	sed -e "s/|PORT|/$port/g" \
+	    -e "s/|UDP_PORT|/$udp_port/g" \
 	    -e "s/|MAX_CLIENTS|/$max_clients/g" \
 	    -e "s/|MAX_SAME|/$max_same/g" \
 	    -e "s/|DPD|/$dpd/g" \
@@ -147,7 +152,7 @@ start_service() {
 	[ -f /etc/config/ocserv-dir/ca-key.pem ] && mv /etc/config/ocserv-dir/ca-key.pem /etc/ocserv/ca-key.pem
 	[ -f /etc/config/ocserv-dir/ca.pem ] && mv /etc/config/ocserv-dir/ca.pem /etc/ocserv/ca.pem
 	[ -f /etc/config/ocserv-dir/server-key.pem ] && mv /etc/config/ocserv-dir/server-key.pem /etc/ocserv/server-key.pem
-	[ -f /etc/config/ocserv-dir/server-cert.pem ] && mv /etc/config/ocserv-dir/server-cert.pem /etc/ocserv/server-cert.pem 
+	[ -f /etc/config/ocserv-dir/server-cert.pem ] && mv /etc/config/ocserv-dir/server-cert.pem /etc/ocserv/server-cert.pem
 	[ -d /etc/config/ocserv-dir ] && rmdir /etc/config/ocserv-dir
 
 	[ ! -f /etc/ocserv/ca-key.pem ] && [ -x /usr/bin/certtool ] && {

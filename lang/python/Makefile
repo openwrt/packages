@@ -12,7 +12,7 @@ include ./files/python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
@@ -104,6 +104,8 @@ define PyBasePackage
   define PyPackage/$(1)/filespec
     ifneq ($(2),)
       $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
+      -|/usr/lib/python$(PYTHON_VERSION)/*/test
+      -|/usr/lib/python$(PYTHON_VERSION)/*/tests
     endif
   endef
 endef
@@ -193,6 +195,7 @@ define Build/InstallDev
 		./files/python-package.mk \
 		./files/python-host.mk \
 		./files/python-version.mk \
+		./files/python-package-install.sh \
 		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
@@ -258,6 +261,7 @@ $(subst $(space),$(newline),$(foreach lib_file,$(PYTHON_LIB_FILES_DEL),-|$(lib_f
 endef
 
 define PyPackage/python-base/install
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
@@ -297,6 +301,7 @@ $(eval $(call HostBuild))
 $(foreach package, $(PYTHON_PACKAGES),  \
 	$(eval $(call PyPackage,$(package))) \
 	$(eval $(call BuildPackage,$(package))) \
+	$(eval $(call BuildPackage,$(package)-src)) \
 )
 
 $(eval $(call PyPackage,python-base))
@@ -308,3 +313,7 @@ $(eval $(call BuildPackage,python-pip-conf))
 $(eval $(call BuildPackage,python-base))
 $(eval $(call BuildPackage,python-light))
 $(eval $(call BuildPackage,python))
+
+$(eval $(call BuildPackage,python-base-src))
+$(eval $(call BuildPackage,python-light-src))
+$(eval $(call BuildPackage,python-src))

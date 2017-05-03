@@ -10,7 +10,7 @@
 
 CHECK_CRON=$1
 ACME=/usr/lib/acme/acme.sh
-export SSL_CERT_DIR=/etc/ssl/certs
+export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 export NO_TIMESTAMP=1
 
 UHTTPD_LISTEN_HTTP=
@@ -27,45 +27,85 @@ check_cron()
     /etc/init.d/cron start
 }
 
+log()
+{
+    logger -t acme -s -p daemon.info "$@"
+}
+
+err()
+{
+    logger -t acme -s -p daemon.err "$@"
+}
+
 debug()
 {
-    [ "$DEBUG" -eq "1" ] && echo "$@" >&2
+    [ "$DEBUG" -eq "1" ] && logger -t acme -s -p daemon.debug "$@"
+}
+
+get_listeners()
+{
+    netstat -nptl 2>/dev/null | awk 'match($4, /:80$/){split($7, parts, "/"); print parts[2];}' | uniq | tr "\n" " "
 }
 
 pre_checks()
 {
-    echo "Running pre checks."
-    check_cron
+    main_domain="$1"
 
-    [ -d "$STATE_DIR" ] || mkdir -p "$STATE_DIR"
+    log "Running pre checks for $main_domain."
 
-    if [ -e /etc/init.d/uhttpd ]; then
+    listeners="$(get_listeners)"
+    debug "port80 listens: $listeners"
 
-       UHTTPD_LISTEN_HTTP=$(uci get uhttpd.main.listen_http)
+    case "$listeners" in
+        "uhttpd")
+            debug "Found uhttpd listening on port 80; trying to disable."
 
-       uci set uhttpd.main.listen_http=''
-       uci commit uhttpd
-       /etc/init.d/uhttpd reload || return 1
-    fi
+            UHTTPD_LISTEN_HTTP=$(uci get uhttpd.main.listen_http)
 
-    iptables -I input_rule -p tcp --dport 80 -j ACCEPT || return 1
-    ip6tables -I input_rule -p tcp --dport 80 -j ACCEPT || return 1
+            if [ -z "$UHTTPD_LISTEN_HTTP" ]; then
+                err "$main_domain: Unable to find uhttpd listen config."
+                err "Manually disable uhttpd or set webroot to continue."
+                return 1
+            fi
+
+            uci set uhttpd.main.listen_http=''
+            uci commit uhttpd || return 1
+            if ! /etc/init.d/uhttpd reload ; then
+                uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
+                uci commit uhttpd
+                return 1
+            fi
+            ;;
+        "")
+            debug "Nothing listening on port 80."
+            ;;
+        *)
+            err "$main_domain: Cannot run in standalone mode; another daemon is listening on port 80."
+            err "Disable other daemon or set webroot to continue."
+            return 1
+            ;;
+    esac
+
+    iptables -I input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" || return 1
+    ip6tables -I input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" || return 1
     debug "v4 input_rule: $(iptables -nvL input_rule)"
     debug "v6 input_rule: $(ip6tables -nvL input_rule)"
-    debug "port80 listens: $(netstat -ntpl | grep :80)"
     return 0
 }
 
 post_checks()
 {
-    echo "Running post checks (cleanup)."
-    iptables -D input_rule -p tcp --dport 80 -j ACCEPT
-    ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT
+    log "Running post checks (cleanup)."
+    # The comment ensures we only touch our own rules. If no rules exist, that
+    # is fine, so hide any errors
+    iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
+    ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
 
-    if [ -e /etc/init.d/uhttpd ]; then
+    if [ -e /etc/init.d/uhttpd ] && [ -n "$UHTTPD_LISTEN_HTTP" ]; then
         uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
         uci commit uhttpd
         /etc/init.d/uhttpd reload
+        UHTTPD_LISTEN_HTTP=
     fi
 }
 
@@ -102,12 +142,14 @@ issue_cert()
     local main_domain
     local moved_staging=0
     local failed_dir
+    local webroot
 
     config_get_bool enabled "$section" enabled 0
     config_get_bool use_staging "$section" use_staging
     config_get_bool update_uhttpd "$section" update_uhttpd
     config_get domains "$section" domains
     config_get keylength "$section" keylength
+    config_get webroot "$section" webroot
 
     [ "$enabled" -eq "1" ] || return
 
@@ -116,13 +158,17 @@ issue_cert()
     set -- $domains
     main_domain=$1
 
+    [ -n "$webroot" ] || pre_checks "$main_domain" || return 1
+
+    log "Running ACME for $main_domain"
+
     if [ -e "$STATE_DIR/$main_domain" ]; then
         if [ "$use_staging" -eq "0" ] && is_staging "$main_domain"; then
-            echo "Found previous cert issued using staging server. Moving it out of the way."
+            log "Found previous cert issued using staging server. Moving it out of the way."
             mv "$STATE_DIR/$main_domain" "$STATE_DIR/$main_domain.staging"
             moved_staging=1
         else
-            echo "Found previous cert config. Issuing renew."
+            log "Found previous cert config. Issuing renew."
             $ACME --home "$STATE_DIR" --renew -d "$main_domain" $acme_args || return 1
             return 0
         fi
@@ -130,17 +176,28 @@ issue_cert()
 
 
     acme_args="$acme_args $(for d in $domains; do echo -n "-d $d "; done)"
-    acme_args="$acme_args --standalone"
     acme_args="$acme_args --keylength $keylength"
     [ -n "$ACCOUNT_EMAIL" ] && acme_args="$acme_args --accountemail $ACCOUNT_EMAIL"
     [ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
 
+    if [ -z "$webroot" ]; then
+        log "Using standalone mode"
+        acme_args="$acme_args --standalone"
+    else
+        if [ ! -d "$webroot" ]; then
+            err "$main_domain: Webroot dir '$webroot' does not exist!"
+            return 1
+        fi
+        log "Using webroot dir: $webroot"
+        acme_args="$acme_args --webroot \"$webroot\""
+    fi
+
     if ! $ACME --home "$STATE_DIR" --issue $acme_args; then
         failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"
-        echo "Issuing cert for $main_domain failed. Moving state to $failed_dir" >&2
+        err "Issuing cert for $main_domain failed. Moving state to $failed_dir"
         [ -d "$STATE_DIR/$main_domain" ] && mv "$STATE_DIR/$main_domain" "$failed_dir"
         if [ "$moved_staging" -eq "1" ]; then
-            echo "Restoring staging certificate" >&2
+            err "Restoring staging certificate"
             mv "$STATE_DIR/${main_domain}.staging" "$STATE_DIR/${main_domain}"
         fi
         return 1
@@ -152,6 +209,7 @@ issue_cert()
         # commit and reload is in post_checks
     fi
 
+    post_checks
 }
 
 load_vars()
@@ -163,19 +221,22 @@ load_vars()
     DEBUG=$(config_get "$section" debug)
 }
 
-if [ -n "$CHECK_CRON" ]; then
-    check_cron
-    exit 0
-fi
+check_cron
+[ -n "$CHECK_CRON" ] && exit 0
 
 config_load acme
 config_foreach load_vars acme
 
-pre_checks || exit 1
+if [ -z "$STATE_DIR" ] || [ -z "$ACCOUNT_EMAIL" ]; then
+    err "state_dir and account_email must be set"
+    exit 1
+fi
+
+[ -d "$STATE_DIR" ] || mkdir -p "$STATE_DIR"
+
 trap err_out HUP TERM
 trap int_out INT
 
 config_foreach issue_cert cert
-post_checks
 
 exit 0

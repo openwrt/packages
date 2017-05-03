@@ -58,6 +58,9 @@ define Package/libunrar/description
   archives
 endef
 
+MAKE_FLAGS += \
+	LDFLAGS="$(TARGET_LDFLAGS) -lpthread"
+
 ifeq ($(BUILD_VARIANT),lib)
 define Build/Compile
 	$(call Build/Compile/Default,lib)
