@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cryptsetup
 PKG_VERSION:=1.7.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0+ LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL
 
@@ -29,7 +29,7 @@ define Package/cryptsetup/Default
   CATEGORY:=Utilities
   SUBMENU:=Encryption
   TITLE:=Cryptsetup
-  DEPENDS:=+libblkid +libuuid +libpopt +lvm2 +libdevmapper +@KERNEL_DIRECT_IO
+  DEPENDS:=+libblkid +libuuid +libpopt +libdevmapper +@KERNEL_DIRECT_IO
   URL:=http://code.google.com/p/cryptsetup/
 endef
 
@@ -45,6 +45,12 @@ $(call Package/cryptsetup/Default)
   DEPENDS+=+libopenssl
   VARIANT:=openssl
 endef
+
+define Package/cryptsetup/conffiles
+/etc/config/crypttab
+endef
+
+Package/cryptsetup-openssl/conffiles=$(call Package/cryptsetup/conffiles)
 
 define Package/cryptsetup/Default/description
 	Cryptsetup-luks
@@ -71,6 +77,12 @@ define Package/cryptsetup/install
 	$(CP) $(PKG_BUILD_DIR)/src/.libs/cryptsetup $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/lib/.libs/libcryptsetup.so* $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config
+	$(INSTALL_BIN) ./files/cryptstart $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/cryptsetup.init $(1)/etc/init.d/cryptsetup
+	$(INSTALL_BIN) ./files/cryptstop $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/cryptstart-varlog $(1)/usr/sbin/
+	$(INSTALL_CONF) ./files/crypttab.config $(1)/etc/config/crypttab
 endef
 
 Package/cryptsetup-openssl/install = $(Package/cryptsetup/install)
