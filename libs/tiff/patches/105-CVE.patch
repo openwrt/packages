@@ -1,0 +1,45 @@
+commit 4307dad7fc153baefeb6bb677060e9c5157e5d42
+Author: erouault <erouault>
+Date:   Sat Dec 3 11:35:56 2016 +0000
+
+    * tools/tiffcrop.c: fix readContigStripsIntoBuffer() in -i (ignore) mode so
+    that the output buffer is correctly incremented to avoid write outside bounds.
+    Reported by Agostino Sarubbo.
+    Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2620
+
+diff --git a/ChangeLog b/ChangeLog
+index 5b23665..d6a416b 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,5 +1,12 @@
+ 2016-12-03 Even Rouault <even.rouault at spatialys.com>
+ 
++	* tools/tiffcrop.c: fix readContigStripsIntoBuffer() in -i (ignore) mode so
++	that the output buffer is correctly incremented to avoid write outside bounds.
++	Reported by Agostino Sarubbo.
++	Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2620
++
++2016-12-03 Even Rouault <even.rouault at spatialys.com>
++
+ 	* libtiff/tif_ojpeg.c: make OJPEGDecode() early exit in case of failure in
+ 	OJPEGPreDecode(). This will avoid a divide by zero, and potential other issues.
+ 	Reported by Agostino Sarubbo.
+diff --git a/tools/tiffcrop.c b/tools/tiffcrop.c
+index 722b132..bdcbd63 100644
+--- a/tools/tiffcrop.c
++++ b/tools/tiffcrop.c
+@@ -1,4 +1,4 @@
+-/* $Id: tiffcrop.c,v 1.46 2016-11-18 14:58:46 erouault Exp $ */
++/* $Id: tiffcrop.c,v 1.47 2016-12-03 11:35:56 erouault Exp $ */
+ 
+ /* tiffcrop.c -- a port of tiffcp.c extended to include manipulations of
+  * the image data through additional options listed below
+@@ -3698,7 +3698,7 @@ static int readContigStripsIntoBuffer (TIFF* in, uint8* buf)
+                                   (unsigned long) strip, (unsigned long)rows);
+                         return 0;
+                 }
+-                bufp += bytes_read;
++                bufp += stripsize;
+         }
+ 
+         return 1;
