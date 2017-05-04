@@ -1,0 +1,70 @@
+commit 18bca4cf3057681689efb502175cbe5f01cb68c3
+Author: erouault <erouault>
+Date:   Sat Dec 3 16:50:02 2016 +0000
+
+    * tools/tiffcp.c: replace assert( (bps % 8) == 0 ) by a non assert check.
+    Reported by Agostino Sarubbo.
+    Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2605
+
+diff --git a/ChangeLog b/ChangeLog
+index 8ee76c0..025eb72 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,5 +1,11 @@
+ 2016-12-03 Even Rouault <even.rouault at spatialys.com>
+ 
++	* tools/tiffcp.c: replace assert( (bps % 8) == 0 ) by a non assert check.
++	Reported by Agostino Sarubbo.
++	Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2605
++
++2016-12-03 Even Rouault <even.rouault at spatialys.com>
++
+ 	* tools/tiffcp.c: fix uint32 underflow/overflow that can cause heap-based
+ 	buffer overflow.
+ 	Reported by Agostino Sarubbo.
+diff --git a/tools/tiffcp.c b/tools/tiffcp.c
+index 6d96bb8..49c9d37 100644
+--- a/tools/tiffcp.c
++++ b/tools/tiffcp.c
+@@ -1,4 +1,4 @@
+-/* $Id: tiffcp.c,v 1.59 2016-12-03 16:40:01 erouault Exp $ */
++/* $Id: tiffcp.c,v 1.60 2016-12-03 16:50:02 erouault Exp $ */
+ 
+ /*
+  * Copyright (c) 1988-1997 Sam Leffler
+@@ -45,7 +45,6 @@
+ #include <string.h>
+ 
+ #include <ctype.h>
+-#include <assert.h>
+ 
+ #ifdef HAVE_UNISTD_H
+ # include <unistd.h>
+@@ -1393,7 +1392,12 @@ DECLAREreadFunc(readSeparateTilesIntoBuffer)
+             status = 0;
+             goto done;
+         }
+-	assert( bps % 8 == 0 );
++        if( (bps % 8) != 0 )
++        {
++            TIFFError(TIFFFileName(in), "Error, cannot handle BitsPerSample that is not a multiple of 8");
++            status = 0;
++            goto done;
++        }
+ 	bytes_per_sample = bps/8;
+ 
+ 	for (row = 0; row < imagelength; row += tl) {
+@@ -1584,7 +1588,12 @@ DECLAREwriteFunc(writeBufferToSeparateTiles)
+             _TIFFfree(obuf);
+             return 0;
+         }
+-	assert( bps % 8 == 0 );
++        if( (bps % 8) != 0 )
++        {
++            TIFFError(TIFFFileName(out), "Error, cannot handle BitsPerSample that is not a multiple of 8");
++            _TIFFfree(obuf);
++            return 0;
++        }
+ 	bytes_per_sample = bps/8;
+ 
+ 	for (row = 0; row < imagelength; row += tl) {
