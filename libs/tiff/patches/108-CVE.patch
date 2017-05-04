@@ -1,0 +1,45 @@
+commit a1d523c27dafafadf589c77e834c52661f1c78fc
+Author: erouault <erouault>
+Date:   Sat Dec 3 14:18:48 2016 +0000
+
+    * tools/tiffinfo.c: fix null pointer dereference in -r mode when the image has
+    no StripByteCount tag.
+    Reported by Agostino Sarubbo.
+    Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2594
+
+diff --git a/ChangeLog b/ChangeLog
+index dd27c7f..e41d00c 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,5 +1,12 @@
+ 2016-12-03 Even Rouault <even.rouault at spatialys.com>
+ 
++	* tools/tiffinfo.c: fix null pointer dereference in -r mode when the image has
++	no StripByteCount tag.
++	Reported by Agostino Sarubbo.
++	Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2594
++
++2016-12-03 Even Rouault <even.rouault at spatialys.com>
++
+ 	* tools/tiffcrop.c: fix integer division by zero when BitsPerSample is missing.
+ 	Reported by Agostino Sarubbo.
+ 	Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2619
+diff --git a/tools/tiffinfo.c b/tools/tiffinfo.c
+index b02c7d4..4d58055 100644
+--- a/tools/tiffinfo.c
++++ b/tools/tiffinfo.c
+@@ -1,4 +1,4 @@
+-/* $Id: tiffinfo.c,v 1.25 2016-11-12 20:06:05 bfriesen Exp $ */
++/* $Id: tiffinfo.c,v 1.26 2016-12-03 14:18:49 erouault Exp $ */
+ 
+ /*
+  * Copyright (c) 1988-1997 Sam Leffler
+@@ -417,7 +417,7 @@ TIFFReadRawData(TIFF* tif, int bitrev)
+ 	uint64* stripbc=NULL;
+ 
+ 	TIFFGetField(tif, TIFFTAG_STRIPBYTECOUNTS, &stripbc);
+-	if (nstrips > 0) {
++	if (stripbc != NULL && nstrips > 0) {
+ 		uint32 bufsize = (uint32) stripbc[0];
+ 		tdata_t buf = _TIFFmalloc(bufsize);
+ 		tstrip_t s;
