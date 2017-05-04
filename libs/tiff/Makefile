@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tiff
-PKG_VERSION:=4.0.6
-PKG_RELEASE:=2
+PKG_VERSION:=4.0.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.osgeo.org/libtiff
-PKG_MD5SUM:=d1d2e940dea0b5ad435f21f03d96dd72
+PKG_HASH:=9f43a2cfb9589e5cecaa66e16bf87f814c945f22df7ba600d63aac4632c4f019
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4

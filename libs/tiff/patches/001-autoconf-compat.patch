@@ -1,6 +1,5 @@
-diff -rupN tiff-4.0.6/Makefile.am tiff-new/Makefile.am
---- tiff-4.0.6/Makefile.am	2015-09-06 21:30:46.179705536 +0200
-+++ tiff-new/Makefile.am	2016-04-05 14:26:09.539194844 +0200
+--- a/Makefile.am
++++ b/Makefile.am
 @@ -25,7 +25,7 @@
  
  docdir = $(LIBTIFF_DOCDIR)
@@ -19,9 +18,8 @@ diff -rupN tiff-4.0.6/Makefile.am tiff-new/Makefile.am
  
  release:
  	(rm -f $(top_srcdir)/RELEASE-DATE && echo $(LIBTIFF_RELEASE_DATE) > $(top_srcdir)/RELEASE-DATE)
-diff -rupN tiff-4.0.6/test/Makefile.am tiff-new/test/Makefile.am
---- tiff-4.0.6/test/Makefile.am	2015-09-01 04:41:07.598381354 +0200
-+++ tiff-new/test/Makefile.am	2016-04-05 14:26:39.763453075 +0200
+--- a/test/Makefile.am
++++ b/test/Makefile.am
 @@ -23,7 +23,7 @@
  
  # Process this file with automake to produce Makefile.in.
