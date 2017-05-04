@@ -146,9 +146,10 @@ define Package/lighttpd/conffiles
 endef
 
 define Package/lighttpd/install
-	$(INSTALL_DIR) $(1)/etc/lighttpd
+	$(INSTALL_DIR) $(1)/etc/lighttpd $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) ./files/lighttpd.conf $(1)/etc/lighttpd/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/doc/config/conf.d/mime.conf $(1)/etc/lighttpd/
+	$(INSTALL_DATA) ./files/lighttpd.upgrade $(1)/lib/upgrade/keep.d/lighttpd
 	$(INSTALL_DIR) $(1)/etc/lighttpd/conf.d
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/lighttpd.init $(1)/etc/init.d/lighttpd
