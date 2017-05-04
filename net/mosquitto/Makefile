@@ -72,7 +72,7 @@ endef
 define Package/mosquitto-client/default
     $(Package/mosquitto/default)
     TITLE:= mosquitto - client tools
-    DEPENDS+=+libcares
+    DEPENDS+=+MOSQUITTO_SRV:libcares
 endef
 define Package/mosquitto-client
     $(call Package/mosquitto-client/default)
@@ -101,11 +101,15 @@ $(call Package/mosquitto-client/default/description)
         This package is built without SSL support
 endef
 
+define Package/libmosquitto/config
+    source "$(SOURCE)/Config.in"
+endef
+
 define Package/libmosquitto/default
     $(Package/mosquitto/default)
     SECTION:=libs
     CATEGORY:=Libraries
-    DEPENDS:=+libpthread +librt +libcares
+    DEPENDS:=+libpthread +librt +MOSQUITTO_SRV:libcares
     TITLE:= mosquitto - client library
     PROVIDES:=libmosquitto
 endef
@@ -212,7 +216,7 @@ define Package/libmosquittopp/install
 endef
 
 # Applies to all...
-MAKE_FLAGS += WITH_DOCS=no UNAME=Linux
+MAKE_FLAGS += WITH_DOCS=no WITH_SRV=$(if $(CONFIG_MOSQUITTO_SRV),"yes","no") UNAME=Linux
 ifeq ($(BUILD_VARIANT),nossl)
 	MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
 else
