@@ -120,6 +120,7 @@ add_bridge() {
     config_list_foreach "$1" topic add_topic
     append_optional_bool "$1" cleansession cleansession
     append_optional_bool "$1" try_private try_private
+    append_optional_bool "$1" notifications notifications
 
     append_if "$1" clientid
     append_if "$1" identity bridge_identity
