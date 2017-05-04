@@ -6,17 +6,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zerotier
-PKG_VERSION:=1.2.2
-PKG_RELEASE:=4
+PKG_VERSION:=1.2.4
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/zerotier/ZeroTierOne
 PKG_SOURCE_SUBDIR:=ZeroTierOne-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=cfe0d0971f3ce5972d955250dc1ff6ec7a30e3f7
+PKG_SOURCE_VERSION:=fe5257df81c4ec4b5d48f707eb794de0748b7ac0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_MD5SUM:=c8c3219c995a59161832d580a194f6280de7a4eef75cebece6f38400b64f003e
+PKG_MIRROR_HASH:=131436529d26f8eb975a0a8705b489cc22a1139c323755895c1776db579003bc
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
 PKG_BUILD_PARALLEL:=1
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/zerotier
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread +kmod-tun +ip +libstdcpp +ZEROTIER_ENABLE_PORTMAPPING:libminiupnpc +ZEROTIER_ENABLE_PORTMAPPING:libnatpmp
+  DEPENDS:=+libpthread +libstdcpp +kmod-tun +ip +libminiupnpc +libnatpmp
   TITLE:=Create flat virtual Ethernet networks of almost unlimited size
   URL:=https://www.zerotier.com
   SUBMENU:=VPN
@@ -40,17 +40,12 @@ define Package/zerotier/config
 	source "$(SOURCE)/Config.in"
 endef
 
-ifeq ($(CONFIG_ZEROTIER_ENABLE_CLUSTER),y)
-MAKE_FLAGS += ZT_ENABLE_CLUSTER=1
-endif
-
-ifeq ($(CONFIG_ZEROTIER_ENABLE_PORTMAPPING),y)
-MAKE_FLAGS += ZT_ENABLE_PORTMAPPING=1
-endif
-
 ifeq ($(CONFIG_ZEROTIER_ENABLE_DEBUG),y)
-TARGET_CXXFLAGS += -DZT_TRACE -ggdb3
+MAKE_FLAGS += ZT_DEBUG=1
 endif
+
+MAKE_FLAGS += \
+	DEFS="" \
 
 define Build/Compile
 	$(call Build/Compile/Default,one)
