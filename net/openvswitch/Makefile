@@ -8,7 +8,6 @@
 # $Id: Makefile $
 
 include $(TOPDIR)/rules.mk
-include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 
@@ -123,30 +122,6 @@ endef
 define Package/openvswitch/description
   Provides the main userspace components required for Open vSwitch to function.
   Includes also most of  OVS utilities.
-endef
-
-define KernelPackage/openvswitch
-  SECTION:=kernel
-  CATEGORY:=Kernel modules
-  SUBMENU:=Network Support
-  TITLE:=Open vSwitch Kernel Package
-  KCONFIG:= \
-	CONFIG_BRIDGE \
-	CONFIG_OPENVSWITCH \
-	CONFIG_OPENVSWITCH_GRE=n \
-	CONFIG_OPENVSWITCH_VXLAN=n \
-	CONFIG_OPENVSWITCH_GENEVE=n
-  DEPENDS:= \
-	@IPV6 +kmod-gre +kmod-lib-crc32c +kmod-mpls \
-	+kmod-vxlan +kmod-nf-nat +kmod-nf-nat6  \
-	@($(SUPPORTED_KERNELS))
-  FILES:= $(LINUX_DIR)/net/openvswitch/openvswitch.ko
-  AUTOLOAD:=$(call AutoLoad,21,openvswitch)
-endef
-
-define KernelPackage/openvswitch/description
-  This package contains the Open vSwitch kernel moodule and bridge compat
-  module. Furthermore, it supports OpenFlow.
 endef
 
 CONFIGURE_ARGS += --with-linux=$(LINUX_DIR) --with-rundir=/var/run
@@ -277,5 +252,3 @@ $(eval $(call BuildPackage,openvswitch-ovn))
 $(eval $(call BuildPackage,openvswitch-vtep))
 $(eval $(call BuildPackage,openvswitch-python))
 $(eval $(call BuildPackage,openvswitch))
-$(eval $(call KernelPackage,openvswitch))
-
