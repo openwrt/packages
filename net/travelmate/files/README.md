@@ -8,6 +8,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 ## Main Features
 * STA interfaces operating in an "always off" mode, to make sure that the AP is always accessible
 * easy setup within normal OpenWrt/LEDE environment
+* strong LuCI-Support to simplify the interface setup
 * fast uplink connections
 * manual / automatic mode support, the latter one checks the existing uplink connection regardless of ifdown event trigger every n seconds
 * support of devices with multiple radios
@@ -17,14 +18,14 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 
 ## Prerequisites
 * [LEDE](https://www.lede-project.org) 17.01 or latest snapshot
-* iw (default) or iwinfo for wlan scanning
+* iw for wlan scanning
 
 ## LEDE trunk Installation & Usage
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages)
 * install 'travelmate' (_opkg install travelmate_)
-* configure your network to support (multiple) wlan uplinks and set travelmate config options (see below)
-* set 'trm\_enabled' option in travelmate config to '1'
-* travelmate starts automatically during boot and will be triggered by procd interface triggers
+* configure your network:
+    * automatic: use the LuCI frontend with automatic interface setup, that's the recommended way
+    * manual: see detailed configure steps below
 
 ## LuCI travelmate companion package
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/luci)
@@ -39,31 +40,30 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
     * trm\_maxwait => how long (in seconds) should travelmate wait for a successful wlan interface reload action (default: '30')
     * trm\_maxretry => how many times should travelmate try to find an uplink after a trigger event (default: '3')
     * trm\_timeout => timeout in seconds for "automatic mode" (default: '60')
-    * trm\_iw => set this option to '0' to use iwinfo for wlan scanning (default: '1', use iw)
     * trm\_radio => limit travelmate to a dedicated radio, e.g. 'radio0' (default: not set, use all radios)
-    * trm\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: wwan)
-    * trm\_triggerdelay => additional trigger delay in seconds before travelmate processing starts (default: '2')
+    * trm\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: trm_wwan)
+    * trm\_triggerdelay => additional trigger delay in seconds before travelmate processing starts (default: '1')
 
 ## Runtime information
 
 **receive travelmate runtime information:**
 <pre><code>
-root@adb2go:/tmp# /etc/init.d/travelmate status
+root@adb2go:~# /etc/init.d/travelmate status
 ::: travelmate runtime information
- travelmate_version : 0.7.0
+ travelmate_version : 0.7.2
  station_connection : true
  station_ssid       : blackhole
- station_interface  : wwan
+ station_interface  : trm_wwan
  station_radio      : radio1
- last_rundate       : 20.04.2017 08:54:48
- system             : LEDE Reboot SNAPSHOT r3974-56457dbcb7
+ last_rundate       : 06.05.2017 06:58:22
+ system             : LEDE Reboot SNAPSHOT r4051-3ddc1914ba
 </code></pre>
 
 ## Setup
-**1. configure a wwan interface in /etc/config/network:**
+**1. configure the travelmate wwan interface in /etc/config/network:**
 <pre><code>
 [...]
-config interface 'wwan'
+config interface 'trm_wwan'
         option proto 'dhcp'
 [...]
 </code></pre>
@@ -73,7 +73,7 @@ config interface 'wwan'
 [...]
 config zone
         option name 'wan'
-        option network 'wan wan6 wwan'
+        option network 'wan wan6 trm_wwan'
 [...]
 </code></pre>
 
@@ -91,7 +91,7 @@ config wifi-iface
 [...]
 config wifi-iface
         option device 'radio0'
-        option network 'wwan'
+        option network 'trm_wwan'
         option mode 'sta'
         option ssid 'example_01'
         option encryption 'psk2+ccmp'
@@ -99,7 +99,7 @@ config wifi-iface
         option disabled '1'
 config wifi-iface
         option device 'radio0'
-        option network 'wwan'
+        option network 'trm_wwan'
         option mode 'sta'
         option ssid 'example_02'
         option encryption 'psk2+ccmp'
@@ -107,7 +107,7 @@ config wifi-iface
         option disabled '1'
 config wifi-iface
         option device 'radio0'
-        option network 'wwan'
+        option network 'trm_wwan'
         option mode 'sta'
         option ssid 'example_03'
         option encryption 'none'
