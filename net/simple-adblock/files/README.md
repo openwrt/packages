@@ -109,6 +109,9 @@ In general, whatever domain is specified to be whitelisted; it, along with with 
 Please head to [OpenWrt Forum](https://forum.openwrt.org/viewtopic.php?pid=307950) or [LEDE Project Forum](https://forum.lede-project.org/t/simple-adblock-fast-lean-and-fully-uci-luci-configurable-adblocking/1327/) for discussion of this package.
 
 ## What's New
+1.5.7:
+- Much stricter filters for hosts and domains lists resulting in better garbage removal.
+
 1.5.6:
 - Better handling of service start/enable from Web UI and enabled flag management.
 
