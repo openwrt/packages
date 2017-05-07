@@ -1,0 +1,65 @@
+commit 17d56c24c10ed300233164cc51380979124d6dd8
+Author: erouault <erouault>
+Date:   Sat Dec 3 12:19:32 2016 +0000
+
+    * tools/tiffcrop.c: add 3 extra bytes at end of strip buffer in
+    readSeparateStripsIntoBuffer() to avoid read outside of heap allocated buffer.
+    Reported by Agostino Sarubbo.
+    Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2621
+
+diff --git a/ChangeLog b/ChangeLog
+index d6a416b..50db803 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,5 +1,12 @@
+ 2016-12-03 Even Rouault <even.rouault at spatialys.com>
+ 
++	* tools/tiffcrop.c: add 3 extra bytes at end of strip buffer in
++	readSeparateStripsIntoBuffer() to avoid read outside of heap allocated buffer.
++	Reported by Agostino Sarubbo.
++	Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2621
++
++2016-12-03 Even Rouault <even.rouault at spatialys.com>
++
+ 	* tools/tiffcrop.c: fix readContigStripsIntoBuffer() in -i (ignore) mode so
+ 	that the output buffer is correctly incremented to avoid write outside bounds.
+ 	Reported by Agostino Sarubbo.
+diff --git a/tools/tiffcrop.c b/tools/tiffcrop.c
+index bdcbd63..9122aab 100644
+--- a/tools/tiffcrop.c
++++ b/tools/tiffcrop.c
+@@ -1,4 +1,4 @@
+-/* $Id: tiffcrop.c,v 1.47 2016-12-03 11:35:56 erouault Exp $ */
++/* $Id: tiffcrop.c,v 1.48 2016-12-03 12:19:32 erouault Exp $ */
+ 
+ /* tiffcrop.c -- a port of tiffcp.c extended to include manipulations of
+  * the image data through additional options listed below
+@@ -4815,10 +4815,17 @@ static int readSeparateStripsIntoBuffer (TIFF *in, uint8 *obuf, uint32 length,
+   nstrips = TIFFNumberOfStrips(in);
+   strips_per_sample = nstrips /spp;
+ 
++  /* Add 3 padding bytes for combineSeparateSamples32bits */
++  if( (size_t) stripsize > 0xFFFFFFFFU - 3U )
++  {
++      TIFFError("readSeparateStripsIntoBuffer", "Integer overflow when calculating buffer size.");
++      exit(-1);
++  }
++
+   for (s = 0; (s < spp) && (s < MAX_SAMPLES); s++)
+     {
+     srcbuffs[s] = NULL;
+-    buff = _TIFFmalloc(stripsize);
++    buff = _TIFFmalloc(stripsize + 3);
+     if (!buff)
+       {
+       TIFFError ("readSeparateStripsIntoBuffer", 
+@@ -4827,6 +4834,9 @@ static int readSeparateStripsIntoBuffer (TIFF *in, uint8 *obuf, uint32 length,
+         _TIFFfree (srcbuffs[i]);
+       return 0;
+       }
++    buff[stripsize] = 0;
++    buff[stripsize+1] = 0;
++    buff[stripsize+2] = 0;
+     srcbuffs[s] = buff;
+     }
+ 

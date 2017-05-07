@@ -120,11 +120,20 @@ add_bridge() {
     config_list_foreach "$1" topic add_topic
     append_optional_bool "$1" cleansession cleansession
     append_optional_bool "$1" try_private try_private
+    append_optional_bool "$1" notifications notifications
 
     append_if "$1" clientid
     append_if "$1" identity bridge_identity
     append_if "$1" psk bridge_psk
     append_if "$1" tls_version bridge_tls_version
+
+    append_if "$1" restart_timeout
+    append_if "$1" capath bridge_capath
+    append_if "$1" cafile bridge_cafile
+    append_if "$1" certfile bridge_certfile
+    append_if "$1" keyfile bridge_keyfile
+    append_if "$1" username remote_username
+    append_if "$1" password remote_password
 }
 
 

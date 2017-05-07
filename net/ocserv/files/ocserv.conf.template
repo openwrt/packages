@@ -43,7 +43,7 @@ max-same-clients = |MAX_SAME|
 
 # TCP and UDP port number
 tcp-port = |PORT|
-|UDP|udp-port = |PORT|
+|UDP|udp-port = |UDP_PORT|
 
 # Stats report time. The number of seconds after which each
 # worker process will report its usage statistics (number of
