@@ -13,7 +13,6 @@ proto_openconnect_init_config() {
 	proto_config_add_string "password2"
 	proto_config_add_string "token_mode"
 	proto_config_add_string "token_secret"
-	proto_config_add_string "interface"
 	proto_config_add_string "os"
 	proto_config_add_string "csd_wrapper"
 	no_device=1
@@ -23,7 +22,7 @@ proto_openconnect_init_config() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port username serverhash authgroup password password2 interface token_mode token_secret os csd_wrapper
+	json_get_vars server port username serverhash authgroup password password2 token_mode token_secret os csd_wrapper
 
 	grep -q tun /proc/modules || insmod tun
 	ifname="vpn-$config"
