@@ -22,7 +22,7 @@ boot()
 
 start_service()
 {
-    if [ $("${adb_init}" enabled; printf ${?}) -eq 0 ]
+    if [ $("${adb_init}" enabled; printf "%u" ${?}) -eq 0 ]
     then
         if [ -n "${adb_boot}" ]
         then
@@ -34,6 +34,11 @@ start_service()
         procd_set_param stderr 1
         procd_close_instance
     fi
+}
+
+reload_service()
+{
+    rc_procd start_service reload
 }
 
 stop_service()
