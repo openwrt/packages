@@ -101,6 +101,8 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/bin/default/libtalloc.so $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/*.h $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/bin/default/talloc.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libtalloc/install
