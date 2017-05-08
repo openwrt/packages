@@ -9,8 +9,8 @@ readonly A_TMP='/var/hosts.allowed.tmp'
 readonly B_TMP='/var/hosts.blocked.tmp'
 readonly T_TMP='/var/simple-adblock.hosts'
 readonly dl='wget --no-check-certificate -qO-'
-readonly h_filter='/localhost/d;/^#/d;/*/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/^$/d;'
-readonly d_filter='/localhost/d;/^#/d;/*/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/^</d;/^$/d;'
+readonly h_filter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;'
+readonly d_filter='/^#/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;'
 readonly f_filter='s|^|local=/|;s|$|/|'
 readonly _ok_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly _fail_='\033[0;31m\xe2\x9c\x97\033[0m'
@@ -18,7 +18,7 @@ readonly __ok__='\033[0;32m[\xe2\x9c\x93]\033[0m'
 readonly __fail__='\033[0;31m[\xe2\x9c\x97]\033[0m'
 readonly _error_='\033[0;31mERROR\033[0m'
 
-export verbosity=2 force_dns=1 bgrun=0 hosts_file='/var/dnsmasq.d/simple-adblock' led wan_if wan_gw wanphysdev
+export verbosity=2 force_dns=1 bgrun=0 debug=0 hosts_file='/var/dnsmasq.d/simple-adblock' led wan_if wan_gw wanphysdev
 
 ok() { case $verbosity in 1) output "$_ok_";; 2) output "$__ok__\n";; esac; }
 okn() { case $verbosity in 1) output "$_ok_\n";; 2) output "$__ok__\n";; esac; }
@@ -36,9 +36,17 @@ is_enabled () {
 		config_get_bool enabled   'config' 'enabled' 1
 		config_get_bool bgrun     'config' 'run_in_background' 0
 		config_get_bool force_dns 'config' 'force_dns' 1
+		config_get_bool debug     'config' 'debug' 0
 		config_get verbosity      'config' 'verbosity' '2'
 		config_get hosts_file  	  'config' 'hosts_file' '/var/dnsmasq.d/simple-adblock'
 		config_get led        	  'config' 'led'
+
+		if [ "$debug" -ne 0 ]; then
+			exec 1>>/tmp/simple-adblock.log
+			exec 2>&1
+			set -x
+		fi
+
 		led="${led:+/sys/class/leds/$led}"
 		[[ $enabled -gt 0 ]] || { output "$_error_: $p_name is not enabled.\n"; return 1; }
 		source 	/lib/functions/network.sh
@@ -95,7 +103,7 @@ process_url() {
 	while [ -e "$R_TMP" ]; do R_TMP="/var/simple-adblock_$(head /dev/urandom | tr -dc 'A-Za-z0-9' | head -c10)"; done
 	touch "$R_TMP"
     output 2 "[DL] $type $label "
-    $dl "${url}" > "$R_TMP" && ok || fail
+    $dl "${url}" > "$R_TMP" 2>/dev/null && ok || fail
 	{ sed -i "$filter" "$R_TMP"; cat "$R_TMP" >> "$D_TMP"; rm -f "$R_TMP"; } &
 }
 
@@ -115,39 +123,33 @@ start_adblocking () {
 		mv $T_TMP $hosts_file && okn || failn
 	else
 		[ -f $A_TMP ] && rm -f $A_TMP; [ -f $B_TMP ] && rm -f $B_TMP; [ -f $T_TMP ] && rm -f $T_TMP; [ -f $hosts_file ] && rm -f $hosts_file
-	    touch $A_TMP; touch $B_TMP; touch $T_TMP;
-
-	    if [ -n "$blacklist_hosts_urls" ]; then
-		    output 1 '[DL] Blocked Hosts '
-		    for hf in ${blacklist_hosts_urls}; do process_url "$hf" 'hosts' 'blocked'; done
-				output 1 '\n'
+    touch $A_TMP; touch $B_TMP; touch $T_TMP;
+    if [ -n "$blacklist_hosts_urls" ]; then
+	    output 1 '[DL] Blocked Hosts '
+	    for hf in ${blacklist_hosts_urls}; do process_url "$hf" 'hosts' 'blocked'; done
+			output 1 '\n'
 		fi
-
-	    if [ -n "$blacklist_domains_urls" ]; then
-		    output 1 '[DL] Blocked Domains '
-		    for hf in ${blacklist_domains_urls}; do process_url "$hf" 'domains' 'blocked'; done
-				output 1 '\n'
+    if [ -n "$blacklist_domains_urls" ]; then
+	    output 1 '[DL] Blocked Domains '
+	    for hf in ${blacklist_domains_urls}; do process_url "$hf" 'domains' 'blocked'; done
+			output 1 '\n'
 		fi
-
-	    if [ -n "$whitelist_domains_urls" ]; then
-		    output 1 '[DL] Allowed Domains '
-		    for hf in ${whitelist_domains_urls}; do process_url "$hf" 'domains' 'allowed'; done
-				output 1 '\n'
+    if [ -n "$whitelist_domains_urls" ]; then
+	    output 1 '[DL] Allowed Domains '
+	    for hf in ${whitelist_domains_urls}; do process_url "$hf" 'domains' 'allowed'; done
+			output 1 '\n'
 		fi
 		output 3 'Waiting for background processes '
 		wait && okn
-
-	    [ -n "$blacklist_domains" ] && for hf in ${blacklist_domains}; do echo "$hf" | sed "$d_filter" >> $B_TMP; done
-	    whitelist_domains="${whitelist_domains}"$'\n'"$(cat $A_TMP)"
-	    [ -n "$whitelist_domains" ] && for hf in ${whitelist_domains}; do hf=$(echo $hf | sed 's/\./\\./g'); w_filter="$w_filter/^${hf}$/d;/\\.${hf}$/d;"; done
-
+    [ -n "$blacklist_domains" ] && for hf in ${blacklist_domains}; do echo "$hf" | sed "$d_filter" >> $B_TMP; done
+    whitelist_domains="${whitelist_domains}"$'\n'"$(cat $A_TMP)"
+    [ -n "$whitelist_domains" ] && for hf in ${whitelist_domains}; do hf=$(echo $hf | sed 's/\./\\./g'); w_filter="$w_filter/^${hf}$/d;/\\.${hf}$/d;"; done
 		if [ -s $B_TMP ]; then
 		    output 1 'Processing downloads '
 		    output 2 'Sorting merged file '; sort $B_TMP | uniq > $T_TMP && ok || fail
 		    output 2 'Whitelisting domains '; sed -i "$w_filter" $T_TMP && ok || fail
-		    output 2 'Formatting merged file '; sed "$f_filter" $T_TMP > $hosts_file && ok || fail
+		    output 2 'Formatting merged file '; sed "$f_filter" $T_TMP > $B_TMP && mv $B_TMP $hosts_file && ok || fail
 		    output 1 '\n'
-
 		    output 3 'Removing temporary files '
 			[ -f $A_TMP ] && rm -f $A_TMP; [ -f $B_TMP ] && rm -f $B_TMP; [ -f $T_TMP ] && rm -f $T_TMP;
  		    okn
@@ -179,12 +181,6 @@ reload_service () {
 
 start_service () {
   is_enabled || return 1
-
-	procd_open_instance
-	procd_set_param stdout 1
-	procd_set_param stderr 1
-	procd_close_instance
-
 	reset_iptables quiet
 	set_iptables
 	[[ -t 1 && $bgrun -eq 1 ]] && (start_adblocking $1 | cat &) || start_adblocking $1
