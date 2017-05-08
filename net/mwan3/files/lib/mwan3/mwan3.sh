@@ -390,10 +390,7 @@ mwan3_track()
 	}
 	config_list_foreach $1 track_ip mwan3_list_track_ips
 
-	if [ -e /var/run/mwan3track-$1.pid ] ; then
-		kill $(cat /var/run/mwan3track-$1.pid) &> /dev/null
-	fi
-
+	kill $(pgrep -f "mwan3track $1") &> /dev/null
 	if [ -n "$track_ips" ]; then
 		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $1 $2 $track_ips &
 	fi
@@ -401,18 +398,13 @@ mwan3_track()
 
 mwan3_track_signal()
 {
-	local pid status
+	local pid
 
-	if [ -f "/var/run/mwan3track-${1}.pid" ]; then
-		pid="$(cat "/var/run/mwan3track-${1}.pid")"
-		status="$(pgrep -f mwan3track | grep "${pid}")"
-		if [ "${status}" != "" ]; then
-			kill -USR1 "${pid}"
-		else
-			$LOG warn "Unable to send signal USR1 to mwan3track on interface $1 with pid ${pid}"
-		fi
+	pid="$(pgrep -f "mwan3track $1")"
+	if [ "${pid}" != "" ]; then
+		kill -USR1 "${pid}"
 	else
-		$LOG warn "Unable to find \"/var/run/mwan3track-${1}.pid\" file for mwan3track on interface $1"
+		$LOG warn "Unable to send signal USR1 to mwan3track on interface $1 with pid ${pid}"
 	fi
 }
 

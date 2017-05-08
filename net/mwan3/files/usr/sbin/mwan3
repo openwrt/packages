@@ -42,9 +42,7 @@ ifdown()
 
 	ACTION=ifdown INTERFACE=$1 /sbin/hotplug-call iface
 
-	if [ -e /var/run/mwan3track-$1.pid ] ; then
-		kill $(cat /var/run/mwan3track-$1.pid)
-	fi
+	kill $(pgrep -f "mwan3track $1") &> /dev/null
 }
 
 ifup()
