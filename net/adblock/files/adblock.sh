@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.6.2"
+adb_ver="2.6.3"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
@@ -25,6 +25,9 @@ adb_fetchparm="--no-config --quiet --no-cache --no-cookies --max-redirect=0 --ti
 adb_dnslist="dnsmasq unbound"
 adb_dnsprefix="adb_list"
 adb_rtfile="/tmp/adb_runtime.json"
+adb_sources=""
+adb_src_cat_shalla=""
+adb_action="${1}"
 
 # f_envload: load adblock environment
 #
@@ -72,10 +75,6 @@ f_envload()
         sleep 1
         cnt=$((cnt+1))
     done
-    if [ -z "${adb_dns}" ]
-    then
-        f_log "error" "no active/supported DNS backend found"
-    fi
 
     # parse global section by callback
     #
@@ -116,6 +115,11 @@ f_envload()
     config_load adblock
     config_foreach parse_config source
 
+    if [ -z "${adb_dns}" ] || [ -z "${adb_dnsformat}" ] || [ ! -x "$(command -v ${adb_dns})" ] || [ ! -d "${adb_dnsdir}" ]
+    then
+        f_log "error" "no active/supported DNS backend found"
+    fi
+
     # force dns to local resolver
     #
     if [ ${adb_forcedns} -eq 1 ] && [ -z "$(uci -q get firewall.adblock_dns)" ]
@@ -134,7 +138,7 @@ f_envload()
     if [ -n "$(uci -q changes firewall)" ]
     then
         uci -q commit firewall
-        if [ $(/etc/init.d/firewall enabled; printf ${?}) -eq 0 ]
+        if [ $(/etc/init.d/firewall enabled; printf "%u" ${?}) -eq 0 ]
         then
             /etc/init.d/firewall reload >/dev/null 2>&1
         fi
@@ -383,7 +387,7 @@ f_status()
         json_get_keys keylist
         for key in ${keylist}
         do
-            json_get_var value ${key}
+            json_get_var value "${key}"
             printf " %-15s : %s\n" "${key}" "${value}"
         done
     fi
@@ -421,6 +425,7 @@ f_main()
     mem_total="$(awk '$1 ~ /^MemTotal/ {printf $2}' "/proc/meminfo" 2>/dev/null)"
 
     f_log "info " "start adblock processing ..."
+    f_log "debug" "action: ${adb_action}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, memory: ${mem_total}, force srt/dns: ${adb_forcesrt}/${adb_forcedns}"
     > "${adb_rtfile}"
     for src_name in ${adb_sources}
     do
@@ -434,6 +439,7 @@ f_main()
 
         # basic pre-checks
         #
+        f_log "debug" "name: ${src_name}, enabled: ${enabled}, url: ${url}, rset: ${src_rset}"
         if [ "${enabled}" != "1" ] || [ -z "${url}" ] || [ -z "${src_rset}" ]
         then
             f_list remove
@@ -442,7 +448,6 @@ f_main()
 
         # download block list
         #
-        f_log "debug" "name: ${src_name}, enabled: ${enabled}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, memory: ${mem_total}, force srt/dns: ${adb_forcesrt}/${adb_forcedns}"
         if [ "${src_name}" = "blacklist" ]
         then
             cat "${url}" 2>/dev/null > "${adb_tmpload}"
@@ -456,7 +461,7 @@ f_main()
             then
                 for category in ${adb_src_cat_shalla}
                 do
-                    tar -xOzf "${shalla_archive}" BL/${category}/domains >> "${adb_tmpload}"
+                    tar -xOzf "${shalla_archive}" "BL/${category}/domains" >> "${adb_tmpload}"
                     adb_rc=${?}
                     if [ ${adb_rc} -ne 0 ]
                     then
@@ -498,7 +503,7 @@ f_main()
             then
                 grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpfile}" 2>/dev/null | eval "${adb_dnsformat}" > "${adb_dnsfile}"
             else
-                cat "${adb_tmpfile}" 2>/dev/null | eval "${adb_dnsformat}" > "${adb_dnsfile}"
+                eval "${adb_dnsformat}" "${adb_tmpfile}" > "${adb_dnsfile}"
             fi
             adb_rc=${?}
             if [ ${adb_rc} -ne 0 ]
@@ -554,7 +559,7 @@ f_main()
 # handle different adblock actions
 #
 f_envload
-case "${1}" in
+case "${adb_action}" in
     stop)
         f_rmtemp
         f_rmdns
