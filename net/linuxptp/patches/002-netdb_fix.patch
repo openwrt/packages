@@ -1,0 +1,77 @@
+From 60db5d0b0fd8be9afede7e8a14e708f5429f2023 Mon Sep 17 00:00:00 2001
+From: Florian Fainelli <f.fainelli@gmail.com>
+Date: Sun, 7 May 2017 11:16:06 -0700
+Subject: [PATCH] udp: Avoid including netdb.h
+
+netdb.h pulls in a large chain of include files:
+rpc/netdb.h
+rpc/types.h
+
+rpc/types.h re-defines TRUE/FALSE and does it in this way:
+
+ #ifndef FALSE
+ #      define  FALSE   (0)
+ #endif
+
+ #ifndef TRUE
+ #      define  TRUE    (1)
+ #endif
+
+And this later causes build problems that appear in this way:
+
+mipsel-linux-gnu-gcc -Wall -DVER=1.8  -D_GNU_SOURCE -DHAVE_CLOCK_ADJTIME
+-DHAVE_POSIX_SPAWN -DHAVE_ONESTEP_SYNC  -Os -pipe -mno-branch-likely
+-mips32r2 -mtune=24kc -fno-caller-saves -Wno-unused-result
+-D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro
+-I/home/florian/dev/openwrt/trunk/staging_dir/target-mipsel-unknown-linux-gnu_glibc/usr/include
+-I/home/florian/dev/openwrt/trunk/staging_dir/target-mipsel-unknown-linux-gnu_glibc/include
+-I/home/florian/dev/toolchains/stbgcc-4.8-1.5/usr/include
+-I/home/florian/dev/toolchains/stbgcc-4.8-1.5/include
+-DHAVE_CLOCK_ADJTIME -DHAVE_POSIX_SPAWN -DHAVE_ONESTEP_SYNC   -c -o
+udp.o udp.c
+In file included from
+/home/florian/dev/openwrt/trunk/staging_dir/target-mipsel-unknown-linux-gnu_glibc/usr/include/rpc/netdb.h:45:0,
+                 from
+/home/florian/dev/toolchains/stbgcc-4.8-1.5/mipsel-linux-gnu/sys-root/usr/include/netdb.h:32,
+                 from udp.c:23:
+pdt.h:25:7: error: expected identifier before '(' token
+ enum {FALSE, TRUE};
+       ^
+<builtin>: recipe for target 'udp.o' failed
+
+Upon inspection, it does not appear that netdb.h is providing any useful
+definition or declaration, so let's just remove its inclusion.
+
+Signed-off-by: Florian Fainelli <f.fainelli@gmail.com>
+---
+ udp.c  | 1 -
+ udp6.c | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/udp.c b/udp.c
+index 6dabc31836fe..530a2ee3748d 100644
+--- a/udp.c
++++ b/udp.c
+@@ -20,7 +20,6 @@
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <net/if.h>
+-#include <netdb.h>
+ #include <netinet/in.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+diff --git a/udp6.c b/udp6.c
+index c229cac0c41c..89e27bf9e863 100644
+--- a/udp6.c
++++ b/udp6.c
+@@ -20,7 +20,6 @@
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <net/if.h>
+-#include <netdb.h>
+ #include <netinet/in.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+-- 
+2.11.0
+
