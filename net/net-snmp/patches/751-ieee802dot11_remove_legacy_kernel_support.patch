@@ -1,0 +1,98 @@
+--- a/agent/mibgroup/iwlib.h
++++ b/agent/mibgroup/iwlib.h
+@@ -32,95 +32,11 @@
+ #include <sys/time.h>		/* struct timeval */
+ #include <unistd.h>
+ 
+-/* This is our header selection. Try to hide the mess and the misery :-(
+- * Don't look, you would go blind ;-) */
+ 
+-#ifndef LINUX_VERSION_CODE
+-#include <linux/version.h>
+-#endif
+-
+-/* Kernel headers 2.4.X + Glibc 2.2 - Mandrake 8.0, Debian 2.3, RH 7.1
+- * Kernel headers 2.2.X + Glibc 2.2 - Slackware 8.0 */
+-#if defined(__GLIBC__) \
+-    && __GLIBC__ == 2 \
+-    && __GLIBC_MINOR__ >= 2 \
+-    && LINUX_VERSION_CODE >= KERNEL_VERSION(2,2,0)
+-//#define GLIBC22_HEADERS
+-#define GENERIC_HEADERS
+-
+-/* Kernel headers 2.4.X + Glibc 2.1 - Debian 2.2 upgraded, RH 7.0
+- * Kernel headers 2.2.X + Glibc 2.1 - Debian 2.2, RH 6.1 */
+-#elif defined(__GLIBC__) \
+-      && __GLIBC__ == 2 \
+-      && __GLIBC_MINOR__ == 1 \
+-      && LINUX_VERSION_CODE >= KERNEL_VERSION(2,2,0)
+-//#define GLIBC_HEADERS
+-#define GENERIC_HEADERS
+-
+-/* Kernel headers 2.2.X + Glibc 2.0 - Debian 2.1 */
+-#elif defined(__GLIBC__) \
+-      && __GLIBC__ == 2 \
+-      && __GLIBC_MINOR__ == 0 \
+-      && LINUX_VERSION_CODE >= KERNEL_VERSION(2,0,0) \
+-      && LINUX_VERSION_CODE < KERNEL_VERSION(2,1,0)
+-#define GLIBC_HEADERS
+-#define KLUDGE_HEADERS
+-
+-/* Note : is it really worth supporting kernel 2.0.X, knowing that
+- * we require WE v9, which is only available in 2.2.X and higher ?
+- * I guess one could use 2.0.x with an upgraded wireless.h... */
+-
+-/* Kernel headers 2.0.X + Glibc 2.0 - Debian 2.0, RH 5 */
+-#elif defined(__GLIBC__) \
+-      && __GLIBC__ == 2 \
+-      && __GLIBC_MINOR__ == 0 \
+-      && LINUX_VERSION_CODE < KERNEL_VERSION(2,1,0) \
+-      && LINUX_VERSION_CODE >= KERNEL_VERSION(2,0,0)
+-#define GLIBC_HEADERS
+-
+-/* Kernel headers 2.0.X + libc5 - old systems */
+-#elif defined(_LINUX_C_LIB_VERSION_MAJOR) \
+-      && _LINUX_C_LIB_VERSION_MAJOR == 5 \
+-      && LINUX_VERSION_CODE >= KERNEL_VERSION(2,0,0) \
+-      && LINUX_VERSION_CODE < KERNEL_VERSION(2,1,0)
+-#define LIBC5_HEADERS
+-
+-/* Unsupported combination */
+-#else
+-#error "Your kernel/libc combination is not supported"
+-#endif
+-
+-#ifdef GENERIC_HEADERS 
+-/* Proposed by Dr. Michael Rietz <rietz@mail.amps.de>, 27.3.2 */
+-/* If this works for all, it might be more stable on the long term - Jean II */
+ #include <net/if_arp.h>		/* For ARPHRD_ETHER */
+ #include <sys/socket.h>		/* For AF_INET & struct sockaddr */
+ #include <netinet/in.h>         /* For struct sockaddr_in */
+ #include <netinet/if_ether.h>
+-#endif /* GENERIC_HEADERS */    
+-
+-#ifdef GLIBC22_HEADERS 
+-/* Added by Ross G. Miller <Ross_Miller@baylor.edu>, 3/28/01 */
+-#include <linux/if_arp.h> 	/* For ARPHRD_ETHER */
+-#include <linux/socket.h>	/* For AF_INET & struct sockaddr */
+-#include <sys/socket.h>
+-#endif /* GLIBC22_HEADERS */    
+-
+-#ifdef KLUDGE_HEADERS
+-#include <socketbits.h>
+-#endif	/* KLUDGE_HEADERS */
+-
+-#ifdef GLIBC_HEADERS
+-#include <linux/if_arp.h>	/* For ARPHRD_ETHER */
+-#include <linux/socket.h>	/* For AF_INET & struct sockaddr */
+-#include <linux/in.h>		/* For struct sockaddr_in */
+-#endif	/* KLUDGE_HEADERS || GLIBC_HEADERS */
+-
+-#ifdef LIBC5_HEADERS
+-#include <sys/socket.h>		/* For AF_INET & struct sockaddr & socket() */
+-#include <linux/if_arp.h>	/* For ARPHRD_ETHER */
+-#include <linux/in.h>		/* For struct sockaddr_in */
+-#endif	/* LIBC5_HEADERS */
+ 
+ /* Those 3 headers were previously included in wireless.h */
+ #include <linux/types.h>		/* for "caddr_t" et al		*/
