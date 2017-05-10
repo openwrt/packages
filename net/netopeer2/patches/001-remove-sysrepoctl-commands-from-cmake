@@ -1,0 +1,40 @@
+Index: netopeer2-c204b59f9c2bb7e63eb907f33c44adbf208295ee/keystored/CMakeLists.txt
+===================================================================
+--- netopeer2-c204b59f9c2bb7e63eb907f33c44adbf208295ee.orig/keystored/CMakeLists.txt
++++ netopeer2-c204b59f9c2bb7e63eb907f33c44adbf208295ee/keystored/CMakeLists.txt
+@@ -105,6 +105,7 @@ endif()
+ install(DIRECTORY DESTINATION ${KEYSTORED_KEYS_DIR}
+         DIRECTORY_PERMISSIONS OWNER_WRITE OWNER_READ OWNER_EXECUTE)
+ 
++if(FALSE)
+ # install all the required modules and enable features
+ install(CODE "
+     execute_process(COMMAND ${SYSREPOCTL_EXECUTABLE} -l RESULT_VARIABLE RET OUTPUT_VARIABLE INSTALLED_MODULES ERROR_VARIABLE OUT)
+@@ -154,6 +155,7 @@ install(CODE "
+             message(FATAL_ERROR \"  Command sysrepocfg import failed:\\n  \${OUT}\")
+         endif()
+     endif()")
++endif()
+ 
+ # plugins should be installed into sysrepo plugins dir
+ install(TARGETS keystored DESTINATION ${SR_PLUGINS_DIR})
+Index: netopeer2-c204b59f9c2bb7e63eb907f33c44adbf208295ee/server/CMakeLists.txt
+===================================================================
+--- netopeer2-c204b59f9c2bb7e63eb907f33c44adbf208295ee.orig/server/CMakeLists.txt
++++ netopeer2-c204b59f9c2bb7e63eb907f33c44adbf208295ee/server/CMakeLists.txt
+@@ -147,6 +147,7 @@ include_directories(${SYSREPO_INCLUDE_DI
+ # install binary
+ install(TARGETS netopeer2-server DESTINATION ${CMAKE_INSTALL_BINDIR})
+ 
++if(FALSE)
+ # only for configuration
+ if (ENABLE_CONFIGURATION)
+     # find sysrepoctl
+@@ -239,6 +240,7 @@ if (ENABLE_CONFIGURATION)
+ 
+         endif()")
+ endif()
++endif()
+ 
+ # clean cmake cache
+ add_custom_target(cleancache
