@@ -45,7 +45,7 @@ odhcpd_zonedata() {
   local dhcp_ls_old=$UNBOUND_VARDIR/dhcp_lease.old
   local dhcp_ls_add=$UNBOUND_VARDIR/dhcp_lease.add
   local dhcp_ls_del=$UNBOUND_VARDIR/dhcp_lease.del
-  local dhcp_origin=$( uci get dhcp.@odhcpd[0].leasefile )
+  local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
 
   config_load unbound
   config_foreach odhcpd_settings unbound

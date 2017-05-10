@@ -73,7 +73,7 @@ config dhcp 'lan'
 ```
 
 ### Unbound and odhcpd
-You may ask can Unbound replace dnsmasq? You can have DHCP-DNS records with Unbound and odhcpd only. The UCI scripts will allow Unbound to act like dnsmasq. When odhcpd configures each DHCP lease, it will call a script. The script provided with Unbound will read the lease file for DHCP-DNS records. You **must install** `unbound-control`, because the lease records are added and removed without starting, stopping, flushing cache, or re-writing conf files. (_restart overhead can be excessive with even a few mobile devices._)
+You may ask, "can Unbound replace dnsmasq?" You can have DHCP-DNS records with Unbound and odhcpd only. The UCI scripts will allow Unbound to act like dnsmasq. When odhcpd configures each DHCP lease, it will call a script. The script provided with Unbound will read the lease file for DHCP-DNS records. You **must install** `unbound-control`, because the lease records are added and removed without starting, stopping, flushing cache, or re-writing conf files. (_restart overhead can be excessive with even a few mobile devices._)
 
 Don't forget to disable or uninstall dnsmasq when you don't intend to use it. Strange results may occur. If you want to use default dnsmasq+odhcpd and add Unbound on top, then use the dnsmasq-serial or dnsmasq-parallel methods above.
 
@@ -106,8 +106,7 @@ config dhcp 'lan'
   option leasetime '12h'
   option ra 'server'
   option ra_management '1'
-  # issue your ULA and avoid default [fe80::]
-  list dns 'fdxx:xxxx:xxxx::1'
+  # odhcpd should issue ULA [fd00::/8] by default
   ...
 
 config odhcpd 'odhcpd'
@@ -145,6 +144,14 @@ The former will be added to the end of the `server:` clause. The later will be a
 ```
 config unbound
   Currently only one instance is supported.
+
+  option add_extra_dns '0'
+    Level. Execute traditional DNS overrides found in `/etc/config/dhcp`.
+    Optional so you may use other Unbound conf or redirect to NSD instance.
+    0 - Ignore `/etc/config/dhcp`
+    1 - Use only 'domain' clause (host records)
+    2 - Use 'domain', 'mxhost', and 'srvhost' clauses
+    3 - Use all of 'domain', 'mxhost', 'srvhost', and 'cname' clauses
 
   option add_local_fqdn '0'
     Level. This puts your routers host name in the LAN (local) DNS.
@@ -271,9 +278,15 @@ config unbound
     embedded devices don't have a real time power off clock. NTP needs
     DNS to resolve servers. This works around the chicken-and-egg.
 
-  list domain_insecure
-    List. Domains or pointers that you wish to skip DNSSEC. Your DHCP
-    domains and pointers in dnsmasq will get this automatically.
+  list domain_insecure 'www.example.com'
+    Domain. Domains that you wish to skip DNSSEC. Your DHCP
+    domains and pointers will get this automatically.
+
+  list trigger 'lan' 'wan'
+    Interface (logical). This option is a work around for netifd/procd
+    interaction with WAN DHCPv6. Minor RA or DHCP changes in IP6 can
+    cause netifd to execute procd interface reload. Limit Unbound procd
+    triggers to LAN and WAN (IP4 only) to prevent restart @2-3 minutes.
 ```
 
 

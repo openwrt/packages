@@ -1,4 +1,5 @@
 config unbound
+	option add_extra_dns '0'
 	option add_local_fqdn '1'
 	option add_wan_fqdn '0'
 	option dhcp_link 'none'
@@ -24,5 +25,7 @@ config unbound
 	option unbound_control '0'
 	option validator '0'
 	option validator_ntp '1'
-	#list domain_insecure ''
+	list trigger 'lan'
+	list trigger 'wan'
+	#list domain_insecure 'www.example.com'
 
