@@ -1,0 +1,26 @@
+Index: sysrepo-e4a5705a4c5293ba121048c71899b98243d99edf/CMakeLists.txt
+===================================================================
+--- sysrepo-e4a5705a4c5293ba121048c71899b98243d99edf.orig/CMakeLists.txt
++++ sysrepo-e4a5705a4c5293ba121048c71899b98243d99edf/CMakeLists.txt
+@@ -280,7 +280,7 @@ install (FILES ${INTERNAL_YANGS} DESTINA
+ 
+ # install NACM YANG module
+ if(ENABLE_NACM)
+-    INSTALL_YANG("ietf-netconf-acm" "@2012-02-22" "644")
++    # INSTALL_YANG("ietf-netconf-acm" "@2012-02-22" "644")
+ endif(ENABLE_NACM)
+ 
+ find_package(PkgConfig QUIET)
+@@ -304,9 +304,9 @@ if(WITH_SYSTEMD)
+         FILES_MATCHING PATTERN "*.service")
+ endif()
+ 
+-INSTALL_YANG("ietf-netconf-notifications" "" "666")
+-INSTALL_YANG("nc-notifications" "" "666")
+-INSTALL_YANG("notifications" "" "666")
++# INSTALL_YANG("ietf-netconf-notifications" "" "666")
++# INSTALL_YANG("nc-notifications" "" "666")
++# INSTALL_YANG("notifications" "" "666")
+ 
+ if(GEN_LANGUAGE_BINDINGS)
+     add_subdirectory(swig)
