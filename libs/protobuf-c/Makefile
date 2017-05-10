@@ -7,7 +7,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=libprotobuf-c
+PKG_NAME:=protobuf-c
 PKG_VERSION:=v1.2.1
 PKG_RELEASE:=$(PKG_SOURCE_VERSION)
 
@@ -26,14 +26,14 @@ PKG_MAINTAINER:=Jacob Siverskog <jacob@teenageengineering.com>
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libprotobuf-c
+define Package/protobuf-c
   TITLE:=Protocol Buffers library
   SECTION:=libs
   CATEGORY:=Libraries
   URL:=http://code.google.com/p/protobuf-c/
 endef
 
-define Package/libprotobuf-c/description
+define Package/protobuf-c/description
   Runtime library to use Google Protocol Buffers from C applications.
   Protocol Buffers are a way of encoding structured data in an efficient yet
   extensible format. Google uses Protocol Buffers for almost all of its
@@ -54,9 +54,9 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
 endef
 
-define Package/libprotobuf-c/install
+define Package/protobuf-c/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libprotobuf-c.so.* $(1)/usr/lib/
 endef
 
-$(eval $(call BuildPackage,libprotobuf-c))
+$(eval $(call BuildPackage,protobuf-c))
