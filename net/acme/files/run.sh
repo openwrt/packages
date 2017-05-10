@@ -189,7 +189,7 @@ issue_cert()
             return 1
         fi
         log "Using webroot dir: $webroot"
-        acme_args="$acme_args --webroot \"$webroot\""
+        acme_args="$acme_args --webroot $webroot"
     fi
 
     if ! $ACME --home "$STATE_DIR" --issue $acme_args; then
