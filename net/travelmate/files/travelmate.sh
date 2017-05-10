@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.7.2"
+trm_ver="0.7.3"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0
@@ -93,31 +93,35 @@ f_prepare()
 #
 f_check()
 {
-    local ifname radio cnt=1 mode="${1}"
+    local ifname radio status cnt=1 mode="${1}"
     trm_ifstatus="false"
 
     while [ ${cnt} -le ${trm_maxwait} ]
     do
-        if [ "${mode}" = "ap" ]
+        status="$(ubus -S call network.wireless status 2>/dev/null)"
+        if [ -n "${status}" ]
         then
-            for radio in ${trm_radiolist}
-            do
-                trm_ifstatus="$(ubus -S call network.wireless status | jsonfilter -e "@.${radio}.up")"
-                if [ "${trm_ifstatus}" = "true" ]
-                then
-                    trm_aplist="${trm_aplist} $(ubus -S call network.wireless status | jsonfilter -e "@.${radio}.interfaces[@.config.mode=\"ap\"].ifname")_${radio}"
-                    ifname="${trm_aplist}"
-                else
-                    trm_aplist=""
-                    trm_ifstatus="false"
-                    break
-                fi
-            done
-        else
-            ifname="$(ubus -S call network.wireless status | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
-            if [ -n "${ifname}" ]
+            if [ "${mode}" = "ap" ]
             then
-                trm_ifstatus="$(ubus -S call network.interface dump | jsonfilter -e "@.interface[@.device=\"${ifname}\"].up")"
+                for radio in ${trm_radiolist}
+                do
+                    trm_ifstatus="$(printf "%s" "${status}" | jsonfilter -e "@.${radio}.up")"
+                    if [ "${trm_ifstatus}" = "true" ]
+                    then
+                        trm_aplist="${trm_aplist} $(printf "%s" "${status}" | jsonfilter -e "@.${radio}.interfaces[@.config.mode=\"ap\"].ifname")_${radio}"
+                        ifname="${trm_aplist}"
+                    else
+                        trm_aplist=""
+                        trm_ifstatus="false"
+                        break
+                    fi
+                done
+            else
+                ifname="$(printf "%s" "${status}" | jsonfilter -e '@.*.interfaces[@.config.mode="sta"].ifname')"
+                if [ -n "${ifname}" ]
+                then
+                    trm_ifstatus="$(ubus -S call network.interface dump 2>/dev/null | jsonfilter -e "@.interface[@.device=\"${ifname}\"].up")"
+                fi
             fi
         fi
         if [ "${mode}" = "initial" ] || [ "${trm_ifstatus}" = "true" ]
@@ -201,14 +205,10 @@ f_main()
         if [ -n "$(uci -q changes wireless)" ]
         then
             uci -q commit wireless
-            ubus call network reload
+            ubus call network restart
         fi
         f_check "ap"
         f_log "debug" "ap-list: ${trm_aplist}, sta-list: ${trm_stalist}"
-        if [ -z "${trm_aplist}" ] || [ -z "${trm_stalist}" ]
-        then
-            f_log "error" "no usable AP/STA configuration found"
-        fi
         for ap in ${trm_aplist}
         do
             cnt=1
