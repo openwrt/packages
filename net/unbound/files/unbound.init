@@ -47,7 +47,7 @@ start_service() {
 
 stop_service() {
   unbound_stop
-  
+
   # Wait! on restart Unbound may take time writing closure stats to syslog
   pidof $PROG && sleep 1
 }
@@ -55,9 +55,20 @@ stop_service() {
 ##############################################################################
 
 service_triggers() {
-  # use soft reload to prevent continuous stop-start and cache flush
+  local trigger
+  local triggers=$( uci_get unbound.@unbound[0].trigger )
+
+  PROCD_RELOAD_DELAY=2000
   procd_add_reload_trigger "unbound"
-  procd_add_raw_trigger "interface.*.up" 2000 /etc/init.d/unbound reload
+
+  if [ -n "$triggers" ] ; then
+    for trigger in $triggers ; do
+      # due to some netifd/procd interactions with IP6, limit interfaces
+      procd_add_reload_interface_trigger "$trigger"
+    done
+  else
+    procd_add_raw_trigger "interface.*.up" 2000 /etc/init.d/unbound reload
+  fi
 }
 
 ##############################################################################
