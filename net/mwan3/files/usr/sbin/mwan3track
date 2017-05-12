@@ -2,7 +2,7 @@
 
 . /lib/functions.sh
 
-LOG="/usr/bin/logger -t $(basename "$0")[$$] -p"
+LOG="logger -t $(basename "$0")[$$] -p"
 INTERFACE=""
 DEVICE=""
 
