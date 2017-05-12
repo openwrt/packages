@@ -2,7 +2,7 @@
 
 . /lib/functions.sh
 
-LOG="/usr/bin/logger -t $(basename "$0")[$$] -p"
+LOG="logger -t $(basename "$0")[$$] -p"
 INTERFACE=""
 DEVICE=""
 
@@ -10,8 +10,9 @@ IFDOWN_EVENT=0
 
 clean_up() {
 	$LOG notice "Stopping mwan3track for interface \"${INTERFACE}\""
-	rm "/var/run/mwan3track-${INTERFACE}.pid" &> /dev/null
-	rm -rf "/var/run/mwan3track/${INTERFACE}" &> /dev/null
+	if [ "$(pgrep -f "mwan3track ${INTERFACE}")" = "" ]; then
+		rm -rf "/var/run/mwan3track/${INTERFACE}" &> /dev/null
+	fi
 	if [ -z "$(ls -A "/var/run/mwan3track")" ]; then
 		rm -rf "/var/run/mwan3track"
 	fi
@@ -31,7 +32,6 @@ main() {
 
 	INTERFACE=$1
 	DEVICE=$2
-	echo "$$" > /var/run/mwan3track-$1.pid
 	mkdir -p /var/run/mwan3track/$1
 	trap clean_up SIGINT SIGTERM
 	trap if_down SIGUSR1
@@ -103,13 +103,13 @@ main() {
 			if [ $score -eq $up ]; then
 				$LOG notice "Interface $1 ($2) is online"
 				env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
-				rm /var/run/mwan3track-$1.pid
 				rm -rf "/var/run/mwan3track/${1}" &> /dev/null
 				exit 0
 			fi
 		fi
 
 		let turn++
+		mkdir -p "/var/run/mwan3track/${1}"
 		echo "${lost}" > /var/run/mwan3track/$1/LOST
 		echo "${score}" > /var/run/mwan3track/$1/SCORE
 		echo "${turn}" > /var/run/mwan3track/$1/TURN
