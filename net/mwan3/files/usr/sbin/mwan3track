@@ -109,6 +109,7 @@ main() {
 		fi
 
 		let turn++
+		mkdir -p "/var/run/mwan3track/${1}"
 		echo "${lost}" > /var/run/mwan3track/$1/LOST
 		echo "${score}" > /var/run/mwan3track/$1/SCORE
 		echo "${turn}" > /var/run/mwan3track/$1/TURN
