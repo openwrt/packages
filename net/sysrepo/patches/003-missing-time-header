@@ -1,0 +1,12 @@
+Index: sysrepo-e4a5705a4c5293ba121048c71899b98243d99edf/inc/sysrepo.h
+===================================================================
+--- sysrepo-e4a5705a4c5293ba121048c71899b98243d99edf.orig/inc/sysrepo.h
++++ sysrepo-e4a5705a4c5293ba121048c71899b98243d99edf/inc/sysrepo.h
+@@ -51,6 +51,7 @@
+  * @ref xp_page "XPath Addressing" is used for node identification in data-related calls.
+  */
+ 
++#include <time.h>
+ #include <stdbool.h>
+ #include <stdint.h>
+ #include <stdlib.h>
