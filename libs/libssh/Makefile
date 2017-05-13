@@ -12,14 +12,11 @@ PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
 PKG_NAME:=libssh
 PKG_VERSION:=0.7.5
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=0588cbf9d43e7819e453c8b35c1b5e515d815473
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.bz2
-PKG_SOURCE_URL:=git://git.libssh.org/projects/libssh.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://red.libssh.org/attachments/download/218/
+PKG_MD5SUM:=d3fc864208bf607ad87cdee836894feb
 
 CMAKE_INSTALL:=1
 
