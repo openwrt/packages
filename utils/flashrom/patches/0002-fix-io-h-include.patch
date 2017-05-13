@@ -1,0 +1,12 @@
+diff -uprN a/linux_spi.c b/linux_spi.c
+--- a/flash.h     2015-02-08 16:57:52.000000000 -0500
++++ b/flash.h     2016-01-08 20:09:51.599387507 -0500
+@@ -30,6 +30,7 @@
+ #include <stdio.h>
+ #include <stdint.h>
+ #include <stddef.h>
++#include <sys/io.h>
+ #include <stdbool.h>
+ #if IS_WINDOWS
+ #include <windows.h>
+

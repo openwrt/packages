@@ -1,0 +1,29 @@
+diff --git a/setup.py b/setup.py
+index 7979f89..5e1abb3 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1,6 +1,8 @@
+ # Copyright (c) Aaron Gallagher <_@habnab.it>
+ # See COPYING for details.
+ 
++import os
++
+ from setuptools import setup
+ 
+ 
+@@ -30,10 +32,11 @@ setup(
+     ],
+     license='ISC',
+ 
+-    setup_requires=['vcversioner>=1'],
+-    vcversioner={
+-        'version_module_paths': ['txsocksx/_version.py'],
+-    },
++    #setup_requires=['vcversioner>=1'],
++    #vcversioner={
++    #    'version_module_paths': ['txsocksx/_version.py'],
++    #},
++    version=os.environ.get('PKG_VERSION'),
+     install_requires=install_requires,
+     packages=['txsocksx', 'txsocksx.test'],
+ )

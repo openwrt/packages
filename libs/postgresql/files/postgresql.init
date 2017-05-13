@@ -1,93 +1,78 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 START=50
 
-EXTRA_COMMANDS="status reload"
+PROG=/usr/bin/postmaster
 
-config_load "postgresql"
-config_get pgdata config PGDATA
-config_get pguser config PGUSER
-config_get pgctl config PG_CTL
-config_get pglog config PGLOG
+USE_PROCD=1
 
-start() {
-    if [ ! -e /usr/bin/su ]; then
-        echo "The su command is requred to run postgres"
-        exit 1
-    fi
+EXTRA_COMMANDS="status"
+EXTRA_HELP="        status  Show current status of the PostgreSQL server"
 
-    if [ ! -d ${pgdata} ]; then
-        echo "Create the data directory (${pgdata}) and try again"
-        exit 1
-    fi
-
-    echo "starting postgres..."
-    # make sure localhost (without a dot) is in /etc/hosts
-    grep -q 'localhost$' /etc/hosts || echo '127.0.0.1 localhost' >> /etc/hosts
-
-    # for whatever reason, /dev/null gets wrong perms
-    chmod a+w /dev/null
-
-    if [ -f ${pgdata}/postmaster.pid ]; then
-        rm ${pgdata}/postmaster.pid
-    fi
-
-    config_get pgopts config PGOPTS
-    if [ -n "${pgopts}" ]; then
-        pgopts="-o ${pgopts}"
-    fi
-    /usr/bin/su ${pguser} -c "/usr/bin/postmaster -D '${pgdata}' &" >> ${pglog} 2>&1
-
-    while :
-    do
-        cnt=$((${cnt} + 1))
-        if [ -f "${pgdata}/postmaster.pid" ]; then
-            ret=0
-            break
-        fi
-
-        if [ ${cnt} -eq 30 ]; then
-            echo "Postgres failed to start.  See ${pglog} for details"
-            ret=1
-            break
-        fi
-        sleep 1
-    done
-
-    echo "ok"
-    return ${ret}
+fix_hosts() {
+	# make sure localhost (without a dot) is in /etc/hosts
+	grep -q 'localhost$' /etc/hosts || echo '127.0.0.1 localhost' >> /etc/hosts
 }
 
-stop() {
-    echo "stopping postgres..."
-    /usr/bin/su ${pguser} -c "${pgctl} stop -D '${pgdata}' -s -m fast"
-    ret=$?
-    if [ -f ${pgdata}/postmaster.pid ]; then
-        rm ${pgdata}/postmaster.pid
-    fi
-    echo "ok"
-    return ${ret}
+fix_perms() {
+	# for whatever reason, /dev/null gets wrong perms
+	chmod a+w /dev/null
 }
 
-restart() {
-    echo "restarting postgres..."
-    /usr/bin/su ${pguser} -c "${pgctl} stop -D '${pgdata}' -s -m fast -w"
-    if [ -f ${pgdata}/postmaster.pid ]; then
-        rm ${pgdata}/postmaster.pid
-    fi
-    /usr/bin/su ${pguser} -c "/usr/bin/postmaster -D '${pgdata}' &" >> ${pglog} 2>&1
-    echo "ok"
-    return $?
+cleanup() {
+	if [ -f "$1/postmaster.pid" ]; then
+		rm "$1/postmaster.pid"
+	fi
 }
 
-reload() {
-    echo "reloading postgres..."
-    /usr/bin/su ${pguser} -c "${pgctl} reload -D '${pgdata}' -s"
-    echo "ok"
+start_service() {
+	. /lib/functions/postgresql.sh
+
+	config_load "postgresql"
+	config_get pgdata config PGDATA
+	config_get pgopts config PGOPTS
+
+	user_exists postgres 5432 || user_add postgres 5432
+	group_exists postgres 5432 || group_add postgres 5432
+
+	fix_perms
+	fix_hosts
+
+	if [ ! -d "${pgdata}" ]; then
+		pg_init_data ${pgdata}
+		[ $? -gt 0 ] && return 1
+	fi
+
+	cleanup "${pgdata}"
+
+	procd_open_instance
+	procd_set_param user postgres
+	procd_set_param command $PROG
+	procd_append_param command -D "${pgdata}"
+	[ -n "${pgopts}" ] && procd_append_param command -o "${pgopts}"
+	procd_set_param respawn retry=60
+	procd_close_instance
+
+	procd_open_instance
+	procd_set_param user postgres
+	procd_set_param command /lib/functions/postgresql.sh init "${pgdata}"
+	procd_close_instance
+}
+
+reload_service() {
+	config_load "postgresql"
+	config_get pgdata config PGDATA
+	/usr/bin/pg_ctl reload -U postgres -D "${pgdata}" -s
+}
+
+stop_service() {
+	config_load "postgresql"
+	config_get pgdata config PGDATA
+	/usr/bin/pg_ctl stop -U postgres -D "${pgdata}" -s
 }
 
 status() {
-    echo "status postgres..."
-    /usr/bin/su ${pguser} -c "${pgctl} status -D '${pgdata}'"
-    echo "ok"
+	config_load "postgresql"
+	config_get pgdata config PGDATA
+	/usr/bin/pg_ctl status -U postgres -D "${pgdata}"
 }

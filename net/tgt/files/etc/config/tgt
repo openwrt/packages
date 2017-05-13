@@ -42,7 +42,7 @@ config target 1
 #	option 'readonly' '0'
 # Disk devices default to non-removable, cd - to removable
 #	option 'removable' '0'
-#  0 = Clasic sense format, 1 = Support descriptor format.
+#  0 = Classic sense format, 1 = Support descriptor format.
 #	option 'sense_format' '0'
 
 #config lun 2_1

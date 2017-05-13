@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liboping
-PKG_VERSION:=1.6.2
+PKG_VERSION:=1.9.0
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
-PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_LICENSE:=LGPL-2.1+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://verplant.org/liboping/files
-PKG_MD5SUM:=64a6f31310093d2517cfe7f05aa011e0
+PKG_SOURCE_URL:=https://noping.cc/files
+PKG_MD5SUM:=9c9f65bfd297d7e7092c7f219c31f66a
 
 PKG_FIXUP:=autoreconf
 

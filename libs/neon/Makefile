@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=neon
-PKG_VERSION:=0.30.0
+PKG_VERSION:=0.30.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.webdav.org/neon
-PKG_MD5SUM:=fb60b3a124eeec441937a812c456fd94
+PKG_MD5SUM:=e28d77bf14032d7f5046b3930704ef41
 
 PKG_INSTALL:=1
 
@@ -24,7 +24,7 @@ define Package/libneon
   CATEGORY:=Libraries
   TITLE:=HTTP and WebDAV client library
   URL:=http://www.webdav.org/neon/
-  DEPENDS:=+libopenssl +libexpat
+  DEPENDS:=+libopenssl +libexpat +zlib
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 endef
 

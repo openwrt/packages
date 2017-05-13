@@ -17,7 +17,6 @@ config GNUTLS_OCSP
 
 config GNUTLS_CRYPTODEV
 	bool "enable /dev/crypto support"
-	select PACKAGE_kmod-cryptodev
 	default n
 
 config GNUTLS_HEARTBEAT
@@ -39,6 +38,11 @@ config GNUTLS_PSK
 config GNUTLS_ANON
 	bool "enable anonymous authentication support"
 	default y
+
+config GNUTLS_TPM
+	bool "enable tpm support"
+	select GNUTLS_PKCS11
+	default n
 
 config GNUTLS_PKCS11
 	bool "enable smart card (PKCS11) support"

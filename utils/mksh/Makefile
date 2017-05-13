@@ -9,15 +9,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mksh
-PKG_VERSION:=50d
+PKG_VERSION:=54
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Thorsten Glaser <tg@mirbsd.org>
 PKG_LICENSE:=MirOS
 
 PKG_SOURCE:=$(PKG_NAME)-R$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://www.mirbsd.org/MirOS/dist/mir/mksh
-PKG_MD5SUM:=1c3882c07a760b23df1ad94ad0b4ed2e
+PKG_SOURCE_URL:=http://www.mirbsd.org/MirOS/dist/mir/mksh \
+		http://pub.allbsd.org/MirOS/dist/mir/mksh/
+PKG_MD5SUM:=be0a6fb93b4a5f927bcc1893bb6692f8
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 

@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-mosquitto
-PKG_VERSION:=0.1
+PKG_VERSION:=0.2
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -21,7 +21,7 @@ PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)
+define Package/lua-mosquitto
     SUBMENU:=Lua
     SECTION:=lang
     CATEGORY:=Languages
@@ -30,13 +30,13 @@ define Package/$(PKG_NAME)
     MAINTAINER:=Karl Palsson <karlp@remake.is>
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/lua-mosquitto/description
 	Lua bindings to libmosquitto
 endef
 
-define Package/$(PKG_NAME)/install
+define Package/lua-mosquitto/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mosquitto.so $(1)/usr/lib/lua
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,lua-mosquitto))

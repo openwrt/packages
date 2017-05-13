@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=watchcat
 PKG_VERSION:=1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -23,7 +23,7 @@ define Package/watchcat
 endef
 
 define Package/watchcat/description
-Allows to configure a periodically reboot, or after loosing internet connectivity. Configured trough UCI /etc/config/system.
+Allows to configure a periodically reboot, or after losing internet connectivity. Configured trough UCI /etc/config/system.
 endef
 
 define Package/watchcat/conffiles

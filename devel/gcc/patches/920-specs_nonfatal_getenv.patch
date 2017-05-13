@@ -1,12 +1,13 @@
 --- a/gcc/gcc.c
 +++ b/gcc/gcc.c
-@@ -8003,7 +8003,10 @@ getenv_spec_function (int argc, const ch
+@@ -8807,8 +8807,10 @@ getenv_spec_function (int argc, const ch
  
    value = getenv (argv[0]);
    if (!value)
--    fatal_error ("environment variable %qs not defined", argv[0]);
+-    fatal_error (input_location,
+-		 "environment variable %qs not defined", argv[0]);
 +    {
-+      warning (0, "environment variable %qs not defined", argv[0]);
++      warning (input_location, "environment variable %qs not defined", argv[0]);
 +      value = "";
 +    }
  

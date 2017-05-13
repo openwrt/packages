@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -606,8 +606,6 @@ else()
+   target_link_libraries(domoticz -lrt ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} ${CURL_LIBRARIES} pthread ${LUA_LIBRARIES} ${MQTT_LIBRARIES} ${SQLite_LIBRARIES} ${CMAKE_DL_LIBS} ${TELLDUS_LIBRARIES} ${EXECINFO_LIBRARIES})
+ ENDIF()
+ 
+-ADD_PRECOMPILED_HEADER(domoticz "main/stdafx.h")
+-
+ IF(CMAKE_COMPILER_IS_GNUCXX)
+   option(USE_STATIC_LIBSTDCXX "Build with static libgcc/libstdc++ libraries" YES)
+   IF(USE_STATIC_LIBSTDCXX)

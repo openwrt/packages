@@ -1,6 +1,6 @@
 --- a/gtk-doc.make
 +++ b/gtk-doc.make
-@@ -267,7 +267,7 @@ uninstall-local:
+@@ -282,7 +282,7 @@ uninstall-local:
  #
  # Require gtk-doc when making dist
  #

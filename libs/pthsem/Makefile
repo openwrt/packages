@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pthsem
 PKG_VERSION:=2.0.8
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=LGPL-2.1+
@@ -21,6 +21,7 @@ PKG_MD5SUM:=9144b26dcc27e67498d63dd5456f934c
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
+PKG_FORTIFY_SOURCE:=0
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -36,6 +37,13 @@ define Package/pthsem/description
   GNU pth is a user mode multi threading library.
   pthsem is an extend version, with support for semaphores added. It can be installed parallel to a normal pth.
 endef
+
+# The musl libc provides a proper implementation of sigaltstack() so
+# prevent configure from wrongly assuming a broken Linux platform
+ifeq ($(CONFIG_USE_MUSL),y)
+  CONFIGURE_VARS += \
+	ac_cv_check_sjlj=ssjlj
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin

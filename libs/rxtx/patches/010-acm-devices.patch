@@ -1,0 +1,11 @@
+diff -rupN rxtx-2.2pre2/src/gnu/io/RXTXCommDriver.java rxtx-2.2pre2.new/src/gnu/io/RXTXCommDriver.java
+--- rxtx-2.2pre2/src/gnu/io/RXTXCommDriver.java	2008-11-13 16:44:01.000000000 -0800
++++ rxtx-2.2pre2.new/src/gnu/io/RXTXCommDriver.java	2015-08-21 16:19:14.330743949 -0700
+@@ -579,6 +579,7 @@ public class RXTXCommDriver implements C
+ 						"ttyUSB", // for USB frobs
+ 						"rfcomm",       // bluetooth serial device
+ 						"ttyircomm", // linux IrCommdevices (IrDA serial emu)
++						"ttyACM" // linux CDC ACM devices
+ 						};
+ 						CandidatePortPrefixes=Temp;
+ 					}

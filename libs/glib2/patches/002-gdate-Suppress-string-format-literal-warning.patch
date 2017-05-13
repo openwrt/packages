@@ -1,0 +1,24 @@
+From 0817af40e8c74c721c30f6ef482b1f53d12044c7 Mon Sep 17 00:00:00 2001
+From: coypu <coypu@sdf.org>
+Date: Mon, 8 Feb 2016 00:06:06 +0200
+Subject: gdate: Suppress string format literal warning
+
+Newer versions of GCC emit an error here, but we know it's safe.
+https://bugzilla.gnome.org/761550
+---
+ glib/gdate.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/glib/gdate.c
++++ b/glib/gdate.c
+@@ -2497,7 +2497,10 @@ g_date_strftime (gchar       *s,
+        * recognize whether strftime actually failed or just returned "".
+        */
+       tmpbuf[0] = '\1';
++      #pragma GCC diagnostic push
++      #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+       tmplen = strftime (tmpbuf, tmpbufsize, locale_format, &tm);
++      #pragma GCC diagnostic pop
+ 
+       if (tmplen == 0 && tmpbuf[0] != '\0')
+         {

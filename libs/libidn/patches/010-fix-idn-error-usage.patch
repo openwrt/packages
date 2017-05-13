@@ -1,6 +1,6 @@
 --- a/src/idn.c
 +++ b/src/idn.c
-@@ -169,7 +169,7 @@ main (int argc, char *argv[])
+@@ -170,7 +170,7 @@ main (int argc, char *argv[])
        (args_info.idna_to_unicode_given ? 1 : 0) +
        (args_info.nfkc_given ? 1 : 0) != 1)
      {
@@ -9,7 +9,7 @@
        usage (EXIT_FAILURE);
      }
  
-@@ -184,7 +184,7 @@ main (int argc, char *argv[])
+@@ -185,7 +185,7 @@ main (int argc, char *argv[])
    if (!args_info.quiet_given
        && args_info.inputs_num == 0
        && isatty (fileno (stdin)))
@@ -18,7 +18,7 @@
  		       "terminated by a newline character.\n"));
  
    do
-@@ -199,7 +199,7 @@ main (int argc, char *argv[])
+@@ -197,7 +197,7 @@ main (int argc, char *argv[])
  	  if (feof (stdin))
  	    break;
  
@@ -26,8 +26,8 @@
 +	  error (EXIT_FAILURE, errno, "%s", _("input error"));
  	}
  
-       if (readbuf[strlen (readbuf) - 1] == '\n')
-@@ -216,7 +216,7 @@ main (int argc, char *argv[])
+       if (strlen (line) > 0)
+@@ -215,7 +215,7 @@ main (int argc, char *argv[])
  	  if (!q)
  	    {
  	      free (p);
@@ -36,7 +36,7 @@
  		     _("could not convert from UTF-8 to UCS-4"));
  	    }
  
-@@ -241,7 +241,7 @@ main (int argc, char *argv[])
+@@ -240,7 +240,7 @@ main (int argc, char *argv[])
  	  if (!q)
  	    {
  	      free (r);

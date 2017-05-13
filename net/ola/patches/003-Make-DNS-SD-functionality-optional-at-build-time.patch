@@ -1,0 +1,61 @@
+From a88d6d31fc5a04be4378095e03b4aac133954026 Mon Sep 17 00:00:00 2001
+From: Christian Beier <dontmind@freeshell.org>
+Date: Tue, 15 Mar 2016 15:09:25 +0100
+Subject: [PATCH] Make DNS-SD functionality optional at build time.
+
+When building for embedded systems, for instance, we
+want to limit dependencies to a minimum and it seems
+that OLA is able to perform its core tasks without
+DNS-SD perfectly fine.
+
+Signed-off-by: Christian Beier <dontmind@freeshell.org>
+---
+ configure.ac | 27 +++++++++++++++------------
+ 1 file changed, 15 insertions(+), 12 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 6654354..0d1947c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -411,23 +411,26 @@ AS_IF([test "x$use_ossp_uuid" = xyes],
+ 
+ # DNS-SD support
+ # We use either avahi or the Apple DNS-SD library.
+-
+-# dns_sd
+-AC_CHECK_HEADER(
+-  [dns_sd.h],
+-  [AC_SEARCH_LIBS(DNSServiceRegister, [dns_sd], [have_dnssd="yes"])])
++AC_ARG_WITH(dns-sd,
++[AS_HELP_STRING([--without-dns-sd], [disable DNS-SD support])],,)
++if test "x$with_dns_sd" != "xno"; then
++	# dns_sd
++	AC_CHECK_HEADER(
++	  [dns_sd.h],
++	  [AC_SEARCH_LIBS(DNSServiceRegister, [dns_sd], [have_dnssd="yes"])])
++
++	# avahi
++	PKG_CHECK_MODULES(
++	  avahi,
++	  [avahi-client],
++	  [have_avahi="yes"],
++	  [true])
++fi
+ 
+ AS_IF([test "x$have_dnssd" = xyes],
+       [AC_DEFINE([HAVE_DNSSD], [1], [Defined to use Bonjour DNS_SD])])
+ AM_CONDITIONAL([HAVE_DNSSD], [test "x$have_dnssd" = xyes])
+ 
+-# avahi
+-PKG_CHECK_MODULES(
+-  avahi,
+-  [avahi-client],
+-  [have_avahi="yes"],
+-  [true])
+-
+ AS_IF([test "x$have_avahi" = xyes],
+       [AC_DEFINE([HAVE_AVAHI], [1], [Defined to use Avahi])])
+ AM_CONDITIONAL([HAVE_AVAHI], [test "x$have_avahi" = xyes])
+-- 
+2.1.4
+

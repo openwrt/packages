@@ -1,0 +1,11 @@
+--- a/src/ssl.h
++++ b/src/ssl.h
+@@ -90,7 +90,7 @@ typedef	ssl_context SSL_handle_t;
+ 
+ #elif defined(USE_MBEDTLS)
+ #include <mbedtls/ssl.h>
+-#include <mbedtls/net.h>
++#include <mbedtls/net_sockets.h>
+ #include <mbedtls/version.h>
+ 
+ #if defined(MBEDTLS_VERSION_MAJOR)

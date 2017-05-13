@@ -1,0 +1,13 @@
+Index: macchanger-1.7.0/src/netinfo.c
+===================================================================
+--- macchanger-1.7.0.orig/src/netinfo.c
++++ macchanger-1.7.0/src/netinfo.c
+@@ -113,7 +113,7 @@ mc_net_info_get_permanent_mac (const net
+ 	epa->size = IFHWADDRLEN;
+ 
+ 	memcpy(&req, &(net->dev), sizeof(struct ifreq));
+-	req.ifr_data = (caddr_t)epa;
++	req.ifr_data = (char *)epa;
+ 
+ 	if (ioctl(net->sock, SIOCETHTOOL, &req) < 0) {
+ 		perror ("[ERROR] Could not read permanent MAC");

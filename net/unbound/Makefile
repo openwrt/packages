@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2015 OpenWrt.org
+# Copyright (C) 2010-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
-PKG_VERSION:=1.5.3
+PKG_VERSION:=1.6.2
 PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Michael Hanselmann <public@hansmi.ch>
+PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@hotmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unbound.net/downloads
-PKG_MD5SUM:=1e95fdcbaaf5dc87432d898006a5eb13
+PKG_HASH:=1a323d72c32180b7141c9e6ebf199fc68a0208dfebad4640cd2c4c27235e3b9c
 
 PKG_BUILD_DEPENDS:=libexpat
 PKG_BUILD_PARALLEL:=1
@@ -27,7 +27,7 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/unbound/Default
-  TITLE:=A validating, recursive & caching DNS resolver
+  TITLE:=Validating Recursive DNS Server
   URL:=http://www.unbound.net/
   DEPENDS:=+libopenssl
 endef
@@ -37,6 +37,7 @@ define Package/unbound
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
+  USERID:=unbound=553:unbound=553
   TITLE+= (daemon)
   DEPENDS+= +libunbound
 endef
@@ -50,7 +51,7 @@ define Package/unbound-anchor
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  TITLE+= (anchor utility)
+  TITLE+= (DSKEY utility)
   DEPENDS+= +unbound +libexpat
 endef
 
@@ -76,7 +77,7 @@ define Package/unbound-control-setup
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  TITLE+= (control setup utility)
+  TITLE+= (control setup)
   DEPENDS+= +unbound-control +openssl-util
 endef
 
@@ -89,7 +90,7 @@ define Package/unbound-host
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  TITLE+= (DNS lookup utility)
+  TITLE+= (lookup utility)
   DEPENDS+= +libunbound
 endef
 
@@ -102,6 +103,7 @@ define Package/libunbound
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= (library)
+  DEPENDS+= +libpthread
 endef
 
 define Package/libunbound/description
@@ -109,63 +111,79 @@ define Package/libunbound/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-ecdsa \
+	--disable-dsa \
 	--disable-gost \
 	--enable-allsymbols \
 	--with-libexpat="$(STAGING_DIR)/usr" \
 	--with-ssl="$(STAGING_DIR)/usr" \
-	--without-pthreads
+	--with-pidfile=/var/run/unbound.pid \
+	--with-user=unbound
 
 define Package/unbound/conffiles
+/etc/config/unbound
 /etc/unbound/unbound.conf
+/etc/unbound/unbound_ext.conf
+/etc/unbound/unbound_srv.conf
 endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/unbound.h $(1)/usr/include/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/unbound.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libunbound.{so*,a,la} $(1)/usr/lib/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libunbound.{so*,a,la} $(1)/usr/lib/
 endef
 
 define Package/unbound/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) \
+	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/sbin/unbound \
 		$(PKG_INSTALL_DIR)/usr/sbin/unbound-checkconf \
 		$(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/unbound
-	$(INSTALL_CONF) \
+	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/etc/unbound/unbound.conf \
-		$(1)/etc/unbound/
-	$(INSTALL_CONF) ./files/root.key $(1)/etc/unbound/
-	$(INSTALL_CONF) ./files/named.cache $(1)/etc/unbound/
+		$(1)/etc/unbound/unbound.conf
+	$(INSTALL_DATA) ./files/root.key $(1)/etc/unbound/root.key
+	$(INSTALL_DATA) ./files/unbound_ext.conf $(1)/etc/unbound/unbound_ext.conf
+	$(INSTALL_DATA) ./files/unbound_srv.conf $(1)/etc/unbound/unbound_srv.conf
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/unbound.uci $(1)/etc/config/unbound
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/ntp
+	$(INSTALL_BIN)  ./files/unbound.ntpd $(1)/etc/hotplug.d/ntp/25-unbound
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/unbound.init $(1)/etc/init.d/unbound
+	$(INSTALL_BIN)  ./files/unbound.init $(1)/etc/init.d/unbound
+	$(INSTALL_DIR) $(1)/usr/lib/unbound
+	$(INSTALL_BIN)  ./files/odhcpd.sh $(1)/usr/lib/unbound/odhcpd.sh
+	$(INSTALL_DATA) ./files/odhcpd.awk $(1)/usr/lib/unbound/odhcpd.awk
+	$(INSTALL_DATA) ./files/dnsmasq.sh $(1)/usr/lib/unbound/dnsmasq.sh
+	$(INSTALL_DATA) ./files/iptools.sh $(1)/usr/lib/unbound/iptools.sh
+	$(INSTALL_DATA) ./files/rootzone.sh $(1)/usr/lib/unbound/rootzone.sh
+	$(INSTALL_DATA) ./files/unbound.sh $(1)/usr/lib/unbound/unbound.sh
 endef
 
 define Package/unbound-anchor/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/unbound-anchor $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/unbound-anchor $(1)/usr/sbin/
 endef
 
 define Package/unbound-control/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/unbound-control $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/unbound-control $(1)/usr/sbin/
 endef
 
 define Package/unbound-control-setup/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/unbound-control-setup $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/unbound-control-setup $(1)/usr/sbin/
 endef
 
 define Package/unbound-host/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/unbound-host $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/unbound-host $(1)/usr/sbin/
 endef
 
 define Package/libunbound/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libunbound.so.* $(1)/usr/lib/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libunbound.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,unbound))
@@ -174,3 +192,4 @@ $(eval $(call BuildPackage,unbound-control))
 $(eval $(call BuildPackage,unbound-control-setup))
 $(eval $(call BuildPackage,unbound-host))
 $(eval $(call BuildPackage,libunbound))
+

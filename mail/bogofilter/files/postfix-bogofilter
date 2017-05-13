@@ -1,7 +1,10 @@
 #!/bin/sh
 
 FILTER=/usr/bin/bogofilter
-FILTER_DIR=/mnt/sda1/var/spool/bogofilter
+
+# Attempt to read from bogofilter configuration.
+FILTER_DIR=$(cat /etc/bogofilter.cf | sed 's/#.*//g' | grep ^bogofilter_dir | awk -F = '{ print $2 }')
+
 # WARNING! The -i is crucial, else you may see
 # messages truncated at the first period that is alone on a line
 # (which can happen with several kinds of messages, particularly
@@ -12,7 +15,13 @@ FILTER_DIR=/mnt/sda1/var/spool/bogofilter
 # misleading traces in headers, such as local address
 # canonicalizations.
 POSTFIX="/usr/sbin/sendmail -G -i"
-export BOGOFILTER_DIR=/etc/bogofilter
+
+# No bogofilter_dir set in /etc/bogofilter.cf; fall back on directory
+# which persists across reboots.
+if [ -z "$FILTER_DIR" ]; then
+	FILTER_DIR=/etc/bogofilter
+	export BOGOFILTER_DIR=$FILTER_DIR
+fi
 
 # Exit codes from <sysexits.h>
 EX_TEMPFAIL=75

@@ -1,0 +1,13 @@
+diff --git a/src/threading.h b/src/threading.h
+index bfa9ab8..7b3d6a1 100644
+--- a/src/threading.h
++++ b/src/threading.h
+@@ -128,7 +128,7 @@ enum e_status { PENDING, RUNNING, WAITING, DONE, ERROR_ST, CANCELLED };
+   #endif // PLATFORM_WIN32
+   #include <pthread.h>
+ 
+-  #ifdef PLATFORM_LINUX
++  #if defined(PLATFORM_LINUX) && defined(__UCLIBC__)
+   # define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
+   #else
+     /* OS X, ... */

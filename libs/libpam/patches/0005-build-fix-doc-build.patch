@@ -1,0 +1,133 @@
+From 1563e57ea8ab9d123f765129a6840929ef58ff7a Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Wed, 17 Jun 2015 20:38:41 +0800
+Subject: [PATCH 5/7] build: fix doc build.
+
+* Makefile.am: ignore doc/ directory if not ENABLE_REGENERATE_MAN
+* doc/adg/Makefile.am: remove check on ENABLE_REGENERATE_MAN
+* doc/man/Makefile.am: ditto
+* doc/mwg/Makefile.am: ditto
+* doc/sag/Makefile.am: ditto
+* doc/specs/Makefile.am: ignore CC from command line
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ Makefile.am           |    5 ++++-
+ doc/adg/Makefile.am   |    3 ---
+ doc/man/Makefile.am   |    2 --
+ doc/mwg/Makefile.am   |    3 ---
+ doc/sag/Makefile.am   |    2 --
+ doc/specs/Makefile.am |    2 +-
+ 6 files changed, 5 insertions(+), 12 deletions(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 3db4e37..5e6592a 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -4,7 +4,10 @@
+ 
+ AUTOMAKE_OPTIONS = 1.9 gnu dist-bzip2 check-news
+ 
+-SUBDIRS = libpam tests libpamc libpam_misc modules po conf doc examples xtests
++if ENABLE_REGENERATE_MAN
++	MAYBE_DOC = doc
++endif
++SUBDIRS = libpam tests libpamc libpam_misc modules po conf examples xtests $(MAYBE_DOC)
+ 
+ CLEANFILES = *~
+ 
+diff --git a/doc/adg/Makefile.am b/doc/adg/Makefile.am
+index 77bd7a9..bec5edc 100644
+--- a/doc/adg/Makefile.am
++++ b/doc/adg/Makefile.am
+@@ -9,7 +9,6 @@ EXTRA_DIST = $(XMLS)
+ XMLS = Linux-PAM_ADG.xml $(shell ls $(srcdir)/pam_*.xml)
+ DEP_XMLS = $(shell ls $(top_srcdir)/doc/man/pam_*.xml)
+ 
+-if ENABLE_REGENERATE_MAN
+ MAINTAINERCLEANFILES = Linux-PAM_ADG.txt Linux-PAM_ADG.pdf html/*.html
+ 
+ all: Linux-PAM_ADG.txt html/Linux-PAM_ADG.html Linux-PAM_ADG.pdf
+@@ -51,8 +50,6 @@ html/Linux-PAM_ADG.html: $(XMLS) $(DEP_XMLS)
+ distclean-local:
+ 	-rm -rf html Linux-PAM_ADG.txt Linux-PAM_ADG.pdf
+ 
+-endif
+-
+ install-data-local:
+ 	$(mkinstalldirs) $(DESTDIR)$(docdir)
+ 	$(mkinstalldirs) $(DESTDIR)$(pdfdir)
+diff --git a/doc/man/Makefile.am b/doc/man/Makefile.am
+index 78c891d..b1dc421 100644
+--- a/doc/man/Makefile.am
++++ b/doc/man/Makefile.am
+@@ -45,7 +45,6 @@ XMLS = pam.3.xml pam.8.xml \
+ 	misc_conv.3.xml pam_misc_paste_env.3.xml pam_misc_drop_env.3.xml \
+ 	pam_misc_setenv.3.xml
+ 
+-if ENABLE_REGENERATE_MAN
+ PAM.8: pam.8
+ pam_get_authtok_noverify.3: pam_get_authtok.3
+ pam_get_authtok_verify.3: pam_get_authtok.3
+@@ -60,4 +59,3 @@ pam_get_item.3: pam_item_types_std.inc.xml pam_item_types_ext.inc.xml
+ pam_set_data.3: pam_item_types_std.inc.xml pam_item_types_ext.inc.xml
+ pam.conf.5: pam.conf-desc.xml pam.conf-dir.xml pam.conf-syntax.xml
+ -include $(top_srcdir)/Make.xml.rules
+-endif
+diff --git a/doc/mwg/Makefile.am b/doc/mwg/Makefile.am
+index 2bbb2d0..f57e297 100644
+--- a/doc/mwg/Makefile.am
++++ b/doc/mwg/Makefile.am
+@@ -9,7 +9,6 @@ EXTRA_DIST = $(XMLS)
+ XMLS = Linux-PAM_MWG.xml $(shell ls $(srcdir)/pam_*.xml)
+ DEP_XMLS = $(shell ls $(top_srcdir)/doc/man/pam_*.xml)
+ 
+-if ENABLE_REGENERATE_MAN
+ MAINTAINERCLEANFILES = Linux-PAM_MWG.txt Linux-PAM_MWG.pdf html/*.html
+ 
+ all: Linux-PAM_MWG.txt html/Linux-PAM_MWG.html Linux-PAM_MWG.pdf
+@@ -51,8 +50,6 @@ html/Linux-PAM_MWG.html: $(XMLS) $(DEP_XMLS)
+ distclean-local:
+ 	-rm -rf html Linux-PAM_MWG.txt Linux-PAM_MWG.pdf
+ 
+-endif
+-
+ install-data-local:
+ 	$(mkinstalldirs) $(DESTDIR)$(docdir)
+ 	$(mkinstalldirs) $(DESTDIR)$(pdfdir)
+diff --git a/doc/sag/Makefile.am b/doc/sag/Makefile.am
+index 31816aa..a8b655f 100644
+--- a/doc/sag/Makefile.am
++++ b/doc/sag/Makefile.am
+@@ -10,7 +10,6 @@ XMLS = Linux-PAM_SAG.xml $(shell ls $(srcdir)/pam_*.xml)
+ 
+ DEP_XMLS = $(shell ls $(top_srcdir)/modules/pam_*/pam_*.xml)
+ 
+-if ENABLE_REGENERATE_MAN
+ MAINTAINERCLEANFILES = Linux-PAM_SAG.txt Linux-PAM_SAG.pdf html/*.html
+ 
+ all: Linux-PAM_SAG.txt html/Linux-PAM_SAG.html Linux-PAM_SAG.pdf
+@@ -51,7 +50,6 @@ html/Linux-PAM_SAG.html: $(XMLS) $(DEP_XMLS)
+ 
+ distclean-local:
+ 	-rm -rf html Linux-PAM_SAG.txt Linux-PAM_SAG.pdf
+-endif
+ 
+ install-data-local:
+ 	$(mkinstalldirs) $(DESTDIR)$(docdir)
+diff --git a/doc/specs/Makefile.am b/doc/specs/Makefile.am
+index 99ecc70..39c850f 100644
+--- a/doc/specs/Makefile.am
++++ b/doc/specs/Makefile.am
+@@ -11,7 +11,7 @@ draft-morgan-pam-current.txt: padout draft-morgan-pam.raw
+ 
+ AM_YFLAGS = -d
+ 
+-CC = @CC_FOR_BUILD@
++override CC = @CC_FOR_BUILD@
+ CPPFLAGS = @BUILD_CPPFLAGS@
+ CFLAGS = @BUILD_CFLAGS@
+ LDFLAGS = @BUILD_LDFLAGS@
+-- 
+1.7.10.4
+

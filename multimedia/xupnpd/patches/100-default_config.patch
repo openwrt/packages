@@ -1,5 +1,5 @@
---- a/xupnpd.lua
-+++ b/xupnpd.lua
+--- a/src/xupnpd.lua
++++ b/src/xupnpd.lua
 @@ -1,10 +1,10 @@
  cfg={}
  

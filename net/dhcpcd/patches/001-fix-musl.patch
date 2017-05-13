@@ -1,0 +1,13 @@
+--- a/dhcp6.c
++++ b/dhcp6.c
+@@ -1047,8 +1047,8 @@ logsend:
+ 
+ 	ctx = ifp->ctx->ipv6;
+ 	dst.sin6_scope_id = ifp->index;
+-	ctx->sndhdr.msg_name = (caddr_t)&dst;
+-	ctx->sndhdr.msg_iov[0].iov_base = (caddr_t)state->send;
++	ctx->sndhdr.msg_name = (void *)&dst;
++	ctx->sndhdr.msg_iov[0].iov_base = (void *)state->send;
+ 	ctx->sndhdr.msg_iov[0].iov_len = state->send_len;
+ 
+ 	/* Set the outbound interface */

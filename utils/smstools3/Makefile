@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smstools3
 PKG_VERSION:=3.1.15
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Gérald Kerma <dreagle@doukki.net>
 PKG_LICENSE:=GPL-2.0
@@ -22,15 +22,15 @@ PKG_SOURCE_URL:=http://smstools3.kekekasvi.com/packages/
 PKG_MD5SUM:=0241ef60e646fac1a06254a848e61ed7
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
-PKG_BUILD_DEPENDS:=libiconv-full iconv
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/smstools3
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=SMS Server Tools 3
-  DEPENDS:=+libiconv-full +iconv
+  DEPENDS:=$(ICONV_DEPENDS)
   URL:=http://smstools3.kekekasvi.com/
 endef
 
@@ -39,23 +39,17 @@ define Package/smstools3/description
  short messages through GSM modems and mobile phones.
 endef
 
-TARGET_CFLAGS = -D NUMBER_OF_MODEMS=1
-TARGET_CFLAGS += -D USE_ICONV
+TARGET_CFLAGS += -D NUMBER_OF_MODEMS=1
+TARGET_CFLAGS += $(if $(ICONV_FULL),-D USE_ICONV)
 TARGET_CFLAGS += -D DISABLE_INET_SOCKET
 TARGET_CFLAGS += -W -Wall
 TARGET_CFLAGS += -D_FILE_OFFSET_BITS=64
 
-TARGET_LDFLAGS += -liconv
+MAKE_VARS += LFLAGS="$(TARGET_LDFLAGS) $(if $(ICONV_FULL),-liconv)"
 
 BINDIR=/usr/local/bin
 
-define Build/Compile
-	$(MAKE) -C "$(PKG_BUILD_DIR)"/src \
-		CC="$(TARGET_CC)" \
-		USER_CFLAGS='$(TARGET_CFLAGS) $(EXTRA_CFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS) \
-		-I"$(STAGING_DIR)/usr/lib/libiconv-full/include"' \
-		USER_LDFLAGS='$(TARGET_LFLAGS) $(EXTRA_LDFLAGS) -L"$(STAGING_DIR)/usr/lib/libiconv-full/lib"' \
-		all
+define Package/smstools3/configure
 endef
 
 define Package/smstools3/install

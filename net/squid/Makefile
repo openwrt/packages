@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
-PKG_VERSION:=3.5.2
-PKG_RELEASE:=3
+PKG_VERSION:=3.5.12
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.squid-cache.org/Versions/v3/3.5/
-PKG_MD5SUM:=0330ec9f69e333c2a81fa4502ba96a22
+PKG_MD5SUM:=50016bf6e2d3a3a186a6c7236d251f63
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -33,7 +33,7 @@ endef
 define Package/squid
   $(call Package/squid/Default)
   MENU:=1
-  DEPENDS:=+libopenssl +libpthread +librt +libltdl +libstdcpp +libgnutls
+  DEPENDS:=+libopenssl +libpthread +librt +libltdl +libstdcpp
   TITLE:=full-featured Web proxy cache
 endef
 
@@ -62,12 +62,8 @@ CONFIGURE_ARGS += \
 	--enable-kill-parent-hack \
 	--disable-snmp \
 	--enable-ssl \
+	--enable-ssl-crtd \
 	--enable-cache-digests \
-	--enable-auth \
-	--enable-auth-basic \
-	--enable-auth-ntlm \
-	--enable-auth-negotiate \
-	--enable-auth-digest \
 	--enable-linux-netfilter \
 	--disable-unlinkd \
 	--enable-x-accelerator-vary \
@@ -77,6 +73,7 @@ CONFIGURE_ARGS += \
 	--with-pthreads \
 	--without-expat \
 	--without-libxml2 \
+	--without-gnutls \
 	--without-nettle \
 	--with-openssl=$(STAGING_DIR)/usr \
 	--enable-epoll \
@@ -88,12 +85,14 @@ CONFIGURE_ARGS += \
 	--disable-auth-basic \
 	--disable-arch-native \
 	--with-krb5-config=no \
+	--without-mit-krb5 \
 	--without-libcap \
-	--without-netfilter-conntrack \
+	--without-netfilter-conntrack
 
 CONFIGURE_VARS += \
 	ac_cv_header_linux_netfilter_ipv4_h=yes \
 	ac_cv_epoll_works=yes \
+	squid_cv_gnu_atomics=no
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/lib all
@@ -105,6 +104,9 @@ endef
 define Package/squid/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/squid $(1)/usr/sbin/
+
+	$(INSTALL_DIR) $(1)/usr/lib/squid
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/squid/ssl_crtd $(1)/usr/lib/squid
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/squid.config $(1)/etc/config/squid

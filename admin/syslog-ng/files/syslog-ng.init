@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2016 OpenWrt.org
+
+START=20
+
+SERVICE_USE_PID=1
+
+start() {
+	[ -f /etc/syslog-ng.conf ] || return 1
+	service_start /usr/sbin/syslog-ng
+}
+
+stop() {
+	service_stop /usr/sbin/syslog-ng
+}
+
+reload() {
+	service_reload /usr/sbin/syslog-ng
+}

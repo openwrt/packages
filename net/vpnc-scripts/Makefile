@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vpnc-scripts
-PKG_VERSION:=20150116
+PKG_VERSION:=20151220
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk

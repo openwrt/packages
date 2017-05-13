@@ -1,0 +1,120 @@
+From a0c129760ca9bdc7e564ae2a508fac3799f9d39b Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <aa@ocedo.com>
+Date: Wed, 6 Jan 2016 15:33:43 +0200
+Subject: [PATCH 1/2] squashfs-tools: with fnmatch.h compatibility with musl
+
+Signed-off-by: Alexandru Ardelean <aa@ocedo.com>
+---
+ squashfs-tools/action.c         |  2 +-
+ squashfs-tools/fnmatch_compat.h | 32 ++++++++++++++++++++++++++++++++
+ squashfs-tools/mksquashfs.c     |  2 +-
+ squashfs-tools/unsquashfs.c     |  1 +
+ squashfs-tools/unsquashfs.h     |  1 -
+ 5 files changed, 35 insertions(+), 3 deletions(-)
+ create mode 100644 squashfs-tools/fnmatch_compat.h
+
+diff --git a/squashfs-tools/action.c b/squashfs-tools/action.c
+index 35889a4..4b06ccb 100644
+--- a/squashfs-tools/action.c
++++ b/squashfs-tools/action.c
+@@ -31,7 +31,6 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <unistd.h>
+-#include <fnmatch.h>
+ #include <pwd.h>
+ #include <grp.h>
+ #include <sys/wait.h>
+@@ -43,6 +42,7 @@
+ #include "mksquashfs.h"
+ #include "action.h"
+ #include "error.h"
++#include "fnmatch_compat.h"
+ 
+ /*
+  * code to parse actions
+diff --git a/squashfs-tools/fnmatch_compat.h b/squashfs-tools/fnmatch_compat.h
+new file mode 100644
+index 0000000..7b4afd8
+--- /dev/null
++++ b/squashfs-tools/fnmatch_compat.h
+@@ -0,0 +1,32 @@
++#ifndef FNMATCH_COMPAT
++#define FNMATCH_COMPAT
++/*
++ * Squashfs
++ *
++ * Copyright (c) 2015
++ * Phillip Lougher <phillip@squashfs.org.uk>
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2,
++ * or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ * fnmatch_compat.h
++ */
++
++#include <fnmatch.h>
++
++#ifndef FNM_EXTMATCH
++#define FNM_EXTMATCH	0
++#endif
++
++#endif
+diff --git a/squashfs-tools/mksquashfs.c b/squashfs-tools/mksquashfs.c
+index d221c35..4e7cbdd 100644
+--- a/squashfs-tools/mksquashfs.c
++++ b/squashfs-tools/mksquashfs.c
+@@ -46,7 +46,6 @@
+ #include <sys/mman.h>
+ #include <pthread.h>
+ #include <regex.h>
+-#include <fnmatch.h>
+ #include <sys/wait.h>
+ #include <limits.h>
+ #include <ctype.h>
+@@ -76,6 +75,7 @@
+ #include "read_fs.h"
+ #include "restore.h"
+ #include "process_fragments.h"
++#include "fnmatch_compat.h"
+ 
+ int delete = FALSE;
+ int fd;
+diff --git a/squashfs-tools/unsquashfs.c b/squashfs-tools/unsquashfs.c
+index 1323dd6..2428baa 100644
+--- a/squashfs-tools/unsquashfs.c
++++ b/squashfs-tools/unsquashfs.c
+@@ -30,6 +30,7 @@
+ #include "xattr.h"
+ #include "unsquashfs_info.h"
+ #include "stdarg.h"
++#include "fnmatch_compat.h"
+ 
+ #include <sys/sysinfo.h>
+ #include <sys/types.h>
+diff --git a/squashfs-tools/unsquashfs.h b/squashfs-tools/unsquashfs.h
+index ecd0bb4..0edbd25 100644
+--- a/squashfs-tools/unsquashfs.h
++++ b/squashfs-tools/unsquashfs.h
+@@ -40,7 +40,6 @@
+ #include <grp.h>
+ #include <time.h>
+ #include <regex.h>
+-#include <fnmatch.h>
+ #include <signal.h>
+ #include <pthread.h>
+ #include <math.h>
+-- 
+2.1.4
+

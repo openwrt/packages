@@ -1,0 +1,35 @@
+From cee085e0e62214603b9ae035d63fabca23c491bd Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sun, 8 Jan 2017 01:39:35 +0100
+Subject: [PATCH 6/7] ssl: call mbedtls_version_get_string() only if available
+
+The function mbedtls_version_get_string()  is only available if
+MBEDTLS_VERSION_C is set in the mbedtls configuration. Check this
+before calling this function and print the mbedtls version this was
+compiled against instead if mbedtls_version_get_string()  is not
+available.
+
+This fixes a compile problem when MBEDTLS_VERSION_C is not set.
+
+Change-Id: I54c2c2a3fc1f9d35afa475500e3db68420a1b54a
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c
++++ b/resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c
+@@ -1376,9 +1376,13 @@ CAResult_t CAinitSslAdapter()
+     /* Initialize TLS library
+      */
+ #if !defined(NDEBUG) || defined(TB_LOG)
++#ifdef MBEDTLS_VERSION_C
+     char version[MBED_TLS_VERSION_LEN];
+     mbedtls_version_get_string(version);
+     OIC_LOG_V(INFO, NET_SSL_TAG, "mbed TLS version: %s", version);
++#else
++    OIC_LOG_V(INFO, NET_SSL_TAG, "mbed TLS version: %s", MBEDTLS_VERSION_STRING);
++#endif
+ #endif
+ 
+     /* Entropy settings

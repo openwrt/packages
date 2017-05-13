@@ -1,0 +1,16 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -26,12 +26,7 @@
+ include(GNUInstallDirs)
+ 
+ # Make a version file containing the current version from git.
+-include (GetGitRevisionDescription)
+-git_describe (VERSION "--tags")
+-if ("x_${VERSION}" STREQUAL "x_GIT-NOTFOUND")
+-  message (WARNING " - Install git to compile a production UPM!")
+-  set (VERSION "v0.4.0-dirty")
+-endif ()
++set (VERSION "v0.4.0")
+ 
+ message (INFO " - UPM Version ${VERSION}")
+ 

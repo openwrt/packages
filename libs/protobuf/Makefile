@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
-PKG_VERSION:=2.6.1
+PKG_VERSION:=3.3.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-cpp-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
-PKG_MD5SUM:=11aaac2d704eef8efd1867a807865d85
+PKG_MD5SUM:=2d45f7ad84eb2b1883ae2096b3b1f18a
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -30,9 +30,9 @@ define Package/protobuf
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A structured data encoding library
-  URL:=http://code.google.com/p/protobuf/
+  URL:=https://github.com/google/protobuf
   DEPENDS:=+zlib +libpthread +libstdcpp
-  MAINTAINER:=Obinou <obconseil@gmail.com>
+  MAINTAINER:=Per Sandström <per.j.sandstrom@gmail.com>
 endef
 
 define Package/protobuf/description
@@ -41,7 +41,7 @@ define Package/protobuf/description
  of its internal RPC protocols and file formats.
 endef
 
-CONFIGURE_ARGS += --with-protoc=$(STAGING_DIR_HOST)/bin/protoc
+CONFIGURE_ARGS += --with-protoc=$(STAGING_DIR_HOSTPKG)/bin/protoc
 
 define Build/InstallDev
 	$(INSTALL_DIR) \

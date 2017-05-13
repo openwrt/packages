@@ -1,0 +1,101 @@
+{
+    "acl": {
+        "aclist": {
+            "aces": [
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/res",
+                            "rel": "",
+                            "rt": ["oic.wk.res"],
+                            "if": ["oic.if.ll"]
+                        },
+                        {
+                            "href": "/oic/d",
+                            "rel": "",
+                            "rt": ["oic.wk.d"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
+                        },
+                        {
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": ["oic.wk.p"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
+                        },
+                        {
+                            "href": "/oic/sec/acl",
+                            "rel": "",
+                            "rt": ["oic.r.acl"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                    "permission": 2
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/doxm",
+                            "rel": "",
+                            "rt": ["oic.r.doxm"],
+                            "if": ["oic.if.baseline"]
+                        },
+                        {
+                            "href": "/oic/sec/pstat",
+                            "rel": "",
+                            "rt": ["oic.r.pstat"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                    "permission": 2
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "*",
+                            "rel": "",
+                            "rt": ["oic.core"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                    "permission": 7
+                }
+            ]
+        },
+        "rowneruuid" : "31313131-3131-3131-3131-313131313131"
+    },
+    "pstat": {
+        "isop": true,
+        "deviceuuid": "31313131-3131-3131-3131-313131313131",
+        "rowneruuid": "31313131-3131-3131-3131-313131313131",
+        "cm": 0,
+        "tm": 0,
+        "om": 4,
+        "sm": 4
+        },
+    "doxm": {
+        "oxms": [0],
+        "oxmsel": 0,
+        "sct": 1,
+        "owned": true,
+        "deviceuuid": "31313131-3131-3131-3131-313131313131",
+        "devowneruuid": "32323232-3232-3232-3232-323232323232",
+        "rowneruuid": "31313131-3131-3131-3131-313131313131"
+    },
+    "cred": {
+        "creds": [
+            {
+                "credid": 1,
+                "subjectuuid": "32323232-3232-3232-3232-323232323232",
+                "credtype": 1,
+                "privatedata": {
+                    "data": "AAAAAAAAAAAAAAAA",
+                    "encoding": "oic.sec.encoding.raw"
+                }
+            }
+        ],
+        "rowneruuid": "31313131-3131-3131-3131-313131313131"
+    }
+}

@@ -1,0 +1,38 @@
+--- a/configure.in
++++ b/configure.in
+@@ -279,6 +279,9 @@ dnl ************************************
+ dnl Checks for library functions
+ dnl ***********************************************************************
+ 
++dnl Check mkostemp (missing in uclibc)
++AC_CHECK_FUNC(mkostemp)
++
+ dnl Define SOCKET_LIB, NSL_LIB, BIND_LIB, and RESOLV_LIB  when required 
+ dnl for functions we use.
+ AC_CHECK_FUNC(gethostbyaddr,, [AC_CHECK_LIB(bind, gethostbyaddr, BIND_LIB="-lbind")])
+--- a/include/sane/config.h.in
++++ b/include/sane/config.h.in
+@@ -207,6 +207,9 @@
+ /* Define to 1 if you have the `mkdir' function. */
+ #undef HAVE_MKDIR
+ 
++/* Define to 1 if you have a working `mkostemp' function. */
++#undef HAVE_MKOSTEMP
++
+ /* Define to 1 if you have a working `mmap' system call. */
+ #undef HAVE_MMAP
+ 
+--- a/backend/pieusb_buffer.c
++++ b/backend/pieusb_buffer.c
+@@ -112,6 +112,11 @@
+ #endif
+ #endif
+ 
++#ifndef HAVE_MKOSTEMP
++/* uclibc might not implement mkostemp GNU extension */
++#define mkostemp(template, flags) mkstemp(template)
++#endif
++
+ static void buffer_update_read_index(struct Pieusb_Read_Buffer* buffer, int increment);
+ 
+ /* READER */

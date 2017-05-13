@@ -1,65 +1,129 @@
 #!/bin/sh
 
-[ -z "$9" ] && echo "Error: should not be started manually" && exit 0
+. /lib/functions.sh
 
-if [ -e /var/run/mwan3track-$1.pid ] ; then
-	kill $(cat /var/run/mwan3track-$1.pid) &> /dev/null
-	rm /var/run/mwan3track-$1.pid &> /dev/null
-fi
+LOG="logger -t $(basename "$0")[$$] -p"
+INTERFACE=""
+DEVICE=""
 
-echo "$$" > /var/run/mwan3track-$1.pid
+IFDOWN_EVENT=0
 
-score=$(($7+$8))
-track_ips=$(echo $* | cut -d ' ' -f 9-99)
-host_up_count=0
-lost=0
+clean_up() {
+	$LOG notice "Stopping mwan3track for interface \"${INTERFACE}\""
+	if [ "$(pgrep -f "mwan3track ${INTERFACE}")" = "" ]; then
+		rm -rf "/var/run/mwan3track/${INTERFACE}" &> /dev/null
+	fi
+	if [ -z "$(ls -A "/var/run/mwan3track")" ]; then
+		rm -rf "/var/run/mwan3track"
+	fi
+	exit 0
+}
 
-while true; do
+if_down() {
+	$LOG info "Detect ifdown event on interface ${INTERFACE} (${DEVICE})"
+	IFDOWN_EVENT=1
+}
 
-	for track_ip in $track_ips; do
-		ping -I $2 -c $4 -W $5 -s 4 -q $track_ip &> /dev/null
-		if [ $? -eq 0 ]; then
-			let host_up_count++
+main() {
+	local reliability count timeout interval failure_interval
+	local recovery_interval down up size
+
+	[ -z "$3" ] && echo "Error: should not be started manually" && exit 0
+
+	INTERFACE=$1
+	DEVICE=$2
+	mkdir -p /var/run/mwan3track/$1
+	trap clean_up SIGINT SIGTERM
+	trap if_down SIGUSR1
+
+	config_load mwan3
+	config_get reliability $1 reliability 1
+	config_get count $1 count 1
+	config_get timeout $1 timeout 4
+	config_get interval $1 interval 10
+	config_get down $1 down 5
+	config_get up $1 up 5
+	config_get size $1 size 56
+	config_get failure_interval $1 failure_interval $interval
+	config_get recovery_interval $1 recovery_interval $interval
+
+	local score=$(($down+$up))
+	local track_ips=$(echo $* | cut -d ' ' -f 3-99)
+	local host_up_count=0
+	local lost=0
+	local sleep_time=0
+	local turn=0
+
+	echo "offline" > /var/run/mwan3track/$1/STATUS
+	while true; do
+
+		sleep_time=$interval
+
+		for track_ip in $track_ips; do
+			ping -I $2 -c $count -W $timeout -s $size -q $track_ip &> /dev/null
+			if [ $? -eq 0 ]; then
+				let host_up_count++
+				echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+			else
+				let lost++
+				echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+			fi
+		done
+
+		if [ $host_up_count -lt $reliability ]; then
+			let score--
+
+			if [ $score -lt $up ]; then
+				score=0
+			else
+				sleep_time=$failure_interval
+			fi
+
+			if [ $score -eq $up ]; then
+				echo "offline" > /var/run/mwan3track/$1/STATUS
+				$LOG notice "Interface $1 ($2) is offline"
+				env -i ACTION=ifdown INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
+				score=0
+			fi
 		else
-			let lost++
+			if [ $score -lt $(($down+$up)) ] && [ $lost -gt 0 ]; then
+				$LOG info "Lost $(($lost*$count)) ping(s) on interface $1 ($2)"
+			fi
+
+			let score++
+			lost=0
+
+			if [ $score -gt $up ]; then
+				echo "online" > /var/run/mwan3track/$1/STATUS
+				score=$(($down+$up))
+			elif [ $score -le $up ]; then
+				sleep_time=$recovery_interval
+			fi
+
+			if [ $score -eq $up ]; then
+				$LOG notice "Interface $1 ($2) is online"
+				env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
+				rm -rf "/var/run/mwan3track/${1}" &> /dev/null
+				exit 0
+			fi
+		fi
+
+		let turn++
+		mkdir -p "/var/run/mwan3track/${1}"
+		echo "${lost}" > /var/run/mwan3track/$1/LOST
+		echo "${score}" > /var/run/mwan3track/$1/SCORE
+		echo "${turn}" > /var/run/mwan3track/$1/TURN
+
+		host_up_count=0
+		sleep "${sleep_time}" &
+		wait
+
+		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
+			score=0
+			echo "offline" > /var/run/mwan3track/$1/STATUS
+			IFDOWN_EVENT=0
 		fi
 	done
-		
-	if [ $host_up_count -lt $3 ]; then
-		let score--
+}
 
-		if [ $score -lt $8 ]; then score=0 ; fi
-		if [ $score -eq $8 ]; then
-
-			logger -t mwan3track -p notice "Interface $1 ($2) is offline"
-			env -i ACTION=ifdown INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
-			score=0
-
-		fi
-
-	else
-
-		if [ $score -lt $(($7+$8)) ] && [ $lost -gt 0 ]; then
-
-			logger -t mwan3track -p info "Lost $(($lost*$4)) ping(s) on interface $1 ($2)"
-
-		fi
-
-		let score++
-		lost=0
-
-		if [ $score -gt $8 ]; then score=$(($7+$8)); fi
-		if [ $score -eq $8 ]; then
-
-			logger -t mwan3track -p notice "Interface $1 ($2) is online"
-			env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
-			rm /var/run/mwan3track-$1.pid
-			exit 0
-		fi
-	fi
-
-	host_up_count=0
-	sleep $6
-done
-
-exit 1
+main "$@"

@@ -1,0 +1,30 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -907,11 +907,6 @@ pkgconfig/gstreamer-video.pc
+ pkgconfig/gstreamer-video-uninstalled.pc
+ pkgconfig/gstreamer-plugins-base.pc
+ pkgconfig/gstreamer-plugins-base-uninstalled.pc
+-docs/Makefile
+-docs/design/Makefile
+-docs/libs/Makefile
+-docs/plugins/Makefile
+-docs/version.entities
+ common/Makefile
+ common/m4/Makefile
+ m4/Makefile
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -11,13 +11,11 @@ SUBDIRS = 			\
+ 	gst-libs 		\
+ 	gst sys $(SUBDIRS_EXT) 	\
+ 	tools 			\
+-	docs			\
+ 	common 			\
+ 	m4
+ 
+ DIST_SUBDIRS = 			\
+ 	pkgconfig		\
+-	docs			\
+ 	gst-libs		\
+ 	gst sys ext		\
+ 	tools 			\

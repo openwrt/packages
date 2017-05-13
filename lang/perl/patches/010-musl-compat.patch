@@ -1,0 +1,11 @@
+--- a/pp.c
++++ b/pp.c
+@@ -43,7 +43,7 @@ extern Pid_t getpid (void);
+  * Some BSDs and Cygwin default to POSIX math instead of IEEE.
+  * This switches them over to IEEE.
+  */
+-#if defined(LIBM_LIB_VERSION)
++#if defined(LIBM_LIB_VERSION) && (defined(__GLIBC__) || defined(__UCLIBC__))
+     _LIB_VERSION_TYPE _LIB_VERSION = _IEEE_;
+ #endif
+ 

@@ -1,7 +1,7 @@
 #see http://wiki.openwrt.org/doc/howto/zabbix for ready to use templates
 
 # wifi interface discovery
-# exemple: {"data":[{"{#IF}":"wlan0", "{#MODE}":"ap", "{#SSID}":"Openwrt", "{#NET}":"lan", "{#DEV}":"radio0", "{#ENC}":"psk2+ccmp", "{#TYPE}":"mac80211", "{#HWMODE}":"11ng", "{#CHANNEL}":"11", "{#BSSID}":"xx:xx:xx:xx:xx:xx"}]}
+# example: {"data":[{"{#IF}":"wlan0", "{#MODE}":"ap", "{#SSID}":"Openwrt", "{#NET}":"lan", "{#DEV}":"radio0", "{#ENC}":"psk2+ccmp", "{#TYPE}":"mac80211", "{#HWMODE}":"11ng", "{#CHANNEL}":"11", "{#BSSID}":"xx:xx:xx:xx:xx:xx"}]}
 # ubus call only work as root so you need to run zabbix as root to use wifi.ifdiscovery
 UserParameter=wifi.ifdiscovery, lua -l ubus -l iwinfo -e 'u=ubus.connect();list="{\"data\":[";stat=u:call("network.wireless", "status", {});for dev, dev_table in pairs(stat) do for i, iface in pairs(dev_table["interfaces"]) do c=iface["config"];i=iface["ifname"];t=iwinfo.type(i);iw=iwinfo[t];e = iw.encryption(i);e = e and e.description or "None";n = table.concat(c["network"]," ");list=list.."{\"{#IF}\":\""..i.."\", \"{#MODE}\":\""..iw.mode(i).."\", \"{#SSID}\":\""..c["ssid"].."\", \"{#NET}\":\""..n.."\", \"{#DEV}\":\""..dev.."\", \"{#ENC}\":\""..e.."\", \"{#TYPE}\":\""..t.."\", \"{#HWMODE}\":\"".."?".."\", \"{#CHANNEL}\":\""..iw.channel(i).."\", \"{#BSSID}\":\""..iw.bssid(i).."\"},";end;end;list=string.gsub(list,",$","");print(list.."]}")'
 

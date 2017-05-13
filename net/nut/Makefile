@@ -1,5 +1,5 @@
-#
-# Copyright (C) 2006-2015 OpenWrt.org
+
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,31 +8,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
-PKG_VERSION:=2.7.3
-PKG_RELEASE:=1
+PKG_VERSION:=2.7.4
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
-PKG_MD5SUM:=a1a7f747093663e1f39ab595b63b45e4
-PKG_MAINTAINER:=Martin Rowe <martin.p.rowe@gmail.com>
+PKG_MD5SUM:=3ba53656933d7471f95140b32a5b8d5c
+PKG_MAINTAINER:=Daniel Dickinson <lede@cshore.thecshore.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE-GPL2
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/nut-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_NUT_CLIENTS_UPSC \
-	CONFIG_NUT_CLIENTS_UPSCMD \
-	CONFIG_NUT_CLIENTS_UPSLOG \
-	CONFIG_NUT_CLIENTS_UPSMON \
-	CONFIG_NUT_CLIENTS_UPSRW \
-	CONFIG_NUT_CLIENTS_UPSSCHED \
-	CONFIG_NUT_DRIVER_SERIAL \
 	CONFIG_NUT_DRIVER_SNMP \
 	CONFIG_NUT_DRIVER_USB \
-	CONFIG_NUT_SERVER \
-	CONFIG_NUT_SSL \
+	CONFIG_NUT_DRIVER_SERIAL \
+	CONFIG_NUT_SSL
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -40,10 +33,10 @@ define Package/nut/Default
 	SECTION:=net
 	CATEGORY:=Network
 	URL:=http://www.networkupstools.org/
-	DEPENDS:=nut
+	TITLE:=Network UPS Tools (NUT)
 endef
 
-define Package/nut/description
+define Package/nut/description/Default
 Network UPS Tools (NUT) is a client/server monitoring system that
 allows computers to share uninterruptible power supply (UPS) and
 power distribution unit (PDU) hardware. Clients access the hardware
@@ -53,62 +46,293 @@ endef
 
 define Package/nut
 	$(call Package/nut/Default)
-	TITLE:=Network UPS Tools
-	DEPENDS:= \
-		+NUT_DRIVER_SNMP:libnetsnmp \
-		+NUT_DRIVER_USB:libusb-compat \
-		+NUT_SSL:libopenssl
 	MENU:=1
+endef
+
+define Package/nut/description
+$(call Package/nut/description/Default)
 endef
 
 define Package/nut/config
 	source "$(SOURCE)/Config.in"
 endef
 
-define Package/nut/conffiles
-	/etc/nut/nut.conf
-	$(if $(CONFIG_NUT_CLIENTS_UPSMON),/etc/nut/upsmon.conf)
-	$(if $(CONFIG_NUT_CLIENTS_UPSSCHED),/etc/nut/upssched.conf)
-	$(if $(CONFIG_NUT_SERVER),/etc/nut/ups.conf)
-	$(if $(CONFIG_NUT_SERVER),/etc/nut/upsd.conf)
-	$(if $(CONFIG_NUT_SERVER),/etc/nut/upsd.users)
+define Package/nut/install
+	true
 endef
 
-define Package/nut/install
+define Package/nut-server/install
 	$(INSTALL_DIR) $(1)/etc/nut
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/nut.conf.sample $(1)/etc/nut/nut.conf
-	$(if $(or $(CONFIG_NUT_CLIENTS_UPSC),\
-		$(CONFIG_NUT_CLIENTS_UPSCMD),\
-		$(CONFIG_NUT_CLIENTS_LOG),\
-		$(CONFIG_NUT_CLIENTS_UPSRW),\
-		$(CONFIG_NUT_CLIENTS_UPSMON),\
-		$(CONFIG_NUT_CLIENTS_UPSSCHED)),$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupsclient.so* $(1)/usr/lib/)
-	$(if $(or $(CONFIG_NUT_SERVER),\
-		$(CONFIG_NUT_CLIENTS_UPSMON)),$(INSTALL_DIR) $(1)/etc/init.d)
-	$(if $(CONFIG_NUT_SERVER),$(INSTALL_DIR) $(1)/lib/nut)
-	$(if $(CONFIG_NUT_SERVER),$(INSTALL_DIR) $(1)/usr/share/nut)
-	$(if $(CONFIG_NUT_SERVER),$(CP) ./files/nut-server.init $(1)/etc/init.d/)
-	$(if $(CONFIG_NUT_SERVER),$(CP) $(PKG_INSTALL_DIR)/usr/sbin/upsd $(1)/usr/sbin)
-	$(if $(CONFIG_NUT_SERVER),$(CP) $(PKG_INSTALL_DIR)/usr/sbin/upsdrvctl $(1)/usr/sbin)
-	$(if $(CONFIG_NUT_SERVER),$(CP) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/)
-	$(if $(CONFIG_NUT_SERVER),$(CP) $(PKG_INSTALL_DIR)/usr/share/nut/driver.list $(1)/usr/share/nut/)
-	$(if $(CONFIG_NUT_SERVER),$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/ups.conf.sample $(1)/etc/nut/ups.conf)
-	$(if $(CONFIG_NUT_SERVER),$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsd.conf.sample $(1)/etc/nut/upsd.conf)
-	$(if $(CONFIG_NUT_SERVER),$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsd.users.sample $(1)/etc/nut/upsd.users)
-	$(if $(CONFIG_NUT_CLIENTS_UPSC),$(CP) $(PKG_INSTALL_DIR)/usr/bin/upsc $(1)/usr/bin/)
-	$(if $(CONFIG_NUT_CLIENTS_UPSCMD),$(CP) $(PKG_INSTALL_DIR)/usr/bin/upscmd $(1)/usr/bin/)
-	$(if $(CONFIG_NUT_CLIENTS_LOG),$(CP) $(PKG_INSTALL_DIR)/usr/bin/upslog $(1)/usr/bin/)
-	$(if $(CONFIG_NUT_CLIENTS_UPSRW),$(CP) $(PKG_INSTALL_DIR)/usr/bin/upsrw $(1)/usr/bin/)
-	$(if $(CONFIG_NUT_CLIENTS_UPSMON),$(CP) ./files/nut-monitor.init $(1)/etc/init.d/)
-	$(if $(CONFIG_NUT_CLIENTS_UPSMON),$(CP) $(PKG_INSTALL_DIR)/usr/sbin/upsmon $(1)/usr/sbin/)
-	$(if $(CONFIG_NUT_CLIENTS_UPSMON),$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsmon.conf.sample $(1)/etc/nut/upsmon.conf)
-	$(if $(CONFIG_NUT_CLIENTS_UPSSCHED),$(CP) $(PKG_INSTALL_DIR)/usr/bin/upssched-cmd $(1)/usr/bin/)
-	$(if $(CONFIG_NUT_CLIENTS_UPSSCHED),$(CP) $(PKG_INSTALL_DIR)/usr/sbin/upssched $(1)/usr/sbin/)
-	$(if $(CONFIG_NUT_CLIENTS_UPSSCHED),$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upssched.conf.sample $(1)/etc/nut/upssched.conf)
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/usr/share/nut
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/nut-server.init $(1)/etc/init.d/nut-server
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsd $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsdrvctl $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/driver.list $(1)/usr/share/nut/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/nut_server $(1)/etc/config/nut_server
+	ln -sf /var/etc/nut/nut.conf $(1)/etc/nut/nut.conf
+	ln -sf /var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
+	ln -sf /var/etc/nut/upsd.users  $(1)/etc/nut/upsd.users
+	ln -sf /var/etc/nut/upsd.conf $(1)/etc/nut/upsd.conf
+endef
+
+define Package/nut-common
+	$(call Package/nut/Default)
+	TITLE+= (common)
+	DEPENDS:= nut \
+		+NUT_DRIVER_SNMP:libnetsnmp \
+		+NUT_DRIVER_USB:libusb-compat \
+		+NUT_SSL:libopenssl \
+		+PACKAGE_libwrap:libwrap
+endef
+
+define Package/nut-common/description
+$(call Package/nut/description/Default)
+This package contains the common files.
+endef
+
+define Package/nut-common/install
+	$(INSTALL_DIR) $(1)/etc/nut
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupsclient.so* $(1)/usr/lib/
+	ln -sf /var/etc/nut/nut.conf $(1)/etc/nut/nut.conf
+endef
+
+define Package/nut-server
+	$(call Package/nut/Default)
+	TITLE+= (server)
+	DEPENDS:=nut +nut-common
+endef
+
+define Package/nut-server/description
+$(call Package/nut/description/Default)
+upsd is responsible for serving the data from the drivers to the
+clients. It connects to each driver and maintains a local cache of the
+current state. Queries from the clients are served from this cache, so
+delays are minimal. This program is essential, and must be running at
+all times to actually make any use out of the drivers and clients.
+endef
+
+define Package/nut-server/conffiles
+/etc/config/nut_server
+endef
+
+define Package/nut-upsmon
+  $(call Package/nut/Default)
+	TITLE+= (monitor)
+	DEPENDS:=nut +nut-common
+	USERID:=nut=113:nut=113
+endef
+
+define Package/nut-upsmon/description
+$(call Package/nut/description/Default)
+upsmon is the client process that is responsible for the most important
+part of UPS monitoring--shutting down the system when the power goes
+out. It can call out to other helper programs for notification purposes
+during power events. upsmon can monitor multiple systems using a single
+process. Every UPS that is defined in the upsmon.conf configuration file
+is assigned a power value and a type (slave or master).
+endef
+
+define Package/nut-upsmon/conffiles
+/etc/config/nut_monitor
+endef
+
+define Package/nut-upsmon/install
+	$(INSTALL_DIR) $(1)/etc/nut
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/nut-monitor.init $(1)/etc/init.d/nut-monitor
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsmon $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/nut_monitor $(1)/etc/config/nut_monitor
+	ln -sf /var/etc/nut/upsmon.conf $(1)/etc/nut/upsmon.conf
+endef
+
+define Package/nut-upsmon-sendmail-notify
+	$(call Package/nut/Default)
+	TITLE+= (upsmon with notifications via sendmail)
+	DEPENDS:=nut +nut-upsmon
+	CONFLICTS:=nut-upssched
+endef
+
+define Package/nut-upsmon-sendmail-notify/description
+$(call Package/nut/description/Default)
+upsmon with default notification via sendmail
+endef
+
+define Package/nut-upsmon-sendmail-notify/install
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/nut-sendmail-notify $(1)/usr/bin/
+	$(INSTALL_DATA) ./files/nut-sendmail-notify.default $(1)/etc/uci-defaults/nut-sendmail-notify
+endef
+
+define Package/nut-upsc
+	$(call Package/nut/Default)
+	TITLE+= (upsc command)
+	DEPENDS:=nut +nut-common
+endef
+
+define Package/nut-upsc/description
+$(call Package/nut/description/Default)
+upsc is provided as a quick way to poll the status of a UPS server. It
+can be used inside shell scripts and other programs that need UPS data
+but don not want to include the full interface.
+endef
+
+define Package/nut-upsc/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/upsc $(1)/usr/bin
+endef
+
+define Package/nut-upslog
+	$(call Package/nut/Default)
+	TITLE+= (logging client)
+	DEPENDS:=nut +nut-common
+endef
+
+define Package/nut-upslog/description
+$(call Package/nut/description/Default)
+upslog is a daemon that will poll a UPS at periodic intervals, fetch the
+variables that interest you, format them, and write them to a file.
+endef
+
+define Package/nut-upslog/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/upslog $(1)/usr/bin/
+endef
+
+define Package/nut-upscmd
+	$(call Package/nut/Default)
+	TITLE+= (controller)
+	DEPENDS:=nut +nut-common
+endef
+
+define Package/nut-upscmd/description
+$(call Package/nut/description/Default)
+upscmd allows you to invoke "instant commands" in your UPS hardware. Not
+all hardware supports this, so check the list with -l to see if anything
+will work on your equipment. On hardware that supports it, you can use
+this program to start and stop battery tests, invoke a front panel test
+(beep!), turn the load on or off, and more.
+endef
+
+define Package/nut-upscmd/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/upscmd $(1)/usr/bin/
+endef
+
+define Package/nut-upsrw
+	$(call Package/nut/Default)
+	TITLE+= (variable editor)
+	DEPENDS:=nut +nut-common
+endef
+
+define Package/nut-upsrw/description
+$(call Package/nut/description/Default)
+upsrw allows you to view and change the read/write variables inside your
+UPS. It sends commands via the upsd to your driver, which configures the
+hardware for you. The list of variables that allow you to change their
+values is based on the capabilities of your UPS equipment. Not all
+models support this feature. Typically, cheaper hardware does not
+support any of them.
+endef
+
+define Package/nut-upsrw/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/upsrw $(1)/usr/bin/
+endef
+
+define Package/nut-upssched
+	$(call Package/nut/Default)
+	TITLE+= (helper for triggering events from upsmon)
+	DEPENDS:=nut +nut-common +nut-upsmon
+endef
+
+define Package/nut-upssched/description
+$(call Package/nut/description/Default)
+upssched was created to allow users to execute programs at times relative
+to events being monitored by upsmon. The original purpose was to allow
+for a shutdown to occur after some fixed period on battery, but there are
+other uses that are possible.
+You can alternatively write your own script and save some space.
+endef
+
+define Package/nut-upssched/conffiles
+/etc/nut/upssched.conf
+endef
+
+define Package/nut-upssched/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/nut
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/upssched-cmd $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upssched $(1)/usr/sbin/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upssched.conf.sample $(1)/etc/nut/upssched.conf
+	$(INSTALL_DATA) ./files/nut-sched.default $(1)/etc/uci-defaults/nut-upssched
+endef
+
+define Package/nut-web-cgi
+	$(call Package/nut/Default)
+	TITLE+= Web CGI interface
+	DEPENDS:=nut +nut-common +libgd
+endef
+
+define Package/nut-web-cgi/description
+The CGI programs are clients that run through your web server.
+They allow you to see UPS status and perform certain administrative
+commands from any web browser. Javascript and cookies are not required.
+endef
+
+define Package/nut-web-cgi/conffiles
+/etc/nut/hosts.conf
+/etc/nut/upsset.conf
+/etc/nut/upsstats.html
+/etc/nut/upsstats-single.html
+/etc/config/nut_cgi
+/etc/httpd.conf
+endef
+
+define Package/nut-web-cgi/install
+	$(INSTALL_DIR) $(1)/www/cgi-bin/nut $(1)/www/nut
+	$(INSTALL_DIR) $(1)/etc/nut
+	$(CP) $(PKG_INSTALL_DIR)/usr/html/* $(1)/www/nut/
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/cgi-bin/* $(1)/www/cgi-bin/nut
+	$(INSTALL_CONF) ./files/add_nut_httpd_conf $(1)/etc/uci-defaults/add_nut_httpd_conf
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats.html.sample $(1)/etc/nut/upsstats.html
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats-single.html.sample $(1)/etc/nut/upsstats-single.html
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsset.conf.sample $(1)/etc/nut/upsset.conf
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/nut_cgi $(1)/etc/config/nut_cgi
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/nut-cgi.init $(1)/etc/init.d/nut-cgi
+	ln -sf /var/etc/nut/hosts.conf $(1)/etc/nut/hosts.conf
+endef
+
+define Package/nut-avahi-service
+	$(call Package/nut/Default)
+	TITLE+= (Avahi service)
+	DEPENDS:=nut +avahi-daemon
+endef
+
+define Package/nut-avahi-service/description
+This package contains the service definition for announcing the
+attached UPS via mDNS/DNS-SD.
+endef
+
+define Package/nut-avahi-service/conffiles
+/etc/avahi/services/nut.service
+endef
+
+define Package/nut-avahi-service/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_CONF) ./files/nut.service $(1)/etc/avahi/services/
 endef
 
 # Dealing with all of the drivers is very repetitive, but the previous
@@ -117,9 +341,10 @@ define DriverPackage
         define Package/nut-driver-$(2)
 		$(call Package/nut/Default)
 		TITLE:=$(2) (NUT $(1) driver)
-		$(if $(filter $(1),serial),DEPENDS+= @NUT_DRIVER_SERIAL)
+		DEPENDS:=nut +nut-common
 		$(if $(filter $(1),snmp),DEPENDS+= @NUT_DRIVER_SNMP)
 		$(if $(filter $(1),usb),DEPENDS+= @NUT_DRIVER_USB)
+		$(if $(filter $(1),serial),DEPENDS+= @NUT_DRIVER_SERIAL)
         endef
 	# Deliberately empty description in order to trigger a build failure.
 	# It should be overridden by the list below, and when updating to a
@@ -269,24 +494,45 @@ $(eval $(call DriverDescription,usb,nutdrv_qx,\
 	Driver for Q* protocol serial and USB based UPS equipment))
 
 CONFIGURE_ARGS += \
-	--$(if $(CONFIG_NUT_DRIVER_SERIAL),with,without)-serial \
+	--sysconfdir=/etc/nut \
+	--datadir=/usr/share/nut \
+	--with-dev \
 	--$(if $(CONFIG_NUT_DRIVER_USB),with,without)-usb \
+	--without-avahi \
 	--$(if $(CONFIG_NUT_DRIVER_SNMP),with,without)-snmp \
+	--$(if $(CONFIG_NUT_DRIVER_SERAL),with,without)-serial \
 	--without-neon \
 	--without-powerman \
+	--without-wrap \
+	--with-cgi \
 	--without-ipmi \
 	--without-freeipmi \
 	--$(if $(CONFIG_NUT_SSL),with,without)-ssl $(if $(CONFIG_NUT_SSL),--with-openssl) \
-	--without-avahi \
 	--without-libltdl \
-	--with-user=root \
-	--with-group=root \
-	--sysconfdir=/etc/nut \
+	--with-statepath=/var/run/nut \
 	--with-drvpath=/lib/nut \
-	--with-statepath=/var/run \
-	--datadir=/usr/share/nut
+	--with-user=root \
+	--with-group=root
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc $(1)/usr/lib/pkgconfig/
+endef
 
 $(eval $(call BuildPackage,nut))
+$(eval $(call BuildPackage,nut-common))
+$(eval $(call BuildPackage,nut-server))
+$(eval $(call BuildPackage,nut-upsmon))
+$(eval $(call BuildPackage,nut-upsmon-sendmail-notify))
+$(eval $(call BuildPackage,nut-upsc))
+$(eval $(call BuildPackage,nut-upscmd))
+$(eval $(call BuildPackage,nut-upslog))
+$(eval $(call BuildPackage,nut-upsrw))
+$(eval $(call BuildPackage,nut-upssched))
+$(eval $(call BuildPackage,nut-web-cgi))
+$(eval $(call BuildPackage,nut-avahi-service))
 $(foreach d,$(filter-out $(SERIAL_DRIVERLIST_IGNORE),$(SERIAL_DRIVERLIST)),$(eval $(call BuildPackage,nut-driver-$(d))))
 $(foreach d,$(SNMP_DRIVERLIST),$(eval $(call BuildPackage,nut-driver-$(d))))
 $(foreach d,$(USB_LIBUSB_DRIVERLIST),$(eval $(call BuildPackage,nut-driver-$(d))))

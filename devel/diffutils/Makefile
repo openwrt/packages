@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2012 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=diffutils
 PKG_VERSION:=3.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/diffutils
@@ -36,7 +36,7 @@ endef
 
 CONFIGURE_VARS += \
 	ac_cv_func_mempcpy=n
-TARGET_CFLAGS += --std=c99
+TARGET_CFLAGS += --std=gnu99
 
 define Package/diffutils/install
 	$(INSTALL_DIR) $(1)/usr/bin

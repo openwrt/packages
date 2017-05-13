@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 
 START=80
 STOP=10
@@ -163,7 +163,22 @@ _set_permission() {
 }
 
 boot() {
-	return 0	# will be started by "iface" hotplug events
+	# wait a given time (default 10 seconds) before startup
+	# to wait for interfaces to come up / not using hotplug events during boot
+	_start() {
+		[ $1 -gt 0 ] && sleep $1
+		start
+	}
+
+	local _DELAY
+	_DELAY=$(uci_get "radicale" "system" "boot_delay" "10")
+	_start $_DELAY &
+	return 0
+}
+
+shutdown() {
+	rm -f /tmp/radicale.hotplug
+	stop
 }
 
 start() {
@@ -184,6 +199,7 @@ start() {
 	_set_permission
 
 	radicale --daemon --config=$SYSCFG
+	touch /tmp/radicale.hotplug
 
 	_running &	# check if running and syslog
 

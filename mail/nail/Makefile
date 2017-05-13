@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nail
 PKG_VERSION:=12.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD-2-Clause
 
 PKG_SOURCE:=heirloom-mailx_$(PKG_VERSION).orig.tar.gz

@@ -1,0 +1,32 @@
+--- a/ext/phar/config.m4	2016-08-17 21:50:58.000000000 +0200
++++ b/ext/phar/config.m4	2016-09-20 22:21:28.494934775 +0200
+@@ -26,7 +26,7 @@
+   fi
+   PHP_ADD_EXTENSION_DEP(phar, hash, true)
+   PHP_ADD_EXTENSION_DEP(phar, spl, true)
+-  PHP_ADD_MAKEFILE_FRAGMENT
++  #PHP_ADD_MAKEFILE_FRAGMENT
+ 
+   PHP_INSTALL_HEADERS([ext/phar], [php_phar.h])
+ 
+--- a/configure.in	2016-09-20 22:26:38.000000000 +0200
++++ b/configure.in	2016-09-20 22:42:30.380101556 +0200
+@@ -1448,13 +1448,13 @@
+ INLINE_CFLAGS="$INLINE_CFLAGS $standard_libtool_flag"
+ CXXFLAGS="$CXXFLAGS $standard_libtool_flag \$(PROF_FLAGS)"
+ 
+-if test "$PHP_PHAR" != "no" && test "$PHP_CLI" != "no"; then
+-  pharcmd=pharcmd
+-  pharcmd_install=install-pharcmd
+-else
++#if test "$PHP_PHAR" != "no" && test "$PHP_CLI" != "no"; then
++#  pharcmd=pharcmd
++#  pharcmd_install=install-pharcmd
++#else
+   pharcmd=
+   pharcmd_install=
+-fi;
++#fi;
+ 
+ all_targets="$lcov_target \$(OVERALL_TARGET) \$(PHP_MODULES) \$(PHP_ZEND_EX) \$(PHP_BINARIES) $pharcmd"
+ install_targets="$install_sapi $install_modules $install_binaries install-build install-headers install-programs $install_pear $pharcmd_install"

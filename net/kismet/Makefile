@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kismet
-PKG_VERSION:=2013-03-R1b
+PKG_VERSION:=2016-07-R1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=LGPLv2.1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.kismetwireless.net/code
-PKG_MD5SUM:=6cdcd78baf2e15edbe8a9de3c5493f02
+PKG_MD5SUM:=7fa6e86c5078a0e7d91fc9bf954c5107
 
 PKG_BUILD_DEPENDS:=libpcap libncurses libpcre
 
@@ -26,7 +26,7 @@ define Package/kismet/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Kismet
-  MAINTAINER:=Sebastian Wendel <packages@sourceindex.de>
+  MAINTAINER:=Jean-Michel lacroix <lacroix@lepine-lacroix.info>
   DEPENDS:= $(CXX_DEPENDS) +libnl
   URL:=http://www.kismetwireless.net/
   SUBMENU:=wireless

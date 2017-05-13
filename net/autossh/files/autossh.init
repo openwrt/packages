@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2011 OpenWrt.org
+
+START=80
+
+start_instance() {
+	local section="$1"
+
+	config_get ssh "$section" 'ssh'
+	config_get gatetime "$section" 'gatetime'
+	config_get monitorport "$section" 'monitorport'
+	config_get poll "$section" 'poll'
+
+	export AUTOSSH_GATETIME="${gatetime:-30}"
+	export AUTOSSH_POLL="${poll:-600}"
+	service_start /usr/sbin/autossh -M ${monitorport:-20000} -f ${ssh}
+}
+
+boot() {
+	return
+}
+
+start() {
+	config_load 'autossh'
+	config_foreach start_instance 'autossh'
+}
+
+stop() {
+	service_stop /usr/sbin/autossh
+}

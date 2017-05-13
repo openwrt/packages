@@ -42,8 +42,8 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) all \
         CC="$(TARGET_CC)" \
-        LUA="$(STAGING_DIR_HOST)/bin/lua" \
-        LUAC="$(STAGING_DIR_HOST)/bin/luac" \
+        LUA="$(STAGING_DIR_HOSTPKG)/bin/lua" \
+        LUAC="$(STAGING_DIR_HOSTPKG)/bin/luac" \
         OPT_FLAGS="$(TARGET_CFLAGS) --std=c99 -Dpthread_yield=sched_yield"
 endef
 

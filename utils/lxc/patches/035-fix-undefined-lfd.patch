@@ -1,0 +1,20 @@
+--- a/src/lxc/bdev.c
++++ b/src/lxc/bdev.c
+@@ -1939,7 +1939,7 @@ static int find_free_loopdev(int *retfd,
+ 
+ static int loop_mount(struct bdev *bdev)
+ {
+-	int lfd, ffd = -1, ret = -1;
++	int lfd = -1, ffd = -1, ret = -1;
+ 	struct loop_info64 lo;
+ 	char loname[100];
+ 
+@@ -1977,7 +1977,7 @@ out:
+ 	if (ffd > -1)
+ 		close(ffd);
+ 	if (ret < 0) {
+-		close(lfd);
++		if (lfd > -1) close(lfd);
+ 		bdev->lofd = -1;
+ 	}
+ 	return ret;

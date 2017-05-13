@@ -15,7 +15,7 @@ validate_e2guardian_section() {
 		'accessdeniedaddress:string' \
 		'bannediplist:string' \
 		'contentscanexceptions:string' \
-		'contentscanner:string'
+		'contentscanner:string' \
 		'contentscannertimeout:uinteger' \
 		'createlistcachefiles:string' \
 		'custombannedflashfile:string' \

@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnurl
-PKG_VERSION:=7.40.0
-PKG_RELEASE:=3
+PKG_VERSION:=7.53.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnunet.org/sites/default/files
 
-PKG_MD5SUM:=f816deb0c1401c841780ec6b91985a14
+PKG_HASH:=cdac891a3253022b7fd75f6c71b279b5f35cc109f0b61d8068c79bca081802aa
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -53,6 +53,7 @@ CONFIGURE_ARGS += \
 	--with-gnutls="$(STAGING_DIR)/usr" \
 	--with-libidn="$(STAGING_DIR)/usr" \
 	--with-zlib="$(STAGING_DIR)/usr" \
+	--with-ca-path="/etc/ssl/certs/" \
 	--enable-shared \
 	--enable-static \
 	--without-axtls \

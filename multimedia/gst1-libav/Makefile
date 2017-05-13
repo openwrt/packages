@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-libav
-PKG_VERSION:=1.4.5
-PKG_RELEASE:=1
+PKG_VERSION:=1.8.2
+PKG_RELEASE:=2
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
+		Ted Hess <thess@kitschensync.net>
 
 PKG_SOURCE:=gst-libav-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-libav
-PKG_MD5SUM:=f4922a46adbcbe7bd01331ff5dc7979d
+PKG_MD5SUM:=b5f3c7a27b39b5f5c2f0bfd546b0c655020faf6b38d27b64b346c43e5ebf687a
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
@@ -53,7 +54,6 @@ LIBAV_DECODERS:= \
 	mpeg1video \
 	mpeg2video \
 	mpeg4 \
-	mpeg4aac \
 	mpegvideo \
 	pcm_s16be \
 	pcm_s16le \
@@ -121,7 +121,7 @@ define Package/gst1-libav
   URL:=http://www.gstreamer.net/modules/gst-libav.html
   DEPENDS:= +libgstreamer1 +gstreamer1-plugins-base \
 	    +gst1-mod-alsa +libgst1audio +libgst1pbutils +libgst1video \
-	    +libbz2
+	    +libbz2 +liblzma
 endef
 
 define Package/gst1-libav/description
@@ -147,6 +147,7 @@ LIBAV_CONFIGURE_PROTOCOLS:=$(call FILTER_CONFIG,PROTOCOL,protocol,$(LIBAV_PROTOC
 CONFIGURE_ARGS += \
 	--without-system-libav \
 	--with-libav-extra-configure="--target-os=linux \
+	$(if $(findstring " ",$(CONFIG_CPU_TYPE)),,--cpu=$(CONFIG_CPU_TYPE)) \
 	--disable-bsfs \
 	--disable-programs \
 	--disable-devices \
@@ -179,20 +180,12 @@ CONFIGURE_ARGS += \
 	--disable-fma3 \
 	--disable-fma4 \
 	--disable-avx2 \
-	--disable-vfp \
-	--disable-neon \
 	--disable-inline-asm \
 	--disable-yasm"
 
-# XXX: trick to force use of embedded Libav headers
-TARGET_CFLAGS += $(TARGET_CPPFLAGS)
-TARGET_CPPFLAGS :=
+TARGET_CFLAGS += -D_GNU_SOURCE
 
 TARGET_LDFLAGS += $(FPIC)
-
-define Build/Prepare
-$(call Build/Prepare/Default)
-endef
 
 define Package/gst1-libav/install
 	$(INSTALL_DIR) $(1)/usr/lib/gstreamer-$(GST_VERSION)

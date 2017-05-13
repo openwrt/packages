@@ -10,6 +10,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "serverhash"
 	proto_config_add_string "authgroup"
 	proto_config_add_string "password"
+	proto_config_add_string "password2"
 	proto_config_add_string "token_mode"
 	proto_config_add_string "token_secret"
 	proto_config_add_string "interface"
@@ -22,26 +23,22 @@ proto_openconnect_init_config() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port username serverhash authgroup password interface token_mode token_secret os csd_wrapper
+	json_get_vars server port username serverhash authgroup password password2 interface token_mode token_secret os csd_wrapper
 
 	grep -q tun /proc/modules || insmod tun
+	ifname="vpn-$config"
 
 	logger -t openconnect "initializing..."
-	serv_addr=
+
+	logger -t "openconnect" "adding host dependency for $server at $config"
 	for ip in $(resolveip -t 10 "$server"); do
-		( proto_add_host_dependency "$config" "$ip" $interface )
-		serv_addr=1
+		logger -t "openconnect" "adding host dependency for $ip at $config"
+		proto_add_host_dependency "$config" "$ip"
 	done
-	[ -n "$serv_addr" ] || {
-		logger -t openconnect "Could not resolve server address: '$server'"
-		sleep 60
-		proto_setup_failed "$config"
-		exit 1
-	}
 
 	[ -n "$port" ] && port=":$port"
 
-	cmdline="$server$port -i vpn-$config --non-inter --syslog --script /lib/netifd/vpnc-script"
+	cmdline="$server$port -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script"
 
 	# migrate to standard config files
 	[ -f "/etc/config/openconnect-user-cert-vpn-$config.pem" ] && mv "/etc/config/openconnect-user-cert-vpn-$config.pem" "/etc/openconnect/user-cert-vpn-$config.pem"
@@ -65,6 +62,7 @@ proto_openconnect_setup() {
 		mkdir -p /var/etc
 		pwfile="/var/etc/openconnect-$config.passwd"
 		echo "$password" > "$pwfile"
+		[ -n "$password2" ] && echo "$password2" >> "$pwfile"
 		append cmdline "--passwd-on-stdin"
 	}
 

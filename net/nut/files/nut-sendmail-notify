@@ -1,0 +1,10 @@
+#!/bin/sh
+
+/usr/sbin/sendmail root <<EOF
+From: root
+To: root
+Subject: UPS $NOTIFYTYPE Notification
+
+$1
+.
+EOF

@@ -1,0 +1,22 @@
+--- a/conf.d/charts.d.conf
++++ b/conf.d/charts.d.conf
+@@ -30,7 +30,7 @@
+ 
+ # the default enable/disable for all charts.d collectors
+ # the default is "yes"
+-# enable_all_charts="yes"
++enable_all_charts="no"
+ 
+ # BY DEFAULT ENABLED MODULES
+ # ap=yes
+--- a/conf.d/python.d.conf
++++ b/conf.d/python.d.conf
+@@ -7,7 +7,7 @@
+ #
+ 
+ # Enable / disable the whole python.d.plugin (all its modules)
+-enabled: yes
++enabled: no
+ 
+ # Prevent log flood
+ # Define how many log messages can be written to log file in one log_interval

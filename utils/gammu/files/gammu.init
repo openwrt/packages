@@ -15,7 +15,7 @@ start_instance() {
 	config_get_bool item "$conf" enabled 0
 	[ $item = 0 ] && return
 
-	echo -e "; dont edit. instead look into /etc/config/gammu\n[gammu]\n" > $conffile
+	echo -e "; don't edit. instead look into /etc/config/gammu\n[gammu]\n" > $conffile
 
 	config_get item "$conf" device
 	[ -z "$item" ] && return

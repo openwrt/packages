@@ -3,6 +3,8 @@
 
 START=60
 
+USE_PROCD=1
+
 ZNC_CONFIG_PATH=/tmp/etc/znc
 PID_FILE=${ZNC_CONFIG_PATH}/znc.pid
 ZNC_CONFIG=${ZNC_CONFIG_PATH}/configs/znc.conf
@@ -38,7 +40,9 @@ add_network() {
 	config_get name "$network" name
 	echo "	<Network $name>" >> $ZNC_CONFIG
 	config_list_foreach "$network" server "add_param \"		Server\""
+	config_list_foreach "$network" fingerprint "add_param \"		trustedserverfingerprint\""
 	config_list_foreach "$network" channel "add_chan"
+	echo "	</Network>" >> $ZNC_CONFIG
 }
 
 znc_global() {
@@ -56,8 +60,8 @@ znc_global() {
 
 	config_get znc_config_path "$znc" znc_config_path
 
-	config_get RUNAS_USER "$znc" runas_user
-	config_get RUNAS_GROUP "$znc" runas_group
+	config_get RUNAS_USER "$znc" runas_user znc
+	config_get RUNAS_GROUP "$znc" runas_group znc
 
 	if [ "${znc_config_path}" ]
 	then
@@ -86,8 +90,6 @@ znc_global() {
 
 		config_list_foreach "$znc" listener "add_param Listener"
 		config_list_foreach "$znc" module "add_param LoadModule"
-
-		add_param LoadModule "droproot ${RUNAS_USER:-nobody} ${RUNAS_GROUP:-nogroup}"
 	fi
 }
 
@@ -142,6 +144,7 @@ add_user() {
 	if [ "$server" ]; then
 		echo "	<Network Default>" >> $ZNC_CONFIG
 		config_list_foreach "$user" server "add_param \"		Server\""
+		config_list_foreach "$user" fingerprint "add_param \"		trustedserverfingerprint\""
 		config_list_foreach "$user" channel "add_chan"
 		echo "	</Network>" >> $ZNC_CONFIG
 	fi
@@ -151,44 +154,30 @@ add_user() {
 	echo "</User>" >> $ZNC_CONFIG
 }
 
-
-start() {
+start_service() {
 	config_load znc
 	config_foreach znc_global znc
 
-	if [ "$DISABLED" -eq 1 ]; then
-		return 0
-	fi
+	[ "$DISABLED" -eq 0 ] || return 0
 
 	if [ "$EXTERNAL_CONFIG" -eq 0 ]
 	then
 		config_foreach add_listener listener
 		config_foreach add_user user
 
-		chown -hR ${RUNAS_USER:-nobody}:${RUNAS_GROUP:-nogroup} /tmp/etc/znc
 	fi
 
-	if [ "$EXTERNAL_CONFIG" -eq 1 -a "$RUNAS_USER"  ]
-	then
-		local SU=$(which su)
-		if [ "$SU" ]
-		then
-			$SU -c "/usr/bin/znc -d$ZNC_CONFIG_PATH >/dev/null &" $RUNAS_USER
-		else
-			logger -s -t ZNC -p daemon.err "Could not run ZNC as user $RUNAS_USER: su not found."
-			exit 1
-		fi
-	else
-		/usr/bin/znc -d$ZNC_CONFIG_PATH >/dev/null &
-	fi
+	chown -hR ${RUNAS_USER}:${RUNAS_GROUP} ${ZNC_CONFIG_PATH} || {
+		logger -s -t ZNC -p daemon.err "Invalid UID/GID. Aborting startup"
+		exit 1
+	}
+
+	procd_open_instance
+	procd_set_param file /etc/config/znc
+	[ "$EXTERNAL_CONFIG" -eq 1 ] && procd_set_param file "${ZNC_CONFIG}/configs/znc.conf"
+	procd_set_param command /usr/bin/znc
+	procd_append_param command -f -d$ZNC_CONFIG_PATH
+	procd_set_param user ${RUNAS_USER}
+	procd_set_param respawn
+	procd_close_instance
 }
-
-stop() {
-	if [ -f "$PID_FILE" ]
-	then
-		kill $(cat "$PID_FILE")
-	else
-		killall znc
-	fi
-}
-

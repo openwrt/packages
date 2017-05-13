@@ -1,0 +1,141 @@
+--- a/plugins/SConscript
++++ b/plugins/SConscript
+@@ -35,7 +35,7 @@ if target_os not in ['android', 'arduino
+ 
+     SConscript(os.path.join('src', 'SConscript'))
+ 
+-    SConscript(os.path.join('unittests', 'SConscript'))
++#    SConscript(os.path.join('unittests', 'SConscript'))
+ 
+     if build_sample == 'ON':
+ 	    if target_os in ['linux']:
+--- a/resource/SConscript
++++ b/resource/SConscript
+@@ -78,7 +78,7 @@ if target_os in ['linux', 'windows']:
+ 		SConscript('csdk/stack/samples/linux/secure/SConscript')
+ 
+ 	# Build C/C++ unit tests
+-	SConscript('unit_tests.scons')
++	# SConscript('unit_tests.scons')
+ 
+ elif target_os == 'darwin':
+ 	env.Command('../../out/darwin/iotivity-csdk.framework',None,src_dir + '/tools/darwin/mkfwk_osx.sh')
+--- a/resource/csdk/resource-directory/SConscript
++++ b/resource/csdk/resource-directory/SConscript
+@@ -114,8 +114,3 @@ if 'SERVER' in rd_mode:
+ if target_os in ['linux']:
+     SConscript('samples/SConscript')
+ 
+-######################################################################
+-# Build UnitTests of the Resource Directory
+-################################################ ######################
+-if target_os in ['linux']:
+-    SConscript('unittests/SConscript')
+--- a/service/coap-http-proxy/SConscript
++++ b/service/coap-http-proxy/SConscript
+@@ -84,6 +84,3 @@ local_env.UserInstallTargetHeader('inclu
+ ######################################################################
+ if target_os in ['linux', 'tizen']:
+     SConscript('samples/SConscript')
+-
+-if target_os in ['linux']:
+-    SConscript('unittests/SConscript')
+--- a/service/easy-setup/enrollee/SConscript
++++ b/service/easy-setup/enrollee/SConscript
+@@ -123,7 +123,3 @@ if target_os == 'arduino':
+ 
+ if target_os in ['linux']:
+ 	SConscript('../sampleapp/enrollee/linux/SConscript')
+-	#Build UnitTestcases for Enrollee
+-	if enrollee_env.get('SECURED') == '0':
+-		SConscript('../enrollee/unittests/SConscript')
+-
+--- a/service/easy-setup/mediator/richsdk/SConscript
++++ b/service/easy-setup/mediator/richsdk/SConscript
+@@ -163,11 +163,3 @@ if target_os in ['linux']:
+ if target_os in ['android']:
+ 	SConscript('../../sampleapp/mediator/android/SConscript')
+ 
+-
+-######################################################################
+-#Build UnitTestcases for Mediator[RichSDK]
+-################################################ ######################
+-if env.get('SECURED') == '0':
+-   if target_os == 'linux':
+-       SConscript('unittests/SConscript')
+-
+--- a/service/resource-container/SConscript
++++ b/service/resource-container/SConscript
+@@ -223,12 +223,6 @@ else:
+ lib_env = conf2.Finish()
+ 
+ ######################################################################
+-# build resource container unit tests
+-######################################################################
+-if target_os in ['linux']:
+-    SConscript('unittests/SConscript')
+-
+-######################################################################
+ # Build Container Sample
+ ######################################################################
+ if target_os not in ['ios']:
+--- a/service/resource-encapsulation/SConscript
++++ b/service/resource-encapsulation/SConscript
+@@ -121,14 +121,5 @@ resourceClient_env.UserInstallTargetHead
+ ######################################################################
+ SConscript('examples/SConscript')
+ 
+-######################################################################
+-# Build UnitTests Resource Client , resourceCache and resourceBroker and 
+-# DiscoveryManager
+-################################################ ######################
+-if target_os in ['linux']:
+-    SConscript('unittests/SConscript')
+-    SConscript('src/resourceCache/unittests/SConscript')
+-    SConscript('src/resourceBroker/unittest/SConscript')
+-
+ if target_os == 'android':
+     SConscript('android/SConscript')
+--- a/service/resource-encapsulation/src/common/SConscript
++++ b/service/resource-encapsulation/src/common/SConscript
+@@ -22,10 +22,10 @@
+ # rcs_common (primitiveResource and expiryTimer) build script
+ ##
+ import os
++Import('env')
+ 
+ # SConscript file for Local PKI google tests
+-gtest_env = SConscript('#extlibs/gtest/SConscript')
+-lib_env = gtest_env.Clone()
++lib_env = env.Clone()
+ 
+ # Add third party libraries
+ SConscript('#service/third_party_libs.scons', exports = 'lib_env')
+--- a/service/resource-encapsulation/src/serverBuilder/SConscript
++++ b/service/resource-encapsulation/src/serverBuilder/SConscript
+@@ -21,9 +21,11 @@
+ ##
+ # rcs_server (Server Builder) project build script
+ ##
++import os
++Import('env')
++
+ # SConscript file for Local PKI google tests
+-gtest_env = SConscript('#extlibs/gtest/SConscript')
+-lib_env = gtest_env.Clone()
++lib_env = env.Clone()
+ 
+ # Add third party libraries
+ SConscript('#service/third_party_libs.scons', exports = 'lib_env')
+--- a/service/scene-manager/SConscript
++++ b/service/scene-manager/SConscript
+@@ -100,9 +100,5 @@ scenemanager_env.UserInstallTargetHeader
+ scenemanager_env.UserInstallTargetHeader('include/RemoteScene.h', 'service/scene-manager', 'RemoteScene.h')
+ scenemanager_env.UserInstallTargetHeader('include/RemoteSceneAction.h', 'service/scene-manager', 'RemoteSceneAction.h')
+ 
+-# Go to build Unit test
+-if target_os in ['linux']:
+-    SConscript('unittests/SConscript')
+-
+ # Go to build sample apps
+ SConscript('sampleapp/SConscript')

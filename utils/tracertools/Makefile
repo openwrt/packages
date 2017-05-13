@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tracertools
-PKG_VERSION:=20141027
+PKG_VERSION:=20160308
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://gitorious.org/tracertools/tracertools.git
-PKG_SOURCE_VERSION:=9ba70d1fe4f3c0f24d565d98c79fee71711823f0
+PKG_SOURCE_URL:=https://github.com/dangowrt/tracertools.git
+PKG_SOURCE_VERSION:=28d0bb9a10a0b56b4964e3256135cfd152075a59
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 

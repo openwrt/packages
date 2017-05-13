@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2011 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
-PKG_VERSION:=2.2.29
+PKG_VERSION:=2.4.25
 PKG_RELEASE:=1
 PKG_SOURCE_NAME:=httpd
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=Apache License
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://mirrors.ibiblio.org/apache/httpd/ \
-		http://apache.imsam.info/httpd/
-PKG_MD5SUM:=579342fdeaa7b8b68d17fee91f8fab6e
+PKG_SOURCE_URL:=@APACHE/httpd/
+PKG_MD5SUM:=2826f49619112ad5813c0be5afcc7ddb
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
@@ -41,7 +40,7 @@ endef
 
 define Package/apache
 $(call Package/apache/Default)
-  DEPENDS:=+libapr +libaprutil +libpcre +libopenssl +unixodbc
+  DEPENDS:=+libapr +libaprutil +libpcre +libopenssl +unixodbc 
 endef
 
 define Package/apache/description
@@ -91,6 +90,7 @@ endef
 
 TARGET_CFLAGS += $(FPIC)
 TARGET_CPPFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
+TARGET_LDFLAGS += -lpthread 
 
 define Build/Configure
 	$(call Build/Configure/Default, \
@@ -98,16 +98,22 @@ define Build/Configure
 		--with-apr-util="$(STAGING_DIR)/usr/bin/apu-1-config" \
 		--with-pcre="$(STAGING_DIR)/usr/bin/pcre-config" \
 		--enable-http \
+		--with-crypto \
+		--with-sqlit3="$(STAGING_DIR)/usr" \
+		--with-openssl="$(STAGING_DIR)/usr" \
 		--enable-ssl \
 		--enable-proxy \
 		--disable-disk-cache \
 		--enable-maintainer-mode \
+		--with-mpm=prefork \
+		--with-mpm=worker \
 		--enable-mime-magic \
 		--without-suexec-bin \
 		--sysconfdir=/etc/apache \
 		ap_cv_void_ptr_lt_long=no \
 		logfiledir="/var/log" \
 		runtimedir="/var/run" \
+		EXTRA_LIBS="-ldl -lpthread -lcrypto -lrt -lssl" \
 	)
 endef
 
@@ -141,7 +147,8 @@ endef
 define Package/apache/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	# we don't need apxs on the router, it's just for building apache modules.
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{ab,apachectl,checkgid,dbmmanage,envvars,envvars-std,htcacheclean,htdbm,htdigest,htpasswd,httpd,httxt2dbm,logresolve,rotatelogs} $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{ab,dbmmanage,htdbm,htdigest,htpasswd,httxt2dbm,logresolve} $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{apachectl,checkgid,envvars,envvars-std,htcacheclean,httpd,rotatelogs} $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/httpd.exp $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/share

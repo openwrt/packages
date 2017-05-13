@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/cmdpad
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=execute commands when a key is pressed, released or hold down
+  TITLE:=execute commands when key is pressed/released/held down
   URL:=http://cmdpad.sourceforge.net/index.php
 endef
 
@@ -34,7 +34,7 @@ CONFIGURE_ARGS += \
 
 define Package/cmdpad/description
 	cmdpad - execute commands when a key is pressed, released or hold down.
-	Should be started from /etc/rc or /etc/rc.local. To run it as deamon you
+	Should be started from /etc/rc or /etc/rc.local. To run it as daemon you
 	need to start it with '&'. All logs are printed to standard out and standard
 	error (to write the log to disk use cmdpad > /var/log/cmdpad). Cmdpad
 	searches for /etc/cmdpad.conf and load the key bindings. Then wait for

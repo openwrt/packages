@@ -10,12 +10,16 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=cryptodev-linux
-PKG_VERSION:=1.7
-PKG_RELEASE:=2
+PKG_VERSION:=1.9
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://download.gna.org/cryptodev-linux/
-PKG_MD5SUM:=0b63b3481cf2c90386b35f057481d36b
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=d2b49408682795a0e200c0e54a8605f72be4b11088e07b1cd4d48f6c1427b0f4
+PKG_SOURCE_URL:=https://github.com/cryptodev-linux/cryptodev-linux.git
+PKG_SOURCE_VERSION:=87d959d9a279c055b361de8e730fab6a7144edd7
+
+PKG_MAINTAINER:=Ansuel Smith ansuelsmth@gmail.com
 
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -31,7 +35,7 @@ define KernelPackage/cryptodev
   URL:=http://cryptodev-linux.org/
   MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
   VERSION:=$(LINUX_VERSION)+$(PKG_VERSION)-$(BOARD)-$(PKG_RELEASE)
-  DEPENDS:=+kmod-crypto-core +kmod-crypto-authenc +kmod-crypto-hash
+  DEPENDS:=+kmod-crypto-authenc +kmod-crypto-hash
   FILES:= \
 		$(PKG_BUILD_DIR)/cryptodev.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,50,$(CRYPTODEV_AUTOLOAD))
@@ -67,7 +71,7 @@ endef
 
 define KernelPackage/cryptodev/install
 	$(INSTALL_DIR) $(1)/etc/modules.d
-	$(INSTALL_DATA) ./files/cryptodev.modules $(1)/etc/modules.d/80-cryptodev
+	$(INSTALL_DATA) ./files/cryptodev.modules $(1)/etc/modules.d/50-cryptodev
 	$(INSTALL_DIR) $(1)/lib/modules/$(LINUX_VERSION)
 	$(INSTALL_DIR) $(1)/usr/sbin
 endef

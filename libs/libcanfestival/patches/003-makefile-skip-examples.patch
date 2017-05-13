@@ -1,0 +1,20 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -21,7 +21,7 @@
+ # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ # 
+ 
+-all: objdictedit canfestival examples
++all: objdictedit canfestival
+ 
+ examples: canfestival driver
+ 	$(MAKE) -C examples all
+@@ -44,7 +44,7 @@ driver:
+ install: canfestival driver
+ 	$(MAKE) -C drivers $@
+ 	$(MAKE) -C src $@
+-	$(MAKE) -C examples $@
++	#$(MAKE) -C examples $@
+ 	$(MAKE) -C objdictgen $@
+ 	ldconfig
+ 

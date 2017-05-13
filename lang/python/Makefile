@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,19 +7,26 @@
 
 include $(TOPDIR)/rules.mk
 
-# The file included below defines PYTHON_VERSION
-include ./files/python-package.mk
+# For PYTHON_VERSION
+include ./files/python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 PKG_RELEASE:=5
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=c685ef0b8e9f27b5e3db5db12b268ac6
+PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
+PKG_MD5SUM:=53b43534153bb2a0363f08bae8b9d990
+PKG_HASH:=35d543986882f78261f97787fd3e06274bfa6df29fac9b4a94f73930ff98f731
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
+
+# This file provides the necsessary host build variables
+include ./files/python-host.mk
+
+# For PyPackage
+include ./files/python-package.mk
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -29,6 +36,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=python/host
+HOST_BUILD_DEPENDS:=bzip2/host expat/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -38,7 +46,7 @@ define Package/python/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python $(PYTHON_VERSION) programming language
-  URL:=http://www.python.org/
+  URL:=https://www.python.org/
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
@@ -49,6 +57,16 @@ define Package/python/Default/description
  libraries, and can be learned in a few days. Many Python programmers
  report substantial productivity gains and feel the language encourages
  the development of higher quality, more maintainable code.
+endef
+
+define Package/python-pip-conf
+$(call Package/python/Default)
+  TITLE:=Configuration file for pip/pip3
+  URL:=https://pip.pypa.io
+endef
+
+define Package/python-pip-conf/description
+ Configuration file for pip/pip3
 endef
 
 define Package/python-base
@@ -74,19 +92,21 @@ define Package/python-light/description
   into separate packages.
 endef
 
-# Define newline here, since it's not defined in OpenWRT
-define newline
-
-
-endef
-
 PYTHON_LIB_FILES_DEL:=
 PYTHON_PACKAGES:=
+PYTHON_PACKAGES_DEPENDS:=
 define PyBasePackage
   PYTHON_PACKAGES+=$(1)
+  ifeq ($(3),)
+    PYTHON_PACKAGES_DEPENDS+=$(1)
+  endif
   PYTHON_LIB_FILES_DEL+=$(2)
   define PyPackage/$(1)/filespec
-    $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
+    ifneq ($(2),)
+      $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
+      -|/usr/lib/python$(PYTHON_VERSION)/*/test
+      -|/usr/lib/python$(PYTHON_VERSION)/*/tests
+    endif
   endef
 endef
 
@@ -94,7 +114,7 @@ include ./files/python-package-*.mk
 
 define Package/python
 $(call Package/python/Default)
-  DEPENDS:=+python-light $(foreach package,$(PYTHON_PACKAGES),+$(package))
+  DEPENDS:=+python-light $(foreach package,$(PYTHON_PACKAGES_DEPENDS),+$(package))
 endef
 
 define Package/python/description
@@ -117,13 +137,22 @@ ifeq ($(CONFIG_IPV6),y)
 	ENABLE_IPV6 += --enable-ipv6
 endif
 
+PYTHON_FOR_BUILD:= \
+	_PYTHON_PROJECT_BASE=$(PKG_BUILD_DIR) \
+	_PYTHON_HOST_PLATFORM=linux2 \
+	PYTHONPATH="$(PKG_BUILD_DIR)/Lib:$(PKG_BUILD_DIR)/build/lib.linux2-$(PYTHON_VERSION)" \
+	_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata \
+	$(HOST_PYTHON_BIN)
+
 CONFIGURE_ARGS+= \
 	--sysconfdir=/etc \
 	--enable-shared \
 	--without-cxx-main \
 	--with-threads \
-	--with-system-ffi="$(STAGING_DIR)/usr" \
+	--with-system-ffi \
+	--with-ensurepip=no \
 	--without-pymalloc \
+	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
 	OPT="$(TARGET_CFLAGS)"
@@ -133,22 +162,52 @@ define Build/Prepare
 	$(CP) ./files/config.site $(PKG_BUILD_DIR)/config.site
 endef
 
+ifdef CONFIG_PACKAGE_python-setuptools
+define Build/Compile/python-setuptools
+	$(STAGING_DIR_HOSTPKG)/bin/pip install \
+		--ignore-installed \
+		--root=$(PKG_BUILD_DIR)/install-setuptools --prefix=. \
+		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-*.whl
+endef
+endif # CONFIG_PACKAGE_python-setuptools
+
+ifdef CONFIG_PACKAGE_python-pip
+define Build/Compile/python-pip
+	$(STAGING_DIR_HOSTPKG)/bin/pip install \
+		--ignore-installed \
+		--root=$(PKG_BUILD_DIR)/install-pip --prefix=. \
+		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-*.whl
+endef
+endif # CONFIG_PACKAGE_python-pip
+
+define Build/Compile
+	$(call Build/Compile/Default)
+	# Use host pip to install python-setuptools
+	$(call Build/Compile/python-setuptools)
+	$(call Build/Compile/python-pip)
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
 	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
-	$(INSTALL_DATA) ./files/python-package.mk $(STAGING_DIR)/mk/
+	$(INSTALL_DATA) \
+		./files/python-package.mk \
+		./files/python-host.mk \
+		./files/python-version.mk \
+		./files/python-package-install.sh \
+		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
 	$(CP) \
-		$(STAGING_DIR_HOST)/lib/python$(PYTHON_VERSION) \
+		$(HOST_PYTHON_LIB_DIR) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
 	$(CP) \
-		$(STAGING_DIR_HOST)/lib/pkgconfig/python.pc \
-		$(STAGING_DIR_HOST)/lib/pkgconfig/python2.pc \
-		$(STAGING_DIR_HOST)/lib/pkgconfig/python-$(PYTHON_VERSION).pc \
+		$(HOST_PYTHON_DIR)/lib/pkgconfig/python.pc \
+		$(HOST_PYTHON_DIR)/lib/pkgconfig/python2.pc \
+		$(HOST_PYTHON_DIR)/lib/pkgconfig/python-$(PYTHON_VERSION).pc \
 		$(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
@@ -186,12 +245,10 @@ endef
 
 define PyPackage/python-light/filespec
 +|/usr/lib/python$(PYTHON_VERSION)
--|/usr/lib/python$(PYTHON_VERSION)/config
 -|/usr/lib/python$(PYTHON_VERSION)/distutils/cygwinccompiler.py
 -|/usr/lib/python$(PYTHON_VERSION)/distutils/command/wininst*
 -|/usr/lib/python$(PYTHON_VERSION)/ensurepip
 -|/usr/lib/python$(PYTHON_VERSION)/idlelib
--|/usr/lib/python$(PYTHON_VERSION)/lib2to3
 -|/usr/lib/python$(PYTHON_VERSION)/lib-tk
 -|/usr/lib/python$(PYTHON_VERSION)/lib-dynload/_testcapi.so
 -|/usr/lib/python$(PYTHON_VERSION)/pdb.doc
@@ -204,6 +261,7 @@ $(subst $(space),$(newline),$(foreach lib_file,$(PYTHON_LIB_FILES_DEL),-|$(lib_f
 endef
 
 define PyPackage/python-base/install
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
@@ -213,23 +271,29 @@ define PyPackage/python/filespec
 -|$(PYTHON_PKG_DIR)
 endef
 
-HOST_CFLAGS+= \
-	-I/usr/include/ncursesw \
-	-I/usr/include/ncurses
+define Package/python-pip-conf/install
+	$(INSTALL_DIR) $(1)/etc
+	$(CP) ./files/pip.conf $(1)/etc
+endef
+
+HOST_LDFLAGS += \
+	$$$$(pkg-config --static --libs libcrypto libssl)
 
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-pymalloc \
 	--with-threads \
-	--prefix=$(STAGING_DIR_HOST) \
-	--with-ensurepip=upgrade \
-	CONFIG_SITE= \
-	CFLAGS="$(HOST_CFLAGS)"
+	--prefix=$(HOST_PYTHON_DIR) \
+	--exec-prefix=$(HOST_PYTHON_DIR) \
+	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
+	--with-system-ffi=no \
+	--with-ensurepip=install \
+	CONFIG_SITE=
 
 define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin/
 	$(MAKE) -C $(HOST_BUILD_DIR) install
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(STAGING_DIR_HOST)/bin/pgen2
+	$(INSTALL_DIR) $(HOST_PYTHON_DIR)/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON_DIR)/bin/pgen2
 endef
 
 $(eval $(call HostBuild))
@@ -237,12 +301,19 @@ $(eval $(call HostBuild))
 $(foreach package, $(PYTHON_PACKAGES),  \
 	$(eval $(call PyPackage,$(package))) \
 	$(eval $(call BuildPackage,$(package))) \
+	$(eval $(call BuildPackage,$(package)-src)) \
 )
 
 $(eval $(call PyPackage,python-base))
 $(eval $(call PyPackage,python-light))
 $(eval $(call PyPackage,python))
 
+$(eval $(call BuildPackage,python-pip-conf))
+
 $(eval $(call BuildPackage,python-base))
 $(eval $(call BuildPackage,python-light))
 $(eval $(call BuildPackage,python))
+
+$(eval $(call BuildPackage,python-base-src))
+$(eval $(call BuildPackage,python-light-src))
+$(eval $(call BuildPackage,python-src))

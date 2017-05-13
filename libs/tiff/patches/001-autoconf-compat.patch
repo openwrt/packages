@@ -9,9 +9,9 @@
  ACLOCAL_AMFLAGS = -I m4
  
  docfiles = \
-@@ -48,7 +48,7 @@ EXTRA_DIST = \
- 
- dist_doc_DATA = $(docfiles)
+@@ -61,7 +61,7 @@ distcheck-hook:
+ 	rm -rf $(distdir)/_build/cmake
+ 	rm -rf $(distdir)/_inst/cmake
  
 -SUBDIRS = port libtiff tools build contrib test man html
 +SUBDIRS = port libtiff tools build contrib

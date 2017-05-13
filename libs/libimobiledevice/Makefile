@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libimobiledevice
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.2.1
 PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Lukasz Baj <l.baj@radytek.com>
@@ -18,7 +18,7 @@ PKG_LICENSE_FILES:=COPYING.LESSER
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libimobiledevice.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=53eb963f8e6d607cca6b50381c10820a5e8357f4
+PKG_SOURCE_VERSION:=13bf235cac2201747de11652cf14fe2714ca0718
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_FIXUP:=autoreconf

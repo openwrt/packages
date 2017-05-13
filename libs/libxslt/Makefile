@@ -20,7 +20,7 @@ PKG_MD5SUM:=9667bf6f9310b957254fdcf6596600b7
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
-PKG_MAINTAINER:=Jiri Slachta <slachta@cesnet.cz>
+PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -43,7 +43,7 @@ define Package/libexslt
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libxslt
-  TITLE:=Gnome XSLT library Extention
+  TITLE:=Gnome XSLT library Extension
   URL:=http://xmlsoft.org/XSLT/EXSLT/
 endef
 

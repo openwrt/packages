@@ -1,0 +1,46 @@
+From a8edcc1ce2a55e0e02ee13c46c6a5f22dd7920e9 Mon Sep 17 00:00:00 2001
+From: "cheffner@tacnetsol.com"
+ <cheffner@tacnetsol.com@027a3e96-2d37-f1c0-85d6-5ce5a08386c2>
+Date: Tue, 27 Mar 2012 16:25:10 +0000
+Subject: [PATCH] Fixed probe request bug in wash.
+
+git-svn-id: http://reaver-wps.googlecode.com/svn/trunk@113 027a3e96-2d37-f1c0-85d6-5ce5a08386c2
+---
+ src/wpsmon.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/src/wpsmon.c b/src/wpsmon.c
+index da688b9..d976924 100644
+--- a/src/wpsmon.c
++++ b/src/wpsmon.c
+@@ -132,6 +132,11 @@ int main(int argc, char *argv[])
+ 		usage(argv[0]);
+ 		goto end;
+ 	}
++	else if(get_iface())
++	{
++		/* Get the MAC address of the specified interface */
++		read_iface_mac();
++	}
+ 
+ 	if(get_iface() && source == PCAP_FILE)
+ 	{
+@@ -300,6 +305,7 @@ void parse_wps_settings(const u_char *packet, struct pcap_pkthdr *header, char *
+ 
+ 	set_ssid(NULL);
+ 	bssid = (char *) mac2str(frame_header->addr3, ':');
++	set_bssid((unsigned char *) frame_header->addr3);
+ 
+ 	if(bssid)
+ 	{
+@@ -383,6 +389,7 @@ void parse_wps_settings(const u_char *packet, struct pcap_pkthdr *header, char *
+ 
+ end:
+ 	if(wps) free(wps);
++	set_bssid((unsigned char *) NULL_MAC);
+ 
+ 	return;
+ }
+-- 
+2.6.4
+

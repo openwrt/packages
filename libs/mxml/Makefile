@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mxml
-PKG_VERSION:=2.8
+PKG_VERSION:=2.10
 PKG_RELEASE:=1
-PKG_MD5SUM:=d85ee6d30de053581242c4a86e79a5d2
+PKG_MD5SUM:=8804c961a24500a95690ef287d150abe
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.msweet.org/files/project3/

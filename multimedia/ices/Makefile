@@ -1,7 +1,4 @@
 #
-# Copyright (C) 2009-2015 OpenWrt.org
-# Copyright (C) 2009 Freifunk Leipzig
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -18,7 +15,8 @@ PKG_MD5SUM:=832c448cc993170a70fd95804fcda5b2
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
+PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>, \
+		Ted Hess <thess@kitschensync.net>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -41,7 +39,9 @@ endef
 
 CONFIGURE_ARGS+= \
 	--with-ogg="$(STAGING_DIR)/usr/include" \
-	--with-vorbis="$(STAGING_DIR)/usr/include" \
+	--with-vorbis="$(STAGING_DIR)/usr/include"
+
+TARGET_LDFLAGS+= -logg
 
 define Package/ices/install
 	$(INSTALL_DIR) $(1)/usr/bin

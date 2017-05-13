@@ -1,0 +1,30 @@
+--- a/intl/Makefile.in
++++ b/intl/Makefile.in
+@@ -19,7 +19,7 @@
+ PACKAGE = @PACKAGE@
+ VERSION = @VERSION@
+ 
+-SHELL = /bin/sh
++SHELL = @SHELL@
+ 
+ srcdir = @srcdir@
+ top_srcdir = @top_srcdir@
+@@ -56,6 +56,7 @@ DEFS = -DLOCALEDIR=\"$(localedir)\" -DLO
+ -DENABLE_RELOCATABLE=1 -DIN_LIBRARY -DINSTALLDIR=\"$(libdir)\" -DNO_XMALLOC \
+ -Dset_relocation_prefix=libintl_set_relocation_prefix \
+ -Drelocate=libintl_relocate \
++-DINSTALLPREFIX=\"$(prefix)\" \
+ -DDEPENDS_ON_LIBICONV=1 @DEFS@
+ CPPFLAGS = @CPPFLAGS@
+ CFLAGS = @CFLAGS@
+--- a/po/Makefile.in.in
++++ b/po/Makefile.in.in
+@@ -13,7 +13,7 @@
+ PACKAGE = @PACKAGE@
+ VERSION = @VERSION@
+ 
+-SHELL = /bin/sh
++SHELL = @SHELL@
+ @SET_MAKE@
+ 
+ srcdir = @srcdir@

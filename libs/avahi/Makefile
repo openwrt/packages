@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
-PKG_VERSION:=0.6.31
-PKG_RELEASE:=12
+PKG_VERSION:=0.6.32
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://avahi.org/download/
-PKG_MD5SUM:=2f22745b8f7368ad5a0a3fddac343f2d
+PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION)
+PKG_MD5SUM:=22b5e705d3eabb31d26f2e1e7b074013
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_BUILD_DEPENDS:=libexpat libdaemon libgdbm intltool/host libpthread dbus
@@ -243,7 +243,7 @@ define Package/avahi-utils
   $(call Package/avahi/Default)
   SUBMENU:=IP Addresses and Names
   VARIANT:=dbus
-  DEPENDS:=libavahi-client +libgdbm
+  DEPENDS:=+libavahi-client +libgdbm
   TITLE+= (utilities)
 endef
 
@@ -357,6 +357,8 @@ define Package/avahi-autoipd/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/etc/avahi/avahi-autoipd.action $(1)/etc/avahi/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/avahi-autoipd $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/lib/netifd/proto
+	$(INSTALL_BIN) ./files/netifd-autoip.sh $(1)/lib/netifd/proto/autoip.sh
 endef
 
 define Package/avahi-daemon/install

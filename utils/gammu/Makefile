@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gammu
-PKG_VERSION:=1.34.0
-PKG_RELEASE:=3
+PKG_VERSION:=1.38.1
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://dl.cihar.com/gammu/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MD5SUM:=5bc2508389d9b291ca0b8d4f210d0012
+PKG_MD5SUM:=c87bd5293c02d8f4ac75ec785ea79fd3
 PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
 PKG_LICENCE:=GPL-2.0
 
@@ -36,11 +36,19 @@ define Package/gammu
 endef
 
 CMAKE_OPTIONS += -DWITH_LibDBI:BOOL=OFF
-
+ifneq ($(INTL_FULL),)
+CMAKE_OPTIONS += -DLIBINTL_INCLUDE_DIRS:PATH=$(INTL_PREFIX)/include
+CMAKE_OPTIONS += -DLIBINTL_LIBRARIES:STRING=intl
+endif
+ifneq ($(ICONV_FULL),)
+CMAKE_OPTIONS += -DDISABLE_ICONV=OFF
+CMAKE_OPTIONS += -DICONV_INCLUDE_DIRS:PATH=$(ICONV_PREFIX)/include
+CMAKE_OPTIONS += -DICONV_LIBRARIES:STRING=iconv
+endif
 
 define Build/InstallDev
 	mkdir -p $(1)/usr/include
-	$(CP) -r $(PKG_INSTALL_DIR)/usr/include/gammu $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/gammu $(1)/usr/include/
 	mkdir -p $(1)/usr/lib
 	$(CP)    $(PKG_INSTALL_DIR)/usr/lib$(LIB_SUFFIX)/lib{Gammu*,gsmsd*} $(1)/usr/lib/
 endef

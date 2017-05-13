@@ -1,0 +1,29 @@
+From 51e26e002aa043435f94ac0f071066090d5c2de8 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Mon, 22 Jun 2015 20:23:36 +0200
+Subject: [PATCH 5/5] do not chck for boost
+
+Boost is not needed for every package just for some.
+
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ service/third_party_libs.scons | 8 --------
+ 1 file changed, 8 deletions(-)
+
+--- a/service/third_party_libs.scons
++++ b/service/third_party_libs.scons
+@@ -49,14 +49,6 @@ if target_os in ['linux']:
+ 
+ 		conf = Configure(lib_env)
+ 
+-		if target_os not in ['tizen'] and not conf.CheckLib('boost_thread', language='C++'):
+-			print 'Did not find boost_thread, exiting!'
+-			Exit(1)
+-
+-		if target_os not in ['tizen'] and not conf.CheckLib('boost_system', language='C++'):
+-			print 'Did not find boost_system, exiting!'
+-			Exit(1)
+-
+ 		lib_env = conf.Finish()
+ 
+ ######################################################################

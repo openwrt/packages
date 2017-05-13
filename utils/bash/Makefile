@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 BASE_VERSION:=4.3
 
 PKG_NAME:=bash
-PKG_VERSION:=$(BASE_VERSION).39
+PKG_VERSION:=$(BASE_VERSION).42
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(BASE_VERSION).tar.gz
@@ -28,6 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bash
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Shells
   TITLE:=The GNU Bourne Again SHell
   DEPENDS:=+libncurses
   URL:=http://www.gnu.org/software/bash/

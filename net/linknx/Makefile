@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2015 OpenWrt.org
+# Copyright (C) 2008-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linknx
-PKG_VERSION:=0.0.1.32
-PKG_RELEASE:=6
-PKG_MD5SUM:=7ecc1208f59bceb05068c752b2250b63
+PKG_VERSION:=0.0.1.33
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0+
 
-PKG_SOURCE_URL:=@SF/linknx
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/linknx/linknx.git
+PKG_SOURCE_VERSION:=f627ed44feaea5a1f67c53f2810c44a14c059cef
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)
+PKG_SOURCE:=$(PKG_NAME)-${PKG_VERSION}.tar.gz
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_BUILD_DEPENDS:=argp-standalone
+PKG_FORTIFY_SOURCE:=1
+
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 

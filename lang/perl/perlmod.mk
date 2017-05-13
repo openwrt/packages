@@ -1,13 +1,15 @@
 # This makefile simplifies perl module builds.
 #
 
+PERL_VERSION:=5.24
+
 # Build environment
-HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
+HOST_PERL_PREFIX:=$(STAGING_DIR_HOSTPKG)/usr
 ifneq ($(CONFIG_USE_GLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
-PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl5.20.0
+PERL_CMD:=$(STAGING_DIR_HOSTPKG)/usr/bin/perl$(PERL_VERSION).0
 
 MOD_CFLAGS_PERL:=-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $(TARGET_CFLAGS) $(TARGET_CPPFLAGS)
 ifdef CONFIG_PERL_THREADS
@@ -15,7 +17,7 @@ ifdef CONFIG_PERL_THREADS
 endif
 
 # Module install prefix
-PERL_SITELIB:=/usr/lib/perl5/5.20
+PERL_SITELIB:=/usr/lib/perl5/$(PERL_VERSION)
 PERL_TESTSDIR:=/usr/share/perl/perl-tests
 PERLBASE_TESTSDIR:=/usr/share/perl/perlbase-tests
 PERLMOD_TESTSDIR:=/usr/share/perl/perlmod-tests
@@ -24,7 +26,7 @@ define perlmod/host/relink
 	rm -f $(1)/Makefile.aperl
 	$(MAKE) -C $(1) perl
 	$(CP) $(1)/perl $(PERL_CMD)
-	$(CP) $(1)/perl $(STAGING_DIR_HOST)/usr/bin/perl
+	$(CP) $(1)/perl $(STAGING_DIR_HOSTPKG)/usr/bin/perl
 endef
 
 define perlmod/host/Configure
@@ -102,7 +104,7 @@ define perlmod/Configure
 		LINKTYPE=dynamic \
 		DESTDIR=$(PKG_INSTALL_DIR) \
 	);
-	sed 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/5.20/CORE/!' -i $(PKG_BUILD_DIR)/Makefile
+	sed 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/$(PERL_VERSION)/CORE/!' -i $(if $(3),$(3),$(PKG_BUILD_DIR))/Makefile
 endef
 
 define perlmod/Compile
@@ -127,9 +129,7 @@ define perlmod/Install/NoStrip
 endef
 
 
-define perlmod/Install
-	$(call perlmod/Install/NoStrip,$(1),$(2),$(3))
-
+define perlmod/_DoStrip
 	@echo "---> Stripping modules in: $(strip $(1))$(PERL_SITELIB)"
 	find $(strip $(1))$(PERL_SITELIB) -name \*.pm -or -name \*.pl | \
 	xargs -r sed -i \
@@ -137,6 +137,12 @@ define perlmod/Install
 		-e '/^=\(head\|pod\|item\|over\|back\|encoding\|begin\|end\|for\)/,$$$$d' \
 		-e '/^#$$$$/d' \
 		-e '/^#[^!"'"'"']/d'
+endef
+
+define perlmod/Install
+	$(call perlmod/Install/NoStrip,$(1),$(2),$(3))
+
+	$(if $(CONFIG_PERL_NOCOMMENT),$(if $(PKG_LEAVE_COMMENTS),,$(call perlmod/_DoStrip,$(1),$(2),$(3))))
 endef
 
 # You probably don't want to use this directly. Look at perlmod/InstallTests

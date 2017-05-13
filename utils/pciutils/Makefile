@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
-PKG_VERSION:=3.3.1
+PKG_VERSION:=3.5.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
-PKG_MD5SUM:=86d5462e5cfc2a4341a2b91ce3ed0f09
+PKG_MD5SUM:=3a99141a9f40528d0a0035665a06dc37ddb1ae341658e51b50a76ecf86235efc
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0
@@ -48,7 +48,8 @@ MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include" \
 	PREFIX="/usr" \
 	HOST="$(GNU_TARGET_NAME)" \
-	ZLIB="yes" \
+	HWDB="no" \
+	ZLIB="yes"
 
 ifneq ($(CONFIG_USE_GLIBC),)
 TARGET_LDFLAGS += -lresolv

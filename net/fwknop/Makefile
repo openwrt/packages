@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2012 OpenWrt.org
+# Copyright (C) 2011-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwknop
-PKG_VERSION:=2.6.6
+PKG_VERSION:=2.6.9
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.cipherdyne.org/fwknop/download
-PKG_MD5SUM:=1372aeaf1e33ab1d6b9906ef9b5cd02e
+PKG_MD5SUM:=e2c49e9674888a028bd443a55c3aaa22
+PKG_HASH:=5bf47fe1fd30e862d29464f762c0b8bf89b5e298665c37624d6707826da956d4
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=GPLv2
 PKG_INSTALL:=1
@@ -42,7 +43,8 @@ define Package/fwknopd
   CATEGORY:=Network
   SUBMENU:=Firewall
   TITLE+= Daemon
-  DEPENDS:=+iptables +libfko +libpcap +FWKNOP_GPG:gnupg
+  DEPENDS:=+iptables +libfko +!FWKNOPD_NFQ_CAPTURE:libpcap +FWKNOPD_NFQ_CAPTURE:iptables-mod-nfqueue +FWKNOP_GPG:gnupg \
+	+FWKNOPD_NFQ_CAPTURE:libnetfilter-queue +FWKNOPD_NFQ_CAPTURE:libnfnetlink
 endef
 
 define Package/fwknopd/description
@@ -53,6 +55,7 @@ endef
 define Package/fwknopd/conffiles
 /etc/fwknop/access.conf
 /etc/fwknop/fwknopd.conf
+/etc/config/fwknopd
 endef
 
 define Package/fwknopd/config
@@ -87,8 +90,12 @@ define Package/libfko/description
 endef
 
 
-ifeq ($(CONFIG_FWKNOPD_GPG),n)
+ifneq ($(CONFIG_FWKNOPD_GPG),y)
 	CONFIGURE_ARGS += --without-gpgme 
+endif
+
+ifeq ($(CONFIG_FWKNOPD_NFQ_CAPTURE),y)
+ 	CONFIGURE_ARGS += --enable-nfq-capture 
 endif
 
 CONFIGURE_ARGS += \
@@ -111,10 +118,6 @@ define Package/fwknopd/install
 	$(INSTALL_BIN) ./files/fwknopd.init $(1)/etc/init.d/fwknopd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fwknopd $(1)/usr/sbin/
-endef
-
-define Package/fwknopd/conffiles
-	/etc/config/fwknopd
 endef
 
 define Package/fwknop/install

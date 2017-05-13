@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fftw3
-PKG_VERSION:=3.3.4
+PKG_VERSION:=3.3.6-pl2
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0+
 
 PKG_SOURCE:=fftw-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.fftw.org
-PKG_MD5SUM:=2edab8c06b24feeb3b82bbb3ebf3e7b3
+PKG_MD5SUM:=927e481edbb32575397eb3d62535a856
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/fftw-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf

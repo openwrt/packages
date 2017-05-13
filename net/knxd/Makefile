@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2015 OpenWrt.org
+# Copyright (C) 2008-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -11,12 +11,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
-PKG_VERSION=2015-06-02-$(PKG_SOURCE_VERSION)
+PKG_VERSION=2017-01-18
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/knxd/knxd.git
-PKG_SOURCE_VERSION:=3d3b1a5e8112397d297625d673a2a94507f9ebce
+PKG_SOURCE_VERSION:=8255bf08b6e1a972c1489012b570bf0ff8679cb0
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
 
@@ -38,7 +38,7 @@ define Package/knxd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=EIB KNX daemon
-  DEPENDS:=+pthsem +libusb-1.0
+  DEPENDS:=+libusb-1.0 +libstdcpp +libev
 endef
 
 define Package/knxd/description
@@ -49,56 +49,33 @@ define Package/knxd/conffiles
 /etc/config/knxd
 endef
 
-define Package/libeibclient
-  SECTION:=libs
-  CATEGORY:=Libraries
-  TITLE:=Library for EIB clients
-  DEPENDS:=+pthsem
-endef
-
-define Package/libeibclient/description
-EIB KNX client library
-endef
-
 define Package/knxd-tools
   SECTION:=net
   CATEGORY:=Network
   TITLE:=EIB KNX Utils
-  DEPENDS:=+libeibclient
+  DEPENDS:=+libstdcpp +libev
 endef
 
 define Package/knxd-tools/description
 EIB KNX Tools
 endef
 
+TARGET_CXXFLAGS+= -std=c++0x
+TARGET_CXX=$(TARGET_CC)
+
 CONFIGURE_ARGS+= \
-	--disable-ft12 \
 	--enable-eibnetip \
 	--enable-eibnetiptunnel \
 	--enable-eibnetipserver \
-	--enable-usb \
-	--enable-tpuart \
-	--enable-tpuarts \
-	--disable-pei16 \
-	--disable-pei16s \
-	--enable-groupcache \
-	--without-pth-test \
-	--without-libstdc
+	--disable-systemd
 
 EXTRA_LDFLAGS+= \
-	-fno-builtin -nodefaultlibs -lc -lgcc
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/eib*.h $(1)/usr/include/
-
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libeibclient.{a,so*} $(1)/usr/lib/
-endef
+	-largp -lstdc++
 
 define Package/knxd/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	$(RM) $(1)/usr/bin/knxtool
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/knxd.init $(1)/etc/init.d/knxd
@@ -107,46 +84,14 @@ define Package/knxd/install
 	$(INSTALL_DATA) ./files/knxd.config $(1)/etc/config/knxd
 endef
 
-define Package/libeibclient/install
+define Package/knxd-tools/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libeibclient.so* $(1)/usr/lib/
-endef
-
-define Package/knxd-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin
-
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/knxtool $(1)/usr/bin/
-	ln -sf knxtool $(1)/usr/bin/knxread
-	ln -sf knxtool $(1)/usr/bin/knxreadtemp
-	ln -sf knxtool $(1)/usr/bin/knxwrite
-	ln -sf knxtool $(1)/usr/bin/knxlog
-	ln -sf knxtool $(1)/usr/bin/knxon
-	ln -sf knxtool $(1)/usr/bin/knxoff
-	ln -sf knxtool $(1)/usr/bin/knxif
-	ln -sf knxtool $(1)/usr/bin/knxswrite
-	ln -sf knxtool $(1)/usr/bin/knxbool
-	ln -sf knxtool $(1)/usr/bin/knxdimup
-
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/busmonitor1 $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/busmonitor2 $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/busmonitor3 $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/eibread-cgi $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/eibwrite-cgi $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/vbusmonitor1 $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/vbusmonitor2 $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/vbusmonitor3 $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/groupwrite $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/groupswrite $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/grouplisten $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/groupread $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/groupresponse $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/groupreadresponse $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/groupsocketlisten $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/groupsocketread $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/groupsocketwrite $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/knxd/examples/bin/groupsocketswrite $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/knxtool $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/knxd/eibwrite-cgi $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/knxd/eibread-cgi $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,knxd))
-$(eval $(call BuildPackage,libeibclient))
 $(eval $(call BuildPackage,knxd-tools))

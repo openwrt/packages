@@ -1,0 +1,31 @@
+From df8360447163762c63994dcb07f9e69a5a365a1c Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sun, 8 Jan 2017 22:01:57 +0100
+Subject: [PATCH 8/8] zigbee_wrapper: do not check for floating point
+
+This makes the compile fail for soft float builds. In such builds the
+double is still 64 bit long.
+
+Change-Id: I45d3f19b49f5d23d2b65307738a362765c5ea1c2
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ plugins/zigbee_wrapper/src/zigbee_wrapper.c | 8 --------
+ 1 file changed, 8 deletions(-)
+
+--- a/plugins/zigbee_wrapper/src/zigbee_wrapper.c
++++ b/plugins/zigbee_wrapper/src/zigbee_wrapper.c
+@@ -37,14 +37,6 @@
+ #include <math.h>
+ #include <errno.h>
+ 
+-// The following #define must be here under "math.h".
+-// This ifdef ensures that "__STDC_IEC_559__" is defined. If it is defined,
+-// then we are guaranteed that the 'double' type is 64-bit. Otherwise, the
+-// compilation of this file should fail because we are no longer guaranteed.
+-#ifndef __STDC_IEC_559__
+-#error "Requires IEEE 754 floating point!"
+-#endif
+-
+ #include "zigbee_wrapper.h"
+ #include "telegesis_wrapper.h"
+ #include "pluginlist.h"

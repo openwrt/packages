@@ -6,13 +6,14 @@
 # Must run inside a openwrt with all *ruby* packages installed
 #
 
+RUBY_SIMPLE_VERSION = RUBY_VERSION.split(".")[0..1].join(".")
 failed = false
 
 puts "Looking for installed ruby packages..."
 packages=`opkg list-installed '*ruby*' | cut -d' ' -f 1`.split("\n")
 
 puts "Looking for packages files..."
-package_files=Hash.new([])
+package_files=Hash.new { |h,k| h[k]=[] }
 packages.each do
 	|pkg|
 	files=`opkg files "#{pkg}" | sed -e 1d`.split("\n")
@@ -24,7 +25,7 @@ require_regex_ignore=/^require ([a-zA-Z\$]|["']$|.*\/$)/
 require_ignore=%w{drb/invokemethod16 foo rubygems/defaults/operating_system win32console java Win32API
                   builder/xchar json/pure simplecov win32/sspi rdoc/markdown/literals_1_8 enumerator win32/resolv rbtree
                   nqxml/streamingparser nqxml/treeparser xmlscan/parser xmlscan/scanner xmltreebuilder xml/parser xmlparser xml/encoding-ja xmlencoding-ja
-                  iconv uconv win32ole gettext/po_parser gettext/mo libxml}
+                  iconv uconv win32ole gettext/po_parser gettext/mo libxml psych.jar psych_jars jar-dependencies thread minitest/proveit}
 
 builtin_enc=[
 	Encoding.find("ASCII-8BIT"),
@@ -34,7 +35,7 @@ builtin_enc=[
 ]
 
 puts "Looking for requires in files..."
-files_requires=Hash.new([])
+files_requires=Hash.new { |h,k| h[k]=[] }
 packages.each do
         |pkg|
 	package_files[pkg].each do
@@ -93,7 +94,7 @@ packages.each do
 						next
 					end
 
-					files_requires[file]=files_requires[file] + [require]
+					files_requires[file] += [require]
 
 				when /Encoding::/
 					encs=line.scan(/Encoding::[[:alnum:]_]+/).collect {|enc| eval(enc) }.select {|enc| enc.kind_of? Encoding }
@@ -104,7 +105,7 @@ packages.each do
 				required_encs = (encs - builtin_enc).collect {|enc| "enc/#{enc.name.downcase.gsub("-","_")}" }
 				required_encs << "enc/encdb" if need_encdb
 
-				files_requires[file] = files_requires[file] + required_encs
+				files_requires[file] += required_encs
 			end
 		end
 	end
@@ -119,10 +120,18 @@ package_files.each do |(pkg,files)| files.each do |file|
 	end
 end; end
 
-puts "Merging requirements into packages..."
-package_requires = Hash[packages.collect { |pkg| [pkg, package_files[pkg].collect {|file| files_requires[file] }.inject([],:+).uniq] }]
+puts "Grouping package requirements per package"
+package_requires_files = Hash.new{|h,k| h[k] = Hash.new { |h2,k2| h2[k2] = [] } }
+package_files.each do |(pkg,files)|
+	package_requires_files[pkg]
+	files.each do |file|
+		files_requires[file].each do |requires|
+			package_requires_files[pkg][requires] << file
+		end
+	end
+end
 
-weak_dependency=Hash.new([])
+weak_dependency=Hash.new { |h,k| h[k]=[] }
 weak_dependency.merge!({
 "ruby-misc"=>["ruby-openssl","ruby-fiddle"],			#securerandom.rb
 "ruby-debuglib"=>["ruby-readline"],				#debug.rb
@@ -136,6 +145,7 @@ weak_dependency.merge!({
 "ruby-rdoc"=>["ruby-gems","ruby-readline","ruby-webrick",	#/usr/bin/rdoc and others
 	       "ruby-io-console"],				#rdoc/stats/normal.rb
 "ruby-webrick"=>["ruby-openssl"],				#webrick/ssl.rb
+"ruby-testunit"=>["ruby-io-console"],			 	#gems/test-unit-3.1.5/lib/test/unit/ui/console/testrunner.rb
 })
 
 puts "Preloading gems..."
@@ -143,29 +153,29 @@ Gem::Specification.all.each{ |x| gem x.name }
 
 puts "Looking for package dependencies..."
 package_provides = {}
-package_dependencies = Hash.new([])
-package_requires.each do
-	|(pkg,requires)|
+package_dependencies = Hash.new { |h,k| h[k]=[] }
+package_requires_files.each do
+	|(pkg,requires_files)|
 
-	requires.each do
-		|require|
+	requires_files.each do
+		|(require,files)|
 		if package_provides.include?(require)
 			found = package_provides[require]
 		else
 			found = package_files.detect {|(pkg,files)| files.detect {|file| $:.detect {|path| "#{path}/#{require}" == file.gsub(/\.(so|rb)$/,"") } } }
 			if not found
-				$stderr.puts "#{pkg}: Nothing provides #{require}"
+				$stderr.puts "#{pkg}: Nothing provides #{require} for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
 				failed = true
 				next
 			end
 			found = found.first
-			package_provides[require]=found
+			package_provides[require] = found
 		end
 		if weak_dependency[pkg].include?(found)
-			puts "#{pkg}: #{found} provides #{require} (ignored WEAK dep)"
+			puts "#{pkg}: #{found} provides #{require} (weak depedendency ignored)"
 		else
-			puts "#{pkg}: #{found} provides #{require}"
-			package_dependencies[pkg]=package_dependencies[pkg] + [found]
+			puts "#{pkg}: #{found} provides #{require} for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
+			package_dependencies[pkg] += [found]
 		end
 	end
 end
@@ -174,20 +184,16 @@ if failed
 	puts "Please, fix the missing files or ignore them on require_ignore var"
 	exit(1)
 end
-
-package_dependencies.each do
-        |(pkg,deps)|
-        package_dependencies[pkg]=deps.uniq.sort - [pkg]
-end
+# Remove self dependency
+package_dependencies = Hash[package_dependencies.collect {|(pkg,deps)| [pkg,package_dependencies[pkg]=deps.uniq.sort - [pkg]]}]
+package_dependencies.default = []
 
 puts "Expanding dependencies..."
 begin
 	changed=false
 	package_dependencies.each do
 		|(pkg,deps)|
-
 		next if deps.empty?
-
 		deps_new = deps.collect {|dep| [dep] + package_dependencies[dep] }.inject([],:+).uniq.sort
 		if not deps == deps_new
 			puts "#{pkg}: #{deps.join(",")}"
@@ -197,6 +203,12 @@ begin
 		end
 	end
 end if not changed
+
+puts "Removing redundant dependencies..."
+package_dependencies.each do
+	|(pkg,deps)|
+	package_dependencies[pkg]=deps.uniq - [pkg]
+end
 
 puts "Checking for mutual dependencies..."
 package_dependencies.each do
@@ -208,17 +220,12 @@ package_dependencies.each do
 end
 exit(1) if failed
 
-puts "Removing redundant dependencies..."
-package_dependencies.each do
-	|(pkg,deps)|
-	package_dependencies[pkg]=deps.uniq - [pkg]
-end
 
 package_dependencies2=package_dependencies.dup
 package_dependencies.each do
 	|(pkg,deps)|
 
-	# Ignore dependencies that are aready required by another dependency
+	# Ignore dependencies that are already required by another dependency
 	deps_clean = deps.reject {|dep_suspect| deps.detect {|dep_provider|
 			if package_dependencies[dep_provider].include?(dep_suspect)
 				puts "#{pkg}: #{dep_suspect} is already required by #{dep_provider}"
@@ -256,15 +263,4 @@ end
 
 puts "All dependencies are OK." if ok
 
-
 __END__
-
-puts RUBY_VERSION, RUBY_PLATFORM
-puts 123
-
-puts Object.contants
-
-#RUBY_VER=2.1
-#RUBY_ARCH=i486-linux-gnu
-#RUBYLIB=/usr/lib/ruby/$RUBY_VER/
-#RUBYLIB_A=/usr/lib/ruby/$RUBY_ARCH/$RUBY_VER/

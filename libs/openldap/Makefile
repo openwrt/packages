@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2012 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openldap
-PKG_VERSION:=2.4.39
-PKG_RELEASE:=2
+PKG_VERSION:=2.4.44
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=ftp://ftp.openldap.org/pub/OpenLDAP/openldap-release/ \
 	ftp://sunsite.cnlab-switch.ch/mirror/OpenLDAP/openldap-release/ \
 	ftp://ftp.nl.uu.net/pub/unix/db/openldap/openldap-release/ \
 	ftp://ftp.plig.org/pub/OpenLDAP/openldap-release/
-PKG_MD5SUM:=b0d5ee4b252c841dec6b332d679cf943
+PKG_MD5SUM:=693ac26de86231f8dcae2b4e9d768e51
 
 PKG_FIXUP:=autoreconf
 
@@ -95,13 +95,15 @@ CONFIGURE_ARGS += \
 	--with-threads \
 	--with-tls \
 	--with-yielding_select="yes" \
-	--without-cyrus-sasl \
 	--without-threads \
 	--enable-null \
 	--disable-bdb \
 	--disable-hdb \
 	--disable-monitor \
 	--disable-relay
+
+CONFIGURE_VARS += \
+	ol_cv_lib_icu="no"
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \

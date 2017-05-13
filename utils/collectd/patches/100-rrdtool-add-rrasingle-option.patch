@@ -1,40 +1,38 @@
 --- a/src/rrdtool.c
 +++ b/src/rrdtool.c
-@@ -82,6 +82,7 @@ static const char *config_keys[] =
- 	"HeartBeat",
- 	"RRARows",
- 	"RRATimespan",
-+	"RRASingle",
- 	"XFF",
- 	"WritesPerSecond",
- 	"RandomTimeout"
-@@ -103,6 +104,8 @@ static rrdcreate_config_t rrdcreate_conf
- 	/* timespans = */ NULL,
- 	/* timespans_num = */ 0,
+@@ -61,6 +61,7 @@ typedef struct rrd_queue_s rrd_queue_t;
+ static const char *config_keys[] = {
+     "CacheTimeout", "CacheFlush",      "CreateFilesAsync", "DataDir",
+     "StepSize",     "HeartBeat",       "RRARows",          "RRATimespan",
++    "RRASingle",
+     "XFF",          "WritesPerSecond", "RandomTimeout"};
+ static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
  
-+	/* rrasingle = */ 0,
+@@ -78,6 +79,8 @@ static rrdcreate_config_t rrdcreate_conf
+     /* timespans = */ NULL,
+     /* timespans_num = */ 0,
+ 
++    /* rrasingle = */ 0,
 +
- 	/* consolidation_functions = */ NULL,
- 	/* consolidation_functions_num = */ 0,
+     /* consolidation_functions = */ NULL,
+     /* consolidation_functions_num = */ 0,
  
-@@ -1093,6 +1096,14 @@ static int rrd_config (const char *key,
+@@ -971,6 +974,12 @@ static int rrd_config(const char *key, c
+           /* compar = */ rrd_compare_numeric);
  
- 		free (value_copy);
- 	}
-+	else if (strcasecmp ("RRASingle", key) == 0)
-+	{
+     free(value_copy);
++  } else if (strcasecmp ("RRASingle", key) == 0) {
 +		if (IS_TRUE (value))
 +		{
 +			rrdcreate_config.rrasingle = 1;
 +			NOTICE ("rrdtool plugin: RRASingle = true: creating only AVERAGE RRAs");
 +		}
-+	}
- 	else if (strcasecmp ("XFF", key) == 0)
- 	{
- 		double tmp = atof (value);
+   } else if (strcasecmp("XFF", key) == 0) {
+     double tmp = atof(value);
+     if ((tmp < 0.0) || (tmp >= 1.0)) {
 --- a/src/utils_rrdcreate.c
 +++ b/src/utils_rrdcreate.c
-@@ -212,6 +212,9 @@ static int rra_get (char ***ret, const v
+@@ -180,6 +180,9 @@ static int rra_get(char ***ret, const va
      rts_num = rra_timespans_num;
    }
  
@@ -42,11 +40,11 @@
 +    rra_types_num = 1;
 +
    rra_max = rts_num * rra_types_num;
+   assert(rra_max > 0);
  
-   if ((rra_def = (char **) malloc ((rra_max + 1) * sizeof (char *))) == NULL)
 --- a/src/utils_rrdcreate.h
 +++ b/src/utils_rrdcreate.h
-@@ -36,6 +36,8 @@ struct rrdcreate_config_s
+@@ -40,6 +40,8 @@ struct rrdcreate_config_s {
    int *timespans;
    size_t timespans_num;
  

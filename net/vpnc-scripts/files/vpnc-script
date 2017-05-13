@@ -81,23 +81,52 @@ do_connect() {
 		[[ "$addr" != "$mask" ]] && proto_add_ipv6_address "$addr" "$mask"
 	fi
 
+	DNSMASQ_FILE="/tmp/dnsmasq.d/openconnect.$TUNDEV"
+	LOCAL_DOMAIN=$(uci get dhcp.@dnsmasq[0].domain)
+	rm -f $DNSMASQ_FILE
 	if [ -n "$CISCO_SPLIT_DNS" ] && [ -d "/tmp/dnsmasq.d/" ];then
 		SDNS=`echo $CISCO_SPLIT_DNS|sed 's/,/\n/g'`
-		DNSMASQ_FILE="/tmp/dnsmasq.d/openconnect.$TUNDEV"
-		rm -f $DNSMASQ_FILE
 		echo "$SDNS" | while read i; do
+			if [ "$i" = "$LOCAL_DOMAIN" ];then
+				continue
+			fi
 			if [ -n "$INTERNAL_IP4_DNS" ];then
-				echo "server=/$i/$INTERNAL_IP4_DNS" >> $DNSMASQ_FILE
+				for dns in $INTERNAL_IP4_DNS;do
+					echo "server=/$i/$dns" >> $DNSMASQ_FILE
+				done
 			fi
 			if [ -n "$INTERNAL_IP6_DNS" ];then
-				echo "server=/$i/$INTERNAL_IP6_DNS" >> $DNSMASQ_FILE
+				for dns in $INTERNAL_IP6_DNS;do
+					echo "server=/$i/$dns" >> $DNSMASQ_FILE
+				done
 			fi
 			echo "rebind-domain-ok=$i" >> $DNSMASQ_FILE
 		done
 		/etc/init.d/dnsmasq restart
 	else
-		[ -n "$INTERNAL_IP4_DNS" ] && proto_add_dns_server "$INTERNAL_IP4_DNS"
-		[ -n "$CISCO_DEF_DOMAIN" ] && proto_add_dns_search "$CISCO_DEF_DOMAIN"
+		if [ -n "$INTERNAL_IP4_DNS" ];then
+			for dns in $INTERNAL_IP4_DNS;do
+				proto_add_dns_server "$dns"
+			done
+		fi
+		if [ -n "$INTERNAL_IP6_DNS" ];then
+			for dns in $INTERNAL_IP6_DNS;do
+				proto_add_dns_server "$dns"
+			done
+		fi
+		if [ -n "$CISCO_DEF_DOMAIN" ] && [ "$CISCO_DEF_DOMAIN" != "$LOCAL_DOMAIN" ];then
+			if [ -n "$INTERNAL_IP4_DNS" ];then
+				for dns in $INTERNAL_IP4_DNS;do
+					echo "server=/$CISCO_DEF_DOMAIN/$dns" >> $DNSMASQ_FILE
+				done
+			fi
+			if [ -n "$INTERNAL_IP6_DNS" ];then
+				for dns in $INTERNAL_IP6_DNS;do
+					echo "server=/$CISCO_DEF_DOMAIN/$dns" >> $DNSMASQ_FILE
+				done
+			fi
+			proto_add_dns_search "$CISCO_DEF_DOMAIN"
+		fi
 	fi
 
 	if [ -n "$CISCO_SPLIT_INC" ]; then

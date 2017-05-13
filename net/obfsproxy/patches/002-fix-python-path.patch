@@ -1,0 +1,16 @@
+diff --git a/setup.py b/setup.py
+index 2353a29..8d3d56d 100644
+--- a/setup.py
++++ b/setup.py
+@@ -27,6 +27,11 @@ setup(
+             'obfsproxy = obfsproxy.pyobfsproxy:run'
+             ]
+         },
++    options = {
++        'build_scripts': {
++            'executable': '/usr/bin/python'
++            },
++        },
+ 
+     install_requires = [
+         'setuptools',

@@ -556,7 +556,7 @@ index 0000000..d820329
 +	u_int32_t 		textEncoding;		/* hint for name conversions */
 +	u_int32_t 		attrBlocks;		/* cached count of attribute data blocks */
 +
-+	/* Note: these start on double long (64 bit) boundry */
++	/* Note: these start on double long (64 bit) boundary */
 +	HFSPlusForkData 	dataFork;		/* size and block data for data fork */
 +	HFSPlusForkData 	resourceFork;		/* size and block data for resource fork */
 +}PACKED_S;
@@ -595,7 +595,7 @@ index 0000000..d820329
 +/*
 +  	HFSPlusAttrForkData
 +  	For larger attributes, whose value is stored in allocation blocks.
-+  	If the attribute has more than 8 extents, there will be additonal
++  	If the attribute has more than 8 extents, there will be additional
 +  	records (of type HFSPlusAttrExtents) for this attribute.
 +*/
 +struct HFSPlusAttrForkData {

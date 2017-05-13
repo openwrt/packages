@@ -17,7 +17,7 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=0deb9c7e135e9380a6d09e9d2e938a146bb698c8
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 
-PKG_MAINTAINER := Zoltan HERPAI <wigyori@uid0.hu>
+PKG_MAINTAINER:=Zoltan HERPAI <wigyori@uid0.hu>
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -26,11 +26,10 @@ define Package/pps-tools
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=PPS-tools
-  DEPENDS:=@LINUX_3_10||@LINUX_3_13||@LINUX_3_14||@LINUX_3_18
 endef
 
 define Package/pps-tools/description
-  Userland tools for GPS and DCF-77 Clock syncronization. PPS support in Kernel must be enabled.
+  Userland tools for GPS and DCF-77 Clock synchronization. PPS support in Kernel must be enabled.
 endef
 
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include

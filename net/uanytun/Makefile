@@ -53,7 +53,7 @@ uAnytun is a tiny implementation of SATP the secure anycast tunneling protocol.
   IPSec in Tunnel mode and allows tunneling of every ETHER TYPE protocol (e.g.
   ethernet, ip, arp ...). SATP directly includes cryptography and message
   authentication based on the methods used by SRTP.  It is intended to deliver
-  a generic, scaleable and secure solution for tunneling and relaying of packets
+  a generic, scalable and secure solution for tunneling and relaying of packets
   of any protocol.
   Unlike Anytun which is a full featured implementation uAnytun has no support
   for multiple connections or synchronisation. It is a small single threaded
@@ -137,7 +137,7 @@ define Build/Compile
     $(TARGET_CONFIGURE_OPTS) \
     $(VARIANT_MAKE_OPTS) \
     TARGET=Linux \
-    CFLAGS="$(TARGET_CFLAGS) $(VARIANT_CFLAGS)" \
+    CFLAGS="$(TARGET_CFLAGS) $(VARIANT_CFLAGS) $(TARGET_CPPFLAGS)" \
     LDFLAGS="$(TARGET_LDFLAGS) $(VARIANT_LDFLAGS)"
 	$(STRIP) $(PKG_BUILD_DIR)/src/uanytun
 endef

@@ -1,28 +1,13 @@
 diff --git a/samples/knot.sample.conf.in b/samples/knot.sample.conf.in
-index 956e8a9..a068e67 100644
+index e07c8a7..ecc13ad 100644
 --- a/samples/knot.sample.conf.in
 +++ b/samples/knot.sample.conf.in
-@@ -14,7 +14,7 @@ system {
+@@ -9,7 +9,7 @@ server:
+     # Listen on all configured IPv6 interfaces.
+     listen: ::@53
+     # User for running the server.
+-    # user: knot:knot
++    user: knot:knot
  
-   # User for running server
-   # May also specify user.group (e.g. knot.knot)
--  user knot.knot;
-+  user root.root;
- 
-   # Directory for storing run-time data
-   # e.g. PID file and control sockets
-@@ -63,11 +63,11 @@ zones {
- #  storage "@storage_dir@";
- #
- #  Example master zone
--#  example.com {
--#    file "@config_dir@/example.com.zone";
-+  example.com {
-+    file "example.com.zone";
- #    xfr-out slave0;
- #    notify-out slave0;
--#  }
-+  }
- #
- #  Example slave zone
- #  example.net {
+ log:
+     # Log info and more serious events to syslog.

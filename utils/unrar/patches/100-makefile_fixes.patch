@@ -4,9 +4,9 @@
  # Makefile for UNIX - unrar
  
  # Linux using GCC
--CXX=g++
+-CXX=c++
 -CXXFLAGS=-O2
-+#CXX=g++
++#CXX=c++
 +#CXXFLAGS=-O2
  LIBFLAGS=-fPIC
  DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRAR_SMP
@@ -16,3 +16,12 @@
  DESTDIR=/usr
  
  # Linux using LCC
+@@ -142,7 +142,7 @@ uninstall-unrar:
+ 			rm -f $(DESTDIR)/bin/unrar
+ 
+ install-lib:
+-		install libunrar.so $(DESTDIR)/lib
++		install -D libunrar.so $(DESTDIR)/lib/libunrar.so
+ 
+ uninstall-lib:
+ 		rm -f $(DESTDIR)/lib/libunrar.so

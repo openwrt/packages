@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2014 OpenWrt.org
+# Copyright (C) 2013-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zsh
-PKG_VERSION:=5.0.6
+PKG_VERSION:=5.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/zsh
-PKG_MD5SUM:=7150a6abc2aa1a79d81ed9a282594225
-PKG_MAINTAINER:=Vadim A. Misbakh-Soloviov <mva@mva.name>
+PKG_MD5SUM:=afe96fde08b70e23c1cab1ca7a68fb34
+PKG_MAINTAINER:=Vadim A. Misbakh-Soloviov <openwrt-zsh@mva.name>
 PKG_LICENSE:=ZSH
 
 PKG_INSTALL:=1
@@ -24,6 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/zsh
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Shells
   TITLE:=The Z shell
   DEPENDS:=+libncurses +libncursesw +libpcre +librt
   URL:=http://www.zsh.org/

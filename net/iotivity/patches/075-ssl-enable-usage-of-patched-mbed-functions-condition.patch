@@ -1,0 +1,44 @@
+From 01796db0b166e720860eff200acabff410ba6979 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sun, 4 Dec 2016 00:15:21 +0100
+Subject: [PATCH 4/7] ssl: enable usage of patched mbed functions conditionally
+
+Only activate support for the MBEDTLS_KEY_EXCHANGE_ECDH_ANON_ENABLED
+cipher suite when this is actually available in mbedtls.
+This makes it possible to compile IoTivity against a unpatched mbedtls
+version.
+
+Change-Id: Ic56d7faf7597cc5dc08f9d55be29dde898949609
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c
++++ b/resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c
+@@ -237,7 +237,9 @@ int tlsCipher[ADAPTER_CIPHER_MAX][2] =
+ {
+     {MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA, 0},
+     {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, 0},
++#ifdef MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256
+     {MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256, 0},
++#endif
+     {MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, 0},
+     {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM, 0},
+     {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, 0}
+@@ -1943,6 +1945,7 @@ CAResult_t CAsetTlsCipherSuite(const uin
+             g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
+             break;
+         }
++#ifdef MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256
+         case MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256:
+         {
+ #ifdef __WITH_TLS__
+@@ -1960,6 +1963,7 @@ CAResult_t CAsetTlsCipherSuite(const uin
+             g_caSslContext->cipher = ADAPTER_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA_256;
+             break;
+         }
++#endif
+         case MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256:
+         {
+ #if 0 // PIN OTM

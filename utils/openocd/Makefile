@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd
-PKG_VERSION:=v0.9.0
+PKG_VERSION:=v0.10.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -26,6 +26,7 @@ PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/openocd
   SECTION:=utils
@@ -39,7 +40,7 @@ define Package/openocd/description
 OpenOCD provides on-chip programming and debugging support with a
 layered architecture of JTAG interface and TAP support including:
 
-- (X)SVF playback to faciliate automated boundary scan and FPGA/CPLD
+- (X)SVF playback to facilitate automated boundary scan and FPGA/CPLD
   programming;
 - debug target support (e.g. ARM, MIPS): single-stepping,
   breakpoints/watchpoints, gprof profiling, etc;
@@ -58,10 +59,7 @@ CONFIGURE_ARGS += \
 	--disable-werror \
 	MAKEINFO=true \
 	--enable-dummy \
-	--enable-sysfsgpio \
-	--enable-usb_blaster_libftdi \
-        --enable-openjtag_ftdi \
-        --enable-presto_libftdi
+	--enable-sysfsgpio
 
 define Build/Compile
         +$(MAKE_VARS) \

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2017 Ted Hess <thess@kitschensync.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pianod
-PKG_VERSION:=173
-PKG_RELEASE:=3
+PKG_VERSION:=174.05
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://deviousfish.com/Downloads/pianod/
-PKG_MD5SUM:=be0cec19ea6df1c4bc6c1cac8e253445
+PKG_SOURCE_URL:=https://github.com/thess/pianod-sc/releases/download/$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_MD5SUM:=0bae19b0c1e309343bc1b351e521173fe439431542a949dd2bacf4165cce5200
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
@@ -28,10 +28,10 @@ include $(INCLUDE_DIR)/package.mk
 define Package/pianod
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+libao +libfaad2 +libmad +libpolarssl +libjson-c +libgcrypt +libpthread
+  DEPENDS:=+libao +libfaad2 +libmad +libmbedtls +libjson-c +libgcrypt +libpthread
   TITLE:=Pandora radio daemon
   USERID:=pianod=88:pianod=88
-  URL:=http://deviousfish.com/pianod/
+  URL:=http://deviousfish.com/pianod1/
 endef
 
 define Package/pianod/description
@@ -39,7 +39,7 @@ define Package/pianod/description
   A simple protocol makes for easy clients, mix scripting, integration with a
   home automation system, use as multiple-user music system for home or office.
   Documentation and configuration information can be found at:
-      http://deviousfish.com/pianod/
+      http://deviousfish.com/pianod1/
 endef
 
 define Package/pianod-client
@@ -47,7 +47,7 @@ define Package/pianod-client
   CATEGORY:=Sound
   DEPENDS:=+pianod
   TITLE:=Pandora radio daemon WebUI
-  URL:=http://deviousfish.com/pianod/
+  URL:=http://deviousfish.com/pianod1/
 endef
 
 define Package/pianod-client/description
@@ -58,12 +58,12 @@ define Package/pianod-client/description
                  http://pianod-host:4446/pianod/viewer.html?server=pianod-host:4446
 endef
 
-CONFIGURE_ARGS+= --with-polarssl
+CONFIGURE_ARGS+= --with-mbedtls
 
 PIANOD_CLIENT:=pianod-client-compiled-51.tar.gz
 
 define Download/pianod-client
-  URL:=$(PKG_SOURCE_URL)
+  URL:=http://deviousfish.com/Downloads/pianod/
   FILE:=$(PIANOD_CLIENT)
   MD5SUM:=abbdee5627bcee6a00c8304da8b4e2e7
 endef

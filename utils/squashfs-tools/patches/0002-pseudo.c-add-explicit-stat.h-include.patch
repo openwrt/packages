@@ -1,0 +1,25 @@
+From 0ea07a1b5ddb2f2fa1358b2c1b42bcf34bbf5ee2 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <aa@ocedo.com>
+Date: Wed, 6 Jan 2016 15:36:48 +0200
+Subject: [PATCH 2/2] pseudo.c: add explicit <stat.h> include
+
+Signed-off-by: Alexandru Ardelean <aa@ocedo.com>
+---
+ squashfs-tools/pseudo.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/squashfs-tools/pseudo.c b/squashfs-tools/pseudo.c
+index f85fe60..7a26bca 100644
+--- a/squashfs-tools/pseudo.c
++++ b/squashfs-tools/pseudo.c
+@@ -32,6 +32,7 @@
+ #include <stdlib.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
++#include <sys/stat.h>
+ #include <ctype.h>
+ 
+ #include "pseudo.h"
+-- 
+2.1.4
+

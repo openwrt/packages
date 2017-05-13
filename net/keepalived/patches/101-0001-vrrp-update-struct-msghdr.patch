@@ -1,0 +1,50 @@
+From dbb2cac9139954bd18813e88bfcb622ad3e93c54 Mon Sep 17 00:00:00 2001
+From: Stijn Tintel <stijn@linux-ipv6.be>
+Date: Tue, 10 May 2016 04:26:31 +0300
+Subject: [PATCH] vrrp: update struct msghdr
+
+The vrrp netlink code assumes an order for the members of struct msghdr.
+This breaks recvmsg and sendmsg with musl libc on mips64. Fix this by
+using designated initializers instead.
+
+Signed-off-by: Stijn Tintel <stijn@linux-ipv6.be>
+---
+ keepalived/vrrp/vrrp_netlink.c | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/keepalived/vrrp/vrrp_netlink.c b/keepalived/vrrp/vrrp_netlink.c
+index b19e2e7..2c2fd59 100644
+--- a/keepalived/vrrp/vrrp_netlink.c
++++ b/keepalived/vrrp/vrrp_netlink.c
+@@ -416,8 +416,12 @@ netlink_parse_info(int (*filter) (struct sockaddr_nl *, struct nlmsghdr *),
+ 		char buf[4096];
+ 		struct iovec iov = { buf, sizeof buf };
+ 		struct sockaddr_nl snl;
+-		struct msghdr msg =
+-		    { (void *) &snl, sizeof snl, &iov, 1, NULL, 0, 0 };
++		struct msghdr msg = {
++			.msg_name = &snl,
++			.msg_namelen = sizeof(snl),
++			.msg_iov = &iov,
++			.msg_iovlen = 1,
++		};
+ 		struct nlmsghdr *h;
+ 
+ 		status = recvmsg(nl->fd, &msg, 0);
+@@ -538,7 +542,12 @@ netlink_talk(nl_handle_t *nl, struct nlmsghdr *n)
+ 	int ret, flags;
+ 	struct sockaddr_nl snl;
+ 	struct iovec iov = { (void *) n, n->nlmsg_len };
+-	struct msghdr msg = { (void *) &snl, sizeof snl, &iov, 1, NULL, 0, 0 };
++	struct msghdr msg = {
++		.msg_name = &snl,
++		.msg_namelen = sizeof(snl),
++		.msg_iov = &iov,
++		.msg_iovlen = 1,
++	};
+ 
+ 	memset(&snl, 0, sizeof snl);
+ 	snl.nl_family = AF_NETLINK;
+-- 
+2.10.2
+

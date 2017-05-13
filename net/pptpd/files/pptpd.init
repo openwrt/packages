@@ -1,58 +1,72 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006 OpenWrt.org
+# Copyright (C) 2015 OpenWrt.org
 
 START=60
+USE_PROCD=1
+
 BIN=/usr/sbin/pptpd
-DEFAULT=/etc/default/$BIN
-RUN_D=/var/run
-PID_F=$RUN_D/$BIN.pid
 CONFIG=/var/etc/pptpd.conf
 CHAP_SECRETS=/var/etc/chap-secrets
+OPTIONS_PPTP=/var/etc/options.pptpd
+
+validate_login_section() {
+	uci_validate_section pptpd login "${1}" \
+		'username:string' \
+		'password:string'
+}
+
+validate_pptpd_section() {
+	uci_validate_section pptpd service "${1}" \
+		'enabled:uinteger' \
+		'localip:string' \
+		'remoteip:string' \
+		'mppe:list(string):required no40 no56 stateless' \
+		'logwtmp:uinteger'
+}
 
 setup_login() {
-	local section="$1"
+	validate_login_section "${1}" || {
+		echo "validation failed"
+		return 1
+	}
 
-	config_get username "$section" username
-	config_get password "$section" password
-	[ -n "$username" ] || return 0
-	[ -n "$password" ] || return 0
+	[ -n "${username}" ] || return 0
+	[ -n "${password}" ] || return 0
 
-	echo "$username pptp-server $password *" >> $CHAP_SECRETS
+	echo "${username} pptp-server ${password} *" >> $CHAP_SECRETS
 }
 
 setup_config() {
-	local section="$1"
+	local enabled localip remoteip mppe
 
-	config_get enabled "$section" enabled
+	validate_pptpd_section "${1}" || {
+		echo "validation failed"
+		return 1
+	}
+
 	[ "$enabled" -eq 0 ] && return 1
 
 	mkdir -p /var/etc
 	cp /etc/pptpd.conf $CONFIG
+	cp /etc/ppp/options.pptpd $OPTIONS_PPTP
 
-	config_get localip "$section" localip
-	config_get remoteip "$section" remoteip
 	[ -n "$localip" ] && echo "localip  $localip" >> $CONFIG
 	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG
+	[ "$logwtmp" -eq 1 ] && echo "logwtmp" >> $CONFIG
+
+	echo "mppe $(echo $mppe | sed -e 's/\s/,/g')" >> $OPTIONS_PPTP
+
 	return 0
 }
 
-start_pptpd() {
-	[ -f $DEFAULT ] && . $DEFAULT
-	mkdir -p $RUN_D
-	for m in arc4 sha1_generic slhc crc-ccitt ppp_generic ppp_async ppp_mppe; do
-		insmod $m >/dev/null 2>&1
-	done
-	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
-	service_start $BIN $OPTIONS -c $CONFIG
-}
-
-start() {
+start_service() {
 	config_load pptpd
 	setup_config pptpd || return
 	config_foreach setup_login login
-	start_pptpd
-}
 
-stop() {
-	service_stop $BIN
+	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
+
+	procd_open_instance
+	procd_set_param command $BIN -c $CONFIG --fg -o $OPTIONS_PPTP
+	procd_close_instance
 }

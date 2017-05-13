@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014 - 2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-html-parser
-PKG_VERSION:=3.71
-PKG_RELEASE:=2
+PKG_VERSION:=3.72
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS/
 PKG_SOURCE:=HTML-Parser-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=9128a45893097dfa3bf03301b19c5efe
+PKG_MD5SUM:=eb7505e5f626913350df9dd4a03d54a8
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
@@ -29,7 +29,7 @@ define Package/perl-html-parser
   CATEGORY:=Languages
   TITLE:=A collection of modules that parse HTML text documents
   URL:=http://search.cpan.org/dist/HTML-Parser/
-  DEPENDS:=perl +perl-html-tagset +perl-uri
+  DEPENDS:=perl +perl-html-tagset +perlbase-essential +perlbase-xsloader
 endef
 
 define Build/Configure

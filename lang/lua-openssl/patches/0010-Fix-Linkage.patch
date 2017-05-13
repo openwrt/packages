@@ -1,0 +1,36 @@
+diff --git a/deps/lua-compat/c-api/compat-5.3.c b/deps/lua-compat/c-api/compat-5.3.c
+index 4395bbc..4a8877c 100644
+--- a/deps/lua-compat/c-api/compat-5.3.c
++++ b/deps/lua-compat/c-api/compat-5.3.c
+@@ -491,17 +491,6 @@ COMPAT53_API int lua_geti (lua_State *L, int index, lua_Integer i) {
+ }
+
+
+-COMPAT53_API int lua_isinteger (lua_State *L, int index) {
+-  if (lua_type(L, index) == LUA_TNUMBER) {
+-    lua_Number n = lua_tonumber(L, index);
+-    lua_Integer i = lua_tointeger(L, index);
+-    if (i == n)
+-      return 1;
+-  }
+-  return 0;
+-}
+-
+-
+ static void compat53_reverse (lua_State *L, int a, int b) {
+   for (; a < b; ++a, --b) {
+     lua_pushvalue(L, a);
+diff --git a/deps/lua-compat/c-api/compat-5.3.h b/deps/lua-compat/c-api/compat-5.3.h
+index 2309294..8e67bae 100644
+--- a/deps/lua-compat/c-api/compat-5.3.h
++++ b/deps/lua-compat/c-api/compat-5.3.h
+@@ -244,9 +244,6 @@ typedef int (*lua_KFunction)(lua_State *L, int status, lua_KContext ctx);
+ #define lua_geti COMPAT53_CONCAT(COMPAT53_PREFIX, _geti)
+ COMPAT53_API int lua_geti (lua_State *L, int index, lua_Integer i);
+
+-#define lua_isinteger COMPAT53_CONCAT(COMPAT53_PREFIX, _isinteger)
+-COMPAT53_API int lua_isinteger (lua_State *L, int index);
+-
+ #define lua_numbertointeger(n, p) \
+   ((*(p) = (lua_Integer)(n)), 1)
+

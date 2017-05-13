@@ -1,0 +1,18 @@
+--- a/ssmtp.c
++++ b/ssmtp.c
+@@ -1591,12 +1591,12 @@ int ssmtp(char *argv[])
+ 			outbytes += smtp_write(sock, "%s", leadingdot ? b : buf);
+ 		} else {
+ 			if (log_level > 0) {
+-				log_event(LOG_INFO, "Sent a very long line in chunks");
++				log_event(LOG_INFO, "Sending a partial line");
+ 			}
+ 			if (leadingdot) {
+-				outbytes += fd_puts(sock, b, sizeof(b));
++				outbytes += fd_puts(sock, b, strlen(b));
+ 			} else {
+-				outbytes += fd_puts(sock, buf, bufsize);
++				outbytes += fd_puts(sock, buf, strlen(buf));
+ 			}
+ 		}
+ 		(void)alarm((unsigned) MEDWAIT);

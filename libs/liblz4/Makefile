@@ -10,13 +10,13 @@ include $(TOPDIR)/rules.mk
 # Although liblz4 exports a major.minor.patch version, it isn't always
 # incremented for new releases, so use the release tag instead.
 PKG_NAME:=liblz4
-PKG_VERSION:=r129
+PKG_VERSION:=r131
 PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_MAINTAINER:=Darik Horn <dajhorn@vanadac.com>
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/Cyan4973/lz4.git

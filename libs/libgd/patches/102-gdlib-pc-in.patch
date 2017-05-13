@@ -1,0 +1,9 @@
+--- a/config/gdlib.pc.in
++++ b/config/gdlib.pc.in
+@@ -7,5 +7,5 @@ Name: gd
+ Description: GD graphics library
+ Version: @VERSION@
+ Cflags: -I${includedir}
+-Libs.private: @LIBS@ @LIBICONV@
++Libs.private: @LIBS@ 
+ Libs: -L${libdir} -lgd

@@ -5,14 +5,19 @@
 # list of contributors, see the file 'CREDITS'.
 #
 . /lib/functions.sh
-START=60
+START=95
 
 FWKNOPD_BIN=/usr/sbin/fwknopd
 
 start()
 {
 	gen_confs
-        $FWKNOPD_BIN 
+	if [ $UCI_ENABLED ]; then
+        	$FWKNOPD_BIN -c /var/etc/fwknopd.conf -a /var/etc/access.conf 
+	else
+        	$FWKNOPD_BIN 
+	fi
+
 }
 
 stop()
@@ -36,6 +41,13 @@ reload()
 gen_confs()
 {
 	[ -f /tmp/access.conf.tmp ] && rm /tmp/access.conf.tmp
+	if [ -z "$( uci get fwknopd.@config[0].PCAP_INTF )" ]
+	then
+		. /lib/functions/network.sh
+		network_get_physdev device wan
+		uci set fwknopd.@config[0].PCAP_INTF="$device"
+		uci commit
+	fi
 	config_cb() {
 		local type="$1"
 		local name="$2"
@@ -44,8 +56,10 @@ gen_confs()
 				local option="$1"
 				local value="$2"
 				if [ "$option" = "uci_enabled" ] && [ "$value" -eq 1 ] ; then
-					> /etc/fwknop/fwknopd.conf
-					> /etc/fwknop/access.conf
+					> /var/etc/fwknopd.conf
+					> /var/etc/access.conf
+                                        chmod 600 /var/etc/fwknopd.conf
+                                        chmod 600 /var/etc/access.conf
 					UCI_ENABLED=1
 				fi
 			}
@@ -54,20 +68,20 @@ gen_confs()
 				local option="$1"
 				local value="$2"
 				if [ $UCI_ENABLED ]; then
-					echo "$option $value" >> /etc/fwknop/fwknopd.conf  #writing each option to fwknopd.conf
+					echo "$option $value" >> /var/etc/fwknopd.conf  #writing each option to fwknopd.conf
 				fi
 			}
 		elif [ "$type" = "access" ]
 		then
 			if [ -f /tmp/access.conf.tmp ] ; then
-				cat /tmp/access.conf.tmp >> /etc/fwknop/access.conf
+				cat /tmp/access.conf.tmp >> /var/etc/access.conf
 				rm /tmp/access.conf.tmp
 			fi
 			option_cb() {
 				local option="$1"
 				local value="$2"
 				if [ $UCI_ENABLED ] && [ $option = "SOURCE" ]; then
-					echo "$option $value" >> /etc/fwknop/access.conf  #writing each option to access.conf
+					echo "$option $value" >> /var/etc/access.conf  #writing each option to access.conf
 				fi
 				if [ $UCI_ENABLED ] && [ $option != "SOURCE" ]; then
 					echo "$option $value" >> /tmp/access.conf.tmp  #writing each option to access.conf
@@ -79,7 +93,7 @@ gen_confs()
 	if [ -f /etc/config/fwknopd ]; then
 		config_load fwknopd
 		if [ -f /tmp/access.conf.tmp ] ; then
-			cat /tmp/access.conf.tmp >> /etc/fwknop/access.conf
+			cat /tmp/access.conf.tmp >> /var/etc/access.conf
 			rm /tmp/access.conf.tmp
 		fi
 	fi

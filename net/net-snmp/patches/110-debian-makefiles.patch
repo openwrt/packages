@@ -1,6 +1,7 @@
---- a/local/Makefile.in
-+++ b/local/Makefile.in
-@@ -100,7 +100,7 @@ tkmib.made: $(srcdir)/tkmib
+diff -uNr a/local/Makefile.in b/local/Makefile.in
+--- a/local/Makefile.in	2014-02-20 08:36:42.000000000 +0800
++++ b/local/Makefile.in	2014-05-27 13:21:34.245223503 +0800
+@@ -103,7 +103,7 @@
  
  mib2c.made: $(srcdir)/mib2c
  	if test "x$(PERL)" != "x" ; then \
@@ -9,9 +10,21 @@
  	else \
  	  touch mib2c.made; \
          fi
---- a/mibs/Makefile.in
-+++ b/mibs/Makefile.in
-@@ -48,11 +48,15 @@ NETSNMPMIBS = NET-SNMP-TC.txt NET-SNMP-M
+diff -uNr a/Makefile.top b/Makefile.top
+--- a/Makefile.top	2014-02-20 08:36:42.000000000 +0800
++++ b/Makefile.top	2014-05-27 13:26:53.023737120 +0800
+@@ -27,6 +27,7 @@
+ snmplibdir	= $(datadir)/snmp
+ mibdir		= $(snmplibdir)/mibs
+ persistentdir	= @PERSISTENT_DIRECTORY@
++sysconfdir	= @sysconfdir@
+ DESTDIR         = @INSTALL_PREFIX@
+ INSTALL_PREFIX  = $(DESTDIR)
+ 
+diff -uNr a/mibs/Makefile.in b/mibs/Makefile.in
+--- a/mibs/Makefile.in	2014-02-20 08:36:42.000000000 +0800
++++ b/mibs/Makefile.in	2014-05-27 13:25:07.151988585 +0800
+@@ -49,11 +49,15 @@
  UCDMIBS = UCD-SNMP-MIB.txt UCD-DEMO-MIB.txt UCD-IPFWACC-MIB.txt \
  	UCD-DLMOD-MIB.txt UCD-DISKIO-MIB.txt
  
@@ -27,14 +40,4 @@
 +	$(NETSNMPMIBS) $(UCDMIBS) $(DEFAULTMIBS) $(EXTRAMIBS)
  
  all: standardall
- 
---- a/Makefile.top
-+++ b/Makefile.top
-@@ -26,6 +26,7 @@ man8dir		= $(mandir)/man8
- snmplibdir	= $(datadir)/snmp
- mibdir		= $(snmplibdir)/mibs
- persistentdir	= @PERSISTENT_DIRECTORY@
-+sysconfdir	= @sysconfdir@
- DESTDIR         = @INSTALL_PREFIX@
- INSTALL_PREFIX  = $(DESTDIR)
  

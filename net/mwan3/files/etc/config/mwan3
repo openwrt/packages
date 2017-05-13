@@ -61,13 +61,6 @@ config policy 'wan2_wan'
 	list use_member 'wan_m2_w3'
 	list use_member 'wan2_m1_w2'
 
-config rule 'youtube'
-	option sticky '1'
-	option ipset 'youtube'
-	option dest_port '80,443'
-	option proto 'tcp'
-	option use_policy 'balanced'
-
 config rule 'https'
 	option sticky '1'
 	option dest_port '443'

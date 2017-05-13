@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup
-PKG_VERSION:=2.44.2
-PKG_RELEASE:=1
+PKG_VERSION:=2.54.1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.44
-PKG_MD5SUM:=92aa3667357157e8f3489bcca287f2fa
+PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.54
+PKG_MD5SUM:=73b1fb774de16c29b380f87016f9f9dd
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -42,6 +42,9 @@ define Build/Configure
 		--disable-glibtest \
 		--without-apache-httpd \
 		--without-gnome \
+		--without-gssapi \
+		--enable-vala=no \
+		--disable-more-warnings \
 	)
 endef
 

@@ -23,6 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/serialconsole
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Terminal
   TITLE:=Serial Console - minimal terminal program
   URL:=http://sourceforge.net/projects/serialconsole/
 endef

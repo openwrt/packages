@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -10,13 +8,15 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ntfs-3g
 PKG_RELEASE:=1
 
-PKG_VERSION:=2014.2.15
+PKG_VERSION:=2017.3.23
 PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://www.tuxera.com/opensource/
-PKG_MD5SUM:=f11d563816249d730a00498983485f3a
+PKG_SOURCE_URL:=https://www.tuxera.com/opensource/
+PKG_HASH:=3e5a021d7b761261836dcb305370af299793eedbded731df3d6943802e1262d5
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
+
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -35,7 +35,6 @@ define Package/ntfs-3g/common
   URL:=http://www.tuxera.com
   SUBMENU:=Filesystem
   TITLE:=Stable Read/Write NTFS Driver
-  MAINTAINER:=Bud <wrt_buddhay@gmx.net>
 endef
 
 define Package/ntfs-3g
@@ -86,27 +85,29 @@ define Package/ntfs-3g-low/description
 
 endef
 
-define Package/ntfs-3g-utils
-  $(call Package/ntfs-3g/common)
-  TITLE:=ntfs-3g utilities (ntfs-3g.secaudit, ntfs-3g.usermap)
-  DEPENDS+= +ntfs-3g
-endef
 
 define Package/ntfs-3g-utils/description
-  Additional ntfs-3g utilities. Not included by default for size
-  considerations. All binaries except ntfs-3g, ntfs-3g.probe.
-
-  Currently:
-   - ntfs-3g.secaudit
-   - ntfs-3g.usermap
-
+  Suite of NTFS utilities for doing neat things with NTFS.
+  Contains:
+   - mkntfs - Create an NTFS filesystem.
+   - ntfscat - Dump a file's content to the standard output.
+   - ntfsclone - Efficiently clone, backup, restore or rescue NTFS.
+   - ntfscluster - Locate the files which use the given sectors or clusters.
+   - ntfscmp - Compare two NTFS filesystems and tell the differences.
+   - ntfscp - Copy a file to an NTFS volume.
+   - ntfssecaudit - Display ownership and permissions, check consistency
+   - ntfsfix - Check and fix some common errors, clear the LogFile.
+   - ntfsinfo - Show information about NTFS or one of the files or directories within it.
+   - ntfslabel - Show, or set, an NTFS filesystem's volume label.
+   - ntfsls - List information about files in a directory residing on an NTFS.
+   - ntfsresize - Resize NTFS without losing data.
+   - ntfsundelete - Recover deleted files from NTFS.
+   - ntfsusermap - Define mapping of Windows accounts to Linux logins
 endef
 
-# TODO: write a proper description
-# new in 2001.4.12
-define Package/ntfsprogs_ntfs-3g
+define Package/ntfs-3g-utils
   $(call Package/ntfs-3g/common)
-  TITLE:=ntfsprogs (ntfs-3g)
+  TITLE:=ntfs-3g utilities
   DEPENDS+= +ntfs-3g +libgcrypt +libuuid
 endef
 
@@ -124,11 +125,11 @@ else
 	TARGET_CPPFLAGS:=-I../include/fuse-lite $(TARGET_CPPFLAGS)
 endif
 
-# enable disable ntfsprogs
-ifneq ($(CONFIG_PACKAGE_ntfsprogs_ntfs-3g)$(SDK)$(DEVELOPER),)
-	CONFIGURE_ARGS += --enable-ntfsprogs
+# enable ntfsprogs and extras
+ifneq ($(CONFIG_PACKAGE_ntfs-3g-utils)$(SDK)$(DEVELOPER),)
+	CONFIGURE_ARGS += --enable-ntfsprogs --enable-extras
 else
-	CONFIGURE_ARGS += --disable-ntfsprogs
+	CONFIGURE_ARGS += --disable-ntfsprogs --disable-extras
 endif
 
 # redefine prepare to extract to our build dir
@@ -154,6 +155,7 @@ define Package/ntfs-3g/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libntfs-3g.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/sbin
 	$(CP) $(PKG_INSTALL_DIR)/sbin/mount.ntfs-3g $(1)/sbin/
+	$(CP) $(PKG_INSTALL_DIR)/sbin/mount.ntfs-3g $(1)/sbin/mount.ntfs
 endef
 
 define Package/ntfs-3g/postinst
@@ -198,11 +200,6 @@ fi
 endef
 
 define Package/ntfs-3g-utils/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(FIND) $(PKG_INSTALL_DIR)/usr/bin/ -type f ! -name ntfs-3g.probe ! -name ntfs-3g -exec $(INSTALL_BIN) {} $(1)/usr/bin/ \;
-endef
-
-define Package/ntfsprogs_ntfs-3g/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(CP) $(PKG_INSTALL_DIR)/sbin/mkfs.ntfs $(1)/sbin/
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -214,4 +211,3 @@ endef
 $(eval $(call BuildPackage,ntfs-3g))
 $(eval $(call BuildPackage,ntfs-3g-low))
 $(eval $(call BuildPackage,ntfs-3g-utils))
-$(eval $(call BuildPackage,ntfsprogs_ntfs-3g))

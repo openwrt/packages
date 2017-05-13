@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-lockfile-simple
 PKG_VERSION:=0.208
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/S/SC/SCHWIGON/lockfile-simple/
 PKG_SOURCE:=LockFile-Simple-$(PKG_VERSION).tar.gz
@@ -29,7 +29,7 @@ define Package/perl-lockfile-simple
   CATEGORY:=Languages
   TITLE:=Simple advisory file locking
   URL:=http://search.cpan.org/dist/LockFile-Simple/
-  DEPENDS:=perl
+  DEPENDS:=perl +perlbase-essential +perlbase-sys
 endef
 
 define Build/Configure

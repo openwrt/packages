@@ -1,0 +1,28 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -998,7 +998,6 @@ libs/gst/net/Makefile
+ plugins/Makefile
+ plugins/elements/Makefile
+ plugins/tracers/Makefile
+-po/Makefile.in
+ tests/Makefile
+ tests/benchmarks/Makefile
+ tests/check/Makefile
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -9,7 +9,6 @@ aclocal_DATA = gst-element-check-@GST_AP
+ SUBDIRS = pkgconfig \
+ 	gst libs plugins tests \
+ 	docs \
+-	po \
+ 	m4 \
+ 	common \
+ 	data
+@@ -22,7 +21,6 @@ endif
+ DIST_SUBDIRS = pkgconfig \
+ 	gst libs plugins tools tests \
+ 	docs \
+-	po \
+ 	m4 \
+ 	common \
+ 	data

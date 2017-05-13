@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -152,6 +152,10 @@ if test "x$found_resolv" != "xyes"; then
+@@ -161,6 +161,10 @@ if test "x$found_resolv" != "xyes"; then
  	AC_MSG_ERROR([Unable to do DNS lookups (libresolv check failed)])
  fi
  LIBS="${LIBS} ${RESOLV_LIBS}"
@@ -13,7 +13,7 @@
  dnl *                                                               *
 --- a/src/libs/zbxsysinfo/common/net.c
 +++ b/src/libs/zbxsysinfo/common/net.c
-@@ -450,6 +450,7 @@ static int	dns_query(AGENT_REQUEST *requ
+@@ -471,6 +471,7 @@ static int	dns_query(AGENT_REQUEST *requ
  		return SYSINFO_RET_FAIL;
  	}
  
@@ -21,7 +21,7 @@
  	if (-1 == (res = res_mkquery(QUERY, zone, C_IN, type, NULL, 0, NULL, buf, sizeof(buf))))
  	{
  		SET_MSG_RESULT(result, zbx_dsprintf(NULL, "Cannot create DNS query: %s", zbx_strerror(errno)));
-@@ -480,6 +481,11 @@ static int	dns_query(AGENT_REQUEST *requ
+@@ -505,6 +506,11 @@ static int	dns_query(AGENT_REQUEST *requ
  	_res.retry = retry;
  
  	res = res_send(buf, res, answer.buffer, sizeof(answer.buffer));
@@ -31,5 +31,5 @@
 +	return SYSINFO_RET_FAIL;
 +#endif 
  
+ 	_res.options = saved_options;
  	_res.retrans = saved_retrans;
- 	_res.retry = saved_retry;

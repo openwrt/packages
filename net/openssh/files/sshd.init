@@ -8,7 +8,7 @@ USE_PROCD=1
 PROG=/usr/sbin/sshd
 
 start_service() {
-	for type in rsa dsa; do {
+	for type in rsa ecdsa ed25519; do {
 		# check for keys
 		key=/etc/ssh/ssh_host_${type}_key
 		[ ! -f $key ] && {

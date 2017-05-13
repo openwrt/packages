@@ -11,7 +11,7 @@
  EXTRA_DIST = cfg.mk maint.mk .clcopying
 --- a/configure.ac
 +++ b/configure.ac
-@@ -48,8 +48,6 @@ AC_PROG_LIBTOOL
+@@ -47,8 +47,6 @@ LT_INIT([win32-dll])
  # Checks for programs.
  AM_MISSING_PROG(PERL, perl, $missing_dir)
  AM_MISSING_PROG(HELP2MAN, help2man, $missing_dir)

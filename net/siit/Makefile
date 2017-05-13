@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=siit
 PKG_VERSION:=1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPLv2+
 
 include $(INCLUDE_DIR)/package.mk
@@ -21,7 +21,7 @@ define KernelPackage/siit
   DEPENDS:= @(!(TARGET_ps3||TARGET_pxcab))
   FILES:=$(PKG_BUILD_DIR)/siit.ko
   AUTOLOAD:=$(call AutoLoad,50,siit)
-  MAINTAINER=Vladimir Ulrich <admin@evl.su>
+  MAINTAINER:=Vladimir Ulrich <admin@evl.su>
 endef
 
 include $(INCLUDE_DIR)/kernel-defaults.mk

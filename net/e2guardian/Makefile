@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=e2guardian
-PKG_VERSION:=3.1.2
+PKG_VERSION:=3.2.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/e2guardian/e2guardian/archive/
-PKG_MD5SUM:=85cfa16074737dbc3935f93dfcded285
+PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/archive/
+PKG_MD5SUM:=70613669ef00a480e3ebb62e12427cf4
+
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -53,6 +54,7 @@ CONFIGURE_ARGS += \
 		--enable-sslmitm=no
 
 define Build/Configure
+	( cd $(PKG_BUILD_DIR); ./autogen.sh )
 	$(call Build/Configure/Default,$CONFIGURE_ARGS)
 endef
 

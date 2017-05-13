@@ -1,0 +1,27 @@
+From b0e285a8c7faaec8807fdd677da6750f341f0109 Mon Sep 17 00:00:00 2001
+From: Phil Eichinger <phil@zankapfel.net>
+Date: Thu, 19 Nov 2015 13:18:53 +0100
+Subject: [PATCH] no po and docs
+
+[adapted old patch and converted to git patch]
+Signed-off-by: Phil Eichinger <phil@zankapfel.net>
+---
+ Makefile.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.in b/Makefile.in
+index 1909835..cfa7ca0 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -470,7 +470,7 @@ get_cs_cmdline = $(call get_cs_compile,$
+ AUTOMAKE_OPTIONS = 1.6 foreign
+ @BUILD_IMAP_TRUE@IMAP_SUBDIR = imap
+ @BUILD_IMAP_TRUE@IMAP_INCLUDES = -I$(top_srcdir)/imap
+-SUBDIRS = m4 po intl doc contrib $(IMAP_SUBDIR)
++SUBDIRS = m4 intl contrib $(IMAP_SUBDIR)
+ bin_SCRIPTS = muttbug flea $(SMIMEAUX_TARGET)
+ @BUILD_HCACHE_TRUE@HCVERSION = hcversion.h
+ BUILT_SOURCES = keymap_defs.h patchlist.c reldate.h conststrings.c $(HCVERSION)
+-- 
+2.1.4
+

@@ -9,7 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort
 PKG_VERSION:=2.9.7.2
-PKG_RELEASE:=2
+PKG_RELEASE:=4
+
+PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
@@ -27,7 +30,7 @@ define Package/snort
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libdaq +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +SNORT_MYSQL:libmysqlclient +SNORT_PGSQL:libpq +SNORT_PGSQL:libuuid +SNORT_LZMA:liblzma
+  DEPENDS:=+libdaq +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +SNORT_LZMA:liblzma
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -58,24 +61,12 @@ CONFIGURE_ARGS += \
 	--with-daq-libraries="$(STAGING_DIR)/usr/lib" \
 	--disable-static-daq
 
-ifeq ($(CONFIG_SNORT_MYSQL),)
-CONFIGURE_ARGS += \
-	--without-mysql
-endif
-
-ifeq ($(CONFIG_PGSQL),)
-CONFIGURE_ARGS += \
-	--without-postgresql
-endif
-
 ifeq ($(CONFIG_SNORT_LZMA),)
 CONFIGURE_ARGS += \
 	--disable-lzma
 endif
 
 CONFIGURE_VARS += \
-	CPPFLAGS="$$$$CPPFLAGS -I$(STAGING_DIR)/usr/include/mysql" \
-	LDFLAGS="$$$$LDFLAGS -L$(STAGING_DIR)/usr/lib/mysql" \
 	PATH="$(STAGING_DIR)/usr/lib/libnet-1.0.x/bin:$$$$PATH"
 
 MAKE_FLAGS += \

@@ -1,16 +1,16 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014-2015 OpenWrt.org
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bwm-ng
-PKG_VERSION:=0.6
+PKG_VERSION:=0.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.gropp.org/bwm-ng
-PKG_MD5SUM:=d3a02484fb7946371bfb4e10927cebfb
+PKG_MD5SUM:=ef0c7669508e95f56250ad4f8db98b7f
 PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
 PKG_LICENSE:=GPL2-2.0
 PKG_LICENSE_FILES:=COPYING

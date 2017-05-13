@@ -1,0 +1,12 @@
+diff --git a/setup.py b/setup.py
+index da67731..928e0de 100644
+--- a/setup.py
++++ b/setup.py
+@@ -293,6 +293,7 @@ class PyBuildExt(build_ext):
+             print("Failed to build these modules:")
+             print_three_column(failed)
+             print()
++            if cross_compiling: sys.exit(1)
+ 
+         if self.failed_on_import:
+             failed = self.failed_on_import[:]

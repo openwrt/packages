@@ -1,0 +1,27 @@
+From d0409ae1164030913801d37ce5425ed93529c69d Mon Sep 17 00:00:00 2001
+From: Daniel Dickinson <gitolite@daniel.thecshore.com>
+Date: Fri, 1 Jul 2016 00:37:23 -0400
+Subject: [PATCH] Conf::Store: Fix missing hooks dir for symlink
+
+At least when doing 'gitolite setup -pk user.pub', the
+symlinking of hooks fails because the hooks directory
+does not exist.  Make sure we create it if it's missing.
+---
+ src/lib/Gitolite/Conf/Store.pm | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/lib/Gitolite/Conf/Store.pm b/src/lib/Gitolite/Conf/Store.pm
+index 5568b3f..aac90d4 100644
+--- a/src/lib/Gitolite/Conf/Store.pm
++++ b/src/lib/Gitolite/Conf/Store.pm
+@@ -363,6 +363,7 @@ sub store_common {
+             chmod 0755, "$rc{GL_ADMIN_BASE}/hooks/gitolite-admin/post-update";
+             $hook_reset++;
+         }
++	_mkdir("$repo.git/hooks");
+ 
+         # propagate user-defined (custom) hooks to all repos
+         ln_sf( "$rc{LOCAL_CODE}/hooks/common", "*", "$repo.git/hooks" ) if $rc{LOCAL_CODE};
+-- 
+2.7.4
+

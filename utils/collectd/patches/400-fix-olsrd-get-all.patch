@@ -1,11 +1,11 @@
 --- a/src/olsrd.c
 +++ b/src/olsrd.c
-@@ -653,7 +653,7 @@ static int olsrd_read (void) /* {{{ */
+@@ -585,7 +585,7 @@ static int olsrd_read(void) /* {{{ */
    if (fh == NULL)
      return (-1);
  
--  fputs ("\r\n", fh);
-+  fputs ("/all \r\n", fh);
-   fflush (fh);
+-  fputs("\r\n", fh);
++  fputs("/all \r\n", fh);
+   fflush(fh);
  
-   while (fgets (buffer, sizeof (buffer), fh) != NULL)
+   while (fgets(buffer, sizeof(buffer), fh) != NULL) {

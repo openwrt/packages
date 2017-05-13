@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-compress-bzip2
-PKG_VERSION:=2.22
-PKG_RELEASE:=2
+PKG_VERSION:=2.24
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/R/RU/RURBAN/
 PKG_SOURCE:=Compress-Bzip2-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=0d01b86c3efa74e29bb975aea46b666f
+PKG_MD5SUM:=d5ef04d1e51fe45743b3044abad967d2
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
@@ -29,7 +29,7 @@ define Package/perl-compress-bzip2
   CATEGORY:=Languages
   TITLE:=Perl interface to bzip2 compression library
   URL:=http://search.cpan.org/dist/Compress-Bzip2/
-  DEPENDS:=perl +libbz2
+  DEPENDS:=perl +libbz2 +perlbase-autoloader +perlbase-config +perlbase-essential +perlbase-fcntl +perlbase-file +perlbase-getopt +perlbase-test +perlbase-xsloader
 endef
 
 define Build/Configure

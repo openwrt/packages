@@ -1,0 +1,55 @@
+--- a/service/resource-container/SConscript
++++ b/service/resource-container/SConscript
+@@ -191,36 +191,22 @@ if target_os in ['linux', 'tizen', 'andr
+ # build hue sample bundle
+ ######################################################################
+ 
+-conf2 = Configure(lib_env)
+-if not conf2.CheckLib('curl'):
+-    print '''X
+-*********************************** Error *************************************
+-* Cannot build hue sample. Please install libcurl.
+-* Example (Ubuntu):
+-*   sudo apt-get install libcurl4-openssl-dev
+-*   sudo ldconfig
+-* Hint: check with pkg-config --libs libcurl and clear scons cache.
+-* Skipping hue sample build.
+-*******************************************************************************
+-    '''
+-else:
+-    hue_resource_bundle_env = resource_container_env.Clone()
+-    hue_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+-
+-    HUE_RESOURCE_BUNDLE_DIR = 'examples/HueSampleBundle/'
+-    hue_resource_bundle_env.AppendUnique(CPPPATH = [
+-            HUE_RESOURCE_BUNDLE_DIR + 'include',
+-            'include/'
+-            ])
+-
+-    hue_resource_bundle_env.PrependUnique(LIBS = ['curl', 'rcs_container'])
+-
+-    hue_resource_bundle_src = [ Glob(HUE_RESOURCE_BUNDLE_DIR + 'src/*.cpp')]
+-
+-    HueBundle = hue_resource_bundle_env.SharedLibrary('HueBundle', hue_resource_bundle_src)
+-    hue_resource_bundle_env.InstallTarget(HueBundle, 'libHueBundle')
+-    hue_resource_bundle_env.UserInstallTargetLib(HueBundle, 'libHueBundle')
+-lib_env = conf2.Finish()
++hue_resource_bundle_env = resource_container_env.Clone()
++hue_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
++
++HUE_RESOURCE_BUNDLE_DIR = 'examples/HueSampleBundle/'
++hue_resource_bundle_env.AppendUnique(CPPPATH = [
++        HUE_RESOURCE_BUNDLE_DIR + 'include',
++        'include/'
++        ])
++
++hue_resource_bundle_env.PrependUnique(LIBS = ['curl', 'rcs_container'])
++
++hue_resource_bundle_src = [ Glob(HUE_RESOURCE_BUNDLE_DIR + 'src/*.cpp')]
++
++HueBundle = hue_resource_bundle_env.SharedLibrary('HueBundle', hue_resource_bundle_src)
++hue_resource_bundle_env.InstallTarget(HueBundle, 'libHueBundle')
++hue_resource_bundle_env.UserInstallTargetLib(HueBundle, 'libHueBundle')
+ 
+ ######################################################################
+ # Build Container Sample

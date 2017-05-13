@@ -1,0 +1,31 @@
+--- a/common/common.h
++++ b/common/common.h
+@@ -50,6 +50,7 @@
+ #include <signal.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#include <sys/uio.h>
+ #include <fcntl.h>
+ 
+ #if defined(_SUNOS) || defined(_AIX) || defined(_DARWIN)
+@@ -91,7 +92,9 @@
+ 	#include <sys/select.h>
+ 
+ 	#include <net/if.h>
++#if defined(__GLIBC__) || defined(__UCLIBC__)
+ 	#include <netinet/if_ether.h>
++#endif
+ #ifdef linux
+ 	#include <netpacket/packet.h>
+ 	#include <linux/if_tun.h>
+--- a/common/dn_skipname.c
++++ b/common/dn_skipname.c
+@@ -1,6 +1,8 @@
+ #include <errno.h>
+ #include <resolv.h>
+ 
++#include <sys/types.h>
++
+ /* Ripped from glibc 2.4 sources. */
+ 
+ /*

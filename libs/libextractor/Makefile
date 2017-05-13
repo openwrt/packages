@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2015 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,27 +7,30 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libextractor
 PKG_VERSION:=1.3
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 # ToDo:
-# - package missing optional dependencies: libexiv2, giflib, gsf, librpm, smf, tidy
+# - package missing optional dependencies: libexiv2, gsf, librpm, smf, tidy
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
 PKG_MD5SUM:=35b8913dbebafe583a2781bf71509c48
+PKG_HASH:=868ad64c9a056d6b923d451d746935bffb1ddf5d89c3eb4f67d786001a3f7b7f
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 PLUGINS:= \
-	archive:+libarchive \
+	archive:+libarchive-noopenssl \
 	deb \
 	dvi \
 	flac:+libflac \
-	gstreamer:+libgstreamer1:+libgst1app:+libgst1pbutils:+libgst1tag \
+	gif:+giflib \
+	gstreamer:+libgstreamer1:+gstreamer1-plugins-base:+libgst1app:+libgst1pbutils:+libgst1tag \
 	it \
 	jpeg:+libjpeg \
 	man \
@@ -52,6 +53,7 @@ PLUGINS:= \
 
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 CONFIGURE_ARGS += \
 	--enable-ffmpeg \
@@ -64,7 +66,7 @@ define Package/libextractor
 	CATEGORY:=Libraries
 	TITLE:=GNU Libextractor
 	URL:=https://www.gnu.org/software/libextractor/
-	DEPENDS:=+libbz2 +libltdl +librt +zlib
+	DEPENDS:=+libbz2 +libltdl +librt +zlib $(ICONV_DEPENDS) $(INTL_DEPENDS)
 	MENU:=1
 endef
 

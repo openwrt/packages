@@ -1,27 +1,27 @@
---- postfix-2.10.2/makedefs	2013-02-04 05:33:13.000000000 +0400
-+++ postfix-2.10.2_patched/makedefs	2013-11-19 22:48:50.528560454 +0400
-@@ -190,9 +190,9 @@
+--- a/makedefs	2016-01-28 12:30:14.444082390 -0500
++++ b/makedefs	2016-01-28 13:44:02.092006512 -0500
+@@ -198,7 +198,7 @@ error() {
  
  case $# in
   # Officially supported usage.
 - 0) SYSTEM=`(uname -s) 2>/dev/null`
--    RELEASE=`(uname -r) 2>/dev/null`
--    VERSION=`(uname -v) 2>/dev/null`
-+ 0) SYSTEM="Linux"
-+    RELEASE="3.10.18"
-+    VERSION="OpenWRT"
-     case "$VERSION" in
-      dcosx*) SYSTEM=$VERSION;;
-     esac;;
-@@ -522,9 +522,9 @@
- 		esac
- 		for name in nsl resolv
- 		do
--		    for lib in /usr/lib64 /lib64 /usr/lib /usr/lib/* /lib /lib/*
-+		    for lib in /usr/lib64 /usr/lib64/* /usr/lib /usr/lib/* /lib /lib/*
- 		    do
--			test -e $lib/lib$name.a -o -e $lib/lib$name.so && {
-+			test -e $PKG_BUILD_DIR/$lib/lib$name.a -o -e $PKG_BUILD_DIR/$lib/lib$name.so && {
- 			    SYSLIBS="$SYSLIBS -l$name"
- 			    break
- 			}
++ 0) SYSTEM="OpenWRT"
+     RELEASE=`(uname -r) 2>/dev/null`
+     # No ${x%%y} support in Solaris 11 /bin/sh
+     RELEASE_MAJOR=`expr "$RELEASE" : '\([0-9]*\)'` || exit 1
+@@ -212,6 +212,15 @@ case $# in
+ esac
+ 
+ case "$SYSTEM.$RELEASE" in
++   OpenWRT*)    SYSTYPE=LINUX$RELEASE_MAJOR
++		SYSLIBS="$SYSLIBS -ldl"
++		: ${SHLIB_SUFFIX=.so}
++		: ${SHLIB_CFLAGS=-fPIC}
++		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
++		: ${SHLIB_RPATH='-Wl,--enable-new-dtags -Wl,-rpath,${SHLIB_DIR}'}
++		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
++		: ${PLUGIN_LD="${CC-gcc} -shared"}
++		;;
+    SCO_SV.3.2)	SYSTYPE=SCO5
+ 		# Use the native compiler by default
+ 		: ${CC="/usr/bin/cc -b elf"}

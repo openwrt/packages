@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,15 +7,13 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=libxerces-c
-PKG_VERSION:=3.1.2
-PKG_RELEASE:=1
+PKG_NAME:=xerces-c
+PKG_VERSION:=3.1.4
+PKG_RELEASE:=2
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.apache.org/xerces-c.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=Xerces-C_3_1_2
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@APACHE/xerces/c/3/sources
+PKG_MD5SUM:=9973cc79481803f8b6652c52faf5195d963f50d209d4f681ec97e2aa014b6241
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=Apache-2.0

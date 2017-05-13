@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -10216,7 +10216,7 @@ linux* | k*bsd*-gnu)
+@@ -14197,7 +14197,7 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu)
    need_version=no
    library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
    soname_spec='${libname}${release}${shared_ext}$major'
@@ -8,4 +8,4 @@
 +  finish_cmds=''
    shlibpath_var=LD_LIBRARY_PATH
    shlibpath_overrides_runpath=no
-   # This implies no fast_install, which is unacceptable.
+ 

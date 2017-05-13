@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2010 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython
-PKG_VERSION=1.4.3-20150601-$(PKG_SOURCE_VERSION)
+PKG_VERSION=1.8.6-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/micropython/micropython.git
-PKG_SOURCE_VERSION:=3ac2d06bd13f1cedb8242eaacc6c608ac08c3520
+PKG_SOURCE_VERSION:=5a1d63fc14dae788f705403a43c2d8639b7dd9cd
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
@@ -40,9 +40,14 @@ define Package/micropython/description
  that is optimised to run on a microcontroller (and low power computers).
 endef
 
-MAKE_FLAGS += \
-       -C $(PKG_BUILD_DIR)/unix \
-       MICROPY_USE_READLINE=0
+
+MAKE_FLAGS += -C $(PKG_BUILD_DIR)/unix 
+
+define Build/Compile
+	$(call Build/Compile/Default,axtls) 
+	$(call Build/Compile/Default) 
+
+endef
 
 define Package/micropython/install
 	$(INSTALL_DIR) $(1)/usr/bin

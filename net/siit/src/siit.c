@@ -690,7 +690,7 @@ static int ip6_ip4(char *src, int len, char *dst, int include_flag)
 				}
 				else if (next_hdr == NEXTHDR_ESP || next_hdr == NEXTHDR_AUTH)
 				{
-					PDEBUG("ip6_ip4(): cannot translate AUTH or ESP extention header, packet dropped\n");
+					PDEBUG("ip6_ip4(): cannot translate AUTH or ESP extension header, packet dropped\n");
 					return -1;
 				}
 				else if (next_hdr == NEXTHDR_IPV6)
@@ -707,12 +707,12 @@ static int ip6_ip4(char *src, int len, char *dst, int include_flag)
 					   value within the original packet
 					   */
 					/* NOT IMPLEMENTED */
-					PDEBUG("ip6_ip4(): NEXTHDR in extention header = 0, packet dropped\n");
+					PDEBUG("ip6_ip4(): NEXTHDR in extension header = 0, packet dropped\n");
 					return -1;
 				}
 				else
 				{
-					PDEBUG("ip6_ip4(): cannot translate extention header = %d, packet dropped\n", next_hdr);
+					PDEBUG("ip6_ip4(): cannot translate extension header = %d, packet dropped\n", next_hdr);
 					return -1;
 				}
 			}
@@ -1166,7 +1166,11 @@ static int siit_xmit(struct sk_buff *skb, struct net_device *dev)
 	siit_stats(dev)->rx_bytes += skb->len;
 	siit_stats(dev)->rx_packets++;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0)
+	netif_trans_update(dev);
+#else
 	dev->trans_start = jiffies;
+#endif
 
 	/* Upper layer (IP) protocol forms sk_buff for outgoing packet
 	 * and sets IP header + Ether header too. IP layer sets outgoing

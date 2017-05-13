@@ -1,0 +1,92 @@
+--- a/ssmtp.c
++++ b/ssmtp.c
+@@ -282,6 +282,7 @@ standardise() -- Trim off '\n's and doub
+ */
+ bool_t standardise(char *str, bool_t *linestart)
+ {
++	size_t sl;
+ 	char *p;
+ 	bool_t leadingdot = False;
+ 
+@@ -297,6 +298,12 @@ bool_t standardise(char *str, bool_t *li
+ 	if((p = strchr(str, '\n'))) {
+ 		*p = '\0';
+ 		*linestart = True;
++
++		/* If the line ended in "\r\n", then drop the '\r' too */
++		sl = strlen(str);
++		if(sl >= 1 && str[sl - 1] == '\r') {
++			str[sl - 1] = '\0';
++		}
+ 	}
+ 	return(leadingdot);
+ }
+@@ -690,6 +697,14 @@ void header_parse(FILE *stream)
+ 		}
+ 		len++;
+ 
++		if(l == '\r' && c == '\n') {
++			/* Properly handle input that already has "\r\n"
++			   line endings; see https://bugs.debian.org/584162 */
++			l = (len >= 2 ? *(q - 2) : '\n');
++			q--;
++			len--;
++		}
++
+ 		if(l == '\n') {
+ 			switch(c) {
+ 				case ' ':
+@@ -712,8 +727,9 @@ void header_parse(FILE *stream)
+ 						if((q = strrchr(p, '\n'))) {
+ 							*q = '\0';
+ 						}
+-						header_save(p);
+-
++						if(len > 0) {
++							header_save(p);
++						}
+ 						q = p;
+ 						len = 0;
+ 			}
+@@ -722,35 +738,12 @@ void header_parse(FILE *stream)
+ 
+ 		l = c;
+ 	}
+-	if(in_header) {
+-		if(l == '\n') {
+-			switch(c) {
+-				case ' ':
+-				case '\t':
+-						/* Must insert '\r' before '\n's embedded in header
+-						   fields otherwise qmail won't accept our mail
+-						   because a bare '\n' violates some RFC */
+-						
+-						*(q - 1) = '\r';	/* Replace previous \n with \r */
+-						*q++ = '\n';		/* Insert \n */
+-						len++;
+-						
+-						break;
+-
+-				case '\n':
+-						in_header = False;
+-
+-				default:
+-						*q = '\0';
+-						if((q = strrchr(p, '\n'))) {
+-							*q = '\0';
+-						}
+-						header_save(p);
+-
+-						q = p;
+-						len = 0;
+-			}
+-		}
++	if(in_header && l == '\n') {
++		/* Got EOF while reading the header */
++		if((q = strrchr(p, '\n'))) {
++			*q = '\0';
++ 		}
++		header_save(p);
+ 	}
+ 	(void)free(p);
+ }

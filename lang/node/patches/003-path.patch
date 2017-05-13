@@ -1,0 +1,12 @@
+--- a/lib/module.js
++++ b/lib/module.js
+@@ -453,7 +453,8 @@ Module._initPaths = function() {
+     homeDir = process.env.HOME;
+   }
+ 
+-  var paths = [path.resolve(process.execPath, '..', '..', 'lib', 'node')];
++  var paths = [path.resolve(process.execPath, '..', '..', 'lib', 'node'),
++    path.resolve(process.execPath, '..', '..', 'lib', 'node_modules')];
+ 
+   if (homeDir) {
+     paths.unshift(path.resolve(homeDir, '.node_libraries'));

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2014 OpenWrt.org
+# Copyright (C) 2012-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tgt
-PKG_VERSION:=1.0.53
-PKG_REV:=9764e0afd9a7115e356fc85569a780f9003c4eac
-PKG_RELEASE:=3
+PKG_VERSION:=1.0.65
+PKG_REV:=c8f86393d2ea3f37b64963f66af240f17d88b43d
+PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE_PROTO:=git
@@ -30,7 +30,7 @@ define Package/tgt
   CATEGORY:=Network
   URL:=http://stgt.sourceforge.net/
   TITLE:=userspace iSCSI target
-  DEPENDS:=+libpthread +libaio +@KERNEL_AIO +@KERNEL_DIRECT_IO
+  DEPENDS:=+libpthread +libaio @KERNEL_AIO @KERNEL_DIRECT_IO
 endef
 
 define Package/tgt/description

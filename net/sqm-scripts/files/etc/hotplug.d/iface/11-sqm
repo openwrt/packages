@@ -1,3 +1,0 @@
-#!/bin/sh
-
-[ "$ACTION" = ifup ] && /etc/init.d/sqm enabled && /usr/lib/sqm/run.sh start ${DEVICE}

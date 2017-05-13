@@ -1,0 +1,39 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -1001,18 +1001,6 @@ plugins/tracers/Makefile
+ tools/Makefile
+ common/Makefile
+ common/m4/Makefile
+-docs/Makefile
+-docs/design/Makefile
+-docs/faq/Makefile
+-docs/gst/Makefile
+-docs/gst/gstreamer.types
+-docs/libs/Makefile
+-docs/plugins/Makefile
+-docs/manual/Makefile
+-docs/pwg/Makefile
+-docs/slides/Makefile
+-docs/xsl/Makefile
+-docs/version.entities
+ m4/Makefile
+ pkgconfig/Makefile
+ stamp.h
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -8,7 +8,6 @@ aclocal_DATA = gst-element-check-@GST_AP
+ 
+ SUBDIRS = pkgconfig \
+ 	gst libs plugins \
+-	docs \
+ 	m4 \
+ 	common \
+ 	data
+@@ -20,7 +19,6 @@ endif
+ # These are all the possible subdirs
+ DIST_SUBDIRS = pkgconfig \
+ 	gst libs plugins tools \
+-	docs \
+ 	m4 \
+ 	common \
+ 	data

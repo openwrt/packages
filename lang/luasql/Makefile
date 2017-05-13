@@ -30,7 +30,7 @@ define Package/luasql/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Lua SQL binding
-  URL:=http://www.keplerproject.org/luasql/
+  URL:=http://keplerproject.github.io/luasql/
   DEPENDS:= +lua
 endef
 

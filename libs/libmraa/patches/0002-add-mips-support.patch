@@ -1,0 +1,483 @@
+From 2c67c6f51ce5bab18c79f4304ccf42716f59f13c Mon Sep 17 00:00:00 2001
+From: John Crispin <blogic@openwrt.org>
+Date: Thu, 23 Jul 2015 13:21:25 +0200
+Subject: [PATCH 2/4] add mips support
+
+Signed-off-by: John Crispin <blogic@openwrt.org>
+---
+ include/mips/mediatek.h |   39 ++++++
+ src/mips/CMakeLists.txt |    6 +
+ src/mips/mediatek.c     |  349 +++++++++++++++++++++++++++++++++++++++++++++++
+ src/mips/mips.c         |   60 ++++++++
+ 4 files changed, 454 insertions(+)
+ create mode 100644 include/mips/mediatek.h
+ create mode 100644 src/mips/CMakeLists.txt
+ create mode 100644 src/mips/mediatek.c
+ create mode 100644 src/mips/mips.c
+
+--- /dev/null
++++ b/include/mips/mediatek.h
+@@ -0,0 +1,39 @@
++/*
++ * Author: Thomas Ingleby <thomas.c.ingleby@intel.com>
++ * Author: Michael Ring <mail@michael-ring.org>
++ * Copyright (c) 2014 Intel Corporation.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining
++ * a copy of this software and associated documentation files (the
++ * "Software"), to deal in the Software without restriction, including
++ * without limitation the rights to use, copy, modify, merge, publish,
++ * distribute, sublicense, and/or sell copies of the Software, and to
++ * permit persons to whom the Software is furnished to do so, subject to
++ * the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be
++ * included in all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
++ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
++ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
++ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++ */
++
++#pragma once
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include "mraa_internal.h"
++
++mraa_board_t *
++        mraa_mtk_linkit();
++
++#ifdef __cplusplus
++}
++#endif
+--- /dev/null
++++ b/src/mips/CMakeLists.txt
+@@ -0,0 +1,6 @@
++message (INFO " - Adding MIPS platforms")
++set (mraa_LIB_PLAT_SRCS_NOAUTO ${mraa_LIB_SRCS_NOAUTO}
++  ${PROJECT_SOURCE_DIR}/src/mips/mips.c
++  ${PROJECT_SOURCE_DIR}/src/mips/mediatek.c
++  PARENT_SCOPE
++)
+--- /dev/null
++++ b/src/mips/mediatek.c
+@@ -0,0 +1,349 @@
++/*
++ * Author: Thomas Ingleby <thomas.c.ingleby@intel.com>
++ * Author: Michael Ring <mail@michael-ring.org>
++ * Copyright (c) 2014 Intel Corporation.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining
++ * a copy of this software and associated documentation files (the
++ * "Software"), to deal in the Software without restriction, including
++ * without limitation the rights to use, copy, modify, merge, publish,
++ * distribute, sublicense, and/or sell copies of the Software, and to
++ * permit persons to whom the Software is furnished to do so, subject to
++ * the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be
++ * included in all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
++ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
++ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
++ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++ */
++
++#include <stdio.h>
++#include <stdint.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/mman.h>
++#include <mraa/common.h>
++
++#include "mraa_internal.h"
++
++#include "common.h"
++
++#define PLATFORM_MEDIATEK_LINKIT	1
++#define PLATFORM_MEDIATEK_LINKIT_AIR	2
++#define MMAP_PATH			"/dev/mem"
++#define MT7628_GPIO_BASE		0x100
++#define MT7628_BLOCK_SIZE		(4 * 1024)
++#define MT7628_GPIO_CTRL		0x00
++#define MT7628_GPIO_DATA		0x20
++#define MT7628_GPIO_SET			0x30
++#define MT7628_GPIO_CLEAR		0x40
++
++#define MAX_SIZE 64
++
++// MMAP
++static uint8_t* mmap_reg = NULL;
++static int mmap_fd = 0;
++static int mmap_size;
++static unsigned int mmap_count = 0;
++static int platform_detected = 0;
++
++mraa_result_t
++mraa_mtk_linkit_mmap_write(mraa_gpio_context dev, int value)
++{
++    volatile uint32_t* addr;
++    if (value) {
++        *(volatile uint32_t*) (mmap_reg + MT7628_GPIO_SET + (dev->pin / 32) * 4) =
++        (uint32_t)(1 << (dev->pin % 32));
++    } else {
++        *(volatile uint32_t*) (mmap_reg + MT7628_GPIO_CLEAR + (dev->pin / 32) * 4) =
++        (uint32_t)(1 << (dev->pin % 32));
++    }
++    return MRAA_SUCCESS;
++}
++
++static mraa_result_t
++mraa_mtk_linkit_mmap_unsetup()
++{
++    if (mmap_reg == NULL) {
++        syslog(LOG_ERR, "linkit mmap: null register can't unsetup");
++        return MRAA_ERROR_INVALID_RESOURCE;
++    }
++    munmap(mmap_reg, mmap_size);
++    mmap_reg = NULL;
++    if (close(mmap_fd) != 0) {
++        return MRAA_ERROR_INVALID_RESOURCE;
++    }
++    return MRAA_SUCCESS;
++}
++
++int
++mraa_mtk_linkit_mmap_read(mraa_gpio_context dev)
++{
++    uint32_t value = *(volatile uint32_t*) (mmap_reg + MT7628_GPIO_DATA + (dev->pin / 32) * 4);
++    if (value & (uint32_t)(1 << (dev->pin % 32))) {
++        return 1;
++    }
++    return 0;
++}
++
++mraa_result_t
++mraa_mtk_linkit_mmap_setup(mraa_gpio_context dev, mraa_boolean_t en)
++{
++    if (dev == NULL) {
++        syslog(LOG_ERR, "linkit mmap: context not valid");
++        return MRAA_ERROR_INVALID_HANDLE;
++    }
++
++    if (en == 0) {
++        if (dev->mmap_write == NULL && dev->mmap_read == NULL) {
++            syslog(LOG_ERR, "linkit mmap: can't disable disabled mmap gpio");
++            return MRAA_ERROR_INVALID_PARAMETER;
++        }
++        dev->mmap_write = NULL;
++        dev->mmap_read = NULL;
++        mmap_count--;
++        if (mmap_count == 0) {
++            return mraa_mtk_linkit_mmap_unsetup();
++        }
++        return MRAA_SUCCESS;
++    }
++
++    if (dev->mmap_write != NULL && dev->mmap_read != NULL) {
++        syslog(LOG_ERR, "linkit mmap: can't enable enabled mmap gpio");
++        return MRAA_ERROR_INVALID_PARAMETER;
++    }
++
++    // Might need to make some elements of this thread safe.
++    // For example only allow one thread to enter the following block
++    // to prevent mmap'ing twice.
++    if (mmap_reg == NULL) {
++        if ((mmap_fd = open(MMAP_PATH, O_RDWR)) < 0) {
++            syslog(LOG_ERR, "linkit map: unable to open resource0 file");
++            return MRAA_ERROR_INVALID_HANDLE;
++        }
++
++        mmap_reg = (uint8_t*) mmap(NULL, MT7628_BLOCK_SIZE, PROT_READ | PROT_WRITE,
++                                       MAP_FILE | MAP_SHARED, mmap_fd, MT7628_GPIO_BASE);
++        if (mmap_reg == MAP_FAILED) {
++            syslog(LOG_ERR, "linkit mmap: failed to mmap");
++            mmap_reg = NULL;
++            close(mmap_fd);
++            return MRAA_ERROR_NO_RESOURCES;
++        }
++    }
++    dev->mmap_write = &mraa_mtk_linkit_mmap_write;
++    dev->mmap_read = &mraa_mtk_linkit_mmap_read;
++    mmap_count++;
++
++    return MRAA_SUCCESS;
++}
++
++mraa_board_t*
++mraa_mtk_linkit()
++{
++    mraa_board_t* b = (mraa_board_t*) malloc(sizeof(mraa_board_t));
++    if (b == NULL) {
++        return NULL;
++    }
++
++    b->platform_name = "LINKIT";
++    platform_detected = PLATFORM_MEDIATEK_LINKIT;
++    b->phy_pin_count = 31;
++
++    b->aio_count = 0;
++    b->adc_raw = 0;
++    b->adc_supported = 0;
++    b->pwm_default_period = 500;
++    b->pwm_max_period = 2147483;
++    b->pwm_min_period = 1;
++
++    b->pins = (mraa_pininfo_t*) malloc(sizeof(mraa_pininfo_t) * b->phy_pin_count);
++
++    advance_func->gpio_mmap_setup = &mraa_mtk_linkit_mmap_setup;
++
++    strncpy(b->pins[0].name, "P0", MRAA_PIN_NAME_SIZE);
++    b->pins[0].capabilites = (mraa_pincapabilities_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
++
++    strncpy(b->pins[1].name, "P1", MRAA_PIN_NAME_SIZE);
++    b->pins[1].capabilites = (mraa_pincapabilities_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
++
++    strncpy(b->pins[2].name, "P2", MRAA_PIN_NAME_SIZE);
++    b->pins[2].capabilites = (mraa_pincapabilities_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
++
++    strncpy(b->pins[3].name, "P3", MRAA_PIN_NAME_SIZE);
++    b->pins[3].capabilites = (mraa_pincapabilities_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
++
++    strncpy(b->pins[4].name, "P4", MRAA_PIN_NAME_SIZE);
++    b->pins[4].capabilites = (mraa_pincapabilities_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
++
++    strncpy(b->pins[5].name, "P5", MRAA_PIN_NAME_SIZE);
++    b->pins[5].capabilites = (mraa_pincapabilities_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
++
++    strncpy(b->pins[6].name, "P6", MRAA_PIN_NAME_SIZE);
++    b->pins[6].capabilites = (mraa_pincapabilities_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
++
++    strncpy(b->pins[7].name, "P7", MRAA_PIN_NAME_SIZE);
++    b->pins[7].capabilites = (mraa_pincapabilities_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
++
++    strncpy(b->pins[8].name, "P8", MRAA_PIN_NAME_SIZE);
++    b->pins[8].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 1 };
++    b->pins[8].gpio.pinmap = 21;
++    b->pins[8].uart.parent_id = 2;
++    b->pins[8].uart.mux_total = 0;
++
++    strncpy(b->pins[9].name, "P9", MRAA_PIN_NAME_SIZE);
++    b->pins[9].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 1 };
++    b->pins[9].gpio.pinmap = 20;
++    b->pins[9].uart.parent_id = 2;
++    b->pins[9].uart.mux_total = 0;
++
++    strncpy(b->pins[10].name, "P10", MRAA_PIN_NAME_SIZE);
++    b->pins[10].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 0 };
++    b->pins[10].gpio.pinmap = 2;
++
++    strncpy(b->pins[11].name, "P11", MRAA_PIN_NAME_SIZE);
++    b->pins[11].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 0 };
++    b->pins[11].gpio.pinmap = 3;
++
++    strncpy(b->pins[12].name, "P12", MRAA_PIN_NAME_SIZE);
++    b->pins[12].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 0 };
++    b->pins[12].gpio.pinmap = 0;
++
++    strncpy(b->pins[13].name, "P13", MRAA_PIN_NAME_SIZE);
++    b->pins[13].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 0 };
++    b->pins[13].gpio.pinmap = 1;
++
++    strncpy(b->pins[14].name, "P14", MRAA_PIN_NAME_SIZE);
++    b->pins[14].capabilites = (mraa_pincapabilities_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
++
++    strncpy(b->pins[15].name, "P15", MRAA_PIN_NAME_SIZE);
++    b->pins[15].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 0 };
++    b->pins[15].gpio.pinmap = 44;
++
++    strncpy(b->pins[16].name, "P16", MRAA_PIN_NAME_SIZE);
++    b->pins[16].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 1 };
++    b->pins[16].gpio.pinmap = 46;
++    b->pins[16].uart.parent_id = 1;
++    b->pins[16].uart.mux_total = 0;
++
++    strncpy(b->pins[17].name, "P17", MRAA_PIN_NAME_SIZE);
++    b->pins[17].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 1 };
++    b->pins[17].gpio.pinmap = 45;
++    b->pins[17].uart.parent_id = 1;
++    b->pins[17].uart.mux_total = 0;
++
++    strncpy(b->pins[18].name, "P18", MRAA_PIN_NAME_SIZE);
++    b->pins[18].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 1 };
++    b->pins[18].gpio.pinmap = 13;
++    b->pins[18].uart.parent_id = 1;
++    b->pins[18].uart.mux_total = 0;
++
++    strncpy(b->pins[19].name, "P19", MRAA_PIN_NAME_SIZE);
++    b->pins[19].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 1 };
++    b->pins[19].gpio.pinmap = 12;
++    b->pins[19].uart.parent_id = 0;
++    b->pins[19].uart.mux_total = 0;
++
++    strncpy(b->pins[20].name, "P20", MRAA_PIN_NAME_SIZE);
++    b->pins[20].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 1, 0, 0 };
++    b->pins[20].gpio.pinmap = 5;
++    b->pins[20].i2c.pinmap = 0;
++    b->pins[20].i2c.mux_total = 0;
++
++    strncpy(b->pins[21].name, "P21", MRAA_PIN_NAME_SIZE);
++    b->pins[21].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 1, 0, 0 };
++    b->pins[21].gpio.pinmap = 4;
++    b->pins[21].i2c.pinmap = 0;
++    b->pins[21].i2c.mux_total = 0;
++
++    strncpy(b->pins[22].name, "P22", MRAA_PIN_NAME_SIZE);
++    b->pins[22].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 1, 0, 0, 0 };
++    b->pins[22].gpio.pinmap = 8;
++    b->pins[22].spi.pinmap = 0;
++    b->pins[22].spi.mux_total = 0;
++
++    strncpy(b->pins[23].name, "P23", MRAA_PIN_NAME_SIZE);
++    b->pins[23].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 1, 0, 0, 0 };
++    b->pins[23].gpio.pinmap = 9;
++    b->pins[23].spi.pinmap = 0;
++    b->pins[23].spi.mux_total = 0;
++
++    strncpy(b->pins[24].name, "P24", MRAA_PIN_NAME_SIZE);
++    b->pins[24].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 1, 0, 0, 0 };
++    b->pins[24].gpio.pinmap = 7;
++    b->pins[24].spi.pinmap = 0;
++    b->pins[24].spi.mux_total = 0;
++
++    strncpy(b->pins[25].name, "P25", MRAA_PIN_NAME_SIZE);
++    b->pins[25].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 1, 0, 0, 0 };
++    b->pins[25].gpio.pinmap = 6;
++    b->pins[25].spi.pinmap = 0;
++    b->pins[25].spi.mux_total = 0;
++
++    strncpy(b->pins[26].name, "P26", MRAA_PIN_NAME_SIZE);
++    b->pins[26].capabilites = (mraa_pincapabilities_t){ 1, 1, 1, 0, 0, 0, 0, 0 };
++    b->pins[26].gpio.pinmap = 18;
++
++    strncpy(b->pins[27].name, "P27", MRAA_PIN_NAME_SIZE);
++    b->pins[27].capabilites = (mraa_pincapabilities_t){ 1, 1, 1, 0, 0, 0, 0, 0 };
++    b->pins[27].gpio.pinmap = 19;
++
++    strncpy(b->pins[28].name, "P28", MRAA_PIN_NAME_SIZE);
++    b->pins[28].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 0 };
++    b->pins[28].gpio.pinmap = 16;
++
++    strncpy(b->pins[29].name, "P29", MRAA_PIN_NAME_SIZE);
++    b->pins[29].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 0 };
++    b->pins[29].gpio.pinmap = 17;
++
++    strncpy(b->pins[30].name, "P30", MRAA_PIN_NAME_SIZE);
++    b->pins[30].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 0 };
++    b->pins[30].gpio.pinmap = 14;
++
++    strncpy(b->pins[31].name, "P31", MRAA_PIN_NAME_SIZE);
++    b->pins[31].capabilites = (mraa_pincapabilities_t){ 1, 1, 0, 0, 0, 0, 0, 0 };
++    b->pins[31].gpio.pinmap = 15;
++
++    // BUS DEFINITIONS
++    b->i2c_bus_count = 1;
++    b->def_i2c_bus = 0;
++        b->i2c_bus[0].bus_id = 0;
++    b->i2c_bus[0].sda = 20;
++    b->i2c_bus[0].scl = 21;
++
++    b->spi_bus_count = 1;
++    b->def_spi_bus = 0;
++    b->spi_bus[0].bus_id = 0;
++    b->spi_bus[0].slave_s = 0;
++    b->spi_bus[0].cs = 25;
++    b->spi_bus[0].mosi = 22;
++    b->spi_bus[0].miso = 23;
++    b->spi_bus[0].sclk = 21;
++
++    b->uart_dev_count = 3;
++    b->def_uart_dev = 0;
++    b->uart_dev[0].rx = 18;
++    b->uart_dev[0].tx = 19;
++
++    b->uart_dev[1].rx = 16;
++    b->uart_dev[1].tx = 17;
++
++    b->uart_dev[2].rx = 9;
++    b->uart_dev[2].tx = 8;
++
++    b->gpio_count = 0;
++    int i;
++    for (i = 0; i < b->phy_pin_count; i++) {
++        if (b->pins[i].capabilites.gpio) {
++            b->gpio_count++;
++        }
++    }
++
++    return b;
++}
+--- /dev/null
++++ b/src/mips/mips.c
+@@ -0,0 +1,60 @@
++/*
++ * Author: Thomas Ingleby <thomas.c.ingleby@intel.com>
++ * Author: Michael Ring <mail@michael-ring.org>
++ * Copyright (c) 2014 Intel Corporation.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining
++ * a copy of this software and associated documentation files (the
++ * "Software"), to deal in the Software without restriction, including
++ * without limitation the rights to use, copy, modify, merge, publish,
++ * distribute, sublicense, and/or sell copies of the Software, and to
++ * permit persons to whom the Software is furnished to do so, subject to
++ * the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be
++ * included in all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
++ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
++ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
++ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++ */
++
++#include <stdlib.h>
++#include <string.h>
++
++#include "mraa_internal.h"
++#include "mips/mediatek.h"
++
++mraa_platform_t
++mraa_mips_platform()
++{
++    mraa_platform_t platform_type = MRAA_UNKNOWN_PLATFORM;
++    size_t len = 100;
++    char* line = malloc(len);
++    FILE* fh = fopen("/proc/cpuinfo", "r");
++    if (fh != NULL) {
++        while (getline(&line, &len, fh) != -1) {
++            if (strncmp(line, "machine", 7) == 0) {
++                if (strstr(line, "MediaTek LinkIt Smart 7688")) {
++                    platform_type = MRAA_MTK_LINKIT;
++                }
++            }
++        }
++        fclose(fh);
++    }
++    free(line);
++
++    switch (platform_type) {
++        case MRAA_MTK_LINKIT:
++            plat = mraa_mtk_linkit();
++            break;
++        default:
++            plat = NULL;
++            syslog(LOG_ERR, "Unknown Platform, currently not supported by MRAA");
++    }
++    return platform_type;
++}

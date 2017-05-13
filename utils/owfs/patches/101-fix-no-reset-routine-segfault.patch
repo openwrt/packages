@@ -1,0 +1,13 @@
+--- a/module/owlib/src/c/ow_reset.c
++++ b/module/owlib/src/c/ow_reset.c
+@@ -21,6 +21,10 @@ RESET_TYPE BUS_reset(const struct parsed
+ 	struct connection_in * in = pn->selected_connection ;
+ 	STAT_ADD1_BUS(e_bus_resets, in);
+ 
++	if ( in->iroutines.reset == NO_RESET_ROUTINE ) {
++		return BUS_RESET_OK;
++	}
++
+ 	switch ( (in->iroutines.reset) (pn) ) {
+ 	case BUS_RESET_OK:
+ 		in->reconnect_state = reconnect_ok;	// Flag as good!

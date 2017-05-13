@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=lispmob
 PKG_REV:=180aa39d338a00bb532e421de7f8513492cf2e8b
 PKG_VERSION:=0.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=git://github.com/LISPmob/lispmob.git
@@ -33,12 +33,12 @@ define Package/lispd
   CATEGORY:=Network
   TITLE:=Locator/ID separation protocol (using TUN)
   URL:=https://github.com/LISPmob
-  DEPENDS:= +librt +libopenssl +confuse +kmod-tun +uci +kmod-ipv6
+  DEPENDS:= +librt +libopenssl +confuse +kmod-tun +uci @IPV6
   $(call Package/lispd/default)
 endef
 
 define Package/lispd/description
-  This packet provides support for the Locator-ID Seperation Protocol.
+  This packet provides support for the Locator-ID Separation Protocol.
 endef
 
 MAKE_FLAGS += \

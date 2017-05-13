@@ -1,0 +1,45 @@
+commit b412777317cabbf8ed89ca38fb180991cca89b8c
+Author: erouault <erouault>
+Date:   Fri Dec 2 22:13:32 2016 +0000
+
+    * tools/tiffcp.c: avoid uint32 underflow in cpDecodedStrips that
+    can cause various issues, such as buffer overflows in the library.
+    Reported by Agostino Sarubbo.
+    Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2598
+
+diff --git a/ChangeLog b/ChangeLog
+index 668b66a..0f154d6 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,5 +1,12 @@
+ 2016-12-02 Even Rouault <even.rouault at spatialys.com>
+ 
++	* tools/tiffcp.c: avoid uint32 underflow in cpDecodedStrips that 
++	can cause various issues, such as buffer overflows in the library.
++	Reported by Agostino Sarubbo.
++	Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2598
++
++2016-12-02 Even Rouault <even.rouault at spatialys.com>
++
+ 	* libtiff/tif_read.c, libtiff/tiffiop.h: fix uint32 overflow in
+ 	TIFFReadEncodedStrip() that caused an integer division by zero.
+ 	Reported by Agostino Sarubbo.
+diff --git a/tools/tiffcp.c b/tools/tiffcp.c
+index 338a3d1..6dfb9a9 100644
+--- a/tools/tiffcp.c
++++ b/tools/tiffcp.c
+@@ -1,4 +1,4 @@
+-/* $Id: tiffcp.c,v 1.55 2016-10-08 15:54:57 erouault Exp $ */
++/* $Id: tiffcp.c,v 1.56 2016-12-02 22:13:32 erouault Exp $ */
+ 
+ /*
+  * Copyright (c) 1988-1997 Sam Leffler
+@@ -985,7 +985,7 @@ DECLAREcpFunc(cpDecodedStrips)
+ 		tstrip_t s, ns = TIFFNumberOfStrips(in);
+ 		uint32 row = 0;
+ 		_TIFFmemset(buf, 0, stripsize);
+-		for (s = 0; s < ns; s++) {
++		for (s = 0; s < ns && row < imagelength; s++) {
+ 			tsize_t cc = (row + rowsperstrip > imagelength) ?
+ 			    TIFFVStripSize(in, imagelength - row) : stripsize;
+ 			if (TIFFReadEncodedStrip(in, s, buf, cc) < 0

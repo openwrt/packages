@@ -1,0 +1,28 @@
+diff -rupN seafile-seahub-5.1.1.orig/Makefile seafile-seahub-5.1.1/Makefile
+--- seafile-seahub-5.1.1.orig/Makefile	2016-04-26 23:59:48.000000000 +0200
++++ seafile-seahub-5.1.1/Makefile	2016-04-28 09:03:35.507105416 +0200
+@@ -1,3 +1,6 @@
++include $(TOPDIR)/rules.mk
++$(call include_mk, python-package.mk)
++
+ PROJECT=seahub
+ 
+ develop: setup-git
+@@ -9,7 +12,7 @@ dist: locale uglify statici18n collectst
+ 
+ locale:
+ 	@echo "--> Compile locales"
+-	django-admin.py compilemessages
++	$(call HostPython,,$(STAGING_DIR)/usr/bin/django-admin.py compilemessages)
+ 	@echo ""
+ 
+ uglify:
+@@ -19,7 +22,7 @@ uglify:
+ 
+ statici18n:
+ 	@echo "--> Generate JS locale files in static/scripts/i18n"
+-	python manage.py compilejsi18n
++	$(call HostPython,,manage.py compilejsi18n)
+ 
+ collectstatic:
+ 	@echo "--> Collect django static files to media/assets"

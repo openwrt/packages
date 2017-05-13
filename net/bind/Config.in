@@ -1,0 +1,17 @@
+if PACKAGE_bind-server
+
+config BIND_ENABLE_FILTER_AAAA
+	bool
+	default y
+	prompt "Enable filtering of AAAA records returned to the client"
+	help
+		BIND 9 has an option to filter AAAA (IPv6 address) records
+		returned to the client based on the transport used for the
+		query, and other filtering conditions. This filtering does
+		not affect the recursive queries made by the server (if
+		any) as a result of the client request.
+
+		Additional details are available at
+		https://kb.isc.org/article/AA-00576/0/Filter-AAAA-option-in-BIND-9-.html
+
+endif

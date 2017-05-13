@@ -8,19 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opensc
-PKG_VERSION:=20150513
+PKG_VERSION:=0.16.0
 PKG_RELEASE:=1
+PKG_MD5SUM:=3ac8c29542bb48179e7086d35a1b8907a4e86aca3de3323c2f48bd74eaaf5729
+
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
-
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/OpenSC/OpenSC.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=a09ca246a797230c14bc33a34f2dddc4a4dbff40
+PKG_SOURCE_URL:=https://github.com/OpenSC/OpenSC/releases/download/$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+
 PKG_BUILD_DEPENDS:=+libpcsclite
 PKG_FIXUP:=libtool
 
@@ -33,7 +30,7 @@ define Package/libopensc
   CATEGORY:=Libraries
   TITLE:=OpenSC libraries for smart cards
   URL:=https://github.com/OpenSC/OpenSC/wiki
-  DEPENDS:=+libopenssl +libpthread
+  DEPENDS:=+libopenssl +libpthread +zlib
   MENU:=1
 endef
 

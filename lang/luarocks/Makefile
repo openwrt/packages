@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luarocks
 PKG_VERSION:=2.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
@@ -41,7 +41,11 @@ endef
 CONFIGURE_ARGS = \
     --prefix=$(CONFIGURE_PREFIX) \
     --sysconfdir=/etc \
-    --with-lua=$(STAGING_DIR_HOST)
+    --with-lua=$(STAGING_DIR_HOSTPKG)
+
+CONFIGURE_VARS = \
+	LUAROCKS_UNAME_S="Linux" \
+	LUAROCKS_UNAME_M="$(ARCH)"
 
 define Build/Compile
 	$(call Build/Compile/Default,build)

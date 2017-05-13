@@ -28,6 +28,7 @@ proto_vpnc_init_config() {
 	proto_config_add_int "dpd_idle"
 	proto_config_add_string "auth_mode"
 	proto_config_add_string "target_network"
+	proto_config_add_boolean "authfail"
 	no_device=1
 	available=1
 }
@@ -35,14 +36,14 @@ proto_vpnc_init_config() {
 proto_vpnc_setup() {
 	local config="$1"
 
-	json_get_vars server username hexpasswd authgroup password token_mode token_secret interface passgroup hexpassgroup domain vendor natt_mode dh_group pfs enable_single_des enable_no_enc mtu local_addr local_port udp_port dpd_idle auth_mode target_network
+	json_get_vars server username hexpasswd authgroup password token_mode token_secret interface passgroup hexpassgroup domain vendor natt_mode dh_group pfs enable_single_des enable_no_enc mtu local_addr local_port udp_port dpd_idle auth_mode target_network authfail
 
 	grep -q tun /proc/modules || insmod tun
 
 	logger -t vpnc "initializing..."
 	serv_addr=
 	for ip in $(resolveip -t 10 "$server"); do
-		( proto_add_host_dependency "$config" "$ip" $interface )
+		( proto_add_host_dependency "vpn-$config" "$ip" $interface )
 		serv_addr=1
 	done
 	[ -n "$serv_addr" ] || {
@@ -89,6 +90,17 @@ proto_vpnc_teardown() {
 	local config="$1"
 
 	pwfile="/var/etc/vpnc-$config.conf"
+
+	json_get_var authfail authfail
+	# On error exit (vpnc only has success = 0 and error = 1, so
+	# we can't be fine-grained and say only auth error)
+	# and authfail setting true, then don't retry starting vpnc
+	# This is used for the case were the server blocks repeated
+	# failed authentication attempts (which will occur if the password
+	# is wrong, for example).
+	if [ ${ERROR:-0} -gt 0 ] && [ "${authfail:-0}" -gt 0 ]; then
+		proto_block_restart "$config"
+	fi
 
 	rm -f $pwfile
 	logger -t vpnc "bringing down vpnc"

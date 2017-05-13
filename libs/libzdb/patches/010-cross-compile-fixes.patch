@@ -1,6 +1,6 @@
-diff -rupN libzdb-3.0.orig/configure.ac libzdb-3.0/configure.ac
---- libzdb-3.0.orig/configure.ac	2014-01-06 22:17:57.000000000 +0100
-+++ libzdb-3.0/configure.ac	2014-11-20 13:59:27.456957651 +0100
+diff -rupN libzdb-3.1.orig/configure.ac libzdb-3.1/configure.ac
+--- libzdb-3.1.orig/configure.ac	2015-08-31 14:46:02.000000000 +0200
++++ libzdb-3.1/configure.ac	2016-04-18 19:43:13.836937134 +0200
 @@ -196,15 +196,6 @@ AC_SEARCH_LIBS([pthread_create], [pthrea
  # Database Libraries 
  
@@ -40,7 +40,7 @@ diff -rupN libzdb-3.0.orig/configure.ac libzdb-3.0/configure.ac
 -                DBCPPFLAGS="$DBCPPFLAGS `$MYSQLCONFIG --include`"
 -                DBLDFLAGS="$DBLDFLAGS `$MYSQLCONFIG --libs`"
 +                DBCPPFLAGS="$DBCPPFLAGS -I$STAGING_DIR/usr/include/mysql"
-+                DBLDFLAGS="$DBLDFLAGS -L$STAGING_DIR/usr/lib/mysql -L$STAGING_DIR/usr/lib -lmysqlclient -lz -lcrypt -lnsl -lm"
++                DBLDFLAGS="$DBLDFLAGS -L$STAGING_DIR/usr/lib/mysql -L$STAGING_DIR/usr/lib -lmysqlclient -lz -lcrypt -lm"
                  AC_DEFINE([HAVE_LIBMYSQLCLIENT], 1, [Define to 1 to enable mysql])
          else
                  CPPFLAGS=$svd_CPPFLAGS
@@ -95,18 +95,18 @@ diff -rupN libzdb-3.0.orig/configure.ac libzdb-3.0/configure.ac
 -                        [
 -                                svd_LDFLAGS=$LDFLAGS
 -                                svd_CPPFLAGS=$CPPFLAGS
--                                LDFLAGS="-L$with_sqlite/lib $LDFLAGS -lsqlite3"
+-                                LDFLAGS="-L$with_sqlite/lib $LDFLAGS"
 -                                CPPFLAGS="-I$with_sqlite/include $CPPFLAGS"
 -                                AC_SEARCH_LIBS([sqlite3_open], [sqlite3],
 -                                [
 -                                        DBCPPFLAGS="$DBCPPFLAGS -I$with_sqlite/include"
 -                                        DBLDFLAGS="$DBLDFLAGS -L$with_sqlite/lib/ -lsqlite3"
--                                ],[sqlite="no"])
+-                                ],[sqlite="no"],[-ldl])
 -                                LDFLAGS=$svd_LDFLAGS
 -                                CPPFLAGS=$svd_CPPFLAGS
 -   
 -                        ],
--                        AC_SEARCH_LIBS([sqlite3_open], [sqlite3], [], [sqlite="no"]))
+-                        AC_SEARCH_LIBS([sqlite3_open], [sqlite3], [], [sqlite="no"], [-ldl]))
 +                        AC_SEARCH_LIBS([sqlite3_open], [sqlite3], [], [sqlite="no"])
                  fi
          ], 
@@ -157,7 +157,7 @@ diff -rupN libzdb-3.0.orig/configure.ac libzdb-3.0/configure.ac
  AC_CHECK_FUNCS([timegm])
  
  
-@@ -487,11 +421,6 @@ echo "|   PostgreSQL:
+@@ -516,11 +450,6 @@ echo "|   PostgreSQL:
  else
  echo "|   PostgreSQL:                                   DISABLED   |"
  fi
@@ -169,9 +169,9 @@ diff -rupN libzdb-3.0.orig/configure.ac libzdb-3.0/configure.ac
  echo "+------------------------------------------------------------+"
  
  
-diff -rupN libzdb-3.0.orig/Makefile.am libzdb-3.0/Makefile.am
---- libzdb-3.0.orig/Makefile.am	2014-01-06 22:34:08.000000000 +0100
-+++ libzdb-3.0/Makefile.am	2014-11-20 13:51:22.508204689 +0100
+diff -rupN libzdb-3.1.orig/Makefile.am libzdb-3.1/Makefile.am
+--- libzdb-3.1.orig/Makefile.am	2015-08-31 14:55:18.000000000 +0200
++++ libzdb-3.1/Makefile.am	2016-04-18 19:43:42.215769551 +0200
 @@ -45,11 +45,6 @@ libzdb_la_SOURCES += src/db/sqlite/SQLit
                       src/db/sqlite/SQLiteResultSet.c \
                       src/db/sqlite/SQLitePreparedStatement.c

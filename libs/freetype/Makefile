@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freetype
-PKG_VERSION:=2.5.5
+PKG_VERSION:=2.7.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/freetype
-PKG_MD5SUM:=2a7a314927011d5030903179cf183be0
+PKG_HASH:=3a3bb2c4e15ffb433f2032f50a5b5a92558206822e22bfe8cbe339af4aa82f88
 
 PKG_LICENSE:=FTL GPL-2.0 MIT ZLIB
 PKG_LICENSE_FILES:=docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT src/bdf/README src/pcf/README src/gzip/zlib.h
@@ -64,13 +64,13 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/freetype2.pc $(1)/usr/lib/pkgconfig/
 
 	$(SED) \
-		's,^\(prefix\|exec_prefix\)=.*,\1="$(STAGING_DIR)/usr",g' \
+		's,^\(prefix\|exec_prefix\)=.*,\1="$(STAGING_DIR)/usr",; \
+		 s,^\(includedir\)=.*,\1="$(STAGING_DIR)/usr/include",; \
+		 s,^\(libdir\)=.*,\1="$(STAGING_DIR)/usr/lib",' \
 		 $(2)/bin/freetype-config
 	$(SED) \
-		's,/usr/include,$$$${prefix}/include,g' \
-		 $(1)/usr/lib/pkgconfig/freetype2.pc
-	$(SED) \
-		's,/usr/lib,$$$${exec_prefix}/lib,g' \
+		's,/usr/include,$$$${prefix}/include,g; \
+		 s,/usr/lib,$$$${exec_prefix}/lib,g' \
 		 $(1)/usr/lib/pkgconfig/freetype2.pc
 endef
 

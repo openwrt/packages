@@ -1,21 +1,156 @@
 #!/bin/sh /etc/rc.common
-
+# Copyright © 2012 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
 START=50
+
+RUN_D=/var/run
+PID_F=$RUN_D/upsd.pid
+UPS_C=/var/etc/nut/ups.conf
+USERS_C=/var/etc/nut/upsd.users
+UPSD_C=/var/etc/nut/upsd.conf
+
 USE_PROCD=1
 
-restart() {
-	stop_service
-	start_service
+listen_address() {
+    local cfg="$1"
+
+    config_get address "$cfg" address "::1"
+    config_get port "$cfg" port
+    echo "LISTEN $address $port" >>$UPSD_C
+}
+
+upsd_statepath() {
+    local cfg="$1"
+    config_get statepath "$cfg" statepath
+}
+
+upsd_config() {
+    local cfg="$1"
+    local maxage maxconn certfile
+
+    # Note runas support requires you make sure USB device file is readable by
+    # the runas user
+    config_get runas "$cfg" runas
+
+    config_get maxage "$cfg" maxage
+    [ -n "$maxage" ] && echo "MAXAGE $maxage" >>$UPSD_C
+
+    config_get statepath "$cfg" statepath
+    [ -n "$statepath" ] && echo "STATEPATH $statepath" >>$UPSD_C
+
+    config_get maxconn "$cfg" maxconn
+    [ -n "$maxconn" ] && echo "MAXCONN $maxconn" >>$UPSD_C
+
+    #NOTE: certs only apply to SSL-enabled version
+    config_get certfile "$cfg" certfile
+    [ -n "$certfile" ] && echo "CERTFILE $certfile" >>$UPSD_C
+}
+
+nut_user_add() {
+	local cfg="$1"
+	local a
+	local val
+
+	config_get val "$cfg" username "$1"
+	echo "[$val]" >> $USERS_C
+
+	config_get val "$cfg" password
+	echo "  password = $val" >> $USERS_C
+
+	config_get val "$cfg" actions
+	for a in $val; do
+	    echo "  actions = $a" >> $USERS_C
+	done
+
+	instcmd() {
+		local val="$1"
+		echo "  instcmds = $val" >> $USERS_C
+	}
+
+	config_list_foreach "$cfg" instcmd instcmd
+
+	config_get val "$cfg" upsmon
+	if [ -n "$val" ]; then
+	    echo "  upsmon $val" >> $USERS_C
+	fi
 }
 
 start_service() {
-	upsdrvctl start
-	upsd
+	local runas statepath
+
+        mkdir -p /var/etc/nut
+	chmod -R 750 /var/etc/nut
+
+	rm -f $UPSD_C
+	rm -f $USERS_C
+	rm -f $UPSD_C
+	rm -f /var/etc/nut/nut.conf
+
+	echo "# Config file automatically generated from UCI config" > $UPS_C
+	echo "# Config file automatically generated from UCI config" > $USERS_C
+	echo "# Config file automatically generated from UCI config" > $UPSD_C
+
+        local in_driver have_drivers
+	config_cb() {
+	    if [ "$1" != "driver" ]; then
+		in_driver=
+	    else
+		echo "[$2]" >> $UPS_C
+		in_driver=true
+		have_drivers=true
+	    fi
+	}
+	option_cb() {
+	    if [ "$in_driver" = "true" ]; then
+		echo " $1 = $2" >> $UPS_C
+	    fi
+	}
+
+	config_load nut_server
+
+	config_foreach nut_user_add user
+	config_foreach upsd_config upsd
+	config_foreach listen_address listen_address
+
+	echo "MODE=netserver" >>/var/etc/nut/nut.conf
+
+	chmod 0640 $USERS_C
+	chmod 0640 $UPS_C
+	chmod 0640 $UPSD_C
+	chmod 0640 /var/etc/nut/nut.conf
+	[ -d "${statepath:-/var/run/nut}" ] || {
+		mkdir -m 0750 -p "${statepath:-/var/run/nut}"
+		chown $runas:$(id -gn $runas) "${statepath:-/var/run/nut}"
+	}
+
+	if [ -n "$runas" ]; then
+		chown -R $runas:$(id -gn $runas) /var/etc/nut
+	fi
+
+	if [ "$have_drivers" = "true" ]; then
+	    $DEBUG /usr/sbin/upsd ${runas:+-u $runas} $OPTIONS
+	    $DEBUG /usr/sbin/upsdrvctl ${runas:+-u $runas} start
+	fi
+}
+
+
+nut_driver_stop() {
+	local cfg="$1"
+	local driver
+
+	config_get driver "$cfg" driver
+
+	[ -r ${statepath:-/var/run/nut}/$driver-$cfg ] && /usr/sbin/upsdrvctl stop $cfg
 }
 
 stop_service() {
-	upsd -c stop
-	upsdrvctl stop
+	[ -r $PID_F ] && /usr/sbin/upsd -c stop
+	config_load ups
+	config_foreach upsd_statepath upsd
+	config_foreach nut_driver_stop driver
 }
 
 reload_service() {

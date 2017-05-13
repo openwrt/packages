@@ -1,0 +1,16 @@
+--- a/backend/pieusb_buffer.c
++++ b/backend/pieusb_buffer.c
+@@ -104,11 +104,13 @@
+ 
+ /* When creating the release backend, make complains about unresolved external
+  * le16toh, although it finds the include <endian.h> */
++#ifndef le16toh
+ #if __BYTE_ORDER == __LITTLE_ENDIAN
+  #define le16toh(x) (x)
+ #else
+  #define le16toh(x) __bswap_16 (x)
+ #endif
++#endif
+ 
+ static void buffer_update_read_index(struct Pieusb_Read_Buffer* buffer, int increment);
+ 

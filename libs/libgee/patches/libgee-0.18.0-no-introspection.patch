@@ -1,0 +1,101 @@
+diff -u --recursive libgee-0.18.0-vanilla/configure.ac libgee-0.18.0/configure.ac
+--- libgee-0.18.0-vanilla/configure.ac	2015-03-23 23:24:39.000000000 -0400
++++ libgee-0.18.0/configure.ac	2015-10-18 07:25:39.474698663 -0400
+@@ -64,10 +64,6 @@
+               enable_consistency_check=$enableval, enable_consistency_check=no)
+ AS_IF([test "x$enable_consistency_check" != xno], [VALA_ADD_VALAFLAGS(-D CONSISTENCY_CHECKS)])
+ 
+-GOBJECT_INTROSPECTION_CHECK([0.9.0])
+-
+-VALA_CHECK([0.25.1])
+-
+ AC_OUTPUT([Makefile
+            gee-0.8.pc
+            benchmark/Makefile
+diff -u --recursive libgee-0.18.0-vanilla/gee/Makefile.am libgee-0.18.0/gee/Makefile.am
+--- libgee-0.18.0-vanilla/gee/Makefile.am	2015-03-16 11:23:57.000000000 -0400
++++ libgee-0.18.0/gee/Makefile.am	2015-10-18 10:41:49.759314756 -0400
+@@ -146,29 +146,6 @@
+ 	gee-0.8.vapi \
+ 	$(NULL)
+ 
+-if HAVE_INTROSPECTION
+-girdir = @INTROSPECTION_GIRDIR@
+-
+-dist_gir_DATA = \
+-	Gee-0.8.gir \
+-	$(NULL)
+-
+-typelibdir = @INTROSPECTION_TYPELIBDIR@
+-typelib_DATA = \
+-	Gee-0.8.typelib \
+-	$(NULL)
+-
+-# Extract dlname from libfolks.la; see bug #658002.
+-# This is what g-ir-scanner does.
+-libgee_dlname = \
+-	`$(SED) -nE "s/^dlname='([A-Za-z0-9.+-]+)'/\1/p" libgee-0.8.la`
+-INTROSPECTION_COMPILER_ARGS= \
+-	-l $(libgee_dlname)
+-Gee-0.8.gir: libgee_0_8_la_vala.stamp
+-Gee-0.8.typelib: Gee-0.8.gir libgee-0.8.la
+-	@INTROSPECTION_COMPILER@ $(INTROSPECTION_COMPILER_ARGS) -o $@ $^
+-endif
+-
+ MOSTLYCLEANFILES = \
+ 	$(libgee_0_8_la_VALASOURCES:.vala=.c) \
+ 	libgee_0_8_la_vala.stamp \
+diff -u --recursive libgee-0.18.0-vanilla/gee/Makefile.in libgee-0.18.0/gee/Makefile.in
+--- libgee-0.18.0-vanilla/gee/Makefile.in	2015-03-23 23:25:03.000000000 -0400
++++ libgee-0.18.0/gee/Makefile.in	2015-10-18 11:02:34.888709559 -0400
+@@ -285,14 +285,6 @@
+ INSTALL_PROGRAM = @INSTALL_PROGRAM@
+ INSTALL_SCRIPT = @INSTALL_SCRIPT@
+ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+-INTROSPECTION_CFLAGS = @INTROSPECTION_CFLAGS@
+-INTROSPECTION_COMPILER = @INTROSPECTION_COMPILER@
+-INTROSPECTION_GENERATE = @INTROSPECTION_GENERATE@
+-INTROSPECTION_GIRDIR = @INTROSPECTION_GIRDIR@
+-INTROSPECTION_LIBS = @INTROSPECTION_LIBS@
+-INTROSPECTION_MAKEFILE = @INTROSPECTION_MAKEFILE@
+-INTROSPECTION_SCANNER = @INTROSPECTION_SCANNER@
+-INTROSPECTION_TYPELIBDIR = @INTROSPECTION_TYPELIBDIR@
+ LCOV = @LCOV@
+ LD = @LD@
+ LDFLAGS = @LDFLAGS@
+@@ -531,25 +523,6 @@
+ 	gee-0.8.vapi \
+ 	$(NULL)
+ 
+-@HAVE_INTROSPECTION_TRUE@girdir = @INTROSPECTION_GIRDIR@
+-@HAVE_INTROSPECTION_TRUE@dist_gir_DATA = \
+-@HAVE_INTROSPECTION_TRUE@	Gee-0.8.gir \
+-@HAVE_INTROSPECTION_TRUE@	$(NULL)
+-
+-@HAVE_INTROSPECTION_TRUE@typelibdir = @INTROSPECTION_TYPELIBDIR@
+-@HAVE_INTROSPECTION_TRUE@typelib_DATA = \
+-@HAVE_INTROSPECTION_TRUE@	Gee-0.8.typelib \
+-@HAVE_INTROSPECTION_TRUE@	$(NULL)
+-
+-
+-# Extract dlname from libfolks.la; see bug #658002.
+-# This is what g-ir-scanner does.
+-@HAVE_INTROSPECTION_TRUE@libgee_dlname = \
+-@HAVE_INTROSPECTION_TRUE@	`$(SED) -nE "s/^dlname='([A-Za-z0-9.+-]+)'/\1/p" libgee-0.8.la`
+-
+-@HAVE_INTROSPECTION_TRUE@INTROSPECTION_COMPILER_ARGS = \
+-@HAVE_INTROSPECTION_TRUE@	-l $(libgee_dlname)
+-
+ MOSTLYCLEANFILES = \
+ 	$(libgee_0_8_la_VALASOURCES:.vala=.c) \
+ 	libgee_0_8_la_vala.stamp \
+@@ -1607,9 +1580,6 @@
+ 
+ $(libgee_0_8_la_VALASOURCES:.vala=.c): libgee_0_8_la_vala.stamp
+ gee-0.8.vapi gee-internals-0.8.vapi gee.h gee-internals.h: libgee_0_8_la_vala.stamp
+-@HAVE_INTROSPECTION_TRUE@Gee-0.8.gir: libgee_0_8_la_vala.stamp
+-@HAVE_INTROSPECTION_TRUE@Gee-0.8.typelib: Gee-0.8.gir libgee-0.8.la
+-@HAVE_INTROSPECTION_TRUE@	@INTROSPECTION_COMPILER@ $(INTROSPECTION_COMPILER_ARGS) -o $@ $^
+ 
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.

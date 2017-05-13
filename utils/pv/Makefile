@@ -16,7 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.ivarch.com/programs/sources/
 PKG_MD5SUM:=efe8e9e4cad5f3264a32258a63bf2c8e
 PKG_LICENSE:=Artistic-2.0
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 PKG_INSTALL:=1
 

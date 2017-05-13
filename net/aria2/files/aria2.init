@@ -1,0 +1,112 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2014-2016 nanpuyue <nanpuyue@gmail.com>
+# Copyright (C) 2016 kuoruan <kuoruan@gmail.com>
+
+START=99
+SERVICE_WRITE_PID=1
+SERVICE_DAEMONIZE=1
+
+
+append_params() {
+	local p; local v; local s="$1"; shift
+	for p in $*; do
+		config_get v "$s" "$p"
+		[ -n "$v" ] && (
+			p=$(echo "$p" | sed -e 's|_|-|g');
+			echo "$p=$v" >> $config_file
+			)
+	done
+}
+
+section_enabled() {
+	local result
+	config_get_bool result "$1" 'enabled' 0
+	[ $result -eq 1 ]
+}
+
+option_disabled() {
+	local result
+	config_get_bool result "$1" "$2" 1
+	[ $result -eq 0 ]
+}
+
+start_instance() {
+	local s="$1"
+	local user
+
+	section_enabled "$s" || return 1
+
+	config_get config_dir "$s" 'config_dir' '/var/etc/aria2'
+	config_get dir "$s" 'dir'
+	config_get user "$s" 'user'
+
+	config_file="$config_dir/aria2.conf"
+	session_file="$config_dir/aria2.session"
+	dht_file="$config_dir/dht.dat"
+	log_file="$config_dir/aria2.log"
+
+	[ -d "$config_dir" ] || {
+		mkdir -m 0755 -p "$config_dir"
+		touch "$config_file"
+	}
+
+	[ -d "$dir" ] || {
+		mkdir -m 0755 -p "$dir"	# create download dir
+		touch "$dir"
+	}
+
+	touch "$session_file" # create session file
+
+	echo -e "enable-rpc=true\nrpc-allow-origin-all=true\nrpc-listen-all=true\nquiet=true" > $config_file
+	echo -e "continue=true\ninput-file=$session_file\nsave-session=$session_file" >> $config_file
+
+	option_disabled "$s" 'enable_dht' || echo "dht-file-path=$dht_file" >> $config_file
+	option_disabled "$s" 'enable_log' || {
+		[ -f "$log_file" ] && echo > $log_file # if log file exist, clear it
+                echo -e "log=$log_file" >> $config_file
+        }
+
+	# if user is set, change dir owner
+	[ -z "$user" ] || {
+		chown -R $user:$user $config_dir
+		chown -R $user:$user $dir
+	}
+
+	append_params "$s" \
+		file_allocation bt_enable_lpd enable_dht rpc_user rpc_passwd rpc_listen_port dir bt_tracker disk_cache \
+		max_overall_download_limit max_overall_upload_limit max_download_limit max_upload_limit max_concurrent_downloads \
+		max_connection_per_server min_split_size split save_session_interval follow_torrent listen_port bt_max_peers \
+		peer_id_prefix user_agent rpc_secret log_level
+	
+	config_list_foreach "$s" extra_settings append_extrasettings
+	
+	SERVICE_UID="$user" \
+	service_start /usr/bin/aria2c --conf-path="$config_file" # start service
+}
+
+append_extrasettings() {
+	echo "$1" >> $config_file
+}
+
+start() {
+	logger -t ARIA2C 'Starting aria2c service'
+	config_load 'aria2'
+	config_foreach start_instance 'aria2'
+	return 0
+}
+
+stop() {
+	if [ -n "`pidof aria2c`" ]; then
+		logger -t ARIA2C 'Shutting down aria2c service'
+		service_stop /usr/bin/aria2c
+	fi
+	return 0
+}
+
+restart() {
+	logger -t ARIA2C 'Restarting aria2c service'
+	stop
+	sleep 2 # give time to shutdown
+	start
+}
+

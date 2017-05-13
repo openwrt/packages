@@ -1,0 +1,27 @@
+From 811f5c0b0a226edfbf5aa2f316e083f30ec3cd8d Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Tue, 18 Aug 2015 14:34:26 +0800
+Subject: [PATCH] Include <sys/types.h> for definition of u_char.
+
+Fixes build with musl-libc.
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ src/libwps/libwps.h |    1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/libwps/libwps.h b/src/libwps/libwps.h
+index b04dd8b..bdd7b9a 100755
+--- a/src/libwps/libwps.h
++++ b/src/libwps/libwps.h
+@@ -17,6 +17,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <arpa/inet.h>
++#include <sys/types.h>
+ 
+ #define LIBWPS_MAX_STR_LEN 256
+ 
+-- 
+1.7.10.4
+

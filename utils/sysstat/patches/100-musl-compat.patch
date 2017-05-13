@@ -1,0 +1,30 @@
+--- a/sa_common.c
++++ b/sa_common.c
+@@ -28,6 +28,7 @@
+ #include <dirent.h>
+ #include <fcntl.h>
+ #include <libgen.h>
++#include <limits.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ 
+--- a/common.c
++++ b/common.c
+@@ -30,6 +30,7 @@
+ #include <dirent.h>
+ #include <ctype.h>
+ #include <libgen.h>
++#include <limits.h>
+ 
+ #include "version.h"
+ #include "common.h"
+--- a/ioconf.c
++++ b/ioconf.c
+@@ -27,6 +27,7 @@
+ #include <errno.h>
+ #include <dirent.h>
+ #include <sys/stat.h>
++#include <sys/types.h>
+ 
+ #include "ioconf.h"
+ #include "common.h"

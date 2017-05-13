@@ -1,0 +1,57 @@
+From 39b0c436c77555849da1e68cc8733c67183c291f Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sat, 10 Dec 2016 18:35:04 +0100
+Subject: [PATCH 22/23] build: restrict compiler options to supported
+ architectures
+
+For Linux we currently only support the following architectures:
+'x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'
+explicitly check for those architectures and also remove ARM hard float.
+
+Change-Id: I7078530bc2a89b88c7049cc53e8bb3fbe5d75ca8
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ build_common/linux/SConscript                     | 11 +++--------
+ resource/csdk/connectivity/build/linux/SConscript | 11 +++--------
+ 2 files changed, 6 insertions(+), 16 deletions(-)
+
+--- a/build_common/linux/SConscript
++++ b/build_common/linux/SConscript
+@@ -30,14 +30,9 @@ if target_arch in ['x86']:
+ elif target_arch in ['x86_64']:
+ 	env.AppendUnique(CCFLAGS = ['-m64'])
+ 	env.AppendUnique(LINKFLAGS = ['-m64'])
+-elif target_arch in ['arm'] or target_arch.find('v5') > 0:
++elif target_arch in ['arm']:
+ 	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
+-elif target_arch.find('v7a-hard') > 0:
++elif target_arch in ['arm-v7a', 'armeabi-v7a']:
+ 	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+-	env.AppendUnique(CPPFLAGS = ['-mfloat-abi=hard'])
+-	env.AppendUnique(CCFLAGS = ['-mfloat-abi=hard'])
+-	env.AppendUnique(LINKFLAGS = ['-mfloat-abi=hard'])
+-elif target_arch.find('v7a') > 0:
+-	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+-elif target_arch.find('arm64') >= 0:
++elif target_arch.find('arm64') > 0:
+ 	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
+--- a/resource/csdk/connectivity/build/linux/SConscript
++++ b/resource/csdk/connectivity/build/linux/SConscript
+@@ -29,14 +29,9 @@ if target_arch in ['x86']:
+ elif target_arch in ['x86_64']:
+ 	env.AppendUnique(CCFLAGS = ['-m64'])
+ 	env.AppendUnique(LINKFLAGS = ['-m64'])
+-elif target_arch.find('v7a-hard') > 0:
+-	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+-	env.AppendUnique(CPPFLAGS = ['-mfloat-abi=hard'])
+-	env.AppendUnique(CCFLAGS = ['-mfloat-abi=hard'])
+-	env.AppendUnique(LINKFLAGS = ['-mfloat-abi=hard'])
+-elif target_arch.find('v7a') > 0:
++elif target_arch in ['arm']:
++	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
++elif target_arch in ['arm-v7a', 'armeabi-v7a']:
+ 	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+ elif target_arch.find('arm64') > 0:
+ 	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
+-else:
+-	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])

@@ -1,0 +1,48 @@
+#
+# Copyright (C) 2016 Shuanglei Tao <tsl0922@gmail.com>
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=ttyd
+PKG_VERSION:=1.3.2+git-f60398
+PKG_RELEASE:=1
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/tsl0922/ttyd.git
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=f60398fb0976d5a682f2a28c2e8f8b90ec1c4c2c
+PKG_MIRROR_HASH=687499f46471f018aadce1d71c72de8a7fdd2ea04b926d8eb9eaeb747e1f4388
+
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
+
+CMAKE_INSTALL:=1
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
+
+define Package/ttyd
+	SECTION:=utils
+	CATEGORY:=Utilities
+	TITLE:=Command-line tool for sharing terminal over the web
+	DEPENDS:=+libopenssl +libjson-c +libpthread +libwebsockets-openssl
+	URL:=https://github.com/tsl0922/ttyd
+	SUBMENU:=Terminal
+	MAINTAINER:=Shuanglei Tao <tsl0922@gmail.com>
+endef
+
+define Package/ttyd/description
+ttyd is a command-line tool for sharing terminal over the web.
+endef
+
+define Package/ttyd/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ttyd $(1)/usr/bin/
+endef
+
+$(eval $(call BuildPackage,ttyd))

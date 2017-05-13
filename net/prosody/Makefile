@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prosody
-PKG_VERSION:=0.9.8
+PKG_VERSION:=0.9.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://prosody.im/downloads/source
-PKG_MD5SUM:=5144cd832a1860443e21e336dc560ee7
+PKG_MD5SUM:=d743adea6cfbaacc3a24cc0c3928bb1b
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=MIT/X11
 
@@ -50,7 +50,7 @@ define Build/Configure
 	# this is *NOT* GNU autoconf stuff
 	(cd $(PKG_BUILD_DIR); ./configure \
 		--prefix=/usr \
-		--with-lua="$(STAGING_DIR)/host/bin" \
+		--with-lua="$(STAGING_DIR_HOSTPKG)/bin" \
 		--with-lua-include="$(STAGING_DIR)/usr/include" \
 		--with-lua-lib="$(STAGING_DIR)/usr/lib" \
 		--cflags="$(TARGET_CFLAGS)" \

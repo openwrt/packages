@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.14
-PKG_RELEASE:=1.3
-PKG_MAINTAINER:=Dirk Brenken <dibdot@gmail.com>
+PKG_VERSION:=4.8.19
+PKG_RELEASE:=1
+PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_MD5SUM:=fbdaddb9edcf8925dcf3231331a8720b
-
+PKG_HASH:=eb9e56bbb5b2893601d100d0e0293983049b302c5ab61bfb544ad0ee2cc1f2df
 PKG_BUILD_PARALLEL:=1
-PKG_FIXUP:=autoreconf
+PKG_FIXUP:=autoreconf gettext-version
 
 PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_MC \
@@ -34,12 +33,12 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/mc
-  SECTION:=utils
-  CATEGORY:=Utilities
-  DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
-  TITLE:=Midnight Commander - a powerful visual file manager
-  URL:=http://www.midnight-commander.org/
-  MENU:=1
+	SECTION:=utils
+	CATEGORY:=Utilities
+	DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
+	TITLE:=Midnight Commander - a powerful visual file manager
+	URL:=https://www.midnight-commander.org/
+	MENU:=1
 endef
 
 define Package/mc/config
@@ -47,15 +46,18 @@ define Package/mc/config
 endef
 
 define Package/mc/description
- GNU Midnight Commander is a visual file manager,
- licensed under GNU General Public License and therefore qualifies as Free Software.
- It's a feature rich full-screen text mode application that allows you to copy,
- move and delete files and whole directory trees, search for files
- and run commands in the subshell. Internal viewer and editor are included.
+GNU Midnight Commander is a visual file manager.
+It's a feature rich full-screen text mode application that allows you to copy,
+move and delete files and whole directory trees, search for files and run commands in the subshell.
+Internal viewer and editor are included as well.
+
 endef
 
 CONFIGURE_ARGS += \
+	--enable-silent-rules \
+	--disable-tests \
 	--disable-doxygen-doc \
+	--with-homedir=/etc/mc \
 	--with-screen=ncurses \
 	--without-gpm-mouse \
 	--without-x \
@@ -102,6 +104,11 @@ define Package/mc/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mc $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/mc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.charsets $(1)/etc/mc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.default.keymap $(1)/etc/mc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.ext $(1)/etc/mc
+	$(INSTALL_DIR) $(1)/usr/share/mc/help
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/doc/hlp/mc.hlp $(1)/usr/share/mc/help
 ifeq ($(CONFIG_MC_DIFFVIEWER),y)
 	ln -sf mc $(1)/usr/bin/mcdiff
 endif
@@ -111,7 +118,7 @@ endif
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.menu $(1)/etc/mc
 	$(INSTALL_DIR) $(1)/etc/mc/skins
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/skins/default.ini $(1)/etc/mc/skins
-	$(INSTALL_DIR) $(1)/root/.mc/cedit/Syntax
+	$(INSTALL_DIR) $(1)/etc/mc/mcedit/Syntax
 endef
 
 define Package/mc/conffiles

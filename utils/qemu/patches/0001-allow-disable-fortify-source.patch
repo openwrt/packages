@@ -1,0 +1,11 @@
+--- a/configure.orig	2016-11-22 11:53:25.739180380 +0800
++++ b/configure	2016-11-22 11:53:55.183189596 +0800
+@@ -1147,6 +1147,8 @@ for opt do
+   ;;
+   --enable-jemalloc) jemalloc="yes"
+   ;;
++  --disable-fortify-source) fortify_source="no"
++  ;;
+   *)
+       echo "ERROR: unknown option $opt"
+       echo "Try '$0 --help' for more information"
