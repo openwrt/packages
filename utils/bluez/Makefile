@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluez
 PKG_VERSION:=5.38
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/bluetooth/
@@ -21,6 +21,8 @@ PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+
+PKG_FIXUP=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
