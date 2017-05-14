@@ -1,6 +1,6 @@
---- a/configure.in	2017-04-14 11:53:48.345481008 -0600
-+++ b/configure.in	2017-04-14 11:58:47.887644651 -0600
-@@ -497,6 +497,7 @@
+--- a/configure.in
++++ b/configure.in
+@@ -494,6 +494,7 @@ limits.h \
  locale.h \
  monetary.h \
  netdb.h \
@@ -8,59 +8,55 @@
  pwd.h \
  resolv.h \
  signal.h \
-@@ -509,7 +510,6 @@
- sys/file.h \
- sys/mman.h \
- sys/mount.h \
--sys/poll.h \
- sys/resource.h \
- sys/select.h \
- sys/socket.h \
---- a/main/php_network.h	2017-04-11 09:37:35.000000000 -0600
-+++ b/main/php_network.h	2017-04-14 12:00:00.736168983 -0600
-@@ -122,8 +122,8 @@
- /* uncomment this to debug poll(2) emulation on systems that have poll(2) */
- /* #define PHP_USE_POLL_2_EMULATION 1 */
- 
--#if defined(HAVE_SYS_POLL_H) && defined(HAVE_POLL)
--# include <sys/poll.h>
-+#if defined(HAVE_POLL_H) && defined(HAVE_POLL)
-+# include <poll.h>
- typedef struct pollfd php_pollfd;
- #else
- typedef struct _php_pollfd {
---- a/main/network.c	2017-04-11 09:37:35.000000000 -0600
-+++ b/main/network.c	2017-04-14 11:59:44.528052372 -0600
-@@ -51,8 +51,8 @@
- #ifdef HAVE_SYS_SELECT_H
- #include <sys/select.h>
- #endif
--#if HAVE_SYS_POLL_H
--#include <sys/poll.h>
-+#if HAVE_POLL_H
-+#include <poll.h>
- #endif
- 
- #if defined(NETWARE)
---- a/main/fastcgi.c	2017-04-11 09:37:35.000000000 -0600
-+++ b/main/fastcgi.c	2017-04-14 12:01:06.924644901 -0600
-@@ -76,8 +76,8 @@
+--- a/main/fastcgi.c
++++ b/main/fastcgi.c
+@@ -76,7 +76,9 @@ static int is_impersonate = 0;
  # include <netdb.h>
  # include <signal.h>
  
 -# if defined(HAVE_SYS_POLL_H) && defined(HAVE_POLL)
--#  include <sys/poll.h>
 +# if defined(HAVE_POLL_H) && defined(HAVE_POLL)
 +#  include <poll.h>
++# elif defined(HAVE_SYS_POLL_H) && defined(HAVE_POLL)
+ #  include <sys/poll.h>
  # endif
  # if defined(HAVE_SYS_SELECT_H)
- #  include <sys/select.h>
-@@ -1430,7 +1430,7 @@
+@@ -1427,7 +1429,7 @@ int fcgi_accept_request(fcgi_request *req)
  				break;
  #else
  				if (req->fd >= 0) {
 -#if defined(HAVE_SYS_POLL_H) && defined(HAVE_POLL)
-+#if defined(HAVE_POLL_H) && defined(HAVE_POLL)
++#if defined(HAVE_POLL)
  					struct pollfd fds;
  					int ret;
  
+--- a/main/network.c
++++ b/main/network.c
+@@ -51,7 +51,9 @@
+ #ifdef HAVE_SYS_SELECT_H
+ #include <sys/select.h>
+ #endif
+-#if HAVE_SYS_POLL_H
++#if HAVE_POLL_H
++#include <poll.h>
++#elif HAVE_SYS_POLL_H
+ #include <sys/poll.h>
+ #endif
+ 
+--- a/main/php_network.h
++++ b/main/php_network.h
+@@ -120,8 +120,12 @@ typedef int php_socket_t;
+ /* uncomment this to debug poll(2) emulation on systems that have poll(2) */
+ /* #define PHP_USE_POLL_2_EMULATION 1 */
+ 
+-#if defined(HAVE_SYS_POLL_H) && defined(HAVE_POLL)
+-# include <poll.h>
++#if defined(HAVE_POLL)
++# if defined(HAVE_POLL_H)
++#  include <poll.h>
++# elif defined(HAVE_SYS_POLL_H)
++#  include <sys/poll.h>
++# endif
+ typedef struct pollfd php_pollfd;
+ #else
+ typedef struct _php_pollfd {
