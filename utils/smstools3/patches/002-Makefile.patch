@@ -9,12 +9,3 @@
  
  # Uncomment for Solaris
  # CFLAGS += -D SOLARIS
-@@ -43,7 +43,7 @@ smsd: smsd.c extras.o locking.o cfgfile.
- 
- ifneq (,$(findstring SOLARIS,$(CFLAGS)))
- ifeq (,$(findstring DISABLE_INET_SOCKET,$(CFLAGS)))
--override LFLAGS += -lsocket -lnsl
-+	override LFLAGS += -lsocket -lnsl
- endif
- endif
- 
