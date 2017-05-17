@@ -20,6 +20,10 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+ifdef CONFIG_USE_MIPS16
+  TARGET_CFLAGS += -fno-ipa-sra
+endif
+
 define Package/jq
   SECTION:=utils
   CATEGORY:=Utilities
