@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.7.3"
+trm_ver="0.7.4"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0
@@ -19,9 +19,10 @@ trm_maxretry=3
 trm_maxwait=30
 trm_timeout=60
 trm_iw="$(command -v iw)"
+trm_radio=""
 trm_rtfile="/tmp/trm_runtime.json"
 
-# source required system library
+# source required system libraries
 #
 if [ -r "/lib/functions.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]
 then
@@ -94,8 +95,9 @@ f_prepare()
 f_check()
 {
     local ifname radio status cnt=1 mode="${1}"
-    trm_ifstatus="false"
 
+    ubus call network reload
+    trm_ifstatus="false"
     while [ ${cnt} -le ${trm_maxwait} ]
     do
         status="$(ubus -S call network.wireless status 2>/dev/null)"
@@ -200,12 +202,12 @@ f_main()
     f_check "initial"
     if [ "${trm_ifstatus}" != "true" ]
     then
+        > "${trm_rtfile}"
         config_load wireless
         config_foreach f_prepare wifi-iface
         if [ -n "$(uci -q changes wireless)" ]
         then
             uci -q commit wireless
-            ubus call network restart
         fi
         f_check "ap"
         f_log "debug" "ap-list: ${trm_aplist}, sta-list: ${trm_stalist}"
@@ -234,7 +236,6 @@ f_main()
                         if [ -n "$(printf "%s" "${ssid_list}" | grep -Fo "\"${sta_ssid}\"")" ] && [ "${ap_radio}" = "${sta_radio}" ]
                         then
                             uci -q set wireless."${config}".disabled=0
-                            ubus call network reload
                             f_check "sta"
                             if [ "${trm_ifstatus}" = "true" ]
                             then
@@ -244,7 +245,6 @@ f_main()
                                 return 0
                             else
                                 uci -q revert wireless
-                                ubus call network reload
                                 f_log "info " "interface '${sta_iface}' on '${sta_radio}' can't connect to uplink '${sta_ssid}' (${trm_sysver})"
                                 f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
                             fi
@@ -255,6 +255,10 @@ f_main()
                 sleep 5
             done
         done
+        if [ ! -s "${trm_rtfile}" ]
+        then
+            f_jsnupdate "n/a" "n/a" "n/a"
+        fi
     else
         if [ ! -s "${trm_rtfile}" ]
         then
