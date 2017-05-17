@@ -1,0 +1,18 @@
+--- a/iptc/util.py
++++ b/iptc/util.py
+@@ -65,6 +65,15 @@ def _do_find_library(name):
+     except:
+         pass
+ 
++    if os.uname()[1] == 'OpenWrt':
++        for d in ['/lib/', '/usr/lib']:
++            try:
++                lib = ctypes.CDLL(os.path.realpath(os.path.join(d, name)),
++                                  mode=ctypes.RTLD_GLOBAL)
++                return lib
++            except:
++                pass
++
+     for p in sys.path:
+         try:
+             lib = ctypes.CDLL(os.path.join(p, name), mode=ctypes.RTLD_GLOBAL)
