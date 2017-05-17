@@ -32,10 +32,7 @@ stop_service()
     local rtfile="$(uci -q get travelmate.global.trm_rtfile)"
 
     rtfile="${rtfile:="/tmp/trm_runtime.json"}"
-    if [ -s "${rtfile}" ]
-    then
-        > "${rtfile}"
-    fi
+    > "${rtfile}"
     rc_procd start_service
 }
 
