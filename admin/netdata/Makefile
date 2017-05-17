@@ -21,6 +21,8 @@ PKG_HASH:=7839491f6e8b297cc8c28ca96845ff087f7961a12b92aa0eea1f66528da8bdaf
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
+TARGET_CFLAGS+= -DNETDATA_NO_ATOMIC_INSTRUCTIONS=1
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/netdata
