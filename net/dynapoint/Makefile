@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dynapoint
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Tobias Ilte <tobias.ilte@campus.tu-berlin.de>
 PKG_LICENSE:=GPL-3.0+
