@@ -20,6 +20,7 @@ define Py3Package/python3-pip/install
 	$(CP) \
 		$(PKG_BUILD_DIR)/install-pip/lib/python$(PYTHON3_VERSION)/site-packages/pip \
 		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/
+	find $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/ -name __pycache__ | xargs rm -rf
 endef
 
 $(eval $(call Py3BasePackage,python3-pip, \
