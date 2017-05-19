@@ -12,7 +12,7 @@ $(call Package/python3/Default)
   DEPENDS:=+python3 +python3-setuptools +python-pip-conf
 endef
 
-define Py3Package/python3-pip/install
+define Package/python3-pip/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages
 	# Adjust shebang to proper python location on target
 	sed "1s/.*/#\!\/usr\/bin\/python$(PYTHON3_VERSION)/" -i $(PKG_BUILD_DIR)/install-pip/bin/*
@@ -20,6 +20,7 @@ define Py3Package/python3-pip/install
 	$(CP) \
 		$(PKG_BUILD_DIR)/install-pip/lib/python$(PYTHON3_VERSION)/site-packages/pip \
 		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/
+	find $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/ -name __pycache__ | xargs rm -rf
 endef
 
 $(eval $(call Py3BasePackage,python3-pip, \
