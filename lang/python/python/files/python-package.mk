@@ -61,6 +61,7 @@ define PyPackage
     endef
   endif
 
+  ifndef Package/$(1)/install
   $(call shexport,PyPackage/$(1)/filespec)
 
   define Package/$(1)/install
@@ -85,6 +86,7 @@ define PyPackage
   define Package/$(1)-src/install
 	$$(call Package/$(1)/install,$$(1),sources)
   endef
+  endif # Package/$(1)/install
 endef
 
 $(call include_mk, python-host.mk)
