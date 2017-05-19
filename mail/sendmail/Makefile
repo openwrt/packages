@@ -21,6 +21,7 @@ PKG_LICENSE:=Sendmail
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=openssl
 
 include $(INCLUDE_DIR)/package.mk
 
