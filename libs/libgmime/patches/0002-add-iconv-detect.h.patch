@@ -1,0 +1,23 @@
+From fc025228bf042a4fdb39f1bd40651dcee593b550 Mon Sep 17 00:00:00 2001
+From: Marko Ratkaj <marko.ratkaj@sartura.hr>
+Date: Tue, 25 Apr 2017 17:10:07 +0200
+Subject: [PATCH] add iconv-detect.h
+
+Signed-off-by: Marko Ratkaj <marko.ratkaj@sartura.hr>
+---
+ iconv-detect.h | 3 +++
+ 1 file changed, 3 insertions(+)
+ create mode 100644 iconv-detect.h
+
+diff --git a/iconv-detect.h b/iconv-detect.h
+new file mode 100644
+index 0000000..4a96908
+--- /dev/null
++++ b/iconv-detect.h
+@@ -0,0 +1,3 @@
++#define ICONV_ISO_INT_FORMAT "iso-%u-%u"
++#define ICONV_ISO_STR_FORMAT "iso-%u-%s"
++#define ICONV_10646 "iso-10646"
+-- 
+2.10.2
+

@@ -1,0 +1,49 @@
+From 43c10061b6e329f90e98c7e2ecee8ae382260277 Mon Sep 17 00:00:00 2001
+From: Marko Ratkaj <marko.ratkaj@sartura.hr>
+Date: Tue, 25 Apr 2017 16:47:30 +0200
+Subject: [PATCH] no docs and tests
+
+Signed-off-by: Marko Ratkaj <marko.ratkaj@sartura.hr>
+---
+ Makefile.am  | 2 --
+ configure.ac | 4 ----
+ 2 files changed, 6 deletions(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 0b51c5e..094a2ca 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -8,8 +8,6 @@ if ENABLE_MONO
+ SUBDIRS += mono
+ endif
+ 
+-SUBDIRS += tests docs
+-
+ if !PLATFORM_WIN32
+ SUBDIRS += examples
+ endif
+diff --git a/configure.ac b/configure.ac
+index a2d0e6d..33e9263 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -707,9 +707,6 @@ build/vs2008/Makefile
+ build/vs2008/config-win32.h
+ build/vs2010/Makefile
+ build/vs2010/config-win32.h
+-docs/Makefile
+-docs/reference/Makefile
+-docs/tutorial/Makefile
+ examples/Makefile
+ util/Makefile
+ gmime/Makefile
+@@ -718,7 +715,6 @@ mono/Makefile
+ mono/AssemblyInfo.cs
+ mono/gmime-sharp.dll.config
+ mono/gmime-sharp.pc
+-tests/Makefile
+ tools/Makefile
+ gmime.spec
+ gmime.pc
+-- 
+2.10.2
+
