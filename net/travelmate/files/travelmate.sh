@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.7.1"
+trm_ver="0.7.4"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0
@@ -18,10 +18,11 @@ trm_automatic=1
 trm_maxretry=3
 trm_maxwait=30
 trm_timeout=60
-trm_iw=1
+trm_iw="$(command -v iw)"
+trm_radio=""
 trm_rtfile="/tmp/trm_runtime.json"
 
-# source required system library
+# source required system libraries
 #
 if [ -r "/lib/functions.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]
 then
@@ -57,17 +58,11 @@ f_envload()
         exit 0
     fi
 
-    # check for preferred wireless tool
+    # check for wireless tool
     #
-    if [ ${trm_iw} -eq 1 ]
+    if [ -z "${trm_iw}" ]
     then
-        trm_scanner="$(which iw)"
-    else
-        trm_scanner="$(which iwinfo)"
-    fi
-    if [ -z "${trm_scanner}" ]
-    then
-        f_log "error" "no wireless tool for wlan scanning found, please install 'iw' or 'iwinfo'"
+        f_log "error" "no wireless tool found, please install package 'iw'"
     fi
 }
 
@@ -99,31 +94,36 @@ f_prepare()
 #
 f_check()
 {
-    local ifname radio cnt=1 mode="${1}"
-    trm_ifstatus="false"
+    local ifname radio status cnt=1 mode="${1}"
 
+    ubus call network reload
+    trm_ifstatus="false"
     while [ ${cnt} -le ${trm_maxwait} ]
     do
-        if [ "${mode}" = "ap" ]
+        status="$(ubus -S call network.wireless status 2>/dev/null)"
+        if [ -n "${status}" ]
         then
-            for radio in ${trm_radiolist}
-            do
-                trm_ifstatus="$(ubus -S call network.wireless status | jsonfilter -e "@.${radio}.up")"
-                if [ "${trm_ifstatus}" = "true" ]
-                then
-                    trm_aplist="${trm_aplist} $(ubus -S call network.wireless status | jsonfilter -e "@.${radio}.interfaces[@.config.mode=\"ap\"].ifname")_${radio}"
-                    ifname="${trm_aplist}"
-                else
-                    trm_aplist=""
-                    trm_ifstatus="false"
-                    break
-                fi
-            done
-        else
-            ifname="$(ubus -S call network.wireless status | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
-            if [ -n "${ifname}" ]
+            if [ "${mode}" = "ap" ]
             then
-                trm_ifstatus="$(ubus -S call network.interface dump | jsonfilter -e "@.interface[@.device=\"${ifname}\"].up")"
+                for radio in ${trm_radiolist}
+                do
+                    trm_ifstatus="$(printf "%s" "${status}" | jsonfilter -e "@.${radio}.up")"
+                    if [ "${trm_ifstatus}" = "true" ]
+                    then
+                        trm_aplist="${trm_aplist} $(printf "%s" "${status}" | jsonfilter -e "@.${radio}.interfaces[@.config.mode=\"ap\"].ifname")_${radio}"
+                        ifname="${trm_aplist}"
+                    else
+                        trm_aplist=""
+                        trm_ifstatus="false"
+                        break
+                    fi
+                done
+            else
+                ifname="$(printf "%s" "${status}" | jsonfilter -e '@.*.interfaces[@.config.mode="sta"].ifname')"
+                if [ -n "${ifname}" ]
+                then
+                    trm_ifstatus="$(ubus -S call network.interface dump 2>/dev/null | jsonfilter -e "@.interface[@.device=\"${ifname}\"].up")"
+                fi
             fi
         fi
         if [ "${mode}" = "initial" ] || [ "${trm_ifstatus}" = "true" ]
@@ -169,7 +169,7 @@ f_status()
         json_get_keys keylist
         for key in ${keylist}
         do
-            json_get_var value ${key}
+            json_get_var value "${key}"
             printf " %-18s : %s\n" "${key}" "${value}"
         done
     fi
@@ -202,39 +202,29 @@ f_main()
     f_check "initial"
     if [ "${trm_ifstatus}" != "true" ]
     then
+        > "${trm_rtfile}"
         config_load wireless
         config_foreach f_prepare wifi-iface
         if [ -n "$(uci -q changes wireless)" ]
         then
             uci -q commit wireless
-            ubus call network reload
         fi
         f_check "ap"
         f_log "debug" "ap-list: ${trm_aplist}, sta-list: ${trm_stalist}"
-        if [ -z "${trm_aplist}" ] || [ -z "${trm_stalist}" ]
-        then
-            f_log "error" "no usable AP/STA configuration found"
-        fi
         for ap in ${trm_aplist}
         do
             cnt=1
             ap_radio="${ap##*_}"
             ap="${ap%%_*}"
-            if [ -z "$(printf "${trm_stalist}" | grep -Fo "_${ap_radio}")" ]
+            if [ -z "$(printf "%s" "${trm_stalist}" | grep -Fo "_${ap_radio}")" ]
             then
                 continue
             fi
             while [ ${cnt} -le ${trm_maxretry} ]
             do
-                if [ ${trm_iw} -eq 1 ]
-                then
-                    ssid_list="$(${trm_scanner} dev "${ap}" scan 2>/dev/null | \
-                        awk '/SSID: /{if(!seen[$0]++){printf "\"";for(i=2; i<=NF; i++)if(i==2)printf $i;else printf " "$i;printf "\" "}}')"
-                else
-                    ssid_list="$(${trm_scanner} "${ap}" scan | \
-                        awk '/ESSID: ".*"/{ORS=" ";if (!seen[$0]++) for(i=2; i<=NF; i++) print $i}')"
-                fi
-                f_log "debug" "scanner: ${trm_scanner}, ap: ${ap}, ssids: ${ssid_list}"
+                ssid_list="$(${trm_iw} dev "${ap}" scan 2>/dev/null | \
+                    awk '/SSID: /{if(!seen[$0]++){printf "\"";for(i=2; i<=NF; i++)if(i==2)printf $i;else printf " "$i;printf "\" "}}')"
+                f_log "debug" "iw: ${trm_iw}, ap: ${ap}, ssids: ${ssid_list}"
                 if [ -n "${ssid_list}" ]
                 then
                     for sta in ${trm_stalist}
@@ -243,10 +233,9 @@ f_main()
                         sta_radio="${sta##*_}"
                         sta_ssid="$(uci -q get wireless."${config}".ssid)"
                         sta_iface="$(uci -q get wireless."${config}".network)"
-                        if [ -n "$(printf "${ssid_list}" | grep -Fo "\"${sta_ssid}\"")" ] && [ "${ap_radio}" = "${sta_radio}" ]
+                        if [ -n "$(printf "%s" "${ssid_list}" | grep -Fo "\"${sta_ssid}\"")" ] && [ "${ap_radio}" = "${sta_radio}" ]
                         then
                             uci -q set wireless."${config}".disabled=0
-                            ubus call network reload
                             f_check "sta"
                             if [ "${trm_ifstatus}" = "true" ]
                             then
@@ -256,7 +245,6 @@ f_main()
                                 return 0
                             else
                                 uci -q revert wireless
-                                ubus call network reload
                                 f_log "info " "interface '${sta_iface}' on '${sta_radio}' can't connect to uplink '${sta_ssid}' (${trm_sysver})"
                                 f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
                             fi
@@ -267,6 +255,10 @@ f_main()
                 sleep 5
             done
         done
+        if [ ! -s "${trm_rtfile}" ]
+        then
+            f_jsnupdate "n/a" "n/a" "n/a"
+        fi
     else
         if [ ! -s "${trm_rtfile}" ]
         then

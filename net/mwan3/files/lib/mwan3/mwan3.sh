@@ -1,11 +1,11 @@
 #!/bin/sh
 
-IP4="/usr/bin/ip -4"
-IP6="/usr/bin/ip -6"
-IPS="/usr/sbin/ipset"
-IPT4="/usr/sbin/iptables -t mangle -w"
-IPT6="/usr/sbin/ip6tables -t mangle -w"
-LOG="/usr/bin/logger -t mwan3 -p"
+IP4="ip -4"
+IP6="ip -6"
+IPS="ipset"
+IPT4="iptables -t mangle -w"
+IPT6="ip6tables -t mangle -w"
+LOG="logger -t mwan3 -p"
 CONNTRACK_FILE="/proc/net/nf_conntrack"
 
 mwan3_get_iface_id()
@@ -390,10 +390,7 @@ mwan3_track()
 	}
 	config_list_foreach $1 track_ip mwan3_list_track_ips
 
-	if [ -e /var/run/mwan3track-$1.pid ] ; then
-		kill $(cat /var/run/mwan3track-$1.pid) &> /dev/null
-	fi
-
+	kill $(pgrep -f "mwan3track $1") &> /dev/null
 	if [ -n "$track_ips" ]; then
 		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track $1 $2 $track_ips &
 	fi
@@ -401,18 +398,13 @@ mwan3_track()
 
 mwan3_track_signal()
 {
-	local pid status
+	local pid
 
-	if [ -f "/var/run/mwan3track-${1}.pid" ]; then
-		pid="$(cat "/var/run/mwan3track-${1}.pid")"
-		status="$(pgrep -f mwan3track | grep "${pid}")"
-		if [ "${status}" != "" ]; then
-			kill -USR1 "${pid}"
-		else
-			$LOG warn "Unable to send signal USR1 to mwan3track on interface $1 with pid ${pid}"
-		fi
+	pid="$(pgrep -f "mwan3track $1")"
+	if [ "${pid}" != "" ]; then
+		kill -USR1 "${pid}"
 	else
-		$LOG warn "Unable to find \"/var/run/mwan3track-${1}.pid\" file for mwan3track on interface $1"
+		$LOG warn "Unable to send signal USR1 to mwan3track on interface $1 with pid ${pid}"
 	fi
 }
 

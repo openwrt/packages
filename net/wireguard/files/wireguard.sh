@@ -21,7 +21,6 @@ proto_wireguard_init_config() {
   proto_config_add_string "private_key"
   proto_config_add_int    "listen_port"
   proto_config_add_int    "mtu"
-  proto_config_add_string "preshared_key"
   proto_config_add_string "fwmark"
   available=1
   no_proto_task=1
@@ -32,6 +31,7 @@ proto_wireguard_setup_peer() {
   local peer_config="$1"
 
   local public_key
+  local preshared_key
   local allowed_ips
   local route_allowed_ips
   local endpoint_host
@@ -39,6 +39,7 @@ proto_wireguard_setup_peer() {
   local persistent_keepalive
 
   config_get      public_key           "${peer_config}" "public_key"
+  config_get      preshared_key        "${peer_config}" "preshared_key"
   config_get      allowed_ips          "${peer_config}" "allowed_ips"
   config_get_bool route_allowed_ips    "${peer_config}" "route_allowed_ips" 0
   config_get      endpoint_host        "${peer_config}" "endpoint_host"
@@ -48,6 +49,9 @@ proto_wireguard_setup_peer() {
   # peer configuration
   echo "[Peer]"                                         >> "${wg_cfg}"
   echo "PublicKey=${public_key}"                        >> "${wg_cfg}"
+  if [ "${preshared_key}" ]; then
+    echo "PresharedKey=${preshared_key}"                >> "${wg_cfg}"
+  fi
   for allowed_ip in $allowed_ips; do
     echo "AllowedIPs=${allowed_ip}"                     >> "${wg_cfg}"
   done
@@ -95,7 +99,6 @@ proto_wireguard_setup() {
   local private_key
   local listen_port
   local mtu
-  local preshared_key
 
   # load configuration
   config_load network
@@ -103,7 +106,6 @@ proto_wireguard_setup() {
   config_get listen_port   "${config}" "listen_port"
   config_get addresses     "${config}" "addresses"
   config_get mtu           "${config}" "mtu"
-  config_get preshared_key "${config}" "preshared_key"
   config_get fwmark        "${config}" "fwmark"
 
   # create interface
@@ -123,9 +125,6 @@ proto_wireguard_setup() {
   echo "PrivateKey=${private_key}"       >> "${wg_cfg}"
   if [ "${listen_port}" ]; then
     echo "ListenPort=${listen_port}"     >> "${wg_cfg}"
-  fi
-  if [ "${preshared_key}" ]; then
-    echo "PresharedKey=${preshared_key}" >> "${wg_cfg}"
   fi
   if [ "${fwmark}" ]; then
     echo "FwMark=${fwmark}" >> "${wg_cfg}"

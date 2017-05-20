@@ -6,9 +6,9 @@
 MWAN3_STATUS_DIR="/var/run/mwan3track"
 MWAN3_PID_FILE="/var/run/mwan3track"
 
-IPS="/usr/sbin/ipset"
-IPT4="/usr/sbin/iptables -t mangle -w"
-IPT6="/usr/sbin/ip6tables -t mangle -w"
+IPS="ipset"
+IPT4="iptables -t mangle -w"
+IPT6="ip6tables -t mangle -w"
 
 report_connected_v4() {
 	local address
@@ -34,16 +34,12 @@ get_mwan3_status() {
 	local iface="${1}"
 	local iface_select="${2}"
 	local running="0"
-	local pid=""
-	local status=""
+	local pid
 
 	if [ "${iface}" = "${iface_select}" ] || [ "${iface_select}" = "" ]; then
-		if [ -f "${MWAN3_PID_FILE}-${iface}.pid" ]; then
-			pid="$(cat "${MWAN3_PID_FILE}-${iface}.pid")"
-			status="$(pgrep -f mwan3track | grep "${pid}")"
-			if [ "${status}" != "" ]; then
-				running="1"
-			fi
+		pid="$(pgrep -f "mwan3track $iface_selected")"
+		if [ "${pid}" != "" ]; then
+			running="1"
 		fi
 
 		json_add_object "${iface}"

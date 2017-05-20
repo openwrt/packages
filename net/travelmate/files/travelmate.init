@@ -17,7 +17,7 @@ boot()
 
 start_service()
 {
-    if [ $("${trm_init}" enabled; printf ${?}) -eq 0 ]
+    if [ $("${trm_init}" enabled; printf "%u" ${?}) -eq 0 ]
     then
         procd_open_instance "travelmate"
         procd_set_param command "${trm_script}" "${@}"
@@ -25,6 +25,15 @@ start_service()
         procd_set_param stderr 1
         procd_close_instance
     fi
+}
+
+stop_service()
+{
+    local rtfile="$(uci -q get travelmate.global.trm_rtfile)"
+
+    rtfile="${rtfile:="/tmp/trm_runtime.json"}"
+    > "${rtfile}"
+    rc_procd start_service
 }
 
 status()
