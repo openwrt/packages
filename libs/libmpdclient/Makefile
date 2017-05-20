@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2011-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmpdclient
-PKG_VERSION:=2.10
+PKG_VERSION:=2.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/libmpdclient/2/
-PGK_MD5SUM:=00606c630b905aa6196330373b366c29
+PGK_HASH:=15fe693893c0d7ea3f4c35c4016fbd0332836164178b20983eec9b470846baf6
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=BSD-3-Clause
