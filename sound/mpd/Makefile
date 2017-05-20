@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2015-2016 Ted Hess
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.19.19
-PKG_RELEASE:=2
+PKG_VERSION:=0.20.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.19/
-PKG_MD5SUM:=6e4fca9a9c26dad08b61bac9a91802db
+PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.20/
+PKG_HASH:=7d177f29663c4a0997413401e52bbf11d2bb472773bbcf9294f839c4b8751e35
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
@@ -102,6 +100,10 @@ define Package/mpd-avahi-service/conffiles
 /etc/avahi/services/mpd.service
 endef
 
+TARGET_CFLAGS += -ggdb3
+TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-liconv)
+EXTRA_CXXFLAGS += $(if $(CONFIG_GCC_VERSION_4_8),-std=gnu++11,-std=gnu++14)
+
 CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-debug \
@@ -156,8 +158,6 @@ CONFIGURE_VARS += \
 	$(if $(CONFIG_BUILD_PATENTED),MAD_CFLAGS="$(TARGET_CFLAGS)") \
 	$(if $(CONFIG_BUILD_PATENTED),MAD_LIBS="$(TARGET_LDFLAGS) -lmad") \
 
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-liconv)
-
 ifeq ($(BUILD_VARIANT),full)
 
   CONFIGURE_ARGS += \
@@ -167,16 +167,14 @@ ifeq ($(BUILD_VARIANT),full)
 	--enable-fifo \
 	--enable-ffmpeg \
 	--enable-id3 \
-	--enable-lastfm \
 	--enable-mms \
-	--enable-oggflac \
+	--enable-flac \
 	--enable-pipe-output \
 	--enable-recorder-output \
 	--disable-shout \
 	--enable-sndfile \
 	--enable-vorbis \
 	--disable-vorbis-encoder \
-	--with-faad="$(STAGING_DIR)/usr" \
 	--with-tremor=yes \
 
 endif
