@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -151,8 +151,8 @@ installpythonmodule3:	pythonmodule3
+@@ -187,8 +187,8 @@ installpythonmodule3:	pythonmodule3
  	python3 setup.py install
  
  validateminixml:	minixmlvalid

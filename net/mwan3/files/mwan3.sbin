@@ -1,11 +1,5 @@
 #!/bin/sh
 
-[ -x /usr/bin/ip ] || exit 4
-[ -x /usr/sbin/ipset ] || exit 5
-[ -x /usr/sbin/iptables ] || exit 6
-[ -x /usr/sbin/ip6tables ] || exit 7
-[ -x /usr/bin/logger ] || exit 8
-
 . /lib/functions.sh
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
@@ -42,9 +36,7 @@ ifdown()
 
 	ACTION=ifdown INTERFACE=$1 /sbin/hotplug-call iface
 
-	if [ -e /var/run/mwan3track-$1.pid ] ; then
-		kill $(cat /var/run/mwan3track-$1.pid)
-	fi
+	kill $(pgrep -f "mwan3track $1") &> /dev/null
 }
 
 ifup()

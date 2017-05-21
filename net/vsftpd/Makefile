@@ -9,11 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vsftpd
 PKG_VERSION:=3.0.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://security.appspot.com/downloads/
-PKG_MD5SUM:=da119d084bd3f98664636ea05b5bb398
+PKG_HASH:=9d4d2bf6e6e2884852ba4e69e157a2cecd68c5a7635d66a3a8cf8d898c955ef7
 PKG_LICENSE:=GPLv2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -24,8 +24,8 @@ define Package/vsftpd/Default
   SUBMENU:=File Transfer
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=A fast and secure FTP server
-  URL:=http://vsftpd.beasts.org/
+  TITLE:=Fast and secure FTP server
+  URL:=https://security.appspot.com/vsftpd.html
   MAINTAINER:=Cezary Jackiewicz <cezary@eko.one.pl>
   DEPENDS:=+libuci
 endef
@@ -53,6 +53,7 @@ endef
 
 define Package/vsftpd/conffiles
 /etc/vsftpd.conf
+/etc/vsftpd
 endef
 
 Package/vsftpd-tls/conffiles=$(Package/vsftpd/conffiles)
@@ -110,6 +111,7 @@ define Package/vsftpd/install
 $(call Package/vsftpd/install/default, $(1))
 	$(INSTALL_CONF) ./files/$(PKG_NAME).conf $(1)/etc/$(PKG_NAME).conf
 	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
+	$(INSTALL_DIR) $(1)/etc/vsftpd
 endef
 endif
 
