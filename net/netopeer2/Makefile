@@ -112,7 +112,7 @@ define Package/netopeer2-server/install
 	$(INSTALL_BIN) ./files/netopeer2-server.init $(1)/etc/init.d/netopeer2-server
 
 	$(INSTALL_DIR) $(1)/usr/share/netopeer2-server
-	$(INSTALL_DATA) $(PKG_BUILD_ROOT)/server/stock_config.xml $(1)/usr/share/netopeer2-server
+	$(INSTALL_DATA) ./files/stock_config.xml $(1)/usr/share/netopeer2-server
 endef
 
 define Package/netopeer2-cli/install
