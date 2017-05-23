@@ -13,3 +13,7 @@ start_service() {
     procd_close_instance
 }
 
+stop_service()
+{
+    service_stop ${PROG}
+}
