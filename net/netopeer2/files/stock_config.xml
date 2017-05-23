@@ -1,0 +1,17 @@
+<netconf-server xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-server">
+  <listen>
+    <endpoint>
+      <name>test_ssh_listen_endpt</name>
+      <ssh>
+        <address>::</address>
+        <port>830</port>
+        <host-keys>
+          <host-key>
+            <name>test_ssh_listen_key</name>
+            <public-key>ssh_host_rsa_key</public-key>
+          </host-key>
+        </host-keys>
+      </ssh>
+    </endpoint>
+  </listen>
+</netconf-server>
