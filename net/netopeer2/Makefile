@@ -47,7 +47,7 @@ define Package/netopeer2-server
   CATEGORY:=Utilities
   TITLE:=NETCONF server
   URL:=$(PKG_SOURCE_URL)
-  DEPENDS:=+libpthread +libyang +libnetconf2 +netopeer2-keystored +libsysrepo +sysrepocfg +sysrepoctl +sysrepod +SSH_SERVER:openssh-server
+  DEPENDS:=+libpthread +libyang +libnetconf2 +netopeer2-keystored +libsysrepo +sysrepocfg +sysrepoctl +sysrepo +SSH_SERVER:openssh-server
   MENU:=1
 endef
 
@@ -64,7 +64,7 @@ define Package/netopeer2-keystored
   CATEGORY:=Utilities
   TITLE:=Netopeer2 key store management
   URL:=$(PKG_SOURCE_URL)
-  DEPENDS:=+libopenssl +libsysrepo +sysrepo-plugind +sysrepocfg +sysrepoctl +SSH_KEYS:openssh-keygen
+  DEPENDS:=+libopenssl +libsysrepo +sysrepo +sysrepocfg +sysrepoctl +SSH_KEYS:openssh-keygen
   MENU:=1
 endef
 
