@@ -8,15 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nano
-PKG_VERSION:=2.7.5
+PKG_VERSION:=2.8.4
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/nano
-PKG_MD5SUM:=002703e368e07882f75e304c8860d83d
-PKG_HASH:=a64d24e6bc4fc448376d038f9a755af77f8e748c9051b6f45bf85e783a7e67e4
+PKG_HASH:=c7cf264f0f3e4af43ecdbc4ec72c3b1e831c69a1a5f6512d5b0c109e6bac7b11
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -40,10 +39,9 @@ endef
 
 CONFIGURE_ARGS += \
 	--enable-tiny \
-	--disable-glibtest \
 	--disable-utf8 \
-        --without-slang \
-        --disable-color \
+	--without-slang \
+	--disable-color \
 
 CONFIGURE_VARS += \
 	ac_cv_header_regex_h=no \
