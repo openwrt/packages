@@ -9,18 +9,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=six
 PKG_VERSION:=1.10.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/s/six
 PKG_MD5SUM:=34eed507548117b2ab523ab14b2f8b55
 
-PKG_BUILD_DEPENDS:=python python-setuptools
+HOST_BUILD_DEPENDS:=python/host
+PKG_BUILD_DEPENDS:=python
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 
@@ -43,6 +45,14 @@ endef
 define Build/Compile
 	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
 endef
+
+define Host/Compile
+	$(call Build/Compile/HostPyMod,,install --prefix="" --root="$(STAGING_DIR_HOSTPKG)")
+endef
+
+Host/Install:=
+
+$(eval $(call HostBuild))
 
 $(eval $(call PyPackage,python-six))
 $(eval $(call BuildPackage,python-six))
