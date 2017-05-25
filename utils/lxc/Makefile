@@ -39,10 +39,11 @@ LXC_SCRIPTS += \
 
 DEPENDS_APPLETS = +libpthread +libcap +liblxc
 
-DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock
+DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock +!LXC_BUSYBOX_OPTIONS:tar +!LXC_BUSYBOX_OPTIONS:getopt
 
 DEPENDS_ls = +lxc-config
 DEPENDS_top = +lxc-lua +luafilesystem @BROKEN
+DEPENDS_autostart = @BROKEN
 
 
 define Package/lxc/Default
