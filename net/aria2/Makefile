@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 OpenWrt.org
+# Copyright (C) 2012-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aria2
-PKG_VERSION:=1.31.0
+PKG_VERSION:=1.32.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/aria2/aria2/releases/download/release-$(PKG_VERSION)/
-PKG_HASH:=7b85619048b23406f241e38a5b1b8b0bc2cae9e80fd117810c2a71ecca813f8c
+PKG_HASH:=546e9194a9135d665fce572cb93c88f30fb5601d113bfa19951107ced682dc50
 PKG_INSTALL:=1
 
 PKG_MAINTAINER:=Imre Kaloz <kaloz@openwrt.org>, Hsing-Wang Liao <kuoruan@gmail.com>
