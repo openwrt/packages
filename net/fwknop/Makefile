@@ -101,6 +101,11 @@ endif
 CONFIGURE_ARGS += \
 	--with-iptables=/usr/sbin/iptables
 
+ifneq ($(CONFIG_SSP_SUPPORT),y)
+CONFIGURE_ARGS+= \
+	--disable-stack-protector
+endif
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/fko.h $(1)/usr/include/
