@@ -64,7 +64,7 @@ define Package/netopeer2-keystored
   CATEGORY:=Utilities
   TITLE:=Netopeer2 key store management
   URL:=$(PKG_SOURCE_URL)
-  DEPENDS:=+libopenssl +libsysrepo +sysrepo +sysrepocfg +sysrepoctl +SSH_KEYS:openssh-keygen
+  DEPENDS:=+libopenssl +libsysrepo +sysrepo +sysrepocfg +sysrepoctl +SSH_KEYS:openssh-keygen +SSH_KEYS:openssl-util
   MENU:=1
 endef
 
