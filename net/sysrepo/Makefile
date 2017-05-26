@@ -78,7 +78,7 @@ CMAKE_OPTIONS += \
 
 define Package/libsysrepo/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/libsysrepo.so* $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/src/libsysrepo.so* $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/etc/sysrepo/yang/internal
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/yang/sysrepo-module-dependencies.yang $(1)/etc/sysrepo/yang/internal
