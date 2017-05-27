@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=3.2.4
+PKG_VERSION:=3.2.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
-PKG_MD5SUM:=39fd71024ac76ba35f04397021af5606
-PKG_HASH:=6e38ff14f080c98b58cf5967573501b8cb586e3a173b591f3807d8f0660daf7a
+PKG_MD5SUM:=b53ecfcbafca973f92bfb77815cce01e
+PKG_HASH:=0c0c15e999c66003b969c7a5d61c4a7e1d3dfbf3c809c23ff5537d583dd93323
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 
