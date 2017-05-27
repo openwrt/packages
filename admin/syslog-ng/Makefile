@@ -11,6 +11,7 @@ PKG_SOURCE_URL:=https://github.com/balabit/syslog-ng/releases/download/$(PKG_NAM
 PKG_MD5SUM:=1b48da9ef620cf06e55e481b5abb677a
 PKG_HASH:=5678856a550ae790618fabde9d1447f932ce7a9080d55dca8fc5df1202c70a17
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
