@@ -53,9 +53,9 @@ create_config_file() {
     append_param_not_empty  "QueryLogFile"  "$query_log_file"   $config_path
     if [ $plugins_support_enabled -ne 0 ]
     then
-       append_yes_no           "block_ipv6"     $block_ipv6         $config_path
+       append_yes_no           "BlockIPv6"     $block_ipv6         $config_path
     else
-       log_ignored_param "BlockIPv6"
+       log_ignored_param "block_ipv6"
     fi
 
     if [ $plugins_support_enabled -ne 0 ]
