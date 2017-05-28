@@ -1,0 +1,25 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -159,12 +159,8 @@ AC_CONFIG_FILES([
+ 	audiofile.pc
+ 	audiofile-uninstalled.pc
+ 	sfcommands/Makefile
+-	test/Makefile
+-	gtest/Makefile
+-	examples/Makefile
+ 	libaudiofile/Makefile
+ 	libaudiofile/alac/Makefile
+ 	libaudiofile/modules/Makefile
+-	docs/Makefile
+ 	Makefile])
+ AC_OUTPUT
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,6 +1,6 @@
+ ## Process this file with automake to produce Makefile.in
+ 
+-SUBDIRS = gtest libaudiofile sfcommands test examples docs
++SUBDIRS = libaudiofile sfcommands
+ 
+ EXTRA_DIST = \
+ 	ACKNOWLEDGEMENTS \
