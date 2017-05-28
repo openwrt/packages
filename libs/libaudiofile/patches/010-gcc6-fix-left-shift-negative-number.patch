@@ -1,0 +1,18 @@
+Description: Fix FTBFS with GCC 6
+Author: Michael Schwendt <mschwendt@fedoraproject.org>
+Origin: vendor, https://github.com/mpruett/audiofile/pull/27
+Bug-Debian: https://bugs.debian.org/812055
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+
+--- a/libaudiofile/modules/SimpleModule.h
++++ b/libaudiofile/modules/SimpleModule.h
+@@ -123,7 +123,7 @@ struct signConverter
+ 	typedef typename IntTypes<Format>::UnsignedType UnsignedType;
+ 
+ 	static const int kScaleBits = (Format + 1) * CHAR_BIT - 1;
+-	static const int kMinSignedValue = -1 << kScaleBits;
++	static const int kMinSignedValue = 0-(1U<<kScaleBits);
+ 
+ 	struct signedToUnsigned : public std::unary_function<SignedType, UnsignedType>
+ 	{
