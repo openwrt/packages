@@ -116,3 +116,4 @@ soltysiak,"Soltysiak","Public DNSCrypt server in Poland","Poland","52.4014619, 1
 soltysiak-ipv6,"Soltysiak over IPv6","Public DNSCrypt server in Poland","Poland","52.4014619, 16.9278078",http://dc1.soltysiak.com/,1,yes,yes,yes,[2001:470:70:4ff::2]:2053,2.dnscrypt-cert.soltysiak.com,25C4:E188:2915:4697:8F9C:2BBD:B6A7:AFA4:01ED:A051:0508:5D53:03E7:1928:C066:8F21,pubkey.dc1.soltysiak.com
 ventricle.us,"Anatomical DNS","Public DNSCrypt resolver provided by Jacob Henner","New York, NY","",https://jacobhenner.com,1,yes,yes,no,107.170.57.34,2.dnscrypt-cert.dnscrypt.ventricle.us,E985:F118:AD4E:3CC6:5FF2:2520:1890:C6F5:58B7:5B5A:52F5:6B17:CFEA:C100:5C8B:9BAA,pubkey.dnscrypt.ventricle.us
 yandex,"Yandex","Yandex public DNS server","Anycast","",https://www.yandex.com,1,no,no,no,77.88.8.78:15353,2.dnscrypt-cert.browser.yandex.net,D384:C071:C9F7:4662:AF2A:CCD5:7B5D:CC97:14D4:07B6:AD36:01E1:AEDC:06D5:6D49:6327,
+
