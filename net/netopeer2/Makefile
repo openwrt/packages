@@ -34,12 +34,21 @@ CMAKE_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+define Package/netopeer2-server/config
+  source "$(SOURCE)/Config_server.in"
+endef
+
+define Package/netopeer2-keystored/config
+  source "$(SOURCE)/Config_keystored.in"
+endef
+
 define Package/netopeer2-server
   SECTION:=util
   CATEGORY:=Utilities
   TITLE:=NETCONF server
   URL:=$(PKG_SOURCE_URL)
-  DEPENDS:=+libpthread +libyang +libnetconf2 +netopeer2-keystored +libsysrepo +sysrepocfg +sysrepoctl
+  DEPENDS:=+libpthread +libyang +libnetconf2 +netopeer2-keystored +libsysrepo +sysrepocfg +sysrepoctl +sysrepo +SSH_SERVER:openssh-server
+  MENU:=1
 endef
 
 define Package/netopeer2-cli
@@ -55,7 +64,8 @@ define Package/netopeer2-keystored
   CATEGORY:=Utilities
   TITLE:=Netopeer2 key store management
   URL:=$(PKG_SOURCE_URL)
-  DEPENDS:=+libopenssl +libsysrepo +sysrepo-plugind +sysrepocfg +sysrepoctl
+  DEPENDS:=+libopenssl +libsysrepo +sysrepo +sysrepocfg +sysrepoctl +SSH_KEYS:openssh-keygen +SSH_KEYS:openssl-util
+  MENU:=1
 endef
 
 define Package/netopeer2/description
@@ -112,7 +122,7 @@ define Package/netopeer2-server/install
 	$(INSTALL_BIN) ./files/netopeer2-server.init $(1)/etc/init.d/netopeer2-server
 
 	$(INSTALL_DIR) $(1)/usr/share/netopeer2-server
-	$(INSTALL_DATA) $(PKG_BUILD_ROOT)/server/stock_config.xml $(1)/usr/share/netopeer2-server
+	$(INSTALL_DATA) ./files/stock_config.xml $(1)/usr/share/netopeer2-server
 endef
 
 define Package/netopeer2-cli/install
@@ -128,15 +138,19 @@ define Package/netopeer2-keystored/install
 	$(INSTALL_DATA) $(PKG_BUILD_ROOT)/modules/ietf-keystore.yang $(1)/etc/sysrepo/yang
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
+
+	$(INSTALL_DIR) $(1)/etc/keystored/keys
+ifeq ($(CONFIG_SSH_KEYS),y)
+	$(INSTALL_BIN) ./files/netopeer2-keystored-keygen.default $(1)/etc/uci-defaults/97_netopeer2-keystored
+else
 	$(INSTALL_BIN) ./files/netopeer2-keystored.default $(1)/etc/uci-defaults/97_netopeer2-keystored
+	#ssh key name is specified in ./files/stock_config.xml file, you will need to provide the ssh keys yourself.
+	$(INSTALL_DATA) ./files/ssh_host_rsa_key.pem $(1)/etc/keystored/keys
+	$(INSTALL_DATA) ./files/ssh_host_rsa_key.pub.pem $(1)/etc/keystored/keys
+endif
 
 	$(INSTALL_DIR) $(1)/usr/share/netopeer2-keystored
 	$(INSTALL_DATA) $(PKG_BUILD_ROOT)/keystored/stock_key_config.xml $(1)/usr/share/netopeer2-keystored
-
-	$(INSTALL_DIR) $(1)/etc/keystored/keys
-	#$(INSTALL_DATA) ./files/ssh_host_rsa_key.pem $(1)/etc/keystored/keys
-	#$(INSTALL_DATA) ./files/ssh_host_rsa_key.pub.pem $(1)/etc/keystored/keys
-	#ssh key name is specified in stock_key_config.xml file, you will need to provide the ssh keys yourself.
 endef
 
 $(eval $(call BuildPackage,netopeer2-server))

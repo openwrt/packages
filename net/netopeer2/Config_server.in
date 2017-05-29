@@ -1,0 +1,7 @@
+if PACKAGE_netopeer2-server
+
+config SSH_SERVER
+	bool "Install the default ssh server (openssh-server)"
+	default y
+
+endif

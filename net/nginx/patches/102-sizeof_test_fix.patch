@@ -10,7 +10,7 @@
 +	'Y', '3', 'p', 'M', '\n'
 +};
 +
- int main() {
+ int main(void) {
 -    printf("%d", (int) sizeof($ngx_type));
 +    printf("dummy use of object_code_block to avoid gc-section: %c", object_code_block[0]);
      return 0;
