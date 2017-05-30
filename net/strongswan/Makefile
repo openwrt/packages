@@ -32,7 +32,7 @@ PKG_MOD_AVAILABLE:= \
 	coupling \
 	ctr \
 	curl \
-	cureve25519 \
+	curve25519 \
 	des \
 	dhcp \
 	dnskey \
