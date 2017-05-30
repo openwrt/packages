@@ -1,0 +1,57 @@
+diff --git a/output/sqlite3/ulogd_output_SQLITE3.c b/output/sqlite3/ulogd_output_SQLITE3.c
+index 20ceb3b..ea66061 100644
+--- a/output/sqlite3/ulogd_output_SQLITE3.c
++++ b/output/sqlite3/ulogd_output_SQLITE3.c
+@@ -48,7 +48,7 @@
+ 
+ struct field {
+ 	TAILQ_ENTRY(field) link;
+-	char name[ULOGD_MAX_KEYLEN];
++	char name[ULOGD_MAX_KEYLEN+1]; /* +1 for null char */
+ 	struct ulogd_key *key;
+ };
+ 
+@@ -214,7 +214,7 @@ sqlite3_createstmt(struct ulogd_pluginstance *pi)
+ {
+ 	struct sqlite3_priv *priv = (void *)pi->private;
+ 	struct field *f;
+-	char buf[ULOGD_MAX_KEYLEN];
++	char buf[ULOGD_MAX_KEYLEN+1]; /* +1 for null char */
+ 	char *underscore;
+ 	char *stmt_pos;
+ 	int i, cols = 0;
+@@ -305,7 +305,7 @@ static int
+ sqlite3_init_db(struct ulogd_pluginstance *pi)
+ {
+ 	struct sqlite3_priv *priv = (void *)pi->private;
+-	char buf[ULOGD_MAX_KEYLEN];
++	char buf[ULOGD_MAX_KEYLEN+1];
+ 	char *underscore;
+ 	struct field *f;
+ 	sqlite3_stmt *schema_stmt;
+diff --git a/src/ulogd.c b/src/ulogd.c
+index 5b9a586..0d6a367 100644
+--- a/src/ulogd.c
++++ b/src/ulogd.c
+@@ -942,7 +942,7 @@ static int create_stack(const char *option)
+ 	/* PASS 1: find and instanciate plugins of stack, link them together */
+ 	for (tok = strtok(buf, ",\n"); tok; tok = strtok(NULL, ",\n")) {
+ 		char *plname, *equals;
+-		char pi_id[ULOGD_MAX_KEYLEN];
++		char pi_id[ULOGD_MAX_KEYLEN+1]; /* +1 for the null char */
+ 		struct ulogd_pluginstance *pi;
+ 		struct ulogd_plugin *pl;
+ 
+diff --git a/util/db.c b/util/db.c
+index c9aec41..6af4555 100644
+--- a/util/db.c
++++ b/util/db.c
+@@ -96,7 +96,7 @@ static int sql_createstmt(struct ulogd_pluginstance *upi)
+ 	if (strncasecmp(procedure,"INSERT", strlen("INSERT")) == 0 &&
+ 	    (procedure[strlen("INSERT")] == '\0' ||
+ 			procedure[strlen("INSERT")] == ' ')) {
+-		char buf[ULOGD_MAX_KEYLEN];
++		char buf[ULOGD_MAX_KEYLEN+1]; /* +1 for null char */
+ 		char *underscore;
+ 
+ 		if(procedure[6] == '\0') {
