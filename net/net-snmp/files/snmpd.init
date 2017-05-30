@@ -210,6 +210,15 @@ snmpd_engineid_add() {
 	[ -n "$engineidnic" ] && echo "engineIDNic $engineidnic" >> $CONFIGFILE
 }
 
+snmpd_v3user_add()
+{
+       local cfg="$1"
+       config_get rouser "$cfg" rouser
+       [ -n "$rouser" ] && echo "rouser $rouser" >> $CONFIGFILE
+       config_get rwuser "$cfg" rwuser
+       [ -n "$rwuser" ] && echo "rwuser $rwuser" >> $CONFIGFILE
+}
+
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
 
@@ -234,7 +243,8 @@ start_service() {
 	config_foreach snmpd_exec_add exec
 	config_foreach snmpd_disk_add disk
 	config_foreach snmpd_engineid_add engineid
-	
+	config_foreach snmpd_v3user_add v3user
+
 	procd_set_param command $PROG -Lf /dev/null -f
 	procd_set_param file $CONFIGFILE
 	procd_set_param respawn
