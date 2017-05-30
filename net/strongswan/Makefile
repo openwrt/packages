@@ -32,6 +32,7 @@ PKG_MOD_AVAILABLE:= \
 	coupling \
 	ctr \
 	curl \
+	cureve25519 \
 	des \
 	dhcp \
 	dnskey \
@@ -150,6 +151,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-coupling \
 	+strongswan-mod-ctr \
 	+strongswan-mod-curl \
+	+strongswan-mod-curve25519 \
 	+strongswan-mod-des \
 	+strongswan-mod-dhcp \
 	+strongswan-mod-dnskey \
@@ -517,6 +519,7 @@ $(eval $(call BuildPlugin,constraints,advanced X509 constraint checking,))
 $(eval $(call BuildPlugin,coupling,IKEv2 plugin to couple peer certificates permanently to authentication,))
 $(eval $(call BuildPlugin,ctr,Counter Mode wrapper crypto,))
 $(eval $(call BuildPlugin,curl,cURL fetcher plugin,+PACKAGE_strongswan-mod-curl:libcurl))
+$(eval $(call BuildPlugin,curve25519,Curve25519 Diffie-Hellman,))
 $(eval $(call BuildPlugin,des,DES crypto,))
 $(eval $(call BuildPlugin,dhcp,DHCP based attribute provider,))
 $(eval $(call BuildPlugin,dnskey,DNS RR key decoding,))
