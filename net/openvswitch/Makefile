@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=2.7.0
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=Apache-2.0
@@ -22,6 +22,8 @@ PKG_USE_MIPS16:=0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://openvswitch.org/releases/
 PKG_HASH:=e492cf08a929b4a2178b7f9b01dc4ff562f44138b547b4e942078187b2445d2e
+
+PKG_BUILD_DEPENDS:=python-six/host
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -65,32 +67,11 @@ endef
 define Package/openvswitch-python
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Python Support
-  DEPENDS:=+openvswitch +PACKAGE_openvswitch-python:python
+  DEPENDS:=+openvswitch +python +python-six
 endef
 
 define Package/openvswitch-python/description
   Provides bindings and libraries for using Python to manipulate/work with Open vSwitch.
-endef
-
-define Package/openvswitch-ipsec
-  $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch GRE through IPsec tool
-  DEPENDS:=+openvswitch-python
-endef
-
-define Package/openvswitch-ipsec/description
-  The ovs-monitor-ipsec script provides support for encrypting GRE tunnels with 
-  IPsec.
-endef
-
-define Package/openvswitch-benchmark
-  $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch flow setup benchmark utility
-  DEPENDS:=+openvswitch
-endef
-
-define Package/openvswitch-benchmark/description
-  Utility for running OpenVSwitch benchmarking
 endef
 
 OVS_BIN_TOOLS:=ovs-appctl ovs-ofctl ovs-dpctl ovs-vsctl ovsdb-client
@@ -184,16 +165,6 @@ define Package/openvswitch-python/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/openvswitch/python/ovs/* $(1)/usr/lib/python$(PYTHON_VERSION)/ovs
 endef
 
-define Package/openvswitch-ipsec/install
-	$(INSTALL_DIR) $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/debian/ovs-monitor-ipsec $(1)/usr/sbin/
-endef
-
-define Package/openvswitch-benchmark/install
-	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ovs-benchmark $(1)/usr/bin/
-endef
-
 define Package/openvswitch/install
 	:
 endef
@@ -208,8 +179,6 @@ $(foreach t,$(OVS_BIN_TOOLS),$(eval $(call BuildPackage,openvswitch-$(t))))
 
 $(eval $(call BuildPackage,openvswitch-base))
 $(eval $(call BuildPackage,openvswitch-python))
-$(eval $(call BuildPackage,openvswitch-ipsec))
-$(eval $(call BuildPackage,openvswitch-benchmark))
 $(eval $(call BuildPackage,openvswitch))
 $(eval $(call KernelPackage,openvswitch))
 
