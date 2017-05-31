@@ -1,0 +1,42 @@
+--- a/configure
++++ b/configure
+@@ -1560,6 +1560,7 @@ Optional Packages:
+   --with-operkey          set the default operator @AUTHKEY value
+   --with-components       set components to build:
+ 			    - "all" (default) builds everything
++			    - "embedded" builds everything except man and notifier
+ 			    - "core" builds libcups and ipptool
+   --with-privateinclude   set path for private include files, default=none
+   --with-lpdconfig        set URI for LPD config file
+@@ -5916,6 +5917,10 @@ case "$COMPONENTS" in
+ 		BUILDDIRS="filter backend berkeley cgi-bin monitor notifier ppdc scheduler systemv conf data desktop locale man doc examples templates"
+ 		;;
+ 
++	embedded)
++		BUILDDIRS="filter backend berkeley cgi-bin driver monitor ppdc scheduler systemv conf data locale doc examples templates"
++		;;
++
+ 	core)
+ 		BUILDDIRS="data locale"
+ 		;;
+--- a/config-scripts/cups-common.m4
++++ b/config-scripts/cups-common.m4
+@@ -440,6 +440,7 @@ COMPONENTS="all"
+ 
+ AC_ARG_WITH(components, [  --with-components       set components to build:
+ 			    - "all" (default) builds everything
++			    - "embedded" builds everything except locale, man and notifier
+ 			    - "core" builds libcups and ipptool],
+ 	COMPONENTS="$withval")
+ 
+@@ -448,6 +449,10 @@ case "$COMPONENTS" in
+ 		BUILDDIRS="filter backend berkeley cgi-bin monitor notifier ppdc scheduler systemv conf data desktop locale man doc examples templates"
+ 		;;
+ 
++	embedded)
++		BUILDDIRS="filter backend berkeley cgi-bin driver monitor ppdc scheduler systemv conf data locale doc examples templates"
++		;;
++
+ 	core)
+ 		BUILDDIRS="data locale"
+ 		;;
