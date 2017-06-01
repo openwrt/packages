@@ -3,29 +3,109 @@
 menu "Configuration"
 	depends on PACKAGE_coova-chilli
 
-config COOVACHILLI_PROXY
-        bool "Enable support for chilli proxy. Required for AAA Proxy through http"
-        default n
+config COOVACHILLI_CHILLIQUERY
+	bool "Enable chilli_query"
+	default y
 
-config COOVACHILLI_REDIR
-	bool "Enable support for redir server. Required for uamregex"
+config COOVACHILLI_UAMANYIP
+	bool "Enable use of uamanyip"
+	default y
+
+config COOVACHILLI_UAMUIPORT
+	bool "Enable use of uamuiport"
+	default y
+
+config COOVACHILLI_ACCOUNTING_ONOFF
+	bool "Enable use of Accounting-On and Accounting-Off"
+	default y
+
+config COOVACHILLI_TAP
+	bool "Enable support for tap interface (tun only)"
+	default y
+
+config COOVACHILLI_TCPRESET
+	bool "Enable support for TCP reset of filtered connections"
+	default y
+
+config COOVACHILLI_RADPROXY
+	bool "Enable support RADIUS (EAP) Proxy"
+	default y
+
+config COOVACHILLI_DHCPRADIUS
+	bool "Enable support DHCP/RADIUS integration"
+	default y
+
+config COOVACHILLI_WPAD
+	bool "Enable support WPAD"
 	default n
 
-config COOVACHILLI_MINIPORTAL
-	bool "Enable support Coova miniportal"
+config COOVACHILLI_LEAKYBUCKET
+	bool "Enable use of leaky bucket shaping"
+	default y
+
+config COOVACHILLI_AUTHEDALLOWED
+	bool "Enable Authorized Garden"
 	default n
 
-config COOVACHILLI_USERAGENT
-	bool "Enable recording user-agent"
+config COOVACHILLI_GARDENEXT
+	bool "Enable extended walled garden features"
+	default n
+
+config COOVACHILLI_INSPECT
+	bool "Enable inspect feature in cmdsock"
+	default n
+
+config COOVACHILLI_COA
+	bool "Enable CoA RADIUS support"
+	default y
+
+config COOVACHILLI_DHCPOPT
+	bool "Enable support for DHCP option setting"
+	default n
+
+config COOVACHILLI_SESSGARDEN
+	bool "Enable support for session-based walled garden"
+	default n
+
+config COOVACHILLI_SESSPROXY
+	bool "Enable support for per session postauth proxy"
+	default n
+
+config COOVACHILLI_SESSDHCP
+	bool "Enable support for per session DHCP relay"
+	default n
+
+config COOVACHILLI_SESSDNS
+	bool "Enable support for per session DNS enforcement"
+	default n
+
+config COOVACHILLI_CHILLIXML
+	bool "Enable use of chillixml"
+	default n
+
+config COOVACHILLI_PROXYVSA
+	bool "Enable support for VSA attribute proxy"
 	default n
 
 config COOVACHILLI_DNSLOG
 	bool "Enable support to log DNS name queries"
 	default n
 
+config COOVACHILLI_IPWHITELIST
+	bool "Enable file based IP white list"
+	default n
+
 config COOVACHILLI_UAMDOMAINFILE
 	bool "Enable loading of mass uamdomains from file"
 	default n
+
+config COOVACHILLI_REDIRDNSREQ
+	bool "Enable the sending of a DNS query on redirect"
+	default n
+
+config COOVACHILLI_IEEE8021Q
+	bool "Enable support for IEEE 802.1Q"
+	default y
 
 config COOVACHILLI_LARGELIMITS
 	bool "Enable larger limits for use with non-embedded systems"
@@ -41,11 +121,203 @@ config COOVACHILLI_NOSSL
 config COOVACHILLI_MATRIXSSL
 	bool "MatrixSSL"
 
+config COOVACHILLI_MATRIXSSL_CLI
+	depends on COOVACHILLI_MATRIXSSL
+	bool "Enable MatrixSSL Client use"
+	default n
+
 config COOVACHILLI_CYASSL
 	bool "CyaSSL"
 
 config COOVACHILLI_OPENSSL
 	bool "OpenSSL"
+
+endchoice
+
+config COOVACHILLI_CLUSTER
+	depends on COOVACHILLI_OPENSSL
+	bool "Enable support for clustering"
+	default n
+
+config COOVACHILLI_NFQUEUE
+	bool "Enable support for netfilter_queue"
+	default n
+
+choice
+	prompt "Hashing method"
+	default COOVACHILLI_SFHASH
+
+config COOVACHILLI_SFHASH
+	bool "SuperFashHash"
+
+config COOVACHILLI_LOOKUP3
+	bool "Jenkins lookup3"
+
+endchoice
+
+config COOVACHILLI_PATRICIA
+	bool "Enable Patricia use"
+	default n
+
+config COOVACHILLI_IPV6
+	bool "Enable IPV6"
+	default y
+
+config COOVACHILLI_PCAP
+	bool "Enable support for pcap"
+	default n
+
+config COOVACHILLI_MMAP
+	bool "Enable support for mmap"
+	default n
+
+config COOVACHILLI_POLL
+	bool "Enable support for poll"
+	default n
+
+config COOVACHILLI_IPC_MSG
+	bool "Enable support for msgsnd/msgrcv SV IPC"
+	default n
+
+config COOVACHILLI_BINSTATUSFILE
+	bool "Enable support for binary status file"
+	default n
+
+config COOVACHILLI_STATUSFILE
+	bool "Enable support for status file"
+	default n
+
+config COOVACHILLI_CHILLIPROXY
+	bool "Enable support for chilli proxy. Required for AAA Proxy through http"
+	default n
+
+config COOVACHILLI_CURL
+	depends on COOVACHILLI_CHILLIPROXY
+	bool "Enable support for curl"
+	default n
+
+config COOVACHILLI_MULTIROUTE
+	bool "Enable support for multiple routes"
+	default n
+
+config COOVACHILLI_MULTILAN
+	bool "Enable support for multiple LANs"
+	default n
+
+config COOVACHILLI_CHILLIRADSEC
+	depends on (COOVACHILLI_OPENSSL || COOVACHILLI_CYASSL || COOVACHILLI_MATRIXSSL)
+	bool "Enable support for RadSec AAA Proxy"
+	default n
+
+config COOVACHILLI_CHILLIREDIR
+	bool "Enable support for redir server. Required for uamregex"
+	default n
+
+config COOVACHILLI_CHILLISCRIPT
+	bool "Enable support for chilli_script helper"
+	default n
+
+config COOVACHILLI_SESSIONSTATE
+	bool "Enable extended use of the CoovaChilli-Session-State attribute"
+	default n
+
+config COOVACHILLI_SESSIONID
+	bool "Enable the use of the CoovaChilli-Session-Id attribute"
+	default n
+
+config COOVACHILLI_APSESSIONID
+	bool "Enable the use of the CoovaChilli-AP-Session-Id attribute"
+	default n
+
+config COOVACHILLI_COOVACHILLICONFIG
+	bool "Enable the use of the CoovaChilli-Config attribute"
+	default y
+
+config COOVACHILLI_MDNS
+	bool "Enable support for MDNS"
+	default n
+
+config COOVACHILLI_NETBIOS
+	bool "Enable support for NetBIOS"
+	default n
+
+config COOVACHILLI_IEEE8023
+	bool "Enable support for IEEE 802.3 Ethernet"
+	default n
+
+config COOVACHILLI_PPPOE
+	bool "Enable support for PPPoE"
+	default n
+
+config COOVACHILLI_L2TPPPP
+	bool "Enable support for L2TP/PPP Tunneling"
+	default n
+
+config COOVACHILLI_EAPOL
+	bool "Enable support for EAPOL"
+	default n
+
+config COOVACHILLI_MINIPORTAL
+	bool "Enable support Coova miniportal"
+	default n
+
+config COOVACHILLI_MINICONFIG
+	bool "Enable support minimal cmdline config"
+	default n
+
+config COOVACHILLI_EWTAPI
+	bool "Enable support for CoovaEWT API"
+	default n
+
+config COOVACHILLI_SSDP
+	bool "Enable support for Simple Service Discovery Protocol"
+	default n
+
+config COOVACHILLI_LAYER3
+	bool "Enable support for Layer3 only operation"
+	default n
+
+config COOVACHILLI_MODULES
+	bool "Enable dynamically loadable modules (experimental)"
+	default n
+
+config COOVACHILLI_EXTADMVSA
+	bool "Enable admin-user VSA attribute support"
+	default n
+
+config COOVACHILLI_REDIRINJECT
+	bool "Enable Redir content-injection support"
+	default n
+
+config COOVACHILLI_USERAGENT
+	bool "Enable recording user-agent"
+	default n
+
+config COOVACHILLI_ACCEPTLANGUAGE
+	bool "Enable recording Accept-Language"
+	default n
+
+config COOVACHILLI_LOCATION
+	depends on COOVACHILLI_PROXYVSA
+	bool "Enable Location Awareness"
+	default n
+
+config COOVACHILLI_FORCEDNS
+	bool "Enable the forcing (NAT) of DNS"
+	default n
+
+choice
+	prompt "Debugging messages"
+	default COOVACHILLI_DEBUG
+
+config COOVACHILLI_NO_DEBUG
+	bool "Disable debugging messages"
+
+config COOVACHILLI_DEBUG
+	bool "Enable debugging messages"
+
+config COOVACHILLI_DEBUG2
+	bool "Enable verbose debugging"
 
 endchoice
 
