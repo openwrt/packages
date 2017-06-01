@@ -38,6 +38,8 @@ define Package/motion/conffiles
 /etc/motion.conf
 endef
 
+TARGET_CFLAGS+=$(TARGET_CPPFLAGS)
+
 CONFIGURE_ARGS+= \
 	--without-optimizecpu \
 	--without-ffmpeg \
