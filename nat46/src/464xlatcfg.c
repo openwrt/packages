@@ -1,6 +1,7 @@
 /* 464xlatcfg.c
  *
  * Copyright (c) 2015 Steven Barth <cyrus@openwrt.org>
+ * Copyright (c) 2017 Hans Dedecker <dedeckeh@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
@@ -40,8 +41,9 @@ int main(int argc, const char *argv[])
 	snprintf(buf, sizeof(buf), "/var/run/%s.pid", argv[1]);
 	FILE *fp = fopen(buf, "r");
 	if (fp) {
-		fscanf(fp, "%d", &pid);
-		kill(pid, SIGTERM);
+		if (fscanf(fp, "%d", &pid) == 1)
+			kill(pid, SIGTERM);
+
 		unlink(buf);
 		fclose(fp);
 	}
@@ -52,7 +54,9 @@ int main(int argc, const char *argv[])
 	if (!argv[3] || !argv[4] || !(fp = fopen(buf, "wx")))
 		return 1;
 
-	signal(SIGTERM, sighandler);
+	signal(SIGTERM, SIG_DFL);
+	setvbuf(fp, NULL, _IOLBF, 0);
+	fprintf(fp, "%d\n", getpid());
 
 	prefix[sizeof(prefix) - 1] = 0;
 	strncpy(prefix, argv[3], sizeof(prefix) - 1);
@@ -133,6 +137,7 @@ int main(int argc, const char *argv[])
 		fclose(stderr);
 		chdir("/");
 		setsid();
+		signal(SIGTERM, sighandler);
 		pause();
 
 		nat46 = fopen("/proc/net/nat46/control", "w");
@@ -141,6 +146,7 @@ int main(int argc, const char *argv[])
 			fclose(nat46);
 		}
 	} else {
+		rewind(fp);
 		fprintf(fp, "%d\n", pid);
 	}
 	
