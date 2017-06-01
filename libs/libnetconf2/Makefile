@@ -68,7 +68,7 @@ endef
 
 define Package/libnetconf2/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libnetconf2.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetconf2.so* $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/share/libnetconf2
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/libnetconf2/*.yin $(1)/usr/share/libnetconf2/
