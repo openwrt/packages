@@ -49,7 +49,8 @@ CONFIGURE_ARGS+= \
 
 define Package/motion/install
 	$(INSTALL_DIR) $(1)/etc
-	$(CP) $(PKG_BUILD_DIR)/motion-dist.conf $(1)/etc/motion.conf
+	mkdir -p $(1)/etc/motion/
+	$(CP) $(PKG_BUILD_DIR)/motion-dist.conf $(1)/etc/motion/motion.conf
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/motion $(1)/usr/bin/
 
