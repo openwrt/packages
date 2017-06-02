@@ -1,0 +1,13 @@
+--- a/servconf.c	2017-03-19 20:39:27.000000000 -0600
++++ b/servconf.c	2017-06-01 19:12:51.338645002 -0600
+@@ -201,8 +201,10 @@
+ 		/* fill default hostkeys for protocols */
+ 		options->host_key_files[options->num_host_key_files++] =
+ 		    _PATH_HOST_RSA_KEY_FILE;
++#if 0
+ 		options->host_key_files[options->num_host_key_files++] =
+ 		    _PATH_HOST_DSA_KEY_FILE;
++#endif
+ #ifdef OPENSSL_HAS_ECC
+ 		options->host_key_files[options->num_host_key_files++] =
+ 		    _PATH_HOST_ECDSA_KEY_FILE;
