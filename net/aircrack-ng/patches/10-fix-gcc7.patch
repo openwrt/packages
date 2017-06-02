@@ -1,0 +1,22 @@
+diff --git a/src/aircrack-ng.c b/src/aircrack-ng.c
+index 3fd5179..3e6d78e 100644
+--- a/src/aircrack-ng.c
++++ b/src/aircrack-ng.c
+@@ -427,7 +427,7 @@ void eof_wait( int *eof_notified )
+ }
+ 
+ 
+-inline int wpa_send_passphrase(char *key, struct WPA_data* data, int lock)
++static int wpa_send_passphrase(char *key, struct WPA_data* data, int lock)
+ {
+ 	pthread_mutex_lock(&data->mutex);
+ 
+@@ -455,7 +455,7 @@ inline int wpa_send_passphrase(char *key, struct WPA_data* data, int lock)
+ }
+ 
+ 
+-inline int wpa_receive_passphrase(char *key, struct WPA_data* data)
++static int wpa_receive_passphrase(char *key, struct WPA_data* data)
+ {
+ 	pthread_mutex_lock(&data->mutex);
+ 
