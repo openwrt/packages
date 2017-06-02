@@ -1,0 +1,3 @@
+config metrics 'main'
+	option listen_address '::1'
+	option listen_port '9100'
