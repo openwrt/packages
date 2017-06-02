@@ -32,12 +32,12 @@ int main(int argc, const char *argv[])
 {
 	char buf[INET6_ADDRSTRLEN], prefix[INET6_ADDRSTRLEN + 4];
 	int pid;
-	
+
 	if (argc <= 1) {
 		fprintf(stderr, "Usage: %s <name> [ifname] [ipv6prefix] [ipv4addr] [ipv6addr]\n", argv[0]);
 		return 1;
 	}
-	
+
 	snprintf(buf, sizeof(buf), "/var/run/%s.pid", argv[1]);
 	FILE *fp = fopen(buf, "r");
 	if (fp) {
@@ -47,10 +47,10 @@ int main(int argc, const char *argv[])
 		unlink(buf);
 		fclose(fp);
 	}
-	
+
 	if (!argv[2])
 		return 0;
-	
+
 	if (!argv[3] || !argv[4] || !(fp = fopen(buf, "wx")))
 		return 1;
 
@@ -74,7 +74,7 @@ int main(int argc, const char *argv[])
 		strcat(prefix, "/96");
 		freeaddrinfo(res);
 	}
-		
+
 	int i = 0;
 	int sock;
 	struct sockaddr_in6 saddr;
@@ -102,7 +102,7 @@ int main(int argc, const char *argv[])
 		sleep(3);
 		i++;
 	} while (i < 3);
-	
+
 	struct ipv6_mreq mreq = {saddr.sin6_addr, if_nametoindex(argv[2])};
 	if (!argv[5]) {
 		if (IN6_IS_ADDR_LINKLOCAL(&mreq.ipv6mr_multiaddr))
@@ -115,21 +115,21 @@ int main(int argc, const char *argv[])
 	} else if (inet_pton(AF_INET6, argv[5], &mreq.ipv6mr_multiaddr) != 1) {
 		return 1;
 	}
-	
+
 	if (setsockopt(sock, SOL_IPV6, IPV6_JOIN_ANYCAST, &mreq, sizeof(mreq)))
 		return 3;
-	
+
 	inet_ntop(AF_INET6, &mreq.ipv6mr_multiaddr, buf, sizeof(buf));
 	fputs(buf, stdout);
 	fputc('\n', stdout);
 	fflush(stdout);
-	
+
 	FILE *nat46 = fopen("/proc/net/nat46/control", "w");
 	if (!nat46 || fprintf(nat46, "add %s\nconfig %s local.style NONE local.v4 %s/32 local.v6 %s/128 "
 			"remote.style RFC6052 remote.v6 %s\n", argv[1], argv[1], argv[4], buf, prefix) < 0 ||
 			fclose(nat46))
 		return 4;
-	
+
 	if (!(pid = fork())) {
 		fclose(fp);
 		fclose(stdin);
@@ -149,6 +149,6 @@ int main(int argc, const char *argv[])
 		rewind(fp);
 		fprintf(fp, "%d\n", pid);
 	}
-	
+
 	return 0;
 }
