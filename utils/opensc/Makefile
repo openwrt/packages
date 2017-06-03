@@ -92,7 +92,7 @@ define ProfileGen
 define Package/libopensc-profile-$(subst _,-,$(firstword $(subst :, ,$(1))))
   TITLE:=$(firstword $(subst :, ,$(1))) card profile for opensc
   URL:=https://github.com/OpenSC/OpenSC/wiki
-  SECTION:=lib
+  SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=libopensc
 endef

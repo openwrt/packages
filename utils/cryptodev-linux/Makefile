@@ -19,7 +19,7 @@ PKG_MIRROR_HASH:=d2b49408682795a0e200c0e54a8605f72be4b11088e07b1cd4d48f6c1427b0f
 PKG_SOURCE_URL:=https://github.com/cryptodev-linux/cryptodev-linux.git
 PKG_SOURCE_VERSION:=87d959d9a279c055b361de8e730fab6a7144edd7
 
-PKG_MAINTAINER:=Ansuel Smith ansuelsmth@gmail.com
+PKG_MAINTAINER:=Ansuel Smith <ansuelsmth@gmail.com>
 
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 

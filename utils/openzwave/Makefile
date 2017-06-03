@@ -33,14 +33,14 @@ endef
 
 define Package/libopenzwave
 $(call Package/openzwave/default)
-  SECTION:=Libs
+  SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Open-ZWave Library
 endef
 
 define Package/openzwave
 $(call Package/openzwave/default)
-  SECTION:=Utils
+  SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Open-ZWave MinOZW test utility
   DEPENDS:=+libopenzwave +openzwave-config
@@ -48,7 +48,7 @@ endef
 
 define Package/openzwave-config
 $(call Package/openzwave/default)
-  SECTION:=Utils
+  SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Open-ZWave Device Configs
 endef
