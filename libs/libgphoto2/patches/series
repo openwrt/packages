@@ -1,0 +1,3 @@
+001-automake-compat.patch
+002-no-tests-docs-examples-translations.patch
+003-replace_utime.patch

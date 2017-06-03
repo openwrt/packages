@@ -1,0 +1,96 @@
+Index: libgphoto2-2.5.9/configure.ac
+===================================================================
+--- libgphoto2-2.5.9.orig/configure.ac
++++ libgphoto2-2.5.9/configure.ac
+@@ -635,20 +635,11 @@ gphoto-m4/Makefile
+ libgphoto2/Makefile
+ libgphoto2.pc
+ libgphoto2-uninstalled.pc
+-examples/Makefile
+-tests/Makefile
+-tests/ddb/Makefile
+-tests/ddb/check-ddb.sh
+ packaging/Makefile
+ packaging/linux-hotplug/Makefile
+ packaging/generic/Makefile
+ packaging/rpm/Makefile
+ packaging/rpm/package.spec
+-po/Makefile.in
+-doc/Makefile
+-doc/Doxyfile
+-doc/Doxyfile-internals
+-doc/api/Makefile
+ ],[
+ dnl This relies on this code being called for each of the above files
+ dnl with ac_file set to the filename.
+Index: libgphoto2-2.5.9/libgphoto2_port/configure.ac
+===================================================================
+--- libgphoto2-2.5.9.orig/libgphoto2_port/configure.ac
++++ libgphoto2-2.5.9/libgphoto2_port/configure.ac
+@@ -474,13 +474,10 @@ AC_SUBST([AM_LDFLAGS])
+ # ---------------------------------------------------------------------------
+ AC_CONFIG_FILES([
+ Makefile
+-po/Makefile.in
+ libgphoto2_port/Makefile
+ libgphoto2_port.pc
+ libgphoto2_port-uninstalled.pc
+ gphoto2-port-config
+-test/Makefile
+-doc/Makefile
+ gphoto-m4/Makefile
+ ])
+ AC_OUTPUT
+Index: libgphoto2-2.5.9/libgphoto2_port/Makefile.am
+===================================================================
+--- libgphoto2-2.5.9.orig/libgphoto2_port/Makefile.am
++++ libgphoto2-2.5.9/libgphoto2_port/Makefile.am
+@@ -25,7 +25,7 @@ udevscript_PROGRAMS =
+ bin_SCRIPTS = gphoto2-port-config
+ 
+ # The . stands for the current dir, i.e. the iolibs to build.
+-SUBDIRS = po libgphoto2_port test . doc gphoto-m4
++SUBDIRS = libgphoto2_port . gphoto-m4
+ 
+ 
+ ########################################################################
+Index: libgphoto2-2.5.9/libgphoto2_port/Makefile.in
+===================================================================
+--- libgphoto2-2.5.9.orig/libgphoto2_port/Makefile.in
++++ libgphoto2-2.5.9/libgphoto2_port/Makefile.in
+@@ -556,7 +556,7 @@ EXTRA_LTLIBRARIES = disk.la ptpip.la ser
+ bin_SCRIPTS = gphoto2-port-config
+ 
+ # The . stands for the current dir, i.e. the iolibs to build.
+-SUBDIRS = po libgphoto2_port test . doc gphoto-m4
++SUBDIRS = libgphoto2_port . gphoto-m4
+ 
+ ########################################################################
+ # All iolibs are defined as EXTRA_LTLIBRARIES. This requires that
+Index: libgphoto2-2.5.9/Makefile.am
+===================================================================
+--- libgphoto2-2.5.9.orig/Makefile.am
++++ libgphoto2-2.5.9/Makefile.am
+@@ -8,7 +8,7 @@ bin_SCRIPTS = gphoto2-config
+ EXTRA_DIST = HACKING MAINTAINERS TESTERS installcheck.mk
+ 
+ # Note: @subdirs@ lists all the directories from AC_CONFIG_SUBDIRS()
+-SUBDIRS = @subdirs@ libgphoto2 camlibs tests examples po packaging doc gphoto-m4
++SUBDIRS = @subdirs@ libgphoto2 camlibs packaging
+ 
+ EXTRA_DIST    += libgphoto2.pc.in
+ pkgconfig_DATA = libgphoto2.pc
+Index: libgphoto2-2.5.9/Makefile.in
+===================================================================
+--- libgphoto2-2.5.9.orig/Makefile.in
++++ libgphoto2-2.5.9/Makefile.in
+@@ -482,7 +482,8 @@ EXTRA_DIST = HACKING MAINTAINERS TESTERS
+ 	INSTALL README.in README README.packaging
+ 
+ # Note: @subdirs@ lists all the directories from AC_CONFIG_SUBDIRS()
+-SUBDIRS = @subdirs@ libgphoto2 camlibs tests examples po packaging doc gphoto-m4
++SUBDIRS = @subdirs@ libgphoto2 camlibs packaging
++
+ pkgconfig_DATA = libgphoto2.pc
+ noinst_DATA = libgphoto2-uninstalled.pc
+ doc_DATA = AUTHORS COPYING NEWS ABOUT-NLS ChangeLog README \
