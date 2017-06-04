@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# should restart shorewall6-lite when an interface comes up
+
+[ ifup = "$ACTION" ] && {
+        /etc/init.d/shorewall6-lite restart
+}
+
+[ ifdown = "$ACTION" ] && {
+        # might need to restore some routing
+        /etc/init.d/shorewall6-lite restart
+}
