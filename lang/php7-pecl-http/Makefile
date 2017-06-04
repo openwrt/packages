@@ -9,7 +9,7 @@ PECL_NAME:=pecl_http
 PECL_LONGNAME:=Extended HTTP Support
 
 PKG_VERSION:=3.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MD5SUM:=e3de67b156e7d5f6c2e5eb1e2b5f0acceb7004f1260d68c9f8b2c0f9629aabf0
 
 PKG_NAME:=php7-pecl-http
