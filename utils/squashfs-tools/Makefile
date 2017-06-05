@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squashfs-tools
 PKG_VERSION:=4.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
@@ -69,6 +69,8 @@ endif
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/squashfs-tools \
 		CC="$(TARGET_CC)" \
+		EXTRA_CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
+		EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
 		$(MAKE_FLAGS) \
 		mksquashfs unsquashfs
 endef
