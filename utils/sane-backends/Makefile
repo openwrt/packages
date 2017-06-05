@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2017 Luiz Angelo Daros de Luca <luizluca@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,18 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
-PKG_VERSION:=1.0.25
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.27
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://fossies.org/linux/misc \
     https://alioth.debian.org/frs/download.php/file/4146/
-PKG_MD5SUM:=f9ed5405b3c12f07c6ca51ee60225fe7
+PKG_HASH:=293747bf37275c424ebb2c833f8588601a60b2f9653945d5a3194875355e36c9
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=GPL-2.0 GPL-2.0+
 PKG_LICENSE_FILES:=COPYING LICENSE
-
-PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=aclocal.m4
 
 PKG_INSTALL:=1
 
@@ -167,8 +165,6 @@ TARGET_LDFLAGS += \
 CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
-	--disable-translations \
-	--disable-latex \
 	--without-gphoto2 \
 	--without-snmp
 
@@ -352,7 +348,7 @@ $(eval $(call SaneBackend,umax,UMAX scanners))
 $(eval $(call SaneBackend,umax1220u,the UMAX Astra 1220U and similar scanners))
 $(eval $(call SaneBackend,umax_pp,Umax Astra parallel port flatbed scanners))
 $(eval $(call SaneBackend,v4l,Video for Linux API,+libv4l +libjpeg))
-$(eval $(call SaneBackend,xerox_mfp,Xerox Phaser 3200MFP device))
+$(eval $(call SaneBackend,xerox_mfp,Xerox Phaser 3200MFP device,+libjpeg))
 $(eval $(call BuildPackage,sane-backends))
 $(eval $(call BuildPackage,sane-backends-all))
 $(eval $(call BuildPackage,sane-frontends))
