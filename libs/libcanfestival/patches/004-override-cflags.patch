@@ -5,7 +5,7 @@
  CC = SUB_CC
  OPT_CFLAGS = -O2
 -CFLAGS = SUB_OPT_CFLAGS
-+CFLAGS = SUB_OPT_CFLAGS -fhonour-copts
++CFLAGS ?= SUB_OPT_CFLAGS
  PROG_CFLAGS = SUB_PROG_CFLAGS
  PREFIX = SUB_PREFIX
  TARGET = SUB_TARGET
@@ -16,7 +16,7 @@
  
  else
 -CFLAGS = SUB_OPT_CFLAGS
-+CFLAGS = SUB_OPT_CFLAGS -fhonour-copts
++CFLAGS ?= SUB_OPT_CFLAGS
  
  ifeq ($(TARGET),none)
  canfestival: libcanfestival.o
@@ -27,7 +27,7 @@
  
  else
 -CFLAGS = SUB_OPT_CFLAGS
-+CFLAGS = SUB_OPT_CFLAGS -fhonour-copts
++CFLAGS ?= SUB_OPT_CFLAGS
  
  driver: libcanfestival_$(TARGET).a
  
@@ -38,7 +38,7 @@
  CC = SUB_CC
  OPT_CFLAGS = -O2
 -CFLAGS = SUB_OPT_CFLAGS
-+CFLAGS = SUB_OPT_CFLAGS -fhonour-copts
++CFLAGS ?= SUB_OPT_CFLAGS
  PROG_CFLAGS = SUB_PROG_CFLAGS
  OS_NAME = SUB_OS_NAME
  ARCH_NAME = SUB_ARCH_NAME
