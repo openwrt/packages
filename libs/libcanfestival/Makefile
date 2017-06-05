@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcanfestival
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE_VERSION:=8bfe0ac00cdb
 PKG_SOURCE_URL:=http://dev.automforge.net/CanFestival-3/archive/$(PKG_SOURCE_VERSION).tar.bz2?_dummyfilename=
