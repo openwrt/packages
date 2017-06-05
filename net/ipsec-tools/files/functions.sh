@@ -88,6 +88,41 @@ spd$spdcmd $ritem $litem any -P in ipsec esp/tunnel/$4-$gate/require;
   done
 }
 
+manage_nonesa() {
+  local spdcmd
+  local item
+  local cout cin
+
+  if [ -z "$4" ]; then
+    $log "Bad usage of manage_nonesa"
+    errno=3; return 3
+  fi
+
+  case "$1" in
+    add|up|1) spdcmd=add ;;
+    del|down|0) spdcmd=delete ;;
+    *) errno=3; return 3 ;;
+  esac
+
+  case "$2" in
+    local|remote) ;;
+    *) errno=3; return 3 ;;
+  esac
+
+  for item in $3 ; do
+    if [ "$2" = "local" ]; then
+      cout="$4 $item"
+      cin="$item $4"
+    else
+      cout="$item $4"
+      cin="$4 $item"
+    fi
+    echo "
+spd$spdcmd $cout any -P out none;
+spd$spdcmd $cin any -P in none;
+" | /usr/sbin/setkey -c 1>&2
+  done
+}
 
 . /lib/functions/network.sh
 
