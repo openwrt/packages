@@ -30,7 +30,7 @@ define Package/tgt
   CATEGORY:=Network
   URL:=http://stgt.sourceforge.net/
   TITLE:=userspace iSCSI target
-  DEPENDS:=+libpthread +libaio @KERNEL_AIO @KERNEL_DIRECT_IO
+  DEPENDS:=+libpthread +libaio @KERNEL_AIO
 endef
 
 define Package/tgt/description
