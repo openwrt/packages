@@ -28,7 +28,7 @@ define Package/netatalk
   DEPENDS:=+libattr +libdb47 +libgcrypt +libopenssl $(LIBRPC_DEPENDS)
   TITLE:=netatalk
   URL:=http://netatalk.sourceforge.net
-  MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+  MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
 define Package/netatalk/decription
