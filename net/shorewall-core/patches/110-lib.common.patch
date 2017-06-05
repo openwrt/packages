@@ -1,0 +1,22 @@
+Index: shorewall-core-5.0.15.2/lib.common
+===================================================================
+--- shorewall-core-5.0.15.2.orig/lib.common	2016-12-20 23:42:20.000000000 +0100
++++ shorewall-core-5.0.15.2/lib.common	2017-01-02 11:33:03.026495427 +0100
+@@ -352,7 +352,7 @@
+ 
+     if [ -z "$MODULESDIR" ]; then
+ 	uname=$(uname -r)
+-	MODULESDIR=/lib/modules/$uname/kernel/net/ipv${g_family}/netfilter:/lib/modules/$uname/kernel/net/netfilter:/lib/modules/$uname/kernel/net/sched:/lib/modules/$uname/extra:/lib/modules/$uname/extra/ipset
++	MODULESDIR=/lib/modules/$uname:/lib/modules/$uname/kernel/net/ipv${g_family}/netfilter:/lib/modules/$uname/kernel/net/netfilter:/lib/modules/$uname/kernel/net/sched:/lib/modules/$uname/extra:/lib/modules/$uname/extra/ipset
+ 	if [ -n "$extras" ]; then
+ 	    for directory in $(split "$extras"); do
+ 		MODULESDIR="$MODULESDIR:/lib/modules/$uname/$directory"
+@@ -408,7 +408,7 @@
+ 
+     if [ -z "$MODULESDIR" ]; then
+ 	uname=$(uname -r)
+-	MODULESDIR=/lib/modules/$uname/kernel/net/ipv${g_family}/netfilter:/lib/modules/$uname/kernel/net/netfilter:/lib/modules/$uname/kernel/net/sched:/lib/modules/$uname/extra:/lib/modules/$uname/extra/ipset
++	MODULESDIR=/lib/modules/$uname:/lib/modules/$uname/kernel/net/ipv${g_family}/netfilter:/lib/modules/$uname/kernel/net/netfilter:/lib/modules/$uname/kernel/net/sched:/lib/modules/$uname/extra:/lib/modules/$uname/extra/ipset
+ 	if [ -n "$extras" ]; then
+ 	    for directory in $(split "$extras"); do
+ 		MODULESDIR="$MODULESDIR:/lib/modules/$uname/$directory"
