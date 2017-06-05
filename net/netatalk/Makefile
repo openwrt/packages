@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
 PKG_VERSION:=3.1.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/netatalk
@@ -35,10 +35,6 @@ define Package/netatalk/decription
   Netatalk is a freely-available Open Source AFP fileserver.
   It also provides a kernel level implementation of the AppleTalk
   Protocol Suite.
-endef
-
-define Package/netatalk/conffiles
-/etc/netatalk/afpd.conf
 endef
 
 TARGET_CFLAGS += -std=gnu99
@@ -89,8 +85,8 @@ define Package/netatalk/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/cnid_dbd $(1)/usr/sbin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/cnid_metad $(1)/usr/sbin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/uams/*.so $(1)/usr/lib/uams/
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/afp.conf $(1)/etc/
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/extmap.conf $(1)/etc/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/afp.conf $(1)/etc/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/extmap.conf $(1)/etc/
 	$(INSTALL_BIN) ./files/afpd.init $(1)/etc/init.d/afpd
 endef
 
