@@ -76,6 +76,8 @@ endef
 CONFIGURE_ARGS += \
 	--without-cython
 
+TARGET_LDFLAGS += -lz
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/plist $(1)/usr/include/
