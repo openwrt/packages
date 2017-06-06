@@ -55,13 +55,17 @@ define Package/smartd/description
   ATA and SCSI disks. It is derived from smartsuite.
 endef
 
-# uses GNU configure
+ifeq ($(CONFIG_USE_UCLIBCXX),y)
+  UCXXCFLAGS:=-fno-builtin -fno-rtti -nostdinc++
+  UCXXCPPFLAGS:=-I$(STAGING_DIR)/usr/include/uClibc++
+  UCXXLIBS:=-nodefaultlibs -lc -luClibc++
+endif
 
 CONFIGURE_VARS += \
-	CXXFLAGS="$$$$CXXFLAGS -fno-builtin -fno-rtti -nostdinc++" \
-	CPPFLAGS="$$$$CPPFLAGS -I$(STAGING_DIR)/usr/include/uClibc++ -I$(LINUX_DIR)/include" \
+	CXXFLAGS="$$$$CXXFLAGS $(UCXXCFLAGS)" \
+	CPPFLAGS="$$$$CPPFLAGS $(UCXXCPPFLAGS) -I$(LINUX_DIR)/include" \
 	LDFLAGS="$$$$LDFLAGS" \
-	LIBS="-nodefaultlibs -lc -luClibc++ -lm $(LIBGCC_S) -lc" \
+	LIBS="$(UCXXLIBS) -lm $(LIBGCC_S) -lc" \
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
