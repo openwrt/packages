@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oonf-olsrd2
-PKG_VERSION:=0.13.0
-PKG_REV:=9f941b25e1ac806db9d41e9892a5cf361bfe98f5
+PKG_VERSION:=0.14.0
+PKG_REV:=9863631659b28df7f9e507786ffb77f0ab2ef58e
 PKG_RELEASE:=$(PKG_REV)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -24,6 +24,7 @@ CMAKE_OPTIONAL_PLUGINS:= $(subst $(SPACE),;,$(strip \
         $(if $(filter y,$(CONFIG_OONF_OLSRV2_ROUTE_MODIFIER)),route_modifier,) \
         $(if $(filter y,$(CONFIG_OONF_GENERIC_DLEP_ROUTER)),dlep_router,) \
         $(if $(filter y,$(CONFIG_OONF_GENERIC_REMOTECONTROL)),remotecontrol,) \
+        $(if $(filter y,$(CONFIG_OONF_OLSRV2_MPR)),mpr,) \
     ))
 
 CMAKE_OPTIONS=-D OONF_NO_WERROR:Bool=true \
