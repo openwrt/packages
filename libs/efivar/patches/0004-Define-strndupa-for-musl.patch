@@ -1,0 +1,35 @@
+The musl libc does not define strndupa()
+
+Inspired by:
+
+  commit 0d259ad72bb04c5a9bc1c83d35b1cd327f4240e6
+  Author: Aric Belsito <lluixhi@gmail.com>
+  Date:   Mon Nov 21 13:25:37 2016 -0800
+
+      sys-libs/efivar: Add 30
+
+From: git@github.com:gentoo/musl.git
+
+diff --recursive -U5 efivar-30/src/linux.c efivar-30.b/src/linux.c
+--- efivar-30/src/linux.c	2016-09-27 13:35:22.000000000 -0700
++++ efivar-30.b/src/linux.c	2017-06-05 16:29:39.578277681 -0700
+@@ -46,10 +46,19 @@
+ 
+ #include "dp.h"
+ #include "linux.h"
+ #include "util.h"
+ 
++#ifndef strndupa
++#define strndupa(s, n) \
++       (__extension__ ({const char *__in = (s); \
++                        size_t __len = strnlen (__in, (n)) + 1; \
++                        char *__out = (char *) alloca (__len); \
++                        __out[__len-1] = '\0'; \
++                        (char *) memcpy (__out, __in, __len-1);}))
++#endif
++
+ int
+ __attribute__((__visibility__ ("hidden")))
+ set_disk_and_part_name(struct disk_info *info)
+ {
+ 	char *linkbuf;

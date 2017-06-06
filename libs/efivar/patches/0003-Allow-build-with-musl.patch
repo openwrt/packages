@@ -1,0 +1,43 @@
+musl's byteswapping definitions are incompatible with the use in this program,
+just copy them from the header.
+
+Inspired by:
+
+  commit 0d259ad72bb04c5a9bc1c83d35b1cd327f4240e6
+  Author: Aric Belsito <lluixhi@gmail.com>
+  Date:   Mon Nov 21 13:25:37 2016 -0800
+
+      sys-libs/efivar: Add 30
+
+From: git@github.com:gentoo/musl.git
+
+diff --recursive -U5 efivar-30/src/makeguids.c efivar-30.b/src/makeguids.c
+--- efivar-30/src/makeguids.c	2016-09-27 13:35:22.000000000 -0700
++++ efivar-30.b/src/makeguids.c	2017-06-05 16:24:05.078378721 -0700
+@@ -149,21 +149,22 @@
+ 
+ 	fprintf(header, "#ifndef EFIVAR_GUIDS_H\n#define EFIVAR_GUIDS_H 1\n\n");
+ 
+ 	fprintf(symout, "#include <efivar.h>\n");
+ 	fprintf(symout, "#include <endian.h>\n");
++	fprintf(symout, "#include <linux/swab.h>\n");
+ 	fprintf(symout, """\n\
+ #if BYTE_ORDER == BIG_ENDIAN\n\
+ #define cpu_to_be32(n) (n)\n\
+ #define cpu_to_be16(n) (n)\n\
+-#define cpu_to_le32(n) (__bswap_constant_32(n))\n\
+-#define cpu_to_le16(n) (__bswap_constant_16(n))\n\
++#define cpu_to_le32(n) (___constant_swab32(n))\n\
++#define cpu_to_le16(n) (___constant_swab16(n))\n\
+ #else\n\
+ #define cpu_to_le32(n) (n)\n\
+ #define cpu_to_le16(n) (n)\n\
+-#define cpu_to_be32(n) (__bswap_constant_32(n))\n\
+-#define cpu_to_be16(n) (__bswap_constant_16(n))\n\
++#define cpu_to_be32(n) (___constant_swab32(n))\n\
++#define cpu_to_be16(n) (___constant_swab16(n))\n\
+ #endif\n\
+ """);
+ 
+ 	for (unsigned int i = 0; i < line-1; i++) {
+ 		uint8_t *guid_data = (uint8_t *) &outbuf[i].guid;
