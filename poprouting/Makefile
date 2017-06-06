@@ -14,14 +14,13 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/prince
-	SECTION :=net
-	CATEGORY :=Network
-	SUBMENU :=Routing and Redirection
-	Mantainer :=Gabriele Gemmi <gabriel@autistici.org>
-	TITLE :=PopRouting daemon
-	URL :=https://github.com/gabri94/poprouting
-	MENU :=0
-	DEPENDS := +libjson-c +libpthread
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
+  MAINTAINER:=Gabriele Gemmi <gabriel@autistici.org>
+  TITLE:=PopRouting daemon
+  URL:=https://github.com/gabri94/poprouting
+  DEPENDS:= +libjson-c +libpthread
 endef
 
 define Package/prince/description
