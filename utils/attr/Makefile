@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=http://git.savannah.gnu.org/r/attr.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
+PKG_MIRROR_HASH:=9ee01f36a81ccab5f003fc62afdcebfaa422c4f110d0a501e47617eb1c697768
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 
 PKG_LICENSE:=LGPL-2.1 GPL-2.0
