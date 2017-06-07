@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2017.02.17
+PKG_VERSION:=2017.06.05
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://yt-dl.org/downloads/$(PKG_VERSION)/
-PKG_MD5SUM:=d38dbe099af22eb9af35b0e8b274dc4e
+PKG_MD5SUM:=1f9b35f2c767374967d0afef08132fe2
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Adrian Panella <ianchi74@outlook.com>
 
+PKG_BUILD_DEPENDS:=python/host
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -39,7 +40,14 @@ endef
 
 define Package/youtube-dl/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/youtube-dl $(1)/usr/bin/
+	
+	python -m compileall $(PKG_BUILD_DIR)/youtube_dl/
+	cd $(PKG_BUILD_DIR) && zip --quiet youtube-dl-c.zip youtube_dl/*.pyc youtube_dl/*/*.pyc
+	cd $(PKG_BUILD_DIR) && zip --quiet --junk-paths youtube-dl-c.zip youtube_dl/__main__.pyc
+	echo '#!/usr/bin/env python' > $(PKG_BUILD_DIR)/youtube-dl-c
+	cat $(PKG_BUILD_DIR)/youtube-dl-c.zip >> $(PKG_BUILD_DIR)/youtube-dl-c
+	
+	$(INSTALL_BIN) -T $(PKG_BUILD_DIR)/youtube-dl-c $(1)/usr/bin/youtube-dl
 endef
 
 $(eval $(call BuildPackage,youtube-dl))
