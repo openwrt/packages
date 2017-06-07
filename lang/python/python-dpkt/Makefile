@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dpkt
-PKG_VERSION:=1.90
+PKG_VERSION:=1.91
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Andrew McConachie <andrew@depht.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -16,7 +16,7 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/kbandla/dpkt.git
-PKG_SOURCE_VERSION:=a1a311e73665f88ff453385ae943b280256c541c
+PKG_SOURCE_VERSION:=6cd0909d613a66033ecdefaca6cc07cfa7d46d6b
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=python python-setuptools
