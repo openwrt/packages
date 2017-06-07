@@ -1,0 +1,29 @@
+--- a/dataxfer.c
++++ b/dataxfer.c
+@@ -3679,7 +3679,7 @@ static void
+ showshortport(struct controller_info *cntlr, port_info_t *port)
+ {
+     char buffer[NI_MAXHOST], portbuff[NI_MAXSERV];
+-    int  count;
++    int  count = 0;
+     int  need_space = 0;
+     int  err;
+     struct absout out = { .out = cntrl_absout, .data = cntlr };
+@@ -3703,7 +3703,7 @@ showshortport(struct controller_info *cn
+ 		      NI_NUMERICHOST | NI_NUMERICSERV);
+     if (err) {
+ 	strcpy(buffer, "*err*");
+-	sprintf(portbuff, "%s", gai_strerror(err));
++	sprintf(portbuff, "error[%d]", err);
+     }
+     bytes_recv = netcon->bytes_received;
+     bytes_sent = netcon->bytes_sent;
+@@ -3759,7 +3759,7 @@ showport(struct controller_info *cntlr, 
+ 			  NI_NUMERICHOST | NI_NUMERICSERV);
+ 	if (err) {
+ 	    strcpy(buffer, "*err*");
+-	    sprintf(portbuff, "%s", gai_strerror(err));
++	    sprintf(portbuff, "error[%d]", err);
+ 	}
+ 	controller_outputf(cntlr, "  connected to: %s,%s\r\n",
+ 			   buffer, portbuff);
