@@ -25,6 +25,7 @@ CMAKE_OPTIONAL_PLUGINS:= $(subst $(SPACE),;,$(strip \
         $(if $(filter y,$(CONFIG_OONF_GENERIC_DLEP_ROUTER)),dlep_router,) \
         $(if $(filter y,$(CONFIG_OONF_GENERIC_REMOTECONTROL)),remotecontrol,) \
         $(if $(filter y,$(CONFIG_OONF_OLSRV2_MPR)),mpr,) \
+        $(if $(filter y,$(OONF_GENERIC_HTTP)),http,) \
     ))
 
 CMAKE_OPTIONS=-D OONF_NO_WERROR:Bool=true \
