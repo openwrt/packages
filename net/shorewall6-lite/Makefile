@@ -12,7 +12,7 @@ PKG_NAME:=shorewall6-lite
 PKG_VERSION:=5.1.4.1
 PKG_DIRECTORY:=5.1
 PKG_MAINVERSION:=5.1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.shorewall.net/pub/shorewall/$(PKG_DIRECTORY)/shorewall-$(PKG_MAINVERSION)/ 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/shorewall6-lite
     SECTION:=net
     CATEGORY:=Network
-    DEPENDS:=+ip +iptables6 +shorewall-core
+    DEPENDS:=+ip +ip6tables +shorewall-core
     TITLE:=Shorewall6 Lite
     URL:=http://www.shorewall.net/
     SUBMENU:=Firewall
@@ -59,7 +59,7 @@ define Build/Compile
 endef
 
 define Package/shorewall6-lite/install
-	$(INSTALL_DIR) $(1)/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_DIR) $(1)/etc/shorewall6-lite/state
