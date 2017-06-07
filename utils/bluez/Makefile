@@ -151,6 +151,8 @@ define Package/bluez-daemon/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/profiles/proximity/proximity.conf $(1)/etc/bluetooth/proximity.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/bluetoothd.init $(1)/etc/init.d/bluetoothd
+	$(INSTALL_DIR) $(1)/lib/firmware/brcm
+	$(INSTALL_DATA) ./files/BCM43430A1.hcd $(1)/lib/firmware/brcm/BCM43430A1.hcd
 endef
 
 $(eval $(call BuildPackage,bluez-examples))
