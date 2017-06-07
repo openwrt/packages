@@ -1,17 +1,17 @@
-Index: gphoto2-2.5.11/Makefile.am
+Index: gphoto2-2.5.14/Makefile.am
 ===================================================================
---- gphoto2-2.5.11.orig/Makefile.am
-+++ gphoto2-2.5.11/Makefile.am
+--- gphoto2-2.5.14.orig/Makefile.am
++++ gphoto2-2.5.14/Makefile.am
 @@ -1,4 +1,4 @@
 -SUBDIRS = gphoto-m4 contrib doc gphoto2 packaging po tests
 +SUBDIRS = gphoto-m4 contrib doc gphoto2 packaging tests
  
  ACLOCAL_AMFLAGS = -I auto-m4 -I gphoto-m4
  EXTRA_DIST = README.md
-Index: gphoto2-2.5.11/Makefile.in
+Index: gphoto2-2.5.14/Makefile.in
 ===================================================================
---- gphoto2-2.5.11.orig/Makefile.in
-+++ gphoto2-2.5.11/Makefile.in
+--- gphoto2-2.5.14.orig/Makefile.in
++++ gphoto2-2.5.14/Makefile.in
 @@ -390,7 +390,7 @@ target_alias = @target_alias@
  top_build_prefix = @top_build_prefix@
  top_builddir = @top_builddir@
@@ -21,10 +21,10 @@ Index: gphoto2-2.5.11/Makefile.in
  ACLOCAL_AMFLAGS = -I auto-m4 -I gphoto-m4
  EXTRA_DIST = README.md
  all: config.h
-Index: gphoto2-2.5.11/configure.ac
+Index: gphoto2-2.5.14/configure.ac
 ===================================================================
---- gphoto2-2.5.11.orig/configure.ac
-+++ gphoto2-2.5.11/configure.ac
+--- gphoto2-2.5.14.orig/configure.ac
++++ gphoto2-2.5.14/configure.ac
 @@ -59,10 +59,7 @@ dnl ------------------------------------
  GP_GETTEXT_HACK([],[Lutz Müller and others],[${MAIL_GPHOTO_TRANSLATION}])
  ALL_LINGUAS="az cs da de en_GB es eu fi fr hu id is it ja nl pa pl pt_BR ro ru rw sk sr sv uk vi zh_CN zh_TW"
@@ -36,7 +36,7 @@ Index: gphoto2-2.5.11/configure.ac
  
  dnl We cannot use AC_DEFINE_UNQUOTED() for these definitions, as
  dnl we require make to do insert the proper $(datadir) value
-@@ -354,7 +351,6 @@ AC_SUBST([AM_LDFLAGS])
+@@ -408,7 +405,6 @@ AC_SUBST([AM_LDFLAGS])
  # Create output files
  # ---------------------------------------------------------------------------
  AC_CONFIG_FILES([
