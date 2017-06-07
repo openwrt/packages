@@ -93,7 +93,7 @@ endef
 define Package/libelektra-plugins
   $(call Package/libelektra/Default)
   TITLE:=Useful elektra plugins
-  DEPENDS:=+libelektra-core
+  DEPENDS:=+libelektra-core +libcurl
 endef
 
 define CONTENT_ELEKTRA_PLUGINS_TEXT
