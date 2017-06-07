@@ -119,7 +119,7 @@ endef
 
 define Package/olsrd-mod-pud
   $(call Package/olsrd/template)
-  DEPENDS:=olsrd +libgps +ncurses
+  DEPENDS:=olsrd +libgps
   TITLE:=Position Update Distribution plugin
 endef
 
