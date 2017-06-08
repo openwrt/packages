@@ -43,6 +43,11 @@ proto_464xlat_setup() {
 		return
 	fi
 
+	ip -6 rule del from all lookup local
+	ip -6 rule add from all lookup local pref 1
+	ip -6 rule add to $ip6addr lookup prelocal pref 0
+	echo "$ip6addr" > /tmp/464-$cfg-anycast
+
 	proto_init_update "$link" 1
 	proto_add_ipv4_route "0.0.0.0" 0 "" "" 2048
 	proto_add_ipv6_route $ip6addr 128 "" "" "" "" 128
@@ -74,7 +79,20 @@ proto_464xlat_setup() {
 }
 
 proto_464xlat_teardown() {
-	464xlatcfg "464-$1"
+	local cfg="$1"
+	local link="464-$cfg"
+	local ip6addr=$(cat /tmp/464-$cfg-anycast)
+	local anycast_active
+
+	464xlatcfg "$link"
+
+	rm -rf /tmp/464-$cfg-anycast
+	ip -6 rule del to $ip6addr lookup prelocal
+
+	if [ -z "$(ls /tmp/464-*-anycast 2>&-)" ]; then
+		ip -6 rule del from all lookup local
+		ip -6 rule add from all lookup local pref 0
+	fi
 }
 
 proto_464xlat_init_config() {

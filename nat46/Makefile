@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=nat46
-PKG_VERSION:=9
+PKG_VERSION:=10
 PKG_RELEASE:=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -33,7 +33,7 @@ endef
 define Package/464xlat
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+kmod-nat46
+  DEPENDS:=+kmod-nat46 +ip
   TITLE:=464xlat CLAT support
 endef
 
