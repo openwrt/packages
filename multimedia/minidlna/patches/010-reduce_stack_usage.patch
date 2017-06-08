@@ -1,0 +1,102 @@
+https://sourceforge.net/p/minidlna/git/ci/46c692fc591c5d927f68783a2b6b687114421f3b/
+
+luizluca: Some nfo files could result in segfault
+
+--- a/metadata.c
++++ b/metadata.c
+@@ -160,33 +160,40 @@ void
+ parse_nfo(const char *path, metadata_t *m)
+ {
+ 	FILE *nfo;
+-	char buf[65536];
++	char *buf;
+ 	struct NameValueParserData xml;
+ 	struct stat file;
+ 	size_t nread;
+ 	char *val, *val2;
+ 
+-	if( stat(path, &file) != 0 ||
+-	    file.st_size > 65536 )
++	if (stat(path, &file) != 0 ||
++	    file.st_size > 65535)
+ 	{
+ 		DPRINTF(E_INFO, L_METADATA, "Not parsing very large .nfo file %s\n", path);
+ 		return;
+ 	}
+ 	DPRINTF(E_DEBUG, L_METADATA, "Parsing .nfo file: %s\n", path);
++	buf = calloc(1, file.st_size + 1);
++	if (buf)
++		return;
+ 	nfo = fopen(path, "r");
+-	if( !nfo )
++	if (!nfo)
++	{
++		free(buf);
+ 		return;
++	}
+ 	nread = fread(&buf, 1, sizeof(buf), nfo);
++	fclose(nfo);
+ 	
+ 	ParseNameValue(buf, nread, &xml, 0);
+ 
+ 	//printf("\ttype: %s\n", GetValueFromNameValueList(&xml, "rootElement"));
+ 	val = GetValueFromNameValueList(&xml, "title");
+-	if( val )
++	if (val)
+ 	{
+ 		char *esc_tag, *title;
+ 		val2 = GetValueFromNameValueList(&xml, "episodetitle");
+-		if( val2 )
++		if (val2)
+ 			xasprintf(&title, "%s - %s", val, val2);
+ 		else
+ 			title = strdup(val);
+@@ -197,39 +204,41 @@ parse_nfo(const char *path, metadata_t *
+ 	}
+ 
+ 	val = GetValueFromNameValueList(&xml, "plot");
+-	if( val ) {
++	if (val)
++	{
+ 		char *esc_tag = unescape_tag(val, 1);
+ 		m->comment = escape_tag(esc_tag, 1);
+ 		free(esc_tag);
+ 	}
+ 
+ 	val = GetValueFromNameValueList(&xml, "capturedate");
+-	if( val ) {
++	if (val)
++	{
+ 		char *esc_tag = unescape_tag(val, 1);
+ 		m->date = escape_tag(esc_tag, 1);
+ 		free(esc_tag);
+ 	}
+ 
+ 	val = GetValueFromNameValueList(&xml, "genre");
+-	if( val )
++	if (val)
+ 	{
+-		free(m->genre);
+ 		char *esc_tag = unescape_tag(val, 1);
++		free(m->genre);
+ 		m->genre = escape_tag(esc_tag, 1);
+ 		free(esc_tag);
+ 	}
+ 
+ 	val = GetValueFromNameValueList(&xml, "mime");
+-	if( val )
++	if (val)
+ 	{
+-		free(m->mime);
+ 		char *esc_tag = unescape_tag(val, 1);
++		free(m->mime);
+ 		m->mime = escape_tag(esc_tag, 1);
+ 		free(esc_tag);
+ 	}
+ 
+ 	ClearNameValueList(&xml);
+-	fclose(nfo);
++	free(buf);
+ }
+ 
+ void
