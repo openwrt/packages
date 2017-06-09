@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.7.0"
+adb_ver="2.7.1"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
@@ -486,7 +486,7 @@ f_main()
         elif [ "${src_name}" = "shalla" ]
         then
             shalla_archive="${adb_tmpdir}/shallalist.tar.gz"
-            "${adb_fetch}" ${adb_fetchparm} "${shalla_archive}" "${url}"
+            "${adb_fetch}" ${adb_fetchparm} "${shalla_archive}" "${url}" 2>/dev/null
             adb_rc=${?}
             if [ ${adb_rc} -eq 0 ]
             then
@@ -503,7 +503,7 @@ f_main()
             rm -f "${shalla_archive}"
             rm -rf "${adb_tmpdir}/BL"
         else
-            "${adb_fetch}" ${adb_fetchparm} "${adb_tmpload}" "${url}"
+            "${adb_fetch}" ${adb_fetchparm} "${adb_tmpload}" "${url}" 2>/dev/null
             adb_rc=${?}
         fi
 

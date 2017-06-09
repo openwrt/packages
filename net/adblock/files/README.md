@@ -135,7 +135,7 @@ If you use manual configuration for unbound, then just include the following lin
 <pre><code>
 wget (default):
   option adb_fetch="/usr/bin/wget"
-  option adb_fetchparm="--no-config --quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
+  option adb_fetchparm="--quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
 
 aria2c:
   option adb_fetch '/usr/bin/aria2c'
@@ -165,7 +165,7 @@ root@blackhole:~# /etc/init.d/adblock status
   
 **cronjob for a regular block list update (/etc/crontabs/root):**
 <pre><code>
-0 06 * * *    /etc/init.d/adblock start
+0 06 * * *    /etc/init.d/adblock reload
 </code></pre>
   
 **blacklist entry (/etc/adblock/adblock.blacklist):**
