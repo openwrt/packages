@@ -8,9 +8,10 @@
 include $(TOPDIR)/rules.mk
 
 # Although liblz4 exports a major.minor.patch version, it isn't always
-# incremented for new releases, so use the release tag instead.
+# incremented for new releases. Check the NEWS file and instead use a
+# release tag when appropriate. (eg: PKG_VERSION:=r131)
 PKG_NAME:=liblz4
-PKG_VERSION:=r131
+PKG_VERSION:=v1.7.5
 PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-2-Clause
