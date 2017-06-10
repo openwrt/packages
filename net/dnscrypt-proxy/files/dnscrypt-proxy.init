@@ -16,7 +16,7 @@ dnscrypt_instance() {
 }
 
 create_config_file() {
-    local address port resolver resolvers_list ephemeral_keys client_key syslog syslog_prefix local_cache query_log_file block_ipv6 provider_name provider_key resolver_address
+    local address port resolver resolvers_list ephemeral_keys client_key log_level syslog syslog_prefix local_cache query_log_file block_ipv6 provider_name provider_key resolver_address
     local config_path="$2"
     local plugins_support_enabled=$(dnscrypt-proxy --version | grep 'Support for plugins: present' | wc -l)
 
@@ -33,6 +33,7 @@ create_config_file() {
     config_get      client_key      $1 'client_key'     ''
     config_get      syslog_prefix   $1 'syslog_prefix'  'dnscrypt-proxy'
     config_get      query_log_file  $1 'query_log_file' ''
+    config_get      log_level       $1 'log_level'	'6'
     config_get_bool syslog          $1 'syslog'         '1'
     config_get_bool ephemeral_keys  $1 'ephemeral_keys' '0'
     config_get_bool local_cache     $1 'local_cache'    '0'
@@ -47,6 +48,7 @@ create_config_file() {
     append_param            "LocalAddress"  "$address:$port"    $config_path
     append_param_not_empty  "ClientKey"     "$client_key"       $config_path
     append_on_off           "EphemeralKeys" $ephemeral_keys     $config_path
+    append_param            "LogLevel"      "$log_level"	$config_path
     append_on_off           "Syslog"        $syslog             $config_path
     append_param            "SyslogPrefix"  "$syslog_prefix"    $config_path
     append_on_off           "LocalCache"    $local_cache        $config_path

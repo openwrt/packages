@@ -25,8 +25,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 1.500 entries
     * [openphish](https://openphish.com)
     * => numerous updates on the same day, approx. 1.800 entries
-    * [palevo tracker](https://palevotracker.abuse.ch)
-    * => daily updates, approx. 15 entries
     * [ransomware tracker](https://ransomwaretracker.abuse.ch)
     * => daily updates, approx. 150 entries
     * [reg_cn](https://easylist-downloads.adblockplus.org/easylistchina+easylist.txt)
@@ -76,7 +74,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
 * optional: force dns requests to local resolver
 * optional: force overall sort / duplicate removal for low memory devices (handle with care!)
-* optional: automatic block list backup & restore, backups will be (de-)compressed and restored on the fly in case of any runtime error
+* optional: 'manual mode' to re-use blocklist backups during startup, get fresh lists only via manual reload or restart action
+* optional: automatic block list backup & restore, they will be used in case of download errors or during startup in manual mode
 * optional: add new adblock sources on your own via uci config
 
 ## Prerequisites
@@ -120,6 +119,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_triggerdelay => additional trigger delay in seconds before adblock processing starts (default: '2')
     * adb\_forcedns => force dns requests to local resolver (default: '0', disabled)
     * adb\_forcesrt => force overall sort on low memory devices with less than 64 MB RAM (default: '0', disabled)
+    * adb\_manmode => do not automatically update blocklists during startup, use blocklist backups instead (default: '0', disabled)
 
 ## Examples
 **change default dns backend to 'unbound':**
@@ -135,7 +135,7 @@ If you use manual configuration for unbound, then just include the following lin
 <pre><code>
 wget (default):
   option adb_fetch="/usr/bin/wget"
-  option adb_fetchparm="--no-config --quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
+  option adb_fetchparm="--quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
 
 aria2c:
   option adb_fetch '/usr/bin/aria2c'
@@ -165,7 +165,7 @@ root@blackhole:~# /etc/init.d/adblock status
   
 **cronjob for a regular block list update (/etc/crontabs/root):**
 <pre><code>
-0 06 * * *    /etc/init.d/adblock start
+0 06 * * *    /etc/init.d/adblock reload
 </code></pre>
   
 **blacklist entry (/etc/adblock/adblock.blacklist):**

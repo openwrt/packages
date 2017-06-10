@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=1.4.11
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.12
+PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://mosquitto.org/files/source/
-PKG_HASH:=ca47533bbc1b7c5e15d6e5d96d3efc59677f2515b6692263c34b7c48f33280c5
+PKG_HASH:=b12e2353f92cb76882ce7b7bddfea022b461b38cbe6e7fb7c969d0daeb379cf7
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -184,7 +184,7 @@ define Package/mosquitto-client-ssl/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_pub $(1)/usr/bin/mosquitto_pub
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_sub $(1)/usr/bin/mosquitto_sub
 endef
-Package/mosquitto-client-nossl/install = $(Package/mosquitto-client/install)
+Package/mosquitto-client-nossl/install = $(Package/mosquitto-client-ssl/install)
 
 # This installs files into ./staging_dir/. so that you can cross compile from the host
 define Build/InstallDev

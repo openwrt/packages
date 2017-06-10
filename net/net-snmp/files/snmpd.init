@@ -210,6 +210,28 @@ snmpd_engineid_add() {
 	[ -n "$engineidnic" ] && echo "engineIDNic $engineidnic" >> $CONFIGFILE
 }
 
+snmpd_setup_fw_rules() {
+	local net="$1"
+	local zone
+
+	zone=$(fw3 -q network "$net" 2>/dev/null)
+
+	local handled_zone
+	for handled_zone in $HANDLED_SNMP_ZONES; do
+		[ "$handled_zone" = "$zone" ] && return
+	done
+
+	json_add_object ""
+	json_add_string type rule
+	json_add_string src "$zone"
+	json_add_string proto udp
+	json_add_string dest_port 161
+	json_add_string target ACCEPT
+	json_close_object
+
+	HANDLED_SNMP_ZONES="$HANDLED_SNMP_ZONES $zone"
+}
+
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
 
@@ -242,6 +264,14 @@ start_service() {
 	for iface in $(ls /sys/class/net 2>/dev/null); do
 		procd_append_param netdev "$iface"
 	done
+
+	procd_open_data
+
+	json_add_array firewall
+	config_list_foreach general network snmpd_setup_fw_rules
+	json_close_array
+
+	procd_close_data
 
 	procd_close_instance
 }
