@@ -44,44 +44,44 @@ define Package/sqm-scripts/install
 	make -C $(PKG_BUILD_DIR) DESTDIR=$(1) PLATFORM=openwrt install
 endef
 
-define Package/luci-app-sqm
-  SECTION:=luci
-  CATEGORY:=LuCI
-  TITLE:=SQM Scripts - LuCI interface
-  MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
-  PKGARCH:=all
-  DEPENDS:= lua luci-base +sqm-scripts
-  SUBMENU:=3. Applications
-endef
+#define Package/luci-app-sqm
+#  SECTION:=luci
+#  CATEGORY:=LuCI
+#  TITLE:=SQM Scripts - LuCI interface
+#  MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
+#  PKGARCH:=all
+#  DEPENDS:= lua luci-base +sqm-scripts
+#  SUBMENU:=3. Applications
+#endef
 
-define Package/luci-app-sqm/description
-	Luci interface for the SQM scripts queue management configuration package.
-endef
+#define Package/luci-app-sqm/description
+#	Luci interface for the SQM scripts queue management configuration package.
+#endef
 
-define Package/luci-app-sqm/install
-	make -C $(PKG_BUILD_DIR) DESTDIR=$(1) PLATFORM=openwrt install-luci
-endef
+#define Package/luci-app-sqm/install
+#	make -C $(PKG_BUILD_DIR) DESTDIR=$(1) PLATFORM=openwrt install-luci
+#endef
 
-define Package/luci-app-sqm/postinst
+#define Package/luci-app-sqm/postinst
 #!/bin/sh
-which uci > /dev/null || exit 0
-uci -q get ucitrack.@sqm[0] > /dev/null || {
-  uci add ucitrack sqm > /dev/null
-  uci set ucitrack.@sqm[0].init=sqm
-  uci add_list ucitrack.@firewall[0].affects=sqm
-  uci commit
-}
-endef
+#which uci > /dev/null || exit 0
+#uci -q get ucitrack.@sqm[0] > /dev/null || {
+#  uci add ucitrack sqm > /dev/null
+#  uci set ucitrack.@sqm[0].init=sqm
+#  uci add_list ucitrack.@firewall[0].affects=sqm
+#  uci commit
+#}
+#endef
 
-define Package/luci-app-sqm/postrm
+#define Package/luci-app-sqm/postrm
 #!/bin/sh
-which uci > /dev/null || exit 0
-uci -q get ucitrack.@sqm[0] > /dev/null && {
-  uci delete ucitrack.@sqm[0]
-  uci del_list ucitrack.@firewall[0].affects=sqm
-  uci commit
-}
-endef
+#which uci > /dev/null || exit 0
+#uci -q get ucitrack.@sqm[0] > /dev/null && {
+#  uci delete ucitrack.@sqm[0]
+#  uci del_list ucitrack.@firewall[0].affects=sqm
+#  uci commit
+#}
+#endef
 
 $(eval $(call BuildPackage,sqm-scripts))
-$(eval $(call BuildPackage,luci-app-sqm))
+#$(eval $(call BuildPackage,luci-app-sqm))
