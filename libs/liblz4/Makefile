@@ -19,7 +19,7 @@ PKG_MAINTAINER:=Darik Horn <dajhorn@vanadac.com>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/Cyan4973/lz4.git
+PKG_SOURCE_URL:=https://github.com/lz4/lz4.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
