@@ -1,156 +1,212 @@
 #!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2014-2017 Jian Chang <aa65535@live.com>
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+#
 
 START=90
 STOP=15
 
-SERVICE_USE_PID=1
-SERVICE_WRITE_PID=1
-SERVICE_DAEMONIZE=1
-EXTRA_COMMANDS="rules"
-CONFIG_FILE=/var/etc/shadowsocks-libev.json
+NAME=shadowsocks
+EXTRA_COMMANDS=rules
 
-get_config() {
-	config_get_bool enable $1 enable
-	config_get server $1 server
-	config_get server_port $1 server_port
-	config_get local_port $1 local_port
-	config_get timeout $1 timeout
-	config_get password $1 password
-	config_get encrypt_method $1 encrypt_method
-	config_get ignore_list $1 ignore_list
-	config_get udp_mode $1 udp_mode
-	config_get udp_server $1 udp_server
-	config_get udp_server_port $1 udp_server_port
-	config_get udp_local_port $1 udp_local_port
-	config_get udp_timeout $1 udp_timeout
-	config_get udp_password $1 udp_password
-	config_get udp_encrypt_method $1 udp_encrypt_method
-	config_get_bool tunnel_enable $1 tunnel_enable
-	config_get tunnel_port $1 tunnel_port
-	config_get tunnel_forward $1 tunnel_forward
-	config_get lan_ac_mode $1 lan_ac_mode
-	config_get lan_ac_ip $1 lan_ac_ip
-	config_get wan_bp_ip $1 wan_bp_ip
-	config_get wan_fw_ip $1 wan_fw_ip
-	config_get ipt_ext $1 ipt_ext
-	: ${timeout:=60}
-	: ${udp_timeout:=60}
-	: ${tunnel_port:=5300}
-	: ${tunnel_forward:=8.8.4.4:53}
+uci_get_by_name() {
+	local ret=$(uci get $NAME.$1.$2 2>/dev/null)
+	echo ${ret:=$3}
+}
+
+uci_get_by_type() {
+	local ret=$(uci get $NAME.@$1[0].$2 2>/dev/null)
+	echo ${ret:=$3}
+}
+
+uci_bool_by_name() {
+	case "$(uci_get_by_name $1 $2)" in
+		1|on|true|yes|enabled) return 0;;
+	esac
+	return 1
+}
+
+validate_server() {
+	[ "$(uci get $NAME.$1 2>/dev/null)" = "servers" ]
+}
+
+has_valid_server() {
+	for server in $@; do
+		validate_server $server && return 0
+	done
+	return 1
+}
+
+get_arg_udp() {
+	local server=$(uci_get_by_type transparent_proxy udp_relay_server)
+	[ "$server" = "same" ] || validate_server $server && echo "-u"
+}
+
+get_arg_out() {
+	case "$(uci_get_by_type access_control self_proxy 1)" in
+		1) echo "-o";;
+		2) echo "-O";;
+	esac
+}
+
+get_arg_tfo() {
+	if [ "3" = "$(cat /proc/sys/net/ipv4/tcp_fastopen 2>/dev/null)" ]; then
+		uci_bool_by_name $1 fast_open && echo "--fast-open"
+	fi
+}
+
+get_server_ips() {
+	echo $(uci_get_by_name $1 server)
+}
+
+get_lan_hosts() {
+	uci_bool_by_name $1 enable && \
+		echo "$(uci_get_by_name $1 type),$(uci_get_by_name $1 host)"
+}
+
+get_plugin_config() {
+	local plugin=$(uci_get_by_name $1 plugin)
+	local plugin_opts=$(uci_get_by_name $1 plugin_opts)
+	if [ -n "$plugin" -a -n "$plugin_opts" ]; then
+		echo $plugin >>/var/run/ss-plugin
+		echo "
+    \"plugin\": \"$plugin\",
+    \"plugin_opts\": \"$plugin_opts\","
+	fi
+}
+
+get_crypto_config() {
+	local key=$(uci_get_by_name $1 key)
+	local password=$(uci_get_by_name $1 password)
+	if [ -n "$key" ]; then
+		echo "\"key\": \"$key\","
+	elif [ -n "$password" ]; then
+		echo "\"password\": \"$password\","
+	else
+		logger -st $NAME -p3 "The password or key is not set."
+	fi
+}
+
+gen_config_file() {
+	local config_file=/var/etc/$NAME.$1.json
+	cat <<-EOF >$config_file
+		{
+		    "server": "$(uci_get_by_name $1 server)",
+		    "server_port": $(uci_get_by_name $1 server_port),
+		    $(get_crypto_config $1)
+		    "method": "$(uci_get_by_name $1 encrypt_method)",
+		    "local_address": "0.0.0.0",$(get_plugin_config $1)
+		    "timeout": $(uci_get_by_name $1 timeout 60),
+		    "reuse_port": true
+		}
+EOF
+	echo $config_file
 }
 
 start_rules() {
-	local ac_args
-
-	if [ -n "$lan_ac_ip" ]; then
-		case $lan_ac_mode in
-			1) ac_args="w$lan_ac_ip"
-			;;
-			2) ac_args="b$lan_ac_ip"
-			;;
-		esac
-	fi
+	config_load $NAME
 	/usr/bin/ss-rules \
-		-s "$server" \
-		-l "$local_port" \
-		-S "$udp_server" \
-		-L "$udp_local_port" \
-		-i "$ignore_list" \
-		-a "$ac_args" \
-		-b "$wan_bp_ip" \
-		-w "$wan_fw_ip" \
-		-e "$ipt_ext" \
-		-o $udp
-	return $?
-}
-
-start_redir() {
-	cat <<-EOF >$CONFIG_FILE
-		{
-		    "server": "$server",
-		    "server_port": $server_port,
-		    "local_address": "0.0.0.0",
-		    "local_port": $local_port,
-		    "password": "$password",
-		    "timeout": $timeout,
-		    "method": "$encrypt_method"
-		}
-EOF
-	if [ "$udp_mode" = 2 ]; then
-		/usr/bin/ss-redir \
-			-c $CONFIG_FILE \
-			-f /var/run/ss-redir_t.pid
-		cat <<-EOF >$CONFIG_FILE
-			{
-			    "server": "$udp_server",
-			    "server_port": $udp_server_port,
-			    "local_address": "0.0.0.0",
-			    "local_port": $udp_local_port,
-			    "password": "$udp_password",
-			    "timeout": $udp_timeout,
-			    "method": "$udp_encrypt_method"
-			}
-EOF
-	fi
-	/usr/bin/ss-redir \
-		-c $CONFIG_FILE \
-		-f /var/run/ss-redir.pid \
-		$udp
-	return $?
-}
-
-start_tunnel() {
-	: ${udp:="-u"}
-	/usr/bin/ss-tunnel \
-		-c $CONFIG_FILE \
-		-l $tunnel_port \
-		-L $tunnel_forward \
-		-f /var/run/ss-tunnel.pid \
-		$udp
-	return $?
+		-s "$(config_foreach get_server_ips servers)" \
+		-l "$(uci_get_by_type transparent_proxy local_port 1234)" \
+		-B "$(uci_get_by_type access_control wan_bp_list)" \
+		-b "$(uci_get_by_type access_control wan_bp_ips)" \
+		-W "$(uci_get_by_type access_control wan_fw_list)" \
+		-w "$(uci_get_by_type access_control wan_fw_ips)" \
+		-I "$(uci_get_by_type access_control lan_ifaces)" \
+		-d "$(uci_get_by_type access_control lan_target)" \
+		-a "$(config_foreach get_lan_hosts lan_hosts)" \
+		-e "$(uci_get_by_type access_control ipt_ext)" \
+		$(get_arg_out) $(get_arg_udp)
 }
 
 rules() {
-	config_load shadowsocks-libev
-	config_foreach get_config shadowsocks-libev
-	[ "$enable" = 1 ] || exit 0
-	mkdir -p /var/run /var/etc
-
-	: ${server:?}
-	: ${server_port:?}
-	: ${local_port:?}
-	: ${password:?}
-	: ${encrypt_method:?}
-	case $udp_mode in
-		1) udp="-u"
-		;;
-		2)
-			udp="-U"
-			: ${udp_server:?}
-			: ${udp_server_port:?}
-			: ${udp_local_port:?}
-			: ${udp_password:?}
-			: ${udp_encrypt_method:?}
-		;;
-	esac
-
-	start_rules
+	pidof ss-redir >/dev/null || return 0
+	start_rules || /usr/bin/ss-rules -f
 }
 
-boot() {
-	until iptables-save -t nat | grep -q "^:zone_lan_prerouting"; do
-		sleep 1
+start_redir() {
+	validate_server $1 || return 0
+	ss-redir -c $(gen_config_file $1) $2 $(get_arg_tfo $1) \
+		-l $(uci_get_by_type transparent_proxy local_port 1234) \
+		--mtu $(uci_get_by_type transparent_proxy mtu 1492) \
+		-f /var/run/ss-redir$3-$1.pid
+}
+
+ss_redir() {
+	command -v ss-redir >/dev/null 2>&1 || return 1
+	local main_server=$(uci_get_by_type transparent_proxy main_server)
+	has_valid_server $main_server || return 1
+	local udp_relay_server=$(uci_get_by_type transparent_proxy udp_relay_server)
+	if [ "$udp_relay_server" = "same" ]; then
+		for server in $main_server; do
+			start_redir $server -u
+		done
+	else
+		for server in $main_server; do
+			start_redir $server
+		done
+		for server in $udp_relay_server; do
+			start_redir $server -U -udp
+		done
+	fi
+}
+
+start_local() {
+	validate_server $1 || return 0
+	ss-local -c $(gen_config_file $1) -u $(get_arg_tfo $1) \
+		-l $(uci_get_by_type socks5_proxy local_port 1080) \
+		--mtu $(uci_get_by_type socks5_proxy mtu 1492) \
+		-f /var/run/ss-local-$1.pid
+}
+
+ss_local() {
+	command -v ss-local >/dev/null 2>&1 || return 0
+	for server in $(uci_get_by_type socks5_proxy server); do
+		start_local $server
 	done
-	start
+}
+
+start_tunnel() {
+	validate_server $1 || return 0
+	ss-tunnel -c $(gen_config_file $1) -u \
+		-l $(uci_get_by_type port_forward local_port 5300) \
+		-L $(uci_get_by_type port_forward destination 8.8.4.4:53) \
+		--mtu $(uci_get_by_type port_forward mtu 1492) \
+		-f /var/run/ss-tunnel-$1.pid
+}
+
+ss_tunnel() {
+	command -v ss-tunnel >/dev/null 2>&1 || return 0
+	for server in $(uci_get_by_type port_forward server); do
+		start_tunnel $server
+	done
 }
 
 start() {
-	rules && start_redir
-	[ "$tunnel_enable" = 1 ] && start_tunnel
+	mkdir -p /var/run /var/etc
+	ss_redir && rules
+	ss_local
+	ss_tunnel
+}
+
+boot() {
+	local delay=$(uci_get_by_type general startup_delay 0)
+	(sleep $delay && start >/dev/null 2>&1) &
+	return 0
+}
+
+kill_all() {
+	kill -9 $(pidof $@) >/dev/null 2>&1
 }
 
 stop() {
 	/usr/bin/ss-rules -f
-	killall -q -9 ss-redir
-	killall -q -9 ss-tunnel
+	kill_all ss-redir ss-local ss-tunnel
+	if [ -f /var/run/ss-plugin ]; then
+		kill_all $(sort -u /var/run/ss-plugin)
+		rm -f /var/run/ss-plugin
+	fi
 }
