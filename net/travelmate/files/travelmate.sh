@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.7.4"
+trm_ver="0.7.5"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0
@@ -257,6 +257,7 @@ f_main()
         done
         if [ ! -s "${trm_rtfile}" ]
         then
+            trm_ifstatus="false"
             f_jsnupdate "n/a" "n/a" "n/a"
         fi
     else
