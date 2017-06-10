@@ -24,8 +24,9 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages)
 * install 'travelmate' (_opkg install travelmate_)
 * configure your network:
-    * automatic: use the LuCI frontend with automatic interface setup, that's the recommended way
+    * automatic: use the LuCI frontend with automatic STA interface setup, that's the recommended way
     * manual: see detailed configure steps below
+    * at least you need one AP and one STA interface configured
 
 ## LuCI travelmate companion package
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/luci)
@@ -59,7 +60,7 @@ root@adb2go:~# /etc/init.d/travelmate status
  system             : LEDE Reboot SNAPSHOT r4051-3ddc1914ba
 </code></pre>
 
-## Setup
+## Manual Setup
 **1. configure the travelmate wwan interface in /etc/config/network:**
 <pre><code>
 [...]
@@ -77,7 +78,7 @@ config zone
 [...]
 </code></pre>
 
-**3. add required ap and wwan stations to your wireless configuration in etc/config/wireless:**
+**3. at least add one ap and (multiple) wwan stations to your wireless configuration in etc/config/wireless:**
 <pre><code>
 [...]
 config wifi-iface
