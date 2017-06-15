@@ -1,0 +1,40 @@
+From: =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <rafal@milecki.pl>
+Subject: [PATCH] clients: add support for Kodi and captions
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This change has been extracted out of the upstream commit 4f926639b24f8
+("upnpsoap: Add additonal bookmark support").
+
+Signed-off-by: Rafał Miłecki <rafal@milecki.pl>
+---
+
+--- a/clients.c
++++ b/clients.c
+@@ -254,6 +254,13 @@ struct client_type_s client_types[] =
+ 	  EUserAgent
+ 	},
+ 
++	{ EKodi,
++	  FLAG_DLNA | FLAG_MIME_AVI_AVI | FLAG_CAPTION_RES,
++	  "Kodi",
++	  "Kodi",
++	  EUserAgent
++	},
++
+ 	{ 0,
+ 	  FLAG_DLNA | FLAG_MIME_AVI_AVI,
+ 	  "Windows",
+diff --git a/clients.h b/clients.h
+index fa39656..a7f038d 100644
+--- a/clients.h
++++ b/clients.h
+@@ -79,6 +79,7 @@ enum client_types {
+ 	EAsusOPlay,
+ 	EBubbleUPnP,
+ 	ENetFrontLivingConnect,
++	EKodi,
+ 	EStandardDLNA150,
+ 	EStandardUPnP
+ };

@@ -1,0 +1,28 @@
+From 126f0f5cb8cd93eef448e2e5bf7a2c0d8d5183fb Mon Sep 17 00:00:00 2001
+From: Eduardo Rocha <folhabranca@gmail.com>
+Date: Sun, 14 Sep 2014 14:11:51 -0300
+Subject: [PATCH] Samsung bookmark - go back to the beginning of the movie if
+ less than 30 seconds was played.
+
+---
+ upnpsoap.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/upnpsoap.c b/upnpsoap.c
+index 4f6f22e..0f19035 100644
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -1924,6 +1924,10 @@ SamsungSetBookmark(struct upnphttp * h, const char * action)
+ 	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data, 0);
+ 	ObjectID = GetValueFromNameValueList(&data, "ObjectID");
+ 	PosSecond = GetValueFromNameValueList(&data, "PosSecond");
++
++	if ( atoi(PosSecond) < 30 )
++		PosSecond = "0";
++
+ 	if( ObjectID && PosSecond )
+ 	{
+ 		int ret;
+-- 
+2.11.0
+

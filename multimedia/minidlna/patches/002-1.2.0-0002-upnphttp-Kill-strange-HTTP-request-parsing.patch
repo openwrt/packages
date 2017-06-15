@@ -1,0 +1,32 @@
+From 8a996b4b624ef45538a5de10730b8e94c55e7768 Mon Sep 17 00:00:00 2001
+From: Justin Maggard <jmaggard@netgear.com>
+Date: Wed, 28 Sep 2016 18:44:58 -0700
+Subject: [PATCH] upnphttp: Kill strange HTTP request parsing
+
+Avoid reading uninitialized memory on malicious HTTP requests.
+
+Fixes: Bug #293 - upnphttp.c ProcessHttpQuery_upnphttp() Function HTTP Request Handling Remote DoS
+---
+ upnphttp.c | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/upnphttp.c b/upnphttp.c
+index 4184bb2..1902159 100644
+--- a/upnphttp.c
++++ b/upnphttp.c
+@@ -827,12 +827,6 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
+ 	HttpCommand[i] = '\0';
+ 	while(*p==' ')
+ 		p++;
+-	if(strncmp(p, "http://", 7) == 0)
+-	{
+-		p = p+7;
+-		while(*p!='/')
+-			p++;
+-	}
+ 	for(i = 0; i<511 && *p && *p != ' ' && *p != '\r'; i++)
+ 		HttpUrl[i] = *(p++);
+ 	HttpUrl[i] = '\0';
+-- 
+2.11.0
+

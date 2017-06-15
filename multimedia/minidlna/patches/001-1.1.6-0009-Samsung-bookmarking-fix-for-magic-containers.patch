@@ -1,0 +1,33 @@
+From cae3e880d26ba7671b59ac4fe44c499b6a0a9d4e Mon Sep 17 00:00:00 2001
+From: Eduardo Rocha <folhabranca@gmail.com>
+Date: Sun, 14 Sep 2014 13:45:11 -0300
+Subject: [PATCH] Samsung bookmarking: fix for magic containers
+
+---
+ upnpsoap.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/upnpsoap.c b/upnpsoap.c
+index 96ad2d5..4f6f22e 100644
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -1927,11 +1927,14 @@ SamsungSetBookmark(struct upnphttp * h, const char * action)
+ 	if( ObjectID && PosSecond )
+ 	{
+ 		int ret;
++		const char *rid = ObjectID;
++
++		in_magic_container(ObjectID, 0, &rid);
+ 		ret = sql_exec(db, "INSERT OR REPLACE into BOOKMARKS"
+ 		                   " VALUES "
+-		                   "((select DETAIL_ID from OBJECTS where OBJECT_ID = '%q'), %q)", ObjectID, PosSecond);
++		                   "((select DETAIL_ID from OBJECTS where OBJECT_ID = '%q'), %q)", rid, PosSecond);
+ 		if( ret != SQLITE_OK )
+-			DPRINTF(E_WARN, L_METADATA, "Error setting bookmark %s on ObjectID='%s'\n", PosSecond, ObjectID);
++			DPRINTF(E_WARN, L_METADATA, "Error setting bookmark %s on ObjectID='%s'\n", PosSecond, rid);
+ 		BuildSendAndCloseSoapResp(h, resp, sizeof(resp)-1);
+ 	}
+ 	else
+-- 
+2.11.0
+

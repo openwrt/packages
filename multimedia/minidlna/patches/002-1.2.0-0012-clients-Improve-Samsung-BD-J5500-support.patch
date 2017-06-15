@@ -1,0 +1,93 @@
+From d894885bc1f6d9d43d5421663cdff7b993d0304e Mon Sep 17 00:00:00 2001
+From: Justin Maggard <jmaggard@netgear.com>
+Date: Mon, 1 May 2017 17:49:16 -0700
+Subject: [PATCH] clients: Improve Samsung BD-J5500 support
+
+From SF user Andrea Odetti:
+
+The Samsung BD J5500 player does not accept some of the DLNA_PN values
+used by minidlna for *.mp4 files.
+
+For instance AVC_MP4_MP_HD_720p_AAC and AVC_MP4_BL_L31_HD_AAC are
+problematic as the player would simply ignore the files and not show
+them.
+
+AVC_MP4_HP_HD_AAC works.
+
+All the files play normally from a USB key.
+
+I've noticed as well that NULL works always, and this is the approach I
+have followed.
+
+So I changed minidlna and added a flag to disable DLNA_PN, and this
+flag is only used for a Samsung BD J5500 in order not to break other
+players, which can handle DLNA_PN properly.
+
+So when a J5500 is connected we simply set DLNA_PN to NULL and
+everything works well.
+---
+ clients.c  | 8 +++++++-
+ clients.h  | 2 ++
+ upnpsoap.c | 3 +++
+ 3 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/clients.c b/clients.c
+index 5b9ba5d..e045ad8 100644
+--- a/clients.c
++++ b/clients.c
+@@ -63,6 +63,13 @@ struct client_type_s client_types[] =
+ 	  EUserAgent
+ 	},
+ 
++	{ ESamsungBDJ5500,
++	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE | FLAG_CAPTION_RES | FLAG_SKIP_DLNA_PN,
++	  "Samsung BD J5500",
++	  "[BD]J5500",
++	  EUserAgent
++	},
++
+ 	/* Samsung Series [CDE] BDPs and TVs must be separated, or some of our
+ 	 * advertised extra features trigger a folder browsing bug on BDPs. */
+ 	/* User-Agent: DLNADOC/1.50 SEC_HHP_BD-D5100/1.0 */
+@@ -324,4 +331,3 @@ AddClientCache(struct in_addr addr, int type)
+ 
+ 	return NULL;
+ }
+-
+diff --git a/clients.h b/clients.h
+index 35d819a..f9818f5 100644
+--- a/clients.h
++++ b/clients.h
+@@ -37,6 +37,7 @@
+ #define FLAG_AUDIO_ONLY         0x00000400
+ #define FLAG_FORCE_SORT         0x00000800
+ #define FLAG_CAPTION_RES        0x00001000
++#define FLAG_SKIP_DLNA_PN       0x00002000 /* during browsing */
+ /* Response-related flags */
+ #define FLAG_HAS_CAPTIONS       0x80000000
+ #define RESPONSE_FLAGS          0xF0000000
+@@ -69,6 +70,7 @@ enum client_types {
+ 	ESamsungSeriesB,
+ 	ESamsungSeriesCDEBDP,
+ 	ESamsungSeriesCDE,
++	ESamsungBDJ5500,
+ 	ESonyBDP,
+ 	ESonyBravia,
+ 	ESonyInternetTV,
+diff --git a/upnpsoap.c b/upnpsoap.c
+index 0c2b9af..9ee0b90 100644
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -905,6 +905,9 @@ callback(void *args, int argc, char **argv, char **azColName)
+ 		else
+ 			dlna_flags |= DLNA_FLAG_TM_I;
+ 
++		if( passed_args->flags & FLAG_SKIP_DLNA_PN )
++		        dlna_pn = NULL;
++
+ 		if( dlna_pn )
+ 			snprintf(dlna_buf, sizeof(dlna_buf), "DLNA.ORG_PN=%s;"
+ 			                                     "DLNA.ORG_OP=01;"
+-- 
+2.11.0
+

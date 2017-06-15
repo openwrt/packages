@@ -1,0 +1,31 @@
+From d097d3c02da148c73c46ea5e6402a01b78cc1b5a Mon Sep 17 00:00:00 2001
+From: Justin Maggard <jmaggard@netgear.com>
+Date: Mon, 16 Nov 2015 09:57:07 -0800
+Subject: [PATCH] nls: Move init_nls() after log_init().
+
+Otherwise the DPRINTF in minidlna.c:init_nls() will always fail to log.
+Pointed out by Shrimpkin.
+---
+ minidlna.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/minidlna.c b/minidlna.c
+index 7933f54..8977a17 100644
+--- a/minidlna.c
++++ b/minidlna.c
+@@ -1021,11 +1021,11 @@ main(int argc, char **argv)
+ 
+ 	for (i = 0; i < L_MAX; i++)
+ 		log_level[i] = E_WARN;
+-	init_nls();
+ 
+ 	ret = init(argc, argv);
+ 	if (ret != 0)
+ 		return 1;
++	init_nls();
+ 
+ 	DPRINTF(E_WARN, L_GENERAL, "Starting " SERVER_NAME " version " MINIDLNA_VERSION ".\n");
+ 	if (sqlite3_libversion_number() < 3005001)
+-- 
+2.11.0
+

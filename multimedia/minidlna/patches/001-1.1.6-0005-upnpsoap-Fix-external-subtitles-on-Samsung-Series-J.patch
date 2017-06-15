@@ -1,0 +1,53 @@
+From 4ec6cd005358f3474ce9caec4f0954b4756570ed Mon Sep 17 00:00:00 2001
+From: Justin Maggard <jmaggard@netgear.com>
+Date: Thu, 7 Jan 2016 00:31:56 -0800
+Subject: [PATCH] upnpsoap: Fix external subtitles on Samsung Series J.
+
+Add FLAG_CAPTION_RES to the modern Samsung profile.  Older Samsung
+devices used a custom method for describing subtitles, but apparently
+Series J no longer supports it.  The good thing is, they now support
+the more standard method (and probably have been for a while, since it
+works on my old Series D BDP).
+
+So let's just expose both methods to the client, since everything should
+be able to handle it.
+
+Fixes: SF bug #113 (Subtitles support for new 2015 Samsung J series TV)
+---
+ clients.c  | 5 +++--
+ upnpsoap.c | 2 +-
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/clients.c b/clients.c
+index a8609d2..39ca362 100644
+--- a/clients.c
++++ b/clients.c
+@@ -65,9 +65,10 @@ struct client_type_s client_types[] =
+ 
+ 	/* User-Agent: DLNADOC/1.50 SEC_HHP_[TV]UE40D7000/1.0 */
+ 	/* User-Agent: DLNADOC/1.50 SEC_HHP_ Family TV/1.0 */
++	/* USER-AGENT: DLNADOC/1.50 SEC_HHP_[TV] UE65JU7000/1.0 UPnP/1.0 */
+ 	{ ESamsungSeriesCDE,
+-	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE | FLAG_SAMSUNG_DCM10,
+-	  "Samsung Series [CDEF]",
++	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE | FLAG_SAMSUNG_DCM10 | FLAG_CAPTION_RES,
++	  "Samsung Series [CDEFJ]",
+ 	  "SEC_HHP_",
+ 	  EUserAgent
+ 	},
+diff --git a/upnpsoap.c b/upnpsoap.c
+index 8066318..96ad2d5 100644
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -1064,7 +1064,7 @@ callback(void *args, int argc, char **argv, char **azColName)
+ 									     "http://%s:%d/Captions/%s.srt"
+ 									   "&lt;/res&gt;",
+ 									   lan_addr[passed_args->iface].str, runtime_vars.port, detailID);
+-						else if( passed_args->filter & FILTER_SEC_CAPTION_INFO_EX )
++						if( passed_args->filter & FILTER_SEC_CAPTION_INFO_EX )
+ 							ret = strcatf(str, "&lt;sec:CaptionInfoEx sec:type=\"srt\"&gt;"
+ 							                     "http://%s:%d/Captions/%s.srt"
+ 							                   "&lt;/sec:CaptionInfoEx&gt;",
+-- 
+2.11.0
+

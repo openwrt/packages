@@ -1,0 +1,71 @@
+From 5450ac486e9956f5139c5d5074ce09c49f4b6a9a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jind=C5=99ich=20Makovi=C4=8Dka?= <makovick@gmail.com>
+Date: Tue, 2 May 2017 20:08:30 +0200
+Subject: [PATCH] clients: Add media extension to titles for Hyundai TVs
+
+On Hyundai HLN 24TS382 Smart TV, the DLNA client refuses to display
+media files whose title does not end with a media file extension.
+Because minidlna strips the extensions, all folders thus appear empty.
+
+This patch adds a quirk for Hyundai TVs that appends the original file
+extension to the titles, which fixes the issue.
+---
+ clients.c  |  7 +++++++
+ clients.h  |  1 +
+ upnpsoap.c | 10 ++++++++++
+ 3 files changed, 18 insertions(+)
+
+diff --git a/clients.c b/clients.c
+index e045ad8..c3bd96d 100644
+--- a/clients.c
++++ b/clients.c
+@@ -205,6 +205,13 @@ struct client_type_s client_types[] =
+ 	  EUserAgent
+ 	},
+ 
++	{ EHyundaiTV,
++	  FLAG_DLNA,
++	  "Hyundai TV",
++	  "HYUNDAITV",
++	  EFriendlyName
++	},
++
+ 	{ ERokuSoundBridge,
+ 	  FLAG_MS_PFS | FLAG_AUDIO_ONLY | FLAG_MIME_WAV_WAV | FLAG_FORCE_SORT,
+ 	  "Roku SoundBridge",
+diff --git a/clients.h b/clients.h
+index f9818f5..fa39656 100644
+--- a/clients.h
++++ b/clients.h
+@@ -75,6 +75,7 @@ enum client_types {
+ 	ESonyBravia,
+ 	ESonyInternetTV,
+ 	EToshibaTV,
++	EHyundaiTV,
+ 	EAsusOPlay,
+ 	EBubbleUPnP,
+ 	ENetFrontLivingConnect,
+diff --git a/upnpsoap.c b/upnpsoap.c
+index 9ee0b90..23473b7 100644
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -883,6 +883,16 @@ callback(void *args, int argc, char **argv, char **azColName)
+ 				if( strlen(title) > 23 )
+ 					title[23] = '\0';
+ 			}
++			/* Hyundai hack: Only titles with a media extension get recognized. */
++			else if( passed_args->client == EHyundaiTV )
++			{
++				ext = mime_to_ext(mime);
++				ret = asprintf(&alt_title, "%s.%s", title, ext);
++				if( ret > 0 )
++					title = alt_title;
++				else
++					alt_title = NULL;
++			}
+ 		}
+ 		else if( *mime == 'a' )
+ 		{
+-- 
+2.11.0
+

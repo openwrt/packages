@@ -1,0 +1,24 @@
+From 910b84bcd6b64a8a72368aaa66d1bd4731c67cc8 Mon Sep 17 00:00:00 2001
+From: Darkvater <tamas.farago@credit-suisse.com>
+Date: Wed, 27 Jan 2016 19:42:36 +0800
+Subject: [PATCH] inotify: missing include file
+
+---
+ inotify.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/inotify.c b/inotify.c
+index d5043bb..c5c4343 100644
+--- a/inotify.c
++++ b/inotify.c
+@@ -25,6 +25,7 @@
+ #include <unistd.h>
+ #include <dirent.h>
+ #include <libgen.h>
++#include <signal.h>
+ #include <errno.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+-- 
+2.11.0
+

@@ -1,0 +1,59 @@
+From abc1972600d03d93e35fe30661f84a6ea52a058a Mon Sep 17 00:00:00 2001
+From: Justin Maggard <jmaggard@netgear.com>
+Date: Thu, 17 Mar 2016 13:37:09 -0700
+Subject: [PATCH] inotify: fix SQL error when moving captions
+
+Change INSERT to INSERT OR REPLACE when recording caption file moves,
+to avoid UNIQUE constraint failures.
+---
+ inotify.c  | 3 +--
+ metadata.c | 2 +-
+ po/ru.po   | 4 ++++
+ 3 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/inotify.c b/inotify.c
+index c5c4343..88ca83a 100644
+--- a/inotify.c
++++ b/inotify.c
+@@ -350,9 +350,8 @@ inotify_insert_file(char * name, const char * path)
+ 			if( !is_image(path) )
+ 				return -1;
+ 			break;
+-                default:
++		default:
+ 			return -1;
+-			break;
+ 	}
+ 	
+ 	/* If it's already in the database and hasn't been modified, skip it. */
+diff --git a/metadata.c b/metadata.c
+index c08ca3f..2bfa8b9 100644
+--- a/metadata.c
++++ b/metadata.c
+@@ -149,7 +149,7 @@ check_for_captions(const char *path, int64_t detailID)
+ 
+ 	if (ret == 0)
+ 	{
+-		sql_exec(db, "INSERT into CAPTIONS"
++		sql_exec(db, "INSERT OR REPLACE into CAPTIONS"
+ 		             " (ID, PATH) "
+ 		             "VALUES"
+ 		             " (%lld, %Q)", detailID, file);
+diff --git a/po/ru.po b/po/ru.po
+index fda545d..e07502b 100644
+--- a/po/ru.po
++++ b/po/ru.po
+@@ -85,6 +85,10 @@ msgstr "Папки"
+ msgid "Playlists"
+ msgstr "Списки Воспроизведения"
+ 
++#: scanner.c:598
++msgid "Recently Added"
++msgstr ""
++
+ #: scanner.c:536
+ msgid "Video"
+ msgstr "Видео"
+-- 
+2.11.0
+

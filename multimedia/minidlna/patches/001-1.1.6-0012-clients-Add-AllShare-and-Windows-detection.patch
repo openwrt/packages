@@ -1,0 +1,50 @@
+From 02b6085380e3dfb422037c8b08a492e48789dd59 Mon Sep 17 00:00:00 2001
+From: Justin Maggard <jmaggard@netgear.com>
+Date: Thu, 21 Apr 2016 14:31:53 -0700
+Subject: [PATCH] clients: Add AllShare and Windows detection
+
+Reporting Samsung features to Windows and AllShare somehow makes them
+ignore us, so detect these client types specifically and don't expose
+Samsung capabilities to them.
+---
+ clients.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/clients.c b/clients.c
+index cd1d06a..5b9ba5d 100644
+--- a/clients.c
++++ b/clients.c
+@@ -53,6 +53,16 @@ struct client_type_s client_types[] =
+ 	  EXAVClientInfo
+ 	},
+ 
++	/* User-Agent: DLNADOC/1.50 SEC_HHP_[PC]LPC001/1.0  MS-DeviceCaps/1024 */
++	/* This is AllShare running on a PC.  We don't want to respond with Samsung
++	 * capabilities, or Windows (and AllShare) might get grumpy. */
++	{ 0,
++	  FLAG_DLNA,
++	  "AllShare",
++	  "SEC_HHP_[PC]",
++	  EUserAgent
++	},
++
+ 	/* Samsung Series [CDE] BDPs and TVs must be separated, or some of our
+ 	 * advertised extra features trigger a folder browsing bug on BDPs. */
+ 	/* User-Agent: DLNADOC/1.50 SEC_HHP_BD-D5100/1.0 */
+@@ -230,6 +240,13 @@ struct client_type_s client_types[] =
+ 	  EUserAgent
+ 	},
+ 
++	{ 0,
++	  FLAG_DLNA | FLAG_MIME_AVI_AVI,
++	  "Windows",
++	  "FDSSDP",
++	  EUserAgent
++	},
++
+ 	{ EStandardDLNA150,
+ 	  FLAG_DLNA | FLAG_MIME_AVI_AVI,
+ 	  "Generic DLNA 1.5",
+-- 
+2.11.0
+
