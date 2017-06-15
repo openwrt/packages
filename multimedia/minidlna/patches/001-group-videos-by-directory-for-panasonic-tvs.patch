@@ -11,7 +11,7 @@ Subject: [PATCH] Add support for grouping videos by directory for Panasonic
 
 --- a/upnpsoap.c
 +++ b/upnpsoap.c
-@@ -1052,6 +1052,15 @@ callback(void *args, int argc, char **ar
+@@ -1095,6 +1095,15 @@ callback(void *args, int argc, char **ar
  						add_res(size, duration, bitrate, sampleFrequency, nrAudioChannels,
  						        resolution, dlna_buf, mime, detailID, ext, passed_args);
  					}
@@ -27,7 +27,7 @@ Subject: [PATCH] Add support for grouping videos by directory for Panasonic
  					break;
  				case ESamsungSeriesCDE:
  				case ELGDevice:
-@@ -1314,8 +1323,11 @@ BrowseContentDirectory(struct upnphttp *
+@@ -1357,8 +1366,11 @@ BrowseContentDirectory(struct upnphttp *
  		if (!where[0])
  			sqlite3_snprintf(sizeof(where), where, "PARENT_ID = '%q'", ObjectID);
  
@@ -40,13 +40,13 @@ Subject: [PATCH] Add support for grouping videos by directory for Panasonic
  		ret = 0;
  		if (SortCriteria && !orderBy)
  		{
-@@ -1354,14 +1366,16 @@ BrowseContentDirectory(struct upnphttp *
+@@ -1397,14 +1409,16 @@ BrowseContentDirectory(struct upnphttp *
  			SoapError(h, 709, "Unsupported or invalid sort criteria");
  			goto browse_error;
  		}
 -
  		sql = sqlite3_mprintf("SELECT %s, %s, %s, " COLUMNS
- 		                      "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
+ 				      "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
 -				      " where %s %s limit %d, %d;",
 +				      " where %s order by d.date limit %d, %d;",
  				      objectid_sql, parentid_sql, refid_sql,
@@ -60,7 +60,7 @@ Subject: [PATCH] Add support for grouping videos by directory for Panasonic
  	}
  	if( (ret != SQLITE_OK) && (zErrMsg != NULL) )
  	{
-@@ -1795,7 +1809,7 @@ SearchContentDirectory(struct upnphttp *
+@@ -1838,7 +1852,7 @@ SearchContentDirectory(struct upnphttp *
  	                      (*ContainerID == '*') ? NULL :
  	                      sqlite3_mprintf("UNION ALL " SELECT_COLUMNS
  	                                      "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
