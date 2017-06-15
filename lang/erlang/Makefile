@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
 PKG_VERSION:=19.3
-PKG_RELEASE:=3
+PKG_RELEASE:=6
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/ \
