@@ -60,7 +60,7 @@ endef
 define Package/erlang-asn1
 $(call Package/erlang/Default)
   TITLE:=Abstract Syntax Notation One (ASN.1) support
-  VERSION:=3.0.4
+  VERSION:=4.0.4
   DEPENDS+= +erlang +erlang-syntax-tools
 endef
 
@@ -75,7 +75,7 @@ endef
 define Package/erlang-compiler
 $(call Package/erlang/Default)
   TITLE:=Byte code compiler
-  VERSION:=5.0.4
+  VERSION:=7.0.4
   DEPENDS+= +erlang +erlang-hipe
 endef
 
@@ -90,7 +90,7 @@ endef
 define Package/erlang-crypto
 $(call Package/erlang/Default)
   TITLE:=Cryptography support
-  VERSION:=3.5
+  VERSION:=3.7.3
   DEPENDS+= +erlang +libopenssl
 endef
 
