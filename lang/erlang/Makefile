@@ -185,7 +185,7 @@ define Package/erlang-public-key
 $(call Package/erlang/Default)
   TITLE:=Public Key support
   VERSION:=1.4
-  DEPENDS+= +erlang +erlang-crypto
+  DEPENDS+= +erlang +erlang-crypto +erlang-asn1
 endef
 
 define Package/erlang-public-key/description
