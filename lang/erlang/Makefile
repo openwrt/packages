@@ -240,6 +240,48 @@ $(call Package/erlang/Default/description)
 endef
 
 
+define Package/erlang-tools
+$(call Package/erlang/Default)
+  TITLE:=Erlang tools support
+  VERSION:=2.9.1
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-tools/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for misc tools.
+endef
+
+
+define Package/erlang-reltool
+$(call Package/erlang/Default)
+  TITLE:=Erlang reltool support
+  VERSION:=0.7.3
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-reltool/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for release management.
+endef
+
+
+define Package/erlang-erl-interface
+$(call Package/erlang/Default)
+  TITLE:=Erlang erl_interface support
+  VERSION:=3.9.3
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-erl-interface/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for erlang interoperability with other languages.
+endef
+
+
 # Host
 
 HOST_CONFIGURE_ARGS += \
@@ -352,3 +394,6 @@ $(eval $(call BuildModule,public-key,public_key))
 $(eval $(call BuildModule,ssh,ssh))
 $(eval $(call BuildModule,ssl,ssl))
 $(eval $(call BuildModule,syntax-tools,syntax_tools))
+$(eval $(call BuildModule,tools,tools))
+$(eval $(call BuildModule,reltool,reltool))
+$(eval $(call BuildModule,erl-interface,erl_interface))
