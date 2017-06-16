@@ -10,7 +10,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * easy setup within normal OpenWrt/LEDE environment
 * strong LuCI-Support to simplify the interface setup
 * fast uplink connections
-* manual / automatic mode support, the latter one checks the existing uplink connection regardless of ifdown event trigger every n seconds
+* manual / automatic mode support, the latter one checks the existing uplink connection regardless of ifdown event trigger actions every n seconds
 * support of devices with multiple radios
 * procd init and hotplug support
 * runtime information available via LuCI & via 'status' init command
@@ -18,7 +18,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 
 ## Prerequisites
 * [LEDE](https://www.lede-project.org) 17.01 or latest snapshot
-* iw for wlan scanning
+* iwinfo for wlan scanning
 
 ## LEDE trunk Installation & Usage
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages)
@@ -26,7 +26,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * configure your network:
     * automatic: use the LuCI frontend with automatic STA interface setup, that's the recommended way
     * manual: see detailed configure steps below
-    * at least you need one AP and one STA interface configured
+    * at least you need one configured AP and one STA interface
 
 ## LuCI travelmate companion package
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/luci)
