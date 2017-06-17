@@ -1,10 +1,12 @@
 #!/bin/sh
 #
-# Copyright (C) 2014-2017 Jian Chang <aa65535@live.com>
+# Copyright (C) 2016-2017 Jian Chang <aa65535@live.com>
 #
 # This is free software, licensed under the GNU General Public License v3.
 # See /LICENSE for more information.
 #
+
+# Warning: This script will be slow!
 
 usage() {
 	cat <<-EOF
@@ -47,29 +49,8 @@ flush_rules() {
 		ip rule del fwmark 1 lookup 100 2>/dev/null
 		ip route del local default dev lo table 100 2>/dev/null
 	fi
-	for setname in $(ipset -n list | grep "ss_spec"); do
-		ipset destroy $setname 2>/dev/null
-	done
 	FWI=$(uci get firewall.shadowsocks.path 2>/dev/null)
 	[ -n "$FWI" ] && echo '# firewall include file' >$FWI
-	return 0
-}
-
-ipset_init() {
-	ipset -! restore <<-EOF || return 1
-		create ss_spec_src_ac hash:ip hashsize 64
-		create ss_spec_src_bp hash:ip hashsize 64
-		create ss_spec_src_fw hash:ip hashsize 64
-		create ss_spec_dst_sp hash:net hashsize 64
-		create ss_spec_dst_bp hash:net hashsize 64
-		create ss_spec_dst_fw hash:net hashsize 64
-		$(gen_lan_host_ipset_entry)
-		$(gen_special_purpose_ip | sed -e "s/^/add ss_spec_dst_sp /")
-		$(sed -e "s/^/add ss_spec_dst_bp /" ${WAN_BP_LIST:=/dev/null} 2>/dev/null)
-		$(for ip in $WAN_BP_IP; do echo "add ss_spec_dst_bp $ip"; done)
-		$(sed -e "s/^/add ss_spec_dst_fw /" ${WAN_FW_LIST:=/dev/null} 2>/dev/null)
-		$(for ip in $WAN_FW_IP; do echo "add ss_spec_dst_fw $ip"; done)
-EOF
 	return 0
 }
 
@@ -79,10 +60,14 @@ ipt_nat() {
 	$ipt -A SS_SPEC_WAN_FW -p tcp \
 		-j REDIRECT --to-ports $local_port || return 1
 	if [ -n "$OUTPUT" ]; then
-		$ipt -N SS_SPEC_WAN_DG
-		$ipt -A SS_SPEC_WAN_DG -m set --match-set ss_spec_dst_sp dst -j RETURN
-		$ipt -A SS_SPEC_WAN_DG -p tcp $EXT_ARGS -j $OUTPUT
-		$ipt -I OUTPUT 1 -p tcp -j SS_SPEC_WAN_DG
+		iptables-restore -n <<-EOF
+		*nat
+		:SS_SPEC_WAN_DG - [0:0]
+		$(gen_special_purpose_ip | sed -e "s/\(.*\)/-A SS_SPEC_WAN_DG -d \1 -j RETURN/")
+		-A SS_SPEC_WAN_DG -p tcp $EXT_ARGS -j $OUTPUT
+		-I OUTPUT 1 -p tcp -j SS_SPEC_WAN_DG
+		COMMIT
+EOF
 	fi
 	return $?
 }
@@ -113,17 +98,17 @@ CAT
 	return $?
 }
 
-gen_lan_host_ipset_entry() {
+gen_lan_host_ipt_entry() {
 	for host in $LAN_HOSTS; do
 		case "${host:0:1}" in
 			n|N)
-				echo add ss_spec_src_ac ${host:2}
+				echo "3-A SS_SPEC_LAN_AC -s ${host:2} -j SS_SPEC_WAN_AC"
 				;;
 			b|B)
-				echo add ss_spec_src_bp ${host:2}
+				echo "1-A SS_SPEC_LAN_AC -s ${host:2} -j RETURN"
 				;;
 			g|G)
-				echo add ss_spec_src_fw ${host:2}
+				echo "2-A SS_SPEC_LAN_AC -s ${host:2} -j SS_SPEC_WAN_FW"
 				;;
 		esac
 	done
@@ -163,14 +148,14 @@ include_ac_rules() {
 	:SS_SPEC_LAN_AC - [0:0]
 	:SS_SPEC_WAN_AC - [0:0]
 	:SS_SPEC_WAN_FW - [0:0]
-	-A SS_SPEC_LAN_DG -m set --match-set ss_spec_dst_sp dst -j RETURN
+	$(gen_special_purpose_ip | sed -e "s/\(.*\)/-A SS_SPEC_LAN_DG -d \1 -j RETURN/")
 	-A SS_SPEC_LAN_DG -p $protocol $EXT_ARGS -j SS_SPEC_LAN_AC
-	-A SS_SPEC_LAN_AC -m set --match-set ss_spec_src_bp src -j RETURN
-	-A SS_SPEC_LAN_AC -m set --match-set ss_spec_src_fw src -j SS_SPEC_WAN_FW
-	-A SS_SPEC_LAN_AC -m set --match-set ss_spec_src_ac src -j SS_SPEC_WAN_AC
+	$(gen_lan_host_ipt_entry | sort | sed -e s/^.//)
 	-A SS_SPEC_LAN_AC -j ${LAN_TARGET:=SS_SPEC_WAN_AC}
-	-A SS_SPEC_WAN_AC -m set --match-set ss_spec_dst_fw dst -j SS_SPEC_WAN_FW
-	-A SS_SPEC_WAN_AC -m set --match-set ss_spec_dst_bp dst -j RETURN
+	$(sed -e "s/\(.*\)/-A SS_SPEC_WAN_AC -d \1 -j SS_SPEC_WAN_FW/" ${WAN_FW_LIST:=/dev/null} 2>/dev/null)
+	$(for ip in $WAN_FW_IP; do echo "-A SS_SPEC_WAN_AC -d $ip -j SS_SPEC_WAN_FW"; done)
+	$(sed -e "s/\(.*\)/-A SS_SPEC_WAN_AC -d \1 -j RETURN/" ${WAN_BP_LIST:=/dev/null} 2>/dev/null)
+	$(for ip in $WAN_BP_IP; do echo "-A SS_SPEC_WAN_AC -d $ip -j RETURN"; done)
 	-A SS_SPEC_WAN_AC -j SS_SPEC_WAN_FW
 	$(gen_prerouting_rules $protocol)
 	COMMIT
@@ -254,7 +239,7 @@ elif [ "$TPROXY" = 2 ]; then
 	: ${LOCAL_PORT:?"You must assign a port for the udp relay server."}
 fi
 
-flush_rules && ipset_init && ipt_nat && ipt_mangle && export_ipt_rules
+flush_rules && ipt_nat && ipt_mangle && export_ipt_rules
 RET=$?
 [ "$RET" = 0 ] || loger 3 "Start failed!"
 exit $RET
