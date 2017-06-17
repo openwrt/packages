@@ -53,6 +53,8 @@ define Package/libstoken
   CATEGORY:=Libraries
 endef
 
+TARGET_LDFLAGS += -lz
+
 CONFIGURE_ARGS += \
 	--with-nettle
 
