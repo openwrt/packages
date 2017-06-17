@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=reaver
 PKG_VERSION:=1.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -25,6 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_PATH:=src
 MAKE_PATH:=src
+EXTRA_CFLAGS=$(TARGET_CPPFLAGS)
 
 define Package/reaver
   SECTION:=net
