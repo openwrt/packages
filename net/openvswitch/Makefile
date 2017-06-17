@@ -118,7 +118,10 @@ CONFIGURE_ARGS += --enable-shared
 TARGET_CFLAGS += -flto -std=gnu99
 
 CONFIGURE_VARS += KARCH=$(LINUX_KARCH)
-MAKE_FLAGS += ARCH="$(LINUX_KARCH)"
+MAKE_FLAGS += \
+	ARCH="$(LINUX_KARCH)" \
+	PYTHONPATH="$(HOST_PYTHONPATH)" \
+	PYTHON="$(HOST_PYTHON_BIN)"
 
 define OvsBinUtility
   define Package/openvswitch-$(1)
