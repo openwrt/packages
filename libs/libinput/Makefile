@@ -1,6 +1,3 @@
-#
-# Copyright (C) 2007-2015 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libinput
-PKG_VERSION:=1.3.1
+PKG_VERSION:=1.7.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.freedesktop.org/software/libinput/
-PKG_MD5SUM:=458fc483f7227d3c4c330f4abd6dfa77
+PKG_HASH:=096d612d2711f0caa2de544976ff3729e6233511ab373808644cc2dd5affcb1d
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -33,7 +30,7 @@ define Package/libinput
   CATEGORY:=Libraries
   TITLE:=a library to handle input devices
   URL:=http://freedesktop.org/wiki/Software/libinput/
-  DEPENDS:=+libevdev +mtdev +libudev
+  DEPENDS:=+libevdev +mtdev +libudev-fbsd
 endef
 
 define Package/libinput/description
