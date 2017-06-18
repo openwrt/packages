@@ -32,7 +32,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libsysrepo
-  SECTION:=util
+  SECTION:=utils
   CATEGORY:=Utilities
   URL:=$(PKG_SOURCE_URL)
   TITLE:=YANG-based data store library
@@ -40,7 +40,7 @@ define Package/libsysrepo
 endef
 
 define Package/sysrepo
-  SECTION:=util
+  SECTION:=utils
   CATEGORY:=Utilities
   URL:=$(PKG_SOURCE_URL)
   TITLE:=YANG-based data store daemon and plugin
@@ -48,7 +48,7 @@ define Package/sysrepo
 endef
 
 define Package/sysrepoctl
-  SECTION:=util
+  SECTION:=utils
   CATEGORY:=Utilities
   URL:=$(PKG_SOURCE_URL)
   TITLE:=sysrepo cli tool
@@ -56,7 +56,7 @@ define Package/sysrepoctl
 endef
 
 define Package/sysrepocfg
-  SECTION:=util
+  SECTION:=utils
   CATEGORY:=Utilities
   URL:=$(PKG_SOURCE_URL)
   TITLE:=sysrepo configuration tool

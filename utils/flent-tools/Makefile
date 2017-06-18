@@ -21,7 +21,7 @@ PKG_SOURCE_VERSION:=$(PKG_REV)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/flent-tools
-  SECTION:=util
+  SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Helper programs for the Flent test tool
   URL:=https://flent.org

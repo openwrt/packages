@@ -18,7 +18,7 @@ PKG_HASH:=9122b6b380081dd2665189f97bfd777f04f92dc3ab6698eea1dbb27ad59d8692
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Ted Hess <thess@kitchensync.net> Ian Leonard <antonlacon@gmail.com>
+PKG_MAINTAINER:=Ted Hess <thess@kitchensync.net>, Ian Leonard <antonlacon@gmail.com>
 
 PKG_INSTALL:=1
 
