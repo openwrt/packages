@@ -1,6 +1,3 @@
-#
-# Copyright (C) 2007-2015 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libevdev
-PKG_VERSION:=1.4.6
+PKG_VERSION:=1.5.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.freedesktop.org/software/libevdev/
-PKG_MD5SUM:=9b3f25bd8fb0f8efa4944d34668dddc0
+PKG_HASH:=ecec7e9d66b1d3692f10b3b20aa97fb25e874a784c5552a7b1698091fef5a688
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
