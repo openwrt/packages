@@ -6,6 +6,7 @@ init_proto "$@"
 proto_openconnect_init_config() {
 	proto_config_add_string "server"
 	proto_config_add_int "port"
+	proto_config_add_int "mtu"
 	proto_config_add_string "username"
 	proto_config_add_string "serverhash"
 	proto_config_add_string "authgroup"
@@ -13,7 +14,6 @@ proto_openconnect_init_config() {
 	proto_config_add_string "password2"
 	proto_config_add_string "token_mode"
 	proto_config_add_string "token_secret"
-	proto_config_add_string "interface"
 	proto_config_add_string "os"
 	proto_config_add_string "csd_wrapper"
 	no_device=1
@@ -23,7 +23,7 @@ proto_openconnect_init_config() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port username serverhash authgroup password password2 interface token_mode token_secret os csd_wrapper
+	json_get_vars server port username serverhash authgroup password password2 token_mode token_secret os csd_wrapper mtu
 
 	grep -q tun /proc/modules || insmod tun
 	ifname="vpn-$config"
@@ -39,6 +39,7 @@ proto_openconnect_setup() {
 	[ -n "$port" ] && port=":$port"
 
 	cmdline="$server$port -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script"
+	[ -n "$mtu" ] && cmdline="$cmdline --mtu $mtu"
 
 	# migrate to standard config files
 	[ -f "/etc/config/openconnect-user-cert-vpn-$config.pem" ] && mv "/etc/config/openconnect-user-cert-vpn-$config.pem" "/etc/openconnect/user-cert-vpn-$config.pem"
