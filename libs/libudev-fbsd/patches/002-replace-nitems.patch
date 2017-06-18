@@ -1,0 +1,11 @@
+--- a/src/libudev.c
++++ b/src/libudev.c
+@@ -175,7 +175,7 @@ populate_properties_list(struct udev_dev
+ 
+ 	struct udev_list_entry **list_end = &udev_device->properties_list;
+ 
+-	for (unsigned i = 0; i < nitems(ids); ++i) {
++	for (unsigned i = 0; i < (sizeof(ids) / sizeof(ids[0])); ++i) {
+ 		char const *id = ids[i];
+ 		struct udev_list_entry *le;
+ 
