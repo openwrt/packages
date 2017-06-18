@@ -1,6 +1,6 @@
 --- a/metadata.c
 +++ b/metadata.c
-@@ -845,6 +845,10 @@ GetVideoMetadata(const char *path, char
+@@ -843,6 +843,10 @@ GetVideoMetadata(const char *path, char
  			xasprintf(&m.mime, "video/x-matroska");
  		else if( strcmp(ctx->iformat->name, "flv") == 0 )
  			xasprintf(&m.mime, "video/x-flv");
@@ -25,7 +25,7 @@
  #define DLNA_FLAG_HTTP_STALLING  0x00200000
 --- a/utils.c
 +++ b/utils.c
-@@ -383,6 +383,7 @@ is_video(const char * file)
+@@ -397,6 +397,7 @@ is_video(const char * file)
  		ends_with(file, ".m2t") || ends_with(file, ".mkv")   ||
  		ends_with(file, ".vob") || ends_with(file, ".ts")    ||
  		ends_with(file, ".flv") || ends_with(file, ".xvid")  ||

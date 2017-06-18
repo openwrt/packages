@@ -22,14 +22,14 @@ and that cache ignores artist names as well.
 
 --- a/scanner.c
 +++ b/scanner.c
-@@ -97,9 +97,8 @@ insert_container(const char *item, const
- 	                                "left join DETAILS d on (o.DETAIL_ID = d.ID)"
- 	                                " where o.PARENT_ID = '%s'"
- 			                " and o.NAME like '%q'"
--			                " and d.ARTIST %s %Q"
- 	                                " and o.CLASS = 'container.%s' limit 1",
--	                                rootParent, item, artist?"like":"is", artist, class);
-+	                                rootParent, item, class);
+@@ -98,9 +98,8 @@ insert_container(const char *item, const
+ 					"left join DETAILS d on (o.DETAIL_ID = d.ID)"
+ 					" where o.PARENT_ID = '%s'"
+ 					" and o.NAME like '%q'"
+-					" and d.ARTIST %s %Q"
+ 					" and o.CLASS = 'container.%s' limit 1",
+-					rootParent, item, artist?"like":"is", artist, class);
++					rootParent, item, class);
  	if( result )
  	{
  		base = strrchr(result, '$');

@@ -4,7 +4,7 @@ Updated: 2015-03-01
 
 --- a/minidlna.c
 +++ b/minidlna.c
-@@ -352,6 +352,7 @@ rescan:
+@@ -357,6 +357,7 @@ rescan:
  		open_db(&db);
  		if (*scanner_pid == 0) /* child (scanner) process */
  		{
@@ -12,7 +12,7 @@ Updated: 2015-03-01
  			start_scanner();
  			sqlite3_close(db);
  			log_close();
-@@ -365,6 +366,7 @@ rescan:
+@@ -370,6 +371,7 @@ rescan:
  		}
  #else
  		start_scanner();
