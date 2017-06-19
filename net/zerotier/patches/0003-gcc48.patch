@@ -1,0 +1,13 @@
+Index: ZeroTierOne-1.2.4/ext/json/json.hpp
+===================================================================
+--- ZeroTierOne-1.2.4.orig/ext/json/json.hpp
++++ ZeroTierOne-1.2.4/ext/json/json.hpp
+@@ -64,7 +64,7 @@ SOFTWARE.
+     #endif
+ #elif defined(__GNUC__)
+     #define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+-    #if GCC_VERSION < 40900
++    #if GCC_VERSION < 40800
+         #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
+     #endif
+ #endif
