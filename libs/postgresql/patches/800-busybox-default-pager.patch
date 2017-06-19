@@ -1,8 +1,8 @@
 --- a/src/bin/psql/print.h
 +++ b/src/bin/psql/print.h
-@@ -197,10 +197,6 @@ extern void setDecimalLocale(void);
+@@ -179,10 +179,6 @@ extern void printQuery(const PGresult *r
+ extern void setDecimalLocale(void);
  extern const printTextFormat *get_line_style(const printTableOpt *opt);
- extern void refresh_utf8format(const printTableOpt *opt);
  
 -#ifndef __CYGWIN__
 -#define DEFAULT_PAGER "more"
