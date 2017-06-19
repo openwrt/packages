@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jamvm
 PKG_VERSION:=2.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Dana H. Myers <k6jq@comcast.net>
 
@@ -31,6 +31,7 @@ define Package/jamvm
   TITLE:=A compact Java Virtual Machine
   URL:=http://sourceforge.net/projects/jamvm
   DEPENDS:=+zlib +libpthread +librt +classpath @!avr32
+  PROVIDES:=jvm
 endef
 
 define Package/jamvm/description

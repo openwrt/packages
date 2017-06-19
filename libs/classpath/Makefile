@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=classpath
 PKG_VERSION:=0.99
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Dana H. Myers <k6jq@comcast.net>
 
@@ -21,6 +21,8 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+$(eval $(call RequireCommand,java,Please install a host Java virtual machine))
+$(eval $(call RequireCommand,javac,Please install a host Java compiler))
 
 define Package/classpath
   SECTION:=libs
@@ -30,10 +32,10 @@ define Package/classpath
   DEPENDS:=+alsa-lib +libgmp +libmagic
 endef
 
-define Package/classpath/Description
-	GNU Classpath, Essential Libraries for Java, is a GNU project
-	to create free core class libraries for use with virtual
-	machines and compilers for the java programming language.
+define Package/classpath/description
+  GNU Classpath, Essential Libraries for Java, is a GNU project
+  to create free core class libraries for use with virtual
+  machines and compilers for the java programming language.
 endef
 
 define Package/classpath-tools
