@@ -1,0 +1,28 @@
+diff --git a/Makefile.am b/Makefile.am
+index 68f537c..d32f81c 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -17,7 +17,7 @@
+ 
+ ALL_RECURSIVE_TARGETS =
+ 
+-SUBDIRS = po . gnulib-tests
++SUBDIRS = po
+ 
+ changelog_etc =				\
+   build-aux/ChangeLog-2007		\
+@@ -40,7 +40,6 @@ EXTRA_DIST =				\
+   cfg.mk				\
+   dist-check.mk				\
+   maint.mk				\
+-  tests/GNUmakefile			\
+   thanks-gen
+ 
+ gen_progs_lists = $(top_srcdir)/build-aux/gen-lists-of-programs.sh
+@@ -213,6 +212,3 @@ AM_CPPFLAGS = -Ilib -I$(top_srcdir)/lib -Isrc -I$(top_srcdir)/src
+ 
+ include $(top_srcdir)/lib/local.mk
+ include $(top_srcdir)/src/local.mk
+-include $(top_srcdir)/doc/local.mk
+-include $(top_srcdir)/man/local.mk
+-include $(top_srcdir)/tests/local.mk

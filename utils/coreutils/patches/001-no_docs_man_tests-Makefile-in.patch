@@ -1,0 +1,88 @@
+--- a/Makefile.in	2017-03-09 06:24:51.000000000 +0100
++++ b/Makefile.in	2017-03-25 03:35:55.738006410 +0100
+@@ -2329,11 +2329,7 @@
+ 	install-ps-recursive install-recursive installcheck-recursive \
+ 	installdirs-recursive pdf-recursive ps-recursive \
+ 	tags-recursive uninstall-recursive
+-am__can_run_installinfo = \
+-  case $$AM_UPDATE_INFO_DIR in \
+-    n|no|NO) false;; \
+-    *) (install-info --version) >/dev/null 2>&1;; \
+-  esac
++am__can_run_installinfo = false
+ am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+ am__vpath_adj = case $$p in \
+     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+@@ -2584,11 +2580,8 @@
+ 	$(top_srcdir)/build-aux/missing \
+ 	$(top_srcdir)/build-aux/test-driver \
+ 	$(top_srcdir)/build-aux/texinfo.tex \
+-	$(top_srcdir)/build-aux/ylwrap $(top_srcdir)/doc/local.mk \
+ 	$(top_srcdir)/lib/alloca.c $(top_srcdir)/lib/config.hin \
+-	$(top_srcdir)/lib/local.mk $(top_srcdir)/man/local.mk \
+ 	$(top_srcdir)/src/local.mk $(top_srcdir)/src/single-binary.mk \
+-	$(top_srcdir)/tests/local.mk ABOUT-NLS AUTHORS COPYING \
+ 	ChangeLog INSTALL NEWS README THANKS TODO build-aux/ar-lib \
+ 	build-aux/compile build-aux/config.guess \
+ 	build-aux/config.rpath build-aux/config.sub build-aux/depcomp \
+@@ -2687,7 +2680,7 @@
+ EOVERFLOW_VALUE = @EOVERFLOW_VALUE@
+ ERRNO_H = @ERRNO_H@
+ EXEEXT = @EXEEXT@
+-EXTRA_MANS = @EXTRA_MANS@
++EXTRA_MANS = 
+ FLOAT_H = @FLOAT_H@
+ FNMATCH_H = @FNMATCH_H@
+ GETADDRINFO_LIB = @GETADDRINFO_LIB@
+@@ -3932,7 +3925,7 @@
+ lispdir = @lispdir@
+ localedir = @localedir@
+ localstatedir = @localstatedir@
+-man1_MANS = @man1_MANS@
++man1_MANS = 
+ mandir = @mandir@
+ mkdir_p = @mkdir_p@
+ oldincludedir = @oldincludedir@
+@@ -3955,7 +3948,7 @@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ ALL_RECURSIVE_TARGETS = distcheck-hook check-root
+-SUBDIRS = po . gnulib-tests
++SUBDIRS = po 
+ changelog_etc = \
+   build-aux/ChangeLog-2007		\
+   lib/ChangeLog-2007			\
+@@ -4124,14 +4117,7 @@
+ 	lib/xdectoint.h lib/xgetcwd.h lib/xnanosleep.h lib/xreadlink.h \
+ 	lib/xstrtod.h lib/xstrtol.h lib/xstrtod.c lib/xstrtod.h \
+ 	lib/xalloc.h lib/yesno.h src/dcgen src/dircolors.hin \
+-	src/primes.h src/tac-pipe.c src/extract-magic man/help2man \
+-	man/dummy-man $(man1_MANS:.1=.x) $(EXTRA_MANS:.1=.x) \
+-	$(all_tests) init.cfg tests/Coreutils.pm tests/CuSkip.pm \
+-	tests/CuTmpdir.pm tests/d_type-check tests/envvar-check \
+-	tests/factor/run.sh tests/factor/create-test.sh \
+-	tests/filefrag-extent-compare tests/fiemap-capable \
+-	tests/init.sh tests/lang-default tests/no-perl \
+-	tests/other-fs-tmpdir tests/sample-test $(pr_data)
++	src/primes.h src/tac-pipe.c src/extract-magic \
+ gen_progs_lists = $(top_srcdir)/build-aux/gen-lists-of-programs.sh
+ gen_single_binary = $(top_srcdir)/build-aux/gen-single-binary.sh
+ ACLOCAL_AMFLAGS = -I m4
+@@ -5925,7 +5911,7 @@
+ .SUFFIXES: .1 .c .dvi .log .o .obj .pl .pl$(EXEEXT) .ps .sed .sh .sh$(EXEEXT) .sin .trs .x .xpl .xpl$(EXEEXT) .y
+ am--refresh: Makefile
+ 	@:
+-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(top_srcdir)/doc/local.mk $(top_srcdir)/man/local.mk $(top_srcdir)/tests/local.mk $(am__configure_deps)
++$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(am__configure_deps)
+ 	@for dep in $?; do \
+ 	  case '$(am__configure_deps)' in \
+ 	    *$$dep*) \
+@@ -5947,7 +5933,7 @@
+ 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)'; \
+ 	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe);; \
+ 	esac;
+-$(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(top_srcdir)/doc/local.mk $(top_srcdir)/man/local.mk $(top_srcdir)/tests/local.mk $(am__empty):
++$(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(am__empty):
+ 
+ $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
+ 	$(SHELL) ./config.status --recheck
