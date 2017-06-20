@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=\
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 PKG_MD5SUM:=fca055481875d1c49e31c28443f56472a1474b3fbe25b7ae64440c6118f82e64
-PKG_BUILD_PARALLEL:=1
+
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=config
