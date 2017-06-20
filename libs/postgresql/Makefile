@@ -135,6 +135,8 @@ CONFIGURE_ARGS += \
 			--enable-depend \
 			$(if $(CONFIG_TARGET_avr32),--disable-spinlocks)
 
+EXTRA_CFLAGS:= -I$(PKG_BUILD_DIR)/src/include/
+
 # Need a native ecpg ,pg_config, and zic for build
 define Host/Compile
 	$(MAKE) -C $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)"
