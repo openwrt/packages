@@ -1,0 +1,41 @@
+*** gkrellm-2.3.10/server/gkrellmd.conf	2011-08-04 03:26:38.000000000 +0200
+--- gkrellm-2.3.10/server/gkrellmd.conf.mod	2017-06-18 10:10:54.702528926 +0200
+***************
+*** 30,47 ****
+  # Drop privileges after startup (you must start gkrellmd as root to do it).
+  # NOTE: Option ignored on Windows
+  #
+! #user	nobody
+  #group	proc
+  
+  # Create a PID file for the running gkrellmd.  Default is no PID file.
+  # NOTE: Option ignored on Windows
+  #
+! #pidfile /var/run/gkrellmd.pid
+  
+  # Run in background and detach from the controlling terminal
+  # NOTE: Option ignored on Windows
+  #
+! #detach
+  
+  # Enable writing logging message to the system syslog file
+  # NOTE: On windows this enables logging to the windows event log
+--- 30,47 ----
+  # Drop privileges after startup (you must start gkrellmd as root to do it).
+  # NOTE: Option ignored on Windows
+  #
+! user	nobody
+  #group	proc
+  
+  # Create a PID file for the running gkrellmd.  Default is no PID file.
+  # NOTE: Option ignored on Windows
+  #
+! pidfile /var/run/gkrellmd.pid
+  
+  # Run in background and detach from the controlling terminal
+  # NOTE: Option ignored on Windows
+  #
+! detach
+  
+  # Enable writing logging message to the system syslog file
+  # NOTE: On windows this enables logging to the windows event log
