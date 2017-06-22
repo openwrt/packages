@@ -7,6 +7,14 @@ IPT4="/usr/sbin/iptables -t mangle -w"
 IPT6="/usr/sbin/ip6tables -t mangle -w"
 LOG="/usr/bin/logger -t mwan3 -p"
 
+mwan3_lock() {
+	lock /var/run/mwan3.lock
+}
+
+mwan3_unlock() {
+	lock -u /var/run/mwan3.lock
+}
+
 mwan3_get_iface_id()
 {
 	local _tmp _iface _iface_count

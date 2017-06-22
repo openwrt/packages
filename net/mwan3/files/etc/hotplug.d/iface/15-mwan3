@@ -35,6 +35,7 @@ if [ "$ACTION" == "ifup" ]; then
 	[ -n "$gateway" ] || exit 9
 fi
 
+mwan3_lock
 $LOG notice "$ACTION interface $INTERFACE (${DEVICE:-unknown})"
 
 case "$ACTION" in
@@ -57,5 +58,7 @@ case "$ACTION" in
 		mwan3_set_user_rules
 	;;
 esac
+
+mwan3_unlock
 
 exit 0
