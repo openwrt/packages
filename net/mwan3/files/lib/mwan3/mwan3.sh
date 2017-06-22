@@ -8,6 +8,14 @@ IPT6="ip6tables -t mangle -w"
 LOG="logger -t mwan3 -p"
 CONNTRACK_FILE="/proc/net/nf_conntrack"
 
+mwan3_lock() {
+	lock /var/run/mwan3.lock
+}
+
+mwan3_unlock() {
+	lock -u /var/run/mwan3.lock
+}
+
 mwan3_get_iface_id()
 {
 	local _tmp _iface _iface_count
@@ -730,7 +738,7 @@ mwan3_report_iface_status()
 	config_list_foreach $1 track_ip mwan3_list_track_ips
 
 	if [ -n "$track_ips" ]; then
-		if [ -n "$(ps -w | grep mwan3track | grep -v grep | sed '/.*\/usr\/sbin\/mwan3track \([^ ]*\) .*$/!d;s//\1/' | awk '$1 == "'$1'"')" ]; then
+		if [ -n "$(pgrep -f "mwan3track $1")" ]; then
 			tracking="active"
 		else
 			tracking="down"
