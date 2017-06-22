@@ -8,6 +8,14 @@ IPT6="ip6tables -t mangle -w"
 LOG="logger -t mwan3 -p"
 CONNTRACK_FILE="/proc/net/nf_conntrack"
 
+mwan3_lock() {
+	lock /var/run/mwan3.lock
+}
+
+mwan3_unlock() {
+	lock -u /var/run/mwan3.lock
+}
+
 mwan3_get_iface_id()
 {
 	local _tmp _iface _iface_count
