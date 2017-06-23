@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rng-tools
 PKG_VERSION:=5
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/gkernel/rng-tools/$(PKG_VERSION)/
@@ -52,8 +52,8 @@ CONFIGURE_ARGS += \
 define Package/rng-tools/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/rngd.init $(1)/etc/init.d/rngd
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/rngd.uci_defaults $(1)/etc/uci-defaults/rngd
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/rngd.config $(1)/etc/config/rngd
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rngtest $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/sbin

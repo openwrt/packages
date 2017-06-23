@@ -58,6 +58,7 @@ minidlna_create_config() {
 	minidlna_cfg_addstr $cfg db_dir
 	minidlna_cfg_addstr $cfg log_dir
 	minidlna_cfg_addbool $cfg inotify '1'
+	minidlna_cfg_addbool $cfg wide_links '0'
 	minidlna_cfg_addbool $cfg enable_tivo '0'
 	minidlna_cfg_addbool $cfg strict_dlna '0'
 	minidlna_cfg_addstr $cfg album_art_names
@@ -90,6 +91,8 @@ start() {
 	mkdir -m 0755 -p $db_dir
 	mkdir -m 0755 -p $log_dir
 	service_start /usr/bin/minidlna -f "$MINIDLNA_CONFIG_FILE"
+	# lower priority using renice in busybox
+	renice -n 3 $(pidof minidlna)
 }
 
 stop() {

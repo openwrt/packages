@@ -1,0 +1,24 @@
+--- a/src/syscall-arm.h
++++ b/src/syscall-arm.h
+@@ -19,11 +19,21 @@
+ #define __NR_SYSCALL_BASE	__NR_OABI_SYSCALL_BASE
+ #endif
+ 
++#ifndef __NR_io_setup
+ #define __NR_io_setup			(__NR_SYSCALL_BASE+243)
++#endif
++#ifndef __NR_io_destroy
+ #define __NR_io_destroy			(__NR_SYSCALL_BASE+244)
++#endif
++#ifndef __NR_io_getevents
+ #define __NR_io_getevents		(__NR_SYSCALL_BASE+245)
++#endif
++#ifndef __NR_io_submit
+ #define __NR_io_submit			(__NR_SYSCALL_BASE+246)
++#endif
++#ifndef __NR_io_cancel
+ #define __NR_io_cancel			(__NR_SYSCALL_BASE+247)
++#endif
+ 
+ #define __sys2(x) #x
+ #define __sys1(x) __sys2(x)

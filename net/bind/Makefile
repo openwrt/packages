@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.10.5
+PKG_VERSION:=9.11.1
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
@@ -20,7 +20,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	ftp://ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_MD5SUM:=8359e000eaec76efd6dfa186c12c3b93
+PKG_HASH:=22050095f5c82a1385cc4174190ac60392670bbc5d63d592ecae52a214bc10b2
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
@@ -46,7 +46,7 @@ endef
 define Package/bind-libs
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libopenssl
+  DEPENDS:=+libopenssl +zlib +libjson-c
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 endef
@@ -95,24 +95,26 @@ define Package/bind-dig
   TITLE+= DNS excavation tool
 endef
 
-export BUILD_CC="$(TARGET_CC)"
+#export BUILD_CC="$(TARGET_CC)"
 
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--with-randomdev="/dev/urandom" \
-	--disable-threads \
+	--enable-threads \
 	--disable-linux-caps \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--with-libjson=no \
 	--with-libtool \
+	--with-lmdb=no \
 	--with-libxml2=no \
 	--enable-epoll=yes \
 	--with-gost=no \
 	--with-gssapi=no \
 	--with-ecdsa=$(if $(CONFIG_OPENSSL_WITH_EC),yes,no) \
 	--with-readline=no \
-	--sysconfdir=/etc/bind
+	--sysconfdir=/etc/bind \
+	--with-libjson="$(STAGING_DIR)/usr"
 
 ifdef CONFIG_BIND_ENABLE_FILTER_AAAA
 	CONFIGURE_ARGS += \

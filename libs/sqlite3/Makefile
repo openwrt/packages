@@ -78,14 +78,6 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--disable-editline
 
-CONFIGURE_VARS += \
-	config_BUILD_CC="$(HOSTCC)" \
-	config_BUILD_CFLAGS="-O2" \
-	config_TARGET_CC="$(TARGET_CC)" \
-	config_TARGET_CFLAGS="$(TARGET_CFLAGS)" \
-	config_TARGET_READLINE_INC="$(TARGET_CPPFLAGS)" \
-	config_TARGET_READLINE_LIBS="$(TARGET_LDFLAGS) -lreadline -lncurses" \
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/sqlite3{,ext}.h $(1)/usr/include/

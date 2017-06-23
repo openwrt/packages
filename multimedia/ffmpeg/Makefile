@@ -364,21 +364,18 @@ endef
 
 
 FFMPEG_CONFIGURE:= \
-	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" \
-	LDFLAGS="$(TARGET_LDFLAGS)" \
-	./configure \
 	--enable-cross-compile \
 	--cross-prefix="$(TARGET_CROSS)" \
 	--arch="$(ARCH)" \
 	--target-os=linux \
-	--prefix="/usr" \
-	--pkg-config="pkg-config" \
+	--pkg-config="$(STAGING_DIR_HOST)/bin/pkg-config" \
 	--enable-shared \
 	--enable-static \
 	--enable-pthreads \
 	--enable-zlib \
 	--disable-doc \
 	--disable-debug \
+	--disable-bzlib \
 	\
 	--disable-dxva2 \
 	--disable-lzma \
@@ -592,9 +589,21 @@ ifneq ($(CONFIG_TARGET_x86),)
   TARGET_CFLAGS += -fomit-frame-pointer
 endif
 
-define Build/Configure
-	( cd $(PKG_BUILD_DIR); $(FFMPEG_CONFIGURE) )
-endef
+# Taken from package-defaults.mk
+CONFIGURE_ARGS:= \
+	--prefix=$(CONFIGURE_PREFIX) \
+	--bindir=$(CONFIGURE_PREFIX)/bin \
+	--datadir=$(CONFIGURE_PREFIX)/share \
+	--mandir=$(CONFIGURE_PREFIX)/man \
+	$(FFMPEG_CONFIGURE)
+
+# Suppress some warnings
+TARGET_CFLAGS+= \
+	$(FPIC) \
+	-Wno-unused-but-set-variable \
+	-Wno-deprecated-declarations \
+	-Wno-unused-function \
+	-Wno-unused-result
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \

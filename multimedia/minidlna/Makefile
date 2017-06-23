@@ -26,6 +26,7 @@ PKG_BUILD_PARALLEL:=0
 PKG_BUILD_DEPENDS:=util-linux
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/minidlna
@@ -33,7 +34,7 @@ define Package/minidlna
   CATEGORY:=Multimedia
   TITLE:=UPnP A/V & DLNA Media Server
   URL:=http://minidlna.sourceforge.net/
-  DEPENDS:= +libpthread +libexif +libjpeg +libsqlite3 +libffmpeg \
+  DEPENDS:= +libpthread +libexif +libjpeg +libsqlite3 +libffmpeg-full \
   	+libid3tag +libflac +libvorbis +libuuid \
   	$(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
@@ -63,13 +64,14 @@ MAKE_FLAGS +=\
 	ICONV_LIBS="-liconv $(if $(INTL_FULL),-lintl)" \
 
 CONFIGURE_ARGS +=\
+	--disable-rpath \
 	--with-libiconv-prefix="$(ICONV_PREFIX)" \
 	--with-libintl-prefix="$(INTL_PREFIX)" \
 	--with-os-name="OpenWrt Linux" \
 	--with-os-version="$(LINUX_VERSION)" \
 	--with-os-url="http://openwrt.org/" \
 	--with-db-path="/var/run/minidlna" \
-	--with-log-path="/var/log" \
+	--with-log-path="/var/log"
 
 define Package/minidlna/install
 	$(INSTALL_DIR) $(1)/usr/bin

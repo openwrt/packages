@@ -1,0 +1,33 @@
+--- a/genre.dat
++++ b/genre.dat
+@@ -277,8 +277,8 @@ static id3_ucs4_t const genre_PUNK_ROCK[
+   { 'P', 'u', 'n', 'k', ' ', 'R', 'o', 'c', 'k', 0 };
+ static id3_ucs4_t const genre_DRUM_SOLO[] =
+   { 'D', 'r', 'u', 'm', ' ', 'S', 'o', 'l', 'o', 0 };
+-static id3_ucs4_t const genre_A_CAPPELLA[] =
+-  { 'A', ' ', 'C', 'a', 'p', 'p', 'e', 'l', 'l', 'a', 0 };
++static id3_ucs4_t const genre_A_CAPELLA[] =
++  { 'A', ' ', 'C', 'a', 'p', 'e', 'l', 'l', 'a', 0 };
+ static id3_ucs4_t const genre_EURO_HOUSE[] =
+   { 'E', 'u', 'r', 'o', '-', 'H', 'o', 'u', 's', 'e', 0 };
+ static id3_ucs4_t const genre_DANCE_HALL[] =
+@@ -452,7 +452,7 @@ static id3_ucs4_t const *const genre_tab
+   genre_DUET,
+   genre_PUNK_ROCK,
+   genre_DRUM_SOLO,
+-  genre_A_CAPPELLA,
++  genre_A_CAPELLA,
+   genre_EURO_HOUSE,
+   genre_DANCE_HALL,
+   genre_GOA,
+--- a/genre.dat.in
++++ b/genre.dat.in
+@@ -153,7 +153,7 @@ Freestyle
+ Duet
+ Punk Rock
+ Drum Solo
+-A Cappella
++A Capella
+ Euro-House
+ Dance Hall
+ Goa

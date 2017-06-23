@@ -1,8 +1,6 @@
-diff --git a/Python/pythonrun.c b/Python/pythonrun.c
-index 748a63b..cb6e291 100644
 --- a/Python/pythonrun.c
 +++ b/Python/pythonrun.c
-@@ -79,7 +79,7 @@ int Py_InteractiveFlag; /* Needed by Py_FdIsInteractive() below */
+@@ -79,7 +79,7 @@ int Py_InteractiveFlag; /* Needed by Py_
  int Py_InspectFlag; /* Needed to determine whether to exit at SystemExit */
  int Py_NoSiteFlag; /* Suppress 'import site' */
  int Py_BytesWarningFlag; /* Warn on str(bytes) and str(buffer) */
@@ -11,7 +9,7 @@ index 748a63b..cb6e291 100644
  int Py_UseClassExceptionsFlag = 1; /* Needed by bltinmodule.c: deprecated */
  int Py_FrozenFlag; /* Needed by getpath.c */
  int Py_UnicodeFlag = 0; /* Needed by compile.c */
-@@ -174,7 +174,7 @@ Py_InitializeEx(int install_sigs)
+@@ -171,7 +171,7 @@ Py_InitializeEx(int install_sigs)
      if ((p = Py_GETENV("PYTHONOPTIMIZE")) && *p != '\0')
          Py_OptimizeFlag = add_flag(Py_OptimizeFlag, p);
      if ((p = Py_GETENV("PYTHONDONTWRITEBYTECODE")) && *p != '\0')

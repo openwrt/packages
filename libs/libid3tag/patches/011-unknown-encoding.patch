@@ -1,0 +1,25 @@
+--- a/compat.gperf
++++ b/compat.gperf
+@@ -236,6 +236,10 @@ int id3_compat_fixup(struct id3_tag *tag
+ 
+     encoding = id3_parse_uint(&data, 1);
+     string   = id3_parse_string(&data, end - data, encoding, 0);
++    if (!string)
++    {
++	continue;
++    }
+ 
+     if (id3_ucs4_length(string) < 4) {
+       free(string);
+--- a/parse.c
++++ b/parse.c
+@@ -165,6 +165,9 @@ id3_ucs4_t *id3_parse_string(id3_byte_t
+   case ID3_FIELD_TEXTENCODING_UTF_8:
+     ucs4 = id3_utf8_deserialize(ptr, length);
+     break;
++  default:
++  	/* FIXME: Unknown encoding! Print warning? */
++	return NULL;
+   }
+ 
+   if (ucs4 && !full) {

@@ -1,26 +1,49 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2011-2014 OpenWrt.org
+# Copyright (C) 2016 wongsyrone
+
+. /lib/functions.sh
 
 START=25
-
 USE_PROCD=1
+#PROCD_DEBUG=1
+
 PROG=/sbin/rngd
 
+config_load "rngd"
+
+ENABLED=0
+PRECMD=
+DEVICE=/dev/urandom
+WARTERMARK=2048
+
+parse_rngd() {
+	config_get ENABLED "$section" "enabled"
+	config_get PRECMD "$section" "precmd"
+	config_get DEVICE "$section" "device"
+	config_get WARTERMARK "$section" "fill_watermark"
+}
+config_foreach parse_rngd 'rngd'
+
 start_service() {
-	local enabled=$(uci -q get system.@rngd[0].enabled)
-	local precmd=$(uci -q get system.@rngd[0].precmd)
-	local device=$(uci -q get system.@rngd[0].device)
-	local watermark=$(uci -q get system.@rngd[0].fill_watermark)
+	if [ "1" = "$ENABLED" ] || [ "on" = "$ENABLED" ] || [ "true" = "$ENABLED" ]; then
+		[ -z "$PRECMD" ] || ${PRECMD} ${DEVICE}
 
-	[ "$enabled" = "1" ] || return
+		[ -z "$DEVICE" ] || DEVICE="-r ${DEVICE}"
+		[ -z "$WARTERMARK" ] || WARTERMARK="-W ${WARTERMARK}"
 
-	[ -z "$precmd" ] || ${precmd} ${device}
+		procd_open_instance
+		procd_set_param command "$PROG" -f ${DEVICE} ${WARTERMARK}
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_close_instance
+	else
+		echo "rngd is disabled!"
+	fi
+}
 
-	[ -z "$device" ] || device="-r ${device}"
-	[ -z "$watermark" ] || watermark="-W ${watermark}"
-
-	procd_open_instance
-	procd_set_param command "$PROG" -f ${device} ${watermark}
-	procd_set_param stderr 1
-	procd_close_instance
+reload_service() {
+	stop
+	sleep 2s
+	start
 }

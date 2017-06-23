@@ -28,6 +28,7 @@ include ./files/python-host.mk
 # For PyPackage
 include ./files/python-package.mk
 
+PKG_FIXUP:=libtool autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
@@ -187,9 +188,11 @@ define Build/Compile
 	$(call Build/Compile/python-pip)
 endef
 
+# Install python2-config for Samba 4
+# Do not copy 'python-config', which may conflict with python3
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
-	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
+	$(INSTALL_DIR) $(1)/usr/bin/ $(1)/usr/include/ $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
 	$(INSTALL_DATA) \
 		./files/python-package.mk \
@@ -212,6 +215,9 @@ define Build/InstallDev
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
 		$(1)/usr/lib/python$(PYTHON_VERSION)/
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/bin/python2*-config \
+		$(1)/usr/bin/
 endef
 
 PYTHON_BASE_LIB_FILES:= \

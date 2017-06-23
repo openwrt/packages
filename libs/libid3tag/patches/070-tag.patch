@@ -1,0 +1,17 @@
+--- a/tag.c
++++ b/tag.c
+@@ -714,9 +714,12 @@ id3_length_t v1_render(struct id3_tag co
+ 
+   frame = id3_tag_findframe(tag, ID3_FRAME_TRACK, 0);
+   if (frame) {
+-    unsigned int track;
++    id3_ucs4_t const *string;
++    unsigned int track = 0;
+ 
+-    track = id3_ucs4_getnumber(id3_field_getstrings(&frame->fields[1], 0));
++	string = id3_field_getstrings(&frame->fields[1], 0);
++	if (string)
++    	track = id3_ucs4_getnumber(string);
+     if (track > 0 && track <= 0xff) {
+       ptr[-2] = 0;
+       ptr[-1] = track;

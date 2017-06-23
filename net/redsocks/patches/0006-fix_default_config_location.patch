@@ -6,7 +6,7 @@ Forwared: no
 Last-Update: 2013-04-23
 --- a/main.c
 +++ b/main.c
-@@ -39,7 +39,7 @@ app_subsys *subsystems[] = {
+@@ -45,7 +45,7 @@ app_subsys *subsystems[] = {
  	&dnstc_subsys,
  };
  

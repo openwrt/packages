@@ -1,0 +1,22 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -72,6 +72,9 @@ debug=""
+ optimize=""
+ profile=""
+ 
++save_CFLAGS="$CFLAGS"
++save_LDFLAGS="$LDFLAGS"
++
+ set -- $CFLAGS
+ CFLAGS=""
+ 
+@@ -197,6 +200,9 @@ test -n "$debug"    && CFLAGS="$CFLAGS $
+ test -n "$optimize" && CFLAGS="$CFLAGS $optimize"
+ test -n "$profile"  && CFLAGS="$CFLAGS $profile" LDFLAGS="$LDFLAGS $profile"
+ 
++CFLAGS="$save_CFLAGS"
++LDFLAGS="$save_LDFLAGS"
++
+ dnl LTLIBOBJS=`echo "$LIBOBJS" | sed -e 's/\.o/.lo/g'`
+ dnl AC_SUBST(LTLIBOBJS)
+ 

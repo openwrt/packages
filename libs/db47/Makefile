@@ -55,6 +55,23 @@ define Package/libdb47xx/description
   Berkeley DB library (4.7).  C++ wrapper.
 endef
 
+define Package/db47-util
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=+libdb47
+  TITLE:=Berkeley DB library (4.7) Utilities
+  URL:=http://www.sleepycat.com/products/db.shtml
+  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+endef
+
+define Package/db47-util/description
+  Berkeley DB library (4.7) Utilities.
+endef
+
+define Package/db47-util/config
+	source "$(SOURCE)/Config.in"
+endef
+
 CONFIGURE_PATH = build_unix
 CONFIGURE_CMD = ../dist/configure
 
@@ -66,6 +83,7 @@ CONFIGURE_ARGS += \
 	--disable-tcl \
 	--disable-rpc \
 	--enable-compat185 \
+	--enable-smallbuild \
 	--disable-debug \
 	$(if $(CONFIG_PACKAGE_libdb47xx),--enable-cxx,--disable-cxx)
 
@@ -88,6 +106,21 @@ define Package/libdb47xx/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdb_cxx-*.so $(1)/usr/lib/
 endef
 
+define Package/db47-util/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	if [ "$(CONFIG_DB47_ARCHIVE)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_archive $(1)/usr/bin/; fi
+	if [ "$(CONFIG_DB47_CHECKPOINT)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_checkpoint $(1)/usr/bin/; fi
+	if [ "$(CONFIG_DB47_DEADLOCK)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_deadlock $(1)/usr/bin/; fi
+	if [ "$(CONFIG_DB47_DUMP)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_dump $(1)/usr/bin/; fi
+	if [ "$(CONFIG_DB47_HOTBACKUP)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_hotbackup $(1)/usr/bin/; fi
+	if [ "$(CONFIG_DB47_LOAD)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_load $(1)/usr/bin/; fi
+	if [ "$(CONFIG_DB47_PRINTLOG)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_printlog $(1)/usr/bin/; fi
+	if [ "$(CONFIG_DB47_RECOVER)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_recover $(1)/usr/bin/; fi
+	if [ "$(CONFIG_DB47_STAT)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_stat $(1)/usr/bin/; fi
+	if [ "$(CONFIG_DB47_UPGRADE)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_upgrade $(1)/usr/bin/; fi
+	if [ "$(CONFIG_DB47_VERIFY)" == "y" ]; then $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/db_verify $(1)/usr/bin/; fi
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/db.h $(1)/usr/include/
@@ -98,3 +131,4 @@ endef
 
 $(eval $(call BuildPackage,libdb47))
 $(eval $(call BuildPackage,libdb47xx))
+$(eval $(call BuildPackage,db47-util))

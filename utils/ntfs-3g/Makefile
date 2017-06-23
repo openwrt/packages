@@ -114,7 +114,9 @@ endef
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--with-uuid
+	--with-uuid \
+	--disable-ldconfig \
+	--enable-posix-acls
 
 # configure/make according selection
 ifdef CONFIG_PACKAGE_NTFS-3G_USE_LIBFUSE

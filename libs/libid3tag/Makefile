@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libid3tag
 PKG_VERSION:=0.15.1b
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/mad
@@ -39,27 +39,30 @@ endef
 
 TARGET_CFLAGS += $(FPIC)
 
-CONFIGURE_VARS += CC="$(TARGET_CC) $(TARGET_CFLAGS)"
+# If you get stuck, please install gperf first.
+GPERF := $(shell command -v gperf)
+ifndef GPERF
+	$(error Please install gperf)
+endif
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--enable-shared \
-		--enable-static \
-		--disable-debugging \
-		--disable-profiling \
-	)
-endef
+CONFIGURE_ARGS+= \
+	--enable-shared \
+	--enable-static \
+	--disable-debugging \
+	--disable-profiling
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/id3tag.h $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/id3tag.pc $(1)/usr/lib/pkgconfig/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libid3tag.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libid3tag.{a,so*} $(1)/usr/lib/
 endef
 
 define Package/libid3tag/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libid3tag.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libid3tag.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libid3tag))

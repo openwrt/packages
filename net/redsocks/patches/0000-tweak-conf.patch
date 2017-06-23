@@ -1,0 +1,35 @@
+--- a/redsocks.conf.example
++++ b/redsocks.conf.example
+@@ -3,7 +3,7 @@ base {
+ 	log_debug = off;
+ 
+ 	// info: start and end of client session
+-	log_info = on;
++	log_info = off;
+ 
+ 	/* possible `log' values are:
+ 	 *   stderr
+@@ -86,7 +86,7 @@ redsocks {
+ 
+ 	// Enable or disable faster data pump based on splice(2) syscall.
+ 	// Default value depends on your kernel version, true for 2.6.27.13+
+-	// splice = false;
++	splice = true;
+ 
+ 	// `ip' and `port' are IP and tcp-port of proxy-server
+ 	// You can also use hostname instead of IP, only one (random)
+@@ -114,6 +114,7 @@ redsocks {
+ 	// on_proxy_fail = close;
+ }
+ 
++/*
+ redudp {
+ 	// `local_ip' should not be 0.0.0.0 as it's also used for outgoing
+ 	// packets that are sent as replies - and it should be fixed
+@@ -149,5 +150,6 @@ dnstc {
+ 	local_ip = 127.0.0.1;
+ 	local_port = 5300;
+ }
++*/
+ 
+ // you can add more `redsocks' and `redudp' sections if you need.

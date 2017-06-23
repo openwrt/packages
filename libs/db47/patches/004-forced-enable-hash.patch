@@ -1,0 +1,10 @@
+--- a/dist/configure
++++ b/dist/configure
+@@ -2586,7 +2586,6 @@
+ 
+ if test "$db_cv_smallbuild" = "yes"; then
+ 	db_cv_build_cryptography="no"
+-	db_cv_build_hash="no"
+ 	db_cv_build_queue="no"
+ 	db_cv_build_replication="no"
+ 	db_cv_build_statistics="no"
