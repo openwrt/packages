@@ -120,6 +120,9 @@ tp_rule() {
 	$ipt_m -A SS_SPEC_TPROXY -p udp -m set ! --match-set ss_spec_wan_ac dst \
 		-j TPROXY --on-port $LOCAL_PORT --tproxy-mark 0x01/0x01
 	$ipt_m -A PREROUTING -p udp $EXT_ARGS \
+		-m socket \
+		-m comment --comment "_SS_SPEC_RULE_" -j MARK --set-mark 1
+	$ipt_m -A PREROUTING -p udp $EXT_ARGS \
 		-m set ! --match-set ss_spec_lan_ac src \
 		-m comment --comment "_SS_SPEC_RULE_" -j SS_SPEC_TPROXY
 	return $?
