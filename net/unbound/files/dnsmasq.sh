@@ -37,8 +37,7 @@ dnsmasq_local_zone() {
     UNBOUND_D_WAN_FQDN=$wan_fqdn
   fi
 
-
-  if [ -n "$fwd_domain" -a -n "$fwd_port" -a ! "$fwd_port" -eq 53 ] ; then
+  if [ -n "$fwd_domain" -a -n "$fwd_port" -a ! "${fwd_port:-53}" -eq 53 ] ; then
     # dnsmasq localhost listening ports (possible multiple instances)
     UNBOUND_N_FWD_PORTS="$UNBOUND_N_FWD_PORTS $fwd_port"
     UNBOUND_TXT_FWD_ZONE="$UNBOUND_TXT_FWD_ZONE $fwd_domain"
