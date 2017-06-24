@@ -10,6 +10,7 @@ GNUNET_HOME=/var/run/gnunet
 # LOGFILE=$GNUNET_HOME/gnunet.log
 CONFIGFILE=$GNUNET_HOME/gnunet.conf
 SUID_ROOT_HELPERS="exit nat-server nat-client transport-bluetooth transport-wlan vpn"
+EXTRA_COMMANDS="restart_transport"
 
 chmodown_execbin() {
 	execname=/usr/lib/gnunet/libexec/gnunet-$1
@@ -34,6 +35,8 @@ fix_libexec_permissions() {
 }
 
 prepare_config() {
+	local had_exit_service=0;
+
 	if [ ! -e "$GNUNET_HOME" ]; then
 		mkdir -p $GNUNET_HOME
 		chown gnunet:gnunet $GNUNET_HOME
@@ -80,7 +83,10 @@ prepare_config() {
 		local __TYPE="$1"
 		local __NAME="${2/_/-}"
 		[ "${__TYPE}" = "gnunet-config" ] && _gnunet_section="${__NAME}"
-		[ "${__TYPE}" = "gnunet-exit-service" ] && _gnunet_section="${__NAME}.gnunet."
+		[ "${__TYPE}" = "gnunet-exit-service" ] && {
+			had_exit_service=1
+			_gnunet_section="${__NAME}.gnunet."
+		}
 	}
 	option_cb() {
 		# $1    name of variable
@@ -89,9 +95,17 @@ prepare_config() {
 		local __VAL="$2"
 		gnunet-config -c $CONFIGFILE -w -s ${_gnunet_section} -o ${__OPT} -V "${__VAL}"
 	}
+
 	config_load gnunet
 
+	[ "$had_exit_service" -eq 1 ] && gnunet-config -c $CONFIGFILE -w -s exit -o FORCESTART -V YES
+
 	return 0
+}
+
+restart_transport() {
+	gnunet-arm -c $CONFIGFILE -k transport
+	gnunet-arm -c $CONFIGFILE -i transport
 }
 
 start_service() {
@@ -104,4 +118,10 @@ start_service() {
 	[ "$LOGFILE" ] && procd_append_param command -l $LOGFILE
 	procd_set_param respawn
 	procd_close_instance
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "gnunet"
+	procd_add_raw_trigger "interface.*.up" 3000 /etc/init.d/gnunet restart_transport
 }
