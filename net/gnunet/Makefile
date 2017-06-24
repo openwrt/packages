@@ -1,10 +1,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=e29410cee115f099f093605692ec94614fbbe6d9
-PKG_MIRROR_HASH:=b397c73c6cb8da852d2198469d04a8e0f6e61dcd0adead24634e7c57e2c952af
+PKG_SOURCE_VERSION:=556ccd6d483b3678867c3829e6979c307df04450
+PKG_MIRROR_HASH:=5ecf15575eccc30135b2dc9871d88de0b32b593dc79cf5b0632a4fe2ffd711df
 
-PKG_VERSION:=0.10.2-git-20170624-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.10.2-git-20170626-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -145,7 +145,7 @@ define Package/gnunet/install
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
 	done )
 
-	( for plug in ats_proportional block_dht block_regex   \
+	( for plug in ats_proportional block_dht block_regex block_revocation  \
 	    transport_tcp transport_udp transport_unix; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$plug*.so $(1)/usr/lib/gnunet ; \
 	done )
@@ -193,6 +193,7 @@ LIBEXEC_conversation:=helper-audio-playback helper-audio-record service-conversa
 CONF_conversation:=conversation
 
 BIN_dht-cli:=dht-get dht-put dht-monitor
+PLUGIN_dht-cli:=block_test
 
 DEPENDS_hostlist:=+libmicrohttpd +libgnurl +ca-certificates
 LIBEXEC_hostlist:=daemon-hostlist
@@ -264,6 +265,7 @@ BIN_social:=identity-token multicast social
 LIB_social:=consensus identityprovider multicast psyc psycstore psycutil secretsharing social
 LIBEXEC_social:=service-consensus service-evil-consensus service-identity-provider service-multicast service-psyc service-psycstore service-secretsharing service-social
 CONF_social:=consensus multicast psyc psycstore secretsharing social
+PLUGINS_social:=block_consensus
 
 PLUGIN_dhtcache-heap:=datacache_heap
 CONFLICTS_dhtcache-heap:=gnunet-dhtcache-pgsql gnunet-dhtcache-sqlite
