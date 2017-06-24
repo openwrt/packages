@@ -577,6 +577,7 @@ main_backup(int argc, char **argv)
 	pid_t pid;
 	time_t now;
 	int len;
+	int status;
 	int fds[2];
 	char buf[4096];
 	char datestr[16] = { 0 };
@@ -610,6 +611,7 @@ main_backup(int argc, char **argv)
 		return -1;
 
 	default:
+		fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK);
 		now = time(NULL);
 		strftime(datestr, sizeof(datestr) - 1, "%Y-%m-%d", localtime(&now));
 
@@ -621,10 +623,15 @@ main_backup(int argc, char **argv)
 		printf("Content-Disposition: attachment; "
 		       "filename=\"backup-%s-%s.tar.gz\"\r\n\r\n", hostname, datestr);
 
-		while ((len = read(fds[0], buf, sizeof(buf))) > 0)
-			fwrite(buf, len, 1, stdout);
+		do {
+			waitpid(pid, &status, 0);
 
-		waitpid(pid, NULL, 0);
+			while ((len = read(fds[0], buf, sizeof(buf))) > 0) {
+				fwrite(buf, len, 1, stdout);
+				fflush(stdout);
+			}
+
+		} while (!WIFEXITED(status));
 
 		close(fds[0]);
 		close(fds[1]);

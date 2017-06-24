@@ -184,7 +184,7 @@ define Package/mosquitto-client-ssl/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_pub $(1)/usr/bin/mosquitto_pub
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_sub $(1)/usr/bin/mosquitto_sub
 endef
-Package/mosquitto-client-nossl/install = $(Package/mosquitto-client/install)
+Package/mosquitto-client-nossl/install = $(Package/mosquitto-client-ssl/install)
 
 # This installs files into ./staging_dir/. so that you can cross compile from the host
 define Build/InstallDev

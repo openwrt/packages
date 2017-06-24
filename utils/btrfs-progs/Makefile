@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
 PKG_VERSION:=4.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs/
@@ -17,7 +17,6 @@ PKG_MD5SUM:=25ba238f44b9a1a54e62f7b361bdc9d8
 PKG_HASH:=e17a68cc52a27d905b715445e91ddbaa4d42de4847d54836d6ed21e012dabf0e
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
@@ -52,6 +51,8 @@ CONFIGURE_ARGS += \
 	--disable-backtrace \
 	--disable-convert \
 	--disable-documentation
+
+EXTRA_CFLAGS=$(TARGET_CPPFLAGS)
 
 define Package/btrfs-progs/install
 	$(INSTALL_DIR) $(1)/usr/lib

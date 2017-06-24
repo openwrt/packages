@@ -1,10 +1,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=1c2ab4aa3b9b563ad2098984b5751e67d3267778
-PKG_MIRROR_HASH:=cb0286944b78616e381b049de678a3475b0a496055f40f8af5eea367c4d9c0c6
+PKG_SOURCE_VERSION:=d7547ab18052726a69ee088876389a18798e03a8
+PKG_MIRROR_HASH:=c3e8d545e1e9fa33a92bf392c4d090416b3a0d672c2403d732dc0c043505e4fa
 
-PKG_VERSION:=0.10.2-git-20170419-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.10.2-git-20170623-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -288,7 +288,7 @@ PLUGIN_fs-mysql:=datastore_mysql
 CONFLICTS_fs-mysql:=gnunet-fs-pgsql gnunet-fs-sqlite
 
 DEPENDS_pgsql:=+libpq
-LIB_pgsql:=postgres pq
+LIB_pgsql:=pq
 
 DEPENDS_dhtcache-pgsql:=+gnunet-pgsql
 PLUGIN_dhtcache-pgsql:=datacache_postgres
@@ -387,7 +387,7 @@ $(eval $(call PostInstFixSUIDPerms,gnunet-vpn))
 $(eval $(call BuildPackage,gnunet))
 $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,datastore,data storage components,))
-$(eval $(call BuildComponent,dv,distance-vector routing component,y))
+# $(eval $(call BuildComponent,dv,distance-vector routing component,y))
 $(eval $(call BuildComponent,experiments,experimental components,))
 $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))

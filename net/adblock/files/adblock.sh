@@ -10,10 +10,12 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.6.4"
+adb_ver="2.7.1"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
+adb_minfree=2
+adb_manmode=0
 adb_forcesrt=0
 adb_forcedns=0
 adb_backup=0
@@ -35,7 +37,7 @@ f_envload()
 {
     local services dns_up cnt=0
 
-    # source in system library
+    # source in system libraries
     #
     if [ -r "/lib/functions.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]
     then
@@ -253,19 +255,24 @@ f_rmdns()
 #
 f_dnsrestart()
 {
-    local cnt=0
+    local dns_up mem_free cnt=0
 
     "/etc/init.d/${adb_dns}" restart >/dev/null 2>&1
     while [ ${cnt} -le 10 ]
     do
-        adb_dnsup="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" | jsonfilter -l1 -e "@.${adb_dns}.instances.*.running")"
-        if [ "${adb_dnsup}" = "true" ]
+        dns_up="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" | jsonfilter -l1 -e "@.${adb_dns}.instances.*.running")"
+        if [ "${dns_up}" = "true" ]
         then
-            break
+            mem_free="$(awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo")"
+            if [ ${mem_free} -ge ${adb_minfree} ]
+            then
+                return 0
+            fi
         fi
         cnt=$((cnt+1))
         sleep 1
     done
+    return 1
 }
 
 # f_list: backup/restore/remove block lists
@@ -299,6 +306,15 @@ f_list()
             if [ -d "${adb_backupdir}" ]
             then
                 rm -f "${adb_backupdir}/${adb_dnsprefix}.${src_name}.gz"
+            fi
+            adb_rc=${?}
+            ;;
+        format)
+            if [ -s "${adb_tmpdir}/tmp.whitelist" ]
+            then
+                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpfile}" | eval "${adb_dnsformat}" > "${adb_dnsfile}"
+            else
+                eval "${adb_dnsformat}" "${adb_tmpfile}" > "${adb_dnsfile}"
             fi
             adb_rc=${?}
             ;;
@@ -414,7 +430,7 @@ f_log()
                 f_rmdns
                 f_dnsrestart
             fi
-            exit 255
+            exit 1
         fi
     fi
 }
@@ -423,12 +439,11 @@ f_log()
 #
 f_main()
 {
-    local enabled url cnt sum_cnt=0 mem_total=0
-    local src_name src_rset shalla_archive
-    mem_total="$(awk '$1 ~ /^MemTotal/ {printf $2}' "/proc/meminfo" 2>/dev/null)"
+    local src_name src_rset shalla_archive enabled url cnt sum_cnt=0
+    local mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo")"
 
     f_log "info " "start adblock processing ..."
-    f_log "debug" "action: ${adb_action}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, memory: ${mem_total}, force srt/dns: ${adb_forcesrt}/${adb_forcedns}"
+    f_log "debug" "action: ${adb_action}, manual_mode:${adb_manmode}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, mem_total: ${mem_total}, force_srt/_dns: ${adb_forcesrt}/${adb_forcedns}"
     > "${adb_rtfile}"
     for src_name in ${adb_sources}
     do
@@ -449,11 +464,24 @@ f_main()
             continue
         fi
 
+        # manual mode
+        #
+        if [ ${adb_manmode} -eq 1 ] && [ -z "${adb_action}" ]
+        then
+            adb_rc=4
+            f_list restore
+            if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
+            then
+                f_list format
+                continue
+            fi
+        fi
+
         # download block list
         #
         if [ "${src_name}" = "blacklist" ]
         then
-            cat "${url}" 2>/dev/null > "${adb_tmpload}"
+            cat "${url}" > "${adb_tmpload}"
             adb_rc=${?}
         elif [ "${src_name}" = "shalla" ]
         then
@@ -502,13 +530,7 @@ f_main()
         #
         if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
         then
-            if [ -s "${adb_tmpdir}/tmp.whitelist" ]
-            then
-                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpfile}" 2>/dev/null | eval "${adb_dnsformat}" > "${adb_dnsfile}"
-            else
-                eval "${adb_dnsformat}" "${adb_tmpfile}" > "${adb_dnsfile}"
-            fi
-            adb_rc=${?}
+            f_list format
             if [ ${adb_rc} -ne 0 ]
             then
                 f_list remove
@@ -522,7 +544,7 @@ f_main()
     #
     for src_name in $(ls -dASr "${adb_tmpdir}/${adb_dnsprefix}"* 2>/dev/null)
     do
-        if [ ${mem_total} -ge 64000 ] || [ ${adb_forcesrt} -eq 1 ]
+        if [ ${mem_total} -ge 64 ] || [ ${adb_forcesrt} -eq 1 ]
         then
             if [ -s "${adb_tmpdir}/blocklist.overall" ]
             then
@@ -541,7 +563,7 @@ f_main()
     chown "${adb_dns}":"${adb_dns}" "${adb_dnsdir}/${adb_dnsprefix}"* 2>/dev/null
     f_rmtemp
     f_dnsrestart
-    if [ "${adb_dnsup}" = "true" ]
+    if [ ${?} -eq 0 ]
     then
         json_init
         json_add_object "data"
