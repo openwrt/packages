@@ -1,0 +1,151 @@
+From ea18a4ffcd9a8de4c5b888d9dc58a2b173c5ff8e Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Mon, 26 Jun 2017 14:49:36 +0800
+Subject: [PATCH] decouple use_syslog from pid_flags
+
+Sometimes we need processes to run in the foreground to be supervised
+and at the same time use syslog facility instead of logging its stdout,
+stderr output
+---
+ src/jconf.c   |  6 ++++++
+ src/local.c   |  2 +-
+ src/manager.c |  2 +-
+ src/redir.c   |  2 +-
+ src/server.c  |  2 +-
+ src/tunnel.c  |  2 +-
+ src/utils.h   | 18 +++++++++++-------
+ 7 files changed, 22 insertions(+), 12 deletions(-)
+
+diff --git a/src/jconf.c b/src/jconf.c
+index 3c58148..05445c3 100644
+--- a/src/jconf.c
++++ b/src/jconf.c
+@@ -313,6 +313,12 @@ read_jconf(const char *file)
+                 check_json_value_type(value, json_boolean,
+                     "invalid config file: option 'ipv6_first' must be a boolean");
+                 conf.ipv6_first = value->u.boolean;
++#ifdef HAS_SYSLOG
++            } else if (strcmp(name, "use_syslog") == 0) {
++                check_json_value_type(value, json_boolean,
++                    "invalid config file: option 'use_syslog' must be a boolean");
++                use_syslog = value->u.boolean;
++#endif
+             }
+         }
+     } else {
+diff --git a/src/local.c b/src/local.c
+index aa69205..d123516 100644
+--- a/src/local.c
++++ b/src/local.c
+@@ -1519,8 +1519,8 @@ main(int argc, char **argv)
+         local_addr = "127.0.0.1";
+     }
+ 
++    USE_SYSLOG(argv[0], pid_flags);
+     if (pid_flags) {
+-        USE_SYSLOG(argv[0]);
+         daemonize(pid_path);
+     }
+ 
+diff --git a/src/manager.c b/src/manager.c
+index 6e7197c..338ab85 100644
+--- a/src/manager.c
++++ b/src/manager.c
+@@ -1149,8 +1149,8 @@ main(int argc, char **argv)
+         timeout = "60";
+     }
+ 
++    USE_SYSLOG(argv[0], pid_flags);
+     if (pid_flags) {
+-        USE_SYSLOG(argv[0]);
+         daemonize(pid_path);
+     }
+ 
+diff --git a/src/redir.c b/src/redir.c
+index 4856007..88660f8 100644
+--- a/src/redir.c
++++ b/src/redir.c
+@@ -1137,8 +1137,8 @@ main(int argc, char **argv)
+ #endif
+     }
+ 
++    USE_SYSLOG(argv[0], pid_flags);
+     if (pid_flags) {
+-        USE_SYSLOG(argv[0]);
+         daemonize(pid_path);
+     }
+ 
+diff --git a/src/server.c b/src/server.c
+index 747f0e5..7e3df9e 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -1726,8 +1726,8 @@ main(int argc, char **argv)
+     }
+ #endif
+ 
++    USE_SYSLOG(argv[0], pid_flags);
+     if (pid_flags) {
+-        USE_SYSLOG(argv[0]);
+         daemonize(pid_path);
+     }
+ 
+diff --git a/src/tunnel.c b/src/tunnel.c
+index 77c7380..2419fa0 100644
+--- a/src/tunnel.c
++++ b/src/tunnel.c
+@@ -1022,8 +1022,8 @@ main(int argc, char **argv)
+         local_addr = "127.0.0.1";
+     }
+ 
++    USE_SYSLOG(argv[0], pid_flags);
+     if (pid_flags) {
+-        USE_SYSLOG(argv[0]);
+         daemonize(pid_path);
+     }
+ 
+diff --git a/src/utils.h b/src/utils.h
+index 2603e85..53f3983 100644
+--- a/src/utils.h
++++ b/src/utils.h
+@@ -35,7 +35,7 @@
+ 
+ #include <android/log.h>
+ #define USE_TTY()
+-#define USE_SYSLOG(ident)
++#define USE_SYSLOG(ident, _cond)
+ #define LOGI(...)                                                \
+     ((void)__android_log_print(ANDROID_LOG_DEBUG, "shadowsocks", \
+                                __VA_ARGS__))
+@@ -53,7 +53,7 @@
+ extern FILE *logfile;
+ #define TIME_FORMAT "%Y-%m-%d %H:%M:%S"
+ #define USE_TTY()
+-#define USE_SYSLOG(ident)
++#define USE_SYSLOG(ident, _cond)
+ #define USE_LOGFILE(ident)                                     \
+     do {                                                       \
+         if (ident != NULL) { logfile = fopen(ident, "w+"); } } \
+@@ -99,11 +99,15 @@ extern int use_syslog;
+         use_tty = isatty(STDERR_FILENO); \
+     } while (0)
+ 
+-#define USE_SYSLOG(ident)                          \
+-    do {                                           \
+-        use_syslog = 1;                            \
+-        openlog((ident), LOG_CONS | LOG_PID, 0); } \
+-    while (0)
++#define USE_SYSLOG(_ident, _cond)                       \
++    do {                                                \
++        if (!use_syslog && (_cond)) {                   \
++            use_syslog = 1;                             \
++        }                                               \
++        if (use_syslog) {                               \
++            openlog((_ident), LOG_CONS | LOG_PID, 0);   \
++        }                                               \
++    } while (0)
+ 
+ #define LOGI(format, ...)                                                        \
+     do {                                                                         \
+-- 
+2.12.2
+
