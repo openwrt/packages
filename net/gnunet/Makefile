@@ -1,10 +1,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=d7547ab18052726a69ee088876389a18798e03a8
-PKG_MIRROR_HASH:=c3e8d545e1e9fa33a92bf392c4d090416b3a0d672c2403d732dc0c043505e4fa
+PKG_SOURCE_VERSION:=e29410cee115f099f093605692ec94614fbbe6d9
+PKG_MIRROR_HASH:=b397c73c6cb8da852d2198469d04a8e0f6e61dcd0adead24634e7c57e2c952af
 
-PKG_VERSION:=0.10.2-git-20170623-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.10.2-git-20170624-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -191,6 +191,8 @@ LIB_conversation:=conversation microphone speaker
 PLUGIN_conversation:=gnsrecord_conversation
 LIBEXEC_conversation:=helper-audio-playback helper-audio-record service-conversation
 CONF_conversation:=conversation
+
+BIN_dht-cli:=dht-get dht-put dht-monitor
 
 DEPENDS_hostlist:=+libmicrohttpd +libgnurl +ca-certificates
 LIBEXEC_hostlist:=daemon-hostlist
@@ -387,6 +389,7 @@ $(eval $(call PostInstFixSUIDPerms,gnunet-vpn))
 $(eval $(call BuildPackage,gnunet))
 $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,datastore,data storage components,))
+$(eval $(call BuildComponent,dht-cli,DHT command line clients,))
 # $(eval $(call BuildComponent,dv,distance-vector routing component,y))
 $(eval $(call BuildComponent,experiments,experimental components,))
 $(eval $(call BuildComponent,fs,file-sharing components,))
