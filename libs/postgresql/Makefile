@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
 PKG_VERSION:=9.4.12
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 
@@ -20,7 +20,7 @@ PKG_MD5SUM:=fca055481875d1c49e31c28443f56472a1474b3fbe25b7ae64440c6118f82e64
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=config
-PKG_BUILD_DEPENDS += postgresql/host
+PKG_BUILD_DEPENDS += readline/host postgresql/host
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -79,6 +79,24 @@ define Package/pgsql-server/description
 PostgreSQL databases Server.
 endef
 
+PGSQL_SERVER_BIN := \
+	pg_archivecleanup \
+	pg_basebackup \
+	pg_controldata \
+	pg_ctl \
+	pg_dump \
+	pg_dumpall \
+	pg_isready \
+	pg_receivexlog \
+	pg_recvlogical \
+	pg_resetxlog \
+	pg_restore \
+	pg_standby \
+	pg_upgrade \
+	pg_xlogdump \
+	postgres \
+	initdb
+
 PGSQL_CLI_EXTRA_BIN := \
 	clusterdb	\
 	createdb	\
@@ -107,7 +125,6 @@ endif
 TARGET_CONFIGURE_OPTS+=$(PGSQL_CONFIG_VARS)
 
 HOST_CONFIGURE_ARGS += \
-			$(DISABLE_NLS) \
 			--disable-rpath \
 			--without-bonjour \
 			--without-gssapi \
@@ -122,6 +139,7 @@ HOST_CONFIGURE_ARGS += \
 			--enable-depend
 
 CONFIGURE_ARGS += \
+			$(DISABLE_NLS) \
 			--disable-rpath \
 			--without-bonjour \
 			--without-gssapi \
@@ -137,16 +155,18 @@ CONFIGURE_ARGS += \
 
 EXTRA_CFLAGS:= -I$(PKG_BUILD_DIR)/src/include/
 
-# Need a native ecpg ,pg_config, and zic for build
+# Need a native ecpg and zic for build
 define Host/Compile
+	$(MAKE) -C $(HOST_BUILD_DIR)/src/common CC="$(HOSTCC)"
+	$(MAKE) -C $(HOST_BUILD_DIR)/src/port CC="$(HOSTCC)"
 	$(MAKE) -C $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)"
 	$(MAKE) -C $(HOST_BUILD_DIR)/src/timezone CC="$(HOSTCC)"
-	$(MAKE) -C $(HOST_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)"
 endef
 
 define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR)/host/bin/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/bin/pg_config/pg_config $(STAGING_DIR)/host/bin/
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/lib/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/common/libpgcommon.a $(STAGING_DIR_HOSTPKG)/lib/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/port/libpgport.a $(STAGING_DIR_HOSTPKG)/lib/
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg $(STAGING_DIR_HOSTPKG)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/timezone/zic $(STAGING_DIR_HOSTPKG)/bin/
@@ -155,6 +175,12 @@ endef
 define Build/Configure
 	$(Build/Configure/Default)
 	$(SED) 's@ECPG = ../../preproc/ecpg@ECPG = $(STAGING_DIR_HOSTPKG)/bin/ecpg@' $(PKG_BUILD_DIR)/src/interfaces/ecpg/test/Makefile.regress
+endef
+
+define Build/Compile
+	$(call Build/Compile/Default, )
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/bin/pg_config clean
+	$(MAKE) -C $(PKG_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)" TARGET_CC="$(TARGET_CC)" CFLAGS="$(HOST_CFLAGS)" TARGET_CFLAGS="$(TARGET_CFLAGS)" LDFLAGS="$(HOST_LDFLAGS)" STD_LDFLAGS="$(TARGET_LDFLAGS)"
 endef
 
 TARGET_CFLAGS += $(FPIC) -lpthread
@@ -179,8 +205,8 @@ endef
 
 define Package/pgsql-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/pg_* $(PKG_INSTALL_DIR)/usr/bin/postgres \
-			$(PKG_INSTALL_DIR)/usr/bin/initdb $(1)/usr/bin/
+	$(INSTALL_BIN) $(foreach bin,$(PGSQL_SERVER_BIN),$(PKG_INSTALL_DIR)/usr/bin/$(bin)) $(1)/usr/bin/
+
 	ln -sf postgres $(1)/usr/bin/postmaster
 
 	$(INSTALL_DIR) $(1)/usr/share/postgresql
@@ -203,7 +229,9 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(LN) $(STAGING_DIR)/host/bin/pg_config $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/bin/pg_config/pg_config $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/host/bin/
+	$(LN) $(STAGING_DIR)/usr/bin/pg_config $(1)/host/bin
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpq $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpq-fe.h $(1)/usr/include/

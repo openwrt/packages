@@ -33,7 +33,7 @@ define Package/libiio
   CATEGORY:=Libraries
   TITLE:=Library for interfacing with Linux IIO devices
   URL:=https://github.com/analogdevicesinc/libiio
-  DEPENDS:=+libxml2
+  DEPENDS:=+libusb-1.0 +libxml2
 endef
 
 define Package/libiio/description
