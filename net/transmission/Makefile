@@ -132,7 +132,7 @@ Package/transmission-daemon-mbedtls/conffiles = $(Package/transmission-daemon-op
 
 
 CONFIGURE_VARS += \
-	LIBEVENT_LIBS="$(STAGING_DIR)/usr/lib/libevent-2.1.so.6"
+	LIBEVENT_LIBS="$(STAGING_DIR)/usr/lib/libevent.so"
 
 CONFIGURE_ARGS += \
 	--enable-daemon \
