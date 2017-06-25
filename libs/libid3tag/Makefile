@@ -39,12 +39,6 @@ endef
 
 TARGET_CFLAGS += $(FPIC)
 
-# If you get stuck, please install gperf first.
-GPERF := $(shell command -v gperf)
-ifndef GPERF
-	$(error Please install gperf)
-endif
-
 CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
