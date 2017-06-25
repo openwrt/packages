@@ -1,6 +1,6 @@
 --- a/src/bin/pg_ctl/pg_ctl.c
 +++ b/src/bin/pg_ctl/pg_ctl.c
-@@ -94,6 +94,7 @@ static char *exec_path = NULL;
+@@ -88,6 +88,7 @@ static char *event_source = NULL;
  static char *register_servicename = "PostgreSQL";		/* FIXME: + version ID? */
  static char *register_username = NULL;
  static char *register_password = NULL;
@@ -8,8 +8,8 @@
  static char *argv0 = NULL;
  static bool allow_core_files = false;
  static time_t start_time;
-@@ -2093,6 +2094,9 @@ do_help(void)
- 	printf(_("  -D, --pgdata=DATADIR   location of the database storage area\n"));
+@@ -1930,6 +1931,9 @@ do_help(void)
+ #endif
  	printf(_("  -s, --silent           only print errors, no informational messages\n"));
  	printf(_("  -t, --timeout=SECS     seconds to wait when using -w option\n"));
 +#if !defined(WIN32) && !defined(__CYGWIN__)
@@ -18,7 +18,7 @@
  	printf(_("  -V, --version          output version information, then exit\n"));
  	printf(_("  -w                     wait until operation completes\n"));
  	printf(_("  -W                     do not wait until operation completes\n"));
-@@ -2289,6 +2293,7 @@ main(int argc, char **argv)
+@@ -2126,6 +2130,7 @@ main(int argc, char **argv)
  		{"pgdata", required_argument, NULL, 'D'},
  		{"silent", no_argument, NULL, 's'},
  		{"timeout", required_argument, NULL, 't'},
@@ -26,7 +26,7 @@
  		{"core-files", no_argument, NULL, 'c'},
  		{NULL, 0, NULL, 0}
  	};
-@@ -2329,20 +2334,6 @@ main(int argc, char **argv)
+@@ -2166,20 +2171,6 @@ main(int argc, char **argv)
  		}
  	}
  
@@ -47,7 +47,7 @@
  
  	env_wait = getenv("PGCTLTIMEOUT");
  	if (env_wait != NULL)
-@@ -2416,11 +2407,15 @@ main(int argc, char **argv)
+@@ -2265,11 +2256,15 @@ main(int argc, char **argv)
  					wait_seconds_arg = true;
  					break;
  				case 'U':
@@ -63,7 +63,7 @@
  					break;
  				case 'w':
  					do_wait = true;
-@@ -2502,6 +2497,41 @@ main(int argc, char **argv)
+@@ -2351,6 +2346,41 @@ main(int argc, char **argv)
  		exit(1);
  	}
  
