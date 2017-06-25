@@ -125,8 +125,6 @@ transmission() {
 	procd_add_jail_mount $config_file
 	procd_add_jail_mount_rw $download_dir
 	procd_close_instance
-	# lower priority using renice in busybox
-	renice -n 4 $(pidof transmission-daemon)
 }
 
 start_service() {
