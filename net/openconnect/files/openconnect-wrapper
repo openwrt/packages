@@ -10,32 +10,4 @@ test -z "$1" && exit 1
 
 pwfile=$1
 shift
-
-pidfile=/var/run/ocwrap-$$.pid
-
-cleanup()
-{
-	if ! test -z "$pid";then
-		kill $pid
-		wait $pid
-	fi
-	exit 0
-}
-
-cleanup2()
-{
-	if ! test -z "$pid";then
-		kill -2 $pid
-		wait $pid
-	fi
-	exit 0
-}
-
-trap cleanup2 2
-trap cleanup 1 3 6 15
-
-rm -f "$pidfile"
-/usr/sbin/openconnect $* <$pwfile &
-pid=$!
-
-wait $pid
+exec /usr/sbin/openconnect "$@" <$pwfile
