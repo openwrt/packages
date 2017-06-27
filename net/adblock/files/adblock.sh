@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.8.0"
+adb_ver="2.8.0-2"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
@@ -537,16 +537,18 @@ f_main()
 
     # overall sort
     #
-    if [ ${mem_total} -ge 64 ] || [ ${adb_forcesrt} -eq 1 ]
+    if [ -s "${adb_tmpdir}/${adb_dnsfile}" ]
     then
-        if [ -s "${adb_tmpdir}/${adb_dnsfile}" ]
+        if [ ${mem_total} -ge 64 ] || [ ${adb_forcesrt} -eq 1 ]
         then
             sort -u "${adb_tmpdir}/${adb_dnsfile}" > "${adb_dnsdir}/${adb_dnsfile}"
         else
             mv -f "${adb_tmpdir}/${adb_dnsfile}" "${adb_dnsdir}" 2>/dev/null
         fi
-        cnt="$(wc -l < "${adb_dnsdir}/${adb_dnsfile}")"
+    else
+        > "${adb_dnsdir}/${adb_dnsfile}"
     fi
+    cnt="$(wc -l < "${adb_dnsdir}/${adb_dnsfile}")"
 
     # restart the dns backend and export runtime information
     #
