@@ -82,7 +82,7 @@ define Package/transmission-daemon/conffiles
 endef
 
 CONFIGURE_VARS += \
-	LIBEVENT_LIBS="$(STAGING_DIR)/usr/lib/libevent-2.0.so.5"
+	LIBEVENT_LIBS="$(STAGING_DIR)/usr/lib/libevent.so"
 
 CONFIGURE_ARGS += \
 	--enable-daemon \
