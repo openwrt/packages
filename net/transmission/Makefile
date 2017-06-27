@@ -96,6 +96,11 @@ MAKE_FLAGS += \
 
 TARGET_CFLAGS += -std=gnu99
 
+define Build/Configure
+	( cd $(PKG_BUILD_DIR); ./autogen.sh $(CONFIGURE_ARGS))
+	$(call Build/Configure/Default,$CONFIGURE_ARGS)
+endef
+
 define Package/transmission-daemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/transmission-daemon $(1)/usr/bin/
