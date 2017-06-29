@@ -23,7 +23,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://openvswitch.org/releases/
 PKG_HASH:=e492cf08a929b4a2178b7f9b01dc4ff562f44138b547b4e942078187b2445d2e
 
-PKG_BUILD_DEPENDS:=python-six/host
+PKG_BUILD_DEPENDS:=python/host python-six/host CONFIG_PACKAGE_openvswitch-python
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -67,7 +67,7 @@ endef
 define Package/openvswitch-python
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Python Support
-  DEPENDS:=+openvswitch +python +python-six
+  DEPENDS:=+openvswitch +PACKAGE_openvswitch-python:python +PACKAGE_openvswitch-python:python-six
 endef
 
 define Package/openvswitch-python/description
@@ -118,7 +118,10 @@ CONFIGURE_ARGS += --enable-shared
 TARGET_CFLAGS += -flto -std=gnu99
 
 CONFIGURE_VARS += KARCH=$(LINUX_KARCH)
-MAKE_FLAGS += ARCH="$(LINUX_KARCH)"
+MAKE_FLAGS += \
+	ARCH="$(LINUX_KARCH)" \
+	PYTHONPATH="$(HOST_PYTHONPATH)" \
+	PYTHON="$(HOST_PYTHON_BIN)"
 
 define OvsBinUtility
   define Package/openvswitch-$(1)
