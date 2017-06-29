@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
 PKG_VERSION:=9.4.12
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 
@@ -20,7 +20,7 @@ PKG_MD5SUM:=fca055481875d1c49e31c28443f56472a1474b3fbe25b7ae64440c6118f82e64
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=config
-PKG_BUILD_DEPENDS += postgresql/host
+PKG_BUILD_DEPENDS += readline/host postgresql/host
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -125,7 +125,6 @@ endif
 TARGET_CONFIGURE_OPTS+=$(PGSQL_CONFIG_VARS)
 
 HOST_CONFIGURE_ARGS += \
-			$(DISABLE_NLS) \
 			--disable-rpath \
 			--without-bonjour \
 			--without-gssapi \
@@ -140,6 +139,7 @@ HOST_CONFIGURE_ARGS += \
 			--enable-depend
 
 CONFIGURE_ARGS += \
+			$(DISABLE_NLS) \
 			--disable-rpath \
 			--without-bonjour \
 			--without-gssapi \
@@ -157,11 +157,16 @@ EXTRA_CFLAGS:= -I$(PKG_BUILD_DIR)/src/include/
 
 # Need a native ecpg and zic for build
 define Host/Compile
+	$(MAKE) -C $(HOST_BUILD_DIR)/src/common CC="$(HOSTCC)"
+	$(MAKE) -C $(HOST_BUILD_DIR)/src/port CC="$(HOSTCC)"
 	$(MAKE) -C $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)"
 	$(MAKE) -C $(HOST_BUILD_DIR)/src/timezone CC="$(HOSTCC)"
 endef
 
 define Host/Install
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/lib/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/common/libpgcommon.a $(STAGING_DIR_HOSTPKG)/lib/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/port/libpgport.a $(STAGING_DIR_HOSTPKG)/lib/
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg $(STAGING_DIR_HOSTPKG)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/timezone/zic $(STAGING_DIR_HOSTPKG)/bin/
