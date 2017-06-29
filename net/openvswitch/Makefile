@@ -67,7 +67,7 @@ endef
 define Package/openvswitch-python
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Python Support
-  DEPENDS:=+openvswitch +python +python-six
+  DEPENDS:=+openvswitch +PACKAGE_openvswitch-python:python +PACKAGE_openvswitch-python:python-six
 endef
 
 define Package/openvswitch-python/description
