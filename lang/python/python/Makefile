@@ -188,7 +188,6 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(STAGING_DIR)/mk/
 	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
 	$(INSTALL_DATA) \
@@ -292,8 +291,18 @@ HOST_CONFIGURE_ARGS+= \
 
 define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) install
-	$(INSTALL_DIR) $(HOST_PYTHON_DIR)/bin/
+	$(INSTALL_DIR) $(HOST_PYTHON_DIR)/bin/ $(STAGING_DIR)/mk/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON_DIR)/bin/pgen2
+	# Install these mk files in the Host/Install phase ;
+	# The Build/InstallDev rule is activated only for target builds.
+	# But if someone needs only the host Python, then
+	# these files need to be installed in this phase, and not Build/InstallDev
+	$(INSTALL_DATA) \
+		./files/python-package.mk \
+		./files/python-host.mk \
+		./files/python-version.mk \
+		./files/python-package-install.sh \
+		$(STAGING_DIR)/mk/
 endef
 
 $(eval $(call HostBuild))
