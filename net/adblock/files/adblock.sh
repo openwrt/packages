@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.8.1"
+adb_ver="2.8.2"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
@@ -436,7 +436,7 @@ f_log()
 #
 f_main()
 {
-    local src_name src_rset shalla_archive enabled url cnt=0
+    local src_name src_rset shalla_archive enabled url hash_old hash_new cnt=0
     local mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo")"
 
     f_log "info " "start adblock processing ..."
@@ -535,8 +535,12 @@ f_main()
         fi
     done
 
-    # overall sort
+    # hash preparation & overall sort
     #
+    if [ -f "${adb_dnsdir}/${adb_dnsfile}" ]
+    then
+        hash_old="$(sha256sum "${adb_dnsdir}/${adb_dnsfile}" | awk '{print $1}')"
+    fi
     if [ -s "${adb_tmpdir}/${adb_dnsfile}" ]
     then
         if [ ${mem_total} -ge 64 ] || [ ${adb_forcesrt} -eq 1 ]
@@ -548,13 +552,17 @@ f_main()
     else
         > "${adb_dnsdir}/${adb_dnsfile}"
     fi
+    hash_new="$(sha256sum "${adb_dnsdir}/${adb_dnsfile}" | awk '{print $1}')"
     cnt="$(wc -l < "${adb_dnsdir}/${adb_dnsfile}")"
 
-    # restart the dns backend and export runtime information
+    # conditional restart of the dns backend and runtime information export
     #
     chown "${adb_dns}":"${adb_dns}" "${adb_dnsdir}/${adb_dnsfile}" 2>/dev/null
     f_rmtemp
-    f_dnsrestart
+    if [ "${hash_old}" != "${hash_new}" ]
+    then
+        f_dnsrestart
+    fi
     if [ ${?} -eq 0 ]
     then
         json_init
