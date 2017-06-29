@@ -42,21 +42,12 @@ $(call Build/Prepare/Default)
 endef
 
 define Build/Compile
-	(cd $(PKG_BUILD_DIR)/libev; \
-		$(TARGET_CONFIGURE_OPTS) \
-                CFLAGS="$(TARGET_CFLAGS)" \
-                CPPFLAGS="-I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/include" \
-                LDFLAGS="-L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib" \
-		$(PKG_BUILD_DIR)/libev/configure \
-			--target=$(GNU_TARGET_NAME) \
-                        --host=$(GNU_TARGET_NAME) \
-                        --build=$(GNU_HOST_NAME) \
-                        --prefix=/usr \
-	);
-	$(call Build/Compile/PyMod,., \
-		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)", \
-		CYTHON="$(STAGING_DIR_HOST)/usr/bin/cython" \
+	$(call Build/Compile/PyMod,, \
+		install --prefix=/usr --root=$(PKG_INSTALL_DIR), \
+		CYTHON="$(STAGING_DIR_HOST)/usr/bin/cython" GNU_TARGET_NAME="$(GNU_TARGET_NAME)" \
 	)
 endef
 
+$(eval $(call PyPackage,python-gevent))
 $(eval $(call BuildPackage,python-gevent))
+

@@ -1,0 +1,59 @@
+diff -Nur a/_setupares.py b/_setupares.py
+--- a/_setupares.py	2017-06-29 20:46:09.769970871 +0800
++++ b/_setupares.py	2017-06-29 20:52:05.977959719 +0800
+@@ -27,6 +27,29 @@
+ 
+ CARES_EMBED = should_embed('c-ares')
+ 
++# Meet a qiang po zheng patient
++ldflags = os.getenv("LDFLAGS", "")
++if ldflags:
++    new_ldflags = []
++    libs = []
++    for i in ldflags.split(" "):
++        if i.lstrip().startswith("-l"):
++            libs.append(i)
++        else:
++            new_ldflags.append(i)
++    os.environ["LDFLAGS"] = " ".join(new_ldflags)
++    os.environ["LIBS"] = os.getenv("LIBS", "") + " ".join(libs)
++cflags = os.getenv("CFLAGS", "")
++if cflags:
++    new_cflags = []
++    cppflags = []
++    for i in cflags.split(" "):
++        if i.lstrip().startswith("-D"):
++            cppflags.append(i)
++        else:
++            new_cflags.append(i)
++    os.environ["CFLAGS"] = " ".join(new_cflags)
++    os.environ["CPPFLAGS"] = os.getenv("CPPFLAGS", "") + " ".join(cppflags)
+ 
+ # See #616, trouble building for a 32-bit python against a 64-bit platform
+ _config_vars = distutils.sysconfig.get_config_var("CFLAGS")
+@@ -37,6 +60,8 @@
+ 
+ # Use -r, not -e, for support of old solaris. See
+ # https://github.com/gevent/gevent/issues/777
++target = os.getenv("GNU_TARGET_NAME")
++_m32 += "--target=%s --host=%s " % (target, target)
+ ares_configure_command = ' '.join([
+     "(cd ", quoted_dep_abspath('c-ares'),
+     " && if [ -r ares_build.h ]; then cp ares_build.h ares_build.h.orig; fi ",
+diff -Nur a/_setuplibev.py b/_setuplibev.py
+--- a/_setuplibev.py	2017-06-29 20:45:59.881971181 +0800
++++ b/_setuplibev.py	2017-06-29 20:46:03.257971075 +0800
+@@ -28,9 +28,13 @@
+ # the build/temp.XXX/libev/ directory. If we're building from a
+ # source checkout on pypy, OLDPWD will be the location of setup.py
+ # and the PyPy branch will clean it up.
++import os
++target = os.environ.get("GNU_TARGET_NAME")
++configure_cmd = "--target=%s --host=%s" % (target, target)
+ libev_configure_command = ' '.join([
+     "(cd ", quoted_dep_abspath('libev'),
+     " && sh ./configure ",
++    configure_cmd,
+     " && cp config.h \"$OLDPWD\"",
+     ")",
+     '> configure-output.txt'
