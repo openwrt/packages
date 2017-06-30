@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+
+SERVICE_USE_PID=1
+SERVICE_WRITE_PID=1
+SERVICE_DAEMONIZE=1
+
+CONFIG=/etc/shadowsocksr.json
+
+start() {
+	service_start /usr/bin/ssr-redir -c $CONFIG -b 0.0.0.0 -l 1081
+	/usr/bin/ssr-watchdog >> /var/log/shadowsocksr_watchdog.log 2>&1 &
+}
+
+stop() {
+	kill -9 "`pidof ssr-watchdog`"
+	service_stop /usr/bin/ssr-redir
+}

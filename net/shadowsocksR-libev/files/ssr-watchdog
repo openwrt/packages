@@ -1,0 +1,29 @@
+#!/bin/sh
+
+LOGFILE=/var/log/shadowsocksr_watchdog.log
+touch $LOGFILE
+
+while true; do
+	sleep 60
+	
+	LOGSIZE=$(wc -c < $LOGFILE)
+	if [ $LOGSIZE -ge 10000 ]; then
+		sed -i -e 1,10d $LOGFILE
+	fi
+
+	LOGTIME=$(date "+%Y-%m-%d %H:%M:%S")
+
+	wget -s -q -T 3 http://www.google.com.hk
+	if [ "$?" == "0" ]; then
+		echo "[$LOGTIME] No problem."
+	else
+		wget -s -q -T 3 http://www.baidu.com
+		if [ "$?" == "0" ]; then
+			echo "[$LOGTIME] Problem decteted, restart ShadowsocksR."
+			/etc/init.d/dns-forwarder restart
+			/etc/init.d/shadowsocksr restart
+		else
+			echo "[$LOGTIME] Network problem. Do nothing."
+		fi
+	fi
+done

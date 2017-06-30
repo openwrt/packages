@@ -1,0 +1,17 @@
+# This file is interpreted as shell script.
+# Put your custom iptables rules here, they will
+# be executed with each firewall (re-)start.
+
+# Internal uci firewall chains are flushed and recreated on reload, so
+# put custom rules into the root chains e.g. INPUT or FORWARD or into the
+# special user chains, e.g. input_wan_rule or postrouting_lan_rule.
+
+ipset create gfwlist hash:net
+ipset add gfwlist 8.8.8.8
+ipset add gfwlist 91.108.4.0/22
+ipset add gfwlist 91.108.56.0/22
+ipset add gfwlist 109.239.140.0/24
+ipset add gfwlist 149.154.160.0/20
+
+iptables -t nat -I PREROUTING -i br-lan -p tcp -m set --match-set gfwlist dst -j REDIRECT --to-port 1081
+iptables -t nat -I OUTPUT -p tcp -m set --match-set gfwlist dst -j REDIRECT --to-port 1081
