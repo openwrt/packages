@@ -781,8 +781,10 @@ do_transfer() {
 				__PROG="$__PROG --no-check-certificate"
 			elif [ -f "$cacert" ]; then
 				__PROG="$__PROG --ca-certificate=$cacert"
-			elif [ -n "$cacert" ]; then		# it's not a file; nothing else supported
-				write_log 14 "No valid certificate file '$cacert' for HTTPS communication"
+			elif [ -d "$cacert" ]; then
+				__PROG="$__PROG --ca-directory=$cacert"
+			elif [ -n "$cacert" ]; then		# it's not a file and not a directory but given
+				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
 			fi
 		fi
 		__RUNPROG="$__PROG '$__URL' 2>$ERRFILE"		# build final command
