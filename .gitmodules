@@ -1,4 +1,0 @@
-[submodule "net/shadowsocksR-libev"]
-	path = net/shadowsocksR-libev
-	url = https://github.com/bettermanbao/openwrt-shadowsocksR-libev-full.git
-	branch = master
