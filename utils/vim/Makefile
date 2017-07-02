@@ -114,6 +114,7 @@ CONFIGURE_ARGS += \
 	--disable-cscope \
 	--disable-gpm \
 	--disable-acl \
+	--disable-darwin \
 	--with-tlib=ncurses
 
 CONFIGURE_VARS += \
