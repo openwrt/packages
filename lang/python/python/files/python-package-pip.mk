@@ -15,7 +15,7 @@ endef
 define PyPackage/python-pip/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/python$(PYTHON_VERSION)/site-packages
 	# Adjust shebang to proper python location on target
-	sed "1s/.*/#\!\/usr\/bin\/python$(PYTHON_VERSION)/" -i $(PKG_BUILD_DIR)/install-pip/bin/*
+	sed "1s@.*@#\!/usr/bin/python$(PYTHON_VERSION)@" -i $(PKG_BUILD_DIR)/install-pip/bin/*
 	$(CP) $(PKG_BUILD_DIR)/install-pip/bin/* $(1)/usr/bin
 	$(CP) \
 		$(PKG_BUILD_DIR)/install-pip/lib/python$(PYTHON_VERSION)/site-packages/pip \
