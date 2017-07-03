@@ -107,6 +107,7 @@ uci batch <<-EOF
 EOF
 endef
 
+CONFIGURE_ARGS += --disable-documentation
 
 $(eval $(call BuildPackage,shadowsocks-libev-config))
 $(eval $(call BuildPackage,shadowsocks-libev-ss-rules))
