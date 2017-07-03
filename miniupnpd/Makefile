@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
 PKG_VERSION:=2.0.20170421
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://miniupnp.free.fr/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -32,7 +32,7 @@ endef
 define Package/miniupnpd/config
 config MINIUPNPD_IGDv2
 	bool
-	default y
+	default n
 	prompt "Enable IGDv2"
 endef
 
