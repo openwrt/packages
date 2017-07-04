@@ -132,8 +132,10 @@ define PyBuild/Compile/Default
 	)
 endef
 
+PyBuild/Compile=$(PyBuild/Compile/Default)
+
 ifeq ($(BUILD_VARIANT),python)
 define Build/Compile
-	$(call PyBuild/Compile/Default)
+	$(call PyBuild/Compile)
 endef
 endif # python
