@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.8.2"
+adb_ver="2.8.3"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
@@ -462,7 +462,7 @@ f_main()
 
         # manual mode
         #
-        if [ ${adb_manmode} -eq 1 ] && [ -z "${adb_action}" ]
+        if [ ${adb_manmode} -eq 1 ] && [ -z "${adb_action}" ] && [ "${src_name}" != "blacklist" ]
         then
             f_list restore
             if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
@@ -535,7 +535,7 @@ f_main()
         fi
     done
 
-    # hash preparation & overall sort
+    # hash preparation and overall sort
     #
     if [ -f "${adb_dnsdir}/${adb_dnsfile}" ]
     then
