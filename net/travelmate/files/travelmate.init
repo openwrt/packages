@@ -11,7 +11,7 @@ trm_script="/usr/bin/travelmate.sh"
 
 boot()
 {
-    ubus -t 30 wait_for network.interface 2>/dev/null
+    ubus -t 30 wait_for network.interface network.wireless hostapd.wlan0 2>/dev/null
     rc_procd start_service
 }
 
