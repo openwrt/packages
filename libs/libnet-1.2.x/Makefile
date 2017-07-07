@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnet
 PKG_VERSION:=1.2-rc3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://sourceforge.net/projects/libnet-dev/files/
@@ -53,14 +53,14 @@ endef
 
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/libnet-1.2.x/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libnet.h $(STAGING_DIR)/usr/lib/libnet-1.2.x/include
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/libnet.h $(STAGING_DIR)/usr/include
 
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/libnet-1.2.x/include/libnet
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libnet/libnet-*.h $(STAGING_DIR)/usr/lib/libnet-1.2.x/include/libnet
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/libnet
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/libnet/libnet-*.h $(STAGING_DIR)/usr/include/libnet
 
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/libnet-1.2.x/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnet.{a,la,so*} $(STAGING_DIR)/usr/lib/libnet-1.2.x/lib
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnet.{a,la,so*} $(STAGING_DIR)/usr/lib
 endef
 
 define Package/libnet-1.2.x/install
