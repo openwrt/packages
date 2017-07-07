@@ -30,10 +30,6 @@ define Package/netdiscover
   URL:=https://sourceforge.net/projects/netdiscover
 endef
 
-CONFIGURE_VARS+= \
-	CPPFLAGS="$(TARGET_CPPFLAGS) -I$(STAGING_DIR)/usr/lib/libnet-1.2.x/lib" \
-	LDFLAGS="$(TARGET_LDFLAGS) -L$(STAGING_DIR)/usr/lib/libnet-1.2.x/lib"
-
 define Package/netdiscover/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netdiscover $(1)/usr/sbin/
