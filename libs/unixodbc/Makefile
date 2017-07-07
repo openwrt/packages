@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
 PKG_VERSION:=2.3.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=ftp://ftp.unixodbc.org/pub/unixODBC/
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
@@ -98,8 +98,9 @@ define Package/unixodbc/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libodbc[ci]*so* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libodbc.*so* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnn*so* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/etc
-	$(CP) $(PKG_INSTALL_DIR)/etc/odbc* $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/odbc.init $(1)/etc/init.d/odbc
+	$(LN) /tmp/etc/odbcinst.ini $(1)/etc/odbcinst.ini
 endef
 
 define Package/unixodbc-tools/install
@@ -110,6 +111,10 @@ endef
 define Package/pgsqlodbc/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libodbcpsql*so* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/etc/odbcinst.ini.d/
+	echo "[PostgreSQL]" > $(1)/etc/odbcinst.ini.d/pgsqlodbc.ini
+	echo "Description = unixODBC PostgreSQL driver" >> $(1)/etc/odbcinst.ini.d/pgsqlodbc.ini
+	echo "Driver = /usr/lib/libodbcpsql.so" >> $(1)/etc/odbcinst.ini.d/pgsqlodbc.ini
 endef
 
 $(eval $(call BuildPackage,unixodbc))
