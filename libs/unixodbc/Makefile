@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
 PKG_VERSION:=2.3.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=ftp://ftp.unixodbc.org/pub/unixODBC/
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
@@ -22,7 +22,8 @@ include $(INCLUDE_DIR)/package.mk
 CONFIGURE_ARGS += \
 	--disable-gui \
 	--with-pic \
-	--enable-drivers
+	--enable-drivers \
+	--includedir=$(STAGING_DIR)/usr/include
 
 define Package/unixodbc/Default
   SUBMENU:=database
@@ -73,6 +74,12 @@ define Build/Compile
 		$(MAKE_FLAGS) \
 		ARCH="$(ARCH)" \
 		CC="$(TARGET_CC)"
+	rm $(PKG_BUILD_DIR)/exe/{odbc_config,odbc-config.o}
+	$(MAKE) -C $(PKG_BUILD_DIR)/exe \
+		DESTDIR="$(PKG_INSTALL_DIR)" \
+		CC="$(HOSTCC)" \
+		CFLAGS="$(HOST_CFLAGS) -DUSE_UNIXODBC_CONF_H" \
+		LDFLAGS="$(HOST_LDFLAGS)"
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		$(MAKE_FLAGS) \
@@ -81,10 +88,12 @@ define Build/Compile
 endef
 
 define Build/InstallDev
+	$(INSTALL_DIR) $(1)/host/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/odbc_config $(1)/host/bin
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	$(LN) ../../host/bin/odbc_config $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/$(STAGING_DIR)/usr/include/*.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc
@@ -105,7 +114,7 @@ endef
 
 define Package/unixodbc-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/{dltest,isql,iusql,odbcinst,slencheck} $(1)/usr/bin/
 endef
 
 define Package/pgsqlodbc/install
