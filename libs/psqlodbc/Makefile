@@ -19,6 +19,10 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+CONFIGURE_ARGS += \
+	--with-unixodbc=$(STAGING_DIR)/usr \
+	--with-libpq=$(STAGING_DIR)/usr
+
 define Package/psqlodbc/Default
   SUBMENU:=database
   URL:=https://odbc.postgresql.org/
