@@ -15,13 +15,15 @@ UserParameter=mac80211.ACKFailureCount[*],zabbix_helper_mac80211 $1 dot11ACKFail
 UserParameter=mac80211.FCSErrorCount[*],zabbix_helper_mac80211 $1 dot11FCSErrorCount
 UserParameter=mac80211.RTSFailureCount[*],zabbix_helper_mac80211 $1 dot11RTSFailureCount
 UserParameter=mac80211.RTSSuccessCount[*],zabbix_helper_mac80211 $1 dot11RTSSuccessCount
-UserParameter=mac80211.FailedCount[*],zabbix_helper_mac80211 $1 failed_count
-UserParameter=mac80211.FrameDuplicateCount[*],zabbix_helper_mac80211 $1 frame_duplicate_count
-UserParameter=mac80211.MulticastReceivedFrameCount[*],zabbix_helper_mac80211 $1 multicast_received_frame_count
-UserParameter=mac80211.MulticastTransmittedFrameCount[*],zabbix_helper_mac80211 $1 multicast_transmitted_frame_count
-UserParameter=mac80211.MultipleRetryCount[*],zabbix_helper_mac80211 $1 multiple_retry_count
-UserParameter=mac80211.ReceivedFragmentCount[*],zabbix_helper_mac80211 $1 received_fragment_count
-UserParameter=mac80211.RetryCount[*],zabbix_helper_mac80211 $1 retry_count
-UserParameter=mac80211.TransmittedFragmentCount[*],zabbix_helper_mac80211 $1 transmitted_fragment_count
-UserParameter=mac80211.TransmittedFrameCount[*],zabbix_helper_mac80211 $1 transmitted_frame_count
+
+# hidden behind MAC80211_DEBUG_COUNTERS
+UserParameter=mac80211.FailedCount[*],zabbix_helper_mac80211 $1 dot11FailedCount
+UserParameter=mac80211.FrameDuplicateCount[*],zabbix_helper_mac80211 $1 dot11FrameDuplicateCount
+UserParameter=mac80211.MulticastReceivedFrameCount[*],zabbix_helper_mac80211 $1 dot11MulticastReceivedFrameCount
+UserParameter=mac80211.MulticastTransmittedFrameCount[*],zabbix_helper_mac80211 $1 dot11MulticastTransmittedFrameCount
+UserParameter=mac80211.MultipleRetryCount[*],zabbix_helper_mac80211 $1 dot11MultipleRetryCount
+UserParameter=mac80211.ReceivedFragmentCount[*],zabbix_helper_mac80211 $1 dot11ReceivedFragmentCount
+UserParameter=mac80211.RetryCount[*],zabbix_helper_mac80211 $1 dot11RetryCount
+UserParameter=mac80211.TransmittedFragmentCount[*],zabbix_helper_mac80211 $1 dot11TransmittedFragmentCount
+UserParameter=mac80211.TransmittedFrameCount[*],zabbix_helper_mac80211 $1 dot11TransmittedFrameCount
 
