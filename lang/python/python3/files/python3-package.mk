@@ -132,8 +132,10 @@ define Py3Build/Compile/Default
 	)
 endef
 
+Py3Build/Compile=$(Py3Build/Compile/Default)
+
 ifeq ($(BUILD_VARIANT),python3)
 define Build/Compile
-	$(call Py3Build/Compile/Default)
+	$(call Py3Build/Compile)
 endef
 endif # python3

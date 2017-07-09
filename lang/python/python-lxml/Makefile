@@ -37,14 +37,14 @@ endef
 define Package/python-lxml
 $(call Package/python-lxml/Default)
   TITLE:=python-lxml
-  DEPENDS+=+python-light +python-codecs
+  DEPENDS+=+PACKAGE_python-lxml:python-light +PACKAGE_python-lxml:python-codecs
   VARIANT:=python
 endef
 
 define Package/python3-lxml
 $(call Package/python-lxml/Default)
   TITLE:=python3-lxml
-  DEPENDS+=+python3-light
+  DEPENDS+=+PACKAGE_python3-lxml:python3-light
   VARIANT:=python3
 endef
 
@@ -61,7 +61,7 @@ endef
 
 TARGET_LDFLAGS += -lxml2 -lxslt -lexslt
 
-define PyBuild/Compile/Default
+define PyBuild/Compile
 	$(call Build/Compile/PyMod,, \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		--static \
@@ -74,7 +74,7 @@ define PyBuild/Compile/Default
 	)
 endef
 
-define Py3Build/Compile/Default
+define Py3Build/Compile
 	$(call Build/Compile/Py3Mod,, \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		--static \
