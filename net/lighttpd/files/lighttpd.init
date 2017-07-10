@@ -28,3 +28,6 @@ start_service() {
 	procd_close_instance
 }
 
+reload_service() {
+	procd_send_signal lighttpd
+}
