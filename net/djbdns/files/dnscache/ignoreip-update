@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-# update-ignoreip version 0.1
+# update-ignoreip version 0.2
 # Written by J.P. Larocque, <piranha@thoughtcrime.us>, OpenPGP 0x0c14cdda
 # This software is in the public domain.
 # 
@@ -25,11 +25,26 @@
 # happen if it breaks.
 # 
 # Changelog:
+#   version 0.2 (2017/Jul/10)
+#       Use official TLDs list where possible
+#       Only restart service when files differ
+#       Update comments
 #   version 0.1 (2003/Sep/17)
 #       Initially written and released.
 
-stupid_tlds='ac cc com cx museum net nu ph sh tm ws'
+tld_url="http://data.iana.org/TLD/tlds-alpha-by-domain.txt"
 ignoreip='root/ignoreip'
+
+if which wget > /dev/null 2>&1; then
+	stupid_tlds=`wget "$tld_url" -O- 2>/dev/null | grep -v "^#"`
+elif which curl > /dev/null 2>&1; then
+	stupid_tlds=`curl "$tld_url" 2>/dev/null | grep -v "^#"`
+fi
+
+if [ -z "$stupid_tlds" ]; then
+	# If that fails (no wget?, etc.) at least try the old set of domains
+	stupid_tlds='ac cc com cx museum net nu ph sh tm ws'
+fi
 
 set -e
 
