@@ -1,0 +1,205 @@
+diff -urN daemontools-0.76/src/Makefile daemontools-0.76.new/src/Makefile
+--- daemontools-0.76/src/Makefile	2001-07-12 19:49:49.000000000 +0300
++++ daemontools-0.76.new/src/Makefile	2007-09-30 16:27:25.000000000 +0300
+@@ -101,9 +101,6 @@
+ uint64.h
+ 	./compile deepsleep.c
+ 
+-direntry.h: choose compile direntry.h1 direntry.h2 trydrent.c
+-	./choose c trydrent direntry.h1 direntry.h2 > direntry.h
+-
+ env.o: compile env.c env.h str.h
+ 	./compile env.c
+ 
+@@ -151,29 +148,6 @@
+ fmt_ulong.o: compile fmt.h fmt_ulong.c
+ 	./compile fmt_ulong.c
+ 
+-hasflock.h: choose compile hasflock.h1 hasflock.h2 load tryflock.c
+-	./choose cl tryflock hasflock.h1 hasflock.h2 > hasflock.h
+-
+-hasmkffo.h: choose compile hasmkffo.h1 hasmkffo.h2 load trymkffo.c
+-	./choose cl trymkffo hasmkffo.h1 hasmkffo.h2 > hasmkffo.h
+-
+-hassgact.h: choose compile hassgact.h1 hassgact.h2 load trysgact.c
+-	./choose cl trysgact hassgact.h1 hassgact.h2 > hassgact.h
+-
+-hassgprm.h: choose compile hassgprm.h1 hassgprm.h2 load trysgprm.c
+-	./choose cl trysgprm hassgprm.h1 hassgprm.h2 > hassgprm.h
+-
+-hasshsgr.h: chkshsgr choose compile hasshsgr.h1 hasshsgr.h2 load \
+-tryshsgr.c warn-shsgr
+-	./chkshsgr || ( cat warn-shsgr; exit 1 )
+-	./choose clr tryshsgr hasshsgr.h1 hasshsgr.h2 > hasshsgr.h
+-
+-haswaitp.h: choose compile haswaitp.h1 haswaitp.h2 load trywaitp.c
+-	./choose cl trywaitp haswaitp.h1 haswaitp.h2 > haswaitp.h
+-
+-iopause.h: choose compile iopause.h1 iopause.h2 load trypoll.c
+-	./choose clr trypoll iopause.h1 iopause.h2 > iopause.h
+-
+ iopause.o: compile iopause.c iopause.h select.h tai.h taia.h uint64.h
+ 	./compile iopause.c
+ 
+@@ -265,7 +239,6 @@
+ rts: envdir envuidgid fghack matchtest multilog pgrphack \
+ readproctitle rts.tests setlock setuidgid softlimit supervise svc \
+ svok svscan svscanboot svstat tai64n tai64nlocal
+-	env - /bin/sh rts.tests 2>&1 | cat -v > rts
+ 
+ scan_ulong.o: compile scan.h scan_ulong.c
+ 	./compile scan_ulong.c
+@@ -273,9 +246,6 @@
+ seek_set.o: compile seek.h seek_set.c
+ 	./compile seek_set.c
+ 
+-select.h: choose compile select.h1 select.h2 trysysel.c
+-	./choose c trysysel select.h1 select.h2 > select.h
+-
+ setlock: byte.a load setlock.o unix.a
+ 	./load setlock unix.a byte.a 
+ 
+@@ -478,9 +448,6 @@
+ timestamp.o: compile tai.h taia.h timestamp.c timestamp.h uint64.h
+ 	./compile timestamp.c
+ 
+-uint64.h: choose compile load tryulong64.c uint64.h1 uint64.h2
+-	./choose clr tryulong64 uint64.h1 uint64.h2 > uint64.h
+-
+ unix.a: alloc.o alloc_re.o buffer.o buffer_0.o buffer_1.o buffer_2.o \
+ buffer_get.o buffer_put.o buffer_read.o buffer_write.o coe.o env.o \
+ error.o error_str.o fd_copy.o fd_move.o fifo.o lock_ex.o lock_exnb.o \
+diff -urN daemontools-0.76/src/conf-cc daemontools-0.76.new/src/conf-cc
+--- daemontools-0.76/src/conf-cc	2007-09-30 13:58:40.000000000 +0300
++++ daemontools-0.76.new/src/conf-cc	2007-09-30 15:15:32.000000000 +0300
+@@ -1,3 +1,3 @@
+-gcc -O2 -Wimplicit -Wunused -Wcomment -Wchar-subscripts -Wuninitialized -Wshadow -Wcast-qual -Wcast-align -Wwrite-strings
++$TARGET_CC $TARGET_CFLAGS -Wimplicit -Wunused -Wcomment -Wchar-subscripts -Wuninitialized -Wshadow -Wcast-qual -Wcast-align -Wwrite-strings -include errno.h
+ 
+ This will be used to compile .c files.
+diff -urN daemontools-0.76/src/conf-ld daemontools-0.76.new/src/conf-ld
+--- daemontools-0.76/src/conf-ld	2001-07-12 19:49:49.000000000 +0300
++++ daemontools-0.76.new/src/conf-ld	2007-09-30 15:15:42.000000000 +0300
+@@ -1,3 +1,3 @@
+-gcc -s
++$TARGET_CC -s $TARGET_LDFLAGS
+ 
+ This will be used to link .o files into an executable.
+diff -urN daemontools-0.76/src/direntry.h daemontools-0.76.new/src/direntry.h
+--- daemontools-0.76/src/direntry.h	1970-01-01 03:00:00.000000000 +0300
++++ daemontools-0.76.new/src/direntry.h	2007-09-30 13:52:11.000000000 +0300
+@@ -0,0 +1,12 @@
++/* Public domain. */
++
++#ifndef DIRENTRY_H
++#define DIRENTRY_H
++
++/* sysdep: +dirent */
++
++#include <sys/types.h>
++#include <dirent.h>
++#define direntry struct dirent
++
++#endif
+diff -urN daemontools-0.76/src/hasflock.h daemontools-0.76.new/src/hasflock.h
+--- daemontools-0.76/src/hasflock.h	1970-01-01 03:00:00.000000000 +0300
++++ daemontools-0.76.new/src/hasflock.h	2007-09-30 13:52:55.000000000 +0300
+@@ -0,0 +1,4 @@
++/* Public domain. */
++
++/* sysdep: +flock */
++#define HASFLOCK 1
+diff -urN daemontools-0.76/src/hasmkffo.h daemontools-0.76.new/src/hasmkffo.h
+--- daemontools-0.76/src/hasmkffo.h	1970-01-01 03:00:00.000000000 +0300
++++ daemontools-0.76.new/src/hasmkffo.h	2007-09-30 13:53:16.000000000 +0300
+@@ -0,0 +1,4 @@
++/* Public domain. */
++
++/* sysdep: +mkfifo */
++#define HASMKFIFO 1
+diff -urN daemontools-0.76/src/hassgact.h daemontools-0.76.new/src/hassgact.h
+--- daemontools-0.76/src/hassgact.h	1970-01-01 03:00:00.000000000 +0300
++++ daemontools-0.76.new/src/hassgact.h	2007-09-30 13:53:47.000000000 +0300
+@@ -0,0 +1,4 @@
++/* Public domain. */
++
++/* sysdep: +sigaction */
++#define HASSIGACTION 1
+diff -urN daemontools-0.76/src/hassgprm.h daemontools-0.76.new/src/hassgprm.h
+--- daemontools-0.76/src/hassgprm.h	1970-01-01 03:00:00.000000000 +0300
++++ daemontools-0.76.new/src/hassgprm.h	2007-09-30 13:54:13.000000000 +0300
+@@ -0,0 +1,4 @@
++/* Public domain. */
++
++/* sysdep: +sigprocmask */
++#define HASSIGPROCMASK 1
+diff -urN daemontools-0.76/src/hasshsgr.h daemontools-0.76.new/src/hasshsgr.h
+--- daemontools-0.76/src/hasshsgr.h	1970-01-01 03:00:00.000000000 +0300
++++ daemontools-0.76.new/src/hasshsgr.h	2007-09-30 13:54:41.000000000 +0300
+@@ -0,0 +1,3 @@
++/* Public domain. */
++
++/* sysdep: -shortsetgroups */
+diff -urN daemontools-0.76/src/haswaitp.h daemontools-0.76.new/src/haswaitp.h
+--- daemontools-0.76/src/haswaitp.h	1970-01-01 03:00:00.000000000 +0300
++++ daemontools-0.76.new/src/haswaitp.h	2007-09-30 13:54:57.000000000 +0300
+@@ -0,0 +1,4 @@
++/* Public domain. */
++
++/* sysdep: +waitpid */
++#define HASWAITPID 1
+diff -urN daemontools-0.76/src/iopause.h daemontools-0.76.new/src/iopause.h
+--- daemontools-0.76/src/iopause.h	1970-01-01 03:00:00.000000000 +0300
++++ daemontools-0.76.new/src/iopause.h	2007-09-30 13:55:14.000000000 +0300
+@@ -0,0 +1,20 @@
++/* Public domain. */
++
++#ifndef IOPAUSE_H
++#define IOPAUSE_H
++
++/* sysdep: +poll */
++#define IOPAUSE_POLL
++
++#include <sys/types.h>
++#include <poll.h>
++
++typedef struct pollfd iopause_fd;
++#define IOPAUSE_READ POLLIN
++#define IOPAUSE_WRITE POLLOUT
++
++#include "taia.h"
++
++extern void iopause(iopause_fd *,unsigned int,struct taia *,struct taia *);
++
++#endif
+diff -urN daemontools-0.76/src/select.h daemontools-0.76.new/src/select.h
+--- daemontools-0.76/src/select.h	1970-01-01 03:00:00.000000000 +0300
++++ daemontools-0.76.new/src/select.h	2007-09-30 13:55:32.000000000 +0300
+@@ -0,0 +1,13 @@
++/* Public domain. */
++
++#ifndef SELECT_H
++#define SELECT_H
++
++/* sysdep: +sysselect */
++
++#include <sys/types.h>
++#include <sys/time.h>
++#include <sys/select.h>
++extern int select();
++
++#endif
+diff -urN daemontools-0.76/src/uint64.h daemontools-0.76.new/src/uint64.h
+--- daemontools-0.76/src/uint64.h	1970-01-01 03:00:00.000000000 +0300
++++ daemontools-0.76.new/src/uint64.h	2007-09-30 13:55:54.000000000 +0300
+@@ -0,0 +1,10 @@
++/* Public domain. */
++
++#ifndef UINT64_H
++#define UINT64_H
++
++/* sysdep: -ulong64 */
++
++typedef unsigned long long uint64;
++
++#endif
