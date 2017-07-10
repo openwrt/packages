@@ -1,0 +1,226 @@
+--- a/query.c
++++ b/query.c
+@@ -91,6 +91,21 @@ static void cleanup(struct query *z)
+   }
+ }
+ 
++static int move_name_to_alias(struct query *z,uint32 ttl)
++{
++  int j ;
++
++  if (z->alias[QUERY_MAXALIAS - 1]) return 0 ;
++  for (j = QUERY_MAXALIAS - 1;j > 0;--j)
++    z->alias[j] = z->alias[j - 1];
++  for (j = QUERY_MAXALIAS - 1;j > 0;--j)
++    z->aliasttl[j] = z->aliasttl[j - 1];
++  z->alias[0] = z->name[0];
++  z->aliasttl[0] = ttl;
++  z->name[0] = 0;
++  return 1 ;
++}
++
+ static int rqa(struct query *z)
+ {
+   int i;
+@@ -123,7 +138,6 @@ static int globalip(char *d,char ip[4])
+ static char *t1 = 0;
+ static char *t2 = 0;
+ static char *t3 = 0;
+-static char *cname = 0;
+ static char *referral = 0;
+ static unsigned int *records = 0;
+ 
+@@ -179,15 +193,14 @@ static int doit(struct query *z,int stat
+   uint16 datalen;
+   char *control;
+   char *d;
++  char *owner_name = 0 ;
+   const char *dtype;
+   unsigned int dlen;
+   int flagout;
+-  int flagcname;
+   int flagreferral;
+   int flagsoa;
+   uint32 ttl;
+   uint32 soattl;
+-  uint32 cnamettl;
+   int i;
+   int j;
+   int k;
+@@ -253,7 +266,10 @@ static int doit(struct query *z,int stat
+ 
+     byte_copy(key,2,DNS_T_CNAME);
+     cached = cache_get(key,dlen + 2,&cachedlen,&ttl);
+-    if (cached) {
++    /* A previous explicit query might have caused an empty RRSet to have been
++    ** cached.  Take care to ignore such a thing. 
++    */
++    if (cached && cachedlen) {
+       if (typematch(DNS_T_CNAME,dtype)) {
+         log_cachedanswer(d,DNS_T_CNAME);
+         if (!rqa(z)) goto DIE;
+@@ -262,8 +278,11 @@ static int doit(struct query *z,int stat
+ 	return 1;
+       }
+       log_cachedcname(d,cached);
+-      if (!dns_domain_copy(&cname,cached)) goto DIE;
+-      goto CNAME;
++      if (!z->level) {
++	if (!move_name_to_alias(z,ttl)) goto DIE ;
++      }
++      if (!dns_domain_copy(&z->name[z->level],cached)) goto DIE;
++      goto NEWNAME;
+     }
+ 
+     if (typematch(DNS_T_NS,dtype)) {
+@@ -352,7 +371,7 @@ static int doit(struct query *z,int stat
+       }
+     }
+ 
+-    if (!typematch(DNS_T_ANY,dtype) && !typematch(DNS_T_AXFR,dtype) && !typematch(DNS_T_CNAME,dtype) && !typematch(DNS_T_NS,dtype) && !typematch(DNS_T_PTR,dtype) && !typematch(DNS_T_A,dtype) && !typematch(DNS_T_MX,dtype)) {
++    if (!typematch(DNS_T_ANY,dtype) && !typematch(DNS_T_AXFR,dtype) && !typematch(DNS_T_NS,dtype) && !typematch(DNS_T_PTR,dtype) && !typematch(DNS_T_A,dtype) && !typematch(DNS_T_MX,dtype)) {
+       byte_copy(key,2,dtype);
+       cached = cache_get(key,dlen + 2,&cachedlen,&ttl);
+       if (cached && (cachedlen || byte_diff(dtype,2,DNS_T_ANY))) {
+@@ -473,29 +492,31 @@ static int doit(struct query *z,int stat
+ 
+   cachettl = 0;
+   flagout = 0;
+-  flagcname = 0;
+   flagreferral = 0;
+   flagsoa = 0;
+   soattl = 0;
+-  cnamettl = 0;
++  if (!dns_domain_copy(&owner_name,d)) goto DIE;
++  /* This code assumes that the CNAME chain is presented in the correct 
++  ** order.  The example algorithm in RFC 1034 will actually result in this
++  ** being the case, but the words do not require it to be so.
++  */
+   for (j = 0;j < numanswers;++j) {
+     pos = dns_packet_getname(buf,len,pos,&t1); if (!pos) goto DIE;
+     pos = dns_packet_copy(buf,len,pos,header,10); if (!pos) goto DIE;
+ 
+-    if (dns_domain_equal(t1,d))
++    if (dns_domain_equal(t1,owner_name))
+       if (byte_equal(header + 2,2,DNS_C_IN)) { /* should always be true */
+         if (typematch(header,dtype))
+           flagout = 1;
+         else if (typematch(header,DNS_T_CNAME)) {
+-          if (!dns_packet_getname(buf,len,pos,&cname)) goto DIE;
+-          flagcname = 1;
+-	  cnamettl = ttlget(header + 4);
++          if (!dns_packet_getname(buf,len,pos,&owner_name)) goto DIE;
+         }
+       }
+   
+     uint16_unpack_big(header + 8,&datalen);
+     pos += datalen;
+   }
++  dns_domain_free(&owner_name) ;
+   posauthority = pos;
+ 
+   for (j = 0;j < numauthority;++j) {
+@@ -522,15 +543,6 @@ static int doit(struct query *z,int stat
+   }
+   posglue = pos;
+ 
+-
+-  if (!flagcname && !rcode && !flagout && flagreferral && !flagsoa)
+-    if (dns_domain_equal(referral,control) || !dns_domain_suffix(referral,control)) {
+-      log_lame(whichserver,control,referral);
+-      byte_zero(whichserver,4);
+-      goto HAVENS;
+-    }
+-
+-
+   if (records) { alloc_free(records); records = 0; }
+ 
+   k = numanswers + numauthority + numglue;
+@@ -677,24 +689,36 @@ static int doit(struct query *z,int stat
+ 
+   alloc_free(records); records = 0;
+ 
++  if (byte_diff(DNS_T_CNAME,2,dtype)) {
++    /* This code assumes that the CNAME chain is presented in the correct 
++    ** order.  The example algorithm in RFC 1034 will actually result in this
++    ** being the case, but the words do not require it to be so.
++    */
++    pos = posanswers;
++    for (j = 0;j < numanswers;++j) {
++      pos = dns_packet_getname(buf,len,pos,&t1); if (!pos) goto DIE;
++      pos = dns_packet_copy(buf,len,pos,header,10); if (!pos) goto DIE;
++
++      if (dns_domain_equal(t1,d))
++	if (byte_equal(header + 2,2,DNS_C_IN)) { /* should always be true */
++	  if (typematch(header,DNS_T_CNAME)) {
++	    ttl = ttlget(header + 4);
++	    if (z->level == 0) {
++	      if (!move_name_to_alias(z,ttl)) goto DIE ;
++	    }
++	    if (!dns_packet_getname(buf,len,pos,&z->name[z->level])) goto DIE;
++	    d = z->name[z->level];
++	    if (!dns_domain_suffix(d,control) || !roots_same(d,control))
++	      goto NEWNAME ;  /* Cannot trust the chain further - restart using current name */
++	  }
++	}
+ 
+-  if (flagcname) {
+-    ttl = cnamettl;
+-    CNAME:
+-    if (!z->level) {
+-      if (z->alias[QUERY_MAXALIAS - 1]) goto DIE;
+-      for (j = QUERY_MAXALIAS - 1;j > 0;--j)
+-        z->alias[j] = z->alias[j - 1];
+-      for (j = QUERY_MAXALIAS - 1;j > 0;--j)
+-        z->aliasttl[j] = z->aliasttl[j - 1];
+-      z->alias[0] = z->name[0];
+-      z->aliasttl[0] = ttl;
+-      z->name[0] = 0;
++      uint16_unpack_big(header + 8,&datalen);
++      pos += datalen;
+     }
+-    if (!dns_domain_copy(&z->name[z->level],cname)) goto DIE;
+-    goto NEWNAME;
+   }
+ 
++  /* A "no such name" error applies to the end of any CNAME chain, not to the start. */
+   if (rcode == 3) {
+     log_nxdomain(whichserver,d,cachettl);
+     cachegeneric(DNS_T_ANY,d,"",0,cachettl);
+@@ -707,10 +731,26 @@ static int doit(struct query *z,int stat
+     return 1;
+   }
+ 
++  /* We check for a lame server _after_ we have cached any records that it
++  ** might have returned to us.  This copes better with the incorrect
++  ** behaviour of one content DNS server software that doesn't return
++  ** complete CNAME chains but instead returns only the first link in a
++  ** chain followed by a lame delegation to the same server.
++  ** Also: We check for a lame server _after_ following the CNAME chain.  The
++  ** delegation in a referral answer applies to the _end_ of the chain, not
++  ** to the beginning.
++  */
++  if (!rcode && !flagout && flagreferral && !flagsoa)
++    if (dns_domain_equal(referral,control) || !dns_domain_suffix(referral,control)) {
++      log_lame(whichserver,control,referral);
++      byte_zero(whichserver,4);
++      goto HAVENS;
++    }
++
+   if (!flagout && flagsoa)
++    /* Don't save empty RRSets for those types that we use as special markers. */
+     if (byte_diff(DNS_T_ANY,2,dtype))
+-      if (byte_diff(DNS_T_AXFR,2,dtype))
+-        if (byte_diff(DNS_T_CNAME,2,dtype)) {
++      if (byte_diff(DNS_T_AXFR,2,dtype)) {
+           save_start();
+           save_finish(dtype,d,soattl);
+ 	  log_nodata(whichserver,d,dtype,soattl);
+@@ -822,6 +862,7 @@ static int doit(struct query *z,int stat
+   DIE:
+   cleanup(z);
+   if (records) { alloc_free(records); records = 0; }
++  dns_domain_free(&owner_name) ;
+   return -1;
+ }
+ 

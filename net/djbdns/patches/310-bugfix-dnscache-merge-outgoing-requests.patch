@@ -1,0 +1,328 @@
+--- a/Makefile
++++ b/Makefile
+@@ -315,11 +315,11 @@ stralloc.h iopause.h taia.h tai.h uint64
+ 	./compile dns_txt.c
+ 
+ dnscache: \
+-load dnscache.o droproot.o okclient.o log.o cache.o query.o \
++load dnscache.o droproot.o okclient.o log.o cache.o query.o qmerge.o \
+ response.o dd.o roots.o iopause.o prot.o dns.a env.a alloc.a buffer.a \
+ libtai.a unix.a byte.a socket.lib
+ 	./load dnscache droproot.o okclient.o log.o cache.o \
+-	query.o response.o dd.o roots.o iopause.o prot.o dns.a \
++	query.o qmerge.o response.o dd.o roots.o iopause.o prot.o dns.a \
+ 	env.a alloc.a buffer.a libtai.a unix.a byte.a  `cat \
+ 	socket.lib`
+ 
+@@ -340,7 +340,7 @@ compile dnscache.c env.h exit.h scan.h s
+ uint16.h uint64.h socket.h uint16.h dns.h stralloc.h gen_alloc.h \
+ iopause.h taia.h tai.h uint64.h taia.h taia.h byte.h roots.h fmt.h \
+ iopause.h query.h dns.h uint32.h alloc.h response.h uint32.h cache.h \
+-uint32.h uint64.h ndelay.h log.h uint64.h okclient.h droproot.h
++uint32.h uint64.h ndelay.h log.h uint64.h okclient.h droproot.h maxclient.h
+ 	./compile dnscache.c
+ 
+ dnsfilter: \
+@@ -685,11 +685,16 @@ qlog.o: \
+ compile qlog.c buffer.h qlog.h uint16.h
+ 	./compile qlog.c
+ 
++qmerge.o: \
++compile qmerge.c qmerge.h dns.h stralloc.h gen_alloc.h iopause.h \
++taia.h tai.h uint64.h log.h maxclient.h
++	./compile qmerge.c
++
+ query.o: \
+ compile query.c error.h roots.h log.h uint64.h case.h cache.h \
+ uint32.h uint64.h byte.h dns.h stralloc.h gen_alloc.h iopause.h \
+ taia.h tai.h uint64.h taia.h uint64.h uint32.h uint16.h dd.h alloc.h \
+-response.h uint32.h query.h dns.h uint32.h
++response.h uint32.h query.h dns.h uint32.h qmerge.h
+ 	./compile query.c
+ 
+ random-ip: \
+--- a/dnscache.c
++++ b/dnscache.c
+@@ -20,6 +20,7 @@
+ #include "response.h"
+ #include "cache.h"
+ #include "ndelay.h"
++#include "maxclient.h"
+ #include "log.h"
+ #include "okclient.h"
+ #include "droproot.h"
+@@ -57,7 +58,6 @@ uint64 numqueries = 0;
+ 
+ static int udp53;
+ 
+-#define MAXUDP 200
+ static struct udpclient {
+   struct query q;
+   struct taia start;
+@@ -134,7 +134,6 @@ void u_new(void)
+ 
+ static int tcp53;
+ 
+-#define MAXTCP 20
+ struct tcpclient {
+   struct query q;
+   struct taia start;
+--- a/log.c
++++ b/log.c
+@@ -151,6 +151,13 @@ void log_tx(const char *q,const char qty
+   line();
+ }
+ 
++void log_tx_piggyback(const char *q, const char qtype[2], const char *control)
++{
++  string("txpb ");
++  logtype(qtype); space(); name(q); space(); name(control);
++  line();
++}
++
+ void log_cachedanswer(const char *q,const char type[2])
+ {
+   string("cached "); logtype(type); space();
+--- a/log.h
++++ b/log.h
+@@ -20,6 +20,7 @@ extern void log_cachednxdomain(const cha
+ extern void log_cachedns(const char *,const char *);
+ 
+ extern void log_tx(const char *,const char *,const char *,const char *,unsigned int);
++extern void log_tx_piggyback(const char *,const char *,const char *);
+ 
+ extern void log_nxdomain(const char *,const char *,unsigned int);
+ extern void log_nodata(const char *,const char *,const char *,unsigned int);
+--- /dev/null
++++ b/maxclient.h
+@@ -0,0 +1,7 @@
++#ifndef MAXCLIENT_H
++#define MAXCLIENT_H
++
++#define MAXUDP 200
++#define MAXTCP 20
++
++#endif /* MAXCLIENT_H */
+--- /dev/null
++++ b/qmerge.c
+@@ -0,0 +1,115 @@
++#include "qmerge.h"
++#include "byte.h"
++#include "log.h"
++#include "maxclient.h"
++
++#define QMERGE_MAX (MAXUDP+MAXTCP)
++struct qmerge inprogress[QMERGE_MAX];
++
++static
++int qmerge_key_init(struct qmerge_key *qmk, const char *q, const char qtype[2],
++    const char *control)
++{
++  if (!dns_domain_copy(&qmk->q, q)) return 0;
++  byte_copy(qmk->qtype, 2, qtype);
++  if (!dns_domain_copy(&qmk->control, control)) return 0;
++  return 1;
++}
++
++static
++int qmerge_key_equal(struct qmerge_key *a, struct qmerge_key *b)
++{
++  return
++    byte_equal(a->qtype, 2, b->qtype) &&
++    dns_domain_equal(a->q, b->q) &&
++    dns_domain_equal(a->control, b->control);
++}
++
++static
++void qmerge_key_free(struct qmerge_key *qmk)
++{
++  dns_domain_free(&qmk->q);
++  dns_domain_free(&qmk->control);
++}
++
++void qmerge_free(struct qmerge **x)
++{
++  struct qmerge *qm;
++
++  qm = *x;
++  *x = 0;
++  if (!qm || !qm->active) return;
++
++  qm->active--;
++  if (!qm->active) {
++    qmerge_key_free(&qm->key);
++    dns_transmit_free(&qm->dt);
++  }
++}
++
++int qmerge_start(struct qmerge **qm, const char servers[64], int flagrecursive,
++    const char *q, const char qtype[2], const char localip[4],
++    const char *control)
++{
++  struct qmerge_key k;
++  int i;
++  int r;
++
++  qmerge_free(qm);
++
++  byte_zero(&k, sizeof k);
++  if (!qmerge_key_init(&k, q, qtype, control)) return -1;
++  for (i = 0; i < QMERGE_MAX; i++) {
++    if (!inprogress[i].active) continue;
++    if (!qmerge_key_equal(&k, &inprogress[i].key)) continue;
++    log_tx_piggyback(q, qtype, control);
++    inprogress[i].active++;
++    *qm = &inprogress[i];
++    qmerge_key_free(&k);
++    return 0;
++  }
++
++  for (i = 0; i < QMERGE_MAX; i++)
++    if (!inprogress[i].active)
++      break;
++  if (i == QMERGE_MAX) return -1;
++
++  log_tx(q, qtype, control, servers, 0);
++  r = dns_transmit_start(&inprogress[i].dt, servers, flagrecursive, q, qtype, localip);
++  if (r == -1) { qmerge_key_free(&k); return -1; }
++  inprogress[i].active++;
++  inprogress[i].state = 0;
++  qmerge_key_free(&inprogress[i].key);
++  byte_copy(&inprogress[i].key, sizeof k, &k);
++  *qm = &inprogress[i];
++  return 0;
++}
++
++void qmerge_io(struct qmerge *qm, iopause_fd *io, struct taia *deadline)
++{
++  if (qm->state == 0) {
++    dns_transmit_io(&qm->dt, io, deadline);
++    qm->state = 1;
++  }
++  else {
++    io->fd = -1;
++    io->events = 0;
++  }
++}
++
++int qmerge_get(struct qmerge **x, const iopause_fd *io, const struct taia *when)
++{
++  int r;
++  struct qmerge *qm;
++
++  qm = *x;
++  if (qm->state == -1) return -1; /* previous error */
++  if (qm->state == 0) return 0; /* no packet */
++  if (qm->state == 2) return 1; /* already got packet */
++
++  r = dns_transmit_get(&qm->dt, io, when);
++  if (r == -1) { qm->state = -1; return -1; } /* error */
++  if (r == 0) { qm->state = 0; return 0; } /* must wait for i/o */
++  if (r == 1) { qm->state = 2; return 1; } /* got packet */
++  return -1; /* bug */
++}
+--- /dev/null
++++ b/qmerge.h
+@@ -0,0 +1,24 @@
++#ifndef QMERGE_H
++#define QMERGE_H
++
++#include "dns.h"
++
++struct qmerge_key {
++  char *q;
++  char qtype[2];
++  char *control;
++};
++
++struct qmerge {
++  int active;
++  struct qmerge_key key;
++  struct dns_transmit dt;
++  int state; /* -1 = error, 0 = need io, 1 = need get, 2 = got packet */
++};
++
++extern int qmerge_start(struct qmerge **,const char *,int,const char *,const char *,const char *,const char *);
++extern void qmerge_io(struct qmerge *,iopause_fd *,struct taia *);
++extern int qmerge_get(struct qmerge **,const iopause_fd *,const struct taia *);
++extern void qmerge_free(struct qmerge **);
++
++#endif /* QMERGE_H */
+--- a/query.c
++++ b/query.c
+@@ -83,7 +83,7 @@ static void cleanup(struct query *z)
+   int j;
+   int k;
+ 
+-  dns_transmit_free(&z->dt);
++  qmerge_free(&z->qm);
+   for (j = 0;j < QUERY_MAXALIAS;++j)
+     dns_domain_free(&z->alias[j]);
+   for (j = 0;j < QUERY_MAXLEVEL;++j) {
+@@ -452,14 +452,8 @@ static int doit(struct query *z,int stat
+   if (j == 64) goto SERVFAIL;
+ 
+   dns_sortip(z->servers[z->level],64);
+-  if (z->level) {
+-    log_tx(z->name[z->level],DNS_T_A,z->control[z->level],z->servers[z->level],z->level);
+-    if (dns_transmit_start(&z->dt,z->servers[z->level],flagforwardonly,z->name[z->level],DNS_T_A,z->localip) == -1) goto DIE;
+-  }
+-  else {
+-    log_tx(z->name[0],z->type,z->control[0],z->servers[0],0);
+-    if (dns_transmit_start(&z->dt,z->servers[0],flagforwardonly,z->name[0],z->type,z->localip) == -1) goto DIE;
+-  }
++  dtype = z->level ? DNS_T_A : z->type;
++  if (qmerge_start(&z->qm,z->servers[z->level],flagforwardonly,z->name[z->level],dtype,z->localip,z->control[z->level]) == -1) goto DIE;
+   return 0;
+ 
+ 
+@@ -473,10 +467,10 @@ static int doit(struct query *z,int stat
+ 
+   HAVEPACKET:
+   if (++z->loop == 100) goto DIE;
+-  buf = z->dt.packet;
+-  len = z->dt.packetlen;
++  buf = z->qm->dt.packet;
++  len = z->qm->dt.packetlen;
+ 
+-  whichserver = z->dt.servers + 4 * z->dt.curserver;
++  whichserver = z->qm->dt.servers + 4 * z->qm->dt.curserver;
+   control = z->control[z->level];
+   d = z->name[z->level];
+   dtype = z->level ? DNS_T_A : z->type;
+@@ -902,7 +896,7 @@ int query_start(struct query *z,char *dn
+ 
+ int query_get(struct query *z,iopause_fd *x,struct taia *stamp)
+ {
+-  switch(dns_transmit_get(&z->dt,x,stamp)) {
++  switch(qmerge_get(&z->qm,x,stamp)) {
+     case 1:
+       return doit(z,1);
+     case -1:
+@@ -913,5 +907,5 @@ int query_get(struct query *z,iopause_fd
+ 
+ void query_io(struct query *z,iopause_fd *x,struct taia *deadline)
+ {
+-  dns_transmit_io(&z->dt,x,deadline);
++  qmerge_io(z->qm,x,deadline);
+ }
+--- a/query.h
++++ b/query.h
+@@ -1,7 +1,7 @@
+ #ifndef QUERY_H
+ #define QUERY_H
+ 
+-#include "dns.h"
++#include "qmerge.h"
+ #include "uint32.h"
+ 
+ #define QUERY_MAXLEVEL 5
+@@ -20,7 +20,7 @@ struct query {
+   char localip[4];
+   char type[2];
+   char class[2];
+-  struct dns_transmit dt;
++  struct qmerge *qm;
+ } ;
+ 
+ extern int query_start(struct query *,char *,char *,char *,char *);

@@ -1,0 +1,41 @@
+--- a/query.c
++++ b/query.c
+@@ -193,6 +193,7 @@ static int doit(struct query *z,int stat
+   int k;
+   int p;
+   int q;
++  uint32 cachettl;
+ 
+   errno = error_io;
+   if (state == 1) goto HAVEPACKET;
+@@ -470,6 +471,7 @@ static int doit(struct query *z,int stat
+   rcode = header[3] & 15;
+   if (rcode && (rcode != 3)) goto DIE; /* impossible; see irrelevant() */
+ 
++  cachettl = 0;
+   flagout = 0;
+   flagcname = 0;
+   flagreferral = 0;
+@@ -512,6 +514,11 @@ static int doit(struct query *z,int stat
+ 
+     uint16_unpack_big(header + 8,&datalen);
+     pos += datalen;
++
++    if (flagsoa && (pos <= len)) {
++      cachettl = ttlget(buf + pos - 4);
++      if (soattl < cachettl) cachettl = soattl;
++    }
+   }
+   posglue = pos;
+ 
+@@ -689,8 +696,8 @@ static int doit(struct query *z,int stat
+   }
+ 
+   if (rcode == 3) {
+-    log_nxdomain(whichserver,d,soattl);
+-    cachegeneric(DNS_T_ANY,d,"",0,soattl);
++    log_nxdomain(whichserver,d,cachettl);
++    cachegeneric(DNS_T_ANY,d,"",0,cachettl);
+ 
+     NXDOMAIN:
+     if (z->level) goto LOWERLEVEL;

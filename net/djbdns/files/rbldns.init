@@ -1,0 +1,67 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2012 OpenWrt.org
+#
+# version 20090401 jhalfmoon
+
+START=46
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/rbldns
+NAME=rbldns
+DESC="Reverse DNS wall"
+
+ROOT=/tmp/rbldns
+
+start() {
+    echo "Starting $DESC: $NAME"
+    config_load djbdns
+    config_foreach get_userids global
+    rm -rf $ROOT
+    mkdir -p $ROOT
+    ln -fs /etc/rbldns/data $ROOT/data
+    cd $ROOT
+    rbldns-data
+    chown -R $UID:$GID $ROOT
+    config_foreach start_daemon rbldns
+}
+
+get_userids() {
+    local cfg="$1"
+    config_get UID "$cfg" runasuser
+    config_get GID "$cfg" runasgroup
+    UID=`id -u $UID`
+    GID=`id -g $GID`
+}
+
+start_daemon() {
+    local cfg="$1"
+    config_get logging "$cfg" logging
+    config_get iface   "$cfg" interface
+    config_get BASE    "$cfg" base
+# Unset BASE if it is empty
+    [ -z $BASE ] && export -n BASE
+# Translate listening interfaces to ip addresses
+    . /lib/functions/network.sh
+    network_get_ipaddr IP "$iface"
+    export ROOT
+    if [ "$DEBUG" == 1 ] ; then
+            $DAEMON
+    elif [ "$logging" == '1' ] ; then
+        $DAEMON 2>&1 | logger -p local1.info -t $NAME &
+    else
+        $DAEMON > /dev/null 2>&1 &
+    fi
+}
+
+stop() {
+    echo -n "Stopping $DESC: $NAME"
+    kill `pidof $NAME|sed "s/$$//g"` > /dev/null 2>&1
+    echo " ."
+}
+
+restart() {
+    echo "Restarting $DESC: $NAME... "
+    stop
+    sleep 2
+    start
+}
+

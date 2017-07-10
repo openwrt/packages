@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/local/bin/tinydns-edit data data.new add alias ${1+"$@"}

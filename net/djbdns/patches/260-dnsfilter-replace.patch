@@ -1,0 +1,71 @@
+--- a/dnsfilter.c
++++ b/dnsfilter.c
+@@ -41,6 +41,7 @@ int inbuflen = 0;
+ iopause_fd *inio;
+ int flag0 = 1;
+ 
++int opt_replace = 0;
+ iopause_fd *io;
+ int iolen;
+ 
+@@ -51,12 +52,16 @@ char name[DNS_NAME4_DOMAIN];
+ void errout(int i)
+ {
+   int j;
+-
+-  if (!stralloc_copys(&x[i].middle,":")) nomem();
+-  if (!stralloc_cats(&x[i].middle,error_str(errno))) nomem();
+-  for (j = 0;j < x[i].middle.len;++j)
+-    if (x[i].middle.s[j] == ' ')
+-      x[i].middle.s[j] = '-';
++ 
++  if (opt_replace) 
++    x[i].middle.len=0;
++  else {
++    if (!stralloc_copys(&x[i].middle,":")) nomem();
++    if (!stralloc_cats(&x[i].middle,error_str(errno))) nomem();
++    for (j = 0;j < x[i].middle.len;++j)
++      if (x[i].middle.s[j] == ' ')
++        x[i].middle.s[j] = '-';
++  }
+ }
+ 
+ int main(int argc,char **argv)
+@@ -69,7 +74,7 @@ int main(int argc,char **argv)
+   int j;
+   int r;
+ 
+-  while ((opt = getopt(argc,argv,"c:l:")) != opteof)
++  while ((opt = getopt(argc,argv,"c:l:r")) != opteof)
+     switch(opt) {
+       case 'c':
+ 	scan_ulong(optarg,&u);
+@@ -83,8 +88,11 @@ int main(int argc,char **argv)
+ 	if (u > 1000000) u = 1000000;
+ 	xmax = u;
+ 	break;
++      case 'r':
++	opt_replace = 1;	  
++	break;
+       default:
+-	strerr_die1x(111,"dnsfilter: usage: dnsfilter [ -c concurrency ] [ -l lines ]");
++	strerr_die1x(111,"dnsfilter: usage: dnsfilter [ -c concurrency ] [ -l lines ] [-r]");
+     }
+ 
+   x = (struct line *) alloc(xmax * sizeof(struct line));
+@@ -140,8 +148,13 @@ int main(int argc,char **argv)
+ 	else if (r == 1) {
+ 	  if (dns_name_packet(&x[i].middle,x[i].dt.packet,x[i].dt.packetlen) == -1)
+ 	    errout(i);
+-	  if (x[i].middle.len)
+-	    if (!stralloc_cats(&x[i].left,"=")) nomem();
++	  if (x[i].middle.len) {
++	    if (opt_replace) {
++	      if (!stralloc_copys(&x[i].left, "")) nomem();
++	    } else {
++	      if (!stralloc_cats(&x[i].left, "=")) nomem();
++	    }
++	  }
+ 	  x[i].flagactive = 0;
+ 	  --numactive;
+ 	}

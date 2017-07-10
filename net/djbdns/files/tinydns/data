@@ -1,0 +1,59 @@
+# example verbose tinydns data file
+# from http://www.pjvenda.org/linux/doc/tinydns/
+# Copyright (C) 2001-2009 by Pedro Venda
+# licensed under a Creative Commons Attribution 2.5 License
+#
+# REVERSE ZONE
+#
+# (reverse) dns servers: primary and secondary
+Z45.168.192.in-addr.arpa:ns.example.net:hostmaster.example.net::::::::
+
+# NS records
+&45.168.192.in-addr.arpa::ns.example.net:::
+&45.168.192.in-addr.arpa::ns2.example.net:::
+
+# MX handlers
+@45.168.192.in-addr.arpa::relay.example.net:10
+@45.168.192.in-addr.arpa::relay2.example.net:20
+
+#
+# FORWARD ZONE:
+#
+# SOA record: primary nameserver is ns.example.net and hostmaster
+#             mail address is hostmaster@example.net
+#             (the 'Z' configuration line is the only one that
+#             allows specifying the hostmaster mail address)
+Zexample.net:ns.example.net:hostmaster.example.net::::::::
+
+# NS records: primary and secondary nameservers
+&example.net::ns.example.net:::
+&example.net::ns2.example.net:::
+
+# MX records: relay.example.net, distance = 10
+#             relay2.example.net, distance = 20
+@example.net::relay.example.net:10
+@example.net::relay2.example.net:20
+
+# A records: ns.example.net, ns2.example.net
+=ns.example.net:192.168.45.1:::
+=ns2.example.net:192.168.45.2:::
+
+# PTR records: relays are in the same hosts as dns servers
++relay.example.net:192.168.45.1:::
++relay2.example.net:192.168.45.2:::
+
+# more A records: gateway.example.net
+=gateway.example.net:192.168.45.254:::
+
+# CNAME record: nscache.example.net is alias to gateway.example.net
+Cnscache.example.net:gateway.example.net:::
+
+#
+# SUB DOMAIN DELEGATION
+#
+
+# NS record
+&dmz.example.net::ns.dmz.example.net:::
+
+# A/PTR record for nameserver
+=ns.dmz.example.net:192.168.90.1:::

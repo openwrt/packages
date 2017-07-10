@@ -1,0 +1,170 @@
+--- a/Makefile
++++ b/Makefile
+@@ -29,10 +29,6 @@ auto-str.o: \
+ compile auto-str.c buffer.h exit.h
+ 	./compile auto-str.c
+ 
+-auto_home.c: \
+-auto-str conf-home
+-	./auto-str auto_home `head -1 conf-home` > auto_home.c
+-
+ auto_home.o: \
+ compile auto_home.c
+ 	./compile auto_home.c
+@@ -221,10 +217,6 @@ compile dd.c dns.h stralloc.h gen_alloc.
+ uint64.h taia.h dd.h
+ 	./compile dd.c
+ 
+-direntry.h: \
+-choose compile trydrent.c direntry.h1 direntry.h2
+-	./choose c trydrent direntry.h1 direntry.h2 > direntry.h
+-
+ dns.a: \
+ makelib dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o dns_ipq.o dns_mx.o \
+ dns_name.o dns_nd.o dns_packet.o dns_random.o dns_rcip.o dns_rcrw.o \
+@@ -508,12 +500,6 @@ systype hasdevtcp.h1 hasdevtcp.h2
+ 	  *) cat hasdevtcp.h1 ;; \
+ 	esac ) > hasdevtcp.h
+ 
+-hasshsgr.h: \
+-choose compile load tryshsgr.c hasshsgr.h1 hasshsgr.h2 chkshsgr \
+-warn-shsgr
+-	./chkshsgr || ( cat warn-shsgr; exit 1 )
+-	./choose clr tryshsgr hasshsgr.h1 hasshsgr.h2 > hasshsgr.h
+-
+ hier.o: \
+ compile hier.c auto_home.h
+ 	./compile hier.c
+@@ -534,10 +520,6 @@ instcheck.o: \
+ compile instcheck.c strerr.h error.h exit.h
+ 	./compile instcheck.c
+ 
+-iopause.h: \
+-choose compile load trypoll.c iopause.h1 iopause.h2
+-	./choose clr trypoll iopause.h1 iopause.h2 > iopause.h
+-
+ iopause.o: \
+ compile iopause.c taia.h tai.h uint64.h select.h iopause.h taia.h
+ 	./compile iopause.c
+@@ -590,7 +572,7 @@ warn-auto.sh systype
+ 	dgux-*) ;; \
+ 	hp-ux-*) ;; \
+ 	sco*) ;; \
+-	*) echo 'ranlib "$$main"' ;; \
++	*) echo '$(if $(TARGET_RANLIB),$(TARGET_RANLIB),ranlib) "$$main"' ;; \
+ 	esac \
+ 	) > makelib
+ 	chmod 755 makelib
+@@ -766,10 +748,6 @@ seek_set.o: \
+ compile seek_set.c seek.h
+ 	./compile seek_set.c
+ 
+-select.h: \
+-choose compile trysysel.c select.h1 select.h2
+-	./choose c trysysel select.h1 select.h2 > select.h
+-
+ server.o: \
+ compile server.c byte.h case.h env.h buffer.h strerr.h ip4.h uint16.h \
+ ndelay.h socket.h uint16.h droproot.h qlog.h uint16.h response.h \
+@@ -1060,10 +1038,6 @@ uint32_unpack.o: \
+ compile uint32_unpack.c uint32.h
+ 	./compile uint32_unpack.c
+ 
+-uint64.h: \
+-choose compile load tryulong64.c uint64.h1 uint64.h2
+-	./choose clr tryulong64 uint64.h1 uint64.h2 > uint64.h
+-
+ unix.a: \
+ makelib buffer_read.o buffer_write.o error.o error_str.o ndelay_off.o \
+ ndelay_on.o open_read.o open_trunc.o openreadclose.o readclose.o \
+--- /dev/null
++++ b/auto_home.c
+@@ -0,0 +1,3 @@
++const char auto_home[] = "\
++\057\165\163\162\
++";
+--- a/conf-cc
++++ b/conf-cc
+@@ -1,3 +1,3 @@
+-gcc -O2 -Wimplicit -Wunused -Wcomment -Wchar-subscripts -Wuninitialized -Wshadow -Wcast-qual -Wcast-align -Wwrite-strings
++$TARGET_CC $TARGET_CFLAGS -Wimplicit -Wunused -Wcomment -Wchar-subscripts -Wuninitialized -Wshadow -Wcast-qual -Wcast-align -Wwrite-strings -include errno.h
+ 
+ This will be used to compile .c files.
+--- a/conf-home
++++ b/conf-home
+@@ -1,4 +1,4 @@
+-/usr/local
++/usr
+ 
+ This is the dnscache home directory. Programs will be installed in
+ .../bin.
+--- a/conf-ld
++++ b/conf-ld
+@@ -1,3 +1,3 @@
+-gcc -s
++$TARGET_CC -s $TARGET_LDFLAGS
+ 
+ This will be used to link .o files into an executable.
+--- /dev/null
++++ b/direntry.h
+@@ -0,0 +1,10 @@
++#ifndef DIRENTRY_H
++#define DIRENTRY_H
++
++/* sysdep: +dirent */
++
++#include <sys/types.h>
++#include <dirent.h>
++#define direntry struct dirent
++
++#endif
+--- /dev/null
++++ b/hasshsgr.h
+@@ -0,0 +1 @@
++/* sysdep: -shortsetgroups */
+--- /dev/null
++++ b/iopause.h
+@@ -0,0 +1,18 @@
++#ifndef IOPAUSE_H
++#define IOPAUSE_H
++
++/* sysdep: +poll */
++#define IOPAUSE_POLL
++
++#include <sys/types.h>
++#include <poll.h>
++
++typedef struct pollfd iopause_fd;
++#define IOPAUSE_READ POLLIN
++#define IOPAUSE_WRITE POLLOUT
++
++#include "taia.h"
++
++extern void iopause(iopause_fd *,unsigned int,struct taia *,struct taia *);
++
++#endif
+--- /dev/null
++++ b/select.h
+@@ -0,0 +1,11 @@
++#ifndef SELECT_H
++#define SELECT_H
++
++/* sysdep: +sysselect */
++
++#include <sys/types.h>
++#include <sys/time.h>
++#include <sys/select.h>
++extern int select();
++
++#endif
+--- /dev/null
++++ b/uint64.h
+@@ -0,0 +1,8 @@
++#ifndef UINT64_H
++#define UINT64_H
++
++/* sysdep: -ulong64 */
++
++typedef unsigned long long uint64;
++
++#endif

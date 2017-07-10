@@ -1,0 +1,11 @@
+--- a/response.c
++++ b/response.c
+@@ -34,7 +34,7 @@ int response_addname(const char *d)
+         uint16_pack_big(buf,49152 + name_ptr[i]);
+         return response_addbytes(buf,2);
+       }
+-    if (dlen <= 128)
++    if ((dlen <= 128) && (response_len < 16384))
+       if (name_num < NAMES) {
+ 	byte_copy(name[name_num],dlen,d);
+ 	name_ptr[name_num] = response_len;

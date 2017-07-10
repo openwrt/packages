@@ -1,0 +1,156 @@
+--- /dev/null
++++ b/dnsnamex.c
+@@ -0,0 +1,34 @@
++#include "buffer.h"
++#include "exit.h"
++#include "strerr.h"
++#include "ip4.h"
++#include "dns.h"
++
++#define FATAL "dnsnamex: fatal: "
++
++static char seed[128];
++
++char ip[4];
++static stralloc out;
++
++int main(int argc,char **argv)
++{
++  dns_random_init(seed);
++
++  if (*argv) ++argv;
++
++  while (*argv) {
++    if (!ip4_scan(*argv,ip))
++      strerr_die3x(111,FATAL,"unable to parse IP address ",*argv);
++    if (dns_name4_multi(&out,ip) == -1)
++      strerr_die4sys(111,FATAL,"unable to find host name for ",*argv,": ");
++
++    buffer_put(buffer_1,out.s,out.len);
++    buffer_puts(buffer_1,"\n");
++
++    ++argv;
++  }
++
++  buffer_flush(buffer_1);
++  _exit(0);
++}
+--- /dev/null
++++ b/dns_namex.c
+@@ -0,0 +1,48 @@
++#include "stralloc.h"
++#include "uint16.h"
++#include "byte.h"
++#include "dns.h"
++
++static char *q = 0;
++
++int dns_name_packet_multi(stralloc *out,const char *buf,unsigned int len)
++{
++  unsigned int pos;
++  char header[12];
++  uint16 numanswers;
++  uint16 datalen;
++
++  if (!stralloc_copys(out,"")) return -1;
++
++  pos = dns_packet_copy(buf,len,0,header,12); if (!pos) return -1;
++  uint16_unpack_big(header + 6,&numanswers);
++  pos = dns_packet_skipname(buf,len,pos); if (!pos) return -1;
++  pos += 4;
++
++  while (numanswers--) {
++    pos = dns_packet_skipname(buf,len,pos); if (!pos) return -1;
++    pos = dns_packet_copy(buf,len,pos,header,10); if (!pos) return -1;
++    uint16_unpack_big(header + 8,&datalen);
++    if (byte_equal(header,2,DNS_T_PTR))
++      if (byte_equal(header + 2,2,DNS_C_IN)) {
++	if (!dns_packet_getname(buf,len,pos,&q)) return -1;
++	if (!dns_domain_todot_cat(out,q)) return -1;
++	if (!stralloc_cats(out, " ")) return -1 ; 
++      }
++    pos += datalen;
++  }
++
++  return 0;
++}
++
++int dns_name4_multi(stralloc *out,const char ip[4])
++{
++  char name[DNS_NAME4_DOMAIN];
++
++  dns_name4_domain(name,ip);
++  if (dns_resolve(name,DNS_T_PTR) == -1) return -1;
++  if (dns_name_packet_multi(out,dns_resolve_tx.packet,dns_resolve_tx.packetlen) == -1) return -1;
++  dns_transmit_free(&dns_resolve_tx);
++  dns_domain_free(&q);
++  return 0;
++}
+--- a/dns.h
++++ b/dns.h
+@@ -70,9 +70,11 @@ extern struct dns_transmit dns_resolve_t
+ extern int dns_ip4_packet(stralloc *,const char *,unsigned int);
+ extern int dns_ip4(stralloc *,const stralloc *);
+ extern int dns_name_packet(stralloc *,const char *,unsigned int);
++extern int dns_name_packet_multi(stralloc *,const char *,unsigned int);
+ extern void dns_name4_domain(char *,const char *);
+ #define DNS_NAME4_DOMAIN 31
+ extern int dns_name4(stralloc *,const char *);
++extern int dns_name4_multi(stralloc *,const char *);
+ extern int dns_txt_packet(stralloc *,const char *,unsigned int);
+ extern int dns_txt(stralloc *,const stralloc *);
+ extern int dns_mx_packet(stralloc *,const char *,unsigned int);
+--- a/Makefile
++++ b/Makefile
+@@ -219,10 +219,10 @@ uint64.h taia.h dd.h
+ 
+ dns.a: \
+ makelib dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o dns_ipq.o dns_mx.o \
+-dns_name.o dns_nd.o dns_packet.o dns_random.o dns_rcip.o dns_rcrw.o \
++dns_name.o dns_namex.o dns_nd.o dns_packet.o dns_random.o dns_rcip.o dns_rcrw.o \
+ dns_resolve.o dns_sortip.o dns_transmit.o dns_txt.o
+ 	./makelib dns.a dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o \
+-	dns_ipq.o dns_mx.o dns_name.o dns_nd.o dns_packet.o \
++	dns_ipq.o dns_mx.o dns_name.o dns_namex.o dns_nd.o dns_packet.o \
+ 	dns_random.o dns_rcip.o dns_rcrw.o dns_resolve.o \
+ 	dns_sortip.o dns_transmit.o dns_txt.o
+ 
+@@ -261,6 +261,11 @@ compile dns_name.c stralloc.h gen_alloc.
+ stralloc.h iopause.h taia.h tai.h uint64.h taia.h
+ 	./compile dns_name.c
+ 
++dns_namex.o: \
++compile dns_namex.c stralloc.h gen_alloc.h uint16.h byte.h dns.h \
++stralloc.h iopause.h taia.h tai.h uint64.h taia.h
++	./compile dns_namex.c
++
+ dns_nd.o: \
+ compile dns_nd.c byte.h fmt.h dns.h stralloc.h gen_alloc.h iopause.h \
+ taia.h tai.h uint64.h taia.h
+@@ -394,6 +399,17 @@ compile dnsname.c buffer.h exit.h strerr
+ gen_alloc.h iopause.h taia.h tai.h uint64.h taia.h
+ 	./compile dnsname.c
+ 
++dnsnamex: \
++load dnsnamex.o iopause.o dns.a env.a libtai.a alloc.a buffer.a unix.a \
++byte.a socket.lib
++	./load dnsnamex iopause.o dns.a env.a libtai.a alloc.a \
++	buffer.a unix.a byte.a  `cat socket.lib`
++
++dnsnamex.o: \
++compile dnsnamex.c buffer.h exit.h strerr.h ip4.h dns.h stralloc.h \
++gen_alloc.h iopause.h taia.h tai.h uint64.h taia.h
++	./compile dnsnamex.c
++
+ dnsq: \
+ load dnsq.o iopause.o printrecord.o printpacket.o parsetype.o dns.a \
+ env.a libtai.a buffer.a alloc.a unix.a byte.a socket.lib
+@@ -658,7 +674,7 @@ prog: \
+ dnscache-conf dnscache walldns-conf walldns rbldns-conf rbldns \
+ rbldns-data pickdns-conf pickdns pickdns-data tinydns-conf tinydns \
+ tinydns-data tinydns-get tinydns-edit axfr-get axfrdns-conf axfrdns \
+-dnsip dnsipq dnsname dnstxt dnsmx dnsfilter random-ip dnsqr dnsq \
++dnsip dnsipq dnsname dnsnamex dnstxt dnsmx dnsfilter random-ip dnsqr dnsq \
+ dnstrace dnstracesort cachetest utime rts
+ 
+ prot.o: \

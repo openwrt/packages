@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 # Original port by FreeWRT project.
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -17,6 +17,9 @@ PKG_RELEASE:=1
 PKG_SOURCE:=${PKG_NAME}-${PKG_VERSION}.tar.gz
 PKG_SOURCE_URL:=http://cr.yp.to/ucspi-tcp/
 PKG_HASH:=4a0615cab74886f5b4f7e8fd32933a07b955536a3476d74ea087a3ea66a23e9c
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MAINTAINER:=Thomas Guyot-Sionnest <tguyot@gmail.com>
+PKG_LICENSE:=Public Domain
 
 include $(INCLUDE_DIR)/package.mk
 

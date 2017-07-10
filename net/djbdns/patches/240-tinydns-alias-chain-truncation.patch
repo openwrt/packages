@@ -1,0 +1,87 @@
+--- a/tdlookup.c
++++ b/tdlookup.c
+@@ -103,12 +103,13 @@ static int doname(void)
+   return response_addname(d1);
+ }
+ 
+-static int doit(char *q,char qtype[2])
++static int doit1(char **pqname,char qtype[2])
+ {
+   unsigned int bpos;
+   unsigned int anpos;
+   unsigned int aupos;
+   unsigned int arpos;
++  char *q;
+   char *control;
+   char *wild;
+   int flaggavesoa;
+@@ -122,6 +123,12 @@ static int doit(char *q,char qtype[2])
+   int addrnum;
+   uint32 addrttl;
+   int i;
++  int loop = 0 ;
++
++RESTART:
++  if (loop++ >= 100) return 0 ;
++
++  q = *pqname ;
+ 
+   anpos = response_len;
+ 
+@@ -136,7 +143,14 @@ static int doit(char *q,char qtype[2])
+       if (byte_equal(type,2,DNS_T_NS)) flagns = 1;
+     }
+     if (flagns) break;
+-    if (!*control) return 0; /* q is not within our bailiwick */
++    if (!*control) { /* q is not within our bailiwick */
++      if (loop <= 1)
++        return 0 ;
++      else {
++        response[2] &= ~4;
++        goto DONE; /* The administrator has issued contradictory instructions */
++      }
++    }
+     control += *control;
+     control += 1;
+   }
+@@ -172,9 +186,17 @@ static int doit(char *q,char qtype[2])
+ 	continue;
+       }
+       if (!response_rstart(q,type,ttl)) return 0;
+-      if (byte_equal(type,2,DNS_T_NS) || byte_equal(type,2,DNS_T_CNAME) || byte_equal(type,2,DNS_T_PTR)) {
++      if (byte_equal(type,2,DNS_T_NS) || byte_equal(type,2,DNS_T_PTR)) {
+ 	if (!doname()) return 0;
+       }
++      else if (byte_equal(type,2,DNS_T_CNAME)) {
++	if (!doname()) return 0;
++        if (byte_diff(type,2,qtype)) {
++	  response_rfinish(RESPONSE_ANSWER);
++	  if (!dns_domain_copy(pqname,d1)) return 0 ;
++	  goto RESTART ;
++	}
++      }
+       else if (byte_equal(type,2,DNS_T_MX)) {
+ 	if (!dobytes(2)) return 0;
+ 	if (!doname()) return 0;
+@@ -275,9 +297,21 @@ static int doit(char *q,char qtype[2])
+     }
+   }
+ 
++DONE:
+   return 1;
+ }
+ 
++static int doit(char *qname,char qtype[2])
++{
++  int r ;
++  char * q = 0 ;
++
++  if (!dns_domain_copy(&q, qname)) return 0 ;
++  r = doit1(&q, qtype) ;
++  dns_domain_free(&q) ;
++  return r ;
++}
++
+ int respond(char *q,char qtype[2],char ip[4])
+ {
+   static struct tai cdb_valid = { 0 };

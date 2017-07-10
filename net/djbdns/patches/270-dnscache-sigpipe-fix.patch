@@ -1,0 +1,16 @@
+--- a/dnscache.c
++++ b/dnscache.c
+@@ -1,4 +1,5 @@
+ #include <unistd.h>
++#include <signal.h>
+ #include "env.h"
+ #include "exit.h"
+ #include "scan.h"
+@@ -391,6 +392,7 @@ int main()
+   char *x;
+   unsigned long cachesize;
+ 
++  signal(SIGPIPE, SIG_IGN);
+   x = env_get("IP");
+   if (!x)
+     strerr_die2x(111,FATAL,"$IP not set");

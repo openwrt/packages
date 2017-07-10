@@ -1,0 +1,319 @@
+
+# 20090409 jhalfmoon@milksnot.com - Don't hesitate to let me know if you decide to use it and/or what you think of it.
+
+This is a port of djbdns for OpenWRT (>= v8.09). Features:
+
+- works with the most current buildroot
+- makes use of the UCI configuration system
+- components are seperately packaged to minimize package footprint
+- most of the popular and necessary available patches are applied
+- documentation available (you're reading it)
+
+The djbdns package is a set of compact, reliable and fast DNS daemons and tools. This port is based on the work done by a few other people:
+
+- The FreeWRT project
+- Alexander Tsvyashchenko - https://dev.openwrt.org/ticket/2497
+- Some anonymous (Danish?) person - https://dev.openwrt.org/ticket/3837
+
+Using the previous work as a base, time went into rewriting the Make file, adding patches, adding the config system and writing this documentation. The ucspi-tcp and daemontools packages were not touched; they work just fine in the state they were found on OpenWRT TRAC.
+
+The following document meant to give some useful information about this package. You do not need to know all of the following to install or compile this package; it is only meant as an addition to help potential users on their way. An installation could theoretically be as simple as: "opkg install dnscache.ipk ; /etc/init.d/dnscache start". To find more about the workings of djbdns, visit:
+
+http://cr.yp.to/djbdns.html
+
+On the following sites you can find even more info, including text about the patches included in this package:
+
+http://www.lifewithdjbdns.com/
+http://www.thedjbway.org/djbdns/resources.html
+http://www.fefe.de/djbdns/
+http://homepages.tesco.net/~J.deBoynePollard/FGA/#DNS
+http://binarios.com/miscnotes/djbdns.html
+http://web.archive.org/web/20061013054303/http://ezine.daemonnews.org/200210/ezdjbdns.html
+
+Some info about the bugfixes:
+
+http://www.securityfocus.com/archive/1/501294/30/0/threaded
+http://www.your.org/dnscache/
+
+How to build
+============
+- copy the folders djbdns, ucspi-tcp (and optionally daemontools) to your buildroot/package directory
+- make menuconfig
+- select the packages under network/DNS/djbdns and network/ucspi-tcp (and optionally network/daemontools)
+- make
+- after compilation, the package can be found at bin/packages/<targetname>
+- now do what you normally do to install self-compiled packages on your OpenWRT machine
+
+If you wish to tinker with the code, then here are some useful commands to run in the buildroot:
+    rm -rf build_dir/<targetname>/djbdns-1.05
+    make package/cleanup
+    make package/djbdns/compile V=99
+    make package/index
+Once you have done a "make menuconfig;make" you can use these commands to quickly rebuild only the djbdns package.
+
+Usage pointers
+==============
+- After installation, you can make the servers start automatically on boot by running "/etc/init.d/<servicename> enable" . The script will then appear in the /etc/rc.d directory. This is standard OpenWRT functionality.
+- All djbdns parameters are stored in the UCI configuration system. Run "uci show djbdns" to see the settings. Data files are not implemented in the UCI system, so these files must be manually backed up when and if you intend to do a sysupgrade (=reflash the firmware). Those files include: dnscache dnsroot.global, dnscache @ file, tinydns data file, axfrdns tcp file, rbldns data file, each in their individual directories in /etc.
+- Each package is ready to run out-of-the-box, once installed. The default settings allow you to start playing immediately. The defaults are reasonably secure, but do not take my word for it. Verify it. Note: dnscache has two default example resolver IP addresses. The two default addresses are the OpenDNS resolvers, which might work at the moment, but this may change in the future.
+- You will most likely want to customize the settings for each seperate service you wish to use. Read the docs on the weblinks listed above for pointers on how to do so.
+- The ucspi-tcp package is only needed if you wish to install and run axfrdns.
+- The daemontools package is strictly optional. It is in no way linked to the djbdns package (yet). It is just there for you to play with.
+- Starting the init.d scripts from the command line with the environment variable DEBUG set to 1 will prevent the servers from daemonizing and show the servers's log dumped to stdout / stderr instead of /dev/null. Example: "DEBUG=1 /etc/init.d/dnscache start"
+- By default, all logging is disabled. Each daemon has a seperate option to activate logging. When logging activated the daemon logs to syslog using facility local1.info.
+- Each djbdns server requires an IP address on which to listen on. This port of djbdns allows you to define an interface on which to listen instead of an IP address. The advantage of this is that an interface can get a different IP address assigned, the djbdns stuff will not break. The dnscache server has a patch applied so that it is possible to define multiple interfaces on which to listen, separated by slashes. Example: wan/lan .
+- By default, dnscache acts as a recursive name server. If you wish to operate in forwardonly mode, then you need to set the forwardonly flag to '1'. Then you need to do either one of the following: Put the ip addresses of the name servers you wish to use as resolvers in the UCI config (djbdns.dnscache.resolver) or alternatively you can set the useresolvconf flag which will cause the dns servers assigned by dhcp to be used. That last option is a so called set-and-forget mode which will work quite well in most home environments.
+- If you want your OpenWRT machine to make use of its own dnscache, then you must make /etc/resolv.conf reflect this. One way of doin this is as follows: uci set network.wan.dns=127.0.0.1 . If you have dnscache listening on some other interface, you would naturally replace 127.0.0.1 by the address of that interface.
+- OpenWRT has several applications that can do DNS serving in one way or another (dnsmasq, Maradns, Bind). Make sure you have none of these apps running when you start running a djbdns name server because having two DNS apps listening on the same address is not something you would usually want. A patch for the dnsmasq configuration script and its config file is included with this package. The patch will allow you to configure dnsmasq to listen only on certain interfaces, instead of on all them as it does by default on OpenWRT. Alternatively, you could completely disable and / or remove dnsmasq, if you do not intend to use any of its functionality (which is serving DNS and DHCP).
+- The ignoreip patch also has a script supplied along with it, with which you can update the ignorelist. The script contains an explanation of why you might want to do this.
+- The ignoreip functionality is disabled by default. If you want to activate it, you need to set the flag 'useignore' flag to '1' in the config. You might also want to check if you are really blocking what you want to block. Be careful with this feature. Think twice before using it.
+
+To apply the dnsmasq patch
+==========================
+NOTE: This patch has been incorporated into OpenWRT trunk per 20090409 as seen in https://dev.openwrt.org/ticket/4900 and https://dev.openwrt.org/changeset/15172.
+
+This is a patch to allow you to use dnsmasq alongside dnscache. It will allow you to configure dnsmasq to listen only on certain interfaces, instead of on all them as it does by default on OpenWRT. It only patches the startup script and configuration file of dnsmasq, not dnsmasq itself. If you need or desire to apply the patch yourself, then there are two possible ways to go about it:
+
+Patch the dnsmasq package source:
+- cd to svn/openwrt/branches/8.09/packages/dnsmasq/files
+- do 'patch < dnsmasq.patch
+- if all went well you can now compile the package as you nomally would
+- you can now either reinstall dnsmasq on your router or re-flash the firmware image. If you reinstall the dnsmasq package then you waste some flash memory, as dnsmasq is usually already included as a part of the firmware image. One way to reinstall the dnsmasq package is to use SSH to upload the image to the router and do: opkg update ; opgk install -force-reinstall dnsmasq.ipk . Or you could configure your OpenWRT build machine as an http server that serves OpenWRT packages and then configure opkg to use your server as an ipkg repository. This is generally a pretty good idea if you are building your own firmware and packages.
+
+Alternatively, you can patch the dnsmasq files on the router itself:
+Look at the patch file and manually patch the files on the router. There are only four lines to modify, so it is not hard.
+
+NOTE: The dnsmasq paramaters added by this patch are not shown on the Luci webinterface. You will manually have to configure dnsmasq. An example of how to make dnsmasq serve DNS and DHCP only on the lan:
+uci set dhcp.@dnsmasq[0].nonwildcard=1
+uci set dhcp.@dnsmasq[0].interfaces=br-lan
+uci commit
+This will prevent dnsmasq from binding to the wildcard IP address and instead make it listen on the designated (lan) interface. You are then free to run a DNS server on, for example, the loopback and/or the wan interface.
+
+Assorted notes
+==============
+- This port was put together with reasonable care. It is not a dirty hack, but that is ofcourse a very subjective statement.
+- It was created on and for Kamikaze 8.09 with both a 2.4 and a 2.6 kernel. It was not tested to work on older versions of OpenWRT, but it might.
+- This package will build into several packages. Most of the packages rely on the package djbdnsbase. It contains the shared config data for all daemons. It should automatically get installed along with the daemons by opkg.
+- The ucspi-tcp package is a requirement for installing axfrdns. If you don't user afrxdns, you won't need to install ucspi-tcp.
+- The daemontool package is supplied as a part of this port, but it is not needed or used by anything in the djbdns packages. It is included in case anyone feels the want or need to make use of it.
+- Among the applied patches are the latest (as of the 2nd of april 2009) notorious bug fixes for dnscache.
+- Most patches are vanilla, ie. unmodified as they can be found on the net. The only patch modified is the djbdns-1.05-slogging patch, which was merged with the server-1.05-nxdomain-logging patch.
+- The dnscache gets a patch applied to be able to listen on multiple IP addresses. Tinydns is not patched to have that functionality, although the patch for that is available on the net.
+- dnscache is also patched to deliver additional statistics in its log files, including hits/misses and what types of records were queried. These can be used to monitor and/or graph the behaviour of your dnscache server.
+- The dnscache package gets configured to listen to 127.0.0.1 and the lan subnet by default. See "ls /etc/dnscache/ip" and  "uci show djbdns|grep dnscache" .
+- tinydns, axfrdns and rbldns include example data files that are installed by default. Their purpose is to ease installation and testing of the packages and to act as a guide to people who are not familiar with these applications.
+- The dnstools part of this package contains a script called dnsroots-update with which you can update the global root file. This is quite useful because IP addresses of the root servers change now and then, although not very often. I seems that few people actually bother to update the global roots file once they have installed dnscache. It is important to run the update script every now and them, or at least at installation time. Do the following to update the list: dnsroots-update > /etc/dnscache/dnsroots.global and then copy the file dnsroots.global to /etc/dnscache/server/@ . The dnstools package is quite large (400K installed) for an embedded system. What you could do instead of running the update script on the router, is to install the djbdns package on some big machine and run the script on there and then copy the output to the dnsroots file on the router. The dnsroots.global file included in this package is up to date as per the date of this writing (2nd of april 2009).
+
+Testing the installation
+========================
+The following may ease any debugging you might wish/need to do:
+- Set the syslog buffer to something like 64K or more and make it log to IP address localhost (reboot to activate the changes):
+    uci set system.@system[0].log_ip=127.0.0.1
+    uci set system.@system[0].log_size=64
+    uci commit
+- Use "logread|less" to browse through the buffered syslog output.
+- For realtime log monitoring: Install netcat and make it listen to the syslog output:
+    opkg install netcat
+    netcat -ulp 514
+
+This paragraph gives a few brief pointers on how to test your installation. The general idea is as follows: Log in to the OpenWRT machine using two seperate SSH sessions or a single session and then use 'screen' to gain multiple sessions. In the first session you have to start the daemon you wish to test. In the second session you run the diagnostic commands. In the following examples, for each daemon and each diagnostic tool, I have supplied the commandline and the expected, approximate output.
+
+NOTE1: Make sure no other DNS servers are running. Check with "netstat -an|grep 53" and/or do a "killall dnsmasq" just to be sure.
+NOTE2: dnscache requires an active internet connection it to work
+NOTE3: In the following examples, the servers were running on IP address 10.1.1.2
+NOTE4: Most of these tests require the dnstools package to be installed
+
+-dnscache
+session1 "DEBUG=1 /etc/init.d/dnscache start"
+        Starting Caching nameserver: dnscachelistening on 0a010102
+        starting
+        <a whole truckload of log data will follow>
+session2 "DNSCACHEIP=$yourwanip dnsqr a example.com"  (note: you do no have to modify /etc/resolv.conf to use this command)
+        1 example.com:
+        45 bytes, 1+1+0+0 records, response, noerror
+        query: 1 example.com
+        answer: example.com 172800 A 208.77.188.166
+session2 "dnsip example.com" (note: /etc/resolv.conf must point to the address on which dnscache is listening)
+        208.77.188.166
+session2 "nslookup example.com" (note: /etc/resolv.conf must point to the address on which dnscache is listening)
+        Server:    10.1.1.2
+        Address 1: 10.1.1.2
+        Name:      example.com
+        Address 1: 208.77.188.166 www.example.com
+
+-tinydns
+session1 "DEBUG=1 /etc/init.d/tinydns start"
+        Starting Authoritative nameserver: tinydnsstarting tinydns
+        0a010102:4eee:fdd8 + 0001 example.net
+        stats 1 1 0 0 0 0 0
+session2 "dnsq a example.net $yourwanip"
+        1 example.net:
+        79 bytes, 1+0+1+0 records, response, authoritative, noerror
+        query: 1 example.net
+        authority: example.net 2560 SOA ns.example.net hostmaster.example.net 1238703484 16384 2048 1048576 2560
+
+-axfrdns
+session1 "DEBUG=1 /etc/init.d/axfrdns start"
+        Starting Zone transfer name server: tcpservertcpserver: status: 0/10
+        tcpserver: status: 1/10
+        tcpserver: pid 1140 from 10.1.1.2
+        tcpserver: ok 1140 0:10.1.1.2:53 :10.1.1.2::1034
+        0a010102:040a:0000 0006 example.net
+        tcpserver: end 1140 status 0
+        tcpserver: status: 0/10
+session2 "tcpclient -RHl0 $yourwanip 53 axfr-get example.net /tmp/zone /tmp/zone.tmp"
+        The file /tmp/zone should now contain the example.net zone in tinydns-data format.
+
+-rbldns
+session1 "DEBUG=1 /etc/init.d/rbldns start"
+        Starting Reverse DNS wall: rbldnsstarting rbldns
+        0a010102:881d:01ca + 0010 8.4.2.1.test
+        stats 1 1 0 0 0 0 0
+        0a010102:674a:e70f N 0010 9.4.2.1.test
+session2 "dnsq txt 8.4.2.1.test $yourwanip"
+        16 8.4.2.1.test:
+        59 bytes, 1+1+0+0 records, response, authoritative, noerror
+        query: 16 8.4.2.1.test
+        answer: 8.4.2.1.test 2048 16 \020www.somesite.com
+session2 "dnsq txt 9.4.2.1.test $yourwanip"
+        16 9.4.2.1.test:
+        30 bytes, 1+0+0+0 records, response, authoritative, nxdomain
+        query: 16 9.4.2.1.test
+
+-walldns
+session1 "DEBUG=1 /etc/init.d/walldns start"
+        Starting Reverse DNS wall: walldnsstarting walldns
+        0a010102:7b76:3d97 + 0001 4.3.2.1.in-addr.arpa
+        stats 1 1 0 0 0 0 0
+session2 "dnsq a 4.3.2.1.in-addr.arpa $yourwanip"
+        1 4.3.2.1.in-addr.arpa:
+        54 bytes, 1+1+0+0 records, response, authoritative, noerror
+        query: 1 4.3.2.1.in-addr.arpa
+        answer: 4.3.2.1.in-addr.arpa 655360 A 1.2.3.4
+
+axfrdns defaults
+================
+axfrdns is run using tcpserver from the ucspi-tcp package. The following parameters are used to start the tcpserver daemon (which runs as root BTW):
+-D: Never delay sending data; enable TCP_NODELAY.
+-R: Do not attempt to obtain $TCPREMOTEINFO from the remote host. To avoid loops, you must use this option for servers on TCP ports 53 and 113.
+-H: Do not look up the remote host name in DNS; remove the environment variable $TCPREMOTEHOST. To avoid loops, you must use this option for servers on TCP port 53.
+-l localname: Do not look up the local host name in DNS; use localname for the environment variable $TCPLOCALHOST. A common choice for localname is 0. To avoid loops, you must use this option for servers on TCP port 53.
+-c n (=40): Do not handle more than n simultaneous connections. If there are n simultaneous copies of prog running, defer acceptance of a new connection until one copy finishes. n must be a positive integer. Default: 40.
+-b n (=10): Allow a backlog of approximately n TCP SYNs. On some systems, n is silently limited to 5. On systems supporting SYN cookies, the backlog is irrelevant.
+
+In debug mode and when logging is activated, the following parameter is also active:
+-v: Verbose. Print error messages and status messages.
+
+Applied patches
+===============
+crosscompile.patch
+https://dev.openwrt.org/ticket/2497
+Patch to make djbdns compile correctly for OpenWRT. I understand that the original patch comes from FreeWRT and was adapted for OpenWRT by Alexander Tsvyashchenko.
+
+dnsroots-update.patch
+Update the dnsroots.global file to be current.
+
+srv-records-and-axfrget.patch
+http://sol.truespace.ca/Files/djbdns/srv.patch
+Adds native support for srv records (not really necessary) and also patches axfr-get to decompose SRV and PTR records and write them out in native format, rather than opaque. This last thing is needed to fix a possible problem with tinydns-data.
+
+dnscache_less_chatty_log
+http://sol.truespace.ca/Files/djbdns/log.patch
+Makes dnscache log "stat" entries no more than once per 5 seconds.
+
+tinydns_mmap_leak
+http://marc.info/?l=djbdns&m=116399640808774&w=2
+This fixes the following: In the original code if cdb_read encountered an error it returned an error code and the calling function exited without closing the cdb data file resulting in an fd leak, eventually leading to a 'too many files open' error.
+
+dnscache_big_udp_packets
+http://marc.info/?l=djbdns&m=122368590802063&w=2
+Patch to support oversized UDP packets up to 4096 bytes in length, while still correctly truncating responses over 512 bytes when sending them to stub resolvers.
+
+dnscache_dpos_tcp_servfail
+http://marc.info/?l=djbdns&m=119998909915985&w=3
+Fixes broken tcp dns queries in certain situations. For example: A vanilla 1.05 will fail on "dnstxt aol.com aol.com".
+
+dnscache-cache-negatives
+http://sol.truespace.ca/Files/djbdns/nxdomain.patch
+Add support for caching of unsuccessful lookup results.
+
+tinydns_one_second
+http://www.tinydns.org/one-second.patch
+Causes tinydns to keep its mmap() of the data.cdb file open for at most one second, instead of the default one hundred queries. This improves throughput on high traffic machines.
+
+dnscache-cachestats.patch
+http://romana.now.ie/#djbdns-cachestats
+This patch modifies the dnscache program to keep a counter of cache hits and cache misses. Two new fields are added to the stats output line: the fifth number is the number of cache hits; the sixth number is the number of cache misses.
+
+compiler-temporary-filename.patch
+http://homepages.tesco.net/~J.deBoynePollard/Softwares/djbdns/#compiler-temporary-filename
+A bit of a nit-picky patch that adjusts the names of generated temorary files to be more 'correct'. A bit silly really.
+
+dnscache-multiple-ip.patch
+http://danp.net/djbdns/patches.html
+When applied, dnscache will accept a /-delimited list of IP address in $IP and bind to each in turn. NOTE: This patch is only really useful on embedded systems with very limited memory. On big systems, ther are other ways to achieve listening on multiple IP adresses. You can read more on that over here: http://www.faqts.com/knowledge_base/view.phtml/aid/9644/fid/699
+
+dnsnamex-extra-command.patch
+http://homepages.tesco.net/~J.deBoynePollard/Softwares/djbdns/#dnsnamex
+Not really a patch, but an extra command. dnsnamex prints all of the domain names that the IP address supplied to it maps to, on a single line.
+
+dnscache-cname-handling.patch
+http://homepages.tesco.net/~J.deBoynePollard/FGA/#DNS
+Fixes mis-handling of client-side aliases
+
+dnscache-strict-forwardonly.patch
+http://homepages.tesco.net/~J.deBoynePollard/Softwares/djbdns/#dnscache-strict-forwardonly
+This patch modifies the behaviour of dnscache such that "forwardonly" mode is fully enforced.
+
+dnscacheip-space-separator.patch
+http://homepages.tesco.net/~J.deBoynePollard/FGA/djbdns-problems.html#dnscacheip-separator-character
+Patch to change the separator in ${DNSCACHEIP} to the space character
+
+tinydns-data-semantic-error.patch
+http://homepages.tesco.net/~J.deBoynePollard/FGA/djbdns-problems.html#tinydns-data-semantic-error
+Fixes the fact that stock tinydns-data doesn't handle semantic errors in its input
+
+tinydns-alias-chain-truncation.patch
+http://homepages.tesco.net/~J.deBoynePollard/FGA/djbdns-problems.html#tinydns-alias-chain-truncation
+Fixes truncation of alias chains by tinydns and axfrdns
+
+dnscache-slogging.patch
+http://www.ohse.de/uwe/patches.html
+Patch to enable statistics logging of queried resource records.
+This patch is merged with the patch server-1.05-nxdomain-logging.patch that logs nxdomain queries.
+http://danp.net/djbdns/
+
+dnsfilter-replace.patch
+http://www.ohse.de/uwe/patches.html
+This patch adds an option to the dnsfilter program (-r). It's use makes dnsfilter simply replace the IP address by the host name if possible. If the IP address cannot be determined for whatever reason then it will be left alone. -r stands for replace.
+
+dnscache_sigpipe_fix
+http://marc.info/?l=djbdns&m=104804013229536&w=2
+This patch tells dnscache to ignore the SIGPIPE signal.
+
+ignoreip2.patch
+http://tinydns.org/djbdns-1.05-ignoreip2.patch
+This patch change djbdns's dnscache so that it will ignore thex IP addresses given in the ignoreip file. This patch was made to boycott Verisign, amongst others, who decided to start supplying replies to non-existant and wildcard domains. NOTE: This feature is disabled in the config file by default. Be careful with this one.
+
+bugfix-dnscache-dempsky-poison.patch
+http://www.securityfocus.com/archive/1/501294/30/0/threaded
+Patch to fix a potential cache-poisoning attack. This bug only affects domains that serve DNS content using tinydns and axfrdns (only for DNS queries over TCP; clients do not need AXFR permissions) from djbdns 1.05 and allow untrusted users to include arbitrary records.
+
+bugfix-dnscache-merge-outgoing-requests.patch
+http://www.your.org/dnscache/
+This patch prevents a class of poisoning attack by combining identical requests from clients into one outgoing query. Without this patch, an attacker can coerce dnscache into launching hundreds of identical queries at once, making a specific type of attack several orders of magnitude easier.
+
+bugfix-dnscache-cache-soa-records.patch
+http://www.your.org/dnscache/
+This patch allows dnscache to store the responses of "SOA" type queries in its cache. SOA responses are the only type of response unconditionally uncached. dnscache uses its internal cache to prevent certain classes of poisoning attack. Attackers may choose to send floods of SOA requests to bypass these protections.
+
+dnrqx
+http://homepages.tesco.net/~J.deBoynePollard/Softwares/djbdns/dnsqrx
+Not really a patch, but a handy script to make dnsq query a given name server instead of the one in /etc/resolv.conf.
+
+Possible future enhancements to this package
+============================================
+- add a Luci webinterface
+- add scripts to make the DNS daemons run using daemontools to increase the reliability of the services
+- ipv6 support
+

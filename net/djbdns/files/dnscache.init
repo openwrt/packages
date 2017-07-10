@@ -1,0 +1,122 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2012 OpenWrt.org
+
+# Preferably start dnscache after udhcpd/dnsmasq, to be sure /etc/resolv.conf is set correctly. dnsmasq is at S60, so dnscache is put at S65 as seen below. If /etc/resolv.conf is not used, then dnscache may be started at S47, just after the firewall has been set up.
+START=65
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/dnscache
+NAME=dnscache
+DESC="Caching name server"
+
+ROOT="/tmp/dnscache"
+resolvfile="/etc/resolv.conf"
+
+start() {
+    echo "Starting $DESC: $NAME"
+    config_load djbdns
+    config_foreach get_userids global
+    mkdir -p $ROOT
+    cp -fa /etc/dnscache/* $ROOT
+    rm -f $ROOT/resolvers
+    rm -f $ROOT/ignoreip
+    chown -R $UID:$GID $ROOT
+    config_foreach start_dnscache dnscache
+}
+
+get_userids() {
+    local cfg="$1"
+    config_get UID "$cfg" runasuser
+    config_get GID "$cfg" runasgroup
+    UID=`id -u $UID`
+    GID=`id -g $GID`
+}
+
+append_server() {
+    echo $1 >> $ROOT/resolvers
+}
+
+append_ignore() {
+    echo $1 >> $ROOT/ignoreip
+}
+
+start_dnscache() {
+    local cfg="$1"
+    config_get logging        "$cfg" logging
+    config_get useresolvconf  "$cfg" useresolvconf
+    config_get iface          "$cfg" interface
+    config_get ifacesend      "$cfg" interfacesend
+    config_get defaultallowif "$cfg" defaultallowif
+    config_get CACHESIZE      "$cfg" cachesize
+    config_get FORWARDONLY    "$cfg" forwardonly
+    config_get HIDETTL        "$cfg" hidettl
+    config_list_foreach       "$cfg" "resolver" append_server
+    config_get useignore      "$cfg" useignore
+    if [ "$useignore" == "1" ] ; then
+        config_list_foreach   "$cfg" "ignoreip" append_ignore
+    fi
+# Add some interface network addresses to list of allowed IP addresses (assumes /24 networks)
+    . /lib/functions/network.sh
+    if [ -n "$defaultallowif" ] ; then
+        for myinterface in `echo $defaultallowif`; do
+            network_get_ipaddr addr $myinterface || continue
+            # the next line strips the last octet from the ip address
+            addr=`echo $addr|sed 's/.[0-9]\+$//'`
+            touch $ROOT/ip/$addr
+            echo Adding $ROOT/ip/$addr
+        done
+    fi
+# Translate listen interface names to IP addresses
+    network_get_ipaddr IP "$iface"
+# Translate send interface name to an IP address
+    network_get_ipaddr IPSEND "$ifacesend"
+# Unset HIDETTL if equal to 0
+    if [ "$HIDETTL" == "0" ] ; then
+        export -n HIDETTL
+    fi
+# If forwardingonly set then activate list of resolvers
+    if [ "$FORWARDONLY" == "0" ] ; then
+        # Unset FORWARDONLY if equal to '0'
+        export -n FORWARDONLY
+    else
+# Use either fixed list of dnsservers or resolv.conf data
+        if [ "$useresolvconf" == "1" ] ; then
+            if [ -s "$resolvfile" ] ; then
+               cat $resolvfile|grep nameserver|sed 's/nameserver //g' > $ROOT/resolvers
+            else
+               echo Error: $resolvfile does not exist.
+               exit 1
+            fi
+        fi
+        if [ ! "`cat $ROOT/resolvers|wc -L`" == "0" ] ; then
+            cp -f $ROOT/resolvers $ROOT/servers/@ > /dev/null 2>&1
+        else
+            echo Error: No resolvers are defined.
+            exit 1
+        fi
+     fi
+    export IP 
+    export ROOT
+# dnscache likes to receive a 128 byte random seed
+    dd if=/dev/urandom of=$ROOT/randomseed bs=128 count=1  > /dev/null 2>&1
+    if [ "$DEBUG" == 1 ] ; then
+        $DAEMON < /$ROOT/randomseed
+    elif [ "$logging" == '1' ] ; then
+        $DAEMON 2>&1 < /$ROOT/randomseed | logger -p local1.info -t $NAME &
+    else
+        $DAEMON > /dev/null 2>&1 < /$ROOT/randomseed &
+    fi
+}
+
+stop() {
+    echo -n "Stopping $DESC: $NAME"
+    kill `pidof $NAME|sed "s/$$//g"` > /dev/null 2>&1
+    echo " ."
+}
+
+restart() {
+    echo "Restarting $DESC: $NAME... "
+    stop
+    sleep 2
+    start
+}
+

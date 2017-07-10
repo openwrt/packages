@@ -1,0 +1,10 @@
+--- a/dns_transmit.c
++++ b/dns_transmit.c
+@@ -166,6 +166,7 @@ static int thistcp(struct dns_transmit *
+       taia_uint(&d->deadline,10);
+       taia_add(&d->deadline,&d->deadline,&now);
+       if (socket_connect4(d->s1 - 1,ip,53) == 0) {
++        d->pos = 0;
+         d->tcpstate = 2;
+         return 0;
+       }

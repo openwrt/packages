@@ -1,0 +1,47 @@
+--- a/log.h
++++ b/log.h
+@@ -25,6 +25,7 @@ extern void log_nxdomain(const char *,co
+ extern void log_nodata(const char *,const char *,const char *,unsigned int);
+ extern void log_servfail(const char *);
+ extern void log_lame(const char *,const char *,const char *);
++extern void log_ignore_referral(const char *,const char *,const char *);
+ 
+ extern void log_rr(const char *,const char *,const char *,const char *,unsigned int,unsigned int);
+ extern void log_rrns(const char *,const char *,const char *,unsigned int);
+--- a/log.c
++++ b/log.c
+@@ -197,6 +197,13 @@ void log_lame(const char server[4],const
+   line();
+ }
+ 
++void log_ignore_referral(const char server[4],const char * control, const char *referral)
++{
++  string("ignored referral "); ip(server); space();
++  name(control); space(); name(referral);
++  line();
++}
++
+ void log_servfail(const char *dn)
+ {
+   const char *x = error_str(errno);
+--- a/query.c
++++ b/query.c
+@@ -828,6 +828,18 @@ static int doit(struct query *z,int stat
+ 
+ 
+   if (!dns_domain_suffix(d,referral)) goto DIE;
++
++  /* In strict "forwardonly" mode, we don't, as the manual states,
++  ** contact a chain of servers according to "NS" resource records.
++  ** We don't obey any referral responses, therefore.  Instead, we
++  ** eliminate the server from the list and try the next one.
++  */
++  if (flagforwardonly) {
++      log_ignore_referral(whichserver,control,referral);
++      byte_zero(whichserver,4);
++      goto HAVENS;
++  }
++
+   control = d + dns_domain_suffixpos(d,referral);
+   z->control[z->level] = control;
+   byte_zero(z->servers[z->level],64);

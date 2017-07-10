@@ -1,0 +1,43 @@
+#Changelog for the djbdns port for OpenWRT
+
+5 20090522 jhalfmoon
+enhancement - added patch: dnsroots_updated
+enhancement - added patch: tinydns_one_second
+enhancement - added patch: srv-records-and-axfrget
+enhancement - added patch: dnscache_less_chatty_log
+enhancement - added patch: tinydns_mmap_leak
+enhancement - added patch: dnscache_dpos_tcp_servfail
+enhancement - added patch: dnscache_negative_ttls
+enhancement - added patch: dnscache_sigpipe_fix
+enhancement - added patch: dnscache_big_udp_packets
+enhancement - added patch: dnscache_ignoreip2 (Note: disabled in config by default!)
+enhancement - added HIDETTL config option
+change - Corrected a typo in the axfrdns description in the Makefile.
+change - Cleaned up some lines in the Makefile
+change - dnsroots.global now gets copied from the djbdns source folder instead of from the package/files folder.
+change - The dnscache-multiple-ip patch was removed as it served no purpose
+change - Renamed a few patches to be more consistent with the other patches
+change - Updated the README file to reflect the changes
+
+4 20090418 jhalfmoon
+bugfix - The dnscache postinst script had a bug that prevented djbdns from being compiled into a firmware image.
+bugfix - The dnscache startup script now uses /dev/urandom instead of /dev/random as a source of randomness. Using /dev/random does not work on 2.6 kernels.
+bugfix - dnscache no longer tries to use /tmp/resolv.conf.auto but /etc/resolv.conf instead. This only applies when useresolvconf==1.
+change - In menuconfig: djbdns moved from network to network/DNS
+change - Removed the dnscache postinst script to the dnscache startup script. The script configures dnscache to accept connections from certain local network adresses.
+change - The dnscache startup script was cleaned up a bit.
+change - default logging level is now info instead of notice.
+enhancement - Added option to add list of resolvers to UCI config for use in forwardonly mode. Two OpenDNS example addresses are added as a default.
+
+3 20090409 jhalfmoon
+bugfix - The restart routines of all scripts were broken causing restart to fail
+bugfix - dnsqrx was broken, script accidentally relied on bash instead of sh
+
+2 20090406 jhalfmoon
+bugfix - dnscache init script did not correctly handle /tmp/resolv.conf.auto
+enhancement - Addded the dnsqr command from http://homepages.tesco.net/~J.deBoynePollard/Softwares/djbdns/dnsqrx
+change - Default dnscache CACHESIZE was set too low, was 200KB, is now 1MB
+change - Added list of patches and made some overall adjustments to the README
+
+1 20090404 jhalfmoon
+Initial release

@@ -1,0 +1,93 @@
+--- a/pickdns-data.c
++++ b/pickdns-data.c
+@@ -123,7 +123,7 @@ void syntaxerror(const char *why)
+ }
+ void die_datatmp(void)
+ {
+-  strerr_die2sys(111,FATAL,"unable to create data.tmp: ");
++  strerr_die2sys(111,FATAL,"unable to create data.cdb.tmp: ");
+ }
+ 
+ int main()
+@@ -142,7 +142,7 @@ int main()
+   if (fd == -1) strerr_die2sys(111,FATAL,"unable to open data: ");
+   buffer_init(&b,buffer_unixread,fd,bspace,sizeof bspace);
+ 
+-  fdcdb = open_trunc("data.tmp");
++  fdcdb = open_trunc("data.cdb.tmp");
+   if (fdcdb == -1) die_datatmp();
+   if (cdb_make_start(&cdb,fdcdb) == -1) die_datatmp();
+ 
+@@ -223,8 +223,8 @@ int main()
+   if (cdb_make_finish(&cdb) == -1) die_datatmp();
+   if (fsync(fdcdb) == -1) die_datatmp();
+   if (close(fdcdb) == -1) die_datatmp(); /* NFS stupidity */
+-  if (rename("data.tmp","data.cdb") == -1)
+-    strerr_die2sys(111,FATAL,"unable to move data.tmp to data.cdb: ");
++  if (rename("data.cdb.tmp","data.cdb") == -1)
++    strerr_die2sys(111,FATAL,"unable to move data.cdb.tmp to data.cdb: ");
+ 
+   _exit(0);
+ }
+--- a/rbldns-data.c
++++ b/rbldns-data.c
+@@ -42,7 +42,7 @@ void syntaxerror(const char *why)
+ }
+ void die_datatmp(void)
+ {
+-  strerr_die2sys(111,FATAL,"unable to create data.tmp: ");
++  strerr_die2sys(111,FATAL,"unable to create data.cdb.tmp: ");
+ }
+ 
+ int main()
+@@ -59,7 +59,7 @@ int main()
+   if (fd == -1) strerr_die2sys(111,FATAL,"unable to open data: ");
+   buffer_init(&b,buffer_unixread,fd,bspace,sizeof bspace);
+ 
+-  fdcdb = open_trunc("data.tmp");
++  fdcdb = open_trunc("data.cdb.tmp");
+   if (fdcdb == -1) die_datatmp();
+   if (cdb_make_start(&cdb,fdcdb) == -1) die_datatmp();
+ 
+@@ -121,8 +121,8 @@ int main()
+   if (cdb_make_finish(&cdb) == -1) die_datatmp();
+   if (fsync(fdcdb) == -1) die_datatmp();
+   if (close(fdcdb) == -1) die_datatmp(); /* NFS stupidity */
+-  if (rename("data.tmp","data.cdb") == -1)
+-    strerr_die2sys(111,FATAL,"unable to move data.tmp to data.cdb: ");
++  if (rename("data.cdb.tmp","data.cdb") == -1)
++    strerr_die2sys(111,FATAL,"unable to move data.cdb.tmp to data.cdb: ");
+ 
+   _exit(0);
+ }
+--- a/tinydns-data.c
++++ b/tinydns-data.c
+@@ -27,7 +27,7 @@
+ 
+ void die_datatmp(void)
+ {
+-  strerr_die2sys(111,FATAL,"unable to create data.tmp: ");
++  strerr_die2sys(111,FATAL,"unable to create data.cdb.tmp: ");
+ }
+ void nomem(void)
+ {
+@@ -207,7 +207,7 @@ int main()
+ 
+   buffer_init(&b,buffer_unixread,fddata,bspace,sizeof bspace);
+ 
+-  fdcdb = open_trunc("data.tmp");
++  fdcdb = open_trunc("data.cdb.tmp");
+   if (fdcdb == -1) die_datatmp();
+   if (cdb_make_start(&cdb,fdcdb) == -1) die_datatmp();
+ 
+@@ -487,8 +487,8 @@ int main()
+   if (cdb_make_finish(&cdb) == -1) die_datatmp();
+   if (fsync(fdcdb) == -1) die_datatmp();
+   if (close(fdcdb) == -1) die_datatmp(); /* NFS stupidity */
+-  if (rename("data.tmp","data.cdb") == -1)
+-    strerr_die2sys(111,FATAL,"unable to move data.tmp to data.cdb: ");
++  if (rename("data.cdb.tmp","data.cdb") == -1)
++    strerr_die2sys(111,FATAL,"unable to move data.cdb.tmp to data.cdb: ");
+ 
+   _exit(0);
+ }

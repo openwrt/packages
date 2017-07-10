@@ -1,0 +1,122 @@
+--- a/server.c
++++ b/server.c
+@@ -25,12 +25,63 @@ static int len;
+ 
+ static char *q;
+ 
++static uint64 stats_numq;
++static uint64 stats_plus;
++static uint64 stats_minus;
++static uint64 stats_nx;
++static uint64 stats_notimp;
++static uint64 stats_weird;
++static uint64 stats_noq;
++
++/* work around gcc 2.95.2 bug */
++#define number(x) ( (u64 = (x)), u64_print() )
++static uint64 u64;
++static void u64_print(void)
++{
++  char ubuf[20];
++  unsigned int pos;
++
++  pos = sizeof ubuf;
++  do {
++    if (!pos) break;
++    ubuf[--pos] = '0' + (u64 % 10);
++    u64 /= 10;
++  } while(u64);
++
++  buffer_put(buffer_2,ubuf + pos,sizeof ubuf - pos);
++}
++
++static void string(const char *s)
++{
++  buffer_puts(buffer_2,s);
++}
++
++static void line(void)
++{
++  string("\n");
++  buffer_flush(buffer_2);
++}
++
++static void log_stats(void)
++{
++  string("stats ");
++  number(stats_numq); string(" ");
++  number(stats_plus); string(" ");
++  number(stats_minus); string(" ");
++  number(stats_nx); string(" ");
++  number(stats_notimp); string(" ");
++  number(stats_weird); string(" ");
++  number(stats_noq);
++  line();
++}
++
+ static int doit(void)
+ {
+   unsigned int pos;
+   char header[12];
+   char qtype[2];
+   char qclass[2];
++  stats_numq++;
+ 
+   if (len >= sizeof buf) goto NOQ;
+   pos = dns_packet_copy(buf,len,0,header,12); if (!pos) goto NOQ;
+@@ -56,25 +107,37 @@ static int doit(void)
+ 
+   case_lowerb(q,dns_domain_length(q));
+   if (!respond(q,qtype,ip)) {
++    stats_minus++;
+     qlog(ip,port,header,q,qtype," - ");
+     return 0;
+   }
+-  qlog(ip,port,header,q,qtype," + ");
++
++  if ((response[2] & 4) && (response[3] & 3)) {
++    stats_nx++;
++    qlog(ip,port,header,q,qtype," N ");
++  }
++  else {
++    stats_plus++;
++    qlog(ip,port,header,q,qtype," + ");
++  }
+   return 1;
+ 
+   NOTIMP:
++  stats_notimp++;
+   response[3] &= ~15;
+   response[3] |= 4;
+   qlog(ip,port,header,q,qtype," I ");
+   return 1;
+ 
+   WEIRDCLASS:
++  stats_weird++;
+   response[3] &= ~15;
+   response[3] |= 1;
+   qlog(ip,port,header,q,qtype," C ");
+   return 1;
+ 
+   NOQ:
++  stats_noq++;
+   qlog(ip,port,"\0\0","","\0\0"," / ");
+   return 0;
+ }
+@@ -83,6 +146,7 @@ int main()
+ {
+   char *x;
+   int udp53;
++  unsigned char flag=0;
+ 
+   x = env_get("IP");
+   if (!x)
+@@ -106,6 +170,8 @@ int main()
+   buffer_putsflush(buffer_2,starting);
+ 
+   for (;;) {
++    if ((flag++)%32==1)
++      log_stats();
+     len = socket_recv4(udp53,buf,sizeof buf,ip,&port);
+     if (len < 0) continue;
+     if (!doit()) continue;

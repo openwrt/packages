@@ -1,0 +1,9 @@
+#!/bin/sh
+# (c) Copyright 2003-2003 Jonathan de Boyne Pollard. All rights reserved. "Moral" rights asserted.
+# Permission is hereby granted to distribute this script unmodified.
+# This script requires the patch that changes the ${DNSCACHEIP} separator, which can be found at <URL:http://homepages.tesco.net./~J.deBoynePollard/Softwares/djbdns.html>.
+t=${1?Missing type}
+n=${2?Missing name}
+s=${3?Missing server}
+i=`dnsip $s`
+DNSCACHEIP=${i:?Bad server name} dnsqr $t $n

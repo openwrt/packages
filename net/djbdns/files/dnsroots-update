@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# This is a script that outputs the current list of active DNS
+# root servers. To run, it requires an active internet connection
+# and a working resolving DNS server. It also requires that the
+# djbdns dnstools be installed, or at least the tools dnsqr and
+# dnsip.
+
+dnsqr ns .|grep answer|cut -f 5 -d " "|sort|while read server; do dnsip $server; done

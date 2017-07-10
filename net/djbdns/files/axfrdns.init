@@ -1,0 +1,73 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2012 OpenWrt.org
+#
+# version 20090401 jhalfmoon
+
+START=47
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/tcpserver
+NAME=tcpserver
+DESC="Zone transfer name server"
+
+APP=/usr/bin/axfrdns
+ROOT=/tmp/tinydns
+
+if [ ! -e /etc/tinydns/data ] ; then
+    echo Error: Dependency tinydns not found.
+    exit 111
+fi
+
+start() {
+    echo "Starting $DESC: $NAME"
+    config_load djbdns
+    mkdir -p $ROOT
+    ln -sf /etc/tinydns/data $ROOT/data
+    cd $ROOT
+    tinydns-data
+    chown -R $UID:$GID $ROOT
+    tcprules $ROOT/tcp.cdb $ROOT/tcp.cdb.tmp < /etc/axfrdns/tcp
+    config_foreach get_userids global
+    config_foreach start_daemon axfrdns
+}
+
+get_userids() {
+    local cfg="$1"
+    config_get UID "$cfg" runasuser
+    config_get GID "$cfg" runasgroup
+    UID=`id -u $UID`
+    GID=`id -g $GID`
+}
+
+start_daemon() {
+    local cfg="$1"
+    config_get logging  "$cfg" logging
+    config_get iface    "$cfg" interface
+    config_get AXFR     "$cfg" allowedzones
+# Unset AXFR if it is empty
+    [ -z $AXFR ] && export -n AXFR
+# Translate listening interfaces to ip addresses
+    . /lib/functions/network.sh
+    network_get_ipaddr IP "$iface" || return 1
+    export ROOT
+    if [ "$DEBUG" == 1 ] ; then
+        $DAEMON -vDRHl0 -c40 -b10 -x $ROOT/tcp.cdb -- $IP 53 $APP
+    elif [ "$logging" == '1' ] ; then
+        $DAEMON -vDRHl0 -c40 -b10 -x $ROOT/tcp.cdb -- $IP 53 $APP 2>&1 | logger -p local1.info -t $NAME &    
+    else
+        $DAEMON -DRHl0 -c40 -b10 -x $ROOT/tcp.cdb -- $IP 53 $APP > /dev/null 2>&1 &
+    fi
+}
+
+stop() {
+    echo -n "Stopping $DESC: $NAME"
+    kill `pidof $NAME|sed "s/$$//g"` > /dev/null 2>&1
+    echo " ."
+}
+
+restart() {
+    echo "Restarting $DESC: $NAME... "
+    stop
+    sleep 2
+    start
+}
+

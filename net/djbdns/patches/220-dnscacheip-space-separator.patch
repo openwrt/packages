@@ -1,0 +1,11 @@
+--- a/dns_rcip.c
++++ b/dns_rcip.c
+@@ -17,7 +17,7 @@ static int init(char ip[64])
+   x = env_get("DNSCACHEIP");
+   if (x)
+     while (iplen <= 60) {
+-      if (*x == '.')
++      if (*x == ' ' || *x == '\t' || *x == '\n')
+ 	++x;
+       else {
+         i = ip4_scan(x,ip + iplen);

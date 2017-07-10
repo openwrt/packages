@@ -1,0 +1,39 @@
+--- a/log.h
++++ b/log.h
+@@ -1,6 +1,8 @@
+ #ifndef LOG_H
+ #define LOG_H
+ 
++#define STATS_DISPLAY_INTERVAL 5
++
+ #include "uint64.h"
+ 
+ extern void log_startup(void);
+--- a/log.c
++++ b/log.c
+@@ -1,6 +1,7 @@
+ #include "buffer.h"
+ #include "uint32.h"
+ #include "uint16.h"
++#include "time.h"
+ #include "error.h"
+ #include "byte.h"
+ #include "log.h"
+@@ -274,11 +275,17 @@ void log_rrsoa(const char server[4],cons
+ 
+ void log_stats(void)
+ {
++  static time_t prev = 0;
++  time_t cur = time(NULL);
+   extern uint64 numqueries;
+   extern uint64 cache_motion;
+   extern int uactive;
+   extern int tactive;
+ 
++  if(prev == 0) prev = time(NULL);
++  if(cur - prev < STATS_DISPLAY_INTERVAL) return;
++  prev = cur;
++
+   string("stats ");
+   number(numqueries); space();
+   number(cache_motion); space();

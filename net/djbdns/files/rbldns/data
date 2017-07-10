@@ -1,0 +1,5 @@
+#example rdldns data file
+1.2.4.8
+10.0.0.1
+192.168.0.0/16
+:127.0.0.1:www.somesite.com

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 # Original port by FreeWRT project.
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -17,10 +17,13 @@ PKG_RELEASE:=1
 PKG_SOURCE:=${PKG_NAME}-${PKG_VERSION}.tar.gz
 PKG_SOURCE_URL:=http://cr.yp.to/daemontools/
 PKG_HASH:=a55535012b2be7a52dcd9eccabb9a198b13be50d0384143bd3b32b8710df4c1f
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MAINTAINER:=Thomas Guyot-Sionnest <tguyot@gmail.com>
+PKG_LICENSE:=Public Domain
 
 include $(INCLUDE_DIR)/package.mk
 
-PKG_UNPACK += && mv $(PKG_BUILD_DIR)/../admin/* $(PKG_BUILD_DIR)/.. && rmdir $(PKG_BUILD_DIR)/../admin
+PKG_UNPACK += && mv $(PKG_BUILD_DIR)/../admin/$(PKG_NAME)-$(PKG_VERSION)/* $(PKG_BUILD_DIR)/ && rmdir -p --ignore-fail-on-non-empty $(PKG_BUILD_DIR)/../admin/$(PKG_NAME)-$(PKG_VERSION)
 
 define Package/daemontools
   SECTION:=utils

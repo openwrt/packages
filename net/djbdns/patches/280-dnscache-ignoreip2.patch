@@ -1,0 +1,117 @@
+This patch change djbdns's dnscache program so that it will ignore the
+IP address given in the ignoreip file.  I wrote this patch because of
+Verisign's oh-so helpful wildcard A record for *.COM and *.NET.
+
+If you have djbdns-1.05-ignoreip.patch installed, back it out like this:
+    cd /usr/local/src/djbdns-1.05
+    patch -R <djbdns-1.05-ignoreip.patch
+
+Install the patch like this:
+    cd /usr/local/src/djbdns-1.05
+    patch <djbdns-1.05-ignoreip2.patch
+    svc -d /service/dnscache
+    make setup check
+    svc -u /service/dnscache
+
+Configure it to ignore Verisign's wildcard record like this:
+    echo 64.94.110.11 >/service/dnscache/root/ignoreip
+    svc -t /service/dnscache
+
+Configure it to ignore all the cretins like this:
+awk '{print $2}' <<EOF >/service/dnscache/root/ignoreip
+         *.ac            194.205.62.122
+         *.cc            206.253.214.102
+         *.com           64.94.110.11
+         *.cx            219.88.106.80
+         *.museum        195.7.77.20
+         *.net           64.94.110.11
+         *.nu            64.55.105.9
+                   and   212.181.91.6
+         *.ph            203.119.4.6
+         *.sh            194.205.62.62
+         *.tm            194.205.62.62
+         *.ws            216.35.187.246
+EOF
+    svc -t /service/dnscache
+
+J.P. Larocque contributes a script which updates root/ignoreip:
+    http://ely.ath.cx/~piranha/software/ignoreip-update/ignoreip-update-0.1
+
+If root/ignoreip is not present, no addresses will be ignored.
+
+--
+--My blog is at angry-economist.russnelson.com  | Free markets express in the
+Crynwr sells support for free software  | PGPok | practical world our belief
+521 Pleasant Valley Rd. | +1 315 268 1925 voice | that there is that of God
+Potsdam, NY 13676-3213  | +1 315 268 9201 FAX   | in all people. -Chris V.
+
+
+--- a/dnscache.c
++++ b/dnscache.c
+@@ -24,6 +24,8 @@
+ #include "okclient.h"
+ #include "droproot.h"
+ 
++stralloc ignoreip = {0};
++
+ static int packetquery(char *buf,unsigned int len,char **q,char qtype[2],char qclass[2],char id[2])
+ {
+   unsigned int pos;
+@@ -390,6 +392,7 @@ char seed[128];
+ int main()
+ {
+   char *x;
++  unsigned int i, j, k;
+   unsigned long cachesize;
+ 
+   signal(SIGPIPE, SIG_IGN);
+@@ -433,6 +436,20 @@ int main()
+   if (!cache_init(cachesize))
+     strerr_die3x(111,FATAL,"not enough memory for cache of size ",x);
+ 
++  if (openreadclose("ignoreip",&ignoreip,64) < 0) 
++    strerr_die2x(111,FATAL,"trouble reading ignoreip");
++  for(j = k = i = 0; i < ignoreip.len; i++)
++    if (ignoreip.s[i] == '\n')  {
++      ignoreip.s[i] = '\0';
++      if (j + 4 > i)
++        strerr_die3x(111,FATAL,"badly malformed ip4 address ",ignoreip.s+k);
++      if (!ip4_scan(ignoreip.s+k,ignoreip.s+j))
++        strerr_die3x(111,FATAL,"unable to parse address in ignoreip ",ignoreip.s+k);
++      j += 4;
++      k = i + 1;
++    }
++  ignoreip.len = j;
++
+   if (env_get("HIDETTL"))
+     response_hidettl();
+   if (env_get("FORWARDONLY"))
+--- a/query.c
++++ b/query.c
+@@ -13,6 +13,8 @@
+ #include "response.h"
+ #include "query.h"
+ 
++extern stralloc ignoreip;
++
+ static int flagforwardonly = 0;
+ 
+ void query_forwardonly(void)
+@@ -173,6 +175,7 @@ static int smaller(char *buf,unsigned in
+ 
+ static int doit(struct query *z,int state)
+ {
++  unsigned int ii;
+   char key[257];
+   char *cached;
+   unsigned int cachedlen;
+@@ -662,6 +665,9 @@ static int doit(struct query *z,int stat
+         pos = dns_packet_copy(buf,len,pos,header,10); if (!pos) goto DIE;
+         if (byte_equal(header + 8,2,"\0\4")) {
+           pos = dns_packet_copy(buf,len,pos,header,4); if (!pos) goto DIE;
++          if (ignoreip.len)
++	    for(ii = 0; ii < ignoreip.len; ii+= 4)
++	      if (byte_equal(header,4,ignoreip.s+ii)) goto NXDOMAIN;
+           save_data(header,4);
+           log_rr(whichserver,t1,DNS_T_A,header,4,ttl);
+         }
