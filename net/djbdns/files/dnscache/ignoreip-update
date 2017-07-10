@@ -24,13 +24,6 @@
 # please don't do so without understanding how it works and what could
 # happen if it breaks.
 # 
-# The latest version of this program can be found at the URL:
-#       http://ely.ath.cx/~piranha/software/ignoreip-update/
-# This program has been signed with my public key.  Its fingerprint is:
-#       810B A0AC A7F7 2899 46D2  F2F6 3E7D 5279 0C14 CDDA
-# The detached signature can be found at the URL:
-#       http://ely.ath.cx/~piranha/software/ignoreip-update/ignoreip-update-0.1.asc
-# 
 # Changelog:
 #   version 0.1 (2003/Sep/17)
 #       Initially written and released.
@@ -67,14 +60,14 @@ temp1="`mktemp "ignoreip-update-$$-1-XXXXXX"`"
 temp2="`mktemp "ignoreip-update-$$-2-XXXXXX"`"
 trap 'rm -f "$temp1" "$temp2"' EXIT
 
-## Generate random name
+## Generate random name  ##FIXME: need to truncate to 32 chars at least for md5sum
 #rand="`dd if=/dev/urandom bs=16 count=1 2> /dev/null | "$hash_prog"`"
 
-# Do lookups on random addresses; break into one addres/line; remove
+# Do lookups on random addresses; break into one address/line; remove
 # empty lines
 for stupid_tld in $stupid_tlds; do
-	dnsip "$rand.$stupid_tld"
-	#dnsip "*.$stupid_tld"
+	#dnsip "$rand.$stupid_tld"
+	dnsip "*.$stupid_tld"
 done | xargs -n 1 echo | grep '.' > "$temp1"
 
 # Abort if there were no new bogus addresses
@@ -88,8 +81,13 @@ if [ "$verbose" ]; then
 	diff -u "$ignoreip" "$temp2" || true
 fi
 
+# Do not restart if new file is the same
+if cmp -s "$temp2" "$ignoreip"; then
+	exit
+fi
+
 # Update list and restart dnscache
 chmod 644 "$temp2"
 mv "$temp2" "$ignoreip"
-#svc -t .
+svc -t .
 
