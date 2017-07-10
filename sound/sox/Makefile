@@ -52,7 +52,8 @@ CONFIGURE_ARGS += \
 		--without-png \
 		--without-sndfile \
 		--with-lame \
-		--with-id3tag
+		--with-id3tag \
+		--disable-openmp
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
