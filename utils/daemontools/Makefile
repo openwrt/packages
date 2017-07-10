@@ -1,5 +1,6 @@
 #
-# Copyright (C) 2007-2017 OpenWrt.org
+# Copyright (C) 2017 Thomas Guyot-Sionnest <tguyot@gmail.com>
+# Copyright (C) 2007 OpenWrt.org
 # Original port by FreeWRT project.
 #
 # This is free software, licensed under the GNU General Public License v2.

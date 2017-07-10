@@ -1,4 +1,5 @@
 #
+# Copyright (C) 2017 Thomas Guyot-Sionnest <tguyot@gmail.com>
 # Copyright (C) 2007-2012 OpenWrt.org
 # Original port by FreeWRT project.
 #
@@ -20,6 +21,9 @@ PKG_SOURCE:=${PKG_NAME}-${PKG_VERSION}.tar.gz
 PKG_SOURCE_URL:=http://cr.yp.to/djbdns/
 PKG_HASH:=3ccd826a02f3cde39be088e1fc6aed9fd57756b8f970de5dc99fcd2d92536b48
 PKG_BUILD_DEPENDS:=daemontools ucspi-tcp
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MAINTAINER:=Thomas Guyot-Sionnest <tguyot@gmail.com>
+PKG_LICENSE:=Public Domain
 
 include $(INCLUDE_DIR)/package.mk
 
