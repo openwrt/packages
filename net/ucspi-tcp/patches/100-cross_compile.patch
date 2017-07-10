@@ -1,0 +1,196 @@
+--- a/Makefile
++++ b/Makefile
+@@ -36,10 +36,6 @@ auto-str.o: \
+ compile auto-str.c buffer.h readwrite.h exit.h
+ 	./compile auto-str.c
+ 
+-auto_home.c: \
+-auto-str conf-home
+-	./auto-str auto_home `head -1 conf-home` > auto_home.c
+-
+ auto_home.o: \
+ compile auto_home.c
+ 	./compile auto_home.c
+@@ -305,10 +301,6 @@ fmt_ulong.o: \
+ compile fmt_ulong.c fmt.h
+ 	./compile fmt_ulong.c
+ 
+-fork.h: \
+-choose compile load tryvfork.c fork.h1 fork.h2
+-	./choose cl tryvfork fork.h1 fork.h2 > fork.h
+-
+ getln.o: \
+ compile getln.c byte.h getln.h buffer.h stralloc.h gen_alloc.h
+ 	./compile getln.c
+@@ -317,24 +309,6 @@ getln2.o: \
+ compile getln2.c byte.h getln.h buffer.h stralloc.h gen_alloc.h
+ 	./compile getln2.c
+ 
+-hassgact.h: \
+-choose compile load trysgact.c hassgact.h1 hassgact.h2
+-	./choose cl trysgact hassgact.h1 hassgact.h2 > hassgact.h
+-
+-hassgprm.h: \
+-choose compile load trysgprm.c hassgprm.h1 hassgprm.h2
+-	./choose cl trysgprm hassgprm.h1 hassgprm.h2 > hassgprm.h
+-
+-hasshsgr.h: \
+-choose compile load tryshsgr.c hasshsgr.h1 hasshsgr.h2 chkshsgr \
+-warn-shsgr
+-	./chkshsgr || ( cat warn-shsgr; exit 1 )
+-	./choose clr tryshsgr hasshsgr.h1 hasshsgr.h2 > hasshsgr.h
+-
+-haswaitp.h: \
+-choose compile load trywaitp.c haswaitp.h1 haswaitp.h2
+-	./choose cl trywaitp haswaitp.h1 haswaitp.h2 > haswaitp.h
+-
+ hier.o: \
+ compile hier.c auto_home.h
+ 	./compile hier.c
+@@ -362,10 +336,6 @@ instcheck.o: \
+ compile instcheck.c strerr.h error.h readwrite.h exit.h
+ 	./compile instcheck.c
+ 
+-iopause.h: \
+-choose compile trypoll.c iopause.h1 iopause.h2
+-	./choose clr trypoll iopause.h1 iopause.h2 > iopause.h
+-
+ iopause.o: \
+ compile iopause.c taia.h tai.h uint64.h select.h iopause.h taia.h
+ 	./compile iopause.c
+@@ -404,7 +374,7 @@ warn-auto.sh systype
+ 	dgux-*) ;; \
+ 	hp-ux-*) ;; \
+ 	sco*) ;; \
+-	*) echo 'ranlib "$$main"' ;; \
++	*) echo '$(if $(TARGET_RANLIB),$(TARGET_RANLIB),ranlib) "$$main"' ;; \
+ 	esac \
+ 	) > makelib
+ 	chmod 755 makelib
+@@ -521,10 +491,6 @@ seek_set.o: \
+ compile seek_set.c seek.h
+ 	./compile seek_set.c
+ 
+-select.h: \
+-choose compile trysysel.c select.h1 select.h2
+-	./choose c trysysel select.h1 select.h2 > select.h
+-
+ setup: \
+ it install
+ 	./install
+@@ -791,10 +757,6 @@ uint32_unpack.o: \
+ compile uint32_unpack.c uint32.h
+ 	./compile uint32_unpack.c
+ 
+-uint64.h: \
+-choose compile load tryulong64.c uint64.h1 uint64.h2
+-	./choose clr tryulong64 uint64.h1 uint64.h2 > uint64.h
+-
+ unix.a: \
+ makelib alloc.o alloc_re.o buffer.o buffer_0.o buffer_1.o buffer_2.o \
+ buffer_copy.o buffer_get.o buffer_put.o env.o error.o error_str.o \
+--- /dev/null
++++ b/auto_home.c
+@@ -0,0 +1,3 @@
++const char auto_home[] = "\
++\057\165\163\162\
++";
+--- a/conf-cc
++++ b/conf-cc
+@@ -1,3 +1,3 @@
+-gcc -O2
++$TARGET_CC $TARGET_CFLAGS -include errno.h
+ 
+ This will be used to compile .c files.
+--- a/conf-home
++++ b/conf-home
+@@ -1,4 +1,4 @@
+-/usr/local
++/usr
+ 
+ This is the ucspi-tcp home directory. Programs will be installed in
+ .../bin.
+--- a/conf-ld
++++ b/conf-ld
+@@ -1,3 +1,3 @@
+-gcc -s
++$TARGET_CC -s $TARGET_LDFLAGS
+ 
+ This will be used to link .o files into an executable.
+--- /dev/null
++++ b/fork.h
+@@ -0,0 +1,9 @@
++#ifndef FORK_H
++#define FORK_H
++
++/* sysdep: +vfork */
++
++extern int fork();
++extern int vfork();
++
++#endif
+--- /dev/null
++++ b/hassgact.h
+@@ -0,0 +1,2 @@
++/* sysdep: +sigaction */
++#define HASSIGACTION 1
+--- /dev/null
++++ b/hassgprm.h
+@@ -0,0 +1,2 @@
++/* sysdep: +sigprocmask */
++#define HASSIGPROCMASK 1
+--- /dev/null
++++ b/hasshsgr.h
+@@ -0,0 +1 @@
++/* sysdep: -shortsetgroups */
+--- /dev/null
++++ b/haswaitp.h
+@@ -0,0 +1,2 @@
++/* sysdep: +waitpid */
++#define HASWAITPID 1
+--- /dev/null
++++ b/iopause.h
+@@ -0,0 +1,18 @@
++#ifndef IOPAUSE_H
++#define IOPAUSE_H
++
++/* sysdep: +poll */
++#define IOPAUSE_POLL
++
++#include <sys/types.h>
++#include <poll.h>
++
++typedef struct pollfd iopause_fd;
++#define IOPAUSE_READ POLLIN
++#define IOPAUSE_WRITE POLLOUT
++
++#include "taia.h"
++
++extern void iopause(iopause_fd *,unsigned int,struct taia *,struct taia *);
++
++#endif
+--- /dev/null
++++ b/select.h
+@@ -0,0 +1,11 @@
++#ifndef SELECT_H
++#define SELECT_H
++
++/* sysdep: +sysselect */
++
++#include <sys/types.h>
++#include <sys/time.h>
++#include <sys/select.h>
++extern int select();
++
++#endif
+--- /dev/null
++++ b/uint64.h
+@@ -0,0 +1,8 @@
++#ifndef UINT64_H
++#define UINT64_H
++
++/* sysdep: -ulong64 */
++
++typedef unsigned long long uint64;
++
++#endif
