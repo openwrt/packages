@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sox
 PKG_VERSION:=14.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/sox
-PKG_MD5SUM:=81a6956d4330e75b5827316e44ae381e6f1e8928003c6aa45896da9041ea149c
+PKG_HASH:=81a6956d4330e75b5827316e44ae381e6f1e8928003c6aa45896da9041ea149c
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-2.1 GPL-2.0
@@ -31,9 +31,9 @@ TARGET_LDFLAGS+= \
 define Package/sox
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+BUILD_PATENTED:lame-lib +BUILD_PATENTED:libmad +BUILD_PATENTED:libid3tag \
-		+libvorbis +libvorbisidec +alsa-lib +libsndfile +libflac \
-		+libmagic +libpng
+  DEPENDS:=+lame-lib +libmad +libid3tag \
+		+libvorbis +libvorbisidec +alsa-lib +libflac \
+		+libmagic
   TITLE:=Sox is a general purpose sound converter/player/recorder
   URL:=http://sox.sourceforge.net/
 endef
@@ -52,15 +52,11 @@ define Build/Configure
 		--without-ao \
 		--with-alsa \
 		--without-libltdl \
-		--with-ogg \
 		--with-flac \
-		--without-amr-wb \
-		--without-amr-nb \
-		--without-samplerate \
 		--without-ladspa \
-		--$(if $(CONFIG_BUILD_PATENTED),with-mad,without-mad) \
-		--$(if $(CONFIG_BUILD_PATENTED),with-lame,without-lame) \
-		--$(if $(CONFIG_BUILD_PATENTED),with-id3tag,without-id3tag) \
+		--without-png \
+		--with-lame \
+		--with-id3tag \
 	)
 endef
 
