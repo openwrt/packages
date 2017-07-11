@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=expat
-PKG_VERSION:=2.2.0
+PKG_VERSION:=2.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=2f47841c829facb346eb6e3fab5212e2
+PKG_HASH:=cd77a2869e32354b004cc6b34fcb0bee56114caa2d9ed862aaa8071441e34eb7
 PKG_SOURCE_URL:=@SF/expat
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 
@@ -20,7 +20,6 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=conftools/libtool.m4
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -32,7 +31,7 @@ define Package/libexpat
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=An XML parsing library
-  URL:=http://expat.sourceforge.net/
+  URL:=https://libexpat.github.io/
 endef
 
 define Package/libexpat/description
