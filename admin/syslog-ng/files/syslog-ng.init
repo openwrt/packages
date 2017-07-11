@@ -2,18 +2,17 @@
 # Copyright (C) 2006-2016 OpenWrt.org
 
 START=20
+USE_PROCD=1
+PROG=/usr/sbin/syslog-ng
 
-SERVICE_USE_PID=1
+config_file=/etc/syslog-ng.conf
 
-start() {
-	[ -f /etc/syslog-ng.conf ] || return 1
-	service_start /usr/sbin/syslog-ng
+start_service() {
+	procd_open_instance
+	procd_set_param command $PROG -F -f $config_file
+	procd_close_instance
 }
 
-stop() {
-	service_stop /usr/sbin/syslog-ng
-}
-
-reload() {
-	service_reload /usr/sbin/syslog-ng
+reload_service() {
+	procd_send_signal syslog-ng
 }
