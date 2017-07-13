@@ -5,7 +5,7 @@ IP6="ip -6"
 IPS="ipset"
 IPT4="iptables -t mangle -w"
 IPT6="ip6tables -t mangle -w"
-LOG="logger -t mwan3 -p"
+LOG="logger -t mwan3[$$] -p"
 CONNTRACK_FILE="/proc/net/nf_conntrack"
 
 # mwan3's MARKing mask (at least 3 bits should be set)
