@@ -1,0 +1,170 @@
+--- a/include/pcm.h
++++ b/include/pcm.h
+@@ -33,6 +33,7 @@
+ extern "C" {
+ #endif
+ 
++#include <stdint.h>
+ /**
+  *  \defgroup PCM PCM Interface
+  *  See the \ref pcm page for more details.
+@@ -1108,10 +1109,10 @@ int snd_pcm_format_width(snd_pcm_format_
+ int snd_pcm_format_physical_width(snd_pcm_format_t format);		/* in bits */
+ snd_pcm_format_t snd_pcm_build_linear_format(int width, int pwidth, int unsignd, int big_endian);
+ ssize_t snd_pcm_format_size(snd_pcm_format_t format, size_t samples);
+-u_int8_t snd_pcm_format_silence(snd_pcm_format_t format);
+-u_int16_t snd_pcm_format_silence_16(snd_pcm_format_t format);
+-u_int32_t snd_pcm_format_silence_32(snd_pcm_format_t format);
+-u_int64_t snd_pcm_format_silence_64(snd_pcm_format_t format);
++uint8_t snd_pcm_format_silence(snd_pcm_format_t format);
++uint16_t snd_pcm_format_silence_16(snd_pcm_format_t format);
++uint32_t snd_pcm_format_silence_32(snd_pcm_format_t format);
++uint64_t snd_pcm_format_silence_64(snd_pcm_format_t format);
+ int snd_pcm_format_set_silence(snd_pcm_format_t format, void *buf, unsigned int samples);
+ 
+ snd_pcm_sframes_t snd_pcm_bytes_to_frames(snd_pcm_t *pcm, ssize_t bytes);
+--- a/src/pcm/pcm_misc.c
++++ b/src/pcm/pcm_misc.c
+@@ -387,7 +387,7 @@ ssize_t snd_pcm_format_size(snd_pcm_form
+  * \param format Sample format
+  * \return silence 64 bit word
+  */
+-u_int64_t snd_pcm_format_silence_64(snd_pcm_format_t format)
++uint64_t snd_pcm_format_silence_64(snd_pcm_format_t format)
+ {
+ 	switch (format) {
+ 	case SNDRV_PCM_FORMAT_S8:
+@@ -467,7 +467,7 @@ u_int64_t snd_pcm_format_silence_64(snd_
+ 	{
+ 		union {
+ 			float f[2];
+-			u_int64_t i;
++			uint64_t i;
+ 		} u;
+ 		u.f[0] = u.f[1] = 0.0;
+ #ifdef SNDRV_LITTLE_ENDIAN
+@@ -480,7 +480,7 @@ u_int64_t snd_pcm_format_silence_64(snd_
+ 	{
+ 		union {
+ 			double f;
+-			u_int64_t i;
++			uint64_t i;
+ 		} u;
+ 		u.f = 0.0;
+ #ifdef SNDRV_LITTLE_ENDIAN
+@@ -493,7 +493,7 @@ u_int64_t snd_pcm_format_silence_64(snd_
+ 	{
+ 		union {
+ 			float f[2];
+-			u_int64_t i;
++			uint64_t i;
+ 		} u;
+ 		u.f[0] = u.f[1] = 0.0;
+ #ifdef SNDRV_LITTLE_ENDIAN
+@@ -506,7 +506,7 @@ u_int64_t snd_pcm_format_silence_64(snd_
+ 	{
+ 		union {
+ 			double f;
+-			u_int64_t i;
++			uint64_t i;
+ 		} u;
+ 		u.f = 0.0;
+ #ifdef SNDRV_LITTLE_ENDIAN
+@@ -539,10 +539,10 @@ u_int64_t snd_pcm_format_silence_64(snd_
+  * \param format Sample format
+  * \return silence 32 bit word
+  */
+-u_int32_t snd_pcm_format_silence_32(snd_pcm_format_t format)
++uint32_t snd_pcm_format_silence_32(snd_pcm_format_t format)
+ {
+ 	assert(snd_pcm_format_physical_width(format) <= 32);
+-	return (u_int32_t)snd_pcm_format_silence_64(format);
++	return (uint32_t)snd_pcm_format_silence_64(format);
+ }
+ 
+ /**
+@@ -550,10 +550,10 @@ u_int32_t snd_pcm_format_silence_32(snd_
+  * \param format Sample format
+  * \return silence 16 bit word
+  */
+-u_int16_t snd_pcm_format_silence_16(snd_pcm_format_t format)
++uint16_t snd_pcm_format_silence_16(snd_pcm_format_t format)
+ {
+ 	assert(snd_pcm_format_physical_width(format) <= 16);
+-	return (u_int16_t)snd_pcm_format_silence_64(format);
++	return (uint16_t)snd_pcm_format_silence_64(format);
+ }
+ 
+ /**
+@@ -561,10 +561,10 @@ u_int16_t snd_pcm_format_silence_16(snd_
+  * \param format Sample format
+  * \return silence 8 bit word
+  */
+-u_int8_t snd_pcm_format_silence(snd_pcm_format_t format)
++uint8_t snd_pcm_format_silence(snd_pcm_format_t format)
+ {
+ 	assert(snd_pcm_format_physical_width(format) <= 8);
+-	return (u_int8_t)snd_pcm_format_silence_64(format);
++	return (uint8_t)snd_pcm_format_silence_64(format);
+ }
+ 
+ /**
+@@ -580,7 +580,7 @@ int snd_pcm_format_set_silence(snd_pcm_f
+ 		return 0;
+ 	switch (snd_pcm_format_physical_width(format)) {
+ 	case 4: {
+-		u_int8_t silence = snd_pcm_format_silence_64(format);
++		uint8_t silence = snd_pcm_format_silence_64(format);
+ 		unsigned int samples1;
+ 		if (samples % 2 != 0)
+ 			return -EINVAL;
+@@ -589,13 +589,13 @@ int snd_pcm_format_set_silence(snd_pcm_f
+ 		break;
+ 	}
+ 	case 8: {
+-		u_int8_t silence = snd_pcm_format_silence_64(format);
++		uint8_t silence = snd_pcm_format_silence_64(format);
+ 		memset(data, silence, samples);
+ 		break;
+ 	}
+ 	case 16: {
+-		u_int16_t silence = snd_pcm_format_silence_64(format);
+-		u_int16_t *pdata = (u_int16_t *)data;
++		uint16_t silence = snd_pcm_format_silence_64(format);
++		uint16_t *pdata = (uint16_t *)data;
+ 		if (! silence)
+ 			memset(data, 0, samples * 2);
+ 		else {
+@@ -605,8 +605,8 @@ int snd_pcm_format_set_silence(snd_pcm_f
+ 		break;
+ 	}
+ 	case 24: {
+-		u_int32_t silence = snd_pcm_format_silence_64(format);
+-		u_int8_t *pdata = (u_int8_t *)data;
++		uint32_t silence = snd_pcm_format_silence_64(format);
++		uint8_t *pdata = (uint8_t *)data;
+ 		if (! silence)
+ 			memset(data, 0, samples * 3);
+ 		else {
+@@ -625,8 +625,8 @@ int snd_pcm_format_set_silence(snd_pcm_f
+ 		break;
+ 	}
+ 	case 32: {
+-		u_int32_t silence = snd_pcm_format_silence_64(format);
+-		u_int32_t *pdata = (u_int32_t *)data;
++		uint32_t silence = snd_pcm_format_silence_64(format);
++		uint32_t *pdata = (uint32_t *)data;
+ 		if (! silence)
+ 			memset(data, 0, samples * 4);
+ 		else {
+@@ -636,8 +636,8 @@ int snd_pcm_format_set_silence(snd_pcm_f
+ 		break;
+ 	}
+ 	case 64: {
+-		u_int64_t silence = snd_pcm_format_silence_64(format);
+-		u_int64_t *pdata = (u_int64_t *)data;
++		uint64_t silence = snd_pcm_format_silence_64(format);
++		uint64_t *pdata = (uint64_t *)data;
+ 		if (! silence)
+ 			memset(data, 0, samples * 8);
+ 		else {
