@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libplist
-PKG_VERSION:=1.13
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.0
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Lukasz Baj <l.baj@radytek.com>
 PKG_LICENSE:=LGPL-2.1+
@@ -18,7 +18,7 @@ PKG_LICENSE_FILES:=COPYING.LESSER
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libplist.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=060eda6b1846968aa40b0d38dcf92ac46f933417
+PKG_SOURCE_VERSION:=62ec804736435fa34e37e66e228e17e2aacee1d7
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_FIXUP:=autoreconf
@@ -75,6 +75,8 @@ endef
 
 CONFIGURE_ARGS += \
 	--without-cython
+
+TARGET_LDFLAGS += -lz
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

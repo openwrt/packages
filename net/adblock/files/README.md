@@ -25,8 +25,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 1.500 entries
     * [openphish](https://openphish.com)
     * => numerous updates on the same day, approx. 1.800 entries
-    * [palevo tracker](https://palevotracker.abuse.ch)
-    * => daily updates, approx. 15 entries
     * [ransomware tracker](https://ransomwaretracker.abuse.ch)
     * => daily updates, approx. 150 entries
     * [reg_cn](https://easylist-downloads.adblockplus.org/easylistchina+easylist.txt)
@@ -57,15 +55,15 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 440 entries
 * zero-conf like automatic installation & setup, usually no manual changes needed
 * simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
-* automatically selects dnsmasq or unbound as dns backend
+* automatically selects dnsmasq, unbound or bind as dns backend
 * automatically selects uclient-fetch or wget as download utility (other tools like curl or aria2c are supported as well)
 * support http only mode (without installed ssl library) for all non-SSL blocklist sources
 * automatically supports a wide range of router modes, even AP modes are supported
 * full IPv4 and IPv6 support
-* supports tld compression (top level domain compression), this feature removes thousands of needless host entries from the block lists and lowers the memory footprint for the dns backends
+* supports tld compression (top level domain compression), this feature removes thousands of needless host entries from the block list and lowers the memory footprint for the dns backends
 * each block list source will be updated and processed separately
 * block list source parsing by fast & flexible regex rulesets
-* overall duplicate removal in separate block lists
+* overall duplicate removal in central block list (adb_list.overall)
 * additional whitelist for manual overrides, located by default in /etc/adblock/adblock.whitelist
 * quality checks during block list update to ensure a reliable dns backend service
 * minimal status & error logging to syslog, enable debug logging to receive more output
@@ -76,7 +74,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
 * optional: force dns requests to local resolver
 * optional: force overall sort / duplicate removal for low memory devices (handle with care!)
-* optional: automatic block list backup & restore, backups will be (de-)compressed and restored on the fly in case of any runtime error
+* optional: 'manual mode' to re-use blocklist backups during startup, get fresh lists only via manual reload or restart action
+* optional: automatic block list backup & restore, they will be used in case of download errors or during startup in manual mode
 * optional: add new adblock sources on your own via uci config
 
 ## Prerequisites
@@ -106,7 +105,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **scheduled list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
 * **restrict procd interface trigger:** restrict the procd interface trigger to a (list of) certain interface(s) (default: wan). To disable it at all, remove all entries
 * **suspend & resume adblocking:** to quickly switch the adblock service 'on' or 'off', simply use _/etc/init.d/adblock [suspend|resume]_
-* **domain query:** to query the active block lists for a specific domain, please run _/etc/init.d/adblock query `<DOMAIN>`_ (see example below)
+* **domain query:** to query the active block list for a specific domain, please run _/etc/init.d/adblock query `<DOMAIN>`_ (see example below)
 * **add new list sources:** you could add new block list sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
 * **disable active dns probing in windows 10:** to prevent a yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
 
@@ -120,22 +119,47 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_triggerdelay => additional trigger delay in seconds before adblock processing starts (default: '2')
     * adb\_forcedns => force dns requests to local resolver (default: '0', disabled)
     * adb\_forcesrt => force overall sort on low memory devices with less than 64 MB RAM (default: '0', disabled)
+    * adb\_manmode => do not automatically update block lists during startup, use backups instead (default: '0', disabled)
 
 ## Examples
 **change default dns backend to 'unbound':**
 <pre><code>
-Adblock detects the presence of an active unbound dns backend and the block lists will be automatically pulled in by unbound.
-The adblock script deposits the sorted and filtered block lists in '/var/lib/unbound' where unbound can find them in its jail.
-If you use manual configuration for unbound, then just include the following line in your 'server:' clause:
+Adblock deposits the sorted and filtered block list (adb_list.overall) in '/var/lib/unbound' where unbound can find them in its jail.
+If you use manual configuration for unbound, then just include the following line in your 'server' clause:
 
-  include: "/var/lib/unbound/adb_list.*"
+  include: "/var/lib/unbound/adb_list.overall"
+</code></pre>
+  
+**change default dns backend to 'bind':**
+<pre><code>
+Adblock deposits the sorted and filtered block list (adb_list.overall) in '/var/lib/bind' where bind can find them.
+To use the block list please modify the following bind configuration files:
+
+change '/etc/bind/named.conf', in the 'options' namespace add:
+  response-policy { zone "rpz"; };
+
+and at the end of the file add:
+  zone "rpz" {
+    type master;
+    file "/etc/bind/db.rpz";
+    allow-query { none; };
+    allow-transfer { none; };
+  };
+
+create the new file '/etc/bind/db.rpz' and add:
+  $TTL 2h
+  $ORIGIN rpz.
+  @ SOA localhost. root.localhost. (1 6h 1h 1w 2h)
+  NS localhost.
+
+  $INCLUDE /var/lib/bind/adb_list.overall
 </code></pre>
   
 **configuration for different download utilities:**
 <pre><code>
 wget (default):
   option adb_fetch="/usr/bin/wget"
-  option adb_fetchparm="--no-config --quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
+  option adb_fetchparm="--quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
 
 aria2c:
   option adb_fetch '/usr/bin/aria2c'
@@ -152,20 +176,20 @@ curl:
   
 **receive adblock runtime information:**
 <pre><code>
-root@blackhole:~# /etc/init.d/adblock status
+/etc/init.d/adblock status
 ::: adblock runtime information
  status          : active
- adblock_version : 2.6.0
- blocked_domains : 113711
+ adblock_version : 2.8.0
+ blocked_domains : 122827
  fetch_info      : wget (built-in)
  dns_backend     : dnsmasq
- last_rundate    : 12.04.2017 13:08:26
- system          : LEDE Reboot SNAPSHOT r3900-399d5cf532
+ last_rundate    : 26.06.2017 17:00:27
+ system          : LEDE Reboot SNAPSHOT r4434-b91a38d647
 </code></pre>
   
 **cronjob for a regular block list update (/etc/crontabs/root):**
 <pre><code>
-0 06 * * *    /etc/init.d/adblock start
+0 06 * * *    /etc/init.d/adblock reload
 </code></pre>
   
 **blacklist entry (/etc/adblock/adblock.blacklist):**
@@ -186,7 +210,7 @@ This entry does not block:
 <pre><code>
 here.com
 
-This entry removes the following (sub)domains from the block lists:
+This entry removes the following (sub)domains from the block list:
   maps.here.com
   here.com
 
@@ -195,22 +219,21 @@ This entry does not remove:
   www.adwhere.com
 </code></pre>
   
-**query active block lists for a certain (sub-)domain, e.g. for whitelisting:**
+**query active block list for a certain (sub-)domain, e.g. for whitelisting:**
 <pre><code>
 /etc/init.d/adblock query example.www.doubleclick.net
-::: distinct results for domain 'example.www.doubleclick.net'
- no match
-::: distinct results for domain 'www.doubleclick.net'
- adb_list.sysctl      : www.doubleclick.net
-::: distinct results for domain 'doubleclick.net'
- adb_list.adaway      : ad-g.doubleclick.net
- adb_list.securemecca : 1168945.fls.doubleclick.net
- adb_list.sysctl      : 1435575.fls.doubleclick.net
- adb_list.whocares    : 3ad.doubleclick.net
+::: results for (sub-)domain 'example.www.doubleclick.net' (max. 5)
+ - no match
+::: results for (sub-)domain 'www.doubleclick.net' (max. 5)
+ - no match
+::: results for (sub-)domain 'doubleclick.net' (max. 5)
+ + doubleclick.net
+ + feedads.g.doubleclick.net
+ + survey.g.doubleclick.net
 
 The query function checks against the submitted (sub-)domain and recurses automatically to the upper top level domain(s).
-For every domain it returns the overall count plus a distinct list of active block lists with the first relevant result.
-In the example above whitelist "www.doubleclick.net" to free the submitted domain.
+For every (sub-)domain it returns the first five relevant results.
+In the example above whitelist "doubleclick.net" to free the submitted domain.
 </code></pre>
   
 **add a new block list source:**

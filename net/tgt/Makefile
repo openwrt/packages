@@ -30,7 +30,7 @@ define Package/tgt
   CATEGORY:=Network
   URL:=http://stgt.sourceforge.net/
   TITLE:=userspace iSCSI target
-  DEPENDS:=+libpthread +libaio @KERNEL_AIO @KERNEL_DIRECT_IO
+  DEPENDS:=+libpthread +libaio @KERNEL_AIO
 endef
 
 define Package/tgt/description
@@ -41,9 +41,11 @@ Note that if you are interested in only iSCSI (probably you are), you need only 
 endef
 
 define Build/Compile
-	CC=$(TARGET_CC) CFLAGS="$(TARGET_CFLAGS)" $(MAKE) -C $(PKG_BUILD_DIR) \
+	CC=$(TARGET_CC) CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
+		$(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		LD="$(TARGET_CC)" \
+		LDFLAGS="$(TARGET_LDFLAGS)" \
 		install-programs
 endef
 

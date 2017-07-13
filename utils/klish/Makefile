@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=klish
 PKG_VERSION:=2.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://libcode.org/attachments/download/66/
@@ -49,6 +49,9 @@ define Package/klish/description
  informations in a way which is similar to what's found on CISCO devices.
  More information about these tools is to be found on the klish web site.
 endef
+
+TARGET_LDFLAGS += -lxml2 -lz
+TARGET_CFLAGS += -D_XOPEN_SOURCE=500
 
 define Build/Configure
 	$(call Build/Configure/Default, \

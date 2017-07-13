@@ -82,8 +82,14 @@ proto_wireguard_setup_peer() {
         *:*/*)
           proto_add_ipv6_route "${allowed_ip%%/*}" "${allowed_ip##*/}"
         ;;
-        */*)
+        *.*/*)
           proto_add_ipv4_route "${allowed_ip%%/*}" "${allowed_ip##*/}"
+        ;;
+        *:*)
+          proto_add_ipv6_route "${allowed_ip%%/*}" "128"
+        ;;
+        *.*)
+          proto_add_ipv4_route "${allowed_ip%%/*}" "32"
         ;;
       esac
     done
@@ -168,7 +174,6 @@ proto_wireguard_setup() {
     sed -E 's/\[?([0-9.:a-f]+)\]?:([0-9]+)/\1 \2/' | \
     while IFS=$'\t ' read -r key address port; do
     [ -n "${port}" ] || continue
-    echo "adding host depedency for ${address} at ${config}"
     proto_add_host_dependency "${config}" "${address}"
   done
 

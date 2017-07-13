@@ -9,7 +9,7 @@
  } # as_fn_error
  
  if expr a : '\(a\)' >/dev/null 2>&1 &&
-@@ -5942,8 +5942,6 @@ else
+@@ -5909,8 +5909,6 @@ else
  fi
  rm -f core conftest.err conftest.$ac_objext \
      conftest$ac_exeext conftest.$ac_ext
@@ -18,7 +18,7 @@
  oldlibs="$LIBS"
  LIBS="$LIBS -lsun"
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking IRIX sun library..." >&5
-@@ -7024,7 +7022,7 @@ as_fn_error ()
+@@ -6991,7 +6989,7 @@ as_fn_error ()
      $as_echo "$as_me:${as_lineno-$LINENO}: error: $2" >&$4
    fi
    $as_echo "$as_me: error: $2" >&2

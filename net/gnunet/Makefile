@@ -1,10 +1,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=1c2ab4aa3b9b563ad2098984b5751e67d3267778
-PKG_MIRROR_HASH:=cb0286944b78616e381b049de678a3475b0a496055f40f8af5eea367c4d9c0c6
+PKG_SOURCE_VERSION:=556ccd6d483b3678867c3829e6979c307df04450
+PKG_MIRROR_HASH:=5ecf15575eccc30135b2dc9871d88de0b32b593dc79cf5b0632a4fe2ffd711df
 
-PKG_VERSION:=0.10.2-git-20170419-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.10.2-git-20170626-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -145,7 +145,7 @@ define Package/gnunet/install
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
 	done )
 
-	( for plug in ats_proportional block_dht block_regex   \
+	( for plug in ats_proportional block_dht block_regex block_revocation  \
 	    transport_tcp transport_udp transport_unix; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$plug*.so $(1)/usr/lib/gnunet ; \
 	done )
@@ -191,6 +191,9 @@ LIB_conversation:=conversation microphone speaker
 PLUGIN_conversation:=gnsrecord_conversation
 LIBEXEC_conversation:=helper-audio-playback helper-audio-record service-conversation
 CONF_conversation:=conversation
+
+BIN_dht-cli:=dht-get dht-put dht-monitor
+PLUGIN_dht-cli:=block_test
 
 DEPENDS_hostlist:=+libmicrohttpd +libgnurl +ca-certificates
 LIBEXEC_hostlist:=daemon-hostlist
@@ -262,6 +265,7 @@ BIN_social:=identity-token multicast social
 LIB_social:=consensus identityprovider multicast psyc psycstore psycutil secretsharing social
 LIBEXEC_social:=service-consensus service-evil-consensus service-identity-provider service-multicast service-psyc service-psycstore service-secretsharing service-social
 CONF_social:=consensus multicast psyc psycstore secretsharing social
+PLUGINS_social:=block_consensus
 
 PLUGIN_dhtcache-heap:=datacache_heap
 CONFLICTS_dhtcache-heap:=gnunet-dhtcache-pgsql gnunet-dhtcache-sqlite
@@ -288,7 +292,7 @@ PLUGIN_fs-mysql:=datastore_mysql
 CONFLICTS_fs-mysql:=gnunet-fs-pgsql gnunet-fs-sqlite
 
 DEPENDS_pgsql:=+libpq
-LIB_pgsql:=postgres pq
+LIB_pgsql:=pq
 
 DEPENDS_dhtcache-pgsql:=+gnunet-pgsql
 PLUGIN_dhtcache-pgsql:=datacache_postgres
@@ -387,7 +391,8 @@ $(eval $(call PostInstFixSUIDPerms,gnunet-vpn))
 $(eval $(call BuildPackage,gnunet))
 $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,datastore,data storage components,))
-$(eval $(call BuildComponent,dv,distance-vector routing component,y))
+$(eval $(call BuildComponent,dht-cli,DHT command line clients,))
+# $(eval $(call BuildComponent,dv,distance-vector routing component,y))
 $(eval $(call BuildComponent,experiments,experimental components,))
 $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))

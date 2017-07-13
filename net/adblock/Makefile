@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=2.6.4
+PKG_VERSION:=2.8.3
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -21,7 +21,7 @@ define Package/adblock
 endef
 
 define Package/adblock/description
-Powerful adblock script to block ad/abuse domains via dnsmasq or unbound dns backend.
+Powerful adblock script to block ad/abuse domains via dnsmasq, unbound or bind dns backend.
 The script supports many domain blacklist sites plus manual black- and whitelist overrides.
 Please see https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md for further information.
 

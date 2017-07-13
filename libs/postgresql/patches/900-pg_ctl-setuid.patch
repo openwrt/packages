@@ -1,8 +1,6 @@
-Index: postgresql-9.5.4/src/bin/pg_ctl/pg_ctl.c
-===================================================================
---- postgresql-9.5.4.orig/src/bin/pg_ctl/pg_ctl.c
-+++ postgresql-9.5.4/src/bin/pg_ctl/pg_ctl.c
-@@ -95,6 +95,7 @@ static char *event_source = NULL;
+--- a/src/bin/pg_ctl/pg_ctl.c
++++ b/src/bin/pg_ctl/pg_ctl.c
+@@ -88,6 +88,7 @@ static char *event_source = NULL;
  static char *register_servicename = "PostgreSQL";		/* FIXME: + version ID? */
  static char *register_username = NULL;
  static char *register_password = NULL;
@@ -10,7 +8,7 @@ Index: postgresql-9.5.4/src/bin/pg_ctl/pg_ctl.c
  static char *argv0 = NULL;
  static bool allow_core_files = false;
  static time_t start_time;
-@@ -2114,6 +2115,9 @@ do_help(void)
+@@ -1930,6 +1931,9 @@ do_help(void)
  #endif
  	printf(_("  -s, --silent           only print errors, no informational messages\n"));
  	printf(_("  -t, --timeout=SECS     seconds to wait when using -w option\n"));
@@ -20,7 +18,7 @@ Index: postgresql-9.5.4/src/bin/pg_ctl/pg_ctl.c
  	printf(_("  -V, --version          output version information, then exit\n"));
  	printf(_("  -w                     wait until operation completes\n"));
  	printf(_("  -W                     do not wait until operation completes\n"));
-@@ -2310,6 +2314,7 @@ main(int argc, char **argv)
+@@ -2126,6 +2130,7 @@ main(int argc, char **argv)
  		{"pgdata", required_argument, NULL, 'D'},
  		{"silent", no_argument, NULL, 's'},
  		{"timeout", required_argument, NULL, 't'},
@@ -28,7 +26,7 @@ Index: postgresql-9.5.4/src/bin/pg_ctl/pg_ctl.c
  		{"core-files", no_argument, NULL, 'c'},
  		{NULL, 0, NULL, 0}
  	};
-@@ -2350,20 +2355,6 @@ main(int argc, char **argv)
+@@ -2166,20 +2171,6 @@ main(int argc, char **argv)
  		}
  	}
  
@@ -49,7 +47,7 @@ Index: postgresql-9.5.4/src/bin/pg_ctl/pg_ctl.c
  
  	env_wait = getenv("PGCTLTIMEOUT");
  	if (env_wait != NULL)
-@@ -2449,11 +2440,15 @@ main(int argc, char **argv)
+@@ -2265,11 +2256,15 @@ main(int argc, char **argv)
  					wait_seconds_arg = true;
  					break;
  				case 'U':
@@ -65,7 +63,7 @@ Index: postgresql-9.5.4/src/bin/pg_ctl/pg_ctl.c
  					break;
  				case 'w':
  					do_wait = true;
-@@ -2535,6 +2530,41 @@ main(int argc, char **argv)
+@@ -2351,6 +2346,41 @@ main(int argc, char **argv)
  		exit(1);
  	}
  

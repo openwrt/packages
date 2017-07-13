@@ -9,7 +9,7 @@ PKG_SOURCE_URL:=https://github.com/zhao-gang/shadowsocks-tiny.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=b59d754f838213d60b908aed0b7d4d5a81f273e2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MAINTAINER:=Zhao, Gang <gang.zhao.42@gmail.com>
+PKG_MAINTAINER:=Gang Zhao <gang.zhao.42@gmail.com>
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING

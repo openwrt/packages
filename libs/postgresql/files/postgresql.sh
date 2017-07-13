@@ -26,30 +26,56 @@ pg_server_ready() {
 	return 1
 }
 
-# $1: dbname, $2: username, $3: password
+
+pg_test_db() {
+	if [ "$3" ]; then
+		echo "SHOW ALL;" | env PGPASSWORD="$3" $PSQL -U "$2" -d "$1" -q 2>/dev/null >/dev/null
+		return $?
+	else
+		echo "SHOW ALL;" | $PSQL -w -U "$2" -d "$1" -q 2>/dev/null >/dev/null
+		return $?
+	fi
+}
+
+pg_include_sql() {
+	if [ "$3" ]; then
+		env PGPASSWORD="$3" $PSQL -U "$2" -d "$1" -e -f "$4"
+		return $?
+	else
+		$PSQL -w -U "$2" -d "$1" -e -f "$4"
+		return $?
+	fi
+}
+
+# $1: dbname, $2: username, $3: password, $4: sql populate script
 pg_require_db() {
+	local ret
+
 	pg_test_db $@ && return 0
 	( echo "CREATE DATABASE $1;"
 	echo -n "CREATE USER $2"
 	[ "$3" ] && echo -n " WITH PASSWORD '$3'"
-	echo ";"
-	echo "GRANT ALL PRIVILEGES ON DATABASE \"$1\" to $2;" ) |
+	echo " NOCREATEDB NOSUPERUSER NOCREATEROLE NOINHERIT;"
+	echo "GRANT ALL PRIVILEGES ON DATABASE \"$1\" TO $2;" ) |
 		$PSQL -U postgres -d template1 -e
-	return $?
-}
+	ret=$?
+	[ "$ret" = "0" ] || return $ret
 
-pg_test_db() {
-	PGPASSWORD=$3
-	echo "SHOW ALL;" | $PSQL -U $2 -d $1 -q 2>/dev/null >/dev/null
-	return $?
+	if [ "$4" ]; then
+		pg_include_sql "$@"
+		ret=$?
+	fi
+
+	return $ret
 }
 
 uci_require_db() {
-	local dbname dbuser dbpass
+	local dbname dbuser dbpass dbscript
 	config_get dbname $1 name
 	config_get dbuser $1 user
 	config_get dbpass $1 pass
-	pg_require_db $dbname $dbuser $dbpass
+	config_get dbscript $1 script
+	pg_require_db "$dbname" "$dbuser" "$dbpass" "$dbscript"
 }
 
 [ "$1" = "init" ] && {
