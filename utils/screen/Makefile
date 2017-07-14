@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=screen
 PKG_VERSION:=4.6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=9433706b653e941cc4c745f28e252e57be2a141eded923e61cc2c4a09768fed4
@@ -38,6 +38,7 @@ endef
 define Build/Configure
 	$(call Build/Configure/Default,\
 		--with-sys-screenrc=/etc/screenrc \
+		--enable-colors256 \
 	)
 	# XXX: memmove() works well with overlapped memory areas
 	echo "#define USEMEMMOVE 1" >>$(PKG_BUILD_DIR)/config.h
