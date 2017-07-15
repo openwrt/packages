@@ -1,0 +1,38 @@
+--- a/src/rpcb_svc_com.c
++++ b/src/rpcb_svc_com.c
+@@ -42,7 +42,7 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <sys/param.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <bits/poll.h>
+ #include <sys/socket.h>
+ #include <rpc/rpc.h>
+--- a/src/rpcbind.c
++++ b/src/rpcbind.c
+@@ -42,11 +42,11 @@
+ 
+ #include <sys/types.h>
+ #include <sys/stat.h>
+-#include <sys/errno.h>
++#include <errno.h>
+ #include <sys/resource.h>
+ #include <sys/wait.h>
+ #include <sys/time.h>
+-#include <sys/signal.h>
++#include <signal.h>
+ #include <sys/file.h>
+ #include <sys/socket.h>
+ #include <sys/un.h>
+--- a/src/util.c
++++ b/src/util.c
+@@ -45,7 +45,7 @@
+ #include <net/if.h>
+ #include <netinet/in.h>
+ #include <ifaddrs.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <rpc/rpc.h>
+ #include <errno.h>
+ #include <stdlib.h>
