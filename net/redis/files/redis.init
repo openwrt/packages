@@ -1,0 +1,39 @@
+#!/bin/sh /etc/rc.common
+
+START=98
+STOP=81
+
+SERVICE_USE_PID=1
+
+REDIS_BIN="/usr/bin/redis-server"
+REDIS_CLI="/usr/bin/redis-cli"
+REDIS_CONFIG="/etc/redis.conf"
+REDIS_PID="/var/run/redis.pid"
+REDIS_DATA="/var/lib/redis"
+
+start() {
+	[ -d $REDIS_DATA ] || mkdir -p $REDIS_DATA
+	service_start $REDIS_BIN "$REDIS_CONFIG"
+}
+
+stop() {
+	if [ ! -f $REDIS_PID ] ; then
+		echo 'Not running!'
+	else
+		PID=$(cat $REDIS_PID)
+		timeout=10
+		$REDIS_CLI shutdown
+		echo -n 'Waiting for redis shutdown...'
+		while [ -x /proc/$PID ] ; do
+			echo -n '.'
+			timeout=$((timeout - 1))
+			if [ $timeout -eq 0 ] ; then
+				break
+			fi
+			sleep 1
+		done
+		echo 'done.'
+		service_stop $REDIS_BIN
+		[ -x /proc/$PID ] && kill -9 $PID
+	fi
+}
