@@ -1,0 +1,48 @@
+--- a/makefile	2012-07-04 19:55:36.000000000 +0400
++++ b/makefile	2016-08-24 11:16:54.991229269 +0300
+@@ -1,24 +1,24 @@
+-# point it to where the compiler can find the Lua header files (lua.h, etc.)
+-# LUADIR = ../lua
+-LUADIR = /usr/include/lua5.1/
+-
+-# define your own "large" integer type; not defining a proper type
+-# will default to 'long', which may cause problems with 'size_t'
+-INTTYPE = -DSTRUCT_INT="long long"
+-
+-
+-CWARNS = -Wall -W -pedantic \
+-        -Waggregate-return \
+-        -Wcast-align \
+-        -Wmissing-prototypes \
+-        -Wnested-externs \
+-        -Wpointer-arith \
+-        -Wshadow \
+-        -Wwrite-strings
++LUA=/usr/lib/lua
++LUAINC=$(LUA)/include
++LUALIB=$(LUA)/lib
++LUABIB=$(LUA)/bin
+ 
+-CFLAGS = -D_POSIX_SOURCE $(CWARNS) $(INTTYPE) -O2 -I$(LUADIR)
+-CC = gcc
++OFLAGS = -O0
+ 
+-struct.so: struct.c makefile
+-	$(CC) $(CFLAGS) -shared -fpic -o struct.so struct.c
++STRUCT_CFLAGS = -I$(LUAINC) -std=gnu99 -DSTRUCT_INT="long long"
++STRUCT_LDFLAGS = -L$(LUALIB) -llua
++STRUCT_OBJ = struct.o
++STRUCT_LIB = struct.so
+ 
++all: $(STRUCT_LIB)
++
++%.o: %.c
++	$(CC) $(CPPFLAGS) $(CFLAGS) $(OFLAGS) $(LUA_CFLAGS) $(STRUCT_CFLAGS) $(FPIC) -c -o $@ $<
++
++$(STRUCT_LIB): $(STRUCT_OBJ)
++	$(CC) $(LDFLAGS) -shared -o $(STRUCT_LIB) $(STRUCT_OBJ) $(STRUCT_LDFLAGS)
++
++install: $(STRUCT_LIB)
++
++clean:
++	rm -f *.o *.so
