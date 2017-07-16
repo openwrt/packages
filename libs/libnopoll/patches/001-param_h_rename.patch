@@ -1,0 +1,66 @@
+From 675ac7b4b64d398de8a61e9c713383b8c0d9071f Mon Sep 17 00:00:00 2001
+From: Florian Fainelli <f.fainelli@gmail.com>
+Date: Tue, 20 Jun 2017 20:06:36 -0700
+Subject: [PATCH] nopoll: * [fix] Avoid clashes with isset() from sys/param.h
+
+---
+ src/nopoll_io.c      | 4 ++--
+ src/nopoll_loop.c    | 4 ++--
+ src/nopoll_private.h | 4 ++--
+ 3 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/src/nopoll_io.c b/src/nopoll_io.c
+index 036aa2c1c685..b3e48c2385d0 100644
+--- a/src/nopoll_io.c
++++ b/src/nopoll_io.c
+@@ -204,8 +204,8 @@ noPollIoEngine * nopoll_io_get_engine (noPollCtx * ctx, noPollIoEngineType engin
+ 	engine->destroy = nopoll_io_wait_select_destroy;
+ 	engine->clear   = nopoll_io_wait_select_clear;
+ 	engine->wait    = nopoll_io_wait_select_wait;
+-	engine->addto   = nopoll_io_wait_select_add_to;
+-	engine->isset   = nopoll_io_wait_select_is_set;
++	engine->add_to  = nopoll_io_wait_select_add_to;
++	engine->is_set  = nopoll_io_wait_select_is_set;
+ 
+ 	/* call to create the object */
+ 	engine->ctx       = ctx;
+diff --git a/src/nopoll_loop.c b/src/nopoll_loop.c
+index f58b8133b79a..60112f8dbf58 100644
+--- a/src/nopoll_loop.c
++++ b/src/nopoll_loop.c
+@@ -64,7 +64,7 @@ nopoll_bool nopoll_loop_register (noPollCtx * ctx, noPollConn * conn, noPollPtr
+ 
+ 	/* register the connection socket */
+ 	/* nopoll_log (ctx, NOPOLL_LEVEL_DEBUG, "Adding socket id: %d", conn->session);*/
+-	if (! ctx->io_engine->addto (conn->session, ctx, conn, ctx->io_engine->io_object)) {
++	if (! ctx->io_engine->add_to (conn->session, ctx, conn, ctx->io_engine->io_object)) {
+ 
+ 		/* remove this connection from registry */
+ 		nopoll_ctx_unregister_conn (ctx, conn);
+@@ -109,7 +109,7 @@ nopoll_bool nopoll_loop_process (noPollCtx * ctx, noPollConn * conn, noPollPtr u
+ 	int        * conn_changed = (int *) user_data;
+ 
+ 	/* check if the connection have something to notify */
+-	if (ctx->io_engine->isset (ctx, conn->session, ctx->io_engine->io_object)) {
++	if (ctx->io_engine->is_set (ctx, conn->session, ctx->io_engine->io_object)) {
+ 
+ 		/* call to notify action according to role */
+ 		switch (conn->role) {
+diff --git a/src/nopoll_private.h b/src/nopoll_private.h
+index 82fd27bb7fba..cd895d1e3ffd 100644
+--- a/src/nopoll_private.h
++++ b/src/nopoll_private.h
+@@ -340,8 +340,8 @@ struct _noPollIoEngine {
+ 	noPollIoMechDestroy    destroy;
+ 	noPollIoMechClear      clear;
+ 	noPollIoMechWait       wait;
+-	noPollIoMechAddTo      addto;
+-	noPollIoMechIsSet      isset;
++	noPollIoMechAddTo      add_to;
++	noPollIoMechIsSet      is_set;
+ };
+ 
+ struct _noPollMsg {
+-- 
+2.11.0
+

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libiio
 PKG_VERSION:=0.10
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/analogdevicesinc/libiio/tar.gz/v$(PKG_VERSION)?
@@ -33,7 +33,8 @@ define Package/libiio
   CATEGORY:=Libraries
   TITLE:=Library for interfacing with Linux IIO devices
   URL:=https://github.com/analogdevicesinc/libiio
-  DEPENDS:=+libusb-1.0 +libxml2
+  DEPENDS:=+PACKAGE_libaio:libaio +PACKAGE_libusb-1.0:libusb-1.0 \
+           +PACKAGE_libavahi-common:libavahi-common +PACKAGE_libavahi-client:libavahi-client +libxml2
 endef
 
 define Package/libiio/description

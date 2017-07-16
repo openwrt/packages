@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=3.2.5
+PKG_VERSION:=3.2.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
-PKG_MD5SUM:=b53ecfcbafca973f92bfb77815cce01e
-PKG_HASH:=0c0c15e999c66003b969c7a5d61c4a7e1d3dfbf3c809c23ff5537d583dd93323
+PKG_MD5SUM:=7a35bd97bd7253305bf5c0af5f9dd3ce
+PKG_HASH:=3751cebb5c71a861288267769114d12b966a7703a686a325d90a93707f3a6d9f
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 
@@ -428,11 +428,18 @@ endif
 
 # selectively disable optimizations according to arch/cpu type
 ifneq ($(findstring arm,$(CONFIG_ARCH)),)
-	ifeq (,$(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)))
+	ifneq ($(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)),)
+		FFMPEG_CONFIGURE+= \
+			--enable-vfp
+	else
 		FFMPEG_CONFIGURE+= \
 			--disable-vfp
 	endif
-	ifeq (,$(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)))
+	ifneq ($(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),)
+		FFMPEG_CONFIGURE+= \
+			--enable-neon \
+			--enable-vfp
+	else
 		FFMPEG_CONFIGURE+= \
 			--disable-neon
 	endif

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jq
 PKG_VERSION:=1.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -23,6 +23,8 @@ include $(INCLUDE_DIR)/package.mk
 ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -fno-ipa-sra
 endif
+
+TARGET_CFLAGS += -std=c99
 
 define Package/jq
   SECTION:=utils

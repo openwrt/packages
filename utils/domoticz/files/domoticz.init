@@ -19,7 +19,12 @@ start_domoticz() {
 
 	[ -n "$loglevel" ] && procd_append_param command -loglevel "$loglevel"
 	[ -n "$syslog" ] && procd_append_param command -syslog "$syslog"
-	[ -n "$userdata" ] && procd_append_param command -userdata "$userdata"
+	[ -n "$userdata" ] && {
+		mkdir -p "$userdata"
+		chmod 0770 "$userdata"
+		chown domoticz:domoticz "$userdata"
+		procd_append_param command -userdata "$userdata"
+	}
 	[ -n "$sslcert" -a "${sslwww:-0}" -gt 0 ] && {
 		procd_append_param command -sslcert "$sslcert"
 		procd_append_param command -sslwww "$sslwww"
@@ -29,10 +34,6 @@ start_domoticz() {
 }
 
 start_service() {
-	mkdir -p /var/lib/domoticz
-	chmod 0770 /var/lib/domoticz
-	chown domoticz:domoticz /var/lib/domoticz
-
 	procd_open_instance
 
 	procd_set_param command "$PROG"

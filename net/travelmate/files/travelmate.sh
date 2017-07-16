@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.8.0"
+trm_ver="0.8.2"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0
@@ -21,20 +21,6 @@ trm_timeout=60
 trm_iwinfo="$(command -v iwinfo)"
 trm_radio=""
 trm_rtfile="/tmp/trm_runtime.json"
-
-# source required system libraries
-#
-if [ -r "/lib/functions.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]
-then
-    . "/lib/functions.sh"
-    . "/usr/share/libubox/jshn.sh"
-else
-    f_log "error" "system libraries not found"
-fi
-
-# initial wireless recovery
-#
-ubus call network.wireless up
 
 # f_envload: load travelmate environment
 #
@@ -60,13 +46,6 @@ f_envload()
     then
         f_log "info " "travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
         exit 0
-    fi
-
-    # check for wireless tool
-    #
-    if [ -z "${trm_iwinfo}" ]
-    then
-        f_log "error" "no wireless tool found, please install package 'iwinfo'"
     fi
 }
 
@@ -272,6 +251,16 @@ f_main()
         fi
     fi
 }
+
+# source required system libraries
+#
+if [ -r "/lib/functions.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]
+then
+    . "/lib/functions.sh"
+    . "/usr/share/libubox/jshn.sh"
+else
+    f_log "error" "system libraries not found"
+fi
 
 # handle different travelmate actions
 #

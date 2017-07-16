@@ -68,7 +68,7 @@
 
 "dnshome.de"		"http://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip=[IP]"
 
-"dnsmadeeasy.com"	"http://www.dnsmadeeasy.com/servlet/updateip?username=[USERNAME]&password=[PASSWORD}&id=[DOMAIN]&ip=[IP]"	"success|ip-same"
+"dnsmadeeasy.com"	"http://cp.dnsmadeeasy.com/servlet/updateip?username=[USERNAME]&password=[PASSWORD]&id=[DOMAIN]&ip=[IP]"	"success|ip-same"
 
 "dnsmax.com"		"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=1&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
 

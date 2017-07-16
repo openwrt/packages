@@ -82,8 +82,14 @@ proto_wireguard_setup_peer() {
         *:*/*)
           proto_add_ipv6_route "${allowed_ip%%/*}" "${allowed_ip##*/}"
         ;;
-        */*)
+        *.*/*)
           proto_add_ipv4_route "${allowed_ip%%/*}" "${allowed_ip##*/}"
+        ;;
+        *:*)
+          proto_add_ipv6_route "${allowed_ip%%/*}" "128"
+        ;;
+        *.*)
+          proto_add_ipv4_route "${allowed_ip%%/*}" "32"
         ;;
       esac
     done
