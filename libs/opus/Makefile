@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opus
-PKG_VERSION:=1.2
+PKG_VERSION:=1.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://archive.mozilla.org/pub/opus/
-PKG_HASH:=77db45a87b51578fbc49555ef1b10926179861d854eb2613207dc79d9ec0a9a9
+PKG_HASH:=cfafd339ccd9c5ef8d6ab15d7e1a412c054bf4cb4ecbbbcc78c12ef2def70732
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -41,6 +41,11 @@ CONFIGURE_ARGS+= \
 	--disable-extra-programs
 
 ifeq ($(CONFIG_SOFT_FLOAT),y)
+	CONFIGURE_ARGS+= \
+		--enable-fixed-point
+endif
+
+ifneq ($(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),)
 	CONFIGURE_ARGS+= \
 		--enable-fixed-point
 endif
