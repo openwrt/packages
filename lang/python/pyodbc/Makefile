@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyodbc
 PKG_VERSION:=4.0.17
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/ce/57/6b92aa5b3497dde6be55fd6fcb76c7db215ed1d56fde45c613add4a43095/
