@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -12,9 +10,10 @@ PKG_VERSION:=2.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=cd77a2869e32354b004cc6b34fcb0bee56114caa2d9ed862aaa8071441e34eb7
 PKG_SOURCE_URL:=@SF/expat
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_HASH:=4376911fcf81a23ebd821bbabc26fd933f3ac74833f74924342c29aad2c86046
+PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>, \
+		Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
