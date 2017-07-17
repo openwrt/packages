@@ -1,11 +1,10 @@
 --- a/src/connection.cpp
 +++ b/src/connection.cpp
-@@ -18,6 +18,15 @@
+@@ -18,6 +18,14 @@
  #include "cnxninfo.h"
  #include "sqlwchar.h"
  
-+#include <endian.h>
-+#if __BYTE_ORDER == __BIG_ENDIAN
++#ifdef WORDS_BIGENDIAN
 +# define OPTENC_UTF16NE OPTENC_UTF16BE
 +# define ENCSTR_UTF16NE "utf-16be"
 +#else
@@ -16,7 +15,7 @@
  #if PY_MAJOR_VERSION < 3
  static bool IsStringType(PyObject* t) { return (void*)t == (void*)&PyString_Type; }
  static bool IsUnicodeType(PyObject* t) { return (void*)t == (void*)&PyUnicode_Type; }
-@@ -90,7 +99,7 @@ static bool Connect(PyObject* pConnectSt
+@@ -90,7 +98,7 @@ static bool Connect(PyObject* pConnectSt
          // indication that we can handle Unicode.  We are going to use the same unicode ending
          // as we do for binding parameters.
  
@@ -25,7 +24,7 @@
          if (!wchar)
              return false;
  
-@@ -216,24 +225,24 @@ PyObject* Connection_New(PyObject* pConn
+@@ -216,24 +224,24 @@ PyObject* Connection_New(PyObject* pConn
      // single-byte text we don't actually know what the encoding is.  For example, with SQL
      // Server the encoding is based on the database's collation.  We ask the driver / DB to
      // convert to SQL_C_WCHAR and use the ODBC default of UTF-16LE.
