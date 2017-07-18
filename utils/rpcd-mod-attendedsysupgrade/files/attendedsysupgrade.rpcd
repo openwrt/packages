@@ -1,0 +1,29 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+
+case "$1" in
+	list)
+		json_init
+
+       	json_add_object "sysupgrade"
+       	json_close_object
+
+       	json_dump
+        ;;
+    call)
+        case "$2" in
+			sysupgrade)
+				if [ -f "/tmp/sysupgrade.bin" ]; then
+					/etc/init.d/uhttpd stop
+					/etc/init.d/dropbear stop
+					sleep 1;
+					/sbin/sysupgrade -c /tmp/sysupgrade.bin
+				fi
+				json_init
+				json_add_string "message" "could not find /tmp/sysupgrade.bin"
+				json_dump
+        esac
+    ;;
+esac
+
