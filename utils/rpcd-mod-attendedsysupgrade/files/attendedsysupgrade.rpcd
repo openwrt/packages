@@ -1,0 +1,40 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+
+case "$1" in
+	list)
+		json_init
+		json_add_object "sysupgrade"
+		json_add_boolean "keep_settings" 1
+		json_close_object
+		json_dump
+		;;
+	call)
+		case "$2" in
+			sysupgrade)
+				read input;
+				json_load "$input"
+				json_get_var keep_settings keep_settings
+
+				if [ -f "/tmp/sysupgrade.bin" ]; then
+					json_init
+					json_add_string "message" "starting sysupgrade"
+					json_dump
+
+					/etc/init.d/uhttpd stop
+					/etc/init.d/dropbear stop
+					sleep 1;
+					if [ "$keep_settings" -eq "0" ]; then
+						keep_settings_param="-n"
+					fi
+
+					/sbin/sysupgrade $keep_settings_param /tmp/sysupgrade.bin
+				fi
+				json_init
+				json_add_string "message" "could not find /tmp/sysupgrade.bin"
+				json_dump
+		esac
+		;;
+esac
+
