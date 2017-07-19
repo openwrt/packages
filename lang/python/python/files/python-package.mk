@@ -126,6 +126,9 @@ define Build/Compile/PyMod
 endef
 
 define PyBuild/Compile/Default
+	$(foreach pkg,$(HOST_PYTHON_PACKAGE_BUILD_DEPENDS),
+		$(call host_python_pip_install_host,$(pkg))
+	)
 	$(call Build/Compile/PyMod,, \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		--single-version-externally-managed \
