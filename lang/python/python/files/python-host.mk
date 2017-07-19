@@ -71,11 +71,4 @@ define Build/Compile/HostPyMod
 		$(3))
 endef
 
-define HostPy/Compile/Default
-	$(call Build/Compile/HostPyMod,,\
-		install --root="$(STAGING_DIR_HOSTPKG)" --prefix="" \
-		--single-version-externally-managed \
-	)
-endef
-
 endif # __python_host_mk_inc

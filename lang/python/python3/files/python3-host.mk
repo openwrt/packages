@@ -71,11 +71,4 @@ define Build/Compile/HostPy3Mod
 		$(3))
 endef
 
-define HostPy3/Compile/Default
-	$(call Build/Compile/HostPy3Mod,,\
-		install --root="$(STAGING_DIR_HOSTPKG)" --prefix="" \
-		--single-version-externally-managed \
-	)
-endef
-
 endif # __python3_host_mk_inc
