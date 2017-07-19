@@ -60,6 +60,19 @@ define Build/Compile/HostPy3RunHost
 	)
 endef
 
+# Note: I shamelessly copied this from Yousong's logic (from python-packages);
+HOST_PYTHON3_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON3_VERSION)
+define host_python3_pip_install
+	$(HOST_PYTHON3_PIP) install \
+		--root=$(1) \
+		--prefix=$(2) \
+		--ignore-installed \
+		$(3)
+endef
+
+define host_python3_pip_install_host
+$(call host_python3_pip_install,$(STAGING_DIR_HOSTPKG),"",$(1))
+endef
 
 # $(1) => build subdir
 # $(2) => additional arguments to setup.py
