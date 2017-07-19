@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.8.2"
+trm_ver="0.9.0"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0
@@ -223,11 +223,19 @@ f_main()
                                 f_log "info " "interface '${sta_iface}' on '${sta_radio}' connected to uplink '${sta_ssid}' (${trm_sysver})"
                                 f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
                                 return 0
+                            elif [ ${cnt} -eq ${trm_maxretry} ]
+                            then
+                                uci -q set wireless."${config}".disabled=1
+                                uci -q set wireless."${config}".ssid="${sta_ssid}_err"
+                                uci -q commit wireless
+                                f_check "dev"
+                                f_log "info " "interface 'can't connect to uplink '${sta_ssid}' (${cnt}/${trm_maxretry}), uplink disabled (${trm_sysver})"
                             else
                                 uci -q revert wireless
-                                f_log "info " "interface '${sta_iface}' on '${sta_radio}' can't connect to uplink '${sta_ssid}' (${trm_sysver})"
-                                f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
+                                f_check "dev"
+                                f_log "info " "can't connect to uplink '${sta_ssid}' (${cnt}/${trm_maxretry}) (${trm_sysver})"
                             fi
+                            f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
                         fi
                     done
                 fi
