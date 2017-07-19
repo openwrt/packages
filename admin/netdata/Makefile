@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=1.6.0
+PKG_VERSION:=1.7.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
 PKG_LICENSE:=GPL-3.0
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/firehol/netdata/releases/download/v$(PKG_VERSION)
-PKG_HASH:=7839491f6e8b297cc8c28ca96845ff087f7961a12b92aa0eea1f66528da8bdaf
+PKG_HASH:=7fa23ceaccf6548fba165cd4839ce694784b2fcf7f90de0a0162b9c529805fc0
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
@@ -28,13 +28,15 @@ define Package/netdata
   CATEGORY:=Administration
   DEPENDS:=+zlib +libuuid
   TITLE:=Real-time performance monitoring tool
-  URL:=http://netdata.firehol.org/
+  URL:=https://my-netdata.io/
 endef
 
 define Package/netdata/description
   netdata is a highly optimized Linux daemon providing real-time performance
   monitoring for Linux systems, applications and SNMP devices over the web.
 endef
+
+CONFIGURE_ARGS += --with-zlib --with-math --disable-x86-sse --disable-lto
 
 define Package/netdata/conffiles
 /etc/netdata/
@@ -46,9 +48,7 @@ define Package/netdata/install
 	$(CP) ./files/netdata.conf $(1)/etc/netdata
 	mkdir -p $(1)/usr/share/netdata
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/netdata $(1)/usr/share
-	rm $(1)/usr/share/netdata/web/images/animated.gif
-	rm -rf $(1)/usr/share/netdata/web/images/seo-*.png
-	rm -rf $(1)/usr/share/netdata/web/images/post.png
+	rm -rf $(1)/usr/share/netdata/web/images
 	rm -rf $(1)/usr/share/netdata/web/old
 	rm $(1)/usr/share/netdata/web/demo*html
 	rm $(1)/usr/share/netdata/web/fonts/*.svg
