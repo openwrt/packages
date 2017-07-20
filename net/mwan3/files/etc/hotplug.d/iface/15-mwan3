@@ -43,7 +43,7 @@ if [ "$ACTION" == "ifup" ]; then
 fi
 
 mwan3_lock
-$LOG notice "$ACTION interface $INTERFACE (${DEVICE:-unknown})"
+$LOG notice "Execute "$ACTION" event on interface $INTERFACE (${DEVICE:-unknown})"
 
 case "$ACTION" in
 	ifup)
