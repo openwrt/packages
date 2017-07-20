@@ -51,6 +51,7 @@ validate_track_method() {
 main() {
 	local reliability count timeout interval failure_interval
 	local recovery_interval down up size
+	local keep_failure_interval
 
 	[ -z "$3" ] && echo "Error: should not be started manually" && exit 0
 
@@ -74,6 +75,7 @@ main() {
 	config_get up $1 up 5
 	config_get size $1 size 56
 	config_get failure_interval $1 failure_interval $interval
+	config_get_bool keep_failure_interval $1 keep_failure_interval 0
 	config_get recovery_interval $1 recovery_interval $interval
 
 	local score=$(($down+$up))
@@ -111,6 +113,9 @@ main() {
 
 			if [ $score -lt $up ]; then
 				score=0
+				[ ${keep_failure_interval} -eq 1 ] && {
+					sleep_time=$failure_interval
+				}
 			else
 				sleep_time=$failure_interval
 			fi
