@@ -37,7 +37,7 @@ get_mwan3_status() {
 	local pid
 
 	if [ "${iface}" = "${iface_select}" ] || [ "${iface_select}" = "" ]; then
-		pid="$(pgrep -f "mwan3track $iface_selected")"
+		pid="$(pgrep -f "mwan3track $iface")"
 		if [ "${pid}" != "" ]; then
 			running="1"
 		fi
