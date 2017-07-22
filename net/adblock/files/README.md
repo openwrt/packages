@@ -29,6 +29,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 150 entries
     * [reg_cn](https://easylist-downloads.adblockplus.org/easylistchina+easylist.txt)
     * => regional blocklist for China, daily updates, approx. 1.600 entries
+    * [reg_nl](https://easylist-downloads.adblockplus.org/easylistdutch+easylist.txt)
+    * => regional blocklist for the Netherlands, weekly updates, approx. 1300 entries
     * [reg_pl](http://adblocklist.org)
     * => regional blocklist for Poland, daily updates, approx. 50 entries
     * [reg_ro](https://easylist-downloads.adblockplus.org/rolist+easylist.txt)
