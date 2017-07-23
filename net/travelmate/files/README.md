@@ -8,7 +8,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 ## Main Features
 * STA interfaces operating in an "always off" mode, to make sure that the AP is always accessible
 * easy setup within normal OpenWrt/LEDE environment
-* strong LuCI-Support to simplify the interface setup
+* strong LuCI-Support with builtin interface wizard and wireless interface manager
 * fast uplink connections
 * manual / automatic mode support, the latter one checks the existing uplink connection regardless of ifdown event trigger actions every n seconds
 * support of devices with multiple radios
@@ -24,7 +24,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages)
 * install 'travelmate' (_opkg install travelmate_)
 * configure your network:
-    * automatic: use the LuCI frontend with automatic STA interface setup, that's the recommended way
+    * recommended: use the LuCI frontend with automatic STA interface setup and connection manager
     * manual: see detailed configure steps below
     * at least you need one configured AP and one STA interface
 
@@ -123,7 +123,7 @@ config wifi-iface
 </code></pre>
 
 ## Support
-Please join the travelmate discussion in this [forum thread](https://forum.openwrt.org/viewtopic.php?id=67697) or contact me by [mail](mailto:dev@brenken.org)  
+Please join the travelmate discussion in this [forum thread](https://forum.lede-project.org/t/travelmate-support-thread/5155) or contact me by [mail](mailto:dev@brenken.org)  
 
 ## Removal
 * stop the travelmate daemon with _/etc/init.d/travelmate stop_
