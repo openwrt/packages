@@ -241,7 +241,7 @@ validate_common_server_options_() {
 	local aead_methods='"aes-128-gcm", "aes-192-gcm", "aes-256-gcm"'
 
 	"${func:-ss_validate}" "$cfgtype" "$cfg" "$@" \
-		'disabled:bool:false' \
+		'disabled:bool:0' \
 		'server:host' \
 		'server_port:port' \
 		'password:string' \
@@ -262,10 +262,10 @@ validate_common_options_() {
 	local func="$1"; shift
 
 	"${func:-ss_validate}" "$cfgtype" "$cfg" "$@" \
-		'disabled:bool:false' \
-		'verbose:bool:false' \
-		'fast_open:bool:false' \
-		'reuse_port:bool:false' \
+		'disabled:bool:0' \
+		'verbose:bool:0' \
+		'fast_open:bool:0' \
+		'reuse_port:bool:0' \
 		'mode:or("tcp_only", "udp_only", "tcp_and_udp")' \
 		'mtu:uinteger' \
 		'timeout:uinteger' \
@@ -286,7 +286,7 @@ validate_ss_redir_section() {
 
 validate_ss_rules_section() {
 	"${2:-ss_validate}" ss_rules "$1" \
-		'disabled:bool:false' \
+		'disabled:bool:0' \
 		'redir_tcp:uci("shadowsocks-libev", "@ss_redir")' \
 		'redir_udp:uci("shadowsocks-libev", "@ss_redir")' \
 		'src_ips_bypass:list(ipaddr)' \
