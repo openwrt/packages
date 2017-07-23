@@ -39,6 +39,9 @@ endef
 
 TARGET_CFLAGS += $(FPIC)
 
+HOST_CONFIGURE_VARS += \
+	CPPFLAGS="$(HOST_CFLAGS) -DXML_POOR_ENTROPY"
+
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static
