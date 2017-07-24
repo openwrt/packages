@@ -47,10 +47,11 @@ main() {
 	local recovery_interval down up size
 	local keep_failure_interval
 
-	[ -z "$3" ] && echo "Error: should not be started manually" && exit 0
+	[ -z "$5" ] && echo "Error: should not be started manually" && exit 0
 
 	INTERFACE=$1
 	DEVICE=$2
+	STATUS=$3
 	mkdir -p /var/run/mwan3track/$1
 	trap clean_up SIGINT SIGTERM
 	trap if_down SIGUSR1
@@ -73,13 +74,18 @@ main() {
 	config_get recovery_interval $1 recovery_interval $interval
 
 	local score=$(($down+$up))
-	local track_ips=$(echo $* | cut -d ' ' -f 4-99)
+	local track_ips=$(echo $* | cut -d ' ' -f 5-99)
 	local host_up_count=0
 	local lost=0
 	local sleep_time=0
 	local turn=0
 
-	echo "offline" > /var/run/mwan3track/$1/STATUS
+	if [ "$STATUS" = "offline" ]; then
+		echo "offline" > /var/run/mwan3track/$1/STATUS
+		score=0
+	else
+		echo "online" > /var/run/mwan3track/$1/STATUS
+	fi
 	while true; do
 
 		sleep_time=$interval
@@ -137,6 +143,7 @@ main() {
 
 			if [ $score -eq $up ]; then
 				$LOG notice "Interface $1 ($2) is online"
+				echo "online" > /var/run/mwan3track/$1/STATUS
 				env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
 				exit 0
 			fi
