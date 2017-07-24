@@ -8,6 +8,8 @@ IPT6="ip6tables -t mangle -w"
 LOG="logger -t mwan3[$$] -p"
 CONNTRACK_FILE="/proc/net/nf_conntrack"
 
+MWAN3_STATUS_DIR="/var/run/mwan3track"
+
 # mwan3's MARKing mask (at least 3 bits should be set)
 MMX_MASK=0xff00
 
@@ -63,6 +65,10 @@ mwan3_lock() {
 
 mwan3_unlock() {
 	lock -u /var/run/mwan3.lock
+}
+
+mwan3_lock_clean() {
+	rm -rf /var/run/mwan3.lock
 }
 
 mwan3_get_iface_id()
@@ -918,4 +924,14 @@ mwan3_flush_conntrack()
 	else
 		$LOG warning "connection tracking not enabled"
 	fi
+}
+
+mwan3_track_clean()
+{
+	rm -rf "$MWAN3_STATUS_DIR/${1}" &> /dev/null
+	[ -d "$MWAN3_STATUS_DIR" ] && {
+		if [ -z "$(ls -A "$MWAN3_STATUS_DIR")" ]; then
+			rm -rf "$MWAN3_STATUS_DIR"
+		fi
+	}
 }
