@@ -10,12 +10,6 @@ IFDOWN_EVENT=0
 
 clean_up() {
 	$LOG notice "Stopping mwan3track for interface \"${INTERFACE}\""
-	if [ "$(pgrep -f "mwan3track ${INTERFACE} ${DEVICE}")" = "" ]; then
-		rm -rf "/var/run/mwan3track/${INTERFACE}" &> /dev/null
-	fi
-	if [ -z "$(ls -A "/var/run/mwan3track")" ]; then
-		rm -rf "/var/run/mwan3track"
-	fi
 	exit 0
 }
 
@@ -144,7 +138,6 @@ main() {
 			if [ $score -eq $up ]; then
 				$LOG notice "Interface $1 ($2) is online"
 				env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
-				rm -rf "/var/run/mwan3track/${1}" &> /dev/null
 				exit 0
 			fi
 		fi
