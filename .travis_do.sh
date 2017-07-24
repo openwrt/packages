@@ -55,9 +55,8 @@ download_sdk() {
 }
 
 # test_package will run on the `script` step.
-# test_package call make download check for very new/modified package in it's
-# own clean sdk directory
-test_packages() {
+# test_package call make download check for very new/modified package
+test_packages2() {
 	# search for new or modified packages. PKGS will hold a list of package like 'admin/muninlite admin/monit ...'
 	PKGS=$(git diff --name-only "$TRAVIS_COMMIT_RANGE" | grep 'Makefile$' | grep -v '/files/' | awk -F'/Makefile' '{ print $1 }')
 
@@ -101,7 +100,7 @@ EOF
 		echo_blue "=== $pkg_name Finished package"
 	done
 
-	exit $RET
+	return $RET
 }
 
 test_commits() {
@@ -139,7 +138,14 @@ test_commits() {
 		fi
 	done
 
-	exit $RET
+	return $RET
+}
+
+test_packages() {
+	GRET=0
+	test_commits   || GRET=1
+	test_packages2 || GRET=1
+	return $GRET
 }
 
 echo_blue "=== Travis ENV"
