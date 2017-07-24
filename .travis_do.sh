@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # MIT Alexander Couzens <lynxis@fe80.eu>
 
@@ -9,6 +9,23 @@ SDK_PATH=https://downloads.lede-project.org/snapshots/targets/ar71xx/generic/
 SDK=lede-sdk-ar71xx-generic_gcc-5.4.0_musl.Linux-x86_64
 PACKAGES_DIR="$PWD"
 
+echo_red()   { printf "\033[1;31m$*\033[m\n"; }
+echo_green() { printf "\033[1;32m$*\033[m\n"; }
+echo_blue()  { printf "\033[1;34m$*\033[m\n"; }
+
+exec_status() {
+	("$@" 2>&1) > logoutput && status=0 || status=1
+	grep -qE 'WARNING|ERROR' logoutput && status=1
+	cat logoutput
+	if [ $status -eq 0 ]; then
+		echo_green "=> $* successful"
+		return 0
+	else
+		echo_red   "=> $* failed"
+		return 1
+	fi
+}
+
 # download will run on the `before_script` step
 # The travis cache will be used (all files under $HOME/sdk/). Meaning
 # We don't have to download the file again
@@ -16,7 +33,7 @@ download_sdk() {
 	mkdir -p "$SDK_HOME"
 	cd "$SDK_HOME"
 
-	echo "=== download SDK"
+	echo_blue "=== download SDK"
 	wget "$SDK_PATH/sha256sums" -O sha256sums
 	wget "$SDK_PATH/sha256sums.gpg" -O sha256sums.asc
 
@@ -34,7 +51,7 @@ download_sdk() {
 
 	# check again and fail here if the file is still bad
 	sha256sum -c ./sha256sums.small
-	echo "=== SDK is up-to-date"
+	echo_blue "=== SDK is up-to-date"
 }
 
 # test_package will run on the `script` step.
@@ -42,52 +59,97 @@ download_sdk() {
 # own clean sdk directory
 test_packages() {
 	# search for new or modified packages. PKGS will hold a list of package like 'admin/muninlite admin/monit ...'
-	PKGS=$(git diff --stat "$TRAVIS_COMMIT_RANGE" | grep Makefile | grep -v '/files/' | awk '{ print $1}' | awk -F'/Makefile' '{ print $1 }')
+	PKGS=$(git diff --name-only "$TRAVIS_COMMIT_RANGE" | grep 'Makefile$' | grep -v '/files/' | awk -F'/Makefile' '{ print $1 }')
 
 	if [ -z "$PKGS" ] ; then
-		echo "No new or modified packages found!" >&2
+		echo_blue "No new or modified packages found!" >&2
 		exit 0
 	fi
 
-	echo "=== Found new/modified packages:"
+	echo_blue "=== Found new/modified packages:"
 	for pkg in $PKGS ; do
 		echo "===+ $pkg"
 	done
 
+	echo_blue "=== Setting up SDK"
+	tmp_path=$(mktemp -d)
+	cd "$tmp_path"
+	tar Jxf "$SDK_HOME/$SDK.tar.xz" --strip=1
+
+	# use github mirrors to spare lede servers
+	cat > feeds.conf <<EOF
+src-git base https://github.com/lede-project/source.git
+src-link packages $PACKAGES_DIR
+src-git luci https://github.com/openwrt/luci.git
+EOF
+
+	./scripts/feeds update -a
+	./scripts/feeds install -a
+	make defconfig
+	echo_blue "=== Setting up SDK done"
+
+	RET=0
 	# E.g: pkg_dir => admin/muninlite
-	#      pkg_name => muninlite
+	# pkg_name => muninlite
 	for pkg_dir in $PKGS ; do
 		pkg_name=$(echo "$pkg_dir" | awk -F/ '{ print $NF }')
-		tmp_path=$HOME/tmp/$pkg_name/
+		echo_blue "=== $pkg_name Testing package"
 
-		echo "=== $pkg_name Testing package"
+		exec_status make "package/$pkg_name/download" V=s || RET=1
+		exec_status make "package/$pkg_name/check" V=s || RET=1
 
-		# create a clean sdk for every package
-		mkdir -p "$tmp_path"
-		cd "$tmp_path"
-		tar Jxf "$SDK_HOME/$SDK.tar.xz"
-		cd "$SDK"
-
-		cat > feeds.conf <<EOF
-src-git base https://git.lede-project.org/source.git
-src-link packages $PACKAGES_DIR
-src-git luci https://git.lede-project.org/project/luci.git
-src-git routing https://git.lede-project.org/feed/routing.git
-src-git telephony https://git.lede-project.org/feed/telephony.git
-EOF
-		./scripts/feeds update 2>/dev/null >/dev/null
-		./scripts/feeds install "$pkg_name"
-
-		make defconfig
-		make "package/$pkg_name/download" V=s
-		make "package/$pkg_name/check" V=s | tee -a logoutput
-		grep WARNING logoutput && exit 1
-		rm -rf "$tmp_path"
-		echo "=== $pkg_name Finished package"
+		echo_blue "=== $pkg_name Finished package"
 	done
+
+	exit $RET
 }
 
-export
+test_commits() {
+	RET=0
+	for commit in $(git rev-list ${TRAVIS_COMMIT_RANGE/.../..}); do
+		echo_blue "=== Checking commit '$commit'"
+		if git show --format='%P' -s $commit | grep -qF ' '; then
+			echo_red "Pull request should not include merge commits"
+			RET=1
+		fi
+
+		author="$(git show -s --format=%aN $commit)"
+		if echo $author | grep -q '\S\+\s\+\S\+'; then
+			echo_green "Author name ($author) seems ok"
+		else
+			echo_red "Author name ($author) need to be your real name 'firstname lastname'"
+			RET=1
+		fi
+
+		subject="$(git show -s --format=%s $commit)"
+		if echo "$subject" | grep -q '^[0-9A-Za-z,]\+: '; then
+			echo_green "Commit subject line seems ok ($subject)"
+		else
+			echo_red "Commit subject line MUST start with '<package name>: ' ($subject)"
+			RET=1
+		fi
+
+		body="$(git show -s --format=%b $commit)"
+		sob="$(git show -s --format='Signed-off-by: %aN <%aE>' $commit)"
+		if echo "$body" | grep -qF "$sob"; then
+			echo_green "Signed-off-by match author"
+		else
+			echo_red "Signed-off-by is missing or doesn't match author (should be '$sob')"
+			RET=1
+		fi
+	done
+
+	exit $RET
+}
+
+echo_blue "=== Travis ENV"
+env
+echo_blue "=== Travis ENV"
+
+until git merge-base ${TRAVIS_COMMIT_RANGE/.../ } > /dev/null; do
+	echo_blue "Fetching 50 commits more"
+	git fetch origin --deepen=50
+done
 
 if [ "$TRAVIS_PULL_REQUEST" = false ] ; then
 	echo "Only Pull Requests are supported at the moment." >&2
