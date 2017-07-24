@@ -14,12 +14,14 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=4
+# XXX: reset PKG_RELEASE to 1 only if Python's pip & setuptools versions have also bumped;
+#      otherwise, keep bumping PKG_RELEASE
+PKG_RELEASE:=5
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=a01810ddfcec216bcdb357a84bfaafdfaa0ca42bbdaa4cb7ff74f5a9961e4041
+PKG_HASH:=9229773be41ed144370f47f0f626a1579931f5a390f1e8e3853174d52edd64a9
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -276,7 +278,6 @@ define Host/Install
 
 	$(INSTALL_DIR) $(HOST_PYTHON3_DIR)/bin/ $(STAGING_DIR)/mk/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON3_DIR)/bin/pgen3
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Programs/_freeze_importlib $(HOST_PYTHON3_DIR)/bin/_freeze_importlib
 
 	# Install these mk files in the Host/Install phase ;
 	# The Build/InstallDev rule is activated only for target builds.
