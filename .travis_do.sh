@@ -146,6 +146,11 @@ echo_blue "=== Travis ENV"
 env
 echo_blue "=== Travis ENV"
 
+until git merge-base ${TRAVIS_COMMIT_RANGE/.../ } > /dev/null; do
+	echo_blue "Fetching 50 commits more"
+	git fetch origin --deepen=50
+done
+
 if [ "$TRAVIS_PULL_REQUEST" = false ] ; then
 	echo "Only Pull Requests are supported at the moment." >&2
 	exit 0
