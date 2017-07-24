@@ -47,6 +47,7 @@ ss_mkjson_server_conf() {
 
 ss_mkjson_server_conf_() {
 	[ -n "$server_port" ] || return 1
+	password="${password//\"/\\\"}"
 	cat <<-EOF
 		${server:+${q}server${q}: ${q}$server${q},}
 		"server_port": $server_port,
