@@ -3,6 +3,7 @@
 . /lib/functions.sh
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
+. /usr/share/libubox/jshn.sh
 
 [ "$ACTION" == "ifup" -o "$ACTION" == "ifdown" ] || exit 1
 [ -n "$INTERFACE" ] || exit 2
@@ -15,6 +16,7 @@ mwan3_set_connected_iptables
 
 config_load mwan3
 config_get enabled $INTERFACE enabled 0
+config_get initial_state $INTERFACE initial_state "online"
 [ "$enabled" == "1" ] || exit 0
 
 if [ "$ACTION" == "ifup" ]; then
@@ -42,6 +44,17 @@ if [ "$ACTION" == "ifup" ]; then
 	[ -n "$gateway" ] || exit 9
 fi
 
+if [ "$initial_state" = "offline" ]; then
+	json_load "$(ubus call mwan3 status '{"section":"interfaces"}')"
+	json_select "interfaces"
+	json_select "${INTERFACE}"
+	json_get_var running running
+	json_get_var status status
+else
+	status=online
+	running=1
+fi
+
 mwan3_lock
 $LOG notice "Execute "$ACTION" event on interface $INTERFACE (${DEVICE:-unknown})"
 
@@ -49,13 +62,18 @@ case "$ACTION" in
 	ifup)
 		mwan3_set_general_rules
 		mwan3_set_general_iptables
-		mwan3_create_iface_rules $INTERFACE $DEVICE
 		mwan3_create_iface_iptables $INTERFACE $DEVICE
-		mwan3_create_iface_route $INTERFACE $DEVICE
-		mwan3_track $INTERFACE $DEVICE ${src_ip}
-		mwan3_set_policies_iptables
-		mwan3_set_user_rules
-		mwan3_flush_conntrack $INTERFACE $DEVICE "ifup"
+		if [ ${running} -eq 1 -a "${status}" = "online" ]; then
+			mwan3_create_iface_rules $INTERFACE $DEVICE
+			mwan3_create_iface_route $INTERFACE $DEVICE
+			mwan3_track $INTERFACE $DEVICE ${src_ip} "online"
+			mwan3_set_policies_iptables
+			mwan3_set_user_rules
+			mwan3_flush_conntrack $INTERFACE $DEVICE "ifup"
+		else
+			$LOG notice "Starting tracker on interface $INTERFACE (${DEVICE:-unknown})"
+			mwan3_track $INTERFACE $DEVICE "offline"
+		fi
 	;;
 	ifdown)
 		mwan3_delete_iface_rules $INTERFACE

@@ -457,7 +457,7 @@ mwan3_track()
 
 	kill $(pgrep -f "mwan3track $1 $2") &> /dev/null
 	if [ -n "$track_ips" ]; then
-		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track "$1" "$2" "$3" $track_ips &
+		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track "$1" "$2" "$3" "$4" $track_ips &
 	fi
 }
 
