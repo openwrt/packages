@@ -5,7 +5,6 @@
 . /usr/share/libubox/jshn.sh
 
 MWAN3_STATUS_DIR="/var/run/mwan3track"
-MWAN3_PID_FILE="/var/run/mwan3track"
 
 IPS="ipset"
 IPT4="iptables -t mangle -w"
