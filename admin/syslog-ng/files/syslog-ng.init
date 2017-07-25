@@ -12,6 +12,12 @@ config_file=/etc/syslog-ng.conf
 
 start() {
 	[ -f $config_file ] || return 1
+
+	if ! $PROG -s 2>/dev/null ; then
+		echo "Couldn't parse $(basename $config_file)" >&2
+		exit 1
+	fi
+
 	service_start $PROG --process-mode background \
 		-p $SERVICE_PID_FILE
 }
