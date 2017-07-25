@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 process_filespec() {
 	local src_dir="$1"
@@ -45,12 +46,18 @@ process_filespec "$src_dir" "$dst_dir" "$filespec" || {
 	exit 1
 }
 
+# delete egg-info directories
+find "$dst_dir" -name "*.egg-info" | xargs rm -rf
+
 if [ "$mode" == "sources" ] ; then
 	# Copy only python source files
-	find $dst_dir -not -name "*\.py" | xargs rm -f
+	find $dst_dir -type f -not -name "*\.py" | xargs rm -f
+
 	# Delete empty folders (if the case)
-	find $dst_dir/usr -type d | xargs rmdir &> /dev/null
-	rmdir $dst_dir/usr &> /dev/null
+	if [ -d "$dst_dir/usr" ] ; then
+		find $dst_dir/usr -type d | xargs rmdir --ignore-fail-on-non-empty
+		rmdir --ignore-fail-on-non-empty $dst_dir/usr
+	fi
 	exit 0
 fi
 
@@ -64,6 +71,15 @@ $python -m compileall -b -d '/' $dst_dir || {
 	echo "python -m compileall err-ed"
 	exit 1
 }
+
 # Delete source files and pyc [ un-optimized bytecode files ]
 # We may want to make this optimization thing configurable later, but not sure atm
-find $dst_dir -name "*\.py" | xargs rm -f
+find $dst_dir -type f -name "*\.py" | xargs rm -f
+
+# Delete empty folders (if the case)
+if [ -d "$dst_dir/usr" ] ; then
+	find $dst_dir/usr -type d | xargs rmdir --ignore-fail-on-non-empty
+	rmdir --ignore-fail-on-non-empty $dst_dir/usr
+fi
+
+exit 0

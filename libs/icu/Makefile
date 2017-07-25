@@ -9,7 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icu4c
 PKG_VERSION:=59.1
+<<<<<<< HEAD
 PKG_RELEASE:=1
+=======
+PKG_RELEASE:=2
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 PKG_SOURCE:=$(PKG_NAME)-59_1-src.tgz
 PKG_SOURCE_URL:=http://download.icu-project.org/files/$(PKG_NAME)/$(PKG_VERSION)

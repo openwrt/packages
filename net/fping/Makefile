@@ -9,7 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fping
 PKG_VERSION:=4.0
+<<<<<<< HEAD
 PKG_RELEASE:=1
+=======
+PKG_RELEASE:=2
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://fping.org/dist/
@@ -43,6 +47,8 @@ endef
 CONFIGURE_ARGS+= \
 	--enable-ipv4 \
 	--enable-ipv6
+
+TARGET_CFLAGS += -std=gnu99
 
 define Package/fping/install
 	$(INSTALL_DIR) $(1)/usr/bin

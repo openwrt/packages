@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libarchive
-PKG_VERSION:=3.3.1
+PKG_VERSION:=3.3.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.libarchive.org/downloads
-PKG_HASH:=29ca5bd1624ca5a007aa57e16080262ab4379dbf8797f5c52f7ea74a3b0424e7
+PKG_HASH:=ed2dbd6954792b2c054ccf8ec4b330a54b85904a80cef477a1c74643ddafa0ce
 PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
 PKG_LICENSE:=BSD-2-Clause
 
@@ -62,10 +62,10 @@ CONFIGURE_ARGS += \
 	--enable-bsdtar=shared \
 	--disable-acl \
 	--disable-xattr \
-	--without-lzo2 \
 	--without-nettle \
 	--without-xml2 \
 	--without-lz4 \
+	--without-cng \
 
 ifeq ($(BUILD_VARIANT),noopenssl)
 	CONFIGURE_ARGS += --without-openssl

@@ -126,14 +126,19 @@ define Build/Compile/Py3Mod
 endef
 
 define Py3Build/Compile/Default
+	$(foreach pkg,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS),
+		$(call host_python3_pip_install_host,$(pkg))
+	)
 	$(call Build/Compile/Py3Mod,, \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		--single-version-externally-managed \
 	)
 endef
 
+Py3Build/Compile=$(Py3Build/Compile/Default)
+
 ifeq ($(BUILD_VARIANT),python3)
 define Build/Compile
-	$(call Py3Build/Compile/Default)
+	$(call Py3Build/Compile)
 endef
 endif # python3

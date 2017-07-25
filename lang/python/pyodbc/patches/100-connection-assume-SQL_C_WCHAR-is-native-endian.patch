@@ -1,0 +1,59 @@
+--- a/src/connection.cpp
++++ b/src/connection.cpp
+@@ -18,6 +18,14 @@
+ #include "cnxninfo.h"
+ #include "sqlwchar.h"
+ 
++#ifdef WORDS_BIGENDIAN
++# define OPTENC_UTF16NE OPTENC_UTF16BE
++# define ENCSTR_UTF16NE "utf-16be"
++#else
++# define OPTENC_UTF16NE OPTENC_UTF16LE
++# define ENCSTR_UTF16NE "utf-16le"
++#endif
++
+ #if PY_MAJOR_VERSION < 3
+ static bool IsStringType(PyObject* t) { return (void*)t == (void*)&PyString_Type; }
+ static bool IsUnicodeType(PyObject* t) { return (void*)t == (void*)&PyUnicode_Type; }
+@@ -90,7 +98,7 @@ static bool Connect(PyObject* pConnectSt
+         // indication that we can handle Unicode.  We are going to use the same unicode ending
+         // as we do for binding parameters.
+ 
+-        SQLWChar wchar(pConnectString, SQL_C_WCHAR, encoding, "utf-16le");
++        SQLWChar wchar(pConnectString, SQL_C_WCHAR, encoding, ENCSTR_UTF16NE);
+         if (!wchar)
+             return false;
+ 
+@@ -216,24 +224,24 @@ PyObject* Connection_New(PyObject* pConn
+     // single-byte text we don't actually know what the encoding is.  For example, with SQL
+     // Server the encoding is based on the database's collation.  We ask the driver / DB to
+     // convert to SQL_C_WCHAR and use the ODBC default of UTF-16LE.
+-    cnxn->sqlchar_enc.optenc = OPTENC_UTF16LE;
+-    cnxn->sqlchar_enc.name   = _strdup("utf-16le");
++    cnxn->sqlchar_enc.optenc = OPTENC_UTF16NE;
++    cnxn->sqlchar_enc.name   = _strdup(ENCSTR_UTF16NE);
+     cnxn->sqlchar_enc.ctype  = SQL_C_WCHAR;
+ 
+-    cnxn->sqlwchar_enc.optenc = OPTENC_UTF16LE;
+-    cnxn->sqlwchar_enc.name   = _strdup("utf-16le");
++    cnxn->sqlwchar_enc.optenc = OPTENC_UTF16NE;
++    cnxn->sqlwchar_enc.name   = _strdup(ENCSTR_UTF16NE);
+     cnxn->sqlwchar_enc.ctype  = SQL_C_WCHAR;
+ 
+-    cnxn->metadata_enc.optenc = OPTENC_UTF16LE;
+-    cnxn->metadata_enc.name   = _strdup("utf-16le");
++    cnxn->metadata_enc.optenc = OPTENC_UTF16NE;
++    cnxn->metadata_enc.name   = _strdup(ENCSTR_UTF16NE);
+     cnxn->metadata_enc.ctype  = SQL_C_WCHAR;
+ 
+     // Note: I attempted to use UTF-8 here too since it can hold any type, but SQL Server fails
+     // with a data truncation error if we send something encoded in 2 bytes to a column with 1
+     // character.  I don't know if this is a bug in SQL Server's driver or if I'm missing
+     // something, so we'll stay with the default ODBC conversions.
+-    cnxn->unicode_enc.optenc = OPTENC_UTF16LE;
+-    cnxn->unicode_enc.name   = _strdup("utf-16le");
++    cnxn->unicode_enc.optenc = OPTENC_UTF16NE;
++    cnxn->unicode_enc.name   = _strdup(ENCSTR_UTF16NE);
+     cnxn->unicode_enc.ctype  = SQL_C_WCHAR;
+ 
+ #if PY_MAJOR_VERSION < 3

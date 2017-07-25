@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openzwave
 PKG_REV:=164
 PKG_VERSION:=1.4.$(PKG_REV)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://old.openzwave.com/downloads
@@ -33,14 +33,14 @@ endef
 
 define Package/libopenzwave
 $(call Package/openzwave/default)
-  SECTION:=Libs
+  SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Open-ZWave Library
 endef
 
 define Package/openzwave
 $(call Package/openzwave/default)
-  SECTION:=Utils
+  SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Open-ZWave MinOZW test utility
   DEPENDS:=+libopenzwave +openzwave-config
@@ -48,13 +48,14 @@ endef
 
 define Package/openzwave-config
 $(call Package/openzwave/default)
-  SECTION:=Utils
+  SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Open-ZWave Device Configs
 endef
 
 MAKE_FLAGS += \
 	LD="$(TARGET_CROSS)g++" \
+	LIBDIR="$(PKG_BUILD_DIR)" \
 	PREFIX=$(CONFIGURE_PREFIX) \
 	instlibdir=/usr/lib \
 	pkgconfigdir=/usr/lib/pkgconfig \

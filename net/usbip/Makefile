@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=usbip
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_LICENSE:=GPL-2.0
 
 # Since kernel 2.6.39.1 userspace tools are inside the kernel tree
@@ -30,7 +30,6 @@ define prepare_source_directory
 endef
 Hooks/Prepare/Pre += prepare_source_directory
 
-PKG_BUILD_DEPENDS:=eudev
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_FLAGS:=nonshared
@@ -53,7 +52,7 @@ endef
 define Package/usbip
   $(call Package/usbip/Default)
   TITLE+= (common)
-  DEPENDS+= +libwrap +kmod-usbip +eudev
+  DEPENDS+= +libwrap +kmod-usbip +libudev-fbsd
 endef
 
 define Package/usbip-client

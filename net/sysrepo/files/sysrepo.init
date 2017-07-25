@@ -1,6 +1,10 @@
 #!/bin/sh /etc/rc.common
 
+<<<<<<< HEAD
 START=70
+=======
+START=60
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 STOP=10
 
 USE_PROCD=1
@@ -23,12 +27,15 @@ start_service() {
 
 stop_service()
 {
+<<<<<<< HEAD
     if [ -f /etc/init.d/netopeer2-server ]; then
         # netopeer2-server will automatically start sysrepod,
         # so we need to stop it
         /etc/init.d/netopeer2-server stop
         sleep 1
     fi
+=======
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
     service_stop ${PROG_PLUGIN}
     service_stop ${PROG_DEAMON}
 }

@@ -30,7 +30,6 @@ define Package/lame/Default
   SECTION:=sound
   CATEGORY:=Sound
   URL:=http://sourceforge.net/projects/lame
-  DEPENDS:=@BUILD_PATENTED
 endef
 
 define Package/lame

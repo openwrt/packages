@@ -9,7 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
+<<<<<<< HEAD
 PKG_VERSION:=9.10.5
+=======
+PKG_VERSION:=9.10.5-P3
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
@@ -18,9 +22,15 @@ PKG_LICENSE := BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
+<<<<<<< HEAD
 	ftp://ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION)
 PKG_MD5SUM:=8359e000eaec76efd6dfa186c12c3b93
+=======
+	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
+	http://ftp.isc.org/isc/bind9/$(PKG_VERSION)
+PKG_HASH:=8d7e96b5b0bbac7b900d4c4bbb82e0956b4e509433c5fa392bb72a929b96606a
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
@@ -82,7 +92,7 @@ endef
 
 define Package/bind-dnssec
   $(call Package/bind/Default)
-  TITLE+= administration tools (dnssec-keygen and dnssec-signzone only)
+  TITLE+= administration tools (dnssec-keygen, dnssec-settime and dnssec-signzone only)
 endef
 
 define Package/bind-host
@@ -174,6 +184,7 @@ define Package/bind-tools/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/host $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-keygen $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-settime $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-signzone $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkconf $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkzone $(1)/usr/sbin/
@@ -196,6 +207,7 @@ endef
 define Package/bind-dnssec/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-keygen $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-settime $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-signzone $(1)/usr/sbin/
 endef
 

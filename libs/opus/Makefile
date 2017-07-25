@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opus
-PKG_VERSION:=1.1.4
+PKG_VERSION:=1.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.xiph.org/releases/opus/
-PKG_MD5SUM:=a2c09d995d0885665ff83b5df2505a5f
-PKG_HASH:=9122b6b380081dd2665189f97bfd777f04f92dc3ab6698eea1dbb27ad59d8692
+PKG_SOURCE_URL:=https://archive.mozilla.org/pub/opus/
+PKG_HASH:=cfafd339ccd9c5ef8d6ab15d7e1a412c054bf4cb4ecbbbcc78c12ef2def70732
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Ted Hess <thess@kitchensync.net> Ian Leonard <antonlacon@gmail.com>
+PKG_MAINTAINER:=Ted Hess <thess@kitchensync.net>, Ian Leonard <antonlacon@gmail.com>
 
 PKG_INSTALL:=1
 
@@ -42,6 +41,11 @@ CONFIGURE_ARGS+= \
 	--disable-extra-programs
 
 ifeq ($(CONFIG_SOFT_FLOAT),y)
+	CONFIGURE_ARGS+= \
+		--enable-fixed-point
+endif
+
+ifneq ($(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),)
 	CONFIGURE_ARGS+= \
 		--enable-fixed-point
 endif

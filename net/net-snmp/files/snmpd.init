@@ -210,6 +210,46 @@ snmpd_engineid_add() {
 	[ -n "$engineidnic" ] && echo "engineIDNic $engineidnic" >> $CONFIGFILE
 }
 
+<<<<<<< HEAD
+=======
+snmpd_sink_add() {
+	local cfg="$1"
+	local section="$2"
+	local community
+	local port
+	local host
+
+	config_get host "$cfg" host
+	[ -n "section" -a -n "$host" ] || return 0
+	# optional community
+	config_get community "$cfg" community
+	# optional port
+	config_get port "$cfg" port
+	port=${port:+:$port}
+	echo "$section $host$port $community" >> $CONFIGFILE
+}
+
+append_parm() {
+	local section="$1"
+	local option="$2"
+	local switch="$3"
+	local _loctmp
+	config_get _loctmp "$section" "$option"
+	[ -z "$_loctmp" ] && return 0
+	echo "$switch $_loctmp" >> $CONFIGFILE
+}
+
+append_authtrapenable() {
+	local section="$1"
+	local option="$2"
+	local switch="$3"
+	local _loctmp
+	config_get_bool _loctmp "$section" "$option"
+	[ -z "$_loctmp" ] && return 0
+	[ "$_loctmp" -gt 0 ] && echo "$switch $_loctmp" >> $CONFIGFILE
+}
+
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 snmpd_setup_fw_rules() {
 	local net="$1"
 	local zone
@@ -235,9 +275,12 @@ snmpd_setup_fw_rules() {
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
 
-	procd_open_instance
-
 	config_load snmpd
+
+	config_get_bool snmp_enabled general enabled 1
+	[ "$snmp_enabled" -eq 0 ] && return
+
+	procd_open_instance
 
 	config_foreach snmpd_agent_add agent
 	config_foreach snmpd_agentx_add agentx
@@ -256,7 +299,14 @@ start_service() {
 	config_foreach snmpd_exec_add exec
 	config_foreach snmpd_disk_add disk
 	config_foreach snmpd_engineid_add engineid
-	
+	append_parm trapcommunity community trapcommunity
+	config_foreach snmpd_sink_add trapsink trapsink
+	config_foreach snmpd_sink_add trap2sink trap2sink
+	config_foreach snmpd_sink_add informsink informsink
+	append_authtrapenable authtrapenable enable authtrapenable
+	append_parm v1trapaddress host v1trapaddress
+	append_parm trapsess trapsess trapsess
+
 	procd_set_param command $PROG -Lf /dev/null -f
 	procd_set_param file $CONFIGFILE
 	procd_set_param respawn

@@ -10,13 +10,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgphoto2
 PKG_VERSION:=2.5.14
+<<<<<<< HEAD
 PKG_RELEASE:=1
+=======
+PKG_RELEASE:=2
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 PORT_VERSION:=0.12.0
 PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/gphoto
+<<<<<<< HEAD
 PKG_MD5SUM:=65acb6cbd2b4f3f46829599f5dabd89c
+=======
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 PKG_HASH:=d3ce70686fb87d6791b9adcbb6e5693bfbe1cfef9661c23c75eb8a699ec4e274
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING
@@ -436,6 +443,7 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--disable-rpath \
 	--with-camlibs="all" \
+<<<<<<< HEAD
 	--without-included-ltdl \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
@@ -446,6 +454,17 @@ CONFIGURE_ARGS += \
 	--with-libxml-2.0=no \
 	--with-libusb-1.0=auto \
 	--with-libusb=no
+=======
+	--with-gdlib=no \
+	--with-libexif=no \
+	--with-libusb=no \
+	--with-libusb-1.0=auto \
+	--with-libxml-2.0=no \
+	--without-included-ltdl \
+	--without-jpeg \
+	--without-libiconv-prefix \
+	--without-libintl-prefix \
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 CONFIGURE_VARS += \
 	CPPFLAGS="$$$$CPPFLAGS $(ICONV_CFLAGS)" \

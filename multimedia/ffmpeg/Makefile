@@ -9,6 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
+<<<<<<< HEAD
 PKG_VERSION:=3.2.5
 PKG_RELEASE:=1
 
@@ -16,6 +17,15 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
 PKG_MD5SUM:=b53ecfcbafca973f92bfb77815cce01e
 PKG_HASH:=0c0c15e999c66003b969c7a5d61c4a7e1d3dfbf3c809c23ff5537d583dd93323
+=======
+PKG_VERSION:=3.2.6
+PKG_RELEASE:=2
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://ffmpeg.org/releases/
+PKG_MD5SUM:=7a35bd97bd7253305bf5c0af5f9dd3ce
+PKG_HASH:=3751cebb5c71a861288267769114d12b966a7703a686a325d90a93707f3a6d9f
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 
@@ -431,11 +441,18 @@ endif
 
 # selectively disable optimizations according to arch/cpu type
 ifneq ($(findstring arm,$(CONFIG_ARCH)),)
-	ifeq (,$(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)))
+	ifneq ($(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)),)
+		FFMPEG_CONFIGURE+= \
+			--enable-vfp
+	else
 		FFMPEG_CONFIGURE+= \
 			--disable-vfp
 	endif
-	ifeq (,$(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)))
+	ifneq ($(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),)
+		FFMPEG_CONFIGURE+= \
+			--enable-neon \
+			--enable-vfp
+	else
 		FFMPEG_CONFIGURE+= \
 			--disable-neon
 	endif
@@ -450,6 +467,7 @@ endif
 
 ifeq ($(BUILD_VARIANT),full)
 	FFMPEG_CONFIGURE+= \
+		--enable-avresample \
 		$(if $(CONFIG_PACKAGE_libopus),--enable-libopus)
   ifeq ($(CONFIG_SOFT_FLOAT),y)
 	FFMPEG_CONFIGURE+= \
@@ -616,9 +634,9 @@ define Build/InstallDev/full
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale} $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.{a,so*} $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.pc $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale} $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.pc $(1)/usr/lib/pkgconfig/
 ifneq ($(CONFIG_SOFT_FLOAT),y)
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpostproc $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.{a,so*} $(1)/usr/lib/
@@ -684,7 +702,7 @@ endef
 # Soft float is LGPL (no libpostproc); Hard float is GPL (yes libpostproc)
 define Package/libffmpeg-full/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.so.* $(1)/usr/lib/
 ifneq ($(CONFIG_SOFT_FLOAT),y)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.so.* $(1)/usr/lib/
 endif

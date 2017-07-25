@@ -8,12 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot
+<<<<<<< HEAD
 PKG_VERSION:=2.2.29.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.dovecot.org/releases/2.2
 PKG_HASH:=ccfa9ffb7eb91e9e87c21c108324b911250c9ffa838bffb64b1caafadcb0f388
+=======
+PKG_VERSION:=2.2.31
+PKG_RELEASE:=2
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=http://www.dovecot.org/releases/2.2
+PKG_HASH:=034be40907748128d65088a4f59789b2f99ae7b33a88974eae0b6a68ece376a1
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 PKG_LICENSE:=LGPL-2.1 MIT BSD-3-Clause Unique
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL COPYING.MIT
 
@@ -77,6 +86,14 @@ CONFIGURE_VARS += \
 	lib_cv_va_copy=yes \
 	lib_cv___va_copy=yes \
 	lib_cv_va_val_copy=yes
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/dovecot $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dovecot $(1)/usr/lib/
+	rm -f $(1)/usr/lib/dovecot/*.la
+endef
+
 
 define Package/dovecot/install
 	$(INSTALL_DIR)  $(1)/etc/init.d \

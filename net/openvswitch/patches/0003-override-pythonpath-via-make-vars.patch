@@ -1,0 +1,26 @@
+diff --git a/Makefile.am b/Makefile.am
+index a4dd7b8..099a3c1 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -53,7 +53,7 @@ endif
+ # foo/__init__.py into an (older) version with plain foo.py, since
+ # foo/__init__.pyc will cause Python to ignore foo.py.
+ run_python = \
+-	PYTHONPATH=$(top_srcdir)/python$(psep)$$PYTHONPATH \
++	PYTHONPATH=$(top_srcdir)/python$(psep)$(PYTHONPATH) \
+ 	PYTHONDONTWRITEBYTECODE=yes $(PYTHON)
+ 
+ ALL_LOCAL =
+diff --git a/Makefile.in b/Makefile.in
+index 8df66e2..98b54bf 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -1654,7 +1654,7 @@ AM_CFLAGS = -Wstrict-prototypes $(WARNING_FLAGS) $(OVS_CFLAGS) \
+ # foo/__init__.py into an (older) version with plain foo.py, since
+ # foo/__init__.pyc will cause Python to ignore foo.py.
+ run_python = \
+-	PYTHONPATH=$(top_srcdir)/python$(psep)$$PYTHONPATH \
++	PYTHONPATH=$(top_srcdir)/python$(psep)$(PYTHONPATH) \
+ 	PYTHONDONTWRITEBYTECODE=yes $(PYTHON)
+ 
+ 

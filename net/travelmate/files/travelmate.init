@@ -1,6 +1,10 @@
 #!/bin/sh /etc/rc.common
 
+<<<<<<< HEAD
 START=35
+=======
+START=90
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 USE_PROCD=1
 
 EXTRA_COMMANDS="status"
@@ -11,7 +15,11 @@ trm_script="/usr/bin/travelmate.sh"
 
 boot()
 {
+<<<<<<< HEAD
     ubus -t 30 wait_for network.interface 2>/dev/null
+=======
+    ubus -t 30 wait_for network.interface network.wireless 2>/dev/null
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
     rc_procd start_service
 }
 

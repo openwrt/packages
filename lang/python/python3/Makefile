@@ -14,13 +14,18 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
+<<<<<<< HEAD:lang/python/python3/Makefile
 PKG_RELEASE:=2
+=======
+# XXX: reset PKG_RELEASE to 1 only if Python's pip & setuptools versions have also bumped;
+#      otherwise, keep bumping PKG_RELEASE
+PKG_RELEASE:=5
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d:lang/python/python3/Makefile
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_MD5SUM:=692b4fc3a2ba0d54d1495d4ead5b0b5c
-PKG_HASH:=a01810ddfcec216bcdb357a84bfaafdfaa0ca42bbdaa4cb7ff74f5a9961e4041
+PKG_HASH:=9229773be41ed144370f47f0f626a1579931f5a390f1e8e3853174d52edd64a9
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -37,6 +42,8 @@ HOST_BUILD_PARALLEL:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
+
+PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_python3-setuptools CONFIG_PACKAGE_python3-pip
 
 PKG_BUILD_DEPENDS:=python3/host
 HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
@@ -182,15 +189,8 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(STAGING_DIR)/mk/
 	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
-	$(INSTALL_DATA) \
-		./files/python3-package.mk \
-		./files/python3-host.mk \
-		./files/python3-version.mk \
-		./files/python3-package-install.sh \
-		$(STAGING_DIR)/mk/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
@@ -258,6 +258,7 @@ define Py3Package/python3/filespec
 endef
 
 HOST_LDFLAGS += \
+	-Wl,--no-as-needed -lrt \
 	$$$$(pkg-config --static --libs libcrypto libssl)
 
 HOST_CONFIGURE_ARGS+= \
@@ -279,9 +280,19 @@ endef
 define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 
-	$(INSTALL_DIR) $(HOST_PYTHON3_DIR)/bin/
+	$(INSTALL_DIR) $(HOST_PYTHON3_DIR)/bin/ $(STAGING_DIR)/mk/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON3_DIR)/bin/pgen3
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Programs/_freeze_importlib $(HOST_PYTHON3_DIR)/bin/_freeze_importlib
+
+	# Install these mk files in the Host/Install phase ;
+	# The Build/InstallDev rule is activated only for target builds.
+	# But if someone needs only the host Python, then
+	# these files need to be installed in this phase, and not Build/InstallDev
+	$(INSTALL_DATA) \
+		./files/python3-package.mk \
+		./files/python3-host.mk \
+		./files/python3-version.mk \
+		./files/python3-package-install.sh \
+		$(STAGING_DIR)/mk/
 endef
 
 $(eval $(call HostBuild))

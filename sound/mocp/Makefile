@@ -9,11 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=moc
 PKG_VERSION:=2.5.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ftp.daper.net/pub/soft/moc/stable/
-PKG_MD5SUM:=f3a68115602a4788b7cfa9bbe9397a9d5e24c68cb61a57695d1c2c3ecf49db08
+PKG_HASH:=f3a68115602a4788b7cfa9bbe9397a9d5e24c68cb61a57695d1c2c3ecf49db08
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/moc
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+libcurl +BUILD_PATENTED:libmad +libvorbis $(ICONV_DEPENDS) +alsa-lib +libid3tag +libflac +libsamplerate +libncursesw +libffmpeg +libltdl +libmagic +faad2 +libdb47
+  DEPENDS:=+libcurl $(ICONV_DEPENDS) +alsa-lib +libid3tag +libsamplerate +libncursesw +libffmpeg +libltdl +libmagic +libdb47
   TITLE:=Music On Console
   URL:=http://moc.daper.net/
 endef
@@ -43,16 +43,18 @@ TARGET_CFLAGS+=-D_GNU_SOURCE
 TARGET_CPPFLAGS+=-P
 
 CONFIGURE_ARGS+= \
-		$(if $(CONFIG_BUILD_PATENTED),,--without-mp3) \
 		--enable-shared \
 		--disable-static \
 		--disable-debug \
 		--without-speex \
-		--without-samplerate \
-		--without-curl \
+		--without-aac \
 		--without-flac \
+		--without-mp3 \
 		--without-musepack \
 		--without-rcc \
+		--without-sndfile \
+		--without-vorbis \
+		--without-wavpack \
 		$(if $(CONFIG_PACKAGE_libncursesw),--with-ncursesw --without-ncurses,--with-ncurses --without-ncursesw) \
 		--with-bdb-dir="$(STAGING_DIR)/usr"
 

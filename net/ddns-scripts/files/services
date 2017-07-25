@@ -44,6 +44,8 @@
 
 "afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
 "afraid.org-keyauth"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+"afraid.org-v2-basic"	"http://[USERNAME]:[PASSWORD]@sync.afraid.org/u/?h=[DOMAIN]&ip=[IP]"
+"afraid.org-v2-token"	"http://sync.afraid.org/u/[PASSWORD]/?address=[IP]"
 
 "all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
 
@@ -68,7 +70,7 @@
 
 "dnshome.de"		"http://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip=[IP]"
 
-"dnsmadeeasy.com"	"http://www.dnsmadeeasy.com/servlet/updateip?username=[USERNAME]&password=[PASSWORD}&id=[DOMAIN]&ip=[IP]"	"success|ip-same"
+"dnsmadeeasy.com"	"http://cp.dnsmadeeasy.com/servlet/updateip?username=[USERNAME]&password=[PASSWORD]&id=[DOMAIN]&ip=[IP]"	"success|ip-same"
 
 "dnsmax.com"		"http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=1&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
 

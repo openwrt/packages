@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nopoll
 PKG_VERSION:=0.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ASPLes/nopoll.git
@@ -39,6 +39,8 @@ endef
 define Package/libnopoll/description
   This package contains the noPoll C WebSocket library.
 endef
+
+TARGET_LDFLAGS += -lcrypto -lpthread
 
 CONFIGURE_ARGS += \
 	--enable-nopoll-log=no \

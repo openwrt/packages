@@ -28,7 +28,11 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libssh
+<<<<<<< HEAD
   SECTION:=lib
+=======
+  SECTION:=libs
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
   CATEGORY:=Libraries
   URL:=$(PKG_SOURCE_URL)
   TITLE:=SSH library

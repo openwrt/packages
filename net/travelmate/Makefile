@@ -6,7 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=travelmate
+<<<<<<< HEAD
 PKG_VERSION:=0.7.4
+=======
+PKG_VERSION:=0.9.0
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -17,7 +21,11 @@ define Package/travelmate
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=A wlan connection manager for travel router
+<<<<<<< HEAD
 	DEPENDS:=+iw
+=======
+	DEPENDS:=+iwinfo
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 	PKGARCH:=all
 endef
 

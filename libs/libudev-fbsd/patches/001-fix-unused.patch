@@ -1,0 +1,42 @@
+--- a/src/libudev.c
++++ b/src/libudev.c
+@@ -354,7 +354,7 @@ udev_device_get_subsystem(struct udev_de
+ 
+ const char *
+ udev_device_get_sysattr_value(
+-    struct udev_device *udev_device __unused, const char *sysattr)
++     __attribute__ ((unused))struct udev_device *udev_device, const char *sysattr)
+ {
+ 	(void)sysattr;
+ 	LOG("stub: udev_device_get_sysattr_value %s\n", sysattr);
+@@ -469,7 +469,7 @@ udev_device_get_parent_with_subsystem_de
+ }
+ 
+ struct udev_enumerate *
+-udev_enumerate_new(struct udev *udev __unused)
++udev_enumerate_new( __attribute__ ((unused))struct udev *udev)
+ {
+ 	LOG("udev_enumerate_new\n");
+ 	struct udev_enumerate *u = calloc(1, sizeof(struct udev_enumerate));
+@@ -538,7 +538,7 @@ udev_enumerate_get_list_entry(struct ude
+ 
+ int
+ udev_enumerate_add_match_sysname(
+-    struct udev_enumerate *udev_enumerate __unused, const char *sysname)
++     __attribute__ ((unused))struct udev_enumerate *udev_enumerate, const char *sysname)
+ {
+ 	(void)sysname;
+ 	LOG("stub: udev_enumerate_add_match_sysname %s\n", sysname);
+--- a/src/libudev.h
++++ b/src/libudev.h
+@@ -24,8 +24,8 @@ void udev_unref(struct udev *udev);
+ char const *udev_device_get_devnode(struct udev_device *udev_device);
+ dev_t udev_device_get_devnum(struct udev_device *udev_device);
+ char const *udev_device_get_property_value(
+-    struct udev_device *dummy __unused, char const *property);
+-struct udev *udev_device_get_udev(struct udev_device *dummy __unused);
++     __attribute__ ((unused))struct udev_device *dummy, char const *property);
++struct udev *udev_device_get_udev( __attribute__ ((unused))struct udev_device *dummy);
+ struct udev_device *udev_device_new_from_syspath(
+     struct udev *udev, char const *syspath);
+ struct udev_device *udev_device_new_from_devnum(

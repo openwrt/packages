@@ -6,8 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
+<<<<<<< HEAD
 PKG_VERSION:=7.1.5
 PKG_RELEASE:=1
+=======
+PKG_VERSION:=7.1.6
+PKG_RELEASE:=2
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -16,8 +21,13 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
+<<<<<<< HEAD
 PKG_MD5SUM:=fb0702321c7aceac68c82b8c7a10d196
 PKG_HASH:=d149a3c396c45611f5dc6bf14be190f464897145a76a8e5851cf18ff7094f6ac
+=======
+PKG_MD5SUM:=eafc7a79cc8cc62c9292c96f9c9ccf90
+PKG_HASH:=01584dc521ab7ec84b502b61952f573652fe6aa00c18d6d844fb9209f14b245b
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -37,7 +47,7 @@ PHP7_MODULES = \
 	mbstring mcrypt mysqli \
 	opcache openssl \
 	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql phar \
-	session shmop simplexml soap sockets sqlite3 sysvmsg sysvsem sysvshm \
+	session shmop simplexml snmp soap sockets sqlite3 sysvmsg sysvsem sysvshm \
 	tokenizer \
 	xml xmlreader xmlwriter zip \
 
@@ -288,7 +298,7 @@ else
   CONFIGURE_ARGS+= --disable-opcache
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-openssl),)
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-openssl)$(CONFIG_PACKAGE_php7-mod-snmp),)
   CONFIGURE_ARGS+= \
 	--with-openssl=shared,"$(STAGING_DIR)/usr" \
 	--with-kerberos=no \
@@ -352,6 +362,12 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-simplexml),)
   CONFIGURE_ARGS+= --enable-simplexml=shared
 else
   CONFIGURE_ARGS+= --disable-simplexml
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-snmp),)
+  CONFIGURE_ARGS+= --with-snmp=shared,"$(STAGING_DIR)/usr"
+else
+  CONFIGURE_ARGS+= --without-snmp
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-soap),)
@@ -585,6 +601,7 @@ $(eval $(call BuildModule,phar,Phar Archives,+php7-mod-hash))
 $(eval $(call BuildModule,session,Session))
 $(eval $(call BuildModule,shmop,Shared Memory))
 $(eval $(call BuildModule,simplexml,SimpleXML,+@PHP7_LIBXML +PACKAGE_php7-mod-simplexml:libxml2))
+$(eval $(call BuildModule,snmp,SNMP,+PACKAGE_php7-mod-snmp:libnetsnmp +PACKAGE_php7-mod-snmp:libopenssl))
 $(eval $(call BuildModule,soap,SOAP,+@PHP7_LIBXML +PACKAGE_php7-mod-soap:libxml2))
 $(eval $(call BuildModule,sockets,Sockets))
 $(eval $(call BuildModule,sqlite3,SQLite3,+PACKAGE_php7-mod-sqlite3:libsqlite3))

@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.dest-unreach.org/socat/download
 PKG_HASH:=e3561f808739383eb10fada1e5d4f26883f0311b34fd0af7837d0c95ef379251
 
-PKG_MAINTAINER:= Ted Hess <thess@kitschensync.net>
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0 OpenSSL
 PKG_LICENSE_FILES:=COPYING COPYING.OpenSSL

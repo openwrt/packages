@@ -4,6 +4,9 @@ PROJECT(cgi-io C)
 
 INCLUDE(CheckFunctionExists)
 
+FIND_PATH(ubus_include_dir libubus.h)
+INCLUDE_DIRECTORIES(${ubus_include_dir})
+
 ADD_DEFINITIONS(-Os -Wall -Werror --std=gnu99 -g3 -Wmissing-declarations)
 
 SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")

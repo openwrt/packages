@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,19 +6,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=expat
-PKG_VERSION:=2.2.0
+PKG_VERSION:=2.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=2f47841c829facb346eb6e3fab5212e2
 PKG_SOURCE_URL:=@SF/expat
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_HASH:=4376911fcf81a23ebd821bbabc26fd933f3ac74833f74924342c29aad2c86046
+PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>, \
+		Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=conftools/libtool.m4
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -32,7 +30,7 @@ define Package/libexpat
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=An XML parsing library
-  URL:=http://expat.sourceforge.net/
+  URL:=https://libexpat.github.io/
 endef
 
 define Package/libexpat/description
@@ -40,6 +38,9 @@ define Package/libexpat/description
 endef
 
 TARGET_CFLAGS += $(FPIC)
+
+HOST_CONFIGURE_VARS += \
+	CPPFLAGS="$(HOST_CFLAGS) -DXML_POOR_ENTROPY"
 
 CONFIGURE_ARGS += \
 	--enable-shared \
