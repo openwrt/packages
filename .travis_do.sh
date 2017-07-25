@@ -121,7 +121,7 @@ test_commits() {
 		fi
 
 		subject="$(git show -s --format=%s $commit)"
-		if echo "$subject" | grep -q '^[0-9A-Za-z,]\+: '; then
+		if echo "$subject" | grep -q '^[0-9A-Za-z,-]\+: '; then
 			echo_green "Commit subject line seems ok ($subject)"
 		else
 			echo_red "Commit subject line MUST start with '<package name>: ' ($subject)"
