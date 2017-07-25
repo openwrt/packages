@@ -12,7 +12,8 @@ config_file=/etc/syslog-ng.conf
 
 start() {
 	[ -f $config_file ] || return 1
-	service_start $PROG -p $SERVICE_PID_FILE
+	service_start $PROG --process-mode background \
+		-p $SERVICE_PID_FILE
 }
 
 stop() {
