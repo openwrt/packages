@@ -2,18 +2,23 @@
 # Copyright (C) 2006-2016 OpenWrt.org
 
 START=20
+PROG=/usr/sbin/syslog-ng
+PROG2=/usr/sbin/syslog-ng-ctl
 
 SERVICE_USE_PID=1
+SERVICE_PID_FILE=/var/log/syslog-ng.pid
+
+config_file=/etc/syslog-ng.conf
 
 start() {
-	[ -f /etc/syslog-ng.conf ] || return 1
-	service_start /usr/sbin/syslog-ng
+	[ -f $config_file ] || return 1
+	service_start $PROG -p $SERVICE_PID_FILE
 }
 
 stop() {
-	service_stop /usr/sbin/syslog-ng
+	service_stop $PROG
 }
 
 reload() {
-	service_reload /usr/sbin/syslog-ng
+	service_reload $PROG
 }
