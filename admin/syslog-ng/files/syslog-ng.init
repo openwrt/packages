@@ -27,5 +27,5 @@ stop() {
 }
 
 reload() {
-	service_reload $PROG
+	$PROG2 reload
 }
