@@ -2,7 +2,7 @@ include  $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=3.9.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -30,7 +30,8 @@ define Package/syslog-ng/description
 endef
 
 define Package/syslog-ng/conffiles
-  /etc/syslog-ng.conf
+/etc/syslog-ng.conf
+/etc/syslog-ng.d/
 endef
 
 define Build/Configure
@@ -68,8 +69,8 @@ define Package/syslog-ng/install
 		install-moduleLTLIBRARIES DESTDIR="$(1)"
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/syslog-ng.init $(1)/etc/init.d/syslog-ng
-	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) ./files/syslog-ng.conf $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/syslog-ng.d/
 	$(call libtool_remove_files,$(1))
 endef
 
