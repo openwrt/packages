@@ -8,8 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
+<<<<<<< HEAD
+PKG_VERSION:=5.7.1
+PKG_RELEASE:=6
+=======
 PKG_VERSION:=5.7.2
 PKG_RELEASE:=1
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \

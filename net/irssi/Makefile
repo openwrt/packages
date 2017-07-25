@@ -8,8 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=irssi
+<<<<<<< HEAD
+PKG_VERSION:=1.0.2
+PKG_RELEASE:=2
+=======
 PKG_VERSION:=1.0.4
 PKG_RELEASE:=1
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/irssi/irssi/releases/download/1.0.4/

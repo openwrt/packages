@@ -1,0 +1,62 @@
+--- a/configure.in
++++ b/configure.in
+@@ -494,6 +494,7 @@ limits.h \
+ locale.h \
+ monetary.h \
+ netdb.h \
++poll.h \
+ pwd.h \
+ resolv.h \
+ signal.h \
+--- a/main/fastcgi.c
++++ b/main/fastcgi.c
+@@ -76,7 +76,9 @@ static int is_impersonate = 0;
+ # include <netdb.h>
+ # include <signal.h>
+ 
+-# if defined(HAVE_SYS_POLL_H) && defined(HAVE_POLL)
++# if defined(HAVE_POLL_H) && defined(HAVE_POLL)
++#  include <poll.h>
++# elif defined(HAVE_SYS_POLL_H) && defined(HAVE_POLL)
+ #  include <sys/poll.h>
+ # endif
+ # if defined(HAVE_SYS_SELECT_H)
+@@ -1427,7 +1429,7 @@ int fcgi_accept_request(fcgi_request *req)
+ 				break;
+ #else
+ 				if (req->fd >= 0) {
+-#if defined(HAVE_SYS_POLL_H) && defined(HAVE_POLL)
++#if defined(HAVE_POLL)
+ 					struct pollfd fds;
+ 					int ret;
+ 
+--- a/main/network.c
++++ b/main/network.c
+@@ -51,7 +51,9 @@
+ #ifdef HAVE_SYS_SELECT_H
+ #include <sys/select.h>
+ #endif
+-#if HAVE_SYS_POLL_H
++#if HAVE_POLL_H
++#include <poll.h>
++#elif HAVE_SYS_POLL_H
+ #include <sys/poll.h>
+ #endif
+ 
+--- a/main/php_network.h
++++ b/main/php_network.h
+@@ -120,8 +120,12 @@ typedef int php_socket_t;
+ /* uncomment this to debug poll(2) emulation on systems that have poll(2) */
+ /* #define PHP_USE_POLL_2_EMULATION 1 */
+ 
+-#if defined(HAVE_SYS_POLL_H) && defined(HAVE_POLL)
+-# include <poll.h>
++#if defined(HAVE_POLL)
++# if defined(HAVE_POLL_H)
++#  include <poll.h>
++# elif defined(HAVE_SYS_POLL_H)
++#  include <sys/poll.h>
++# endif
+ typedef struct pollfd php_pollfd;
+ #else
+ typedef struct _php_pollfd {

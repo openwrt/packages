@@ -1,13 +1,24 @@
 #!/bin/sh /etc/rc.common
 
+<<<<<<< HEAD
+START=90
+STOP=10
+=======
 START=99
 STOP=11
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 USE_PROCD=1
 PROG=/bin/netopeer2-server
 
 start_service() {
 
+<<<<<<< HEAD
+    # netopeer2-server requires sysrepo daemon
+    /etc/init.d/sysrepo start
+
+    sleep 1
+=======
     PERSIST_FILE=/etc/sysrepo/data/ietf-keystore.persist
 
     while [ ! -f $PERSIST_FILE ]
@@ -33,6 +44,7 @@ start_service() {
             RETRY_CNT=5
         fi
 	  done
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
     procd_open_instance
     procd_set_param command $PROG

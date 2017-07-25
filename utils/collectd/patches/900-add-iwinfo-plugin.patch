@@ -10,7 +10,11 @@
  # For the turbostat plugin
  have_asm_msrindex_h="no"
  AC_CHECK_HEADERS(asm/msr-index.h, [have_asm_msrindex_h="yes"])
+<<<<<<< HEAD
+@@ -5943,6 +5946,7 @@ plugin_interface="no"
+=======
 @@ -6035,6 +6038,7 @@ plugin_interface="no"
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
@@ -18,7 +22,11 @@
  plugin_load="no"
  plugin_log_logstash="no"
  plugin_memory="no"
+<<<<<<< HEAD
+@@ -6413,6 +6417,7 @@ AC_PLUGIN([ipmi],                [$plugi
+=======
 @@ -6505,6 +6509,7 @@ AC_PLUGIN([ipmi],                [$plugi
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
  AC_PLUGIN([iptables],            [$with_libiptc],           [IPTables rule counters])
  AC_PLUGIN([ipvs],                [$plugin_ipvs],            [IPVS connection statistics])
  AC_PLUGIN([irq],                 [$plugin_irq],             [IRQ statistics])
@@ -26,7 +34,11 @@
  AC_PLUGIN([java],                [$with_java],              [Embed the Java Virtual Machine])
  AC_PLUGIN([load],                [$plugin_load],            [System load])
  AC_PLUGIN([log_logstash],        [$plugin_log_logstash],    [Logstash json_event compatible logging])
+<<<<<<< HEAD
+@@ -6794,6 +6799,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
+=======
 @@ -6886,6 +6891,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
  AC_MSG_RESULT([    oracle  . . . . . . . $with_oracle])
  AC_MSG_RESULT([    protobuf-c  . . . . . $have_protoc_c])
  AC_MSG_RESULT([    protoc 3  . . . . . . $have_protoc3])
@@ -34,7 +46,11 @@
  AC_MSG_RESULT()
  AC_MSG_RESULT([  Features:])
  AC_MSG_RESULT([    daemon mode . . . . . $enable_daemon])
+<<<<<<< HEAD
+@@ -6850,6 +6856,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
+=======
 @@ -6942,6 +6948,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
  AC_MSG_RESULT([    iptables  . . . . . . $enable_iptables])
  AC_MSG_RESULT([    ipvs  . . . . . . . . $enable_ipvs])
  AC_MSG_RESULT([    irq . . . . . . . . . $enable_irq])

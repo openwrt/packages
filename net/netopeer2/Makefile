@@ -43,7 +43,11 @@ define Package/netopeer2-keystored/config
 endef
 
 define Package/netopeer2-server
+<<<<<<< HEAD
+  SECTION:=util
+=======
   SECTION:=utils
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
   CATEGORY:=Utilities
   TITLE:=NETCONF server
   URL:=$(PKG_SOURCE_URL)
@@ -52,7 +56,11 @@ define Package/netopeer2-server
 endef
 
 define Package/netopeer2-cli
+<<<<<<< HEAD
+  SECTION:=util
+=======
   SECTION:=utils
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
   CATEGORY:=Utilities
   TITLE:=Netopeer2 cli tool
   URL:=$(PKG_SOURCE_URL)
@@ -60,7 +68,11 @@ define Package/netopeer2-cli
 endef
 
 define Package/netopeer2-keystored
+<<<<<<< HEAD
+  SECTION:=util
+=======
   SECTION:=utils
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
   CATEGORY:=Utilities
   TITLE:=Netopeer2 key store management
   URL:=$(PKG_SOURCE_URL)

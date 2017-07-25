@@ -8,7 +8,11 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 ## Main Features
 * STA interfaces operating in an "always off" mode, to make sure that the AP is always accessible
 * easy setup within normal OpenWrt/LEDE environment
+<<<<<<< HEAD
+* strong LuCI-Support to simplify the interface setup
+=======
 * strong LuCI-Support with builtin interface wizard and wireless interface manager
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 * fast uplink connections
 * manual / automatic mode support, the latter one checks the existing uplink connection regardless of ifdown event trigger actions every n seconds
 * support of devices with multiple radios
@@ -18,15 +22,24 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 
 ## Prerequisites
 * [LEDE](https://www.lede-project.org) 17.01 or latest snapshot
+<<<<<<< HEAD
+* iw for wlan scanning
+=======
 * iwinfo for wlan scanning
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 ## LEDE trunk Installation & Usage
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages)
 * install 'travelmate' (_opkg install travelmate_)
 * configure your network:
+<<<<<<< HEAD
+    * automatic: use the LuCI frontend with automatic interface setup, that's the recommended way
+    * manual: see detailed configure steps below
+=======
     * recommended: use the LuCI frontend with automatic STA interface setup and connection manager
     * manual: see detailed configure steps below
     * at least you need one configured AP and one STA interface
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 ## LuCI travelmate companion package
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/luci)
@@ -60,7 +73,11 @@ root@adb2go:~# /etc/init.d/travelmate status
  system             : LEDE Reboot SNAPSHOT r4051-3ddc1914ba
 </code></pre>
 
+<<<<<<< HEAD
+## Setup
+=======
 ## Manual Setup
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 **1. configure the travelmate wwan interface in /etc/config/network:**
 <pre><code>
 [...]

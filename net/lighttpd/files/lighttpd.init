@@ -6,6 +6,7 @@ STOP=50
 
 USE_PROCD=1
 PROG=/usr/sbin/lighttpd
+<<<<<<< HEAD
 
 validate_conf() {
 	$PROG -tt -f /etc/lighttpd/lighttpd.conf >/dev/null 2>&1 || {
@@ -14,6 +15,16 @@ validate_conf() {
 	}
 }
 
+=======
+
+validate_conf() {
+	$PROG -tt -f /etc/lighttpd/lighttpd.conf >/dev/null 2>&1 || {
+		echo "validation failed"
+		return 1
+	}
+}
+
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 start_service() {
 	user_exists http || user_add http
 	[ -d /var/log/lighttpd ] || {

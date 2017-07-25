@@ -9,7 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.45
+<<<<<<< HEAD
+PKG_RELEASE:=5
+=======
 PKG_RELEASE:=7
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x

@@ -9,7 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-six
 PKG_VERSION:=1.10.0
+<<<<<<< HEAD:lang/python/python-six/Makefile
+PKG_RELEASE:=2
+=======
 PKG_RELEASE:=3
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d:lang/python/python-six/Makefile
 
 PKG_SOURCE:=six-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/s/six
@@ -17,8 +21,11 @@ PKG_MD5SUM:=34eed507548117b2ab523ab14b2f8b55
 
 HOST_BUILD_DEPENDS:=python/host
 PKG_BUILD_DEPENDS:=python
+<<<<<<< HEAD:lang/python/python-six/Makefile
+=======
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d:lang/python/python-six/Makefile
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE

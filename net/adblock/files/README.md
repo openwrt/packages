@@ -76,8 +76,12 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
 * optional: force dns requests to local resolver
 * optional: force overall sort / duplicate removal for low memory devices (handle with care!)
+<<<<<<< HEAD
+* optional: automatic block list backup & restore, backups will be (de-)compressed and restored on the fly in case of any runtime error
+=======
 * optional: 'manual mode' to re-use blocklist backups during startup, get fresh lists only via manual reload or restart action
 * optional: automatic block list backup & restore, they will be used in case of download errors or during startup in manual mode
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 * optional: add new adblock sources on your own via uci config
 
 ## Prerequisites
@@ -107,7 +111,11 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **scheduled list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
 * **restrict procd interface trigger:** restrict the procd interface trigger to a (list of) certain interface(s) (default: wan). To disable it at all, remove all entries
 * **suspend & resume adblocking:** to quickly switch the adblock service 'on' or 'off', simply use _/etc/init.d/adblock [suspend|resume]_
+<<<<<<< HEAD
+* **domain query:** to query the active block lists for a specific domain, please run _/etc/init.d/adblock query `<DOMAIN>`_ (see example below)
+=======
 * **domain query:** to query the active block list for a specific domain, please run _/etc/init.d/adblock query `<DOMAIN>`_ (see example below)
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 * **add new list sources:** you could add new block list sources on your own via uci config, all you need is a source url and an awk one-liner (see example below)
 * **disable active dns probing in windows 10:** to prevent a yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
 
@@ -121,7 +129,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_triggerdelay => additional trigger delay in seconds before adblock processing starts (default: '2')
     * adb\_forcedns => force dns requests to local resolver (default: '0', disabled)
     * adb\_forcesrt => force overall sort on low memory devices with less than 64 MB RAM (default: '0', disabled)
+<<<<<<< HEAD
+=======
     * adb\_manmode => do not automatically update block lists during startup, use backups instead (default: '0', disabled)
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 ## Examples
 **change default dns backend to 'unbound':**
@@ -234,8 +245,13 @@ This entry does not remove:
  + survey.g.doubleclick.net
 
 The query function checks against the submitted (sub-)domain and recurses automatically to the upper top level domain(s).
+<<<<<<< HEAD
+For every domain it returns the overall count plus a distinct list of active block lists with the first relevant result.
+In the example above whitelist "www.doubleclick.net" to free the submitted domain.
+=======
 For every (sub-)domain it returns the first five relevant results.
 In the example above whitelist "doubleclick.net" to free the submitted domain.
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 </code></pre>
   
 **add a new block list source:**

@@ -14,9 +14,13 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
+<<<<<<< HEAD:lang/python/python3/Makefile
+PKG_RELEASE:=2
+=======
 # XXX: reset PKG_RELEASE to 1 only if Python's pip & setuptools versions have also bumped;
 #      otherwise, keep bumping PKG_RELEASE
 PKG_RELEASE:=5
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d:lang/python/python3/Makefile
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz

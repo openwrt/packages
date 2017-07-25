@@ -9,7 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
 PKG_VERSION:=4.11
+<<<<<<< HEAD
+PKG_RELEASE:=1
+=======
 PKG_RELEASE:=2
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs/

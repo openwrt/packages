@@ -32,7 +32,11 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libsysrepo
+<<<<<<< HEAD
+  SECTION:=util
+=======
   SECTION:=utils
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
   CATEGORY:=Utilities
   URL:=$(PKG_SOURCE_URL)
   TITLE:=YANG-based data store library
@@ -40,7 +44,11 @@ define Package/libsysrepo
 endef
 
 define Package/sysrepo
+<<<<<<< HEAD
+  SECTION:=util
+=======
   SECTION:=utils
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
   CATEGORY:=Utilities
   URL:=$(PKG_SOURCE_URL)
   TITLE:=YANG-based data store daemon and plugin
@@ -48,7 +56,11 @@ define Package/sysrepo
 endef
 
 define Package/sysrepoctl
+<<<<<<< HEAD
+  SECTION:=util
+=======
   SECTION:=utils
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
   CATEGORY:=Utilities
   URL:=$(PKG_SOURCE_URL)
   TITLE:=sysrepo cli tool
@@ -56,7 +68,11 @@ define Package/sysrepoctl
 endef
 
 define Package/sysrepocfg
+<<<<<<< HEAD
+  SECTION:=util
+=======
   SECTION:=utils
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
   CATEGORY:=Utilities
   URL:=$(PKG_SOURCE_URL)
   TITLE:=sysrepo configuration tool
@@ -75,6 +91,9 @@ CMAKE_OPTIONS += \
 	-DGEN_LANGUAGE_BINDINGS:BOOL=FALSE \
 	-DREPOSITORY_LOC:PATH=/etc/sysrepo \
 	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
+<<<<<<< HEAD
+	-DENABLE_NACM:BOOL=FALSE
+=======
 	-DENABLE_NACM:BOOL=FALSE \
 	-DREQUEST_TIMEOUT=6 \
 	-DLONG_REQUEST_TIMEOUT=30 \
@@ -83,6 +102,7 @@ CMAKE_OPTIONS += \
 	-DNOTIF_AGE_TIMEOUT=120 \
 	-DNOTIF_TIME_WINDOW=20 \
 	-DUSE_SR_MEM_MGMT=0
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 define Package/libsysrepo/install
 	$(INSTALL_DIR) $(1)/usr/lib

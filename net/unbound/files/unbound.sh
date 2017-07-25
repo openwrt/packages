@@ -394,6 +394,10 @@ create_domain_insecure() {
 ##############################################################################
 
 unbound_mkdir() {
+<<<<<<< HEAD
+  local resolvsym=0
+=======
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
   local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
   local dhcp_dir=$( dirname $dhcp_origin )
   local filestuff

@@ -210,6 +210,8 @@ snmpd_engineid_add() {
 	[ -n "$engineidnic" ] && echo "engineIDNic $engineidnic" >> $CONFIGFILE
 }
 
+<<<<<<< HEAD
+=======
 snmpd_sink_add() {
 	local cfg="$1"
 	local section="$2"
@@ -247,6 +249,7 @@ append_authtrapenable() {
 	[ "$_loctmp" -gt 0 ] && echo "$switch $_loctmp" >> $CONFIGFILE
 }
 
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 snmpd_setup_fw_rules() {
 	local net="$1"
 	local zone

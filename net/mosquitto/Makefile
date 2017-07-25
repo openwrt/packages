@@ -9,14 +9,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
+<<<<<<< HEAD
+PKG_VERSION:=1.4.12
+=======
 PKG_VERSION:=1.4.14
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://mosquitto.org/files/source/
+<<<<<<< HEAD
+PKG_HASH:=b12e2353f92cb76882ce7b7bddfea022b461b38cbe6e7fb7c969d0daeb379cf7
+=======
 PKG_HASH:=156b1fa731d12baad4b8b22f7b6a8af50ba881fc711b81e9919ec103cf2942d1
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk

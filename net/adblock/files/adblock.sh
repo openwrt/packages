@@ -10,12 +10,19 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+<<<<<<< HEAD
+adb_ver="2.6.4"
+adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
+adb_enabled=1
+adb_debug=0
+=======
 adb_ver="2.8.3"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
 adb_minfree=2
 adb_manmode=0
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 adb_forcesrt=0
 adb_forcedns=0
 adb_backup=0
@@ -24,7 +31,11 @@ adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\"^\"\$1\"\\\|[.]\"\$1)}"
 adb_fetch="/usr/bin/wget"
 adb_fetchparm="--quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
+<<<<<<< HEAD
+adb_dnslist="dnsmasq unbound"
+=======
 adb_dnslist="dnsmasq unbound named"
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 adb_dnsprefix="adb_list"
 adb_dnsfile="${adb_dnsprefix}.overall"
 adb_rtfile="/tmp/adb_runtime.json"
@@ -114,6 +125,8 @@ f_envload()
                             adb_dnsformat="awk '{print \"local-zone: \042\"\$0\"\042 static\"}'"
                             break 2
                             ;;
+<<<<<<< HEAD
+=======
                         named)
                             adb_dns="${dns}"
                             adb_dnsdir="${adb_dnsdir:="/var/lib/bind"}"
@@ -121,6 +134,7 @@ f_envload()
                             adb_dnsformat="awk '{print \"\"\$0\" IN CNAME .\n*.\"\$0\" IN CNAME .\"}'"
                             break 2
                             ;;
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
                     esac
                 fi
             done
@@ -440,7 +454,11 @@ f_main()
     local mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo")"
 
     f_log "info " "start adblock processing ..."
+<<<<<<< HEAD
+    f_log "debug" "action: ${adb_action}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, memory: ${mem_total}, force srt/dns: ${adb_forcesrt}/${adb_forcedns}"
+=======
     f_log "debug" "action: ${adb_action}, manual_mode:${adb_manmode}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, mem_total: ${mem_total}, force_srt/_dns: ${adb_forcesrt}/${adb_forcedns}"
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
     > "${adb_rtfile}"
     for src_name in ${adb_sources}
     do
@@ -474,7 +492,11 @@ f_main()
 
         # download block list
         #
+<<<<<<< HEAD
+        if [ "${src_name}" = "blacklist" ]
+=======
         if [ "${src_name}" = "blacklist" ] && [ -s "${url}" ]
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
         then
             cat "${url}" > "${adb_tmpload}"
             adb_rc=${?}
@@ -525,7 +547,17 @@ f_main()
         #
         if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
         then
+<<<<<<< HEAD
+            if [ -s "${adb_tmpdir}/tmp.whitelist" ]
+            then
+                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpfile}" 2>/dev/null | eval "${adb_dnsformat}" > "${adb_dnsfile}"
+            else
+                eval "${adb_dnsformat}" "${adb_tmpfile}" > "${adb_dnsfile}"
+            fi
+            adb_rc=${?}
+=======
             f_list format
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
             if [ ${adb_rc} -ne 0 ]
             then
                 f_list remove
@@ -537,6 +569,11 @@ f_main()
 
     # hash preparation and overall sort
     #
+<<<<<<< HEAD
+    for src_name in $(ls -dASr "${adb_tmpdir}/${adb_dnsprefix}"* 2>/dev/null)
+    do
+        if [ ${mem_total} -ge 64000 ] || [ ${adb_forcesrt} -eq 1 ]
+=======
     if [ -f "${adb_dnsdir}/${adb_dnsfile}" ]
     then
         hash_old="$(sha256sum "${adb_dnsdir}/${adb_dnsfile}" | awk '{print $1}')"
@@ -544,6 +581,7 @@ f_main()
     if [ -s "${adb_tmpdir}/${adb_dnsfile}" ]
     then
         if [ ${mem_total} -ge 64 ] || [ ${adb_forcesrt} -eq 1 ]
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
         then
             sort -u "${adb_tmpdir}/${adb_dnsfile}" > "${adb_dnsdir}/${adb_dnsfile}"
         else

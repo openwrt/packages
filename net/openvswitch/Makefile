@@ -12,8 +12,13 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 
+<<<<<<< HEAD
+PKG_RELEASE:=2
+PKG_VERSION:=2.7.0
+=======
 PKG_RELEASE:=1
 PKG_VERSION:=2.7.1
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -21,10 +26,16 @@ PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://openvswitch.org/releases/
+<<<<<<< HEAD
+PKG_HASH:=e492cf08a929b4a2178b7f9b01dc4ff562f44138b547b4e942078187b2445d2e
+
+PKG_BUILD_DEPENDS:=python-six/host
+=======
 PKG_HASH:=b0458cb2a7206f8e5802a524297c9f0569c01ae4bf91037a4dff37dcd0e2a84a
 
 PKG_BUILD_DEPENDS:=python/host python-six/host
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_openvswitch-python
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -68,7 +79,11 @@ endef
 define Package/openvswitch-python
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Python Support
+<<<<<<< HEAD
+  DEPENDS:=+openvswitch +python +python-six
+=======
   DEPENDS:=+openvswitch +PACKAGE_openvswitch-python:python +PACKAGE_openvswitch-python:python-six
+>>>>>>> fb00f8f39d2fd26dba01970cd859777609a5b91d
 endef
 
 define Package/openvswitch-python/description
