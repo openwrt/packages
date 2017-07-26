@@ -7,11 +7,9 @@ Subject: [PATCH] enable zlib
  Modules/Setup.dist | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Modules/Setup.dist b/Modules/Setup.dist
-index 01fb85f..01ac492 100644
 --- a/Modules/Setup.dist
 +++ b/Modules/Setup.dist
-@@ -358,7 +358,7 @@ _symtable symtablemodule.c
+@@ -464,7 +464,7 @@ GLHACK=-Dclear=__GLclear
  # Andrew Kuchling's zlib module.
  # This require zlib 1.1.3 (or later).
  # See http://www.gzip.org/zlib/
@@ -20,6 +18,3 @@ index 01fb85f..01ac492 100644
  
  # Interface to the Expat XML parser
  #
--- 
-1.8.4.5
-
