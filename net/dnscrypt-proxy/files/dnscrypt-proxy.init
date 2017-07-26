@@ -6,6 +6,11 @@ PROG=/usr/sbin/dnscrypt-proxy
 CONFIG_DIR=/var/etc
 USER=nobody
 
+boot() {
+    dnscrypt_boot=1
+    rc_procd start_service
+}
+
 dnscrypt_instance() {   
     local config_path="$CONFIG_DIR/dnscrypt-proxy-$1.conf"     
     create_config_file $1 "$config_path"
@@ -133,10 +138,15 @@ append_blacklists() {
 }
 
 start_service() {
+    if [ -n "${dnscrypt_boot}" ]
+    then
+        return 0
+    fi
     config_load dnscrypt-proxy
     config_foreach dnscrypt_instance dnscrypt-proxy
 }
 
 service_triggers() {
+    procd_add_raw_trigger "interface.*.up" 2000 /etc/init.d/dnscrypt-proxy reload
     procd_add_reload_trigger 'dnscrypt-proxy'
 }
