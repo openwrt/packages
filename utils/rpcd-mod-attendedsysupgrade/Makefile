@@ -35,7 +35,7 @@ define Package/rpcd-mod-attendedsysupgrade/install
 	$(INSTALL_BIN) ./files/attendedsysupgrade.acl $(1)/usr/share/rpcd/acl.d/attendedsysupgrade.json
 
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd/
-	$(INSTALL_BIN) ./files/attendedsysupgrade $(1)/usr/libexec/rpcd/attendedsysupgrade
+	$(INSTALL_BIN) ./files/attendedsysupgrade.rpcd $(1)/usr/libexec/rpcd/attendedsysupgrade
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults/
 	$(INSTALL_BIN) ./files/attendedsysupgrade.defaults $(1)/etc/uci-defaults/attendedsysupgrade
