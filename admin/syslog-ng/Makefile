@@ -2,13 +2,12 @@ include  $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=3.9.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/balabit/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_MD5SUM:=1b48da9ef620cf06e55e481b5abb677a
 PKG_HASH:=5678856a550ae790618fabde9d1447f932ce7a9080d55dca8fc5df1202c70a17
 
 PKG_INSTALL:=1
@@ -31,7 +30,8 @@ define Package/syslog-ng/description
 endef
 
 define Package/syslog-ng/conffiles
-  /etc/syslog-ng.conf
+/etc/syslog-ng.conf
+/etc/syslog-ng.d/
 endef
 
 define Build/Configure
@@ -69,8 +69,8 @@ define Package/syslog-ng/install
 		install-moduleLTLIBRARIES DESTDIR="$(1)"
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/syslog-ng.init $(1)/etc/init.d/syslog-ng
-	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) ./files/syslog-ng.conf $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/syslog-ng.d/
 	$(call libtool_remove_files,$(1))
 endef
 
