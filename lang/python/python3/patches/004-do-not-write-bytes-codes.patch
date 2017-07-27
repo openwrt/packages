@@ -1,8 +1,6 @@
-diff --git a/Python/pylifecycle.c b/Python/pylifecycle.c
-index 640271f..5479e6c 100644
 --- a/Python/pylifecycle.c
 +++ b/Python/pylifecycle.c
-@@ -88,7 +88,7 @@ int Py_BytesWarningFlag; /* Warn on str(bytes) and str(buffer) */
+@@ -88,7 +88,7 @@ int Py_BytesWarningFlag; /* Warn on str(
  int Py_UseClassExceptionsFlag = 1; /* Needed by bltinmodule.c: deprecated */
  int Py_FrozenFlag; /* Needed by getpath.c */
  int Py_IgnoreEnvironmentFlag; /* e.g. PYTHONPATH, PYTHONHOME */
@@ -11,7 +9,7 @@ index 640271f..5479e6c 100644
  int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
  int Py_UnbufferedStdioFlag = 0; /* Unbuffered binary std{in,out,err} */
  int Py_HashRandomizationFlag = 0; /* for -R and PYTHONHASHSEED */
-@@ -329,7 +329,7 @@ _Py_InitializeEx_Private(int install_sigs, int install_importlib)
+@@ -329,7 +329,7 @@ _Py_InitializeEx_Private(int install_sig
      if ((p = Py_GETENV("PYTHONOPTIMIZE")) && *p != '\0')
          Py_OptimizeFlag = add_flag(Py_OptimizeFlag, p);
      if ((p = Py_GETENV("PYTHONDONTWRITEBYTECODE")) && *p != '\0')

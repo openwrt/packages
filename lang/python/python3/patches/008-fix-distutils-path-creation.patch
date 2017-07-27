@@ -1,5 +1,3 @@
-diff --git a/Lib/imp.py b/Lib/imp.py
-index 781ff23..beeac70 100644
 --- a/Lib/imp.py
 +++ b/Lib/imp.py
 @@ -203,8 +203,9 @@ def load_package(name, path):
