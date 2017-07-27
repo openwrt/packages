@@ -1,5 +1,3 @@
-diff --git a/setup.py b/setup.py
-index 54054c2..d043761 100644
 --- a/setup.py
 +++ b/setup.py
 @@ -454,13 +454,8 @@ class PyBuildExt(build_ext):
