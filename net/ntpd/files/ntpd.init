@@ -8,12 +8,74 @@ USE_PROCD=1
 PROG=/sbin/ntpd
 HOTPLUG_HELPER=/usr/sbin/ntpd.hotplug-helper
 
+config_file=/var/run/ntpd.conf
+
+trunc() {
+	echo -n "" > $config_file
+}
+
+emit() {
+	echo -e "$@" >> $config_file
+}
+
+validate_ntp_section() {
+	uci_validate_section system timeserver "${1}" \
+		'server:list(host)' 'enabled:bool:1' 'enable_server:bool:0' \
+		'interface:list(string)'
+}
+
 start_service() {
+	local server enabled enable_server interface intf
+
+	validate_ntp_section ntp || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ "$enabled" = 0 ] && return
+
+	[ -z "$server" -a "$enable_server" = 0 ] && return
+
+	# not sure that the interfaces enumerated should be validated,
+	# since some of them might be dynamic interfaces (like IPsec
+	# tunnels) which aren't known by ubus.
+
+	trunc
+	emit "driftfile /var/lib/ntp/ntp.drift\n"
+
+	if [ "$enable_server" != 0 ]; then
+		emit "restrict default limited kod nomodify notrap nopeer"
+		emit "restrict -6 default limited kod nomodify notrap nopeer"
+	else
+		emit "restrict -4 default noserve"
+		emit "restrict -6 default noserve"
+	fi
+	emit "restrict source noquery"
+
+	emit "\n# No limits for local monitoring"
+	emit "restrict 127.0.0.1"
+	emit "restrict -6 ::1\n"
+
+	if [ -n "$interface" ]; then
+		local loopback=$(ubus call network.interface dump | jsonfilter -e "@.interface[@.interface='loopback']['device']")
+
+		local saw_lo=
+		for intf in $interface; do
+			emit "interface listen $intf"
+			[ "$intf" = "$loopback" ] && saw_lo=1
+		done
+		[ -z "$saw_lo" ] && emit "interface listen $loopback"
+		emit ""
+	fi
+
+	emit "server $server iburst"
+
 	mkdir -p /var/lib/ntp
 	chown -R ntp:ntp /var/lib/ntp
 
 	procd_open_instance
-	procd_set_param command $PROG -g -u ntp:ntp -p /var/run/ntpd.pid -n
+	procd_set_param command $PROG -g -u ntp:ntp -p /var/run/ntpd.pid -n \
+		-c $config_file
 	procd_close_instance
 
 	procd_open_instance
