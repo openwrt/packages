@@ -114,7 +114,7 @@ define Build/Prepare
 			-o -name '*.lo' \
 			-o -name '.deps' \
 			-o -name '.libs' \
-		| xargs rm -rvf
+		| $(XARGS) rm -rvf
 endef
 
 CONFIGURE_ARGS += \
