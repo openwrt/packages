@@ -12,7 +12,7 @@ PKG_NAME:=softethervpn
 PKG_VERSION:=4.22-9634
 PKG_VERREL:=beta
 PKG_VERDATE:=2016.11.27
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=http://www.softether-download.com/files/softether/v$(PKG_VERSION)-$(PKG_VERREL)-$(PKG_VERDATE)-tree/Source_Code/
@@ -78,8 +78,8 @@ MAKE_FLAGS += \
 	-f src/makefiles/linux_$(if $(CONFIG_ARCH_64BIT),64,32)bit.mak
 
 # Map nonstandard CCFLAGS variable to standard TARGET_CFLAGS
-MAKE_VARS += \
-	CCFLAGS="$(TARGET_CFLAGS)"
+MAKE_FLAGS += \
+	CC="$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(TARGET_LDFLAGS)"
 
 define Build/Configure
 	# Fetch prebuilt hamcore.se2 from staging dir
