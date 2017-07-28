@@ -6,7 +6,7 @@ PROG=/usr/sbin/syslog-ng
 PROG2=/usr/sbin/syslog-ng-ctl
 
 SERVICE_USE_PID=1
-SERVICE_PID_FILE=/var/log/syslog-ng.pid
+SERVICE_PID_FILE=/var/run/syslog-ng.pid
 
 config_file=/etc/syslog-ng.conf
 
