@@ -19,7 +19,7 @@ include $(TOPDIR)/rules.mk
 #
 PKG_NAME:=shadowsocks-libev
 PKG_VERSION:=3.0.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/shadowsocks/shadowsocks-libev/releases/download/v$(PKG_VERSION)
@@ -105,6 +105,16 @@ uci batch <<-EOF
 	delete $$s
 	commit firewall
 EOF
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(FIND) $(PKG_BUILD_DIR) \
+			   -name '*.o' \
+			-o -name '*.lo' \
+			-o -name '.deps' \
+			-o -name '.libs' \
+		| xargs rm -rvf
 endef
 
 CONFIGURE_ARGS += \
