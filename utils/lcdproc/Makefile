@@ -8,22 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdproc
-# PKG_VERSION:=0.5.8
-PKG_BASE_VERSION:=0.5.8
-PKG_VERSION:=$(PKG_BASE_VERSION)+git2070222
-PKG_RELEASE:=3
+PKG_VERSION:=0.5.9
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/lcdproc/lcdproc.git
-PKG_SOURCE_VERSION:=156983afab6d8f49d9a84e2a0929874eac569cc3
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_BASE_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_BASE_VERSION)
-
-#PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-#PKG_SOURCE_URL:=https://github.com/lcdproc/lcdproc/releases/download/v$(PKG_VERSION)/
-#PKG_MD5SUM:=1dd25676946c61184c6f51cc0a75379e
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/lcdproc/lcdproc/releases/download/v$(PKG_VERSION)/
+PKG_HASH:=d48a915496c96ff775b377d2222de3150ae5172bfb84a6ec9f9ceab962f97b83
 PKG_MAINTAINER:=Harald Geyer <harald@ccbib.org>, \
 		Philip Prindeville <philipp@redfish-solutions.com>
 PKG_LICENSE:=GPL-2.0
