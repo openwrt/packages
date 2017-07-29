@@ -8,7 +8,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 ## Main Features
 * STA interfaces operating in an "always off" mode, to make sure that the AP is always accessible
 * easy setup within normal OpenWrt/LEDE environment
-* strong LuCI-Support with builtin interface wizard and wireless interface manager
+* strong LuCI-Support with builtin interface wizard and a wireless station manager
 * fast uplink connections
 * manual / automatic mode support, the latter one checks the existing uplink connection regardless of ifdown event trigger actions every n seconds
 * support of devices with multiple radios
@@ -24,7 +24,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * download the package [here](https://downloads.lede-project.org/snapshots/packages/x86_64/packages)
 * install 'travelmate' (_opkg install travelmate_)
 * configure your network:
-    * recommended: use the LuCI frontend with automatic STA interface setup and connection manager
+    * recommended: use the LuCI frontend with builtin interface wizard and a wireless station manager
     * manual: see detailed configure steps below
     * at least you need one configured AP and one STA interface
 
@@ -34,7 +34,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * the application is located in LuCI under 'Services' menu
 
 ## Travelmate config options
-* travelmate config options:
+* usually the pre-configured travelmate setup works quite well and no manual config overrides are needed, all listed options apply to the 'global' config section:
     * trm\_enabled => main switch to enable/disable the travelmate service (default: '0', disabled)
     * trm\_debug => enable/disable debug logging (default: '0', disabled)
     * trm\_automatic => keep travelmate in an active state (default: '1', enabled)
@@ -42,8 +42,8 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
     * trm\_maxretry => how many times should travelmate try to find an uplink after a trigger event (default: '3')
     * trm\_timeout => timeout in seconds for "automatic mode" (default: '60')
     * trm\_radio => limit travelmate to a dedicated radio, e.g. 'radio0' (default: not set, use all radios)
-    * trm\_iface => restrict the procd interface trigger to a (list of) certain wan interface(s) or disable it at all (default: trm_wwan)
-    * trm\_triggerdelay => additional trigger delay in seconds before travelmate processing starts (default: '1')
+    * trm\_iface => main uplink / procd trigger network interface (default: trm_wwan)
+    * trm\_triggerdelay => additional trigger delay in seconds before travelmate processing starts (default: '2')
 
 ## Runtime information
 
@@ -51,13 +51,13 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 <pre><code>
 root@adb2go:~# /etc/init.d/travelmate status
 ::: travelmate runtime information
- travelmate_version : 0.7.2
+ travelmate_version : 0.9.1
  station_connection : true
- station_ssid       : blackhole
+ station_ssid       : blackhole.nl
  station_interface  : trm_wwan
  station_radio      : radio1
- last_rundate       : 06.05.2017 06:58:22
- system             : LEDE Reboot SNAPSHOT r4051-3ddc1914ba
+ last_rundate       : 29.07.2017 18:02:01
+ system             : LEDE Reboot SNAPSHOT r4639-eb43a817f7
 </code></pre>
 
 ## Manual Setup
@@ -98,6 +98,7 @@ config wifi-iface
         option encryption 'psk2+ccmp'
         option key 'abc'
         option disabled '1'
+[...]
 config wifi-iface
         option device 'radio0'
         option network 'trm_wwan'
@@ -106,22 +107,26 @@ config wifi-iface
         option encryption 'psk2+ccmp'
         option key 'xyz'
         option disabled '1'
-config wifi-iface
-        option device 'radio0'
-        option network 'trm_wwan'
-        option mode 'sta'
-        option ssid 'example_03'
-        option encryption 'none'
-        option disabled '1'
 [...]
 </code></pre>
 
-**4. reload network configuration & start travelmate:**
+**4. start travelmate:**
 <pre><code>
-/etc/init.d/network reload
-/etc/init.d/travelmate start
+edit /etc/config/travelmate and set 'trm_enabled' to '1'
+/etc/init.d/travelmate restart
 </code></pre>
 
+## FAQ
+**Q:** What's about 'manual' and 'automatic' mode?  
+**A:** In "manual" mode travelmate will be triggered solely by procd interface down events, whenever an uplink disappears travelmate tries n times (default 3) to find a new uplink or reconnect to the old one. The 'automatic' mode keeps travelmate in an active state and checks every n seconds the connection status / the uplink availability regardless of procd event trigger.  
+
+**Q:** What happen with misconfigured uplinks, e.g. due to outdated wlan passwords?  
+**A:** Travelmate tries n times (default 3) to connect, then the respective uplink SSID will be marked / renamed to '_SSID_\_err'. In this case use the builtin wireless station manager to update your wireless credentials.  
+
+**Q:** Is travelmate compatible with CC/Openwrt?  
+**A:** Travelmate was never tested with an ancient CC/OpenWrt release ... it should still work, but no promises.  
+
+[...] to be continued [...]
 ## Support
 Please join the travelmate discussion in this [forum thread](https://forum.lede-project.org/t/travelmate-support-thread/5155) or contact me by [mail](mailto:dev@brenken.org)  
 
