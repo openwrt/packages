@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale
-PKG_VERSION:=1.1.3
+PKG_VERSION:=1.1.6
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/Kozea/Radicale
 PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=d5171958ffe41e495ccaf2c02702d9acb0c6e6ad
+PKG_SOURCE_VERSION:=7568ec39f09a753217fb2d525c5f8db64f4d98f4
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 
 include $(INCLUDE_DIR)/package.mk
