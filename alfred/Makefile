@@ -7,9 +7,6 @@
 
 include $(TOPDIR)/rules.mk
 
-#
-# The latest alfred git hash in PKG_REV can be obtained from https://git.open-mesh.org/alfred.git
-#
 PKG_NAME:=alfred
 PKG_VERSION:=2017.2
 PKG_RELEASE:=0
