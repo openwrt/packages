@@ -43,14 +43,16 @@ status()
 
 service_triggers()
 {
-    local iface="$(uci -q get travelmate.global.trm_iface)"
-    local delay="$(uci -q get travelmate.global.trm_triggerdelay)"
+    local auto="$(uci -q get travelmate.global.trm_automatic)"
 
-    PROCD_RELOAD_DELAY=$((${delay:=2} * 1000))
-    for name in ${iface}
-    do
-        procd_add_interface_trigger "interface.*.down" "${name}" "${trm_init}" start
-    done
+    if [ "${auto}" = "0" ]
+    then
+        local iface="$(uci -q get travelmate.global.trm_iface)"
+        local delay="$(uci -q get travelmate.global.trm_triggerdelay)"
+
+        PROCD_RELOAD_DELAY=$((${delay:=2} * 1000))
+        procd_add_interface_trigger "interface.*.down" "${iface}" "${trm_init}" start
+    fi
     PROCD_RELOAD_DELAY=1000
     procd_add_config_trigger "config.change" "travelmate" "${trm_init}" start
 }
