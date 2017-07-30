@@ -60,9 +60,6 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-binaries \
-	--disable-oggtest \
-	--enable-sse=no \
-	--with-ogg=$(STAGING_DIR)/usr \
-	$(if $(CONFIG_SOFT_FLOAT),--enable-fixed-point --disable-float-api)
+	$(if $(CONFIG_SOFT_FLOAT),--enable-fixed-point --disable-float-api --disable-vbr)
 
 $(eval $(call BuildPackage,libspeex))

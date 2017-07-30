@@ -60,7 +60,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-examples \
-	--enable-sse=no \
+	$(if $(CONFIG_aarch64),--disable-neon) \
 	$(if $(CONFIG_SOFT_FLOAT),--enable-fixed-point --disable-float-api)
 
 $(eval $(call BuildPackage,libspeexdsp))
