@@ -7,28 +7,28 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=speex
-PKG_VERSION:=1.2.0
+PKG_NAME:=speexdsp
+PKG_VERSION:=1.2rc3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.us.xiph.org/releases/speex/
-PKG_HASH:=eaae8af0ac742dc7d542c9439ac72f1f385ce838392dc849cae4536af9210094
+PKG_HASH:=4ae688600039f5d224bdf2e222d2fbde65608447e4c2f681585e4dca6df692f1
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libspeex
+define Package/libspeexdsp
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=Open source speech compression codec library
+  TITLE:=Open source speech compression codec library output to DSP
   URL:=http://www.speex.org/
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
-define Package/libspeex/description
+define Package/libspeexdsp/description
 	Open source patent-free speech compression codec library.
 	Speex is an Open Source/Free Software patent-free audio compression
 	format designed for speech. The Speex Project aims to lower the
@@ -37,21 +37,21 @@ define Package/libspeex/description
 	is well-adapted to Internet applications and provides useful features
 	that are not present in most other codecs.
 
-	This package contains the shared codec library, needed by other programs.
+	This package contains the shared dsp library, needed by other programs.
 endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/speex $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libspeex.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libspeexdsp.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/speex.pc $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/speexdsp.pc $(1)/usr/lib/pkgconfig/
 endef
 
-define Package/libspeex/install
+define Package/libspeexdsp/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libspeex.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libspeexdsp.so.* $(1)/usr/lib/
 endef
 
 TARGET_CFLAGS += $(FPIC)
@@ -59,10 +59,8 @@ TARGET_CFLAGS += $(FPIC)
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--disable-binaries \
-	--disable-oggtest \
+	--disable-examples \
 	--enable-sse=no \
-	--with-ogg=$(STAGING_DIR)/usr \
 	$(if $(CONFIG_SOFT_FLOAT),--enable-fixed-point --disable-float-api)
 
-$(eval $(call BuildPackage,libspeex))
+$(eval $(call BuildPackage,libspeexdsp))
