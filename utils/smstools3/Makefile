@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smstools3
-PKG_VERSION:=3.1.15
-PKG_RELEASE:=3
+PKG_VERSION:=3.1.21
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Gérald Kerma <dreagle@doukki.net>
 PKG_LICENSE:=GPL-2.0
@@ -19,7 +19,7 @@ PKG_BUILD_PARALLEL:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://smstools3.kekekasvi.com/packages/
-PKG_MD5SUM:=0241ef60e646fac1a06254a848e61ed7
+PKG_MD5SUM:=6a9f038fb38a49cc3a4f8f14a88fb8af
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
