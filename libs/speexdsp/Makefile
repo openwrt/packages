@@ -60,6 +60,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-examples \
+	--enable-neon=no \
 	--enable-sse=no \
 	$(if $(CONFIG_SOFT_FLOAT),--enable-fixed-point --disable-float-api)
 
