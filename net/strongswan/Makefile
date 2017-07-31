@@ -137,6 +137,7 @@ $(call Package/strongswan/Default)
   TITLE+= (full)
   DEPENDS:= +strongswan \
 	+strongswan-charon \
+	+strongswan-ipsec \
 	+strongswan-mod-addrblock \
 	+strongswan-mod-aes \
 	+strongswan-mod-af-alg \
@@ -209,7 +210,6 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-xcbc \
 	+strongswan-pki \
 	+strongswan-scepclient \
-	+strongswan-utils \
 	@DEVEL
 endef
 
@@ -227,6 +227,7 @@ $(call Package/strongswan/Default)
   TITLE+= (default)
   DEPENDS:= +strongswan \
 	+strongswan-charon \
+	+strongswan-ipsec \
 	+strongswan-mod-aes \
 	+strongswan-mod-attr \
 	+strongswan-mod-connmark \
@@ -255,8 +256,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-updown \
 	+strongswan-mod-x509 \
 	+strongswan-mod-xauth-generic \
-	+strongswan-mod-xcbc \
-	+strongswan-utils
+	+strongswan-mod-xcbc
 endef
 
 define Package/strongswan-default/description
@@ -270,6 +270,7 @@ $(call Package/strongswan/Default)
   TITLE+= (isakmp)
   DEPENDS:= +strongswan \
 	+strongswan-charon \
+	+strongswan-ipsec \
 	+strongswan-mod-aes \
 	+strongswan-mod-des \
 	+strongswan-mod-gmpdh \
@@ -283,8 +284,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-socket-default \
 	+strongswan-mod-stroke \
 	+strongswan-mod-uci \
-	+strongswan-mod-updown \
-	+strongswan-utils
+	+strongswan-mod-updown
 endef
 
 define Package/strongswan-isakmp/description
@@ -331,6 +331,17 @@ $(call Package/strongswan/description/Default)
  This package contains charon, an IKEv2 keying daemon.
 endef
 
+define Package/strongswan-ipsec
+$(call Package/strongswan/Default)
+  TITLE+= utilities
+  DEPENDS:= +strongswan
+endef
+
+define Package/strongswan-ipsec/description
+$(call Package/strongswan/description/Default)
+ This package contains the ipsec utility.
+endef
+
 define Package/strongswan-pki
 $(call Package/strongswan/Default)
   TITLE+= PKI tool
@@ -351,17 +362,6 @@ endef
 define Package/strongswan-scepclient/description
 $(call Package/strongswan/description/Default)
  This package contains the SCEP client.
-endef
-
-define Package/strongswan-utils
-$(call Package/strongswan/Default)
-  TITLE+= utilities
-  DEPENDS:= +strongswan
-endef
-
-define Package/strongswan-utils/description
-$(call Package/strongswan/description/Default)
- This package contains the ipsec utility.
 endef
 
 define Package/strongswan-libtls
@@ -458,6 +458,11 @@ define Package/strongswan-charon/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libcharon.so.* $(1)/usr/lib/ipsec/
 endef
 
+define Package/strongswan-ipsec/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ipsec $(1)/usr/sbin/
+endef
+
 define Package/strongswan-pki/install
 	$(INSTALL_DIR) $(1)/etc/strongswan.d
 	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.d/pki.conf $(1)/etc/strongswan.d/
@@ -470,11 +475,6 @@ define Package/strongswan-scepclient/install
 	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.d/scepclient.conf $(1)/etc/strongswan.d/
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/scepclient $(1)/usr/lib/ipsec/
-endef
-
-define Package/strongswan-utils/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ipsec $(1)/usr/sbin/
 endef
 
 define Package/strongswan-libtls/install
@@ -538,9 +538,9 @@ $(eval $(call BuildPackage,strongswan-full))
 $(eval $(call BuildPackage,strongswan-minimal))
 $(eval $(call BuildPackage,strongswan-isakmp))
 $(eval $(call BuildPackage,strongswan-charon))
+$(eval $(call BuildPackage,strongswan-ipsec))
 $(eval $(call BuildPackage,strongswan-pki))
 $(eval $(call BuildPackage,strongswan-scepclient))
-$(eval $(call BuildPackage,strongswan-utils))
 $(eval $(call BuildPackage,strongswan-libtls))
 $(eval $(call BuildPlugin,addrblock,RFC 3779 address block constraint support,))
 $(eval $(call BuildPlugin,aes,AES crypto,))
@@ -605,7 +605,7 @@ $(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charo
 $(eval $(call BuildPlugin,sql,SQL database interface,))
 $(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-sqlite:libsqlite3))
 $(eval $(call BuildPlugin,sshkey,SSH key decoding,))
-$(eval $(call BuildPlugin,stroke,Stroke,+strongswan-charon +strongswan-utils))
+$(eval $(call BuildPlugin,stroke,Stroke,+strongswan-charon +strongswan-ipsec))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci))
 $(eval $(call BuildPlugin,unity,Cisco Unity extension,))
