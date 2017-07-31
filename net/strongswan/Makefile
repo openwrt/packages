@@ -138,6 +138,7 @@ $(call Package/strongswan/Default)
   TITLE+= (full)
   DEPENDS:= +strongswan \
 	+strongswan-charon \
+	+strongswan-charon-cmd \
 	+strongswan-ipsec \
 	+strongswan-mod-addrblock \
 	+strongswan-mod-aes \
@@ -334,6 +335,17 @@ $(call Package/strongswan/description/Default)
  This package contains charon, an IKEv2 keying daemon.
 endef
 
+define Package/strongswan-charon-cmd
+$(call Package/strongswan/Default)
+  TITLE+= charon-cmd utility
+  DEPENDS:= +strongswan +strongswan-charon
+endef
+
+define Package/strongswan-charon-cmd/description
+$(call Package/strongswan/description/Default)
+ This package contains the charon-cmd utility.
+endef
+
 define Package/strongswan-ipsec
 $(call Package/strongswan/Default)
   TITLE+= utilities
@@ -416,6 +428,7 @@ CONFIGURE_ARGS+= \
 	--disable-fast \
 	--enable-mediation \
 	--with-systemdsystemunitdir=no \
+	$(if $(CONFIG_PACKAGE_strongswan-charon-cmd),--enable-cmd,--disable-cmd) \
 	$(if $(CONFIG_PACKAGE_strongswan-pki),--enable-pki,--disable-pki) \
 	$(if $(CONFIG_PACKAGE_strongswan-scepclient),--enable-scepclient,--disable-scepclient) \
 	--with-random-device=/dev/random \
@@ -473,6 +486,11 @@ define Package/strongswan-charon/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/charon $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libcharon.so.* $(1)/usr/lib/ipsec/
+endef
+
+define Package/strongswan-charon-cmd/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/charon-cmd $(1)/usr/sbin/
 endef
 
 define Package/strongswan-ipsec/install
@@ -569,6 +587,7 @@ $(eval $(call BuildPackage,strongswan-full))
 $(eval $(call BuildPackage,strongswan-minimal))
 $(eval $(call BuildPackage,strongswan-isakmp))
 $(eval $(call BuildPackage,strongswan-charon))
+$(eval $(call BuildPackage,strongswan-charon-cmd))
 $(eval $(call BuildPackage,strongswan-ipsec))
 $(eval $(call BuildPackage,strongswan-pki))
 $(eval $(call BuildPackage,strongswan-scepclient))
