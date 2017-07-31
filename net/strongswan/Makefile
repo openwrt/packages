@@ -208,6 +208,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-xauth-generic \
 	+strongswan-mod-xcbc \
 	+strongswan-pki \
+	+strongswan-scepclient \
 	+strongswan-utils \
 	@DEVEL
 endef
@@ -341,6 +342,17 @@ $(call Package/strongswan/description/Default)
  This package contains the pki tool.
 endef
 
+define Package/strongswan-scepclient
+$(call Package/strongswan/Default)
+  TITLE+= SCEP client
+  DEPENDS:= +strongswan
+endef
+
+define Package/strongswan-scepclient/description
+$(call Package/strongswan/description/Default)
+ This package contains the SCEP client.
+endef
+
 define Package/strongswan-utils
 $(call Package/strongswan/Default)
   TITLE+= utilities
@@ -349,7 +361,7 @@ endef
 
 define Package/strongswan-utils/description
 $(call Package/strongswan/description/Default)
- This package contains the scepclient utility.
+ This package contains the ipsec utility.
 endef
 
 define Package/strongswan-libtls
@@ -391,7 +403,7 @@ CONFIGURE_ARGS+= \
 	--enable-mediation \
 	--with-systemdsystemunitdir=no \
 	$(if $(CONFIG_PACKAGE_strongswan-pki),--enable-pki,--disable-pki) \
-	$(if $(CONFIG_PACKAGE_strongswan-utils),--enable-scepclient,--disable-scepclient) \
+	$(if $(CONFIG_PACKAGE_strongswan-scepclient),--enable-scepclient,--disable-scepclient) \
 	--with-random-device=/dev/random \
 	--with-urandom-device=/dev/urandom \
 	--with-routing-table="$(call qstrip,$(CONFIG_STRONGSWAN_ROUTING_TABLE))" \
@@ -453,11 +465,16 @@ define Package/strongswan-pki/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/pki $(1)/usr/bin/
 endef
 
+define Package/strongswan-scepclient/install
+	$(INSTALL_DIR) $(1)/etc/strongswan.d
+	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.d/scepclient.conf $(1)/etc/strongswan.d/
+	$(INSTALL_DIR) $(1)/usr/lib/ipsec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/scepclient $(1)/usr/lib/ipsec/
+endef
+
 define Package/strongswan-utils/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ipsec $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/usr/lib/ipsec
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/scepclient $(1)/usr/lib/ipsec/
 endef
 
 define Package/strongswan-libtls/install
@@ -522,6 +539,7 @@ $(eval $(call BuildPackage,strongswan-minimal))
 $(eval $(call BuildPackage,strongswan-isakmp))
 $(eval $(call BuildPackage,strongswan-charon))
 $(eval $(call BuildPackage,strongswan-pki))
+$(eval $(call BuildPackage,strongswan-scepclient))
 $(eval $(call BuildPackage,strongswan-utils))
 $(eval $(call BuildPackage,strongswan-libtls))
 $(eval $(call BuildPlugin,addrblock,RFC 3779 address block constraint support,))
