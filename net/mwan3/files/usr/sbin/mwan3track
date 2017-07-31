@@ -10,7 +10,7 @@ IFDOWN_EVENT=0
 
 clean_up() {
 	$LOG notice "Stopping mwan3track for interface \"${INTERFACE}\""
-	if [ "$(pgrep -f "mwan3track ${INTERFACE}")" = "" ]; then
+	if [ "$(pgrep -f "mwan3track ${INTERFACE} ${DEVICE}")" = "" ]; then
 		rm -rf "/var/run/mwan3track/${INTERFACE}" &> /dev/null
 	fi
 	if [ -z "$(ls -A "/var/run/mwan3track")" ]; then

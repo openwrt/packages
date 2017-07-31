@@ -36,7 +36,7 @@ ifdown()
 
 	ACTION=ifdown INTERFACE=$1 /sbin/hotplug-call iface
 
-	kill $(pgrep -f "mwan3track $1") &> /dev/null
+	kill $(pgrep -f "mwan3track $1 $2") &> /dev/null
 }
 
 ifup()

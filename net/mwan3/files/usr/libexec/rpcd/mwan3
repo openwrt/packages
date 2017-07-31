@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . /lib/functions.sh
+. /lib/functions/network.sh
 . /usr/share/libubox/jshn.sh
 
 MWAN3_STATUS_DIR="/var/run/mwan3track"
@@ -34,10 +35,12 @@ get_mwan3_status() {
 	local iface="${1}"
 	local iface_select="${2}"
 	local running="0"
-	local pid
+	local pid device
+
+	network_get_device device $1
 
 	if [ "${iface}" = "${iface_select}" ] || [ "${iface_select}" = "" ]; then
-		pid="$(pgrep -f "mwan3track $iface")"
+		pid="$(pgrep -f "mwan3track $iface $device")"
 		if [ "${pid}" != "" ]; then
 			running="1"
 		fi
