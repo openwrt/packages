@@ -449,7 +449,7 @@ mwan3_track()
 	}
 	config_list_foreach $1 track_ip mwan3_list_track_ips
 
-	kill $(pgrep -f "mwan3track $1") &> /dev/null
+	kill $(pgrep -f "mwan3track $1 $2") &> /dev/null
 	if [ -n "$track_ips" ]; then
 		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track "$1" "$2" "$3" $track_ips &
 	fi
@@ -459,7 +459,7 @@ mwan3_track_signal()
 {
 	local pid
 
-	pid="$(pgrep -f "mwan3track $1")"
+	pid="$(pgrep -f "mwan3track $1 $2")"
 	if [ "${pid}" != "" ]; then
 		kill -USR1 "${pid}"
 	else
@@ -789,7 +789,7 @@ mwan3_report_iface_status()
 	config_list_foreach $1 track_ip mwan3_list_track_ips
 
 	if [ -n "$track_ips" ]; then
-		if [ -n "$(pgrep -f "mwan3track $1")" ]; then
+		if [ -n "$(pgrep -f "mwan3track $1 $device")" ]; then
 			tracking="active"
 		else
 			tracking="down"
