@@ -154,6 +154,7 @@ main() {
 		echo "${lost}" > /var/run/mwan3track/$1/LOST
 		echo "${score}" > /var/run/mwan3track/$1/SCORE
 		echo "${turn}" > /var/run/mwan3track/$1/TURN
+		echo "$(date +'%s')" > /var/run/mwan3track/$1/TIME
 
 		host_up_count=0
 		sleep "${sleep_time}" &
