@@ -86,6 +86,7 @@ PKG_MOD_AVAILABLE:= \
 	unity \
 	uci \
 	updown \
+	vici \
 	whitelist \
 	x509 \
 	xauth-eap \
@@ -203,6 +204,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-uci \
 	+strongswan-mod-unity \
 	+strongswan-mod-updown \
+	+strongswan-mod-vici \
 	+strongswan-mod-whitelist \
 	+strongswan-mod-x509 \
 	+strongswan-mod-xauth-eap \
@@ -521,6 +523,12 @@ define Plugin/updown/install
 	$(INSTALL_DIR) $(1)/etc
 endef
 
+define Plugin/vici/install
+	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libvici.so $(1)/usr/lib/ipsec/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-vici.so $(1)/usr/lib/ipsec/plugins/
+endef
+
 define Plugin/whitelist/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/whitelist $(1)/usr/lib/ipsec/
@@ -610,6 +618,7 @@ $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci))
 $(eval $(call BuildPlugin,unity,Cisco Unity extension,))
 $(eval $(call BuildPlugin,updown,updown firewall,))
+$(eval $(call BuildPlugin,vici,Versatile IKE Configuration Interface,))
 $(eval $(call BuildPlugin,whitelist,peer identity whitelisting,))
 $(eval $(call BuildPlugin,x509,x509 certificate,))
 $(eval $(call BuildPlugin,xauth-eap,EAP XAuth backend,))
