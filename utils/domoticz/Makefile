@@ -70,9 +70,10 @@ define Build/Prepare
 	# Remove unwanted scripts
 	cd $(PKG_BUILD_DIR)/scripts && rm -rf \
 		buienradar_rain_example.pl \
-		_domoticz_main.bat \
+		_domoticz_main* \
 		download_update.sh \
-		dzVents/{documentation,examples,runtime/{integration-tests,tests}} \
+		dzVents/{.gitignore,documentation,examples} \
+		dzVents/runtime/{integration-tests,misc/smoothing.xlsx,tests} \
 		logrotate/ \
 		lua_parsers/example* \
 		lua/*demo.lua \
