@@ -34,7 +34,8 @@ get_mwan3_status() {
 	local iface="${1}"
 	local iface_select="${2}"
 	local running="0"
-	local pid device
+	local age=0
+	local pid device time_p time_n
 
 	network_get_device device $1
 
@@ -44,7 +45,14 @@ get_mwan3_status() {
 			running="1"
 		fi
 
+		time_p="$(cat "$MWAN3_STATUS_DIR/${iface}/TIME")"
+		[ -z "${time_p}" ] || {
+			time_n="$(date +'%s')"
+			let age=time_n-time_p
+		}
+
 		json_add_object "${iface}"
+		json_add_int age "$age"
 		json_add_string "score" "$(cat "$MWAN3_STATUS_DIR/${iface}/SCORE")"
 		json_add_string "lost" "$(cat "$MWAN3_STATUS_DIR/${iface}/LOST")"
 		json_add_string "turn" "$(cat "$MWAN3_STATUS_DIR/${iface}/TURN")"
