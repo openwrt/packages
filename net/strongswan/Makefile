@@ -212,6 +212,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-xcbc \
 	+strongswan-pki \
 	+strongswan-scepclient \
+	+strongswan-swanctl \
 	@DEVEL
 endef
 
@@ -366,6 +367,17 @@ $(call Package/strongswan/description/Default)
  This package contains the SCEP client.
 endef
 
+define Package/strongswan-swanctl
+$(call Package/strongswan/Default)
+  TITLE+= swanctl utility
+  DEPENDS:= +strongswan +strongswan-mod-vici
+endef
+
+define Package/strongswan-swanctl/description
+$(call Package/strongswan/description/Default)
+ This package contains the swanctl utility.
+endef
+
 define Package/strongswan-libtls
 $(call Package/strongswan/Default)
   TITLE+= libtls
@@ -479,6 +491,14 @@ define Package/strongswan-scepclient/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/scepclient $(1)/usr/lib/ipsec/
 endef
 
+define Package/strongswan-swanctl/install
+	$(INSTALL_DIR) $(1)/etc/swanctl/{bliss,ecdsa,pkcs{12,8},private,pubkey,rsa}
+	$(INSTALL_DIR) $(1)/etc/swanctl/x509{,aa,ac,ca,crl,ocsp}
+	$(CP) $(PKG_INSTALL_DIR)/etc/swanctl/swanctl.conf $(1)/etc/swanctl/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/swanctl $(1)/usr/sbin/
+endef
+
 define Package/strongswan-libtls/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libtls.so.* $(1)/usr/lib/ipsec/
@@ -525,7 +545,7 @@ endef
 
 define Plugin/vici/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libvici.so $(1)/usr/lib/ipsec/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libvici.so.* $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-vici.so $(1)/usr/lib/ipsec/plugins/
 endef
 
@@ -549,6 +569,7 @@ $(eval $(call BuildPackage,strongswan-charon))
 $(eval $(call BuildPackage,strongswan-ipsec))
 $(eval $(call BuildPackage,strongswan-pki))
 $(eval $(call BuildPackage,strongswan-scepclient))
+$(eval $(call BuildPackage,strongswan-swanctl))
 $(eval $(call BuildPackage,strongswan-libtls))
 $(eval $(call BuildPlugin,addrblock,RFC 3779 address block constraint support,))
 $(eval $(call BuildPlugin,aes,AES crypto,))
