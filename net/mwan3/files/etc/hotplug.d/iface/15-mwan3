@@ -59,7 +59,6 @@ case "$ACTION" in
 	;;
 	ifdown)
 		mwan3_delete_iface_rules $INTERFACE
-		mwan3_delete_iface_iptables $INTERFACE
 		mwan3_delete_iface_route $INTERFACE
 		mwan3_delete_iface_ipset_entries $INTERFACE
 		mwan3_track_signal $INTERFACE $DEVICE
