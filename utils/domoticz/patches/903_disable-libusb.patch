@@ -1,6 +1,6 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -476,20 +476,23 @@ else()
+@@ -521,20 +521,23 @@ else()
    MESSAGE(FATAL_ERROR "cURL not found on your system, see install.txt how to get them installed. (for example 'sudo apt-get install curl libcurl4-openssl-dev')")
  ENDIF(CURL_FOUND)
  
