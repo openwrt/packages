@@ -53,9 +53,9 @@ get_mwan3_status() {
 
 		json_add_object "${iface}"
 		json_add_int age "$age"
-		json_add_string "score" "$(cat "$MWAN3_STATUS_DIR/${iface}/SCORE")"
-		json_add_string "lost" "$(cat "$MWAN3_STATUS_DIR/${iface}/LOST")"
-		json_add_string "turn" "$(cat "$MWAN3_STATUS_DIR/${iface}/TURN")"
+		json_add_int "score" "$(cat "$MWAN3_STATUS_DIR/${iface}/SCORE")"
+		json_add_int "lost" "$(cat "$MWAN3_STATUS_DIR/${iface}/LOST")"
+		json_add_int "turn" "$(cat "$MWAN3_STATUS_DIR/${iface}/TURN")"
 		json_add_string "status" "$(cat "$MWAN3_STATUS_DIR/${iface}/STATUS")"
 		json_add_boolean "running" "${running}"
 		json_add_array "track_ip"
