@@ -224,7 +224,7 @@ config_remote() {
 	config_name=$1
 
 	config_get_bool enabled "$1" enabled 0
-	[ "$enabled" = "0" ] && return
+	[ $enabled -eq 0 ] && return
 
 	config_get gateway           "$1" gateway
 	config_get pre_shared_key    "$1" pre_shared_key
@@ -277,7 +277,7 @@ config_ipsec() {
 
 	config_get debug "$1" debug 0
 	config_get_bool rtinstall_enabled "$1" rtinstall_enabled 1
-	[ $rtinstall_enabled = "1" ] && install_routes=yes || install_routes=no
+	[ $rtinstall_enabled -eq 1 ] && install_routes=yes || install_routes=no
 
 	# prepare extra charon config option ignore_routing_tables
 	for routing_table in $(config_get "$1" "ignore_routing_tables"); do
