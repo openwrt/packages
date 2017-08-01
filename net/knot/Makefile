@@ -242,40 +242,27 @@ define Package/knot-tests/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libtap/runtests		$(1)/usr/share/knot/tap/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libtap/tap/libtap.sh	$(1)/usr/share/knot/tap/
 
-	$(INSTALL_DIR)									$(1)/usr/share/knot/tests
-	find $(PKG_BUILD_DIR)/tests/.libs -maxdepth 1 -executable -type f | \
-		xargs -I{} basename {} | \
-		xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/.libs/{}		$(1)/usr/share/knot/tests/test_{}
-
-	$(INSTALL_DIR)									$(1)/usr/share/knot/tests/dnssec
-	find $(PKG_BUILD_DIR)/src/dnssec/tests -maxdepth 1 -executable -type f | \
-		xargs -I{} basename {} | \
-		xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/src/dnssec/tests/{}	$(1)/usr/share/knot/tests/dnssec/test_{}
-
-	$(INSTALL_DIR)									$(1)/usr/share/knot/tests/contrib
-	find $(PKG_BUILD_DIR)/tests/contrib/.libs -maxdepth 1 -executable -type f | \
-		xargs -I{} basename {} | \
-		xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/contrib/.libs/{}	$(1)/usr/share/knot/tests/contrib/{}
-
-	$(INSTALL_DIR)									$(1)/usr/share/knot/tests/libknot
-	find $(PKG_BUILD_DIR)/tests/libknot/.libs -maxdepth 1 -executable -type f | \
-		xargs -I{} basename {} | \
-		xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/libknot/.libs/{}	$(1)/usr/share/knot/tests/libknot/{}
-
-	$(INSTALL_DIR)									$(1)/usr/share/knot/tests/modules
-	find $(PKG_BUILD_DIR)/tests/modules/.libs -maxdepth 1 -executable -type f | \
-		xargs -I{} basename {} | \
-		xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/modules/.libs/{}	$(1)/usr/share/knot/tests/modules/test_{}
-
-	$(INSTALL_DIR)									$(1)/usr/share/knot/tests/utils
-	find $(PKG_BUILD_DIR)/tests/utils/.libs -maxdepth 1 -executable -type f | \
-		xargs -I{} basename {} | \
-		xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/utils/.libs/{}	$(1)/usr/share/knot/tests/utils/{}
+	$(INSTALL_DIR)								$(1)/usr/share/knot/tests
 
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/zscanner/tests/.libs/zscanner-tool	$(1)/usr/share/knot/tests/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/zscanner/tests/unittests		$(1)/usr/share/knot/tests/test_zscanner
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/zscanner/tests/TESTS		$(1)/usr/share/knot/tests/
 	cp -a $(PKG_BUILD_DIR)/src/zscanner/tests/data				$(1)/usr/share/knot/tests/
+
+	find $(PKG_BUILD_DIR)/src/dnssec/tests -maxdepth 1 -executable -type f | \
+		xargs -I{} basename {} | \
+		xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/src/dnssec/tests/{}	$(1)/usr/share/knot/tests/dnssec_test_{}
+
+	find $(PKG_BUILD_DIR)/tests/.libs -maxdepth 1 -executable -type f | \
+		xargs -I{} basename {} | \
+		xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/.libs/{}		$(1)/usr/share/knot/tests/{}
+
+	for module in contrib libknot modules utils; do \
+		find $(PKG_BUILD_DIR)/tests/$$$${module}/.libs -maxdepth 1 -executable -type f | \
+			xargs -I{} basename {} | \
+			xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/$$$${module}/.libs/{} \
+											$(1)/usr/share/knot/tests/$$$${module}_{}; \
+	done
 endef
 
 $(eval $(call BuildPackage,knot-libs))
