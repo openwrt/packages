@@ -1,0 +1,14 @@
+diff --git a/src/_cffi_src/openssl/ssl.py b/src/_cffi_src/openssl/ssl.py
+index 8bda4e0..aa81060 100644
+--- a/src/_cffi_src/openssl/ssl.py
++++ b/src/_cffi_src/openssl/ssl.py
+@@ -595,9 +595,6 @@ static const long TLS_ST_OK = 0;
+ 
+ #if defined(OPENSSL_NO_DTLS) || CRYPTOGRAPHY_OPENSSL_LESS_THAN_102
+ static const long Cryptography_HAS_GENERIC_DTLS_METHOD = 0;
+-const SSL_METHOD *(*DTLS_method)(void) = NULL;
+-const SSL_METHOD *(*DTLS_server_method)(void) = NULL;
+-const SSL_METHOD *(*DTLS_client_method)(void) = NULL;
+ #else
+ static const long Cryptography_HAS_GENERIC_DTLS_METHOD = 1;
+ #endif

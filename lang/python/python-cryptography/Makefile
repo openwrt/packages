@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptography
-PKG_VERSION:=1.9
+PKG_VERSION:=2.0.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=cryptography-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/2a/0c/31bd69469e90035381f0197b48bf71032991d9f07a7e444c311b4a23a3df
-PKG_HASH:=5518337022718029e367d982642f3e3523541e098ad671672a90b82474c84882
+PKG_SOURCE_URL:=https://pypi.python.org/packages/9c/1a/0fc8cffb04582f9ffca61b15b0681cf2e8588438e55f61403eb9880bd8e0
+PKG_HASH:=d04bb2425086c3fe86f7bc48915290b13e798497839fbb18ab7f6dffcf98cc3a
 
 PKG_LICENSE:=Apache-2.0 BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.APACHE LICENSE.BSD
@@ -44,7 +44,7 @@ $(call Package/python-cryptography/Default)
       +PACKAGE_python-cryptography:python-enum34 \
       +PACKAGE_python-cryptography:python-idna \
       +PACKAGE_python-cryptography:python-ipaddress \
-      +PACKAGE_python-cryptography:python-pyasn1 \
+      +PACKAGE_python-cryptography:python-asn1crypto \
       +PACKAGE_python-cryptography:python-six
   VARIANT:=python
 endef
@@ -56,7 +56,7 @@ $(call Package/python-cryptography/Default)
       +PACKAGE_python3-cryptography:python3 \
       +PACKAGE_python3-cryptography:python3-cffi \
       +PACKAGE_python3-cryptography:python3-idna \
-      +PACKAGE_python3-cryptography:python3-pyasn1 \
+      +PACKAGE_python3-cryptography:python3-asn1crypto \
       +PACKAGE_python3-cryptography:python3-six
   VARIANT:=python3
 endef
@@ -71,18 +71,6 @@ define Package/python3-cryptography/description
 $(call Package/python-cryptography/description)
 .
 (Variant for Python3)
-endef
-
-define PyPackage/python-cryptography/filespec
-+|$(PYTHON_PKG_DIR)
--|$(PYTHON_PKG_DIR)/cryptography/hazmat/backends/commoncrypto
--|$(PYTHON_PKG_DIR)/cryptography/hazmat/bindings/commoncrypto
-endef
-
-define Py3Package/python3-cryptography/filespec
-+|$(PYTHON3_PKG_DIR)
--|$(PYTHON3_PKG_DIR)/cryptography/hazmat/backends/commoncrypto
--|$(PYTHON3_PKG_DIR)/cryptography/hazmat/bindings/commoncrypto
 endef
 
 $(eval $(call PyPackage,python-cryptography))
