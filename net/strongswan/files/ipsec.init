@@ -331,8 +331,8 @@ restart() {
 
 reload() {
 	prepare_env
-	ipsec secrets
-	if [[ ! -z "$(ipsec status)" ]]; then
+	if ipsec status > /dev/null 2>&1; then
+		ipsec rereadall
 		ipsec reload
 	else
 		ipsec start
