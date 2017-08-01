@@ -3,6 +3,9 @@
 START=90
 STOP=10
 
+USE_PROCD=1
+PROG=/usr/lib/ipsec/starter
+
 . $IPKG_INSTROOT/lib/functions.sh
 
 IPSEC_SECRETS_FILE=/etc/ipsec.secrets
@@ -315,21 +318,7 @@ prepare_env() {
 	config_foreach config_remote remote
 }
 
-start() {
-	prepare_env
-	ipsec start
-}
-
-stop() {
-	ipsec stop
-}
-
-restart() {
-	prepare_env
-	ipsec restart
-}
-
-reload() {
+reload_service() {
 	prepare_env
 	if ipsec status > /dev/null 2>&1; then
 		ipsec rereadall
@@ -337,4 +326,26 @@ reload() {
 	else
 		ipsec start
 	fi
+}
+
+service_triggers() {
+	procd_add_reload_trigger "ipsec"
+}
+
+start_service() {
+	prepare_env
+
+	procd_open_instance
+
+	procd_set_param command $PROG --daemon charon --nofork
+
+	procd_set_param file $IPSEC_CONN_FILE
+	procd_append_param file $IPSEC_SECRETS_FILE
+	procd_append_param file $STRONGSWAN_CONF_FILE
+	procd_append_param file /etc/strongswan.d/*.conf
+	procd_append_param file /etc/strongswan.d/charon/*.conf
+
+	procd_set_param respawn
+
+	procd_close_instance
 }
