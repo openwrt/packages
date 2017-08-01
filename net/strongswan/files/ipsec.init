@@ -5,8 +5,6 @@ STOP=10
 
 . $IPKG_INSTROOT/lib/functions.sh
 
-UCI_IPSEC_CONFIG=/etc/config/ipsec
-
 IPSEC_SECRETS_FILE=/etc/ipsec.secrets
 IPSEC_CONN_FILE=/etc/ipsec.conf
 STRONGSWAN_CONF_FILE=/etc/strongswan.conf
@@ -14,8 +12,6 @@ STRONGSWAN_CONF_FILE=/etc/strongswan.conf
 IPSEC_VAR_SECRETS_FILE=/var/ipsec/ipsec.secrets
 IPSEC_VAR_CONN_FILE=/var/ipsec/ipsec.conf
 STRONGSWAN_VAR_CONF_FILE=/var/ipsec/strongswan.conf
-
-ENABLED_REMOTE_PEERS=0
 
 file_reset() {
 	: > "$1"
@@ -227,8 +223,6 @@ config_remote() {
 	config_get_bool enabled "$1" enabled 0
 	[ "$enabled" = "0" ] && return
 
-	ENABLED_REMOTE_PEERS=$((ENABLED_REMOTE_PEERS + 1))
-
 	config_get gateway           "$1" gateway
 	config_get pre_shared_key    "$1" pre_shared_key
 	config_get auth_method       "$1" authentication_method
@@ -323,7 +317,7 @@ prepare_env() {
 
 start() {
 	prepare_env
-	[ $ENABLED_REMOTE_PEERS != 0 -o ! -f $UCI_IPSEC_CONFIG ] && ipsec start
+	ipsec start
 }
 
 stop() {
@@ -332,17 +326,15 @@ stop() {
 
 restart() {
 	prepare_env
-	[ $ENABLED_REMOTE_PEERS != 0 -o ! -f $UCI_IPSEC_CONFIG ] && ipsec restart || ipsec stop
+	ipsec restart
 }
 
 reload() {
 	prepare_env
-	[ $ENABLED_REMOTE_PEERS != 0 -o ! -f $UCI_IPSEC_CONFIG ] && {
-		ipsec secrets
-		if [[ ! -z "$(ipsec status)" ]]; then
-			ipsec reload
-		else
-			ipsec start
-		fi
-	} || ipsec stop
+	ipsec secrets
+	if [[ ! -z "$(ipsec status)" ]]; then
+		ipsec reload
+	else
+		ipsec start
+	fi
 }
