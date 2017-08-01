@@ -82,12 +82,6 @@ define Package/knot-nsupdate
 	DEPENDS=+knot-libdnssec +knot-libknot +knot-libzscanner
 endef
 
-define Package/knot-nsec3hash
-	$(call Package/knot/Default)
-	TITLE+= simple NSEC3 hash utility
-	DEPENDS=+knot-libdnssec
-endef
-
 define Package/knot-zonecheck
 	$(call Package/knot/Default)
 	TITLE+= zonefile check utility
@@ -132,10 +126,6 @@ endef
 
 define Package/knot-nsupdate/description
 	Knot DNS dynamic DNS update utility.
-endef
-
-define Package/knot-nsec3hash/description
-	Knot DNS simple NSEC3 hash utility.
 endef
 
 define Package/knot-zonecheck/description
@@ -235,11 +225,6 @@ define Package/knot-nsupdate/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/knsupdate	$(1)/usr/bin/
 endef
 
-define Package/knot-nsec3hash/install
-	$(INSTALL_DIR)						$(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/knsec3hash	$(1)/usr/bin/
-endef
-
 define Package/knot-zonecheck/install
 	$(INSTALL_DIR)						$(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/kzonecheck	$(1)/usr/bin/
@@ -301,7 +286,6 @@ $(eval $(call BuildPackage,knot))
 $(eval $(call BuildPackage,knot-dig))
 $(eval $(call BuildPackage,knot-host))
 $(eval $(call BuildPackage,knot-nsupdate))
-$(eval $(call BuildPackage,knot-nsec3hash))
 $(eval $(call BuildPackage,knot-zonecheck))
 $(eval $(call BuildPackage,knot-keymgr))
 $(eval $(call BuildPackage,knot-tests))
