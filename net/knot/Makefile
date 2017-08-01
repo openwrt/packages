@@ -28,6 +28,7 @@ define Package/knot-lib/Default
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=Knot DNS
+	DEPENDS=+libpthread
 	URL:=https://www.knot-dns.cz
 endef
 
@@ -36,79 +37,81 @@ define Package/knot/Default
 	CATEGORY:=Network
 	SUBMENU:=IP Addresses and Names
 	TITLE:=Knot DNS
+	DEPENDS=+libatomic
 	URL:=https://www.knot-dns.cz
 	USERID:=knot=5353:knot=5353
 endef
 
-define Package/knot-libdnssec
+define Package/knot-libs
 	$(call Package/knot-lib/Default)
-	TITLE+= DNSSEC library
-	DEPENDS=+libpthread +libgnutls +jansson
-endef
-
-define Package/knot-libknot
-	$(call Package/knot-lib/Default)
-	TITLE+= library
-	DEPENDS=+libpthread +knot-libdnssec
+	TITLE+= common DNS and DNSSEC libraries
+	DEPENDS+=+libgnutls +jansson
 endef
 
 define Package/knot-libzscanner
 	$(call Package/knot-lib/Default)
 	TITLE+= zone parser library
-	DEPENDS=+libpthread
 endef
 
 define Package/knot
 	$(call Package/knot/Default)
-	TITLE+= server
-	DEPENDS=+liburcu +libedit +knot-libdnssec +knot-libknot +knot-libzscanner
+	TITLE+= server with control utility
+	DEPENDS+=+libedit +liburcu +knot-libs +knot-libzscanner
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
+	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
 endef
 
 define Package/knot-dig
 	$(call Package/knot/Default)
 	TITLE+= advanced DNS lookup utility
-	DEPENDS=+knot-libdnssec +knot-libknot
+	DEPENDS+=+libedit +knot-libs
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE))
 endef
 
 define Package/knot-host
 	$(call Package/knot/Default)
 	TITLE+= simple DNS lookup utility
-	DEPENDS=+knot-libdnssec +knot-libknot
+	DEPENDS+=+libedit +knot-libs
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE))
 endef
 
 define Package/knot-nsupdate
 	$(call Package/knot/Default)
 	TITLE+= dynamic DNS update utility
-	DEPENDS=+knot-libdnssec +knot-libknot +knot-libzscanner
+	DEPENDS+=+libedit +knot-libs +knot-libzscanner
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
+	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
 endef
 
 define Package/knot-zonecheck
 	$(call Package/knot/Default)
 	TITLE+= zonefile check utility
-	DEPENDS=+liburcu +knot-libdnssec +knot-libknot +knot-libzscanner
+	DEPENDS+=+libedit +liburcu +knot-libs +knot-libzscanner
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
+	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
 endef
 
 define Package/knot-keymgr
 	$(call Package/knot/Default)
 	TITLE+= DNSSEC key management utility
-	DEPENDS=+liburcu +knot-libdnssec +knot-libknot +knot-libzscanner
+	DEPENDS+=+libedit +liburcu +knot-libs +knot-libzscanner
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
+	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
 endef
 
 define Package/knot-tests
 	$(call Package/knot/Default)
 	TITLE+= tests
-	DEPENDS=+liburcu +libedit +knot-libdnssec +knot-libknot +knot-libzscanner
+	DEPENDS+=+libedit +liburcu +knot-libs +knot-libzscanner
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
+	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
 endef
 
-define Package/knot-libdnssec/description
-	Knot DNS DNSSEC library.
+define Package/knot-libs/description
+	Knot DNS common DNS and DNSSEC libraries.
 endef
 
-define Package/knot-libknot/description
-	Knot DNS library.
-endef
-
-define Package/knot-libdnssec/description
+define Package/knot-libzscanner/description
 	Knot DNS zone parser library.
 endef
 
@@ -182,13 +185,9 @@ define Build/InstallDev
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc	$(1)/usr/lib/pkgconfig/
 endef
 
-define Package/knot-libdnssec/install
+define Package/knot-libs/install
 	$(INSTALL_DIR) 						$(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdnssec.so.*		$(1)/usr/lib/
-endef
-
-define Package/knot-libknot/install
-	$(INSTALL_DIR) 						$(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libknot.so.*		$(1)/usr/lib/
 endef
 
@@ -279,8 +278,7 @@ define Package/knot-tests/install
 	cp -a $(PKG_BUILD_DIR)/src/zscanner/tests/data				$(1)/usr/share/knot/tests/
 endef
 
-$(eval $(call BuildPackage,knot-libdnssec))
-$(eval $(call BuildPackage,knot-libknot))
+$(eval $(call BuildPackage,knot-libs))
 $(eval $(call BuildPackage,knot-libzscanner))
 $(eval $(call BuildPackage,knot))
 $(eval $(call BuildPackage,knot-dig))
