@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=2.3.3
+PKG_VERSION:=2.5.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_HASH:=a929bce3b957a81776b1db7b43b0e4473339bf16be8dbba5abb4b0593bf43c94
+PKG_HASH:=d78ae231a68ace264f5738c8e57481923bcad7413f3f440c06fa6cc0aded9d8e
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=GPL-3.0 LGPL-2.0 0BSD MIT OLDAP-2.8
@@ -44,7 +44,7 @@ endef
 define Package/knot-libs
 	$(call Package/knot-lib/Default)
 	TITLE+= common DNS and DNSSEC libraries
-	DEPENDS+=+libgnutls +jansson
+	DEPENDS+=+libgnutls
 endef
 
 define Package/knot-libzscanner
@@ -151,8 +151,7 @@ CONFIGURE_ARGS += 			\
 	--with-rundir=/var/run/knot	\
 	--with-storage=/var/lib/knot	\
 	--with-configdir=/etc/knot	\
-	--with-timer-mapsize=50		\
-	--with-conf-mapsize=50
+	--with-conf-mapsize=20
 
 TARGET_CFLAGS += -DPSELECT_COMPAT -DNDEBUG
 
