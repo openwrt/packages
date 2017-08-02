@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE_URL:=ftp://ftp.porcupine.org/mirrors/postfix-release/official/
 PKG_VERSION:=3.2.2
 PKG_HASH:=d06849418d119d09366997b2b481bb23f737629769b4e4a52da42fb3ad8b0576
@@ -246,7 +246,7 @@ define Package/postfix/postinst
   echo "Warning: $${IPKG_INSTROOT}$(sendmail_path) saved as $${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
  fi
  if [ ! -f "$${IPKG_INSTROOT}$(sendmail_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(sendmail_path)$(ln_suffix)" "$(sendmail_path)"
+  ln -s "$(sendmail_path)$(ln_suffix)" "$${IPKG_INSTROOT}$(sendmail_path)"
  fi
 
  if [ -f "$${IPKG_INSTROOT}$(newaliases_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(newaliases_path)")" != "$(newaliases_path)$(ln_suffix)" ]; then
@@ -254,7 +254,7 @@ define Package/postfix/postinst
   echo "Warning: $${IPKG_INSTROOT}$(newaliases_path) saved as $${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
  fi
  if [ ! -f "$${IPKG_INSTROOT}$(newaliases_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(newaliases_path)$(ln_suffix)" "$(newaliases_path)"
+  ln -s "$(newaliases_path)$(ln_suffix)" "$${IPKG_INSTROOT}$(newaliases_path)"
  fi
 
  if [ -f "$${IPKG_INSTROOT}$(mailq_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(mailq_path)")" != "$(mailq_path)$(ln_suffix)" ]; then
@@ -262,7 +262,7 @@ define Package/postfix/postinst
   echo "Warning: $${IPKG_INSTROOT}$(mailq_path) saved as $${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
  fi
  if [ ! -f "$(mailq_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(mailq_path)$(ln_suffix)" "$(mailq_path)"
+  ln -s "$(mailq_path)$(ln_suffix)" "$${IPKG_INSTROOT}$(mailq_path)"
  fi
 
  grep -qc main\.cf "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/main.cf" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
