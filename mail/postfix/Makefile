@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE_URL:=ftp://ftp.porcupine.org/mirrors/postfix-release/official/
 PKG_VERSION:=3.2.2
 PKG_HASH:=d06849418d119d09366997b2b481bb23f737629769b4e4a52da42fb3ad8b0576
