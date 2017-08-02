@@ -12,7 +12,9 @@ if [ "$ACTION" == "ifup" ]; then
         [ -n "$DEVICE" ] || exit 3
 fi
 
+mwan3_lock
 mwan3_set_connected_iptables
+mwan3_unlock
 
 config_load mwan3
 config_get enabled $INTERFACE enabled 0
