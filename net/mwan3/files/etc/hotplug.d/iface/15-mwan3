@@ -17,7 +17,9 @@ fi
 [ -x /usr/sbin/ip6tables ] || exit 7
 [ -x /usr/bin/logger ] || exit 8
 
+mwan3_lock
 mwan3_set_connected_iptables
+mwan3_unlock
 
 config_load mwan3
 config_get enabled $INTERFACE enabled 0
