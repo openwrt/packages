@@ -129,7 +129,7 @@ test_commits() {
 		fi
 
 		body="$(git show -s --format=%b $commit)"
-		sob="$(git show -s --format='Signed-off-by: %aN <%aE>' $commit)"
+		sob="$(git show -s --format='Signed-off-by: %cN <%aE>' $commit)"
 		if echo "$body" | grep -qF "$sob"; then
 			echo_green "Signed-off-by match author"
 		else
