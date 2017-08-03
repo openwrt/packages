@@ -23,15 +23,19 @@ if [ "$ACTION" == "ifup" ]; then
 		ubus call network.interface.${INTERFACE}_4 status &>/dev/null
 		if [ "$?" -eq "0" ]; then
 			network_get_gateway gateway ${INTERFACE}_4
+			network_get_ipaddr src_ip ${INTERFACE}_4
 		else
 			network_get_gateway gateway $INTERFACE
+			network_get_ipaddr src_ip ${INTERFACE}
 		fi
 	elif [ "$family" = "ipv6" ]; then
 		ubus call network.interface.${INTERFACE}_6 status &>/dev/null
 		if [ "$?" -eq "0" ]; then
 			network_get_gateway6 gateway ${INTERFACE}_6
+			network_get_ipaddr6 src_ip ${INTERFACE}_6
 		else
 			network_get_gateway6 gateway ${INTERFACE}
+			network_get_ipaddr6 src_ip ${INTERFACE}
 		fi
 	fi
 
@@ -48,7 +52,7 @@ case "$ACTION" in
 		mwan3_create_iface_rules $INTERFACE $DEVICE
 		mwan3_create_iface_iptables $INTERFACE $DEVICE
 		mwan3_create_iface_route $INTERFACE $DEVICE
-		mwan3_track $INTERFACE $DEVICE
+		mwan3_track $INTERFACE $DEVICE ${src_ip}
 		mwan3_set_policies_iptables
 		mwan3_set_user_rules
 		mwan3_flush_conntrack $INTERFACE $DEVICE "ifup"
