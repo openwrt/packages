@@ -103,7 +103,7 @@ start_service_real() {
     # Determine if we are configuring via UCI or directly from /etc/vnstat.conf
     local use_uci
     config_get_bool use_uci "$cfg" use_uci
-    if [ "$use_uci" == "1" ]; then
+    if [ "$use_uci" = "1" ]; then
         CONF=$TCONF
         convert_uci $1
     else
@@ -176,7 +176,7 @@ start_service_real() {
 
     # if we are using UCI, and no_add is not set, enable it as the interface
     #  update (-u) above will create the databases for selected interfaces only.
-    if [ -z "$no_add" ] && [ "$use_uci" == "1" ]; then
+    if [ -z "$no_add" ] && [ "$use_uci" = "1" ]; then
         no_add=1
     fi
 
@@ -185,9 +185,9 @@ start_service_real() {
     procd_set_param command vnstatd
     procd_append_param command -d
     procd_append_param command --config $CONF
-    [ "$always_add" == "1" ] && procd_append_param command --alwaysadd
-    [ "$no_add" == "1" ] && procd_append_param command --noadd
-    [ "$debug" == "1" ] && procd_append_param command --debug
+    [ "$always_add" = "1" ] && procd_append_param command --alwaysadd
+    [ "$no_add" = "1" ] && procd_append_param command --noadd
+    [ "$debug" = "1" ] && procd_append_param command --debug
     procd_set_param file $CONF
     procd_close_instance
 }
