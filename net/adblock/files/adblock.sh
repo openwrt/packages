@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="2.8.3"
+adb_ver="2.8.5"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=1
 adb_debug=0
@@ -24,7 +24,7 @@ adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_whitelist_rset="\$1 ~/^([A-Za-z0-9_-]+\.){1,}[A-Za-z]+/{print tolower(\"^\"\$1\"\\\|[.]\"\$1)}"
 adb_fetch="/usr/bin/wget"
 adb_fetchparm="--quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
-adb_dnslist="dnsmasq unbound named"
+adb_dnslist="dnsmasq unbound named kresd"
 adb_dnsprefix="adb_list"
 adb_dnsfile="${adb_dnsprefix}.overall"
 adb_rtfile="/tmp/adb_runtime.json"
@@ -119,6 +119,13 @@ f_envload()
                             adb_dnsdir="${adb_dnsdir:="/var/lib/bind"}"
                             adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
                             adb_dnsformat="awk '{print \"\"\$0\" IN CNAME .\n*.\"\$0\" IN CNAME .\"}'"
+                            break 2
+                            ;;
+                        kresd)
+                            adb_dns="${dns}"
+                            adb_dnsdir="${adb_dnsdir:="/tmp/kresd"}"
+                            adb_dnshidedir="${adb_dnsdir}/.adb_hidden"
+                            adb_dnsformat="awk '{print \"\"\$0\" CNAME .\n*.\"\$0\" CNAME .\"}'"
                             break 2
                             ;;
                     esac
@@ -313,17 +320,36 @@ f_list()
             fi
             adb_rc=${?}
             ;;
+        merge)
+            if [ -s "${adb_tmpfile}" ]
+            then
+                cat "${adb_tmpfile}" >> "${adb_tmpdir}/${adb_dnsfile}"
+                adb_rc=${?}
+            fi
+            ;;
         format)
             if [ -s "${adb_tmpdir}/tmp.whitelist" ]
             then
-                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpfile}" | eval "${adb_dnsformat}" >> "${adb_tmpdir}/${adb_dnsfile}"
+                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpdir}/${adb_dnsfile}" | eval "${adb_dnsformat}" > "${adb_dnsdir}/${adb_dnsfile}"
             else
-                eval "${adb_dnsformat}" "${adb_tmpfile}" >> "${adb_tmpdir}/${adb_dnsfile}"
+                eval "${adb_dnsformat}" "${adb_tmpdir}/${adb_dnsfile}" > "${adb_dnsdir}/${adb_dnsfile}"
             fi
             adb_rc=${?}
             ;;
     esac
     f_log "debug" "name: ${src_name}, mode: ${mode}, count: ${cnt}, in_rc: ${in_rc}, out_rc: ${adb_rc}"
+}
+
+# f_tldcompression: top level domain compression
+#
+f_tldcompression()
+{
+    local source="${1}" temp="${adb_tmpload}"
+
+    awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${source}" 2>/dev/null | sort -u > "${temp}"
+    awk '{if(NR==1){tld=$NF};while(getline){if($NF !~ tld"\\."){print tld;tld=$NF}}print tld}' "${temp}" 2>/dev/null > "${source}"
+    awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${source}" 2>/dev/null > "${temp}"
+    sort -u "${temp}" > "${source}"
 }
 
 # f_switch: suspend/resume adblock processing
@@ -373,9 +399,9 @@ f_query()
         while [ "${domain}" != "${tld}" ]
         do
             search="${domain//./\.}"
-            result="$(grep -Hm5 "[/\"\.]${search}[/\"]" "${adb_dnsfile}" | awk -F ':|=|/|\"' '{printf(" + %s\n",$4)}')"
+            result="$(grep -Hm5 "[/\"\.]${search}[/\"]" "${adb_dnsfile}" | awk -F ':|=|/|\"' '{printf("  + %s\n",$4)}')"
             printf "%s\n" "::: results for (sub-)domain '${domain}' (max. 5)"
-            printf "%s\n" "${result:=" - no match"}"
+            printf "%s\n" "${result:="  - no match"}"
             domain="${tld}"
             tld="${domain#*.}"
         done
@@ -460,14 +486,14 @@ f_main()
             continue
         fi
 
-        # manual mode
+        # manual / backup mode
         #
         if [ ${adb_manmode} -eq 1 ] && [ -z "${adb_action}" ] && [ "${src_name}" != "blacklist" ]
         then
             f_list restore
             if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
             then
-                f_list format
+                f_list merge
                 continue
             fi
         fi
@@ -502,17 +528,14 @@ f_main()
             adb_rc=${?}
         fi
 
-        # check download result and prepare domain output (incl. tld compression, list backup & restore)
+        # check download result and prepare list output (incl. tld compression, list backup & restore)
         #
         if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpload}" ]
         then
             awk "${src_rset}" "${adb_tmpload}" 2>/dev/null > "${adb_tmpfile}"
             if [ -s "${adb_tmpfile}" ]
             then
-                awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${adb_tmpfile}" 2>/dev/null | sort -u > "${adb_tmpload}"
-                awk '{if(NR==1){tld=$NF};while(getline){if($NF !~ tld"\\."){print tld;tld=$NF}}print tld}' "${adb_tmpload}" 2>/dev/null > "${adb_tmpfile}"
-                awk -F "." '{for(f=NF;f > 1;f--) printf "%s.", $f;print $1}' "${adb_tmpfile}" 2>/dev/null > "${adb_tmpload}"
-                mv -f "${adb_tmpload}" "${adb_tmpfile}"
+                f_tldcompression "${adb_tmpfile}"
                 f_list backup
             else
                 f_list restore
@@ -521,11 +544,11 @@ f_main()
             f_list restore
         fi
 
-        # remove whitelist domains, final list preparation
+        # list merge
         #
         if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
         then
-            f_list format
+            f_list merge
             if [ ${adb_rc} -ne 0 ]
             then
                 f_list remove
@@ -535,7 +558,7 @@ f_main()
         fi
     done
 
-    # hash preparation and overall sort
+    # hash preparation, whitelist removal and overall sort
     #
     if [ -f "${adb_dnsdir}/${adb_dnsfile}" ]
     then
@@ -545,10 +568,9 @@ f_main()
     then
         if [ ${mem_total} -ge 64 ] || [ ${adb_forcesrt} -eq 1 ]
         then
-            sort -u "${adb_tmpdir}/${adb_dnsfile}" > "${adb_dnsdir}/${adb_dnsfile}"
-        else
-            mv -f "${adb_tmpdir}/${adb_dnsfile}" "${adb_dnsdir}" 2>/dev/null
+            f_tldcompression "${adb_tmpdir}/${adb_dnsfile}"
         fi
+        f_list format
     else
         > "${adb_dnsdir}/${adb_dnsfile}"
     fi
