@@ -80,7 +80,11 @@ ss_mkjson_ss_local_conf() {
 }
 
 ss_mkjson_ss_redir_conf() {
-	ss_mkjson_server_conf
+	ss_mkjson_server_conf || return 1
+	[ "$disable_sni" = 0 ] && disable_sni=false || disable_sni=true
+	cat <<-EOF
+		${q}disable_sni${q}: $disable_sni,
+	EOF
 }
 
 ss_mkjson_ss_server_conf() {
@@ -285,7 +289,9 @@ validate_ss_local_section() {
 }
 
 validate_ss_redir_section() {
-	validate_common_client_options_ ss_redir "$1" "${2}"
+	validate_common_client_options_ ss_redir "$1" \
+		"${2}" \
+		'disable_sni:bool:0'
 }
 
 validate_ss_rules_section() {
