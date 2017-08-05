@@ -10,20 +10,15 @@ include $(TOPDIR)/rules.mk
 # Checklist when bumping versions
 #
 # - update cipher list by checking src/crypto.c:crypto_init()
-# - check if default mode has changed from TCP_ONLY
 # - check if ss-rules has been upstreamed
 #
-# TODO
-#
-# - add validate type: user
-#
 PKG_NAME:=shadowsocks-libev
-PKG_VERSION:=3.0.7
-PKG_RELEASE:=3
+PKG_VERSION:=3.0.8
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/shadowsocks/shadowsocks-libev/releases/download/v$(PKG_VERSION)
-PKG_HASH:=024f2ff501e15ad0cd03dcbac5ca1842aad13dbd51788e522818ff4c129dee18
+PKG_HASH:=3bdf7f8f89050aee896496fd86b6b7ef694754f0b8cd97c4b5a04d1d3e5c2e5b
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 

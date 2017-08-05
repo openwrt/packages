@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.9.0"
+trm_ver="0.9.1"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0

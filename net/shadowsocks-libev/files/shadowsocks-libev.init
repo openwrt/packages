@@ -58,10 +58,12 @@ ss_mkjson_server_conf_() {
 }
 
 ss_mkjson_common_conf() {
+	[ "$ipv6_first" = 0 ] && ipv6_first=false || ipv6_first=true
 	[ "$fast_open" = 0 ] && fast_open=false || fast_open=true
 	[ "$reuse_port" = 0 ] && reuse_port=false || reuse_port=true
 	cat <<-EOF
 		"use_syslog": true,
+		"ipv6_first": $ipv6_first,
 		"fast_open": $fast_open,
 		"reuse_port": $reuse_port,
 		${local_address:+${q}local_address${q}: ${q}$local_address${q},}
@@ -78,7 +80,11 @@ ss_mkjson_ss_local_conf() {
 }
 
 ss_mkjson_ss_redir_conf() {
-	ss_mkjson_server_conf
+	ss_mkjson_server_conf || return 1
+	[ "$disable_sni" = 0 ] && disable_sni=false || disable_sni=true
+	cat <<-EOF
+		${q}disable_sni${q}: $disable_sni,
+	EOF
 }
 
 ss_mkjson_ss_server_conf() {
@@ -264,9 +270,10 @@ validate_common_options_() {
 
 	"${func:-ss_validate}" "$cfgtype" "$cfg" "$@" \
 		'disabled:bool:0' \
-		'verbose:bool:0' \
 		'fast_open:bool:0' \
+		'ipv6_first:bool:0' \
 		'reuse_port:bool:0' \
+		'verbose:bool:0' \
 		'mode:or("tcp_only", "udp_only", "tcp_and_udp")' \
 		'mtu:uinteger' \
 		'timeout:uinteger' \
@@ -282,7 +289,9 @@ validate_ss_local_section() {
 }
 
 validate_ss_redir_section() {
-	validate_common_client_options_ ss_redir "$1" "${2}"
+	validate_common_client_options_ ss_redir "$1" \
+		"${2}" \
+		'disable_sni:bool:0'
 }
 
 validate_ss_rules_section() {
