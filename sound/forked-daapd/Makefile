@@ -11,11 +11,10 @@ PKG_NAME:=forked-daapd
 PKG_VERSION:=25.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/ejurgensen/$(PKG_NAME)/archive/
-PKG_HASH:=3566f416e929591ab4fab7f99580ae5b58b99607b5abb695ac8329efaafe019c
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/ejurgensen/$(PKG_NAME)/releases/download/$(PKG_VERSION)/
+PKG_HASH:=5741a64d8f54e11e89dfa2fbfae693b2837e1e19a0c4980a20f8ff56bce4456e
 
-PKG_BUILD_DEPENDS:=gperf/host
 PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
 PKG_INSTALL:=1
