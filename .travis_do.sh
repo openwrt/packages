@@ -61,8 +61,8 @@ test_packages2() {
 	PKGS=$(git diff --name-only "$TRAVIS_COMMIT_RANGE" | grep 'Makefile$' | grep -v '/files/' | awk -F'/Makefile' '{ print $1 }')
 
 	if [ -z "$PKGS" ] ; then
-		echo_blue "No new or modified packages found!" >&2
-		exit 0
+		echo_blue "No new or modified packages found!"
+		return 0
 	fi
 
 	echo_blue "=== Found new/modified packages:"
