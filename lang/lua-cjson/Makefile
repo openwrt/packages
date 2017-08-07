@@ -14,9 +14,9 @@ PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.kyne.com.au/~mark/software/download/
-PKG_MD5SUM:=24f270663e9f6ca8ba2a02cef19f7963
+PKG_SOURCE:=$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=http://github.com/mpx/lua-cjson/archive/
+PKG_MD5SUM:=fa5ee22e8a5adbc5c5b6eab6152f154e
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 HOST_BUILD_DEPENDS:=lua/host
