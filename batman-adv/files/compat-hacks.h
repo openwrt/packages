@@ -11,6 +11,13 @@
 
 #endif /* < KERNEL_VERSION(4, 1, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
+
+/* Linux 3.15 misses the uapi include.... */
+#include <uapi/linux/nl80211.h>
+
+#endif /* < KERNEL_VERSION(3, 16, 0) */
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
 
 #include <linux/netdevice.h>
@@ -35,6 +42,11 @@
 
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+
+/* for batadv_v_elp_get_throughput which would have used
+ * STATION_INFO_EXPECTED_THROUGHPUT in Linux 4.0.0
+ */
+#define NL80211_STA_INFO_EXPECTED_THROUGHPUT    28
 
 /* wild hack for batadv_getlink_net only */
 #define get_link_net get_xstats_size || 1 ? fallback_net : (struct net*)netdev->rtnl_link_ops->get_xstats_size
@@ -213,6 +225,54 @@ static inline int batadv_nla_put_u64_64bit(struct sk_buff *skb, int attrtype,
 #define __ro_after_init
 
 #endif /* < KERNEL_VERSION(4, 10, 0) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 9)
+
+/* work around missing attribute needs_free_netdev and priv_destructor in
+ * net_device
+ */
+#define ether_setup(dev) \
+	void batadv_softif_free2(struct net_device *dev) \
+	{ \
+		batadv_softif_free(dev); \
+		free_netdev(dev); \
+	} \
+	void (*t1)(struct net_device *dev) __attribute__((unused)); \
+	bool t2 __attribute__((unused)); \
+	ether_setup(dev)
+#define needs_free_netdev destructor = batadv_softif_free2; t2
+#define priv_destructor destructor = batadv_softif_free2; t1
+
+#endif /* < KERNEL_VERSION(4, 11, 9) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
+
+static inline void *batadv_skb_put(struct sk_buff *skb, unsigned int len)
+{
+	return (void *)skb_put(skb, len);
+}
+#define skb_put batadv_skb_put
+
+static inline void *skb_put_zero(struct sk_buff *skb, unsigned int len)
+{
+	void *tmp = skb_put(skb, len);
+
+	memset(tmp, 0, len);
+
+	return tmp;
+}
+
+static inline void *skb_put_data(struct sk_buff *skb, const void *data,
+				 unsigned int len)
+{
+	void *tmp = skb_put(skb, len);
+
+	memcpy(tmp, data, len);
+
+	return tmp;
+}
+
+#endif /* < KERNEL_VERSION(4, 13, 0) */
 
 /* <DECLARE_EWMA> */
 
