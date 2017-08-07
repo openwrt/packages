@@ -6,17 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=faad2
-PKG_VERSION:=2.8.0~cvs20161113
+PKG_VERSION:=2.8.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.xz
-PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/f/$(PKG_NAME)
-PKG_HASH:=de34bce327eac8a89cd58b7d44dfb58988033de6fda0ab9582ed0585fc3fd07e
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=@SF/faac/faad2-src/$(PKG_NAME)-2.8.0
+PKG_HASH:=f4042496f6b0a60f5ded6acd11093230044ef8a2fd965360c1bbd5b58780933d
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
-
-PKG_CONFIG_DEPENDS := \
-	CONFIG_SOFT_FLOAT \
-	CONFIG_FAAD2_ALWAYS_USE_FLOATING_POINT
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -56,10 +52,6 @@ $(call Package/faad2/Default)
   MENU:=1
 endef
 
-define Package/libfaad2/config
-	source "$(SOURCE)/Config.in"
-endef
-
 define Package/libfaad2/description
 $(call Package/faad2/Default/description)
   This package contains the library.
@@ -68,14 +60,14 @@ endef
 TARGET_CFLAGS += $(FPIC)
 CONFIGURE_ARGS+= --without-xmms
 
-# Use fixed point math, if we're using soft floats, and the user didn't
-# specifically ask to use floats anyways.
-#ifeq ($(CONFIG_SOFT_FLOAT)-$(CONFIG_FAAD2_ALWAYS_USE_FLOATING_POINT),y-)
-TARGET_CFLAGS+= -DFIXED_POINT
-CONFIGURE_ARGS+= -nfp
-#endif
+ifeq ($(CONFIG_SOFT_FLOAT),y)
+	TARGET_CFLAGS+= -DFIXED_POINT
+	CONFIGURE_ARGS+= -nfp
+endif
 
-CONFIGURE_VARS+= CPPFLAGS="-fno-builtin-cos -fno-builtin-sin -fno-builtin-log"
+ifeq ($(CONFIG_USE_UCLIBC),y)
+	CONFIGURE_VARS+= CPPFLAGS="-fno-builtin-cos -fno-builtin-sin -fno-builtin-log"
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
