@@ -39,6 +39,22 @@ endef
 define Build/Compile
 endef
 
+define Package/mwan3/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/rpcd restart
+fi
+exit 0
+endef
+
+define Package/mwan3/postrm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/rpcd restart
+fi
+exit 0
+endef
+
 define Package/mwan3/install
 $(CP) ./files/* $(1)
 endef
