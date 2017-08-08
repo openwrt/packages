@@ -404,6 +404,8 @@ endif
 
 # selectively disable optimizations according to arch/cpu type
 ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+	FFMPEG_CONFIGURE+= --enable-lto
+
 	ifneq ($(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)),)
 		FFMPEG_CONFIGURE+= --enable-vfp
 	else
@@ -417,6 +419,10 @@ ifneq ($(findstring arm,$(CONFIG_ARCH)),)
 		FFMPEG_CONFIGURE+= --disable-neon
 	endif
 
+endif
+
+ifeq ($(ARCH),x86_64)
+	FFMPEG_CONFIGURE+= --enable-lto
 endif
 
 ifneq ($(CONFIG_YASM),y)
