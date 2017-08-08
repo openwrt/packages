@@ -95,7 +95,7 @@ CONFIGURE_VARS += \
 	CXXFLAGS="$$$$CXXFLAGS -fno-builtin"
 
 ifeq ($(BUILD_VARIANT),ssl)
-	CONFIGURE_ARGS += --with-openssl="$(STAGING_DIR)/usr"
+	CONFIGURE_ARGS += --with-openssl="$(STAGING_DIR)/usr" --without-libssh2
 else
 	CONFIGURE_ARGS += --without-openssl
 endif
