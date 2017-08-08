@@ -344,7 +344,7 @@ define Package/erlang/install
 	done
 	$(INSTALL_DIR) $(1)/usr/lib/erlang
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/erts-* $(1)/usr/lib/erlang/
-	rm -rf $(1)/usr/lib/erlang/erts-*/{doc,include,lib,man,src}
+	rm -rf $(1)/usr/lib/erlang/erts-*/{doc,lib,man,src} 
 	rm -rf $(1)/usr/lib/erlang/erts-*/bin/*.src
 	$(INSTALL_DIR) $(1)/usr/lib/erlang/releases
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/releases/* $(1)/usr/lib/erlang/releases/
