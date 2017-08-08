@@ -119,12 +119,6 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_DEMUXER_sdp
 	select FFMPEG_CUSTOM_DEMUXER_wav
 	select FFMPEG_CUSTOM_DEMUXER_wv
-	select FFMPEG_CUSTOM_PARSER_aac
-	select FFMPEG_CUSTOM_PARSER_aac_latm
-	select FFMPEG_CUSTOM_PARSER_ac3
-	select FFMPEG_CUSTOM_PARSER_flac
-	select FFMPEG_CUSTOM_PARSER_mpegaudio
-	select FFMPEG_CUSTOM_PARSER_opus
 	select FFMPEG_CUSTOM_PROTOCOL_file
 	select FFMPEG_CUSTOM_PROTOCOL_http
 	select FFMPEG_CUSTOM_PROTOCOL_rtp
@@ -160,14 +154,12 @@ config FFMPEG_CUSTOM_SELECT_libx264
 	select FFMPEG_CUSTOM_DECODER_h264
 	select FFMPEG_CUSTOM_MUXER_h264
 	select FFMPEG_CUSTOM_DEMUXER_h264
-	select FFMPEG_CUSTOM_PARSER_h264
 
 comment "Encoders"
 
 config FFMPEG_CUSTOM_ENCODER_ac3
 	bool "AC3"
 	depends on FFMPEG_CUSTOM_PATENTED
-	select FFMPEG_CUSTOM_PARSER_ac3
 
 config FFMPEG_CUSTOM_ENCODER_jpegls
 	bool "JPEG-LS"
@@ -204,7 +196,6 @@ comment "Decoders"
 config FFMPEG_CUSTOM_DECODER_aac
 	bool "AAC (Advanced Audio Coding)"
 	depends on FFMPEG_CUSTOM_PATENTED
-	select FFMPEG_CUSTOM_PARSER_aac
 
 config FFMPEG_CUSTOM_SELECT_adpcm
 	bool "ADPCM (multiple types)"
@@ -212,7 +203,6 @@ config FFMPEG_CUSTOM_SELECT_adpcm
 config FFMPEG_CUSTOM_DECODER_ac3
 	bool "AC3"
 	depends on FFMPEG_CUSTOM_PATENTED
-	select FFMPEG_CUSTOM_PARSER_ac3
 
 config FFMPEG_CUSTOM_DECODER_alac
 	bool "ALAC"
@@ -234,7 +224,6 @@ config FFMPEG_CUSTOM_DECODER_atrac3
 
 config FFMPEG_CUSTOM_DECODER_flac
 	bool "FLAC"
-	select FFMPEG_CUSTOM_PARSER_flac
 
 config FFMPEG_CUSTOM_DECODER_gif
 	bool "GIF"
@@ -392,7 +381,6 @@ config FFMPEG_CUSTOM_DEMUXER_mov
 
 config FFMPEG_CUSTOM_DEMUXER_mp3
 	bool "MP3 (MPEG Audio Layer 3)"
-	select FFMPEG_CUSTOM_PARSER_mpegaudio
 
 config FFMPEG_CUSTOM_DEMUXER_mpegvideo
 	bool "MPEG Video"

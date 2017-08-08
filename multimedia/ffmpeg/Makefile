@@ -199,14 +199,6 @@ FFMPEG_AUDIO_DEMUXERS:= \
 	wav \
 	wv \
 
-FFMPEG_AUDIO_PARSERS:= \
-	aac \
-	aac_latm \
-	ac3 \
-	flac \
-	mpegaudio \
-	opus \
-
 FFMPEG_AUDIO_PROTOCOLS:= \
 	file http icecast rtp tcp udp
 
@@ -549,7 +541,6 @@ ifeq ($(BUILD_VARIANT),audio-dec)
 	--disable-everything \
 	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_AUDIO_DECODERS)) \
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_AUDIO_DEMUXERS)) \
-	$(call FFMPEG_ENABLE,parser,$(FFMPEG_AUDIO_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_AUDIO_PROTOCOLS)) \
 	--disable-decoder=pcm_bluray,pcm_dvd \
 
