@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=expat
-PKG_VERSION:=2.2.2
+PKG_VERSION:=2.2.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/expat
-PKG_HASH:=4376911fcf81a23ebd821bbabc26fd933f3ac74833f74924342c29aad2c86046
+PKG_HASH:=b31890fb02f85c002a67491923f89bda5028a880fd6c374f707193ad81aace5f
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>, \
 		Ted Hess <thess@kitschensync.net>
 
@@ -38,9 +38,6 @@ define Package/libexpat/description
 endef
 
 TARGET_CFLAGS += $(FPIC)
-
-HOST_CONFIGURE_VARS += \
-	CPPFLAGS="$(HOST_CFLAGS) -DXML_POOR_ENTROPY"
 
 CONFIGURE_ARGS += \
 	--enable-shared \
