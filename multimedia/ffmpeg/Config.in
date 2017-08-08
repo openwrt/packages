@@ -141,7 +141,6 @@ config FFMPEG_CUSTOM_SELECT_libfdk-aac
 
 config FFMPEG_CUSTOM_SELECT_libmp3lame
 	bool "Libmp3lame"
-	depends on FFMPEG_CUSTOM_PATENTED
 	depends on PACKAGE_lame-lib
 	select FFMPEG_CUSTOM_DECODER_mp3
 	select FFMPEG_CUSTOM_MUXER_mp3
@@ -253,11 +252,9 @@ config FFMPEG_CUSTOM_DECODER_jpegls
 
 config FFMPEG_CUSTOM_DECODER_mp2
 	bool "MP2 (MPEG Audio Layer 2)"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_DECODER_mp3
-	bool "MP3 (MPEG Audio Layer 2)"
-	depends on FFMPEG_CUSTOM_PATENTED
+	bool "MP3 (MPEG Audio Layer 3)"
 
 config FFMPEG_CUSTOM_DECODER_mpegvideo
 	bool "MPEG Video"
