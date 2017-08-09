@@ -45,6 +45,9 @@ endef
 define Package/libsodium/config
 menu "Configuration"
 	depends on PACKAGE_libsodium
+	config LIBSODIUM_INCLUDES
+	    bool "Include header files in the installation."
+	    default n
 	config LIBSODIUM_MINIMAL
 		bool "Compile only what is required for the high-level API (no aes128ctr), should be fine in most cases."
 		default y
@@ -53,9 +56,10 @@ endef
 
 CONFIGURE_ARGS+= \
 	--disable-ssp \
+	$(if $(CONFIG_LIBSODIUM_INCLUDES),--includedir=$(1)/usr/include,,)
 	$(if $(CONFIG_LIBSODIUM_MINIMAL),--enable-minimal=yes,--enable-minimal=no)
 
-define Build/Install
+define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/sodium
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/sodium.h $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/sodium/*.h $(1)/usr/include/sodium
