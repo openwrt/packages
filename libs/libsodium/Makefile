@@ -66,6 +66,9 @@ define Build/InstallDev
 endef
 
 define Package/libsodium/install
+    $(INSTALL_DIR) $(1)/usr/include/sodium
+    $(CP) $(PKG_INSTALL_DIR)/usr/include/sodium.h $(1)/usr/include
+    $(CP) $(PKG_INSTALL_DIR)/usr/include/sodium/*.h $(1)/usr/include/sodium
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsodium.so.* $(1)/usr/lib/
 endef
