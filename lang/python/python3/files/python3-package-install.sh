@@ -51,7 +51,7 @@ find "$dst_dir" -name "*.egg-info" | xargs rm -rf
 
 if [ "$mode" == "sources" ] ; then
 	# Copy only python source files
-	find $dst_dir -type f -not -name "*\.py" | xargs rm -f
+	find $dst_dir -not -type d -not -name "*\.py" | xargs rm -f
 
 	# Delete empty folders (if the case)
 	if [ -d "$dst_dir/usr" ] ; then
