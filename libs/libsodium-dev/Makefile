@@ -78,4 +78,4 @@ define Package/libsodium-dev/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsodium.so.* $(1)/usr/lib/
 endef
 
-$(eval $(call BuildPackage,libsodium))
+$(eval $(call BuildPackage,libsodium-dev))
