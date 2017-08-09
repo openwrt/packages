@@ -56,7 +56,7 @@ endef
 
 CONFIGURE_ARGS+= \
 	--disable-ssp \
-	$(if $(CONFIG_LIBSODIUM_INCLUDES),--includedir=$(1)/usr/include,)
+	$(if $(CONFIG_LIBSODIUM_INCLUDES),--includedir=$(1)/usr/include,) \
 	$(if $(CONFIG_LIBSODIUM_MINIMAL),--enable-minimal=yes,--enable-minimal=no)
 
 define Build/InstallDev
