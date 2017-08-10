@@ -36,7 +36,9 @@ ifdown()
 
 	ACTION=ifdown INTERFACE=$1 /sbin/hotplug-call iface
 
-	kill $(pgrep -f "mwan3track $1") &> /dev/null
+	kill $(pgrep -f "mwan3track $1 $2") &> /dev/null
+	mwan3_delete_iface_iptables $1
+	mwan3_track_clean $1
 }
 
 ifup()
@@ -121,6 +123,9 @@ stop()
 
 	killall mwan3track &> /dev/null
 
+	config_load mwan3
+	config_foreach mwan3_track_clean interface
+
 	for IP in "$IP4" "$IP6"; do
 
 		for route in $($IP route list table all | sed 's/.*table \([^ ]*\) .*/\1/' |  awk '{print $1}' | awk '{for(i=1;i<=NF;i++) if($i+0>0) if($i+0<255) {print;break}}'); do
@@ -153,6 +158,8 @@ stop()
 	for ipset in $($IPS -n list | grep mwan3 | grep -E '_v4|_v6'); do
 		$IPS -q destroy $ipset
 	done
+
+	mwan3_lock_clean
 }
 
 restart() {

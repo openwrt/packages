@@ -5,8 +5,10 @@ IP6="ip -6"
 IPS="ipset"
 IPT4="iptables -t mangle -w"
 IPT6="ip6tables -t mangle -w"
-LOG="logger -t mwan3 -p"
+LOG="logger -t mwan3[$$] -p"
 CONNTRACK_FILE="/proc/net/nf_conntrack"
+
+MWAN3_STATUS_DIR="/var/run/mwan3track"
 
 # mwan3's MARKing mask (at least 3 bits should be set)
 MMX_MASK=0xff00
@@ -63,6 +65,10 @@ mwan3_lock() {
 
 mwan3_unlock() {
 	lock -u /var/run/mwan3.lock
+}
+
+mwan3_lock_clean() {
+	rm -rf /var/run/mwan3.lock
 }
 
 mwan3_get_iface_id()
@@ -449,9 +455,9 @@ mwan3_track()
 	}
 	config_list_foreach $1 track_ip mwan3_list_track_ips
 
-	kill $(pgrep -f "mwan3track $1") &> /dev/null
+	kill $(pgrep -f "mwan3track $1 $2") &> /dev/null
 	if [ -n "$track_ips" ]; then
-		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track "$1" "$2" "$3" $track_ips &
+		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track "$1" "$2" "$3" "$4" $track_ips &
 	fi
 }
 
@@ -459,7 +465,7 @@ mwan3_track_signal()
 {
 	local pid
 
-	pid="$(pgrep -f "mwan3track $1")"
+	pid="$(pgrep -f "mwan3track $1 $2")"
 	if [ "${pid}" != "" ]; then
 		kill -USR1 "${pid}"
 	else
@@ -789,7 +795,7 @@ mwan3_report_iface_status()
 	config_list_foreach $1 track_ip mwan3_list_track_ips
 
 	if [ -n "$track_ips" ]; then
-		if [ -n "$(pgrep -f "mwan3track $1")" ]; then
+		if [ -n "$(pgrep -f "mwan3track $1 $device")" ]; then
 			tracking="active"
 		else
 			tracking="down"
@@ -918,4 +924,14 @@ mwan3_flush_conntrack()
 	else
 		$LOG warning "connection tracking not enabled"
 	fi
+}
+
+mwan3_track_clean()
+{
+	rm -rf "$MWAN3_STATUS_DIR/${1}" &> /dev/null
+	[ -d "$MWAN3_STATUS_DIR" ] && {
+		if [ -z "$(ls -A "$MWAN3_STATUS_DIR")" ]; then
+			rm -rf "$MWAN3_STATUS_DIR"
+		fi
+	}
 }
