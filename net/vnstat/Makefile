@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vnstat
 PKG_VERSION:=1.17
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://humdi.net/vnstat
@@ -27,6 +27,7 @@ define Package/vnstat/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=http://humdi.net/vnstat/
+  USERID:=vnstat:vnstat
 endef
 
 define Package/vnstat
