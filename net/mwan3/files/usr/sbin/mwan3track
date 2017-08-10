@@ -10,12 +10,6 @@ IFDOWN_EVENT=0
 
 clean_up() {
 	$LOG notice "Stopping mwan3track for interface \"${INTERFACE}\""
-	if [ "$(pgrep -f "mwan3track ${INTERFACE}")" = "" ]; then
-		rm -rf "/var/run/mwan3track/${INTERFACE}" &> /dev/null
-	fi
-	if [ -z "$(ls -A "/var/run/mwan3track")" ]; then
-		rm -rf "/var/run/mwan3track"
-	fi
 	exit 0
 }
 
@@ -51,11 +45,13 @@ validate_track_method() {
 main() {
 	local reliability count timeout interval failure_interval
 	local recovery_interval down up size
+	local keep_failure_interval
 
-	[ -z "$3" ] && echo "Error: should not be started manually" && exit 0
+	[ -z "$5" ] && echo "Error: should not be started manually" && exit 0
 
 	INTERFACE=$1
 	DEVICE=$2
+	STATUS=$3
 	mkdir -p /var/run/mwan3track/$1
 	trap clean_up SIGINT SIGTERM
 	trap if_down SIGUSR1
@@ -74,16 +70,22 @@ main() {
 	config_get up $1 up 5
 	config_get size $1 size 56
 	config_get failure_interval $1 failure_interval $interval
+	config_get_bool keep_failure_interval $1 keep_failure_interval 0
 	config_get recovery_interval $1 recovery_interval $interval
 
 	local score=$(($down+$up))
-	local track_ips=$(echo $* | cut -d ' ' -f 4-99)
+	local track_ips=$(echo $* | cut -d ' ' -f 5-99)
 	local host_up_count=0
 	local lost=0
 	local sleep_time=0
 	local turn=0
 
-	echo "offline" > /var/run/mwan3track/$1/STATUS
+	if [ "$STATUS" = "offline" ]; then
+		echo "offline" > /var/run/mwan3track/$1/STATUS
+		score=0
+	else
+		echo "online" > /var/run/mwan3track/$1/STATUS
+	fi
 	while true; do
 
 		sleep_time=$interval
@@ -111,6 +113,9 @@ main() {
 
 			if [ $score -lt $up ]; then
 				score=0
+				[ ${keep_failure_interval} -eq 1 ] && {
+					sleep_time=$failure_interval
+				}
 			else
 				sleep_time=$failure_interval
 			fi
@@ -138,8 +143,8 @@ main() {
 
 			if [ $score -eq $up ]; then
 				$LOG notice "Interface $1 ($2) is online"
+				echo "online" > /var/run/mwan3track/$1/STATUS
 				env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
-				rm -rf "/var/run/mwan3track/${1}" &> /dev/null
 				exit 0
 			fi
 		fi
@@ -149,6 +154,7 @@ main() {
 		echo "${lost}" > /var/run/mwan3track/$1/LOST
 		echo "${score}" > /var/run/mwan3track/$1/SCORE
 		echo "${turn}" > /var/run/mwan3track/$1/TURN
+		echo "$(date +'%s')" > /var/run/mwan3track/$1/TIME
 
 		host_up_count=0
 		sleep "${sleep_time}" &

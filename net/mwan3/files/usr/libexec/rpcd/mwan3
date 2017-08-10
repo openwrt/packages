@@ -1,10 +1,10 @@
 #!/bin/sh
 
 . /lib/functions.sh
+. /lib/functions/network.sh
 . /usr/share/libubox/jshn.sh
 
 MWAN3_STATUS_DIR="/var/run/mwan3track"
-MWAN3_PID_FILE="/var/run/mwan3track"
 
 IPS="ipset"
 IPT4="iptables -t mangle -w"
@@ -34,18 +34,28 @@ get_mwan3_status() {
 	local iface="${1}"
 	local iface_select="${2}"
 	local running="0"
-	local pid
+	local age=0
+	local pid device time_p time_n
+
+	network_get_device device $1
 
 	if [ "${iface}" = "${iface_select}" ] || [ "${iface_select}" = "" ]; then
-		pid="$(pgrep -f "mwan3track $iface_selected")"
+		pid="$(pgrep -f "mwan3track $iface $device")"
 		if [ "${pid}" != "" ]; then
 			running="1"
 		fi
 
+		time_p="$(cat "$MWAN3_STATUS_DIR/${iface}/TIME")"
+		[ -z "${time_p}" ] || {
+			time_n="$(date +'%s')"
+			let age=time_n-time_p
+		}
+
 		json_add_object "${iface}"
-		json_add_string "score" "$(cat "$MWAN3_STATUS_DIR/${iface}/SCORE")"
-		json_add_string "lost" "$(cat "$MWAN3_STATUS_DIR/${iface}/LOST")"
-		json_add_string "turn" "$(cat "$MWAN3_STATUS_DIR/${iface}/TURN")"
+		json_add_int age "$age"
+		json_add_int "score" "$(cat "$MWAN3_STATUS_DIR/${iface}/SCORE")"
+		json_add_int "lost" "$(cat "$MWAN3_STATUS_DIR/${iface}/LOST")"
+		json_add_int "turn" "$(cat "$MWAN3_STATUS_DIR/${iface}/TURN")"
 		json_add_string "status" "$(cat "$MWAN3_STATUS_DIR/${iface}/STATUS")"
 		json_add_boolean "running" "${running}"
 		json_add_array "track_ip"
