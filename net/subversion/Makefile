@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,11 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=subversion
 PKG_RELEASE:=1
-PKG_VERSION:=1.9.6
+PKG_VERSION:=1.9.7
 PKG_SOURCE_URL:=@APACHE/subversion
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=dbcbc51fb634082f009121f2cb64350ce32146612787ffb0f7ced351aacaae19
-PKG_MD5SUM:=f27e00338d4a9f7f9aec9d4a3f8b418b
+PKG_HASH:=c3b118333ce12e501d509e66bb0a47bcc34d053990acab45559431ac3e491623
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
