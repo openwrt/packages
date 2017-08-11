@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libhttp-parser
-PKG_VERSION:=2.3.0
+PKG_VERSION:=2.7.1
 PKG_RELEASE=1
 PKG_MAINTAINER:=Ramanathan Sivagurunathan <ramzthecoder@gmail.com>
 PKG_LICENSE:=MIT
@@ -18,7 +18,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git://github.com/joyent/http-parser.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=56f7ad0e2e5a80f79d214015c91e1f17d11d109f
+PKG_SOURCE_VERSION:=feae95a3a69f111bc1897b9048d9acbc290992f9
 
 
 include $(INCLUDE_DIR)/package.mk
