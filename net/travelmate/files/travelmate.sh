@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.9.1"
+trm_ver="0.9.2"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0
@@ -229,7 +229,7 @@ f_main()
                                 uci -q set wireless."${config}".ssid="${sta_ssid}_err"
                                 uci -q commit wireless
                                 f_check "dev"
-                                f_log "info " "interface 'can't connect to uplink '${sta_ssid}' (${cnt}/${trm_maxretry}), uplink disabled (${trm_sysver})"
+                                f_log "info " "can't connect to uplink '${sta_ssid}' (${cnt}/${trm_maxretry}), uplink disabled (${trm_sysver})"
                             else
                                 uci -q revert wireless
                                 f_check "dev"
