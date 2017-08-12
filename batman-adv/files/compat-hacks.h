@@ -228,6 +228,8 @@ static inline int batadv_nla_put_u64_64bit(struct sk_buff *skb, int attrtype,
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 9)
 
+#include <linux/netdevice.h>
+
 /* work around missing attribute needs_free_netdev and priv_destructor in
  * net_device
  */
