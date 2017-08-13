@@ -11,7 +11,7 @@
 CHECK_CRON=$1
 ACME=/usr/lib/acme/acme.sh
 export SSL_CERT_DIR=/etc/ssl/certs
-export CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 export NO_TIMESTAMP=1
 
 UHTTPD_LISTEN_HTTP=
