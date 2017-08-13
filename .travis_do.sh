@@ -14,16 +14,21 @@ echo_green() { printf "\033[1;32m$*\033[m\n"; }
 echo_blue()  { printf "\033[1;34m$*\033[m\n"; }
 
 exec_status() {
-	("$@" 2>&1) > logoutput && status=0 || status=1
-	grep -qE 'WARNING|ERROR' logoutput && status=1
-	cat logoutput
-	if [ $status -eq 0 ]; then
-		echo_green "=> $* successful"
-		return 0
-	else
-		echo_red   "=> $* failed"
+	PATTERN="$1"
+	shift
+	("$@" 2>&1) | tee logoutput
+	R=${PIPESTATUS[0]}
+	if [ $R -ne 0 ]; then
+		echo_red   "=> '$*' failed (return code $R)"
 		return 1
 	fi
+	if grep -qE "$PATTERN" logoutput; then
+		echo_red   "=> '$*' failed (log matched '$PATTERN')"
+		return 1
+	fi
+
+	echo_green "=> '$*' successful"
+	return 0
 }
 
 # download will run on the `before_script` step
@@ -92,15 +97,26 @@ EOF
 	# pkg_name => muninlite
 	for pkg_dir in $PKGS ; do
 		pkg_name=$(echo "$pkg_dir" | awk -F/ '{ print $NF }')
-		echo_blue "=== $pkg_name Testing package"
+		echo_blue "=== $pkg_name: Starting quick tests"
 
-		exec_status make "package/$pkg_name/download" V=s || RET=1
-		exec_status make "package/$pkg_name/check" V=s || RET=1
+		exec_status 'WARNING|ERROR' make "package/$pkg_name/download" V=s || RET=1
+		exec_status 'WARNING|ERROR' make "package/$pkg_name/check" V=s || RET=1
 
-		echo_blue "=== $pkg_name Finished package"
+		echo_blue "=== $pkg_name: quick tests done"
 	done
 
-	return $RET
+	[ $RET -ne 0 ] && return $RET
+
+	for pkg_dir in $PKGS ; do
+		pkg_name=$(echo "$pkg_dir" | awk -F/ '{ print $NF }')
+		echo_blue "=== $pkg_name: Starting compile test"
+
+		exec_status '^ERROR' make "package/$pkg_name/compile" V=s -j3
+
+		echo_blue "=== $pkg_name: compile test done"
+	done
+
+	return 0
 }
 
 test_commits() {
@@ -142,10 +158,7 @@ test_commits() {
 }
 
 test_packages() {
-	GRET=0
-	test_commits   || GRET=1
-	test_packages2 || GRET=1
-	return $GRET
+	test_commits && test_packages2 || return 1
 }
 
 echo_blue "=== Travis ENV"
