@@ -274,7 +274,7 @@ validate_common_options_() {
 		'ipv6_first:bool:0' \
 		'reuse_port:bool:0' \
 		'verbose:bool:0' \
-		'mode:or("tcp_only", "udp_only", "tcp_and_udp")' \
+		'mode:or("tcp_only", "udp_only", "tcp_and_udp"):tcp_only' \
 		'mtu:uinteger' \
 		'timeout:uinteger' \
 		'user:string'
