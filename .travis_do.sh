@@ -165,8 +165,10 @@ echo_blue "=== Travis ENV"
 env
 echo_blue "=== Travis ENV"
 
-until [ "$(git rev-list ${TRAVIS_COMMIT_RANGE/.../..} | tail -n1)" != "a22de9b74cf9579d1ce7e6cf1845b4afa4277b00" ]; do
-	# if clone depth is too small, git rev-list / diff return incorrect results
+while true; do
+	# if clone depth is too small, git rev-list / diff return incorrect or empty results
+	C="$(git rev-list ${TRAVIS_COMMIT_RANGE/.../..} | tail -n1)" 2>/dev/null
+	[ -n "$C" -a "$C" != "a22de9b74cf9579d1ce7e6cf1845b4afa4277b00" ] && break
 	echo_blue "Fetching 50 commits more"
 	git fetch origin --deepen=50
 done
