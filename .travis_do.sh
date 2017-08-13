@@ -111,7 +111,9 @@ EOF
 		pkg_name=$(echo "$pkg_dir" | awk -F/ '{ print $NF }')
 		echo_blue "=== $pkg_name: Starting compile test"
 
-		exec_status '^ERROR' make "package/$pkg_name/compile" V=s -j3
+		# we can't enable verbose built else we often hit Travis limits
+		# on log size and the job get killed
+		exec_status '^ERROR' make "package/$pkg_name/compile" -j3
 
 		echo_blue "=== $pkg_name: compile test done"
 	done
