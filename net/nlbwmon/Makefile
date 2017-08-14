@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nlbwmon
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/jow-/nlbwmon.git
@@ -38,5 +38,10 @@ define Package/nlbwmon/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nlbwmon.config $(1)/etc/config/nlbwmon
 endef
+
+define Package/nlbwmon/conffiles
+/usr/share/nlbwmon/protocols
+endef
+
 
 $(eval $(call BuildPackage,nlbwmon))
