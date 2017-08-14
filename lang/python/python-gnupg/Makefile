@@ -5,20 +5,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-gnupg
-PKG_VERSION:=2.3.0
+PKG_VERSION:=0.4.1
 PKG_RELEASE:=1
 
-PKG_SOURCE_NAME:=gnupg
-PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/fa/ea/58e0415e1e3c3a0649119158e036ca4a9af154c56ef80f3d6de986bf9cb2/
-PKG_MD5SUM:=b6ebde86093f262f8430eff8d8a4c82b
-PKG_HASH:=1d90e854dcc7790a7efc3aac5998159553cc34ec599ee2bc7927beb45fb564ec
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://pypi.python.org/packages/fc/f1/df6c06da34939f67ea622e0b31dbc5bdb5121b271ab530d151df59974425/
+PKG_MD5SUM:=b5d98344798b3cbb80cdcc1bfd788ea3
+PKG_HASH:=ef47b02eaf41dee3cf4b02ddf83130827318de9fe3eae89d01a3f05859e20e1a
 
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-$(PKG_SOURCE_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-$(PKG_NAME)-$(PKG_VERSION)
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 include $(INCLUDE_DIR)/package.mk
@@ -64,6 +63,19 @@ $(call Package/python-gnupg/description)
 
 (Variant for Python3)
 endef
+
+define PyBuild/Compile
+	$(call Build/Compile/PyMod,,\
+		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
+	)
+endef
+
+define Py3Build/Compile
+	$(call Build/Compile/Py3Mod,,\
+		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
+	)
+endef
+
 
 $(eval $(call PyPackage,python-gnupg))
 $(eval $(call BuildPackage,python-gnupg))
