@@ -87,6 +87,9 @@ src-link packages $PACKAGES_DIR
 src-git luci https://github.com/openwrt/luci.git
 EOF
 
+	# enable BUILD_LOG
+	sed -i '1s/^/config BUILD_LOG\n\tbool\n\tdefault y\n\n/' Config-build.in
+
 	./scripts/feeds update -a
 	./scripts/feeds install -a
 	make defconfig
@@ -116,6 +119,10 @@ EOF
 		exec_status '^ERROR' make "package/$pkg_name/compile" -j3
 
 		echo_blue "=== $pkg_name: compile test done"
+
+		echo_blue "=== $pkg_name: begin compile logs"
+		cat logs/package/feeds/packages/$pkg_name/compile.txt
+		echo_blue "=== $pkg_name: end compile logs"
 	done
 
 	return 0
