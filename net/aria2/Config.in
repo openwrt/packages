@@ -56,7 +56,7 @@ config ARIA2_BITTORRENT
 	bool "Enable Bittorrent Support"
 	depends on ARIA2_OPENSSL || ARIA2_LIBGCRYPT || \
 		(ARIA2_NETTLE && ARIA2_GMP)
-	default n
+	default y
 
 config ARIA2_METALINK
 	bool "Enable Metalink Support"
