@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnurl
-PKG_VERSION:=7.54.1
+PKG_VERSION:=7.55.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnunet.org/sites/default/files
 
-PKG_HASH:=4481f50a6c2bf3f1e161743333cb1bafea29dffc3cf535137bba2428ca90eb6b
+PKG_HASH:=761b3ddb32946965c62676ca4acf2ebaab38d09068aebeea78caaf6cce8c2b45
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
