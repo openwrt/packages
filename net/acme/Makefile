@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=acme
 PKG_SOURCE_VERSION:=7b40cbe8c1a52041351524bcde4b37665a7cdf79
 PKG_VERSION:=1.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPLv3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE).tar.xz
@@ -91,6 +91,7 @@ uci -q get ucitrack.@acme[0] > /dev/null && {
   uci delete ucitrack.@acme[0]
   uci commit
 }
+exit 0
 endef
 
 
