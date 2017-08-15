@@ -44,6 +44,7 @@ define Package/ntpd
 $(call Package/ntpd/Default)
   TITLE+= server
   USERID:=ntp=123:ntp=123
+  DEPENDS+= +ntp-utils
 endef
 
 define Package/ntpd/description
@@ -116,7 +117,6 @@ define Package/ntpd/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpd/ntpd $(1)/sbin/
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpq/ntpq $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/ntpd.hotplug-helper $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) ./files/ntp.conf $(1)/etc/
@@ -147,6 +147,7 @@ endef
 
 define Package/ntp-utils/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpq/ntpq $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpdc/ntpdc $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/util/ntptime $(1)/usr/sbin/
 endef
