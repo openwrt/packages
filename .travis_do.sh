@@ -16,8 +16,10 @@ echo_blue()  { printf "\033[1;34m$*\033[m\n"; }
 exec_status() {
 	PATTERN="$1"
 	shift
+	while :;do sleep 590;echo "still running (please don't kill me Travis)";done &
 	("$@" 2>&1) | tee logoutput
 	R=${PIPESTATUS[0]}
+	kill $!
 	if [ $R -ne 0 ]; then
 		echo_red   "=> '$*' failed (return code $R)"
 		return 1
