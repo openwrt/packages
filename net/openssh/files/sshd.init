@@ -20,7 +20,11 @@ start_service() {
 	}; done
 	mkdir -m 0700 -p /var/empty
 
+	local lport=`grep ^Port /etc/ssh/sshd_config | cut -d " " -f 2`
+	[ -z $lport ] && lport=22
+
 	procd_open_instance
+	procd_add_mdns "ssh" "tcp" "$lport"
 	procd_set_param command $PROG -D
 	procd_close_instance
 }
