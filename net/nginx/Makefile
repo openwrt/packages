@@ -270,7 +270,7 @@ define  Prepare/nginx-naxsi
 endef
 
 define Download/lua-nginx
-	VERSION:=1967998b0eedab1ff51bff8fafa5fc3db47976aa
+	VERSION:=cdd2ae921f67bf396c743406493127be496e57ce
 	SUBDIR:=lua-nginx
 	FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
 	URL:=https://github.com/openresty/lua-nginx-module.git
