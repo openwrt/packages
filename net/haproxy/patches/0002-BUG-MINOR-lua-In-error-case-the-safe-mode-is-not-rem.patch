@@ -1,0 +1,36 @@
+From bcc483a9edfeb8ab69d1af83886d9e1323cffd06 Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <thierry.fournier@ozon.io>
+Date: Wed, 12 Jul 2017 11:18:00 +0200
+Subject: [PATCH 02/18] BUG/MINOR: lua: In error case, the safe mode is not
+ removed
+
+Just forgot of reset the safe mode. This have not consequences
+the safe mode just set a pointer on fucntion which is called only
+and initialises a longjmp.
+
+Out of lua execution, this longjmp is never executed and the
+function is never called.
+
+This patch should be backported in 1.6 and 1.7
+(cherry picked from commit 0a97620c080232a21ad7fce2c859a2edc9d7147e)
+
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/hlua.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/hlua.c b/src/hlua.c
+index c862102d..4c1c2d21 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -854,6 +854,7 @@ int hlua_ctx_init(struct hlua *lua, struct task *task)
+ 	lua->T = lua_newthread(gL.T);
+ 	if (!lua->T) {
+ 		lua->Tref = LUA_REFNIL;
++		RESET_SAFE_LJMP(gL.T);
+ 		return 0;
+ 	}
+ 	hlua_sethlua(lua);
+-- 
+2.13.0
+

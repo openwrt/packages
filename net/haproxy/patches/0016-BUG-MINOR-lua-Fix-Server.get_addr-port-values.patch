@@ -1,0 +1,45 @@
+From c00347899e9f0c3420f98c53eab1469644e28e06 Mon Sep 17 00:00:00 2001
+From: Nenad Merdanovic <nmerdan@haproxy.com>
+Date: Sun, 23 Jul 2017 22:04:58 -0400
+Subject: [PATCH 16/18] BUG/MINOR: lua: Fix Server.get_addr() port values
+
+The get_addr() method of the Lua Server class was using the
+'sockaddr_storage addr' member to get the port value. HAProxy does not
+store ports in this member as it uses a separate member, called
+'svc_port'.
+
+This fix should be backported to 1.7.
+
+(cherry picked from commit 3849473828f319829aff422d2fbbce0823e65d64)
+Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+---
+ src/hlua_fcn.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/src/hlua_fcn.c b/src/hlua_fcn.c
+index fe899a4a..0752220e 100644
+--- a/src/hlua_fcn.c
++++ b/src/hlua_fcn.c
+@@ -545,8 +545,7 @@ int hlua_server_get_addr(lua_State *L)
+ 		          addr, INET_ADDRSTRLEN);
+ 		luaL_addstring(&b, addr);
+ 		luaL_addstring(&b, ":");
+-		snprintf(addr, INET_ADDRSTRLEN, "%d",
+-		         ntohs(((struct sockaddr_in *)&srv->addr)->sin_port));
++		snprintf(addr, INET_ADDRSTRLEN, "%d", srv->svc_port);
+ 		luaL_addstring(&b, addr);
+ 		break;
+ 	case AF_INET6:
+@@ -554,8 +553,7 @@ int hlua_server_get_addr(lua_State *L)
+ 		          addr, INET_ADDRSTRLEN);
+ 		luaL_addstring(&b, addr);
+ 		luaL_addstring(&b, ":");
+-		snprintf(addr, INET_ADDRSTRLEN, "%d",
+-		         ntohs(((struct sockaddr_in6 *)&srv->addr)->sin6_port));
++		snprintf(addr, INET_ADDRSTRLEN, "%d", srv->svc_port);
+ 		luaL_addstring(&b, addr);
+ 		break;
+ 	case AF_UNIX:
+-- 
+2.13.0
+

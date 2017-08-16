@@ -1,0 +1,32 @@
+From e14ec1d816de60b648dd7cb6c55b665f5163156b Mon Sep 17 00:00:00 2001
+From: ben51degrees <ben@51degrees.com>
+Date: Wed, 19 Jul 2017 16:22:04 +0100
+Subject: [PATCH 10/18] DOC: Updated 51Degrees git URL to point to a stable
+ version.
+
+The previously documented location doesn't work anymore and must not be
+used. Warning for backports, different branches are in use depending on
+the version (v3.2.10 for 1.7, v3.2.5 for 1.6).
+(cherry picked from commit ac752ff68cd3ac88a7a27ce17daa5c3f0c839694)
+
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ doc/51Degrees-device-detection.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/doc/51Degrees-device-detection.txt b/doc/51Degrees-device-detection.txt
+index 1ee912d9..71b2eb76 100644
+--- a/doc/51Degrees-device-detection.txt
++++ b/doc/51Degrees-device-detection.txt
+@@ -14,7 +14,7 @@ headers as configurable parameters.
+ In order to enable 51Degrees download the 51Degrees source code from the
+ official github repository :
+ 
+-    git clone https://github.com/51Degrees/Device-Detection
++    git clone https://git.51Degrees.com/Device-Detection.git -b v3.2.10
+ 
+ then run 'make' with USE_51DEGREES and 51DEGREES_SRC set. Both 51DEGREES_INC
+ and 51DEGREES_LIB may additionally be used to force specific different paths
+-- 
+2.13.0
+

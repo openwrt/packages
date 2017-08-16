@@ -1,0 +1,38 @@
+From df1655a6c0e4431317cc66c67693281092a952b0 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 19 Jul 2017 19:08:48 +0200
+Subject: [PATCH 09/18] BUILD: lua: replace timegm() with my_timegm() to fix
+ build on Solaris 10
+
+Akhnin Nikita reported that Lua doesn't build on Solaris 10 because
+the code uses timegm() to parse a date, which is not provided there.
+The recommended way to implement timegm() is broken in the man page,
+as it is based on a change of the TZ environment variable at run time
+before calling the function (which is obviously not thread safe, and
+terribly inefficient).
+
+Here instead we rely on the new my_timegm() function, it should be
+sufficient for all known use cases.
+(cherry picked from commit abd9bb20b76818c9f461a82b72b10818736ff8b3)
+
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/hlua_fcn.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/hlua_fcn.c b/src/hlua_fcn.c
+index 58905d7d..fe899a4a 100644
+--- a/src/hlua_fcn.c
++++ b/src/hlua_fcn.c
+@@ -287,7 +287,7 @@ static int hlua_parse_date(lua_State *L, int (*fcn)(const char *, int, struct tm
+ 	 * the timezone from the broken-down time, it must be fixed
+ 	 * after the conversion.
+ 	 */
+-	time = timegm(&tm);
++	time = my_timegm(&tm);
+ 	if (time == -1) {
+ 		lua_pushnil(L);
+ 		return 1;
+-- 
+2.13.0
+

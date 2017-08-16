@@ -1,0 +1,34 @@
+From e79fe9bc0ae363e91555f1ba64889e2ddf475b8e Mon Sep 17 00:00:00 2001
+From: Nenad Merdanovic <nmerdan@haproxy.com>
+Date: Sun, 23 Jul 2017 22:04:59 -0400
+Subject: [PATCH 17/18] BUG/MINOR: lua: Correctly use INET6_ADDRSTRLEN in
+ Server.get_addr()
+
+The get_addr() method of the Lua Server class incorrectly used
+INET_ADDRSTRLEN for IPv6 addresses resulting in failing to convert
+longer IPv6 addresses to strings.
+
+This fix should be backported to 1.7.
+
+(cherry picked from commit a9f040453acc09e888c3f2dc983f15dcf3fa66e3)
+Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+---
+ src/hlua_fcn.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/hlua_fcn.c b/src/hlua_fcn.c
+index 0752220e..f8b9b5ec 100644
+--- a/src/hlua_fcn.c
++++ b/src/hlua_fcn.c
+@@ -550,7 +550,7 @@ int hlua_server_get_addr(lua_State *L)
+ 		break;
+ 	case AF_INET6:
+ 		inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&srv->addr)->sin6_addr,
+-		          addr, INET_ADDRSTRLEN);
++		          addr, INET6_ADDRSTRLEN);
+ 		luaL_addstring(&b, addr);
+ 		luaL_addstring(&b, ":");
+ 		snprintf(addr, INET_ADDRSTRLEN, "%d", srv->svc_port);
+-- 
+2.13.0
+

@@ -1,0 +1,59 @@
+From 49d319a677432b69c6a69ef5331ae2ed592075c9 Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <thierry.fournier@ozon.io>
+Date: Wed, 12 Jul 2017 13:41:33 +0200
+Subject: [PATCH 03/18] BUG/MINOR: lua: executes the function destroying the
+ Lua session in safe mode
+
+When we destroy the Lua session, we manipulates Lua stack,
+so errors can raises. It will be better to catch these errors.
+
+This patch should be backported in 1.6 and 1.7
+(cherry picked from commit 75d0208009c3189b5d10793e08f27dd62a76c3ae)
+
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/hlua.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/src/hlua.c b/src/hlua.c
+index 4c1c2d21..2d312804 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -876,9 +876,15 @@ void hlua_ctx_destroy(struct hlua *lua)
+ 	/* Purge all the pending signals. */
+ 	hlua_com_purge(lua);
+ 
++	if (!SET_SAFE_LJMP(lua->T))
++		return;
+ 	luaL_unref(lua->T, LUA_REGISTRYINDEX, lua->Mref);
+-	luaL_unref(gL.T, LUA_REGISTRYINDEX, lua->Tref);
++	RESET_SAFE_LJMP(lua->T);
+ 
++	if (!SET_SAFE_LJMP(gL.T))
++		return;
++	luaL_unref(gL.T, LUA_REGISTRYINDEX, lua->Tref);
++	RESET_SAFE_LJMP(gL.T);
+ 	/* Forces a garbage collecting process. If the Lua program is finished
+ 	 * without error, we run the GC on the thread pointer. Its freed all
+ 	 * the unused memory.
+@@ -889,9 +895,16 @@ void hlua_ctx_destroy(struct hlua *lua)
+ 	 * the garbage collection.
+ 	 */
+ 	if (lua->flags & HLUA_MUST_GC) {
++		if (!SET_SAFE_LJMP(lua->T))
++			return;
+ 		lua_gc(lua->T, LUA_GCCOLLECT, 0);
+-		if (lua_status(lua->T) != LUA_OK)
++		RESET_SAFE_LJMP(lua->T);
++		if (lua_status(lua->T) != LUA_OK) {
++			if (!SET_SAFE_LJMP(gL.T))
++				return;
+ 			lua_gc(gL.T, LUA_GCCOLLECT, 0);
++			RESET_SAFE_LJMP(gL.T);
++		}
+ 	}
+ 
+ 	lua->T = NULL;
+-- 
+2.13.0
+
