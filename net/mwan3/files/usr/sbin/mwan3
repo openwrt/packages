@@ -160,6 +160,7 @@ stop()
 	done
 
 	mwan3_lock_clean
+	rm -rf "${MWAN3_STATUS_DIR}/mmx_mask"
 }
 
 restart() {

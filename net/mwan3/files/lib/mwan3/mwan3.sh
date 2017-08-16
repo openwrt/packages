@@ -11,7 +11,15 @@ CONNTRACK_FILE="/proc/net/nf_conntrack"
 MWAN3_STATUS_DIR="/var/run/mwan3track"
 
 # mwan3's MARKing mask (at least 3 bits should be set)
-MMX_MASK=0xff00
+if [ -e "${MWAN3_STATUS_DIR}/mmx_mask" ]; then
+	MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
+else
+	config_load mwan3
+	config_get MMX_MASK globals mmx_mask '0xff00'
+	mkdir -p "${MWAN3_STATUS_DIR}"
+	echo "$MMX_MASK" > "${MWAN3_STATUS_DIR}/mmx_mask"
+	$LOG notice "Using firewall mask ${MMX_MASK}"
+fi
 
 # counts how many bits are set to 1
 # n&(n-1) clears the lowest bit set to 1
