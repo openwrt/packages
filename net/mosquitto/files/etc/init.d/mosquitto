@@ -56,7 +56,7 @@ convert_mosq_general() {
 
 	config_get_bool no_remote "$1" no_remote_access 0
 	if [ "$no_remote" -eq 1 ]; then
-		echo "bind_address 127.0.0.1" >> $TCONF
+		echo "bind_address localhost" >> $TCONF
 	fi
 
 	config_get port "$1" port 1883
