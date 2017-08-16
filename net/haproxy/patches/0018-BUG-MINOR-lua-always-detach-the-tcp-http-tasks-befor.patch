@@ -1,0 +1,45 @@
+From dd18f945c26fc30872a52c66b06b5a0a86b10060 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Mon, 24 Jul 2017 17:35:27 +0200
+Subject: [PATCH 18/18] BUG/MINOR: lua: always detach the tcp/http tasks before
+ freeing them
+
+In hlua_{http,tcp}_applet_release(), a call to task_free() is performed
+to release the task, but no task_delete() is made on these tasks. Till
+now it wasn't much of a problem because this was normally not done with
+the task in the run queue, and the task was never put into the wait queue
+since it doesn't have any timer. But with threading it will become an
+issue. And not having this already prevents another bug from being fixed.
+
+Thanks to Christopher for spotting this one. A backport to 1.7 and 1.6 is
+preferred for safety.
+
+(cherry picked from commit bd7fc95edbce821f1d7b745a7b75deef4d6b1e27)
+Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+---
+ src/hlua.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/hlua.c b/src/hlua.c
+index a998860e..67b9458c 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -5948,6 +5948,7 @@ error:
+ 
+ static void hlua_applet_tcp_release(struct appctx *ctx)
+ {
++	task_delete(ctx->ctx.hlua_apptcp.task);
+ 	task_free(ctx->ctx.hlua_apptcp.task);
+ 	ctx->ctx.hlua_apptcp.task = NULL;
+ 	hlua_ctx_destroy(&ctx->ctx.hlua_apptcp.hlua);
+@@ -6226,6 +6227,7 @@ error:
+ 
+ static void hlua_applet_http_release(struct appctx *ctx)
+ {
++	task_delete(ctx->ctx.hlua_apphttp.task);
+ 	task_free(ctx->ctx.hlua_apphttp.task);
+ 	ctx->ctx.hlua_apphttp.task = NULL;
+ 	hlua_ctx_destroy(&ctx->ctx.hlua_apphttp.hlua);
+-- 
+2.13.0
+

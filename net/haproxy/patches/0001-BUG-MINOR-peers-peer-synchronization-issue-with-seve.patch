@@ -1,0 +1,299 @@
+From fa73e6b0d5f64eb8a6fd8a1706d7ec03293a943e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fr=C3=A9d=C3=A9ric=20L=C3=A9caille?= <flecaille@haproxy.com>
+Date: Thu, 13 Jul 2017 09:07:09 +0200
+Subject: [PATCH 01/18] BUG/MINOR: peers: peer synchronization issue (with
+ several peers sections).
+
+When several stick-tables were configured with several peers sections,
+only a part of them could be synchronized: the ones attached to the last
+parsed 'peers' section. This was due to the fact that, at least, the peer I/O handler
+refered to the wrong peer section list, in fact always the same: the last one parsed.
+
+The fact that the global peer section list was named "struct peers *peers"
+lead to this issue. This variable name is dangerous ;).
+
+So this patch renames global 'peers' variable to 'cfg_peers' to ensure that
+no such wrong references are still in use, then all the functions wich used
+old 'peers' variable have been modified to refer to the correct peer list.
+
+Must be backported to 1.6 and 1.7.
+(cherry picked from commit ed2b4a6b793d062000518e51ed71e014c649c313)
+
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ include/types/peers.h |  2 +-
+ src/cfgparse.c        | 18 +++++++++---------
+ src/haproxy.c         | 10 +++++-----
+ src/peers.c           | 40 ++++++++++++++++++++--------------------
+ src/proxy.c           |  6 +++---
+ 5 files changed, 38 insertions(+), 38 deletions(-)
+
+diff --git a/include/types/peers.h b/include/types/peers.h
+index 105dffb0..a77a0942 100644
+--- a/include/types/peers.h
++++ b/include/types/peers.h
+@@ -91,7 +91,7 @@ struct peers {
+ };
+ 
+ 
+-extern struct peers *peers;
++extern struct peers *cfg_peers;
+ 
+ #endif /* _TYPES_PEERS_H */
+ 
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index 8c0906bf..1b53006b 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -2124,7 +2124,7 @@ int cfg_parse_peers(const char *file, int linenum, char **args, int kwm)
+ 			goto out;
+ 		}
+ 
+-		for (curpeers = peers; curpeers != NULL; curpeers = curpeers->next) {
++		for (curpeers = cfg_peers; curpeers != NULL; curpeers = curpeers->next) {
+ 			/*
+ 			 * If there are two proxies with the same name only following
+ 			 * combinations are allowed:
+@@ -2142,8 +2142,8 @@ int cfg_parse_peers(const char *file, int linenum, char **args, int kwm)
+ 			goto out;
+ 		}
+ 
+-		curpeers->next = peers;
+-		peers = curpeers;
++		curpeers->next = cfg_peers;
++		cfg_peers = curpeers;
+ 		curpeers->conf.file = strdup(file);
+ 		curpeers->conf.line = linenum;
+ 		curpeers->last_change = now.tv_sec;
+@@ -2223,7 +2223,7 @@ int cfg_parse_peers(const char *file, int linenum, char **args, int kwm)
+ 		if (strcmp(newpeer->id, localpeer) == 0) {
+ 			/* Current is local peer, it define a frontend */
+ 			newpeer->local = 1;
+-			peers->local = newpeer;
++			cfg_peers->local = newpeer;
+ 
+ 			if (!curpeers->peers_fe) {
+ 				if ((curpeers->peers_fe  = calloc(1, sizeof(struct proxy))) == NULL) {
+@@ -8189,9 +8189,9 @@ int check_config_validity()
+ 		}
+ 
+ 		if (curproxy->table.peers.name) {
+-			struct peers *curpeers = peers;
++			struct peers *curpeers;
+ 
+-			for (curpeers = peers; curpeers; curpeers = curpeers->next) {
++			for (curpeers = cfg_peers; curpeers; curpeers = curpeers->next) {
+ 				if (strcmp(curpeers->id, curproxy->table.peers.name) == 0) {
+ 					free((void *)curproxy->table.peers.name);
+ 					curproxy->table.peers.p = curpeers;
+@@ -9279,15 +9279,15 @@ out_uri_auth_compat:
+ 		if (curproxy->table.peers.p)
+ 			curproxy->table.peers.p->peers_fe->bind_proc |= curproxy->bind_proc;
+ 
+-	if (peers) {
+-		struct peers *curpeers = peers, **last;
++	if (cfg_peers) {
++		struct peers *curpeers = cfg_peers, **last;
+ 		struct peer *p, *pb;
+ 
+ 		/* Remove all peers sections which don't have a valid listener,
+ 		 * which are not used by any table, or which are bound to more
+ 		 * than one process.
+ 		 */
+-		last = &peers;
++		last = &cfg_peers;
+ 		while (*last) {
+ 			curpeers = *last;
+ 
+diff --git a/src/haproxy.c b/src/haproxy.c
+index 6d09aed4..25cea0cd 100644
+--- a/src/haproxy.c
++++ b/src/haproxy.c
+@@ -988,7 +988,7 @@ void init(int argc, char **argv)
+ 		struct peers *pr;
+ 		struct proxy *px;
+ 
+-		for (pr = peers; pr; pr = pr->next)
++		for (pr = cfg_peers; pr; pr = pr->next)
+ 			if (pr->peers_fe)
+ 				break;
+ 
+@@ -1217,11 +1217,11 @@ void init(int argc, char **argv)
+ 	if (global.stats_fe)
+ 		global.maxsock += global.stats_fe->maxconn;
+ 
+-	if (peers) {
++	if (cfg_peers) {
+ 		/* peers also need to bypass global maxconn */
+-		struct peers *p = peers;
++		struct peers *p = cfg_peers;
+ 
+-		for (p = peers; p; p = p->next)
++		for (p = cfg_peers; p; p = p->next)
+ 			if (p->peers_fe)
+ 				global.maxsock += p->peers_fe->maxconn;
+ 	}
+@@ -2067,7 +2067,7 @@ int main(int argc, char **argv)
+ 		}
+ 
+ 		/* we might have to unbind some peers sections from some processes */
+-		for (curpeers = peers; curpeers; curpeers = curpeers->next) {
++		for (curpeers = cfg_peers; curpeers; curpeers = curpeers->next) {
+ 			if (!curpeers->peers_fe)
+ 				continue;
+ 
+diff --git a/src/peers.c b/src/peers.c
+index 543c84c1..5b8a287a 100644
+--- a/src/peers.c
++++ b/src/peers.c
+@@ -171,7 +171,7 @@ enum {
+ #define PEER_MINOR_VER        1
+ #define PEER_DWNGRD_MINOR_VER 0
+ 
+-struct peers *peers = NULL;
++struct peers *cfg_peers = NULL;
+ static void peer_session_forceshutdown(struct appctx *appctx);
+ 
+ /* This function encode an uint64 to 'dynamic' length format.
+@@ -727,19 +727,19 @@ switchstate:
+ 				/* if current peer is local */
+                                 if (curpeer->local) {
+                                         /* if current host need resyncfrom local and no process assined  */
+-                                        if ((peers->flags & PEERS_RESYNC_STATEMASK) == PEERS_RESYNC_FROMLOCAL &&
+-                                            !(peers->flags & PEERS_F_RESYNC_ASSIGN)) {
++                                        if ((curpeers->flags & PEERS_RESYNC_STATEMASK) == PEERS_RESYNC_FROMLOCAL &&
++                                            !(curpeers->flags & PEERS_F_RESYNC_ASSIGN)) {
+                                                 /* assign local peer for a lesson, consider lesson already requested */
+                                                 curpeer->flags |= PEER_F_LEARN_ASSIGN;
+-                                                peers->flags |= (PEERS_F_RESYNC_ASSIGN|PEERS_F_RESYNC_PROCESS);
++                                                curpeers->flags |= (PEERS_F_RESYNC_ASSIGN|PEERS_F_RESYNC_PROCESS);
+                                         }
+ 
+                                 }
+-                                else if ((peers->flags & PEERS_RESYNC_STATEMASK) == PEERS_RESYNC_FROMREMOTE &&
+-                                         !(peers->flags & PEERS_F_RESYNC_ASSIGN)) {
++                                else if ((curpeers->flags & PEERS_RESYNC_STATEMASK) == PEERS_RESYNC_FROMREMOTE &&
++                                         !(curpeers->flags & PEERS_F_RESYNC_ASSIGN)) {
+                                         /* assign peer for a lesson  */
+                                         curpeer->flags |= PEER_F_LEARN_ASSIGN;
+-                                        peers->flags |= PEERS_F_RESYNC_ASSIGN;
++                                        curpeers->flags |= PEERS_F_RESYNC_ASSIGN;
+                                 }
+ 
+ 
+@@ -807,7 +807,7 @@ switchstate:
+ 				curpeer->statuscode = atoi(trash.str);
+ 
+ 				/* Awake main task */
+-				task_wakeup(peers->sync_task, TASK_WOKEN_MSG);
++				task_wakeup(curpeers->sync_task, TASK_WOKEN_MSG);
+ 
+ 				/* If status code is success */
+ 				if (curpeer->statuscode == PEER_SESS_SC_SUCCESSCODE) {
+@@ -830,14 +830,14 @@ switchstate:
+                                                 curpeer->flags |= PEER_F_TEACH_PROCESS;
+ 
+                                         }
+-                                        else if ((peers->flags & PEERS_RESYNC_STATEMASK) == PEERS_RESYNC_FROMREMOTE &&
+-                                                    !(peers->flags & PEERS_F_RESYNC_ASSIGN)) {
++                                        else if ((curpeers->flags & PEERS_RESYNC_STATEMASK) == PEERS_RESYNC_FROMREMOTE &&
++                                                    !(curpeers->flags & PEERS_F_RESYNC_ASSIGN)) {
+                                                 /* If peer is remote and resync from remote is needed,
+                                                    and no peer currently assigned */
+ 
+                                                 /* assign peer for a lesson */
+                                                 curpeer->flags |= PEER_F_LEARN_ASSIGN;
+-						peers->flags |= PEERS_F_RESYNC_ASSIGN;
++						curpeers->flags |= PEERS_F_RESYNC_ASSIGN;
+ 					}
+ 
+ 				}
+@@ -950,8 +950,8 @@ switchstate:
+ 
+ 						if (curpeer->flags & PEER_F_LEARN_ASSIGN) {
+ 							curpeer->flags &= ~PEER_F_LEARN_ASSIGN;
+-							peers->flags &= ~(PEERS_F_RESYNC_ASSIGN|PEERS_F_RESYNC_PROCESS);
+-							peers->flags |= (PEERS_F_RESYNC_LOCAL|PEERS_F_RESYNC_REMOTE);
++							curpeers->flags &= ~(PEERS_F_RESYNC_ASSIGN|PEERS_F_RESYNC_PROCESS);
++							curpeers->flags |= (PEERS_F_RESYNC_LOCAL|PEERS_F_RESYNC_REMOTE);
+ 						}
+ 						curpeer->confirm++;
+ 					}
+@@ -959,11 +959,11 @@ switchstate:
+ 
+ 						if (curpeer->flags & PEER_F_LEARN_ASSIGN) {
+ 							curpeer->flags &= ~PEER_F_LEARN_ASSIGN;
+-							peers->flags &= ~(PEERS_F_RESYNC_ASSIGN|PEERS_F_RESYNC_PROCESS);
++							curpeers->flags &= ~(PEERS_F_RESYNC_ASSIGN|PEERS_F_RESYNC_PROCESS);
+ 
+ 							curpeer->flags |= PEER_F_LEARN_NOTUP2DATE;
+-							peers->resync_timeout = tick_add(now_ms, MS_TO_TICKS(5000));
+-							task_wakeup(peers->sync_task, TASK_WOKEN_MSG);
++							curpeers->resync_timeout = tick_add(now_ms, MS_TO_TICKS(5000));
++							task_wakeup(curpeers->sync_task, TASK_WOKEN_MSG);
+ 						}
+ 						curpeer->confirm++;
+ 					}
+@@ -1334,8 +1334,8 @@ incomplete:
+ 
+ 				/* Need to request a resync */
+                                 if ((curpeer->flags & PEER_F_LEARN_ASSIGN) &&
+-                                        (peers->flags & PEERS_F_RESYNC_ASSIGN) &&
+-                                        !(peers->flags & PEERS_F_RESYNC_PROCESS)) {
++                                        (curpeers->flags & PEERS_F_RESYNC_ASSIGN) &&
++                                        !(curpeers->flags & PEERS_F_RESYNC_PROCESS)) {
+ 					unsigned char msg[2];
+ 
+                                         /* Current peer was elected to request a resync */
+@@ -1351,7 +1351,7 @@ incomplete:
+                                                 appctx->st0 = PEER_SESS_ST_END;
+                                                 goto switchstate;
+                                         }
+-                                        peers->flags |= PEERS_F_RESYNC_PROCESS;
++                                        curpeers->flags |= PEERS_F_RESYNC_PROCESS;
+                                 }
+ 
+ 				/* Nothing to read, now we start to write */
+@@ -1624,7 +1624,7 @@ incomplete:
+ 
+                                         /* Current peer was elected to request a resync */
+ 					msg[0] = PEER_MSG_CLASS_CONTROL;
+-					msg[1] = ((peers->flags & PEERS_RESYNC_STATEMASK) == PEERS_RESYNC_FINISHED) ? PEER_MSG_CTRL_RESYNCFINISHED : PEER_MSG_CTRL_RESYNCPARTIAL;
++					msg[1] = ((curpeers->flags & PEERS_RESYNC_STATEMASK) == PEERS_RESYNC_FINISHED) ? PEER_MSG_CTRL_RESYNCFINISHED : PEER_MSG_CTRL_RESYNCPARTIAL;
+ 					/* process final lesson message */
+ 					repl = bi_putblk(si_ic(si), (char *)msg, sizeof(msg));
+ 					if (repl <= 0) {
+diff --git a/src/proxy.c b/src/proxy.c
+index 78120d9b..bedc7ae0 100644
+--- a/src/proxy.c
++++ b/src/proxy.c
+@@ -1007,7 +1007,7 @@ void soft_stop(void)
+ 		p = p->next;
+ 	}
+ 
+-	prs = peers;
++	prs = cfg_peers;
+ 	while (prs) {
+ 		if (prs->peers_fe)
+ 			stop_proxy(prs->peers_fe);
+@@ -1142,7 +1142,7 @@ void pause_proxies(void)
+ 		p = p->next;
+ 	}
+ 
+-	prs = peers;
++	prs = cfg_peers;
+ 	while (prs) {
+ 		if (prs->peers_fe)
+ 			err |= !pause_proxy(prs->peers_fe);
+@@ -1176,7 +1176,7 @@ void resume_proxies(void)
+ 		p = p->next;
+ 	}
+ 
+-	prs = peers;
++	prs = cfg_peers;
+ 	while (prs) {
+ 		if (prs->peers_fe)
+ 			err |= !resume_proxy(prs->peers_fe);
+-- 
+2.13.0
+

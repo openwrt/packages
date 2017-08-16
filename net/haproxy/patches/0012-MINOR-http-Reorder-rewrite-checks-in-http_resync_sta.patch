@@ -1,0 +1,100 @@
+From a49007a187ab7fddfcec58e1d9fc8a707e4531c9 Mon Sep 17 00:00:00 2001
+From: Christopher Faulet <cfaulet@haproxy.com>
+Date: Tue, 18 Jul 2017 11:18:46 +0200
+Subject: [PATCH 12/18] MINOR: http: Reorder/rewrite checks in
+ http_resync_states
+
+The previous patch removed the forced symmetry of the TUNNEL mode during the
+state synchronization. Here, we take care to remove body analyzer only on the
+channel in TUNNEL mode. In fact, today, this change has no effect because both
+sides are switched in same time. But this way, with some changes, it will be
+possible to keep body analyzer on a side (to finish the states synchronization)
+with the other one in TUNNEL mode.
+
+WARNING: This patch will be used to fix a bug. The fix will be commited in a
+very next commit. So if the fix is backported, this one must be backported too.
+
+(cherry picked from commit f77bb539d4846ab278269b99a3165a5608ca0cf4)
+Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+---
+ src/proto_http.c | 48 +++++++++++++++++++++++++++++-------------------
+ 1 file changed, 29 insertions(+), 19 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 796955f5..aaf9f648 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -5577,34 +5577,27 @@ int http_resync_states(struct stream *s)
+ 
+ 	/* OK, both state machines agree on a compatible state.
+ 	 * There are a few cases we're interested in :
+-	 *  - HTTP_MSG_TUNNEL on either means we have to disable both analysers
+ 	 *  - HTTP_MSG_CLOSED on both sides means we've reached the end in both
+ 	 *    directions, so let's simply disable both analysers.
+-	 *  - HTTP_MSG_CLOSED on the response only means we must abort the
+-	 *    request.
+-	 *  - HTTP_MSG_CLOSED on the request and HTTP_MSG_DONE on the response
+-	 *    with server-close mode means we've completed one request and we
+-	 *    must re-initialize the server connection.
++	 *  - HTTP_MSG_CLOSED on the response only or HTTP_MSG_ERROR on either
++	 *    means we must abort the request.
++	 *  - HTTP_MSG_TUNNEL on either means we have to disable analyser on
++	 *    corresponding channel.
++	 *  - HTTP_MSG_DONE or HTTP_MSG_CLOSED on the request and HTTP_MSG_DONE
++	 *    on the response with server-close mode means we've completed one
++	 *    request and we must re-initialize the server connection.
+ 	 */
+-
+-	if (txn->req.msg_state == HTTP_MSG_TUNNEL ||
+-	    txn->rsp.msg_state == HTTP_MSG_TUNNEL ||
+-	    (txn->req.msg_state == HTTP_MSG_CLOSED &&
+-	     txn->rsp.msg_state == HTTP_MSG_CLOSED)) {
++	if (txn->req.msg_state == HTTP_MSG_CLOSED &&
++	    txn->rsp.msg_state == HTTP_MSG_CLOSED) {
+ 		s->req.analysers &= AN_REQ_FLT_END;
+ 		channel_auto_close(&s->req);
+ 		channel_auto_read(&s->req);
+ 		s->res.analysers &= AN_RES_FLT_END;
+ 		channel_auto_close(&s->res);
+ 		channel_auto_read(&s->res);
+-		if (txn->req.msg_state == HTTP_MSG_TUNNEL && HAS_REQ_DATA_FILTERS(s))
+-			s->req.analysers |= AN_REQ_FLT_XFER_DATA;
+-		if (txn->rsp.msg_state == HTTP_MSG_TUNNEL && HAS_RSP_DATA_FILTERS(s))
+-			s->res.analysers |= AN_RES_FLT_XFER_DATA;
+-	}
+-	else if ((txn->req.msg_state >= HTTP_MSG_DONE &&
+-		  (txn->rsp.msg_state == HTTP_MSG_CLOSED || (s->res.flags & CF_SHUTW))) ||
+-		 txn->rsp.msg_state == HTTP_MSG_ERROR ||
++	}
++	else if (txn->rsp.msg_state == HTTP_MSG_CLOSED ||
++		 txn->rsp.msg_state == HTTP_MSG_ERROR  ||
+ 		 txn->req.msg_state == HTTP_MSG_ERROR) {
+ 		s->res.analysers &= AN_RES_FLT_END;
+ 		channel_auto_close(&s->res);
+@@ -5615,6 +5608,23 @@ int http_resync_states(struct stream *s)
+ 		channel_auto_read(&s->req);
+ 		channel_truncate(&s->req);
+ 	}
++	else if (txn->req.msg_state == HTTP_MSG_TUNNEL ||
++		 txn->rsp.msg_state == HTTP_MSG_TUNNEL) {
++		if (txn->req.msg_state == HTTP_MSG_TUNNEL) {
++			s->req.analysers &= AN_REQ_FLT_END;
++			if (HAS_REQ_DATA_FILTERS(s))
++				s->req.analysers |= AN_REQ_FLT_XFER_DATA;
++		}
++		if (txn->rsp.msg_state == HTTP_MSG_TUNNEL) {
++			s->res.analysers &= AN_RES_FLT_END;
++			if (HAS_RSP_DATA_FILTERS(s))
++				s->res.analysers |= AN_RES_FLT_XFER_DATA;
++		}
++		channel_auto_close(&s->req);
++		channel_auto_read(&s->req);
++		channel_auto_close(&s->res);
++		channel_auto_read(&s->res);
++	}
+ 	else if ((txn->req.msg_state == HTTP_MSG_DONE ||
+ 		  txn->req.msg_state == HTTP_MSG_CLOSED) &&
+ 		 txn->rsp.msg_state == HTTP_MSG_DONE &&
+-- 
+2.13.0
+

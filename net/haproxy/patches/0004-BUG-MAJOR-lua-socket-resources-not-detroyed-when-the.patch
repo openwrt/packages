@@ -1,0 +1,97 @@
+From 2823f54f706f56304970313cb14a98a4ce20d5ab Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <thierry.fournier@ozon.io>
+Date: Sun, 16 Jul 2017 20:48:54 +0200
+Subject: [PATCH 04/18] BUG/MAJOR: lua/socket: resources not detroyed when the
+ socket is aborted
+
+In some cases, the socket is misused. The user can open socket and never
+close it, or open the socket and close it without sending data. This
+causes resources leak on all resources associated to the stream (buffer,
+spoe, ...)
+
+This is caused by the stream_shutdown function which is called outside
+of the stream execution process. Sometimes, the shtudown is required
+while the stream is not started, so the cleanup is ignored.
+
+This patch change the shutdown mode of the session. Now if the session is
+no longer used and the Lua want to destroy it, it just set a destroy flag
+and the session kill itself.
+
+This patch should be backported in 1.6 and 1.7
+
+(cherry picked from cmomit b13b20a19aacb039a33f886e38a181b00c9a6d41)
+
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ include/types/applet.h |  1 +
+ src/hlua.c             | 16 ++++++++++++++--
+ 2 files changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/include/types/applet.h b/include/types/applet.h
+index 46b2bc10..aee9167e 100644
+--- a/include/types/applet.h
++++ b/include/types/applet.h
+@@ -122,6 +122,7 @@ struct appctx {
+ 			struct hlua_socket *socket;
+ 			struct list wake_on_read;
+ 			struct list wake_on_write;
++			int die;
+ 		} hlua;
+ 		struct {
+ 			struct hlua hlua;
+diff --git a/src/hlua.c b/src/hlua.c
+index 2d312804..eb003558 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -1544,6 +1544,15 @@ static void hlua_socket_handler(struct appctx *appctx)
+ 	struct stream_interface *si = appctx->owner;
+ 	struct connection *c = objt_conn(si_opposite(si)->end);
+ 
++	if (appctx->ctx.hlua.die) {
++		si_shutw(si);
++		si_shutr(si);
++		si_ic(si)->flags |= CF_READ_NULL;
++		hlua_com_wake(&appctx->ctx.hlua.wake_on_read);
++		hlua_com_wake(&appctx->ctx.hlua.wake_on_write);
++		stream_shutdown(si_strm(si), SF_ERR_KILLED);
++	}
++
+ 	/* If the connection object is not avalaible, close all the
+ 	 * streams and wakeup everithing waiting for.
+ 	 */
+@@ -1619,9 +1628,10 @@ __LJMP static int hlua_socket_gc(lua_State *L)
+ 
+ 	/* Remove all reference between the Lua stack and the coroutine stream. */
+ 	appctx = objt_appctx(socket->s->si[0].end);
+-	stream_shutdown(socket->s, SF_ERR_KILLED);
+ 	socket->s = NULL;
+ 	appctx->ctx.hlua.socket = NULL;
++	appctx->ctx.hlua.die = 1;
++	appctx_wakeup(appctx);
+ 
+ 	return 0;
+ }
+@@ -1641,10 +1651,11 @@ __LJMP static int hlua_socket_close(lua_State *L)
+ 		return 0;
+ 
+ 	/* Close the stream and remove the associated stop task. */
+-	stream_shutdown(socket->s, SF_ERR_KILLED);
+ 	appctx = objt_appctx(socket->s->si[0].end);
+ 	appctx->ctx.hlua.socket = NULL;
+ 	socket->s = NULL;
++	appctx->ctx.hlua.die = 1;
++	appctx_wakeup(appctx);
+ 
+ 	return 0;
+ }
+@@ -2316,6 +2327,7 @@ __LJMP static int hlua_socket_new(lua_State *L)
+ 
+ 	appctx->ctx.hlua.socket = socket;
+ 	appctx->ctx.hlua.connected = 0;
++	appctx->ctx.hlua.die = 0;
+ 	LIST_INIT(&appctx->ctx.hlua.wake_on_write);
+ 	LIST_INIT(&appctx->ctx.hlua.wake_on_read);
+ 
+-- 
+2.13.0
+

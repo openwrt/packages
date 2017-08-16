@@ -1,0 +1,118 @@
+From f82344c1cf20afcf77e8c3df8f9d341d659da93b Mon Sep 17 00:00:00 2001
+From: Christopher Faulet <cfaulet@haproxy.com>
+Date: Tue, 18 Jul 2017 11:42:08 +0200
+Subject: [PATCH 14/18] BUG/MEDIUM: http: Switch HTTP responses in TUNNEL mode
+ when body length is undefined
+
+When the body length of a HTTP response is undefined, the HTTP parser is blocked
+in the body parsing. Before HAProxy 1.7, in this case, because
+AN_RES_HTTP_XFER_BODY is never set, there is no visible effect. When the server
+closes its connection to terminate the response, HAProxy catches it as a normal
+closure. Since 1.7, we always set this analyzer to enter at least once in
+http_response_forward_body. But, in the present case, when the server connection
+is closed, http_response_forward_body is called one time too many. The response
+is correctly sent to the client, but an error is catched and logged with "SD--"
+flags.
+
+To reproduce the bug, you can use the configuration "tests/test-fsm.cfg". The
+tests 3 and 21 hit the bug.
+
+Idea to fix the bug is to switch the response in TUNNEL mode without switching
+the request. This is possible because of previous patches.
+
+First, we need to detect responses with undefined body length during states
+synchronization. Excluding tunnelled transactions, when the response length is
+undefined, TX_CON_WANT_CLO is always set on the transaction. So, when states are
+synchronized, if TX_CON_WANT_CLO is set, the response is switched in TUNNEL mode
+and the request remains unchanged.
+
+Then, in http_msg_forward_body, we add a specific check to switch the response
+in DONE mode if the body length is undefined and if there is no data filter.
+
+This patch depends on following previous commits:
+
+  * MINOR: http: Switch requests/responses in TUNNEL mode only by checking txn flags
+  * MINOR: http: Reorder/rewrite checks in http_resync_states
+
+This patch must be backported in 1.7 with 2 previous ones.
+
+(cherry picked from commit 1486b0ab6de744e14ae684af105951345534f9ec)
+Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+---
+ src/proto_http.c | 37 +++++++++++++++++++++++++------------
+ 1 file changed, 25 insertions(+), 12 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 00a92cdb..e776e4d5 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -5354,7 +5354,16 @@ int http_sync_req_state(struct stream *s)
+ 			 * let's enforce it now that we're not expecting any new
+ 			 * data to come. The caller knows the stream is complete
+ 			 * once both states are CLOSED.
++			 *
++			 *  However, there is an exception if the response
++			 *  length is undefined. In this case, we need to wait
++			 *  the close from the server. The response will be
++			 *  switched in TUNNEL mode until the end.
+ 			 */
++			if (!(txn->rsp.flags & HTTP_MSGF_XFER_LEN) &&
++			    txn->rsp.msg_state != HTTP_MSG_CLOSED)
++				goto check_channel_flags;
++
+ 			if (!(chn->flags & (CF_SHUTW|CF_SHUTW_NOW))) {
+ 				channel_shutr_now(chn);
+ 				channel_shutw_now(chn);
+@@ -5471,8 +5480,16 @@ int http_sync_res_state(struct stream *s)
+ 			 * let's enforce it now that we're not expecting any new
+ 			 * data to come. The caller knows the stream is complete
+ 			 * once both states are CLOSED.
++			 *
++			 * However, there is an exception if the response length
++			 * is undefined. In this case, we switch in TUNNEL mode.
+ 			 */
+-			if (!(chn->flags & (CF_SHUTW|CF_SHUTW_NOW))) {
++			if (!(txn->rsp.flags & HTTP_MSGF_XFER_LEN)) {
++				channel_auto_read(chn);
++				txn->rsp.msg_state = HTTP_MSG_TUNNEL;
++				chn->flags |= CF_NEVER_WAIT;
++			}
++			else if (!(chn->flags & (CF_SHUTW|CF_SHUTW_NOW))) {
+ 				channel_shutr_now(chn);
+ 				channel_shutw_now(chn);
+ 			}
+@@ -6952,14 +6969,6 @@ int http_response_forward_body(struct stream *s, struct channel *res, int an_bit
+ 	if ((msg->flags & HTTP_MSGF_TE_CHNK) || (msg->flags & HTTP_MSGF_COMPRESSING))
+ 		res->flags |= CF_EXPECT_MORE;
+ 
+-	/* If there is neither content-length, nor transfer-encoding header
+-	 * _AND_ there is no data filtering, we can safely forward all data
+-	 * indefinitely. */
+-	if (!(msg->flags & HTTP_MSGF_XFER_LEN) && !HAS_DATA_FILTERS(s, res)) {
+-		buffer_flush(res->buf);
+-		channel_forward_forever(res);
+-	}
+-
+ 	/* the stream handler will take care of timeouts and errors */
+ 	return 0;
+ 
+@@ -7036,9 +7045,13 @@ http_msg_forward_body(struct stream *s, struct http_msg *msg)
+ 		goto missing_data_or_waiting;
+ 	}
+ 
+-	/* The server still sending data that should be filtered */
+-	if (!(msg->flags & HTTP_MSGF_XFER_LEN) && !(chn->flags & CF_SHUTR))
+-		goto missing_data_or_waiting;
++	/* This check can only be true for a response. HTTP_MSGF_XFER_LEN is
++	 * always set for a request. */
++	if (!(msg->flags & HTTP_MSGF_XFER_LEN)) {
++		/* The server still sending data that should be filtered */
++		if (!(chn->flags & CF_SHUTR) && HAS_DATA_FILTERS(s, chn))
++			goto missing_data_or_waiting;
++	}
+ 
+ 	msg->msg_state = HTTP_MSG_ENDING;
+ 
+-- 
+2.13.0
+
