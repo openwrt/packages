@@ -45,6 +45,7 @@ $(call Package/ntpd/Default)
   DEPENDS+= +ntp-utils
   TITLE+= server
   USERID:=ntp=123:ntp=123
+  DEPENDS+= +ntp-utils
 endef
 
 define Package/ntpd/description
@@ -147,6 +148,7 @@ endef
 
 define Package/ntp-utils/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpq/ntpq $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpdc/ntpdc $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpq/ntpq $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/util/ntptime $(1)/usr/sbin/
