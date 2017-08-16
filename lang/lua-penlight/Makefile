@@ -28,7 +28,7 @@ define Package/lua-penlight
   TITLE:=Penlight
   URL:=http://stevedonovan.github.io/Penlight/api/manual/01-introduction.md.html
   DEPENDS:=+luafilesystem
-  MAINTAINER:=Karl Palsson <karlp@remake.is>
+  MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
 
 define Package/lua-penlight/description
