@@ -14,7 +14,6 @@ PKG_RELEASE:=1
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
 PKG_HASH:=b4222e26fdb620a8d3c3a3a8b955e08b713672e1bc5198d1e4f462308a795b30
-PKG_MD5SUM:=995eb0a140455cf0cfc497e5bd7f94b3
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=2-clause BSD-like license
 
@@ -271,7 +270,7 @@ define  Prepare/nginx-naxsi
 endef
 
 define Download/lua-nginx
-	VERSION:=1967998b0eedab1ff51bff8fafa5fc3db47976aa
+	VERSION:=cdd2ae921f67bf396c743406493127be496e57ce
 	SUBDIR:=lua-nginx
 	FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
 	URL:=https://github.com/openresty/lua-nginx-module.git
