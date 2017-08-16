@@ -9,12 +9,17 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.12.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
+
+NCHAN_VERSION:=1.1.7
+NCHAN_VERSION_HASH:=c8ae7791560ef19a0fec459f424366a09e3baf52ab0fc4938ffce8d962b6abd6
+
+NAXSI_VERSION:=cf73f9c8664127252c2a4958d2e169516d3845a1
+LUA_VERSION:=20d6558b074f1bda3584827412f2e364aeb00b0f
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
 PKG_HASH:=b4222e26fdb620a8d3c3a3a8b955e08b713672e1bc5198d1e4f462308a795b30
-PKG_MD5SUM:=995eb0a140455cf0cfc497e5bd7f94b3
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=2-clause BSD-like license
 
@@ -59,6 +64,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_V2 \
 	CONFIG_NGINX_PCRE \
 	CONFIG_NGINX_NAXSI \
+	CONFIG_NGINX_NCHAN \
 	CONFIG_NGINX_LUA \
 	CONFIG_NGINX_HTTP_REAL_IP \
 	CONFIG_NGINX_HTTP_SECURE_LINK
@@ -96,6 +102,9 @@ ifeq ($(CONFIG_NGINX_NAXSI),y)
 endif
 ifeq ($(CONFIG_NGINX_LUA),y)
   ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/lua-nginx
+endif
+ifeq ($(CONFIG_NGINX_NCHAN),y)
+  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nchan-$(NCHAN_VERSION)
 endif
 ifeq ($(CONFIG_IPV6),y)
   ADDITIONAL_MODULES += --with-ipv6
@@ -255,10 +264,11 @@ define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(if $(CONFIG_NGINX_NAXSI),$(call Prepare/nginx-naxsi))
 	$(if $(CONFIG_NGINX_LUA),$(call Prepare/lua-nginx))
+	$(if $(CONFIG_NGINX_NCHAN),$(call Prepare/nginx-nchan))
 endef
 
 define Download/nginx-naxsi
-	VERSION:=cf73f9c8664127252c2a4958d2e169516d3845a1
+	VERSION:=$(NAXSI_VERSION)
 	SUBDIR:=nginx-naxsi
 	FILE:=nginx-naxsi-module-$(PKG_VERSION)-$$(VERSION).tar.gz
 	URL:=https://github.com/nbs-system/naxsi.git
@@ -271,7 +281,7 @@ define  Prepare/nginx-naxsi
 endef
 
 define Download/lua-nginx
-	VERSION:=1967998b0eedab1ff51bff8fafa5fc3db47976aa
+	VERSION:=$(LUA_VERSION)
 	SUBDIR:=lua-nginx
 	FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
 	URL:=https://github.com/openresty/lua-nginx-module.git
@@ -282,6 +292,18 @@ define  Prepare/lua-nginx
 	$(eval $(call Download,lua-nginx))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
 	$(call PatchDir,$(PKG_BUILD_DIR),./patches-lua-nginx)
+endef
+
+define Download/nginx-nchan
+	VERSION:=$(NCHAN_VERSION)
+	FILE:=v$$(VERSION).tar.gz
+	URL:=https://github.com/slact/nchan/archive/
+	PKG_HASH:=$(NCHAN_VERSION_HASH)
+endef
+
+define Prepare/nginx-nchan
+	$(eval $(call Download,nginx-nchan))
+	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
 endef
 
 $(eval $(call BuildPackage,nginx))

@@ -201,5 +201,11 @@ config NGINX_HTTP_SECURE_LINK
 	bool
 	prompt "Enable HTTP secure link module"
 	default n
+	
+config NGINX_NCHAN
+	bool
+	prompt "Enable Nginx Nchan module"
+	default n
 
 endmenu
+
