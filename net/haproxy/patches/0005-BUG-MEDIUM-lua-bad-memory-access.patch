@@ -1,0 +1,46 @@
+From ea3b479be6cacb399a6541a00b1bdce17b0179d0 Mon Sep 17 00:00:00 2001
+From: Thierry FOURNIER <thierry.fournier@ozon.io>
+Date: Mon, 17 Jul 2017 00:44:40 +0200
+Subject: [PATCH 05/18] BUG/MEDIUM: lua: bad memory access
+
+We cannot perform garbage collection on unreferenced thread.
+This memory is now free and another Lua process can use it for
+other things.
+
+HAProxy is monothread, so this bug doesn't cause crash.
+
+This patch must be backported in 1.6 and 1.7
+(cherry picked from commit 7bd10d58d3aecf7cf1e5ee7df01193e07128a52d)
+
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/hlua.c | 12 +++---------
+ 1 file changed, 3 insertions(+), 9 deletions(-)
+
+diff --git a/src/hlua.c b/src/hlua.c
+index eb003558..a998860e 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -895,16 +895,10 @@ void hlua_ctx_destroy(struct hlua *lua)
+ 	 * the garbage collection.
+ 	 */
+ 	if (lua->flags & HLUA_MUST_GC) {
+-		if (!SET_SAFE_LJMP(lua->T))
++		if (!SET_SAFE_LJMP(gL.T))
+ 			return;
+-		lua_gc(lua->T, LUA_GCCOLLECT, 0);
+-		RESET_SAFE_LJMP(lua->T);
+-		if (lua_status(lua->T) != LUA_OK) {
+-			if (!SET_SAFE_LJMP(gL.T))
+-				return;
+-			lua_gc(gL.T, LUA_GCCOLLECT, 0);
+-			RESET_SAFE_LJMP(gL.T);
+-		}
++		lua_gc(gL.T, LUA_GCCOLLECT, 0);
++		RESET_SAFE_LJMP(gL.T);
+ 	}
+ 
+ 	lua->T = NULL;
+-- 
+2.13.0
+

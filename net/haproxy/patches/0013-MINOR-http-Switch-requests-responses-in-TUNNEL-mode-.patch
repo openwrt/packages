@@ -1,0 +1,153 @@
+From 1430a0c0f62fcff4303706f5baf2b544e00fcda3 Mon Sep 17 00:00:00 2001
+From: Christopher Faulet <cfaulet@haproxy.com>
+Date: Tue, 18 Jul 2017 10:48:24 +0200
+Subject: [PATCH 13/18] MINOR: http: Switch requests/responses in TUNNEL mode
+ only by checking txn flags
+
+Today, the only way to have a request or a response in HTTP_MSG_TUNNEL state is
+to have the flag TX_CON_WANT_TUN set on the transaction. So this is a symmetric
+state. Both the request and the response are switch in same time in this
+state. This can be done only by checking transaction flags instead of relying on
+the other side state. This is the purpose of this patch.
+
+This way, if for any reason we need to switch only one side in TUNNEL mode, it
+will be possible. And to prepare asymmetric cases, we check channel flags in
+DONE _AND_ TUNNEL states.
+
+WARNING: This patch will be used to fix a bug. The fix will be commited in a
+very next commit. So if the fix is backported, this one must be backported too.
+
+(cherry picked from commit 4be9803914ae7156109c915659aad216e4a3c6c1)
+Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+---
+ src/proto_http.c | 65 +++++++++++++++++++-------------------------------------
+ 1 file changed, 22 insertions(+), 43 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index aaf9f648..00a92cdb 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -5294,7 +5294,7 @@ int http_sync_req_state(struct stream *s)
+ 	unsigned int old_flags = chn->flags;
+ 	unsigned int old_state = txn->req.msg_state;
+ 
+-	if (unlikely(txn->req.msg_state < HTTP_MSG_BODY))
++	if (unlikely(txn->req.msg_state < HTTP_MSG_DONE))
+ 		return 0;
+ 
+ 	if (txn->req.msg_state == HTTP_MSG_DONE) {
+@@ -5338,13 +5338,6 @@ int http_sync_req_state(struct stream *s)
+ 			goto wait_other_side;
+ 		}
+ 
+-		if (txn->rsp.msg_state == HTTP_MSG_TUNNEL) {
+-			/* if any side switches to tunnel mode, the other one does too */
+-			channel_auto_read(chn);
+-			txn->req.msg_state = HTTP_MSG_TUNNEL;
+-			goto wait_other_side;
+-		}
+-
+ 		/* When we get here, it means that both the request and the
+ 		 * response have finished receiving. Depending on the connection
+ 		 * mode, we'll have to wait for the last bytes to leave in either
+@@ -5377,20 +5370,7 @@ int http_sync_req_state(struct stream *s)
+ 			}
+ 		}
+ 
+-		if (chn->flags & (CF_SHUTW|CF_SHUTW_NOW)) {
+-			/* if we've just closed an output, let's switch */
+-			s->si[1].flags |= SI_FL_NOLINGER;  /* we want to close ASAP */
+-
+-			if (!channel_is_empty(chn)) {
+-				txn->req.msg_state = HTTP_MSG_CLOSING;
+-				goto http_msg_closing;
+-			}
+-			else {
+-				txn->req.msg_state = HTTP_MSG_CLOSED;
+-				goto http_msg_closed;
+-			}
+-		}
+-		goto wait_other_side;
++		goto check_channel_flags;
+ 	}
+ 
+ 	if (txn->req.msg_state == HTTP_MSG_CLOSING) {
+@@ -5419,6 +5399,16 @@ int http_sync_req_state(struct stream *s)
+ 		goto wait_other_side;
+ 	}
+ 
++ check_channel_flags:
++	/* Here, we are in HTTP_MSG_DONE or HTTP_MSG_TUNNEL */
++	if (chn->flags & (CF_SHUTW|CF_SHUTW_NOW)) {
++		/* if we've just closed an output, let's switch */
++		s->si[1].flags |= SI_FL_NOLINGER;  /* we want to close ASAP */
++		txn->req.msg_state = HTTP_MSG_CLOSING;
++		goto http_msg_closing;
++	}
++
++
+  wait_other_side:
+ 	return txn->req.msg_state != old_state || chn->flags != old_flags;
+ }
+@@ -5438,7 +5428,7 @@ int http_sync_res_state(struct stream *s)
+ 	unsigned int old_flags = chn->flags;
+ 	unsigned int old_state = txn->rsp.msg_state;
+ 
+-	if (unlikely(txn->rsp.msg_state < HTTP_MSG_BODY))
++	if (unlikely(txn->rsp.msg_state < HTTP_MSG_DONE))
+ 		return 0;
+ 
+ 	if (txn->rsp.msg_state == HTTP_MSG_DONE) {
+@@ -5461,14 +5451,6 @@ int http_sync_res_state(struct stream *s)
+ 			goto wait_other_side;
+ 		}
+ 
+-		if (txn->req.msg_state == HTTP_MSG_TUNNEL) {
+-			/* if any side switches to tunnel mode, the other one does too */
+-			channel_auto_read(chn);
+-			txn->rsp.msg_state = HTTP_MSG_TUNNEL;
+-			chn->flags |= CF_NEVER_WAIT;
+-			goto wait_other_side;
+-		}
+-
+ 		/* When we get here, it means that both the request and the
+ 		 * response have finished receiving. Depending on the connection
+ 		 * mode, we'll have to wait for the last bytes to leave in either
+@@ -5506,18 +5488,7 @@ int http_sync_res_state(struct stream *s)
+ 				txn->rsp.msg_state = HTTP_MSG_TUNNEL;
+ 		}
+ 
+-		if (chn->flags & (CF_SHUTW|CF_SHUTW_NOW)) {
+-			/* if we've just closed an output, let's switch */
+-			if (!channel_is_empty(chn)) {
+-				txn->rsp.msg_state = HTTP_MSG_CLOSING;
+-				goto http_msg_closing;
+-			}
+-			else {
+-				txn->rsp.msg_state = HTTP_MSG_CLOSED;
+-				goto http_msg_closed;
+-			}
+-		}
+-		goto wait_other_side;
++		goto check_channel_flags;
+ 	}
+ 
+ 	if (txn->rsp.msg_state == HTTP_MSG_CLOSING) {
+@@ -5548,6 +5519,14 @@ int http_sync_res_state(struct stream *s)
+ 		goto wait_other_side;
+ 	}
+ 
++ check_channel_flags:
++	/* Here, we are in HTTP_MSG_DONE or HTTP_MSG_TUNNEL */
++	if (chn->flags & (CF_SHUTW|CF_SHUTW_NOW)) {
++		/* if we've just closed an output, let's switch */
++		txn->rsp.msg_state = HTTP_MSG_CLOSING;
++		goto http_msg_closing;
++	}
++
+  wait_other_side:
+ 	/* We force the response to leave immediately if we're waiting for the
+ 	 * other side, since there is no pending shutdown to push it out.
+-- 
+2.13.0
+

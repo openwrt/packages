@@ -1,0 +1,43 @@
+From af9b52e92be8ca6a07f9156dcb0b08dd2ad8db75 Mon Sep 17 00:00:00 2001
+From: Christopher Faulet <cfaulet@haproxy.com>
+Date: Thu, 20 Jul 2017 11:05:10 +0200
+Subject: [PATCH 15/18] BUG/MAJOR: http: Fix possible infinity loop in
+ http_sync_(req|res)_state
+
+In commit "MINOR: http: Switch requests/responses in TUNNEL mode only by
+checking txn flags", it is possible to have an infinite loop on HTTP_MSG_CLOSING
+state.
+
+(cherry picked from commit 56d260916f61e48c8b2f1fd2f9431afac776d160)
+Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+---
+ src/proto_http.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index e776e4d5..4a030013 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -5394,8 +5394,8 @@ int http_sync_req_state(struct stream *s)
+ 		else if (chn->flags & CF_SHUTW) {
+ 			txn->req.err_state = txn->req.msg_state;
+ 			txn->req.msg_state = HTTP_MSG_ERROR;
+-			goto wait_other_side;
+ 		}
++		goto wait_other_side;
+ 	}
+ 
+ 	if (txn->req.msg_state == HTTP_MSG_CLOSED) {
+@@ -5523,8 +5523,8 @@ int http_sync_res_state(struct stream *s)
+ 			s->be->be_counters.cli_aborts++;
+ 			if (objt_server(s->target))
+ 				objt_server(s->target)->counters.cli_aborts++;
+-			goto wait_other_side;
+ 		}
++		goto wait_other_side;
+ 	}
+ 
+ 	if (txn->rsp.msg_state == HTTP_MSG_CLOSED) {
+-- 
+2.13.0
+
