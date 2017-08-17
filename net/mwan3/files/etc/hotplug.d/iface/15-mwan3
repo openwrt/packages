@@ -68,13 +68,13 @@ case "$ACTION" in
 		if [ ${running} -eq 1 -a "${status}" = "online" ]; then
 			mwan3_create_iface_rules $INTERFACE $DEVICE
 			mwan3_create_iface_route $INTERFACE $DEVICE
-			mwan3_track $INTERFACE $DEVICE ${src_ip} "online"
+			mwan3_track $INTERFACE $DEVICE "online" "$src_ip"
 			mwan3_set_policies_iptables
 			mwan3_set_user_rules
 			mwan3_flush_conntrack $INTERFACE $DEVICE "ifup"
 		else
 			$LOG notice "Starting tracker on interface $INTERFACE (${DEVICE:-unknown})"
-			mwan3_track $INTERFACE $DEVICE "offline"
+			mwan3_track $INTERFACE $DEVICE "offline" "$src_ip"
 		fi
 	;;
 	ifdown)
