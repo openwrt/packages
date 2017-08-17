@@ -19,7 +19,7 @@ exec_status() {
 	while :;do sleep 590;echo "still running (please don't kill me Travis)";done &
 	("$@" 2>&1) | tee logoutput
 	R=${PIPESTATUS[0]}
-	kill $!
+	kill $! && wait $! 2>/dev/null
 	if [ $R -ne 0 ]; then
 		echo_red   "=> '$*' failed (return code $R)"
 		return 1
