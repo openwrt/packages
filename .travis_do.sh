@@ -134,7 +134,7 @@ EOF
 		echo_blue "=== $pkg_name: end packages sizes"
 	done
 
-	return 0
+	return $RET
 }
 
 test_commits() {
