@@ -141,8 +141,8 @@ md5sum(const char *file)
 		close(fds[0]);
 		close(fds[1]);
 
-		if (execl("/bin/busybox", "/bin/busybox", "md5sum", file, NULL));
-			return NULL;
+		{ { if (execl("/bin/busybox", "/bin/busybox", "md5sum", file, NULL)); }
+			return NULL; }
 
 		break;
 
