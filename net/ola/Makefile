@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
-# Copyright (C) 2015 Christian Beier <dontmind@freeshell.org>
+# Copyright (C) 2006-2017 OpenWrt.org
+# Copyright (C) 2015-2017 Christian Beier <dontmind@freeshell.org>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,14 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ola
-PKG_VERSION:=0.10.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.10.5
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/OpenLightingProject/ola.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=5b86f5802e2e5b23c6a010dc8d10788e6dc57614
+PKG_SOURCE_VERSION:=32db3c49d435398d017c6b5c0b25e02a7a831f5c
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH=11ed6540bd667c1662d91de93a260a9a63a98725851f768647e2b9b2efe1ae34
 PKG_LICENSE:=LGPL-2.1+
 
 PKG_FIXUP:=libtool
