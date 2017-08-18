@@ -1,0 +1,67 @@
+Index: bash-4.4/lib/readline/history.c
+===================================================================
+--- bash-4.4.orig/lib/readline/history.c
++++ bash-4.4/lib/readline/history.c
+@@ -279,6 +279,7 @@ add_history (string)
+      const char *string;
+ {
+   HIST_ENTRY *temp;
++  int new_length;
+ 
+   if (history_stifled && (history_length == history_max_entries))
+     {
+@@ -295,13 +296,9 @@ add_history (string)
+ 
+       /* Copy the rest of the entries, moving down one slot.  Copy includes
+ 	 trailing NULL.  */
+-#if 0
+-      for (i = 0; i < history_length; i++)
+-	the_history[i] = the_history[i + 1];
+-#else
+       memmove (the_history, the_history + 1, history_length * sizeof (HIST_ENTRY *));
+-#endif
+ 
++      new_length = history_length;
+       history_base++;
+     }
+   else
+@@ -315,7 +312,7 @@ add_history (string)
+ 	  else
+ 	    history_size = DEFAULT_HISTORY_INITIAL_SIZE;
+ 	  the_history = (HIST_ENTRY **)xmalloc (history_size * sizeof (HIST_ENTRY *));
+-	  history_length = 1;
++	  new_length = 1;
+ 	}
+       else
+ 	{
+@@ -325,14 +322,15 @@ add_history (string)
+ 	      the_history = (HIST_ENTRY **)
+ 		xrealloc (the_history, history_size * sizeof (HIST_ENTRY *));
+ 	    }
+-	  history_length++;
++	  new_length = history_length + 1;
+ 	}
+     }
+ 
+   temp = alloc_history_entry ((char *)string, hist_inittime ());
+ 
+-  the_history[history_length] = (HIST_ENTRY *)NULL;
+-  the_history[history_length - 1] = temp;
++  the_history[new_length] = (HIST_ENTRY *)NULL;
++  the_history[new_length - 1] = temp;
++  history_length = new_length;
+ }
+ 
+ /* Change the time stamp of the most recent history entry to STRING. */
+Index: bash-4.4/patchlevel.h
+===================================================================
+--- bash-4.4.orig/patchlevel.h
++++ bash-4.4/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 8
++#define PATCHLEVEL 9
+ 
+ #endif /* _PATCHLEVEL_H_ */
