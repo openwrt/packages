@@ -1,0 +1,41 @@
+#
+# Copyright (C) 2016 Md. Minhazul Haque
+# 
+# Distributed under the MIT software license, see the accompanying
+# file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ 
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=lua-task
+PKG_VERSION:=master
+PKG_RELEASE:=1
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/minhazul-haque/lua-task.git
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/$(PKG_NAME)
+    SUBMENU:=Lua
+    SECTION:=lang
+    CATEGORY:=Languages
+    TITLE:=Multitasking library for Lua
+    DEPENDS:=+lua +libpthread
+    MAINTAINER:=Md. Minhazul Haque <mdminhazulhaque@gmail.com>
+endef
+
+define Package/$(PKG_NAME)/description
+    Multitasking library for Lua
+endef
+
+define Package/$(PKG_NAME)/install
+    $(INSTALL_DIR) $(1)/usr/lib/lua
+    $(INSTALL_BIN) $(PKG_BUILD_DIR)/task.so $(1)/usr/lib/lua
+endef
+
+$(eval $(call BuildPackage,$(PKG_NAME)))
