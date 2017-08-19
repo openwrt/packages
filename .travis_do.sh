@@ -118,7 +118,8 @@ EOF
 
 		# we can't enable verbose built else we often hit Travis limits
 		# on log size and the job get killed
-		exec_status '^ERROR' make "package/$pkg_name/compile" -j3 || RET=1
+		CPU_MAX="$(( $(grep -c ^processor /proc/cpuinfo) + 1 ))"
+		exec_status '^ERROR' make "package/$pkg_name/compile" -j$CPU_MAX || RET=1
 
 		echo_blue "=== $pkg_name: compile test done"
 
