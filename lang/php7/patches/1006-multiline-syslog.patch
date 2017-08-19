@@ -1,0 +1,172 @@
+commit 4d77af8d7d349b7b9e43082deb47c1469f450115
+Author: Philip Prindeville <philipp@redfish-solutions.com>
+Date:   Fri Aug 18 12:05:44 2017 -0600
+
+    Backport of fix for Issue #74860
+
+diff --git a/configure.in b/configure.in
+index 9acf42b..559a274 100644
+--- a/configure.in
++++ b/configure.in
+@@ -1470,7 +1470,7 @@ PHP_ADD_SOURCES(main, main.c snprintf.c spprintf.c php_sprintf.c \
+        php_ini.c SAPI.c rfc1867.c php_content_types.c strlcpy.c \
+        strlcat.c mergesort.c reentrancy.c php_variables.c php_ticks.c \
+        network.c php_open_temporary_file.c \
+-       output.c getopt.c, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
++       output.c getopt.c php_syslog.c, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
+ 
+ PHP_ADD_SOURCES_X(main, fastcgi.c, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1, PHP_FASTCGI_OBJS, no)
+ 
+diff --git a/ext/standard/php_smart_string.h b/ext/standard/php_smart_string.h
+index adb78c0..8d90688 100644
+--- a/ext/standard/php_smart_string.h
++++ b/ext/standard/php_smart_string.h
+@@ -146,4 +146,8 @@
+ #define smart_string_sets(dest, src) \
+ 	smart_string_setl((dest), (src), strlen(src));
+ 
++#define smart_string_reset(dest) do {		\
++	(dest)->len = 0;			\
++} while (0)
++
+ #endif
+diff --git a/main/php_syslog.c b/main/php_syslog.c
+new file mode 100644
+index 0000000..43d1f56
+--- /dev/null
++++ b/main/php_syslog.c
+@@ -0,0 +1,80 @@
++/*
++   +----------------------------------------------------------------------+
++   | PHP Version 7                                                        |
++   +----------------------------------------------------------------------+
++   | Copyright (c) 2017 The PHP Group                                |
++   +----------------------------------------------------------------------+
++   | This source file is subject to version 3.01 of the PHP license,      |
++   | that is bundled with this package in the file LICENSE, and is        |
++   | available through the world-wide-web at the following url:           |
++   | http://www.php.net/license/3_01.txt                                  |
++   | If you did not receive a copy of the PHP license and are unable to   |
++   | obtain it through the world-wide-web, please send a note to          |
++   | license@php.net so we can mail you a copy immediately.               |
++   +----------------------------------------------------------------------+
++   | Author: Philip Prindeville <philipp@redfish-solutions.com>           |
++   +----------------------------------------------------------------------+
++*/
++
++/* $Id$ */
++
++#include <stdio.h>
++#include <string.h>
++#include <assert.h>
++#include <stdlib.h>
++#include "php.h"
++#include "php_syslog.h"
++
++#include "zend.h"
++#include "ext/standard/php_smart_string.h"
++
++/*
++ * The SCO OpenServer 5 Development System (not the UDK)
++ * defines syslog to std_syslog.
++ */
++
++#ifdef HAVE_STD_SYSLOG
++#define syslog std_syslog
++#endif
++
++PHPAPI void php_syslog(int priority, const char *format, ...) /* {{{ */
++{
++	const char *ptr;
++	unsigned char c;
++	char *message = NULL;
++	smart_string sbuf = {0};
++	va_list args;
++
++	va_start(args, format);
++	vspprintf(&message, 0, format, args);
++	va_end(args);
++
++	for (ptr = message; ; ++ptr) {
++		c = *ptr;
++		if (c == '\0') {
++			syslog(priority, "%.*s", (int)sbuf.len, sbuf.c);
++			break;
++		}
++
++		if (c != '\n')
++			smart_string_appendc(&sbuf, c);
++		else {
++			syslog(priority, "%.*s", (int)sbuf.len, sbuf.c);
++			smart_string_reset(&sbuf);
++		}
++	}
++
++	efree(message);
++	smart_string_free(&sbuf);
++}
++
++/* }}} */
++
++/*
++ * Local variables:
++ * tab-width: 4
++ * c-basic-offset: 4
++ * End:
++ * vim600: sw=4 ts=4 fdm=marker
++ * vim<600: sw=4 ts=4
++ */
+diff --git a/main/php_syslog.h b/main/php_syslog.h
+index 33f52a3..a09f98c 100644
+--- a/main/php_syslog.h
++++ b/main/php_syslog.h
+@@ -21,6 +21,8 @@
+ #ifndef PHP_SYSLOG_H
+ #define PHP_SYSLOG_H
+ 
++#include "php.h"
++
+ #ifdef PHP_WIN32
+ #include "win32/syslog.h"
+ #else
+@@ -30,23 +32,8 @@
+ #endif
+ #endif
+ 
+-/*
+- * The SCO OpenServer 5 Development System (not the UDK)
+- * defines syslog to std_syslog.
+- */
+-
+-#ifdef syslog
+-
+-#ifdef HAVE_STD_SYSLOG
+-#define php_syslog std_syslog
+-#endif
+-
+-#undef syslog
+-
+-#endif
+-
+-#ifndef php_syslog
+-#define php_syslog syslog
+-#endif
++BEGIN_EXTERN_C()
++PHPAPI void php_syslog(int, const char *format, ...);
++END_EXTERN_C()
+ 
+ #endif
+diff --git a/win32/build/config.w32 b/win32/build/config.w32
+index 1269c6e..f766e53 100644
+--- a/win32/build/config.w32
++++ b/win32/build/config.w32
+@@ -237,7 +237,8 @@ ADD_FLAG("CFLAGS_BD_ZEND", "/D ZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+ ADD_SOURCES("main", "main.c snprintf.c spprintf.c getopt.c fopen_wrappers.c \
+ 	php_scandir.c php_ini.c SAPI.c rfc1867.c php_content_types.c strlcpy.c \
+ 	strlcat.c mergesort.c reentrancy.c php_variables.c php_ticks.c network.c \
+-	php_open_temporary_file.c output.c internal_functions.c php_sprintf.c");
++	php_open_temporary_file.c output.c internal_functions.c php_sprintf.c \
++	php_syslog.c");
+ ADD_FLAG("CFLAGS_BD_MAIN", "/D ZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+ ADD_SOURCES("win32", "inet.c fnmatch.c sockets.c");
+ 
