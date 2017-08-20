@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=3.2.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -144,8 +144,8 @@ FFMPEG_MINI_DEMUXERS:= \
 	matroska \
 	mov \
 	mp3 \
+	mpegps \
 	mpegts \
-	mpegvideo \
 	ogg \
 
 FFMPEG_MINI_PROTOCOLS:= \
