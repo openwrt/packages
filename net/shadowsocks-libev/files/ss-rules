@@ -33,6 +33,9 @@ Usage: ss-rules [options]
 	--dst-forward-file <file>
 	--dst-default <bypass|forward>
 	                Same as with their --src-xx equivalent
+	--dst-forward-recentrst
+	                Forward those packets whose destinations have recently
+	                sent to us multiple tcp-rst packets
 	--local-default <bypass|forward|checkdst>
 	                Default action for local out TCP traffic
 
@@ -94,6 +97,7 @@ ss_rules_parse_args() {
 			--src-checkdst) o_src_checkdst="$2"; shift 2;;
 			--dst-bypass) o_dst_bypass="$2"; shift 2;;
 			--dst-forward) o_dst_forward="$2"; shift 2;;
+			--dst-forward-recentrst) o_dst_forward_recentrst=1; shift 1;;
 			--dst-bypass-file) o_dst_bypass_file="$2"; shift 2;;
 			--dst-forward-file) o_dst_forward_file="$2"; shift 2;;
 			*) __errmsg "unknown option $1"; return 1;;
@@ -102,6 +106,10 @@ ss_rules_parse_args() {
 
 	if [ -z "$o_redir_tcp_port" -a -z "$o_redir_udp_port" ]; then
 		__errmsg "Requires at least -l or -L option"
+		return 1
+	fi
+	if [ -n "$o_dst_forward_recentrst" ] && ! iptables -m recent -h >/dev/null; then
+		__errmsg "Please install iptables-mod-conntrack-extra with opkg"
 		return 1
 	fi
 }
@@ -125,6 +133,7 @@ ss_rules_ipset_init() {
 		create ss_rules_dst_bypass hash:net hashsize 64
 		create ss_rules_dst_bypass_ hash:net hashsize 64
 		create ss_rules_dst_forward hash:net hashsize 64
+		create ss_rules_dst_forward_recentrst_ hash:ip hashsize 64 timeout 3600
 		$(ss_rules_ipset_mkadd ss_rules_dst_bypass_ "$o_dst_bypass_ $o_remote_servers")
 		$(ss_rules_ipset_mkadd ss_rules_src_bypass "$o_src_bypass")
 		$(ss_rules_ipset_mkadd ss_rules_src_forward "$o_src_forward")
@@ -151,8 +160,6 @@ ss_rules_iptchains_init() {
 ss_rules_iptchains_init_tcp() {
 	local ipt="iptables -t nat"
 	local local_target
-	local forward_rules
-	local r
 
 	[ -n "$o_redir_tcp_port" ] || return 0
 
@@ -184,10 +191,22 @@ ss_rules_iptchains_init_() {
 	local proto="$2"
 	local forward_rules
 	local src_default_target dst_default_target
+	local recentrst_mangle_rules recentrst_addset_rules
 
 	case "$proto" in
 		tcp)
 			forward_rules="-A ss_rules_forward -p tcp -j REDIRECT --to-ports $o_redir_tcp_port"
+			if [ -n "$o_dst_forward_recentrst" ]; then
+				recentrst_mangle_rules="
+					*mangle
+					-I PREROUTING 1 -p tcp -m tcp --tcp-flags RST RST -m recent --name ss_rules_recentrst --set --rsource
+					COMMIT
+				"
+				recentrst_addset_rules="
+					-A ss_rules_dst -m recent --name ss_rules_recentrst --rcheck --rdest --seconds 3 --hitcount 3 -j SET --add-set ss_rules_dst_forward_recentrst_ dst --exist
+					-A ss_rules_dst -m set --match-set ss_rules_dst_forward_recentrst_ dst -j ss_rules_forward
+				"
+			fi
 			;;
 		udp)
 			ip rule add fwmark 1 lookup 100
@@ -204,7 +223,7 @@ ss_rules_iptchains_init_() {
 		forward) dst_default_target=ss_rules_forward ;;
 		bypass|*) dst_default_target=RETURN ;;
 	esac
-	iptables-restore --noflush <<-EOF
+	sed -e '/^\s*$/d' -e 's/^\s\+//' <<-EOF | iptables-restore --noflush
 		*$table
 		:ss_rules_pre_src -
 		:ss_rules_src -
@@ -219,9 +238,11 @@ ss_rules_iptchains_init_() {
 		-A ss_rules_src -j $src_default_target -m comment --comment "src_default: $o_src_default"
 		-A ss_rules_dst -m set --match-set ss_rules_dst_bypass dst -j RETURN
 		-A ss_rules_dst -m set --match-set ss_rules_dst_forward dst -j ss_rules_forward
+		$recentrst_addset_rules
 		-A ss_rules_dst -j $dst_default_target -m comment --comment "dst_default: $o_dst_default"
 		$forward_rules
 		COMMIT
+		$recentrst_mangle_rules
 	EOF
 }
 

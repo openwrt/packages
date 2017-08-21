@@ -67,9 +67,11 @@ We can have multiple instances of component and `server` sections.  The relation
 
 	local_default		[bypass], forward, checkdst
 
+Bool option `dst_forward_recentrst` requires iptables/netfilter `recent` match module (`opkg install iptables-mod-conntrack-extra`).  When enabled, `ss-rules` will setup iptables rules to forward through `ss-redir` those packets whose destination have recently sent to us multiple tcp-rst.
+
 ss-rules uses kernel ipset mechanism for storing addresses/networks.  Those ipsets are also part of the API and can be populated by other programs, e.g. dnsmasq with builtin ipset support.  For more details please read output of `ss-rules --help`
 
-Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network representation.  Names are retained for backward compatibility coniderations
+Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network representation.  Option names are retained in its current form for backward compatibility coniderations
 
 ## notes and faq
 
