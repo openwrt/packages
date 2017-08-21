@@ -23,6 +23,9 @@ You can also set policies for traffic with specific DSCP tag. Instructions for t
 #### Strict enforcement
 - Supports strict policy enforcement, even if the policy gateway is down -- resulting in network being unreachable for specific policy (enabled by default).
 
+#### Use DNSMASQ
+- Service can be set to utilize ```dnsmasq```'s ```ipset``` support. This requires the ```dnsmasq-full``` to be installed (see [How to install dnsmasq-full](#how-to-install-dnsmasq-full)) and it significantly improves the start up time because dnsmasq resolves the domain names and adds them to ipsets in the background. Another benefit if using ```dnsmasq```'s ```ipset``` is that it also automatically adds third-level domains to the ipset; if ```domain.com``` is added to the policy, this policy will affect all ```*.domain.com``` subdomains.
+
 #### Customization
 - Can be fully configured with uci commands or by editing ```/etc/config/openvpn-policy-routing``` file.
 - Has a companion package (luci-app-openvpn-policy-routing) so everything can be configured with Web UI.
@@ -35,12 +38,19 @@ You can also set policies for traffic with specific DSCP tag. Instructions for t
 ![screenshot](https://raw.githubusercontent.com/stangri/screenshots/master/openvpn-policy-routing/screenshot01.png "screenshot")
 
 ## Requirements
-This service requires the following packages to be installed on your router: ```resolveip```, ```kmod-ipt-ipset``` and ```iptables```.
+This service requires the following packages to be installed on your router: ```ipset```, ```resolveip```, ```kmod-ipt-ipset``` and ```iptables```.
 
 To satisfy the requirements, connect to your router via ssh and run the following commands:
 ```sh
-opkg update; opkg install resolveip kmod-ipt-ipset iptables
+opkg update; opkg install ipset resolveip kmod-ipt-ipset iptables
 ```
+
+#### How to install dnsmasq-full
+If you want to use ```dnsmasq```'s ```ipset``` support, you will need to install ```dnsmasq-full``` instead of the ```dnsmasq```. To do that, connect to your router via ssh and run the following command:
+```sh
+opkg update; opkg remove dnsmasq; opkg install dnsmasq-full
+```
+
 
 #### Unmet dependencies
 If you are running a development (trunk/snapshot) build of OpenWrt/LEDE Project on your router and your build is outdated (meaning that packages of the same revision/commit hash are no longer available and when you try to satisfy the [requirements](#requirements) you get errors), please flash either current LEDE release image or current development/snapshot image.
@@ -134,21 +144,6 @@ Please head to [LEDE Project Forum](https://forum.lede-project.org/t/openvpn-pol
 option route_nopull '1'
 ```
 <!-- option route '0.0.0.0 0.0.0.0'  -->
-<!--
-#### Internal domain-based policies handling
-- Preferred way for the domain-based policies is to rely on ```dnsmasq-full``` to work. If, for some reason, you don't have (or can't have) ```dnsmasq-full``` installed and running, you can configure openvpn-policy-routing to use its own handling of domain-based policies instead.
-
-- The format/syntax for domain-based policies is the same. You can add/edit the domain policies to be handled internally using Web UI (it detects wherever domain-based policies can rely on ```dnsmasq``` or not and lets you edit the proper config file accordingly), by editing ```/etc/config/openvpn-policy-routing``` or by running commands like:
-```sh
-uci add openvpn-policy-routing domain-policy
-uci add_list openvpn-policy-routing.@domain-policy[0].ipset='/whatismyip.com/wanroute'
-uci add_list openvpn-policy-routing.@domain-policy[0].ipset='/showip.net/tun0route'
-uci commit openvpn-policy-routing
-```
-- By default, with internal handling of domain-based policies, only a first resolved IP address for domain will be used. If you want to ensure reliable operation, please configure openvpn-policy-routing to use full name resolution by running  ```uci set openvpn-policy-routing.@domain-policy[0].resolve=1; uci commit openvpn-policy-routing;```.
-
-- If you want to use internal handling of domains-based policies with full name resolution and *large* lists of domains, please consider installing ```bind-dig``` (it requires ```libopenssl``` which is quite heavy), openvpn-policy-routing will recognize that dig is installed and will use it to speed up name resolution during boot/start/reload.
-//-->
 
 ## Thanks
 I'd like to thank everyone who helped create, test and troubleshoot this service. Without contributions from [@hnyman](https://github.com/hnyman), [@dibdot](https://github.com/dibdot), [@danrl](https://github.com/danrl), [@tohojo](https://github.com/tohojo), [@cybrnook](https://github.com/cybrnook), [@nidstigator](https://github.com/nidstigator), [@AndreBL](https://github.com/AndreBL) and rigorous testing by [@dziny](https://github.com/dziny), [@bluenote73](https://github.com/bluenote73) and [@buckaroo](https://github.com/pgera) it wouldn't have been possible.

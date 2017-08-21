@@ -20,7 +20,7 @@ export EXTRA_HELP="	support	Generates output required to troubleshoot routing is
 			WARNING: while paste.ee uploades are unlisted, they are still publicly available
 		List domain names after options to include their lookup in report"
 
-export verbosity strictMode wanTableID='201' wanMark='0x010000' fwMask='0xff0000' ipv6Enabled ipsetEnabled
+export verbosity strictMode wanTableID wanMark fwMask ipv6Enabled ipsetEnabled dnsmasqEnabled
 export wanIface4 wanIface6 ifaceMark ifaceTableID
 
 output_ok() { case $verbosity in 1) output "$_OK_";; 2) output "$__OK__\n";; esac; }
@@ -30,20 +30,30 @@ output_failn() { case $verbosity in 1) output "$_FAIL_\n";; 2) output "$__FAIL__
 output() { [[ $# -ne 1 ]] && { [[ ! $((verbosity & $1)) -gt 0 ]] && return 0 || shift; }; local msg; msg=$(echo -n "${1/$serviceName /service }" | sed 's|\\033\[[0-9]\?;\?[0-9]\?[0-9]\?m||g'); [[ -t 1 ]] && echo -e -n "$1"; [[ $(echo -e -n "$msg" | wc -l) -gt 0 ]] && logger -t "${packageName:-service} [$$]" "$(echo -e -n ${logmsg}${msg})" && logmsg='' || logmsg=${logmsg}${msg}; }
 readonly packageName="openvpn-policy-routing"; serviceName="$packageName $PKG_VERSION"
 readonly PID="/var/run/${packageName}.pid"
+readonly dnsmasqFile="/tmp/dnsmasq.d/${packageName}"
 
 is_enabled() {
 		local sleepCount=1 serviceEnabled
 		config_load $packageName
-		config_get_bool serviceEnabled 'config' 'enabled' 1
-		config_get_bool strictMode     'config' 'strict_enforcement' 0
-		config_get_bool ipv6Enabled    'config' 'ipv6_enabled' 0
+		config_get_bool serviceEnabled 'config' 'enabled' 0
+		config_get_bool strictMode     'config' 'strict_enforcement' 1
+		config_get_bool ipv6Enabled    'config' 'ipv6_enabled' 1
 		config_get_bool ipsetEnabled   'config' 'ipset_enabled' 1
+		config_get_bool dnsmasqEnabled 'config' 'dnsmasq_enabled' 0
 		config_get verbosity    'config' 'verbosity' '2'
 		config_get wanTableID   'config' 'wan_tid' '201'
 		config_get wanMark      'config' 'wan_mark' '0x010000'
 		config_get fwMask       'config' 'fw_mask' '0xff0000'
 
 		[[ $serviceEnabled -gt 0 ]] || { output "$_ERROR_: $serviceName is not enabled.\n"; return 1; }
+		if [[ $dnsmasqEnabled -ne 0 ]]; then
+			if ! dnsmasq --version | grep -q " ipset "; then
+				output "$_ERROR_: dnsmasq is enabled in $packageName, but installed dnsmasq does not support ipsets!\n"
+				dnsmasqEnabled=0
+			else
+				ipsetEnabled=1
+			fi
+		fi
 		source /lib/functions/network.sh
 		while : ; do
 			network_find_wan wanIface4; network_find_wan6 wanIface6;
@@ -53,6 +63,7 @@ is_enabled() {
 			[[ $sleepCount -ge 25 ]] || [ -n "$wanGW" ] && break
 			output "$serviceName waiting for wan gateway...\n"; sleep 2; network_flush_cache; sleepCount=$((sleepCount+1));
 		done
+
 		[ -n "$wanGW" ] && return 0 || { output "$_ERROR_: $serviceName failed to discover WAN gateway.\n"; return 1; }
 }
 
@@ -101,6 +112,16 @@ ips() {
 	esac
 }
 
+# ips_dnsmasq "add" "${iface}route" "$raddr" "${comment}: $raddr"
+ips_dnsmasq() {
+	local command="$1" ipset="$2" domain="$3" comment="$4"
+	[[ $dnsmasqEnabled -eq 0 ]] && return 1
+	case $command in
+		add|*)
+			echo "ipset=/${domain}/${ipset},${ipset}6 # $comment" >> "$dnsmasqFile" || return 1;;
+	esac
+}
+
 insert_policy() {
 	local comment="$1" iface="$2" laddr="$3" lport="$4" raddr="$5" rport="$6" mark
 	mark=$(eval echo "\$mark_$iface")
@@ -133,8 +154,16 @@ r_process_policy(){
 		elif [[ -n "$laddr" && -z "$lport" && -z "$raddr" && -z "$rport" ]]; then #only $laddr policy
 			for i in $(resolveip $laddr); do ips "add" "${iface}local" "$laddr" "${comment}: $laddr" || failFlag=1; done
 		elif [[ -z "$laddr" && -z "$lport" && -n "$raddr" && -z "$rport" ]]; then #only $raddr policy
-			for i in $(resolveip $raddr); do ips "add" "${iface}route" "$raddr" "${comment}: $raddr" || failFlag=1; done
-		else
+			if [ "${raddr//:}" != "$raddr" ]; then # IPv6
+				ips "add" "${iface}route" "$raddr" "${comment}: $raddr" || failFlag=1;
+			elif [ "${raddr//[a-zA-Z-]}" != "$raddr" ]; then # domain, try using dnsmasq first
+				if ! ips_dnsmasq "add" "${iface}route" "$raddr" "${comment}"; then
+					for i in $(resolveip $raddr); do ips "add" "${iface}route" "$raddr" "${comment}: $raddr" || failFlag=1; done
+				fi
+			else # IPv4
+				ips "add" "${iface}route" "$raddr" "${comment}: $raddr" || failFlag=1;
+			fi
+		else # policy cannot be created with the ipset
 			failFlag=1
 		fi
 		if [ -n "$failFlag" ]; then # either ipset above has failed or it's a non-ispet compatible policy
@@ -174,7 +203,7 @@ process_policy(){
 
 	output 2 "Routing '$comment' via $iface "
 	r_process_policy "$comment" "$iface" "$laddr" "$lport" "$raddr" "$rport"
-	[ -z "$process_policy_status" ] && output_ok || { output_fail; output "$_ERROR_: $process_policy_status\n"; }
+	[ -z "$process_policy_status" ] && output_ok || { output_failn; output "$_ERROR_: $process_policy_status\n"; }
 }
 
 table_destroy(){
@@ -301,6 +330,7 @@ start_service() {
 	touch "$PID"
   is_enabled || return 1
 	[ -z "$wanGW" ] && output "$_ERROR_: $serviceName could not discover wan gateway!\n" && exit 1
+	[ -s "$dnsmasqFile" ] && rm -f "$dnsmasqFile"
 	{ modprobe xt_set; modprobe ip_set; modprobe ip_set_hash_ip; } >/dev/null 2>&1;
 	ipt -t mangle -D PREROUTING -m mark --mark 0x00/${fwMask} -g OPR_CHAIN
 	ipt -t mangle -N OPR_CHAIN; ipt -t mangle -A PREROUTING -m mark --mark 0x00/${fwMask} -g OPR_CHAIN;
@@ -311,6 +341,11 @@ start_service() {
 	output 1 'Routing policies '
 	config_load $packageName; config_foreach process_policy 'policy';
 	output 1 '\n'
+	if [ -s "$dnsmasqFile" ]; then
+		output 3 'Restarting dnsmasq '
+		/etc/init.d/dnsmasq restart >/dev/null 2>&1 && output_ok || output_fail
+		output 3 '\n'
+	fi
 
 	if [ -z "$serviceStatusSummary" ]; then
 		output "$_ERROR_: $serviceName failed to find any gateway!\n"; return 1;
@@ -329,6 +364,10 @@ stop_service() {
 		ipt -t mangle -D PREROUTING -m mark --mark 0x00/${fwMask} -g OPR_CHAIN
 		ipt -t mangle -F OPR_CHAIN; ipt -t mangle -X OPR_CHAIN;
 		unset ifaceTableID; unset ifaceMark;
+		if [ -s "$dnsmasqFile" ]; then
+			rm -f "$dnsmasqFile"
+			/etc/init.d/dnsmasq restart >/dev/null 2>&1
+		fi
 		output "$serviceName stopped $_OK_\n"
 		rm "$PID"
 	else
@@ -364,15 +403,7 @@ service_triggers() {
 input() { local data; while read data; do echo "$data" | tee -a /var/${packageName}-support; done; }
 support() {
 	local dist vers out id s param wanIface4 wanIface6 wanGW4 wanGW6 status set_d='' set_p='' tableCount i=0 dev dev6
-	config_load $packageName
-	config_get_bool serviceEnabled 'config' 'enabled' 1
-	config_get_bool strictMode     'config' 'strict_enforcement' 0
-	config_get_bool ipv6Enabled    'config' 'ipv6_enabled' 0
-	config_get_bool ipsetEnabled   'config' 'ipset_enabled' 1
-	config_get verbosity    'config' 'verbosity' '2'
-	config_get wanTableID   'config' 'wan_tid' '201'
-	config_get wanMark      'config' 'wan_mark' '0x010000'
-	config_get fwMask       'config' 'fw_mask' '0xff0000'
+	is_enabled
 
 	source /lib/functions/network.sh; source /usr/share/libubox/jshn.sh;
 	json_load "$(ubus call system board)"; json_select release; json_get_var dist distribution; json_get_var vers version
