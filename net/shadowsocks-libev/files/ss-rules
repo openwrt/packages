@@ -8,7 +8,7 @@
 # See /LICENSE for more information.
 #
 
-ss_usage() {
+ss_rules_usage() {
 	cat >&2 <<EOF
 Usage: ss-rules [options]
 
@@ -79,7 +79,7 @@ __errmsg() {
 ss_rules_parse_args() {
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
-			-h|--help) ss_usage; exit 0;;
+			-h|--help) ss_rules_usage; exit 0;;
 			-f|--flush) ss_rules_flush; exit 0;;
 			-l) o_redir_tcp_port="$2"; shift 2;;
 			-L) o_redir_udp_port="$2"; shift 2;;
