@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.9.2"
+trm_ver="0.9.3"
 trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 trm_enabled=0
 trm_debug=0
@@ -201,7 +201,7 @@ f_main()
             then
                 continue
             fi
-            while [ ${cnt} -le ${trm_maxretry} ]
+            while [ ${trm_maxretry} -eq 0 ] || [ ${cnt} -le ${trm_maxretry} ]
             do
                 ssid_list="$(${trm_iwinfo} "${dev}" scan | awk '/ESSID: "/{ORS=" ";if (!seen[$0]++) for(i=2; i<=NF; i++) print $i}')"
                 f_log "debug" "main: ${trm_iwinfo}, dev: ${dev}, ssids: ${ssid_list}"
@@ -223,7 +223,7 @@ f_main()
                                 f_log "info " "interface '${sta_iface}' on '${sta_radio}' connected to uplink '${sta_ssid}' (${trm_sysver})"
                                 f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
                                 return 0
-                            elif [ ${cnt} -eq ${trm_maxretry} ]
+                            elif [ ${trm_maxretry} -ne 0 ] && [ ${cnt} -eq ${trm_maxretry} ]
                             then
                                 uci -q set wireless."${config}".disabled=1
                                 uci -q set wireless."${config}".ssid="${sta_ssid}_err"
@@ -231,6 +231,10 @@ f_main()
                                 f_check "dev"
                                 f_log "info " "can't connect to uplink '${sta_ssid}' (${cnt}/${trm_maxretry}), uplink disabled (${trm_sysver})"
                             else
+                                if [ ${trm_maxretry} -eq 0 ]
+                                then
+                                    cnt=0
+                                fi
                                 uci -q revert wireless
                                 f_check "dev"
                                 f_log "info " "can't connect to uplink '${sta_ssid}' (${cnt}/${trm_maxretry}) (${trm_sysver})"
