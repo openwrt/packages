@@ -39,7 +39,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
     * trm\_debug => enable/disable debug logging (default: '0', disabled)
     * trm\_automatic => keep travelmate in an active state (default: '1', enabled)
     * trm\_maxwait => how long (in seconds) should travelmate wait for a successful wlan interface reload action (default: '30')
-    * trm\_maxretry => how many times should travelmate try to find an uplink after a trigger event (default: '3')
+    * trm\_maxretry => how many times should travelmate try to connect to an uplink, '0' means unlimited retries. (default: '3')
     * trm\_timeout => timeout in seconds for "automatic mode" (default: '60')
     * trm\_radio => limit travelmate to a dedicated radio, e.g. 'radio0' (default: not set, use all radios)
     * trm\_iface => main uplink / procd trigger network interface (default: trm_wwan)
@@ -121,7 +121,7 @@ edit /etc/config/travelmate and set 'trm_enabled' to '1'
 **A:** In "manual" mode travelmate will be triggered solely by procd interface down events, whenever an uplink disappears travelmate tries n times (default 3) to find a new uplink or reconnect to the old one. The 'automatic' mode keeps travelmate in an active state and checks every n seconds the connection status / the uplink availability regardless of procd event trigger.  
 
 **Q:** What happen with misconfigured uplinks, e.g. due to outdated wlan passwords?  
-**A:** Travelmate tries n times (default 3) to connect, then the respective uplink SSID will be marked / renamed to '_SSID_\_err'. In this case use the builtin wireless station manager to update your wireless credentials.  
+**A:** Travelmate tries n times (default 3) to connect, then the respective uplink SSID will be marked / renamed to '_SSID_\_err'. In this case use the builtin wireless station manager to update your wireless credentials. To disable this functionality at all set the Connection Limit ('trm\_maxretry') to '0', which means unlimited retries.  
 
 **Q:** Is travelmate compatible with CC/Openwrt?  
 **A:** Travelmate was never tested with an ancient CC/OpenWrt release ... it should still work, but no promises.  
