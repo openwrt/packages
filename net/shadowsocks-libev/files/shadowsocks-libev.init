@@ -147,6 +147,7 @@ ss_rules() {
 	local bin="$ss_bindir/ss-rules"
 	local cfgtype
 	local local_port_tcp local_port_udp
+	local args
 
 	[ -x "$bin" ] || return 1
 	config_get cfgtype "$cfg" TYPE
@@ -160,6 +161,7 @@ ss_rules() {
 	eval local_port_udp="\$ss_rules_redir_udp_$redir_udp"
 	[ -n "$local_port_tcp" -o -n "$local_port_udp" ] || return 1
 	ss_redir_servers="$(echo "$ss_redir_servers" | tr ' ' '\n' | sort -u)"
+	[ "$dst_forward_recentrst" = 0 ] || args="$args --dst-forward-recentrst"
 
 	"$bin" \
 			-s "$ss_redir_servers" \
@@ -177,6 +179,7 @@ ss_rules() {
 			--src-checkdst "$src_ips_checkdst" \
 			--ifnames "$ifnames" \
 			--ipt-extra "$ipt_args" \
+			$args \
 		|| "$bin" -f
 }
 
@@ -294,6 +297,7 @@ validate_ss_rules_section() {
 		'src_default:or("bypass", "forward", "checkdst"):checkdst' \
 		'dst_default:or("bypass", "forward"):bypass' \
 		'local_default:or("bypass", "forward", "checkdst"):bypass' \
+		'dst_forward_recentrst:bool:0' \
 		'ifnames:list(maxlength(15))' \
 		'ipt_args:string'
 }
