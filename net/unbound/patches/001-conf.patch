@@ -6,7 +6,7 @@ index 83e7c5c..3ea2b28 100644
 -#
 -# Example configuration file.
 -#
--# See unbound.conf(5) man page, version 1.6.1.
+-# See unbound.conf(5) man page, version 1.6.5.
 -#
 -# this is a comment.
 +##############################################################################
@@ -16,17 +16,17 @@ index 83e7c5c..3ea2b28 100644
 +# no longer supported ... are exceptional for the DNS.
 +# (http://unbound.net/documentation/unbound.conf.html)
 +##############################################################################
- 
+
  #Use this to include other text into the file.
  #include: "otherfile.conf"
 @@ -12,9 +13,71 @@
  server:
  	# whitespace is not necessary, but looks cleaner.
- 
+
 -	# verbosity number, 0 is least verbose. 1 is default.
 +	# verbosity 1 is default
  	verbosity: 1
- 
+
 +	# Self jail Unbound with user "unbound" to /var/lib/unbound
 +	# The script /etc/init.d/unbound will setup the location
 +	username: "unbound"
