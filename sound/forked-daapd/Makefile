@@ -15,6 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/ejurgensen/$(PKG_NAME)/releases/download/$(PKG_VERSION)/
 PKG_HASH:=5741a64d8f54e11e89dfa2fbfae693b2837e1e19a0c4980a20f8ff56bce4456e
 
+PKG_BUILD_DEPENDS:=gperf/host
 PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
 PKG_INSTALL:=1
