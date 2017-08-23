@@ -107,6 +107,7 @@ CONFIGURE_ARGS += \
 	--with-libjson=no \
 	--with-libtool \
 	--with-libxml2=no \
+	--without-lmdb \
 	--enable-epoll=yes \
 	--with-gost=no \
 	--with-gssapi=no \
