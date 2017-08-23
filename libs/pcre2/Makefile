@@ -12,7 +12,7 @@ PKG_VERSION:=10.30
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/
+PKG_SOURCE_URL:=@SF/$(PKG_NAME)
 PKG_HASH:=90bd41c605d30e3745771eb81928d779f158081a51b2f314bbcc1f73de5773db
 PKG_MAINTAINER:=Shane Peelar <lookatyouhacker@gmail.com>
 
