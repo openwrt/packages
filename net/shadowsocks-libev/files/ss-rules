@@ -92,18 +92,26 @@ ac_rule() {
 		fi
 	fi
 
+	ipset -! -R <<-EOF || return 1
+		create ss_spec_lan_ac hash:net
+		$(for ip in ${LAN_AC_IP:1}; do echo "add ss_spec_lan_ac $ip $TAG"; done)
+EOF
+
 	ROUTECHAIN=PREROUTING
 	if iptables-save -t nat | grep -q "^:zone_lan_prerouting"; then
 		ROUTECHAIN=zone_lan_prerouting
 	fi
 
-	ipset -! -R <<-EOF || return 1
-		create ss_spec_lan_ac hash:net
-		$(for ip in ${LAN_AC_IP:1}; do echo "add ss_spec_lan_ac $ip $TAG"; done)
-EOF
 	$ipt_n -A $ROUTECHAIN -p tcp $EXT_ARGS \
-		-m set ! --match-set ss_spec_lan_ac src \
-		-m comment --comment "_SS_SPEC_RULE_" -j SS_SPEC_WAN_AC
+	       -m set ! --match-set ss_spec_lan_ac src \
+	       -m comment --comment "_SS_SPEC_RULE_" -j SS_SPEC_WAN_AC
+
+	if iptables-save -t nat | grep -q "^:zone_wan_prerouting"; then
+		ROUTECHAIN=zone_wan_prerouting
+		$ipt_n -A $ROUTECHAIN -p tcp $EXT_ARGS \
+		       -m set ! --match-set ss_spec_lan_ac src \
+		       -m comment --comment "_SS_SPEC_RULE_" -j SS_SPEC_WAN_AC
+	fi
 
 	if [ "$OUTPUT" = 1 ]; then
 		$ipt_n -A OUTPUT -p tcp $EXT_ARGS \
