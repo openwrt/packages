@@ -28,9 +28,7 @@ ss_mkjson_() {
 	local func
 
 	for func in "$@"; do
-		if ! "$func"; then
-			return 1
-		fi
+		"$func" || return 1
 	done
 }
 
@@ -184,7 +182,7 @@ ss_rules() {
 }
 
 start_service() {
-	local cfgtype="$1"
+	local cfgtype
 
 	mkdir -p "$ss_confdir"
 	config_load shadowsocks-libev
