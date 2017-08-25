@@ -56,6 +56,7 @@ CONFIGURE_ARGS += \
 	--enable-chromecast \
 	--enable-verification \
 	--disable-spotify \
+	--without-pulseaudio \
 	--without-libevent_pthreads
 
 TARGET_CFLAGS += $(FPIC)
