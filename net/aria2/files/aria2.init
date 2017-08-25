@@ -112,8 +112,8 @@ aria2_validate() {
 		'disk_cache:string' \
 		'enable_dht:or("true","false"):true' \
 		'enable_dht6:or("true","false")' \
-		'enable_peer_exchange:("true","false")' \
-		'event_poll:("epoll","kqueue","port","poll","select")' \
+		'enable_peer_exchange:or("true","false")' \
+		'event_poll:or("epoll","kqueue","port","poll","select")' \
 		'file_allocation:or("none","prealloc","trunc","falloc")' \
 		'follow_torrent:or("true","false","mem")' \
 		'force_save:or("true","false")' \
