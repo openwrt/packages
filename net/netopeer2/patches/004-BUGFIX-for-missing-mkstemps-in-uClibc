@@ -1,0 +1,51 @@
+Index: netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/CMakeLists.txt
+===================================================================
+--- netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459.orig/cli/CMakeLists.txt
++++ netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/CMakeLists.txt
+@@ -69,6 +69,10 @@ endif()
+ 
+ include(CheckFunctionExists)
+ check_function_exists(eaccess HAVE_EACCESS)
++check_function_exists(mkstemps HAVE_MKSTEMPS)
++if(HAVE_MKSTEMPS)
++    set(CMAKE_C_FLAGS         "${CMAKE_C_FLAGS} -DHAVE_MKSTEMPS")
++endif(HAVE_MKSTEMPS)
+ 
+ # install binary
+ install(TARGETS netopeer2-cli DESTINATION ${BIN_INSTALL_DIR})
+Index: netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/completion.c
+===================================================================
+--- netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459.orig/cli/completion.c
++++ netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/completion.c
+@@ -120,6 +120,7 @@ readinput(const char *instruction, const
+     char* tmpname = NULL, *input = NULL, *old_content = NULL, *ptr, *ptr2;
+ 
+     /* Create a unique temporary file */
++#ifdef HAVE_MKSTEMPS
+     if (asprintf(&tmpname, "/tmp/tmpXXXXXX.xml") == -1) {
+         ERROR(__func__, "asprintf() failed (%s).", strerror(errno));
+         goto fail;
+@@ -129,6 +130,23 @@ readinput(const char *instruction, const
+         ERROR(__func__, "Failed to create a temporary file (%s).", strerror(errno));
+         goto fail;
+     }
++#else
++    if (asprintf(&tmpname, "/tmp/tmpXXXXXX") == -1) {
++        ERROR(__func__, "asprintf() failed (%s).", strerror(errno));
++        goto fail;
++    }
++    /* cannot fail */
++    mktemp(tmpname);
++    if (asprintf(&tmpname, ".xml") == -1) {
++        ERROR(__func__, "asprintf() failed (%s).", strerror(errno));
++        goto fail;
++    }
++    tmpfd = open(tmpname, O_RDWR | O_CREAT | O_EXCL, 0600);
++    if (tmpfd == -1) {
++        ERROR(__func__, "Failed to create a temporary file (%s).", strerror(errno));
++        goto fail;
++    }
++#endif /* #ifdef HAVE_MKSTEMPS */
+ 
+     /* Read the old content, if any */
+     if (old_tmp != NULL) {
