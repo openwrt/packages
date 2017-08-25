@@ -253,7 +253,7 @@ ss_rules_iptchains_mkprerules() {
 	if [ -z "$o_ifnames" ]; then
 		echo "-I PREROUTING 1 -p $proto -j ss_rules_pre_src"
 	else
-		echo "$o_ifnames" \
+		echo $o_ifnames \
 			| tr ' ' '\n' \
 			| sed "s/.*/-I PREROUTING 1 -i \\0 -p $proto -j ss_rules_pre_src/"
 	fi
