@@ -59,7 +59,8 @@ while true; do
 	fi
 
 	host_up_count=0
-	sleep $6
+	sleep $6 &
+	wait
 done
 
 exit 1

@@ -46,6 +46,7 @@ ifdown()
 		kill $(cat /var/run/mwan3track-$1.pid)
 		rm /var/run/mwan3track-$1.pid
 	fi
+	mwan3_delete_iface_iptables $1
 }
 
 ifup()
@@ -163,6 +164,8 @@ stop()
 	for ipset in $($IPS -n list | grep mwan3 | grep -E '_v4|_v6'); do
 		$IPS -q destroy $ipset
 	done
+
+	mwan3_lock_clean
 }
 
 restart() {
