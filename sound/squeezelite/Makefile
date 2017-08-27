@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squeezelite
 PKG_VERSION:=1.8.4-743
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -20,10 +18,11 @@ PKG_SOURCE_URL:=https://github.com/ralph-irving/squeezelite.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=e37ed17fed9e11a7346cbe9f1e1deeccc051f42e
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=b6ea4a11366330790f5e36bd875b45bb19a9772dfc984c462f436dfca30256c0
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=libflac libvorbis libmad libfaad2 SQUEEZELITE_WMA:libffmpeg-audio-dec
+PKG_BUILD_DEPENDS:=libflac libvorbis libmpg123 libfaad2 SQUEEZELITE_WMA:libffmpeg-audio-dec
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -40,7 +39,7 @@ endef
 define Package/squeezelite-full
     $(call Package/squeezelite/default)
     TITLE+= (full)
-    DEPENDS+= +libflac +libvorbis +libmad +libfaad2 \
+    DEPENDS+= +libflac +libvorbis +libmpg123 +libfaad2 \
               +SQUEEZELITE_WMA:libffmpeg-audio-dec
     VARIANT:=full
 endef

@@ -102,7 +102,7 @@ make_cmdline() {
 	local vorbis_lib="libvorbisidec.so.1"
 
 	excl_codecs=`checkcodec decode_flac "libFLAC.so.8" flac "$excl_codecs"`
-	excl_codecs=`checkcodec decode_mp3 "libmad.so.0" mp3 "$excl_codecs"`
+	excl_codecs=`checkcodec decode_mp3 "libmpg123.so.0" mp3 "$excl_codecs"`
 	excl_codecs=`checkcodec decode_aac "libfaad.so.2" aac "$excl_codecs"`
 
 	[ -e "/usr/lib/$vorbis_lib" ] || vorbis_lib="libvorbisfile.so.3"
