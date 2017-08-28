@@ -16,7 +16,7 @@ PKG_SOURCE_URL:= \
 	http://www.netfilter.org/projects/libnetfilter_acct/files/ \
 	ftp://ftp.netfilter.org/pub/libnetfilter_acct/ \
 	http://mirrors.evolva.ro/netfilter.org/libnetfilter_acct/
-PKG_MD5SUM:=2118d9514c079839ebd9cb3144ad2ad7
+PKG_HASH:=0128f19c3419fbd84f7e6d46b13a33ef7bda9b9f5e493bc5ae1882d087514b71
 
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING

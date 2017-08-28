@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/38/1b/d55c39f2cf442bd9fb2c59760ed058c84b57d25c680819c25f3aff741e1f
-PKG_MD5SUM:=5f7e15a5bcdfa3c6c0e93ffe45caf87c
+PKG_HASH:=6a0e224a052e3ce27b3a7b1300a24747513f7a507217fcc2a4cb02eb92945cee
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 

@@ -13,7 +13,7 @@ PKG_RELEASE:=1.1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/OpenLightingProject/libartnet/releases/download/1.1.2
-PKG_MD5SUM:=dcceab3efe3dae4c18fa549dbd198e71
+PKG_HASH:=19cdda434e208a81ddd138377f11046364438e40e34542ae101d6aa3fcaec696
 
 PKG_MAINTAINER:=Martijn Zilverschoon <martijn@friedzombie.com>
 

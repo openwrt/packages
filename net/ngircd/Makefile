@@ -18,7 +18,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
         http://ngircd.barton.de/pub/ngircd/ \
         ftp://ftp.berlios.de/pub/ngircd/
-PKG_MD5SUM:=59b2d56f6eb55b85225e91ebfbfc848b
+PKG_HASH:=3e00a7da52c81fc1e02bb996a27bf43da905ba7037bf8c6bb3bd13321e0c85ab
 
 PKG_INSTALL:=1
 

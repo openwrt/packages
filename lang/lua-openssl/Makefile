@@ -14,6 +14,7 @@ PKG_MAINTAINER:=Amnon Paz <pazamnon@gmail.com>
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_MIRROR_HASH:=33de8fa469f66bbf6df09c4ba4e3386c0613cc061f5adff0928d532af6905773
 PKG_SOURCE_URL:=https://github.com/zhaozg/lua-openssl.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=1b950e6ff8617205cda1a1b612637ef21b9daf96

@@ -13,7 +13,7 @@ PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/C/CO/COOK/
 PKG_SOURCE:=Device-SerialPort-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=82c698151f934eb28c65d1838cee7d9e
+PKG_HASH:=d392567cb39b4ea606c0e0acafd8ed72320311b995336ece5fcefcf9b150e9d7
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Paul Oranje <por@xs4all.nl>

@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=http://libcode.org/attachments/download/66/
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENCE
 PKG_MAINTAINER:=Takashi Umeno <umeno.takashi@gmail.com>
-PKG_MD5SUM:=7dfe46d474c02c86946c1d7a461ae549
+PKG_HASH:=70528039da9c5fdfadaea325ab6243cdabef627da0398335312e08d90ab415f8
 
 PKG_INSTALL:=1
 

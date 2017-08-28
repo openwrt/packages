@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=libmpeg2-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://libmpeg2.sourceforge.net/files/
-PKG_MD5SUM:=0f92c7454e58379b4a5a378485bbd8ef
+PKG_HASH:=dee22e893cb5fc2b2b6ebd60b88478ab8556cb3b93f9a0d7ce8f3b61851871d4
 
 PKG_INSTALL:=1
 

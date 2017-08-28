@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/67/d9/fa0ea70d1792875745116ad62ac8d4bcb07550b15cded591bb57df6a6d9a
-PKG_MD5SUM:=7c46c8a04acc227a778c7900c87cdfc7
+PKG_HASH:=5810f1b5a9ae9255df99fb9c2dcab7352fed325687efda56c0faae1a82c5e3cb
 
 PKG_BUILD_DEPENDS:=python libopenldap
 

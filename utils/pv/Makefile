@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.ivarch.com/programs/sources/
-PKG_MD5SUM:=efe8e9e4cad5f3264a32258a63bf2c8e
+PKG_HASH:=76f3999b1c3b3027163dce6ef667cdf8dafb75218ee25e54a03bfe590478f90e
 PKG_LICENSE:=Artistic-2.0
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 

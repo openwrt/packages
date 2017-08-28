@@ -13,7 +13,6 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/appneta/tcpreplay/releases/download/v$(PKG_VERSION)
-PKG_MD5SUM:=0571a6e20081429931d408b612ecc8a8
 PKG_HASH:=68d8d49dab5bf58b2e8d244eee1ee7f2379d967da19fe97dd9d59bcf40a22abc
 
 PKG_LICENSE:=GPL-3.0

@@ -13,7 +13,7 @@ PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=gku100.tar.gz
 PKG_SOURCE_URL:=ftp://kermit.columbia.edu/kermit/archives
-PKG_MD5SUM:=aea4fa728b9981fce41c9f2c635f2e05
+PKG_HASH:=3dbe63291277c4795255343b48b860777fb0a160163d7e1d30b1ee68585593eb
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nathaniel Wesley Filardo <nwfilardo@gmail.com>

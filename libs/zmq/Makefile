@@ -18,7 +18,7 @@ PKG_LICENSE_FILES:=LICENCE.txt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= https://github.com/zeromq/zeromq4-1/releases/download/v$(PKG_VERSION)/
-PKG_MD5SUM:=a611ecc93fffeb6d058c0e6edf4ad4fb
+PKG_HASH:=e99f44fde25c2e4cb84ce440f87ca7d3fe3271c2b8cfbc67d55e4de25e6fe378
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=libuuid

@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.linux-pam.org/library/
-PKG_MD5SUM:=ee4a480d77b341c99e8b1375f8f180c0
+PKG_HASH:=cd8beac5961e942e9c73b32a3cd1a3457755f8fb35d07c9ec64511e19e135ea4
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>

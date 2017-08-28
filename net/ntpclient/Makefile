@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://doolittle.icarus.com/ntpclient/
-PKG_MD5SUM:=a64689398f2df8933ee0d8da246e9eaa
+PKG_HASH:=9ad9b028385082fb804167f464e2db0a0b3d33780acd399327e64898b8fcfddd
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 

@@ -16,6 +16,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/pullmoll/musl-fts.git
 PKG_SOURCE_VERSION:=0bde52df588e8969879a2cae51c3a4774ec62472
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_MIRROR_HASH:=29c62a600128e9189b1b2e1aea568546178eedf739527f657873b3b773072ecb
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 

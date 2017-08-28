@@ -20,14 +20,14 @@ PKG_LICENSE:=Public Domain
 PKG_SOURCE:=tzdata$(PKG_VERSION).tar.gz
 PKG_SOURCE_CODE:=tzcode$(PKG_VERSION_CODE).tar.gz
 PKG_SOURCE_URL:=http://www.iana.org/time-zones/repository/releases
-PKG_MD5SUM:=50dc0dc50c68644c1f70804f2e7a1625
+PKG_HASH:=f8242a522ea3496b0ce4ff4f2e75a049178da21001a08b8e666d8cbe07d18086
 
 include $(INCLUDE_DIR)/package.mk
 
 define Download/tzcode
    FILE=$(PKG_SOURCE_CODE)
    URL=$(PKG_SOURCE_URL)
-   MD5SUM:=afaf15deb13759e8b543d86350385b16
+   HASH:=4d1735bb54e22b8d7443d4d1f1a13d007ae11be79a35e51f8e8322fb8e292d40
 endef
 
 $(eval $(call Download,tzcode))
