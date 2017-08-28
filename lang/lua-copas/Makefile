@@ -14,6 +14,7 @@ PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_MIRROR_HASH:=a47a8b5f6c1cf0d9fff4770a28bf7a3efdd8f37415dde8e02528f3e63f8a7899
 PKG_SOURCE_URL:=https://github.com/keplerproject/copas.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=f39a80add9f7c010ac979297652bbaaea0360a27

@@ -16,7 +16,7 @@ PKG_MAINTAINER:=Zoltan HERPAI <wigyori@uid0.hu>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/libfuse/sshfs/releases/download/$(PKG_NAME)_$(PKG_VERSION)
-PKG_MD5SUM:=0ba25e848ee59e2595d6576c8f6284b6
+PKG_HASH:=7f689174d02e6b7e2631306fda4fb8e6b4483102d1bce82b3cdafba33369ad22
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 

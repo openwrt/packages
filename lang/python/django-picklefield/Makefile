@@ -14,7 +14,7 @@ PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://pypi.python.org/packages/source/d/django-picklefield/
-PKG_MD5SUM:=b2c17ca9e03704ce33890e6aefc7b2e5
+PKG_HASH:=fab48a427c6310740755b242128f9300283bef159ffee42d3231a274c65d9ae2
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk

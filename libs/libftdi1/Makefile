@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
-PKG_MD5SUM:=156cdf40cece9f8a3ce1582db59a502a
+PKG_HASH:=9a8c95c94bfbcf36584a0a58a6e2003d9b133213d9202b76aec76302ffaa81f4
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=LGPL-2.0

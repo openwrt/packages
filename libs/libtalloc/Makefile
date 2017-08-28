@@ -14,7 +14,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc/
-PKG_MD5SUM:=d6763d65d03d627816ae1d50c74576fe
+PKG_HASH:=19154e728e48d29c7398f470b0a59d093edc836156b41ffe20d247d6ec9fa006
 
 PKG_MAINTAINER:=Lucile Quirion <lucile.quirion@savoirfairelinux.com>
 PKG_LICENSE:=LGPL-3.0+

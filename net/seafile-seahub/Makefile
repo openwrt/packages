@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=https://github.com/haiwen/seahub.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=2cf75b17a372216a88842172f769d61f621416fd
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=69e90cff3bb63967bca1bd04c8e25ff6f89aa5dba595df29854115c3560d9804
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)

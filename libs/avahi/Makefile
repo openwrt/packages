@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION)
-PKG_MD5SUM:=22b5e705d3eabb31d26f2e1e7b074013
+PKG_HASH:=d54991185d514a0aba54ebeb408d7575b60f5818a772e28fa0e18b98bc1db454
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_BUILD_DEPENDS:=libexpat libdaemon libgdbm intltool/host libpthread dbus

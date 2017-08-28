@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=https://github.com/intel-iot-devkit/mraa.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=70600dece4138b0c0dbaff42f57828f1559cd840
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=9cbda58e7c7790db3d62cee62f399975effcdc2d9688d3d6bb2b4a86748faff9
 PKG_BUILD_DEPENDS:=node python/host swig/host node/host
 CMAKE_INSTALL:=1
 

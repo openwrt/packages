@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.aircrack-ng.org/ \
 		http://archive.aircrack-ng.org/aircrack-ng/$(PKG_VERSION)/
-PKG_MD5SUM:=c2f8648c92f7e46051c86c618d4fb0d5
+PKG_HASH:=cf3134521e1c3d7aed4e384e3e5e7b6959e2d485bd1554474608a3a9328e35fd
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

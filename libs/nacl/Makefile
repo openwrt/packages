@@ -14,7 +14,7 @@ PKG_RELEASE:=2
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://hyperelliptic.org/nacl
-PKG_MD5SUM:=7efb5715561c3d10dafd3fa97b4f2d20
+PKG_HASH:=4f277f89735c8b0b8a6bbd043b3efb3fa1cc68a9a5da6a076507d067fc3b3bf8
 
 PKG_LICENSE:=PublicDomain
 

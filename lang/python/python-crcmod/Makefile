@@ -15,7 +15,7 @@ PKG_LICENSE:=MIT
 
 PKG_SOURCE:=crcmod-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://pypi.python.org/packages/source/c/crcmod/
-PKG_MD5SUM:=2d5b92117d958dcead94f9e17f54cd32
+PKG_HASH:=dc7051a0db5f2bd48665a990d3ec1cc305a466a77358ca4492826f41f283601e
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/crcmod-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python

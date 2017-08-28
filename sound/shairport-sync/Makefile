@@ -15,6 +15,7 @@ PKG_SOURCE_URL:=git://github.com/mikebrady/shairport-sync.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
+PKG_MIRROR_HASH:=892a8c8c5302026501c07f2e75c0d51963167143c96875f12578f7e7c9dadc96
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Mike Brady <mikebrady@eircom.net>
 

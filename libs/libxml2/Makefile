@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://gd.tuwien.ac.at/languages/libxml/ \
 	http://xmlsoft.org/sources/ \
 	ftp://fr.rpmfind.net/pub/libxml/
-PKG_MD5SUM:=ae249165c173b1ff386ee8ad676815f5
+PKG_HASH:=ffb911191e509b966deb55de705387f14156e1a56b21824357cdf0053233633c
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING

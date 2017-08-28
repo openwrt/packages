@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pupnp
-PKG_MD5SUM:=ee16e5d33a3ea7506f38d71facc057dd
+PKG_HASH:=b3142b39601243b50532eec90f4a27dba85eb86f58d4b849ac94edeb29d9b22a
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_FIXUP:=autoreconf

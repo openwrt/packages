@@ -13,7 +13,7 @@ PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/3977/
-PKG_MD5SUM:=7044ca3e291268c33294f171d426dc2d
+PKG_HASH:=9ac3a663b82f4f5df64114b4792b9926b536c85f59de0f2d2b321c7626a904f4
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0

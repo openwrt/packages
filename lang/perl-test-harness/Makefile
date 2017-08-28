@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/L/LE/LEONT/
 PKG_SOURCE:=Test-Harness-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=4c8d9c77e8e06ca96c7383c05c8f3616
+PKG_HASH:=e7566f13b041d028b56f184b77ec2545ec6f0bb5a0f8f5368f7e4a08b496b63e
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

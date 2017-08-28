@@ -13,7 +13,7 @@ PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/P/PE/PETDANCE/
 PKG_SOURCE:=HTML-Tagset-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=d2bfa18fe1904df7f683e96611e87437
+PKG_HASH:=adb17dac9e36cd011f5243881c9739417fd102fce760f8de4e9be4c7131108e2
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

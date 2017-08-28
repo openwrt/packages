@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=ftp://ftp.netfilter.org/pub/ulogd/ \
 	ftp://ftp.be.netfilter.org/pub/netfilter/ulogd/ \
 	ftp://ftp.de.netfilter.org/pub/netfilter/ulogd/ \
 	ftp://ftp.no.netfilter.org/pub/netfilter/ulogd/
-PKG_MD5SUM:=f0f8fe1371fa28b5e06cb16aaa0111dd
+PKG_HASH:=a221cb9f77347c0ca00d0937e27c1b90e3291a553cc62a4139b788e2e420e8c0
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING

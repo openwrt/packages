@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=libdmapsharing-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.flyn.org/projects/libdmapsharing/
-PKG_MD5SUM:=2494161340c4c3c36907359eeddc4da3
+PKG_HASH:=165952dced0d0561dd7d3f2db5d40605d9ecff999ab7530db63e8a60343b0615
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

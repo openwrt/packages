@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/o/obfsproxy
-PKG_MD5SUM:=f596aeeda7bf03cdf0e78e68e6e7ac9f
+PKG_HASH:=1e26c2faef1cfcf856ddf60e9647058a7c78fb0d47f05b58a0f847ed7cc41a66
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE

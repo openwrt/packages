@@ -17,7 +17,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.spreadspace.org/tcpproxy/releases/
-PKG_MD5SUM:=14f734a61350c52556909e2ed5bff361
+PKG_HASH:=446104b3abefda73b1255e5197702acbeb36b3aada251ad39e1e5ab55292683b
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=LICENSE

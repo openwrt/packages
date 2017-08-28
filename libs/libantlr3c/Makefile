@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=libantlr3c
 PKG_VERSION:=3.2
 PKG_RELEASE:=1
-PKG_MD5SUM:=674646e1d1bf5c6015435480cead725a
+PKG_HASH:=2ccfb8a8bdd3d6c1d60742ff3a5a954af6d5a8d7f8901c87229fc6fa540ac99a
 
 PKG_SOURCE_URL:=http://www.antlr3.org/download/C
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz

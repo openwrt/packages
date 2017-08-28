@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=ftp://ftp.debian.org/debian/pool/main/b/bc
-PKG_MD5SUM:=24d0831812d8262b6cac8316b0bac483
+PKG_HASH:=5e1471869dd27ba4120dd3942d2f4ec6646cf917fb056be9ae0d3a8259668d47
 
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>
 PKG_LICENSE:=GPL-2.0
