@@ -21,6 +21,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/phhusson/quassel-irssi
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.bz2
+PKG_MIRROR_HASH:=fd13b2497e3b0d0779e0ce3d8b27c37e207d2a73b5b6dc0cb2799bd4472fc5e1
 
 PKG_MAINTAINER:=Ben Rosser <rosser.bjr@gmail.com>
 

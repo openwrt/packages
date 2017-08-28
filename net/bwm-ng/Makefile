@@ -10,7 +10,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.gropp.org/bwm-ng
-PKG_MD5SUM:=ef0c7669508e95f56250ad4f8db98b7f
+PKG_HASH:=027cf3c960cd96fc9ffacdf7713df62d0fc55eeef4a1388289f8a62ae5e50df0
 PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
 PKG_LICENSE:=GPL2-2.0
 PKG_LICENSE_FILES:=COPYING

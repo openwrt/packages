@@ -13,7 +13,6 @@ PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.cipherdyne.org/fwknop/download
-PKG_MD5SUM:=e2c49e9674888a028bd443a55c3aaa22
 PKG_HASH:=5bf47fe1fd30e862d29464f762c0b8bf89b5e298665c37624d6707826da956d4
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=GPLv2

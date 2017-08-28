@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://znc.in/releases \
 		http://znc.in/releases/archive
-PKG_MD5SUM:=2f0225d49c53a01f8d94feea4619a6fe92857792bb3401a4eb1edd65f0342aca
+PKG_HASH:=2f0225d49c53a01f8d94feea4619a6fe92857792bb3401a4eb1edd65f0342aca
 
 PKG_MAINTAINER:=Jonas Gorski <jogo@openwrt.org>
 PKG_LICENSE:=Apache-2.0

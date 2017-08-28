@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/thess/pianod-sc/releases/download/$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MD5SUM:=0bae19b0c1e309343bc1b351e521173fe439431542a949dd2bacf4165cce5200
+PKG_HASH:=0bae19b0c1e309343bc1b351e521173fe439431542a949dd2bacf4165cce5200
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 

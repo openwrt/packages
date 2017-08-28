@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://softflowd.googlecode.com/files/
-PKG_MD5SUM:=ba83e2715e6250e6645ebcaa9ae1009d
+PKG_HASH:=2313f2c50ea9b3f2db3524e38ec7cd71f9a6e885ac2e3b55ab037bccf8173612
 PKG_MAINTAINER:=Ross Vandegrift <ross@kallisti.us>
 PKG_LICENSE:=BSD-3-Clause
 

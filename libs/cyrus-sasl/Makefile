@@ -15,7 +15,7 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.cyrusimap.org/cyrus-sasl/
-PKG_MD5SUM:=a7f4e5e559a0e37b3ffc438c9456e425
+PKG_HASH:=8fbc5136512b59bb793657f36fadda6359cae3b08f01fd16b3d406f1345b7bc3
 
 PKG_LICENSE:=BSD-4c BSD
 PKG_LICENSE_FILES:=COPYING cmulocal/COPYING saslauthd/COPYING

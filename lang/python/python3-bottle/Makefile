@@ -16,7 +16,7 @@ PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=bottle-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/f7/dd/8ceaa148eeed5371a83fa1fb5a54b01dfc95000799c649924ece23f9f0e1/
-PKG_MD5SUM:=3d4b6b0e22f67b421c273105b30d9a21fd147eaf0c1576172378ee034fbf5313
+PKG_HASH:=3d4b6b0e22f67b421c273105b30d9a21fd147eaf0c1576172378ee034fbf5313
 PKG_BUILD_DIR:=$(BUILD_DIR)/bottle-$(PKG_VERSION)
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 

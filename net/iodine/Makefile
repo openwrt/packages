@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://code.kryo.se/iodine/
-PKG_MD5SUM:=fdbf3b81cd69caf5230d76a8b039fd99
+PKG_HASH:=ad2b40acf1421316ec15800dcde0f587ab31d7d6f891fa8b9967c4ded93c013e
 
 PKG_MAINTAINER:=Uwe Kleine-König <uwe+openwrt@kleine-koenig.org>
 PKG_LICENSE:=ISC

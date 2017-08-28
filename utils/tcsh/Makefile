@@ -16,7 +16,7 @@ PKG_SOURCE_URL:= \
 	http://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/old/ \
 	ftp://ftp.astron.com/pub/tcsh/ \
 	ftp://ftp.astron.com/pub/tcsh/old
-PKG_MD5SUM:=59d40ef40a68e790d95e182069431834
+PKG_HASH:=b89de7064ab54dac454a266cfe5d8bf66940cb5ed048d0c30674ea62e7ecef9d
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=Copyright

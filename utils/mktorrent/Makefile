@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.sourceforge.net/$(PKG_NAME)/
-PKG_MD5SUM:=0da00209da96a0dc39efbb6eb5b4d8ff
+PKG_HASH:=6f8e562af6366e0d9bde76e434f740b55722c6c3c555860dbe80083f9d1d119f
 
 include $(INCLUDE_DIR)/package.mk
 

@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://libmodbus.org/releases
-PKG_MD5SUM:=b1a8fd3a40d2db4de51fb0cbcb201806
+PKG_HASH:=c8c862b0e9a7ba699a49bc98f62bdffdfafd53a5716c0e162696b4bf108d3637
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 

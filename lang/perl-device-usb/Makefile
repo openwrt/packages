@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GW/GWADEJ/
 PKG_SOURCE:=Device-USB-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=aa91bee777f7ed7a18225a84f8795344
+PKG_HASH:=fac2eb4f9e8db08b46d734ba8a2076598f974c274a91b248613fcecd7c9fc175
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

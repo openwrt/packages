@@ -15,6 +15,7 @@ PKG_SOURCE_URL:=git://dev.cloudtrax.com/ap51-flash.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=48b3fbac1c30c5968b2608eb09b53ea37c310a24
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
+PKG_MIRROR_HASH:=4d00a1ceb480793db95e359cb95d63630920335415c7ffdcd05f2616cf1bc034
 PKG_MAINTAINER:=Russell Senior <russell@personaltelco.net>
 
 include $(INCLUDE_DIR)/package.mk

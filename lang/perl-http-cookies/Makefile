@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS
 PKG_SOURCE:=HTTP-Cookies-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=ecfd0eeb88512033352c2f13c9580f03
+PKG_HASH:=f5d3ade383ce6389d80cb0d0356b643af80435bb036afd8edce335215ec5eb20
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

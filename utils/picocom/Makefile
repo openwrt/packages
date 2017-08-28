@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://picocom.googlecode.com/files
-PKG_MD5SUM:=8eaba1d31407e8408674d6e57af447ef
+PKG_HASH:=d0f31c8f7a215a76922d30c81a52b9a2348c89e02a84935517002b3bc2c1129e
 
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=GPL-2.0+

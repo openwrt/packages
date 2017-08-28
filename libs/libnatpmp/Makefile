@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://miniupnp.free.fr/files
-PKG_MD5SUM:=7c9a7c76e200ead4e6447fe4b105f676
+PKG_HASH:=b2ce5e626a21c795cba2d118f26e54aaa89de29d4611c440fafc49a2a5bedabb
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de>
 PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=LICENSE

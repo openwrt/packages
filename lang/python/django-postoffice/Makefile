@@ -15,7 +15,7 @@ PKG_LICENSE:=MIT
 PKG_SOURCE:=django-post_office-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/52/25/cc0cfe923f183d7c19b162cac3bf8430ddaed7bad28202b8f93a97d248a4/
 PKG_BUILD_DIR:=$(BUILD_DIR)/django-post_office-$(PKG_VERSION)/
-PKG_MD5SUM:=437bf62cef06381d346ae2bc087c0e3c
+PKG_HASH:=bfb3ff26de5b668c91453ee8d930ff0bfe397849fd5508ff3e1216c3b46d6449
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk

@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://download.samba.org/pub/linux-cifs/cifs-utils/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=b7d75b67fd3987952896d27256c7293d
+PKG_HASH:=38fc63926af435dae4ebcf4406275580a692d9fb9ee3e32170317cf2ba68e6e3
 
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 PKG_LICENSE:=GPL-3.0

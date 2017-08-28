@@ -14,7 +14,7 @@ PKG_LICENSE:=BSD-2-Clause
 
 PKG_SOURCE:=heirloom-mailx_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=http://ftp.de.debian.org/debian/pool/main/h/heirloom-mailx/
-PKG_MD5SUM:=29a6033ef1412824d02eb9d9213cb1f2
+PKG_HASH:=015ba4209135867f37a0245d22235a392b8bbed956913286b887c2e2a9a421ad
 PKG_BUILD_DIR:=$(BUILD_DIR)/heirloom-mailx-$(PKG_VERSION)
 
 PKG_INSTALL:=0

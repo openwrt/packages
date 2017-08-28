@@ -14,7 +14,7 @@ PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.tildeslash.com/libzdb/dist/
-PKG_MD5SUM:=01d8519a596d62f6b43559cc29ecd36d
+PKG_HASH:=0f01abb1b01d1a1f4ab9b55ad3ba445d203fc3b4757abdf53e1d85e2b7b42695
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

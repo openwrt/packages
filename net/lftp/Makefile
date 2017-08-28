@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://lftp.tech/ftp/ \
 		ftp://ftp.st.ryukoku.ac.jp/pub/network/ftp/lftp/
-PKG_MD5SUM:=88c1505f8264429353ea7f249597eeb7
+PKG_HASH:=53b5c5eba2e38b418bcf451776f2df596050dff4db90ab4ea73d872f8b1fd0d8
 
 
 

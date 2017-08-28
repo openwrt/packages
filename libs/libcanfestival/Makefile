@@ -13,8 +13,8 @@ PKG_RELEASE:=6
 PKG_SOURCE_VERSION:=8bfe0ac00cdb
 PKG_SOURCE_URL:=http://dev.automforge.net/CanFestival-3/archive/$(PKG_SOURCE_VERSION).tar.bz2?_dummyfilename=
 PKG_SOURCE:=CanFestival-3-$(PKG_SOURCE_VERSION).tar.bz2
+PKG_HASH:=0bee7aaef266fc579922ca159b7acbe9cdc9a936ac1f30402814844b007f7185
 PKG_SOURCE_SUBDIR:=CanFestival-3-$(PKG_SOURCE_VERSION)
-PKG_MIRROR_HASH:=0bee7aaef266fc579922ca159b7acbe9cdc9a936ac1f30402814844b007f7185
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 

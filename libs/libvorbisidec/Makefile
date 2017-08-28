@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=https://git.xiph.org/tremor.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=b56ffce0c0773ec5ca04c466bc00b1bbcaf65aef
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_MIRROR_HASH:=45a3ae74fffa32a9e0255132ec2cc4d5413af32699562a89278bc0e561bfbed7
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
