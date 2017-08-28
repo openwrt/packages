@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/NethServer/bandwidthd/archive/$(PKG_VERSION)
-PKG_MD5SUM:=a4075335d06fe91ae815616ed9e27375
+PKG_HASH:=41803a202956ae99b095f98ce92e5637dad62d25509ccd5cff9a8913626a4226
 
 PKG_MAINTAINER:=Jean-Michel Lacroix <lacroix@lepine-lacroix.info>
 

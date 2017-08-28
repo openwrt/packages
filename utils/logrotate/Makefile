@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= https://github.com/logrotate/logrotate/releases/download/$(PKG_VERSION)
-PKG_MD5SUM:=888f58caf07082c76f5dd39e5d30ec12
+PKG_HASH:=dbc76cae5d4912455b5221654bb6114e43d91a3a0879ce3e20a62a157532912e
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk

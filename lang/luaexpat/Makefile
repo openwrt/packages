@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://matthewwild.co.uk/projects/luaexpat
-PKG_MD5SUM:=3c20b5795e7107f847f8da844fbfe2da
+PKG_HASH:=d060397960d87b2c89cf490f330508b7def1a0677bdc120531c571609fc57dc3
 
 include $(INCLUDE_DIR)/package.mk
 

@@ -14,7 +14,7 @@ PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/reaver-wps
-PKG_MD5SUM:=05441dda7bacfcbe1e831c85d1ea3bc9
+PKG_HASH:=add3050a4a05fe0ab6bfb291ee2de8e9b8a85f1e64ced93ee27a75744954b22d
 PKG_LICENSE:=GPL-2.0
 
 PKG_USE_MIPS16:=0

@@ -14,6 +14,7 @@ PKG_RELEASE:=8
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).1.tar.bz2
+PKG_MIRROR_HASH:=c41e2c91948a69d25bb78c2b52bd91998921424aa35b21046f47735d2e933e49
 PKG_SOURCE_URL:=https://svn.code.sf.net/p/mjpg-streamer/code/mjpg-streamer-experimental
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)

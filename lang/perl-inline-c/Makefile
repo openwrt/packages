@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/I/IN/INGY
 PKG_SOURCE:=Inline-C-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=c0fbfdd058075c9271a1384c822c9a87
+PKG_HASH:=22e9713b4d331d3c49e4a9a9f012dbf84cec25a01e5da4f57091be287f1a9a35
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

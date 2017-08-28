@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=http://lua.sqlite.org/index.cgi/zip/lsqlite3_fsl09w.zip
-PKG_MD5SUM:=8e16ef4fda82eb73295bf2f1050d14f1
+PKG_HASH:=b857df8b66d01a803378cc86e56b787958beffdc8b851ad304f4ce8c7f0e9dbb
 
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>

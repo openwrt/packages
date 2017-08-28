@@ -15,7 +15,7 @@ PKG_LICENSE:=LGPL-2.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://roaringpenguin.com/files/download
-PKG_MD5SUM:=00794e04031546b0e9b8cf286f2a6d1ccfc4a621b2a3abb2d7ef2a7ab7cc86c2
+PKG_HASH:=00794e04031546b0e9b8cf286f2a6d1ccfc4a621b2a3abb2d7ef2a7ab7cc86c2
 
 PKG_BUILD_DEPENDS:=ppp
 

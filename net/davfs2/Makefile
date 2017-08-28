@@ -13,7 +13,7 @@ PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/davfs2/
-PKG_MD5SUM:=c9f0b557275b7ec88fec751bf22f30cf
+PKG_HASH:=c9c4e0f0912a782386216b2147eb9c36c47f193b8fcf3d637719e0b9fe7c96e0
 
 PKG_FIXUP:=gettext-version autoreconf
 

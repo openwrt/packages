@@ -13,7 +13,7 @@ PKG_RELEASE:=5
 
 PKG_SOURCE:=release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/luaposix/luaposix/archive/
-PKG_MD5SUM:=aa68b5c07ab1ecea81bb466c81e88056
+PKG_HASH:=4fb34dfea67f4cf3194cdecc6614c9aea67edc3c4093d34137669ea869c358e1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)
 PKG_REMOVE_FILES:=aclocal.m4
 PKG_FIXUP:=autoreconf

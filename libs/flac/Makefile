@@ -13,7 +13,6 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/flac/
-PKG_MD5SUM:=454f1bfa3f93cc708098d7890d0499bd
 PKG_HASH:=91cfc3ed61dc40f47f050a109b08610667d73477af6ef36dcad31c31a4a8d53f
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 

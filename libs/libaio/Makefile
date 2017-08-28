@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/liba/libaio/
-PKG_MD5SUM:=2a35602e43778383e2f4907a4ca39ab8
+PKG_HASH:=e019028e631725729376250e32b473012f7cb68e1f7275bfc1bbcdd0f8745f7e
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=LGPL-2.1
 

@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE_URL:=ftp://ftp.mutt.org/pub/mutt/ \
 		https://bitbucket.org/mutt/mutt/downloads/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=15425c4c9946d58c22ccb44901544e6d
+PKG_HASH:=1553501687cd22d5b8aaee4dc5a7d9dcf6cc61d7956f6aabaadd252d10cd5ff9
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=GPL

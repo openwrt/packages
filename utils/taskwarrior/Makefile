@@ -15,7 +15,7 @@ PKG_LICENSE:=MIT
 
 PKG_SOURCE:=task-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.taskwarrior.org/download/
-PKG_MD5SUM:=517450c4a23a5842df3e9905b38801b3
+PKG_HASH:=7ff406414e0be480f91981831507ac255297aab33d8246f98dbfd2b1b2df8e3b
 PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/task-$(PKG_VERSION)

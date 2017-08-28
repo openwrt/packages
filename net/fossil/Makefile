@@ -16,7 +16,7 @@ PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=$(PKG_NAME)-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.fossil-scm.org/index.html/uv/download
-PKG_MD5SUM:=3d5a7da5c506a47784942236a788b29b
+PKG_HASH:=53a6b83e878feced9ac7705f87e5b6ea82727314e3e19202ae1c46c7e4dba49f
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-src-$(PKG_VERSION)
 

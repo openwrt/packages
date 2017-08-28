@@ -15,7 +15,7 @@ PKG_LICENSE:=MIT
 PKG_SOURCE:=django_compressor-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/38/58/03098a826062b856956c7169a8f778ec2b8e2767ddc63da0629062df5621/
 PKG_BUILD_DIR:=$(BUILD_DIR)/django_compressor-$(PKG_VERSION)/
-PKG_MD5SUM:=5e74141076b70272149ed07e6ce0ea56
+PKG_HASH:=9200400046ee00a5c1b4e2fbab97704fd2514f9b59d5649c8a365c3cf06c82e8
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk

@@ -13,7 +13,7 @@ PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pkg-shadow.alioth.debian.org/releases
-PKG_MD5SUM:=2bfafe7d4962682d31b5eba65dba4fc8
+PKG_HASH:=3b0893d1476766868cd88920f4f1231c4795652aa407569faff802bcda0f3d41
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=BSD-3-Clause
 

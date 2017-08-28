@@ -16,7 +16,7 @@ PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://linuxcontainers.org/downloads/lxc/
-PKG_MD5SUM:=dd9684dde0a58ed13f4f49c855b79a1a
+PKG_HASH:=9588ad1b04e114ee7370f690c65131e28098b28d2521d97c73557d11897ed0be
 
 PKG_BUILD_DEPENDS:=lua
 PKG_BUILD_PARALLEL:=1
