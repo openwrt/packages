@@ -7,11 +7,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmms
 PKG_VERSION:=0.6.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/libmms
-PKG_MD5SUM:=d6b665b335a6360e000976e770da7691
+PKG_HASH:=3c05e05aebcbfcc044d9e8c2d4646cd8359be39a3f0ba8ce4e72a9094bee704f
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPLv2.1
@@ -25,7 +25,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libmms
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+glib2
   TITLE:=MMS stream protocol library
   URL:=http://libmms.sourceforge.net
 endef
