@@ -287,18 +287,18 @@ validate_ss_rules_section() {
 		'disabled:bool:0' \
 		'redir_tcp:uci("shadowsocks-libev", "@ss_redir")' \
 		'redir_udp:uci("shadowsocks-libev", "@ss_redir")' \
-		'src_ips_bypass:list(or(ip4addr,cidr4))' \
-		'src_ips_forward:list(or(ip4addr,cidr4))' \
-		'src_ips_checkdst:list(or(ip4addr,cidr4))' \
+		'src_ips_bypass:or(ip4addr,cidr4)' \
+		'src_ips_forward:or(ip4addr,cidr4)' \
+		'src_ips_checkdst:or(ip4addr,cidr4)' \
 		'dst_ips_bypass_file:file' \
-		'dst_ips_bypass:list(or(ip4addr,cidr4))' \
+		'dst_ips_bypass:or(ip4addr,cidr4)' \
 		'dst_ips_forward_file:file' \
-		'dst_ips_forward:list(or(ip4addr,cidr4))' \
+		'dst_ips_forward:or(ip4addr,cidr4)' \
 		'src_default:or("bypass", "forward", "checkdst"):checkdst' \
 		'dst_default:or("bypass", "forward"):bypass' \
 		'local_default:or("bypass", "forward", "checkdst"):bypass' \
 		'dst_forward_recentrst:bool:0' \
-		'ifnames:list(maxlength(15))' \
+		'ifnames:maxlength(15)' \
 		'ipt_args:string'
 }
 
