@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=17.5
-PKG_RELEASE:=3
+PKG_VERSION:=19.3
+PKG_RELEASE:=6
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/ \
 	http://erlang.mirror.su.se/
-PKG_MD5SUM:=346dd0136bf1cc28cebc140e505206bb
+PKG_MD5SUM:=a8c259ec47bf84e77510673e1b76b6db
 
 PKG_LICENSE:=ErlPL-1.1
 PKG_LICENSE_FILES:=EPLICENCE
@@ -46,7 +46,7 @@ endef
 define Package/erlang
 $(call Package/erlang/Default)
   DEPENDS+= +libncurses +librt +zlib
-  PROVIDES:= erlang-erts=6.4 erlang-kernel=3.2 erlang-sasl=2.4.1 erlang-stdlib=2.4
+  PROVIDES:= erlang-erts=8.3 erlang-kernel=5.2 erlang-sasl=3.0.3 erlang-stdlib=3.3
 endef
 
 define Package/erlang/description
@@ -60,7 +60,7 @@ endef
 define Package/erlang-asn1
 $(call Package/erlang/Default)
   TITLE:=Abstract Syntax Notation One (ASN.1) support
-  VERSION:=3.0.4
+  VERSION:=4.0.4
   DEPENDS+= +erlang +erlang-syntax-tools
 endef
 
@@ -75,7 +75,7 @@ endef
 define Package/erlang-compiler
 $(call Package/erlang/Default)
   TITLE:=Byte code compiler
-  VERSION:=5.0.4
+  VERSION:=7.0.4
   DEPENDS+= +erlang +erlang-hipe
 endef
 
@@ -90,7 +90,7 @@ endef
 define Package/erlang-crypto
 $(call Package/erlang/Default)
   TITLE:=Cryptography support
-  VERSION:=3.5
+  VERSION:=3.7.3
   DEPENDS+= +erlang +libopenssl
 endef
 
@@ -105,7 +105,7 @@ endef
 define Package/erlang-hipe
 $(call Package/erlang/Default)
   TITLE:=High Performance Erlang
-  VERSION:=3.11.3
+  VERSION:=3.15.4
   DEPENDS+= +erlang
 endef
 
@@ -120,7 +120,7 @@ endef
 define Package/erlang-inets
 $(call Package/erlang/Default)
   TITLE:=Internet clients and servers
-  VERSION:=5.10.6
+  VERSION:=6.3.6
   DEPENDS+= +erlang
 endef
 
@@ -136,7 +136,7 @@ endef
 define Package/erlang-mnesia
 $(call Package/erlang/Default)
   TITLE:=Distributed database
-  VERSION:=4.12.5
+  VERSION:=4.14.3
   DEPENDS+= +erlang
 endef
 
@@ -153,7 +153,7 @@ endef
 define Package/erlang-runtime-tools
 $(call Package/erlang/Default)
   TITLE:=Low-profile debugging/tracing tools
-  VERSION:=1.8.16
+  VERSION:=1.11.1
   DEPENDS+= +erlang
 endef
 
@@ -168,7 +168,7 @@ endef
 define Package/erlang-snmp
 $(call Package/erlang/Default)
   TITLE:=Simple Network Management Protocol (SNMP) support
-  VERSION:=5.1.1
+  VERSION:=5.2.5
   DEPENDS+= +erlang +erlang-asn1
 endef
 
@@ -181,10 +181,24 @@ $(call Package/erlang/Default/description)
 endef
 
 
+define Package/erlang-public-key
+$(call Package/erlang/Default)
+  TITLE:=Public Key support
+  VERSION:=1.4
+  DEPENDS+= +erlang +erlang-crypto +erlang-asn1
+endef
+
+define Package/erlang-public-key/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides functions to handle public-key infrastructure.
+endef
+
+
 define Package/erlang-ssh
 $(call Package/erlang/Default)
   TITLE:=Secure Shell (SSH) support
-  VERSION:=3.2
+  VERSION:=4.4.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -199,7 +213,7 @@ endef
 define Package/erlang-ssl
 $(call Package/erlang/Default)
   TITLE:=Secure Sockets Layer (SSL) support
-  VERSION:=6.0
+  VERSION:=8.1.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -214,7 +228,7 @@ endef
 define Package/erlang-syntax-tools
 $(call Package/erlang/Default)
   TITLE:=Abstract Erlang syntax trees handling support
-  VERSION:=1.6.18
+  VERSION:=2.1.1
   DEPENDS+= +erlang
 endef
 
@@ -223,6 +237,48 @@ $(call Package/erlang/Default/description)
  .
  This Erlang/OTP package provides support for handling abstract Erlang
  syntax trees.
+endef
+
+
+define Package/erlang-tools
+$(call Package/erlang/Default)
+  TITLE:=Erlang tools support
+  VERSION:=2.9.1
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-tools/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for misc tools.
+endef
+
+
+define Package/erlang-reltool
+$(call Package/erlang/Default)
+  TITLE:=Erlang reltool support
+  VERSION:=0.7.3
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-reltool/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for release management.
+endef
+
+
+define Package/erlang-erl-interface
+$(call Package/erlang/Default)
+  TITLE:=Erlang erl_interface support
+  VERSION:=3.9.3
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-erl-interface/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for erlang interoperability with other languages.
 endef
 
 
@@ -288,7 +344,7 @@ define Package/erlang/install
 	done
 	$(INSTALL_DIR) $(1)/usr/lib/erlang
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/erts-* $(1)/usr/lib/erlang/
-	rm -rf $(1)/usr/lib/erlang/erts-*/{doc,include,lib,man,src}
+	rm -rf $(1)/usr/lib/erlang/erts-*/{doc,lib,man,src} 
 	rm -rf $(1)/usr/lib/erlang/erts-*/bin/*.src
 	$(INSTALL_DIR) $(1)/usr/lib/erlang/releases
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/releases/* $(1)/usr/lib/erlang/releases/
@@ -334,6 +390,10 @@ $(eval $(call BuildModule,inets,inets))
 $(eval $(call BuildModule,mnesia,mnesia))
 $(eval $(call BuildModule,runtime-tools,runtime_tools))
 $(eval $(call BuildModule,snmp,snmp))
+$(eval $(call BuildModule,public-key,public_key))
 $(eval $(call BuildModule,ssh,ssh))
 $(eval $(call BuildModule,ssl,ssl))
 $(eval $(call BuildModule,syntax-tools,syntax_tools))
+$(eval $(call BuildModule,tools,tools))
+$(eval $(call BuildModule,reltool,reltool))
+$(eval $(call BuildModule,erl-interface,erl_interface))
