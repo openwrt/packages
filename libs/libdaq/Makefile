@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaq
-PKG_VERSION:=2.0.4
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.6
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
 	@SF/snort
 PKG_SOURCE:=daq-$(PKG_VERSION).tar.gz
-PKG_HASH:=a294aa3d01cd8902bf842d320e7f2c043af9ead95d0e7198c3b71a0dbc9d253c
+PKG_HASH:=b40e1d1273e08aaeaa86e69d4f28d535b7e53bdb3898adf539266b63137be7cb
 PKG_BUILD_DIR:=$(BUILD_DIR)/daq-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0
