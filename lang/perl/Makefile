@@ -19,7 +19,6 @@ PKG_SOURCE_URL:=\
 		https://mirrors.sonic.net/cpan/src/5.0 \
 		https://www.cpan.org/src/5.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MD5SUM:=af6a84c7c3e2b8b269c105a5db2f6d53
 PKG_HASH:=03a77bac4505c270f1890ece75afc7d4b555090b41aa41ea478747e23b2afb3f
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl

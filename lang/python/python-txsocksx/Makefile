@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/t/txsocksx
-PKG_MD5SUM:=0266b9ae7b58f7550a49683afebf65ba
+PKG_HASH:=4f79b5225ce29709bfcee45e6f726e65b70fd6f1399d1898e54303dbd6f8065f
 
 PKG_BUILD_DEPENDS:=python python-setuptools
 

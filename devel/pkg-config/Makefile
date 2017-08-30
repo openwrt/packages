@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://pkgconfig.freedesktop.org/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=f739a28cae4e0ca291f82d1d41ef107d
+PKG_HASH:=beb43c9e064555469bd4390dcfd8030b1536e0aa103f08d7abf7ae8cac0cb001
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
 PKG_LICENSE:=GPL-2+
 

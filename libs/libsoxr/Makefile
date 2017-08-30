@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=git://git.code.sf.net/p/soxr/code
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=939259d5c02bbe55cf8329e7bd05ce4d660e37d5c97fcbb0fdeef04f11a63e7f
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Mike Brady <mikebrady@eircom.net>

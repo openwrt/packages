@@ -14,7 +14,7 @@ PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/M/MySQL-python/
-PKG_MD5SUM:=654f75b302db6ed8dc5a898c625e030c
+PKG_HASH:=811040b647e5d5686f84db415efd697e6250008b112b6909ba77ac059e140c74
 
 PKG_BUILD_DEPENDS:=python python-setuptools libmysqlclient
 

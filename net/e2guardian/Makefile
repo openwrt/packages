@@ -16,7 +16,7 @@ PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 
 PKG_SOURCE:=v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/archive/
-PKG_MD5SUM:=70613669ef00a480e3ebb62e12427cf4
+PKG_HASH:=cae011aacf6b250fc021c861fe46e15310349c474bca4553c0f829620e53e3bf
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1

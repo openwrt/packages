@@ -16,7 +16,7 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 
 PKG_SOURCE:=gst-libav-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-libav
-PKG_MD5SUM:=b5f3c7a27b39b5f5c2f0bfd546b0c655020faf6b38d27b64b346c43e5ebf687a
+PKG_HASH:=b5f3c7a27b39b5f5c2f0bfd546b0c655020faf6b38d27b64b346c43e5ebf687a
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB

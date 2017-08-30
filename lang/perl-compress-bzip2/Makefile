@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/R/RU/RURBAN/
 PKG_SOURCE:=Compress-Bzip2-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=d5ef04d1e51fe45743b3044abad967d2
+PKG_HASH:=7956ac627fb373fae6effede3d21b3157122800224491b124afdd7bb426c8c3f
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

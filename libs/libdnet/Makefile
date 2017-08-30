@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/dugsong/libdnet/archive
-PKG_MD5SUM:=d2f1b72eac2a1070959667e9e61dcf20
+PKG_HASH:=b6360659c93fa2e3cde9e0a1fc9c07bc4111f3448c5de856e095eb98315dd424
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

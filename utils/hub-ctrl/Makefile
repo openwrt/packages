@@ -20,6 +20,7 @@ PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Simon Peter <probono@puredarwin.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_MIRROR_HASH:=98ffd9ead07d6208acf7f713dc6574877d4967bdfb47bf70444ec9d44399faaa
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk

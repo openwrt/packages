@@ -24,6 +24,7 @@ PKG_SOURCE_URL:=git://github.com/wifidog/wifidog-gateway.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=1.3.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=cdab08c11ba04ffa58c2df69c2c62f63196e290a216708fa5b7d43087c18d1b0
 
 PKG_FIXUP:=autoreconf
 # do not run make install

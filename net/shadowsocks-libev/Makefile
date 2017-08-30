@@ -14,7 +14,7 @@ include $(TOPDIR)/rules.mk
 #
 PKG_NAME:=shadowsocks-libev
 PKG_VERSION:=3.0.8
-PKG_RELEASE:=8
+PKG_RELEASE:=14
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/shadowsocks/shadowsocks-libev/releases/download/v$(PKG_VERSION)
@@ -81,7 +81,7 @@ define Package/shadowsocks-libev-ss-rules
   SUBMENU:=Web Servers/Proxies
   TITLE:=shadowsocks-libev ss-rules
   URL:=https://github.com/shadowsocks/shadowsocks-libev
-  DEPENDS:=+ip +ipset +iptables-mod-tproxy +shadowsocks-libev-ss-redir +shadowsocks-libev-config
+  DEPENDS:=+ip +ipset +iptables-mod-tproxy +resolveip +shadowsocks-libev-ss-redir +shadowsocks-libev-config
 endef
 
 define Package/shadowsocks-libev-ss-rules/install

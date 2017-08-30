@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/aggregate/
-PKG_MD5SUM:=6fcc515388bf2c5b0c8f9f733bfee7e1
+PKG_HASH:=166503005cd8722c730e530cc90652ddfa198a25624914c65dffc3eb87ba5482
 
 PKG_MAINTAINER:=Nikil Mehta <nikil.mehta@gmail.com>
 PKG_LICENSE:=ISC

@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-cpp-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
-PKG_MD5SUM:=2d45f7ad84eb2b1883ae2096b3b1f18a
+PKG_HASH:=578a2589bf9258adb03245dec5d624b61536867ebb732dbb8aeb30d96b0ada1f
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE

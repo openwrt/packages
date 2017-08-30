@@ -14,7 +14,7 @@ PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/mad \
 	ftp://ftp.mars.org/pub/mpeg/
-PKG_MD5SUM:=1be543bc30c56fb6bea1d7bf6a64e66c
+PKG_HASH:=bbfac3ed6bfbc2823d3775ebb931087371e142bb0e9bb1bee51a76a6e0078690
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPLv2

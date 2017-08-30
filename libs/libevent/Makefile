@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)-stable
 PKG_SOURCE:=release-$(PKG_VERSION)-stable.tar.gz
 PKG_SOURCE_URL:=https://github.com/libevent/libevent/archive/
-PKG_MD5SUM:=6dce6fe39f133c09ffe63de895805f7f
+PKG_HASH:=e9a32238a98954081d7ed9918d8f799eb4c743fd570749c0721585140dd5de21
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 
 PKG_FIXUP:=autoreconf

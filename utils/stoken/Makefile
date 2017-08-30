@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=https://github.com/cernekee/stoken.git
 
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REV).tar.gz
+PKG_MIRROR_HASH:=2f77c42b14a0b6b1e4d44dfd4d66b63ce6ed7484ca97debec0344f5c966e2e5c
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 PKG_LICENSE:=LGPL-2.1

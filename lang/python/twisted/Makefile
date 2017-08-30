@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=Twisted-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://pypi.python.org/packages/6b/23/8dbe86fc83215015e221fbd861a545c6ec5c9e9cd7514af114d1f64084ab \
 		http://twistedmatrix.com/Releases/Twisted/16.4
-PKG_MD5SUM:=c6d09bdd681f538369659111f079c29d
+PKG_HASH:=1d8d73f006c990744effb35588359fd44d43608649ac0b6b7edc71176e88e816
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/Twisted-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python python-setuptools USE_MUSL:librpc

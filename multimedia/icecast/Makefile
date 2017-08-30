@@ -11,7 +11,6 @@ PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.xiph.org/releases/icecast/
-PKG_MD5SUM:=83d7d34dbe22f0f8fc119d2c9839efc0
 PKG_HASH:=c85ca48c765d61007573ee1406a797ae6cb31fb5961a42e7f1c87adb45ddc592
 
 PKG_MAINTAINER:=André Gaul <andre@gaul.io>, \

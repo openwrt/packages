@@ -14,7 +14,7 @@ PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/84/ce/7ea5396efad1cef682bbc4068e72a0276341d9d9d0f501da609fab9fcb80/
-PKG_MD5SUM:=338e5e8a83ea0f0625f768dba4597530
+PKG_HASH:=813f6916d18a4c8e90efde72f419308b357692f81333cb1125f80013d22fb618
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk

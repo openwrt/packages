@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.dlitz.net/pub/dlitz/crypto/pycrypto/
-PKG_MD5SUM:=55a61a054aa66812daf5161a0d5d7eda
+PKG_HASH:=f2ce1e989b272cfcb677616763e0a2e7ec659effa67a88aa92b3a65528f60a3c
 
 PKG_LICENSE:=Public Domain
 PKG_LICENSE_FILES:=COPYRIGHT

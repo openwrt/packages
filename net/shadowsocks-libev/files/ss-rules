@@ -112,6 +112,7 @@ ss_rules_parse_args() {
 		__errmsg "Please install iptables-mod-conntrack-extra with opkg"
 		return 1
 	fi
+	o_remote_servers="$(for s in $o_remote_servers; do resolveip -4 "$s"; done)"
 }
 
 ss_rules_flush() {
@@ -252,7 +253,7 @@ ss_rules_iptchains_mkprerules() {
 	if [ -z "$o_ifnames" ]; then
 		echo "-I PREROUTING 1 -p $proto -j ss_rules_pre_src"
 	else
-		echo "$o_ifnames" \
+		echo $o_ifnames \
 			| tr ' ' '\n' \
 			| sed "s/.*/-I PREROUTING 1 -i \\0 -p $proto -j ss_rules_pre_src/"
 	fi

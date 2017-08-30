@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/T/TO/TODDR/
 PKG_SOURCE:=XML-Parser-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=af4813fe3952362451201ced6fbce379
+PKG_HASH:=1ae9d07ee9c35326b3d9aad56eae71a6730a73a116b9fe9e8a4758b7cc033216
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

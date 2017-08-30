@@ -14,7 +14,7 @@ PKG_RELEASE:=18
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.haproxy.org/download/1.7/src/
-PKG_MD5SUM:=7e94653cc5a1dba006bbe43736f53595
+PKG_HASH:=ec90153ccedd20ad4015d3eaf76b502ff1f61b431d54c22b8457b5784a9ae142
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_LICENSE:=GPL-2.0
@@ -33,7 +33,7 @@ endef
 define Download/lua533
 	FILE:=lua-5.3.3.tar.gz
 	URL:=http://www.lua.org/ftp/
-	MD5SUM:=703f75caa4fdf4a911c1a72e67a27498
+	HASH:=5113c06884f7de453ce57702abaac1d618307f33f6789fa870e87a59d772aca2
 endef
 
 define Build/Prepare

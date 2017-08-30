@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://libestr.adiscon.com/files/download/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=f4c9165a23587e77f7efe65d676d5e8e
+PKG_HASH:=bd655e126e750edd18544b88eb1568d200a424a0c23f665eb14bbece07ac703c
 
 PKG_MAINTAINER:=Dov Murik <dmurik@us.ibm.com>
 PKG_LICENSE:=LGPL-2.1+

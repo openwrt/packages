@@ -8,7 +8,7 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_SOURCE_URL:=https://my.balabit.com/downloads/eventlog/0.2/
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=3d6ebda8a161d36cb40d09328f78786b
+PKG_HASH:=494dac8e01dc5ce323df2ad554d94874938dab51aa025987677b2bc6906a9c66
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

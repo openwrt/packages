@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.digifail.com/software/bluelog
-PKG_MD5SUM:=614d0fe65bae68acff1d33d9f86e4805
+PKG_HASH:=9750b007daffaffecea3b8dd2332bf74cc24955c307861197a20d04d845bc412
 
 OUI_SOURCE:=oui-2016-05-30.txt.gz
 OUI_URL:=http://sources.lede-project.org/

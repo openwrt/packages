@@ -18,7 +18,7 @@ PKG_VERSION:=0.8.19
 PKG_RELEASE:=1
 
 # Use this for official releasees
-PKG_MD5SUM:=6669e765c834e259fb7570f126b85d7e
+PKG_HASH:=cc14f09539aa95623e884f28e8be7bd67c37550d25e08288108a54fd294fd2a8
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://ftp.libelektra.org/ftp/elektra/releases
 
