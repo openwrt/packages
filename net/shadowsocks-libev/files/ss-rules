@@ -112,7 +112,7 @@ ss_rules_parse_args() {
 		__errmsg "Please install iptables-mod-conntrack-extra with opkg"
 		return 1
 	fi
-	o_remote_servers="$(for s in $o_remote_servers; do resolveip "$s"; done)"
+	o_remote_servers="$(for s in $o_remote_servers; do resolveip -4 "$s"; done)"
 }
 
 ss_rules_flush() {
