@@ -1,0 +1,15 @@
+Index: fdm-1.9/Makefile.am
+===================================================================
+--- fdm-1.9.orig/Makefile.am
++++ fdm-1.9/Makefile.am
+@@ -107,7 +107,9 @@ dist_fdm_SOURCES = \
+ 	xmalloc.c \
+ 	\
+ 	parse.y \
+-	lex.c
++	lex.c \
++	b64_ntop.c \
++	b64_pton.c
+ 
+ nodist_fdm_SOURCES =
+ if NO_STRLCAT
