@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
 PKG_VERSION:=2.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -81,9 +81,9 @@ ifeq ($(BUILD_VARIANT),cyassl)
     CMAKE_OPTIONS += -DLWS_WITH_SSL=ON
 # for cyassl, edit package/libs/cyassl/Makefile to include --enable-opensslextra
 # NOTE: it will compile without it, untested whether it it's needed?!
-    CMAKE_OPTIONS += -DLWS_USE_CYASSL=ON
-    CMAKE_OPTIONS += -DLWS_CYASSL_LIBRARIES=$(STAGING_DIR)/usr/lib/libcyassl.so
-    CMAKE_OPTIONS += -DLWS_CYASSL_INCLUDE_DIRS=$(STAGING_DIR)/usr/include
+    CMAKE_OPTIONS += -DLWS_USE_WOLFSSL=ON
+    CMAKE_OPTIONS += -DLWS_WOLFSSL_LIBRARIES=$(STAGING_DIR)/usr/lib/libwolfssl.so
+    CMAKE_OPTIONS += -DLWS_WOLFSSL_INCLUDE_DIRS=$(STAGING_DIR)/usr/include
 endif
 
 ifeq ($(BUILD_VARIANT),full)
