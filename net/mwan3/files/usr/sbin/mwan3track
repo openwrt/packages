@@ -81,8 +81,8 @@ main() {
 	local sleep_time=0
 	local turn=0
 
-	if [ "$STATUS" = "offline" ]; then
-		echo "offline" > /var/run/mwan3track/$1/STATUS
+	if [ "$STATUS" = "unknown" ]; then
+		echo "unknown" > /var/run/mwan3track/$1/STATUS
 		score=0
 	else
 		echo "online" > /var/run/mwan3track/$1/STATUS
