@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcoap
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/obgm/libcoap
@@ -39,10 +39,32 @@ define Package/libcoap/description
   Constrained Application Protocol (RFC 7252) library
 endef
 
+define Package/coap-client
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=+libcoap
+  TITLE:=CoAP (RFC 7252) client tool
+endef
+
+define Package/coap-client/description
+  Constrained Application Protocol (RFC7252) client tool
+endef
+
+define Package/coap-server
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+libcoap
+  TITLE:=CoAP (RFC 7252) server programs
+endef
+
+define Package/coap-server/description
+  Constrained Application Protocol (RFC 7252) server and resource directory server
+endef
+
 TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
-	--disable-examples \
+	--enable-examples \
 	--disable-documentation
 
 ifeq ($(CONFIG_BIG_ENDIAN),y)
@@ -62,4 +84,17 @@ define Package/libcoap/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcoap-1.so* $(1)/usr/lib/
 endef
 
+define Package/coap-client/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/coap-client $(1)/usr/bin/
+endef
+
+define Package/coap-server/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/coap-server $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/coap-rd $(1)/usr/bin/
+endef
+
 $(eval $(call BuildPackage,libcoap))
+$(eval $(call BuildPackage,coap-client))
+$(eval $(call BuildPackage,coap-server))
