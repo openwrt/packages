@@ -44,6 +44,9 @@ define Build/InstallDev
 	
 	$(INSTALL_DIR)						$(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libedit.{a,so*}	$(1)/usr/lib/
+
+	$(INSTALL_DIR)						$(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libedit.pc	$(1)/usr/lib/pkgconfig
 endef
 
 define Package/libedit/install
