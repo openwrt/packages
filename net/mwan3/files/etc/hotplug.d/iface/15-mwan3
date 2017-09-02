@@ -65,21 +65,23 @@ case "$ACTION" in
 		mwan3_set_general_rules
 		mwan3_set_general_iptables
 		mwan3_create_iface_iptables $INTERFACE $DEVICE
+		mwan3_create_iface_rules $INTERFACE $DEVICE
+		mwan3_create_iface_route $INTERFACE $DEVICE
 		if [ ${running} -eq 1 -a "${status}" = "online" ]; then
-			mwan3_create_iface_rules $INTERFACE $DEVICE
-			mwan3_create_iface_route $INTERFACE $DEVICE
+			$LOG notice "Starting tracker on interface $INTERFACE (${DEVICE:-unknown})"
+			mwan3_set_iface_hotplug_state $INTERFACE "online"
 			mwan3_track $INTERFACE $DEVICE "online" "$src_ip"
 			mwan3_set_policies_iptables
 			mwan3_set_user_rules
 			mwan3_flush_conntrack $INTERFACE $DEVICE "ifup"
 		else
 			$LOG notice "Starting tracker on interface $INTERFACE (${DEVICE:-unknown})"
+			mwan3_set_iface_hotplug_state $INTERFACE "offline"
 			mwan3_track $INTERFACE $DEVICE "offline" "$src_ip"
 		fi
 	;;
 	ifdown)
-		mwan3_delete_iface_rules $INTERFACE
-		mwan3_delete_iface_route $INTERFACE
+		mwan3_set_iface_hotplug_state $INTERFACE "offline"
 		mwan3_delete_iface_ipset_entries $INTERFACE
 		mwan3_track_signal $INTERFACE $DEVICE
 		mwan3_set_policies_iptables
