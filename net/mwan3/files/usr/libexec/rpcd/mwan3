@@ -4,7 +4,7 @@
 . /lib/functions/network.sh
 . /usr/share/libubox/jshn.sh
 
-MWAN3_STATUS_DIR="/var/run/mwan3track"
+MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
 
 IPS="ipset"
 IPT4="iptables -t mangle -w"
@@ -45,7 +45,7 @@ get_mwan3_status() {
 			running="1"
 		fi
 
-		time_p="$(cat "$MWAN3_STATUS_DIR/${iface}/TIME")"
+		time_p="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TIME")"
 		[ -z "${time_p}" ] || {
 			time_n="$(date +'%s')"
 			let age=time_n-time_p
@@ -53,13 +53,13 @@ get_mwan3_status() {
 
 		json_add_object "${iface}"
 		json_add_int age "$age"
-		json_add_int "score" "$(cat "$MWAN3_STATUS_DIR/${iface}/SCORE")"
-		json_add_int "lost" "$(cat "$MWAN3_STATUS_DIR/${iface}/LOST")"
-		json_add_int "turn" "$(cat "$MWAN3_STATUS_DIR/${iface}/TURN")"
-		json_add_string "status" "$(cat "$MWAN3_STATUS_DIR/${iface}/STATUS")"
+		json_add_int "score" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/SCORE")"
+		json_add_int "lost" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOST")"
+		json_add_int "turn" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TURN")"
+		json_add_string "status" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
 		json_add_boolean "running" "${running}"
 		json_add_array "track_ip"
-		for file in $MWAN3_STATUS_DIR/${iface}/*; do
+		for file in $MWAN3TRACK_STATUS_DIR/${iface}/*; do
 			track="${file#*/TRACK_}"
 			if [ "${track}" != "${file}" ]; then
 				json_add_object

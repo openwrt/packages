@@ -8,15 +8,16 @@ IPT6="ip6tables -t mangle -w"
 LOG="logger -t mwan3[$$] -p"
 CONNTRACK_FILE="/proc/net/nf_conntrack"
 
-MWAN3_STATUS_DIR="/var/run/mwan3track"
+MWAN3_STATUS_DIR="/var/run/mwan3"
+MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
 
+[ -d $MWAN3_STATUS_DIR ] || mkdir -p $MWAN3_STATUS_DIR/iface_state
 # mwan3's MARKing mask (at least 3 bits should be set)
 if [ -e "${MWAN3_STATUS_DIR}/mmx_mask" ]; then
 	MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
 else
 	config_load mwan3
 	config_get MMX_MASK globals mmx_mask '0xff00'
-	mkdir -p "${MWAN3_STATUS_DIR}"
 	echo "$MMX_MASK" > "${MWAN3_STATUS_DIR}/mmx_mask"
 	$LOG notice "Using firewall mask ${MMX_MASK}"
 fi
@@ -499,7 +500,7 @@ mwan3_set_policy()
 
 	if [ "$family" == "ipv4" ]; then
 
-		if [ -n "$($IP4 route list table $id)" ]; then
+		if [ "$(mwan3_get_iface_hotplug_state $iface)" = "online" ]; then
 			if [ "$metric" -lt "$lowest_metric_v4" ]; then
 
 				total_weight_v4=$weight
@@ -532,7 +533,7 @@ mwan3_set_policy()
 
 	if [ "$family" == "ipv6" ]; then
 
-		if [ -n "$($IP6 route list table $id)" ]; then
+		if [ "$(mwan3_get_iface_hotplug_state $iface)" = "online" ]; then
 			if [ "$metric" -lt "$lowest_metric_v6" ]; then
 
 				total_weight_v6=$weight
@@ -763,6 +764,19 @@ mwan3_set_user_rules()
 	config_foreach mwan3_set_user_iptables_rule rule
 }
 
+mwan3_set_iface_hotplug_state() {
+	local iface=$1
+	local state=$2
+
+	echo -n $state > $MWAN3_STATUS_DIR/iface_state/$iface
+}
+
+mwan3_get_iface_hotplug_state() {
+	local iface=$1
+
+	cat $MWAN3_STATUS_DIR/iface_state/$iface 2>/dev/null || echo "unknown"
+}
+
 mwan3_report_iface_status()
 {
 	local device result track_ips tracking IP IPT
@@ -784,16 +798,14 @@ mwan3_report_iface_status()
 
 	if [ -z "$id" -o -z "$device" ]; then
 		result="unknown"
-	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')"i -a -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" -a -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -a -n "$($IPT -S mwan3_iface_out_$1 2> /dev/null)" -a -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
-		result="online"
+	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" -a -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" -a -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -a -n "$($IPT -S mwan3_iface_out_$1 2> /dev/null)" -a -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
+		result="$(mwan3_get_iface_hotplug_state $1)"
 	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" -o -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" -o -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -o -n "$($IPT -S mwan3_iface_out_$1 2> /dev/null)" -o -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
 		result="error"
+	elif [ "$enabled" == "1" ]; then
+		result="offline"
 	else
-		if [ "$enabled" == "1" ]; then
-			result="offline"
-		else
-			result="disabled"
-		fi
+		result="disabled"
 	fi
 
 	mwan3_list_track_ips()
