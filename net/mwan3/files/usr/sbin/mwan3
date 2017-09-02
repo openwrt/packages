@@ -46,7 +46,6 @@ ifdown()
 		kill $(cat /var/run/mwan3track-$1.pid)
 		rm /var/run/mwan3track-$1.pid
 	fi
-	mwan3_delete_iface_iptables $1
 }
 
 ifup()
@@ -166,6 +165,7 @@ stop()
 	done
 
 	mwan3_lock_clean
+	rm -rf $MWAN3_STATUS_DIR
 }
 
 restart() {

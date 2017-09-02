@@ -47,13 +47,13 @@ case "$ACTION" in
 		mwan3_create_iface_rules $INTERFACE $DEVICE
 		mwan3_create_iface_iptables $INTERFACE $DEVICE
 		mwan3_create_iface_route $INTERFACE $DEVICE
+		mwan3_set_iface_hotplug_state $INTERFACE "online"
 		mwan3_track $INTERFACE $DEVICE
 		mwan3_set_policies_iptables
 		mwan3_set_user_rules
 	;;
 	ifdown)
-		mwan3_delete_iface_rules $INTERFACE
-		mwan3_delete_iface_route $INTERFACE
+		mwan3_set_iface_hotplug_state $INTERFACE "offline"
 		mwan3_delete_iface_ipset_entries $INTERFACE
 		mwan3_set_policies_iptables
 		mwan3_set_user_rules
