@@ -22,7 +22,7 @@ config_get local_source globals local_source 'none'
 }
 
 mwan3_lock
-src_ip=$(uci -q -P /var/state get mwan3.globals.src_ip 2>/dev/null)
+src_ip=$(uci_get_state mwan3 globals src_ip)
 [ "${src_ip}" != "" ] && {
 	ip route del default via "${src_ip}" dev lo 1>/dev/null 2>&1
 	ip addr del "${src_ip}/32" dev lo 1>/dev/null 2>&1
@@ -37,7 +37,7 @@ usleep 10000
 	else
 		ip addr add "${src_ip}/32" dev lo
 		ip route add default via "${src_ip}" dev lo
-		uci -q -P /var/state set mwan3.globals.src_ip="${src_ip}"
+		uci_toggle_state mwan3 globals src_ip "${src_ip}"
 	fi
 }
 mwan3_unlock

@@ -81,8 +81,8 @@ main() {
 	local sleep_time=0
 	local turn=0
 
-	if [ "$STATUS" = "offline" ]; then
-		echo "offline" > /var/run/mwan3track/$1/STATUS
+	if [ "$STATUS" = "unknown" ]; then
+		echo "unknown" > /var/run/mwan3track/$1/STATUS
 		score=0
 	else
 		echo "online" > /var/run/mwan3track/$1/STATUS
@@ -92,20 +92,24 @@ main() {
 		sleep_time=$interval
 
 		for track_ip in $track_ips; do
-			case "$track_method" in
-				ping)
-					ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip &> /dev/null ;;
-				arping)
-					arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null ;;
-				httping)
-					httping -y $SRC_IP -c $count -t $timeout -q $track_ip &> /dev/null ;;
-			esac
-			if [ $? -eq 0 ]; then
-				let host_up_count++
-				echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+			if [ $host_up_count -lt $reliability ]; then
+				case "$track_method" in
+					ping)
+						ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip &> /dev/null ;;
+					arping)
+						arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null ;;
+					httping)
+						httping -y $SRC_IP -c $count -t $timeout -q $track_ip &> /dev/null ;;
+				esac
+				if [ $? -eq 0 ]; then
+					let host_up_count++
+					echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+				else
+					let lost++
+					echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+				fi
 			else
-				let lost++
-				echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+				echo "skipped" > /var/run/mwan3track/$1/TRACK_${track_ip}
 			fi
 		done
 
