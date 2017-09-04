@@ -1,0 +1,344 @@
+Index: boost_1_65_0/boost/context/continuation_fcontext.hpp
+===================================================================
+--- boost_1_65_0.orig/boost/context/continuation_fcontext.hpp
++++ boost_1_65_0/boost/context/continuation_fcontext.hpp
+@@ -95,7 +95,7 @@ transfer_t context_ontop( transfer_t t)
+     t.data = nullptr;
+     Ctx c{ t.fctx };
+     // execute function, pass continuation via reference
+-    fn( std::move( c) );
++    c = fn( std::move( c) );
+ #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+     return { exchange( c.fctx_, nullptr), nullptr };
+ #else
+Index: boost_1_65_0/boost/context/continuation_ucontext.hpp
+===================================================================
+--- boost_1_65_0.orig/boost/context/continuation_ucontext.hpp
++++ boost_1_65_0/boost/context/continuation_ucontext.hpp
+@@ -84,18 +84,18 @@ static void entry_func( void * data) noe
+ struct BOOST_CONTEXT_DECL activation_record {
+     thread_local static activation_record   *   current_rec;
+ 
+-    ucontext_t                                  uctx{};
+-    stack_context                               sctx{};
+-    bool                                        main_ctx{ true };
+-	activation_record                       *	from{ nullptr };
+-    std::function< void(activation_record*&) >  ontop{};
+-    bool                                        terminated{ false };
+-    bool                                        force_unwind{ false };
++    ucontext_t                                                  uctx{};
++    stack_context                                               sctx{};
++    bool                                                        main_ctx{ true };
++	activation_record                                       *	from{ nullptr };
++    std::function< activation_record*(activation_record*&) >    ontop{};
++    bool                                                        terminated{ false };
++    bool                                                        force_unwind{ false };
+ #if defined(BOOST_USE_ASAN)
+-    void                                    *   fake_stack{ nullptr };
+-    void                                    *   stack_bottom{ nullptr };
+-    std::size_t                                 stack_size{ 0 };
+-    bool                                        started{ false };
++    void                                                    *   fake_stack{ nullptr };
++    void                                                    *   stack_bottom{ nullptr };
++    std::size_t                                                 stack_size{ 0 };
++    bool                                                        started{ false };
+ #endif
+ 
+     static activation_record *& current() noexcept;
+@@ -168,20 +168,30 @@ struct BOOST_CONTEXT_DECL activation_rec
+         current()->ontop = std::bind(
+                 [](typename std::decay< Fn >::type & fn, activation_record *& ptr){
+                     Ctx c{ ptr };
+-                    fn( std::move( c) );
++                    c = fn( std::move( c) );
+                     if ( ! c) {
+                         ptr = nullptr;
+                     }
++#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
++                    return exchange( c.ptr_, nullptr);
++#else
++                    return std::exchange( c.ptr_, nullptr);
++#endif
+                 },
+                 std::forward< Fn >( fn),
+                 std::placeholders::_1);
+ #else
+         current()->ontop = [fn=std::forward<Fn>(fn)](activation_record *& ptr){
+             Ctx c{ ptr };
+-            fn( std::move( c) );
++            c = fn( std::move( c) );
+             if ( ! c) {
+                 ptr = nullptr;
+             }
++#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
++            return exchange( c.ptr_, nullptr);
++#else
++            return std::exchange( c.ptr_, nullptr);
++#endif
+         };
+ #endif
+ #if defined(BOOST_USE_SEGMENTED_STACKS)
+@@ -408,7 +418,7 @@ public:
+         if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+             throw detail::forced_unwind{ ptr};
+         } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
+-            detail::activation_record::current()->ontop( ptr);
++            ptr = detail::activation_record::current()->ontop( ptr);
+             detail::activation_record::current()->ontop = nullptr;
+         }
+         return continuation{ ptr };
+@@ -426,7 +436,7 @@ public:
+         if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+             throw detail::forced_unwind{ ptr};
+         } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
+-            detail::activation_record::current()->ontop( ptr);
++            ptr = detail::activation_record::current()->ontop( ptr);
+             detail::activation_record::current()->ontop = nullptr;
+         }
+         return continuation{ ptr };
+Index: boost_1_65_0/boost/context/continuation_winfib.hpp
+===================================================================
+--- boost_1_65_0.orig/boost/context/continuation_winfib.hpp
++++ boost_1_65_0/boost/context/continuation_winfib.hpp
+@@ -65,13 +65,13 @@ static VOID WINAPI entry_func( LPVOID da
+ struct BOOST_CONTEXT_DECL activation_record {
+     thread_local static activation_record   *   current_rec;
+ 
+-    LPVOID                                      fiber{ nullptr };
+-    stack_context                               sctx{};
+-    bool                                        main_ctx{ true };
+-    activation_record                       *   from{ nullptr };
+-    std::function< void(activation_record*&) >  ontop{};
+-    bool                                        terminated{ false };
+-    bool                                        force_unwind{ false };
++    LPVOID                                                      fiber{ nullptr };
++    stack_context                                               sctx{};
++    bool                                                        main_ctx{ true };
++    activation_record                                       *   from{ nullptr };
++    std::function< activation_record*(activation_record*&) >    ontop{};
++    bool                                                        terminated{ false };
++    bool                                                        force_unwind{ false };
+ 
+     static activation_record *& current() noexcept;
+ 
+@@ -142,20 +142,30 @@ struct BOOST_CONTEXT_DECL activation_rec
+         current()->ontop = std::bind(
+                 [](typename std::decay< Fn >::type & fn, activation_record *& ptr){
+                     Ctx c{ ptr };
+-                    fn( std::move( c) );
++                    c = fn( std::move( c) );
+                     if ( ! c) {
+                         ptr = nullptr;
+                     }
++#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
++                    return exchange( c.ptr_, nullptr);
++#else
++                    return std::exchange( c.ptr_, nullptr);
++#endif
+                 },
+                 std::forward< Fn >( fn),
+                 std::placeholders::_1);
+ #else
+         current()->ontop = [fn=std::forward<Fn>(fn)](activation_record *& ptr){
+             Ctx c{ ptr };
+-            fn( std::move( c) );
++            c = fn( std::move( c) );
+             if ( ! c) {
+                 ptr = nullptr;
+             }
++#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
++            return exchange( c.ptr_, nullptr);
++#else
++            return std::exchange( c.ptr_, nullptr);
++#endif
+         };
+ #endif
+         // context switch
+@@ -336,7 +346,7 @@ public:
+         if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+             throw detail::forced_unwind{ ptr};
+         } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
+-            detail::activation_record::current()->ontop( ptr);
++            ptr = detail::activation_record::current()->ontop( ptr);
+             detail::activation_record::current()->ontop = nullptr;
+         }
+         return continuation{ ptr };
+@@ -354,7 +364,7 @@ public:
+         if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+             throw detail::forced_unwind{ ptr};
+         } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
+-            detail::activation_record::current()->ontop( ptr);
++            ptr = detail::activation_record::current()->ontop( ptr);
+             detail::activation_record::current()->ontop = nullptr;
+         }
+         return continuation{ ptr };
+Index: boost_1_65_0/boost/thread/win32/condition_variable.hpp
+===================================================================
+--- boost_1_65_0.orig/boost/thread/win32/condition_variable.hpp
++++ boost_1_65_0/boost/thread/win32/condition_variable.hpp
+@@ -211,7 +211,7 @@ namespace boost
+                 {}
+ #endif
+ 
+-                void remove_waiter()
++                void remove_waiter_and_reset()
+                 {
+                   if (entry) {
+                     boost::lock_guard<boost::mutex> internal_lock(internal_mutex);
+@@ -221,7 +221,7 @@ namespace boost
+                 }
+                 ~entry_manager() BOOST_NOEXCEPT_IF(false)
+                 {
+-                    remove_waiter();
++                  remove_waiter_and_reset();
+                 }
+ 
+                 list_entry* operator->()
+@@ -250,7 +250,7 @@ namespace boost
+                   woken=entry->woken();
+               }
+               // do it here to avoid throwing on the destructor
+-              entry->remove_waiter();
++              entry.remove_waiter_and_reset();
+               locker.lock();
+               return woken;
+             }
+Index: boost_1_65_0/libs/context/doc/callcc.qbk
+===================================================================
+--- boost_1_65_0.orig/libs/context/doc/callcc.qbk
++++ boost_1_65_0/libs/context/doc/callcc.qbk
+@@ -176,6 +176,7 @@ return `void`.
+     c=c.resume_with([&data](ctx::continuation && c){
+                         std::cout << "f2: entered: " << data << std::endl;
+                         data=-1;
++                        return std::move( c);
+                     });
+     std::cout << "f1: returned third time" << std::endl;
+ 
+@@ -221,6 +222,7 @@ an exception.
+     c = c.resume_with(
+            [](ctx::continuation && c){
+                throw my_exception(std::move(c),"abc");
++               return std::move( c);
+            });
+ 
+     output:
+@@ -527,11 +529,11 @@ e.g. ['continuation::operator bool()] re
+ 
+ [variablelist
+ [[Effects:] [Captures current continuation and resumes `*this`.
+-The function `resume_with`, is used to execute function `fn` in continuation
++The function `resume_with`, is used to execute function `fn` in the execution context of
+ `*this` (e.g. the stack frame of `fn` is allocated on stack of `*this`).]]
+ [[Returns:] [The continuation representing the continuation that has been
+ suspended.]]
+-[[Note:] [Function `fn` needs to return void.]]
++[[Note:] [Function `fn` needs to return `continuation`.]]
+ [[Note:] [The returned continuation indicates if the suspended continuation has
+ terminated (return from context-function) via `bool operator()`.]]
+ ]
+Index: boost_1_65_0/libs/context/example/ontop.cpp
+===================================================================
+--- boost_1_65_0.orig/libs/context/example/ontop.cpp
++++ boost_1_65_0/libs/context/example/ontop.cpp
+@@ -32,6 +32,7 @@ int main() {
+     c = c.resume_with( [&data](ctx::continuation && c){
+                             std::cout << "f2: entered: " << data << std::endl;
+                             data = -1;
++                            return std::move( c);
+                         });
+     std::cout << "f1: returned third time" << std::endl;
+     std::cout << "main: done" << std::endl;
+Index: boost_1_65_0/libs/context/example/ontop_void.cpp
+===================================================================
+--- boost_1_65_0.orig/libs/context/example/ontop_void.cpp
++++ boost_1_65_0/libs/context/example/ontop_void.cpp
+@@ -21,8 +21,9 @@ ctx::continuation f1( ctx::continuation
+     return std::move( c);
+ }
+ 
+-void f2( ctx::continuation && c) {
++ctx::continuation f2( ctx::continuation && c) {
+     std::cout << "f2: entered" << std::endl;
++    return std::move( c);
+ }
+ 
+ int main() {
+Index: boost_1_65_0/libs/context/example/throw.cpp
+===================================================================
+--- boost_1_65_0.orig/libs/context/example/throw.cpp
++++ boost_1_65_0/libs/context/example/throw.cpp
+@@ -38,6 +38,7 @@ int main() {
+     c = c.resume_with(
+            [](ctx::continuation && c){
+                throw my_exception(std::move( c), "abc");
++               return std::move( c);
+            });
+ 
+     std::cout << "main: done" << std::endl;
+Index: boost_1_65_0/libs/context/test/test_callcc.cpp
+===================================================================
+--- boost_1_65_0.orig/libs/context/test/test_callcc.cpp
++++ boost_1_65_0/libs/context/test/test_callcc.cpp
+@@ -252,6 +252,7 @@ void test_ontop() {
+         c = c.resume_with(
+                [&i](ctx::continuation && c){
+                    i -= 10;
++                   return std::move( c);
+                });
+         BOOST_CHECK( c);
+         BOOST_CHECK_EQUAL( i, 200);
+@@ -266,6 +267,7 @@ void test_ontop() {
+         c = c.resume_with(
+                [&c1](ctx::continuation && c){
+                    c1 = std::move( c);
++                   return std::move( c);
+                });
+     }
+ }
+@@ -290,7 +292,8 @@ void test_ontop_exception() {
+     const char * what = "hello world";
+     c.resume_with(
+        [what](ctx::continuation && c){
+-           throw my_exception( std::move( c), what);
++            throw my_exception( std::move( c), what);
++            return std::move( c);
+        });
+     BOOST_CHECK_EQUAL( 3, value1);
+     BOOST_CHECK_EQUAL( std::string( what), value2);
+Index: boost_1_65_0/libs/fiber/src/context.cpp
+===================================================================
+--- boost_1_65_0.orig/libs/fiber/src/context.cpp
++++ boost_1_65_0/libs/fiber/src/context.cpp
+@@ -145,6 +145,7 @@ context::resume() noexcept {
+     // pass pointer to the context that resumes `this`
+     c_.resume_with([prev](boost::context::continuation && c){
+                 prev->c_ = std::move( c);
++                return boost::context::continuation{};
+             });
+ }
+ 
+@@ -158,6 +159,7 @@ context::resume( detail::spinlock_lock &
+     c_.resume_with([prev,&lk](boost::context::continuation && c){
+                 prev->c_ = std::move( c);
+                 lk.unlock();
++                return boost::context::continuation{};
+             });
+ }
+ 
+@@ -171,6 +173,7 @@ context::resume( context * ready_ctx) no
+     c_.resume_with([prev,ready_ctx](boost::context::continuation && c){
+                 prev->c_ = std::move( c);
+                 context::active()->schedule( ready_ctx);
++                return boost::context::continuation{};
+             });
+ }
+ 
+@@ -218,6 +221,7 @@ context::suspend_with_cc() noexcept {
+     // pass pointer to the context that resumes `this`
+     return c_.resume_with([prev](boost::context::continuation && c){
+                 prev->c_ = std::move( c);
++                return boost::context::continuation{};
+             });
+ }
+ 

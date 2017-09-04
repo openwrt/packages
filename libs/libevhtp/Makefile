@@ -16,10 +16,11 @@ PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/ellzey/libevhtp.git
+PKG_SOURCE_URL:=https://chromium.googlesource.com/external/github.com/ellzey/libevhtp
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=91071e2f20749cd469b87ac2ef1c158dc2a6806f
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=c9c4415539e78ac9021a8507cd16b9101564dd03286bc84428cc1ee11f0df1fd
 
 PKG_INSTALL:=1
 

@@ -9,13 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=3.2.6
-PKG_RELEASE:=1
+PKG_VERSION:=3.2.7
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
-PKG_MD5SUM:=7a35bd97bd7253305bf5c0af5f9dd3ce
-PKG_HASH:=3751cebb5c71a861288267769114d12b966a7703a686a325d90a93707f3a6d9f
+PKG_HASH:=28e75fc32485a88035a7ebf0a956a1e5c7e93b440dd4bbd6bc30c7268cf34fe9
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 
@@ -127,6 +126,7 @@ FFMPEG_MINI_DECODERS:= \
 	h264 \
 	hevc \
 	jpegls \
+	mp2 \
 	mp3 \
 	mpeg1video \
 	mpeg2video \
@@ -145,12 +145,13 @@ FFMPEG_MINI_DEMUXERS:= \
 	matroska \
 	mov \
 	mp3 \
+	mpegps \
 	mpegts \
 	mpegvideo \
 	ogg \
 
 FFMPEG_MINI_PROTOCOLS:= \
-	file \
+	file
 
 FFMPEG_AUDIO_DECODERS:= \
 	aac \
@@ -199,14 +200,6 @@ FFMPEG_AUDIO_DEMUXERS:= \
 	sdp \
 	wav \
 	wv \
-
-FFMPEG_AUDIO_PARSERS:= \
-	aac \
-	aac_latm \
-	ac3 \
-	flac \
-	mpegaudio \
-	opus \
 
 FFMPEG_AUDIO_PROTOCOLS:= \
 	file http icecast rtp tcp udp
@@ -377,34 +370,16 @@ FFMPEG_CONFIGURE:= \
 	--disable-debug \
 	--disable-bzlib \
 	\
-	--disable-dxva2 \
 	--disable-lzma \
 	--disable-vaapi \
-	--disable-vda \
 	--disable-vdpau \
 	--disable-outdevs
 
 ifeq ($(CONFIG_SOFT_FLOAT),y)
-FFMPEG_CONFIGURE += \
+FFMPEG_CONFIGURE+= \
 	--disable-altivec \
 	--disable-vsx \
 	--disable-power8 \
-	--disable-amd3dnow \
-	--disable-amd3dnowext \
-	--disable-mmx \
-	--disable-mmxext \
-	--disable-sse \
-	--disable-sse2 \
-	--disable-sse3 \
-	--disable-ssse3 \
-	--disable-sse4 \
-	--disable-sse42 \
-	--disable-avx \
-	--disable-xop \
-	--disable-fma3 \
-	--disable-fma4 \
-	--disable-avx2 \
-	--disable-aesni \
 	--disable-armv5te \
 	--disable-armv6 \
 	--disable-armv6t2 \
@@ -418,42 +393,45 @@ FFMPEG_CONFIGURE += \
 	--disable-runtime-cpudetect
 
 else ifneq ($(findstring arm,$(CONFIG_ARCH)),)
-FFMPEG_CONFIGURE += \
+FFMPEG_CONFIGURE+= \
 	--disable-runtime-cpudetect
 # XXX: GitHub issue 3320 ppc cpu with fpu but no altivec (WNDR4700)
 else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
-FFMPEG_CONFIGURE += \
+FFMPEG_CONFIGURE+= \
 	--disable-altivec
 endif
 
 # selectively disable optimizations according to arch/cpu type
 ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+	FFMPEG_CONFIGURE+= --enable-lto
+
 	ifneq ($(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)),)
-		FFMPEG_CONFIGURE+= \
-			--enable-vfp
+		FFMPEG_CONFIGURE+= --enable-vfp
 	else
-		FFMPEG_CONFIGURE+= \
-			--disable-vfp
+		FFMPEG_CONFIGURE+= --disable-vfp
 	endif
 	ifneq ($(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),)
 		FFMPEG_CONFIGURE+= \
 			--enable-neon \
 			--enable-vfp
 	else
-		FFMPEG_CONFIGURE+= \
-			--disable-neon
+		FFMPEG_CONFIGURE+= --disable-neon
 	endif
 
 endif
 
+ifeq ($(ARCH),x86_64)
+	FFMPEG_CONFIGURE+= --enable-lto
+endif
+
 ifneq ($(CONFIG_YASM),y)
-FFMPEG_CONFIGURE += \
-	--disable-yasm
+FFMPEG_CONFIGURE+= --disable-yasm
 
 endif
 
 ifeq ($(BUILD_VARIANT),full)
 	FFMPEG_CONFIGURE+= \
+		--enable-avresample \
 		$(if $(CONFIG_PACKAGE_libopus),--enable-libopus)
   ifeq ($(CONFIG_SOFT_FLOAT),y)
 	FFMPEG_CONFIGURE+= \
@@ -461,8 +439,12 @@ ifeq ($(BUILD_VARIANT),full)
 		\
 		$(if $(CONFIG_PACKAGE_shine),--enable-libshine)
   else
+	ifeq ($(ARCH),x86_64)
+		FFMPEG_CONFIGURE+= --enable-hardcoded-tables
+	else
+		FFMPEG_CONFIGURE+= --enable-small
+	endif
 	FFMPEG_CONFIGURE+= \
-		--enable-small \
 		--enable-gpl \
 		\
 		$(if $(CONFIG_PACKAGE_lame-lib),--enable-libmp3lame) \
@@ -564,7 +546,6 @@ ifeq ($(BUILD_VARIANT),audio-dec)
 	--disable-everything \
 	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_AUDIO_DECODERS)) \
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_AUDIO_DEMUXERS)) \
-	$(call FFMPEG_ENABLE,parser,$(FFMPEG_AUDIO_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_AUDIO_PROTOCOLS)) \
 	--disable-decoder=pcm_bluray,pcm_dvd \
 
@@ -593,7 +574,7 @@ ifeq ($(BUILD_VARIANT),mini)
 endif
 
 ifneq ($(CONFIG_TARGET_x86),)
-  TARGET_CFLAGS += -fomit-frame-pointer
+  TARGET_CFLAGS+= -fomit-frame-pointer
 endif
 
 # Taken from package-defaults.mk
@@ -632,9 +613,9 @@ define Build/InstallDev/full
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale} $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.{a,so*} $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.pc $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale} $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.pc $(1)/usr/lib/pkgconfig/
 ifneq ($(CONFIG_SOFT_FLOAT),y)
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpostproc $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.{a,so*} $(1)/usr/lib/
@@ -700,7 +681,7 @@ endef
 # Soft float is LGPL (no libpostproc); Hard float is GPL (yes libpostproc)
 define Package/libffmpeg-full/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.so.* $(1)/usr/lib/
 ifneq ($(CONFIG_SOFT_FLOAT),y)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.so.* $(1)/usr/lib/
 endif

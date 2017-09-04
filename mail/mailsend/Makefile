@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/muquit/mailsend/archive/$(PKG_VERSION)
-PKG_MD5SUM:=60103c411a8627e893d35e7836f904e8
+PKG_HASH:=73cb1b2455de95ab126e3682bf19c62e6baabee00f449da692be0bebd3ceb26b
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 

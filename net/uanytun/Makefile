@@ -17,7 +17,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.anytun.org/download/
-PKG_MD5SUM:=ce47ad45003ff1d84eaf5276941b9ddf
+PKG_HASH:=8edeed2ce185cc1add8a53de9f9192dfa65a48b559cccae6393faf2a1cd6f093
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 PKG_LICENSE:=GPL-3.0+

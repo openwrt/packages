@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/libs/security/linux-privs/libcap2
-PKG_MD5SUM:=6666b839e5d46c2ad33fc8aa2ceb5f77
+PKG_HASH:=693c8ac51e983ee678205571ef272439d83afe62dd8e424ea14ad9790bc35162
 PKG_MAINTAINER:=Paul Wassi <p.wassi@gmx.at>
 
 PKG_INSTALL:=1

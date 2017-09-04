@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.sourceforge.net/project/dfu-programmer/dfu-programmer/$(PKG_VERSION)/
-PKG_MD5SUM:=98641b0a7cf1cc8c8be3584d5552f6d8
+PKG_HASH:=1db4d36b1aedab2adc976e8faa5495df3cf82dc4bf883633dc6ba71f7c4af995
 
 PKG_MAINTAINER:=Stefan Hellermann <stefan@the2masters.de>
 PKG_LICENSE:=GPL-2.0

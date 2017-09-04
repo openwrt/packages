@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2010-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,11 +7,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmms
 PKG_VERSION:=0.6.4
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/libmms
-PKG_MD5SUM:=d6b665b335a6360e000976e770da7691
+PKG_HASH:=3c05e05aebcbfcc044d9e8c2d4646cd8359be39a3f0ba8ce4e72a9094bee704f
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPLv2.1
@@ -23,15 +21,12 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
 
 define Package/libmms
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+glib2
   TITLE:=MMS stream protocol library
   URL:=http://libmms.sourceforge.net
-  DEPENDS:=$(ICONV_DEPENDS)
 endef
 
 define Package/libmms/description
@@ -42,7 +37,6 @@ define Package/libmms/description
 endef
 
 TARGET_CFLAGS += $(FPIC)
-TARGET_LDFLAGS += $(if $(ICONV_FULL),-liconv)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

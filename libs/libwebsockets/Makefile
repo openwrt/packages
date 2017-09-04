@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
 PKG_VERSION:=2.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -55,11 +55,11 @@ define Package/libwebsockets-openssl
 	VARIANT:=openssl
 endef
 
-define Package/libwebsockets-cyassl
+define Package/libwebsockets-wolfssl
 	$(call Package/libwebsockets/Default)
-	TITLE += (CyaSSL)
+	TITLE += (WolfSSL)
 	DEPENDS += +libcyassl
-	VARIANT:=cyassl
+	VARIANT:=wolfssl
 endef
 
 define Package/libwebsockets-full
@@ -75,15 +75,15 @@ ifeq ($(BUILD_VARIANT),openssl)
     CMAKE_OPTIONS += -DLWS_WITH_SSL=ON
 endif
 
-ifeq ($(BUILD_VARIANT),cyassl)
+ifeq ($(BUILD_VARIANT),wolfssl)
     CMAKE_OPTIONS += -DLWS_OPENSSL_CLIENT_CERTS=/etc/ssl/certs
     CMAKE_OPTIONS += -DLWS_OPENSSL_SUPPORT=ON
     CMAKE_OPTIONS += -DLWS_WITH_SSL=ON
-# for cyassl, edit package/libs/cyassl/Makefile to include --enable-opensslextra
+# for wolfssl, edit package/libs/wolfssl/Makefile to include --enable-opensslextra
 # NOTE: it will compile without it, untested whether it it's needed?!
-    CMAKE_OPTIONS += -DLWS_USE_CYASSL=ON
-    CMAKE_OPTIONS += -DLWS_CYASSL_LIBRARIES=$(STAGING_DIR)/usr/lib/libcyassl.so
-    CMAKE_OPTIONS += -DLWS_CYASSL_INCLUDE_DIRS=$(STAGING_DIR)/usr/include
+    CMAKE_OPTIONS += -DLWS_USE_WOLFSSL=ON
+    CMAKE_OPTIONS += -DLWS_WOLFSSL_LIBRARIES=$(STAGING_DIR)/usr/lib/libwolfssl.so
+    CMAKE_OPTIONS += -DLWS_WOLFSSL_INCLUDE_DIRS=$(STAGING_DIR)/usr/include
 endif
 
 ifeq ($(BUILD_VARIANT),full)
@@ -102,10 +102,10 @@ define Package/libwebsockets/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebsockets.so* $(1)/usr/lib/
 endef
 
-Package/libwebsockets-cyassl/install = $(Package/libwebsockets/install)
+Package/libwebsockets-wolfssl/install = $(Package/libwebsockets/install)
 Package/libwebsockets-openssl/install = $(Package/libwebsockets/install)
 Package/libwebsockets-full/install = $(Package/libwebsockets/install)
 
 $(eval $(call BuildPackage,libwebsockets-openssl))
-$(eval $(call BuildPackage,libwebsockets-cyassl))
+$(eval $(call BuildPackage,libwebsockets-wolfssl))
 $(eval $(call BuildPackage,libwebsockets-full))

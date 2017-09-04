@@ -16,6 +16,7 @@ PKG_LICENSE:=LGPL-2.0+
 PKG_LICENSE_FILES:=license.txt
 
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=unixodbc/host
 
 include $(INCLUDE_DIR)/package.mk
 

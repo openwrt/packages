@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre
-PKG_VERSION:=8.40
+PKG_VERSION:=8.41
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/
-PKG_MD5SUM:=41a842bf7dcecd6634219336e2167d1d
+PKG_HASH:=e62c7eac5ae7c0e7286db61ff82912e1c0b7a0c13706616e94a7dd729321b530
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 
 PKG_LICENSE:=BSD-3-Clause
@@ -53,6 +53,7 @@ CONFIGURE_ARGS += \
 	--enable-utf8 \
 	--enable-unicode-properties \
 	--enable-pcre16 \
+	--with-match-limit-recursion=16000 \
 
 ifneq ($(CONFIG_PACKAGE_libpcrecpp),)
   CONFIGURE_ARGS+= --enable-cpp

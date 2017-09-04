@@ -29,6 +29,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 150 entries
     * [reg_cn](https://easylist-downloads.adblockplus.org/easylistchina+easylist.txt)
     * => regional blocklist for China, daily updates, approx. 1.600 entries
+    * [reg_nl](https://easylist-downloads.adblockplus.org/easylistdutch+easylist.txt)
+    * => regional blocklist for the Netherlands, weekly updates, approx. 1300 entries
     * [reg_pl](http://adblocklist.org)
     * => regional blocklist for Poland, daily updates, approx. 50 entries
     * [reg_ro](https://easylist-downloads.adblockplus.org/rolist+easylist.txt)
@@ -55,7 +57,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => daily updates, approx. 440 entries
 * zero-conf like automatic installation & setup, usually no manual changes needed
 * simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
-* automatically selects dnsmasq, unbound or bind as dns backend
+* automatically selects dnsmasq, unbound, bind or kresd (experimental!) as dns backend.
 * automatically selects uclient-fetch or wget as download utility (other tools like curl or aria2c are supported as well)
 * support http only mode (without installed ssl library) for all non-SSL blocklist sources
 * automatically supports a wide range of router modes, even AP modes are supported
@@ -153,6 +155,32 @@ create the new file '/etc/bind/db.rpz' and add:
   NS localhost.
 
   $INCLUDE /var/lib/bind/adb_list.overall
+</code></pre>
+  
+**change default dns backend to 'kresd':**
+<pre><code>
+The knot-resolver (kresd) support is only available to turris omnia users. At this stage there's no package for kresd in the official LEDE / OpenWrt package repository.
+Adblock deposits the sorted and filtered block list (adb_list.overall) in '/tmp/kresd' where kresd can find them.
+To use the block list please modify the following kresd configuration files (experimental / untested!):
+
+edit '/etc/config/resolver' and uncomment the following option:
+  option include_config '/etc/kresd/custom.conf'
+
+in the same file change the 'forward_upstream' option like that:
+  forward_upstream '0'
+
+edit '/etc/kresd/custom.conf' and add:
+  policy.add(policy.rpz(policy.DENY, '/etc/kresd/db.rpz'))
+  policy.add(policy.all(policy.FORWARD('8.8.8.8')))
+  policy.add(policy.all(policy.FORWARD('8.8.4.4')))
+
+create the new file '/etc/kresd/db.rpz' and add:
+  $TTL 2h
+  $ORIGIN rpz.
+  @ SOA localhost. root.localhost. (1 6h 1h 1w 2h)
+  NS localhost.
+
+  $INCLUDE /tmp/kresd/adb_list.overall
 </code></pre>
   
 **configuration for different download utilities:**

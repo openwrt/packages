@@ -14,7 +14,7 @@ PKG_RELEASE:=3
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/ \
 	http://erlang.mirror.su.se/
-PKG_MD5SUM:=346dd0136bf1cc28cebc140e505206bb
+PKG_HASH:=3c28820c981b30c50df8ac2a4a238e5813454fa3ed2ad530bc7948a282846474
 
 PKG_LICENSE:=ErlPL-1.1
 PKG_LICENSE_FILES:=EPLICENCE

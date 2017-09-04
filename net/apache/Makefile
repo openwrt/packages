@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
-PKG_VERSION:=2.4.25
+PKG_VERSION:=2.4.27
 PKG_RELEASE:=1
 PKG_SOURCE_NAME:=httpd
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
@@ -16,7 +16,7 @@ PKG_LICENSE:=Apache License
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/httpd/
-PKG_MD5SUM:=2826f49619112ad5813c0be5afcc7ddb
+PKG_HASH:=71fcc128238a690515bd8174d5330a5309161ef314a326ae45c7c15ed139c13a
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
@@ -40,7 +40,7 @@ endef
 
 define Package/apache
 $(call Package/apache/Default)
-  DEPENDS:=+libapr +libaprutil +libpcre +libopenssl +unixodbc 
+  DEPENDS:=+libapr +libaprutil +libpcre +libopenssl +unixodbc +zlib
 endef
 
 define Package/apache/description

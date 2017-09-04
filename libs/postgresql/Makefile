@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.6.3
-PKG_RELEASE:=3
+PKG_VERSION:=9.6.4
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 
@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=\
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
-PKG_HASH:=1645b3736901f6d854e695a937389e68ff2066ce0cde9d73919d6ab7c995b9c6
+PKG_HASH:=2b3ab16d82e21cead54c08b95ce3ac480696944a68603b6c11b3205b7376ce13
 
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
@@ -238,6 +238,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/postgresql $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpq.{a,so*} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpq.pc $(1)/usr/lib/pkgconfig/
 endef
 
 $(eval $(call HostBuild))

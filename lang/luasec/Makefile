@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/brunoos/luasec/archive/
-PKG_MD5SUM:=14e1aef6d2aae96bbf98afc6b6634af2
+PKG_HASH:=cef3a35c18beb8a54d9c8ce6260a4cabbd9a386de8711320d084daffad0aed5d
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 
 MAINTAINER:=W. Michael Petullo <mike@flyn.org>

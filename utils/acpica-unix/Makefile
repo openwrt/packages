@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acpica-unix
-PKG_VERSION:=20170629
+PKG_VERSION:=20170728
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://acpica.org/sites/$(subst -unix,,$(PKG_NAME))/files/$(PKG_SOURCE_URL)
-PKG_HASH:=5f05d8f63d60888d7450f090ce270ef7ed026de9293ce9f6d04fe99cbbb77635
+PKG_HASH:=6f9a37125bbb07c0a90fa25b59153b2774f6abe0e43eb1ddde852e43b21939ab
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 
 PKG_LICENSE:=GPL-2.0
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/acpica-unix
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=
+  DEPENDS:=@TARGET_x86_64
   TITLE:=ACPI utilities for UNIX
   URL:=https://acpica.org/
 endef

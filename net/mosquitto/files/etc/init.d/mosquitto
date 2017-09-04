@@ -56,7 +56,7 @@ convert_mosq_general() {
 
 	config_get_bool no_remote "$1" no_remote_access 0
 	if [ "$no_remote" -eq 1 ]; then
-		echo "bind_address 127.0.0.1" >> $TCONF
+		echo "bind_address localhost" >> $TCONF
 	fi
 
 	config_get port "$1" port 1883
@@ -64,6 +64,7 @@ convert_mosq_general() {
 	append_if "$1" protocol
 	append_if "$1" max_inflight_messages
 	append_if "$1" max_queued_messages
+	append_if "$1" sys_interval
 }
 
 convert_persistence() {
@@ -99,6 +100,18 @@ add_listener() {
     fi
 
     append_if "$1" protocol
+    append_if "$1" http_dir
+    append_optional_bool "$1" use_username_as_clientid use_username_as_clientid
+    append_if "$1" cafile
+    append_if "$1" capath
+    append_if "$1" certfile
+    append_if "$1" keyfile
+    append_if "$1" tls_version
+    append_optional_bool "$1" require_certificate require_certificate
+    append_optional_bool "$1" use_identity_as_username use_identity_as_username
+    append_if "$1" crlfile
+    append_if "$1" ciphers
+    append_if "$1" psk_hint
 }
 
 add_topic() {
@@ -121,8 +134,20 @@ add_bridge() {
     append_optional_bool "$1" cleansession cleansession
     append_optional_bool "$1" try_private try_private
     append_optional_bool "$1" notifications notifications
+    append_optional_bool "$1" round_robin round_robin
 
-    append_if "$1" clientid
+    # Note, deprecated upstream, preserve old uci configs
+    append_if "$1" clientid remote_clientid
+    append_if "$1" remote_clientid
+    append_if "$1" local_clientid
+    append_if "$1" notification_topic
+    append_if "$1" keepalive_interval
+    append_if "$1" start_type
+    append_if "$1" restart_timeout
+    append_if "$1" idle_timeout
+    append_if "$1" threshold
+    append_if "$1" protocol_version bridge_protocol_version
+    append_optional_bool "$1" attempt_unsubscribe bridge_attempt_unsubscribe
     append_if "$1" identity bridge_identity
     append_if "$1" psk bridge_psk
     append_if "$1" tls_version bridge_tls_version
@@ -132,8 +157,12 @@ add_bridge() {
     append_if "$1" cafile bridge_cafile
     append_if "$1" certfile bridge_certfile
     append_if "$1" keyfile bridge_keyfile
+    # Note, deprecated upstream, preserve old uci configs
     append_if "$1" username remote_username
+    # Note, deprecated upstream, preserve old uci configs
     append_if "$1" password remote_password
+    append_if "$1" remote_username
+    append_if "$1" remote_password
 }
 
 

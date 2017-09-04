@@ -1,0 +1,44 @@
+From 468988860e0dae62ebbf991627c74bcbb4bd256f Mon Sep 17 00:00:00 2001
+From: erouault <erouault>
+Date: Mon, 29 May 2017 11:29:06 +0000
+Subject: [PATCH] * libtiff/tif_getimage.c: initYCbCrConversion(): stricter
+ validation for refBlackWhite coefficients values. To avoid invalid
+ float->int32 conversion (when refBlackWhite[0] == 2147483648.f) Fixes
+ https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1907 Credit to OSS Fuzz
+
+---
+ ChangeLog              | 8 ++++++++
+ libtiff/tif_getimage.c | 2 +-
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/ChangeLog b/ChangeLog
+index a2ddaac2..04881ba7 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,5 +1,13 @@
+ 2017-05-29  Even Rouault <even.rouault at spatialys.com>
+ 
++	* libtiff/tif_getimage.c: initYCbCrConversion(): stricter validation for
++	refBlackWhite coefficients values. To avoid invalid float->int32 conversion
++	(when refBlackWhite[0] == 2147483648.f)
++	Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1907
++	Credit to OSS Fuzz
++
++2017-05-29  Even Rouault <even.rouault at spatialys.com>
++
+ 	* libtiff/tif_color.c: TIFFYCbCrToRGBInit(): stricter clamping to avoid
+ 	int32 overflow in TIFFYCbCrtoRGB().
+ 	Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1844
+diff --git a/libtiff/tif_getimage.c b/libtiff/tif_getimage.c
+index dc373abc..a209a7a7 100644
+--- a/libtiff/tif_getimage.c
++++ b/libtiff/tif_getimage.c
+@@ -2241,7 +2241,7 @@ DECLARESepPutFunc(putseparate8bitYCbCr11tile)
+ 
+ static int isInRefBlackWhiteRange(float f)
+ {
+-    return f >= (float)(-0x7FFFFFFF + 128) && f <= (float)0x7FFFFFFF;
++    return f > (float)(-0x7FFFFFFF + 128) && f < (float)0x7FFFFFFF;
+ }
+ 
+ static int

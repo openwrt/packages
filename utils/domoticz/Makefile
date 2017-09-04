@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=domoticz
 PKG_VERSION_MAJOR:=3
-PKG_VERSION_PATCH:=5877
+PKG_VERSION_PATCH:=8153
 PKG_VERSION:=$(PKG_VERSION_MAJOR).$(PKG_VERSION_PATCH)
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/domoticz/domoticz/archive/$(PKG_VERSION)/$(PKG_SOURCE)
-PKG_HASH:=fb88edbe428851a7a337a85faa93f6da00713b3ad086ff6957031dc9b3b58bba
+PKG_HASH:=5ea8f37f2ef900e9bd17b1b5375e75bfdec4f09001e3e2e0b647a260989d014c
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=License.txt
@@ -70,14 +70,20 @@ define Build/Prepare
 	# Remove unwanted scripts
 	cd $(PKG_BUILD_DIR)/scripts && rm -rf \
 		buienradar_rain_example.pl \
-		_domoticz_main.bat \
+		_domoticz_main* \
 		download_update.sh \
+		dzVents/{.gitignore,documentation,examples} \
+		dzVents/runtime/{integration-tests,misc/smoothing.xlsx,tests} \
 		logrotate/ \
+		lua_parsers/example* \
+		lua/*demo.lua \
 		python/ \
 		readme.txt \
 		restart_domoticz \
 		templates/All.Python \
 		update_domoticz
+	# Remove *.md
+	cd $(PKG_BUILD_DIR) && $(FIND) -name '*.md' -delete
 endef
 
 define Package/domoticz/install

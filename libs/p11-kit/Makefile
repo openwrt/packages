@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=96f073270c489c9a594e1c9413f42db8
+PKG_HASH:=e57371669f3b157141b86c429bd9c29741994b2f5ff115fcb8a03e751b0f6ac4
 PKG_SOURCE_URL:=http://p11-glue.freedesktop.org/releases/
 
 PKG_INSTALL:=1

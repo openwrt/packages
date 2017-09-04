@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE_URL:=ftp://roy.marples.name/pub/dhcpcd \
     http://roy.marples.name/downloads/dhcpcd
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=b22005c131e7108ecf598b6a4ac091eb
+PKG_HASH:=36ad01619ee81ac3815467d0157c38a14f5db464371326e97f719be362d5ab9c
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=

@@ -28,9 +28,7 @@ ss_mkjson_() {
 	local func
 
 	for func in "$@"; do
-		if ! "$func"; then
-			return 1
-		fi
+		"$func" || return 1
 	done
 }
 
@@ -47,6 +45,7 @@ ss_mkjson_server_conf() {
 
 ss_mkjson_server_conf_() {
 	[ -n "$server_port" ] || return 1
+	password="${password//\"/\\\"}"
 	cat <<-EOF
 		${server:+${q}server${q}: ${q}$server${q},}
 		"server_port": $server_port,
@@ -57,10 +56,12 @@ ss_mkjson_server_conf_() {
 }
 
 ss_mkjson_common_conf() {
+	[ "$ipv6_first" = 0 ] && ipv6_first=false || ipv6_first=true
 	[ "$fast_open" = 0 ] && fast_open=false || fast_open=true
 	[ "$reuse_port" = 0 ] && reuse_port=false || reuse_port=true
 	cat <<-EOF
 		"use_syslog": true,
+		"ipv6_first": $ipv6_first,
 		"fast_open": $fast_open,
 		"reuse_port": $reuse_port,
 		${local_address:+${q}local_address${q}: ${q}$local_address${q},}
@@ -77,7 +78,11 @@ ss_mkjson_ss_local_conf() {
 }
 
 ss_mkjson_ss_redir_conf() {
-	ss_mkjson_server_conf
+	ss_mkjson_server_conf || return 1
+	[ "$disable_sni" = 0 ] && disable_sni=false || disable_sni=true
+	cat <<-EOF
+		${q}disable_sni${q}: $disable_sni,
+	EOF
 }
 
 ss_mkjson_ss_server_conf() {
@@ -100,7 +105,7 @@ ss_xxx() {
 
 	[ -x "$bin" ] || return
 	eval "$("validate_${cfgtype}_section" "$cfg" ss_validate_mklocal)"
-	"validate_${cfgtype}_section" "$cfg"
+	"validate_${cfgtype}_section" "$cfg" || return 1
 	[ "$disabled" = 0 ] || return
 
 	if ss_mkjson \
@@ -120,21 +125,17 @@ ss_xxx() {
 }
 
 ss_rules_cb() {
-	local cfgserver
-	local server
+	local cfgserver server
 
-	[ "$cfgtype" != ss_server ] || return
-	config_get cfgserver "$cfg" server
-	config_get server "$cfgserver" server
-
-	ss_rules_servers="$ss_rules_servers $server"
 	if [ "$cfgtype" = ss_redir ]; then
+		config_get cfgserver "$cfg" server
+		config_get server "$cfgserver" server
+		ss_redir_servers="$ss_redir_servers $server"
 		if [ "$mode" = tcp_only -o "$mode" = "tcp_and_udp" ]; then
 			eval "ss_rules_redir_tcp_$cfg=$local_port"
 		fi
 		if [ "$mode" = udp_only -o "$mode" = "tcp_and_udp" ]; then
 			eval "ss_rules_redir_udp_$cfg=$local_port"
-			eval "ss_rules_redir_server_udp_$cfg=$server"
 		fi
 	fi
 }
@@ -143,53 +144,45 @@ ss_rules() {
 	local cfg="ss_rules"
 	local bin="$ss_bindir/ss-rules"
 	local cfgtype
-	local args local_port_tcp local_port_udp server_udp
-	local i a_args d_args
+	local local_port_tcp local_port_udp
+	local args
 
 	[ -x "$bin" ] || return 1
 	config_get cfgtype "$cfg" TYPE
 	[ "$cfgtype" = ss_rules ] || return 1
 
 	eval "$(validate_ss_rules_section "$cfg" ss_validate_mklocal)"
-	validate_ss_rules_section "$cfg"
+	validate_ss_rules_section "$cfg" || return 1
 	[ "$disabled" = 0 ] || return 1
 
 	eval local_port_tcp="\$ss_rules_redir_tcp_$redir_tcp"
 	eval local_port_udp="\$ss_rules_redir_udp_$redir_udp"
-	eval server_udp="\$ss_rules_redir_server_udp_$redir_udp"
-	[ -z "$local_port_udp" ] || args="$args -U"
-	case "$local_default" in
-		forward) args="$args -O" ;;
-		checkdst) args="$args -o" ;;
-	esac
-	case "$src_default" in
-		bypass) d_args=RETURN ;;
-		forward) d_args=SS_SPEC_WAN_FW ;;
-		checkdst) d_args=SS_SPEC_WAN_AC ;;
-	esac
-	ss_rules_servers="$(echo "$ss_rules_servers" | tr ' ' '\n' | sort -u)"
-	for i in $src_ips_bypass; do a_args="b,$i $a_args"; done
-	for i in $src_ips_forward; do a_args="g,$i $a_args"; done
-	for i in $src_ips_checkdst; do a_args="n,$i $a_args"; done
+	[ -n "$local_port_tcp" -o -n "$local_port_udp" ] || return 1
+	ss_redir_servers="$(echo "$ss_redir_servers" | tr ' ' '\n' | sort -u)"
+	[ "$dst_forward_recentrst" = 0 ] || args="$args --dst-forward-recentrst"
 
 	"$bin" \
-			-s "$ss_rules_servers" \
+			-s "$ss_redir_servers" \
 			-l "$local_port_tcp" \
-			-S "$server_udp" \
 			-L "$local_port_udp" \
-			-B "$dst_ips_bypass_file" \
-			-W "$dst_ips_forward_file" \
-			-b "$dst_ips_bypass" \
-			-w "$dst_ips_forward" \
-			-e "$ipt_args" \
-			-a "$a_args" \
-			-d "$d_args" \
+			--src-default "$src_default" \
+			--dst-default "$dst_default" \
+			--local-default "$local_default" \
+			--dst-bypass-file "$dst_ips_bypass_file" \
+			--dst-forward-file "$dst_ips_forward_file" \
+			--dst-bypass "$dst_ips_bypass" \
+			--dst-forward "$dst_ips_forward" \
+			--src-bypass "$src_ips_bypass" \
+			--src-forward "$src_ips_forward" \
+			--src-checkdst "$src_ips_checkdst" \
+			--ifnames "$ifnames" \
+			--ipt-extra "$ipt_args" \
 			$args \
 		|| "$bin" -f
 }
 
 start_service() {
-	local cfgtype="$1"
+	local cfgtype
 
 	mkdir -p "$ss_confdir"
 	config_load shadowsocks-libev
@@ -238,10 +231,10 @@ validate_common_server_options_() {
 	local cfg="$1"; shift
 	local func="$1"; shift
 	local stream_methods='"table", "rc4", "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "bf-cfb", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "salsa20", "chacha20", "chacha20-ietf"'
-	local aead_methods='"aes-128-gcm", "aes-192-gcm", "aes-256-gcm"'
+	local aead_methods='"aes-128-gcm", "aes-192-gcm", "aes-256-gcm", "chacha20-ietf-poly1305", "xchacha20-ietf-poly1305"'
 
 	"${func:-ss_validate}" "$cfgtype" "$cfg" "$@" \
-		'disabled:bool:false' \
+		'disabled:bool:0' \
 		'server:host' \
 		'server_port:port' \
 		'password:string' \
@@ -262,11 +255,12 @@ validate_common_options_() {
 	local func="$1"; shift
 
 	"${func:-ss_validate}" "$cfgtype" "$cfg" "$@" \
-		'disabled:bool:false' \
-		'verbose:bool:false' \
-		'fast_open:bool:false' \
-		'reuse_port:bool:false' \
-		'mode:or("tcp_only", "udp_only", "tcp_and_udp")' \
+		'disabled:bool:0' \
+		'fast_open:bool:0' \
+		'ipv6_first:bool:0' \
+		'reuse_port:bool:0' \
+		'verbose:bool:0' \
+		'mode:or("tcp_only", "udp_only", "tcp_and_udp"):tcp_only' \
 		'mtu:uinteger' \
 		'timeout:uinteger' \
 		'user:string'
@@ -281,23 +275,28 @@ validate_ss_local_section() {
 }
 
 validate_ss_redir_section() {
-	validate_common_client_options_ ss_redir "$1" "${2}"
+	validate_common_client_options_ ss_redir "$1" \
+		"${2}" \
+		'disable_sni:bool:0'
 }
 
 validate_ss_rules_section() {
 	"${2:-ss_validate}" ss_rules "$1" \
-		'disabled:bool:false' \
+		'disabled:bool:0' \
 		'redir_tcp:uci("shadowsocks-libev", "@ss_redir")' \
 		'redir_udp:uci("shadowsocks-libev", "@ss_redir")' \
-		'src_ips_bypass:list(ipaddr)' \
-		'src_ips_forward:list(ipaddr)' \
-		'src_ips_checkdst:list(ipaddr)' \
+		'src_ips_bypass:or(ip4addr,cidr4)' \
+		'src_ips_forward:or(ip4addr,cidr4)' \
+		'src_ips_checkdst:or(ip4addr,cidr4)' \
 		'dst_ips_bypass_file:file' \
-		'dst_ips_bypass:list(ipaddr)' \
+		'dst_ips_bypass:or(ip4addr,cidr4)' \
 		'dst_ips_forward_file:file' \
-		'dst_ips_forward:list(ipaddr)' \
-		'src_default:or("bypass", "forward", "checkdst")' \
-		'local_default:or("bypass", "forward", "checkdst")' \
+		'dst_ips_forward:or(ip4addr,cidr4)' \
+		'src_default:or("bypass", "forward", "checkdst"):checkdst' \
+		'dst_default:or("bypass", "forward"):bypass' \
+		'local_default:or("bypass", "forward", "checkdst"):bypass' \
+		'dst_forward_recentrst:bool:0' \
+		'ifnames:maxlength(15)' \
 		'ipt_args:string'
 }
 

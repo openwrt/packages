@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.5.3
-PKG_RELEASE:=5
+PKG_VERSION:=2.6.4
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=GPLv2
 
@@ -37,6 +37,22 @@ define Package/mwan3/conffiles
 endef
 
 define Build/Compile
+endef
+
+define Package/mwan3/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/rpcd restart
+fi
+exit 0
+endef
+
+define Package/mwan3/postrm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/rpcd restart
+fi
+exit 0
 endef
 
 define Package/mwan3/install

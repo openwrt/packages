@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgcrypt
-PKG_VERSION:=1.7.3
+PKG_VERSION:=1.6.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.gnupg.org/gcrypt/libgcrypt
-PKG_MD5SUM:=c869e542cc13a1c28d8055487bf7f5c4
+PKG_HASH:=f9461b4619bb78b273a88d468915750d418e89a3ea3b641bab0563a9af4b04d0
 
 PKG_FIXUP:=patch-libtool
 PKG_INSTALL:=1

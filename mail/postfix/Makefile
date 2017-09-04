@@ -8,15 +8,25 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE_URL:=ftp://ftp.porcupine.org/mirrors/postfix-release/official/
-PKG_VERSION:=3.1.4
-PKG_MD5SUM:=878a059d92ee3b093d7d3e97248c915d
+PKG_VERSION:=3.2.2
+PKG_HASH:=d06849418d119d09366997b2b481bb23f737629769b4e4a52da42fb3ad8b0576
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=IPL-1.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DEPENDS:=+POSTFIX_CDB:tinycdb
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_POSTFIX_TLS \
+	CONFIG_POSTFIX_SASL \
+	CONFIG_POSTFIX_LDAP \
+	CONFIG_POSTFIX_CDB \
+	CONFIG_POSTFIX_DB \
+	CONFIG_POSTFIX_SQLITE \
+	CONFIG_POSTFIX_PGSQL \
+	CONFIG_POSTFIX_PCRE \
+	CONFIG_POSTFIX_EAI \
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,7 +35,7 @@ define Package/postfix
   CATEGORY:=Mail
   TITLE:=Postfix Mail Transmit Agent
   URL:=http://www.postfix.org/
-  DEPENDS:=+POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_EAI:icu +libpcre
+  DEPENDS:=+POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_PGSQL:libpq +POSTFIX_EAI:icu +POSTFIX_PCRE:libpcre
 endef
 
 define Package/postfix/description
@@ -64,16 +74,26 @@ define Package/postfix/config
 			default y
 			help
 			  Implements support for SQLite3 DB
+		config POSTFIX_PGSQL
+			bool "PostgreSQL support"
+			default n
+			help
+			  Implement support for PostgreSQL
+		config POSTFIX_PCRE
+			bool "PCRE support"
+			default n
+			help
+			  Implement support for Perl Compatible Regular Expressions
 		config POSTFIX_EAI
 			bool "SMTPUTF8 support"
 			default n
 			help
-				Enable Postfix support for Email Address Internationalization
-				(EAI) as defined in RFC 6531 (SMTPUTF8 extension), RFC 6532
-				(Internationalized email headers) and RFC 6533
-				(Internationalized delivery status notifications).
-				Since version 3.0, Postfix fully supports UTF-8 email
-				addresses and UTF-8 message header values.
+			  Enable Postfix support for Email Address Internationalization
+			  (EAI) as defined in RFC 6531 (SMTPUTF8 extension), RFC 6532
+			  (Internationalized email headers) and RFC 6533
+			  (Internationalized delivery status notifications).
+			  Since version 3.0, Postfix fully supports UTF-8 email
+			  addresses and UTF-8 message header values.
 	endmenu
 endef
 
@@ -114,6 +134,18 @@ endif
 ifdef CONFIG_POSTFIX_SQLITE
   CCARGS+=-DHAS_SQLITE -I$(STAGING_DIR)/usr/include/
   AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lsqlite3 -lpthread
+endif
+
+ifdef CONFIG_POSTFIX_PGSQL
+  CCARGS+=-DHAS_PGSQL -I$(STAGING_DIR)/usr/include/
+  AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lpq
+endif
+
+ifdef CONFIG_POSTFIX_PCRE
+  CCARGS+=-DHAS_PCRE -I$(STAGING_DIR)/usr/include/
+  AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lpcre
+else
+  CCARGS+=-DNO_PCRE
 endif
 
 ifdef CONFIG_POSTFIX_EAI
@@ -214,7 +246,7 @@ define Package/postfix/postinst
   echo "Warning: $${IPKG_INSTROOT}$(sendmail_path) saved as $${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
  fi
  if [ ! -f "$${IPKG_INSTROOT}$(sendmail_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(sendmail_path)$(ln_suffix)" "$(sendmail_path)"
+  ln -s "$(sendmail_path)$(ln_suffix)" "$${IPKG_INSTROOT}$(sendmail_path)"
  fi
 
  if [ -f "$${IPKG_INSTROOT}$(newaliases_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(newaliases_path)")" != "$(newaliases_path)$(ln_suffix)" ]; then
@@ -222,7 +254,7 @@ define Package/postfix/postinst
   echo "Warning: $${IPKG_INSTROOT}$(newaliases_path) saved as $${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
  fi
  if [ ! -f "$${IPKG_INSTROOT}$(newaliases_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(newaliases_path)$(ln_suffix)" "$(newaliases_path)"
+  ln -s "$(newaliases_path)$(ln_suffix)" "$${IPKG_INSTROOT}$(newaliases_path)"
  fi
 
  if [ -f "$${IPKG_INSTROOT}$(mailq_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(mailq_path)")" != "$(mailq_path)$(ln_suffix)" ]; then
@@ -230,7 +262,7 @@ define Package/postfix/postinst
   echo "Warning: $${IPKG_INSTROOT}$(mailq_path) saved as $${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
  fi
  if [ ! -f "$(mailq_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(mailq_path)$(ln_suffix)" "$(mailq_path)"
+  ln -s "$(mailq_path)$(ln_suffix)" "$${IPKG_INSTROOT}$(mailq_path)"
  fi
 
  grep -qc main\.cf "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/main.cf" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf

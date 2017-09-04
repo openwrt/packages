@@ -14,7 +14,7 @@ PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/l7-filter
-PKG_MD5SUM:=91be154d12134dcdbc560cc7aa7fe4ce
+PKG_HASH:=d6bf98a69268558543bd32fccea287cb3f14b37521d18c790e2b6f8dcfaa5381
 
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk

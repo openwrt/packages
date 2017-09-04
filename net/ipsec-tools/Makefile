@@ -11,14 +11,14 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ipsec-tools
 PKG_VERSION:=0.8.2
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>, \
 	Vitaly Protsko <villy@sft.ru>
 PKG_LICENSE := BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/ipsec-tools
-PKG_MD5SUM:=d53ec14a0a3ece64e09e5e34b3350b41
+PKG_HASH:=8eb6b38716e2f3a8a72f1f549c9444c2bc28d52c9536792690564c74fe722f2d
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

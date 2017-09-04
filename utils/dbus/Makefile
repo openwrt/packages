@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dbus.freedesktop.org/releases/dbus/
-PKG_MD5SUM:=27b8e99ffad603b8acfa25201c6e3d5c
+PKG_HASH:=ad7dcad73ad9b0ff55819985d354eacfffe07e2eb8c763e155efc21d6001084b
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=AFL-2.1
 

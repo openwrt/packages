@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://gael.roualland.free.fr/ifstat/
-PKG_MD5SUM:=8599063b7c398f9cfef7a9ec699659b25b1c14d2bc0f535aed05ce32b7d9f507
+PKG_HASH:=8599063b7c398f9cfef7a9ec699659b25b1c14d2bc0f535aed05ce32b7d9f507
 
 PKG_MAINTAINER:=Nikil Mehta <nikil.mehta@gmail.com>
 PKG_LICENSE:=GPL-2.0

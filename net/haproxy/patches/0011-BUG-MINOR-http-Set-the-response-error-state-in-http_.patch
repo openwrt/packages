@@ -1,0 +1,33 @@
+From 9304b76fb37a36f6249ec963093d74210bd237f6 Mon Sep 17 00:00:00 2001
+From: Christopher Faulet <cfaulet@haproxy.com>
+Date: Tue, 18 Jul 2017 10:35:55 +0200
+Subject: [PATCH 11/18] BUG/MINOR: http: Set the response error state in
+ http_sync_res_state
+
+This is just typo. It may only report a wrong response message state in
+"show errors" on the CLI.
+
+This patch must be backported in 1.7.
+
+(cherry picked from commit a3992e06a6e74142d9784d18d8cb3527fadb64d6)
+Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+---
+ src/proto_http.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 94c8d639..796955f5 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -5530,7 +5530,7 @@ int http_sync_res_state(struct stream *s)
+ 			goto http_msg_closed;
+ 		}
+ 		else if (chn->flags & CF_SHUTW) {
+-			txn->req.err_state = txn->req.msg_state;
++			txn->rsp.err_state = txn->rsp.msg_state;
+ 			txn->rsp.msg_state = HTTP_MSG_ERROR;
+ 			s->be->be_counters.cli_aborts++;
+ 			if (objt_server(s->target))
+-- 
+2.13.0
+

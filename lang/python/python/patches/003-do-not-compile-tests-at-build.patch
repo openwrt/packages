@@ -1,6 +1,6 @@
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1038,6 +1038,7 @@ libinstall:	build_all $(srcdir)/Lib/$(PL
+@@ -1116,6 +1116,7 @@ libinstall:	build_all $(srcdir)/Lib/$(PL
  		done; \
  	done
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
@@ -8,7 +8,7 @@
  	if test -d $(DESTDIR)$(LIBDEST)/distutils/tests; then \
  		$(INSTALL_DATA) $(srcdir)/Modules/xxmodule.c \
  			$(DESTDIR)$(LIBDEST)/distutils/tests ; \
-@@ -1064,6 +1065,7 @@ libinstall:	build_all $(srcdir)/Lib/$(PL
+@@ -1142,6 +1143,7 @@ libinstall:	build_all $(srcdir)/Lib/$(PL
  		$(PYTHON_FOR_BUILD) -m lib2to3.pgen2.driver $(DESTDIR)$(LIBDEST)/lib2to3/Grammar.txt
  	-PYTHONPATH=$(DESTDIR)$(LIBDEST) $(RUNSHARED) \
  		$(PYTHON_FOR_BUILD) -m lib2to3.pgen2.driver $(DESTDIR)$(LIBDEST)/lib2to3/PatternGrammar.txt

@@ -15,7 +15,7 @@ PKG_LICENSE:=GPL-2.0+
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.bz2
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/s/ssmtp
-PKG_MD5SUM:=22c37dc90c871e8e052b2cab0ad219d010fa938608cd66b21c8f3c759046fa36
+PKG_HASH:=22c37dc90c871e8e052b2cab0ad219d010fa938608cd66b21c8f3c759046fa36
 
 include $(INCLUDE_DIR)/package.mk
 

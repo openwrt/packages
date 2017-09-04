@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,19 +6,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=expat
-PKG_VERSION:=2.2.0
+PKG_VERSION:=2.2.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=2f47841c829facb346eb6e3fab5212e2
 PKG_SOURCE_URL:=@SF/expat
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_HASH:=b31890fb02f85c002a67491923f89bda5028a880fd6c374f707193ad81aace5f
+PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>, \
+		Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=conftools/libtool.m4
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -32,7 +30,7 @@ define Package/libexpat
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=An XML parsing library
-  URL:=http://expat.sourceforge.net/
+  URL:=https://libexpat.github.io/
 endef
 
 define Package/libexpat/description

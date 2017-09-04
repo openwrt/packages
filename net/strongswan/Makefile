@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.5.3
+PKG_VERSION:=5.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=c5ea54b199174708de11af9b8f4ecf28b5b0743d4bc0e380e741f25b28c0f8d4
+PKG_HASH:=a14dc0d92634ed52730bfc76a76db30943a28ed3c65a560066e1e9f785827b13
 PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
@@ -86,6 +86,7 @@ PKG_MOD_AVAILABLE:= \
 	unity \
 	uci \
 	updown \
+	vici \
 	whitelist \
 	x509 \
 	xauth-eap \
@@ -137,6 +138,8 @@ $(call Package/strongswan/Default)
   TITLE+= (full)
   DEPENDS:= +strongswan \
 	+strongswan-charon \
+	+strongswan-charon-cmd \
+	+strongswan-ipsec \
 	+strongswan-mod-addrblock \
 	+strongswan-mod-aes \
 	+strongswan-mod-af-alg \
@@ -202,12 +205,15 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-uci \
 	+strongswan-mod-unity \
 	+strongswan-mod-updown \
+	+strongswan-mod-vici \
 	+strongswan-mod-whitelist \
 	+strongswan-mod-x509 \
 	+strongswan-mod-xauth-eap \
 	+strongswan-mod-xauth-generic \
 	+strongswan-mod-xcbc \
-	+strongswan-utils \
+	+strongswan-pki \
+	+strongswan-scepclient \
+	+strongswan-swanctl \
 	@DEVEL
 endef
 
@@ -225,6 +231,7 @@ $(call Package/strongswan/Default)
   TITLE+= (default)
   DEPENDS:= +strongswan \
 	+strongswan-charon \
+	+strongswan-ipsec \
 	+strongswan-mod-aes \
 	+strongswan-mod-attr \
 	+strongswan-mod-connmark \
@@ -253,8 +260,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-updown \
 	+strongswan-mod-x509 \
 	+strongswan-mod-xauth-generic \
-	+strongswan-mod-xcbc \
-	+strongswan-utils
+	+strongswan-mod-xcbc
 endef
 
 define Package/strongswan-default/description
@@ -268,6 +274,7 @@ $(call Package/strongswan/Default)
   TITLE+= (isakmp)
   DEPENDS:= +strongswan \
 	+strongswan-charon \
+	+strongswan-ipsec \
 	+strongswan-mod-aes \
 	+strongswan-mod-des \
 	+strongswan-mod-gmpdh \
@@ -281,8 +288,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-socket-default \
 	+strongswan-mod-stroke \
 	+strongswan-mod-uci \
-	+strongswan-mod-updown \
-	+strongswan-utils
+	+strongswan-mod-updown
 endef
 
 define Package/strongswan-isakmp/description
@@ -329,15 +335,59 @@ $(call Package/strongswan/description/Default)
  This package contains charon, an IKEv2 keying daemon.
 endef
 
-define Package/strongswan-utils
+define Package/strongswan-charon-cmd
+$(call Package/strongswan/Default)
+  TITLE+= charon-cmd utility
+  DEPENDS:= +strongswan +strongswan-charon
+endef
+
+define Package/strongswan-charon-cmd/description
+$(call Package/strongswan/description/Default)
+ This package contains the charon-cmd utility.
+endef
+
+define Package/strongswan-ipsec
 $(call Package/strongswan/Default)
   TITLE+= utilities
   DEPENDS:= +strongswan
 endef
 
-define Package/strongswan-utils/description
+define Package/strongswan-ipsec/description
 $(call Package/strongswan/description/Default)
- This package contains the pki & scepclient utilities.
+ This package contains the ipsec utility.
+endef
+
+define Package/strongswan-pki
+$(call Package/strongswan/Default)
+  TITLE+= PKI tool
+  DEPENDS:= +strongswan
+endef
+
+define Package/strongswan-pki/description
+$(call Package/strongswan/description/Default)
+ This package contains the pki tool.
+endef
+
+define Package/strongswan-scepclient
+$(call Package/strongswan/Default)
+  TITLE+= SCEP client
+  DEPENDS:= +strongswan
+endef
+
+define Package/strongswan-scepclient/description
+$(call Package/strongswan/description/Default)
+ This package contains the SCEP client.
+endef
+
+define Package/strongswan-swanctl
+$(call Package/strongswan/Default)
+  TITLE+= swanctl utility
+  DEPENDS:= +strongswan +strongswan-mod-vici
+endef
+
+define Package/strongswan-swanctl/description
+$(call Package/strongswan/description/Default)
+ This package contains the swanctl utility.
 endef
 
 define Package/strongswan-libtls
@@ -378,7 +428,9 @@ CONFIGURE_ARGS+= \
 	--disable-fast \
 	--enable-mediation \
 	--with-systemdsystemunitdir=no \
-	$(if $(CONFIG_PACKAGE_strongswan-utils),--enable-pki --enable-scepclient,--disable-pki --disable-scepclient) \
+	$(if $(CONFIG_PACKAGE_strongswan-charon-cmd),--enable-cmd,--disable-cmd) \
+	$(if $(CONFIG_PACKAGE_strongswan-pki),--enable-pki,--disable-pki) \
+	$(if $(CONFIG_PACKAGE_strongswan-scepclient),--enable-scepclient,--disable-scepclient) \
 	--with-random-device=/dev/random \
 	--with-urandom-device=/dev/urandom \
 	--with-routing-table="$(call qstrip,$(CONFIG_STRONGSWAN_ROUTING_TABLE))" \
@@ -428,18 +480,44 @@ define Package/strongswan-minimal/install
 endef
 
 define Package/strongswan-charon/install
+	$(INSTALL_DIR) $(1)/etc/strongswan.d
+	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.d/charon.conf $(1)/etc/strongswan.d
+	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.d/charon-logging.conf $(1)/etc/strongswan.d
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/charon $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libcharon.so.* $(1)/usr/lib/ipsec/
 endef
 
-define Package/strongswan-utils/install
+define Package/strongswan-charon-cmd/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/charon-cmd $(1)/usr/sbin/
+endef
+
+define Package/strongswan-ipsec/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ipsec $(1)/usr/sbin/
+endef
+
+define Package/strongswan-pki/install
+	$(INSTALL_DIR) $(1)/etc/strongswan.d
+	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.d/pki.conf $(1)/etc/strongswan.d/
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/pki $(1)/usr/bin/
+endef
+
+define Package/strongswan-scepclient/install
+	$(INSTALL_DIR) $(1)/etc/strongswan.d
+	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.d/scepclient.conf $(1)/etc/strongswan.d/
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/scepclient $(1)/usr/lib/ipsec/
+endef
+
+define Package/strongswan-swanctl/install
+	$(INSTALL_DIR) $(1)/etc/swanctl/{bliss,ecdsa,pkcs{12,8},private,pubkey,rsa}
+	$(INSTALL_DIR) $(1)/etc/swanctl/x509{,aa,ac,ca,crl,ocsp}
+	$(CP) $(PKG_INSTALL_DIR)/etc/swanctl/swanctl.conf $(1)/etc/swanctl/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/swanctl $(1)/usr/sbin/
 endef
 
 define Package/strongswan-libtls/install
@@ -486,6 +564,12 @@ define Plugin/updown/install
 	$(INSTALL_DIR) $(1)/etc
 endef
 
+define Plugin/vici/install
+	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libvici.so.* $(1)/usr/lib/ipsec/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-vici.so $(1)/usr/lib/ipsec/plugins/
+endef
+
 define Plugin/whitelist/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/whitelist $(1)/usr/lib/ipsec/
@@ -503,7 +587,11 @@ $(eval $(call BuildPackage,strongswan-full))
 $(eval $(call BuildPackage,strongswan-minimal))
 $(eval $(call BuildPackage,strongswan-isakmp))
 $(eval $(call BuildPackage,strongswan-charon))
-$(eval $(call BuildPackage,strongswan-utils))
+$(eval $(call BuildPackage,strongswan-charon-cmd))
+$(eval $(call BuildPackage,strongswan-ipsec))
+$(eval $(call BuildPackage,strongswan-pki))
+$(eval $(call BuildPackage,strongswan-scepclient))
+$(eval $(call BuildPackage,strongswan-swanctl))
 $(eval $(call BuildPackage,strongswan-libtls))
 $(eval $(call BuildPlugin,addrblock,RFC 3779 address block constraint support,))
 $(eval $(call BuildPlugin,aes,AES crypto,))
@@ -568,11 +656,12 @@ $(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charo
 $(eval $(call BuildPlugin,sql,SQL database interface,))
 $(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-sqlite:libsqlite3))
 $(eval $(call BuildPlugin,sshkey,SSH key decoding,))
-$(eval $(call BuildPlugin,stroke,Stroke,+strongswan-charon +strongswan-utils))
+$(eval $(call BuildPlugin,stroke,Stroke,+strongswan-charon +strongswan-ipsec))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci))
 $(eval $(call BuildPlugin,unity,Cisco Unity extension,))
 $(eval $(call BuildPlugin,updown,updown firewall,))
+$(eval $(call BuildPlugin,vici,Versatile IKE Configuration Interface,))
 $(eval $(call BuildPlugin,whitelist,peer identity whitelisting,))
 $(eval $(call BuildPlugin,x509,x509 certificate,))
 $(eval $(call BuildPlugin,xauth-eap,EAP XAuth backend,))

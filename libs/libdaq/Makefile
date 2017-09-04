@@ -14,7 +14,7 @@ PKG_RELEASE:=2
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
 	@SF/snort
 PKG_SOURCE:=daq-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=65e51d72e9d5d8b397e192e4e5857eff
+PKG_HASH:=a294aa3d01cd8902bf842d320e7f2c043af9ead95d0e7198c3b71a0dbc9d253c
 PKG_BUILD_DIR:=$(BUILD_DIR)/daq-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0

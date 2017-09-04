@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=COPYING.LIB COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-base/
-PKG_MD5SUM:=9d7109c8fb0a5dec8edb17b0053c59a46aba7ddf48dc48ea822ebbbd4339d38d
+PKG_HASH:=9d7109c8fb0a5dec8edb17b0053c59a46aba7ddf48dc48ea822ebbbd4339d38d
 
 PKG_BUILD_DEPENDS:= libgstreamer1
 PKG_CONFIG_DEPENDS:= \

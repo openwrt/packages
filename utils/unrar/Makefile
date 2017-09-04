@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.rarlab.com/rar
-PKG_MD5SUM:=588b3fadc04eea7372cbfe98e4709aee
+PKG_HASH:=e470c584332422893fb52e049f2cbd99e24dc6c6da971008b4e2ae4284f8796c
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=UnRAR

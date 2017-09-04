@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2016 OpenWrt.org
+# Copyright (C) 2008-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 #
@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale
-PKG_VERSION:=1.1.3
+PKG_VERSION:=1.1.6
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 
@@ -16,9 +16,10 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/Kozea/Radicale
-PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=d5171958ffe41e495ccaf2c02702d9acb0c6e6ad
+PKG_SOURCE_VERSION:=7568ec39f09a753217fb2d525c5f8db64f4d98f4
+PKG_MIRROR_HASH:=73de51e296479f860d4d8cd383a6aa34e8c702d9fca63b0499c7fcc2e794e6df
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)

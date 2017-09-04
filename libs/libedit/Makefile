@@ -16,7 +16,7 @@ PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://thrysoee.dk/editline/
-PKG_MD5SUM:=b6e60f326a3fce91bea1a6fe4700af58
+PKG_HASH:=b6b159c0c6ec8a7f349ea2a75d8b960efa346c462c1ac4921f1ac0de85a9f5d6
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
@@ -44,6 +44,9 @@ define Build/InstallDev
 	
 	$(INSTALL_DIR)						$(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libedit.{a,so*}	$(1)/usr/lib/
+
+	$(INSTALL_DIR)						$(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libedit.pc	$(1)/usr/lib/pkgconfig
 endef
 
 define Package/libedit/install

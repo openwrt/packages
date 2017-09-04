@@ -14,6 +14,7 @@ PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_MIRROR_HASH:=0ab254d4bb8ce9556ad8fc2a1b4aef739ec3bb3e1f343400b20435e2ab8e686f
 PKG_SOURCE_URL:=https://github.com/keplerproject/xavante.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=9825b905133e14d37a4c179f2d02367ab93f1ef6

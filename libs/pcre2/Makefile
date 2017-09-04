@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre2
-PKG_VERSION:=10.23
+PKG_VERSION:=10.30
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/
-PKG_MD5SUM:=b2cd00ca7e24049040099b0a46bb3649
-PKG_HASH:=dfc79b918771f02d33968bd34a749ad7487fa1014aeb787fad29dd392b78c56e
+PKG_SOURCE_URL:=@SF/$(PKG_NAME)
+PKG_HASH:=90bd41c605d30e3745771eb81928d779f158081a51b2f314bbcc1f73de5773db
 PKG_MAINTAINER:=Shane Peelar <lookatyouhacker@gmail.com>
 
 PKG_LICENSE:=BSD-3-Clause

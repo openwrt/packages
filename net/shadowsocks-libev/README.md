@@ -39,8 +39,9 @@ We can have multiple instances of component and `server` sections.  The relation
 
 	redir_tcp		name of ss_redir section with mode tcp_only or tcp_and_udp
 	redir_udp		name of ss_redir section with mode udp_only or tcp_and_udp
+	ifnames			only apply rules on packets from these ifnames
 
-	--- incoming packets having source address in
+	--- for incoming packets having source address in
 
 	src_ips_bypass		will bypass the redir chain
 	src_ips_forward		will always go through the redir chain
@@ -50,10 +51,6 @@ We can have multiple instances of component and `server` sections.  The relation
 
 	src_default		bypass, forward, [checkdst]
 
-	--- for local out tcp packets, the default action can be specified with
-
-	local_default		[bypass], forward, checkdst
-
 	--- if the previous check result is checkdst,
 	--- then packets having destination address in
 
@@ -61,6 +58,20 @@ We can have multiple instances of component and `server` sections.  The relation
 	dst_ips_bypass		will bypass the redir chain
 	dst_ips_forward_file
 	dst_ips_forward		will go through the redir chain
+
+	--- otherwise, the default action can be specified with
+
+	dst_default		[bypass], forward
+
+	--- for local out tcp packets, the default action can be specified with
+
+	local_default		[bypass], forward, checkdst
+
+Bool option `dst_forward_recentrst` requires iptables/netfilter `recent` match module (`opkg install iptables-mod-conntrack-extra`).  When enabled, `ss-rules` will setup iptables rules to forward through `ss-redir` those packets whose destination have recently sent to us multiple tcp-rst.
+
+ss-rules uses kernel ipset mechanism for storing addresses/networks.  Those ipsets are also part of the API and can be populated by other programs, e.g. dnsmasq with builtin ipset support.  For more details please read output of `ss-rules --help`
+
+Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network representation.  Option names are retained in its current form for backward compatibility coniderations
 
 ## notes and faq
 

@@ -36,7 +36,7 @@ Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  # live in project/PCBuild9.  If we're dealing with an x64 Windows build,
 --- a/Lib/distutils/command/build_ext.py
 +++ b/Lib/distutils/command/build_ext.py
-@@ -237,7 +237,10 @@ class build_ext (Command):
+@@ -240,7 +240,10 @@ class build_ext (Command):
          if (sysconfig.get_config_var('Py_ENABLE_SHARED')):
              if not sysconfig.python_build:
                  # building third party extensions

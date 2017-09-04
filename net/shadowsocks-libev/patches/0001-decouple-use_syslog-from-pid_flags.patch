@@ -1,7 +1,7 @@
-From ea18a4ffcd9a8de4c5b888d9dc58a2b173c5ff8e Mon Sep 17 00:00:00 2001
+From a91d70dd37e9555d104629538890d44ef355c772 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Mon, 26 Jun 2017 14:49:36 +0800
-Subject: [PATCH] decouple use_syslog from pid_flags
+Subject: [PATCH 1/2] decouple use_syslog from pid_flags
 
 Sometimes we need processes to run in the foreground to be supervised
 and at the same time use syslog facility instead of logging its stdout,
@@ -34,10 +34,10 @@ index 3c58148..05445c3 100644
          }
      } else {
 diff --git a/src/local.c b/src/local.c
-index aa69205..d123516 100644
+index 78f6d29..e4bd477 100644
 --- a/src/local.c
 +++ b/src/local.c
-@@ -1519,8 +1519,8 @@ main(int argc, char **argv)
+@@ -1522,8 +1522,8 @@ main(int argc, char **argv)
          local_addr = "127.0.0.1";
      }
  
@@ -62,10 +62,10 @@ index 6e7197c..338ab85 100644
      }
  
 diff --git a/src/redir.c b/src/redir.c
-index 4856007..88660f8 100644
+index 3809411..fae8d54 100644
 --- a/src/redir.c
 +++ b/src/redir.c
-@@ -1137,8 +1137,8 @@ main(int argc, char **argv)
+@@ -1140,8 +1140,8 @@ main(int argc, char **argv)
  #endif
      }
  
@@ -76,7 +76,7 @@ index 4856007..88660f8 100644
      }
  
 diff --git a/src/server.c b/src/server.c
-index 747f0e5..7e3df9e 100644
+index 534dbd8..1c25c74 100644
 --- a/src/server.c
 +++ b/src/server.c
 @@ -1726,8 +1726,8 @@ main(int argc, char **argv)

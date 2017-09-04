@@ -1,6 +1,6 @@
 --- a/makedefs	2016-01-28 12:30:14.444082390 -0500
 +++ b/makedefs	2016-01-28 13:44:02.092006512 -0500
-@@ -198,7 +198,7 @@ error() {
+@@ -210,7 +210,7 @@ error() {
  
  case $# in
   # Officially supported usage.
@@ -9,7 +9,7 @@
      RELEASE=`(uname -r) 2>/dev/null`
      # No ${x%%y} support in Solaris 11 /bin/sh
      RELEASE_MAJOR=`expr "$RELEASE" : '\([0-9]*\)'` || exit 1
-@@ -212,6 +212,15 @@ case $# in
+@@ -224,6 +224,15 @@ case $# in
  esac
  
  case "$SYSTEM.$RELEASE" in

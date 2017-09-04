@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
 PKG_SOURCE:=URI-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=247c3da29a794f72730e01aa5a715daf
+PKG_HASH:=9c8eca0d7f39e74bbc14706293e653b699238eeb1a7690cc9c136fb8c2644115
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=https://github.com/expressif/pecl-event-libevent.git
 PKG_SOURCE_VERSION:=9e72744ce6224beafc7b54ce2a3a990f1c552a5a
 PKG_SOURCE_SUBDIR:=$(PECL_NAME)-$(PKG_SOURCE_VERSION)
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=b81f02ef7f990f4ce3f859e22a85b7430188fc6f1395cd8fba82ef237ba62d8b
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 

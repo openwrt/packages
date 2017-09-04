@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=dvtm-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.brain-dump.org/projects/dvtm/
-PKG_MD5SUM:=887e162a3abe2ad8e86caefab20cdd63
+PKG_HASH:=8f2015c05e2ad82f12ae4cf12b363d34f527a4bbc8c369667f239e4542e1e510
 PKG_MAINTAINER:=Yunfan Jiang <jyf1987@gmail.com>
 
 PKG_LICENSE:=MIT/X

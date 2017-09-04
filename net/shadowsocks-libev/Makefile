@@ -10,20 +10,15 @@ include $(TOPDIR)/rules.mk
 # Checklist when bumping versions
 #
 # - update cipher list by checking src/crypto.c:crypto_init()
-# - check if default mode has changed from TCP_ONLY
-# - check if ss-rules has been upstreamed
-#
-# TODO
-#
-# - add validate type: user
+# - check if default mode has changed from being tcp_only
 #
 PKG_NAME:=shadowsocks-libev
-PKG_VERSION:=3.0.6
-PKG_RELEASE:=2
+PKG_VERSION:=3.0.8
+PKG_RELEASE:=14
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/shadowsocks/shadowsocks-libev/releases/download/v$(PKG_VERSION)
-PKG_HASH:=7d9b43b0235a57c115bfe160efd54abef96bffcbfff61c5496e7c2800f0734ca
+PKG_HASH:=3bdf7f8f89050aee896496fd86b6b7ef694754f0b8cd97c4b5a04d1d3e5c2e5b
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
@@ -86,7 +81,7 @@ define Package/shadowsocks-libev-ss-rules
   SUBMENU:=Web Servers/Proxies
   TITLE:=shadowsocks-libev ss-rules
   URL:=https://github.com/shadowsocks/shadowsocks-libev
-  DEPENDS:=+ip +ipset +iptables-mod-tproxy +shadowsocks-libev-ss-redir +shadowsocks-libev-config
+  DEPENDS:=+ip +ipset +iptables-mod-tproxy +resolveip +shadowsocks-libev-ss-redir +shadowsocks-libev-config
 endef
 
 define Package/shadowsocks-libev-ss-rules/install
@@ -107,7 +102,21 @@ uci batch <<-EOF
 EOF
 endef
 
-CONFIGURE_ARGS += --disable-documentation
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(FIND) $(PKG_BUILD_DIR) \
+			   -name '*.o' \
+			-o -name '*.lo' \
+			-o -name '.deps' \
+			-o -name '.libs' \
+		| $(XARGS) rm -rvf
+endef
+
+CONFIGURE_ARGS += \
+	--disable-documentation \
+	--disable-silent-rules \
+	--disable-assert \
+	--disable-ssp \
 
 $(eval $(call BuildPackage,shadowsocks-libev-config))
 $(eval $(call BuildPackage,shadowsocks-libev-ss-rules))

@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fdm
-PKG_VERSION:=1.7
-PKG_RELEASE:=1
+PKG_VERSION:=1.9
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD-2-Clause
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/fdm
-PKG_MD5SUM:=aea0421571e8f3ec8f747a5d72c84348
+PKG_SOURCE:=$(PKG_VERSION).zip
+PKG_SOURCE_URL:=https://github.com/nicm/fdm/archive
+PKG_HASH:=ee08f9133657c8c959b738079c2e4f556cf5cca2daa8343feaf4f07698ad6086
 
 PKG_INSTALL:=1
 
@@ -38,13 +38,23 @@ define Package/fdm/description
   to a pipe, file, maildir, mbox or SMTP server, based on $(if $(CONFIG_FDM_WITH_PCRE),PCRE,POSIX regexp)
 endef
 
+ifdef CONFIG_FDM_WITH_PCRE
+	EXTRA_CFLAGS := -DPCRE
+	EXTRA_LDFLAGS += -lpcre
+endif
+
 MAKE_FLAGS += \
-	PREFIX="/usr"\
+	PREFIX="/usr" \
 	$(if $(CONFIG_FDM_WITH_PCRE),PCRE=1)
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(CP) ./src/compat/* $(PKG_BUILD_DIR)/
+endef
+
+define Build/Configure
+	( cd $(PKG_BUILD_DIR); ./autogen.sh )
+	$(call Build/Configure/Default)
 endef
 
 define Package/fdm/config

@@ -15,7 +15,7 @@ PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/zeromq/lzmq/tar.gz/v$(PKG_VERSION)?
-PKG_MD5SUM:=c4e51a60a5a26987bdce59e45d674a9e
+PKG_HASH:=51ec00117b0570db82b1eba7b62e95d7e98c880a028584b195a98b433dd8edd1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

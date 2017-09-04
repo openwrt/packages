@@ -16,7 +16,7 @@ PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://perso.orange.fr/sebastien.godard/
-PKG_MD5SUM:=df1ed75656eb06320088d54247f0e803
+PKG_HASH:=9a721992e70883c1b9a09d9977501662587b909a014ac0eaa397d30a963acc53
 
 PKG_INSTALL:=1
 
