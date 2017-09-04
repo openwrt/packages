@@ -81,7 +81,7 @@ ss_mkjson_ss_redir_conf() {
 	ss_mkjson_server_conf || return 1
 	[ "$disable_sni" = 0 ] && disable_sni=false || disable_sni=true
 	cat <<-EOF
-		${q}disable_sni${q}: $disable_sni,
+		"disable_sni": $disable_sni,
 	EOF
 }
 
@@ -120,7 +120,7 @@ ss_xxx() {
 		procd_set_param file "$confjson"
 		procd_set_param respawn
 		procd_close_instance
-		ss_rules_cb "$cfg"
+		ss_rules_cb
 	fi
 }
 
