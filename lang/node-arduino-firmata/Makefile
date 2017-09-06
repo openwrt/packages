@@ -52,8 +52,8 @@ EXTRA_LDFLAGS="-L$(TOOLCHAIN_DIR)/lib/ -Wl,-rpath-link $(TOOLCHAIN_DIR)/lib/" \
 define Build/Compile
 	$(MAKE_FLAGS) \
 	npm_config_arch=$(CONFIG_ARCH) \
-	npm_config_nodedir=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/ \
-	npm_config_cache=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/npm-cache \
+	npm_config_nodedir=$(STAGING_DIR_HOSTPKG)/ \
+	npm_config_cache=$(STAGING_DIR_HOSTPKG)/share/node/npm-cache \
 	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
 	npm install -g $(PKG_BUILD_DIR)
 endef
