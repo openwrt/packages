@@ -17,7 +17,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=\
 	http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v$(PKG_VERSION) \
 	http://ftp.be.postgresql.org/postgresql/source/v$(PKG_VERSION) \
-	ftp://ftp-archives.postgresql.org/pub/source/v$(PKG_VERSION)
+	ftp://ftp-archives.postgresql.org/pub/source/v$(PKG_VERSION) \
+	https://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 PKG_MD5SUM:=1fe952c44ed26d7e6a335cf991a9c1c6
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
