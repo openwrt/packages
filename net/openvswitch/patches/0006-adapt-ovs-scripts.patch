@@ -1,0 +1,30 @@
+diff --git a/utilities/ovs-ctl.in b/utilities/ovs-ctl.in
+index dc1d02c..61ecf2f 100755
+--- a/utilities/ovs-ctl.in
++++ b/utilities/ovs-ctl.in
+@@ -108,7 +108,7 @@ set_system_ids () {
+     esac
+     set "$@" external-ids:system-id="\"$SYSTEM_ID\""
+ 
+-    set "$@" external-ids:hostname="\"$(hostname -f)\""
++    set "$@" external-ids:hostname="\"$(cat /proc/sys/kernel/hostname)\""
+ 
+     set "$@" external-ids:rundir="\"$rundir\""
+ 
+diff --git a/utilities/ovs-lib.in b/utilities/ovs-lib.in
+index 8665698..7931bc6 100644
+--- a/utilities/ovs-lib.in
++++ b/utilities/ovs-lib.in
+@@ -157,7 +157,11 @@ install_dir () {
+     [ "${OVS_USER##*:}" != "" ] && INSTALL_GROUP="${OVS_USER##*:}"
+ 
+     if test ! -d "$DIR"; then
+-        install -d -m "$INSTALL_MODE" -o "$INSTALL_USER" -g "$INSTALL_GROUP" "$DIR"
++        mkdir -p "$DIR"
++        [ -n "$INSTALL_MODE" ] && chmod "$INSTALL_MODE" "$DIR"
++        local OWN="$INSTALL_USER"
++        [ -n "$OWN" ] && [ -n "$INSTALL_GROUP" ] &&  OWN="${OWN}:${INSTALL_GROUP}"
++        [ -n "$OWN" ] && chown "$OWN" "$DIR"
+         restorecon "$DIR" >/dev/null 2>&1
+     fi
+ }
