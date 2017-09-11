@@ -10,4 +10,3 @@
  
    if (homeDir) {
      paths.unshift(path.resolve(homeDir, '.node_libraries'));
-     
