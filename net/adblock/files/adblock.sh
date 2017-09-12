@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.0.0"
+adb_ver="3.0.1"
 adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
 adb_enabled=0
 adb_debug=0
@@ -85,8 +85,42 @@ f_envload()
     config_load adblock
     config_foreach parse_config source
 
-    # set dns backend environment
+    # set/check dns backend environment
     #
+    case "${adb_dns}" in
+        dnsmasq)
+            adb_dnsuser="${adb_dns}"
+            adb_dnsdir="${adb_dnsdir:-"/tmp/dnsmasq.d"}"
+            adb_dnsformat="awk '{print \"local=/\"\$0\"/\"}'"
+            ;;
+        unbound)
+            adb_dnsuser="${adb_dns}"
+            adb_dnsdir="${adb_dnsdir:-"/var/lib/unbound"}"
+            adb_dnsformat="awk '{print \"local-zone: \042\"\$0\"\042 static\"}'"
+            ;;
+        named)
+            adb_dnsuser="bind"
+            adb_dnsdir="${adb_dnsdir:-"/var/lib/bind"}"
+            adb_dnsformat="awk '{print \"\"\$0\" IN CNAME .\n*.\"\$0\" IN CNAME .\"}'"
+            ;;
+        kresd)
+            adb_dnsuser="root"
+            adb_dnsdir="${adb_dnsdir:-"/etc/kresd"}"
+            adb_dnsformat="awk '{print \"\"\$0\" CNAME .\n*.\"\$0\" CNAME .\"}'"
+            adb_dnsheader="\$TTL 2h"$'\n'"@ IN SOA localhost. root.localhost. (2 6h 1h 1w 2h)"$'\n'"  IN NS  localhost."
+            ;;
+        dnscrypt-proxy)
+            adb_dnsuser="nobody"
+            adb_dnsdir="${adb_dnsdir:-"/tmp"}"
+            adb_dnsformat="awk '{print \$0}'"
+            ;;
+    esac
+
+    if [ -d "${adb_dnsdir}" ] && [ ! -f "${adb_dnsdir}/${adb_dnsfile}" ]
+    then
+        > "${adb_dnsdir}/${adb_dnsfile}"
+    fi
+
     case "${adb_action}" in
         start|restart|reload)
             > "${adb_rtfile}"
@@ -96,48 +130,18 @@ f_envload()
             fi
         ;;
     esac
+
     while [ ${cnt} -le 30 ]
     do
         dns_up="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" 2>/dev/null | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running" 2>/dev/null)"
         if [ "${dns_up}" = "true" ]
         then
-            case "${adb_dns}" in
-                dnsmasq)
-                    adb_dnsuser="${adb_dns}"
-                    adb_dnsdir="${adb_dnsdir:-"/tmp/dnsmasq.d"}"
-                    adb_dnsformat="awk '{print \"local=/\"\$0\"/\"}'"
-                    break
-                    ;;
-                unbound)
-                    adb_dnsuser="${adb_dns}"
-                    adb_dnsdir="${adb_dnsdir:-"/var/lib/unbound"}"
-                    adb_dnsformat="awk '{print \"local-zone: \042\"\$0\"\042 static\"}'"
-                    break
-                    ;;
-                named)
-                    adb_dnsuser="bind"
-                    adb_dnsdir="${adb_dnsdir:-"/var/lib/bind"}"
-                    adb_dnsformat="awk '{print \"\"\$0\" IN CNAME .\n*.\"\$0\" IN CNAME .\"}'"
-                    break
-                    ;;
-                kresd)
-                    adb_dnsuser="root"
-                    adb_dnsdir="${adb_dnsdir:-"/etc/kresd"}"
-                    adb_dnsformat="awk '{print \"\"\$0\" CNAME .\n*.\"\$0\" CNAME .\"}'"
-                    adb_dnsheader="\$TTL 2h"$'\n'"@ IN SOA localhost. root.localhost. (2 6h 1h 1w 2h)"$'\n'"  IN NS  localhost."
-                    break
-                    ;;
-                dnscrypt-proxy)
-                    adb_dnsuser="nobody"
-                    adb_dnsdir="${adb_dnsdir:-"/tmp"}"
-                    adb_dnsformat="awk '{print \$0}'"
-                    break
-                    ;;
-            esac
+            break
         fi
         sleep 1
         cnt=$((cnt+1))
     done
+
     if [ -z "${adb_dns}" ] || [ -z "${adb_dnsformat}" ] || [ ! -x "$(command -v ${adb_dns})" ] || [ ! -d "${adb_dnsdir}" ]
     then
         f_log "error" "'${adb_dns}' not running, DNS backend not found"
@@ -620,7 +624,7 @@ f_main()
     else
         > "${adb_dnsdir}/${adb_dnsfile}"
     fi
-    chown "${adb_dnsuser}":"${adb_dnsuser}" "${adb_dnsdir}/${adb_dnsfile}" 2>/dev/null
+    chown "${adb_dnsuser}" "${adb_dnsdir}/${adb_dnsfile}" 2>/dev/null
     f_rmtemp
 
     # conditional restart of the dns backend and runtime information export
