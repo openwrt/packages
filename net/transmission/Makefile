@@ -37,7 +37,7 @@ endef
 
 define Package/transmission-daemon
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libopenssl +libpthread +libevent2 +librt +zlib
+  DEPENDS:=+libcurl +@LIBCURL_ZLIB +libopenssl +libpthread +libevent2 +librt +zlib
   MENU:=1
   USERID:=transmission=224:transmission=224
 endef
@@ -49,7 +49,7 @@ endef
 
 define Package/transmission-remote
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libopenssl +libpthread +libevent2 +librt +zlib
+  DEPENDS:=+libcurl +@LIBCURL_ZLIB +libopenssl +libpthread +libevent2 +librt +zlib
 endef
 
 define Package/transmission-web
