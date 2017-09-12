@@ -460,7 +460,7 @@ mwan3_track()
 
 	mwan3_list_track_ips()
 	{
-		track_ips="$1 $track_ips"
+		track_ips="$track_ips $1"
 	}
 	config_list_foreach $1 track_ip mwan3_list_track_ips
 
