@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=cylon
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.22.0
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/hybridgroup/cylon-firmata.git
@@ -20,7 +20,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MIRROR_HASH:=e531d3c92965518c60d52bc497bfa9be563ee68c3cf65c77fa55d5e9c2627367
 
 PKG_BUILD_DEPENDS:=node/host
-PKG_NODE_VERSION:=4.4.5
+PKG_NODE_VERSION:=6.11.2
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=Apache-2.0
@@ -29,12 +29,12 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 
 define Package/node-cylon/default
-  DEPENDS:=+node +node-npm $(2)
   SUBMENU:=Node.js
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=CylonJS - $(1)
   URL:=https://www.npmjs.org/package/cylon
+  DEPENDS:=+node +node-npm $(2)
 endef
 
 define Package/node-cylon
