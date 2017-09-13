@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=hid
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.5.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/node-hid/node-hid.git
@@ -20,7 +20,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MIRROR_HASH:=125f752d491ac10d32bab0f0d660f6f150c6a9a168b2b56bfddc2cb1d65166fc
 
 PKG_BUILD_DEPENDS:=node/host
-PKG_NODE_VERSION:=4.4.5
+PKG_NODE_VERSION:=6.11.2
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=Custom
@@ -29,13 +29,12 @@ PKG_LICENSE_FILES:=
 include $(INCLUDE_DIR)/package.mk
 
 define Package/node-hid
-  DEPENDS:=+node +node-npm
   SUBMENU:=Node.js
   SECTION:=lang
   CATEGORY:=Languages
-  DEPENDS:=+libusb-1.0 +hidapi +libstdcpp
   TITLE:=Node.js package to access HID devices
   URL:=https://github.com/node-hid/node-hid
+  DEPENDS:=+node +node-npm +libusb-1.0 +hidapi +libstdcpp
 endef
 
 define Package/node-hid/description
