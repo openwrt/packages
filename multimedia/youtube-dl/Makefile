@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2017.06.05
+PKG_VERSION:=2017.09.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://yt-dl.org/downloads/$(PKG_VERSION)/
-PKG_HASH:=b54ca848490285909d0830c04c19376c2d78da74d8de0056387b11ba34234e8c
+PKG_HASH:=8b6defdd7cb9a8228eca2ef03a8c203a3ccba1ed97cb700f11b40a3af548212a
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Adrian Panella <ianchi74@outlook.com>
 
-PKG_BUILD_DEPENDS:=python/host
+PKG_BUILD_DEPENDS:=python/host zip/host
 
 include $(INCLUDE_DIR)/package.mk
 
