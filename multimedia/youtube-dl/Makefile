@@ -20,7 +20,7 @@ PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Adrian Panella <ianchi74@outlook.com>
 
-PKG_BUILD_DEPENDS:=python/host
+PKG_BUILD_DEPENDS:=python/host zip/host
 
 include $(INCLUDE_DIR)/package.mk
 
