@@ -16,7 +16,7 @@ PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 PKG_NAME:=python3
 # XXX: reset PKG_RELEASE to 1 only if Python's pip & setuptools versions have also bumped;
 #      otherwise, keep bumping PKG_RELEASE
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -184,6 +184,16 @@ define Build/Compile
 	$(call Build/Compile/python3-pip)
 endef
 
+define Build/InstallMkFiles
+	$(INSTALL_DIR) $(STAGING_DIR)/mk/
+	$(INSTALL_DATA) \
+		./files/python-package.mk \
+		./files/python-host.mk \
+		./files/python-version.mk \
+		./files/python-package-install.sh \
+		$(STAGING_DIR)/mk/
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
@@ -197,6 +207,7 @@ define Build/InstallDev
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config-$(PYTHON_VERSION) \
 		$(1)/usr/lib/python$(PYTHON_VERSION)/
+	$(call Build/InstallMkFiles)
 endef
 
 PYTHON3_BASE_LIB_FILES:= \
@@ -274,21 +285,10 @@ define Host/Compile
 endef
 
 define Host/Install
+	$(call Build/InstallMkFiles)
 	$(MAKE) -C $(HOST_BUILD_DIR) install
-
 	$(INSTALL_DIR) $(HOST_PYTHON3_DIR)/bin/ $(STAGING_DIR)/mk/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON3_DIR)/bin/pgen3
-
-	# Install these mk files in the Host/Install phase ;
-	# The Build/InstallDev rule is activated only for target builds.
-	# But if someone needs only the host Python, then
-	# these files need to be installed in this phase, and not Build/InstallDev
-	$(INSTALL_DATA) \
-		./files/python3-package.mk \
-		./files/python3-host.mk \
-		./files/python3-version.mk \
-		./files/python3-package-install.sh \
-		$(STAGING_DIR)/mk/
 endef
 
 $(eval $(call HostBuild))
