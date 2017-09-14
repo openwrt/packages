@@ -37,21 +37,26 @@ define HostPython3
 	$(HOST_PYTHON3_BIN) $(2);
 endef
 
+define host_python3_settings
+	ARCH="$(HOST_ARCH)" \
+	CC="$(HOSTCC)" \
+	CCSHARED="$(HOSTCC) $(HOST_FPIC)" \
+	CXX="$(HOSTCXX)" \
+	LD="$(HOSTCC)" \
+	LDSHARED="$(HOSTCC) -shared" \
+	CFLAGS="$(HOST_CFLAGS)" \
+	CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON3_INC_DIR)" \
+	LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib" \
+	_PYTHON_HOST_PLATFORM=linux2
+endef
+
 # $(1) => commands to execute before running pythons script
 # $(2) => python script and its arguments
 # $(3) => additional variables
 define Build/Compile/HostPy3RunHost
 	$(call HostPython3, \
 		$(if $(1),$(1);) \
-		CC="$(HOSTCC)" \
-		CCSHARED="$(HOSTCC) $(HOST_FPIC)" \
-		CXX="$(HOSTCXX)" \
-		LD="$(HOSTCC)" \
-		LDSHARED="$(HOSTCC) -shared" \
-		CFLAGS="$(HOST_CFLAGS)" \
-		CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON3_INC_DIR)" \
-		LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib" \
-		_PYTHON_HOST_PLATFORM=linux2 \
+		$(call host_python3_settings) \
 		$(3) \
 		, \
 		$(2) \
@@ -63,6 +68,7 @@ endef
 # Note: I shamelessly copied this from Yousong's logic (from python-packages);
 HOST_PYTHON3_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON3_VERSION)
 define host_python3_pip_install
+	$(call host_python3_settings) \
 	$(HOST_PYTHON3_PIP) install \
 		--root=$(1) \
 		--prefix=$(2) \
