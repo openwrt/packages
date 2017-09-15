@@ -187,10 +187,10 @@ endef
 define Build/InstallMkFiles
 	$(INSTALL_DIR) $(STAGING_DIR)/mk/
 	$(INSTALL_DATA) \
-		./files/python-package.mk \
-		./files/python-host.mk \
-		./files/python-version.mk \
-		./files/python-package-install.sh \
+		./files/python3-package.mk \
+		./files/python3-host.mk \
+		./files/python3-version.mk \
+		./files/python3-package-install.sh \
 		$(STAGING_DIR)/mk/
 endef
 
@@ -287,7 +287,7 @@ endef
 define Host/Install
 	$(call Build/InstallMkFiles)
 	$(MAKE) -C $(HOST_BUILD_DIR) install
-	$(INSTALL_DIR) $(HOST_PYTHON3_DIR)/bin/ $(STAGING_DIR)/mk/
+	$(INSTALL_DIR) $(HOST_PYTHON3_DIR)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON3_DIR)/bin/pgen3
 endef
 
