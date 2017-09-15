@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libffi
 PKG_VERSION:=3.2.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://sourceware.org/pub/libffi/
@@ -76,6 +76,16 @@ define Package/libffi/install
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/libffi.so.* \
 		$(1)/usr/lib/
+endef
+
+define Host/Install
+	$(call Host/Install/Default)
+	# Adjust host libffi headers ; the default rule does
+	# not seem to install them to the proper include folder
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/include
+	$(CP) \
+		$(STAGING_DIR_HOSTPKG)/lib/libffi-$(PKG_VERSION)/include/*.h \
+		$(STAGING_DIR_HOSTPKG)/include
 endef
 
 $(eval $(call HostBuild))
