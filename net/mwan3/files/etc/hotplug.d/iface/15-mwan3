@@ -77,7 +77,7 @@ case "$ACTION" in
 		else
 			$LOG notice "Starting tracker on interface $INTERFACE (${DEVICE:-unknown})"
 			mwan3_set_iface_hotplug_state $INTERFACE "offline"
-			mwan3_track $INTERFACE $DEVICE "offline" "$src_ip"
+			mwan3_track $INTERFACE $DEVICE "unknown" "$src_ip"
 		fi
 	;;
 	ifdown)
