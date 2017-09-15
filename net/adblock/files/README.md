@@ -129,19 +129,19 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_manmode => do not automatically update block lists during startup, use backups instead (default: '0', disabled)
 
 ## Examples
-**change default dns backend to 'unbound':**
-<pre><code>
+**change default dns backend to 'unbound':**  
+
 Adblock deposits the sorted and filtered block list (adb_list.overall) in '/var/lib/unbound' where unbound can find them in its jail.
 If you use manual configuration for unbound, then just include the following line in your 'server' clause:
-
+<pre><code>
   include: "/var/lib/unbound/adb_list.overall"
 </code></pre>
   
-**change default dns backend to 'named' (bind):**
-<pre><code>
+**change default dns backend to 'named' (bind):**  
+
 Adblock deposits the sorted and filtered block list (adb_list.overall) in '/var/lib/bind' where bind can find them.
 To use the block list please modify the following bind configuration files:
-
+<pre><code>
 change '/etc/bind/named.conf', in the 'options' namespace add:
   response-policy { zone "rpz"; };
 
@@ -162,30 +162,33 @@ create the new file '/etc/bind/db.rpz' and add:
   $INCLUDE /var/lib/bind/adb_list.overall
 </code></pre>
   
-**change default dns backend to 'kresd':**
-<pre><code>
+**change default dns backend to 'kresd':**  
+
 The knot-resolver (kresd) is only available on turris omnia devices. Currently there's no package for kresd in the official LEDE / OpenWrt package repository.
 Adblock deposits the sorted and filtered block list (adb_list.overall) in '/etc/kresd' where kresd can find them.
 To use the block list please create/modify the following kresd configuration files:
+<pre><code>
+TurrisOS > 3.6:
+  edit '/etc/config/resolver' and change / uncomment the following options:
+    forward_upstream '0'
+    list rpz_file '/etc/kresd/adb_list.overall'
 
-edit '/etc/config/resolver' and uncomment the following option:
-  option include_config '/etc/kresd/custom.conf'
+TurrisOS < 3.6:
+  edit '/etc/config/resolver' and change / uncomment the following options:
+   forward_upstream '0'
+   option include_config '/etc/kresd/custom.conf'
 
-in the same file change the 'forward_upstream' option like that:
-  forward_upstream '0'
-
-create '/etc/kresd/custom.conf' and add:
-  policy.add(policy.rpz(policy.DENY, '/etc/kresd/adb_list.overall'))
-  policy.add(policy.all(policy.FORWARD('8.8.8.8')))
-  policy.add(policy.all(policy.FORWARD('8.8.4.4')))
+  create '/etc/kresd/custom.conf' and add:
+    policy.add(policy.rpz(policy.DENY, '/etc/kresd/adb_list.overall'))
+    policy.add(policy.all(policy.FORWARD({'8.8.8.8', '8.8.4.4'})))
 </code></pre>
   
-**change default dns backend to 'dnscrypt-proxy':**
-<pre><code>
+**change default dns backend to 'dnscrypt-proxy':**  
+
 Adblock deposits the sorted and filtered block list (adb_list.overall) by default in '/tmp' where DNSCrypt-Proxy can find them.
 The blacklist option is not supported by default, because DNSCrypt-Proxy is compiled without plugins support.
 Take a custom LEDE build with plugins support to use this feature:
-
+<pre><code>
 edit '/etc/config/dnscrypt-proxy' and add the following option per dnscrypt-proxy instance:
   list blacklist 'domains:/tmp/adb_list.overall'
 </code></pre>

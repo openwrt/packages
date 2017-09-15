@@ -10,8 +10,8 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.0.1"
-adb_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
+adb_ver="3.0.2"
+adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
 adb_manmode=0
@@ -34,7 +34,22 @@ adb_rc=0
 #
 f_envload()
 {
-    local dns_up cnt=0
+    local dns_up sys_call sys_desc sys_model sys_ver cnt=0
+
+    # get system information
+    #
+    sys_call="$(ubus -S call system board 2>/dev/null)"
+    if [ -n "${sys_call}" ]
+    then
+        sys_desc="$(printf '%s' "${sys_call}" | jsonfilter -e '@.release.description')"
+        sys_model="$(printf '%s' "${sys_call}" | jsonfilter -e '@.model')"
+        sys_ver="$(cat /etc/turris-version 2>/dev/null)"
+        if [ -n "${sys_ver}" ]
+        then
+            sys_desc="${sys_desc}/${sys_ver}"
+        fi
+        adb_sysver="${sys_model}, ${sys_desc}"
+    fi
 
     # source in system libraries
     #
