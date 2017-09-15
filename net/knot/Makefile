@@ -39,7 +39,6 @@ define Package/knot/Default
 	TITLE:=Knot DNS
 	DEPENDS=+libatomic
 	URL:=https://www.knot-dns.cz
-	USERID:=knot=5353:knot=5353
 endef
 
 define Package/knot-libs
@@ -59,6 +58,7 @@ define Package/knot
 	DEPENDS+=+libedit +liburcu +knot-libs +knot-libzscanner
 	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
 	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
+	USERID:=knot=5353:knot=5353
 endef
 
 define Package/knot-dig
