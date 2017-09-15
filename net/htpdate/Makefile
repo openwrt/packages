@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=htpdate
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.vervest.org/htp/archive/c/
@@ -26,7 +26,8 @@ define Package/htpdate
   CATEGORY:=Network
   TITLE:=an HTP (Hypertext Time Protocol) implementation
   URL:=http://www.vervest.com/htp/
-  MAINTAINER:=Tijs Van Buggenhout <tvbuggen@netzerk.be>
+  MAINTAINER:=Tijs Van Buggenhout <tvbuggen@netzerk.be>, \
+              Marcin Jurkowski <marcin1j@gmail.com>
 endef
 
 define Package/htpdate/description
@@ -38,7 +39,7 @@ define Package/htpdate/description
 endef
 
 define Package/htpdate/conffiles
-/etc/default/htpdate
+/etc/config/htpdate
 endef
 
 define Build/Compile
@@ -50,8 +51,8 @@ endef
 define Package/htpdate/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/htpdate $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc/default/
-	$(INSTALL_CONF) ./files/htpdate.default $(1)/etc/default/htpdate
+	$(INSTALL_DIR) $(1)/etc/config/
+	$(INSTALL_CONF) ./files/htpdate.conf $(1)/etc/config/htpdate
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/htpdate.init $(1)/etc/init.d/htpdate
 endef
