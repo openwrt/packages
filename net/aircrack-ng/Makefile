@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aircrack-ng
-PKG_VERSION:=1.2-rc1
+PKG_VERSION:=1.2-rc4
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.aircrack-ng.org/ \
 		http://archive.aircrack-ng.org/aircrack-ng/$(PKG_VERSION)/
-PKG_HASH:=cf3134521e1c3d7aed4e384e3e5e7b6959e2d485bd1554474608a3a9328e35fd
+PKG_HASH:=d93ac16aade5b4d37ab8cdf6ce4b855835096ccf83deb65ffdeff6d666eaff36
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/aircrack-ng
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpcap +libpthread +libopenssl +libnl-core +libnl-genl +zlib
+  DEPENDS:=+libstdcpp +libpcap +libpthread +libopenssl +libnl-core +libnl-genl +zlib
   TITLE:=WLAN tools (without airmon-ng) for breaking 802.11 WEP/WPA keys
   URL:=http://www.aircrack-ng.org/
   SUBMENU:=wireless
@@ -54,7 +54,7 @@ endef
 MAKE_FLAGS += prefix=/usr \
 	libnl=true \
 	sqlite=false \
-	unstable=false \
+	experimental=true \
 	OSNAME=Linux
 
 define Package/aircrack-ng/install
