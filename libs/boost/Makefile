@@ -16,15 +16,15 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/target.mk 
 
 PKG_NAME:=boost
-PKG_VERSION:=1.65.0
-PKG_SOURCE_VERSION:=1_65_0
+PKG_VERSION:=1.65.1
+PKG_SOURCE_VERSION:=1_65_1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
-PKG_HASH:=ea26712742e2fb079c2a566a31f3266973b76e38222b9f88b387e3c8b2f9902c
+PKG_HASH:=9807a5d16566c57fd74fb522764e0b134a8bbe6b6e8967b83afefd30dcd3be81
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
@@ -44,7 +44,7 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.65 libraries.
+This package provides the Boost v1.65.1 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
 
 -----------------------------------------------------------------------------
@@ -90,7 +90,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_65_0/
+See more at http://www.boost.org/doc/libs/1_65_1/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host PACKAGE_python:python PACKAGE_python3:python3
