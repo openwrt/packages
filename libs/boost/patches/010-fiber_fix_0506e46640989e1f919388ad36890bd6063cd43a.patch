@@ -1,7 +1,7 @@
-Index: boost_1_65_0/libs/fiber/src/numa/linux/pin_thread.cpp
+Index: boost_1_65_1/libs/fiber/src/numa/linux/pin_thread.cpp
 ===================================================================
---- boost_1_65_0.orig/libs/fiber/src/numa/linux/pin_thread.cpp
-+++ boost_1_65_0/libs/fiber/src/numa/linux/pin_thread.cpp
+--- boost_1_65_1.orig/libs/fiber/src/numa/linux/pin_thread.cpp
++++ boost_1_65_1/libs/fiber/src/numa/linux/pin_thread.cpp
 @@ -9,6 +9,7 @@
  extern "C" {
  #include <pthread.h>
