@@ -159,7 +159,6 @@ ss_rules_iptchains_init() {
 }
 
 ss_rules_iptchains_init_tcp() {
-	local ipt="iptables -t nat"
 	local local_target
 
 	[ -n "$o_redir_tcp_port" ] || return 0
