@@ -1,9 +1,9 @@
 diff --git a/sysincl.h b/sysincl.h
-index 30e9b48..8fe16c0 100644
+index a9e4da0..e2a6e78 100644
 --- a/sysincl.h
 +++ b/sysincl.h
-@@ -70,4 +70,8 @@
- #include <arpa/inet.h>
+@@ -80,4 +80,8 @@
+ #include <sys/random.h>
  #endif
  
 +#if defined(LINUX) && !defined(IP_FREEBIND)
