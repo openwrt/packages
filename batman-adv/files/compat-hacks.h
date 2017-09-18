@@ -116,6 +116,10 @@ batadv_ethtool_get_link_ksettings(struct net_device *dev,
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0)
 
+#ifdef netif_trans_update
+#undef netif_trans_update
+#endif
+
 #define netif_trans_update batadv_netif_trans_update
 static inline void batadv_netif_trans_update(struct net_device *dev)
 {
@@ -202,6 +206,10 @@ static inline int batadv_nla_put_64bit(struct sk_buff *skb, int attrtype,
 	return 0;
 }
 
+#ifdef nla_put_u64_64bit
+#undef nla_put_u64_64bit
+#endif
+
 #define nla_put_u64_64bit(_skb, _attrtype, _value, _padattr) \
 	batadv_nla_put_u64_64bit(_skb, _attrtype, _value, _padattr)
 static inline int batadv_nla_put_u64_64bit(struct sk_buff *skb, int attrtype,
@@ -253,9 +261,13 @@ static inline void *batadv_skb_put(struct sk_buff *skb, unsigned int len)
 {
 	return (void *)skb_put(skb, len);
 }
+#ifdef skb_put
+#undef skb_put
+#endif
+
 #define skb_put batadv_skb_put
 
-static inline void *skb_put_zero(struct sk_buff *skb, unsigned int len)
+static inline void *batadv_skb_put_zero(struct sk_buff *skb, unsigned int len)
 {
 	void *tmp = skb_put(skb, len);
 
@@ -263,8 +275,13 @@ static inline void *skb_put_zero(struct sk_buff *skb, unsigned int len)
 
 	return tmp;
 }
+#ifdef skb_put_zero
+#undef skb_put_zero
+#endif
 
-static inline void *skb_put_data(struct sk_buff *skb, const void *data,
+#define skb_put_zero batadv_skb_put_zero
+
+static inline void *batadv_skb_put_data(struct sk_buff *skb, const void *data,
 				 unsigned int len)
 {
 	void *tmp = skb_put(skb, len);
@@ -273,6 +290,11 @@ static inline void *skb_put_data(struct sk_buff *skb, const void *data,
 
 	return tmp;
 }
+#ifdef skb_put_data
+#undef skb_put_data
+#endif
+
+#define skb_put_data batadv_skb_put_data
 
 #endif /* < KERNEL_VERSION(4, 13, 0) */
 
