@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rp-pppoe
 PKG_VERSION:=3.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Daniel Dickinson <lede@cshore.thecshore.com>
 PKG_LICENSE:=LGPL-2.0+
 
