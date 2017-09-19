@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
-PKG_VERSION:=3.5.12
+PKG_VERSION:=3.5.27
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
+PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.squid-cache.org/Versions/v3/3.5/
-PKG_MD5SUM:=50016bf6e2d3a3a186a6c7236d251f63
+PKG_SOURCE_URL:=http://www3.us.squid-cache.org/Versions/v3/3.5/ \
+	http://www2.pl.squid-cache.org/Versions/v3/3.5/ \
+	http://www.squid-cache.org/Versions/v3/3.5/
+PKG_HASH:=5ddb4367f2dc635921f9ca7a59d8b87edb0412fa203d1543393ac3c7f9fef0ec
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -28,11 +30,11 @@ define Package/squid/Default
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   URL:=http://www.squid-cache.org/
+  MENU:=1
 endef
 
 define Package/squid
   $(call Package/squid/Default)
-  MENU:=1
   DEPENDS:=+libopenssl +libpthread +librt +libltdl +libstdcpp
   TITLE:=full-featured Web proxy cache
 endef
