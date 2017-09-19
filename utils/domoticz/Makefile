@@ -11,7 +11,7 @@ PKG_NAME:=domoticz
 PKG_VERSION_MAJOR:=3
 PKG_VERSION_PATCH:=8153
 PKG_VERSION:=$(PKG_VERSION_MAJOR).$(PKG_VERSION_PATCH)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/domoticz/domoticz/archive/$(PKG_VERSION)/$(PKG_SOURCE)
@@ -72,7 +72,7 @@ define Build/Prepare
 		buienradar_rain_example.pl \
 		_domoticz_main* \
 		download_update.sh \
-		dzVents/{.gitignore,documentation,examples} \
+		dzVents/{.gitignore,documentation,examples,generated_scripts} \
 		dzVents/runtime/{integration-tests,misc/smoothing.xlsx,tests} \
 		logrotate/ \
 		lua_parsers/example* \
