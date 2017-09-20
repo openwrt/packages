@@ -11,8 +11,8 @@ PKG_NAME:=minicom
 PKG_VERSION:=2.7
 PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/3977/
+PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
+PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/m/minicom/
 PKG_MD5SUM:=7044ca3e291268c33294f171d426dc2d
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
