@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=port-mirroring
-PKG_VERSION:=1.4.2
+PKG_VERSION:=1.4.3
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Mike Maraya <mike.maraya@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
@@ -16,7 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git://github.com/mmaraya/port-mirroring.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=f6ead68b7760fa86e8da73ac1e062349f243ac93
+PKG_SOURCE_VERSION:=3e03191a877db260a261b0e28740fdf90409f86b
 PKG_FIXUP:=autoreconf
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
