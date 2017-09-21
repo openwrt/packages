@@ -14,7 +14,10 @@ PKG_VERSION:=1.7
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://nwl.cc/pub/cryptodev-linux/
+PKG_SOURCE_URL:=\
+	http://download.gna.org/cryptodev-linux/ \
+	http://nwl.cc/pub/cryptodev-linux/
+
 PKG_MD5SUM:=0b63b3481cf2c90386b35f057481d36b
 
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
