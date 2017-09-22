@@ -12,7 +12,9 @@ PKG_VERSION:=2.7
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/3977/
+PKG_SOURCE_URL:=\
+	https://alioth.debian.org/frs/download.php/file/3977/ \
+	https://mirror.hs-esslingen.de/Mirrors/gentoo/distfiles/
 PKG_MD5SUM:=7044ca3e291268c33294f171d426dc2d
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
