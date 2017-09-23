@@ -92,9 +92,9 @@ EOF
 	# enable BUILD_LOG
 	sed -i '1s/^/config BUILD_LOG\n\tbool\n\tdefault y\n\n/' Config-build.in
 
-	./scripts/feeds update -a
-	./scripts/feeds install -a
-	make defconfig
+	./scripts/feeds update -a > /dev/null
+	./scripts/feeds install -a > /dev/null
+	make defconfig > /dev/null
 	echo_blue "=== Setting up SDK done"
 
 	RET=0
@@ -124,8 +124,8 @@ EOF
 
 		echo_blue "=== $pkg_name: begin compile logs"
 		for f in $(find logs/package/feeds/packages/$pkg_name/ -type f); do
-			echo_blue "Printing $f"
-			cat "$f"
+			echo_blue "Printing last 200 lines of $f"
+			tail -n200 "$f"
 		done
 		echo_blue "=== $pkg_name: end compile logs"
 
