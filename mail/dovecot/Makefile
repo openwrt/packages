@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot
 PKG_VERSION:=2.2.32
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.dovecot.org/releases/2.2
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dovecot
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+DOVECOT_LDAP:libopenldap +DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap
+  DEPENDS:=+DOVECOT_LDAP:libopenldap +DOVECOT_MYSQL:libmysqlclient +DOVECOT_PGSQL:libpq +DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap
   TITLE:=An IMAP and POP3 daemon
   MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
   URL:=http://www.dovecot.org/
@@ -46,6 +46,16 @@ define Package/dovecot/config
                         default n
                         help
                           Implements LDAP support in dovecot.
+                config DOVECOT_MYSQL
+                        bool "MYSQL support"
+                        default n
+                        help
+                          Implements MYSQL support in dovecot.
+                config DOVECOT_PGSQL
+                        bool "PostgreSQL support"
+                        default n
+                        help
+                          Implements PostgreSQL support in dovecot.
                 config DOVECOT_SQLITE
                         bool "SQLite support"
                         default n
@@ -63,6 +73,8 @@ CONFIGURE_ARGS += \
 	--without-lz4 \
 	--with-icu=no \
 	$(if $(CONFIG_DOVECOT_LDAP),--with-ldap=yes,--with-ldap=no) \
+	$(if $(CONFIG_DOVECOT_MYSQL),--with-mysql=yes,--with-mysql=no) \
+	$(if $(CONFIG_DOVECOT_PGSQL),--with-pgsql=yes,--with-pgsql=no) \
 	$(if $(CONFIG_DOVECOT_SQLITE),--with-sqlite=yes,--with-sqlite=no)
 
 CONFIGURE_VARS += \
