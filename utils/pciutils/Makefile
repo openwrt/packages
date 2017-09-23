@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
 PKG_VERSION:=3.5.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
@@ -37,11 +37,20 @@ define Package/pciutils/description
  of PCI devices
 endef
 
-define Package/pciutils/postinst
-#!/bin/sh
-[ -z "$${IPKG_INSTROOT}" ] || \
-(cd $${PKG_ROOT}/usr/share; $${PKG_ROOT}/usr/sbin/update-pciids; rm pci.ids.gz.old)
-exit 0
+PCI_IDS_REV:=91cfa8a0c994634ba9a4a8639aa2ac6dff8453b9
+PCI_IDS_FILE:=pci.ids.$(PCI_IDS_REV)
+define Download/pci_ids
+  FILE:=$(PCI_IDS_FILE)
+  URL_FILE:=pci.ids
+  URL:=@GITHUB/pciutils/pciids/$(PCI_IDS_REV)
+  HASH:=798528092d1c58eeac99c6505033ec4ce8fe3e19d7e0c41b06790d58753a89b6
+endef
+$(eval $(call Download,pci_ids))
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(RM) $(PKG_BUILD_DIR)/pci.ids
+	$(CP) $(DL_DIR)/$(PCI_IDS_FILE) $(PKG_BUILD_DIR)/pci.ids
 endef
 
 MAKE_FLAGS += \
