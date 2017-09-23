@@ -6,7 +6,7 @@ index 5396029..cbb51ec 100644
 -#
 -# Example configuration file.
 -#
--# See unbound.conf(5) man page, version 1.6.5.
+-# See unbound.conf(5) man page, version 1.6.6.
 -#
 -# this is a comment.
 +##############################################################################

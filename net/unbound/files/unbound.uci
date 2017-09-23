@@ -9,6 +9,8 @@ config unbound
 	option domain 'lan'
 	option domain_type 'static'
 	option edns_size '1280'
+	option extended_luci '0'
+	option extended_stats '0'
 	option hide_binddata '1'
 	option listen_port '53'
 	option localservice '1'
