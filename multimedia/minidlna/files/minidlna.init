@@ -59,6 +59,7 @@ minidlna_create_config() {
 	minidlna_cfg_addstr $cfg log_dir
 	minidlna_cfg_addbool $cfg inotify '1'
 	minidlna_cfg_addbool $cfg enable_tivo '0'
+	minidlna_cfg_addbool $cfg wide_links '0'
 	minidlna_cfg_addbool $cfg strict_dlna '0'
 	minidlna_cfg_addstr $cfg album_art_names
 	minidlna_cfg_addstr $cfg presentation_url
