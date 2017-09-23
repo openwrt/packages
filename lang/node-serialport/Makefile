@@ -10,14 +10,14 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=serialport
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=3.0.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://registry.npmjs.org/$(PKG_NPM_NAME)/-/
 PKG_HASH:=3bc75b4c2742f0efe8495feb28c5da1a4774df75d94836e43409ed352addfec7
 
 PKG_BUILD_DEPENDS:=node/host
-PKG_NODE_VERSION:=4.4.5
+PKG_NODE_VERSION:=6.11.2
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=Custom
@@ -26,12 +26,12 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 
 define Package/node-serialport
-  DEPENDS:=+node +node-npm
   SUBMENU:=Node.js
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Node.js package to access serial ports for reading and writing
   URL:=https://www.npmjs.org/package/serialport
+  DEPENDS:=+node +node-npm
 endef
 
 define Package/node-serialport/description
