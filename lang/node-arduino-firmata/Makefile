@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=arduino-firmata
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.3.3
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/shokai/node-arduino-firmata.git
@@ -20,7 +20,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MIRROR_HASH:=b7a498ccf70e466503e72d38ae5b474e91416b6c9842fd167dff249357b0dc37
 
 PKG_BUILD_DEPENDS:=node/host
-PKG_NODE_VERSION:=4.4.5
+PKG_NODE_VERSION:=6.11.2
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=MIT
@@ -29,13 +29,12 @@ PKG_LICENSE_FILES:=LICENSE.txt
 include $(INCLUDE_DIR)/package.mk
 
 define Package/node-arduino-firmata
-  DEPENDS:=+node +node-npm
   SUBMENU:=Node.js
   SECTION:=lang
   CATEGORY:=Languages
-  DEPENDS:=+node +node-serialport
   TITLE:=Node.js package to access serial ports for reading and writing
   URL:=https://www.npmjs.org/package/serialport
+  DEPENDS:=+node +node-npm +node-serialport
 endef
 
 define Package/node-arduino-firmata/description
