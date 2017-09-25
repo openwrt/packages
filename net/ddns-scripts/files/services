@@ -60,7 +60,7 @@
 
 "ddo.jp"		"http://free.ddo.jp/dnsupdate.php?dn=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
 
-"desec.io"		"http://[USERNAME]:[PASSWORD]@update.dedyn.io/?hostname=[DOMAIN]&myipv4=[IP]"	"good|nochg"
+"desec.io"		"http://update.dedyn.io/?username=[USERNAME]&password=[PASSWORD]&hostname=[DOMAIN]&myipv4=[IP]"	"good|nochg"
 
 "dhis.org"		"http://[USERNAME]:[PASSWORD]@is.dhis.org/"
 
