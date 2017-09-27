@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=hid
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.5.1
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/node-hid/node-hid.git
@@ -20,7 +20,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MIRROR_HASH:=125f752d491ac10d32bab0f0d660f6f150c6a9a168b2b56bfddc2cb1d65166fc
 
 PKG_BUILD_DEPENDS:=node/host
-PKG_NODE_VERSION:=6.11.2
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=Custom
@@ -50,10 +49,13 @@ define Build/Compile
 	$(MAKE_VARS) \
 	$(MAKE_FLAGS) \
 	npm_config_arch=$(CONFIG_ARCH) \
-	npm_config_nodedir=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/ \
-	npm_config_cache=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/npm-cache \
+	npm_config_nodedir=$(STAGING_DIR)/usr/ \
+	npm_config_cache=$(TMP_DIR)/npm-cache \
+	npm_config_tmp=$(TMP_DIR)/npm-tmp \
 	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
 	npm install --build-from-source --target_arch=$(CPU) -g $(PKG_BUILD_DIR)
+	rm -rf $(TMP_DIR)/npm-tmp
+	rm -rf $(TMP_DIR)/npm-cache
 endef
 
 define Package/node-hid/install
