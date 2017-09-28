@@ -102,6 +102,18 @@ $(call Package/net-snmp/Default)
 endef
 
 
+define Package/snmptrapd
+$(call Package/net-snmp/Default)
+  DEPENDS:=+libnetsnmp
+  TITLE:=Open source SNMP implementation (notification receiver)
+endef
+
+define Package/snmptrapd/description
+$(call Package/net-snmp/Default/description)
+ .
+ This package contains the SNMP notification receiver.
+endef
+
 
 SNMP_MIB_MODULES_INCLUDED = \
 	agent/extend \
@@ -189,6 +201,7 @@ CONFIGURE_ARGS += \
 	--with-transports="$(SNMP_TRANSPORTS_INCLUDED)" \
 	--without-openssl \
 	--without-libwrap \
+	--without-mysql \
 	--without-rpm \
 	--without-zlib \
 	--with-nl \
@@ -253,8 +266,18 @@ define Package/snmpd/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmpd $(1)/usr/sbin/snmpd
 endef
 
+define Package/snmptrapd/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/snmptrapd.init $(1)/etc/init.d/snmptrapd
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetsnmptrapd.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmptrapd $(1)/usr/sbin/
+endef
+
 $(eval $(call BuildPackage,libnetsnmp))
 $(eval $(call BuildPackage,snmp-mibs))
 $(eval $(call BuildPackage,snmp-utils))
 $(eval $(call BuildPackage,snmpd))
 $(eval $(call BuildPackage,snmpd-static))
+$(eval $(call BuildPackage,snmptrapd))
