@@ -72,7 +72,13 @@ endef
 define Package/snmp-utils/description
 $(call Package/net-snmp/Default/description)
  .
- This package contains SNMP client utilities.
+ This package contains SNMP client utilities:
+   - snmpget
+   - snmpset
+   - snmpstatus
+   - snmptest
+   - snmptrap
+   - snmpwalk
 endef
 
 
