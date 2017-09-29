@@ -1,0 +1,12 @@
+--- nsjail/Makefile	2017-09-26 14:15:00.000000000 +0200
++++ nsjail/Makefile	2017-09-26 14:19:12.564695716 +0200
+@@ -24,7 +24,7 @@
+ 	-D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 \
+ 	-Wformat -Wformat=2 -Wformat-security -fPIE \
+ 	-Wno-format-nonliteral \
+-	-Wall -Wextra -Werror \
++	-Wall -Wextra  \
+ 	-Ikafel/include
+ 
+ CFLAGS += $(COMMON_FLAGS) \
+
