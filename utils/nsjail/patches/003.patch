@@ -1,0 +1,43 @@
+--- nsjail/cmdline.c	2017-09-27 16:53:26.984191599 +0200
++++ nsjail/cmdline.c	2017-09-27 16:55:56.748198001 +0200
+@@ -99,11 +99,11 @@
+     { { "rlimit_nofile", required_argument, NULL, 0x0205 }, "RLIMIT_NOFILE, 'max' for RLIM_INFINITY, 'def' for the current value (default: 32)" },
+     { { "rlimit_nproc", required_argument, NULL, 0x0206 }, "RLIMIT_NPROC, 'max' for RLIM_INFINITY, 'def' for the current value (default: 'def')" },
+     { { "rlimit_stack", required_argument, NULL, 0x0207 }, "RLIMIT_STACK in MB, 'max' for RLIM_INFINITY, 'def' for the current value (default: 'def')" },
+-    { { "persona_addr_compat_layout", no_argument, NULL, 0x0301 }, "personality(ADDR_COMPAT_LAYOUT)" },
++//    { { "persona_addr_compat_layout", no_argument, NULL, 0x0301 }, "personality(ADDR_COMPAT_LAYOUT)" },
+     { { "persona_mmap_page_zero", no_argument, NULL, 0x0302 }, "personality(MMAP_PAGE_ZERO)" },
+-    { { "persona_read_implies_exec", no_argument, NULL, 0x0303 }, "personality(READ_IMPLIES_EXEC)" },
+-    { { "persona_addr_limit_3gb", no_argument, NULL, 0x0304 }, "personality(ADDR_LIMIT_3GB)" },
+-    { { "persona_addr_no_randomize", no_argument, NULL, 0x0305 }, "personality(ADDR_NO_RANDOMIZE)" },
++//    { { "persona_read_implies_exec", no_argument, NULL, 0x0303 }, "personality(READ_IMPLIES_EXEC)" },
++//    { { "persona_addr_limit_3gb", no_argument, NULL, 0x0304 }, "personality(ADDR_LIMIT_3GB)" },
++//    { { "persona_addr_no_randomize", no_argument, NULL, 0x0305 }, "personality(ADDR_NO_RANDOMIZE)" },
+     { { "disable_clone_newnet", no_argument, NULL, 'N' }, "Don't use CLONE_NEWNET. Enable networking inside the jail" },
+     { { "disable_clone_newuser", no_argument, NULL, 0x0402 }, "Don't use CLONE_NEWUSER. Requires euid==0" },
+     { { "disable_clone_newns", no_argument, NULL, 0x0403 }, "Don't use CLONE_NEWNS" },
+@@ -491,19 +491,19 @@
+ 			nsjconf->rl_stack = cmdlineParseRLimit(RLIMIT_STACK, optarg, (1024 * 1024));
+ 			break;
+ 		case 0x0301:
+-			nsjconf->personality |= ADDR_COMPAT_LAYOUT;
++//			nsjconf->personality |= ADDR_COMPAT_LAYOUT;
+ 			break;
+ 		case 0x0302:
+ 			nsjconf->personality |= MMAP_PAGE_ZERO;
+ 			break;
+ 		case 0x0303:
+-			nsjconf->personality |= READ_IMPLIES_EXEC;
++//			nsjconf->personality |= READ_IMPLIES_EXEC;
+ 			break;
+ 		case 0x0304:
+-			nsjconf->personality |= ADDR_LIMIT_3GB;
++//			nsjconf->personality |= ADDR_LIMIT_3GB;
+ 			break;
+ 		case 0x0305:
+-			nsjconf->personality |= ADDR_NO_RANDOMIZE;
++//			nsjconf->personality |= ADDR_NO_RANDOMIZE;
+ 			break;
+ 		case 'N':
+ 			nsjconf->clone_newnet = false;
+
