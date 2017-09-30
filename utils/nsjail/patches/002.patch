@@ -1,0 +1,20 @@
+*** nsjail/kafel/build/Makefile.mk	2017-09-27 12:29:13.000000000 +0200
+--- nsjail/kafel/build/Makefile.mk	2017-09-27 12:50:51.592641341 +0200
+***************
+*** 18,24 ****
+  #
+  
+  PROJECT_ROOT?=
+! CFLAGS+=-std=gnu11 -I${PROJECT_ROOT}include -Wall -Wextra -Werror
+  
+  GENERATED_OBJECTS:=$(GENERATED_SRCS:.c=.o)
+  OBJECTS:=$(SRCS:.c=.o)
+--- 18,24 ----
+  #
+  
+  PROJECT_ROOT?=
+! CFLAGS+=-std=gnu11 -I${PROJECT_ROOT}include -Wall -Wextra 
+  
+  GENERATED_OBJECTS:=$(GENERATED_SRCS:.c=.o)
+  OBJECTS:=$(SRCS:.c=.o)
+

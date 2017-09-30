@@ -1,0 +1,37 @@
+--- nsjail/config.cc	2017-09-27 14:03:13.000000000 +0200
++++ nsjail/config.cc.edited	2017-09-27 17:05:09.376221625 +0200
+@@ -150,21 +150,21 @@
+         nsjconf->rl_stack = njc.rlimit_stack() * 1024ULL * 1024ULL;
+     }
+ 
+-    if (njc.persona_addr_compat_layout()) {
+-        nsjconf->personality |= ADDR_COMPAT_LAYOUT;
+-    }
++//    if (njc.persona_addr_compat_layout()) {
++//        nsjconf->personality |= ADDR_COMPAT_LAYOUT;
++//    }
+     if (njc.persona_mmap_page_zero()) {
+         nsjconf->personality |= MMAP_PAGE_ZERO;
+     }
+-    if (njc.persona_read_implies_exec()) {
+-        nsjconf->personality |= READ_IMPLIES_EXEC;
+-    }
+-    if (njc.persona_addr_limit_3gb()) {
+-        nsjconf->personality |= ADDR_LIMIT_3GB;
+-    }
+-    if (njc.persona_addr_no_randomize()) {
+-        nsjconf->personality |= ADDR_NO_RANDOMIZE;
+-    }
++//    if (njc.persona_read_implies_exec()) {
++//        nsjconf->personality |= READ_IMPLIES_EXEC;
++//    }
++//    if (njc.persona_addr_limit_3gb()) {
++//        nsjconf->personality |= ADDR_LIMIT_3GB;
++//    }
++//    if (njc.persona_addr_no_randomize()) {
++//        nsjconf->personality |= ADDR_NO_RANDOMIZE;
++//    }
+ 
+     nsjconf->clone_newnet = njc.clone_newnet();
+     nsjconf->clone_newuser = njc.clone_newuser();
+
