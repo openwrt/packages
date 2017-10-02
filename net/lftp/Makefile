@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lftp
-PKG_VERSION:=4.7.5
+PKG_VERSION:=4.8.2
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://lftp.tech/ftp/ \
-		ftp://ftp.st.ryukoku.ac.jp/pub/network/ftp/lftp/
-PKG_HASH:=53b5c5eba2e38b418bcf451776f2df596050dff4db90ab4ea73d872f8b1fd0d8
-
+		https://mirror.csclub.uwaterloo.ca/gentoo-distfiles/distfiles/
+		
+PKG_HASH:=5c875b8476e05e856ebc8eec458e43317b2bebd6ed5f7725a733d4591548cd9c
 
 
 PKG_LICENSE:=GPL-3.0+
@@ -37,19 +37,9 @@ define Package/lftp/description
 LFTP is a sophisticated file transfer program with command line interface. It supports FTP, HTTP, FISH, SFTP, HTTPS and FTPS protocols. GNU Readline library is used for input.
 Every operation in lftp is reliable, that is any non-fatal error is handled and the operation is retried automatically. So if downloading breaks, it will be restarted from the point automatically. Even if ftp server does not support REST command, lftp will try to retrieve the file from the very beginning until the file is transferred completely. This is useful for dynamic-ip machines which change their IP addresses quite often, and for sites with very bad internet connectivity.
 
-If you exit lftp when some jobs are not finished yet, lftp will move itself to nohup mode in background. The same happens when you have a real modem hangup or when you close an xterm.
-
 lftp has shell-like command syntax allowing you to launch several commands in parallel in background (&). It is also possible to group commands within () and execute them in background. All background jobs are executed in the same single process. You can bring a foreground job to background with ^Z (c-z) and back with command `wait' (or `fg' which is alias to `wait'). To list running jobs, use command `jobs'. Some commands allow redirecting their output (cat, ls, ...) to file or via pipe to external command. Commands can be executed conditionally based on termination status of previous command (&&, ||).
 
 lftp has builtin mirror which can download or update a whole directory tree. There is also reverse mirror (mirror -R) which uploads or updates a directory tree on server.
-
-There is command `at' to launch a job at specified time in current context, command `queue' to queue commands for sequential execution for current server, and much more.
-
-LFTP supports IPv6 for both FTP and HTTP protocols. For FTP protocol it uses method described in RFC2428.
-
-Other low level stuff supported: ftp proxy, http proxy, ftp over http, opie/skey, fxp transfers, socks.
-
-LFTP supports secure versions of the protocols FTP and HTTP: FTPS (explicit and implicit) and HTTPS. LFTP needs to be linked with an SSL library to support them. GNU TLS and OpenSSL are both supported as SSL backend.
 endef
 
 CONFIGURE_ARGS += \
@@ -63,12 +53,7 @@ CONFIGURE_ARGS += \
 	--with-zlib="$(STAGING_DIR)/usr" \
 	--disable-static
 
-#CONFIGURE_VARS += \
-#	LIBS="-lz -lutil -lcurses -ldl" \
-#	i_cv_posix_fallocate_works=no
-
-#MAKE_VARS += \
-#	LD="$(TARGET_CXX)"
+EXTRA_CXXFLAGS += -std=c++0x
 
 define Package/lftp/install
 	$(INSTALL_DIR) $(1)/usr/bin
