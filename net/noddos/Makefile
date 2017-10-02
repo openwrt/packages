@@ -11,11 +11,12 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=noddos
 PKG_RELEASE:=1
 PKG_LICENSE:=GPLv3
+PKG_MAINTAINER:=Steven Hessing <steven.hessing@gmail.com>
 
-PKG_SOURCE_VERSION:=0.5.0
+PKG_SOURCE_VERSION:=0.5.1
 PKG_SOURCE_URL:=https://github.com/noddos/noddos/releases/download/v$(PKG_SOURCE_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_HASH:=61119d76bbc1e7de74c3f3cd58fe7048581a1653dbffa03ae4215163b5221b18
+PKG_HASH:=246bccaf9b4ad589a2884da3bfa449e4adc5fcb951307f1b5a5c2c1bcdef95c1
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
