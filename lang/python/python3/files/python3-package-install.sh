@@ -47,7 +47,8 @@ process_filespec "$src_dir" "$dst_dir" "$filespec" || {
 }
 
 # delete egg-info directories
-find "$dst_dir" -name "*.egg-info" | xargs rm -rf
+[ "$PYTHON3_KEEP_EGGINFO" == "1" ] || \
+	find "$dst_dir" -name "*.egg-info" | xargs rm -rf
 
 if [ "$mode" == "sources" ] ; then
 	# Copy only python source files
