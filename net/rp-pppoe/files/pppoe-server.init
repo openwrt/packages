@@ -12,12 +12,11 @@ pppoe_triggers() {
 
 pppoe_instance() {
 	local cfg="$1"
-	local interface ac_name service_names service_name maxsessionsperpeer maxsesssionsperpeer localip firstremoteip maxsessions optionsfiles randomsession unit offset timeout mss sync OPTIONS
+	local interface ac_name service_names service_name maxsessionsperpeer localip firstremoteip maxsessions optionsfiles randomsession unit offset timeout mss sync OPTIONS
 	config_get interface "$cfg" interface
 	config_get ac_name "$cfg" ac_name
 	config_get service_names "$cfg" service_name
 	config_get maxsessionsperpeer "$cfg" maxsessionsperpeer
-	config_get maxsesssionsperpeer "$cfg" maxsesssionsperpeer
 	config_get localip "$cfg" localip
 	config_get firstremoteip "$cfg" firstremoteip
 	config_get maxsessions "$cfg" maxsessions
@@ -40,7 +39,6 @@ pppoe_instance() {
 	    done
 	    append OPTIONS "-I $interface"
 	    [ -n "$maxsessionsperpeer" ] && append OPTIONS "-x $maxsessionsperpeer"
-	    [ -n "$maxsesssionsperpeer" ] && append OPTIONS "-x $maxsesssionsperpeer"
 	    [ -n "$localip" ] && append OPTIONS "-L $localip"
 	    [ -n "$firstremoteip" ] && append OPTIONS "-R $firstremoteip"
 	    [ -n "maxsessions" ] && append OPTIONS "-N $maxsessions"
