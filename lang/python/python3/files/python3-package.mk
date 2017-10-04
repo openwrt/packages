@@ -32,6 +32,8 @@ ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
 endif
 
+PYTHON3_KEEP_EGGINFO ?= 0
+
 define Py3Package
 
   define Package/$(1)-src
@@ -68,11 +70,13 @@ define Py3Package
 	$(call Py3Package/$(1)/install,$$(1))
 	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 	if [ -e files/python3-package-install.sh ] ; then \
+		PYTHON3_KEEP_EGGINFO="$(PYTHON3_KEEP_EGGINFO)" \
 		$(SHELL) files/python3-package-install.sh \
 			"$(PKG_INSTALL_DIR)" "$$(1)" \
 			"$(HOST_PYTHON3_BIN)" "$$(2)" \
 			"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)" ; \
 	elif [ -e $(STAGING_DIR)/mk/python3-package-install.sh ] ; then \
+		PYTHON3_KEEP_EGGINFO="$(PYTHON3_KEEP_EGGINFO)" \
 		$(SHELL) $(STAGING_DIR)/mk/python3-package-install.sh \
 			"$(PKG_INSTALL_DIR)" "$$(1)" \
 			"$(HOST_PYTHON3_BIN)" "$$(2)" \
