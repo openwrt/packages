@@ -132,6 +132,8 @@ define Package/eudev/install
 			80-net-name-slot.rules) \
 		$(1)/lib/udev/rules.d
 
+	$(INSTALL_DIR) $(1)/run
+
 ifneq ($(eudev-extra-lib-bin-y),)
 		$(INSTALL_BIN) \
 			$(addprefix $(PKG_INSTALL_DIR)/lib/udev/, \
