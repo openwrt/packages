@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acpica-unix
-PKG_VERSION:=20170831
+PKG_VERSION:=20170929
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://acpica.org/sites/$(subst -unix,,$(PKG_NAME))/files/$(PKG_SOURCE_URL)
-PKG_HASH:=c918a422f6c72e27b08c841158b52d870b92730fb6406b33d20ef50b1d2b4113
+PKG_HASH:=c786868ae6c7a4c7bca19a5ca66bfb16740cad5c1c01b21642932f2f0dea9cc8
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 
 PKG_LICENSE:=GPL-2.0
@@ -37,7 +37,7 @@ define Package/acpica-unix/description
 	(AML) interpreter, a simulator, test suites, and a compiler to
 	translate ACPI Source Language (ASL) into AML.
 
-	At this time, only acpidump is bundledr; more might be added later.
+	At this time, only acpidump is bundled; more might be added later.
 endef
 
 define Build/Configure
