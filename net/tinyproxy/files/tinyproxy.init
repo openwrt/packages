@@ -4,6 +4,7 @@
 START=50
 
 CFGFILE=/var/etc/tinyproxy.conf
+LN=/etc/tinyproxy_custom.conf
 
 section_enabled() {
 	config_get_bool enabled "$1" 'enabled' 0
@@ -71,7 +72,12 @@ start_proxy() {
 	proxy_list "$1" ConnectPort >> $CFGFILE
 
 	config_foreach write_upstream upstream
-
+        
+	[ -f $LN ] && {
+	    echo "" >> $CFGFILE
+	    cat $LN >> $CFGFILE
+	}
+	
 	service_start /usr/sbin/tinyproxy -c "$CFGFILE"
 }
 
