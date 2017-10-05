@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=horst
-PKG_VERSION:=5.0
+PKG_VERSION:=5.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-git.tar.gz
-PKG_MIRROR_HASH:=3a677e504e8a1f27c899dfbf39da8c94412b24b08bb2eab0de7807cef07d078b
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git://github.com/br101/horst.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=version-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=22f4be94e839c58ac85ebdc2359b813fd5f68dfd71e1b0c9ed9545020d1abc7d
 
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>
 PKG_LICENSE:=GPL-2.0+
@@ -43,10 +43,18 @@ define Package/horst/description
 	and especially IBSS (ad-hoc) mode and mesh networks (OLSR).
 endef
 
+define Package/horst/conffiles
+/etc/config/horst
+endef
+
 define Package/horst/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/horst $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/horst.sh $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./horst.init $(1)/etc/init.d/horst
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./horst.config $(1)/etc/config/horst
 endef
 
 $(eval $(call BuildPackage,horst))
