@@ -33,14 +33,14 @@ start_service() {
 	local options url
 	config_load knxd
 	append_parm args eibaddr "eibaddr" "0.0.1"
-	append_parm args client-addrs "client-addrs" "0.0.2:10"
+	append_parm args client_addrs "client-addrs" "0.0.2:10"
 	append_parm args layer2 "layer2"
 	append_bool args GroupCache "GroupCache" 0
 	append_parm args daemon "daemon" "/var/log/knxd.log"
 	append_parm args error "error" # "5"
 	append_parm args listen_tcp "listen-tcp" "6720"
 	append_parm args Interface "Interface" # "eth0"
-	append_parm args send-delay "send-delay" # "50"
+	append_parm args send_delay "send-delay" # "50"
 	append_parm args Name "Name" "OpenWrt"
 	append_bool args no_monitor "no-monitor" 0
 	append_bool args Routing "Routing" 0
