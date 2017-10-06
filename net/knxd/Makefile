@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
 PKG_VERSION:=0.14.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/knxd/knxd.git
@@ -47,7 +47,7 @@ EIB KNX Daemon
 endef
 
 define Package/knxd/conffiles
-/etc/config/knxd.ini
+/etc/knxd.ini
 endef
 
 TARGET_CXXFLAGS+= -std=c++0x
@@ -72,7 +72,7 @@ define Package/knxd/install
 	$(INSTALL_BIN) ./files/knxd.init $(1)/etc/init.d/knxd
 
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/knxd.ini $(1)/etc/config/knxd.ini
+	$(INSTALL_DATA) ./files/knxd.ini $(1)/etc/knxd.ini
 endef
 
 $(eval $(call BuildPackage,knxd))
