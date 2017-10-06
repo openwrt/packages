@@ -48,6 +48,7 @@ endef
 
 define Package/knxd/conffiles
 /etc/knxd.ini
+/etc/config/knxd
 endef
 
 TARGET_CXXFLAGS+= -std=c++0x
@@ -73,6 +74,7 @@ define Package/knxd/install
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/knxd.ini $(1)/etc/knxd.ini
+	$(INSTALL_DATA) ./files/knxd.config $(1)/etc/config/knxd
 endef
 
 $(eval $(call BuildPackage,knxd))
