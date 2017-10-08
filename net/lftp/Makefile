@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lftp
 PKG_VERSION:=4.8.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://lftp.tech/ftp/ \
 		https://mirror.csclub.uwaterloo.ca/gentoo-distfiles/distfiles/
@@ -53,7 +53,7 @@ CONFIGURE_ARGS += \
 	--with-zlib="$(STAGING_DIR)/usr" \
 	--disable-static
 
-EXTRA_CXXFLAGS += -std=c++0x
+TARGET_CXXFLAGS+= -std=c++11
 
 define Package/lftp/install
 	$(INSTALL_DIR) $(1)/usr/bin
