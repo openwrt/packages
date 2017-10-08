@@ -16,7 +16,7 @@ pppoe_instance() {
 	config_get interface "$cfg" interface
 	config_get ac_name "$cfg" ac_name
 	config_get service_names "$cfg" service_name
-	config_get maxsessionsperpeer "$cfg" maxsesssionsperpeer
+	config_get maxsessionsperpeer "$cfg" maxsessionsperpeer
 	config_get localip "$cfg" localip
 	config_get firstremoteip "$cfg" firstremoteip
 	config_get maxsessions "$cfg" maxsessions
@@ -38,7 +38,7 @@ pppoe_instance() {
 		append OPTIONS "-S $service_name"
 	    done
 	    append OPTIONS "-I $interface"
-	    [ -n "$maxsesssionsperpeer" ] && append OPTIONS "-x $maxsesssionsperpeer"
+	    [ -n "$maxsessionsperpeer" ] && append OPTIONS "-x $maxsessionsperpeer"
 	    [ -n "$localip" ] && append OPTIONS "-L $localip"
 	    [ -n "$firstremoteip" ] && append OPTIONS "-R $firstremoteip"
 	    [ -n "maxsessions" ] && append OPTIONS "-N $maxsessions"
