@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2007 OpenWrt.org
-START=99
+START=50
 USE_PROCD=1
 
 append_bool() {
