@@ -19,9 +19,9 @@ INFOFILE="/var/run/smsd.working"
 # Logfile can also be defined in here:
 LOGFILE="/var/log/smsd.log"
 
-DAEMON=/usr/local/bin/smsd
+DAEMON=/usr/bin/smsd
 # A program which turns power off for couple of seconds:
-RESETMODEMS=/usr/local/bin/smsd_resetmodems
+RESETMODEMS=/usr/bin/smsd_resetmodems
 NAME=smsd
 PSOPT=""
 
