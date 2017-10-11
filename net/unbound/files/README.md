@@ -200,6 +200,13 @@ config unbound
     Bytes. Extended DNS is necessary for DNSSEC. However, it can run
     into MTU issues. Use this size in bytes to manage drop outs.
 
+  option extended_luci '0'
+    Boolean. Extends a tab hierarchy in LuCI for advanced congfiguration.
+
+  option extended_stats '0'
+    Boolean. extended statistics are printed from unbound-control.
+    Keeping track of more statistics takes time.
+
   option hide_binddata '1'
     Boolean. If enabled version.server, version.bind, id.server, and
     hostname.bind queries are refused.
@@ -266,8 +273,12 @@ config unbound
     Typical to configure maybe 0~300, but 1800 is the maximum accepted.
 
   option unbound_control '0'
-    Boolean. Enables unbound-control application access ports. Enabling
-    this without the unbound-control package installed is robust.
+    Level. Enables unbound-control application access ports.
+    0 - No unbound-control Access, or add your own in 'unbound_ext.conf'
+    1 - Unencrypted Local Host Access
+    2 - SSL Local Host Access; auto unbound-control-setup if available
+    3 - SSL Network Access; auto unbound-control-setup if available
+    4 - SSL Network Access; static key/pem files must already exist
 
   option validator '0'
     Boolean. Enable DNSSEC. Unbound names this the "validator" module.

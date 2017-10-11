@@ -68,7 +68,7 @@
       if ( bconf == 1 ) {
         x = ( "local-data: \"" fqdn ". 120 IN A " adr "\"" ) ;
         y = ( "local-data-ptr: \"" adr " 120 " fqdn "\"" ) ;
-        print ( x "\n" y ) > hostfile ;
+        print ( x "\n" y "\n" ) > hostfile ;
       }
 
       else {
@@ -91,17 +91,17 @@
             # GA or ULA routed addresses only (not LL or MC)
             sub( /\/.*/, "", adr ) ;
             adr = ( adr slaac ) ;
-            
-            
-            if ( split( adr, tmp0, ":" ) >= 8 ) { 
-              sub( "::", ":", adr ) ; 
+
+
+            if ( split( adr, tmp0, ":" ) >= 8 ) {
+              sub( "::", ":", adr ) ;
             }
 
 
             if ( bconf == 1 ) {
               x = ( "local-data: \"" fqdn ". 120 IN AAAA " adr "\"" ) ;
               y = ( "local-data-ptr: \"" adr " 120 " fqdn "\"" ) ;
-              print ( x "\n" y ) > hostfile ;
+              print ( x "\n" y "\n" ) > hostfile ;
             }
 
             else {
@@ -124,7 +124,7 @@
       if ( bconf == 1 ) {
         x = ( "local-data: \"" fqdn ". 120 IN AAAA " adr "\"" ) ;
         y = ( "local-data-ptr: \"" adr " 120 " fqdn "\"" ) ;
-        print ( x "\n" y ) > hostfile ;
+        print ( x "\n" y "\n" ) > hostfile ;
       }
 
       else {
@@ -135,12 +135,12 @@
         print ( x "\n" y ) > hostfile ;
       }
     }
-    
+
     if (( cdr2 == 128 ) && ( hst != "-" )) {
       if ( bconf == 1 ) {
         x = ( "local-data: \"" fqdn ". 120 IN AAAA " adr2 "\"" ) ;
         y = ( "local-data-ptr: \"" adr2 " 120 " fqdn "\"" ) ;
-        print ( x "\n" y ) > hostfile ;
+        print ( x "\n" y "\n" ) > hostfile ;
       }
 
       else {

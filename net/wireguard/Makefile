@@ -11,12 +11,12 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=wireguard
 
-PKG_VERSION:=0.0.20170810
+PKG_VERSION:=0.0.20171005
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WireGuard-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://git.zx2c4.com/WireGuard/snapshot/
-PKG_HASH:=ab96230390625aad6f4816fa23aef6e9f7fee130f083d838919129ff12089bf7
+PKG_HASH:=832a3b7cbb510f6986fd0c3a6b2d86bc75fc9f23b6754d8f46bc58ea8e02d608
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -34,8 +34,9 @@ define Package/wireguard/Default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=VPN
-  URL:=https://www.wireguard.io
+  URL:=https://www.wireguard.com
   MAINTAINER:=Baptiste Jonglez <openwrt@bitsofnetworks.org>, \
+              Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>, \
               Dan Luedtke <mail@danrl.com>, \
               Jason A. Donenfeld <Jason@zx2c4.com>
 endef
@@ -46,8 +47,7 @@ define Package/wireguard/Default/description
   more useful than IPSec, while avoiding the massive headache. It intends to
   be considerably more performant than OpenVPN.  WireGuard is designed as a
   general purpose VPN for running on embedded interfaces and super computers
-  alike, fit for many different circumstances.
-  It runs over UDP.
+  alike, fit for many different circumstances. It uses UDP.
 endef
 
 define Package/wireguard

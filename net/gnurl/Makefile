@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnurl
-PKG_VERSION:=7.55.0
+PKG_VERSION:=7.55.1-4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnunet.org/sites/default/files
 
-PKG_HASH:=761b3ddb32946965c62676ca4acf2ebaab38d09068aebeea78caaf6cce8c2b45
+PKG_HASH:=d4758822f84fe961d9253d3d7ff742c9cd0d39d5340d441b8014771eb95b8125
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -98,7 +98,7 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include/gnurl $(1)/usr/lib $(1)/usr/lib/pkgconfig
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnurl-config $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/curl/*.h $(1)/usr/include/gnurl
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/gnurl/*.h $(1)/usr/include/gnurl
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnurl.{a,so*} $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/libgnurl.pc $(1)/usr/lib/pkgconfig/
 	$(SED) 's,-L$$$${exec_prefix}/lib,,g' $(1)/usr/bin/gnurl-config

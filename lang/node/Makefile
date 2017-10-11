@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
 PKG_VERSION:=v6.11.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
 PKG_HASH:=04af4992238b19124ea56f1bcfda36827613a24eb3b00fc3b50f261a415a26e4
@@ -83,7 +83,7 @@ CONFIGURE_ARGS:= \
 
 ifneq ($(findstring arm,$(NODEJS_CPU)),)
 ifeq ($(CONFIG_SOFT_FLOAT),y)
-CONFIGURE_ARGS+= with-arm-float-abi=softfp
+CONFIGURE_ARGS+= --with-arm-float-abi=softfp
 else
 
 CONFIGURE_ARGS+= --with-arm-float-abi=hard

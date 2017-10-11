@@ -12,11 +12,13 @@ include ./files/python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=6
+# XXX: reset PKG_RELEASE to 1 only if Python's pip & setuptools versions have also bumped;
+#      otherwise, keep bumping PKG_RELEASE
+PKG_RELEASE:=2
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=35d543986882f78261f97787fd3e06274bfa6df29fac9b4a94f73930ff98f731
+PKG_HASH:=71ffb26e09e78650e424929b2b457b9c912ac216576e6bd9e7d204ed03296a66
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
@@ -34,6 +36,8 @@ HOST_BUILD_PARALLEL:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
+
+PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_python-setuptools CONFIG_PACKAGE_python-pip
 
 PKG_BUILD_DEPENDS:=python/host
 HOST_BUILD_DEPENDS:=bzip2/host expat/host
@@ -187,6 +191,16 @@ define Build/Compile
 	$(call Build/Compile/python-pip)
 endef
 
+define Build/InstallMkFiles
+	$(INSTALL_DIR) $(STAGING_DIR)/mk/
+	$(INSTALL_DATA) \
+		./files/python-package.mk \
+		./files/python-host.mk \
+		./files/python-version.mk \
+		./files/python-package-install.sh \
+		$(STAGING_DIR)/mk/
+endef
+
 # Install python2-config for Samba 4
 # Do not copy 'python-config', which may conflict with python3
 define Build/InstallDev
@@ -282,6 +296,7 @@ define Package/python-pip-conf/install
 endef
 
 HOST_LDFLAGS += \
+	-Wl,--no-as-needed -lrt \
 	$$$$(pkg-config --static --libs libcrypto libssl)
 
 HOST_CONFIGURE_ARGS+= \
@@ -295,7 +310,12 @@ HOST_CONFIGURE_ARGS+= \
 	--with-ensurepip=install \
 	CONFIG_SITE=
 
+define Host/Compile
+	$(call Host/Compile/Default,python Parser/pgen sharedmods)
+endef
+
 define Host/Install
+	$(call Build/InstallMkFiles)
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 	$(INSTALL_DIR) $(HOST_PYTHON_DIR)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON_DIR)/bin/pgen2

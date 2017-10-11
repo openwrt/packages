@@ -20,9 +20,9 @@ start_domoticz() {
 	[ -n "$loglevel" ] && procd_append_param command -loglevel "$loglevel"
 	[ -n "$syslog" ] && procd_append_param command -syslog "$syslog"
 	[ -n "$userdata" ] && {
-		mkdir -p "$userdata"
-		chmod 0770 "$userdata"
-		chown domoticz:domoticz "$userdata"
+		mkdir -p "${userdata}/generated_scripts"
+		chmod -R 0770 "$userdata"
+		chown -R domoticz:domoticz "$userdata"
 		procd_append_param command -userdata "$userdata"
 	}
 	[ -n "$sslcert" -a "${sslwww:-0}" -gt 0 ] && {

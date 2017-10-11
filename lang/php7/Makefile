@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.1.8
-PKG_RELEASE:=2
+PKG_VERSION:=7.1.10
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_HASH:=8943858738604acb33ecedb865d6c4051eeffe4e2d06f3a3c8f794daccaa2aab
+PKG_HASH:=2b8efa771a2ead0bb3ae67b530ca505b5b286adc873cca9ce97a6e1d6815c50b
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -133,7 +133,7 @@ endef
 
 define Package/php7-fpm
   $(call Package/php7/Default)
-  DEPENDS+= +php7-cgi
+  DEPENDS+= +PACKAGE_php7-mod-intl:libstdcpp
   TITLE+= (FPM)
 endef
 

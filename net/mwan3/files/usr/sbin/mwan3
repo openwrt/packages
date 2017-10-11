@@ -37,7 +37,6 @@ ifdown()
 	ACTION=ifdown INTERFACE=$1 /sbin/hotplug-call iface
 
 	kill $(pgrep -f "mwan3track $1 $2") &> /dev/null
-	mwan3_delete_iface_iptables $1
 	mwan3_track_clean $1
 }
 
@@ -160,7 +159,7 @@ stop()
 	done
 
 	mwan3_lock_clean
-	rm -rf "${MWAN3_STATUS_DIR}/mmx_mask"
+	rm -rf $MWAN3_STATUS_DIR $MWAN3TRACK_STATUS_DIR
 }
 
 restart() {

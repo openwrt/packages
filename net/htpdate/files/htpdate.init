@@ -2,18 +2,53 @@
 # Copyright (C) 2006 OpenWrt.org
 
 START=49
-BIN=htpdate
-DEFAULT=/etc/default/$BIN
-RUN_D=/var/run
-PID_F=$RUN_D/$BIN.pid
+USE_PROCD=1
+PROG=/usr/sbin/htpdate
 
-start() {
-	[ -f $DEFAULT ] && . $DEFAULT
-	mkdir -p $RUN_D
-	$BIN -l -s -t $OPTIONS && $BIN -D $OPTIONS
+
+
+
+validate_htpdate_section() {
+	uci_validate_section htpdate htpdate "${1}" \
+		'server:list(host)' \
+		'proxy_host:host' \
+		'proxy_port:port:8080' \
+		'debug:bool:0' \
+		'sanity_check:bool:1' \
+		'option:list(string)' \
+		'enabled:bool:1'
 }
 
-stop() {
-	[ -f $PID_F ] && kill $(cat $PID_F)
+
+start_service() {
+	local server proxy debug sanity_check option enabled
+
+        validate_htpdate_section htpdate || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ "$enabled" = 0 ] && return
+
+
+	procd_open_instance
+	procd_set_param command "$PROG" -f
+
+	[ -n "$proxy" ] && procd_append_param command -P $proxy:$proxy_port
+	[ "$debug" = "1" ] && procd_append_param command -d
+	[ "$sanity_check" = "0" ] && procd_append_param command -t
+	[ -n "$option" ] && procd_append_param command $option
+	for peer in $server; do
+		procd_append_param command $peer
+	done
+
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
 }
 
+service_triggers() {
+	procd_add_reload_trigger "htpdate"
+	procd_add_validation validate_htpdate_section
+}

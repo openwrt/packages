@@ -1,0 +1,59 @@
+Index: netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/CMakeLists.txt
+===================================================================
+--- netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459.orig/cli/CMakeLists.txt
++++ netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/CMakeLists.txt
+@@ -67,6 +67,9 @@ if(NOT MAN_INSTALL_DIR)
+     set(MAN_INSTALL_DIR share/man)
+ endif()
+ 
++include(CheckFunctionExists)
++check_function_exists(eaccess HAVE_EACCESS)
++
+ # install binary
+ install(TARGETS netopeer2-cli DESTINATION ${BIN_INSTALL_DIR})
+ 
+Index: netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/commands.c
+===================================================================
+--- netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459.orig/cli/commands.c
++++ netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/commands.c
+@@ -37,6 +37,10 @@
+ #   include <openssl/x509v3.h>
+ #endif
+ 
++#ifndef HAVE_EACCESS
++#define eaccess access
++#endif
++
+ #include "commands.h"
+ #include "configuration.h"
+ #include "completion.h"
+Index: netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/completion.c
+===================================================================
+--- netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459.orig/cli/completion.c
++++ netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/completion.c
+@@ -27,6 +27,10 @@
+ 
+ #include <nc_client.h>
+ 
++#ifndef HAVE_EACCESS
++#define eaccess access
++#endif
++
+ #include "commands.h"
+ #include "linenoise/linenoise.h"
+ 
+Index: netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/configuration.c
+===================================================================
+--- netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459.orig/cli/configuration.c
++++ netopeer2-0.4.0-d028c1f931819db4b3e3cb1fd2d349a4fd5c0459/cli/configuration.c
+@@ -28,6 +28,10 @@
+ #include <libyang/libyang.h>
+ #include <nc_client.h>
+ 
++#ifndef HAVE_EACCESS
++#define eaccess access
++#endif
++
+ #include "configuration.h"
+ #include "commands.h"
+ #include "linenoise/linenoise.h"
