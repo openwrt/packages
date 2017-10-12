@@ -38,6 +38,7 @@ endef
 
 define Package/keepalived/conffiles
 /etc/keepalived/keepalived.conf
+/etc/config/keepalived
 endef
 
 CONFIGURE_ARGS+= \
