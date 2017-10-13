@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2016-2017 Yunhui Fu <yhfudev@gmail.com>
+# Licensed to the public under the Apache License 2.0.
+
+START=99
+USE_PROCD=1
+
+NAME=fcgiwrap
+PROG=/usr/bin/fcgiwrap
+
+FN_UNIX_SOCKET="/tmp/fcgiwrap.socket"
+ip="127.0.0.1"
+port="12345"
+
+service_triggers() {
+    procd_add_reload_trigger "$NAME"
+}
+start_service() {
+	procd_open_instance
+	#procd_set_param command "$PROG" -s unix:${FN_UNIX_SOCKET}
+	# /usr/bin/spawn-fcgi -s /var/run/fcgiwrap.sock -P /var/run/fcgiwrap.pid -u www-data -g www-data -- /usr/sbin/fcgiwrap
+	procd_set_param command "$PROG" -s tcp:$ip:$port
+
+	#[ "${listen_globally}" -ne 0 ] && procd_append_param command -G
+	#procd_append_param command -S "${port}"
+	#procd_append_param command "${device}"
+	procd_set_param respawn
+
+	procd_close_instance
+}
+
