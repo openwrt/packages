@@ -1,0 +1,13 @@
+--- nsjail/util.c	2017-10-14 10:59:24.606329947 +0200
++++ nsjail/util.c	2017-10-13 17:12:55.440176462 +0200
+@@ -39,6 +39,9 @@
+ 
+ #include "log.h"
+ 
++#define __SIGRTMIN	32
++#define __SIGRTMAX	(_NSIG - 1)
++
+ void *utilMalloc(size_t sz)
+ {
+ 	void *ret = malloc(sz);
+

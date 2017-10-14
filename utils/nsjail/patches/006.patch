@@ -1,0 +1,22 @@
+--- nsjail/common.h	2017-10-14 10:59:24.590329688 +0200
++++ nsjail/common.h	2017-10-14 11:02:01.456917636 +0200
+@@ -19,6 +19,19 @@
+ 
+ */
+ 
++typedef unsigned long int __rlim_t;
++typedef unsigned long int __rlim64_t;
++
++#if defined(PLATFORM_MACOSX_GNU) || defined(PLATFORM_FREEBSD) || !defined(__GLIBC__)
++#define TEMP_FAILURE_RETRY(expression) \
++  (__extension__                                                              \
++    ({ long int __result;                                                     \
++       do __result = (long int) (expression);                                 \
++       while (__result == -1L && errno == EINTR);                             \
++       __result; }))
++#endif
++
++
+ #ifndef NS_COMMON_H
+ #define NS_COMMON_H
+ 
