@@ -1,3 +1,10 @@
+# ./scripts/feeds update -a
+# ./scripts/feeds install protobuf
+# ./scripts/feeds install libcap
+# ./scripts/feeds install libprotobuf-c
+# ./scripts/feeds install libpcap
+# ./scripts/feeds install libmount
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nsjail
