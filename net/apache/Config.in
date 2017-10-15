@@ -1,0 +1,11 @@
+menu "Configuration"
+        depends on PACKAGE_apache
+
+config APACHE_HTTP2
+        bool
+        prompt "Enable HTTP2"
+        help
+                Enable HTTPS2 support.
+        default n
+
+endmenu
