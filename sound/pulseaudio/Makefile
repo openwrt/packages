@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
-PKG_VERSION:=11.0
-PKG_RELEASE:=2
+PKG_VERSION:=11.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://freedesktop.org/software/pulseaudio/releases/
-PKG_HASH:=072305d4018fc5e75bb1b45ee6b938fa52fc9fd27493bf327415ef89ed14c969
+PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases/
+PKG_HASH:=f2521c525a77166189e3cb9169f75c2ee2b82fa3fcf9476024fbc2c3a6c9cd9e
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=GPL LICENSE
 
