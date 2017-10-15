@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
 PKG_VERSION:=1.7.9
-PKG_RELEASE:=01
+PKG_RELEASE:=02
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.haproxy.org/download/1.7/src/
@@ -38,8 +38,10 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
+ifeq ($(ENABLE_LUA),y)
 	tar -zxvf $(DL_DIR)/lua-5.3.4.tar.gz -C $(PKG_BUILD_DIR)
 	ln -s $(PKG_BUILD_DIR)/lua-5.3.4 $(PKG_BUILD_DIR)/lua
+endif
 endef
 
 define Package/haproxy/Default/conffiles
@@ -89,6 +91,11 @@ $(call Package/haproxy/Default/description)
  This package is built without SSL support.
 endef
 
+ENABLE_LUA:=y
+ifeq ($(CONFIG_mips),y)
+  ENABLE_LUA:=n
+endif
+
 ifeq ($(CONFIG_avr32),y)
   LINUX_TARGET:=linux26
 else
@@ -97,17 +104,18 @@ endif
 
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
+	ADDON+=ADDLIB="-lcrypto -lm "
+else ifeq ($(CONFIG_mips),n)
 	ADDON+=USE_LUA=1
 	ADDON+=LUA_LIB_NAME="lua534"
 	ADDON+=LUA_INC="$(STAGING_DIR)/lua-5.3.4/include"
 	ADDON+=LUA_LIB="$(STAGING_DIR)/lua-5.3.4/lib"
-	ADDON+=ADDLIB="-lcrypto -lm "
 else
 	ADDON+=ADDLIB="-lm"
 endif
 
-
-define Build/Compile
+ifeq ($(ENABLE_LUA),y)
+define Build/Compile/lua
 	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR)/lua \
 		INSTALL_TOP="$(STAGING_DIR)/lua-5.3.4/" \
 		CC="$(TARGET_CC)" \
@@ -117,7 +125,11 @@ define Build/Compile
 		linux install
 
 	mv $(STAGING_DIR)/lua-5.3.4/lib/liblua.a $(STAGING_DIR)/lua-5.3.4/lib/liblua534.a
+endef
+endif
 
+define Build/Compile
+	$(call Build/Compile/lua)
 	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
@@ -159,7 +171,6 @@ define Package/haproxy/install
 endef
 
 Package/haproxy-nossl/install = $(Package/haproxy/install)
-
 
 define Package/halog
 	MENU:=1
