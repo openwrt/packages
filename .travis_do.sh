@@ -6,7 +6,7 @@ set -e
 
 SDK_HOME="$HOME/sdk"
 SDK_PATH=https://downloads.lede-project.org/snapshots/targets/ar71xx/generic/
-SDK=lede-sdk-ar71xx-generic_gcc-5.4.0_musl.Linux-x86_64
+SDK=lede-sdk-ar71xx-generic_gcc-5.5.0_musl.Linux-x86_64
 PACKAGES_DIR="$PWD"
 
 echo_red()   { printf "\033[1;31m$*\033[m\n"; }
