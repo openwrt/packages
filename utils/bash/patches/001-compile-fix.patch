@@ -1,6 +1,8 @@
---- a/execute_cmd.c
-+++ b/execute_cmd.c
-@@ -2369,7 +2369,11 @@ execute_pipeline (command, asynchronous,
+Index: bash-4.4/execute_cmd.c
+===================================================================
+--- bash-4.4.orig/execute_cmd.c
++++ bash-4.4/execute_cmd.c
+@@ -2459,7 +2459,11 @@ execute_pipeline (command, asynchronous,
    /* If the `lastpipe' option is set with shopt, and job control is not
       enabled, execute the last element of non-async pipelines in the
       current shell environment. */

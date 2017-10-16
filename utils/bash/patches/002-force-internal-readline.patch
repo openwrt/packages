@@ -1,6 +1,8 @@
---- a/configure
-+++ b/configure
-@@ -5430,8 +5430,7 @@ if test $opt_readline = yes; then
+Index: bash-4.4/configure
+===================================================================
+--- bash-4.4.orig/configure
++++ bash-4.4/configure
+@@ -5420,8 +5420,7 @@ if test $opt_readline = yes; then
  		# static version specified as -llibname to override the
  		# dynamic version
  		case "${host_os}" in
@@ -10,9 +12,11 @@
  		esac
  	fi
  else
---- a/configure.ac
-+++ b/configure.ac
-@@ -578,8 +578,7 @@ if test $opt_readline = yes; then
+Index: bash-4.4/configure.ac
+===================================================================
+--- bash-4.4.orig/configure.ac
++++ bash-4.4/configure.ac
+@@ -573,8 +573,7 @@ if test $opt_readline = yes; then
  		# static version specified as -llibname to override the
  		# dynamic version
  		case "${host_os}" in
