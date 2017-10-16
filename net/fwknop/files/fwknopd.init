@@ -4,7 +4,6 @@
 # Copyright (C) 2009-2014 fwknop developers and contributors. For a full
 # list of contributors, see the file 'CREDITS'.
 #
-. /lib/functions.sh
 
 USE_PROCD=1
 START=95
