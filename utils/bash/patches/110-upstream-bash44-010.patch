@@ -1,0 +1,26 @@
+Index: bash-4.4/builtins/read.def
+===================================================================
+--- bash-4.4.orig/builtins/read.def
++++ bash-4.4/builtins/read.def
+@@ -181,7 +181,8 @@ read_builtin (list)
+      WORD_LIST *list;
+ {
+   register char *varname;
+-  int size, i, nr, pass_next, saw_escape, eof, opt, retval, code, print_ps2;
++  int size, nr, pass_next, saw_escape, eof, opt, retval, code, print_ps2;
++  volatile int i;
+   int input_is_tty, input_is_pipe, unbuffered_read, skip_ctlesc, skip_ctlnul;
+   int raw, edit, nchars, silent, have_timeout, ignore_delim, fd, lastsig, t_errno;
+   unsigned int tmsec, tmusec;
+Index: bash-4.4/patchlevel.h
+===================================================================
+--- bash-4.4.orig/patchlevel.h
++++ bash-4.4/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 9
++#define PATCHLEVEL 10
+ 
+ #endif /* _PATCHLEVEL_H_ */
