@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
-PKG_VERSION:=1.8.14p3
+PKG_VERSION:=1.8.21p2
 PKG_RELEASE:=1
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=doc/LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.sudo.ws/dist
-PKG_HASH:=a8a697cbb113859058944850d098464618254804cf97961dee926429f00a1237
+PKG_HASH:=74c5746cd33a814e2431c39faf0d76f7f8a697379bd073862e3b156cf0d76368
 
 PKG_INSTALL:=1
 
