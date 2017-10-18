@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lame
-PKG_VERSION:=3.99.5
-PKG_RELEASE:=2
+PKG_VERSION:=3.100
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/lame
-PKG_HASH:=24346b4158e4af3bd9f2e194bb23eb473c75fb7377011523353196b19b9a23ff
+PKG_HASH:=ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e
 PKG_FIXUP:=autoreconf
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
@@ -36,7 +36,7 @@ define Package/lame
 $(call Package/lame/Default)
   TITLE:=lame
   MENU:=1
-  DEPENDS += +libncurses
+  DEPENDS += +libncurses +lame-lib
 endef
 
 define Package/lame/description
@@ -52,11 +52,11 @@ define Package/lame-lib/description
 lame mp3 encoder libs
 endef
 
-CONFIG_VARS+=NASM=no
-
 ifeq ($(ARCH),i386)
 TARGET_CFLAGS+=-msse
 endif
+
+CONFIGURE_ARGS += --disable-gtktest --disable-static
 
 define Package/lame/install
 	$(INSTALL_DIR) $(1)/usr/bin
