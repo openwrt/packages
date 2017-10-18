@@ -1,0 +1,26 @@
+From 6dbfafd4b8bfc9f5e53db90c5279784c506a3253 Mon Sep 17 00:00:00 2001
+From: Phil Eichinger <phil@zankapfel.net>
+Date: Tue, 17 Oct 2017 06:44:04 +0200
+Subject: [PATCH] no po
+
+docs are disabled via ./configure --disable-doc now
+---
+ Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 4bc2db4..bb00927 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -14,7 +14,7 @@ IMAP_SUBDIR = imap
+ IMAP_INCLUDES = -I$(top_srcdir)/imap
+ endif
+ 
+-SUBDIRS = m4 po intl $(DOC_SUBDIR) contrib $(IMAP_SUBDIR)
++SUBDIRS = m4 intl $(DOC_SUBDIR) contrib $(IMAP_SUBDIR)
+ 
+ bin_SCRIPTS = muttbug flea $(SMIMEAUX_TARGET)
+ 
+-- 
+2.11.0
+
