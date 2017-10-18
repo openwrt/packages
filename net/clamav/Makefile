@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamav
 PKG_VERSION:=0.99.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr> \
@@ -72,6 +72,9 @@ define Build/Configure
 		--with-group nogroup \
 		--with-pcre="$(STAGING_DIR)/usr/" \
 		--with-openssl="$(STAGING_DIR)/usr/" \
+		--with-zlib="$(STAGING_DIR)/usr/" \
+		--disable-zlib-vcheck \
+		--disable-clamdtop \
 	)
 endef
 
