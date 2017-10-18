@@ -9,6 +9,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => infrequent updates, approx. 400 entries (enabled by default)
     * [adguard](https://adguard.com)
     * => numerous updates on the same day, approx. 12.000 entries
+    * [bitcoin](https://github.com/hoshsadiq/adblock-nocoin-list)
+    * => infrequent updates, approx. 15 entries
     * [blacklist]()
     * => static local blacklist, located by default in '/etc/adblock/adblock.blacklist'
     * [disconnect](https://disconnect.me)
