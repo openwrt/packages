@@ -1,0 +1,11 @@
+--- a/src/lxc/storage/overlay.c
++++ b/src/lxc/storage/overlay.c
+@@ -747,7 +747,7 @@ int ovl_mkdir(const struct mntent *mntent, const struct lxc_rootfs *rootfs,
+ 	char lxcpath[MAXPATHLEN];
+ 	char **opts;
+ 	int ret;
+-	size_t arrlen, dirlen, i, len, rootfslen;
++	size_t arrlen, i, len, rootfslen, dirlen = 0;
+ 	int fret = -1;
+ 	char *rootfs_dir = NULL, *rootfs_path = NULL, *upperdir = NULL,
+ 	     *workdir = NULL;

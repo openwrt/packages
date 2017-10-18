@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=1.1.5
-PKG_RELEASE:=3
+PKG_VERSION:=2.1.0
+PKG_RELEASE:=1
 
 PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause GPL-2.0
-PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
+PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://linuxcontainers.org/downloads/lxc/
-PKG_HASH:=9588ad1b04e114ee7370f690c65131e28098b28d2521d97c73557d11897ed0be
+PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
+PKG_HASH:=394407305a409eb1f95fe06e7718acfe89b1d5df267b0c6aafb1d714e2038de2
 
 PKG_BUILD_DEPENDS:=lua
 PKG_BUILD_PARALLEL:=1
@@ -27,23 +27,19 @@ PKG_FIXUP:=autoreconf
 include $(INCLUDE_DIR)/package.mk
 
 LXC_APPLETS_BIN += \
-	attach autostart cgroup clone config console create destroy device \
+	attach autostart cgroup copy config console create destroy device \
 	execute freeze info monitor snapshot start stop unfreeze unshare \
-	usernsexec wait
+	usernsexec wait top ls
 
 LXC_APPLETS_LIB += \
 	monitord user-nic
 
 LXC_SCRIPTS += \
-	checkconfig ls top
+	checkconfig
 
 DEPENDS_APPLETS = +libpthread +libcap +liblxc
 
 DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock
-
-DEPENDS_ls = +lxc-config
-DEPENDS_top = +lxc-lua +luafilesystem @BROKEN
-
 
 define Package/lxc/Default
   SECTION:=utils
@@ -118,7 +114,7 @@ endef
 define Package/lxc-lua
   $(call Package/lxc/Default)
   TITLE:=LXC Lua bindings
-  DEPENDS:= lxc +liblua +liblxc +luafilesystem
+  DEPENDS:= lxc +liblua +liblxc
 endef
 
 define Package/lxc-init
