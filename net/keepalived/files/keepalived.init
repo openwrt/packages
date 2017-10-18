@@ -49,7 +49,14 @@ print_elems_indent() {
 		eval optval=\$$opt
 		[ -z "$optval" ] && continue
 		printf "$indent$opt" >> $KEEPALIVED_CONF
-		[ "$no_val" == "0" ] && printf " $optval" >> $KEEPALIVED_CONF
+		[ "$no_val" == "0" ] && {
+			local words=$(echo "$optval" | wc -w)
+			if [ $words -gt 1 ]; then
+				printf " \"$optval\"" >> $KEEPALIVED_CONF
+			else
+				printf " $optval" >> $KEEPALIVED_CONF
+			fi
+		}
 		printf "\n" >> $KEEPALIVED_CONF
 	done
 	unset optval
