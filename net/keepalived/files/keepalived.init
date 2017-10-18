@@ -297,14 +297,26 @@ vrrp_instance() {
 		printf "$INDENT_1}\n" >> $KEEPALIVED_CONF
 	done
 
-	# Handle track_interface & track_script lists
-	for opt in track_interface track_script; do
+	# Handle track_script lists
+	for opt in track_script; do
 		config_get $opt $1 $opt
 		eval optval=\$$opt
 		[ -z "$optval" ] && continue
 		printf "$INDENT_1$opt {\n" >> $KEEPALIVED_CONF
 		for t in $optval; do
 			printf "$INDENT_2$optval\n" >> $KEEPALIVED_CONF
+		done
+		printf "$INDENT_1}\n" >> $KEEPALIVED_CONF
+	done
+
+	# Handle track_interface lists
+	for opt in track_interface; do
+		config_get $opt $1 $opt
+		eval optval=\$$opt
+		[ -z "$optval" ] && continue
+		printf "$INDENT_1$opt {\n" >> $KEEPALIVED_CONF
+		for t in $optval; do
+			config_foreach print_track_elem_indent track_interface $t $INDENT_2
 		done
 		printf "$INDENT_1}\n" >> $KEEPALIVED_CONF
 	done
