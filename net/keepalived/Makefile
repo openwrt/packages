@@ -41,14 +41,10 @@ define Package/keepalived/conffiles
 endef
 
 CONFIGURE_ARGS+= \
-	--enable-vrrp \
-	--enable-fwmark \
 	--enable-sha1 \
 	--disable-lvs \
 	--disable-lvs-syncd \
 	--disable-snmp \
-	--disable-debug \
-	--disable-profile \
 	--with-kernel-dir="$(LINUX_DIR)/$(LINUX_UAPI_DIR)"
 
 MAKE_FLAGS += \
