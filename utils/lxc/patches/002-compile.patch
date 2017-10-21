@@ -1,0 +1,10 @@
+--- a/src/lxc/storage/aufs.h
++++ b/src/lxc/storage/aufs.h
+@@ -24,7 +24,6 @@
+ #ifndef __LXC_AUFS_H
+ #define __LXC_AUFS_H
+ 
+-#define _GNU_SOURCE
+ #include <stdbool.h>
+ #include <stdio.h>
+ #include <stdint.h>
