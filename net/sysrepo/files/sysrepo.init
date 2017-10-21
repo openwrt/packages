@@ -23,6 +23,8 @@ start_service() {
 
 stop_service()
 {
+    kill -9 `ps | grep netopeer2-server | grep -v grep | awk '{print $1}'` >/dev/null 2>&1
     service_stop ${PROG_PLUGIN}
     service_stop ${PROG_DEAMON}
+    rm -rf /var/run/sysrepo-subscriptions/*
 }
