@@ -34,19 +34,8 @@ define Package/sslh/conffiles
 /etc/sslh.conf
 endef
 
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS)" \
-		CPPFLAGS="$(TARGET_CPPFLAGS)" \
-		LDFLAGS="$(TARGET_LDFLAGS)" \
-		ENABLE_REGEX=1 \
-		USELIBCONFIG=1 \
-		USELIBWRAP= \
-		USELIBPCRE= \
-		$(if $(CONFIG_USE_GLIBC),USELIBPCRE=,USELIBPCRE=1)\
-		all
-endef
+MAKE_FLAGS += \
+  $(if $(CONFIG_USE_GLIBC),USELIBPCRE=,USELIBPCRE=1)
 
 define Package/sslh/install
 	$(INSTALL_DIR) $(1)/usr/sbin
