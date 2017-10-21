@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.65.1
 PKG_SOURCE_VERSION:=1_65_1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/$(PKG_VERSION)
@@ -54,8 +54,8 @@ Boost is a set of free, peer-reviewed, portable C++ source libraries.
 | compile the kernel with Full Language Support.                            |
 | Without these requirerements, the following libs will not be available:   |
 | - Boost.Locale                                                            |
-| - Boost.Coroutine2                                                        |
-| - Boost.Fiber                                                             |
+| - Boost.Coroutine2 (header-only library - requires C++11)                 |
+| - Boost.Fiber (requires C++14)                                            |
 -----------------------------------------------------------------------------
 
 This package provides the following run-time libraries:
@@ -307,7 +307,7 @@ $(eval $(call DefineBoostLibrary,date_time,,))
 $(eval $(call DefineBoostLibrary,fiber,coroutine filesystem,,))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
-$(eval $(call DefineBoostLibrary,iostreams,,+zlib +liblzma))
+$(eval $(call DefineBoostLibrary,iostreams,,+zlib +liblzma +libbz2))
 $(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS),BUILD_NLS))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex,))
 $(eval $(call DefineBoostLibrary,math,,))
@@ -389,13 +389,15 @@ define Build/Compile
 			$(if $(CONFIG_boost-single-thread),threading=single,) \
 			threading=multi \
 			--without-mpi \
-			$(if $(CONFIG_boost-coroutine2),,--without-coroutine2) \
 			$(if $(CONFIG_boost-graph-parallel),,--without-graph_parallel) \
 			$(if $(CONFIG_PACKAGE_boost-test),,--without-test) \
 			$(foreach lib,$(BOOST_LIBS), \
 				$(if $(findstring python,$(lib)), \
 					$(if $(CONFIG_PACKAGE_boost-python),python=2.7,--without-python), \
-					$(if $(CONFIG_PACKAGE_boost-$(lib)),,--without-$(lib))) \
+						$(if $(CONFIG_PACKAGE_boost-$(lib)),, \
+							$(if $(findstring $(lib),wserialization),,--without-$(lib)) \
+						) \
+					) \
 			) \
 			$(if $(CONFIG_PACKAGE_boost-locale),boost.locale.iconv=on -sICONV_PATH=$(ICONV_PREFIX) boost.locale.posix=$(if $(USE_MUSL),on,off), \
 				boost.locale.iconv=off) \
@@ -403,26 +405,32 @@ define Build/Compile
 			$(if $(CONFIG_PACKAGE_boost-iostreams),-sNO_BZIP2=1 -sZLIB_INCLUDE=$(STAGING_DIR)/usr/include \
 				-sZLIB_LIBPATH=$(STAGING_DIR)/usr/lib) \
 			install ;\
-		b2 \
-			$(CONFIGURE_ARGS) \
-			--ignore-site-config \
-			--toolset=gcc-$(ARCH) abi=$(BOOST_ABI) \
-			--disable-long-double \
-			$(if $(CONFIG_boost-variant-release), variant=release,) \
-			$(if $(CONFIG_boost-variant-debug), variant=debug,) \
-			$(if $(CONFIG_boost-variant-profile), variant=profile,) \
-			$(if $(CONFIG_boost-use-name-tags),--layout=tagged,--layout=system) \
-			$(if $(CONFIG_boost-build-type-complete),--build-type=complete,--build-type=minimal) \
-			$(if $(CONFIG_boost-shared-libs),link=shared,) \
-			$(if $(CONFIG_boost-static-libs),link=static,) \
-			$(if $(CONFIG_boost-static-and-shared-libs),link=static$(comma)shared,) \
-			$(if $(CONFIG_boost-runtime-shared),runtime-link=shared,) \
-			$(if $(CONFIG_boost-runtime-static),runtime-link=static,) \
-			$(if $(CONFIG_boost-runtime-static-and-shared),runtime-link=shared$(comma)static,) \
-			$(if $(CONFIG_boost-single-thread),threading=single,) \
-			threading=multi \
-			$(if $(CONFIG_PACKAGE_boost-python3),--with-python python=3.6,) \
-			install ;\
+			$(if $(CONFIG_PACKAGE_boost-python3), \
+				b2 \
+					$(CONFIGURE_ARGS) \
+					--ignore-site-config \
+					--toolset=gcc-$(ARCH) abi=$(BOOST_ABI) \
+					--disable-long-double \
+					$(if $(CONFIG_boost-variant-release), variant=release,) \
+					$(if $(CONFIG_boost-variant-debug), variant=debug,) \
+					$(if $(CONFIG_boost-variant-profile), variant=profile,) \
+					$(if $(CONFIG_boost-use-name-tags),--layout=tagged,--layout=system) \
+					$(if $(CONFIG_boost-build-type-complete),--build-type=complete,--build-type=minimal) \
+					$(if $(CONFIG_boost-shared-libs),link=shared,) \
+					$(if $(CONFIG_boost-static-libs),link=static,) \
+					$(if $(CONFIG_boost-static-and-shared-libs),link=static$(comma)shared,) \
+					$(if $(CONFIG_boost-runtime-shared),runtime-link=shared,) \
+					$(if $(CONFIG_boost-runtime-static),runtime-link=static,) \
+					$(if $(CONFIG_boost-runtime-static-and-shared),runtime-link=shared$(comma)static,) \
+					$(if $(CONFIG_boost-single-thread),threading=single,) \
+					threading=multi \
+					$(foreach lib,$(BOOST_LIBS), \
+						$(if $(findstring python,$(lib)), \
+							$(if $(CONFIG_PACKAGE_boost-python3),python=3.6,), \
+						) \
+					) \
+				install ;\
+			,) \
 	)
 endef
 
