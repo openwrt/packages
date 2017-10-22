@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.6
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=18
+PKG_RELEASE:=19
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>

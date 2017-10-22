@@ -103,7 +103,7 @@
 
 "dynu.com"		"http://api.dynu.com/nic/update?hostname=[DOMAIN]&myip=[IP]&username=[USERNAME]&password=[PASSWORD]"
 
-"dynv6.com"		"http://dynv6.com/api/update?hostname=[DOMAIN]&token=[PASSWORD]&ipv4=[IP]"	"updated"
+"dynv6.com"		"http://dynv6.com/api/update?hostname=[DOMAIN]&token=[PASSWORD]&ipv4=[IP]"	"updated|unchanged"
 
 "easydns.com"		"http://[USERNAME]:[PASSWORD]@api.cp.easydns.com/dyn/generic.php?hostname=[DOMAIN]&myip=[IP]"	"NOERROR"
 
