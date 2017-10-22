@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-ccnet
-PKG_VERSION:=6.0.7
+PKG_VERSION:=6.2.2
 PKG_RELEASE=$(PKG_SOURCE_VERSION)-1
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/haiwen/ccnet-server.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=a0de32b9cfeca98ab93d84cacbe9d315d7ecca35
+PKG_SOURCE_VERSION:=6b9d7e2920aa9b807f9efe9038439b57ce949ecc
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=b7ac0e5775aff91746e7bfc297b6cf788c9e7372084e28762467f8bd75cee2f8
+PKG_MIRROR_HASH:=8aed6d2283ac7b3148f9b5c82b1d992ed36dc5193000cf727bdcfae7446ce1fe
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -34,7 +34,7 @@ define Package/seafile-ccnet
     DEPENDS:=+libsearpc +libevent2 +libopenssl \
 		+glib2 +python +libzdb +libuuid \
 		+libpthread +libsqlite3 +jansson $(ICONV_DEPENDS)
-    EXTRA_DEPENDS:=libsearpc (=6.0.7-8998e7b2c5587f0b94c48db24e2952d08def5add-1)
+    EXTRA_DEPENDS:=libsearpc (=6.2.2-8998e7b2c5587f0b94c48db24e2952d08def5add-1)
 endef
 
 define Package/seafile-ccnet/description
