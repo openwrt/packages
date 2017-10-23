@@ -14,6 +14,7 @@ config LXC_KERNEL_OPTIONS
 	select KERNEL_MEMCG
 	select KERNEL_MEMCG_KMEM
 	select KERNEL_CPUSETS
+	select PACKAGE_kmod-ikconfig
 	help
 	  Select needed kernel options for LXC related utilities. Options
 	  include cgroups, namespaces and other miscellaneous options. These
