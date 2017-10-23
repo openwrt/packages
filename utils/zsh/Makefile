@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zsh
-PKG_VERSION:=5.2
+PKG_VERSION:=5.4.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/zsh
-PKG_HASH:=f17916320ffaa844bbd7ce48ceeb5945fc5f3eff64b149b4229bbfbdf3795a9d
+PKG_HASH:=957bcdb2c57f64c02f673693ea5a7518ef24b6557aeb3a4ce222cefa6d74acc9
 PKG_MAINTAINER:=Vadim A. Misbakh-Soloviov <openwrt-zsh@mva.name>
 PKG_LICENSE:=ZSH
 
@@ -41,14 +41,26 @@ endef
 
 define Build/Configure
 	$(call Build/Configure/Default, \
-		--bindir=/bin \
 		--disable-etcdir \
 		--disable-gdbm \
+		--enable-dynamic \
+		--enable-libc-musl \
 		--enable-pcre \
+		--enable-cap \
 		--enable-multibyte \
+		--enable-unicode9 \
+		--enable-runhelpdir=$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/help \
+		--enable-fndir=$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/functions \
+		--enable-site-fndir=$(CONFIGURE_PREFIX)/share/zsh/site-functions \
 		--enable-function-subdirs \
 		--with-tcsetpgrp \
 		--with-term-lib="ncursesw", \
+		zsh_cv_shared_environ=yes \
+		zsh_cv_sys_dynamic_clash_ok=yes\
+		zsh_cv_sys_dynamic_execsyms=yes \
+		zsh_cv_sys_dynamic_rtld_global=yes \
+		zsh_cv_sys_dynamic_strip_exe=yes \
+		zsh_cv_sys_dynamic_strip_lib=yes \
 		zsh_cv_sys_nis=no \
 		zsh_cv_sys_nis_plus=no \
 	)
@@ -70,14 +82,27 @@ endef
 define Package/zsh/postinst
 #!/bin/sh
 grep zsh $${IPKG_INSTROOT}/etc/shells || \
-	echo "/bin/zsh" >> $${IPKG_INSTROOT}/etc/shells
+	echo "/usr/bin/zsh" >> $${IPKG_INSTROOT}/etc/shells
+
+	# Backwards compatibility
+	if [[ -e /bin/zsh ]] && ([[ ! -L /bin/zsh ]] || [[ "$(readlink -fn $${IPKG_INSTROOT}/bin/zsh)" != "../$(CONFIGURE_PREFIX)/bin/zsh" ]]); then
+		ln -fs "../$(CONFIGURE_PREFIX)/bin/zsh" "$${IPKG_INSTROOT}/bin/zsh"
+	fi
 endef
 
 define Package/zsh/install
 	$(INSTALL_DIR) $(1)/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/zsh $(1)/bin/
-	$(INSTALL_DIR) $(1)/usr/share/zsh/$(PKG_VERSION)
-	$(CP) $(PKG_INSTALL_DIR)/usr/share/zsh/$(PKG_VERSION)/* $(1)/usr/share/zsh/$(PKG_VERSION)/
+	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/bin
+	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)
+	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)
+
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/bin/zsh $(1)/$(CONFIGURE_PREFIX)/bin/
+	$(CP) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/* $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/
+	$(CP) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/* $(1)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/
+endef
+
+define Package/zsh/postrm
+	rm -rf "$${IPKG_INSTROOT}/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)"
 endef
 
 $(eval $(call BuildPackage,zsh))
