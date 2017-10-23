@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=2.1.0
+PKG_VERSION:=2.1.1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause GPL-2.0
@@ -16,7 +16,7 @@ PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
-PKG_HASH:=394407305a409eb1f95fe06e7718acfe89b1d5df267b0c6aafb1d714e2038de2
+PKG_HASH:=68663a67450a8d6734e137eac54cc7077209fb15c456eec401a2c26e6386eff6
 
 PKG_BUILD_DEPENDS:=lua
 PKG_BUILD_PARALLEL:=1
