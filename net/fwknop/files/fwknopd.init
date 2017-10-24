@@ -8,6 +8,8 @@
 USE_PROCD=1
 START=95
 
+. /lib/functions/network.sh
+
 FWKNOPD_BIN=/usr/sbin/fwknopd
 
 start_service()
@@ -62,7 +64,9 @@ generate_configuration()
 	local PCAP_INTF=
 	local USER_CONFIG_PATH=/etc/fwknop/fwknopd.conf
 	local DEFAULT_UCI_NETWORK=wan
-	local DEFAULT_FWKNOPD_IFNAME=eth0
+	local DEFAULT_FWKNOPD_IFNAME=
+
+	network_get_device DEFAULT_FWKNOPD_IFNAME $DEFAULT_UCI_NETWORK
 
 	config_cb() {
 		local type="$1"
@@ -163,7 +167,6 @@ generate_configuration()
 
 		# Resolve network if possible
 		if [ -n "$NETWORK" ]; then
-			. /lib/functions/network.sh
 			network_get_device DEPEND_IFNAME "$NETWORK"
 			if [ -n "$DEPEND_IFNAME" ]; then
 				logger -p daemon.debug -t "fwknopd[----]" "Resolved network $NETWORK as interface $DEPEND_IFNAME"
