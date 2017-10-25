@@ -1,0 +1,22 @@
+--- a/Makefile.classic
++++ b/Makefile.classic
+@@ -41,9 +41,6 @@
+ # FOSSIL_ENABLE_MINIZ = 1
+ # TCC += -DFOSSIL_ENABLE_MINIZ
+ 
+-# To add support for HTTPS
+-TCC += -DFOSSIL_ENABLE_SSL
+-
+ #### We sometimes add the -static option here so that we can build a
+ #    static executable that will run in a chroot jail.
+ #LIB = -static
+@@ -60,9 +57,6 @@
+ # If using zlib:
+ LIB += $(ZLIB_LIB.$(FOSSIL_ENABLE_MINIZ)) $(LDFLAGS)
+ 
+-# If using HTTPS:
+-LIB += -lcrypto -lssl
+-
+ #### Tcl shell for use in running the fossil testsuite.  If you do not
+ #    care about testing the end result, this can be blank.
+ #

@@ -1,0 +1,43 @@
+diff -uNr a/local/Makefile.in b/local/Makefile.in
+--- a/local/Makefile.in	2014-02-20 08:36:42.000000000 +0800
++++ b/local/Makefile.in	2014-05-27 13:21:34.245223503 +0800
+@@ -103,7 +103,7 @@
+ 
+ mib2c.made: $(srcdir)/mib2c
+ 	if test "x$(PERL)" != "x" ; then \
+-	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%;s#/usr/local/share/snmp#$(snmplibdir)#;' ${srcdir}/mib2c > mib2c.made; \
++	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%;s#/usr/local/share/snmp#$(snmplibdir)#;s#/usr/local/etc/snmp#$(SNMPCONFPATH)#;' ${srcdir}/mib2c > mib2c.made; \
+ 	else \
+ 	  touch mib2c.made; \
+         fi
+diff -uNr a/Makefile.top b/Makefile.top
+--- a/Makefile.top	2014-02-20 08:36:42.000000000 +0800
++++ b/Makefile.top	2014-05-27 13:26:53.023737120 +0800
+@@ -27,6 +27,7 @@
+ snmplibdir	= $(datadir)/snmp
+ mibdir		= $(snmplibdir)/mibs
+ persistentdir	= @PERSISTENT_DIRECTORY@
++sysconfdir	= @sysconfdir@
+ DESTDIR         = @INSTALL_PREFIX@
+ INSTALL_PREFIX  = $(DESTDIR)
+ 
+diff -uNr a/mibs/Makefile.in b/mibs/Makefile.in
+--- a/mibs/Makefile.in	2014-02-20 08:36:42.000000000 +0800
++++ b/mibs/Makefile.in	2014-05-27 13:25:07.151988585 +0800
+@@ -49,11 +49,15 @@
+ UCDMIBS = UCD-SNMP-MIB.txt UCD-DEMO-MIB.txt UCD-IPFWACC-MIB.txt \
+ 	UCD-DLMOD-MIB.txt UCD-DISKIO-MIB.txt
+ 
++EXTRAMIBS = BGP4-MIB.txt BRIDGE-MIB.txt GNOME-SMI.txt OSPF-MIB.txt \
++	OSPF-TRAP-MIB.txt RIPv2-MIB.txt SOURCE-ROUTING-MIB.txt \
++	LM-SENSORS-MIB.txt
++
+ DEFAULTMIBS = @default_mibs_install@
+ 
+ MIBS	= $(V1MIBS) $(V2MIBS) $(V3MIBS) $(RFCMIBS) \
+ 	$(AGENTMIBS) $(IANAMIBS) \
+-	$(NETSNMPMIBS) $(UCDMIBS) $(DEFAULTMIBS)
++	$(NETSNMPMIBS) $(UCDMIBS) $(DEFAULTMIBS) $(EXTRAMIBS)
+ 
+ all: standardall
+ 

@@ -1,0 +1,12 @@
+Index: dansguardian-2.12.0.3/src/OptionContainer.cpp
+===================================================================
+--- dansguardian-2.12.0.3.orig/src/OptionContainer.cpp
++++ dansguardian-2.12.0.3/src/OptionContainer.cpp
+@@ -17,6 +17,7 @@
+ #include <sstream>
+ #include <syslog.h>
+ #include <dirent.h>
++#include <cstdlib>
+ 
+ #include <unistd.h>		// checkme: remove?
+ 

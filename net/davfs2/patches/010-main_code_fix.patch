@@ -1,0 +1,22 @@
+--- a/src/cache.c
++++ b/src/cache.c
+@@ -58,7 +58,7 @@
+ #ifdef HAVE_SYS_TYPES_H
+ #include <sys/types.h>
+ #endif
+-#include <sys/xattr.h>
++#include <linux/xattr.h>
+ 
+ #include <ne_alloc.h>
+ #include <ne_string.h>
+--- a/src/webdav.c
++++ b/src/webdav.c
+@@ -2033,7 +2033,7 @@ ssl_verify(void *userdata, int failures,
+             len = getline(&s, &n, stdin);
+             if (len < 0)
+                 abort();
+-            if (rpmatch(s) > 0)
++            if ((s[0]=='y' || s[0]=='Y') > 0)
+                 ret = 0;
+             free(s);
+     } 

@@ -1,0 +1,56 @@
+From 1c53ed7db5b49ebf347efe65dbf9b740f9d54557 Mon Sep 17 00:00:00 2001
+From: Carlo Landmeter <clandmeter@gmail.com>
+Date: Tue, 31 Mar 2015 09:52:53 +0000
+Subject: [PATCH] respect LDFLAGS
+
+---
+ Makefile | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,7 @@
+ # Cross compile support - create a Makefile which defines these three variables and then includes this Makefile...
+-CFLAGS  ?= -Wall -fPIC -O2 $(OPTS)
+-LDFLAGS ?= -lasound -lpthread -lm -lrt
++CFLAGS  ?= -Wall -O2
++CFLAGS  += -fPIC $(OPTS)
++LIBS ?= -lasound -lpthread -lm -lrt
+ EXECUTABLE ?= squeezelite
+ 
+ # passing one or more of these in $(OPTS) enables optional feature inclusion
+@@ -52,20 +53,20 @@ endif
+ 
+ # add optional link options
+ ifneq (,$(findstring $(OPT_LINKALL), $(CFLAGS)))
+-	LDFLAGS += $(LINKALL)
++	LIBS += $(LINKALL)
+ ifneq (,$(findstring $(OPT_FF), $(CFLAGS)))
+-	LDFLAGS += $(LINKALL_FF)
++	LIBS += $(LINKALL_FF)
+ endif
+ ifneq (,$(findstring $(OPT_RESAMPLE), $(CFLAGS)))
+-	LDFLAGS += $(LINKALL_RESAMPLE)
++	LIBS += $(LINKALL_RESAMPLE)
+ endif
+ ifneq (,$(findstring $(OPT_IR), $(CFLAGS)))
+-	LDFLAGS += $(LINKALL_IR)
++	LIBS += $(LINKALL_IR)
+ endif
+ else
+ # if not LINKALL and linux add LINK_LINUX
+ ifeq ($(UNAME), Linux)
+-	LDFLAGS += $(LINK_LINUX)
++	LIBS += $(LINK_LINUX)
+ endif
+ endif
+ 
+@@ -74,7 +75,7 @@ OBJECTS = $(SOURCES:.c=.o)
+ all: $(EXECUTABLE)
+ 
+ $(EXECUTABLE): $(OBJECTS)
+-	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
++	$(CC) $(OBJECTS) $(LDFLAGS) $(LIBS) -o $@
+ 
+ $(OBJECTS): $(DEPS)
+ 

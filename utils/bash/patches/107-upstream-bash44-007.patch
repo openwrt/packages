@@ -1,0 +1,100 @@
+Index: bash-4.4/bashline.c
+===================================================================
+--- bash-4.4.orig/bashline.c
++++ bash-4.4/bashline.c
+@@ -142,7 +142,7 @@ static int executable_completion __P((co
+ static rl_icppfunc_t *save_directory_hook __P((void));
+ static void restore_directory_hook __P((rl_icppfunc_t));
+ 
+-static int directory_exists __P((const char *));
++static int directory_exists __P((const char *, int));
+ 
+ static void cleanup_expansion_error __P((void));
+ static void maybe_make_readline_line __P((char *));
+@@ -3102,18 +3102,20 @@ restore_directory_hook (hookf)
+     rl_directory_rewrite_hook = hookf;
+ }
+ 
+-/* Check whether not the (dequoted) version of DIRNAME, with any trailing slash
+-   removed, exists. */
++/* Check whether not DIRNAME, with any trailing slash removed, exists.  If
++   SHOULD_DEQUOTE is non-zero, we dequote the directory name first. */
+ static int
+-directory_exists (dirname)
++directory_exists (dirname, should_dequote)
+      const char *dirname;
++     int should_dequote;
+ {
+   char *new_dirname;
+   int dirlen, r;
+   struct stat sb;
+ 
+-  /* First, dequote the directory name */
+-  new_dirname = bash_dequote_filename ((char *)dirname, rl_completion_quote_character);
++  /* We save the string and chop the trailing slash because stat/lstat behave
++     inconsistently if one is present. */
++  new_dirname = should_dequote ? bash_dequote_filename ((char *)dirname, rl_completion_quote_character) : savestring (dirname);
+   dirlen = STRLEN (new_dirname);
+   if (new_dirname[dirlen - 1] == '/')
+     new_dirname[dirlen - 1] = '\0';
+@@ -3145,7 +3147,7 @@ bash_filename_stat_hook (dirname)
+   else if (t = mbschr (local_dirname, '`'))	/* XXX */
+     should_expand_dirname = '`';
+ 
+-  if (should_expand_dirname && directory_exists (local_dirname))
++  if (should_expand_dirname && directory_exists (local_dirname, 0))
+     should_expand_dirname = 0;
+   
+   if (should_expand_dirname)  
+@@ -3155,7 +3157,7 @@ bash_filename_stat_hook (dirname)
+ 	 have to worry about restoring this setting. */
+       global_nounset = unbound_vars_is_error;
+       unbound_vars_is_error = 0;
+-      wl = expand_prompt_string (new_dirname, 0, W_NOCOMSUB|W_COMPLETE);	/* does the right thing */
++      wl = expand_prompt_string (new_dirname, 0, W_NOCOMSUB|W_NOPROCSUB|W_COMPLETE);	/* does the right thing */
+       unbound_vars_is_error = global_nounset;
+       if (wl)
+ 	{
+@@ -3244,13 +3246,13 @@ bash_directory_completion_hook (dirname)
+ 	should_expand_dirname = '`';
+     }
+ 
+-  if (should_expand_dirname && directory_exists (local_dirname))
++  if (should_expand_dirname && directory_exists (local_dirname, 1))
+     should_expand_dirname = 0;
+ 
+   if (should_expand_dirname)  
+     {
+       new_dirname = savestring (local_dirname);
+-      wl = expand_prompt_string (new_dirname, 0, W_NOCOMSUB|W_COMPLETE);	/* does the right thing */
++      wl = expand_prompt_string (new_dirname, 0, W_NOCOMSUB|W_NOPROCSUB|W_COMPLETE);	/* does the right thing */
+       if (wl)
+ 	{
+ 	  *dirname = string_list (wl);
+Index: bash-4.4/patchlevel.h
+===================================================================
+--- bash-4.4.orig/patchlevel.h
++++ bash-4.4/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 6
++#define PATCHLEVEL 7
+ 
+ #endif /* _PATCHLEVEL_H_ */
+Index: bash-4.4/subst.c
+===================================================================
+--- bash-4.4.orig/subst.c
++++ bash-4.4/subst.c
+@@ -9458,6 +9458,10 @@ add_twochars:
+ 		tword->flags |= word->flags & (W_ASSIGNARG|W_ASSIGNRHS);	/* affects $@ */
+ 	      if (word->flags & W_COMPLETE)
+ 		tword->flags |= W_COMPLETE;	/* for command substitutions */
++	      if (word->flags & W_NOCOMSUB)
++		tword->flags |= W_NOCOMSUB;
++	      if (word->flags & W_NOPROCSUB)
++		tword->flags |= W_NOPROCSUB;
+ 
+ 	      temp = (char *)NULL;
+ 

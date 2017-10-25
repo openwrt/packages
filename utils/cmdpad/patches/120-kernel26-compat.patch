@@ -1,0 +1,15 @@
+--- cmdpad-0.0.3/src/parse.orig	2008-01-05 23:55:32.000000000 +0100
++++ cmdpad-0.0.3/src/parse.c	2008-01-05 23:56:07.000000000 +0100
+@@ -289,6 +289,12 @@
+         pchEventDevice = strdup( pchValue) ;
+         return 1 ;
+       }
++      if( (pchValue != NULL) && 
++          (strncmp( pchValue, "/dev/event", 6) == 0) )
++      {
++        pchEventDevice = strdup( pchValue) ;
++        return 1 ;
++      }
+       printf( "Option 'device' expects a /dev/input/eventX argument\n");
+       return -1 ;
+     }

@@ -1,0 +1,34 @@
+From ab85841b142c62c47f69fc45c0b54f080d54ddc9 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Mon, 20 Feb 2017 14:47:13 -0500
+Subject: [PATCH] [mod_cgi] fix CGI local-redir w/ url.rewrite-once (fixes
+ #2793)
+
+x-ref:
+  "1.4.40 regression: broken redirect (using Location) between url.rewrite-once URLs"
+  https://redmine.lighttpd.net/issues/2793
+---
+ src/mod_cgi.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+--- a/src/mod_cgi.c
++++ b/src/mod_cgi.c
+@@ -583,8 +583,7 @@ static int cgi_demux_response(server *sr
+ 							}
+ 
+ 							connection_response_reset(srv, con); /*(includes con->http_status = 0)*/
+-
+-							con->mode = DIRECT;
++							plugins_call_connection_reset(srv, con);
+ 							return FDEVENT_HANDLED_COMEBACK;
+ 						}
+ 					}
+@@ -803,7 +802,7 @@ static int cgi_recv_response(server *srv
+ 			/* if we get a IN|HUP and have read everything don't exec the close twice */
+ 			return HANDLER_FINISHED;
+ 		case FDEVENT_HANDLED_COMEBACK:
+-			cgi_connection_close(srv, hctx);
++			/*cgi_connection_close(srv, hctx);*//*(already cleaned up and hctx is now invalid)*/
+ 			return HANDLER_COMEBACK;
+ 		case FDEVENT_HANDLED_ERROR:
+ 			log_error_write(srv, __FILE__, __LINE__, "s", "demuxer failed: ");

@@ -1,0 +1,11 @@
+--- a/rules.mak.orig	2016-11-22 13:30:40.933006727 +0800
++++ b/rules.mak	2016-11-22 13:30:47.229008698 +0800
+@@ -70,7 +70,7 @@ LINK = $(call quiet-command, $(LINKPROG)
+ 	$(call quiet-command,$(CPP) $(QEMU_INCLUDES) $(QEMU_CFLAGS) $(QEMU_DGFLAGS) $(CFLAGS) -o $@ $<,"  CPP   $(TARGET_DIR)$@")
+ 
+ %.o: %.asm
+-	$(call quiet-command,$(AS) $(ASFLAGS) -o $@ $<,"  AS    $(TARGET_DIR)$@")
++	$(call quiet-command,$(AS) $(ASFLAGS) -o $@ -x assembler $<,"  AS    $(TARGET_DIR)$@")
+ 
+ %.o: %.cc
+ 	$(call quiet-command,$(CXX) $(QEMU_INCLUDES) $(QEMU_CXXFLAGS) $(QEMU_DGFLAGS) $(CFLAGS) $($@-cflags) -c -o $@ $<,"  CXX   $(TARGET_DIR)$@")

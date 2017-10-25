@@ -1,0 +1,30 @@
+--- a/libtransmission/bitfield.c
++++ b/libtransmission/bitfield.c
+@@ -6,6 +6,8 @@
+  *
+  */
+ 
++#define __NEED_ssize_t
++
+ #include <assert.h>
+ #include <string.h> /* memset */
+ 
+@@ -13,6 +15,7 @@
+ #include "bitfield.h"
+ #include "utils.h" /* tr_new0 () */
+ 
++
+ const tr_bitfield TR_BITFIELD_INIT = { NULL, 0, 0, 0, false, false };
+ 
+ /****
+--- a/libtransmission/fdlimit.h
++++ b/libtransmission/fdlimit.h
+@@ -10,6 +10,8 @@
+  #error only libtransmission should #include this header.
+ #endif
+ 
++#define __NEED_off_t
++
+ #include "transmission.h"
+ #include "file.h"
+ #include "net.h"

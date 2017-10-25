@@ -1,0 +1,30 @@
+diff --git a/ext/posix/unistd.c b/ext/posix/unistd.c
+index 9276640..69c8cef 100644
+--- a/ext/posix/unistd.c
++++ b/ext/posix/unistd.c
+@@ -525,6 +525,7 @@ Pgetgroups(lua_State *L)
+ #endif
+ 
+ 
++#ifndef NO_GETLOGIN
+ /***
+ Current logged-in user.
+ @treturn[1] string username, if successful
+@@ -537,6 +538,7 @@ Pgetlogin(lua_State *L)
+ 	checknargs(L, 0);
+ 	return pushstringresult(getlogin());
+ }
++#endif
+ 
+ 
+ /***
+@@ -1044,7 +1046,9 @@ static const luaL_Reg posix_unistd_fns[] =
+ 	LPOSIX_FUNC( Pgetegid		),
+ 	LPOSIX_FUNC( Pgeteuid		),
+ 	LPOSIX_FUNC( Pgetgid		),
++#ifndef NO_GETLOGIN
+ 	LPOSIX_FUNC( Pgetlogin		),
++#endif
+ 	LPOSIX_FUNC( Pgetpgrp		),
+ 	LPOSIX_FUNC( Pgetpid		),
+ 	LPOSIX_FUNC( Pgetppid		),

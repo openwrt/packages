@@ -1,0 +1,55 @@
+--- a/src/lib/kadm5/str_conv.c
++++ b/src/lib/kadm5/str_conv.c
+@@ -131,7 +131,7 @@
+ {
+     int found = 0, invert = 0;
+     size_t i;
+-    krb5_flags flag;
++    krb5_flags flag = 0;
+     unsigned long ul;
+ 
+     for (i = 0; !found && i < NFTBL; i++) {
+--- a/src/lib/krad/packet.c
++++ b/src/lib/krad/packet.c
+@@ -253,7 +253,7 @@
+ {
+     krb5_error_code retval;
+     krad_packet *pkt;
+-    uchar id;
++    uchar id = 0;
+     size_t attrset_len;
+ 
+     pkt = packet_new();
+--- a/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
++++ b/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
+@@ -3618,7 +3618,7 @@
+ {
+     CK_ULONG i, r;
+     unsigned char *cp;
+-    size_t label_len;
++    size_t label_len = 0;
+     CK_ULONG count = 0;
+     CK_SLOT_ID_PTR slotlist;
+     CK_TOKEN_INFO tinfo;
+--- a/src/util/profile/prof_file.c
++++ b/src/util/profile/prof_file.c
+@@ -309,7 +309,7 @@
+     unsigned long frac;
+     time_t now;
+ #endif
+-    FILE *f;
++    FILE *f = NULL;
+     int isdir = 0;
+ 
+ #ifdef HAVE_STAT
+--- a/src/kadmin/ktutil/ktutil_funcs.c
++++ b/src/kadmin/ktutil/ktutil_funcs.c
+@@ -64,7 +64,7 @@
+     krb5_kt_list *list;
+     int idx;
+ {
+-    krb5_kt_list lp, prev;
++    krb5_kt_list lp, prev = NULL;
+     int i;
+ 
+     for (lp = *list, i = 1; lp; prev = lp, lp = lp->next, i++) {

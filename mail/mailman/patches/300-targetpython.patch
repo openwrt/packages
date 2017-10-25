@@ -1,0 +1,12 @@
+diff -Naur mailman-2.1.18-1/configure mailman-2.1.18-1_patched/configure
+--- mailman-2.1.18-1/configure	2014-05-06 20:43:56.000000000 +0400
++++ mailman-2.1.18-1_patched/configure	2014-11-04 15:02:32.892666331 +0300
+@@ -3927,6 +3927,8 @@
+ $as_echo "$URLHOST" >&6; }
+ rm -f conftest.out conftest.py
+ 
++PYTHON=/usr/bin/python
++
+ # Checks for libraries.
+ 
+ for ac_func in strerror setregid syslog

@@ -1,0 +1,13 @@
+Index: micropython-1.5-20161117-e81a5353cb794b8d6c57317488e5db6a1c524755/unix/Makefile
+===================================================================
+--- micropython-1.5-20161117-e81a5353cb794b8d6c57317488e5db6a1c524755.orig/unix/Makefile	2016-11-17 02:43:13.000000000 +0100
++++ micropython-1.5-20161117-e81a5353cb794b8d6c57317488e5db6a1c524755/unix/Makefile	2016-11-17 16:49:02.937809018 +0100
+@@ -21,7 +21,7 @@
+ INC += -I$(BUILD)
+ 
+ # compiler settings
+-CWARN = -Wall -Werror
++CWARN = -Wall
+ CWARN += -Wpointer-arith -Wuninitialized
+ CFLAGS = $(INC) $(CWARN) -ansi -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
+ 

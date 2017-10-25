@@ -1,0 +1,55 @@
+diff --git a/tftp_def.c b/tftp_def.c
+index 96abdc5..16240f7 100644
+--- a/tftp_def.c
++++ b/tftp_def.c
+@@ -141,7 +141,7 @@ int print_eng(double value, char *string, int size, char *format)
+ /*
+  * This is a strncpy function that take care of string NULL termination
+  */
+-inline char *Strncpy(char *to, const char *from, size_t size)
++char *Strncpy(char *to, const char *from, size_t size)
+ {
+      strncpy(to, from, size);
+      if (size>0) 
+diff --git a/tftp_def.h b/tftp_def.h
+index e4b338d..4418ee7 100644
+--- a/tftp_def.h
++++ b/tftp_def.h
+@@ -50,7 +50,7 @@ extern char *tftp_errmsg[9];
+ 
+ int timeval_diff(struct timeval *res, struct timeval *t1, struct timeval *t0);
+ int print_eng(double value, char *string, int size, char *format);
+-inline char *Strncpy(char *to, const char *from, size_t size);
++char *Strncpy(char *to, const char *from, size_t size);
+ int Gethostbyname(char *addr, struct hostent *host);
+ 
+ char *sockaddr_print_addr(const struct sockaddr_storage *, char *, size_t);
+diff --git a/tftpd.h b/tftpd.h
+index 945065e..4bd3f17 100644
+--- a/tftpd.h
++++ b/tftpd.h
+@@ -93,7 +93,7 @@ int tftpd_list_find_multicast_server_and_add(struct thread_data **thread,
+ /*
+  * Defined in tftpd_list.c, operation on client structure list.
+  */
+-inline void tftpd_clientlist_ready(struct thread_data *thread);
++void tftpd_clientlist_ready(struct thread_data *thread);
+ void tftpd_clientlist_remove(struct thread_data *thread,
+                              struct client_info *client);
+ void tftpd_clientlist_free(struct thread_data *thread);
+diff --git a/tftpd_list.c b/tftpd_list.c
+index f376159..159ffca 100644
+--- a/tftpd_list.c
++++ b/tftpd_list.c
+@@ -201,7 +201,7 @@ int tftpd_list_find_multicast_server_and_add(struct thread_data **thread,
+      return 0;
+ }
+ 
+-inline void tftpd_clientlist_ready(struct thread_data *thread)
++void tftpd_clientlist_ready(struct thread_data *thread)
+ {
+      pthread_mutex_lock(&thread->client_mutex);
+      thread->client_ready = 1;
+-- 
+2.1.4
+

@@ -1,0 +1,20 @@
+--- a/generic/tclStrToD.c
++++ b/generic/tclStrToD.c
+@@ -73,7 +73,7 @@ typedef unsigned int fpu_control_t __att
+  * MIPS floating-point units need special settings in control registers
+  * to use gradual underflow as we expect.
+  */
+-#if defined(__mips)
++#if defined(__sgi) && defined(_COMPILER_VERSION)
+ #include <sys/fpu.h>
+ #endif
+ /*
+@@ -2166,7 +2166,7 @@ TclInitDoubleConversion(void)
+     } bitwhack;
+ #endif
+ 
+-#if defined(__mips)
++#if defined(__sgi) && defined(_COMPILER_VERSION)
+     union fpc_csr mipsCR;
+ 
+     mipsCR.fc_word = get_fpc_csr();

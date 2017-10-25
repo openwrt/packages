@@ -1,0 +1,16 @@
+--- a/src/decoder/plugins/FfmpegDecoderPlugin.cxx
++++ b/src/decoder/plugins/FfmpegDecoderPlugin.cxx
+@@ -478,6 +478,13 @@ ffmpeg_probe(DecoderClient *client, Inpu
+ 
+ 	unsigned char buffer[BUFFER_SIZE];
+ 	size_t nbytes = decoder_read(client, is, buffer, BUFFER_SIZE);
++
++	if ((nbytes > 0) && (nbytes < 1024))
++	{
++		// Gobble some more data if header is small
++		nbytes += decoder_read(client, is, buffer + nbytes, BUFFER_SIZE - nbytes);
++	}
++
+ 	if (nbytes <= PADDING)
+ 		return nullptr;
+ 

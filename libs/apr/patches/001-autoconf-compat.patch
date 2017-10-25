@@ -1,0 +1,26 @@
+Index: apr-1.5.2/Makefile.in
+===================================================================
+--- apr-1.5.2.orig/Makefile.in
++++ apr-1.5.2/Makefile.in
+@@ -3,6 +3,7 @@ srcdir=@srcdir@
+ VPATH=@srcdir@
+ top_srcdir=@apr_srcdir@
+ top_blddir=@apr_builddir@
++top_builddir=@top_builddir@
+ 
+ #
+ # APR (Apache Portable Runtime) library Makefile.
+Index: apr-1.5.2/configure.in
+===================================================================
+--- apr-1.5.2.orig/configure.in
++++ apr-1.5.2/configure.in
+@@ -245,9 +245,6 @@ case $host in
+     gcc $CFLAGS $CPPFLAGS -o $LIBTOOL.exe $LIBTOOL.c
+     ;;
+ *)
+-    if test "x$LTFLAGS" = "x"; then
+-        LTFLAGS='--silent'
+-    fi
+     if test "$experimental_libtool" = "yes"; then
+         # Use a custom-made libtool replacement
+         echo "using jlibtool"

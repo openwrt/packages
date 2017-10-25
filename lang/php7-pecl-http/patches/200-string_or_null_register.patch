@@ -1,0 +1,57 @@
+From ab5b4e3acd2b0379e5d8bc95a8d4f83ce5c91fb7 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Sun, 4 Jun 2017 15:00:33 +0200
+Subject: [PATCH] Handle NULL strings gracefully during constant registration
+
+When libcurl is compiled not using e.g. libz or SSL, then a call to
+curl_version_info could return NULL in the corresponding fields of
+curl_version_info_data.
+
+Passing such NULL pointers down to REGISTER_NS_STRING_CONSTANT results
+in a segfault during php startup, so let's check for this special case
+and register a NULL constant in this case.
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ src/php_http_client_curl.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/src/php_http_client_curl.c b/src/php_http_client_curl.c
+index f286324..f07bb8f 100644
+--- a/src/php_http_client_curl.c
++++ b/src/php_http_client_curl.c
+@@ -2429,6 +2429,14 @@ php_http_client_ops_t *php_http_client_curl_get_ops(void)
+ 	return &php_http_client_curl_ops;
+ }
+ 
++#define REGISTER_NS_STRING_OR_NULL_CONSTANT(ns, name, str, flags)                              \
++		do {                                                                           \
++			if ((str) != NULL) {                                                   \
++				REGISTER_NS_STRING_CONSTANT(ns, name, str, flags);             \
++			} else {                                                               \
++				REGISTER_NS_NULL_CONSTANT(ns, name, flags);                    \
++			}                                                                      \
++		} while (0)
+ 
+ PHP_MINIT_FUNCTION(http_client_curl)
+ {
+@@ -2509,12 +2517,12 @@ PHP_MINIT_FUNCTION(http_client_curl)
+ 		REGISTER_NS_STRING_CONSTANT("http\\Client\\Curl", "VERSIONS", curl_version(), CONST_CS|CONST_PERSISTENT);
+ #if CURLVERSION_NOW >= 0
+ 		REGISTER_NS_STRING_CONSTANT("http\\Client\\Curl\\Versions", "CURL", (char *) info->version, CONST_CS|CONST_PERSISTENT);
+-		REGISTER_NS_STRING_CONSTANT("http\\Client\\Curl\\Versions", "SSL", (char *) info->ssl_version, CONST_CS|CONST_PERSISTENT);
+-		REGISTER_NS_STRING_CONSTANT("http\\Client\\Curl\\Versions", "LIBZ", (char *) info->libz_version, CONST_CS|CONST_PERSISTENT);
++		REGISTER_NS_STRING_OR_NULL_CONSTANT("http\\Client\\Curl\\Versions", "SSL", (char *) info->ssl_version, CONST_CS|CONST_PERSISTENT);
++		REGISTER_NS_STRING_OR_NULL_CONSTANT("http\\Client\\Curl\\Versions", "LIBZ", (char *) info->libz_version, CONST_CS|CONST_PERSISTENT);
+ # if CURLVERSION_NOW >= 1
+-		REGISTER_NS_STRING_CONSTANT("http\\Client\\Curl\\Versions", "ARES", (char *) info->ares, CONST_CS|CONST_PERSISTENT);
++		REGISTER_NS_STRING_OR_NULL_CONSTANT("http\\Client\\Curl\\Versions", "ARES", (char *) info->ares, CONST_CS|CONST_PERSISTENT);
+ #  if CURLVERSION_NOW >= 2
+-		REGISTER_NS_STRING_CONSTANT("http\\Client\\Curl\\Versions", "IDN", (char *) info->libidn, CONST_CS|CONST_PERSISTENT);
++		REGISTER_NS_STRING_OR_NULL_CONSTANT("http\\Client\\Curl\\Versions", "IDN", (char *) info->libidn, CONST_CS|CONST_PERSISTENT);
+ #  endif
+ # endif
+ #endif
+-- 
+2.7.4
+

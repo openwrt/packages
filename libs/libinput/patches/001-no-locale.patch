@@ -1,0 +1,38 @@
+--- a/src/libinput-util.c
++++ b/src/libinput-util.c
+@@ -31,7 +31,6 @@
+ #include "config.h"
+ 
+ #include <ctype.h>
+-#include <locale.h>
+ #include <stdarg.h>
+ #include <stdbool.h>
+ #include <stdio.h>
+--- a/src/libinput-util.h
++++ b/src/libinput-util.h
+@@ -30,7 +30,6 @@
+ #include <assert.h>
+ #include <errno.h>
+ #include <limits.h>
+-#include <locale.h>
+ #include <math.h>
+ #include <stdarg.h>
+ #include <stdbool.h>
+@@ -448,16 +447,8 @@ safe_atod(const char *str, double *val)
+ {
+ 	char *endptr;
+ 	double v;
+-	locale_t c_locale;
+ 
+-	/* Create a "C" locale to force strtod to use '.' as separator */
+-	c_locale = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
+-	if (c_locale == (locale_t)0)
+-		return false;
+-
+-	errno = 0;
+-	v = strtod_l(str, &endptr, c_locale);
+-	freelocale(c_locale);
++	v = strtod(str, &endptr);
+ 	if (errno > 0)
+ 		return false;
+ 	if (str == endptr)

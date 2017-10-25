@@ -1,0 +1,44 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -907,23 +907,6 @@ pkgconfig/gstreamer-video.pc
+ pkgconfig/gstreamer-video-uninstalled.pc
+ pkgconfig/gstreamer-plugins-base.pc
+ pkgconfig/gstreamer-plugins-base-uninstalled.pc
+-tests/Makefile
+-tests/check/Makefile
+-tests/examples/Makefile
+-tests/examples/app/Makefile
+-tests/examples/audio/Makefile
+-tests/examples/dynamic/Makefile
+-tests/examples/encoding/Makefile
+-tests/examples/fft/Makefile
+-tests/examples/gio/Makefile
+-tests/examples/overlay/Makefile
+-tests/examples/seek/Makefile
+-tests/examples/snapshot/Makefile
+-tests/examples/playback/Makefile
+-tests/examples/playrec/Makefile
+-tests/files/Makefile
+-tests/icles/Makefile
+-tests/icles/playback/Makefile
+ docs/Makefile
+ docs/design/Makefile
+ docs/libs/Makefile
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -11,7 +11,6 @@ SUBDIRS = 			\
+ 	gst-libs 		\
+ 	gst sys $(SUBDIRS_EXT) 	\
+ 	tools 			\
+-	tests 			\
+ 	docs			\
+ 	common 			\
+ 	m4
+@@ -22,7 +21,6 @@ DIST_SUBDIRS = 			\
+ 	gst-libs		\
+ 	gst sys ext		\
+ 	tools 			\
+-	tests 			\
+ 	common 			\
+ 	m4
+ 

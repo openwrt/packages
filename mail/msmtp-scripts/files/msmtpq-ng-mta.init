@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2016 OpenWrt.org
+
+START=90
+
+boot() {
+	[ ! -d /var/spool/msmtp ] && {
+		mkdir -m 0770 -p /var/spool/msmtp
+		chown msmtp:msmtp /var/spool/msmtp
+	}
+
+	[ ! -d /var/lock/msmtp ] && {
+		mkdir -m 0770 -p /var/lock/msmtp
+		chown msmtp:msmtp /var/lock/msmtp
+	}
+}
+

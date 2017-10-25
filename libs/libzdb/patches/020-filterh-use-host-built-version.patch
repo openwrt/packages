@@ -1,0 +1,20 @@
+diff -rupN libzdb-3.0.orig/Makefile.am libzdb-3.0/Makefile.am
+--- libzdb-3.0.orig/Makefile.am	2014-01-06 22:34:08.000000000 +0100
++++ libzdb-3.0/Makefile.am	2014-11-19 20:26:20.588547729 +0100
+@@ -1,5 +1,7 @@
+ # Copyright (C) Tildeslash Ltd. All rights reserved.
+ 
++include $(TOPDIR)/rules.mk
++
+ AUTOMAKE_OPTIONS = foreign no-dependencies subdir-objects
+ ACLOCAL_AMFLAGS  = -I m4
+ 
+@@ -12,7 +14,7 @@ LIBRARY_NAME    = zdb
+ 
+ RE2C		= @RE2C@
+ RE2CFLAGS       = -b
+-FILTERH         = ./tools/bin/filterh
++FILTERH         = $(STAGING_DIR_HOSTPKG)/bin/filterh
+ 
+ AM_CPPFLAGS     = $(CPPFLAGS) $(DBCPPFLAGS)
+ AM_CPPFLAGS     += -Isrc -Isrc/util -Isrc/net -Isrc/db -Isrc/exceptions

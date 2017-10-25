@@ -1,0 +1,97 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2016 OpenWrt.org
+
+START=60
+APP=darkstat
+RUN_D=/var/empty
+PID_F=$RUN_D/darkstat.pid
+
+SYSLOG=""
+VERBOSE=""
+NODAEMON=""
+NOPROMISC=""
+NODNS=""
+NOMACS=""
+NOLASTSEEN=""
+LOCAL=""
+paramstr=""
+
+export_bool () {
+	local option="$1"
+	local section="$2"
+	local _keystr="$3"
+	local _loctmp
+	paramstr=""
+	config_get_bool _loctmp "$section" "$option"
+	if [ -n "$_loctmp" ]; then
+		if [ 1 -eq "$_loctmp" ]; then
+			paramstr="${_keystr} "
+		fi
+	fi
+}
+
+start() {
+	mkdir -p $RUN_D
+	. /lib/functions/network.sh
+	config_load darkstat
+	config_foreach start_darkstat darkstat
+}
+
+start_darkstat() {
+	local cfg="$1"
+	config_get interface $cfg interface
+	export_bool syslog $cfg "--syslog"
+	SYSLOG=$paramstr
+	export_bool verbose $cfg "--verbose"
+	VERBOSE=$paramstr
+	export_bool no_daemon $cfg "--no-daemon"
+	NODAEMON=$paramstr
+	export_bool no_promisc $cfg "--no-promisc"
+	NOPROMISC=$paramstr
+	export_bool no_dns $cfg "--no-dns"
+	NODNS=$paramstr
+	export_bool no_macs $cfg "--no-macs"
+	NOMACS=$paramstr
+	export_bool no_lastseen $cfg "--no-lastseen"
+	NOLASTSEEN=$paramstr
+	config_get httpaddr $cfg httpaddr
+	config_get httpport $cfg httpport
+	config_get network_filter $cfg network_filter
+	config_get network_netmask $cfg network_netmask
+	export_bool local_only $cfg "--local-only"
+	LOCAL=$paramstr
+	config_get hosts_max $cfg hosts_max
+	config_get hosts_keep $cfg hosts_keep
+	config_get ports_max $cfg ports_max
+	config_get ports_keep $cfg ports_keep
+	config_get highest_port	$cfg highest_port
+
+
+	network_get_device ifname "$interface" && {
+		/usr/sbin/$APP -i "$ifname" \
+			${SYSLOG} \
+			${VERBOSE} \
+			${NODAEMON} \
+			${NOPROMISC} \
+			${NODNS} \
+			${NOMACS} \
+			${NOLASTSEEN} \
+			${httpaddr:+-b "$httpaddr"} \
+			${httpport:+-p "$httpport"} \
+			${network_filter:+-f "$network_filter"} \
+			${network_netmask:+-l "$network_netmask"} \
+			${LOCAL} \
+			${hosts_max:+--hosts-max "$hosts_max"} \
+			${hosts_keep:+--hosts-keep "$hosts_keep"} \
+			${ports_max:+--ports-max "$ports_max"} \
+			${ports_keep:+--ports-keep "$ports_keep"} \
+			${highest_port:+--highest-port "$highest_port"} \
+			--chroot $RUN_D \
+			--pidfile $PID_F
+	}
+}
+
+stop() {
+	start-stop-daemon -K -n $APP -p $PID_F -s TERM
+	rm -f $PID_F
+}

@@ -1,0 +1,25 @@
+From 7cf69704374e363fdda227803be3849233ba96f3 Mon Sep 17 00:00:00 2001
+From: Dario Ernst <Dario.Ernst@riverbed.com>
+Date: Fri, 25 Nov 2016 15:33:48 +0100
+Subject: [PATCH 4/4] disable-module-build
+
+---
+ datapath/linux/Makefile.main.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/datapath/linux/Makefile.main.in b/datapath/linux/Makefile.main.in
+index 7d18253..e5555a7 100644
+--- a/datapath/linux/Makefile.main.in
++++ b/datapath/linux/Makefile.main.in
+@@ -68,7 +68,7 @@ ifeq (,$(wildcard $(CONFIG_FILE)))
+ endif
+ 
+ default:
+-	$(MAKE) -C $(KSRC) M=$(builddir) modules
++	@echo skipping module build
+ 
+ modules_install:
+ 	$(MAKE) -C $(KSRC) M=$(builddir) modules_install
+-- 
+2.9.3
+

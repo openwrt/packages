@@ -1,0 +1,11 @@
+--- a/etc/login.defs
++++ b/etc/login.defs
+@@ -111,7 +111,7 @@ NOLOGINS_FILE	/etc/nologin
+ # command as "-su".  If not defined, then ps(1) will display the
+ # name of the shell actually being run, e.g. something like "-sh".
+ #
+-SU_NAME		su
++#SU_NAME		su
+ 
+ #
+ # *REQUIRED*

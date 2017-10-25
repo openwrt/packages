@@ -1,0 +1,14 @@
+diff -Naur postfix-2.11.1/src/util/sys_defs.h postfix-2.11.1.patched/src/util/sys_defs.h
+--- postfix-2.11.1/src/util/sys_defs.h	2013-09-30 00:51:55.000000000 +0400
++++ postfix-2.11.1.patched/src/util/sys_defs.h	2014-09-29 03:11:48.962277971 +0400
+@@ -759,9 +759,8 @@
+ #define INTERNAL_LOCK	MYFLOCK_STYLE_FLOCK
+ #define DEF_MAILBOX_LOCK "fcntl, dotlock"	/* RedHat >= 4.x */
+ #define HAS_FSYNC
+-#define HAS_DB
+ #define NATIVE_DB_TYPE	"hash"
+-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
++#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/postfix/aliases"
+ #ifndef NO_NIS
+ #define HAS_NIS
+ #endif

@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2010 OpenWrt.org
+
+START=99
+STOP=80
+
+SERVICE_USE_PID=1
+
+HAPROXY_BIN="/usr/sbin/haproxy"
+HAPROXY_CONFIG="/etc/haproxy.cfg"
+HAPROXY_PID="/var/run/haproxy.pid"
+
+start() {
+	service_start $HAPROXY_BIN -q -D -f "$HAPROXY_CONFIG" -p "$HAPROXY_PID"
+}
+
+stop() {
+	kill -9 $(cat $HAPROXY_PID | tr "\n" " ")
+	service_stop $HAPROXY_BIN
+}
+
+reload() {
+	$HAPROXY_BIN -D -q -f $HAPROXY_CONFIG -p $HAPROXY_PID -sf $(cat $HAPROXY_PID | tr "\n" " ")	
+	#$HAPROXY_BIN -D -q -f $HAPROXY_CONFIG -p $HAPROXY_PID -sf $(cat $HAPROXY_PID)
+}

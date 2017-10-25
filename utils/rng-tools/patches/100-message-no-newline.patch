@@ -1,0 +1,137 @@
+From d401b23149a89fc14806dc8c347f2a85205a95cd Mon Sep 17 00:00:00 2001
+From: Philip Prindeville <philipp@redfish-solutions.com>
+Date: Mon, 26 Jun 2017 18:34:04 -0600
+Subject: [PATCH v1 1/1] Cleanup calls to message() containing newlines
+To: Philipp Rumpf <prumpf@mandrakesoft.com>, Jeff Garzik <jgarzik@pobox.com>, Henrique de Moraes Holschuh <hmh@debian.org>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Philip Prindeville <philipp@redfish-solutions.com>
+
+Newlines are added automatically by logging daemons, and having
+embedded newlines can cause extra blank lines in syslog-ng,
+busybox, etc.
+
+Signed-off-by: Philip Prindeville <philipp@redfish-solutions.com>
+---
+ rngd.c           | 8 ++++----
+ rngd_entsource.c | 6 +++---
+ rngd_linux.c     | 2 +-
+ rngd_rdrand.c    | 6 +++---
+ 4 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/rngd.c b/rngd.c
+index 0205d40e0abb970fb126460306398388bd7462a0..f10198682a14f2f1460100a1d274ad0d724cb326 100644
+--- a/rngd.c
++++ b/rngd.c
+@@ -271,7 +271,7 @@ static void do_loop(int random_step)
+ 			} else if (iter->failures >= MAX_RNG_FAILURES) {
+ 				if (!arguments->quiet)
+ 					message(LOG_DAEMON|LOG_ERR,
+-					"too many FIPS failures, disabling entropy source\n");
++					"too many FIPS failures, disabling entropy source");
+ 				iter->disabled = true;
+ 			}
+ 		}
+@@ -282,7 +282,7 @@ static void do_loop(int random_step)
+ 
+ 	if (!arguments->quiet)
+ 		message(LOG_DAEMON|LOG_ERR,
+-		"No entropy sources working, exiting rngd\n");
++		"No entropy sources working, exiting rngd");
+ }
+ 
+ static void term_signal(int signo)
+@@ -317,7 +317,7 @@ int main(int argc, char **argv)
+ 			message(LOG_DAEMON|LOG_ERR,
+ 				"can't open any entropy source");
+ 			message(LOG_DAEMON|LOG_ERR,
+-				"Maybe RNG device modules are not loaded\n");
++				"Maybe RNG device modules are not loaded");
+ 		}
+ 		return 1;
+ 	}
+@@ -337,7 +337,7 @@ int main(int argc, char **argv)
+ 		&& (rc_tpm || !arguments->enable_tpm)) {
+ 		if (!arguments->quiet)
+ 			message(LOG_DAEMON|LOG_ERR,
+-		"No entropy source available, shutting down\n");
++		"No entropy source available, shutting down");
+ 		return 1;
+ 	}
+ 
+diff --git a/rngd_entsource.c b/rngd_entsource.c
+index f0e219d7af674204e5bdcf96e9045c40717872c3..8c1d7cb33159c9a0e03a4ea83f3a3358c706e2e3 100644
+--- a/rngd_entsource.c
++++ b/rngd_entsource.c
+@@ -64,7 +64,7 @@ int xread(void *buf, size_t size, struct rng *ent_src)
+ 	}
+ 
+ 	if (size) {
+-		message(LOG_DAEMON|LOG_ERR, "read error\n");
++		message(LOG_DAEMON|LOG_ERR, "read error");
+ 		return -1;
+ 	}
+ 	return 0;
+@@ -114,7 +114,7 @@ int xread_tpm(void *buf, size_t size, struct rng *ent_src)
+ 				       sizeof(rng_cmd) - r);
+ 			if (retval < 0) {
+ 				message(LOG_ERR|LOG_INFO,
+-					"Error writing %s\n",
++					"Error writing %s",
+ 					ent_src->rng_name);
+ 				retval = -1;
+ 				goto error_out;
+@@ -123,7 +123,7 @@ int xread_tpm(void *buf, size_t size, struct rng *ent_src)
+ 		}
+ 		if (r < sizeof(rng_cmd)) {
+ 			message(LOG_ERR|LOG_INFO,
+-				"Error writing %s\n", ent_src->rng_name);
++				"Error writing %s", ent_src->rng_name);
+ 			retval = -1;
+ 			goto error_out;
+ 		}
+diff --git a/rngd_linux.c b/rngd_linux.c
+index c4f45dedecad0fd3bf80a35d7c240b917bf5ffdd..481c6bb15def3f06989766988b61f35d91207b58 100644
+--- a/rngd_linux.c
++++ b/rngd_linux.c
+@@ -131,7 +131,7 @@ void random_add_entropy(void *buf, size_t size)
+ 	memcpy(entropy.data, buf, size);
+ 
+ 	if (ioctl(random_fd, RNDADDENTROPY, &entropy) != 0) {
+-		message(LOG_DAEMON|LOG_ERR, "RNDADDENTROPY failed: %s\n",
++		message(LOG_DAEMON|LOG_ERR, "RNDADDENTROPY failed: %s",
+ 			strerror(errno));
+ 		exit(1);
+ 	}
+diff --git a/rngd_rdrand.c b/rngd_rdrand.c
+index 4d7a5a7b3f52c3af8e677d3c4d758d4d235f1dd6..c1919d538428a8647dbce88d7d76384761e5b6cc 100644
+--- a/rngd_rdrand.c
++++ b/rngd_rdrand.c
+@@ -162,7 +162,7 @@ static inline int gcrypt_mangle(unsigned char *tmp)
+ 
+ 	if (gcry_error) {
+ 		message(LOG_DAEMON|LOG_ERR,
+-			"gcry_cipher_encrypt error: %s\n",
++			"gcry_cipher_encrypt error: %s",
+ 			gcry_strerror(gcry_error));
+ 		return -1;
+ 	}
+@@ -257,7 +257,7 @@ static int init_gcrypt(const void *key)
+ 
+ 	if (!gcry_check_version(MIN_GCRYPT_VERSION)) {
+ 		message(LOG_DAEMON|LOG_ERR,
+-			"libgcrypt version mismatch: have %s, require >= %s\n",
++			"libgcrypt version mismatch: have %s, require >= %s",
+ 			gcry_check_version(NULL), MIN_GCRYPT_VERSION);
+ 		return 1;
+ 	}
+@@ -278,7 +278,7 @@ static int init_gcrypt(const void *key)
+ 
+ 	if (gcry_error) {
+ 		message(LOG_DAEMON|LOG_ERR,
+-			"could not set key or IV: %s\n",
++			"could not set key or IV: %s",
+ 			gcry_strerror(gcry_error));
+ 		gcry_cipher_close(gcry_cipher_hd);
+ 		return 1;
+-- 
+2.7.4
+

@@ -1,0 +1,11 @@
+--- a/src/blob.hpp
++++ b/src/blob.hpp
+@@ -38,7 +38,7 @@
+ // They seem to be doing something for MSC, but since I only have gcc, I'll just do that
+ // Assuming this is uneccessary on GCC 4
+ // #if (defined(__GNUC__) && (__GNUC__ >= 3) || (defined(_MSC_VER) && _MSC_VER > 1000))
+-#if (defined(__GNUC__) && (__GNUC__ >= 3) && (__GNUC__ <= 4))
++#if (defined(__GNUC__) && (__GNUC__ >= 3))
+ namespace std
+ {
+   template<>

@@ -1,0 +1,35 @@
+diff -Naur mailman-2.1.18-1/Mailman/MailList.py mailman-2.1.18-1_patched/Mailman/MailList.py
+--- mailman-2.1.18-1/Mailman/MailList.py	2014-05-06 20:43:56.000000000 +0400
++++ mailman-2.1.18-1_patched/Mailman/MailList.py	2014-11-04 15:57:06.832636147 +0300
+@@ -30,7 +30,7 @@
+ import shutil
+ import socket
+ import urllib
+-import cPickle
++import pickle as cPickle
+ 
+ from cStringIO import StringIO
+ from UserDict import UserDict
+diff -Naur mailman-2.1.18-1/misc/paths.py.in mailman-2.1.18-1_patched/misc/paths.py.in
+--- mailman-2.1.18-1/misc/paths.py.in	2014-05-06 20:43:56.000000000 +0400
++++ mailman-2.1.18-1_patched/misc/paths.py.in	2014-11-04 15:55:49.594941540 +0300
+@@ -66,14 +66,14 @@
+ # In a normal interactive Python environment, the japanese.pth and korean.pth
+ # files would be imported automatically.  But because we inhibit the importing
+ # of the site module, we need to be explicit about importing these codecs.
+-if not jaok:
+-    import japanese
++#if not jaok:
++#    import japanese
+ # As of KoreanCodecs 2.0.5, you had to do the second import to get the Korean
+ # codecs installed, however leave the first import in there in case an upgrade
+ # changes this.
+-if not kook:
+-    import korean
+-    import korean.aliases
++#if not kook:
++#    import korean
++#    import korean.aliases
+ # Arabic and Hebrew (RFC-1556) encoding aliases. (temporary solution)
+ import encodings.aliases
+ encodings.aliases.aliases.update({

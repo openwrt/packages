@@ -1,0 +1,11 @@
+--- tgt-1.0.48.orig/Makefile	2014-06-04 15:03:53.000000000 +0300
++++ tgt-1.0.48/Makefile	2014-06-04 15:18:13.132963670 +0300
+@@ -64,7 +64,7 @@
+ 	$(MAKE) -C conf clean
+ 
+ .PHONY: install
+-install: install-programs install-doc install-conf install-scripts
++install: install-programs
+ 
+ .PHONY: rpm
+ rpm:

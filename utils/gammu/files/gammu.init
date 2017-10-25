@@ -1,0 +1,116 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 villy@sft.ru
+
+START=98
+
+USE_PROCD=1
+PROG=/usr/bin/gammu-smsd
+CONFPFX=/var/gammu
+
+start_instance() {
+	local conf="$1"
+	local item
+	local conffile="$CONFPFX-$conf.conf"
+
+	config_get_bool item "$conf" enabled 0
+	[ $item = 0 ] && return
+
+	echo -e "; don't edit. instead look into /etc/config/gammu\n[gammu]\n" > $conffile
+
+	config_get item "$conf" device
+	[ -z "$item" ] && return
+	echo "device = $item" >> $conffile
+
+	config_get item "$conf" connection
+	[ -z "$item" ] && return
+	echo "connection = $item" >> $conffile
+
+	config_get item "$conf" logfile
+	[ -z "$item" ] && item=syslog
+	echo "logfile = $item" >> $conffile
+
+	echo -e "\n[smsd]\nphoneid = $conf\nservice = files\nlogfile = $item" >> $conffile
+	echo -e "checkbattery = 0\nhangupcalls = 1" >> $conffile
+
+	config_get item "$conf" pin
+	[ -n "$item" ] && echo "pin = $item" >> $conffile
+
+	config_get item "$conf" phonecode
+	[ -n "$item" ] && echo "phonecode = $item" >> $conffile
+
+	config_get item "$conf" send
+	[ -n "$item" ] && echo "send = $item" >> $conffile
+
+	config_get item "$conf" receive
+	[ -n "$item" ] && echo "receive = $item" >> $conffile
+
+	config_get item "$conf" timeout
+	[ -n "$item" ] && echo "commtimeout = $item" >> $conffile
+
+	config_get item "$conf" sleep
+	[ -n "$item" ] && echo "loopsleep = $item" >> $conffile
+
+	config_get item "$conf" report
+	[ -n "$item" ] && echo "deliveryreport = $item" >> $conffile
+
+	config_get item "$conf" onreceive
+	[ -n "$item" ] && echo "runonreceive = $item" >> $conffile
+
+	config_get item "$conf" onerror
+	[ -n "$item" ] && echo "runonfailure = $item" >> $conffile
+
+	config_get item "$conf" spool
+	[ -z "$item" ] && item=/var/sms
+	[ ! -d $item ] && {
+	  mkdir $item
+	  mkdir $item/inbox
+	  mkdir $item/outbox
+	  mkdir $item/sent
+	  mkdir $item/error
+	}
+	echo -e "inboxpath = $item/inbox/\noutboxpath = $item/outbox/" >> $conffile
+	echo -e "sentsmspath = $item/sent/\nerrorsmspath = $item/error/" >> $conffile
+
+	config_get item "$conf" allow
+	[ -n "$item" ] && {
+	  local data
+	  local allowfile=$CONFPFX-$conf.allow
+	  for data in $item ; do
+	    echo $data >> $allowfile
+	  done
+
+	  echo "includenumbersfile = $allowfile" >> $conffile
+	}
+
+	config_get item "$conf" deny
+	[ -n "$item" ] && {
+	  local data
+	  local denyfile=$CONFPFX-$conf.deny
+	  for data in $item ; do
+	    echo $data >> $denyfile
+	  done
+
+	  echo "excludenumbersfile = $denyfile" >> $conffile
+	}
+
+	procd_open_instance
+
+	config_get_bool item "$conf" respawn 0
+	[ $item != 0 ] && procd_set_param respawn
+
+	procd_set_param command $PROG --config=$conffile
+
+	config_get item "$conf" pidfile
+	[ -n "$item" ] && procd_append_param command --pid=$item
+
+	procd_close_instance
+}
+
+start_service() {
+	config_load gammu
+	config_foreach start_instance daemon
+}
+
+service_triggers() {
+	procd_add_reload_trigger "gammu"
+}

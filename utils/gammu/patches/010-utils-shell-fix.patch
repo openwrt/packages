@@ -1,0 +1,16 @@
+--- a/utils/gammu-config
++++ b/utils/gammu-config
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/bin/sh
+ # Gammu configuration generator
+ # Copyright (C) 2003 - 2009 Michal Cihar <michal@cihar.com>
+ # vim: expandtab sw=4 ts=4 sts=4:
+--- a/utils/jadmaker
++++ b/utils/jadmaker
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/bin/sh
+ # JAD file generator
+ # Copyright © 2008 - 2009 Michal Čihař <michal@cihar.com>
+ # vim: expandtab sw=4 ts=4 sts=4:

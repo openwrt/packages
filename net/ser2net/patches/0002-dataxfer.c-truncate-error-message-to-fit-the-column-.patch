@@ -1,0 +1,30 @@
+From b303432f2dbd6a20afa99cb462aa0a1bb740b86d Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Wed, 12 Apr 2017 23:43:18 +0200
+Subject: [PATCH] dataxfer.c: truncate error message to fit the column width
+
+gai_strerror() could return a string which is longer than our current
+column width of "Remote address". To make the output nice again,
+truncate the error string in this case.
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+Signed-off-by: Corey Minyard <cminyard@mvista.com>
+
+diff --git a/dataxfer.c b/dataxfer.c
+index 988f4e4..75c2777 100644
+--- a/dataxfer.c
++++ b/dataxfer.c
+@@ -3703,6 +3703,10 @@ showshortport(struct controller_info *cntlr, port_info_t *port)
+ 		      NI_NUMERICHOST | NI_NUMERICSERV);
+     if (err) {
+ 	snprintf(buffer, sizeof(buffer), "*err*,%s", gai_strerror(err));
++	/* gai_strerror could return an elongated string which could break
++	   our pretty formatted output below, so truncate the string nicely */
++	if (strlen(buffer) > 22)
++	    strcpy(&buffer[22 - 3], "...");
+ 	count = controller_outputf(cntlr, "%s", buffer);
+     } else {
+ 	count = controller_outputf(cntlr, "%s,%s", buffer, portbuff);
+-- 
+2.7.4
+

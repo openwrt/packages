@@ -1,0 +1,10 @@
+--- a/3rdparty/tinyxml/tinyxml.h
++++ b/3rdparty/tinyxml/tinyxml.h
+@@ -39,6 +39,7 @@ distribution.
+ #include <string>
+ #include <iostream>
+ #include <sstream>
++#include "lstate.h"
+ using namespace std;
+ 
+ // Help out windows:

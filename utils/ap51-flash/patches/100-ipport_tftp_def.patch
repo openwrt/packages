@@ -1,0 +1,15 @@
+Index: ap51-flash-2016-10-16/proto.c
+===================================================================
+--- ap51-flash-2016-10-16.orig/proto.c
++++ ap51-flash-2016-10-16/proto.c
+@@ -29,6 +29,10 @@
+ #include "router_redboot.h"
+ #include "router_tftp_client.h"
+ 
++#ifndef IPPORT_TFTP
++#define IPPORT_TFTP	69
++#endif
++
+ #define TFTP_SRC_PORT 13337
+ #define REDBOOT_TELNET_SPORT 13337
+ #define REDBOOT_TELNET_DPORT 9000

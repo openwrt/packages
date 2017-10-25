@@ -1,0 +1,27 @@
+From 261cf19bfa3dea10ed0f2ebbb2d945c19c9a2804 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sun, 4 Dec 2016 00:18:37 +0100
+Subject: [PATCH 5/7] ssl: fix compilation against non debug mbedtls
+
+The function mbedtls_debug_set_threshold() is only available when
+MBEDTLS_DEBUG_C is set. make the call depend on this condition.
+
+Change-Id: I8158bc4c55b428167e36084e7a46359c269c5fc7
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c
++++ b/resource/csdk/connectivity/src/adapter_util/ca_adapter_net_ssl.c
+@@ -1278,8 +1278,10 @@ static int InitConfig(mbedtls_ssl_config
+ 
+ #if !defined(NDEBUG) || defined(TB_LOG)
+     mbedtls_ssl_conf_dbg(conf, DebugSsl, NULL);
++#if defined(MBEDTLS_DEBUG_C)
+     mbedtls_debug_set_threshold(MBED_TLS_DEBUG_LEVEL);
+ #endif
++#endif
+     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+     return 0;
+ }

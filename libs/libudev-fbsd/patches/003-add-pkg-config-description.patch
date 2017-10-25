@@ -1,0 +1,20 @@
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -11,6 +11,7 @@ install(TARGETS udev LIBRARY DESTINATION
+ install(FILES libudev.h DESTINATION include)
+ 
+ set(PKG_CONFIG_NAME libudev)
++set(PKG_CONFIG_DESCRIPTION small udev shim for FreeBSD/devd)
+ set(PKG_CONFIG_REQUIRES libevdev)
+ set(PKG_CONFIG_LIBDIR "\${prefix}/lib")
+ set(PKG_CONFIG_INCLUDEDIR "\${prefix}/include")
+--- a/src/pkg-config.pc.cmake
++++ b/src/pkg-config.pc.cmake
+@@ -3,6 +3,7 @@ libdir=${PKG_CONFIG_LIBDIR}
+ includedir=${PKG_CONFIG_INCLUDEDIR}
+ 
+ Name: ${PKG_CONFIG_NAME}
++Description: ${PKG_CONFIG_DESCRIPTION}
+ Version: 143
+ Requires: ${PKG_CONFIG_REQUIRES}
+ Libs: ${PKG_CONFIG_LIBS}

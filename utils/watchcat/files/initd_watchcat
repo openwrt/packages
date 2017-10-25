@@ -1,0 +1,109 @@
+#!/bin/sh /etc/rc.common
+
+START=97
+
+PIDFILE="/tmp/run/watchcat"
+
+append_string() {
+	local varname="$1"; local add="$2"; local separator="${3:- }"; local actual
+	eval "actual=\$$varname"
+
+	new="${actual:+$actual$separator}$add"
+	eval "$varname=\$new"
+}
+
+timetoseconds() {
+	local time=$1
+	unset seconds
+
+	{ [ "$time" -ge 1 ] 2> /dev/null && seconds="$time"; } || \
+	{ [ "${time%s}" -ge 1 ] 2> /dev/null && seconds="${time%s}"; } || \
+	{ [ "${time%m}" -ge 1 ] 2> /dev/null && seconds=$((${time%m}*60)); } || \
+	{ [ "${time%h}" -ge 1 ] 2> /dev/null && seconds=$((${time%h}*3600)); } || \
+	{ [ "${time%d}" -ge 1 ] 2> /dev/null && seconds=$((${time%d}*86400)); }
+}
+
+load_watchcat() {
+	config_get period	$1 period
+	config_get mode		$1 mode		"always"
+	config_get pinghosts	$1 pinghosts	"8.8.8.8"
+	config_get pingperiod	$1 pingperiod
+	config_get forcedelay	$1 forcedelay	"0"
+
+	# Fix potential typo in mode (backward compatibility).
+	[ "$mode" = "allways" ] && mode="always"
+
+	error=""
+
+	timetoseconds "$period"
+	period="$seconds"
+	[ "$period" -ge 1 ] \
+		|| append_string "error" 'period is not a valid time value (ex: "30"; "4m"; "6h"; "2d")' "; "
+	[ "$mode" = "always" -o "$mode" = "ping" ] \
+		|| append_string "error" "mode must be 'always' or 'ping'" "; "
+	[ -n "$pinghosts" -o "$mode" = "always" ] \
+		|| append_string "error" "pinghosts must be set when in 'ping' mode" "; "
+	[ "$mode" = "ping" ] && {
+		if [ -n "$pingperiod" ]
+		then
+			timetoseconds "$pingperiod"
+			pingperiod="$seconds"
+			if [ "$pingperiod" -ge 0 ]
+			then
+				[ "$pingperiod" -lt "$period" ] \
+					|| append_string "error" "pingperiod must be less than period" "; "
+			else
+				append_string "error" 'pingperiod is not a valid time value (ex: "30"; "4m"; "6h"; "2d")' "; "
+			fi
+		else
+			pingperiod="$((period/20))"
+		fi
+	}
+	[ "$forcedelay" -ge 0 ] \
+		|| append_string "error" "forcedelay must be a integer greater or equal than 0, where 0 means disabled" "; "
+
+	[ -n "$error" ] && { logger -p user.err -t "watchcat" "reboot program $1 not started - $error"; return; }
+
+	if [ "$mode" = "always" ]
+	then
+		/usr/bin/watchcat.sh "always" "$period" "$forcedelay" &
+		logger -p user.info -t "watchcat" "started task (mode=$mode;period=$period;forcedelay=$forcedelay)"
+	else
+		/usr/bin/watchcat.sh "period" "$period" "$forcedelay" "$pinghosts" "$pingperiod" &
+		logger -p user.info -t "watchcat" "started task (mode=$mode;period=$period;pinghosts=$pinghosts;pingperiod=$pingperiod;forcedelay=$forcedelay)"
+	fi
+
+	echo $! >> "${PIDFILE}.pids"
+}
+
+stop() {
+	if [ -f "${PIDFILE}.pids" ]
+	then
+		logger -p user.info -t "watchcat" "stopping all tasks"
+
+		while read pid
+		do
+			kill "$pid"
+		done < "${PIDFILE}.pids"
+
+		rm "${PIDFILE}.pids"
+
+		logger -p user.info -t "watchcat" "all tasks stopped"
+	else
+		logger -p user.info -t "watchcat" "no tasks running"
+	fi
+}
+
+start() {
+	[ -f "${PIDFILE}.pids" ] && stop
+
+	config_load system
+	if [ -n "$(uci show system.@watchcat[0])" ] # at least one watchcat section exists
+	then
+		logger -p user.info -t "watchcat" "starting all tasks"
+		config_foreach load_watchcat watchcat
+		logger -p user.info -t "watchcat" "all tasks started"
+	else
+		logger -p user.info -t "watchcat" "no tasks defined"
+	fi
+}

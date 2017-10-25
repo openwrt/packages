@@ -1,0 +1,24 @@
+--- a/munin-node.in
++++ b/munin-node.in
+@@ -72,17 +72,17 @@ RES=""
+ for PLUG in $PLUGINS
+ do 
+   if [ "$PLUG" = "if_" ]; then  
+-    for INTER in $(grep '^ *\(ppp\|eth\|wlan\|ath\|ra\|ipsec\|tap\)\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
++    for INTER in $(grep '^ *\(ppp\|eth\|wlan\|ath\|ra\|ipsec\|tap\|br-\)\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
+     do
+-      INTERRES=$(echo $INTER | sed 's/\./VLAN/')
++      INTERRES=$(echo $INTER | sed -e 's/\./VLAN/' -e 's/\-/_/')
+       RES="$RES if_$INTERRES"
+       eval "fetch_if_${INTERRES}() { fetch_if $INTER $@; };"
+       eval "config_if_${INTERRES}() { config_if $INTER $@; };"
+     done
+   elif [ "$PLUG" = "if_err_" ]; then
+-    for INTER in $(grep '^ *\(ppp\|eth\|wlan\|ath\|ra\|ipsec\|tap\)\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
++    for INTER in $(grep '^ *\(ppp\|eth\|wlan\|ath\|ra\|ipsec\|tap\|br-\)\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
+     do
+-      INTERRES=$(echo $INTER | sed 's/\./VLAN/')
++      INTERRES=$(echo $INTER | sed -e 's/\./VLAN/' -e 's/\-/_/')
+       RES="$RES if_err_$INTERRES"
+       eval "fetch_if_err_${INTERRES}() { fetch_if_err $INTER $@; };"
+       eval "config_if_err_${INTERRES}() { config_if_err $INTER $@; };"

@@ -1,0 +1,24 @@
+diff -urN fcgi-2.4.0/Makefile.am fcgi-2.4.0.new/Makefile.am
+--- fcgi-2.4.0/Makefile.am	2001-12-22 14:05:39.000000000 +0100
++++ fcgi-2.4.0.new/Makefile.am	2007-08-28 11:05:10.000000000 +0200
+@@ -4,7 +4,7 @@
+ #  $Id: Makefile.am,v 1.7 2001/12/22 13:05:39 robs Exp $
+ #
+ 
+-SUBDIRS = libfcgi cgi-fcgi examples include
++SUBDIRS = libfcgi cgi-fcgi include
+ 
+ include_HEADERS = fcgi_config.h
+ 
+diff -urN fcgi-2.4.0/Makefile.in fcgi-2.4.0.new/Makefile.in
+--- fcgi-2.4.0/Makefile.in	2003-01-19 18:21:15.000000000 +0100
++++ fcgi-2.4.0.new/Makefile.in	2007-08-28 11:04:55.000000000 +0200
+@@ -93,7 +93,7 @@
+ am__quote = @am__quote@
+ install_sh = @install_sh@
+ 
+-SUBDIRS = libfcgi cgi-fcgi examples include
++SUBDIRS = libfcgi cgi-fcgi include
+ 
+ include_HEADERS = fcgi_config.h
+ 

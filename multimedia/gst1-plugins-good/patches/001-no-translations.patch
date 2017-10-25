@@ -1,0 +1,20 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -1049,7 +1049,6 @@ sys/sunaudio/Makefile
+ sys/v4l2/Makefile
+ sys/waveform/Makefile
+ sys/ximage/Makefile
+-po/Makefile.in
+ tests/Makefile
+ tests/check/Makefile
+ tests/examples/Makefile
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -4,7 +4,6 @@ ALWAYS_SUBDIRS =		\
+ 	gst sys ext 		\
+ 	tests			\
+ 	docs			\
+-	po			\
+ 	common			\
+ 	m4			\
+ 	pkgconfig

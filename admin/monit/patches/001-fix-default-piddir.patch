@@ -1,0 +1,18 @@
+--- a/configure
++++ b/configure
+@@ -13852,14 +13852,7 @@ fi
+ # Find the right directory to put the root-mode PID file in
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking pid file location" >&5
+ $as_echo_n "checking pid file location... " >&6; }
+-if test -d "/run"
+-then
+-	piddir="/run"
+-elif test -d "/var/run"; then
+-        piddir="/var/run"
+-elif test -d "/etc"; then
+-        piddir="/etc"
+-fi
++piddir="/var/run"
+ 
+ 
+ cat >>confdefs.h <<_ACEOF

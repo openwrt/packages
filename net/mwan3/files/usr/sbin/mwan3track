@@ -1,0 +1,176 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+LOG="logger -t $(basename "$0")[$$] -p"
+INTERFACE=""
+DEVICE=""
+
+IFDOWN_EVENT=0
+
+clean_up() {
+	$LOG notice "Stopping mwan3track for interface \"${INTERFACE}\""
+	exit 0
+}
+
+if_down() {
+	$LOG info "Detect ifdown event on interface ${INTERFACE} (${DEVICE})"
+	IFDOWN_EVENT=1
+}
+
+validate_track_method() {
+	case "$1" in
+		ping)
+			# Assume that ping is installed
+			;;
+		arping)
+			which arping 1>/dev/null 2>&1 || {
+				$LOG warn "Missing arping. Please install iputils-arping package."
+				return 1
+			}
+			;;
+		httping)
+			which httping 1>/dev/null 2>&1 || {
+				$LOG warn "Missing httping. Please install httping package."
+				return 1
+			}
+			;;
+		*)
+			$LOG warn "Unsupported tracking method: $track_method"
+			return 2
+			;;
+	esac
+}
+
+main() {
+	local reliability count timeout interval failure_interval
+	local recovery_interval down up size
+	local keep_failure_interval
+
+	[ -z "$5" ] && echo "Error: should not be started manually" && exit 0
+
+	INTERFACE=$1
+	DEVICE=$2
+	STATUS=$3
+	SRC_IP=$4
+	mkdir -p /var/run/mwan3track/$1
+	trap clean_up SIGINT SIGTERM
+	trap if_down SIGUSR1
+
+	config_load mwan3
+	config_get track_method $1 track_method ping
+	validate_track_method $track_method || {
+		$LOG warn "Using ping to track interface $INTERFACE avaliability"
+		track_method=ping
+	}
+	config_get reliability $1 reliability 1
+	config_get count $1 count 1
+	config_get timeout $1 timeout 4
+	config_get interval $1 interval 10
+	config_get down $1 down 5
+	config_get up $1 up 5
+	config_get size $1 size 56
+	config_get failure_interval $1 failure_interval $interval
+	config_get_bool keep_failure_interval $1 keep_failure_interval 0
+	config_get recovery_interval $1 recovery_interval $interval
+
+	local score=$(($down+$up))
+	local track_ips=$(echo $* | cut -d ' ' -f 5-99)
+	local host_up_count=0
+	local lost=0
+	local sleep_time=0
+	local turn=0
+
+	if [ "$STATUS" = "unknown" ]; then
+		echo "unknown" > /var/run/mwan3track/$1/STATUS
+		score=0
+	else
+		echo "online" > /var/run/mwan3track/$1/STATUS
+	fi
+	while true; do
+
+		sleep_time=$interval
+
+		for track_ip in $track_ips; do
+			if [ $host_up_count -lt $reliability ]; then
+				case "$track_method" in
+					ping)
+						ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip &> /dev/null ;;
+					arping)
+						arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null ;;
+					httping)
+						httping -y $SRC_IP -c $count -t $timeout -q $track_ip &> /dev/null ;;
+				esac
+				if [ $? -eq 0 ]; then
+					let host_up_count++
+					echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+				else
+					let lost++
+					echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+				fi
+			else
+				echo "skipped" > /var/run/mwan3track/$1/TRACK_${track_ip}
+			fi
+		done
+
+		if [ $host_up_count -lt $reliability ]; then
+			let score--
+
+			if [ $score -lt $up ]; then
+				score=0
+				[ ${keep_failure_interval} -eq 1 ] && {
+					sleep_time=$failure_interval
+				}
+			else
+				sleep_time=$failure_interval
+			fi
+
+			if [ $score -eq $up ]; then
+				echo "offline" > /var/run/mwan3track/$1/STATUS
+				$LOG notice "Interface $1 ($2) is offline"
+				env -i ACTION=ifdown INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
+				score=0
+			fi
+		else
+			if [ $score -lt $(($down+$up)) ] && [ $lost -gt 0 ]; then
+				$LOG info "Lost $(($lost*$count)) ping(s) on interface $1 ($2)"
+			fi
+
+			let score++
+			lost=0
+
+			if [ $score -gt $up ]; then
+				echo "online" > /var/run/mwan3track/$1/STATUS
+				score=$(($down+$up))
+			elif [ $score -le $up ]; then
+				sleep_time=$recovery_interval
+			fi
+
+			if [ $score -eq $up ]; then
+				$LOG notice "Interface $1 ($2) is online"
+				echo "online" > /var/run/mwan3track/$1/STATUS
+				env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
+				exit 0
+			fi
+		fi
+
+		let turn++
+		mkdir -p "/var/run/mwan3track/${1}"
+		echo "${lost}" > /var/run/mwan3track/$1/LOST
+		echo "${score}" > /var/run/mwan3track/$1/SCORE
+		echo "${turn}" > /var/run/mwan3track/$1/TURN
+		echo "$(date +'%s')" > /var/run/mwan3track/$1/TIME
+
+		host_up_count=0
+		sleep "${sleep_time}" &
+		wait
+
+		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
+			score=0
+			echo "offline" > /var/run/mwan3track/$1/STATUS
+			IFDOWN_EVENT=0
+		fi
+	done
+}
+
+main "$@"

@@ -1,0 +1,43 @@
+diff -rupN seafile-server-5.1.1.orig/lib/Makefile.am seafile-server-5.1.1/lib/Makefile.am
+--- seafile-server-5.1.1.orig/lib/Makefile.am	2016-04-21 11:05:26.000000000 +0200
++++ seafile-server-5.1.1/lib/Makefile.am	2016-04-22 10:09:41.567751561 +0200
+@@ -1,3 +1,5 @@
++include $(TOPDIR)/rules.mk
++
+ pcfiles = libseafile.pc
+ pkgconfig_DATA = $(pcfiles)
+ pkgconfigdir = $(libdir)/pkgconfig
+@@ -35,7 +37,7 @@ seafile-rpc-wrapper.c: seafile-object.h
+ 
+ seafile-object.h: ${seafile_object_define}
+ 	rm -f $@
+-	valac --pkg posix ${seafile_object_define} -C -H seafile-object.h
++	"$(STAGING_DIR_HOSTPKG)/bin/valac" --pkg posix ${seafile_object_define} -C -H seafile-object.h
+ 
+ DISTCLEANFILES = ${searpc_gen}
+ 
+@@ -64,7 +66,7 @@ rpc_table.stamp: ${top_srcdir}/lib/rpc_t
+ 	@rm -f rpc_table.tmp
+ 	@touch rpc_table.tmp
+ 	@echo "[libsearpc]: generating rpc header files"
+-	@PYTHON@ `which searpc-codegen.py` ${top_srcdir}/lib/rpc_table.py
++	@PYTHON@ "$(STAGING_DIR)/usr/bin/searpc-codegen.py" ${top_srcdir}/lib/rpc_table.py
+ 	@echo "[libsearpc]: done"
+ 	@mv -f rpc_table.tmp $@
+ 
+@@ -74,7 +76,7 @@ vala.stamp: ${seafile_object_define}
+ 	rm -f ${seafile_object_gen}
+ 	@rm -f vala.tmp
+ 	@touch vala.tmp
+-	valac -C --pkg posix $^
++	"$(STAGING_DIR_HOSTPKG)/bin/valac" -C --pkg posix $^
+ 	@mv -f vala.tmp $@
+ 
+ ${seafile_object_gen}: vala.stamp
+@@ -90,5 +92,5 @@ install-data-local:
+ if MACOS
+ 	sed -i '' -e "s|(DESTDIR)|${DESTDIR}|g" $(pcfiles)
+ else
+-	${SED} -i "s|(DESTDIR)|${DESTDIR}|g" $(pcfiles)
++	${SED} "s|(DESTDIR)|${DESTDIR}|g" $(pcfiles)
+ endif

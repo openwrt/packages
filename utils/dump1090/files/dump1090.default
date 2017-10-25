@@ -1,0 +1,16 @@
+#!/bin/sh
+uci batch <<-EOF
+	set uhttpd.xupnpd=uhttpd
+	set uhttpd.xupnpd.listen_http='0.0.0.0:8080 [::]:8080'
+	set uhttpd.xupnpd.home=/usr/share/dump1090
+	set uhttpd.xupnpd.rfc1918_filter=1
+	set uhttpd.xupnpd.max_requests=3
+	set uhttpd.xupnpd.max_connections=100
+	set uhttpd.xupnpd.script_timeout=60
+	set uhttpd.xupnpd.network_timeout=30
+	set uhttpd.xupnpd.http_keepalive=20
+	set uhttpd.xupnpd.tcp_keepalive=1
+	set uhttpd.xupnpd.index_page='index.html index.htm gmap.html'
+	commit uhttpd
+EOF
+exit 0

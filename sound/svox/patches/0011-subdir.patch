@@ -1,0 +1,12 @@
+diff -urN a/pico/configure.in b/pico/configure.in
+--- a/pico/configure.in	2015-01-21 18:59:39.604452795 +0100
++++ b/pico/configure.in	2015-01-21 19:00:53.288777298 +0100
+@@ -4,7 +4,7 @@
+ 
+ AC_INIT([svox], [1.0], [math.parent@gmail.com])
+ 
+-AM_INIT_AUTOMAKE([1.9 foreign])
++AM_INIT_AUTOMAKE([1.9 foreign subdir-objects])
+ 
+ AC_PROG_CC
+ LT_INIT

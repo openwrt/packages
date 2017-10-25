@@ -1,0 +1,16 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2012 OpenWrt.org
+
+START=13
+
+HAVEGED_THRESHOLD=1024
+HAVEGED_DCACHE=32
+HAVEGED_ICACHE=32
+
+start() {
+	service_start /usr/sbin/haveged -w $HAVEGED_THRESHOLD -d $HAVEGED_DCACHE -i $HAVEGED_ICACHE -v 1
+}
+
+stop() {
+	service_stop /usr/sbin/haveged
+}

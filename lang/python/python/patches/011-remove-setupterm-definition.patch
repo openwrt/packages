@@ -1,0 +1,10 @@
+--- a/Modules/_cursesmodule.c
++++ b/Modules/_cursesmodule.c
+@@ -117,7 +117,6 @@ char *PyCursesVersion = "2.2";
+     #defines many common symbols (such as "lines") which breaks the
+     curses module in other ways.  So the code will just specify
+     explicit prototypes here. */
+-extern int setupterm(char *,int,int *);
+ #ifdef __sgi
+ #include <term.h>
+ #endif

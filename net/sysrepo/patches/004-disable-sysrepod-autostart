@@ -1,0 +1,19 @@
+Index: sysrepo-e4a5705a4c5293ba121048c71899b98243d99edf/src/clientlib/client_library.c
+===================================================================
+--- sysrepo-e4a5705a4c5293ba121048c71899b98243d99edf.orig/src/clientlib/client_library.c
++++ sysrepo-e4a5705a4c5293ba121048c71899b98243d99edf/src/clientlib/client_library.c
+@@ -405,14 +405,6 @@ sr_connect(const char *app_name, const s
+     if (SR_ERR_OK != rc) {
+         if (opts & SR_CONN_DAEMON_REQUIRED) {
+             if ((opts & SR_CONN_DAEMON_START) && (0 == getuid())) {
+-                /* sysrepo daemon start requested and process is running under root privileges */
+-                SR_LOG_DBG_MSG("Sysrepo daemon not detected, starting it.");
+-                ret = system("sysrepod");
+-                if (0 == ret) {
+-                    SR_LOG_INF_MSG("Sysrepo daemon has been started.");
+-                } else {
+-                    SR_LOG_WRN("Unable to start sysrepo daemon, error code=%d.", ret);
+-                }
+                 /* retry to connect again in any case */
+                 rc = cl_socket_connect(connection, SR_DAEMON_SOCKET);
+                 CHECK_RC_LOG_GOTO(rc, cleanup, "Unable to connect to sysrepod: %s.", sr_strerror(rc));

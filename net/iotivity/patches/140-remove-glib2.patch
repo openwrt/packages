@@ -1,0 +1,32 @@
+--- a/resource/csdk/connectivity/src/bt_le_adapter/linux/SConscript
++++ b/resource/csdk/connectivity/src/bt_le_adapter/linux/SConscript
+@@ -73,7 +73,6 @@ env.AppendUnique(
+ 
+ # The Linux BLE adapter implementation uses GDBus to make D-Bus based
+ # method calls to BlueZ.  Pull in the necessary dependencies.
+-env.ParseConfig("pkg-config gio-unix-2.0 --cflags --libs")
+ 
+ # Set up commands to generate GDBus code from the D-Bus introspection
+ # XML.
+--- a/resource/csdk/security/provisioning/sample/SConscript
++++ b/resource/csdk/security/provisioning/sample/SConscript
+@@ -70,7 +70,6 @@ if target_os not in ['windows']:
+ 
+ if target_os not in ['msys_nt', 'windows']:
+ 	provisioning_env.AppendUnique(LIBS = ['dl', 'm'])
+-	provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
+ 	provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+ else:
+ 	provisioning_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
+--- a/resource/csdk/security/provisioning/SConscript
++++ b/resource/csdk/security/provisioning/SConscript
+@@ -73,9 +73,6 @@ provisioning_env.PrependUnique(LIBS = ['
+ provisioning_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+ 
+ 
+-if target_os not in ['msys_nt', 'windows', 'android', 'ios']:
+-	provisioning_env.ParseConfig('pkg-config --libs glib-2.0')
+-
+ if target_os in ['windows', 'msys_nt']:
+ 	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi'])
+ 

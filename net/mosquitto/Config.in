@@ -1,0 +1,13 @@
+config MOSQUITTO_LWS
+    bool "libwebsockets support"
+    depends on PACKAGE_mosquitto-ssl
+    default y
+    help
+        Includes websockets support in the broker, via libwebsockets
+
+config MOSQUITTO_PASSWD
+    bool "Include mosquitto_passwd utility"
+    depends on PACKAGE_mosquitto-ssl
+    default y
+    help
+        mosquitto_passwd is a tool for managing password files for mosquitto.

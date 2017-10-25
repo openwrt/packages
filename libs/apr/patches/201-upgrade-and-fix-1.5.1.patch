@@ -1,0 +1,51 @@
+Makefile.in: fix cross compiling failed
+
+The tools/gen_test_char was invoked at build time,
+and it didn't work for the cross compiling, so we
+compile it with $BUILDCC.
+
+Remove the 'tools' dir creation, it always existed.
+And it caused gen_test_char unexpected rebuilt at
+do_install time.
+
+Upstream-Status: inappropriate [oe specific]
+
+Signed-off-by: Hongxu Jia <hongxu.jia@windriver.com>
+---
+ Makefile.in | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
+
+Index: apr-1.5.2/Makefile.in
+===================================================================
+--- apr-1.5.2.orig/Makefile.in
++++ apr-1.5.2/Makefile.in
+@@ -20,7 +20,7 @@ INCDIR=./include
+ OSDIR=$(top_srcdir)/include/arch/@OSDIR@
+ DEFOSDIR=$(INCDIR)/arch/@DEFAULT_OSDIR@
+ INCLUDES=-I$(INCDIR) -I$(OSDIR) -I$(DEFOSDIR) -I$(top_srcdir)/include/arch/@DEFAULT_OSDIR@ -I$(top_srcdir)/include -I$(top_srcdir)/include/private -I$(top_blddir)/include/private
+-
++BUILDCC=gcc
+ #
+ # Macros for target determination
+ #
+@@ -47,7 +47,6 @@ LT_VERSION = @LT_VERSION@
+ 
+ CLEAN_TARGETS = apr-config.out apr.exp exports.c export_vars.c .make.dirs \
+ 	build/apr_rules.out tools/gen_test_char@EXEEXT@ \
+-	tools/gen_test_char.o tools/gen_test_char.lo \
+ 	include/private/apr_escape_test_char.h
+ DISTCLEAN_TARGETS = config.cache config.log config.status \
+ 	include/apr.h include/arch/unix/apr_private.h \
+@@ -135,9 +134,9 @@ tools/gen_test_char.lo: tools/gen_test_c
+ 	$(APR_MKDIR) tools
+ 	$(LT_COMPILE)
+ 
+-tools/gen_test_char@EXEEXT@: $(OBJECTS_gen_test_char)
+-	$(LINK_PROG) $(OBJECTS_gen_test_char) $(ALL_LIBS)
+-
++tools/gen_test_char@EXEEXT@: tools/gen_test_char.c
++	$(BUILDCC) $(CFLAGS_FOR_BUILD) $< -o $@
++ 
+ include/private/apr_escape_test_char.h: tools/gen_test_char@EXEEXT@
+ 	$(APR_MKDIR) include/private
+ 	tools/gen_test_char@EXEEXT@ > $@

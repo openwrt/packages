@@ -1,0 +1,11 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -79,7 +79,7 @@ screen: $(OFILES)
+ 	$(CC) $(LDFLAGS) -o $@ $(OFILES) $(LIBS)
+ 
+ .c.o:
+-	$(CC) -c -I. -I$(srcdir) $(M_CFLAGS) $(CPPFLAGS) $(DEFS) \
++	$(CC) -c $(M_CFLAGS) $(CPPFLAGS) $(DEFS) \
+ 	    $(OPTIONS) $(CFLAGS) $<
+ 
+ install_bin: .version screen installdirs

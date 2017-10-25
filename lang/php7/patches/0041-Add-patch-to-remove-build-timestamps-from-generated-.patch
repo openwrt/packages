@@ -1,0 +1,114 @@
+From: Thijs Kinkhorst <thijs@debian.org>
+Date: Wed, 15 Jun 2016 09:18:03 +0200
+Subject: Add patch to remove build timestamps from generated binaries.
+
+---
+ ext/standard/info.c           |  1 -
+ sapi/apache2handler/config.m4 | 15 +++------------
+ sapi/cgi/cgi_main.c           |  4 ++--
+ sapi/cli/php_cli.c            |  4 ++--
+ sapi/fpm/fpm/fpm_main.c       |  4 ++--
+ sapi/phpdbg/phpdbg.c          |  4 +---
+ 6 files changed, 10 insertions(+), 22 deletions(-)
+
+diff --git a/ext/standard/info.c b/ext/standard/info.c
+index e74d6b4..883fbdf 100644
+--- a/ext/standard/info.c
++++ b/ext/standard/info.c
+@@ -865,7 +865,6 @@ PHPAPI void php_print_info(int flag)
+ 		php_info_print_box_end();
+ 		php_info_print_table_start();
+ 		php_info_print_table_row(2, "System", ZSTR_VAL(php_uname));
+-		php_info_print_table_row(2, "Build Date", __DATE__ " " __TIME__);
+ #ifdef COMPILER
+ 		php_info_print_table_row(2, "Compiler", COMPILER);
+ #endif
+diff --git a/sapi/apache2handler/config.m4 b/sapi/apache2handler/config.m4
+index f286b1a..fba92b8 100644
+--- a/sapi/apache2handler/config.m4
++++ b/sapi/apache2handler/config.m4
+@@ -59,18 +59,9 @@ if test "$PHP_APXS2" != "no"; then
+   APACHE_CFLAGS="$APACHE_CPPFLAGS -I$APXS_INCLUDEDIR $APR_CFLAGS $APU_CFLAGS -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1"
+ 
+   APXS_LIBEXECDIR='$(INSTALL_ROOT)'`$APXS -q LIBEXECDIR`
+-  if test -z `$APXS -q SYSCONFDIR`; then
+-    INSTALL_IT="\$(mkinstalldirs) '$APXS_LIBEXECDIR' && \
+-                 $APXS -S LIBEXECDIR='$APXS_LIBEXECDIR' \
+-                       -i -n php7"
+-  else
+-    APXS_SYSCONFDIR='$(INSTALL_ROOT)'`$APXS -q SYSCONFDIR`
+-    INSTALL_IT="\$(mkinstalldirs) '$APXS_LIBEXECDIR' && \
+-                \$(mkinstalldirs) '$APXS_SYSCONFDIR' && \
+-                 $APXS -S LIBEXECDIR='$APXS_LIBEXECDIR' \
+-                       -S SYSCONFDIR='$APXS_SYSCONFDIR' \
+-                       -i -a -n php7"
+-  fi
++  INSTALL_IT="\$(mkinstalldirs) '$APXS_LIBEXECDIR' && \
++               $APXS -S LIBEXECDIR='$APXS_LIBEXECDIR' \
++                     -i -n php7"
+ 
+   case $host_alias in
+   *aix*)
+diff --git a/sapi/cgi/cgi_main.c b/sapi/cgi/cgi_main.c
+index 0b6deb1..bb9014a 100644
+--- a/sapi/cgi/cgi_main.c
++++ b/sapi/cgi/cgi_main.c
+@@ -2342,9 +2342,9 @@ consult the installation file that came with this distribution, or visit \n\
+ 								SG(request_info).no_headers = 1;
+ 							}
+ #if ZEND_DEBUG
+-							php_printf("PHP %s (%s) (built: %s %s) (DEBUG)\nCopyright (c) 1997-2017 The PHP Group\n%s", PHP_VERSION, sapi_module.name, __DATE__, __TIME__, get_zend_version());
++							php_printf("PHP %s (%s) (DEBUG)\nCopyright (c) 1997-2017 The PHP Group\n%s", PHP_VERSION, sapi_module.name, get_zend_version());
+ #else
+-							php_printf("PHP %s (%s) (built: %s %s)\nCopyright (c) 1997-2017 The PHP Group\n%s", PHP_VERSION, sapi_module.name, __DATE__, __TIME__, get_zend_version());
++							php_printf("PHP %s (%s)\nCopyright (c) 1997-2017 The PHP Group\n%s", PHP_VERSION, sapi_module.name, get_zend_version());
+ #endif
+ 							php_request_shutdown((void *) 0);
+ 							fcgi_shutdown();
+diff --git a/sapi/cli/php_cli.c b/sapi/cli/php_cli.c
+index dc92045..bb28364 100644
+--- a/sapi/cli/php_cli.c
++++ b/sapi/cli/php_cli.c
+@@ -690,8 +690,8 @@ static int do_cli(int argc, char **argv) /* {{{ */
+ 				goto out;
+ 
+ 			case 'v': /* show php version & quit */
+-				php_printf("PHP %s (%s) (built: %s %s) ( %s)\nCopyright (c) 1997-2017 The PHP Group\n%s",
+-					PHP_VERSION, cli_sapi_module.name, __DATE__, __TIME__,
++				php_printf("PHP %s (%s) ( %s)\nCopyright (c) 1997-2017 The PHP Group\n%s",
++					PHP_VERSION, cli_sapi_module.name,
+ #if ZTS
+ 					"ZTS "
+ #else
+diff --git a/sapi/fpm/fpm/fpm_main.c b/sapi/fpm/fpm/fpm_main.c
+index 6768113..545c52e 100644
+--- a/sapi/fpm/fpm/fpm_main.c
++++ b/sapi/fpm/fpm/fpm_main.c
+@@ -1756,9 +1756,9 @@ int main(int argc, char *argv[])
+ 				SG(request_info).no_headers = 1;
+ 
+ #if ZEND_DEBUG
+-				php_printf("PHP %s (%s) (built: %s %s) (DEBUG)\nCopyright (c) 1997-2017 The PHP Group\n%s", PHP_VERSION, sapi_module.name, __DATE__,        __TIME__, get_zend_version());
++				php_printf("PHP %s (%s) (DEBUG)\nCopyright (c) 1997-2017 The PHP Group\n%s", PHP_VERSION, sapi_module.name, get_zend_version());
+ #else
+-				php_printf("PHP %s (%s) (built: %s %s)\nCopyright (c) 1997-2017 The PHP Group\n%s", PHP_VERSION, sapi_module.name, __DATE__, __TIME__,      get_zend_version());
++				php_printf("PHP %s (%s)\nCopyright (c) 1997-2017 The PHP Group\n%s", PHP_VERSION, sapi_module.name, get_zend_version());
+ #endif
+ 				php_request_shutdown((void *) 0);
+ 				fcgi_shutdown();
+diff --git a/sapi/phpdbg/phpdbg.c b/sapi/phpdbg/phpdbg.c
+index b47c7c8..ab94bba 100644
+--- a/sapi/phpdbg/phpdbg.c
++++ b/sapi/phpdbg/phpdbg.c
+@@ -1699,10 +1699,8 @@ phpdbg_main:
+ 				phpdbg_do_help_cmd(exec);
+ 			} else if (show_version) {
+ 				phpdbg_out(
+-					"phpdbg %s (built: %s %s)\nPHP %s, Copyright (c) 1997-2017 The PHP Group\n%s",
++					"phpdbg %s\nPHP %s, Copyright (c) 1997-2017 The PHP Group\n%s",
+ 					PHPDBG_VERSION,
+-					__DATE__,
+-					__TIME__,
+ 					PHP_VERSION,
+ 					get_zend_version()
+ 				);

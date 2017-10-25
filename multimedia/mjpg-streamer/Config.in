@@ -1,0 +1,36 @@
+#
+# Copyright (C) 2014 OpenWrt.org
+#
+
+if PACKAGE_mjpg-streamer
+
+config MJPG_STREAMER_V4L2
+	bool "Compile input_uvc with libv4l2 (camera controls)"
+	default n
+	select PACKAGE_libv4l
+
+config MJPG_STREAMER_INPUT_FILE
+	bool "Install input file plugin"
+	default n
+
+config MJPG_STREAMER_INPUT_UVC
+	bool "Install input uvc plugin"
+	default y
+
+config MJPG_STREAMER_INPUT_TESTPICTURE
+	bool "Install input testpicture plugin"
+	default n
+
+config MJPG_STREAMER_OUTPUT_FILE
+	bool "Install output file plugin"
+	default n
+
+config MJPG_STREAMER_OUTPUT_HTTP
+	bool "Install output http plugin"
+	default y
+
+config MJPG_STREAMER_WWW
+	bool "Install complete Web UI files (includes cambozola)"
+	default n
+
+endif

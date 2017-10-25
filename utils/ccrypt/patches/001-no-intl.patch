@@ -1,0 +1,89 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -123,17 +123,6 @@ AC_MSG_RESULT($UINT32_TYPE)
+ AC_DEFINE_UNQUOTED(UINT32_TYPE,$UINT32_TYPE,unsigned 32 bit integer type)
+ 
+ dnl ----------------------------------------------------------------------
+-dnl Internationalization
+-
+-GETTEXT_PACKAGE=ccrypt
+-AC_SUBST(GETTEXT_PACKAGE)
+-AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Package name for gettext])
+-
+-AM_GNU_GETTEXT
+-AM_GNU_GETTEXT_VERSION([0.14.3])
+-IT_PO_SUBDIR(po)
+-
+-dnl ----------------------------------------------------------------------
+ dnl Libtool (needed by intl/)
+ 
+ LT_INIT
+@@ -153,9 +142,7 @@ AC_SUBST(TAR)
+ dnl ----------------------------------------------------------------------
+ AC_CONFIG_FILES([doc/ccrypt.1
+ 	   doc/ccguess.1
+-	   po/Makefile.in 
+ 	   m4/Makefile 
+-	   intl/Makefile 
+ 	   Makefile 
+ 	   src/Makefile 
+ 	   emacs/Makefile
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -4,7 +4,7 @@
+ 
+ ## Process this file with automake to produce Makefile.in
+ 
+-SUBDIRS = m4 po intl src emacs doc check
++SUBDIRS = m4 src emacs doc check
+ 
+ EXTRA_DIST = m4/ChangeLog config.rpath README-WIN
+ 
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -36,7 +36,7 @@ host_triplet = @host@
+ subdir = .
+ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
+ 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
+-	$(top_srcdir)/configure $(top_srcdir)/intl/Makefile.in \
++	$(top_srcdir)/configure \
+ 	ABOUT-NLS AUTHORS COPYING ChangeLog INSTALL NEWS config.guess \
+ 	config.rpath config.sub depcomp elisp-comp install-sh \
+ 	ltmain.sh missing mkinstalldirs
+@@ -66,7 +66,7 @@ am__CONFIG_DISTCLEAN_FILES = config.stat
+  configure.lineno config.status.lineno
+ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+ CONFIG_HEADER = config.h
+-CONFIG_CLEAN_FILES = intl/Makefile
++CONFIG_CLEAN_FILES =
+ CONFIG_CLEAN_VPATH_FILES =
+ SOURCES =
+ DIST_SOURCES =
+@@ -277,7 +277,7 @@ target_alias = @target_alias@
+ top_build_prefix = @top_build_prefix@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+-SUBDIRS = m4 po intl src emacs doc check
++SUBDIRS = m4 src emacs doc check
+ EXTRA_DIST = m4/ChangeLog config.rpath README-WIN
+ ACLOCAL_AMFLAGS = -I m4
+ all: config.h
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -56,4 +56,4 @@ uninstall-local:
+ # internationalization stuff
+ localedir = $(datadir)/locale
+ INCLUDES = -I../intl -I$(top_srcdir)/intl -DLOCALEDIR=\"$(localedir)\"
+-LIBS = @LIBINTL@ @LIBS@
++LIBS = @LIBS@
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -159,7 +159,7 @@ LDFLAGS = @LDFLAGS@
+ LIBICONV = @LIBICONV@
+ LIBINTL = @LIBINTL@
+ LIBOBJS = @LIBOBJS@
+-LIBS = @LIBINTL@ @LIBS@
++LIBS = @LIBS@
+ LIBTOOL = @LIBTOOL@
+ LIPO = @LIPO@
+ LN_S = @LN_S@

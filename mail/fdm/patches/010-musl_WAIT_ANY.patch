@@ -1,0 +1,13 @@
+--- a/fdm.c
++++ b/fdm.c
+@@ -22,6 +22,10 @@
+ #include <sys/utsname.h>
+ #include <sys/wait.h>
+ 
++#ifndef WAIT_ANY
++#define WAIT_ANY (-1)
++#endif
++
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <fnmatch.h>

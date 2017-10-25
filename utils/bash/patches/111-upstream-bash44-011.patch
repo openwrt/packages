@@ -1,0 +1,26 @@
+Index: bash-4.4/patchlevel.h
+===================================================================
+--- bash-4.4.orig/patchlevel.h
++++ bash-4.4/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 10
++#define PATCHLEVEL 11
+ 
+ #endif /* _PATCHLEVEL_H_ */
+Index: bash-4.4/sig.c
+===================================================================
+--- bash-4.4.orig/sig.c
++++ bash-4.4/sig.c
+@@ -585,7 +585,8 @@ termsig_handler (sig)
+ #if defined (JOB_CONTROL)
+   if (sig == SIGHUP && (interactive || (subshell_environment & (SUBSHELL_COMSUB|SUBSHELL_PROCSUB))))
+     hangup_all_jobs ();
+-  end_job_control ();
++  if ((subshell_environment & (SUBSHELL_COMSUB|SUBSHELL_PROCSUB)) == 0)
++    end_job_control ();
+ #endif /* JOB_CONTROL */
+ 
+ #if defined (PROCESS_SUBSTITUTION)

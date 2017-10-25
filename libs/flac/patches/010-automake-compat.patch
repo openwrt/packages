@@ -1,0 +1,11 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -33,6 +33,8 @@ ACLOCAL_AMFLAGS = -I m4
+ 
+ SUBDIRS = include m4 src build objs
+ 
++ACLOCAL_AMFLAGS = -I m4
++
+ EXTRA_DIST = \
+ 	COPYING.FDL \
+ 	COPYING.GPL \

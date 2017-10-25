@@ -1,0 +1,11 @@
+--- a/plugin_netinfo.c
++++ b/plugin_netinfo.c
+@@ -264,7 +264,7 @@ static void my_netmask_short(RESULT * re
+     sin = get_netmask(arg1);
+     if (NULL != sin) {
+ 	logval = (long double) (get_netmask(arg1)->sin_addr.s_addr);
+-	netlen = (int) rint(log2l(logval) / log2l(2.0));
++	netlen = (int) rint(log2f(logval) / log2f(2.0));
+ 	qprintf(value, sizeof(value), "/%d", netlen);
+     } else {
+ 	qprintf(value, sizeof(value), "/?");

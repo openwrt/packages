@@ -1,0 +1,64 @@
+--- a/configure
++++ b/configure
+@@ -414,7 +414,7 @@ as_fn_error ()
+     $as_echo "$as_me:${as_lineno-$LINENO}: error: $2" >&$4
+   fi
+   $as_echo "$as_me: error: $2" >&2
+-  as_fn_exit $as_status
++  # as_fn_exit $as_status
+ } # as_fn_error
+ 
+ if expr a : '\(a\)' >/dev/null 2>&1 &&
+@@ -5909,8 +5909,6 @@ else
+ fi
+ rm -f core conftest.err conftest.$ac_objext \
+     conftest$ac_exeext conftest.$ac_ext
+-test -f /lib/libsec.a || test -f /usr/lib/libsec.a && LIBS="$LIBS -lsec"
+-test -f /lib/libshadow.a || test -f /usr/lib/libshadow.a && LIBS="$LIBS -lshadow"
+ oldlibs="$LIBS"
+ LIBS="$LIBS -lsun"
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking IRIX sun library..." >&5
+@@ -6991,7 +6989,7 @@ as_fn_error ()
+     $as_echo "$as_me:${as_lineno-$LINENO}: error: $2" >&$4
+   fi
+   $as_echo "$as_me: error: $2" >&2
+-  as_fn_exit $as_status
++  # as_fn_exit $as_status
+ } # as_fn_error
+ 
+ 
+--- a/pty.c
++++ b/pty.c
+@@ -39,9 +39,9 @@
+ #endif
+ 
+ /* for solaris 2.1, Unixware (SVR4.2) and possibly others */
+-#ifdef HAVE_STROPTS_H
+-# include <sys/stropts.h>
+-#endif
++//#ifdef HAVE_STROPTS_H
++//# include <sys/stropts.h>
++//#endif
+ 
+ #if defined(sun) && defined(LOCKPTY) && !defined(TIOCEXCL)
+ # include <sys/ttold.h>
+--- a/sched.h
++++ b/sched.h
+@@ -27,6 +27,11 @@
+  * $Id$ GNU
+  */
+ 
++#ifndef __SCHED_H
++#define __SCHED_H
++
++#include <sys/time.h>
++
+ struct event
+ {
+   struct event *next;
+@@ -46,3 +51,5 @@ struct event
+ #define EV_READ		1
+ #define EV_WRITE	2
+ #define EV_ALWAYS	3
++
++#endif

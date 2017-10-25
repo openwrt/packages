@@ -1,0 +1,31 @@
+diff --git a/radsecproxy.c b/radsecproxy.c
+index 563c4a8..9fa076d 100644
+--- a/radsecproxy.c
++++ b/radsecproxy.c
+@@ -3382,18 +3382,16 @@ int radsecproxy_main(int argc, char **argv) {
+ 	options.loglevel = loglevel;
+     else if (options.loglevel)
+ 	debug_set_level(options.loglevel);
+-    if (!foreground) {
+-	debug_set_destination(options.logdestination
+-                              ? options.logdestination
+-                              : "x-syslog:///", LOG_TYPE_DEBUG);
++    debug_set_destination(options.logdestination
++			  ? options.logdestination
++			  : "x-syslog:///", LOG_TYPE_DEBUG);
+ #if defined(WANT_FTICKS)
+-    	if (options.ftickssyslogfacility) {
+-            debug_set_destination(options.ftickssyslogfacility,
+-                                  LOG_TYPE_FTICKS);
+-            free(options.ftickssyslogfacility);
+-    	}
+-#endif
++    if (options.ftickssyslogfacility) {
++	debug_set_destination(options.ftickssyslogfacility,
++			      LOG_TYPE_FTICKS);
++	free(options.ftickssyslogfacility);
+     }
++#endif
+     free(options.logdestination);
+ 
+     if (!list_first(clconfs))

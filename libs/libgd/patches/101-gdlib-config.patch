@@ -1,0 +1,20 @@
+--- a/config/gdlib-config.in
++++ b/config/gdlib-config.in
+@@ -74,7 +74,7 @@ while test $# -gt 0; do
+ 	echo @LDFLAGS@
+ 	;;
+     --libs)
+-	echo -lgd @LIBS@ @LIBICONV@
++	echo -lgd @LIBS@
+ 	;;
+     --cflags|--includes)
+ 	echo -I@includedir@
+@@ -87,7 +87,7 @@ while test $# -gt 0; do
+ 	echo "includedir: $includedir"
+ 	echo "cflags:     -I@includedir@"
+ 	echo "ldflags:    @LDFLAGS@"
+-	echo "libs:       @LIBS@ @LIBICONV@"
++	echo "libs:       @LIBS@"
+ 	echo "libdir:     $libdir"
+ 	echo "features:   @FEATURES@"
+ 	;;

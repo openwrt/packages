@@ -1,0 +1,54 @@
+From: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Date: Mon, 16 Mar 2015 17:40:12 +0000 (-0400)
+Subject: Avoid breakage with gcc 5
+X-Git-Tag: libgpg-error-1.19~7
+X-Git-Url: http://git.gnupg.org/cgi-bin/gitweb.cgi?p=libgpg-error.git;a=commitdiff_plain;h=c01c8f0c4f55d76b037c7f6aa44ad25ede18d38a
+
+Avoid breakage with gcc 5
+
+* src/Makefile.am: Add -P to the C preprocessor when building
+mkerrcodes.h, to avoid a noisy intermediate pipeline.
+
+--
+
+With gcc 5 without this patch, we see many errors like the following:
+
+gcc -I. -I. -o mkerrcodes ./mkerrcodes.c
+In file included from ./mkerrcodes.c:26:0:
+./mkerrcodes.h:9:5: error: expected expression before ‘,’ token
+   { , "GPG_ERR_E2BIG" },
+     ^
+./mkerrcodes.h:10:5: error: expected expression before ‘,’ token
+   { , "GPG_ERR_EACCES" },
+     ^
+
+This patch cleans up the generated mkerrcodes.h by making the
+intermediate stage clean for all the versions of gcc i tested (4.x and
+5).
+
+Debian-Bug-Id: 777374
+Signed-Off-By: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+---
+
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -140,7 +140,7 @@ code-to-errno.h: Makefile mkerrnos.awk e
+ # It is correct to use $(CPP).  We want the host's idea of the error codes.
+ mkerrcodes.h: Makefile mkerrcodes.awk $(gpg_extra_headers)
+ 	$(AWK) -f $(srcdir)/mkerrcodes1.awk $(srcdir)/errnos.in >_$@
+-	$(CPP) $(CPPFLAGS) $(extra_cppflags) _$@ | grep GPG_ERR_ | \
++	$(CPP) $(CPPFLAGS) $(extra_cppflags) -P _$@ | grep GPG_ERR_ | \
+                $(AWK) -f $(srcdir)/mkerrcodes.awk >$@
+ 	-rm _$@
+ 
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -979,7 +979,7 @@ code-to-errno.h: Makefile mkerrnos.awk e
+ # It is correct to use $(CPP).  We want the host's idea of the error codes.
+ mkerrcodes.h: Makefile mkerrcodes.awk $(gpg_extra_headers)
+ 	$(AWK) -f $(srcdir)/mkerrcodes1.awk $(srcdir)/errnos.in >_$@
+-	$(CPP) $(CPPFLAGS) $(extra_cppflags) _$@ | grep GPG_ERR_ | \
++	$(CPP) $(CPPFLAGS) $(extra_cppflags) -P _$@ | grep GPG_ERR_ | \
+                $(AWK) -f $(srcdir)/mkerrcodes.awk >$@
+ 	-rm _$@
+ 

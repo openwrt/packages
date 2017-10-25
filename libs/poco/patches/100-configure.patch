@@ -1,0 +1,15 @@
+--- a/configure
++++ b/configure
+@@ -231,9 +231,9 @@
+		;;
+
+	*)
+-		showhelp
+-		exit 1
+-		;;
++#		showhelp
++#		exit 1
++#		;;
+	esac
+
+ 	shift

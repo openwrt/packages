@@ -1,0 +1,22 @@
+Make it possible to use system mbedtls version
+
+--- a/resource/csdk/connectivity/src/SConscript
++++ b/resource/csdk/connectivity/src/SConscript
+@@ -73,16 +73,7 @@ if env.get('SECURED') == '1':
+ 	env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/security/include'])
+ 	env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
+ 	env.AppendUnique(CPPPATH = [os.path.join(root_dir, 'external/inc')])
+-	tls_path = 'extlibs/mbedtls';
+-	tls_headers_path = 'mbedtls/include';
+-	if ca_os == 'tizen' and os.path.exists(root_dir + '/' + tls_path):
+-		env.SConscript(os.path.join(root_dir, tls_path + '/SConscript'))
+-		env.AppendUnique(CPPPATH = [os.path.join(root_dir, tls_path + '/' + tls_headers_path)])
+-	else:
+-		if ca_os != 'android':
+-			env.SConscript('#' + tls_path + '/SConscript')
+-		env.AppendUnique(CPPPATH = ['#' + tls_path + '/' + tls_headers_path])
+-		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_ssl.c')])
++	env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_ssl.c')])
+ 
+ if ((secured == '1') and (with_tcp == True)):
+ 	env.AppendUnique(CPPDEFINES = ['__WITH_TLS__'])

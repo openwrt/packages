@@ -1,0 +1,118 @@
+#
+# Copyright (C) 2006-2014 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=dovecot
+PKG_VERSION:=2.2.33.1
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=http://www.dovecot.org/releases/2.2
+PKG_HASH:=e4d9a182408100dce70e05dad1f8a703252a497aeb25706642286d84a118890b
+PKG_LICENSE:=LGPL-2.1 MIT BSD-3-Clause Unique
+PKG_LICENSE_FILES:=COPYING COPYING.LGPL COPYING.MIT
+
+PKG_BUILD_DEPENDS:=libiconv
+
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/dovecot
+  SECTION:=mail
+  CATEGORY:=Mail
+  DEPENDS:=+DOVECOT_LDAP:libopenldap +DOVECOT_MYSQL:libmysqlclient +DOVECOT_PGSQL:libpq +DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap
+  TITLE:=An IMAP and POP3 daemon
+  MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
+  URL:=http://www.dovecot.org/
+  USERID:=dovecot=59:dovecot=59
+endef
+
+define Package/dovecot/description
+ Dovecot is a program which provides POP3 and IMAP services.
+endef
+
+define Package/dovecot/config
+        menu "Select dovecot build options"
+                depends on PACKAGE_dovecot
+                config DOVECOT_LDAP
+                        bool "LDAP support"
+                        default n
+                        help
+                          Implements LDAP support in dovecot.
+                config DOVECOT_MYSQL
+                        bool "MYSQL support"
+                        default n
+                        help
+                          Implements MYSQL support in dovecot.
+                config DOVECOT_PGSQL
+                        bool "PostgreSQL support"
+                        default n
+                        help
+                          Implements PostgreSQL support in dovecot.
+                config DOVECOT_SQLITE
+                        bool "SQLite support"
+                        default n
+                        help
+                          Implements SQLite DB support in dovecot.
+        endmenu
+endef
+
+CONFIGURE_ARGS += \
+	--without-gssapi \
+	--without-pam \
+	--with-moduledir=/usr/lib/dovecot/modules \
+	--with-notify=dnotify \
+	--without-lzma \
+	--without-lz4 \
+	--with-icu=no \
+	$(if $(CONFIG_DOVECOT_LDAP),--with-ldap=yes,--with-ldap=no) \
+	$(if $(CONFIG_DOVECOT_MYSQL),--with-mysql=yes,--with-mysql=no) \
+	$(if $(CONFIG_DOVECOT_PGSQL),--with-pgsql=yes,--with-pgsql=no) \
+	$(if $(CONFIG_DOVECOT_SQLITE),--with-sqlite=yes,--with-sqlite=no)
+
+CONFIGURE_VARS += \
+	RPCGEN= \
+	i_cv_signed_size_t=no \
+	i_cv_signed_time_t=no \
+	i_cv_gmtime_max_time_t=32 \
+	i_cv_mmap_plays_with_write=yes \
+	i_cv_fd_passing=yes \
+	i_cv_c99_vsnprintf=yes \
+	lib_cv_va_copy=yes \
+	lib_cv_va_copy=yes \
+	lib_cv___va_copy=yes \
+	lib_cv_va_val_copy=yes
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/dovecot $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dovecot $(1)/usr/lib/
+	rm -f $(1)/usr/lib/dovecot/*.la
+endef
+
+
+define Package/dovecot/install
+	$(INSTALL_DIR)  $(1)/etc/init.d \
+			$(1)/etc/dovecot \
+			$(1)/usr/share/doc/dovecot/example-config \
+			$(1)/usr/lib/dovecot \
+			$(1)/usr/bin \
+			$(1)/usr/sbin
+	$(CP) $(PKG_INSTALL_DIR)/etc/dovecot/* $(1)/etc/dovecot/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dovecot/* $(1)/usr/lib/dovecot/
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/doc/dovecot/example-config $(1)/usr/share/doc/dovecot/example-config
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/doveconf $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/dovecot.init $(1)/etc/init.d/dovecot
+	rm  $(1)/usr/lib/dovecot/dovecot-config
+	find $(1)/usr/lib/dovecot/ -name "*.a" -o -name "*.la" | xargs rm
+endef
+
+$(eval $(call BuildPackage,dovecot))

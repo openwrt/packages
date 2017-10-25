@@ -1,0 +1,32 @@
+--- a/setup.py
++++ b/setup.py
+@@ -1083,6 +1083,7 @@ class PyBuildExt(build_ext):
+                         if db_setup_debug: print "db lib: ", dblib, "not found"
+ 
+         except db_found:
++            rt_dblib_dir = None if cross_compiling else dblib_dir
+             if db_setup_debug:
+                 print "bsddb using BerkeleyDB lib:", db_ver, dblib
+                 print "bsddb lib dir:", dblib_dir, " inc dir:", db_incdir
+@@ -1097,7 +1098,7 @@ class PyBuildExt(build_ext):
+             exts.append(Extension('_bsddb', ['_bsddb.c'],
+                                   depends = ['bsddb.h'],
+                                   library_dirs=dblib_dir,
+-                                  runtime_library_dirs=dblib_dir,
++                                  runtime_library_dirs=rt_dblib_dir,
+                                   include_dirs=db_incs,
+                                   libraries=dblibs))
+         else:
+@@ -1308,10 +1309,11 @@ class PyBuildExt(build_ext):
+                             break
+                 elif cand == "bdb":
+                     if db_incs is not None:
++                        rt_dblib_dir = None if cross_compiling else dblib_dir
+                         print "building dbm using bdb"
+                         dbmext = Extension('dbm', ['dbmmodule.c'],
+                                            library_dirs=dblib_dir,
+-                                           runtime_library_dirs=dblib_dir,
++                                           runtime_library_dirs=rt_dblib_dir,
+                                            include_dirs=db_incs,
+                                            define_macros=[
+                                                ('HAVE_BERKDB_H', None),

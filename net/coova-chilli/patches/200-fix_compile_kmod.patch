@@ -1,0 +1,17 @@
+--- a/src/linux/Makefile
++++ b/src/linux/Makefile
+@@ -21,11 +21,11 @@ lib%.so: lib%.o
+ 	$(CC) $(CFLAGS) -shared -o $@ $^;
+ 
+ lib%.o: lib%.c
+-	$(CC) $(CFLAGS) -fPIC -O2 -Wall -I${KERNEL_DIR}/include -D_INIT=lib$*_init -c -o $@ $<;
++	$(CC) $(CFLAGS) -D_INIT=lib$*_init -c -o $@ $<;
+ 
+ install: modules_install libxt_coova.so
+-	mkdir -p $(DESTDIR)/lib/xtables/
+-	cp libxt_coova.so $(DESTDIR)/lib/xtables/
++	mkdir -p $(DESTDIR)/usr/lib/iptables/
++	cp libxt_coova.so $(DESTDIR)/usr/lib/iptables/
+ 
+ distdir:
+ 

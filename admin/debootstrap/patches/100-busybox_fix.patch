@@ -1,0 +1,11 @@
+--- a/usr/share/debootstrap/functions
++++ b/usr/share/debootstrap/functions
+@@ -859,8 +859,6 @@ choose_extractor () {
+ 
+ 	if [ -n "$EXTRACTOR_OVERRIDE" ]; then
+ 		extractor="$EXTRACTOR_OVERRIDE"
+-	elif type dpkg-deb >/dev/null 2>&1; then
+-		extractor="dpkg-deb"
+ 	else
+ 		extractor="ar"
+ 	fi

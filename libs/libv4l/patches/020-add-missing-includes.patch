@@ -1,0 +1,28 @@
+--- a/utils/rds-ctl/rds-ctl.cpp
++++ b/utils/rds-ctl/rds-ctl.cpp
+@@ -29,6 +29,7 @@
+ #include <inttypes.h>
+ #include <getopt.h>
+ #include <sys/types.h>
++#include <ctype.h>
+ #include <fcntl.h>
+ #include <errno.h>
+ #include <sys/ioctl.h>
+@@ -36,6 +37,7 @@
+ #include <dirent.h>
+ #include <config.h>
+ #include <signal.h>
++#include <time.h>
+ 
+ #include <linux/videodev2.h>
+ #include <libv4l2.h>
+--- a/utils/v4l2-ctl/v4l2-ctl-streaming.cpp
++++ b/utils/v4l2-ctl/v4l2-ctl-streaming.cpp
+@@ -14,6 +14,7 @@
+ #include <sys/mman.h>
+ #include <dirent.h>
+ #include <math.h>
++#include <time.h>
+ 
+ #include "v4l2-ctl.h"
+ 

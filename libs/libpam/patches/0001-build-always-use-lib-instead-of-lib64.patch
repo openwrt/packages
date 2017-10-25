@@ -1,0 +1,36 @@
+From 1948dd03d69c1a50e92d7e8868b7d6eabd4873c1 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Wed, 17 Jun 2015 16:11:31 +0800
+Subject: [PATCH 1/7] build: always use /lib instead of /lib64.
+
+* configure.ac: OpenWrt does not use /lib64.
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ configure.ac |   10 +---------
+ 1 file changed, 1 insertion(+), 9 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index fd0e310..306b6e2 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -25,15 +25,7 @@ dnl If we use /usr as prefix, use /etc for config files
+         then
+                 sysconfdir="/etc"
+         fi
+-	if test ${libdir} = '${exec_prefix}/lib'
+-	then
+-		case "`uname -m`" in
+-		    x86_64|ppc64|s390x|sparc64)
+-			libdir="/lib64" ;;
+-		    *)
+-			libdir="/lib" ;;
+-		esac
+-	fi
++	libdir="/lib"
+ 	if test ${sbindir} = '${exec_prefix}/sbin'
+         then
+                 sbindir="/sbin"
+-- 
+1.7.10.4
+

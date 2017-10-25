@@ -1,0 +1,266 @@
+#!/bin/sh /etc/rc.common
+
+START=19
+USE_PROCD=1
+PROG=/usr/sbin/dhcpd
+
+lease_file=/tmp/dhcpd.leases
+config_file=/tmp/run/dhcpd.conf
+
+time2seconds() {
+	local timestring=$1
+	local multiplier number suffix
+
+	suffix="${timestring//[0-9 ]}"
+	number="${timestring%%$suffix}"
+	[ "$number$suffix" != "$timestring" ] && return 1
+	case "$suffix" in
+		"" | s)
+			multiplier=1
+			;;
+		m)
+			multiplier=60
+			;;
+		h)
+			multiplier=3600
+			;;
+		d)
+			multiplier=86400
+			;;
+		w)
+			multiplier=604800
+			;;
+		*)
+			return 1
+			;;
+	esac
+	echo $(( number * multiplier ))
+}
+
+# duplicated from dnsmasq init script
+hex_to_hostid() {
+	local var="$1"
+	local hex="${2#0x}" # strip optional "0x" prefix
+
+	if [ -n "${hex//[0-9a-fA-F]/}" ]; then
+		# is invalid hex literal
+		return 1
+	fi
+
+	# convert into host id
+	export "$var=$(
+		printf "%0x:%0x" \
+		$(((0x$hex >> 16) % 65536)) \
+		$(( 0x$hex        % 65536))
+		)"
+
+	return 0
+}
+
+static_host_add() {
+	local cfg="$1"
+	local broadcast hostid macn macs mac name ip leasetime
+
+	config_get macs "$cfg" "mac"
+	[ -n "$macs" ] || return 0
+	config_get name "$cfg" "name"
+	[ -n "$name" ] || return 0
+	config_get ip "$cfg" "ip"
+	[ -n "$ip" ] || return 0
+
+	config_get_bool broadcast "$cfg" "broadcast" 0
+	config_get dns "$cfg" "dns"
+	config_get gateway "$cfg" "gateway"
+	config_get leasetime "$cfg" "leasetime"
+	if [ -n "$leasetime" ] ; then
+		leasetime="$(time2seconds "$leasetime")"
+		[ "$?" -ne 0 ] && return 1
+	fi
+
+	config_get hostid "$cfg" "hostid"
+	if [ -n "$hostid" ] ; then
+		hex_to_hostid hostid "$hostid" || return 1
+	fi
+
+	macn=0
+	for mac in $macs; do
+		macn=$(( macn + 1 ))
+	done
+
+	for mac in $macs; do
+		local secname="$name"
+		if [ $macn -gt 1 ] ; then
+			secname="${name}-${mac//:}"
+		fi
+		echo "host $secname {"
+		echo " hardware ethernet $mac;"
+		echo " fixed-address $ip;"
+		echo " option host-name \"$name\";"
+		if [ "$broadcast" -eq 1 ] ; then
+			echo " always-broadcast true;"
+		fi
+		if [ -n "$leasetime" ] ; then
+			echo " default-lease-time $leasetime;"
+			echo " max-lease-time $leasetime;"
+		fi
+		if [ -n "$hostid" ] ; then
+			echo " option dhcp-client-identifier $hostid;"
+		fi
+		if [ -n "$dns" ] ; then
+			echo " option domain-name-servers $dns;"
+		fi
+		if [ -n "$gateway" ] ; then
+			echo " option routers $gateway;"
+		fi
+		echo "}"
+	done
+}
+
+static_hosts() {
+	config_foreach static_host_add host "$@"
+}
+
+gen_dhcp_subnet() {
+	echo "subnet $NETWORK netmask $NETMASK {"
+	echo " range $START $END;"
+	echo " option subnet-mask $netmask;"
+	if [ "$BROADCAST" != "0.0.0.0" ] ; then
+		echo " option broadcast-address $BROADCAST;"
+	fi
+	if [ "$dynamicdhcp" -eq 0 ] ; then
+		if [ "$authoritative" -eq 1 ] ; then
+			echo " deny unknown-clients;"
+		else
+			echo " ignore unknown-clients;"
+		fi
+	fi
+	if [ -n "$leasetime" ] ; then
+		echo " default-lease-time $leasetime;"
+		echo " max-lease-time $leasetime;"
+	fi
+	echo " option routers $gateway;"
+	echo " option domain-name-servers $DNS;"
+	echo "}"
+}
+
+dhcpd_add() {
+	local cfg="$1"
+	local dhcp6range="::"
+	local dynamicdhcp end gateway ifname ignore leasetime limit net netmask
+	local proto networkid start subnet
+	local IP NETMASK BROADCAST NETWORK PREFIX DNS START END
+
+	config_get_bool ignore "$cfg" "ignore" 0
+	[ "$ignore" = "0" ] || return 0
+
+	config_get net "$cfg" "interface"
+	[ -n "$net" ] || return 0
+
+	config_get start "$cfg" "start"
+	[ -n "$start" ] || return 0
+
+	config_get limit "$cfg" "limit"
+	[ -n "$limit" ] || return 0
+
+	network_get_subnet subnet "$net" || return 0
+	network_get_device ifname "$net" || return 0
+	network_get_protocol proto "$net" || return 0
+
+	[ static = "$proto" ] || return 0
+
+	config_get_bool dynamicdhcp "$cfg" "dynamicdhcp" 1
+
+	dhcp_ifs="$dhcp_ifs $ifname"
+
+	eval "$(ipcalc.sh $subnet $start $limit)"
+
+	config_get netmask "$cfg" "netmask" "$NETMASK"
+	config_get leasetime "$cfg" "leasetime"
+	if [ -n "$leasetime" ] ; then
+		leasetime="$(time2seconds "$leasetime")"
+		[ "$?" -ne 0 ] && return 1
+	fi
+
+	if network_get_dnsserver dnsserver "$net" ; then
+		for dnsserv in $dnsserver ; do
+			DNS="$DNS${DNS:+, }$dnsserv"
+		done
+	else
+		DNS="$IP"
+	fi
+
+	if ! network_get_gateway gateway "$net" ; then
+		gateway="$IP"
+	fi
+
+	gen_dhcp_subnet >> $config_file
+}
+
+general_config() {
+	local always_broadcast boot_unknown_clients log_facility
+	local default_lease_time max_lease_time
+	config_get_bool always_broadcast "isc_dhcpd" "always_broadcast" 0
+	config_get_bool authoritative "isc_dhcpd" "authoritative" 1
+	config_get_bool boot_unknown_clients "isc_dhcpd" "boot_unknown_clients" 1
+	config_get default_lease_time "isc_dhcpd" "default_lease_time" 3600
+	config_get max_lease_time "isc_dhcpd" "max_lease_time" 86400
+	config_get log_facility "isc_dhcpd" "log_facility"
+
+	[ $always_broadcast -eq 1 ] && echo "always-broadcast true;"
+	[ $authoritative -eq 1 ] && echo "authoritative;"
+	[ $boot_unknown_clients -eq 0 ] && echo "boot-unknown-clients false;"
+
+	default_lease_time="$(time2seconds "$default_lease_time")"
+	[ "$?" -ne 0 ] && return 1
+	max_lease_time="$(time2seconds "$max_lease_time")"
+	[ "$?" -ne 0 ] && return 1
+
+	if [ -n "$log_facility" ] ; then
+		echo "log-facility $log_facility;"
+	fi
+	echo "default-lease-time $default_lease_time;"
+	echo "max-lease-time $max_lease_time;"
+}
+
+start_service() {
+	if [ -n "$DHCPD_BOOT" ] ; then
+		return 0
+	fi
+
+	if [ ! -e $lease_file ] ; then
+		touch $lease_file
+	fi
+
+	dhcp_ifs=""
+
+	if [ -e "/etc/dhcpd.conf" ] ; then
+		config_file="/etc/dhcpd.conf"
+	else
+		. /lib/functions/network.sh
+
+		config_load dhcp
+		local authoritative
+		general_config > $config_file
+
+		config_foreach dhcpd_add dhcp
+
+		static_hosts >> $config_file
+
+		[ -z "$dhcp_ifs" ] && return 0
+	fi
+
+	procd_open_instance
+	procd_set_param command $PROG -q -f -cf $config_file -lf $lease_file $dhcp_ifs
+	procd_close_instance
+}
+
+boot() {
+	DHCPD_BOOT=1
+	start "$@"
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "dhcp"
+	procd_add_raw_trigger "interface.*" 3000 /etc/init.d/dhcpd reload
+}

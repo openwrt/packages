@@ -1,0 +1,28 @@
+From a35daea1b8be768d1b0be6eae157fbf3e5380f92 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Wed, 17 Jun 2015 18:22:31 +0800
+Subject: [PATCH 4/7] build: fix build when crypt() is not part of crypt_libs.
+
+* configure.ac: ditto.
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ configure.ac |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index ca4bf5b..6553c78 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -408,7 +408,7 @@ AS_IF([test "x$ac_cv_header_xcrypt_h" = "xyes"],
+   [crypt_libs="crypt"])
+ 
+ BACKUP_LIBS=$LIBS
+-AC_SEARCH_LIBS([crypt],[$crypt_libs], LIBCRYPT="-l$ac_lib", LIBCRYPT="")
++AC_SEARCH_LIBS([crypt],[$crypt_libs], LIBCRYPT="${ac_lib:+-l$ac_lib}", LIBCRYPT="")
+ AC_CHECK_FUNCS(crypt_r crypt_gensalt_r)
+ LIBS=$BACKUP_LIBS
+ AC_SUBST(LIBCRYPT)
+-- 
+1.7.10.4
+

@@ -1,0 +1,54 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=90
+USE_PROCD=1
+
+start_instance() {
+	local cfg="$1"
+
+	config_get repository "$cfg" repository
+	if [ -z "$repository" ]; then
+		echo "repository is not defined in $1, skipping"
+		return
+	fi
+
+	config_get_bool create "$cfg" create 0
+
+	if [ "$create" -eq 0 -a ! -f "$repository" ]; then
+		echo "in $1 create option is '$create' and repository '$repository' is not a regular file, skipping"
+		return
+	fi
+
+	if [ "$create" -eq 1 -a ! -d `dirname $repository` ]; then
+		mkdir -p `dirname $repository`
+		if [ "$?" -ne 0 ]; then
+			echo "could not create directory, skipping"
+			return
+		fi
+	fi
+
+	config_get port "$cfg" port ""
+	if [ -z "$port" ]; then
+		echo "port is not defined in $1, skipping"
+		return
+	fi
+
+	config_get_bool debug "$cfg" debug 0
+	config_get_bool localhost "$cfg" localhost 1
+	config_get_bool scgi "$cfg" scgi 0
+
+	procd_open_instance
+	procd_set_param command /usr/bin/fossil server "$repository" --port $port
+	[ "$debug" -eq 1 ] && procd_append_param command --th-trace
+	[ "$create" -eq 1 ] && procd_append_param command --user root --create
+	[ "$localhost" -eq 1 ] && procd_append_param command --localhost
+	[ "$scgi" -eq 1 ] && procd_append_param command --scgi
+	procd_set_param respawn
+	procd_close_instance
+}
+
+start_service() {
+	config_load 'fossil'
+	config_foreach start_instance 'server'
+}

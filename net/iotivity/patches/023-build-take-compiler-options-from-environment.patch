@@ -1,0 +1,126 @@
+From 5f9513eb341d520d10c48f8ba2bd145063405fdd Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sat, 10 Dec 2016 18:08:05 +0100
+Subject: [PATCH 23/23] build: take compiler options from environment
+
+This makes it possible to compile IoTivity with custom compiler
+options. This way someone can use optimized compiler settings for the
+target CPU. I want to use this in OpenWrt / LEDE to build specific
+IoTivity binaries for each CPU architecture, there the build system
+provides the matching compiler options.
+
+Change-Id: I86772f73b81c41d7e96e51b434fd9e3b4992753a
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ build_common/SConscript                           | 25 +++++++++++++++++++++
+ build_common/linux/SConscript                     | 27 ++++++++++++-----------
+ resource/csdk/connectivity/build/linux/SConscript | 27 ++++++++++++-----------
+ 3 files changed, 53 insertions(+), 26 deletions(-)
+
+--- a/build_common/SConscript
++++ b/build_common/SConscript
+@@ -120,6 +120,7 @@ help_vars.Add(PathVariable('ANDROID_NDK'
+ help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
+ help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
+ help_vars.Add(EnumVariable('WITH_UPSTREAM_LIBCOAP', 'Use latest stable version of LibCoAP downloaded from github', default_with_upstream_libcoap, allowed_values=('0','1')))
++help_vars.Add(BoolVariable('WITH_ENV', 'Use compiler options from environment', False))
+ 
+ AddOption('--prefix',
+                   dest='prefix',
+@@ -153,6 +154,30 @@ else:
+ 			)
+ Help(help_vars.GenerateHelpText(env))
+ 
++if env.get('WITH_ENV'):
++	env['ENV'] = os.environ
++	if 'CC' in os.environ:
++		env['CC'] = Split(os.environ['CC'])
++		print "using CC from environment: %s" % env['CC']
++	if 'CXX' in os.environ:
++		env['CXX'] = Split(os.environ['CXX'])
++		print "using CXX from environment: %s" % env['CXX']
++	if 'CFLAGS' in os.environ:
++		env['CFLAGS'] = Split(os.environ['CFLAGS'])
++		print "using CFLAGS from environment: %s" % env['CFLAGS']
++	if 'CXXFLAGS' in os.environ:
++		env['CXXFLAGS'] = Split(os.environ['CXXFLAGS'])
++       		print "using CXXFLAGS from environment: %s" % env['CXXFLAGS']
++	if 'CCFLAGS' in os.environ:
++		env['CCFLAGS'] = Split(os.environ['CCFLAGS'])
++		print "using CCFLAGS from environment: %s" % env['CCFLAGS']
++	if 'CPPFLAGS' in os.environ:
++		env['CPPFLAGS'] = Split(os.environ['CPPFLAGS'])
++		print "using CPPFLAGS from environment: %s" % env['CPPFLAGS']
++	if 'LDFLAGS' in os.environ:
++		env['LINKFLAGS'] = Split(os.environ['LDFLAGS'])
++		print "using LDFLAGS/LINKFLAGS from environment: %s" % env['LINKFLAGS']
++
+ tc_set_msg = '''
+ ************************************ Warning **********************************
+ *   Enviornment variable TC_PREFIX/TC_PATH is set. It will change the default *
+--- a/build_common/linux/SConscript
++++ b/build_common/linux/SConscript
+@@ -23,16 +23,17 @@ env.AppendUnique(CCFLAGS = ['-Wall', '-W
+ env.AppendUnique(LIBS = ['dl', 'pthread', 'uuid'])
+ 
+ # Set arch flags that match best TARGET_ARCH variable
+-target_arch = env.get('TARGET_ARCH')
+-if target_arch in ['x86']:
+-	env.AppendUnique(CCFLAGS = ['-m32'])
+-	env.AppendUnique(LINKFLAGS = ['-m32'])
+-elif target_arch in ['x86_64']:
+-	env.AppendUnique(CCFLAGS = ['-m64'])
+-	env.AppendUnique(LINKFLAGS = ['-m64'])
+-elif target_arch in ['arm']:
+-	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
+-elif target_arch in ['arm-v7a', 'armeabi-v7a']:
+-	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+-elif target_arch.find('arm64') > 0:
+-	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
++if not env.get('WITH_ENV'):
++	target_arch = env.get('TARGET_ARCH')
++	if target_arch in ['x86']:
++		env.AppendUnique(CCFLAGS = ['-m32'])
++		env.AppendUnique(LINKFLAGS = ['-m32'])
++	elif target_arch in ['x86_64']:
++		env.AppendUnique(CCFLAGS = ['-m64'])
++		env.AppendUnique(LINKFLAGS = ['-m64'])
++	elif target_arch in ['arm']:
++		env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
++	elif target_arch in ['arm-v7a', 'armeabi-v7a']:
++		env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
++	elif target_arch.find('arm64') > 0:
++		env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
+--- a/resource/csdk/connectivity/build/linux/SConscript
++++ b/resource/csdk/connectivity/build/linux/SConscript
+@@ -22,16 +22,17 @@ env.AppendUnique(CCFLAGS = ['-Wall', '-f
+ env.AppendUnique(LIBS = ['dl', 'pthread'])
+ 
+ # Set arch flags
+-target_arch = env.get('TARGET_ARCH')
+-if target_arch in ['x86']:
+-	env.AppendUnique(CCFLAGS = ['-m32'])
+-	env.AppendUnique(LINKFLAGS = ['-m32'])
+-elif target_arch in ['x86_64']:
+-	env.AppendUnique(CCFLAGS = ['-m64'])
+-	env.AppendUnique(LINKFLAGS = ['-m64'])
+-elif target_arch in ['arm']:
+-	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
+-elif target_arch in ['arm-v7a', 'armeabi-v7a']:
+-	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+-elif target_arch.find('arm64') > 0:
+-	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
++if not env.get('WITH_ENV'):
++	target_arch = env.get('TARGET_ARCH')
++	if target_arch in ['x86']:
++		env.AppendUnique(CCFLAGS = ['-m32'])
++		env.AppendUnique(LINKFLAGS = ['-m32'])
++	elif target_arch in ['x86_64']:
++		env.AppendUnique(CCFLAGS = ['-m64'])
++		env.AppendUnique(LINKFLAGS = ['-m64'])
++	elif target_arch in ['arm']:
++		env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
++	elif target_arch in ['arm-v7a', 'armeabi-v7a']:
++		env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
++	elif target_arch.find('arm64') > 0:
++		env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])

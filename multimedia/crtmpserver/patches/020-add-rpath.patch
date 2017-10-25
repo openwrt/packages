@@ -1,0 +1,13 @@
+--- a/builders/make/linux.mk
++++ b/builders/make/linux.mk
+@@ -31,8 +31,8 @@ OPTIMIZATIONS = -O3
+ COMPILE_FLAGS = $(FPIC) $(OPTIMIZATIONS) $(CFLAGS)
+ 
+ #linking flags
+-dynamic_lib_flags = $(FPIC) $(OPTIMIZATIONS) -Wl,-soname,$(DYNAMIC_LIB_PREFIX)$(1)$(DYNAMIC_LIB_SUFIX) -Wl,-rpath,"\$$ORIGIN"
+-dynamic_exec_flags = $(FPIC) $(OPTIMIZATIONS) -Wl,-rpath,"\$$ORIGIN"
++dynamic_lib_flags = $(FPIC) $(OPTIMIZATIONS) -Wl,-soname,$(DYNAMIC_LIB_PREFIX)$(1)$(DYNAMIC_LIB_SUFIX) -Wl,-rpath,/usr/lib/crtmpserver
++dynamic_exec_flags = $(FPIC) $(OPTIMIZATIONS) -Wl,-rpath,/usr/lib/crtmpserver
+ 
+ #compile switches
+ PLATFORM_DEFINES = \

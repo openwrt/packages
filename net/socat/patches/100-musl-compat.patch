@@ -1,0 +1,23 @@
+--- a/sysincludes.h
++++ b/sysincludes.h
+@@ -79,6 +79,9 @@
+ #endif
+ #if HAVE_NETDB_H && (_WITH_IP4 || _WITH_IP6)
+ #include <netdb.h>	/* struct hostent, gethostbyname() */
++#if !(__UCLIBC__ || __GLIBC__)
++#define NETDB_INTERNAL -1
++#endif
+ #endif
+ #if HAVE_SYS_UN_H && WITH_UNIX
+ #include <sys/un.h>	/* struct sockaddr_un, unix domain sockets */
+@@ -139,8 +142,10 @@
+ #include <netpacket/packet.h>
+ #endif
+ #if HAVE_NETINET_IF_ETHER_H
++#if defined(__UCLIBC__) || defined(__GLIBC__)
+ #include <netinet/if_ether.h>
+ #endif
++#endif
+ #if HAVE_LINUX_IF_TUN_H
+ #include <linux/if_tun.h>
+ #endif

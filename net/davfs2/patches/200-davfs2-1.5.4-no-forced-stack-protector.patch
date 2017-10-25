@@ -1,0 +1,12 @@
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -32,8 +32,7 @@ mount_davfs_SOURCES = cache.c dav_coda.c
+         kernel_interface.h mount_davfs.h webdav.h
+ umount_davfs_SOURCES = umount_davfs.c defaults.h
+ 
+-AM_CFLAGS = -Wall -Werror=format-security \
+-        -fstack-protector-strong --param=ssp-buffer-size=4
++AM_CFLAGS = -Wall -Werror=format-security
+ DEFS = -DPROGRAM_NAME=\"mount.davfs\" \
+        -DDAV_SYS_CONF_DIR=\"$(pkgsysconfdir)\" \
+        -DDAV_LOCALSTATE_DIR=\"$(dav_localstatedir)\" \

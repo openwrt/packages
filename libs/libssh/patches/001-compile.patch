@@ -1,0 +1,35 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -35,10 +35,6 @@ include(DefineInstallationPaths)
+ include(DefineOptions.cmake)
+ include(CPackConfig.cmake)
+ 
+-# disallow in-source build
+-include(MacroEnsureOutOfSourceBuild)
+-macro_ensure_out_of_source_build("${PROJECT_NAME} requires an out of source build. Please create a separate build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there.")
+-
+ # search for libraries
+ if (WITH_ZLIB)
+     find_package(ZLIB REQUIRED)
+--- a/ConfigureChecks.cmake
++++ b/ConfigureChecks.cmake
+@@ -5,7 +5,6 @@ include(CheckFunctionExists)
+ include(CheckLibraryExists)
+ include(CheckTypeSize)
+ include(CheckCXXSourceCompiles)
+-include(TestBigEndian)
+ 
+ set(PACKAGE ${APPLICATION_NAME})
+ set(VERSION ${APPLICATION_VERSION})
+@@ -270,6 +269,8 @@ if (WITH_GSSAPI AND NOT GSSAPI_FOUND)
+ endif (WITH_GSSAPI AND NOT GSSAPI_FOUND)
+ 
+ # ENDIAN
+-if (NOT WIN32)
+-    test_big_endian(WORDS_BIGENDIAN)
+-endif (NOT WIN32)
++if (WITH_BIG_ENDIAN)
++  set(WORDS_BIGENDIAN 1)
++else (WITH_BIG_ENDIAN)
++  set(WORDS_BIGENDIAN 0)
++endif (WITH_BIG_ENDIAN)

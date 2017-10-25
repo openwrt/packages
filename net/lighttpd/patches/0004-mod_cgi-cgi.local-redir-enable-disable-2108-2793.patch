@@ -1,0 +1,105 @@
+From 57ab20ace504fdb6e0944ef6fa6e0ce35adc4446 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Sun, 26 Feb 2017 17:49:47 -0500
+Subject: [PATCH] [mod_cgi] cgi.local-redir = [enable|disable] (#2108, #2793)
+
+new directive cgi.local-redir = [enable|disable]
+
+*disable* RFC3875 6.2.2 local-redir by default.
+(behavior change from when local-redir support added in lighttpd 1.4.40)
+
+The reason for this behavior change is that CGI local-redir support
+(RFC3875 6.2.2) is an optimization.  Absence of support may result in
+additional latency in servicing a request due the additional round-trip
+to the client, but that was the prior behavior (before lighttpd 1.4.40)
+and is the behavior of web servers which do not support CGI local-redir.
+
+However, enabling CGI local-redir by default may result in broken links
+in the case where a user config (unaware of CGI local-redir behavior)
+returns HTML pages containing *relative* paths (not root-relative paths)
+which are relative to the location of the local-redir target document,
+and the local-redir target document is located at a different URL-path
+from the original CGI request.
+
+x-ref:
+  RFC3875 CGI 1.1 specification section 6.2.2 Local Redirect Response
+  http://www.ietf.org/rfc/rfc3875
+  "CGI local redirect not implemented correctly"
+  https://redmine.lighttpd.net/issues/2108
+  "1.4.40 regression: broken redirect (using Location) between url.rewrite-once URLs"
+  https://redmine.lighttpd.net/issues/2793
+---
+ src/mod_cgi.c       | 9 ++++++++-
+ tests/lighttpd.conf | 1 +
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+--- a/src/mod_cgi.c
++++ b/src/mod_cgi.c
+@@ -66,6 +66,7 @@ typedef struct {
+ typedef struct {
+ 	array *cgi;
+ 	unsigned short execute_x_only;
++	unsigned short local_redir;
+ 	unsigned short xsendfile_allow;
+ 	array *xsendfile_docroot;
+ } plugin_config;
+@@ -172,6 +173,7 @@ SETDEFAULTS_FUNC(mod_fastcgi_set_default
+ 		{ "cgi.execute-x-only",          NULL, T_CONFIG_BOOLEAN, T_CONFIG_SCOPE_CONNECTION },     /* 1 */
+ 		{ "cgi.x-sendfile",              NULL, T_CONFIG_BOOLEAN, T_CONFIG_SCOPE_CONNECTION },     /* 2 */
+ 		{ "cgi.x-sendfile-docroot",      NULL, T_CONFIG_ARRAY,   T_CONFIG_SCOPE_CONNECTION },     /* 3 */
++		{ "cgi.local-redir",             NULL, T_CONFIG_BOOLEAN, T_CONFIG_SCOPE_CONNECTION },     /* 4 */
+ 		{ NULL,                          NULL, T_CONFIG_UNSET, T_CONFIG_SCOPE_UNSET}
+ 	};
+ 
+@@ -189,6 +191,7 @@ SETDEFAULTS_FUNC(mod_fastcgi_set_default
+ 
+ 		s->cgi    = array_init();
+ 		s->execute_x_only = 0;
++		s->local_redir    = 0;
+ 		s->xsendfile_allow= 0;
+ 		s->xsendfile_docroot = array_init();
+ 
+@@ -196,6 +199,7 @@ SETDEFAULTS_FUNC(mod_fastcgi_set_default
+ 		cv[1].destination = &(s->execute_x_only);
+ 		cv[2].destination = &(s->xsendfile_allow);
+ 		cv[3].destination = s->xsendfile_docroot;
++		cv[4].destination = &(s->local_redir);
+ 
+ 		p->config_storage[i] = s;
+ 
+@@ -549,7 +553,7 @@ static int cgi_demux_response(server *sr
+ 					 *  to same URL, since CGI should have handled it internally if it
+ 					 *  really wanted to do that internally)
+ 					 */
+-					if (con->http_status >= 300 && con->http_status < 400) {
++					if (hctx->conf.local_redir && con->http_status >= 300 && con->http_status < 400) {
+ 						/*(con->parsed_response & HTTP_LOCATION)*/
+ 						size_t ulen = buffer_string_length(con->uri.path);
+ 						data_string *ds;
+@@ -1321,6 +1325,7 @@ static int mod_cgi_patch_connection(serv
+ 
+ 	PATCH(cgi);
+ 	PATCH(execute_x_only);
++	PATCH(local_redir);
+ 	PATCH(xsendfile_allow);
+ 	PATCH(xsendfile_docroot);
+ 
+@@ -1340,6 +1345,8 @@ static int mod_cgi_patch_connection(serv
+ 				PATCH(cgi);
+ 			} else if (buffer_is_equal_string(du->key, CONST_STR_LEN("cgi.execute-x-only"))) {
+ 				PATCH(execute_x_only);
++			} else if (buffer_is_equal_string(du->key, CONST_STR_LEN("cgi.local-redir"))) {
++				PATCH(local_redir);
+ 			} else if (buffer_is_equal_string(du->key, CONST_STR_LEN("cgi.x-sendfile"))) {
+ 				PATCH(xsendfile_allow);
+ 			} else if (buffer_is_equal_string(du->key, CONST_STR_LEN("cgi.x-sendfile-docroot"))) {
+--- a/tests/lighttpd.conf
++++ b/tests/lighttpd.conf
+@@ -110,6 +110,7 @@ fastcgi.server = (
+ 	) ),
+ )
+ 
++cgi.local-redir = "enable"
+ cgi.assign = (
+ 	".pl"  => env.PERL,
+ 	".cgi" => env.PERL,

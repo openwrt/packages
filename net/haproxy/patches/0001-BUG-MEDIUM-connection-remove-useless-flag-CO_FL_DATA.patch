@@ -1,0 +1,158 @@
+From 912e8f18ef274fdda0a522b2aa8255bddd00fb7b Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 30 Aug 2017 07:35:35 +0200
+Subject: [PATCH] BUG/MEDIUM: connection: remove useless flag CO_FL_DATA_RD_SH
+
+This flag is both confusing and wrong. It is supposed to report the
+fact that the data layer has received a shutdown, but in fact this is
+reported by CO_FL_SOCK_RD_SH which is set by the transport layer after
+this condition is detected. The only case where the flag above is set
+is in the stream interface where CF_SHUTR is also set on the receiving
+channel.
+
+In addition, it was checked in the health checks code (while never set)
+and was always test jointly with CO_FL_SOCK_RD_SH everywhere, except in
+conn_data_read0_pending() which incorrectly doesn't match the second
+time it's called and is fortunately protected by an extra check on
+(ic->flags & CF_SHUTR).
+
+This patch gets rid of the flag completely. Now conn_data_read0_pending()
+accurately reports the fact that the transport layer has detected the end
+of the stream, regardless of the fact that this state was already consumed,
+and the stream interface watches ic->flags&CF_SHUTR to know if the channel
+was already closed by the upper layer (which it already used to do).
+
+The now unused conn_data_read0() function was removed.
+(cherry picked from commit 54e917cfa1e7b0539550ae32c48c76da2f169041)
+
+[wt: this happens to fix a real bug which occasionally strikes when
+     using http-reuse in the rare case where a server shuts down after
+     providing its response but before the connection is put back into
+     the idle pool, and it gets immediately recycled for another request,
+     without first passing through the idle handler, and the already
+     reported shutdown is never reported to the second transaction,
+     causing a loop to last for as long as the server timeout]
+---
+ contrib/debug/flags.c      |  1 -
+ include/proto/connection.h |  8 +-------
+ include/types/connection.h |  2 +-
+ src/checks.c               |  4 ++--
+ src/stream_interface.c     | 11 +++++------
+ 5 files changed, 9 insertions(+), 17 deletions(-)
+
+diff --git a/contrib/debug/flags.c b/contrib/debug/flags.c
+index bc71bde9..19327f34 100644
+--- a/contrib/debug/flags.c
++++ b/contrib/debug/flags.c
+@@ -117,7 +117,6 @@ void show_conn_flags(unsigned int f)
+ 	SHOW_FLAG(f, CO_FL_SOCK_WR_SH);
+ 	SHOW_FLAG(f, CO_FL_SOCK_RD_SH);
+ 	SHOW_FLAG(f, CO_FL_DATA_WR_SH);
+-	SHOW_FLAG(f, CO_FL_DATA_RD_SH);
+ 	SHOW_FLAG(f, CO_FL_WAKE_DATA);
+ 	SHOW_FLAG(f, CO_FL_INIT_DATA);
+ 	SHOW_FLAG(f, CO_FL_ADDR_TO_SET);
+diff --git a/include/proto/connection.h b/include/proto/connection.h
+index fce60259..eb68322a 100644
+--- a/include/proto/connection.h
++++ b/include/proto/connection.h
+@@ -413,12 +413,6 @@ static inline void conn_sock_read0(struct connection *c)
+ 		fdtab[c->t.sock.fd].linger_risk = 0;
+ }
+ 
+-static inline void conn_data_read0(struct connection *c)
+-{
+-	c->flags |= CO_FL_DATA_RD_SH;
+-	__conn_data_stop_recv(c);
+-}
+-
+ static inline void conn_sock_shutw(struct connection *c)
+ {
+ 	c->flags |= CO_FL_SOCK_WR_SH;
+@@ -450,7 +444,7 @@ static inline void conn_data_shutw_hard(struct connection *c)
+ /* detect sock->data read0 transition */
+ static inline int conn_data_read0_pending(struct connection *c)
+ {
+-	return (c->flags & (CO_FL_DATA_RD_SH | CO_FL_SOCK_RD_SH)) == CO_FL_SOCK_RD_SH;
++	return (c->flags & CO_FL_SOCK_RD_SH) != 0;
+ }
+ 
+ /* detect data->sock shutw transition */
+diff --git a/include/types/connection.h b/include/types/connection.h
+index 02eac932..90e8e073 100644
+--- a/include/types/connection.h
++++ b/include/types/connection.h
+@@ -90,7 +90,7 @@ enum {
+ 	CO_FL_WAKE_DATA     = 0x00008000,  /* wake-up data layer upon activity at the transport layer */
+ 
+ 	/* flags used to remember what shutdown have been performed/reported */
+-	CO_FL_DATA_RD_SH    = 0x00010000,  /* DATA layer was notified about shutr/read0 */
++	/* unused : 0x00010000 */
+ 	CO_FL_DATA_WR_SH    = 0x00020000,  /* DATA layer asked for shutw */
+ 	CO_FL_SOCK_RD_SH    = 0x00040000,  /* SOCK layer was notified about shutr/read0 */
+ 	CO_FL_SOCK_WR_SH    = 0x00080000,  /* SOCK layer asked for shutw */
+diff --git a/src/checks.c b/src/checks.c
+index ca3881a5..6c5e3cbc 100644
+--- a/src/checks.c
++++ b/src/checks.c
+@@ -839,7 +839,7 @@ static void event_srv_chk_r(struct connection *conn)
+ 	done = 0;
+ 
+ 	conn->xprt->rcv_buf(conn, check->bi, check->bi->size);
+-	if (conn->flags & (CO_FL_ERROR | CO_FL_SOCK_RD_SH | CO_FL_DATA_RD_SH)) {
++	if (conn->flags & (CO_FL_ERROR | CO_FL_SOCK_RD_SH)) {
+ 		done = 1;
+ 		if ((conn->flags & CO_FL_ERROR) && !check->bi->i) {
+ 			/* Report network errors only if we got no other data. Otherwise
+@@ -2892,7 +2892,7 @@ static void tcpcheck_main(struct connection *conn)
+ 				goto out_end_tcpcheck;
+ 
+ 			if (conn->xprt->rcv_buf(conn, check->bi, check->bi->size) <= 0) {
+-				if (conn->flags & (CO_FL_ERROR | CO_FL_SOCK_RD_SH | CO_FL_DATA_RD_SH)) {
++				if (conn->flags & (CO_FL_ERROR | CO_FL_SOCK_RD_SH)) {
+ 					done = 1;
+ 					if ((conn->flags & CO_FL_ERROR) && !check->bi->i) {
+ 						/* Report network errors only if we got no other data. Otherwise
+diff --git a/src/stream_interface.c b/src/stream_interface.c
+index 836487bd..aba49c94 100644
+--- a/src/stream_interface.c
++++ b/src/stream_interface.c
+@@ -1060,14 +1060,14 @@ static void si_conn_recv_cb(struct connection *conn)
+ 	if (conn->flags & CO_FL_ERROR)
+ 		return;
+ 
+-	/* stop here if we reached the end of data */
+-	if (conn_data_read0_pending(conn))
+-		goto out_shutdown_r;
+-
+ 	/* maybe we were called immediately after an asynchronous shutr */
+ 	if (ic->flags & CF_SHUTR)
+ 		return;
+ 
++	/* stop here if we reached the end of data */
++	if (conn_data_read0_pending(conn))
++		goto out_shutdown_r;
++
+ 	cur_read = 0;
+ 
+ 	if ((ic->flags & (CF_STREAMER | CF_STREAMER_FAST)) && !ic->buf->o &&
+@@ -1153,7 +1153,7 @@ static void si_conn_recv_cb(struct connection *conn)
+ 	 * that if such an event is not handled above in splice, it will be handled here by
+ 	 * recv().
+ 	 */
+-	while (!(conn->flags & (CO_FL_ERROR | CO_FL_SOCK_RD_SH | CO_FL_DATA_RD_SH | CO_FL_WAIT_ROOM | CO_FL_HANDSHAKE))) {
++	while (!(conn->flags & (CO_FL_ERROR | CO_FL_SOCK_RD_SH | CO_FL_WAIT_ROOM | CO_FL_HANDSHAKE)) && !(ic->flags & CF_SHUTR)) {
+ 		max = channel_recv_max(ic);
+ 
+ 		if (!max) {
+@@ -1267,7 +1267,6 @@ static void si_conn_recv_cb(struct connection *conn)
+ 	if (ic->flags & CF_AUTO_CLOSE)
+ 		channel_shutw_now(ic);
+ 	stream_sock_read0(si);
+-	conn_data_read0(conn);
+ 	return;
+ }
+ 
+-- 
+2.13.5
+

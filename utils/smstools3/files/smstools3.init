@@ -1,0 +1,152 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2014 OpenWrt.org
+# smsd initscript openwrt mod
+
+START=99
+STOP=99
+
+EXTRA_COMMANDS="status"
+EXTRA_HELP="        status  View pid and service status "
+
+# Set USER and GROUP, if necessary:
+USER=""
+GROUP=""
+
+# If an unpriviledged user is selected, make sure that next two
+# files are writable by that user:
+PIDFILE="/var/run/smsd.pid"
+INFOFILE="/var/run/smsd.working"
+# Logfile can also be defined in here:
+LOGFILE="/var/log/smsd.log"
+
+DAEMON=/usr/local/bin/smsd
+# A program which turns power off for couple of seconds:
+RESETMODEMS=/usr/local/bin/smsd_resetmodems
+NAME=smsd
+PSOPT=""
+
+# Set/edit this before starting service !!!!!
+WRT_SPOOL=/var/spool
+
+# Maximum time to stop smsd, after that it gets killed hardly:
+MAXWAIT=45
+
+boot() {
+	start
+}
+
+start() {
+	test -x $DAEMON || exit 0
+
+	echo "Creating minimum spool directories"
+	mkdir -p $WRT_SPOOL
+	mkdir -p $WRT_SPOOL/sms
+	mkdir -p $WRT_SPOOL/sms/incoming
+	mkdir -p $WRT_SPOOL/sms/outgoing
+	mkdir -p $WRT_SPOOL/sms/checked
+	mkdir -p $WRT_SPOOL/sms/failed
+	mkdir -p $WRT_SPOOL/sms/sent
+
+	echo -n "Starting SMS Daemon: "
+	MSG="."
+	ARGS="-n MAINPROCESS -p$PIDFILE -i$INFOFILE"
+	[ "x$USER" != x ] && ARGS="$ARGS -u$USER"
+	[ "x$GROUP" != x ] && ARGS="$ARGS -g$GROUP"
+	[ "x$LOGFILE" != x ] && ARGS="$ARGS -l$LOGFILE"
+	PID=`cat $PIDFILE 2>/dev/null`
+	if [ "x$PID" != x ]; then
+	  if kill -0 $PID 2>/dev/null; then
+	    MSG=" already running ($PID)."
+	  else
+	    PID=""
+	  fi
+	fi
+	if [ "x$PID" = x ]; then
+	  if ps $PSOPT | grep $NAME | grep -v grep >/dev/null; then
+	    MSG=" already running."
+	  else
+	    $DAEMON $ARGS
+	    sleep 1
+	    PIDS=`ps $PSOPT | grep $NAME | grep -v grep`
+	    [ "x$PIDS" = x ] && MSG=" failed."
+	  fi
+	fi
+	echo "$NAME$MSG"
+}
+
+stop() {
+	if ps $PSOPT | grep $NAME | grep -v grep >/dev/null; then
+	  PID=`cat $PIDFILE 2>/dev/null`
+	  if [ "x$PID" != x ]; then
+	    P=`kill -0 $PID 2>/dev/null`
+	    [ "x$P" != x ] && PID=""
+	  fi
+	  if [ "x$PID" != x ]; then
+	    kill $PID
+	  else
+	    kill `ps $PSOPT | grep $NAME | grep -v grep | awk '{print $1}'` >/dev/null 2>&1
+	  fi
+	  sleep 1
+	  if ps $PSOPT | grep $NAME | grep -v grep >/dev/null; then
+	    echo "Allowing $NAME to terminate gracefully within $MAXWAIT seconds"
+	    infofound=0
+	    dots=0
+	    seconds=0
+	    while ps $PSOPT | grep $NAME | grep -v grep >/dev/null; do
+	      if [ $infofound -lt 1 ]; then
+	        if [ -f $INFOFILE ]; then
+	          infofound=1
+	          if [ $dots -gt 0 ]; then
+	            echo ""
+	            dots=0
+	          fi
+	          $ECHO -n "$NAME is currently "
+	          cat $INFOFILE
+	          echo "Time counting is now disabled and we will wait until this job is complete."
+	        fi
+	      fi
+	      [ $infofound -lt 1 ] && seconds=`expr $seconds + 1`
+	      echo -n "."
+	      dots=`expr $dots + 1`
+	      if [ "$seconds" -ge $MAXWAIT ]; then
+	        if [ $dots -gt 0 ]; then
+	          echo ""
+	          dots=0
+	        fi
+	        echo "Timeout occurred, killing $NAME hardly."
+	        kill -9 `ps $PSOPT | grep $NAME | grep -v grep | awk '{print $1}'` >/dev/null 2>&1
+	        [ -f $PIDFILE ] && rm $PIDFILE
+	        seconds=0
+	      fi
+	      sleep 1
+	    done
+	    [ $dots -gt 0 ] && echo ""
+	    #echo "$NAME is stopped."
+	  fi
+	fi
+}
+
+restart() {
+	stop
+	start
+}
+
+
+status() {
+	PID=$(cat $PIDFILE)
+
+	test -e $PIDFILE
+	if [ $? == 0 ]; then
+		echo $NAME " running! pid $PID"
+	else
+		echo $NAME " not running !!!"
+	fi
+}
+
+reset() {
+	$0 stop
+	[ -f "$RESETMODEMS" ] && "$RESETMODEMS"
+	sleep 30
+	$0 start
+}
+

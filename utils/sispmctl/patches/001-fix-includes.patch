@@ -1,0 +1,25 @@
+--- a/src/sispm_ctl.c
++++ b/src/sispm_ctl.c
+@@ -33,6 +33,7 @@
+ #include <stdlib.h>
+ #include <unistd.h>
+ #include <time.h>
++#include <sys/types.h>
+ #include <usb.h>
+ #include <assert.h>
+ #include "sispm_ctl.h"
+--- a/src/main.c
++++ b/src/main.c
+@@ -34,11 +34,11 @@
+ #define __USE_XOPEN
+ #include <time.h>
+ #include <signal.h>
+-#include <usb.h>
+ #include <assert.h>
+ #include <getopt.h>
+ #include <sys/types.h>
+ #include <sys/socket.h>
++#include <usb.h>
+ 
+ #include <fcntl.h>
+ 

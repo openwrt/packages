@@ -1,0 +1,47 @@
+Revert upstream commit bf9297132d219539e07506c125c6801dd77202f4
+to prevent building the UI component. Also disable manpage.
+
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -24,19 +24,14 @@ AUTOMAKE_OPTIONS = no-dependencies
+ ACLOCAL_AMFLAGS = -I m4
+ EXTRA_DIST = COPYING autogen.sh misc/irqbalance.service misc/irqbalance.env
+ 
+-UI_DIR = ui
+ AM_CFLAGS = $(LIBCAP_NG_CFLAGS) $(GLIB_CFLAGS)
+ AM_CPPFLAGS = -I${top_srcdir} -W -Wall -Wshadow -Wformat -Wundef -D_GNU_SOURCE
+ noinst_HEADERS = bitmap.h constants.h cpumask.h irqbalance.h non-atomic.h \
+-	types.h $(UI_DIR)/helpers.h $(UI_DIR)/irqbalance-ui.h $(UI_DIR)/ui.h
+-sbin_PROGRAMS = irqbalance irqbalance-ui
++	types.h
++sbin_PROGRAMS = irqbalance
+ irqbalance_SOURCES = activate.c bitmap.c classify.c cputree.c irqbalance.c \
+ 	irqlist.c numa.c placement.c procinterrupts.c
+ irqbalance_LDADD = $(LIBCAP_NG_LIBS) $(GLIB_LIBS)
+-irqbalance_ui_SOURCES = $(UI_DIR)/helpers.c $(UI_DIR)/irqbalance-ui.c \
+-	$(UI_DIR)/ui.c
+-irqbalance_ui_LDADD = $(GLIB_LIBS) $(CURSES_LIBS)
+-dist_man_MANS = irqbalance.1
+ 
+ CONFIG_CLEAN_FILES = debug*.list config/*
+ clean-generic:
+--- a/configure.ac
++++ b/configure.ac
+@@ -3,7 +3,7 @@ AC_PREREQ(2.12)dnl
+ AM_CONFIG_HEADER(config.h)
+ 
+ AC_CONFIG_MACRO_DIR([m4])
+-AM_INIT_AUTOMAKE([foreign] [subdir-objects])
++AM_INIT_AUTOMAKE([foreign])
+ AM_PROG_LIBTOOL
+ AC_SUBST(LIBTOOL_DEPS)
+ 
+@@ -26,8 +26,6 @@ AC_CHECK_FUNCS(getopt_long)
+ AC_CHECK_LIB(numa, numa_available)
+ AC_CHECK_LIB(m, floor)
+ 
+-AC_CHECK_LIB(curses, mvprintw)
+-
+ AC_C_CONST
+ AC_C_INLINE
+ AM_PROG_CC_C_O

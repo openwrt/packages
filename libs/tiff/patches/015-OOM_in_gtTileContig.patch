@@ -1,0 +1,295 @@
+From 1077fad562e03d1cad591dd10163dd80ad63ab0e Mon Sep 17 00:00:00 2001
+From: Even Rouault <even.rouault@spatialys.com>
+Date: Fri, 30 Jun 2017 13:11:18 +0000
+Subject: [PATCH] * libtiff/tif_read.c, tiffiop.h: add a
+ _TIFFReadEncodedStripAndAllocBuffer() function, variant of
+ TIFFReadEncodedStrip() that allocates the decoded buffer only after a first
+ successful TIFFFillStrip(). This avoids excessive memory allocation on
+ corrupted files. * libtiff/tif_getimage.c: use
+ _TIFFReadEncodedStripAndAllocBuffer(). Fixes
+ http://bugzilla.maptools.org/show_bug.cgi?id=2708 and
+ https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2433 . Credit to OSS
+ Fuzz
+
+---
+ ChangeLog              | 11 +++++++
+ libtiff/tif_getimage.c | 59 ++++++++++++++++++++++----------------
+ libtiff/tif_read.c     | 78 +++++++++++++++++++++++++++++++++++++++++++-------
+ libtiff/tiffiop.h      |  5 ++++
+ 4 files changed, 118 insertions(+), 35 deletions(-)
+
+diff --git a/ChangeLog b/ChangeLog
+index c969f9e2..6f085e09 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,3 +1,14 @@
++2017-06-30  Even Rouault <even.rouault at spatialys.com>
++
++	* libtiff/tif_read.c, tiffiop.h: add a _TIFFReadEncodedStripAndAllocBuffer()
++	function, variant of TIFFReadEncodedStrip() that allocates the
++	decoded buffer only after a first successful TIFFFillStrip(). This avoids
++	excessive memory allocation on corrupted files.
++	* libtiff/tif_getimage.c: use _TIFFReadEncodedStripAndAllocBuffer(). 
++	Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2708 and
++	https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2433 .
++	Credit to OSS Fuzz
++
+ 2017-06-26  Even Rouault <even.rouault at spatialys.com>
+ 
+ 	* libtiff/tif_jbig.c: fix memory leak in error code path of JBIGDecode()
+diff --git a/libtiff/tif_getimage.c b/libtiff/tif_getimage.c
+index cee8e930..cc6e8f30 100644
+--- a/libtiff/tif_getimage.c
++++ b/libtiff/tif_getimage.c
+@@ -905,26 +905,22 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
+ 	tileContigRoutine put = img->put.contig;
+ 	uint32 row, y, nrow, nrowsub, rowstoread;
+ 	tmsize_t pos;
+-	unsigned char* buf;
++	unsigned char* buf = NULL;
+ 	uint32 rowsperstrip;
+ 	uint16 subsamplinghor,subsamplingver;
+ 	uint32 imagewidth = img->width;
+ 	tmsize_t scanline;
+ 	int32 fromskew, toskew;
+ 	int ret = 1, flip;
++        tmsize_t maxstripsize;
+ 
+ 	TIFFGetFieldDefaulted(tif, TIFFTAG_YCBCRSUBSAMPLING, &subsamplinghor, &subsamplingver);
+ 	if( subsamplingver == 0 ) {
+ 		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Invalid vertical YCbCr subsampling");
+ 		return (0);
+ 	}
+-
+-	buf = (unsigned char*) _TIFFmalloc(TIFFStripSize(tif));
+-	if (buf == 0) {
+-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "No space for strip buffer");
+-		return (0);
+-	}
+-	_TIFFmemset(buf, 0, TIFFStripSize(tif));
++	
++	maxstripsize = TIFFStripSize(tif);
+ 
+ 	flip = setorientation(img);
+ 	if (flip & FLIP_VERTICALLY) {
+@@ -946,11 +942,12 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
+ 		nrowsub = nrow;
+ 		if ((nrowsub%subsamplingver)!=0)
+ 			nrowsub+=subsamplingver-nrowsub%subsamplingver;
+-		if (TIFFReadEncodedStrip(tif,
++		if (_TIFFReadEncodedStripAndAllocBuffer(tif,
+ 		    TIFFComputeStrip(tif,row+img->row_offset, 0),
+-		    buf,
++		    (void**)(&buf),
++                    maxstripsize,
+ 		    ((row + img->row_offset)%rowsperstrip + nrowsub) * scanline)==(tmsize_t)(-1)
+-		    && img->stoponerr)
++		    && (buf == NULL || img->stoponerr))
+ 		{
+ 			ret = 0;
+ 			break;
+@@ -994,8 +991,8 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
+ {
+ 	TIFF* tif = img->tif;
+ 	tileSeparateRoutine put = img->put.separate;
+-	unsigned char *buf;
+-	unsigned char *p0, *p1, *p2, *pa;
++	unsigned char *buf = NULL;
++	unsigned char *p0 = NULL, *p1 = NULL, *p2 = NULL, *pa = NULL;
+ 	uint32 row, y, nrow, rowstoread;
+ 	tmsize_t pos;
+ 	tmsize_t scanline;
+@@ -1014,15 +1011,6 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
+ 		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Integer overflow in %s", "gtStripSeparate");
+ 		return (0);
+ 	}
+-	p0 = buf = (unsigned char *)_TIFFmalloc(bufsize);
+-	if (buf == 0) {
+-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "No space for tile buffer");
+-		return (0);
+-	}
+-	_TIFFmemset(buf, 0, bufsize);
+-	p1 = p0 + stripsize;
+-	p2 = p1 + stripsize;
+-	pa = (alpha?(p2+stripsize):NULL);
+ 
+ 	flip = setorientation(img);
+ 	if (flip & FLIP_VERTICALLY) {
+@@ -1040,7 +1028,6 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
+           case PHOTOMETRIC_MINISBLACK:
+           case PHOTOMETRIC_PALETTE:
+             colorchannels = 1;
+-            p2 = p1 = p0;
+             break;
+ 
+           default:
+@@ -1056,7 +1043,31 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
+ 		rowstoread = rowsperstrip - (row + img->row_offset) % rowsperstrip;
+ 		nrow = (row + rowstoread > h ? h - row : rowstoread);
+ 		offset_row = row + img->row_offset;
+-		if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 0),
++                if( buf == NULL )
++                {
++                    if (_TIFFReadEncodedStripAndAllocBuffer(
++                            tif, TIFFComputeStrip(tif, offset_row, 0),
++                            (void**) &buf, bufsize,
++                            ((row + img->row_offset)%rowsperstrip + nrow) * scanline)==(tmsize_t)(-1)
++                        && (buf == NULL || img->stoponerr))
++                    {
++                            ret = 0;
++                            break;
++                    }
++                    p0 = buf;
++                    if( colorchannels == 1 )
++                    {
++                        p2 = p1 = p0;
++                        pa = (alpha?(p0+3*stripsize):NULL);
++                    }
++                    else
++                    {
++                        p1 = p0 + stripsize;
++                        p2 = p1 + stripsize;
++                        pa = (alpha?(p2+stripsize):NULL);
++                    }
++                }
++		else if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 0),
+ 		    p0, ((row + img->row_offset)%rowsperstrip + nrow) * scanline)==(tmsize_t)(-1)
+ 		    && img->stoponerr)
+ 		{
+diff --git a/libtiff/tif_read.c b/libtiff/tif_read.c
+index fc0072e7..047305ab 100644
+--- a/libtiff/tif_read.c
++++ b/libtiff/tif_read.c
+@@ -442,18 +442,17 @@ TIFFReadScanline(TIFF* tif, void* buf, uint32 row, uint16 sample)
+ }
+ 
+ /*
+- * Read a strip of data and decompress the specified
+- * amount into the user-supplied buffer.
++ * Calculate the strip size according to the number of
++ * rows in the strip (check for truncated last strip on any
++ * of the separations).
+  */
+-tmsize_t
+-TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
++static tmsize_t TIFFReadEncodedStripGetStripSize(TIFF* tif, uint32 strip, uint16* pplane)
+ {
+ 	static const char module[] = "TIFFReadEncodedStrip";
+ 	TIFFDirectory *td = &tif->tif_dir;
+ 	uint32 rowsperstrip;
+ 	uint32 stripsperplane;
+ 	uint32 stripinplane;
+-	uint16 plane;
+ 	uint32 rows;
+ 	tmsize_t stripsize;
+ 	if (!TIFFCheckRead(tif,0))
+@@ -465,23 +464,37 @@ TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
+ 		    (unsigned long)td->td_nstrips);
+ 		return((tmsize_t)(-1));
+ 	}
+-	/*
+-	 * Calculate the strip size according to the number of
+-	 * rows in the strip (check for truncated last strip on any
+-	 * of the separations).
+-	 */
++
+ 	rowsperstrip=td->td_rowsperstrip;
+ 	if (rowsperstrip>td->td_imagelength)
+ 		rowsperstrip=td->td_imagelength;
+ 	stripsperplane= TIFFhowmany_32_maxuint_compat(td->td_imagelength, rowsperstrip);
+ 	stripinplane=(strip%stripsperplane);
+-	plane=(uint16)(strip/stripsperplane);
++	if( pplane ) *pplane=(uint16)(strip/stripsperplane);
+ 	rows=td->td_imagelength-stripinplane*rowsperstrip;
+ 	if (rows>rowsperstrip)
+ 		rows=rowsperstrip;
+ 	stripsize=TIFFVStripSize(tif,rows);
+ 	if (stripsize==0)
+ 		return((tmsize_t)(-1));
++	return stripsize;
++}
++
++/*
++ * Read a strip of data and decompress the specified
++ * amount into the user-supplied buffer.
++ */
++tmsize_t
++TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
++{
++	static const char module[] = "TIFFReadEncodedStrip";
++	TIFFDirectory *td = &tif->tif_dir;
++	tmsize_t stripsize;
++	uint16 plane;
++
++	stripsize=TIFFReadEncodedStripGetStripSize(tif, strip, &plane);
++	if (stripsize==((tmsize_t)(-1)))
++		return((tmsize_t)(-1));
+ 
+     /* shortcut to avoid an extra memcpy() */
+     if( td->td_compression == COMPRESSION_NONE &&
+@@ -510,6 +523,49 @@ TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
+ 	return(stripsize);
+ }
+ 
++/* Variant of TIFFReadEncodedStrip() that does 
++ * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillStrip() has
++ *   suceeded. This avoid excessive memory allocation in case of truncated
++ *   file.
++ * * calls regular TIFFReadEncodedStrip() if *buf != NULL
++ */
++tmsize_t
++_TIFFReadEncodedStripAndAllocBuffer(TIFF* tif, uint32 strip,
++                                    void **buf, tmsize_t bufsizetoalloc,
++                                    tmsize_t size_to_read)
++{
++    tmsize_t this_stripsize;
++    uint16 plane;
++
++    if( *buf != NULL )
++    {
++        return TIFFReadEncodedStrip(tif, strip, *buf, size_to_read);
++    }
++
++    this_stripsize=TIFFReadEncodedStripGetStripSize(tif, strip, &plane);
++    if (this_stripsize==((tmsize_t)(-1)))
++            return((tmsize_t)(-1));
++
++    if ((size_to_read!=(tmsize_t)(-1))&&(size_to_read<this_stripsize))
++            this_stripsize=size_to_read;
++    if (!TIFFFillStrip(tif,strip))
++            return((tmsize_t)(-1));
++
++    *buf = _TIFFmalloc(bufsizetoalloc);
++    if (*buf == NULL) {
++            TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "No space for strip buffer");
++            return((tmsize_t)(-1));
++    }
++    _TIFFmemset(*buf, 0, bufsizetoalloc);
++
++    if ((*tif->tif_decodestrip)(tif,*buf,this_stripsize,plane)<=0)
++            return((tmsize_t)(-1));
++    (*tif->tif_postdecode)(tif,*buf,this_stripsize);
++    return(this_stripsize);
++
++
++}
++
+ static tmsize_t
+ TIFFReadRawStrip1(TIFF* tif, uint32 strip, void* buf, tmsize_t size,
+     const char* module)
+diff --git a/libtiff/tiffiop.h b/libtiff/tiffiop.h
+index 846ade03..7f0b90f7 100644
+--- a/libtiff/tiffiop.h
++++ b/libtiff/tiffiop.h
+@@ -365,6 +365,11 @@ extern void* _TIFFCheckRealloc(TIFF*, void*, tmsize_t, tmsize_t, const char*);
+ extern double _TIFFUInt64ToDouble(uint64);
+ extern float _TIFFUInt64ToFloat(uint64);
+ 
++extern tmsize_t
++_TIFFReadEncodedStripAndAllocBuffer(TIFF* tif, uint32 strip,
++                                    void **buf, tmsize_t bufsizetoalloc,
++                                    tmsize_t size_to_read);
++
+ extern int TIFFInitDumpMode(TIFF*, int);
+ #ifdef PACKBITS_SUPPORT
+ extern int TIFFInitPackBits(TIFF*, int);

@@ -1,0 +1,23 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -475,9 +475,6 @@ ext/mpg123/Makefile
+ ext/sidplay/Makefile
+ ext/twolame/Makefile
+ ext/x264/Makefile
+-docs/Makefile
+-docs/plugins/Makefile
+-docs/version.entities
+ m4/Makefile
+ pkgconfig/Makefile
+ pkgconfig/gstreamer-plugins-ugly-uninstalled.pc
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,7 +1,7 @@
+ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
+ 
+ SUBDIRS = \
+-	gst-libs gst ext docs m4 common pkgconfig
++	gst-libs gst ext m4 common pkgconfig
+ 
+ # include before EXTRA_DIST for win32 assignment
+ include $(top_srcdir)/common/win32.mak

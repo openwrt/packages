@@ -1,0 +1,47 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=11
+
+USE_PROCD=1
+PROG=/bin/netopeer2-server
+
+start_service() {
+
+    PERSIST_FILE=/etc/sysrepo/data/ietf-keystore.persist
+
+    while [ ! -f $PERSIST_FILE ]
+    do
+        echo "no persist file yet"
+        sleep 3
+    done
+
+    RETRY_CNT=5
+    LAST_LINE=$(tail -n1 $PERSIST_FILE)
+
+    while [[ -f $PERSIST_FILE && $LAST_LINE != "</module>" ]]
+    do
+        sleep 1
+
+        echo "$RETRY_CNT: $LAST_LINE"
+        LAST_LINE=$(tail -n1 $PERSIST_FILE)
+        RETRY_CNT=$(($RETRY_CNT-1))
+
+        if [ $RETRY_CNT -le 0 ];
+        then
+            rm $PERSIST_FILE
+            RETRY_CNT=5
+        fi
+	  done
+
+    procd_open_instance
+    procd_set_param command $PROG
+    procd_append_param command -d -v 0
+    procd_set_param respawn
+    procd_close_instance
+}
+
+stop_service()
+{
+    service_stop ${PROG}
+}

@@ -1,0 +1,31 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -488,9 +488,9 @@ have_ioloop=no
+ 
+ if test "$ioloop" = "best" || test "$ioloop" = "epoll"; then
+   AC_CACHE_CHECK([whether we can use epoll],i_cv_epoll_works,[
+-    AC_TRY_RUN([
++    AC_TRY_LINK([
+       #include <sys/epoll.h>
+-  
++    ], [
+       int main()
+       {
+ 	return epoll_create(5) < 1;
+@@ -594,7 +594,7 @@ fi
+ dnl * Old glibcs have broken posix_fallocate(). Make sure not to use it.
+ dnl * It may also be broken in AIX.
+ AC_CACHE_CHECK([whether posix_fallocate() works],i_cv_posix_fallocate_works,[
+-  AC_TRY_RUN([
++  AC_TRY_LINK([
+     #define _XOPEN_SOURCE 600
+     #include <stdio.h>
+     #include <stdlib.h>
+@@ -603,6 +603,7 @@ AC_CACHE_CHECK([whether posix_fallocate(
+     #if defined(__GLIBC__) && (__GLIBC__ < 2 || __GLIBC_MINOR__ < 7)
+       possibly broken posix_fallocate
+     #endif
++  ], [
+     int main() {
+       int fd = creat("conftest.temp", 0600);
+       int ret;

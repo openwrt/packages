@@ -1,0 +1,11 @@
+--- a/builders/make/linux.mk
++++ b/builders/make/linux.mk
+@@ -38,7 +38,7 @@ dynamic_exec_flags = $(FPIC) $(OPTIMIZAT
+ PLATFORM_DEFINES = \
+ 	-DLINUX \
+ 	-DLITTLE_ENDIAN_BYTE_ALIGNED \
+-	-DNET_EPOLL
++	-DNET_SELECT
+ 
+ SSL_BASE=/usr/local
+ 

@@ -1,0 +1,18 @@
+--- cmdpad-0.0.3/src/command.c.orig	2003-03-29 17:54:12.000000000 +0100
++++ cmdpad-0.0.3/src/command.c	2008-01-12 05:41:22.000000000 +0100
+@@ -68,6 +68,7 @@
+ 
+ void exec( char * command)
+ {
++    int status;
+ 	if( fork() == 0) {
+ 		char ** tmp ;
+ 		int i ;
+@@ -88,6 +89,7 @@
+ 		perror( "ERROR: execv") ;
+ 		exit( 1) ;
+ 	} // end if( fork())
++        wait(&status);
+ }
+ 
+ int getNumberofEntry()

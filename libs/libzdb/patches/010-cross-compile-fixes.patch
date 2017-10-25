@@ -1,0 +1,186 @@
+diff -rupN libzdb-3.1.orig/configure.ac libzdb-3.1/configure.ac
+--- libzdb-3.1.orig/configure.ac	2015-08-31 14:46:02.000000000 +0200
++++ libzdb-3.1/configure.ac	2016-04-18 19:43:13.836937134 +0200
+@@ -196,15 +196,6 @@ AC_SEARCH_LIBS([pthread_create], [pthrea
+ # Database Libraries 
+ 
+ mysql="yes"
+-check_mysql_config() 
+-{
+-        AC_PATH_PROG([MYSQLCONFIG], [mysql_config], [no], [$PATH:/usr/local/bin:/usr/local/mysql/bin])
+-        if test "x$MYSQLCONFIG" = "xno" 
+-        then
+-                AC_MSG_WARN([mysql_config is required to build libzdb with mysql])
+-                mysql="no"
+-        fi
+-}
+ AC_MSG_CHECKING(for mysql)
+ AC_ARG_WITH([mysql], 
+         AS_HELP_STRING([--with-mysql(=<path>)], 
+@@ -216,22 +207,20 @@ AC_ARG_WITH([mysql],
+                         mysql="no"
+                 else
+                         AC_MSG_RESULT([yes])
+-                        AC_CHECK_FILE([$with_mysql], [MYSQLCONFIG=$with_mysql], [check_mysql_config])        
+                 fi
+         ],
+         [
+                 AC_MSG_RESULT([yes])
+-                check_mysql_config
+         ])
+ if test "xyes" = "x$mysql"; then
+         svd_CPPFLAGS=$CPPFLAGS
+         svd_LDFLAGS=$LDFLAGS
+-        CPPFLAGS="`$MYSQLCONFIG --include` $CPPFLAGS"
+-        LDFLAGS="`$MYSQLCONFIG --libs` $LDFLAGS"
++        CPPFLAGS="-I$STAGING_DIR/usr/include/mysql $CPPFLAGS"
++        LDFLAGS="-L$STAGING_DIR/usr/lib/mysql -L$STAGING_DIR/usr/lib $LDFLAGS"
+         AC_CHECK_HEADERS([mysql.h], [], [mysql="no"])
+         if test "xyes" = "x$mysql"; then
+-                DBCPPFLAGS="$DBCPPFLAGS `$MYSQLCONFIG --include`"
+-                DBLDFLAGS="$DBLDFLAGS `$MYSQLCONFIG --libs`"
++                DBCPPFLAGS="$DBCPPFLAGS -I$STAGING_DIR/usr/include/mysql"
++                DBLDFLAGS="$DBLDFLAGS -L$STAGING_DIR/usr/lib/mysql -L$STAGING_DIR/usr/lib -lmysqlclient -lz -lcrypt -lm"
+                 AC_DEFINE([HAVE_LIBMYSQLCLIENT], 1, [Define to 1 to enable mysql])
+         else
+                 CPPFLAGS=$svd_CPPFLAGS
+@@ -241,15 +230,6 @@ fi
+ AM_CONDITIONAL([WITH_MYSQL], test "xyes" = "x$mysql")
+ 
+ postgresql="yes"
+-check_postgres_config() 
+-{
+-        AC_PATH_PROG([PGCONFIG], [pg_config], [no], [$PATH:/usr/local/bin:/usr/local/pgsql/bin])
+-        if test "x$PGCONFIG" = "xno"
+-        then
+-                AC_MSG_WARN([pg_config is required to build libzdb with postgresql])
+-                postgresql="no"
+-        fi
+-}
+ AC_MSG_CHECKING(for postgresql)
+ AC_ARG_WITH([postgresql], 
+         AS_HELP_STRING([--with-postgresql(=<path>)], 
+@@ -261,22 +241,20 @@ AC_ARG_WITH([postgresql],
+                         postgresql="no"
+                 else
+                         AC_MSG_RESULT([yes])
+-                        AC_CHECK_FILE([$with_postgresql], [PGCONFIG=$with_postgresql],[check_postgres_config])
+                 fi
+         ],
+         [
+                 AC_MSG_RESULT([yes])
+-                check_postgres_config
+         ])
+ if test "xyes" = "x$postgresql"; then
+         svd_CPPFLAGS=$CPPFLAGS
+         svd_LDFLAGS=$LDFLAGS
+-        CPPFLAGS="-I`$PGCONFIG --includedir` $CPPFLAGS"
+-        LDFLAGS="-L`$PGCONFIG --libdir` $LDFLAGS"
++        CPPFLAGS="-I$STAGING_DIR/usr/include/postgresql -I$STAGING_DIR/usr/include $CPPFLAGS"
++        LDFLAGS="-L$STAGING_DIR/usr/lib $LDFLAGS"
+         AC_CHECK_HEADERS([libpq-fe.h], [], [postgresql="no"])
+         if test "xyes" = "x$postgresql"; then
+-                DBCPPFLAGS="$DBCPPFLAGS -I`$PGCONFIG --includedir`"
+-                DBLDFLAGS="$DBLDFLAGS -L`$PGCONFIG --libdir` -lpq"
++                DBCPPFLAGS="$DBCPPFLAGS -I$STAGING_DIR/usr/include/postgresql -I$STAGING_DIR/usr/include"
++                DBLDFLAGS="$DBLDFLAGS -L$STAGING_DIR/usr/lib -lpq"
+                 AC_DEFINE([HAVE_LIBPQ], 1, [Define to 1 to enable postgresql])
+         else
+                 CPPFLAGS=$svd_CPPFLAGS
+@@ -298,22 +276,7 @@ AC_ARG_WITH([sqlite],
+                         sqlite="no"
+                 else
+                         AC_MSG_RESULT([yes])
+-                        AC_CHECK_FILE([$with_sqlite],
+-                        [
+-                                svd_LDFLAGS=$LDFLAGS
+-                                svd_CPPFLAGS=$CPPFLAGS
+-                                LDFLAGS="-L$with_sqlite/lib $LDFLAGS"
+-                                CPPFLAGS="-I$with_sqlite/include $CPPFLAGS"
+-                                AC_SEARCH_LIBS([sqlite3_open], [sqlite3],
+-                                [
+-                                        DBCPPFLAGS="$DBCPPFLAGS -I$with_sqlite/include"
+-                                        DBLDFLAGS="$DBLDFLAGS -L$with_sqlite/lib/ -lsqlite3"
+-                                ],[sqlite="no"],[-ldl])
+-                                LDFLAGS=$svd_LDFLAGS
+-                                CPPFLAGS=$svd_CPPFLAGS
+-   
+-                        ],
+-                        AC_SEARCH_LIBS([sqlite3_open], [sqlite3], [], [sqlite="no"], [-ldl]))
++                        AC_SEARCH_LIBS([sqlite3_open], [sqlite3], [], [sqlite="no"])
+                 fi
+         ], 
+         [
+@@ -328,20 +291,8 @@ if test "xyes" = "x$sqlite"; then
+ fi
+ AM_CONDITIONAL([WITH_SQLITE], test "xyes" = "x$sqlite")
+ 
+-oracle="yes"
+-AC_MSG_CHECKING(for oracle)
+-AX_LIB_ORACLE_OCI
+-if test -n "$ORACLE_OCI_CFLAGS" -a -n "$ORACLE_OCI_LDFLAGS"; then
+-        DBCPPFLAGS="$DBCPPFLAGS $ORACLE_OCI_CFLAGS"
+-        DBLDFLAGS="$DBLDFLAGS $ORACLE_OCI_LDFLAGS"
+-        AC_DEFINE([HAVE_ORACLE], 1, [Define to 1 to enable oracle])
+-else
+-        oracle="no"
+-fi
+-AM_CONDITIONAL([WITH_ORACLE], test "xyes" = "x$oracle")
+-
+ # Test if any database system was found
+-if test "xno" = "x$postgresql" -a "xno" = "x$mysql" -a "xno" = "x$sqlite" -a "xno" = "x$oracle"; then
++if test "xno" = "x$postgresql" -a "xno" = "x$mysql" -a "xno" = "x$sqlite"; then
+         AC_MSG_ERROR([No available database found or selected. Try configure --help])
+ fi
+ 
+@@ -358,23 +309,6 @@ AC_HEADER_STDC
+ # Functions 
+ # ------------------------------------------------------------------------
+ 
+-# Require a working setjmp
+-AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+-        #include <setjmp.h>
+-        ]],
+-        [[jmp_buf env; setjmp(env);]])], 
+-        [], [AC_MSG_FAILURE([setjmp is required])]
+-)
+-
+-# Require that we have vsnprintf that conforms to c99. I.e. does bounds check
+-AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+-        #include <stdarg.h> 
+-        #include <stdio.h>
+-        ]],
+-        [[char t[1]; va_list ap; int n = vsnprintf(t, 1, "hello", ap); if(n == 5) return 0;return 1;]])], 
+-        [], [AC_MSG_FAILURE([vsnprintf does not conform to c99])]
+-)
+-
+ AC_CHECK_FUNCS([timegm])
+ 
+ 
+@@ -516,11 +450,6 @@ echo "|   PostgreSQL:
+ else
+ echo "|   PostgreSQL:                                   DISABLED   |"
+ fi
+-if test "xyes" = "x$oracle"; then
+-echo "|   Oracle:                                       ENABLED    |"
+-else
+-echo "|   Oracle:                                       DISABLED   |"
+-fi
+ echo "+------------------------------------------------------------+"
+ 
+ 
+diff -rupN libzdb-3.1.orig/Makefile.am libzdb-3.1/Makefile.am
+--- libzdb-3.1.orig/Makefile.am	2015-08-31 14:55:18.000000000 +0200
++++ libzdb-3.1/Makefile.am	2016-04-18 19:43:42.215769551 +0200
+@@ -45,11 +45,6 @@ libzdb_la_SOURCES += src/db/sqlite/SQLit
+                      src/db/sqlite/SQLiteResultSet.c \
+                      src/db/sqlite/SQLitePreparedStatement.c
+ endif
+-if WITH_ORACLE
+-libzdb_la_SOURCES += src/db/oracle/OracleConnection.c \
+-                     src/db/oracle/OracleResultSet.c \
+-                     src/db/oracle/OraclePreparedStatement.c
+-endif
+ 
+ API_INTERFACES  = src/zdb.h src/db/ConnectionPool.h src/db/Connection.h \
+                   src/db/ResultSet.h src/net/URL.h src/db/PreparedStatement.h \

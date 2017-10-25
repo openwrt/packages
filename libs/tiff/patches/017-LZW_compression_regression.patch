@@ -1,0 +1,46 @@
+From 9c45d2395863b793528518d64ddb97d8fdc200dd Mon Sep 17 00:00:00 2001
+From: Even Rouault <even.rouault@spatialys.com>
+Date: Tue, 11 Jul 2017 08:55:07 +0000
+Subject: [PATCH] * libtiff/tif_lzw.c: fix 4.0.8 regression in the decoding of
+ old-style LZW compressed files.
+
+---
+ ChangeLog         | 5 +++++
+ libtiff/tif_lzw.c | 4 ++++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/ChangeLog b/ChangeLog
+index b0c84977..c5c74af7 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,3 +1,8 @@
++2017-07-11  Even Rouault <even.rouault at spatialys.com>
++
++	* libtiff/tif_lzw.c: fix 4.0.8 regression in the decoding of old-style LZW
++	compressed files.
++
+ 2017-06-30  Even Rouault <even.rouault at spatialys.com>
+ 
+ 	* libtiff/tif_dirwrite.c: in TIFFWriteDirectoryTagCheckedXXXX()
+diff --git a/libtiff/tif_lzw.c b/libtiff/tif_lzw.c
+index a2d01c90..f62b9e58 100644
+--- a/libtiff/tif_lzw.c
++++ b/libtiff/tif_lzw.c
+@@ -655,6 +655,9 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
+ 	}
+ 
+ 	bp = (unsigned char *)tif->tif_rawcp;
++#ifdef LZW_CHECKEOS
++	sp->dec_bitsleft = (((uint64)tif->tif_rawcc) << 3);
++#endif
+ 	nbits = sp->lzw_nbits;
+ 	nextdata = sp->lzw_nextdata;
+ 	nextbits = sp->lzw_nextbits;
+@@ -764,6 +767,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
+ 		}
+ 	}
+ 
++	tif->tif_rawcc -= (tmsize_t)( (uint8*) bp - tif->tif_rawcp );
+ 	tif->tif_rawcp = (uint8*) bp;
+ 	sp->lzw_nbits = (unsigned short)nbits;
+ 	sp->lzw_nextdata = nextdata;

@@ -1,0 +1,24 @@
+--- a/drv_G15.c
++++ b/drv_G15.c
+@@ -42,6 +42,7 @@
+ 
+ #include <usb.h>
+ #include <fcntl.h>
++#include <linux/version.h>
+ #include <linux/input.h>
+ #include <linux/uinput.h>
+ 
+@@ -269,8 +270,13 @@ void drv_G15_initKeyHandling(char *devic
+     }
+     memset(&device, 0, sizeof(device));
+     strncpy(device.name, "G15 Keys", UINPUT_MAX_NAME_SIZE);
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+     device.id.bustype = BUS_USB;
+     device.id.version = 4;
++#else
++    device.idbus = BUS_USB;
++    device.idversion = 4;
++#endif
+ 
+     ioctl(uinput_fd, UI_SET_EVBIT, EV_KEY);
+ 

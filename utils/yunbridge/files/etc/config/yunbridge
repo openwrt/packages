@@ -1,0 +1,6 @@
+config bridge config
+	option socket_timeout 5
+	option secure_rest_api false
+
+	# remove this line to activae the yunbridge
+	option disabled	1

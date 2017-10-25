@@ -1,0 +1,39 @@
+diff --git a/configure.ac b/configure.ac
+index e6a23a6..8a7c6d6 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -118,7 +118,6 @@ OVS_CHECK_XENSERVER_VERSION
+ OVS_CHECK_GROFF
+ OVS_CHECK_GNU_MAKE
+ OVS_CHECK_TLS
+-OVS_CHECK_ATOMIC_LIBS
+ OVS_CHECK_GCC4_ATOMICS
+ OVS_CHECK_ATOMIC_ALWAYS_LOCK_FREE(1)
+ OVS_CHECK_ATOMIC_ALWAYS_LOCK_FREE(2)
+diff --git a/lib/netdev-linux.c b/lib/netdev-linux.c
+index 712cb5a..e840f10 100644
+--- a/lib/netdev-linux.c
++++ b/lib/netdev-linux.c
+@@ -40,7 +40,9 @@
+ #include <netpacket/packet.h>
+ #include <net/if.h>
+ #include <net/if_arp.h>
++#if defined(__UCLIBC__) || defined(__GLIBC__)
+ #include <net/if_packet.h>
++#endif
+ #include <net/route.h>
+ #include <netinet/in.h>
+ #include <poll.h>
+diff --git a/lib/ovs-atomic.h b/lib/ovs-atomic.h
+index 9ead907..0a131d7 100644
+--- a/lib/ovs-atomic.h
++++ b/lib/ovs-atomic.h
+@@ -318,7 +318,7 @@
+ #include "util.h"
+ 
+ #define IN_OVS_ATOMIC_H
+-    #if __CHECKER__
++    #if 1
+         /* sparse doesn't understand some GCC extensions we use. */
+         #include "ovs-atomic-pthreads.h"
+     #elif __has_extension(c_atomic)

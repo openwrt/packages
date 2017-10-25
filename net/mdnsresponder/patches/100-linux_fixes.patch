@@ -1,0 +1,403 @@
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..920cdfc
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,4 @@
++Clients/build
++mDNSPosix/build
++mDNSPosix/objects
++
+diff --git a/Clients/Makefile b/Clients/Makefile
+index 383af31..925c20e 100755
+--- a/Clients/Makefile
++++ b/Clients/Makefile
+@@ -34,7 +34,7 @@ TARGETS = build/dns-sd build/dns-sd64
+ LIBS =
+ else
+ TARGETS = build/dns-sd
+-LIBS = -L../mDNSPosix/build/prod/ -ldns_sd
++LIBS ?= -L../mDNSPosix/build/prod/ -ldns_sd
+ endif
+ 
+ all: $(TARGETS)
+diff --git a/mDNSPosix/PosixDaemon.c b/mDNSPosix/PosixDaemon.c
+index 88b3292..e86a6c7 100644
+--- a/mDNSPosix/PosixDaemon.c
++++ b/mDNSPosix/PosixDaemon.c
+@@ -37,6 +37,11 @@
+ #include <fcntl.h>
+ #include <pwd.h>
+ #include <sys/types.h>
++#ifdef __linux__
++#include <sys/capability.h> /* !!! We require libcap-dev for this. Oh well. */
++/* prctl is required to enable inheriting of capabilities across setuid */
++#include <sys/prctl.h>
++#endif /* __linux__ */
+ 
+ #if __APPLE__
+ #undef daemon
+@@ -184,16 +189,50 @@ int main(int argc, char **argv)
+ 
+     Reconfigure(&mDNSStorage);
+ 
++#ifdef __linux__
++    /*
++     * SO_BINDTODEVICE is privileged operation; however, we can get
++     * around it using capabilities instead of remaining root.
++     */
++    if (mStatus_NoError == err)
++      {
++        if (prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0) < 0)
++          perror("prctl PR_SET_KEEPCAPS");
++      }
++#endif /* __linux__ */
++
+     // Now that we're finished with anything privileged, switch over to running as "nobody"
+     if (mStatus_NoError == err)
+     {
+         const struct passwd *pw = getpwnam("nobody");
+         if (pw != NULL)
++          {
+             setuid(pw->pw_uid);
++#ifdef __linux__
++            struct __user_cap_header_struct ch;
++            struct __user_cap_data_struct cd[_LINUX_CAPABILITY_U32S_3];
++
++            memset(&ch, 0, sizeof(ch));
++            ch.version = _LINUX_CAPABILITY_VERSION_3;
++            ch.pid = getpid();
++            memset(&cd[0], 0, sizeof(cd));
++            /* CAP_NET_RAW is required to use SO_BINDTODEVICE */
++            int caps = CAP_TO_MASK(CAP_NET_RAW);
++            cd[0].permitted = caps;
++            cd[0].effective = caps;
++            if (capset(&ch, &cd[0]) < 0)
++              perror("capset");
++#endif /* __linux__ */
++          }
+         else
+             LogMsg("WARNING: mdnsd continuing as root because user \"nobody\" does not exist");
+     }
+ 
++#ifdef __linux__
++    if (mStatus_NoError == err)
++      err = mDNSPlatformPosixRefreshInterfaceList(&mDNSStorage);
++#endif /* __linux__ */
++
+     if (mStatus_NoError == err)
+         err = MainLoop(&mDNSStorage);
+ 
+diff --git a/mDNSPosix/Responder.c b/mDNSPosix/Responder.c
+index 3996b7b..e58d8eb 100755
+--- a/mDNSPosix/Responder.c
++++ b/mDNSPosix/Responder.c
+@@ -603,7 +603,8 @@ static mStatus RegisterServicesInFile(const char *filePath)
+         status = mStatus_UnknownErr;
+     }
+ 
+-    assert(0 == fclose(fp));
++    int rv = fclose(fp);
++    assert(0 == rv);
+ 
+     return status;
+ }
+diff --git a/mDNSPosix/mDNSPosix.c b/mDNSPosix/mDNSPosix.c
+index 6effa12..7c1d6eb 100755
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -138,7 +138,7 @@ mDNSlocal void SockAddrTomDNSAddr(const struct sockaddr *const sa, mDNSAddr *ipA
+ 
+ // mDNS core calls this routine when it needs to send a packet.
+ mDNSexport mStatus mDNSPlatformSendUDP(const mDNS *const m, const void *const msg, const mDNSu8 *const end,
+-                                       mDNSInterfaceID InterfaceID, UDPSocket *src, const mDNSAddr *dst, 
++                                       mDNSInterfaceID InterfaceID, UDPSocket *src, const mDNSAddr *dst,
+                                        mDNSIPPort dstPort, mDNSBool useBackgroundTrafficClass)
+ {
+     int err = 0;
+@@ -583,9 +583,17 @@ mDNSlocal void FreePosixNetworkInterface(PosixNetworkInterface *intf)
+ {
+     assert(intf != NULL);
+     if (intf->intfName != NULL) free((void *)intf->intfName);
+-    if (intf->multicastSocket4 != -1) assert(close(intf->multicastSocket4) == 0);
++    if (intf->multicastSocket4 != -1)
++      {
++        int rv = close(intf->multicastSocket4);
++        assert(rv == 0);
++      }
+ #if HAVE_IPV6
+-    if (intf->multicastSocket6 != -1) assert(close(intf->multicastSocket6) == 0);
++    if (intf->multicastSocket6 != -1)
++      {
++        int rv = close(intf->multicastSocket6);
++        assert(rv == 0);
++      }
+ #endif
+ 
+     // Move interface to the RecentInterfaces list for a minute
+@@ -724,6 +732,29 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
+             if (err < 0) { err = errno; perror("setsockopt - IP_MULTICAST_TTL"); }
+         }
+ 
++#ifdef __linux__
++#ifdef SO_BINDTODEVICE
++        if (err == 0 && interfaceIndex)
++        {
++            char ifname[IFNAMSIZ];
++            if (if_indextoname(interfaceIndex, ifname))
++              {
++                err = setsockopt(*sktPtr, SOL_SOCKET, SO_BINDTODEVICE, ifname, strlen(ifname));
++                if (err < 0)
++                  {
++                    err = errno;
++                    perror("setsockopt - SO_BINDTODEVICE");
++                  }
++              }
++            else
++              {
++                err = errno;
++                perror("if_indextoname");
++              }
++        }
++#endif /* SO_BINDTODEVICE */
++#endif /* __linux__ */
++
+         // And start listening for packets
+         if (err == 0)
+         {
+@@ -805,6 +836,29 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
+             if (err < 0) { err = errno; perror("setsockopt - IPV6_MULTICAST_HOPS"); }
+         }
+ 
++#ifdef __linux__
++#ifdef SO_BINDTODEVICE
++        if (err == 0 && interfaceIndex)
++        {
++            char ifname[IFNAMSIZ];
++            if (if_indextoname(interfaceIndex, ifname))
++              {
++                err = setsockopt(*sktPtr, SOL_SOCKET, SO_BINDTODEVICE, ifname, strlen(ifname));
++                if (err < 0)
++                  {
++                    err = errno;
++                    perror("setsockopt - SO_BINDTODEVICE");
++                  }
++              }
++            else
++              {
++                err = errno;
++                perror("if_indextoname");
++              }
++        }
++#endif /* SO_BINDTODEVICE */
++#endif /* __linux__ */
++
+         // And start listening for packets
+         if (err == 0)
+         {
+@@ -836,7 +890,12 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
+     }
+ 
+     // Clean up
+-    if (err != 0 && *sktPtr != -1) { assert(close(*sktPtr) == 0); *sktPtr = -1; }
++    if (err != 0 && *sktPtr != -1)
++      {
++        int rv = close(*sktPtr);
++        assert(rv == 0);
++        *sktPtr = -1;
++      }
+     assert((err == 0) == (*sktPtr != -1));
+     return err;
+ }
+@@ -938,19 +997,14 @@ mDNSlocal int SetupInterfaceList(mDNS *const m)
+     int err            = 0;
+     struct ifi_info *intfList      = get_ifi_info(AF_INET, mDNStrue);
+     struct ifi_info *firstLoopback = NULL;
++    struct ifi_info **p = &intfList;
+ 
+     assert(m != NULL);
+     debugf("SetupInterfaceList");
+ 
+-    if (intfList == NULL) err = ENOENT;
+-
+ #if HAVE_IPV6
+-    if (err == 0)       /* Link the IPv6 list to the end of the IPv4 list */
+-    {
+-        struct ifi_info **p = &intfList;
+-        while (*p) p = &(*p)->ifi_next;
+-        *p = get_ifi_info(AF_INET6, mDNStrue);
+-    }
++    while (*p) p = &(*p)->ifi_next;
++    *p = get_ifi_info(AF_INET6, mDNStrue);
+ #endif
+ 
+     if (err == 0)
+@@ -1026,7 +1080,7 @@ mDNSlocal mStatus OpenIfNotifySocket(int *pFD)
+     /* Subscribe the socket to Link & IP addr notifications. */
+     mDNSPlatformMemZero(&snl, sizeof snl);
+     snl.nl_family = AF_NETLINK;
+-    snl.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR;
++    snl.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
+     ret = bind(sock, (struct sockaddr *) &snl, sizeof snl);
+     if (0 == ret)
+         *pFD = sock;
+@@ -1104,11 +1158,18 @@ mDNSlocal mDNSu32       ProcessRoutingNotification(int sd)
+         PrintNetLinkMsg(pNLMsg);
+ #endif
+ 
++        // this result isn't used anywhere as a number, just as
++        // non-zero - however, I have seen devices with more than 32
++        // interfaces at some point..
++        // (on Linux, every tunnel increases index for example)
++
+         // Process the NetLink message
+         if (pNLMsg->nlmsg_type == RTM_GETLINK || pNLMsg->nlmsg_type == RTM_NEWLINK)
+-            result |= 1 << ((struct ifinfomsg*) NLMSG_DATA(pNLMsg))->ifi_index;
++          result |= 1;
++        // << ((struct ifinfomsg*) NLMSG_DATA(pNLMsg))->ifi_index;
+         else if (pNLMsg->nlmsg_type == RTM_DELADDR || pNLMsg->nlmsg_type == RTM_NEWADDR)
+-            result |= 1 << ((struct ifaddrmsg*) NLMSG_DATA(pNLMsg))->ifa_index;
++          result |= 1;
++        // << ((struct ifaddrmsg*) NLMSG_DATA(pNLMsg))->ifa_index;
+ 
+         // Advance pNLMsg to the next message in the buffer
+         if ((pNLMsg->nlmsg_flags & NLM_F_MULTI) != 0 && pNLMsg->nlmsg_type != NLMSG_DONE)
+@@ -1279,8 +1340,12 @@ mDNSexport mStatus mDNSPlatformInit(mDNS *const m)
+     if (err == mStatus_NoError) err = SetupSocket(&sa, zeroIPPort, 0, &m->p->unicastSocket6);
+ #endif
+ 
++    // In Linux case, we can't set up sockets with different owner -
++    // it blows up SO_REUSEPORT. So we do this step bit later.
++#ifndef __linux__
+     // Tell mDNS core about the network interfaces on this machine.
+     if (err == mStatus_NoError) err = SetupInterfaceList(m);
++#endif /* !__linux__ */
+ 
+     // Tell mDNS core about DNS Servers
+     mDNS_Lock(m);
+@@ -1313,9 +1378,17 @@ mDNSexport void mDNSPlatformClose(mDNS *const m)
+ {
+     assert(m != NULL);
+     ClearInterfaceList(m);
+-    if (m->p->unicastSocket4 != -1) assert(close(m->p->unicastSocket4) == 0);
++    if (m->p->unicastSocket4 != -1)
++      {
++        int rv = close(m->p->unicastSocket4);
++        assert(rv == 0);
++      }
+ #if HAVE_IPV6
+-    if (m->p->unicastSocket6 != -1) assert(close(m->p->unicastSocket6) == 0);
++    if (m->p->unicastSocket6 != -1)
++      {
++        int rv = close(m->p->unicastSocket6);
++        assert(rv == 0);
++      }
+ #endif
+ }
+ 
+@@ -1571,14 +1644,14 @@ mDNSexport mStatus    mDNSPlatformClearSPSMACAddr(void)
+ mDNSexport mDNSu16 mDNSPlatformGetUDPPort(UDPSocket *sock)
+ {
+     (void) sock; // unused
+- 
++
+     return (mDNSu16)-1;
+ }
+ 
+ mDNSexport mDNSBool mDNSPlatformInterfaceIsD2D(mDNSInterfaceID InterfaceID)
+ {
+     (void) InterfaceID; // unused
+-    
++
+     return mDNSfalse;
+ }
+ 
+diff --git a/mDNSPosix/mDNSUNP.c b/mDNSPosix/mDNSUNP.c
+index b392fc7..f551ad5 100755
+--- a/mDNSPosix/mDNSUNP.c
++++ b/mDNSPosix/mDNSUNP.c
+@@ -63,6 +63,7 @@
+ #if defined(AF_INET6) && HAVE_IPV6 && HAVE_LINUX
+ #include <netdb.h>
+ #include <arpa/inet.h>
++#include <linux/if_addr.h>
+ 
+ /* Converts a prefix length to IPv6 network mask */
+ void plen_to_mask(int plen, char *addr) {
+@@ -86,7 +87,7 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
+     FILE *fp;
+     char addr[8][5];
+     int flags, myflags, index, plen, scope;
+-    char ifname[9], lastname[IFNAMSIZ];
++    char ifname[IFNAMSIZ], lastname[IFNAMSIZ];
+     char addr6[32+7+1]; /* don't forget the seven ':' */
+     struct addrinfo hints, *res0;
+     struct sockaddr_in6 *sin6;
+@@ -94,7 +95,8 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
+     int err;
+     int sockfd = -1;
+     struct ifreq ifr;
+-
++    char mask[64] = "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %";
++    sprintf(mask+strlen(mask), "%ds\n", IFNAMSIZ);
+     res0=NULL;
+     ifihead = NULL;
+     ifipnext = &ifihead;
+@@ -106,11 +108,12 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
+             goto gotError;
+         }
+         while (fscanf(fp,
+-                      "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %8s\n",
++                      mask,
+                       addr[0],addr[1],addr[2],addr[3],
+                       addr[4],addr[5],addr[6],addr[7],
+                       &index, &plen, &scope, &flags, ifname) != EOF) {
+ 
++            if (flags & IFA_F_DEPRECATED) continue;
+             myflags = 0;
+             if (strncmp(lastname, ifname, IFNAMSIZ) == 0) {
+                 if (doaliases == 0)
+@@ -204,8 +207,11 @@ gotError:
+         res0=NULL;
+     }
+ done:
++    if (fp)
++      fclose(fp);
+     if (sockfd != -1) {
+-        assert(close(sockfd) == 0);
++      int rv = close(sockfd);
++      assert(rv == 0);
+     }
+     return(ifihead);    /* pointer to first structure in linked list */
+ }
+diff --git a/mDNSShared/dnsextd_parser.y b/mDNSShared/dnsextd_parser.y
+index 18c5990..d4b63ce 100644
+--- a/mDNSShared/dnsextd_parser.y
++++ b/mDNSShared/dnsextd_parser.y
+@@ -15,6 +15,8 @@
+  * limitations under the License.
+  */
+ 
++%parse-param { void *context }
++
+ %{
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -23,7 +25,7 @@
+ #include "DebugServices.h"
+ #include "dnsextd.h"
+ 
+-void yyerror( const char* error );
++void yyerror( void *context, const char* error );
+ int  yylex(void);
+ 
+ 
+@@ -378,7 +380,7 @@ int yywrap(void);
+ 
+ extern int yylineno;
+ 
+-void yyerror( const char *str )
++void yyerror( void *context, const char *str )
+ {
+         fprintf( stderr,"%s:%d: error: %s\n", g_filename, yylineno, str );
+ }

@@ -1,0 +1,22 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -1052,9 +1052,6 @@ sys/ximage/Makefile
+ common/Makefile
+ common/m4/Makefile
+ m4/Makefile
+-docs/Makefile
+-docs/plugins/Makefile
+-docs/version.entities
+ pkgconfig/Makefile
+ pkgconfig/gstreamer-plugins-good-uninstalled.pc
+ gst-plugins-good.spec
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,7 +2,6 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-d
+ 
+ ALWAYS_SUBDIRS =		\
+ 	gst sys ext 		\
+-	docs			\
+ 	common			\
+ 	m4			\
+ 	pkgconfig

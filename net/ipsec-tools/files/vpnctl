@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+
+case X$1 in
+  Xup|X1|Xstart) connMode=vpn-connect ;;
+  Xdown|X0|Xstop) connMode=vpn-disconnect ;;
+  *)
+    echo "Usage: $0: up|1|start || down|0|stop"
+    exit 1 ;;
+esac
+
+if [ -s /var/racoon/peers.txt ]; then
+  (while read ipa ; do
+    racoonctl $connMode $ipa
+  done) < /var/racoon/peers.txt
+fi
+
+
+# EOF /usr/bin/vpnctl

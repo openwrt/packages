@@ -1,0 +1,17 @@
+Windows (Win32) doesn't support the analyze ATR perl-script and since we 
+don't want to pull in perl as a dependency add the same workaround here. 
+
+diff --git a/pcsc_scan.c b/pcsc_scan.c
+index e1d8942..81344e1 100644
+--- a/pcsc_scan.c
++++ b/pcsc_scan.c
+@@ -224,9 +224,7 @@ int main(int argc, char *argv[])
+ 	printf("PC/SC device scanner\n");
+ 	printf("V " PACKAGE_VERSION " (c) 2001-2017, Ludovic Rousseau <ludovic.rousseau@free.fr>\n");
+ 
+-#ifdef WIN32
+ 	analyse_atr = FALSE;
+-#endif
+ 
+ 	while ((opt = getopt(argc, argv, "Vhns")) != EOF)
+ 	{

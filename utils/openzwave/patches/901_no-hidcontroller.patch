@@ -1,0 +1,89 @@
+--- a/cpp/src/Driver.cpp
++++ b/cpp/src/Driver.cpp
+@@ -37,11 +37,6 @@
+ #include "platform/Event.h"
+ #include "platform/Mutex.h"
+ #include "platform/SerialController.h"
+-#ifdef WINRT
+-#include "platform/winRT/HidControllerWinRT.h"
+-#else
+-#include "platform/HidController.h"
+-#endif
+ #include "platform/Thread.h"
+ #include "platform/Log.h"
+ #include "platform/TimeStamp.h"
+@@ -223,14 +218,7 @@ m_nonceReportSentAttempt( 0 )
+ 
+ 	initNetworkKeys(false);
+ 
+-	if( ControllerInterface_Hid == _interface )
+-	{
+-		m_controller = new HidController();
+-	}
+-	else
+-	{
+-		m_controller = new SerialController();
+-	}
++	m_controller = new SerialController();
+ 	m_controller->SetSignalThreshold( 1 );
+ 
+ 	Options::Get()->GetOptionAsBool( "NotifyTransactions", &m_notifytransactions );
+--- a/cpp/build/Makefile
++++ b/cpp/build/Makefile
+@@ -66,16 +66,7 @@ CFLAGS  += $(CPPFLAGS)
+ #where to put the temporary library
+ LIBDIR	?= $(top_builddir)
+ 
+-INCLUDES	:= -I $(top_srcdir)/cpp/src -I $(top_srcdir)/cpp/tinyxml/ -I $(top_srcdir)/cpp/hidapi/hidapi/
+-
+-ifeq ($(UNAME),Darwin)
+-SOURCES_HIDAPI =$(top_srcdir)/cpp/hidapi/mac
+-else ifeq ($(UNAME),FreeBSD)
+-SOURCES_HIDAPI =$(top_srcdir)/cpp/hidapi/libusb
+-else
+-SOURCES_HIDAPI =$(top_srcdir)/cpp/hidapi/linux
+-endif
+-
++INCLUDES	:= -I $(top_srcdir)/cpp/src -I $(top_srcdir)/cpp/tinyxml/
+ 
+ SOURCES		:= $(top_srcdir)/cpp/src $(top_srcdir)/cpp/src/command_classes $(top_srcdir)/cpp/tinyxml \
+ 	$(top_srcdir)/cpp/src/value_classes $(top_srcdir)/cpp/src/platform $(top_srcdir)/cpp/src/platform/unix $(SOURCES_HIDAPI) $(top_srcdir)/cpp/src/aes/
+@@ -85,14 +76,6 @@ VPATH = $(top_srcdir)/cpp/src:$(top_srcd
+ 
+ tinyxml := $(notdir $(wildcard $(top_srcdir)/cpp/tinyxml/*.cpp))
+ 
+-ifeq ($(UNAME),Darwin)
+-hidapi := $(notdir $(wildcard $(top_srcdir)/cpp/hidapi/mac/*.c))
+-else ifeq ($(UNAME),FreeBSD)
+-hidapi := $(notdir $(wildcard $(top_srcdir)/cpp/hidapi/libusb/*.c))
+-else
+-hidapi := $(notdir $(wildcard $(top_srcdir)/cpp/hidapi/linux/*.c)) # we do not want the libusb version
+-endif
+-
+ cclasses := $(notdir $(wildcard $(top_srcdir)/cpp/src/command_classes/*.cpp))
+ vclasses := $(notdir $(wildcard $(top_srcdir)/cpp/src/value_classes/*.cpp))
+ pform := $(notdir $(wildcard $(top_srcdir)/cpp/src/platform/*.cpp)) \
+@@ -111,7 +94,6 @@ printversion:
+ 
+ 
+ -include $(patsubst %.cpp,$(DEPDIR)/%.d,$(tinyxml))
+--include $(patsubst %.c,$(DEPDIR)/%.d,$(hidapi))
+ -include $(patsubst %.cpp,$(DEPDIR)/%.d,$(cclasses))
+ -include $(patsubst %.cpp,$(DEPDIR)/%.d,$(vclasses))
+ -include $(patsubst %.cpp,$(DEPDIR)/%.d,$(pform))
+@@ -131,7 +113,6 @@ $(top_srcdir)/cpp/src/vers.cpp:
+ #$(OBJDIR)/vers.o:	$(top_builddir)/vers.cpp
+ 
+ $(LIBDIR)/libopenzwave.a:	$(patsubst %.cpp,$(OBJDIR)/%.o,$(tinyxml)) \
+-			$(patsubst %.c,$(OBJDIR)/%.o,$(hidapi)) \
+ 			$(patsubst %.c,$(OBJDIR)/%.o,$(aes)) \
+ 			$(patsubst %.cpp,$(OBJDIR)/%.o,$(cclasses)) \
+ 			$(patsubst %.cpp,$(OBJDIR)/%.o,$(vclasses)) \
+@@ -143,7 +124,6 @@ $(LIBDIR)/libopenzwave.a:	$(patsubst %.c
+ 	@$(RANLIB) $@
+ 
+ $(LIBDIR)/$(SHARED_LIB_NAME):	$(patsubst %.cpp,$(OBJDIR)/%.o,$(tinyxml)) \
+-			$(patsubst %.c,$(OBJDIR)/%.o,$(hidapi)) \
+ 			$(patsubst %.c,$(OBJDIR)/%.o,$(aes)) \
+ 			$(patsubst %.cpp,$(OBJDIR)/%.o,$(cclasses)) \
+ 			$(patsubst %.cpp,$(OBJDIR)/%.o,$(vclasses)) \

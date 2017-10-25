@@ -1,0 +1,73 @@
+
+config interface 'wan'
+	option enabled '1'
+	list track_ip '8.8.4.4'
+	list track_ip '8.8.8.8'
+	list track_ip '208.67.222.222'
+	list track_ip '208.67.220.220'
+	option reliability '2'
+	option count '1'
+	option timeout '2'
+	option interval '5'
+	option down '3'
+	option up '8'
+
+config interface 'wan2'
+	option enabled '0'
+	list track_ip '8.8.8.8'
+	list track_ip '208.67.220.220'
+	option reliability '1'
+	option count '1'
+	option timeout '2'
+	option interval '5'
+	option down '3'
+	option up '8'
+
+config member 'wan_m1_w3'
+	option interface 'wan'
+	option metric '1'
+	option weight '3'
+
+config member 'wan_m2_w3'
+	option interface 'wan'
+	option metric '2'
+	option weight '3'
+
+config member 'wan2_m1_w2'
+	option interface 'wan2'
+	option metric '1'
+	option weight '2'
+
+config member 'wan2_m2_w2'
+	option interface 'wan2'
+	option metric '2'
+	option weight '2'
+
+config policy 'wan_only'
+	list use_member 'wan_m1_w3'
+
+config policy 'wan2_only'
+	list use_member 'wan2_m1_w2'
+
+config policy 'balanced'
+	list use_member 'wan_m1_w3'
+	list use_member 'wan2_m1_w2'
+
+config policy 'wan_wan2'
+	list use_member 'wan_m1_w3'
+	list use_member 'wan2_m2_w2'
+
+config policy 'wan2_wan'
+	list use_member 'wan_m2_w3'
+	list use_member 'wan2_m1_w2'
+
+config rule 'https'
+	option sticky '1'
+	option dest_port '443'
+	option proto 'tcp'
+	option use_policy 'balanced'
+
+config rule 'default_rule'
+	option dest_ip '0.0.0.0/0'
+	option use_policy 'balanced'
+

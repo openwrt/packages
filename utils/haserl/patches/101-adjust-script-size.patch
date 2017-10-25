@@ -1,0 +1,11 @@
+--- a/src/h_lua_common.c	2013-09-20 23:35:19.000000000 +0300
++++ b/src/h_lua_common.c	2014-05-03 19:27:43.000000000 +0300
+@@ -79,7 +79,7 @@
+ 
+   /* and load our haserl library */
+   if (luaL_loadbuffer
+-      (lua_vm, (const char *) &haserl_lualib, sizeof (haserl_lualib),
++      (lua_vm, (const char *) haserl_lualib, sizeof(haserl_lualib)-1,
+        "luascript.lua") || lua_pcall (lua_vm, 0, 0, 0))
+     {
+       die_with_message (NULL, NULL,

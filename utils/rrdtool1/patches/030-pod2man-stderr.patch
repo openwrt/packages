@@ -1,0 +1,11 @@
+--- rrdtool-1.0.50/doc/Makefile.am.orig	2013-11-16 11:44:50.940231208 -0500
++++ rrdtool-1.0.50/doc/Makefile.am	2013-11-16 11:45:09.802229483 -0500
+@@ -35,7 +35,7 @@
+ all-local: link txt man html
+ 
+ .pod.1 .pm.1 .pl.1:
+-	pod2man --release=$(VERSION) --center=RRDtool $<  > $@
++	pod2man --stderr --release=$(VERSION) --center=RRDtool $<  > $@
+ 
+ .1.txt:
+ 	@NROFF@ -man -Tlp $< > $@ || echo @NROFF@ failed > $@

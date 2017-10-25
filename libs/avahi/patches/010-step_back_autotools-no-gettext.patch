@@ -1,0 +1,80 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -75,8 +75,7 @@ SUBDIRS = \
+ 	avahi-compat-howl \
+ 	avahi-autoipd \
+ 	avahi-ui \
+-	avahi-ui-sharp \
+-	po
++	avahi-ui-sharp
+ 
+ DX_INPUT = \
+ 	$(srcdir)/avahi-common/address.h \
+--- a/avahi-python/avahi-discover/Makefile.am
++++ b/avahi-python/avahi-discover/Makefile.am
+@@ -38,7 +38,6 @@ if HAVE_GDBM
+ pythonscripts += \
+ 	avahi-discover
+ desktop_DATA += avahi-discover.desktop
+-@INTLTOOL_DESKTOP_RULE@
+ avahi_discover_PYTHON += __init__.py
+ endif
+ 
+@@ -46,7 +45,6 @@ if HAVE_DBM
+ pythonscripts += \
+ 	avahi-discover
+ desktop_DATA += avahi-discover.desktop
+-@INTLTOOL_DESKTOP_RULE@
+ avahi_discover_PYTHON += __init__.py
+ endif
+ 
+--- a/avahi-ui/Makefile.am
++++ b/avahi-ui/Makefile.am
+@@ -78,7 +78,6 @@ endif
+ 
+ bin_PROGRAMS = bssh
+ desktop_DATA += bssh.desktop bvnc.desktop
+-@INTLTOOL_DESKTOP_RULE@
+ 
+ bssh_SOURCES = bssh.c
+ 
+@@ -106,6 +105,4 @@ endif # HAVE_GLIB
+ endif
+ endif
+ 
+-@INTLTOOL_DESKTOP_RULE@
+-
+ CLEANFILES = $(desktop_DATA) $(desktop_DATA_in)
+--- a/configure.ac
++++ b/configure.ac
+@@ -23,7 +23,7 @@ AC_INIT([avahi],[0.6.29],[avahi (at) lis
+ AC_CONFIG_SRCDIR([avahi-core/server.c])
+ AC_CONFIG_MACRO_DIR([common])
+ AC_CONFIG_HEADERS([config.h])
+-AM_INIT_AUTOMAKE([foreign 1.11 -Wall -Wno-portability silent-rules tar-pax])
++AM_INIT_AUTOMAKE([foreign 1.11 -Wall -Wno-portability tar-pax])
+ 
+ AC_SUBST(PACKAGE_URL, [http://avahi.org/])
+ 
+@@ -43,8 +43,6 @@ AC_SUBST(HOWL_COMPAT_VERSION, [0.9.8])
+ 
+ AC_CANONICAL_HOST
+ 
+-AM_SILENT_RULES([yes])
+-
+ AC_CHECK_PROG([STOW], [stow], [yes], [no])
+ 
+ AS_IF([test "x$STOW" = "xyes" && test -d /usr/local/stow], [
+@@ -412,12 +410,6 @@ if test "x$have_kqueue" = "xyes" ; then
+     AC_DEFINE([HAVE_KQUEUE], 1, [Enable BSD kqueue() usage])
+ fi
+ 
+-IT_PROG_INTLTOOL([0.35.0])
+-GETTEXT_PACKAGE=avahi
+-AC_SUBST([GETTEXT_PACKAGE])
+-AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[Gettext package])
+-AM_GLIB_GNU_GETTEXT
+-
+ avahilocaledir='${prefix}/${DATADIRNAME}/locale'
+ AC_SUBST(avahilocaledir)
+ 

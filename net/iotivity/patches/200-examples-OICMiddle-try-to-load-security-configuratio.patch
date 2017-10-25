@@ -1,0 +1,44 @@
+From ce27d50b9c11386242487852f14b025ed6c67701 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke.mehrtens@lantiq.com>
+Date: Wed, 19 Aug 2015 16:47:21 +0200
+Subject: [PATCH 14/14] examples: OICMiddle: try to load security
+ configuration by default
+
+Load the security configuration from the default location by default.
+When it is not found security will just not work.
+
+Signed-off-by: Hauke Mehrtens <hauke.mehrtens@lantiq.com>
+---
+ examples/OICMiddle/OICMiddle.cpp |    9 ++++++++-
+ examples/OICMiddle/OICMiddle.h   |    1 +
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+--- a/examples/OICMiddle/OICMiddle.cpp
++++ b/examples/OICMiddle/OICMiddle.cpp
+@@ -99,8 +99,15 @@ void Middle::startPlatform()
+     //std::string ipaddr = INADDR_ANY;
+     std::string ipaddr = "0.0.0.0";
+ 
++    // Initialize Persistent Storage for SVR database
++    middle.ps.open = fopen;
++    middle.ps.read = fread;
++    middle.ps.write = fwrite;
++    middle.ps.close = fclose;
++    middle.ps.unlink = unlink;
++
+     PlatformConfig cfg { ServiceType::InProc, ModeType::Both,
+-                  ipaddr, port, QualityOfService::LowQos};
++                  ipaddr, port, QualityOfService::LowQos, &middle.ps};
+ 
+     OC::OCPlatform::Configure(cfg);
+ }
+--- a/examples/OICMiddle/OICMiddle.h
++++ b/examples/OICMiddle/OICMiddle.h
+@@ -83,6 +83,7 @@ protected:
+     MiddleServer *m_server;
+     LineInput *m_lineInput;
+     RestInput *m_restInput;
++    OCPersistentStorage ps;
+ 
+ protected:
+     void startPlatform();

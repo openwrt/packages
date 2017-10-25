@@ -1,0 +1,49 @@
+--- a/motion.c
++++ b/motion.c
+@@ -2630,6 +2630,17 @@ int main (int argc, char **argv)
+     struct sigaction sigchild_action;
+     setup_signals(&sig_handler_action, &sigchild_action);
+ 
++    /*
++     * Create and a thread attribute for the threads we spawn later on.
++     * PTHREAD_CREATE_DETACHED means to create threads detached, i.e.
++     * their termination cannot be synchronized through 'pthread_join'.
++     */
++    pthread_attr_init(&thread_attr);
++    pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
++
++    /* Create the TLS key for thread number. */
++    pthread_key_create(&tls_key_threadnr, NULL);
++
+     motion_startup(1, argc, argv);
+ 
+ #ifdef HAVE_FFMPEG
+@@ -2648,17 +2659,6 @@ int main (int argc, char **argv)
+     if (cnt_list[0]->conf.setup_mode)
+         MOTION_LOG(NTC, TYPE_ALL, NO_ERRNO, "%s: Motion running in setup mode.");
+ 
+-    /*
+-     * Create and a thread attribute for the threads we spawn later on.
+-     * PTHREAD_CREATE_DETACHED means to create threads detached, i.e.
+-     * their termination cannot be synchronized through 'pthread_join'.
+-     */
+-    pthread_attr_init(&thread_attr);
+-    pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
+-
+-    /* Create the TLS key for thread number. */
+-    pthread_key_create(&tls_key_threadnr, NULL);
+-
+     do {
+         if (restart) {
+             /*
+--- a/motion.h
++++ b/motion.h
+@@ -84,7 +84,7 @@
+ #endif
+ 
+ /* strerror_r() XSI vs GNU */
+-#if (defined(BSD)) || ((_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE)
++#if (defined(BSD)) || ((_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE) || (!defined(__GLIBC__))
+ #define XSI_STRERROR_R
+ #endif
+ 

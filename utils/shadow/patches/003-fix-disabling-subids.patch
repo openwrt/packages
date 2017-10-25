@@ -1,0 +1,32 @@
+--- a/src/usermod.c
++++ b/src/usermod.c
+@@ -1361,6 +1361,7 @@ static void process_flags (int argc, cha
+ 		exit (E_UID_IN_USE);
+ 	}
+ 
++#ifdef ENABLE_SUBIDS
+ 	if (   (vflg || Vflg)
+ 	    && !is_sub_uid) {
+ 		fprintf (stderr,
+@@ -1376,6 +1377,7 @@ static void process_flags (int argc, cha
+ 		         Prog, sub_gid_dbname (), "-w", "-W");
+ 		exit (E_USAGE);
+ 	}
++#endif
+ }
+ 
+ /*
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -52,7 +52,10 @@ usbin_PROGRAMS = \
+ noinst_PROGRAMS = id sulogin
+ 
+ suidbins       = su
+-suidubins      = chage chfn chsh expiry gpasswd newgrp passwd newuidmap newgidmap
++suidubins      = chage chfn chsh expiry gpasswd newgrp passwd
++if ENABLE_SUBIDS
++	suidubins += newuidmap newgidmap
++endif
+ if ACCT_TOOLS_SETUID
+ 	suidubins += chage chgpasswd chpasswd groupadd groupdel groupmod newusers useradd userdel usermod
+ endif

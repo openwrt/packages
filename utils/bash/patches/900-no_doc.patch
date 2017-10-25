@@ -1,0 +1,13 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -741,10 +741,8 @@ reconfig: force
+ #	$(MAKE) -f $(srcdir)/Makefile $(MFLAGS) srcdir=$(srcdir)
+ 
+ doc documentation:  force
+-	@(cd $(DOCDIR) ; $(MAKE) $(MFLAGS) )
+ 
+ info dvi ps: force
+-	@(cd $(DOCDIR) ; $(MAKE) $(MFLAGS) CFLAGS='$(CCFLAGS)' $@ )
+ 
+ force:
+ 

@@ -1,0 +1,11 @@
+--- a/lib/tools/Makefile
++++ b/lib/tools/Makefile
+@@ -23,7 +23,7 @@ include $(ERL_TOP)/make/$(TARGET)/otp.mk
+ # Macros
+ # ----------------------------------------------------
+ 
+-SUB_DIRECTORIES = c_src src doc/src examples priv emacs
++SUB_DIRECTORIES = c_src src doc/src examples priv
+ 
+ include vsn.mk
+ VSN = $(TOOLS_VSN)

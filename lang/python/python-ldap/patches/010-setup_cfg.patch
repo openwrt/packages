@@ -1,0 +1,16 @@
+From: Dmitrij Trefilov <the-alien@live.ru>
+
+Subject: [PATCH] lang: removed hardcoded include and library directories from setup.cfg
+Signed-off-by: Dmitrij Trefilov <the-alien@live.ru>
+---
+--- a/setup.cfg
++++ b/setup.cfg
+@@ -1,6 +1,6 @@
+ [_ldap]
+-library_dirs = /usr/lib /usr/lib64 /usr/local/lib /usr/local/lib64
+-include_dirs = /usr/include /usr/include/sasl /usr/local/include /usr/local/include/sasl
++library_dirs = 
++include_dirs = 
+ defines = HAVE_SASL HAVE_TLS HAVE_LIBLDAP_R
+ extra_compile_args = 
+ extra_objects = 

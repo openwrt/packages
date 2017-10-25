@@ -1,0 +1,103 @@
+From 1b8adc11edec48a9b8fcb75b9efdaf618a6744bd Mon Sep 17 00:00:00 2001
+From: ejurgensen <espenjurgensen@gmail.com>
+Date: Fri, 25 Aug 2017 19:27:41 +0200
+Subject: [PATCH] [dmap] Use a wrapper for dmap_find_field() Avoids the need to
+ have definition of dmap_find_field in dmap_common.h that must be kept in sync
+ with the definition that gperf generates.
+
+Also should fix compilation problems when gperf is not present, ref pr #390
+---
+ configure.ac      | 21 ---------------------
+ src/dmap_common.c |  6 ++++++
+ src/dmap_common.h |  4 +---
+ src/httpd_daap.c  |  2 +-
+ 4 files changed, 8 insertions(+), 25 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 9b149be..9819c82 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -32,27 +32,6 @@ to install it.]])],
+ 		[AC_MSG_ERROR([[GNU gperf required, please install it.]])])
+ 	])
+ 
+-GPERF_TEST="$(echo foo,bar | ${GPERF} -L ANSI-C)"
+-
+-AC_COMPILE_IFELSE(
+-	[AC_LANG_PROGRAM([
+-		#include <string.h>
+-		const char * in_word_set(const char *, size_t);
+-		$GPERF_TEST]
+-	)],
+-	[GPERF_LEN_TYPE=size_t],
+-	[AC_COMPILE_IFELSE(
+-		[AC_LANG_PROGRAM([
+-			#include <string.h>
+-			const char * in_word_set(const char *, unsigned);
+-			$GPERF_TEST]
+-		)],
+-		[GPERF_LEN_TYPE=unsigned],
+-		[AC_MSG_ERROR([** unable to determine gperf len type])]
+-	)]
+-)
+-
+-AC_DEFINE_UNQUOTED([GPERF_LEN_TYPE], [$GPERF_LEN_TYPE], [gperf len type])
+ AC_PATH_PROG([ANTLR], [[antlr3]])
+ AS_IF([[test -z "$ANTLR"]],
+ 	[AS_IF([[test -f "$srcdir/src/SMARTPLLexer.h"]],
+diff --git a/src/dmap_common.c b/src/dmap_common.c
+index 250a2d1..b2bc362 100644
+--- a/src/dmap_common.c
++++ b/src/dmap_common.c
+@@ -42,6 +42,12 @@ dmap_get_fields_table(int *nfields)
+   return dmap_fields;
+ }
+ 
++// This wrapper is so callers don't need to include dmap_fields_hash.h
++const struct dmap_field *
++dmap_find_field_wrapper(const char *str, int len)
++{
++  return dmap_find_field(str, len);
++}
+ 
+ void
+ dmap_add_container(struct evbuffer *evbuf, const char *tag, int len)
+diff --git a/src/dmap_common.h b/src/dmap_common.h
+index 93a2bdc..73f72d0 100644
+--- a/src/dmap_common.h
++++ b/src/dmap_common.h
+@@ -2,7 +2,6 @@
+ #ifndef __DMAP_HELPERS_H__
+ #define __DMAP_HELPERS_H__
+ 
+-#include "config.h"
+ #include <event2/buffer.h>
+ #include <event2/http.h>
+ 
+@@ -45,9 +44,8 @@ extern const struct dmap_field_map dfm_dmap_aeSP;
+ const struct dmap_field *
+ dmap_get_fields_table(int *nfields);
+ 
+-/* From dmap_fields.gperf - keep in sync, don't alter */
+ const struct dmap_field *
+-dmap_find_field (register const char *str, register GPERF_LEN_TYPE len);
++dmap_find_field_wrapper(const char *str, int len);
+ 
+ 
+ void
+diff --git a/src/httpd_daap.c b/src/httpd_daap.c
+index aef2fe0..0564275 100644
+--- a/src/httpd_daap.c
++++ b/src/httpd_daap.c
+@@ -738,7 +738,7 @@ parse_meta(struct evhttp_request *req, char *tag, const char *param, const struc
+ 
+       if (n == i)
+ 	{
+-	  meta[i] = dmap_find_field(field, strlen(field));
++	  meta[i] = dmap_find_field_wrapper(field, strlen(field));
+ 
+ 	  if (!meta[i])
+ 	    {
+-- 
+2.7.4
+

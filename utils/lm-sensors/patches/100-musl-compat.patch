@@ -1,0 +1,44 @@
+--- a/prog/dump/isadump.c
++++ b/prog/dump/isadump.c
+@@ -38,7 +38,7 @@
+ 
+ 
+ /* To keep glibc2 happy */
+-#if defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ >= 0
++#if !defined(__UCLIBC__)
+ #include <sys/io.h>
+ #else
+ #include <asm/io.h>
+--- a/prog/dump/isaset.c
++++ b/prog/dump/isaset.c
+@@ -34,7 +34,7 @@
+ 
+ 
+ /* To keep glibc2 happy */
+-#if defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ >= 0
++#if !defined(__UCLIBC__)
+ #include <sys/io.h>
+ #else
+ #include <asm/io.h>
+--- a/prog/dump/superio.c
++++ b/prog/dump/superio.c
+@@ -21,7 +21,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#if defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ >= 0
++#if !defined(__UCLIBC__)
+ #include <sys/io.h>
+ #else
+ #include <asm/io.h>
+--- a/prog/dump/util.c
++++ b/prog/dump/util.c
+@@ -12,7 +12,7 @@
+ #include "util.h"
+ 
+ /* To keep glibc2 happy */
+-#if defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ >= 0
++#if !defined(__UCLIBC__)
+ #include <sys/io.h>
+ #else
+ #include <asm/io.h>

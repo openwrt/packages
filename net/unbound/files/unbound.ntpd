@@ -1,0 +1,27 @@
+#!/bin/sh
+##############################################################################
+#
+# Copyright (C) 2016 Eric Luehrsen
+#
+##############################################################################
+#
+# "Restart" Unbound on hotplug NTP ready:
+# - Only do this the first time when no file exists
+# - Some of Unbound conf options to not reload run time
+# - Change the enable flag for DNSSEC date-time checking
+#
+##############################################################################
+
+# Common file location definitions
+. /usr/lib/unbound/unbound.sh
+
+##############################################################################
+
+if [ "$ACTION" = stratum -a ! -f "$UNBOUND_TIMEFILE" ] ; then
+  echo "ntpd: $( date )" > $UNBOUND_TIMEFILE
+  /etc/init.d/unbound enabled && /etc/init.d/unbound restart
+  # Yes, hard RESTART. We need to be absolutely sure to enable DNSSEC.
+fi
+
+##############################################################################
+

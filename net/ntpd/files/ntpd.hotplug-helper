@@ -1,0 +1,13 @@
+#!/bin/sh
+
+while true
+do
+	STATUS="$(/usr/sbin/ntpq -c 'rv 0 stratum'|awk -F '=' '{ print $2 }')"
+
+	if [ -n "$STATUS" ] && [ "$STATUS" -lt "16" ]
+	then
+		ACTION="stratum" /sbin/hotplug-call ntp
+		exit 0
+	fi
+	sleep 10
+done

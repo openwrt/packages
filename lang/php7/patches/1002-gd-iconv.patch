@@ -1,0 +1,14 @@
+--- a/ext/gd/libgd/gdkanji.c
++++ b/ext/gd/libgd/gdkanji.c
+@@ -9,6 +9,11 @@
+ #include "gdhelpers.h"
+ 
+ #include <stdarg.h>
++
++/* force usage of internal conversation routine */
++#undef HAVE_ICONV_H
++#undef HAVE_ICONV
++
+ #if defined(HAVE_ICONV_H) || defined(HAVE_ICONV)
+ #include <iconv.h>
+ #ifdef HAVE_ERRNO_H

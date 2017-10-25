@@ -1,0 +1,13 @@
+diff --git a/configure.ac b/configure.ac
+index a978473..302ac4d 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -70,7 +70,7 @@ AC_PROG_MAKE_SET
+ dnl libtool/libtoolize; version 2.4.2 is the tested version. This or any
+ dnl compatible later version may be used
+ LT_INIT([win32-dll])
+-LT_PREREQ([2.4.2])
++LT_PREREQ([2.4])
+ 
+ # Some awks crash when confronted with pnglibconf.dfa, do a test run now
+ # to make sure this doesn't happen

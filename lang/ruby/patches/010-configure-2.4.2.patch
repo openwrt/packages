@@ -1,0 +1,40 @@
+diff -pU3 a/configure b/configure
+--- a/configure	2017-09-14 21:52:19.000000000 +0900
++++ b/configure	2017-09-15 07:03:12.000000000 +0900
+@@ -10614,6 +10614,7 @@ fi
+ ac_res=$ac_cv_search___gmpz_init
+ if test "$ac_res" != no; then :
+   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
++  $as_echo "#define HAVE_LIBGMP 1" >>confdefs.h
+ 
+ fi
+ 
+@@ -10683,6 +10684,7 @@ fi
+ ac_res=$ac_cv_search_malloc_conf
+ if test "$ac_res" != no; then :
+   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
++  $as_echo "#define HAVE_LIBJEMALLOC 1" >>confdefs.h
+ 
+ else
+   with_jemalloc=no
+diff -pU3 a/configure.in b/configure.in
+--- a/configure.in	2017-08-04 23:39:29.000000000 +0900
++++ b/configure.in	2017-09-15 07:20:40.000000000 +0900
+@@ -1403,13 +1403,15 @@ AC_ARG_WITH([gmp],
+ AS_IF([test "x$with_gmp" != xno],
+   [AC_CHECK_HEADERS(gmp.h)
+    AS_IF([test "x$ac_cv_header_gmp_h" != xno],
+-     AC_SEARCH_LIBS([__gmpz_init], [gmp]))])
++     AC_SEARCH_LIBS([__gmpz_init], [gmp],
++       [AC_DEFINE(HAVE_LIBGMP, 1)]))])
+ 
+ AC_ARG_WITH([jemalloc],
+   [AS_HELP_STRING([--with-jemalloc],[use jemalloc allocator])],
+   [with_jemalloc=$withval], [with_jemalloc=no])
+ AS_IF([test "x$with_jemalloc" = xyes],[
+-  AC_SEARCH_LIBS([malloc_conf], [jemalloc], [], [with_jemalloc=no])
++  AC_SEARCH_LIBS([malloc_conf], [jemalloc],
++    [AC_DEFINE(HAVE_LIBJEMALLOC, 1)], [with_jemalloc=no])
+   AC_CHECK_HEADER(jemalloc/jemalloc.h, [
+     AC_DEFINE(RUBY_ALTERNATIVE_MALLOC_HEADER, [<jemalloc/jemalloc.h>])
+   ])

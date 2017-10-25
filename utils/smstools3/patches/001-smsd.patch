@@ -1,0 +1,13 @@
+--- a/src/smsd.c	2010-09-21 13:47:48.000000000 +0300
++++ b/src/smsd.c	2013-03-05 05:26:26.000000000 +0300
+@@ -5200,8 +5200,8 @@
+ 	int result = 1;
+ 	char *cmd;
+ 	char *p;
+-	char answer[500];
+-	char buffer[600];
++	char answer[1024];
++	char buffer[1024];
+ 	int fd;
+ 	int log_retry = 3;
+ 	int i;

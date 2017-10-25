@@ -1,0 +1,22 @@
+--- a/configure.in
++++ b/configure.in
+@@ -25,7 +25,7 @@ AC_MSG_CHECKING([for XML::Parser])
+ if `$PERL -e "require XML::Parser" 2>/dev/null`; then
+    AC_MSG_RESULT([ok])
+ else
+-   AC_MSG_ERROR([XML::Parser perl module is required for intltool])
++   AC_MSG_RESULT([XML::Parser perl module is required for some intltool utilitities])
+ fi
+ 
+ AC_OUTPUT([
+--- a/intltool.m4
++++ b/intltool.m4
+@@ -127,7 +127,7 @@ if test "x$2" != "xno-xml"; then
+    if `$INTLTOOL_PERL -e "require XML::Parser" 2>/dev/null`; then
+        AC_MSG_RESULT([ok])
+    else
+-       AC_MSG_ERROR([XML::Parser perl module is required for intltool])
++       AC_MSG_RESULT([XML::Parser perl module is required for some intltool utilitities])
+    fi
+ fi
+ 

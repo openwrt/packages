@@ -1,0 +1,53 @@
+From 02669064e927074819ce1ed39aba0fccaa167717 Mon Sep 17 00:00:00 2001
+From: erouault <erouault>
+Date: Mon, 29 May 2017 10:12:54 +0000
+Subject: [PATCH] * libtiff/tif_color.c: TIFFYCbCrToRGBInit(): stricter
+ clamping to avoid int32 overflow in TIFFYCbCrtoRGB(). Fixes
+ https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1844 Credit to OSS Fuzz
+
+---
+ ChangeLog           | 7 +++++++
+ libtiff/tif_color.c | 6 +++---
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/ChangeLog b/ChangeLog
+index ee8d9d08..61116596 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,3 +1,10 @@
++2017-05-29  Even Rouault <even.rouault at spatialys.com>
++
++	* libtiff/tif_color.c: TIFFYCbCrToRGBInit(): stricter clamping to avoid
++	int32 overflow in TIFFYCbCrtoRGB().
++	Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1844
++	Credit to OSS Fuzz
++
+ 2017-05-21  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+ 
+ 	* configure.ac: libtiff 4.0.8 released.
+diff --git a/libtiff/tif_color.c b/libtiff/tif_color.c
+index 055ed3b2..10a5e66e 100644
+--- a/libtiff/tif_color.c
++++ b/libtiff/tif_color.c
+@@ -275,10 +275,10 @@ TIFFYCbCrToRGBInit(TIFFYCbCrToRGB* ycbcr, float *luma, float *refBlackWhite)
+       for (i = 0, x = -128; i < 256; i++, x++) {
+ 	    int32 Cr = (int32)CLAMPw(Code2V(x, refBlackWhite[4] - 128.0F,
+ 			    refBlackWhite[5] - 128.0F, 127),
+-                            -128.0F * 64, 128.0F * 64);
++                            -128.0F * 32, 128.0F * 32);
+ 	    int32 Cb = (int32)CLAMPw(Code2V(x, refBlackWhite[2] - 128.0F,
+ 			    refBlackWhite[3] - 128.0F, 127),
+-                            -128.0F * 64, 128.0F * 64);
++                            -128.0F * 32, 128.0F * 32);
+ 
+ 	    ycbcr->Cr_r_tab[i] = (int32)((D1*Cr + ONE_HALF)>>SHIFT);
+ 	    ycbcr->Cb_b_tab[i] = (int32)((D3*Cb + ONE_HALF)>>SHIFT);
+@@ -286,7 +286,7 @@ TIFFYCbCrToRGBInit(TIFFYCbCrToRGB* ycbcr, float *luma, float *refBlackWhite)
+ 	    ycbcr->Cb_g_tab[i] = D4*Cb + ONE_HALF;
+ 	    ycbcr->Y_tab[i] =
+ 		    (int32)CLAMPw(Code2V(x + 128, refBlackWhite[0], refBlackWhite[1], 255),
+-                                  -128.0F * 64, 128.0F * 64);
++                                  -128.0F * 32, 128.0F * 32);
+       }
+     }
+ 

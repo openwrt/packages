@@ -1,0 +1,13 @@
+--- a/setup.py
++++ b/setup.py
+@@ -100,6 +100,10 @@
+         w(kwd.get("end", "\n"))
+ 
+ def endianness_macro():
++    if os.environ["CONFIG_BIG_ENDIAN"] == "y":
++        return ('PCT_BIG_ENDIAN', 1)
++    else:
++        return ('PCT_LITTLE_ENDIAN', 1)
+     s = struct.pack("@I", 0x33221100)
+     if s == "\x00\x11\x22\x33".encode():     # little endian
+         return ('PCT_LITTLE_ENDIAN', 1)

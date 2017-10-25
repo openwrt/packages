@@ -1,0 +1,139 @@
+From: Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
+Subject: Add SH supprt
+
+The test-suite logs can be found at:
+
+  <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=535288>
+
+
+---
+ harness/main.c   |    2 -
+ src/libaio.h     |    4 ++
+ src/syscall-sh.h |   78 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/syscall.h    |    2 +
+ 4 files changed, 84 insertions(+), 2 deletions(-)
+
+
+--- a/harness/main.c
++++ b/harness/main.c
+@@ -14,7 +14,7 @@
+ #if __LP64__ == 0
+ #if defined(__i386__) || defined(__powerpc__) || defined(__mips__)
+ #define KERNEL_RW_POINTER	((void *)0xc0010000)
+-#elif defined(__arm__) || defined(__m68k__) || defined(__s390__)
++#elif defined(__arm__) || defined(__m68k__) || defined(__s390__) || defined(__sh__)
+ #define KERNEL_RW_POINTER	((void *)0x00010000)
+ #elif defined(__hppa__)
+ #define KERNEL_RW_POINTER	((void *)0x10100000)
+--- a/src/libaio.h
++++ b/src/libaio.h
+@@ -51,7 +51,8 @@ typedef enum io_iocb_cmd {
+ 
+ /* little endian, 32 bits */
+ #if defined(__i386__) || (defined(__arm__) && !defined(__ARMEB__)) || \
+-    defined(__sh__) || defined(__bfin__) || defined(__MIPSEL__) || \
++    (defined(__sh__) && defined(__LITTLE_ENDIAN__)) || \
++    defined(__bfin__) || defined(__MIPSEL__) || \
+     defined(__cris__)
+ #define PADDED(x, y)	x; unsigned y
+ #define PADDEDptr(x, y)	x; unsigned y
+@@ -76,6 +77,7 @@ typedef enum io_iocb_cmd {
+ /* big endian, 32 bits */
+ #elif defined(__PPC__) || defined(__s390__) || \
+       (defined(__arm__) && defined(__ARMEB__)) || \
++      (defined(__sh__) && defined (__BIG_ENDIAN__)) || \
+       defined(__sparc__) || defined(__MIPSEB__) || defined(__m68k__) || \
+       defined(__hppa__) || defined(__frv__) || defined(__avr32__)
+ #define PADDED(x, y)	unsigned y; x
+--- /dev/null
++++ b/src/syscall-sh.h
+@@ -0,0 +1,78 @@
++/* Copy from ./arch/sh/include/asm/unistd_32.h */
++#define __NR_io_setup       245
++#define __NR_io_destroy     246
++#define __NR_io_getevents   247
++#define __NR_io_submit      248
++#define __NR_io_cancel      249
++
++#define io_syscall1(type,fname,sname,type1,arg1) \
++type fname(type1 arg1) \
++{ \
++register long __sc0 __asm__ ("r3") = __NR_##sname; \
++register long __sc4 __asm__ ("r4") = (long) arg1; \
++__asm__ __volatile__ ("trapa    #0x11" \
++	: "=z" (__sc0) \
++	: "0" (__sc0), "r" (__sc4) \
++	: "memory"); \
++	return (type) __sc0;\
++}
++
++#define io_syscall2(type,fname,sname,type1,arg1,type2,arg2) \
++type fname(type1 arg1,type2 arg2) \
++{ \
++register long __sc0 __asm__ ("r3") = __NR_##sname; \
++register long __sc4 __asm__ ("r4") = (long) arg1; \
++register long __sc5 __asm__ ("r5") = (long) arg2; \
++	__asm__ __volatile__ ("trapa    #0x12" \
++	: "=z" (__sc0) \
++	: "0" (__sc0), "r" (__sc4), "r" (__sc5) \
++	: "memory"); \
++	return (type) __sc0;\
++}
++
++#define io_syscall3(type,fname,sname,type1,arg1,type2,arg2,type3,arg3) \
++type fname(type1 arg1,type2 arg2,type3 arg3) \
++{ \
++register long __sc0 __asm__ ("r3") = __NR_##sname; \
++register long __sc4 __asm__ ("r4") = (long) arg1; \
++register long __sc5 __asm__ ("r5") = (long) arg2; \
++register long __sc6 __asm__ ("r6") = (long) arg3; \
++	__asm__ __volatile__ ("trapa    #0x13" \
++	: "=z" (__sc0) \
++	: "0" (__sc0), "r" (__sc4), "r" (__sc5), "r" (__sc6) \
++	: "memory"); \
++	return (type) __sc0;\
++}
++
++#define io_syscall4(type,fname,sname,type1,arg1,type2,arg2,type3,arg3,type4,arg4) \
++type fname(type1 arg1, type2 arg2, type3 arg3, type4 arg4) \
++{ \
++register long __sc0 __asm__ ("r3") = __NR_##sname; \
++register long __sc4 __asm__ ("r4") = (long) arg1; \
++register long __sc5 __asm__ ("r5") = (long) arg2; \
++register long __sc6 __asm__ ("r6") = (long) arg3; \
++register long __sc7 __asm__ ("r7") = (long) arg4; \
++__asm__ __volatile__ ("trapa    #0x14" \
++	: "=z" (__sc0) \
++	: "0" (__sc0), "r" (__sc4), "r" (__sc5), "r" (__sc6),  \
++	"r" (__sc7) \
++	: "memory" ); \
++	return (type) __sc0;\
++}
++
++#define io_syscall5(type,fname,sname,type1,arg1,type2,arg2,type3,arg3,type4,arg4,type5,arg5) \
++type fname(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5) \
++{ \
++register long __sc3 __asm__ ("r3") = __NR_##sname; \
++register long __sc4 __asm__ ("r4") = (long) arg1; \
++register long __sc5 __asm__ ("r5") = (long) arg2; \
++register long __sc6 __asm__ ("r6") = (long) arg3; \
++register long __sc7 __asm__ ("r7") = (long) arg4; \
++register long __sc0 __asm__ ("r0") = (long) arg5; \
++__asm__ __volatile__ ("trapa    #0x15" \
++	: "=z" (__sc0) \
++	: "0" (__sc0), "r" (__sc4), "r" (__sc5), "r" (__sc6), "r" (__sc7),  \
++	"r" (__sc3) \
++	: "memory" ); \
++	return (type) __sc0;\
++}
+--- a/src/syscall.h
++++ b/src/syscall.h
+@@ -34,6 +34,8 @@
+ #include "syscall-parisc.h"
+ #elif defined(__mips__)
+ #include "syscall-mips.h"
++#elif defined(__sh__)
++#include "syscall-sh.h"
+ #else
+ #warning "using generic syscall method"
+ #include "syscall-generic.h"

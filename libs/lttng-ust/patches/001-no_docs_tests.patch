@@ -1,0 +1,11 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -20,8 +20,6 @@ if BUILD_JAVA_AGENT
+ SUBDIRS += liblttng-ust-java-agent
+ endif
+ 
+-SUBDIRS += tests doc
+-
+ #temporarily disabled
+ # liblttng-ust-malloc
+ 

@@ -1,0 +1,64 @@
+From 3695118267be9b7a9412c86c7c5424ab47efe7ec Mon Sep 17 00:00:00 2001
+From: Romain Beauxis <toots@rastageeks.org>
+Date: Thu, 7 Apr 2016 13:20:46 -0500
+Subject: [PATCH] Rename slen{1,2}_table to avoid name collision with ffmpeg.
+
+---
+ src/lib/l3bitstream.c | 4 ++--
+ src/lib/l3loop.c      | 4 ++--
+ src/lib/tables.c      | 4 ++--
+ src/lib/tables.h      | 4 ++--
+ 4 files changed, 8 insertions(+), 8 deletions(-)
+
+--- a/src/lib/l3bitstream.c
++++ b/src/lib/l3bitstream.c
+@@ -127,8 +127,8 @@ static void encodeMainData(shine_global_
+         {
+           BF_PartHolder **pph = &config->l3stream.scaleFactorsPH[gr][ch];
+           gr_info *gi = &(si.gr[gr].ch[ch].tt);
+-          unsigned slen1 = slen1_tab[ gi->scalefac_compress ];
+-          unsigned slen2 = slen2_tab[ gi->scalefac_compress ];
++          unsigned slen1 = shine_slen1_tab[ gi->scalefac_compress ];
++          unsigned slen2 = shine_slen2_tab[ gi->scalefac_compress ];
+           int *ix = &config->l3_enc[ch][gr][0];
+ 
+           if ( (gr == 0) || (si.scfsi[ch][0] == 0) )
+--- a/src/lib/l3loop.c
++++ b/src/lib/l3loop.c
+@@ -287,8 +287,8 @@ int part2_length(int gr, int ch, shine_g
+   bits = 0;
+ 
+   {
+-    slen1 = slen1_tab[ gi->scalefac_compress ];
+-    slen2 = slen2_tab[ gi->scalefac_compress ];
++    slen1 = shine_slen1_tab[ gi->scalefac_compress ];
++    slen2 = shine_slen2_tab[ gi->scalefac_compress ];
+ 
+     if ( !gr || !(config->side_info.scfsi[ch][0]) )
+       bits += (6 * slen1);
+--- a/src/lib/tables.c
++++ b/src/lib/tables.c
+@@ -7,8 +7,8 @@
+ 
+ #include "tables.h"
+ 
+-const int slen1_tab[16] = { 0, 0, 0, 0, 3, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4 };
+-const int slen2_tab[16] = { 0, 1, 2, 3, 0, 1, 2, 3, 1, 2, 3, 1, 2, 3, 2, 3 };
++const int shine_slen1_tab[16] = { 0, 0, 0, 0, 3, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4 };
++const int shine_slen2_tab[16] = { 0, 1, 2, 3, 0, 1, 2, 3, 1, 2, 3, 1, 2, 3, 2, 3 };
+ 
+ /* Valid samplerates and bitrates. */
+ const int samplerates[9] = {
+--- a/src/lib/tables.h
++++ b/src/lib/tables.h
+@@ -3,8 +3,8 @@
+ 
+ #include "types.h"
+ 
+-extern const int slen1_tab[16];
+-extern const int slen2_tab[16];
++extern const int shine_slen1_tab[16];
++extern const int shine_slen2_tab[16];
+ 
+ extern const int samplerates[9];
+ extern const int bitrates[16][4];

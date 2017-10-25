@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2012 OpenWrt.org
+
+START=60
+
+start() {
+	[ -d /var/run/dmapd ] || {
+		mkdir -m 0755 -p /var/run/dmapd
+		chown dmapd:dmapd /var/run/dmapd
+	}
+	[ -d /var/db/dmapd/DAAP ] || {
+		mkdir -m 0755 -p /var/db/dmapd/DAAP
+		chown dmapd:dmapd /var/db/dmapd/DAAP
+	}
+	[ -d /var/db/dmapd/DPAP ] || {
+		mkdir -m 0755 -p /var/db/dmapd/DPAP
+		chown dmapd:dmapd /var/db/dmapd/DPAP
+	}
+	mkdir -m 0755 -p /var/lock/subsys
+	mkdir -m 0755 -p /var/media/music
+	mkdir -m 0755 -p /var/media/pictures
+
+	service_start /usr/sbin/dmapd -u dmapd -g dmapd -m /var/media/music -p /var/media/pictures --vips-disc-threshold 64k
+}
+
+stop() {
+	service_stop /usr/sbin/dmapd
+}

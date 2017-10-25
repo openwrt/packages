@@ -1,0 +1,51 @@
+--- a/builders/cmake/crtmpserver/crtmpserver.lua
++++ b/builders/cmake/crtmpserver/crtmpserver.lua
+@@ -4,7 +4,7 @@ configuration=
+ {
+ 	-- if true, the server will run as a daemon.
+ 	-- NOTE: all console appenders will be ignored if this is a daemon
+-	daemon=false,
++	daemon=true,
+ 	-- the OS's path separator. Used in composing paths
+ 	pathSeparator="/",
+ 
+@@ -44,7 +44,7 @@ configuration=
+ 	{
+ 		-- this is the root directory of all applications
+ 		-- usually this is relative to the binary execuable
+-		rootDirectory="applications",
++		rootDirectory="/usr/lib/crtmpserver",
+ 		
+ 		
+ 		--this is where the applications array starts
+@@ -68,7 +68,7 @@ configuration=
+ 			-- this is the folder from where the current application gets it's content.
+ 			-- It is optional. If not specified, it will be defaulted to:
+ 			-- <rootDirectory>/<name>/mediaFolder
+-			-- mediaFolder="/some/directory/where/media/files/are/stored"
++			mediaFolder="/media",
+ 			-- the application will also be known by that names. It is optional
+ 			--aliases=
+ 			--{
+@@ -89,13 +89,6 @@ configuration=
+ 				},
+ 				{
+ 					ip="0.0.0.0",
+-					port=8081,
+-					protocol="inboundRtmps",
+-					sslKey="server.key",
+-					sslCert="server.crt"
+-				},
+-				{
+-					ip="0.0.0.0",
+ 					port=8080,
+ 					protocol="inboundRtmpt"
+                 },
+@@ -184,6 +177,7 @@ configuration=
+ 			name="samplefactory",
+ 			description="asdsadasdsa",
+ 			protocol="dynamiclinklibrary",
++			mediaFolder="/usr/share/ctmpserver/media",
+ 			aliases=
+ 			{
+ 				"httpOutboundTest"

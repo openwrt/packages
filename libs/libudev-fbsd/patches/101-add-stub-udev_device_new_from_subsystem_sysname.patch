@@ -1,0 +1,72 @@
+--- a/src/libudev.c
++++ b/src/libudev.c
+@@ -26,6 +26,7 @@ struct udev_device {
+ 	struct udev *udev;
+ 	int refcount;
+ 	char syspath[32];
++	char sysfspath[64];
+ 	dev_t devnum;
+ 	char const *sysname;
+ 	char const *action;
+@@ -115,6 +116,29 @@ udev_device_new_from_devnum(struct udev
+ 	return NULL;
+ }
+ 
++struct udev_device *
++udev_device_new_from_subsystem_sysname(
++    struct udev *udev, const char *subsystem, const char *sysname)
++{
++	struct udev_device *u;
++	char sysfsname[64];
++	struct stat st;
++
++	snprintf(sysfsname, sizeof(sysfsname), "/sys/bus/%s/devices/%s/", subsystem, sysname);
++	if (stat(sysfsname, &st) == 0)
++	{
++		char sysfsdev[64];
++		u = calloc(1, sizeof(struct udev_device));
++		strncpy(u->sysfspath, sysfsname, sizeof(u->sysfspath));
++
++		return u;
++	}
++	else
++	{
++		return NULL;
++	}
++}
++
+ char const *
+ udev_device_get_devnode(struct udev_device *udev_device)
+ {
+@@ -132,6 +156,20 @@ udev_device_get_devnum(struct udev_devic
+ char const *
+ udev_device_get_driver(struct udev_device *udev_device)
+ {
++	if (udev_device->sysfspath)
++	{
++		char driverlnp[64];
++		char driverlnk[32];
++		snprintf(driverlnp, sizeof(driverlnp), "%s/driver",
++			 udev_device->sysfspath);
++		if (readlink(driverlnp, driverlnk, sizeof(driver)))
++		{
++			char *drivernm;
++			drivernm = strrchr(driverlnk, '/');
++			if (drivernm)
++				return ++drivernm;
++		}
++	}
+ 	return NULL;
+ }
+ 
+--- a/src/libudev.h
++++ b/src/libudev.h
+@@ -30,6 +30,8 @@ struct udev_device *udev_device_new_from
+     struct udev *udev, char const *syspath);
+ struct udev_device *udev_device_new_from_devnum(
+     struct udev *udev, char type, dev_t devnum);
++struct udev_device *udev_device_new_from_subsystem_sysname(
++    struct udev *udev, const char *subsystem, const char *sysname);
+ char const *udev_device_get_driver(struct udev_device *udev_device);
+ char const *udev_device_get_syspath(struct udev_device *udev_device);
+ char const *udev_device_get_sysname(struct udev_device *udev_device);

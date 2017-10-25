@@ -1,0 +1,14 @@
+--- a/output_alsa.c
++++ b/output_alsa.c
+@@ -911,8 +911,11 @@ void output_init_alsa(log_level level, c
+ 		LOG_INFO("memory locked");
+ 	}
+ 
++#ifdef M_TRIM_THRESHOLD
++	// mallopt is not defined in musl libc
+ 	mallopt(M_TRIM_THRESHOLD, -1);
+ 	mallopt(M_MMAP_MAX, 0);
++#endif
+ 
+ 	touch_memory(silencebuf, MAX_SILENCE_FRAMES * BYTES_PER_FRAME);
+ 	touch_memory(outputbuf->buf, outputbuf->size);

@@ -1,0 +1,115 @@
+--- a/Clients/Makefile
++++ b/Clients/Makefile
+@@ -27,6 +27,8 @@
+ 
+ #############################################################################
+ 
++CC = @cc
++
+ # On OS X the dns_sd library functions are included in libSystem, which is implicitly linked with every executable
+ # If /usr/lib/libSystem.dylib exists, then we're on OS X, so we don't need also to link the "dns_sd" shared library
+ ifneq "$(wildcard /usr/lib/libSystem.dylib)" ""
+@@ -46,10 +48,10 @@ build:
+ 	mkdir build
+ 
+ build/dns-sd: build dns-sd.c ClientCommon.c
+-	$(CC) $(filter %.c %.o, $+) $(LIBS) -I../mDNSShared -Wall -o $@
++	$(CC) $(CFLAGS) $(filter %.c %.o, $+) $(LIBS) -I../mDNSShared -Wall -o $@
+ 
+ build/dns-sd64: build dns-sd.c ClientCommon.c
+-	$(CC) $(filter %.c %.o, $+) $(LIBS) -I../mDNSShared -Wall -o $@ -m64
++	$(CC) $(CFLAGS) $(filter %.c %.o, $+) $(LIBS) -I../mDNSShared -Wall -o $@ -m64
+ 
+ # Note, we can make a 'fat' version of dns-sd using 'lipo', as shown below, but we
+ # don't, because we don't want or need a 'fat' version of dns-sd, because it will
+--- a/mDNSPosix/Makefile
++++ b/mDNSPosix/Makefile
+@@ -54,11 +54,12 @@ COREDIR = ../mDNSCore
+ SHAREDDIR ?= ../mDNSShared
+ JDK = /usr/jdk
+ 
+-CC = @cc
++CC = @gcc
+ BISON = @bison
+ FLEX = @flex
+ ST = @strip
+-LD = ld -shared
++LD = @ld
++SOOPTS = -shared
+ CP = cp
+ RM = rm
+ LN = ln -s -f
+@@ -92,7 +93,7 @@ CFLAGS_DEBUG = -O0 -DMDNS_DEBUGMSGS=0
+ CFLAGS_OS = -DNOT_HAVE_DAEMON -DNOT_HAVE_SA_LEN -DNOT_HAVE_SOCKLEN_T -DNOT_HAVE_IF_NAMETOINDEX \
+ 	 -DLOG_PERROR=0 -D_XPG4_2 -D__EXTENSIONS__ -DHAVE_BROKEN_RECVIF_NAME -DTARGET_OS_SOLARIS
+ CC = gcc
+-LD = gcc -shared
++LD = gcc
+ LINKOPTS = -lsocket -lnsl -lresolv
+ JAVACFLAGS_OS += -I$(JDK)/include/solaris
+ ifneq ($(DEBUG),1)
+@@ -148,7 +149,8 @@ CFLAGS_OS = -DHAVE_IPV6 -no-cpp-precomp
+ 	-D__MAC_OS_X_VERSION_MIN_REQUIRED=__MAC_OS_X_VERSION_10_4 \
+ 	-D__APPLE_USE_RFC_2292 #-Wunreachable-code
+ CC = gcc
+-LD = $(CC) -dynamiclib
++LD = $(CC)
++SOOPTS= -dynamiclib
+ LINKOPTS = -lSystem
+ LDSUFFIX = dylib
+ JDK = /System/Library/Frameworks/JavaVM.framework/Home
+@@ -170,8 +172,9 @@ NSSLIBFILE  := $(NSSLIBNAME)-$(NSSVERSIO
+ NSSLINKNAME := $(NSSLIBNAME).so.2
+ NSSINSTPATH := /lib
+ 
+-# If not otherwise defined, we install into /usr/lib and /usr/include
++# If not otherwise defined, we install into /usr/lib, /usr/include and /etc
+ # and our startup script is called mdns (e.g. /etc/init.d/mdns)
++ETCBASE?=/etc
+ INSTBASE?=/usr
+ STARTUPSCRIPTNAME?=mdns
+ 
+@@ -257,7 +260,7 @@ libdns_sd: setup $(BUILDDIR)/libdns_sd.$
+ CLIENTLIBOBJS = $(OBJDIR)/dnssd_clientlib.c.so.o $(OBJDIR)/dnssd_clientstub.c.so.o $(OBJDIR)/dnssd_ipc.c.so.o
+ 
+ $(BUILDDIR)/libdns_sd.$(LDSUFFIX): $(CLIENTLIBOBJS)
+-	@$(LD) $(LINKOPTS) -o $@ $+
++	@$(LD) $(SOOPTS) $(LINKOPTS) -o $@ $+
+ 	@$(STRIP) $@
+ 
+ Clients: setup libdns_sd ../Clients/build/dns-sd
+@@ -292,7 +295,7 @@ InstalledManPages: $(MANPATH)/man8/mdnsd
+ InstalledClients: $(INSTBASE)/bin/dns-sd
+ 	@echo $+ " installed"
+ 
+-InstalledNSS: $(NSSINSTPATH)/$(NSSLINKNAME) /etc/nss_mdns.conf $(MANPATH)/man5/nss_mdns.conf.5 $(MANPATH)/man8/libnss_mdns.8
++InstalledNSS: $(NSSINSTPATH)/$(NSSLINKNAME) $(ETCBASE)/nss_mdns.conf $(MANPATH)/man5/nss_mdns.conf.5 $(MANPATH)/man8/libnss_mdns.8
+ 	@echo $+ " installed"
+ 
+ # Note: If daemon already installed, we make sure it's stopped before overwriting it
+@@ -347,19 +350,21 @@ $(INSTBASE)/bin/dns-sd: ../Clients/build
+ 
+ $(NSSINSTPATH)/$(NSSLINKNAME): $(NSSINSTPATH)/$(NSSLIBFILE)
+ 	$(LN) $< $@
+-	ldconfig
++ifdef LDCONFIG
++	$(LDCONFIG)
++endif
+ 
+ $(NSSINSTPATH)/$(NSSLIBFILE): $(BUILDDIR)/$(NSSLIBFILE)
+ 	$(CP) $< $@
+ 	chmod 444 $@
+ 
+-/etc/nss_mdns.conf: nss_mdns.conf
++$(ETCBASE)/nss_mdns.conf: nss_mdns.conf
+ 	$(CP) $< $@
+ 	chmod 444 $@
+ 	# Check the nsswitch.conf file.
+ 	# If 'mdns' does not already appear on the "hosts:" line, then add it right before 'dns'
+-	cp -f /etc/nsswitch.conf /etc/nsswitch.conf.pre-mdns
+-	sed -e '/mdns/!s/^\(hosts:.*\)dns\(.*\)/\1mdns dns\2/' /etc/nsswitch.conf.pre-mdns > /etc/nsswitch.conf
++	-[ -f $(ETCBASE)/nsswitch.conf ] && cp -f $(ETCBASE)/nsswitch.conf $(ETCBASE)/nsswitch.conf.pre-mdns
++	-[ -f $(ETCBASE)/nsswitch.conf ] && sed -e '/mdns/!s/^\(hosts:.*\)dns\(.*\)/\1mdns dns\2/' $(ETCBASE)/nsswitch.conf.pre-mdns > $(ETCBASE)/nsswitch.conf
+ 
+ #############################################################################
+ 

@@ -1,0 +1,10 @@
+diff --git a/twisted/python/twisted-completion.zsh b/twisted/python/twisted-completion.zsh
+index 4d97aa5..9a8d4d8 100644
+--- a/twisted/python/twisted-completion.zsh
++++ b/twisted/python/twisted-completion.zsh
+@@ -1,4 +1,4 @@
+-#compdef twistd trial conch cftp ckeygen pyhtmlizer tkconch
++#compdef twistd trial conch cftp ckeygen pyhtmlizer
+ #
+ # This is the ZSH completion file for Twisted commands. It calls the current
+ # command-line with the special "--_shell-completion" option which is handled

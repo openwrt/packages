@@ -1,0 +1,11 @@
+--- a/src/php_http_etag.c	2016-12-12 10:04:21.000000000 +0100
++++ b/src/php_http_etag.c	2016-12-23 21:10:59.523222367 +0100
+@@ -60,7 +60,7 @@
+ 		unsigned char buf[4];
+ 
+ 		*((uint *) e->ctx) = ~*((uint *) e->ctx);
+-#if WORDS_BIGENDIAN
++#ifdef WORDS_BIGENDIAN
+ 		etag = php_http_etag_digest((unsigned char *) e->ctx, 4);
+ #else
+ 		buf[0] = ((unsigned char *) e->ctx)[3];

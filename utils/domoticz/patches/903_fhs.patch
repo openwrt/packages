@@ -1,0 +1,407 @@
+diff --git a/hardware/EvohomeScript.cpp b/hardware/EvohomeScript.cpp
+index 5258fc55..0a44e97c 100644
+--- a/hardware/EvohomeScript.cpp
++++ b/hardware/EvohomeScript.cpp
+@@ -30,7 +30,7 @@
+ 
+ #include <string>
+ 
+-extern std::string szUserDataFolder;
++extern std::string szScriptsFolder;
+ 
+ 
+ CEvohomeScript::CEvohomeScript(const int ID)
+@@ -143,7 +143,7 @@ void CEvohomeScript::RunScript(const char *pdata, const unsigned char length)
+ 			std::string scriptname = OnAction.substr(9);
+ #if !defined WIN32
+ 			if (scriptname.find("/") != 0)
+-				scriptname = szUserDataFolder + "scripts/" + scriptname;
++				scriptname = szScriptsFolder + "scripts/" + scriptname;
+ #endif
+ 			std::string scriptparams="";
+ 			//Add parameters
+diff --git a/hardware/OpenZWave.cpp b/hardware/OpenZWave.cpp
+index 1f5c341c..24db61c9 100644
+--- a/hardware/OpenZWave.cpp
++++ b/hardware/OpenZWave.cpp
+@@ -948,7 +948,7 @@ bool COpenZWave::OpenSerialConnector()
+ 
+ 	m_nodes.clear();
+ 	m_bNeedSave = false;
+-	std::string ConfigPath = szStartupFolder + "Config/";
++	std::string ConfigPath = "/usr/share/domoticz/openzwave/";
+ 	std::string UserPath = ConfigPath;
+ 	if (szStartupFolder != szUserDataFolder)
+ 	{
+diff --git a/main/EventSystem.cpp b/main/EventSystem.cpp
+index 4eff02fd..f2b17b97 100644
+--- a/main/EventSystem.cpp
++++ b/main/EventSystem.cpp
+@@ -33,9 +33,11 @@ extern "C" {
+ #endif
+ }
+ 
++extern std::string szScriptsFolder;
+ extern std::string szUserDataFolder;
+ extern http::server::CWebServerHelper m_webservers;
+ 
++static std::string dzv_Dir;
+ static std::string m_printprefix;
+ 
+ #ifdef ENABLE_PYTHON
+@@ -115,7 +117,6 @@ static const _tJsonMap JsonMap[] =
+ 	{ NULL,					NULL,						tString		}
+ };
+ 
+-
+ CEventSystem::CEventSystem(void)
+ {
+ 	m_stoprequested = false;
+@@ -149,7 +150,7 @@ void CEventSystem::StartEventSystem()
+ 	GetCurrentScenesGroups();
+ 	GetCurrentUserVariables();
+ #ifdef ENABLE_PYTHON
+-    Plugins::PythonEventsInitialize(szUserDataFolder);
++    Plugins::PythonEventsInitialize(szScriptsFolder);
+ #endif
+ 
+ 	m_thread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CEventSystem::Do_Work, this)));
+@@ -179,11 +180,11 @@ void CEventSystem::SetEnabled(const bool bEnabled)
+ 
+ void CEventSystem::LoadEvents()
+ {
+-	std::string dzv_Dir,s;
++	std::string s;
+ #ifdef WIN32
+-	dzv_Dir = szUserDataFolder + "scripts\\dzVents\\generated_scripts\\";
++	dzv_Dir = szUserDataFolder + "generated_scripts\\";
+ #else
+-	dzv_Dir = szUserDataFolder + "scripts/dzVents/generated_scripts/";
++	dzv_Dir = szUserDataFolder + "generated_scripts/";
+ #endif
+ 	boost::unique_lock<boost::shared_mutex> eventsMutexLock(m_eventsMutex);
+ 	_log.Log(LOG_STATUS, "EventSystem: reset all events...");
+@@ -274,18 +275,18 @@ void CEventSystem::LoadEvents()
+ void CEventSystem::Do_Work()
+ {
+ #ifdef WIN32
+-	m_lua_Dir = szUserDataFolder + "scripts\\lua\\";
+-	m_dzv_Dir = szUserDataFolder + "scripts\\dzVents\\runtime\\";
++	m_lua_Dir = szScriptsFolder + "lua\\";
++	m_dzv_Dir = szScriptsFolder + "dzVents\\runtime\\";
+ #else
+-	m_lua_Dir = szUserDataFolder + "scripts/lua/";
+-	m_dzv_Dir = szUserDataFolder + "scripts/dzVents/runtime/";
++	m_lua_Dir = szScriptsFolder + "lua/";
++	m_dzv_Dir = szScriptsFolder + "dzVents/runtime/";
+ #endif
+ 
+ #ifdef ENABLE_PYTHON
+ #ifdef WIN32
+-	m_python_Dir = szUserDataFolder + "scripts\\python\\";
++	m_python_Dir = szScriptsFolder + "python\\";
+ #else
+-	m_python_Dir = szUserDataFolder + "scripts/python/";
++	m_python_Dir = szScriptsFolder + "python/";
+ #endif
+ #endif
+ 	m_stoprequested = false;
+@@ -1426,9 +1427,9 @@ void CEventSystem::EvaluateEvent(const std::string &reason, const uint64_t Devic
+ 		{
+ 			std::string dzv_scripts;
+ #ifdef WIN32
+-			dzv_scripts = szUserDataFolder + "scripts\\dzVents\\scripts\\";
++			dzv_scripts = szScriptsFolder + "dzVents\\scripts\\";
+ #else
+-			dzv_scripts = szUserDataFolder + "scripts/dzVents/scripts/";
++			dzv_scripts = szScriptsFolder + "dzVents/scripts/";
+ #endif
+ 			DirectoryListing(FileEntries, dzv_scripts, false, true);
+ 			for (itt = FileEntries.begin(); itt != FileEntries.end(); ++itt)
+@@ -2404,7 +2405,7 @@ bool CEventSystem::parseBlocklyActions(const std::string &Actions, const std::st
+ 			}
+ #if !defined WIN32
+ 			if (sPath.find("/") != 0)
+-				sPath = szUserDataFolder + "scripts/" + sPath;
++				sPath = szScriptsFolder + sPath;
+ #endif
+ 
+ 			m_sql.AddTaskItem(_tTaskItem::ExecuteScript(0.2f, sPath, sParam));
+@@ -3508,13 +3509,16 @@ void CEventSystem::EvaluateLua(const std::string &reason, const std::string &fil
+ 		{
+ 			std::stringstream lua_DirT;
+ 
+-			lua_DirT << szUserDataFolder <<
++			lua_DirT << szScriptsFolder <<
+ #ifdef WIN32
+-			"scripts\\dzVents\\";
++			"dzVents\\";
+ #else
+-			"scripts/dzVents/";
++			"dzVents/";
+ #endif
+ 
++			lua_pushstring(lua_state, "generated_script_path");
++			lua_pushstring(lua_state, dzv_Dir.c_str());
++			lua_rawset(lua_state, -3);
+ 			lua_pushstring(lua_state, "script_path");
+ 			lua_pushstring(lua_state, lua_DirT.str().c_str());
+ 			lua_rawset(lua_state, -3);
+@@ -4695,9 +4699,9 @@ namespace http {
+ 
+ 				std::stringstream template_file;
+ #ifdef WIN32
+-				template_file << szUserDataFolder << "scripts\\templates\\" << eventType << "." << interpreter;
++				template_file << szScriptsFolder << "templates\\" << eventType << "." << interpreter;
+ #else
+-				template_file << szUserDataFolder << "scripts/templates/" << eventType << "." << interpreter;
++				template_file << szScriptsFolder << "templates/" << eventType << "." << interpreter;
+ #endif
+ 				std::ifstream file;
+ 				std::stringstream template_content;
+diff --git a/main/EventsPythonModule.cpp b/main/EventsPythonModule.cpp
+index f69e7219..2d97562e 100644
+--- a/main/EventsPythonModule.cpp
++++ b/main/EventsPythonModule.cpp
+@@ -108,7 +108,7 @@
+         
+         int PythonEventsInitalized = 0;
+ 
+-        bool PythonEventsInitialize(std::string szUserDataFolder) {
++        bool PythonEventsInitialize(std::string szScriptsFolder) {
+             
+             if (!Plugins::Py_LoadLibrary())
+             {
+@@ -131,9 +131,9 @@
+             
+             std::string ssPath;
+ #ifdef WIN32
+-            ssPath  = szUserDataFolder + "scripts\\python\\;";
++            ssPath  = szScriptsFolder + "python\\;";
+ #else
+-            ssPath  = szUserDataFolder + "scripts/python/:";
++            ssPath  = szScriptsFolder + "python/:";
+ #endif
+             
+             std::wstring sPath = std::wstring(ssPath.begin(), ssPath.end());
+diff --git a/main/LuaHandler.cpp b/main/LuaHandler.cpp
+index 8fdcb278..c2ad98ff 100644
+--- a/main/LuaHandler.cpp
++++ b/main/LuaHandler.cpp
+@@ -22,7 +22,7 @@ extern "C" {
+ #include "mainworker.h"
+ #include "../hardware/hardwaretypes.h"
+ 
+-extern std::string szUserDataFolder;
++extern std::string szScriptsFolder;
+ 
+ int CLuaHandler::l_domoticz_updateDevice(lua_State* lua_state)
+ {
+@@ -155,9 +155,9 @@ bool CLuaHandler::executeLuaScript(const std::string &script, const std::string
+ {
+ 	std::stringstream lua_DirT;
+ #ifdef WIN32
+-	lua_DirT << szUserDataFolder << "scripts\\lua_parsers\\";
++	lua_DirT << szScriptsFolder << "lua_parsers\\";
+ #else
+-	lua_DirT << szUserDataFolder << "scripts/lua_parsers/";
++	lua_DirT << szScriptsFolder << "lua_parsers/";
+ #endif
+ 	std::string lua_Dir = lua_DirT.str();
+ 
+diff --git a/main/SQLHelper.cpp b/main/SQLHelper.cpp
+index 491aa5a2..d529243a 100644
+--- a/main/SQLHelper.cpp
++++ b/main/SQLHelper.cpp
+@@ -633,6 +633,7 @@ const char *sqlCreateMobileDevices =
+ "[LastUpdate] DATETIME DEFAULT(datetime('now', 'localtime'))"
+ ");";
+ 
++extern std::string szScriptsFolder;
+ extern std::string szUserDataFolder;
+ 
+ CSQLHelper::CSQLHelper(void)
+@@ -3683,9 +3684,9 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const
+ 				//Execute possible script
+ 				std::string scriptname;
+ #ifdef WIN32
+-				scriptname = szUserDataFolder + "scripts\\domoticz_main.bat";
++				scriptname = szScriptsFolder + "domoticz_main.bat";
+ #else
+-				scriptname = szUserDataFolder + "scripts/domoticz_main";
++				scriptname = szScriptsFolder + "domoticz_main";
+ #endif
+ 				if (file_exist(scriptname.c_str()))
+ 				{
+@@ -6641,7 +6642,7 @@ bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string &OnAction
+ 			std::string scriptname = OnAction.substr(9);
+ #if !defined WIN32
+ 			if (scriptname.find("/") != 0)
+-				scriptname = szUserDataFolder + "scripts/" + scriptname;
++				scriptname = szScriptsFolder + scriptname;
+ #endif
+ 			std::string scriptparams="";
+ 			//Add parameters
+@@ -6675,7 +6676,7 @@ bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string &OnAction
+ 		std::string scriptname = OffAction.substr(9);
+ #if !defined WIN32
+ 		if (scriptname.find("/") != 0)
+-			scriptname = szUserDataFolder + "scripts/" + scriptname;
++			scriptname = szScriptsFolder + scriptname;
+ #endif
+ 		std::string scriptparams = "";
+ 		int pindex = scriptname.find(' ');
+diff --git a/main/WebServer.cpp b/main/WebServer.cpp
+index f8471791..d2cf10b2 100644
+--- a/main/WebServer.cpp
++++ b/main/WebServer.cpp
+@@ -59,6 +59,7 @@
+ 
+ #define round(a) ( int ) ( a + .5 )
+ 
++extern std::string szScriptsFolder;
+ extern std::string szUserDataFolder;
+ extern std::string szWWWFolder;
+ 
+@@ -2987,9 +2988,9 @@ namespace http {
+ 			if (scriptname.find("..") != std::string::npos)
+ 				return;
+ #ifdef WIN32
+-			scriptname = szUserDataFolder + "scripts\\" + scriptname;
++			scriptname = szScriptsFolder + scriptname;
+ #else
+-			scriptname = szUserDataFolder + "scripts/" + scriptname;
++			scriptname = szScriptsFolder + scriptname;
+ #endif
+ 			if (!file_exist(scriptname.c_str()))
+ 				return;
+diff --git a/main/domoticz.cpp b/main/domoticz.cpp
+index 5ef96f68..52599b14 100644
+--- a/main/domoticz.cpp
++++ b/main/domoticz.cpp
+@@ -136,6 +136,7 @@ static const _facilities facilities[] =
+ }; 
+ std::string logfacname = "user";
+ #endif
++std::string szScriptsFolder;
+ std::string szStartupFolder;
+ std::string szUserDataFolder;
+ std::string szWWWFolder;
+@@ -696,6 +697,19 @@ int main(int argc, char**argv)
+ 			szUserDataFolder = szroot;
+ 	}
+ 
++	szScriptsFolder=szStartupFolder;
++	if (cmdLine.HasSwitch("-scripts"))
++	{
++		if (cmdLine.GetArgumentCount("-scripts") != 1)
++		{
++			_log.Log(LOG_ERROR, "Please specify a path for scripts directory");
++			return 1;
++		}
++		std::string szroot = cmdLine.GetSafeArgument("-scripts", 0, "");
++		if (szroot.size() != 0)
++			szScriptsFolder = szroot;
++	}
++
+ 	if (cmdLine.HasSwitch("-startupdelay"))
+ 	{
+ 		if (cmdLine.GetArgumentCount("-startupdelay") != 1)
+diff --git a/main/mainworker.cpp b/main/mainworker.cpp
+index 803690e1..e89a783b 100644
+--- a/main/mainworker.cpp
++++ b/main/mainworker.cpp
+@@ -159,6 +159,7 @@
+ 
+ #define round(a) ( int ) ( a + .5 )
+ 
++extern std::string szScriptsFolder;
+ extern std::string szStartupFolder;
+ extern std::string szUserDataFolder;
+ extern std::string szWWWFolder;
+@@ -1473,8 +1474,8 @@ void MainWorker::Do_Work()
+ 			m_sql.GetPreferencesVar("ReleaseChannel", nValue);
+ 			bool bIsBetaChannel = (nValue != 0);
+ 
+-			std::string scriptname = szUserDataFolder + "scripts/download_update.sh";
+-			std::string strparm = szUserDataFolder;
++			std::string scriptname = szScriptsFolder + "download_update.sh";
++			std::string strparm = szScriptsFolder;
+ 			if (bIsBetaChannel)
+ 				strparm += " /beta";
+ 
+diff --git a/notifications/NotificationHTTP.cpp b/notifications/NotificationHTTP.cpp
+index decff3b4..632e4e66 100644
+--- a/notifications/NotificationHTTP.cpp
++++ b/notifications/NotificationHTTP.cpp
+@@ -6,7 +6,7 @@
+ #include "../main/SQLHelper.h"
+ #include "../main/Logger.h"
+ 
+-extern std::string szUserDataFolder;
++extern std::string szScriptsFolder;
+ 
+ CNotificationHTTP::CNotificationHTTP() : CNotificationBase(std::string("http"), OPTIONS_NONE)
+ {
+@@ -105,7 +105,7 @@ bool CNotificationHTTP::SendMessageImplementation(
+ 		std::string scriptparams = "";
+ #if !defined WIN32
+ 		if (scriptname.find("/") != 0)
+-			scriptname = szUserDataFolder + "scripts/" + scriptname;
++			scriptname = szScriptsFolder + scriptname;
+ #endif
+ 		//Add parameters
+ 		uPos = scriptname.find(" ");
+diff --git a/push/GooglePubSubPush.cpp b/push/GooglePubSubPush.cpp
+index 359a7d7c..46e489f6 100644
+--- a/push/GooglePubSubPush.cpp
++++ b/push/GooglePubSubPush.cpp
+@@ -22,7 +22,7 @@ extern "C" {
+ using namespace boost::python;
+ #endif
+ 
+-extern std::string szUserDataFolder;
++extern std::string szScriptsFolder;
+ 
+ // this should be filled in by the preprocessor
+ extern const char * Python_exe;
+@@ -231,11 +231,11 @@ void CGooglePubSubPush::DoGooglePubSubPush()
+ 
+ #ifdef ENABLE_PYTHON_DECAP
+ #ifdef WIN32
+-				python_DirT << szUserDataFolder << "scripts\\python\\";
+-				std::string filename = szUserDataFolder + "scripts\\python\\" + "googlepubsub.py";
++				python_DirT << szScriptsFolder << "python\\";
++				std::string filename = szScriptsFolder + "python\\" + "googlepubsub.py";
+ #else
+-				python_DirT << szUserDataFolder << "scripts/python/";
+-				std::string filename = szUserDataFolder + "scripts/python/" + "googlepubsub.py";
++				python_DirT << szScriptsFolder << "python/";
++				std::string filename = szScriptsFolder + "python/" + "googlepubsub.py";
+ #endif
+ 
+ 				wchar_t * argv[1];
+diff --git a/scripts/dzVents/runtime/dzVents.lua b/scripts/dzVents/runtime/dzVents.lua
+index d0dfa869..8370d6a9 100644
+--- a/scripts/dzVents/runtime/dzVents.lua
++++ b/scripts/dzVents/runtime/dzVents.lua
+@@ -1,8 +1,9 @@
+ local currentPath = globalvariables['script_path']
++local generatedScriptPath = globalvariables['generated_script_path']
+ local triggerReason = globalvariables['script_reason']
+ 
+ _G.scriptsFolderPath = currentPath .. 'scripts' -- global
+-_G.generatedScriptsFolderPath = currentPath .. 'generated_scripts' -- global
++_G.generatedScriptsFolderPath = generatedScriptPath -- global
+ _G.dataFolderPath = currentPath .. 'data' -- global
+ 
+ package.path = package.path .. ';' .. currentPath .. '?.lua'
+@@ -10,7 +11,7 @@ package.path = package.path .. ';' .. currentPath .. 'runtime/?.lua'
+ package.path = package.path .. ';' .. currentPath .. 'runtime/device-adapters/?.lua'
+ package.path = package.path .. ';' .. currentPath .. 'dzVents/?.lua'
+ package.path = package.path .. ';' .. currentPath .. 'scripts/?.lua'
+-package.path = package.path .. ';' .. currentPath .. 'generated_scripts/?.lua'
++package.path = package.path .. ';' .. generatedScriptPath .. '?.lua'
+ package.path = package.path .. ';' .. currentPath .. 'data/?.lua'
+ 
+ local EventHelpers = require('EventHelpers')

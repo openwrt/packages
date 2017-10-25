@@ -1,0 +1,28 @@
+--- a/src/md5.h
++++ b/src/md5.h
+@@ -28,6 +28,14 @@
+ #define MD5Update MD5_Update
+ #define MD5Final MD5_Final
+ 
++#elif HAVE_CYASSL
++#include <cyassl/openssl/md5.h>
++
++#define MD5Init MD5_Init
++#define MD5Update MD5_Update
++#define MD5Final MD5_Final
++
++typedef struct CYASSL_MD5_CTX MD5_CTX;
+ #else
+ 
+ struct MD5Context {
+--- a/src/md5.c
++++ b/src/md5.c
+@@ -18,7 +18,7 @@
+ #include <string.h>		/* for memcpy() */
+ #include "md5.h"
+ 
+-#ifndef HAVE_OPENSSL
++#if !defined(HAVE_OPENSSL) && !defined(HAVE_CYASSL)
+ 
+ void byteReverse(unsigned char *buf, size_t longs);
+ 

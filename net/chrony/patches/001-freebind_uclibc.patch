@@ -1,0 +1,13 @@
+diff --git a/sysincl.h b/sysincl.h
+index a9e4da0..e2a6e78 100644
+--- a/sysincl.h
++++ b/sysincl.h
+@@ -80,4 +80,8 @@
+ #include <sys/random.h>
+ #endif
+ 
++#if defined(LINUX) && !defined(IP_FREEBIND)
++#define IP_FREEBIND 15
++#endif
++
+ #endif /* GOT_SYSINCL_H */

@@ -1,0 +1,21 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -8,6 +8,7 @@ APRUTIL_MAJOR_VERSION=@APRUTIL_MAJOR_VER
+ APRUTIL_DOTTED_VERSION=@APRUTIL_DOTTED_VERSION@
+ 
+ srcdir = @srcdir@
++top_builddir = @top_builddir@
+ VPATH = @srcdir@
+ 
+ INCLUDES = @APRUTIL_PRIV_INCLUDES@ @APR_INCLUDES@ @APRUTIL_INCLUDES@
+--- a/configure.in
++++ b/configure.in
+@@ -41,6 +41,8 @@ AC_SUBST(APU_CONFIG_LOCATION)
+ AC_CANONICAL_SYSTEM
+ 
+ AC_PROG_INSTALL
++AC_PROG_LIBTOOL
++LT_INIT
+ 
+ # Use -no-install or -no-fast-install to link the test 
+ # programs on all platforms but Darwin, where it would cause

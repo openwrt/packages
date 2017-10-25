@@ -1,0 +1,32 @@
+#!/bin/sh /etc/rc.common
+
+START=80
+
+USE_PROCD=1
+PROG=/usr/sbin/https_dns_proxy
+
+start_instance() {
+	local cfg="$1"
+	local listen_addr listen_port user group
+
+	config_get listen_addr "$cfg" listen_addr
+	config_get listen_port "$cfg" listen_port
+	config_get user "$cfg" user
+	config_get group "$cfg" group
+
+	procd_open_instance
+	procd_set_param command ${PROG} \
+		-a "$listen_addr" -p "$listen_port" \
+		-u "$user" -g "$group"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "https_dns_proxy"
+}
+
+start_service() {
+	config_load 'https_dns_proxy'
+	config_foreach start_instance 'https_dns_proxy'
+}

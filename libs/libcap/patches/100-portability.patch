@@ -1,0 +1,19 @@
+--- a/libcap/_makenames.c
++++ b/libcap/_makenames.c
+@@ -7,7 +7,6 @@
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+-#include <sys/capability.h>
+ 
+ /*
+  * #include 'sed' generated array
+@@ -22,7 +21,7 @@ struct {
+ };
+ 
+ /* this should be more than big enough (factor of three at least) */
+-const char *pointers[8*sizeof(struct __user_cap_data_struct)];
++const char *pointers[8*12];
+ 
+ int main(void)
+ {

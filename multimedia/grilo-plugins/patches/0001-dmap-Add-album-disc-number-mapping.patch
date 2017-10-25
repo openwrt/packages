@@ -1,0 +1,58 @@
+From 3cd7fb6af73ca7fdef2557ad31b5c4180534d775 Mon Sep 17 00:00:00 2001
+From: "W. Michael Petullo" <mike@flyn.org>
+Date: Sat, 9 Jul 2016 09:50:00 -0400
+Subject: [PATCH] dmap: Add album disc number mapping
+
+Signed-off-by: W. Michael Petullo <mike@flyn.org>
+---
+ src/dmap/grl-daap-db.c | 7 +++++++
+ src/dmap/grl-daap.c    | 1 +
+ 2 files changed, 8 insertions(+)
+
+diff --git a/src/dmap/grl-daap-db.c b/src/dmap/grl-daap-db.c
+index 4850073..5bcd804 100644
+--- a/src/dmap/grl-daap-db.c
++++ b/src/dmap/grl-daap-db.c
+@@ -161,6 +161,7 @@ grl_daap_db_add (DMAPDb *_db, DMAPRecord *_record)
+ 
+   gint   duration = 0;
+   gint32  bitrate = 0,
++             disc = 0,
+             track = 0;
+   gchar  *id_s    = NULL,
+          *title   = NULL,
+@@ -186,6 +187,8 @@ grl_daap_db_add (DMAPDb *_db, DMAPRecord *_record)
+                &title,
+                "track",
+                &track,
++               "disc",
++               &disc,
+                "location",
+                &url,
+                "has-video",
+@@ -217,6 +220,10 @@ grl_daap_db_add (DMAPDb *_db, DMAPRecord *_record)
+     grl_media_set_bitrate      (media, bitrate);
+     grl_media_set_track_number (media, track);
+ 
++    if (disc != 0) {
++      grl_media_set_album_disc_number (media, disc);
++    }
++
+     if (album) {
+       grl_media_set_album (media, album);
+     }
+diff --git a/src/dmap/grl-daap.c b/src/dmap/grl-daap.c
+index 59aa981..796234d 100644
+--- a/src/dmap/grl-daap.c
++++ b/src/dmap/grl-daap.c
+@@ -365,6 +365,7 @@ grl_daap_source_supported_keys (GrlSource *source)
+ 
+   if (!keys) {
+     keys = grl_metadata_key_list_new (GRL_METADATA_KEY_ALBUM,
++                                      GRL_METADATA_KEY_ALBUM_DISC_NUMBER,
+                                       GRL_METADATA_KEY_ARTIST,
+                                       GRL_METADATA_KEY_BITRATE,
+                                       GRL_METADATA_KEY_DURATION,
+-- 
+2.7.4
+

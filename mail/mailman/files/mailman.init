@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2014 OpenWrt.org
+
+START=50
+STOP=50
+
+PYTHON=/usr/bin/python
+MAILMANHOME=/usr/local/mailman
+MAILMANCTL=$MAILMANHOME/bin/mailmanctl
+
+start() {
+	#rm -f $MAILMANHOME/locks/*
+	$PYTHON $MAILMANCTL -s -q start
+}
+
+stop() {
+	$PYTHON $MAILMANCTL -q stop
+}
+
+restart() {
+	$PYTHON $MAILMANCTL -q restart
+}

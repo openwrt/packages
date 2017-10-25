@@ -1,0 +1,19 @@
+diff -r f24487b45cd0 setup.py
+--- a/setup.py	Sun May 15 20:28:23 2016 -0700
++++ b/setup.py	Wed Jul 27 22:49:13 2016 +0800
+@@ -63,15 +63,6 @@
+         version='1.1.6',
+         url='https://bitbucket.org/stoneleaf/enum34',
+         packages=['enum'],
+-        package_data={
+-            'enum' : [
+-                'LICENSE',
+-                'README',
+-                'doc/enum.rst',
+-                'doc/enum.pdf',
+-                'test.py',
+-                ]
+-            },
+         license='BSD License',
+         description='Python 3.4 Enum backported to 3.3, 3.2, 3.1, 2.7, 2.6, 2.5, and 2.4',
+         long_description=long_desc,

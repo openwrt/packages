@@ -1,0 +1,31 @@
+--- a/lispd/lispd_output.c
++++ b/lispd/lispd_output.c
+@@ -26,6 +26,7 @@
+  *    Alberto Rodriguez Natal <arnatal@ac.upc.edu>
+  */
+ 
++#define _GNU_SOURCE 1
+ 
+ 
+ #include <assert.h>
+--- a/lispd/lispd_input.c
++++ b/lispd/lispd_input.c
+@@ -26,6 +26,7 @@
+  *    Alberto Rodriguez Natal <arnatal@ac.upc.edu>
+  */
+ 
++#define _GNU_SOURCE 1
+ 
+ #include "lispd_input.h"
+ #include "lispd_map_notify.h"
+--- a/lispd/lispd_pkt_lib.c
++++ b/lispd/lispd_pkt_lib.c
+@@ -28,6 +28,8 @@
+  *
+  */
+ 
++#define _GNU_SOURCE 1
++
+ #include "lispd_afi.h"
+ #include "lispd_pkt_lib.h"
+ #include "lispd_lib.h"

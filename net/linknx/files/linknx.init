@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=98
+STOP=10
+NAME=linknx
+PROG=/usr/bin/$NAME
+
+. /lib/functions.sh
+
+start() {
+        local conf options
+        config_load "$NAME"
+        config_get conf args conf '/etc/linknx.xml'
+        config_get options args options ''
+        test -f $conf || cp -p /etc/linknx.xml.dist $conf
+        mkdir -p /tmp/$NAME/persist
+        service_start $PROG --config=$conf $options
+}
+
+stop() {
+        service_stop $PROG
+}

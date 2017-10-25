@@ -1,0 +1,10 @@
+--- a/configure.in
++++ b/configure.in
+@@ -197,7 +197,6 @@ dnl XXX - quick hack, should disappear b
+ AC_DEFINE(USE_SYSLOG, 1, [Define to use syslog().])
+ if test "$ac_cv_func_ruserok" = "yes"; then
+ 	AC_DEFINE(RLOGIN, 1, [Define if login should support the -r flag for rlogind.])
+-	AC_DEFINE(RUSEROK, 0, [Define to the ruserok() "success" return value (0 or 1).])
+ fi
+ 
+ AC_ARG_ENABLE(shadowgrp,

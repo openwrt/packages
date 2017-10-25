@@ -1,0 +1,28 @@
+--- a/utils/v4l2-ctl/v4l2-ctl-common.cpp
++++ b/utils/v4l2-ctl/v4l2-ctl-common.cpp
+@@ -671,15 +671,18 @@ static bool parse_subset(char *optarg)
+ 
+ static bool parse_next_subopt(char **subs, char **value)
+ {
+-	static char *const subopts[] = {
+-	    NULL
+-	};
+-	int opt = getsubopt(subs, subopts, value);
++	char *stmp = *subs;
++	*value = NULL;
+ 
+-	if (opt < 0 || *value)
++	if (*subs) {
++		*subs = strchr(stmp, ',');
++		if (*subs)
++			*(*subs)++ = 0;
++		else *subs = stmp + strlen(stmp);
++
++		*value = stmp;
+ 		return false;
+-	fprintf(stderr, "No value given to suboption <%s>\n",
+-			subopts[opt]);
++	}
+ 	return true;
+ }
+ 

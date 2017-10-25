@@ -1,0 +1,16 @@
+menu "Configuration"
+	depends on PACKAGE_seafile-server
+
+config SEAFILE_FUSE_SUPPORT
+	bool "Enable FUSE support"
+	select PACKAGE_libfuse
+	default n
+
+config SEAFILE_CONSOLE_SUPPORT
+	bool "Enable seafile server console"
+	default n
+
+config SEAFILE_RIAK_SUPPORT
+	bool "Enable support for riak backend"
+	default n
+endmenu

@@ -1,0 +1,22 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -22,7 +22,7 @@ doc_subdirs = docs
+ else
+ doc_subdirs =
+ endif
+-SUBDIRS = sigc++ tests examples $(doc_subdirs)
++SUBDIRS = sigc++
+ 
+ sigc_configdir = $(libdir)/$(SIGCXX_MODULE_NAME)/include
+ nodist_sigc_config_HEADERS = sigc++config.h
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -204,7 +204,7 @@ am__define_uniq_tagged_files = \
+ ETAGS = etags
+ CTAGS = ctags
+ CSCOPE = cscope
+-DIST_SUBDIRS = sigc++ tests examples docs
++DIST_SUBDIRS = sigc++
+ DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+ distdir = $(PACKAGE)-$(VERSION)
+ top_distdir = $(distdir)

@@ -1,0 +1,20 @@
+--- lua-openssl-0.6.0.old/src/ssl.c	2016-09-19 08:30:43.735075695 +0200
++++ lua-openssl-0.6.0/src/ssl.c	2016-09-19 08:48:37.393737125 +0200
+@@ -1245,7 +1250,7 @@
+   lua_pushinteger(L, st);
+   return 2;
+ }
+-#ifndef LIBRESSL_VERSION_NUMBER
++#if !defined(OPENSSL_NO_COMP) && !defined(LIBRESSL_VERSION_NUMBER)
+ static int openssl_ssl_current_compression(lua_State *L)
+ {
+   SSL* s = CHECK_OBJECT(1, SSL, "openssl.ssl");
+@@ -1803,7 +1808,7 @@
+   {"getfd",     openssl_ssl_getfd},
+
+   {"current_cipher",        openssl_ssl_current_cipher},
+-#ifndef LIBRESSL_VERSION_NUMBER
++#if !defined(OPENSSL_NO_COMP) && !defined(LIBRESSL_VERSION_NUMBER)
+   {"current_compression",   openssl_ssl_current_compression},
+ #endif
+   {"getpeerverification",   openssl_ssl_getpeerverification},

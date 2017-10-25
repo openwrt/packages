@@ -1,0 +1,24 @@
+From b8a0598002fd08618d20cd1bbfb03559435241a8 Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Thu, 4 May 2017 22:35:58 +0200
+Subject: [PATCH 2/2] pin target to linux
+
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 9511862..d5b0dfc 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ # Common makefile -- loads make rules for each platform
+ 
+-OSTYPE=$(shell uname -s)
++OSTYPE=Linux
+ 
+ ifeq ($(OSTYPE),Darwin)
+ 	include make-mac.mk
+-- 
+2.1.4
+

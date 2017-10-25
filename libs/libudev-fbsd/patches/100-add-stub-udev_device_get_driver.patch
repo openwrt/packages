@@ -1,0 +1,25 @@
+--- a/src/libudev.c
++++ b/src/libudev.c
+@@ -130,6 +130,12 @@ udev_device_get_devnum(struct udev_devic
+ }
+ 
+ char const *
++udev_device_get_driver(struct udev_device *udev_device)
++{
++	return NULL;
++}
++
++char const *
+ udev_device_get_property_value(struct udev_device *dev, char const *property)
+ {
+ 	LOG("udev_device_get_property_value %s\n", property);
+--- a/src/libudev.h
++++ b/src/libudev.h
+@@ -30,6 +30,7 @@ struct udev_device *udev_device_new_from
+     struct udev *udev, char const *syspath);
+ struct udev_device *udev_device_new_from_devnum(
+     struct udev *udev, char type, dev_t devnum);
++char const *udev_device_get_driver(struct udev_device *udev_device);
+ char const *udev_device_get_syspath(struct udev_device *udev_device);
+ char const *udev_device_get_sysname(struct udev_device *udev_device);
+ char const *udev_device_get_subsystem(struct udev_device *udev_device);

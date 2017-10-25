@@ -1,0 +1,11 @@
+--- a/Foundation/src/Error.cpp
++++ b/Foundation/src/Error.cpp
+@@ -66,7 +66,7 @@
+		   without -D_GNU_SOURCE is needed, otherwise the GNU version is
+		   preferred.
+		*/
+-#if defined _GNU_SOURCE && !POCO_ANDROID
++#if (defined _GNU_SOURCE && (defined __GLIBC__ || defined __UCLIBC__)) && !POCO_ANDROID
+		char errmsg[256] = "";
+		return std::string(strerror_r(errorCode, errmsg, 256));
+ #elif (_XOPEN_SOURCE >= 600) || POCO_ANDROID

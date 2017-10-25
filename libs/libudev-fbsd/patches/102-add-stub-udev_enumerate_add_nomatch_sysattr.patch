@@ -1,0 +1,41 @@
+--- a/src/libudev.c
++++ b/src/libudev.c
+@@ -162,7 +162,7 @@ udev_device_get_driver(struct udev_devic
+ 		char driverlnk[32];
+ 		snprintf(driverlnp, sizeof(driverlnp), "%s/driver",
+ 			 udev_device->sysfspath);
+-		if (readlink(driverlnp, driverlnk, sizeof(driver)))
++		if (readlink(driverlnp, driverlnk, sizeof(driverlnk)))
+ 		{
+ 			char *drivernm;
+ 			drivernm = strrchr(driverlnk, '/');
+@@ -600,6 +600,18 @@ udev_enumerate_add_match_property(struct
+ 	    value);
+ 	return -1;
+ }
++
++int
++udev_enumerate_add_nomatch_sysattr(struct udev_enumerate *udev_enumerate,
++    const char *sysattr, const char *value)
++{
++	(void)udev_enumerate;
++	(void)sysattr;
++	(void)value;
++	LOG("stub: udev_enumerate_add_nomatch_sysattr %s %s\n", sysattr,
++	    value);
++	return -1;
++}
+ 
+ void
+ udev_enumerate_unref(struct udev_enumerate *udev_enumerate)
+--- a/src/libudev.h
++++ b/src/libudev.h
+@@ -59,6 +59,8 @@ int udev_enumerate_add_match_sysname(
+     struct udev_enumerate *udev_enumerate, char const *sysname);
+ int udev_enumerate_add_match_property(struct udev_enumerate *udev_enumerate,
+     char const *property, char const *value);
++int udev_enumerate_add_nomatch_sysattr(struct udev_enumerate *udev_enumerate,
++    const char *sysattr, const char *value);
+ void udev_enumerate_unref(struct udev_enumerate *udev_enumerate);
+ 
+ #define udev_list_entry_foreach(list_entry, first_entry)                      \

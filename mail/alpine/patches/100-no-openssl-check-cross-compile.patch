@@ -1,0 +1,29 @@
+diff -Nru alpine-2.20-orig/configure alpine-2.20/configure
+--- alpine-2.20-orig/configure	2015-01-18 09:00:42.100645053 +0200
++++ alpine-2.20/configure	2015-01-25 12:01:11.831015443 +0200
+@@ -17643,10 +17643,8 @@
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking Openssl library version >= 1.0.1c" >&5
+ $as_echo_n "checking Openssl library version >= 1.0.1c... " >&6; }
+   if test "$cross_compiling" = yes; then :
+-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+-as_fn_error $? "cannot run test program while cross compiling
+-See \`config.log' for more details" "$LINENO" 5; }
++   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cross compiling: not checking" >&5
++$as_echo "$as_me: WARNING: cross compiling: not checking" >&2;}
+ else
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+diff -Nru alpine-2.20-orig/configure.ac alpine-2.20/configure.ac
+--- alpine-2.20-orig/configure.ac	2015-01-18 08:38:08.893495949 +0200
++++ alpine-2.20/configure.ac	2015-01-25 12:01:02.773015236 +0200
+@@ -1370,7 +1370,8 @@
+ }
+ 	]])],
+ 	[ AC_MSG_RESULT(yes) ],
+-	[ alpine_SSLTYPE="none" ])
++	[ alpine_SSLTYPE="none" ],
++	[ AC_MSG_WARN([cross compiling: not checking])])
+ 
+     if test "x$alpine_SSLTYPE" = "xnone" ; then
+ 	AC_MSG_ERROR(Install openssl version >= 1.0.1c)

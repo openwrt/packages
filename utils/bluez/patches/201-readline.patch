@@ -1,0 +1,59 @@
+--- a/Makefile.in	2017-09-14 11:47:06.000000000 +0200
++++ b/Makefile.in	2017-09-15 02:52:39.315926972 +0200
+@@ -2447,7 +2447,7 @@
+ @CLIENT_TRUE@					monitor/uuid.h monitor/uuid.c
+ 
+ @CLIENT_TRUE@client_bluetoothctl_LDADD = gdbus/libgdbus-internal.la src/libshared-glib.la \
+-@CLIENT_TRUE@				@GLIB_LIBS@ @DBUS_LIBS@ -lreadline
++@CLIENT_TRUE@				@GLIB_LIBS@ @DBUS_LIBS@ -lreadline -lncurses
+ 
+ @MESH_TRUE@mesh_meshctl_SOURCES = mesh/main.c \
+ @MESH_TRUE@				mesh/mesh-net.h \
+@@ -2468,7 +2468,7 @@
+ 
+ @MESH_TRUE@mesh_meshctl_LDADD = gdbus/libgdbus-internal.la src/libshared-glib.la \
+ @MESH_TRUE@				lib/libbluetooth-internal.la \
+-@MESH_TRUE@				@GLIB_LIBS@ @DBUS_LIBS@ -ljson-c -lreadline
++@MESH_TRUE@				@GLIB_LIBS@ @DBUS_LIBS@ -ljson-c -lreadline -lncurses
+ 
+ @MONITOR_TRUE@monitor_btmon_SOURCES = monitor/main.c monitor/bt.h \
+ @MONITOR_TRUE@				monitor/display.h monitor/display.c \
+@@ -2724,7 +2724,7 @@
+ @READLINE_TRUE@						tools/obex-client-tool.c
+ 
+ @READLINE_TRUE@tools_obex_client_tool_LDADD = lib/libbluetooth-internal.la \
+-@READLINE_TRUE@						@GLIB_LIBS@ -lreadline
++@READLINE_TRUE@						@GLIB_LIBS@ -lreadline -lncurses
+ 
+ @READLINE_TRUE@tools_obex_server_tool_SOURCES = $(gobex_sources) $(btio_sources) \
+ @READLINE_TRUE@						tools/obex-server-tool.c
+@@ -2734,17 +2734,17 @@
+ @READLINE_TRUE@				client/display.h client/display.c
+ 
+ @READLINE_TRUE@tools_bluetooth_player_LDADD = gdbus/libgdbus-internal.la \
+-@READLINE_TRUE@				@GLIB_LIBS@ @DBUS_LIBS@ -lreadline
++@READLINE_TRUE@				@GLIB_LIBS@ @DBUS_LIBS@ -lreadline -lncurses
+ 
+ @READLINE_TRUE@tools_obexctl_SOURCES = tools/obexctl.c \
+ @READLINE_TRUE@				client/display.h client/display.c
+ 
+ @READLINE_TRUE@tools_obexctl_LDADD = gdbus/libgdbus-internal.la \
+-@READLINE_TRUE@				@GLIB_LIBS@ @DBUS_LIBS@ -lreadline
++@READLINE_TRUE@				@GLIB_LIBS@ @DBUS_LIBS@ -lreadline -lncurses
+ 
+ @READLINE_TRUE@tools_btmgmt_SOURCES = tools/btmgmt.c src/uuid-helper.c client/display.c
+ @READLINE_TRUE@tools_btmgmt_LDADD = lib/libbluetooth-internal.la src/libshared-mainloop.la \
+-@READLINE_TRUE@				-lreadline
++@READLINE_TRUE@				-lreadline -lncurses
+ 
+ @DEPRECATED_TRUE@@READLINE_TRUE@attrib_gatttool_SOURCES = attrib/gatttool.c attrib/att.c attrib/gatt.c \
+ @DEPRECATED_TRUE@@READLINE_TRUE@				attrib/gattrib.c btio/btio.c \
+@@ -2753,7 +2753,7 @@
+ @DEPRECATED_TRUE@@READLINE_TRUE@				client/display.h
+ 
+ @DEPRECATED_TRUE@@READLINE_TRUE@attrib_gatttool_LDADD = lib/libbluetooth-internal.la \
+-@DEPRECATED_TRUE@@READLINE_TRUE@			src/libshared-glib.la @GLIB_LIBS@ -lreadline
++@DEPRECATED_TRUE@@READLINE_TRUE@			src/libshared-glib.la @GLIB_LIBS@ -lreadline -lncurses
+ 
+ @CUPS_TRUE@cupsdir = $(libdir)/cups/backend
+ @CUPS_TRUE@profiles_cups_bluetooth_SOURCES = profiles/cups/main.c \

@@ -1,0 +1,11 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -386,7 +386,7 @@ dnl See if ANY version of miniupnpc is i
+ AC_LINK_IFELSE(
+   [AC_LANG_PROGRAM([#include <miniupnpc/miniupnpc.h>],
+                    [struct UPNPDev dev;])],
+-  [upnp_version="unknown"],
++  [upnp_version="none"],
+   [upnp_version="none"]
+ )
+ 

@@ -1,0 +1,11 @@
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -1673,7 +1673,7 @@ mDNSexport mDNSs32 mDNSPlatformGetServic
+     return -1;
+ }
+ 
+-mDNSexport void mDNSPlatformSetDelegatePID(UDPSocket *src, const mDNSAddr *dst, DNSQuestion *q)
++mDNSexport void mDNSPlatformSetuDNSSocktOpt(UDPSocket *src, const mDNSAddr *dst, DNSQuestion *q)
+ {
+     (void) src;
+     (void) dst;

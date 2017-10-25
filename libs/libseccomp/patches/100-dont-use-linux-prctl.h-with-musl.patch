@@ -1,0 +1,14 @@
+Index: libseccomp-2.2.1/src/system.h
+===================================================================
+--- libseccomp-2.2.1.orig/src/system.h
++++ libseccomp-2.2.1/src/system.h
+@@ -23,7 +23,9 @@
+ #define _SYSTEM_H
+ 
+ #include <linux/filter.h>
++#ifdef __GLIBC__
+ #include <linux/prctl.h>
++#endif
+ 
+ #include "configure.h"
+ 

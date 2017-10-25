@@ -1,0 +1,9 @@
+#see http://wiki.openwrt.org/doc/howto/zabbix for ready to use templates
+
+# network interface discovery
+# example: {"data":[{"{#IF}":"lo", "{#NET}":"loopback"},{"{#IF}":"br-lan", "{#NET}":"lan"},{"{#IF}":"eth0.1", "{#NET}":"wan"}]}
+#
+UserParameter=netowrt.discovery,lua -l uci -e 'x = uci.cursor(nil, "/var/state");list = "{\"data\":[";x:foreach("network", "interface", function(s) list=list.."{\"{#IF}\":\""..s.ifname.."\", \"{#NET}\":\""..s[".name"].."\"}," end); list=string.gsub(list,",$",""); print(list.."]}")'
+
+
+

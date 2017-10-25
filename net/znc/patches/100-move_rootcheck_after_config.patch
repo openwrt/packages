@@ -1,0 +1,52 @@
+From adf42357c9043c38d9a9b47544a1b46445bdae19 Mon Sep 17 00:00:00 2001
+From: Jonas Gorski <jonas.gorski+openwrt@gmail.com>
+Date: Wed, 6 Apr 2011 04:10:23 +0200
+Subject: [PATCH] Move the root check to after config parsing
+
+---
+ src/main.cpp | 27 ++++++++++++++-------------
+ 1 file changed, 14 insertions(+), 13 deletions(-)
+
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -312,19 +312,6 @@ int main(int argc, char** argv) {
+ 		CUtils::PrintStatus(true, "");
+ 	}
+ 
+-	if (isRoot()) {
+-		CUtils::PrintError("You are running ZNC as root! Don't do that! There are not many valid");
+-		CUtils::PrintError("reasons for this and it can, in theory, cause great damage!");
+-		if (!bAllowRoot) {
+-			CZNC::DestroyInstance();
+-			return 1;
+-		}
+-		CUtils::PrintError("You have been warned.");
+-		CUtils::PrintError("Hit CTRL+C now if you don't want to run ZNC as root.");
+-		CUtils::PrintError("ZNC will start in 30 seconds.");
+-		sleep(30);
+-	}
+-
+ 	if (bMakeConf) {
+ 		if (!pZNC->WriteNewConfig(sConfig)) {
+ 			CZNC::DestroyInstance();
+@@ -346,6 +333,20 @@ int main(int argc, char** argv) {
+ 		return 1;
+ 	}
+ 
++	if (isRoot()) {
++		CUtils::PrintError("You are running ZNC as root! Don't do that! There are not many valid");
++		CUtils::PrintError("reasons for this and it can, in theory, cause great damage!");
++		if (!bAllowRoot) {
++			CZNC::DestroyInstance();
++			return 1;
++		}
++		CUtils::PrintError("You have been warned.");
++		CUtils::PrintError("Hit CTRL+C now if you don't want to run ZNC as root.");
++		CUtils::PrintError("ZNC will start in 30 seconds.");
++		sleep(30);
++	}
++
++
+ 	if (bForeground) {
+ 		int iPid = getpid();
+ 		CUtils::PrintMessage("Staying open for debugging [pid: " + CString(iPid) + "]");

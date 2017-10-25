@@ -1,0 +1,40 @@
+Index: rp-pppoe-3.11/src/configure
+===================================================================
+--- rp-pppoe-3.11.orig/src/configure	2016-05-21 23:42:58.142423086 -0400
++++ rp-pppoe-3.11/src/configure	2016-05-21 23:42:58.178423086 -0400
+@@ -3646,7 +3646,7 @@
+ done
+ 
+ 
+-for ac_header in fcntl.h sys/dlpi.h sys/ioctl.h sys/time.h syslog.h unistd.h net/if_arp.h netinet/if_ether.h getopt.h sys/uio.h sys/param.h fcntl.h net/bpf.h netpacket/packet.h net/ethernet.h asm/types.h linux/if_packet.h linux/if_ether.h sys/socket.h sys/cdefs.h net/if.h net/if_dl.h net/if_ether.h net/if_types.h netinet/if_ether.h net/if_types.h net/if_dl.h
++for ac_header in fcntl.h sys/dlpi.h sys/ioctl.h sys/time.h syslog.h unistd.h net/if_arp.h getopt.h sys/uio.h sys/param.h fcntl.h net/bpf.h netpacket/packet.h asm/types.h linux/if_packet.h linux/if_ether.h sys/socket.h sys/cdefs.h net/if.h net/if_dl.h net/if_types.h net/if_types.h net/if_dl.h
+ do :
+   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+Index: rp-pppoe-3.11/src/if.c
+===================================================================
+--- rp-pppoe-3.11.orig/src/if.c	2012-08-17 14:31:25.000000000 -0400
++++ rp-pppoe-3.11/src/if.c	2016-05-21 23:45:13.546423086 -0400
+@@ -30,10 +30,6 @@
+ #include <linux/if_packet.h>
+ #endif
+ 
+-#ifdef HAVE_NET_ETHERNET_H
+-#include <net/ethernet.h>
+-#endif
+-
+ #ifdef HAVE_ASM_TYPES_H
+ #include <asm/types.h>
+ #endif
+Index: rp-pppoe-3.11/src/plugin.c
+===================================================================
+--- rp-pppoe-3.11.orig/src/plugin.c	2012-08-17 14:31:25.000000000 -0400
++++ rp-pppoe-3.11/src/plugin.c	2016-05-21 23:43:55.314423086 -0400
+@@ -49,7 +49,6 @@
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <signal.h>
+-#include <net/ethernet.h>
+ #include <net/if_arp.h>
+ #include <linux/ppp_defs.h>
+ #include <linux/if_pppox.h>

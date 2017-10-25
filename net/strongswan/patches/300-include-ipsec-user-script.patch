@@ -1,0 +1,17 @@
+--- a/src/_updown/_updown.in
++++ b/src/_updown/_updown.in
+@@ -16,11 +16,9 @@
+ # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ # for more details.
+ 
+-# CAUTION:  Installing a new version of strongSwan will install a new
+-# copy of this script, wiping out any custom changes you make.  If
+-# you need changes, make a copy of this under another name, and customize
+-# that, and use the (left/right)updown parameters in ipsec.conf to make
+-# strongSwan use yours instead of this default one.
++# Add your custom ip rules to the /etc/ipsec.user file if you need that functionality.
++
++[ -e /etc/ipsec.user ] && . /etc/ipsec.user "$1"
+ 
+ #      PLUTO_VERSION
+ #              indicates  what  version of this interface is being

@@ -1,0 +1,12 @@
+diff -rupN sudo-1.8.11p2.orig/Makefile.in sudo-1.8.11p2/Makefile.in
+--- sudo-1.8.11p2.orig/Makefile.in	2014-10-07 22:26:20.000000000 +0200
++++ sudo-1.8.11p2/Makefile.in	2014-12-09 22:00:27.256934143 +0100
+@@ -62,7 +62,7 @@ SHELL = @SHELL@
+ SED = @SED@
+ 
+ INSTALL = $(SHELL) $(top_srcdir)/install-sh -c
+-INSTALL_OWNER = -o $(install_uid) -g $(install_gid)
++INSTALL_OWNER =
+ 
+ ECHO_N = @ECHO_N@
+ ECHO_C = @ECHO_C@

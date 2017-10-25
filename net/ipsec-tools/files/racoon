@@ -1,0 +1,113 @@
+#/etc/config/racoon
+#
+# Copyright 2015 Vitaly Protsko <villy@sft.ru>
+
+# * WARNING: this is "not working" example
+# * Defaults are commented out
+# * Resuting config will appear in /var/racoon/
+
+config racoon
+#	option	debug		0
+#	option	ext_zone	'wan'
+#	option	int_zone	'lan'
+#	option	port		500
+#	option	natt_port	4500
+# following 4 or 6, no default
+#	option	ipversion	4
+
+config p1_proposal 'example_prop1'
+#	option	lifetime	28800
+	option	enc_alg		'aes'
+	option	hash_alg	'sha1'
+	option	auth_method	'rsasig'
+	option	dh_group	2
+
+config p1_proposal 'example_anon'
+#	option	lifetime	28800
+	option	enc_alg		'aes'
+	option	hash_alg	'sha1'
+	option	auth_method	'xauth_rsa_server'
+	option	dh_group	2
+
+config p1_proposal 'example_xauth'
+#	option	lifetime	28800
+	option	enc_alg		'aes'
+	option	hash_alg	'sha1'
+	option	auth_method	'xauth_rsa_client'
+	option	dh_group	2
+
+config p2_proposal 'example_prop2'
+	option	pfs_group	2
+	option	enc_alg		'aes'
+	option	auth_alg	'hmac_sha1'
+
+config p2_proposal 'example_in2'
+	option	pfs_group	2
+#	option	lifetime	14400
+	option	enc_alg		'aes'
+	option	auth_alg	'hmac_sha1'
+
+config sainfo 'office'
+	option	p2_proposal	'example_prop2'
+	option	local_net	'192.168.8.0/24'
+	option	remote_net	'192.168.1.0/24'
+# you can exclude some local or remote
+# addresses from SA rules
+	list	local_exclude	'192.168.8.0/30'
+	list	remote_exclude	'192.168.1.128/29'
+
+config sainfo 'welcome'
+	option	p2_proposal	'example_in2'
+	option	local_net	'192.168.8.0/24'
+	option	remote_net	'192.168.10.0/24'
+	option	dns4		'192.168.8.1'
+	option	defdomain	'myhome.local'
+
+config sainfo 'client'
+	option  p2_proposal	'std_p2'
+
+config tunnel 'Office'
+	option	enabled		1
+# initial_contact
+#	option	init		1
+	option	remote		'vpn.example.tld'
+	option	exchange_mode	'main'
+	option	certificate	'example_cert'
+#	option	peer_id_type	'asn1dn'
+#	option	prop_check	'obey'
+#	option	verify_id	1
+#	option	weak_p1check	1
+#	option	dpd_delay	''
+	list	p1_proposal	'example_prop1'
+	list	sainfo		'office'
+
+# WARNING:	Only ONE tunnel with remote anonymous
+#		can be configured and it can have only
+#		ONE sainfo. Otherwise resulting racoon
+#		configuration will be unusable
+config tunnel 'Incoming'
+	option	enabled		1
+	option	remote		'anonymous'
+	option	pre_shared_key	'testitnow'
+	option	exchange_mode	'aggressive,main'
+	option	my_id_type	'fqdn'
+	option	my_id		'myserver.homeip.net'
+	list	p1_proposal	'example_anon'
+	list	sainfo		'welcome'
+
+config tunnel 'Client'
+	option	enabled		1
+	option	remote		'vpn.example.tld'
+	option	username	'testuser'
+	option	password	'testW0rD'
+#	option	mode_cfg	1
+	list	p1_proposal	'example_xauth'
+	list	sainfo		'client'
+
+# Insert corresponding data in PEM format as one line
+config 'certificate' 'example_cert'
+	option	'key'	'-----BEGIN PRIVATE KEY----- ~ -----END PRIVATE KEY-----'
+	option	'crt'	'-----BEGIN CERTIFICATE----- ~ -----END CERTIFICATE-----'
+
+config	'certificate' 'example_ca_cert'
+	option	'crt'	'-----BEGIN CERTIFICATE----- ~ -----END CERTIFICATE-----'

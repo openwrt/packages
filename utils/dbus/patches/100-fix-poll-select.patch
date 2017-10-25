@@ -1,0 +1,13 @@
+Index: dbus-1.9.4/tools/tool-common.c
+===================================================================
+--- dbus-1.9.4.orig/tools/tool-common.c
++++ dbus-1.9.4/tools/tool-common.c
+@@ -29,6 +29,8 @@
+ #include <string.h>
+ #include <time.h>
+ 
++#include <sys/select.h>
++
+ #ifdef DBUS_WIN
+ #include <windows.h>
+ #endif

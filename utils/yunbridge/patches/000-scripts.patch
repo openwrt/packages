@@ -1,0 +1,18 @@
+--- a/bridge/packet.py
++++ b/bridge/packet.py
+@@ -93,12 +93,12 @@
+     
+   def run(self, data):
+     if data[0] != 'X':
+-      call(['/usr/bin/blink-start', '100'])
++      #call(['/usr/bin/blink-start', '100'])
+       return chr(1)
+     if data[1:4] != '100':
+-      call(['/usr/bin/blink-start', '100'])
++      #call(['/usr/bin/blink-start', '100'])
+       return chr(2)
+-    call(['/usr/bin/blink-stop'])
++    #call(['/usr/bin/blink-stop'])
+     return chr(0) + '160' # send the actual bridge version
+     
+ class PacketReader:

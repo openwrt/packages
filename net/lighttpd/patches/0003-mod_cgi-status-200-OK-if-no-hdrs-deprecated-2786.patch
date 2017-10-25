@@ -1,0 +1,46 @@
+From 51ff7ac504f7001dc54807f9b2a72de891ab9ee5 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Wed, 22 Feb 2017 11:58:21 -0500
+Subject: [PATCH] [mod_cgi] status 200 OK if no hdrs (deprecated) (#2786)
+
+set status 200 OK if CGI does not return CGI headers
+
+Note:
+This mode in lighttpd is deprecated and may be removed in the next major
+release of lighttpd.  CGI scripts should return a proper CGI header in
+the response, even if that header is empty and followed by a blank line,
+before return response body.
+
+Without a proper CGI response header, the first line(s) of the response
+might be incorrectly construed as being CGI response headers, especially
+if they contain ':', and response may be corrupted.  That is why this
+mode is deprecated (and not supported in numerous other web servers).
+
+The minimal valid CGI response header is "\n", which lighttpd will treat
+as equivalent to "Status: 200\n\n"
+
+x-ref:
+  "error 500 (mod_cgi.c.601) cgi died"
+  https://redmine.lighttpd.net/issues/2786
+---
+ src/mod_cgi.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/src/mod_cgi.c
++++ b/src/mod_cgi.c
+@@ -502,6 +502,7 @@ static int cgi_demux_response(server *sr
+ 					if (0 != http_chunk_append_buffer(srv, con, hctx->response_header)) {
+ 						return FDEVENT_HANDLED_ERROR;
+ 					}
++					if (0 == con->http_status) con->http_status = 200; /* OK */
+ 				} else {
+ 					const char *bstart;
+ 					size_t blen;
+@@ -846,6 +847,7 @@ static handler_t cgi_handle_fdevent(serv
+ 				cgi_connection_close(srv, hctx);
+ 				return HANDLER_ERROR;
+ 			}
++			if (0 == con->http_status) con->http_status = 200; /* OK */
+ 		} else {
+ # if 0
+ 			log_error_write(srv, __FILE__, __LINE__, "sddd", "got HUP from cgi", con->fd, hctx->fd, revents);

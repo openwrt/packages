@@ -1,0 +1,31 @@
+From e0c75c9d20b76ff3d496a776ce43341c752914c3 Mon Sep 17 00:00:00 2001
+From: Eric Leblond <eric@regit.org>
+Date: Tue, 21 Mar 2017 21:49:46 +0100
+Subject: [PATCH] ulogd: use strncpy instead of memcpy
+
+On some architecture, ulogd is not starting due to a
+crash in memcpy. This patch switches to strncpy to
+avoid the problem.
+
+Reported-by: Alexandru Ardelean <ardeleanalex@gmail.com>
+Signed-off-by: Eric Leblond <eric@regit.org>
+---
+ src/ulogd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/ulogd.c b/src/ulogd.c
+index 5b9a586..919a317 100644
+--- a/src/ulogd.c
++++ b/src/ulogd.c
+@@ -668,7 +668,7 @@ pluginstance_alloc_init(struct ulogd_plugin *pl, char *pi_id,
+ 	INIT_LLIST_HEAD(&pi->plist);
+ 	pi->plugin = pl;
+ 	pi->stack = stack;
+-	memcpy(pi->id, pi_id, sizeof(pi->id));
++	strncpy(pi->id, pi_id, ULOGD_MAX_KEYLEN);
+ 
+ 	ptr = (void *)pi + sizeof(*pi);
+ 
+-- 
+2.7.4
+

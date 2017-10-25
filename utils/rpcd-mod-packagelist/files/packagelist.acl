@@ -1,0 +1,12 @@
+{
+	"packagelist": {
+		"description": "get list of installed software packages",
+		"read": {
+			"ubus": {
+				"packagelist": [
+					"list"
+				]
+			}
+		}
+	}
+}

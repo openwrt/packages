@@ -1,0 +1,44 @@
+--- a/drivers/can_socket/Makefile.in
++++ b/drivers/can_socket/Makefile.in
+@@ -23,7 +23,7 @@
+ 
+ CC = SUB_CC
+ OPT_CFLAGS = -O2
+-CFLAGS = SUB_OPT_CFLAGS
++CFLAGS ?= SUB_OPT_CFLAGS
+ PROG_CFLAGS = SUB_PROG_CFLAGS
+ PREFIX = SUB_PREFIX
+ TARGET = SUB_TARGET
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -101,7 +101,7 @@ uninstall:
+ 	rm -rf $(DESTDIR)$(PREFIX)/include/canfestival
+ 
+ else
+-CFLAGS = SUB_OPT_CFLAGS
++CFLAGS ?= SUB_OPT_CFLAGS
+ 
+ ifeq ($(TARGET),none)
+ canfestival: libcanfestival.o
+--- a/drivers/unix/Makefile.in
++++ b/drivers/unix/Makefile.in
+@@ -85,7 +85,7 @@ install:
+ 
+ 
+ else
+-CFLAGS = SUB_OPT_CFLAGS
++CFLAGS ?= SUB_OPT_CFLAGS
+ 
+ driver: libcanfestival_$(TARGET).a
+ 
+--- a/drivers/timers_unix/Makefile.in
++++ b/drivers/timers_unix/Makefile.in
+@@ -23,7 +23,7 @@
+ 
+ CC = SUB_CC
+ OPT_CFLAGS = -O2
+-CFLAGS = SUB_OPT_CFLAGS
++CFLAGS ?= SUB_OPT_CFLAGS
+ PROG_CFLAGS = SUB_PROG_CFLAGS
+ OS_NAME = SUB_OS_NAME
+ ARCH_NAME = SUB_ARCH_NAME

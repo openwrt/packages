@@ -1,0 +1,10 @@
+--- a/src/decoder/plugins/FfmpegDecoderPlugin.cxx
++++ b/src/decoder/plugins/FfmpegDecoderPlugin.cxx
+@@ -931,6 +931,7 @@ static const char *const ffmpeg_mime_typ
+ 	"audio/qcelp",
+ 	"audio/vorbis",
+ 	"audio/vorbis+ogg",
++	"audio/wav",
+ 	"audio/x-8svx",
+ 	"audio/x-16sv",
+ 	"audio/x-aac",

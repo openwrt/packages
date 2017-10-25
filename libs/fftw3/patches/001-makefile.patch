@@ -1,0 +1,20 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -241,7 +241,7 @@
+ CTAGS = ctags
+ CSCOPE = cscope
+ DIST_SUBDIRS = support genfft kernel simd-support dft rdft reodft api \
+-	libbench2 . threads tests mpi doc tools m4
++	libbench2 . threads mpi doc tools m4
+ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
+ 	$(srcdir)/fftw.pc.in AUTHORS COPYING ChangeLog INSTALL NEWS \
+ 	README TODO compile config.guess config.sub install-sh \
+@@ -470,7 +470,7 @@
+ # tools are available, such as fig2dev in maintainer mode)
+ @BUILD_DOC_TRUE@DOCDIR = doc
+ SUBDIRS = support $(GENFFT) kernel simd-support dft rdft reodft api	\
+-libbench2 $(CHICKEN_EGG) tests mpi $(DOCDIR) tools m4
++libbench2 $(CHICKEN_EGG) mpi m4
+ 
+ EXTRA_DIST = COPYRIGHT bootstrap.sh CONVENTIONS fftw.pc.in
+ SIMD_LIBS = \
