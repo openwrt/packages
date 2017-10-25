@@ -65,7 +65,8 @@ end
 
 function getInterfaceStatus(ruleNumber, interfaceName)
 	if ut.trim(sys.exec("uci -p /var/state get mwan3." .. interfaceName .. ".enabled")) == "1" then
-		if ut.trim(sys.exec(ip .. "route list table " .. ruleNumber)) ~= "" then
+		local fs = require "nixio.fs"
+		if fs.readfile("/var/run/mwan3/iface_state/%s" % interfaceName) == "online" then
 			if ut.trim(sys.exec("uci -p /var/state get mwan3." .. interfaceName .. ".track_ip")) ~= "" then
 				return "online"
 			else
