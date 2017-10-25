@@ -1,0 +1,15 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -210,7 +210,11 @@ dnl 		;;
+ dnl 	esac
+ dnl fi
+ 
+-PKG_CHECK_MODULES(GnuTLS, [gnutls >= 2.12.0],[HAVE_GNUTLS=1],[HAVE_GNUTLS=0])
++AC_ARG_WITH([gnutls], AS_HELP_STRING([--with-gnutls], [Build with GnuTLS]))
++AS_IF([test "x$with_gnutls" = "xyes"], [
++	PKG_CHECK_MODULES(GnuTLS, [gnutls >= 2.12.0],[HAVE_GNUTLS=1],[HAVE_GNUTLS=0])
++])
++
+ if test x$HAVE_GNUTLS = x1; then
+ 	AC_DEFINE(HAVE_GNUTLS, 1, [Define to 1 if you have a GnuTLS version of 2.12 or above])
+ else
