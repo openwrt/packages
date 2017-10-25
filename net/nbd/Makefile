@@ -51,7 +51,8 @@ define Package/nbd-server/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-glibtest
+	--disable-glibtest \
+	--without-gnutls
 
 TARGET_CFLAGS += --std=gnu99 -DNODAEMON
 
