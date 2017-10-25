@@ -43,6 +43,7 @@ define Package/$(PKG_NAME)/Default
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=libwebsockets
+	PROVIDES:=libwebsockets
 	DEPENDS:=+zlib
 	URL:=https://libwebsockets.org
 	MAINTAINER:=Karl Palsson <karlp@etactica.com>
