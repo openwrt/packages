@@ -82,7 +82,7 @@
 
 "dtdns.com"		"http://www.dtdns.com/api/autodns.cfm?id=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
 
-"duckdns.org"		"http://www.duckdns.org/update?domains=[USERNAME]&token=[PASSWORD]&ip=[IP]"	"OK"
+"duckdns.org"		"http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ip=[IP]"	"OK"
 
 "duiadns.net"		"http://ip.duiadns.net/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
 
