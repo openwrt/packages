@@ -124,6 +124,7 @@ define Package/lxc-init
 endef
 
 CONFIGURE_ARGS += \
+	--disable-gnutls \
 	--disable-apparmor \
 	--disable-doc \
 	--disable-examples \
