@@ -57,7 +57,7 @@ define perlmod/Configure
 	(cd $(if $(3),$(3),$(PKG_BUILD_DIR)); \
 	PERL_MM_USE_DEFAULT=1 \
 	$(2) \
-	$(PERL_CMD) -MConfig -e '$$$${tied %Config::Config}{cpprun}="$(GNU_TARGET_NAME)-cpp -E"; do "Makefile.PL"' \
+	$(PERL_CMD) -MConfig -e '$$$${tied %Config::Config}{cpprun}="$(GNU_TARGET_NAME)-cpp -E"; do "./Makefile.PL"' \
 		$(1) \
 		AR=ar \
 		CC=$(GNU_TARGET_NAME)-gcc \
