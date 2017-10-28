@@ -16,7 +16,7 @@ PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 PKG_NAME:=python3
 # XXX: reset PKG_RELEASE to 1 only if Python's pip & setuptools versions have also bumped;
 #      otherwise, keep bumping PKG_RELEASE
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
