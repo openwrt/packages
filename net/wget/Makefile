@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
 PKG_VERSION:=1.19.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -66,6 +66,7 @@ endef
 CONFIGURE_ARGS+= \
 	--disable-rpath \
 	--disable-iri \
+	--with-included-libunistring \
 	--without-libuuid
 
 CONFIGURE_VARS += \
