@@ -5,7 +5,7 @@
 set -e
 
 SDK_HOME="$HOME/sdk"
-SDK_PATH=https://downloads.lede-project.org/snapshots/targets/ar71xx/generic/
+SDK_PATH=https://ftp.halifax.rwth-aachen.de/lede/snapshots/targets/ar71xx/generic/
 SDK=lede-sdk-ar71xx-generic_gcc-5.5.0_musl.Linux-x86_64
 PACKAGES_DIR="$PWD"
 
