@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-restframework
-PKG_VERSION:=3.5.4
+PKG_VERSION:=3.7.1
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=djangorestframework-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/e9/24/86dfe19fb82a40a3d7a4c50371a8bd85b9277d3506698bf332a6d41d08f6/
+PKG_SOURCE_URL:=https://pypi.python.org/packages/d0/ab/8b991e7d3e26af7cf6327c84b341e60004fc56325d8a4d4019e1474f7456/
 PKG_BUILD_DIR:=$(BUILD_DIR)/djangorestframework-$(PKG_VERSION)
-PKG_HASH:=f995a35ae22f354d2a9a42ee6d2c059c101f826b1485ed46781677895ad25ee5
+PKG_HASH:=305b2c6564ca46d3b558ba21110ed717135c467adf1a6dfd192bd85f4bb04d50
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
