@@ -12,7 +12,7 @@ PKG_VERSION:=1.0.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/irssi/irssi/releases/download/1.0.5	/
+PKG_SOURCE_URL:=https://github.com/irssi/irssi/releases/download/1.0.5/
 PKG_HASH:=c2556427e12eb06cabfed40839ac6f57eb8b1aa6365fab6dfcd331b7a04bb914
 
 PKG_FIXUP:=autoreconf
