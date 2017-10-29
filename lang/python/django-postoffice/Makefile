@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-postoffice
-PKG_VERSION:=2.0.8
+PKG_VERSION:=3.0.3
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=django-post_office-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/52/25/cc0cfe923f183d7c19b162cac3bf8430ddaed7bad28202b8f93a97d248a4/
+PKG_SOURCE_URL:=https://pypi.python.org/packages/0f/8c/8c7e1d8998741fd195f7df947c509bc31a03d505aca03488c39e59da11f0/
 PKG_BUILD_DIR:=$(BUILD_DIR)/django-post_office-$(PKG_VERSION)/
-PKG_HASH:=bfb3ff26de5b668c91453ee8d930ff0bfe397849fd5508ff3e1216c3b46d6449
+PKG_HASH:=8d691b2e53ba8121d770ce448f05568874cf78a3cf63215918ad49536db5e76a
 PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
