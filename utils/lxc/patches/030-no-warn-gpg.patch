@@ -1,0 +1,12 @@
+--- a/templates/lxc-download.in
++++ b/templates/lxc-download.in
+@@ -39,7 +39,7 @@
+ DOWNLOAD_READY_GPG="false"
+ DOWNLOAD_RELEASE=
+ DOWNLOAD_SERVER="images.linuxcontainers.org"
+-DOWNLOAD_SHOW_GPG_WARNING="true"
++DOWNLOAD_SHOW_GPG_WARNING="false"
+ DOWNLOAD_SHOW_HTTP_WARNING="true"
+ DOWNLOAD_TARGET="system"
+ DOWNLOAD_URL=
+ 
