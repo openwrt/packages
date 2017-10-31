@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libiio
-PKG_VERSION:=0.10
-PKG_RELEASE:=5
+PKG_VERSION:=0.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/analogdevicesinc/libiio/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=002d57f35715821efae66479859bc5357b4d8d33bfff1446b4e17b02ae2c10d2
+PKG_HASH:=0174111b028d84f18fb3716b22834a372a1f2575938f87e20e5cbd76747d0fdb
 
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING.txt
@@ -71,7 +71,7 @@ define Package/iio-utils
 endef
 
 define Package/iio-utils/description
-  Command tools for IIO devices.
+  Command line tools for IIO devices.
 endef
 
 define Build/InstallDev
