@@ -22,6 +22,8 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-2.0
 PKG_LICENSE_FILES:=COPYING LICENSE
 
+PKG_CONFIG_DEPENDS:= CONFIG_LAME-LIB_OPTIMIZE_SPEED
+
 include $(INCLUDE_DIR)/package.mk
 
 PKG_INSTALL=1
@@ -43,6 +45,10 @@ define Package/lame/description
 lame mp3 encoder
 endef
 
+define Package/lame-lib/config
+	source "$(SOURCE)/Config.in"
+endef
+
 define Package/lame-lib
 $(call Package/lame/Default)
   TITLE:=lame-lib
@@ -54,6 +60,11 @@ endef
 
 ifeq ($(ARCH),i386)
 TARGET_CFLAGS+=-msse
+endif
+
+ifeq ($(CONFIG_LAME-LIB_OPTIMIZE_SPEED),y)
+	TARGET_CFLAGS += $(TARGET_CFLAGS) -O3 -fomit-frame-pointer -ffast-math -fschedule-insns2
+	TARGET_CFLAGS := $(filter-out -Os,$(TARGET_CFLAGS))
 endif
 
 CONFIGURE_ARGS += --disable-gtktest --disable-static
