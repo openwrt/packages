@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=x264
 PKG_VERSION:=snapshot-20170623-2245-stable
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.videolan.org/x264/snapshots/
@@ -25,6 +25,7 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS+=-std=gnu99 -fPIC -O3 -ffast-math -I.
+TARGET_CFLAGS := $(filter-out -Os,$(TARGET_CFLAGS))
 MAKE_FLAGS+= LD="$(TARGET_CC) -o" 
 
 # ARM ASM depends on ARM1156 or later, blacklist earlier or incompatible cores
@@ -54,6 +55,7 @@ CONFIGURE_ARGS += \
 		--enable-pic \
 		--enable-strip \
 		--disable-cli \
+		$(if $(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),--enable-lto) \
 		--disable-avs \
 		--disable-ffms \
 		--disable-lsmash
