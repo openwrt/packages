@@ -30,6 +30,7 @@ if [ "$ACTION" == "ifup" ]; then
 		else
 			network_get_ipaddr src_ip ${INTERFACE}
 		fi
+		[ -n "$src_ip" ] || src_ip="0.0.0.0"
 	elif [ "$family" = "ipv6" ]; then
 		ubus call network.interface.${INTERFACE}_6 status &>/dev/null
 		if [ "$?" -eq "0" ]; then
@@ -37,9 +38,8 @@ if [ "$ACTION" == "ifup" ]; then
 		else
 			network_get_ipaddr6 src_ip ${INTERFACE}
 		fi
+		[ -n "$src_ip" ] || src_ip="::"
 	fi
-
-	[ -n "$src_ip" ] || exit 9
 fi
 
 if [ "$initial_state" = "offline" ]; then

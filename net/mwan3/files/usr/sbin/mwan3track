@@ -34,6 +34,10 @@ validate_track_method() {
 				$LOG warn "Missing httping. Please install httping package."
 				return 1
 			}
+			[ -n "$2" -a "$2" != "0.0.0.0" -a "$2" != "::" ] || {
+				$LOG warn "Cannot determine source IP for the interface which is required by httping."
+				return 1
+			}
 			;;
 		*)
 			$LOG warn "Unsupported tracking method: $track_method"
@@ -59,7 +63,7 @@ main() {
 
 	config_load mwan3
 	config_get track_method $1 track_method ping
-	validate_track_method $track_method || {
+	validate_track_method $track_method $SRC_IP || {
 		$LOG warn "Using ping to track interface $INTERFACE avaliability"
 		track_method=ping
 	}
