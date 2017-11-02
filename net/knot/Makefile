@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=2.5.5
+PKG_VERSION:=2.5.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_HASH:=ee204dab4dfe571ac3cc8eb7843d562fa7a129543aa9d4cb92d3469084129baf
+PKG_HASH:=37d1625c2aaefe2394c85f6742a6ae9421e8348318c13119a6c451796c387cfc
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=GPL-3.0 LGPL-2.0 0BSD MIT OLDAP-2.8
