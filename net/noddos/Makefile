@@ -13,10 +13,10 @@ PKG_RELEASE:=1
 PKG_LICENSE:=GPLv3
 PKG_MAINTAINER:=Steven Hessing <steven.hessing@gmail.com>
 
-PKG_SOURCE_VERSION:=0.5.4
+PKG_SOURCE_VERSION:=0.5.5
 PKG_SOURCE_URL:=https://github.com/noddos/noddos/releases/download/v$(PKG_SOURCE_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_HASH:=1021a72fd66f4901cdc1e7bd3a203450cee5c453ec52ea7c6d8f8691fc4e9d0e
+PKG_HASH:=1f5be0c1015b0407036eecc8449d60d2abcacec442bba55db85fc32e89f754db
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
@@ -29,15 +29,15 @@ define Package/noddos
 	CATEGORY:=Network
 	TITLE:=noddos -- device-aware cloud-powered firewall
 	URL:=https://www.noddos.io/
-	DEPENDS:=+libstdcpp +libnetfilter-conntrack +libcurl +libopenssl +openssl-util +ca-bundle +ca-certificates +wget +bzip2 +libtins +ipset +libpthread
+	DEPENDS:=+libstdcpp +libnetfilter-conntrack +libcurl +libopenssl +openssl-util +ca-bundle +ca-certificates +wget +bzip2 +libtins +ipset +libpthread +libyaml-cpp
 endef
 
 define Package/noddos/description
-Noddos discovers what devices you have in your network and tailors the firewall rules based on whitelisted flows for that device. Noddos downloads the firewall rules periodically from the cloud. In order to support creating these firewall rules, noddos can optionally upload anonimized traffic statistics for each device to the cloud.
+Noddos discovers what devices you have in your network and tailors the firewall rules based on whitelisted flows for that device. Noddos downloads the firewall rules periodically from the cloud. In order to support creating these firewall rules, noddos can, after opt-in, upload anonimized traffic statistics for each device to the cloud. The Luci interface is available in the luci-apps-noddos package. For information, visit https://www.noddos.io/
 endef
 
 define Package/noddos/conffiles
-	/etc/config/noddos	
+	/etc/config/noddos
 endef
 
 define Package/noddos/install
@@ -51,9 +51,8 @@ define Package/noddos/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/makenoddoscert.sh $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/noddos.init $(1)/etc/init.d/noddos
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/noddos.uciconfig $(1)/etc/config/noddos
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/noddos.conf-base $(1)/etc/noddos
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/noddos.yml-base $(1)/etc/noddos
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/noddosconfig.pem $(1)/etc/noddos
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/noddos.conf-base $(1)/etc/noddos
 endef
 
 define Package/noddos/prerm
@@ -73,8 +72,8 @@ define Package/noddos/postrm
 	if [ -z "$${IPKG_INSTROOT}" ]; then
 		echo "Removing noddos data directory"
 		rm -rf /var/lib/noddos
-		if [ -f /var/etc/noddos.conf ]; then
-			rm /var/etc/noddos.conf
+		if [ -f /var/etc/noddos.yml ]; then
+			rm /var/etc/noddos.yml
 		fi
 	fi
 	exit 0
