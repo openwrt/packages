@@ -18,6 +18,10 @@ case "$1" in
 				json_get_var keep_settings keep_settings
 
 				if [ -f "/tmp/sysupgrade.bin" ]; then
+					json_init
+					json_add_string "message" "starting sysupgrade"
+					json_dump
+
 					/etc/init.d/uhttpd stop
 					/etc/init.d/dropbear stop
 					sleep 1;
