@@ -10,11 +10,12 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.0.3"
+adb_ver="3.1.0"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
-adb_manmode=0
+adb_backup_mode=0
+adb_whitelist_mode=0
 adb_forcesrt=0
 adb_forcedns=0
 adb_triggerdelay=0
@@ -25,6 +26,7 @@ adb_fetchparm="--quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --n
 adb_dns="dnsmasq"
 adb_dnsprefix="adb_list"
 adb_dnsfile="${adb_dnsprefix}.overall"
+adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_rtfile="/tmp/adb_runtime.json"
 adb_action="${1:-"start"}"
 adb_cnt=0
@@ -61,7 +63,7 @@ f_envload()
         f_log "error" "system libraries not found"
     fi
 
-    # parse global section by callback
+    # parse 'global' and 'extra' section by callback
     #
     config_cb()
     {
@@ -79,7 +81,7 @@ f_envload()
         fi
     }
 
-    # parse 'source' sections
+    # parse 'source' typed sections
     #
     parse_config()
     {
@@ -104,32 +106,65 @@ f_envload()
     #
     case "${adb_dns}" in
         dnsmasq)
-            adb_dnsuser="${adb_dns}"
+            adb_dnsuser="${adb_dnsuser:-"dnsmasq"}"
             adb_dnsdir="${adb_dnsdir:-"/tmp/dnsmasq.d"}"
             adb_dnsformat="awk '{print \"local=/\"\$0\"/\"}'"
+            if [ ${adb_whitelist_mode} -eq 1 ]
+            then
+                adb_dnsformat="awk '{print \"local=/\"\$0\"/#\"}'"
+                adb_dnsblock="local=/#/"
+            fi
             ;;
         unbound)
-            adb_dnsuser="${adb_dns}"
+            adb_dnsuser="${adb_dnsuser:-"unbound"}"
             adb_dnsdir="${adb_dnsdir:-"/var/lib/unbound"}"
             adb_dnsformat="awk '{print \"local-zone: \042\"\$0\"\042 static\"}'"
+            if [ ${adb_whitelist_mode} -eq 1 ]
+            then
+                adb_dnsformat="awk '{print \"local-zone: \042\"\$0\"\042 transparent\"}'"
+                adb_dnsblock="local-zone: \".\" static"
+            fi
             ;;
         named)
-            adb_dnsuser="bind"
+            adb_dnsuser="${adb_dnsuser:-"bind"}"
             adb_dnsdir="${adb_dnsdir:-"/var/lib/bind"}"
-            adb_dnsformat="awk '{print \"\"\$0\" IN CNAME .\n*.\"\$0\" IN CNAME .\"}'"
+            adb_dnsheader="\$TTL 2h"$'\n'"@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)"$'\n'"  IN NS localhost."
+            adb_dnsformat="awk '{print \"\"\$0\" CNAME .\n*.\"\$0\" CNAME .\"}'"
+            if [ ${adb_whitelist_mode} -eq 1 ]
+            then
+                adb_dnsformat="awk '{print \"\"\$0\" CNAME rpz-passthru.\n*.\"\$0\" CNAME rpz-passthru.\"}'"
+                adb_dnsblock="* CNAME ."
+            fi
             ;;
         kresd)
-            adb_dnsuser="root"
+            adb_dnsuser="${adb_dnsuser:-"root"}"
             adb_dnsdir="${adb_dnsdir:-"/etc/kresd"}"
+            adb_dnsheader="\$TTL 2h"$'\n'"@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)"$'\n'"  IN NS  localhost."
             adb_dnsformat="awk '{print \"\"\$0\" CNAME .\n*.\"\$0\" CNAME .\"}'"
-            adb_dnsheader="\$TTL 2h"$'\n'"@ IN SOA localhost. root.localhost. (2 6h 1h 1w 2h)"$'\n'"  IN NS  localhost."
+            if [ ${adb_whitelist_mode} -eq 1 ]
+            then
+                adb_dnsformat="awk '{print \"\"\$0\" CNAME rpz-passthru.\n*.\"\$0\" CNAME rpz-passthru.\"}'"
+                adb_dnsblock="* CNAME ."
+            fi
             ;;
         dnscrypt-proxy)
-            adb_dnsuser="nobody"
+            adb_dnsuser="${adb_dnsuser:-"nobody"}"
             adb_dnsdir="${adb_dnsdir:-"/tmp"}"
             adb_dnsformat="awk '{print \$0}'"
             ;;
     esac
+
+    if [ ${adb_enabled} -ne 1 ]
+    then
+        if [ -s "${adb_dnsdir}/${adb_dnsfile}" ]
+        then
+            f_rmdns
+            f_dnsrestart
+        fi
+        f_jsnupdate
+        f_log "info " "adblock is currently disabled, please set adb_enabled to '1' to use this service"
+        exit 0
+    fi
 
     if [ -d "${adb_dnsdir}" ] && [ ! -f "${adb_dnsdir}/${adb_dnsfile}" ]
     then
@@ -193,20 +228,6 @@ f_envcheck()
 {
     local ssl_lib
 
-    # check 'enabled' option
-    #
-    if [ ${adb_enabled} -ne 1 ]
-    then
-        if [ -s "${adb_dnsdir}/${adb_dnsfile}" ]
-        then
-            f_rmdns
-            f_dnsrestart
-        fi
-        f_jsnupdate
-        f_log "info " "adblock is currently disabled, please set adb_enabled to '1' to use this service"
-        exit 0
-    fi
-
     # check fetch utility
     #
     ssl_lib="-"
@@ -241,18 +262,12 @@ f_envcheck()
     fi
     adb_fetchinfo="${adb_fetch##*/} (${ssl_lib})"
 
-    # create adblock temp file/directory
+    # initialize temp files and directories
     #
     adb_tmpload="$(mktemp -tu)"
     adb_tmpfile="$(mktemp -tu)"
     adb_tmpdir="$(mktemp -p /tmp -d)"
-
-    # prepare whitelist entries
-    #
-    if [ -s "${adb_whitelist}" ] && [ -n "${adb_whitelist_rset}" ]
-    then
-        awk "${adb_whitelist_rset}" "${adb_whitelist}" > "${adb_tmpdir}/tmp.whitelist"
-    fi
+    > "${adb_tmpdir}/tmp.whitelist"
 }
 
 # f_rmtemp: remove temporary files & directories
@@ -300,7 +315,7 @@ f_dnsrestart()
     return 1
 }
 
-# f_list: backup/restore/remove block lists
+# f_list: backup/restore/remove blocklists
 #
 f_list()
 {
@@ -388,13 +403,14 @@ f_switch()
     then
         cat "${source}" > "${target}"
         > "${source}"
+        chown "${adb_dnsuser}" "${target}" 2>/dev/null
         f_dnsrestart
         f_jsnupdate
         f_log "info " "adblock processing ${status}"
     fi
 }
 
-# f_query: query block list for certain (sub-)domains
+# f_query: query blocklist for certain (sub-)domains
 #
 f_query()
 {
@@ -404,7 +420,7 @@ f_query()
 
     if [ ! -s "${adb_dnsdir}/${adb_dnsfile}" ]
     then
-         printf "%s\n" "::: no active block list found, please start / resume adblock first"
+         printf "%s\n" "::: no active blocklist found, please start / resume adblock first"
     elif [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
     then
         printf "%s\n" "::: invalid domain input, please submit a single domain, e.g. 'doubleclick.net'"
@@ -417,7 +433,7 @@ f_query()
             then
                 result="$(awk -F '/|\"' "/[\/\"\.]${search}/{i++;{printf(\"  + %s\n\",\$2)};if(i>9){exit}}" "${adb_dnsfile}")"
             else
-                result="$(awk "/(^[^\*][a-z]*[\.]+${search}|^${search})/{i++;{printf(\"  + %s\n\",\$1)};if(i>9){exit}}" "${adb_dnsfile}")"
+                result="$(awk "/(^[^\*][[:alpha:]]*[\.]+${search}|^${search})/{i++;{printf(\"  + %s\n\",\$1)};if(i>9){exit}}" "${adb_dnsfile}")"
             fi
             printf "%s\n" "::: max. ten results for domain '${domain}'"
             printf "%s\n" "${result:-"  - no match"}"
@@ -450,7 +466,7 @@ f_jsnupdate()
             then
                 adb_cnt="$(( ( $(wc -l < "${adb_dnsdir}/${adb_dnsfile}") - $(printf "%s" "${adb_dnsheader}" | grep -c "^") ) / 2 ))"
             else
-                adb_cnt="$(( $(wc -l < "${adb_dnsdir}/${adb_dnsfile}") - $(printf "%s" "${adb_dnsheader}" | grep -c "^") ))"
+                adb_cnt="$(wc -l < "${adb_dnsdir}/${adb_dnsfile}")"
             fi
         fi
     fi
@@ -466,7 +482,7 @@ f_jsnupdate()
     json_add_object "data"
     json_add_string "adblock_status" "${status}"
     json_add_string "adblock_version" "${adb_ver}"
-    json_add_string "blocked_domains" "${adb_cnt}"
+    json_add_string "overall_domains" "${adb_cnt}"
     json_add_string "fetch_utility" "${adb_fetchinfo}"
     json_add_string "dns_backend" "${adb_dns} (${adb_dnsdir})"
     json_add_string "last_rundate" "${rundate}"
@@ -520,7 +536,7 @@ f_log()
     fi
 }
 
-# main function for block list processing
+# main function for blocklist processing
 #
 f_main()
 {
@@ -528,8 +544,48 @@ f_main()
     local mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo")"
 
     f_log "info " "start adblock processing ..."
-    f_log "debug" "action: ${adb_action}, manual_mode:${adb_manmode}, backup: ${adb_backup}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, mem_total: ${mem_total}, force_srt/_dns: ${adb_forcesrt}/${adb_forcedns}"
+    f_log "debug" "action: ${adb_action}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, backup: ${adb_backup}, backup_mode: ${adb_backup_mode}, whitelist_mode: ${adb_whitelist_mode}, force_srt/_dns: ${adb_forcesrt}/${adb_forcedns}, mem_total: ${mem_total}"
     > "${adb_rtfile}"
+    > "${adb_dnsdir}/.${adb_dnsfile}"
+
+    # prepare whitelist entries
+    #
+    if [ -s "${adb_whitelist}" ]
+    then
+        if [ ${adb_whitelist_mode} -eq 1 ] && [ "${adb_dns}" != "dnscrypt-proxy" ]
+        then
+            adb_whitelist_rset="\$0~/^([[:alnum:]_-]+\.){1,}[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
+        else
+            adb_whitelist_rset="\$0~/^([[:alnum:]_-]+\.){1,}[[:alpha:]]+([[:space:]]|$)/{gsub(\"\\\.\",\"\\\.\",\$1);print tolower(\"^\"\$1\"\\\|\\\.\"\$1)}"
+        fi
+        awk "${adb_whitelist_rset}" "${adb_whitelist}" > "${adb_tmpdir}/tmp.whitelist"
+    fi
+
+    # whitelist mode
+    #
+    if [ ${adb_whitelist_mode} -eq 1 ] && [ "${adb_dns}" != "dnscrypt-proxy" ]
+    then
+        f_tldcompression "${adb_tmpdir}/tmp.whitelist"
+        eval "${adb_dnsformat}" "${adb_tmpdir}/tmp.whitelist" > "${adb_dnsdir}/${adb_dnsfile}"
+        printf '%s\n' "${adb_dnsblock}" >> "${adb_dnsdir}/${adb_dnsfile}"
+        if [ -n "${adb_dnsheader}" ]
+        then
+            printf '%s\n' "${adb_dnsheader}" | cat - "${adb_dnsdir}/${adb_dnsfile}" > "${adb_tmpdir}/${adb_dnsfile}"
+            cat "${adb_tmpdir}/${adb_dnsfile}" > "${adb_dnsdir}/${adb_dnsfile}"
+        fi
+        f_dnsrestart
+        if [ ${?} -eq 0 ]
+        then
+            f_jsnupdate "${adb_cnt}"
+            f_log "info " "whitelist with overall ${adb_cnt} domains loaded successfully (${adb_sysver})"
+        else
+            f_log "error" "dns backend restart with active whitelist failed"
+        fi
+        return
+    fi
+
+    # normal & backup mode
+    #
     for src_name in ${adb_sources}
     do
         eval "enabled=\"\${enabled_${src_name}}\""
@@ -548,9 +604,9 @@ f_main()
             continue
         fi
 
-        # manual / backup mode
+        # backup mode
         #
-        if [ ${adb_manmode} -eq 1 ] && [ "${adb_action}" = "start" ] && [ "${src_name}" != "blacklist" ]
+        if [ ${adb_backup_mode} -eq 1 ] && [ "${adb_action}" = "start" ] && [ "${src_name}" != "blacklist" ]
         then
             f_list restore
             if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
@@ -560,7 +616,7 @@ f_main()
             fi
         fi
 
-        # download block list
+        # download blocklist
         #
         if [ "${src_name}" = "blacklist" ] && [ -s "${url}" ]
         then
@@ -652,9 +708,9 @@ f_main()
     if [ ${?} -eq 0 ]
     then
         f_jsnupdate "${adb_cnt}"
-        f_log "info " "block list with overall ${adb_cnt} domains loaded successfully (${adb_sysver})"
+        f_log "info " "blocklist with overall ${adb_cnt} domains loaded successfully (${adb_sysver})"
     else
-        f_log "error" "dns backend restart with active block list failed"
+        f_log "error" "dns backend restart with active blocklist failed"
     fi
 }
 
