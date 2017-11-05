@@ -4,39 +4,25 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=rpcd-mod-attendedsysupgrade
-PKG_VERSION:=1.1
-PKG_RELEASE:=2
+PKG_NAME:=attendedsysupgrade-common
+PKG_VERSION:=0.1
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/rpcd-mod-attendedsysupgrade
+define Package/attendedsysupgrade-common
   SECTION:=utils
   CATEGORY:=Base system
-  TITLE:=OpenWrt ubus RPC backend server (attendedsysupgrade)
+  TITLE:=Common files neede by attendedsysupgrade packages
   MAINTAINER:=Paul Spooren <paul@spooren.de>
-  DEPENDS:=rpcd +cgi-io +rpcd-mod-packagelist
+  DEPENDS:=rpcd +rpcd-mod-rpcsys +rpcd-mod-packagelist
 endef
 
-define Package/rpcd-mod-attendedsysupgrade/description
-	Implements a sysupgrade procedure which can be used to invoke sysupgrade via ubus calls
-	The	sysupgrade image must be placed at /tmp/sysupgrade.bin
-	After a successfull installation the device will perform a restart.
+define Package/attendedsysupgrade-common/description
+	Common needed files for attendedsysupgrade tool
 
-	Usage:
-
-	ubus call attendedsysupgrade sysupgrade
-
-	Example output:
-
-	{
-		"message": "starting sysupgrade"
-	}
-
-	Possible parameters:
-
-	keep_settings: bool # preserve /config/
+	Manages dependencies and brings settings used by clients.
 
 	UCI options:
 
@@ -62,12 +48,9 @@ endef
 define Build/Configure
 endef
 
-define Package/rpcd-mod-attendedsysupgrade/install
-	$(INSTALL_DIR) $(1)/usr/libexec/rpcd/
-	$(INSTALL_BIN) ./files/attendedsysupgrade.rpcd $(1)/usr/libexec/rpcd/attendedsysupgrade
-
+define Package/attendedsysupgrade-common/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults/
 	$(INSTALL_BIN) ./files/attendedsysupgrade.defaults $(1)/etc/uci-defaults/attendedsysupgrade
 endef
 
-$(eval $(call BuildPackage,rpcd-mod-attendedsysupgrade))
+$(eval $(call BuildPackage,attendedsysupgrade-common))
