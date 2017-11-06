@@ -32,6 +32,7 @@ include ./files/python3-host.mk
 # For Py3Package
 include ./files/python3-package.mk
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
