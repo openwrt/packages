@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-lxml
-PKG_VERSION:=4.1.0
+PKG_VERSION:=4.1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=lxml-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://lxml.de/files/
-PKG_HASH:=be3aaeb5f468a49f523f16736ccff7d82af2b4b303292ba3d052b5b28f3fbe47
+PKG_HASH:=940caef1ec7c78e0c34b0f6b94fe42d0f2022915ffc78643d28538a5cfd0f40e
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-lxml-$(PKG_VERSION)
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
