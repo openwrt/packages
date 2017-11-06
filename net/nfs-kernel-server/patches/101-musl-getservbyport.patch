@@ -1,11 +1,9 @@
 Musl will always return something with getservbyport so we cannot skip
 ports that returns non-null.
 
-diff --git a/utils/statd/rmtcall.c b/utils/statd/rmtcall.c
-index fd576d9..d72a0bf 100644
 --- a/utils/statd/rmtcall.c
 +++ b/utils/statd/rmtcall.c
-@@ -90,8 +90,10 @@ statd_get_socket(void)
+@@ -93,8 +93,10 @@ statd_get_socket(void)
  					__func__);
  			break;
  		}
@@ -14,5 +12,5 @@ index fd576d9..d72a0bf 100644
  		if (se == NULL)
 +#endif
  			break;
- 		/* rather not use that port, try again */
  
+ 		if (retries == MAX_BRP_RETRIES) {
