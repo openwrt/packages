@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=2.1.1
+PKG_VERSION:=2.2.1
 PKG_RELEASE:=1
-PKG_HASH:=0a28416948516c26f3bfe90425b0de09b79364dc1f508bf1dda8de66e1edbb09
+PKG_HASH:=0d819d8da358bea6e005e1a6cf0f6fa0c5507a78747d36bc87a0182e6af14291
 
 PKG_SOURCE_URL:=@SF/nfs
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.bz2
@@ -86,6 +86,7 @@ CONFIGURE_ARGS += \
 
 CONFIGURE_VARS += \
 	libblkid_cv_is_recent=yes \
+	ac_cv_lib_resolv___res_querydomain=yes \
 	CONFIG_SQLITE3_TRUE="\#" \
 	CONFIG_NFSDCLD_TRUE="\#"
 
