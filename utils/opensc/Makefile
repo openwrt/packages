@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opensc
-PKG_VERSION:=0.16.0
+PKG_VERSION:=0.17.0
 PKG_RELEASE:=1
-PKG_HASH:=3ac8c29542bb48179e7086d35a1b8907a4e86aca3de3323c2f48bd74eaaf5729
+PKG_HASH:=be73c6816867ab4721e6a9ae7dba8e890c5f169f0a2cbb4bf354e0f30a948300
 
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING
@@ -152,8 +152,8 @@ $(foreach file,$(PROFILES),$(eval $(call ProfileGen,$(file))))
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libopensc.{a,so}* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsmm-local.{a,so}* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libopensc.{la,so}* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsmm-local.{la,so}* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/opensc-pkcs11.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkcs11-spy.so $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkcs11
