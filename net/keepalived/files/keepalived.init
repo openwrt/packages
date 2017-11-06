@@ -79,6 +79,18 @@ print_list_indent() {
 	printf "$indent}\n" >> $KEEPALIVED_CONF
 }
 
+print_notify() {
+	local type=$1
+	shift
+	local name=$1
+	shift
+	for notify in $*; do
+		printf "$INDENT_1$notify" >> $KEEPALIVED_CONF
+		notify=$(echo $notify | tr 'a-z' 'A-Z')
+		printf " \"/bin/busybox env -i ACTION=$notify TYPE=$type NAME=$name /sbin/hotplug-call keepalived\"\n" >> $KEEPALIVED_CONF
+	done
+}
+
 global_defs() {
 	local linkbeat_use_polling notification_email
 
@@ -242,8 +254,11 @@ vrrp_sync_group() {
 	group="$valid_group"
 	print_list_indent group
 
-	print_elems_indent $1 $INDENT_1 notify_backup notify_master notify_fault \
-		notify no_val_smtp_alert no_val_global_tracking
+	print_elems_indent $1 $INDENT_1 no_val_smtp_alert no_val_global_tracking
+
+	print_notify "GROUP" "$name" notify_backup notify_master \
+		notify_fault notify
+
 	config_section_close
 }
 
@@ -266,12 +281,14 @@ vrrp_instance() {
 
 	print_elems_indent $1 $INDENT_1 use_vmac state interface \
 		mcast_src_ip unicast_src_ip virtual_router_id version priority \
-		advert_int preempt_delay debug notify_backup \
-		notify_master notify_fault notify_stop notify \
+		advert_int preempt_delay debug \
 		lvs_sync_daemon_interface garp_master_delay garp_master_refresh \
 		garp_master_repeat garp_master_refresh_repeat \
 		no_val_vmac_xmit_base no_val_native_ipv6 no_val_accept \
 		no_val_dont_track_primary no_val_smtp_alert no_val_nopreempt
+
+	print_notify "INSTANCE" "$name" notify_backup notify_master \
+		notify_fault notify_stop notify
 
 	# Handle virtual_ipaddress & virtual_ipaddress_excluded lists
 	for opt in virtual_ipaddress virtual_ipaddress_excluded; do
