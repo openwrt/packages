@@ -1,0 +1,774 @@
+--- a/Makefile
++++ b/Makefile
+@@ -570,6 +570,7 @@ CHIP_OBJS = \
+ 	flashchips.o \
+ 	jedec.o \
+ 	opaque.o \
++	otp.o \
+ 	sfdp.o \
+ 	spi25.o \
+ 	spi25_statusreg.o \
+--- a/chipdrivers.h
++++ b/chipdrivers.h
+@@ -21,6 +21,7 @@
+ #define __CHIPDRIVERS_H__ 1
+ 
+ #include "flash.h"	/* for chipaddr and flashctx */
++#include "otp.h"	/* For enum otp_region */
+ #include "spi25_statusreg.h"	/* For enum status_register_num */
+ #include "writeprotect.h"
+ 
+@@ -61,6 +62,14 @@ int spi_write_chunked(struct flashctx *f
+ int spi_enter_4ba(struct flashctx *flash);
+ int spi_exit_4ba(struct flashctx *flash);
+ int spi_set_extended_address(struct flashctx *, uint8_t addr_high);
++int spi_enter_otp_mode(struct flashctx *flash);
++int spi_sec_reg_nbyte_read(struct flashctx *flash, unsigned int address, uint8_t *bytes, unsigned int len);
++int spi_sec_reg_read_chunked(struct flashctx *flash, uint8_t *buf, unsigned int start, unsigned int len, unsigned int chunksize);
++int spi_sec_reg_read(struct flashctx *flash, uint8_t *buf, unsigned int start, unsigned int len);
++int spi_sec_reg_nbyte_program(struct flashctx *flash, unsigned int addr, const uint8_t *bytes, unsigned int len);
++int spi_sec_reg_write_chunked(struct flashctx *flash, const uint8_t *buf, unsigned int start, unsigned int len, unsigned int chunksize);
++int spi_sec_reg_prog(struct flashctx *flash, const uint8_t *buf, unsigned int start, unsigned int len);
++int spi_sec_reg_erase(struct flashctx *flash, uint32_t addr);
+ 
+ 
+ /* spi25_statusreg.c */
+@@ -115,6 +124,24 @@ int spi_prettyprint_status_register_sst2
+ int spi_prettyprint_status_register_sst25vf040b(struct flashctx *flash);
+ int spi_disable_blockprotect_sst26_global_unprotect(struct flashctx *flash);
+ 
++/* otp.c */
++int eon_status_generic(struct flashctx *flash, enum otp_region otp_region);
++int eon_print_status_generic(struct flashctx *flash);
++int eon_read_generic(struct flashctx *flash, uint8_t *buf, enum otp_region otp_region,
++	uint32_t start_byte, uint32_t len);
++int eon_write_generic(struct flashctx *flash, const uint8_t *buf, enum otp_region otp_region,
++	uint32_t start_byte, uint32_t len);
++int eon_erase_generic(struct flashctx *flash, enum otp_region otp_region);
++int eon_lock_generic(struct flashctx *flash, enum otp_region otp_region);
++int gd_w_status_generic(struct flashctx *flash, enum otp_region otp_region);
++int gd_w_print_status_generic(struct flashctx *flash);
++int gd_w_read_generic(struct flashctx *flash, uint8_t *buf, enum otp_region otp_region,
++	uint32_t start_byte, uint32_t len);
++int gd_w_write_generic(struct flashctx *flash, const uint8_t *buf, enum otp_region otp_region,
++	uint32_t start_byte, uint32_t len);
++int gd_erase_generic(struct flashctx *flash, enum otp_region otp_region);
++int gd_w_lock_generic(struct flashctx *flash, enum otp_region otp_region);
++
+ /* writeprotect.c */
+ struct range *sec_block_range_pattern(struct flashctx *flash);
+ char get_cmp(struct flashctx *flash);
+--- a/flash.h
++++ b/flash.h
+@@ -36,6 +36,7 @@
+ 
+ #include "libflashrom.h"
+ #include "layout.h"
++#include "otp.h"
+ #include "spi25_statusreg.h"
+ #include "writeprotect.h"
+ 
+@@ -282,6 +283,28 @@ struct flashchip {
+ 		int (*print_table) (struct flashctx *flash);
+ 	} *wp;
+ 
++	struct otp {
++		struct region {
++			/* This address corresponds to the first byte in the OTP memory region. */
++			uint32_t addr;
++			uint32_t size; /* in bytes */
++
++			/* Usually, setting this modifier bit will permanently lock the
++			 * corresponding OTP region against writes.
++			 * Not all chips have a modifier bit (AMIC, Macronix). */
++			enum status_register_bit status_bit;
++		} region[MAX_OTP_REGIONS + 1]; /* We need one more than MAX_STATUS_REGISTERS */
++
++		int (*status) (struct flashctx *flash, enum otp_region otp_region);
++		int (*print_status) (struct flashctx *flash);
++		int (*read) (struct flashctx *flash, uint8_t *buf, enum otp_region otp_region,
++			uint32_t start_addr, uint32_t len);
++		int (*write) (struct flashctx *flash, const uint8_t *buf, enum otp_region otp_region,
++			uint32_t start_addr, uint32_t len);
++		int (*erase) (struct flashctx *flash, enum otp_region otp_region);
++		int (*lock) (struct flashctx *flash, enum otp_region otp_region);
++	} *otp;
++
+ 	/* SPI specific options (TODO: Make it a union in case other bustypes get specific options.) */
+ 	uint8_t wrea_override; /**< override opcode for write extended address register */
+ };
+--- /dev/null
++++ b/otp.c
+@@ -0,0 +1,381 @@
++/*
++ * This file is part of the flashrom project.
++ *
++ * Copyright (C) 2016 Hatim Kanchwala <hatim@hatimak.me>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
++ */
++
++#include "chipdrivers.h"
++#include "flash.h"
++#include "spi25_statusreg.h"
++
++/* Return the top-most (highest) OTP region of flash. */
++static enum otp_region top_otp_region(struct flashctx *flash) {
++	enum otp_region otp_region = OTP_REG_1;
++	struct region *region = flash->chip->otp->region;
++
++	while (region[otp_region++].size != 0)
++		;
++	return otp_region - 2;
++}
++
++/* Some standard error checking used by program and erase functions. */
++static int otp_error_check(struct flashctx *flash, enum otp_region otp_region,
++	uint32_t start_byte, uint32_t len) {
++	if (otp_region > top_otp_region(flash)) {
++		msg_cdbg("Trying to access non-existent OTP region %d\n%s has only %d OTP regions\n",
++			otp_region + 1, flash->chip->name, top_otp_region(flash) + 1);
++		return 1;
++	}
++	if (start_byte + len > flash->chip->otp->region[otp_region].size) {
++		msg_cdbg("OTP region for %s is %d bytes\n", flash->chip->name,
++			flash->chip->otp->region[otp_region].size);
++		return 1;
++	}
++	return 0;
++}
++
++/* === Eon chip specific functions === */
++static uint8_t bp_bitfield, to_restore = 0;
++
++static void save_bp(struct flashctx *flash) {
++	uint8_t status = flash->chip->status_register->read(flash, SR1);
++	uint32_t bp_bitmask = flash->chip->wp->bp_bitmask(flash);
++	bp_bitfield = (status & bp_bitmask) >> pos_bit(flash, BP0);
++}
++
++static int restore_bp(struct flashctx *flash) {
++	uint8_t status = flash->chip->status_register->read(flash, SR1);
++	uint32_t bp_bitmask = flash->chip->wp->bp_bitmask(flash);
++	status = ((status & ~bp_bitmask) | (bp_bitfield << pos_bit(flash, BP0))) & 0xff;
++	return flash->chip->status_register->write(flash, SR1, status);
++}
++
++/* Enter OTP mode. If any Block Protect bits are set, then save
++ * their state and temporarily unset them all. */
++static int enter_otp_mode(struct flashctx *flash) {
++	uint8_t bp = flash->chip->status_register->read(flash, SR1) & flash->chip->wp->bp_bitmask(flash);
++	if (bp) {
++		msg_cdbg("Need to unset all BP bits before entering OTP mode ...\n");
++		msg_cdbg("BP bits will be restored to 0x%02x\n", bp >> pos_bit(flash, BP0));
++		to_restore = 1;
++		save_bp(flash);
++	}
++	return spi_enter_otp_mode(flash);
++}
++
++/* Exit OTP mode. If any Block Protect bits were set prior to issuing
++ * an Enter OTP, then restore those bits after exiting. */
++static int exit_otp_mode(struct flashctx *flash) {
++	int result = spi_write_disable(flash);
++	if (result) {
++		msg_cdbg("Couldn't exit OTP mode\n");
++		return result;
++	}
++
++	if (to_restore) {
++		msg_cdbg("Restoring BP bits to their state prior to entering OTP mode ...\n");
++		result = restore_bp(flash);
++		if (result)
++			msg_cdbg("Couldn't restore BP bits\n");
++	}
++	to_restore = 0;
++	return result;
++}
++
++int eon_status_generic(struct flashctx *flash, enum otp_region otp_region) {
++	enter_otp_mode(flash);
++	uint8_t status = (flash->chip->status_register->read(flash, SR1) &
++		(1 << pos_bit(flash, SRP0))) ? 1 : 0;
++	exit_otp_mode(flash);
++	return status;
++}
++
++int eon_print_status_generic(struct flashctx *flash) {
++	enum otp_region top_region = top_otp_region(flash), region_n;
++	msg_cdbg("%s contains %d OTP memory region%s (also called OTP sector%s) -\n",
++		flash->chip->name, top_region + 1,
++		(top_region == 0) ? "" : "s", (top_region == 0) ? "" : "s");
++
++	for (region_n = OTP_REG_1; region_n <= top_region; region_n++) {
++		msg_cdbg("OTP memory region %d: %d bytes, controlled by %s bit in status register %d "
++			"(while in OTP mode)\n", region_n + 1, flash->chip->otp->region[region_n].size,
++			statreg_bit_desc[flash->chip->otp->region[region_n].status_bit][0],
++			(pos_bit(flash, flash->chip->otp->region[region_n].status_bit) / 8) + 1);
++		if (flash->chip->otp->status(flash, region_n)) {
++			msg_cdbg("OTP memory region %d is permanently locked and cannot be erased "
++				"or written to\n", region_n + 1);
++		}
++	}
++	return 0;
++}
++
++/* Read len bytes of the security register (corresponding to otp_region) into buf,
++ * starting from start_byte. */
++int eon_read_generic(struct flashctx *flash, uint8_t *buf, enum otp_region otp_region,
++	uint32_t start_byte, uint32_t len) {
++	int result = otp_error_check(flash, otp_region, start_byte, len);
++	if (result) {
++		msg_cerr("%s failed\n", __func__);
++		return result;
++	}
++
++	enter_otp_mode(flash);
++	result = flash->chip->read(flash, buf, start_byte, len);
++	exit_otp_mode(flash);
++
++	if (result)
++		msg_cerr("%s failed\n", __func__);
++	return result;
++}
++
++/* Write len bytes to the security register (corresponding to otp_region) form buf,
++ * starting from start_byte. */
++int eon_write_generic(struct flashctx *flash, const uint8_t *buf, enum otp_region otp_region,
++	uint32_t start_byte, uint32_t len) {
++	int result = otp_error_check(flash, otp_region, start_byte, len);
++	if (result) {
++		msg_cerr("%s failed\n", __func__);
++		return result;
++	}
++	if (flash->chip->otp->status(flash, otp_region)) {
++		msg_cdbg("OTP memory region %d is permanently locked and cannot be written to\n",
++			otp_region + 1);
++		msg_cerr("%s failed\n", __func__);
++		return 1;
++	}
++
++	enter_otp_mode(flash);
++	result = flash->chip->write(flash, buf, start_byte, len);
++	exit_otp_mode(flash);
++
++	if (result)
++		msg_cerr("%s failed\n", __func__);
++	return result;
++}
++
++/* Erase the security register corresponding to otp_region. */
++int eon_erase_generic(struct flashctx *flash, enum otp_region otp_region) {
++	int result = otp_error_check(flash, otp_region, 0x000000, 0);
++	if (result) {
++		msg_cerr("%s failed\n", __func__);
++		return result;
++	}
++	if (flash->chip->otp->status(flash, otp_region)) {
++		msg_cdbg("OTP memory region %d is permanently locked and cannot be written to\n",
++			otp_region + 1);
++		msg_cerr("%s failed\n", __func__);
++		return 1;
++	}
++
++	enter_otp_mode(flash);
++	result = spi_block_erase_20(flash, flash->chip->otp->region[otp_region].addr,
++		flash->chip->otp->region[otp_region].size);
++	exit_otp_mode(flash);
++
++	if (result)
++		msg_cerr("%s failed\n", __func__);
++	return result;
++}
++
++/* Lock the OTP memory corresponding to otp_region. The corresponding bit
++ * in the status register is set (which is one-time programmable). For Eon
++ * chips, the SRP/SRP0/SRWD bit is served as OTP it while in OTP mode.
++ * Note that if the bit was already set, the function does not consider
++ * it a point of failure. */
++int eon_lock_generic(struct flashctx *flash, enum otp_region otp_region) {
++	int result = otp_error_check(flash, otp_region, 0x000000, 0);
++	if (result) {
++		msg_cerr("%s failed\n", __func__);
++		return result;
++	}
++	enum status_register_bit status_bit = flash->chip->otp->region[otp_region].status_bit;
++	if (pos_bit(flash, status_bit) == -1) {
++		/* Check if such a bit even exists in the status register in the first place. */
++		// TODO(hatim): This block does not seem to have many use cases as the error
++		// can be avoided while reviewing patches itself
++		msg_cdbg("OTP modifier bit %s for %s defined incorrectly\n",
++			statreg_bit_desc[status_bit][0], flash->chip->name);
++		msg_cerr("%s failed\n", __func__);
++		return 1;
++	}
++	if (flash->chip->otp->status(flash, otp_region)) {
++		msg_cdbg("OTP modifier bit already set, "
++			"cannot alter value as it is one-time-programmable only\n");
++		// FIXME(hatim): Should we return zero or non-zero here?
++		return 0;
++	}
++
++	enter_otp_mode(flash);
++	/* WRSR will set OTP modifier bit irrespective of status byte supplied. */
++	flash->chip->status_register->write(flash, SR1, 1 << pos_bit(flash, SRP0));
++	exit_otp_mode(flash);
++
++	if (!flash->chip->otp->status(flash, otp_region)) {
++		msg_cdbg("Unable to set OTP modifier bit\n");
++		msg_cerr("%s failed\n", __func__);
++		return 1;
++	} else
++		return 0;
++}
++
++
++/* === GigaDevice and (most) Winbond chip specific functions === */
++/* Get the OTP modifier bit (these are usually the LB1, LB2, ... bits) from the status
++ * registers. */
++static int gd_w_get_otp_bit(struct flashctx *flash, enum status_register_bit modifier_bit) {
++	enum status_register_num SRn = pos_bit(flash, modifier_bit) / 8;
++	uint8_t modifier_bit_mask = 1 << (pos_bit(flash, modifier_bit) - (SRn * 8));
++
++	uint8_t status = flash->chip->status_register->read(flash, SRn);
++	return status & modifier_bit_mask;
++}
++
++/* Set the OTP modifier bit (these are usually the LB1, LB2, ... bits) in the status registers.
++ * We take no value of the bit as an argument because they are one-time-programmable only and
++ * they can only be set. */
++static int gd_w_set_otp_bit(struct flashctx *flash, enum status_register_bit modifier_bit) {
++	enum status_register_num SRn = pos_bit(flash, modifier_bit) / 8;
++	uint8_t modifier_bit_mask = 1 << (pos_bit(flash, modifier_bit) - (SRn * 8));
++
++	uint8_t status = flash->chip->status_register->read(flash, SRn);
++	status = (status & ~modifier_bit_mask) & 0xff;
++	status |= modifier_bit_mask;
++	return flash->chip->status_register->write(flash, SRn, status);
++}
++
++int gd_w_status_generic(struct flashctx *flash, enum otp_region otp_region) {
++	return gd_w_get_otp_bit(flash, flash->chip->otp->region[otp_region].status_bit) ? 1 : 0;
++}
++
++int gd_w_print_status_generic(struct flashctx *flash) {
++	enum otp_region top_region = top_otp_region(flash), region_n;
++	msg_cdbg("%s contains %d OTP memory region%s (also called Security Register%s) -\n",
++		flash->chip->name, top_region + 1,
++		(top_region == 0) ? "" : "s", (top_region == 0) ? "" : "s");
++
++	for (region_n = OTP_REG_1; region_n <= top_region; region_n++) {
++		msg_cdbg("OTP memory region %d: %d bytes, controlled by %s bit in status register %d\n",
++			region_n + 1,
++			flash->chip->otp->region[region_n].size,
++			statreg_bit_desc[flash->chip->otp->region[region_n].status_bit][0],
++			(pos_bit(flash, flash->chip->otp->region[region_n].status_bit) / 8) + 1);
++		if (flash->chip->otp->status(flash, region_n)) {
++			msg_cdbg("OTP memory region %d is permanently locked and cannot be erased "
++				"or written to\n", region_n + 1);
++		}
++	}
++	return 0;
++}
++
++/* Read len bytes of the security register (corresponding to otp_region) into buf,
++ * starting from start_byte. */
++int gd_w_read_generic(struct flashctx *flash, uint8_t *buf, enum otp_region otp_region,
++	uint32_t start_byte, uint32_t len) {
++	int result = otp_error_check(flash, otp_region, start_byte, len);
++	if (result) {
++		msg_cerr("%s failed\n", __func__);
++		return result;
++	}
++
++	/* Prefix the first couple of pre-defined bits of the security register address. */
++	result = spi_sec_reg_read(flash, buf, flash->chip->otp->region[otp_region].addr | start_byte, len);
++	if (result)
++		msg_cerr("%s failed\n", __func__);
++	return result;
++}
++
++/* Write len bytes to the security register (corresponding to otp_region) form buf,
++ * starting from start_byte. */
++int gd_w_write_generic(struct flashctx *flash, const uint8_t *buf, enum otp_region otp_region,
++	uint32_t start_byte, uint32_t len) {
++	int result = otp_error_check(flash, otp_region, start_byte, len);
++	if (result) {
++		msg_cerr("%s failed\n", __func__);
++		return result;
++	}
++	if (flash->chip->otp->status(flash, otp_region)) {
++		msg_cdbg("OTP memory region %d is permanently locked and cannot be written to\n",
++			otp_region + 1);
++		msg_cerr("%s failed\n", __func__);
++		return 1;
++	}
++
++	/* Prefix the first couple of pre-defined bits of the security register address. */
++	result = spi_sec_reg_prog(flash, buf, flash->chip->otp->region[otp_region].addr | start_byte, len);
++	if (result)
++		msg_cerr("%s failed\n", __func__);
++	return result;
++}
++
++/* Erase the security register corresponding to otp_region. */
++int gd_erase_generic(struct flashctx *flash, enum otp_region otp_region) {
++	int result = otp_error_check(flash, otp_region, 0x000000, 0);
++	if (result) {
++		msg_cerr("%s failed\n", __func__);
++		return result;
++	}
++	if (flash->chip->otp->status(flash, otp_region)) {
++		msg_cdbg("OTP memory region %d is permanently locked and cannot be erased\n",
++			otp_region + 1);
++		msg_cerr("%s failed\n", __func__);
++		return 1;
++	}
++
++	result = spi_sec_reg_erase(flash, flash->chip->otp->region[otp_region].addr);
++	if (result)
++		msg_cerr("%s failed\n", __func__);
++	return result;
++}
++
++/* Lock the OTP memory corresponding to otp_region. The corresponding bit
++ * in the status register is set (which is one-time programmable).
++ * Note that if the bit was already set, the function does not consider
++ * it a point of failure. */
++int gd_w_lock_generic(struct flashctx *flash, enum otp_region otp_region) {
++	int result = otp_error_check(flash, otp_region, 0x000000, 0);
++	if (result) {
++		msg_cerr("%s failed\n", __func__);
++		return result;
++	}
++
++	enum status_register_bit status_bit = flash->chip->otp->region[otp_region].status_bit;
++	if (pos_bit(flash, status_bit) == -1) {
++		/* Check if such a bit even exists in the status register in the first place. */
++		// TODO(hatim): This block does not seem to have many use cases as the error
++		// can be avoided while reviewing patches itself
++		msg_cdbg("OTP modifier bit %s for %s defined incorrectly\n",
++			statreg_bit_desc[status_bit][0], flash->chip->name);
++		msg_cerr("%s failed\n", __func__);
++		return 1;
++	}
++	if (flash->chip->otp->status(flash, otp_region)) {
++		msg_cdbg("OTP modifier bit already set, "
++			"cannot alter value as it is one-time-programmable only\n");
++		// FIXME(hatim): Should we return zero or non-zero here?
++		return 0;
++	} else {
++		result = gd_w_set_otp_bit(flash, status_bit);
++		if (result)
++			msg_cerr("%s failed\n", __func__);
++		if (!flash->chip->otp->status(flash, otp_region)) {
++			msg_cdbg("Unable to set OTP modifier bit\n");
++			msg_cerr("%s failed\n", __func__);
++			return 1;
++		}
++		return result;
++	}
++}
+--- /dev/null
++++ b/otp.h
+@@ -0,0 +1,28 @@
++/*
++ * This file is part of the flashrom project.
++ *
++ * Copyright (C) 2016 Hatim Kanchwala <hatim@hatimak.me>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
++ */
++
++#ifndef __OTP_H__
++#define __OTP_H__ 1
++
++#define MAX_OTP_REGIONS 4
++
++enum otp_region { OTP_REG_1 = 0, OTP_REG_2, OTP_REG_3 };
++
++#endif		/* !__OTP_H__ */
+--- a/spi.h
++++ b/spi.h
+@@ -190,6 +190,26 @@
+    From ANY mode (3-bytes or 4-bytes) it works with 4-byte address */
+ #define JEDEC_BYTE_PROGRAM_4BA	0x12
+ 
++/* Enter OTP mode (supported by most Eon chips) */
++#define JEDEC_ENTER_OTP		0x3A
++#define JEDEC_ENTER_OTP_OUTSIZE	0x01
++#define JEDEC_ENTER_OTP_INSIZE	0x00
++
++/* Read Security Register(s) (supported by most GigaDevice chips) */
++#define JEDEC_READ_SEC_REG		0x48
++#define JEDEC_READ_SEC_REG_OUTSIZE	0x05
++/* JEDEC_READ_SEC_REG_INSIZE		any length */
++
++/* Program Security Register(s) (supported by most GigaDevice chips) */
++#define JEDEC_PROG_BYTE_SEC_REG		0x42
++#define JEDEC_PROG_BYTE_SEC_REG_OUTSIZE	0x05
++#define JEDEC_PROG_BYTE_SEC_REG_INSIZE	0x00
++
++/* Erase Security Register(s) (supported by most GigaDevice chips) */
++#define JEDEC_ERASE_SEC_REG		0x44
++#define JEDEC_ERASE_SEC_REG_OUTSIZE	0x04
++#define JEDEC_ERASE_SEC_REG_INSIZE	0x00
++
+ /* Error codes */
+ #define SPI_GENERIC_ERROR	-1
+ #define SPI_INVALID_OPCODE	-2
+--- a/spi25.c
++++ b/spi25.c
+@@ -825,3 +825,218 @@ int spi_exit_4ba(struct flashctx *flash)
+ {
+ 	return spi_enter_exit_4ba(flash, false);
+ }
++
++
++/* This function is specific to mostly Eon chips. It maps the
++ * additional OTP sector to the top or bottom sector (depending
++ * on the chip). The mapped sector behaves like just another
++ * normal sector. */
++int spi_enter_otp_mode(struct flashctx *flash)
++{
++	static const unsigned char cmd[JEDEC_ENTER_OTP_OUTSIZE] = { JEDEC_ENTER_OTP };
++	return spi_send_command(flash, sizeof(cmd), 0, cmd, NULL);
++}
++
++int spi_sec_reg_nbyte_read(struct flashctx *flash, unsigned int address, uint8_t *bytes,
++		   unsigned int len)
++{
++	const unsigned char cmd[JEDEC_READ_SEC_REG_OUTSIZE] = {
++		JEDEC_READ_SEC_REG,
++		(address >> 16) & 0xff,
++		(address >> 8) & 0xff,
++		(address >> 0) & 0xff,
++		0x00,
++	};
++
++	/* Send Read */
++	return spi_send_command(flash, sizeof(cmd), len, cmd, bytes);
++}
++
++int spi_sec_reg_read_chunked(struct flashctx *flash, uint8_t *buf, unsigned int start,
++		     unsigned int len, unsigned int chunksize)
++{
++	int rc = 0;
++	unsigned int i, j, starthere, lenhere, toread;
++	/* Limit for multi-die 4-byte-addressing chips. */
++	unsigned int area_size = min(flash->chip->total_size * 1024, 16 * 1024 * 1024);
++
++	/* Warning: This loop has a very unusual condition and body.
++	 * The loop needs to go through each area with at least one affected
++	 * byte. The lowest area number is (start / area_size) since that
++	 * division rounds down. The highest area number we want is the area
++	 * where the last byte of the range lives. That last byte has the
++	 * address (start + len - 1), thus the highest area number is
++	 * (start + len - 1) / area_size. Since we want to include that last
++	 * area as well, the loop condition uses <=.
++	 */
++	for (i = start / area_size; i <= (start + len - 1) / area_size; i++) {
++		/* Byte position of the first byte in the range in this area. */
++		/* starthere is an offset to the base address of the chip. */
++		starthere = max(start, i * area_size);
++		/* Length of bytes in the range in this area. */
++		lenhere = min(start + len, (i + 1) * area_size) - starthere;
++		for (j = 0; j < lenhere; j += chunksize) {
++			toread = min(chunksize, lenhere - j);
++			rc = spi_sec_reg_nbyte_read(flash, starthere + j, buf + starthere - start + j, toread);
++
++			if (rc)
++				break;
++		}
++		if (rc)
++			break;
++	}
++
++	return rc;
++}
++
++int spi_sec_reg_read(struct flashctx *flash, uint8_t *buf, unsigned int start,
++		     unsigned int len)
++{
++	unsigned int max_data = flash->mst->spi.max_data_read - 1; /* -1 because of dummy byte */
++	if (max_data == MAX_DATA_UNSPECIFIED) {
++		msg_perr("%s called, but SPI read chunk size not defined "
++			 "on this hardware. Please report a bug at "
++			 "flashrom@flashrom.org\n", __func__);
++		return 1;
++	}
++	return spi_sec_reg_read_chunked(flash, buf, start, len, max_data);
++}
++
++int spi_sec_reg_nbyte_program(struct flashctx *flash, unsigned int addr, const uint8_t *bytes, unsigned int len)
++{
++	int result;
++	/* FIXME: Switch to malloc based on len unless that kills speed. */
++	unsigned char cmd[JEDEC_PROG_BYTE_SEC_REG_OUTSIZE - 1 + 256] = {
++		JEDEC_PROG_BYTE_SEC_REG,
++		(addr >> 16) & 0xff,
++		(addr >> 8) & 0xff,
++		(addr >> 0) & 0xff,
++	};
++	struct spi_command cmds[] = {
++	{
++		.writecnt	= JEDEC_WREN_OUTSIZE,
++		.writearr	= (const unsigned char[]){ JEDEC_WREN },
++		.readcnt	= 0,
++		.readarr	= NULL,
++	}, {
++		.writecnt	= JEDEC_BYTE_PROGRAM_OUTSIZE - 1 + len,
++		.writearr	= cmd,
++		.readcnt	= 0,
++		.readarr	= NULL,
++	}, {
++		.writecnt	= 0,
++		.writearr	= NULL,
++		.readcnt	= 0,
++		.readarr	= NULL,
++	}};
++
++	if (!len) {
++		msg_cerr("%s called for zero-length write\n", __func__);
++		return 1;
++	}
++	if (len > 256) {
++		msg_cerr("%s called for too long a write\n", __func__);
++		return 1;
++	}
++
++	memcpy(&cmd[4], bytes, len);
++
++	result = spi_send_multicommand(flash, cmds);
++	if (result) {
++		msg_cerr("%s failed during command execution at address 0x%x\n",
++			__func__, addr);
++	}
++	return result;
++}
++
++int spi_sec_reg_write_chunked(struct flashctx *flash, const uint8_t *buf, unsigned int start,
++		      unsigned int len, unsigned int chunksize)
++{
++	int rc = 0;
++	unsigned int i, j, starthere, lenhere, towrite;
++	/* FIXME: page_size is the wrong variable. We need max_writechunk_size
++	 * in struct flashctx to do this properly. All chips using
++	 * spi_chip_write_256 have page_size set to max_writechunk_size, so
++	 * we're OK for now.
++	 */
++	unsigned int page_size = flash->chip->page_size;
++
++	/* Warning: This loop has a very unusual condition and body.
++	 * The loop needs to go through each page with at least one affected
++	 * byte. The lowest page number is (start / page_size) since that
++	 * division rounds down. The highest page number we want is the page
++	 * where the last byte of the range lives. That last byte has the
++	 * address (start + len - 1), thus the highest page number is
++	 * (start + len - 1) / page_size. Since we want to include that last
++	 * page as well, the loop condition uses <=.
++	 */
++	for (i = start / page_size; i <= (start + len - 1) / page_size; i++) {
++		/* Byte position of the first byte in the range in this page. */
++		/* starthere is an offset to the base address of the chip. */
++		starthere = max(start, i * page_size);
++		/* Length of bytes in the range in this page. */
++		lenhere = min(start + len, (i + 1) * page_size) - starthere;
++		for (j = 0; j < lenhere; j += chunksize) {
++			towrite = min(chunksize, lenhere - j);
++			rc = spi_sec_reg_nbyte_program(flash, starthere + j, buf + starthere - start + j, towrite);
++			if (rc)
++				break;
++			// TODO(hatim): Switch to newer infrastructure completely after integration
++			if (flash->chip->status_register) {
++				while (flash->chip->status_register->read(flash, SR1) & SPI_SR_WIP)
++					programmer_delay(10);
++			} else {
++				while (spi_read_status_register(flash) & SPI_SR_WIP)
++					programmer_delay(10);
++			}
++		}
++		if (rc)
++			break;
++	}
++
++	return rc;
++}
++
++int spi_sec_reg_prog(struct flashctx *flash, const uint8_t *buf, unsigned int start, unsigned int len)
++{
++	unsigned int max_data = flash->mst->spi.max_data_write;
++	if (max_data == MAX_DATA_UNSPECIFIED) {
++		msg_perr("%s called, but SPI write chunk size not defined "
++			 "on this hardware. Please report a bug at "
++			 "flashrom@flashrom.org\n", __func__);
++		return 1;
++	}
++	return spi_sec_reg_write_chunked(flash, buf, start, len, max_data);
++}
++
++int spi_sec_reg_erase(struct flashctx *flash, uint32_t addr)
++{
++	/* We assume that addr is correct and proceed without any error checking. */
++	int ret = spi_write_enable(flash);
++	if (ret) {
++		msg_cerr("%s failed\n", __func__);
++		return ret;
++	}
++
++	uint8_t cmd[JEDEC_ERASE_SEC_REG_OUTSIZE] = {
++		(uint8_t)JEDEC_ERASE_SEC_REG,
++		(uint8_t)(addr >> 16) & 0xff,
++		(uint8_t)(addr >> 8) & 0xff,
++		(uint8_t)addr & 0xff,
++	};
++
++	ret = spi_send_command(flash, sizeof(cmd), 0, cmd, NULL);
++	if (ret)
++		msg_cerr("%s\n", __func__);
++
++	// TODO(hatim): Switch to newer infrastructure completely after integration
++	if (flash->chip->status_register) {
++		while (flash->chip->status_register->read(flash, SR1) & SPI_SR_WIP)
++			programmer_delay(10);
++	} else {
++		while (spi_read_status_register(flash) & SPI_SR_WIP)
++			programmer_delay(10);
++	}
++
++	return ret;
++}
+--- a/meson.build
++++ b/meson.build
+@@ -321,6 +321,7 @@ srcs += 'jedec.c'
+ srcs += 'layout.c'
+ srcs += 'libflashrom.c'
+ srcs += 'opaque.c'
++srcs += 'otp.c'
+ srcs += 'print.c'
+ srcs += 'programmer.c'
+ srcs += 'sfdp.c'

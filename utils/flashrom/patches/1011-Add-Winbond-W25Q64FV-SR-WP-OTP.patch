@@ -1,0 +1,267 @@
+--- a/Makefile
++++ b/Makefile
+@@ -570,6 +570,7 @@ CHIP_OBJS = \
+ 	flashchips.o \
+ 	jedec.o \
+ 	opaque.o \
++	otp_layouts.o \
+ 	otp.o \
+ 	sfdp.o \
+ 	spi25.o \
+@@ -579,9 +580,11 @@ CHIP_OBJS = \
+ 	sst28sf040.o \
+ 	sst49lfxxxc.o \
+ 	sst_fwhub.o \
++	statusreg_layouts.o \
+ 	stm50.o \
+ 	w29ee011.o \
+ 	w39.o \
++	writeprotect_layouts.o \
+ 	writeprotect.o
+ 
+ ###############################################################################
+--- a/flashchips.c
++++ b/flashchips.c
+@@ -21,6 +21,8 @@
+ #include "flash.h"
+ #include "flashchips.h"
+ #include "chipdrivers.h"
++#include "spi25_statusreg.h"
++#include "writeprotect.h"
+ 
+ /**
+  * List of supported flash chips.
+@@ -16936,7 +16938,7 @@ const struct flashchip flashchips[] = {
+ 		.total_size	= 8192,
+ 		.page_size	= 256,
+ 		/* supports SFDP */
+-		/* OTP: 1024B total, 256B reserved; read 0x48; write 0x42, erase 0x44, read ID 0x4B */
++		/* Read ID 0x4B */
+ 		.feature_bits	= FEATURE_WRSR_WREN | FEATURE_OTP,
+ 		.tested		= TEST_OK_PREW,
+ 		.probe		= probe_spi_rdid,
+@@ -16960,11 +16962,13 @@ const struct flashchip flashchips[] = {
+ 				.block_erase = spi_block_erase_c7,
+ 			}
+ 		},
+-		.printlock	= spi_prettyprint_status_register_plain, /* TODO: improve */
++		.status_register = &w25q40bl_64fv_sr,
+ 		.unlock		= spi_disable_blockprotect,
+ 		.write		= spi_chip_write_256,
+ 		.read		= spi_chip_read,
+ 		.voltage	= {2700, 3600},
++		.wp		= &gd_w_wp,
++		.otp		= &gd_w256_3_otp,
+ 	},
+ 
+ 	{
+--- /dev/null
++++ b/statusreg_layouts.c
+@@ -0,0 +1,51 @@
++/*
++ * This file is part of the flashrom project.
++ *
++ * Copyright (C) 2016 Hatim Kanchwala <hatim@hatimak.me>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
++ */
++
++#include "chipdrivers.h"
++#include "flash.h"
++#include "spi25_statusreg.h"
++
++/*
++ * struct status_register {
++ *	enum status_register_bit layout[MAX_STATUS_REGISTERS + 1][8];
++ *	uint8_t (*read) (struct flashctx *flash, enum status_register_num SRn);
++ *	int (*write) (struct flashctx *flash, enum status_register_num SRn, uint8_t status);
++ *	int (*print) (struct flashctx *flash, enum status_register_num SRn);
++ *	enum wp_mode (*get_wp_mode) (struct flashctx *flash);
++ *	int (*set_wp_mode) (struct flashctx *flash, enum wp_mode wp_mode);
++ *	int (*print_wp_mode) (struct flashctx *flash);
++ * };
++ */
++
++/* === Single status register === */
++/* === Winbond === */
++/* W25Q40BL, W25Q64FV */
++struct status_register w25q40bl_64fv_sr = {
++	.layout = {
++		{ WIP, WEL, BP0, BP1, BP2, TB, SEC, SRP0 },
++		{ SRP1, QE, RESV, LB1, LB2, LB3, CMP, SUS },
++	},
++	.read		= &spi_read_status_register_generic,
++	.write		= &spi_write_status_register_generic,
++	.print		= &spi_prettyprint_status_register_generic,
++	.print_wp_mode	= &spi_prettyprint_status_register_wp_generic,
++	.get_wp_mode	= &get_wp_mode_generic,
++	.set_wp_mode	= &set_wp_mode_generic,
++};
+--- /dev/null
++++ b/writeprotect_layouts.c
+@@ -0,0 +1,45 @@
++/*
++ * This file is part of the flashrom project.
++ *
++ * Copyright (C) 2016 Hatim Kanchwala <hatim@hatimak.me>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
++ */
++
++#include "chipdrivers.h"
++#include "flash.h"
++#include "writeprotect.h"
++
++/*
++ * struct wp {
++ *	struct range *ranges;
++ *	struct range *(*range_table) (struct flashctx *flash);
++ * 	uint32_t (*bp_bitmask) (struct flashctx *flash);
++ *	int (*set_range) (struct flashctx *flash, uint32_t start, uint32_t len);
++ *	int (*disable) (struct flashctx *flash);
++ *	int (*print_table) (struct flashctx *flash);
++ * };
++ */
++
++/* A25L080, A25LQ16, GD25LQ40, GD25LQ80, GD25LQ16, GD25Q16, GD25Q16B GD25Q32(B),
++ * GD25Q64(B), GD25Q128B, GD25Q128C, GD25VQ16C, GD25VQ21B, GD25VQ40C, GD25VQ41B,
++ * GD25VQ80C, W25Q40BL, W25Q64FV */
++struct wp gd_w_wp = {
++	.range_table	= &sec_block_range_pattern,
++	.bp_bitmask	= &bp_bitmask_generic,
++	.print_table	= &print_table_generic,
++	.set_range	= &set_range_generic,
++	.disable	= &disable_generic,
++};
+--- a/writeprotect.h
++++ b/writeprotect.h
+@@ -30,4 +30,6 @@ struct range {
+ 	uint32_t len;	/* in kB */
+ };
+ 
++extern struct wp gd_w_wp;
++
+ #endif		/* !__WRITEPROTECT_H__ */
+--- a/otp.h
++++ b/otp.h
+@@ -25,4 +25,6 @@
+ 
+ enum otp_region { OTP_REG_1 = 0, OTP_REG_2, OTP_REG_3 };
+ 
++extern struct otp gd_w256_3_otp;
++
+ #endif		/* !__OTP_H__ */
+--- /dev/null
++++ b/otp_layouts.c
+@@ -0,0 +1,53 @@
++/*
++ * This file is part of the flashrom project.
++ *
++ * Copyright (C) 2016 Hatim Kanchwala <hatim@hatimak.me>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
++ */
++
++#include "chipdrivers.h"
++#include "flash.h"
++#include "otp.h"
++
++/* === GigaDevice and Winbond === */
++// FIXME(hatim): Deal with chips with shared OTP modifier bit
++/* GD25LQ16, GD25LQ80, GD25LQ40, W25Q40BL, W25Q64FV
++ * (There is an additional 256 bytes security register
++ * at 0x000000 which is reserved and can only be read.) */
++// FIXME(hatim): Add support to interact with the reserved security register
++struct otp gd_w256_3_otp = {
++	.region = {
++		{
++			.addr = 0x001000,
++			.size = 256,
++			.status_bit = LB1,
++		}, {
++			.addr = 0x002000,
++			.size = 256,
++			.status_bit = LB2,
++		}, {
++			.addr = 0x003000,
++			.size = 256,
++			.status_bit = LB3,
++		},
++	},
++	.status = &gd_w_status_generic,
++	.print_status = &gd_w_print_status_generic,
++	.read = &gd_w_read_generic,
++	.write = &gd_w_write_generic,
++	.erase = &gd_erase_generic,
++	.lock = &gd_w_lock_generic,
++};
+--- a/spi25_statusreg.h
++++ b/spi25_statusreg.h
+@@ -76,4 +76,7 @@ enum wp_mode {
+ /* Describes corresponding bits from enum status_register_bit */
+ extern const char *statreg_bit_desc[][2];
+ 
++/* === Winbond === */
++extern struct status_register w25q40bl_64fv_sr;
++
+ #endif		/* !__SPI25_STATUSREG_H__ */
+--- a/meson.build
++++ b/meson.build
+@@ -322,6 +322,7 @@ srcs += 'layout.c'
+ srcs += 'libflashrom.c'
+ srcs += 'opaque.c'
+ srcs += 'otp.c'
++srcs += 'otp_layouts.c'
+ srcs += 'print.c'
+ srcs += 'programmer.c'
+ srcs += 'sfdp.c'
+@@ -332,11 +333,13 @@ srcs += 'spi.c'
+ srcs += 'sst28sf040.c'
+ srcs += 'sst49lfxxxc.c'
+ srcs += 'sst_fwhub.c'
++srcs += 'statusreg_layouts.c'
+ srcs += 'stm50.c'
+ srcs += 'udelay.c'
+ srcs += 'w29ee011.c'
+ srcs += 'w39.c'
+ srcs += 'writeprotect.c'
++srcs += 'writeprotect_layouts.c'
+ 
+ mapfile = 'libflashrom.map'
+ vflag = '-Wl,--version-script,@0@/@1@'.format(meson.current_source_dir(), mapfile)

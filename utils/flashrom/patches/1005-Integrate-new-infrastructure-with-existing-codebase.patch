@@ -1,0 +1,71 @@
+--- a/flashrom.c
++++ b/flashrom.c
+@@ -34,6 +34,7 @@
+ #if HAVE_UTSNAME == 1
+ #include <sys/utsname.h>
+ #endif
++#include "chipdrivers.h"
+ #include "flash.h"
+ #include "flashchips.h"
+ #include "programmer.h"
+@@ -1134,6 +1135,7 @@ int probe_flash(struct registered_master
+ {
+ 	const struct flashchip *chip;
+ 	enum chipbustype buses_common;
++	enum status_register_num SRn;
+ 	char *tmp;
+ 
+ 	for (chip = flashchips + startchip; chip && chip->name; chip++) {
+@@ -1245,9 +1247,17 @@ notfound:
+ 
+ 	/* Flash registers may more likely not be mapped if the chip was forced.
+ 	 * Lock info may be stored in registers, so avoid lock info printing. */
+-	if (!force)
+-		if (flash->chip->printlock)
++	if (!force) {
++		if (flash->chip->status_register) {
++			for (SRn = SR1; SRn <= top_status_register(flash); SRn++)
++				flash->chip->status_register->print(flash, SRn);
++			flash->chip->status_register->print_wp_mode(flash);
++			if (flash->chip->wp)
++				print_range_generic(flash);
++		} else if (flash->chip->printlock) {
+ 			flash->chip->printlock(flash);
++		}
++	}
+ 
+ 	/* Get out of the way for later runs. */
+ 	unmap_flash(flash);
+@@ -2197,7 +2207,9 @@ int prepare_flash_access(struct flashctx
+ 
+ 	/* Given the existence of read locks, we want to unlock for read,
+ 	   erase and write. */
+-	if (flash->chip->unlock)
++	if (flash->chip->wp)
++		flash->chip->wp->disable(flash);
++	else if (flash->chip->unlock)
+ 		flash->chip->unlock(flash);
+ 
+ 	flash->address_high_byte = -1;
+--- a/spi25.c
++++ b/spi25.c
+@@ -286,10 +286,16 @@ int probe_spi_at25f(struct flashctx *fla
+ 
+ static int spi_poll_wip(struct flashctx *const flash, const unsigned int poll_delay)
+ {
+-	/* FIXME: We can't tell if spi_read_status_register() failed. */
++	/* FIXME: We can't tell if reading status register(s) failed. */
+ 	/* FIXME: We don't time out. */
+-	while (spi_read_status_register(flash) & SPI_SR_WIP)
+-		programmer_delay(poll_delay);
++	// TODO(hatim): Switch to newer infrastructure completely after integration
++	if (flash->chip->status_register) {
++		while (flash->chip->status_register->read(flash, SR1) & SPI_SR_WIP)
++			programmer_delay(poll_delay);
++	} else {
++		while (spi_read_status_register(flash) & SPI_SR_WIP)
++			programmer_delay(poll_delay);
++	}
+ 	/* FIXME: Check the status register for errors. */
+ 	return 0;
+ }

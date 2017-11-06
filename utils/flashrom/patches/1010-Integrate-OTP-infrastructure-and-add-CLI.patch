@@ -1,0 +1,561 @@
+--- a/cli_classic.c
++++ b/cli_classic.c
+@@ -39,6 +39,11 @@ enum LONGOPT_RETURN_VALUES {
+ 	LONGOPT_WP_ENABLE,
+ 	LONGOPT_WP_DISABLE,
+ 	LONGOPT_SET_BP_RANGE,
++	LONGOPT_PRINT_OTP_STATUS,
++	LONGOPT_READ_OTP,
++	LONGOPT_WRITE_OTP,
++	LONGOPT_ERASE_OTP,
++	LONGOPT_LOCK_OTP,
+ };
+ 
+ static void cli_classic_usage(const char *name)
+@@ -54,7 +59,9 @@ static void cli_classic_usage(const char
+ 	       "\t\t [-n] [-N] [-f])]\n"
+ 	       "\t[-V[V[V]]] [-o <logfile>] [--print-status-reg] [--print-wp-status]\n"
+ 	       "\t[--wp-list] [--wp-enable[=<MODE>]] [--wp-disable]\n"
+-	       "\t[--wp-set-range start=<start>,len=<len>]\n\n", name);
++	       "\t[--wp-set-range start=<start>,len=<len>] [--print-otp-status]\n"
++	       "\t[--read-otp file=<file>[,reg=<region>]] [--erase-otp [reg=<region>]]\n"
++	       "\t[--write-otp file=<file>[,reg=<region>]] [--lock-otp [reg=<region>]]\n\n", name);
+ 
+ 	printf(" -h | --help                        print this help text\n"
+ 	       " -R | --version                     print version (release)\n"
+@@ -89,6 +96,14 @@ static void cli_classic_usage(const char
+ 	       "      --wp-disable                  disable any write protection of status register(s)\n"
+ 	       "      --wp-set-range start=<start>,len=<len>\n"
+ 	       "                                    set write protection range (see man page)\n"
++	       "      --print-otp-status            print OTP memory regions and lock status\n"
++	       "      --read-otp file=<file>[,reg=<region>]\n"
++	       "                                    read OTP memory <region> (defaults to 1)\n"
++	       "                                    and save to <file>\n"
++	       "      --write-otp file=<file>[,reg=<region>]\n"
++	       "                                    write <file> to OTP memory <region> (defaults to 1)\n"
++	       "      --erase-otp [reg=<region>]    erase OTP memory <region> (defaults to 1)\n"
++	       "      --lock-otp [reg=<region>]     lock OTP memory <region> (defaults to 1)\n"
+ 	       " -p | --programmer <name>[:<param>] specify the programmer device. One of\n");
+ 	list_programmers_linebreak(4, 80, 0);
+ 	printf(".\n\nYou can specify one of -h, -R, -L, "
+@@ -107,11 +122,11 @@ static void cli_classic_abort_usage(cons
+ 	exit(1);
+ }
+ 
+-static void cli_statreg_wp_support(struct flashctx *flash)
++static void cli_infra_support(struct flashctx *flash, char const *infra)
+ {
+-	msg_ginfo("flashrom does not (yet) support write protection for chip \"%s\".\n"
++	msg_ginfo("flashrom does not (yet) support %s infrastructure for chip \"%s\".\n"
+ 		  "You could add support and send the patch to flashrom@flashrom.org\n",
+-		  flash->chip->name);
++		  infra, flash->chip->name);
+ }
+ 
+ static void cli_classic_validate_singleop(int *operation_specified)
+@@ -148,6 +163,7 @@ int main(int argc, char *argv[])
+ 	int flash_name = 0, flash_size = 0;
+ 	int read_it = 0, write_it = 0, erase_it = 0, verify_it = 0, print_status_reg = 0;
+ 	int print_wp_status = 0, wp_list = 0, wp_enable = 0, wp_disable = 0, wp_set_range = 0;
++	int print_otp_status = 0, read_otp = 0, write_otp = 0, erase_otp = 0, lock_otp = 0;
+ 	int dont_verify_it = 0, dont_verify_all = 0, list_supported = 0, operation_specified = 0;
+ 	struct flashrom_layout *layout = NULL;
+ 	enum programmer prog = PROGRAMMER_INVALID;
+@@ -194,6 +210,11 @@ int main(int argc, char *argv[])
+ 		{"wp-enable",		optional_argument, NULL, LONGOPT_WP_ENABLE},
+ 		{"wp-disable",		0, NULL, LONGOPT_WP_DISABLE},
+ 		{"wp-set-range",	1, NULL, LONGOPT_SET_BP_RANGE},
++		{"print-otp-status",	0, NULL, LONGOPT_PRINT_OTP_STATUS},
++		{"read-otp",		1, NULL, LONGOPT_READ_OTP},
++		{"write-otp",		1, NULL, LONGOPT_WRITE_OTP},
++		{"erase-otp",		optional_argument, NULL, LONGOPT_ERASE_OTP},
++		{"lock-otp",		optional_argument, NULL, LONGOPT_LOCK_OTP},
+ 		{NULL,			0, NULL, 0},
+ 	};
+ 
+@@ -208,6 +229,10 @@ int main(int argc, char *argv[])
+ 	char *pparam = NULL;
+ 	char *wp_mode_opt = NULL;
+ 	char const *wp_set_range_opt = NULL;
++	char const *read_otp_opt = NULL;
++	char const *write_otp_opt = NULL;
++	char const *erase_otp_opt = NULL;
++	char const *lock_otp_opt = NULL;
+ 	struct layout_include_args *include_args = NULL;
+ 
+ 	flashrom_set_log_callback((flashrom_log_callback *)&flashrom_print_cb);
+@@ -404,8 +429,9 @@ int main(int argc, char *argv[])
+ 			break;
+ 		/* FIXME(hatim): For the following long options, not _all_
+ 		 * of them are mutually exclusive per se (like wp_set_range
+-		 * and wp_enable makes sense). There is scope for improvement
+-		 * here, but for now let's treat each one as separate operation. */
++		 * and wp_enable, or read_otp and lock_otp makes sense). There
++		 * is scope for improvement here, but for now let's treat each
++		 * one as separate operation. */
+ 		case LONGOPT_PRINT_STATUSREG:
+ 			if (++operation_specified > 1) {
+ 				fprintf(stderr, "More than one operation "
+@@ -457,6 +483,54 @@ int main(int argc, char *argv[])
+ 			wp_set_range_opt = strdup(optarg);
+ 			wp_set_range = 1;
+ 			break;
++		case LONGOPT_PRINT_OTP_STATUS:
++			if (++operation_specified > 1) {
++				fprintf(stderr, "More than one operation "
++					"specified. Aborting.\n");
++				cli_classic_abort_usage(NULL);
++			}
++			print_otp_status = 1;
++			break;
++		case LONGOPT_READ_OTP:
++			if (++operation_specified > 1) {
++				fprintf(stderr, "More than one operation "
++					"specified. Aborting.\n");
++				cli_classic_abort_usage(NULL);
++			}
++			read_otp_opt = strdup(optarg);
++			filename = extract_param(&read_otp_opt, "file", ",");
++			read_otp = 1;
++			break;
++		case LONGOPT_WRITE_OTP:
++			if (++operation_specified > 1) {
++				fprintf(stderr, "More than one operation "
++					"specified. Aborting.\n");
++				cli_classic_abort_usage(NULL);
++			}
++			write_otp_opt = strdup(optarg);
++			filename = extract_param(&write_otp_opt, "file", ",");
++			write_otp = 1;
++			break;
++		case LONGOPT_ERASE_OTP:
++			if (++operation_specified > 1) {
++				fprintf(stderr, "More than one operation "
++					"specified. Aborting.\n");
++				cli_classic_abort_usage(NULL);
++			}
++			erase_otp = 1;
++			if (optarg)
++				erase_otp_opt = strdup(optarg);
++			break;
++		case LONGOPT_LOCK_OTP:
++			if (++operation_specified > 1) {
++				fprintf(stderr, "More than one operation "
++					"specified. Aborting.\n");
++				cli_classic_abort_usage(NULL);
++			}
++			lock_otp = 1;
++			if (optarg)
++				lock_otp_opt = strdup(optarg);
++			break;
+ 		default:
+ 			cli_classic_abort_usage(NULL);
+ 			break;
+@@ -465,7 +539,7 @@ int main(int argc, char *argv[])
+ 
+ 	if (optind < argc)
+ 		cli_classic_abort_usage("Error: Extra parameter found.\n");
+-	if ((read_it | write_it | verify_it) && check_filename(filename, "image"))
++	if ((read_it | write_it | verify_it | read_otp | write_otp) && check_filename(filename, "image"))
+ 		cli_classic_abort_usage(NULL);
+ 	if (layoutfile && check_filename(layoutfile, "layout"))
+ 		cli_classic_abort_usage(NULL);
+@@ -639,7 +713,7 @@ int main(int argc, char *argv[])
+ 
+ 	fill_flash = &flashes[0];
+ 
+-	print_chip_support_status(fill_flash->chip);
++	print_chip_support_status(fill_flash);
+ 
+ 	unsigned int limitexceeded = count_max_decode_exceedings(fill_flash);
+ 	if (limitexceeded > 0 && !force) {
+@@ -658,7 +732,8 @@ int main(int argc, char *argv[])
+ 	}
+ 
+ 	if (!(read_it | write_it | verify_it | erase_it | flash_name | flash_size | print_status_reg |
+-	      print_wp_status | wp_list | wp_enable | wp_disable | wp_set_range)) {
++	      print_wp_status | wp_list | wp_enable | wp_disable | wp_set_range |
++	      print_otp_status | read_otp | write_otp | erase_otp | lock_otp)) {
+ 		msg_ginfo("No operations were specified.\n");
+ 		goto out_shutdown;
+ 	}
+@@ -736,7 +811,7 @@ int main(int argc, char *argv[])
+ 			if (fill_flash->chip->wp)
+ 				print_range_generic(fill_flash);
+ 		} else
+-			cli_statreg_wp_support(fill_flash);
++			cli_infra_support(fill_flash, "access protection");
+ 		goto out_shutdown;
+ 	}
+ 
+@@ -748,7 +823,7 @@ int main(int argc, char *argv[])
+ 			if (fill_flash->chip->wp)
+ 				print_range_generic(fill_flash);
+ 		} else
+-			cli_statreg_wp_support(fill_flash);
++			cli_infra_support(fill_flash, "access protection");
+ 		goto out_shutdown;
+ 	}
+ 
+@@ -759,7 +834,7 @@ int main(int argc, char *argv[])
+ 				  fill_flash->chip->name);
+ 			fill_flash->chip->wp->print_table(fill_flash);
+ 		} else
+-			cli_statreg_wp_support(fill_flash);
++			cli_infra_support(fill_flash, "access protection");
+ 		goto out_shutdown;
+ 	}
+ 
+@@ -768,7 +843,7 @@ int main(int argc, char *argv[])
+ 		if (fill_flash->chip->wp) {
+ 			ret = fill_flash->chip->wp->disable(fill_flash);
+ 		} else
+-			cli_statreg_wp_support(fill_flash);
++			cli_infra_support(fill_flash, "access protection");
+ 		goto out_shutdown;
+ 	}
+ 
+@@ -791,7 +866,7 @@ int main(int argc, char *argv[])
+ 			else
+ 				msg_ginfo("Protection successful!\n");
+ 		} else
+-			cli_statreg_wp_support(fill_flash);
++			cli_infra_support(fill_flash, "access protection");
+ 		goto out_shutdown;
+ 	}
+ 
+@@ -822,7 +897,171 @@ int main(int argc, char *argv[])
+ 			ret = !(wp_mode == fill_flash->chip->status_register->get_wp_mode(fill_flash));
+ 			msg_gerr("%s\n", ret ? "Failed" : "Success");
+ 		} else
+-			cli_statreg_wp_support(fill_flash);
++			cli_infra_support(fill_flash, "access protection");
++		goto out_shutdown;
++	}
++
++	if (print_otp_status) {
++		verbose_screen++;
++		if (fill_flash->chip->otp) {
++			msg_ginfo("OTP status -\n");
++			ret = fill_flash->chip->otp->print_status(fill_flash);
++		} else
++			cli_infra_support(fill_flash, "OTP");
++
++		goto out_shutdown;
++	}
++
++	if (read_otp) {
++		verbose_screen++;
++		if (fill_flash->chip->otp) {
++			char *otp_region_opt = extract_param(&read_otp_opt, "reg", ",");
++			enum otp_region otp_region = OTP_REG_1;
++			if (otp_region_opt) {
++				char *endptr = NULL;
++				// FIXME(hatim): Implement error-checking (?)
++				otp_region = (uint8_t)strtoul(otp_region_opt, &endptr, 0) - 1;
++				msg_gdbg("Using OTP region %s\n", otp_region_opt);
++			} else
++				msg_gdbg("OTP region not specified, using default region 1\n");
++
++			uint32_t len = fill_flash->chip->otp->region[otp_region].size;
++			uint8_t *buf = calloc(len, sizeof(uint8_t));
++			if (!buf) {
++				msg_gerr("Memory allocation failed\n");
++				ret = 1;
++				goto out_shutdown;
++			}
++			if (!fill_flash->chip->otp->read) {
++				msg_gerr("No OTP read function available for \"%s\"\n",
++					fill_flash->chip->name);
++				ret = 1;
++				free(buf);
++				goto out_shutdown;
++			}
++			msg_gdbg("Reading OTP memory...\n");
++			ret = fill_flash->chip->otp->read(fill_flash, buf, otp_region, 0x000000, len);
++			if (ret) {
++				msg_gerr("Reading OTP memory failed\n");
++				free(buf);
++				goto out_shutdown;
++			}
++			ret = write_buf_to_file(buf, len, filename);
++		} else
++			cli_infra_support(fill_flash, "OTP");
++
++		goto out_shutdown;
++	}
++
++	if (write_otp) {
++		verbose_screen++;
++		if (fill_flash->chip->otp) {
++			char *otp_region_opt = extract_param(&write_otp_opt, "reg", ",");
++			enum otp_region otp_region = OTP_REG_1;
++			if (otp_region_opt) {
++				char *endptr = NULL;
++				// FIXME(hatim): Implement error-checking (?)
++				otp_region = (uint8_t)strtoul(otp_region_opt, &endptr, 0) - 1;
++				msg_gdbg("Using OTP region %s\n", otp_region_opt);
++			} else
++				msg_gdbg("OTP region not specified, using default region 1\n");
++
++			uint32_t len = fill_flash->chip->otp->region[otp_region].size;
++			uint8_t *buf = calloc(len, sizeof(uint8_t));
++			if (!buf) {
++				msg_gerr("Memory allocation failed\n");
++				ret = 1;
++				goto out_shutdown;
++			}
++
++			ret = read_buf_from_file(buf, len, filename);
++			if (ret) {
++				msg_gerr("Error reading from file \"%s\", failed\n", filename);
++				free(buf);
++				goto out_shutdown;
++			}
++			msg_gdbg("Reading from file \"%s\" complete\n", filename);
++			if (!fill_flash->chip->otp->write) {
++				msg_gerr("No OTP write function available for \"%s\"\n",
++					fill_flash->chip->name);
++				ret = 1;
++				free(buf);
++				goto out_shutdown;
++			}
++
++			msg_gdbg("Erasing OTP memory...\n");
++			ret = fill_flash->chip->otp->erase(fill_flash, otp_region);
++			if (ret) {
++				msg_gerr("Erasing OTP memory failed\n");
++				free(buf);
++				goto out_shutdown;
++			}
++			msg_gdbg("Erasing OTP memory done\n");
++
++			msg_gdbg("Writing OTP memory...\n");
++			ret = fill_flash->chip->otp->write(fill_flash, buf, otp_region, 0x000000, len);
++			if (ret) {
++				msg_gerr("Writing OTP memory failed\n");
++				free(buf);
++				goto out_shutdown;
++			}
++			msg_gdbg("Writing OTP memory done\n");
++			// FIXME(hatim): Verify written contents
++		} else
++			cli_infra_support(fill_flash, "OTP");
++
++		goto out_shutdown;
++	}
++
++	if (erase_otp) {
++		verbose_screen++;
++		if (fill_flash->chip->otp) {
++			char *otp_region_opt = NULL;
++			enum otp_region otp_region = OTP_REG_1;
++			if (erase_otp_opt && (otp_region_opt = extract_param(&erase_otp_opt, "reg", ","))) {
++				char *endptr = NULL;
++				// FIXME(hatim): Implement error-checking (?)
++				otp_region = (uint8_t)strtoul(otp_region_opt, &endptr, 0) - 1;
++				msg_gdbg("Using OTP region %s\n", otp_region_opt);
++			} else
++				msg_gdbg("OTP region not specified, using default region 1\n");
++
++			msg_gdbg("Erasing OTP memory ...\n");
++			ret = fill_flash->chip->otp->erase(fill_flash, otp_region);
++			if (ret) {
++				msg_gerr("Erasing OTP memory failed\n");
++				goto out_shutdown;
++			}
++			msg_gdbg("Erasing OTP memory done\n");
++		} else
++			cli_infra_support(fill_flash, "OTP");
++
++		goto out_shutdown;
++	}
++
++	if (lock_otp) {
++		verbose_screen++;
++		if (fill_flash->chip->otp) {
++			char *otp_region_opt = NULL;
++			enum otp_region otp_region = OTP_REG_1;
++			if (lock_otp_opt && (otp_region_opt = extract_param(&lock_otp_opt, "reg", ","))) {
++				char *endptr = NULL;
++				// FIXME(hatim): Implement error-checking (?)
++				otp_region = (uint8_t)strtoul(otp_region_opt, &endptr, 0) - 1;
++				msg_gdbg("Using OTP region %s\n", otp_region_opt);
++			} else
++				msg_gdbg("OTP region not specified, using default region 1\n");
++
++			msg_gdbg("Trying to lock OTP memory...\n");
++			ret = fill_flash->chip->otp->lock(fill_flash, otp_region);
++			if (ret) {
++				msg_gerr("Failed to lock\n");
++				goto out_shutdown;
++			}
++			msg_gdbg("OTP memory locked\n");
++		} else
++			cli_infra_support(fill_flash, "OTP");
++
+ 		goto out_shutdown;
+ 	}
+ 
+--- a/cli_common.c
++++ b/cli_common.c
+@@ -20,50 +20,52 @@
+ #include <string.h>
+ #include "flash.h"
+ 
+-void print_chip_support_status(const struct flashchip *chip)
++void print_chip_support_status(struct flashctx *flash)
+ {
+-	if (chip->feature_bits & FEATURE_OTP) {
+-		msg_cdbg("This chip may contain one-time programmable memory. flashrom cannot read\n"
+-			 "and may never be able to write it, hence it may not be able to completely\n"
+-			 "clone the contents of this chip (see man page for details).\n");
++	if (flash->chip->otp) {
++		flash->chip->otp->print_status(flash);
++	} else if (flash->chip->feature_bits & FEATURE_OTP) {
++		msg_cdbg("This chip may contain one-time programmable memory. flashrom may be able\n"
++			 "to read, write, erase and/or lock it, if OTP infrastructure support is added.\n"
++			 "You could add support and send the patch to flashrom@flashrom.org\n");
+ 	}
+ 
+-	if ((chip->tested.erase == NA) && (chip->tested.write == NA)) {
++	if ((flash->chip->tested.erase == NA) && (flash->chip->tested.write == NA)) {
+ 		msg_cdbg("This chip's main memory can not be erased/written by design.\n");
+ 	}
+ 
+-	if ((chip->tested.probe == BAD) || (chip->tested.probe == NT) ||
+-	    (chip->tested.read == BAD)  || (chip->tested.read == NT) ||
+-	    (chip->tested.erase == BAD) || (chip->tested.erase == NT) ||
+-	    (chip->tested.write == BAD) || (chip->tested.write == NT)){
++	if ((flash->chip->tested.probe == BAD) || (flash->chip->tested.probe == NT) ||
++	    (flash->chip->tested.read == BAD)  || (flash->chip->tested.read == NT) ||
++	    (flash->chip->tested.erase == BAD) || (flash->chip->tested.erase == NT) ||
++	    (flash->chip->tested.write == BAD) || (flash->chip->tested.write == NT)){
+ 		msg_cinfo("===\n");
+-		if ((chip->tested.probe == BAD) ||
+-		    (chip->tested.read == BAD) ||
+-		    (chip->tested.erase == BAD) ||
+-		    (chip->tested.write == BAD)) {
++		if ((flash->chip->tested.probe == BAD) ||
++		    (flash->chip->tested.read == BAD) ||
++		    (flash->chip->tested.erase == BAD) ||
++		    (flash->chip->tested.write == BAD)) {
+ 			msg_cinfo("This flash part has status NOT WORKING for operations:");
+-			if (chip->tested.probe == BAD)
++			if (flash->chip->tested.probe == BAD)
+ 				msg_cinfo(" PROBE");
+-			if (chip->tested.read == BAD)
++			if (flash->chip->tested.read == BAD)
+ 				msg_cinfo(" READ");
+-			if (chip->tested.erase == BAD)
++			if (flash->chip->tested.erase == BAD)
+ 				msg_cinfo(" ERASE");
+-			if (chip->tested.write == BAD)
++			if (flash->chip->tested.write == BAD)
+ 				msg_cinfo(" WRITE");
+ 			msg_cinfo("\n");
+ 		}
+-		if ((chip->tested.probe == NT) ||
+-		    (chip->tested.read == NT) ||
+-		    (chip->tested.erase == NT) ||
+-		    (chip->tested.write == NT)) {
++		if ((flash->chip->tested.probe == NT) ||
++		    (flash->chip->tested.read == NT) ||
++		    (flash->chip->tested.erase == NT) ||
++		    (flash->chip->tested.write == NT)) {
+ 			msg_cinfo("This flash part has status UNTESTED for operations:");
+-			if (chip->tested.probe == NT)
++			if (flash->chip->tested.probe == NT)
+ 				msg_cinfo(" PROBE");
+-			if (chip->tested.read == NT)
++			if (flash->chip->tested.read == NT)
+ 				msg_cinfo(" READ");
+-			if (chip->tested.erase == NT)
++			if (flash->chip->tested.erase == NT)
+ 				msg_cinfo(" ERASE");
+-			if (chip->tested.write == NT)
++			if (flash->chip->tested.write == NT)
+ 				msg_cinfo(" WRITE");
+ 			msg_cinfo("\n");
+ 		}
+--- a/flash.h
++++ b/flash.h
+@@ -425,7 +425,7 @@ int do_verify(struct flashctx *, const c
+ #define ERROR_FLASHROM_LIMIT -201
+ 
+ /* cli_common.c */
+-void print_chip_support_status(const struct flashchip *chip);
++void print_chip_support_status(struct flashctx *flash);
+ 
+ /* cli_output.c */
+ extern enum flashrom_log_level verbose_screen;
+--- a/flashrom.8.tmpl
++++ b/flashrom.8.tmpl
+@@ -54,6 +54,9 @@ flashrom \- detect, read, write, verify
+          [\fB--print-status-reg\fR] [\fB--print-wp-status\fR]
+          [\fB--wp-list\fR] [\fB--wp-enable\fR[=<MODE>]]
+          [\fB--wp-disable\fR] [\fB--wp-set-range\fR start=<start>,len=<len>]
++         [\fB--print-otp-status\fR] [\fB--read-otp\fR file=<file>[,reg=<region>]]
++         [\fB--erase-otp\fR [reg=<region>]] [\fB--lock-otp\fR [reg=<region>]]
++         [\fB--write-otp\fR file=<file>[,reg=<region>]]
+ .SH DESCRIPTION
+ .B flashrom
+ is a utility for detecting, reading, writing, verifying and erasing flash
+@@ -193,10 +196,55 @@ will be applied after disabling.
+ .B "\-\-wp\-set\-range start=<start>,len=<len>"
+ Configure status register(s) to protect
+ .B "<len>"
+- kB of memory starting from address
+-.B "<start>".
++kB of memory starting from address
++.B "<start>."
+ Both start and len must be supplied. (Consider setting a write protection \
+ mode to prevent against configuration changes to status register(s).)
++
++.TP
++.B "\-\-print\-otp\-status"
++Print details of OTP memory region(s) for the chip along with corresponding \
++modifier bits
++.TP
++.B "\-\-read\-otp file=<file>[,reg=<reg>]"
++Read OTP memory region
++.B "<reg>"
++of the chip, and save to
++.B "<file>."
++If
++.B "<reg>"
++is ommitted, then it defaults to the first OTP region.
++.sp
++Example:
++.sp
++.B "  flashrom \-p prog \-c chip \-\-read\-otp file=read_otp.bin,reg=2"
++.sp
++will read the the 2nd OTP region and save it to
++.B "read_otp.bin."
++.TP
++.B "\-\-write\-otp file=<file>[,reg=<reg>]"
++Write
++.B "<file>"
++to OTP memory region
++.B "<reg>."
++of the chip. If
++.B "<reg>"
++is ommitted, then it defaults to the first OTP region.
++.TP
++.B "\-\-erase\-otp [reg=<reg>]"
++Erase OTP memory region
++.B "<reg>."
++of the chip. If
++.B "<reg>"
++is ommitted, then it defaults to the first OTP region.
++.TP
++.B "\-\-lock\-otp [reg=<reg>]"
++Lock OTP memory region
++.B "<reg>."
++of the chip against any future writes (Please be cautious, this action is \
++almost always irreversible). If
++.B "<reg>"
++is ommitted, then it defaults to the first OTP region.
+ .TP
+ .B "\-f, \-\-force"
+ Force one or more of the following actions:
