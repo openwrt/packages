@@ -1,22 +1,6 @@
 --- a/builders/make/compile.mk
 +++ b/builders/make/compile.mk
-@@ -43,17 +43,22 @@ FEATURES_DEFINES = \
- 	-DHAS_PROTOCOL_RTP \
- 	-DHAS_PROTOCOL_TS \
- 	-DHAS_PROTOCOL_VAR \
-+	-DHAS_PROTOCOL_CLI \
-+	-DHAS_PROTOCOL_HLS \
-+	-DHAS_PROTOCOL_RAWHTTPSTREAM \
- 	-DHAS_LUA \
- 	-DHAS_MEDIA_MP3 \
- 	-DHAS_MEDIA_MP4 \
--	-DHAS_MEDIA_FLV
-+	-DHAS_MEDIA_FLV \
-+	-DHAS_SYSLOG
-+	
- 
- 
- DEFINES = $(PLATFORM_DEFINES) $(FEATURES_DEFINES)
+@@ -58,7 +58,7 @@ DEFINES = $(PLATFORM_DEFINES) $(FEATURES
  
  #library paths
  SSL_INCLUDE=-I$(SSL_BASE)/include
@@ -25,7 +9,7 @@
  
  #lua
  LUA_INCLUDE=-I$(PROJECT_BASE_PATH)/3rdparty/lua-dev
-@@ -67,25 +72,25 @@ TINYXML_OBJS = $(TINYXML_SRCS:.cpp=.tiny
+@@ -72,25 +72,25 @@ TINYXML_OBJS = $(TINYXML_SRCS:.cpp=.tiny
  
  #common
  COMMON_INCLUDE=$(LUA_INCLUDE) $(TINYXML_INCLUDE) $(SSL_INCLUDE) -I$(PROJECT_BASE_PATH)/sources/common/include
