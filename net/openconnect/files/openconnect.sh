@@ -7,6 +7,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "server"
 	proto_config_add_int "port"
 	proto_config_add_int "mtu"
+	proto_config_add_int "juniper"
 	proto_config_add_string "username"
 	proto_config_add_string "serverhash"
 	proto_config_add_string "authgroup"
@@ -23,7 +24,7 @@ proto_openconnect_init_config() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port username serverhash authgroup password password2 token_mode token_secret os csd_wrapper mtu
+	json_get_vars server port username serverhash authgroup password password2 token_mode token_secret os csd_wrapper mtu juniper
 
 	grep -q tun /proc/modules || insmod tun
 	ifname="vpn-$config"
@@ -52,6 +53,11 @@ proto_openconnect_setup() {
 		append cmdline "--cafile /etc/openconnect/ca-vpn-$config.pem"
 		append cmdline "--no-system-trust"
 	}
+
+	if [ "${juniper:-0}" -gt 0 ]; then
+		append cmdline "--juniper"
+	fi
+
 	[ -n "$serverhash" ] && {
 		append cmdline " --servercert=$serverhash"
 		append cmdline "--no-system-trust"
