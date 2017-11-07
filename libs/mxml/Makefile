@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 PKG_MD5SUM:=8804c961a24500a95690ef287d150abe
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.msweet.org/files/project3/
+PKG_SOURCE_URL:=https://github.com/michaelrsweet/mxml/releases/download/release-$(PKG_VERSION)/
 PKG_FIXUP:=autoreconf
 
 PKG_MAINTAINER:=Espen Jürgensen <espenjurgensen+openwrt@gmail.com>
