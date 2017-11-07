@@ -1,0 +1,8 @@
+--- a/Makefile.PL	2017-05-30 14:58:53.000000000 -0600
++++ b/Makefile.PL	2017-11-07 13:40:05.172119764 -0700
+@@ -82,3 +82,5 @@ package
+ MY;
+ use File::ShareDir::Install qw(postamble);
+ }
++
++1;
