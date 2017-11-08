@@ -33,7 +33,7 @@ define Package/perl-inline-c
   CATEGORY:=Languages
   TITLE:=C Language Support for Inline
   URL:=http://search.cpan.org/dist/Inline-C/
-  DEPENDS:=perl +perl-inline +perl-parse-recdescent +perlbase-config +perlbase-cwd +perlbase-data +perlbase-essential +perlbase-extutils +perlbase-file +perlbase-if
+  DEPENDS:=perl +perl-inline +perl-parse-recdescent +perlbase-config +perlbase-cwd +perlbase-data +perlbase-essential +perlbase-file +perlbase-if
 endef
 
 define Host/Configure
