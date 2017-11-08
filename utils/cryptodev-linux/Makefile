@@ -40,6 +40,7 @@ define KernelPackage/cryptodev
   FILES:= \
 		$(PKG_BUILD_DIR)/cryptodev.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoLoad,50,$(CRYPTODEV_AUTOLOAD))
+  MODPARAMS.cryptodev:= cryptodev_verbosity=-1
 endef
 
 define KernelPackage/cryptodev/description
@@ -68,13 +69,6 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/crypto
 	$(CP) $(PKG_BUILD_DIR)/crypto/cryptodev.h $(STAGING_DIR)/usr/include/crypto/
-endef
-
-define KernelPackage/cryptodev/install
-	$(INSTALL_DIR) $(1)/etc/modules.d
-	$(INSTALL_DATA) ./files/cryptodev.modules $(1)/etc/modules.d/50-cryptodev
-	$(INSTALL_DIR) $(1)/lib/modules/$(LINUX_VERSION)
-	$(INSTALL_DIR) $(1)/usr/sbin
 endef
 
 $(eval $(call KernelPackage,cryptodev))
