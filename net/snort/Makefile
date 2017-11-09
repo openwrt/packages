@@ -12,7 +12,7 @@ PKG_VERSION:=2.9.7.2
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
+PKG_SOURCE_URL:=https://www.snort.org/downloads/archive/snort/ \
 	@SF/$(PKG_NAME)
 PKG_MD5SUM:=b01e9964827394c39194a0147bc15705
 
