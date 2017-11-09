@@ -28,7 +28,7 @@ define Package/lua-mosquitto
     CATEGORY:=Languages
     TITLE:=Lua-mosquitto
     DEPENDS:=+libmosquitto +lua
-    MAINTAINER:=Karl Palsson <karlp@remake.is>
+    MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
 
 define Package/lua-mosquitto/description
