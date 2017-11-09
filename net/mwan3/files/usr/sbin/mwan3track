@@ -21,7 +21,10 @@ if_down() {
 validate_track_method() {
 	case "$1" in
 		ping)
-			# Assume that ping is installed
+			which ping 1>/dev/null 2>&1 || {
+				$LOG warn "Missing ping. Please install iputils-ping package or enable ping util and recompile busybox."
+				return 1
+			}
 			;;
 		arping)
 			which arping 1>/dev/null 2>&1 || {
@@ -32,6 +35,10 @@ validate_track_method() {
 		httping)
 			which httping 1>/dev/null 2>&1 || {
 				$LOG warn "Missing httping. Please install httping package."
+				return 1
+			}
+			[ -n "$2" -a "$2" != "0.0.0.0" -a "$2" != "::" ] || {
+				$LOG warn "Cannot determine source IP for the interface which is required by httping."
 				return 1
 			}
 			;;
@@ -59,9 +66,14 @@ main() {
 
 	config_load mwan3
 	config_get track_method $1 track_method ping
-	validate_track_method $track_method || {
-		$LOG warn "Using ping to track interface $INTERFACE avaliability"
+	validate_track_method $track_method $SRC_IP || {
 		track_method=ping
+		if validate_track_method $track_method; then
+			$LOG warn "Using ping to track interface $INTERFACE avaliability"
+		else
+			$LOG err "No track method avaliable"
+			exit 1
+		fi
 	}
 	config_get reliability $1 reliability 1
 	config_get count $1 count 1

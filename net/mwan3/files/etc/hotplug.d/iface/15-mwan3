@@ -26,24 +26,20 @@ if [ "$ACTION" == "ifup" ]; then
 	if [ "$family" = "ipv4" ]; then
 		ubus call network.interface.${INTERFACE}_4 status &>/dev/null
 		if [ "$?" -eq "0" ]; then
-			network_get_gateway gateway ${INTERFACE}_4
 			network_get_ipaddr src_ip ${INTERFACE}_4
 		else
-			network_get_gateway gateway $INTERFACE
 			network_get_ipaddr src_ip ${INTERFACE}
 		fi
+		[ -n "$src_ip" ] || src_ip="0.0.0.0"
 	elif [ "$family" = "ipv6" ]; then
 		ubus call network.interface.${INTERFACE}_6 status &>/dev/null
 		if [ "$?" -eq "0" ]; then
-			network_get_gateway6 gateway ${INTERFACE}_6
 			network_get_ipaddr6 src_ip ${INTERFACE}_6
 		else
-			network_get_gateway6 gateway ${INTERFACE}
 			network_get_ipaddr6 src_ip ${INTERFACE}
 		fi
+		[ -n "$src_ip" ] || src_ip="::"
 	fi
-
-	[ -n "$gateway" ] || exit 9
 fi
 
 if [ "$initial_state" = "offline" ]; then
