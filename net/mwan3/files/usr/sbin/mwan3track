@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . /lib/functions.sh
+. /lib/mwan3/common.sh
 
 LOG="logger -t $(basename "$0")[$$] -p"
 INTERFACE=""
@@ -171,7 +172,7 @@ main() {
 		echo "${lost}" > /var/run/mwan3track/$1/LOST
 		echo "${score}" > /var/run/mwan3track/$1/SCORE
 		echo "${turn}" > /var/run/mwan3track/$1/TURN
-		echo "$(date +'%s')" > /var/run/mwan3track/$1/TIME
+		echo "$(get_uptime)" > /var/run/mwan3track/$1/TIME
 
 		host_up_count=0
 		sleep "${sleep_time}" &
