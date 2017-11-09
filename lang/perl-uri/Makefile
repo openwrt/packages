@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-uri
-PKG_VERSION:=1.67
+PKG_VERSION:=1.71
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
 PKG_SOURCE:=URI-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=d0ef53b6c63bcc02ba55f405c30741e3
+PKG_MD5SUM:=247c3da29a794f72730e01aa5a715daf
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
