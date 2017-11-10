@@ -11,8 +11,8 @@ list)
 call)
 	case "$2" in
 	list)
-		json_init;
-		json_add_object "packagelist"
+		json_init
+		json_add_array "packagelist"
 
 		if [ -f /usr/lib/opkg/status ]; then
 			while read var p1 p2 p3; do
@@ -27,12 +27,15 @@ call)
 					-a "$p1" = "install" \
 					-a "$p2" = "user" \
 					-a "$p3" = "installed" ]; then
-						json_add_string "$pkg" "$version";
+						json_add_object "package"
+						json_add_string "name" "$pkg"
+						json_add_string "version" "$version"
+						json_close_object
 				fi
 			done < /usr/lib/opkg/status
 		fi
 
-		json_close_object
+		json_close_array
 		json_dump
 		;;
 	esac
