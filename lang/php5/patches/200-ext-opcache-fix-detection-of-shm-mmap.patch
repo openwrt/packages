@@ -18,8 +18,6 @@ Signed-off-by: Michael Heimpold <mhei@heimpold.de>
  ext/opcache/config.m4 |  122 ++-----------------------------------------------
  1 file changed, 4 insertions(+), 118 deletions(-)
 
-diff --git a/ext/opcache/config.m4 b/ext/opcache/config.m4
-index b7e4835..7b6c0aa 100644
 --- a/ext/opcache/config.m4
 +++ b/ext/opcache/config.m4
 @@ -11,127 +11,13 @@ if test "$PHP_OPCACHE" != "no"; then
@@ -154,6 +152,3 @@ index b7e4835..7b6c0aa 100644
  
    AC_MSG_CHECKING(for mmap() using /dev/zero shared memory support)
    AC_TRY_RUN([
--- 
-1.7.10.4
-
