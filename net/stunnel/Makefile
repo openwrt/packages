@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stunnel
 PKG_VERSION:=5.44
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
@@ -46,6 +46,7 @@ endef
 
 define Package/stunnel/conffiles
 /etc/stunnel/stunnel.conf
+/etc/config/stunnel
 endef
 
 
@@ -77,6 +78,8 @@ define Package/stunnel/install
 	$(INSTALL_CONF) ./files/stunnel.conf $(1)/etc/stunnel/stunnel.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/stunnel.init $(1)/etc/init.d/stunnel
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/stunnel.uci $(1)/etc/config/stunnel
 endef
 
 $(eval $(call BuildPackage,stunnel))
