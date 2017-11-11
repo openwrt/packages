@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.1.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -457,6 +457,7 @@ CONFIGURE_VARS+= \
 
 define Package/php7/conffiles
 /etc/php.ini
+/etc/php7/
 endef
 
 define Package/php7/install
@@ -498,6 +499,12 @@ define Package/php7-fpm/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/php7-fpm.init $(1)/etc/init.d/php7-fpm
+endef
+
+define Package/php7-fpm/conffiles
+/etc/php7-fpm.conf
+/etc/php7-fpm.d/
+/etc/config/php7-fpm
 endef
 
 define Build/Prepare
