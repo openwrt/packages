@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sshfs
-PKG_VERSION:=2.5
+PKG_VERSION:=2.10
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Zoltan HERPAI <wigyori@uid0.hu>
 
-PKG_SOURCE:=$(PKG_NAME)-fuse-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/fuse
-PKG_MD5SUM:=17494910db8383a366b1301e5f5148a9
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/libfuse/sshfs/releases/download/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MD5SUM:=c99a1bcf3934d45e4a6342113669df4b
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-fuse-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
