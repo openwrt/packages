@@ -683,17 +683,15 @@ int main(int args, char *argv[]) {
 	blobmsg_buf_init(&imgbuf);
 	blobmsg_buf_init(&upgbuf);
 
-	if (!ubus_lookup_id(ctx, "system", &id)) {
-		ubus_invoke(ctx, id, "board", NULL, board_cb, &checkbuf, 3000);
-	} else {
+	if (ubus_lookup_id(ctx, "system", &id) ||
+	    ubus_invoke(ctx, id, "board", NULL, board_cb, &checkbuf, 3000)) {
 		fprintf(stderr, "cannot request board info from procd\n");
 		rc=-1;
 		goto freebufs;
 	}
 
-	if (!ubus_lookup_id(ctx, "rpc-sys", &id)) {
-		ubus_invoke(ctx, id, "packagelist", NULL, pkglist_cb, &checkbuf, 3000);
-	} else {
+	if (ubus_lookup_id(ctx, "rpc-sys", &id) ||
+	    ubus_invoke(ctx, id, "packagelist", NULL, pkglist_cb, &checkbuf, 3000)) {
 		fprintf(stderr, "cannot request packagelist from rpcd\n");
 		rc=-1;
 		goto freeboard;
@@ -741,10 +739,7 @@ int main(int args, char *argv[]) {
 		}
 
 		if (retry || queuepos) {
-			if (imgbuf.buf)
-				free(imgbuf.buf);
-
-			memset(&imgbuf, '\0', sizeof(imgbuf));
+			blob_buf_free(&imgbuf);
 			blobmsg_buf_init(&imgbuf);
 			sleep(3);
 		}
@@ -828,19 +823,11 @@ freeboard:
 	free(version);
 	free(revision);
 
-
 freebufs:
-	if (checkbuf.buf)
-		free(checkbuf.buf);
-
-	if (reqbuf.buf)
-		free(reqbuf.buf);
-
-	if (imgbuf.buf)
-		free(imgbuf.buf);
-
-	if (upgbuf.buf)
-		free(upgbuf.buf);
+	blob_buf_free(&checkbuf);
+	blob_buf_free(&reqbuf);
+	blob_buf_free(&imgbuf);
+	blob_buf_free(&upgbuf);
 
 freessl:
 	if (ssl_ctx)
