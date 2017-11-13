@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=attendedsysupgrade-common
 PKG_VERSION:=0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -16,7 +16,7 @@ define Package/attendedsysupgrade-common
   CATEGORY:=Base system
   TITLE:=Common files neede by attendedsysupgrade packages
   MAINTAINER:=Paul Spooren <paul@spooren.de>
-  DEPENDS:=rpcd +rpcd-mod-rpcsys +rpcd-mod-packagelist
+  DEPENDS:=+rpcd +rpcd-mod-rpcsys
 endef
 
 define Package/attendedsysupgrade-common/description
