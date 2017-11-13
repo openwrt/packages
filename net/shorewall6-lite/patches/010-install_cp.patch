@@ -1,10 +1,10 @@
-Index: shorewall6-lite-5.0.15.2/install.sh
+Index: shorewall6-lite-5.1.7.2/install.sh
 ===================================================================
---- shorewall6-lite-5.0.15.2.orig/install.sh	2016-12-20 18:41:05.000000000 +0100
-+++ shorewall6-lite-5.0.15.2/install.sh	2017-01-04 12:01:31.018724737 +0100
-@@ -549,7 +549,7 @@
- 	chmod 755 ${DESTDIR}${SYSCONFDIR}
-     fi
+--- shorewall6-lite-5.1.7.2.orig/install.sh	2017-10-11 15:34:43.612217209 +0200
++++ shorewall6-lite-5.1.7.2/install.sh	2017-10-11 15:34:43.608217428 +0200
+@@ -492,7 +492,7 @@
+ if [ -n "$SYSCONFFILE" -a -f "$SYSCONFFILE" -a ! -f ${DESTDIR}${SYSCONFDIR}/${PRODUCT} ]; then
+     [ ${DESTDIR} ] && make_parent_directory ${DESTDIR}${SYSCONFDIR} 0755
  
 -    install_file ${SYSCONFFILE} ${DESTDIR}${SYSCONFDIR}/${PRODUCT} 0640
 +    install_file ${SYSCONFFILE} ${DESTDIR}${SYSCONFDIR}/${PRODUCT}/${SYSCONFFILE} 0640
