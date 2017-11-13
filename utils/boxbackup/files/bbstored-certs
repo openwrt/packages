@@ -1,0 +1,319 @@
+#!/bin/sh
+#
+# A port of bbstored-certs Perl script to Bash.
+# Copyright (C) 2017 Val Kulkov <val.kulkov@gmail.com>
+
+cert_dir=""
+root_sign_period=""
+sign_period=""
+
+cmd_init_create_root() {
+	entity=$1
+
+	cert="${cert_dir}/roots/${entity}CA.pem"
+	serial="${cert_dir}/roots/${entity}CA.srl"
+	key="${cert_dir}/keys/${entity}RootKey.pem"
+	csr="${cert_dir}/keys/${entity}RootCSR.pem"
+
+	# generate key
+	openssl genrsa -out $key 2048
+	if [ ! -s "$key" ]; then
+		echo "Couldn't generate private key."
+		exit 1
+	fi
+	
+	# make CSR
+	cat <<__E | openssl req -new -key $key -sha1 -out $csr
+.
+.
+.
+.
+.
+Backup system $entity root
+.
+.
+.
+
+__E
+	echo ""
+	if [ ! -s "$csr" ]; then
+		echo "Certificate request wasn't created."
+		exit 1
+	fi
+	
+	# sign it to make a self-signed root CA key
+	openssl x509 -req -in "$csr" -sha1 -extensions v3_ca -signkey "$key" -out "$cert" -days "$root_sign_period"
+	if [ ! -s "$cert" ]; then
+		echo "Couldn't generate root certificate."
+		exit 1
+	fi
+	
+	# write the initial serial number
+	echo "00" > "$serial"
+	if [ ! -s "$serial" ]; then
+		echo "Can't open $serial for writing"
+		exit 1
+	fi
+}
+
+get_csr_common_name() {
+	csr=$1
+	
+	subject=$(openssl req -text -in "$csr" | sed 's/Subject:.*CN\s\?=\s\?\([-\.[:alnum:]]\+\)/\1/p;d')
+	if [ "$subject" = '' ]; then
+		echo "No subject found in CSR $csr"
+	fi
+	echo $subject
+}
+
+get_confirmation() {
+	read -p "$1" line
+	lcline=$(echo $line | tr '[A-Z]' '[a-z]')
+	if [ "$lcline" != "yes" ]; then
+		echo "CANCELLED"
+	fi
+}
+
+cmd_sign() {
+	csr=$1
+	
+	if [ ! -s "$csr" ]; then
+		echo "$csr does not exist"
+		exit 1
+	fi
+	
+	# get the common name specified in this certificate
+	common_name=$(get_csr_common_name "$csr")
+	
+	# look OK?
+	acc=$(echo $common_name | sed 's/^BACKUP-\([[:alnum:]]\+\)$/\1/')
+	if [ -z "$acc" ]; then
+		echo "The certificate presented does not appear to be a backup client certificate"
+		exit 1
+	fi
+	
+	# check against filename
+	certno=$(basename $csr | sed 's/-.*//g' )
+	if [ "$certno" != "$acc" ]; then
+		echo "Certificate request filename does not match name in certificate ($common_name)"
+		exit 1
+	fi
+		
+	cat <<__E
+
+This certificate is for backup account
+
+   $acc
+
+Ensure this matches the account number you are expecting. The filename is
+
+   $csr
+
+which should include this account number, and additionally, you should check
+that you received it from the right person.
+
+Signing the wrong certificate compromises the security of your backup system.
+
+__E
+
+	retval=$(get_confirmation "Would you like to sign this certificate? (type 'yes' to confirm) ")
+	if [ "$retval" = "CANCELLED" ]; then
+		echo $retval
+		exit
+	fi
+
+	# out certificate
+	out_cert="${cert_dir}/clients/${acc}-cert.pem"
+
+	# sign it!
+	openssl x509 -req -in "$csr" -sha1 -extensions usr_crt -CA "${cert_dir}/roots/clientCA.pem" -CAkey "${cert_dir}/keys/clientRootKey.pem" -out "$out_cert" -days "$sign_period"
+	if [ $? -ne 0 ]; then
+		echo "Signing failed"
+		exit 1
+	fi
+	
+	# tell user what to do next
+	cat <<__E
+
+
+Certificate signed.
+
+Send the files
+
+   $out_cert
+   $cert_dir/roots/serverCA.pem
+
+to the client.
+
+__E
+}
+
+
+cmd_init() {
+	cert_dir=$1
+	# create directories
+	mkdir -p -m 0700 "${cert_dir}/roots" \
+		&& mkdir -m 0700 "${cert_dir}/keys" \
+		&& mkdir -m 0700 "${cert_dir}/servers" \
+		&& mkdir -m 0700 "${cert_dir}/clients" \
+		|| ( echo "Failed to create directory structure"; exit 1 )
+
+	# create root keys and certrs
+	cmd_init_create_root 'client'
+	cmd_init_create_root 'server'
+}
+
+
+cmd_sign_server() {
+	csr=$1
+
+	if [ ! -s "$csr" ]; then
+		echo "$csr does not exist"
+		exit 1
+	fi
+	
+	# get the common name specified in this certificate
+	common_name=$(get_csr_common_name "$csr")
+	
+	# look OK?
+	cncheck=$(echo $common_name | sed 's/[-\.[:alnum:]]//g')
+	if [ -n "$cncheck" ]; then
+		echo "Invalid server name"
+		exit 1
+	fi
+	cat <<__E
+
+This certificate is for backup server
+
+   $common_name
+
+Signing the wrong certificate compromises the security of your backup system.
+
+__E
+
+	retval=$(get_confirmation "Would you like to sign this certificate? (type 'yes' to confirm) ")
+	if [ "$retval" = "CANCELLED" ]; then
+		echo $retval
+		exit
+	fi
+
+	# out certificate
+	out_cert="${cert_dir}/servers/${common_name}-cert.pem"
+
+	# sign it!
+	openssl x509 -req -in "$csr" -sha1 -extensions usr_crt -CA "${cert_dir}/roots/serverCA.pem" -CAkey "${cert_dir}/keys/serverRootKey.pem" -out "$out_cert" -days "$sign_period"
+	if [ $? -ne 0 ]; then
+		echo "Signing failed"
+		exit 1
+	fi
+	
+	# tell user what to do next
+	cat <<__E
+
+
+Certificate signed.
+
+Install the files
+
+   $out_cert
+   $cert_dir/roots/clientCA.pem
+
+on the server.
+
+__E
+}
+
+
+# validity period for root certificates -- default is 2038, the best we can do for now
+root_sign_period=$(( ( 2**31 - $(date +%s) ) / 86400 ))
+
+# but less so for client certificates
+sign_period='5000'
+if [ $sign_period -gt $root_sign_period ]; then
+	sign_period=$root_sign_period
+fi
+
+# check and get command line parameters
+if [ $# -eq 0 ]; then
+	cat <<__E
+
+bbstored certificates utility.
+
+Bad command line parameters.
+Usage:
+	bbstored-certs certs-dir command [arguments]
+
+certs-dir is the directory holding the root keys and certificates for the backup system
+command is the action to perform, taking parameters.
+
+Commands are
+
+	init
+		-- generate initial root certificates (certs-dir must not already exist)
+	sign path-to-certificate
+		-- sign a client certificate
+	sign-server path-to-certificate
+		-- sign a server certificate
+
+Signing requires confirmation that the certificate is correct and should be signed.
+
+__E
+	exit 1
+fi
+
+# check for OPENSSL_CONF environment var being set
+if [ -n "$OPENSSL_CONF" ]; then
+	cat <<__E
+
+---------------------------------------
+
+WARNING:
+    You have the OPENSSL_CONF environment variable set.
+    Use of non-standard openssl configs may cause problems.
+
+---------------------------------------
+
+__E
+fi
+
+# directory structure:
+#
+# roots/
+#	clientCA.pem -- root certificate for client (used on server)
+#	serverCA.pem -- root certificate for servers (used on clients)
+# keys/
+#   clientRootKey.pem -- root key for clients
+#   serverRootKey.pem -- root key for servers
+# servers/
+#   hostname.pem -- certificate for server 'hostname'
+# clients/
+#   account.pem -- certficiate for account 'account' (ID in hex)
+#
+
+
+# check parameters
+cert_dir=$1 && shift
+command=$1 && shift
+args=$@
+
+# check directory exists
+if [ "$command" != 'init' ]; then
+	if [ ! -d "$cert_dir" ]; then
+		echo "$cert_dir does not exist"
+		exit 1
+	fi
+fi
+
+# run command
+if [ "$command" = 'init' ]; then
+	cmd_init "$cert_dir"
+elif [ "$command" = 'sign' ]; then
+	cmd_sign $@
+elif [ "$command" = 'sign-server' ]; then
+	cmd_sign_server $@
+else
+	echo "Unknown command $command"
+	exit 1
+fi
+
+

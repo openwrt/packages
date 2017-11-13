@@ -1,0 +1,647 @@
+#!/bin/sh
+#
+# A port of bbackupd-config Perl script to Bash.
+# Copyright (C) 2017 Val Kulkov <val.kulkov@gmail.com>
+
+# should be running # should be running as root
+if [ $(id -u) != "0" ]; then
+	echo ""
+	echo "WARNING: this should be run as root"
+	echo "" ; echo ""
+fi
+
+error_print_usage() {
+	cat <<__E
+
+Setup bbackupd config utility.
+
+Bad command line parameters.
+Usage:
+    bbackupd-config config-dir backup-mode account-num server-hostname
+        working-dir [backup directories]
+
+Parameters:
+    config-dir          is usually /etc/boxbackup
+    backup-mode         is lazy or snapshot:
+        lazy mode       runs continously, uploading files over a specified age
+        snapshot mode   uploads a snapshot of the filesystem when instructed
+                        explicitly, using bbackupctl sync
+    account-num (hexdecimal) is supplied by the server administrator
+    server-hostname     is supplied by the server administrator
+    working-dir         is usually /var/bbackupd
+    backup directories  is list of directories to back up
+
+__E
+	if [ -n "$1" ]; then
+		echo "=========" && echo "ERROR:"
+		echo $1
+		echo "" && echo ""
+	fi
+}
+
+# check and get command line parameters
+if [ $# -lt 6 ]; then
+	error_print_usage
+	exit 1
+fi
+
+# check for OPENSSL_CONF environment var being set
+if [ -n "$OPENSSL_CONF" ]; then
+	cat <<__E
+
+---------------------------------------
+
+WARNING:
+    You have the OPENSSL_CONF environment variable set.
+    Use of non-standard openssl configs may cause problems.
+
+---------------------------------------
+
+__E
+fi
+
+# default locations
+default_config_location='/etc/boxbackup/bbackupd.conf'
+
+# command line parameters
+config_dir=$1 && shift
+backup_mode=$1 && shift
+account_num=$1 && shift
+server=$1 && shift
+working_dir=$1 && shift
+
+# check backup mode is valid
+if [ "$backup_mode" != 'lazy' -a "$backup_mode" != 'snapshot' ]; then
+	error_print_usage "ERROR: backup mode must be 'lazy' or 'snapshot'"
+	exit 1
+fi
+
+# check server exists
+if [ $(nslookup "$server" | awk -F': ' 'NR==6 { print $2 } ') = "" ]; then
+	echo "Backup server specified as '$server', but it could not found."
+	echo "(A test DNS lookup failed -- check arguments)"
+fi
+
+echo "$working_dir" | grep -q '^/'
+if [ $? -ne 0 ]; then
+	echo "Working directory $working_dir is not specified as an absolute path"
+	exit 1
+fi
+
+# ssl stuff
+private_key="${config_dir}/bbackupd/${account_num}-key.pem"
+certificate_request="${config_dir}/bbackupd/${account_num}-csr.pem"
+certificate="${config_dir}/bbackupd/${account_num}-cert.pem"
+ca_root_cert="${config_dir}/bbackupd/serverCA.pem"
+
+# encryption keys
+enc_key_file="${config_dir}/bbackupd/${account_num}-FileEncKeys.raw"
+
+# other files
+config_file="${config_dir}/bbackupd.conf"
+notify_script="${config_dir}/bbackupd/NotifySysadmin.sh"
+
+# ask user to confirm overwriting an existing config file
+if [ -s "$config_file" ]; then
+	echo ""
+	read -p "$config_file already exists. Are you sure you want to overwrite it [y/N]? " ans
+	if [ -z "$ans" -o -n "$(echo "$ans" | grep '^[^yY]')" ]; then
+		echo ""
+		exit
+	fi
+fi
+
+# check that the directories are allowable
+for d in $@; do
+	if [ "$d" = '/' ]; then
+		echo "It is not recommended that you backup the root directory of your disc"
+		exit 1
+	fi
+	echo "$d" | grep -q '^/'
+	if [ $? -ne 0 ]; then
+		echo "Directory $d is not specified as an absolute path"
+		exit 1
+	fi
+	if [ ! -d "$d" ]; then
+		echo "$d is not a directory"
+		exit 1
+	fi
+done
+
+# summarise configuration
+cat <<__E
+
+Setup bbackupd config utility.
+
+Configuration:
+   Writing configuration file: $config_file
+   Account: $account_num
+   Server hostname: $server
+   Directories to back up:
+__E
+for d in $@; do
+	echo "      $d"
+done
+cat <<__E
+
+Note: If other file systems are mounted inside these directories, then
+they will NOT be backed up. You will have to create separate locations for
+any mounted filesystems inside your backup locations.
+
+__E
+
+# create directories
+if [ ! -d "$config_dir" ]; then
+	echo "Creating $config_dir..."
+	mkdir -p -m 0755 "$config_dir"
+	if [ $? -ne 0 ]; then
+		echo "Can't create $config_dir"
+		exit 1
+	fi
+fi
+
+if [ ! -d "${config_dir}/bbackupd" ]; then
+	echo "Creating ${config_dir}/bbackupd"
+	mkdir -p -m 0700 "${config_dir}/bbackupd"
+	if [ $? -ne 0 ]; then
+		echo "Can't create ${config_dir}/bbackupd"
+		exit 1
+	fi
+fi
+
+if [ ! -d "$working_dir" ]; then
+	echo "Creating $working_dir"
+	mkdir -p -m 0700 "$working_dir"
+	if [ $? -ne 0 ]; then
+		echo "Couldn't create $working_dir -- create this manually and try again"
+		exit 1
+	fi
+fi
+
+# generate the private key for the server
+if [ ! -f "$private_key" ]; then
+	echo "Generating private key..."
+	openssl genrsa -out "$private_key" 2048
+	if [ $? -ne 0 ]; then
+		echo "Couldn't generate private key."
+		exit 1
+	fi
+	chmod o-rwx "$private_key"
+fi
+
+# generate a certificate request
+if [ ! -f "$certificate_request" ]; then
+	cat <<__E | openssl req -new -key "$private_key" -sha1 -out "$certificate_request"
+.
+.
+.
+.
+.
+BACKUP-$account_num
+.
+.
+.
+
+__E
+	if [ $? -ne 0 ]; then
+		echo "Couldn't run openssl for CSR generation"
+		exit 1
+	fi
+	echo "" && echo ""
+	if [ ! -s "$certificate_request" ]; then
+		echo "Certificate request wasn't created."
+		exit 1
+	fi
+	chmod o-rwx "$certificate_request"
+fi
+
+# generate the key material for the file
+if [ ! -f "$enc_key_file" ]; then
+	echo "Generating keys for file backup"
+	openssl rand -out "$enc_key_file" 1024
+	if [ $? -ne 0 ]; then
+		echo "Couldn't generate file backup keys."
+		exit 1
+	fi
+	chmod o-rwx "$enc_key_file"
+fi
+
+# write the notify when store full script
+echo "Writing notify script $notify_script"
+
+hostname=$(uci get system.@system[0].hostname)
+current_username=$(id -un)
+sendmail=$(which sendmail)
+
+if [ "$sendmail" = "" ]; then
+	sendmail="sendmail"
+	echo "WARNING: sendmail executable is not found. E-mail notifications from"
+	echo "NotifySysadmin.sh will not be sent until sendmail or sendmail-like"
+	echo "executable is installed."
+fi
+
+cat <<__EOS >"$notify_script"
+#!/bin/sh
+
+# This script is run whenever bbackupd changes state or encounters a
+# problem which requires the system administrator to assist:
+#
+# 1) The store is full, and no more data can be uploaded.
+# 2) Some files or directories were not readable.
+# 3) A backup run starts or finishes.
+#
+# The default script emails the system administrator, except for backups
+# starting and stopping, where it does nothing.
+
+SUBJECT="BACKUP PROBLEM on host $hostname"
+SENDTO="$current_username"
+
+if [ "\$1" = "" ]; then
+	echo "Usage: \$0 <store-full|read-error|backup-ok|backup-error|backup-start|backup-finish>" >&2
+	exit 2
+elif [ "\$1" = store-full ]; then
+	$sendmail \$SENDTO <<EOM
+Subject: \$SUBJECT (store full)
+To: \$SENDTO
+
+
+The store account for $hostname is full.
+
+=============================
+FILES ARE NOT BEING BACKED UP
+=============================
+
+Please adjust the limits on account $account_num on server $server.
+
+EOM
+elif [ "\$1" = read-error ]; then
+$sendmail \$SENDTO <<EOM
+Subject: \$SUBJECT (read errors)
+To: \$SENDTO
+
+
+Errors occured reading some files or directories for backup on $hostname.
+
+===================================
+THESE FILES ARE NOT BEING BACKED UP
+===================================
+
+Check the logs on $hostname for the files and directories which caused
+these errors, and take appropriate action.
+
+Other files are being backed up.
+
+EOM
+elif [ "\$1" = backup-start -o "\$1" = backup-finish -o "\$1" = backup-ok ]; then
+	# do nothing by default
+	true
+else
+$sendmail \$SENDTO <<EOM
+Subject: \$SUBJECT (unknown)
+To: \$SENDTO
+
+
+The backup daemon on $hostname reported an unknown error (\$1).
+
+==========================
+FILES MAY NOT BE BACKED UP
+==========================
+
+Please check the logs on $hostname.
+
+EOM
+fi
+__EOS
+
+if [ ! -s "$notify_script" ]; then
+	echo "Cannot create $notify_script"
+	exit 1
+fi
+chmod 0700 "$notify_script"
+if [ $? -ne 0 ]; then
+	echo "Can't chmod $notify_script"
+	exit 1
+fi
+
+# write the configuration file
+echo "Writing configuration file $config_file"
+cat <<__E >"$config_file"
+
+StoreHostname = $server
+AccountNumber = 0x$account_num
+KeysFile = $enc_key_file
+
+CertificateFile = $certificate
+PrivateKeyFile = $private_key
+TrustedCAsFile = $ca_root_cert
+
+DataDirectory = $working_dir
+
+
+# This script is run whenever bbackupd changes state or encounters a
+# problem which requires the system administrator to assist:
+#
+# 1) The store is full, and no more data can be uploaded.
+# 2) Some files or directories were not readable.
+# 3) A backup run starts or finishes.
+#
+# The default script emails the system administrator, except for backups
+# starting and stopping, where it does nothing.
+
+NotifyScript = $notify_script
+
+__E
+if [ ! -s "$config_file" ]; then
+	echo "Cannot create config file $config_file"
+	exit 1
+fi
+
+if [ "$backup_mode" = "lazy" ]; then
+	# lazy mode configuration
+	cat <<__E >>"$config_file"
+
+# The number of seconds between backup runs under normal conditions. To avoid 
+# cycles of load on the server, this time is randomly adjusted by a small 
+# percentage as the daemon runs.
+
+UpdateStoreInterval = 3600
+
+
+# The minimum age of a file, in seconds, that will be uploaded. Avoids 
+# repeated uploads of a file which is constantly being modified.
+
+MinimumFileAge = 21600
+
+
+# If a file is modified repeated, it won't be uploaded immediately in case 
+# it's modified again, due to the MinimumFileAge specified above. However, it 
+# should be uploaded eventually even if it is being modified repeatedly. This 
+# is how long we should wait, in seconds, after first noticing a change. 
+# (86400 seconds = 1 day)
+
+MaxUploadWait = 86400
+
+# If the connection is idle for some time (e.g. over 10 minutes or 600
+# seconds, not sure exactly how long) then the server will give up and
+# disconnect the client, resulting in Connection Protocol_Timeout errors
+# on the server and TLSReadFailed or TLSWriteFailed errors on the client.
+# Also, some firewalls and NAT gateways will kill idle connections after
+# similar lengths of time. 
+#
+# This can happen for example when most files are backed up already and
+# don't need to be sent to the store again, while scanning a large
+# directory, or while calculating diffs of a large file. To avoid this,
+# KeepAliveTime specifies that special keep-alive messages should be sent
+# when the connection is otherwise idle for a certain length of time,
+# specified here in seconds.
+#
+# The default is that these messages are never sent, equivalent to setting
+# this option to zero, but we recommend that all users enable this.
+
+KeepAliveTime = 120
+
+__E
+else
+	# snapshot configuration
+	cat <<__E >>"$config_file"
+
+# This configuration file is written for snapshot mode.
+# You will need to run bbackupctl to instruct the daemon to upload files.
+
+AutomaticBackup = no
+UpdateStoreInterval = 0
+MinimumFileAge = 0
+MaxUploadWait = 0
+
+__E
+fi
+
+cat <<__E >>"$config_file"
+
+# Files above this size (in bytes) are tracked, and if they are renamed they will simply be
+# renamed on the server, rather than being uploaded again. (64k - 1)
+
+FileTrackingSizeThreshold = 65535
+
+
+# The daemon does "changes only" uploads for files above this size (in bytes).
+# Files less than it are uploaded whole without this extra processing.
+
+DiffingUploadSizeThreshold = 8192
+
+
+# The limit on how much time is spent diffing files, in seconds. Most files 
+# shouldn't take very long, but if you have really big files you can use this 
+# to limit the time spent diffing them.
+#
+# * Reduce if you are having problems with processor usage.
+#
+# * Increase if you have large files, and think the upload of changes is too 
+#   large and you want bbackupd to spend more time searching for unchanged
+#   blocks.
+
+MaximumDiffingTime = 120
+
+
+# Uncomment this line to see exactly what the daemon is going when it's connected to the server.
+
+# ExtendedLogging = yes
+
+
+# This specifies a program or script script which is run just before each 
+# sync, and ideally the full path to the interpreter. It will be run as the 
+# same user bbackupd is running as, usually root.
+#
+# The script must output (print) either "now" or a number to STDOUT (and a 
+# terminating newline, no quotes).
+#
+# If the result was "now", then the sync will happen. If it's a number, then 
+# no backup will happen for that number of seconds (bbackupd will pause) and 
+# then the script will be run again.
+#
+# Use this to temporarily stop bbackupd from syncronising or connecting to the 
+# store. For example, you could use this on a laptop to only backup when on a 
+# specific network, or when it has a working Internet connection.
+
+# SyncAllowScript = /path/to/intepreter/or/exe script-name parameters etc
+
+
+# Where the command socket is created in the filesystem.
+
+CommandSocket = $working_dir/bbackupd.sock
+
+# Uncomment the StoreObjectInfoFile to enable the experimental archiving
+# of the daemon's state (including client store marker and configuration)
+# between backup runs. This saves time and increases efficiency when
+# bbackupd is frequently stopped and started, since it removes the need
+# to rescan all directories on the remote server. However, it is new and
+# not yet heavily tested, so use with caution.
+
+# StoreObjectInfoFile = $working_dir/bbackupd.state
+
+Server
+{
+	PidFile = /var/run/bbackupd.pid
+}
+
+
+# BackupLocations specifies which locations on disc should be backed up. Each
+# directory is in the format
+# 
+# 	name
+# 	{
+# 		Path = /path/of/directory
+# 		(optional exclude directives)
+# 	}
+# 
+# 'name' is derived from the Path by the config script, but should merely be
+# unique.
+# 
+# The exclude directives are of the form
+# 
+# 	[Exclude|AlwaysInclude][File|Dir][|sRegex] = regex or full pathname
+# 
+# (The regex suffix is shown as 'sRegex' to make File or Dir plural)
+#
+# For example:
+# 
+# 	ExcludeDir = /home/guest-user
+# 	ExcludeFilesRegex = \.(mp3|MP3)\$
+# 	AlwaysIncludeFile = /home/username/veryimportant.mp3
+# 
+# This excludes the directory /home/guest-user from the backup along with all mp3
+# files, except one MP3 file in particular.
+# 
+# In general, Exclude excludes a file or directory, unless the directory is
+# explicitly mentioned in a AlwaysInclude directive. However, Box Backup
+# does NOT scan inside excluded directories and will never back up an
+# AlwaysIncluded file or directory inside an excluded directory or any
+# subdirectory thereof.
+#
+# To back up a directory inside an excluded directory, use a configuration
+# like this, to ensure that each directory in the path to the important
+# files is included, but none of their contents will be backed up except
+# the directories further down that path to the important one.
+#
+# ExcludeDirsRegex = ^/home/user/bigfiles/
+# ExcludeFilesRegex = ^/home/user/bigfiles/
+# AlwaysIncludeDir = /home/user/bigfiles/path
+# AlwaysIncludeDir = /home/user/bigfiles/path/to
+# AlwaysIncludeDir = /home/user/bigfiles/path/important
+# AlwaysIncludeDir = /home/user/bigfiles/path/important/files
+# AlwaysIncludeDirsRegex = ^/home/user/bigfiles/path/important/files/
+# AlwaysIncludeFilesRegex = ^/home/user/bigfiles/path/important/files/
+# 
+# If a directive ends in Regex, then it is a regular expression rather than a 
+# explicit full pathname. See
+# 
+# 	man 7 re_format
+# 
+# for the regex syntax on your platform.
+
+BackupLocations
+{
+__E
+
+# write the dirs to backup
+enc_key_file_bn=$(basename "$enc_key_file")
+for d in $@; do
+	d=$(echo $d | sed 's/\/$//')
+	n=$(echo $d | sed 's/^.//' | tr / -)
+	
+	cat <<__E >>"$config_file"
+	$n
+	{
+		Path = $d
+__E
+	for kf in $(find "$d" -name "$enc_key_file_bn"); do
+		cat <<__E
+
+NOTE: Keys file has been explicitly excluded from the backup:
+  $kf
+__E
+		cat <<__E >>"$config_file"
+		ExcludeFile = $kf
+__E
+	done
+	cat <<__E >>"$config_file"
+	}
+__E
+	
+done
+cat <<__E >>"$config_file"
+}
+
+
+__E
+
+
+# explain to the user what they need to do next
+if [ "$config_file" = "$default_config_location" ]; then
+	daemon_args=""
+	ctl_daemon_args=""
+else
+	daemon_args=" $config_file"
+	ctl_daemon_args=" -c $config_file"
+fi
+
+cat <<__E
+
+===================================================================
+
+bbackupd basic configuration complete.
+
+What you need to do now...
+
+1) Make a backup of $enc_key_file
+   This should be a secure offsite backup.
+   Without it, you cannot restore backups. Everything else can
+   be replaced. But this cannot.
+   KEEP IT IN A SAFE PLACE, OTHERWISE YOUR BACKUPS ARE USELESS.
+
+2) Send $certificate_request
+   to the administrator of the backup server, and ask for it to
+   be signed.
+
+3) The administrator will send you two files. Install them as
+      $certificate
+      $ca_root_cert
+   after checking their authenticity.
+
+4) You may wish to read the configuration file
+      $config_file
+   and adjust as appropriate.
+   
+   There are some notes in it on excluding files you do not
+   wish to be backed up.
+
+5) Review the script
+      $notify_script
+   and check that it will email the right person when the store
+   becomes full. This is important -- when the store is full, no
+   more files will be backed up. You want to know about this.
+
+6) Start the backup daemon with the command
+      /usr/sbin/bbackupd$daemon_args
+   in /etc/rc.local, or your local equivalent.
+   Note that bbackupd must run as root.
+__E
+if [ "$backup_mode" = "snapshot" ]; then
+	cat <<__E
+
+7) Set up a cron job to run whenever you want a snapshot of the
+   file system to be taken. Run the command
+      /usr/bin/bbackupctl -q$ctl_daemon_args sync
+__E
+fi
+cat <<__E
+
+===================================================================
+
+Remember to make a secure, offsite backup of your backup keys,
+as described in step 1 above. If you do not, you have no backups.
+
+__E
+
+chmod o-rwx "$config_file"
+

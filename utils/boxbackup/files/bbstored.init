@@ -1,0 +1,124 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=15
+USE_PROCD=1
+
+CONFDIR='/etc/boxbackup'
+PIDFILE='/var/run/bbstored/bbstored.pid'
+HOSTNAME=$(uci get system.@system[0].hostname)
+
+make_bbstored_conf() {
+	pidf=$(echo $PIDFILE | sed 's=/=\\/=g')
+	confd=$(echo $CONFDIR | sed 's=/=\\/=g')
+	cat "${CONFDIR}/bbstored.conf.bb" | \
+		sed "s/<hostname>/$HOSTNAME/" | \
+		sed "s/<pidfile>/$pidf/" | \
+		sed "s/<confdir>/$confd/" > \
+		"${CONFDIR}/bbstored.conf"
+	rm "${CONFDIR}/bbstored.conf.bb"
+	chmod o-rwx "${CONFDIR}/bbstored.conf"
+	# create blank accounts file
+	if [ ! -f "$accounts_file" ]; then
+		touch "${CONFDIR}/bbstored/accounts.txt"
+	fi
+}
+make_keys() {
+	CertificateFile="${CONFDIR}/bbstored/${HOSTNAME}-cert.pem"
+	CertificateReqFile="${CONFDIR}/bbstored/${HOSTNAME}-csr.pem"
+	PrivateKeyFile="${CONFDIR}/bbstored/${HOSTNAME}-key.pem"
+	TrustedCAsFile="${CONFDIR}/bbstored/clientCA.pem"
+	echo "Generating private key..."
+	openssl genrsa -out "$PrivateKeyFile" 2048
+	cat <<__CSRREQ | openssl req -new -key "$PrivateKeyFile" -sha1 -out "$CertificateReqFile"
+.
+.
+.
+.
+.
+$HOSTNAME
+.
+.
+.
+
+__CSRREQ
+	chmod o-wrx "$PrivateKeyFile" "${CONFDIR}/bbstored"
+	echo "" && echo ""
+
+	# make certs-dir and generate root keys and certificates for the backup system
+	CAdir="${CONFDIR}/ca"
+	if [ ! -d "$CAdir" ]; then
+		bbstored-certs "$CAdir" init
+		echo "yes" | bbstored-certs "$CAdir" sign-server "${CONFDIR}/bbstored/${HOSTNAME}-csr.pem"
+		cp "$CAdir/servers/${HOSTNAME}-cert.pem" "${CONFDIR}/bbstored/"
+		cp "$CAdir/roots/clientCA.pem" "${CONFDIR}/bbstored/"
+		chmod o-rwx "${CONFDIR}/bbstored"
+		chmod o-rwx "$CAdir"
+		echo "" && echo "" && echo ""
+		echo "*****************************************************************"
+		echo ""
+		echo "The Certification Authority (CA) has been set up in ${CAdir}."
+		echo "It is recommended that you move your CA to a machine that is neither"
+		echo "the client nor the server, preferably a machine without direct network"
+		echo "access in order to limit the impact of a server compromise."
+		echo "The contents of the CA directory control who can access your backup"
+		echo "store server."
+		echo ""
+		echo ""
+		echo "The certificate for backup server $HOSTNAME:"
+		echo "  $CAdir/servers/${HOSTNAME}-cert.pem"
+		echo "has been signed and copied to ${CONFDIR}/bbstored/."
+		echo ""
+		echo "The client root certificate:"
+		echo "  $CAdir/roots/clientCA.pem"
+		echo "has been copied to ${CONFDIR}/bbstored/."
+		echo "" && echo ""
+	fi
+}
+make_raidfile_conf() {
+	# detect mount point of an external storage device
+	mp=$(mount | grep '/dev/[hs]d' | head -1 | cut -f 3 -d ' ')
+	mp=${mp%/overlay}
+	mp="${mp}/bbstore"
+	if [ ! -d "$mp" ]; then
+		mkdir -p -m 0755 "$mp"
+	fi
+	chown bbstored.bbstored "$mp"
+
+	echo "bbstored will store backups in:"
+	echo "  $mp"
+	echo "Edit ${CONFDIR}/raidfile.conf to change this location."
+	echo "Note that the backup store directory must be writable to bbstored."
+	echo "" && echo ""
+	mp=$(echo $mp | sed 's=/=\\/=g')
+	cat "${CONFDIR}/raidfile.conf.bb" | \
+		sed "s/<mountpoint>/$mp/" > \
+		"${CONFDIR}/raidfile.conf"
+	rm "${CONFDIR}/raidfile.conf.bb"
+	chmod o-rwx "${CONFDIR}/raidfile.conf"
+}
+
+
+initial_config() {
+	make_bbstored_conf
+	make_keys
+	make_raidfile_conf
+	echo "You are now ready to set up accounts with bbstoreaccounts."
+	echo ""
+}
+
+
+start_service() {
+	[ -f "${CONFDIR}/bbstored.conf.bb" ] && initial_config
+	piddir=$(dirname $PIDFILE)
+	[ ! -d "$piddir" ] && mkdir -p "$piddir" && chown bbstored "$piddir"
+	chown -R bbstored "${CONFDIR}/bbstored" "${CONFDIR}/bbstored.conf" "${CONFDIR}/raidfile.conf"
+
+	procd_open_instance
+	procd_set_param command /usr/sbin/bbstored -F
+	procd_set_param user bbstored
+	procd_set_param respawn
+	procd_set_param file "${CONFDIR}/bbstored.conf"
+	procd_close_instance
+}
+

@@ -1,0 +1,12 @@
+--- a/lib/common/BoxPlatform.h
++++ b/lib/common/BoxPlatform.h
+@@ -68,6 +68,9 @@
+ 	#define PLATFORM_DISABLE_MEM_LEAK_TESTING
+ #endif
+ 
++// LEDE/OpenWrt platform: do not use the memleaks collection mechanism
++#define PLATFORM_DISABLE_MEM_LEAK_TESTING
++
+ // Darwin also has a weird idea of permissions and dates on symlinks:
+ // perms are fixed at creation time by your umask, and dates can't be
+ // changed. This breaks unit tests if we try to compare these things.

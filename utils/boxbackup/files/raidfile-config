@@ -1,0 +1,126 @@
+#!/bin/sh
+#
+# A port of raidfile-config Perl script to Bash.
+# Copyright (C) 2017 Val Kulkov <val.kulkov@gmail.com>
+
+
+# should be running as root
+if [ $(id -u) != "0" ]; then
+	echo ""
+	echo "WARNING: this should be run as root"
+	echo "" ; echo ""
+fi
+
+# check and get command line parameters
+if [ $# -ne 5 -a $# -ne 3 ]; then
+	cat <<__E
+
+Setup raidfile config utility.
+
+Bad command line parameters.
+Usage:
+    raidfile-config config-dir block-size dir0 [dir1 dir2]
+
+Parameters:
+    config-dir        is usually /etc/boxbackup
+    block-size        must be a power of two, and usually the block or
+                      fragment size of your file system
+    dir0, dir1, dir2  are the directories used as the root of the raid
+                      file system
+
+If only one directory is specified, then userland RAID is disabled.
+Specifying three directories enables it.
+
+__E
+	exit 1
+fi
+
+config_dir=$1 && shift
+block_size=$1 && shift
+conf="${config_dir}/raidfile.conf"
+
+dir1=$(echo $1 | sed 's/\/$//')
+if [ $# -eq 3 ]; then
+	dir2=$(echo $2 | sed 's/\/$//')
+	dir3=$(echo $3 | sed 's/\/$//')
+	# check dirs are unique
+	if [ "$dir1" = "$dir2" -o "$dir1" = "$dir3" -o "$dir2" = "$dir3" ]; then
+		echo "A directory cannot be used more than once in userland RAID."
+		exit 1
+	fi
+fi
+
+for d in $@; do
+	# dirs must exist
+	if [ ! -d "$d" ]; then
+		echo "$d does not exist or is not a directory."
+		exit 1
+	fi
+	
+	echo "$d" | grep -q '^/'
+	if [ $? -ne 0 ]; then
+		echo "$d must be an absolute path."
+		exit 1
+	fi
+done
+
+# check block size is OK
+block_size=$(echo $block_size | awk '{print int($1)}')
+if [ $block_size -le 0 ]; then
+	echo "Bad block size"
+	exit 1
+fi
+c=1
+while true; do
+	[ $c -eq $block_size ] && break
+	if [ $c -gt $block_size ]; then
+		echo "Block size $block_size is not a power of two"
+		exit 1
+	fi
+	c=$(( $c * 2 ))
+done
+
+# check that it doesn't already exist
+if [ -f "$conf" ]; then
+	echo "$conf already exists. Delete and try again"
+	exit 1
+fi
+
+# create directory
+if [ ! -d "$config_dir" ]; then
+	echo "Creating $config_dir..."
+	mkdir -m 0755 -p "$config_dir"
+	if [ $? -ne 0 ]; then
+		echo "Can't create $config_dir"
+		exit 1
+	fi
+fi
+
+# adjust if userland RAID is disabled
+if [ $# -eq 1 ]; then
+	dir2=$dir1
+	dir3=$dir1
+	echo "WARNING: userland RAID is disabled."
+fi
+
+# write the file
+cat <<__E >"$conf"
+
+disc0
+{
+	SetNumber = 0
+	BlockSize = $block_size
+	Dir0 = $dir1
+	Dir1 = $dir2
+	Dir2 = $dir3
+}
+
+__E
+
+if [ ! -s "$conf" ]; then
+	echo "Can't open $conf for writing"
+	exit 1
+fi
+
+echo "Config file written."
+

@@ -1,0 +1,29 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=15
+USE_PROCD=1
+
+CONFDIR='/etc/boxbackup'
+CONFFILE="${CONFDIR}/bbackupd.conf"
+
+start_service() {
+	if [ ! -d "${CONFDIR}/bbackupd" ]; then
+		mkdir -p -m 0750 "${CONFDIR}/bbackupd"
+	fi
+	if [ ! -s "$CONFFILE" ]; then
+		echo "Please configure bbackupd with bbackupd-config."
+		exit
+	fi
+
+	datadir=$(grep DataDirectory "$CONFFILE" | sed 's/.*= *//')
+	if [ ! -d "$datadir" ]; then
+		mkdir -p -m 0700 "$datadir"
+	fi
+	procd_open_instance
+	procd_set_param command /usr/sbin/bbackupd -F
+	procd_set_param respawn
+	procd_set_param file "$CONFFILE"
+	procd_close_instance
+}
+

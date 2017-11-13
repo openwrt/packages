@@ -1,0 +1,54 @@
+--- a/parcels.txt
++++ b/parcels.txt
+@@ -8,23 +8,6 @@ backup-client
+ 	bin bbackupquery
+ 	bin bbackupctl
+ 	script bin/bbackupd/bbackupd-config
+-	noinstall script COPYING.txt
+-	noinstall script LICENSE-GPL.txt
+-	noinstall script LICENSE-DUAL.txt
+-
+-	html bbackupd
+-	html bbackupquery
+-	html bbackupctl
+-	html bbackupd-config
+-	html bbackupd.conf
+-
+-EXCEPT:mingw32,mingw32msvc
+-	man bbackupd.8
+-	man bbackupquery.8
+-	man bbackupctl.8
+-	man bbackupd-config.8
+-	man bbackupd.conf.5
+-END-EXCEPT
+ 
+ ONLY:mingw32,mingw32msvc
+ 	script bin/bbackupd/win32/installer.iss 
+@@ -56,27 +39,6 @@ backup-server
+ 	script bin/bbstored/bbstored-certs
+ 	script bin/bbstored/bbstored-config
+ 	script lib/raidfile/raidfile-config
+-	noinstall script COPYING.txt
+-	noinstall script LICENSE-GPL.txt
+-	noinstall script LICENSE-DUAL.txt
+-
+-	html bbstored
+-	html bbstoreaccounts
+-	html bbstored-certs
+-	html bbstored-config
+-	html raidfile-config
+-	html bbstored.conf
+-	html raidfile.conf
+-
+-EXCEPT:mingw32,mingw32msvc
+-	man bbstored.8
+-	man bbstoreaccounts.8
+-	man bbstored-certs.8
+-	man bbstored-config.8
+-	man raidfile-config.8
+-	man bbstored.conf.5
+-	man raidfile.conf.5
+-END-EXCEPT
+ 
+ ONLY:SunOS
+ 	script contrib/solaris/bbstored-manifest.xml lib/svc/manifest
