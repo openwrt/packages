@@ -16,7 +16,8 @@ PKG_LICENSE:=Apache License
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://mirrors.ibiblio.org/apache/httpd/ \
-		http://apache.imsam.info/httpd/
+		http://apache.imsam.info/httpd/ \
+		https://archive.apache.org/dist/httpd/
 PKG_MD5SUM:=6c10e15835ab214464228a9beb7afba8
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)

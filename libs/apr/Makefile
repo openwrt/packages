@@ -12,7 +12,7 @@ PKG_VERSION:=1.5.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://mirrors.ibiblio.org/apache/apr/
+PKG_SOURCE_URL:=https://archive.apache.org/dist/apr/
 PKG_MD5SUM:=4e9769f3349fe11fc0a5e1b224c236aa
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=Apache License

@@ -12,7 +12,7 @@ PKG_VERSION:=0.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://releases.stm32flash.googlecode.com/git
+PKG_SOURCE_URL:=@SF/stm32flash
 PKG_MD5SUM:=ec9b5c8bae67f9a489786546d088bd14
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>

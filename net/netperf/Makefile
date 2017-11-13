@@ -13,8 +13,12 @@ PKG_RELEASE:=1
 PKG_LICENSE:=Custom
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.netperf.org/netperf/
-PKG_MD5SUM:=ad1c5342d61f297c417a93133aeba65a
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/HewlettPackard/netperf.git
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=f46c031
+
+#PKG_MD5SUM:=ad1c5342d61f297c417a93133aeba65a
 
 include $(INCLUDE_DIR)/package.mk
 
