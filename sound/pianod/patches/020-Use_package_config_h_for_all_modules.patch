@@ -19,7 +19,7 @@
  
 --- a/src/libwaitress/waitress.c
 +++ b/src/libwaitress/waitress.c
-@@ -918,14 +918,14 @@ static WaitressReturn_t WaitressSendRequ
+@@ -922,14 +922,14 @@ static WaitressReturn_t WaitressSendRequ
  	if (WaitressProxyEnabled (waith) && !waith->url.tls) {
  		snprintf (buf, WAITRESS_BUFFER_SIZE,
  			"%s http://%s:%s/%s HTTP/" WAITRESS_HTTP_VERSION "\r\n"

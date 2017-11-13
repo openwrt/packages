@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pianod
-PKG_VERSION:=173
-PKG_RELEASE:=3
+PKG_VERSION:=174
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://deviousfish.com/Downloads/pianod/
-PKG_MD5SUM:=be0cec19ea6df1c4bc6c1cac8e253445
+PKG_MD5SUM:=cca2143e4a5301dea8c0cb9fcbd20881
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
