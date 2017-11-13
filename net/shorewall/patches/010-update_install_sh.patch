@@ -1,0 +1,23 @@
+Index: shorewall-5.1.4.1/install.sh
+===================================================================
+--- shorewall-5.1.4.1.orig/install.sh	2017-05-26 17:39:12.000000000 +0200
++++ shorewall-5.1.4.1/install.sh	2017-06-06 19:26:46.152686822 +0200
+@@ -213,6 +213,8 @@
+ 		BUILD=suse
+ 	    elif [ -f /etc/arch-release ] ; then
+ 		BUILD=archlinux
++    	    elif [ -f ${CONFDIR}/openwrt_release ] ; then
++		BUILD=openwrt
+ 	    else
+ 		BUILD=linux
+ 	    fi
+@@ -264,6 +266,9 @@
+     archlinux)
+ 	echo "Installing ArchLinux-specific configuration..."
+ 	;;
++    openwrt)
++	echo "Installing OpenWRT-specific configuration..."
++	;;
+     linux)
+ 	;;
+     *)
