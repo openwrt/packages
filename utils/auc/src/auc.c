@@ -13,6 +13,7 @@
  */
 
 #define _GNU_SOURCE
+#define AUC_VERSION "0.0.3"
 
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -38,7 +39,7 @@
 #define APIOBJ_CHECK "api/upgrade-check"
 #define APIOBJ_REQUEST "api/upgrade-request"
 
-static const char *user_agent = "auc";
+static char user_agent[80];
 static char *serverurl;
 static struct ustream_ssl_ctx *ssl_ctx;
 static const struct ustream_ssl_ops *ssl_ops;
@@ -683,6 +684,10 @@ int main(int args, char *argv[]) {
 	blobmsg_buf_init(&imgbuf);
 	blobmsg_buf_init(&upgbuf);
 
+	snprintf(user_agent, sizeof(user_agent), "%s (%s)", argv[0], AUC_VERSION);
+
+	fprintf(stderr, "%s\n", user_agent);
+
 	if (ubus_lookup_id(ctx, "system", &id) ||
 	    ubus_invoke(ctx, id, "board", NULL, board_cb, &checkbuf, 3000)) {
 		fprintf(stderr, "cannot request board info from procd\n");
@@ -697,6 +702,11 @@ int main(int args, char *argv[]) {
 		goto freeboard;
 	}
 
+	fprintf(stderr, "running %s %s %s on %s/%s (%s)\n", distribution, version,
+		revision, target, subtarget, board_name);
+
+	fprintf(stderr, "checking %s for sysupgrade\n", serverurl);
+
 	blobmsg_add_string(&reqbuf, "distro", distribution);
 	blobmsg_add_string(&reqbuf, "target", target);
 	blobmsg_add_string(&reqbuf, "subtarget", subtarget);
@@ -704,7 +714,11 @@ int main(int args, char *argv[]) {
 
 	snprintf(url, sizeof(url), "%s/%s", serverurl, APIOBJ_CHECK);
 	uptodate=0;
-	server_request(url, &checkbuf, &reqbuf);
+	if (server_request(url, &checkbuf, &reqbuf)) {
+		fprintf(stderr, "failed to connect to server\n");
+		rc=-1;
+		goto freeboard;
+	};
 	blobmsg_parse(check_policy, __CHECK_MAX, tbc, blob_data(reqbuf.head), blob_len(reqbuf.head));
 	if (!tbc[CHECK_VERSION]) {
 		if (!uptodate) {
