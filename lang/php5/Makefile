@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=5.6.17
+PKG_VERSION:=5.6.32
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>, Michael Heimpold <mhei@heimpold.de>
@@ -18,7 +18,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_MD5SUM:=5e080e4b7df5db24f1b64313f8114bd8
+PKG_MD5SUM:=660cd5bc0f16eaad655b7815c757aadc
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -32,7 +32,7 @@ PHP5_MODULES = \
 	ftp \
 	gettext gd gmp \
 	hash \
-	iconv \
+	iconv intl \
 	json \
 	ldap \
 	mbstring mcrypt mysql mysqli \
@@ -98,6 +98,7 @@ endef
 
 define Package/php5-cli
   $(call Package/php5/Default)
+  DEPENDS+= +PACKAGE_php5-mod-intl:libstdcpp
   TITLE+= (CLI)
 endef
 
@@ -108,6 +109,7 @@ endef
 
 define Package/php5-cgi
   $(call Package/php5/Default)
+  DEPENDS+= +PACKAGE_php5-mod-intl:libstdcpp
   TITLE+= (CGI & FastCGI)
 endef
 
@@ -237,6 +239,12 @@ else
   CONFIGURE_ARGS+= --without-iconv
 endif
 
+ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-intl),)
+  CONFIGURE_ARGS+= --enable-intl=shared
+else
+  CONFIGURE_ARGS+= --disable-intl
+endif
+
 ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-json),)
   CONFIGURE_ARGS+= --enable-json=shared
 else
@@ -258,7 +266,7 @@ else
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php5-mod-mcrypt),)
-  CONFIGURE_ARGS+=  --with-mcrypt=shared,"$(STAGING_DIR)/usr"
+  CONFIGURE_ARGS+= --with-mcrypt=shared,"$(STAGING_DIR)/usr"
 else
   CONFIGURE_ARGS+= --without-mcrypt
 endif
@@ -543,6 +551,7 @@ $(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php5-mod-gettext:libintl-full
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php5-mod-gmp:libgmp))
 $(eval $(call BuildModule,hash,Hash))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
+$(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php5-mod-intl:icu))
 $(eval $(call BuildModule,json,JSON))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php5-mod-ldap:libopenldap +PACKAGE_php5-mod-ldap:libsasl2))
 $(eval $(call BuildModule,mbstring,MBString))
