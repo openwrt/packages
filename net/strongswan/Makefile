@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_HASH:=a14dc0d92634ed52730bfc76a76db30943a28ed3c65a560066e1e9f785827b13
@@ -42,6 +42,7 @@ PKG_MOD_AVAILABLE:= \
 	eap-mschapv2 \
 	eap-radius \
 	eap-tls \
+	ext-auth \
 	farp \
 	fips-prf \
 	forecast \
@@ -164,6 +165,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-eap-mschapv2 \
 	+strongswan-mod-eap-radius \
 	+strongswan-mod-eap-tls \
+	+strongswan-mod-ext-auth \	
 	+strongswan-mod-farp \
 	+strongswan-mod-fips-prf \
 	+strongswan-mod-forecast \
@@ -617,6 +619,7 @@ $(eval $(call BuildPlugin,eap-md5,EAP MD5 (CHAP) EAP auth,))
 $(eval $(call BuildPlugin,eap-mschapv2,EAP MS-CHAPv2 EAP auth,+strongswan-mod-md4 +strongswan-mod-des))
 $(eval $(call BuildPlugin,eap-radius,EAP RADIUS auth,))
 $(eval $(call BuildPlugin,eap-tls,EAP TLS auth,+strongswan-libtls))
+$(eval $(call BuildPlugin,ext-auth,External script authorization plugin,))
 $(eval $(call BuildPlugin,farp,fake arp respsonses,))
 $(eval $(call BuildPlugin,fips-prf,FIPS PRF crypto,+strongswan-mod-sha1))
 $(eval $(call BuildPlugin,forecast,forward multi/broadcast traffic,+kmod-ipt-conntrack-extra))
