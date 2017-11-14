@@ -14,7 +14,7 @@ PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 # XXX: reset PKG_RELEASE to 1 only if Python's pip & setuptools versions have also bumped;
 #      otherwise, keep bumping PKG_RELEASE
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
@@ -37,9 +37,11 @@ HOST_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
-PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_python-setuptools CONFIG_PACKAGE_python-pip
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_python-setuptools CONFIG_PACKAGE_python-pip \
+	CONFIG_PACKAGE_bluez-libs
 
-PKG_BUILD_DEPENDS:=python/host
+PKG_BUILD_DEPENDS:=python/host PACKAGE_bluez-libs:bluez-libs
 HOST_BUILD_DEPENDS:=bzip2/host expat/host
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -87,7 +89,7 @@ endef
 define Package/python-light
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) light installation
-  DEPENDS:=+python-base +libffi +libbz2
+  DEPENDS:=+python-base +libffi +libbz2 +PACKAGE_bluez-libs:bluez-libs
 endef
 
 define Package/python-light/description
