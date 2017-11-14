@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pkg-shadow.alioth.debian.org/releases
@@ -37,8 +37,7 @@ CONFIGURE_ARGS += \
 	--without-acl \
 	--without-attr \
 	--without-tcb \
-	--without-nscd \
-	--disable-subordinate-ids \
+	--without-nscd
 
 define Package/shadow/Default
   SECTION:=utils
