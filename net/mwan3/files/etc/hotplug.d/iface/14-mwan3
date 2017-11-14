@@ -28,7 +28,7 @@ src_ip=$(uci_get_state mwan3 globals src_ip)
 	ip addr del "${src_ip}/32" dev lo 1>/dev/null 2>&1
 }
 
-usleep 10000
+sleep 1
 
 [ "$ACTION" = "ifup" ] && {
 	network_get_ipaddr src_ip "${local_source}"
