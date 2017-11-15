@@ -121,5 +121,5 @@ endef
 $(eval $(call BuildPackage,i2c-tools))
 $(eval $(call PyPackage,python-smbus))
 $(eval $(call BuildPackage,python-smbus))
-$(eval $(call PyPackage,python3-smbus))
+$(eval $(call Py3Package,python3-smbus))
 $(eval $(call BuildPackage,python3-smbus))
