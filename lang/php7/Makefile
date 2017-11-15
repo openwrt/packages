@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.1.11
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -443,11 +443,11 @@ else
   CONFIGURE_ARGS+= --disable-libxml
 endif
 
-#ifneq ($(CONFIG_PHP7_SYSTEMTZDATA),)
-#  CONFIGURE_ARGS+= --with-system-tzdata
-#else
-#  CONFIGURE_ARGS+= --without-system-tzdata
-#endif
+ifneq ($(CONFIG_PHP7_SYSTEMTZDATA),)
+  CONFIGURE_ARGS+= --with-system-tzdata
+else
+  CONFIGURE_ARGS+= --without-system-tzdata
+endif
 
 CONFIGURE_VARS+= \
 	ac_cv_c_bigendian_php=$(if $(CONFIG_BIG_ENDIAN),yes,no) \
