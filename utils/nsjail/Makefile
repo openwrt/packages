@@ -14,11 +14,11 @@ PKG_MAINTAINER:= Hamid Ebadi
 PKG_LICENSE:= Apache-2.0
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/google/nsjail.git
-PKG_SOURCE_VERSION:=3c0e3007944e9fed8a32d7e871916270cc27940e
+PKG_SOURCE_VERSION:=HEAD
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_MIRROR_HASH:= 97d8a66a9da6fd52b3731754e0b0a601695e39057a557340574fb74ecd66064b
-PKGARCH:= x86_64 arm
+
+
 include $(INCLUDE_DIR)/package.mk
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
@@ -36,8 +36,14 @@ define Package/nsjail/description
  A light-weight process isolation tool, making use of Linux namespaces and seccomp-bpf syscall filters (with help of the kafel bpf language).
 endef
 
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)
+	$(CP) ./nsjail/* $(PKG_BUILD_DIR)/
+    git submodule update --init $(PKG_BUILD_DIR)/
+endef
+
 define Build/Compile
-	$(call Build/Compile/Default,USE_NL3=no)  
+	$(call Build/Compile/Default)  
 endef
 
 define Package/nsjail/install
