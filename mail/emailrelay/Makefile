@@ -14,11 +14,14 @@ PKG_RELEASE:=4
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=@SF/emailrelay/$(PKG_VERSION)
 PKG_HASH:=869a3e2d053237d7f63784acc25e748af2dbf2d9b9c5c48e4a5269d4e4b5bda0
+PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_CONFIG_DEPENDS:=CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG CONFIG_EMAILRELAY_SSL 
+PKG_CONFIG_DEPENDS:=CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG CONFIG_EMAILRELAY_SSL
 
+PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILES:=COPYING
 
 #include $(INCLUDE_DIR)/uclibc++.mk   # $(CXX_DEPENDS)
 include $(INCLUDE_DIR)/package.mk
@@ -26,10 +29,9 @@ include $(INCLUDE_DIR)/package.mk
 define Package/emailrelay
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+EMAILRELAY_SSL:libopenssl +libstdcpp 
+  DEPENDS:=+EMAILRELAY_SSL:libopenssl +libstdcpp
   TITLE:=A simple SMTP proxy and MTA
   URL:=http://emailrelay.sourceforge.net/
-  MAINTAINER:=Federico Di Marco <fededim@gmail.com>
   MENU:=1
 endef
 
@@ -42,7 +44,7 @@ config EMAILRELAY_SUPPORT_VERBOSE_DBG
 	help
 	  Enables support for extended logging (must also be explicitely enabled by using command line switch --debug when starting emailrelay)
 
-config EMAILRELAY_SSL 
+config EMAILRELAY_SSL
 	bool "Enable support for OpenSSL"
 	depends on PACKAGE_emailrelay
 	default y
@@ -54,14 +56,14 @@ endef
 
 
 define Package/emailrelay/description
- Emailrelay is a simple SMTP proxy and store-and-forward message transfer agent (MTA). 
- 
- When running as a proxy all e-mail messages can be passed through 
-  a user-defined program, such as a spam filter, which can drop, 
-  re-address or edit messages as they pass through. When running 
-  as a store-and-forward MTA incoming messages are stored in a 
-  local spool directory, and then forwarded to the next SMTP 
-  server on request.
+ Emailrelay is a simple SMTP proxy and store-and-forward message transfer agent (MTA).
+
+ When running as a proxy all e-mail messages can be passed through
+ a user-defined program, such as a spam filter, which can drop,
+ re-address or edit messages as they pass through. When running
+ as a store-and-forward MTA incoming messages are stored in a
+ local spool directory, and then forwarded to the next SMTP
+ server on request.
 endef
 
 
@@ -75,7 +77,7 @@ CONFIGURE_ARGS += \
 	--enable-testing=no
 
 CONFIGURE_VARS += \
-	CXXFLAGS="$$$$CXXFLAGS -fno-rtti"	
+	CXXFLAGS="$$$$CXXFLAGS -fno-rtti"
 
 
 ifeq ($(CONFIG_EMAILRELAY_SSL),y)
@@ -94,7 +96,7 @@ endif
 
 ifeq ($(CONFIG_OPENSSL_WITH_SSL3),y)
 	CONFIGURE_VARS += \
-		CXXFLAGS="$$$$CXXFLAGS -DSSL3_SUPPORT"	
+		CXXFLAGS="$$$$CXXFLAGS -DSSL3_SUPPORT"
 endif
 
 define Package/emailrelay/install
