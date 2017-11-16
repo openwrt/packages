@@ -123,13 +123,17 @@ print_ipaddress_indent() {
 	# Default indent
 	[ -z "$indent" ] && indent=$INDENT_1
 
-	# If no address or device exit
-	[ -z "$address" -o -z "$device" ] && return 0
+	# If no address exit
+	[ -z "$address" ] && return 0
 
-	# Add IP address/netmask and device
-	printf "$indent$address dev $device" >> $KEEPALIVED_CONF
-	# Add scope
-	[ -n "$scope" ] && printf " scope $scope" >> $KEEPALIVED_CONF
+	if [ -z "$device" ]; then
+		printf "$indent$address" >> $KEEPALIVED_CONF
+	else
+		# Add IP address/netmask and device
+		printf "$indent$address dev $device" >> $KEEPALIVED_CONF
+		# Add scope
+		[ -n "$scope" ] && printf " scope $scope" >> $KEEPALIVED_CONF
+	fi
 
 	printf "\n" >> $KEEPALIVED_CONF
 }
