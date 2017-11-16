@@ -24,12 +24,17 @@ PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/phoronix-test-suite
+define Package/phoronix-test-suite/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Phoronix Test Suite
-  DEPENDS:= +php7-cli
+  DEPENDS:= +php7-cli +php7-mod-dom +php7-mod-json +php7-mod-simplexml
   URL:=https://www.phoronix-test-suite.com
+endef
+
+define Package/phoronix-test-suite
+  $(call Package/phoronix-test-suite/Default)
+  MENU:=1
 endef
 
 define Package/phoronix-test-suite/description
