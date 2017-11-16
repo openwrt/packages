@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=emailrelay
 PKG_VERSION:=1.9
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=@SF/emailrelay/$(PKG_VERSION)
@@ -68,6 +68,7 @@ endef
 
 
 define Package/emailrelay/conffiles
+/etc/config/emailrelay
 /etc/emailrelay.auth
 endef
 
@@ -106,10 +107,10 @@ define Package/emailrelay/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-passwd $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-poke $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-submit $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/tmp/spool
-	$(INSTALL_DIR) $(1)/tmp/spool/emailrelay
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) files/$(PKG_NAME).auth $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) files/$(PKG_NAME).config $(1)/etc/config/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
 endef
