@@ -293,7 +293,7 @@ vrrp_instance() {
 		no_val_use_vmac
 
 	print_notify "INSTANCE" "$name" notify_backup notify_master \
-		notify_fault notify_stop notify
+		notify_fault notify_stop
 
 	# Handle virtual_ipaddress & virtual_ipaddress_excluded lists
 	for opt in virtual_ipaddress virtual_ipaddress_excluded; do
