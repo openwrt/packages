@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=socat
 PKG_VERSION:=1.7.3.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.dest-unreach.org/socat/download
@@ -67,7 +67,8 @@ CONFIGURE_VARS += \
 	sc_cv_termios_ispeed="no" \
 	sc_cv_sys_crdly_shift=9 \
 	sc_cv_sys_tabdly_shift=11 \
-	sc_cv_sys_csize_shift=4
+	sc_cv_sys_csize_shift=4 \
+	BUILD_DATE=$(SOURCE_DATE_EPOCH)
 
 define Package/socat/install
 	$(INSTALL_DIR) $(1)/usr/bin
