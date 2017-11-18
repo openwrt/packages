@@ -56,7 +56,7 @@ from the earlier standard from 2003.
 endef
 
 define Package/python3-idna/description
-$(call define Package/python-idna/description)
+$(call Package/python-idna/description)
 .
 (Variant for Python3)
 endef
