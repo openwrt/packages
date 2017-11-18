@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www-mechanize
-PKG_VERSION:=1.74
+PKG_VERSION:=1.75
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WWW-Mechanize-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
-PKG_MD5SUM:=8ec615225037ac66a2d37f4e9693ef86
+PKG_MD5SUM:=9a4b9c8827f519908ef0a0d2b8ae96fa
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
