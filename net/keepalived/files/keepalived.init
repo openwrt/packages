@@ -49,7 +49,14 @@ print_elems_indent() {
 		eval optval=\$$opt
 		[ -z "$optval" ] && continue
 		printf "$indent$opt" >> $KEEPALIVED_CONF
-		[ "$no_val" == "0" ] && printf " $optval" >> $KEEPALIVED_CONF
+		[ "$no_val" == "0" ] && {
+			local words=$(echo "$optval" | wc -w)
+			if [ $words -gt 1 ]; then
+				printf " \"$optval\"" >> $KEEPALIVED_CONF
+			else
+				printf " $optval" >> $KEEPALIVED_CONF
+			fi
+		}
 		printf "\n" >> $KEEPALIVED_CONF
 	done
 	unset optval
@@ -70,6 +77,18 @@ print_list_indent() {
 		printf "$indent$INDENT_1$e\n" >> $KEEPALIVED_CONF
 	done
 	printf "$indent}\n" >> $KEEPALIVED_CONF
+}
+
+print_notify() {
+	local type=$1
+	shift
+	local name=$1
+	shift
+	for notify in $*; do
+		printf "$INDENT_1$notify" >> $KEEPALIVED_CONF
+		notify=$(echo $notify | tr 'a-z' 'A-Z')
+		printf " \"/bin/busybox env -i ACTION=$notify TYPE=$type NAME=$name /sbin/hotplug-call keepalived\"\n" >> $KEEPALIVED_CONF
+	done
 }
 
 global_defs() {
@@ -235,8 +254,11 @@ vrrp_sync_group() {
 	group="$valid_group"
 	print_list_indent group
 
-	print_elems_indent $1 $INDENT_1 notify_backup notify_master notify_fault \
-		notify no_val_smtp_alert no_val_global_tracking
+	print_elems_indent $1 $INDENT_1 no_val_smtp_alert no_val_global_tracking
+
+	print_notify "GROUP" "$name" notify_backup notify_master \
+		notify_fault notify
+
 	config_section_close
 }
 
@@ -259,12 +281,14 @@ vrrp_instance() {
 
 	print_elems_indent $1 $INDENT_1 use_vmac state interface \
 		mcast_src_ip unicast_src_ip virtual_router_id version priority \
-		advert_int preempt_delay debug notify_backup \
-		notify_master notify_fault notify_stop notify \
+		advert_int preempt_delay debug \
 		lvs_sync_daemon_interface garp_master_delay garp_master_refresh \
 		garp_master_repeat garp_master_refresh_repeat \
 		no_val_vmac_xmit_base no_val_native_ipv6 no_val_accept \
 		no_val_dont_track_primary no_val_smtp_alert no_val_nopreempt
+
+	print_notify "INSTANCE" "$name" notify_backup notify_master \
+		notify_fault notify_stop notify
 
 	# Handle virtual_ipaddress & virtual_ipaddress_excluded lists
 	for opt in virtual_ipaddress virtual_ipaddress_excluded; do
@@ -290,14 +314,26 @@ vrrp_instance() {
 		printf "$INDENT_1}\n" >> $KEEPALIVED_CONF
 	done
 
-	# Handle track_interface & track_script lists
-	for opt in track_interface track_script; do
+	# Handle track_script lists
+	for opt in track_script; do
 		config_get $opt $1 $opt
 		eval optval=\$$opt
 		[ -z "$optval" ] && continue
 		printf "$INDENT_1$opt {\n" >> $KEEPALIVED_CONF
 		for t in $optval; do
 			printf "$INDENT_2$optval\n" >> $KEEPALIVED_CONF
+		done
+		printf "$INDENT_1}\n" >> $KEEPALIVED_CONF
+	done
+
+	# Handle track_interface lists
+	for opt in track_interface; do
+		config_get $opt $1 $opt
+		eval optval=\$$opt
+		[ -z "$optval" ] && continue
+		printf "$INDENT_1$opt {\n" >> $KEEPALIVED_CONF
+		for t in $optval; do
+			config_foreach print_track_elem_indent track_interface $t $INDENT_2
 		done
 		printf "$INDENT_1}\n" >> $KEEPALIVED_CONF
 	done
