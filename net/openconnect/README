@@ -26,6 +26,9 @@ config interface 'MYVPN'
         #option token_mode 'hotp'
         #option token_secret '00'
 
+	# Juniper vpn support
+	#option juniper '1'
+
 The additional files are also used:
 /etc/openconnect/user-cert-vpn-MYVPN.pem: The user certificate
 /etc/openconnect/user-key-vpn-MYVPN.pem: The user private key
