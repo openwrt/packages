@@ -8,7 +8,7 @@ proto_openconnect_init_config() {
 	proto_config_add_int "port"
 	proto_config_add_int "mtu"
 	proto_config_add_int "juniper"
-	proto_config_add_string "interface"
+	proto_config_add_string "interface" 
 	proto_config_add_string "username"
 	proto_config_add_string "serverhash"
 	proto_config_add_string "authgroup"
