@@ -41,6 +41,7 @@
 
 static char user_agent[80];
 static char *serverurl;
+static int upgrade_packages;
 static struct ustream_ssl_ctx *ssl_ctx;
 static const struct ustream_ssl_ops *ssl_ops;
 static off_t out_bytes;
@@ -54,6 +55,7 @@ static char *target = NULL, *subtarget = NULL;
 static char *distribution = NULL, *version = NULL, *revision = NULL;
 static int uptodate;
 static char *filename = NULL;
+static int debug = 0;
 
 /*
  * policy for ubus call system board
@@ -135,11 +137,13 @@ static const struct blobmsg_policy upgtest_policy[__UPGTEST_MAX] = {
  */
 enum {
 	CHECK_VERSION,
+	CHECK_UPGRADES,
 	__CHECK_MAX,
 };
 
 static const struct blobmsg_policy check_policy[__CHECK_MAX] = {
 	[CHECK_VERSION] = { .name = "version", .type = BLOBMSG_TYPE_STRING },
+	[CHECK_UPGRADES] = { .name = "upgrades", .type = BLOBMSG_TYPE_TABLE },
 };
 
 /*
@@ -173,7 +177,7 @@ static const struct blobmsg_policy image_policy[__IMAGE_MAX] = {
 static int load_config() {
 	static struct uci_context *uci_ctx;
 	static struct uci_package *uci_attendedsysupgrade;
-	struct uci_section *uci_server;
+	struct uci_section *uci_s;
 
 	uci_ctx = uci_alloc_context();
 	if (!uci_ctx)
@@ -186,12 +190,21 @@ static int load_config() {
 		fprintf(stderr, "Failed to load attendedsysupgrade config\n");
 		return -1;
 	}
-	uci_server = uci_lookup_section(uci_ctx, uci_attendedsysupgrade, "server");
-	if (!uci_server) {
+
+	uci_s = uci_lookup_section(uci_ctx, uci_attendedsysupgrade, "server");
+	if (!uci_s) {
 		fprintf(stderr, "Failed to read server url from config\n");
 		return -1;
 	}
-	serverurl = strdup(uci_lookup_option_string(uci_ctx, uci_server, "url"));
+	serverurl = strdup(uci_lookup_option_string(uci_ctx, uci_s, "url"));
+
+	uci_s = uci_lookup_section(uci_ctx, uci_attendedsysupgrade, "client");
+	if (!uci_s) {
+		fprintf(stderr, "Failed to read client config\n");
+		return -1;
+	}
+	upgrade_packages = atoi(uci_lookup_option_string(uci_ctx, uci_s, "upgrade_packages"));
+
 	uci_free_context(uci_ctx);
 
 	return 0;
@@ -343,12 +356,10 @@ static void header_done_cb(struct uclient *cl)
 	};
 	struct blob_attr *tb[__H_MAX];
 	uint64_t resume_offset = 0, resume_end, resume_size;
-	static int retries;
 
-	if (retries < 10 && uclient_http_redirect(cl)) {
+	if (uclient_http_redirect(cl)) {
 		fprintf(stderr, "Redirected to %s on %s\n", cl->url->location, cl->url->host);
 
-		retries++;
 		return;
 	}
 
@@ -365,6 +376,14 @@ static void header_done_cb(struct uclient *cl)
 	case 400:
 		request_done(cl);
 		break;
+	case 412:
+		fprintf(stderr, "target not found.\n");
+		request_done(cl);
+		break;
+	case 413:
+		fprintf(stderr, "image too big.\n");
+		request_done(cl);
+		break;
 	case 416:
 		fprintf(stderr, "File download already fully retrieved; nothing to do.\n");
 		request_done(cl);
@@ -373,12 +392,9 @@ static void header_done_cb(struct uclient *cl)
 		fprintf(stderr, "unknown package requested.\n");
 		request_done(cl);
 		break;
-	case 201:
-		if (!imagebuilder) {
-			fprintf(stderr, "server is dispatching build job\n");
-			imagebuilder=1;
-		}
-		retry=1;
+	case 501:
+		fprintf(stderr, "ImageBuilder didn't produce sysupgrade file.\n");
+		request_done(cl);
 		break;
 	case 204:
 		fprintf(stderr, "system is up to date.\n");
@@ -386,11 +402,7 @@ static void header_done_cb(struct uclient *cl)
 		break;
 	case 206:
 		if (!cur_resume) {
-			if (!building) {
-				fprintf(stderr, "server is now building image...\n");
-				building=1;
-			}
-			retry=1;
+			fprintf(stderr, "Error: Partial content received, full content requested\n");
 			request_done(cl);
 			break;
 		}
@@ -406,6 +418,16 @@ static void header_done_cb(struct uclient *cl)
 			fprintf(stderr, "Content-Range header is invalid\n");
 			break;
 		}
+	case 202:
+		if (!imagebuilder) {
+			fprintf(stderr, "server is dispatching build job\n");
+			imagebuilder=1;
+		} else if (!building) {
+			fprintf(stderr, "server is now building image...\n");
+			building=1;
+		}
+		retry=1;
+		// fall through
 	case 200:
 		if (cl->priv)
 			break;
@@ -652,6 +674,9 @@ int main(int args, char *argv[]) {
 	char *checksum = NULL;
 	struct stat imgstat;
 
+	if (args>1 && !strncmp(argv[1], "-d", 3))
+		debug = 1;
+
 	if (!ctx) {
 		fprintf(stderr, "failed to connect to ubus.\n");
 		return -1;
@@ -702,10 +727,13 @@ int main(int args, char *argv[]) {
 		goto freeboard;
 	}
 
-	fprintf(stderr, "running %s %s %s on %s/%s (%s)\n", distribution, version,
-		revision, target, subtarget, board_name);
+	blobmsg_add_u32(&checkbuf, "upgrade_packages", upgrade_packages);
 
-	fprintf(stderr, "checking %s for sysupgrade\n", serverurl);
+	fprintf(stderr, "running %s %s %s on %s/%s (%s)\n", distribution,
+		version, revision, target, subtarget, board_name);
+
+	fprintf(stderr, "checking %s for release upgrade%s\n", serverurl,
+		upgrade_packages?" or updated packages":"");
 
 	blobmsg_add_string(&reqbuf, "distro", distribution);
 	blobmsg_add_string(&reqbuf, "target", target);
@@ -714,13 +742,22 @@ int main(int args, char *argv[]) {
 
 	snprintf(url, sizeof(url), "%s/%s", serverurl, APIOBJ_CHECK);
 	uptodate=0;
+
+	if (debug)
+		fprintf(stderr, "requesting: %s\n", blobmsg_format_json(checkbuf.head, true));
+
 	if (server_request(url, &checkbuf, &reqbuf)) {
 		fprintf(stderr, "failed to connect to server\n");
 		rc=-1;
 		goto freeboard;
 	};
+
+	if (debug)
+		fprintf(stderr, "reply: %s\n", blobmsg_format_json(reqbuf.head, true));
+
 	blobmsg_parse(check_policy, __CHECK_MAX, tbc, blob_data(reqbuf.head), blob_len(reqbuf.head));
-	if (!tbc[CHECK_VERSION]) {
+
+	if (!tbc[CHECK_VERSION] && !tbc[CHECK_UPGRADES]) {
 		if (!uptodate) {
 			fprintf(stderr, "server reply invalid.\n");
 			rc=-1;
@@ -729,9 +766,18 @@ int main(int args, char *argv[]) {
 		rc=0;
 		goto freeboard;
 	}
-	newversion = blobmsg_get_string(tbc[CHECK_VERSION]);
-	fprintf(stderr, "new release %s found.\n", newversion);
+	if (tbc[CHECK_VERSION]) {
+		newversion = blobmsg_get_string(tbc[CHECK_VERSION]);
+		fprintf(stderr, "new %s release %s found.\n", distribution, newversion);
+	} else {
+		fprintf(stderr, "staying on %s release version %s\n", distribution, version);
+		blobmsg_add_string(&reqbuf, "version", version);
+	};
 
+	if (tbc[CHECK_UPGRADES]) {
+		fprintf(stderr, "package updates found:\n%s\n",
+			blobmsg_format_json(tbc[CHECK_UPGRADES], true));
+	}
 	rc = ask_user();
 	if (rc)
 		goto freeboard;
@@ -744,6 +790,10 @@ int main(int args, char *argv[]) {
 	do {
 		queuepos = 0;
 		retry = 0;
+
+		if (debug)
+			fprintf(stderr, "requesting: %s\n", blobmsg_format_json(reqbuf.head, true));
+
 		server_request(url, &reqbuf, &imgbuf);
 		blobmsg_parse(image_policy, __IMAGE_MAX, tb, blob_data(imgbuf.head), blob_len(imgbuf.head));
 
