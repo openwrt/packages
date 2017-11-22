@@ -20,7 +20,7 @@ PKG_SOURCE_URL:= \
 	http://www.usenix.org.uk/mirrors/stunnel/ \
 	https://www.stunnel.org/downloads/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=05915babf705a0494886a72a7367913d403d07fc908ebb7b380d639e2d8bcee2
+PKG_MD5SUM:=05915babf705a0494886a72a7367913d403d07fc908ebb7b380d639e2d8bcee2
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
