@@ -8,6 +8,7 @@ proto_openconnect_init_config() {
 	proto_config_add_int "port"
 	proto_config_add_int "mtu"
 	proto_config_add_int "juniper"
+	proto_config_add_string "interface"
 	proto_config_add_string "username"
 	proto_config_add_string "serverhash"
 	proto_config_add_string "authgroup"
@@ -24,7 +25,7 @@ proto_openconnect_init_config() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port username serverhash authgroup password password2 token_mode token_secret os csd_wrapper mtu juniper
+	json_get_vars server port interface username serverhash authgroup password password2 token_mode token_secret os csd_wrapper mtu juniper
 
 	grep -q tun /proc/modules || insmod tun
 	ifname="vpn-$config"
@@ -34,7 +35,7 @@ proto_openconnect_setup() {
 	logger -t "openconnect" "adding host dependency for $server at $config"
 	for ip in $(resolveip -t 10 "$server"); do
 		logger -t "openconnect" "adding host dependency for $ip at $config"
-		proto_add_host_dependency "$config" "$ip"
+		proto_add_host_dependency "$config" "$ip" "$interface"
 	done
 
 	[ -n "$port" ] && port=":$port"
