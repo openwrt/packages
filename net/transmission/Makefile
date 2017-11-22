@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=2.92+git
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/transmission/transmission.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=35fea28d1a37875ef7480ac061754df617805b19
+PKG_SOURCE_VERSION:=5b29fe15561d40c40cbee635446df6b33e18d2c2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MIRROR_HASH:=aeeb8dfd918bd2cf4fb6fbdf58bd822e9b509df1ba5ec408888edd161123ef8e
+PKG_MIRROR_HASH:=f99982ae68564da9bf6ad4407285aff2e29508e4fd801ff56f86a8b3dae01819
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -32,7 +32,7 @@ define Package/transmission/template
   CATEGORY:=Network
   TITLE:=BitTorrent client
   URL:=http://www.transmissionbt.com
-  MAINTAINER:=Cezary Jackiewicz <cezary@eko.one.pl>
+  MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 endef
 
 define Package/transmission-daemon/Default
@@ -171,6 +171,8 @@ define Package/transmission-daemon-openssl/install
 	$(INSTALL_BIN) files/transmission.init $(1)/etc/init.d/transmission
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) files/transmission.config $(1)/etc/config/transmission
+	$(INSTALL_DIR) $(1)/etc/sysctl.d/
+	$(INSTALL_CONF) files/transmission.sysctl $(1)/etc/sysctl.d/20-transmission.conf
 endef
 Package/transmission-daemon-mbedtls/install = $(Package/transmission-daemon-openssl/install)
 

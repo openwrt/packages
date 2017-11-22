@@ -1,0 +1,30 @@
+diff --git a/daemon/daemon.c b/daemon/daemon.c
+index 7b2a3b425..5b19d105a 100644
+--- a/daemon/daemon.c
++++ b/daemon/daemon.c
+@@ -715,12 +715,7 @@ static int daemon_start(void* raw_arg, bool foreground)
+     }
+ 
+ #ifdef HAVE_SYSLOG
+-
+-    if (!foreground)
+-    {
+-        openlog(MY_NAME, LOG_CONS | LOG_PID, LOG_DAEMON);
+-    }
+-
++    openlog(MY_NAME, LOG_CONS | LOG_PID, LOG_DAEMON);
+ #endif
+ 
+     /* Create new timer event to report daemon status */
+@@ -772,11 +767,8 @@ cleanup:
+     /* shutdown */
+ #ifdef HAVE_SYSLOG
+ 
+-    if (!foreground)
+-    {
+         syslog(LOG_INFO, "%s", "Closing session");
+         closelog();
+-    }
+ 
+ #endif
+ 
