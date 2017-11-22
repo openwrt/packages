@@ -1,0 +1,19 @@
+This patch fixes the runtime error when libmilter is used with Postfix:
+"unix_send_fd: your system has no support for file descriptor passing"
+
+The issue has been fixed upstream in 20170618 update to Postfix v.3.3:
+http://postfix.1071664.n5.nabble.com/Fix-check-for-file-descriptor-passing-td90983.html
+
+This patch must be removed before compiling Postfix v.3.3.*
+
+--- a/src/util/sys_defs.h
++++ b/src/util/sys_defs.h
+@@ -804,7 +804,7 @@ extern int initgroups(const char *, int)
+ #define KERNEL_VERSION(a,b,c) (LINUX_VERSION_CODE + 1)
+ #endif
+ #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,2,0)) \
+-	|| (__GLIBC__ < 2)
++	|| (defined(__GLIBC__) && __GLIBC__ < 2)
+ #define CANT_USE_SEND_RECV_MSG
+ #define DEF_SMTP_CACHE_DEMAND	0
+ #else
