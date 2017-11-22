@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=2.92+git
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/transmission/transmission.git
@@ -169,6 +169,8 @@ define Package/transmission-daemon-openssl/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/transmission-daemon $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) files/transmission.init $(1)/etc/init.d/transmission
+	$(INSTALL_DIR) $(1)/etc/sysctl.d/
+	$(INSTALL_BIN) files/transmission.sysctl $(1)/etc/sysctl.d/20-transmission.sysctl
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) files/transmission.config $(1)/etc/config/transmission
 endef
