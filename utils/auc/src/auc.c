@@ -148,11 +148,9 @@ static const struct blobmsg_policy check_policy[__CHECK_MAX] = {
 
 /*
  * policy for upgrade-request response
- * it can be either only a queue position or the download information
- * for the ready image.
+ * parse download information for the ready image.
  */
 enum {
-	IMAGE_QUEUE,
 	IMAGE_FILESIZE,
 	IMAGE_URL,
 	IMAGE_CHECKSUM,
@@ -162,7 +160,6 @@ enum {
 };
 
 static const struct blobmsg_policy image_policy[__IMAGE_MAX] = {
-	[IMAGE_QUEUE] = { .name = "queue", .type = BLOBMSG_TYPE_INT32 },
 	[IMAGE_FILESIZE] = { .name = "filesize", .type = BLOBMSG_TYPE_INT32 },
 	[IMAGE_URL] = { .name = "url", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_CHECKSUM] = { .name = "checksum", .type = BLOBMSG_TYPE_STRING },
@@ -348,14 +345,20 @@ static void header_done_cb(struct uclient *cl)
 	enum {
 		H_RANGE,
 		H_LEN,
+		H_IBSTATUS,
+		H_IBQUEUEPOS,
 		__H_MAX
 	};
 	static const struct blobmsg_policy policy[__H_MAX] = {
 		[H_RANGE] = { .name = "content-range", .type = BLOBMSG_TYPE_STRING },
 		[H_LEN] = { .name = "content-length", .type = BLOBMSG_TYPE_STRING },
+		[H_IBSTATUS] = { .name = "x-imagebuilder-status", .type = BLOBMSG_TYPE_STRING },
+		[H_IBQUEUEPOS] = { .name = "x-build-queue-position", .type = BLOBMSG_TYPE_STRING },
 	};
 	struct blob_attr *tb[__H_MAX];
 	uint64_t resume_offset = 0, resume_end, resume_size;
+	char *ibstatus;
+	unsigned int queuepos = 0;
 
 	if (uclient_http_redirect(cl)) {
 		fprintf(stderr, "Redirected to %s on %s\n", cl->url->location, cl->url->host);
@@ -369,6 +372,9 @@ static void header_done_cb(struct uclient *cl)
 		//init_request(cl);
 		return;
 	}
+
+	if (debug)
+		fprintf(stderr, "headers:\n%s\n", blobmsg_format_json_indent(cl->meta, true, 0));
 
 	blobmsg_parse(policy, __H_MAX, tb, blob_data(cl->meta), blob_len(cl->meta));
 
@@ -419,14 +425,31 @@ static void header_done_cb(struct uclient *cl)
 			break;
 		}
 	case 202:
-		if (!imagebuilder) {
-			fprintf(stderr, "server is dispatching build job\n");
-			imagebuilder=1;
-		} else if (!building) {
-			fprintf(stderr, "server is now building image...\n");
-			building=1;
+		if (!tb[H_IBSTATUS])
+			break;
+
+		ibstatus = blobmsg_get_string(tb[H_IBSTATUS]);
+
+		if (!strncmp(ibstatus, "queue", 6)) {
+			if (!imagebuilder) {
+				fprintf(stderr, "server is dispatching build job\n");
+				imagebuilder=1;
+			} else {
+				if (tb[H_IBQUEUEPOS]) {
+					queuepos = atoi(blobmsg_get_string(tb[H_IBQUEUEPOS]));
+					fprintf(stderr, "build is in queue position %u.\n", queuepos);
+				}
+			}
+			retry=1;
+		} else if (!strncmp(ibstatus, "building", 9)) {
+			if (!building) {
+				fprintf(stderr, "server is now building image...\n");
+				building=1;
+			}
+			retry=1;
+		} else {
+			fprintf(stderr, "unrecognized remote imagebuilder status '%s'\n", ibstatus);
 		}
-		retry=1;
 		// fall through
 	case 200:
 		if (cl->priv)
@@ -744,7 +767,7 @@ int main(int args, char *argv[]) {
 	uptodate=0;
 
 	if (debug)
-		fprintf(stderr, "requesting: %s\n", blobmsg_format_json(checkbuf.head, true));
+		fprintf(stderr, "requesting:\n%s\n", blobmsg_format_json_indent(checkbuf.head, true, 0));
 
 	if (server_request(url, &checkbuf, &reqbuf)) {
 		fprintf(stderr, "failed to connect to server\n");
@@ -753,7 +776,7 @@ int main(int args, char *argv[]) {
 	};
 
 	if (debug)
-		fprintf(stderr, "reply: %s\n", blobmsg_format_json(reqbuf.head, true));
+		fprintf(stderr, "reply:\n%s\n", blobmsg_format_json_indent(reqbuf.head, true, 0));
 
 	blobmsg_parse(check_policy, __CHECK_MAX, tbc, blob_data(reqbuf.head), blob_len(reqbuf.head));
 
@@ -776,7 +799,7 @@ int main(int args, char *argv[]) {
 
 	if (tbc[CHECK_UPGRADES]) {
 		fprintf(stderr, "package updates found:\n%s\n",
-			blobmsg_format_json(tbc[CHECK_UPGRADES], true));
+			blobmsg_format_json_indent(tbc[CHECK_UPGRADES], true, 0));
 	}
 	rc = ask_user();
 	if (rc)
@@ -788,21 +811,15 @@ int main(int args, char *argv[]) {
 	building = 0;
 
 	do {
-		queuepos = 0;
 		retry = 0;
 
 		if (debug)
-			fprintf(stderr, "requesting: %s\n", blobmsg_format_json(reqbuf.head, true));
+			fprintf(stderr, "requesting:\n%s\n", blobmsg_format_json_indent(reqbuf.head, true, 0));
 
 		server_request(url, &reqbuf, &imgbuf);
 		blobmsg_parse(image_policy, __IMAGE_MAX, tb, blob_data(imgbuf.head), blob_len(imgbuf.head));
 
-		if (tb[IMAGE_QUEUE]) {
-			queuepos = blobmsg_get_u32(tb[IMAGE_QUEUE]);
-			fprintf(stderr, "build is in queue position %u.\n", queuepos);
-		}
-
-		if (retry || queuepos) {
+		if (retry) {
 			blob_buf_free(&imgbuf);
 			blobmsg_buf_init(&imgbuf);
 			sleep(3);
