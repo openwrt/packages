@@ -13,7 +13,7 @@
  */
 
 #define _GNU_SOURCE
-#define AUC_VERSION "0.0.6"
+#define AUC_VERSION "0.0.7"
 
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -151,6 +151,7 @@ static const struct blobmsg_policy check_policy[__CHECK_MAX] = {
  * parse download information for the ready image.
  */
 enum {
+	IMAGE_REQHASH,
 	IMAGE_FILESIZE,
 	IMAGE_URL,
 	IMAGE_CHECKSUM,
@@ -160,13 +161,13 @@ enum {
 };
 
 static const struct blobmsg_policy image_policy[__IMAGE_MAX] = {
+	[IMAGE_REQHASH] = { .name = "request_hash", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_FILESIZE] = { .name = "filesize", .type = BLOBMSG_TYPE_INT32 },
 	[IMAGE_URL] = { .name = "url", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_CHECKSUM] = { .name = "checksum", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_FILES] = { .name = "files", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_SYSUPGRADE] = { .name = "sysupgrade", .type = BLOBMSG_TYPE_STRING },
 };
-
 
 /*
  * load serverurl from UCI
@@ -682,7 +683,7 @@ static char *md5sum(const char *file) {
 
 static int ask_user(void)
 {
-	fprintf(stderr, "Are you sure to proceed? [N/y] ");
+	fprintf(stderr, "Are you sure you want to continue the upgrade process? [N/y] ");
 	if (getchar() != 'y')
 		return -1;
 	return 0;
@@ -694,7 +695,7 @@ int main(int args, char *argv[]) {
 	struct ubus_context *ctx = ubus_connect(NULL);
 	uint32_t id;
 	int rc;
-	int queuepos, valid;
+	int queuepos, valid, use_get;
 	char url[256];
 	char *newversion = NULL;
 	struct blob_attr *tb[__IMAGE_MAX];
@@ -818,6 +819,7 @@ int main(int args, char *argv[]) {
 
 	imagebuilder = 0;
 	building = 0;
+	use_get = 0;
 
 	do {
 		retry = 0;
@@ -825,8 +827,19 @@ int main(int args, char *argv[]) {
 		if (debug)
 			fprintf(stderr, "requesting:\n%s\n", blobmsg_format_json_indent(reqbuf.head, true, 0));
 
-		server_request(url, &reqbuf, &imgbuf);
+		server_request(url, use_get?NULL:&reqbuf, &imgbuf);
 		blobmsg_parse(image_policy, __IMAGE_MAX, tb, blob_data(imgbuf.head), blob_len(imgbuf.head));
+
+		if (!use_get && tb[IMAGE_REQHASH]) {
+			snprintf(url, sizeof(url), "%s/%s/%s", serverurl,
+				 APIOBJ_REQUEST,
+				 blobmsg_get_string(tb[IMAGE_REQHASH]));
+			if (debug)
+				fprintf(stderr, "polling via GET %s\n", url);
+
+			retry=1;
+			use_get=1;
+		}
 
 		if (retry) {
 			blob_buf_free(&imgbuf);
