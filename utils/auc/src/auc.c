@@ -13,7 +13,7 @@
  */
 
 #define _GNU_SOURCE
-#define AUC_VERSION "0.0.3"
+#define AUC_VERSION "0.0.6"
 
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -49,7 +49,7 @@ static off_t out_len;
 static off_t out_offset;
 static bool cur_resume;
 static int output_fd = -1;
-static int retry, imagebuilder, building;
+static int retry, imagebuilder, building, ibready;
 static char *board_name = NULL;
 static char *target = NULL, *subtarget = NULL;
 static char *distribution = NULL, *version = NULL, *revision = NULL;
@@ -447,6 +447,12 @@ static void header_done_cb(struct uclient *cl)
 				building=1;
 			}
 			retry=1;
+		} else if (!strncmp(ibstatus, "initialize", 11)) {
+			if (!ibready) {
+				fprintf(stderr, "server is setting up ImageBuilder...\n");
+				ibready=1;
+			}
+			retry=1;
 		} else {
 			fprintf(stderr, "unrecognized remote imagebuilder status '%s'\n", ibstatus);
 		}
@@ -676,7 +682,7 @@ static char *md5sum(const char *file) {
 
 static int ask_user(void)
 {
-	fprintf(stderr, "Are you sure to proceed? [N/y]\n");
+	fprintf(stderr, "Are you sure to proceed? [N/y] ");
 	if (getchar() != 'y')
 		return -1;
 	return 0;
@@ -769,11 +775,14 @@ int main(int args, char *argv[]) {
 	if (debug)
 		fprintf(stderr, "requesting:\n%s\n", blobmsg_format_json_indent(checkbuf.head, true, 0));
 
-	if (server_request(url, &checkbuf, &reqbuf)) {
-		fprintf(stderr, "failed to connect to server\n");
-		rc=-1;
-		goto freeboard;
-	};
+	retry=0;
+	do {
+		if (server_request(url, &checkbuf, &reqbuf)) {
+			fprintf(stderr, "failed to connect to server\n");
+			rc=-1;
+			goto freeboard;
+		};
+	} while(retry);
 
 	if (debug)
 		fprintf(stderr, "reply:\n%s\n", blobmsg_format_json_indent(reqbuf.head, true, 0));
