@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
 PKG_VERSION:=9.11.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 USERID:=bind=57:bind=57
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
@@ -29,7 +29,16 @@ PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
 PKG_CONFIG_DEPENDS := \
-	CONFIG_BIND_ENABLE_FILTER_AAAA
+	CONFIG_BIND_ENABLE_FILTER_AAAA \
+	CONFIG_BIND_LIBJSON \
+	CONFIG_BIND_LIBXML2
+
+ifdef CONFIG_BIND_LIBXML2
+  PKG_BUILD_DEPENDS += libxml2
+endif
+ifdef CONFIG_BIND_LIBJSON
+  PKG_BUILD_DEPENDS += libjson-c
+endif
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -48,6 +57,12 @@ define Package/bind-libs
   DEPENDS:=+libopenssl +zlib
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
+ifdef CONFIG_BIND_LIBJSON
+  DEPENDS+= +libjson-c
+endif
+ifdef CONFIG_BIND_LIBXML2
+  DEPENDS+= +libxml2
+endif
 endef
 
 define Package/bind-server
@@ -104,9 +119,7 @@ CONFIGURE_ARGS += \
 	--disable-threads \
 	--disable-linux-caps \
 	--with-openssl="$(STAGING_DIR)/usr" \
-	--with-libjson=no \
 	--with-libtool \
-	--with-libxml2=no \
 	--without-lmdb \
 	--enable-epoll=yes \
 	--with-gost=no \
@@ -118,6 +131,22 @@ CONFIGURE_ARGS += \
 ifdef CONFIG_BIND_ENABLE_FILTER_AAAA
 	CONFIGURE_ARGS += \
 		--enable-filter-aaaa
+endif
+
+ifdef CONFIG_BIND_LIBJSON
+	CONFIGURE_ARGS += \
+		--with-libjson="$(STAGING_DIR)/usr"
+else
+	CONFIGURE_ARGS += \
+		--with-libjson=no
+endif
+
+ifdef CONFIG_BIND_LIBXML2
+	CONFIGURE_ARGS += \
+		--with-libxml2="$(STAGING_DIR)/usr"
+else
+	CONFIGURE_ARGS += \
+		--with-libxml2=no
 endif
 
 CONFIGURE_VARS += \
