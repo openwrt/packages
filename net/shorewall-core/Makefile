@@ -27,7 +27,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/shorewall-core
     SECTION:=net
     CATEGORY:=Network
-    DEPENDS:=+ip +iptables
     TITLE:=Shorewall Core
     URL:=http://www.shorewall.net/
     SUBMENU:=Firewall
