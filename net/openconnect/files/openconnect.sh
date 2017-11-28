@@ -77,7 +77,7 @@ proto_openconnect_setup() {
 		[ "$token_mode" = "script" ] && {
 			$token_script > "$pwfile" 2> /dev/null || {
 				logger -t openconenct "Cannot get password from script '$token_script'"
-				sleep 60
+				sleep 1
 				proto_setup_failed "$config"
 			}
 		}
