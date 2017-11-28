@@ -13,7 +13,7 @@
  */
 
 #define _GNU_SOURCE
-#define AUC_VERSION "0.0.7"
+#define AUC_VERSION "0.0.8"
 
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -335,8 +335,19 @@ free:
 	return ret;
 }
 
+struct jsonblobber {
+	json_tokener *tok;
+	struct blob_buf *outbuf;
+};
+
 static void request_done(struct uclient *cl)
 {
+	struct jsonblobber *jsb = (struct jsonblobber *)cl->priv;
+	if (jsb) {
+		json_tokener_free(jsb->tok);
+		free(jsb);
+	};
+
 	uclient_disconnect(cl);
 	uloop_end();
 }
@@ -483,12 +494,12 @@ static void read_data_cb(struct uclient *cl)
 {
 	char buf[256];
 	int len;
-	json_tokener *tok;
 	json_object *jsobj;
+	struct blob_buf *outbuf = NULL;
+	json_tokener *tok = NULL;
+	struct jsonblobber *jsb = (struct jsonblobber *)cl->priv;
 
-	struct blob_buf *outbuf = (struct blob_buf *)cl->priv;
-
-	if (!outbuf) {
+	if (!jsb) {
 		while (1) {
 			len = uclient_read(cl, buf, sizeof(buf));
 			if (!len)
@@ -500,8 +511,9 @@ static void read_data_cb(struct uclient *cl)
 		return;
 	}
 
-	tok = json_tokener_new();
-	
+	outbuf = jsb->outbuf;
+	tok = jsb->tok;
+
 	while (1) {
 		len = uclient_read(cl, buf, sizeof(buf));
 		if (!len)
@@ -526,8 +538,6 @@ static void read_data_cb(struct uclient *cl)
 			break;
 		}
 	}
-
-	json_tokener_free(tok);
 }
 
 static void eof_cb(struct uclient *cl)
@@ -573,6 +583,7 @@ static const struct uclient_cb check_cb = {
 
 static int server_request(const char *url, struct blob_buf *inbuf, struct blob_buf *outbuf) {
 	struct uclient *ucl;
+	struct jsonblobber *jsb = NULL;
 	int rc = -1;
 	char *post_data;
 	out_offset = 0;
@@ -582,9 +593,15 @@ static int server_request(const char *url, struct blob_buf *inbuf, struct blob_b
 	uloop_init();
 
 	ucl = uclient_new(url, NULL, &check_cb);
+	if (outbuf) {
+		jsb = malloc(sizeof(struct jsonblobber));
+		jsb->outbuf = outbuf;
+		jsb->tok = json_tokener_new();
+	};
+
 	uclient_http_set_ssl_ctx(ucl, ssl_ops, ssl_ctx, 1);
 	ucl->timeout_msecs = REQ_TIMEOUT * 1000;
-	ucl->priv = outbuf;
+	ucl->priv = jsb;
 	rc = uclient_connect(ucl);
 	if (rc)
 		return rc;
@@ -689,8 +706,29 @@ static int ask_user(void)
 	return 0;
 }
 
+static void print_package_updates(struct blob_attr *upgrades) {
+	struct blob_attr *cur;
+	struct blob_attr *tb[2];
+	int rem;
+
+	static struct blobmsg_policy policy[2] = {
+		{ .type = BLOBMSG_TYPE_STRING },
+		{ .type = BLOBMSG_TYPE_STRING },
+	};
+
+	blobmsg_for_each_attr(cur, upgrades, rem) {
+		blobmsg_parse_array(policy, ARRAY_SIZE(policy), tb, blobmsg_data(cur), blobmsg_data_len(cur));
+		if (!tb[0] || !tb[1])
+			continue;
+
+		fprintf(stdout, "\t%s (%s -> %s)\n", blobmsg_name(cur),
+			blobmsg_get_string(tb[1]), blobmsg_get_string(tb[0]));
+	};
+}
+
 /* this main function is too big... todo: split */
 int main(int args, char *argv[]) {
+	unsigned char argc=1;
 	static struct blob_buf checkbuf, reqbuf, imgbuf, upgbuf;
 	struct ubus_context *ctx = ubus_connect(NULL);
 	uint32_t id;
@@ -704,8 +742,22 @@ int main(int args, char *argv[]) {
 	char *checksum = NULL;
 	struct stat imgstat;
 
-	if (args>1 && !strncmp(argv[1], "-d", 3))
-		debug = 1;
+	snprintf(user_agent, sizeof(user_agent), "%s (%s)", argv[0], AUC_VERSION);
+	fprintf(stdout, "%s\n", user_agent);
+
+	while (argc<args) {
+		if (!strncmp(argv[argc], "-h", 3) ||
+		    !strncmp(argv[argc], "--help", 7)) {
+			fprintf(stdout, "%s: Attended sysUpgrade CLI client\n", argv[0]);
+			fprintf(stdout, "Usage: auc [-d] [-h]\n");
+			fprintf(stdout, " -d\tenable debugging output\n");
+			fprintf(stdout, " -h\toutput help\n");
+			return 0;
+		}
+		if (!strncmp(argv[argc], "-d", 3))
+			debug = 1;
+		argc++;
+	};
 
 	if (!ctx) {
 		fprintf(stderr, "failed to connect to ubus.\n");
@@ -739,10 +791,6 @@ int main(int args, char *argv[]) {
 	blobmsg_buf_init(&imgbuf);
 	blobmsg_buf_init(&upgbuf);
 
-	snprintf(user_agent, sizeof(user_agent), "%s (%s)", argv[0], AUC_VERSION);
-
-	fprintf(stderr, "%s\n", user_agent);
-
 	if (ubus_lookup_id(ctx, "system", &id) ||
 	    ubus_invoke(ctx, id, "board", NULL, board_cb, &checkbuf, 3000)) {
 		fprintf(stderr, "cannot request board info from procd\n");
@@ -759,10 +807,10 @@ int main(int args, char *argv[]) {
 
 	blobmsg_add_u32(&checkbuf, "upgrade_packages", upgrade_packages);
 
-	fprintf(stderr, "running %s %s %s on %s/%s (%s)\n", distribution,
+	fprintf(stdout, "running %s %s %s on %s/%s (%s)\n", distribution,
 		version, revision, target, subtarget, board_name);
 
-	fprintf(stderr, "checking %s for release upgrade%s\n", serverurl,
+	fprintf(stdout, "checking %s for release upgrade%s\n", serverurl,
 		upgrade_packages?" or updated packages":"");
 
 	blobmsg_add_string(&reqbuf, "distro", distribution);
@@ -773,16 +821,18 @@ int main(int args, char *argv[]) {
 	snprintf(url, sizeof(url), "%s/%s", serverurl, APIOBJ_CHECK);
 	uptodate=0;
 
-	if (debug)
-		fprintf(stderr, "requesting:\n%s\n", blobmsg_format_json_indent(checkbuf.head, true, 0));
-
-	retry=0;
 	do {
+		retry=0;
+		if (debug)
+			fprintf(stderr, "requesting:\n%s\n", blobmsg_format_json_indent(checkbuf.head, true, 0));
 		if (server_request(url, &checkbuf, &reqbuf)) {
 			fprintf(stderr, "failed to connect to server\n");
 			rc=-1;
 			goto freeboard;
 		};
+
+		if (retry)
+			sleep(3);
 	} while(retry);
 
 	if (debug)
@@ -801,16 +851,17 @@ int main(int args, char *argv[]) {
 	}
 	if (tbc[CHECK_VERSION]) {
 		newversion = blobmsg_get_string(tbc[CHECK_VERSION]);
-		fprintf(stderr, "new %s release %s found.\n", distribution, newversion);
+		fprintf(stdout, "new %s release %s found.\n", distribution, newversion);
 	} else {
-		fprintf(stderr, "staying on %s release version %s\n", distribution, version);
+		fprintf(stdout, "staying on %s release version %s\n", distribution, version);
 		blobmsg_add_string(&reqbuf, "version", version);
 	};
 
 	if (tbc[CHECK_UPGRADES]) {
-		fprintf(stderr, "package updates found:\n%s\n",
-			blobmsg_format_json_indent(tbc[CHECK_UPGRADES], true, 0));
+		fprintf(stdout, "package updates:\n");
+		print_package_updates(tbc[CHECK_UPGRADES]);
 	}
+
 	rc = ask_user();
 	if (rc)
 		goto freeboard;
@@ -824,7 +875,7 @@ int main(int args, char *argv[]) {
 	do {
 		retry = 0;
 
-		if (debug)
+		if (debug && !use_get)
 			fprintf(stderr, "requesting:\n%s\n", blobmsg_format_json_indent(reqbuf.head, true, 0));
 
 		server_request(url, use_get?NULL:&reqbuf, &imgbuf);
@@ -847,6 +898,9 @@ int main(int args, char *argv[]) {
 			sleep(3);
 		}
 	} while(retry || queuepos);
+
+	if (debug)
+		fprintf(stderr, "reply:\n%s\n", blobmsg_format_json_indent(imgbuf.head, true, 0));
 
 	if (!tb[IMAGE_SYSUPGRADE]) {
 		fprintf(stderr, "no sysupgrade image returned\n");
@@ -903,20 +957,16 @@ int main(int args, char *argv[]) {
 		}
 	}
 
-	if (!ubus_lookup_id(ctx, "rpc-sys", &id)) {
-		valid = 0;
-		ubus_invoke(ctx, id, "upgrade_test", NULL, upgtest_cb, &valid, 3000);
-		if (!valid) {
-			rc=-1;
-			goto freeboard;
-		}
-
-		blobmsg_add_u8(&upgbuf, "keep", 1);
-		fprintf(stderr, "invoking sysupgrade\n");
-		ubus_invoke(ctx, id, "upgrade_start", upgbuf.head, NULL, NULL, 3000);
-	} else {
+	valid = 0;
+	ubus_invoke(ctx, id, "upgrade_test", NULL, upgtest_cb, &valid, 3000);
+	if (!valid) {
 		rc=-1;
+		goto freeboard;
 	}
+
+	blobmsg_add_u8(&upgbuf, "keep", 1);
+	fprintf(stdout, "invoking sysupgrade\n");
+	ubus_invoke(ctx, id, "upgrade_start", upgbuf.head, NULL, NULL, 3000);
 
 freeboard:
 	free(board_name);
