@@ -26,6 +26,10 @@ config interface 'MYVPN'
         #option token_mode 'hotp'
         #option token_secret '00'
 
+	# tokens from script
+	#option token_mode 'script'
+	#option token_script '/lib/custom/getocpass.sh'
+
 	# Juniper vpn support
 	#option juniper '1'
 
