@@ -10,6 +10,7 @@ CONNTRACK_FILE="/proc/net/nf_conntrack"
 
 MWAN3_STATUS_DIR="/var/run/mwan3"
 MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
+DEFAULT_LOWEST_METRIC=256
 
 [ -d $MWAN3_STATUS_DIR ] || mkdir -p $MWAN3_STATUS_DIR/iface_state
 # mwan3's MARKing mask (at least 3 bits should be set)
@@ -480,6 +481,7 @@ mwan3_set_policy()
 	config_get weight $1 weight 1
 
 	[ -n "$iface" ] || return 0
+	[ "$metric" -gt $DEFAULT_LOWEST_METRIC ] && $LOG warn "Member interface $iface has >$DEFAULT_LOWEST_METRIC metric. Not appending to policy" && return 0
 
 	mwan3_get_iface_id id $iface
 
@@ -587,10 +589,10 @@ mwan3_create_policies_iptables()
 		esac
 	done
 
-	lowest_metric_v4=256
+	lowest_metric_v4=$DEFAULT_LOWEST_METRIC
 	total_weight_v4=0
 
-	lowest_metric_v6=256
+	lowest_metric_v6=$DEFAULT_LOWEST_METRIC
 	total_weight_v6=0
 
 	config_list_foreach $1 use_member mwan3_set_policy
