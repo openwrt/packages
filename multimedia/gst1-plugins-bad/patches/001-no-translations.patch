@@ -1,9 +1,9 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -3717,7 +3717,6 @@ ext/x265/Makefile
- ext/xvid/Makefile
+@@ -3841,7 +3841,6 @@ ext/xvid/Makefile
  ext/zbar/Makefile
  ext/dtls/Makefile
+ ext/webrtcdsp/Makefile
 -po/Makefile.in
  docs/Makefile
  docs/plugins/Makefile

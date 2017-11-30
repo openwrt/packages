@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1052,9 +1052,6 @@ sys/ximage/Makefile
+@@ -1064,9 +1064,6 @@ sys/ximage/Makefile
  common/Makefile
  common/m4/Makefile
  m4/Makefile

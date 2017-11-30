@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -3617,38 +3617,6 @@ sys/wasapi/Makefile
+@@ -3739,37 +3739,6 @@ sys/wasapi/Makefile
  sys/wininet/Makefile
  sys/winks/Makefile
  sys/winscreencap/Makefile
@@ -21,7 +21,6 @@
 -tests/examples/gl/generic/doublecube/Makefile
 -tests/examples/gl/generic/recordgraphic/Makefile
 -tests/examples/gl/gtk/Makefile
--tests/examples/gl/gtk/gtkvideooverlay/Makefile
 -tests/examples/gl/gtk/3dvideo/Makefile
 -tests/examples/gl/gtk/filternovideooverlay/Makefile
 -tests/examples/gl/gtk/filtervideooverlay/Makefile

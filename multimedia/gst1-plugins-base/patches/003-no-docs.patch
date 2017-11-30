@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -907,11 +907,6 @@ pkgconfig/gstreamer-video.pc
+@@ -940,11 +940,6 @@ pkgconfig/gstreamer-video.pc
  pkgconfig/gstreamer-video-uninstalled.pc
  pkgconfig/gstreamer-plugins-base.pc
  pkgconfig/gstreamer-plugins-base-uninstalled.pc
