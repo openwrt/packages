@@ -332,6 +332,11 @@ rpc_lxc_info(struct ubus_context *ctx, struct ubus_object *obj,
 	l = rpc_lxc_init(tb);
 	if (!l)
 		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	if (!l->container->is_running(l->container) &&
+	    !l->container->is_defined(l->container))
+		return UBUS_STATUS_NOT_FOUND;
+
 	blob_buf_init(&buf, 0);
 
 	blobmsg_add_string(&buf, "name", l->container->name);
