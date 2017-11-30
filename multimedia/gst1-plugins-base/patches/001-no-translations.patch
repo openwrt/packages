@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -929,7 +929,6 @@ docs/design/Makefile
+@@ -963,7 +963,6 @@ docs/design/Makefile
  docs/libs/Makefile
  docs/plugins/Makefile
  docs/version.entities

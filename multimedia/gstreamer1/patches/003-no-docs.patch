@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1001,18 +1001,6 @@ plugins/tracers/Makefile
+@@ -1050,18 +1050,6 @@ plugins/tracers/Makefile
  tools/Makefile
  common/Makefile
  common/m4/Makefile
