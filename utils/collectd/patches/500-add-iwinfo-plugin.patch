@@ -1,24 +1,26 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -804,6 +804,9 @@ AC_CACHE_CHECK([whether clock_boottime a
- 		       [c_cv_have_clock_boottime_monotonic="no"]))
- 
+@@ -714,6 +714,11 @@ AC_CACHE_CHECK([whether clock_boottime a
+   ]
+ )
  
 +# For the iwinfo plugin
-+AC_CHECK_LIB(iwinfo, iwinfo_backend, [with_iwinfo="yes"], [with_iwinfo="no (libiwinfo not found)"], [])
-+
- # For the turbostat plugin
- have_asm_msrindex_h="no"
- AC_CHECK_HEADERS(asm/msr-index.h, [have_asm_msrindex_h="yes"])
-@@ -6035,6 +6038,7 @@ plugin_interface="no"
++AC_CHECK_LIB([iwinfo], [iwinfo_backend],
++    [with_iwinfo="yes"],
++    [with_iwinfo="no (libiwinfo not found)"]
++)
+ 
+ #
+ # Checks for typedefs, structures, and compiler characteristics.
+@@ -6131,6 +6136,7 @@ plugin_ipc="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
 +plugin_iwinfo="no"
  plugin_load="no"
  plugin_log_logstash="no"
- plugin_memory="no"
-@@ -6505,6 +6509,7 @@ AC_PLUGIN([ipmi],                [$plugi
+ plugin_mcelog="no"
+@@ -6542,6 +6548,7 @@ AC_PLUGIN([ipmi],                [$plugi
  AC_PLUGIN([iptables],            [$with_libiptc],           [IPTables rule counters])
  AC_PLUGIN([ipvs],                [$plugin_ipvs],            [IPVS connection statistics])
  AC_PLUGIN([irq],                 [$plugin_irq],             [IRQ statistics])
@@ -26,7 +28,7 @@
  AC_PLUGIN([java],                [$with_java],              [Embed the Java Virtual Machine])
  AC_PLUGIN([load],                [$plugin_load],            [System load])
  AC_PLUGIN([log_logstash],        [$plugin_log_logstash],    [Logstash json_event compatible logging])
-@@ -6886,6 +6891,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
+@@ -6903,6 +6910,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
  AC_MSG_RESULT([    oracle  . . . . . . . $with_oracle])
  AC_MSG_RESULT([    protobuf-c  . . . . . $have_protoc_c])
  AC_MSG_RESULT([    protoc 3  . . . . . . $have_protoc3])
@@ -34,7 +36,7 @@
  AC_MSG_RESULT()
  AC_MSG_RESULT([  Features:])
  AC_MSG_RESULT([    daemon mode . . . . . $enable_daemon])
-@@ -6942,6 +6948,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
+@@ -6961,6 +6969,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
  AC_MSG_RESULT([    iptables  . . . . . . $enable_iptables])
  AC_MSG_RESULT([    ipvs  . . . . . . . . $enable_ipvs])
  AC_MSG_RESULT([    irq . . . . . . . . . $enable_irq])
@@ -44,7 +46,7 @@
  AC_MSG_RESULT([    logfile . . . . . . . $enable_logfile])
 --- a/src/collectd.conf.in
 +++ b/src/collectd.conf.in
-@@ -135,6 +135,7 @@
+@@ -137,6 +137,7 @@
  #@BUILD_PLUGIN_IPTABLES_TRUE@LoadPlugin iptables
  #@BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
  #@BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
@@ -52,7 +54,7 @@
  #@BUILD_PLUGIN_JAVA_TRUE@LoadPlugin java
  @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
  #@BUILD_PLUGIN_LPAR_TRUE@LoadPlugin lpar
-@@ -649,6 +650,12 @@
+@@ -720,6 +721,12 @@
  #	IgnoreSelected true
  #</Plugin>
  
@@ -67,7 +69,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -3143,6 +3143,27 @@ and all other interrupts are collected.
+@@ -3503,6 +3503,27 @@ and all other interrupts are collected.
  
  =back
  
@@ -248,25 +250,9 @@
 +	plugin_register_config("iwinfo", iwinfo_config, config_keys, config_keys_num);
 +	plugin_register_read("iwinfo", iwinfo_read);
 +}
---- a/src/Makefile.am
-+++ b/src/Makefile.am
-@@ -568,6 +568,13 @@ irq_la_SOURCES = irq.c
- irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
- endif
- 
-+if BUILD_PLUGIN_IWINFO
-+pkglib_LTLIBRARIES += iwinfo.la
-+iwinfo_la_SOURCES = iwinfo.c
-+iwinfo_la_LDFLAGS = -module -avoid-version
-+iwinfo_la_LIBADD = -liwinfo
-+endif
-+
- if BUILD_PLUGIN_JAVA
- pkglib_LTLIBRARIES += java.la
- java_la_SOURCES = java.c
 --- a/src/types.db
 +++ b/src/types.db
-@@ -260,6 +260,7 @@ voltage_threshold       value:GAUGE:U:U,
+@@ -269,6 +269,7 @@ voltage_threshold       value:GAUGE:U:U,
  vs_memory               value:GAUGE:0:9223372036854775807
  vs_processes            value:GAUGE:0:65535
  vs_threads              value:GAUGE:0:65535
@@ -274,3 +260,124 @@
  
  #
  # Legacy types
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -983,6 +983,14 @@ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ irq_la_LIBADD = libignorelist.la
+ endif
+ 
++if BUILD_PLUGIN_IWINFO
++pkglib_LTLIBRARIES += iwinfo.la
++iwinfo_la_SOURCES = src/iwinfo.c
++#iwinfo_la_LDFLAGS = -module -avoid-version
++iwinfo_la_LDFLAGS = $(PLUGIN_LDFLAGS)
++iwinfo_la_LIBADD = -liwinfo libignorelist.la
++endif
++
+ if BUILD_PLUGIN_JAVA
+ pkglib_LTLIBRARIES += java.la
+ java_la_SOURCES = src/java.c
+--- a/Makefile
++++ b/Makefile
+@@ -238,7 +238,7 @@ am__append_126 = memory.la
+ #am__append_131 = -lperfstat
+ #am__append_132 = mic.la
+ #am__append_133 = modbus.la
+-#am__append_134 = mqtt.la
++am__append_134 = mqtt.la
+ #am__append_135 = multimeter.la
+ #am__append_136 = mysql.la
+ #am__append_137 = netapp.la
+@@ -909,8 +909,10 @@ irq_la_LINK = $(LIBTOOL) $(AM_V_lt) --ta
+ 	$(irq_la_LDFLAGS) $(LDFLAGS) -o $@
+ #am_irq_la_rpath = -rpath $(pkglibdir)
+ iwinfo_la_DEPENDENCIES =
+-am__iwinfo_la_SOURCES_DIST = iwinfo.c
+-am_iwinfo_la_OBJECTS = iwinfo.lo
++am__iwinfo_la_SOURCES_DIST = src/iwinfo.c src/utils_ignorelist.c \
++	src/utils_ignorelist.h
++am_iwinfo_la_OBJECTS = src/iwinfo.lo \
++	src/utils_ignorelist.lo
+ iwinfo_la_OBJECTS = $(am_iwinfo_la_OBJECTS)
+ iwinfo_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+ 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+@@ -1198,14 +1200,14 @@ modbus_la_LINK = $(LIBTOOL) $(AM_V_lt) -
+ 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(modbus_la_CFLAGS) \
+ 	$(CFLAGS) $(modbus_la_LDFLAGS) $(LDFLAGS) -o $@
+ #am_modbus_la_rpath = -rpath $(pkglibdir)
+-#mqtt_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
++mqtt_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+ am__mqtt_la_SOURCES_DIST = src/mqtt.c
+-#am_mqtt_la_OBJECTS = src/mqtt_la-mqtt.lo
++am_mqtt_la_OBJECTS = src/mqtt_la-mqtt.lo
+ mqtt_la_OBJECTS = $(am_mqtt_la_OBJECTS)
+ mqtt_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+ 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+ 	$(mqtt_la_LDFLAGS) $(LDFLAGS) -o $@
+-#am_mqtt_la_rpath = -rpath $(pkglibdir)
++am_mqtt_la_rpath = -rpath $(pkglibdir)
+ multimeter_la_LIBADD =
+ am__multimeter_la_SOURCES_DIST = src/multimeter.c
+ #am_multimeter_la_OBJECTS =  \
+@@ -3699,7 +3701,10 @@ interface_la_LIBADD = libignorelist.la \
+ #irq_la_SOURCES = src/irq.c
+ #irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ #irq_la_LIBADD = libignorelist.la
+-iwinfo_la_SOURCES = iwinfo.c
++iwinfo_la_SOURCES = src/iwinfo.c \
++		    src/utils_ignorelist.c \
++		    src/utils_ignorelist.h
++
+ iwinfo_la_LDFLAGS = -module -avoid-version
+ iwinfo_la_LIBADD = -liwinfo
+ #java_la_SOURCES = src/java.c
+@@ -3784,10 +3789,10 @@ memory_la_LIBADD = $(am__append_127) \
+ #modbus_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBMODBUS_CFLAGS)
+ #modbus_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ #modbus_la_LIBADD = $(BUILD_WITH_LIBMODBUS_LIBS)
+-#mqtt_la_SOURCES = src/mqtt.c
+-#mqtt_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBMOSQUITTO_CPPFLAGS)
+-#mqtt_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBMOSQUITTO_LDFLAGS)
+-#mqtt_la_LIBADD = $(BUILD_WITH_LIBMOSQUITTO_LIBS)
++mqtt_la_SOURCES = src/mqtt.c
++mqtt_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBMOSQUITTO_CPPFLAGS)
++mqtt_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBMOSQUITTO_LDFLAGS)
++mqtt_la_LIBADD = $(BUILD_WITH_LIBMOSQUITTO_LIBS)
+ #multimeter_la_SOURCES = src/multimeter.c
+ #multimeter_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ #mysql_la_SOURCES = src/mysql.c
+@@ -4566,6 +4571,9 @@ src/irq.lo: src/$(am__dirstamp) src/$(DE
+ 
+ irq.la: $(irq_la_OBJECTS) $(irq_la_DEPENDENCIES) $(EXTRA_irq_la_DEPENDENCIES) 
+ 	$(AM_V_CCLD)$(irq_la_LINK) $(am_irq_la_rpath) $(irq_la_OBJECTS) $(irq_la_LIBADD) $(LIBS)
++src/iwinfo.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
++src/utils_ignorelist.lo: src/$(am__dirstamp) \
++	src/$(DEPDIR)/$(am__dirstamp)
+ 
+ iwinfo.la: $(iwinfo_la_OBJECTS) $(iwinfo_la_DEPENDENCIES) $(EXTRA_iwinfo_la_DEPENDENCIES) 
+ 	$(AM_V_CCLD)$(iwinfo_la_LINK) $(am_iwinfo_la_rpath) $(iwinfo_la_OBJECTS) $(iwinfo_la_LIBADD) $(LIBS)
+@@ -4646,8 +4654,6 @@ src/daemon/utils_heap.lo: src/daemon/$(a
+ 
+ libheap.la: $(libheap_la_OBJECTS) $(libheap_la_DEPENDENCIES) $(EXTRA_libheap_la_DEPENDENCIES) 
+ 	$(AM_V_CCLD)$(LINK)  $(libheap_la_OBJECTS) $(libheap_la_LIBADD) $(LIBS)
+-src/utils_ignorelist.lo: src/$(am__dirstamp) \
+-	src/$(DEPDIR)/$(am__dirstamp)
+ 
+ libignorelist.la: $(libignorelist_la_OBJECTS) $(libignorelist_la_DEPENDENCIES) $(EXTRA_libignorelist_la_DEPENDENCIES) 
+ 	$(AM_V_CCLD)$(LINK)  $(libignorelist_la_OBJECTS) $(libignorelist_la_LIBADD) $(LIBS)
+@@ -5482,7 +5488,6 @@ distclean-compile:
+ include ./$(DEPDIR)/grpc_la-collectd.grpc.pb.Plo
+ include ./$(DEPDIR)/grpc_la-collectd.pb.Plo
+ include ./$(DEPDIR)/grpc_la-types.pb.Plo
+-include ./$(DEPDIR)/iwinfo.Plo
+ include ./$(DEPDIR)/write_prometheus_la-prometheus.pb-c.Plo
+ include src/$(DEPDIR)/aggregation.Plo
+ include src/$(DEPDIR)/amqp_la-amqp.Plo
+@@ -5546,6 +5551,7 @@ include src/$(DEPDIR)/ipmi_la-ipmi.Plo
+ include src/$(DEPDIR)/iptables_la-iptables.Plo
+ include src/$(DEPDIR)/ipvs.Plo
+ include src/$(DEPDIR)/irq.Plo
++include src/$(DEPDIR)/iwinfo.Plo
+ include src/$(DEPDIR)/java_la-java.Plo
+ include src/$(DEPDIR)/libformat_json_la-utils_format_json.Plo
+ include src/$(DEPDIR)/load_la-load.Plo

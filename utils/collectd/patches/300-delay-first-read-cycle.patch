@@ -1,6 +1,6 @@
 --- a/src/daemon/plugin.c
 +++ b/src/daemon/plugin.c
-@@ -1108,7 +1108,7 @@ static int plugin_insert_read(read_func_
+@@ -1099,7 +1099,7 @@ static int plugin_insert_read(read_func_
    int status;
    llentry_t *le;
  
