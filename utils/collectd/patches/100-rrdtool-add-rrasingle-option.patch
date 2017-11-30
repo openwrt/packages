@@ -1,6 +1,6 @@
 --- a/src/rrdtool.c
 +++ b/src/rrdtool.c
-@@ -61,6 +61,7 @@ typedef struct rrd_queue_s rrd_queue_t;
+@@ -60,6 +60,7 @@ typedef struct rrd_queue_s rrd_queue_t;
  static const char *config_keys[] = {
      "CacheTimeout", "CacheFlush",      "CreateFilesAsync", "DataDir",
      "StepSize",     "HeartBeat",       "RRARows",          "RRATimespan",
@@ -8,7 +8,7 @@
      "XFF",          "WritesPerSecond", "RandomTimeout"};
  static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
  
-@@ -78,6 +79,8 @@ static rrdcreate_config_t rrdcreate_conf
+@@ -77,6 +78,8 @@ static rrdcreate_config_t rrdcreate_conf
      /* timespans = */ NULL,
      /* timespans_num = */ 0,
  
@@ -17,7 +17,7 @@
      /* consolidation_functions = */ NULL,
      /* consolidation_functions_num = */ 0,
  
-@@ -971,6 +974,12 @@ static int rrd_config(const char *key, c
+@@ -950,6 +953,12 @@ static int rrd_config(const char *key, c
            /* compar = */ rrd_compare_numeric);
  
      free(value_copy);
