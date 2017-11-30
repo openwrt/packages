@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluez
 PKG_VERSION:=5.47
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/bluetooth/
@@ -21,6 +21,9 @@ PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_bluez-examples
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -35,7 +38,7 @@ $(call Package/bluez/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= python example apps
-  DEPENDS:=+python
+  DEPENDS:=+PACKAGE_bluez-examples:python
 endef
 
 define Package/bluez-examples/description
