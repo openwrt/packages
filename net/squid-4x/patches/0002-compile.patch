@@ -1,0 +1,13 @@
+--- a/src/base/File.h
++++ b/src/base/File.h
+@@ -11,6 +11,10 @@
+ 
+ #include "sbuf/SBuf.h"
+ 
++#if HAVE_SYS_FILE_H
++#include <sys/file.h>
++#endif
++
+ /// How should a file be opened/created? Should it be locked?
+ class FileOpeningConfig
+ {
