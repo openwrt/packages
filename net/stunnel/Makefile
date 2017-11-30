@@ -9,10 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stunnel
 PKG_VERSION:=5.44
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0+
-PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
+PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net> \
+		Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE_FILES:=COPYING COPYRIGHT.GPL
 
 PKG_SOURCE_URL:= \

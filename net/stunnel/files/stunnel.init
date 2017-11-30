@@ -81,7 +81,10 @@ print_list_colon() {
 
 service_section() {
 	local cfg="$1"
-	local accept_host accept_port
+	local accept_host accept_port enabled
+
+	config_get_bool enabled "$cfg" 'enabled' '1'
+	[ ${enabled} -gt 0 ] || return 0
 
 	printf "\n" >> "$CONF_FILE"
 	printf "[%s]\n" "$cfg" >> "$CONF_FILE"
