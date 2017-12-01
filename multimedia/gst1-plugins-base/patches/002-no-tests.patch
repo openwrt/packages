@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -907,23 +907,6 @@ pkgconfig/gstreamer-video.pc
+@@ -940,24 +940,6 @@ pkgconfig/gstreamer-video.pc
  pkgconfig/gstreamer-video-uninstalled.pc
  pkgconfig/gstreamer-plugins-base.pc
  pkgconfig/gstreamer-plugins-base-uninstalled.pc
@@ -9,6 +9,7 @@
 -tests/examples/Makefile
 -tests/examples/app/Makefile
 -tests/examples/audio/Makefile
+-tests/examples/decodebin_next/Makefile
 -tests/examples/dynamic/Makefile
 -tests/examples/encoding/Makefile
 -tests/examples/fft/Makefile
