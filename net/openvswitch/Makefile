@@ -134,8 +134,13 @@ define KernelPackage/openvswitch
   KCONFIG:=CONFIG_BRIDGE
   DEPENDS:=+kmod-stp @IPV6 +kmod-gre +kmod-lib-crc32c +kmod-vxlan +kmod-nf-conntrack +kmod-nf-conntrack6 @($(SUPPORTED_KERNELS))
   FILES:= \
+	$(PKG_BUILD_DIR)/datapath/linux/vport-geneve.$(LINUX_KMOD_SUFFIX) \
+	$(PKG_BUILD_DIR)/datapath/linux/vport-gre.$(LINUX_KMOD_SUFFIX) \
+	$(PKG_BUILD_DIR)/datapath/linux/vport-lisp.$(LINUX_KMOD_SUFFIX) \
+	$(PKG_BUILD_DIR)/datapath/linux/vport-stt.$(LINUX_KMOD_SUFFIX) \
+	$(PKG_BUILD_DIR)/datapath/linux/vport-vxlan.$(LINUX_KMOD_SUFFIX) \
 	$(PKG_BUILD_DIR)/datapath/linux/openvswitch.$(LINUX_KMOD_SUFFIX)
-  AUTOLOAD:=$(call AutoLoad,21,openvswitch)
+  AUTOLOAD:=$(call AutoLoad,21,openvswitch vport-geneve vport-gre vport-lisp vport-stt vport-vxlan)
 endef
 
 define KernelPackage/openvswitch/description
