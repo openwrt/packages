@@ -65,16 +65,6 @@ define Package/python/Default/description
  the development of higher quality, more maintainable code.
 endef
 
-define Package/python-pip-conf
-$(call Package/python/Default)
-  TITLE:=Configuration file for pip/pip3
-  URL:=https://pip.pypa.io
-endef
-
-define Package/python-pip-conf/description
- Configuration file for pip/pip3
-endef
-
 define Package/python-base
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) interpreter
@@ -281,11 +271,6 @@ define PyPackage/python/filespec
 -|$(PYTHON_PKG_DIR)
 endef
 
-define Package/python-pip-conf/install
-	$(INSTALL_DIR) $(1)/etc
-	$(CP) ./files/pip.conf $(1)/etc
-endef
-
 HOST_LDFLAGS += \
 	-Wl,--no-as-needed -lrt \
 	$$$$(pkg-config --static --libs libcrypto libssl)
@@ -323,8 +308,6 @@ $(foreach package, $(PYTHON_PACKAGES),  \
 $(eval $(call PyPackage,python-base))
 $(eval $(call PyPackage,python-light))
 $(eval $(call PyPackage,python))
-
-$(eval $(call BuildPackage,python-pip-conf))
 
 $(eval $(call BuildPackage,python-base))
 $(eval $(call BuildPackage,python-light))
