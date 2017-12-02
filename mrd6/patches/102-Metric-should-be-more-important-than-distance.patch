@@ -7,11 +7,9 @@ Subject: [PATCH 2/2] Metric should be more important than distance at lookup
  src/mrib.cpp | 10 +++++-----
  1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/src/mrib.cpp b/src/mrib.cpp
-index e51fed7..707d601 100644
 --- a/src/mrib.cpp
 +++ b/src/mrib.cpp
-@@ -327,16 +327,16 @@ mrib_def::mrib_node *mrib_def::prefix_lookup_y(const inet6_addr &source) const {
+@@ -327,16 +327,16 @@ mrib_def::mrib_node *mrib_def::prefix_lo
  void mrib_def::insert_prefix_in_node(mrib_node *n, prefix *p) {
  	prefix *curr = n->head, *prev = 0;
  
@@ -33,6 +31,3 @@ index e51fed7..707d601 100644
  			prev = curr;
  			curr = curr->next;
  		}
--- 
-1.9.0
-
