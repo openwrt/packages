@@ -8,12 +8,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smcroute
 PKG_VERSION:=2.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=ftp://troglobit.com/smcroute/
 PKG_MD5SUM:=cbf478e52ab9ae411adca41b9d22f68a
+
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
