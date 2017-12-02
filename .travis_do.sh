@@ -67,8 +67,14 @@ download_sdk() {
 # test_package will run on the `script` step.
 # test_package call make download check for very new/modified package
 test_packages2() {
+	local commit_range=$TRAVIS_COMMIT_RANGE
+	if [ "$TRAVIS_PULL_REQUEST" = false ]; then
+		echo_blue "Using only the latest commit, since we're not in a Pull Request"
+		commit_range=HEAD~1
+	fi
+
 	# search for new or modified packages. PKGS will hold a list of package like 'admin/muninlite admin/monit ...'
-	PKGS=$(git diff --diff-filter=d --name-only "$TRAVIS_COMMIT_RANGE" | grep 'Makefile$' | grep -v '/files/' | awk -F'/Makefile' '{ print $1 }')
+	PKGS=$(git diff --diff-filter=d --name-only "$commit_range" | grep 'Makefile$' | grep -v '/files/' | awk -F'/Makefile' '{ print $1 }')
 
 	if [ -z "$PKGS" ] ; then
 		echo_blue "No new or modified packages found!"
@@ -142,6 +148,10 @@ EOF
 
 test_commits() {
 	RET=0
+	if [ "$TRAVIS_PULL_REQUEST" = false ]; then
+		echo_blue "Skipping commits tests (not in a Pull Request)"
+		return 0
+	fi
 	for commit in $(git rev-list ${TRAVIS_COMMIT_RANGE/.../..}); do
 		echo_blue "=== Checking commit '$commit'"
 		if git show --format='%P' -s $commit | grep -qF ' '; then
@@ -186,19 +196,20 @@ echo_blue "=== Travis ENV"
 env
 echo_blue "=== Travis ENV"
 
-while true; do
-	# if clone depth is too small, git rev-list / diff return incorrect or empty results
-	C="$(git rev-list ${TRAVIS_COMMIT_RANGE/.../..} | tail -n1)" 2>/dev/null
-	[ -n "$C" -a "$C" != "a22de9b74cf9579d1ce7e6cf1845b4afa4277b00" ] && break
-	echo_blue "Fetching 50 commits more"
-	git fetch origin --deepen=50
-done
-
-if [ "$TRAVIS_PULL_REQUEST" = false ] ; then
-	echo "Only Pull Requests are supported at the moment." >&2
-	exit 0
+if [ -z "$TRAVIS_COMMIT_RANGE" ] && [ "$TRAVIS_PULL_REQUEST" = true ] ; then
+	echo_red "TRAVIS_COMMIT_RANGE variable is empty in a Pull Request"
+	exit 1
 fi
 
+if [ "$TRAVIS_PULL_REQUEST" = true ]; then
+	while true; do
+		# if clone depth is too small, git rev-list / diff return incorrect or empty results
+		C="$(git rev-list ${TRAVIS_COMMIT_RANGE/.../..} | tail -n1)" 2>/dev/null
+		[ -n "$C" -a "$C" != "a22de9b74cf9579d1ce7e6cf1845b4afa4277b00" ] && break
+		echo_blue "Fetching 50 commits more"
+		git fetch origin --deepen=50
+	done
+fi
 
 if [ $# -ne 1 ] ; then
 	cat <<EOF
