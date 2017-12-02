@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=4.13.3
+PKG_VERSION:=4.14
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs/
-PKG_HASH:=805bdb0031c21a0a5d2ba295a8c9bdd8ba831a68c3fa801aab85677ec902d783
+PKG_HASH:=09095cbc3bc2b6aa9d09c93146fb4d7437c51d2572f6918b74fe990fcdcb91af
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
@@ -50,7 +50,8 @@ progs = btrfs btrfs-debug-tree btrfs-find-root btrfs-image btrfs-map-logical \
 CONFIGURE_ARGS += \
 	--disable-backtrace \
 	--disable-convert \
-	--disable-documentation
+	--disable-documentation \
+	--disable-zstd
 
 EXTRA_CFLAGS=$(TARGET_CPPFLAGS)
 
