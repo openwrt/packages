@@ -121,6 +121,7 @@ CONFIGURE_ARGS += \
 	--disable-examples \
 	--disable-tests \
 	--disable-valgrind \
+	--disable-gst-tracer-hooks \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
 	--without-x \

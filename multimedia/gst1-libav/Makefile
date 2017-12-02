@@ -146,6 +146,7 @@ LIBAV_CONFIGURE_PROTOCOLS:=$(call FILTER_CONFIG,PROTOCOL,protocol,$(LIBAV_PROTOC
 
 CONFIGURE_ARGS += \
 	--without-system-libav \
+	--with-libav-extra-configure=" \
 	--disable-bsfs \
 	--disable-programs \
 	--disable-devices \
