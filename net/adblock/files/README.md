@@ -76,6 +76,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * minimal status & error logging to syslog, enable debug logging to receive more output
 * procd based init system support (start/stop/restart/reload/suspend/resume/query/status)
 * procd network interface trigger support or classic time based startup
+* conditional dns backend restarts by old/new blocklist comparison with sha256sum (default) or md5sum
 * suspend & resume adblock actions temporarily without blocklist reloading
 * output comprehensive runtime information via LuCI or via 'status' init command
 * query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
@@ -235,7 +236,8 @@ This entry does not remove:
   www.adwhere.com
 </code></pre>
   
-**query the active blocklist for a certain (sub-)domain, e.g. for whitelisting:**
+**query the active blocklist for a certain (sub-)domain, e.g. for whitelisting:**  
+
 The query function checks against the submitted (sub-)domain and recurses automatically to the upper top level domain. For every (sub-)domain it returns the first ten relevant results.
 <pre><code>
 /etc/init.d/adblock query www.example.google.com
@@ -253,7 +255,8 @@ The query function checks against the submitted (sub-)domain and recurses automa
   + www-google-analytics.l.google.com
 </code></pre>
   
-**add a new blocklist source:**
+**add a new blocklist source:**  
+
 1. the easy way ...  
 example: https://easylist-downloads.adblockplus.org/rolist+easylist.txt  
 Adblock already supports an easylist source, called 'reg_ru'. To add the additional local easylist as a new source, copy the existing config source section and change only
