@@ -1,0 +1,12 @@
+--- a/py/persistentcode.c	2017-09-22 13:26:04.914339465 +0000
++++ b/py/persistentcode.c	2017-09-22 13:26:22.618319621 +0000
+@@ -373,7 +373,7 @@
+
+ // here we define mp_raw_code_save_file depending on the port
+ // TODO abstract this away properly
+
+-#if defined(__i386__) || defined(__x86_64__) || (defined(__arm__) && (defined(__unix__)))
++#if defined(__i386__) || defined(__x86_64__) || defined(__unix__)
+
+ #include <unistd.h>
+
