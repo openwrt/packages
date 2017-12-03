@@ -1,0 +1,78 @@
+From d7b6c04aaf416344332e73f49fe457013e3ccf36 Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Sun, 10 Dec 2017 00:54:06 +0100
+Subject: [PATCH] CMakeLists: build reproducible by default
+Merged-upstream: yes
+
+Using the build user and build hostname as part of the git hash breaks
+reproducible builds. Make this part optional, but build reproducible by
+default.
+---
+ CMakeLists.txt | 47 +++++++++++++++++++++++++++--------------------
+ 1 file changed, 27 insertions(+), 20 deletions(-)
+
+Index: libwebsockets-2.4.0/CMakeLists.txt
+===================================================================
+--- libwebsockets-2.4.0.orig/CMakeLists.txt
++++ libwebsockets-2.4.0/CMakeLists.txt
+@@ -39,26 +39,32 @@ message(STATUS "CMAKE_TOOLCHAIN_FILE='${
+ find_package(Git)
+ if(GIT_EXECUTABLE)
+ 	execute_process(
+-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+-    COMMAND "${GIT_EXECUTABLE}" describe
+-    OUTPUT_VARIABLE GIT_HASH
+-    OUTPUT_STRIP_TRAILING_WHITESPACE
+-    )
+-	execute_process(
+-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+-    COMMAND "whoami"
+-    OUTPUT_VARIABLE GIT_USER
+-    OUTPUT_STRIP_TRAILING_WHITESPACE
+-    )
+-	execute_process(
+-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+-    COMMAND "hostname"
+-    OUTPUT_VARIABLE GIT_HOST
+-    OUTPUT_STRIP_TRAILING_WHITESPACE
+-    )
+-	string(REGEX REPLACE "([^\\])[\\]([^\\])" "\\1\\\\\\\\\\2" GIT_USER ${GIT_USER})
+-    set(LWS_BUILD_HASH ${GIT_USER}@${GIT_HOST}-${GIT_HASH})
+-    message("Git commit hash: ${LWS_BUILD_HASH}")
++		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
++		COMMAND "${GIT_EXECUTABLE}" describe
++		OUTPUT_VARIABLE GIT_HASH
++		OUTPUT_STRIP_TRAILING_WHITESPACE
++		)
++	set(LWS_BUILD_HASH ${GIT_HASH})
++
++	# appen the build user and hostname
++	if(NOT LWS_REPRODUCIBLE)
++		execute_process(
++			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
++			COMMAND "whoami"
++			OUTPUT_VARIABLE GIT_USER
++			OUTPUT_STRIP_TRAILING_WHITESPACE
++			)
++		execute_process(
++			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
++			COMMAND "hostname"
++			OUTPUT_VARIABLE GIT_HOST
++			OUTPUT_STRIP_TRAILING_WHITESPACE
++			)
++		string(REGEX REPLACE "([^\\])[\\]([^\\])" "\\1\\\\\\\\\\2" GIT_USER ${GIT_USER})
++		set(LWS_BUILD_HASH ${GIT_USER}@${GIT_HOST}-${GIT_HASH})
++	endif()
++
++	message("Git commit hash: ${LWS_BUILD_HASH}")
+ endif()
+ 
+ set(LWS_WITH_BUNDLED_ZLIB_DEFAULT OFF)
+@@ -121,6 +127,7 @@ option(LWS_AVOID_SIGPIPE_IGN "Android 7+
+ option(LWS_WITH_STATS "Keep statistics of lws internal operations" OFF)
+ option(LWS_WITH_SOCKS5 "Allow use of SOCKS5 proxy on client connections" OFF)
+ option(LWS_WITH_PEER_LIMITS "Track peers and restrict resources a single peer can allocate" OFF)
++option(LWS_REPRODUCIBLE "Build libwebsockets reproducible. It removes the build user and hostname from the build" ON)
+ 
+ macro(confirm_command CMD NOCMD)
+ 	find_program (HAVE_CMD_${CMD} ${CMD} )
