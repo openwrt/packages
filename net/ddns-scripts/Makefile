@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.6
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=20
+PKG_RELEASE:=21
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
@@ -129,7 +129,7 @@ define Build/Compile
 		-e '/^[[:space:]]*$$$$/d'	$$$$FILE; \
 	done
 	# compress public_suffix_list.dat
-	gzip -f9 $(PKG_BUILD_DIR)/files/public_suffix_list.dat
+	gzip -nf9 $(PKG_BUILD_DIR)/files/public_suffix_list.dat
 endef
 
 define Package/ddns-scripts/conffiles
