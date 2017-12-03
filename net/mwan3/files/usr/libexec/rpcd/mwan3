@@ -3,6 +3,7 @@
 . /lib/functions.sh
 . /lib/functions/network.sh
 . /usr/share/libubox/jshn.sh
+. /lib/mwan3/common.sh
 
 MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
 
@@ -47,7 +48,7 @@ get_mwan3_status() {
 
 		time_p="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TIME")"
 		[ -z "${time_p}" ] || {
-			time_n="$(date +'%s')"
+			time_n="$(get_uptime)"
 			let age=time_n-time_p
 		}
 
