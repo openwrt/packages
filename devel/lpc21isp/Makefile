@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lpc21isp
 PKG_VERSION:=197
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=LGPL-3.0+
 PKG_LICENSE_FILES:=README gpl.txt lgpl-3.0.txt
 
