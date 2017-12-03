@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpproxy
 PKG_VERSION:=1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.spreadspace.org/tcpproxy/releases/
@@ -51,7 +51,6 @@ define Build/Configure
     echo '#define TCPPROXY_config_h_INCLUDED' >> config.h; \
     echo '' >> config.h; \
     echo '#define VERSION_STRING_0 "tcpproxy version '`cat $(PKG_BUILD_DIR)/version`'"' >> config.h; \
-    echo '#define VERSION_STRING_1 "built on '`hostname`', '`date +"%d.%m.%Y %H:%M:%S %Z"`'"' >> config.h; \
     echo '' >> config.h; \
     echo '#define TARGET "linux"' >> config.h; \
     echo '#define PREFIX "/usr"' >> config.h; \
