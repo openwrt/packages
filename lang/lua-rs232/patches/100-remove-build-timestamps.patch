@@ -1,0 +1,22 @@
+Index: lua-rs232-1.0.3/bindings/lua/luars232.c
+===================================================================
+--- lua-rs232-1.0.3.orig/bindings/lua/luars232.c	2014-06-05 09:48:23.000000000 +0200
++++ lua-rs232-1.0.3/bindings/lua/luars232.c	2017-12-03 13:03:51.008917783 +0100
+@@ -31,7 +31,6 @@
+ 
+ #include "librs232/rs232.h"
+ 
+-#define MODULE_TIMESTAMP __DATE__ " " __TIME__
+ #define MODULE_NAMESPACE "luars232"
+ #define MODULE_VERSION "1.0.3"
+ #define MODULE_BUILD "$Id: luars232.c 15 2011-02-23 09:02:20Z sp $"
+@@ -483,9 +482,6 @@
+ 	lua_pushstring(L, MODULE_BUILD);
+ 	lua_setfield(L, -2, "_BUILD");
+ 
+-	lua_pushstring(L, MODULE_TIMESTAMP);
+-	lua_setfield(L, -2, "_TIMESTAMP");
+-
+ 	lua_pushstring(L, MODULE_COPYRIGHT);
+ 	lua_setfield(L, -2, "_COPYRIGHT");
+ 
