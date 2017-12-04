@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 2.6)
+
+PROJECT(libeuci C)
+
+ADD_LIBRARY(euci SHARED euci.c)
+TARGET_LINK_LIBRARIES(euci uci)
+
+INSTALL(FILES euci.h
+	DESTINATION include
+)
+
+INSTALL(TARGETS euci
+	LIBRARY DESTINATION lib
+	RUNTIME DESTINATION bin
+)
