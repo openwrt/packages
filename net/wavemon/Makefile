@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wavemon
 PKG_VERSION:=0.8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_MIRROR_HASH:=e00710049c34bf45735085ad59eedf54190e78d1c5f6b43d28ae9bc93d07681e
@@ -44,7 +44,8 @@ define Package/wavemon/description
 endef
 
 CONFIGURE_VARS += \
-	ac_cv_lib_cap_cap_get_flag=no
+	ac_cv_lib_cap_cap_get_flag=no \
+	BUILD_DATE=$(SOURCE_DATE_EPOCH)
 
 TARGET_CFLAGS += -pthread -I$(STAGING_DIR)/usr/include/libnl3
 
