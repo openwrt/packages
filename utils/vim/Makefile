@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
 PKG_VERSION:=8.0.586
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 VIMVER:=80
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -114,7 +114,8 @@ CONFIGURE_ARGS += \
 	--disable-cscope \
 	--disable-gpm \
 	--disable-acl \
-	--with-tlib=ncurses
+	--with-tlib=ncurses \
+	--with-compiledby="non-existent-hostname-compiled"
 
 CONFIGURE_VARS += \
 	vim_cv_getcwd_broken=no \
@@ -125,6 +126,11 @@ CONFIGURE_VARS += \
 	vim_cv_toupper_broken=no \
 	vim_cv_tty_group=root \
 	vim_cv_tty_mode=0620
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(MAKE) -C $(PKG_BUILD_DIR)/src autoconf
+endef
 
 ifneq ($(CONFIG_PACKAGE_vim),)
 define Build/Compile/vim
