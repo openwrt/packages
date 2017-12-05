@@ -70,6 +70,22 @@ define Package/lxc-auto/conffiles
 /etc/config/lxc-auto
 endef
 
+define Package/lxc-unprivileged
+  $(call Package/lxc/Default)
+  TITLE:=Helper script for unprivileged containers support
+  DEPENDS:=+shadow-utils +shadow-newuidmap +shadow-newgidmap
+endef
+
+define Package/lxc-unprivileged/description
+ Support for unprivileged containers requires newuidmap and newguidmap.
+ This package makes sure they are available & have correct permissions.
+endef
+
+define Package/lxc-unprivileged/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/lxc-unprivileged.defaults $(1)/etc/uci-defaults/lxc-unprivileged
+endef
+
 define Package/lxc/config
   source "$(SOURCE)/Config.in"
 endef
@@ -272,6 +288,7 @@ $(eval $(call BuildPackage,liblxc))
 $(eval $(call BuildPackage,lxc-lua))
 $(eval $(call BuildPackage,lxc-init))
 $(eval $(call BuildPackage,lxc-auto))
+$(eval $(call BuildPackage,lxc-unprivileged))
 $(foreach u,$(LXC_APPLETS_BIN),$(eval $(call GenPlugin,$(u),$(DEPENDS_APPLETS),"/usr/bin")))
 $(foreach u,$(LXC_APPLETS_LIB),$(eval $(call GenPlugin,$(u),$(DEPENDS_APPLETS),"/usr/lib/lxc")))
 $(foreach u,$(LXC_SCRIPTS),$(eval $(call GenPlugin,$(u),,"/usr/bin")))
