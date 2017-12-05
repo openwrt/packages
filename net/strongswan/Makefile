@@ -105,7 +105,7 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/strongswan/Default
-  SUBMENU:=VPN
+  SUBMENU:=StrongSwan
   SECTION:=net
   CATEGORY:=Network
   TITLE:=StrongSwan
