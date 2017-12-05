@@ -1,0 +1,131 @@
+From: Robert Luberda <robert@debian.org>
+Date: Wed, 9 Sep 2015 21:37:37 +0200
+Subject: Remove scscid()
+
+Remove sccsid() function togethwe with SCCSID string that
+contained __DATE__ and __TIME__ macros. This should cause
+binary to be more reproducible, see
+https://wiki.debian.org/ReproducibleBuilds/TimestampsFromCPPMacros
+---
+ cifsiostat.c | 3 ---
+ iostat.c     | 3 ---
+ mpstat.c     | 3 ---
+ pidstat.c    | 3 ---
+ sadc.c       | 3 ---
+ sadf.c       | 3 ---
+ sar.c        | 3 ---
+ tapestat.c   | 3 ---
+ 8 files changed, 24 deletions(-)
+
+diff --git a/cifsiostat.c b/cifsiostat.c
+index a3c81d0..4668a7c 100644
+--- a/cifsiostat.c
++++ b/cifsiostat.c
+@@ -41,9 +41,6 @@
+ #define _(string) (string)
+ #endif
+ 
+-#define SCCSID "@(#)sysstat-" VERSION ": " __FILE__ " compiled " __DATE__ " " __TIME__
+-char *sccsid(void) { return (SCCSID); }
+-
+ unsigned long long uptime0[2] = {0, 0};
+ struct cifs_stats *st_cifs[2];
+ struct io_hdr_stats *st_hdr_cifs;
+diff --git a/iostat.c b/iostat.c
+index 7b346e2..a0199d2 100644
+--- a/iostat.c
++++ b/iostat.c
+@@ -48,9 +48,6 @@
+ #define _(string) (string)
+ #endif
+ 
+-#define SCCSID "@(#)sysstat-" VERSION ": " __FILE__ " compiled " __DATE__ " " __TIME__
+-char *sccsid(void) { return (SCCSID); }
+-
+ struct stats_cpu *st_cpu[2];
+ unsigned long long uptime[2]  = {0, 0};
+ unsigned long long uptime0[2] = {0, 0};
+diff --git a/mpstat.c b/mpstat.c
+index 1c83ea2..e4a040b 100644
+--- a/mpstat.c
++++ b/mpstat.c
+@@ -43,9 +43,6 @@
+ #define _(string) (string)
+ #endif
+ 
+-#define SCCSID "@(#)sysstat-" VERSION ": "  __FILE__ " compiled " __DATE__ " " __TIME__
+-char *sccsid(void) { return (SCCSID); }
+-
+ unsigned long long uptime[3] = {0, 0, 0};
+ unsigned long long uptime0[3] = {0, 0, 0};
+ 
+diff --git a/pidstat.c b/pidstat.c
+index 876635c..5372176 100644
+--- a/pidstat.c
++++ b/pidstat.c
+@@ -47,9 +47,6 @@
+ #define _(string) (string)
+ #endif
+ 
+-#define SCCSID "@(#)sysstat-" VERSION ": " __FILE__ " compiled " __DATE__ " " __TIME__
+-char *sccsid(void) { return (SCCSID); }
+-
+ unsigned long long uptime[3] = {0, 0, 0};
+ unsigned long long uptime0[3] = {0, 0, 0};
+ struct pid_stats *st_pid_list[3] = {NULL, NULL, NULL};
+diff --git a/sadc.c b/sadc.c
+index 7cdbc38..bfb4dac 100644
+--- a/sadc.c
++++ b/sadc.c
+@@ -52,9 +52,6 @@
+ #include "sensors/error.h"
+ #endif
+ 
+-#define SCCSID "@(#)sysstat-" VERSION ": " __FILE__ " compiled " __DATE__ " " __TIME__
+-char *sccsid(void) { return (SCCSID); }
+-
+ long interval = 0;
+ unsigned int flags = 0;
+ 
+diff --git a/sadf.c b/sadf.c
+index 160b485..0c0017c 100644
+--- a/sadf.c
++++ b/sadf.c
+@@ -41,9 +41,6 @@
+ # define _(string) (string)
+ #endif
+ 
+-#define SCCSID "@(#)sysstat-" VERSION ": " __FILE__ " compiled " __DATE__ " " __TIME__
+-char *sccsid(void) { return (SCCSID); }
+-
+ long interval = -1, count = 0;
+ 
+ unsigned int flags = 0;
+diff --git a/sar.c b/sar.c
+index ccf426e..07a9b4a 100644
+--- a/sar.c
++++ b/sar.c
+@@ -42,9 +42,6 @@
+ #define _(string) (string)
+ #endif
+ 
+-#define SCCSID "@(#)sysstat-" VERSION ": " __FILE__ " compiled " __DATE__ " " __TIME__
+-char *sccsid(void) { return (SCCSID); }
+-
+ /* Interval and count parameters */
+ long interval = -1, count = 0;
+ 
+diff --git a/tapestat.c b/tapestat.c
+index 268e4a5..df0a01b 100644
+--- a/tapestat.c
++++ b/tapestat.c
+@@ -58,9 +58,6 @@
+ #define _(string) (string)
+ #endif
+ 
+-#define SCCSID "@(#)sysstat-" VERSION ": " __FILE__ " compiled " __DATE__ " " __TIME__
+-char *sccsid(void) { return (SCCSID); }
+-
+ int cpu_nr = 0;		/* Nb of processors on the machine */
+ int flags = 0;		/* Flag for common options and system state */
+ 
