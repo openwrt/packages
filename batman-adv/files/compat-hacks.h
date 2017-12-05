@@ -22,9 +22,10 @@
 
 #include <linux/netdevice.h>
 
-#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info) ({\
+#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) ({\
 	BUILD_BUG_ON(upper_priv != NULL); \
 	BUILD_BUG_ON(upper_info != NULL); \
+	BUILD_BUG_ON(extack != NULL); \
 	netdev_set_master(dev, upper_dev); \
 })
 
@@ -32,10 +33,20 @@
 
 #include <linux/netdevice.h>
 
-#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info) ({\
+#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) ({\
 	BUILD_BUG_ON(upper_priv != NULL); \
 	BUILD_BUG_ON(upper_info != NULL); \
+	BUILD_BUG_ON(extack != NULL); \
 	netdev_master_upper_dev_link(dev, upper_dev); \
+})
+
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
+
+#include <linux/netdevice.h>
+
+#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) ({\
+	BUILD_BUG_ON(extack != NULL); \
+	netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info); \
 })
 
 #endif /* < KERNEL_VERSION(4, 5, 0) */
@@ -297,6 +308,31 @@ static inline void *batadv_skb_put_data(struct sk_buff *skb, const void *data,
 #define skb_put_data batadv_skb_put_data
 
 #endif /* < KERNEL_VERSION(4, 13, 0) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
+
+#define batadv_softif_slave_add(__dev, __slave_dev, __extack) \
+	batadv_softif_slave_add(__dev, __slave_dev)
+
+#endif /* < KERNEL_VERSION(4, 15, 0) */
+
+#ifndef from_timer
+
+#define TIMER_DATA_TYPE                unsigned long
+#define TIMER_FUNC_TYPE                void (*)(TIMER_DATA_TYPE)
+
+static inline void 	(struct timer_list *timer,
+			       void (*callback)(struct timer_list *),
+			       unsigned int flags)
+{
+	__setup_timer(timer, (TIMER_FUNC_TYPE)callback,
+		      (TIMER_DATA_TYPE)timer, flags);
+}
+
+#define from_timer(var, callback_timer, timer_fieldname) \
+	container_of(callback_timer, typeof(*var), timer_fieldname)
+
+#endif /* !from_timer */
 
 /* <DECLARE_EWMA> */
 
