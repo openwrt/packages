@@ -9,12 +9,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shorewall6-lite
-PKG_VERSION:=5.1.8.1
-PKG_DIRECTORY:=5.1
-PKG_MAINVERSION:=5.1.8
+PKG_MAJOR_MINOR_VERSION:=5.1
+PKG_BUGFIX_MAJOR_VERSION:=8
+PKG_BUGFIX_MINOR_VERSION:=.1
+PKG_VERSION:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)$(PKG_BUGFIX_MINOR_VERSION)
+PKG_DIRECTORY:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.shorewall.net/pub/shorewall/$(PKG_DIRECTORY)/shorewall-$(PKG_MAINVERSION)/
+PKG_SOURCE_URL:=http://www.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://www1.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://slovakia.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://shorewall.de/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://www.shorewall.com.au/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_HASH:=7f1b99465df8f6bc47e0bc40e413b9323a5a9d0b2576709fd28366f0af5b852e
 
