@@ -1,0 +1,12 @@
+Index: uanytun-0.3.5/src/options.c
+===================================================================
+--- uanytun-0.3.5.orig/src/options.c
++++ uanytun-0.3.5/src/options.c
+@@ -481,7 +481,6 @@ void options_print_usage()
+ void options_print_version()
+ {
+   printf("%s\n", VERSION_STRING_0);
+-  printf("%s\n", VERSION_STRING_1);
+ }
+ 
+ void options_print(options_t* opt)
