@@ -10,6 +10,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * easy setup within normal OpenWrt/LEDE environment
 * strong LuCI-Support with builtin interface wizard and a wireless station manager
 * fast uplink connections
+* support all kinds of uplinks, incl. hidden and enterprise uplinks
 * manual / automatic mode support, the latter one checks the existing uplink connection regardless of ifdown event trigger actions every n seconds
 * support of devices with multiple radios
 * procd init and hotplug support
@@ -49,15 +50,14 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 
 **receive travelmate runtime information:**
 <pre><code>
-root@adb2go:~# /etc/init.d/travelmate status
 ::: travelmate runtime information
- travelmate_version : 0.9.1
+ travelmate_version : 0.9.5
  station_connection : true
- station_ssid       : blackhole.nl
+ station_id         : blackhole/04:F0:21:2F:B7:64
  station_interface  : trm_wwan
  station_radio      : radio1
- last_rundate       : 29.07.2017 18:02:01
- system             : LEDE Reboot SNAPSHOT r4639-eb43a817f7
+ last_rundate       : 06.12.2017 16:47:56
+ system             : LEDE Reboot SNAPSHOT r5422-9fe59abef8
 </code></pre>
 
 ## Manual Setup
