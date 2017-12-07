@@ -7,15 +7,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ap51-flash
-PKG_VERSION:=2016-10-16
+PKG_VERSION:=2017-12-07
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://dev.cloudtrax.com/ap51-flash.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=48b3fbac1c30c5968b2608eb09b53ea37c310a24
+PKG_SOURCE_VERSION:=f94f9c99711d14a3c0186318d822d67d9d0ce391
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MIRROR_HASH:=4d00a1ceb480793db95e359cb95d63630920335415c7ffdcd05f2616cf1bc034
+PKG_MIRROR_HASH:=15786a0ecae9be5ed4e8f32940624d1a1c83da924294df08003616a863947074
 PKG_MAINTAINER:=Russell Senior <russell@personaltelco.net>
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,11 +27,8 @@ define Package/ap51-flash
   URL:=http://dev.cloudtrax.com/wiki/ap51-flash-station
 endef
 
-TARGET_EXTRA_CFLAGS:=-D_GNU_SOURCE
-
 # pass optimization flags
 MAKE_FLAGS += \
-	EXTRA_CFLAGS="$(TARGET_EXTRA_CFLAGS)" \
 	REVISION="$(PKG_VERSION)" \
 	ap51-flash
 
