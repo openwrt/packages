@@ -1,0 +1,11 @@
+--- a/Makefile.linux	2017-11-14 03:20:41.000000000 +0800
++++ b/Makefile.linux	2017-11-29 23:55:38.919136211 +0800
+@@ -44,7 +44,7 @@
+ 	LDLIBS += -lpthread -static-libstdc++ -static-libgcc -lrt -ldl
+ 	USE_AESNI := no
+ else
+-	LDLIBS = -lcrypto -lssl -lz -lboost_system -lboost_date_time -lboost_filesystem -lboost_program_options -lpthread
++	LDLIBS = -latomic -lcrypto -lssl -lz -lboost_system -lboost_date_time -lboost_filesystem -lboost_program_options -lpthread
+ endif
+ 
+ # UPNP Support (miniupnpc 1.5 and higher)
