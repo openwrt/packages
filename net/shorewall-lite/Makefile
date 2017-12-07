@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shorewall-lite
-PKG_VERSION:=5.1.4.1
+PKG_VERSION:=5.1.8.1
 PKG_DIRECTORY:=5.1
-PKG_MAINVERSION:=5.1.4
+PKG_MAINVERSION:=5.1.8
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.shorewall.net/pub/shorewall/$(PKG_DIRECTORY)/shorewall-$(PKG_MAINVERSION)/ 
+PKG_SOURCE_URL:=http://www.shorewall.net/pub/shorewall/$(PKG_DIRECTORY)/shorewall-$(PKG_MAINVERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=e90d419ed8a6da615c3a0d6fdcb9481f8e71f89c2bdcff09ab027198ca2ce293
+PKG_HASH:=2efc424c1d4f737618f91864ba8e618328605514965e497660ee0ac9020b6048
 
 PKG_MAINTAINER:=Willem van den Akker <wvdakker@wilsoft.nl>
 PKG_LICENSE:=GPL-2.0+
@@ -46,8 +46,7 @@ define Package/shorewall-lite/description
 endef
 
 define Package/shorewall-lite/conffiles
-/etc/shorewall-lite/shorewall-lite.conf
-/etc/shorewall-lite/vardir
+/etc/shorewall-lite/
 endef
 
 CONFIGURE_ARGS += \
@@ -58,19 +57,19 @@ define Build/Compile
 endef
 
 define Package/shorewall-lite/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_DIR) $(1)/etc/shorewall-lite/state
-	$(INSTALL_DIR) $(1)/usr/share
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface/
+	$(INSTALL_DIR) $(1)/etc/shorewall-lite/state/
+	$(INSTALL_DIR) $(1)/usr/share/shorewall-lite/
 	$(INSTALL_BIN) ./files/hotplug_iface $(1)/etc/hotplug.d/iface/05-shorewall-lite
-	$(CP) $(PKG_INSTALL_DIR)/usr/share/shorewall-lite $(1)/usr/share
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/shorewall-lite $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/shorewall-lite/shorecap $(1)/usr/share/shorewall-lite
-	$(INSTALL_BIN) ./files/hostname $(1)/usr/share/shorewall-lite
-	$(CP) $(PKG_INSTALL_DIR)/etc/shorewall-lite $(1)/etc
-	$(CP) $(PKG_INSTALL_DIR)/etc/init.d $(1)/etc
-	$(CP) ./files/vardir $(1)/etc/shorewall-lite
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/shorewall-lite/ $(1)/usr/share/
+	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/shorewall-lite $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/shorewall-lite/shorecap $(1)/usr/share/shorewall-lite/
+	$(INSTALL_BIN) ./files/hostname $(1)/usr/share/shorewall-lite/
+	$(CP) $(PKG_INSTALL_DIR)/etc/shorewall-lite/ $(1)/etc/
+	$(INSTALL_BIN) ./files/shorewall-lite.init $(1)/etc/init.d/shorewall-lite
+	$(CP) ./files/vardir $(1)/etc/shorewall-lite/
 endef
 
 $(eval $(call BuildPackage,shorewall-lite))
