@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006-2012 OpenWrt.org
-#               2014 Noah Meyerhans <frodo@morgul.net>
+#               2014-2016 Noah Meyerhans <frodo@morgul.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.9.8-P3
+PKG_VERSION:=9.11.2
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
@@ -18,14 +18,15 @@ PKG_LICENSE := BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
-	ftp://ftp.isc.org/isc/bind9/$(PKG_VERSION) \
-	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_MD5SUM:=30b9bf88a78eee783d3fef5257445788
+	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
+	http://ftp.isc.org/isc/bind9/$(PKG_VERSION)
+PKG_MD5SUM:=efca7e5a63a07efba264da9be2fbb57f
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
 
 PKG_INSTALL:=1
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -41,7 +42,7 @@ endef
 define Package/bind-libs
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libopenssl
+  DEPENDS:=+libopenssl +zlib
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 endef
@@ -73,7 +74,7 @@ endef
 
 define Package/bind-dnssec
   $(call Package/bind/Default)
-  TITLE+= administration tools (dnssec-keygen and dnssec-signzone only)
+  TITLE+= administration tools (dnssec-keygen, dnssec-settime and dnssec-signzone only)
 endef
 
 define Package/bind-host
@@ -95,6 +96,7 @@ CONFIGURE_ARGS += \
 	--disable-threads \
 	--disable-linux-caps \
 	--with-openssl="$(STAGING_DIR)/usr" \
+	--with-libjson=no \
 	--with-libtool \
 	--with-libxml2=no \
 	--enable-epoll=yes \
@@ -102,6 +104,7 @@ CONFIGURE_ARGS += \
 	--with-gssapi=no \
 	--with-ecdsa=no \
 	--with-readline=no
+	--sysconfdir=/etc/bind
 
 CONFIGURE_VARS += \
 	BUILD_CC="$(TARGET_CC)" \
@@ -158,6 +161,7 @@ define Package/bind-tools/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/host $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-keygen $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-settime $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-signzone $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkconf $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkzone $(1)/usr/sbin/
@@ -180,6 +184,7 @@ endef
 define Package/bind-dnssec/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-keygen $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-settime $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-signzone $(1)/usr/sbin/
 endef
 
