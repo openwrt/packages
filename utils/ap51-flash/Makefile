@@ -20,10 +20,6 @@ PKG_MAINTAINER:=Russell Senior <russell@personaltelco.net>
 
 include $(INCLUDE_DIR)/package.mk
 
-ifeq ($(CONFIG_BIG_ENDIAN),y)
-  STAMP_BUILT:=$(STAMP_BUILT)_big
-endif
-
 define Package/ap51-flash
   SECTION:=utils
   CATEGORY:=Utilities
@@ -32,9 +28,6 @@ define Package/ap51-flash
 endef
 
 TARGET_EXTRA_CFLAGS:=-DFLASH_FROM_FILE -DNO_LIBPCAP -D_GNU_SOURCE
-ifeq ($(CONFIG_BIG_ENDIAN),y)
-	TARGET_EXTRA_CFLAGS:=$(TARGET_EXTRA_CFLAGS) -DUIP_CONF_BYTE_ORDER=1234
-endif
 
 # pass optimization flags
 MAKE_FLAGS += \
