@@ -68,7 +68,7 @@ download_sdk() {
 # test_package call make download check for very new/modified package
 test_packages2() {
 	local commit_range=$TRAVIS_COMMIT_RANGE
-	if [ "$TRAVIS_PULL_REQUEST" = false ]; then
+	if [ -z "$TRAVIS_PULL_REQUEST_SHA" ]; then
 		echo_blue "Using only the latest commit, since we're not in a Pull Request"
 		commit_range=HEAD~1
 	fi
@@ -148,7 +148,7 @@ EOF
 
 test_commits() {
 	RET=0
-	if [ "$TRAVIS_PULL_REQUEST" = false ]; then
+	if [ -z "$TRAVIS_PULL_REQUEST_SHA" ]; then
 		echo_blue "Skipping commits tests (not in a Pull Request)"
 		return 0
 	fi
@@ -196,12 +196,7 @@ echo_blue "=== Travis ENV"
 env
 echo_blue "=== Travis ENV"
 
-if [ -z "$TRAVIS_COMMIT_RANGE" ] && [ "$TRAVIS_PULL_REQUEST" = true ] ; then
-	echo_red "TRAVIS_COMMIT_RANGE variable is empty in a Pull Request"
-	exit 1
-fi
-
-if [ "$TRAVIS_PULL_REQUEST" = true ]; then
+if [ -n "$TRAVIS_PULL_REQUEST_SHA" ]; then
 	while true; do
 		# if clone depth is too small, git rev-list / diff return incorrect or empty results
 		C="$(git rev-list ${TRAVIS_COMMIT_RANGE/.../..} | tail -n1)" 2>/dev/null
