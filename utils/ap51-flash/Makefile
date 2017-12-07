@@ -27,7 +27,7 @@ define Package/ap51-flash
   URL:=http://dev.cloudtrax.com/wiki/ap51-flash-station
 endef
 
-TARGET_EXTRA_CFLAGS:=-DFLASH_FROM_FILE -DNO_LIBPCAP -D_GNU_SOURCE
+TARGET_EXTRA_CFLAGS:=-DFLASH_FROM_FILE -D_GNU_SOURCE
 
 # pass optimization flags
 MAKE_FLAGS += \
