@@ -1,0 +1,30 @@
+commit 9a480deec4d20277d8e20bc55515ef0640ca1e55
+Author: Wayne Davison <wayned@samba.org>
+Date:   Tue Oct 24 20:44:37 2017 -0700
+
+    Only allow a modern checksum method for passwords.
+
+diff --git a/authenticate.c b/authenticate.c
+index d60ee20..a106b0f 100644
+--- a/authenticate.c
++++ b/authenticate.c
+@@ -22,6 +22,7 @@
+ #include "itypes.h"
+ 
+ extern int read_only;
++extern int protocol_version;
+ extern char *password_file;
+ 
+ /***************************************************************************
+@@ -237,6 +238,11 @@ char *auth_server(int f_in, int f_out, int module, const char *host,
+ 	if (!users || !*users)
+ 		return "";
+ 
++	if (protocol_version < 21) { /* Don't allow a weak checksum for the password. */
++		rprintf(FERROR, "ERROR: protocol version is too old!\n");
++		exit_cleanup(RERR_PROTOCOL);
++	}
++
+ 	gen_challenge(addr, challenge);
+ 
+ 	io_printf(f_out, "%s%s\n", leader, challenge);
