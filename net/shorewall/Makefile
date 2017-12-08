@@ -9,12 +9,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shorewall
-PKG_VERSION:=5.1.8.1
-PKG_DIRECTORY:=5.1
-PKG_MAINVERSION:=5.1.8
+PKG_MAJOR_MINOR_VERSION:=5.1
+PKG_BUGFIX_MAJOR_VERSION:=8
+PKG_BUGFIX_MINOR_VERSION:=.1
+PKG_VERSION:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)$(PKG_BUGFIX_MINOR_VERSION)
+PKG_DIRECTORY:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.shorewall.net/pub/shorewall/$(PKG_DIRECTORY)/shorewall-$(PKG_MAINVERSION)/
+PKG_SOURCE_URL:=http://www.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://www1.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://slovakia.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://shorewall.de/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://www.shorewall.com.au/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_HASH:=0ba4f22394d988a5714637444c248e542d5897e41ab5770907edf38e422fe2ff
 PKG_MAINTAINER:=Willem van den Akker <wvdakker@wilsoft.nl>
