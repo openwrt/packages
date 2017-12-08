@@ -1,0 +1,593 @@
+commit f3873b3d88b61167b106e7b9227a20147f8f6197
+Author: Wayne Davison <wayned@samba.org>
+Date:   Mon Oct 10 11:49:50 2016 -0700
+
+    Support --sparse combined with --preallocate or --inplace.
+    
+    The new code tries to punch holes in the destination file using newer
+    Linux fallocate features. It also supports a --whole-file + --sparse +
+    --inplace copy on any filesystem by truncating the destination file.
+
+diff --git a/configure.ac b/configure.ac
+index b5e4049..e01e124 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -614,6 +614,36 @@ if test x"$rsync_cv_have_fallocate" = x"yes"; then
+     AC_DEFINE(HAVE_FALLOCATE, 1, [Define to 1 if you have the fallocate function and it compiles and links without error])
+ fi
+ 
++AC_MSG_CHECKING([for FALLOC_FL_PUNCH_HOLE])
++AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
++        #define _GNU_SOURCE 1
++        #include <linux/falloc.h>
++        #ifndef FALLOC_FL_PUNCH_HOLE
++        #error FALLOC_FL_PUNCH_HOLE is missing
++        #endif
++    ]])], [
++        AC_MSG_RESULT([yes])
++        AC_DEFINE([HAVE_FALLOC_FL_PUNCH_HOLE], [1], [Define if FALLOC_FL_PUNCH_HOLE is available.])
++    ], [
++        AC_MSG_RESULT([no])
++    ]
++)
++
++AC_MSG_CHECKING([for FALLOC_FL_ZERO_RANGE])
++AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
++        #define _GNU_SOURCE 1
++        #include <linux/falloc.h>
++        #ifndef FALLOC_FL_ZERO_RANGE
++        #error FALLOC_FL_ZERO_RANGE is missing
++        #endif
++    ]])], [
++        AC_MSG_RESULT([yes])
++        AC_DEFINE([HAVE_FALLOC_FL_ZERO_RANGE], [1], [Define if FALLOC_FL_ZERO_RANGE is available.])
++    ], [
++        AC_MSG_RESULT([no])
++    ]
++)
++
+ AC_CACHE_CHECK([for SYS_fallocate],rsync_cv_have_sys_fallocate,[
+ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/syscall.h>
+ #include <sys/types.h>]], [[syscall(SYS_fallocate, 0, 0, (loff_t)0, (loff_t)0);]])],[rsync_cv_have_sys_fallocate=yes],[rsync_cv_have_sys_fallocate=no])])
+diff --git a/fileio.c b/fileio.c
+index 70e079d..1e8a562 100644
+--- a/fileio.c
++++ b/fileio.c
+@@ -35,7 +35,10 @@
+ 
+ extern int sparse_files;
+ 
++OFF_T preallocated_len = 0;
++
+ static OFF_T sparse_seek = 0;
++static OFF_T sparse_past_write = 0;
+ 
+ int sparse_end(int f, OFF_T size)
+ {
+@@ -63,8 +66,10 @@ int sparse_end(int f, OFF_T size)
+ 	return ret;
+ }
+ 
+-
+-static int write_sparse(int f, char *buf, int len)
++/* Note that the offset is just the caller letting us know where
++ * the current file position is in the file. The use_seek arg tells
++ * us that we should seek over matching data instead of writing it. */
++static int write_sparse(int f, int use_seek, OFF_T offset, const char *buf, int len)
+ {
+ 	int l1 = 0, l2 = 0;
+ 	int ret;
+@@ -77,9 +82,24 @@ static int write_sparse(int f, char *buf, int len)
+ 	if (l1 == len)
+ 		return len;
+ 
+-	if (sparse_seek)
+-		do_lseek(f, sparse_seek, SEEK_CUR);
++	if (sparse_seek) {
++		if (sparse_past_write >= preallocated_len) {
++			if (do_lseek(f, sparse_seek, SEEK_CUR) < 0)
++				return -1;
++		} else if (do_punch_hole(f, sparse_past_write, sparse_seek) < 0) {
++			sparse_seek = 0;
++			return -1;
++		}
++	}
+ 	sparse_seek = l2;
++	sparse_past_write = offset + len - l2;
++
++	if (use_seek) {
++		/* The in-place data already matches. */
++		if (do_lseek(f, len - (l1+l2), SEEK_CUR) < 0)
++			return -1;
++		return len;
++	}
+ 
+ 	while ((ret = write(f, buf + l1, len - (l1+l2))) <= 0) {
+ 		if (ret < 0 && errno == EINTR)
+@@ -96,7 +116,6 @@ static int write_sparse(int f, char *buf, int len)
+ 	return len;
+ }
+ 
+-
+ static char *wf_writeBuf;
+ static size_t wf_writeBufSize;
+ static size_t wf_writeBufCnt;
+@@ -118,12 +137,10 @@ int flush_write_file(int f)
+ 	return ret;
+ }
+ 
+-
+-/*
+- * write_file does not allow incomplete writes.  It loops internally
+- * until len bytes are written or errno is set.
+- */
+-int write_file(int f, char *buf, int len)
++/* write_file does not allow incomplete writes.  It loops internally
++ * until len bytes are written or errno is set.  Note that use_seek and
++ * offset are only used in sparse processing (see write_sparse()). */
++int write_file(int f, int use_seek, OFF_T offset, const char *buf, int len)
+ {
+ 	int ret = 0;
+ 
+@@ -131,7 +148,8 @@ int write_file(int f, char *buf, int len)
+ 		int r1;
+ 		if (sparse_files > 0) {
+ 			int len1 = MIN(len, SPARSE_WRITE_SIZE);
+-			r1 = write_sparse(f, buf, len1);
++			r1 = write_sparse(f, use_seek, offset, buf, len1);
++			offset += r1;
+ 		} else {
+ 			if (!wf_writeBuf) {
+ 				wf_writeBufSize = WRITE_SIZE * 8;
+@@ -164,6 +182,30 @@ int write_file(int f, char *buf, int len)
+ 	return ret;
+ }
+ 
++/* An in-place update found identical data at an identical location. We either
++ * just seek past it, or (for an in-place sparse update), we give the data to
++ * the sparse processor with the use_seek flag set. */
++int skip_matched(int fd, OFF_T offset, const char *buf, int len)
++{
++	OFF_T pos;
++
++	if (sparse_files > 0) {
++		if (write_file(fd, 1, offset, buf, len) != len)
++			return -1;
++		return 0;
++	}
++
++	if (flush_write_file(fd) < 0)
++		return -1;
++
++	if ((pos = do_lseek(fd, len, SEEK_CUR)) != offset + len) {
++		rsyserr(FERROR_XFER, errno, "lseek returned %s, not %s",
++			big_num(pos), big_num(offset));
++		return -1;
++	}
++
++	return 0;
++}
+ 
+ /* This provides functionality somewhat similar to mmap() but using read().
+  * It gives sliding window access to a file.  mmap() is not used because of
+@@ -271,7 +313,6 @@ char *map_ptr(struct map_struct *map, OFF_T offset, int32 len)
+ 	return map->p + align_fudge;
+ }
+ 
+-
+ int unmap_file(struct map_struct *map)
+ {
+ 	int	ret;
+diff --git a/options.c b/options.c
+index 308443b..6ba13b7 100644
+--- a/options.c
++++ b/options.c
+@@ -714,7 +714,7 @@ void usage(enum logcode F)
+ #ifdef SUPPORT_XATTRS
+   rprintf(F,"     --fake-super            store/recover privileged attrs using xattrs\n");
+ #endif
+-  rprintf(F," -S, --sparse                handle sparse files efficiently\n");
++  rprintf(F," -S, --sparse                turn sequences of nulls into sparse blocks\n");
+ #ifdef SUPPORT_PREALLOCATION
+   rprintf(F,"     --preallocate           allocate dest files before writing them\n");
+ #else
+@@ -2237,14 +2237,6 @@ int parse_arguments(int *argc_p, const char ***argv_p)
+ 			bwlimit_writemax = 512;
+ 	}
+ 
+-	if (sparse_files && inplace) {
+-		/* Note: we don't check for this below, because --append is
+-		 * OK with --sparse (as long as redos are handled right). */
+-		snprintf(err_buf, sizeof err_buf,
+-			 "--sparse cannot be used with --inplace\n");
+-		return 0;
+-	}
+-
+ 	if (append_mode) {
+ 		if (whole_file > 0) {
+ 			snprintf(err_buf, sizeof err_buf,
+diff --git a/receiver.c b/receiver.c
+index f9b97dd..bed5328 100644
+--- a/receiver.c
++++ b/receiver.c
+@@ -49,6 +49,7 @@ extern int sparse_files;
+ extern int preallocate_files;
+ extern int keep_partial;
+ extern int checksum_seed;
++extern int whole_file;
+ extern int inplace;
+ extern int allowed_lull;
+ extern int delay_updates;
+@@ -61,6 +62,9 @@ extern char *basis_dir[MAX_BASIS_DIRS+1];
+ extern char sender_file_sum[MAX_DIGEST_LEN];
+ extern struct file_list *cur_flist, *first_flist, *dir_flist;
+ extern filter_rule_list daemon_filter_list;
++#ifdef SUPPORT_PREALLOCATION
++extern OFF_T preallocated_len;
++#endif
+ 
+ static struct bitbag *delayed_bits = NULL;
+ static int phase = 0, redoing = 0;
+@@ -241,22 +245,25 @@ static int receive_data(int f_in, char *fname_r, int fd_r, OFF_T size_r,
+ 	char *data;
+ 	int32 i;
+ 	char *map = NULL;
+-#ifdef SUPPORT_PREALLOCATION
+-#ifdef PREALLOCATE_NEEDS_TRUNCATE
+-	OFF_T preallocated_len = 0;
+-#endif
+ 
++#ifdef SUPPORT_PREALLOCATION
+ 	if (preallocate_files && fd != -1 && total_size > 0 && (!inplace || total_size > size_r)) {
+ 		/* Try to preallocate enough space for file's eventual length.  Can
+ 		 * reduce fragmentation on filesystems like ext4, xfs, and NTFS. */
+-		if (do_fallocate(fd, 0, total_size) == 0) {
+-#ifdef PREALLOCATE_NEEDS_TRUNCATE
+-			preallocated_len = total_size;
+-#endif
+-		} else
++		if ((preallocated_len = do_fallocate(fd, 0, total_size)) < 0)
+ 			rsyserr(FWARNING, errno, "do_fallocate %s", full_fname(fname));
+-	}
++	} else
++#endif
++	if (inplace) {
++#ifdef HAVE_FTRUNCATE
++		/* The most compatible way to create a sparse file is to start with no length. */
++		if (sparse_files > 0 && whole_file && fd >= 0 && do_ftruncate(fd, 0) == 0)
++			preallocated_len = 0;
++		else
+ #endif
++			preallocated_len = size_r;
++	} else
++		preallocated_len = 0;
+ 
+ 	read_sum_head(f_in, &sum);
+ 
+@@ -318,7 +325,7 @@ static int receive_data(int f_in, char *fname_r, int fd_r, OFF_T size_r,
+ 
+ 			sum_update(data, i);
+ 
+-			if (fd != -1 && write_file(fd,data,i) != i)
++			if (fd != -1 && write_file(fd, 0, offset, data, i) != i)
+ 				goto report_write_error;
+ 			offset += i;
+ 			continue;
+@@ -348,37 +355,33 @@ static int receive_data(int f_in, char *fname_r, int fd_r, OFF_T size_r,
+ 
+ 		if (updating_basis_or_equiv) {
+ 			if (offset == offset2 && fd != -1) {
+-				OFF_T pos;
+-				if (flush_write_file(fd) < 0)
++				if (skip_matched(fd, offset, map, len) < 0)
+ 					goto report_write_error;
+ 				offset += len;
+-				if ((pos = do_lseek(fd, len, SEEK_CUR)) != offset) {
+-					rsyserr(FERROR_XFER, errno,
+-						"lseek of %s returned %s, not %s",
+-						full_fname(fname),
+-						big_num(pos), big_num(offset));
+-					exit_cleanup(RERR_FILEIO);
+-				}
+ 				continue;
+ 			}
+ 		}
+-		if (fd != -1 && map && write_file(fd, map, len) != (int)len)
++		if (fd != -1 && map && write_file(fd, 0, offset, map, len) != (int)len)
+ 			goto report_write_error;
+ 		offset += len;
+ 	}
+ 
+-	if (flush_write_file(fd) < 0)
+-		goto report_write_error;
++	if (fd != -1 && offset > 0) {
++		if (sparse_files > 0) {
++			if (sparse_end(fd, offset) != 0)
++				goto report_write_error;
++		} else if (flush_write_file(fd) < 0) {
++		    report_write_error:
++			rsyserr(FERROR_XFER, errno, "write failed on %s", full_fname(fname));
++			exit_cleanup(RERR_FILEIO);
++		}
++	}
+ 
+ #ifdef HAVE_FTRUNCATE
+ 	/* inplace: New data could be shorter than old data.
+ 	 * preallocate_files: total_size could have been an overestimate.
+ 	 *     Cut off any extra preallocated zeros from dest file. */
+-	if ((inplace
+-#ifdef PREALLOCATE_NEEDS_TRUNCATE
+-	  || preallocated_len > offset
+-#endif
+-	  ) && fd != -1 && do_ftruncate(fd, offset) < 0) {
++	if ((inplace || preallocated_len > offset) && fd != -1 && do_ftruncate(fd, offset) < 0) {
+ 		rsyserr(FERROR_XFER, errno, "ftruncate failed on %s",
+ 			full_fname(fname));
+ 	}
+@@ -387,13 +390,6 @@ static int receive_data(int f_in, char *fname_r, int fd_r, OFF_T size_r,
+ 	if (INFO_GTE(PROGRESS, 1))
+ 		end_progress(total_size);
+ 
+-	if (fd != -1 && offset > 0 && sparse_end(fd, offset) != 0) {
+-	    report_write_error:
+-		rsyserr(FERROR_XFER, errno, "write failed on %s",
+-			full_fname(fname));
+-		exit_cleanup(RERR_FILEIO);
+-	}
+-
+ 	checksum_len = sum_end(file_sum1);
+ 
+ 	if (mapbuf)
+diff --git a/rsync.yo b/rsync.yo
+index bfe43b9..d1e6fdf 100644
+--- a/rsync.yo
++++ b/rsync.yo
+@@ -376,7 +376,7 @@ to the detailed description below for a complete description.  verb(
+  -J, --omit-link-times       omit symlinks from --times
+      --super                 receiver attempts super-user activities
+      --fake-super            store/recover privileged attrs using xattrs
+- -S, --sparse                handle sparse files efficiently
++ -S, --sparse                turn sequences of nulls into sparse blocks
+      --preallocate           allocate dest files before writing
+  -n, --dry-run               perform a trial run with no changes made
+  -W, --whole-file            copy files whole (w/o delta-xfer algorithm)
+@@ -873,9 +873,7 @@ the same or longer than the size on the sender, the file is skipped.  This
+ does not interfere with the updating of a file's non-content attributes
+ (e.g. permissions, ownership, etc.) when the file does not need to be
+ transferred, nor does it affect the updating of any non-regular files.
+-Implies bf(--inplace),
+-but does not conflict with bf(--sparse) (since it is always extending a
+-file's length).
++Implies bf(--inplace).
+ 
+ The use of bf(--append) can be dangerous if you aren't 100% sure that the files
+ that are longer have only grown by the appending of data onto the end.  You
+@@ -1252,20 +1250,30 @@ This option is overridden by both bf(--super) and bf(--no-super).
+ See also the "fake super" setting in the daemon's rsyncd.conf file.
+ 
+ dit(bf(-S, --sparse)) Try to handle sparse files efficiently so they take
+-up less space on the destination.  Conflicts with bf(--inplace) because it's
+-not possible to overwrite data in a sparse fashion.
++up less space on the destination.  If combined with bf(--inplace) the
++file created might not end up with sparse blocks with some combinations
++of kernel version and/or filesystem type.  If bf(--whole-file) is in
++effect (e.g. for a local copy) then it will always work because rsync
++truncates the file prior to writing out the updated version.
++
++Note that versions of rsync older than 3.1.3 will reject the combination of
++bf(--sparse) and bf(--inplace).
+ 
+ dit(bf(--preallocate)) This tells the receiver to allocate each destination
+-file to its eventual size before writing data to the file.  Rsync will only use
+-the real filesystem-level preallocation support provided by Linux's
++file to its eventual size before writing data to the file.  Rsync will only
++use the real filesystem-level preallocation support provided by Linux's
+ bf(fallocate)(2) system call or Cygwin's bf(posix_fallocate)(3), not the slow
+-glibc implementation that writes a zero byte into each block.
++glibc implementation that writes a null byte into each block.
+ 
+ Without this option, larger files may not be entirely contiguous on the
+ filesystem, but with this option rsync will probably copy more slowly.  If the
+ destination is not an extent-supporting filesystem (such as ext4, xfs, NTFS,
+ etc.), this option may have no positive effect at all.
+ 
++If combined with bf(--sparse), the file will only have sparse blocks (as
++opposed to allocated sequences of null bytes) if the kernel version and
++filesystem type support creating holes in the allocated data.
++
+ dit(bf(-n, --dry-run)) This makes rsync perform a trial run that doesn't
+ make any changes (and produces mostly the same output as a real run).  It
+ is most commonly used in combination with the bf(-v, --verbose) and/or
+diff --git a/syscall.c b/syscall.c
+index ecca2f1..fa53b63 100644
+--- a/syscall.c
++++ b/syscall.c
+@@ -38,6 +38,8 @@ extern int am_root;
+ extern int am_sender;
+ extern int read_only;
+ extern int list_only;
++extern int inplace;
++extern int preallocate_files;
+ extern int preserve_perms;
+ extern int preserve_executability;
+ 
+@@ -423,27 +425,80 @@ int do_utime(const char *fname, time_t modtime, UNUSED(uint32 mod_nsec))
+ #endif
+ 
+ #ifdef SUPPORT_PREALLOCATION
+-int do_fallocate(int fd, OFF_T offset, OFF_T length)
+-{
+ #ifdef FALLOC_FL_KEEP_SIZE
+ #define DO_FALLOC_OPTIONS FALLOC_FL_KEEP_SIZE
+ #else
+ #define DO_FALLOC_OPTIONS 0
+ #endif
++
++OFF_T do_fallocate(int fd, OFF_T offset, OFF_T length)
++{
++	int opts = inplace || preallocate_files ? 0 : DO_FALLOC_OPTIONS;
++	int ret;
+ 	RETURN_ERROR_IF(dry_run, 0);
+ 	RETURN_ERROR_IF_RO_OR_LO;
++	if (length & 1) /* make the length not match the desired length */
++		length++;
++	else
++		length--;
+ #if defined HAVE_FALLOCATE
+-	return fallocate(fd, DO_FALLOC_OPTIONS, offset, length);
++	ret = fallocate(fd, opts, offset, length);
+ #elif defined HAVE_SYS_FALLOCATE
+-	return syscall(SYS_fallocate, fd, DO_FALLOC_OPTIONS, (loff_t)offset, (loff_t)length);
++	ret = syscall(SYS_fallocate, fd, opts, (loff_t)offset, (loff_t)length);
+ #elif defined HAVE_EFFICIENT_POSIX_FALLOCATE
+-	return posix_fallocate(fd, offset, length);
++	ret = posix_fallocate(fd, offset, length);
+ #else
+ #error Coding error in SUPPORT_PREALLOCATION logic.
+ #endif
++	if (ret < 0)
++		return ret;
++	if (opts == 0) {
++		STRUCT_STAT st;
++		if (do_fstat(fd, &st) < 0)
++			return length;
++		return st.st_blocks * 512;
++	}
++	return 0;
+ }
+ #endif
+ 
++/* Punch a hole at pos for len bytes. The current file position must be at pos and will be
++ * changed to be at pos + len. */
++int do_punch_hole(int fd, UNUSED(OFF_T pos), int len)
++{
++#ifdef HAVE_FALLOCATE
++# ifdef HAVE_FALLOC_FL_PUNCH_HOLE
++	if (fallocate(fd, FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE, pos, len) == 0) {
++		if (do_lseek(fd, len, SEEK_CUR) != pos + len)
++			return -1;
++		return 0;
++	}
++# endif
++# ifdef HAVE_FALLOC_FL_ZERO_RANGE
++	if (fallocate(fd, FALLOC_FL_ZERO_RANGE, pos, len) == 0) {
++		if (do_lseek(fd, len, SEEK_CUR) != pos + len)
++			return -1;
++		return 0;
++	}
++# endif
++#endif
++	{
++		char zeros[4096];
++		memset(zeros, 0, sizeof zeros);
++		while (len > 0) {
++			int chunk = len > (int)sizeof zeros ? (int)sizeof zeros : len;
++			int wrote = write(fd, zeros, chunk);
++			if (wrote <= 0) {
++				if (wrote < 0 && errno == EINTR)
++					continue;
++				return -1;
++			}
++			len -= wrote;
++		}
++	}
++	return 0;
++}
++
+ int do_open_nofollow(const char *pathname, int flags)
+ {
+ #ifndef O_NOFOLLOW
+diff --git a/t_stub.c b/t_stub.c
+index 26951a6..fc1ee3b 100644
+--- a/t_stub.c
++++ b/t_stub.c
+@@ -21,6 +21,7 @@
+ 
+ #include "rsync.h"
+ 
++int inplace = 0;
+ int modify_window = 0;
+ int preallocate_files = 0;
+ int protect_args = 0;
+diff --git a/tls.c b/tls.c
+index 45d1e10..d5a2896 100644
+--- a/tls.c
++++ b/tls.c
+@@ -51,6 +51,8 @@ int link_owner = 0;
+ int nsec_times = 0;
+ int preserve_perms = 0;
+ int preserve_executability = 0;
++int preallocate_files = 0;
++int inplace = 0;
+ 
+ #ifdef SUPPORT_XATTRS
+ 
+diff --git a/trimslash.c b/trimslash.c
+index 207eaf2..5db6f3e 100644
+--- a/trimslash.c
++++ b/trimslash.c
+@@ -28,6 +28,8 @@ int read_only = 1;
+ int list_only = 0;
+ int preserve_perms = 0;
+ int preserve_executability = 0;
++int preallocate_files = 0;
++int inplace = 0;
+ 
+ int
+ main(int argc, char **argv)
+diff --git a/util.c b/util.c
+index ca38f3e..49c5b71 100644
+--- a/util.c
++++ b/util.c
+@@ -323,9 +323,7 @@ int copy_file(const char *source, const char *dest, int ofd, mode_t mode)
+ 	int ifd;
+ 	char buf[1024 * 8];
+ 	int len;   /* Number of bytes read into `buf'. */
+-#ifdef PREALLOCATE_NEEDS_TRUNCATE
+-	OFF_T preallocated_len = 0, offset = 0;
+-#endif
++	OFF_T prealloc_len = 0, offset = 0;
+ 
+ 	if ((ifd = do_open(source, O_RDONLY, 0)) < 0) {
+ 		int save_errno = errno;
+@@ -365,11 +363,8 @@ int copy_file(const char *source, const char *dest, int ofd, mode_t mode)
+ 		if (do_fstat(ifd, &srcst) < 0)
+ 			rsyserr(FWARNING, errno, "fstat %s", full_fname(source));
+ 		else if (srcst.st_size > 0) {
+-			if (do_fallocate(ofd, 0, srcst.st_size) == 0) {
+-#ifdef PREALLOCATE_NEEDS_TRUNCATE
+-				preallocated_len = srcst.st_size;
+-#endif
+-			} else
++			prealloc_len = do_fallocate(ofd, 0, srcst.st_size);
++			if (prealloc_len < 0)
+ 				rsyserr(FWARNING, errno, "do_fallocate %s", full_fname(dest));
+ 		}
+ 	}
+@@ -384,9 +379,7 @@ int copy_file(const char *source, const char *dest, int ofd, mode_t mode)
+ 			errno = save_errno;
+ 			return -1;
+ 		}
+-#ifdef PREALLOCATE_NEEDS_TRUNCATE
+ 		offset += len;
+-#endif
+ 	}
+ 
+ 	if (len < 0) {
+@@ -403,15 +396,13 @@ int copy_file(const char *source, const char *dest, int ofd, mode_t mode)
+ 			full_fname(source));
+ 	}
+ 
+-#ifdef PREALLOCATE_NEEDS_TRUNCATE
+ 	/* Source file might have shrunk since we fstatted it.
+ 	 * Cut off any extra preallocated zeros from dest file. */
+-	if (offset < preallocated_len && do_ftruncate(ofd, offset) < 0) {
++	if (offset < prealloc_len && do_ftruncate(ofd, offset) < 0) {
+ 		/* If we fail to truncate, the dest file may be wrong, so we
+ 		 * must trigger the "partial transfer" error. */
+ 		rsyserr(FERROR_XFER, errno, "ftruncate %s", full_fname(dest));
+ 	}
+-#endif
+ 
+ 	if (close(ofd) < 0) {
+ 		int save_errno = errno;
