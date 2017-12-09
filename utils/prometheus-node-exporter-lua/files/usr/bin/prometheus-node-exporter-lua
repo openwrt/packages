@@ -11,11 +11,6 @@ socket = require("socket")
 -- Allow us to call unpack under both lua5.1 and lua5.2+
 local unpack = unpack or table.unpack
 
--- This table defines the scrapers to run.
--- Each corresponds directly to a scraper_<name> function.
-scrapers = { "cpu", "load_averages", "memory", "file_handles", "network",
-             "network_devices", "time", "uname", "nat", "wifi"}
-
 -- Parsing
 
 function space_split(s)
@@ -69,249 +64,27 @@ function metric(name, mtype, labels, value)
   return outputter
 end
 
-local ubus = require "ubus"
-local iwinfo = require "iwinfo"
-
-function scraper_wifi()
-  local metric_wifi_network_quality = metric("wifi_network_quality","gauge")
-  local metric_wifi_network_bitrate = metric("wifi_network_bitrate","gauge")
-  local metric_wifi_network_noise = metric("wifi_network_noise","gauge")
-  local metric_wifi_network_signal = metric("wifi_network_signal","gauge")
-
-  local metric_wifi_station_signal = metric("wifi_station_signal","gauge")
-  local metric_wifi_station_tx_packets = metric("wifi_station_tx_packets","gauge")
-  local metric_wifi_station_rx_packets = metric("wifi_station_rx_packets","gauge")
-
-  local u = ubus.connect()
-  local status = u:call("network.wireless", "status", {})
-
-  for dev, dev_table in pairs(status) do
-    for _, intf in ipairs(dev_table['interfaces']) do
-      local ifname = intf['ifname']
-      local iw = iwinfo[iwinfo.type(ifname)]
-      local labels = {
-        channel = iw.channel(ifname),
-        ssid = iw.ssid(ifname),
-        bssid = iw.bssid(ifname),
-        mode = iw.mode(ifname),
-        ifname = ifname,
-        country = iw.country(ifname),
-        frequency = iw.frequency(ifname),
-        device = dev,
-      }
-
-      local qc = iw.quality(ifname) or 0
-      local qm = iw.quality_max(ifname) or 0
-      local quality = 0
-      if qc > 0 and qm > 0 then
-        quality = math.floor((100 / qm) * qc)
-      end
-
-      metric_wifi_network_quality(labels, quality)
-      metric_wifi_network_noise(labels, iw.noise(ifname) or 0)
-      metric_wifi_network_bitrate(labels, iw.bitrate(ifname) or 0)
-      metric_wifi_network_signal(labels, iw.signal(ifname) or -255)
-
-      local assoclist = iw.assoclist(ifname)
-      for mac, station in pairs(assoclist) do
-        local labels = {
-          ifname = ifname,
-          mac = mac,
-        }
-        metric_wifi_station_signal(labels, station.signal)
-        metric_wifi_station_tx_packets(labels, station.tx_packets)
-        metric_wifi_station_rx_packets(labels, station.rx_packets)
-      end
-    end
-  end
-end
-
-function scraper_cpu()
-  local stat = get_contents("/proc/stat")
-
-  -- system boot time, seconds since epoch
-  metric("node_boot_time", "gauge", nil, string.match(stat, "btime ([0-9]+)"))
-
-  -- context switches since boot (all CPUs)
-  metric("node_context_switches", "counter", nil, string.match(stat, "ctxt ([0-9]+)"))
-
-  -- cpu times, per CPU, per mode
-  local cpu_mode = {"user", "nice", "system", "idle", "iowait", "irq",
-                    "softirq", "steal", "guest", "guest_nice"}
-  local i = 0
-  local cpu_metric = metric("node_cpu", "counter")
-  while string.match(stat, string.format("cpu%d ", i)) do
-    local cpu = space_split(string.match(stat, string.format("cpu%d ([0-9 ]+)", i)))
-    local labels = {cpu = "cpu" .. i}
-    for ii, mode in ipairs(cpu_mode) do
-      labels['mode'] = mode
-      cpu_metric(labels, cpu[ii] / 100)
-    end
-    i = i + 1
-  end
-
-  -- interrupts served
-  metric("node_intr", "counter", nil, string.match(stat, "intr ([0-9]+)"))
-
-  -- processes forked
-  metric("node_forks", "counter", nil, string.match(stat, "processes ([0-9]+)"))
-
-  -- processes running
-  metric("node_procs_running", "gauge", nil, string.match(stat, "procs_running ([0-9]+)"))
-
-  -- processes blocked for I/O
-  metric("node_procs_blocked", "gauge", nil, string.match(stat, "procs_blocked ([0-9]+)"))
-end
-
-function scraper_load_averages()
-  local loadavg = space_split(get_contents("/proc/loadavg"))
-
-  metric("node_load1", "gauge", nil, loadavg[1])
-  metric("node_load5", "gauge", nil, loadavg[2])
-  metric("node_load15", "gauge", nil, loadavg[3])
-end
-
-function scraper_memory()
-  local meminfo = line_split(get_contents("/proc/meminfo"):gsub("[):]", ""):gsub("[(]", "_"))
-
-  for i, mi in ipairs(meminfo) do
-    local name, size, unit = unpack(space_split(mi))
-    if unit == 'kB' then
-      size = size * 1024
-    end
-    metric("node_memory_" .. name, "gauge", nil, size)
-  end
-end
-
-function scraper_file_handles()
-  local file_nr = space_split(get_contents("/proc/sys/fs/file-nr"))
-
-  metric("node_filefd_allocated", "gauge", nil, file_nr[1])
-  metric("node_filefd_maximum", "gauge", nil, file_nr[3])
-end
-
-function scraper_network()
-  -- NOTE: Both of these are missing in OpenWRT kernels.
-  --       See: https://dev.openwrt.org/ticket/15781
-  local netstat = get_contents("/proc/net/netstat") .. get_contents("/proc/net/snmp")
-
-  -- all devices
-  local netsubstat = {"IcmpMsg", "Icmp", "IpExt", "Ip", "TcpExt", "Tcp", "UdpLite", "Udp"}
-  for i, nss in ipairs(netsubstat) do
-    local substat_s = string.match(netstat, nss .. ": ([A-Z][A-Za-z0-9 ]+)")
-    if substat_s then
-      local substat = space_split(substat_s)
-      local substatv = space_split(string.match(netstat, nss .. ": ([0-9 -]+)"))
-      for ii, ss in ipairs(substat) do
-        metric("node_netstat_" .. nss .. "_" .. ss, "gauge", nil, substatv[ii])
-      end
-    end
-  end
-end
-
-function scraper_network_devices()
-  local netdevstat = line_split(get_contents("/proc/net/dev"))
-  local netdevsubstat = {"receive_bytes", "receive_packets", "receive_errs",
-                   "receive_drop", "receive_fifo", "receive_frame", "receive_compressed",
-                   "receive_multicast", "transmit_bytes", "transmit_packets",
-                   "transmit_errs", "transmit_drop", "transmit_fifo", "transmit_colls",
-                   "transmit_carrier", "transmit_compressed"}
-  for i, line in ipairs(netdevstat) do
-    netdevstat[i] = string.match(netdevstat[i], "%S.*")
-  end
-  local nds_table = {}
-  local devs = {}
-  for i, nds in ipairs(netdevstat) do
-    local dev, stat_s = string.match(netdevstat[i], "([^:]+): (.*)")
-    if dev then
-      nds_table[dev] = space_split(stat_s)
-      table.insert(devs, dev)
-    end
-  end
-  for i, ndss in ipairs(netdevsubstat) do
-    netdev_metric = metric("node_network_" .. ndss, "gauge")
-    for ii, d in ipairs(devs) do
-      netdev_metric({device=d}, nds_table[d][i])
-    end
-  end
-end
-
-function scraper_time()
-  -- current time
-  metric("node_time", "counter", nil, os.time())
-end
-
-uname_labels = {
-domainname = "",
-nodename = "",
-release = string.sub(get_contents("/proc/sys/kernel/osrelease"), 1, -2),
-sysname = string.sub(get_contents("/proc/sys/kernel/ostype"), 1, -2),
-version = string.sub(get_contents("/proc/sys/kernel/version"), 1, -2),
-machine = string.sub(io.popen("uname -m"):read("*a"), 1, -2)
-}
-
-function scraper_uname()
-  uname_labels["domainname"] = string.sub(get_contents("/proc/sys/kernel/domainname"), 1, -2)
-  uname_labels["nodename"] = string.sub(get_contents("/proc/sys/kernel/hostname"), 1, -2)
-  metric("node_uname_info", "gauge", uname_labels, 1)
-end
-
-function scraper_nat()
-  -- documetation about nf_conntrack:
-  -- https://www.frozentux.net/iptables-tutorial/chunkyhtml/x1309.html
-  local natstat = line_split(get_contents("/proc/net/nf_conntrack"))
-
-  nat_metric =  metric("node_nat_traffic", "gauge" )
-  for i, e in ipairs(natstat) do
-    -- output(string.format("%s\n",e  ))
-    local fields = space_split(e)
-    local src, dest, bytes;
-    bytes = 0;
-    for ii, field in ipairs(fields) do
-      if src == nil and string.match(field, '^src') then
-        src = string.match(field,"src=([^ ]+)");
-      elseif dest == nil and string.match(field, '^dst') then
-        dest = string.match(field,"dst=([^ ]+)");
-      elseif string.match(field, '^bytes') then
-        local b = string.match(field, "bytes=([^ ]+)");
-        bytes = bytes + b;
-        -- output(string.format("\t%d %s",ii,field  ));
-      end
-
-    end
-    -- local src, dest, bytes = string.match(natstat[i], "src=([^ ]+) dst=([^ ]+) .- bytes=([^ ]+)");
-    -- local src, dest, bytes = string.match(natstat[i], "src=([^ ]+) dst=([^ ]+) sport=[^ ]+ dport=[^ ]+ packets=[^ ]+ bytes=([^ ]+)")
-
-    local labels = { src = src, dest = dest }
-    -- output(string.format("src=|%s| dest=|%s| bytes=|%s|", src, dest, bytes  ))
-    nat_metric(labels, bytes )
-  end
-end
-
-function timed_scrape(scraper)
+function timed_scrape(collector)
   local start_time = socket.gettime()
-  -- build the function name and call it from global variable table
-  _G["scraper_"..scraper]()
-  local duration = socket.gettime() - start_time
-  return duration
+  local success = 1
+  local status, err = pcall(collector.scrape)
+  if not status then
+    success = 0
+    print(err)
+  end
+  return (socket.gettime() - start_time), success
 end
 
-function run_all_scrapers()
-  times = {}
-  for i,scraper in ipairs(scrapers) do
-    runtime = timed_scrape(scraper)
-    times[scraper] = runtime
-    scrape_time_sums[scraper] = scrape_time_sums[scraper] + runtime
-    scrape_counts[scraper] = scrape_counts[scraper] + 1
-  end
-
-  local name = "node_exporter_scrape_duration_seconds"
-  local duration_metric = metric(name, "summary")
-  for i,scraper in ipairs(scrapers) do
-    local labels = {collector=scraper, result="success"}
-    duration_metric(labels, times[scraper])
-    print_metric(name.."_sum", labels, scrape_time_sums[scraper])
-    print_metric(name.."_count", labels, scrape_counts[scraper])
+function run_all_collectors(collectors)
+  local metric_duration = metric("node_scrape_collector_duration_seconds", "gauge")
+  local metric_success = metric("node_scrape_collector_success", "gauge")
+  for _,cname in pairs(collectors) do
+    if col_mods[cname] ~= nil then
+      local duration, success = timed_scrape(col_mods[cname])
+      local labels = {collector=cname}
+      metric_duration(labels, duration)
+      metric_success(labels, success)
+    end
   end
 end
 
@@ -326,11 +99,19 @@ function http_not_found()
 end
 
 function serve(request)
-  if not string.match(request, "GET /metrics.*") then
+  local q = request:match("^GET /metrics%??([^ ]*) HTTP/1%.[01]$")
+  if q == nil then
     http_not_found()
   else
     http_ok_header()
-    run_all_scrapers()
+    local cols = {}
+    for c in q:gmatch("collect[^=]*=([^&]+)") do
+      cols[#cols+1] = c
+    end
+    if #cols == 0 then
+      cols = col_names
+    end
+    run_all_collectors(cols)
   end
   client:close()
   return true
@@ -347,11 +128,12 @@ for k,v in ipairs(arg) do
   end
 end
 
-scrape_counts = {}
-scrape_time_sums = {}
-for i,scraper in ipairs(scrapers) do
-  scrape_counts[scraper] = 0
-  scrape_time_sums[scraper] = 0
+col_mods = {}
+col_names = {}
+for c in io.popen("ls -1 /usr/lib/lua/prometheus-collectors/*.lua"):lines() do
+  c = c:match("([^/]+)%.lua$")
+  col_mods[c] = require('prometheus-collectors.'..c)
+  col_names[#col_names+1] = c
 end
 
 if port then
@@ -371,5 +153,5 @@ if port then
   end
 else
   output = print
-  run_all_scrapers()
+  run_all_collectors(col_names)
 end
