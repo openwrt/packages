@@ -40,6 +40,8 @@ define Package/prometheus-node-exporter-lua/install
 	$(INSTALL_BIN) ./files/etc/init.d/prometheus-node-exporter-lua $(1)/etc/init.d/prometheus-node-exporter-lua
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/prometheus-node-exporter-lua $(1)/usr/bin/prometheus-node-exporter-lua
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/* $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
