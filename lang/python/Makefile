@@ -242,6 +242,10 @@ HOST_CONFIGURE_ARGS+= \
 	--with-system-ffi=no \
 	CONFIG_SITE=
 
+define Host/Compile
+	$(call Host/Compile/Default,python Parser/pgen sharedmods)
+endef
+
 define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 	$(INSTALL_DIR) $(HOST_PYTHON_DIR)/bin/
