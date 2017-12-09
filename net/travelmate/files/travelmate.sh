@@ -10,8 +10,8 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.9.5"
-trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
+trm_ver="0.9.6"
+trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
 trm_automatic=1
@@ -26,6 +26,23 @@ trm_rtfile="/tmp/trm_runtime.json"
 #
 f_envload()
 {
+    local sys_call sys_desc sys_model sys_ver
+
+    # get system information
+    #
+    sys_call="$(ubus -S call system board 2>/dev/null)"
+    if [ -n "${sys_call}" ]
+    then
+        sys_desc="$(printf '%s' "${sys_call}" | jsonfilter -e '@.release.description')"
+        sys_model="$(printf '%s' "${sys_call}" | jsonfilter -e '@.model')"
+        sys_ver="$(cat /etc/turris-version 2>/dev/null)"
+        if [ -n "${sys_ver}" ]
+        then
+            sys_desc="${sys_desc}/${sys_ver}"
+        fi
+        trm_sysver="${sys_model}, ${sys_desc}"
+    fi
+
     # initialize lists
     #
     trm_devlist=""
@@ -123,7 +140,7 @@ f_check()
 #
 f_jsnupdate()
 {
-    local iface="${1}" radio="${2}" essid="${3:-"n/a"}" bssid="${4:-"n/a"}"
+    local iface="${1}" radio="${2}" essid="${3:-"-"}" bssid="${4:-"-"}"
 
     json_init
     json_add_object "data"
@@ -216,8 +233,10 @@ f_main()
                         sta_essid="$(uci -q get wireless."${config}".ssid)"
                         sta_bssid="$(uci -q get wireless."${config}".bssid)"
                         sta_iface="$(uci -q get wireless."${config}".network)"
-                        if ([ -n "$(printf "%s" "${essid_list}" | grep -Fo "\"${sta_essid}\"")" ] ||\
-                            [ -n "$(printf "%s" "${bssid_list}" | grep -Fo "${sta_bssid}")" ]) && [ "${dev}" = "${sta_radio}" ]
+                        if (([ -n "$(printf "%s" "${essid_list}" | grep -Fo "\"${sta_essid}\"")" ] && [ -z "${sta_bssid}" ]) || \
+                            ([ -n "$(printf "%s" "${bssid_list}" | grep -Fo "${sta_bssid}")" ] && [ -z "$(printf "%s" "${essid_list}" | grep -Fo "\"${sta_essid}\"")" ]) || \
+                            ([ -n "$(printf "%s" "${essid_list}" | grep -Fo "\"${sta_essid}\"")" ] && [ -n "$(printf "%s" "${bssid_list}" | grep -Fo "${sta_bssid}")" ])) && \
+                             [ "${dev}" = "${sta_radio}" ]
                         then
                             uci -q set wireless."${config}".disabled=0
                             f_check "sta"
@@ -261,7 +280,7 @@ f_main()
         if [ ! -s "${trm_rtfile}" ]
         then
             trm_ifstatus="false"
-            f_jsnupdate "n/a" "n/a" "n/a" "n/a"
+            f_jsnupdate "n/a" "n/a"
         fi
     else
         if [ ! -s "${trm_rtfile}" ]
