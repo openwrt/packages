@@ -34,6 +34,18 @@ define Package/prometheus-node-exporter-lua/description
   This service is a lightweight rewrite in LUA of the offical Prometheus node_exporter.
 endef
 
+define Package/prometheus-node-exporter-lua-nat_traffic
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (nat_traffic collector)
+  DEPENDS:=prometheus-node-exporter-lua
+endef
+
+define Package/prometheus-node-exporter-lua-netstat
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (netstat collector)
+  DEPENDS:=prometheus-node-exporter-lua
+endef
+
 define Package/prometheus-node-exporter-lua-wifi
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (wifi collector)
@@ -60,11 +72,19 @@ define Package/prometheus-node-exporter-lua/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/filefd.lua      $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/loadavg.lua     $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/meminfo.lua     $(1)/usr/lib/lua/prometheus-collectors/
-	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/nat_traffic.lua $(1)/usr/lib/lua/prometheus-collectors/
-	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/netstat.lua     $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/netdev.lua      $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/time.lua        $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/uname.lua       $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-nat_traffic/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/nat_traffic.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-netstat/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/netstat.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
 define Package/prometheus-node-exporter-lua-wifi/install
@@ -78,5 +98,7 @@ define Package/prometheus-node-exporter-lua-wifi_stations/install
 endef
 
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
