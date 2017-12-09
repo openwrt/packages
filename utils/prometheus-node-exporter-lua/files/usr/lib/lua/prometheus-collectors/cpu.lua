@@ -13,12 +13,13 @@ local function scrape()
                     "softirq", "steal", "guest", "guest_nice"}
   local i = 0
   local cpu_metric = metric("node_cpu", "counter")
-  while string.match(stat, string.format("cpu%d ", i)) do
-    local cpu = space_split(string.match(stat, string.format("cpu%d ([0-9 ]+)", i)))
-    local labels = {cpu = "cpu" .. i}
+  while true do
+    local cpu = {string.match(stat, "cpu"..i.." (%d+) (%d+) (%d+) (%d+) (%d+) (%d+) (%d+) (%d+) (%d+) (%d+)")}
+    if #cpu ~= 10 then
+      break
+    end
     for ii, mode in ipairs(cpu_mode) do
-      labels['mode'] = mode
-      cpu_metric(labels, cpu[ii] / 100)
+      cpu_metric({cpu="cpu"..i, mode=mode}, cpu[ii] / 100)
     end
     i = i + 1
   end
