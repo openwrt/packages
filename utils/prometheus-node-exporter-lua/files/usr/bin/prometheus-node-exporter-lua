@@ -8,22 +8,11 @@
 
 socket = require("socket")
 
--- Allow us to call unpack under both lua5.1 and lua5.2+
-local unpack = unpack or table.unpack
-
 -- Parsing
 
 function space_split(s)
-  elements = {}
+  local elements = {}
   for element in s:gmatch("%S+") do
-    table.insert(elements, element)
-  end
-  return elements
-end
-
-function line_split(s)
-  elements = {}
-  for element in s:gmatch("[^\n]+") do
     table.insert(elements, element)
   end
   return elements

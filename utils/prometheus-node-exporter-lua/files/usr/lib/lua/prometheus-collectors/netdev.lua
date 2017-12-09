@@ -1,26 +1,23 @@
-local function scrape()
-  local netdevstat = line_split(get_contents("/proc/net/dev"))
-  local netdevsubstat = {"receive_bytes", "receive_packets", "receive_errs",
+
+local netdevsubstat = {"receive_bytes", "receive_packets", "receive_errs",
                    "receive_drop", "receive_fifo", "receive_frame", "receive_compressed",
                    "receive_multicast", "transmit_bytes", "transmit_packets",
                    "transmit_errs", "transmit_drop", "transmit_fifo", "transmit_colls",
                    "transmit_carrier", "transmit_compressed"}
-  for i, line in ipairs(netdevstat) do
-    netdevstat[i] = string.match(netdevstat[i], "%S.*")
-  end
+local pattern = "([^%s:]+):%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)"
+
+local function scrape()
   local nds_table = {}
-  local devs = {}
-  for i, nds in ipairs(netdevstat) do
-    local dev, stat_s = string.match(netdevstat[i], "([^:]+): (.*)")
-    if dev then
-      nds_table[dev] = space_split(stat_s)
-      table.insert(devs, dev)
+  for line in io.lines("/proc/net/dev") do
+    local t = {string.match(line, pattern)}
+    if #t == 17 then
+      nds_table[t[1]] = t
     end
   end
   for i, ndss in ipairs(netdevsubstat) do
     netdev_metric = metric("node_network_" .. ndss, "gauge")
-    for ii, d in ipairs(devs) do
-      netdev_metric({device=d}, nds_table[d][i])
+    for dev, nds_dev in pairs(nds_table) do
+      netdev_metric({device=dev}, nds_dev[i+1])
     end
   end
 end
