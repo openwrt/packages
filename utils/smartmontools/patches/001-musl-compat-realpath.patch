@@ -1,0 +1,19 @@
+commit 2473c5e01ea14fae96c157d8bce3a3ec1da124f3
+Author: Maxim Storchak <m.storchak@gmail.com>
+Date:   Sat Dec 9 15:21:51 2017 +0200
+
+    Replace canonicalize_file_name with realpath equivalent
+
+diff --git a/os_linux.cpp b/os_linux.cpp
+index 134d5bc..0575a13 100644
+--- a/os_linux.cpp
++++ b/os_linux.cpp
+@@ -3176,7 +3176,7 @@ static bool is_hpsa(const char * name)
+ {
+   char path[128];
+   snprintf(path, sizeof(path), "/sys/block/%s/device", name);
+-  char * syshostpath = canonicalize_file_name(path);
++  char * syshostpath = realpath(path, NULL);
+   if (!syshostpath)
+     return false;
+ 
