@@ -12,13 +12,16 @@ PKG_LICENSE:=Apache-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/prometheus-node-exporter-lua
+define Package/prometheus-node-exporter-lua/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Provides system statistics as Prometheus scraping endpoint
-  DEPENDS:=+luasocket +libiwinfo-lua +libubus-lua +lua
-  URL:=https://github.com/rbo/openwrt_exporter
+  TITLE:=Prometheus node exporter
   PKGARCH:=all
+endef
+
+define Package/prometheus-node-exporter-lua
+  $(call Package/prometheus-node-exporter-lua/Default)
+  DEPENDS:=+luasocket +lua
 endef
 
 define Package/prometheus-node-exporter-lua/conffiles
@@ -31,6 +34,18 @@ define Package/prometheus-node-exporter-lua/description
   This service is a lightweight rewrite in LUA of the offical Prometheus node_exporter.
 endef
 
+define Package/prometheus-node-exporter-lua-wifi
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (wifi collector)
+  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua +libubus-lua
+endef
+
+define Package/prometheus-node-exporter-lua-wifi_stations
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (wifi_stations collector)
+  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua +libubus-lua
+endef
+
 Build/Compile=
 
 define Package/prometheus-node-exporter-lua/install
@@ -41,7 +56,27 @@ define Package/prometheus-node-exporter-lua/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/prometheus-node-exporter-lua $(1)/usr/bin/prometheus-node-exporter-lua
 	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
-	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/* $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/cpu.lua         $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/filefd.lua      $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/loadavg.lua     $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/meminfo.lua     $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/nat_traffic.lua $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/netstat.lua     $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/netdev.lua      $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/time.lua        $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/uname.lua       $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-wifi/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/wifi.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-wifi_stations/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/wifi_stations.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
