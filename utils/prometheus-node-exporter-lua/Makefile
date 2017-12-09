@@ -16,7 +16,7 @@ define Package/prometheus-node-exporter-lua
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Provides system statistics as Prometheus scraping endpoint
-  DEPENDS:=+luasocket
+  DEPENDS:=+luasocket +libiwinfo-lua +libubus-lua +lua
   URL:=https://github.com/rbo/openwrt_exporter
   PKGARCH:=all
 endef
