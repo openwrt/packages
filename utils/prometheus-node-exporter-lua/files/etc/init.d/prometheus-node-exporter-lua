@@ -15,5 +15,8 @@ start_service() {
 	procd_append_param command --port ${port}
 	procd_append_param command --bind ${bind}
 
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
 	procd_close_instance
 }
