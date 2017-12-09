@@ -248,20 +248,19 @@ function scraper_time()
   metric("node_time", "counter", nil, os.time())
 end
 
-function scraper_uname()
-  -- version can have spaces, so grab it directly
-  local version = string.sub(io.popen("uname -v"):read("*a"), 1, -2)
-  -- avoid individual popen calls for the rest of the values
-  local uname_string = io.popen("uname -a"):read("*a")
-  local sysname, nodename, release = unpack(space_split(uname_string))
-  local labels = {domainname = "(none)", nodename = nodename, release = release,
-                  sysname = sysname, version = version}
+uname_labels = {
+domainname = "",
+nodename = "",
+release = string.sub(get_contents("/proc/sys/kernel/osrelease"), 1, -2),
+sysname = string.sub(get_contents("/proc/sys/kernel/ostype"), 1, -2),
+version = string.sub(get_contents("/proc/sys/kernel/version"), 1, -2),
+machine = string.sub(io.popen("uname -m"):read("*a"), 1, -2)
+}
 
-  -- The machine hardware name is immediately after the version string, so add
-  -- up the values we know and add in the 4 spaces to find the offset...
-  machine_offset = string.len(sysname .. nodename .. release .. version) + 4
-  labels['machine'] = string.match(string.sub(uname_string, machine_offset), "(%S+)" )
-  metric("node_uname_info", "gauge", labels, 1)
+function scraper_uname()
+  uname_labels["domainname"] = string.sub(get_contents("/proc/sys/kernel/domainname"), 1, -2)
+  uname_labels["nodename"] = string.sub(get_contents("/proc/sys/kernel/hostname"), 1, -2)
+  metric("node_uname_info", "gauge", uname_labels, 1)
 end
 
 function scraper_nat()
