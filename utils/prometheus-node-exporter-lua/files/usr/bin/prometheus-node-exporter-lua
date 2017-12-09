@@ -327,18 +327,11 @@ end
 -- Web server-specific functions
 
 function http_ok_header()
-  output("HTTP/1.1 200 OK\r")
-  output("Server: lua-metrics\r")
-  output("Content-Type: text/plain; version=0.0.4\r")
-  output("\r")
+  output("HTTP/1.0 200 OK\r\nServer: lua-metrics\r\nContent-Type: text/plain; version=0.0.4\r\n\r")
 end
 
 function http_not_found()
-  output("HTTP/1.1 404 Not Found\r")
-  output("Server: lua-metrics\r")
-  output("Content-Type: text/plain\r")
-  output("\r")
-  output("ERROR: File Not Found.")
+  output("HTTP/1.0 404 Not Found\r\nServer: lua-metrics\r\nContent-Type: text/plain\r\n\r\nERROR: File Not Found.")
 end
 
 function serve(request)
