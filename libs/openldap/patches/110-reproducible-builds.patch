@@ -1,0 +1,21 @@
+Index: openldap-2.4.45/build/mkversion
+===================================================================
+--- openldap-2.4.45.orig/build/mkversion
++++ openldap-2.4.45/build/mkversion
+@@ -50,7 +50,6 @@ if test $# != 1 ; then
+ fi
+ 
+ APPLICATION=$1
+-WHOWHERE="$USER@`uname -n`:`pwd`"
+ 
+ cat << __EOF__
+ /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+@@ -72,7 +71,6 @@ static const char copyright[] =
+ "COPYING RESTRICTIONS APPLY\n";
+ 
+ $static $const char $SYMBOL[] =
+-"@(#) \$$PACKAGE: $APPLICATION $VERSION (" __DATE__ " " __TIME__ ") \$\n"
+-"\t$WHOWHERE\n";
++"@(#) \$$PACKAGE: $APPLICATION $VERSION\$\n";
+ 
+ __EOF__
