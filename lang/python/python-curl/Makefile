@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pycurl
-PKG_VERSION:=7.43.0
+PKG_VERSION:=7.43.0.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Waldemar Konik <informatyk74@interia.pl>
 PKG_LICENSE:=LGPL-2.1
@@ -13,7 +13,7 @@ PKG_LICENSE_FILE=COPYING-LGPL
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dl.bintray.com/pycurl/pycurl/
-PKG_HASH:=aa975c19b79b6aa6c0518c0cc2ae33528900478f0b500531dbcdbf05beec584c
+PKG_HASH:=43231bf2bafde923a6d9bb79e2407342a5f3382c1ef0a3b2e491c6a4e50b91aa
 
 PKG_BUILD_DEPENDS:=python libcurl
 
