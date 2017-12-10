@@ -1,0 +1,59 @@
+--- djbdns-1.05/query.c	2012-08-30 22:14:28.885825918 +0800
++++ djbdns-1.05-new/query.c	2012-08-30 22:22:23.887727783 +0800
+@@ -220,7 +217,7 @@
+ 
+ 
+   NEWNAME:
+-  if (++z->loop == 100) goto DIE;
++  if (++z->loop == 150) goto DIE;
+   d = z->name[z->level];
+   dtype = z->level ? DNS_T_A : z->type;
+   dlen = dns_domain_length(d);
+@@ -489,7 +486,7 @@
+ 
+ 
+   HAVEPACKET:
+-  if (++z->loop == 100) goto DIE;
++  if (++z->loop == 150) goto DIE;
+   buf = z->qm->dt.packet;
+   len = z->qm->dt.packetlen;
+ 
+@@ -722,6 +716,7 @@
+   alloc_free(records); records = 0;
+ 
+   if (byte_diff(DNS_T_CNAME,2,dtype)) {
++    int flagcname = 0;
+     /* This code assumes that the CNAME chain is presented in the correct 
+     ** order.  The example algorithm in RFC 1034 will actually result in this
+     ** being the case, but the words do not require it to be so.
+@@ -734,20 +729,29 @@
+       if (dns_domain_equal(t1,d))
+ 	if (byte_equal(header + 2,2,DNS_C_IN)) { /* should always be true */
+ 	  if (typematch(header,DNS_T_CNAME)) {
++       flagcname = 1;
+ 	    ttl = ttlget(header + 4);
+ 	    if (z->level == 0) {
+ 	      if (!move_name_to_alias(z,ttl)) goto DIE ;
+ 	    }
++	    if (!dns_domain_copy(&owner_name, control)) goto DIE ;
+ 	    if (!dns_packet_getname(buf,len,pos,&z->name[z->level])) goto DIE;
+ 	    d = z->name[z->level];
+-	    if (!dns_domain_suffix(d,control) || !roots_same(d,control))
++	    if (!dns_domain_suffix(d,owner_name) || !roots_same(d,owner_name)) {
++	      dns_domain_free(&owner_name);
+ 	      goto NEWNAME ;  /* Cannot trust the chain further - restart using current name */
+ 	  }
++	    control = d + dns_domain_suffixpos(d,owner_name);
++	    z->control[z->level] = control;
++	    dns_domain_free(&owner_name);
++	  }
+ 	}
+ 
+       uint16_unpack_big(header + 8,&datalen);
+       pos += datalen;
+     }
++    if (flagcname != 0)
++      goto HAVENS;
+   }
+ 
+   /* A "no such name" error applies to the end of any CNAME chain, not to the start. */
