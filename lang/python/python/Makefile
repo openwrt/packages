@@ -14,7 +14,7 @@ PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 # XXX: reset PKG_RELEASE to 1 only if Python's pip & setuptools versions have also bumped;
 #      otherwise, keep bumping PKG_RELEASE
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
@@ -39,9 +39,9 @@ HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_python-setuptools CONFIG_PACKAGE_python-pip \
-	CONFIG_PACKAGE_bluez-libs
+	CONFIG_PYTHON_BLUETOOTH_SUPPORT
 
-PKG_BUILD_DEPENDS:=python/host PACKAGE_bluez-libs:bluez-libs
+PKG_BUILD_DEPENDS:=python/host
 HOST_BUILD_DEPENDS:=bzip2/host expat/host
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -65,16 +65,6 @@ define Package/python/Default/description
  the development of higher quality, more maintainable code.
 endef
 
-define Package/python-pip-conf
-$(call Package/python/Default)
-  TITLE:=Configuration file for pip/pip3
-  URL:=https://pip.pypa.io
-endef
-
-define Package/python-pip-conf/description
- Configuration file for pip/pip3
-endef
-
 define Package/python-base
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) interpreter
@@ -89,7 +79,11 @@ endef
 define Package/python-light
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) light installation
-  DEPENDS:=+python-base +libffi +libbz2 +PACKAGE_bluez-libs:bluez-libs
+  DEPENDS:=+python-base +libffi +libbz2 +PYTHON_BLUETOOTH_SUPPORT:bluez-libs
+endef
+
+define Package/python-light/config
+  source "$(SOURCE)/Config-python-light.in"
 endef
 
 define Package/python-light/description
@@ -150,6 +144,10 @@ PYTHON_FOR_BUILD:= \
 	_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata \
 	$(HOST_PYTHON_BIN)
 
+DISABLE_BLUETOOTH:= \
+    ac_cv_header_bluetooth_bluetooth_h=no \
+    ac_cv_header_bluetooth_h=no
+
 CONFIGURE_ARGS+= \
 	--sysconfdir=/etc \
 	--enable-shared \
@@ -158,6 +156,7 @@ CONFIGURE_ARGS+= \
 	--with-system-ffi \
 	--with-ensurepip=no \
 	--without-pymalloc \
+	$(if $(CONFIG_PYTHON_BLUETOOTH_SUPPORT),,$(DISABLE_BLUETOOTH)) \
 	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
@@ -281,11 +280,6 @@ define PyPackage/python/filespec
 -|$(PYTHON_PKG_DIR)
 endef
 
-define Package/python-pip-conf/install
-	$(INSTALL_DIR) $(1)/etc
-	$(CP) ./files/pip.conf $(1)/etc
-endef
-
 HOST_LDFLAGS += \
 	-Wl,--no-as-needed -lrt \
 	$$$$(pkg-config --static --libs libcrypto libssl)
@@ -323,8 +317,6 @@ $(foreach package, $(PYTHON_PACKAGES),  \
 $(eval $(call PyPackage,python-base))
 $(eval $(call PyPackage,python-light))
 $(eval $(call PyPackage,python))
-
-$(eval $(call BuildPackage,python-pip-conf))
 
 $(eval $(call BuildPackage,python-base))
 $(eval $(call BuildPackage,python-light))
