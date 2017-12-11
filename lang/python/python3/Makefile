@@ -16,7 +16,7 @@ PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 PKG_NAME:=python3
 # XXX: reset PKG_RELEASE to 1 only if Python's pip & setuptools versions have also bumped;
 #      otherwise, keep bumping PKG_RELEASE
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -42,10 +42,9 @@ HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_python3-setuptools CONFIG_PACKAGE_python3-pip \
-	CONFIG_PACKAGE_bluez-libs
+	CONFIG_PYTHON3_BLUETOOTH_SUPPORT
 
-
-PKG_BUILD_DEPENDS:=python3/host PACKAGE_bluez-libs:bluez-libs
+PKG_BUILD_DEPENDS:=python3/host
 HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -83,7 +82,11 @@ endef
 define Package/python3-light
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON_VERSION) light installation
-  DEPENDS:=+python3-base +libffi +libbz2 +PACKAGE_bluez-libs:bluez-libs
+  DEPENDS:=+python3-base +libffi +libbz2 +PYTHON3_BLUETOOTH_SUPPORT:bluez-libs
+endef
+
+define Package/python3-light/config
+  source "$(SOURCE)/Config-python3-light.in"
 endef
 
 define Package/python3-light/description
@@ -145,6 +148,10 @@ PYTHON_FOR_BUILD:= \
 	_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata \
 	$(HOST_PYTHON3_BIN)
 
+DISABLE_BLUETOOTH:= \
+	ac_cv_header_bluetooth_bluetooth_h=no \
+	ac_cv_header_bluetooth_h=no
+
 CONFIGURE_ARGS+= \
 	--sysconfdir=/etc \
 	--enable-shared \
@@ -153,6 +160,7 @@ CONFIGURE_ARGS+= \
 	--with-system-ffi \
 	--with-ensurepip=no \
 	--without-pymalloc \
+	$(if $(CONFIG_PYTHON3_BLUETOOTH_SUPPORT),,$(DISABLE_BLUETOOTH)) \
 	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \

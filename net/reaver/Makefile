@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2012-2015 OpenWrt.org
+# Copyright (C) 2017 Yousong Zhou
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,47 +9,48 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=reaver
-PKG_VERSION:=1.4
-PKG_RELEASE:=3
+PKG_VERSION:=1.6.3
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/reaver-wps
-PKG_HASH:=add3050a4a05fe0ab6bfb291ee2de8e9b8a85f1e64ced93ee27a75744954b22d
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/t6x/reaver-wps-fork-t6x/releases/download/v$(PKG_VERSION)
+PKG_HASH:=191f785f53030e4803260ada1a29ca4b42c848d56f6f3982e320d03b6117aaf2
+
 PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=docs/LICENSE
 
 PKG_USE_MIPS16:=0
 PKG_AUTOMAKE_PATHS:=src
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
-
 CONFIGURE_PATH:=src
 MAKE_PATH:=src
-EXTRA_CFLAGS=$(TARGET_CPPFLAGS)
 
 define Package/reaver
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=wireless
   TITLE:=Efficient brute force attack against Wifi Protected Setup
-  URL:=https://code.google.com/p/reaver-wps/
-  DEPENDS:=+libpcap +libsqlite3
+  URL:=https://github.com/t6x/reaver-wps-fork-t6x
+  DEPENDS:=+libpcap
 endef
 
 define Package/reaver/description
-  Reaver targets the external registrar functionality mandated by the WiFi
-  Protected Setup specification.
-  Access points will provide authenticated registrars with their current
-  wireless configuration (including the WPA PSK), and also accept a new
-  configuration from the registrar.
+  Reaver has been designed to be a robust and practical attack against Wi-Fi
+  Protected Setup (WPS) registrar PINs in order to recover WPA/WPA2
+  passphrases. It has been tested against a wide variety of access points and
+  WPS implementations.
+
+  This is reaver-wps-fork-t6x, a community forked version, which has included
+  various bug fixes and additional attack method (the offline Pixie Dust
+  attack).
 endef
 
 define Package/reaver/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/{reaver,wash} $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/etc/reaver
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/reaver.db $(1)/etc/reaver/
 endef
 
 $(eval $(call BuildPackage,reaver))

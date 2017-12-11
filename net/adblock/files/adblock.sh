@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.1.0"
+adb_ver="3.1.1"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -28,6 +28,7 @@ adb_dnsprefix="adb_list"
 adb_dnsfile="${adb_dnsprefix}.overall"
 adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_rtfile="/tmp/adb_runtime.json"
+adb_hashsum="$(command -v sha256sum)"
 adb_action="${1:-"start"}"
 adb_cnt=0
 adb_rc=0
@@ -154,13 +155,16 @@ f_envload()
             ;;
     esac
 
-    if [ ${adb_enabled} -ne 1 ]
+    # check adblock status
+    #
+    if [ ${adb_enabled} -eq 0 ]
     then
         if [ -s "${adb_dnsdir}/${adb_dnsfile}" ]
         then
             f_rmdns
             f_dnsrestart
         fi
+        f_extconf
         f_jsnupdate
         f_log "info " "adblock is currently disabled, please set adb_enabled to '1' to use this service"
         exit 0
@@ -196,30 +200,6 @@ f_envload()
     then
         f_log "error" "'${adb_dns}' not running, DNS backend not found"
     fi
-
-    # force dns to local resolver
-    #
-    if [ ${adb_forcedns} -eq 1 ] && [ -z "$(uci -q get firewall.adblock_dns)" ]
-    then
-        uci -q set firewall.adblock_dns="redirect"
-        uci -q set firewall.adblock_dns.name="Adblock DNS"
-        uci -q set firewall.adblock_dns.src="lan"
-        uci -q set firewall.adblock_dns.proto="tcp udp"
-        uci -q set firewall.adblock_dns.src_dport="53"
-        uci -q set firewall.adblock_dns.dest_port="53"
-        uci -q set firewall.adblock_dns.target="DNAT"
-    elif [ ${adb_forcedns} -eq 0 ] && [ -n "$(uci -q get firewall.adblock_dns)" ]
-    then
-        uci -q delete firewall.adblock_dns
-    fi
-    if [ -n "$(uci -q changes firewall)" ]
-    then
-        uci -q commit firewall
-        if [ $(/etc/init.d/firewall enabled; printf "%u" ${?}) -eq 0 ]
-        then
-            /etc/init.d/firewall reload >/dev/null 2>&1
-        fi
-    fi
 }
 
 # f_envcheck: check/set environment prerequisites
@@ -227,6 +207,10 @@ f_envload()
 f_envcheck()
 {
     local ssl_lib
+
+    # check external uci config files
+    #
+    f_extconf
 
     # check fetch utility
     #
@@ -262,12 +246,65 @@ f_envcheck()
     fi
     adb_fetchinfo="${adb_fetch##*/} (${ssl_lib})"
 
+    # check hashsum utility
+    #
+    if [ ! -x "${adb_hashsum}" ]
+    then
+        adb_hashsum="$(command -v md5sum)"
+    fi
+
     # initialize temp files and directories
     #
     adb_tmpload="$(mktemp -tu)"
     adb_tmpfile="$(mktemp -tu)"
     adb_tmpdir="$(mktemp -p /tmp -d)"
     > "${adb_tmpdir}/tmp.whitelist"
+}
+
+# f_extconf: set external config options
+#
+f_extconf()
+{
+    # kresd related options
+    #
+    if [ "${adb_dns}" = "kresd" ]
+    then
+        if [ ${adb_enabled} -eq 1 ] && [ -z "$(uci -q get resolver.kresd.rpz_file | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+        then
+            uci -q add_list resolver.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
+        elif [ ${adb_enabled} -eq 0 ] && [ -n "$(uci -q get resolver.kresd.rpz_file | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+        then
+            uci -q del_list resolver.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
+        fi
+        if [ -n "$(uci -q changes resolver)" ]
+        then
+            uci -q commit resolver
+        fi
+    fi
+
+    # firewall related options
+    #
+    if [ ${adb_enabled} -eq 1 ] && [ ${adb_forcedns} -eq 1 ] && [ -z "$(uci -q get firewall.adblock_dns)" ]
+    then
+        uci -q set firewall.adblock_dns="redirect"
+        uci -q set firewall.adblock_dns.name="Adblock DNS"
+        uci -q set firewall.adblock_dns.src="lan"
+        uci -q set firewall.adblock_dns.proto="tcp udp"
+        uci -q set firewall.adblock_dns.src_dport="53"
+        uci -q set firewall.adblock_dns.dest_port="53"
+        uci -q set firewall.adblock_dns.target="DNAT"
+    elif [ -n "$(uci -q get firewall.adblock_dns)" ] && ([ ${adb_enabled} -eq 0 ] || [ ${adb_forcedns} -eq 0 ])
+    then
+        uci -q delete firewall.adblock_dns
+    fi
+    if [ -n "$(uci -q changes firewall)" ]
+    then
+        uci -q commit firewall
+        if [ $(/etc/init.d/firewall enabled; printf "%u" ${?}) -eq 0 ]
+        then
+            /etc/init.d/firewall reload >/dev/null 2>&1
+        fi
+    fi
 }
 
 # f_rmtemp: remove temporary files & directories
@@ -452,7 +489,7 @@ f_jsnupdate()
     if [ ${adb_rc} -gt 0 ]
     then
         status="error"
-    elif [ ${adb_enabled} -ne 1 ]
+    elif [ ${adb_enabled} -eq 0 ]
     then
         status="disabled"
     elif [ -s "${adb_dnsdir}/.${adb_dnsfile}" ]
@@ -544,7 +581,7 @@ f_main()
     local mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo")"
 
     f_log "info " "start adblock processing ..."
-    f_log "debug" "action: ${adb_action}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, backup: ${adb_backup}, backup_mode: ${adb_backup_mode}, whitelist_mode: ${adb_whitelist_mode}, force_srt/_dns: ${adb_forcesrt}/${adb_forcedns}, mem_total: ${mem_total}"
+    f_log "debug" "action: ${adb_action}, dns: ${adb_dns}, fetch: ${adb_fetchinfo}, hashsum: ${adb_hashsum}, backup: ${adb_backup}, backup_mode: ${adb_backup_mode}, whitelist_mode: ${adb_whitelist_mode}, force_srt/_dns: ${adb_forcesrt}/${adb_forcedns}, mem_total: ${mem_total}"
     > "${adb_rtfile}"
     > "${adb_dnsdir}/.${adb_dnsfile}"
 
@@ -681,9 +718,9 @@ f_main()
 
     # hash preparation, whitelist removal and overall sort
     #
-    if [ -f "${adb_dnsdir}/${adb_dnsfile}" ]
+    if [ -x "${adb_hashsum}" ] && [ -f "${adb_dnsdir}/${adb_dnsfile}" ]
     then
-        hash_old="$(sha256sum "${adb_dnsdir}/${adb_dnsfile}" 2>/dev/null | awk '{print $1}')"
+        hash_old="$(${adb_hashsum} "${adb_dnsdir}/${adb_dnsfile}" 2>/dev/null | awk '{print $1}')"
     fi
     if [ -s "${adb_tmpdir}/${adb_dnsfile}" ]
     then
@@ -700,7 +737,10 @@ f_main()
 
     # conditional restart of the dns backend and runtime information export
     #
-    hash_new="$(sha256sum "${adb_dnsdir}/${adb_dnsfile}" 2>/dev/null | awk '{print $1}')"
+    if [ -x "${adb_hashsum}" ] && [ -f "${adb_dnsdir}/${adb_dnsfile}" ]
+    then
+        hash_new="$(${adb_hashsum} "${adb_dnsdir}/${adb_dnsfile}" 2>/dev/null | awk '{print $1}')"
+    fi
     if [ -z "${hash_old}" ] || [ -z "${hash_new}" ] || [ "${hash_old}" != "${hash_new}" ]
     then
         f_dnsrestart

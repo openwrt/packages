@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.7.2
-PKG_RELEASE:=2
+PKG_VERSION:=5.8.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
 	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
-PKG_HASH:=9d20a0221569a8d6b80bbc52b86e5e84965f5bafdbf5dfc3790e0fed0763e592
+PKG_HASH:=b06ff476bbf05533cb97ae6749262cc3c76c9969f032bd8496690084ddeb15c9
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
@@ -36,6 +36,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	curl_json \
 	curl_xml \
 	dbi \
+	dpdkevents \
 	dpdkstat \
 	drbd \
 	ethstat \
@@ -46,6 +47,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	grpc \
 	hddtemp \
 	hugepages \
+	intel_pmu \
 	intel_rdt \
 	ipc \
 	ipmi \
@@ -57,6 +59,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	lpar \
 	madwifi \
 	mbmon \
+	mcelog \
 	md \
 	memcachec \
 	memcached \
@@ -73,6 +76,8 @@ COLLECTD_PLUGINS_DISABLED:= \
 	openldap \
 	openvz \
 	oracle \
+	ovs_events \
+	ovs_stats \
 	perl \
 	pf \
 	pinba \
@@ -83,8 +88,10 @@ COLLECTD_PLUGINS_DISABLED:= \
 	serial \
 	sigrok \
 	smart \
+	snmp_agent \
 	statsd \
 	swap \
+	synproxy \
 	tape \
 	tokyotyrant \
 	turbostat \

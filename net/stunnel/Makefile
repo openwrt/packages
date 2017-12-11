@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stunnel
-PKG_VERSION:=5.41
-PKG_RELEASE:=1
+PKG_VERSION:=5.44
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
@@ -20,9 +20,10 @@ PKG_SOURCE_URL:= \
 	http://www.usenix.org.uk/mirrors/stunnel/ \
 	https://www.stunnel.org/downloads/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=f05c6321ee1f6ddebacc234ccf20825971941e831b5beea6d0ce0b8e1668148f
+PKG_HASH:=990a325dbb47d77d88772dd02fbbd27d91b1fea3ece76c9ff4461eca93f12299
 
 PKG_FIXUP:=autoreconf
+PKG_FIXUP:=patch-libtool
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -45,6 +46,7 @@ endef
 
 define Package/stunnel/conffiles
 /etc/stunnel/stunnel.conf
+/etc/config/stunnel
 endef
 
 
@@ -53,7 +55,8 @@ CONFIGURE_ARGS+= \
 	--with-threads=pthread \
 	--with-ssl=$(STAGING_DIR)/usr \
 	--disable-libwrap \
-	--disable-systemd
+	--disable-systemd \
+	--disable-fips
 
 ifeq ($(CONFIG_IPV6),n)
 CONFIGURE_ARGS+= \
@@ -75,6 +78,8 @@ define Package/stunnel/install
 	$(INSTALL_CONF) ./files/stunnel.conf $(1)/etc/stunnel/stunnel.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/stunnel.init $(1)/etc/init.d/stunnel
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/stunnel.uci $(1)/etc/config/stunnel
 endef
 
 $(eval $(call BuildPackage,stunnel))

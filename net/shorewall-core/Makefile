@@ -9,14 +9,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shorewall-core
-PKG_VERSION:=5.1.4.1
-PKG_DIRECTORY:=5.1
+PKG_MAJOR_MINOR_VERSION:=5.1
+PKG_BUGFIX_MAJOR_VERSION:=9
+PKG_BUGFIX_MINOR_VERSION:=
+PKG_VERSION:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)$(PKG_BUGFIX_MINOR_VERSION)
+PKG_DIRECTORY:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)
 PKG_RELEASE:=1
-PKG_MAINVERSION:=5.1.4
 
-PKG_SOURCE_URL:=http://www.shorewall.net/pub/shorewall/$(PKG_DIRECTORY)/shorewall-$(PKG_MAINVERSION)/
+PKG_SOURCE_URL:=http://www.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://www1.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://slovakia.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://shorewall.de/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
+	http://www.shorewall.com.au/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=3d1446f7e437104c8f8c7257ccdbddfc0dc7df3ea68b80274c11dd94cc1c8629
+PKG_HASH:=a7735b31305678e1c4d21fabb026fbd37bdb8b3e0f5d8887f60ab2969a485e46
 
 PKG_MAINTAINER:=Willem van den Akker <wvdakker@wilsoft.nl>
 PKG_LICENSE:=GPL-2.0+
@@ -27,7 +33,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/shorewall-core
     SECTION:=net
     CATEGORY:=Network
-    DEPENDS:=+ip +iptables
     TITLE:=Shorewall Core
     URL:=http://www.shorewall.net/
     SUBMENU:=Firewall
@@ -51,11 +56,11 @@ define Build/Compile
 endef
 
 define Package/shorewall-core/install
-	$(INSTALL_DIR) $(1)/usr/share
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_INSTALL_DIR)/usr/share/shorewall $(1)/usr/share
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/shorewall/wait4ifup $(1)/usr/share/shorewall
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/shorewall $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/share/shorewall/
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/shorewall $(1)/usr/share/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/shorewall/wait4ifup $(1)/usr/share/shorewall/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/shorewall $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,shorewall-core))

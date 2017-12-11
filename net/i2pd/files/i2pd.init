@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2017 OpenWrt.org
+
+START=70
+STOP=70
+
+USE_PROCD=1
+PROG=/usr/sbin/i2pd
+
+
+start_service() {
+	procd_open_instance
+	procd_set_param command $PROG --conf=/etc/i2pd/i2pd.conf
+	procd_close_instance
+}

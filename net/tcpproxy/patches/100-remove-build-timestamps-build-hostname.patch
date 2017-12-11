@@ -1,0 +1,40 @@
+Index: tcpproxy-1.2/src/configure
+===================================================================
+--- tcpproxy-1.2.orig/src/configure	2017-12-03 13:12:34.483712208 +0100
++++ tcpproxy-1.2/src/configure	2017-12-03 13:13:56.677386919 +0100
+@@ -195,9 +195,6 @@
+     fi
+ fi
+ 
+-HOSTNAME=`hostname`
+-DATE=`date +"%d.%m.%Y %H:%M:%S %Z"`
+-
+ cat > config.h <<EOF
+ /*
+  * tcpproxy config header
+@@ -211,7 +208,6 @@
+ #define TCPPROXY_config_h_INCLUDED
+ 
+ #define VERSION_STRING_0 "tcpproxy version $VERSION"
+-#define VERSION_STRING_1 "built on $HOSTNAME, $DATE"
+ 
+ #define TARGET "$TARGET"
+ #define PREFIX "$PREFIX"
+Index: tcpproxy-1.2/src/options.c
+===================================================================
+--- tcpproxy-1.2.orig/src/options.c	2015-05-14 00:14:22.000000000 +0200
++++ tcpproxy-1.2/src/options.c	2017-12-03 13:14:37.442219952 +0100
+@@ -326,11 +326,9 @@
+ {
+   printf("%s\n", VERSION_STRING_0);
+ #if defined(__clang__)
+-  printf("%s, using CLANG %s\n", VERSION_STRING_1, __clang_version__);
++  printf("using CLANG %s\n", __clang_version__);
+ #elif defined(__GNUC__)
+-  printf("%s, using GCC %d.%d.%d\n", VERSION_STRING_1, __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+-#else
+-  printf("%s\n", VERSION_STRING_1);
++  printf("using GCC %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+ #endif
+ }
+ 

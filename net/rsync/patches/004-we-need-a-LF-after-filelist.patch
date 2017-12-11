@@ -1,0 +1,21 @@
+commit e02b89d0d35ab8acbd522983c08d2519d8bd12d4
+Author: Wayne Davison <wayned@samba.org>
+Date:   Sat Oct 29 14:33:44 2016 -0700
+
+    We need a LF after filelist-progress with a CR.
+    Fixes bug 12367.
+
+diff --git a/flist.c b/flist.c
+index acb95f7..4a9f4e6 100644
+--- a/flist.c
++++ b/flist.c
+@@ -156,7 +156,9 @@ static void start_filelist_progress(char *kind)
+ 
+ static void emit_filelist_progress(int count)
+ {
++	output_needs_newline = 0; /* avoid a newline in the middle of this filelist-progress output */
+ 	rprintf(FCLIENT, " %d files...\r", count);
++	output_needs_newline = 1;
+ }
+ 
+ static void maybe_emit_filelist_progress(int count)

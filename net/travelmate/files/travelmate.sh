@@ -10,8 +10,8 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.9.3"
-trm_sysver="$(ubus -S call system board | jsonfilter -e '@.release.description')"
+trm_ver="0.9.6"
+trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
 trm_automatic=1
@@ -26,6 +26,23 @@ trm_rtfile="/tmp/trm_runtime.json"
 #
 f_envload()
 {
+    local sys_call sys_desc sys_model sys_ver
+
+    # get system information
+    #
+    sys_call="$(ubus -S call system board 2>/dev/null)"
+    if [ -n "${sys_call}" ]
+    then
+        sys_desc="$(printf '%s' "${sys_call}" | jsonfilter -e '@.release.description')"
+        sys_model="$(printf '%s' "${sys_call}" | jsonfilter -e '@.model')"
+        sys_ver="$(cat /etc/turris-version 2>/dev/null)"
+        if [ -n "${sys_ver}" ]
+        then
+            sys_desc="${sys_desc}/${sys_ver}"
+        fi
+        trm_sysver="${sys_model}, ${sys_desc}"
+    fi
+
     # initialize lists
     #
     trm_devlist=""
@@ -123,13 +140,13 @@ f_check()
 #
 f_jsnupdate()
 {
-    local iface="${1}" radio="${2}" ssid="${3}"
+    local iface="${1}" radio="${2}" essid="${3:-"-"}" bssid="${4:-"-"}"
 
     json_init
     json_add_object "data"
     json_add_string "travelmate_version" "${trm_ver}"
     json_add_string "station_connection" "${trm_ifstatus}"
-    json_add_string "station_ssid" "${ssid}"
+    json_add_string "station_id" "${essid}/${bssid}"
     json_add_string "station_interface" "${iface}"
     json_add_string "station_radio" "${radio}"
     json_add_string "last_rundate" "$(/bin/date "+%d.%m.%Y %H:%M:%S")"
@@ -180,7 +197,7 @@ f_log()
 #
 f_main()
 {
-    local dev config ssid_list sta_ssid sta_radio sta_iface cnt=1
+    local dev config raw_scan essid_list bssid_list sta_essid sta_bssid sta_radio sta_iface cnt=1
 
     f_check "initial"
     if [ "${trm_ifstatus}" != "true" ]
@@ -203,33 +220,46 @@ f_main()
             fi
             while [ ${trm_maxretry} -eq 0 ] || [ ${cnt} -le ${trm_maxretry} ]
             do
-                ssid_list="$(${trm_iwinfo} "${dev}" scan | awk '/ESSID: "/{ORS=" ";if (!seen[$0]++) for(i=2; i<=NF; i++) print $i}')"
-                f_log "debug" "main: ${trm_iwinfo}, dev: ${dev}, ssids: ${ssid_list}"
-                if [ -n "${ssid_list}" ]
+                raw_scan="$(${trm_iwinfo} "${dev}" scan)"
+                essid_list="$(printf "%s" "${raw_scan}" | awk '/ESSID: "/{ORS=" ";if (!seen[$0]++) for(i=2; i<=NF; i++) print $i}')"
+                bssid_list="$(printf "%s" "${raw_scan}" | awk '/Address: /{ORS=" ";if (!seen[$5]++) print $5}')"
+                f_log "debug" "main: ${trm_iwinfo}, dev: ${dev}, essid-list: ${essid_list}, bssid-list: ${bssid_list}"
+                if [ -n "${essid_list}" ] || [ -n "${bssid_list}" ]
                 then
                     for sta in ${trm_stalist}
                     do
                         config="${sta%%_*}"
                         sta_radio="${sta##*_}"
-                        sta_ssid="$(uci -q get wireless."${config}".ssid)"
+                        sta_essid="$(uci -q get wireless."${config}".ssid)"
+                        sta_bssid="$(uci -q get wireless."${config}".bssid)"
                         sta_iface="$(uci -q get wireless."${config}".network)"
-                        if [ -n "$(printf "%s" "${ssid_list}" | grep -Fo "\"${sta_ssid}\"")" ] && [ "${dev}" = "${sta_radio}" ]
+                        if (([ -n "$(printf "%s" "${essid_list}" | grep -Fo "\"${sta_essid}\"")" ] && [ -z "${sta_bssid}" ]) || \
+                            ([ -n "$(printf "%s" "${bssid_list}" | grep -Fo "${sta_bssid}")" ] && [ -z "$(printf "%s" "${essid_list}" | grep -Fo "\"${sta_essid}\"")" ]) || \
+                            ([ -n "$(printf "%s" "${essid_list}" | grep -Fo "\"${sta_essid}\"")" ] && [ -n "$(printf "%s" "${bssid_list}" | grep -Fo "${sta_bssid}")" ])) && \
+                             [ "${dev}" = "${sta_radio}" ]
                         then
                             uci -q set wireless."${config}".disabled=0
                             f_check "sta"
                             if [ "${trm_ifstatus}" = "true" ]
                             then
                                 uci -q commit wireless
-                                f_log "info " "interface '${sta_iface}' on '${sta_radio}' connected to uplink '${sta_ssid}' (${trm_sysver})"
-                                f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
+                                f_log "info " "interface '${sta_iface}' on '${sta_radio}' connected to uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' (${trm_sysver})"
+                                f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_essid}" "${sta_bssid}"
                                 return 0
                             elif [ ${trm_maxretry} -ne 0 ] && [ ${cnt} -eq ${trm_maxretry} ]
                             then
                                 uci -q set wireless."${config}".disabled=1
-                                uci -q set wireless."${config}".ssid="${sta_ssid}_err"
+                                if [ -n "${sta_essid}" ]
+                                then
+                                    uci -q set wireless."${config}".ssid="${sta_essid}_err"
+                                fi
+                                if [ -n "${sta_bssid}" ]
+                                then
+                                    uci -q set wireless."${config}".bssid="${sta_bssid}_err"
+                                fi
                                 uci -q commit wireless
                                 f_check "dev"
-                                f_log "info " "can't connect to uplink '${sta_ssid}' (${cnt}/${trm_maxretry}), uplink disabled (${trm_sysver})"
+                                f_log "info " "can't connect to uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' (${cnt}/${trm_maxretry}), uplink disabled (${trm_sysver})"
                             else
                                 if [ ${trm_maxretry} -eq 0 ]
                                 then
@@ -237,9 +267,9 @@ f_main()
                                 fi
                                 uci -q revert wireless
                                 f_check "dev"
-                                f_log "info " "can't connect to uplink '${sta_ssid}' (${cnt}/${trm_maxretry}) (${trm_sysver})"
+                                f_log "info " "can't connect to uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' (${cnt}/${trm_maxretry}) (${trm_sysver})"
                             fi
-                            f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
+                            f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_essid}" "${sta_bssid}"
                         fi
                     done
                 fi
@@ -250,16 +280,17 @@ f_main()
         if [ ! -s "${trm_rtfile}" ]
         then
             trm_ifstatus="false"
-            f_jsnupdate "n/a" "n/a" "n/a"
+            f_jsnupdate "n/a" "n/a"
         fi
     else
         if [ ! -s "${trm_rtfile}" ]
         then
             config="$(ubus -S call network.wireless status | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].section')"
             sta_radio="$(uci -q get wireless."${config}".device)"
-            sta_ssid="$(uci -q get wireless."${config}".ssid)"
+            sta_essid="$(uci -q get wireless."${config}".ssid)"
+            sta_bssid="$(uci -q get wireless."${config}".bssid)"
             sta_iface="$(uci -q get wireless."${config}".network)"
-            f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_ssid}"
+            f_jsnupdate "${sta_iface}" "${sta_radio}" "${sta_essid}" "${sta_bssid}"
         fi
     fi
 }

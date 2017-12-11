@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=polipo
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.pps.jussieu.fr/~jch/software/files/$(PKG_NAME)/
@@ -32,6 +32,8 @@ define Package/polipo/description
  small group of people, there is nothing that prevents it from being used
  by a larger group.
 endef
+
+TARGET_CFLAGS += -DHAVE_IPv6
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \

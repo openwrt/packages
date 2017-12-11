@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
-PKG_VERSION:=1.8.2
+PKG_VERSION:=1.10.5
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -20,9 +20,9 @@ PKG_LICENSE_FILES:=COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-good/
-PKG_HASH:=8d7549118a3b7a009ece6bb38a05b66709c551d32d2adfd89eded4d1d7a23944
+PKG_HASH:=be053f6ed716eeb517cec148cec637cdce571c6e04d5c21409e2876fb76c7639
 
-PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base
+PKG_BUILD_DEPENDS:= libgstreamer1 gst1-plugins-base
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -37,7 +37,7 @@ define Package/gstreamer1-good/Default
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
-  DEPENDS:= +libgstreamer1 $(ICONV_DEPENDS)
+  DEPENDS:= +libgstreamer1 +libgst1pbutils $(ICONV_DEPENDS)
 endef
 
 define Package/gstreamer1-good/description/Default

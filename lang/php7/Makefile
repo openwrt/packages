@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.1.11
-PKG_RELEASE:=4
+PKG_VERSION:=7.1.12
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_HASH:=074093e9d7d21afedc5106904218a80a47b854abe368d2728ed22184c884893e
+PKG_HASH:=a0118850774571b1f2d4e30b4fe7a4b958ca66f07d07d65ebdc789c54ba6eeb3
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -30,7 +30,7 @@ PHP7_MODULES = \
 	ftp \
 	gettext gd gmp \
 	hash \
-	iconv intl \
+	iconv imap intl \
 	json \
 	ldap \
 	mbstring mcrypt mysqli \
@@ -253,6 +253,15 @@ else
   CONFIGURE_ARGS+= --without-iconv
 endif
 
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-imap),)
+  CONFIGURE_ARGS+= \
+		--with-imap=shared,"$(STAGING_DIR)/usr" \
+		--with-imap-kerberos=no \
+		--with-imap-ssl="$(STAGING_DIR)/usr"
+else
+  CONFIGURE_ARGS+= --without-imap
+endif
+
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-intl),)
   CONFIGURE_ARGS+= --enable-intl=shared
   TARGET_CXXFLAGS+= -std=c++0x
@@ -465,6 +474,7 @@ CONFIGURE_VARS+= \
 	php_cv_cc_rpath="no" \
 	iconv_impl_name="gnu_libiconv" \
 	ac_cv_php_xml2_config_path="$(STAGING_DIR)/host/bin/xml2-config" \
+	ac_cv_u8t_decompose=yes \
 
 define Package/php7/conffiles
 /etc/php.ini
@@ -590,6 +600,7 @@ $(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php7-mod-gettext:libintl-full
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php7-mod-gmp:libgmp))
 $(eval $(call BuildModule,hash,Hash))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
+$(eval $(call BuildModule,imap,IMAP,+PACKAGE_php7-mod-imap:libopenssl +PACKAGE_libpam:libpam +PACKAGE_php7-mod-imap:uw-imap))
 $(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php7-mod-intl:icu))
 $(eval $(call BuildModule,json,JSON))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php7-mod-ldap:libopenldap +PACKAGE_php7-mod-ldap:libsasl2))

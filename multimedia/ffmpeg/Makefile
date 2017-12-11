@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=3.2.8
+PKG_VERSION:=3.2.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
-PKG_HASH:=42e7362692318afc666f14378dd445effa9a1b09787504a6ab5811fe442674cd
+PKG_HASH:=1131d37890ed3dcbc3970452b200a56ceb36b73eaa51d1c23c770c90f928537f
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 
@@ -215,6 +215,12 @@ PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_FFMPEG_CUSTOM_PARSER_%,$(FFMPEG_CUSTOM_PARSERS)) \
 	$(patsubst %,CONFIG_FFMPEG_CUSTOM_PROTOCOL_%,$(FFMPEG_CUSTOM_PROTOCOLS))
 
+PKG_BUILD_DEPENDS:= \
+	PACKAGE_shine:shine \
+	PACKAGE_libx264:libx264 \
+	PACKAGE_lame-lib:lame-lib \
+	PACKAGE_libopus:libopus
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ffmpeg/Default
@@ -286,10 +292,12 @@ $(call Package/ffmpeg/Default)
 endef
 
 
+# Package build suppressed when CONFIG_ALL=y
 define Package/libffmpeg-custom
 $(call Package/libffmpeg/Default)
  TITLE+= (custom)
- DEPENDS+= +FFMPEG_CUSTOM_SELECT_libopus:libopus \
+ DEPENDS+= @!ALL \
+           +FFMPEG_CUSTOM_SELECT_libopus:libopus \
            +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib \
            +FFMPEG_CUSTOM_SELECT_libshine:shine \
            +PACKAGE_fdk-aac:fdk-aac
@@ -689,6 +697,4 @@ $(eval $(call BuildPackage,ffserver))
 $(eval $(call BuildPackage,libffmpeg-audio-dec))
 $(eval $(call BuildPackage,libffmpeg-full))
 $(eval $(call BuildPackage,libffmpeg-mini))
-ifneq ($(CONFIG_ALL),y)
-   $(eval $(call BuildPackage,libffmpeg-custom))
-endif
+$(eval $(call BuildPackage,libffmpeg-custom))
