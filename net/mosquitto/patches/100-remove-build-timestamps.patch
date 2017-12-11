@@ -1,0 +1,50 @@
+From ebfccff8735ca0f8b6c9e8d06f2d3efe916affaf Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Sun, 10 Dec 2017 01:23:29 +0100
+Subject: [PATCH] fix reproducible builds by removing build timestamp
+
+Build timestamps prevents reproducible builds. [0]
+
+[0] https://reproducible-builds.org/docs/timestamps/
+
+Signed-off-by: Alexander Couzens <lynxis@fe80.eu>
+---
+ src/conf.c      | 2 +-
+ src/mosquitto.c | 4 +---
+ 2 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/src/conf.c b/src/conf.c
+index a3e233de..e8162031 100644
+--- a/src/conf.c
++++ b/src/conf.c
+@@ -309,7 +309,7 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
+ 
+ static void print_usage(void)
+ {
+-	printf("mosquitto version %s (build date %s)\n\n", VERSION, TIMESTAMP);
++	printf("mosquitto version %s\n\n", VERSION);
+ 	printf("mosquitto is an MQTT v3.1.1/v3.1 broker.\n\n");
+ 	printf("Usage: mosquitto [-c config_file] [-d] [-h] [-p port]\n\n");
+ 	printf(" -c : specify the broker config file.\n");
+diff --git a/src/mosquitto.c b/src/mosquitto.c
+index b28150ce..dcf3a72a 100644
+--- a/src/mosquitto.c
++++ b/src/mosquitto.c
+@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
+ 		rc = 1;
+ 		return rc;
+ 	}
+-	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
++	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s starting", VERSION);
+ 	if(config.config_file){
+ 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);
+ 	}else{
+@@ -308,8 +308,6 @@ int main(int argc, char *argv[])
+ 		/* Set static $SYS messages */
+ 		snprintf(buf, 1024, "mosquitto version %s", VERSION);
+ 		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
+-		snprintf(buf, 1024, "%s", TIMESTAMP);
+-		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
+ 	}
+ #endif
+ 
