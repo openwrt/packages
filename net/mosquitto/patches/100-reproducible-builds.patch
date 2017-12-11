@@ -1,0 +1,36 @@
+Index: mosquitto-1.4.14/src/conf.c
+===================================================================
+--- mosquitto-1.4.14.orig/src/conf.c
++++ mosquitto-1.4.14/src/conf.c
+@@ -309,7 +309,7 @@ void mqtt3_config_cleanup(struct mqtt3_c
+ 
+ static void print_usage(void)
+ {
+-	printf("mosquitto version %s (build date %s)\n\n", VERSION, TIMESTAMP);
++	printf("mosquitto version %s\n\n", VERSION);
+ 	printf("mosquitto is an MQTT v3.1.1/v3.1 broker.\n\n");
+ 	printf("Usage: mosquitto [-c config_file] [-d] [-h] [-p port]\n\n");
+ 	printf(" -c : specify the broker config file.\n");
+Index: mosquitto-1.4.14/src/mosquitto.c
+===================================================================
+--- mosquitto-1.4.14.orig/src/mosquitto.c
++++ mosquitto-1.4.14/src/mosquitto.c
+@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
+ 		rc = 1;
+ 		return rc;
+ 	}
+-	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
++	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s starting", VERSION);
+ 	if(config.config_file){
+ 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);
+ 	}else{
+@@ -308,8 +308,8 @@ int main(int argc, char *argv[])
+ 		/* Set static $SYS messages */
+ 		snprintf(buf, 1024, "mosquitto version %s", VERSION);
+ 		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
+-		snprintf(buf, 1024, "%s", TIMESTAMP);
++		snprintf(buf, 1024, "%s", "1970-01-01 00:00:00+0000");
+ 		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
+ 	}
+ #endif
+ 
