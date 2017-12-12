@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-rs232
 PKG_VERSION:=1.0.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
