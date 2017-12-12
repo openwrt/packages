@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gawk
 PKG_VERSION:=4.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/gawk
@@ -25,14 +25,14 @@ include $(INCLUDE_DIR)/package.mk
 define Package/gawk
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=http://tukaani.org/xz
+  URL:=https://www.gnu.org/software/gawk/
   TITLE:=GNU awk
   DEPENDS:=+libncursesw +libreadline
 endef
 
 define Package/gawk/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/{gawk,igawk} $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/gawk $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib/gawk
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/gawk/* $(1)/usr/lib/gawk/
 	$(INSTALL_DIR) $(1)/usr/lib/awk
