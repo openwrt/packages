@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mjpg-streamer
 PKG_REV:=182
 PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>, \
 		Ted Hess <thess@kitschensync.net>
 
@@ -69,6 +69,10 @@ define Build/Prepare
 	$(TAR) -xvf $(DL_DIR)/$(CAMBOZOLA) --strip=2 --wildcards \
 		-C $(PKG_BUILD_DIR)/www */dist/cambozola.jar
     endif
+endef
+
+define Build/Configure
+    $(RM) $(PKG_BUILD_DIR)/plugins/input_uvc/uvcvideo.h
 endef
 
 ifeq ($(CONFIG_MJPG_STREAMER_V4L2),y)
