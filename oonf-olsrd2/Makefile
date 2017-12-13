@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oonf-olsrd2
-PKG_VERSION:=0.13.0
-PKG_REV:=9f941b25e1ac806db9d41e9892a5cf361bfe98f5
+PKG_VERSION:=0.14.1-1
+PKG_REV:=d86825c0bdf144db706da444be7b0a2e8722b54d
 PKG_RELEASE:=$(PKG_REV)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -24,9 +24,14 @@ CMAKE_OPTIONAL_PLUGINS:= $(subst $(SPACE),;,$(strip \
         $(if $(filter y,$(CONFIG_OONF_OLSRV2_ROUTE_MODIFIER)),route_modifier,) \
         $(if $(filter y,$(CONFIG_OONF_GENERIC_DLEP_ROUTER)),dlep_router,) \
         $(if $(filter y,$(CONFIG_OONF_GENERIC_REMOTECONTROL)),remotecontrol,) \
+        $(if $(filter y,$(CONFIG_OONF_OLSRV2_MPR)),mpr,) \
+        $(if $(filter y,$(CONFIG_OONF_GENERIC_HTTP)),http,) \
     ))
 
-CMAKE_OPTIONS=-D OONF_NO_WERROR:Bool=true \
+BUILD_TYPE:= $(if $(filter y,$(CONFIG_DEBUG)),Debug,Release)
+
+CMAKE_OPTIONS=-D CMAKE_BUILD_TYPE:String=$(BUILD_TYPE) \
+              -D OONF_NO_WERROR:Bool=true \
               -D OONF_LOGGING_LEVEL:String=debug \
               -D OONF_NO_TESTING:Bool=true \
               -D UCI:Bool=true \

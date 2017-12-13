@@ -32,4 +32,16 @@
 			The remotecontrol plugin allows you to control configuration and logging over the telnet plugin. Be careful not to open this functionality over the network without securing it.
 		default n
 
+	config OONF_GENERIC_HTTP
+		bool "http plugin enabled"
+		help
+			The HTTP plugin allows HTTP access to all telnet commands.
+		default n
+
+	config OONF_OLSRV2_MPR
+		bool "MPR plugin enabled"
+		help
+			The MPR plugin reduce the routing graph to limit the overhead of the OLSRv2 protocol
+		default n
+
 	endmenu
