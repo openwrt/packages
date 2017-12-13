@@ -318,14 +318,19 @@ prepare_env() {
 	config_foreach config_remote remote
 }
 
+service_running() {
+	ipsec status > /dev/null 2>&1
+}
+
 reload_service() {
-	prepare_env
-	if ipsec status > /dev/null 2>&1; then
+	running && {
+		prepare_env
 		ipsec rereadall
 		ipsec reload
-	else
-		ipsec start
-	fi
+		return
+	}
+
+	start
 }
 
 service_triggers() {
