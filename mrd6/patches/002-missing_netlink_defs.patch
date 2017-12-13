@@ -1,7 +1,5 @@
-Index: mrd6-0.9.5/include/mrdpriv/linux/netlink_missing_defs.h
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ mrd6-0.9.5/include/mrdpriv/linux/netlink_missing_defs.h	2007-09-21 13:19:06.000000000 +0200
+--- /dev/null
++++ b/include/mrdpriv/linux/netlink_missing_defs.h
 @@ -0,0 +1,41 @@
 +#include <linux/version.h>
 +
@@ -44,10 +42,8 @@ Index: mrd6-0.9.5/include/mrdpriv/linux/netlink_missing_defs.h
 +#endif
 +
 +#endif
-Index: mrd6-0.9.5/src/linux/linux_unicast_route.cpp
-===================================================================
---- mrd6-0.9.5.orig/src/linux/linux_unicast_route.cpp	2007-09-21 13:19:05.000000000 +0200
-+++ mrd6-0.9.5/src/linux/linux_unicast_route.cpp	2007-09-21 13:19:06.000000000 +0200
+--- a/src/linux/linux_unicast_route.cpp
++++ b/src/linux/linux_unicast_route.cpp
 @@ -23,6 +23,7 @@
   */
  

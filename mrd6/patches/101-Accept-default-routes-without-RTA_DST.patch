@@ -7,11 +7,9 @@ Subject: [PATCH 1/2] Accept default routes without RTA_DST
  src/linux/linux_unicast_route.cpp | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/src/linux/linux_unicast_route.cpp b/src/linux/linux_unicast_route.cpp
-index 331a7a0..7919cc2 100644
 --- a/src/linux/linux_unicast_route.cpp
 +++ b/src/linux/linux_unicast_route.cpp
-@@ -334,7 +334,7 @@ void linux_unicast_router::handle_route_event(bool isnew, nlmsghdr *hdr) {
+@@ -335,7 +335,7 @@ void linux_unicast_router::handle_route_
  	netlink_msg::parse_rtatable(tb, RTA_MAX, RTM_RTA(NLMSG_DATA(hdr)),
  				hdr->nlmsg_len - NLMSG_LENGTH(sizeof(rtmsg)));
  
@@ -20,7 +18,7 @@ index 331a7a0..7919cc2 100644
  		lookup_result res;
  
  		parse_prefix_rec(tb, msg->r.rtm_dst_len,
-@@ -360,7 +360,7 @@ void linux_unicast_router::handle_route_event(bool isnew, nlmsghdr *hdr) {
+@@ -361,7 +361,7 @@ void linux_unicast_router::handle_route_
  		}
  
  		prefix_changed(isnew, res);
@@ -29,6 +27,3 @@ index 331a7a0..7919cc2 100644
  }
  
  void linux_unicast_router::handle_intf_event(bool isnew, nlmsghdr *hdr) {
--- 
-1.9.0
-
