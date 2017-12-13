@@ -1,6 +1,5 @@
 --[[ 
-Copyright (C) 2014 - Eloi Carbó Solé (GSoC2014) 
-BGP/Bird integration with OpenWRT and QMP
+Copyright (C) 2014-2017 - Eloi Carbo
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,9 +18,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 module("luci.controller.bird6", package.seeall)
 
 function index()
-        entry({"admin","network","bird6"}, cbi("bird6/overview"), "Bird6", 1).dependent=false
-        entry({"admin","network","bird6","overview"}, cbi("bird6/overview"), "Overview", 2).dependent=false
-        entry({"admin","network","bird6","proto_general"}, cbi("bird6/gen_proto"), "General protocols", 3).dependent=false
-        entry({"admin","network","bird6","proto_bgp"}, cbi("bird6/bgp_proto"), "BGP Protocol", 4).dependent=false
-end
+        entry({"admin","network","bird6"},
+            alias("admin","network","bird6","status"),
+            _("Bird6"), 0)
 
+        entry({"admin", "network", "bird6", "status"},
+            cbi("bird6/status"),
+            _("Status"), 0).leaf = true
+
+        entry({"admin","network","bird6","log"},
+            template("bird6/log"),
+            _("Log"), 1).leaf = true
+
+        entry({"admin","network","bird6","overview"},
+            cbi("bird6/overview"),
+            _("Overview"), 2).leaf = true
+
+        entry({"admin","network","bird6","proto_general"},
+            cbi("bird6/gen_proto"),
+            _("General protocols"), 3).leaf = true
+
+        entry({"admin","network","bird6","proto_bgp"},
+            cbi("bird6/bgp_proto"),
+            _("BGP Protocol"), 4).leaf = true
+
+        entry({"admin","network","bird6","filters"},
+            cbi("bird6/filters"),
+            _("Filters"), 5).leaf = true
+
+        entry({"admin","network","bird6","functions"},
+            cbi("bird6/functions"),
+            _("Functions"), 6).leaf = true
+end

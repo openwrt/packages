@@ -1,6 +1,5 @@
 --[[ 
-Copyright (C) 2014 - Eloi Carbó Solé (GSoC2014) 
-BGP/Bird integration with OpenWRT and QMP
+Copyright (C) 2014-2017 - Eloi Carbo
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,7 +29,7 @@ s_bird_uci.addremove = False
 
 uuc = s_bird_uci:option(Flag, "use_UCI_config", "Use UCI configuration", "Use UCI configuration instead of the /etc/bird4.conf file")
 
-ucf = s_bird_uci:option(Value, "UCI_config_File", "UCI File", "Specify the file to place the UCI-translated configuration")
+ucf = s_bird_uci:option(Value, "UCI_config_file", "UCI File", "Specify the file to place the UCI-translated configuration")
 ucf.default = "/tmp/bird4.conf"
 
 -- Named Section: "table"
@@ -71,7 +70,7 @@ d:value("events","Events")
 d:value("packets","Packets")
 
 function m.on_commit(self,map)
-        luci.sys.call('/etc/init.d/bird4 stop; /etc/init.d/bird4 start')
+        luci.sys.exec('/etc/init.d/bird4 restart')
 end
 
 return m

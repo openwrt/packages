@@ -1,6 +1,5 @@
 --[[ 
-Copyright (C) 2014 - Eloi Carbó Solé (GSoC2014) 
-BGP/Bird integration with OpenWRT and QMP
+Copyright (C) 2014-2017 - Eloi Carbo
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,7 +29,7 @@ s_bird_uci.addremove = False
 
 uuc = s_bird_uci:option(Flag, "use_UCI_config", "Use UCI configuration", "Use UCI configuration instead of the /etc/bird6.conf file")
 
-ucf = s_bird_uci:option(Value, "UCI_config_File", "UCI File", "Specify the file to place the UCI-translated configuration")
+ucf = s_bird_uci:option(Value, "UCI_config_file", "UCI File", "Specify the file to place the UCI-translated configuration")
 ucf.default = "/tmp/bird6.conf"
 
 -- Named Section: "table"
@@ -79,9 +78,8 @@ listen_port.optional = true
 listen_dual = s_bird_global:option(Flag, "listen_bgp_dual", "BGP Dual/ipv6", "Set if BGP connections will listen ipv6 only 'ipv6only' or both ipv4/6 'dual' routes")
 listen_dual.optional = true
 
-
 function m.on_commit(self,map)
-        luci.sys.call('/etc/init.d/bird6 stop; /etc/init.d/bird6 start')
+        luci.sys.exec('/etc/init.d/bird6 restart')
 end
 
 return m

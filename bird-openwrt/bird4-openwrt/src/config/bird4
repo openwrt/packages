@@ -10,11 +10,10 @@ config global 'global'
     option log_file '/tmp/bird4.log'
     option log 'all'
     option debug 'off'
-    option router_id '172.16.1.6'
 
 config table
     option name 'aux'
-    
+
 config kernel kernel1
     option table 'aux'
     option import 'all'
@@ -32,36 +31,3 @@ config device device1
 config static static1
     option table 'aux'
     option disabled '0'
-
-config bgp bgp1
-    option template 'bgp_common'
-    option description 'Description of the BGP instance'
-    option neighbor_address '172.16.1.5'
-    option neighbor_as '65530'
-    option source_address '172.16.1.6'
-    option next_hop_self '0'
-    option next_hop_keep '0'
-    option rr_client '1'
-    option rr_cluster_id '172.16.1.6'
-
-config bgp_template bgp_common
-    option table 'aux'
-    option import 'all'
-    option export 'all'
-    option local_address '172.16.1.6'
-    option local_as '65001'
-    option import_limit '100'
-    option import_limit_action 'warn'
-    option export_limit '100'
-    option export_limit_action 'warn'
-    option receive_limit '100'
-    option receive_limit_action 'warn'
-    option disabled '0'
-
-config route
-    option instance 'static1'
-    option type 'router'
-    option prefix '192.168.9.0/24'
-    option via '10.99.105.159'
-
-

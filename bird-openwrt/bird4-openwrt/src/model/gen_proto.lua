@@ -1,6 +1,5 @@
 --[[ 
-Copyright (C) 2014 - Eloi Carbó Solé (GSoC2014) 
-BGP/Bird integration with OpenWRT and QMP
+Copyright (C) 2014-2017 - Eloi Carbo
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,20 +17,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 require("luci.sys")
 local http = require "luci.http"
-local uci = require "luci.model.uci"
-local uciout = uci.cursor()
+local uci = luci.model.uci.cursor()
+
+-- Repeated Strings
+local common_string = "Valid options are:<br />" .. "1. all (All the routes)<br />" .. "2. none (No routes)<br />" .. "3. filter <b>Your_Filter_Name</b>      (Call a specific filter from any of the available in the filters files)"
+local imp_string = "Set if the protocol must import routes.<br />" .. common_string
+local exp_string = "Set if the protocol must export routes.<br />" .. common_string
 
 m=Map("bird4", "Bird4 general protocol's configuration.")
 
 -- Optional parameters lists
 local protoptions = {
 	{["name"]="table", ["help"]="Auxiliar table for routing", ["depends"]={"static","kernel"}},
-	{["name"]="import", ["help"]="Set if the protocol must import routes", ["depends"]={"kernel"}},
-	{["name"]="export", ["help"]="Set if the protocol must export routes", ["depends"]={"kernel"}},
+	{["name"]="import", ["help"]=imp_string, ["depends"]={"kernel"}},
+	{["name"]="export", ["help"]=exp_string, ["depends"]={"kernel"}},
 	{["name"]="scan_time", ["help"]="Time between scans", ["depends"]={"kernel","device"}},
 	{["name"]="kernel_table", ["help"]="Set which table must be used as auxiliar kernel table", ["depends"]={"kernel"}},
 	{["name"]="learn", ["help"]="Learn routes", ["depends"]={"kernel"}},
-	{["name"]="persist", ["help"]="Store routes. After a restart, routes will be still configured", ["depends"]={"kernel"}}
+	{["name"]="persist", ["help"]="Store routes. After a restart, routes willstill be configured", ["depends"]={"kernel"}}
 }
 
 local routeroptions = {
@@ -42,16 +45,15 @@ local routeroptions = {
 	{["name"]="ip",["help"]="",["depends"]={"recursive"}}
 }
 
+
 --
 -- KERNEL PROTOCOL
 --
-
 sect_kernel_protos = m:section(TypedSection, "kernel", "Kernel options", "Configuration of the kernel protocols. First Instance MUST be Primary table (no table or kernel_table fields).")
 sect_kernel_protos.addremove = true
 sect_kernel_protos.anonymous = false
 
 -- Default kernel parameters
-
 disabled = sect_kernel_protos:option(Flag, "disabled", "Disabled", "If this option is true, the protocol will not be configured.")
 disabled.default=0
 
@@ -64,11 +66,12 @@ for _,o in ipairs(protoptions) do
 					value = sect_kernel_protos:option(Flag, o.name, translate(o.name), translate(o.help))
 				elseif o.name == "table" then 
 					value = sect_kernel_protos:option(ListValue, o.name, translate(o.name), translate(o.help))
-					uciout:foreach("bird4", "table",
+					uci:foreach("bird4", "table",
 						function (s)
 							value:value(s.name)
 						end)
 					value:value("")
+					value.default = ""
 				else
 					value = sect_kernel_protos:option(Value, o.name, translate(o.name), translate(o.help))
 				end
@@ -80,10 +83,10 @@ for _,o in ipairs(protoptions) do
 	end
 end
 
+
 --
 -- DEVICE PROTOCOL
 --
-
 sect_device_protos = m:section(TypedSection, "device", "Device options", "Configuration of the device protocols.")
 sect_device_protos.addremove = true
 sect_device_protos.anonymous = false
@@ -105,55 +108,112 @@ for _,o in ipairs(protoptions) do
 		end
 	end
 end
-																												
+
+
+--
+-- PIPE PROTOCOL
+--
+sect_pipe_protos = m:section(TypedSection, "pipe", "Pipe options",     "Configuration of the Pipe protocols.")
+sect_pipe_protos.addremove = true
+sect_pipe_protos.anonymous = false
+
+-- Default Pipe parameters
+disabled = sect_pipe_protos:option(Flag, "disabled", "Disabled", "If this  option is true, the protocol will not be configured. This protocol will connect the configured 'Table' to the 'Peer Table'.")
+disabled.default=0
+
+table = sect_pipe_protos:option(ListValue, "table", "Table", "Select the Primary Table to connect.")
+table.optional = false
+uci:foreach("bird4", "table",
+  function (s)
+    table:value(s.name)
+  end)
+table:value("")
+table.default = ""
+
+peer_table = sect_pipe_protos:option(ListValue, "peer_table", "Peer Table", "Select the Secondary Table to connect.")
+table.optional = false
+uci:foreach("bird4", "table",
+  function (s)
+    peer_table:value(s.name)
+  end)
+peer_table:value("")
+peer_table.default = ""
+
+mode = sect_pipe_protos:option(ListValue, "mode", "Mode", "Select <b>transparent</b> to retransmit all routes and their attributes<br />Select <b>opaque</b> to retransmit optimal routes (similar to what other protocols do)")
+mode.optional = false
+mode:value("transparent")
+mode:value("opaque")
+mode.default = "transparent"
+
+import = sect_pipe_protos:option(Value, "import", "Import",imp_string)
+import.optional=true
+
+export = sect_pipe_protos:option(Value, "export", "Export", exp_string)
+export.optional=true
+
+
+--
+-- DIRECT PROTOCOL
+--
+sect_direct_protos = m:section(TypedSection, "direct", "Direct options", "Configuration of the Direct protocols.")
+sect_direct_protos.addremove = true
+sect_direct_protos.anonymous = false
+
+-- Default Direct parameters
+disabled = sect_direct_protos:option(Flag, "disabled", "Disabled", "If this option is true, the protocol will not be configured. This protocol will connect the configured 'Table' to the 'Peer Table'.")
+disabled.optional = false
+disabled.default = 0
+
+interface = sect_direct_protos:option(Value, "interface", "Interfaces", "By default Direct will generate device routes for all the interfaces. To restrict this behaviour, select a number of patterns to match your desired interfaces:" .. "<br />" .. "1. All the strings <b>MUST</b> be quoted: \"pattern\"" .. "<br />" .. "2. Use * (star) to match patterns: \"eth*\" (<b>include</b> all eth... interfaces)" .. "<br />" .. "3. You can add \"-\" (minus) to exclude patterns: \"-em*\" (<b>exclude</b> all em... interfaces)." .. "<br />" .. "4. Separate several patterns using , (coma): \"-em*\", \"eth*\" (<b>exclude</b> em... and <b>include</b> all eth... interfaces).")
+interface.optional = false
+interface.default = "\"*\""
+
+
 --
 -- STATIC PROTOCOL
 --
-
 sect_static_protos = m:section(TypedSection, "static", "Static options", "Configuration of the static protocols.")
 sect_static_protos.addremove = true
 sect_static_protos.anonymous = false
 
 -- Default kernel parameters
-
 disabled = sect_static_protos:option(Flag, "disabled", "Disabled", "If this option is true, the protocol will not be configured.")
 disabled.default=0
 
 -- Optional parameters
 for _,o in ipairs(protoptions) do
-	if o.name ~= nil then
-		for _, d in ipairs(o.depends) do
-			if d == "static" then
-				if o.name == "table" then
-					value = sect_static_protos:option(ListValue, o.name, translate(o.name), translate(o.help))
-					uciout:foreach("bird4", "table",
-						function (s)
-							value:value(s.name)
-						end)
-					value:value("")
-				else
-					value = sect_static_protos:option(Value, o.name, translate(o.name), translate(o.help))
-				end
-					value.optional = true
-					value.rmempty = true
-			end
-		end
-	end
+    if o.name ~= nil then
+        for _, d in ipairs(o.depends) do
+            if d == "static" then
+                if o.name == "table" then
+                    value = sect_static_protos:option(ListValue, o.name, translate(o.name), translate(o.help))
+                    uci:foreach("bird4", "table",
+                        function (s)
+                            value:value(s.name)
+                        end)
+                    value:value("")
+                    value.default = ""
+                else
+                    value = sect_static_protos:option(Value, o.name, translate(o.name), translate(o.help))
+                end
+                    value.optional = true
+                    value.rmempty = true
+            end
+        end
+    end
 end
+
 
 --
 -- ROUTES FOR STATIC PROTOCOL
 --
-
-
 sect_routes = m:section(TypedSection, "route", "Routes configuration", "Configuration of the routes used in static protocols.")
 sect_routes.addremove = true
 sect_routes.anonymous = true
 
 instance = sect_routes:option(ListValue, "instance", "Route instance", "")
 i = 0
-
-uciout:foreach("bird4", "static",
+uci:foreach("bird4", "static",
 	function (s)
 		instance:value(s[".name"])
 	end)
@@ -177,15 +237,19 @@ listVia:depends("type", "multipath")
 listVia.optional=false
 listVia.datatype = "ip4addr"
 
-attribute = sect_routes:option(Value, "attribute", "Attribute", "Types are: unreachable, prohibit and blackhole")
+attribute = sect_routes:option(ListValue, "attribute", "Attribute", "")
 attribute:depends("type", "special")
+attribute:value("unreachable")
+attribute:value("prohibit")
+attribute:value("blackhole")
 
 iface  = sect_routes:option(ListValue, "iface", "Interface", "")
 iface:depends("type", "iface")
-
-uciout:foreach("wireless", "wifi-iface",
+uci:foreach("network", "interface",
 	function(section)
-		iface:value(section[".name"])
+        if section[".name"] ~= "loopback" then
+            iface:value(section[".name"])
+        end
 	end)
 
 ip =  sect_routes:option(Value, "ip", "IP address", "")
@@ -193,8 +257,7 @@ ip:depends("type", "ip")
 ip.datatype = [[ or"ip4addr", "ip6addr" ]]
 
 function m.on_commit(self,map)
-        luci.sys.call('/etc/init.d/bird4 stop; /etc/init.d/bird4 start')
+        luci.sys.exec('/etc/init.d/bird4 restart')
 end
 
 return m
-
