@@ -17,6 +17,8 @@ proto_l2tp_init_config() {
 	proto_config_add_int "demand"
 	proto_config_add_int "mtu"
 	proto_config_add_int "checkup_interval"
+	proto_config_add_boolean "redial"
+	proto_config_add_int "redial_timeout"
 	proto_config_add_string "server"
 	available=1
 	no_device=1
@@ -58,8 +60,8 @@ proto_l2tp_setup() {
 		done
 	fi
 
-	local ipv6 demand keepalive username password pppd_options mtu
-	json_get_vars ipv6 demand keepalive username password pppd_options mtu
+	local ipv6 demand keepalive username password pppd_options mtu redial redial_timeout
+	json_get_vars ipv6 demand keepalive username password pppd_options mtu redial redial_timeout
 	[ "$ipv6" = 1 ] || ipv6=""
 	if [ "${demand:-0}" -gt 0 ]; then
 		demand="precompiled-active-filter /etc/ppp/filter demand idle $demand"
@@ -93,8 +95,12 @@ $ipv6
 $mtu
 $pppd_options
 EOF
+	local lac_options
+	if [ "${redial:-1}" -gt 0 ]; then
+		lac_options="redial=yes ${redial_timeout:+redial timeout=$redial_timeout}"
+	fi
 
-	xl2tpd-control add l2tp-${interface} pppoptfile=${optfile} lns=${server} || {
+	xl2tpd-control add l2tp-${interface} pppoptfile=${optfile} lns=${server} ${lac_options} || {
 		echo "xl2tpd-control: Add l2tp-$interface failed" >&2
 		proto_setup_failed "$interface"
 		exit 1
