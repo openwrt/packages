@@ -11,7 +11,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * strong LuCI-Support with builtin interface wizard and a wireless station manager
 * fast uplink connections
 * support all kinds of uplinks, incl. hidden and enterprise uplinks
-* manual / automatic mode support, the latter one checks the existing uplink connection regardless of ifdown event trigger actions every n seconds
+* trigger- or automatic-mode support, the latter one is the default and checks the existing uplink connection regardless of ifdown event trigger actions every n seconds
 * support of devices with multiple radios
 * procd init and hotplug support
 * runtime information available via LuCI & via 'status' init command
@@ -51,13 +51,13 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 **receive travelmate runtime information:**
 <pre><code>
 ::: travelmate runtime information
- travelmate_version : 0.9.5
+ travelmate_version : 1.0.0
  station_connection : true
  station_id         : blackhole/04:F0:21:2F:B7:64
  station_interface  : trm_wwan
  station_radio      : radio1
- last_rundate       : 06.12.2017 16:47:56
- system             : LEDE Reboot SNAPSHOT r5422-9fe59abef8
+ last_rundate       : 15.12.2017 13:51:30
+ system             : TP-LINK RE450, OpenWrt SNAPSHOT r5422+84-9fe59abef8
 </code></pre>
 
 ## Manual Setup
@@ -117,8 +117,8 @@ edit /etc/config/travelmate and set 'trm_enabled' to '1'
 </code></pre>
 
 ## FAQ
-**Q:** What's about 'manual' and 'automatic' mode?  
-**A:** In "manual" mode travelmate will be triggered solely by procd interface down events, whenever an uplink disappears travelmate tries n times (default 3) to find a new uplink or reconnect to the old one. The 'automatic' mode keeps travelmate in an active state and checks every n seconds the connection status / the uplink availability regardless of procd event trigger.  
+**Q:** What's about 'trigger' and 'automatic' mode?  
+**A:** In "trigger" mode travelmate will be triggered solely by procd interface down events, whenever an uplink disappears travelmate tries n times (default 3) to find a new uplink or reconnect to the old one. The 'automatic' mode keeps travelmate in an active state and checks every n seconds the connection status / the uplink availability regardless of procd event trigger.  
 
 **Q:** What happen with misconfigured uplinks, e.g. due to outdated wlan passwords?  
 **A:** Travelmate tries n times (default 3) to connect, then the respective uplink SSID will be marked / renamed to '_SSID_\_err'. In this case use the builtin wireless station manager to update your wireless credentials. To disable this functionality at all set the Connection Limit ('trm\_maxretry') to '0', which means unlimited retries.  
