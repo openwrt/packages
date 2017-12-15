@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="0.9.6"
+trm_ver="1.0.0"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -21,6 +21,7 @@ trm_timeout=60
 trm_iwinfo="$(command -v iwinfo)"
 trm_radio=""
 trm_rtfile="/tmp/trm_runtime.json"
+trm_wpa="$(command -v wpa_supplicant)"
 
 # f_envload: load travelmate environment
 #
@@ -64,6 +65,10 @@ f_envload()
         f_log "info " "travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
         exit 0
     fi
+
+    # check eap capabilities
+    #
+    trm_eap="$("${trm_wpa}" -veap >/dev/null 2>&1; printf "%u" ${?})"
 }
 
 # f_prepare: gather radio information & bring down all STA interfaces
@@ -72,23 +77,28 @@ f_prepare()
 {
     local config="${1}"
     local mode="$(uci -q get wireless."${config}".mode)"
+    local network="$(uci -q get wireless."${config}".network)"
     local radio="$(uci -q get wireless."${config}".device)"
     local disabled="$(uci -q get wireless."${config}".disabled)"
+    local eaptype="$(uci -q get wireless."${config}".eap_type)"
 
     if ([ -z "${trm_radio}" ] || [ "${trm_radio}" = "${radio}" ]) && \
         [ -z "$(printf "%s" "${trm_radiolist}" | grep -Fo " ${radio}")" ]
     then
         trm_radiolist="${trm_radiolist} ${radio}"
     fi
-    if [ "${mode}" = "sta" ]
+    if [ "${mode}" = "sta" ] && [ "${network}" = "${trm_iface}" ]
     then
-        trm_stalist="${trm_stalist} ${config}_${radio}"
         if [ -z "${disabled}" ] || [ "${disabled}" = "0" ]
         then
             uci -q set wireless."${config}".disabled=1
         fi
+        if [ -z "${eaptype}" ] || [ ${trm_eap} -eq 0 ]
+        then
+            trm_stalist="${trm_stalist} ${config}_${radio}"
+        fi
     fi
-    f_log "debug" "prepare: ${mode}, radio: ${radio}, config: ${config}, disabled: ${disabled}"
+    f_log "debug" "prepare: ${config}, mode: ${mode}, network: ${network}, radio: ${radio}, eap: ${trm_eap}, disabled: ${disabled}"
 }
 
 # f_check: check interface status
@@ -223,7 +233,9 @@ f_main()
                 raw_scan="$(${trm_iwinfo} "${dev}" scan)"
                 essid_list="$(printf "%s" "${raw_scan}" | awk '/ESSID: "/{ORS=" ";if (!seen[$0]++) for(i=2; i<=NF; i++) print $i}')"
                 bssid_list="$(printf "%s" "${raw_scan}" | awk '/Address: /{ORS=" ";if (!seen[$5]++) print $5}')"
-                f_log "debug" "main: ${trm_iwinfo}, dev: ${dev}, essid-list: ${essid_list}, bssid-list: ${bssid_list}"
+                f_log "debug" "main: ${trm_iwinfo}, dev: ${dev}"
+                f_log "debug" "main: ${essid_list}"
+                f_log "debug" "main: ${bssid_list}"
                 if [ -n "${essid_list}" ] || [ -n "${bssid_list}" ]
                 then
                     for sta in ${trm_stalist}
