@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=lsof
 PKG_VERSION:=4.89
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.mirrorservice.org/sites/lsof.itap.purdue.edu/pub/tools/unix/lsof/ ftp://sunsite.ualberta.ca/pub/Mirror/lsof/ ftp://ftp.fu-berlin.de/pub/unix/tools/lsof
@@ -57,6 +57,10 @@ define Build/Configure
 endef
 
 define Build/Compile	
+	LSOF_HOST="none" \
+	LSOF_LOGNAME="none" \
+	LSOF_SYSINFO="none" \
+	LSOF_USER="none" \
 	$(MAKE) -C $(PKG_BUILD_DIR)
 endef
 
