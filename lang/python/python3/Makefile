@@ -16,7 +16,7 @@ PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 PKG_NAME:=python3
 # XXX: reset PKG_RELEASE to 1 only if Python's pip & setuptools versions have also bumped;
 #      otherwise, keep bumping PKG_RELEASE
-PKG_RELEASE:=12
+PKG_RELEASE:=11
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -45,7 +45,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PYTHON3_BLUETOOTH_SUPPORT
 
 PKG_BUILD_DEPENDS:=python3/host
-HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host zlib/host
+HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
