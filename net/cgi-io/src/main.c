@@ -117,11 +117,11 @@ out:
 }
 
 static char *
-md5sum(const char *file)
+checksum(const char *applet, size_t sumlen, const char *file)
 {
 	pid_t pid;
 	int fds[2];
-	static char md5[33];
+	static char chksum[65];
 
 	if (pipe(fds))
 		return NULL;
@@ -141,20 +141,20 @@ md5sum(const char *file)
 		close(fds[0]);
 		close(fds[1]);
 
-		if (execl("/bin/busybox", "/bin/busybox", "md5sum", file, NULL))
+		if (execl("/bin/busybox", "/bin/busybox", applet, file, NULL))
 			return NULL;
 
 		break;
 
 	default:
-		memset(md5, 0, sizeof(md5));
-		read(fds[0], md5, 32);
+		memset(chksum, 0, sizeof(chksum));
+		read(fds[0], chksum, sumlen);
 		waitpid(pid, NULL, 0);
 		close(fds[0]);
 		close(fds[1]);
 	}
 
-	return md5;
+	return chksum;
 }
 
 static char *
@@ -266,7 +266,7 @@ postdecode(char **fields, int n_fields)
 static int
 response(bool success, const char *message)
 {
-	char *md5;
+	char *chksum;
 	struct stat s;
 
 	printf("Status: 200 OK\r\n");
@@ -274,9 +274,22 @@ response(bool success, const char *message)
 
 	if (success)
 	{
-		if (!stat(st.filename, &s) && (md5 = md5sum(st.filename)) != NULL)
-			printf("\t\"size\": %u,\n\t\"checksum\": \"%s\"\n",
-				   (unsigned int)s.st_size, md5);
+		if (!stat(st.filename, &s))
+			printf("\t\"size\": %u,\n", (unsigned int)s.st_size);
+		else
+			printf("\t\"size\": null,\n");
+
+		chksum = checksum("md5sum", 32, st.filename);
+		printf("\t\"checksum\": %s%s%s,\n",
+			chksum ? "\"" : "",
+			chksum ? chksum : "null",
+			chksum ? "\"" : "");
+
+		chksum = checksum("sha256sum", 64, st.filename);
+		printf("\t\"sha256sum\": %s%s%s\n",
+			chksum ? "\"" : "",
+			chksum ? chksum : "null",
+			chksum ? "\"" : "");
 	}
 	else
 	{
