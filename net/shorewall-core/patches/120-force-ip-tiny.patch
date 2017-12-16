@@ -1,0 +1,11 @@
+--- a/lib.cli.dist	2017-11-09 14:09:37.694944255 -0500
++++ b/lib.cli	2017-11-09 14:10:15.920013984 -0500
+@@ -4032,7 +4032,7 @@
+ 
+     TC=tc
+ 
+-    IP=$(mywhich ip 2> /dev/null)
++    IP=/usr/bin/ip
+ 
+     g_loopback=$(find_loopback_interfaces)
+ 
