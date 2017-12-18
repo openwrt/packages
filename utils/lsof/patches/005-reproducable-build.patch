@@ -8,7 +8,7 @@ index 2bea108..ed8382e 100644
  	@echo '#define	LSOF_CCV	"${CCV}"' >> version.h
 -	@echo '#define	LSOF_CCDATE	"'`date`'"' >> version.h
 -	@echo '#define	LSOF_CCFLAGS	"'`echo ${CFLAGS} | sed 's/\\\\(/\\(/g' | sed 's/\\\\)/\\)/g' | sed 's/"/\\\\"/g'`'"' >> version.h
-+	@echo '#define	LSOF_CCDATE	"'`date -d @${SOURCE_DATE_EPOCH}`'"' >> version.h
++	@echo '#define	LSOF_CCDATE	"'`{ date -d @${SOURCE_DATE_EPOCH} || date -r ${SOURCE_DATE_EPOCH}; } 2> /dev/null`'"' >> version.h
 +	@echo '#define	LSOF_CCFLAGS	""' >> version.h
  	@echo '#define	LSOF_CINFO	"${CINFO}"' >> version.h
  	@if [ "X${LSOF_HOST}" = "X" ]; then \
