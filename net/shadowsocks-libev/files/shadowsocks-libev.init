@@ -115,6 +115,7 @@ ss_xxx() {
 		procd_open_instance "$cfgtype.$cfg"
 		procd_set_param command "$bin" -c "$confjson"
 		[ "$verbose" = 0 ] || procd_append_param command -v
+		[ "$no_delay" = 0 ] || procd_append_param command --no-delay
 		[ -z "$bind_address" ] || procd_append_param command -b "$bind_address"
 		[ -z "$manager_address" ] || procd_append_param command --manager-address "$manager_address"
 		procd_set_param file "$confjson"
@@ -258,6 +259,7 @@ validate_common_options_() {
 		'disabled:bool:0' \
 		'fast_open:bool:0' \
 		'ipv6_first:bool:0' \
+		'no_delay:bool:0' \
 		'reuse_port:bool:0' \
 		'verbose:bool:0' \
 		'mode:or("tcp_only", "udp_only", "tcp_and_udp"):tcp_only' \
