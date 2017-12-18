@@ -14,7 +14,7 @@ PKG_BUGFIX_MAJOR_VERSION:=9
 PKG_BUGFIX_MINOR_VERSION:=
 PKG_VERSION:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)$(PKG_BUGFIX_MINOR_VERSION)
 PKG_DIRECTORY:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://www.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
 	http://www1.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
@@ -64,19 +64,19 @@ define Build/Compile
 endef
 
 define Package/shorewall6-lite/install
-	$(INSTALL_DIR) $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface/
+	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/etc/shorewall6-lite/state/
+	$(INSTALL_DIR) $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/usr/share/shorewall6-lite/
-	$(INSTALL_BIN) ./files/hotplug_iface $(1)/etc/hotplug.d/iface/05-shorewall6-lite
+	$(CP) $(PKG_INSTALL_DIR)/etc/shorewall6-lite/ $(1)/etc/
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/shorewall6-lite/ $(1)/usr/share/
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/shorewall6-lite $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/shorewall6-lite/shorecap $(1)/usr/share/shorewall6-lite/
 	$(INSTALL_BIN) ./files/hostname $(1)/usr/share/shorewall6-lite/
-	$(CP) $(PKG_INSTALL_DIR)/etc/shorewall6-lite/ $(1)/etc/
+	$(INSTALL_BIN) ./files/hotplug_iface $(1)/etc/hotplug.d/iface/05-shorewall6-lite
 	$(INSTALL_BIN) ./files/shorewall6-lite.init $(1)/etc/init.d/shorewall6-lite
-	$(CP) ./files/vardir $(1)/etc/shorewall6-lite/
+	$(INSTALL_BIN) ./files/vardir $(1)/etc/shorewall6-lite/
 endef
 
 $(eval $(call BuildPackage,shorewall6-lite))
