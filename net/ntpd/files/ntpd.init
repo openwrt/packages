@@ -68,7 +68,9 @@ start_service() {
 		emit ""
 	fi
 
-	emit "server $server iburst"
+	for srv in $server; do
+		emit "server $srv iburst"
+	done
 
 	mkdir -p /var/lib/ntp
 	chown -R ntp:ntp /var/lib/ntp
