@@ -7,15 +7,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shairport-sync
-PKG_VERSION:=2.8.6
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.6
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/mikebrady/shairport-sync.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=892a8c8c5302026501c07f2e75c0d51963167143c96875f12578f7e7c9dadc96
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_MIRROR_HASH:=8f440a6bca6a58d04f7c0f6c7ea711b31a0aa4abc7e4d8f4da7346a085dcd966
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Mike Brady <mikebrady@eircom.net>
 
@@ -33,7 +33,7 @@ define Package/shairport-sync/default
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=AirPlay compatible audio player
-  DEPENDS:=@AUDIO_SUPPORT +libpthread +alsa-lib +libconfig +libdaemon +libpopt
+  DEPENDS:=@AUDIO_SUPPORT +libpthread +libstdcpp +alsa-lib +libconfig +libdaemon +libpopt
   PROVIDES:=shairport-sync
   URL:=http://github.com/mikebrady/shairport-sync
 endef
