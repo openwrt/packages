@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.1.12
-PKG_RELEASE:=3
+PKG_VERSION:=7.2.0
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_HASH:=a0118850774571b1f2d4e30b4fe7a4b958ca66f07d07d65ebdc789c54ba6eeb3
+PKG_HASH:=87572a6b924670a5d4aac276aaa4a94321936283df391d702c845ffc112db095
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -33,7 +33,7 @@ PHP7_MODULES = \
 	iconv imap intl \
 	json \
 	ldap \
-	mbstring mcrypt mysqli \
+	mbstring mysqli \
 	opcache openssl \
 	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql phar \
 	session shmop simplexml snmp soap sockets sqlite3 sysvmsg sysvsem sysvshm \
@@ -287,12 +287,6 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-mbstring),)
   CONFIGURE_ARGS+= --enable-mbstring=shared --enable-mbregex
 else
   CONFIGURE_ARGS+= --disable-mbstring
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-mcrypt),)
-  CONFIGURE_ARGS+= --with-mcrypt=shared,"$(STAGING_DIR)/usr"
-else
-  CONFIGURE_ARGS+= --without-mcrypt
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-mysqli),)
@@ -605,7 +599,6 @@ $(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php7-mod-
 $(eval $(call BuildModule,json,JSON))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php7-mod-ldap:libopenldap +PACKAGE_php7-mod-ldap:libsasl2))
 $(eval $(call BuildModule,mbstring,MBString))
-$(eval $(call BuildModule,mcrypt,Mcrypt,+PACKAGE_php7-mod-mcrypt:libmcrypt +PACKAGE_php7-mod-mcrypt:libltdl))
 $(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php7-mod-mysqli:libmysqlclient))
 $(eval $(call BuildModule,opcache,OPcache,,,zend))
 $(eval $(call BuildModule,openssl,OpenSSL,+PACKAGE_php7-mod-openssl:libopenssl))
