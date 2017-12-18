@@ -1,8 +1,6 @@
-Index: shorewall-5.1.4.1/configfiles/shorewall.conf
-===================================================================
---- shorewall-5.1.4.1.orig/configfiles/shorewall.conf	2017-10-05 11:18:41.586275516 +0200
-+++ shorewall-5.1.4.1/configfiles/shorewall.conf	2017-10-05 11:26:11.825609382 +0200
-@@ -33,7 +33,7 @@
+--- a/configfiles/shorewall.conf
++++ b/configfiles/shorewall.conf
+@@ -33,7 +33,7 @@ FIREWALL=
  #			       L O G G I N G
  ###############################################################################
  
@@ -11,7 +9,7 @@ Index: shorewall-5.1.4.1/configfiles/shorewall.conf
  
  BLACKLIST_LOG_LEVEL=
  
-@@ -101,7 +101,7 @@
+@@ -101,7 +101,7 @@ RESTOREFILE=restore
  
  SHOREWALL_SHELL=/bin/sh
  
