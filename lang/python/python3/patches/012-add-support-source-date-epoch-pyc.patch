@@ -1,0 +1,13 @@
+--- a/Lib/py_compile.py
++++ b/Lib/py_compile.py
+@@ -137,8 +137,9 @@ def compile(file, cfile=None, dfile=None
+     except FileExistsError:
+         pass
+     source_stats = loader.path_stats(file)
++    mtime = int(os.getenv('SOURCE_DATE_EPOCH', source_stats['mtime']))
+     bytecode = importlib._bootstrap_external._code_to_bytecode(
+-            code, source_stats['mtime'], source_stats['size'])
++            code, mtime, source_stats['size'])
+     mode = importlib._bootstrap_external._calc_mode(file)
+     importlib._bootstrap_external._write_atomic(cfile, bytecode, mode)
+     return cfile
