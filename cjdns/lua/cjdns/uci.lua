@@ -19,6 +19,7 @@ function UCI.defaults()
       { setupComplete = 1 }
     },
     router = {
+        supernodes = {},
         ipTunnel = { outgoingConnections = {}, allowedConnections = {} },
         interface = { type = "TUNInterface" }
     },
