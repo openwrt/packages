@@ -11,12 +11,12 @@ PKG_LICENSE:=ASL-2.0
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
 PKG_NAME:=sysrepo
-PKG_VERSION:=0.7.1
+PKG_VERSION:=0.7.2
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=0b36f308574a60d7ee36b1a3118b999618bb40d8
-PKG_MIRROR_HASH:=d28ff0356b6ac4b934bb45ff77973efe7964b86a54270d11e1fd06a2af9bdbc8
+PKG_SOURCE_VERSION:=8a188c515ad113adbe0d393fe54dc0cad2d0167a
+PKG_MIRROR_HASH:=b8a387a6ee6692c455815226f27a572984d997ce0c0c85ac0d15a81e8e9c62a3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/sysrepo/sysrepo.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION)
@@ -96,11 +96,11 @@ define Package/libsysrepo/install
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/yang/sysrepo-persistent-data.yang $(1)/etc/sysrepo/yang/internal
 
 	$(INSTALL_DIR) $(1)/etc/sysrepo/yang
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/yang/ietf-netconf-acm@2012-02-22.yang $(1)/etc/sysrepo/yang/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/yang/ietf-netconf-notifications.yang $(1)/etc/sysrepo/yang/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/yang/nc-notifications.yang $(1)/etc/sysrepo/yang/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/yang/notifications.yang $(1)/etc/sysrepo/yang/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/yang/ietf-netconf@2011-06-01.yang $(1)/etc/sysrepo/yang/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/yang/ietf-netconf-acm@2012-02-22.yang $(1)/etc/sysrepo/yang/ietf-netconf-acm@2012-02-22.yang
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/yang/ietf-netconf-notifications.yang $(1)/etc/sysrepo/yang/ietf-netconf-notifications@2012-02-06..yang
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/yang/nc-notifications.yang $(1)/etc/sysrepo/yang/nc-notifications@2008-07-14.yang
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/yang/notifications.yang $(1)/etc/sysrepo/yang/notifications@2008-07-14.yang
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/yang/ietf-netconf@2011-06-01.yang $(1)/etc/sysrepo/yang/ietf-netconf@2011-06-01.yang
 
 	$(INSTALL_DIR) $(1)/etc/sysrepo/data/internal
 	$(INSTALL_DIR) $(1)/etc/sysrepo/data/notifications
