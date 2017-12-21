@@ -80,8 +80,8 @@ endef
 CFLAGS+="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include"
 
 define Download/usb.ids
-  URL:=http://www.linux-usb.org/
-  HASH:=47dc941dca801b89f1529e09f0d338755d8fbb0ce75f526e1dcccc4fbf8fc66c
+  URL:=https://raw.githubusercontent.com/usbids/usbids/7b14f90dc9376342ed421ea9dd8a9350d0b0346f
+  HASH:=8b52db77343901e5ebe7ae8dabc8a4032d5f0989aa0303fbb77acc1108d154ad
   FILE:=usb.ids
   MD5SUM:=
 endef
