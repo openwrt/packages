@@ -46,6 +46,10 @@ define Package/ser2net/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/ser2net $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/ser2net.conf $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/etc/config/ser2net $(1)/etc/config/ser2net
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/ser2net $(1)/etc/init.d/ser2net
 endef
 
 $(eval $(call BuildPackage,ser2net))
