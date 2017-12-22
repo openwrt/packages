@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=usbip
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 PKG_LICENSE:=GPL-2.0
 
 # Since kernel 2.6.39.1 userspace tools are inside the kernel tree
@@ -81,7 +81,7 @@ CFLAGS+="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include"
 
 USB_IDS_REV:=0a6be488b4c1485d30c9efee1cc895af5d4a1383
 USB_IDS_FILE:=usb.ids.$(USB_IDS_REV)
-define Download/usb_ids
+define Download/usb.ids
   FILE:=$(USB_IDS_FILE)
   URL_FILE:=usb.ids
   URL:=@GITHUB/gentoo/hwids/$(USB_IDS_REV)
