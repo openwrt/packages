@@ -469,6 +469,7 @@ CONFIGURE_VARS+= \
 	iconv_impl_name="gnu_libiconv" \
 	ac_cv_php_xml2_config_path="$(STAGING_DIR)/host/bin/xml2-config" \
 	ac_cv_u8t_decompose=yes \
+	ac_cv_enable_valgrind_check=no \
 
 define Package/php7/conffiles
 /etc/php.ini
