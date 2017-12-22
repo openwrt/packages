@@ -1,0 +1,58 @@
+Index: netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/CMakeLists.txt
+===================================================================
+--- /dev/null
++++ netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/CMakeLists.txt
+@@ -0,0 +1,5 @@
++cmake_minimum_required(VERSION 2.6)
++
++add_subdirectory(server)
++add_subdirectory(cli)
++add_subdirectory(keystored)
+Index: netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/cli/CMakeLists.txt
+===================================================================
+--- netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d.orig/cli/CMakeLists.txt
++++ netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/cli/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ cmake_minimum_required(VERSION 2.6)
+ 
+ # include custom Modules
+-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../CMakeModules/")
++set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
+ 
+ project(netopeer2-cli C)
+ include(GNUInstallDirs)
+@@ -83,7 +83,7 @@ endif()
+ install(FILES ${PROJECT_SOURCE_DIR}/doc/${PROJECT_NAME}.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+ 
+ # clean cmake cache
+-add_custom_target(cleancache
++add_custom_target(cleancache_cli
+                   COMMAND make clean
+                   COMMAND find . -iname '*cmake*' -not -name CMakeLists.txt -exec rm -rf {} +
+                   COMMAND rm -rf Makefile Doxyfile
+Index: netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/keystored/CMakeLists.txt
+===================================================================
+--- netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d.orig/keystored/CMakeLists.txt
++++ netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/keystored/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ cmake_minimum_required(VERSION 2.6)
+ 
+ # include custom Modules
+-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../CMakeModules/")
++set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
+ 
+ project(keystored C)
+ include(GNUInstallDirs)
+Index: netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/server/CMakeLists.txt
+===================================================================
+--- netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d.orig/server/CMakeLists.txt
++++ netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/server/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ cmake_minimum_required(VERSION 2.8.9)
+ 
+ # include custom Modules
+-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../CMakeModules/")
++set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
+ 
+ project(netopeer2-server C)
+ include(GNUInstallDirs)
