@@ -1,0 +1,10 @@
+--- a/userland/lib/pfring_mod.c
++++ b/userland/lib/pfring_mod.c
+@@ -24,6 +24,7 @@
+ #include <ifaddrs.h>
+ 
+ #ifdef ENABLE_BPF
++#include <string.h>
+ #include <pcap/pcap.h>
+ #include <pcap/bpf.h>
+ #include <pcap-int.h>
