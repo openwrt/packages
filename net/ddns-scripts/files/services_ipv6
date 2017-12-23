@@ -37,6 +37,7 @@
 #.cloudflare.com-v4	!!! Please install additional package "ddns-scripts_cloudflare.com-v4"
 #.godaddy.com-v1	!!! Please install additional package "ddns-scripts_godaddy.com-v1"
 #.no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
+#.route53-v1		!!! Please install additional package "ddns-scripts_route53-v1"
 
 "afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
 "afraid.org-keyauth"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
