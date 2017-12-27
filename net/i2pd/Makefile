@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2pd
 PKG_VERSION:=2.17.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_BUILD_PARALLEL:=1
 
 PKG_SOURCE_PROTO:=git
@@ -26,10 +26,11 @@ include $(INCLUDE_DIR)/package.mk
 define Package/i2pd
 	SECTION:=net
 	CATEGORY:=Network
-	DEPENDS:=+libopenssl +boost +boost-system +boost-filesystem +boost-regex \
-		 +boost-program_options +boost-date_time +libatomic +zlib
+	DEPENDS:=+libopenssl +boost +boost-system +boost-filesystem \
+	         +boost-program_options +boost-date_time +libatomic +zlib
 	TITLE:=full-featured C++ implementation of I2P client
 	URL:=https://github.com/PurpleI2P/i2pd
+	USERID:=i2pd:i2pd
 	MAINTAINER:=David Yang <mmyangfl@gmail.com>
 endef
 
@@ -45,13 +46,22 @@ define Package/i2pd/conffiles
 	/etc/i2pd/tunnels.conf
 endef
 
+TARGET_LDFLAGS+=-latomic
 MAKE_FLAGS+=USE_AESNI=no USE_AVX=no
 
 define Package/i2pd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/i2pd $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/share/i2pd
+	$(CP) $(PKG_BUILD_DIR)/contrib/certificates  $(1)/usr/share/i2pd
 	$(INSTALL_DIR) $(1)/etc/i2pd
+	$(LN) /usr/share/i2pd/certificates $(1)/etc/i2pd/certificates
+	$(LN) /var/lib/i2pd/peerProfiles $(1)/etc/i2pd/peerProfiles
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/i2pd.conf $(1)/etc/i2pd
+	$(SED) ' \
+		s/127.0.0.1/192.168.1.1/g; \
+		s/datadir = \/var\/lib/datadir = \/etc/ \
+	' $(1)/etc/i2pd/i2pd.conf
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/subscriptions.txt $(1)/etc/i2pd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/tunnels.conf $(1)/etc/i2pd
 	$(INSTALL_DIR) $(1)/etc/init.d
