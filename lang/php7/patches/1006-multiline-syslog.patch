@@ -1,41 +1,43 @@
-commit 4d77af8d7d349b7b9e43082deb47c1469f450115
+commit f11d40ef88f640fe4764d2731d3061472aefe556
 Author: Philip Prindeville <philipp@redfish-solutions.com>
-Date:   Fri Aug 18 12:05:44 2017 -0600
+Date:   Wed Aug 9 20:55:25 2017 -0600
 
-    Backport of fix for Issue #74860
+    Turn php_syslog() into wrapper for syslog and split lines
 
-diff --git a/configure.in b/configure.in
-index 9acf42b..559a274 100644
---- a/configure.in
-+++ b/configure.in
-@@ -1470,7 +1470,7 @@ PHP_ADD_SOURCES(main, main.c snprintf.c spprintf.c php_sprintf.c \
+diff --git a/Zend/zend_smart_string.h b/Zend/zend_smart_string.h
+index 2282202..12d755e 100644
+--- a/Zend/zend_smart_string.h
++++ b/Zend/zend_smart_string.h
+@@ -136,6 +136,10 @@ static zend_always_inline void smart_string_setl(smart_string *dest, char *src,
+ 	dest->c = src;
+ }
+ 
++static zend_always_inline void smart_string_reset(smart_string *str) {
++	str->len = 0;
++}
++
+ #endif
+ 
+ /*
+diff --git a/configure.ac b/configure.ac
+index cb95d86..a63354f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1443,7 +1443,7 @@ PHP_ADD_SOURCES(main, main.c snprintf.c spprintf.c php_sprintf.c \
         php_ini.c SAPI.c rfc1867.c php_content_types.c strlcpy.c \
-        strlcat.c mergesort.c reentrancy.c php_variables.c php_ticks.c \
+        strlcat.c explicit_bzero.c mergesort.c reentrancy.c php_variables.c php_ticks.c \
         network.c php_open_temporary_file.c \
 -       output.c getopt.c, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
 +       output.c getopt.c php_syslog.c, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
  
  PHP_ADD_SOURCES_X(main, fastcgi.c, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1, PHP_FASTCGI_OBJS, no)
  
-diff --git a/ext/standard/php_smart_string.h b/ext/standard/php_smart_string.h
-index adb78c0..8d90688 100644
---- a/ext/standard/php_smart_string.h
-+++ b/ext/standard/php_smart_string.h
-@@ -146,4 +146,8 @@
- #define smart_string_sets(dest, src) \
- 	smart_string_setl((dest), (src), strlen(src));
- 
-+#define smart_string_reset(dest) do {		\
-+	(dest)->len = 0;			\
-+} while (0)
-+
- #endif
 diff --git a/main/php_syslog.c b/main/php_syslog.c
 new file mode 100644
-index 0000000..43d1f56
+index 0000000..c351951
 --- /dev/null
 +++ b/main/php_syslog.c
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,81 @@
 +/*
 +   +----------------------------------------------------------------------+
 +   | PHP Version 7                                                        |
@@ -64,7 +66,7 @@ index 0000000..43d1f56
 +#include "php_syslog.h"
 +
 +#include "zend.h"
-+#include "ext/standard/php_smart_string.h"
++#include "zend_smart_string.h"
 +
 +/*
 + * The SCO OpenServer 5 Development System (not the UDK)
@@ -79,15 +81,16 @@ index 0000000..43d1f56
 +{
 +	const char *ptr;
 +	unsigned char c;
-+	char *message = NULL;
++	smart_string fbuf = {0};
 +	smart_string sbuf = {0};
 +	va_list args;
 +
 +	va_start(args, format);
-+	vspprintf(&message, 0, format, args);
++	zend_printf_to_smart_string(&fbuf, format, args);
++	smart_string_0(&fbuf);
 +	va_end(args);
 +
-+	for (ptr = message; ; ++ptr) {
++	for (ptr = fbuf.c; ; ++ptr) {
 +		c = *ptr;
 +		if (c == '\0') {
 +			syslog(priority, "%.*s", (int)sbuf.len, sbuf.c);
@@ -102,7 +105,7 @@ index 0000000..43d1f56
 +		}
 +	}
 +
-+	efree(message);
++	smart_string_free(&fbuf);
 +	smart_string_free(&sbuf);
 +}
 +
@@ -117,7 +120,7 @@ index 0000000..43d1f56
 + * vim<600: sw=4 ts=4
 + */
 diff --git a/main/php_syslog.h b/main/php_syslog.h
-index 33f52a3..a09f98c 100644
+index be68cc4..4c4ca4e 100644
 --- a/main/php_syslog.h
 +++ b/main/php_syslog.h
 @@ -21,6 +21,8 @@
@@ -129,7 +132,7 @@ index 33f52a3..a09f98c 100644
  #ifdef PHP_WIN32
  #include "win32/syslog.h"
  #else
-@@ -30,23 +32,8 @@
+@@ -30,26 +32,12 @@
  #endif
  #endif
  
@@ -145,22 +148,25 @@ index 33f52a3..a09f98c 100644
 -#endif
 -
 -#undef syslog
--
--#endif
--
--#ifndef php_syslog
--#define php_syslog syslog
--#endif
 +BEGIN_EXTERN_C()
 +PHPAPI void php_syslog(int, const char *format, ...);
 +END_EXTERN_C()
  
  #endif
+ 
+-#ifndef php_syslog
+-#define php_syslog syslog
+-#endif
+-
+-#endif
+ /*
+  * Local variables:
+  * tab-width: 4
 diff --git a/win32/build/config.w32 b/win32/build/config.w32
-index 1269c6e..f766e53 100644
+index 6cbb18b..71cf491 100644
 --- a/win32/build/config.w32
 +++ b/win32/build/config.w32
-@@ -237,7 +237,8 @@ ADD_FLAG("CFLAGS_BD_ZEND", "/D ZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+@@ -244,7 +244,8 @@ ADD_FLAG("CFLAGS_BD_ZEND", "/D ZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
  ADD_SOURCES("main", "main.c snprintf.c spprintf.c getopt.c fopen_wrappers.c \
  	php_scandir.c php_ini.c SAPI.c rfc1867.c php_content_types.c strlcpy.c \
  	strlcat.c mergesort.c reentrancy.c php_variables.c php_ticks.c network.c \
@@ -168,5 +174,5 @@ index 1269c6e..f766e53 100644
 +	php_open_temporary_file.c output.c internal_functions.c php_sprintf.c \
 +	php_syslog.c");
  ADD_FLAG("CFLAGS_BD_MAIN", "/D ZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
- ADD_SOURCES("win32", "inet.c fnmatch.c sockets.c");
  
+ AC_DEFINE('HAVE_STRNLEN', 1);

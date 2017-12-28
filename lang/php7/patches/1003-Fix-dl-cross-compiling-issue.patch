@@ -1,5 +1,5 @@
---- a/configure.in
-+++ b/configure.in
+--- a/configure.ac
++++ b/configure.ac
 @@ -453,7 +453,10 @@ PHP_CHECK_FUNC(gethostname, nsl)
  PHP_CHECK_FUNC(gethostbyaddr, nsl)
  PHP_CHECK_FUNC(yp_get_default_domain, nsl)
