@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# adblock send mail script for mstmp
+# written by Dirk Brenken (dev@brenken.org)
+# Please note: you have to install and configure the package 'mstmp' before using this script.
+
+# This is free software, licensed under the GNU General Public License v3.
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+LC_ALL=C
+PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+mail_daemon="$(command -v sendmail)"
+mail_profile="adb_notify"
+mail_debug="--debug"
+mail_rc=0
+
+# mail header
+#
+mail_sender="no-reply@adblock"
+mail_receiver="!!!ChangeMe!!!"
+mail_topic="adblock notification"
+mail_head="From: ${mail_sender}\nTo: ${mail_receiver}\nSubject: ${mail_topic}\nReply-to: ${mail_sender}\n\n"
+
+# mail body
+#
+mail_text="adblock status, generated at $(date 2>&1)!"
+mail_text="${mail_text}\n++\n++ System Information ++\n++\n$(cat /etc/banner 2>&1)"
+mail_text="${mail_text}\n\n++\n++ Adblock Information ++\n++\n$(/etc/init.d/adblock status 2>&1)"
+
+# send mail
+#
+if [ -x "${mail_daemon}" ]
+then
+    printf "%b" "${mail_head}${mail_text}" | "${mail_daemon}" ${mail_debug} -a "${mail_profile}" "${mail_receiver}" 2>&1
+    mail_rc=${?}
+fi
+exit ${mail_rc}

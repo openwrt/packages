@@ -82,7 +82,7 @@ service_triggers()
 
     if [ "${trigger}" != "none" ] && [ "${trigger}" != "timed" ]
     then
-        PROCD_RELOAD_DELAY=$((${delay:=1} * 1000))
+        PROCD_RELOAD_DELAY=$((${delay:-1} * 1000))
         procd_add_interface_trigger "interface.*.up" "${trigger}" "${adb_init}" start
     fi
     procd_add_reload_trigger "adblock"

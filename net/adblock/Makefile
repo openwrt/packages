@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=3.1.1
+PKG_VERSION:=3.4.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -17,6 +17,7 @@ define Package/adblock
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Powerful adblock script to block ad/abuse domains
+	DEPENDS:=+jshn +jsonfilter
 	PKGARCH:=all
 endef
 
@@ -53,6 +54,7 @@ define Package/adblock/install
 	$(INSTALL_CONF) ./files/adblock.conf $(1)/etc/config/adblock
 
 	$(INSTALL_DIR) $(1)/etc/adblock
+	$(INSTALL_CONF) ./files/adblock.notify $(1)/etc/adblock/
 	$(INSTALL_CONF) ./files/adblock.blacklist $(1)/etc/adblock/
 	$(INSTALL_CONF) ./files/adblock.whitelist $(1)/etc/adblock/
 endef
