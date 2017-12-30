@@ -1,0 +1,17 @@
+--- a/ext/pcre/pcrelib/sljit/sljitNativeMIPS_common.c	2017-11-28 02:22:57.000000000 -0700
++++ b/ext/pcre/pcrelib/sljit/sljitNativeMIPS_common.c	2017-12-29 17:35:44.231934114 -0700
+@@ -498,12 +498,13 @@ SLJIT_API_FUNC_ATTRIBUTE void* sljit_gen
+ 
+ SLJIT_API_FUNC_ATTRIBUTE sljit_s32 sljit_has_cpu_feature(sljit_s32 feature_type)
+ {
++	sljit_sw fir = 0;
++
+ 	switch (feature_type) {
+ 	case SLJIT_HAS_FPU:
+ #ifdef SLJIT_IS_FPU_AVAILABLE
+ 		return SLJIT_IS_FPU_AVAILABLE;
+ #elif defined(__GNUC__)
+-		sljit_sw fir;
+ 		asm ("cfc1 %0, $0" : "=r"(fir));
+ 		return (fir >> 22) & 0x1;
+ #else
