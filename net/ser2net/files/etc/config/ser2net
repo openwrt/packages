@@ -1,8 +1,0 @@
-config 'proxy'
-	option 'enabled' '0'
-	option 'port' '8000'
-	option 'protocol' 'raw'
-	option 'timeout' '30'
-	option 'device' '/dev/ttyUSB0'
-	option 'options' '9600 1STOPBIT 8DATABITS'
-
