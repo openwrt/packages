@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2016 OpenWrt.org
+# Copyright (C) 2013-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xupnpd
-PKG_REV:=5c08c051caa0062cc1c401b2d26d1f36dffe9c55
-PKG_VERSION:=2016-07-06
+PKG_REV:=7ff74b2d5288fbc35c4f6fcb94466d408b1f853c
+PKG_VERSION:=2017-10-31
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -26,7 +26,7 @@ PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 
-LUA_FLAGS:=-llua
+LUA_FLAGS:=-llua -lssl -lcrypto
 
 define Build/Compile
 	(cd $(PKG_BUILD_DIR)/src; $(TARGET_CC) -v $(LUA_FLAGS) $(TARGET_CFLAGS) -fno-exceptions -fno-rtti -DWITH_URANDOM $(TARGET_CPPFLAGS) $(TARGET_LDFLAGS) -lm -ldl -lcrypt -o xupnpd *.c *.cpp)
@@ -35,7 +35,7 @@ endef
 define Package/xupnpd
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+liblua
+  DEPENDS:=+liblua +libopenssl
   TITLE:=eXtensible UPnP agent
   URL:=http://xupnpd.org/
 endef
