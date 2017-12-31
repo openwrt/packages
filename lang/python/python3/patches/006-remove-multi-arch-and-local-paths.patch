@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -487,16 +487,9 @@ class PyBuildExt(build_ext):
+@@ -512,16 +512,9 @@ class PyBuildExt(build_ext):
              return ['m']
  
      def detect_modules(self):
