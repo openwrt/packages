@@ -27,7 +27,7 @@ PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-# CMAKE_OPTIONS += -DUHTTP_DEBUG=on
+# CMAKE_OPTIONS += -DUHTTPD_DEBUG=on
 
 define Package/libuhttpd/default
   SECTION:=libs
