@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xerces-c
-PKG_VERSION:=3.1.4
-PKG_RELEASE:=2
+PKG_MAIN_VER:=3.2
+PKG_VERSION:=3.2.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@APACHE/xerces/c/3/sources
-PKG_HASH:=9973cc79481803f8b6652c52faf5195d963f50d209d4f681ec97e2aa014b6241
+PKG_HASH:=35d8db18ebe6db353850903981cd07cca64abeba071602e7e32596714352de08
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=Apache-2.0
@@ -72,14 +73,14 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/xercesc/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/xercesc/* $(1)/usr/include/xercesc/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{libxerces-c.a,libxerces-c-3.1.so,libxerces-c.so} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{libxerces-c.a,libxerces-c-$(PKG_MAIN_VER).so,libxerces-c.so} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/xerces-c.pc $(1)/usr/lib/pkgconfig/xerces-c.pc
 endef
 
 define Package/libxerces-c/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{libxerces-c-3.1.so,libxerces-c.so} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{libxerces-c-$(PKG_MAIN_VER).so,libxerces-c.so} $(1)/usr/lib/
 endef
 
 define Package/libxerces-c-samples/install
