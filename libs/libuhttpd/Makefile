@@ -47,18 +47,21 @@ define Package/libuhttpd-openssl
   $(Package/libuhttpd/default)
   TITLE += (openssl)
   DEPENDS += +libustream-openssl
+  VARIANT:=openssl
 endef
 
 define Package/libuhttpd-wolfssl
   $(Package/libuhttpd/default)
   TITLE += (wolfssl)
   DEPENDS += +libustream-wolfssl
+  VARIANT:=wolfssl
 endef
 
 define Package/libuhttpd-mbedtls
   $(Package/libuhttpd/default)
   TITLE += (mbedtls)
   DEPENDS += +libustream-mbedtls
+  VARIANT:=mbedtls
 endef
 
 ifeq ($(BUILD_VARIANT),nossl)
