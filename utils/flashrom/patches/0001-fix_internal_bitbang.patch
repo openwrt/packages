@@ -1,6 +1,6 @@
 --- a/programmer.h
 +++ b/programmer.h
-@@ -557,7 +557,7 @@ enum spi_controller {
+@@ -584,7 +584,7 @@ enum spi_controller {
  #if CONFIG_DEDIPROG == 1
  	SPI_CONTROLLER_DEDIPROG,
  #endif
