@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuhttpd
-PKG_VERSION:=1.0.3
+PKG_VERSION:=1.0.4
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/zhaojh329/libuhttpd.git
-PKG_SOURCE_VERSION:=4fb0f0b692daaf337bcc71ec135a6c0e8bbbb6e3
-PKG_MIRROR_HASH:=d75b1edc81e2eed0d70385c1f9ff2a836c700400c71fd16d9bc4b41ec3c6f576
+PKG_SOURCE_VERSION:=a67add91a1cc45d58e656cea9e145812e9cb8c2e
+PKG_MIRROR_HASH:=cbd32b603247b239ff7b47a51f85db07ede28b3ec5ededbd744742619b9df51e
 CMAKE_INSTALL:=1
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
@@ -27,7 +27,7 @@ PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-# CMAKE_OPTIONS += -DUHTTPD_DEBUG=on
+#CMAKE_OPTIONS += -DUHTTPD_DEBUG=on
 
 define Package/libuhttpd/default
   SECTION:=libs
