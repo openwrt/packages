@@ -27,12 +27,11 @@ PKG_NAME:=bmx7
 
 PKG_SOURCE_PROTO:=git
 
-#PKG_SOURCE_URL:=git://bmx6.net/bmx6.git
-PKG_SOURCE_URL:=git://github.com/axn/bmx6.git
-#PKG_SOURCE_URL:=file:///usr/src/bmx6/bmx6.git
+PKG_SOURCE_URL:=git://github.com/bmx-routing/bmx7.git
+#PKG_SOURCE_URL:=file:///usr/src/bmx-routing/bmx7.git
 
-PKG_REV:=1b8cf4c119d3bf886a9b9c5a1bca8043506f3684
-PKG_VERSION:=r2017071001
+PKG_REV:=a0b18da22d4195afdea82ac080eba02f1121f86b
+PKG_VERSION:=r2018010203
 PKG_RELEASE:=4
 PKG_LICENSE:=GPL-2.0
 
@@ -45,7 +44,6 @@ include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS += $(FPIC)
 
-#MAKE_ARGS += EXTRA_CFLAGS="$(TARGET_CFLAGS) -I. -I$(STAGING_DIR)/usr/include -DCRYPTLIB=POLARSSL_1_3_4 -DCORE_LIMIT=20000 -DTRAFFIC_DUMP -DNO_TRACE_FUNCTION_CALLS -DBMX7_LIB_IWINFO"
 MAKE_ARGS += EXTRA_CFLAGS="$(TARGET_CFLAGS) -I. -I$(STAGING_DIR)/usr/include -DCRYPTLIB=MBEDTLS_2_4_0 -DCORE_LIMIT=20000 -DTRAFFIC_DUMP -DNO_TRACE_FUNCTION_CALLS -DBMX7_LIB_IWINFO"
 
 MAKE_ARGS += \
@@ -60,9 +58,8 @@ define Package/bmx7/Default
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE:=BMX7 layer 3 routing daemon
-  URL:=http://bmx6.net/
+  URL:=http://github.com/bmx-routing/bmx7
   MAINTAINER:=Axel Neumann <neumann@cgws.de>
-#  DEPENDS:=+zlib +libpolarssl +libiwinfo
   DEPENDS:=+zlib +libmbedtls +libiwinfo
 endef
 
