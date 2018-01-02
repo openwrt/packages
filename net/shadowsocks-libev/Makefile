@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2017-2018 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -13,12 +13,12 @@ include $(TOPDIR)/rules.mk
 # - check if default mode has changed from being tcp_only
 #
 PKG_NAME:=shadowsocks-libev
-PKG_VERSION:=3.1.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/shadowsocks/shadowsocks-libev/releases/download/v$(PKG_VERSION)
-PKG_HASH:=24a002c100fbe9b4481e3134273cb1a2f25a4026eb030760e7e7eb57f8466ef6
+PKG_HASH:=3611f09793af923d988ecbd15ad89fb66839e51a0059685d8f88c0131658e4a7
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
