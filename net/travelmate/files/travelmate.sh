@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.0.0"
+trm_ver="1.0.1"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -119,12 +119,9 @@ f_check()
                 for radio in ${trm_radiolist}
                 do
                     trm_ifstatus="$(printf "%s" "${status}" | jsonfilter -l1 -e "@.${radio}.up")"
-                    if [ "${trm_ifstatus}" = "true" ]
+                    if [ "${trm_ifstatus}" = "true" ] && [ -z "$(printf "%s" "${trm_devlist}" | grep -Fo " ${radio}")" ]
                     then
                         trm_devlist="${trm_devlist} ${radio}"
-                    else
-                        trm_devlist=""
-                        break
                     fi
                 done
                 ifname="${trm_devlist}"
