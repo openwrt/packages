@@ -2,7 +2,7 @@
 +++ shorewall6-lite-5.1.9/shorewall6-lite.conf	2017-12-17 09:05:55.769714392 -0500
 @@ -36,7 +36,7 @@
  
- IPTABLES=
+ IP6TABLES=
  
 -PATH=
 +PATH=/usr/sbin:/usr/bin:/sbin:/bin
