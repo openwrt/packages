@@ -10,10 +10,16 @@
 
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-mail_daemon="$(command -v sendmail)"
+mail_ver="1.0.0"
+mail_daemon="$(command -v msmtp)"
 mail_profile="adb_notify"
 mail_debug="--debug"
-mail_rc=0
+mail_rc=1
+
+if [ ! -x "${mail_daemon}" ]
+then
+    mail_daemon="$(command -v sendmail)"
+fi
 
 # mail header
 #
@@ -32,7 +38,11 @@ mail_text="${mail_text}\n\n++\n++ Adblock Information ++\n++\n$(/etc/init.d/adbl
 #
 if [ -x "${mail_daemon}" ]
 then
-    printf "%b" "${mail_head}${mail_text}" | "${mail_daemon}" ${mail_debug} -a "${mail_profile}" "${mail_receiver}" 2>&1
+    printf "%b" "${mail_head}${mail_text}" 2>/dev/null | "${mail_daemon}" ${mail_debug} -a "${mail_profile}" "${mail_receiver}" >/dev/null 2>&1
     mail_rc=${?}
+    logger -p "info" -t "adblock-notify-[${mail_ver}]" "mail sent to '${mail_receiver}' with rc '${mail_rc}'"
+else
+    logger -p "err" -t "adblock-notify-[${mail_ver}]" "msmtp mail daemon not found"
 fi
+
 exit ${mail_rc}
