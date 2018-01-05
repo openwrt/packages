@@ -72,17 +72,31 @@ query()
 
 status()
 {
-    rc_procd "${adb_script}" status
+    local key keylist value rtfile="$(uci_get adblock.extra.adb_rtfile)"
+
+    rtfile="${rtfile:-"/tmp/adb_runtime.json"}"
+    if [ -s "${rtfile}" ]
+    then
+        printf "%s\n" "::: adblock runtime information"
+        json_load "$(cat "${rtfile}" 2>/dev/null)"
+        json_select data
+        json_get_keys keylist
+        for key in ${keylist}
+        do
+            json_get_var value "${key}"
+            printf "  + %-15s : %s\n" "${key}" "${value}"
+        done
+    fi
 }
 
 service_triggers()
 {
     local trigger="$(uci_get adblock.global.adb_trigger)"
-    local delay="$(uci_get adblock.global.adb_triggerdelay)"
+    local delay="$(uci_get adblock.extra.adb_triggerdelay)"
 
     if [ "${trigger}" != "none" ] && [ "${trigger}" != "timed" ]
     then
-        PROCD_RELOAD_DELAY=$((${delay:-1} * 1000))
+        PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
         procd_add_interface_trigger "interface.*.up" "${trigger}" "${adb_init}" start
     fi
     procd_add_reload_trigger "adblock"
