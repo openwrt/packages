@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2015 OpenWrt.org
+# Copyright (C) 2014-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mcproxy
-PKG_SOURCE_VERSION:=b7bd2d0809a0d1f177181c361b9a6c83e193b79a
-PKG_VERSION:=2014-12-31-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=3
+PKG_SOURCE_VERSION:=93b5ace42268160ebbfff4c61818fb15fa2d9b99
+PKG_VERSION:=2017-08-24-$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/mcproxy/mcproxy.git
