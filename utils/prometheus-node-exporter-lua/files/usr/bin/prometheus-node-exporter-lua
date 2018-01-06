@@ -14,7 +14,8 @@ local unpack = unpack or table.unpack
 -- This table defines the scrapers to run.
 -- Each corresponds directly to a scraper_<name> function.
 scrapers = { "cpu", "load_averages", "memory", "file_handles", "network",
-             "network_devices", "time", "uname", "nat", "wifi"}
+             "network_devices", "time", "uname", "wifi_clients", "nat_sessions",
+             "uname", "nat", "wifi"}
 
 -- Parsing
 
@@ -43,6 +44,17 @@ function get_contents(filename)
   end
 
   return contents
+end
+
+function os.capture(cmd, raw)
+  local f = assert(io.popen(cmd, 'r'))
+  local s = assert(f:read('*a'))
+  f:close()
+  if raw then return s end
+  s = string.gsub(s, '^%s+', '')
+  s = string.gsub(s, '%s+$', '')
+  s = string.gsub(s, '[\n\r]+', ' ')
+  return s
 end
 
 -- Metric printing
@@ -216,6 +228,27 @@ function scraper_network()
   end
 end
 
+function scraper_wifi_clients()
+  local netdevstat = line_split(get_contents("/proc/net/dev"))
+  local client = {}
+  local labels = {}
+  wifi_metric = metric("wifi_client", "gauge")
+  for i, line in ipairs(netdevstat) do
+    if string.match(netdevstat[i], "wlan") then
+      local cmd = ("iwinfo " .. space_split(netdevstat[i])[1]:gsub(":", "") .. " assoclist  |grep ':[0-Z][0-Z]:'|wc -l")
+      client = os.capture(cmd, false)
+      labels['iface'] = space_split(netdevstat[i])[1]:gsub(":", "")
+      wifi_metric(labels, client)
+    end
+  end
+end
+
+function scraper_nat_sessions()
+  local cmd = ("cat /proc/net/nf_conntrack|wc -l")
+  local result = os.capture(cmd, false)
+  metric("nat_sessions", "gauge", nil, result)
+end
+
 function scraper_network_devices()
   local netdevstat = line_split(get_contents("/proc/net/dev"))
   local netdevsubstat = {"receive_bytes", "receive_packets", "receive_errs",
@@ -236,7 +269,7 @@ function scraper_network_devices()
     end
   end
   for i, ndss in ipairs(netdevsubstat) do
-    netdev_metric = metric("node_network_" .. ndss, "gauge")
+    netdev_metric = metric("node_network_" .. ndss, "counter")
     for ii, d in ipairs(devs) do
       netdev_metric({device=d}, nds_table[d][i])
     end
@@ -267,8 +300,8 @@ end
 function scraper_nat()
   -- documetation about nf_conntrack:
   -- https://www.frozentux.net/iptables-tutorial/chunkyhtml/x1309.html
-  -- local natstat = line_split(get_contents("/proc/net/nf_conntrack"))
-  local natstat = line_split(get_contents("nf_conntrack"))
+  local natstat = line_split(get_contents("/proc/net/nf_conntrack"))
+  -- local natstat = line_split(get_contents("nf_conntrack"))
 
   nat_metric =  metric("node_nat_traffic", "gauge" )
   for i, e in ipairs(natstat) do
