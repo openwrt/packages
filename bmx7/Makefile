@@ -30,8 +30,8 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/bmx-routing/bmx7.git
 #PKG_SOURCE_URL:=file:///usr/src/bmx-routing/bmx7.git
 
-PKG_REV:=a0b18da22d4195afdea82ac080eba02f1121f86b
-PKG_VERSION:=r2018010203
+PKG_REV:=0a82c7c10fef44b259b35e77ab33632aa132d219
+PKG_VERSION:=r2018010601
 PKG_RELEASE:=4
 PKG_LICENSE:=GPL-2.0
 
