@@ -321,7 +321,7 @@ static inline void *batadv_skb_put_data(struct sk_buff *skb, const void *data,
 #define TIMER_DATA_TYPE                unsigned long
 #define TIMER_FUNC_TYPE                void (*)(TIMER_DATA_TYPE)
 
-static inline void 	(struct timer_list *timer,
+static inline void timer_setup(struct timer_list *timer,
 			       void (*callback)(struct timer_list *),
 			       unsigned int flags)
 {
