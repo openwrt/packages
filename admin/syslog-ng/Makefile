@@ -2,7 +2,7 @@ include  $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=3.9.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 

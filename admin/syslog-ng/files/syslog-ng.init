@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2006-2016 OpenWrt.org
 
-START=20
+START=12
 PROG=/usr/sbin/syslog-ng
 PROG2=/usr/sbin/syslog-ng-ctl
 
