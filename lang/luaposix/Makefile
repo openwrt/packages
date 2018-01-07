@@ -21,6 +21,8 @@ PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
+PKG_BUILD_DEPENDS:=lua/host
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/luaposix
@@ -30,7 +32,6 @@ define Package/luaposix
   TITLE:=luaposix
   URL:=http://luaforge.net/projects/luaposix/
   DEPENDS:=+lua +librt
-  PKG_BUILD_DEPENDS:=+lua/host
 endef
 
 define Package/luaposix/description
