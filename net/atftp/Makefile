@@ -16,8 +16,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
 PKG_HASH:=ae4c6f09cadb8d2150c3ce32d88f19036a54e8211f22d723e97864bb5e18f92d
 
-PKG_BUILD_DEPENDS:=libpcre libreadline
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/atftp/Default

@@ -15,7 +15,6 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/29/4d/fd9ba0e9b86c05714d9bc945d26376b331899d38c9b0666c7b38f3f26686/
 PKG_HASH:=3cb5334d42cfabda49c9c0efb1c24f5663e318ed34b3a34fada5195232f75f65
-PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)

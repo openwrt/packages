@@ -18,7 +18,7 @@ PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_SOURCE_URL:=https://github.com/OpenSC/OpenSC/releases/download/$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
-PKG_BUILD_DEPENDS:=libpcsclite
+PKG_BUILD_DEPENDS:=pcsc-lite
 PKG_FIXUP:=libtool
 
 PKG_INSTALL:=1

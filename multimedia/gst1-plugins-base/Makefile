@@ -22,7 +22,6 @@ PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-base/
 PKG_HASH:=1c401a79bd1e4521c6ef1b66579bddedd9136e164e54792aab4bfcf3485bf9a7
 
-PKG_BUILD_DEPENDS:= libgstreamer1
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-alsa \
 	CONFIG_PACKAGE_gst1-mod-app \

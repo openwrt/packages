@@ -215,12 +215,6 @@ PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_FFMPEG_CUSTOM_PARSER_%,$(FFMPEG_CUSTOM_PARSERS)) \
 	$(patsubst %,CONFIG_FFMPEG_CUSTOM_PROTOCOL_%,$(FFMPEG_CUSTOM_PROTOCOLS))
 
-PKG_BUILD_DEPENDS:= \
-	PACKAGE_shine:shine \
-	PACKAGE_libx264:libx264 \
-	PACKAGE_lame-lib:lame-lib \
-	PACKAGE_libopus:libopus
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ffmpeg/Default

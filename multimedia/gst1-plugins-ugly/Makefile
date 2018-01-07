@@ -22,7 +22,6 @@ PKG_SOURCE:=gst-plugins-ugly-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-ugly/
 PKG_HASH:=d6edc046350809c967f5b058c5c2e534d99d1d69fe1b26acd849e87781a7d7fc
 
-PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-asf \
 	CONFIG_PACKAGE_gst1-mod-lame \

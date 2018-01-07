@@ -23,8 +23,6 @@ PKG_LICENSE_FILES:=LICENCE
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=libopenssl
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/openssh/Default

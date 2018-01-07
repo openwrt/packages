@@ -20,8 +20,6 @@ PKG_SOURCE_URL:=https://github.com/CoreSecurity/pcapy.git
 PKG_SOURCE_VERSION:=b91a418374d1636408c435f11799ef725ef70097
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=python python-setuptools
-
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 

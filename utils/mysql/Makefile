@@ -23,7 +23,6 @@ PKG_HASH:=05ebe21305408b24407d14b77607a3e5ffa3c300e03f1359d3066f301989dcb5
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0
 
-PKG_BUILD_DEPENDS:=libncurses libreadline
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
@@ -42,7 +41,7 @@ endef
 define Package/mysql-server
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libmysqlclient +libpthread +libncursesw +libreadline
+  DEPENDS:=+libmysqlclient +libpthread +libncurses +libreadline
   TITLE:=MySQL Server
   URL:=http://dev.mysql.com/
   SUBMENU:=database

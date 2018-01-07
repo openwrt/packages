@@ -22,7 +22,7 @@ PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING LICENSE
 
-PKG_BUILD_DEPENDS:=librtlsdr libusb-1.0
+PKG_BUILD_DEPENDS:=libusb
 
 include $(INCLUDE_DIR)/package.mk
 

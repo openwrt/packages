@@ -18,7 +18,7 @@ PKG_HASH:=13fc009e68ca490f986f21a7d5d3a429486fb28a1f4e06298c9ac976067518f5
 
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=glib2/host libpthread zlib libintl libffi
+PKG_BUILD_DEPENDS:=glib2/host gettext
 HOST_BUILD_DEPENDS:=gettext-full/host libiconv/host libffi/host
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0

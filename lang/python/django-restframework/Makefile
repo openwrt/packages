@@ -16,7 +16,6 @@ PKG_SOURCE:=djangorestframework-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/d0/ab/8b991e7d3e26af7cf6327c84b341e60004fc56325d8a4d4019e1474f7456/
 PKG_BUILD_DIR:=$(BUILD_DIR)/djangorestframework-$(PKG_VERSION)
 PKG_HASH:=305b2c6564ca46d3b558ba21110ed717135c467adf1a6dfd192bd85f4bb04d50
-PKG_BUILD_DEPENDS:=python python-setuptools
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
