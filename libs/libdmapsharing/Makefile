@@ -10,7 +10,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdmapsharing
-PKG_VERSION:=2.9.38
+PKG_VERSION:=2.9.39
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=libdmapsharing-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.flyn.org/projects/libdmapsharing/
-PKG_HASH:=165952dced0d0561dd7d3f2db5d40605d9ecff999ab7530db63e8a60343b0615
+PKG_HASH:=a90dc0681ae81700e46efc539f70edb6edd936b782a9a695434bea660a43a5ef
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
