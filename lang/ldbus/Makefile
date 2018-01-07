@@ -19,7 +19,7 @@ PKG_LICENSE:=MIT
 
 PKG_FLAGS := nonshared
 
-PKG_BUILD_DEPENDS:=+luarocks/host +dbus +libdbus
+PKG_BUILD_DEPENDS:=luarocks/host dbus libdbus
 
 include $(INCLUDE_DIR)/package.mk
 
