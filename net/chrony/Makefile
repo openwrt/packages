@@ -19,7 +19,7 @@ PKG_MAINTAINER:=Miroslav Lichvar <mlichvar0@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_DEPENDS:=+pps-tools
+PKG_BUILD_DEPENDS:=pps-tools
 
 include $(INCLUDE_DIR)/package.mk
 
