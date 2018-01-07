@@ -26,7 +26,7 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-PKG_BUILD_DEPENDS:= +libpthread
+PKG_BUILD_DEPENDS:=libpthread
 
 define Package/announce
 	SECTION:=net
