@@ -22,8 +22,6 @@ PKG_MIRROR_HASH:=b6ea4a11366330790f5e36bd875b45bb19a9772dfc984c462f436dfca30256c
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=libflac libvorbis libmpg123 libfaad2 SQUEEZELITE_WMA:libffmpeg-audio-dec
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/squeezelite/default

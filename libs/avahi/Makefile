@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSIO
 PKG_HASH:=d54991185d514a0aba54ebeb408d7575b60f5818a772e28fa0e18b98bc1db454
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_BUILD_DEPENDS:=libexpat libdaemon libgdbm intltool/host libpthread dbus
+PKG_BUILD_DEPENDS:=intltool/host
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh

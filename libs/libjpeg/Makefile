@@ -20,7 +20,7 @@ PKG_LICENSE:=IJG
 PKG_LICENSE_FILES:=README
 
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=libltdl
+PKG_BUILD_DEPENDS:=libtool
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk

@@ -15,8 +15,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/bb/26/3b64955ff73f9e3155079b9ed31812afdfa5333b5c76387454d651ef593a
 PKG_HASH:=3a21c5a15f433710aaa26f1ae174b615973a25182006ae7f9c26de151cd51716
 
-PKG_BUILD_DEPENDS:=python python-setuptools
-
 PKG_LICENSE:=Python-2.0
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 

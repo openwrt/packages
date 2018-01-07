@@ -20,8 +20,6 @@ PKG_SOURCE_VERSION:=6cd0909d613a66033ecdefaca6cc07cfa7d46d6b
 PKG_MIRROR_HASH:=fe8657552b1dbaf8b9eba50168730e200567dc88a06932aa1cf60dc93211d16b
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=python python-setuptools
-
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 

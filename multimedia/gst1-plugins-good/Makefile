@@ -22,8 +22,6 @@ PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-good/
 PKG_HASH:=be053f6ed716eeb517cec148cec637cdce571c6e04d5c21409e2876fb76c7639
 
-PKG_BUILD_DEPENDS:= libgstreamer1 gst1-plugins-base
-
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
