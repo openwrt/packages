@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 Daniel Engberg <daniel.engberg.lists@pyret.net>
+# Copyright (C) 2016-2018 Daniel Engberg <daniel.engberg.lists@pyret.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,18 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sngrep
-PKG_VERSION=1.4.4-rc2
+PKG_VERSION=1.4.5-rc1
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/irontec/sngrep
-PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=cf5e1da49d00bc7ab1afe9d63daa240db2b9b19c
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=a6cee2caa108a618134fe87d7c04862e93aa2fdf9647d81dfe4abe91a6c9c19f
+PKG_SOURCE_URL:=https://codeload.github.com/irontec/$(PKG_NAME)/tar.gz/5f97547?dummy=/
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=1e03bb8506753483929223c46ca83908699df3cb2f577a9676b21130212da99c
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-5f97547
 
 PKG_FIXUP:=autoreconf
 
