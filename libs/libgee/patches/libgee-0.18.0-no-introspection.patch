@@ -1,10 +1,11 @@
-diff -u --recursive libgee-0.18.0-vanilla/configure.ac libgee-0.18.0/configure.ac
---- libgee-0.18.0-vanilla/configure.ac	2015-03-23 23:24:39.000000000 -0400
-+++ libgee-0.18.0/configure.ac	2015-10-18 07:25:39.474698663 -0400
-@@ -64,10 +64,6 @@
+diff -u --recursive libgee-0.20.0-vanilla/configure.ac libgee-0.20.0/configure.ac
+--- libgee-0.20.0-vanilla/configure.ac	2018-01-07 20:42:52.827537620 -0500
++++ libgee-0.20.0/configure.ac	2018-01-07 20:43:25.128645499 -0500
+@@ -65,11 +65,6 @@
                enable_consistency_check=$enableval, enable_consistency_check=no)
  AS_IF([test "x$enable_consistency_check" != xno], [VALA_ADD_VALAFLAGS(-D CONSISTENCY_CHECKS)])
  
+-AX_REQUIRE_DEFINED([GOBJECT_INTROSPECTION_CHECK])
 -GOBJECT_INTROSPECTION_CHECK([0.9.0])
 -
 -VALA_CHECK([0.25.1])
@@ -12,9 +13,9 @@ diff -u --recursive libgee-0.18.0-vanilla/configure.ac libgee-0.18.0/configure.a
  AC_OUTPUT([Makefile
             gee-0.8.pc
             benchmark/Makefile
-diff -u --recursive libgee-0.18.0-vanilla/gee/Makefile.am libgee-0.18.0/gee/Makefile.am
---- libgee-0.18.0-vanilla/gee/Makefile.am	2015-03-16 11:23:57.000000000 -0400
-+++ libgee-0.18.0/gee/Makefile.am	2015-10-18 10:41:49.759314756 -0400
+diff -u --recursive libgee-0.20.0-vanilla/gee/Makefile.am libgee-0.20.0/gee/Makefile.am
+--- libgee-0.20.0-vanilla/gee/Makefile.am	2018-01-07 20:42:52.829537627 -0500
++++ libgee-0.20.0/gee/Makefile.am	2018-01-07 20:43:48.332722990 -0500
 @@ -146,29 +146,6 @@
  	gee-0.8.vapi \
  	$(NULL)
@@ -45,10 +46,10 @@ diff -u --recursive libgee-0.18.0-vanilla/gee/Makefile.am libgee-0.18.0/gee/Make
  MOSTLYCLEANFILES = \
  	$(libgee_0_8_la_VALASOURCES:.vala=.c) \
  	libgee_0_8_la_vala.stamp \
-diff -u --recursive libgee-0.18.0-vanilla/gee/Makefile.in libgee-0.18.0/gee/Makefile.in
---- libgee-0.18.0-vanilla/gee/Makefile.in	2015-03-23 23:25:03.000000000 -0400
-+++ libgee-0.18.0/gee/Makefile.in	2015-10-18 11:02:34.888709559 -0400
-@@ -285,14 +285,6 @@
+diff -u --recursive libgee-0.20.0-vanilla/gee/Makefile.in libgee-0.20.0/gee/Makefile.in
+--- libgee-0.20.0-vanilla/gee/Makefile.in	2018-01-07 20:42:52.830537630 -0500
++++ libgee-0.20.0/gee/Makefile.in	2018-01-07 20:44:18.433823516 -0500
+@@ -297,14 +297,6 @@
  INSTALL_PROGRAM = @INSTALL_PROGRAM@
  INSTALL_SCRIPT = @INSTALL_SCRIPT@
  INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
@@ -63,7 +64,7 @@ diff -u --recursive libgee-0.18.0-vanilla/gee/Makefile.in libgee-0.18.0/gee/Make
  LCOV = @LCOV@
  LD = @LD@
  LDFLAGS = @LDFLAGS@
-@@ -531,25 +523,6 @@
+@@ -544,25 +536,6 @@
  	gee-0.8.vapi \
  	$(NULL)
  
@@ -89,7 +90,7 @@ diff -u --recursive libgee-0.18.0-vanilla/gee/Makefile.in libgee-0.18.0/gee/Make
  MOSTLYCLEANFILES = \
  	$(libgee_0_8_la_VALASOURCES:.vala=.c) \
  	libgee_0_8_la_vala.stamp \
-@@ -1607,9 +1580,6 @@
+@@ -1621,9 +1594,6 @@
  
  $(libgee_0_8_la_VALASOURCES:.vala=.c): libgee_0_8_la_vala.stamp
  gee-0.8.vapi gee-internals-0.8.vapi gee.h gee-internals.h: libgee_0_8_la_vala.stamp
