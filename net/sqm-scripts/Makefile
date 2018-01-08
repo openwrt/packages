@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=sqm-scripts
 PKG_SOURCE_VERSION:=8217081f7e52af342c362b29480461575c496387
 PKG_VERSION:=1.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPLv2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE).tar.xz
@@ -81,7 +81,7 @@ uci -q get ucitrack.@sqm[0] > /dev/null && {
   uci delete ucitrack.@sqm[0]
   uci del_list ucitrack.@firewall[0].affects=sqm
   uci commit
-}
+} || exit 0
 endef
 
 $(eval $(call BuildPackage,sqm-scripts))
