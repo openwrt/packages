@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2015 OpenWrt.org
-# Copyright (C) 2014-2016 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
+# Copyright (C) 2014-2018 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liburcu
-PKG_VERSION:=0.9.2
+PKG_VERSION:=0.9.4
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
@@ -17,7 +17,7 @@ PKG_LICENSE:=LGPL-2.1 GPL-2.0 GPL-3.0 MIT
 
 PKG_SOURCE:=userspace-rcu-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://lttng.org/files/urcu/
-PKG_HASH:=8f7fa313b1e0a3f742cea24ce63a39c0efe63e615a769e2961e55bd2663ecaa3
+PKG_HASH:=ec6c909249040dfa59bb34686482b62072ce5477f5e2e2153dac47de50b36b68
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/userspace-rcu-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
