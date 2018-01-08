@@ -9,15 +9,13 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=exfat-nofuse
-PKG_VERSION=2017-01-03-$(PKG_SOURCE_VERSION)
+PKG_VERSION=snapshot-20170619
 PKG_RELEASE:=1
 
-PKG_SOURCE=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=80abb670a59dfa62413e600cee7d13fc65b9980e00579edaa2573fab8568fe93
-PKG_SOURCE_URL:=https://github.com/dorimanx/exfat-nofuse.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=8d291f525ce6d88fe0d8b11b86fd5c2e900401d3
+PKG_SOURCE_URL:=https://codeload.github.com/dorimanx/$(PKG_NAME)/tar.gz/de4c760?dummy=/
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=8cf4c0f6b68ca46ac1581fa56ba2b78246fbe7230190ea38c80e46f48fbcd6cd
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-de4c760
 
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>
 PKG_LICENSE:=GPL-2.0
