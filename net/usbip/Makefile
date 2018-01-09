@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=usbip
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 PKG_LICENSE:=GPL-2.0
 
 # Since kernel 2.6.39.1 userspace tools are inside the kernel tree
@@ -92,7 +92,7 @@ define Package/usbip/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libusbip.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/share/hwdata
-	$(CP) $(DL_DIR)/usb.ids $(1)/usr/share/hwdata/
+	$(CP) $(DL_DIR)/usb.ids.$(USB_IDS_REV) $(1)/usr/share/hwdata/usb.ids
 endef
 
 define Package/usbip-client/install
