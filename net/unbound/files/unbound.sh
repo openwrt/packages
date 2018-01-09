@@ -60,6 +60,8 @@ UNBOUND_TXT_DOMAIN=lan
 UNBOUND_TXT_FWD_ZONE=""
 UNBOUND_TXT_HOSTNAME=thisrouter
 
+UNBOUND_LIST_INSECURE=""
+
 ##############################################################################
 
 # keep track of local-domain: assignments during inserted resource records
@@ -394,7 +396,7 @@ create_access_control() {
 ##############################################################################
 
 create_domain_insecure() {
-  echo "  domain-insecure: \"$1\"" >> $UNBOUND_CONFFILE
+  UNBOUND_LIST_INSECURE="$UNBOUND_LIST_INSECURE $1"
 }
 
 ##############################################################################
@@ -568,8 +570,7 @@ unbound_control() {
 ##############################################################################
 
 unbound_conf() {
-  local cfg="$1"
-  local rt_mem rt_conn modulestring
+  local rt_mem rt_conn modulestring domain
 
   # Make fresh conf file
   echo > $UNBOUND_CONFFILE
@@ -862,9 +863,15 @@ unbound_conf() {
   fi
 
 
-  # Except and accept domains as insecure (DNSSEC); work around broken domains
-  config_list_foreach "$cfg" "domain_insecure" create_domain_insecure
-  echo >> $UNBOUND_CONFFILE
+  if  [ -n "$UNBOUND_LIST_INSECURE" ] ; then
+    for domain in $UNBOUND_LIST_INSECURE ; do
+      # Except and accept domains without (DNSSEC); work around broken domains
+      echo "  domain-insecure: \"$domain\"" >> $UNBOUND_CONFFILE
+    done
+
+
+    echo >> $UNBOUND_CONFFILE
+  fi
 }
 
 ##############################################################################
@@ -1043,6 +1050,8 @@ unbound_uci() {
   config_get UNBOUND_TTL_MIN     "$cfg" ttl_min 120
   config_get UNBOUND_TXT_DOMAIN  "$cfg" domain lan
 
+  config_list_foreach "$cfg" "domain_insecure" create_domain_insecure
+
   UNBOUND_LIST_DOMAINS="nowhere $UNBOUND_TXT_DOMAIN"
 
   if [ "$UNBOUND_D_DHCP_LINK" = "none" ] ; then
@@ -1162,6 +1171,7 @@ unbound_start() {
     unbound_conf
     unbound_access
     unbound_adblock
+
 
     if [ "$UNBOUND_D_DHCP_LINK" = "dnsmasq" ] ; then
       dnsmasq_link
