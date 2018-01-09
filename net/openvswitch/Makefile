@@ -159,6 +159,7 @@ TARGET_CFLAGS += -flto -std=gnu99
 CONFIGURE_VARS += \
 	ovs_cv_flake8=no \
 	ovs_cv_python3=no \
+	ovs_cv_sphinx=no \
 	KARCH=$(LINUX_KARCH)
 
 MAKE_FLAGS += \
