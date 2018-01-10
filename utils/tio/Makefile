@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 Daniel Engberg <daniel.engberg.lists@pyret.net>
+# Copyright (C) 2017-2018 Daniel Engberg <daniel.engberg.lists@pyret.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tio
-PKG_VERSION:=1.26
+PKG_VERSION:=1.28
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=f9532d519fcc7d19b25fbe9fc1ee857dc10e5862a450b4b3b423f8e8538f2500
+PKG_HASH:=bb5fa22b2ca5c2eeb811f57e1af45ae5a2b852eed1aabbeb3a419cc3b4d4d22a
 
 PKG_FIXUP:=autoreconf
 
