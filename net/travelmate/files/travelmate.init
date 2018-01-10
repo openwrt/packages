@@ -31,14 +31,30 @@ stop_service()
 {
     local rtfile="$(uci -q get travelmate.global.trm_rtfile)"
 
-    rtfile="${rtfile:="/tmp/trm_runtime.json"}"
+    rtfile="${rtfile:-"/tmp/trm_runtime.json"}"
     > "${rtfile}"
     rc_procd start_service
 }
 
 status()
 {
-    rc_procd "${trm_script}" status
+    local key keylist value rtfile="$(uci_get travelmate.global.trm_rtfile)"
+
+    rtfile="${rtfile:-"/tmp/trm_runtime.json"}"
+    if [ -s "${rtfile}" ]
+    then
+        printf "%s\n" "::: travelmate runtime information"
+        json_load "$(cat "${rtfile}" 2>/dev/null)"
+        json_select data
+        json_get_keys keylist
+        for key in ${keylist}
+        do
+            json_get_var value "${key}"
+            printf "  + %-18s : %s\n" "${key}" "${value}"
+        done
+    else
+        printf "%s\n" "::: no travelmate runtime information available"
+    fi
 }
 
 service_triggers()
