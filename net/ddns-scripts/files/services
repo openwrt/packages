@@ -37,6 +37,7 @@
 #.cloudflare.com-v4	!!! Please install additional package "ddns-scripts_cloudflare.com-v4"
 #.godaddy.com-v1	!!! Please install additional package "ddns-scripts_godaddy.com-v1"
 #.no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
+#.route53-v1		!!! Please install additional package "ddns-scripts_route53-v1"
 
 "3322.org"		"http://[USERNAME]:[PASSWORD]@members.3322.org/dyndns/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"
 
