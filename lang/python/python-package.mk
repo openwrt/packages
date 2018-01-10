@@ -70,20 +70,10 @@ define PyPackage
   define Package/$(1)/install
 	$(call PyPackage/$(1)/install,$$(1))
 	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
-	if [ -e files/python-package-install.sh ] ; then \
-		$(SHELL) files/python-package-install.sh \
-			"$(PKG_INSTALL_DIR)" "$$(1)" \
-			"$(HOST_PYTHON_BIN)" "$$(2)" \
-			"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" ; \
-	elif [ -e $(STAGING_DIR)/mk/python-package-install.sh ] ; then \
-		$(SHELL) $(STAGING_DIR)/mk/python-package-install.sh \
-			"$(PKG_INSTALL_DIR)" "$$(1)" \
-			"$(HOST_PYTHON_BIN)" "$$(2)" \
-			"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" ; \
-	else \
-		echo "No 'python-package-install.sh' script found" ; \
-		exit 1 ; \
-	fi
+	$(SHELL) $(python_mk_path)python-package-install.sh \
+		"$(PKG_INSTALL_DIR)" "$$(1)" \
+		"$(HOST_PYTHON_BIN)" "$$(2)" \
+		"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)"
   endef
 
   define Package/$(1)-src/install
