@@ -21,7 +21,7 @@ PKG_SOURCE_VERSION:=b91a418374d1636408c435f11799ef725ef70097
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-pcapy
 	SECTION:=language-python

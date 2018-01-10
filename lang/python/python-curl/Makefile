@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://dl.bintray.com/pycurl/pycurl/
 PKG_HASH:=43231bf2bafde923a6d9bb79e2407342a5f3382c1ef0a3b2e491c6a4e50b91aa
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-curl
   CATEGORY:=Languages

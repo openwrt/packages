@@ -32,7 +32,7 @@ PKG_INSTALL:=1
 SUPPORTED_KERNELS:=LINUX_3_18||LINUX_4_1||LINUX_4_3||LINUX_4_4||LINUX_4_9
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../../lang/python/python-package.mk
 
 define Package/openvswitch/Default
   SECTION:=net

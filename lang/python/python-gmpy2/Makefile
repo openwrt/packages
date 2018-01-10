@@ -22,8 +22,8 @@ PKG_LICENSE_FILES:=COPYING.LESSER
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
-$(call include_mk, python3-package.mk)
+include ../python-package.mk
+include ../python3-package.mk
 
 PKG_UNPACK:=unzip -q -d $(PKG_BUILD_DIR) $(DL_DIR)/$(PKG_SOURCE); mv -f $(PKG_BUILD_DIR)/gmpy2-$(PKG_VERSION)/* $(PKG_BUILD_DIR)
 
