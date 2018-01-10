@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/fc/bb/a5768c230f9ddb03acc9ef3f0
 PKG_HASH:=84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/chardet
   SUBMENU:=Python

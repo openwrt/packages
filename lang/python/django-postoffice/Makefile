@@ -18,7 +18,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/django-post_office-$(PKG_VERSION)/
 PKG_HASH:=8d691b2e53ba8121d770ce448f05568874cf78a3cf63215918ad49536db5e76a
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/django-postoffice
   SUBMENU:=Python

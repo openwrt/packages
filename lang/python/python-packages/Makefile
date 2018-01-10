@@ -32,7 +32,7 @@ PKG_CONFIG_DEPENDS:= \
 PKG_BUILD_DEPENDS:=python python/host
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-packages
   SUBMENU:=Python
