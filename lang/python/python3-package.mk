@@ -69,7 +69,7 @@ define Py3Package
   define Package/$(1)/install
 	$(call Py3Package/$(1)/install,$$(1))
 	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
-	$(SHELL) $(python3_mk_path)python3-package-install.sh \
+	$(SHELL) $(python3_mk_path)python-package-install.sh "3" \
 		"$(PKG_INSTALL_DIR)" "$$(1)" \
 		"$(HOST_PYTHON3_BIN)" "$$(2)" \
 		"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)"
