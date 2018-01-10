@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyasn1
-PKG_VERSION:=0.3.7
+PKG_VERSION:=0.4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=pyasn1-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/3c/a6/4d6c88aa1694a06f6671362cb3d0350f0d856edea4685c300785200d1cd9/
-PKG_HASH:=187f2a66d617683f8e82d5c00033b7c8a0287e1da88a9d577aebec321cad4965
+PKG_SOURCE_URL:=https://pypi.python.org/packages/eb/3d/b7d0fdf4a882e26674c68c20f40682491377c4db1439870f5b6f862f76ed
+PKG_HASH:=d258b0a71994f7770599835249cece1caef3c70def868c4915e6e5ca49b67d15
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
