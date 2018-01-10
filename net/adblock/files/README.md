@@ -62,7 +62,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * zero-conf like automatic installation & setup, usually no manual changes needed
 * simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
 * supports five different dns backends / blocklist formats: dnsmasq, unbound, named (bind), kresd and dnscrypt-proxy
-* automatically selects uclient-fetch or wget as download utility (other tools like curl or aria2c are supported as well)
+* supports six different download utilities: uclient-fetch, wget, curl, aria2c, wget-nossl, busybox-wget
 * provides 'http only' mode without installed ssl library for all non-SSL blocklist sources
 * supports a wide range of router modes, even AP modes are supported
 * full IPv4 and IPv6 support
@@ -120,15 +120,18 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **disable active dns probing in windows 10:** to prevent a yellow exclamation mark on your internet connection icon (which wrongly means connected, but no internet), please change the following registry key/value from "1" to "0" _HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet\EnableActiveProbing_
 
 ## Further adblock config options
-* usually the pre-configured adblock setup works quite well and no manual config overrides are needed, all listed options apply to the 'global' config section:
+* usually the pre-configured adblock setup works quite well and no manual overrides are needed
+* the following options apply to the 'global' config section:
     * adb\_enabled => main switch to enable/disable adblock service (default: '0', disabled)
     * adb\_debug => enable/disable adblock debug output (default: '0', disabled)
+    * adb\_fetchutil => name of the used download utility: 'uclient-fetch', 'wget', 'curl', 'aria2c', 'wget-nossl'. 'busybox' (default: 'uclient-fetch')
+    * adb\_fetchparm => special config options for the download utility (default: not set)
     * adb\_dns => select the dns backend for your environment: 'dnsmasq', 'unbound', 'named', 'kresd' or 'dnscrypt-proxy' (default: 'dnsmasq')
     * adb\_dnsdir => target directory for the generated blocklist 'adb_list.overall' (default: not set, use dns backend default)
     * adb\_trigger => set the startup trigger to a certain interface, to 'timed' or to 'none' (default: 'wan')
+
+* the following options apply to the 'extra' config section:
     * adb\_triggerdelay => additional trigger delay in seconds before adblock processing begins (default: '1')
-    * adb\_fetch => full path to a dedicated download utility, see example below (default: not set, use wget default)
-    * adb\_fetchparm => options for the download utility, see example below (default: not set, use wget default options)
     * adb\_forcedns => force dns requests to local resolver (default: '0', disabled)
     * adb\_forcesrt => force overall sort on low memory devices with less than 64 MB RAM (default: '0', disabled)
     * adb\_backup_mode => do not automatically update blocklists during startup, use backups instead (default: '0', disabled)
@@ -197,26 +200,6 @@ password        xxx
 </code></pre>
 Edit the file '/etc/adblock/adblock.notify' and change at least the 'mail_receiver'.  
 Finally make this file executable via 'chmod' and test it directly. If no more errors come up you can comment 'mail_debug', too.
-  
-**configuration for different download utilities:**
-
-<pre><code>
-wget (default):
-  option adb_fetch '/usr/bin/wget'
-  option adb_fetchparm '--quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O'
-
-aria2c:
-  option adb_fetch '/usr/bin/aria2c'
-  option adb_fetchparm '-q --timeout=10 --allow-overwrite=true --auto-file-renaming=false --check-certificate=false -o'
-
-uclient-fetch:
-  option adb_fetch '/bin/uclient-fetch'
-  option adb_fetchparm '-q --timeout=10 --no-check-certificate -O'
-
-curl:
-  option adb_fetch '/usr/bin/curl'
-  option adb_fetchparm '-s --connect-timeout 10 --insecure -o'
-</code></pre>
   
 **receive adblock runtime information:**
 

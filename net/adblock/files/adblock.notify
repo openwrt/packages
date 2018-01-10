@@ -10,7 +10,7 @@
 
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-mail_ver="1.0.0"
+mail_ver="1.0.1"
 mail_daemon="$(command -v msmtp)"
 mail_profile="adb_notify"
 mail_debug="--debug"
@@ -19,6 +19,13 @@ mail_rc=1
 if [ ! -x "${mail_daemon}" ]
 then
     mail_daemon="$(command -v sendmail)"
+fi
+
+if [ -f "/var/log/messages" ]
+then
+    logfile="$(cat /var/log/messages | grep "adblock-")"
+else
+    logfile="$(logread -e "adblock-")"
 fi
 
 # mail header
@@ -33,6 +40,7 @@ mail_head="From: ${mail_sender}\nTo: ${mail_receiver}\nSubject: ${mail_topic}\nR
 mail_text="adblock status, generated at $(date 2>&1)!"
 mail_text="${mail_text}\n++\n++ System Information ++\n++\n$(cat /etc/banner 2>&1)"
 mail_text="${mail_text}\n\n++\n++ Adblock Information ++\n++\n$(/etc/init.d/adblock status 2>&1)"
+mail_text="${mail_text}\n\n++\n++ Logfile Information ++\n++\n${logfile}\n++\n++\n"
 
 # send mail
 #
