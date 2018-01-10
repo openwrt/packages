@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 # The file included below defines PYTHON_VERSION
-include ./files/python3-version.mk
+include ../python3-version.mk
 
 PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
@@ -25,10 +25,10 @@ PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
 
 # This file provides the necsessary host build variables
-include ./files/python3-host.mk
+include ../python3-host.mk
 
 # For Py3Package
-include ./files/python3-package.mk
+include ../python3-package.mk
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
