@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.4.1"
+adb_ver="3.4.3"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -23,8 +23,7 @@ adb_notifycnt=0
 adb_triggerdelay=0
 adb_backup=0
 adb_backupdir="/mnt"
-adb_fetchutil="/usr/bin/wget"
-adb_fetchparm="--quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"
+adb_fetchutil="uclient-fetch"
 adb_dns="dnsmasq"
 adb_dnsprefix="adb_list"
 adb_dnsfile="${adb_dnsprefix}.overall"
@@ -37,18 +36,13 @@ adb_hashnew=""
 adb_cnt=0
 adb_rc=0
 adb_action="${1:-"start"}"
+adb_pidfile="/var/run/adblock.pid"
 
 # load adblock environment
 #
 f_envload()
 {
     local dns_up sys_call sys_desc sys_model sys_ver cnt=0
-
-    # create temp files and directories
-    #
-    adb_tmpload="$(mktemp -tu)"
-    adb_tmpfile="$(mktemp -tu)"
-    adb_tmpdir="$(mktemp -p /tmp -d)"
 
     # get system information
     #
@@ -186,10 +180,10 @@ f_envload()
     if [ ${adb_enabled} -eq 0 ]
     then
         f_extconf
+        f_temp
         f_rmdns
         f_jsnup
         f_log "info" "adblock is currently disabled, please set adb_enabled to '1' to use this service"
-        f_rmtemp
         exit 0
     fi
 
@@ -203,15 +197,10 @@ f_envload()
         printf '%s\n' "${adb_dnsheader}" > "${adb_dnsdir}/${adb_dnsfile}"
     fi
 
-    case "${adb_action}" in
-        start|restart|reload)
-            > "${adb_rtfile}"
-            if [ "${adb_action}" = "start" ] && [ "${adb_trigger}" = "timed" ]
-            then
-                sleep ${adb_triggerdelay}
-            fi
-        ;;
-    esac
+    if [ "${adb_action}" = "start" ] && [ "${adb_trigger}" = "timed" ]
+    then
+        sleep ${adb_triggerdelay}
+    fi
 
     while [ ${cnt} -le 30 ]
     do
@@ -236,56 +225,81 @@ f_envcheck()
 {
     local ssl_lib
 
-    f_log "info" "start adblock processing (${adb_action})"
-
     # check external uci config files
     #
     f_extconf
 
     # check fetch utility
     #
-    if [ -x "${adb_fetchutil}" ]
-    then
-        if [ "$(readlink -fn "${adb_fetchutil}")" = "/usr/bin/wget-nossl" ]
-        then
-            adb_fetchparm="--quiet --no-cache --no-cookies --max-redirect=0 --timeout=10 -O"
-        elif [ "$(readlink -fn "${adb_fetchutil}")" = "/bin/busybox" ] ||
-            ([ "$(readlink -fn "/bin/wget")" = "/bin/busybox" ] && [ "$(readlink -fn "${adb_fetchutil}")" != "/usr/bin/wget" ])
-        then
-            adb_fetchutil="/bin/busybox"
-            adb_fetchparm="-q -O"
-        else
+    case "${adb_fetchutil}" in
+        uclient-fetch)
+            if [ -f "/lib/libustream-ssl.so" ]
+            then
+                adb_fetchparm="${adb_fetchparm:-"--timeout=10 --no-check-certificate -O"}"
+                ssl_lib="libustream-ssl"
+            else
+                adb_fetchparm="${adb_fetchparm:-"--timeout=10 -O"}"
+            fi
+        ;;
+        wget)
+            adb_fetchparm="${adb_fetchparm:-"--no-cache --no-cookies --max-redirect=0 --timeout=10 --no-check-certificate -O"}"
             ssl_lib="built-in"
-        fi
-    fi
-    if [ ! -x "${adb_fetchutil}" ] && [ "$(readlink -fn "/bin/wget")" = "/bin/uclient-fetch" ]
-    then
-        adb_fetchutil="/bin/uclient-fetch"
-        if [ -f "/lib/libustream-ssl.so" ]
-        then
-            adb_fetchparm="-q --timeout=10 --no-check-certificate -O"
-            ssl_lib="libustream-ssl"
-        else
-            adb_fetchparm="-q --timeout=10 -O"
-        fi
-    fi
+        ;;
+        wget-nossl)
+            adb_fetchparm="${adb_fetchparm:-"--no-cache --no-cookies --max-redirect=0 --timeout=10 -O"}"
+        ;;
+        busybox)
+            adb_fetchparm="${adb_fetchparm:-"-O"}"
+        ;;
+        curl)
+            adb_fetchparm="${adb_fetchparm:-"--connect-timeout 10 --insecure -o"}"
+            ssl_lib="built-in"
+        ;;
+        aria2c)
+            adb_fetchparm="${adb_fetchparm:-"--timeout=10 --allow-overwrite=true --auto-file-renaming=false --check-certificate=false -o"}"
+            ssl_lib="built-in"
+        ;;
+    esac
+    adb_fetchutil="$(command -v "${adb_fetchutil}")"
+
     if [ ! -x "${adb_fetchutil}" ] || [ -z "${adb_fetchutil}" ] || [ -z "${adb_fetchparm}" ]
     then
-        f_log "err" "no download utility found, please install 'uclient-fetch' with 'libustream-mbedtls' or the full 'wget' package"
+        f_log "err" "download utility not found, please install 'uclient-fetch' with 'libustream-mbedtls' or the full 'wget' package"
     fi
-    adb_fetchinfo="${adb_fetchutil##*/} (${ssl_lib:-"-"})"
+    adb_fetchinfo="${adb_fetchutil} (${ssl_lib:-"-"})"
+
+    f_temp
+    f_jsnup "running"
+    f_log "info" "start adblock processing (${adb_action})"
 }
 
-# remove temp files and directories
+# create temporay files and directories
+#
+f_temp()
+{
+    if [ -z "${adb_tmpdir}" ]
+    then
+        adb_tmpdir="$(mktemp -p /tmp -d)"
+        adb_tmpload="$(mktemp -tu)"
+        adb_tmpfile="$(mktemp -tu)"
+    fi
+    if [ ! -s "${adb_pidfile}" ]
+    then
+        printf '%s' "${$}" > "${adb_pidfile}"
+    fi
+}
+
+# remove temporay files and directories
 #
 f_rmtemp()
 {
     if [ -d "${adb_tmpdir}" ]
     then
+        rm -rf "${adb_tmpdir}"
         rm -f "${adb_tmpload}"
         rm -f "${adb_tmpfile}"
-        rm -rf "${adb_tmpdir}"
     fi
+    > "${adb_pidfile}"
 }
 
 # remove dns related files and directories
@@ -304,6 +318,7 @@ f_rmdns()
         then
             f_dnsup
         fi
+        f_rmtemp
     fi
     f_log "debug" "f_rmdns::: dns: ${adb_dns}, dns_dir: ${adb_dnsdir}, dns_prefix: ${adb_dnsprefix}, dns_file: ${adb_dnsfile}, rt_file: ${adb_rtfile}, backup_dir: ${adb_backupdir}"
 }
@@ -424,7 +439,7 @@ f_dnsup()
             ;;
             unbound)
                 cache_util="$(command -v unbound-control)"
-                if [ -x "${cache_util}" ] && [ -f "${adb_dnsdir}"/unbound.conf ]
+                if [ -x "${cache_util}" ] && [ -d "${adb_tmpdir}" ] && [ -f "${adb_dnsdir}"/unbound.conf ]
                 then
                     "${cache_util}" -c "${adb_dnsdir}"/unbound.conf dump_cache > "${adb_tmpdir}"/adb_cache.dump 2>/dev/null
                 fi
@@ -462,7 +477,7 @@ f_dnsup()
             case "${adb_dns}" in
                 unbound)
                     cache_util="$(command -v unbound-control)"
-                    if [ -x "${cache_util}" ] && [ -s "${adb_tmpdir}"/adb_cache.dump ]
+                    if [ -x "${cache_util}" ] && [ -d "${adb_tmpdir}" ] && [ -s "${adb_tmpdir}"/adb_cache.dump ]
                     then
                         while [ ${cnt} -le 10 ]
                         do
@@ -484,7 +499,7 @@ f_dnsup()
         cnt=$((cnt+1))
         sleep 1
     done
-    f_log "debug" "f_dnsup::: cache_util: ${cache_util:-"-"}, cache_rc: ${cache_rc}, cache_flush: ${adb_dnsflush}, cache_cnt: ${cnt}, out_rc: ${adb_rc}"
+    f_log "debug" "f_dnsup::: cache_util: ${cache_util:-"-"}, cache_rc: ${cache_rc:-"-"}, cache_flush: ${adb_dnsflush}, cache_cnt: ${cnt}, out_rc: ${adb_rc}"
 }
 
 # backup/restore/remove blocklists
@@ -607,9 +622,12 @@ f_switch()
     fi
     if [ ${?} -eq 1 ]
     then
+        f_temp
         f_dnsup
         f_jsnup
         f_log "info" "${mode} adblock processing"
+        f_rmtemp
+        exit 0
     fi
 }
 
@@ -647,20 +665,24 @@ f_query()
 #
 f_jsnup()
 {
-    local status bg_pid mode="normal mode" rundate="$(/bin/date "+%d.%m.%Y %H:%M:%S")"
+    local bg_pid rundate status="${1}" mode="normal mode"
 
-    if [ ${adb_rc} -gt 0 ]
+    if [ -z "${status}" ]
     then
-        status="error"
-    elif [ ${adb_enabled} -eq 0 ]
-    then
-        status="disabled"
-    elif [ -s "${adb_dnsdir}/.${adb_dnsfile}" ]
-    then
-        status="paused"
-    else
-        status="enabled"
-        f_count
+        rundate="$(/bin/date "+%d.%m.%Y %H:%M:%S")"
+        if [ ${adb_rc} -gt 0 ]
+        then
+            status="error"
+        elif [ ${adb_enabled} -eq 0 ]
+        then
+            status="disabled"
+        elif [ -s "${adb_dnsdir}/.${adb_dnsfile}" ]
+        then
+            status="paused"
+        else
+            status="enabled"
+            f_count
+        fi
     fi
 
     if [ ${adb_backup_mode} -eq 1 ]
@@ -685,7 +707,7 @@ f_jsnup()
     json_add_string "overall_domains" "${adb_cnt} (${mode})"
     json_add_string "fetch_utility" "${adb_fetchinfo:-"-"}"
     json_add_string "dns_backend" "${adb_dns} (${adb_dnsdir})"
-    json_add_string "last_rundate" "${rundate}"
+    json_add_string "last_rundate" "${rundate:-"-"}"
     json_add_string "system_release" "${adb_sysver}"
     json_close_object
     json_dump > "${adb_rtfile}"
@@ -712,7 +734,6 @@ f_log()
         then
             f_rmdns
             f_jsnup
-            f_rmtemp
             logger -p "${class}" -t "adblock-[${adb_ver}]" "Please also check 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md' (${adb_sysver})"
             exit 1
         fi
@@ -723,10 +744,9 @@ f_log()
 #
 f_main()
 {
-    local src_name src_rset shalla_archive enabled url mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo")"
+    local src_name src_rset src_log src_arc enabled url mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo")"
 
     f_log "debug" "f_main ::: dns: ${adb_dns}, fetch_util: ${adb_fetchinfo}, backup: ${adb_backup}, backup_mode: ${adb_backup_mode}, whitelist_mode: ${adb_whitelist_mode}, force_srt: ${adb_forcesrt}, force_dns: ${adb_forcedns}, mem_total: ${mem_total}"
-    > "${adb_rtfile}"
     > "${adb_dnsdir}/.${adb_dnsfile}"
     > "${adb_tmpdir}/tmp.whitelist"
 
@@ -814,14 +834,14 @@ f_main()
             fi
         elif [ "${src_name}" = "shalla" ]
         then
-            shalla_archive="${adb_tmpdir}/shallalist.tar.gz"
-            "${adb_fetchutil}" ${adb_fetchparm} "${shalla_archive}" "${url}" 2>/dev/null
+            src_arc="${adb_tmpdir}/shallalist.tar.gz"
+            src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${src_arc}" "${url}" 2>&1)"
             adb_rc=${?}
             if [ ${adb_rc} -eq 0 ]
             then
                 for category in ${adb_src_cat_shalla}
                 do
-                    tar -xOzf "${shalla_archive}" "BL/${category}/domains" >> "${adb_tmpload}"
+                    tar -xOzf "${src_arc}" "BL/${category}/domains" >> "${adb_tmpload}"
                     adb_rc=${?}
                     if [ ${adb_rc} -ne 0 ]
                     then
@@ -829,11 +849,15 @@ f_main()
                     fi
                 done
             fi
-            rm -f "${shalla_archive}"
+            rm -f "${src_arc}"
             rm -rf "${adb_tmpdir}/BL"
         else
-            "${adb_fetchutil}" ${adb_fetchparm} "${adb_tmpload}" "${url}" 2>/dev/null
+            src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${adb_tmpload}" "${url}" 2>&1)"
             adb_rc=${?}
+        fi
+        if [ ${adb_rc} -ne 0 ] && [ "${src_name}" != "blacklist" ]
+        then
+            f_log "debug" "f_main ::: url: ${url}, rc: ${adb_rc}, src_log: ${src_log:-"-"}"
         fi
 
         # check download result and prepare list output
@@ -901,6 +925,8 @@ f_main()
     else
         f_log "err" "dns backend restart with active blocklist failed"
     fi
+    f_rmtemp
+    exit ${adb_rc}
 }
 
 # handle different adblock actions
@@ -929,6 +955,3 @@ case "${adb_action}" in
         f_main
     ;;
 esac
-
-f_rmtemp
-exit ${adb_rc}
