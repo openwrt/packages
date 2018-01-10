@@ -5,7 +5,10 @@
 # See /LICENSE for more information.
 #
 
-$(call include_mk, python-version.mk)
+# Note: include this after `include $(TOPDIR)/rules.mk in your package Makefile
+
+python_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
+include $(python_mk_path)python-host.mk
 
 PYTHON_DIR:=$(STAGING_DIR)/usr
 PYTHON_BIN_DIR:=$(PYTHON_DIR)/bin
@@ -88,8 +91,6 @@ define PyPackage
   endef
   endif # Package/$(1)/install
 endef
-
-$(call include_mk, python-host.mk)
 
 # $(1) => commands to execute before running pythons script
 # $(2) => python script and its arguments

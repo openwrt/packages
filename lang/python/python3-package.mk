@@ -5,7 +5,9 @@
 # See /LICENSE for more information.
 #
 
-$(call include_mk, python3-version.mk)
+# Note: include this after `include $(TOPDIR)/rules.mk in your package Makefile
+python3_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
+include $(python3_mk_path)python3-host.mk
 
 PYTHON3_DIR:=$(STAGING_DIR)/usr
 PYTHON3_BIN_DIR:=$(PYTHON3_DIR)/bin
@@ -88,8 +90,6 @@ define Py3Package
   endef
   endif # Package/$(1)/install
 endef
-
-$(call include_mk, python3-host.mk)
 
 # $(1) => commands to execute before running pythons script
 # $(2) => python script and its arguments

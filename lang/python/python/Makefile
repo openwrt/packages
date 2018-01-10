@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 # For PYTHON_VERSION
-include ./files/python-version.mk
+include ../python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
@@ -22,10 +22,10 @@ PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
 
 # This file provides the necsessary host build variables
-include ./files/python-host.mk
+include ../python-host.mk
 
 # For PyPackage
-include ./files/python-package.mk
+include ../python-package.mk
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
