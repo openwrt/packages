@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2016 OpenWrt.org
+# Copyright (C) 2009-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git
 PKG_VERSION:=2.15.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/scm/git/
@@ -111,6 +111,7 @@ define Package/git/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/git-* $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib/git-core
 	$(LN) /usr/bin/git $(1)/usr/lib/git-core/git
+	$(INSTALL_DIR) $(1)/usr/share/git-core/templates
 	( cd $(PKG_INSTALL_DIR); $(TAR) \
 		--exclude=usr/lib/git-core/git-http-backend \
 		--exclude=usr/lib/git-core/git-http-fetch \
@@ -120,8 +121,8 @@ define Package/git/install
 		--exclude=usr/lib/git-core/git-remote-https \
 		-cf - \
 		usr/lib/git-core \
+		usr/share/git-core/templates \
 	) | ( cd $(1); $(TAR) -xf - )
-	$(INSTALL_DIR) $(1)/usr/share/git-core/templates
 endef
 
 define Package/git-http/install
