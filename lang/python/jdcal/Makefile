@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/9b/fa/40beb2aa43a13f740dd5be367
 PKG_HASH:=b760160f8dc8cc51d17875c6b663fafe64be699e10ce34b6a95184b5aa0fdc9e
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/jdcal
   SUBMENU:=Python

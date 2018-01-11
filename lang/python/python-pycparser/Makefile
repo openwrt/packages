@@ -25,8 +25,8 @@ HOST_PYTHON_PACKAGE_BUILD_DEPENDS:="ply==3.10"
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="ply==3.10"
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
-$(call include_mk, python3-package.mk)
+include ../python-package.mk
+include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 

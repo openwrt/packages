@@ -25,8 +25,8 @@ PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
-$(call include_mk, python3-package.mk)
+include ../../lang/python/python-package.mk
+include ../../lang/python/python3-package.mk
 
 define Package/i2c/Default
   URL:=http://lm-sensors.org/wiki/I2CTools

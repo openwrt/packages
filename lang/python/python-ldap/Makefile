@@ -19,7 +19,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/67/d9/fa0ea70d1792875745116ad62
 PKG_HASH:=5810f1b5a9ae9255df99fb9c2dcab7352fed325687efda56c0faae1a82c5e3cb
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-ldap
   SUBMENU:=Python

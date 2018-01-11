@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/8a/37/4fa87dd0e43aa0a66fc419d58
 PKG_HASH:=6eec9f3ac4e5657b93e64f3379181d1e727088df10dd34f0398cd12119b9f0b0
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/django-constance
   SUBMENU:=Python

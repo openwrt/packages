@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/30/3a/10bb213cede0cc4d13ac22633
 PKG_HASH:=eee1169f0ca667be05db3351a0960765620dad53f53434262ff8901b68a1b622
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/gunicorn
     SUBMENU:=Python

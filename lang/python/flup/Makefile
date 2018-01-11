@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=http://pypi.python.org/packages/source/f/flup/
 PKG_HASH:=4bad317a5fc1ce3d4fe5e9b6d846ec38a8023e16876785d4f88102f2c8097dd9
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/flup
   SUBMENU:=Python

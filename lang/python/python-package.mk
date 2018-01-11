@@ -5,7 +5,10 @@
 # See /LICENSE for more information.
 #
 
-$(call include_mk, python-version.mk)
+# Note: include this after `include $(TOPDIR)/rules.mk in your package Makefile
+
+python_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
+include $(python_mk_path)python-host.mk
 
 PYTHON_DIR:=$(STAGING_DIR)/usr
 PYTHON_BIN_DIR:=$(PYTHON_DIR)/bin
@@ -67,20 +70,10 @@ define PyPackage
   define Package/$(1)/install
 	$(call PyPackage/$(1)/install,$$(1))
 	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
-	if [ -e files/python-package-install.sh ] ; then \
-		$(SHELL) files/python-package-install.sh \
-			"$(PKG_INSTALL_DIR)" "$$(1)" \
-			"$(HOST_PYTHON_BIN)" "$$(2)" \
-			"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" ; \
-	elif [ -e $(STAGING_DIR)/mk/python-package-install.sh ] ; then \
-		$(SHELL) $(STAGING_DIR)/mk/python-package-install.sh \
-			"$(PKG_INSTALL_DIR)" "$$(1)" \
-			"$(HOST_PYTHON_BIN)" "$$(2)" \
-			"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" ; \
-	else \
-		echo "No 'python-package-install.sh' script found" ; \
-		exit 1 ; \
-	fi
+	$(SHELL) $(python_mk_path)python-package-install.sh "2" \
+		"$(PKG_INSTALL_DIR)" "$$(1)" \
+		"$(HOST_PYTHON_BIN)" "$$(2)" \
+		"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)"
   endef
 
   define Package/$(1)-src/install
@@ -88,8 +81,6 @@ define PyPackage
   endef
   endif # Package/$(1)/install
 endef
-
-$(call include_mk, python-host.mk)
 
 # $(1) => commands to execute before running pythons script
 # $(2) => python script and its arguments

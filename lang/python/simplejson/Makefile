@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/08/48/c97b668d6da7d7bebe7ea1817
 PKG_HASH:=01a22d49ddd9a168b136f26cac87d9a335660ce07aa5c630b8e3607d6f4325e7
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/simplejson
   SUBMENU:=Python

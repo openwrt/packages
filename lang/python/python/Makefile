@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 # For PYTHON_VERSION
-include ./files/python-version.mk
+include ../python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
@@ -22,10 +22,10 @@ PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
 
 # This file provides the necsessary host build variables
-include ./files/python-host.mk
+include ../python-host.mk
 
 # For PyPackage
-include ./files/python-package.mk
+include ../python-package.mk
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -190,16 +190,6 @@ define Build/Compile
 	$(call Build/Compile/python-pip)
 endef
 
-define Build/InstallMkFiles
-	$(INSTALL_DIR) $(STAGING_DIR)/mk/
-	$(INSTALL_DATA) \
-		./files/python-package.mk \
-		./files/python-host.mk \
-		./files/python-version.mk \
-		./files/python-package-install.sh \
-		$(STAGING_DIR)/mk/
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
@@ -218,7 +208,6 @@ define Build/InstallDev
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
 		$(1)/usr/lib/python$(PYTHON_VERSION)/
-	$(call Build/InstallMkFiles)
 endef
 
 PYTHON_BASE_LIB_FILES:= \
@@ -298,7 +287,6 @@ define Host/Compile
 endef
 
 define Host/Install
-	$(call Build/InstallMkFiles)
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 	$(INSTALL_DIR) $(HOST_PYTHON_DIR)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON_DIR)/bin/pgen2

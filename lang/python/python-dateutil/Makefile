@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/54/bb/f1db86504f7a49e1d9b930153
 PKG_HASH:=891c38b2a02f5bb1be3e4793866c8df49c7d19baabf9c1bad62547e0b4866aca
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-dateutil
   SUBMENU:=Python

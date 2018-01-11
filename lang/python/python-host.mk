@@ -5,11 +5,15 @@
 # See /LICENSE for more information.
 #
 
+# Note: include this after `include $(TOPDIR)/rules.mk in your package Makefile
+#       if `python-package.mk` is included, this will already be included
+
 ifneq ($(__python_host_mk_inc),1)
 __python_host_mk_inc=1
 
 # For PYTHON_VERSION
-$(call include_mk, python-version.mk)
+python_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
+include $(python_mk_path)python-version.mk
 
 HOST_PYTHON_DIR:=$(STAGING_DIR_HOSTPKG)
 HOST_PYTHON_INC_DIR:=$(HOST_PYTHON_DIR)/include/python$(PYTHON_VERSION)

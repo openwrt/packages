@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=COPYRIGHT
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-crypto
 	SECTION:=lang-python

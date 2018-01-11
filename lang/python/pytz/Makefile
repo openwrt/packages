@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/a4/09/c47e57fc9c7062b4e83b075d4
 PKG_HASH:=f5c056e8f62d45ba8215e5cb8f50dfccb198b4b9fbea8500674f3443e4689589
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/pytz
   SUBMENU:=Python
