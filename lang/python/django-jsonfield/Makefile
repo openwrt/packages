@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/e4/b2/a079f0a2218e0eb7892edbf40
 PKG_HASH:=6c0afd5554739365b55d86e285cf966cc3a45682fff963463364ea1f6511ca3e
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/django-jsonfield
   SUBMENU:=Python

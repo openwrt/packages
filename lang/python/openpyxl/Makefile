@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/88/3c/34fbe561fc92e6a75f297478b
 PKG_HASH:=3b42ece7933b46b2128f8d4111c57c80fb5aa46f4d16e7f83281f169e7398ba7
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/openpyxl
   SUBMENU:=Python

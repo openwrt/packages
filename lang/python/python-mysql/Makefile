@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://pypi.python.org/packages/source/M/MySQL-python/
 PKG_HASH:=811040b647e5d5686f84db415efd697e6250008b112b6909ba77ac059e140c74
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-mysql
   SUBMENU:=Python

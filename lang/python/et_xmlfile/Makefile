@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=http://pypi.python.org/packages/source/e/et_xmlfile/
 PKG_HASH:=614d9722d572f6246302c4491846d2c393c199cfa4edc9af593437691683335b
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/et_xmlfile
   SUBMENU:=Python

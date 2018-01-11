@@ -21,7 +21,7 @@ PKG_MIRROR_HASH:=fe8657552b1dbaf8b9eba50168730e200567dc88a06932aa1cf60dc93211d16
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-dpkt
 	SECTION:=language-python

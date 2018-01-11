@@ -5,7 +5,9 @@
 # See /LICENSE for more information.
 #
 
-$(call include_mk, python3-version.mk)
+# Note: include this after `include $(TOPDIR)/rules.mk in your package Makefile
+python3_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
+include $(python3_mk_path)python3-host.mk
 
 PYTHON3_DIR:=$(STAGING_DIR)/usr
 PYTHON3_BIN_DIR:=$(PYTHON3_DIR)/bin
@@ -67,20 +69,10 @@ define Py3Package
   define Package/$(1)/install
 	$(call Py3Package/$(1)/install,$$(1))
 	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
-	if [ -e files/python3-package-install.sh ] ; then \
-		$(SHELL) files/python3-package-install.sh \
-			"$(PKG_INSTALL_DIR)" "$$(1)" \
-			"$(HOST_PYTHON3_BIN)" "$$(2)" \
-			"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)" ; \
-	elif [ -e $(STAGING_DIR)/mk/python3-package-install.sh ] ; then \
-		$(SHELL) $(STAGING_DIR)/mk/python3-package-install.sh \
-			"$(PKG_INSTALL_DIR)" "$$(1)" \
-			"$(HOST_PYTHON3_BIN)" "$$(2)" \
-			"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)" ; \
-	else \
-		echo "No 'python3-package-install.sh' script found" ; \
-		exit 1 ; \
-	fi
+	$(SHELL) $(python3_mk_path)python-package-install.sh "3" \
+		"$(PKG_INSTALL_DIR)" "$$(1)" \
+		"$(HOST_PYTHON3_BIN)" "$$(2)" \
+		"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)"
   endef
 
   define Package/$(1)-src/install
@@ -88,8 +80,6 @@ define Py3Package
   endef
   endif # Package/$(1)/install
 endef
-
-$(call include_mk, python3-host.mk)
 
 # $(1) => commands to execute before running pythons script
 # $(2) => python script and its arguments

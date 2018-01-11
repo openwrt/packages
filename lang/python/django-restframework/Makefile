@@ -18,7 +18,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/djangorestframework-$(PKG_VERSION)
 PKG_HASH:=305b2c6564ca46d3b558ba21110ed717135c467adf1a6dfd192bd85f4bb04d50
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/django-restframework
   SUBMENU:=Python

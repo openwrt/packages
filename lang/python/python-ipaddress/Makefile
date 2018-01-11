@@ -19,7 +19,7 @@ PKG_LICENSE:=Python-2.0
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-ipaddress
 	SECTION:=lang

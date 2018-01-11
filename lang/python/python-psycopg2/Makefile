@@ -22,7 +22,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/psycopg2-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python/host
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-psycopg2
   SUBMENU:=Python
