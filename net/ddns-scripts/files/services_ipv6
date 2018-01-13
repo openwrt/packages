@@ -66,7 +66,7 @@
 "dyn.com"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 "dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
-"dynu.com"    "http://api.dynu.com/nic/update?hostname=[DOMAIN]&myipv6=[IP]&username=[USERNAME]&password=[PASSWORD]"
+"dynu.com"    		"http://api.dynu.com/nic/update?hostname=[DOMAIN]&myipv6=[IP]&username=[USERNAME]&password=[PASSWORD]"
 
 "dynv6.com"		"http://dynv6.com/api/update?hostname=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"updated|unchanged"
 

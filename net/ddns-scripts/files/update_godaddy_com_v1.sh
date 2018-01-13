@@ -4,7 +4,7 @@
 #
 # script for sending updates to godaddy.com
 #.based on GoDaddy.sh v1.0 by Nazar78 @ TeaNazaR.com
-#.2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2017-2018 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 # GoDaddy Documentation at https://developer.godaddy.com/doc
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
@@ -85,6 +85,7 @@ godaddy_transfer() {
 		write_log 7 "$(cat $DATFILE)"
 		return 1
 	}
+	return 0
 }
 
 # Build base command to use

@@ -67,6 +67,8 @@
 
 "dnsdynamic.org"	"http://[USERNAME]:[PASSWORD]@www.dnsdynamic.org/api/?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
+"dnsever.com"		"http://[USERNAME]:[PASSWORD]@dyna.dnsever.com/update.php?host[[DOMAIN]]"
+
 "dnsexit.com"		"http://update.dnsexit.com/RemoteUpdate.sv?login=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&myip=[IP]"
 
 "dnshome.de"		"http://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip=[IP]"
@@ -121,6 +123,8 @@
 "loopia.se"		"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 "mydns.jp"		"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV4ADDR=[IP]"
+
+"myip.co.ua"		"http://[USERNAME]:[PASSWORD]@myip.co.ua/update?hostname=[DOMAIN]&myip=[IP]"	"good"
 
 "myonlineportal.net"	"http://[USERNAME]:[PASSWORD]@myonlineportal.net/updateddns?hostname=[DOMAIN]&ip=[IP]"	"good|nochg"
 
