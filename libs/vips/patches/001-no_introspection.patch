@@ -1,0 +1,73 @@
+diff -u --recursive vips-8.6.1-vanilla/configure.ac vips-8.6.1/configure.ac
+--- vips-8.6.1-vanilla/configure.ac	2018-01-13 17:27:19.375813474 -0500
++++ vips-8.6.1/configure.ac	2018-01-13 17:27:38.486871756 -0500
+@@ -53,9 +53,6 @@
+ AC_SUBST(LIBRARY_REVISION)
+ AC_SUBST(LIBRARY_AGE)
+ 
+-# init introspection support
+-GOBJECT_INTROSPECTION_CHECK([1.30.0])
+-
+ # gir needs a list of source files to scan for introspection
+ #
+ # build with a glob and a list of files to exclude from scanning
+diff -u --recursive vips-8.6.1-vanilla/libvips/Makefile.am vips-8.6.1/libvips/Makefile.am
+--- vips-8.6.1-vanilla/libvips/Makefile.am	2018-01-13 17:27:19.366813446 -0500
++++ vips-8.6.1/libvips/Makefile.am	2018-01-13 17:27:57.256929001 -0500
+@@ -70,56 +70,3 @@
+ 	echo "#define VIPS_SONAME \"$$dlname\"" >> soname.h && \
+ 	cp soname.h $(DESTDIR)$(pkgincludedir) && \
+ 	rm soname.h
+-
+--include $(INTROSPECTION_MAKEFILE)
+-INTROSPECTION_GIRS =
+-INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir)
+-INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
+-
+-if HAVE_INTROSPECTION
+-
+-AM_CPPFLAGS = \
+-	      -I${top_srcdir}/libvips/include \
+-	      @VIPS_CFLAGS@ \
+-	      @VIPS_INCLUDES@ \
+-	      @INTROSPECTION_CFLAGS@ 
+-AM_LDFLAGS = \
+-	     @INTROSPECTION_LIBS@ \
+-	     @LDFLAGS@ 
+-LDADD = @INTROSPECTION_LIBS@ @VIPS_CFLAGS@ libvips.la @VIPS_LIBS@ 
+-
+-noinst_PROGRAMS = \
+-	introspect
+-introspect_SOURCES = \
+-	introspect.c
+-
+-# we can't get the _SOURCES lists from the subdirs directly, we get passed it
+-# by configure instead
+-introspection_sources = @vips_introspection_sources@
+-
+-# we make the vips8 API
+-Vips-8.0.gir: introspect
+-Vips_8_0_gir_INCLUDES = GObject-2.0
+-Vips_8_0_gir_CFLAGS = $(INCLUDES) -I${top_srcdir}/libvips/include
+-Vips_8_0_gir_LIBS = libvips.la
+-Vips_8_0_gir_FILES = $(introspection_sources)
+-INTROSPECTION_GIRS += Vips-8.0.gir
+-
+-# don't use
+-#   --warn-all --verbose
+-# too annoying
+-Vips_8_0_gir_SCANNERFLAGS = \
+-	--program=./introspect$(EXEEXT) \
+-	--identifier-prefix=Vips \
+-	--identifier-prefix=vips \
+-	--symbol-prefix=vips \
+-	--c-include=vips/vips.h
+-
+-girdir = $(datadir)/gir-1.0
+-gir_DATA = $(INTROSPECTION_GIRS)
+-
+-typelibdir = $(libdir)/girepository-1.0
+-typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
+-
+-CLEANFILES += $(gir_DATA) $(typelib_DATA)
+-endif

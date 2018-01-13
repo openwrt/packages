@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vips
-PKG_VERSION:=7.42.1
+PKG_VERSION:=8.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.vips.ecs.soton.ac.uk/supported/7.42/
-PKG_HASH:=5ee272b11e4ca61c148d7392cbc01ad35f577b503727f479e38923e5bcfe6abf
+PKG_SOURCE_URL:=https://github.com/jcupitt/libvips/releases/download/v8.6.1/
+PKG_HASH:=f9ba6235ebc3e4d20af5f1604436bcd9686a3fecbe40838325d542f0c21a9270
 PKG_FIXUP:=autoreconf
 PKG_CHECK_FORMAT_SECURITY:=0
 
@@ -29,7 +29,7 @@ define Package/vips
   TITLE:=An image manipulation library
   URL:=http://www.vips.ecs.soton.ac.uk/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-  DEPENDS:=+glib2 +libexif +libjpeg +libpng +libxml2 $(INTL_DEPENDS)
+  DEPENDS:=+glib2 +libexif +libexpat +libjpeg +libpng +libstdcpp +libxml2 $(INTL_DEPENDS)
 endef
 
 TARGET_LDFLAGS+= \
