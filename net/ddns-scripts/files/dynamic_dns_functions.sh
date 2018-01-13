@@ -6,7 +6,7 @@
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 # extended and partial rewritten
-#.2014-2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2014-2018 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # function timeout
 # copied from http://www.ict.griffith.edu.au/anthony/software/timeout.sh
@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.6-13"
+VERSION="2.7.7-2"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -31,6 +31,7 @@ PIDFILE=""		# pid file
 UPDFILE=""		# store UPTIME of last update
 DATFILE=""		# save stdout data of WGet and other external programs called
 ERRFILE=""		# save stderr output of WGet and other external programs called
+IPFILE=""		# store registered IP for read by LuCI status
 TLDFILE=/usr/share/public_suffix_list.dat.gz	# TLD file used by split_FQDN
 
 CHECK_SECONDS=0		# calculated seconds out of given
@@ -81,7 +82,7 @@ CURL=$(which curl)
 # CURL_SSL not empty then SSL support available
 CURL_SSL=$($(which curl) -V 2>/dev/null | grep "Protocols:" | grep -F "https")
 # CURL_PROXY not empty then Proxy support available
-CURL_PROXY=$(find /lib /usr/lib -name libcurl.so* -exec grep -i "all_proxy" {} 2>/dev/null \;)
+CURL_PROXY=$(find /lib /usr/lib -name libcurl.so* -exec strings {} 2>/dev/null \; | grep -im1 "all_proxy")
 
 UCLIENT_FETCH=$(which uclient-fetch)
 # UCLIENT_FETCH_SSL not empty then SSL support available
@@ -261,7 +262,9 @@ write_log() {
 	[ $VERBOSE -gt 0 -o $__EXIT -gt 0 ] && echo -e "$__MSG"
 	# write to logfile
 	if [ ${use_logfile:-1} -eq 1 -o $VERBOSE -gt 1 ]; then
-		echo -e "$__MSG" >> $LOGFILE
+		printf "%s\n" "$__MSG" | \
+			sed -e "s/$password/*password*/g; \
+				s/$URL_PASS/*URL_PASS*/g" >> $LOGFILE
 		# VERBOSE > 1 then NO loop so NO truncate log to $ddns_loglines lines
 		[ $VERBOSE -gt 1 ] || sed -i -e :a -e '$q;N;'$ddns_loglines',$D;ba' $LOGFILE
 	fi
@@ -894,6 +897,7 @@ get_local_ip () {
 	while : ; do
 		if [ -n "$ip_network" ]; then
 			# set correct program
+			network_flush_cache	# force re-read data from ubus
 			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
 					    || __RUNPROG="network_get_ipaddr6"
 			eval "$__RUNPROG __DATA $ip_network" || \
@@ -1140,12 +1144,14 @@ get_registered_ip() {
 			fi
 			[ -n "$__DATA" ] && {
 				write_log 7 "Registered IP '$__DATA' detected"
+				echo "$__DATA" > $IPFILE
 				eval "$1=\"$__DATA\""	# valid data found
 				return 0		# leave here
 			}
 			write_log 4 "NO valid IP found"
 			__ERR=127
 		fi
+		echo "" > $IPFILE
 
 		[ -n "$LUCI_HELPER" ] && return $__ERR	# no retry if called by LuCI helper script
 		[ -n "$2" ] && return $__ERR		# $2 is given -> no retry
