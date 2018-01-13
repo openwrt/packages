@@ -6,7 +6,7 @@
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 # extended and partial rewritten
-#.2014-2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2014-2018 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # variables in small chars are read from /etc/config/ddns
 # variables in big chars are defined inside these scripts as global vars
@@ -101,6 +101,7 @@ PIDFILE="$ddns_rundir/$SECTION_ID.pid"	# Process ID file
 UPDFILE="$ddns_rundir/$SECTION_ID.update"	# last update successful send (system uptime)
 DATFILE="$ddns_rundir/$SECTION_ID.dat"	# save stdout data of WGet and other extern programs called
 ERRFILE="$ddns_rundir/$SECTION_ID.err"	# save stderr output of WGet and other extern programs called
+IPFILE="$ddns_rundir/$SECTION_ID.ip"	#
 LOGFILE="$ddns_logdir/$SECTION_ID.log"	# log file
 
 # VERBOSE > 1 delete logfile if exist to create an empty one
