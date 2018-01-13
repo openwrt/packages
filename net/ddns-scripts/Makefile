@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2017 OpenWrt.org
+# Copyright (C) 2008-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 #
@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.7
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
