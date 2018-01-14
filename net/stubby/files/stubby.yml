@@ -1,0 +1,29 @@
+#NOTE: See '/etc/stubby/stubby.yml.default' for original config file and descriptions
+
+resolution_type: GETDNS_RESOLUTION_STUB
+
+dns_transport_list:
+  - GETDNS_TRANSPORT_TLS
+
+tls_authentication: GETDNS_AUTHENTICATION_REQUIRED
+
+tls_query_padding_blocksize: 256
+
+edns_client_subnet_private : 1
+
+idle_timeout: 10000
+
+listen_addresses:
+  - 127.0.0.1@5453
+  -  0::1@5453
+
+round_robin_upstreams: 0
+
+upstream_recursive_servers:
+# Quad 9 IPv6
+  - address_data: 2620:fe::fe
+    tls_auth_name: "dns.quad9.net"
+# IPv4 addresses
+# Quad 9 service
+  - address_data: 9.9.9.9
+    tls_auth_name: "dns.quad9.net"
