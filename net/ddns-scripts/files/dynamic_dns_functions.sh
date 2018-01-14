@@ -1144,14 +1144,14 @@ get_registered_ip() {
 			fi
 			[ -n "$__DATA" ] && {
 				write_log 7 "Registered IP '$__DATA' detected"
-				echo "$__DATA" > $IPFILE
+				[ -z "$IPFILE" ] || echo "$__DATA" > $IPFILE
 				eval "$1=\"$__DATA\""	# valid data found
 				return 0		# leave here
 			}
 			write_log 4 "NO valid IP found"
 			__ERR=127
 		fi
-		echo "" > $IPFILE
+		[ -z "$IPFILE" ] || echo "" > $IPFILE
 
 		[ -n "$LUCI_HELPER" ] && return $__ERR	# no retry if called by LuCI helper script
 		[ -n "$2" ] && return $__ERR		# $2 is given -> no retry
