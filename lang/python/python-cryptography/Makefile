@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptography
 PKG_VERSION:=2.1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=cryptography-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/78/c5/7188f15a92413096c93053d5304718e1f6ba88b818357d05d19250ebff85
@@ -75,5 +75,8 @@ endef
 
 $(eval $(call PyPackage,python-cryptography))
 $(eval $(call BuildPackage,python-cryptography))
+$(eval $(call BuildPackage,python-cryptography-src))
+
 $(eval $(call Py3Package,python3-cryptography))
 $(eval $(call BuildPackage,python3-cryptography))
+$(eval $(call BuildPackage,python3-cryptography-src))

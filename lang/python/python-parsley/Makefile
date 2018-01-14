@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-parsley
 PKG_VERSION:=1.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=Parsley-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/P/Parsley
@@ -68,6 +68,8 @@ endef
 
 $(eval $(call PyPackage,python-parsley))
 $(eval $(call BuildPackage,python-parsley))
+$(eval $(call BuildPackage,python-parsley-src))
 
 $(eval $(call Py3Package,python3-parsley))
 $(eval $(call BuildPackage,python3-parsley))
+$(eval $(call BuildPackage,python3-parsley-src))

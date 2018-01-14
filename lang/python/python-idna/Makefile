@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
+# Copyright (C) 2015-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-idna
 PKG_VERSION:=2.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=idna-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/f4/bd/0467d62790828c23c47fc1dfa1b1f052b24efdf5290f071c7a91d0d82fd3
@@ -63,5 +63,8 @@ endef
 
 $(eval $(call PyPackage,python-idna))
 $(eval $(call BuildPackage,python-idna))
+$(eval $(call BuildPackage,python-idna-src))
+
 $(eval $(call Py3Package,python3-idna))
 $(eval $(call BuildPackage,python3-idna))
+$(eval $(call BuildPackage,python3-idna-src))

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-service-identity
 PKG_VERSION:=17.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=service_identity-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/de/2a/cab6e30be82c8fcd2339ef618036720eda954cf05daef514e386661c9221
@@ -71,6 +71,8 @@ endef
 
 $(eval $(call PyPackage,python-service-identity))
 $(eval $(call BuildPackage,python-service-identity))
+$(eval $(call BuildPackage,python-service-identity-src))
 
 $(eval $(call Py3Package,python3-service-identity))
 $(eval $(call BuildPackage,python3-service-identity))
+$(eval $(call BuildPackage,python3-service-identity-src))
