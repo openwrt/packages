@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zope-interface
 PKG_VERSION:=4.4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=zope.interface-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/bd/d2/25349ed41f9dcff7b3baf87bd88a4c82396cf6e02f1f42bb68657a3132af
@@ -75,6 +75,8 @@ endef
 
 $(eval $(call PyPackage,python-zope-interface))
 $(eval $(call BuildPackage,python-zope-interface))
+$(eval $(call BuildPackage,python-zope-interface-src))
 
 $(eval $(call Py3Package,python3-zope-interface))
 $(eval $(call BuildPackage,python3-zope-interface))
+$(eval $(call BuildPackage,python3-zope-interface-src))

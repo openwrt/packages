@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyasn1
 PKG_VERSION:=0.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=pyasn1-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/eb/3d/b7d0fdf4a882e26674c68c20f40682491377c4db1439870f5b6f862f76ed
@@ -63,5 +63,8 @@ endef
 
 $(eval $(call PyPackage,python-pyasn1))
 $(eval $(call BuildPackage,python-pyasn1))
+$(eval $(call BuildPackage,python-pyasn1-src))
+
 $(eval $(call Py3Package,python3-pyasn1))
 $(eval $(call BuildPackage,python3-pyasn1))
+$(eval $(call BuildPackage,python3-pyasn1-src))

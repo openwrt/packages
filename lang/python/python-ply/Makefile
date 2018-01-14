@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
+# Copyright (C) 2015-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ply
 PKG_VERSION:=3.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=ply-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.dabeaz.com/ply
@@ -61,6 +61,8 @@ endef
 
 $(eval $(call PyPackage,python-ply))
 $(eval $(call BuildPackage,python-ply))
+$(eval $(call BuildPackage,python-ply-src))
 
 $(eval $(call Py3Package,python3-ply))
 $(eval $(call BuildPackage,python3-ply))
+$(eval $(call BuildPackage,python3-ply-src))
