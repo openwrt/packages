@@ -39,7 +39,6 @@ define Py3Package
   define Package/$(1)-src
     $(call Package/$(1))
     TITLE+= (sources)
-    DEPENDS:=$$$$(foreach dep,$$$$(filter +python3-%,$$$$(DEPENDS)),$$$$(dep)-src)
   endef
 
   define Package/$(1)-src/description
