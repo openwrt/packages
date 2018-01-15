@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
+# Copyright (C) 2015-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cffi
-PKG_VERSION:=1.11.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.11.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=cffi-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/c9/70/89b68b6600d479034276fed316e14b9107d50a62f5627da37fafe083fde3
-PKG_HASH:=ab87dd91c0c4073758d07334c1e5f712ce8fe48f007b86f8238773963ee700a6
+PKG_SOURCE_URL:=https://pypi.python.org/packages/10/f7/3b302ff34045f25065091d40e074479d6893882faef135c96f181a57ed06
+PKG_HASH:=df9083a992b17a28cd4251a3f5c879e0198bb26c9e808c4647e0a18739f1d11d
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-cffi-$(PKG_VERSION)
 
@@ -66,6 +66,8 @@ endef
 
 $(eval $(call PyPackage,python-cffi))
 $(eval $(call BuildPackage,python-cffi))
+$(eval $(call BuildPackage,python-cffi-src))
 
 $(eval $(call Py3Package,python3-cffi))
 $(eval $(call BuildPackage,python3-cffi))
+$(eval $(call BuildPackage,python3-cffi-src))
