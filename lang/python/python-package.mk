@@ -116,13 +116,17 @@ define Build/Compile/PyMod
 	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 endef
 
+PYTHON_PKG_SETUP_ARGS:=--single-version-externally-managed
+PYTHON_PKG_SETUP_VARS:=
+
 define PyBuild/Compile/Default
 	$(foreach pkg,$(HOST_PYTHON_PACKAGE_BUILD_DEPENDS),
 		$(call host_python_pip_install_host,$(pkg))
 	)
 	$(call Build/Compile/PyMod,, \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
-		--single-version-externally-managed \
+		$(PYTHON_PKG_SETUP_ARGS), \
+		$(PYTHON_PKG_SETUP_VARS) \
 	)
 endef
 
