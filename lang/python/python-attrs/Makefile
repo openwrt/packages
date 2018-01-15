@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-attrs
 PKG_VERSION:=17.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=attrs-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/8b/0b/a06cfcb69d0cb004fde8bc6f0fd192d96d565d1b8aa2829f0f20adb796e5
@@ -62,6 +62,8 @@ endef
 
 $(eval $(call PyPackage,python-attrs))
 $(eval $(call BuildPackage,python-attrs))
+$(eval $(call BuildPackage,python-attrs-src))
 
 $(eval $(call Py3Package,python3-attrs))
 $(eval $(call BuildPackage,python3-attrs))
+$(eval $(call BuildPackage,python3-attrs-src))
