@@ -115,13 +115,17 @@ define Build/Compile/Py3Mod
 	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 endef
 
+PYTHON3_PKG_SETUP_ARGS:=--single-version-externally-managed
+PYTHON3_PKG_SETUP_VARS:=
+
 define Py3Build/Compile/Default
 	$(foreach pkg,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS),
 		$(call host_python3_pip_install_host,$(pkg))
 	)
 	$(call Build/Compile/Py3Mod,, \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
-		--single-version-externally-managed \
+		$(PYTHON3_PKG_SETUP_ARGS), \
+		$(PYTHON3_PKG_SETUP_VARS) \
 	)
 endef
 
