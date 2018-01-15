@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyopenssl
 PKG_VERSION:=17.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=pyOpenSSL-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/3b/15/a5d90ab1a41075e8f0fae334f13452549528f82142b3b9d0c9d86ab7178c
@@ -66,5 +66,8 @@ endef
 
 $(eval $(call PyPackage,python-pyopenssl))
 $(eval $(call BuildPackage,python-pyopenssl))
+$(eval $(call BuildPackage,python-pyopenssl-src))
+
 $(eval $(call Py3Package,python3-pyopenssl))
 $(eval $(call BuildPackage,python3-pyopenssl))
+$(eval $(call BuildPackage,python3-pyopenssl-src))
