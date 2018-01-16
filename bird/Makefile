@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=bird-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://bird.network.cz/pub/bird
 PKG_MD5SUM:=39c51cf57c3ba8b5978b2a657ffa2f647ec7f3ae643e91cf42ee5cb070cf7e7c
-PKG_BUILD_DEPENDS:=libncurses libreadline
+PKG_BUILD_DEPENDS:=ncurses readline
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0
