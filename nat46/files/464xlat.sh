@@ -81,13 +81,14 @@ proto_464xlat_setup() {
 proto_464xlat_teardown() {
 	local cfg="$1"
 	local link="464-$cfg"
+
+	[ -f /tmp/464-$cfg-anycast ] || return
 	local ip6addr=$(cat /tmp/464-$cfg-anycast)
-	local anycast_active
 
 	464xlatcfg "$link"
 
 	rm -rf /tmp/464-$cfg-anycast
-	ip -6 rule del to $ip6addr lookup prelocal
+	[ -n "$ip6addr" ] && ip -6 rule del to $ip6addr lookup prelocal
 
 	if [ -z "$(ls /tmp/464-*-anycast 2>&-)" ]; then
 		ip -6 rule del from all lookup local
