@@ -40,7 +40,6 @@ define PyPackage
   define Package/$(1)-src
     $(call Package/$(1))
     TITLE+= (sources)
-    DEPENDS:=$$$$(foreach dep,$$$$(filter +python-%,$$$$(DEPENDS)),$$$$(dep)-src)
   endef
 
   define Package/$(1)-src/description
