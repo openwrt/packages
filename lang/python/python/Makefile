@@ -12,7 +12,7 @@ include ../python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
@@ -310,4 +310,3 @@ $(eval $(call BuildPackage,python))
 
 $(eval $(call BuildPackage,python-base-src))
 $(eval $(call BuildPackage,python-light-src))
-$(eval $(call BuildPackage,python-src))

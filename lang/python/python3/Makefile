@@ -14,7 +14,7 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -307,4 +307,3 @@ $(eval $(call BuildPackage,python3))
 
 $(eval $(call BuildPackage,python3-base-src))
 $(eval $(call BuildPackage,python3-light-src))
-$(eval $(call BuildPackage,python3-src))
