@@ -15,7 +15,7 @@ PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/t6x/reaver-wps-fork-t6x/releases/download/v$(PKG_VERSION)
-PKG_HASH:=191f785f53030e4803260ada1a29ca4b42c848d56f6f3982e320d03b6117aaf2
+PKG_HASH:=1fbdf8d76ee4e5fe2c39e1a3eb2f3b46b1de968b
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=docs/LICENSE
