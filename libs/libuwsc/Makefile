@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2017 OpenWrt.org
+# Copyright (C) 2018 Jianhui Zhao
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuwsc
-PKG_VERSION:=1.0.5
+PKG_VERSION:=1.0.9
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/zhaojh329/libuwsc.git
-PKG_SOURCE_VERSION:=963c70b0d6c18258d405893f5aa9aa3a52c598f8
-PKG_MIRROR_HASH:=eb773639a277e663b39f3c0d360695f78007e55ae4e0c0ead13dfb11fcdbae99
+PKG_SOURCE_VERSION:=7c3bdf78926436a5e394659bacb4dd5a5b7db9c9
+PKG_MIRROR_HASH:=ecc8b419a51cc7beeca626dd0196509d20b5da747862ae0d91163e769c98166a
 CMAKE_INSTALL:=1
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
@@ -27,13 +27,10 @@ PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-CMAKE_OPTIONS += -DUWSC_DEBUG=on
-
 define Package/libuwsc/default
   SECTION:=libs
   CATEGORY:=Libraries
   SUBMENU:=Networking
-  #TITLE:=Lightweight WebSocket client library based on libubox
   TITLE:=Lightweight WebSocket client library
   DEPENDS:=+libubox
 endef
