@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pycparser
 PKG_VERSION:=2.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=pycparser-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/8c/2d/aad7f16146f4197a11f8e91fb81df177adcc2073d36a17b1491fd09df6ed
@@ -65,6 +65,8 @@ endef
 
 $(eval $(call PyPackage,python-pycparser))
 $(eval $(call BuildPackage,python-pycparser))
+$(eval $(call BuildPackage,python-pycparser-src))
 
 $(eval $(call Py3Package,python3-pycparser))
 $(eval $(call BuildPackage,python3-pycparser))
+$(eval $(call BuildPackage,python3-pycparser-src))
