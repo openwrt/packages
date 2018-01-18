@@ -165,7 +165,7 @@ start_service() {
 
 	config_load ser2net
 
-	config_get_bool enabled ser2net enabled 0
+	config_get_bool enabled global enabled 0
 	[ "$enabled" -gt 0 ] || return 0
 
 	cat "$STATICCFGFILE" - 2>/dev/null <<-EOF > "$DYNAMICCFGFILE"
