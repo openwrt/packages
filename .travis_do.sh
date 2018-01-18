@@ -113,8 +113,8 @@ EOF
 		pkg_name=$(echo "$pkg_dir" | awk -F/ '{ print $NF }')
 		echo_blue "=== $pkg_name: Starting quick tests"
 
-		exec_status 'WARNING|ERROR' make "package/$pkg_name/download" V=s || RET=1
-		exec_status 'WARNING|ERROR' make "package/$pkg_name/check" V=s || RET=1
+		exec_status '^ERROR' make "package/$pkg_name/download" V=s || RET=1
+		exec_status '^ERROR' make "package/$pkg_name/check" V=s || RET=1
 
 		echo_blue "=== $pkg_name: quick tests done"
 	done
