@@ -39,6 +39,7 @@ define PyPackage
 
   define Package/$(1)-src
     $(call Package/$(1))
+    DEPENDS:=
     TITLE+= (sources)
   endef
 
