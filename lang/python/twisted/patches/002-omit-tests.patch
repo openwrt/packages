@@ -1,41 +1,33 @@
-diff --git a/setup.py b/setup.py
-index e21ef70..a4d9ee8 100755
---- a/setup.py
-+++ b/setup.py
-@@ -55,13 +55,14 @@ def main(args):
-     setup_args = STATIC_PACKAGE_METADATA.copy()
+diff --git a/src/twisted/python/_setup.py b/src/twisted/python/_setup.py
+index 3b5f69d4b..2dca47aa5 100644
+--- a/src/twisted/python/_setup.py
++++ b/src/twisted/python/_setup.py
+@@ -175,11 +175,6 @@ class ConditionalExtension(Extension, object):
  
-     setup_args.update(dict(
--        packages=setuptools.find_packages(),
-+        packages=setuptools.find_packages(exclude=["*.test", "*.test.*"]),
+ # The C extensions used for Twisted.
+ _EXTENSIONS = [
+-    ConditionalExtension(
+-        "twisted.test.raiser",
+-        sources=["src/twisted/test/raiser.c"],
+-        condition=lambda _: _isCPython),
+-
+     ConditionalExtension(
+         "twisted.internet.iocpreactor.iocpsupport",
+         sources=[
+@@ -232,7 +227,7 @@ def getSetupArgs(extensions=_EXTENSIONS):
+     requirements.append("hyperlink >= 17.1.1")
+ 
+     arguments.update(dict(
+-        packages=find_packages("src"),
++        packages=find_packages("src", exclude=["*.test", "*.test.*"]),
+         use_incremental=True,
+         setup_requires=["incremental >= 16.10.1"],
          install_requires=requirements,
-         conditionalExtensions=getExtensions(),
-         entry_points={
-             'console_scripts':  getConsoleScripts()
+@@ -241,6 +236,7 @@ def getSetupArgs(extensions=_EXTENSIONS):
          },
+         cmdclass=command_classes,
          include_package_data=True,
 +        exclude_package_data={'':['test/*']},
          zip_safe=False,
          extras_require=_EXTRAS_REQUIRE,
-     ))
-diff --git a/twisted/python/dist.py b/twisted/python/dist.py
-index dfff9dc..a05b716 100644
---- a/twisted/python/dist.py
-+++ b/twisted/python/dist.py
-@@ -191,11 +191,11 @@ def getExtensions():
-     Get the C extensions used for Twisted.
-     """
-     extensions = [
--        ConditionalExtension(
--            "twisted.test.raiser",
--            ["twisted/test/raiser.c"],
--            condition=lambda _: _isCPython
--        ),
-+        #ConditionalExtension(
-+        #    "twisted.test.raiser",
-+        #    ["twisted/test/raiser.c"],
-+        #    condition=lambda _: _isCPython
-+        #),
-         ConditionalExtension(
-             "twisted.internet.iocpreactor.iocpsupport",
-             ["twisted/internet/iocpreactor/iocpsupport/iocpsupport.c",
+         package_dir={"": "src"},

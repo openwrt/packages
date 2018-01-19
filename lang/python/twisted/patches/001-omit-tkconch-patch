@@ -1,0 +1,22 @@
+diff --git a/src/twisted/python/_setup.py b/src/twisted/python/_setup.py
+index 3b5f69d4b..c69c5d13c 100644
+--- a/src/twisted/python/_setup.py
++++ b/src/twisted/python/_setup.py
+@@ -142,7 +142,6 @@ _CONSOLE_SCRIPTS = [
+     "cftp = twisted.conch.scripts.cftp:run",
+     "conch = twisted.conch.scripts.conch:run",
+     "pyhtmlizer = twisted.scripts.htmlizer:run",
+-    "tkconch = twisted.conch.scripts.tkconch:run",
+     "trial = twisted.scripts.trial:run",
+     "twist = twisted.application.twist._twist:Twist.main",
+     "twistd = twisted.scripts.twistd:run",
+diff --git a/src/twisted/python/twisted-completion.zsh b/src/twisted/python/twisted-completion.zsh
+index 4d97aa5d3..9a8d4d82e 100644
+--- a/src/twisted/python/twisted-completion.zsh
++++ b/src/twisted/python/twisted-completion.zsh
+@@ -1,4 +1,4 @@
+-#compdef twistd trial conch cftp ckeygen pyhtmlizer tkconch
++#compdef twistd trial conch cftp ckeygen pyhtmlizer
+ #
+ # This is the ZSH completion file for Twisted commands. It calls the current
+ # command-line with the special "--_shell-completion" option which is handled
