@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=vpnc
 PKG_REV:=550
 PKG_VERSION:=0.5.3.r$(PKG_REV)
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://svn.unix-ag.uni-kl.de/vpnc/trunk/
