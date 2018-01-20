@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mutt
-PKG_VERSION:=1.9.1
+PKG_VERSION:=1.9.2
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=ftp://ftp.mutt.org/pub/mutt/ \
 		https://bitbucket.org/mutt/mutt/downloads/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=749b83a96373c6e2101ebe8c4b9a651735e02c478edb750750a5146a15d91bb1
+PKG_HASH:=a2e152a352bbf02d222d54074199d9c53821c19f700c4cb85f78fa85faed7896
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=GPL
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mutt
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+libopenssl +libncursesw +zlib
+  DEPENDS:=+libopenssl +libncursesw +terminfo +zlib
   TITLE:=Console mail client
   URL:=http://www.mutt.org/
 endef
