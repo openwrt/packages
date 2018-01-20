@@ -1,12 +1,12 @@
 diff --git a/doc/example.conf.in b/doc/example.conf.in
-index 83e7c5c..3ea2b28 100644
+index 5396029..cbb51ec 100644
 --- a/doc/example.conf.in
 +++ b/doc/example.conf.in
 @@ -1,9 +1,10 @@
 -#
 -# Example configuration file.
 -#
--# See unbound.conf(5) man page, version 1.6.5.
+-# See unbound.conf(5) man page, version 1.6.8.
 -#
 -# this is a comment.
 +##############################################################################
