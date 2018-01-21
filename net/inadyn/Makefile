@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 Daniel Engberg <daniel.engberg.lists@pyret.net>
+# Copyright (C) 2017-2018 Daniel Engberg <daniel.engberg.lists@pyret.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=inadyn
-PKG_VERSION=2.2
+PKG_VERSION:=2.3
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/troglobit/inadyn/releases/download/v$(PKG_VERSION)
-PKG_HASH:=27aed84a3d04591540b01ef91a5af4b02cbd0e0c20db36a2660453780bd645f6
+PKG_HASH:=4a98b80d8565b9e4cb32b19b7a8b06a22a7d9a6f4f03a5298a8d441b6187c760
 
 PKG_FIXUP:=autoreconf
 
