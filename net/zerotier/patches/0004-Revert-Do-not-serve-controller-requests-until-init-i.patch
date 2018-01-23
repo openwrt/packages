@@ -1,0 +1,138 @@
+From ab8ececbe70f7c83667d6ebb592fc1df17ad26a4 Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Sat, 20 Jan 2018 21:55:52 +0100
+Subject: [PATCH] Revert "Do not serve controller requests until init is done."
+
+This reverts commit f4feccc6265cc480b84c85f897b225714072d4ec.
+---
+ controller/JSONDB.cpp | 20 +++++++-------------
+ controller/JSONDB.hpp | 15 +++++++--------
+ 2 files changed, 14 insertions(+), 21 deletions(-)
+
+diff --git a/controller/JSONDB.cpp b/controller/JSONDB.cpp
+index d3e76fc1..007e0fec 100644
+--- a/controller/JSONDB.cpp
++++ b/controller/JSONDB.cpp
+@@ -26,8 +26,7 @@ static const nlohmann::json _EMPTY_JSON(nlohmann::json::object());
+ static const std::map<std::string,std::string> _ZT_JSONDB_GET_HEADERS;
+ 
+ JSONDB::JSONDB(const std::string &basePath) :
+-	_basePath(basePath),
+-	_ready(false)
++	_basePath(basePath)
+ {
+ 	if ((_basePath.length() > 7)&&(_basePath.substr(0,7) == "http://")) {
+ 		// TODO: this doesn't yet support IPv6 since bracketed address notiation isn't supported.
+@@ -50,7 +49,7 @@ JSONDB::JSONDB(const std::string &basePath) :
+ 		OSUtils::mkdir(_basePath.c_str());
+ 		OSUtils::lockDownFile(_basePath.c_str(),true); // networks might contain auth tokens, etc., so restrict directory permissions
+ 	}
+-	_ready = _reload(_basePath,std::string());
++	_reload(_basePath,std::string());
+ }
+ 
+ bool JSONDB::writeRaw(const std::string &n,const std::string &obj)
+@@ -84,13 +83,9 @@ bool JSONDB::put(const std::string &n,const nlohmann::json &obj)
+ 
+ const nlohmann::json &JSONDB::get(const std::string &n)
+ {
+-	while (!_ready) {
+-		Thread::sleep(250);
+-		_ready = _reload(_basePath,std::string());
+-	}
+-
+ 	if (!_isValidObjectName(n))
+ 		return _EMPTY_JSON;
++
+ 	std::map<std::string,_E>::iterator e(_db.find(n));
+ 	if (e != _db.end())
+ 		return e->second.obj;
+@@ -138,7 +133,7 @@ void JSONDB::erase(const std::string &n)
+ 	_db.erase(n);
+ }
+ 
+-bool JSONDB::_reload(const std::string &p,const std::string &b)
++void JSONDB::_reload(const std::string &p,const std::string &b)
+ {
+ 	if (_httpAddr) {
+ 		std::string body;
+@@ -155,11 +150,11 @@ bool JSONDB::_reload(const std::string &p,const std::string &b)
+ 							_db[tmp].obj = i.value();
+ 						}
+ 					}
+-					return true;
+ 				}
+-			} catch ( ... ) {} // invalid JSON, so maybe incomplete request
++			} catch ( ... ) {
++				// TODO: report error?
++			}
+ 		}
+-		return false;
+ 	} else {
+ 		std::vector<std::string> dl(OSUtils::listDirectory(p.c_str(),true));
+ 		for(std::vector<std::string>::const_iterator di(dl.begin());di!=dl.end();++di) {
+@@ -169,7 +164,6 @@ bool JSONDB::_reload(const std::string &p,const std::string &b)
+ 				this->_reload((p + ZT_PATH_SEPARATOR + *di),(b + *di + ZT_PATH_SEPARATOR));
+ 			}
+ 		}
+-		return true;
+ 	}
+ }
+ 
+diff --git a/controller/JSONDB.hpp b/controller/JSONDB.hpp
+index beafbaf5..c19112ed 100644
+--- a/controller/JSONDB.hpp
++++ b/controller/JSONDB.hpp
+@@ -36,7 +36,6 @@
+ #include "../ext/json/json.hpp"
+ #include "../osdep/OSUtils.hpp"
+ #include "../osdep/Http.hpp"
+-#include "../osdep/Thread.hpp"
+ 
+ namespace ZeroTier {
+ 
+@@ -48,6 +47,12 @@ class JSONDB
+ public:
+ 	JSONDB(const std::string &basePath);
+ 
++	inline void reload()
++	{
++		_db.clear();
++		_reload(_basePath,std::string());
++	}
++
+ 	bool writeRaw(const std::string &n,const std::string &obj);
+ 
+ 	bool put(const std::string &n,const nlohmann::json &obj);
+@@ -74,11 +79,6 @@ public:
+ 	template<typename F>
+ 	inline void filter(const std::string &prefix,F func)
+ 	{
+-		while (!_ready) {
+-			Thread::sleep(250);
+-			_ready = _reload(_basePath,std::string());
+-		}
+-
+ 		for(std::map<std::string,_E>::iterator i(_db.lower_bound(prefix));i!=_db.end();) {
+ 			if ((i->first.length() >= prefix.length())&&(!memcmp(i->first.data(),prefix.data(),prefix.length()))) {
+ 				if (!func(i->first,get(i->first))) {
+@@ -94,7 +94,7 @@ public:
+ 	inline bool operator!=(const JSONDB &db) const { return (!(*this == db)); }
+ 
+ private:
+-	bool _reload(const std::string &p,const std::string &b);
++	void _reload(const std::string &p,const std::string &b);
+ 	bool _isValidObjectName(const std::string &n);
+ 	std::string _genPath(const std::string &n,bool create);
+ 
+@@ -108,7 +108,6 @@ private:
+ 	InetAddress _httpAddr;
+ 	std::string _basePath;
+ 	std::map<std::string,_E> _db;
+-	volatile bool _ready;
+ };
+ 
+ } // namespace ZeroTier
+-- 
+2.15.1
+
