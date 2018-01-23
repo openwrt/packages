@@ -156,12 +156,6 @@ process_config() {
 	config_foreach service_section service
 }
 
-reload_service() {
-	process_config
-	# SIGHUP is used by stunnel to do init.d reload
-	procd_send_signal stunnel
-}
-
 service_triggers() {
 	procd_add_reload_trigger "stunnel"
 }
@@ -175,5 +169,6 @@ start_service() {
 
 	# set auto respawn behavior
 	procd_set_param respawn
+	procd_set_param file "$CONF_FILE"
 	procd_close_instance
 }
