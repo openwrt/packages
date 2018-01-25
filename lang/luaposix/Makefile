@@ -44,6 +44,9 @@ CONFIGURE_VARS += ac_cv_path_LDOC="true"
 TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99
 ifeq ($(CONFIG_USE_MUSL),y)
   TARGET_CFLAGS += -D_POSIX_PRIORITY_SCHEDULING
+  # Musl doesn't do all of XOPEN_REALTIME, but it does for luaposix.
+  # see https://github.com/luaposix/luaposix/issues/295
+  TARGET_CFLAGS += -D_XOPEN_REALTIME=1
 endif
 
 ifneq ($(CONFIG_USE_GLIBC),)
