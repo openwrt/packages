@@ -3,7 +3,6 @@ PKG_VERSION=
 
 export START=94
 export USE_PROCD=1
-#PROCD_DEBUG=1
 
 readonly A_TMP='/var/hosts.allowed.tmp'
 readonly B_TMP='/var/hosts.blocked.tmp'
@@ -12,35 +11,42 @@ readonly dl='wget --no-check-certificate -qO-'
 readonly h_filter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;'
 readonly d_filter='/^#/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;'
 readonly f_filter='s|^|local=/|;s|$|/|'
-readonly _ok_='\033[0;32m\xe2\x9c\x93\033[0m'
-readonly _fail_='\033[0;31m\xe2\x9c\x97\033[0m'
-readonly __ok__='\033[0;32m[\xe2\x9c\x93]\033[0m'
-readonly __fail__='\033[0;31m[\xe2\x9c\x97]\033[0m'
-readonly _error_='\033[0;31mERROR\033[0m'
+readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
+readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
+readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
+readonly __FAIL__='\033[0;31m[\xe2\x9c\x97]\033[0m'
+readonly _ERROR_='\033[0;31mERROR\033[0m'
 
-readonly packageName="simple-adblock"
+export EXTRA_COMMANDS="check killcache"
+export EXTRA_HELP="	check	Checks if specified <string> is found in current blacklist"
+
+readonly packageName='simple-adblock'
 readonly serviceName="$packageName $PKG_VERSION"
-ok() { case $verbosity in 1) output "$_ok_";; 2) output "$__ok__\n";; esac; }
-okn() { case $verbosity in 1) output "$_ok_\n";; 2) output "$__ok__\n";; esac; }
-fail() { case $verbosity in 1) output "$_fail_";; 2) output "$__fail__\n";; esac; }
-failn() { case $verbosity in 1) output "$_fail_\n";; 2) output "$__fail__\n";; esac; }
+ok() { case $verbosity in 1) output "$_OK_";; 2) output "$__OK__\n";; esac; }
+okn() { case $verbosity in 1) output "$_OK_\n";; 2) output "$__OK__\n";; esac; }
+fail() { case $verbosity in 1) output "$_FAIL_";; 2) output "$__FAIL__\n";; esac; }
+failn() { case $verbosity in 1) output "$_FAIL_\n";; 2) output "$__FAIL__\n";; esac; }
 output() { [[ $# -ne 1 ]] && { [[ ! $((verbosity & $1)) -gt 0 ]] && return 0 || shift; }; local msg; msg=$(echo -n "${1/$serviceName /service }" | sed 's|\\033\[[0-9]\?;\?[0-9]\?[0-9]\?m||g'); [[ -t 1 ]] && echo -e -n "$1"; [[ $(echo -e -n "$msg" | wc -l) -gt 0 ]] && logger -t "${packageName:-service} [$$]" "$(echo -e -n ${logmsg}${msg})" && logmsg='' || logmsg=${logmsg}${msg}; }
 led_on(){ [[ -n "$led" && -e "$led/trigger" ]] && echo "default-on" > "$led/trigger"; }
 led_off(){ [[ -n "$led" && -e "$led/trigger" ]] && echo "none" > "$led/trigger"; }
-export verbosity force_dns bgrun debug led wan_if wan_gw wanphysdev hosts_file
+export serviceEnabled verbosity force_dns debug led wan_if wan_gw wanphysdev hosts_file
 
 boot() { ( sleep 120 && rc_procd start_service && rc_procd service_triggers | cat &); }
 
-is_enabled () {
-		local c=1 enabled
-		config_load $packageName
-		config_get_bool enabled   'config' 'enabled' 1
-		config_get_bool bgrun     'config' 'run_in_background' 0
-		config_get_bool force_dns 'config' 'force_dns' 1
-		config_get_bool debug     'config' 'debug' 0
-		config_get verbosity      'config' 'verbosity' '2'
-		config_get hosts_file  	  'config' 'hosts_file' "/var/dnsmasq.d/${packageName}"
-		config_get led        	  'config' 'led'
+load_package_config() {
+	config_load "$packageName"
+	config_get_bool serviceEnabled 'config' 'enabled' 1
+	config_get_bool force_dns      'config' 'force_dns' 1
+	config_get_bool debug          'config' 'debug' 0
+	config_get verbosity           'config' 'verbosity' '2'
+	config_get hosts_file  	       'config' 'hosts_file' "/var/dnsmasq.d/${packageName}"
+	config_get led        	       'config' 'led'
+	source 	/lib/functions/network.sh
+}
+
+is_enabled() {
+		local sleepCount=1
+		load_package_config
 
 		if [ "$debug" -ne 0 ]; then
 			exec 1>>/tmp/simple-adblock.log
@@ -49,30 +55,31 @@ is_enabled () {
 		fi
 
 		led="${led:+/sys/class/leds/$led}"
-		[[ $enabled -gt 0 ]] || { output "$_error_: $serviceName is not enabled.\n"; return 1; }
-		source 	/lib/functions/network.sh
+		[ $serviceEnabled -gt 0 ] || return 1
 		while : ; do
 			network_flush_cache; network_find_wan wan_if;	network_get_gateway wan_gw $wan_if;
-			[[ $c -ge 25 || -n "$wan_gw" ]] && break
-			output "$serviceName waiting for wan gateway...\n"; sleep 2; let "c+=1";
+			[[ $sleepCount -ge 25 || -n "$wan_gw" ]] && break
+			output "$serviceName waiting for wan gateway...\n"; sleep 2; let "sleepCount+=1";
 		done
-		[ -n "$wan_gw" ] && return 0 || { output "$_error_: $serviceName failed to discover WAN gateway.\n"; return 1; }
+		[ -n "$wan_gw" ] && return 0
+		output "$_ERROR_: $serviceName failed to discover WAN gateway.\n"; return 1;
 }
 
-reset_iptables() {
-  [[ $force_dns -eq 0 ]] && return 0
+iptables_destroy() {
+  [ $force_dns -eq 0 ] && return 0
 	[ -z "$packageName" ] && return 1
 	iptables-save | grep -Fv -- "$packageName" | iptables-restore
 	lsmod | grep -q ip6table_nat && ip6tables-save | grep -Fv -- "$packageName" | ip6tables-restore
-	[ ! "$1" == "quiet" ] && output 'No longer forcing local DNS server.\n'
+	[ -z "$1" ] && output 'No longer forcing local DNS server.\n'
 }
 
-set_iptables() {
+iptables_create() {
 	local ip ipv6 label ipv6wan brname
 	network_get_ipaddr ip lan; network_get_ipaddr6 ipv6 lan; network_get_device brname lan; network_get_physdev wanphysdev wan;
 	ipv6wan=$(ifconfig $wanphysdev | grep inet6 | awk '{print $3}')
 
-	if [[ $force_dns -ne 0 ]]; then
+	iptables_destroy 'quiet'
+	if [ $force_dns -ne 0 ]; then
 		[ -n "$ip" ] && iptables -t nat -A prerouting_rule -i $brname -p tcp --dport 53 -j DNAT --to $ip -m comment --comment "$packageName"
 		[ -n "$ip" ] && iptables -t nat -A prerouting_rule -i $brname -p udp --dport 53 -j DNAT --to $ip -m comment --comment "$packageName"
 		if [[ -n "$ipv6" && -n "$ipv6wan" ]] && lsmod | grep -q ip6table_nat; then
@@ -82,16 +89,27 @@ set_iptables() {
 		else
 			label="$ip"
 		fi
-		[ -n "$label" ] && output "Forcing local DNS server: $label.\n" || output "$_error_: $serviceName failed to obtain LAN IP address for DNS forcing!\n"
+		if [ -z "$1" ]; then
+			if [ -n "$label" ]; then
+				output "Forcing local DNS server: $label.\n"
+			else
+				output "$_ERROR_: $serviceName failed to obtain LAN IP address for DNS forcing!\n"
+			fi
+		fi
 	fi
 }
 
-stop_adblocking () {
-    [ -f $hosts_file ] && mv $hosts_file $T_TMP
-    output 3 "Restarting dnsmasq "
-		led_off
-    /etc/init.d/dnsmasq restart >/dev/null 2>&1
-		[[ $? -eq 0 ]] && { okn; output "$serviceName stopped.\n"; } || { failn; output "$_error_: $serviceName failed to reload dnsmasq!\n"; }
+stop_adblocking() {
+	load_package_config
+  [ -f $hosts_file ] && mv $hosts_file $T_TMP
+  output 3 "Restarting dnsmasq "
+	led_off
+  /etc/init.d/dnsmasq restart >/dev/null 2>&1
+	if [[ $? -eq 0 ]]; then
+		okn; output "$serviceName stopped.\n";
+	else
+		failn; output "$_ERROR_: $serviceName failed to reload dnsmasq!\n";
+	fi
 }
 
 process_url() {
@@ -108,7 +126,7 @@ process_url() {
 	{ sed -i "$filter" "$R_TMP"; cat "$R_TMP" >> "$D_TMP"; rm -f "$R_TMP"; } &
 }
 
-start_adblocking () {
+start_adblocking() {
 		local whitelist_domains blacklist_domains whitelist_domains_urls blacklist_domains_urls blacklist_hosts_urls
     config_get whitelist_domains          'config' 'whitelist_domain'
     config_get blacklist_domains          'config' 'blacklist_domain'
@@ -119,6 +137,7 @@ start_adblocking () {
     local hf w_filter
 
 	[ ! -d ${hosts_file%/*} ] && mkdir -p ${hosts_file%/*}
+	[ ! -f "$hosts_file" ] && touch "$hosts_file"
 	if [[ -s $T_TMP && ! "$1" == "reload" ]]; then
 		output 3 'Found existing data file, reusing it '
 		mv $T_TMP $hosts_file && okn || failn
@@ -166,38 +185,50 @@ start_adblocking () {
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 		if [[ $? -eq 0 ]]; then
 			led_on; okn;
-			output "$serviceName blocking $(wc -l < $hosts_file) domains $_ok_\n"
+			output "$serviceName blocking $(wc -l < $hosts_file) domains $_OK_\n"
 		else
-			failn; output "$_error_: $serviceName failed to reload dnsmasq!\n";
+			failn; output "$_ERROR_: $serviceName failed to reload dnsmasq!\n";
 			exit 1
 		fi
 	else
-		output "$_error_: $serviceName failed to create its data file!\n"
+		output "$_ERROR_: $serviceName failed to create its data file!\n"
 		exit 1
 	fi
 }
 
-reload_service () {
-  is_enabled || return 1
-	[[ -t 1 && $bgrun -eq 1 ]] && output "Reloading $serviceName...\n"
-	[[ ! -t 1 || $bgrun -eq 1 ]] && (start_adblocking 'reload' | cat &) || start_adblocking 'reload'
+check() {
+	load_package_config
+	local string="$1"
+	if [ ! -f $hosts_file ]; then
+		echo "No local blacklist ($hosts_file) found."
+	elif [ -z "$string" ]; then
+		echo "Usage: /etc/init.d/${serviceName} check <string>"
+	elif grep -m1 -q $string $hosts_file; then
+		echo "Found $(grep $string $hosts_file | wc -l) matches for $string in $hosts_file:"
+		grep $string $hosts_file | sed 's|local=/||;s|/$||;'
+	else
+		echo "The $string is not found in current blacklist."
+	fi
 }
 
-start_service () {
+start_service() {
   is_enabled || return 1
-	[[ -t 1 && $bgrun -eq 1 ]] && output "Starting $serviceName...\n"
-	reset_iptables quiet
-	set_iptables
-	[[ ! -t 1 || $bgrun -eq 1 ]] && (start_adblocking $1 | cat &) || start_adblocking $1
+	if [ -f "$hosts_file" ]; then
+		output "Reloading $serviceName...\n"
+		iptables_create 'quiet'
+		start_adblocking 'reload'
+	else
+		output "Starting $serviceName...\n"
+		iptables_create
+		start_adblocking
+	fi
 }
 
-stop_service () {
-  is_enabled || return 1
-	[[ -t 1 && $bgrun -eq 1 ]] && output "Stopping $serviceName...\n"
-	reset_iptables
-	[[ ! -t 1 || $bgrun -eq 1 ]] && (stop_adblocking | cat &) || stop_adblocking
+stop_service() {
+  load_package_config
+	output "Stopping $serviceName...\n"
+	iptables_destroy
+	stop_adblocking
 }
 
-service_triggers () {
-    procd_add_reload_trigger 'simple-adblock'
-}
+killcache() { [ -s $T_TMP ] && rm -f $T_TMP; }

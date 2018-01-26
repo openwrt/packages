@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=simple-adblock
-PKG_VERSION:=1.5.7
-PKG_RELEASE:=10
+PKG_VERSION:=1.5.8
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 
@@ -45,6 +45,18 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/simple-adblock.init $(1)/etc/init.d/simple-adblock
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/simple-adblock.conf $(1)/etc/config/simple-adblock
+endef
+
+define Package/$(PKG_NAME)/prerm
+	#!/bin/sh
+	# check if we are on real system
+	if [ -z "$${IPKG_INSTROOT}" ]; then
+		echo "Stopping service and removing rc.d symlink for simple-adblock"
+		/etc/init.d/simple-adblock stop || true
+		/etc/init.d/simple-adblock killcache || true
+		/etc/init.d/simple-adblock disable
+	fi
+	exit 0
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
