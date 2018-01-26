@@ -55,9 +55,10 @@ endef
 
 define perlmod/Configure
 	(cd $(if $(3),$(3),$(PKG_BUILD_DIR)); \
-	PERL_MM_USE_DEFAULT=1 \
-	$(2) \
-	$(PERL_CMD) -MConfig -e '$$$${tied %Config::Config}{cpprun}="$(GNU_TARGET_NAME)-cpp -E"; do "./Makefile.PL"' \
+	 (echo -e 'use Config;\n\n$$$${tied %Config::Config}{cpprun}="$(GNU_TARGET_NAME)-cpp -E";\n' ; cat Makefile.PL) | \
+	 PERL_MM_USE_DEFAULT=1 \
+	 $(2) \
+	 $(PERL_CMD) -I. -- - \
 		$(1) \
 		AR=ar \
 		CC=$(GNU_TARGET_NAME)-gcc \
@@ -103,8 +104,8 @@ define perlmod/Configure
 		INSTALLVENDORMAN3DIR=" " \
 		LINKTYPE=dynamic \
 		DESTDIR=$(PKG_INSTALL_DIR) \
-	);
-	sed 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/$(PERL_VERSION)/CORE/!' -i $(if $(3),$(3),$(PKG_BUILD_DIR))/Makefile
+	)
+	sed -i -e 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/$(PERL_VERSION)/CORE/!' $(if $(3),$(3),$(PKG_BUILD_DIR))/Makefile
 endef
 
 define perlmod/Compile
