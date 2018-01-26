@@ -1,16 +1,5 @@
-Please double check that your commits:
-- all start with "<package name>: "
-- all contain signed-off-by
-- are linked to your github account (you see your logo in front of them) 
-
-Please also read https://github.com/openwrt/packages/blob/master/CONTRIBUTING.md
-
-Thanks for your contribution
-Please remove this text (before ---) and fill the following template
--------------------------------
-
-Maintainer: me / @<github-user>
-Compile tested: (put here arch, model, OpenWRT/LEDE version)
-Run tested: (put here arch, model, OpenWRT/LEDE version, tests done)
+Maintainer: me / @\<github-user> (find it by checking history of the package Makefile)
+Compile tested: (put here arch, model, OpenWrt version)
+Run tested: (put here arch, model, OpenWrt version, tests done)
 
 Description:
