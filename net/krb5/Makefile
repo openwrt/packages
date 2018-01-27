@@ -84,7 +84,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include $(1)/usr
 	$(INSTALL_DIR) $(1)/usr
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib $(1)/usr
-	# needed for samba4, to detect system-krb5
+	# needed for samba4, to detect system-mit-krb5
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/krb5-config $(1)/usr/bin
 endef
