@@ -27,12 +27,12 @@ define Package/inadyn
   CATEGORY:=Network
   DEPENDS:=+confuse +libopenssl +ca-certificates
   TITLE:=A Dynamic DNS client with SSL/TLS support
-  URL:=https://github.com/troglobit/inadyn
+  URL:=http://troglobit.com/project/inadyn/
   SUBMENU:=IP Addresses and Names
 endef
 
 define Package/inadyn/description
-  Suitable for embedded systems, written in C.
+  Inadyn is a small and simple Dynamic DNS, DDNS, client with HTTPS support
 endef
 
 define Package/inadyn/conffiles
