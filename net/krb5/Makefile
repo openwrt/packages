@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
-PKG_VERSION:=1.14.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.16
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=NOTICE
 
-PKG_SOURCE:=krb5-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.14/
-PKG_HASH:=6bcad7e6778d1965e4ce4af21d2efdc15b274c5ce5c69031c58e4c954cda8b27
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.16/
+PKG_HASH:=faeb125f83b0fb4cdb2f99f088140631bb47d975982de0956d18c85842969e08
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -74,15 +74,19 @@ CONFIGURE_ARGS += \
 	--without-system-verto \
 	--without-tcl \
 	--without-libedit \
-	--localstatedir=/etc
+	--localstatedir=/etc \
+	--with-size-optimizations \
+	--disable-rpath \
+	--without-krb5-config
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include \
-		$(1)/usr
+	$(CP) $(PKG_INSTALL_DIR)/usr/include $(1)/usr
 	$(INSTALL_DIR) $(1)/usr
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib \
-		$(1)/usr
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib $(1)/usr
+	# needed for samba4, to detect system-krb5
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/krb5-config $(1)/usr/bin
 endef
 
 define Package/krb5-libs/install
