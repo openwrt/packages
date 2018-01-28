@@ -8,21 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
-PKG_VERSION:=2.93
-PKG_RELEASE:=1
+PKG_VERSION:=2.92+git
+PKG_RELEASE:=5
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/transmission/transmission-releases/raw/master
-PKG_HASH:=8815920e0a4499bcdadbbe89a4115092dab42ce5199f71ff9a926cfd12b9b90b
-PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-
-PKG_LICENSE:=GPL-2.0+
-PKG_LICENSE_FILES:=COPYING
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/transmission/transmission.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=5b29fe15561d40c40cbee635446df6b33e18d2c2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
+PKG_MIRROR_HASH:=f99982ae68564da9bf6ad4407285aff2e29508e4fd801ff56f86a8b3dae01819
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -32,6 +32,7 @@ define Package/transmission/template
   CATEGORY:=Network
   TITLE:=BitTorrent client
   URL:=http://www.transmissionbt.com
+  MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 endef
 
 define Package/transmission-daemon/Default

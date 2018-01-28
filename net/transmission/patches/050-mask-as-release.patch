@@ -1,0 +1,26 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -42,8 +42,8 @@ set(TR_NAME ${PROJECT_NAME})
+ #         "Z" for unsupported trunk builds,
+ #         "0" for stable, supported releases
+ # these should be the only two lines you need to change
+-set(TR_USER_AGENT_PREFIX "2.92+")
+-set(TR_PEER_ID_PREFIX "-TR292Z-")
++set(TR_USER_AGENT_PREFIX "2.92")
++set(TR_PEER_ID_PREFIX "-TR2920-")
+ 
+ string(REGEX MATCH "^([0-9]+)\\.([0-9]+).*" TR_VERSION "${TR_USER_AGENT_PREFIX}")
+ set(TR_VERSION_MAJOR "${CMAKE_MATCH_1}")
+--- a/configure.ac
++++ b/configure.ac
+@@ -3,8 +3,8 @@ dnl STATUS: "X" for prerelease beta buil
+ dnl         "Z" for unsupported trunk builds,
+ dnl         "0" for stable, supported releases
+ dnl these should be the only two lines you need to change
+-m4_define([user_agent_prefix],[2.92+])
+-m4_define([peer_id_prefix],[-TR292Z-])
++m4_define([user_agent_prefix],[2.92])
++m4_define([peer_id_prefix],[-TR2920-])
+ 
+ AC_INIT([transmission],[user_agent_prefix],[https://trac.transmissionbt.com/newticket])
+ AC_SUBST(USERAGENT_PREFIX,[user_agent_prefix])
