@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
 PKG_VERSION:=7.6p1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -93,6 +93,14 @@ define Package/openssh-server/conffiles
 /etc/ssh/sshd_config
 /etc/ssh/ssh_host_*_key
 /etc/ssh/ssh_host_*_key.pub
+endef
+
+define Package/openssh-server/config
+  config OPENSSH_ALLOW_PASSWORDS
+	bool "Enable password authentication"
+	default y
+	help
+		This enables passwords in addition to key-based authentication.
 endef
 
 define Package/openssh-server-pam
@@ -249,6 +257,9 @@ define Package/openssh-server/install
 	chmod 0700 $(1)/etc/ssh
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/ssh/sshd_config $(1)/etc/ssh/
 	sed -r -i 's,^#(HostKey /etc/ssh/ssh_host_(rsa|ecdsa|ed25519)_key)$$$$,\1,' $(1)/etc/ssh/sshd_config
+ifneq ($(CONFIG_OPENSSH_ALLOW_PASSWORD),y)
+	sed -r -i 's,^#PasswordAuthentication yes$$$$,PasswordAuthentication no,' $(1)/etc/ssh/sshd_config
+endif
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sshd.init $(1)/etc/init.d/sshd
 	$(INSTALL_DIR) $(1)/usr/sbin
