@@ -1,6 +1,8 @@
+diff --git a/configure.ac b/configure.ac
+index aff673b..7e109af 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -386,7 +386,7 @@ dnl See if ANY version of miniupnpc is i
+@@ -378,7 +378,7 @@ dnl See if ANY version of miniupnpc is installed
  AC_LINK_IFELSE(
    [AC_LANG_PROGRAM([#include <miniupnpc/miniupnpc.h>],
                     [struct UPNPDev dev;])],

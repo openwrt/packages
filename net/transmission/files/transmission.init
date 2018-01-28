@@ -95,7 +95,7 @@ transmission() {
 			speed_limit_down speed_limit_down_enabled speed_limit_up \
 			speed_limit_up_enabled start_added_torrents trash_original_torrent_files \
 			umask upload_slots_per_torrent utp_enabled scrape_paused_torrents \
-			watch_dir_enabled
+			watch_dir_enabled rpc_host_whitelist_enabled
 
 		append_params_quotes "$cfg" \
 			blocklist_url bind_address_ipv4 bind_address_ipv6 download_dir incomplete_dir \
@@ -113,6 +113,7 @@ transmission() {
 	procd_set_param command $cmdline
 	procd_set_param respawn retry=60
 	procd_set_param user "$user"
+	procd_set_param group "$user"
 	procd_set_param nice "$nice"
 	if test -z "$USE";then
 		procd_set_param limits core="0 0"
