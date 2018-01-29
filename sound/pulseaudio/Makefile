@@ -237,9 +237,9 @@ define Package/pulseaudio-daemon-avahi/install
 		$(PKG_INSTALL_DIR)/usr/lib/pulse-$(PKG_VERSION)/modules/module*.so \
 		$(1)/usr/lib/pulse-$(PKG_VERSION)/modules/
 
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/etc/dbus-1/system.d/pulseaudio-system.conf \
-		$(1)/etc/dbus-1/system.d/pulseaudio-system.conf
+#	$(INSTALL_DATA) \
+#		$(PKG_INSTALL_DIR)/etc/dbus-1/system.d/pulseaudio-system.conf \
+#		$(1)/etc/dbus-1/system.d/pulseaudio-system.conf
 
 #	chmod -R 0644 $(1)/etc/pulse/* $(1)/etc/dbus-1/system.d/pulseaudio-system.conf
 endef
