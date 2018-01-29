@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
 PKG_VERSION:=1.16
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -40,7 +40,7 @@ define Package/krb5-libs
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Kerberos
-	DEPENDS:=+libncurses
+	DEPENDS:=+libncurses +libss +libcomerr
 	TITLE:=Kerberos 5 Shared Libraries
 	URL:=http://web.mit.edu/kerberos/
 endef
@@ -58,7 +58,8 @@ define Package/krb5-client
 endef
 
 define Package/krb5/description
-	Kerberos
+  Kerberos is a network authentication protocol. 
+  It is designed to provide strong authentication for client/server applications by using secret-key cryptography.
 endef
 
 CONFIGURE_PATH = ./src
@@ -72,13 +73,18 @@ CONFIGURE_VARS += \
 	ac_cv_file__etc_TIMEZONE=no
 
 CONFIGURE_ARGS += \
+	--localstatedir=/etc \
+	--with-system-ss \
+	--with-system-et \
 	--without-system-verto \
 	--without-tcl \
+	--without-tls-impl \
 	--without-libedit \
-	--localstatedir=/etc \
-	--with-size-optimizations \
+	--without-readline \
 	--disable-rpath \
-	--without-krb5-config
+	--disable-pkinit \
+	--with-size-optimizations \
+	--with-crypto-impl=builtin
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
