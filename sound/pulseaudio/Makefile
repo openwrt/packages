@@ -94,7 +94,6 @@ CONFIGURE_ARGS += \
 	--disable-jack \
 	--disable-asyncns \
 	--disable-lirc \
-	--disable-bluez \
 	--disable-udev \
 	--without-fftw \
 	--disable-avahi \
