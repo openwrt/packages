@@ -6,19 +6,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pixiewps
-PKG_VERSION:=1.4.1
+PKG_VERSION:=1.4.2
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/wiire-a/pixiewps/releases/download/v$(PKG_VERSION)
-PKG_HASH:=8b61b9d94e26c07ab08a01eacd200576375c08139f9d781b5fdbb587ddd33528
+PKG_HASH:=c4dc0569e476ebdbd85992da2d1ff799db97ed0040da9dc44e13d08a97a9de1e
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.md
 
 include $(INCLUDE_DIR)/package.mk
-MAKE_PATH:=src
 
 define Package/pixiewps
   SECTION:=net
@@ -38,7 +37,7 @@ endef
 
 define Package/pixiewps/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/pixiewps $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/pixiewps $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,pixiewps))
