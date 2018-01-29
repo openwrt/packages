@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=2.93
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/transmission/transmission-releases/raw/master
@@ -37,7 +37,7 @@ endef
 
 define Package/transmission-daemon/Default
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libpthread +libevent2 +librt +zlib
+  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
   USERID:=transmission=224:transmission=224
 endef
 
@@ -57,7 +57,7 @@ endef
 
 define Package/transmission-cli/Default
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libpthread +libevent2 +librt +zlib
+  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
 endef
 
 define Package/transmission-cli-openssl
@@ -76,7 +76,7 @@ endef
 
 define Package/transmission-remote/Default
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libpthread +libevent2 +librt +zlib
+  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
 endef
 
 define Package/transmission-remote-openssl
@@ -131,9 +131,6 @@ endef
 Package/transmission-daemon-mbedtls/conffiles = $(Package/transmission-daemon-openssl/conffiles)
 
 
-CONFIGURE_VARS += \
-	LIBEVENT_LIBS="$(STAGING_DIR)/usr/lib/libevent-2.0.so.5"
-
 CONFIGURE_ARGS += \
 	--enable-daemon \
 	--enable-cli \
@@ -153,16 +150,6 @@ ifeq ($(BUILD_VARIANT),mbedtls)
 	MBEDTLS_CFLAGS="-I$(STAGING_DIR)/usr/include/mbedtls" \
 	MBEDTLS_LIBS="-lmbedtls -lmbedcrypto"
 endif
-
-MAKE_FLAGS += \
-	CFLAGS="$(TARGET_CFLAGS) -D_GNU_SOURCE"
-
-TARGET_CFLAGS += -std=gnu99
-
-define Build/Configure
-	( cd $(PKG_BUILD_DIR); ./autogen.sh $(CONFIGURE_ARGS))
-	$(call Build/Configure/Default,$CONFIGURE_ARGS)
-endef
 
 define Package/transmission-daemon-openssl/install
 	$(INSTALL_DIR) $(1)/usr/bin
