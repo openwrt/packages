@@ -40,7 +40,8 @@ define Package/krb5-libs
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Kerberos
-	DEPENDS:=+libncurses
+	DEPENDS:=+libncurses +PACKAGE_libopenssl:libopenssl +PACKAGE_e2fsprogs:e2fsprogs
+	# e2fsprogs because of BUG FS#1310
 	TITLE:=Kerberos 5 Shared Libraries
 	URL:=http://web.mit.edu/kerberos/
 endef
@@ -88,6 +89,8 @@ define Build/InstallDev
 	# needed for samba4, to detect system-krb5
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/krb5-config $(1)/usr/bin
+	# provide compile_et for other packages
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/compile_et $(1)/usr/bin
 endef
 
 define Package/krb5-libs/install
