@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluez
-PKG_VERSION:=5.30
+PKG_VERSION:=5.47
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.kernel.org/pub/linux/bluetooth/
-PKG_MD5SUM:=24ba1d1e8e7ef5b8f4033a3059d7600e
+PKG_SOURCE_URL:=@KERNEL/linux/bluetooth/
+PKG_MD5SUM:=783e15f65e70cdb8f721c659e140dd56
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
@@ -47,7 +47,7 @@ $(call Package/bluez/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= library
-  DEPENDS:=+libpthread
+  DEPENDS:=+libpthread +kmod-bluetooth
 endef
 
 define Package/bluez-utils
@@ -55,14 +55,22 @@ $(call Package/bluez/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= utilities
-  DEPENDS:=+bluez-libs +libpthread +librt +dbus +glib2 +libical +libncurses +libreadline $(INTL_DEPENDS) $(ICONV_DEPENDS)
+  DEPENDS:=+bluez-libs +libpthread +librt +glib2 +libncurses +libreadline $(INTL_DEPENDS) $(ICONV_DEPENDS)
 endef
 
-define Package/bluez-utils/conffiles
+define Package/bluez-daemon
+$(call Package/bluez/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE+= daemon
+  DEPENDS:=+bluez-libs +bluez-utils +dbus +libical $(INTL_DEPENDS) $(ICONV_DEPENDS)
+endef
+
+define Package/bluez-daemon/conffiles
 /etc/bluetooth/main.conf
 /etc/bluetooth/network.conf
 /etc/bluetooth/input.conf
-/etc/bluetooth/proximity.conf
+/etc/bluetooth/audio.conf
 /etc/config/bluetooth
 endef
 
@@ -84,6 +92,7 @@ CONFIGURE_ARGS += \
 	--disable-systemd \
 	--disable-test \
 	--disable-udev \
+	--enable-deprecated
 
 TARGET_CPPFLAGS += \
 	-D_GNU_SOURCE
@@ -109,10 +118,29 @@ endef
 
 define Package/bluez-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bluetooth/bluetoothd $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bluetooth/obexd $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bccmd $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bluemoon $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/btmon $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/tools/btmgmt $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ciptool $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/hciattach $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/hciconfig $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/hcidump $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/hcitool $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/hex2hcd $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/l2ping $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/l2test $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/rctest $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/rfcomm $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/sdptool $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/attrib/gatttool $(1)/usr/bin/
+endef
+
+define Package/bluez-daemon/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bluetooth/bluetoothd $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bluetoothctl $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bluetooth/obexd $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/bluetooth.config $(1)/etc/config/bluetooth
 	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d/
@@ -121,7 +149,7 @@ define Package/bluez-utils/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/main.conf $(1)/etc/bluetooth/main.conf
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/profiles/network/network.conf $(1)/etc/bluetooth/network.conf
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/profiles/input/input.conf $(1)/etc/bluetooth/input.conf
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/profiles/proximity/proximity.conf $(1)/etc/bluetooth/proximity.conf
+	$(INSTALL_DATA) ./files/audio.conf $(1)/etc/bluetooth/audio.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/bluetoothd.init $(1)/etc/init.d/bluetoothd
 endef
@@ -129,3 +157,4 @@ endef
 $(eval $(call BuildPackage,bluez-examples))
 $(eval $(call BuildPackage,bluez-libs))
 $(eval $(call BuildPackage,bluez-utils))
+$(eval $(call BuildPackage,bluez-daemon))
