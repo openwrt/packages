@@ -35,7 +35,8 @@ define Package/p11-kit/description
 endef
 
 CONFIGURE_ARGS+= \
-	--without-libffi
+	--without-libffi \
+	--disable-trust-module
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/p11-kit-1/p11-kit/
