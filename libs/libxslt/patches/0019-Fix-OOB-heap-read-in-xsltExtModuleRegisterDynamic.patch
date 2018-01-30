@@ -1,0 +1,36 @@
+From 87c3d9ea214fc0503fd8130b6dd97431d69cc066 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 5 May 2016 15:12:48 +0200
+Subject: [PATCH] Fix OOB heap read in xsltExtModuleRegisterDynamic
+
+xsltExtModuleRegisterDynamic would read a byte before the start of a
+string under certain circumstances. I looks like this piece code was
+supposed to strip characters from the end of the extension name, but
+it didn't have any effect. Don't read beyond the beginning of the
+string and actually strip unwanted characters.
+
+Found with afl-fuzz and ASan.
+---
+ libxslt/extensions.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/libxslt/extensions.c b/libxslt/extensions.c
+index 5ad73cb..ae6eef0 100644
+--- a/libxslt/extensions.c
++++ b/libxslt/extensions.c
+@@ -367,8 +367,11 @@ xsltExtModuleRegisterDynamic(const xmlChar * URI)
+         i++;
+     }
+ 
+-    if (*(i - 1) == '_')
++    /* Strip underscores from end of string. */
++    while (i > ext_name && *(i - 1) == '_') {
++        i--;
+         *i = '\0';
++    }
+ 
+     /* determine module directory */
+     ext_directory = (xmlChar *) getenv("LIBXSLT_PLUGINS_PATH");
+-- 
+2.8.1
+

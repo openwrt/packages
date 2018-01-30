@@ -1,0 +1,64 @@
+From 91d0540ac9beaa86719a05b749219a69baa0dd8d Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 10 Apr 2016 13:12:28 +0200
+Subject: [PATCH] Lower and upper bound for format token "i"
+
+Handle xsl:number with format "i" and value 0 according to XSLT 2.0.
+
+Also introduce an upper bound to fix a denial of service.
+---
+ libxslt/numbers.c | 25 ++++++++++++++++---------
+ 1 file changed, 16 insertions(+), 9 deletions(-)
+
+diff --git a/libxslt/numbers.c b/libxslt/numbers.c
+index af52883..e769c42 100644
+--- a/libxslt/numbers.c
++++ b/libxslt/numbers.c
+@@ -274,11 +274,24 @@ xsltNumberFormatAlpha(xsltNumberDataPtr data,
+ }
+ 
+ static void
+-xsltNumberFormatRoman(xmlBufferPtr buffer,
++xsltNumberFormatRoman(xsltNumberDataPtr data,
++		      xmlBufferPtr buffer,
+ 		      double number,
+ 		      int is_upper)
+ {
+     /*
++     * See discussion in xsltNumberFormatAlpha. Also use a reasonable upper
++     * bound to avoid denial of service.
++     */
++    if (number < 1.0 || number > 5000.0) {
++        xsltNumberFormatDecimal(buffer, number, '0', 1,
++                                data->digitsPerGroup,
++                                data->groupingCharacter,
++                                data->groupingCharacterLen);
++        return;
++    }
++
++    /*
+      * Based on an example by Jim Walsh
+      */
+     while (number >= 1000.0) {
+@@ -527,16 +540,10 @@ xsltNumberFormatInsertNumbers(xsltNumberDataPtr data,
+ 		    xsltNumberFormatAlpha(data, buffer, number, FALSE);
+ 		    break;
+ 		case 'I':
+-		    xsltNumberFormatRoman(buffer,
+-					  number,
+-					  TRUE);
+-
++		    xsltNumberFormatRoman(data, buffer, number, TRUE);
+ 		    break;
+ 		case 'i':
+-		    xsltNumberFormatRoman(buffer,
+-					  number,
+-					  FALSE);
+-
++		    xsltNumberFormatRoman(data, buffer, number, FALSE);
+ 		    break;
+ 		default:
+ 		    if (IS_DIGIT_ZERO(token->token)) {
+-- 
+2.8.1
+

@@ -1,0 +1,62 @@
+From d8862309f08054218b28e2c8f5fb3cb2f650cac7 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 20 Apr 2016 14:35:43 +0200
+Subject: [PATCH] Fix double free in libexslt hash functions
+
+Thanks to Nicolas Gregoire for the report.
+
+Fixes bug #765271:
+
+https://bugzilla.gnome.org/show_bug.cgi?id=765271
+---
+ libexslt/crypto.c             | 15 +++------------
+ tests/exslt/crypto/hash.1.out |  2 ++
+ tests/exslt/crypto/hash.1.xml |  5 +++++
+ 3 files changed, 10 insertions(+), 12 deletions(-)
+
+diff --git a/libexslt/crypto.c b/libexslt/crypto.c
+index 6aa9dd2..e13db8b 100644
+--- a/libexslt/crypto.c
++++ b/libexslt/crypto.c
+@@ -499,11 +499,8 @@ exsltCryptoMd4Function (xmlXPathParserContextPtr ctxt, int nargs) {
+     unsigned char hex[MD5_DIGEST_LENGTH * 2 + 1];
+ 
+     str_len = exsltCryptoPopString (ctxt, nargs, &str);
+-    if (str_len == 0) {
+-	xmlXPathReturnEmptyString (ctxt);
+-	xmlFree (str);
++    if (str_len == 0)
+ 	return;
+-    }
+ 
+     PLATFORM_HASH (ctxt, PLATFORM_MD4, (const char *) str, str_len,
+ 		   (char *) hash);
+@@ -532,11 +529,8 @@ exsltCryptoMd5Function (xmlXPathParserContextPtr ctxt, int nargs) {
+     unsigned char hex[MD5_DIGEST_LENGTH * 2 + 1];
+ 
+     str_len = exsltCryptoPopString (ctxt, nargs, &str);
+-    if (str_len == 0) {
+-	xmlXPathReturnEmptyString (ctxt);
+-	xmlFree (str);
++    if (str_len == 0)
+ 	return;
+-    }
+ 
+     PLATFORM_HASH (ctxt, PLATFORM_MD5, (const char *) str, str_len,
+ 		   (char *) hash);
+@@ -565,11 +559,8 @@ exsltCryptoSha1Function (xmlXPathParserContextPtr ctxt, int nargs) {
+     unsigned char hex[SHA1_DIGEST_LENGTH * 2 + 1];
+ 
+     str_len = exsltCryptoPopString (ctxt, nargs, &str);
+-    if (str_len == 0) {
+-	xmlXPathReturnEmptyString (ctxt);
+-	xmlFree (str);
++    if (str_len == 0)
+ 	return;
+-    }
+ 
+     PLATFORM_HASH (ctxt, PLATFORM_SHA1, (const char *) str, str_len,
+ 		   (char *) hash);
+-- 
+2.8.1
+

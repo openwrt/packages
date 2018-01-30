@@ -1,0 +1,105 @@
+From fc1ff481fd01e9a65a921c542fed68d8c965e8a3 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 25 Feb 2016 17:16:06 +0100
+Subject: [PATCH] Fix use-after-free in xsltDocumentFunctionLoadDocument
+
+Also fixes a memory leak in an unlikely error case.
+
+Fixes bug #758291
+https://bugzilla.gnome.org/show_bug.cgi?id=758291
+---
+ libxslt/functions.c         |  3 ++-
+ tests/docs/bug-185-data.xml |  5 +++++
+ tests/docs/bug-185.xml      |  2 ++
+ tests/general/bug-185.err   |  3 +++
+ tests/general/bug-185.out   |  0
+ tests/general/bug-185.xsl   | 14 ++++++++++++++
+ 6 files changed, 26 insertions(+), 1 deletion(-)
+ create mode 100644 tests/docs/bug-185-data.xml
+ create mode 100644 tests/docs/bug-185.xml
+ create mode 100644 tests/general/bug-185.err
+ create mode 100644 tests/general/bug-185.out
+ create mode 100644 tests/general/bug-185.xsl
+
+diff --git a/libxslt/functions.c b/libxslt/functions.c
+index 549649c..a5e7021 100644
+--- a/libxslt/functions.c
++++ b/libxslt/functions.c
+@@ -180,7 +180,6 @@ xsltDocumentFunctionLoadDocument(xmlXPathParserContextPtr ctxt, xmlChar* URI)
+     resObj = xmlXPtrEval(fragment, xptrctxt);
+     xmlXPathFreeContext(xptrctxt);
+ #endif
+-    xmlFree(fragment);
+ 
+     if (resObj == NULL)
+ 	goto out_fragment;
+@@ -204,6 +203,7 @@ xsltDocumentFunctionLoadDocument(xmlXPathParserContextPtr ctxt, xmlChar* URI)
+     }
+ 
+     valuePush(ctxt, resObj);
++    xmlFree(fragment);
+     return;
+ 
+ out_object:
+@@ -211,6 +211,7 @@ out_object:
+ 
+ out_fragment:
+     valuePush(ctxt, xmlXPathNewNodeSet(NULL));
++    xmlFree(fragment);
+ }
+ 
+ /**
+diff --git a/tests/docs/bug-185-data.xml b/tests/docs/bug-185-data.xml
+new file mode 100644
+index 0000000..166ef17
+--- /dev/null
++++ b/tests/docs/bug-185-data.xml
+@@ -0,0 +1,5 @@
++<!DOCTYPE test [ <!ATTLIST A id ID #REQUIRED> ] >
++<test>
++  <A id="X"/>
++  <A id="Y"/>
++</test>
+diff --git a/tests/docs/bug-185.xml b/tests/docs/bug-185.xml
+new file mode 100644
+index 0000000..72bfdc4
+--- /dev/null
++++ b/tests/docs/bug-185.xml
+@@ -0,0 +1,2 @@
++<?xml-stylesheet href="poc.xsl" type="text/xsl"?>
++<in>bug-185-data.xml#xpointer(id('X')/range-to(id('Y')))</in>
+diff --git a/tests/general/bug-185.err b/tests/general/bug-185.err
+new file mode 100644
+index 0000000..d7bbe92
+--- /dev/null
++++ b/tests/general/bug-185.err
+@@ -0,0 +1,3 @@
++runtime error: file ./bug-185.xsl line 7 element copy-of
++document() : XPointer does not select a node set: #xpointer(id('X')/range-to(id('Y')))
++no result for ./../docs/bug-185.xml
+diff --git a/tests/general/bug-185.out b/tests/general/bug-185.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/tests/general/bug-185.xsl b/tests/general/bug-185.xsl
+new file mode 100644
+index 0000000..1c5c7d1
+--- /dev/null
++++ b/tests/general/bug-185.xsl
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
++  <xsl:template match="in">
++    <annotation>
++      <xsl:copy-of select="."/>
++      <value>
++        <xsl:copy-of select="document(.)"/>
++      </value>
++    </annotation>
++  </xsl:template>
++  <xsl:template match="@*|node()">
++    <xsl:apply-templates/>
++  </xsl:template>
++</xsl:stylesheet>
+-- 
+2.8.1
+

@@ -1,0 +1,62 @@
+From 3309feb654036280d2355f8025150a69bfded6e2 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 3 Jan 2016 16:45:24 +0100
+Subject: [PATCH] Always initialize EXSLT month and day to 1
+
+Fixes bug #757970
+https://bugzilla.gnome.org/show_bug.cgi?id=757970
+---
+ libexslt/date.c | 17 +++++++----------
+ 1 file changed, 7 insertions(+), 10 deletions(-)
+
+diff --git a/libexslt/date.c b/libexslt/date.c
+index 9ca993c..272c61b 100644
+--- a/libexslt/date.c
++++ b/libexslt/date.c
+@@ -667,6 +667,11 @@ exsltDateCreateDate (exsltDateType type)
+     }
+     memset (ret, 0, sizeof(exsltDateVal));
+ 
++    if (type != XS_DURATION) {
++        ret->value.date.mon = 1;
++        ret->value.date.day = 1;
++    }
++
+     if (type != EXSLT_UNKNOWN)
+         ret->type = type;
+ 
+@@ -1395,10 +1400,10 @@ _exsltDateTruncateDate (exsltDateValPtr dt, exsltDateType type)
+     }
+ 
+     if ((type & XS_GDAY) != XS_GDAY)
+-        dt->value.date.day = 0;
++        dt->value.date.day = 1;
+ 
+     if ((type & XS_GMONTH) != XS_GMONTH)
+-        dt->value.date.mon = 0;
++        dt->value.date.mon = 1;
+ 
+     if ((type & XS_GYEAR) != XS_GYEAR)
+         dt->value.date.year = 0;
+@@ -1473,18 +1478,10 @@ _exsltDateAdd (exsltDateValPtr dt, exsltDateValPtr dur)
+     d = &(dt->value.date);
+     u = &(dur->value.dur);
+ 
+-    /* normalization */
+-    if (d->mon == 0)
+-        d->mon = 1;
+-
+     /* normalize for time zone offset */
+     u->sec -= (d->tzo * 60);	/* changed from + to - (bug 153000) */
+     d->tzo = 0;
+ 
+-    /* normalization */
+-    if (d->day == 0)
+-        d->day = 1;
+-
+     /* month */
+     carry  = d->mon + u->mon;
+     r->mon = (unsigned int)MODULO_RANGE(carry, 1, 13);
+-- 
+2.8.1
+
