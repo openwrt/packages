@@ -1,0 +1,171 @@
+From d182d8f6ba3071503d96ce17395c9d55871f0242 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 22 Mar 2016 18:20:01 +0100
+Subject: [PATCH] Fix xsltNumberFormatGetMultipleLevel
+
+Namespace nodes are actually an xmlNs, not an xmlNode. They must be
+special-cased in xsltNumberFormatGetMultipleLevel to avoid an
+out-of-bounds heap access.
+
+Move the test whether a node matches the "count" pattern to a separate
+function to make the code more readable. As a side effect, we also
+compare expanded names when walking up the ancestor axis, fixing an
+insignificant bug.
+---
+ libxslt/numbers.c         | 82 +++++++++++++++++++++++++++--------------------
+ tests/docs/bug-186.xml    |  4 +++
+ tests/general/bug-186.out |  5 +++
+ tests/general/bug-186.xsl |  7 ++++
+ 4 files changed, 63 insertions(+), 35 deletions(-)
+ create mode 100644 tests/docs/bug-186.xml
+ create mode 100644 tests/general/bug-186.out
+ create mode 100644 tests/general/bug-186.xsl
+
+diff --git a/libxslt/numbers.c b/libxslt/numbers.c
+index e3209e0..184ee6f 100644
+--- a/libxslt/numbers.c
++++ b/libxslt/numbers.c
+@@ -532,6 +532,43 @@ xsltNumberFormatInsertNumbers(xsltNumberDataPtr data,
+ }
+ 
+ static int
++xsltTestCompMatchCount(xsltTransformContextPtr context,
++                       xmlNodePtr node,
++                       xsltCompMatchPtr countPat,
++                       xmlNodePtr cur)
++{
++    if (countPat != NULL) {
++        return xsltTestCompMatchList(context, node, countPat);
++    }
++    else {
++        /*
++         * 7.7 Numbering
++         *
++         * If count attribute is not specified, then it defaults to the
++         * pattern that matches any node with the same node type as the
++         * current node and, if the current node has an expanded-name, with
++         * the same expanded-name as the current node.
++         */
++        if (node->type != cur->type)
++            return 0;
++        if (node->type == XML_NAMESPACE_DECL)
++            /*
++             * Namespace nodes have no preceding siblings and no parents
++             * that are namespace nodes. This means that node == cur.
++             */
++            return 1;
++        /* TODO: Skip node types without expanded names like text nodes. */
++        if (!xmlStrEqual(node->name, cur->name))
++            return 0;
++        if (node->ns == cur->ns)
++            return 1;
++        if ((node->ns == NULL) || (cur->ns == NULL))
++            return 0;
++        return (xmlStrEqual(node->ns->href, cur->ns->href));
++    }
++}
++
++static int
+ xsltNumberFormatGetAnyLevel(xsltTransformContextPtr context,
+ 			    xmlNodePtr node,
+ 			    xsltCompMatchPtr countPat,
+@@ -562,21 +599,8 @@ xsltNumberFormatGetAnyLevel(xsltTransformContextPtr context,
+ 
+     while (cur != NULL) {
+ 	/* process current node */
+-	if (countPat == NULL) {
+-	    if ((node->type == cur->type) &&
+-		/* FIXME: must use expanded-name instead of local name */
+-		xmlStrEqual(node->name, cur->name)) {
+-		    if ((node->ns == cur->ns) ||
+-		        ((node->ns != NULL) &&
+-			 (cur->ns != NULL) &&
+-		         (xmlStrEqual(node->ns->href,
+-		             cur->ns->href) )))
+-		        cnt++;
+-	    }
+-	} else {
+-	    if (xsltTestCompMatchList(context, cur, countPat))
+-		cnt++;
+-	}
++	if (xsltTestCompMatchCount(context, cur, countPat, node))
++	    cnt++;
+ 	if ((fromPat != NULL) &&
+ 	    xsltTestCompMatchList(context, cur, fromPat)) {
+ 	    break; /* while */
+@@ -633,30 +657,18 @@ xsltNumberFormatGetMultipleLevel(xsltTransformContextPtr context,
+ 		xsltTestCompMatchList(context, ancestor, fromPat))
+ 		break; /* for */
+ 
+-	    if ((countPat == NULL && node->type == ancestor->type &&
+-		xmlStrEqual(node->name, ancestor->name)) ||
+-		xsltTestCompMatchList(context, ancestor, countPat)) {
++	    if (xsltTestCompMatchCount(context, ancestor, countPat, node)) {
+ 		/* count(preceding-sibling::*) */
+-		cnt = 0;
+-		for (preceding = ancestor;
++		cnt = 1;
++		for (preceding =
++                        xmlXPathNextPrecedingSibling(parser, ancestor);
+ 		     preceding != NULL;
+ 		     preceding =
+ 		        xmlXPathNextPrecedingSibling(parser, preceding)) {
+-		    if (countPat == NULL) {
+-			if ((preceding->type == ancestor->type) &&
+-			    xmlStrEqual(preceding->name, ancestor->name)){
+-			    if ((preceding->ns == ancestor->ns) ||
+-			        ((preceding->ns != NULL) &&
+-				 (ancestor->ns != NULL) &&
+-			         (xmlStrEqual(preceding->ns->href,
+-			             ancestor->ns->href) )))
+-			        cnt++;
+-			}
+-		    } else {
+-			if (xsltTestCompMatchList(context, preceding,
+-				                  countPat))
+-			    cnt++;
+-		    }
++
++	            if (xsltTestCompMatchCount(context, preceding, countPat,
++                                               node))
++			cnt++;
+ 		}
+ 		array[amount++] = (double)cnt;
+ 		if (amount >= max)
+diff --git a/tests/docs/bug-186.xml b/tests/docs/bug-186.xml
+new file mode 100644
+index 0000000..424db6b
+--- /dev/null
++++ b/tests/docs/bug-186.xml
+@@ -0,0 +1,4 @@
++<top xmlns:a="AAAA" xmlns:b="BBBB" xmlns:c="CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC">
++<foo/>
++<bar/>
++</top>
+diff --git a/tests/general/bug-186.out b/tests/general/bug-186.out
+new file mode 100644
+index 0000000..01a59f8
+--- /dev/null
++++ b/tests/general/bug-186.out
+@@ -0,0 +1,5 @@
++<?xml version="1.0"?>
++
++1111
++1111
++
+diff --git a/tests/general/bug-186.xsl b/tests/general/bug-186.xsl
+new file mode 100644
+index 0000000..9c491dd
+--- /dev/null
++++ b/tests/general/bug-186.xsl
+@@ -0,0 +1,7 @@
++<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
++ <xsl:template match="*/*">
++  <xsl:for-each select="namespace::*">
++   <xsl:number/>
++  </xsl:for-each>
++ </xsl:template>
++</xsl:stylesheet>
+-- 
+2.8.1
+
