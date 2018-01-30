@@ -40,8 +40,7 @@ define Package/krb5-libs
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Kerberos
-	DEPENDS:=+libncurses +PACKAGE_libopenssl:libopenssl +PACKAGE_e2fsprogs:e2fsprogs
-	# e2fsprogs because of BUG FS#1310
+	DEPENDS:=+libncurses
 	TITLE:=Kerberos 5 Shared Libraries
 	URL:=http://web.mit.edu/kerberos/
 endef
@@ -59,7 +58,8 @@ define Package/krb5-client
 endef
 
 define Package/krb5/description
-	Kerberos
+	Kerberos is a network authentication protocol. It is designed to provide strong authentication for client/server applications by using secret-key cryptography.
+	A free implementation of this protocol is available from the Massachusetts Institute of Technology.
 endef
 
 CONFIGURE_PATH = ./src
