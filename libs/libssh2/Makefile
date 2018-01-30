@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
+# Copyright (C) 2015-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libssh2
 PKG_VERSION:=1.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.libssh2.org/download
+PKG_SOURCE_URL:=https://www.libssh2.org/download
 PKG_MD5SUM:=b01662a210e94cccf2f76094db7dac5c
 
 PKG_INSTALL:=1
@@ -26,7 +26,7 @@ define Package/libssh2
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=SSH2 library
-  URL:=http://www.libssh2.org/
+  URL:=https://www.libssh2.org/
   DEPENDS:=+libopenssl +zlib
   MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 endef
@@ -39,7 +39,8 @@ TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
 	--disable-examples-build \
-	--with-libssl-prefix=$(STAGING_DIR)/usr
+	--with-libssl-prefix=$(STAGING_DIR)/usr \
+	--with-libz-prefix=$(STAGING_DIR)/usr
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
