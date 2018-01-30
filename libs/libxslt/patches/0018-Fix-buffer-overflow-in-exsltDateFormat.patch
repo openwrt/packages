@@ -1,0 +1,33 @@
+From 5d0c6565bab5b9b7efceb33b626916d22b4101a7 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 28 Apr 2016 17:34:27 +0200
+Subject: [PATCH] Fix buffer overflow in exsltDateFormat
+
+Long years can overflow a stack-based buffer on 64-bit platforms by
+up to four bytes.
+
+Thanks to Nicolas Gregoire for the report.
+
+Fixes bug #765380:
+
+https://bugzilla.gnome.org/show_bug.cgi?id=765380
+---
+ libexslt/date.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libexslt/date.c b/libexslt/date.c
+index 272c61b..12c9919 100644
+--- a/libexslt/date.c
++++ b/libexslt/date.c
+@@ -1283,7 +1283,7 @@ exsltDateFormat (const exsltDateValPtr dt)
+     }
+ 
+     if (dt->type & XS_GYEAR) {
+-        xmlChar buf[20], *cur = buf;
++        xmlChar buf[100], *cur = buf;
+ 
+         FORMAT_GYEAR(dt->value.date.year, cur);
+         if (dt->type == XS_GYEARMONTH) {
+-- 
+2.8.1
+

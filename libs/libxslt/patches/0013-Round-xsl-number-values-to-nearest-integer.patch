@@ -1,0 +1,26 @@
+From 345e0bfb1c1131155a32dfbdfc8f78d1c602dc40 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 10 Apr 2016 12:50:02 +0200
+Subject: [PATCH] Round xsl:number values to nearest integer
+
+This matches XSLT 2.0 behavior.
+---
+ libxslt/numbers.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/libxslt/numbers.c b/libxslt/numbers.c
+index 184ee6f..eb087bc 100644
+--- a/libxslt/numbers.c
++++ b/libxslt/numbers.c
+@@ -440,6 +440,8 @@ xsltNumberFormatInsertNumbers(xsltNumberDataPtr data,
+     for (i = 0; i < numbers_max; i++) {
+ 	/* Insert number */
+ 	number = numbers[(numbers_max - 1) - i];
++        /* Round to nearest like XSLT 2.0 */
++        number = floor(number + 0.5);
+ 	if (i < tokens->nTokens) {
+ 	  /*
+ 	   * The "n"th format token will be used to format the "n"th
+-- 
+2.8.1
+
