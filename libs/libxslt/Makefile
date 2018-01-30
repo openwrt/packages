@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014 - 2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxslt
-PKG_VERSION:=1.1.31
+PKG_VERSION:=1.1.32
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	http://xmlsoft.org/sources/ \
 	ftp://fr.rpmfind.net/pub/libxml/
-PKG_HASH:=db25e96b6b801144277e67c05b10560ac09dfff82ccd53a154ce86e43622f3ab
+PKG_HASH:=526ecd0abaf4a7789041622c3950c0e7f2c4c8835471515fd77eec684a355460
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -64,6 +64,7 @@ define Package/xsltproc/description
 endef
 
 CONFIGURE_ARGS+= \
+	--disable-silent-rules \
 	--enable-shared \
 	--enable-static \
 	--without-python \
