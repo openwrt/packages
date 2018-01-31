@@ -1,0 +1,46 @@
+menu "Configuration"
+	depends on PACKAGE_samba4
+
+config SAMBA4_SERVER
+	bool "Server"
+	default y
+	help
+		Installs: smbd smbpasswd pdbedit testparm smbstatus
+	select BUSYBOX_CONFIG_RENICE
+	select BUSYBOX_DEFAULT_RENICE
+
+		config SAMBA4_SERVER_NETBIOS
+			depends on SAMBA4_SERVER
+			bool "enable Netbios support"
+			default y
+			help
+				installs: nmbd nmblookup
+		
+		config SAMBA4_SERVER_AVAHI
+			depends on SAMBA4_SERVER
+			bool "enable AVAHI support"
+			default n
+
+		config SAMBA4_SERVER_VFS
+			depends on SAMBA4_SERVER
+			bool "enable common VFS modules"
+			default y
+			help
+				supported modules are:
+					vfs_btrfs vfs_fruit vfs_shadow_copy vfs_shadow_copy2 vfs_shell_snap vfs_recycle vfs_fake_perms vfs_default_quota vfs_readonly
+					vfs_cap	vfs_xattr_tdb vfs_streams_xattr vfs_aio_fork vfs_aio_pthread vfs_offline vfs_linux_xfs_sgid vfs_crossrename
+		
+config SAMBA4_CLIENT
+	depends on PACKAGE_samba4
+	bool "Client tool"
+	default n
+	help
+		installs: smbclient smbstatus
+
+config SAMBA4_NET
+	depends on PACKAGE_samba4
+	bool "Admin tools (net)"
+	default n
+	help
+		installs: net smbtree smbcontrol smbget profiles rpcclient smbstatus
+endmenu
