@@ -10,22 +10,28 @@
 
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-mail_ver="1.0.1"
+mail_ver="1.0.2"
 mail_daemon="$(command -v msmtp)"
 mail_profile="adb_notify"
-mail_debug="--debug"
+#mail_debug="--debug"
 mail_rc=1
 
+# mail daemon check
+#
 if [ ! -x "${mail_daemon}" ]
 then
     mail_daemon="$(command -v sendmail)"
 fi
 
+# info preparation
+#
+sys_info="$(strings /etc/banner 2>/dev/null; ubus call system board | sed -e 's/\"release\": {//' | sed -e 's/^[ \t]*//' | sed -e 's/[{}\",]//g' | sed -e 's/[ ]/  \t/' | sed '/^$/d' 2>/dev/null)"
+adb_info="$(/etc/init.d/adblock status 2>/dev/null)"
 if [ -f "/var/log/messages" ]
 then
-    logfile="$(cat /var/log/messages | grep "adblock-")"
+    log_info="$(awk '/adblock-/{NR=1;max=79;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max),"&#8629;"} else {print " ",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}' /var/log/messages)"
 else
-    logfile="$(logread -e "adblock-")"
+    log_info="$(logread -e "adblock-" | awk '{NR=1;max=79;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max),"&#8629;"} else {print " ",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
 fi
 
 # mail header
@@ -33,14 +39,15 @@ fi
 mail_sender="no-reply@adblock"
 mail_receiver="!!!ChangeMe!!!"
 mail_topic="adblock notification"
-mail_head="From: ${mail_sender}\nTo: ${mail_receiver}\nSubject: ${mail_topic}\nReply-to: ${mail_sender}\n\n"
+mail_head="From: ${mail_sender}\nTo: ${mail_receiver}\nSubject: ${mail_topic}\nReply-to: ${mail_sender}\nMime-Version: 1.0\nContent-Type: text/html\nContent-Disposition: inline\n\n"
 
 # mail body
 #
-mail_text="adblock status, generated at $(date 2>&1)!"
-mail_text="${mail_text}\n++\n++ System Information ++\n++\n$(cat /etc/banner 2>&1)"
-mail_text="${mail_text}\n\n++\n++ Adblock Information ++\n++\n$(/etc/init.d/adblock status 2>&1)"
-mail_text="${mail_text}\n\n++\n++ Logfile Information ++\n++\n${logfile}\n++\n++\n"
+mail_text="<html><body><pre style='display:block;font-family:monospace;font-size:1rem;padding:20;background-color:#f3eee5;white-space:pre'>"
+mail_text="${mail_text}\n<strong>++\n++ System Information ++\n++</strong>\n${sys_info}"
+mail_text="${mail_text}\n\n<strong>++\n++ Adblock Information ++\n++</strong>\n${adb_info}"
+mail_text="${mail_text}\n\n<strong>++\n++ Logfile Information ++\n++</strong>\n${log_info}"
+mail_text="${mail_text}</pre></body></html>"
 
 # send mail
 #
