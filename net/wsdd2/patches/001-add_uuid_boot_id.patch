@@ -1,0 +1,22 @@
+--- a/wsd.c	2018-07-20
++++ b/wsd.c	2018-07-20
+@@ -97,12 +97,17 @@ static void uuid_endpoint(char *uuid, si
+ 	FILE *fp = fopen("/etc/machine-id", "r");
+ 	int c, i = 0;
+ 
++	if (!fp) {
++		DEBUG(0, W, "Can't open '/etc/machine-id', trying '/proc/sys/kernel/random/boot_id'");
++		fp = fopen("/proc/sys/kernel/random/boot_id", "r");
++	}
++		
+ 	if (!fp)
+ 		return;
+ 
+ 	while (i < 36 && (c = getc(fp)) != EOF &&
+-		(isdigit(c) || (islower(c) && isxdigit(c)))) {
+-		if (i == 8 || i == 13 || i == 18 || i == 23)
++		((c == '-') || isdigit(c) || (islower(c) && isxdigit(c)))) {
++		if ((c != '-') && (i == 8 || i == 13 || i == 18 || i == 23))
+ 			uuid[i++] = '-';
+ 		uuid[i++] = c;
+ 	}
