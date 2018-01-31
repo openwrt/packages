@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
 PKG_VERSION:=3190300
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
 PKG_HASH:=06129c03dced9f87733a8cba408871bd60673b8f93b920ba8d815efab0a06301
@@ -67,6 +67,9 @@ $(call Package/sqlite3/Default/description)
  that can evaluate queries interactively and display the results in multiple
  formats.
 endef
+
+# On uClibc libm needs to be linked in for ISNAN()
+TARGET_LDFLAGS += $(if $(CONFIG_USE_UCLIBC),-lm)
 
 TARGET_CFLAGS += $(FPIC) \
 	-DSQLITE_ENABLE_UNLOCK_NOTIFY=1 \
