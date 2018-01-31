@@ -1,0 +1,18 @@
+menu "Configuration"
+	depends on PACKAGE_libsqlite3
+
+config SQLITE_FTS3
+	bool
+	prompt	"Enable FTS3"
+	help
+		"Enable support for full-text search version 3"
+	default y
+
+config SQLITE_RTREE
+	bool
+	prompt	"Enable RTREE"
+	help
+		"Enable support for the R*Tree index extension"
+	default y
+
+endmenu
