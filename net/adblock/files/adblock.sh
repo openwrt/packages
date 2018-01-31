@@ -10,14 +10,15 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.4.3"
+adb_ver="3.5.0"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
 adb_backup_mode=0
-adb_whitelist_mode=0
 adb_forcesrt=0
 adb_forcedns=0
+adb_jail=0
+adb_maxqueue=4
 adb_notify=0
 adb_notifycnt=0
 adb_triggerdelay=0
@@ -27,6 +28,7 @@ adb_fetchutil="uclient-fetch"
 adb_dns="dnsmasq"
 adb_dnsprefix="adb_list"
 adb_dnsfile="${adb_dnsprefix}.overall"
+adb_dnsjail="${adb_dnsprefix}.jail"
 adb_dnsflush=0
 adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_rtfile="/tmp/adb_runtime.json"
@@ -123,11 +125,11 @@ f_envload()
             adb_dnsuser="${adb_dnsuser:-"dnsmasq"}"
             adb_dnsdir="${adb_dnsdir:-"/tmp"}"
             adb_dnsheader=""
-            adb_dnsformat="awk '{print \"server=/\"\$0\"/\"}'"
-            if [ ${adb_whitelist_mode} -eq 1 ]
+            adb_dnsdeny="awk '{print \"server=/\"\$0\"/\"}'"
+            if [ ${adb_jail} -eq 1 ]
             then
-                adb_dnsformat="awk '{print \"server=/\"\$0\"/#\"}'"
-                adb_dnsblock="server=/#/"
+                adb_dnsallow="awk '{print \"server=/\"\$0\"/#\"}'"
+                adb_dnshalt="server=/#/"
             fi
         ;;
         unbound)
@@ -135,11 +137,11 @@ f_envload()
             adb_dnsuser="${adb_dnsuser:-"unbound"}"
             adb_dnsdir="${adb_dnsdir:-"/var/lib/unbound"}"
             adb_dnsheader=""
-            adb_dnsformat="awk '{print \"local-zone: \042\"\$0\"\042 static\"}'"
-            if [ ${adb_whitelist_mode} -eq 1 ]
+            adb_dnsdeny="awk '{print \"local-zone: \042\"\$0\"\042 static\"}'"
+            if [ ${adb_jail} -eq 1 ]
             then
-                adb_dnsformat="awk '{print \"local-zone: \042\"\$0\"\042 transparent\"}'"
-                adb_dnsblock="local-zone: \".\" static"
+                adb_dnsallow="awk '{print \"local-zone: \042\"\$0\"\042 transparent\"}'"
+                adb_dnshalt="local-zone: \".\" static"
             fi
         ;;
         named)
@@ -147,11 +149,11 @@ f_envload()
             adb_dnsuser="${adb_dnsuser:-"bind"}"
             adb_dnsdir="${adb_dnsdir:-"/var/lib/bind"}"
             adb_dnsheader="\$TTL 2h"$'\n'"@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)"$'\n'"  IN NS localhost."
-            adb_dnsformat="awk '{print \"\"\$0\" CNAME .\n*.\"\$0\" CNAME .\"}'"
-            if [ ${adb_whitelist_mode} -eq 1 ]
+            adb_dnsdeny="awk '{print \"\"\$0\" CNAME .\n*.\"\$0\" CNAME .\"}'"
+            if [ ${adb_jail} -eq 1 ]
             then
-                adb_dnsformat="awk '{print \"\"\$0\" CNAME rpz-passthru.\n*.\"\$0\" CNAME rpz-passthru.\"}'"
-                adb_dnsblock="* CNAME ."
+                adb_dnsallow="awk '{print \"\"\$0\" CNAME rpz-passthru.\n*.\"\$0\" CNAME rpz-passthru.\"}'"
+                adb_dnshalt="* CNAME ."
             fi
         ;;
         kresd)
@@ -159,11 +161,11 @@ f_envload()
             adb_dnsuser="${adb_dnsuser:-"root"}"
             adb_dnsdir="${adb_dnsdir:-"/etc/kresd"}"
             adb_dnsheader="\$TTL 2h"$'\n'"@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)"$'\n'"  IN NS  localhost."
-            adb_dnsformat="awk '{print \"\"\$0\" CNAME .\n*.\"\$0\" CNAME .\"}'"
-            if [ ${adb_whitelist_mode} -eq 1 ]
+            adb_dnsdeny="awk '{print \"\"\$0\" CNAME .\n*.\"\$0\" CNAME .\"}'"
+            if [ ${adb_jail} -eq 1 ]
             then
-                adb_dnsformat="awk '{print \"\"\$0\" CNAME rpz-passthru.\n*.\"\$0\" CNAME rpz-passthru.\"}'"
-                adb_dnsblock="* CNAME ."
+                adb_dnsallow="awk '{print \"\"\$0\" CNAME rpz-passthru.\n*.\"\$0\" CNAME rpz-passthru.\"}'"
+                adb_dnshalt="* CNAME ."
             fi
         ;;
         dnscrypt-proxy)
@@ -171,7 +173,7 @@ f_envload()
             adb_dnsuser="${adb_dnsuser:-"nobody"}"
             adb_dnsdir="${adb_dnsdir:-"/tmp"}"
             adb_dnsheader=""
-            adb_dnsformat="awk '{print \$0}'"
+            adb_dnsdeny="awk '{print \$0}'"
         ;;
     esac
 
@@ -185,11 +187,6 @@ f_envload()
         f_jsnup
         f_log "info" "adblock is currently disabled, please set adb_enabled to '1' to use this service"
         exit 0
-    fi
-
-    if [ "${adb_dns}" = "dnsmasq" ] && [ ${adb_dnsinstance} -ne 0 ]
-    then
-        adb_dnsfile="${adb_dnsprefix}.overall.${adb_dnsinstance}"
     fi
 
     if [ -d "${adb_dnsdir}" ] && [ ! -f "${adb_dnsdir}/${adb_dnsfile}" ]
@@ -213,7 +210,7 @@ f_envload()
         cnt=$((cnt+1))
     done
 
-    if [ -z "${adb_dns}" ] || [ -z "${adb_dnsformat}" ] || [ ! -x "$(command -v ${adb_dns})" ] || [ ! -d "${adb_dnsdir}" ]
+    if [ -z "${adb_dns}" ] || [ -z "${adb_dnsdeny}" ] || [ ! -x "$(command -v ${adb_dns})" ] || [ ! -d "${adb_dnsdir}" ]
     then
         f_log "err" "'${adb_dns}' not running, DNS backend not found"
     fi
@@ -280,8 +277,8 @@ f_temp()
     if [ -z "${adb_tmpdir}" ]
     then
         adb_tmpdir="$(mktemp -p /tmp -d)"
-        adb_tmpload="$(mktemp -tu)"
-        adb_tmpfile="$(mktemp -tu)"
+        adb_tmpload="$(mktemp -p ${adb_tmpdir} -tu)"
+        adb_tmpfile="$(mktemp -p ${adb_tmpdir} -tu)"
     fi
     if [ ! -s "${adb_pidfile}" ]
     then
@@ -296,8 +293,6 @@ f_rmtemp()
     if [ -d "${adb_tmpdir}" ]
     then
         rm -rf "${adb_tmpdir}"
-        rm -f "${adb_tmpload}"
-        rm -f "${adb_tmpfile}"
     fi
     > "${adb_pidfile}"
 }
@@ -363,6 +358,9 @@ f_count()
         else
             adb_cnt="$(wc -l 2>/dev/null < "${adb_dnsdir}/${adb_dnsfile}")"
         fi
+    elif [ "${mode}" = "whitelist" ] && [ -s "${adb_tmpdir}/tmp.whitelist" ]
+    then
+        adb_cnt="$(wc -l 2>/dev/null < "${adb_tmpdir}/tmp.whitelist")"
     elif [ -s "${adb_tmpfile}" ]
     then
         adb_cnt="$(wc -l 2>/dev/null < "${adb_tmpfile}")"
@@ -499,27 +497,28 @@ f_dnsup()
         cnt=$((cnt+1))
         sleep 1
     done
-    f_log "debug" "f_dnsup::: cache_util: ${cache_util:-"-"}, cache_rc: ${cache_rc:-"-"}, cache_flush: ${adb_dnsflush}, cache_cnt: ${cnt}, out_rc: ${adb_rc}"
+    f_log "debug" "f_dnsup::: cache_util: ${cache_util:-"-"}, cache_rc: ${cache_rc:-"-"}, cache_flush: ${adb_dnsflush}, cache_cnt: ${cnt}, rc: ${adb_rc}"
+    return ${adb_rc}
 }
 
 # backup/restore/remove blocklists
 #
 f_list()
 {
-    local mode="${1}" in_rc="${adb_rc}"
+    local file mode="${1}" in_rc="${adb_rc}"
 
     case "${mode}" in
         backup)
             if [ -d "${adb_backupdir}" ]
             then
-                gzip -cf "${adb_tmpfile}" > "${adb_backupdir}/${adb_dnsprefix}.${src_name}.gz" 2>/dev/null
+                gzip -cf "${adb_tmpfile}" 2>/dev/null > "${adb_backupdir}/${adb_dnsprefix}.${src_name}.gz"
                 adb_rc=${?}
             fi
         ;;
         restore)
             if [ -d "${adb_backupdir}" ] && [ -f "${adb_backupdir}/${adb_dnsprefix}.${src_name}.gz" ]
             then
-                gunzip -cf "${adb_backupdir}/${adb_dnsprefix}.${src_name}.gz" > "${adb_tmpfile}" 2>/dev/null
+                gunzip -cf "${adb_backupdir}/${adb_dnsprefix}.${src_name}.gz" 2>/dev/null > "${adb_tmpfile}"
                 adb_rc=${?}
             fi
         ;;
@@ -531,18 +530,24 @@ f_list()
             adb_rc=${?}
         ;;
         merge)
-            if [ -s "${adb_tmpfile}" ]
-            then
-                cat "${adb_tmpfile}" >> "${adb_tmpdir}/${adb_dnsfile}"
-                adb_rc=${?}
-            fi
+            for file in "${adb_tmpfile}".*
+            do
+                cat "${file}" 2>/dev/null >> "${adb_tmpdir}/${adb_dnsfile}"
+                if [ ${?} -ne 0 ]
+                then
+                    adb_rc=${?}
+                    break
+                fi
+                rm -f "${file}"
+            done
+            adb_tmpfile="${adb_tmpdir}/${adb_dnsfile}"
         ;;
         final)
             if [ -s "${adb_tmpdir}/tmp.whitelist" ]
             then
-                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpdir}/${adb_dnsfile}" | eval "${adb_dnsformat}" > "${adb_dnsdir}/${adb_dnsfile}"
+                grep -vf "${adb_tmpdir}/tmp.whitelist" "${adb_tmpdir}/${adb_dnsfile}" | eval "${adb_dnsdeny}" > "${adb_dnsdir}/${adb_dnsfile}"
             else
-                eval "${adb_dnsformat}" "${adb_tmpdir}/${adb_dnsfile}" > "${adb_dnsdir}/${adb_dnsfile}"
+                eval "${adb_dnsdeny}" "${adb_tmpdir}/${adb_dnsfile}" > "${adb_dnsdir}/${adb_dnsfile}"
             fi
             if [ ${?} -eq 0 ] && [ -n "${adb_dnsheader}" ]
             then
@@ -553,22 +558,50 @@ f_list()
         ;;
     esac
     f_count "${mode}"
-    f_log "debug" "f_list ::: mode: ${mode}, cnt: ${adb_cnt}, in_rc: ${in_rc}, out_rc: ${adb_rc}"
+    f_log "debug" "f_list ::: name: ${src_name:-"-"}, mode: ${mode}, cnt: ${adb_cnt}, in_rc: ${in_rc}, out_rc: ${adb_rc}"
 }
 
 # top level domain compression
 #
 f_tld()
 {
-    local cnt cnt_srt cnt_tld source="${1}" temp="${adb_tmpload}"
+    local cnt cnt_srt cnt_tld source="${1}" temp="${1}.tld"
 
     cnt="$(wc -l 2>/dev/null < "${source}")"
-    awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${source}" 2>/dev/null | sort -u > "${temp}"
-    cnt_srt="$(wc -l 2>/dev/null < "${temp}")"
-    awk '{if(NR==1){tld=$NF};while(getline){if($NF!~tld"\\."){print tld;tld=$NF}}print tld}' "${temp}" 2>/dev/null |\
-    awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' 2>/dev/null | sort > "${source}"
-    cnt_tld="$(wc -l 2>/dev/null < "${source}")"
-    f_log "debug" "f_tld  ::: source: ${source}, cnt: ${cnt}, cnt_srt: ${cnt_srt}, cnt_tld: ${cnt_tld}"
+    sort -u "${source}" > "${temp}"
+    if [ ${?} -eq 0 ]
+    then
+        cnt_srt="$(wc -l 2>/dev/null < "${temp}")"
+        awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${temp}" > "${source}"
+        if [ ${?} -eq 0 ]
+        then
+            sort "${source}" > "${temp}"
+            if [ ${?} -eq 0 ]
+            then
+                awk '{if(NR==1){tld=$NF};while(getline){if($NF!~tld"\\."){print tld;tld=$NF}}print tld}' "${temp}" > "${source}"
+                if [ ${?} -eq 0 ]
+                then
+                    awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${source}" > "${temp}"
+                    if [ ${?} -eq 0 ]
+                    then
+                        sort "${temp}" > "${source}"
+                        if [ ${?} -eq 0 ]
+                        then
+                            cnt_tld="$(wc -l 2>/dev/null < "${source}")"
+                        else
+                            cat "${temp}" > "${source}"
+                        fi
+                    fi
+                else
+                    cat "${temp}" > "${source}"
+                fi
+            fi
+        else
+            cat "${temp}" > "${source}"
+        fi
+    fi
+    rm -f "${temp}"
+    f_log "debug" "f_tld  ::: source: ${source}, cnt: ${cnt:-"-"}, cnt_srt: ${cnt_srt:-"-"}, cnt_tld: ${cnt_tld:-"-"}"
 }
 
 # blocklist hash compare
@@ -635,25 +668,25 @@ f_switch()
 #
 f_query()
 {
-    local search result cnt
-    local domain="${1}"
-    local tld="${domain#*.}"
+    local search result field=1 domain="${1}" tld="${1#*.}"
 
     if [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
     then
         printf "%s\n" "::: invalid domain input, please submit a single domain, e.g. 'doubleclick.net'"
     else
-        cd "${adb_dnsdir}"
+        case "${adb_dns}" in
+            dnsmasq)
+                field=2
+            ;;
+            unbound)
+                field=3
+            ;;
+        esac
         while [ "${domain}" != "${tld}" ]
         do
             search="${domain//./\.}"
-            if [ "${adb_dns}" = "dnsmasq" ] || [ "${adb_dns}" = "unbound" ]
-            then
-                result="$(awk -F '/|\"' "/[\/\"\.]${search}/{i++;{printf(\"  + %s\n\",\$2)};if(i>9){exit}}" "${adb_dnsfile}")"
-            else
-                result="$(awk "/(^[^\*][[:alpha:]]*[\.]+${search}|^${search})/{i++;{printf(\"  + %s\n\",\$1)};if(i>9){exit}}" "${adb_dnsfile}")"
-            fi
-            printf "%s\n" "::: results for domain '${domain}' (max. 10)"
+            result="$(awk -F '/|\"| ' "/^($search|[^\*].*[\/\"\. ]+${search})/{i++;{printf(\"  + %s\n\",\$${field})};if(i>9){printf(\"  + %s\n\",\"[...]\");exit}}" "${adb_dnsdir}/${adb_dnsfile}")"
+            printf "%s\n" "::: results for domain '${domain}'"
             printf "%s\n" "${result:-"  - no match"}"
             domain="${tld}"
             tld="${domain#*.}"
@@ -688,9 +721,6 @@ f_jsnup()
     if [ ${adb_backup_mode} -eq 1 ]
     then
         mode="normal/backup mode"
-    elif [ ${adb_whitelist_mode} -eq 1 ]
-    then
-        mode="whitelist mode"
     fi
 
     if [ -z "${adb_fetchinfo}" ] && [ -s "${adb_rtfile}" ]
@@ -713,7 +743,7 @@ f_jsnup()
     json_dump > "${adb_rtfile}"
 
     if [ ${adb_notify} -eq 1 ] && [ -x /etc/adblock/adblock.notify ] && ([ "${status}" = "error" ] ||\
-        ([ "${status}" = "enabled" ] && [ ${adb_whitelist_mode} -eq 0 ] && [ ${adb_cnt} -le ${adb_notifycnt} ]))
+        ([ "${status}" = "enabled" ] && [ ${adb_cnt} -le ${adb_notifycnt} ]))
     then
         (/etc/adblock/adblock.notify >/dev/null 2>&1) &
         bg_pid=${!}
@@ -744,63 +774,53 @@ f_log()
 #
 f_main()
 {
-    local src_name src_rset src_log src_arc enabled url mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo")"
+    local tmp_load tmp_file src_name src_rset src_arc src_log mem_total mem_free enabled url cnt=1
 
-    f_log "debug" "f_main ::: dns: ${adb_dns}, fetch_util: ${adb_fetchinfo}, backup: ${adb_backup}, backup_mode: ${adb_backup_mode}, whitelist_mode: ${adb_whitelist_mode}, force_srt: ${adb_forcesrt}, force_dns: ${adb_forcedns}, mem_total: ${mem_total}"
+    mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
+    mem_free="$(awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
+    tmp_load="${adb_tmpload}"
+    tmp_file="${adb_tmpfile}"
     > "${adb_dnsdir}/.${adb_dnsfile}"
     > "${adb_tmpdir}/tmp.whitelist"
+    f_log "debug" "f_main ::: dns: ${adb_dns}, fetch_util: ${adb_fetchinfo}, backup: ${adb_backup}, backup_mode: ${adb_backup_mode}, dns_jail: ${adb_jail}, force_srt: ${adb_forcesrt}, force_dns: ${adb_forcedns}, mem_total: ${mem_total:-0}, mem_free: ${mem_free:-0}, max_queue: ${adb_maxqueue}"
 
     # prepare whitelist entries
     #
     if [ -s "${adb_whitelist}" ]
     then
-        if [ ${adb_whitelist_mode} -eq 1 ] && [ "${adb_dns}" != "dnscrypt-proxy" ]
-        then
-            adb_whitelist_rset="\$0~/^([[:alnum:]_-]+\.){1,}[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
-        else
-            adb_whitelist_rset="\$0~/^([[:alnum:]_-]+\.){1,}[[:alpha:]]+([[:space:]]|$)/{gsub(\"\\\.\",\"\\\.\",\$1);print tolower(\"^\"\$1\"\\\|\\\.\"\$1)}"
-        fi
+        adb_whitelist_rset="/^([^([:space:]|\#|\*|\/).]+\.)+[[:alpha:]]+([[:space:]]|$)/{gsub(\"\\\.\",\"\\\.\",\$1);print tolower(\"^\"\$1\"\\\|\\\.\"\$1)}"
         awk "${adb_whitelist_rset}" "${adb_whitelist}" > "${adb_tmpdir}/tmp.whitelist"
+        f_list whitelist
+        if [ ${adb_jail} -eq 1 ] && [ "${adb_dns}" != "dnscrypt-proxy" ]
+        then
+            adb_whitelist_rset="/^([^([:space:]|\#|\*|\/).]+\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
+            awk "${adb_whitelist_rset}" "${adb_whitelist}" > "${adb_tmpdir}/tmp.dnsjail"
+        fi
     fi
 
-    # whitelist mode processing
+    # build 'dnsjail' list
     #
-    if [ ${adb_whitelist_mode} -eq 1 ] && [ "${adb_dns}" != "dnscrypt-proxy" ]
+    if [ ${adb_jail} -eq 1 ] && [ "${adb_dns}" != "dnscrypt-proxy" ]
     then
-        f_hash
-        f_tld "${adb_tmpdir}/tmp.whitelist"
-        eval "${adb_dnsformat}" "${adb_tmpdir}/tmp.whitelist" > "${adb_dnsdir}/${adb_dnsfile}"
-        printf '%s\n' "${adb_dnsblock}" >> "${adb_dnsdir}/${adb_dnsfile}"
+        f_tld "${adb_tmpdir}/tmp.dnsjail"
+        eval "${adb_dnsallow}" "${adb_tmpdir}/tmp.dnsjail" > "/tmp/${adb_dnsjail}"
+        printf '%s\n' "${adb_dnshalt}" >> "/tmp/${adb_dnsjail}"
         if [ -n "${adb_dnsheader}" ]
         then
-            printf '%s\n' "${adb_dnsheader}" | cat - "${adb_dnsdir}/${adb_dnsfile}" > "${adb_tmpdir}/${adb_dnsfile}"
-            cat "${adb_tmpdir}/${adb_dnsfile}" > "${adb_dnsdir}/${adb_dnsfile}"
-        fi
-        f_hash
-        if [ ${?} -eq 1 ]
-        then
-            f_dnsup
-        fi
-        f_jsnup
-        if [ ${adb_rc} -eq 0 ]
-        then
-            f_log "info" "whitelist with overall ${adb_cnt} domains loaded successfully (${adb_sysver})"
-            return 0
-        else
-            f_log "err" "dns backend restart with active whitelist failed"
+            printf '%s\n' "${adb_dnsheader}" | cat - "/tmp/${adb_dnsjail}" > "${adb_tmpdir}/tmp.dnsjail"
+            cat "${adb_tmpdir}/tmp.dnsjail" > "/tmp/${adb_dnsjail}"
         fi
     fi
 
-    # normal & backup mode processing
+    # main loop
     #
     for src_name in ${adb_sources}
     do
         eval "enabled=\"\${enabled_${src_name}}\""
         eval "url=\"\${adb_src_${src_name}}\""
         eval "src_rset=\"\${adb_src_rset_${src_name}}\""
-        > "${adb_tmpload}"
-        > "${adb_tmpfile}"
-        adb_rc=1
+        adb_tmpload="${tmp_load}.${src_name}"
+        adb_tmpfile="${tmp_file}.${src_name}"
 
         # basic pre-checks
         #
@@ -818,92 +838,146 @@ f_main()
             f_list restore
             if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
             then
-                f_list merge
+                if ([ ${mem_total} -lt 64 ] || [ ${mem_free} -lt 40 ]) && [ ${adb_forcesrt} -eq 0 ]
+                then
+                    f_tld "${adb_tmpfile}"
+                fi
                 continue
             fi
         fi
 
-        # download blocklist
+        # download queue processing
         #
         if [ "${src_name}" = "blacklist" ]
         then
             if [ -s "${url}" ]
             then
-                cat "${url}" > "${adb_tmpload}"
-                adb_rc=${?}
+                (
+                  src_log="$(cat "${url}" > "${adb_tmpload}" 2>&1)"
+                  adb_rc=${?}
+                  if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpload}" ]
+                  then
+                      awk "${src_rset}" "${adb_tmpload}" 2>/dev/null > "${adb_tmpfile}"
+                      adb_rc=${?}
+                      if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
+                      then
+                          rm -f "${adb_tmpload}"
+                          f_list download
+                          if ([ ${mem_total} -lt 64 ] || [ ${mem_free} -lt 40 ]) && [ ${adb_forcesrt} -eq 0 ]
+                          then
+                              f_tld "${adb_tmpfile}"
+                          fi
+                      fi
+                  else
+                      src_log="$(printf '%s' "${src_log}" | awk '{ORS=" ";print $0}')"
+                      f_log "debug" "f_main ::: name: ${src_name}, url: ${url}, rc: ${adb_rc}, log: ${src_log:-"-"}"
+                  fi
+                ) &
+            else
+                continue
             fi
         elif [ "${src_name}" = "shalla" ]
         then
-            src_arc="${adb_tmpdir}/shallalist.tar.gz"
-            src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${src_arc}" "${url}" 2>&1)"
-            adb_rc=${?}
-            if [ ${adb_rc} -eq 0 ]
-            then
-                for category in ${adb_src_cat_shalla}
-                do
-                    tar -xOzf "${src_arc}" "BL/${category}/domains" >> "${adb_tmpload}"
-                    adb_rc=${?}
-                    if [ ${adb_rc} -ne 0 ]
-                    then
-                        break
-                    fi
-                done
-            fi
-            rm -f "${src_arc}"
-            rm -rf "${adb_tmpdir}/BL"
+            (
+              src_arc="${adb_tmpdir}"/shallalist.tar.gz
+              src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${src_arc}" "${url}" 2>&1)"
+              adb_rc=${?}
+              if [ ${adb_rc} -eq 0 ] && [ -s "${src_arc}" ]
+              then
+                  for category in ${adb_src_cat_shalla}
+                  do
+                      tar -xOzf "${src_arc}" "BL/${category}/domains" >> "${adb_tmpload}"
+                      adb_rc=${?}
+                      if [ ${adb_rc} -ne 0 ]
+                      then
+                          break
+                      fi
+                  done
+              else
+                  src_log="$(printf '%s' "${src_log}" | awk '{ORS=" ";print $0}')"
+                  f_log "debug" "f_main ::: name: ${src_name}, url: ${url}, rc: ${adb_rc}, log: ${src_log:-"-"}"
+              fi
+              if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpload}" ]
+              then
+                  rm -f "${src_arc}"
+                  awk "${src_rset}" "${adb_tmpload}" 2>/dev/null > "${adb_tmpfile}"
+                  adb_rc=${?}
+                  if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
+                  then
+                      rm -f "${adb_tmpload}"
+                      f_list download
+                      if [ ${adb_backup} -eq 1 ]
+                      then
+                          f_list backup
+                      fi
+                      if ([ ${mem_total} -lt 64 ] || [ ${mem_free} -lt 40 ]) && [ ${adb_forcesrt} -eq 0 ]
+                      then
+                          f_tld "${adb_tmpfile}"
+                      fi
+                  elif [ ${adb_backup} -eq 1 ]
+                  then
+                      f_list restore
+                  fi
+              elif [ ${adb_backup} -eq 1 ]
+              then
+                  f_list restore
+              fi
+            ) &
         else
-            src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${adb_tmpload}" "${url}" 2>&1)"
-            adb_rc=${?}
+            (
+              src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${adb_tmpload}" "${url}" 2>&1)"
+              adb_rc=${?}
+              if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpload}" ]
+              then
+                  awk "${src_rset}" "${adb_tmpload}" 2>/dev/null > "${adb_tmpfile}"
+                  adb_rc=${?}
+                  if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
+                  then
+                      rm -f "${adb_tmpload}"
+                      f_list download
+                      if [ ${adb_backup} -eq 1 ]
+                      then
+                          f_list backup
+                      fi
+                      if ([ ${mem_total} -lt 64 ] || [ ${mem_free} -lt 40 ]) && [ ${adb_forcesrt} -eq 0 ]
+                      then
+                          f_tld "${adb_tmpfile}"
+                      fi
+                  elif [ ${adb_backup} -eq 1 ]
+                  then
+                      f_list restore
+                  fi
+              else
+                  src_log="$(printf '%s' "${src_log}" | awk '{ORS=" ";print $0}')"
+                  f_log "debug" "f_main ::: name: ${src_name}, url: ${url}, rc: ${adb_rc}, log: ${src_log:-"-"}"
+                  if [ ${adb_backup} -eq 1 ]
+                  then
+                      f_list restore
+                  fi
+              fi
+            ) &
         fi
-        if [ ${adb_rc} -ne 0 ] && [ "${src_name}" != "blacklist" ]
+        hold=$(( cnt % adb_maxqueue ))
+        if [ ${hold} -eq 0 ]
         then
-            f_log "debug" "f_main ::: url: ${url}, rc: ${adb_rc}, src_log: ${src_log:-"-"}"
+            wait
         fi
-
-        # check download result and prepare list output
-        #
-        if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpload}" ]
-        then
-            awk "${src_rset}" "${adb_tmpload}" 2>/dev/null > "${adb_tmpfile}"
-            if [ -s "${adb_tmpfile}" ]
-            then
-                if [ ${mem_total} -lt 64 ] && [ ${adb_forcesrt} -eq 0 ]
-                then
-                    f_tld "${adb_tmpfile}"
-                fi
-                if [ ${adb_backup} -eq 1 ] && [ "${src_name}" != "blacklist" ]
-                then
-                    f_list backup
-                fi
-            elif [ ${adb_backup} -eq 1 ]
-            then
-                f_list restore
-            fi
-        elif [ ${adb_backup} -eq 1 ] && [ "${src_name}" != "blacklist" ]
-        then
-            f_list restore
-        fi
-
-        # list merge
-        #
-        if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpfile}" ]
-        then
-            f_list merge
-            if [ ${adb_rc} -ne 0 ]
-            then
-                f_list remove
-            fi
-        else
-            f_list remove
-        fi
+        cnt=$(( cnt + 1 ))
     done
+
+    # list merge
+    #
+    wait
+    src_name="overall"
+    adb_tmpfile="${tmp_file}"
+    f_list merge
 
     # overall sort and conditional dns restart
     #
     f_hash
     if [ -s "${adb_tmpdir}/${adb_dnsfile}" ]
     then
-        if [ ${mem_total} -ge 64 ] || [ ${adb_forcesrt} -eq 1 ]
+        if ([ ${mem_total} -ge 64 ] && [ ${mem_free} -ge 40 ]) || [ ${adb_forcesrt} -eq 1 ]
         then
             f_tld "${adb_tmpdir}/${adb_dnsfile}"
         fi
@@ -912,14 +986,13 @@ f_main()
         > "${adb_dnsdir}/${adb_dnsfile}"
     fi
     chown "${adb_dnsuser}" "${adb_dnsdir}/${adb_dnsfile}" 2>/dev/null
-
     f_hash
     if [ ${?} -eq 1 ]
     then
         f_dnsup
     fi
     f_jsnup
-    if [ ${adb_rc} -eq 0 ]
+    if [ ${?} -eq 0 ]
     then
         f_log "info" "blocklist with overall ${adb_cnt} domains loaded successfully (${adb_sysver})"
     else
