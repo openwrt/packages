@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
 PKG_VERSION:=3210000
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
 PKG_HASH:=d7dd516775005ad87a57f428b6f86afd206cb341722927f104d3f0cf65fbbbe3
@@ -23,6 +23,10 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-autoconf-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
 
 PKG_INSTALL:=1
+
+PKG_CONFIG_DEPENDS := \
+	CONFIG_SQLITE_FTS3 \
+	CONFIG_SQLITE_RTREE
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -52,6 +56,10 @@ $(call Package/sqlite3/Default/description)
  programs.
 endef
 
+define Package/libsqlite3/config
+  source "$(SOURCE)/Config.in"
+endef
+
 define Package/sqlite3-cli
   $(call Package/sqlite3/Default)
   SECTION:=utils
@@ -67,10 +75,19 @@ $(call Package/sqlite3/Default/description)
  formats.
 endef
 
+
 TARGET_CFLAGS += $(FPIC) \
 	-DSQLITE_ENABLE_UNLOCK_NOTIFY=1 \
 	-DHAVE_ISNAN=1 \
 	-DHAVE_MALLOC_USABLE_SIZE=1
+
+ifneq ($(CONFIG_SQLITE_FTS3),y)
+TARGET_CFLAGS += -USQLITE_ENABLE_FTS3
+endif
+
+ifneq ($(CONFIG_SQLITE_RTREE),y)
+TARGET_CFLAGS += -USQLITE_ENABLE_RTREE
+endif
 
 CONFIGURE_ARGS += \
 	--enable-shared \
