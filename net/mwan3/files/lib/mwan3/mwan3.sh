@@ -446,7 +446,7 @@ mwan3_delete_iface_ipset_entries()
 
 mwan3_track()
 {
-	local track_ip track_ips
+	local track_ip track_ips pid
 
 	mwan3_list_track_ips()
 	{
@@ -454,7 +454,11 @@ mwan3_track()
 	}
 	config_list_foreach $1 track_ip mwan3_list_track_ips
 
-	kill $(pgrep -f "mwan3track $1 $2") &> /dev/null
+	for pid in $(pgrep -f "mwan3track $1 $2"); do
+		kill -TERM "$pid" > /dev/null 2>&1
+		sleep 1
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
 	if [ -n "$track_ips" ]; then
 		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track "$1" "$2" "$3" "$4" $track_ips &
 	fi

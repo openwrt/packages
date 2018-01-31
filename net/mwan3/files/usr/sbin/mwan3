@@ -132,9 +132,13 @@ start()
 
 stop()
 {
-	local ipset route rule table IP IPT
+	local ipset route rule table IP IPT pid
 
-	killall mwan3track &> /dev/null
+	for pid in $(pgrep -f "mwan3track"); do
+		kill -TERM "$pid" > /dev/null 2>&1
+		sleep 1
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
 
 	config_load mwan3
 	config_foreach mwan3_track_clean interface
