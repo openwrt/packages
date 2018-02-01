@@ -73,12 +73,15 @@ CONFIGURE_VARS += \
 	ac_cv_file__etc_TIMEZONE=no
 
 CONFIGURE_ARGS += \
+	--localstatedir=/etc \
 	--without-system-verto \
 	--without-tcl \
 	--without-libedit \
-	--localstatedir=/etc \
-	--with-size-optimizations \
 	--disable-rpath \
+	--disable-pkinit \
+	--with-size-optimizations \
+	--with-crypto-impl=builtin \
+	--without-tls-impl \
 	--without-krb5-config
 
 define Build/InstallDev
