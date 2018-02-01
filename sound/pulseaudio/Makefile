@@ -22,6 +22,8 @@ PKG_BUILD_DEPENDS:=intltool/host
 PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
 
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+
 PKG_INSTALL = 1
 
 include $(INCLUDE_DIR)/package.mk
