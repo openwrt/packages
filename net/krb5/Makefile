@@ -58,7 +58,8 @@ define Package/krb5-client
 endef
 
 define Package/krb5/description
-	Kerberos
+	Kerberos is a network authentication protocol. It is designed to provide strong authentication for client/server applications by using secret-key cryptography.
+	A free implementation of this protocol is available from the Massachusetts Institute of Technology.
 endef
 
 CONFIGURE_PATH = ./src
@@ -72,12 +73,15 @@ CONFIGURE_VARS += \
 	ac_cv_file__etc_TIMEZONE=no
 
 CONFIGURE_ARGS += \
+	--localstatedir=/etc \
 	--without-system-verto \
 	--without-tcl \
 	--without-libedit \
-	--localstatedir=/etc \
-	--with-size-optimizations \
 	--disable-rpath \
+	--disable-pkinit \
+	--with-size-optimizations \
+	--with-crypto-impl=builtin \
+	--without-tls-impl \
 	--without-krb5-config
 
 define Build/InstallDev
@@ -88,6 +92,8 @@ define Build/InstallDev
 	# needed for samba4, to detect system-krb5
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/krb5-config $(1)/usr/bin
+	# provide compile_et for other packages
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/compile_et $(1)/usr/bin
 endef
 
 define Package/krb5-libs/install
