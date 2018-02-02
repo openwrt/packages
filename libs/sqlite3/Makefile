@@ -75,7 +75,6 @@ $(call Package/sqlite3/Default/description)
  formats.
 endef
 
-
 TARGET_CFLAGS += $(FPIC) \
 	-DSQLITE_ENABLE_UNLOCK_NOTIFY=1 \
 	-DHAVE_ISNAN=1 \
