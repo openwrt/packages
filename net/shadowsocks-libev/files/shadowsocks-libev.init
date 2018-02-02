@@ -264,15 +264,15 @@ validate_common_options_() {
 }
 
 validate_server_section() {
-	validate_common_server_options_ server "$1" "${2}"
+	validate_common_server_options_ server "$1" "$2"
 }
 
 validate_ss_local_section() {
-	validate_common_client_options_ ss_local "$1" "${2}"
+	validate_common_client_options_ ss_local "$1" "$2"
 }
 
 validate_ss_redir_section() {
-	validate_common_client_options_ ss_redir "$1" "${2}"
+	validate_common_client_options_ ss_redir "$1" "$2"
 }
 
 validate_ss_rules_section() {
@@ -298,12 +298,12 @@ validate_ss_rules_section() {
 validate_ss_server_section() {
 	validate_common_server_options_ ss_server "$1" \
 		validate_common_options_ \
-		"${2}" \
+		"$2" \
 		'bind_address:ipaddr'
 }
 
 validate_ss_tunnel_section() {
 	validate_common_client_options_ ss_tunnel "$1" \
-		"${2}" \
+		"$2" \
 		'tunnel_address:regex(".+\:[0-9]+")'
 }
