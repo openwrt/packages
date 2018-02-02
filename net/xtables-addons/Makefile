@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=xtables-addons
 PKG_VERSION:=2.14
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_HASH:=d215a9a8b8e66aae04b982fa2e1228e8a71e7dfe42320df99e34e5000cbdf152
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -135,6 +135,7 @@ define Package/iptgeoip/install
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/xtables-addons/xt_geoip_{build,dl} \
 		$(1)/usr/lib/xtables-addons/
+	$(INSTALL_DIR) $(1)/usr/share/xt_geoip
 endef
 
 
