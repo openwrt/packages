@@ -187,6 +187,7 @@ restart() {
 
 case "$1" in
 	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart)
+		mwan3_init
 		$*
 	;;
 	*)

@@ -21,6 +21,7 @@ config_get initial_state $INTERFACE initial_state "online"
 [ "$enabled" == "1" ] || exit 0
 
 mwan3_lock
+mwan3_init
 mwan3_set_connected_iptables
 mwan3_unlock
 
