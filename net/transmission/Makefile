@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=2.93
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/transmission/transmission-releases/raw/master
@@ -37,7 +37,7 @@ endef
 
 define Package/transmission-daemon/Default
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
+  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
   USERID:=transmission=224:transmission=224
 endef
 
@@ -57,7 +57,7 @@ endef
 
 define Package/transmission-cli/Default
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
+  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
 endef
 
 define Package/transmission-cli-openssl
@@ -76,7 +76,7 @@ endef
 
 define Package/transmission-remote/Default
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
+  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
 endef
 
 define Package/transmission-remote-openssl
