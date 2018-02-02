@@ -11,17 +11,14 @@ CONNTRACK_FILE="/proc/net/nf_conntrack"
 MWAN3_STATUS_DIR="/var/run/mwan3"
 MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
 DEFAULT_LOWEST_METRIC=256
+MMX_MASK=""
+MMX_DEFAULT=""
+MMX_BLACKHOLE=""
+MM_BLACKHOLE=""
 
-[ -d $MWAN3_STATUS_DIR ] || mkdir -p $MWAN3_STATUS_DIR/iface_state
-# mwan3's MARKing mask (at least 3 bits should be set)
-if [ -e "${MWAN3_STATUS_DIR}/mmx_mask" ]; then
-	MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
-else
-	config_load mwan3
-	config_get MMX_MASK globals mmx_mask '0xff00'
-	echo "$MMX_MASK" > "${MWAN3_STATUS_DIR}/mmx_mask"
-	$LOG notice "Using firewall mask ${MMX_MASK}"
-fi
+MMX_UNREACHABLE=""
+MM_UNREACHABLE=""
+
 
 # counts how many bits are set to 1
 # n&(n-1) clears the lowest bit set to 1
@@ -58,16 +55,34 @@ mwan3_id2mask()
 	printf "0x%x" $result
 }
 
-# mark mask constants
-MM_BIT_CNT=$(mwan3_count_one_bits MMX_MASK)
-MM_DEFAULT=$(((1<<MM_BIT_CNT)-1))
-MM_BLACKHOLE=$(($MM_DEFAULT-2))
-MM_UNREACHABLE=$(($MM_DEFAULT-1))
+mwan3_init()
+{
+	local bitcnt
+	local mmdefault mmblackhole mmunreachable
 
-# MMX_DEFAULT should equal MMX_MASK
-MMX_DEFAULT=$(mwan3_id2mask MM_DEFAULT MMX_MASK)
-MMX_BLACKHOLE=$(mwan3_id2mask MM_BLACKHOLE MMX_MASK)
-MMX_UNREACHABLE=$(mwan3_id2mask MM_UNREACHABLE MMX_MASK)
+	[ -d $MWAN3_STATUS_DIR ] || mkdir -p $MWAN3_STATUS_DIR/iface_state
+
+	# mwan3's MARKing mask (at least 3 bits should be set)
+	if [ -e "${MWAN3_STATUS_DIR}/mmx_mask" ]; then
+		MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
+	else
+		config_load mwan3
+		config_get MMX_MASK globals mmx_mask '0xff00'
+		echo "$MMX_MASK" > "${MWAN3_STATUS_DIR}/mmx_mask"
+		$LOG notice "Using firewall mask ${MMX_MASK}"
+	fi
+
+	# mark mask constants
+	bitcnt=$(mwan3_count_one_bits MMX_MASK)
+	mmdefault=$(((1<<bitcnt)-1))
+	MM_BLACKHOLE=$(($mmdefault-2))
+	MM_UNREACHABLE=$(($mmdefault-1))
+
+	# MMX_DEFAULT should equal MMX_MASK
+	MMX_DEFAULT=$(mwan3_id2mask mmdefault MMX_MASK)
+	MMX_BLACKHOLE=$(mwan3_id2mask MM_BLACKHOLE MMX_MASK)
+	MMX_UNREACHABLE=$(mwan3_id2mask MM_UNREACHABLE MMX_MASK)
+}
 
 mwan3_lock() {
 	lock /var/run/mwan3.lock
