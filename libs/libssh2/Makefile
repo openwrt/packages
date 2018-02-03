@@ -29,7 +29,7 @@ define Package/libssh2
   CATEGORY:=Libraries
   TITLE:=SSH2 library
   URL:=https://www.libssh2.org/
-  DEPENDS:=+libmbedtls +zlib
+  DEPENDS:=+LIBSSH2_MBEDTLS:libmbedtls +LIBSSH2_OPENSSL:libopenssl +zlib
   MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 endef
 
@@ -37,13 +37,17 @@ define Package/libssh2/description
  libssh2 is a client-side C library implementing the SSH2 protocol.
 endef
 
+define Package/libssh2/config
+	source "$(SOURCE)/Config.in"
+endef
+
 TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
 	--disable-examples-build \
 	--disable-silent-rules \
-	--with-mbedtls \
-	--with-libmbedtls-prefix=$(STAGING_DIR)/usr \
+	$(if $(CONFIG_LIBSSH2_MBEDTLS),--with-mbedtls --with-libmbedtls-prefix=$(STAGING_DIR)/usr) \
+	$(if $(CONFIG_LIBSSH2_OPENSSL),--with-openssl --with-libssl-prefix=$(STAGING_DIR)/usr) \
 	--with-libz-prefix=$(STAGING_DIR)/usr
 
 define Build/InstallDev
