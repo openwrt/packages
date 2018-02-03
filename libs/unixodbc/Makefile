@@ -57,7 +57,7 @@ define Package/unixodbc-tools
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= Tools
-  DEPENDS:=+unixodbc +libncurses +libreadline
+  DEPENDS:=+unixodbc +PACKAGE_unixodbc-tools:libncurses +PACKAGE_unixodbc-tools:libreadline
 endef
 
 define Package/unixodbc-tools/description
@@ -69,7 +69,7 @@ define Package/pgsqlodbc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Postgresql driver for ODBC
-  DEPENDS:=+unixodbc +libpq
+  DEPENDS:=+unixodbc +PACKAGE_pgsqlodbc:libpq
 endef
 
 define Package/pgsqlodbc/description
