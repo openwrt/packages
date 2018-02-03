@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=2.93
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/transmission/transmission-releases/raw/master
+PKG_SOURCE_URL:=@GITHUB/transmission/transmission-releases/master
 PKG_HASH:=8815920e0a4499bcdadbbe89a4115092dab42ce5199f71ff9a926cfd12b9b90b
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -20,11 +20,11 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSI
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/transmission/template
   SUBMENU:=BitTorrent
@@ -33,11 +33,11 @@ define Package/transmission/template
   TITLE:=BitTorrent client
   URL:=http://www.transmissionbt.com
   MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib
 endef
 
 define Package/transmission-daemon/Default
   $(call Package/transmission/template)
-  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
   USERID:=transmission=224:transmission=224
 endef
 
@@ -55,39 +55,29 @@ define Package/transmission-daemon-mbedtls
   VARIANT:=mbedtls
 endef
 
-define Package/transmission-cli/Default
-  $(call Package/transmission/template)
-  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
-endef
-
 define Package/transmission-cli-openssl
-  $(call Package/transmission-cli/Default)
+  $(call Package/transmission/template)
   TITLE+= (with OpenSSL)
   DEPENDS+=+libopenssl
   VARIANT:=openssl
 endef
 
 define Package/transmission-cli-mbedtls
-  $(call Package/transmission-cli/Default)
+  $(call Package/transmission/template)
   TITLE+= (with mbed TLS)
   DEPENDS+=+libmbedtls
   VARIANT:=mbedtls
 endef
 
-define Package/transmission-remote/Default
-  $(call Package/transmission/template)
-  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
-endef
-
 define Package/transmission-remote-openssl
-  $(call Package/transmission-remote/Default)
+  $(call Package/transmission/template)
   TITLE+= (with OpenSSL)
   DEPENDS+=+libopenssl
   VARIANT:=openssl
 endef
 
 define Package/transmission-remote-mbedtls
-  $(call Package/transmission-remote/Default)
+  $(call Package/transmission/template)
   TITLE+= (with mbed TLS)
   DEPENDS+=+libmbedtls
   VARIANT:=mbedtls
@@ -130,25 +120,17 @@ define Package/transmission-daemon-openssl/conffiles
 endef
 Package/transmission-daemon-mbedtls/conffiles = $(Package/transmission-daemon-openssl/conffiles)
 
-
-CONFIGURE_ARGS += \
-	--enable-daemon \
-	--enable-cli \
-	--without-gtk \
-	--enable-largefile \
-	--enable-lightweight
+CMAKE_OPTIONS += -DENABLE_CLI=ON -DENABLE_LIGHTWEIGHT=ON
+CMAKE_OPTIONS += -DWITH_INOTIFY=ON
+CMAKE_OPTIONS += -DENABLE_GTK=OFF -DENABLE_QT=OFF -DENABLE_NLS=OFF -DENABLE_TESTS=OFF -DINSTALL_DOC=OFF
+CMAKE_OPTIONS += -DWITH_KQUEUE=OFF -DWITH_SYSTEMD=OFF
 
 ifeq ($(BUILD_VARIANT),openssl)
-  CONFIGURE_ARGS += \
-	--with-crypto=openssl
+CMAKE_OPTIONS +=-DWITH_CRYPTO=openssl
 endif
 
 ifeq ($(BUILD_VARIANT),mbedtls)
-  CONFIGURE_ARGS += \
-	--with-crypto=polarssl
-  CONFIGURE_VARS += \
-	MBEDTLS_CFLAGS="-I$(STAGING_DIR)/usr/include/mbedtls" \
-	MBEDTLS_LIBS="-lmbedtls -lmbedcrypto"
+CMAKE_OPTIONS +=-DWITH_CRYPTO=polarssl
 endif
 
 define Package/transmission-daemon-openssl/install
