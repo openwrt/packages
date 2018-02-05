@@ -54,6 +54,12 @@ ifup()
 		echo "Too many arguments. Usage: mwan3 ifup <interface>" && exit 0
 	fi
 
+	config_get_bool enabled globals 'enabled' 0
+	[ ${enabled} -gt 0 ] || {
+		echo "Warning: mwan3 is global disabled. Usage: /etc/init.d/mwan3 start"
+		exit 0
+	}
+
 	config_get enabled "$1" enabled 0
 
 	device=$(uci -p /var/state get network.$1.ifname) &> /dev/null
@@ -112,7 +118,15 @@ status()
 
 start()
 {
+	local enabled
+
 	config_load mwan3
+	config_get_bool enabled globals 'enabled' 0
+	[ ${enabled} -gt 0 ] || {
+		echo "Warning: mwan3 is global disabled. Usage: /etc/init.d/mwan3 start"
+		exit 0
+	}
+
 	config_foreach ifup interface
 }
 
