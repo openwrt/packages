@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
 PKG_VERSION:=3210000
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
 PKG_HASH:=d7dd516775005ad87a57f428b6f86afd206cb341722927f104d3f0cf65fbbbe3
@@ -91,7 +91,8 @@ endif
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--disable-editline
+	--disable-editline \
+	--disable-static-shell
 
 CONFIGURE_VARS += \
 	config_BUILD_CC="$(HOSTCC)" \
