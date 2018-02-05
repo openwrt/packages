@@ -62,8 +62,8 @@ main() {
 	STATUS=$3
 	SRC_IP=$4
 	mkdir -p /var/run/mwan3track/$1
-	trap clean_up SIGINT SIGTERM
-	trap if_down SIGUSR1
+	trap clean_up TERM
+	trap if_down USR1
 
 	config_load mwan3
 	config_get track_method $1 track_method ping
