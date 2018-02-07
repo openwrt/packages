@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnatpmp
-PKG_VERSION:=20140401
+PKG_VERSION:=20150609
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://miniupnp.free.fr/files
-PKG_HASH:=b2ce5e626a21c795cba2d118f26e54aaa89de29d4611c440fafc49a2a5bedabb
+PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
+PKG_HASH:=e1aa9c4c4219bc06943d6b2130f664daee213fb262fcb94dd355815b8f4536b0
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de>
 PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=LICENSE
