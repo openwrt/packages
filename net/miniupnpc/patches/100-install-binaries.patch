@@ -1,0 +1,49 @@
+From cba7e588e0768a16ac6f519829bfb094255f487e Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Thu, 8 Feb 2018 17:45:34 -0800
+Subject: [PATCH] Install binaries
+
+---
+ CMakeLists.txt | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index adb30ef..ad3f27d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -71,6 +71,7 @@ include_directories (${CMAKE_CURRENT_BINARY_DIR})
+ 
+ set (MINIUPNPC_SOURCES
+   igd_desc_parse.c
++  listdevices.c
+   miniupnpc.c
+   minixml.c
+   minisoap.c
+@@ -128,8 +129,10 @@ if (UPNPC_BUILD_SHARED)
+   target_link_libraries (libminiupnpc-shared ${LDLIBS})
+   set (UPNPC_INSTALL_TARGETS ${UPNPC_INSTALL_TARGETS} libminiupnpc-shared)
+   set (UPNPC_LIBRARY_TARGET libminiupnpc-shared)
+-  add_executable (upnpc-shared upnpc.c)
+-  target_link_libraries (upnpc-shared LINK_PRIVATE libminiupnpc-shared)
++  add_executable (upnpc upnpc.c)
++  target_link_libraries (upnpc LINK_PRIVATE libminiupnpc-shared)
++  add_executable (listdevices listdevices.c)
++  target_link_libraries (listdevices LINK_PRIVATE libminiupnpc-shared)
+ endif (UPNPC_BUILD_SHARED)
+ 
+ if (UPNPC_BUILD_TESTS)
+@@ -166,6 +169,11 @@ install (TARGETS ${UPNPC_INSTALL_TARGETS}
+   LIBRARY DESTINATION lib${LIB_SUFFIX}
+   ARCHIVE DESTINATION lib${LIB_SUFFIX}
+ )
++install (FILES
++  listdevices
++  upnpc
++  DESTINATION bin
++)
+ install (FILES
+ 	miniupnpc.h
+   miniwget.h
+-- 
+2.14.3
+
