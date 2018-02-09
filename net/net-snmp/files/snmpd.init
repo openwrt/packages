@@ -271,6 +271,7 @@ snmpd_setup_fw_rules() {
 
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
+	rm -rf /usr/lib/snmp/*
 
 	config_load snmpd
 
@@ -325,6 +326,7 @@ start_service() {
 
 stop_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
+	rm -rf /usr/lib/snmp/*
 }
 
 service_triggers(){
