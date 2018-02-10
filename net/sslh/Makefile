@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2017 OpenWrt.org
+# Copyright (C) 2009-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sslh
-PKG_VERSION:=v1.18
-PKG_RELEASE:=2
+PKG_VERSION:=v1.19b
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://rutschle.net/tech/sslh/
-PKG_HASH:=1601a5b377dcafc6b47d2fbb8d4d25cceb83053a4adcc5874d501a2d5a7745ad
+PKG_HASH:=10dfc4deffbca94c3ef7535d3f71b213abc78d53ed1e900873d3ca1cc943659c
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 
@@ -25,7 +25,7 @@ define Package/sslh
   SUBMENU:=Routing and Redirection
   TITLE:=SSL/SSH multiplexer
   DEPENDS:=+libconfig +USE_UCLIBC:libpcre +USE_MUSL:libpcre
-  URL:=http://rutschle.net/tech/sslh.shtml
+  URL:=https://rutschle.net/tech/sslh/README.html
   PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 
