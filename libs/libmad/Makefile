@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmad
 PKG_VERSION:=0.15.1b
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/mad \
@@ -42,7 +42,6 @@ define Package/libmad
   CATEGORY:=Libraries
   TITLE:=An high-quality MPEG audio decoding library
   URL:=http://www.underbit.com/products/mad/
-  DEPENDS:=@BUILD_PATENTED
 endef
 
 define Package/libmad/description
