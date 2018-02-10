@@ -2,9 +2,16 @@
 
 START=95
 USE_PROCD=1
-KADNODE_BIN=/usr/bin/kadnode
+PROG=/usr/bin/kadnode
 OPTS=""
 
+
+boot()
+{
+	# Wait for the loopback interface to be ready
+	ubus -t 30 wait_for network.interface network.loopback 2>/dev/null
+	rc_procd start_service
+}
 
 xappend() {
 	local name="$2" value="$1"
@@ -56,14 +63,14 @@ start_instance() {
 	append_opts_boolean "$cfg" dns_proxy_enable lpd_disable fwd_disable ipv4 ipv6
 
 	# Close stdin when cmd feature is present
-	if [ $($KADNODE_BIN --version | grep -c cmd) -eq 1 ]; then
+	if [ $($PROG --version | grep -c cmd) -eq 1 ]; then
 		xappend "" "cmd_disable_stdin"
 	fi
 
 	echo "$OPTS" > $CONFIG_FILE
 
 	procd_open_instance
-	procd_set_param command $KADNODE_BIN
+	procd_set_param command $PROG
 	procd_set_param file $CONFIG_FILE
 	procd_set_param stderr 1
 	procd_set_param stdout 1
