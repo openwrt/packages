@@ -161,7 +161,6 @@ comment "Encoders"
 
 config FFMPEG_CUSTOM_ENCODER_ac3
 	bool "AC3"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_ENCODER_jpegls
 	bool "JPEG-LS"
@@ -204,7 +203,6 @@ config FFMPEG_CUSTOM_SELECT_adpcm
 
 config FFMPEG_CUSTOM_DECODER_ac3
 	bool "AC3"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_DECODER_alac
 	bool "ALAC"
@@ -308,7 +306,6 @@ comment "Muxers"
 
 config FFMPEG_CUSTOM_MUXER_ac3
 	bool "AC3"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_MUXER_ffm
 	bool "FFM (ffserver live feed)"
