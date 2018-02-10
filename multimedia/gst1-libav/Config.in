@@ -13,11 +13,11 @@ config GET_LIBAV_COMMON_AV_SUPPORT
 	bool "Include support for common audio/video decoders"
 	default y
 	select GST1_LIBAV_DECODER_aac if GST1_LIBAV_PATENTED
-	select GST1_LIBAV_DECODER_ac3 if GST1_LIBAV_PATENTED
+	select GST1_LIBAV_DECODER_ac3
 	select GST1_LIBAV_DECODER_h264 if GST1_LIBAV_PATENTED
 	select GST1_LIBAV_DECODER_atrac3 if GST1_LIBAV_PATENTED
 	select GST1_LIBAV_DECODER_jpegls
-	select GST1_LIBAV_DECODER_mp3 if GST1_LIBAV_PATENTED
+	select GST1_LIBAV_DECODER_mp3
 	select GST1_LIBAV_DECODER_mpeg1video
 	select GST1_LIBAV_DECODER_mpeg2video if GST1_LIBAV_PATENTED
 	select GST1_LIBAV_DECODER_mpeg4 if GST1_LIBAV_PATENTED
@@ -36,7 +36,7 @@ config GET_LIBAV_COMMON_AV_SUPPORT
 	select GST1_LIBAV_PARSER_mpeg4video
 	select GST1_LIBAV_DEMUXER_ac3
 	select GST1_LIBAV_DEMUXER_h264 if GST1_LIBAV_PATENTED
-	select GST1_LIBAV_DEMUXER_mp3 if GST1_LIBAV_PATENTED
+	select GST1_LIBAV_DEMUXER_mp3
 	select GST1_LIBAV_DEMUXER_mpegvideo if GST1_LIBAV_PATENTED
 	select GST1_LIBAV_DEMUXER_ogg
 
@@ -44,7 +44,6 @@ comment "Encoders ---"
 
 config GST1_LIBAV_ENCODER_ac3
 	bool "AC3"
-	depends on GST1_LIBAV_PATENTED
 	select GST1_LIBAV_PARSER_ac3
 
 config GST1_LIBAV_ENCODER_jpegls
@@ -86,7 +85,6 @@ config GST1_LIBAV_DECODER_aac
 
 config GST1_LIBAV_DECODER_ac3
 	bool "AC3"
-	depends on GST1_LIBAV_PATENTED
 	select GST1_LIBAV_PARSER_ac3
 
 config GST1_LIBAV_DECODER_atrac3
@@ -105,11 +103,9 @@ config GST1_LIBAV_DECODER_jpegls
 
 config GST1_LIBAV_DECODER_mp2
 	bool "MP2 (MPEG Audio Layer 2)"
-	depends on GST1_LIBAV_PATENTED
 
 config GST1_LIBAV_DECODER_mp3
 	bool "MP3 (MPEG Audio Layer 2)"
-	depends on GST1_LIBAV_PATENTED
 
 config GST1_LIBAV_DECODER_mpegvideo
 	bool "MPEG Video"
@@ -157,7 +153,6 @@ comment "Muxers ---"
 
 config GST1_LIBAV_MUXER_ac3
 	bool "AC3"
-	depends on GST1_LIBAV_PATENTED
 
 config GST1_LIBAV_MUXER_ffm
 	bool "FFM (ffserver live feed)"
