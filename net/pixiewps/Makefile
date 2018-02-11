@@ -1,4 +1,4 @@
-# Copyright (C) 2017 Yousong Zhou
+# Copyright (C) 2017-2018 Yousong Zhou
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pixiewps
 PKG_VERSION:=1.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -34,6 +34,12 @@ define Package/pixiewps/description
   "pixie-dust attack" discovered by Dominique Bongard in summer 2014.  It is
   meant for educational purposes only.
 endef
+
+# override flags by pixiewps' own Makefile
+MAKE_FLAGS += \
+	CFLAGS="$(TARGET_CFLAGS) $(EXTRA_CFLAGS)" \
+	CPPFLAGS="$(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS)" \
+	LDFLAGS="$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS)" \
 
 define Package/pixiewps/install
 	$(INSTALL_DIR) $(1)/usr/bin
