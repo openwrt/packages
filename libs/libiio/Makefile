@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 Michael Heimpold <mhei@heimpold.de>
+# Copyright (C) 2017-2018 Michael Heimpold <mhei@heimpold.de>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libiio
-PKG_VERSION:=0.12
+PKG_VERSION:=0.14
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/analogdevicesinc/libiio/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=36e164fc00535762c819db209928ee2704fc81657d41060ea47873bccfd5c4bc
+PKG_HASH:=12063db7a9366aa00bfd789db30afaddb29686bc29b3ce1e5d4adfe1c3b42527
 
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING.txt
