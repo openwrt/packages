@@ -1,0 +1,83 @@
+From f0277a79471fc9b944c60c92a29b01c6ad3ee8a7 Mon Sep 17 00:00:00 2001
+From: Mike Gelfand <mikedld@mikedld.com>
+Date: Sun, 1 Jan 2017 16:49:15 +0300
+Subject: [PATCH 1/3] Remove Makefile, add Makefile.am and CMakeLists.txt
+
+---
+ CMakeLists.txt | 12 ++++++++++++
+ Makefile       | 31 -------------------------------
+ Makefile.am    |  5 +++++
+ 3 files changed, 17 insertions(+), 31 deletions(-)
+ create mode 100644 CMakeLists.txt
+ delete mode 100644 Makefile
+ create mode 100644 Makefile.am
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+new file mode 100644
+index 0000000..d51293f
+--- /dev/null
++++ b/CMakeLists.txt
+@@ -0,0 +1,12 @@
++cmake_minimum_required(VERSION 2.8)
++project(b64 C)
++
++include_directories(include)
++
++add_library(${PROJECT_NAME} SHARED
++    src/cdecode.c
++    src/cencode.c
++)
++
++install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
++install(DIRECTORY include/b64 DESTINATION include)
+diff --git a/Makefile b/Makefile
+deleted file mode 100644
+index db40356..0000000
+--- a/Makefile
++++ /dev/null
+@@ -1,31 +0,0 @@
+-all: all_src all_base64 all_examples
+-
+-all_src:
+-	$(MAKE) -C src
+-all_base64: all_src
+-	$(MAKE) -C base64
+-all_examples:
+-	$(MAKE) -C examples
+-	
+-clean: clean_src clean_base64 clean_include clean_examples
+-	rm -f *~ *.bak
+-
+-clean_include:
+-	rm -f include/b64/*~
+-
+-clean_src:
+-	$(MAKE) -C src clean;
+-clean_base64:
+-	$(MAKE) -C base64 clean;
+-clean_examples:
+-	$(MAKE) -C examples clean;
+-		
+-distclean: clean distclean_src distclean_base64 distclean_examples
+-
+-distclean_src:
+-	$(MAKE) -C src distclean;
+-distclean_base64:
+-	$(MAKE) -C base64 distclean;
+-distclean_examples:
+-	$(MAKE) -C examples distclean;
+-
+diff --git a/Makefile.am b/Makefile.am
+new file mode 100644
+index 0000000..d7801d7
+--- /dev/null
++++ b/Makefile.am
+@@ -0,0 +1,5 @@
++AM_CPPFLAGS = -I$(srcdir)/include
++noinst_LIBRARIES = libb64.a
++libb64_a_SOURCES = src/cdecode.c src/cencode.c
++noinst_HEADERS = include/b64/cdecode.h include/b64/cencode.h include/b64/decode.h include/b64/encode.h
++EXTRA_DIST = AUTHORS CHANGELOG CMakeLists.txt INSTALL LICENSE README
+-- 
+2.14.3
+
