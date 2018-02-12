@@ -1,0 +1,34 @@
+--- a/src/options.c
++++ b/src/options.c
+@@ -373,7 +373,7 @@ int options_fromfd(int fd, bstring bt) {
+
+ #ifdef ENABLE_CHILLIREDIR
+   for (i = 0; i < MAX_REGEX_PASS_THROUGHS; i++) {
+-#if defined (__FreeBSD__) || defined (__APPLE__) || defined (__OpenBSD__) || defined (__NetBSD__)
++#if defined (__linux__) || (__FreeBSD__) || defined (__APPLE__) || defined (__OpenBSD__) || defined (__NetBSD__)
+     regfree(&_options.regex_pass_throughs[i].re_host);
+     regfree(&_options.regex_pass_throughs[i].re_path);
+     regfree(&_options.regex_pass_throughs[i].re_qs);
+--- a/src/main-redir.c
++++ b/src/main-redir.c
+@@ -510,12 +510,6 @@ check_regex(regex_t *re, char *regex, ch
+   log_dbg("Checking %s =~ %s", s, regex);
+ #endif
+ 
+-#if defined (__FreeBSD__) || defined (__APPLE__) || defined (__OpenBSD__) || defined (__NetBSD__)
+-  if (!re->re_g)
+-#else
+-  if (!re->allocated) 
+-#endif
+-  {
+     if ((ret = regcomp(re, regex, REG_EXTENDED | REG_NOSUB)) != 0) {
+       char error[512];
+       regerror(ret, re, error, sizeof(error));
+@@ -523,7 +517,6 @@ check_regex(regex_t *re, char *regex, ch
+       regex[0] = 0;
+       return -1;
+     }
+-  }
+   
+   if ((ret = regexec(re, s, 0, 0, 0)) == 0) {
+     
