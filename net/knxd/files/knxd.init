@@ -44,7 +44,6 @@ start_service() {
 	append_parm args Name "Name" "OpenWrt"
 	append_bool args no_monitor "no-monitor" 0
 	append_bool args Routing "Routing" 0
-	append_parm args trace "trace" # "7"
 	append_bool args tpuarts_ack_all_group "tpuarts-ack-all-group" 0
 	append_bool args tpuarts_ack_all_individual "tpuarts-ack-all-individual" 0
 	append_bool args tpuarts_disch_reset "tpuarts-disch-reset" 0
@@ -52,6 +51,7 @@ start_service() {
 	append_bool args Discovery "Discovery" 1
 	append_parm args Server "Server" "224.0.23.12"
 	append_parm args listen_local "listen-local" "/var/run/knxd"
+	append_parm args trace "trace" # "7"
 	config_get url args url
 	if [ "$url" == "usb:" ] ; then
 		url="usb:""$(findknxusb | tail -n1 | sed -e 's/device: \([0-9]:[0-9]:[0-9]\):[0-9].*/\1/')"
