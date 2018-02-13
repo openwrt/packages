@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=2.93
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/transmission/transmission-releases/raw/master
+PKG_SOURCE_URL:=@GITHUB/transmission/transmission-releases/master
 PKG_HASH:=8815920e0a4499bcdadbbe89a4115092dab42ce5199f71ff9a926cfd12b9b90b
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -32,12 +32,11 @@ define Package/transmission/template
   CATEGORY:=Network
   TITLE:=BitTorrent client
   URL:=http://www.transmissionbt.com
-  MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib
 endef
 
 define Package/transmission-daemon/Default
   $(call Package/transmission/template)
-  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
   USERID:=transmission=224:transmission=224
 endef
 
@@ -55,39 +54,29 @@ define Package/transmission-daemon-mbedtls
   VARIANT:=mbedtls
 endef
 
-define Package/transmission-cli/Default
-  $(call Package/transmission/template)
-  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
-endef
-
 define Package/transmission-cli-openssl
-  $(call Package/transmission-cli/Default)
+  $(call Package/transmission/template)
   TITLE+= (with OpenSSL)
   DEPENDS+=+libopenssl
   VARIANT:=openssl
 endef
 
 define Package/transmission-cli-mbedtls
-  $(call Package/transmission-cli/Default)
+  $(call Package/transmission/template)
   TITLE+= (with mbed TLS)
   DEPENDS+=+libmbedtls
   VARIANT:=mbedtls
 endef
 
-define Package/transmission-remote/Default
-  $(call Package/transmission/template)
-  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libpthread +librt +zlib
-endef
-
 define Package/transmission-remote-openssl
-  $(call Package/transmission-remote/Default)
+  $(call Package/transmission/template)
   TITLE+= (with OpenSSL)
   DEPENDS+=+libopenssl
   VARIANT:=openssl
 endef
 
 define Package/transmission-remote-mbedtls
-  $(call Package/transmission-remote/Default)
+  $(call Package/transmission/template)
   TITLE+= (with mbed TLS)
   DEPENDS+=+libmbedtls
   VARIANT:=mbedtls
