@@ -13,7 +13,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=openvswitch
 
 PKG_VERSION:=2.8.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
 PKG_USE_MIPS16:=0
@@ -134,6 +134,39 @@ define KernelPackage/openvswitch
 	+kmod-nf-nat +IPV6:kmod-nf-nat6
   FILES:= $(LINUX_DIR)/net/openvswitch/openvswitch.ko
   AUTOLOAD:=$(call AutoProbe,openvswitch)
+endef
+
+define KernelPackage/openvswitch-gre
+  SECTION:=kernel
+  CATEGORY:=Kernel modules
+  SUBMENU:=Network Support
+  TITLE:=Open vSwitch GRE tunneling support
+  KCONFIG:= CONFIG_OPENVSWITCH_GRE
+  DEPENDS:= +kmod-openvswitch +kmod-gre
+  FILES:= $(LINUX_DIR)/net/openvswitch/vport-gre.ko
+  AUTOLOAD:=$(call AutoProbe,vport-gre)
+endef
+
+define KernelPackage/openvswitch-vxlan
+  SECTION:=kernel
+  CATEGORY:=Kernel modules
+  SUBMENU:=Network Support
+  TITLE:=Open vSwitch VXLAN tunneling support
+  KCONFIG:= CONFIG_OPENVSWITCH_VXLAN
+  DEPENDS:= +kmod-openvswitch +kmod-vxlan
+  FILES:= $(LINUX_DIR)/net/openvswitch/vport-vxlan.ko
+  AUTOLOAD:=$(call AutoProbe,vport-vxlan)
+endef
+
+define KernelPackage/openvswitch-geneve
+  SECTION:=kernel
+  CATEGORY:=Kernel modules
+  SUBMENU:=Network Support
+  TITLE:=Open vSwitch Geneve tunneling support
+  KCONFIG:= CONFIG_OPENVSWITCH_GENEVE
+  DEPENDS:= +kmod-openvswitch +kmod-geneve
+  FILES:= $(LINUX_DIR)/net/openvswitch/vport-geneve.ko
+  AUTOLOAD:=$(call AutoProbe,vport-geneve)
 endef
 
 CONFIGURE_ARGS += --enable-ndebug
@@ -263,5 +296,8 @@ $(eval $(call BuildPackage,openvswitch-ovn))
 $(eval $(call BuildPackage,openvswitch-vtep))
 $(eval $(call BuildPackage,openvswitch-python))
 $(eval $(call BuildPackage,openvswitch))
-$(eval $(call KernelPackage,openvswitch))
 
+$(eval $(call KernelPackage,openvswitch))
+$(eval $(call KernelPackage,openvswitch-gre))
+$(eval $(call KernelPackage,openvswitch-vxlan))
+$(eval $(call KernelPackage,openvswitch-geneve))
