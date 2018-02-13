@@ -33,7 +33,6 @@ UNBOUND_B_LOCL_BLCK=0
 UNBOUND_B_LOCL_SERV=1
 UNBOUND_B_MAN_CONF=0
 UNBOUND_B_NTP_BOOT=1
-UNBOUND_B_PRIV_BLCK=1
 UNBOUND_B_QUERY_MIN=0
 UNBOUND_B_QRY_MINST=0
 
@@ -42,6 +41,7 @@ UNBOUND_D_DOMAIN_TYPE=static
 UNBOUND_D_DHCP_LINK=none
 UNBOUND_D_EXTRA_DNS=0
 UNBOUND_D_LAN_FQDN=0
+UNBOUND_D_PRIV_BLCK=1
 UNBOUND_D_PROTOCOL=mixed
 UNBOUND_D_RESOURCE=small
 UNBOUND_D_RECURSION=passive
@@ -60,7 +60,9 @@ UNBOUND_TXT_DOMAIN=lan
 UNBOUND_TXT_FWD_ZONE=""
 UNBOUND_TXT_HOSTNAME=thisrouter
 
+UNBOUND_LIST_FORWARD=""
 UNBOUND_LIST_INSECURE=""
+UNBOUND_LIST_PRV_SUBNET=""
 
 ##############################################################################
 
@@ -69,39 +71,13 @@ UNBOUND_LIST_DOMAINS=""
 
 ##############################################################################
 
-UNBOUND_LIBDIR=/usr/lib/unbound
-UNBOUND_VARDIR=/var/lib/unbound
-
-UNBOUND_PIDFILE=/var/run/unbound.pid
-
-UNBOUND_SRV_CONF=$UNBOUND_VARDIR/unbound_srv.conf
-UNBOUND_EXT_CONF=$UNBOUND_VARDIR/unbound_ext.conf
-UNBOUND_DHCP_CONF=$UNBOUND_VARDIR/unbound_dhcp.conf
-UNBOUND_CONFFILE=$UNBOUND_VARDIR/unbound.conf
-
-UNBOUND_KEYFILE=$UNBOUND_VARDIR/root.key
-UNBOUND_HINTFILE=$UNBOUND_VARDIR/root.hints
-UNBOUND_TIMEFILE=$UNBOUND_VARDIR/hotplug.time
-
-UNBOUND_CTLKEY_FILE=$UNBOUND_VARDIR/unbound_control.key
-UNBOUND_CTLPEM_FILE=$UNBOUND_VARDIR/unbound_control.pem
-UNBOUND_SRVKEY_FILE=$UNBOUND_VARDIR/unbound_server.key
-UNBOUND_SRVPEM_FILE=$UNBOUND_VARDIR/unbound_server.pem
-
-##############################################################################
-
-UNBOUND_ANCHOR=/usr/sbin/unbound-anchor
-UNBOUND_CONTROL=/usr/sbin/unbound-control
-UNBOUND_CONTROL_CFG="$UNBOUND_CONTROL -c $UNBOUND_CONFFILE"
-
-##############################################################################
-
 . /lib/functions.sh
 . /lib/functions/network.sh
 
-. $UNBOUND_LIBDIR/dnsmasq.sh
-. $UNBOUND_LIBDIR/iptools.sh
-. $UNBOUND_LIBDIR/rootzone.sh
+. /usr/lib/unbound/defaults.sh
+. /usr/lib/unbound/dnsmasq.sh
+. /usr/lib/unbound/iptools.sh
+. /usr/lib/unbound/rootzone.sh
 
 ##############################################################################
 
@@ -395,8 +371,38 @@ create_access_control() {
 
 ##############################################################################
 
-create_domain_insecure() {
+bundle_domain_forward() {
+  UNBOUND_LIST_FORWARD="$UNBOUND_LIST_FORWARD $1"
+}
+
+##############################################################################
+
+bundle_domain_insecure() {
   UNBOUND_LIST_INSECURE="$UNBOUND_LIST_INSECURE $1"
+}
+
+##############################################################################
+
+bundle_private_interface() {
+  local ipcommand ifsubnet ifsubnets ifname
+
+  network_get_device ifname $1
+
+  if [ -n "$ifname" ] ; then
+    ipcommand="ip -6 -o address show $ifname"
+    ifsubnets=$( $ipcommand | awk '/inet6/{ print $4 }' )
+
+
+    if [ -n "$ifsubnets" ] ; then
+      for ifsubnet in $ifsubnets ; do
+        case $ifsubnet in
+        [1-9]*:*[0-9a-f])
+          # Special GLA protection for local block; ULA protected as a catagory
+          UNBOUND_LIST_PRV_SUBNET="$UNBOUND_LIST_PRV_SUBNET $ifsubnet" ;;
+        esac
+      done
+    fi
+  fi
 }
 
 ##############################################################################
@@ -569,8 +575,36 @@ unbound_control() {
 
 ##############################################################################
 
+unbound_forward() {
+  local fdomain fresolver resolvers
+  # Forward selected domains to the upstream (WAN) stub resolver. This may be
+  # faster or local pool addresses to ISP service login page. This may keep
+  # internal organization lookups, well, internal to the organization.
+
+
+  if [ -n "$UNBOUND_LIST_FORWARD" ] ; then
+    resolvers=$( grep nameserver /tmp/resolv.conf.auto | sed "s/nameserver//g" )
+
+
+    if [ -n "$resolvers" ] ; then
+      for fdomain in $UNBOUND_LIST_FORWARD ; do
+        {
+          echo "forward-zone:"
+          echo "  name: \"$fdomain.\""
+          for fresolver in $resolvers ; do
+          echo "  forward-addr: $fresolver"
+          done
+          echo
+        } >> $UNBOUND_CONFFILE
+      done
+    fi
+  fi
+}
+
+##############################################################################
+
 unbound_conf() {
-  local rt_mem rt_conn modulestring domain
+  local rt_mem rt_conn modulestring domain ifsubnet
 
   # Make fresh conf file
   echo > $UNBOUND_CONFFILE
@@ -832,7 +866,7 @@ unbound_conf() {
   fi
 
 
-  if [ "$UNBOUND_B_PRIV_BLCK" -gt 0 ] ; then
+  if [ "$UNBOUND_D_PRIV_BLCK" -gt 0 ] ; then
     {
       # Remove _upstream_ or global reponses with private addresses.
       # Unbounds own "local zone" and "forward zone" may still use these.
@@ -842,10 +876,21 @@ unbound_conf() {
       echo "  private-address: 169.254.0.0/16"
       echo "  private-address: 172.16.0.0/12"
       echo "  private-address: 192.168.0.0/16"
-      echo "  private-address: fc00::/8"
-      echo "  private-address: fd00::/8"
+      echo "  private-address: fc00::/7"
       echo "  private-address: fe80::/10"
+      echo
     } >> $UNBOUND_CONFFILE
+  fi
+
+
+  if  [ -n "$UNBOUND_LIST_PRV_SUBNET" -a "$UNBOUND_D_PRIV_BLCK" -gt 1 ] ; then
+    for ifsubnet in $UNBOUND_LIST_PRV_SUBNET ; do
+      # Remove global DNS responses with your local network IP6 GLA
+      echo "  private-address: $ifsubnet" >> $UNBOUND_CONFFILE
+    done
+
+
+    echo >> $UNBOUND_CONFFILE
   fi
 
 
@@ -857,9 +902,6 @@ unbound_conf() {
       echo "  private-address: ::1/128"
       echo
     } >> $UNBOUND_CONFFILE
-
-  else
-    echo >> $UNBOUND_CONFFILE
   fi
 
 
@@ -1026,7 +1068,6 @@ unbound_uci() {
   config_get_bool UNBOUND_B_MAN_CONF   "$cfg" manual_conf 0
   config_get_bool UNBOUND_B_QUERY_MIN  "$cfg" query_minimize 0
   config_get_bool UNBOUND_B_QRY_MINST  "$cfg" query_min_strict 0
-  config_get_bool UNBOUND_B_PRIV_BLCK  "$cfg" rebind_protection 1
   config_get_bool UNBOUND_B_LOCL_BLCK  "$cfg" rebind_localhost 0
   config_get_bool UNBOUND_B_DNSSEC     "$cfg" validator 0
   config_get_bool UNBOUND_B_NTP_BOOT   "$cfg" validator_ntp 1
@@ -1042,6 +1083,7 @@ unbound_uci() {
   config_get UNBOUND_D_DHCP_LINK   "$cfg" dhcp_link none
   config_get UNBOUND_D_EXTRA_DNS   "$cfg" add_extra_dns 0
   config_get UNBOUND_D_LAN_FQDN    "$cfg" add_local_fqdn 0
+  config_get UNBOUND_D_PRIV_BLCK   "$cfg" rebind_protection 1
   config_get UNBOUND_D_PROTOCOL    "$cfg" protocol mixed
   config_get UNBOUND_D_RECURSION   "$cfg" recursion passive
   config_get UNBOUND_D_RESOURCE    "$cfg" resource small
@@ -1050,7 +1092,9 @@ unbound_uci() {
   config_get UNBOUND_TTL_MIN     "$cfg" ttl_min 120
   config_get UNBOUND_TXT_DOMAIN  "$cfg" domain lan
 
-  config_list_foreach "$cfg" "domain_insecure" create_domain_insecure
+  config_list_foreach "$cfg" "domain_forward"   bundle_domain_forward
+  config_list_foreach "$cfg" "domain_insecure"  bundle_domain_insecure
+  config_list_foreach "$cfg" "rebind_interface" bundle_private_interface
 
   UNBOUND_LIST_DOMAINS="nowhere $UNBOUND_TXT_DOMAIN"
 
@@ -1137,11 +1181,12 @@ _resolv_setup() {
   # unbound is designated to listen on 127.0.0.1#53,
   #   set resolver file to local.
   rm -f /tmp/resolv.conf
+
   {
     echo "# /tmp/resolv.conf generated by Unbound UCI $( date )"
     echo "nameserver 127.0.0.1"
     echo "nameserver ::1"
-    echo "search $UNBOUND_TXT_DOMAIN"
+    echo "search $UNBOUND_TXT_DOMAIN."
   } > /tmp/resolv.conf
 }
 
@@ -1180,6 +1225,8 @@ unbound_start() {
       unbound_records
     fi
 
+
+    unbound_forward
     unbound_control
   fi
 
