@@ -6,7 +6,7 @@
 ## Package Overview
 Unbound may be useful on consumer grade embedded hardware. It is _intended_ to be a recursive resolver only. [NLnet Labs NSD](https://www.nlnetlabs.nl/projects/nsd/) is _intended_ for the authoritative task. This is different than [ISC Bind](https://www.isc.org/downloads/bind/) and its inclusive functions. Unbound configuration effort and memory consumption may be easier to control. A consumer could have their own recursive resolver with 8/64 MB router, and remove potential issues from forwarding resolvers outside of their control.
 
-This package builds on Unbounds capabilities with OpenWrt UCI. Not every Unbound option is in UCI, but rather, UCI simplifies the combination of related options. Unbounds native options are bundled and balanced within a smaller set of choices. Options include resources, DNSSEC, access control, and some TTL tweaking. The UCI also provides an escape option and work at the raw "unbound.conf" level.
+This package builds on Unbounds capabilities with OpenWrt UCI. Not every Unbound option is in UCI, but rather, UCI simplifies the combination of related options. Unbounds native options are bundled and balanced within a smaller set of choices. Options include resources, DNSSEC, access control, and some TTL tweaking. The UCI also provides an escape option and works at the raw "unbound.conf" level.
 
 ## HOW TO Adblocking
 The UCI scripts will work with [net/adblock 2.3+](https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md), if it is installed and enabled. Its all detected and integrated automatically. In brief, the adblock scripts create distinct local-zone files that are simply included in the unbound conf file during UCI generation. If you don't want this, then disable adblock or reconfigure adblock to not send these files to Unbound.
@@ -245,9 +245,13 @@ config unbound
     also can be used to for bad purposes.
 
   option rebind_protection '1'
-    Boolean. Prevent RFC 1918 Reponses from global DNS. Example a
-    poisoned reponse within "192.168.0.0/24" could be used to turn a
-    local browser into an external attack proxy server.
+    Level. Block your local address responses from global DNS. A poisoned
+    reponse within "192.168.0.0/24" or "fd00::/8" could turn a local browser
+    into an external attack proxy server. IP6 GLA may be vulnerable also.
+    0 - Off
+    1 - Only RFC 1918 and 4193 responses blocked
+    2 - Plus GLA /64 on designated interface(s)
+    3 - Plus DHCP-PD range passed down interfaces (not implemented)
 
   option recursion 'passive'
     Unbound has numerous options for how it recurses. This UCI combines
@@ -289,11 +293,20 @@ config unbound
     embedded devices don't have a real time power off clock. NTP needs
     DNS to resolve servers. This works around the chicken-and-egg.
 
-  list domain_insecure 'www.example.com'
-    Domain. Domains that you wish to skip DNSSEC. Your DHCP
-    domains and pointers will get this automatically.
+  list domain_forward 'mail.my-isp.com'
+    Domain. Do not recurse, but rather forward the domains to given DNS
+    servers found in resolve.conf.auto from WAN DHCP client. This may
+    provide better access to mirror servers in 'your neigborhood.' This
+    may be useful in keeping local organization lookups on local subnets.
 
-  list trigger 'lan' 'wan'
+  list domain_insecure 'ntp.somewhere.org'
+    Domain. Domains that you wish to skip DNSSEC. It is one way around NTP
+    chicken and egg. Your DHCP servered domains are automatically included.
+
+  list rebind_interface 'lan'
+    Interface (logical). Works with 'rebind_protection' options 2 and 3.
+
+  list trigger_interface 'lan' 'wan'
     Interface (logical). This option is a work around for netifd/procd
     interaction with WAN DHCPv6. Minor RA or DHCP changes in IP6 can
     cause netifd to execute procd interface reload. Limit Unbound procd
