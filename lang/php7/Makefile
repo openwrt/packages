@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -167,6 +167,7 @@ CONFIGURE_ARGS+= \
 	--with-config-file-scan-dir=/etc/php7 \
 	--disable-short-tags \
 	\
+	--with-pcre-regex="$(STAGING_DIR)/usr" \
 	--with-zlib="$(STAGING_DIR)/usr" \
 	  --with-zlib-dir="$(STAGING_DIR)/usr"
 
