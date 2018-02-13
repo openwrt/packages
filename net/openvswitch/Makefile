@@ -146,7 +146,6 @@ define KernelPackage/openvswitch/description
   module. Furthermore, it supports OpenFlow.
 endef
 
-CONFIGURE_ARGS += --with-rundir=/var/run
 CONFIGURE_ARGS += --enable-ndebug
 CONFIGURE_ARGS += --disable-ssl
 CONFIGURE_ARGS += --enable-shared
