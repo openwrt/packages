@@ -1,11 +1,13 @@
-From d6655cca7db1b960456811b8206ce222700e010d Mon Sep 17 00:00:00 2001
+From a3ef28bd681e8abf2ee4a6d90ac2218ccffa82c7 Mon Sep 17 00:00:00 2001
 From: Rosen Penev <rosenp@gmail.com>
-Date: Tue, 30 Jan 2018 13:19:58 -0800
-Subject: [PATCH] Remove compressed responses from web servers.
+Date: Tue, 30 Jan 2018 13:56:24 -0800
+Subject: [PATCH] Set compression to curl defaults
 
 While zlib is mandatory for transmission, it is not mandatory for curl.
 
 A libcurl that has been compiled with no support for zlib will return no data if compressed responses are set to on.
+
+In the basic case this prevents the port checking functionality from working properly. It also prevents web seeding from working as well.
 
 Signed-off-by: Rosen Penev <rosenp@gmail.com>
 ---
