@@ -147,7 +147,6 @@ define KernelPackage/openvswitch/description
 endef
 
 CONFIGURE_ARGS += --enable-ndebug
-CONFIGURE_ARGS += --disable-ssl
 CONFIGURE_ARGS += --enable-shared
 
 TARGET_CFLAGS += -flto -std=gnu99
