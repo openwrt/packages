@@ -1,0 +1,63 @@
+#
+# Copyright (C) 2018 Othmar Truniger
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=libfmt
+PKG_VERSION:=4.1.0
+PKG_RELEASE:=1
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/fmtlib/fmt.git
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_MIRROR_HASH:=112c964c1537fbc2f3a993f405547fc57b0f3d1524c808006920c53fab42c233
+
+PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
+PKG_LICENSE:=BSD-2-Clause
+PKG_LICENSE_FILES:=LICENSE.rst
+
+CMAKE_INSTALL:=1
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
+
+CMAKE_OPTIONS += -DBUILD_SHARED_LIBS=ON
+CMAKE_OPTIONS += -DFMT_DOC=OFF
+CMAKE_OPTIONS += -DFMT_TEST=OFF
+
+define Package/libfmt
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=Small, safe and fast formatting library
+  URL:=https://github.com/fmtlib/fmt
+  DEPENDS:=+libstdcpp
+endef
+
+define Package/libfmt/description
+  fmt is an open-source formatting library for C++.
+  It can be used as a safe alternative to printf or as a fast alternative to IOStreams.
+endef
+
+define Package/libfmt/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfmt.so* $(1)/usr/lib/
+endef
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/fmt
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/fmt/*.h $(1)/usr/include/fmt/
+
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfmt.so* $(1)/usr/lib/
+
+	$(INSTALL_DIR) $(1)/usr/lib/cmake
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/cmake/* $(1)/usr/lib/cmake/
+endef
+
+$(eval $(call BuildPackage,libfmt))
