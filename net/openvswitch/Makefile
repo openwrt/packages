@@ -136,8 +136,7 @@ define KernelPackage/openvswitch
 	CONFIG_OPENVSWITCH_GENEVE=n
   DEPENDS:= \
 	@IPV6 +kmod-gre +kmod-lib-crc32c +kmod-mpls \
-	+kmod-vxlan +kmod-nf-nat +kmod-nf-nat6  \
-	@($(SUPPORTED_KERNELS))
+	+kmod-vxlan +kmod-nf-nat +kmod-nf-nat6
   FILES:= $(LINUX_DIR)/net/openvswitch/openvswitch.ko
   AUTOLOAD:=$(call AutoLoad,21,openvswitch)
 endef
