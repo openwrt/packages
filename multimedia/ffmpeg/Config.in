@@ -170,7 +170,6 @@ config FFMPEG_CUSTOM_ENCODER_mpeg1video
 
 config FFMPEG_CUSTOM_ENCODER_mpeg2video
 	bool "MPEG-2 Video"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_ENCODER_mpeg4
 	bool "MPEG-4"
@@ -253,7 +252,6 @@ config FFMPEG_CUSTOM_DECODER_mpeg1video
 
 config FFMPEG_CUSTOM_DECODER_mpeg2video
 	bool "MPEG-2 Video"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_DECODER_mpeg4
 	bool "MPEG-4"
