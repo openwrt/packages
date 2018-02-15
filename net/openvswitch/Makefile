@@ -29,6 +29,8 @@ PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+SUPPORTED_KERNELS:=LINUX_3_18||LINUX_4_1||LINUX_4_3||LINUX_4_4||LINUX_4_9
+
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-package.mk
 
@@ -53,7 +55,7 @@ endef
 define Package/openvswitch-base
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package (base)
-  DEPENDS:=+libpcap +libopenssl +librt +kmod-openvswitch
+  DEPENDS:=+libpcap +libopenssl +librt +kmod-openvswitch @($(SUPPORTED_KERNELS))
 endef
 
 define Package/openvswitch-base/description
