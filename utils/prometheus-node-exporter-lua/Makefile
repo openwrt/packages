@@ -58,6 +58,18 @@ define Package/prometheus-node-exporter-lua-wifi_stations
   DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua +libubus-lua
 endef
 
+define Package/prometheus-node-exporter-lua-bmx6
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (bmx6 links collector)
+  DEPENDS:=prometheus-node-exporter-lua bmx6 +lua-cjson +bmx6-json
+endef
+
+define Package/prometheus-node-exporter-lua-bmx7
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (bmx7 links collector)
+  DEPENDS:=prometheus-node-exporter-lua bmx7 +lua-cjson +bmx7-json
+endef
+
 Build/Compile=
 
 define Package/prometheus-node-exporter-lua/install
@@ -97,8 +109,20 @@ define Package/prometheus-node-exporter-lua-wifi_stations/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/wifi_stations.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-bmx6/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/bmx6.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-bmx7/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/bmx7.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx6))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
