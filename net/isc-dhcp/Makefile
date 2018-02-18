@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
-PKG_VERSION:=4.3.6
+PKG_VERSION:=4.4.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
@@ -20,7 +20,7 @@ PKG_SOURCE:=$(UPSTREAM_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
 		http://ftp.funet.fi/pub/mirrors/ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
 		http://ftp.iij.ad.jp/pub/network/isc/dhcp/$(PKG_VERSION)
-PKG_HASH:=a41eaf6364f1377fe065d35671d9cf82bbbc8f21207819b2b9f33f652aec6f1b
+PKG_HASH:=4a90be0f22ad81c987f5584661b60a594f1b21c581b82bfba3ae60f89ae44397
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -29,12 +29,15 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(UPSTREAM_NAME)-$(PKG_
 
 include $(INCLUDE_DIR)/package.mk
 
+DISABLE_NLS:=
+
 define Package/isc-dhcp/Default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
   TITLE:=ISC's DHCP
   URL:=https://www.isc.org/software/dhcp
+  DEPENDS:=+zlib
 endef
 
 define Package/isc-dhcp-relay-ipv4
