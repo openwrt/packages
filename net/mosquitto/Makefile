@@ -60,7 +60,8 @@ endef
 
 define Package/mosquitto-ssl/description
 	$(call Package/mosquitto/default/description)
-	This package is built with SSL support
+This package is built with SSL support.  TLS-PSK will be included (in both
+the client and broker) if OpenSSL is built with TLS-PSK support.
 endef
 
 define Package/mosquitto-nossl/description
@@ -218,6 +219,7 @@ ifeq ($(BUILD_VARIANT),nossl)
 	MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
 else
 	MAKE_FLAGS += WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
+	MAKE_FLAGS += WITH_TLS_PSK=$(if $(CONFIG_OPENSSL_WITH_PSK),"yes","no")
 endif
 
 $(eval $(call BuildPackage,mosquitto-ssl))
