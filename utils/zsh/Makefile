@@ -26,7 +26,7 @@ define Package/zsh
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=The Z shell
-  DEPENDS:=+libncurses +libncursesw +libpcre +librt
+  DEPENDS:=+libcap +libncurses +libncursesw +libpcre +librt
   URL:=http://www.zsh.org/
 endef
 
