@@ -26,7 +26,7 @@ start_service()
     then
         if [ -n "${adb_boot}" ]
         then
-            local trigger="$(uci_get adblock.global.adb_trigger)"
+            local trigger="$(uci_get adblock global adb_trigger)"
             if [ "${trigger}" != "timed" ]
             then
                 return 0
@@ -77,7 +77,7 @@ query()
 
 status()
 {
-    local key keylist value rtfile="$(uci_get adblock.extra.adb_rtfile)"
+    local key keylist value rtfile="$(uci_get adblock extra adb_rtfile)"
 
     rtfile="${rtfile:-"/tmp/adb_runtime.json"}"
     if [ -s "${rtfile}" ]
@@ -98,8 +98,8 @@ status()
 
 service_triggers()
 {
-    local trigger="$(uci_get adblock.global.adb_trigger)"
-    local delay="$(uci_get adblock.extra.adb_triggerdelay)"
+    local trigger="$(uci_get adblock global adb_trigger)"
+    local delay="$(uci_get adblock extra adb_triggerdelay)"
 
     if [ "${trigger}" != "none" ] && [ "${trigger}" != "timed" ]
     then
