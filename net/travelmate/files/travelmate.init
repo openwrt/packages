@@ -29,7 +29,7 @@ start_service()
 
 stop_service()
 {
-    local rtfile="$(uci -q get travelmate.global.trm_rtfile)"
+    local rtfile="$(uci_get travelmate global trm_rtfile)"
 
     rtfile="${rtfile:-"/tmp/trm_runtime.json"}"
     > "${rtfile}"
@@ -38,7 +38,7 @@ stop_service()
 
 status()
 {
-    local key keylist value rtfile="$(uci_get travelmate.global.trm_rtfile)"
+    local key keylist value rtfile="$(uci_get travelmate global trm_rtfile)"
 
     rtfile="${rtfile:-"/tmp/trm_runtime.json"}"
     if [ -s "${rtfile}" ]
@@ -59,12 +59,12 @@ status()
 
 service_triggers()
 {
-    local auto="$(uci_get travelmate.global.trm_automatic)"
+    local auto="$(uci_get travelmate global trm_automatic)"
 
     if [ "${auto}" = "0" ]
     then
-        local trigger="$(uci_get travelmate.global.trm_iface)"
-        local delay="$(uci_get travelmate.global.trm_triggerdelay)"
+        local trigger="$(uci_get travelmate global trm_iface)"
+        local delay="$(uci_get travelmate global trm_triggerdelay)"
 
         PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
         procd_add_interface_trigger "interface.*.down" "${trigger}" "${trm_init}" start
