@@ -66,6 +66,7 @@ endef
 
 define Package/lm-sensors/conffiles
 /etc/sensors.conf
+/etc/sensors3.conf
 endef
 
 define Build/Compile
