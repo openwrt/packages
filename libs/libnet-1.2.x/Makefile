@@ -12,7 +12,7 @@ PKG_VERSION:=1.2-rc3
 PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://sourceforge.net/projects/libnet-dev/files/
+PKG_SOURCE_URL:=@SF/libnet-dev
 PKG_HASH:=72c380785ad44183005e654b47cc12485ee0228d7fa6b0a87109ff7614be4a63
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 PKG_LICENSE:=GPL-2.0
