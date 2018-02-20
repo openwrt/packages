@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.5.0"
+adb_ver="3.5.1"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -398,7 +398,7 @@ f_extconf()
                 uci -q set resolver.kresd.keep_cache="1"
             elif [ ${adb_enabled} -eq 0 ] || ([ ${adb_dnsflush} -eq 1 ] && [ "$(uci -q get resolver.kresd.keep_cache)" = "1" ])
             then
-                uci -q delete resolver.kresd.keep_cache
+                uci -q set resolver.kresd.keep_cache="0"
             fi
         ;;
     esac
@@ -657,7 +657,7 @@ f_switch()
     then
         f_temp
         f_dnsup
-        f_jsnup
+        f_jsnup "${mode}"
         f_log "info" "${mode} adblock processing"
         f_rmtemp
         exit 0
@@ -698,29 +698,33 @@ f_query()
 #
 f_jsnup()
 {
-    local bg_pid rundate status="${1}" mode="normal mode"
+    local bg_pid rundate="$(/bin/date "+%d.%m.%Y %H:%M:%S")" status="${1:-"enabled"}" mode="normal mode" no_mail=0
 
-    if [ -z "${status}" ]
+    if [ ${adb_rc} -gt 0 ]
     then
-        rundate="$(/bin/date "+%d.%m.%Y %H:%M:%S")"
-        if [ ${adb_rc} -gt 0 ]
-        then
-            status="error"
-        elif [ ${adb_enabled} -eq 0 ]
-        then
-            status="disabled"
-        elif [ -s "${adb_dnsdir}/.${adb_dnsfile}" ]
-        then
-            status="paused"
-        else
-            status="enabled"
-            f_count
-        fi
+        status="error"
+    fi
+    if [ ${adb_enabled} -eq 0 ]
+    then
+        status="disabled"
+    fi
+    if [ "${status}" = "suspend" ]
+    then
+        status="paused"
+    fi
+    if [ "${status}" = "resume" ]
+    then
+        no_mail=1
+        status="enabled"
+    fi
+    if [ "${status}" = "enabled" ]
+    then
+        f_count
     fi
 
     if [ ${adb_backup_mode} -eq 1 ]
     then
-        mode="normal/backup mode"
+        mode="backup mode"
     fi
 
     if [ -z "${adb_fetchinfo}" ] && [ -s "${adb_rtfile}" ]
@@ -742,8 +746,8 @@ f_jsnup()
     json_close_object
     json_dump > "${adb_rtfile}"
 
-    if [ ${adb_notify} -eq 1 ] && [ -x /etc/adblock/adblock.notify ] && ([ "${status}" = "error" ] ||\
-        ([ "${status}" = "enabled" ] && [ ${adb_cnt} -le ${adb_notifycnt} ]))
+    if [ ${adb_notify} -eq 1 ] && [ ${no_mail} -eq 0 ] && [ -x /etc/adblock/adblock.notify ] && \
+      ([ "${status}" = "error" ] || ([ "${status}" = "enabled" ] && [ ${adb_cnt} -le ${adb_notifycnt} ]))
     then
         (/etc/adblock/adblock.notify >/dev/null 2>&1) &
         bg_pid=${!}
