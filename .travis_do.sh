@@ -53,10 +53,10 @@ download_sdk() {
 	wget "$SDK_PATH/sha256sums.gpg" -O sha256sums.asc
 
 	# LEDE Build System (LEDE GnuPG key for unattended build jobs)
-	gpg --import $PACKAGES_DIR/.travis/626471F1.asc
+	gpg --import $PACKAGES_DIR/.keys/626471F1.asc
 	echo '54CC74307A2C6DC9CE618269CD84BCED626471F1:6:' | gpg --import-ownertrust
 	# LEDE Release Builder (17.01 "Reboot" Signing Key)
-	gpg --import $PACKAGES_DIR/.travis/D52BBB6B.asc
+	gpg --import $PACKAGES_DIR/.keys/D52BBB6B.asc
 	echo 'B09BE781AE8A0CD4702FDCD3833C6010D52BBB6B:6:' | gpg --import-ownertrust
 
 	echo_blue "=== Verifying sha256sums signature"
