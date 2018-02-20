@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mailman
 PKG_RELEASE:=1
-PKG_SOURCE_URL:=ftp://ftp.gnu.org/gnu/mailman/ http://ftp.gnu.org/gnu/mailman/
+PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
 PKG_VERSION:=2.1.23
 PKG_HASH:=b022ca6f8534621c9dbe50c983948688bc4623214773b580c2c78e4a7ae43e69
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
