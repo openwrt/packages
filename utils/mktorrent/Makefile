@@ -14,9 +14,9 @@ PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.sourceforge.net/$(PKG_NAME)/
-PKG_HASH:=6f8e562af6366e0d9bde76e434f740b55722c6c3c555860dbe80083f9d1d119f
+PKG_SOURCE:=v$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/Rudde/$(PKG_NAME)/archive
+PKG_HASH:=ab1c42a7fc9f136d4ebc5535d384d1a184cc77fe8054acd4c2f176f3a8c0dac7
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,7 +25,7 @@ define Package/mktorrent
   SECTION:=net
   CATEGORY:=Network
   TITLE:=mktorrent
-  URL:=http://mktorrent.sourceforge.net/
+  URL:=https://github.com/Rudde/mktorrent
 endef
 
 define Package/mktorrent/Description
