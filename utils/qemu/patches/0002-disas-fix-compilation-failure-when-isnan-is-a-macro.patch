@@ -1,6 +1,17 @@
---- a/disas/libvixl/vixl/utils.h.orig	2016-11-22 22:36:20.691253883 +0800
-+++ b/disas/libvixl/vixl/utils.h	2016-11-22 22:55:44.639618185 +0800
-@@ -118,11 +118,17 @@ double double_pack(uint64_t sign, uint64
+From 83e72b93889fbcbbfff281b0dbcc58c5a7455257 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Sat, 24 Feb 2018 13:45:25 +0800
+Subject: [PATCH 2/3] disas: fix compilation failure when isnan is a macro
+
+---
+ disas/libvixl/vixl/utils.h | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/disas/libvixl/vixl/utils.h b/disas/libvixl/vixl/utils.h
+index 5ab134e..df30663 100644
+--- a/disas/libvixl/vixl/utils.h
++++ b/disas/libvixl/vixl/utils.h
+@@ -118,11 +118,17 @@ double double_pack(uint64_t sign, uint64_t exp, uint64_t mantissa);
  // An fpclassify() function for 16-bit half-precision floats.
  int float16classify(float16 value);
  
@@ -19,7 +30,7 @@
      return true;
    }
    return false;
-@@ -132,7 +138,7 @@ inline bool IsSignallingNaN(double num)
+@@ -132,7 +138,7 @@ inline bool IsSignallingNaN(double num) {
  inline bool IsSignallingNaN(float num) {
    const uint32_t kFP32QuietNaNMask = 0x00400000;
    uint32_t raw = float_to_rawbits(num);
@@ -28,7 +39,7 @@
      return true;
    }
    return false;
-@@ -148,21 +154,21 @@ inline bool IsSignallingNaN(float16 num)
+@@ -148,21 +154,21 @@ inline bool IsSignallingNaN(float16 num) {
  
  template <typename T>
  inline bool IsQuietNaN(T num) {
@@ -53,3 +64,6 @@
    return rawbits_to_float(float_to_rawbits(num) | kFP32QuietNaNMask);
  }
  
+-- 
+1.8.3.1
+
