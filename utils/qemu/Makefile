@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2016 OpenWrt.org
-# Copyright (C) 2016 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2016-2018 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,15 +9,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=2.6.2
-PKG_RELEASE:=3
+PKG_VERSION:=2.11.1
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=9a7ec64f147b9e1e570c410e00ebe271869b5d4c85392ba047db7617c297faa3
+PKG_HASH:=d9df2213ceed32e91dab7bc9dd19c1af83f91ba72c7aeef7605dfaaf81732ccb
 PKG_SOURCE_URL:=http://wiki.qemu-project.org/download/
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
@@ -123,7 +124,7 @@ define qemu-target
     TITLE:=QEMU target $(1)
     URL:=http://www.qemu.org
     DEPENDS:= +glib2 +libpthread +zlib $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST) \
-	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +qemu-blobs)
+	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +pixman +qemu-blobs)
   endef
 
   define Package/qemu-$(1)/description
@@ -211,7 +212,6 @@ CONFIGURE_ARGS +=			\
 	--disable-tools			\
 	--disable-seccomp		\
 	--disable-glusterfs		\
-	--disable-archipelago		\
 	--disable-gtk			\
 	--disable-gnutls		\
 	--disable-nettle		\
