@@ -1,0 +1,32 @@
+From 472efb82184b67686ae31316dfc05026926d7f31 Mon Sep 17 00:00:00 2001
+From: Mike Gelfand <mikedld@mikedld.com>
+Date: Sun, 1 Jan 2017 16:23:21 +0300
+Subject: [PATCH] Remove Makefile, add Makefile.am and CMakeLists.txt
+
+---
+ CMakeLists.txt |  9 +++++++++
+ Makefile       |  9 ---------
+ Makefile.am    | 11 +++++++++++
+ 3 files changed, 20 insertions(+), 9 deletions(-)
+ create mode 100644 CMakeLists.txt
+ delete mode 100644 Makefile
+ create mode 100644 Makefile.am
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+new file mode 100644
+index 0000000..4c0d2c0
+--- /dev/null
++++ b/CMakeLists.txt
+@@ -0,0 +1,9 @@
++cmake_minimum_required(VERSION 2.8)
++project(dht C)
++
++add_library(${PROJECT_NAME} SHARED
++    dht.c
++)
++
++install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
++install(FILES dht.h DESTINATION include/dht)
+-- 
+2.14.3
+
