@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=auc
-PKG_VERSION:=0.0.8
-PKG_RELEASE=1
+PKG_VERSION:=0.0.9
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -23,6 +23,12 @@ endef
 define Package/auc/description
    CLI client for attended-sysupgrade
 endef
+
+# set to 1 to enable debugging
+DEBUG:=1
+
+EXTRA_CFLAGS += \
+	$(if $(DEBUG),-DAUC_DEBUG=ON)
 
 define Package/auc/install
 	$(INSTALL_DIR) $(1)/usr/sbin
