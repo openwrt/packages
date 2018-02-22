@@ -13,7 +13,7 @@
  */
 
 #define _GNU_SOURCE
-#define AUC_VERSION "0.0.8"
+#define AUC_VERSION "0.0.9"
 
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -39,6 +39,16 @@
 #define APIOBJ_CHECK "api/upgrade-check"
 #define APIOBJ_REQUEST "api/upgrade-request"
 
+#define PUBKEY_PATH "/etc/opkg/keys"
+
+#ifdef AUC_DEBUG
+#define DPRINTF(...) if (debug) fprintf(stderr, __VA_ARGS__)
+#else
+#define DPRINTF(...)
+#endif
+
+static const char server_issues[]="https://github.com/aparcar/attendedsysupgrade-server/issues";
+
 static char user_agent[80];
 static char *serverurl;
 static int upgrade_packages;
@@ -52,30 +62,26 @@ static int output_fd = -1;
 static int retry, imagebuilder, building, ibready;
 static char *board_name = NULL;
 static char *target = NULL, *subtarget = NULL;
-static char *distribution = NULL, *version = NULL, *revision = NULL;
+static char *distribution = NULL, *version = NULL;
 static int uptodate;
 static char *filename = NULL;
+static int rc;
+
+#ifdef AUC_DEBUG
 static int debug = 0;
+#endif
 
 /*
  * policy for ubus call system board
  * see procd/system.c
  */
 enum {
-	BOARD_KERNEL,
-	BOARD_HOSTNAME,
-	BOARD_SYSTEM,
-	BOARD_MODEL,
 	BOARD_BOARD_NAME,
 	BOARD_RELEASE,
 	__BOARD_MAX,
 };
 
 static const struct blobmsg_policy board_policy[__BOARD_MAX] = {
-	[BOARD_KERNEL] = { .name = "kernel", .type = BLOBMSG_TYPE_STRING },
-	[BOARD_HOSTNAME] = { .name = "hostname", .type = BLOBMSG_TYPE_STRING },
-	[BOARD_SYSTEM] = { .name = "system", .type = BLOBMSG_TYPE_STRING },
-	[BOARD_MODEL] = { .name = "model", .type = BLOBMSG_TYPE_STRING },
 	[BOARD_BOARD_NAME] = { .name = "board_name", .type = BLOBMSG_TYPE_STRING },
 	[BOARD_RELEASE] = { .name = "release", .type = BLOBMSG_TYPE_TABLE },
 };
@@ -87,20 +93,14 @@ static const struct blobmsg_policy board_policy[__BOARD_MAX] = {
 enum {
 	RELEASE_DISTRIBUTION,
 	RELEASE_VERSION,
-	RELEASE_REVISION,
-	RELEASE_CODENAME,
 	RELEASE_TARGET,
-	RELEASE_DESCRIPTION,
 	__RELEASE_MAX,
 };
 
 static const struct blobmsg_policy release_policy[__RELEASE_MAX] = {
 	[RELEASE_DISTRIBUTION] = { .name = "distribution", .type = BLOBMSG_TYPE_STRING },
 	[RELEASE_VERSION] = { .name = "version", .type = BLOBMSG_TYPE_STRING },
-	[RELEASE_REVISION] = { .name = "revision", .type = BLOBMSG_TYPE_STRING },
-	[RELEASE_CODENAME] = { .name = "codename", .type = BLOBMSG_TYPE_STRING },
 	[RELEASE_TARGET] = { .name = "target", .type = BLOBMSG_TYPE_STRING },
-	[RELEASE_DESCRIPTION] = { .name = "description", .type = BLOBMSG_TYPE_STRING },
 };
 
 /*
@@ -146,6 +146,11 @@ static const struct blobmsg_policy check_policy[__CHECK_MAX] = {
 	[CHECK_UPGRADES] = { .name = "upgrades", .type = BLOBMSG_TYPE_TABLE },
 };
 
+static const struct blobmsg_policy pkg_upgrades_policy[2] = {
+	{ .type = BLOBMSG_TYPE_STRING },
+	{ .type = BLOBMSG_TYPE_STRING },
+};
+
 /*
  * policy for upgrade-request response
  * parse download information for the ready image.
@@ -162,19 +167,37 @@ enum {
 
 static const struct blobmsg_policy image_policy[__IMAGE_MAX] = {
 	[IMAGE_REQHASH] = { .name = "request_hash", .type = BLOBMSG_TYPE_STRING },
-	[IMAGE_FILESIZE] = { .name = "filesize", .type = BLOBMSG_TYPE_INT32 },
 	[IMAGE_URL] = { .name = "url", .type = BLOBMSG_TYPE_STRING },
-	[IMAGE_CHECKSUM] = { .name = "checksum", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_FILES] = { .name = "files", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_SYSUPGRADE] = { .name = "sysupgrade", .type = BLOBMSG_TYPE_STRING },
+};
+
+/*
+ * policy for HTTP headers received from server
+ */
+enum {
+	H_RANGE,
+	H_LEN,
+	H_IBSTATUS,
+	H_IBQUEUEPOS,
+	H_UNKNOWN_PACKAGE,
+	__H_MAX
+};
+
+static const struct blobmsg_policy policy[__H_MAX] = {
+	[H_RANGE] = { .name = "content-range", .type = BLOBMSG_TYPE_STRING },
+	[H_LEN] = { .name = "content-length", .type = BLOBMSG_TYPE_STRING },
+	[H_IBSTATUS] = { .name = "x-imagebuilder-status", .type = BLOBMSG_TYPE_STRING },
+	[H_IBQUEUEPOS] = { .name = "x-build-queue-position", .type = BLOBMSG_TYPE_STRING },
+	[H_UNKNOWN_PACKAGE] = { .name = "x-unknown-package", .type = BLOBMSG_TYPE_STRING },
 };
 
 /*
  * load serverurl from UCI
  */
 static int load_config() {
-	static struct uci_context *uci_ctx;
-	static struct uci_package *uci_attendedsysupgrade;
+	struct uci_context *uci_ctx;
+	struct uci_package *uci_attendedsysupgrade;
 	struct uci_section *uci_s;
 
 	uci_ctx = uci_alloc_context();
@@ -217,9 +240,31 @@ static int load_config() {
  * rpc-sys packagelist
  * append packagelist response to blobbuf given in req->priv
  */
-static void pkglist_cb(struct ubus_request *req, int type, struct blob_attr *msg) {
+static void pkglist_check_cb(struct ubus_request *req, int type, struct blob_attr *msg) {
 	struct blob_buf *buf = (struct blob_buf *)req->priv;
 	struct blob_attr *tb[__PACKAGELIST_MAX];
+
+	blobmsg_parse(packagelist_policy, __PACKAGELIST_MAX, tb, blob_data(msg), blob_len(msg));
+
+	if (!tb[PACKAGELIST_PACKAGES]) {
+		fprintf(stderr, "No packagelist received\n");
+		rc=-1;
+		return;
+	}
+
+	blobmsg_add_field(buf, BLOBMSG_TYPE_TABLE, "packages", blobmsg_data(tb[PACKAGELIST_PACKAGES]), blobmsg_data_len(tb[PACKAGELIST_PACKAGES]));
+};
+
+/*
+ * rpc-sys packagelist
+ * append array of package names to blobbuf given in req->priv
+ */
+static void pkglist_req_cb(struct ubus_request *req, int type, struct blob_attr *msg) {
+	struct blob_buf *buf = (struct blob_buf *)req->priv;
+	struct blob_attr *tb[__PACKAGELIST_MAX];
+	struct blob_attr *cur;
+	int rem;
+	void *array;
 
 	blobmsg_parse(packagelist_policy, __PACKAGELIST_MAX, tb, blob_data(msg), blob_len(msg));
 
@@ -228,8 +273,13 @@ static void pkglist_cb(struct ubus_request *req, int type, struct blob_attr *msg
 		return;
 	}
 
-	blobmsg_add_field(buf, BLOBMSG_TYPE_TABLE, "packages", blobmsg_data(tb[PACKAGELIST_PACKAGES]), blobmsg_data_len(tb[PACKAGELIST_PACKAGES]));
+	array = blobmsg_open_array(buf, "packages");
+	blobmsg_for_each_attr(cur, tb[PACKAGELIST_PACKAGES], rem)
+		blobmsg_add_string(buf, NULL, blobmsg_name(cur));
+
+	blobmsg_close_array(buf, array);
 };
+
 
 /*
  * system board
@@ -245,12 +295,14 @@ static void board_cb(struct ubus_request *req, int type, struct blob_attr *msg) 
 
 	if (!tb[BOARD_BOARD_NAME]) {
 		fprintf(stderr, "No board name received\n");
+		rc=-1;
 		return;
 	}
 	board_name = strdup(blobmsg_get_string(tb[BOARD_BOARD_NAME]));
 
 	if (!tb[BOARD_RELEASE]) {
 		fprintf(stderr, "No release received\n");
+		rc=-1;
 		return;
 	}
 
@@ -259,6 +311,7 @@ static void board_cb(struct ubus_request *req, int type, struct blob_attr *msg) 
 
 	if (!rel[RELEASE_TARGET]) {
 		fprintf(stderr, "No target received\n");
+		rc=-1;
 		return;
 	}
 
@@ -268,7 +321,6 @@ static void board_cb(struct ubus_request *req, int type, struct blob_attr *msg) 
 
 	distribution = strdup(blobmsg_get_string(rel[RELEASE_DISTRIBUTION]));
 	version = strdup(blobmsg_get_string(rel[RELEASE_VERSION]));
-	revision = strdup(blobmsg_get_string(rel[RELEASE_REVISION]));
 
 	blobmsg_add_string(buf, "distro", distribution);
 	blobmsg_add_string(buf, "target", target);
@@ -354,19 +406,6 @@ static void request_done(struct uclient *cl)
 
 static void header_done_cb(struct uclient *cl)
 {
-	enum {
-		H_RANGE,
-		H_LEN,
-		H_IBSTATUS,
-		H_IBQUEUEPOS,
-		__H_MAX
-	};
-	static const struct blobmsg_policy policy[__H_MAX] = {
-		[H_RANGE] = { .name = "content-range", .type = BLOBMSG_TYPE_STRING },
-		[H_LEN] = { .name = "content-length", .type = BLOBMSG_TYPE_STRING },
-		[H_IBSTATUS] = { .name = "x-imagebuilder-status", .type = BLOBMSG_TYPE_STRING },
-		[H_IBQUEUEPOS] = { .name = "x-build-queue-position", .type = BLOBMSG_TYPE_STRING },
-	};
 	struct blob_attr *tb[__H_MAX];
 	uint64_t resume_offset = 0, resume_end, resume_size;
 	char *ibstatus;
@@ -385,21 +424,24 @@ static void header_done_cb(struct uclient *cl)
 		return;
 	}
 
-	if (debug)
-		fprintf(stderr, "headers:\n%s\n", blobmsg_format_json_indent(cl->meta, true, 0));
+	DPRINTF("headers:\n%s\n", blobmsg_format_json_indent(cl->meta, true, 0));
 
 	blobmsg_parse(policy, __H_MAX, tb, blob_data(cl->meta), blob_len(cl->meta));
 
 	switch (cl->status_code) {
 	case 400:
 		request_done(cl);
+		rc=-1;
 		break;
 	case 412:
-		fprintf(stderr, "target not found.\n");
+		fprintf(stderr, "%s target %s/%s (%s) not found. Please report this at %s\n",
+			distribution, target, subtarget, board_name, server_issues);
 		request_done(cl);
+		rc=-2;
 		break;
 	case 413:
 		fprintf(stderr, "image too big.\n");
+		rc=-1;
 		request_done(cl);
 		break;
 	case 416:
@@ -407,16 +449,20 @@ static void header_done_cb(struct uclient *cl)
 		request_done(cl);
 		break;
 	case 422:
-		fprintf(stderr, "unknown package requested.\n");
+		fprintf(stderr, "unknown package '%s' requested.\n",
+			blobmsg_get_string(tb[H_UNKNOWN_PACKAGE]));
+		rc=-1;
 		request_done(cl);
 		break;
 	case 501:
 		fprintf(stderr, "ImageBuilder didn't produce sysupgrade file.\n");
+		rc=-2;
 		request_done(cl);
 		break;
 	case 204:
-		fprintf(stderr, "system is up to date.\n");
+		fprintf(stdout, "system is up to date.\n");
 		uptodate=1;
+		request_done(cl);
 		break;
 	case 206:
 		if (!cur_resume) {
@@ -467,6 +513,7 @@ static void header_done_cb(struct uclient *cl)
 			retry=1;
 		} else {
 			fprintf(stderr, "unrecognized remote imagebuilder status '%s'\n", ibstatus);
+			rc=-2;
 		}
 		// fall through
 	case 200:
@@ -657,45 +704,95 @@ static int init_ustream_ssl(void) {
 }
 
 /**
- * use busybox md5sum (from jow's luci-ng)
+ * use busybox sha256sum to verify sha256sums file
  */
-static char *md5sum(const char *file) {
+static int sha256sum_v(const char *sha256file, const char *msgfile) {
 	pid_t pid;
 	int fds[2];
-	static char md5[33];
+	int status;
+	FILE *f = fopen(sha256file, "r");
+	char sumline[512] = {};
+	char *fname;
+	unsigned int fnlen;
+	unsigned int cnt = 0;
 
 	if (pipe(fds))
-		return NULL;
+		return -1;
 
-	switch ((pid = fork()))
-	{
+	if (!f)
+		return -1;
+
+
+	pid = fork();
+	switch (pid) {
 	case -1:
-		return NULL;
+		return -1;
 
 	case 0:
 		uloop_done();
 
-		dup2(fds[1], 1);
-
-		close(0);
+		dup2(fds[0], 0);
+		close(1);
 		close(2);
 		close(fds[0]);
 		close(fds[1]);
-
-		if (execl("/bin/busybox", "/bin/busybox", "md5sum", file, NULL));
-			return NULL;
+		if (execl("/bin/busybox", "/bin/busybox", "sha256sum", "-s", "-c", NULL));
+			return -1;
 
 		break;
 
 	default:
-		memset(md5, 0, sizeof(md5));
-		read(fds[0], md5, 32);
-		waitpid(pid, NULL, 0);
-		close(fds[0]);
+		while (fgets(sumline, sizeof(sumline), f)) {
+			fname = &sumline[66];
+			fnlen = strlen(fname);
+			fname[fnlen-1] = '\0';
+			if (!strcmp(fname, msgfile)) {
+				fname[fnlen-1] = '\n';
+				write(fds[1], sumline, strlen(sumline));
+				cnt++;
+			}
+		}
+		fclose(f);
 		close(fds[1]);
+		waitpid(pid, &status, 0);
+		close(fds[0]);
+
+		if (cnt == 1)
+			return WEXITSTATUS(status);
+		else
+			return -1;
 	}
 
-	return md5;
+	return -1;
+}
+
+/**
+ * use usign to verify sha256sums.sig
+ */
+static int usign_v(const char *file) {
+	pid_t pid;
+	int status;
+
+	pid = fork();
+	switch (pid) {
+	case -1:
+		return -1;
+
+	case 0:
+		uloop_done();
+
+		if (execl("/usr/bin/usign", "/usr/bin/usign",
+		          "-V", "-q", "-P", PUBKEY_PATH, "-m", file, NULL));
+			return -1;
+
+		break;
+
+	default:
+		waitpid(pid, &status, 0);
+		return WEXITSTATUS(status);
+	}
+
+	return -1;
 }
 
 static int ask_user(void)
@@ -711,13 +808,8 @@ static void print_package_updates(struct blob_attr *upgrades) {
 	struct blob_attr *tb[2];
 	int rem;
 
-	static struct blobmsg_policy policy[2] = {
-		{ .type = BLOBMSG_TYPE_STRING },
-		{ .type = BLOBMSG_TYPE_STRING },
-	};
-
 	blobmsg_for_each_attr(cur, upgrades, rem) {
-		blobmsg_parse_array(policy, ARRAY_SIZE(policy), tb, blobmsg_data(cur), blobmsg_data_len(cur));
+		blobmsg_parse_array(pkg_upgrades_policy, ARRAY_SIZE(policy), tb, blobmsg_data(cur), blobmsg_data_len(cur));
 		if (!tb[0] || !tb[1])
 			continue;
 
@@ -728,19 +820,19 @@ static void print_package_updates(struct blob_attr *upgrades) {
 
 /* this main function is too big... todo: split */
 int main(int args, char *argv[]) {
-	unsigned char argc=1;
-	static struct blob_buf checkbuf, reqbuf, imgbuf, upgbuf;
+	static struct blob_buf allpkg, checkbuf, infobuf, reqbuf, imgbuf, upgbuf;
 	struct ubus_context *ctx = ubus_connect(NULL);
 	uint32_t id;
-	int rc;
-	int queuepos, valid, use_get;
+	int valid, use_get;
 	char url[256];
 	char *newversion = NULL;
 	struct blob_attr *tb[__IMAGE_MAX];
 	struct blob_attr *tbc[__CHECK_MAX];
-	unsigned int filesize;
-	char *checksum = NULL;
+	char *tmp;
 	struct stat imgstat;
+	int check_only = 0;
+	int ignore_sig = 0;
+	unsigned char argc = 1;
 
 	snprintf(user_agent, sizeof(user_agent), "%s (%s)", argv[0], AUC_VERSION);
 	fprintf(stdout, "%s\n", user_agent);
@@ -750,12 +842,25 @@ int main(int args, char *argv[]) {
 		    !strncmp(argv[argc], "--help", 7)) {
 			fprintf(stdout, "%s: Attended sysUpgrade CLI client\n", argv[0]);
 			fprintf(stdout, "Usage: auc [-d] [-h]\n");
+			fprintf(stdout, " -c\tonly check if system is up-to-date\n");
+			fprintf(stdout, " -F\tignore result of signature verification\n");
+#ifdef AUC_DEBUG
 			fprintf(stdout, " -d\tenable debugging output\n");
+#endif
 			fprintf(stdout, " -h\toutput help\n");
 			return 0;
 		}
+
+#ifdef AUC_DEBUG
 		if (!strncmp(argv[argc], "-d", 3))
 			debug = 1;
+#endif
+		if (!strncmp(argv[argc], "-c", 3))
+			check_only = 1;
+
+		if (!strncmp(argv[argc], "-F", 3))
+			ignore_sig = 1;
+
 		argc++;
 	};
 
@@ -787,9 +892,12 @@ int main(int args, char *argv[]) {
 	}
 
 	blobmsg_buf_init(&checkbuf);
+	blobmsg_buf_init(&infobuf);
 	blobmsg_buf_init(&reqbuf);
 	blobmsg_buf_init(&imgbuf);
-	blobmsg_buf_init(&upgbuf);
+	/* ubus requires BLOBMSG_TYPE_UNSPEC */
+	blob_buf_init(&allpkg, 0);
+	blob_buf_init(&upgbuf, 0);
 
 	if (ubus_lookup_id(ctx, "system", &id) ||
 	    ubus_invoke(ctx, id, "board", NULL, board_cb, &checkbuf, 3000)) {
@@ -798,34 +906,37 @@ int main(int args, char *argv[]) {
 		goto freebufs;
 	}
 
+	if (rc)
+		goto freebufs;
+
+	blobmsg_add_u8(&allpkg, "all", 1);
+	blobmsg_add_string(&allpkg, "dummy", "foo");
 	if (ubus_lookup_id(ctx, "rpc-sys", &id) ||
-	    ubus_invoke(ctx, id, "packagelist", NULL, pkglist_cb, &checkbuf, 3000)) {
+	    ubus_invoke(ctx, id, "packagelist", allpkg.head, pkglist_check_cb, &checkbuf, 3000)) {
 		fprintf(stderr, "cannot request packagelist from rpcd\n");
 		rc=-1;
 		goto freeboard;
 	}
 
+	if (rc)
+		goto freeboard;
+
 	blobmsg_add_u32(&checkbuf, "upgrade_packages", upgrade_packages);
 
-	fprintf(stdout, "running %s %s %s on %s/%s (%s)\n", distribution,
-		version, revision, target, subtarget, board_name);
+	fprintf(stdout, "running %s %s on %s/%s (%s)\n", distribution,
+		version, target, subtarget, board_name);
 
 	fprintf(stdout, "checking %s for release upgrade%s\n", serverurl,
 		upgrade_packages?" or updated packages":"");
 
-	blobmsg_add_string(&reqbuf, "distro", distribution);
-	blobmsg_add_string(&reqbuf, "target", target);
-	blobmsg_add_string(&reqbuf, "subtarget", subtarget);
-	blobmsg_add_string(&reqbuf, "board", board_name);
 
 	snprintf(url, sizeof(url), "%s/%s", serverurl, APIOBJ_CHECK);
 	uptodate=0;
 
 	do {
 		retry=0;
-		if (debug)
-			fprintf(stderr, "requesting:\n%s\n", blobmsg_format_json_indent(checkbuf.head, true, 0));
-		if (server_request(url, &checkbuf, &reqbuf)) {
+		DPRINTF("requesting:\n%s\n", blobmsg_format_json_indent(checkbuf.head, true, 0));
+		if (server_request(url, &checkbuf, &infobuf)) {
 			fprintf(stderr, "failed to connect to server\n");
 			rc=-1;
 			goto freeboard;
@@ -835,20 +946,20 @@ int main(int args, char *argv[]) {
 			sleep(3);
 	} while(retry);
 
-	if (debug)
-		fprintf(stderr, "reply:\n%s\n", blobmsg_format_json_indent(reqbuf.head, true, 0));
+	DPRINTF("reply:\n%s\n", blobmsg_format_json_indent(infobuf.head, true, 0));
 
-	blobmsg_parse(check_policy, __CHECK_MAX, tbc, blob_data(reqbuf.head), blob_len(reqbuf.head));
+	blobmsg_parse(check_policy, __CHECK_MAX, tbc, blob_data(infobuf.head), blob_len(infobuf.head));
 
 	if (!tbc[CHECK_VERSION] && !tbc[CHECK_UPGRADES]) {
-		if (!uptodate) {
+		if (uptodate) {
+			rc=0;
+		} else if (!rc) {
 			fprintf(stderr, "server reply invalid.\n");
-			rc=-1;
-			goto freeboard;
+			rc=-2;
 		}
-		rc=0;
 		goto freeboard;
 	}
+
 	if (tbc[CHECK_VERSION]) {
 		newversion = blobmsg_get_string(tbc[CHECK_VERSION]);
 		fprintf(stdout, "new %s release %s found.\n", distribution, newversion);
@@ -862,9 +973,28 @@ int main(int args, char *argv[]) {
 		print_package_updates(tbc[CHECK_UPGRADES]);
 	}
 
+	if (check_only) {
+		rc=1;
+		goto freeboard;
+	};
+
 	rc = ask_user();
 	if (rc)
 		goto freeboard;
+
+	blobmsg_add_string(&reqbuf, "distro", distribution);
+	blobmsg_add_string(&reqbuf, "target", target);
+	blobmsg_add_string(&reqbuf, "subtarget", subtarget);
+	blobmsg_add_string(&reqbuf, "board", board_name);
+
+	blob_buf_init(&allpkg, 0);
+	blobmsg_add_u8(&allpkg, "all", 0);
+	blobmsg_add_string(&allpkg, "dummy", "foo");
+	if (ubus_invoke(ctx, id, "packagelist", allpkg.head, pkglist_req_cb, &reqbuf, 3000)) {
+		fprintf(stderr, "cannot request packagelist from rpcd\n");
+		rc=-1;
+		goto freeboard;
+	}
 
 	snprintf(url, sizeof(url), "%s/%s", serverurl, APIOBJ_REQUEST);
 
@@ -875,8 +1005,7 @@ int main(int args, char *argv[]) {
 	do {
 		retry = 0;
 
-		if (debug && !use_get)
-			fprintf(stderr, "requesting:\n%s\n", blobmsg_format_json_indent(reqbuf.head, true, 0));
+		DPRINTF("requesting:\n%s\n", use_get?"":blobmsg_format_json_indent(reqbuf.head, true, 0));
 
 		server_request(url, use_get?NULL:&reqbuf, &imgbuf);
 		blobmsg_parse(image_policy, __IMAGE_MAX, tb, blob_data(imgbuf.head), blob_len(imgbuf.head));
@@ -885,9 +1014,7 @@ int main(int args, char *argv[]) {
 			snprintf(url, sizeof(url), "%s/%s/%s", serverurl,
 				 APIOBJ_REQUEST,
 				 blobmsg_get_string(tb[IMAGE_REQHASH]));
-			if (debug)
-				fprintf(stderr, "polling via GET %s\n", url);
-
+			DPRINTF("polling via GET %s\n", url);
 			retry=1;
 			use_get=1;
 		}
@@ -897,35 +1024,22 @@ int main(int args, char *argv[]) {
 			blobmsg_buf_init(&imgbuf);
 			sleep(3);
 		}
-	} while(retry || queuepos);
+	} while(retry);
 
-	if (debug)
-		fprintf(stderr, "reply:\n%s\n", blobmsg_format_json_indent(imgbuf.head, true, 0));
+	DPRINTF("reply:\n%s\n", blobmsg_format_json_indent(imgbuf.head, true, 0));
 
 	if (!tb[IMAGE_SYSUPGRADE]) {
-		fprintf(stderr, "no sysupgrade image returned\n");
-		rc=-1;
+		if (!rc) {
+			fprintf(stderr, "no sysupgrade image returned\n");
+			rc=-1;
+		}
 		goto freeboard;
 	}
+
 	strncpy(url, blobmsg_get_string(tb[IMAGE_SYSUPGRADE]), sizeof(url));
 
-	if (!tb[IMAGE_FILESIZE]) {
-		fprintf(stderr, "no image size returned\n");
-		rc=-1;
-		goto freeboard;
-	}
-	filesize = blobmsg_get_u32(tb[IMAGE_FILESIZE]);
-
-	if (!tb[IMAGE_CHECKSUM]) {
-		fprintf(stderr, "no image checksum returned\n");
-		rc=-1;
-		goto freeboard;
-	}
-	checksum = blobmsg_get_string(tb[IMAGE_CHECKSUM]);
 	server_request(url, NULL, NULL);
-/* usign signature is not yet implemented! */
-//	strncat(url, ".sig", sizeof(url));
-//	server_request(url, NULL, NULL);
+
 	filename = uclient_get_url_filename(url, "firmware.bin");
 
 	if (stat(filename, &imgstat)) {
@@ -934,18 +1048,78 @@ int main(int args, char *argv[]) {
 		goto freeboard;
 	}
 
-	if ((intmax_t)imgstat.st_size != filesize) {
+	if ((intmax_t)imgstat.st_size != out_len) {
 		fprintf(stderr, "file size mismatch\n");
 		unlink(filename);
 		rc=-1;
 		goto freeboard;
 	}
 
-	if (strncmp(checksum, md5sum(filename), 33)) {
-		fprintf(stderr, "image checksum mismatch\n");
-		unlink(filename);
+	tmp=strrchr(url, '/');
+
+	strcpy(tmp, "/sha256sums");
+	server_request(url, NULL, NULL);
+
+	if (stat("sha256sums", &imgstat)) {
+		fprintf(stderr, "sha256sums download failed\n");
 		rc=-1;
 		goto freeboard;
+	}
+
+	if ((intmax_t)imgstat.st_size != out_len) {
+		fprintf(stderr, "sha256sums download incomplete\n");
+		unlink("sha256sums");
+		rc=-1;
+		goto freeboard;
+	}
+
+	if (out_len < 68) {
+		fprintf(stderr, "sha256sums size mismatch\n");
+		unlink("sha256sums");
+		rc=-1;
+		goto freeboard;
+	}
+
+	if (sha256sum_v("sha256sums", filename)) {
+		fprintf(stderr, "checksum verification failed\n");
+		unlink(filename);
+		unlink("sha256sums");
+		rc=-1;
+		goto freeboard;
+	}
+
+	strcpy(tmp, "/sha256sums.sig");
+	server_request(url, NULL, NULL);
+
+	if (stat("sha256sums.sig", &imgstat)) {
+		fprintf(stderr, "sha256sums.sig download failed\n");
+		rc=-1;
+		goto freeboard;
+	}
+
+	if ((intmax_t)imgstat.st_size != out_len) {
+		fprintf(stderr, "sha256sums.sig download incomplete\n");
+		unlink("sha256sums.sig");
+		rc=-1;
+		goto freeboard;
+	}
+
+	if (out_len < 16) {
+		fprintf(stderr, "sha256sums.sig size mismatch\n");
+		unlink("sha256sums.sig");
+		rc=-1;
+		goto freeboard;
+	}
+
+	if (usign_v("sha256sums")) {
+		fprintf(stderr, "signature verification failed\n");
+		if (!ignore_sig) {
+			unlink(filename);
+			unlink("sha256sums");
+			unlink("sha256sums.sig");
+			rc=-1;
+			goto freeboard;
+		}
 	};
 
 	if (strcmp(filename, "firmware.bin")) {
@@ -974,10 +1148,10 @@ freeboard:
 	/* subtarget is a pointer within target, don't free */
 	free(distribution);
 	free(version);
-	free(revision);
 
 freebufs:
 	blob_buf_free(&checkbuf);
+	blob_buf_free(&infobuf);
 	blob_buf_free(&reqbuf);
 	blob_buf_free(&imgbuf);
 	blob_buf_free(&upgbuf);
