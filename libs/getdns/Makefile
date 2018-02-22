@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=getdns
-PKG_VERSION:=1.3.0
+PKG_VERSION:=1.4.1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
@@ -14,7 +14,7 @@ PKG_MAINTAINER:=David Mora <iamperson347+public@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://getdnsapi.net/dist/
-PKG_HASH:=920fa2e07c72fd0e5854db1820fa777108009fc5cb702f9aa5155ef58b12adb1
+PKG_HASH:=245233dc780f615b6ab1472f2b9cdcd957a451a736f3036717d0da466ab1c51e
 
 PKG_FIXUP:=autoreconf
 
@@ -22,7 +22,7 @@ PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_GETDNS_ENABLE_STUB_ONLY \
-	CONFIG_GETDNS_ENABLE_IDN 
+	CONFIG_GETDNS_ENABLE_IDN_LIBIDN 
 	
 include $(INCLUDE_DIR)/package.mk
 
@@ -36,7 +36,7 @@ define Package/getdns
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE+= (library)
-	DEPENDS+= +libopenssl +!GETDNS_ENABLE_STUB_ONLY:libunbound +GETDNS_ENABLE_IDN:libidn
+	DEPENDS+= +libopenssl +!GETDNS_ENABLE_STUB_ONLY:libunbound +GETDNS_ENABLE_IDN_LIBIDN:libidn
 	MENU:=1
 endef
 
@@ -51,7 +51,9 @@ endef
 
 CONFIGURE_ARGS += \
 		$(if $(CONFIG_GETDNS_ENABLE_STUB_ONLY), --enable-stub-only, ) \
-		$(if $(CONFIG_GETDNS_ENABLE_IDN), , --without-libidn ) 
+		$(if $(CONFIG_GETDNS_ENABLE_IDN_LIBIDN), , --without-libidn ) \
+		--without-libidn2 \
+		--with-ssl="$(STAGING_DIR)/usr" \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/getdns/
