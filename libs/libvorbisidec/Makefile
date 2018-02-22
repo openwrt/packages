@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2006-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -10,14 +8,14 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=libvorbisidec
 PKG_REV:=20150104
 PKG_VERSION:=1.0.3-$(PKG_REV)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://git.xiph.org/tremor.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=b56ffce0c0773ec5ca04c466bc00b1bbcaf65aef
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=45a3ae74fffa32a9e0255132ec2cc4d5413af32699562a89278bc0e561bfbed7
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_MIRROR_HASH:=a5095464c58c5e0909025bf4cdfdcdc07742f545b696829c97514481b9ba64db
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
