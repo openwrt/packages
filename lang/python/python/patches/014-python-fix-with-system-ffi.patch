@@ -1,0 +1,11 @@
+--- a/setup.py
++++ b/setup.py
+@@ -2121,7 +2121,7 @@ class PyBuildExt(build_ext):
+                              sources=['_ctypes/_ctypes_test.c'])
+         self.extensions.extend([ext, ext_test])
+ 
+-        if not '--with-system-ffi' in sysconfig.get_config_var("CONFIG_ARGS"):
++        if '--with-system-ffi=no' in sysconfig.get_config_var("CONFIG_ARGS"):
+             return
+ 
+         if host_platform == 'darwin':
