@@ -7,9 +7,9 @@ dns_transport_list:
 
 tls_authentication: GETDNS_AUTHENTICATION_REQUIRED
 
-tls_query_padding_blocksize: 256
+tls_query_padding_blocksize: 128
 
-edns_client_subnet_private : 1
+edns_client_subnet_private : 0
 
 idle_timeout: 10000
 
@@ -21,9 +21,9 @@ round_robin_upstreams: 0
 
 upstream_recursive_servers:
 # Quad 9 IPv6
-  - address_data: 2620:fe::fe
+  - address_data: 2620:fe::10
     tls_auth_name: "dns.quad9.net"
 # IPv4 addresses
 # Quad 9 service
-  - address_data: 9.9.9.9
+  - address_data: 9.9.9.10
     tls_auth_name: "dns.quad9.net"
