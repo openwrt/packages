@@ -1,0 +1,10 @@
+--- a/configure.ac.orig	2016-11-22 20:44:21.205150763 +0800
++++ b/configure.ac	2016-11-22 20:44:55.505161500 +0800
+@@ -720,7 +720,6 @@ dnl Check if assembler is gas compatible
+ have_mips_dspr2=no
+ AC_MSG_CHECKING(whether to use MIPS DSPr2 assembler)
+ xserver_save_CFLAGS=$CFLAGS
+-CFLAGS="-mdspr2 $CFLAGS"
+ 
+ AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+ #if !(defined(__mips__) &&  __mips_isa_rev >= 2)
