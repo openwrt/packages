@@ -45,10 +45,13 @@ start_instance() {
 	config_get val "${section}" configfile
 	[ -n "${val}" ] && append args "-F${val}"
 
+	mkdir -p "/var/tmp/sslh"
+
 	# Defaults were removed for --user and --pidfile options
 	# in sslh 1.11; Define them here instead.
 	append args "--user nobody"
 	append args "--pidfile /var/run/sslh.pid"
+	append args "-C /var/tmp/sslh"
 
 	# XXX: allow more that one instance to run simultaneously
 	SERVICE_MATCH_NAME=1 SERVICE_NAME="sslh-dummy-$$" \
