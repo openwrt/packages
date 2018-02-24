@@ -73,8 +73,6 @@ CONFIGURE_ARGS+= \
 	--without-mem-debug \
 	--without-debugger \
 
-TARGET_CFLAGS += $(FPIC)
-
 define Build/InstallDev/Xslt
 	$(INSTALL_DIR) $(1)/usr/bin $(2)/bin $(1)/usr/include/libxslt \
 		$(1)/usr/include/libexslt $(1)/usr/lib \
