@@ -58,8 +58,6 @@ $(call Package/tiff/Default)
   DEPENDS:=+libtiff
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
 define Build/Configure
 	$(call Build/Configure/Default, \
 		$(if $(CONFIG_PACKAGE_libtiffxx), \
