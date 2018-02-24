@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxslt
 PKG_VERSION:=1.1.32
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -128,14 +128,14 @@ endef
 define Package/libxslt/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libxslt.so.* \
+		$(PKG_INSTALL_DIR)/usr/lib/libxslt.so* \
 		$(1)/usr/lib/
 endef
 
 define Package/libexslt/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libexslt.so.* \
+		$(PKG_INSTALL_DIR)/usr/lib/libexslt.so* \
 		$(1)/usr/lib/
 endef
 
