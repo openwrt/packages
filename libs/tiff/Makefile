@@ -74,10 +74,15 @@ CONFIGURE_ARGS += \
 	--disable-jbig \
 	--without-x
 
+define Build/InstallDev/hxx
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/*.hxx $(1)/usr/include/
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/{lib,include}
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib* $(1)/usr/lib/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
+	$(if $(CONFIG_PACKAGE_libtiffxx), $(call Build/InstallDev/hxx,$(1)))
 endef
 
 define Package/libtiff/install
