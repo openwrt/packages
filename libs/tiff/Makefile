@@ -12,7 +12,7 @@ PKG_VERSION:=4.0.9
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://download.osgeo.org/libtiff
+PKG_SOURCE_URL:=https://download.osgeo.org/libtiff
 PKG_HASH:=6e7bdeec2c310734e734d19aae3a71ebe37a4d842e0e23dbb1b8921c0026cfcd
 
 PKG_FIXUP:=autoreconf
