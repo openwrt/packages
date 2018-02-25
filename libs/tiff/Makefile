@@ -58,27 +58,21 @@ $(call Package/tiff/Default)
   DEPENDS:=+libtiff
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		$(if $(CONFIG_PACKAGE_libtiffxx), \
-			--enable-cxx, \
-			--disable-cxx \
-		) \
-		--disable-lzma \
-		--enable-ccitt \
-		--enable-packbits \
-		--enable-lzw \
-		--enable-thunder \
-		--enable-next \
-		--enable-logluv \
-		--enable-mdi \
-		--enable-zlib \
-		--enable-jpeg \
-		--disable-old-jpeg \
-		--disable-jbig \
-		--without-x \
-	)
-endef
+CONFIGURE_ARGS += \
+	$(if $(CONFIG_PACKAGE_libtiffxx),--enable-cxx,--disable-cxx) \
+	--disable-lzma \
+	--enable-ccitt \
+	--enable-packbits \
+	--enable-lzw \
+	--enable-thunder \
+	--enable-next \
+	--enable-logluv \
+	--enable-mdi \
+	--enable-zlib \
+	--enable-jpeg \
+	--disable-old-jpeg \
+	--disable-jbig \
+	--without-x
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/{lib,include}
