@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifidog
 PKG_VERSION:=1.3.0
-PKG_RELEASE=1
+PKG_RELEASE:=2
 
 
 PKG_LICENSE:=GPL-2.0
@@ -20,11 +20,11 @@ PKG_LICENSE_FILES:=COPYING
 
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/wifidog/wifidog-gateway.git
+PKG_SOURCE_URL:=https://github.com/wifidog/wifidog-gateway
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=1.3.0
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=cdab08c11ba04ffa58c2df69c2c62f63196e290a216708fa5b7d43087c18d1b0
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
+PKG_MIRROR_HASH:=9ffd9f3ae54baceb723abb7a04e27a9b6a3ff1479f8a3bfda9b8a496e8b4050f
 
 PKG_FIXUP:=autoreconf
 # do not run make install
