@@ -9,13 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xz
-PKG_VERSION:=5.2.3
+PKG_VERSION:=5.2.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=@SF/lzmautils \
-		http://tukaani.org/xz
-PKG_HASH:=fd9ca16de1052aac899ad3495ad20dfa906c27b4a5070102a2ec35ca3a4740c1
+PKG_SOURCE_URL:=@SF/lzmautils
+PKG_HASH:=3313fd2a95f43d88e44264e6b015e7d03053e681860b0d5d3f9baca79c57b7bf
 
 PKG_LICENSE:=Public-Domain LGPL-2.1+ GPL-2.0+ GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
@@ -30,7 +29,7 @@ define Package/xz/Default
   SUBMENU:=Compression
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=http://tukaani.org/xz
+  URL:=https://tukaani.org/xz
 endef
 
 define Package/xz-utils
