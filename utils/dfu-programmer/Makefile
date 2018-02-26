@@ -12,7 +12,7 @@ PKG_VERSION:=0.7.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.sourceforge.net/project/dfu-programmer/dfu-programmer/$(PKG_VERSION)/
+PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_VERSION)
 PKG_HASH:=1db4d36b1aedab2adc976e8faa5495df3cf82dc4bf883633dc6ba71f7c4af995
 
 PKG_MAINTAINER:=Stefan Hellermann <stefan@the2masters.de>
