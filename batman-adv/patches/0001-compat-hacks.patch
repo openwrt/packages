@@ -1,0 +1,33 @@
+--- a/net/batman-adv/main.c
++++ b/net/batman-adv/main.c
+@@ -19,7 +19,7 @@
+ #include "main.h"
+ 
+ #include <linux/atomic.h>
+-#include <linux/build_bug.h>
++#include <linux/bug.h>
+ #include <linux/byteorder/generic.h>
+ #include <linux/crc32c.h>
+ #include <linux/errno.h>
+--- a/net/batman-adv/tp_meter.c
++++ b/net/batman-adv/tp_meter.c
+@@ -20,7 +20,7 @@
+ #include "main.h"
+ 
+ #include <linux/atomic.h>
+-#include <linux/build_bug.h>
++#include <linux/bug.h>
+ #include <linux/byteorder/generic.h>
+ #include <linux/cache.h>
+ #include <linux/compiler.h>
+--- a/net/batman-adv/translation-table.c
++++ b/net/batman-adv/translation-table.c
+@@ -21,7 +21,7 @@
+ 
+ #include <linux/atomic.h>
+ #include <linux/bitops.h>
+-#include <linux/build_bug.h>
++#include <linux/bug.h>
+ #include <linux/byteorder/generic.h>
+ #include <linux/cache.h>
+ #include <linux/compiler.h>
