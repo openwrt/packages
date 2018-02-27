@@ -37,15 +37,15 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * the application is located in LuCI under 'Services' menu
 
 ## Travelmate config options
-* usually the pre-configured travelmate setup works quite well and no manual config overrides are needed, all listed options apply to the 'global' config section:
+* usually the pre-configured travelmate setup works quite well and no manual config overrides are needed, all listed options apply to the 'global' section:
     * trm\_enabled => main switch to enable/disable the travelmate service (bool/default: '0', disabled)
     * trm\_debug => enable/disable debug logging (bool/default: '0', disabled)
     * trm\_automatic => keep travelmate in an active state (bool/default: '1', enabled)
     * trm\_captive => enable/disable the captive portal detection (bool/default: '1', enabled)
-    * trm\_minquality => minimum signal quality threshold as percent for conditional uplink (dis-) connections (int/default: '30')
-    * trm\_maxwait => how long (in seconds) should travelmate wait for a successful wlan interface reload action (int/default: '30')
-    * trm\_maxretry => how many times should travelmate try to connect to an uplink, '0' means unlimited retries. (int/default: '3')
-    * trm\_timeout => timeout in seconds for "automatic mode" (int/default: '60')
+    * trm\_minquality => minimum signal quality threshold as percent for conditional uplink (dis-) connections (int/default: '35', valid range: 20-80)
+    * trm\_maxwait => how long (in seconds) should travelmate wait for a successful wlan interface reload action (int/default: '30', valid range: 20-40)
+    * trm\_maxretry => how many times should travelmate try to connect to an uplink (int/default: '3', valid range: 1-10)
+    * trm\_timeout => timeout in seconds for "automatic mode" (int/default: '60', valid range: 30-300)
     * trm\_radio => limit travelmate to a dedicated radio, e.g. 'radio0' (default: not set, use all radios)
     * trm\_iface => main uplink / procd trigger network interface (default: trm_wwan)
     * trm\_triggerdelay => additional trigger delay in seconds before travelmate processing starts (int/default: '2')
@@ -125,7 +125,7 @@ edit /etc/config/travelmate and set 'trm_enabled' to '1'
 **A:** In "trigger" mode travelmate will be triggered solely by procd interface down events, whenever an uplink disappears travelmate tries n times (default 3) to find a new uplink or reconnect to the old one. The 'automatic' mode keeps travelmate in an active state and checks every n seconds the connection status / the uplink availability regardless of procd event trigger.  
 
 **Q:** What happen with misconfigured uplinks, e.g. due to outdated wlan passwords?  
-**A:** Travelmate tries n times (default 3) to connect, then the respective uplink SSID will be marked / renamed to '_SSID_\_err'. In this case use the builtin wireless station manager to update your wireless credentials. To disable this functionality at all set the Connection Limit ('trm\_maxretry') to '0', which means unlimited retries.  
+**A:** Travelmate tries n times (default 3) to connect, then the respective uplink SSID will be marked / renamed to '_SSID_\_err'. In this case use the builtin wireless station manager to update your wireless credentials.  
 
 ## Support
 Please join the travelmate discussion in this [forum thread](https://forum.lede-project.org/t/travelmate-support-thread/5155) or contact me by [mail](mailto:dev@brenken.org)  
