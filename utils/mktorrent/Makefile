@@ -8,15 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mktorrent
-PKG_VERSION:=1.0
+PKG_VERSION:=1.1
 PKG_RELEASE:=1
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/Rudde/$(PKG_NAME)
+PKG_SOURCE_VERSION:=b20ef699b4ee5ded2f078ead776c7deac969e19a
+PKG_MIRROR_HASH:=abe5f96d1a91c00bd6dcf86640a205583e8607d2b0e9299a588cec76c556a8e8
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
-
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/Rudde/$(PKG_NAME)/archive
-PKG_HASH:=ab1c42a7fc9f136d4ebc5535d384d1a184cc77fe8054acd4c2f176f3a8c0dac7
 
 include $(INCLUDE_DIR)/package.mk
 
