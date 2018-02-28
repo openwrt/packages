@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2013 Julius Schulz-Zander <julius@net.t-labs.tu-berlin.de>
 # Copyright (C) 2014-2017 OpenWrt.org
 #
@@ -12,8 +12,8 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 
-PKG_RELEASE:=1
 PKG_VERSION:=2.8.1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
 PKG_USE_MIPS16:=0
