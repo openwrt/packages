@@ -22,14 +22,14 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://openvswitch.org/releases/
 PKG_HASH:=8d1c439e26d7044f0ec823c7fef1b00b7c6465da0b83a7d0cf3191ed1dc43893
 
-PKG_BUILD_DEPENDS:=python/host python-six/host
-PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_openvswitch-python
+PKG_BUILD_DEPENDS:=python/host
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include ../../lang/python/python-host.mk
 include ../../lang/python/python-package.mk
 
 define Package/openvswitch/Default
@@ -155,12 +155,12 @@ CONFIGURE_VARS += \
 	ovs_cv_flake8=no \
 	ovs_cv_python3=no \
 	ovs_cv_sphinx=no \
+	ovs_cv_python=$(PYTHON) \
+	ovs_cv_python_host=$(HOST_PYTHON_BIN) \
 	KARCH=$(LINUX_KARCH)
 
-MAKE_FLAGS += \
-	ARCH="$(LINUX_KARCH)" \
-	PYTHONPATH="$(HOST_PYTHONPATH)" \
-	PYTHON="$(HOST_PYTHON_BIN)"
+MAKE_VARS += PYTHONPATH="$(HOST_PYTHONPATH)"
+MAKE_FLAGS += ARCH="$(LINUX_KARCH)"
 
 define OvsBinUtility
   define Package/openvswitch-$(2)

@@ -1,0 +1,59 @@
+From dd52bf474a8c03a3b7a5d73229b64971d76adafd Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Wed, 28 Feb 2018 13:42:44 +0800
+Subject: [PATCH] python: separate host/target python for cross-compile
+
+At the moment, python-six is a requirement for openvswitch python
+library on target machine.
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ Makefile.am       |  2 +-
+ m4/openvswitch.m4 | 12 ++++--------
+ 2 files changed, 5 insertions(+), 9 deletions(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 31d6331..4b9e8d4 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -59,7 +59,7 @@ endif
+ # foo/__init__.pyc will cause Python to ignore foo.py.
+ run_python = \
+ 	PYTHONPATH=$(top_srcdir)/python$(psep)$$PYTHONPATH \
+-	PYTHONDONTWRITEBYTECODE=yes $(PYTHON)
++	PYTHONDONTWRITEBYTECODE=yes $(PYTHON_HOST)
+ 
+ ALL_LOCAL =
+ BUILT_SOURCES =
+diff --git a/m4/openvswitch.m4 b/m4/openvswitch.m4
+index 00ffad3..52f207b 100644
+--- a/m4/openvswitch.m4
++++ b/m4/openvswitch.m4
+@@ -347,20 +347,16 @@ else:
+    if test $ovs_cv_python = no; then
+      AC_MSG_ERROR([cannot find python 2.7 or higher.])
+    fi
+-   AM_MISSING_PROG([PYTHON], [python])
++   AC_SUBST([PYTHON])
+    PYTHON=$ovs_cv_python
++   AM_MISSING_PROG([PYTHON_HOST], [python])
++   PYTHON_HOST=$ovs_cv_python_host
+ 
+    # HAVE_PYTHON is always true.  (Python has not always been a build
+    # requirement, so this variable is now obsolete.)
+    AC_SUBST([HAVE_PYTHON])
+    HAVE_PYTHON=yes
+-   AM_CONDITIONAL([HAVE_PYTHON], [test "$HAVE_PYTHON" = yes])
+-
+-   AC_MSG_CHECKING([whether $PYTHON has six library])
+-   if ! $PYTHON -c 'import six ; six.moves.range' >&AS_MESSAGE_LOG_FD 2>&1; then
+-     AC_MSG_ERROR([Missing Python six library or version too old.])
+-   fi
+-   AC_MSG_RESULT([yes])])
++   AM_CONDITIONAL([HAVE_PYTHON], [test "$HAVE_PYTHON" = yes])])
+ 
+ dnl Checks for Python 3.x, x >= 4.
+ AC_DEFUN([OVS_CHECK_PYTHON3],
+-- 
+1.8.3.1
+
