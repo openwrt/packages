@@ -28,6 +28,8 @@ PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
+
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-host.mk
 include ../../lang/python/python-package.mk
@@ -37,7 +39,6 @@ define Package/openvswitch/Default
   SUBMENU:=Open vSwitch
   CATEGORY:=Network
   URL:=http://openvswitch.org/
-  MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
 define Package/openvswitch/Default/description
