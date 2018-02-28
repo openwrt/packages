@@ -1,0 +1,29 @@
+menu "Configuration"
+	depends on PACKAGE_lua-penlight
+
+config PENLIGHT_PATHS
+	bool
+	prompt "Paths, files and directories"
+	default n
+
+config PENLIGHT_APPLICATION
+	bool
+	prompt "Application support"
+	default n
+
+config PENLIGHT_STRING
+	bool
+	prompt "Extra string operations"
+	default n
+
+config PENLIGHT_TABLE
+	bool
+	prompt "Extra table operations"
+	default n
+
+config PENLIGHT_ITERATORS
+	bool
+	prompt "Iterators, OOP and Functional"
+	default n
+
+endmenu
