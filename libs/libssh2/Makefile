@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libssh2
 PKG_VERSION:=1.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.libssh2.org/download
@@ -41,8 +41,6 @@ define Package/libssh2/config
 	source "$(SOURCE)/Config.in"
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
 CONFIGURE_ARGS += \
 	--disable-examples-build \
 	--disable-silent-rules \
@@ -54,9 +52,9 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libssh2.so* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libssh2.pc $(1)/usr/lib/pkgconfig/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libssh2.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libssh2/install
