@@ -19,7 +19,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://openvswitch.org/releases/
+PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=8d1c439e26d7044f0ec823c7fef1b00b7c6465da0b83a7d0cf3191ed1dc43893
 
 PKG_BUILD_DEPENDS:=python/host
