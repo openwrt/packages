@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcap
 PKG_VERSION:=2.25
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/libs/security/linux-privs/libcap2
@@ -30,18 +30,40 @@ define Package/libcap
   URL:=http://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/
 endef
 
+define Package/libcap/config
+  if PACKAGE_libcap
+
+  config PACKAGE_libcap-bin
+    bool "install libcap executables"
+    help
+      Install capsh, getcap, getpcaps, setcap into the target image.
+    default n
+
+  config PACKAGE_libcap-bin-capsh-shell
+    string "capsh shell"
+    depends on PACKAGE_libcap-bin
+    help
+      Set the capsh shell.
+    default "/bin/sh"
+
+  endif
+endef
+
 MAKE_FLAGS += \
-    CFLAGS="$(TARGET_CFLAGS)" \
     BUILD_CC="$(CC)" \
     BUILD_CFLAGS="$(FPIC) -I$(PKG_BUILD_DIR)/libcap/include" \
     CFLAGS="$(TARGET_CFLAGS)" \
-    LD="$(TARGET_CC)" \
-    LDFLAGS="$(TARGET_LDFLAGS) -shared" \
+    LD="$(TARGET_CC) -Wl,-x -shared" \
+    LDFLAGS="$(TARGET_LDFLAGS)" \
     INDENT="| true" \
     PAM_CAP="no" \
     RAISE_SETFCAP="no" \
     DYNAMIC="yes" \
     lib="lib"
+
+ifneq ($(CONFIG_PACKAGE_libcap-bin-capsh-shell),)
+TARGET_CFLAGS += -DSHELL='\"$(CONFIG_PACKAGE_libcap-bin-capsh-shell)\"'
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/sys
@@ -53,6 +75,13 @@ endef
 define Package/libcap/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/lib/libcap.so* $(1)/usr/lib/
+ifneq ($(CONFIG_PACKAGE_libcap-bin),)
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(CP) $(PKG_INSTALL_DIR)/sbin/capsh     $(1)/usr/sbin/
+	$(CP) $(PKG_INSTALL_DIR)/sbin/getcap    $(1)/usr/sbin/
+	$(CP) $(PKG_INSTALL_DIR)/sbin/getpcaps  $(1)/usr/sbin/
+	$(CP) $(PKG_INSTALL_DIR)/sbin/setcap    $(1)/usr/sbin/
+endif
 endef
 
 $(eval $(call BuildPackage,libcap))
