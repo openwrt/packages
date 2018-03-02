@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.1.2"
+trm_ver="1.1.3"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -179,7 +179,7 @@ f_check()
                         trm_ifstatus="$(ubus -S call network.interface dump 2>/dev/null | jsonfilter -l1 -e "@.interface[@.device=\"${ifname}\"].up")"
                     elif [ "${mode}" = "initial" ] && [ ${trm_ifquality} -lt ${trm_minquality} ]
                     then
-                        trm_connection=""
+                        trm_ifstatus="${status}"
                         sta_essid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].*.ssid')"
                         sta_bssid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].*.bssid')"
                         f_log "info" "uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' is out of range (${trm_ifquality}/${trm_minquality}), uplink disconnected (${trm_sysver})"
@@ -219,10 +219,12 @@ f_jsnup()
     if [ "${status}" = "true" ]
     then
         status="connected (${trm_connection:-"-"})"
-    elif [ "${status}" = "false" ]
-    then
+    else
         trm_connection=""
-        status="not connected"
+        if [ "${status}" = "false" ]
+        then
+            status="not connected"
+        fi
     fi
 
     dev_status="$(ubus -S call network.wireless status 2>/dev/null)"
