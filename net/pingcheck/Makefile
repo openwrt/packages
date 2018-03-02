@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pingcheck
-PKG_VERSION:=0.1
+PKG_VERSION:=2017-10-02
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_MIRROR_HASH:=511a6bedd65169ffd1aadb38dd470d53d445cffcc3a322ec2dd0dee6009162a6
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/br101/pingcheck.git
+PKG_SOURCE_URL:=https://github.com/br101/pingcheck
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=0f099998782f550e2abebdc65bcc3e969b798769
+PKG_SOURCE_VERSION:=12e65e2f3fd2a17db785d28756df43ccade29b1b
 
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>
 PKG_LICENSE:=GPL-2.0+
@@ -32,12 +32,14 @@ define Package/pingcheck
 	DEPENDS:=+libubus +libuci
 	MAINTAINER:=Bruno Randolf <br1@einfach.org>
 	TITLE:=Check Internet and interface connectivity
+	URL:=https://github.com/br101/pingcheck
 endef
 
 define Package/pingcheck/description
-Checks by using "ping" (ICMP echo) wether a configured host (normally on the
-internet) can be reached via a specific interface. Then makes this information
-available via ubus and triggers "online" and "offline" scripts.
+Checks by using "ping" (ICMP echo) or by opening connections to TCP port 80
+wether a configured host (normally on the internet) can be reached via a
+specific interface. Then makes this information available via ubus and triggers
+"online" and "offline" scripts.
 endef
 
 define Package/pingcheck/conffiles
@@ -46,7 +48,7 @@ endef
 
 define Package/pingcheck/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/pingcheck $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/pingcheck $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./pingcheck.init $(1)/etc/init.d/pingcheck
 	$(INSTALL_DIR) $(1)/etc/config
