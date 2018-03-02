@@ -25,6 +25,10 @@ define Package/tree
   DEPENDS:=+libc +libgcc
 endef
 
+MAKE_FLAGS += \
+	CFLAGS="$(TARGET_CFLAGS)" \
+	LDFLAGS="$(TARGET_LDFLAGS)"
+
 define Package/tree/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tree $(1)/usr/sbin/
