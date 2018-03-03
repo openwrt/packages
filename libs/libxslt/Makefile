@@ -25,6 +25,10 @@ PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_libexslt \
+	CONFIG_PACKAGE_xsltproc
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libxslt
