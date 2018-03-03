@@ -95,6 +95,9 @@ ENABLE_LUA:=y
 ifeq ($(CONFIG_mips),y)
   ENABLE_LUA:=n
 endif
+ifeq ($(CONFIG_mipsel),y)
+  ENABLE_LUA:=n
+endif
 
 ifeq ($(CONFIG_avr32),y)
   LINUX_TARGET:=linux26
@@ -105,13 +108,13 @@ endif
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
 	ADDON+=ADDLIB="-lcrypto -lm "
-else ifeq ($(CONFIG_mips),n)
+endif
+
+ifeq ($(ENABLE_LUA),y)
 	ADDON+=USE_LUA=1
 	ADDON+=LUA_LIB_NAME="lua534"
 	ADDON+=LUA_INC="$(STAGING_DIR)/lua-5.3.4/include"
 	ADDON+=LUA_LIB="$(STAGING_DIR)/lua-5.3.4/lib"
-else
-	ADDON+=ADDLIB="-lm"
 endif
 
 ifeq ($(ENABLE_LUA),y)
