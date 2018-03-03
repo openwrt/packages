@@ -333,6 +333,16 @@ static inline void timer_setup(struct timer_list *timer,
 	container_of(callback_timer, typeof(*var), timer_fieldname)
 
 #endif /* !from_timer */
+	
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 16, 0)
+
+#ifdef __CHECK_POLL
+typedef unsigned __bitwise __poll_t;
+#else
+typedef unsigned __poll_t;
+#endif
+
+#endif /* < KERNEL_VERSION(4, 16, 0) */
 
 /* <DECLARE_EWMA> */
 
@@ -392,7 +402,7 @@ static inline void timer_setup(struct timer_list *timer,
 	static inline void ewma_##name##_add(struct ewma_##name *e,	\
 					     unsigned long val)		\
 	{								\
-		unsigned long internal = ACCESS_ONCE(e->internal);	\
+		unsigned long internal = READ_ONCE(e->internal);	\
 		unsigned long weight_rcp = ilog2(_weight_rcp);		\
 		unsigned long precision = _precision;			\
 									\
@@ -401,10 +411,10 @@ static inline void timer_setup(struct timer_list *timer,
 		BUILD_BUG_ON((_precision) > 30);			\
 		BUILD_BUG_ON_NOT_POWER_OF_2(_weight_rcp);		\
 									\
-		ACCESS_ONCE(e->internal) = internal ?			\
+		WRITE_ONCE(e->internal, internal ?			\
 			(((internal << weight_rcp) - internal) +	\
 				(val << precision)) >> weight_rcp :	\
-			(val << precision);				\
+			(val << precision));				\
 	}
 
 /* </DECLARE_EWMA> */
