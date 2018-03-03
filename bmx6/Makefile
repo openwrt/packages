@@ -32,6 +32,7 @@ PKG_SOURCE_URL:=git://github.com/bmx-routing/bmx6.git
 #PKG_SOURCE_URL:=file:///usr/src/bmx-routing/bmx6.git
 
 PKG_REV:=0312168aaa384379ccbefd4b2d936fc698664d5b
+PKG_MIRROR_HASH:=98acdbda8a8cadadf8141c7b8a17b6417112f70f3211b86abad23a8c7a28be10
 PKG_VERSION:=r2018020902
 PKG_RELEASE:=5
 PKG_LICENSE:=GPL-2.0
