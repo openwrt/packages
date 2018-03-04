@@ -1,0 +1,103 @@
+From 7ccf7c9791f2b2329f3940d1347618af3a77bebc Mon Sep 17 00:00:00 2001
+From: Emeric Brun <ebrun@haproxy.com>
+Date: Mon, 19 Feb 2018 15:59:48 +0100
+Subject: [PATCH] BUG/MEDIUM: ssl/sample: ssl_bc_* fetch keywords are broken.
+
+Since the split between connections and conn-stream objects, this
+keywords are broken.
+
+This patch must be backported in 1.8
+
+(cherry picked from commit eb8def9f34c37537d56a69fcd211d4c4c8006bea)
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/ssl_sock.c |   31 ++++++++++++++-----------------
+ 1 file changed, 14 insertions(+), 17 deletions(-)
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 4d0d5db..d832d76 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -6580,8 +6580,8 @@ smp_fetch_ssl_x_key_alg(const struct arg *args, struct sample *smp, const char *
+ static int
+ smp_fetch_ssl_fc(const struct arg *args, struct sample *smp, const char *kw, void *private)
+ {
+-	struct connection *conn = objt_conn((kw[4] != 'b') ? smp->sess->origin :
+-	                                    smp->strm ? smp->strm->si[1].end : NULL);
++	struct connection *conn = (kw[4] != 'b') ? objt_conn(smp->sess->origin) :
++	                                    smp->strm ? cs_conn(objt_cs(smp->strm->si[1].end)) : NULL;
+ 
+ 	smp->data.type = SMP_T_BOOL;
+ 	smp->data.u.sint = (conn && conn->xprt == &ssl_sock);
+@@ -6625,8 +6625,8 @@ smp_fetch_ssl_fc_is_resumed(const struct arg *args, struct sample *smp, const ch
+ static int
+ smp_fetch_ssl_fc_cipher(const struct arg *args, struct sample *smp, const char *kw, void *private)
+ {
+-	struct connection *conn = objt_conn((kw[4] != 'b') ? smp->sess->origin :
+-	                                    smp->strm ? smp->strm->si[1].end : NULL);
++	struct connection *conn = (kw[4] != 'b') ? objt_conn(smp->sess->origin) :
++	                                    smp->strm ? cs_conn(objt_cs(smp->strm->si[1].end)) : NULL;
+ 
+ 	smp->flags = 0;
+ 	if (!conn || !conn->xprt_ctx || conn->xprt != &ssl_sock)
+@@ -6651,9 +6651,8 @@ smp_fetch_ssl_fc_cipher(const struct arg *args, struct sample *smp, const char *
+ static int
+ smp_fetch_ssl_fc_alg_keysize(const struct arg *args, struct sample *smp, const char *kw, void *private)
+ {
+-	struct connection *conn = objt_conn((kw[4] != 'b') ? smp->sess->origin :
+-	                                    smp->strm ? smp->strm->si[1].end : NULL);
+-
++	struct connection *conn = (kw[4] != 'b') ? objt_conn(smp->sess->origin) :
++	                                    smp->strm ? cs_conn(objt_cs(smp->strm->si[1].end)) : NULL;
+ 	int sint;
+ 
+ 	smp->flags = 0;
+@@ -6676,8 +6675,8 @@ smp_fetch_ssl_fc_alg_keysize(const struct arg *args, struct sample *smp, const c
+ static int
+ smp_fetch_ssl_fc_use_keysize(const struct arg *args, struct sample *smp, const char *kw, void *private)
+ {
+-	struct connection *conn = objt_conn((kw[4] != 'b') ? smp->sess->origin :
+-	                                    smp->strm ? smp->strm->si[1].end : NULL);
++	struct connection *conn = (kw[4] != 'b') ? objt_conn(smp->sess->origin) :
++	                                    smp->strm ? cs_conn(objt_cs(smp->strm->si[1].end)) : NULL;
+ 
+ 	smp->flags = 0;
+ 	if (!conn || !conn->xprt_ctx || conn->xprt != &ssl_sock)
+@@ -6747,8 +6746,8 @@ smp_fetch_ssl_fc_alpn(const struct arg *args, struct sample *smp, const char *kw
+ static int
+ smp_fetch_ssl_fc_protocol(const struct arg *args, struct sample *smp, const char *kw, void *private)
+ {
+-	struct connection *conn = objt_conn((kw[4] != 'b') ? smp->sess->origin :
+-	                                    smp->strm ? smp->strm->si[1].end : NULL);
++	struct connection *conn = (kw[4] != 'b') ? objt_conn(smp->sess->origin) :
++	                                    smp->strm ? cs_conn(objt_cs(smp->strm->si[1].end)) : NULL;
+ 
+ 	smp->flags = 0;
+ 	if (!conn || !conn->xprt_ctx || conn->xprt != &ssl_sock)
+@@ -6773,9 +6772,8 @@ static int
+ smp_fetch_ssl_fc_session_id(const struct arg *args, struct sample *smp, const char *kw, void *private)
+ {
+ #if OPENSSL_VERSION_NUMBER > 0x0090800fL
+-	struct connection *conn = objt_conn((kw[4] != 'b') ? smp->sess->origin :
+-	                                    smp->strm ? smp->strm->si[1].end : NULL);
+-
++	struct connection *conn = (kw[4] != 'b') ? objt_conn(smp->sess->origin) :
++	                                    smp->strm ? cs_conn(objt_cs(smp->strm->si[1].end)) : NULL;
+ 	SSL_SESSION *ssl_sess;
+ 
+ 	smp->flags = SMP_F_CONST;
+@@ -6917,9 +6915,8 @@ static int
+ smp_fetch_ssl_fc_unique_id(const struct arg *args, struct sample *smp, const char *kw, void *private)
+ {
+ #if OPENSSL_VERSION_NUMBER > 0x0090800fL
+-	struct connection *conn = objt_conn((kw[4] != 'b') ? smp->sess->origin :
+-	                                    smp->strm ? smp->strm->si[1].end : NULL);
+-
++	struct connection *conn = (kw[4] != 'b') ? objt_conn(smp->sess->origin) :
++	                                    smp->strm ? cs_conn(objt_cs(smp->strm->si[1].end)) : NULL;
+ 	int finished_len;
+ 	struct chunk *finished_trash;
+ 
+-- 
+1.7.10.4
+
