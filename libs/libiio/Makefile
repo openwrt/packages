@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libiio
 PKG_VERSION:=0.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/analogdevicesinc/libiio/tar.gz/v$(PKG_VERSION)?
@@ -25,16 +25,61 @@ PKG_INSTALL:=1
 
 CMAKE_INSTALL:=1
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_IPV6 \
+	CONFIG_LIBIIO_LOCAL_BACKEND \
+	CONFIG_LIBIIO_NETWORK_BACKEND \
+	CONFIG_LIBIIO_USB_BACKEND \
+	CONFIG_LIBIIO_XML_BACKEND
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+
+CMAKE_OPTIONS += -DWITH_DOC=OFF
+CMAKE_OPTIONS += -DENABLE_IPV6=$(if $(CONFIG_IPV6),ON,OFF)
+CMAKE_OPTIONS += -DENABLE_AIO=OFF
+CMAKE_OPTIONS += -DWITH_LOCAL_BACKEND=$(if $(CONFIG_LIBIIO_LOCAL_BACKEND),ON,OFF)
+CMAKE_OPTIONS += -DWITH_LOCAL_CONFIG=OFF
+CMAKE_OPTIONS += -DWITH_NETWORK_BACKEND=$(if $(CONFIG_LIBIIO_NETWORK_BACKEND),ON,OFF)
+# serial backend requires libserial which is not packaged yet
+CMAKE_OPTIONS += -DWITH_SERIAL_BACKEND=OFF
+CMAKE_OPTIONS += -DWITH_USB_BACKEND=$(if $(CONFIG_LIBIIO_USB_BACKEND),ON,OFF)
+CMAKE_OPTIONS += -DWITH_XML_BACKEND=$(if $(CONFIG_LIBIIO_XML_BACKEND),ON,OFF)
 
 define Package/libiio
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Library for interfacing with Linux IIO devices
   URL:=https://github.com/analogdevicesinc/libiio
-  DEPENDS:=+PACKAGE_libaio:libaio +PACKAGE_libusb-1.0:libusb-1.0 \
-           +PACKAGE_libavahi-client:libavahi-client +libxml2
+  DEPENDS:=\
+           +LIBIIO_USB_BACKEND:libusb-1.0 \
+           +LIBIIO_NETWORK_BACKEND:libavahi-client \
+           +LIBIIO_XML_BACKEND:libxml2
+  MENU:=1
+endef
+
+define Package/libiio/config
+config LIBIIO_LOCAL_BACKEND
+	bool "Enable local backend"
+	depends on PACKAGE_libiio
+	default y
+
+config LIBIIO_NETWORK_BACKEND
+	bool "Enable network backend"
+	depends on PACKAGE_libiio
+	select LIBIIO_XML_BACKEND
+	default n
+
+config LIBIIO_USB_BACKEND
+	bool "Enable USB backend"
+	depends on PACKAGE_libiio
+	select LIBIIO_XML_BACKEND
+	default n
+
+config LIBIIO_XML_BACKEND
+	bool "Enable XML backend"
+	depends on PACKAGE_libiio
+	default n
 endef
 
 define Package/libiio/description
