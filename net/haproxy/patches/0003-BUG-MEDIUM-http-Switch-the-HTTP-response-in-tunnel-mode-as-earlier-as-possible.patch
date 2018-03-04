@@ -1,0 +1,69 @@
+From 8a5949f2d74c3a3a6c6da25449992c312b183ef3 Mon Sep 17 00:00:00 2001
+From: Christopher Faulet <cfaulet@haproxy.com>
+Date: Fri, 2 Feb 2018 15:54:15 +0100
+Subject: [PATCH] BUG/MEDIUM: http: Switch the HTTP response in tunnel mode as
+ earlier as possible
+
+When the body length is undefined (no Content-Length or Transfer-Encoding
+headers), The reponse remains in ending mode, waiting the request is done. So,
+most of time this is not a problem because the resquest is done before the
+response. But when a client sends data to a server that replies without waiting
+all the data, it is really not desirable to wait the end of the request to
+finish the response.
+
+This bug was introduced when the tunneling of the request and the reponse was
+refactored, in commit 4be980391 ("MINOR: http: Switch requests/responses in
+TUNNEL mode only by checking txn flag").
+
+This patch should be backported in 1.8 and 1.7.
+
+(cherry picked from commit fd04fcf5edb0a24cd29ce8f4d4dc2aa3a0e2e82c)
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/proto_http.c |   15 +++++----------
+ 1 file changed, 5 insertions(+), 10 deletions(-)
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 64bd410..29880ea 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -4634,16 +4634,8 @@ int http_sync_res_state(struct stream *s)
+ 			 * let's enforce it now that we're not expecting any new
+ 			 * data to come. The caller knows the stream is complete
+ 			 * once both states are CLOSED.
+-			 *
+-			 * However, there is an exception if the response length
+-			 * is undefined. In this case, we switch in TUNNEL mode.
+ 			 */
+-			if (!(txn->rsp.flags & HTTP_MSGF_XFER_LEN)) {
+-				channel_auto_read(chn);
+-				txn->rsp.msg_state = HTTP_MSG_TUNNEL;
+-				chn->flags |= CF_NEVER_WAIT;
+-			}
+-			else if (!(chn->flags & (CF_SHUTW|CF_SHUTW_NOW))) {
++			if (!(chn->flags & (CF_SHUTW|CF_SHUTW_NOW))) {
+ 				channel_shutr_now(chn);
+ 				channel_shutw_now(chn);
+ 			}
+@@ -6241,6 +6233,8 @@ http_msg_forward_body(struct stream *s, struct http_msg *msg)
+ 		/* The server still sending data that should be filtered */
+ 		if (!(chn->flags & CF_SHUTR) && HAS_DATA_FILTERS(s, chn))
+ 			goto missing_data_or_waiting;
++		msg->msg_state = HTTP_MSG_TUNNEL;
++		goto ending;
+ 	}
+ 
+ 	msg->msg_state = HTTP_MSG_ENDING;
+@@ -6262,7 +6256,8 @@ http_msg_forward_body(struct stream *s, struct http_msg *msg)
+ 			 /* default_ret */ 1,
+ 			 /* on_error    */ goto error,
+ 			 /* on_wait     */ goto waiting);
+-	msg->msg_state = HTTP_MSG_DONE;
++	if (msg->msg_state == HTTP_MSG_ENDING)
++		msg->msg_state = HTTP_MSG_DONE;
+ 	return 1;
+ 
+   missing_data_or_waiting:
+-- 
+1.7.10.4
+

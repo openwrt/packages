@@ -1,0 +1,61 @@
+From 2fcd544272a5498ffa49544e9f06b51bc93e55d1 Mon Sep 17 00:00:00 2001
+From: Olivier Houchard <ohouchard@haproxy.com>
+Date: Tue, 13 Feb 2018 15:17:23 +0100
+Subject: [PATCH] BUG/MEDIUM: ssl: Don't always treat SSL_ERROR_SYSCALL as
+ unrecovarable.
+
+Bart Geesink reported some random errors appearing under the form of
+termination flags SD in the logs for connections involving SSL traffic
+to reach the servers.
+
+Tomek Gacek and Mateusz Malek finally narrowed down the problem to commit
+c2aae74 ("MEDIUM: ssl: Handle early data with OpenSSL 1.1.1"). It happens
+that the special case of SSL_ERROR_SYSCALL isn't handled anymore since
+this commit.
+
+SSL_read() might return <= 0, and SSL_get_erro() return SSL_ERROR_SYSCALL,
+without meaning the connection is gone. Before flagging the connection
+as in error, check the errno value.
+
+This should be backported to 1.8.
+
+(cherry picked from commit 7e2e505006feb8f3b4a7f9e0ac5e89b5a8c4895e)
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/ssl_sock.c |    9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index aecf3dd..f118724 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -5437,6 +5437,12 @@ static int ssl_sock_to_buf(struct connection *conn, struct buffer *buf, int coun
+ 				break;
+ 			} else if (ret == SSL_ERROR_ZERO_RETURN)
+ 				goto read0;
++			/* For SSL_ERROR_SYSCALL, make sure the error is
++			 * unrecoverable before flagging the connection as
++			 * in error.
++			 */
++			if (ret == SSL_ERROR_SYSCALL && (!errno || errno == EAGAIN))
++				goto clear_ssl_error;
+ 			/* otherwise it's a real error */
+ 			goto out_error;
+ 		}
+@@ -5451,11 +5457,12 @@ static int ssl_sock_to_buf(struct connection *conn, struct buffer *buf, int coun
+ 	conn_sock_read0(conn);
+ 	goto leave;
+  out_error:
++	conn->flags |= CO_FL_ERROR;
++clear_ssl_error:
+ 	/* Clear openssl global errors stack */
+ 	ssl_sock_dump_errors(conn);
+ 	ERR_clear_error();
+ 
+-	conn->flags |= CO_FL_ERROR;
+ 	goto leave;
+ }
+ 
+-- 
+1.7.10.4
+
