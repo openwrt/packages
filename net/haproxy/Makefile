@@ -13,7 +13,7 @@ PKG_VERSION:=1.7.9
 PKG_RELEASE:=02
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.haproxy.org/download/1.7/src/
+PKG_SOURCE_URL:=https://www.haproxy.org/download/1.7/src/
 PKG_HASH:=1072337e54fa188dc6e0cfe3ba4c2200b07082e321cbfe5a0882d85d54db068e
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -32,7 +32,7 @@ endef
 
 define Download/lua534
 	FILE:=lua-5.3.4.tar.gz
-	URL:=http://www.lua.org/ftp/
+	URL:=https://www.lua.org/ftp/
 	HASH:=f681aa518233bc407e23acf0f5887c884f17436f000d453b2491a9f11a52400c
 endef
 
@@ -95,6 +95,9 @@ ENABLE_LUA:=y
 ifeq ($(CONFIG_mips),y)
   ENABLE_LUA:=n
 endif
+ifeq ($(CONFIG_mipsel),y)
+  ENABLE_LUA:=n
+endif
 
 ifeq ($(CONFIG_avr32),y)
   LINUX_TARGET:=linux26
@@ -105,13 +108,13 @@ endif
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
 	ADDON+=ADDLIB="-lcrypto -lm "
-else ifeq ($(CONFIG_mips),n)
+endif
+
+ifeq ($(ENABLE_LUA),y)
 	ADDON+=USE_LUA=1
 	ADDON+=LUA_LIB_NAME="lua534"
 	ADDON+=LUA_INC="$(STAGING_DIR)/lua-5.3.4/include"
 	ADDON+=LUA_LIB="$(STAGING_DIR)/lua-5.3.4/lib"
-else
-	ADDON+=ADDLIB="-lm"
 endif
 
 ifeq ($(ENABLE_LUA),y)
