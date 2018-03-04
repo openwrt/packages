@@ -77,7 +77,7 @@ endef
 define Package/haproxy-nossl
   TITLE+= (without SSL support)
   VARIANT:=nossl
-  DEPENDS+= +libpcre +libltdl +zlib +libpthread
+  DEPENDS+= +libpcre +libltdl +zlib +libpthread +libatomic
   TITLE+= (without SSL support)
 $(call Package/haproxy/Default)
 endef
