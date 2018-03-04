@@ -1,0 +1,63 @@
+From f7fa1d461aa71bbc8a6c23fdcfc305f2e52ce5dd Mon Sep 17 00:00:00 2001
+From: Christopher Faulet <cfaulet@haproxy.com>
+Date: Mon, 19 Feb 2018 14:25:15 +0100
+Subject: [PATCH] BUG/MEDIUM: ssl: Shutdown the connection for reading on
+ SSL_ERROR_SYSCALL
+
+When SSL_read returns SSL_ERROR_SYSCALL and errno is unset or set to EAGAIN, the
+connection must be shut down for reading. Else, the connection loops infinitly,
+consuming all the CPU.
+
+The bug was introduced in the commit 7e2e50500 ("BUG/MEDIUM: ssl: Don't always
+treat SSL_ERROR_SYSCALL as unrecovarable."). This patch must be backported in
+1.8 too.
+
+(cherry picked from commit 4ac77a98cda3d0f9b1d9de7bbbda2c91357f0767)
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/ssl_sock.c |   14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index f118724..a065bbb 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -5437,10 +5437,9 @@ static int ssl_sock_to_buf(struct connection *conn, struct buffer *buf, int coun
+ 				break;
+ 			} else if (ret == SSL_ERROR_ZERO_RETURN)
+ 				goto read0;
+-			/* For SSL_ERROR_SYSCALL, make sure the error is
+-			 * unrecoverable before flagging the connection as
+-			 * in error.
+-			 */
++			/* For SSL_ERROR_SYSCALL, make sure to clear the error
++			 * stack before shutting down the connection for
++			 * reading. */
+ 			if (ret == SSL_ERROR_SYSCALL && (!errno || errno == EAGAIN))
+ 				goto clear_ssl_error;
+ 			/* otherwise it's a real error */
+@@ -5453,16 +5452,19 @@ static int ssl_sock_to_buf(struct connection *conn, struct buffer *buf, int coun
+ 	conn_cond_update_sock_polling(conn);
+ 	return done;
+ 
++ clear_ssl_error:
++	/* Clear openssl global errors stack */
++	ssl_sock_dump_errors(conn);
++	ERR_clear_error();
+  read0:
+ 	conn_sock_read0(conn);
+ 	goto leave;
++
+  out_error:
+ 	conn->flags |= CO_FL_ERROR;
+-clear_ssl_error:
+ 	/* Clear openssl global errors stack */
+ 	ssl_sock_dump_errors(conn);
+ 	ERR_clear_error();
+-
+ 	goto leave;
+ }
+ 
+-- 
+1.7.10.4
+
