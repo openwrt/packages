@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2pd
 PKG_VERSION:=2.18.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_BUILD_PARALLEL:=1
 
 PKG_SOURCE_PROTO:=git
@@ -55,8 +55,6 @@ define Package/i2pd/install
 	$(INSTALL_DIR) $(1)/usr/share/i2pd
 	$(CP) $(PKG_BUILD_DIR)/contrib/certificates  $(1)/usr/share/i2pd
 	$(INSTALL_DIR) $(1)/etc/i2pd
-	$(LN) /usr/share/i2pd/certificates $(1)/etc/i2pd/certificates
-	$(LN) /var/lib/i2pd/peerProfiles $(1)/etc/i2pd/peerProfiles
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/i2pd.conf $(1)/etc/i2pd
 	$(SED) ' \
 		s/127.0.0.1/192.168.1.1/g; \
