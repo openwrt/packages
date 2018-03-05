@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tiff
 PKG_VERSION:=4.0.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.osgeo.org/libtiff
@@ -25,6 +25,7 @@ PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_libtiffxx
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/tiff/Default
@@ -46,7 +47,7 @@ $(call Package/tiff/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= library(c++ bindings)
-  DEPENDS:=+libtiff +PACKAGE_libtiffxx:libstdcpp
+  DEPENDS:=+libtiff $(CXX_DEPENDS)
 endef
 
 define Package/tiff-utils
