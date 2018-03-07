@@ -1,6 +1,11 @@
 #!/bin/sh
 set -e
 
+[ -z "$SOURCE_DATE_EPOCH" ] || {
+	PYTHONHASHSEED="$SOURCE_DATE_EPOCH"
+	export PYTHONHASHSEED
+}
+
 process_filespec() {
 	local src_dir="$1"
 	local dst_dir="$2"
