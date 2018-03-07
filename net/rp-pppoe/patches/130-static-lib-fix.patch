@@ -1,0 +1,12 @@
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -139,7 +139,8 @@ plugin/plugin.o: plugin.c
+ 	@CC@ -DPLUGIN=1 '-DRP_VERSION="$(VERSION)"' $(CFLAGS) -I$(PPPD_INCDIR) -c -o $@ -fPIC $<
+ 
+ plugin/libplugin.a: plugin/discovery.o plugin/if.o plugin/common.o plugin/debug.o
+-	ar -rc $@ $^
++	$(AR) -rc $@ $^
++	@RANLIB@ $@
+ 
+ plugin/discovery.o: discovery.c
+ 	@CC@ -DPLUGIN=1 $(CFLAGS) '-DVERSION="$(VERSION)"' -c -o $@ -fPIC $<
