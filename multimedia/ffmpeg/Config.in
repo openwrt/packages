@@ -43,12 +43,11 @@ config FFMPEG_CUSTOM_FFSERVER_SUPPORT
 
 config FFMPEG_CUSTOM_MINIDLNA_SUPPORT
 	bool "Include support for minidlna"
-	depends on FFMPEG_CUSTOM_PATENTED
 	select FFMPEG_CUSTOM_DECODER_aac
 	select FFMPEG_CUSTOM_DECODER_ac3
 	select FFMPEG_CUSTOM_DECODER_flac
-	select FFMPEG_CUSTOM_DECODER_h264
-	select FFMPEG_CUSTOM_DECODER_hevc
+	select FFMPEG_CUSTOM_DECODER_h264 if (BUILD_PATENTED)
+	select FFMPEG_CUSTOM_DECODER_hevc if (BUILD_PATENTED)
 	select FFMPEG_CUSTOM_DECODER_jpegls
 	select FFMPEG_CUSTOM_DECODER_mp2
 	select FFMPEG_CUSTOM_DECODER_mp3
@@ -58,7 +57,7 @@ config FFMPEG_CUSTOM_MINIDLNA_SUPPORT
 	select FFMPEG_CUSTOM_DECODER_mpegvideo
 	select FFMPEG_CUSTOM_DECODER_png
 	select FFMPEG_CUSTOM_DECODER_opus
-	select FFMPEG_CUSTOM_DECODER_vc1
+	select FFMPEG_CUSTOM_DECODER_vc1 if (BUILD_PATENTED)
 	select FFMPEG_CUSTOM_DECODER_vorbis
 	select FFMPEG_CUSTOM_DECODER_wmav1
 	select FFMPEG_CUSTOM_DECODER_wmav2
@@ -75,7 +74,6 @@ config FFMPEG_CUSTOM_MINIDLNA_SUPPORT
 
 config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	bool "Include support for most audio decoding requirements"
-	depends on FFMPEG_CUSTOM_PATENTED
 	select FFMPEG_CUSTOM_DECODER_aac
 	select FFMPEG_CUSTOM_DECODER_aac_latm
 	select FFMPEG_CUSTOM_DECODER_ac3
@@ -84,7 +82,7 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_DECODER_amrnb
 	select FFMPEG_CUSTOM_DECODER_amrwb
 	select FFMPEG_CUSTOM_DECODER_ape
-	select FFMPEG_CUSTOM_DECODER_atrac3
+	select FFMPEG_CUSTOM_DECODER_atrac3 if (BUILD_PATENTED)
 	select FFMPEG_CUSTOM_DECODER_flac
 	select FFMPEG_CUSTOM_DECODER_mp2
 	select FFMPEG_CUSTOM_DECODER_mp3
@@ -173,7 +171,6 @@ config FFMPEG_CUSTOM_ENCODER_mpeg2video
 
 config FFMPEG_CUSTOM_ENCODER_mpeg4
 	bool "MPEG-4"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_ENCODER_pcm_s16be
 	bool "PCM signed 16-bit big-endian"
@@ -195,7 +192,6 @@ comment "Decoders"
 
 config FFMPEG_CUSTOM_DECODER_aac
 	bool "AAC (Advanced Audio Coding)"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_SELECT_adpcm
 	bool "ADPCM (multiple types)"
@@ -255,7 +251,6 @@ config FFMPEG_CUSTOM_DECODER_mpeg2video
 
 config FFMPEG_CUSTOM_DECODER_mpeg4
 	bool "MPEG-4"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_DECODER_mpc7
 	bool "Musepack 7"
@@ -291,11 +286,9 @@ config FFMPEG_CUSTOM_DECODER_wavpack
 
 config FFMPEG_CUSTOM_DECODER_wmav1
 	bool "WMAv1"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_DECODER_wmav2
 	bool "WMAv2"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_DECODER_zlib
 	bool "Zlib"
@@ -429,7 +422,6 @@ comment "Parsers"
 
 config FFMPEG_CUSTOM_PARSER_aac
 	bool "AAC (Advanced Audio Coding)"
-	depends on FFMPEG_CUSTOM_PATENTED
 
 config FFMPEG_CUSTOM_PARSER_ac3
 	bool "AC3"
