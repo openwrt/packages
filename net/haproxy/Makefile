@@ -94,13 +94,6 @@ endef
 ENABLE_LUA:=y
 ENABLE_REGPARM:=n
 
-ifeq ($(CONFIG_mips),y)
-  ENABLE_LUA:=n
-endif
-ifeq ($(CONFIG_mipsel),y)
-  ENABLE_LUA:=n
-endif
-
 ifeq ($(CONFIG_TARGET_x86),y)
   ENABLE_REGPARM:=y
 endif
@@ -152,6 +145,7 @@ define Build/Compile
 		USE_ZLIB=yes USE_PCRE=1 USE_PCRE_JIT=1 USE_GETADDRINFO=1 \
 		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
 		$(ADDON) \
+		CFLAGS="$(TARGET_CFLAGS)" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -latomic" \
 		IGNOREGIT=1
