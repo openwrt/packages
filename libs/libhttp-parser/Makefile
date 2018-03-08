@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libhttp-parser
-PKG_VERSION:=2.7.1
+PKG_VERSION:=2.8.0
 PKG_RELEASE=1
 PKG_MAINTAINER:=Ramanathan Sivagurunathan <ramzthecoder@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE-MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=20e6acc415ae8a47f39c6821685dbba09d99ff5079902fe1a0f580c2c88ae18a
+PKG_MIRROR_HASH:=83acea397da4cdb9192c27abbd53a9eb8e5a9e1bcea2873b499f7ccc0d68f518
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git://github.com/joyent/http-parser.git
+PKG_SOURCE_URL:=git://github.com/nodejs/http-parser.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
@@ -28,7 +28,7 @@ define Package/libhttp-parser
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A library to parse http request and response
-  URL:=https://github.com/joyent/http-parser
+  URL:=https://github.com/nodejs/http-parser
 endef
 
 define Package/libhttp-parser/description
@@ -49,13 +49,17 @@ define Build/InstallDev
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/http_parser.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libhttp_parser.so.* $(1)/usr/lib/
-	( cd $(1)/usr/lib ; ln -s libhttp_parser.so.* libhttp_parser.so )
+	(	cd $(1)/usr/lib ; \
+		ln -s libhttp_parser.so.$(PKG_VERSION) libhttp_parser.so ; \
+		ln -s libhttp_parser.so.$(PKG_VERSION) libhttp_parser.so.2.8 )
 endef
 
 define Package/libhttp-parser/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/libhttp_parser.so.* $(1)/usr/lib/
-	( cd $(1)/usr/lib ; ln -s libhttp_parser.so.* libhttp_parser.so )
+	(	cd $(1)/usr/lib ; \
+		ln -s libhttp_parser.so.$(PKG_VERSION) libhttp_parser.so ; \
+		ln -s libhttp_parser.so.$(PKG_VERSION) libhttp_parser.so.2.8 )
 endef
 
 $(eval $(call BuildPackage,libhttp-parser))
