@@ -37,7 +37,7 @@ endef
 define Package/rp-pppoe-common
   $(call Package/rp-pppoe/Default)
   TITLE+= common
-  DEPENDS:=+ppp
+  DEPENDS:=ppp
 endef
 
 define Package/rp-pppoe-common/description
