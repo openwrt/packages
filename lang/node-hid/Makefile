@@ -9,18 +9,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=hid
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=0.5.1
-PKG_RELEASE:=7
+PKG_VERSION:=0.7.2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/node-hid/node-hid.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=35d830b7810c87d32484d0a346621568c4849441
+PKG_SOURCE_VERSION:=v0.7.2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=125f752d491ac10d32bab0f0d660f6f150c6a9a168b2b56bfddc2cb1d65166fc
+PKG_MIRROR_HASH:=ede801a26a23290ab76d64ab636c3c3e2788030bb830af7006d37444c2a7b2c4
 
-PKG_BUILD_DEPENDS:=node/host
-PKG_NODE_VERSION:=6.11.2
+PKG_BUILD_DEPENDS:=node/host libudev-fbsd
+PKG_NODE_VERSION:=8.10.0
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=Custom
@@ -58,7 +58,7 @@ endef
 
 define Package/node-hid/install
 	mkdir -p $(1)/usr/lib/node/node-hid/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/* $(1)/usr/lib/node/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/ $(1)/usr/lib/node/
 endef
 
 $(eval $(call BuildPackage,node-hid))
