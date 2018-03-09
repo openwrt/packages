@@ -1,12 +1,13 @@
-Index: node-cylon-0.22.0/package.json
-===================================================================
---- node-cylon-0.22.0.orig/package.json	2015-10-20 20:32:48.000000000 +0200
-+++ node-cylon-0.22.0/package.json	2015-10-21 10:42:20.616109122 +0200
-@@ -38,7 +38,6 @@
+--- a/package.json
++++ b/package.json
+@@ -41,7 +41,8 @@
    },
  
    "dependencies": {
--    "firmata":    ">= 0.3.2",
-     "cylon":      "1.1.0",
-     "cylon-gpio": "0.26.0",
-     "cylon-i2c":  "0.22.0"
+-    "firmata":    ">= 0.8.0",
+-    "cylon":      "^1.3.0"
++    "cylon":      "^1.3.0",
++    "cylon-gpio": "0.30.1",
++    "cylon-i2c":  "0.26.1"
+   }
+ }
