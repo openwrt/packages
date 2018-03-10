@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdgrilo
-PKG_VERSION:=0.0.10
+PKG_VERSION:=0.0.12
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -17,8 +17,8 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.flyn.org/projects/lcdgrilo
-PKG_HASH:=f5e6635864bd2156557e894ab0f95ea50c01fefebb6225d9b39c95622efd67a2
+PKG_SOURCE_URL:=https://www.flyn.org/projects/lcdgrilo
+PKG_HASH:=2e5028fff7a90b1a3688c466f048e978a52d9a4da20a382546d5e5bd42e2fc6a
 PKG_BUILD_DEPENDS:=vala
 
 PKG_INSTALL:=1
