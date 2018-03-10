@@ -13,11 +13,21 @@ start_instance() {
 	config_get listen_port "$cfg" listen_port
 	config_get user "$cfg" user
 	config_get group "$cfg" group
+	config_get subnet_addr "$cfg" subnet_addr
+	config_get proxy_server "$cfg" proxy_server
+
+	if [ -n "$subnet_addr" ]; then
+		subnet_param="-e $subnet_addr"
+	fi
+
+	if [ -n "$proxy_server" ]; then
+		proxy_param="-t $proxy_server"
+	fi
 
 	procd_open_instance
 	procd_set_param command ${PROG} \
 		-a "$listen_addr" -p "$listen_port" \
-		-u "$user" -g "$group"
+		-u "$user" -g "$group" $subnet_param $proxy_param
 	procd_set_param respawn
 	procd_close_instance
 }
