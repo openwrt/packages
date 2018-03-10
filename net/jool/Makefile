@@ -50,6 +50,7 @@ define Build/Compile
 	$(call Build/Compile/Default)
 endef
 
+
 define Package/jool/Default
   SECTION:=net
   CATEGORY:=Network
@@ -71,45 +72,123 @@ define Package/jool/description
   $(call Package/jool/Default/description)
 endef
 
-define KernelPackage/jool
+define Package/jool-stateful
+  $(call Package/jool/Default)
+  TITLE:=Jool stateful meta-package
+  DEPENDS:=+kmod-jool-stateful +jool-tools-stateful
+endef
+
+define Package/jool-stateful/description
+  $(call Package/jool/Default/description)
+  
+  This meta-package provides only the stateful Jool tools and stateful kernel module.
+endef
+
+define Package/jool-stateless
+  $(call Package/jool/Default)
+  TITLE:=Jool stateless meta-package
+  DEPENDS:=+kmod-jool-stateless +jool-tools-stateless
+endef
+
+define Package/jool-stateless/description
+  $(call Package/jool/Default/description)
+  
+  This meta-package provides the stateless Jool tools and stateless kernel module.
+endef
+
+define KernelPackage/jool/Default
   SECTION:=kernel
   CATEGORY:=Kernel modules
   SUBMENU:=Network Support
-  TITLE:=Jool kernel module
   DEPENDS:= \
     @IPV6 \
     +kmod-crypto-md5 \
     +kmod-nf-conntrack \
     +kmod-nf-conntrack6
-  FILES:= \
-    $(PKG_BUILD_DIR)/mod/stateful/jool.$(LINUX_KMOD_SUFFIX) \
-    $(PKG_BUILD_DIR)/mod/stateless/jool_siit.$(LINUX_KMOD_SUFFIX)
 endef
 
-define KernelPackage/jool/description
+define KernelPackage/jool
+  $(call Package/jool/Default)
+  TITLE:=Jool kernel modules meta-package
+  DEPENDS:=+kmod-jool-stateful +kmod-jool-stateless
+endef
+
+define KernelPackage/jool-stateful
+  $(call KernelPackage/jool/Default)
+  TITLE:=Jool stateful kernel module
+  FILES:=$(PKG_BUILD_DIR)/mod/stateful/jool.$(LINUX_KMOD_SUFFIX)
+endef
+
+define KernelPackage/jool-stateful/description
   $(call Package/jool/Default/description)
 
-  This package provides the kernel module for Jool.
+  This package provides the Jool stateful kernel module.
+endef
+
+define KernelPackage/jool-stateless
+  $(call KernelPackage/jool/Default)
+  TITLE:=Jool stateless kernel module
+  FILES:=$(PKG_BUILD_DIR)/mod/stateless/jool_siit.$(LINUX_KMOD_SUFFIX)
+endef
+
+define KernelPackage/jool-stateless/description
+  $(call Package/jool/Default/description)
+
+  This package provides the Jool stateless kernel module.
 endef
 
 define Package/jool-tools
   $(call Package/jool/Default)
-  TITLE:=Jool userspace control programs
-  DEPENDS:=+libnl +ethtool
+  TITLE:=Jool userspace control programs meta-package
+  DEPENDS:=+jool-tools-stateful +jool-tools-stateless
 endef
 
 define Package/jool-tools/description
   $(call Package/jool/Default/description)
 
-  This package provides the userspace control programs for Jool.
+  This meta-package provides the stateful and stateless userspace control programs for Jool.
 endef
 
-define Package/jool-tools/install
+define Package/jool-tools-stateful
+  $(call Package/jool/Default)
+  TITLE:=Jool stateful userspace control program
+  DEPENDS:=+libnl +ethtool
+endef
+
+define Package/jool-tools-stateful/description
+  $(call Package/jool/Default/description)
+
+  This package provides the stateful userspace control program for Jool.
+endef
+
+define Package/jool-tools-stateless
+  $(call Package/jool/Default)
+  TITLE:=Jool stateless userspace control program
+  DEPENDS:=+libnl +ethtool
+endef
+
+define Package/jool-tools-stateless/description
+  $(call Package/jool/Default/description)
+
+  This package provides the stateless userspace control program for Jool.
+endef
+
+define Package/jool-tools-stateful/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usr/stateful/jool       $(1)/usr/sbin/
+endef
+
+define Package/jool-tools-stateless/install
+	$(INSTALL_DIR) $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usr/stateless/jool_siit $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,jool))
+$(eval $(call BuildPackage,jool-stateful))
+$(eval $(call BuildPackage,jool-stateless))
 $(eval $(call KernelPackage,jool))
+$(eval $(call KernelPackage,jool-stateful))
+$(eval $(call KernelPackage,jool-stateless))
 $(eval $(call BuildPackage,jool-tools))
+$(eval $(call BuildPackage,jool-tools-stateful))
+$(eval $(call BuildPackage,jool-tools-stateless))
