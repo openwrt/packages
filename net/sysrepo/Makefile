@@ -31,13 +31,23 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+ifeq ($(CONFIG_SYSREPO_PYTHON),y)
+$(call include_mk, python-package.mk)
+endif
+
+define Package/libsysrepo/config
+	source "$(SOURCE)/Config_libsysrepo.in"
+endef
+
+PKG_BUILD_DEPENDS:=+SYSREPO_BINDINGS:swig/host
 
 define Package/libsysrepo
   SECTION:=utils
   CATEGORY:=Utilities
   URL:=$(PKG_SOURCE_URL)
   TITLE:=YANG-based data store library
-  DEPENDS:=+libyang +libprotobuf-c +libev +libredblack +librt
+  DEPENDS:=+libyang +libprotobuf-c +libev +libredblack +librt +SYSREPO_BINDINGS:libstdcpp +SYSREPO_PYTHON:python-base +SYSREPO_LUA:lua
+  MENU:=1
 endef
 
 define Package/sysrepo
@@ -75,6 +85,8 @@ CMAKE_OPTIONS += \
 	-DBUILD_EXAMPLES:BOOL=FALSE \
 	-DCMAKE_DISABLE_FIND_PACKAGE_SWIG=TRUE \
 	-DGEN_LANGUAGE_BINDINGS:BOOL=FALSE \
+	-DGEN_PYTHON_BINDINGS=0 \
+	-DGEN_LUA_BINDINGS=0 \
 	-DREPOSITORY_LOC:PATH=/etc/sysrepo \
 	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
 	-DENABLE_NACM:BOOL=FALSE \
@@ -85,6 +97,25 @@ CMAKE_OPTIONS += \
 	-DNOTIF_AGE_TIMEOUT=120 \
 	-DNOTIF_TIME_WINDOW=20 \
 	-DUSE_SR_MEM_MGMT=0
+
+ifeq ($(CONFIG_SYSREPO_LUA),y)
+CMAKE_OPTIONS += \
+	-DGEN_LUA_BINDINGS:BOOL=TRUE \
+	-DGEN_LUA_VERSION=5.1
+endif
+
+ifeq ($(CONFIG_SYSREPO_PYTHON),y)
+CMAKE_OPTIONS += \
+	-DGEN_PYTHON_BINDINGS:BOOL=TRUE \
+	-DGEN_PYTHON_VERSION=2
+endif
+
+ifeq ($(CONFIG_SYSREPO_BINDINGS),y)
+CMAKE_OPTIONS += \
+	-DCMAKE_DISABLE_FIND_PACKAGE_SWIG=FALSE \
+	-DGEN_LANGUAGE_BINDINGS:BOOL=TRUE \
+	-DSWIG_DIR=$(STAGING_DIR)/host/share/swig
+endif
 
 define Package/libsysrepo/install
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -107,6 +138,20 @@ define Package/libsysrepo/install
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/libsysrepo.default $(1)/etc/uci-defaults/95_libsysrepo
+
+ifeq ($(CONFIG_SYSREPO_PYTHON),y)
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/swig/libSysrepo-cpp.so* $(1)/usr/lib
+	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/swig/python2/libsysrepoPython2.py $(1)$(PYTHON_PKG_DIR)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/swig/python2/_libsysrepoPython2.so $(1)$(PYTHON_PKG_DIR)
+endif
+
+ifeq ($(CONFIG_SYSREPO_LUA),y)
+	$(INSTALL_DIR) $(1)/usr/lib/lua/
+	$(CP) $(PKG_BUILD_DIR)/swig/lua/libSysrepo_Lua.so* $(1)/usr/lib
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/swig/lua/libsysrepoLua.so $(1)/usr/lib/lua/libsysrepoLua.so
+endif
 endef
 
 define Package/sysrepo/install

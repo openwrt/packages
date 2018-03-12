@@ -1,0 +1,23 @@
+config SYSREPO_PYTHON
+	bool "Generate sysrepo Python2 bindings"
+	depends on PACKAGE_libsysrepo
+	select SYSREPO_BINDINGS
+	default n
+	help
+		This option generates the Python2 language bindings.
+		Disabled by default.
+
+config SYSREPO_LUA
+	bool "Generate sysrepo Lua5.1 bindings"
+	depends on PACKAGE_libsysrepo
+	select SYSREPO_BINDINGS
+	default n
+	help
+		This option generates the Lua5.1 language bindings.
+		Disabled by default.
+
+config SYSREPO_BINDINGS
+	bool
+	depends on PACKAGE_libsysrepo
+	default n
+
