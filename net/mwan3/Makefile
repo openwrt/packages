@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
 PKG_VERSION:=2.6.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=GPLv2
 
@@ -19,7 +19,13 @@ define Package/mwan3
    SECTION:=net
    CATEGORY:=Network
    SUBMENU:=Routing and Redirection
-   DEPENDS:=+ip +ipset +iptables +iptables-mod-conntrack-extra +iptables-mod-ipopt
+   DEPENDS:= \
+     +ip-full \
+     +ipset \
+     +iptables \
+     +iptables-mod-conntrack-extra \
+     +iptables-mod-ipopt \
+     +jshn
    TITLE:=Multiwan hotplug script with connection tracking support
    MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
    PKGARCH:=all
