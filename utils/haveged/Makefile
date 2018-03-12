@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haveged
 PKG_VERSION:=1.9.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/haveged \
@@ -20,6 +20,7 @@ PKG_LICENSE:=GPLv3
 PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
 
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
