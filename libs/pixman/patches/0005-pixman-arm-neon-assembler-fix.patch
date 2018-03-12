@@ -1,0 +1,17 @@
+--- a/pixman/pixman-private.h.orig	2016-11-22 22:10:33.574769654 +0800
++++ b/pixman/pixman-private.h	2016-11-22 22:10:47.638774056 +0800
+@@ -1,5 +1,3 @@
+-#include <float.h>
+-
+ #ifndef PIXMAN_PRIVATE_H
+ #define PIXMAN_PRIVATE_H
+ 
+@@ -17,6 +15,8 @@
+ 
+ #ifndef __ASSEMBLER__
+ 
++#include <float.h>
++
+ #ifndef PACKAGE
+ #  error config.h must be included before pixman-private.h
+ #endif

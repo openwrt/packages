@@ -7,6 +7,8 @@ proto_openconnect_init_config() {
 	proto_config_add_string "server"
 	proto_config_add_int "port"
 	proto_config_add_int "mtu"
+	proto_config_add_int "juniper"
+	proto_config_add_string "interface"
 	proto_config_add_string "username"
 	proto_config_add_string "serverhash"
 	proto_config_add_string "authgroup"
@@ -14,6 +16,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "password2"
 	proto_config_add_string "token_mode"
 	proto_config_add_string "token_secret"
+	proto_config_add_string "token_script"
 	proto_config_add_string "os"
 	proto_config_add_string "csd_wrapper"
 	no_device=1
@@ -23,7 +26,7 @@ proto_openconnect_init_config() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port username serverhash authgroup password password2 token_mode token_secret os csd_wrapper mtu
+	json_get_vars server port interface username serverhash authgroup password password2 token_mode token_secret token_script os csd_wrapper mtu juniper
 
 	grep -q tun /proc/modules || insmod tun
 	ifname="vpn-$config"
@@ -33,7 +36,7 @@ proto_openconnect_setup() {
 	logger -t "openconnect" "adding host dependency for $server at $config"
 	for ip in $(resolveip -t 10 "$server"); do
 		logger -t "openconnect" "adding host dependency for $ip at $config"
-		proto_add_host_dependency "$config" "$ip"
+		proto_add_host_dependency "$config" "$ip" "$interface"
 	done
 
 	[ -n "$port" ] && port=":$port"
@@ -52,22 +55,35 @@ proto_openconnect_setup() {
 		append cmdline "--cafile /etc/openconnect/ca-vpn-$config.pem"
 		append cmdline "--no-system-trust"
 	}
+
+	if [ "${juniper:-0}" -gt 0 ]; then
+		append cmdline "--juniper"
+	fi
+
 	[ -n "$serverhash" ] && {
 		append cmdline " --servercert=$serverhash"
 		append cmdline "--no-system-trust"
 	}
 	[ -n "$authgroup" ] && append cmdline "--authgroup $authgroup"
 	[ -n "$username" ] && append cmdline "-u $username"
-	[ -n "$password" ] && {
+	[ -n "$password" ] || [ "$token_mode" = "script" ] && {
 		umask 077
 		mkdir -p /var/etc
 		pwfile="/var/etc/openconnect-$config.passwd"
-		echo "$password" > "$pwfile"
-		[ -n "$password2" ] && echo "$password2" >> "$pwfile"
+		[ -n "$password" ] && {
+			echo "$password" > "$pwfile"
+			[ -n "$password2" ] && echo "$password2" >> "$pwfile"
+		}
+		[ "$token_mode" = "script" ] && {
+			$token_script > "$pwfile" 2> /dev/null || {
+				logger -t openconenct "Cannot get password from script '$token_script'"
+				proto_setup_failed "$config"
+			}
+		}
 		append cmdline "--passwd-on-stdin"
 	}
 
-	[ -n "$token_mode" ] && append cmdline "--token-mode=$token_mode"
+	[ -n "$token_mode" -a "$token_mode" != "script" ] && append cmdline "--token-mode=$token_mode"
 	[ -n "$token_secret" ] && append cmdline "--token-secret=$token_secret"
 	[ -n "$os" ] && append cmdline "--os=$os"
 	[ -n "$csd_wrapper" ] && [ -x "$csd_wrapper" ] && append cmdline "--csd-wrapper=$csd_wrapper"

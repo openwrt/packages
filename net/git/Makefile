@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2016 OpenWrt.org
+# Copyright (C) 2009-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git
-PKG_VERSION:=2.14.1
-PKG_RELEASE:=1
+PKG_VERSION:=2.16.1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/scm/git/
-PKG_HASH:=6f724c6d0e9e13114ab35db6f67e1b2c1934b641e89366e6a0e37618231f2cc6
+PKG_HASH:=cfad4337f2fdbfc1e2c8abce5e17e1dd4e1718a34ac2cbe3238fbe2426f2ea19
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -43,7 +43,7 @@ endef
 
 define Package/git-http
 $(call Package/git/Default)
-  DEPENDS+=git +libcurl +ca-certificates
+  DEPENDS+= +git +libcurl +ca-certificates
   TITLE:=Git HTTP commands
 endef
 
@@ -56,7 +56,7 @@ endef
 define Package/git-gitweb
 $(call Package/git/Default)
   TITLE:=Git repository web interface
-  DEPENDS:=git +perlbase-essential +perlbase-file +perlbase-fcntl +perlbase-encode +perlbase-digest +perlbase-time +perl-cgi
+  DEPENDS+= +git +perlbase-essential +perlbase-file +perlbase-fcntl +perlbase-encode +perlbase-digest +perlbase-time +perl-cgi
 endef
 
 define Package/git-gitweb/description
@@ -111,6 +111,7 @@ define Package/git/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/git-* $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib/git-core
 	$(LN) /usr/bin/git $(1)/usr/lib/git-core/git
+	$(INSTALL_DIR) $(1)/usr/share/git-core/templates
 	( cd $(PKG_INSTALL_DIR); $(TAR) \
 		--exclude=usr/lib/git-core/git-http-backend \
 		--exclude=usr/lib/git-core/git-http-fetch \
@@ -120,8 +121,8 @@ define Package/git/install
 		--exclude=usr/lib/git-core/git-remote-https \
 		-cf - \
 		usr/lib/git-core \
+		usr/share/git-core/templates \
 	) | ( cd $(1); $(TAR) -xf - )
-	$(INSTALL_DIR) $(1)/usr/share/git-core/templates
 endef
 
 define Package/git-http/install

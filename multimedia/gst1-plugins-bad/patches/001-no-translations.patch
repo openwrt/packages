@@ -1,16 +1,18 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -3717,7 +3717,6 @@ ext/x265/Makefile
- ext/xvid/Makefile
- ext/zbar/Makefile
+diff -u --recursive gst-plugins-bad-1.12.4-vanilla/configure.ac gst-plugins-bad-1.12.4/configure.ac
+--- gst-plugins-bad-1.12.4-vanilla/configure.ac	2018-02-11 19:43:06.962320214 -0500
++++ gst-plugins-bad-1.12.4/configure.ac	2018-02-11 19:43:48.643416395 -0500
+@@ -3717,7 +3717,6 @@
  ext/dtls/Makefile
+ ext/webrtcdsp/Makefile
+ ext/ttml/Makefile
 -po/Makefile.in
  docs/Makefile
  docs/plugins/Makefile
  docs/libs/Makefile
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -2,11 +2,11 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-d
+diff -u --recursive gst-plugins-bad-1.12.4-vanilla/Makefile.am gst-plugins-bad-1.12.4/Makefile.am
+--- gst-plugins-bad-1.12.4-vanilla/Makefile.am	2018-02-11 19:43:06.987320271 -0500
++++ gst-plugins-bad-1.12.4/Makefile.am	2018-02-11 19:43:55.023431118 -0500
+@@ -2,11 +2,11 @@
  
  SUBDIRS = \
  	gst-libs gst sys ext pkgconfig \

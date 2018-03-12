@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
-PKG_VERSION:=1.8.2
+PKG_VERSION:=1.12.4
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gstreamer-$(PKG_VERSION)
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gstreamer/
-PKG_HASH:=9dbebe079c2ab2004ef7f2649fa317cabea1feb4fb5605c24d40744b90918341
+PKG_HASH:=5a8704aa4c2eeb04da192c4a9942f94f860ac1a585de90d9f914bac26a970674
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4
@@ -121,6 +121,8 @@ CONFIGURE_ARGS += \
 	--disable-examples \
 	--disable-tests \
 	--disable-valgrind \
+	--disable-gst-tracer-hooks \
+	--with-unwind=no \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
 	--without-x \
@@ -134,11 +136,6 @@ define Build/InstallDev
 	( cd $(PKG_INSTALL_DIR); $(CP) \
 		./usr/include/gstreamer-$(GST_VERSION)/* \
 		$(1)/usr/include/gstreamer-$(GST_VERSION)/ \
-	)
-	$(INSTALL_DIR) $(1)/usr/lib/gstreamer-$(GST_VERSION)/include/gst
-	( cd $(PKG_INSTALL_DIR); $(CP) \
-		./usr/lib/gstreamer-$(GST_VERSION)/include/gst/*.h \
-		$(1)/usr/lib/gstreamer-$(GST_VERSION)/include/gst \
 	)
 	$(INSTALL_DIR) $(1)/usr/lib
 	( cd $(PKG_INSTALL_DIR); $(CP) \

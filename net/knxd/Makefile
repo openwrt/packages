@@ -11,15 +11,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
-PKG_VERSION:=0.14.18
+PKG_VERSION:=0.14.24
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/knxd/knxd.git
-PKG_SOURCE_VERSION:=5e707fdb7430009a299d3ad849aecf9ccbc8fdf6
+PKG_SOURCE_VERSION:=10f702e112ffb2ada50efd33ea5cdce3f6ce1f6e
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=96d5dd7b1513ccf871aed2bdd2601ca2a2f2d1005462fb1c631e5683e2e86e4e
+PKG_MIRROR_HASH:=f2e18dfbe02e9f8cbebd7b31652c4d7be4e63af23d4635316a14a1fe6184a399
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 
@@ -47,7 +47,8 @@ EIB KNX Daemon
 endef
 
 define Package/knxd/conffiles
-/etc/config/knxd.ini
+/etc/knxd.ini
+/etc/config/knxd
 endef
 
 TARGET_CXXFLAGS+= -std=c++0x
@@ -72,7 +73,8 @@ define Package/knxd/install
 	$(INSTALL_BIN) ./files/knxd.init $(1)/etc/init.d/knxd
 
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/knxd.ini $(1)/etc/config/knxd.ini
+	$(INSTALL_DATA) ./files/knxd.ini $(1)/etc/knxd.ini
+	$(INSTALL_DATA) ./files/knxd.config $(1)/etc/config/knxd
 endef
 
 $(eval $(call BuildPackage,knxd))

@@ -21,6 +21,8 @@ PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
+PKG_BUILD_DEPENDS:=lua/host
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/luaposix
@@ -30,7 +32,6 @@ define Package/luaposix
   TITLE:=luaposix
   URL:=http://luaforge.net/projects/luaposix/
   DEPENDS:=+lua +librt
-  PKG_BUILD_DEPENDS:=+lua/host
 endef
 
 define Package/luaposix/description
@@ -43,6 +44,9 @@ CONFIGURE_VARS += ac_cv_path_LDOC="true"
 TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99
 ifeq ($(CONFIG_USE_MUSL),y)
   TARGET_CFLAGS += -D_POSIX_PRIORITY_SCHEDULING
+  # Musl doesn't do all of XOPEN_REALTIME, but it does for luaposix.
+  # see https://github.com/luaposix/luaposix/issues/295
+  TARGET_CFLAGS += -D_XOPEN_REALTIME=1
 endif
 
 ifneq ($(CONFIG_USE_GLIBC),)

@@ -1,0 +1,80 @@
+--- a/Makefile.SH	2017-10-15 18:57:08.436234652 -0600
++++ b/Makefile.SH	2017-10-15 19:02:47.587658819 -0600
+@@ -327,7 +327,7 @@ PATH_SEP = $p_
+ # Macros to invoke a copy of miniperl during the build.  Targets which
+ # are built using these macros should depend on \$(MINIPERL_EXE)
+ MINIPERL_EXE = miniperl\$(EXE_EXT)
+-MINIPERL = \$(LDLIBPTH) ./miniperl\$(EXE_EXT) -Ilib
++MINIPERL = \$(LDLIBPTH) ./miniperl\$(EXE_EXT) -Ilib -I.
+ 
+ # Macros to invoke sort the MANIFEST during build
+ MANIFEST_SRT = MANIFEST.srt
+@@ -990,7 +990,7 @@ NAMESPACEFLAGS = -force_flat_namespace
+ 	@$(RMS) miniperl.xok
+ 	$(CC) $(CLDFLAGS) $(NAMESPACEFLAGS) -o $(MINIPERL_EXE) \
+ 	    $(miniperl_objs) $(libs)
+-	$(LDLIBPTH) ./miniperl$(HOST_EXE_EXT) -w -Ilib -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
++	$(LDLIBPTH) ./miniperl$(HOST_EXE_EXT) -w -Ilib -I. -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
+ 	$(MINIPERL) -f write_buildcustomize.pl
+ !NO!SUBS!
+ 		;;
+@@ -1001,16 +1001,16 @@ lib/buildcustomize.pl: $& $(miniperl_obj
+ 	@\$(RMS) miniperl.xok
+ 	@\$(RMS) \$(MINIPERL_EXE)
+ 	\$(LNS) \$(HOST_PERL) \$(MINIPERL_EXE)
+-	\$(LDLIBPTH) ./miniperl\$(HOST_EXE_EXT) -w -Ilib -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
++	\$(LDLIBPTH) ./miniperl\$(HOST_EXE_EXT) -w -Ilib -I. -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
+ 	\$(MINIPERL) -f write_buildcustomize.pl 'osname' "$osname"
+ !GROK!THIS!
+ 		else
+ 			$spitshell >>$Makefile <<'!NO!SUBS!'
+ lib/buildcustomize.pl: $& $(miniperl_dep) write_buildcustomize.pl
+ 	@$(RMS) miniperl.xok
+ 	$(CC) $(CLDFLAGS) -o $(MINIPERL_EXE) \
+ 	    $(miniperl_objs) $(libs)
+-	$(LDLIBPTH) ./miniperl$(HOST_EXE_EXT) -w -Ilib -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
++	$(LDLIBPTH) ./miniperl$(HOST_EXE_EXT) -w -Ilib -I. -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
+ 	$(MINIPERL) -f write_buildcustomize.pl
+ !NO!SUBS!
+ 		fi
+--- a/cpan/Devel-PPPort/PPPort_pm.PL	2017-07-18 16:59:59.000000000 -0600
++++ b/cpan/Devel-PPPort/PPPort_pm.PL	2017-10-15 19:19:27.341543182 -0600
+@@ -15,6 +15,7 @@
+ 
+ use strict;
+ $^W = 1;
++push(@INC, '.');
+ require "parts/ppptools.pl";
+ 
+ my $INCLUDE = 'parts/inc';
+--- a/cpan/Devel-PPPort/ppport_h.PL	2017-07-18 16:59:59.000000000 -0600
++++ b/cpan/Devel-PPPort/ppport_h.PL	2017-10-15 19:27:16.594178623 -0600
+@@ -14,6 +14,7 @@
+ ################################################################################
+ 
+ package Devel::PPPort;
++push(@INC, '.');
+ require "PPPort.pm";
+ rename 'ppport.h', 'ppport.old' if -f 'ppport.h';
+ unlink "ppport.old" if WriteFile("ppport.h") && -f 'ppport.h';
+--- a/cpan/Devel-PPPort/PPPort_xs.PL	2017-07-18 16:59:59.000000000 -0600
++++ b/cpan/Devel-PPPort/PPPort_xs.PL	2017-10-15 19:38:09.296679968 -0600
+@@ -15,6 +15,7 @@
+ 
+ use strict;
+ $^W = 1;
++push(@INC, '.');
+ require "parts/ppptools.pl";
+ 
+ my %SECTION = (
+--- a/cpan/Unicode-Collate/Makefile.PL	2017-07-18 16:49:51.000000000 -0600
++++ b/cpan/Unicode-Collate/Makefile.PL	2017-10-15 20:19:31.890439791 -0600
+@@ -6,7 +6,7 @@ my $clean = {};
+ if (-f "Collate.xs") {
+     print "Making header files for XS...\n";
+ 
+-    do 'mkheader' or die $@ || "mkheader: $!";
++    do './mkheader' or die $@ || "mkheader: $!";
+ 
+     $clean = { FILES => 'ucatbl.h' };
+ }

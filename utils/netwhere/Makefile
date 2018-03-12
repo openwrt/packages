@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netwhere
-PKG_VERSION:=0.6
+PKG_VERSION:=0.9
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=netwhere-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/benhsmith/netwhere/archive/$(PKG_VERSION)/
-PKG_HASH:=0820cf5e59bf6b635c09a6282c664d6966b4d2887736b0f20937c86a8a03f563
+PKG_HASH:=94a672bdcd9d4455b85429dddd81ffc778e0b26fe87af19ad75c27858ec9dbe2
 
 PKG_BUILD_DEPENDS:=boost
 

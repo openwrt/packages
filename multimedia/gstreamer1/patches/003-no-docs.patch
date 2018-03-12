@@ -1,27 +1,23 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -1001,18 +1001,6 @@ plugins/tracers/Makefile
+diff -u --recursive gstreamer-1.12.4-vanilla/configure.ac gstreamer-1.12.4/configure.ac
+--- gstreamer-1.12.4-vanilla/configure.ac	2018-02-10 17:45:28.053157030 -0500
++++ gstreamer-1.12.4/configure.ac	2018-02-10 17:45:47.703222322 -0500
+@@ -1086,12 +1086,6 @@
  tools/Makefile
  common/Makefile
  common/m4/Makefile
 -docs/Makefile
--docs/design/Makefile
--docs/faq/Makefile
 -docs/gst/Makefile
 -docs/gst/gstreamer.types
 -docs/libs/Makefile
 -docs/plugins/Makefile
--docs/manual/Makefile
--docs/pwg/Makefile
--docs/slides/Makefile
--docs/xsl/Makefile
 -docs/version.entities
  m4/Makefile
  pkgconfig/Makefile
  stamp.h
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -8,7 +8,6 @@ aclocal_DATA = gst-element-check-@GST_AP
+diff -u --recursive gstreamer-1.12.4-vanilla/Makefile.am gstreamer-1.12.4/Makefile.am
+--- gstreamer-1.12.4-vanilla/Makefile.am	2018-02-10 17:45:28.053157030 -0500
++++ gstreamer-1.12.4/Makefile.am	2018-02-10 17:45:58.940259656 -0500
+@@ -8,7 +8,6 @@
  
  SUBDIRS = pkgconfig \
  	gst libs plugins \
@@ -29,7 +25,7 @@
  	m4 \
  	common \
  	data
-@@ -20,7 +19,6 @@ endif
+@@ -20,7 +19,6 @@
  # These are all the possible subdirs
  DIST_SUBDIRS = pkgconfig \
  	gst libs plugins tools \

@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.7.2
-PKG_RELEASE:=2
+PKG_VERSION:=5.8.0
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
 	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
-PKG_HASH:=9d20a0221569a8d6b80bbc52b86e5e84965f5bafdbf5dfc3790e0fed0763e592
+PKG_HASH:=b06ff476bbf05533cb97ae6749262cc3c76c9969f032bd8496690084ddeb15c9
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
@@ -36,6 +36,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	curl_json \
 	curl_xml \
 	dbi \
+	dpdkevents \
 	dpdkstat \
 	drbd \
 	ethstat \
@@ -46,6 +47,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	grpc \
 	hddtemp \
 	hugepages \
+	intel_pmu \
 	intel_rdt \
 	ipc \
 	ipmi \
@@ -57,12 +59,12 @@ COLLECTD_PLUGINS_DISABLED:= \
 	lpar \
 	madwifi \
 	mbmon \
+	mcelog \
 	md \
 	memcachec \
 	memcached \
 	mic \
 	monitorus \
-	mqtt \
 	multimeter \
 	netapp \
 	nfs \
@@ -73,6 +75,8 @@ COLLECTD_PLUGINS_DISABLED:= \
 	openldap \
 	openvz \
 	oracle \
+	ovs_events \
+	ovs_stats \
 	perl \
 	pf \
 	pinba \
@@ -83,8 +87,10 @@ COLLECTD_PLUGINS_DISABLED:= \
 	serial \
 	sigrok \
 	smart \
+	snmp_agent \
 	statsd \
 	swap \
+	synproxy \
 	tape \
 	tokyotyrant \
 	turbostat \
@@ -139,6 +145,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	match_value \
 	memory \
 	modbus \
+	mqtt \
 	mysql \
 	netlink \
 	network \
@@ -196,6 +203,14 @@ define Package/collectd/description
  and provides mechanismns to store the values in a variety of ways.
 endef
 
+define Package/collectd/config
+	config PACKAGE_COLLECTD_ENCRYPTED_NETWORK
+	bool "Enable ability to use encrypted networking"
+	default n
+	depends on PACKAGE_collectd
+	select PACKAGE_collectd-mod-network
+endef
+
 ifneq ($(CONFIG_avr32),)
   TARGET_CFLAGS += -fsigned-char
 endif
@@ -207,7 +222,6 @@ CONFIGURE_ARGS+= \
 	--enable-daemon \
 	--with-nan-emulation \
 	--with-libyajl=no \
-	--without-libgcrypt \
 	--without-perl-bindings \
 	--without-libudev
 
@@ -215,6 +229,16 @@ CONFIGURE_VARS+= \
 	CFLAGS="$$$$CFLAGS $(FPIC)" \
 	LDFLAGS="$$$$LDFLAGS -lm -lz" \
 	KERNEL_DIR="$(LINUX_DIR)" \
+
+ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
+CONFIGURE_ARGS+= \
+	--with-libgcrypt=$(STAGING_DIR)/usr
+CONFIGURE_VARS+= \
+	GCRYPT_LIBS="-lgcrypt"
+else
+CONFIGURE_ARGS+= \
+	--without-libgcrypt
+endif
 
 CONFIGURE_PLUGIN= \
 	$(foreach m, $(1), \
@@ -345,8 +369,9 @@ $(eval $(call BuildPlugin,match-value,value match,match_value,))
 #$(eval $(call BuildPlugin,mysql,MySQL status input,mysql,+PACKAGE_collectd-mod-mysql:libmysqlclient-r))
 $(eval $(call BuildPlugin,memory,physical memory usage input,memory,))
 $(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAGE_collectd-mod-modbus:libmodbus))
+$(eval $(call BuildPlugin,mqtt,transmit data with MQTT,mqtt,+PACKAGE_collectd-mod-mqtt:libmosquitto))
 $(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-netlink:libmnl))
-$(eval $(call BuildPlugin,network,network input/output,network,))
+$(eval $(call BuildPlugin,network,network input/output,network,+PACKAGE_COLLECTD_ENCRYPTED_NETWORK:libgcrypt))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
 $(eval $(call BuildPlugin,ntpd,NTP daemon status input,ntpd,))
 $(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut-common))

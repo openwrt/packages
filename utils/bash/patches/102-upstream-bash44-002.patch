@@ -1,0 +1,46 @@
+Index: bash-4.4/patchlevel.h
+===================================================================
+--- bash-4.4.orig/patchlevel.h
++++ bash-4.4/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 1
++#define PATCHLEVEL 2
+ 
+ #endif /* _PATCHLEVEL_H_ */
+Index: bash-4.4/subst.c
+===================================================================
+--- bash-4.4.orig/subst.c
++++ bash-4.4/subst.c
+@@ -5931,6 +5931,7 @@ read_comsub (fd, quoted, rflag)
+   char *istring, buf[128], *bufp, *s;
+   int istring_index, istring_size, c, tflag, skip_ctlesc, skip_ctlnul;
+   ssize_t bufn;
++  int nullbyte;
+ 
+   istring = (char *)NULL;
+   istring_index = istring_size = bufn = tflag = 0;
+@@ -5938,6 +5939,8 @@ read_comsub (fd, quoted, rflag)
+   for (skip_ctlesc = skip_ctlnul = 0, s = ifs_value; s && *s; s++)
+     skip_ctlesc |= *s == CTLESC, skip_ctlnul |= *s == CTLNUL;
+ 
++  nullbyte = 0;
++
+   /* Read the output of the command through the pipe.  This may need to be
+      changed to understand multibyte characters in the future. */
+   while (1)
+@@ -5956,7 +5959,11 @@ read_comsub (fd, quoted, rflag)
+       if (c == 0)
+ 	{
+ #if 1
+-	  internal_warning ("%s", _("command substitution: ignored null byte in input"));
++	  if (nullbyte == 0)
++	    {
++	      internal_warning ("%s", _("command substitution: ignored null byte in input"));
++	      nullbyte = 1;
++	    }
+ #endif
+ 	  continue;
+ 	}

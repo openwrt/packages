@@ -14,7 +14,6 @@ proto_l2tp_init_config() {
 	proto_config_add_string "keepalive"
 	proto_config_add_string "pppd_options"
 	proto_config_add_boolean "ipv6"
-	proto_config_add_int "demand"
 	proto_config_add_int "mtu"
 	proto_config_add_int "checkup_interval"
 	proto_config_add_string "server"
@@ -58,14 +57,9 @@ proto_l2tp_setup() {
 		done
 	fi
 
-	local ipv6 demand keepalive username password pppd_options mtu
-	json_get_vars ipv6 demand keepalive username password pppd_options mtu
+	local ipv6 keepalive username password pppd_options mtu
+	json_get_vars ipv6 keepalive username password pppd_options mtu
 	[ "$ipv6" = 1 ] || ipv6=""
-	if [ "${demand:-0}" -gt 0 ]; then
-		demand="precompiled-active-filter /etc/ppp/filter demand idle $demand"
-	else
-		demand="persist"
-	fi
 
 	local interval="${keepalive##*[, ]}"
 	[ "$interval" != "$keepalive" ] || interval=5

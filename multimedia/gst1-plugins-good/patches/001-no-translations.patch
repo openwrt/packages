@@ -1,6 +1,7 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -1049,7 +1049,6 @@ sys/sunaudio/Makefile
+diff -u --recursive gst-plugins-good-1.12.4-vanilla/configure.ac gst-plugins-good-1.12.4/configure.ac
+--- gst-plugins-good-1.12.4-vanilla/configure.ac	2018-02-11 10:34:37.773144289 -0500
++++ gst-plugins-good-1.12.4/configure.ac	2018-02-11 10:35:17.103223474 -0500
+@@ -1061,7 +1061,6 @@
  sys/v4l2/Makefile
  sys/waveform/Makefile
  sys/ximage/Makefile
@@ -8,9 +9,10 @@
  tests/Makefile
  tests/check/Makefile
  tests/examples/Makefile
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -4,7 +4,6 @@ ALWAYS_SUBDIRS =		\
+diff -u --recursive gst-plugins-good-1.12.4-vanilla/Makefile.am gst-plugins-good-1.12.4/Makefile.am
+--- gst-plugins-good-1.12.4-vanilla/Makefile.am	2018-02-11 10:34:37.786144315 -0500
++++ gst-plugins-good-1.12.4/Makefile.am	2018-02-11 10:35:23.529236411 -0500
+@@ -4,7 +4,6 @@
  	gst sys ext 		\
  	tests			\
  	docs			\

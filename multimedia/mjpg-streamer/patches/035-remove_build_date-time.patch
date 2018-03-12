@@ -1,0 +1,34 @@
+--- a/Makefile
++++ b/Makefile
+@@ -15,8 +15,8 @@ DESTDIR = /usr/local
+ # set the compiler to use
+ CC = gcc
+ 
+-SVNDEV := -D'SVN_REV="$(shell svnversion -c .)"'
+-CFLAGS += $(SVNDEV)
++#SVNDEV := -D'SVN_REV="$(shell svnversion -c .)"'
++#CFLAGS += $(SVNDEV)
+ 
+ # general compile flags, enable all warnings to make compile more verbose
+ CFLAGS += -DLINUX -D_GNU_SOURCE -Wall 
+--- a/mjpg_streamer.c
++++ b/mjpg_streamer.c
+@@ -253,15 +253,12 @@ int main(int argc, char *argv[])
+             /* v, version */
+         case 6:
+         case 7:
+-            printf("MJPG Streamer Version: %s\n" \
+-            "Compilation Date.....: %s\n" \
+-            "Compilation Time.....: %s\n",
++            printf("MJPG Streamer Version: %s\n",
+ #ifdef SVN_REV
+-            SVN_REV,
++            SVN_REV);
+ #else
+-            SOURCE_VERSION,
++            SOURCE_VERSION);
+ #endif
+-            __DATE__, __TIME__);
+             return 0;
+             break;
+ 

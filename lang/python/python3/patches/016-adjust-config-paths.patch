@@ -20,7 +20,7 @@
          abi=sys.abiflags,
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1304,7 +1304,7 @@ libinstall:	build_all $(srcdir)/Modules/
+@@ -1338,7 +1338,7 @@ libinstall:	build_all $(srcdir)/Modules/
  			esac; \
  		done; \
  	done
@@ -28,8 +28,8 @@
 +	$(INSTALL_DATA) `cat pybuilddir.txt`/_sysconfigdata*.py \
  		$(DESTDIR)$(LIBDEST); \
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
- 
-@@ -1404,7 +1404,7 @@ sharedinstall: sharedmods
+ ifeq (@COMPILE_ALL_TESTS@,yes)
+@@ -1475,7 +1475,7 @@ sharedinstall: sharedmods
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
  		--root=$(DESTDIR)/

@@ -1,6 +1,7 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -998,7 +998,6 @@ libs/gst/net/Makefile
+diff -u --recursive gstreamer-1.12.4-vanilla/configure.ac gstreamer-1.12.4/configure.ac
+--- gstreamer-1.12.4-vanilla/configure.ac	2018-02-10 17:37:16.379378242 -0500
++++ gstreamer-1.12.4/configure.ac	2018-02-10 17:40:18.742109326 -0500
+@@ -1083,7 +1083,6 @@
  plugins/Makefile
  plugins/elements/Makefile
  plugins/tracers/Makefile
@@ -8,9 +9,10 @@
  tests/Makefile
  tests/benchmarks/Makefile
  tests/check/Makefile
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -9,7 +9,6 @@ aclocal_DATA = gst-element-check-@GST_AP
+diff -u --recursive gstreamer-1.12.4-vanilla/Makefile.am gstreamer-1.12.4/Makefile.am
+--- gstreamer-1.12.4-vanilla/Makefile.am	2018-02-10 17:37:16.390378286 -0500
++++ gstreamer-1.12.4/Makefile.am	2018-02-10 17:40:29.112150898 -0500
+@@ -9,7 +9,6 @@
  SUBDIRS = pkgconfig \
  	gst libs plugins tests \
  	docs \
@@ -18,7 +20,7 @@
  	m4 \
  	common \
  	data
-@@ -22,7 +21,6 @@ endif
+@@ -22,7 +21,6 @@
  DIST_SUBDIRS = pkgconfig \
  	gst libs plugins tools tests \
  	docs \

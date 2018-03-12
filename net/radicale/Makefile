@@ -22,8 +22,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
-$(call include_mk, python3-package.mk)
+include ../../lang/python/python-package.mk
+include ../../lang/python/python3-package.mk
 
 # no default dependencies
 PKG_DEFAULT_DEPENDS:=

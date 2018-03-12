@@ -1,0 +1,10 @@
+config globals 'globals'
+	option alt_config_file '/etc/stunnel/stunnel.conf'
+	option debug '5'
+
+config service 'dummy'
+	option client '1'
+	option accept_host 'localhost'
+	option accept_port '6000'
+	list connect 'localhost:6001'
+

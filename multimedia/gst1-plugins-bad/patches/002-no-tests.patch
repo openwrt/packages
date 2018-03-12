@@ -1,7 +1,8 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -3617,38 +3617,6 @@ sys/wasapi/Makefile
- sys/wininet/Makefile
+diff -u --recursive gst-plugins-bad-1.12.4-vanilla/configure.ac gst-plugins-bad-1.12.4/configure.ac
+--- gst-plugins-bad-1.12.4-vanilla/configure.ac	2018-02-11 19:46:16.942758605 -0500
++++ gst-plugins-bad-1.12.4/configure.ac	2018-02-11 19:46:38.356808019 -0500
+@@ -3619,38 +3619,6 @@
+ sys/wasapi/Makefile
  sys/winks/Makefile
  sys/winscreencap/Makefile
 -tests/Makefile
@@ -12,6 +13,7 @@
 -tests/examples/camerabin2/Makefile
 -tests/examples/codecparsers/Makefile
 -tests/examples/directfb/Makefile
+-tests/examples/audiomixmatrix/Makefile
 -tests/examples/gl/Makefile
 -tests/examples/gl/cocoa/Makefile
 -tests/examples/gl/clutter/Makefile
@@ -21,7 +23,6 @@
 -tests/examples/gl/generic/doublecube/Makefile
 -tests/examples/gl/generic/recordgraphic/Makefile
 -tests/examples/gl/gtk/Makefile
--tests/examples/gl/gtk/gtkvideooverlay/Makefile
 -tests/examples/gl/gtk/3dvideo/Makefile
 -tests/examples/gl/gtk/filternovideooverlay/Makefile
 -tests/examples/gl/gtk/filtervideooverlay/Makefile
@@ -39,9 +40,10 @@
  ext/voamrwbenc/Makefile
  ext/voaacenc/Makefile
  ext/assrender/Makefile
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -2,11 +2,11 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-d
+diff -u --recursive gst-plugins-bad-1.12.4-vanilla/Makefile.am gst-plugins-bad-1.12.4/Makefile.am
+--- gst-plugins-bad-1.12.4-vanilla/Makefile.am	2018-02-11 19:46:16.980758692 -0500
++++ gst-plugins-bad-1.12.4/Makefile.am	2018-02-11 19:46:49.443833603 -0500
+@@ -2,11 +2,11 @@
  
  SUBDIRS = \
  	gst-libs gst sys ext pkgconfig \

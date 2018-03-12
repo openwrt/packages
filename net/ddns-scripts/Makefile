@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2017 OpenWrt.org
+# Copyright (C) 2008-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 #
@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ddns-scripts
 # Version == major.minor.patch
 # increase on new functionality (minor) or patches (patch)
-PKG_VERSION:=2.7.6
+PKG_VERSION:=2.7.7
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=18
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
@@ -113,6 +113,21 @@ define Package/ddns-scripts_nsupdate/config
 endef
 
 ###### *************************************************************************
+define Package/ddns-scripts_route53-v1
+    $(call Package/ddns-scripts/Default)
+    TITLE:=Amazon AWS Route 53 API v1
+    DEPENDS:=ddns-scripts +curl +openssl-util
+endef
+define Package/ddns-scripts_route53-v1/description
+	Dynamic DNS Client scripts extension for Amazon AWS Route53. Note: You
+	must also install ca-certificate or ca-bundle.
+	It requires:
+	"option username" to be a valid AWS access key id
+	"option password" to be the matching AWS secret key id
+	"option domain" to contain the hosted zone ID
+endef
+
+###### *************************************************************************
 define Build/Configure
 endef
 define Build/Compile
@@ -129,7 +144,7 @@ define Build/Compile
 		-e '/^[[:space:]]*$$$$/d'	$$$$FILE; \
 	done
 	# compress public_suffix_list.dat
-	gzip -f9 $(PKG_BUILD_DIR)/files/public_suffix_list.dat
+	gzip -nf9 $(PKG_BUILD_DIR)/files/public_suffix_list.dat
 endef
 
 define Package/ddns-scripts/conffiles
@@ -388,9 +403,51 @@ define Package/ddns-scripts_nsupdate/prerm
 endef
 
 ###### *************************************************************************
+define Package/ddns-scripts_route53-v1/preinst
+	#!/bin/sh
+	# if NOT run buildroot then stop service
+	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
+	exit 0	# suppress errors
+endef
+define Package/ddns-scripts_route53-v1/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_route53-v1
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_route53_v1.sh $(1)/usr/lib/ddns
+endef
+define Package/ddns-scripts_route53-v1/postinst
+	#!/bin/sh
+	# remove old services file entries
+	/bin/sed -i '/route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
+	/bin/sed -i '/route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
+	# and create new
+	printf "%s\\t%s\\n" '"route53-v1"' '"update_route53_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
+	printf "%s\\t%s\\n" '"route53-v1"' '"update_route53_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
+	# on real system restart service if enabled
+	[ -z "$${IPKG_INSTROOT}" ] && {
+		[ -x /etc/uci-defaults/ddns_route53-v1 ] && \
+			/etc/uci-defaults/ddns_route53-v1 && \
+				rm -f /etc/uci-defaults/route53.com-v1 >/dev/null 2>&1
+		/etc/init.d/ddns enabled \
+			&& /etc/init.d/ddns start >/dev/null 2>&1
+	}
+	exit 0	# suppress errors
+endef
+define Package/ddns-scripts_route53-v1/prerm
+	#!/bin/sh
+	# if NOT run buildroot then stop service
+	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
+	# remove services file entries
+	/bin/sed -i 'route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
+	/bin/sed -i 'route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
+	exit 0	# suppress errors
+endef
+
+###### *************************************************************************
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts_cloudflare))
 $(eval $(call BuildPackage,ddns-scripts_cloudflare.com-v4))
 $(eval $(call BuildPackage,ddns-scripts_godaddy.com-v1))
 $(eval $(call BuildPackage,ddns-scripts_no-ip_com))
 $(eval $(call BuildPackage,ddns-scripts_nsupdate))
+$(eval $(call BuildPackage,ddns-scripts_route53-v1))

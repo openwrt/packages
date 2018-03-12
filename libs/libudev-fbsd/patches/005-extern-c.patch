@@ -1,0 +1,24 @@
+diff -ruN libudev-fbsd-20160820/src/libudev.h libudev-fbsd-20160820.mod/src/libudev.h
+--- libudev-fbsd-20160820/src/libudev.h	2017-11-17 16:46:56.705435146 +0100
++++ libudev-fbsd-20160820.mod/src/libudev.h	2017-11-17 16:48:07.276021522 +0100
+@@ -11,6 +11,11 @@
+ #include <fcntl.h>
+ #include <unistd.h>
+ 
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ struct udev;
+ struct udev_device;
+ struct udev_list_entry;
+@@ -83,4 +88,8 @@
+     struct udev_monitor *udev_monitor);
+ void udev_monitor_unref(struct udev_monitor *udev_monitor);
+ 
++#ifdef __cplusplus
++} /* extern "C" */
++#endif
++
+ #endif

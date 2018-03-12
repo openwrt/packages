@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fftw3
-PKG_VERSION:=3.3.6-pl2
+PKG_VERSION:=3.3.7
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0+
 
 PKG_SOURCE:=fftw-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.fftw.org
-PKG_HASH:=a5de35c5c824a78a058ca54278c706cdf3d4abba1c56b63531c2cb05f5d57da2
+PKG_HASH:=3b609b7feba5230e8f6dd8d245ddbefac324c5a6ae4186947670d9ac2cd25573
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/fftw-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
@@ -73,10 +73,12 @@ CONFIGURE_ARGS += \
 	--enable-threads \
 	--enable-type-prefix \
 	--disable-debug \
-	--disable-fortran
+	--disable-fortran \
+	--disable-doc
 
 ifeq ($(BUILD_VARIANT), single)
 CONFIGURE_ARGS += \
+	$(if $(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),--enable-neon) \
 	--enable-single
 endif
 

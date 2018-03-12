@@ -78,11 +78,7 @@ ss_mkjson_ss_local_conf() {
 }
 
 ss_mkjson_ss_redir_conf() {
-	ss_mkjson_server_conf || return 1
-	[ "$disable_sni" = 0 ] && disable_sni=false || disable_sni=true
-	cat <<-EOF
-		"disable_sni": $disable_sni,
-	EOF
+	ss_mkjson_server_conf
 }
 
 ss_mkjson_ss_server_conf() {
@@ -115,8 +111,8 @@ ss_xxx() {
 		procd_open_instance "$cfgtype.$cfg"
 		procd_set_param command "$bin" -c "$confjson"
 		[ "$verbose" = 0 ] || procd_append_param command -v
+		[ "$no_delay" = 0 ] || procd_append_param command --no-delay
 		[ -z "$bind_address" ] || procd_append_param command -b "$bind_address"
-		[ -z "$manager_address" ] || procd_append_param command --manager-address "$manager_address"
 		procd_set_param file "$confjson"
 		procd_set_param respawn
 		procd_close_instance
@@ -258,6 +254,7 @@ validate_common_options_() {
 		'disabled:bool:0' \
 		'fast_open:bool:0' \
 		'ipv6_first:bool:0' \
+		'no_delay:bool:0' \
 		'reuse_port:bool:0' \
 		'verbose:bool:0' \
 		'mode:or("tcp_only", "udp_only", "tcp_and_udp"):tcp_only' \
@@ -267,17 +264,15 @@ validate_common_options_() {
 }
 
 validate_server_section() {
-	validate_common_server_options_ server "$1" "${2}"
+	validate_common_server_options_ server "$1" "$2"
 }
 
 validate_ss_local_section() {
-	validate_common_client_options_ ss_local "$1" "${2}"
+	validate_common_client_options_ ss_local "$1" "$2"
 }
 
 validate_ss_redir_section() {
-	validate_common_client_options_ ss_redir "$1" \
-		"${2}" \
-		'disable_sni:bool:0'
+	validate_common_client_options_ ss_redir "$1" "$2"
 }
 
 validate_ss_rules_section() {
@@ -303,13 +298,12 @@ validate_ss_rules_section() {
 validate_ss_server_section() {
 	validate_common_server_options_ ss_server "$1" \
 		validate_common_options_ \
-		"${2}" \
-		'bind_address:ipaddr' \
-		'manager_address:host'
+		"$2" \
+		'bind_address:ipaddr'
 }
 
 validate_ss_tunnel_section() {
 	validate_common_client_options_ ss_tunnel "$1" \
-		"${2}" \
+		"$2" \
 		'tunnel_address:regex(".+\:[0-9]+")'
 }

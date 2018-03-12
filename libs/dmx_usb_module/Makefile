@@ -10,11 +10,11 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=dmx_usb_module
 PKG_VERSION:=0.1.20130818
-PKG_RELEASE:=0.1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git://github.com/lowlander/dmx_usb_module.git
+PKG_SOURCE_URL:=https://github.com/lowlander/dmx_usb_module.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=ee99ca7edbd9e093480ad63341ac007394047bde
 PKG_MAINTAINER:=Martijn Zilverschoon <martijn@friedzombie.com>

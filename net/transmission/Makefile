@@ -8,21 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
-PKG_VERSION:=2.92+git
-PKG_RELEASE:=4
+PKG_VERSION:=2.93
+PKG_RELEASE:=6
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/transmission/transmission.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=35fea28d1a37875ef7480ac061754df617805b19
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MIRROR_HASH:=aeeb8dfd918bd2cf4fb6fbdf58bd822e9b509df1ba5ec408888edd161123ef8e
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@GITHUB/transmission/transmission-releases/master
+PKG_HASH:=8815920e0a4499bcdadbbe89a4115092dab42ce5199f71ff9a926cfd12b9b90b
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+
+PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -32,12 +32,11 @@ define Package/transmission/template
   CATEGORY:=Network
   TITLE:=BitTorrent client
   URL:=http://www.transmissionbt.com
-  MAINTAINER:=Cezary Jackiewicz <cezary@eko.one.pl>
+  DEPENDS:=+ca-bundle +libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib
 endef
 
 define Package/transmission-daemon/Default
   $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libpthread +libevent2 +librt +zlib
   USERID:=transmission=224:transmission=224
 endef
 
@@ -55,39 +54,29 @@ define Package/transmission-daemon-mbedtls
   VARIANT:=mbedtls
 endef
 
-define Package/transmission-cli/Default
-  $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libpthread +libevent2 +librt +zlib
-endef
-
 define Package/transmission-cli-openssl
-  $(call Package/transmission-cli/Default)
+  $(call Package/transmission/template)
   TITLE+= (with OpenSSL)
   DEPENDS+=+libopenssl
   VARIANT:=openssl
 endef
 
 define Package/transmission-cli-mbedtls
-  $(call Package/transmission-cli/Default)
+  $(call Package/transmission/template)
   TITLE+= (with mbed TLS)
   DEPENDS+=+libmbedtls
   VARIANT:=mbedtls
 endef
 
-define Package/transmission-remote/Default
-  $(call Package/transmission/template)
-  DEPENDS:=+libcurl +libpthread +libevent2 +librt +zlib
-endef
-
 define Package/transmission-remote-openssl
-  $(call Package/transmission-remote/Default)
+  $(call Package/transmission/template)
   TITLE+= (with OpenSSL)
   DEPENDS+=+libopenssl
   VARIANT:=openssl
 endef
 
 define Package/transmission-remote-mbedtls
-  $(call Package/transmission-remote/Default)
+  $(call Package/transmission/template)
   TITLE+= (with mbed TLS)
   DEPENDS+=+libmbedtls
   VARIANT:=mbedtls
@@ -131,13 +120,11 @@ endef
 Package/transmission-daemon-mbedtls/conffiles = $(Package/transmission-daemon-openssl/conffiles)
 
 
-CONFIGURE_VARS += \
-	LIBEVENT_LIBS="$(STAGING_DIR)/usr/lib/libevent-2.0.so.5"
-
 CONFIGURE_ARGS += \
 	--enable-daemon \
 	--enable-cli \
 	--without-gtk \
+	--enable-external-natpmp \
 	--enable-largefile \
 	--enable-lightweight
 
@@ -154,16 +141,6 @@ ifeq ($(BUILD_VARIANT),mbedtls)
 	MBEDTLS_LIBS="-lmbedtls -lmbedcrypto"
 endif
 
-MAKE_FLAGS += \
-	CFLAGS="$(TARGET_CFLAGS) -D_GNU_SOURCE"
-
-TARGET_CFLAGS += -std=gnu99
-
-define Build/Configure
-	( cd $(PKG_BUILD_DIR); ./autogen.sh $(CONFIGURE_ARGS))
-	$(call Build/Configure/Default,$CONFIGURE_ARGS)
-endef
-
 define Package/transmission-daemon-openssl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/transmission-daemon $(1)/usr/bin/
@@ -171,6 +148,8 @@ define Package/transmission-daemon-openssl/install
 	$(INSTALL_BIN) files/transmission.init $(1)/etc/init.d/transmission
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) files/transmission.config $(1)/etc/config/transmission
+	$(INSTALL_DIR) $(1)/etc/sysctl.d/
+	$(INSTALL_CONF) files/transmission.sysctl $(1)/etc/sysctl.d/20-transmission.conf
 endef
 Package/transmission-daemon-mbedtls/install = $(Package/transmission-daemon-openssl/install)
 

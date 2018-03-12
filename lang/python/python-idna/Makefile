@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
+# Copyright (C) 2015-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-idna
 PKG_VERSION:=2.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=idna-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/f4/bd/0467d62790828c23c47fc1dfa1b1f052b24efdf5290f071c7a91d0d82fd3
@@ -22,8 +22,8 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleana
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-idna-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
-$(call include_mk, python3-package.mk)
+include ../python-package.mk
+include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
@@ -56,12 +56,15 @@ from the earlier standard from 2003.
 endef
 
 define Package/python3-idna/description
-$(call define Package/python-idna/description)
+$(call Package/python-idna/description)
 .
 (Variant for Python3)
 endef
 
 $(eval $(call PyPackage,python-idna))
 $(eval $(call BuildPackage,python-idna))
+$(eval $(call BuildPackage,python-idna-src))
+
 $(eval $(call Py3Package,python3-idna))
 $(eval $(call BuildPackage,python3-idna))
+$(eval $(call BuildPackage,python3-idna-src))

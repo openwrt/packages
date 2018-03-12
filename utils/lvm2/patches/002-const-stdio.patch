@@ -1,6 +1,6 @@
 --- a/lib/commands/toolcontext.c
 +++ b/lib/commands/toolcontext.c
-@@ -1843,7 +1843,7 @@ struct cmd_context *create_toolcontext(u
+@@ -1869,7 +1869,7 @@ struct cmd_context *create_toolcontext(u
  	/* FIXME Make this configurable? */
  	reset_lvm_errno(1);
  
@@ -9,7 +9,7 @@
  	/* Set in/out stream buffering before glibc */
  	if (set_buffering) {
  		/* Allocate 2 buffers */
-@@ -2224,7 +2224,7 @@ void destroy_toolcontext(struct cmd_cont
+@@ -2249,7 +2249,7 @@ void destroy_toolcontext(struct cmd_cont
  	if (cmd->libmem)
  		dm_pool_destroy(cmd->libmem);
  
@@ -20,7 +20,7 @@
  		if (is_valid_fd(STDIN_FILENO) &&
 --- a/tools/lvmcmdline.c
 +++ b/tools/lvmcmdline.c
-@@ -1815,6 +1815,7 @@ int lvm_split(char *str, int *argc, char
+@@ -3074,6 +3074,7 @@ int lvm_split(char *str, int *argc, char
  /* Make sure we have always valid filedescriptors 0,1,2 */
  static int _check_standard_fds(void)
  {
@@ -28,7 +28,7 @@
  	int err = is_valid_fd(STDERR_FILENO);
  
  	if (!is_valid_fd(STDIN_FILENO) &&
-@@ -1841,6 +1842,12 @@ static int _check_standard_fds(void)
+@@ -3100,6 +3101,12 @@ static int _check_standard_fds(void)
  		       strerror(errno));
  		return 0;
  	}

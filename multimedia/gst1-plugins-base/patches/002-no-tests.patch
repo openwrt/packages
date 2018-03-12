@@ -1,6 +1,7 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -907,23 +907,6 @@ pkgconfig/gstreamer-video.pc
+diff -u --recursive gst-plugins-base-1.12.4-vanilla/configure.ac gst-plugins-base-1.12.4/configure.ac
+--- gst-plugins-base-1.12.4-vanilla/configure.ac	2018-02-11 09:54:25.065243893 -0500
++++ gst-plugins-base-1.12.4/configure.ac	2018-02-11 09:55:12.112340832 -0500
+@@ -942,24 +942,6 @@
  pkgconfig/gstreamer-video-uninstalled.pc
  pkgconfig/gstreamer-plugins-base.pc
  pkgconfig/gstreamer-plugins-base-uninstalled.pc
@@ -9,6 +10,7 @@
 -tests/examples/Makefile
 -tests/examples/app/Makefile
 -tests/examples/audio/Makefile
+-tests/examples/decodebin_next/Makefile
 -tests/examples/dynamic/Makefile
 -tests/examples/encoding/Makefile
 -tests/examples/fft/Makefile
@@ -22,11 +24,12 @@
 -tests/icles/Makefile
 -tests/icles/playback/Makefile
  docs/Makefile
- docs/design/Makefile
  docs/libs/Makefile
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -11,7 +11,6 @@ SUBDIRS = 			\
+ docs/plugins/Makefile
+diff -u --recursive gst-plugins-base-1.12.4-vanilla/Makefile.am gst-plugins-base-1.12.4/Makefile.am
+--- gst-plugins-base-1.12.4-vanilla/Makefile.am	2018-02-11 09:54:25.091243946 -0500
++++ gst-plugins-base-1.12.4/Makefile.am	2018-02-11 09:55:19.994357073 -0500
+@@ -11,7 +11,6 @@
  	gst-libs 		\
  	gst sys $(SUBDIRS_EXT) 	\
  	tools 			\
@@ -34,7 +37,7 @@
  	docs			\
  	common 			\
  	m4
-@@ -22,7 +21,6 @@ DIST_SUBDIRS = 			\
+@@ -22,7 +21,6 @@
  	gst-libs		\
  	gst sys ext		\
  	tools 			\

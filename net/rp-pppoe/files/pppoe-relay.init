@@ -27,7 +27,7 @@ pppoe_relay_instance() {
     config_get server_interfaces "$cfg" server_interface
     config_get client_interfaces "$cfg" client_interface
     config_get both_interfaces "$cfg" both_interfaces
-    config_get maxsessions "$cfg" maxsesssions
+    config_get maxsessions "$cfg" maxsessions
     config_get timeout "$cfg" timeout
     config_get_bool use_non_uci_config "$cfg" use_non_uci_config 0
 
@@ -44,7 +44,7 @@ pppoe_relay_instance() {
 	for interface in $both_interfaces; do
 	    append OPTIONS "-B $interface"
 	done
-	[ -n "$maxsesssions" ] && append OPTIONS "-n $maxsesssions"
+	[ -n "$maxsessions" ] && append OPTIONS "-n $maxsessions"
 	[ -n "$timeout" ] && append OPTIONS "-i $timeout"
     fi
 

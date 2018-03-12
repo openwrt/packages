@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyodbc
-PKG_VERSION:=4.0.17
-PKG_RELEASE:=5
+PKG_VERSION:=4.0.21
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/ce/57/6b92aa5b3497dde6be55fd6fcb76c7db215ed1d56fde45c613add4a43095/
-PKG_HASH:=a82892ba8d74318524efaaccaf8351d3a3b4079a07e1a758902a2b9e84529c9d
+PKG_SOURCE_URL:=https://pypi.python.org/packages/0f/04/c5638a4636fb8117fdc45685f489864459d193b1d892b61dce785ddf58f9
+PKG_HASH:=9655f84ca9e5cb2dfffff705601017420c840d55271ba62dd44f05383eff0329
 PKG_BUILD_DEPENDS:=python python3 unixodbc
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -20,8 +20,8 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-$(PKG_NAME)-$(PKG_VERSION)
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
-$(call include_mk, python3-package.mk)
+include ../python-package.mk
+include ../python3-package.mk
 
 define Package/python-pyodbc/Default
   SECTION:=lang

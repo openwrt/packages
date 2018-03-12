@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=90
+START=25
 USE_PROCD=1
 
 EXTRA_COMMANDS="status"
@@ -29,30 +29,45 @@ start_service()
 
 stop_service()
 {
-    local rtfile="$(uci -q get travelmate.global.trm_rtfile)"
+    local rtfile="$(uci_get travelmate global trm_rtfile)"
 
-    rtfile="${rtfile:="/tmp/trm_runtime.json"}"
+    rtfile="${rtfile:-"/tmp/trm_runtime.json"}"
     > "${rtfile}"
     rc_procd start_service
 }
 
 status()
 {
-    rc_procd "${trm_script}" status
+    local key keylist value rtfile="$(uci_get travelmate global trm_rtfile)"
+
+    rtfile="${rtfile:-"/tmp/trm_runtime.json"}"
+    if [ -s "${rtfile}" ]
+    then
+        printf "%s\n" "::: travelmate runtime information"
+        json_load "$(cat "${rtfile}" 2>/dev/null)"
+        json_select data
+        json_get_keys keylist
+        for key in ${keylist}
+        do
+            json_get_var value "${key}"
+            printf "  + %-18s : %s\n" "${key}" "${value}"
+        done
+    else
+        printf "%s\n" "::: no travelmate runtime information available"
+    fi
 }
 
 service_triggers()
 {
-    local auto="$(uci -q get travelmate.global.trm_automatic)"
+    local auto="$(uci_get travelmate global trm_automatic)"
 
     if [ "${auto}" = "0" ]
     then
-        local iface="$(uci -q get travelmate.global.trm_iface)"
-        local delay="$(uci -q get travelmate.global.trm_triggerdelay)"
+        local trigger="$(uci_get travelmate global trm_iface)"
+        local delay="$(uci_get travelmate global trm_triggerdelay)"
 
-        PROCD_RELOAD_DELAY=$((${delay:=2} * 1000))
-        procd_add_interface_trigger "interface.*.down" "${iface}" "${trm_init}" start
+        PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
+        procd_add_interface_trigger "interface.*.down" "${trigger}" "${trm_init}" start
     fi
-    PROCD_RELOAD_DELAY=1000
-    procd_add_config_trigger "config.change" "travelmate" "${trm_init}" start
+    procd_add_reload_trigger "travelmate"
 }

@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=1.7.8
-PKG_RELEASE:=18
+PKG_VERSION:=1.8.4
+PKG_RELEASE:=01
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.haproxy.org/download/1.7/src/
-PKG_HASH:=ec90153ccedd20ad4015d3eaf76b502ff1f61b431d54c22b8457b5784a9ae142
+PKG_SOURCE_URL:=https://www.haproxy.org/download/1.8/src/
+PKG_HASH:=e305b0a4e7dec08072841eef6ac6dcd1b5586b1eff09c2d51e152a912e8884a6
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_LICENSE:=GPL-2.0
@@ -27,19 +27,21 @@ define Package/haproxy/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=The Reliable, High Performance TCP/HTTP Load Balancer
-  URL:=http://haproxy.1wt.eu/
+  URL:=https://www.haproxy.org/
 endef
 
-define Download/lua533
-	FILE:=lua-5.3.3.tar.gz
-	URL:=http://www.lua.org/ftp/
-	HASH:=5113c06884f7de453ce57702abaac1d618307f33f6789fa870e87a59d772aca2
+define Download/lua534
+	FILE:=lua-5.3.4.tar.gz
+	URL:=https://www.lua.org/ftp/
+	HASH:=f681aa518233bc407e23acf0f5887c884f17436f000d453b2491a9f11a52400c
 endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	tar -zxvf $(DL_DIR)/lua-5.3.3.tar.gz -C $(PKG_BUILD_DIR)
-	ln -s $(PKG_BUILD_DIR)/lua-5.3.3 $(PKG_BUILD_DIR)/lua
+ifeq ($(ENABLE_LUA),y)
+	tar -zxvf $(DL_DIR)/lua-5.3.4.tar.gz -C $(PKG_BUILD_DIR)
+	ln -s $(PKG_BUILD_DIR)/lua-5.3.4 $(PKG_BUILD_DIR)/lua
+endif
 endef
 
 define Package/haproxy/Default/conffiles
@@ -51,7 +53,7 @@ define Package/haproxy/Default/description
 endef
 
 define Package/haproxy
-  DEPENDS+= +libpcre +libltdl +zlib +libpthread +libopenssl +libncursesw +libreadline +@OPENSSL_WITH_DEPRECATED +@OPENSSL_WITH_EC +@OPENSSL_WITH_EC2M  +@OPENSSL_WITH_DTLS +@OPENSSL_WITH_COMPRESSION +@OPENSSL_WITH_NPN  +@OPENSSL_WITH_PSK +@OPENSSL_WITH_SRP +@OPENSSL_ENGINE_DIGEST +@OPENSSL_ENGINE_CRYPTO
+  DEPENDS+= +libpcre +libltdl +zlib +libpthread +libopenssl +libncursesw +libreadline +libatomic +@OPENSSL_WITH_DEPRECATED +@OPENSSL_WITH_EC +@OPENSSL_WITH_EC2M  +@OPENSSL_WITH_DTLS +@OPENSSL_WITH_COMPRESSION +@OPENSSL_WITH_NPN  +@OPENSSL_WITH_PSK +@OPENSSL_WITH_SRP +@OPENSSL_ENGINE_DIGEST +@OPENSSL_ENGINE_CRYPTO
 
   TITLE+= (with SSL support)
   VARIANT:=ssl
@@ -75,7 +77,7 @@ endef
 define Package/haproxy-nossl
   TITLE+= (without SSL support)
   VARIANT:=nossl
-  DEPENDS+= +libpcre +libltdl +zlib +libpthread
+  DEPENDS+= +libpcre +libltdl +zlib +libpthread +libatomic
   TITLE+= (without SSL support)
 $(call Package/haproxy/Default)
 endef
@@ -89,6 +91,20 @@ $(call Package/haproxy/Default/description)
  This package is built without SSL support.
 endef
 
+ENABLE_LUA:=y
+ENABLE_REGPARM:=n
+
+ifeq ($(CONFIG_mips),y)
+  ENABLE_LUA:=n
+endif
+ifeq ($(CONFIG_mipsel),y)
+  ENABLE_LUA:=n
+endif
+
+ifeq ($(CONFIG_TARGET_x86),y)
+  ENABLE_REGPARM:=y
+endif
+
 ifeq ($(CONFIG_avr32),y)
   LINUX_TARGET:=linux26
 else
@@ -97,40 +113,48 @@ endif
 
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
-	ADDON+=USE_LUA=1
-	ADDON+=LUA_LIB_NAME="lua533"
-	ADDON+=LUA_INC="$(STAGING_DIR)/lua-5.3.3/include"
-	ADDON+=LUA_LIB="$(STAGING_DIR)/lua-5.3.3/lib"
-	ADDON+=ADDLIB="-lcrypto -lm "	
-else
-	ADDON+=ADDLIB="-lm"
+	ADDON+=ADDLIB="-lcrypto -lm "
 endif
 
+ifeq ($(ENABLE_LUA),y)
+	ADDON+=USE_LUA=1
+	ADDON+=LUA_LIB_NAME="lua534"
+	ADDON+=LUA_INC="$(STAGING_DIR)/lua-5.3.4/include"
+	ADDON+=LUA_LIB="$(STAGING_DIR)/lua-5.3.4/lib"
+endif
 
-define Build/Compile
+ifeq ($(ENABLE_REGPARM),y)
+	ADDON+=USE_REGPARM=1
+endif
+
+ifeq ($(ENABLE_LUA),y)
+define Build/Compile/lua
 	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR)/lua \
-		INSTALL_TOP="$(STAGING_DIR)/lua-5.3.3/" \
+		INSTALL_TOP="$(STAGING_DIR)/lua-5.3.4/" \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lncurses -lreadline" \
 		LD="$(TARGET_LD)" \
 		linux install
 
-	mv $(STAGING_DIR)/lua-5.3.3/lib/liblua.a $(STAGING_DIR)/lua-5.3.3/lib/liblua533.a
+	mv $(STAGING_DIR)/lua-5.3.4/lib/liblua.a $(STAGING_DIR)/lua-5.3.4/lib/liblua534.a
+endef
+endif
 
+define Build/Compile
+	$(call Build/Compile/lua)
 	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
 		PCREDIR="$(STAGING_DIR)/usr/" \
 		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
-		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 \
-		USE_ZLIB=yes USE_PCRE=1 USE_PCRE_JIT=1\
+		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_TFO=1 \
+		USE_ZLIB=yes USE_PCRE=1 USE_PCRE_JIT=1 USE_GETADDRINFO=1 \
 		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
-		$(ADDON)
-		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
-		LD="$(TARGET_LD)" \
-		LDFLAGS="$(TARGET_LDFLAGS) -lcurses -lreadline" \
-		GNOREGIT=1
+		$(ADDON) \
+		LD="$(TARGET_CC)" \
+		LDFLAGS="$(TARGET_LDFLAGS) -latomic" \
+		IGNOREGIT=1
 
 	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
@@ -160,7 +184,6 @@ endef
 
 Package/haproxy-nossl/install = $(Package/haproxy/install)
 
-
 define Package/halog
 	MENU:=1
 	$(call Package/haproxy)
@@ -177,8 +200,7 @@ define Package/halog/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/halog/halog $(1)/usr/bin/
 endef
 
-$(eval $(call Download,lua533))
+$(eval $(call Download,lua534))
 $(eval $(call BuildPackage,haproxy))
 $(eval $(call BuildPackage,halog))
 $(eval $(call BuildPackage,haproxy-nossl))
-

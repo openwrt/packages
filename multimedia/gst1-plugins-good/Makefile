@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
-PKG_VERSION:=1.8.2
+PKG_VERSION:=1.12.4
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -20,9 +20,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-good/
-PKG_HASH:=8d7549118a3b7a009ece6bb38a05b66709c551d32d2adfd89eded4d1d7a23944
-
-PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base
+PKG_HASH:=649f49bec60892d47ee6731b92266974c723554da1c6649f21296097715eb957
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -37,7 +35,7 @@ define Package/gstreamer1-good/Default
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
-  DEPENDS:= +libgstreamer1 $(ICONV_DEPENDS)
+  DEPENDS:= +libgstreamer1 +libgst1pbutils $(ICONV_DEPENDS)
 endef
 
 define Package/gstreamer1-good/description/Default
@@ -205,7 +203,7 @@ $(eval $(call GstBuildPlugin,mulaw,mulaw support,audio,,))
 $(eval $(call GstBuildPlugin,multifile,multiple files access,video,,))
 $(eval $(call GstBuildPlugin,multipart,multipart stream handling,,,))
 $(eval $(call GstBuildPlugin,navigationtest,navigationtest support,video,,))
-$(eval $(call GstBuildPlugin,oss4audio,OSS 4 audio support,audio tag,,))
+$(eval $(call GstBuildPlugin,oss4,OSS 4 audio support,audio tag,,))
 $(eval $(call GstBuildPlugin,ossaudio,OSS audio support,audio,,))
 $(eval $(call GstBuildPlugin,png,png support,video,,+libpng))
 #$(eval $(call GstBuildPlugin,pulse,pulse support,audio pbutils tag video,,))
@@ -216,7 +214,7 @@ $(eval $(call GstBuildPlugin,rtsp,RTSP,net rtp rtsp sdp,,))
 $(eval $(call GstBuildPlugin,shapewipe,shapewipe support,video,,))
 #$(eval $(call GstBuildPlugin,shout2,shout2 support,,,))
 $(eval $(call GstBuildPlugin,smpte,smpte support,video,,))
-$(eval $(call GstBuildPlugin,souphttpsrc,soup input,audio tag,,+libsoup))
+$(eval $(call GstBuildPlugin,soup,soup input,audio tag,,+libsoup))
 $(eval $(call GstBuildPlugin,spectrum,spectrum data output,audio fft,,))
 #$(eval $(call GstBuildPlugin,speex,speex support,audio tag,,))
 #$(eval $(call GstBuildPlugin,sty4menc,sty4menc support,video,,))

@@ -1,0 +1,56 @@
+diff --git a/config.mk b/config.mk
+index bfaa208..2a3e2bf 100644
+--- a/config.mk
++++ b/config.mk
+@@ -87,7 +87,6 @@ WITH_SOCKS:=yes
+ # Also bump lib/mosquitto.h, CMakeLists.txt,
+ # installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
+ VERSION=1.4.15
+-TIMESTAMP:=$(shell date "+%F %T%z")
+ 
+ # Client library SO version. Bump if incompatible API/ABI changes are made.
+ SOVERSION=1
+@@ -115,7 +114,7 @@ LIB_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I. -I.. -I../lib
+ LIB_CXXFLAGS:=$(LIB_CFLAGS) ${CPPFLAGS}
+ LIB_LDFLAGS:=${LDFLAGS}
+ 
+-BROKER_CFLAGS:=${LIB_CFLAGS} ${CPPFLAGS} -DVERSION="\"${VERSION}\"" -DTIMESTAMP="\"${TIMESTAMP}\"" -DWITH_BROKER
++BROKER_CFLAGS:=${LIB_CFLAGS} ${CPPFLAGS} -DVERSION="\"${VERSION}\"" -DWITH_BROKER
+ CLIENT_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I../lib -DVERSION="\"${VERSION}\""
+ 
+ ifneq ($(or $(findstring $(UNAME),FreeBSD), $(findstring $(UNAME),OpenBSD)),)
+diff --git a/src/conf.c b/src/conf.c
+index 25d80a6..9ab0599 100644
+--- a/src/conf.c
++++ b/src/conf.c
+@@ -338,7 +338,7 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
+ 
+ static void print_usage(void)
+ {
+-	printf("mosquitto version %s (build date %s)\n\n", VERSION, TIMESTAMP);
++	printf("mosquitto version %s\n\n", VERSION);
+ 	printf("mosquitto is an MQTT v3.1.1/v3.1 broker.\n\n");
+ 	printf("Usage: mosquitto [-c config_file] [-d] [-h] [-p port]\n\n");
+ 	printf(" -c : specify the broker config file.\n");
+diff --git a/src/mosquitto.c b/src/mosquitto.c
+index 22b6372..b581f45 100644
+--- a/src/mosquitto.c
++++ b/src/mosquitto.c
+@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
+ 		rc = 1;
+ 		return rc;
+ 	}
+-	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
++	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s starting", VERSION);
+ 	if(int_db.config_file){
+ 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", int_db.config_file);
+ 	}else{
+@@ -308,8 +308,6 @@ int main(int argc, char *argv[])
+ 		/* Set static $SYS messages */
+ 		snprintf(buf, 1024, "mosquitto version %s", VERSION);
+ 		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
+-		snprintf(buf, 1024, "%s", TIMESTAMP);
+-		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
+ 	}
+ #endif
+ 

@@ -1,0 +1,42 @@
+--- a/acinclude.m4	2017-11-28 10:22:53.000000000 +0100
++++ b/acinclude.m4	2017-12-22 16:28:09.361331754 +0100
+@@ -3227,20 +3227,26 @@
+ 
+ dnl PHP_CHECK_VALGRIND
+ AC_DEFUN([PHP_CHECK_VALGRIND], [
+-  AC_MSG_CHECKING([for valgrind])
++  AC_CACHE_CHECK(whether to enable the check for valgrind support,ac_cv_enable_valgrind_check,[
++    ac_cv_enable_valgrind_check=yes
++  ])
+ 
+-  SEARCH_PATH="/usr/local /usr"
+-  SEARCH_FOR="/include/valgrind/valgrind.h"
+-  for i in $SEARCH_PATH ; do
+-    if test -r $i/$SEARCH_FOR; then
+-      VALGRIND_DIR=$i
+-    fi
+-  done
++  if test "$ac_cv_enable_valgrind_check" = "yes"; then
++    AC_MSG_CHECKING([for valgrind])
++
++    SEARCH_PATH="/usr/local /usr"
++    SEARCH_FOR="/include/valgrind/valgrind.h"
++    for i in $SEARCH_PATH ; do
++      if test -r $i/$SEARCH_FOR; then
++        VALGRIND_DIR=$i
++      fi
++    done
+ 
+-  if test -z "$VALGRIND_DIR"; then
+-    AC_MSG_RESULT([not found])
+-  else
+-    AC_MSG_RESULT(found in $VALGRIND_DIR)
+-    AC_DEFINE(HAVE_VALGRIND, 1, [ ])
++    if test -z "$VALGRIND_DIR"; then
++      AC_MSG_RESULT([not found])
++    else
++      AC_MSG_RESULT(found in $VALGRIND_DIR)
++      AC_DEFINE(HAVE_VALGRIND, 1, [ ])
++    fi
+   fi
+ ])

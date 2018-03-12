@@ -1,6 +1,9 @@
 config global
 #	option uci_enabled '1'
 
+config network
+#	option network 'wan'	# takes precedence over config.PCAP_INTF
+
 config access
 	option SOURCE 'ANY'
 	option HMAC_KEY 'CHANGEME'

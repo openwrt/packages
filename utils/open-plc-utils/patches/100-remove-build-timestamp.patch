@@ -1,0 +1,37 @@
+Index: open-plc-utils-2017-01-15/docbook/version.h.html
+===================================================================
+--- open-plc-utils-2017-01-15.orig/docbook/version.h.html	2017-01-13 19:44:27.000000000 +0100
++++ open-plc-utils-2017-01-15/docbook/version.h.html	2017-12-03 03:46:31.119387280 +0100
+@@ -40,7 +40,6 @@
+ #define PROJECT &quot;open-plc-utils&quot;
+ #define VERSION &quot;0.0.6&quot;
+ #define RELEASE &quot;OSRQCA-929&quot;
+-#define COMPILE __TIME__ &quot; &quot; __DATE__
+ #define CONTACT &quot;cmaier@qca.qualcomm.com&quot;
+ #define LICENSE &quot;Clear BSD&quot;
+ 
+Index: open-plc-utils-2017-01-15/tools/version.c
+===================================================================
+--- open-plc-utils-2017-01-15.orig/tools/version.c	2017-01-13 19:44:27.000000000 +0100
++++ open-plc-utils-2017-01-15/tools/version.c	2017-12-03 03:45:57.358690651 +0100
+@@ -30,7 +30,6 @@
+ 	printf (RELEASE " ");
+ 	printf ("ISO C ");
+-	printf (COMPANY " ");
++	printf (COMPANY "\n");
+-	printf (COMPILE "\n");
+ 	return;
+ }
+ 
+Index: open-plc-utils-2017-01-15/tools/version.h
+===================================================================
+--- open-plc-utils-2017-01-15.orig/tools/version.h	2017-01-13 19:44:27.000000000 +0100
++++ open-plc-utils-2017-01-15/tools/version.h	2017-12-03 03:46:08.902929217 +0100
+@@ -20,7 +20,6 @@
+ #define PROJECT "open-plc-utils"
+ #define VERSION "0.0.6"
+ #define RELEASE "OSRQCA-929"
+-#define COMPILE __TIME__ " " __DATE__
+ #define CONTACT "https://github.com/qca/open-plc-utils"
+ #define LICENSE "Clear BSD"
+ 

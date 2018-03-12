@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2017.05.07
+PKG_VERSION:=2017.12.08
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Christian Simon <simon@swine.de>
@@ -12,13 +12,16 @@ PKG_LICENSE:=Apache-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/prometheus-node-exporter-lua
+define Package/prometheus-node-exporter-lua/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Provides system statistics as Prometheus scraping endpoint
-  DEPENDS:=+luasocket
-  URL:=https://github.com/rbo/openwrt_exporter
+  TITLE:=Prometheus node exporter
   PKGARCH:=all
+endef
+
+define Package/prometheus-node-exporter-lua
+  $(call Package/prometheus-node-exporter-lua/Default)
+  DEPENDS:=+luasocket +lua
 endef
 
 define Package/prometheus-node-exporter-lua/conffiles
@@ -31,6 +34,42 @@ define Package/prometheus-node-exporter-lua/description
   This service is a lightweight rewrite in LUA of the offical Prometheus node_exporter.
 endef
 
+define Package/prometheus-node-exporter-lua-nat_traffic
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (nat_traffic collector)
+  DEPENDS:=prometheus-node-exporter-lua
+endef
+
+define Package/prometheus-node-exporter-lua-netstat
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (netstat collector)
+  DEPENDS:=prometheus-node-exporter-lua
+endef
+
+define Package/prometheus-node-exporter-lua-wifi
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (wifi collector)
+  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua +libubus-lua
+endef
+
+define Package/prometheus-node-exporter-lua-wifi_stations
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (wifi_stations collector)
+  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua +libubus-lua
+endef
+
+define Package/prometheus-node-exporter-lua-bmx6
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (bmx6 links collector)
+  DEPENDS:=prometheus-node-exporter-lua bmx6 +lua-cjson +bmx6-json
+endef
+
+define Package/prometheus-node-exporter-lua-bmx7
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (bmx7 links collector)
+  DEPENDS:=prometheus-node-exporter-lua bmx7 +lua-cjson +bmx7-json
+endef
+
 Build/Compile=
 
 define Package/prometheus-node-exporter-lua/install
@@ -40,6 +79,50 @@ define Package/prometheus-node-exporter-lua/install
 	$(INSTALL_BIN) ./files/etc/init.d/prometheus-node-exporter-lua $(1)/etc/init.d/prometheus-node-exporter-lua
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/prometheus-node-exporter-lua $(1)/usr/bin/prometheus-node-exporter-lua
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/cpu.lua         $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/filefd.lua      $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/loadavg.lua     $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/meminfo.lua     $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/netdev.lua      $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/time.lua        $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/uname.lua       $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-nat_traffic/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/nat_traffic.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-netstat/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/netstat.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-wifi/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/wifi.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-wifi_stations/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/wifi_stations.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-bmx6/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/bmx6.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-bmx7/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/bmx7.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx6))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))

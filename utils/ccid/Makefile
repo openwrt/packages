@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ccid
-PKG_VERSION:=1.4.27
+PKG_VERSION:=1.4.28
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/4218
-PKG_HASH:=a660e269606986cb94840ad5ba802ffb0cd23dd12b98f69a35035e0deb9dd137
+PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/4230
+PKG_HASH:=875836ac5d9d952b40dc1a253a726e74361671864d81337285a3260268f8ade0
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING

@@ -1,0 +1,37 @@
+Index: bash-4.4/builtins/pushd.def
+===================================================================
+--- bash-4.4.orig/builtins/pushd.def
++++ bash-4.4/builtins/pushd.def
+@@ -365,7 +365,7 @@ popd_builtin (list)
+ 	break;
+     }
+ 
+-  if (which > directory_list_offset || (directory_list_offset == 0 && which == 0))
++  if (which > directory_list_offset || (which < -directory_list_offset) || (directory_list_offset == 0 && which == 0))
+     {
+       pushd_error (directory_list_offset, which_word ? which_word : "");
+       return (EXECUTION_FAILURE);
+@@ -387,6 +387,11 @@ popd_builtin (list)
+ 	 remove that directory from the list and shift the remainder
+ 	 of the list into place. */
+       i = (direction == '+') ? directory_list_offset - which : which;
++      if (i < 0 || i > directory_list_offset)
++	{
++	  pushd_error (directory_list_offset, which_word ? which_word : "");
++	  return (EXECUTION_FAILURE);
++	}
+       free (pushd_directory_list[i]);
+       directory_list_offset--;
+ 
+Index: bash-4.4/patchlevel.h
+===================================================================
+--- bash-4.4.orig/patchlevel.h
++++ bash-4.4/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 5
++#define PATCHLEVEL 6
+ 
+ #endif /* _PATCHLEVEL_H_ */

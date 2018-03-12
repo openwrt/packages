@@ -1,17 +1,14 @@
-Please make sure that the issue subject starts with `<package-name>: ` so that it's easily identifiable.
+Please make sure that the issue subject starts with `<package-name>: `
 
-This repo here is ONLY for packages maintained in this repo.  For base packages residing in the same repo as the build system and maintained by core devs, please consider opening tickets there for more timely responses
+This repo here is only for packages maintained in this repo.  For base packages residing in the same repo as the build system and maintained by core devs, please consider opening tickets there for more timely responses
 
- - OpenWrt: https://dev.openwrt.org/newticket
- - LEDE: https://bugs.lede-project.org/
+ - OpenWrt base system: https://bugs.openwrt.org
  - Most LuCI packages: https://github.com/openwrt/luci/issues
 
-Thanks for your contribution
-Please remove this text (before ---) and fill the following template
--------------------------------
+# Issue template (remove lines from top till here)
 
-Maintainer: @<github-user> (find it by checking history of the package Makefile)
-Environment: (put here arch, model, OpenWRT/LEDE version)
+Maintainer: @\<github-user> (find it by checking history of the package Makefile)
+Environment: (put here arch, model, OpenWrt version)
 
 Description:
 

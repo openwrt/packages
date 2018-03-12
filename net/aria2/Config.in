@@ -19,7 +19,7 @@ endchoice
 choice
 	prompt "Crypto Library"
 	depends on !ARIA2_OPENSSL
-	default ARIA2_NOCRYPOTLIB
+	default ARIA2_NOCRYPTO
 
 config ARIA2_NETTLE
 	bool "Nettle"

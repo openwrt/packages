@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=faad2
-PKG_VERSION:=2.8.1
+PKG_VERSION:=2.8.6
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/faac/faad2-src/$(PKG_NAME)-2.8.0
-PKG_HASH:=f4042496f6b0a60f5ded6acd11093230044ef8a2fd965360c1bbd5b58780933d
+PKG_HASH:=654977adbf62eb81f4fca00152aca58ce3b6dd157181b9edd7bed687a7c73f21
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_FIXUP:=autoreconf

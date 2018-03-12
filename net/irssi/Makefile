@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=irssi
-PKG_VERSION:=1.0.4
+PKG_VERSION:=1.1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/irssi/irssi/releases/download/1.0.4/
-PKG_HASH:=b85c07dbafe178213eccdc69f5f8f0ac024dea01c67244668f91ec1c06b986ca
+PKG_SOURCE_URL:=https://github.com/irssi/irssi/releases/download/1.1.1/
+PKG_HASH:=784807e7a1ba25212347f03e4287cff9d0659f076edfb2c6b20928021d75a1bf
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

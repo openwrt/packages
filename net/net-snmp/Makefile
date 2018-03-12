@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.7.3
-PKG_RELEASE:=7
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -72,7 +72,13 @@ endef
 define Package/snmp-utils/description
 $(call Package/net-snmp/Default/description)
  .
- This package contains SNMP client utilities.
+ This package contains SNMP client utilities:
+   - snmpget
+   - snmpset
+   - snmpstatus
+   - snmptest
+   - snmptrap
+   - snmpwalk
 endef
 
 
@@ -95,6 +101,18 @@ $(call Package/net-snmp/Default)
   TITLE:=Open source SNMP implementation (daemon)
 endef
 
+
+define Package/snmptrapd
+$(call Package/net-snmp/Default)
+  DEPENDS:=+libnetsnmp
+  TITLE:=Open source SNMP implementation (notification receiver)
+endef
+
+define Package/snmptrapd/description
+$(call Package/net-snmp/Default/description)
+ .
+ This package contains the SNMP notification receiver.
+endef
 
 
 SNMP_MIB_MODULES_INCLUDED = \
@@ -183,6 +201,7 @@ CONFIGURE_ARGS += \
 	--with-transports="$(SNMP_TRANSPORTS_INCLUDED)" \
 	--without-openssl \
 	--without-libwrap \
+	--without-mysql \
 	--without-rpm \
 	--without-zlib \
 	--with-nl \
@@ -240,11 +259,20 @@ define Package/snmpd/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
 	$(INSTALL_DIR) $(1)/etc/snmp
-	ln -sf /var/run/snmpd.conf $(1)/etc/snmp/
+	$(LN) /var/run/snmpd.conf $(1)/etc/snmp/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmpd $(1)/usr/sbin/snmpd
+endef
+
+define Package/snmptrapd/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/snmptrapd.init $(1)/etc/init.d/snmptrapd
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetsnmptrapd.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmptrapd $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,libnetsnmp))
@@ -252,3 +280,4 @@ $(eval $(call BuildPackage,snmp-mibs))
 $(eval $(call BuildPackage,snmp-utils))
 $(eval $(call BuildPackage,snmpd))
 $(eval $(call BuildPackage,snmpd-static))
+$(eval $(call BuildPackage,snmptrapd))

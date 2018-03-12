@@ -1,6 +1,7 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -929,7 +929,6 @@ docs/design/Makefile
+diff -u --recursive gst-plugins-base-1.12.4-vanilla/configure.ac gst-plugins-base-1.12.4/configure.ac
+--- gst-plugins-base-1.12.4-vanilla/configure.ac	2018-02-11 09:52:04.704954684 -0500
++++ gst-plugins-base-1.12.4/configure.ac	2018-02-11 09:53:01.444071594 -0500
+@@ -964,7 +964,6 @@
  docs/libs/Makefile
  docs/plugins/Makefile
  docs/version.entities
@@ -8,9 +9,10 @@
  common/Makefile
  common/m4/Makefile
  m4/Makefile
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -13,7 +13,6 @@ SUBDIRS = 			\
+diff -u --recursive gst-plugins-base-1.12.4-vanilla/Makefile.am gst-plugins-base-1.12.4/Makefile.am
+--- gst-plugins-base-1.12.4-vanilla/Makefile.am	2018-02-11 09:52:04.704954684 -0500
++++ gst-plugins-base-1.12.4/Makefile.am	2018-02-11 09:53:08.156085423 -0500
+@@ -13,7 +13,6 @@
  	tools 			\
  	tests 			\
  	docs			\
@@ -18,7 +20,7 @@
  	common 			\
  	m4
  
-@@ -24,7 +23,6 @@ DIST_SUBDIRS = 			\
+@@ -24,7 +23,6 @@
  	gst sys ext		\
  	tools 			\
  	tests 			\

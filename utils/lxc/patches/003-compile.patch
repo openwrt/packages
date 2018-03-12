@@ -1,0 +1,11 @@
+--- a/src/lxc/confile_utils.c
++++ b/src/lxc/confile_utils.c
+@@ -677,7 +677,7 @@
+ 	char *endptr = NULL;
+ 
+ 	if (strncmp(*value, "unlimited", sizeof("unlimited") - 1) == 0) {
+-		*res = RLIM_INFINITY;
++		*res = (unsigned long)RLIM_INFINITY;
+ 		*value += sizeof("unlimited") - 1;
+ 		return true;
+ 	}

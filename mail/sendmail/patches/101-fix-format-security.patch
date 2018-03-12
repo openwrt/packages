@@ -1,0 +1,109 @@
+Index: sendmail-8.15.2/sendmail/envelope.c
+===================================================================
+--- sendmail-8.15.2.orig/sendmail/envelope.c
++++ sendmail-8.15.2/sendmail/envelope.c
+@@ -323,7 +323,7 @@ dropenvelope(e, fulldrop, split)
+ 
+ 			/* don't free, allocated from e_rpool */
+ 			e->e_message = sm_rpool_strdup_x(e->e_rpool, buf);
+-			message(buf);
++			message("%s", buf);
+ 			e->e_flags |= EF_CLRQUEUE;
+ 		}
+ 		if (msg_timeout == MSG_NOT_BY)
+@@ -420,7 +420,7 @@ dropenvelope(e, fulldrop, split)
+ 				/* don't free, allocated from e_rpool */
+ 				e->e_message = sm_rpool_strdup_x(e->e_rpool,
+ 								 buf);
+-				message(buf);
++				message("%s", buf);
+ 				e->e_flags |= EF_WARNING;
+ 			}
+ 			if (msg_timeout == MSG_WARN_BY)
+Index: sendmail-8.15.2/sendmail/parseaddr.c
+===================================================================
+--- sendmail-8.15.2.orig/sendmail/parseaddr.c
++++ sendmail-8.15.2/sendmail/parseaddr.c
+@@ -218,7 +218,7 @@ parseaddr(addr, a, flags, delim, delimpt
+ 			msg = "Deferring message until queue run";
+ 		if (tTd(20, 1))
+ 			sm_dprintf("parseaddr: queueing message\n");
+-		message(msg);
++		message("%s", msg);
+ 		if (e->e_message == NULL && e->e_sendmode != SM_DEFER)
+ 			e->e_message = sm_rpool_strdup_x(e->e_rpool, msg);
+ 		a->q_state = QS_QUEUEUP;
+Index: sendmail-8.15.2/sendmail/srvrsmtp.c
+===================================================================
+--- sendmail-8.15.2.orig/sendmail/srvrsmtp.c
++++ sendmail-8.15.2/sendmail/srvrsmtp.c
+@@ -578,13 +578,13 @@ static bool	smtp_data __P((SMTP_T *, ENV
+ 				bool tsave = QuickAbort;		\
+ 									\
+ 				QuickAbort = false;			\
+-				usrerr(response);			\
++				usrerr("%s", response);			\
+ 				QuickAbort = tsave;			\
+ 				e->e_sendqueue = NULL;			\
+ 				goto doquit;				\
+ 			}						\
+ 			else						\
+-				usrerr(response);			\
++				usrerr("%s", response);			\
+ 			break;						\
+ 									\
+ 		  case SMFIR_REJECT:					\
+@@ -615,7 +615,7 @@ static bool	smtp_data __P((SMTP_T *, ENV
+ 					  str, addr, MSG_TEMPFAIL);	\
+ 				LogUsrErrs = false;			\
+ 			}						\
+-			usrerr(MSG_TEMPFAIL);				\
++			usrerr("%s", MSG_TEMPFAIL);				\
+ 			break;						\
+ 		  default:						\
+ 			milter_cmd_fail = false;			\
+@@ -931,7 +931,7 @@ smtp(nullserver, d_flags, e)
+ 	}
+ 	else if (strncmp(nullserver, "421 ", 4) == 0)
+ 	{
+-		message(nullserver);
++		message("%s", nullserver);
+ 		goto doquit;
+ 	}
+ 
+@@ -1849,7 +1849,7 @@ smtp(nullserver, d_flags, e)
+ 				if (nullserver != NULL)
+ 				{
+ 					if (ISSMTPREPLY(nullserver))
+-						usrerr(nullserver);
++						usrerr("%s", nullserver);
+ 					else
+ 						usrerr("550 5.0.0 %s",
+ 						       nullserver);
+@@ -2452,7 +2452,7 @@ smtp(nullserver, d_flags, e)
+ 					tempfail = true;
+ 					smtp.sm_milterize = false;
+ 					if (response != NULL)
+-						usrerr(response);
++						usrerr("%s", response);
+ 					else
+ 						message("421 4.7.0 %s closing connection",
+ 							MyHostName);
+@@ -3659,7 +3659,7 @@ smtp_data(smtp, e)
+ 				(void) extenhsc(response + 4, ' ', e->e_enhsc);
+ #endif /* _FFR_MILTER_ENHSC */
+ 
+-			usrerr(response);
++			usrerr("%s", response);
+ 			if (strncmp(response, "421 ", 4) == 0
+ 			    || strncmp(response, "421-", 4) == 0)
+ 			{
+@@ -3779,7 +3779,7 @@ smtp_data(smtp, e)
+ 			if (ISSMTPCODE(response))
+ 				(void) extenhsc(response + 4, ' ', e->e_enhsc);
+ #endif /* _FFR_MILTER_ENHSC */
+-			usrerr(response);
++			usrerr("%s", response);
+ 			if (strncmp(response, "421 ", 4) == 0
+ 			    || strncmp(response, "421-", 4) == 0)
+ 				rv = false;

@@ -1,8 +1,8 @@
---- a/src/lxc/lxc-checkconfig.in
-+++ b/src/lxc/lxc-checkconfig.in
-@@ -4,6 +4,17 @@
+--- a/src/lxc/tools/lxc-checkconfig.in
++++ b/src/lxc/tools/lxc-checkconfig.in
+@@ -3,6 +3,17 @@
+ # Allow environment variables to override config
  : ${CONFIG:=/proc/config.gz}
- : ${GREP:=zgrep}
  : ${MODNAME:=configs}
 +: ${ZGREP:=zgrep}
 +: ${GUNZIP:=gunzip}
@@ -16,5 +16,5 @@
 +	GREP=grep
 +fi
  
- SETCOLOR_SUCCESS="printf \\033[1;32m"
- SETCOLOR_FAILURE="printf \\033[1;31m"
+ CAT="cat"
+ 

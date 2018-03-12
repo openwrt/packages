@@ -1,0 +1,58 @@
+Index: bash-4.4/expr.c
+===================================================================
+--- bash-4.4.orig/expr.c
++++ bash-4.4/expr.c
+@@ -578,24 +578,23 @@ expcond ()
+   rval = cval = explor ();
+   if (curtok == QUES)		/* found conditional expr */
+     {
+-      readtok ();
+-      if (curtok == 0 || curtok == COL)
+-	evalerror (_("expression expected"));
+       if (cval == 0)
+ 	{
+ 	  set_noeval = 1;
+ 	  noeval++;
+ 	}
+ 
++      readtok ();
++      if (curtok == 0 || curtok == COL)
++	evalerror (_("expression expected"));
++
+       val1 = EXP_HIGHEST ();
+ 
+       if (set_noeval)
+ 	noeval--;
+       if (curtok != COL)
+ 	evalerror (_("`:' expected for conditional expression"));
+-      readtok ();
+-      if (curtok == 0)
+-	evalerror (_("expression expected"));
++
+       set_noeval = 0;
+       if (cval)
+  	{
+@@ -603,7 +602,11 @@ expcond ()
+ 	  noeval++;
+  	}
+ 
++      readtok ();
++      if (curtok == 0)
++	evalerror (_("expression expected"));
+       val2 = expcond ();
++
+       if (set_noeval)
+ 	noeval--;
+       rval = cval ? val1 : val2;
+Index: bash-4.4/patchlevel.h
+===================================================================
+--- bash-4.4.orig/patchlevel.h
++++ bash-4.4/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 7
++#define PATCHLEVEL 8
+ 
+ #endif /* _PATCHLEVEL_H_ */
