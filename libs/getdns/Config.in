@@ -7,8 +7,8 @@ config GETDNS_ENABLE_STUB_ONLY
 		getdns can be configured for stub resolution mode only. (Removes libunbound dependency)
 	default y
 	
-config GETDNS_ENABLE_IDN
-	bool "GETDNS_ENABLE_IDN"
+config GETDNS_ENABLE_IDN_LIBIDN
+	bool "GETDNS_ENABLE_IDN_LIBIDN"
 	help 
 		getdns can be configured with some IDN Support. (Requires libidn dependency)
 	default n
