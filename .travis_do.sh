@@ -6,7 +6,7 @@ set -e
 
 SDK_HOME="$HOME/sdk"
 SDK_PATH=https://downloads.lede-project.org/snapshots/targets/ar71xx/generic/
-SDK=openwrt-sdk-ar71xx-generic_gcc-5.5.0_musl.Linux-x86_64
+SDK=-sdk-ar71xx-generic_
 PACKAGES_DIR="$PWD"
 
 echo_red()   { printf "\033[1;31m$*\033[m\n"; }
@@ -33,6 +33,14 @@ exec_status() {
 	return 0
 }
 
+get_sdk_file() {
+	if [ -e "$SDK_HOME/sha256sums" ] ; then
+		grep -- "$SDK" "$SDK_HOME/sha256sums" | awk '{print $2}' | sed 's/*//g'
+	else
+		false
+	fi
+}
+
 # download will run on the `before_script` step
 # The travis cache will be used (all files under $HOME/sdk/). Meaning
 # We don't have to download the file again
@@ -54,7 +62,7 @@ download_sdk() {
 	echo_blue "=== Verifying sha256sums signature"
 	gpg --verify sha256sums.asc
 	echo_blue "=== Verified sha256sums signature."
-	if ! grep "$SDK" sha256sums > sha256sums.small ; then
+	if ! grep -- "$SDK" sha256sums > sha256sums.small ; then
 		echo_red "=== Can not find $SDK file in sha256sums."
 		echo_red "=== Is \$SDK out of date?"
 		false
@@ -62,9 +70,11 @@ download_sdk() {
 
 	# if missing, outdated or invalid, download again
 	if ! sha256sum -c ./sha256sums.small ; then
+		local sdk_file
+		sdk_file="$(get_sdk_file)"
 		echo_blue "=== sha256 doesn't match or SDK file wasn't downloaded yet."
 		echo_blue "=== Downloading a fresh version"
-		wget "$SDK_PATH/$SDK.tar.xz" -O "$SDK.tar.xz"
+		wget "$SDK_PATH/$sdk_file" -O "$sdk_file"
 	fi
 
 	# check again and fail here if the file is still bad
@@ -101,7 +111,7 @@ test_packages2() {
 	echo_blue "=== Setting up SDK"
 	tmp_path=$(mktemp -d)
 	cd "$tmp_path"
-	tar Jxf "$SDK_HOME/$SDK.tar.xz" --strip=1
+	tar Jxf "$SDK_HOME/$(get_sdk_file)" --strip=1
 
 	# use github mirrors to spare lede servers
 	cat > feeds.conf <<EOF
