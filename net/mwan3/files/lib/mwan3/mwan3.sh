@@ -10,6 +10,7 @@ CONNTRACK_FILE="/proc/net/nf_conntrack"
 
 MWAN3_STATUS_DIR="/var/run/mwan3"
 MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
+MWAN3_INTERFACE_MAX=""
 DEFAULT_LOWEST_METRIC=256
 MMX_MASK=""
 MMX_DEFAULT=""
@@ -65,11 +66,18 @@ mwan3_init()
 	# mwan3's MARKing mask (at least 3 bits should be set)
 	if [ -e "${MWAN3_STATUS_DIR}/mmx_mask" ]; then
 		MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
+		MWAN3_INTERFACE_MAX=$(uci_get_state mwan3 globals iface_max)
 	else
 		config_load mwan3
 		config_get MMX_MASK globals mmx_mask '0xff00'
 		echo "$MMX_MASK" > "${MWAN3_STATUS_DIR}/mmx_mask"
 		$LOG notice "Using firewall mask ${MMX_MASK}"
+
+		bitcnt=$(mwan3_count_one_bits MMX_MASK)
+		mmdefault=$(((1<<bitcnt)-1))
+		MWAN3_INTERFACE_MAX=$(($mmdefault-3))
+		uci_toggle_state mwan3 globals iface_max "$MWAN3_INTERFACE_MAX"
+		$LOG notice "Max interface count is ${MWAN3_INTERFACE_MAX}"
 	fi
 
 	# mark mask constants
