@@ -1,7 +1,7 @@
-From dd52bf474a8c03a3b7a5d73229b64971d76adafd Mon Sep 17 00:00:00 2001
+From b3cc748d502f7f87aeb103b3f69573b0e640e2ba Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 28 Feb 2018 13:42:44 +0800
-Subject: [PATCH] python: separate host/target python for cross-compile
+Subject: [PATCH 102/104] python: separate host/target python for cross-compile
 
 At the moment, python-six is a requirement for openvswitch python
 library on target machine.
@@ -13,7 +13,7 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  2 files changed, 5 insertions(+), 9 deletions(-)
 
 diff --git a/Makefile.am b/Makefile.am
-index 31d6331..4b9e8d4 100644
+index 31d633179..4b9e8d491 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -59,7 +59,7 @@ endif
@@ -26,7 +26,7 @@ index 31d6331..4b9e8d4 100644
  ALL_LOCAL =
  BUILT_SOURCES =
 diff --git a/m4/openvswitch.m4 b/m4/openvswitch.m4
-index 00ffad3..52f207b 100644
+index 00ffad35f..52f207bda 100644
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
 @@ -347,20 +347,16 @@ else:
@@ -55,5 +55,5 @@ index 00ffad3..52f207b 100644
  dnl Checks for Python 3.x, x >= 4.
  AC_DEFUN([OVS_CHECK_PYTHON3],
 -- 
-1.8.3.1
+2.16.2
 

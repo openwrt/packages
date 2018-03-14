@@ -1,0 +1,33 @@
+From 05a6fa94778f9d6c54ca676de80708d03d6c365a Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Wed, 14 Mar 2018 16:40:01 +0800
+Subject: [PATCH 103/104] ovs-ctl: fix setting hostname
+
+The command "hostname" is not available in OpenWrt by default.
+
+The other thing to note is that currently kernel.hostname is not a fully
+qualitied name
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ utilities/ovs-ctl.in | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/utilities/ovs-ctl.in b/utilities/ovs-ctl.in
+index 4ddc450fb..52018e6d3 100755
+--- a/utilities/ovs-ctl.in
++++ b/utilities/ovs-ctl.in
+@@ -68,9 +68,7 @@ ovs_vsctl () {
+ }
+ 
+ set_hostname () {
+-    # 'hostname -f' needs network connectivity to work.  So we should
+-    # call this only after ovs-vswitchd is running.
+-    ovs_vsctl set Open_vSwitch . external-ids:hostname="$(hostname -f)"
++    ovs_vsctl set Open_vSwitch . external-ids:hostname="$(sysctl -n kernel.hostname)"
+ }
+ 
+ set_system_ids () {
+-- 
+2.16.2
+
