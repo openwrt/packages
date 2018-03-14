@@ -51,16 +51,28 @@ download_sdk() {
 	gpg --import $PACKAGES_DIR/.travis/D52BBB6B.asc
 	echo 'B09BE781AE8A0CD4702FDCD3833C6010D52BBB6B:6:' | gpg --import-ownertrust
 
+	echo_blue "=== Verifying sha256sums signature"
 	gpg --verify sha256sums.asc
-	grep "$SDK" sha256sums > sha256sums.small
+	echo_blue "=== Verified sha256sums signature."
+	if ! grep "$SDK" sha256sums > sha256sums.small ; then
+		echo_red "=== Can not find $SDK file in sha256sums."
+		echo_red "=== Is \$SDK out of date?"
+		false
+	fi
 
 	# if missing, outdated or invalid, download again
 	if ! sha256sum -c ./sha256sums.small ; then
+		echo_blue "=== sha256 doesn't match or SDK file wasn't downloaded yet."
+		echo_blue "=== Downloading a fresh version"
 		wget "$SDK_PATH/$SDK.tar.xz" -O "$SDK.tar.xz"
 	fi
 
 	# check again and fail here if the file is still bad
-	sha256sum -c ./sha256sums.small
+	echo_blue "Checking sha256sum a second time"
+	if ! sha256sum -c ./sha256sums.small ; then
+		echo_red "=== SDK can not be verified!"
+		false
+	fi
 	echo_blue "=== SDK is up-to-date"
 }
 
