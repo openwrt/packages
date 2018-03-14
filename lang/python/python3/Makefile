@@ -264,8 +264,12 @@ define Py3Package/python3/filespec
 endef
 
 HOST_LDFLAGS += \
-	-Wl,--no-as-needed -lrt \
 	$$$$(pkg-config --static --libs libcrypto libssl)
+
+ifeq ($(HOST_OS),Linux)
+HOST_LDFLAGS += \
+	-Wl,--no-as-needed -lrt
+endif
 
 HOST_CONFIGURE_ARGS+= \
 	--without-cxx-main \
@@ -274,7 +278,6 @@ HOST_CONFIGURE_ARGS+= \
 	--prefix=$(HOST_PYTHON3_DIR) \
 	--exec-prefix=$(HOST_PYTHON3_DIR) \
 	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
-	--with-system-ffi=no \
 	--with-ensurepip=install \
 	CONFIG_SITE=
 
