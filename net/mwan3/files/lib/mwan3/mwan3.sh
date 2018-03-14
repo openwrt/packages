@@ -58,7 +58,7 @@ mwan3_id2mask()
 mwan3_init()
 {
 	local bitcnt
-	local mmdefault mmblackhole mmunreachable
+	local mmdefault
 
 	[ -d $MWAN3_STATUS_DIR ] || mkdir -p $MWAN3_STATUS_DIR/iface_state
 
