@@ -1,0 +1,31 @@
+From d8dd661e1c100a2d2ba0361cf6c91dcdedfeeb70 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Wed, 14 Mar 2018 16:44:13 +0800
+Subject: [PATCH 104/104] ovs-lib: fix install_dir()
+
+The command "install" is not available in OpenWrt by default
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ utilities/ovs-lib.in | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/utilities/ovs-lib.in b/utilities/ovs-lib.in
+index 1bccea0c5..457297f3f 100644
+--- a/utilities/ovs-lib.in
++++ b/utilities/ovs-lib.in
+@@ -157,7 +157,10 @@ install_dir () {
+     [ "${OVS_USER##*:}" != "" ] && INSTALL_GROUP="${OVS_USER##*:}"
+ 
+     if test ! -d "$DIR"; then
+-        install -d -m "$INSTALL_MODE" -o "$INSTALL_USER" -g "$INSTALL_GROUP" "$DIR"
++        mkdir -p "$DIR"
++        chmod "$INSTALL_MODE"
++        chown "$INSTALL_USER" "$DIR"
++        chgrp "$INSTALL_GROUP" "$DIR"
+         restorecon "$DIR" >/dev/null 2>&1
+     fi
+ }
+-- 
+2.16.2
+
