@@ -278,7 +278,6 @@ HOST_CONFIGURE_ARGS+= \
 	--prefix=$(HOST_PYTHON3_DIR) \
 	--exec-prefix=$(HOST_PYTHON3_DIR) \
 	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
-	--with-system-ffi=no \
 	--with-ensurepip=install \
 	CONFIG_SITE=
 
