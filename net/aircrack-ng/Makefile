@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aircrack-ng
 PKG_VERSION:=1.2-rc1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -50,6 +50,8 @@ endef
 define Package/airmon-ng/description
   Bash script designed to turn wireless cards into monitor mode.
 endef
+
+TARGET_CFLAGS += -std=gnu89
 
 MAKE_FLAGS += prefix=/usr \
 	libnl=true \
