@@ -12,7 +12,7 @@ PKG_VERSION:=0.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://releases.stm32flash.googlecode.com/git
+PKG_SOURCE_URL:=https://sourceforge.net/projects/stm32flash/files
 PKG_HASH:=023f28b01f644edc235c8815a4352e359d3ebdbe6368aaf6bbc28bab3e6ffa5b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
@@ -24,7 +24,7 @@ define Package/stm32flash
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Microcontroller programming
-  URL:=http://code.google.com/p/stm32flash/
+  URL:=https://sourceforge.net/projects/stm32flash
   TITLE:=Firmware flash tool for STM32's serial bootloader
 endef
 
