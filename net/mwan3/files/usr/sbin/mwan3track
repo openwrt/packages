@@ -142,6 +142,7 @@ main() {
 				echo "offline" > /var/run/mwan3track/$1/STATUS
 				$LOG notice "Interface $1 ($2) is offline"
 				env -i ACTION=ifdown INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
+				env -i ACTION="disconnected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
 				score=0
 			fi
 		else
@@ -162,6 +163,7 @@ main() {
 			if [ $score -eq $up ]; then
 				$LOG notice "Interface $1 ($2) is online"
 				echo "online" > /var/run/mwan3track/$1/STATUS
+				env -i ACTION="connected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
 				env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
 				exit 0
 			fi
