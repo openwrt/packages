@@ -94,7 +94,7 @@
             adr = ( adr slaac ) ;
 
 
-            if ( split( adr, tmp0, ":" ) >= 8 ) {
+            if ( split( adr, tmp0, ":" ) > 8 ) {
               sub( "::", ":", adr ) ;
             }
 
