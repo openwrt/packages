@@ -1,0 +1,15 @@
+diff --git a/src/or/config.c b/src/or/config.c
+index 73cc7c2..aba4ecc 100644
+--- a/src/or/config.c
++++ b/src/or/config.c
+@@ -4473,10 +4473,6 @@ compute_real_max_mem_in_queues(const uint64_t val, int log_guess)
+       notice_sent = 1;
+     }
+     return result;
+-  } else if (val < ONE_GIGABYTE / 4) {
+-    log_warn(LD_CONFIG, "MaxMemInQueues must be at least 256 MB for now. "
+-             "Ideally, have it as large as you can afford.");
+-    return ONE_GIGABYTE / 4;
+   } else {
+     /* The value was fine all along */
+     return val;
