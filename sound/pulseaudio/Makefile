@@ -99,6 +99,7 @@ define Package/pulseaudio-profiles
 endef
 
 CONFIGURE_ARGS += \
+	$(if $(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),--enable-neon-opt,--disable-neon-opt) \
 	--with-system-user=pulse \
 	--with-system-group=pulse \
 	--with-access-group=audio \
