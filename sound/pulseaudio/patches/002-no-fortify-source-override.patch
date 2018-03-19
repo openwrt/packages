@@ -1,0 +1,11 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -197,7 +197,7 @@ AS_CASE([" $CFLAGS "], [*" -O0 "*], [],
+     # Warnings to be aware of that appear with -D_FORTIFY_SOURCE=2 but without -U_FORTIFY_SOURCE:
+     # On Fedora 20 with -O0: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+     # On Gentoo with -O2:    "_FORTIFY_SOURCE" redefined [enabled by default]
+-    AS_VAR_APPEND([CPPFLAGS],[" -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2"])
++    #AS_VAR_APPEND([CPPFLAGS],[" -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2"])
+ ])
+ 
+ #### Linker flags ####
