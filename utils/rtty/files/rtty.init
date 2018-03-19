@@ -20,7 +20,7 @@ start_rtty() {
         'ssl:bool:0' \
         'ping:uinteger:5'
     
-    [ $? -eq 1 ] && {
+    [ $? -ne 0 ] && {
         echo "validation failed" >&2
         return 1
     }
