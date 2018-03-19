@@ -30,7 +30,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libpq
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+zlib +libreadline +libpthread +libncursesw
+  DEPENDS:=+libpthread
   TITLE:=PostgreSQL client library
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -43,7 +43,7 @@ endef
 define Package/pgsql-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt
+  DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
   TITLE:=Command Line Interface (CLI) to PostgreSQL databases
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -56,7 +56,7 @@ endef
 define Package/pgsql-cli-extra
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt
+  DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
   TITLE:=Command Line extras for PostgreSQL databases
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -69,7 +69,7 @@ endef
 define Package/pgsql-server
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt +pgsql-cli
+  DEPENDS:=+pgsql-cli
   TITLE:=PostgreSQL databases Server
   URL:=http://www.postgresql.org/
   SUBMENU:=database
