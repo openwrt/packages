@@ -153,7 +153,7 @@ CONFIGURE_ARGS += \
 			--without-tcl \
 			--with-zlib="yes" \
 			--enable-depend \
-			$(if $(CONFIG_TARGET_avr32),--disable-spinlocks)
+			$(if $(CONFIG_arc),--disable-spinlocks)
 
 # Need a native ecpg, pg_config and zic for build
 define Host/Compile
