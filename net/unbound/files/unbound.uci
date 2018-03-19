@@ -27,7 +27,9 @@ config unbound
 	option unbound_control '0'
 	option validator '0'
 	option validator_ntp '1'
-	list trigger 'lan'
-	list trigger 'wan'
-	#list domain_insecure 'www.example.com'
+	list trigger_interface 'lan'
+	list trigger_interface 'wan'
+	#list rebind_interface 'lan'
+	#list domain_insecure 'ntp.example.com'
+	#list domain_forward 'mail.example.com'
 
