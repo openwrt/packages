@@ -8,14 +8,14 @@ Unbound may be useful on consumer grade embedded hardware. It is _intended_ to b
 
 This package builds on Unbounds capabilities with OpenWrt UCI. Not every Unbound option is in UCI, but rather, UCI simplifies the combination of related options. Unbounds native options are bundled and balanced within a smaller set of choices. Options include resources, DNSSEC, access control, and some TTL tweaking. The UCI also provides an escape option and works at the raw "unbound.conf" level.
 
-## HOW TO Adblocking
+## HOW TO Ad Blocking
 The UCI scripts will work with [net/adblock 2.3+](https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md), if it is installed and enabled. Its all detected and integrated automatically. In brief, the adblock scripts create distinct local-zone files that are simply included in the unbound conf file during UCI generation. If you don't want this, then disable adblock or reconfigure adblock to not send these files to Unbound.
 
 ## HOW TO Integrate with DHCP
 Some UCI options and scripts help Unbound to work with DHCP servers to load the local DNS. The examples provided here are serial dnsmasq-unbound, parallel dnsmasq-unbound, and unbound scripted with odhcpd.
 
 ### Serial dnsmasq
-In this case, dnsmasq is not changed *much* with respect to the default OpenWRT/LEDE configuration. Here dnsmasq is forced to use the local Unbound instance as the lone upstream DNS server, instead of your ISP. This may be the easiest implementation, but performance degradation can occur in high volume networks. dnsmasq and Unbound effectively have the same information in memory, and all transfers are double handled.
+In this case, dnsmasq is not changed *much* with respect to the default OpenWrt/LEDE configuration. Here dnsmasq is forced to use the local Unbound instance as the lone upstream DNS server, instead of your ISP. This may be the easiest implementation, but performance degradation can occur in high volume networks. dnsmasq and Unbound effectively have the same information in memory, and all transfers are double handled.
 
 **/etc/config/unbound**:
 
@@ -73,9 +73,12 @@ config dhcp 'lan'
 ```
 
 ### Unbound and odhcpd
-You may ask, "can Unbound replace dnsmasq?" You can have DHCP-DNS records with Unbound and odhcpd only. The UCI scripts will allow Unbound to act like dnsmasq. When odhcpd configures each DHCP lease, it will call a script. The script provided with Unbound will read the lease file for DHCP-DNS records. You **must install** `unbound-control`, because the lease records are added and removed without starting, stopping, flushing cache, or re-writing conf files. (_restart overhead can be excessive with even a few mobile devices._)
-
-Don't forget to disable or uninstall dnsmasq when you don't intend to use it. Strange results may occur. If you want to use default dnsmasq+odhcpd and add Unbound on top, then use the dnsmasq-serial or dnsmasq-parallel methods above.
+You may ask, "can Unbound replace dnsmasq?" You can have DHCP-DNS records with Unbound and odhcpd only. The UCI scripts will allow Unbound to act like dnsmasq. When odhcpd configures each DHCP lease, it will call a script. The script provided with Unbound will read the lease file for DHCP-DNS records. The unbound-control application is required, because simply rewriting conf-files and restarting unbound is too much overhead.
+- Default OpenWrt has dnsmasq+odhcpd with `odhcpd-ipv6only` limited to DHCPv6.
+- If you use dnsmasq+odhcpd together, then use dnsmasq serial or parallel methods above.
+- You must install package `odhcpd` (full) to use odhcpd alone.
+- You must install package `unbound-control` to load and unload leases.
+- Remember to uninstall (or disable) dnsmasq when you won't use it.
 
 **/etc/config/unbound**:
 
