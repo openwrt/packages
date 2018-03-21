@@ -117,9 +117,15 @@ main() {
 				if [ $? -eq 0 ]; then
 					let host_up_count++
 					echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					if [ $score -le $up ]; then
+						$LOG info "Check ($track_method) success for target \"$track_ip\" on interface $1 ($2)"
+					fi
 				else
 					let lost++
 					echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					if [ $score -gt $up ]; then
+						$LOG info "Check ($track_method) failed for target \"$track_ip\" on interface $1 ($2)"
+					fi
 				fi
 			else
 				echo "skipped" > /var/run/mwan3track/$1/TRACK_${track_ip}
