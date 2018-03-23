@@ -1,0 +1,18 @@
+--- a/Makefile
++++ b/Makefile
+@@ -18,15 +18,12 @@
+ 
+ all: 
+ 	CPPFLAGS=$(CPPFLAGS) $(MAKE) -C $(top_srcdir)/cpp/build/ -$(MAKEFLAGS) 
+-	CPPFLAGS=$(CPPFLAGS) $(MAKE) -C $(top_srcdir)/cpp/examples/MinOZW/ -$(MAKEFLAGS) 
+ 
+ install:
+ 	$(MAKE) -C $(top_srcdir)/cpp/build/ -$(MAKEFLAGS) $(MAKECMDGOALS)
+-	$(MAKE) -C $(top_srcdir)/cpp/examples/MinOZW/ -$(MAKEFLAGS) $(MAKECMDGOALS)
+ 
+ clean:
+ 	$(MAKE) -C $(top_srcdir)/cpp/build/ -$(MAKEFLAGS) $(MAKECMDGOALS)
+-	$(MAKE) -C $(top_srcdir)/cpp/examples/MinOZW/ -$(MAKEFLAGS) $(MAKECMDGOALS)
+ 
+ cpp/src/vers.cpp:
+ 	CPPFLAGS=$(CPPFLAGS) $(MAKE) -C $(top_srcdir)/cpp/build/ -$(MAKEFLAGS) cpp/src/vers.cpp
