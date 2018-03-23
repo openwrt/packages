@@ -964,9 +964,11 @@ int main(int args, char *argv[]) {
 		newversion = blobmsg_get_string(tbc[CHECK_VERSION]);
 		fprintf(stdout, "new %s release %s found.\n", distribution, newversion);
 	} else {
+		newversion = version;
 		fprintf(stdout, "staying on %s release version %s\n", distribution, version);
-		blobmsg_add_string(&reqbuf, "version", version);
 	};
+
+	blobmsg_add_string(&reqbuf, "version", newversion);
 
 	if (tbc[CHECK_UPGRADES]) {
 		fprintf(stdout, "package updates:\n");
