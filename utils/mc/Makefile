@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2006-2017 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
 PKG_VERSION:=4.8.20
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
@@ -66,38 +64,31 @@ CONFIGURE_VARS += \
 	ac_cv_search_addwstr=no \
 
 ifeq ($(CONFIG_MC_DIFFVIEWER),)
-CONFIGURE_ARGS += \
-	--without-diff-viewer
+CONFIGURE_ARGS += --without-diff-viewer
 endif
 
 ifeq ($(CONFIG_MC_EDITOR),)
-CONFIGURE_ARGS += \
-	--without-internal-edit
+CONFIGURE_ARGS += --without-internal-edit
 endif
 
 ifeq ($(CONFIG_MC_SUBSHELL),)
-CONFIGURE_ARGS += \
-	--without-subshell
+CONFIGURE_ARGS += --without-subshell
 endif
 
 ifeq ($(CONFIG_MC_LARGEFILE),)
-CONFIGURE_ARGS += \
-	--disable-largefile
+CONFIGURE_ARGS += --disable-largefile
 endif
 
 ifeq ($(CONFIG_MC_BACKGROUND),)
-CONFIGURE_ARGS += \
-	--disable-background
+CONFIGURE_ARGS += --disable-background
 endif
 
 ifeq ($(CONFIG_MC_CHARSET),)
-CONFIGURE_ARGS += \
-	--disable-charset
+CONFIGURE_ARGS += --disable-charset
 endif
 
 ifeq ($(CONFIG_MC_VFS),)
-CONFIGURE_ARGS += \
-	--disable-vfs
+CONFIGURE_ARGS += --disable-vfs
 endif
 
 define Package/mc/install
@@ -109,16 +100,20 @@ define Package/mc/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.ext $(1)/etc/mc
 	$(INSTALL_DIR) $(1)/usr/share/mc/help
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/doc/hlp/mc.hlp $(1)/usr/share/mc/help
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.menu $(1)/etc/mc
+	$(INSTALL_DIR) $(1)/etc/mc/skins
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/skins/default.ini $(1)/etc/mc/skins
+	$(INSTALL_DIR) $(1)/etc/mc/mcedit/Syntax
 ifeq ($(CONFIG_MC_DIFFVIEWER),y)
 	ln -sf mc $(1)/usr/bin/mcdiff
 endif
 ifeq ($(CONFIG_MC_EDITOR),y)
 	ln -sf mc $(1)/usr/bin/mcedit
 endif
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.menu $(1)/etc/mc
-	$(INSTALL_DIR) $(1)/etc/mc/skins
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/skins/default.ini $(1)/etc/mc/skins
-	$(INSTALL_DIR) $(1)/etc/mc/mcedit/Syntax
+ifeq ($(CONFIG_MC_VFS),y)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/vfs/extfs/helpers/sfs.ini $(1)/etc/mc
+	$(INSTALL_DIR) $(1)/usr/lib/mc/extfs.d
+endif
 endef
 
 define Package/mc/conffiles
