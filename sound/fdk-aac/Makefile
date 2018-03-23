@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fdk-aac
-PKG_VERSION:=0.1.5-20171220
+PKG_VERSION:=0.1.6
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=Fraunhofer-FDK-AAC-for-Android
@@ -15,10 +15,10 @@ PKG_LICENSE_FILES:=NOTICE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/mstorsjo/fdk-aac/
-PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=89aeea5f292306c429550e4c9fe55d865c903600
+PKG_SOURCE_SUBDIR=:$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=a30bfced6b6d6d976c728552d247cb30dd86e238
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=ef3c368dfd9c97ea2243103556354c40c1160db5f11c7f0c0162e659b33323cf
+PKG_MIRROR_HASH:=8589905a946c19cb1ce4b29d08f60bb927818e92033ba90e5ab49f63351bee26
 
 PKG_FIXUP:=autoreconf
 
@@ -37,7 +37,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/fdk-aac
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=@BUILD_PATENTED
   TITLE:=Fraunhofer FDK AAC Codec Library
   URL:=https://sourceforge.net/projects/opencore-amr/
 endef
