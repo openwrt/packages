@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamav
-PKG_VERSION:=0.99.3
+PKG_VERSION:=0.99.4
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
@@ -17,7 +17,7 @@ PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr> \
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.clamav.net/downloads/production/
-PKG_HASH:=00fa5292a6e00a3a4035b826267748965d5d2c4943d8ff417d740238263e8e84
+PKG_HASH:=d72ac3273bde8d2e5e28ec9978373ee3ab4529fd868bc3fc4d2d2671228f2461
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
