@@ -145,7 +145,7 @@ stop()
 
 	for IP in "$IP4" "$IP6"; do
 
-		for route in $($IP route list table all | sed 's/.*table \([^ ]*\) .*/\1/' |  awk '{print $1}' | awk '{for(i=1;i<=NF;i++) if($i+0>0) if($i+0<255) {print;break}}'); do
+		for route in $(seq 1 $MWAN3_INTERFACE_MAX); do
 			$IP route flush table $route &> /dev/null
 		done
 

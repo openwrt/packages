@@ -86,7 +86,7 @@
 
 
         while ( ( cmd | getline adr ) > 0 ) {
-          if (( substr( adr, 1, 5 ) <= "fd00:" ) \
+          if (( substr( adr, 1, 5 ) <= "fdff:" ) \
           && ( index( adr, "anycast" ) == 0 ) \
           && ( index( adr, "via" ) == 0 )) {
             # GA or ULA routed addresses only (not LL or MC)
@@ -94,7 +94,7 @@
             adr = ( adr slaac ) ;
 
 
-            if ( split( adr, tmp0, ":" ) >= 8 ) {
+            if ( split( adr, tmp0, ":" ) > 8 ) {
               sub( "::", ":", adr ) ;
             }
 

@@ -12,7 +12,7 @@ PKG_VERSION:=1.7
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://picocom.googlecode.com/files
+PKG_SOURCE_URL:=https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/picocom
 PKG_HASH:=d0f31c8f7a215a76922d30c81a52b9a2348c89e02a84935517002b3bc2c1129e
 
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>

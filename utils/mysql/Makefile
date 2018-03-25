@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/uclibc++.mk
 
 PKG_NAME:=mysql
 PKG_VERSION:=5.1.73
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=\
@@ -60,8 +60,6 @@ endef
 ifneq ($(CONFIG_USE_UCLIBCXX),)
   TARGET_CXX=g++-uc
 endif
-
-TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
 	--enable-shared \
