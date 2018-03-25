@@ -120,7 +120,44 @@ static_hosts() {
 	config_foreach static_host_add host "$@"
 }
 
+typeof() {
+	echo "$1" | awk '
+/^\d+\.\d+\.\d+\.d+$/		{ print "ip\n"; next; }
+/^(true|false)$/		{ print "bool\n"; next; }
+/^\d+$/				{ print "integer\n"; next; }
+/^"[^"]*"$/			{ print "string\n"; next; }
+				{ print "other\n"; next; }
+'
+}
+
+append_dhcp_options() {
+	local tuple="$1"
+
+	# strip redundant "option:" prefix
+	tuple="${tuple#option:}"
+
+	local tag="${tuple%%,*}"
+	local values="${tuple#$tag,}"
+
+	local formatted value
+	local IFS=$', \n'
+	for value in $values; do
+		# detect type of $value and quote if necessary
+		case $(typeof "$value") in
+		ip|bool|integer|string)
+			;;
+		other)
+			value="\"$value\""
+			;;
+		esac
+		formatted="$formatted${formatted:+, }$value"
+	done
+	echo " option $tag $formatted;"
+}
+
 gen_dhcp_subnet() {
+	local cfg="$1"
+
 	echo "subnet $NETWORK netmask $NETMASK {"
 	echo " range $START $END;"
 	echo " option subnet-mask $netmask;"
@@ -140,6 +177,7 @@ gen_dhcp_subnet() {
 	fi
 	echo " option routers $gateway;"
 	echo " option domain-name-servers $DNS;"
+	config_list_foreach "$cfg" "dhcp_option" append_dhcp_options
 	echo "}"
 }
 
@@ -193,7 +231,7 @@ dhcpd_add() {
 		gateway="$IP"
 	fi
 
-	gen_dhcp_subnet >> $config_file
+	gen_dhcp_subnet "$cfg" >> $config_file
 }
 
 general_config() {
