@@ -206,6 +206,8 @@ general_config() {
 	config_get max_lease_time "isc_dhcpd" "max_lease_time" 86400
 	config_get log_facility "isc_dhcpd" "log_facility"
 
+	config_get domain "isc_dhcpd" "domain"
+
 	[ $always_broadcast -eq 1 ] && echo "always-broadcast true;"
 	[ $authoritative -eq 1 ] && echo "authoritative;"
 	[ $boot_unknown_clients -eq 0 ] && echo "boot-unknown-clients false;"
@@ -220,6 +222,8 @@ general_config() {
 	fi
 	echo "default-lease-time $default_lease_time;"
 	echo "max-lease-time $max_lease_time;"
+
+	[ -n "$domain" ] && echo "option domain-name \"$domain\";"
 }
 
 start_service() {
@@ -231,7 +235,7 @@ start_service() {
 		touch $lease_file
 	fi
 
-	dhcp_ifs=""
+	local domain dhcp_ifs
 
 	if [ -e "/etc/dhcpd.conf" ] ; then
 		config_file="/etc/dhcpd.conf"
