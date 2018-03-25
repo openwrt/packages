@@ -26,6 +26,9 @@ parse_whitelist() {
 start_service() {
     modprobe wifidog-ng
 
+    ipset create wifidog-ng-mac hash:mac
+    ipset create wifidog-ng-ip hash:ip timeout 10000
+
     config_load wifidog-ng
     config_foreach parse_whitelist whitelist
 
@@ -37,4 +40,7 @@ start_service() {
 
 stop_service() {
     rmmod wifidog-ng
+
+    ipset destroy wifidog-ng-mac
+    ipset destroy wifidog-ng-ip
 }
