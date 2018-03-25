@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifidog-ng
-PKG_VERSION:=1.2.4
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL=https://github.com/zhaojh329/wifidog-ng.git
-PKG_MIRROR_HASH:=e437366d73f3becb61701560d88740fb097b8060b636febe3ad872831c83b598
+PKG_MIRROR_HASH:=a65ecad48dd3668a1f7416fd7882386a57b8bccf503e353224dbca54c398f052
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
 
@@ -31,7 +31,8 @@ define Package/wifidog-ng/default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Next generation WifiDog
-  DEPENDS:=+kmod-wifidog-ng +libuci +libuclient +libblobmsg-json +libubus +libcares
+  DEPENDS:=+kmod-wifidog-ng +libuci +libuclient +libblobmsg-json +libubus +libcares \
+	  +ipset +libpcap
 endef
 
 define Package/wifidog-ng-nossl
@@ -84,7 +85,7 @@ include $(INCLUDE_DIR)/kernel.mk
 define KernelPackage/wifidog-ng
   SUBMENU:=Other modules
   TITLE:=Kernel module for wifidog-ng
-  DEPENDS:=+kmod-nf-nat
+  DEPENDS:=+kmod-nf-nat +kmod-ipt-ipset
   FILES:=$(PKG_BUILD_DIR)/kmod/wifidog-ng.ko
 endef
 
