@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
-PKG_VERSION:=4.0.9
+PKG_VERSION:=4.2.4
 PKG_RELEASE:=1
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=c18e3803d6e36348442ccf3b0ac4868948692491c7dd646d48576f5aec09cdd8
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend.git
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
@@ -33,7 +32,7 @@ define Package/tvheadend
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Tvheadend is a TV streaming server for Linux
-  DEPENDS:=+libopenssl +librt +zlib +TVHEADEND_AVAHI_SUPPORT:libavahi-client $(ICONV_DEPENDS)
+  DEPENDS:=+libopenssl +librt +zlib +TVHEADEND_AVAHI_SUPPORT:libavahi-client $(ICONV_DEPENDS) +libffmpeg
   URL:=https://tvheadend.org
   MAINTAINER:=Jan Čermák <jan.cermak@nic.cz>
 endef
@@ -73,8 +72,9 @@ endif
 CONFIGURE_ARGS += \
 	--arch=$(ARCH) \
 	--disable-dbus_1 \
-	--disable-libav \
-	--enable-bundle
+	--enable-libav \
+	--disable-bundle \
+	--disable-ffmpeg_static
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
@@ -92,8 +92,7 @@ define Package/tvheadend/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/tvheadend.config $(1)/etc/config/tvheadend
 
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build.linux/tvheadend $(1)/usr/bin/
+	$(MAKE) -C $(PKG_BUILD_DIR) install DESTDIR=$(1)
 endef
 
 $(eval $(call BuildPackage,tvheadend))
