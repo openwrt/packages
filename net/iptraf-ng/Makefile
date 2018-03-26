@@ -12,7 +12,7 @@ PKG_VERSION:=1.1.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://fedorahosted.org/releases/i/p/iptraf-ng/
+PKG_SOURCE_URL:=https://infrastructure.fedoraproject.org/infra/hosted-content/$(PKG_NAME)/$(PKG_NAME)
 PKG_HASH:=79140cf07c0cceb1b5723242847a73aa86f5e4f9dccfe8970fda6801d347eb09
 
 PKG_LICENSE:=GPL-2.0
@@ -29,7 +29,7 @@ define Package/iptraf-ng
   CATEGORY:=Network
   DEPENDS:=+libncurses
   TITLE:=A console-based network monitoring program
-  URL:=https://fedorahosted.org/iptraf-ng/
+  URL:=https://infrastructure.fedoraproject.org/infra/hosted-content/iptraf-ng/
 endef
 
 define Package/iptraf-ng/description
